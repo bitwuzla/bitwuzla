@@ -477,7 +477,9 @@ Rewriter::rewrite_bv_udiv(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_UDIV_EVAL);
     BZLA_APPLY_RW_RULE(BV_UDIV_SPECIAL_CONST);
-    // TODO
+    BZLA_APPLY_RW_RULE(BV_UDIV_BV1);
+    BZLA_APPLY_RW_RULE(BV_UDIV_ONE);
+    BZLA_APPLY_RW_RULE(BV_UDIV_POW2);
   }
 
 DONE:

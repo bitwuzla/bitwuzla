@@ -148,7 +148,7 @@ Node RewriteRule<RewriteRuleKind::BV_MUL_BV1>::_apply(Rewriter& rewriter,
                                                       const Node& node);
 #if 0
 // this increases mul nodes in the general case
-// bcond_mul
+// bcond_mul (TODO tbd)
 #endif
 // const_lhs_mul
 // const_rhs_mul
@@ -243,9 +243,18 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_UDIV_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 // bool_udiv
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UDIV_BV1>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // power2_udiv
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UDIV_POW2>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 // one_udiv
-// bcond_udiv
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UDIV_ONE>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// bcond_udiv (TODO tbd)
 
 /* bvult -------------------------------------------------------------------- */
 

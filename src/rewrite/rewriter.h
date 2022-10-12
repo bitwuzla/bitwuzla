@@ -209,6 +209,9 @@ enum class RewriteRuleKind
   //// bvudiv
   BV_UDIV_EVAL,
   BV_UDIV_SPECIAL_CONST,
+  BV_UDIV_BV1,
+  BV_UDIV_ONE,
+  BV_UDIV_POW2,
 
   //// bvult
   BV_ULT_EVAL,

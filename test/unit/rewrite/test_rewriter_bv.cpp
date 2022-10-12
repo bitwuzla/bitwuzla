@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "bv/bitvector.h"
 #include "gtest/gtest.h"
 #include "node/node_manager.h"
@@ -962,6 +964,46 @@ TEST_F(TestRewriterBv, bv_udiv_special_const)
         d_nm.mk_node(Kind::BV_UDIV, {d_bv1_one, d_a1}));
     test_rule_does_not_apply<kind>(
         d_nm.mk_node(Kind::BV_UDIV, {d_bv4_one, d_a4}));
+  }
+}
+
+TEST_F(TestRewriterBv, bv_udiv_bv1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UDIV_BV1;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a1, d_a1}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a1, d_b1}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4}));
+}
+
+TEST_F(TestRewriterBv, bv_udiv_one)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UDIV_ONE;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_a4}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a1, d_a1}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4}));
+}
+
+TEST_F(TestRewriterBv, bv_udiv_pow2)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UDIV_POW2;
+  for (uint64_t i = 0; i < (1u << 4); ++i)
+  {
+    Node c = d_nm.mk_value(BitVector::from_ui(4, i));
+    if (std::log2(i)
+        == (static_cast<double>(static_cast<uint64_t>(std::log2(i)))))
+    {
+      ////// applies
+      test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a4, c}));
+    }
+    else
+    {
+      ////// does not apply
+      test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a4, c}));
+    }
   }
 }
 

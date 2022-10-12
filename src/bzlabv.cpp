@@ -388,20 +388,11 @@ bzla_bv_power_of_two(const BzlaBitVector *bv)
 {
   assert(bv);
 
-  uint64_t i, j;
-  uint32_t bit;
-  bool iszero;
-
-  for (i = 0, j = 0, iszero = true; i < bv->d_bv->size(); i++)
+  if (bv->d_bv->is_power_of_two())
   {
-    bit = bzla_bv_get_bit(bv, i);
-    if (!bit) continue;
-    if (bit && !iszero) return -1;
-    assert(bit && iszero);
-    j      = i;
-    iszero = false;
+    return bv->d_bv->count_trailing_zeros();
   }
-  return j;
+  return -1;
 }
 
 uint32_t

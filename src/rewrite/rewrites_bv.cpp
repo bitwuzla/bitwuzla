@@ -1137,6 +1137,73 @@ RewriteRule<RewriteRuleKind::BV_UDIV_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/**
+ * match:  (bvudiv a b) with a and b of bit-width 1
+ * result: (bvnot (bvand (bvnot a) b))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UDIV_BV1>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].type().bv_size() != 1) return node;
+  return rewriter.mk_node(
+      Kind::BV_NOT,
+      {rewriter.mk_node(Kind::BV_AND,
+                        {rewriter.mk_node(Kind::BV_NOT, {node[0]}), node[1]})});
+}
+
+/**
+ * match:  (bvudiv a b) where b = pow2(n)
+ * result: (concat (_ bv0 n) ((_ extract (N - 1) n) a))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UDIV_POW2>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[1].is_value())
+  {
+    const BitVector& val1 = node[1].value<BitVector>();
+    if (val1.is_power_of_two())
+    {
+      uint64_t n    = val1.count_trailing_zeros();
+      uint64_t size = val1.size();
+      Node ext = rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, n});
+      if (n == 0) return ext;
+      return rewriter.mk_node(
+          Kind::BV_CONCAT,
+          {NodeManager::get().mk_value(BitVector::mk_zero(n)), ext});
+    }
+  }
+  return node;
+}
+
+/**
+ * match:  (bvudiv a a)
+ * result: (ite (= a (_ bv0 N)) (bvnot (_ bv0 N)) (_ bv1 N))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UDIV_ONE>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0] == node[1])
+  {
+    NodeManager& nm = NodeManager::get();
+    uint64_t size   = node.type().bv_size();
+    Node one        = nm.mk_value(BitVector::mk_one(size));
+    Node ones       = nm.mk_value(BitVector::mk_ones(size));
+    Node zero       = nm.mk_value(BitVector::mk_zero(size));
+    return rewriter.mk_node(
+        Kind::ITE, {rewriter.mk_node(Kind::EQUAL, {node[0], zero}), ones, one});
+  }
+  return node;
+}
+
 /* bvult -------------------------------------------------------------------- */
 
 /**
