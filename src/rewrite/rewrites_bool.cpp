@@ -105,11 +105,11 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 
               });
         }
-        if (node::utils::is_bv_xnor(node[idx1]))
+        Node xnor0, xnor1;
+        if (node::utils::is_bv_xnor(node[idx1], xnor0, xnor1))
         {
           // 1..1 == a XNOR b  --->  a = b
-          return rewriter.mk_node(Kind::EQUAL,
-                                  {node[idx1][0][0], node[idx1][0][1]});
+          return rewriter.mk_node(Kind::EQUAL, {xnor0, xnor1});
         }
       }
     }

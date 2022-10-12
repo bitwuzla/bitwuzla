@@ -112,9 +112,19 @@ TEST_F(TestRewriterBool, bool_equal_special_const)
     // lhs ones
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_ones, bv4and}));
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_ones, bv4xnor}));
+    test_rule<kind>(d_nm.mk_node(
+        Kind::EQUAL,
+        {d_bv4_ones,
+         RewriteRule<RewriteRuleKind::BV_XNOR_ELIM>::apply(d_rewriter, bv4xnor)
+             .first}));
     // rhs ones
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {bv4and, d_bv4_ones}));
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {bv4xnor, d_bv4_ones}));
+    test_rule<kind>(d_nm.mk_node(
+        Kind::EQUAL,
+        {RewriteRule<RewriteRuleKind::BV_XNOR_ELIM>::apply(d_rewriter, bv4xnor)
+             .first,
+         d_bv4_ones}));
   }
 }
 

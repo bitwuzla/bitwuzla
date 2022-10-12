@@ -238,10 +238,14 @@ _rw_bv_add_neg(Rewriter& rewriter, const Node& node, size_t idx)
   assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
-  if (node::utils::is_bv_neg(node[idx1]) && node[idx0] == node[idx1][0])
+  Node neg0;
+  if (node::utils::is_bv_neg(node[idx1], neg0))
   {
-    return NodeManager::get().mk_value(
-        BitVector::mk_zero(node[0].type().bv_size()));
+    if (node[idx0] == neg0)
+    {
+      return NodeManager::get().mk_value(
+          BitVector::mk_zero(node[0].type().bv_size()));
+    }
   }
   return node;
 }
@@ -279,19 +283,22 @@ _rw_bv_add_urem(Rewriter& rewriter, const Node& node, size_t idx)
   const Node *udiv = nullptr, *b = nullptr;
   const Node& a = node[idx1];
   // (bvadd a (bvneg (bvmul (bvudiv a b) b)))
-  if (node::utils::is_bv_neg(node[idx0])
-      && node[idx0][0].kind() == Kind::BV_MUL)
+  Node neg0;
+  if (node::utils::is_bv_neg(node[idx0], neg0))
   {
-    const Node& mul = node[idx0][0];
-    if (mul[0].kind() == Kind::BV_UDIV)
+    const Node& mul = neg0;
+    if (mul.kind() == Kind::BV_MUL)
     {
-      udiv = &mul[0];
-      b    = &mul[1];
-    }
-    if (mul[1].kind() == Kind::BV_UDIV)
-    {
-      udiv = &mul[1];
-      b    = &mul[0];
+      if (mul[0].kind() == Kind::BV_UDIV)
+      {
+        udiv = &mul[0];
+        b    = &mul[1];
+      }
+      if (mul[1].kind() == Kind::BV_UDIV)
+      {
+        udiv = &mul[1];
+        b    = &mul[0];
+      }
     }
   }
   // (bvadd a (bvmul (bvneg (bvudiv a b)) b)))
@@ -299,26 +306,28 @@ _rw_bv_add_urem(Rewriter& rewriter, const Node& node, size_t idx)
   else if (node[idx0].kind() == Kind::BV_MUL)
   {
     const Node& mul = node[idx0];
-    if (node::utils::is_bv_neg(mul[0]) && mul[0][0].kind() == Kind::BV_UDIV)
+    if (node::utils::is_bv_neg(mul[0], neg0) && neg0.kind() == Kind::BV_UDIV)
     {
-      udiv = &mul[0][0];
+      udiv = &neg0;
       b    = &mul[1];
     }
-    else if (node::utils::is_bv_neg(mul[1])
-             && mul[1][0].kind() == Kind::BV_UDIV)
+    else if (node::utils::is_bv_neg(mul[1], neg0)
+             && neg0.kind() == Kind::BV_UDIV)
     {
-      udiv = &mul[1][0];
+      udiv = &neg0;
       b    = &mul[0];
     }
-    else if (mul[0].kind() == Kind::BV_UDIV && node::utils::is_bv_neg(mul[1]))
+    else if (mul[0].kind() == Kind::BV_UDIV
+             && node::utils::is_bv_neg(mul[1], neg0))
     {
       udiv = &mul[0];
-      b    = &mul[1][0];
+      b    = &neg0;
     }
-    else if (mul[1].kind() == Kind::BV_UDIV && node::utils::is_bv_neg(mul[0]))
+    else if (mul[1].kind() == Kind::BV_UDIV
+             && node::utils::is_bv_neg(mul[0], neg0))
     {
       udiv = &mul[1];
-      b    = &mul[0][0];
+      b    = &neg0;
     }
   }
   if (udiv && b && (*udiv)[0] == a && (*udiv)[1] == *b)
