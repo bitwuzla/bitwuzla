@@ -774,7 +774,6 @@ namespace {
 Node
 _rw_bv_mul_shl(Rewriter& rewriter, const Node& node, size_t idx)
 {
-  (void) rewriter;
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
   assert(node.num_children() == 2);
@@ -798,6 +797,69 @@ RewriteRule<RewriteRuleKind::BV_MUL_SHL>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_bv_mul_shl(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (bvmul (bvneg a) b)
+ * result: (bvneg (bvmul a b))
+ *
+ * match:  (bvmul (bvneg a) (bvneg b))
+ * resutl: (bvmul a b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_MUL_NEG>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  assert(node.num_children() == 2);
+  Node neg0, neg1;
+  if (node::utils::is_bv_neg(node[0], neg0))
+  {
+    if (node::utils::is_bv_neg(node[1], neg1))
+    {
+      return rewriter.mk_node(Kind::BV_MUL, {neg0, neg1});
+    }
+    return rewriter.mk_node(Kind::BV_NEG,
+                            {rewriter.mk_node(Kind::BV_MUL, {neg0, node[1]})});
+  }
+  else if (node::utils::is_bv_neg(node[1], neg1))
+  {
+    return rewriter.mk_node(Kind::BV_NEG,
+                            {rewriter.mk_node(Kind::BV_MUL, {node[0], neg1})});
+  }
+  return node;
+}
+
+/**
+ * match:  (bvmul (bvnot (_ bv0 N) a))
+ * result: (bvneg a)
+ */
+namespace {
+Node
+_rw_bv_mul_ones(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  assert(node.num_children() == 2);
+  if (node[idx0].is_value() && node[idx0].value<BitVector>().is_ones())
+  {
+    return rewriter.mk_node(Kind::BV_NEG, {node[idx1]});
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_MUL_ONES>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  Node res = _rw_bv_mul_ones(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_mul_ones(rewriter, node, 1);
   }
   return res;
 }

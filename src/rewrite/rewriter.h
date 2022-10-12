@@ -146,61 +146,79 @@ enum class RewriteRuleKind
   DISTINCT_CARD,
   DISTINCT_ELIM,
 
+  //// Elimination rules
   IMPLIES_ELIM,
   OR_ELIM,
   XOR_ELIM,
 
   /* BV rewrites --------------------------------- */
 
+  //// bvadd
   BV_ADD_EVAL,
   BV_ADD_SPECIAL_CONST,
   BV_ADD_CONST,
   BV_ADD_BV1,
-  BV_ADD_ITE,
-  BV_ADD_MUL,
   BV_ADD_MUL_TWO,
   BV_ADD_NOT,
   BV_ADD_NEG,
   BV_ADD_UREM,
+  // Level 3
+  BV_ADD_ITE,
+  BV_ADD_MUL,
   BV_ADD_SHL,
 
+  //// bvand
   BV_AND_EVAL,
   BV_AND_SPECIAL_CONST,
 
+  //// bvashr
   BV_ASHR_EVAL,
   BV_ASHR_SPECIAL_CONST,
 
+  //// bvconcat
   BV_CONCAT_EVAL,
 
+  //// bvmul
   BV_MUL_EVAL,
   BV_MUL_SPECIAL_CONST,
   BV_MUL_CONST,
   BV_MUL_BV1,
+  // Level 3
   BV_MUL_CONST_ADD,
   BV_MUL_ITE,
+  BV_MUL_NEG,
+  BV_MUL_ONES,
   BV_MUL_SHL,
 
+  //// bvnot
   BV_NOT_EVAL,
   BV_NOT_BV_NOT,
 
+  //// bvshl
   BV_SHL_EVAL,
   BV_SHL_SPECIAL_CONST,
 
+  //// bvlshr
   BV_SHR_EVAL,
   BV_SHR_SPECIAL_CONST,
 
+  //// bvslt
   BV_SLT_EVAL,
   BV_SLT_SPECIAL_CONST,
 
+  //// bvudiv
   BV_UDIV_EVAL,
   BV_UDIV_SPECIAL_CONST,
 
+  //// bvult
   BV_ULT_EVAL,
   BV_ULT_SPECIAL_CONST,
 
+  //// bvurem
   BV_UREM_EVAL,
   BV_UREM_SPECIAL_CONST,
 
+  //// Elimination rules
   BV_NAND_ELIM,
   BV_NEG_ELIM,
   BV_NOR_ELIM,
@@ -291,6 +309,7 @@ enum class RewriteRuleKind
   FP_TO_FP_FROM_SBV_EVAL,
   FP_TO_FP_FROM_UBV_EVAL,
 
+  //// Elimination rules
   FP_GE_ELIM,
   FP_GT_ELIM,
   FP_EQUAL_ELIM,

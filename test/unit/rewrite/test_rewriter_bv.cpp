@@ -659,6 +659,55 @@ TEST_F(TestRewriterBv, bv_mul_shl)
       Kind::BV_MUL, {d_nm.mk_node(Kind::BV_SHR, {d_a4, d_b4}), c4}));
 }
 
+TEST_F(TestRewriterBv, bv_mul_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_NEG;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_MUL,
+                               {d_nm.mk_node(Kind::BV_NEG, {d_a4}),
+                                d_nm.mk_node(Kind::BV_NEG, {d_b4})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_MUL, {d_a4, d_nm.mk_node(Kind::BV_NEG, {d_b4})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_MUL, {d_nm.mk_node(Kind::BV_NEG, {d_a4}), d_b4}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_MUL,
+                   {RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(
+                        d_rewriter, d_nm.mk_node(Kind::BV_NEG, {d_a4}))
+                        .first,
+                    RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(
+                        d_rewriter, d_nm.mk_node(Kind::BV_NEG, {d_b4}))
+                        .first}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_MUL,
+                   {d_a4,
+                    RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(
+                        d_rewriter, d_nm.mk_node(Kind::BV_NEG, {d_b4}))
+                        .first}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_MUL,
+                   {RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(
+                        d_rewriter, d_nm.mk_node(Kind::BV_NEG, {d_a4}))
+                        .first,
+                    d_b4}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_MUL, {d_a4, d_nm.mk_node(Kind::BV_NOT, {d_b4})}));
+}
+
+TEST_F(TestRewriterBv, bv_mul_ones)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_ONES;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_ones, d_a4}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_ones}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv1_one, d_a1}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_a1, d_bv1_one}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_ones, d_bv4_ones}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_one, d_a4}));
+}
+
 /* bvnot -------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_not_eval)

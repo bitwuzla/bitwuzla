@@ -387,10 +387,11 @@ Rewriter::rewrite_bv_mul(const Node& node)
     BZLA_APPLY_RW_RULE(BV_MUL_BV1);
     // LEVEL 3 rewrites /////////////////////////////////////////
     BZLA_APPLY_RW_RULE(BV_MUL_CONST_ADD);
+    BZLA_APPLY_RW_RULE(BV_MUL_ONES);
+    BZLA_APPLY_RW_RULE(BV_MUL_NEG);
     // rewrites for Noetzli benchmarks
     BZLA_APPLY_RW_RULE(BV_MUL_ITE);
     BZLA_APPLY_RW_RULE(BV_MUL_SHL);
-    // TODO
   }
 
 DONE:

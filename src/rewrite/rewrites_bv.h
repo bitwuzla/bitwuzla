@@ -168,7 +168,13 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_MUL_SHL>::_apply(Rewriter& rewriter,
                                                       const Node& node);
 // neg_mul
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_NEG>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 // ones_mul
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_ONES>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 
 /* bvnot -------------------------------------------------------------------- */
 
