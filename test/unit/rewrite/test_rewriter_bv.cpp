@@ -1101,6 +1101,26 @@ TEST_F(TestRewriterBv, bv_urem_special_const)
   }
 }
 
+TEST_F(TestRewriterBv, bv_urem_bv1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UREM_BV1;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a1, d_a1}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a1, d_b1}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a4, d_b4}));
+}
+
+TEST_F(TestRewriterBv, bv_urem_zero)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UREM_ZERO;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a1, d_a1}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a4, d_a4}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a4, d_b4}));
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_nand_elim) { test_elim_rule_bv(Kind::BV_NAND); }

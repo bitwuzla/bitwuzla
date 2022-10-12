@@ -220,6 +220,8 @@ enum class RewriteRuleKind
   //// bvurem
   BV_UREM_EVAL,
   BV_UREM_SPECIAL_CONST,
+  BV_UREM_BV1,
+  BV_UREM_ZERO,
 
   //// Elimination rules
   BV_NAND_ELIM,

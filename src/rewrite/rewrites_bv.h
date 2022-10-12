@@ -285,7 +285,13 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_UREM_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 // bool_urem
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UREM_BV1>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // zero_urem
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UREM_ZERO>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 
 /* --- Elimination Rules ---------------------------------------------------- */
 

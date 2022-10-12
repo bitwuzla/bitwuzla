@@ -1342,6 +1342,40 @@ RewriteRule<RewriteRuleKind::BV_UREM_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/**
+ * match:  (bvurem a b) with a and b of bit-width 1
+ * result: (bvand a (bvnot (b))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UREM_BV1>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].type().bv_size() != 1) return node;
+  return rewriter.mk_node(Kind::BV_AND,
+                          {node[0], rewriter.mk_node(Kind::BV_NOT, {node[1]})});
+}
+
+/**
+ * match:  (bvurem a a)
+ * result: (_ bv0 N)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UREM_ZERO>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0] == node[1])
+  {
+    return NodeManager::get().mk_value(
+        BitVector::mk_zero(node.type().bv_size()));
+  }
+  return node;
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>

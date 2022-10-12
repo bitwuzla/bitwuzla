@@ -513,7 +513,8 @@ Rewriter::rewrite_bv_urem(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_UREM_EVAL);
     BZLA_APPLY_RW_RULE(BV_UREM_SPECIAL_CONST);
-    // TODO
+    BZLA_APPLY_RW_RULE(BV_UREM_ZERO);
+    BZLA_APPLY_RW_RULE(BV_UREM_BV1);
   }
 
 DONE:
