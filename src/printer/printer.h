@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "node/node.h"
+#include "node/unordered_node_ref_map.h"
 
 namespace bzla {
 
@@ -17,15 +18,11 @@ class Printer
  private:
   static void print(std::ostream& os,
                     const Node& node,
-                    std::unordered_map<std::reference_wrapper<const Node>,
-                                       std::string,
-                                       std::hash<Node>>& let_map);
+                    node::unordered_node_ref_map<std::string>& let_map);
 
   static void letify(std::ostream& os,
                      const Node& node,
-                     std::unordered_map<std::reference_wrapper<const Node>,
-                                        std::string,
-                                        std::hash<Node>>& let_map);
+                     node::unordered_node_ref_map<std::string>& let_map);
 
   static void print_symbol(std::ostream& os, const Node& node);
 };

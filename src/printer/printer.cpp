@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "bv/bitvector.h"
+#include "node/node_ref_vector.h"
+#include "node/unordered_node_ref_map.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
@@ -13,17 +15,12 @@ namespace bzla {
 
 using namespace node;
 
-using NodeRefVector = std::vector<std::reference_wrapper<const Node>>;
-template <class T>
-using NodeRefMap =
-    std::unordered_map<std::reference_wrapper<const Node>, T, std::hash<Node>>;
-
 /* --- Printer public ------------------------------------------------------- */
 
 void
 Printer::print(std::ostream& os, const Node& node)
 {
-  NodeRefMap<std::string> let_map;
+  unordered_node_ref_map<std::string> let_map;
   letify(os, node, let_map);
 }
 
@@ -66,10 +63,10 @@ Printer::print(std::ostream& os, const Type& type)
 void
 Printer::print(std::ostream& os,
                const Node& node,
-               NodeRefMap<std::string>& let_map)
+               node::unordered_node_ref_map<std::string>& let_map)
 {
-  NodeRefVector visit{node};
-  NodeRefMap<bool> cache;
+  node::node_ref_vector visit{node};
+  node::unordered_node_ref_map<bool> cache;
   bool expect_space = false;
   do
   {
@@ -307,14 +304,14 @@ Printer::print_symbol(std::ostream& os, const Node& node)
 void
 Printer::letify(std::ostream& os,
                 const Node& node,
-                NodeRefMap<std::string>& let_map)
+                node::unordered_node_ref_map<std::string>& let_map)
 {
-  NodeRefVector visit{node}, lets;
-  NodeRefMap<bool> cache;
-  NodeRefMap<uint64_t> refs;
+  node::node_ref_vector visit{node}, lets;
+  node::unordered_node_ref_map<bool> cache;
+  node::unordered_node_ref_map<uint64_t> refs;
 
   // Find nodes that need to be letified (i.e., referenced more than once)
-  NodeRefVector binders;
+  node::node_ref_vector binders;
   do
   {
     const Node& cur = visit.back();

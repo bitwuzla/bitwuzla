@@ -1,6 +1,7 @@
 #include "rewrite/rewriter.h"
 
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
 #include "rewrite/rewrites_bool.h"
 #include "rewrite/rewrites_bv.h"
 #include "rewrite/rewrites_fp.h"
@@ -33,7 +34,7 @@ const Node&
 Rewriter::rewrite(const Node& node)
 {
   NodeManager& nm = NodeManager::get();
-  std::vector<std::reference_wrapper<const Node>> visit{node};
+  node::node_ref_vector visit{node};
   do
   {
     const Node& cur = visit.back();

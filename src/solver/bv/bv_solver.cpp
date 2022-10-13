@@ -2,6 +2,8 @@
 
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
+#include "node/unordered_node_ref_map.h"
 #include "sat/cadical.h"
 #include "solving_context.h"
 
@@ -86,12 +88,6 @@ BvSolver::check()
   return d_sat_state;
 }
 
-// TODO: move typedefs
-using NodeRefVector = std::vector<std::reference_wrapper<const Node>>;
-template <class T>
-using NodeRefMap =
-    std::unordered_map<std::reference_wrapper<const Node>, T, std::hash<Node>>;
-
 Node
 BvSolver::value(const Node& term)
 {
@@ -99,8 +95,8 @@ BvSolver::value(const Node& term)
   assert(term.type().is_bool() || term.type().is_bv());
 
   NodeManager& nm = NodeManager::get();
-  NodeRefVector visit{term};
-  NodeRefMap<bool> cache;
+  node_ref_vector visit{term};
+  unordered_node_ref_map<bool> cache;
 
   do
   {
@@ -361,7 +357,7 @@ BvSolver::bitblast(const Node& t)
 {
   using namespace node;
 
-  std::vector<std::reference_wrapper<const Node>> visit{t};
+  node_ref_vector visit{t};
   do
   {
     const Node& cur = visit.back();

@@ -1,18 +1,17 @@
 #include "preprocess/pass/elim_lambda.h"
 
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
+#include "node/unordered_node_ref_map.h"
 
 namespace bzla::preprocess::pass {
 
 using namespace node;
 
-using ConstNodeRef = std::reference_wrapper<const Node>;
-
 namespace {
 
 Node
-reduce(const Node& node,
-       const std::unordered_map<ConstNodeRef, Node, std::hash<Node>>& map)
+reduce(const Node& node, const node::unordered_node_ref_map<Node>& map)
 {
   assert(node.kind() == Kind::APPLY);
   assert(node[0].kind() == Kind::LAMBDA);
@@ -29,8 +28,8 @@ reduce(const Node& node,
   assert(body.kind() != Kind::LAMBDA);
 
   NodeManager& nm = NodeManager::get();
-  std::unordered_map<ConstNodeRef, Node, std::hash<Node>> cache;
-  std::vector<ConstNodeRef> visit{body};
+  node::unordered_node_ref_map<Node> cache;
+  node::node_ref_vector visit{body};
   do
   {
     const Node& cur = visit.back();
@@ -89,8 +88,8 @@ reduce(const Node& node,
 void
 PassElimLambda::apply()
 {
-  std::vector<ConstNodeRef> visit;
-  std::unordered_map<ConstNodeRef, Node, std::hash<Node>> cache;
+  node::node_ref_vector visit;
+  node::unordered_node_ref_map<Node> cache;
   NodeManager& nm = NodeManager::get();
 
   while (!d_assertions.empty())
