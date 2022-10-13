@@ -9,6 +9,9 @@ using namespace node;
 
 /* fpabs -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_ABS_EVAL>::_apply(Rewriter& rewriter,
@@ -44,6 +47,9 @@ RewriteRule<RewriteRuleKind::FP_ABS_ABS_NEG>::_apply(Rewriter& rewriter,
 
 /* fpadd -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when all operands are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_ADD_EVAL>::_apply(Rewriter& rewriter,
@@ -65,6 +71,9 @@ RewriteRule<RewriteRuleKind::FP_ADD_EVAL>::_apply(Rewriter& rewriter,
 
 /* fpdiv -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when all operands are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_DIV_EVAL>::_apply(Rewriter& rewriter,
@@ -86,6 +95,9 @@ RewriteRule<RewriteRuleKind::FP_DIV_EVAL>::_apply(Rewriter& rewriter,
 
 /* fpisinf ------------------------------------------------------------------ */
 
+/**
+ * Constant folding, matches when operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_IS_INF_EVAL>::_apply(Rewriter& rewriter,
@@ -121,6 +133,9 @@ RewriteRule<RewriteRuleKind::FP_IS_INF_ABS_NEG>::_apply(Rewriter& rewriter,
 
 /* fpisnan ------------------------------------------------------------------ */
 
+/**
+ * Constant folding, matches when operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_IS_NAN_EVAL>::_apply(Rewriter& rewriter,
@@ -156,6 +171,9 @@ RewriteRule<RewriteRuleKind::FP_IS_NAN_ABS_NEG>::_apply(Rewriter& rewriter,
 
 /* fpisneg ------------------------------------------------------------------ */
 
+/**
+ * Constant folding, matches when operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_IS_NEG_EVAL>::_apply(Rewriter& rewriter,
@@ -172,6 +190,9 @@ RewriteRule<RewriteRuleKind::FP_IS_NEG_EVAL>::_apply(Rewriter& rewriter,
 
 /* fpisnorm ----------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_IS_NORM_EVAL>::_apply(Rewriter& rewriter,
@@ -207,6 +228,9 @@ RewriteRule<RewriteRuleKind::FP_IS_NORM_ABS_NEG>::_apply(Rewriter& rewriter,
 
 /* fpispos ------------------------------------------------------------------ */
 
+/**
+ * Constant folding, matches when operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_IS_POS_EVAL>::_apply(Rewriter& rewriter,
@@ -223,6 +247,9 @@ RewriteRule<RewriteRuleKind::FP_IS_POS_EVAL>::_apply(Rewriter& rewriter,
 
 /* fpissubnorm -------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_IS_SUBNORM_EVAL>::_apply(Rewriter& rewriter,
@@ -258,6 +285,9 @@ RewriteRule<RewriteRuleKind::FP_IS_SUBNORM_ABS_NEG>::_apply(Rewriter& rewriter,
 
 /* fpiszero ----------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_IS_ZERO_EVAL>::_apply(Rewriter& rewriter,
@@ -293,6 +323,9 @@ RewriteRule<RewriteRuleKind::FP_IS_ZERO_ABS_NEG>::_apply(Rewriter& rewriter,
 
 /* fple --------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand all operands are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_LE_EVAL>::_apply(Rewriter& rewriter,
@@ -325,6 +358,9 @@ RewriteRule<RewriteRuleKind::FP_LE_EQ>::_apply(Rewriter& rewriter,
 
 /* fplt --------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand all operands are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_LT_EVAL>::_apply(Rewriter& rewriter,
@@ -391,6 +427,9 @@ RewriteRule<RewriteRuleKind::FP_MAX_EQ>::_apply(Rewriter& rewriter,
 
 /* fpmul -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand all operands are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_MUL_EVAL>::_apply(Rewriter& rewriter,
@@ -412,6 +451,9 @@ RewriteRule<RewriteRuleKind::FP_MUL_EVAL>::_apply(Rewriter& rewriter,
 
 /* fpneg -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_NEG_EVAL>::_apply(Rewriter& rewriter,
@@ -443,6 +485,9 @@ RewriteRule<RewriteRuleKind::FP_NEG_NEG>::_apply(Rewriter& rewriter,
 
 /* fprem -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand all operands are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_REM_EVAL>::_apply(Rewriter& rewriter,
@@ -507,6 +552,9 @@ RewriteRule<RewriteRuleKind::FP_REM_NEG>::_apply(Rewriter& rewriter,
 
 /* fprti -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand all operands are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_RTI_EVAL>::_apply(Rewriter& rewriter,
@@ -524,6 +572,9 @@ RewriteRule<RewriteRuleKind::FP_RTI_EVAL>::_apply(Rewriter& rewriter,
 
 /* fpsqrt ------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand all operands are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_SQRT_EVAL>::_apply(Rewriter& rewriter,
@@ -541,6 +592,9 @@ RewriteRule<RewriteRuleKind::FP_SQRT_EVAL>::_apply(Rewriter& rewriter,
 
 /* to_fp: from_bv ----------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_BV_EVAL>::_apply(Rewriter& rewriter,
@@ -559,6 +613,9 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_BV_EVAL>::_apply(Rewriter& rewriter,
 
 /* to_fp: from_fp ----------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_FP_EVAL>::_apply(Rewriter& rewriter,
@@ -580,6 +637,9 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_FP_EVAL>::_apply(Rewriter& rewriter,
 
 /* to_fp: from_sbv ---------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL>::_apply(Rewriter& rewriter,
@@ -602,6 +662,9 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL>::_apply(Rewriter& rewriter,
 
 /* to_fp: from_ubv ---------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when operand operand is a value.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL>::_apply(Rewriter& rewriter,
