@@ -2,7 +2,12 @@
 
 #include <cassert>
 
+#include "node/node_ref_vector.h"
+#include "node/unordered_node_ref_set.h"
+
 namespace bzla {
+
+using namespace node;
 
 /* --- SolvingContext public ----------------------------------------------- */
 
@@ -26,7 +31,28 @@ void
 SolvingContext::assert_formula(const Node& formula)
 {
   assert(formula.type().is_bool());
-  d_assertions.push_back(formula);
+  node_ref_vector visit{formula};
+  unordered_node_ref_set cache;
+
+  // Flatten AND
+  // TODO: Requires tracking for unsat cores
+  do
+  {
+    const Node& cur = visit.back();
+    visit.pop_back();
+    auto [it, inserted] = cache.insert(cur);
+    if (inserted)
+    {
+      if (cur.kind() == Kind::AND)
+      {
+        visit.insert(visit.end(), cur.rbegin(), cur.rend());
+      }
+      else
+      {
+        d_assertions.push_back(cur);
+      }
+    }
+  } while (!visit.empty());
 }
 
 Node
