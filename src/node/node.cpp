@@ -220,6 +220,18 @@ Node::end() const
   return nullptr;
 }
 
+Node::reverse_iterator
+Node::rbegin() const
+{
+  return reverse_iterator(end());
+}
+
+Node::reverse_iterator
+Node::rend() const
+{
+  return reverse_iterator(begin());
+}
+
 /* --- Node private -------------------------------------------------------- */
 
 Node::Node(node::NodeData* data) : d_data(data)

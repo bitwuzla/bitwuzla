@@ -56,6 +56,38 @@ TEST_F(TestNode, node_is_value)
           .is_value());
 }
 
+TEST_F(TestNode, rbegin_rend)
+{
+  NodeManager& nm = NodeManager::get();
+  Type bool_type  = nm.mk_bool_type();
+  Node a          = nm.mk_const(bool_type, "a");
+  Node b          = nm.mk_const(bool_type, "b");
+  Node c          = nm.mk_const(bool_type, "c");
+  Node d          = nm.mk_const(bool_type, "d");
+
+  std::vector<Node> children = {a, b};
+  Node a_and_b               = nm.mk_node(Kind::AND, children);
+  auto itv                   = children.rbegin();
+  auto itn                   = a_and_b.rbegin();
+  for (; itv != children.rend(); ++itv, ++itn)
+  {
+    std::cout << *itv << " == " << *itn << std::endl;
+    ASSERT_EQ(*itv, *itn);
+  }
+
+  Type fun_type =
+      nm.mk_fun_type({bool_type, bool_type, bool_type, bool_type, bool_type});
+  Node fun                   = nm.mk_const(fun_type);
+  std::vector<Node> expected = {fun, a, b, c, d};
+  Node app                   = nm.mk_node(Kind::APPLY, expected);
+  itv                        = expected.rbegin();
+  itn                        = app.rbegin();
+  for (; itv != expected.rend(); ++itv, ++itn)
+  {
+    ASSERT_EQ(*itv, *itn);
+  }
+}
+
 TEST_F(TestNode, operator_out)
 {
   NodeManager& nm = NodeManager::get();

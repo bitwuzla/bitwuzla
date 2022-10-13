@@ -32,6 +32,7 @@ class Node
 
  public:
   using iterator = const Node*;
+  using reverse_iterator = std::reverse_iterator<const Node*>;
 
   Node() = default;
   ~Node();
@@ -133,6 +134,16 @@ class Node
    * @return An iterator to the end of the children list of this node.
    */
   iterator end() const;
+
+  /**
+   * @return Beginning of the reverse iterator.
+   */
+  reverse_iterator rbegin() const;
+
+  /**
+   * @return End of the reverse iterator.
+   */
+  reverse_iterator rend() const;
 
  private:
   Node(node::NodeData* data);
