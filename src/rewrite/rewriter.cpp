@@ -447,7 +447,9 @@ Rewriter::rewrite_bv_shr(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_SHR_EVAL);
     BZLA_APPLY_RW_RULE(BV_SHR_SPECIAL_CONST);
-    // TODO
+    BZLA_APPLY_RW_RULE(BV_SHR_CONST);
+    BZLA_APPLY_RW_RULE(BV_SHR_SAME);
+    BZLA_APPLY_RW_RULE(BV_SHR_NOT);
   }
 
 DONE:

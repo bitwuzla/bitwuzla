@@ -938,6 +938,54 @@ TEST_F(TestRewriterBv, bv_shr_special_const)
   }
 }
 
+TEST_F(TestRewriterBv, bv_shr_const)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SHR_CONST;
+  Type bv64_type                 = d_nm.mk_bv_type(64);
+  Node a64                       = d_nm.mk_const(bv64_type);
+  Type bv65_type                 = d_nm.mk_bv_type(65);
+  Node a65                       = d_nm.mk_const(bv65_type);
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_SHR, {d_a4, d_nm.mk_value(BitVector(4, "1111"))}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_SHR, {d_a4, d_nm.mk_value(BitVector(4, "0100"))}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_SHR, {d_a4, d_nm.mk_value(BitVector(4, "0011"))}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_SHR, {d_a4, d_nm.mk_value(BitVector(4, "0011"))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_SHR, {a64, d_nm.mk_value(BitVector::from_ui(64, UINT64_MAX))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_SHR, {a64, d_nm.mk_value(BitVector::from_ui(64, 244))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_SHR, {a64, d_nm.mk_value(BitVector::from_ui(64, 24))}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_SHR, {a65, d_nm.mk_value(BitVector::from_ui(65, 24))}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_SHR, {d_a4, d_b4}));
+}
+
+TEST_F(TestRewriterBv, bv_shr_same)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SHR_SAME;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_SHR, {d_a4, d_a4}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_SHR, {d_a1, d_a1}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_SHR, {d_a4, d_b4}));
+}
+
+TEST_F(TestRewriterBv, bv_shr_not)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SHR_NOT;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_SHR, {d_nm.mk_node(Kind::BV_NOT, {d_a4}), d_a4}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_SHR, {d_a4, d_a4}));
+}
+
 /* bvslt -------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_slt_eval)

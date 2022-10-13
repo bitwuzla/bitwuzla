@@ -207,6 +207,9 @@ enum class RewriteRuleKind
   //// bvlshr
   BV_SHR_EVAL,
   BV_SHR_SPECIAL_CONST,
+  BV_SHR_CONST,
+  BV_SHR_SAME,
+  BV_SHR_NOT,
 
   //// bvslt
   BV_SLT_EVAL,

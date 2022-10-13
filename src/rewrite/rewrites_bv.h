@@ -221,8 +221,17 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_SHR_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 // const_srl
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHR_CONST>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 // same_srl
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHR_SAME>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // not_same_srl
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHR_NOT>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 
 /* bvslt -------------------------------------------------------------------- */
 

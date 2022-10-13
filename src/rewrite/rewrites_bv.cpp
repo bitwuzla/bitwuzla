@@ -1118,6 +1118,79 @@ RewriteRule<RewriteRuleKind::BV_SHR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/**
+ * match:  (bvshr a (_ bvX N)) with X >= N
+ * result: (_ bv0 N)
+ *
+ * match:  (bvshr a (_ bvX N)) with N <= 64
+ * result: (bvconcat (_ bv0 X) ((_ extract (N - 1) X) a))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SHR_CONST>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[1].is_value())
+  {
+    const BitVector& shift = node[1].value<BitVector>();
+    uint64_t size          = shift.size();
+    BitVector bv_size      = BitVector::from_ui(size, size);
+    if (shift.compare(bv_size) >= 0)
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(size));
+    }
+    if (size <= 64)
+    {
+      uint64_t uishift = shift.to_uint64();
+      return rewriter.mk_node(
+          Kind::BV_CONCAT,
+          {NodeManager::get().mk_value(BitVector::mk_zero(uishift)),
+           rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, uishift})});
+    }
+  }
+  return node;
+}
+
+/**
+ * match:  (bvshr a a)
+ * result: (_ bv0 N)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SHR_SAME>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0] == node[1])
+  {
+    return NodeManager::get().mk_value(
+        BitVector::mk_zero(node.type().bv_size()));
+  }
+  return node;
+}
+
+/**
+ * match:  (bvshr (bvnot a) a)
+ * result: (bvshr (bvnot (_ bv0 N)) a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SHR_NOT>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].kind() == Kind::BV_NOT && node[0][0] == node[1])
+  {
+    return rewriter.mk_node(
+        Kind::BV_SHR,
+        {NodeManager::get().mk_value(BitVector::mk_ones(node.type().bv_size())),
+         node[1]});
+  }
+  return node;
+}
+
 /* bvslt -------------------------------------------------------------------- */
 
 /**
