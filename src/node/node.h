@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 
 #include "node/node_kind.h"
@@ -139,6 +140,8 @@ class Node
   /** Node payload. */
   node::NodeData* d_data = nullptr;
 };
+
+using ConstNodeRef = std::reference_wrapper<const Node>;
 
 /** Syntactical equality over two nodes. */
 bool operator==(const Node& a, const Node& b);
