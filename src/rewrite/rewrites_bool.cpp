@@ -221,11 +221,7 @@ Node
 RewriteRule<RewriteRuleKind::OR_ELIM>::_apply(Rewriter& rewriter,
                                               const Node& node)
 {
-  return rewriter.mk_node(
-      Kind::NOT,
-      {rewriter.mk_node(Kind::AND,
-                        {rewriter.mk_node(Kind::NOT, {node[0]}),
-                         rewriter.mk_node(Kind::NOT, {node[1]})})});
+  return rewriter.invert_node(rewriter.mk_node(Kind::AND, {node[0], node[1]}));
 }
 
 template <>
@@ -236,8 +232,7 @@ RewriteRule<RewriteRuleKind::XOR_ELIM>::_apply(Rewriter& rewriter,
   return rewriter.mk_node(
       Kind::AND,
       {rewriter.mk_node(Kind::OR, {node[0], node[1]}),
-       rewriter.mk_node(Kind::NOT,
-                        {rewriter.mk_node(Kind::AND, {node[0], node[1]})})});
+       rewriter.invert_node(rewriter.mk_node(Kind::AND, {node[0], node[1]}))});
 }
 
 /* -------------------------------------------------------------------------- */

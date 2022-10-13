@@ -1638,8 +1638,8 @@ RewriteRule<RewriteRuleKind::BV_SLT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     if (value0.is_min_signed())
     {
       // min_signed < node[1]  --->  node[1] != min_signed
-      return rewriter.mk_node(
-          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+      return rewriter.invert_node(
+          rewriter.mk_node(Kind::EQUAL, {node[0], node[1]}));
     }
   }
   else if (!node[0].is_value() && node[1].is_value())
@@ -1648,8 +1648,8 @@ RewriteRule<RewriteRuleKind::BV_SLT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     if (value1.is_max_signed())
     {
       // node[0] < max_signed --->  node[0] != node[1]
-      return rewriter.mk_node(
-          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+      return rewriter.invert_node(
+          rewriter.mk_node(Kind::EQUAL, {node[0], node[1]}));
     }
     if (value1.is_min_signed())
     {
@@ -1934,8 +1934,8 @@ RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     const BitVector& value0 = node[0].value<BitVector>();
     if (value0.is_zero())
     {
-      return rewriter.mk_node(
-          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+      return rewriter.invert_node(
+          rewriter.mk_node(Kind::EQUAL, {node[0], node[1]}));
     }
     if (value0.is_ones())
     {
@@ -1958,8 +1958,8 @@ RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     }
     if (value1.is_ones())
     {
-      return rewriter.mk_node(
-          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+      return rewriter.invert_node(
+          rewriter.mk_node(Kind::EQUAL, {node[0], node[1]}));
     }
   }
   return node;
@@ -2477,8 +2477,8 @@ Node
 RewriteRule<RewriteRuleKind::BV_SGE_ELIM>::_apply(Rewriter& rewriter,
                                                   const Node& node)
 {
-  return rewriter.mk_node(Kind::NOT,
-                          {rewriter.mk_node(Kind::BV_SLT, {node[0], node[1]})});
+  return rewriter.invert_node(
+      rewriter.mk_node(Kind::BV_SLT, {node[0], node[1]}));
 }
 
 template <>
@@ -2521,8 +2521,8 @@ Node
 RewriteRule<RewriteRuleKind::BV_SLE_ELIM>::_apply(Rewriter& rewriter,
                                                   const Node& node)
 {
-  return rewriter.mk_node(Kind::NOT,
-                          {rewriter.mk_node(Kind::BV_SLT, {node[1], node[0]})});
+  return rewriter.invert_node(
+      rewriter.mk_node(Kind::BV_SLT, {node[1], node[0]}));
 }
 
 template <>
@@ -2772,8 +2772,8 @@ Node
 RewriteRule<RewriteRuleKind::BV_UGE_ELIM>::_apply(Rewriter& rewriter,
                                                   const Node& node)
 {
-  return rewriter.mk_node(Kind::NOT,
-                          {rewriter.mk_node(Kind::BV_ULT, {node[0], node[1]})});
+  return rewriter.invert_node(
+      rewriter.mk_node(Kind::BV_ULT, {node[0], node[1]}));
 }
 
 template <>
@@ -2789,8 +2789,8 @@ Node
 RewriteRule<RewriteRuleKind::BV_ULE_ELIM>::_apply(Rewriter& rewriter,
                                                   const Node& node)
 {
-  return rewriter.mk_node(Kind::NOT,
-                          {rewriter.mk_node(Kind::BV_ULT, {node[1], node[0]})});
+  return rewriter.invert_node(
+      rewriter.mk_node(Kind::BV_ULT, {node[1], node[0]}));
 }
 
 template <>
