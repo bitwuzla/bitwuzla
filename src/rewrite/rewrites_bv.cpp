@@ -131,8 +131,8 @@ RewriteRule<RewriteRuleKind::BV_ADD_BV1>::_apply(Rewriter& rewriter,
  */
 template <>
 Node
-RewriteRule<RewriteRuleKind::BV_ADD_MUL_TWO>::_apply(Rewriter& rewriter,
-                                                     const Node& node)
+RewriteRule<RewriteRuleKind::BV_ADD_SAME>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
 {
   assert(node.num_children() == 2);
   if (node[0] != node[1]) return node;
@@ -1306,8 +1306,8 @@ RewriteRule<RewriteRuleKind::BV_UDIV_POW2>::_apply(Rewriter& rewriter,
  */
 template <>
 Node
-RewriteRule<RewriteRuleKind::BV_UDIV_ONE>::_apply(Rewriter& rewriter,
-                                                  const Node& node)
+RewriteRule<RewriteRuleKind::BV_UDIV_SAME>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
 {
   assert(node.num_children() == 2);
   if (node[0] == node[1])
@@ -1482,7 +1482,7 @@ RewriteRule<RewriteRuleKind::BV_UREM_BV1>::_apply(Rewriter& rewriter,
  */
 template <>
 Node
-RewriteRule<RewriteRuleKind::BV_UREM_ZERO>::_apply(Rewriter& rewriter,
+RewriteRule<RewriteRuleKind::BV_UREM_SAME>::_apply(Rewriter& rewriter,
                                                    const Node& node)
 {
   (void) rewriter;

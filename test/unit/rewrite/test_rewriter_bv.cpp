@@ -113,9 +113,9 @@ TEST_F(TestRewriterBv, bv_add_bv1)
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4}));
 }
 
-TEST_F(TestRewriterBv, bv_add_mul_two)
+TEST_F(TestRewriterBv, bv_add_same)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_MUL_TWO;
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_SAME;
   //// applies
   test_rule<kind>(d_nm.mk_node(Kind::BV_ADD, {d_a4, d_a4}));
   test_rule<kind>(d_nm.mk_node(Kind::BV_ADD, {d_a1, d_a1}));
@@ -1091,9 +1091,9 @@ TEST_F(TestRewriterBv, bv_udiv_bv1)
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4}));
 }
 
-TEST_F(TestRewriterBv, bv_udiv_one)
+TEST_F(TestRewriterBv, bv_udiv_same)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UDIV_ONE;
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UDIV_SAME;
   //// applies
   test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_a4}));
   test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a1, d_a1}));
@@ -1225,9 +1225,9 @@ TEST_F(TestRewriterBv, bv_urem_bv1)
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a4, d_b4}));
 }
 
-TEST_F(TestRewriterBv, bv_urem_zero)
+TEST_F(TestRewriterBv, bv_urem_same)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UREM_ZERO;
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UREM_SAME;
   //// applies
   test_rule<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a1, d_a1}));
   test_rule<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a4, d_a4}));

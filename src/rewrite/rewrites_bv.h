@@ -22,8 +22,8 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_BV1>::_apply(Rewriter& rewriter,
                                                       const Node& node);
 // mult_add
 template <>
-Node RewriteRule<RewriteRuleKind::BV_ADD_MUL_TWO>::_apply(Rewriter& rewriter,
-                                                          const Node& node);
+Node RewriteRule<RewriteRuleKind::BV_ADD_SAME>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // not_add
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_NOT>::_apply(Rewriter& rewriter,
@@ -261,8 +261,8 @@ Node RewriteRule<RewriteRuleKind::BV_UDIV_POW2>::_apply(Rewriter& rewriter,
                                                         const Node& node);
 // one_udiv
 template <>
-Node RewriteRule<RewriteRuleKind::BV_UDIV_ONE>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
+Node RewriteRule<RewriteRuleKind::BV_UDIV_SAME>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 // bcond_udiv (TODO tbd)
 
 /* bvult -------------------------------------------------------------------- */
@@ -299,7 +299,7 @@ Node RewriteRule<RewriteRuleKind::BV_UREM_BV1>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // zero_urem
 template <>
-Node RewriteRule<RewriteRuleKind::BV_UREM_ZERO>::_apply(Rewriter& rewriter,
+Node RewriteRule<RewriteRuleKind::BV_UREM_SAME>::_apply(Rewriter& rewriter,
                                                         const Node& node);
 
 /* bvxor -------------------------------------------------------------------- */

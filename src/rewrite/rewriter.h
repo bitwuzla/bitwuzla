@@ -158,7 +158,7 @@ enum class RewriteRuleKind
   BV_ADD_SPECIAL_CONST,
   BV_ADD_CONST,
   BV_ADD_BV1,
-  BV_ADD_MUL_TWO,
+  BV_ADD_SAME,
   BV_ADD_NOT,
   BV_ADD_NEG,
   BV_ADD_UREM,
@@ -216,7 +216,7 @@ enum class RewriteRuleKind
   BV_UDIV_EVAL,
   BV_UDIV_SPECIAL_CONST,
   BV_UDIV_BV1,
-  BV_UDIV_ONE,
+  BV_UDIV_SAME,
   BV_UDIV_POW2,
 
   //// bvult
@@ -227,7 +227,7 @@ enum class RewriteRuleKind
   BV_UREM_EVAL,
   BV_UREM_SPECIAL_CONST,
   BV_UREM_BV1,
-  BV_UREM_ZERO,
+  BV_UREM_SAME,
 
   //// bvxor
   BV_XOR_EVAL,
