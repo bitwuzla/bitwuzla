@@ -257,7 +257,6 @@ Node
 RewriteRule<RewriteRuleKind::BV_ADD_NEG>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
-  (void) rewriter;
   Node res = _rw_bv_add_neg(rewriter, node, 0);
   if (res == node)
   {
@@ -278,7 +277,6 @@ namespace {
 Node
 _rw_bv_add_urem(Rewriter& rewriter, const Node& node, size_t idx)
 {
-  (void) rewriter;
   size_t idx0      = idx;
   size_t idx1      = 1 - idx;
   const Node *udiv = nullptr, *b = nullptr;
@@ -360,7 +358,6 @@ namespace {
 Node
 _rw_bv_add_ite(Rewriter& rewriter, const Node& node, size_t idx)
 {
-  (void) rewriter;
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
   if (node[idx0].kind() == Kind::ITE
@@ -400,7 +397,6 @@ namespace {
 Node
 _rw_bv_add_shl(Rewriter& rewriter, const Node& node, size_t idx)
 {
-  (void) rewriter;
   assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
@@ -558,6 +554,95 @@ RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::_apply(Rewriter& rewriter,
   Node res = NodeManager::get().mk_value(
       node[0].value<BitVector>().bvconcat(node[1].value<BitVector>()));
   return res;
+}
+
+/**
+ * match:  (bvconcat (bvconcat a (_ bvX n)) (_ bvY m))
+ * result: (bvconcat a (_ bvZ n+m)) with bvZ = (bvconcat (_ bvX n) (_ bvY m))
+ *
+ * match:  (bvconcat (_ bvX m) (bvconcat (_ bvY n) a))
+ * result: (bvconcat (_ bvZ n+m) a) with bvZ = (bvconcat (_ bvX n) (_ bvY m))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_CONCAT_CONST>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].kind() == Kind::BV_CONCAT && node[0][1].is_value()
+      && node[1].is_value())
+  {
+    return rewriter.mk_node(
+        Kind::BV_CONCAT,
+        {node[0][0], rewriter.mk_node(Kind::BV_CONCAT, {node[0][1], node[1]})});
+  }
+  else if (node[1].kind() == Kind::BV_CONCAT && node[1][0].is_value()
+           && node[0].is_value())
+  {
+    return rewriter.mk_node(
+        Kind::BV_CONCAT,
+        {rewriter.mk_node(Kind::BV_CONCAT, {node[0], node[1][0]}), node[1][1]});
+  }
+  return node;
+}
+
+/**
+ * match:  (bvconcat ((_ extract h1 l1) a) ((_ extract h2 l2) a))
+ *         with l1 = h2 + 1
+ * result: ((_ extract h1 l2) a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_CONCAT_EXTRACT>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  assert(node.num_children() == 2);
+  bool inverted     = false;
+  const Node *node0 = &node[0], *node1 = &node[1];
+  if (node0->kind() == Kind::BV_NOT && node1->kind() == Kind::BV_NOT)
+  {
+    inverted = true;
+    node0    = &node[0][0];
+    node1    = &node[1][0];
+  }
+  if (node0->kind() == Kind::BV_EXTRACT && node1->kind() == Kind::BV_EXTRACT
+      && (*node0)[0] == (*node1)[0] && node0->index(1) == node1->index(0) + 1)
+  {
+    Node res = rewriter.mk_node(
+        Kind::BV_EXTRACT, {(*node0)[0]}, {node0->index(0), node1->index(1)});
+    return inverted ? rewriter.mk_node(Kind::BV_NOT, {res}) : res;
+  }
+  return node;
+}
+
+/**
+ * match:  (bvconcat (bvand a b) c)
+ * result: (bvand (bvconcat a c) (bvconcat b c))
+ *
+ * match:  (bvconcat a (bvand b c))
+ * result: (bvand (bvconcat a b) (bvconcat a c))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_CONCAT_AND>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].kind() == Kind::BV_AND)
+  {
+    return rewriter.mk_node(
+        Kind::BV_AND,
+        {rewriter.mk_node(Kind::BV_CONCAT, {node[0][0], node[1]}),
+         rewriter.mk_node(Kind::BV_CONCAT, {node[0][1], node[1]})});
+  }
+  else if (node[1].kind() == Kind::BV_AND)
+  {
+    return rewriter.mk_node(
+        Kind::BV_AND,
+        {rewriter.mk_node(Kind::BV_CONCAT, {node[0], node[1][0]}),
+         rewriter.mk_node(Kind::BV_CONCAT, {node[0], node[1][1]})});
+  }
+  return node;
 }
 
 /* bvmul -------------------------------------------------------------------- */
@@ -734,7 +819,6 @@ namespace {
 Node
 _rw_bv_mul_ite(Rewriter& rewriter, const Node& node, size_t idx)
 {
-  (void) rewriter;
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
   if (node[idx0].kind() == Kind::ITE

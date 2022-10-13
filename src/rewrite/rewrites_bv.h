@@ -109,13 +109,19 @@ Node RewriteRule<RewriteRuleKind::BV_ASHR_SPECIAL_CONST>::_apply(
 template <>
 Node RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::_apply(Rewriter& rewriter,
                                                           const Node& node);
-
-// special_const_lhs_binary_exp
-// special_const_rhs_binary_exp
 // const_concat
+template <>
+Node RewriteRule<RewriteRuleKind::BV_CONCAT_CONST>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
 // slice_concat
+template <>
+Node RewriteRule<RewriteRuleKind::BV_CONCAT_EXTRACT>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
 // and_lhs_concat
 // and_rhs_concat
+template <>
+Node RewriteRule<RewriteRuleKind::BV_CONCAT_AND>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
 
 /* bvextract ---------------------------------------------------------------- */
 

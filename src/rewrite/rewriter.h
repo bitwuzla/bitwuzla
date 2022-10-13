@@ -177,6 +177,11 @@ enum class RewriteRuleKind
 
   //// bvconcat
   BV_CONCAT_EVAL,
+  BV_CONCAT_CONST,
+  // Level 1
+  BV_CONCAT_EXTRACT,
+  // Level 3
+  BV_CONCAT_AND,
 
   //// bvmul
   BV_MUL_EVAL,

@@ -357,7 +357,11 @@ Rewriter::rewrite_bv_concat(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(BV_CONCAT_EVAL);
-    // TODO
+    BZLA_APPLY_RW_RULE(BV_CONCAT_CONST);
+    // LEVEL 1 rewrites /////////////////////////////////////////
+    BZLA_APPLY_RW_RULE(BV_CONCAT_EXTRACT);
+    // LEVEL 3 rewrites /////////////////////////////////////////
+    BZLA_APPLY_RW_RULE(BV_CONCAT_AND);
   }
 
 DONE:

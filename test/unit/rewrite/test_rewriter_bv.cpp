@@ -20,6 +20,7 @@ class TestRewriterBv : public TestRewriter
     TestRewriter::SetUp();
     d_a4 = d_nm.mk_const(d_bv4_type);
     d_b4 = d_nm.mk_const(d_bv4_type);
+    d_c4 = d_nm.mk_const(d_bv4_type);
     d_a1 = d_nm.mk_const(d_bv1_type);
     d_b1 = d_nm.mk_const(d_bv1_type);
   }
@@ -40,6 +41,7 @@ class TestRewriterBv : public TestRewriter
   Node d_b1;
   Node d_a4;
   Node d_b4;
+  Node d_c4;
 };
 
 /* bvadd -------------------------------------------------------------------- */
@@ -514,6 +516,90 @@ TEST_F(TestRewriterBv, bv_concat_eval)
       Kind::BV_CONCAT, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
 }
 
+TEST_F(TestRewriterBv, bv_concat_const)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_CONCAT_CONST;
+  Node a_val                     = d_nm.mk_value(BitVector::from_ui(4, 5));
+  Node b_val                     = d_nm.mk_value(BitVector::from_ui(4, 1));
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, a_val}), b_val}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT, {a_val, d_nm.mk_node(Kind::BV_CONCAT, {b_val, d_a4})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT, {d_nm.mk_node(Kind::BV_CONCAT, {a_val, d_a4}), b_val}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT, {a_val, d_nm.mk_node(Kind::BV_CONCAT, {d_a4, b_val})}));
+}
+
+TEST_F(TestRewriterBv, bv_concat_extract)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_CONCAT_EXTRACT;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3}),
+                    d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 0})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 2}),
+                    d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {1, 1})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 1}),
+                    d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {0, 0})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3})}),
+       d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 0})})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 2})}),
+       d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {1, 1})})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 1})}),
+       d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {0, 0})})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3}),
+                    d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {1, 0})}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3}),
+                    d_nm.mk_node(Kind::BV_EXTRACT, {d_b4}, {2, 0})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3}),
+       d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 0})})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3})}),
+       d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 0})}));
+}
+
+TEST_F(TestRewriterBv, bv_concat_and)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_CONCAT_AND;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT, {d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}), d_c4}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT, {d_c4, d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT, {d_nm.mk_node(Kind::BV_OR, {d_a4, d_b4}), d_c4}));
+}
 /* bvmul -------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_mul_eval)
