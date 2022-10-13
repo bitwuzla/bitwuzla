@@ -1264,6 +1264,101 @@ RewriteRule<RewriteRuleKind::BV_SLT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/**
+ * match:  (bvslt a a)
+ * result: false
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SLT_SAME>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0] == node[1])
+  {
+    return NodeManager::get().mk_value(false);
+  }
+  return node;
+}
+
+/**
+ * match:  (bvslt a b) with a and b of bit-width 1
+ * result: (bvand a (bvnot b))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SLT_BV1>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].type().bv_size() != 1) return node;
+  return rewriter.mk_node(Kind::BV_AND,
+                          {node[0], rewriter.mk_node(Kind::BV_NOT, {node[1]})});
+}
+
+/**
+ * match:  (bvslt (bvconcat b a) (bvconcat c a))
+ * result: (bvslt b c)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SLT_CONCAT>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].kind() == Kind::BV_CONCAT && node[1].kind() == Kind::BV_CONCAT
+      && node[0][1] == node[1][1])
+  {
+    return rewriter.mk_node(Kind::BV_SLT, {node[0][0], node[1][0]});
+  }
+  return node;
+}
+
+/**
+ * match:  (bvslt (ite x a b) (ite x c d))
+ *         where either a = c or b = d
+ * result: (ite x (bvslt a c) (bvslt b d))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SLT_ITE>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  assert(node.num_children() == 2);
+  bool inverted     = false;
+  const Node *node0 = &node[0], *node1 = &node[1];
+  if (node0->kind() == Kind::BV_NOT && node1->kind() == Kind::BV_NOT)
+  {
+    inverted = true;
+    node0    = &node[0][0];
+    node1    = &node[1][0];
+  }
+  if (node0->kind() == Kind::ITE && node1->kind() == Kind::ITE
+      && (*node0)[0] == (*node1)[0]
+      && ((*node0)[1] == (*node1)[1] || (*node0)[2] == (*node1)[2]))
+  {
+    if (inverted)
+    {
+      return rewriter.mk_node(
+          Kind::ITE,
+          {(*node0)[0],
+           rewriter.mk_node(Kind::BV_SLT,
+                            {rewriter.mk_node(Kind::BV_NOT, {(*node0)[1]}),
+                             rewriter.mk_node(Kind::BV_NOT, {(*node1)[1]})}),
+           rewriter.mk_node(Kind::BV_SLT,
+                            {rewriter.mk_node(Kind::BV_NOT, {(*node0)[2]}),
+                             rewriter.mk_node(Kind::BV_NOT, {(*node1)[2]})})});
+    }
+    return rewriter.mk_node(
+        Kind::ITE,
+        {(*node0)[0],
+         rewriter.mk_node(Kind::BV_SLT, {(*node0)[1], (*node1)[1]}),
+         rewriter.mk_node(Kind::BV_SLT, {(*node0)[2], (*node1)[2]})});
+  }
+  return node;
+}
+
 /* bvudiv ------------------------------------------------------------------- */
 
 /**
@@ -1470,6 +1565,24 @@ RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
       return rewriter.mk_node(
           Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
     }
+  }
+  return node;
+}
+
+/**
+ * match:  (bvult a a)
+ * result: false
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ULT_SAME>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0] == node[1])
+  {
+    return NodeManager::get().mk_value(false);
   }
   return node;
 }

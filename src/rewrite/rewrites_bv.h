@@ -245,9 +245,21 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_SLT_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 // false_lt
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SLT_SAME>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // bool_slt
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SLT_BV1>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 // concat_lower_slt
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SLT_CONCAT>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
 // bcond_slt
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SLT_ITE>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 
 /* bvudiv ------------------------------------------------------------------- */
 
@@ -286,6 +298,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 // false_lt
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ULT_SAME>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // bool_ult
 // concat_upper_ult
 // concat_lower_ult
