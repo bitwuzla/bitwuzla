@@ -204,6 +204,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_SHL_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 // const_sll
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHL_CONST>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 
 /* bvshr -------------------------------------------------------------------- */
 

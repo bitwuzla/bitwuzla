@@ -1030,6 +1030,41 @@ RewriteRule<RewriteRuleKind::BV_SHL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/**
+ * match:  (bvshl a (_ bvX N)) with X >= N
+ * result: (_ bv0 N)
+ *
+ * match:  (bvshl a (_ bvX N)) with N <= 64
+ * result: (bvconcat ((_ extract (N - X - 1) 0) a) (_ bv0 X))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SHL_CONST>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[1].is_value())
+  {
+    const BitVector& shift = node[1].value<BitVector>();
+    uint64_t size          = shift.size();
+    BitVector bv_size      = BitVector::from_ui(size, size);
+    if (shift.compare(bv_size) >= 0)
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(size));
+    }
+    if (size <= 64)
+    {
+      uint64_t uishift = shift.to_uint64();
+      return rewriter.mk_node(
+          Kind::BV_CONCAT,
+          {rewriter.mk_node(
+               Kind::BV_EXTRACT, {node[0]}, {size - uishift - 1, 0}),
+           NodeManager::get().mk_value(BitVector::mk_zero(uishift))});
+    }
+  }
+  return node;
+}
+
 /* bvshr -------------------------------------------------------------------- */
 
 /**
