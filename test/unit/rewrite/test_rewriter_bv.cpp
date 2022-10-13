@@ -1316,6 +1316,84 @@ TEST_F(TestRewriterBv, bv_ult_same)
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_ULT, {d_a4, d_b4}));
 }
 
+TEST_F(TestRewriterBv, bv_ult_bv1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ULT_BV1;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_a1, d_b1}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_ULT, {d_a4, d_b4}));
+}
+
+TEST_F(TestRewriterBv, bv_ult_concat)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ULT_CONCAT;
+  Node c4                        = d_nm.mk_const(d_bv4_type);
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ULT,
+                               {d_nm.mk_node(Kind::BV_CONCAT, {d_b4, d_a4}),
+                                d_nm.mk_node(Kind::BV_CONCAT, {c4, d_a4})}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ULT,
+                               {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4}),
+                                d_nm.mk_node(Kind::BV_CONCAT, {d_a4, c4})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ULT,
+                   {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4}),
+                    d_nm.mk_node(Kind::BV_CONCAT, {c4, d_a4})}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ULT,
+                   {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4}),
+                    d_nm.mk_const(d_nm.mk_bv_type(8))}));
+}
+
+TEST_F(TestRewriterBv, bv_ult_ite)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ULT_ITE;
+  Node cond                      = d_nm.mk_const(d_nm.mk_bool_type());
+  Node c4                        = d_nm.mk_const(d_bv4_type);
+  Node d4                        = d_nm.mk_const(d_bv4_type);
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ULT,
+                               {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_b4}),
+                                d_nm.mk_node(Kind::ITE, {cond, d_a4, d4})}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ULT,
+                               {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_b4}),
+                                d_nm.mk_node(Kind::ITE, {cond, d_c4, d_b4})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ULT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_b4})}),
+       d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, d_a4, d4})})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ULT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_b4})}),
+       d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, c4, d_b4})})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ULT,
+      {d_nm.mk_node(Kind::ITE,
+                    {d_nm.mk_const(d_nm.mk_bool_type()), d_a4, d_b4}),
+       d_nm.mk_node(Kind::ITE, {cond, d_a4, d4})}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ULT,
+                   {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_b4}),
+                    d_nm.mk_node(Kind::ITE, {cond, c4, d4})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ULT,
+      {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_b4}),
+       d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, d_a4, d4})})}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ULT,
+                   {d_nm.mk_node(Kind::BV_NOT,
+                                 {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_b4})}),
+                    d_nm.mk_node(Kind::ITE, {cond, c4, d_b4})}));
+}
+
 /* bvurem ------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_urem_eval)

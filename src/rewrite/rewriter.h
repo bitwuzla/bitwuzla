@@ -231,6 +231,10 @@ enum class RewriteRuleKind
   BV_ULT_EVAL,
   BV_ULT_SPECIAL_CONST,
   BV_ULT_SAME,
+  BV_ULT_BV1,
+  BV_ULT_ITE,
+  // Level 3
+  BV_ULT_CONCAT,
 
   //// bvurem
   BV_UREM_EVAL,

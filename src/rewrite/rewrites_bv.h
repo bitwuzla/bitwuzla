@@ -302,9 +302,18 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_ULT_SAME>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // bool_ult
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ULT_BV1>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 // concat_upper_ult
 // concat_lower_ult
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ULT_CONCAT>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
 // bcond_ult
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ULT_ITE>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 
 /* bvurem ------------------------------------------------------------------- */
 

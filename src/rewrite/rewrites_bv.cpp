@@ -1587,6 +1587,90 @@ RewriteRule<RewriteRuleKind::BV_ULT_SAME>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/**
+ * match:  (bvult a b) with a and b of bit-width 1
+ * result: (bvand (bvnot a) b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ULT_BV1>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].type().bv_size() != 1) return node;
+  return rewriter.mk_node(Kind::BV_AND,
+                          {rewriter.mk_node(Kind::BV_NOT, {node[0]}), node[1]});
+}
+
+/**
+ * match:  (bvult (bvconcat a b) (bvconcat a c))
+ *         (bvult (bvconcat b a) (bvconcat c a))
+ * result: (bvult b c)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ULT_CONCAT>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].kind() == Kind::BV_CONCAT && node[1].kind() == Kind::BV_CONCAT)
+  {
+    if (node[0][0] == node[1][0])
+    {
+      return rewriter.mk_node(Kind::BV_ULT, {node[0][1], node[1][1]});
+    }
+    if (node[0][1] == node[1][1])
+    {
+      return rewriter.mk_node(Kind::BV_ULT, {node[0][0], node[1][0]});
+    }
+  }
+  return node;
+}
+
+/**
+ * match:  (bvult (ite x a b) (ite x c d))
+ *         where either a = c or b = d
+ * result: (ite x (bvult a c) (bvult b d))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ULT_ITE>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  assert(node.num_children() == 2);
+  bool inverted     = false;
+  const Node *node0 = &node[0], *node1 = &node[1];
+  if (node0->kind() == Kind::BV_NOT && node1->kind() == Kind::BV_NOT)
+  {
+    inverted = true;
+    node0    = &node[0][0];
+    node1    = &node[1][0];
+  }
+  if (node0->kind() == Kind::ITE && node1->kind() == Kind::ITE
+      && (*node0)[0] == (*node1)[0]
+      && ((*node0)[1] == (*node1)[1] || (*node0)[2] == (*node1)[2]))
+  {
+    if (inverted)
+    {
+      return rewriter.mk_node(
+          Kind::ITE,
+          {(*node0)[0],
+           rewriter.mk_node(Kind::BV_ULT,
+                            {rewriter.mk_node(Kind::BV_NOT, {(*node0)[1]}),
+                             rewriter.mk_node(Kind::BV_NOT, {(*node1)[1]})}),
+           rewriter.mk_node(Kind::BV_ULT,
+                            {rewriter.mk_node(Kind::BV_NOT, {(*node0)[2]}),
+                             rewriter.mk_node(Kind::BV_NOT, {(*node1)[2]})})});
+    }
+    return rewriter.mk_node(
+        Kind::ITE,
+        {(*node0)[0],
+         rewriter.mk_node(Kind::BV_ULT, {(*node0)[1], (*node1)[1]}),
+         rewriter.mk_node(Kind::BV_ULT, {(*node0)[2], (*node1)[2]})});
+  }
+  return node;
+}
+
 /* bvudiv ------------------------------------------------------------------- */
 
 /**

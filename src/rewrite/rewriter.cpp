@@ -507,6 +507,10 @@ Rewriter::rewrite_bv_ult(const Node& node)
     BZLA_APPLY_RW_RULE(BV_ULT_EVAL);
     BZLA_APPLY_RW_RULE(BV_ULT_SPECIAL_CONST);
     BZLA_APPLY_RW_RULE(BV_ULT_SAME);
+    BZLA_APPLY_RW_RULE(BV_ULT_BV1);
+    BZLA_APPLY_RW_RULE(BV_ULT_ITE);
+    // LEVEL 3 rewrites /////////////////////////////////////////
+    BZLA_APPLY_RW_RULE(BV_ULT_CONCAT);
     // TODO
   }
 
