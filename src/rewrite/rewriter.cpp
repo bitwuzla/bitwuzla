@@ -371,11 +371,27 @@ DONE:
 Node
 Rewriter::rewrite_bv_extract(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
   if (d_enabled)
   {
-    // TODO
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_EVAL);
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_FULL);
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_EXTRACT);
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_FULL_LHS);
+    // LEVEL 0-2 rewrites ///////////////////////////////////////
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_FULL_RHS);
+    // LEVEL 3 rewrites /////////////////////////////////////////
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_LSH_RHS);
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT);
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_AND);
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_ITE);
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_ADD_MUL);
   }
-  return node;
+
+DONE:
+  return res;
 }
 
 Node

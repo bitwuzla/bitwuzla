@@ -125,17 +125,47 @@ Node RewriteRule<RewriteRuleKind::BV_CONCAT_AND>::_apply(Rewriter& rewriter,
 
 /* bvextract ---------------------------------------------------------------- */
 
-// full_slice
 // const_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_EVAL>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
+// full_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_FULL>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
 // slice_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_EXTRACT>::_apply(
+    Rewriter& rewriter, const Node& node);
 // concat_lower_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_RHS>::_apply(
+    Rewriter& rewriter, const Node& node);
 // concat_upper_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_LHS>::_apply(
+    Rewriter& rewriter, const Node& node);
 // concat_rec_upper_slice
 // concat_rec_lower_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_LSH_RHS>::_apply(
+    Rewriter& rewriter, const Node& node);
 // concat_rec_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
 // and_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_AND>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
 // bcond_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_ITE>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
 // zero_lower_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_ADD_MUL>::_apply(
+    Rewriter& rewriter, const Node& node);
 
 /* bvmul -------------------------------------------------------------------- */
 

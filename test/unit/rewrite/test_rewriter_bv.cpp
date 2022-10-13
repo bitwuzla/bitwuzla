@@ -600,6 +600,462 @@ TEST_F(TestRewriterBv, bv_concat_and)
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::BV_CONCAT, {d_nm.mk_node(Kind::BV_OR, {d_a4, d_b4}), d_c4}));
 }
+
+/* bvconcat ----------------------------------------------------------------- */
+
+TEST_F(TestRewriterBv, bv_extract_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_EVAL;
+  //// applies
+  Node bvextract0 = d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_value(BitVector(4, "1001"))}, {1, 0});
+  ASSERT_EQ(d_nm.mk_value(BitVector(2, "01")), d_rewriter.rewrite(bvextract0));
+  ASSERT_EQ(
+      d_nm.mk_value(BitVector(1, "0")),
+      d_rewriter.rewrite(d_nm.mk_node(Kind::BV_EXTRACT, {bvextract0}, {1, 1})));
+  // with empty cache
+  ASSERT_EQ(
+      d_nm.mk_value(BitVector(1, "0")),
+      Rewriter().rewrite(d_nm.mk_node(Kind::BV_EXTRACT, {bvextract0}, {1, 1})));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 0}));
+}
+
+TEST_F(TestRewriterBv, bv_extract_full)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_FULL;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 0}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 1}));
+}
+
+TEST_F(TestRewriterBv, bv_extract_extract)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_EXTRACT;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 1})},
+                               {1, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 1})})},
+      {1, 0}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 1}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_NOT, {d_a4})}, {3, 1}));
+}
+
+TEST_F(TestRewriterBv, bv_extract_concat_full_lhs)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_LHS;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {7, 4}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {7, 4}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {3, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {3, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {2, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {4, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {6, 4}));
+}
+
+TEST_F(TestRewriterBv, bv_extract_concat_full_rhs)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_RHS;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {3, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {3, 0}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {7, 4}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {7, 4}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {2, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {4, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {6, 4}));
+}
+
+TEST_F(TestRewriterBv, bv_extract_concat_lhs_rhs)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_CONCAT_LSH_RHS;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {3, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {3, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {1, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {1, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {7, 4}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {7, 4}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {7, 6}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {7, 6}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4})}, {2, 0}));
+}
+
+TEST_F(TestRewriterBv, bv_extract_concat)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_CONCAT;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {4, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {4, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {7, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {7, 0}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {7, 4}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {7, 4}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {7, 6}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})})},
+      {7, 6}));
+}
+
+TEST_F(TestRewriterBv, bv_extract_and)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_AND;
+  Node bvand                     = d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4});
+  Node bvextract                 = d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_const(d_nm.mk_bv_type(8))}, {3, 0});
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4})}, {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_AND, {d_a4, bvand})}, {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_AND, {bvand, d_b4})}, {2, 0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::BV_AND, {d_a4, d_bv4_one})},
+                               {2, 0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::BV_AND, {d_bv4_one, d_b4})},
+                               {2, 0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::BV_AND, {d_bv4_one, bvand})},
+                               {2, 0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::BV_AND, {bvand, d_bv4_one})},
+                               {2, 0}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::BV_AND, {bvextract, bvextract})},
+                   {2, 0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::BV_AND, {d_a4, bvextract})},
+                               {2, 0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::BV_AND, {bvextract, d_b4})},
+                               {2, 0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::BV_AND, {bvextract, bvand})},
+                               {2, 0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::BV_AND, {bvand, bvextract})},
+                               {2, 0}));
+
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_AND, {d_a4, bvand})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_AND, {bvand, d_b4})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_AND, {d_a4, d_bv4_one})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_AND, {d_bv4_one, d_b4})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_AND, {d_bv4_one, bvand})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_AND, {bvand, d_bv4_one})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_AND, {bvextract, bvextract})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_AND, {d_a4, bvextract})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_AND, {bvextract, d_b4})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_AND, {bvextract, bvand})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::BV_AND, {bvand, bvextract})})},
+      {2, 0}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_OR, {d_a4, d_b4})}, {2, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_OR, {d_a4, d_b4})})},
+      {2, 0}));
+}
+
+TEST_F(TestRewriterBv, bv_extract_ite)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_ITE;
+  Node cond                      = d_nm.mk_const(d_nm.mk_bool_type());
+  Node bvand                     = d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4});
+  Node bvextract                 = d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_const(d_nm.mk_bv_type(8))}, {3, 0});
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_b4})}, {2, 0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::ITE, {cond, d_a4, bvand})},
+                               {2, 0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_EXTRACT,
+                               {d_nm.mk_node(Kind::ITE, {cond, bvand, d_b4})},
+                               {2, 0}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_bv4_one})},
+                   {2, 0}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::ITE, {cond, d_bv4_one, d_b4})},
+                   {2, 0}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::ITE, {cond, d_bv4_one, bvand})},
+                   {2, 0}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::ITE, {cond, bvand, d_bv4_one})},
+                   {2, 0}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::ITE, {cond, bvextract, bvextract})},
+                   {2, 0}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::ITE, {cond, d_a4, bvextract})},
+                   {2, 0}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::ITE, {cond, bvextract, d_b4})},
+                   {2, 0}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::ITE, {cond, bvextract, bvand})},
+                   {2, 0}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::ITE, {cond, bvand, bvextract})},
+                   {2, 0}));
+
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_b4})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, d_a4, bvand})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, bvand, d_b4})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_bv4_one})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, d_bv4_one, d_b4})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, d_bv4_one, bvand})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, bvand, d_bv4_one})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, bvextract, bvextract})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, d_a4, bvextract})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, bvextract, d_b4})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, bvextract, bvand})})},
+      {2, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT,
+                    {d_nm.mk_node(Kind::ITE, {cond, bvand, bvextract})})},
+      {2, 0}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_OR, {d_a4, d_b4})}, {2, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_OR, {d_a4, d_b4})})},
+      {2, 0}));
+}
+
+TEST_F(TestRewriterBv, bv_extract_add_mul)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_ADD_MUL;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4})}, {1, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4})}, {1, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4})})},
+      {1, 0}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4})})},
+      {1, 0}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4})}, {2, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4})}, {2, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4})})},
+      {3, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4})})},
+      {3, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4})}, {1, 1}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4})}, {1, 1}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4})})},
+      {1, 1}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4})})},
+      {1, 1}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_SUB, {d_a4, d_b4})}, {1, 0}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4})})},
+      {1, 0}));
+}
+
 /* bvmul -------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_mul_eval)

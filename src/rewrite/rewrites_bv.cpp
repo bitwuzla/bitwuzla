@@ -12,7 +12,7 @@ using namespace node;
 /* bvadd -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -22,9 +22,8 @@ RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().bvadd(node[1].value<BitVector>()));
-  return res;
 }
 
 /**
@@ -424,7 +423,7 @@ RewriteRule<RewriteRuleKind::BV_ADD_SHL>::_apply(Rewriter& rewriter,
 /* bvand -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -434,9 +433,8 @@ RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().bvand(node[1].value<BitVector>()));
-  return res;
 }
 
 /**
@@ -488,7 +486,7 @@ RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 /* bvashr ------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -498,9 +496,8 @@ RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().bvashr(node[1].value<BitVector>()));
-  return res;
 }
 
 /**
@@ -541,7 +538,7 @@ RewriteRule<RewriteRuleKind::BV_ASHR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 /* bvconcat ----------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -551,9 +548,8 @@ RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().bvconcat(node[1].value<BitVector>()));
-  return res;
 }
 
 /**
@@ -587,9 +583,17 @@ RewriteRule<RewriteRuleKind::BV_CONCAT_CONST>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match:  (bvconcat ((_ extract h1 l1) a) ((_ extract h2 l2) a))
+ * match:  (bvconcat
+ *            ((_ extract h1 l1) a)
+ *            ((_ extract h2 l2) a))
  *         with l1 = h2 + 1
  * result: ((_ extract h1 l2) a)
+ *
+ * match:  (bvconcat
+ *            (bvnot ((_ extract h1 l1) a))
+ *            (bvnot ((_ extract h2 l2) a)))
+ *         with l1 = h2 + 1
+ * result: (bvnot ((_ extract h1 l2) a))
  */
 template <>
 Node
@@ -645,10 +649,407 @@ RewriteRule<RewriteRuleKind::BV_CONCAT_AND>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/* bvextract ---------------------------------------------------------------- */
+
+/**
+ * Constant folding, matches when operand is a value.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_EVAL>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  if (!node[0].is_value()) return node;
+  return NodeManager::get().mk_value(
+      node[0].value<BitVector>().bvextract(node.index(0), node.index(1)));
+}
+
+/**
+ * match:  ((_ extract (N - 1) 0) a)
+ * result: a
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_FULL>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  if (node.index(0) == node[0].type().bv_size() - 1 && node.index(1) == 0)
+  {
+    return node[0];
+  }
+  return node;
+}
+
+/**
+ * match:  ((_ extract u2 l2) ((_ extract u1 l1) a))
+ * result: ((_ extract (l1 + u2) (l1 + l2)) a)
+ *
+ * match:  ((_ extract u2 l2) (bvnot ((_ extract u1 l1) a)))
+ * result: ((_ extract (l1 + u2) (l1 + l2)) (bvnot a))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_EXTRACT>::_apply(Rewriter& rewriter,
+                                                         const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  if (node[0].kind() == Kind::BV_EXTRACT)
+  {
+    return rewriter.mk_node(
+        Kind::BV_EXTRACT,
+        {node[0][0]},
+        {node[0].index(1) + node.index(0), node[0].index(1) + node.index(1)});
+  }
+  else if (node[0].kind() == Kind::BV_NOT
+           && node[0][0].kind() == Kind::BV_EXTRACT)
+  {
+    return rewriter.mk_node(Kind::BV_EXTRACT,
+                            {rewriter.mk_node(Kind::BV_NOT, {node[0][0][0]})},
+                            {node[0][0].index(1) + node.index(0),
+                             node[0][0].index(1) + node.index(1)});
+  }
+  return node;
+}
+
+/**
+ * match: ((_ extract (m - 1) 0) (concat a_[n] b_[m]))
+ * result: b
+ *
+ * match: ((_ extract (m - 1) 0) (bvnot (concat a_[n] b_[m])))
+ * result: (bvnot b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_RHS>::_apply(
+    Rewriter& rewriter, const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  bool inverted     = false;
+  const Node* node0 = &node[0];
+
+  if (node0->kind() == Kind::BV_NOT)
+  {
+    inverted = true;
+    node0    = &node[0][0];
+  }
+
+  if (node0->kind() == Kind::BV_CONCAT)
+  {
+    uint64_t m = (*node0)[1].type().bv_size();
+    if (node.index(0) == m - 1 && node.index(1) == 0)
+    {
+      if (inverted)
+      {
+        return rewriter.mk_node(Kind::BV_NOT, {(*node0)[1]});
+      }
+      return (*node0)[1];
+    }
+  }
+  return node;
+}
+
+/**
+ * match: ((_ extract (n + m - 1) m) (concat a_[n] b_[m]))
+ * result: a
+ *
+ * match: ((_ extract (n + m - 1) m) (bvnot (concat a_[n] b_[m])))
+ * result: (bvnot a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_LHS>::_apply(
+    Rewriter& rewriter, const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  bool inverted     = false;
+  const Node* node0 = &node[0];
+
+  if (node0->kind() == Kind::BV_NOT)
+  {
+    inverted = true;
+    node0    = &node[0][0];
+  }
+
+  if (node0->kind() == Kind::BV_CONCAT)
+  {
+    uint64_t n = (*node0)[0].type().bv_size();
+    uint64_t m = (*node0)[1].type().bv_size();
+    if (node.index(0) == n + m - 1 && node.index(1) == m)
+    {
+      if (inverted)
+      {
+        return rewriter.mk_node(Kind::BV_NOT, {(*node0)[0]});
+      }
+      return (*node0)[0];
+    }
+  }
+  return node;
+}
+
+/**
+ * match:  ((_ extract u l) (concat a_[n] b_[m])) with u < m
+ * result: ((_ extract u l) b)
+ *
+ * match:  ((_ extract u l) (bvnot (concat a_[n] b_[m]))) with u < m
+ * result: ((_ extract u l) (bvnot b))
+ *
+ * match:  ((_ extract u l) (concat a_[n] b_[m])) with  l >= m
+ * result: ((_ extract (u - m) (l - m)) a)
+ *
+ * match:  ((_ extract u l) (bvnot (concat a_[n] b_[m]))) with  l >= m
+ * result: ((_ extract (u - m) (l - m)) (bvnot a))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_LSH_RHS>::_apply(
+    Rewriter& rewriter, const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  bool inverted     = false;
+  const Node* node0 = &node[0];
+
+  if (node0->kind() == Kind::BV_NOT)
+  {
+    inverted = true;
+    node0    = &node[0][0];
+  }
+
+  if (node0->kind() == Kind::BV_CONCAT)
+  {
+    uint64_t m = (*node0)[1].type().bv_size();
+    uint64_t u = node.index(0);
+    uint64_t l = node.index(1);
+    if (u < m)
+    {
+      if (inverted)
+      {
+        return rewriter.mk_node(Kind::BV_EXTRACT,
+                                {rewriter.mk_node(Kind::BV_NOT, {(*node0)[1]})},
+                                {u, l});
+      }
+      return rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[1]}, {u, l});
+    }
+    else if (l >= m)
+    {
+      if (inverted)
+      {
+        return rewriter.mk_node(Kind::BV_EXTRACT,
+                                {rewriter.mk_node(Kind::BV_NOT, {(*node0)[0]})},
+                                {u - m, l - m});
+      }
+      return rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[0]}, {u - m, l - m});
+    }
+  }
+  return node;
+}
+
+/**
+ * match:  ((_ extract u 0) (concat a_[n] b_[m])) with u >= m
+ * result: (concat ((_ extract (u - m) 0) a) b)
+ *
+ * match:  ((_ extract u 0) (bvnot (concat a b))) with u >= m
+ * result: (concat ((_ extract (u - m) 0) (bvnot a)) (bvnot b))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  bool inverted     = false;
+  const Node* node0 = &node[0];
+
+  if (node0->kind() == Kind::BV_NOT)
+  {
+    inverted = true;
+    node0    = &node[0][0];
+  }
+  if (node0->kind() == Kind::BV_CONCAT)
+  {
+    uint64_t m = (*node0)[1].type().bv_size();
+    uint64_t u = node.index(0);
+    uint64_t l = node.index(1);
+    if (l == 0 && u >= m)
+    {
+      if (inverted)
+      {
+        return rewriter.mk_node(
+            Kind::BV_CONCAT,
+            {rewriter.mk_node(Kind::BV_EXTRACT,
+                              {rewriter.mk_node(Kind::BV_NOT, {(*node0)[0]})},
+                              {u - m, 0}),
+             rewriter.mk_node(Kind::BV_NOT, {(*node0)[1]})});
+      }
+      return rewriter.mk_node(
+          Kind::BV_CONCAT,
+          {rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[0]}, {u - m, 0}),
+           (*node0)[1]});
+    }
+  }
+  return node;
+}
+
+namespace {
+/** @return True if given node is either a CONSTANT, a VALUE or a BV_EXTRACT. */
+bool
+is_const_val_extract(const Node& node)
+{
+  const Kind& kind = node.kind();
+  return kind == Kind::CONSTANT || kind == Kind::VALUE
+         || kind == Kind::BV_EXTRACT;
+}
+}  // namespace
+
+/**
+ * match:  ((_ extract u l) (bvand a b))
+ *          where a or b are eithe a VALUE, a CONSTANT or a BV_EXTRACT
+ * result: (bvand ((_ extract u l) a) ((_ extract u l) b))
+ *
+ * match:  ((_ extract u l) (bvnot (bvand a b)))
+ *          where a or b are eithe a VALUE, a CONSTANT or a BV_EXTRACT
+ * result: (bvnot (bvand ((_ extract u l) a) ((_ extract u l) b)))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_AND>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  bool inverted     = false;
+  const Node* node0 = &node[0];
+
+  if (node0->kind() == Kind::BV_NOT)
+  {
+    inverted = true;
+    node0    = &node[0][0];
+  }
+  if (node0->kind() == Kind::BV_AND
+      && (is_const_val_extract((*node0)[0])
+          || is_const_val_extract((*node0)[1])))
+  {
+    uint64_t u = node.index(0);
+    uint64_t l = node.index(1);
+    Node res   = rewriter.mk_node(
+        Kind::BV_AND,
+        {rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[0]}, {u, l}),
+           rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[1]}, {u, l})});
+    if (inverted)
+    {
+      res = rewriter.mk_node(Kind::BV_NOT, {res});
+    }
+    return res;
+  }
+  return node;
+}
+
+/**
+ * match:  ((_ extract u l) (ite c a b))
+ *          where a or b are eithe a VALUE, a CONSTANT or a BV_EXTRACT
+ * result: (ite c ((_ extract u l) a) ((_ extract u l) b))
+ *
+ * match:  ((_ extract u l) (bvnot (ite c a b)))
+ *          where a or b are eithe a VALUE, a CONSTANT or a BV_EXTRACT
+ * result: (bvnot (ite c ((_ extract u l) a) ((_ extract u l) b)))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_ITE>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  bool inverted     = false;
+  const Node* node0 = &node[0];
+
+  if (node0->kind() == Kind::BV_NOT)
+  {
+    inverted = true;
+    node0    = &node[0][0];
+  }
+  if (node0->kind() == Kind::ITE
+      && (is_const_val_extract((*node0)[1])
+          || is_const_val_extract((*node0)[2])))
+  {
+    uint64_t u = node.index(0);
+    uint64_t l = node.index(1);
+    Node res   = rewriter.mk_node(
+        Kind::ITE,
+        {(*node0)[0],
+           rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[1]}, {u, l}),
+           rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[2]}, {u, l})});
+    if (inverted)
+    {
+      res = rewriter.mk_node(Kind::BV_NOT, {res});
+    }
+    return res;
+  }
+  return node;
+}
+
+/**
+ * match:  ((_ extract u 0) (bvmul a b))
+ *         ((_ extract u 0) (bvadd a b))
+ *         with u < N / 2
+ * result: (bvmul ((_ extract u 0) a) ((_ extract u 0) b))
+ *         (bvadd ((_ extract u 0) a) ((_ extract u 0) b))
+ *
+ * match:  ((_ extract u 0) (bvnot (bvmul a b)))
+ *         ((_ extract u 0) (bvnot (bvadd a b)))
+ *         with u < N / 2
+ * result: (bvnot (bvmul ((_ extract u 0) a) ((_ extract u 0) b)))
+ *         (bvnot (bvadd ((_ extract u 0) a) ((_ extract u 0) b)))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_ADD_MUL>::_apply(Rewriter& rewriter,
+                                                         const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  bool inverted     = false;
+  const Node* node0 = &node[0];
+
+  if (node0->kind() == Kind::BV_NOT)
+  {
+    inverted = true;
+    node0    = &node[0][0];
+  }
+  if (node0->kind() == Kind::BV_MUL || node0->kind() == Kind::BV_ADD)
+  {
+    uint64_t u = node.index(0);
+    uint64_t l = node.index(1);
+    if (l == 0 && u < node0->type().bv_size() / 2)
+    {
+      Node res = rewriter.mk_node(
+          node0->kind(),
+          {rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[0]}, {u, l}),
+           rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[1]}, {u, l})});
+      if (inverted)
+      {
+        res = rewriter.mk_node(Kind::BV_NOT, {res});
+      }
+      return res;
+    }
+  }
+  return node;
+}
+
 /* bvmul -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -658,9 +1059,8 @@ RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().bvmul(node[1].value<BitVector>()));
-  return res;
 }
 
 /**
@@ -951,7 +1351,7 @@ RewriteRule<RewriteRuleKind::BV_MUL_ONES>::_apply(Rewriter& rewriter,
 /* bvnot -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when operand is a value.
  */
 template <>
 Node
@@ -980,7 +1380,7 @@ RewriteRule<RewriteRuleKind::BV_NOT_BV_NOT>::_apply(Rewriter& rewriter,
 /* bvshl -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -990,9 +1390,8 @@ RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().bvshl(node[1].value<BitVector>()));
-  return res;
 }
 
 /**
@@ -1068,7 +1467,7 @@ RewriteRule<RewriteRuleKind::BV_SHL_CONST>::_apply(Rewriter& rewriter,
 /* bvshr -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -1078,9 +1477,8 @@ RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().bvshr(node[1].value<BitVector>()));
-  return res;
 }
 
 /**
@@ -1194,7 +1592,7 @@ RewriteRule<RewriteRuleKind::BV_SHR_NOT>::_apply(Rewriter& rewriter,
 /* bvslt -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -1204,10 +1602,9 @@ RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().signed_compare(node[1].value<BitVector>())
       < 0);
-  return res;
 }
 
 /**
@@ -1319,6 +1716,10 @@ RewriteRule<RewriteRuleKind::BV_SLT_CONCAT>::_apply(Rewriter& rewriter,
  * match:  (bvslt (ite x a b) (ite x c d))
  *         where either a = c or b = d
  * result: (ite x (bvslt a c) (bvslt b d))
+ *
+ * match:  (bvslt (bvnot (ite x a b)) (bvnot (ite x c d)))
+ *         where either a = c or b = d
+ * result: (ite x (bvslt (bvnot a) (bvnot c)) (bvslt (bvnot b) (bvnot d)))
  */
 template <>
 Node
@@ -1362,7 +1763,7 @@ RewriteRule<RewriteRuleKind::BV_SLT_ITE>::_apply(Rewriter& rewriter,
 /* bvudiv ------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -1372,9 +1773,8 @@ RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().bvudiv(node[1].value<BitVector>()));
-  return res;
 }
 
 /**
@@ -1494,7 +1894,7 @@ RewriteRule<RewriteRuleKind::BV_UDIV_SAME>::_apply(Rewriter& rewriter,
 /* bvult -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -1504,9 +1904,8 @@ RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().compare(node[1].value<BitVector>()) < 0);
-  return res;
 }
 
 /**
@@ -1631,6 +2030,10 @@ RewriteRule<RewriteRuleKind::BV_ULT_CONCAT>::_apply(Rewriter& rewriter,
  * match:  (bvult (ite x a b) (ite x c d))
  *         where either a = c or b = d
  * result: (ite x (bvult a c) (bvult b d))
+ *
+ * match:  (bvult (bvnot (ite x a b)) (bvnot (ite x c d)))
+ *         where either a = c or b = d
+ * result: (ite x (bvult (bvnot a) (bvnot c)) (bvult (bvnot b) (bvnot d)))
  */
 template <>
 Node
@@ -1674,7 +2077,7 @@ RewriteRule<RewriteRuleKind::BV_ULT_ITE>::_apply(Rewriter& rewriter,
 /* bvudiv ------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -1684,9 +2087,8 @@ RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().bvurem(node[1].value<BitVector>()));
-  return res;
 }
 
 /**
@@ -1768,7 +2170,7 @@ RewriteRule<RewriteRuleKind::BV_UREM_SAME>::_apply(Rewriter& rewriter,
 /* bvxor -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when both lhs and rhs are values.
+ * Constant folding, matches when all operands are values.
  */
 template <>
 Node
@@ -1778,9 +2180,8 @@ RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].value<BitVector>().bvxor(node[1].value<BitVector>()));
-  return res;
 }
 
 /* --- Elimination Rules ---------------------------------------------------- */
