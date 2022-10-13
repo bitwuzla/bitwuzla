@@ -1,5 +1,6 @@
 #include "rewrite/rewriter.h"
 
+#include "node/node_kind.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "rewrite/rewrites_bool.h"
@@ -73,6 +74,17 @@ Rewriter::mk_node(node::Kind kind,
                   const std::vector<uint64_t>& indices)
 {
   return _rewrite(NodeManager::get().mk_node(kind, children, indices));
+}
+
+Node
+Rewriter::invert_node(const Node& node)
+{
+  assert(node.type().is_bool() || node.type().is_bv());
+  if (node.type().is_bool())
+  {
+    return mk_node(node::Kind::NOT, {node});
+  }
+  return mk_node(node::Kind::BV_NOT, {node});
 }
 
 /* === Rewriter private ===================================================== */

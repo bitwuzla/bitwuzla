@@ -84,12 +84,10 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
               {
                   rewriter.mk_node(
                       Kind::EQUAL,
-                      {rewriter.mk_node(Kind::BV_NOT, {node[idx1][0][0]}),
-                       node[idx0]}),
+                      {rewriter.invert_node(node[idx1][0][0]), node[idx0]}),
                   rewriter.mk_node(
                       Kind::EQUAL,
-                      {rewriter.mk_node(Kind::BV_NOT, {node[idx1][0][1]}),
-                       node[idx0]}),
+                      {rewriter.invert_node(node[idx1][0][1]), node[idx0]}),
               });
         }
       }
@@ -119,7 +117,7 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
       {
         return node[idx1];
       }
-      return rewriter.mk_node(Kind::NOT, {node[idx1]});
+      return rewriter.invert_node(node[idx1]);
     }
   }
   return node;
@@ -184,8 +182,8 @@ RewriteRule<RewriteRuleKind::DISTINCT_ELIM>::_apply(Rewriter& rewriter,
   uint64_t num_children = node.num_children();
   if (num_children == 2)
   {
-    return rewriter.mk_node(
-        Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+    return rewriter.invert_node(
+        rewriter.mk_node(Kind::EQUAL, {node[0], node[1]}));
   }
 
   Node res;
@@ -193,8 +191,8 @@ RewriteRule<RewriteRuleKind::DISTINCT_ELIM>::_apply(Rewriter& rewriter,
   {
     for (size_t j = i + 1; j < num_children; ++j)
     {
-      Node tmp = rewriter.mk_node(
-          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[i], node[j]})});
+      Node tmp = rewriter.invert_node(
+          rewriter.mk_node(Kind::EQUAL, {node[i], node[j]}));
       if (res.is_null())
       {
         res = tmp;
@@ -214,10 +212,8 @@ Node
 RewriteRule<RewriteRuleKind::IMPLIES_ELIM>::_apply(Rewriter& rewriter,
                                                    const Node& node)
 {
-  return rewriter.mk_node(
-      Kind::NOT,
-      {rewriter.mk_node(Kind::AND,
-                        {node[0], rewriter.mk_node(Kind::NOT, {node[1]})})});
+  return rewriter.invert_node(
+      rewriter.mk_node(Kind::AND, {node[0], rewriter.invert_node(node[1])}));
 }
 
 template <>

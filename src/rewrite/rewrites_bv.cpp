@@ -614,7 +614,7 @@ RewriteRule<RewriteRuleKind::BV_CONCAT_EXTRACT>::_apply(Rewriter& rewriter,
   {
     Node res = rewriter.mk_node(
         Kind::BV_EXTRACT, {(*node0)[0]}, {node0->index(0), node1->index(1)});
-    return inverted ? rewriter.mk_node(Kind::BV_NOT, {res}) : res;
+    return inverted ? rewriter.invert_node(res) : res;
   }
   return node;
 }
@@ -711,7 +711,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_EXTRACT>::_apply(Rewriter& rewriter,
            && node[0][0].kind() == Kind::BV_EXTRACT)
   {
     return rewriter.mk_node(Kind::BV_EXTRACT,
-                            {rewriter.mk_node(Kind::BV_NOT, {node[0][0][0]})},
+                            {rewriter.invert_node(node[0][0][0])},
                             {node[0][0].index(1) + node.index(0),
                              node[0][0].index(1) + node.index(1)});
   }
@@ -748,7 +748,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_RHS>::_apply(
     {
       if (inverted)
       {
-        return rewriter.mk_node(Kind::BV_NOT, {(*node0)[1]});
+        return rewriter.invert_node((*node0)[1]);
       }
       return (*node0)[1];
     }
@@ -787,7 +787,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_LHS>::_apply(
     {
       if (inverted)
       {
-        return rewriter.mk_node(Kind::BV_NOT, {(*node0)[0]});
+        return rewriter.invert_node((*node0)[0]);
       }
       return (*node0)[0];
     }
@@ -833,9 +833,8 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_LSH_RHS>::_apply(
     {
       if (inverted)
       {
-        return rewriter.mk_node(Kind::BV_EXTRACT,
-                                {rewriter.mk_node(Kind::BV_NOT, {(*node0)[1]})},
-                                {u, l});
+        return rewriter.mk_node(
+            Kind::BV_EXTRACT, {rewriter.invert_node((*node0)[1])}, {u, l});
       }
       return rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[1]}, {u, l});
     }
@@ -844,7 +843,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_LSH_RHS>::_apply(
       if (inverted)
       {
         return rewriter.mk_node(Kind::BV_EXTRACT,
-                                {rewriter.mk_node(Kind::BV_NOT, {(*node0)[0]})},
+                                {rewriter.invert_node((*node0)[0])},
                                 {u - m, l - m});
       }
       return rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[0]}, {u - m, l - m});
@@ -887,9 +886,9 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT>::_apply(Rewriter& rewriter,
         return rewriter.mk_node(
             Kind::BV_CONCAT,
             {rewriter.mk_node(Kind::BV_EXTRACT,
-                              {rewriter.mk_node(Kind::BV_NOT, {(*node0)[0]})},
+                              {rewriter.invert_node((*node0)[0])},
                               {u - m, 0}),
-             rewriter.mk_node(Kind::BV_NOT, {(*node0)[1]})});
+             rewriter.invert_node((*node0)[1])});
       }
       return rewriter.mk_node(
           Kind::BV_CONCAT,
@@ -947,7 +946,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_AND>::_apply(Rewriter& rewriter,
            rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[1]}, {u, l})});
     if (inverted)
     {
-      res = rewriter.mk_node(Kind::BV_NOT, {res});
+      res = rewriter.invert_node(res);
     }
     return res;
   }
@@ -991,7 +990,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_ITE>::_apply(Rewriter& rewriter,
            rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[2]}, {u, l})});
     if (inverted)
     {
-      res = rewriter.mk_node(Kind::BV_NOT, {res});
+      res = rewriter.invert_node(res);
     }
     return res;
   }
@@ -1038,7 +1037,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_ADD_MUL>::_apply(Rewriter& rewriter,
            rewriter.mk_node(Kind::BV_EXTRACT, {(*node0)[1]}, {u, l})});
       if (inverted)
       {
-        res = rewriter.mk_node(Kind::BV_NOT, {res});
+        res = rewriter.invert_node(res);
       }
       return res;
     }
@@ -1691,7 +1690,7 @@ RewriteRule<RewriteRuleKind::BV_SLT_BV1>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 2);
   if (node[0].type().bv_size() != 1) return node;
   return rewriter.mk_node(Kind::BV_AND,
-                          {node[0], rewriter.mk_node(Kind::BV_NOT, {node[1]})});
+                          {node[0], rewriter.invert_node(node[1])});
 }
 
 /**
@@ -1745,11 +1744,11 @@ RewriteRule<RewriteRuleKind::BV_SLT_ITE>::_apply(Rewriter& rewriter,
           Kind::ITE,
           {(*node0)[0],
            rewriter.mk_node(Kind::BV_SLT,
-                            {rewriter.mk_node(Kind::BV_NOT, {(*node0)[1]}),
-                             rewriter.mk_node(Kind::BV_NOT, {(*node1)[1]})}),
+                            {rewriter.invert_node((*node0)[1]),
+                             rewriter.invert_node((*node1)[1])}),
            rewriter.mk_node(Kind::BV_SLT,
-                            {rewriter.mk_node(Kind::BV_NOT, {(*node0)[2]}),
-                             rewriter.mk_node(Kind::BV_NOT, {(*node1)[2]})})});
+                            {rewriter.invert_node((*node0)[2]),
+                             rewriter.invert_node((*node1)[2])})});
     }
     return rewriter.mk_node(
         Kind::ITE,
@@ -1835,10 +1834,8 @@ RewriteRule<RewriteRuleKind::BV_UDIV_BV1>::_apply(Rewriter& rewriter,
 {
   assert(node.num_children() == 2);
   if (node[0].type().bv_size() != 1) return node;
-  return rewriter.mk_node(
-      Kind::BV_NOT,
-      {rewriter.mk_node(Kind::BV_AND,
-                        {rewriter.mk_node(Kind::BV_NOT, {node[0]}), node[1]})});
+  return rewriter.invert_node(
+      rewriter.mk_node(Kind::BV_AND, {rewriter.invert_node(node[0]), node[1]}));
 }
 
 /**
@@ -1998,7 +1995,7 @@ RewriteRule<RewriteRuleKind::BV_ULT_BV1>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 2);
   if (node[0].type().bv_size() != 1) return node;
   return rewriter.mk_node(Kind::BV_AND,
-                          {rewriter.mk_node(Kind::BV_NOT, {node[0]}), node[1]});
+                          {rewriter.invert_node(node[0]), node[1]});
 }
 
 /**
@@ -2059,11 +2056,11 @@ RewriteRule<RewriteRuleKind::BV_ULT_ITE>::_apply(Rewriter& rewriter,
           Kind::ITE,
           {(*node0)[0],
            rewriter.mk_node(Kind::BV_ULT,
-                            {rewriter.mk_node(Kind::BV_NOT, {(*node0)[1]}),
-                             rewriter.mk_node(Kind::BV_NOT, {(*node1)[1]})}),
+                            {rewriter.invert_node((*node0)[1]),
+                             rewriter.invert_node((*node1)[1])}),
            rewriter.mk_node(Kind::BV_ULT,
-                            {rewriter.mk_node(Kind::BV_NOT, {(*node0)[2]}),
-                             rewriter.mk_node(Kind::BV_NOT, {(*node1)[2]})})});
+                            {rewriter.invert_node((*node0)[2]),
+                             rewriter.invert_node((*node1)[2])})});
     }
     return rewriter.mk_node(
         Kind::ITE,
@@ -2145,7 +2142,7 @@ RewriteRule<RewriteRuleKind::BV_UREM_BV1>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 2);
   if (node[0].type().bv_size() != 1) return node;
   return rewriter.mk_node(Kind::BV_AND,
-                          {node[0], rewriter.mk_node(Kind::BV_NOT, {node[1]})});
+                          {node[0], rewriter.invert_node(node[1])});
 }
 
 /**
@@ -2191,8 +2188,8 @@ Node
 RewriteRule<RewriteRuleKind::BV_NAND_ELIM>::_apply(Rewriter& rewriter,
                                                    const Node& node)
 {
-  return rewriter.mk_node(Kind::BV_NOT,
-                          {rewriter.mk_node(Kind::BV_AND, {node[0], node[1]})});
+  return rewriter.invert_node(
+      rewriter.mk_node(Kind::BV_AND, {node[0], node[1]}));
 }
 
 template <>
@@ -2202,7 +2199,7 @@ RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::_apply(Rewriter& rewriter,
 {
   return rewriter.mk_node(
       Kind::BV_ADD,
-      {rewriter.mk_node(Kind::BV_NOT, {node[0]}),
+      {rewriter.invert_node(node[0]),
        NodeManager::get().mk_value(BitVector::mk_one(node.type().bv_size()))});
 }
 
@@ -2211,8 +2208,8 @@ Node
 RewriteRule<RewriteRuleKind::BV_NOR_ELIM>::_apply(Rewriter& rewriter,
                                                   const Node& node)
 {
-  return rewriter.mk_node(Kind::BV_NOT,
-                          {rewriter.mk_node(Kind::BV_OR, {node[0], node[1]})});
+  return rewriter.invert_node(
+      rewriter.mk_node(Kind::BV_OR, {node[0], node[1]}));
 }
 
 template <>
@@ -2220,11 +2217,9 @@ Node
 RewriteRule<RewriteRuleKind::BV_OR_ELIM>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
-  return rewriter.mk_node(
-      Kind::BV_NOT,
-      {rewriter.mk_node(Kind::BV_AND,
-                        {rewriter.mk_node(Kind::BV_NOT, {node[0]}),
-                         rewriter.mk_node(Kind::BV_NOT, {node[1]})})});
+  return rewriter.invert_node(rewriter.mk_node(
+      Kind::BV_AND,
+      {rewriter.invert_node(node[0]), rewriter.invert_node(node[1])}));
 }
 
 template <>
@@ -2245,14 +2240,13 @@ Node
 RewriteRule<RewriteRuleKind::BV_REDOR_ELIM>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
-  return rewriter.mk_node(
-      Kind::BV_NOT,
-      {rewriter.mk_node(Kind::BV_COMP,
-                        {node[0],
-                         NodeManager::get().mk_value(
-                             BitVector::mk_zero(node[0].type().bv_size()))}
+  return rewriter.invert_node(rewriter.mk_node(
+      Kind::BV_COMP,
+      {node[0],
+       NodeManager::get().mk_value(
+           BitVector::mk_zero(node[0].type().bv_size()))}
 
-                        )});
+      ));
 }
 
 template <>
@@ -2426,11 +2420,8 @@ RewriteRule<RewriteRuleKind::BV_SDIV_ELIM>::_apply(Rewriter& rewriter,
 
   if (size == 1)
   {
-    return rewriter.mk_node(
-        Kind::BV_NOT,
-        {rewriter.mk_node(
-            Kind::BV_AND,
-            {rewriter.mk_node(Kind::BV_NOT, {node[0]}), node[1]})});
+    return rewriter.invert_node(rewriter.mk_node(
+        Kind::BV_AND, {rewriter.invert_node(node[0]), node[1]}));
   }
 
   // Extract MSB of operands
@@ -2685,8 +2676,8 @@ RewriteRule<RewriteRuleKind::BV_SREM_ELIM>::_apply(Rewriter& rewriter,
 
   if (size == 1)
   {
-    return rewriter.mk_node(
-        Kind::BV_AND, {node[0], rewriter.mk_node(Kind::BV_NOT, {node[1]})});
+    return rewriter.mk_node(Kind::BV_AND,
+                            {node[0], rewriter.invert_node(node[1])});
   }
 
   NodeManager& nm = NodeManager::get();
@@ -2874,8 +2865,8 @@ Node
 RewriteRule<RewriteRuleKind::BV_XNOR_ELIM>::_apply(Rewriter& rewriter,
                                                    const Node& node)
 {
-  return rewriter.mk_node(Kind::BV_NOT,
-                          {rewriter.mk_node(Kind::BV_XOR, {node[0], node[1]})});
+  return rewriter.invert_node(
+      rewriter.mk_node(Kind::BV_XOR, {node[0], node[1]}));
 }
 
 template <>
@@ -2883,11 +2874,10 @@ Node
 RewriteRule<RewriteRuleKind::BV_XOR_ELIM>::_apply(Rewriter& rewriter,
                                                   const Node& node)
 {
-  return rewriter.mk_node(
-      Kind::BV_AND,
-      {rewriter.mk_node(Kind::BV_OR, {node[0], node[1]}),
-       rewriter.mk_node(Kind::BV_NOT,
-                        {rewriter.mk_node(Kind::BV_AND, {node[0], node[1]})})});
+  return rewriter.mk_node(Kind::BV_AND,
+                          {rewriter.mk_node(Kind::BV_OR, {node[0], node[1]}),
+                           rewriter.invert_node(rewriter.mk_node(
+                               Kind::BV_AND, {node[0], node[1]}))});
 }
 
 template <>
