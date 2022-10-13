@@ -22,6 +22,33 @@ AssertionStack::replace(size_t index, const Node& assertion)
   d_assertions[index].first = assertion;
 }
 
+void
+AssertionStack::replace(size_t index, const std::vector<Node>& assertions)
+{
+  assert(!assertions.empty());
+
+  size_t cur_level = level(index);
+
+  d_cache.erase(d_assertions[index].first);
+  d_assertions[index].first = assertions[0];
+
+  if (assertions.size() > 1)
+  {
+    for (size_t i = 1, size = assertions.size(); i < size; ++i)
+    {
+      d_cache.insert(assertions[i]);
+      d_assertions.emplace(
+          d_assertions.begin() + index + i, assertions[i], cur_level);
+    }
+    // Since new elements were inserted, update control stack starting from
+    // `cur_level`.
+    for (size_t i = cur_level, size = d_control.size(); i < size; ++i)
+    {
+      d_control[i] += assertions.size() - 1;
+    }
+  }
+}
+
 size_t
 AssertionStack::size() const
 {
@@ -132,6 +159,12 @@ void
 AssertionView::replace(size_t index, const Node& assertion)
 {
   d_assertions.replace(index, assertion);
+}
+
+void
+AssertionView::replace(size_t index, const std::vector<Node>& assertions)
+{
+  d_assertions.replace(index, assertions);
 }
 
 }  // namespace bzla::backtrack

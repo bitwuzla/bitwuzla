@@ -41,6 +41,8 @@ class AssertionView
 
   void replace(size_t index, const Node& assertion);
 
+  void replace(size_t index, const std::vector<Node>& assertions);
+
  private:
   AssertionView(AssertionStack& assertions);
   /** The underlying assertion stack. */
@@ -69,6 +71,14 @@ class AssertionStack : public Backtrackable
    * @param assertion The new assertion.
    */
   void replace(size_t index, const Node& assertion);
+
+  /**
+   * Replace an assertion with a vector of assertions.
+   *
+   * @param index The index of the assertion to be replaced
+   * @param assertions The list of assertions to insert at `index`.
+   */
+  void replace(size_t index, const std::vector<Node>& assertions);
 
   /** @return The number of assertions on the stack. */
   size_t size() const;
