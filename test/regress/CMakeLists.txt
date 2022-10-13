@@ -373,6 +373,7 @@ set(unsat_testcases
 "extarraywrite3.smt2"
 "fifo32bc04k05.smt2"
 "issue97.smt2"
+"prels-funs.smt2 --fun-preprop"
 "preprocess/lambda_elim1.smt2"
 "preprocess/lambda_elim2.smt2"
 #"lambda2.btor"

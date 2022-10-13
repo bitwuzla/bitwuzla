@@ -1,0 +1,6 @@
+(declare-const e (_ BitVec 1))
+(declare-fun l ((_ BitVec 256)) (_ BitVec 256))
+(define-fun s ((v!0 (_ BitVec 256))) (_ BitVec 256) (ite (bvugt ((_ zero_extend 255) e) (_ bv0 256)) v!0 (_ bv1 256)))
+(assert (not (bvumulo ((_ zero_extend 255) e) ((_ zero_extend 255) e))))
+(assert (= (_ bv0 256) (s (_ bv1 256))))
+(check-sat)

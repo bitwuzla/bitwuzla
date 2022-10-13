@@ -2409,11 +2409,17 @@ check_sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
   preslv    = *ls_slv;
   bzla->slv = preslv;
   result    = preslv->api.sat(preslv);
+  // We don't need to update the model for FUN_PREPROPOLD and FUN_PRESLS
+  // since both engines directly manipulate the BV model in bzla. For
+  // FUN_PREPROP, however, we have to get back the model from the LocalSearch
+  // engine, which maintains its own model and doesn't touch the BV model
+  // in bzla.
   if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
-      && (bzla_opt_get(bzla, BZLA_OPT_CHECK_MODEL)
-          || bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS)))
+      && ((bzla->ufs->count == 0 && bzla->lambdas->count == 0)
+          || (bzla_opt_get(bzla, BZLA_OPT_CHECK_MODEL)
+              || bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS))))
   {
-    bzla->slv->api.generate_model(bzla->slv, false, false);
+    bzla->slv->api.generate_model(bzla->slv, false, true);
   }
 
   /* print prop/sls solver statistics */
