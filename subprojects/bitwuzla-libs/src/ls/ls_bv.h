@@ -30,18 +30,18 @@ class LocalSearchBV : public LocalSearch<BitVector, BitVectorNode>
   void compute_bounds(BitVectorNode* node) override;
 
   uint64_t mk_node(uint64_t size) override;
-  uint64_t mk_node(OperatorKind kind,
+  uint64_t mk_node(NodeKind kind,
                    uint64_t size,
                    const std::vector<uint64_t>& children) override;
-  uint64_t mk_indexed_node(OperatorKind kind,
+  uint64_t mk_indexed_node(NodeKind kind,
                            uint64_t size,
                            uint64_t child0,
                            const std::vector<uint64_t>& indices) override;
   uint64_t mk_node(const BitVector& assignment, const BitVectorDomain& domain);
-  uint64_t mk_node(OperatorKind kind,
+  uint64_t mk_node(NodeKind kind,
                    const BitVectorDomain& domain,
                    const std::vector<uint64_t>& children);
-  uint64_t mk_indexed_node(OperatorKind kind,
+  uint64_t mk_indexed_node(NodeKind kind,
                            const BitVectorDomain& domain,
                            uint64_t child0,
                            const std::vector<uint64_t>& indices);

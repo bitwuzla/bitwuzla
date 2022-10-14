@@ -24,7 +24,7 @@ LocalSearchBV::mk_node(uint64_t size)
 }
 
 uint64_t
-LocalSearchBV::mk_node(OperatorKind kind,
+LocalSearchBV::mk_node(NodeKind kind,
                        uint64_t size,
                        const std::vector<uint64_t>& children)
 {
@@ -32,7 +32,7 @@ LocalSearchBV::mk_node(OperatorKind kind,
 }
 
 uint64_t
-LocalSearchBV::mk_indexed_node(OperatorKind kind,
+LocalSearchBV::mk_indexed_node(NodeKind kind,
                                uint64_t size,
                                uint64_t child0,
                                const std::vector<uint64_t>& indices)
@@ -57,7 +57,7 @@ LocalSearchBV::mk_node(const BitVector& assignment,
 }
 
 uint64_t
-LocalSearchBV::mk_node(OperatorKind kind,
+LocalSearchBV::mk_node(NodeKind kind,
                        const BitVectorDomain& domain,
                        const std::vector<uint64_t>& children)
 {
@@ -73,12 +73,12 @@ LocalSearchBV::mk_node(OperatorKind kind,
 
   switch (kind)
   {
-    case OperatorKind::EQ:
+    case NodeKind::EQ:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorEq(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
-    case OperatorKind::ITE:
+    case NodeKind::ITE:
       assert(children.size() == 3);  // API check
       res.reset(new BitVectorIte(d_rng.get(),
                                  domain,
@@ -86,49 +86,49 @@ LocalSearchBV::mk_node(OperatorKind kind,
                                  get_node(children[1]),
                                  get_node(children[2])));
       break;
-    case OperatorKind::BV_ADD:
+    case NodeKind::BV_ADD:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorAdd(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
 
-    case OperatorKind::AND:
-    case OperatorKind::BV_AND:
+    case NodeKind::AND:
+    case NodeKind::BV_AND:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorAnd(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
-    case OperatorKind::BV_ASHR:
+    case NodeKind::BV_ASHR:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorAshr(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
-    case OperatorKind::BV_CONCAT:
+    case NodeKind::BV_CONCAT:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorConcat(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
-    case OperatorKind::BV_MUL:
+    case NodeKind::BV_MUL:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorMul(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
-    case OperatorKind::NOT:
-    case OperatorKind::BV_NOT:
+    case NodeKind::NOT:
+    case NodeKind::BV_NOT:
       assert(children.size() == 1);  // API check
       res.reset(new BitVectorNot(d_rng.get(), domain, get_node(children[0])));
       break;
-    case OperatorKind::BV_SHL:
+    case NodeKind::BV_SHL:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorShl(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
-    case OperatorKind::BV_SHR:
+    case NodeKind::BV_SHR:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorShr(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
-    case OperatorKind::BV_SLT:
+    case NodeKind::BV_SLT:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorSlt(d_rng.get(),
                                  domain,
@@ -136,12 +136,12 @@ LocalSearchBV::mk_node(OperatorKind kind,
                                  get_node(children[1]),
                                  d_options.use_opt_lt_concat_sext));
       break;
-    case OperatorKind::BV_UDIV:
+    case NodeKind::BV_UDIV:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorUdiv(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
-    case OperatorKind::BV_ULT:
+    case NodeKind::BV_ULT:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorUlt(d_rng.get(),
                                  domain,
@@ -149,13 +149,13 @@ LocalSearchBV::mk_node(OperatorKind kind,
                                  get_node(children[1]),
                                  d_options.use_opt_lt_concat_sext));
       break;
-    case OperatorKind::BV_UREM:
+    case NodeKind::BV_UREM:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorUrem(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
-    case OperatorKind::XOR:
-    case OperatorKind::BV_XOR:
+    case NodeKind::XOR:
+    case NodeKind::BV_XOR:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorXor(
           d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
@@ -173,22 +173,21 @@ LocalSearchBV::mk_node(OperatorKind kind,
 }
 
 uint64_t
-LocalSearchBV::mk_indexed_node(OperatorKind kind,
+LocalSearchBV::mk_indexed_node(NodeKind kind,
                                const BitVectorDomain& domain,
                                uint64_t child0,
                                const std::vector<uint64_t>& indices)
 {
   // API check
-  assert(kind == OperatorKind::BV_EXTRACT || kind == OperatorKind::BV_SEXT);
+  assert(kind == NodeKind::BV_EXTRACT || kind == NodeKind::BV_SEXT);
   // API check
-  assert(kind != OperatorKind::BV_EXTRACT || indices.size() == 2);
+  assert(kind != NodeKind::BV_EXTRACT || indices.size() == 2);
   // API check
-  assert(kind != OperatorKind::BV_EXTRACT || indices[0] >= indices[1]);
+  assert(kind != NodeKind::BV_EXTRACT || indices[0] >= indices[1]);
   // API check
-  assert(kind != OperatorKind::BV_EXTRACT
-         || indices[0] < get_node(child0)->size());
+  assert(kind != NodeKind::BV_EXTRACT || indices[0] < get_node(child0)->size());
   // API check
-  assert(kind != OperatorKind::BV_SEXT || indices.size() == 1);
+  assert(kind != NodeKind::BV_SEXT || indices.size() == 1);
 
   uint64_t id = d_nodes.size();
   assert(child0 < id);
@@ -197,7 +196,7 @@ LocalSearchBV::mk_indexed_node(OperatorKind kind,
   d_parents.at(child0).insert(id);
 
   std::unique_ptr<BitVectorNode> res;
-  if (kind == OperatorKind::BV_EXTRACT)
+  if (kind == NodeKind::BV_EXTRACT)
   {
     res.reset(new BitVectorExtract(
         d_rng.get(), domain, get_node(child0), indices[0], indices[1]));
@@ -219,7 +218,7 @@ uint64_t
 LocalSearchBV::invert_node(uint64_t id)
 {
   assert(id < d_nodes.size());  // API check
-  return mk_node(OperatorKind::NOT, get_node(id)->domain().bvnot(), {id});
+  return mk_node(NodeKind::NOT, get_node(id)->domain().bvnot(), {id});
 }
 
 const BitVectorDomain&
@@ -246,7 +245,7 @@ LocalSearchBV::update_bounds_aux(BitVectorNode* root, int32_t pos)
 
   BitVectorNode* child0 = (*root)[0];
   BitVectorNode* child1 = (*root)[1];
-  bool is_signed        = root->get_kind() == BitVectorNode::Kind::SLT;
+  bool is_signed        = root->get_kind() == NodeKind::BV_SLT;
   uint64_t size         = child0->size();
   BitVector min_value, max_value;
 
@@ -334,7 +333,7 @@ LocalSearchBV::compute_bounds(BitVectorNode* node)
       BitVectorNode* p = get_node(pid);
       if (!is_ineq_root(p)) continue;
       if (p->assignment().is_true() != d_roots_ineq.at(p)) continue;
-      if (p->get_kind() == BitVectorNode::Kind::NOT)
+      if (p->get_kind() == NodeKind::BV_NOT)
       {
         p = (*p)[0];
       }

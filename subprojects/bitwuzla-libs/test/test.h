@@ -15,47 +15,6 @@ namespace bzla::test {
 class TestCommon : public ::testing::Test
 {
  protected:
-  enum OpKind
-  {
-    ADD,
-    AND,
-    ASHR,
-    CONCAT,
-    DEC,
-    EQ,
-    IMPLIES,
-    ITE,
-    INC,
-    MUL,
-    NAND,
-    NE,
-    NEG,
-    NOR,
-    NOT,
-    OR,
-    REDAND,
-    REDOR,
-    SDIV,
-    SEXT,
-    SGT,
-    SGE,
-    SHL,
-    SHR,
-    SLT,
-    SLE,
-    SREM,
-    SUB,
-    UDIV,
-    UGT,
-    UGE,
-    ULT,
-    ULE,
-    UREM,
-    XNOR,
-    XOR,
-    ZEXT,
-  };
-
   static void gen_all_combinations(size_t size,
                                    const std::vector<char>& bits,
                                    std::vector<std::string>& values);

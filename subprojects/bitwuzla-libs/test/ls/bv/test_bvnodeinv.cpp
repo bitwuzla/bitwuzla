@@ -12,124 +12,158 @@ class TestBvNodeInv : public TestBvNode
 
 TEST_F(TestBvNodeInv, add)
 {
-  test_binary<BitVectorAdd>(INV, ADD, 0);
-  test_binary<BitVectorAdd>(INV, ADD, 1);
+  test_binary<BitVectorAdd>(INV, NodeKind::BV_ADD, 0);
+  test_binary<BitVectorAdd>(INV, NodeKind::BV_ADD, 1);
 }
 
 TEST_F(TestBvNodeInv, and)
 {
-  test_binary<BitVectorAnd>(INV, AND, 0);
-  test_binary<BitVectorAnd>(INV, AND, 1);
-  test_binary<BitVectorAnd>(INV, AND, 0, TestBvNode::BoundsKind::UNSIGNED);
-  test_binary<BitVectorAnd>(INV, AND, 1, TestBvNode::BoundsKind::UNSIGNED);
-  test_binary<BitVectorAnd>(INV, AND, 0, TestBvNode::BoundsKind::SIGNED);
-  test_binary<BitVectorAnd>(INV, AND, 1, TestBvNode::BoundsKind::SIGNED);
-  test_binary<BitVectorAnd>(INV, AND, 0, TestBvNode::BoundsKind::BOTH);
-  test_binary<BitVectorAnd>(INV, AND, 1, TestBvNode::BoundsKind::BOTH);
+  test_binary<BitVectorAnd>(INV, NodeKind::BV_AND, 0);
+  test_binary<BitVectorAnd>(INV, NodeKind::BV_AND, 1);
+  test_binary<BitVectorAnd>(
+      INV, NodeKind::BV_AND, 0, TestBvNode::BoundsKind::UNSIGNED);
+  test_binary<BitVectorAnd>(
+      INV, NodeKind::BV_AND, 1, TestBvNode::BoundsKind::UNSIGNED);
+  test_binary<BitVectorAnd>(
+      INV, NodeKind::BV_AND, 0, TestBvNode::BoundsKind::SIGNED);
+  test_binary<BitVectorAnd>(
+      INV, NodeKind::BV_AND, 1, TestBvNode::BoundsKind::SIGNED);
+  test_binary<BitVectorAnd>(
+      INV, NodeKind::BV_AND, 0, TestBvNode::BoundsKind::BOTH);
+  test_binary<BitVectorAnd>(
+      INV, NodeKind::BV_AND, 1, TestBvNode::BoundsKind::BOTH);
 }
 
 TEST_F(TestBvNodeInv, concat)
 {
-  test_binary<BitVectorConcat>(INV, OpKind::CONCAT, 0);
-  test_binary<BitVectorConcat>(INV, OpKind::CONCAT, 1);
+  test_binary<BitVectorConcat>(INV, NodeKind::BV_CONCAT, 0);
+  test_binary<BitVectorConcat>(INV, NodeKind::BV_CONCAT, 1);
 }
 
 TEST_F(TestBvNodeInv, eq)
 {
-  test_binary<BitVectorEq>(INV, EQ, 0);
-  test_binary<BitVectorEq>(INV, EQ, 1);
+  test_binary<BitVectorEq>(INV, NodeKind::EQ, 0);
+  test_binary<BitVectorEq>(INV, NodeKind::EQ, 1);
 }
 
 TEST_F(TestBvNodeInv, mul)
 {
-  test_binary<BitVectorMul>(INV, MUL, 0);
-  test_binary<BitVectorMul>(INV, MUL, 1);
+  test_binary<BitVectorMul>(INV, NodeKind::BV_MUL, 0);
+  test_binary<BitVectorMul>(INV, NodeKind::BV_MUL, 1);
 }
 
 TEST_F(TestBvNodeInv, shl)
 {
-  test_binary<BitVectorShl>(INV, SHL, 0);
-  test_binary<BitVectorShl>(INV, SHL, 1);
+  test_binary<BitVectorShl>(INV, NodeKind::BV_SHL, 0);
+  test_binary<BitVectorShl>(INV, NodeKind::BV_SHL, 1);
 }
 
 TEST_F(TestBvNodeInv, shr)
 {
-  test_binary<BitVectorShr>(INV, SHR, 0);
-  test_binary<BitVectorShr>(INV, SHR, 1);
+  test_binary<BitVectorShr>(INV, NodeKind::BV_SHR, 0);
+  test_binary<BitVectorShr>(INV, NodeKind::BV_SHR, 1);
 }
 
 TEST_F(TestBvNodeInv, ashr)
 {
-  test_binary<BitVectorAshr>(INV, ASHR, 0);
-  test_binary<BitVectorAshr>(INV, ASHR, 1);
+  test_binary<BitVectorAshr>(INV, NodeKind::BV_ASHR, 0);
+  test_binary<BitVectorAshr>(INV, NodeKind::BV_ASHR, 1);
 }
 
 TEST_F(TestBvNodeInv, slt)
 {
-  test_binary<BitVectorSlt>(INV, SLT, 0);
-  test_binary<BitVectorSlt>(INV, SLT, 1);
-  test_binary<BitVectorUlt>(INV, SLT, 0, NONE, OptimizationKind::CONCAT);
-  test_binary<BitVectorUlt>(INV, SLT, 1, NONE, OptimizationKind::CONCAT);
-  test_binary<BitVectorUlt>(INV, SLT, 0, NONE, OptimizationKind::SEXT);
-  test_binary<BitVectorUlt>(INV, SLT, 1, NONE, OptimizationKind::SEXT);
-  test_binary<BitVectorSlt>(INV, SLT, 0, SIGNED);
-  test_binary<BitVectorSlt>(INV, SLT, 1, SIGNED);
-  test_binary<BitVectorSlt>(INV, SLT, 0, SIGNED, OptimizationKind::CONCAT);
-  test_binary<BitVectorSlt>(INV, SLT, 1, SIGNED, OptimizationKind::CONCAT);
-  test_binary<BitVectorSlt>(INV, SLT, 0, SIGNED, OptimizationKind::SEXT);
-  test_binary<BitVectorSlt>(INV, SLT, 1, SIGNED, OptimizationKind::SEXT);
-  test_binary<BitVectorSlt>(INV, SLT, 0, BOTH);
-  test_binary<BitVectorSlt>(INV, SLT, 1, BOTH);
-  test_binary<BitVectorSlt>(INV, SLT, 0, BOTH, OptimizationKind::CONCAT);
-  test_binary<BitVectorSlt>(INV, SLT, 1, BOTH, OptimizationKind::CONCAT);
-  test_binary<BitVectorSlt>(INV, SLT, 0, BOTH, OptimizationKind::SEXT);
-  test_binary<BitVectorSlt>(INV, SLT, 1, BOTH, OptimizationKind::SEXT);
+  test_binary<BitVectorSlt>(INV, NodeKind::BV_SLT, 0);
+  test_binary<BitVectorSlt>(INV, NodeKind::BV_SLT, 1);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_SLT, 0, NONE, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_SLT, 1, NONE, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_SLT, 0, NONE, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_SLT, 1, NONE, OptimizationKind::SEXT);
+  test_binary<BitVectorSlt>(INV, NodeKind::BV_SLT, 0, SIGNED);
+  test_binary<BitVectorSlt>(INV, NodeKind::BV_SLT, 1, SIGNED);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 0, SIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 1, SIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 0, SIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 1, SIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorSlt>(INV, NodeKind::BV_SLT, 0, BOTH);
+  test_binary<BitVectorSlt>(INV, NodeKind::BV_SLT, 1, BOTH);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 0, BOTH, OptimizationKind::CONCAT);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 1, BOTH, OptimizationKind::CONCAT);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 0, BOTH, OptimizationKind::SEXT);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 1, BOTH, OptimizationKind::SEXT);
 }
 
 TEST_F(TestBvNodeInv, udiv)
 {
-  test_binary<BitVectorUdiv>(INV, UDIV, 0);
-  test_binary<BitVectorUdiv>(INV, UDIV, 1);
+  test_binary<BitVectorUdiv>(INV, NodeKind::BV_UDIV, 0);
+  test_binary<BitVectorUdiv>(INV, NodeKind::BV_UDIV, 1);
 }
 
 TEST_F(TestBvNodeInv, ult)
 {
-  test_binary<BitVectorUlt>(INV, ULT, 0);
-  test_binary<BitVectorUlt>(INV, ULT, 1);
-  test_binary<BitVectorUlt>(INV, ULT, 0, NONE, OptimizationKind::CONCAT);
-  test_binary<BitVectorUlt>(INV, ULT, 1, NONE, OptimizationKind::CONCAT);
-  test_binary<BitVectorUlt>(INV, ULT, 0, NONE, OptimizationKind::SEXT);
-  test_binary<BitVectorUlt>(INV, ULT, 1, NONE, OptimizationKind::SEXT);
-  test_binary<BitVectorUlt>(INV, ULT, 0, UNSIGNED);
-  test_binary<BitVectorUlt>(INV, ULT, 1, UNSIGNED);
-  test_binary<BitVectorUlt>(INV, ULT, 0, UNSIGNED, OptimizationKind::CONCAT);
-  test_binary<BitVectorUlt>(INV, ULT, 1, UNSIGNED, OptimizationKind::CONCAT);
-  test_binary<BitVectorUlt>(INV, ULT, 0, UNSIGNED, OptimizationKind::SEXT);
-  test_binary<BitVectorUlt>(INV, ULT, 1, UNSIGNED, OptimizationKind::SEXT);
-  test_binary<BitVectorUlt>(INV, ULT, 0, SIGNED);
-  test_binary<BitVectorUlt>(INV, ULT, 1, SIGNED);
-  test_binary<BitVectorUlt>(INV, ULT, 0, SIGNED, OptimizationKind::CONCAT);
-  test_binary<BitVectorUlt>(INV, ULT, 1, SIGNED, OptimizationKind::CONCAT);
-  test_binary<BitVectorUlt>(INV, ULT, 0, SIGNED, OptimizationKind::SEXT);
-  test_binary<BitVectorUlt>(INV, ULT, 1, SIGNED, OptimizationKind::SEXT);
-  test_binary<BitVectorUlt>(INV, ULT, 0, BOTH);
-  test_binary<BitVectorUlt>(INV, ULT, 1, BOTH);
-  test_binary<BitVectorUlt>(INV, ULT, 0, BOTH, OptimizationKind::CONCAT);
-  test_binary<BitVectorUlt>(INV, ULT, 1, BOTH, OptimizationKind::CONCAT);
-  test_binary<BitVectorUlt>(INV, ULT, 0, BOTH, OptimizationKind::SEXT);
-  test_binary<BitVectorUlt>(INV, ULT, 1, BOTH, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(INV, NodeKind::BV_ULT, 0);
+  test_binary<BitVectorUlt>(INV, NodeKind::BV_ULT, 1);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 0, NONE, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 1, NONE, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 0, NONE, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 1, NONE, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(INV, NodeKind::BV_ULT, 0, UNSIGNED);
+  test_binary<BitVectorUlt>(INV, NodeKind::BV_ULT, 1, UNSIGNED);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 0, UNSIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 1, UNSIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 0, UNSIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 1, UNSIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(INV, NodeKind::BV_ULT, 0, SIGNED);
+  test_binary<BitVectorUlt>(INV, NodeKind::BV_ULT, 1, SIGNED);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 0, SIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 1, SIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 0, SIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 1, SIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(INV, NodeKind::BV_ULT, 0, BOTH);
+  test_binary<BitVectorUlt>(INV, NodeKind::BV_ULT, 1, BOTH);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 0, BOTH, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 1, BOTH, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 0, BOTH, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(
+      INV, NodeKind::BV_ULT, 1, BOTH, OptimizationKind::SEXT);
 }
 
 TEST_F(TestBvNodeInv, urem)
 {
-  test_binary<BitVectorUrem>(INV, UREM, 0);
-  test_binary<BitVectorUrem>(INV, UREM, 1);
+  test_binary<BitVectorUrem>(INV, NodeKind::BV_UREM, 0);
+  test_binary<BitVectorUrem>(INV, NodeKind::BV_UREM, 1);
 }
 
 TEST_F(TestBvNodeInv, xor)
 {
-  test_binary<BitVectorXor>(INV, XOR, 0);
-  test_binary<BitVectorXor>(INV, XOR, 1);
+  test_binary<BitVectorXor>(INV, NodeKind::BV_XOR, 0);
+  test_binary<BitVectorXor>(INV, NodeKind::BV_XOR, 1);
 }
 
 TEST_F(TestBvNodeInv, ite)

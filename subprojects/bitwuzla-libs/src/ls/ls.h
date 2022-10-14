@@ -15,8 +15,10 @@ namespace ls {
 
 /* -------------------------------------------------------------------------- */
 
-enum class OperatorKind
+enum class NodeKind
 {
+  CONST,
+
   AND,
   EQ,
   // IMPLIES,
@@ -63,7 +65,7 @@ enum class OperatorKind
   NUM_OPS,
 };
 
-std::ostream& operator<<(std::ostream& out, const OperatorKind& kind);
+std::ostream& operator<<(std::ostream& out, const NodeKind& kind);
 
 /* -------------------------------------------------------------------------- */
 
@@ -101,8 +103,8 @@ class LocalSearch
     uint64_t d_nconf = 0;
 
 #ifndef NDEBUG
-    std::unordered_map<OperatorKind, uint64_t> d_ninv;
-    std::unordered_map<OperatorKind, uint64_t> d_ncons;
+    std::unordered_map<NodeKind, uint64_t> d_ninv;
+    std::unordered_map<NodeKind, uint64_t> d_ncons;
 #endif
   } d_statistics;
 
@@ -189,10 +191,10 @@ class LocalSearch
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }
 
   virtual uint64_t mk_node(uint64_t size)                                = 0;
-  virtual uint64_t mk_node(OperatorKind kind,
+  virtual uint64_t mk_node(NodeKind kind,
                            uint64_t size,
                            const std::vector<uint64_t>& children)        = 0;
-  virtual uint64_t mk_indexed_node(OperatorKind kind,
+  virtual uint64_t mk_indexed_node(NodeKind kind,
                                    uint64_t size,
                                    uint64_t child0,
                                    const std::vector<uint64_t>& indices) = 0;

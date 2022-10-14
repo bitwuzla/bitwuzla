@@ -18,7 +18,7 @@ class TestBvNodeSelPath : public TestBvNode
     BitVectorNode::s_prob_pick_ess_input = 1000;
   }
   template <class T>
-  void test_binary(OpKind op_kind);
+  void test_binary(NodeKind kind);
   void test_ite();
   void test_not();
   void test_extract();
@@ -27,17 +27,18 @@ class TestBvNodeSelPath : public TestBvNode
 
 template <class T>
 void
-TestBvNodeSelPath::test_binary(OpKind op_kind)
+TestBvNodeSelPath::test_binary(NodeKind kind)
 {
   uint64_t bw_s0 = TEST_BW;
   uint64_t bw_s1 = TEST_BW;
   uint64_t bw_t  = TEST_BW;
 
-  if (op_kind == ULT || op_kind == SLT || op_kind == EQ)
+  if (kind == NodeKind::BV_ULT || kind == NodeKind::BV_SLT
+      || kind == NodeKind::EQ)
   {
     bw_t = 1;
   }
-  else if (op_kind == OpKind::CONCAT)
+  else if (kind == NodeKind::BV_CONCAT)
   {
     bw_s1 = 2; /* decrease number of tests for concat */
     bw_t  = bw_s0 + bw_s1;
@@ -47,7 +48,7 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
 
   std::vector<std::string>& s0values = d_xvalues;
   std::vector<std::string> s1values;
-  if (op_kind == OpKind::CONCAT)
+  if (kind == NodeKind::BV_CONCAT)
   {
     gen_xvalues(bw_s1, s1values);
   }
@@ -520,34 +521,43 @@ TestBvNodeSelPath::test_sext()
   }
 }
 
-TEST_F(TestBvNodeSelPath, add) { test_binary<BitVectorAdd>(ADD); }
+TEST_F(TestBvNodeSelPath, add) { test_binary<BitVectorAdd>(NodeKind::BV_ADD); }
 
-TEST_F(TestBvNodeSelPath, and) { test_binary<BitVectorAnd>(AND); }
+TEST_F(TestBvNodeSelPath, and) { test_binary<BitVectorAnd>(NodeKind::BV_AND); }
 
 TEST_F(TestBvNodeSelPath, concat)
 {
-  test_binary<BitVectorConcat>(OpKind::CONCAT);
+  test_binary<BitVectorConcat>(NodeKind::BV_CONCAT);
 }
 
-TEST_F(TestBvNodeSelPath, eq) { test_binary<BitVectorEq>(EQ); }
+TEST_F(TestBvNodeSelPath, eq) { test_binary<BitVectorEq>(NodeKind::EQ); }
 
-TEST_F(TestBvNodeSelPath, mul) { test_binary<BitVectorMul>(MUL); }
+TEST_F(TestBvNodeSelPath, mul) { test_binary<BitVectorMul>(NodeKind::BV_MUL); }
 
-TEST_F(TestBvNodeSelPath, shl) { test_binary<BitVectorShl>(SHL); }
+TEST_F(TestBvNodeSelPath, shl) { test_binary<BitVectorShl>(NodeKind::BV_SHL); }
 
-TEST_F(TestBvNodeSelPath, shr) { test_binary<BitVectorShr>(SHR); }
+TEST_F(TestBvNodeSelPath, shr) { test_binary<BitVectorShr>(NodeKind::BV_SHR); }
 
-TEST_F(TestBvNodeSelPath, ashr) { test_binary<BitVectorAshr>(ASHR); }
+TEST_F(TestBvNodeSelPath, ashr)
+{
+  test_binary<BitVectorAshr>(NodeKind::BV_ASHR);
+}
 
-TEST_F(TestBvNodeSelPath, udiv) { test_binary<BitVectorUdiv>(UDIV); }
+TEST_F(TestBvNodeSelPath, udiv)
+{
+  test_binary<BitVectorUdiv>(NodeKind::BV_UDIV);
+}
 
-TEST_F(TestBvNodeSelPath, ult) { test_binary<BitVectorUlt>(ULT); }
+TEST_F(TestBvNodeSelPath, ult) { test_binary<BitVectorUlt>(NodeKind::BV_ULT); }
 
-TEST_F(TestBvNodeSelPath, slt) { test_binary<BitVectorSlt>(SLT); }
+TEST_F(TestBvNodeSelPath, slt) { test_binary<BitVectorSlt>(NodeKind::BV_SLT); }
 
-TEST_F(TestBvNodeSelPath, urem) { test_binary<BitVectorUrem>(UREM); }
+TEST_F(TestBvNodeSelPath, urem)
+{
+  test_binary<BitVectorUrem>(NodeKind::BV_UREM);
+}
 
-TEST_F(TestBvNodeSelPath, xor) { test_binary<BitVectorXor>(XOR); }
+TEST_F(TestBvNodeSelPath, xor) { test_binary<BitVectorXor>(NodeKind::BV_XOR); }
 
 TEST_F(TestBvNodeSelPath, ite) { test_ite(); }
 

@@ -110,13 +110,13 @@ BitVectorNode::BitVectorNode(RNG* rng,
 bool
 BitVectorNode::is_inequality() const
 {
-  return get_kind() == Kind::SLT || get_kind() == Kind::ULT;
+  return get_kind() == NodeKind::BV_SLT || get_kind() == NodeKind::BV_ULT;
 }
 
 bool
 BitVectorNode::is_not() const
 {
-  return get_kind() == Kind::NOT;
+  return get_kind() == NodeKind::BV_NOT;
 }
 
 uint32_t
@@ -585,34 +585,6 @@ std::ostream&
 operator<<(std::ostream& out, const BitVectorNode& node)
 {
   out << node.to_string();
-  return out;
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorNode::Kind kind)
-{
-  switch (kind)
-  {
-    case BitVectorNode::ADD: out << "ADD"; break;
-    case BitVectorNode::AND: out << "AND"; break;
-    case BitVectorNode::ASHR: out << "ASHR"; break;
-    case BitVectorNode::CONCAT: out << "CONCAT"; break;
-    case BitVectorNode::CONST: out << "CONST"; break;
-    case BitVectorNode::EXTRACT: out << "EXTRACT"; break;
-    case BitVectorNode::EQ: out << "EQ"; break;
-    case BitVectorNode::ITE: out << "ITE"; break;
-    case BitVectorNode::MUL: out << "MUL"; break;
-    case BitVectorNode::NOT: out << "NOT"; break;
-    case BitVectorNode::SEXT: out << "SEXT"; break;
-    case BitVectorNode::SHL: out << "SHL"; break;
-    case BitVectorNode::SHR: out << "SHR"; break;
-    case BitVectorNode::SLT: out << "SLT"; break;
-    case BitVectorNode::UDIV: out << "UDIV"; break;
-    case BitVectorNode::ULT: out << "ULT"; break;
-    case BitVectorNode::UREM: out << "UREM"; break;
-    case BitVectorNode::XOR: out << "XOR"; break;
-    default: assert(false);
-  };
   return out;
 }
 
@@ -3820,7 +3792,8 @@ BitVectorUlt::is_invertible(const BitVector& t,
   bool is_true             = t.is_true();
 
   uint64_t n = 0, bw_x = 0, bw_xx = 0;
-  bool opt_sext = d_opt_concat_sext && d_children[pos_x]->get_kind() == SEXT;
+  bool opt_sext =
+      d_opt_concat_sext && d_children[pos_x]->get_kind() == NodeKind::BV_SEXT;
   const BitVectorDomain* dx = &x;
   BitVectorDomain dxn, dxx, ddx;
 
@@ -4054,7 +4027,7 @@ BitVector*
 BitVectorUlt::inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s)
 {
   BitVectorNode& op_x = *d_children[pos_x];
-  assert(op_x.get_kind() == CONCAT);
+  assert(op_x.get_kind() == NodeKind::BV_CONCAT);
   BitVectorNode& op_s = *d_children[pos_s];
 
   const BitVectorDomain& dx = op_x.domain();
@@ -4415,7 +4388,8 @@ BitVectorSlt::is_invertible(const BitVector& t,
   bool is_true             = t.is_true();
 
   uint64_t n = 0, bw_x = 0, bw_xx = 0;
-  bool opt_sext = d_opt_concat_sext && d_children[pos_x]->get_kind() == SEXT;
+  bool opt_sext =
+      d_opt_concat_sext && d_children[pos_x]->get_kind() == NodeKind::BV_SEXT;
   const BitVectorDomain* dx = &x;
   BitVectorDomain dxn, dxx, ddx;
 
@@ -4618,7 +4592,7 @@ BitVector*
 BitVectorSlt::inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s)
 {
   BitVectorNode& op_x = *d_children[pos_x];
-  assert(op_x.get_kind() == CONCAT);
+  assert(op_x.get_kind() == NodeKind::BV_CONCAT);
   BitVectorNode& op_s = *d_children[pos_s];
 
   const BitVectorDomain& dx = op_x.domain();

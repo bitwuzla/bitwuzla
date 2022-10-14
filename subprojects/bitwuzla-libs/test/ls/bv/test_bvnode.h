@@ -19,7 +19,7 @@ class TestBvNodeCommon : public ::bzla::test::TestCommon
     d_rng.reset(new RNG(1234));
   }
 
-  BitVector eval_op_binary(OpKind op_kind,
+  BitVector eval_op_binary(NodeKind op_kind,
                            const BitVector& x_val,
                            const BitVector& s_val,
                            uint32_t pos_x) const;
@@ -32,7 +32,7 @@ class TestBvNodeCommon : public ::bzla::test::TestCommon
 };
 
 BitVector
-TestBvNodeCommon::eval_op_binary(OpKind op_kind,
+TestBvNodeCommon::eval_op_binary(NodeKind op_kind,
                                  const BitVector& x_val,
                                  const BitVector& s_val,
                                  uint32_t pos_x) const
@@ -40,38 +40,45 @@ TestBvNodeCommon::eval_op_binary(OpKind op_kind,
   BitVector res;
   switch (op_kind)
   {
-    case ADD: res = pos_x ? s_val.bvadd(x_val) : x_val.bvadd(s_val); break;
-    case AND: res = pos_x ? s_val.bvand(x_val) : x_val.bvand(s_val); break;
-    case ASHR: res = pos_x ? s_val.bvashr(x_val) : x_val.bvashr(s_val); break;
-    case CONCAT:
+    case NodeKind::BV_ADD:
+      res = pos_x ? s_val.bvadd(x_val) : x_val.bvadd(s_val);
+      break;
+    case NodeKind::BV_AND:
+      res = pos_x ? s_val.bvand(x_val) : x_val.bvand(s_val);
+      break;
+    case NodeKind::BV_ASHR:
+      res = pos_x ? s_val.bvashr(x_val) : x_val.bvashr(s_val);
+      break;
+    case NodeKind::BV_CONCAT:
       res = pos_x ? s_val.bvconcat(x_val) : x_val.bvconcat(s_val);
       break;
-    case EQ: res = pos_x ? s_val.bveq(x_val) : x_val.bveq(s_val); break;
-    case IMPLIES:
-      res = pos_x ? s_val.bvimplies(x_val) : x_val.bvimplies(s_val);
+    case NodeKind::EQ:
+      res = pos_x ? s_val.bveq(x_val) : x_val.bveq(s_val);
       break;
-    case MUL: res = pos_x ? s_val.bvmul(x_val) : x_val.bvmul(s_val); break;
-    case NAND: res = pos_x ? s_val.bvnand(x_val) : x_val.bvnand(s_val); break;
-    case NE: res = pos_x ? s_val.bvne(x_val) : x_val.bvne(s_val); break;
-    case NOR: res = pos_x ? s_val.bvnor(x_val) : x_val.bvnor(s_val); break;
-    case OR: res = pos_x ? s_val.bvor(x_val) : x_val.bvor(s_val); break;
-    case SDIV: res = pos_x ? s_val.bvsdiv(x_val) : x_val.bvsdiv(s_val); break;
-    case SGT: res = pos_x ? s_val.bvsgt(x_val) : x_val.bvsgt(s_val); break;
-    case SGE: res = pos_x ? s_val.bvsge(x_val) : x_val.bvsge(s_val); break;
-    case SHL: res = pos_x ? s_val.bvshl(x_val) : x_val.bvshl(s_val); break;
-    case SHR: res = pos_x ? s_val.bvshr(x_val) : x_val.bvshr(s_val); break;
-    case SLT: res = pos_x ? s_val.bvslt(x_val) : x_val.bvslt(s_val); break;
-    case SLE: res = pos_x ? s_val.bvsle(x_val) : x_val.bvsle(s_val); break;
-    case SREM: res = pos_x ? s_val.bvsrem(x_val) : x_val.bvsrem(s_val); break;
-    case SUB: res = pos_x ? s_val.bvsub(x_val) : x_val.bvsub(s_val); break;
-    case UDIV: res = pos_x ? s_val.bvudiv(x_val) : x_val.bvudiv(s_val); break;
-    case UGT: res = pos_x ? s_val.bvugt(x_val) : x_val.bvugt(s_val); break;
-    case UGE: res = pos_x ? s_val.bvuge(x_val) : x_val.bvuge(s_val); break;
-    case ULT: res = pos_x ? s_val.bvult(x_val) : x_val.bvult(s_val); break;
-    case ULE: res = pos_x ? s_val.bvule(x_val) : x_val.bvule(s_val); break;
-    case UREM: res = pos_x ? s_val.bvurem(x_val) : x_val.bvurem(s_val); break;
-    case XNOR: res = pos_x ? s_val.bvxnor(x_val) : x_val.bvxnor(s_val); break;
-    case XOR: res = pos_x ? s_val.bvxor(x_val) : x_val.bvxor(s_val); break;
+    case NodeKind::BV_MUL:
+      res = pos_x ? s_val.bvmul(x_val) : x_val.bvmul(s_val);
+      break;
+    case NodeKind::BV_SHL:
+      res = pos_x ? s_val.bvshl(x_val) : x_val.bvshl(s_val);
+      break;
+    case NodeKind::BV_SHR:
+      res = pos_x ? s_val.bvshr(x_val) : x_val.bvshr(s_val);
+      break;
+    case NodeKind::BV_SLT:
+      res = pos_x ? s_val.bvslt(x_val) : x_val.bvslt(s_val);
+      break;
+    case NodeKind::BV_UDIV:
+      res = pos_x ? s_val.bvudiv(x_val) : x_val.bvudiv(s_val);
+      break;
+    case NodeKind::BV_ULT:
+      res = pos_x ? s_val.bvult(x_val) : x_val.bvult(s_val);
+      break;
+    case NodeKind::BV_UREM:
+      res = pos_x ? s_val.bvurem(x_val) : x_val.bvurem(s_val);
+      break;
+    case NodeKind::BV_XOR:
+      res = pos_x ? s_val.bvxor(x_val) : x_val.bvxor(s_val);
+      break;
     default: assert(false);
   }
   return res;
@@ -105,18 +112,18 @@ class TestBvNode : public TestBvNodeCommon
   };
 
   bool check_sat_binary(Kind kind,
-                        OpKind op_kind,
+                        NodeKind op_kind,
                         BitVectorNode* op_x,
                         const BitVector& t,
                         const BitVector& s_val,
                         uint32_t pos_x,
                         OptimizationKind opt_kind = DEFAULT) const;
-  bool check_sat_binary_cons(OpKind op_kind,
+  bool check_sat_binary_cons(NodeKind op_kind,
                              const BitVector& x_val,
                              const BitVector& t,
                              uint64_t s_size,
                              uint32_t pos_x) const;
-  bool check_sat_binary_is_ess(OpKind op_kind,
+  bool check_sat_binary_is_ess(NodeKind op_kind,
                                const BitVector& x_val,
                                const BitVector& t,
                                const BitVectorDomain& s,
@@ -154,7 +161,7 @@ class TestBvNode : public TestBvNodeCommon
 
   template <class T>
   void test_binary(Kind kind,
-                   OpKind op_kind,
+                   NodeKind op_kind,
                    uint32_t pos_x,
                    BoundsKind bounds_kind    = NONE,
                    OptimizationKind opt_kind = DEFAULT);
@@ -186,7 +193,7 @@ class TestBvNode : public TestBvNodeCommon
 
 bool
 TestBvNode::check_sat_binary(Kind kind,
-                             OpKind op_kind,
+                             NodeKind op_kind,
                              BitVectorNode* op_x,
                              const BitVector& t,
                              const BitVector& s_val,
@@ -275,7 +282,7 @@ TestBvNode::check_sat_binary(Kind kind,
 }
 
 bool
-TestBvNode::check_sat_binary_cons(OpKind op_kind,
+TestBvNode::check_sat_binary_cons(NodeKind op_kind,
                                   const BitVector& x_val,
                                   const BitVector& t,
                                   uint64_t s_size,
@@ -294,7 +301,7 @@ TestBvNode::check_sat_binary_cons(OpKind op_kind,
 }
 
 bool
-TestBvNode::check_sat_binary_is_ess(OpKind op_kind,
+TestBvNode::check_sat_binary_is_ess(NodeKind op_kind,
                                     const BitVector& x_val,
                                     const BitVector& t,
                                     const BitVectorDomain& s,
@@ -536,7 +543,7 @@ TestBvNode::check_sat_sext(Kind kind,
 template <class T>
 void
 TestBvNode::test_binary(Kind kind,
-                        OpKind op_kind,
+                        NodeKind op_kind,
                         uint32_t pos_x,
                         TestBvNode::BoundsKind bounds_kind,
                         OptimizationKind opt_kind)
@@ -545,11 +552,12 @@ TestBvNode::test_binary(Kind kind,
   uint64_t bw_s = TEST_BW;
   uint64_t bw_t = TEST_BW;
 
-  if (op_kind == ULT || op_kind == SLT || op_kind == EQ)
+  if (op_kind == NodeKind::BV_ULT || op_kind == NodeKind::BV_SLT
+      || op_kind == NodeKind::EQ)
   {
     bw_t = 1;
   }
-  else if (op_kind == OpKind::CONCAT)
+  else if (op_kind == NodeKind::BV_CONCAT)
   {
     bw_s = 2; /* decrease number of tests for concat */
     bw_t = bw_s + bw_x;
@@ -562,7 +570,7 @@ TestBvNode::test_binary(Kind kind,
   if (kind == IS_ESS)
   {
     std::vector<std::string> svalues;
-    if (op_kind == OpKind::CONCAT)
+    if (op_kind == NodeKind::BV_CONCAT)
     {
       gen_xvalues(bw_s, svalues);
     }
@@ -684,7 +692,7 @@ TestBvNode::test_binary(Kind kind,
             }
             else
             {
-              if (op_kind == ULT)
+              if (op_kind == NodeKind::BV_ULT)
               {
                 op.reset(
                     new BitVectorUlt(d_rng.get(),
@@ -695,7 +703,7 @@ TestBvNode::test_binary(Kind kind,
               }
               else
               {
-                assert(op_kind == SLT);
+                assert(op_kind == NodeKind::BV_SLT);
                 op.reset(
                     new BitVectorSlt(d_rng.get(),
                                      bw_t,
@@ -750,7 +758,7 @@ TestBvNode::test_binary(Kind kind,
                 std::cout << "x: " << x_value << ": " << x_val << std::endl;
                 std::cout << "s: " << s_val << std::endl;
                 if (opt_kind != DEFAULT
-                    && op_x->get_kind() == BitVectorNode::Kind::SEXT)
+                    && op_x->get_kind() == NodeKind::BV_SEXT)
                 {
                   std::cout
                       << "n: "

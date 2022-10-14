@@ -61,37 +61,36 @@ class TestLsBv : public TestBvNodeCommon
     d_ls->set_assignment(d_v3, d_six4);
 
     // v1 + c1
-    d_v1pc1 = d_ls->mk_node(OperatorKind::BV_ADD, TEST_BW, {d_v1, d_c1});
+    d_v1pc1 = d_ls->mk_node(NodeKind::BV_ADD, TEST_BW, {d_v1, d_c1});
     // (v1 + c1) * v2
-    d_v1pc1mv2 = d_ls->mk_node(OperatorKind::BV_MUL, TEST_BW, {d_v1pc1, d_v2});
+    d_v1pc1mv2 = d_ls->mk_node(NodeKind::BV_MUL, TEST_BW, {d_v1pc1, d_v2});
     // v1 + v2
-    d_v1pv2 = d_ls->mk_node(OperatorKind::BV_ADD, TEST_BW, {d_v1, d_v2});
+    d_v1pv2 = d_ls->mk_node(NodeKind::BV_ADD, TEST_BW, {d_v1, d_v2});
     // (v1 + v2) & v2
-    d_v1pv2av2 = d_ls->mk_node(OperatorKind::BV_AND, TEST_BW, {d_v1pv2, d_v2});
+    d_v1pv2av2 = d_ls->mk_node(NodeKind::BV_AND, TEST_BW, {d_v1pv2, d_v2});
 
     // v1[0:0]
-    d_v1e = d_ls->mk_indexed_node(OperatorKind::BV_EXTRACT, 1, d_v1, {0, 0});
+    d_v1e = d_ls->mk_indexed_node(NodeKind::BV_EXTRACT, 1, d_v1, {0, 0});
     // v3[0:0]
-    d_v3e = d_ls->mk_indexed_node(OperatorKind::BV_EXTRACT, 1, d_v3, {0, 0});
+    d_v3e = d_ls->mk_indexed_node(NodeKind::BV_EXTRACT, 1, d_v3, {0, 0});
     // v1[0:0] / v3[0:0]
-    d_v1edv3e = d_ls->mk_node(OperatorKind::BV_UDIV, 1, {d_v1e, d_v3e});
+    d_v1edv3e = d_ls->mk_node(NodeKind::BV_UDIV, 1, {d_v1e, d_v3e});
     // sext(v1[0:0] / v3[0:0], 3)
     d_v1edv3e_ext =
-        d_ls->mk_indexed_node(OperatorKind::BV_SEXT, TEST_BW, d_v1edv3e, {3});
+        d_ls->mk_indexed_node(NodeKind::BV_SEXT, TEST_BW, d_v1edv3e, {3});
 
     // v3 << c1
-    d_v3sc1 = d_ls->mk_node(OperatorKind::BV_SHL, TEST_BW, {d_v3, d_c1});
+    d_v3sc1 = d_ls->mk_node(NodeKind::BV_SHL, TEST_BW, {d_v3, d_c1});
     // (v3 << c1) + v3
-    d_v3sc1pv3 = d_ls->mk_node(OperatorKind::BV_ADD, TEST_BW, {d_v3sc1, d_v3});
+    d_v3sc1pv3 = d_ls->mk_node(NodeKind::BV_ADD, TEST_BW, {d_v3sc1, d_v3});
     // ((v3 << c1) + v3) + v1
     d_v3sc1pv3pv1 =
-        d_ls->mk_node(OperatorKind::BV_ADD, TEST_BW, {d_v3sc1pv3, d_v1});
+        d_ls->mk_node(NodeKind::BV_ADD, TEST_BW, {d_v3sc1pv3, d_v1});
 
     // root1: (v1 + c1) + v2 < (v1 + v2) & v2
-    d_root1 = d_ls->mk_node(OperatorKind::BV_SLT, 1, {d_v1pc1mv2, d_v1pv2av2});
+    d_root1 = d_ls->mk_node(NodeKind::BV_SLT, 1, {d_v1pc1mv2, d_v1pv2av2});
     // root2: sext(v1[0:0] + v3[0:0], 3) = ((v3 + c1) + v3) + v1
-    d_root2 =
-        d_ls->mk_node(OperatorKind::EQ, 1, {d_v1edv3e_ext, d_v3sc1pv3pv1});
+    d_root2 = d_ls->mk_node(NodeKind::EQ, 1, {d_v1edv3e_ext, d_v3sc1pv3pv1});
   }
 
   /**
@@ -113,7 +112,7 @@ class TestLsBv : public TestBvNodeCommon
    */
   void update_cone(uint64_t id, const BitVector& assignment);
 
-  void test_move_binary(OpKind opkind, OperatorKind kind, uint32_t pos_x);
+  void test_move_binary(NodeKind kind, uint32_t pos_x);
   void test_move_ite(uint32_t pos_x);
   void test_move_not();
   void test_move_extract();
@@ -172,7 +171,7 @@ TestLsBv::update_cone(uint64_t id, const BitVector& assignment)
 }
 
 void
-TestLsBv::test_move_binary(OpKind opkind, OperatorKind kind, uint32_t pos_x)
+TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
 {
   std::vector<std::string> xvalues;
   if (TEST_SLOW)
@@ -198,7 +197,7 @@ TestLsBv::test_move_binary(OpKind opkind, OperatorKind kind, uint32_t pos_x)
         do
         {
           BitVector x_val = genx.has_next() ? genx.next() : x.lo();
-          BitVector t_val = eval_op_binary(opkind, x_val, s_val, pos_x);
+          BitVector t_val = eval_op_binary(kind, x_val, s_val, pos_x);
 
           uint64_t bw_t = t_val.size();
 
@@ -218,7 +217,7 @@ TestLsBv::test_move_binary(OpKind opkind, OperatorKind kind, uint32_t pos_x)
                     : ls.mk_node(kind, BitVectorDomain(bw_t), {op_s, op_x});
             uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
             uint64_t root =
-                ls.mk_node(OperatorKind::EQ, BitVectorDomain(1), {op, t});
+                ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
             Result res = ls.move();
             assert(!ls.get_domain(root).is_fixed()
@@ -251,7 +250,7 @@ TestLsBv::test_move_binary(OpKind opkind, OperatorKind kind, uint32_t pos_x)
                     : ls.mk_node(kind, BitVectorDomain(bw_t), {op_s, op_x});
             uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
             uint64_t root =
-                ls.mk_node(OperatorKind::EQ, BitVectorDomain(1), {op, t});
+                ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
             Result res;
             do
@@ -357,18 +356,18 @@ TestLsBv::test_move_ite(uint32_t pos_x)
                 uint64_t op_x  = ls.mk_node(rx_val, x);
                 uint64_t op =
                     pos_x == 0
-                        ? ls.mk_node(OperatorKind::ITE,
+                        ? ls.mk_node(NodeKind::ITE,
                                      BitVectorDomain(bw_t),
                                      {op_x, op_s0, op_s1})
-                        : (pos_x == 1 ? ls.mk_node(OperatorKind::ITE,
+                        : (pos_x == 1 ? ls.mk_node(NodeKind::ITE,
                                                    BitVectorDomain(bw_t),
                                                    {op_s0, op_x, op_s1})
-                                      : ls.mk_node(OperatorKind::ITE,
+                                      : ls.mk_node(NodeKind::ITE,
                                                    BitVectorDomain(bw_t),
                                                    {op_s0, op_s1, op_x}));
                 uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
                 uint64_t root =
-                    ls.mk_node(OperatorKind::EQ, BitVectorDomain(1), {op, t});
+                    ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
                 ls.register_root(root);
                 Result res = ls.move();
                 assert(!ls.get_domain(root).is_fixed()
@@ -394,18 +393,18 @@ TestLsBv::test_move_ite(uint32_t pos_x)
                 uint64_t op_x  = ls.mk_node(rx_val, x);
                 uint64_t op =
                     pos_x == 0
-                        ? ls.mk_node(OperatorKind::ITE,
+                        ? ls.mk_node(NodeKind::ITE,
                                      BitVectorDomain(bw_t),
                                      {op_x, op_s0, op_s1})
-                        : (pos_x == 1 ? ls.mk_node(OperatorKind::ITE,
+                        : (pos_x == 1 ? ls.mk_node(NodeKind::ITE,
                                                    BitVectorDomain(bw_t),
                                                    {op_s0, op_x, op_s1})
-                                      : ls.mk_node(OperatorKind::ITE,
+                                      : ls.mk_node(NodeKind::ITE,
                                                    BitVectorDomain(bw_t),
                                                    {op_s0, op_s1, op_x}));
                 uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
                 uint64_t root =
-                    ls.mk_node(OperatorKind::EQ, BitVectorDomain(1), {op, t});
+                    ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
                 ls.register_root(root);
                 Result res;
                 do
@@ -458,10 +457,9 @@ TestLsBv::test_move_not()
 
       LocalSearchBV ls(100, 100);
       uint64_t op_x = ls.mk_node(rx_val, x);
-      uint64_t op =
-          ls.mk_node(OperatorKind::NOT, BitVectorDomain(bw_t), {op_x});
+      uint64_t op   = ls.mk_node(NodeKind::NOT, BitVectorDomain(bw_t), {op_x});
       uint64_t t    = ls.mk_node(t_val, BitVectorDomain(t_val));
-      uint64_t root = ls.mk_node(OperatorKind::EQ, BitVectorDomain(1), {op, t});
+      uint64_t root = ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
       ls.register_root(root);
       Result res = ls.move();
       assert(!ls.get_domain(root).is_fixed()
@@ -508,13 +506,11 @@ TestLsBv::test_move_extract()
 
             LocalSearchBV ls(100, 100);
             uint64_t op_x = ls.mk_node(rx_val, x);
-            uint64_t op   = ls.mk_indexed_node(OperatorKind::BV_EXTRACT,
-                                             BitVectorDomain(bw_t),
-                                             op_x,
-                                             {hi, lo});
+            uint64_t op   = ls.mk_indexed_node(
+                NodeKind::BV_EXTRACT, BitVectorDomain(bw_t), op_x, {hi, lo});
             uint64_t t  = ls.mk_node(t_val, BitVectorDomain(t_val));
             uint64_t root =
-                ls.mk_node(OperatorKind::EQ, BitVectorDomain(1), {op, t});
+                ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
             Result res = ls.move();
             assert(!ls.get_domain(root).is_fixed()
@@ -563,10 +559,9 @@ TestLsBv::test_move_sext()
         LocalSearchBV ls(100, 100);
         uint64_t op_x = ls.mk_node(rx_val, x);
         uint64_t op   = ls.mk_indexed_node(
-            OperatorKind::BV_SEXT, BitVectorDomain(bw_t), op_x, {n});
+            NodeKind::BV_SEXT, BitVectorDomain(bw_t), op_x, {n});
         uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
-        uint64_t root =
-            ls.mk_node(OperatorKind::EQ, BitVectorDomain(1), {op, t});
+        uint64_t root = ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
         ls.register_root(root);
         Result res = ls.move();
         assert(!ls.get_domain(root).is_fixed()
@@ -822,80 +817,80 @@ TEST_F(TestLsBv, update_cone)
 
 TEST_F(TestLsBv, move_add)
 {
-  test_move_binary(ADD, OperatorKind::BV_ADD, 0);
-  test_move_binary(ADD, OperatorKind::BV_ADD, 1);
+  test_move_binary(NodeKind::BV_ADD, 0);
+  test_move_binary(NodeKind::BV_ADD, 1);
 }
 
 TEST_F(TestLsBv, move_and)
 {
-  test_move_binary(AND, OperatorKind::BV_AND, 0);
-  test_move_binary(AND, OperatorKind::BV_AND, 1);
+  test_move_binary(NodeKind::BV_AND, 0);
+  test_move_binary(NodeKind::BV_AND, 1);
 }
 
 TEST_F(TestLsBv, move_concat)
 {
-  test_move_binary(CONCAT, OperatorKind::BV_CONCAT, 0);
-  test_move_binary(CONCAT, OperatorKind::BV_CONCAT, 1);
+  test_move_binary(NodeKind::BV_CONCAT, 0);
+  test_move_binary(NodeKind::BV_CONCAT, 1);
 }
 
 TEST_F(TestLsBv, move_eq)
 {
-  test_move_binary(EQ, OperatorKind::EQ, 0);
-  test_move_binary(EQ, OperatorKind::EQ, 1);
+  test_move_binary(NodeKind::EQ, 0);
+  test_move_binary(NodeKind::EQ, 1);
 }
 
 TEST_F(TestLsBv, move_mul)
 {
-  test_move_binary(MUL, OperatorKind::BV_MUL, 0);
-  test_move_binary(MUL, OperatorKind::BV_MUL, 1);
+  test_move_binary(NodeKind::BV_MUL, 0);
+  test_move_binary(NodeKind::BV_MUL, 1);
 }
 
 TEST_F(TestLsBv, move_shl)
 {
-  test_move_binary(SHL, OperatorKind::BV_SHL, 0);
-  test_move_binary(SHL, OperatorKind::BV_SHL, 1);
+  test_move_binary(NodeKind::BV_SHL, 0);
+  test_move_binary(NodeKind::BV_SHL, 1);
 }
 
 TEST_F(TestLsBv, move_shr)
 {
-  test_move_binary(SHR, OperatorKind::BV_SHR, 0);
-  test_move_binary(SHR, OperatorKind::BV_SHR, 1);
+  test_move_binary(NodeKind::BV_SHR, 0);
+  test_move_binary(NodeKind::BV_SHR, 1);
 }
 
 TEST_F(TestLsBv, move_ashr)
 {
-  test_move_binary(ASHR, OperatorKind::BV_ASHR, 0);
-  test_move_binary(ASHR, OperatorKind::BV_ASHR, 1);
+  test_move_binary(NodeKind::BV_ASHR, 0);
+  test_move_binary(NodeKind::BV_ASHR, 1);
 }
 
 TEST_F(TestLsBv, move_udiv)
 {
-  test_move_binary(UDIV, OperatorKind::BV_UDIV, 0);
-  test_move_binary(UDIV, OperatorKind::BV_UDIV, 1);
+  test_move_binary(NodeKind::BV_UDIV, 0);
+  test_move_binary(NodeKind::BV_UDIV, 1);
 }
 
 TEST_F(TestLsBv, move_ult)
 {
-  test_move_binary(ULT, OperatorKind::BV_ULT, 0);
-  test_move_binary(ULT, OperatorKind::BV_ULT, 1);
+  test_move_binary(NodeKind::BV_ULT, 0);
+  test_move_binary(NodeKind::BV_ULT, 1);
 }
 
 TEST_F(TestLsBv, move_slt)
 {
-  test_move_binary(SLT, OperatorKind::BV_SLT, 0);
-  test_move_binary(SLT, OperatorKind::BV_SLT, 1);
+  test_move_binary(NodeKind::BV_SLT, 0);
+  test_move_binary(NodeKind::BV_SLT, 1);
 }
 
 TEST_F(TestLsBv, move_urem)
 {
-  test_move_binary(UREM, OperatorKind::BV_UREM, 0);
-  test_move_binary(UREM, OperatorKind::BV_UREM, 1);
+  test_move_binary(NodeKind::BV_UREM, 0);
+  test_move_binary(NodeKind::BV_UREM, 1);
 }
 
 TEST_F(TestLsBv, move_xor)
 {
-  test_move_binary(XOR, OperatorKind::BV_XOR, 0);
-  test_move_binary(XOR, OperatorKind::BV_XOR, 1);
+  test_move_binary(NodeKind::BV_XOR, 0);
+  test_move_binary(NodeKind::BV_XOR, 1);
 }
 
 TEST_F(TestLsBv, ite)
