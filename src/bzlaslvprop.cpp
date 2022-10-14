@@ -174,14 +174,14 @@ PropSolverState::mk_node(BzlaNode *node)
     case BZLA_BV_ADD_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::OperatorKind::BV_ADD,
+          d_ls->mk_node(bzla::ls::NodeKind::BV_ADD,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_AND_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::OperatorKind::BV_AND,
+          d_ls->mk_node(bzla::ls::NodeKind::BV_AND,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
@@ -190,7 +190,7 @@ PropSolverState::mk_node(BzlaNode *node)
       if (d_use_sext && bzla_exp_is_bv_sext(d_bzla, node))
       {
         res =
-            d_ls->mk_indexed_node(bzla::ls::OperatorKind::BV_SEXT,
+            d_ls->mk_indexed_node(bzla::ls::NodeKind::BV_SEXT,
                                   domain,
                                   d_node_map.at(node->e[1]),
                                   {bzla_node_bv_get_width(d_bzla, node->e[0])});
@@ -198,7 +198,7 @@ PropSolverState::mk_node(BzlaNode *node)
       else
       {
         res = d_ls->mk_node(
-            bzla::ls::OperatorKind::BV_CONCAT,
+            bzla::ls::NodeKind::BV_CONCAT,
             domain,
             {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       }
@@ -206,27 +206,27 @@ PropSolverState::mk_node(BzlaNode *node)
     case BZLA_BV_EQ_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::OperatorKind::EQ,
+          d_ls->mk_node(bzla::ls::NodeKind::EQ,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_MUL_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::OperatorKind::BV_MUL,
+          d_ls->mk_node(bzla::ls::NodeKind::BV_MUL,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_ULT_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::OperatorKind::BV_ULT,
+          d_ls->mk_node(bzla::ls::NodeKind::BV_ULT,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_SLICE_NODE:
       assert(node->arity == 1);
-      res = d_ls->mk_indexed_node(bzla::ls::OperatorKind::BV_EXTRACT,
+      res = d_ls->mk_indexed_node(bzla::ls::NodeKind::BV_EXTRACT,
                                   domain,
                                   d_node_map.at(node->e[0]),
                                   {bzla_node_bv_slice_get_upper(node),
@@ -235,41 +235,41 @@ PropSolverState::mk_node(BzlaNode *node)
     case BZLA_BV_SLL_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::OperatorKind::BV_SHL,
+          d_ls->mk_node(bzla::ls::NodeKind::BV_SHL,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_SLT_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::OperatorKind::BV_SLT,
+          d_ls->mk_node(bzla::ls::NodeKind::BV_SLT,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_SRL_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::OperatorKind::BV_SHR,
+          d_ls->mk_node(bzla::ls::NodeKind::BV_SHR,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_UDIV_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::OperatorKind::BV_UDIV,
+          d_ls->mk_node(bzla::ls::NodeKind::BV_UDIV,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_UREM_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::OperatorKind::BV_UREM,
+          d_ls->mk_node(bzla::ls::NodeKind::BV_UREM,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_COND_NODE:
       assert(node->arity == 3);
-      res = d_ls->mk_node(bzla::ls::OperatorKind::ITE,
+      res = d_ls->mk_node(bzla::ls::NodeKind::ITE,
                           domain,
                           {d_node_map.at(node->e[0]),
                            d_node_map.at(node->e[1]),
