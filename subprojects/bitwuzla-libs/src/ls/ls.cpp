@@ -59,14 +59,14 @@ operator<<(std::ostream& out, const NodeKind& kind)
 
 /* -------------------------------------------------------------------------- */
 
-template <class VALUE, class NODE>
+template <class VALUE>
 struct LocalSearchMove
 {
   LocalSearchMove() : d_nprops(0), d_nupdates(0), d_input(nullptr) {}
 
   LocalSearchMove(uint64_t nprops,
                   uint64_t nupdates,
-                  NODE* input,
+                  Node<VALUE>* input,
                   VALUE assignment)
       : d_nprops(nprops),
         d_nupdates(nupdates),
@@ -77,59 +77,59 @@ struct LocalSearchMove
 
   uint64_t d_nprops;
   uint64_t d_nupdates;
-  NODE* d_input;
+  Node<VALUE>* d_input;
   VALUE d_assignment;
 };
 
-template struct LocalSearchMove<BitVector, BitVectorNode>;
+template struct LocalSearchMove<BitVector>;
 
 /* -------------------------------------------------------------------------- */
 
-template <class VALUE, class NODE>
-LocalSearch<VALUE, NODE>::LocalSearch(uint64_t max_nprops,
-                                      uint64_t max_nupdates,
-                                      uint32_t seed)
+template <class VALUE>
+LocalSearch<VALUE>::LocalSearch(uint64_t max_nprops,
+                                uint64_t max_nupdates,
+                                uint32_t seed)
     : d_max_nprops(max_nprops), d_max_nupdates(max_nupdates), d_seed(seed)
 
 {
   d_rng.reset(new RNG(d_seed));
 }
 
-template <class VALUE, class NODE>
-LocalSearch<VALUE, NODE>::~LocalSearch()
+template <class VALUE>
+LocalSearch<VALUE>::~LocalSearch()
 {
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 void
-LocalSearch<VALUE, NODE>::init()
+LocalSearch<VALUE>::init()
 {
-  NODE::s_path_sel_essential  = d_options.use_path_sel_essential;
-  NODE::s_prob_pick_ess_input = d_options.prob_pick_ess_input;
+  Node<VALUE>::s_path_sel_essential  = d_options.use_path_sel_essential;
+  Node<VALUE>::s_prob_pick_ess_input = d_options.prob_pick_ess_input;
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 const VALUE&
-LocalSearch<VALUE, NODE>::get_assignment(uint64_t id) const
+LocalSearch<VALUE>::get_assignment(uint64_t id) const
 {
   assert(id < d_nodes.size());  // API check
   return get_node(id)->assignment();
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 void
-LocalSearch<VALUE, NODE>::set_assignment(uint64_t id, const VALUE& assignment)
+LocalSearch<VALUE>::set_assignment(uint64_t id, const VALUE& assignment)
 {
   assert(id < d_nodes.size());  // API check
   get_node(id)->set_assignment(assignment);
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 void
-LocalSearch<VALUE, NODE>::register_root(uint64_t id)
+LocalSearch<VALUE>::register_root(uint64_t id)
 {
   assert(id < d_nodes.size());  // API check
-  NODE* root = get_node(id);
+  Node<VALUE>* root = get_node(id);
   d_roots.push_back(root);
   if (root->is_inequality())
   {
@@ -142,17 +142,17 @@ LocalSearch<VALUE, NODE>::register_root(uint64_t id)
   update_unsat_roots(root);
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 uint32_t
-LocalSearch<VALUE, NODE>::get_arity(uint64_t id) const
+LocalSearch<VALUE>::get_arity(uint64_t id) const
 {
   assert(id < d_nodes.size());  // API check
   return get_node(id)->arity();
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 uint64_t
-LocalSearch<VALUE, NODE>::get_child(uint64_t id, uint32_t idx) const
+LocalSearch<VALUE>::get_child(uint64_t id, uint32_t idx) const
 {
   assert(id < d_nodes.size());  // API check
   assert(idx < get_arity(id));  // API check
@@ -161,47 +161,47 @@ LocalSearch<VALUE, NODE>::get_child(uint64_t id, uint32_t idx) const
 
 /* -------------------------------------------------------------------------- */
 
-template <class VALUE, class NODE>
-NODE*
-LocalSearch<VALUE, NODE>::get_node(uint64_t id) const
+template <class VALUE>
+Node<VALUE>*
+LocalSearch<VALUE>::get_node(uint64_t id) const
 {
   assert(id < d_nodes.size());
   assert(d_nodes[id]->id() == id);
   return d_nodes[id].get();
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 bool
-LocalSearch<VALUE, NODE>::is_leaf_node(const NODE* node) const
+LocalSearch<VALUE>::is_leaf_node(const Node<VALUE>* node) const
 {
   assert(node);
   return node->arity() == 0;
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 bool
-LocalSearch<VALUE, NODE>::is_root_node(const NODE* node) const
+LocalSearch<VALUE>::is_root_node(const Node<VALUE>* node) const
 {
   assert(node);
   assert(d_parents.find(node->id()) != d_parents.end());
   return d_parents.at(node->id()).empty();
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 bool
-LocalSearch<VALUE, NODE>::is_ineq_root(const NODE* node) const
+LocalSearch<VALUE>::is_ineq_root(const Node<VALUE>* node) const
 {
   return d_roots_ineq.find(node) != d_roots_ineq.end();
 }
 
-template <class VALUE, class NODE>
-LocalSearchMove<VALUE, NODE>
-LocalSearch<VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
+template <class VALUE>
+LocalSearchMove<VALUE>
+LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
 {
   assert(root);
 
   uint64_t nprops = 0, nupdates = 0;
-  NODE* cur = root;
+  Node<VALUE>* cur = root;
   VALUE t   = t_root;
 
   for (;;)
@@ -225,7 +225,7 @@ LocalSearch<VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
     }
     else
     {
-      assert(!cur->domain().is_fixed());
+      assert(!cur->is_value());
 
       /* Compute min/max bounds of current node wrt. current assignment. */
       if (d_options.use_ineq_bounds)
@@ -235,36 +235,15 @@ LocalSearch<VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
 
       if (BZLALSLOG_ENABLED(1))
       {
-        for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+        for (const auto& s : cur->log())
         {
-          BZLALSLOG(1) << "      |- node[" << i << "]: " << *(*cur)[i]
-                       << std::endl;
-          if ((*cur)[i]->min_u())
-          {
-            BZLALSLOG(1) << "           + min_u: " << *(*cur)[i]->min_u()
-                         << std::endl;
-          }
-          if ((*cur)[i]->max_u())
-          {
-            BZLALSLOG(1) << "           + max_u: " << *(*cur)[i]->max_u()
-                         << std::endl;
-          }
-          if ((*cur)[i]->min_s())
-          {
-            BZLALSLOG(1) << "           + min_s: " << *(*cur)[i]->min_s()
-                         << std::endl;
-          }
-          if ((*cur)[i]->max_s())
-          {
-            BZLALSLOG(1) << "           + max_s: " << *(*cur)[i]->max_s()
-                         << std::endl;
-          }
+          BZLALSLOG(1) << s;
         }
       }
       BZLALSLOG(1) << "    target value: " << t << std::endl;
 
       /* Select path */
-      uint32_t pos_x = cur->select_path(t);
+      uint64_t pos_x = cur->select_path(t);
       assert(pos_x < arity);
 
       BZLALSLOG(1) << "      select path: node[" << pos_x << "]" << std::endl;
@@ -327,12 +306,12 @@ LocalSearch<VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
   BZLALSLOG(1) << "*** conflict" << std::endl;
 
   /* Conflict case */
-  return LocalSearchMove<VALUE, NODE>(nprops, nupdates, nullptr, VALUE());
+  return LocalSearchMove<VALUE>(nprops, nupdates, nullptr, VALUE());
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 void
-LocalSearch<VALUE, NODE>::update_unsat_roots(NODE* root)
+LocalSearch<VALUE>::update_unsat_roots(Node<VALUE>* root)
 {
   assert(is_root_node(root));
 
@@ -353,9 +332,9 @@ LocalSearch<VALUE, NODE>::update_unsat_roots(NODE* root)
   }
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 uint64_t
-LocalSearch<VALUE, NODE>::update_cone(NODE* node, const VALUE& assignment)
+LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
 {
   assert(node);
   assert(is_leaf_node(node));
@@ -378,7 +357,7 @@ LocalSearch<VALUE, NODE>::update_cone(NODE* node, const VALUE& assignment)
   uint64_t nupdates = 1;
 
   std::vector<uint64_t> cone;
-  std::vector<NODE*> to_visit;
+  std::vector<Node<VALUE>*> to_visit;
   std::unordered_set<uint64_t> visited;
 
   /* reset cone */
@@ -390,7 +369,7 @@ LocalSearch<VALUE, NODE>::update_cone(NODE* node, const VALUE& assignment)
 
   while (!to_visit.empty())
   {
-    NODE* cur = to_visit.back();
+    Node<VALUE>* cur = to_visit.back();
     to_visit.pop_back();
 
     if (visited.find(cur->id()) != visited.end()) continue;
@@ -414,7 +393,7 @@ LocalSearch<VALUE, NODE>::update_cone(NODE* node, const VALUE& assignment)
 
   for (uint64_t id : cone)
   {
-    NODE* cur = get_node(id);
+    Node<VALUE>* cur = get_node(id);
     BZLALSLOG(2) << "  node: " << *cur << " -> ";
     cur->evaluate();
     nupdates += 1;
@@ -442,9 +421,9 @@ LocalSearch<VALUE, NODE>::update_cone(NODE* node, const VALUE& assignment)
   return nupdates;
 }
 
-template <class VALUE, class NODE>
+template <class VALUE>
 Result
-LocalSearch<VALUE, NODE>::move()
+LocalSearch<VALUE>::move()
 {
   BZLALSLOG(1) << "*** move: " << d_statistics.d_nmoves + 1 << std::endl;
   if (BZLALSLOG_ENABLED(1))
@@ -455,7 +434,7 @@ LocalSearch<VALUE, NODE>::move()
       BZLALSLOG(1) << "    - " << *(get_node(id)) << std::endl;
     }
     BZLALSLOG(1) << "  satisfied roots:" << std::endl;
-    for (const BitVectorNode* r : d_roots)
+    for (const Node<VALUE>* r : d_roots)
     {
       if (d_roots_unsat.find(r->id()) != d_roots_unsat.end()) continue;
       BZLALSLOG(1) << "    - " << *r << std::endl;
@@ -464,7 +443,7 @@ LocalSearch<VALUE, NODE>::move()
 
   if (d_roots_unsat.empty()) return Result::SAT;
 
-  LocalSearchMove<VALUE, NODE> m;
+  LocalSearchMove<VALUE> m;
   do
   {
     if (d_max_nprops > 0 && d_statistics.d_nprops >= d_max_nprops)
@@ -472,11 +451,11 @@ LocalSearch<VALUE, NODE>::move()
     if (d_max_nupdates > 0 && d_statistics.d_nupdates >= d_max_nupdates)
       return Result::UNKNOWN;
 
-    NODE* root =
+    Node<VALUE>* root =
         get_node(d_rng->pick_from_set<std::unordered_set<uint64_t>, uint64_t>(
             d_roots_unsat));
 
-    if (root->is_value() && root->domain().lo().is_false())
+    if (root->is_value_false())
     {
       return Result::UNSAT;
     }
@@ -513,7 +492,7 @@ LocalSearch<VALUE, NODE>::move()
   return Result::UNKNOWN;
 }
 
-template class LocalSearch<BitVector, BitVectorNode>;
+template class LocalSearch<BitVector>;
 
 /* -------------------------------------------------------------------------- */
 

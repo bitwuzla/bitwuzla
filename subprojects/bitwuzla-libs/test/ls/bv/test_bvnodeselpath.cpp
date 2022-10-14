@@ -85,7 +85,7 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
           s1_val = gen.random();
         }
 
-        uint32_t pos_x;
+        uint64_t pos_x;
         bool is_val0, is_val1;
         bool is_essential0, is_essential1;
 
@@ -142,6 +142,7 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
           continue;
         }
         pos_x = oop.select_path(t);
+        assert(!(pos_x == 0 ? is_val0 : is_val1));
         ASSERT_FALSE(pos_x == 0 ? is_val0 : is_val1);
         ASSERT_TRUE(!is_val0 || pos_x == 1);
         ASSERT_TRUE(!is_val1 || pos_x == 0);
@@ -203,7 +204,7 @@ TestBvNodeSelPath::test_ite()
             s2_val = gen.random();
           }
 
-          uint32_t pos_x;
+          uint64_t pos_x;
           bool is_val0, is_val1, is_val2;
           bool is_essential0, is_essential1, is_essential2;
 
@@ -313,7 +314,7 @@ TestBvNodeSelPath::test_not()
         s0_val = gen.random();
       }
 
-      uint32_t pos_x;
+      uint64_t pos_x;
       bool is_val;
       bool is_essential;
 
@@ -392,7 +393,7 @@ TestBvNodeSelPath::test_extract()
             s0_val = gen.random();
           }
 
-          uint32_t pos_x;
+          uint64_t pos_x;
           bool is_val;
           bool is_essential;
 
@@ -470,7 +471,7 @@ TestBvNodeSelPath::test_sext()
           s0_val = gen.random();
         }
 
-        uint32_t pos_x;
+        uint64_t pos_x;
         bool is_val;
         bool is_essential;
 

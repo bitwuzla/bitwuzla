@@ -208,7 +208,7 @@ TestBvNode::check_sat_binary(Kind kind,
   assert(!min_u || max_u);
   assert(!min_s || max_s);
 
-  const BitVectorDomain& x = op_x->get_domain();
+  const BitVectorDomain& x = op_x->domain();
 
   BitVectorDomainGenerator gen(x);
   do
@@ -653,21 +653,24 @@ TestBvNode::test_binary(Kind kind,
           do
           {
             std::unique_ptr<BitVectorNode> op_x;
+            std::unique_ptr<BitVectorNode> child0, child1;
             if (opt_kind == CONCAT)
             {
               uint64_t bw_x0 = d_rng->pick<uint64_t>(1, bw_x - 1);
               uint64_t bw_x1 = bw_x - bw_x0;
-              BitVectorNode child0(d_rng.get(), bw_x0);
-              BitVectorNode child1(d_rng.get(), bw_x1);
-              op_x.reset(new BitVectorConcat(d_rng.get(), x, &child0, &child1));
+              child0.reset(new BitVectorNode(d_rng.get(), bw_x0));
+              child1.reset(new BitVectorNode(d_rng.get(), bw_x1));
+              op_x.reset(new BitVectorConcat(
+                  d_rng.get(), x, child0.get(), child1.get()));
               op_x->set_assignment(x_val);
             }
             else if (opt_kind == SEXT)
             {
               uint64_t n     = d_rng->pick<uint64_t>(0, bw_x - 1);
               uint64_t bw_xx = bw_x - n;
-              BitVectorNode child(d_rng.get(), bw_xx);
-              op_x.reset(new BitVectorSignExtend(d_rng.get(), x, &child, n));
+              child0.reset(new BitVectorNode(d_rng.get(), bw_xx));
+              op_x.reset(
+                  new BitVectorSignExtend(d_rng.get(), x, child0.get(), n));
               op_x->set_assignment(x_val);
             }
             else

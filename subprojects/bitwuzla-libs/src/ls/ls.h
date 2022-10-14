@@ -13,6 +13,9 @@ class RNG;
 
 namespace ls {
 
+template <class VALUE>
+class Node;
+
 /* -------------------------------------------------------------------------- */
 
 enum class NodeKind
@@ -78,16 +81,16 @@ enum class Result
 
 /* -------------------------------------------------------------------------- */
 
-template <class VALUE, class Node>
+template <class VALUE>
 struct LocalSearchMove;
 
 /* -------------------------------------------------------------------------- */
 
-template <class VALUE, class NODE>
+template <class VALUE>
 class LocalSearch
 {
  public:
-  using NodesIdTable = std::vector<std::unique_ptr<NODE>>;
+  using NodesIdTable = std::vector<std::unique_ptr<Node<VALUE>>>;
   using ParentsSet   = std::unordered_set<uint64_t>;
   using ParentsMap   = std::unordered_map<uint64_t, ParentsSet>;
 
@@ -248,19 +251,19 @@ class LocalSearch
    * @param id The node id.
    * @return The node with the given id.
    */
-  NODE* get_node(uint64_t id) const;
+  Node<VALUE>* get_node(uint64_t id) const;
   /**
    * Determine if given node is a leaf node (its arity = 0).
    * @param node The node to query.
    * @return True if `node` is a leaf.
    */
-  bool is_leaf_node(const NODE* node) const;
+  bool is_leaf_node(const Node<VALUE>* node) const;
   /**
    * Determine if given node is a root node.
    * @param node The node to query.
    * @return True if `node` is a root.
    */
-  bool is_root_node(const NODE* node) const;
+  bool is_root_node(const Node<VALUE>* node) const;
   /**
    * Get the arity of the node given by id.
    * @param id The id of the node to query.
@@ -277,7 +280,7 @@ class LocalSearch
    * @param node The node to query.
    * @return True if `node` is a (possibly negated) inequality root.
    */
-  bool is_ineq_root(const NODE* node) const;
+  bool is_ineq_root(const Node<VALUE>* node) const;
   /**
    * Determine if all roots are sat.
    * @return True if all roots are sat.
@@ -295,7 +298,7 @@ class LocalSearch
    *
    * @param root The root to update.
    */
-  void update_unsat_roots(NODE* root);
+  void update_unsat_roots(Node<VALUE>* root);
   /**
    * Compute min/max bounds for children of given node.
    *
@@ -305,7 +308,7 @@ class LocalSearch
    *
    * @param node The node.
    */
-  virtual void compute_bounds(NODE* node) = 0;
+  virtual void compute_bounds(Node<VALUE>* node) = 0;
   /**
    * Update the assignment of the given node to the given assignment, and
    * recompute the assignment of all nodes in its cone of influence
@@ -314,7 +317,7 @@ class LocalSearch
    * @param assignment The new assignment of the given node.
    * @return The number of updated assignments.
    */
-  uint64_t update_cone(NODE* node, const VALUE& assignment);
+  uint64_t update_cone(Node<VALUE>* node, const VALUE& assignment);
   /**
    * Select an input and a new assignment for that input by propagating the
    * given target value `t_root` for the given root along one path towards an
@@ -324,7 +327,7 @@ class LocalSearch
    * @param t_root The target value of the given root.
    * @return An object encapsulating all information necessary for that move.
    */
-  LocalSearchMove<VALUE, NODE> select_move(NODE* root, const VALUE& t_root);
+  LocalSearchMove<VALUE> select_move(Node<VALUE>* root, const VALUE& t_root);
 
   /** The random number generator. */
   std::unique_ptr<RNG> d_rng;
@@ -332,7 +335,7 @@ class LocalSearch
   /** Map from node id to nodes. */
   NodesIdTable d_nodes;
   /** The set of roots. */
-  std::vector<NODE*> d_roots;
+  std::vector<Node<VALUE>*> d_roots;
   /** The set of unsatisfied roots. */
   std::unordered_set<uint64_t> d_roots_unsat;
   /**
@@ -343,7 +346,7 @@ class LocalSearch
    * @note This includes top-level inequalities and negated inequalities that
    *       are not roots but whose parents are a top-level NOT.
    */
-  std::unordered_map<const NODE*, bool> d_roots_ineq;
+  std::unordered_map<const Node<VALUE>*, bool> d_roots_ineq;
   /** Map nodes to their parent nodes. */
   ParentsMap d_parents;
 

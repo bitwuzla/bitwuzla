@@ -3,6 +3,7 @@
 
 #include <gmpxx.h>
 
+#include <cassert>
 #include <cstdint>
 #include <memory>
 #include <random>

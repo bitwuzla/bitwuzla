@@ -12,7 +12,7 @@ namespace ls {
 class BitVectorDomain;
 class BitVectorNode;
 
-class LocalSearchBV : public LocalSearch<BitVector, BitVectorNode>
+class LocalSearchBV : public LocalSearch<BitVector>
 {
  public:
   /**
@@ -27,7 +27,7 @@ class LocalSearchBV : public LocalSearch<BitVector, BitVectorNode>
                 uint64_t max_nupdates,
                 uint32_t seed = 1234);
 
-  void compute_bounds(BitVectorNode* node) override;
+  void compute_bounds(Node<BitVector>* node) override;
 
   uint64_t mk_node(uint64_t size) override;
   uint64_t mk_node(NodeKind kind,
@@ -58,6 +58,12 @@ class LocalSearchBV : public LocalSearch<BitVector, BitVectorNode>
   void fix_bit(uint64_t id, uint32_t idx, bool value);
 
  private:
+  /**
+   * Get node by id.
+   * @param id The node id.
+   * @return The node with the given id.
+   */
+  BitVectorNode* get_node(uint64_t id) const;
   /**
    * Helper for computing bounds of children of root inequalities.
    * @param root The root node.

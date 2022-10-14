@@ -11,7 +11,7 @@ namespace bzla::ls {
 LocalSearchBV::LocalSearchBV(uint64_t max_nprops,
                              uint64_t max_nupdates,
                              uint32_t seed)
-    : LocalSearch<BitVector, BitVectorNode>(max_nprops, max_nupdates, seed)
+    : LocalSearch<BitVector>(max_nprops, max_nupdates, seed)
 
 {
   d_true.reset(new BitVector(BitVector::mk_true()));
@@ -237,14 +237,20 @@ LocalSearchBV::fix_bit(uint64_t id, uint32_t idx, bool value)
   node->fix_bit(idx, value);
 }
 
+BitVectorNode*
+LocalSearchBV::get_node(uint64_t id) const
+{
+  return reinterpret_cast<BitVectorNode*>(LocalSearch<BitVector>::get_node(id));
+}
+
 void
 LocalSearchBV::update_bounds_aux(BitVectorNode* root, int32_t pos)
 {
   assert(root->is_inequality());
   assert(root->arity() == 2);
 
-  BitVectorNode* child0 = (*root)[0];
-  BitVectorNode* child1 = (*root)[1];
+  BitVectorNode* child0 = root->child(0);
+  BitVectorNode* child1 = root->child(1);
   bool is_signed        = root->get_kind() == NodeKind::BV_SLT;
   uint64_t size         = child0->size();
   BitVector min_value, max_value;
@@ -318,15 +324,16 @@ LocalSearchBV::update_bounds_aux(BitVectorNode* root, int32_t pos)
 }
 
 void
-LocalSearchBV::compute_bounds(BitVectorNode* node)
+LocalSearchBV::compute_bounds(Node<BitVector>* node)
 {
+  BitVectorNode* n = reinterpret_cast<BitVectorNode*>(node);
   for (uint32_t i = 0, arity = node->arity(); i < arity; ++i)
   {
-    (*node)[i]->reset_bounds();
+    n->child(i)->reset_bounds();
   }
   for (uint32_t i = 0, arity = node->arity(); i < arity; ++i)
   {
-    const BitVectorNode* child                  = (*node)[i];
+    const BitVectorNode* child                  = n->child(i);
     const std::unordered_set<uint64_t>& parents = d_parents.at(child->id());
     for (uint64_t pid : parents)
     {
@@ -335,10 +342,11 @@ LocalSearchBV::compute_bounds(BitVectorNode* node)
       if (p->assignment().is_true() != d_roots_ineq.at(p)) continue;
       if (p->get_kind() == NodeKind::BV_NOT)
       {
-        p = (*p)[0];
+        p = p->child(0);
       }
 
-      update_bounds_aux(p, child == (*p)[0] ? (child == (*p)[1] ? -1 : 0) : 1);
+      update_bounds_aux(
+          p, child == p->child(0) ? (child == p->child(1) ? -1 : 0) : 1);
     }
   }
 }

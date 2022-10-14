@@ -6,6 +6,7 @@
 #include "bv/bitvector.h"
 #include "ls/bv/bitvector_domain.h"
 #include "ls/ls.h"
+#include "ls/node/node.h"
 
 namespace bzla {
 
@@ -15,60 +16,52 @@ namespace ls {
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorNode
+class BitVectorNode : public Node<BitVector>
 {
  public:
   /**
-   * Path selection mode.
-   * True if path is to be selected based on essential inputs, false if it is
-   * to be selected randomly.
+   * Constructor.
+   * @param rng  The associated random number generator.
+   * @param size The bit-vector size.
    */
-  static inline bool s_path_sel_essential = true;
-  /**
-   * Probability for picking an essential input if there is one, and else
-   * a random input (see use_path_sel_essential).
-   */
-  static inline uint32_t s_prob_pick_ess_input = 990;
-
-  /** Constructor. */
   BitVectorNode(RNG* rng, uint64_t size);
+  /**
+   * Constructor.
+   * @param rng        The associated random number generator.
+   * @param assignment The current bit-vector assignment.
+   * @param size       The bit-vector size.
+   */
   BitVectorNode(RNG* rng,
                 const BitVector& assignment,
                 const BitVectorDomain& domain);
   /** Destructor. */
   virtual ~BitVectorNode() {}
 
+  bool is_inequality() const override;
+  bool is_not() const override;
+  bool is_value_false() const override;
+  void set_assignment(const BitVector& assignment) override;
+  std::string to_string() const override;
+  std::vector<std::string> log() const override;
+
+  /**
+   * Get child at given index.
+   * @param pos The index of the child to get.
+   * @return The child at the given index.
+   */
+  BitVectorNode* child(uint64_t pos) const;
+
   /**
    * Get the domain of this node.
    * @return A reference to the domain of this node.
    */
-  const BitVectorDomain& get_domain() const { return d_domain; }
-
-  /**
-   * Get the kind of the node.
-   * @return The kind of this node.
-   */
-  virtual NodeKind get_kind() const { return NodeKind::CONST; }
-
-  /**
-   * Determine if this node is an inequality node.
-   * @return True if this is an inequality node.
-   */
-  bool is_inequality() const;
-  /**
-   * Determine if this node is a not node.
-   * @return True if this is a not node.
-   */
-  bool is_not() const;
+  const BitVectorDomain& domain() const { return d_domain; }
 
   /**
    * Get the bit-vector size of the node.
    * @return The size of this node.
    */
   uint64_t size() { return d_assignment.size(); }
-
-  /** Update assignment based on the assignment of its children. */
-  virtual void evaluate() {}
 
   /**
    * Tighten signed and/or unsigned bounds of this node wrt. to the given
@@ -122,145 +115,6 @@ class BitVectorNode
                                 BitVector& res_min_hi,
                                 BitVector& res_max_hi);
   /**
-   * Check if operand at index `pos_x` is essential with respect to constant
-   * bits and target value `t`.
-   *
-   * @param t The target value.
-   * @param pos_x The index of `x`.
-   * @return True if operand at index `pos_x` is essential.
-   */
-  virtual bool is_essential(const BitVector& t, uint32_t pos_x)
-  {
-    return !is_invertible(t, 1 - pos_x, true);
-  }
-
-  /**
-   * Check invertibility condition for `x` at index `pos_x with` respect to
-   * constant bits and target value `t`.
-   *
-   * Caches an inverse (if already determined while checking invertibility)
-   * if `is_essential_check` is false.
-   *
-   * @param t The target value.
-   * @param pos_x The index of `x`.
-   * @param is_essential_check True if called to determine is_essential(). For
-   *                           is_essential() checks, we don't consider bounds
-   *                           derived from top-level inequalities since this
-   *                           may trap us in a cycle (see is_essential()).
-   *                           We further do not cache inverse values computed
-   *                           while checking for essential checks.
-   * @return True if there exists an inverse value for `x`.
-   */
-  virtual bool is_invertible(const BitVector& t,
-                             uint32_t pos_x,
-                             bool is_essential_check = false)
-  {
-    (void) t;
-    (void) pos_x;
-    (void) is_essential_check;
-    return true;
-  }
-
-  /**
-   * Check consistency condition for `x` at index `pos_x` with respect to
-   * constant bits and target value `t`.
-   * @param t The target value.
-   * @param pos_x The index of `x`.
-   * @return True if there exists a consistent value for `x`.
-   */
-  virtual bool is_consistent(const BitVector& t, uint32_t pos_x)
-  {
-    (void) t;
-    (void) pos_x;
-    return true;
-  }
-
-  /**
-   * Get an inverse value for `x` at index `pos_x` with respect to constant bits
-   * and target value `t`.
-   * @param t The target value.
-   * @param pos_x The index of `x`.
-   * @return The inverse value for `x`.
-   */
-  virtual const BitVector& inverse_value(const BitVector& t, uint32_t pos_x)
-  {
-    (void) t;
-    (void) pos_x;
-    return *d_inverse;
-  }
-  /**
-   * Get an consistent value for `x` at index `pos_x` with respect to constant
-   * bits and target value `t`.
-   * @param t The target value.
-   * @param pos_x The index of `x`.
-   * @return The consistent value for `x`.
-   */
-  virtual const BitVector& consistent_value(const BitVector& t, uint32_t pos_x)
-  {
-    (void) t;
-    (void) pos_x;
-    return *d_consistent;
-  }
-
-  /**
-   * Select the next step in the propagation path based on target value `t` and
-   * the current assignment of this node's children.
-   * @param t The target value of this node.
-   * @return The index of child to propagate the target value down to.
-   */
-  virtual uint32_t select_path(const BitVector& t);
-
-  /**
-   * Get child at given index.
-   * @param pos The index of the child to get.
-   * @return The child at the given index.
-   */
-  BitVectorNode* operator[](uint32_t pos) const;
-
-  /**
-   * Get the arity of this node.
-   * @return The arity of this node.
-   */
-  uint32_t arity() const { return d_arity; }
-  /**
-   * Set the assignment of this node.
-   * @param assignment The assignment to set.
-   */
-  void set_assignment(const BitVector& assignment);
-  /**
-   * Get the assignment of this node.
-   * @return The assignment of this node.
-   */
-  const BitVector& assignment() const { return d_assignment; }
-  /**
-   * Get the domain of this node.
-   * @return The domain of this node.
-   */
-  const BitVectorDomain& domain() const { return d_domain; }
-  /**
-   * Determine if the underlying domain is fixed.
-   * @return True if the underlying domain is fixed.
-   */
-  bool is_value() const { return d_is_value; }
-
-  /**
-   * Determine if all children are const.
-   * @return True if all children are const.
-   */
-  bool all_value() const { return d_all_value; }
-
-  /**
-   * Set id of this node.
-   * @param id The id to set.
-   */
-  void set_id(uint64_t id) { d_id = id; }
-  /**
-   * Get id of this node.
-   * @return The id of this node.
-   */
-  uint64_t id() const { return d_id; }
-
-  /**
    * Get the unsigned upper bound (incl) for inverse value computation.
    * @return The upper unsigned bound.
    */
@@ -308,9 +162,6 @@ class BitVectorNode
    */
   void reset_bounds();
 
-  /** Get the string representation of this node. */
-  virtual std::string to_string() const;
-
  protected:
   /**
    * Determine if given BitVector is within either one of the given bounds.
@@ -347,18 +198,6 @@ class BitVectorNode
                 BitVectorNode* child0,
                 BitVectorNode* child1,
                 BitVectorNode* child2);
-
-  /**
-   * Helper to select a non-const operand. Additional collects the indices
-   * of all non-const operands.
-   * @note Asserts that at least one operand is non-const.
-   * @param res_inputs The resulting vector of indices of non-const operands.
-   * @return -1 if more than one operand is non-const (and thus
-   *         `res_intpus.size() > 1`), else the index of the non-const operand.
-   */
-  virtual uint32_t select_path_non_const(
-      std::vector<uint32_t>& res_inputs) const;
-
   /**
    * Helper to compute the normalized min and max bounds for `x` with respect
    * to `s` and `t` and the current signed and unsigned min/max bounds of `x`,
@@ -381,7 +220,7 @@ class BitVectorNode
    */
   void compute_normalized_bounds(const BitVector& s,
                                  const BitVector& t,
-                                 uint32_t pos_x,
+                                 uint64_t pos_x,
                                  BitVector& res_min_lo,
                                  BitVector& res_max_lo,
                                  BitVector& res_min_hi,
@@ -411,20 +250,14 @@ class BitVectorNode
    */
   virtual void compute_min_max_bounds(const BitVector& s,
                                       const BitVector& t,
-                                      uint32_t pos_x,
+                                      uint64_t pos_x,
                                       BitVector& res_min_u,
                                       BitVector& res_max_u,
                                       BitVector& res_min_s,
                                       BitVector& res_max_s);
 
-  uint64_t d_id = 0;
-  std::unique_ptr<BitVectorNode*[]> d_children;
-  RNG* d_rng;
-  uint32_t d_arity;
-  BitVector d_assignment;
+  /** The underlying bit-vector domain representing constant bits. */
   BitVectorDomain d_domain;
-  bool d_is_value;
-  bool d_all_value;
 
   /** Unsigned upper bound (incl) for inverse value computation. */
   std::unique_ptr<BitVector> d_max_u;
@@ -434,20 +267,7 @@ class BitVectorNode
   std::unique_ptr<BitVector> d_max_s;
   /** Signed lower bound (incl) for inverse value computation. */
   std::unique_ptr<BitVector> d_min_s;
-
-  /** Cached inverse value result. */
-  std::unique_ptr<BitVector> d_inverse;
-  /** Cached consistent value result. */
-  std::unique_ptr<BitVector> d_consistent;
 };
-
-/**
- * Serialize a bit-vector node to a given stream.
- * @param out The output stream.
- * @param kind The bit-vector node to serialize.
- * @return The output stream.
- */
-std::ostream& operator<<(std::ostream& out, const BitVectorNode& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -474,7 +294,7 @@ class BitVectorAdd : public BitVectorNode
    *   with const bits: mfb(x, t - s)
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -482,12 +302,12 @@ class BitVectorAdd : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: true
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -545,7 +365,7 @@ class BitVectorAnd : public BitVectorNode
 
   void compute_min_max_bounds(const BitVector& s,
                               const BitVector& t,
-                              uint32_t pos_x,
+                              uint64_t pos_x,
                               BitVector& res_min_u,
                               BitVector& res_max_u,
                               BitVector& res_min_s,
@@ -561,7 +381,7 @@ class BitVectorAnd : public BitVectorNode
    * 2) s & t = t on all non-const bits of x
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -569,12 +389,12 @@ class BitVectorAnd : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: t & x_hi = t
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -646,7 +466,7 @@ class BitVectorConcat : public BitVectorNode
    * with const bits: mfb(x, tx) && s = ts
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -657,12 +477,12 @@ class BitVectorConcat : public BitVectorNode
    *     pos_x = 0: tx = t[bw(t) - 1 : bw(t) - bw(x)]
    *     pos_x = 1: tx = t[bw(x) - 1 : 0]
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -726,7 +546,7 @@ class BitVectorEq : public BitVectorNode
    *    t = 1: mfb(x, s)
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -734,12 +554,12 @@ class BitVectorEq : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: true
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -805,7 +625,7 @@ class BitVectorMul : public BitVectorNode
    *                    with c = ctz(s) and y = (t >> c) * (s >> c)^-1
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -815,18 +635,18 @@ class BitVectorMul : public BitVectorNode
    *                    (odd(t) => x_hi[lsb] != 0) &&
    *                    (!odd(t) => \exists y. (mfb(x, y) && ctz(t) >= ctz(y))
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
   void compute_min_max_bounds(const BitVector& s,
                               const BitVector& t,
-                              uint32_t pos_x,
+                              uint64_t pos_x,
                               BitVector& res_min_u,
                               BitVector& res_max_u,
                               BitVector& res_min_s,
@@ -898,7 +718,7 @@ class BitVectorShl : public BitVectorNode
    *                  ((t != 0) => mfb(x, ctz(t) - ctz(s)))
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -908,12 +728,12 @@ class BitVectorShl : public BitVectorNode
    *     pos_x = 0: \exists y. (y <= ctz(t) && mfb(x << y, t))
    *     pos_x = 1: t = 0 || \exists y. (y <= ctz(t) && mfb(x, y))
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -963,7 +783,7 @@ class BitVectorShr : public BitVectorNode
                             const BitVector& t,
                             const BitVector& s,
                             const BitVectorDomain& x,
-                            uint32_t pos_x,
+                            uint64_t pos_x,
                             std::unique_ptr<BitVector>* inverse_value);
   /**
    * Additional interface / helper for inverse_value.
@@ -973,7 +793,7 @@ class BitVectorShr : public BitVectorNode
                             const BitVector& t,
                             const BitVector& s,
                             const BitVectorDomain& x,
-                            uint32_t pos_x,
+                            uint64_t pos_x,
                             std::unique_ptr<BitVector>& inverse_value);
   /** Constructors. */
   BitVectorShr(RNG* rng,
@@ -1003,7 +823,7 @@ class BitVectorShr : public BitVectorNode
    *                  ((t != 0) => mfb(x, clz(t) - clz(s)))
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -1013,12 +833,12 @@ class BitVectorShr : public BitVectorNode
    *     pos_x = 0: \exists y. (y <= clz(t) && mfb(x >> y, t))
    *     pos_x = 1: t = 0 || \exists y. (y <= clz(t) && mfb(x, y))
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -1089,7 +909,7 @@ class BitVectorAshr : public BitVectorNode
    *                  (s[msb] = 1 => IC_shr(~s >> x = ~t))
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -1107,12 +927,12 @@ class BitVectorAshr : public BitVectorNode
    *     \exists y. (c => y < clo(t) && ~c => y < clz(t) && mfb(x, y)
    *     with c = (t[msb] = 1)
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -1188,7 +1008,7 @@ class BitVectorUdiv : public BitVectorNode
    *                      (t != ones => y > t + 1 && y <= s / t)))
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -1208,12 +1028,12 @@ class BitVectorUdiv : public BitVectorNode
    *       (t != ones => (!mulo(x_lo, t) &&
    *                  \exists y. (y > 0 && mfb(x, y) && !mulo(y, t))))
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -1305,7 +1125,7 @@ class BitVectorUlt : public BitVectorNode
    *       pos_x = 1: t = 1 => (s != ones && x_hi > s) && t = 0 => (x_lo <= s)
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -1314,18 +1134,18 @@ class BitVectorUlt : public BitVectorNode
    *   with const bits: pos_x = 0: t = false || x_lo != ones
    *                    pos_x = 1: t = false || x_hi != 0
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
   void compute_min_max_bounds(const BitVector& s,
                               const BitVector& t,
-                              uint32_t pos_x,
+                              uint64_t pos_x,
                               BitVector& res_min_u,
                               BitVector& res_max_u,
                               BitVector& res_min_s,
@@ -1377,7 +1197,7 @@ class BitVectorUlt : public BitVectorNode
   bool _is_invertible(const BitVectorDomain* d,
                       const BitVector& s,
                       const BitVector& t,
-                      uint32_t pos_x,
+                      uint64_t pos_x,
                       bool is_essential_check);
 
   /**
@@ -1389,7 +1209,7 @@ class BitVectorUlt : public BitVectorNode
    * @param pos_x The index of operand `x`, which is a concat node.
    * @return The inverse value.
    */
-  BitVector* inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s);
+  BitVector* inverse_value_concat(bool t, uint64_t pos_x, uint64_t pos_s);
   /**
    * Helper for inverse_value_concat()  to generate a new random value with
    * respect to the given domain and within given min/max range.
@@ -1451,7 +1271,7 @@ class BitVectorSlt : public BitVectorNode
    *                            (MSB(x) != 0 && s >= 1 o x_lo[bw-2:0])))
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -1460,18 +1280,18 @@ class BitVectorSlt : public BitVectorNode
    *   with const bits: pos_x = 0: t = false || (const(x) => x_lo != smax)
    *                    pos_x = 1: t = false || (const(x) => x_lo != smin)
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
   void compute_min_max_bounds(const BitVector& s,
                               const BitVector& t,
-                              uint32_t pos_x,
+                              uint64_t pos_x,
                               BitVector& res_min_u,
                               BitVector& res_max_u,
                               BitVector& res_min_s,
@@ -1523,7 +1343,7 @@ class BitVectorSlt : public BitVectorNode
   bool _is_invertible(const BitVectorDomain* d,
                       const BitVector& s,
                       const BitVector& t,
-                      uint32_t pos_x,
+                      uint64_t pos_x,
                       bool is_essential_check);
   /**
    * Helper for concat-specific (when x is a concat) inverse value computation.
@@ -1534,7 +1354,7 @@ class BitVectorSlt : public BitVectorNode
    * @param pos_x The index of operand `x`, which is a concat node.
    * @return The inverse value.
    */
-  BitVector* inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s);
+  BitVector* inverse_value_concat(bool t, uint64_t pos_x, uint64_t pos_s);
   /**
    * Helper for inverse_value_concat()  to generate a new random value with
    * respect to the given domain and within given min/max range.
@@ -1592,7 +1412,7 @@ class BitVectorUrem : public BitVectorNode
    *                      mfb(x, y) && y > t && (s - t) mod y = 0)
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -1610,12 +1430,12 @@ class BitVectorUrem : public BitVectorNode
    *                ((t = ones => mfb(x, 0)) &&
    *                 (t != ones => \exists y. (mfb(x, y) && y > t)))
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -1685,7 +1505,7 @@ class BitVectorXor : public BitVectorNode
    *   with const bits: mfb(x, s^t)
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -1693,12 +1513,12 @@ class BitVectorXor : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: true
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -1756,7 +1576,7 @@ class BitVectorIte : public BitVectorNode
 
   void evaluate() override;
 
-  bool is_essential(const BitVector& t, uint32_t pos_x) override;
+  bool is_essential(const BitVector& t, uint64_t pos_x) override;
 
   /**
    * ite(_c, _t, _e)
@@ -1782,7 +1602,7 @@ class BitVectorIte : public BitVectorNode
    *                  with s0 the value for '_c'
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -1790,19 +1610,19 @@ class BitVectorIte : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: true
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
-  uint32_t select_path(const BitVector& t) override;
+  uint64_t select_path(const BitVector& t) override;
 
   std::string to_string() const override;
 
  private:
-  uint32_t select_path_non_const(std::vector<uint32_t>& inputs) const override;
+  uint64_t select_path_non_const(std::vector<uint64_t>& inputs) const override;
   /**
    * Evaluate the assignment of this node.
    *
@@ -1848,7 +1668,7 @@ class BitVectorNot : public BitVectorNode
 
   void evaluate() override;
 
-  bool is_essential(const BitVector& t, uint32_t pos_x) override;
+  bool is_essential(const BitVector& t, uint64_t pos_x) override;
 
   /**
    * IC:
@@ -1856,7 +1676,7 @@ class BitVectorNot : public BitVectorNode
    *   with const bits: mfb(x, ~t)
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -1864,12 +1684,12 @@ class BitVectorNot : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: IC
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -1924,7 +1744,7 @@ class BitVectorExtract : public BitVectorNode
 
   void evaluate() override;
 
-  bool is_essential(const BitVector& t, uint32_t pos_x) override;
+  bool is_essential(const BitVector& t, uint64_t pos_x) override;
 
   /**
    * IC:
@@ -1932,7 +1752,7 @@ class BitVectorExtract : public BitVectorNode
    *   with const bits: mfb(x[hi:lo], t)
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -1940,12 +1760,12 @@ class BitVectorExtract : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: IC
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
@@ -2040,7 +1860,7 @@ class BitVectorSignExtend : public BitVectorNode
                                 BitVector& res_min_hi,
                                 BitVector& res_max_hi) override;
 
-  bool is_essential(const BitVector& t, uint32_t pos_x) override;
+  bool is_essential(const BitVector& t, uint64_t pos_x) override;
 
   /**
    * IC:
@@ -2052,7 +1872,7 @@ class BitVectorSignExtend : public BitVectorNode
    *   with const bits: IC_wo && mfb(x, t_x)
    */
   bool is_invertible(const BitVector& t,
-                     uint32_t pos_x,
+                     uint64_t pos_x,
                      bool is_essential_check = false) override;
 
   /**
@@ -2060,12 +1880,12 @@ class BitVectorSignExtend : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: IC
    */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+  bool is_consistent(const BitVector& t, uint64_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t, uint64_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t,
-                                    uint32_t pos_x) override;
+                                    uint64_t pos_x) override;
 
   std::string to_string() const override;
 
