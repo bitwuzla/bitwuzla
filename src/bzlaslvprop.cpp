@@ -109,8 +109,9 @@ bool
 is_leaf_node(BzlaNode *n)
 {
   assert(n);
-  return bzla_node_is_bv_var(n) || bzla_node_is_apply(n)
-         || bzla_node_is_fun_eq(n) || bzla_node_is_quantifier(n);
+  return bzla_node_is_bv_var(n) || bzla_node_is_bv_const(n)
+         || bzla_node_is_apply(n) || bzla_node_is_fun_eq(n)
+         || bzla_node_is_quantifier(n);
 }
 }  // namespace
 
@@ -274,8 +275,6 @@ PropSolverState::mk_node(BzlaNode *node)
                            d_node_map.at(node->e[1]),
                            d_node_map.at(node->e[2])});
       break;
-    case BZLA_BV_CONST_NODE:
-    case BZLA_VAR_NODE: res = d_ls->mk_node(domain.lo(), domain); break;
     default:
       assert(is_leaf_node(node));
       res = d_ls->mk_node(domain.lo(), domain);
