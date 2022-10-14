@@ -86,7 +86,7 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
         }
 
         uint32_t pos_x;
-        bool is_const0, is_const1;
+        bool is_val0, is_val1;
         bool is_essential0, is_essential1;
 
         /* Both operands leaf nodes. */
@@ -95,23 +95,23 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
         std::unique_ptr<BitVectorNode> leaf1(
             new BitVectorNode(d_rng.get(), s1_val, s1));
         T lop(d_rng.get(), bw_t, leaf0.get(), leaf1.get());
-        is_const0     = lop[0]->is_const();
-        is_const1     = lop[1]->is_const();
+        is_val0       = lop[0]->is_value();
+        is_val1       = lop[1]->is_value();
         is_essential0 = lop.is_essential(t, 0);
         is_essential1 = lop.is_essential(t, 1);
         /* we only perform this death test once (for performance reasons) */
-        if (is_const0 && is_const1)
+        if (is_val0 && is_val1)
         {
           if (test_both_const_leafs)
           {
-            ASSERT_DEATH(lop.select_path(t), "!all_const");
+            ASSERT_DEATH(lop.select_path(t), "!all_value");
             test_both_const_leafs = false;
           }
           continue;
         }
         pos_x = lop.select_path(t);
-        ASSERT_TRUE(!is_const0 || pos_x == 1);
-        ASSERT_TRUE(!is_const1 || pos_x == 0);
+        ASSERT_TRUE(!is_val0 || pos_x == 1);
+        ASSERT_TRUE(!is_val1 || pos_x == 0);
         ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential0
                     || pos_x == 0);
         ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential1
@@ -127,28 +127,28 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
         std::unique_ptr<BitVectorNode> op_s1(
             new BitVectorAdd(d_rng.get(), s1, child1.get(), child1.get()));
         T oop(d_rng.get(), bw_t, op_s0.get(), op_s1.get());
-        is_const0     = lop[0]->is_const();
-        is_const1     = lop[1]->is_const();
+        is_val0       = lop[0]->is_value();
+        is_val1       = lop[1]->is_value();
         is_essential0 = oop.is_essential(t, 0);
         is_essential1 = oop.is_essential(t, 1);
         /* we only perform this death test once (for performance reasons) */
-        if (is_const0 && is_const1)
+        if (is_val0 && is_val1)
         {
           if (test_both_const_ops)
           {
-            ASSERT_DEATH(oop.select_path(t), "!all_const");
+            ASSERT_DEATH(oop.select_path(t), "!all_value");
             test_both_const_ops = false;
           }
           continue;
         }
         pos_x = oop.select_path(t);
-        ASSERT_FALSE(pos_x == 0 ? is_const0 : is_const1);
-        ASSERT_TRUE(!is_const0 || pos_x == 1);
-        ASSERT_TRUE(!is_const1 || pos_x == 0);
+        ASSERT_FALSE(pos_x == 0 ? is_val0 : is_val1);
+        ASSERT_TRUE(!is_val0 || pos_x == 1);
+        ASSERT_TRUE(!is_val1 || pos_x == 0);
         ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential0
-                    || is_const0 || pos_x == 0);
+                    || is_val0 || pos_x == 0);
         ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential1
-                    || is_const1 || pos_x == 1);
+                    || is_val1 || pos_x == 1);
       }
     }
   }
@@ -165,8 +165,8 @@ TestBvNodeSelPath::test_ite()
   std::vector<std::string>& s1values = d_xvalues;
   std::vector<std::string>& s2values = d_xvalues;
 
-  bool test_all_const_leafs = true;
-  bool test_all_const_ops   = true;
+  bool test_all_value_leafs = true;
+  bool test_all_value_ops   = true;
 
   for (const std::string& s0_value : s0values)
   {
@@ -204,7 +204,7 @@ TestBvNodeSelPath::test_ite()
           }
 
           uint32_t pos_x;
-          bool is_const0, is_const1, is_const2;
+          bool is_val0, is_val1, is_val2;
           bool is_essential0, is_essential1, is_essential2;
 
           /* Both operands leaf nodes. */
@@ -216,28 +216,27 @@ TestBvNodeSelPath::test_ite()
               new BitVectorNode(d_rng.get(), s2_val, s2));
           BitVectorIte lop(
               d_rng.get(), bw_t, leaf0.get(), leaf1.get(), leaf2.get());
-          is_const0     = lop[0]->is_const();
-          is_const1     = lop[1]->is_const();
-          is_const2     = lop[2]->is_const();
+          is_val0       = lop[0]->is_value();
+          is_val1       = lop[1]->is_value();
+          is_val2       = lop[2]->is_value();
           is_essential0 = lop.is_essential(t, 0);
           is_essential1 = lop.is_essential(t, 1);
           is_essential2 = lop.is_essential(t, 2);
           /* we only perform this death test once (for performance reasons) */
-          if (is_const0 && is_const1 && is_const2)
+          if (is_val0 && is_val1 && is_val2)
           {
-            if (test_all_const_leafs)
+            if (test_all_value_leafs)
             {
-              ASSERT_DEATH(lop.select_path(t), "!all_const");
-              test_all_const_leafs = false;
+              ASSERT_DEATH(lop.select_path(t), "!all_value");
+              test_all_value_leafs = false;
             }
             continue;
           }
           pos_x = lop.select_path(t);
-          ASSERT_FALSE(pos_x == 0 ? is_const0
-                                  : (pos_x == 1 ? is_const1 : is_const2));
-          ASSERT_TRUE(!is_const1 || !is_const2 || pos_x == 0);
-          ASSERT_TRUE(!is_const0 || !is_const2 || pos_x == 1);
-          ASSERT_TRUE(!is_const0 || !is_const1 || pos_x == 2);
+          ASSERT_FALSE(pos_x == 0 ? is_val0 : (pos_x == 1 ? is_val1 : is_val2));
+          ASSERT_TRUE(!is_val1 || !is_val2 || pos_x == 0);
+          ASSERT_TRUE(!is_val0 || !is_val2 || pos_x == 1);
+          ASSERT_TRUE(!is_val0 || !is_val1 || pos_x == 2);
           ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
                       || !is_essential0 || pos_x == 0);
           ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
@@ -258,32 +257,32 @@ TestBvNodeSelPath::test_ite()
               d_rng.get(), s2, childbwt.get(), childbwt.get()));
           BitVectorIte oop(
               d_rng.get(), bw_t, op_s0.get(), op_s1.get(), op_s2.get());
-          is_const0     = lop[0]->is_const();
-          is_const1     = lop[1]->is_const();
-          is_const2     = lop[2]->is_const();
+          is_val0       = lop[0]->is_value();
+          is_val1       = lop[1]->is_value();
+          is_val2       = lop[2]->is_value();
           is_essential0 = oop.is_essential(t, 0);
           is_essential1 = oop.is_essential(t, 1);
           is_essential2 = oop.is_essential(t, 2);
           /* we only perform this death test once (for performance reasons) */
-          if (is_const0 && is_const1 && is_const2)
+          if (is_val0 && is_val1 && is_val2)
           {
-            if (test_all_const_ops)
+            if (test_all_value_ops)
             {
-              ASSERT_DEATH(oop.select_path(t), "!all_const");
-              test_all_const_ops = false;
+              ASSERT_DEATH(oop.select_path(t), "!all_value");
+              test_all_value_ops = false;
             }
             continue;
           }
           pos_x = oop.select_path(t);
-          ASSERT_TRUE(!is_const1 || !is_const2 || pos_x == 0);
-          ASSERT_TRUE(!is_const0 || !is_const2 || pos_x == 1);
-          ASSERT_TRUE(!is_const0 || !is_const1 || pos_x == 2);
+          ASSERT_TRUE(!is_val1 || !is_val2 || pos_x == 0);
+          ASSERT_TRUE(!is_val0 || !is_val2 || pos_x == 1);
+          ASSERT_TRUE(!is_val0 || !is_val1 || pos_x == 2);
           ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
-                      || !is_essential0 || is_const0 || pos_x == 0);
+                      || !is_essential0 || is_val0 || pos_x == 0);
           ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
-                      || !is_essential1 || is_const1 || pos_x == 1);
+                      || !is_essential1 || is_val1 || pos_x == 1);
           ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
-                      || !is_essential2 || is_const2 || pos_x == 2);
+                      || !is_essential2 || is_val2 || pos_x == 2);
         }
       }
     }
@@ -315,27 +314,27 @@ TestBvNodeSelPath::test_not()
       }
 
       uint32_t pos_x;
-      bool is_const;
+      bool is_val;
       bool is_essential;
 
       /* Operand is leaf node. */
       std::unique_ptr<BitVectorNode> leaf0(
           new BitVectorNode(d_rng.get(), s0_val, s0));
       BitVectorNot lop(d_rng.get(), bw_t, leaf0.get());
-      is_const     = lop[0]->is_const();
+      is_val       = lop[0]->is_value();
       is_essential = lop.is_essential(t, 0);
       /* we only perform this death test once (for performance reasons) */
-      if (is_const)
+      if (is_val)
       {
         if (test_const_leaf)
         {
-          ASSERT_DEATH(lop.select_path(t), "!all_const");
+          ASSERT_DEATH(lop.select_path(t), "!all_value");
           test_const_leaf = false;
         }
         continue;
       }
       pos_x = lop.select_path(t);
-      ASSERT_TRUE(is_const || pos_x == 0);
+      ASSERT_TRUE(is_val || pos_x == 0);
       ASSERT_TRUE(is_essential || pos_x == 0);
 
       /* Operands is op. */
@@ -344,21 +343,21 @@ TestBvNodeSelPath::test_not()
       std::unique_ptr<BitVectorNode> op_s0(
           new BitVectorNot(d_rng.get(), s0, child.get()));
       BitVectorNot oop(d_rng.get(), bw_t, op_s0.get());
-      is_const     = lop[0]->is_const();
+      is_val       = lop[0]->is_value();
       is_essential = oop.is_essential(t, 0);
       /* we only perform this death test once (for performance reasons) */
-      if (is_const)
+      if (is_val)
       {
         if (test_const_op)
         {
-          ASSERT_DEATH(oop.select_path(t), "!all_const");
+          ASSERT_DEATH(oop.select_path(t), "!all_value");
           test_const_op = false;
         }
         continue;
       }
       pos_x = oop.select_path(t);
-      ASSERT_TRUE(!is_const || pos_x == 0);
-      ASSERT_TRUE(is_essential || is_const || pos_x == 0);
+      ASSERT_TRUE(!is_val || pos_x == 0);
+      ASSERT_TRUE(is_essential || is_val || pos_x == 0);
     }
   }
 }
@@ -394,27 +393,27 @@ TestBvNodeSelPath::test_extract()
           }
 
           uint32_t pos_x;
-          bool is_const;
+          bool is_val;
           bool is_essential;
 
           /* Operand is leaf node. */
           std::unique_ptr<BitVectorNode> leaf0(
               new BitVectorNode(d_rng.get(), s0_val, s0));
           BitVectorExtract lop(d_rng.get(), bw_t, leaf0.get(), hi, lo);
-          is_const     = lop[0]->is_const();
+          is_val       = lop[0]->is_value();
           is_essential = lop.is_essential(t, 0);
           /* we only perform this death test once (for performance reasons) */
-          if (is_const)
+          if (is_val)
           {
             if (test_const_leaf)
             {
-              ASSERT_DEATH(lop.select_path(t), "!all_const");
+              ASSERT_DEATH(lop.select_path(t), "!all_value");
               test_const_leaf = false;
             }
             continue;
           }
           pos_x = lop.select_path(t);
-          ASSERT_TRUE(is_const || pos_x == 0);
+          ASSERT_TRUE(is_val || pos_x == 0);
           ASSERT_TRUE(is_essential || pos_x == 0);
 
           /* Operands is op. */
@@ -423,21 +422,21 @@ TestBvNodeSelPath::test_extract()
           std::unique_ptr<BitVectorNode> op_s0(
               new BitVectorMul(d_rng.get(), s0, child.get(), child.get()));
           BitVectorExtract oop(d_rng.get(), bw_t, op_s0.get(), hi, lo);
-          is_const     = lop[0]->is_const();
+          is_val       = lop[0]->is_value();
           is_essential = oop.is_essential(t, 0);
           /* we only perform this death test once (for performance reasons) */
-          if (is_const)
+          if (is_val)
           {
             if (test_const_op)
             {
-              ASSERT_DEATH(oop.select_path(t), "!all_const");
+              ASSERT_DEATH(oop.select_path(t), "!all_value");
               test_const_op = false;
             }
             continue;
           }
           pos_x = oop.select_path(t);
-          ASSERT_TRUE(!is_const || pos_x == 0);
-          ASSERT_TRUE(is_essential || is_const || pos_x == 0);
+          ASSERT_TRUE(!is_val || pos_x == 0);
+          ASSERT_TRUE(is_essential || is_val || pos_x == 0);
         }
       }
     }
@@ -472,27 +471,27 @@ TestBvNodeSelPath::test_sext()
         }
 
         uint32_t pos_x;
-        bool is_const;
+        bool is_val;
         bool is_essential;
 
         /* Operand is leaf node. */
         std::unique_ptr<BitVectorNode> leaf0(
             new BitVectorNode(d_rng.get(), s0_val, s0));
         BitVectorSignExtend lop(d_rng.get(), bw_t, leaf0.get(), n);
-        is_const     = lop[0]->is_const();
+        is_val       = lop[0]->is_value();
         is_essential = lop.is_essential(t, 0);
         /* we only perform this death test once (for performance reasons) */
-        if (is_const)
+        if (is_val)
         {
           if (test_const_leaf)
           {
-            ASSERT_DEATH(lop.select_path(t), "!all_const");
+            ASSERT_DEATH(lop.select_path(t), "!all_value");
             test_const_leaf = false;
           }
           continue;
         }
         pos_x = lop.select_path(t);
-        ASSERT_TRUE(is_const || pos_x == 0);
+        ASSERT_TRUE(is_val || pos_x == 0);
         ASSERT_TRUE(is_essential || pos_x == 0);
 
         /* Operands is op. */
@@ -501,21 +500,21 @@ TestBvNodeSelPath::test_sext()
         std::unique_ptr<BitVectorNode> op_s0(
             new BitVectorUdiv(d_rng.get(), s0, child.get(), child.get()));
         BitVectorSignExtend oop(d_rng.get(), bw_t, op_s0.get(), n);
-        is_const     = lop[0]->is_const();
+        is_val       = lop[0]->is_value();
         is_essential = oop.is_essential(t, 0);
         /* we only perform this death test once (for performance reasons) */
-        if (is_const)
+        if (is_val)
         {
           if (test_const_op)
           {
-            ASSERT_DEATH(oop.select_path(t), "!all_const");
+            ASSERT_DEATH(oop.select_path(t), "!all_value");
             test_const_op = false;
           }
           continue;
         }
         pos_x = oop.select_path(t);
-        ASSERT_TRUE(!is_const || pos_x == 0);
-        ASSERT_TRUE(is_essential || is_const || pos_x == 0);
+        ASSERT_TRUE(!is_val || pos_x == 0);
+        ASSERT_TRUE(is_essential || is_val || pos_x == 0);
       }
     }
   }

@@ -44,7 +44,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_arity(0),
       d_assignment(assignment),
       d_domain(domain),
-      d_is_const(domain.is_fixed())
+      d_is_value(domain.is_fixed())
 {
   assert(assignment.size() == domain.size());
   assert(domain.match_fixed_bits(assignment));
@@ -57,14 +57,14 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_arity(1),
       d_assignment(domain.lo()),
       d_domain(domain),
-      d_is_const(domain.is_fixed())
+      d_is_value(domain.is_fixed())
 {
   assert(rng);
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
   d_children.reset(new BitVectorNode*[d_arity]);
   d_children[0] = child0;
-  d_all_const   = child0->is_const();
+  d_all_value   = child0->is_value();
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
@@ -75,7 +75,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_arity(2),
       d_assignment(domain.lo()),
       d_domain(domain),
-      d_is_const(domain.is_fixed())
+      d_is_value(domain.is_fixed())
 {
   assert(rng);
   d_inverse.reset(nullptr);
@@ -83,7 +83,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
   d_children.reset(new BitVectorNode*[d_arity]);
   d_children[0] = child0;
   d_children[1] = child1;
-  d_all_const   = child0->is_const() && child1->is_const();
+  d_all_value   = child0->is_value() && child1->is_value();
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
@@ -95,7 +95,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_arity(3),
       d_assignment(domain.lo()),
       d_domain(domain),
-      d_is_const(domain.is_fixed())
+      d_is_value(domain.is_fixed())
 {
   assert(rng);
   d_inverse.reset(nullptr);
@@ -104,7 +104,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
   d_children[0] = child0;
   d_children[1] = child1;
   d_children[2] = child2;
-  d_all_const = child0->is_const() && child1->is_const() && child2->is_const();
+  d_all_value = child0->is_value() && child1->is_value() && child2->is_value();
 }
 
 bool
@@ -125,7 +125,7 @@ BitVectorNode::select_path_non_const(std::vector<uint32_t>& res_inputs) const
   assert(res_inputs.empty());
   for (uint32_t i = 0; i < d_arity; ++i)
   {
-    if (d_children[i]->is_const()) continue;
+    if (d_children[i]->is_value()) continue;
     res_inputs.push_back(i);
   }
   if (res_inputs.size() > 1) return static_cast<uint32_t>(-1);
@@ -135,7 +135,7 @@ BitVectorNode::select_path_non_const(std::vector<uint32_t>& res_inputs) const
 uint32_t
 BitVectorNode::select_path(const BitVector& t)
 {
-  assert(!all_const());
+  assert(!all_value());
 
   std::vector<uint32_t> inputs;
 
@@ -151,7 +151,7 @@ BitVectorNode::select_path(const BitVector& t)
     std::vector<uint32_t> ess_inputs;
     for (uint32_t i : inputs)
     {
-      assert(!d_children[i]->is_const());
+      assert(!d_children[i]->is_value());
       if (is_essential(t, i))
       {
         ess_inputs.push_back(i);
@@ -622,12 +622,12 @@ void
 BitVectorAdd::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -765,12 +765,12 @@ void
 BitVectorAnd::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -998,12 +998,12 @@ void
 BitVectorConcat::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -1188,12 +1188,12 @@ void
 BitVectorEq::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -1375,12 +1375,12 @@ void
 BitVectorMul::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -1734,12 +1734,12 @@ void
 BitVectorShl::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -2139,12 +2139,12 @@ void
 BitVectorShr::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -2571,12 +2571,12 @@ void
 BitVectorAshr::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -2991,12 +2991,12 @@ void
 BitVectorUdiv::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -3697,12 +3697,12 @@ void
 BitVectorUlt::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -4293,12 +4293,12 @@ void
 BitVectorSlt::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -4907,12 +4907,12 @@ void
 BitVectorUrem::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -5493,12 +5493,12 @@ void
 BitVectorXor::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -5645,12 +5645,12 @@ void
 BitVectorIte::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -5883,7 +5883,7 @@ BitVectorIte::select_path_non_const(std::vector<uint32_t>& inputs) const
   bool cond = d_children[0]->assignment().is_true();
   for (uint32_t i = 0; i < d_arity; ++i)
   {
-    if (d_children[i]->is_const()) continue;
+    if (d_children[i]->is_value()) continue;
     if (i == 1 && !cond) continue;
     if (i == 2 && cond) continue;
     inputs.push_back(i);
@@ -5898,7 +5898,7 @@ BitVectorIte::select_path_non_const(std::vector<uint32_t>& inputs) const
 uint32_t
 BitVectorIte::select_path(const BitVector& t)
 {
-  assert(!all_const());
+  assert(!all_value());
 
   std::vector<uint32_t> inputs;
 
@@ -5931,11 +5931,11 @@ BitVectorIte::select_path(const BitVector& t)
      * in the test setting (when covering all cases), and we guard for this. */
     if (inputs.empty())
     {
-      assert(d_children[0]->is_const());
+      assert(d_children[0]->is_value());
       assert(d_children[0]->assignment().is_true()
-             || (!d_children[1]->is_const() && d_children[2]->is_const()));
+             || (!d_children[1]->is_value() && d_children[2]->is_value()));
       assert(d_children[0]->assignment().is_false()
-             || (!d_children[2]->is_const() && d_children[1]->is_const()));
+             || (!d_children[2]->is_value() && d_children[1]->is_value()));
       pos_x = d_children[0]->assignment().is_true() ? 2 : 1;
     }
     else
@@ -5990,12 +5990,12 @@ void
 BitVectorNot::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -6113,12 +6113,12 @@ void
 BitVectorExtract::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header
@@ -6331,12 +6331,12 @@ void
 BitVectorSignExtend::_evaluate_and_set_domain()
 {
   _evaluate();
-  if (d_all_const)
+  if (d_all_value)
   {
-    if (!d_is_const)
+    if (!d_is_value)
     {
       d_domain.fix(d_assignment);
-      d_is_const = true;
+      d_is_value = true;
     }
   }
   // we cannot assert that the assignment matches const bits, see header

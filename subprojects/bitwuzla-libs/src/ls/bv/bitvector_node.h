@@ -241,13 +241,13 @@ class BitVectorNode
    * Determine if the underlying domain is fixed.
    * @return True if the underlying domain is fixed.
    */
-  bool is_const() const { return d_is_const; }
+  bool is_value() const { return d_is_value; }
 
   /**
    * Determine if all children are const.
    * @return True if all children are const.
    */
-  bool all_const() const { return d_all_const; }
+  bool all_value() const { return d_all_value; }
 
   /**
    * Set id of this node.
@@ -408,8 +408,8 @@ class BitVectorNode
   uint32_t d_arity;
   BitVector d_assignment;
   BitVectorDomain d_domain;
-  bool d_is_const;
-  bool d_all_const;
+  bool d_is_value;
+  bool d_all_value;
 
   /** Unsigned upper bound (incl) for inverse value computation. */
   std::unique_ptr<BitVector> d_max_u;

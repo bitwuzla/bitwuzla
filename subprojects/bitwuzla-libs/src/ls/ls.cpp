@@ -218,7 +218,7 @@ LocalSearch<VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
       BZLALSLOG(1) << "    target value: " << t << std::endl;
       return LocalSearchMove(nprops, nupdates, cur, t);
     }
-    if (cur->is_const() || cur->all_const())
+    if (cur->is_value() || cur->all_value())
     {
       BZLALSLOG(1) << "    target value: " << t << std::endl;
       break;
@@ -473,7 +473,7 @@ LocalSearch<VALUE, NODE>::move()
         get_node(d_rng->pick_from_set<std::unordered_set<uint64_t>, uint64_t>(
             d_roots_unsat));
 
-    if (root->is_const() && root->domain().lo().is_false())
+    if (root->is_value() && root->domain().lo().is_false())
     {
       return Result::UNSAT;
     }
