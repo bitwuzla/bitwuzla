@@ -81,7 +81,7 @@ struct LocalSearchMove;
 
 /* -------------------------------------------------------------------------- */
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 class LocalSearch
 {
  public:
@@ -345,7 +345,7 @@ class LocalSearch
   ParentsMap d_parents;
 
   /** The target value for each root. */
-  std::unique_ptr<BOOL> d_true;
+  std::unique_ptr<VALUE> d_true;
 
   /** The log level. */
   uint32_t d_log_level = 0;

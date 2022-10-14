@@ -81,51 +81,52 @@ struct LocalSearchMove
   VALUE d_assignment;
 };
 
+template struct LocalSearchMove<BitVector, BitVectorNode>;
+
 /* -------------------------------------------------------------------------- */
 
-template <class BOOL, class VALUE, class NODE>
-LocalSearch<BOOL, VALUE, NODE>::LocalSearch(uint64_t max_nprops,
-                                            uint64_t max_nupdates,
-                                            uint32_t seed)
+template <class VALUE, class NODE>
+LocalSearch<VALUE, NODE>::LocalSearch(uint64_t max_nprops,
+                                      uint64_t max_nupdates,
+                                      uint32_t seed)
     : d_max_nprops(max_nprops), d_max_nupdates(max_nupdates), d_seed(seed)
 
 {
   d_rng.reset(new RNG(d_seed));
 }
 
-template <class BOOL, class VALUE, class NODE>
-LocalSearch<BOOL, VALUE, NODE>::~LocalSearch()
+template <class VALUE, class NODE>
+LocalSearch<VALUE, NODE>::~LocalSearch()
 {
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 void
-LocalSearch<BOOL, VALUE, NODE>::init()
+LocalSearch<VALUE, NODE>::init()
 {
   NODE::s_path_sel_essential  = d_options.use_path_sel_essential;
   NODE::s_prob_pick_ess_input = d_options.prob_pick_ess_input;
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 const VALUE&
-LocalSearch<BOOL, VALUE, NODE>::get_assignment(uint64_t id) const
+LocalSearch<VALUE, NODE>::get_assignment(uint64_t id) const
 {
   assert(id < d_nodes.size());  // API check
   return get_node(id)->assignment();
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 void
-LocalSearch<BOOL, VALUE, NODE>::set_assignment(uint64_t id,
-                                               const VALUE& assignment)
+LocalSearch<VALUE, NODE>::set_assignment(uint64_t id, const VALUE& assignment)
 {
   assert(id < d_nodes.size());  // API check
   get_node(id)->set_assignment(assignment);
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 void
-LocalSearch<BOOL, VALUE, NODE>::register_root(uint64_t id)
+LocalSearch<VALUE, NODE>::register_root(uint64_t id)
 {
   assert(id < d_nodes.size());  // API check
   NODE* root = get_node(id);
@@ -141,17 +142,17 @@ LocalSearch<BOOL, VALUE, NODE>::register_root(uint64_t id)
   update_unsat_roots(root);
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 uint32_t
-LocalSearch<BOOL, VALUE, NODE>::get_arity(uint64_t id) const
+LocalSearch<VALUE, NODE>::get_arity(uint64_t id) const
 {
   assert(id < d_nodes.size());  // API check
   return get_node(id)->arity();
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 uint64_t
-LocalSearch<BOOL, VALUE, NODE>::get_child(uint64_t id, uint32_t idx) const
+LocalSearch<VALUE, NODE>::get_child(uint64_t id, uint32_t idx) const
 {
   assert(id < d_nodes.size());  // API check
   assert(idx < get_arity(id));  // API check
@@ -160,42 +161,42 @@ LocalSearch<BOOL, VALUE, NODE>::get_child(uint64_t id, uint32_t idx) const
 
 /* -------------------------------------------------------------------------- */
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 NODE*
-LocalSearch<BOOL, VALUE, NODE>::get_node(uint64_t id) const
+LocalSearch<VALUE, NODE>::get_node(uint64_t id) const
 {
   assert(id < d_nodes.size());
   assert(d_nodes[id]->id() == id);
   return d_nodes[id].get();
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 bool
-LocalSearch<BOOL, VALUE, NODE>::is_leaf_node(const NODE* node) const
+LocalSearch<VALUE, NODE>::is_leaf_node(const NODE* node) const
 {
   assert(node);
   return node->arity() == 0;
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 bool
-LocalSearch<BOOL, VALUE, NODE>::is_root_node(const NODE* node) const
+LocalSearch<VALUE, NODE>::is_root_node(const NODE* node) const
 {
   assert(node);
   assert(d_parents.find(node->id()) != d_parents.end());
   return d_parents.at(node->id()).empty();
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 bool
-LocalSearch<BOOL, VALUE, NODE>::is_ineq_root(const NODE* node) const
+LocalSearch<VALUE, NODE>::is_ineq_root(const NODE* node) const
 {
   return d_roots_ineq.find(node) != d_roots_ineq.end();
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 LocalSearchMove<VALUE, NODE>
-LocalSearch<BOOL, VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
+LocalSearch<VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
 {
   assert(root);
 
@@ -434,9 +435,9 @@ LocalSearch<BOOL, VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
   return LocalSearchMove<VALUE, NODE>(nprops, nupdates, nullptr, VALUE());
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 void
-LocalSearch<BOOL, VALUE, NODE>::update_unsat_roots(NODE* root)
+LocalSearch<VALUE, NODE>::update_unsat_roots(NODE* root)
 {
   assert(is_root_node(root));
 
@@ -457,9 +458,9 @@ LocalSearch<BOOL, VALUE, NODE>::update_unsat_roots(NODE* root)
   }
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 uint64_t
-LocalSearch<BOOL, VALUE, NODE>::update_cone(NODE* node, const VALUE& assignment)
+LocalSearch<VALUE, NODE>::update_cone(NODE* node, const VALUE& assignment)
 {
   assert(node);
   assert(is_leaf_node(node));
@@ -546,9 +547,9 @@ LocalSearch<BOOL, VALUE, NODE>::update_cone(NODE* node, const VALUE& assignment)
   return nupdates;
 }
 
-template <class BOOL, class VALUE, class NODE>
+template <class VALUE, class NODE>
 Result
-LocalSearch<BOOL, VALUE, NODE>::move()
+LocalSearch<VALUE, NODE>::move()
 {
   BZLALSLOG(1) << "*** move: " << d_statistics.d_nmoves + 1 << std::endl;
   if (BZLALSLOG_ENABLED(1))
@@ -617,7 +618,7 @@ LocalSearch<BOOL, VALUE, NODE>::move()
   return Result::UNKNOWN;
 }
 
-template class LocalSearch<BitVector, BitVector, BitVectorNode>;
+template class LocalSearch<BitVector, BitVectorNode>;
 
 /* -------------------------------------------------------------------------- */
 
