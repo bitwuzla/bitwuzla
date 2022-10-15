@@ -82,6 +82,16 @@ TEST_F(TestBvNodeInv, slt)
       INV, NodeKind::BV_SLT, 0, NONE, OptimizationKind::SEXT);
   test_binary<BitVectorUlt>(
       INV, NodeKind::BV_SLT, 1, NONE, OptimizationKind::SEXT);
+  test_binary<BitVectorSlt>(INV, NodeKind::BV_SLT, 0, UNSIGNED);
+  test_binary<BitVectorSlt>(INV, NodeKind::BV_SLT, 1, UNSIGNED);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 0, UNSIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 1, UNSIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 0, UNSIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorSlt>(
+      INV, NodeKind::BV_SLT, 1, UNSIGNED, OptimizationKind::SEXT);
   test_binary<BitVectorSlt>(INV, NodeKind::BV_SLT, 0, SIGNED);
   test_binary<BitVectorSlt>(INV, NodeKind::BV_SLT, 1, SIGNED);
   test_binary<BitVectorSlt>(
