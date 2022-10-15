@@ -284,7 +284,7 @@ class BitVectorAdd : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::BV_ADD; }
+  NodeKind kind() const override { return NodeKind::BV_ADD; }
 
   void evaluate() override;
 
@@ -359,7 +359,7 @@ class BitVectorAnd : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::BV_AND; }
+  NodeKind kind() const override { return NodeKind::BV_AND; }
 
   void evaluate() override;
 
@@ -450,7 +450,7 @@ class BitVectorConcat : public BitVectorNode
                   BitVectorNode* child0,
                   BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::BV_CONCAT; }
+  NodeKind kind() const override { return NodeKind::BV_CONCAT; }
 
   void evaluate() override;
 
@@ -534,7 +534,7 @@ class BitVectorEq : public BitVectorNode
               BitVectorNode* child0,
               BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::EQ; }
+  NodeKind kind() const override { return NodeKind::EQ; }
 
   void evaluate() override;
 
@@ -611,7 +611,7 @@ class BitVectorMul : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::BV_MUL; }
+  NodeKind kind() const override { return NodeKind::BV_MUL; }
 
   void evaluate() override;
 
@@ -700,7 +700,7 @@ class BitVectorShl : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::BV_SHL; }
+  NodeKind kind() const override { return NodeKind::BV_SHL; }
 
   void evaluate() override;
 
@@ -805,7 +805,7 @@ class BitVectorShr : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::BV_SHR; }
+  NodeKind kind() const override { return NodeKind::BV_SHR; }
 
   void evaluate() override;
 
@@ -890,7 +890,7 @@ class BitVectorAshr : public BitVectorNode
                 BitVectorNode* child0,
                 BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::BV_ASHR; }
+  NodeKind kind() const override { return NodeKind::BV_ASHR; }
 
   void evaluate() override;
 
@@ -984,7 +984,7 @@ class BitVectorUdiv : public BitVectorNode
                 BitVectorNode* child0,
                 BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::BV_UDIV; }
+  NodeKind kind() const override { return NodeKind::BV_UDIV; }
 
   void evaluate() override;
 
@@ -1110,7 +1110,7 @@ class BitVectorUlt : public BitVectorNode
                BitVectorNode* child1,
                bool opt_concat_sext = false);
 
-  NodeKind get_kind() const override { return NodeKind::BV_ULT; }
+  NodeKind kind() const override { return NodeKind::BV_ULT; }
 
   void evaluate() override;
 
@@ -1248,7 +1248,7 @@ class BitVectorSlt : public BitVectorNode
                BitVectorNode* child1,
                bool opt_concat_sext = false);
 
-  NodeKind get_kind() const override { return NodeKind::BV_SLT; }
+  NodeKind kind() const override { return NodeKind::BV_SLT; }
 
   void evaluate() override;
 
@@ -1391,7 +1391,7 @@ class BitVectorUrem : public BitVectorNode
                 BitVectorNode* child0,
                 BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::BV_UREM; }
+  NodeKind kind() const override { return NodeKind::BV_UREM; }
 
   void evaluate() override;
 
@@ -1495,7 +1495,7 @@ class BitVectorXor : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
 
-  NodeKind get_kind() const override { return NodeKind::BV_XOR; }
+  NodeKind kind() const override { return NodeKind::BV_XOR; }
 
   void evaluate() override;
 
@@ -1572,7 +1572,7 @@ class BitVectorIte : public BitVectorNode
                BitVectorNode* child1,
                BitVectorNode* child2);
 
-  NodeKind get_kind() const override { return NodeKind::ITE; }
+  NodeKind kind() const override { return NodeKind::ITE; }
 
   void evaluate() override;
 
@@ -1664,7 +1664,7 @@ class BitVectorNot : public BitVectorNode
   BitVectorNot(RNG* rng, uint64_t size, BitVectorNode* child0);
   BitVectorNot(RNG* rng, const BitVectorDomain& domain, BitVectorNode* child0);
 
-  NodeKind get_kind() const override { return NodeKind::BV_NOT; }
+  NodeKind kind() const override { return NodeKind::BV_NOT; }
 
   void evaluate() override;
 
@@ -1740,7 +1740,7 @@ class BitVectorExtract : public BitVectorNode
                    uint64_t hi,
                    uint64_t lo);
 
-  NodeKind get_kind() const override { return NodeKind::BV_EXTRACT; }
+  NodeKind kind() const override { return NodeKind::BV_EXTRACT; }
 
   void evaluate() override;
 
@@ -1847,7 +1847,7 @@ class BitVectorSignExtend : public BitVectorNode
    */
   uint64_t get_n() const { return d_n; }
 
-  NodeKind get_kind() const override { return NodeKind::BV_SEXT; }
+  NodeKind kind() const override { return NodeKind::BV_SEXT; }
 
   void evaluate() override;
 

@@ -274,7 +274,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
         BZLALSLOG(1) << "      inverse value: " << t << std::endl;
         d_statistics.d_nprops_inv += 1;
 #ifndef NDEBUG
-        d_statistics.d_ninv[cur->get_kind()] += 1;
+        d_statistics.d_ninv[cur->kind()] += 1;
 #endif
       }
       else if (cur->is_consistent(t, pos_x))
@@ -283,7 +283,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
         BZLALSLOG(1) << "      consistent value: " << t << std::endl;
         d_statistics.d_nprops_cons += 1;
 #ifndef NDEBUG
-        d_statistics.d_ncons[cur->get_kind()] += 1;
+        d_statistics.d_ncons[cur->kind()] += 1;
 #endif
       }
       else

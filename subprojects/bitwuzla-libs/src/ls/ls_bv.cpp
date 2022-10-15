@@ -251,7 +251,7 @@ LocalSearchBV::update_bounds_aux(BitVectorNode* root, int32_t pos)
 
   BitVectorNode* child0 = root->child(0);
   BitVectorNode* child1 = root->child(1);
-  bool is_signed        = root->get_kind() == NodeKind::BV_SLT;
+  bool is_signed        = root->kind() == NodeKind::BV_SLT;
   uint64_t size         = child0->size();
   BitVector min_value, max_value;
 
@@ -340,7 +340,7 @@ LocalSearchBV::compute_bounds(Node<BitVector>* node)
       BitVectorNode* p = get_node(pid);
       if (!is_ineq_root(p)) continue;
       if (p->assignment().is_true() != d_roots_ineq.at(p)) continue;
-      if (p->get_kind() == NodeKind::BV_NOT)
+      if (p->kind() == NodeKind::BV_NOT)
       {
         p = p->child(0);
       }

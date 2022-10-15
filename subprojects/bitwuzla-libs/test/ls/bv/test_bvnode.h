@@ -760,8 +760,7 @@ TestBvNode::test_binary(Kind kind,
                 std::cout << "t: " << t << std::endl;
                 std::cout << "x: " << x_value << ": " << x_val << std::endl;
                 std::cout << "s: " << s_val << std::endl;
-                if (opt_kind != DEFAULT
-                    && op_x->get_kind() == NodeKind::BV_SEXT)
+                if (opt_kind != DEFAULT && op_x->kind() == NodeKind::BV_SEXT)
                 {
                   std::cout
                       << "n: "

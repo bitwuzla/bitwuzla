@@ -81,13 +81,13 @@ BitVectorNode::BitVectorNode(RNG* rng,
 bool
 BitVectorNode::is_inequality() const
 {
-  return get_kind() == NodeKind::BV_SLT || get_kind() == NodeKind::BV_ULT;
+  return kind() == NodeKind::BV_SLT || kind() == NodeKind::BV_ULT;
 }
 
 bool
 BitVectorNode::is_not() const
 {
-  return get_kind() == NodeKind::BV_NOT;
+  return kind() == NodeKind::BV_NOT;
 }
 
 bool
@@ -3856,7 +3856,7 @@ BitVectorUlt::is_invertible(const BitVector& t,
 
   uint64_t n = 0, bw_x = 0, bw_xx = 0;
   bool opt_sext =
-      d_opt_concat_sext && child(pos_x)->get_kind() == NodeKind::BV_SEXT;
+      d_opt_concat_sext && child(pos_x)->kind() == NodeKind::BV_SEXT;
   const BitVectorDomain* dx = &x;
   BitVectorDomain dxn, dxx, ddx;
 
@@ -4089,7 +4089,7 @@ BitVector*
 BitVectorUlt::inverse_value_concat(bool t, uint64_t pos_x, uint64_t pos_s)
 {
   BitVectorNode& op_x = *child(pos_x);
-  assert(op_x.get_kind() == NodeKind::BV_CONCAT);
+  assert(op_x.kind() == NodeKind::BV_CONCAT);
   BitVectorNode& op_s = *child(pos_s);
 
   const BitVectorDomain& dx = op_x.domain();
@@ -4451,7 +4451,7 @@ BitVectorSlt::is_invertible(const BitVector& t,
 
   uint64_t n = 0, bw_x = 0, bw_xx = 0;
   bool opt_sext =
-      d_opt_concat_sext && child(pos_x)->get_kind() == NodeKind::BV_SEXT;
+      d_opt_concat_sext && child(pos_x)->kind() == NodeKind::BV_SEXT;
   const BitVectorDomain* dx = &x;
   BitVectorDomain dxn, dxx, ddx;
 
@@ -4651,7 +4651,7 @@ BitVector*
 BitVectorSlt::inverse_value_concat(bool t, uint64_t pos_x, uint64_t pos_s)
 {
   BitVectorNode& op_x = *child(pos_x);
-  assert(op_x.get_kind() == NodeKind::BV_CONCAT);
+  assert(op_x.kind() == NodeKind::BV_CONCAT);
   BitVectorNode& op_s = *child(pos_s);
 
   const BitVectorDomain& dx = op_x.domain();

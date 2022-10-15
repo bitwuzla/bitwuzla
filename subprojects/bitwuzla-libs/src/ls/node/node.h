@@ -35,7 +35,7 @@ class Node
    * Get the kind of the node.
    * @return The kind of this node.
    */
-  virtual NodeKind get_kind() const { return NodeKind::CONST; }
+  virtual NodeKind kind() const { return NodeKind::CONST; }
 
   /**
    * Determine if this node is an inequality node.
@@ -46,7 +46,7 @@ class Node
    * Determine if this node is a not node.
    * @return True if this is a not node.
    */
-  virtual bool is_not() const { return get_kind() == NodeKind::NOT; }
+  virtual bool is_not() const { return kind() == NodeKind::NOT; }
 
   /** Update assignment based on the assignment of its children. */
   virtual void evaluate(){};
