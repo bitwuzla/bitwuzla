@@ -539,7 +539,6 @@ Rewriter::rewrite_bv_ult(const Node& node)
     BZLA_APPLY_RW_RULE(BV_ULT_ITE);
     // LEVEL 3 rewrites /////////////////////////////////////////
     BZLA_APPLY_RW_RULE(BV_ULT_CONCAT);
-    // TODO
   }
 
 DONE:

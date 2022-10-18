@@ -1680,7 +1680,7 @@ RewriteRule<RewriteRuleKind::BV_SLT_SAME>::_apply(Rewriter& rewriter,
 
 /**
  * match:  (bvslt a b) with a and b of bit-width 1
- * result: (bvand a (bvnot b))
+ * result: (= (bvand a (bvnot b)) (_ bv1 1))
  */
 template <>
 Node
@@ -1689,8 +1689,10 @@ RewriteRule<RewriteRuleKind::BV_SLT_BV1>::_apply(Rewriter& rewriter,
 {
   assert(node.num_children() == 2);
   if (node[0].type().bv_size() != 1) return node;
-  return rewriter.mk_node(Kind::BV_AND,
-                          {node[0], rewriter.invert_node(node[1])});
+  return rewriter.mk_node(
+      Kind::EQUAL,
+      {rewriter.mk_node(Kind::BV_AND, {node[0], rewriter.invert_node(node[1])}),
+       NodeManager::get().mk_value(BitVector::mk_one(1))});
 }
 
 /**
@@ -1985,7 +1987,7 @@ RewriteRule<RewriteRuleKind::BV_ULT_SAME>::_apply(Rewriter& rewriter,
 
 /**
  * match:  (bvult a b) with a and b of bit-width 1
- * result: (bvand (bvnot a) b)
+ * result: (= (bvand (bvnot a) b) (_ bv1 1))
  */
 template <>
 Node
@@ -1994,8 +1996,10 @@ RewriteRule<RewriteRuleKind::BV_ULT_BV1>::_apply(Rewriter& rewriter,
 {
   assert(node.num_children() == 2);
   if (node[0].type().bv_size() != 1) return node;
-  return rewriter.mk_node(Kind::BV_AND,
-                          {rewriter.invert_node(node[0]), node[1]});
+  return rewriter.mk_node(
+      Kind::EQUAL,
+      {rewriter.mk_node(Kind::BV_AND, {rewriter.invert_node(node[0]), node[1]}),
+       NodeManager::get().mk_value(BitVector::mk_one(1))});
 }
 
 /**
