@@ -143,6 +143,17 @@ NodeManager::mk_node(Kind kind,
   return Node(data);
 }
 
+Node
+NodeManager::invert_node(const Node& node)
+{
+  assert(node.type().is_bool() || node.type().is_bv());
+  if (node.type().is_bool())
+  {
+    return mk_node(node::Kind::NOT, {node});
+  }
+  return mk_node(node::Kind::BV_NOT, {node});
+}
+
 Type
 NodeManager::mk_bool_type()
 {

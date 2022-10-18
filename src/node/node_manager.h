@@ -105,6 +105,13 @@ class NodeManager
                const std::vector<Node>& children,
                const std::vector<uint64_t>& indices = {});
 
+  /**
+   * Helper to create an inverted Boolean or bit-vector node.
+   * @param node The node to invert.
+   * @return The inverted node.
+   */
+  Node invert_node(const Node& node);
+
   /* --- Type interface ---------------------------------------------------- */
 
   /**
