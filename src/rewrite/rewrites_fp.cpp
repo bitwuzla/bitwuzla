@@ -352,8 +352,7 @@ RewriteRule<RewriteRuleKind::FP_LE_EQ>::_apply(Rewriter& rewriter,
 {
   assert(node.num_children() == 2);
   if (node[0] != node[1]) return node;
-  return rewriter.mk_node(Kind::NOT,
-                          {rewriter.mk_node(Kind::FP_IS_NAN, {node[0]})});
+  return rewriter.invert_node(rewriter.mk_node(Kind::FP_IS_NAN, {node[0]}));
 }
 
 /* fplt --------------------------------------------------------------------- */
@@ -714,12 +713,9 @@ RewriteRule<RewriteRuleKind::FP_EQUAL_ELIM>::_apply(Rewriter& rewriter,
       Kind::AND,
       {rewriter.mk_node(
            Kind::AND,
-           {rewriter.mk_node(Kind::NOT,
-                             {
-                                 rewriter.mk_node(Kind::FP_IS_NAN, {node[0]}),
-                             }),
-            rewriter.mk_node(Kind::NOT,
-                             {rewriter.mk_node(Kind::FP_IS_NAN, {node[1]})})}),
+           {rewriter.invert_node(rewriter.mk_node(Kind::FP_IS_NAN, {node[0]})),
+            rewriter.invert_node(
+                rewriter.mk_node(Kind::FP_IS_NAN, {node[1]}))}),
        rewriter.mk_node(
            Kind::OR,
            {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]}),
