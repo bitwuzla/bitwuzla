@@ -113,6 +113,13 @@ Node::is_const() const
   return d_data->get_kind() == node::Kind::CONSTANT;
 }
 
+bool
+Node::is_inverted() const
+{
+  return d_data->get_kind() == node::Kind::NOT
+         || d_data->get_kind() == node::Kind::BV_NOT;
+}
+
 size_t
 Node::num_children() const
 {

@@ -72,6 +72,11 @@ class Node
   bool is_const() const;
 
   /**
+   * @return True if this node is a NOT or BV_NOT node.
+   */
+  bool is_inverted() const;
+
+  /**
    * @return The number of children.
    */
   size_t num_children() const;
