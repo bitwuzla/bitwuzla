@@ -221,7 +221,9 @@ Node
 RewriteRule<RewriteRuleKind::OR_ELIM>::_apply(Rewriter& rewriter,
                                               const Node& node)
 {
-  return rewriter.invert_node(rewriter.mk_node(Kind::AND, {node[0], node[1]}));
+  return rewriter.invert_node(rewriter.mk_node(
+      Kind::AND,
+      {rewriter.invert_node(node[0]), rewriter.invert_node(node[1])}));
 }
 
 template <>
