@@ -480,7 +480,7 @@ RewriteRule<RewriteRuleKind::FP_NEG_NEG>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 1);
   if (node[0].kind() != Kind::FP_NEG) return node;
-  return node[0];
+  return node[0][0];
 }
 
 /* fprem -------------------------------------------------------------------- */
