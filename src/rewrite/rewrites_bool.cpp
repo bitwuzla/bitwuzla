@@ -56,6 +56,27 @@ RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
       (node[0].value<RoundingMode>() == node[1].value<RoundingMode>()));
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (= (_ bv0 N) (bvxor a b))
+ * result: (= a b)
+ *
+ * match:  (= (_ bv0 N) (bvor a b))
+ * result: (and (= (_ bv0 N ) a) (= (_ bv0 N) b))
+ *
+ * match:  (= (bvnot (_ bv0 N)) (bvand a b))
+ * result: (bvand (= (bvnot (_ bv0 N)) a) (= (bvnot (_ bv0 N)) b))
+ *
+ * match:  (= (bvnot (_ bv0 N)) (bvxnor a b))
+ * result: (= a b)
+ *
+ * match:  (= a true)
+ * result: a
+ *
+ * match   (= a false)
+ * result: (not a)
+ */
 namespace {
 Node
 _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
@@ -76,19 +97,14 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
           // 0 == a ^ b  --->  a = b
           return rewriter.mk_node(Kind::EQUAL, {node[idx1][0], node[idx1][1]});
         }
-        if (node[idx1].is_inverted() && node[idx1][0].kind() == Kind::BV_AND)
+        Node or0, or1;
+        if (node::utils::is_bv_or(node[idx1], or0, or1))
         {
           // 0 == a | b  ---> a == 0 && b == 0
           return rewriter.mk_node(
               Kind::AND,
-              {
-                  rewriter.mk_node(
-                      Kind::EQUAL,
-                      {rewriter.invert_node(node[idx1][0][0]), node[idx0]}),
-                  rewriter.mk_node(
-                      Kind::EQUAL,
-                      {rewriter.invert_node(node[idx1][0][1]), node[idx0]}),
-              });
+              {rewriter.mk_node(Kind::EQUAL, {or0, node[idx0]}),
+               rewriter.mk_node(Kind::EQUAL, {or1, node[idx0]})});
         }
       }
       else if (value0.is_ones())
@@ -99,9 +115,7 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
           return rewriter.mk_node(
               Kind::AND,
               {rewriter.mk_node(Kind::EQUAL, {node[idx1][0], node[idx0]}),
-               rewriter.mk_node(Kind::EQUAL, {node[idx1][1], node[idx0]})
-
-              });
+               rewriter.mk_node(Kind::EQUAL, {node[idx1][1], node[idx0]})});
         }
         Node xnor0, xnor1;
         if (node::utils::is_bv_xnor(node[idx1], xnor0, xnor1))
