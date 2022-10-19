@@ -55,6 +55,32 @@ is_bv_or(const Node& node, Node& child0, Node& child1)
 }
 
 bool
+is_bv_sub(const Node& node, Node& child0, Node& child1)
+{
+  if (node.kind() == Kind::BV_SUB)
+  {
+    child0 = node[0];
+    child1 = node[1];
+    return true;
+  }
+
+  if (node.kind() == Kind::BV_ADD)
+  {
+    if (node::utils::is_bv_neg(node[0], child0))
+    {
+      child1 = node[1];
+      return true;
+    }
+    if (node::utils::is_bv_neg(node[1], child1))
+    {
+      child0 = node[0];
+      return true;
+    }
+  }
+  return false;
+}
+
+bool
 is_bv_xnor(const Node& node, Node& child0, Node& child1)
 {
   if (node.kind() == Kind::BV_XNOR)

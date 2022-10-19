@@ -28,11 +28,11 @@ TEST_F(TestNodeUtils, is_bv_neg)
 {
   Node res, child;
   RewriteRuleKind kind;
-  Node neg = d_nm.mk_node(Kind::BV_NEG, {d_a4});
-  ASSERT_TRUE(utils::is_bv_neg(neg, child));
+  Node bvneg = d_nm.mk_node(Kind::BV_NEG, {d_a4});
+  ASSERT_TRUE(utils::is_bv_neg(bvneg, child));
   ASSERT_EQ(child, d_a4);
   std::tie(res, kind) =
-      RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(d_rewriter, neg);
+      RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(d_rewriter, bvneg);
   ASSERT_TRUE(utils::is_bv_neg(res, child));
   ASSERT_EQ(child, d_a4);
   ASSERT_FALSE(utils::is_bv_neg(d_nm.mk_node(Kind::BV_NOT, {d_a4}), child));
@@ -55,16 +55,33 @@ TEST_F(TestNodeUtils, is_bv_or)
       d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}), child0, child1));
 }
 
+TEST_F(TestNodeUtils, is_bv_sub)
+{
+  Node res, child0, child1;
+  RewriteRuleKind kind;
+  Node bvsub = d_nm.mk_node(Kind::BV_SUB, {d_a4, d_b4});
+  ASSERT_TRUE(utils::is_bv_sub(bvsub, child0, child1));
+  ASSERT_EQ(child0, d_a4);
+  ASSERT_EQ(child1, d_b4);
+  std::tie(res, kind) =
+      RewriteRule<RewriteRuleKind::BV_OR_ELIM>::apply(d_rewriter, bvsub);
+  ASSERT_TRUE(utils::is_bv_or(res, child0, child1));
+  ASSERT_EQ(child0, d_a4);
+  ASSERT_EQ(child1, d_b4);
+  ASSERT_FALSE(utils::is_bv_sub(
+      d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}), child0, child1));
+}
+
 TEST_F(TestNodeUtils, is_bv_xnor)
 {
   Node res, child0, child1;
   RewriteRuleKind kind;
-  Node xnor = d_nm.mk_node(Kind::BV_XNOR, {d_a4, d_b4});
-  ASSERT_TRUE(utils::is_bv_xnor(xnor, child0, child1));
+  Node bvxnor = d_nm.mk_node(Kind::BV_XNOR, {d_a4, d_b4});
+  ASSERT_TRUE(utils::is_bv_xnor(bvxnor, child0, child1));
   ASSERT_EQ(child0, d_a4);
   ASSERT_EQ(child1, d_b4);
   std::tie(res, kind) =
-      RewriteRule<RewriteRuleKind::BV_XNOR_ELIM>::apply(d_rewriter, xnor);
+      RewriteRule<RewriteRuleKind::BV_XNOR_ELIM>::apply(d_rewriter, bvxnor);
   ASSERT_TRUE(utils::is_bv_xnor(res, child0, child1));
   ASSERT_EQ(child0, d_a4);
   ASSERT_EQ(child1, d_b4);

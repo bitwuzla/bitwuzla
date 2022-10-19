@@ -2789,8 +2789,7 @@ applies_bcond_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   real_e1 = bzla_node_real_addr(e1);
   return bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv_cond(real_e0)
          && bzla_node_is_bv_cond(real_e1)
-         && bzla_node_is_inverted(e0)
-                == bzla_node_is_inverted(e1)  // TODO: needed?
+         && bzla_node_is_inverted(e0) == bzla_node_is_inverted(e1)
          && real_e0->e[0] == real_e1->e[0]
          && (real_e0->e[1] == real_e1->e[1] || real_e0->e[2] == real_e1->e[2]);
 }

@@ -27,6 +27,22 @@ Node RewriteRule<RewriteRuleKind::EQUAL_TRUE>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_FALSE>::_apply(Rewriter& rewriter,
                                                        const Node& node);
+// bcond_eq
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_ITE>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
+// add_left_eq
+// add_right_eq
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_ADD>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
+// add_add_1_eq
+// add_add_2_eq
+// add_add_3_eq
+// add_add_4_eq
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_ADD_ADD>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
 
 /* distinct ----------------------------------------------------------------- */
 

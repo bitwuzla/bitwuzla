@@ -184,6 +184,147 @@ RewriteRule<RewriteRuleKind::EQUAL_FALSE>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/**
+ * match:  (= (ite x a b) (ite x c d))
+ *         with either a = c or b = d
+ * result: (ite x (= a c) (= b d))
+ */
+namespace {
+Node
+_rw_eq_ite(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0       = idx;
+  size_t idx1       = 1 - idx;
+  bool inverted0    = node[idx0].is_inverted();
+  bool inverted1    = node[idx1].is_inverted();
+  const Node& node0 = inverted0 ? node[idx0][0] : node[idx0];
+  const Node& node1 = inverted1 ? node[idx1][0] : node[idx1];
+  if (node0.kind() == Kind::ITE && node1.kind() == Kind::ITE
+      && node0[0] == node1[0] && (node0[1] == node1[1] || node0[2] == node1[2]))
+  {
+    Node t = rewriter.mk_node(
+        Kind::EQUAL,
+        {inverted0 ? rewriter.invert_node(node0[1]) : node0[1],
+         inverted1 ? rewriter.invert_node(node1[1]) : node1[1]});
+    Node e = rewriter.mk_node(
+        Kind::EQUAL,
+        {inverted0 ? rewriter.invert_node(node0[2]) : node0[2],
+         inverted1 ? rewriter.invert_node(node1[2]) : node1[2]});
+    return rewriter.mk_node(Kind::ITE, {node0[0], t, e});
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_ITE>::_apply(Rewriter& rewriter,
+                                                const Node& node)
+{
+  Node res = _rw_eq_ite(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_ite(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (= (bvadd a b) a)
+ * result: (= b (_ bv0 N))
+ *
+ * Note: This rule will not lead to less variable substitutions since `a` cannot
+ *       be substituted (the occurrence check will fail).
+ */
+namespace {
+Node
+_rw_eq_add(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_ADD)
+  {
+    if (node[idx0][0] == node[idx1])
+    {
+      return rewriter.mk_node(Kind::EQUAL,
+                              {node[idx0][1],
+                               NodeManager::get().mk_value(BitVector::mk_zero(
+                                   node[idx0].type().bv_size()))});
+    }
+    if (node[idx0][1] == node[idx1])
+    {
+      return rewriter.mk_node(Kind::EQUAL,
+                              {node[idx0][0],
+                               NodeManager::get().mk_value(BitVector::mk_zero(
+                                   node[idx0].type().bv_size()))});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_ADD>::_apply(Rewriter& rewriter,
+                                                const Node& node)
+{
+  Node res = _rw_eq_add(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_add(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (= (bvadd a b) (bvadd a c))
+ * result: (= b c)
+ */
+namespace {
+Node
+_rw_eq_add_add(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_ADD && node[idx1].kind() == Kind::BV_ADD)
+  {
+    if (node[idx0][0] == node[idx1][0])
+    {
+      return rewriter.mk_node(Kind::EQUAL, {node[idx0][1], node[idx1][1]});
+    }
+    if (node[idx0][0] == node[idx1][1])
+    {
+      return rewriter.mk_node(Kind::EQUAL, {node[idx0][1], node[idx1][0]});
+    }
+    if (node[idx0][1] == node[idx1][0])
+    {
+      return rewriter.mk_node(Kind::EQUAL, {node[idx0][0], node[idx1][1]});
+    }
+    if (node[idx0][1] == node[idx1][1])
+    {
+      return rewriter.mk_node(Kind::EQUAL, {node[idx0][0], node[idx1][0]});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_ADD_ADD>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  Node res = _rw_eq_add_add(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_add_add(rewriter, node, 1);
+  }
+  return res;
+}
+
 /* distinct ----------------------------------------------------------------- */
 
 template <>
