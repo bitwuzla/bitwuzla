@@ -14,10 +14,22 @@ using namespace bzla::node;
 class TestRewriterBool : public TestRewriter
 {
  protected:
+  void SetUp() override
+  {
+    TestRewriter::SetUp();
+    d_b    = d_nm.mk_const(d_nm.mk_bool_type());
+    d_bv1a = d_nm.mk_const(d_bv1_type);
+    d_bv4a = d_nm.mk_const(d_bv4_type);
+    d_bv4b = d_nm.mk_const(d_bv4_type);
+  }
   void test_elim_rule_bool(Kind kind)
   {
     test_elim_rule(kind, d_nm.mk_bool_type());
   }
+  Node d_b;
+  Node d_bv1a;
+  Node d_bv4a;
+  Node d_bv4b;
 };
 
 /* and ---------------------------------------------------------------------- */
@@ -34,8 +46,7 @@ TEST_F(TestRewriterBool, bool_and_eval)
   // empty cache
   ASSERT_EQ(d_false, Rewriter().rewrite(and1));
   // does not apply
-  test_rule_does_not_apply<kind>(
-      d_nm.mk_node(Kind::AND, {d_nm.mk_const(d_nm.mk_bool_type()), d_false}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::AND, {d_b, d_false}));
 }
 
 /* equal -------------------------------------------------------------------- */
@@ -70,44 +81,40 @@ TEST_F(TestRewriterBool, bool_equal_eval)
   // empty cache
   ASSERT_EQ(d_false, Rewriter().rewrite(equal0_1));
   // does not apply
-  test_rule_does_not_apply<kind>(
-      d_nm.mk_node(Kind::EQUAL, {d_nm.mk_const(d_nm.mk_bool_type()), d_false}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {d_b, d_false}));
 }
 
 TEST_F(TestRewriterBool, bool_equal_special_const)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_SPECIAL_CONST;
-  Node b                         = d_nm.mk_const(d_nm.mk_bool_type());
-  Node bv4a                      = d_nm.mk_const(d_bv4_type);
-  Node bv4b                      = d_nm.mk_const(d_bv4_type);
   ////// special const 0
   {
     //// applies
-    Node bv4xor = d_nm.mk_node(Kind::BV_XOR, {bv4a, bv4b});
-    Node bv4or =
-        d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_AND, {bv4a, bv4b})});
+    Node bv4xor = d_nm.mk_node(Kind::BV_XOR, {d_bv4a, d_bv4b});
+    Node bv4or  = d_nm.mk_node(Kind::BV_NOT,
+                              {d_nm.mk_node(Kind::BV_AND, {d_bv4a, d_bv4b})});
     // lhs 0
-    test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_false, b}));
+    test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_false, d_b}));
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_zero, bv4xor}));
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_zero, bv4or}));
     // rhs 0
-    test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {b, d_false}));
+    test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_b, d_false}));
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {bv4xor, d_bv4_zero}));
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {bv4or, d_bv4_zero}));
     //// does not apply
     test_rule_does_not_apply<kind>(
-        d_nm.mk_node(Kind::EQUAL, {d_bv1_zero, d_nm.mk_const(d_bv1_type)}));
-    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {bv4a, bv4b}));
+        d_nm.mk_node(Kind::EQUAL, {d_bv1_zero, d_bv1a}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4a, d_bv4b}));
   }
   ////// special const ones
   {
     //// applies
-    Node bv4and = d_nm.mk_node(Kind::BV_AND, {bv4a, bv4b});
-    Node bv4xnor = d_nm.mk_node(Kind::BV_XNOR, {bv4a, bv4b});
+    Node bv4and  = d_nm.mk_node(Kind::BV_AND, {d_bv4a, d_bv4b});
+    Node bv4xnor = d_nm.mk_node(Kind::BV_XNOR, {d_bv4a, d_bv4b});
     // lhs true
-    test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_true, b}));
+    test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_true, d_b}));
     // rhs true
-    test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {b, d_true}));
+    test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_b, d_true}));
     // lhs ones
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_ones, bv4and}));
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_ones, bv4xnor}));
@@ -125,6 +132,131 @@ TEST_F(TestRewriterBool, bool_equal_special_const)
              .first,
          d_bv4_ones}));
   }
+}
+
+TEST_F(TestRewriterBool, bool_equal_true)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_TRUE;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4a, d_bv4a}));
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_zero, d_bv4_zero}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4a, d_bv4b}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL, {d_bv4_zero, d_bv4_one}));
+}
+
+TEST_F(TestRewriterBool, bool_equal_false)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_FALSE;
+  //// applies
+  // (= (bvnot a) a)
+  test_rule<kind>(
+      d_nm.mk_node(Kind::EQUAL, {d_nm.invert_node(d_bv4a), d_bv4a}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::EQUAL, {d_nm.invert_node(d_bv4_zero), d_bv4_zero}));
+  // (= a (bvnot a))
+  test_rule<kind>(
+      d_nm.mk_node(Kind::EQUAL, {d_bv4a, d_nm.invert_node(d_bv4a)}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::EQUAL, {d_bv4_zero, d_nm.invert_node(d_bv4_zero)}));
+  // (= (bvadd a c) a) with c a non-zero value
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_one}), d_bv4a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::BV_ADD, {d_bv4_one, d_bv4a}), d_bv4a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_bv4a, d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_one})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_bv4a, d_nm.mk_node(Kind::BV_ADD, {d_bv4_one, d_bv4a})}));
+  // (= (bvnot (bvadd a c)) (bvnot a)) with c a non-zero value
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_one})),
+       d_nm.invert_node(d_bv4a)}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4_one, d_bv4a})),
+       d_nm.invert_node(d_bv4a)}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_bv4a),
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_one}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_bv4a),
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4_one, d_bv4a}))}));
+  // (= (bvadd a c0) (bvadd a c1)) with c0,c1 values and c0 != c1
+  test_rule<kind>(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_one}),
+                    d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_ones})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, d_bv4a}),
+                    d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_ones})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, d_bv4a}),
+                    d_nm.mk_node(Kind::BV_ADD, {d_bv4_one, d_bv4a})}));
+  // (= (bvnot (bvadd a c0)) (bvnot (bvadd a c1)))
+  // with c0,c1 values and c0 != c1
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_one})),
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_ones}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, d_bv4a})),
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_ones}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, d_bv4a})),
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4_one, d_bv4a}))}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4a, d_bv4a}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_zero}), d_bv4a}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL, {d_bv4a, d_nm.invert_node(d_bv4b)}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL, {d_nm.invert_node(d_bv4a), d_bv4b}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_zero})),
+       d_nm.invert_node(d_bv4a)}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_bv4a),
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, d_bv4a}))}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_ones}),
+                    d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_ones})}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_one}),
+                    d_nm.mk_node(Kind::BV_ADD, {d_bv4b, d_bv4_ones})}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4a}),
+                    d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_ones})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_ones})),
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_ones}))}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_one})),
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4b, d_bv4_ones}))}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4a})),
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4_ones}))}));
+  Type fun_type = d_nm.mk_fun_type({d_bv4_type, d_bv4_type});
+  Node funa     = d_nm.mk_const(fun_type);
+  Node funb     = d_nm.mk_const(fun_type);
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {funa, funb}));
 }
 
 /* distinct ----------------------------------------------------------------- */
@@ -158,8 +290,7 @@ TEST_F(TestRewriterBool, bool_not_eval)
   // empty cache
   ASSERT_EQ(d_false, Rewriter().rewrite(not1));
   // does not apply
-  test_rule_does_not_apply<kind>(
-      d_nm.mk_node(Kind::NOT, {d_nm.mk_const(d_nm.mk_bool_type())}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::NOT, {d_b}));
 }
 
 /* --- Elimination Rules ---------------------------------------------------- */

@@ -5,6 +5,7 @@
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
+#include "rewrite/rewrite_utils.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
@@ -75,8 +76,7 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
           // 0 == a ^ b  --->  a = b
           return rewriter.mk_node(Kind::EQUAL, {node[idx1][0], node[idx1][1]});
         }
-        if (node[idx1].kind() == Kind::BV_NOT
-            && node[idx1][0].kind() == Kind::BV_AND)
+        if (node[idx1].is_inverted() && node[idx1][0].kind() == Kind::BV_AND)
         {
           // 0 == a | b  ---> a == 0 && b == 0
           return rewriter.mk_node(
@@ -135,6 +135,39 @@ RewriteRule<RewriteRuleKind::EQUAL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     res = _rw_eq_special_const(rewriter, node, 1);
   }
   return res;
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_TRUE>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0] == node[1])
+  {
+    return NodeManager::get().mk_value(true);
+  }
+  return node;
+}
+
+/**
+ * match:  (= a b) where a and b can be determined to be always disequal,
+ *         (see rewrite::utils::is_always_disequal()
+ * result: false
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_FALSE>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (rewrite::utils::is_always_disequal(node[0], node[1]))
+  {
+    return NodeManager::get().mk_value(false);
+  }
+  return node;
 }
 
 /* distinct ----------------------------------------------------------------- */

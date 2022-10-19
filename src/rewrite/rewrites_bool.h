@@ -16,10 +16,17 @@ Node RewriteRule<RewriteRuleKind::AND_EVAL>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
                                                       const Node& node);
-
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
+// true_eq
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_TRUE>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
+// false_eq
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_FALSE>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 
 /* distinct ----------------------------------------------------------------- */
 

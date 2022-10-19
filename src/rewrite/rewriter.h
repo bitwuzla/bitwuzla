@@ -147,6 +147,9 @@ enum class RewriteRuleKind
 
   EQUAL_EVAL,
   EQUAL_SPECIAL_CONST,
+  EQUAL_TRUE,
+  // Level 1
+  EQUAL_FALSE,
 
   NOT_EVAL,
 
