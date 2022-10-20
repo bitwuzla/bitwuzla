@@ -36,6 +36,7 @@ SolvingContext::assert_formula(const Node& formula)
 
   // Flatten AND
   // TODO: Requires tracking for unsat cores
+  // TODO: negated OR?
   do
   {
     const Node& cur = visit.back();
@@ -49,7 +50,7 @@ SolvingContext::assert_formula(const Node& formula)
       }
       else
       {
-        d_assertions.push_back(cur);
+        register_assertion(cur);
       }
     }
   } while (!visit.empty());
@@ -99,6 +100,15 @@ Rewriter&
 SolvingContext::rewriter()
 {
   return d_rewriter;
+}
+
+void
+SolvingContext::register_assertion(const Node& assertion)
+{
+  if (d_assertions.push_back(assertion))
+  {
+    d_preprocessor.register_assertion(assertion);
+  }
 }
 
 }  // namespace bzla

@@ -26,6 +26,7 @@ Preprocessor::preprocess()
   // TODO: apply until fixed-point
   // fixed-point passes
   d_pass_rewrite.apply(assertions);
+  d_pass_variable_substitution.apply(assertions);
 
   // one-shot passes
   d_pass_elim_lambda.apply(assertions);
@@ -36,6 +37,12 @@ Preprocessor::preprocess()
   }
 
   return Result::UNKNOWN;
+}
+
+void
+Preprocessor::register_assertion(const Node& assertion)
+{
+  d_pass_variable_substitution.register_assertion(assertion);
 }
 
 }  // namespace bzla::preprocess

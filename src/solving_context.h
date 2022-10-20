@@ -48,6 +48,8 @@ class SolvingContext
   Rewriter& rewriter();
 
  private:
+  void register_assertion(const Node& formula);
+
   backtrack::BacktrackManager d_backtrack_mgr;
   backtrack::AssertionStack d_assertions;
 
