@@ -48,6 +48,9 @@ class Backtrackable
   /** Pop last scope. */
   virtual void pop() = 0;
 
+  /** @return Current scope level. */
+  std::size_t cur_level() const;
+
  protected:
   /** Backtrack manager this object is associated with. */
   BacktrackManager* d_mgr = nullptr;

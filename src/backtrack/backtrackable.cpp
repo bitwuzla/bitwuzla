@@ -4,6 +4,8 @@
 
 namespace bzla::backtrack {
 
+/* --- Backtrackable public ------------------------------------------------- */
+
 Backtrackable::Backtrackable(BacktrackManager* mgr) : d_mgr(mgr)
 {
   d_mgr->register_backtrackable(this);
@@ -16,6 +18,14 @@ Backtrackable::~Backtrackable()
     d_mgr->remove_backtrackable(this);
   }
 }
+
+std::size_t
+Backtrackable::cur_level() const
+{
+  return d_control.size();
+}
+
+/* --- BacktrackManager public ---------------------------------------------- */
 
 void
 BacktrackManager::push()
@@ -42,6 +52,11 @@ void
 BacktrackManager::register_backtrackable(Backtrackable* backtrackable)
 {
   d_backtrackables.insert(backtrackable);
+  // If scopes were already pushed, sync the scopes of backtrackable.
+  for (std::size_t i = 0; i < d_scope_levels; ++i)
+  {
+    backtrackable->push();
+  }
 }
 
 void
