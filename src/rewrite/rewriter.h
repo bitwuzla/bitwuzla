@@ -155,6 +155,8 @@ enum class RewriteRuleKind
   EQUAL_ADD,
   EQUAL_ADD_ADD,
   EQUAL_CONCAT,
+  EQUAL_ITE_BV1,
+  EQUAL_ITE_DIS_BV1,
 
   NOT_EVAL,
 

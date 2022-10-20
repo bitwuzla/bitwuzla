@@ -31,6 +31,14 @@ Node RewriteRule<RewriteRuleKind::EQUAL_FALSE>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_ITE>::_apply(Rewriter& rewriter,
                                                      const Node& node);
+// bcond_if_eq
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_ITE_BV1>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// bcond_uneq_if_eq
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_ITE_DIS_BV1>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
 // add_left_eq
 // add_right_eq
 template <>

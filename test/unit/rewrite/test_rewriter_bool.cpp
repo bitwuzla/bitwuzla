@@ -17,7 +17,11 @@ class TestRewriterBool : public TestRewriter
   void SetUp() override
   {
     TestRewriter::SetUp();
+    d_true  = d_nm.mk_value(true);
+    d_false = d_nm.mk_value(false);
+    d_a     = d_nm.mk_const(d_nm.mk_bool_type());
     d_b    = d_nm.mk_const(d_nm.mk_bool_type());
+    d_c     = d_nm.mk_const(d_nm.mk_bool_type());
     d_bv1a = d_nm.mk_const(d_bv1_type);
     d_bv4a = d_nm.mk_const(d_bv4_type);
     d_bv4b = d_nm.mk_const(d_bv4_type);
@@ -28,7 +32,11 @@ class TestRewriterBool : public TestRewriter
   {
     test_elim_rule(kind, d_nm.mk_bool_type());
   }
+  Node d_true;
+  Node d_false;
+  Node d_a;
   Node d_b;
+  Node d_c;
   Node d_bv1a;
   Node d_bv4a;
   Node d_bv4b;
@@ -381,6 +389,69 @@ TEST_F(TestRewriterBool, bool_equal_concat)
       Kind::EQUAL, {d_nm.mk_node(Kind::BV_CONCAT, {d_bv4a, d_bv4b}), c}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::EQUAL, {d_nm.mk_node(Kind::BV_ADD, {d_bv4a, d_bv4b}), d_bv4c}));
+}
+
+TEST_F(TestRewriterBool, bool_equal_ite_bv1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_ITE_BV1;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_a, d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})), d_a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_b, d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})), d_b}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4a,
+       d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_b, d_bv4a, d_bv4b}))}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_c, d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b}))}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_a, d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_b, d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})}));
+}
+
+TEST_F(TestRewriterBool, bool_equal_ite_dis_bv1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_ITE_DIS_BV1;
+  //// applies
+  // (= (not a) a)
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_a), d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_b), d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})}));
+  // (= a (not a))
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_a, d_nm.mk_node(Kind::ITE, {d_c, d_nm.invert_node(d_a), d_b})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_b, d_nm.mk_node(Kind::ITE, {d_c, d_a, d_nm.invert_node(d_b)})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_a, d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_b, d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_a),
+       d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b}))}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.invert_node(d_b),
+       d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b}))}));
 }
 
 /* distinct ----------------------------------------------------------------- */

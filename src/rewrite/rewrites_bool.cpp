@@ -231,6 +231,108 @@ RewriteRule<RewriteRuleKind::EQUAL_ITE>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match:  (= a (not (ite c a b)))
+ * result: (and (not c) (= a (not b)))
+ *
+ * match:  (= a (not (ite c b a)))
+ * result: (and c (= a (not b)))
+ */
+namespace {
+Node
+_rw_eq_ite_bv1(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::NOT && node[idx0][0].kind() == Kind::ITE)
+  {
+    if (node[idx0][0][1] == node[idx1])
+    {
+      return rewriter.mk_node(
+          Kind::AND,
+          {rewriter.invert_node(node[idx0][0][0]),
+           rewriter.mk_node(
+               Kind::EQUAL,
+               {node[idx1], rewriter.invert_node(node[idx0][0][2])})});
+    }
+    if (node[idx0][0][2] == node[idx1])
+    {
+      return rewriter.mk_node(
+          Kind::AND,
+          {node[idx0][0][0],
+           rewriter.mk_node(
+               Kind::EQUAL,
+               {node[idx1], rewriter.mk_node(Kind::NOT, {node[idx0][0][1]})})});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_ITE_BV1>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  Node res = _rw_eq_ite_bv1(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_ite_bv1(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (= d (ite c a b)) where a and d can be determined to be always
+ *         disequal, (see rewrite::utils::is_always_disequal()
+ * result: (and (not c) (= b d))
+ *
+ * match:  (= d (ite c a b)) where b and d can be determined to be always
+ *         disequal, (see rewrite::utils::is_always_disequal()
+ * result: (and c (= a d))
+ */
+namespace {
+Node
+_rw_eq_ite_dis_bv1(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::ITE && node[idx0].type().is_bool())
+  {
+    if (rewrite::utils::is_always_disequal(node[idx0][1], node[idx1]))
+    {
+      return rewriter.mk_node(
+          Kind::AND,
+          {rewriter.invert_node(node[idx0][0]),
+           rewriter.mk_node(Kind::EQUAL, {node[idx0][2], node[idx1]})});
+    }
+    if (rewrite::utils::is_always_disequal(node[idx0][2], node[idx1]))
+    {
+      return rewriter.mk_node(
+          Kind::AND,
+          {node[idx0][0],
+           rewriter.mk_node(Kind::EQUAL, {node[idx0][1], node[idx1]})});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_ITE_DIS_BV1>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  Node res = _rw_eq_ite_dis_bv1(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_ite_dis_bv1(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
  * match:  (= (bvadd a b) a)
  * result: (= b (_ bv0 N))
  *
