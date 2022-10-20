@@ -12,12 +12,9 @@ namespace bzla::preprocess::pass {
 class PassElimLambda : public PreprocessingPass
 {
  public:
-  PassElimLambda(backtrack::AssertionView& assertions, Rewriter& rewriter)
-      : PreprocessingPass(assertions, rewriter)
-  {
-  }
+  PassElimLambda(Rewriter& rewriter) : PreprocessingPass(rewriter) {}
 
-  void apply() override;
+  void apply(std::vector<std::pair<Node, size_t>>& assertions) override;
 };
 
 }  // namespace bzla::preprocess::pass

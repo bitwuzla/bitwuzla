@@ -12,16 +12,12 @@ namespace bzla::preprocess {
 class PreprocessingPass
 {
  public:
-  PreprocessingPass(backtrack::AssertionView& assertions, Rewriter& rewriter)
-      : d_assertions(assertions), d_rewriter(rewriter)
-  {
-  }
+  PreprocessingPass(Rewriter& rewriter) : d_rewriter(rewriter) {}
 
   /** Apply preprocessing pass to the current set of assertions. */
-  virtual void apply() = 0;
+  virtual void apply(std::vector<std::pair<Node, size_t>>& assertions) = 0;
 
  protected:
-  backtrack::AssertionView& d_assertions;
   Rewriter& d_rewriter;
 };
 

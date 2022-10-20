@@ -3,15 +3,15 @@
 namespace bzla::preprocess::pass {
 
 void
-PassRewrite::apply()
+PassRewrite::apply(std::vector<std::pair<Node, size_t>>& assertions)
 {
-  while (!d_assertions.empty())
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    auto [assertion, index] = d_assertions.next_index();
-    Node rewritten          = d_rewriter.rewrite(assertion);
+    const Node& assertion = assertions[i].first;
+    Node rewritten        = d_rewriter.rewrite(assertion);
     if (rewritten != assertion)
     {
-      d_assertions.replace(index, rewritten);
+      assertions[i].first = rewritten;
     }
   }
   // TODO: report back when assertion simplifies to false

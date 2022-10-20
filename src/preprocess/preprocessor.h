@@ -20,6 +20,7 @@ class Preprocessor
   Result preprocess();
 
  private:
+  backtrack::AssertionView& d_assertions;
   /** Preprocessing passes */
   pass::PassRewrite d_pass_rewrite;
   pass::PassElimLambda d_pass_elim_lambda;

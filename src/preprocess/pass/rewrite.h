@@ -12,12 +12,9 @@ namespace bzla::preprocess::pass {
 class PassRewrite : public PreprocessingPass
 {
  public:
-  PassRewrite(backtrack::AssertionView& assertions, Rewriter& rewriter)
-      : PreprocessingPass(assertions, rewriter)
-  {
-  }
+  PassRewrite(Rewriter& rewriter) : PreprocessingPass(rewriter) {}
 
-  void apply() override;
+  void apply(std::vector<std::pair<Node, size_t>>& assertions) override;
 };
 
 }  // namespace bzla::preprocess::pass
