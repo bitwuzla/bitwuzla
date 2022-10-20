@@ -29,17 +29,13 @@ class AssertionView
   /** @return The next assertion and its associated scope level. */
   const std::pair<Node, size_t>& next_level();
 
-  /** @return The next assertion and its associated index on the assertion
-   * stack. */
-  std::pair<Node, size_t> next_index();
-
   /** @return Whether the view still has assertions to process. */
   bool empty() const;
 
   /** @return The number of assertions seen by this view. */
-  size_t size();
+  size_t size() const;
 
-  void replace(size_t index, const Node& assertion);
+  void replace(const Node& assertion, const Node& replacement);
 
   void replace(size_t index, const std::vector<Node>& assertions);
 
@@ -61,8 +57,9 @@ class AssertionStack : public Backtrackable
    * Push new assertion onto stack.
    *
    * @param assertion The new assertion.
+   * @return Whether assertion was added.
    */
-  void push_back(const Node& assertion);
+  bool push_back(const Node& assertion);
 
   /**
    * Replace an assertion.
@@ -70,7 +67,7 @@ class AssertionStack : public Backtrackable
    * @param index The index of the assertion to be replaced
    * @param assertion The new assertion.
    */
-  void replace(size_t index, const Node& assertion);
+  void replace(const Node& assertion, const Node& replacement);
 
   /**
    * Replace an assertion with a vector of assertions.
@@ -127,7 +124,7 @@ class AssertionStack : public Backtrackable
   /** Assertion associated with their current scope level. */
   std::vector<std::pair<Node, size_t>> d_assertions;
   /** Assertion cache to avoid pushing duplicates. */
-  std::unordered_set<Node> d_cache;
+  std::unordered_map<Node, size_t> d_cache;
   /** Registered views. */
   std::vector<std::unique_ptr<AssertionView>> d_views;
 };

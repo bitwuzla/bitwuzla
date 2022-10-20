@@ -4,22 +4,27 @@ namespace bzla::backtrack {
 
 /* --- AssertionStack public ------------------------------------------------ */
 
-void
+bool
 AssertionStack::push_back(const Node& assertion)
 {
   assert(assertion.type().is_bool());
-  auto [it, inserted] = d_cache.insert(assertion);
+  auto [it, inserted] = d_cache.emplace(assertion, d_assertions.size());
   if (inserted)
   {
     d_assertions.emplace_back(assertion, d_control.size());
   }
+  return inserted;
 }
 
 void
-AssertionStack::replace(size_t index, const Node& assertion)
+AssertionStack::replace(const Node& assertion, const Node& replacement)
 {
-  d_cache.erase(d_assertions[index].first);
-  d_assertions[index].first = assertion;
+  auto it = d_cache.find(assertion);
+  assert(it != d_cache.end());
+  size_t index = it->second;
+  d_cache.erase(it);
+  d_assertions[index].first = replacement;
+  d_cache.emplace(replacement, index);
 }
 
 void
@@ -135,14 +140,6 @@ AssertionView::next_level()
   return d_assertions.get(d_index++);
 }
 
-std::pair<Node, size_t>
-AssertionView::next_index()
-{
-  assert(!empty());
-  size_t index = d_index;
-  return std::make_pair(next(), index);
-}
-
 bool
 AssertionView::empty() const
 {
@@ -150,15 +147,15 @@ AssertionView::empty() const
 }
 
 size_t
-AssertionView::size()
+AssertionView::size() const
 {
   return d_assertions.size() - d_index;
 }
 
 void
-AssertionView::replace(size_t index, const Node& assertion)
+AssertionView::replace(const Node& assertion, const Node& replacement)
 {
-  d_assertions.replace(index, assertion);
+  d_assertions.replace(assertion, replacement);
 }
 
 void
