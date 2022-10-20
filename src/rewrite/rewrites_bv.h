@@ -148,7 +148,7 @@ Node RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_LHS>::_apply(
 // concat_rec_upper_slice
 // concat_rec_lower_slice
 template <>
-Node RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_LSH_RHS>::_apply(
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_LHS_RHS>::_apply(
     Rewriter& rewriter, const Node& node);
 // concat_rec_slice
 template <>

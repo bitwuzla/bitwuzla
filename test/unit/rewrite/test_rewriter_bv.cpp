@@ -707,7 +707,7 @@ TEST_F(TestRewriterBv, bv_extract_concat_full_rhs)
 
 TEST_F(TestRewriterBv, bv_extract_concat_lhs_rhs)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_CONCAT_LSH_RHS;
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_CONCAT_LHS_RHS;
   //// applies
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_EXTRACT, {d_nm.mk_node(Kind::BV_CONCAT, {d_a4, d_b4})}, {3, 0}));

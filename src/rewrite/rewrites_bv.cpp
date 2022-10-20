@@ -792,7 +792,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_LHS>::_apply(
  */
 template <>
 Node
-RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_LSH_RHS>::_apply(
+RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_LHS_RHS>::_apply(
     Rewriter& rewriter, const Node& node)
 {
   assert(node.num_children() == 1);

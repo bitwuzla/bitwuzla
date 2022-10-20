@@ -402,7 +402,7 @@ Rewriter::rewrite_bv_extract(const Node& node)
     // LEVEL 0-2 rewrites ///////////////////////////////////////
     BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_FULL_RHS);
     // LEVEL 3 rewrites /////////////////////////////////////////
-    BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_LSH_RHS);
+    BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_LHS_RHS);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_AND);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_ITE);
