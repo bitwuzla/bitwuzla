@@ -10,6 +10,22 @@ namespace bzla {
 template <>
 Node RewriteRule<RewriteRuleKind::AND_EVAL>::_apply(Rewriter& rewriter,
                                                     const Node& node);
+// and_idem1
+template <>
+Node RewriteRule<RewriteRuleKind::AND_IDEM1>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
+// and_idem2
+template <>
+Node RewriteRule<RewriteRuleKind::AND_IDEM2>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
+// and_contr1
+template <>
+Node RewriteRule<RewriteRuleKind::AND_CONTRA1>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// and_contr2
+template <>
+Node RewriteRule<RewriteRuleKind::AND_CONTRA2>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 
 /* equal -------------------------------------------------------------------- */
 

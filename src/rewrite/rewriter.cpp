@@ -230,6 +230,10 @@ Rewriter::rewrite_and(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(AND_EVAL);
+    BZLA_APPLY_RW_RULE(AND_IDEM1);
+    BZLA_APPLY_RW_RULE(AND_IDEM2);
+    BZLA_APPLY_RW_RULE(AND_CONTRA1);
+    BZLA_APPLY_RW_RULE(AND_CONTRA2);
     // TODO
   }
 
@@ -346,6 +350,10 @@ Rewriter::rewrite_bv_and(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_AND_EVAL);
     BZLA_APPLY_RW_RULE(BV_AND_SPECIAL_CONST);
+    BZLA_APPLY_RW_RULE(BV_AND_IDEM1);
+    BZLA_APPLY_RW_RULE(BV_AND_IDEM2);
+    BZLA_APPLY_RW_RULE(BV_AND_CONTRA1);
+    BZLA_APPLY_RW_RULE(BV_AND_CONTRA2);
     // TODO
   }
 

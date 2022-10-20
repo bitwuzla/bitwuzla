@@ -72,10 +72,22 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 // idem1_and
-// contr1_and
-// contr2_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_IDEM1>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 // idem2_and
 // comm_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_IDEM2>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+// contr1_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_CONTRA1>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+// contr2_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_CONTRA2>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
 // bool_xnor_and
 // resol1_and
 // resol2_and

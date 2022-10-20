@@ -483,6 +483,141 @@ RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match;  (bvand a a)
+ * result: a
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_IDEM1>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0] == node[1])
+  {
+    return node[0];
+  }
+  return node;
+}
+
+/**
+ * match;  (bvand (bvand a b) (bvand a c))
+ * result: (bvand (bvand a b) c)
+ */
+namespace {
+Node
+_rw_bv_and_idem2(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_AND && node[idx1].kind() == Kind::BV_AND)
+  {
+    if (node[idx0][0] == node[idx1][0] || node[idx0][1] == node[idx1][0])
+    {
+      return rewriter.mk_node(Kind::BV_AND, {node[idx0], node[idx1][1]});
+    }
+    if (node[idx0][0] == node[idx1][1] || node[idx0][1] == node[idx1][1])
+    {
+      return rewriter.mk_node(Kind::BV_AND, {node[idx0], node[idx1][0]});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_IDEM2>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  Node res = _rw_bv_and_idem2(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_and_idem2(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match;  (bvand a (bvnot a))
+ * result: (_ bv0 N)
+ */
+namespace {
+Node
+_rw_bv_and_contra1(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx1].kind() == Kind::BV_NOT && node[idx1][0] == node[idx0])
+  {
+    return NodeManager::get().mk_value(
+        BitVector::mk_zero(node[idx0].type().bv_size()));
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_CONTRA1>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  Node res = _rw_bv_and_contra1(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_and_contra1(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match;  (bvand (bvand (bvnot a) b) (bvand (bvnot a) c))
+ * result: (_ bv0 N)
+ */
+namespace {
+Node
+_rw_bv_and_contra2(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_AND && node[idx1].kind() == Kind::BV_AND)
+  {
+    if ((node[idx0][0].kind() == Kind::BV_NOT
+         && node[idx0][0][0] == node[idx1][0])
+        || (node[idx0][0].kind() == Kind::BV_NOT
+            && node[idx0][0][0] == node[idx1][1])
+        || (node[idx0][1].kind() == Kind::BV_NOT
+            && node[idx0][1][0] == node[idx1][0])
+        || (node[idx0][1].kind() == Kind::BV_NOT
+            && node[idx0][1][0] == node[idx1][1]))
+    {
+      return NodeManager::get().mk_value(
+          BitVector::mk_zero(node[idx0].type().bv_size()));
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_CONTRA2>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  Node res = _rw_bv_and_contra2(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_and_contra2(rewriter, node, 1);
+  }
+  return res;
+}
+
 /* bvashr ------------------------------------------------------------------- */
 
 /**

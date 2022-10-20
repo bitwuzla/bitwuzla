@@ -444,6 +444,95 @@ TEST_F(TestRewriterBv, bv_and_special_const)
   }
 }
 
+TEST_F(TestRewriterBv, bv_and_idem1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_IDEM1;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_a4, d_a4}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_a1, d_a1}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}));
+}
+
+TEST_F(TestRewriterBv, bv_and_idem2)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_IDEM2;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND,
+                               {d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}),
+                                d_nm.mk_node(Kind::BV_AND, {d_a4, d_c4})}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND,
+                               {d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}),
+                                d_nm.mk_node(Kind::BV_AND, {d_c4, d_a4})}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND,
+                               {d_nm.mk_node(Kind::BV_AND, {d_b4, d_a4}),
+                                d_nm.mk_node(Kind::BV_AND, {d_a4, d_c4})}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND,
+                               {d_nm.mk_node(Kind::BV_AND, {d_b4, d_a4}),
+                                d_nm.mk_node(Kind::BV_AND, {d_c4, d_a4})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_AND,
+                   {d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4})),
+                    d_nm.mk_node(Kind::BV_AND, {d_a4, d_c4})}));
+}
+
+TEST_F(TestRewriterBv, bv_and_contra)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_CONTRA1;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_a4, d_nm.invert_node(d_a4)}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_nm.invert_node(d_a4), d_a4}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_a1, d_nm.invert_node(d_a1)}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_nm.invert_node(d_a1), d_a1}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_AND, {d_a4, d_a4}));
+}
+
+TEST_F(TestRewriterBv, bv_and_contra2)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_CONTRA2;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_AND,
+      {d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}),
+       d_nm.mk_node(Kind::BV_AND, {d_nm.invert_node(d_a4), d_c4})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND,
+                   {d_nm.mk_node(Kind::BV_AND, {d_nm.invert_node(d_a4), d_b4}),
+                    d_nm.mk_node(Kind::BV_AND, {d_a4, d_c4})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_AND,
+      {d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}),
+       d_nm.mk_node(Kind::BV_AND, {d_c4, d_nm.invert_node(d_a4)})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND,
+                   {d_nm.mk_node(Kind::BV_AND, {d_nm.invert_node(d_a4), d_b4}),
+                    d_nm.mk_node(Kind::BV_AND, {d_c4, d_a4})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_AND,
+      {d_nm.mk_node(Kind::BV_AND, {d_b4, d_a4}),
+       d_nm.mk_node(Kind::BV_AND, {d_nm.invert_node(d_a4), d_c4})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND,
+                   {d_nm.mk_node(Kind::BV_AND, {d_b4, d_nm.invert_node(d_a4)}),
+                    d_nm.mk_node(Kind::BV_AND, {d_a4, d_c4})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_AND,
+      {d_nm.mk_node(Kind::BV_AND, {d_b4, d_a4}),
+       d_nm.mk_node(Kind::BV_AND, {d_c4, d_nm.invert_node(d_a4)})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND,
+                   {d_nm.mk_node(Kind::BV_AND, {d_b4, d_nm.invert_node(d_a4)}),
+                    d_nm.mk_node(Kind::BV_AND, {d_c4, d_a4})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_AND,
+                   {d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}),
+                    d_nm.mk_node(Kind::BV_AND, {d_a4, d_c4})}));
+}
+
 /* bvashr ------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_ashr_eval)
