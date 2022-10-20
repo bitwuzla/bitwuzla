@@ -148,6 +148,8 @@ enum class RewriteRuleKind
   AND_IDEM2,
   AND_CONTRA1,
   AND_CONTRA2,
+  AND_SUBSUM1,
+  AND_SUBSUM2,
 
   EQUAL_EVAL,
   EQUAL_SPECIAL_CONST,
@@ -195,6 +197,8 @@ enum class RewriteRuleKind
   BV_AND_IDEM2,
   BV_AND_CONTRA1,
   BV_AND_CONTRA2,
+  BV_AND_SUBSUM1,
+  BV_AND_SUBSUM2,
 
   //// bvashr
   BV_ASHR_EVAL,

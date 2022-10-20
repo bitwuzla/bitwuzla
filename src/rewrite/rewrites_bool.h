@@ -26,6 +26,14 @@ Node RewriteRule<RewriteRuleKind::AND_CONTRA1>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::AND_CONTRA2>::_apply(Rewriter& rewriter,
                                                        const Node& node);
+// and_subsum1
+template <>
+Node RewriteRule<RewriteRuleKind::AND_SUBSUM1>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// and_subsum2
+template <>
+Node RewriteRule<RewriteRuleKind::AND_SUBSUM2>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 
 /* equal -------------------------------------------------------------------- */
 

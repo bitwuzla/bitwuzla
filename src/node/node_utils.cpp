@@ -6,6 +6,28 @@
 namespace bzla::node::utils {
 
 bool
+is_or(const Node& node, Node& child0, Node& child1)
+{
+  if (node.kind() == Kind::OR)
+  {
+    child0 = node[0];
+    child1 = node[1];
+    return true;
+  }
+
+  if (node.is_inverted() && node[0].kind() == Kind::AND)
+  {
+    NodeManager& nm = NodeManager::get();
+    child0 =
+        node[0][0].is_inverted() ? node[0][0][0] : nm.invert_node(node[0][0]);
+    child1 =
+        node[0][1].is_inverted() ? node[0][1][0] : nm.invert_node(node[0][1]);
+    return true;
+  }
+  return false;
+}
+
+bool
 is_bv_neg(const Node& node, Node& child)
 {
   Node one =

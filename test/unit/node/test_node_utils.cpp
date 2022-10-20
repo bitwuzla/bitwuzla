@@ -11,6 +11,8 @@ class TestNodeUtils : public ::testing::Test
 {
   void SetUp() override
   {
+    d_a        = d_nm.mk_const(d_nm.mk_bool_type());
+    d_b        = d_nm.mk_const(d_nm.mk_bool_type());
     d_bv4_type = d_nm.mk_bv_type(4);
     d_a4       = d_nm.mk_const(d_bv4_type);
     d_b4       = d_nm.mk_const(d_bv4_type);
@@ -20,9 +22,28 @@ class TestNodeUtils : public ::testing::Test
   NodeManager& d_nm = NodeManager::get();
   Rewriter d_rewriter;
   Type d_bv4_type;
+  Node d_a;
+  Node d_b;
   Node d_a4;
   Node d_b4;
 };
+
+TEST_F(TestNodeUtils, is_or)
+{
+  Node res, child0, child1;
+  RewriteRuleKind kind;
+  Node bor = d_nm.mk_node(Kind::OR, {d_a, d_b});
+  ASSERT_TRUE(utils::is_or(bor, child0, child1));
+  ASSERT_EQ(child0, d_a);
+  ASSERT_EQ(child1, d_b);
+  std::tie(res, kind) =
+      RewriteRule<RewriteRuleKind::OR_ELIM>::apply(d_rewriter, bor);
+  ASSERT_TRUE(utils::is_or(res, child0, child1));
+  ASSERT_EQ(child0, d_a);
+  ASSERT_EQ(child1, d_b);
+  ASSERT_FALSE(
+      utils::is_or(d_nm.mk_node(Kind::AND, {d_a, d_b}), child0, child1));
+}
 
 TEST_F(TestNodeUtils, is_bv_neg)
 {

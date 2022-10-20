@@ -88,16 +88,22 @@ Node RewriteRule<RewriteRuleKind::BV_AND_CONTRA1>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_CONTRA2>::_apply(Rewriter& rewriter,
                                                           const Node& node);
+// subsum1_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_SUBSUM1>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+// subsum2_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_SUBSUM2>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
 // bool_xnor_and
 // resol1_and
 // resol2_and
 // lt_false_and
 // lt_and
 // contr_rec_and
-// subsum1_and
 // subst1_and
 // subst2_and
-// subsum2_and
 // subst3_and
 // subst4_and
 // contr3_and

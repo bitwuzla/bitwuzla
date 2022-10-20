@@ -161,6 +161,82 @@ RewriteRule<RewriteRuleKind::AND_CONTRA2>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  (and (and a b) (not (and a c)))
+ * result: (and a b)
+ */
+namespace {
+Node
+_rw_and_subsum1(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  Node or0, or1;
+  if (node[idx0].kind() == Kind::AND
+      && node::utils::is_or(node[idx1], or0, or1))
+  {
+    if (node[idx0][0] == or0 || node[idx0][0] == or1 || node[idx][1] == or0
+        || node[idx0][1] == or1)
+    {
+      return node[idx0];
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::AND_SUBSUM1>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  Node res = _rw_and_subsum1(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_and_subsum1(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (and (or a b) a)
+ * result: a
+ */
+namespace {
+Node
+_rw_and_subsum2(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  Node or0, or1;
+  if (node::utils::is_or(node[idx1], or0, or1))
+  {
+    if (node[idx0] == or0 || node[idx0] == or1)
+    {
+      return node[idx0];
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::AND_SUBSUM2>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  Node res = _rw_and_subsum2(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_and_subsum2(rewriter, node, 1);
+  }
+  return res;
+}
+
 /* equal -------------------------------------------------------------------- */
 
 /**
