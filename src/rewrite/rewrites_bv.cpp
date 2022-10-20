@@ -588,14 +588,10 @@ _rw_bv_and_contra2(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx1 = 1 - idx;
   if (node[idx0].kind() == Kind::BV_AND && node[idx1].kind() == Kind::BV_AND)
   {
-    if ((node[idx0][0].kind() == Kind::BV_NOT
-         && node[idx0][0][0] == node[idx1][0])
-        || (node[idx0][0].kind() == Kind::BV_NOT
-            && node[idx0][0][0] == node[idx1][1])
-        || (node[idx0][1].kind() == Kind::BV_NOT
-            && node[idx0][1][0] == node[idx1][0])
-        || (node[idx0][1].kind() == Kind::BV_NOT
-            && node[idx0][1][0] == node[idx1][1]))
+    if ((node[idx0][0].is_inverted() && node[idx0][0][0] == node[idx1][0])
+        || (node[idx0][0].is_inverted() && node[idx0][0][0] == node[idx1][1])
+        || (node[idx0][1].is_inverted() && node[idx0][1][0] == node[idx1][0])
+        || (node[idx0][1].is_inverted() && node[idx0][1][0] == node[idx1][1]))
     {
       return NodeManager::get().mk_value(
           BitVector::mk_zero(node[idx0].type().bv_size()));
