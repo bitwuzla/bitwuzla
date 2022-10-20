@@ -43,6 +43,10 @@ Node RewriteRule<RewriteRuleKind::EQUAL_ADD>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_ADD_ADD>::_apply(Rewriter& rewriter,
                                                          const Node& node);
+// concat_eq
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_CONCAT>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 
 /* distinct ----------------------------------------------------------------- */
 

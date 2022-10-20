@@ -154,6 +154,7 @@ enum class RewriteRuleKind
   // Level 3
   EQUAL_ADD,
   EQUAL_ADD_ADD,
+  EQUAL_CONCAT,
 
   NOT_EVAL,
 

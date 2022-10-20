@@ -325,6 +325,71 @@ RewriteRule<RewriteRuleKind::EQUAL_ADD_ADD>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  (= (bvconcat a_[n] b) c_[m])
+ * result: (and
+ *           (=
+ *             ((_ extract u l) (bvconcat a b))
+ *             ((_ extract u l) c))
+ *           (=
+ *             ((_ extract (l - 1) 0) (bvconcat a b))
+ *             ((_ extract (l - 1)  0) c))
+ *         with u = m - 1
+ *              l = m - n + 1
+ */
+namespace {
+Node
+_rw_eq_concat(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_CONCAT)
+  {
+    uint64_t m = node[idx1].type().bv_size();
+    uint64_t u = m - 1;
+    uint64_t l = m - node[idx0][0].type().bv_size();
+
+    Node ext1_lhs = rewriter.mk_node(Kind::BV_EXTRACT, {node[idx1]}, {u, l});
+    Node ext1_rhs =
+        rewriter.mk_node(Kind::BV_EXTRACT, {node[idx1]}, {l - 1, 0});
+    // Note: Introducing two extracts on node[idx1] is not necessarily
+    //       beneficial. Hence, we only rewrite if an extract on node[idx1]
+    //       is rewritten to a non-extract.
+
+    // TODO: check why we only rewrite when ext1_lhs is a non-slice and
+    //       ext1_rhs is a slice
+    //       NOTE: disabled second condition for now since it makes no sense
+    if (ext1_lhs.kind() != Kind::BV_EXTRACT)
+    //&& ext1_rhs.kind() == Kind::BV_EXTRACT)
+    {
+      Node lhs = rewriter.mk_node(
+          Kind::EQUAL,
+          {rewriter.mk_node(Kind::BV_EXTRACT, {node[idx0]}, {u, l}), ext1_lhs});
+      Node rhs = rewriter.mk_node(
+          Kind::EQUAL,
+          {rewriter.mk_node(Kind::BV_EXTRACT, {node[idx0]}, {l - 1, 0}),
+           ext1_rhs});
+      return rewriter.mk_node(Kind::AND, {lhs, rhs});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_CONCAT>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  Node res = _rw_eq_concat(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_concat(rewriter, node, 1);
+  }
+  return res;
+}
+
 /* distinct ----------------------------------------------------------------- */
 
 template <>

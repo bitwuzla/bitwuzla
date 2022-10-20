@@ -291,6 +291,7 @@ Rewriter::rewrite_eq(const Node& node)
     // LEVEL 3 rewrites /////////////////////////////////////////
     BZLA_APPLY_RW_RULE(EQUAL_ADD);
     BZLA_APPLY_RW_RULE(EQUAL_ADD_ADD);
+    BZLA_APPLY_RW_RULE(EQUAL_CONCAT);
     // TODO
   }
 
