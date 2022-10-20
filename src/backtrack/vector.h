@@ -25,6 +25,12 @@ class vector : public Backtrackable
 
   void push_back(const T& value) { d_data.push_back(value); }
 
+  template <class... Args>
+  void emplace_back(Args&&... args)
+  {
+    d_data.emplace_back(std::forward<Args>(args)...);
+  }
+
   auto begin() const { return d_data.begin(); }
 
   auto end() const { return d_data.end(); }
