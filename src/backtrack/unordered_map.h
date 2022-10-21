@@ -22,7 +22,7 @@ class unordered_map : public Backtrackable
 
   bool empty() const { return d_data.empty(); }
 
-  auto find(const K& key) { return d_data.find(key); }
+  auto find(const K& key) const { return d_data.find(key); }
 
   template <class... Args>
   auto emplace(Args&&... args)
