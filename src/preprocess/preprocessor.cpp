@@ -15,26 +15,13 @@ Preprocessor::Preprocessor(SolvingContext& context)
 Result
 Preprocessor::preprocess()
 {
-  std::vector<Node> orig_assertions;
-  std::vector<std::pair<Node, size_t>> assertions;
-  while (!d_assertions.empty())
-  {
-    assertions.push_back(d_assertions.next_level());
-    orig_assertions.push_back(assertions.back().first);
-  }
-
   // TODO: apply until fixed-point
   // fixed-point passes
-  d_pass_rewrite.apply(assertions);
-  d_pass_variable_substitution.apply(assertions);
+  d_pass_rewrite.apply(d_assertions);
+  d_pass_variable_substitution.apply(d_assertions);
 
   // one-shot passes
-  d_pass_elim_lambda.apply(assertions);
-
-  for (size_t i = 0, size = orig_assertions.size(); i < size; ++i)
-  {
-    d_assertions.replace(orig_assertions[i], assertions[i].first);
-  }
+  d_pass_elim_lambda.apply(d_assertions);
 
   return Result::UNKNOWN;
 }

@@ -20,7 +20,7 @@ class PassVariableSubstitution : public PreprocessingPass
   {
   }
 
-  void apply(std::vector<std::pair<Node, size_t>>& assertions) override;
+  void apply(backtrack::AssertionView& assertions) override;
 
   void register_assertion(const Node& assertion);
 

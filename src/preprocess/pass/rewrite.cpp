@@ -3,7 +3,7 @@
 namespace bzla::preprocess::pass {
 
 void
-PassRewrite::apply(std::vector<std::pair<Node, size_t>>& assertions)
+PassRewrite::apply(backtrack::AssertionView& assertions)
 {
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
@@ -11,7 +11,7 @@ PassRewrite::apply(std::vector<std::pair<Node, size_t>>& assertions)
     Node rewritten        = d_rewriter.rewrite(assertion);
     if (rewritten != assertion)
     {
-      assertions[i].first = rewritten;
+      assertions.replace(assertion, rewritten);
     }
   }
   // TODO: report back when assertion simplifies to false

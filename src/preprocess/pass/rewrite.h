@@ -14,7 +14,7 @@ class PassRewrite : public PreprocessingPass
  public:
   PassRewrite(Rewriter& rewriter) : PreprocessingPass(rewriter) {}
 
-  void apply(std::vector<std::pair<Node, size_t>>& assertions) override;
+  void apply(backtrack::AssertionView& assertions) override;
 };
 
 }  // namespace bzla::preprocess::pass

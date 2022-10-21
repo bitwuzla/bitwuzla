@@ -86,7 +86,7 @@ reduce(const Node& node, const node::unordered_node_ref_map<Node>& map)
 }  // namespace
 
 void
-PassElimLambda::apply(std::vector<std::pair<Node, size_t>>& assertions)
+PassElimLambda::apply(backtrack::AssertionView& assertions)
 {
   node::node_ref_vector visit;
   node::unordered_node_ref_map<Node> cache;
@@ -135,7 +135,7 @@ PassElimLambda::apply(std::vector<std::pair<Node, size_t>>& assertions)
       visit.pop_back();
     } while (!visit.empty());
 
-    assertions[ia].first = d_rewriter.rewrite(cache.at(assertion));
+    assertions.replace(assertion, d_rewriter.rewrite(cache.at(assertion)));
   }
 }
 

@@ -15,7 +15,7 @@ class PreprocessingPass
   PreprocessingPass(Rewriter& rewriter) : d_rewriter(rewriter) {}
 
   /** Apply preprocessing pass to the current set of assertions. */
-  virtual void apply(std::vector<std::pair<Node, size_t>>& assertions) = 0;
+  virtual void apply(backtrack::AssertionView& assertions) = 0;
 
  protected:
   Rewriter& d_rewriter;

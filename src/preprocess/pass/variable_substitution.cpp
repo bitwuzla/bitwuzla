@@ -10,8 +10,7 @@ namespace bzla::preprocess::pass {
 using namespace node;
 
 void
-PassVariableSubstitution::apply(
-    std::vector<std::pair<Node, size_t>>& assertions)
+PassVariableSubstitution::apply(backtrack::AssertionView& assertions)
 {
   std::unordered_map<Node, Node> substitutions;
   size_t num_levels = d_substitutions.cur_level();
@@ -42,7 +41,10 @@ PassVariableSubstitution::apply(
       }
       const Node& preprocessed = substitute(assertion, substitutions, cache);
       const Node& rewritten    = d_rewriter.rewrite(preprocessed);
-      assertions[ia].first     = rewritten;
+      if (assertion != rewritten)
+      {
+        assertions.replace(assertion, rewritten);
+      }
     }
   }
   assert(ia == assertions.size());
