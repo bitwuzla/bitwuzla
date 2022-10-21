@@ -88,6 +88,10 @@ Node RewriteRule<RewriteRuleKind::BV_AND_CONTRA1>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_CONTRA2>::_apply(Rewriter& rewriter,
                                                           const Node& node);
+// contr3_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_CONTRA3>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
 // subsum1_and
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_SUBSUM1>::_apply(Rewriter& rewriter,
@@ -104,9 +108,14 @@ Node RewriteRule<RewriteRuleKind::BV_AND_SUBSUM2>::_apply(Rewriter& rewriter,
 // contr_rec_and
 // subst1_and
 // subst2_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_NOT_AND1>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
 // subst3_and
 // subst4_and
-// contr3_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_NOT_AND2>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
 // idem3_and
 // const1_and
 // const2_and

@@ -14,6 +14,24 @@ namespace bzla::node::utils {
  *               Ignored if nullptr.
  */
 bool is_or(const Node& node, Node& child0, Node& child1);
+/**
+ * @return True if given node corresponds to a (rewritten) XOR node.
+ * @param node   The node to check.
+ * @param child0 The (resulting) first child of the extracted bvxnor node.
+ *               Ignored if nullptr.
+ * @param child1 The (resulting) second child of the extracted bvxnor node.
+ *               Ignored if nullptr.
+ */
+bool is_xor(const Node& node, Node& child0, Node& child1);
+/**
+ * @return True if given node corresponds to a (rewritten) XNOR node.
+ * @param node   The node to check.
+ * @param child0 The (resulting) first child of the extracted bvxnor node.
+ *               Ignored if nullptr.
+ * @param child1 The (resulting) second child of the extracted bvxnor node.
+ *               Ignored if nullptr.
+ */
+bool is_xnor(const Node& node, Node& child0, Node& child1);
 
 /**
  * @return True if given node corresponds to a (rewritten) BV_NEG node.

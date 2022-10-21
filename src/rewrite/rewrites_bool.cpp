@@ -98,7 +98,7 @@ _rw_and_contra1(Rewriter& rewriter, const Node& node, size_t idx)
   assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
-  if (node[idx1].kind() == Kind::NOT && node[idx1][0] == node[idx0])
+  if (rewrite::utils::is_inverted_of(node[idx0], node[idx1]))
   {
     return NodeManager::get().mk_value(false);
   }
@@ -120,7 +120,7 @@ RewriteRule<RewriteRuleKind::AND_CONTRA1>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match;  (and (and (not a) b) (and (not a) c))
+ * match;  (and (and a b) (and (not a) c))
  * result: false
  */
 namespace {
@@ -133,13 +133,10 @@ _rw_and_contra2(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx1 = 1 - idx;
   if (node[idx0].kind() == Kind::AND && node[idx1].kind() == Kind::AND)
   {
-    if ((node[idx0][0].kind() == Kind::NOT && node[idx0][0][0] == node[idx1][0])
-        || (node[idx0][0].kind() == Kind::NOT
-            && node[idx0][0][0] == node[idx1][1])
-        || (node[idx0][1].kind() == Kind::NOT
-            && node[idx0][1][0] == node[idx1][0])
-        || (node[idx0][1].kind() == Kind::NOT
-            && node[idx0][1][0] == node[idx1][1]))
+    if (rewrite::utils::is_inverted_of(node[idx0][0], node[idx1][0])
+        || rewrite::utils::is_inverted_of(node[idx0][0], node[idx1][1])
+        || rewrite::utils::is_inverted_of(node[idx0][1], node[idx1][0])
+        || rewrite::utils::is_inverted_of(node[idx0][1], node[idx1][1]))
     {
       return NodeManager::get().mk_value(false);
     }
@@ -157,6 +154,43 @@ RewriteRule<RewriteRuleKind::AND_CONTRA2>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_and_contra2(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match;  (and a (and (not a) b))
+ * result: false
+ */
+namespace {
+Node
+_rw_and_contra3(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::AND)
+  {
+    if (rewrite::utils::is_inverted_of(node[idx0][0], node[idx1])
+        || rewrite::utils::is_inverted_of(node[idx0][1], node[idx1]))
+    {
+      return NodeManager::get().mk_value(false);
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::AND_CONTRA3>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  Node res = _rw_and_contra3(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_and_contra3(rewriter, node, 1);
   }
   return res;
 }
@@ -233,6 +267,91 @@ RewriteRule<RewriteRuleKind::AND_SUBSUM2>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_and_subsum2(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (and (and a b) (not (and a c)))
+ * result: (and((and a b) (not c))
+ */
+namespace {
+Node
+_rw_and_not_and1(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  Node or0, or1;
+  if (node[idx0].kind() == Kind::AND && node[idx1].is_inverted()
+      && node[idx1][0].kind() == Kind::AND)
+  {
+    if (node[idx0][0] == node[idx1][0][0] || node[idx0][1] == node[idx1][0][0])
+    {
+      return rewriter.mk_node(
+          Kind::AND, {node[idx0], rewriter.invert_node(node[idx1][0][1])});
+    }
+    if (node[idx0][0] == node[idx1][0][1] || node[idx0][1] == node[idx1][0][1])
+    {
+      return rewriter.mk_node(
+          Kind::AND, {node[idx0], rewriter.invert_node(node[idx1][0][0])});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::AND_NOT_AND1>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  Node res = _rw_and_not_and1(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_and_not_and1(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (and a (not (and a b)))
+ * result: (and a (not b))
+ */
+namespace {
+Node
+_rw_and_not_and2(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  Node or0, or1;
+  if (node[idx1].is_inverted() && node[idx1][0].kind() == Kind::AND)
+  {
+    if (node[idx0] == node[idx1][0][0])
+    {
+      return rewriter.mk_node(
+          Kind::AND, {node[idx0], rewriter.invert_node(node[idx1][0][1])});
+    }
+    if (node[idx0] == node[idx1][0][1])
+    {
+      return rewriter.mk_node(
+          Kind::AND, {node[idx0], rewriter.invert_node(node[idx1][0][0])});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::AND_NOT_AND2>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  Node res = _rw_and_not_and2(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_and_not_and2(rewriter, node, 1);
   }
   return res;
 }
@@ -742,6 +861,24 @@ RewriteRule<RewriteRuleKind::NOT_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   if (!node[0].is_value()) return node;
   return NodeManager::get().mk_value(!node[0].value<bool>());
+}
+
+/**
+ * match:  (xnor a b) (rewritten to (not (xor a b)))
+ * result: (= a b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::NOT_XOR>::_apply(Rewriter& rewriter,
+                                              const Node& node)
+{
+  assert(node.num_children() == 1);
+  Node xnor0, xnor1;
+  if (node::utils::is_xnor(node, xnor0, xnor1))
+  {
+    return rewriter.mk_node(Kind::EQUAL, {xnor0, xnor1});
+  }
+  return node;
 }
 
 /* --- Elimination Rules ---------------------------------------------------- */

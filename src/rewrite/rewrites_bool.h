@@ -10,30 +10,44 @@ namespace bzla {
 template <>
 Node RewriteRule<RewriteRuleKind::AND_EVAL>::_apply(Rewriter& rewriter,
                                                     const Node& node);
-// and_idem1
+// idem1_and
 template <>
 Node RewriteRule<RewriteRuleKind::AND_IDEM1>::_apply(Rewriter& rewriter,
                                                      const Node& node);
-// and_idem2
+// idem2_and
 template <>
 Node RewriteRule<RewriteRuleKind::AND_IDEM2>::_apply(Rewriter& rewriter,
                                                      const Node& node);
-// and_contr1
+// contr1_and
 template <>
 Node RewriteRule<RewriteRuleKind::AND_CONTRA1>::_apply(Rewriter& rewriter,
                                                        const Node& node);
-// and_contr2
+// contr2_and
 template <>
 Node RewriteRule<RewriteRuleKind::AND_CONTRA2>::_apply(Rewriter& rewriter,
                                                        const Node& node);
-// and_subsum1
+// contr3_and
+template <>
+Node RewriteRule<RewriteRuleKind::AND_CONTRA3>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// subsum1_and
 template <>
 Node RewriteRule<RewriteRuleKind::AND_SUBSUM1>::_apply(Rewriter& rewriter,
                                                        const Node& node);
-// and_subsum2
+// subsum2_and
 template <>
 Node RewriteRule<RewriteRuleKind::AND_SUBSUM2>::_apply(Rewriter& rewriter,
                                                        const Node& node);
+// subst1_and
+// subst2_and
+template <>
+Node RewriteRule<RewriteRuleKind::AND_NOT_AND1>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+// subst3_and
+// subst4_and
+template <>
+Node RewriteRule<RewriteRuleKind::AND_NOT_AND2>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 
 /* equal -------------------------------------------------------------------- */
 
@@ -91,6 +105,10 @@ Node RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::NOT_EVAL>::_apply(Rewriter& rewriter,
                                                     const Node& node);
+// bool_xnor_and
+template <>
+Node RewriteRule<RewriteRuleKind::NOT_XOR>::_apply(Rewriter& rewriter,
+                                                   const Node& node);
 
 /* --- Elimination Rules ---------------------------------------------------- */
 

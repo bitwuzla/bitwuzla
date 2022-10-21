@@ -5,6 +5,8 @@
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
+#include "rewrite/rewrite_utils.h"
+
 namespace bzla {
 
 using namespace node;
@@ -204,7 +206,7 @@ _rw_bv_add_not(Rewriter& rewriter, const Node& node, size_t idx)
   assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
-  if (node[idx1].is_inverted() && node[idx0] == node[idx1][0])
+  if (rewrite::utils::is_inverted_of(node[idx0], node[idx1]))
   {
     return NodeManager::get().mk_value(
         BitVector::mk_ones(node[0].type().bv_size()));
@@ -552,7 +554,7 @@ _rw_bv_and_contra1(Rewriter& rewriter, const Node& node, size_t idx)
   assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
-  if (node[idx1].kind() == Kind::BV_NOT && node[idx1][0] == node[idx0])
+  if (rewrite::utils::is_inverted_of(node[idx0], node[idx1]))
   {
     return NodeManager::get().mk_value(
         BitVector::mk_zero(node[idx0].type().bv_size()));
@@ -575,7 +577,7 @@ RewriteRule<RewriteRuleKind::BV_AND_CONTRA1>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match;  (bvand (bvand (bvnot a) b) (bvand (bvnot a) c))
+ * match;  (bvand (bvand a b) (bvand (bvnot a) c))
  * result: (_ bv0 N)
  */
 namespace {
@@ -588,10 +590,10 @@ _rw_bv_and_contra2(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx1 = 1 - idx;
   if (node[idx0].kind() == Kind::BV_AND && node[idx1].kind() == Kind::BV_AND)
   {
-    if ((node[idx0][0].is_inverted() && node[idx0][0][0] == node[idx1][0])
-        || (node[idx0][0].is_inverted() && node[idx0][0][0] == node[idx1][1])
-        || (node[idx0][1].is_inverted() && node[idx0][1][0] == node[idx1][0])
-        || (node[idx0][1].is_inverted() && node[idx0][1][0] == node[idx1][1]))
+    if (rewrite::utils::is_inverted_of(node[idx0][0], node[idx1][0])
+        || rewrite::utils::is_inverted_of(node[idx0][0], node[idx1][1])
+        || rewrite::utils::is_inverted_of(node[idx0][1], node[idx1][0])
+        || rewrite::utils::is_inverted_of(node[idx0][1], node[idx1][1]))
     {
       return NodeManager::get().mk_value(
           BitVector::mk_zero(node[idx0].type().bv_size()));
@@ -610,6 +612,44 @@ RewriteRule<RewriteRuleKind::BV_AND_CONTRA2>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_bv_and_contra2(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match;  (bvand a (bvand (bvnot a) b))
+ * result: (_ bv0 N)
+ */
+namespace {
+Node
+_rw_bv_and_contra3(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_AND)
+  {
+    if (rewrite::utils::is_inverted_of(node[idx0][0], node[idx1])
+        || rewrite::utils::is_inverted_of(node[idx0][1], node[idx1]))
+    {
+      return NodeManager::get().mk_value(
+          BitVector::mk_zero(node[idx0].type().bv_size()));
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_CONTRA3>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  Node res = _rw_bv_and_contra3(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_and_contra3(rewriter, node, 1);
   }
   return res;
 }
@@ -686,6 +726,91 @@ RewriteRule<RewriteRuleKind::BV_AND_SUBSUM2>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_bv_and_subsum2(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (bvand (bvand a b) (bvnot (bvand a c)))
+ * result: (bvand((bvand a b) (bvnot c))
+ */
+namespace {
+Node
+_rw_bv_and_not_and1(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  Node or0, or1;
+  if (node[idx0].kind() == Kind::BV_AND && node[idx1].is_inverted()
+      && node[idx1][0].kind() == Kind::BV_AND)
+  {
+    if (node[idx0][0] == node[idx1][0][0] || node[idx0][1] == node[idx1][0][0])
+    {
+      return rewriter.mk_node(
+          Kind::BV_AND, {node[idx0], rewriter.invert_node(node[idx1][0][1])});
+    }
+    if (node[idx0][0] == node[idx1][0][1] || node[idx0][1] == node[idx1][0][1])
+    {
+      return rewriter.mk_node(
+          Kind::BV_AND, {node[idx0], rewriter.invert_node(node[idx1][0][0])});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_NOT_AND1>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  Node res = _rw_bv_and_not_and1(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_and_not_and1(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (bvand a (bvnot (bvand a b)))
+ * result: (bvand a (bvnot b))
+ */
+namespace {
+Node
+_rw_bv_and_not_and2(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  Node or0, or1;
+  if (node[idx1].is_inverted() && node[idx1][0].kind() == Kind::BV_AND)
+  {
+    if (node[idx0] == node[idx1][0][0])
+    {
+      return rewriter.mk_node(
+          Kind::BV_AND, {node[idx0], rewriter.invert_node(node[idx1][0][1])});
+    }
+    if (node[idx0] == node[idx1][0][1])
+    {
+      return rewriter.mk_node(
+          Kind::BV_AND, {node[idx0], rewriter.invert_node(node[idx1][0][0])});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_NOT_AND2>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  Node res = _rw_bv_and_not_and2(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_and_not_and2(rewriter, node, 1);
   }
   return res;
 }
@@ -1738,7 +1863,7 @@ RewriteRule<RewriteRuleKind::BV_SHR_NOT>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
   assert(node.num_children() == 2);
-  if (node[0].is_inverted() && node[0][0] == node[1])
+  if (rewrite::utils::is_inverted_of(node[0], node[1]))
   {
     return rewriter.mk_node(
         Kind::BV_SHR,
@@ -2546,8 +2671,9 @@ RewriteRule<RewriteRuleKind::BV_SADDO_ELIM>::_apply(Rewriter& rewriter,
   // Overflow occurs if
   //  1) negative + negative = positive
   //  2) positive + positive = negative
-  Node one  = NodeManager::get().mk_value(BitVector::mk_one(1));
-  Node zero = NodeManager::get().mk_value(BitVector::mk_zero(1));
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(1));
+  Node zero       = nm.mk_value(BitVector::mk_zero(1));
   const Node& both_neg =
       rewriter.mk_node(Kind::AND,
                        {rewriter.mk_node(Kind::EQUAL, {sign0, one}),

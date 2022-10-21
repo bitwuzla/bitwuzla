@@ -28,6 +28,52 @@ is_or(const Node& node, Node& child0, Node& child1)
 }
 
 bool
+is_xor(const Node& node, Node& child0, Node& child1)
+{
+  if (node.kind() == Kind::XOR)
+  {
+    child0 = node[0];
+    child1 = node[1];
+    return true;
+  }
+
+  Node or0, or1;
+  if (node.kind() == Kind::AND)
+  {
+    if ((is_or(node[0], or0, or1) && node[1].is_inverted()
+         && node[1][0].kind() == Kind::AND
+         && (node[1][0][0] == or0 || node[1][0][0] == or1)
+         && (node[1][0][1] == or0 || node[1][0][1] == or1))
+        || (is_or(node[1], or0, or1) && node[0].is_inverted()
+            && node[0][0].kind() == Kind::AND
+            && (node[0][0][0] == or0 || node[0][0][0] == or1)
+            && (node[0][0][1] == or0 || node[0][0][1] == or1)))
+    {
+      child0 = or0;
+      child1 = or1;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool
+is_xnor(const Node& node, Node& child0, Node& child1)
+{
+  if (node.is_inverted())
+  {
+    Node xor0, xor1;
+    if (is_xor(node[0], xor0, xor1))
+    {
+      child0 = xor0;
+      child1 = xor1;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool
 is_bv_neg(const Node& node, Node& child)
 {
   Node one =
