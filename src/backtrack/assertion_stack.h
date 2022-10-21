@@ -35,9 +35,21 @@ class AssertionView
   /** @return The number of assertions seen by this view. */
   size_t size() const;
 
+  /**
+   * Replace an assertion.
+   *
+   * @param index The index of the assertion to be replaced.
+   * @param assertion The new assertion.
+   */
   void replace(const Node& assertion, const Node& replacement);
 
-  void replace(size_t index, const std::vector<Node>& assertions);
+  /**
+   * Insert assertion at given level.
+   *
+   * @param level The level to insert the assertion to.
+   * @param assertion The assertion to insert.
+   */
+  void insert_at_level(size_t level, const Node& assertion);
 
  private:
   AssertionView(AssertionStack& assertions);
@@ -64,18 +76,18 @@ class AssertionStack : public Backtrackable
   /**
    * Replace an assertion.
    *
-   * @param index The index of the assertion to be replaced
+   * @param index The index of the assertion to be replaced.
    * @param assertion The new assertion.
    */
   void replace(const Node& assertion, const Node& replacement);
 
   /**
-   * Replace an assertion with a vector of assertions.
+   * Insert assertion at given level.
    *
-   * @param index The index of the assertion to be replaced
-   * @param assertions The list of assertions to insert at `index`.
+   * @param level The level to insert the assertion to.
+   * @param assertion The assertion to insert.
    */
-  void replace(size_t index, const std::vector<Node>& assertions);
+  void insert_at_level(size_t level, const Node& assertion);
 
   /** @return The number of assertions on the stack. */
   size_t size() const;

@@ -28,29 +28,34 @@ AssertionStack::replace(const Node& assertion, const Node& replacement)
 }
 
 void
-AssertionStack::replace(size_t index, const std::vector<Node>& assertions)
+AssertionStack::insert_at_level(size_t level, const Node& assertion)
 {
-  assert(!assertions.empty());
-
-  size_t cur_level = level(index);
-
-  d_cache.erase(d_assertions[index].first);
-  d_assertions[index].first = assertions[0];
-
-  if (assertions.size() > 1)
+  // If inserted at current level, just use push_back().
+  if (level == d_control.size())
   {
-    for (size_t i = 1, size = assertions.size(); i < size; ++i)
+    push_back(assertion);
+    return;
+  }
+  assert(level < d_control.size());
+
+  size_t index        = d_control[level];
+  auto [it, inserted] = d_cache.emplace(assertion, index);
+  if (!inserted)
+  {
+    // Assertion already added in a previous level.
+    if (it->second < index)
     {
-      d_cache.insert(assertions[i]);
-      d_assertions.emplace(
-          d_assertions.begin() + index + i, assertions[i], cur_level);
+      return;
     }
-    // Since new elements were inserted, update control stack starting from
-    // `cur_level`.
-    for (size_t i = cur_level, size = d_control.size(); i < size; ++i)
-    {
-      d_control[i] += assertions.size() - 1;
-    }
+    // Assertion added to lower level, update index.
+    it->second = index;
+  }
+
+  // Add assertion to given level and update control stack.
+  d_assertions.emplace(d_assertions.begin() + index, assertion, level);
+  for (size_t i = level, size = d_control.size(); i < size; ++i)
+  {
+    ++d_control[i];
   }
 }
 
@@ -104,9 +109,25 @@ AssertionStack::pop()
   // Pop back assertions
   while (d_assertions.size() > pop_to)
   {
-    d_cache.erase(d_assertions.back().first);
+    const auto& [assertion, level] = d_assertions.back();
+    auto it                        = d_cache.find(assertion);
+    // Only remove from cache if the assertion is at the correct index.
+    if (it->second == d_assertions.size() - 1)
+    {
+      d_cache.erase(it);
+    }
     d_assertions.pop_back();
   }
+
+#ifndef NDEBUG
+  for (const auto& [assertion, level] : d_assertions)
+  {
+    assert(level <= d_control.size());
+    auto it = d_cache.find(assertion);
+    assert(it != d_cache.end());
+    assert(it->second < d_assertions.size());
+  }
+#endif
 
   // Update views
   size_t size = d_assertions.size();
@@ -159,9 +180,9 @@ AssertionView::replace(const Node& assertion, const Node& replacement)
 }
 
 void
-AssertionView::replace(size_t index, const std::vector<Node>& assertions)
+AssertionView::insert_at_level(size_t level, const Node& assertion)
 {
-  d_assertions.replace(index, assertions);
+  d_assertions.insert_at_level(level, assertion);
 }
 
 }  // namespace bzla::backtrack

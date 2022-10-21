@@ -53,72 +53,87 @@ TEST_F(TestAssertionStack, push_pop)
   ASSERT_EQ(as[1], f3);
 }
 
-TEST_F(TestAssertionStack, replace1)
+TEST_F(TestAssertionStack, insert_at_level)
 {
   AssertionStack as;
   NodeManager& nm = NodeManager::get();
 
-  Node f1 = nm.mk_const(nm.mk_bool_type());
-  Node f2 = nm.mk_const(nm.mk_bool_type());
-  Node f3 = nm.mk_const(nm.mk_bool_type());
-  Node f4 = nm.mk_const(nm.mk_bool_type());
-  Node f5 = nm.mk_const(nm.mk_bool_type());
+  Node a1 = nm.mk_const(nm.mk_bool_type(), "a1");
+  Node a2 = nm.mk_const(nm.mk_bool_type(), "a2");
+  Node a3 = nm.mk_const(nm.mk_bool_type(), "a3");
+  Node a4 = nm.mk_const(nm.mk_bool_type(), "a4");
+  Node a5 = nm.mk_const(nm.mk_bool_type(), "a5");
 
-  as.push_back(f1);
-  as.push_back(f2);
+  as.insert_at_level(0, a1);
   ASSERT_EQ(as.level(0), 0);
-  ASSERT_EQ(as.level(1), 0);
-  as.push();
-  as.push_back(f3);
-  ASSERT_EQ(as.level(2), 1);
+  ASSERT_EQ(as[0], a1);
 
-  as.replace(1, {f4, f5});
-  ASSERT_EQ(as[0], f1);
-  ASSERT_EQ(as[1], f4);
-  ASSERT_EQ(as[2], f5);
-  ASSERT_EQ(as[3], f3);
+  as.push_back(a2);
+  ASSERT_EQ(as.level(1), 0);
+  ASSERT_EQ(as[1], a2);
+
+  as.push();
+
+  as.push_back(a3);
+  ASSERT_EQ(as.level(2), 1);
+  ASSERT_EQ(as[2], a3);
+
+  as.insert_at_level(0, a3);
+  ASSERT_EQ(as.size(), 4);
+  ASSERT_EQ(as[0], a1);
+  ASSERT_EQ(as[1], a2);
+  ASSERT_EQ(as[2], a3);
+  ASSERT_EQ(as[3], a3);
   ASSERT_EQ(as.level(0), 0);
   ASSERT_EQ(as.level(1), 0);
   ASSERT_EQ(as.level(2), 0);
   ASSERT_EQ(as.level(3), 1);
+
+  as.insert_at_level(0, a3);
+  ASSERT_EQ(as.size(), 4);
+  as.insert_at_level(1, a3);
+  ASSERT_EQ(as.size(), 4);
+  ASSERT_EQ(as[0], a1);
+  ASSERT_EQ(as[1], a2);
+  ASSERT_EQ(as[2], a3);
+  ASSERT_EQ(as[3], a3);
+
+  as.insert_at_level(1, a4);
+  ASSERT_EQ(as[0], a1);
+  ASSERT_EQ(as[1], a2);
+  ASSERT_EQ(as[2], a3);
+  ASSERT_EQ(as[3], a3);
+  ASSERT_EQ(as[4], a4);
+  ASSERT_EQ(as.level(0), 0);
+  ASSERT_EQ(as.level(1), 0);
+  ASSERT_EQ(as.level(2), 0);
+  ASSERT_EQ(as.level(3), 1);
+  ASSERT_EQ(as.level(4), 1);
+
   as.pop();
   ASSERT_EQ(as.size(), 3);
-  ASSERT_EQ(as[0], f1);
-  ASSERT_EQ(as[1], f4);
-  ASSERT_EQ(as[2], f5);
-}
+  ASSERT_EQ(as[0], a1);
+  ASSERT_EQ(as[1], a2);
+  ASSERT_EQ(as[2], a3);
+  ASSERT_EQ(as.level(0), 0);
+  ASSERT_EQ(as.level(1), 0);
+  ASSERT_EQ(as.level(2), 0);
 
-TEST_F(TestAssertionStack, replace2)
-{
-  AssertionStack as;
-  NodeManager& nm = NodeManager::get();
-
-  Node f1 = nm.mk_const(nm.mk_bool_type());
-  Node f2 = nm.mk_const(nm.mk_bool_type());
-  Node f3 = nm.mk_const(nm.mk_bool_type());
-  Node f4 = nm.mk_const(nm.mk_bool_type());
-  Node f5 = nm.mk_const(nm.mk_bool_type());
-
-  as.push_back(f1);
   as.push();
-  as.push_back(f2);
-  as.push_back(f3);
-  ASSERT_EQ(as.level(0), 0);
-  ASSERT_EQ(as.level(1), 1);
-  ASSERT_EQ(as.level(2), 1);
+  as.insert_at_level(1, a4);
+  ASSERT_EQ(as.size(), 4);
+  as.push_back(a4);
+  ASSERT_EQ(as.size(), 4);
 
-  as.replace(1, {f4, f5});
-  ASSERT_EQ(as[0], f1);
-  ASSERT_EQ(as[1], f4);
-  ASSERT_EQ(as[2], f5);
-  ASSERT_EQ(as[3], f3);
-  ASSERT_EQ(as.level(0), 0);
-  ASSERT_EQ(as.level(1), 1);
-  ASSERT_EQ(as.level(2), 1);
-  ASSERT_EQ(as.level(3), 1);
+  as.push();
+  as.push_back(a5);
+  ASSERT_EQ(as.size(), 5);
+  as.insert_at_level(2, a5);
+  ASSERT_EQ(as.size(), 5);
+
   as.pop();
-  ASSERT_EQ(as.size(), 1);
-  ASSERT_EQ(as[0], f1);
+  as.insert_at_level(1, a5);
+  ASSERT_EQ(as.size(), 5);
 }
 
 TEST_F(TestAssertionStack, view)
