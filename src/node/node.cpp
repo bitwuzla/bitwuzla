@@ -239,6 +239,14 @@ Node::rend() const
   return reverse_iterator(begin());
 }
 
+std::string
+Node::str() const
+{
+  std::stringstream ss;
+  ss << *this;
+  return ss.str();
+}
+
 /* --- Node private -------------------------------------------------------- */
 
 Node::Node(node::NodeData* data) : d_data(data)

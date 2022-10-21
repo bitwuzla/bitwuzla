@@ -150,6 +150,11 @@ class Node
    */
   reverse_iterator rend() const;
 
+  /**
+   * @return String representation of this node.
+   */
+  std::string str() const;
+
  private:
   Node(node::NodeData* data);
 
