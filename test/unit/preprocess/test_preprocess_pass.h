@@ -1,0 +1,22 @@
+#include "backtrack/assertion_stack.h"
+#include "gtest/gtest.h"
+#include "node/node_manager.h"
+#include "rewrite/rewriter.h"
+
+namespace bzla::test {
+
+using namespace backtrack;
+using namespace node;
+
+class TestPreprocessingPass : public ::testing::Test
+{
+ public:
+  TestPreprocessingPass() : d_nm(NodeManager::get()), d_rw(){};
+
+ protected:
+  NodeManager& d_nm;
+  Rewriter d_rw;
+  AssertionStack d_as;
+};
+
+}

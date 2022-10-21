@@ -31,29 +31,7 @@ void
 SolvingContext::assert_formula(const Node& formula)
 {
   assert(formula.type().is_bool());
-  node_ref_vector visit{formula};
-  unordered_node_ref_set cache;
-
-  // Flatten AND
-  // TODO: Requires tracking for unsat cores
-  // TODO: negated OR?
-  do
-  {
-    const Node& cur = visit.back();
-    visit.pop_back();
-    auto [it, inserted] = cache.insert(cur);
-    if (inserted)
-    {
-      if (cur.kind() == Kind::AND)
-      {
-        visit.insert(visit.end(), cur.rbegin(), cur.rend());
-      }
-      else
-      {
-        register_assertion(cur);
-      }
-    }
-  } while (!visit.empty());
+  register_assertion(formula);
 }
 
 Node

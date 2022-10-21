@@ -1,0 +1,1 @@
+add_unit_test(test_pass_flatten_and)

@@ -87,6 +87,7 @@ set(libbitwuzla_src_files
   preprocess/pass/elim_lambda.cpp
   preprocess/pass/rewrite.cpp
   preprocess/pass/variable_substitution.cpp
+  preprocess/pass/flatten_and.cpp
   preprocess/preprocessor.cpp
   rewrite/rewrite_utils.cpp
   rewrite/rewriter.cpp
