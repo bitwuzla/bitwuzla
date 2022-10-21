@@ -71,6 +71,10 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
+// const1_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_CONST>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 // idem1_and
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_IDEM1>::_apply(Rewriter& rewriter,
@@ -79,6 +83,10 @@ Node RewriteRule<RewriteRuleKind::BV_AND_IDEM1>::_apply(Rewriter& rewriter,
 // comm_and
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_IDEM2>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+// idem3_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_IDEM3>::_apply(Rewriter& rewriter,
                                                         const Node& node);
 // contr1_and
 template <>
@@ -100,11 +108,8 @@ Node RewriteRule<RewriteRuleKind::BV_AND_SUBSUM1>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_SUBSUM2>::_apply(Rewriter& rewriter,
                                                           const Node& node);
-// bool_xnor_and
 // resol1_and
 // resol2_and
-// lt_false_and
-// lt_and
 // contr_rec_and
 // subst1_and
 // subst2_and
@@ -116,8 +121,6 @@ Node RewriteRule<RewriteRuleKind::BV_AND_NOT_AND1>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_NOT_AND2>::_apply(Rewriter& rewriter,
                                                            const Node& node);
-// idem3_and
-// const1_and
 // const2_and
 // concat_and
 

@@ -144,8 +144,11 @@ enum class RewriteRuleKind
   /* Boolean rewrites ---------------------------- */
 
   AND_EVAL,
+  AND_SPECIAL_CONST,
+  AND_CONST,
   AND_IDEM1,
   AND_IDEM2,
+  AND_IDEM3,
   AND_CONTRA1,
   AND_CONTRA2,
   AND_CONTRA3,
@@ -153,6 +156,8 @@ enum class RewriteRuleKind
   AND_SUBSUM2,
   AND_NOT_AND1,
   AND_NOT_AND2,
+  AND_BV_LT_FALSE,
+  AND_BV_LT,
 
   EQUAL_EVAL,
   EQUAL_SPECIAL_CONST,
@@ -197,8 +202,10 @@ enum class RewriteRuleKind
   //// bvand
   BV_AND_EVAL,
   BV_AND_SPECIAL_CONST,
+  BV_AND_CONST,
   BV_AND_IDEM1,
   BV_AND_IDEM2,
+  BV_AND_IDEM3,
   BV_AND_CONTRA1,
   BV_AND_CONTRA2,
   BV_AND_CONTRA3,

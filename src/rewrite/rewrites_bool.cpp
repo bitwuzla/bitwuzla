@@ -30,6 +30,93 @@ RewriteRule<RewriteRuleKind::AND_EVAL>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (and false a) or (and a false)
+ * result: false
+ *
+ * match:  (and true a) or (and a true)
+ * result: a
+ */
+namespace {
+Node
+_rw_and_special_const(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].is_value() && !node[idx1].is_value())
+  {
+    if (node[idx0].value<bool>())
+    {
+      return node[idx1];
+    }
+    return NodeManager::get().mk_value(false);
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::AND_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  Node res = _rw_and_special_const(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_and_special_const(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (and x (and y a)) with x, y constant values
+ * result: (and z a) with z = x /\ y
+ */
+namespace {
+Node
+_rw_and_const(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].is_value() && node[idx1].kind() == Kind::AND)
+  {
+    BitVector z;
+    if (node[idx1][0].is_value())
+    {
+      bool z = node[idx0].value<bool>() && node[idx1][0].value<bool>();
+      return rewriter.mk_node(Kind::AND,
+                              {NodeManager::get().mk_value(z), node[idx1][1]});
+    }
+    if (node[idx1][1].is_value())
+    {
+      bool z = node[idx0].value<bool>() && node[idx1][1].value<bool>();
+      return rewriter.mk_node(Kind::AND,
+                              {NodeManager::get().mk_value(z), node[idx1][0]});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::AND_CONST>::_apply(Rewriter& rewriter,
+                                                const Node& node)
+{
+  Node res = _rw_and_const(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_and_const(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
  * match;  (and a a)
  * result: a
  */
@@ -82,6 +169,40 @@ RewriteRule<RewriteRuleKind::AND_IDEM2>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_and_idem2(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match;  (and a (and a b))
+ * result: (and a b)
+ */
+namespace {
+Node
+_rw_and_idem3(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::AND
+      && (node[idx0][0] == node[idx1] || node[idx0][1] == node[idx1]))
+  {
+    return node[idx0];
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::AND_IDEM3>::_apply(Rewriter& rewriter,
+                                                const Node& node)
+{
+  Node res = _rw_and_idem3(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_and_idem3(rewriter, node, 1);
   }
   return res;
 }
@@ -282,7 +403,6 @@ _rw_and_not_and1(Rewriter& rewriter, const Node& node, size_t idx)
   assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
-  Node or0, or1;
   if (node[idx0].kind() == Kind::AND && node[idx1].is_inverted()
       && node[idx1][0].kind() == Kind::AND)
   {
@@ -325,7 +445,6 @@ _rw_and_not_and2(Rewriter& rewriter, const Node& node, size_t idx)
   assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
-  Node or0, or1;
   if (node[idx1].is_inverted() && node[idx1][0].kind() == Kind::AND)
   {
     if (node[idx0] == node[idx1][0][0])
@@ -354,6 +473,50 @@ RewriteRule<RewriteRuleKind::AND_NOT_AND2>::_apply(Rewriter& rewriter,
     res = _rw_and_not_and2(rewriter, node, 1);
   }
   return res;
+}
+
+/**
+ * match:  (and (bvult a b) (bvult b a))
+ *         (and (bvslt a b) (bvslt b a))
+ * result: false
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::AND_BV_LT_FALSE>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (((node[0].kind() == Kind::BV_ULT && node[1].kind() == Kind::BV_ULT)
+       || (node[0].kind() == Kind::BV_SLT && node[1].kind() == Kind::BV_SLT))
+      && node[0][0] == node[1][1] && node[0][1] == node[1][0])
+  {
+    return NodeManager::get().mk_value(false);
+  }
+  return node;
+}
+
+/*
+ * match:  (and (bvnot (bvult a b)) (bvnot (bvult b a)))
+ *         (and (bvnot (bvslt a b)) (bvnot (bvslt b a)))
+ * result: (= a b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::AND_BV_LT>::_apply(Rewriter& rewriter,
+                                                const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].is_inverted() && node[1].is_inverted()
+      && ((node[0][0].kind() == Kind::BV_ULT
+           && node[1][0].kind() == Kind::BV_ULT)
+          || (node[0][0].kind() == Kind::BV_SLT
+              && node[1][0].kind() == Kind::BV_SLT))
+      && node[0][0][0] == node[1][0][1] && node[0][0][1] == node[1][0][0])
+  {
+    return rewriter.mk_node(Kind::EQUAL, {node[0][0][0], node[0][0][1]});
+  }
+  return node;
 }
 
 /* equal -------------------------------------------------------------------- */

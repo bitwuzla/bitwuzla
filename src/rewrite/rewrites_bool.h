@@ -10,6 +10,13 @@ namespace bzla {
 template <>
 Node RewriteRule<RewriteRuleKind::AND_EVAL>::_apply(Rewriter& rewriter,
                                                     const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::AND_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
+// const1_and
+template <>
+Node RewriteRule<RewriteRuleKind::AND_CONST>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
 // idem1_and
 template <>
 Node RewriteRule<RewriteRuleKind::AND_IDEM1>::_apply(Rewriter& rewriter,
@@ -17,6 +24,10 @@ Node RewriteRule<RewriteRuleKind::AND_IDEM1>::_apply(Rewriter& rewriter,
 // idem2_and
 template <>
 Node RewriteRule<RewriteRuleKind::AND_IDEM2>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
+// idem3_and
+template <>
+Node RewriteRule<RewriteRuleKind::AND_IDEM3>::_apply(Rewriter& rewriter,
                                                      const Node& node);
 // contr1_and
 template <>
@@ -48,6 +59,14 @@ Node RewriteRule<RewriteRuleKind::AND_NOT_AND1>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::AND_NOT_AND2>::_apply(Rewriter& rewriter,
                                                         const Node& node);
+// lt_false_and
+template <>
+Node RewriteRule<RewriteRuleKind::AND_BV_LT_FALSE>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
+// lt_and
+template <>
+Node RewriteRule<RewriteRuleKind::AND_BV_LT>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
 
 /* equal -------------------------------------------------------------------- */
 

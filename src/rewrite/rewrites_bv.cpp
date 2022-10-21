@@ -486,6 +486,53 @@ RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match:  (bvand (_ bvX N) (bvand (_ bvY N) a))
+ * result: (bvand (_ bvZ N) a) with Z = X & Y
+ */
+namespace {
+Node
+_rw_bv_and_const(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].is_value() && node[idx1].kind() == Kind::BV_AND)
+  {
+    BitVector z;
+    if (node[idx1][0].is_value())
+    {
+      BitVector z =
+          node[idx0].value<BitVector>().bvand(node[idx1][0].value<BitVector>());
+      return rewriter.mk_node(Kind::BV_AND,
+                              {NodeManager::get().mk_value(z), node[idx1][1]});
+    }
+    if (node[idx1][1].is_value())
+    {
+      BitVector z =
+          node[idx0].value<BitVector>().bvand(node[idx1][1].value<BitVector>());
+      return rewriter.mk_node(Kind::BV_AND,
+                              {NodeManager::get().mk_value(z), node[idx1][0]});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_CONST>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  Node res = _rw_bv_and_const(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_and_const(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
  * match;  (bvand a a)
  * result: a
  */
@@ -538,6 +585,40 @@ RewriteRule<RewriteRuleKind::BV_AND_IDEM2>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_bv_and_idem2(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match;  (bvand a (bvand a b))
+ * result: (bvand a b)
+ */
+namespace {
+Node
+_rw_bv_and_idem3(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_AND
+      && (node[idx0][0] == node[idx1] || node[idx0][1] == node[idx1]))
+  {
+    return node[idx0];
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_IDEM3>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  Node res = _rw_bv_and_idem3(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_and_idem3(rewriter, node, 1);
   }
   return res;
 }
