@@ -72,6 +72,7 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 // const1_and
+// const2_and
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_CONST>::_apply(Rewriter& rewriter,
                                                         const Node& node);
@@ -110,6 +111,9 @@ Node RewriteRule<RewriteRuleKind::BV_AND_SUBSUM2>::_apply(Rewriter& rewriter,
                                                           const Node& node);
 // resol1_and
 // resol2_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_RESOL1>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
 // contr_rec_and
 // subst1_and
 // subst2_and
@@ -121,8 +125,10 @@ Node RewriteRule<RewriteRuleKind::BV_AND_NOT_AND1>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_NOT_AND2>::_apply(Rewriter& rewriter,
                                                            const Node& node);
-// const2_and
 // concat_and
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_CONCAT>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
 
 /* bvashr ------------------------------------------------------------------- */
 

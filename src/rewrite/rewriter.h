@@ -152,6 +152,7 @@ enum class RewriteRuleKind
   AND_CONTRA1,
   AND_CONTRA2,
   AND_CONTRA3,
+  AND_RESOL1,
   AND_SUBSUM1,
   AND_SUBSUM2,
   AND_NOT_AND1,
@@ -211,8 +212,10 @@ enum class RewriteRuleKind
   BV_AND_CONTRA3,
   BV_AND_SUBSUM1,
   BV_AND_SUBSUM2,
+  BV_AND_RESOL1,
   BV_AND_NOT_AND1,
   BV_AND_NOT_AND2,
+  BV_AND_CONCAT,
 
   //// bvashr
   BV_ASHR_EVAL,
