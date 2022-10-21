@@ -59,6 +59,12 @@ AssertionStack::insert_at_level(size_t level, const Node& assertion)
   }
 }
 
+const std::pair<Node, size_t>& AssertionView::operator[](size_t index) const
+{
+  assert(d_start_index + index < d_assertions.size());
+  return d_assertions.get(d_start_index + index);
+}
+
 size_t
 AssertionStack::size() const
 {
@@ -133,9 +139,10 @@ AssertionStack::pop()
   size_t size = d_assertions.size();
   for (auto& view : d_views)
   {
-    if (view->d_index > size)
+    if (view->d_cur_index > size)
     {
-      view->d_index = size;
+      view->d_cur_index   = size;
+      view->d_start_index = size;
     }
   }
 }
@@ -143,7 +150,7 @@ AssertionStack::pop()
 /* --- AssertionView public ------------------------------------------------- */
 
 AssertionView::AssertionView(AssertionStack& assertions)
-    : d_assertions(assertions), d_index(0)
+    : d_assertions(assertions), d_cur_index(0), d_start_index(0)
 {
 }
 
@@ -151,26 +158,26 @@ const Node&
 AssertionView::next()
 {
   assert(!empty());
-  return d_assertions[d_index++];
+  return d_assertions[d_cur_index++];
 }
 
 const std::pair<Node, size_t>&
 AssertionView::next_level()
 {
   assert(!empty());
-  return d_assertions.get(d_index++);
+  return d_assertions.get(d_cur_index++);
 }
 
 bool
 AssertionView::empty() const
 {
-  return d_index >= d_assertions.size();
+  return d_cur_index >= d_assertions.size();
 }
 
 size_t
 AssertionView::size() const
 {
-  return d_assertions.size() - d_index;
+  return d_assertions.size() - d_start_index;
 }
 
 void

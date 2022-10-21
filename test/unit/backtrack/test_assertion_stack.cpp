@@ -162,7 +162,7 @@ TEST_F(TestAssertionStack, view)
   ASSERT_EQ(view1.next(), f1);
   ASSERT_EQ(view1.next(), f2);
   ASSERT_TRUE(view1.empty());
-  ASSERT_EQ(view1.size(), 0);
+  ASSERT_EQ(view1.size(), 2);
   ASSERT_EQ(view2.size(), 2);
 
   as.pop();
@@ -180,7 +180,7 @@ TEST_F(TestAssertionStack, view)
   ASSERT_FALSE(view1.empty());
   ASSERT_EQ(view1.next(), f3);
   ASSERT_TRUE(view1.empty());
-  ASSERT_EQ(view1.size(), 0);
+  ASSERT_EQ(view1.size(), 1);
   ASSERT_EQ(view2.size(), 2);
   ASSERT_FALSE(view2.empty());
   ASSERT_EQ(view2.next(), f1);
