@@ -59,7 +59,8 @@ AssertionStack::insert_at_level(size_t level, const Node& assertion)
   }
 }
 
-const std::pair<Node, size_t>& AssertionView::operator[](size_t index) const
+const std::pair<Node, size_t>&
+AssertionView::operator[](size_t index) const
 {
   assert(d_start_index + index < d_assertions.size());
   return d_assertions.get(d_start_index + index);
@@ -183,12 +184,23 @@ AssertionView::size() const
 void
 AssertionView::replace(const Node& assertion, const Node& replacement)
 {
+  // Makes sure that we can only replace assertions that can be seen by this
+  // view.
+  assert(std::find_if(std::begin(d_assertions) + d_start_index,
+                      std::end(d_assertions),
+                      [assertion](const std::pair<Node, size_t>& p) {
+                        return p.first == assertion;
+                      })
+         != std::end(d_assertions));
   d_assertions.replace(assertion, replacement);
 }
 
 void
 AssertionView::insert_at_level(size_t level, const Node& assertion)
 {
+  // Makes sure that we can only insert assertions at levels that can be seen
+  // by this view.
+  assert(d_assertions.get(d_start_index).second <= level);
   d_assertions.insert_at_level(level, assertion);
 }
 
