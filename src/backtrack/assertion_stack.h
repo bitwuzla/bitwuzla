@@ -2,7 +2,7 @@
 #define BZLA_BACKTRACK_ASSERTION_STACK_H_INCLUDED
 
 #include <memory>
-#include <unordered_set>
+#include <unordered_map>
 #include <vector>
 
 #include "backtrack/backtrackable.h"
