@@ -7,6 +7,12 @@
 namespace bzla::rewrite::utils {
 
 bool
+is_inverted_of(const Node& a, const Node& b)
+{
+  return (a.is_inverted() && a[0] == b) || (b.is_inverted() && b[0] == a);
+}
+
+bool
 is_always_disequal(const Node& a, const Node& b)
 {
   // rewrite EQUAL_EVAL is expected to be enabled
@@ -81,11 +87,5 @@ is_always_disequal(const Node& a, const Node& b)
     }
   }
   return false;
-}
-
-bool
-is_inverted_of(const Node& a, const Node& b)
-{
-  return (a.is_inverted() && a[0] == b) || (b.is_inverted() && b[0] == a);
 }
 }  // namespace bzla::rewrite::utils

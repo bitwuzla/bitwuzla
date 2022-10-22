@@ -6,6 +6,14 @@
 namespace bzla::rewrite::utils {
 
 /**
+ * Determine if node a is the inverted version of b or vice versa.
+ * @param a The first node.
+ * @param b The second node.
+ * @return True if a = invert(b) or (invert a) = b.
+ */
+bool is_inverted_of(const Node& a, const Node& b);
+
+/**
  * Helper to determine if two nodes are always disequal.
  *
  * Nodes `a` and `b` can be determined to be always disequal if:
@@ -26,13 +34,5 @@ namespace bzla::rewrite::utils {
  * @return True if the two nodes can be determined to be always disequal.
  */
 bool is_always_disequal(const Node& a, const Node& b);
-
-/**
- * Determine if node a is the inverted version of b or vice versa.
- * @param a The first node.
- * @param b The second node.
- * @return True if a = invert(b) or (invert a) = b.
- */
-bool is_inverted_of(const Node& a, const Node& b);
 }  // namespace bzla::rewrite::utils
 #endif
