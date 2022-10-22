@@ -325,9 +325,9 @@ TEST_F(TestRewriterBv, bv_add_urem)
                         d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4}), d_b4})}));
 }
 
-TEST_F(TestRewriterBv, bv_add_mul)
+TEST_F(TestRewriterBv, bv_add_mul1)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_MUL;
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_MUL1;
   //// applies
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4})}));
@@ -345,6 +345,33 @@ TEST_F(TestRewriterBv, bv_add_mul)
                    {d_a4,
                     d_nm.mk_node(Kind::BV_MUL,
                                  {d_b4, d_nm.mk_node(Kind::BV_NOT, {d_a4})})}));
+}
+
+TEST_F(TestRewriterBv, bv_add_mul2)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_MUL2;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ADD,
+                               {d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4}),
+                                d_nm.mk_node(Kind::BV_MUL, {d_a4, d_c4})}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ADD,
+                               {d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4}),
+                                d_nm.mk_node(Kind::BV_MUL, {d_c4, d_a4})}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ADD,
+                               {d_nm.mk_node(Kind::BV_MUL, {d_b4, d_a4}),
+                                d_nm.mk_node(Kind::BV_MUL, {d_a4, d_c4})}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ADD,
+                               {d_nm.mk_node(Kind::BV_MUL, {d_b4, d_a4}),
+                                d_nm.mk_node(Kind::BV_MUL, {d_c4, d_a4})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ADD,
+                   {d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4}),
+                    d_nm.mk_node(Kind::BV_MUL, {d_c4, d_d4})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::BV_MUL, {d_b4, d_a4}), d_a4}));
 }
 
 TEST_F(TestRewriterBv, bv_add_shl)

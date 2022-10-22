@@ -344,7 +344,8 @@ Rewriter::rewrite_bv_add(const Node& node)
     BZLA_APPLY_RW_RULE(BV_ADD_UREM);
     // LEVEL 3 rewrites /////////////////////////////////////////
     BZLA_APPLY_RW_RULE(BV_ADD_ITE);
-    BZLA_APPLY_RW_RULE(BV_ADD_MUL);
+    BZLA_APPLY_RW_RULE(BV_ADD_MUL1);
+    BZLA_APPLY_RW_RULE(BV_ADD_MUL2);
     BZLA_APPLY_RW_RULE(BV_ADD_SHL);
   }
 

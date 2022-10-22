@@ -57,8 +57,12 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_SHL>::_apply(Rewriter& rewriter,
                                                       const Node& node);
 // mul_add
 template <>
-Node RewriteRule<RewriteRuleKind::BV_ADD_MUL>::_apply(Rewriter& rewriter,
-                                                      const Node& node);
+Node RewriteRule<RewriteRuleKind::BV_ADD_MUL1>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// add_mul_distrib
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ADD_MUL2>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 
 /* bvand -------------------------------------------------------------------- */
 
