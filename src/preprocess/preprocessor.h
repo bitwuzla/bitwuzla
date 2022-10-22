@@ -18,9 +18,13 @@ class Preprocessor
  public:
   Preprocessor(SolvingContext& context);
 
+  /** Preprocess current set of assertions. */
   Result preprocess();
 
   void register_assertion(const Node& assertion);
+
+  /** Preprocess given term. */
+  Node process(const Node& term);
 
  private:
   backtrack::AssertionView& d_assertions;

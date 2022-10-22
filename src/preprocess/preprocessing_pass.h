@@ -17,6 +17,9 @@ class PreprocessingPass
   /** Apply preprocessing pass to the current set of assertions. */
   virtual void apply(backtrack::AssertionView& assertions) = 0;
 
+  /** Apply preprocessing pass to given term. */
+  virtual Node process(const Node& term) { return term; }
+
  protected:
   Rewriter& d_rewriter;
 };

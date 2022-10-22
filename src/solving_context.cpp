@@ -42,7 +42,7 @@ SolvingContext::get_value(const Node& term)
   const Type& type = term.type();
   if (type.is_bool() || type.is_bv())
   {
-    return d_bv_solver.value(term);
+    return d_bv_solver.value(d_preprocessor.process(term));
   }
 
   // TODO: Handle more types.

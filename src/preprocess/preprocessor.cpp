@@ -32,4 +32,12 @@ Preprocessor::register_assertion(const Node& assertion)
   d_pass_variable_substitution.register_assertion(assertion);
 }
 
+Node
+Preprocessor::process(const Node& term)
+{
+  // TODO: add more passes
+  Node processed = d_pass_variable_substitution.process(term);
+  return d_pass_rewrite.process(processed);
+}
+
 }  // namespace bzla::preprocess
