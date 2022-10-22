@@ -11,15 +11,31 @@ class TestRewriter : public ::testing::Test
  protected:
   void SetUp() override
   {
+    d_bool_type = d_nm.mk_bool_type();
     d_bv4_type  = d_nm.mk_bv_type(4);
     d_bv1_type  = d_nm.mk_bv_type(1);
+
     d_fp35_type = d_nm.mk_fp_type(3, 5);
+
+    d_a = d_nm.mk_const(d_nm.mk_bool_type());
+    d_b = d_nm.mk_const(d_nm.mk_bool_type());
+    d_c = d_nm.mk_const(d_nm.mk_bool_type());
+    d_d = d_nm.mk_const(d_nm.mk_bool_type());
+
     d_bv4_zero  = d_nm.mk_value(BitVector::mk_zero(4));
     d_bv1_zero  = d_nm.mk_value(BitVector::mk_zero(1));
     d_bv4_one   = d_nm.mk_value(BitVector::mk_one(4));
     d_bv1_one   = d_nm.mk_value(BitVector::mk_one(1));
     d_bv4_ones  = d_nm.mk_value(BitVector::mk_ones(4));
     d_bv1_ones  = d_nm.mk_value(BitVector::mk_ones(1));
+
+    d_bv4_a = d_nm.mk_const(d_bv4_type);
+    d_bv4_b = d_nm.mk_const(d_bv4_type);
+    d_bv4_c = d_nm.mk_const(d_bv4_type);
+    d_bv4_d = d_nm.mk_const(d_bv4_type);
+    d_bv1_a = d_nm.mk_const(d_bv1_type);
+    d_bv1_b = d_nm.mk_const(d_bv1_type);
+
     d_false     = d_nm.mk_value(false);
     d_true      = d_nm.mk_value(true);
   }
@@ -140,16 +156,33 @@ class TestRewriter : public ::testing::Test
   }
 
   Rewriter d_rewriter;
+
   NodeManager& d_nm = NodeManager::get();
+
+  Type d_bool_type;
   Type d_bv4_type;
   Type d_bv1_type;
   Type d_fp35_type;
+
+  Node d_a;
+  Node d_b;
+  Node d_c;
+  Node d_d;
+
   Node d_bv4_zero;
   Node d_bv1_zero;
   Node d_bv1_one;
   Node d_bv4_one;
   Node d_bv1_ones;
   Node d_bv4_ones;
+
+  Node d_bv1_a;
+  Node d_bv1_b;
+  Node d_bv4_a;
+  Node d_bv4_b;
+  Node d_bv4_c;
+  Node d_bv4_d;
+
   Node d_false;
   Node d_true;
 };
