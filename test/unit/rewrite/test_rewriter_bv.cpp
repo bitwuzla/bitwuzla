@@ -392,7 +392,7 @@ TEST_F(TestRewriterBv, bv_add_shl)
 TEST_F(TestRewriterBv, bv_add_ite)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_ITE;
-  Node cond                      = d_nm.mk_const(d_nm.mk_bool_type());
+  Node cond                      = d_nm.mk_const(d_bool_type);
   //// applies
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_ADD,
@@ -1480,7 +1480,7 @@ TEST_F(TestRewriterBv, bv_extract_and)
 TEST_F(TestRewriterBv, bv_extract_ite)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::BV_EXTRACT_ITE;
-  Node cond                      = d_nm.mk_const(d_nm.mk_bool_type());
+  Node cond                      = d_nm.mk_const(d_bool_type);
   Node bvand = d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b});
   Node bvextract                 = d_nm.mk_node(
       Kind::BV_EXTRACT, {d_nm.mk_const(d_nm.mk_bv_type(8))}, {3, 0});
@@ -1783,7 +1783,7 @@ TEST_F(TestRewriterBv, bv_mul_const_add)
 TEST_F(TestRewriterBv, bv_mul_ite)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_ITE;
-  Node cond                      = d_nm.mk_const(d_nm.mk_bool_type());
+  Node cond                      = d_nm.mk_const(d_bool_type);
   //// applies
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_MUL,
@@ -2212,7 +2212,7 @@ TEST_F(TestRewriterBv, bv_slt_concat)
 TEST_F(TestRewriterBv, bv_slt_ite)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SLT_ITE;
-  Node cond                      = d_nm.mk_const(d_nm.mk_bool_type());
+  Node cond                      = d_nm.mk_const(d_bool_type);
   //// applies
   test_rule<kind>(
       d_nm.mk_node(Kind::BV_SLT,
@@ -2237,8 +2237,7 @@ TEST_F(TestRewriterBv, bv_slt_ite)
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::BV_SLT,
-      {d_nm.mk_node(Kind::ITE,
-                    {d_nm.mk_const(d_nm.mk_bool_type()), d_bv4_a, d_bv4_b}),
+      {d_nm.mk_node(Kind::ITE, {d_nm.mk_const(d_bool_type), d_bv4_a, d_bv4_b}),
        d_nm.mk_node(Kind::ITE, {cond, d_bv4_a, d_bv4_d})}));
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::BV_SLT,
@@ -2453,7 +2452,7 @@ TEST_F(TestRewriterBv, bv_ult_concat)
 TEST_F(TestRewriterBv, bv_ult_ite)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ULT_ITE;
-  Node cond                      = d_nm.mk_const(d_nm.mk_bool_type());
+  Node cond                      = d_nm.mk_const(d_bool_type);
   //// applies
   test_rule<kind>(
       d_nm.mk_node(Kind::BV_ULT,
@@ -2478,8 +2477,7 @@ TEST_F(TestRewriterBv, bv_ult_ite)
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::BV_ULT,
-      {d_nm.mk_node(Kind::ITE,
-                    {d_nm.mk_const(d_nm.mk_bool_type()), d_bv4_a, d_bv4_b}),
+      {d_nm.mk_node(Kind::ITE, {d_nm.mk_const(d_bool_type), d_bv4_a, d_bv4_b}),
        d_nm.mk_node(Kind::ITE, {cond, d_bv4_a, d_bv4_d})}));
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::BV_ULT,

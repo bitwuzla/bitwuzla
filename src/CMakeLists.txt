@@ -92,6 +92,7 @@ set(libbitwuzla_src_files
   rewrite/rewrite_utils.cpp
   rewrite/rewriter.cpp
   rewrite/rewrites_bool.cpp
+  rewrite/rewrites_core.cpp
   rewrite/rewrites_bv.cpp
   rewrite/rewrites_fp.cpp
   sat/bzlacadical.cpp
