@@ -12,7 +12,7 @@ using namespace node;
 void
 PassVariableSubstitution::apply(backtrack::AssertionView& assertions)
 {
-  std::unordered_map<Node, Node> substitutions;
+  d_substitution_map.clear();
   size_t num_levels = d_substitutions.cur_level();
   size_t is         = 0;
   size_t ia         = 0;
@@ -25,13 +25,13 @@ PassVariableSubstitution::apply(backtrack::AssertionView& assertions)
       {
         break;
       }
-      substitutions.emplace(var, term);
+      d_substitution_map.emplace(var, term);
     }
 
-    remove_indirect_cycles(substitutions);
+    remove_indirect_cycles(d_substitution_map);
 
     // Process assertions for current level.
-    node::unordered_node_ref_map<Node> cache;
+    d_substitution_cache.clear();
     for (size_t size = assertions.size(); ia < size; ++ia)
     {
       const auto& [assertion, alevel] = assertions[ia];
@@ -39,8 +39,9 @@ PassVariableSubstitution::apply(backtrack::AssertionView& assertions)
       {
         break;
       }
-      const Node& preprocessed = substitute(assertion, substitutions, cache);
-      const Node& rewritten    = d_rewriter.rewrite(preprocessed);
+      const Node& preprocessed =
+          substitute(assertion, d_substitution_map, d_substitution_cache);
+      const Node& rewritten = d_rewriter.rewrite(preprocessed);
       if (assertion != rewritten)
       {
         assertions.replace(assertion, rewritten);
@@ -75,6 +76,12 @@ PassVariableSubstitution::register_assertion(const Node& assertion)
       }
     }
   }
+}
+
+Node
+PassVariableSubstitution::process(const Node& term)
+{
+  return substitute(term, d_substitution_map, d_substitution_cache);
 }
 
 /* --- PassVariableSubstitution private ------------------------------------- */
@@ -186,7 +193,7 @@ Node
 PassVariableSubstitution::substitute(
     const Node& assertion,
     const std::unordered_map<Node, Node>& substitutions,
-    node::unordered_node_ref_map<Node>& cache) const
+    std::unordered_map<Node, Node>& cache) const
 {
   node::node_ref_vector visit{assertion};
   NodeManager& nm = NodeManager::get();

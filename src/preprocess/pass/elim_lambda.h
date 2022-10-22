@@ -7,7 +7,7 @@
 namespace bzla::preprocess::pass {
 
 /**
- * Preprocessing pass to perform rewriting on all assertions.
+ * Preprocessing pass to eliminate applications on lambda nodes.
  */
 class PassElimLambda : public PreprocessingPass
 {
@@ -15,6 +15,13 @@ class PassElimLambda : public PreprocessingPass
   PassElimLambda(Rewriter& rewriter) : PreprocessingPass(rewriter) {}
 
   void apply(backtrack::AssertionView& assertions) override;
+
+  Node process(const Node& term) override;
+
+ private:
+  Node reduce(const Node& node) const;
+
+  std::unordered_map<Node, Node> d_cache;
 };
 
 }  // namespace bzla::preprocess::pass

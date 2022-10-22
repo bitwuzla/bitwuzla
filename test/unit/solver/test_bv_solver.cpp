@@ -149,6 +149,8 @@ TEST_F(TestBvSolver, value2)
   ctx.assert_formula(
       nm.mk_node(Kind::EQUAL, {y, nm.mk_value(BitVector::from_ui(8, 5))}));
   ASSERT_EQ(ctx.solve(), Result::SAT);
+  ASSERT_EQ(ctx.get_value(x), nm.mk_value(BitVector::from_ui(8, 2)));
+  ASSERT_EQ(ctx.get_value(y), nm.mk_value(BitVector::from_ui(8, 5)));
   ASSERT_EQ(ctx.get_value(nm.mk_node(Kind::BV_MUL, {x, y})),
             nm.mk_value(BitVector::from_ui(8, 10)));
 }

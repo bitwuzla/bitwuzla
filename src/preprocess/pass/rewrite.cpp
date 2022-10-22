@@ -14,7 +14,12 @@ PassRewrite::apply(backtrack::AssertionView& assertions)
       assertions.replace(assertion, rewritten);
     }
   }
-  // TODO: report back when assertion simplifies to false
+}
+
+Node
+PassRewrite::process(const Node& term)
+{
+  return d_rewriter.rewrite(term);
 }
 
 }  // namespace bzla::preprocess::pass

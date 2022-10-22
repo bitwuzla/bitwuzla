@@ -7,7 +7,7 @@
 namespace bzla::preprocess::pass {
 
 /**
- * Preprocessing pass to perform rewriting on all assertions.
+ * Preprocessing pass to flatten AND nodes.
  */
 class PassFlattenAnd : public PreprocessingPass
 {

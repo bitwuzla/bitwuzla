@@ -24,6 +24,9 @@ class PassVariableSubstitution : public PreprocessingPass
 
   void register_assertion(const Node& assertion);
 
+  /** Process term and apply currently cached substitutions. */
+  Node process(const Node& term);
+
  private:
   void remove_indirect_cycles(std::unordered_map<Node, Node>& substs) const;
 
@@ -31,9 +34,13 @@ class PassVariableSubstitution : public PreprocessingPass
 
   Node substitute(const Node& assertion,
                   const std::unordered_map<Node, Node>& substitutions,
-                  node::unordered_node_ref_map<Node>& cache) const;
+                  std::unordered_map<Node, Node>& cache) const;
 
   backtrack::vector<std::tuple<Node, Node, size_t>> d_substitutions;
+
+  /** Substitution cache of latest substitution pass. */
+  std::unordered_map<Node, Node> d_substitution_map;
+  std::unordered_map<Node, Node> d_substitution_cache;
 };
 
 }  // namespace bzla::preprocess::pass

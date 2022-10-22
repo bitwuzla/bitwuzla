@@ -15,6 +15,8 @@ class PassRewrite : public PreprocessingPass
   PassRewrite(Rewriter& rewriter) : PreprocessingPass(rewriter) {}
 
   void apply(backtrack::AssertionView& assertions) override;
+
+  Node process(const Node& term) override;
 };
 
 }  // namespace bzla::preprocess::pass

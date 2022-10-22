@@ -8,10 +8,69 @@ namespace bzla::preprocess::pass {
 
 using namespace node;
 
-namespace {
+/* --- PassElimLambda public ------------------------------------------------ */
+
+void
+PassElimLambda::apply(backtrack::AssertionView& assertions)
+{
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  {
+    const Node& assertion = assertions[i].first;
+    assertions.replace(assertion, process(assertion));
+  }
+}
 
 Node
-reduce(const Node& node, const node::unordered_node_ref_map<Node>& map)
+PassElimLambda::process(const Node& term)
+{
+  NodeManager& nm = NodeManager::get();
+  node::node_ref_vector visit{term};
+
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = d_cache.emplace(cur, Node());
+
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      std::vector<Node> children;
+      for (const Node& child : cur)
+      {
+        auto iit = d_cache.find(child);
+        assert(iit != d_cache.end());
+        children.push_back(iit->second);
+      }
+
+      // Eliminate function applications on lambdas
+      if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
+      {
+        it->second = reduce(cur);
+      }
+      else if (children.size() > 0)
+      {
+        it->second = nm.mk_node(cur.kind(), children, cur.indices());
+      }
+      else
+      {
+        it->second = cur;
+      }
+    }
+
+    visit.pop_back();
+  } while (!visit.empty());
+
+  return d_rewriter.rewrite(d_cache.at(term));
+}
+
+/* --- PassElimLambda private ----------------------------------------------- */
+
+Node
+PassElimLambda::reduce(const Node& node) const
 {
   assert(node.kind() == Kind::APPLY);
   assert(node[0].kind() == Kind::LAMBDA);
@@ -22,7 +81,7 @@ reduce(const Node& node, const node::unordered_node_ref_map<Node>& map)
   for (; it != node.end(); ++it)
   {
     const Node& var = body[0];
-    substitutions.emplace(var, map.at(*it));
+    substitutions.emplace(var, d_cache.at(*it));
     body = body[1];
   }
   assert(body.kind() != Kind::LAMBDA);
@@ -39,7 +98,7 @@ reduce(const Node& node, const node::unordered_node_ref_map<Node>& map)
     {
       if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
       {
-        visit.push_back(map.at(cur));
+        visit.push_back(d_cache.at(cur));
       }
       else
       {
@@ -51,7 +110,7 @@ reduce(const Node& node, const node::unordered_node_ref_map<Node>& map)
     {
       if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
       {
-        it->second = cache.at(map.at(cur));
+        it->second = cache.at(d_cache.at(cur));
       }
       else
       {
@@ -81,62 +140,6 @@ reduce(const Node& node, const node::unordered_node_ref_map<Node>& map)
   } while (!visit.empty());
 
   return cache.at(body);
-}
-
-}  // namespace
-
-void
-PassElimLambda::apply(backtrack::AssertionView& assertions)
-{
-  node::node_ref_vector visit;
-  node::unordered_node_ref_map<Node> cache;
-  NodeManager& nm = NodeManager::get();
-
-  for (size_t ia = 0, size = assertions.size(); ia < size; ++ia)
-  {
-    const Node& assertion = assertions[ia].first;
-
-    visit.push_back(assertion);
-    do
-    {
-      const Node& cur     = visit.back();
-      auto [it, inserted] = cache.emplace(cur, Node());
-
-      if (inserted)
-      {
-        visit.insert(visit.end(), cur.begin(), cur.end());
-        continue;
-      }
-      else if (it->second.is_null())
-      {
-        std::vector<Node> children;
-        for (const Node& child : cur)
-        {
-          auto iit = cache.find(child);
-          assert(iit != cache.end());
-          children.push_back(iit->second);
-        }
-
-        // Eliminate function applications on lambdas
-        if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
-        {
-          it->second = reduce(cur, cache);
-        }
-        else if (children.size() > 0)
-        {
-          it->second = nm.mk_node(cur.kind(), children, cur.indices());
-        }
-        else
-        {
-          it->second = cur;
-        }
-      }
-
-      visit.pop_back();
-    } while (!visit.empty());
-
-    assertions.replace(assertion, d_rewriter.rewrite(cache.at(assertion)));
-  }
 }
 
 }  // namespace bzla::preprocess::pass
