@@ -184,6 +184,10 @@ enum class RewriteRuleKind
   ITE_ELSE_ITE1,
   ITE_ELSE_ITE2,
   ITE_ELSE_ITE3,
+  ITE_BOOL,
+  // Level 3
+  ITE_BV_CONCAT,
+  ITE_BV_OP,
 
   NOT_EVAL,
   NOT_XOR,

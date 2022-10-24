@@ -332,6 +332,10 @@ Rewriter::rewrite_ite(const Node& node)
     BZLA_APPLY_RW_RULE(ITE_ELSE_ITE1);
     BZLA_APPLY_RW_RULE(ITE_ELSE_ITE2);
     BZLA_APPLY_RW_RULE(ITE_ELSE_ITE3);
+    BZLA_APPLY_RW_RULE(ITE_BOOL);
+    // LEVEL 3 rewrites /////////////////////////////////////////
+    BZLA_APPLY_RW_RULE(ITE_BV_CONCAT);
+    BZLA_APPLY_RW_RULE(ITE_BV_OP);
     // TODO
   }
 

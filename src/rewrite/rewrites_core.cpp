@@ -773,6 +773,153 @@ RewriteRule<RewriteRuleKind::ITE_ELSE_ITE3>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/**
+ * match:  (ite c a b) with a and b of bit-width 1
+ * result: (and (or (not c a) (or c b)))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_BOOL>::_apply(Rewriter& rewriter,
+                                               const Node& node)
+{
+  assert(node.num_children() == 3);
+  if (node[1].type().is_bool())
+  {
+    return rewriter.mk_node(
+        Kind::AND,
+        {rewriter.mk_node(Kind::OR, {rewriter.invert_node(node[0]), node[1]}),
+         rewriter.mk_node(Kind::OR, {node[0], node[2]})});
+  }
+  return node;
+}
+
+/**
+ * match:  (ite c (concat a b) (concat a d))
+ * result: (concat a (ite c b d))
+ *
+ * match:  (ite c (bvnot (concat a b)) (concat (bvnot a) d))
+ * result: (concat (bvnot a) (ite c (bvnot b) d))
+ *
+ * match:  (ite c (concat (bvnot a) b) (bvnot (concat a d)))
+ * result: (concat (bvnot a) (ite c b (bvnot d)))
+ *
+ * match:  (ite c (bvnot (concat a b)) (bvnot (concat a d)))
+ * result: (concat (bvnot a) (ite c (bvnot b) (bvnot d)))
+ *
+ * match:  (ite c (concat a b) (concat d b))
+ * result: (concat (ite c a d) b)
+ *
+ * match:  (ite c (bvnot (concat a b)) (concat d b))
+ * result: (concat (ite c (bvnot a) d) (bvnot b))
+ *
+ * match:  (ite c (concat a b) (bvnot (concat d b)))
+ * result: (concat (ite c a (bvnot (d)) (bvnot b))
+ *
+ * match:  (ite c (bvnot (concat a b)) (bvnot (concat d b)))
+ * result: (concat (ite c (bvnot a) (bvnot d)) (bvnot b))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_BV_CONCAT>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 3);
+  bool inverted1    = node[1].is_inverted();
+  bool inverted2    = node[2].is_inverted();
+  const Node& node1 = inverted1 ? node[1][0] : node[1];
+  const Node& node2 = inverted2 ? node[2][0] : node[2];
+  if (node1.kind() == Kind::BV_CONCAT && node2.kind() == Kind::BV_CONCAT)
+  {
+    if ((inverted1 == inverted2
+         && (node1[0] == node2[0] || node1[1] == node2[1]))
+        || (inverted1 != inverted2
+            && (rewrite::utils::is_inverted_of(node1[0], node2[0])
+                || rewrite::utils::is_inverted_of(node1[1], node2[1]))))
+    {
+      return rewriter.mk_node(
+          Kind::BV_CONCAT,
+          {rewriter.mk_node(
+               Kind::ITE,
+               {
+                   node[0],
+                   inverted1 ? rewriter.invert_node(node1[0]) : node1[0],
+                   inverted2 ? rewriter.invert_node(node2[0]) : node2[0],
+               }),
+           rewriter.mk_node(
+               Kind::ITE,
+               {
+                   node[0],
+                   inverted1 ? rewriter.invert_node(node1[1]) : node1[1],
+                   inverted2 ? rewriter.invert_node(node2[1]) : node2[1],
+
+               })});
+    }
+  }
+  return node;
+}
+
+/**
+ * match:  (ite c (<op> a b) (<op> a d)
+ *         with <op> in {bvadd, bvand, bvmul, bvudiv, bvurem}
+ * result: (<op> a (ite c b d))
+ *
+ * match:  (ite c (<op> a b) (<op> d b)
+ *         with <op> in {bvadd, bvand, bvmul, bvudiv, bvurem}
+ * result: (<op> (ite c a d) b)
+ *
+ * match:  (ite c (<op> a b) (<op> d a)
+ *         with <op> in {bvadd, bvand, bvmul}
+ * result: (<op> a (ite c b d))
+ *
+ * match:  (ite c (<op> a b) (<op> b d)
+ *         with <op> in {bvadd, bvand, bvmul}
+ * result: (<op> (ite c a d) b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_BV_OP>::_apply(Rewriter& rewriter,
+                                                const Node& node)
+{
+  assert(node.num_children() == 3);
+  Kind kind = node[1].kind();
+  if (kind == node[2].kind()
+      && (kind == Kind::BV_ADD || kind == Kind::BV_AND || kind == Kind::BV_MUL
+          || kind == Kind::BV_UDIV || kind == Kind::BV_UREM))
+  {
+    if (node[1][0] == node[2][0])
+    {
+      return rewriter.mk_node(
+          kind,
+          {node[1][0],
+           rewriter.mk_node(Kind::ITE, {node[0], node[1][1], node[2][1]})});
+    }
+    if (node[1][1] == node[2][1])
+    {
+      return rewriter.mk_node(
+          kind,
+          {rewriter.mk_node(Kind::ITE, {node[0], node[1][0], node[2][0]}),
+           node[1][1]});
+    }
+    if (kind != Kind::BV_UDIV && kind != Kind::BV_UREM
+        && node[1][0] == node[2][1])
+    {
+      return rewriter.mk_node(
+          kind,
+          {node[1][0],
+           rewriter.mk_node(Kind::ITE, {node[0], node[1][1], node[2][0]})});
+    }
+    if (kind != Kind::BV_UDIV && kind != Kind::BV_UREM
+        && node[1][1] == node[2][0])
+    {
+      return rewriter.mk_node(
+          kind,
+          {rewriter.mk_node(Kind::ITE, {node[0], node[1][0], node[2][1]}),
+           node[1][1]});
+    }
+  }
+  return node;
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>

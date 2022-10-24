@@ -90,6 +90,19 @@ Node RewriteRule<RewriteRuleKind::ITE_ELSE_ITE2>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::ITE_ELSE_ITE3>::_apply(Rewriter& rewriter,
                                                          const Node& node);
+// bool_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_BOOL>::_apply(Rewriter& rewriter,
+                                                    const Node& node);
+// concat_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_BV_CONCAT>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// op_lhs_cond
+// op_rhs_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_BV_OP>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
 
 /* --- Elimination Rules ---------------------------------------------------- */
 
