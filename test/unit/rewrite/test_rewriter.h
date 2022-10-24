@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "node/node_manager.h"
 #include "rewrite/rewriter.h"
+#include "solver/fp/floating_point.h"
 
 namespace bzla::test {
 
@@ -14,8 +15,8 @@ class TestRewriter : public ::testing::Test
     d_bool_type = d_nm.mk_bool_type();
     d_bv4_type  = d_nm.mk_bv_type(4);
     d_bv1_type  = d_nm.mk_bv_type(1);
-
     d_fp35_type = d_nm.mk_fp_type(3, 5);
+    d_rm_type   = d_nm.mk_rm_type();
 
     d_a = d_nm.mk_const(d_nm.mk_bool_type());
     d_b = d_nm.mk_const(d_nm.mk_bool_type());
@@ -35,6 +36,14 @@ class TestRewriter : public ::testing::Test
     d_bv4_d = d_nm.mk_const(d_bv4_type);
     d_bv1_a = d_nm.mk_const(d_bv1_type);
     d_bv1_b = d_nm.mk_const(d_bv1_type);
+
+    d_fp35_pzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, false));
+    d_fp35_nzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, true));
+
+    d_fp35_a = d_nm.mk_const(d_fp35_type);
+    d_fp35_b = d_nm.mk_const(d_fp35_type);
+
+    d_rm = d_nm.mk_const(d_rm_type);
 
     d_false     = d_nm.mk_value(false);
     d_true      = d_nm.mk_value(true);
@@ -155,6 +164,12 @@ class TestRewriter : public ::testing::Test
     ASSERT_EQ(node, RewriteRule<K>::apply(d_rewriter, node).first);
   }
 
+  void test_rewrite(const Node& node, const Node& expected)
+  {
+    ASSERT_EQ(expected, d_rewriter.rewrite(node));
+    ASSERT_EQ(expected, Rewriter().rewrite(node));
+  }
+
   Rewriter d_rewriter;
 
   NodeManager& d_nm = NodeManager::get();
@@ -163,6 +178,7 @@ class TestRewriter : public ::testing::Test
   Type d_bv4_type;
   Type d_bv1_type;
   Type d_fp35_type;
+  Type d_rm_type;
 
   Node d_a;
   Node d_b;
@@ -182,6 +198,14 @@ class TestRewriter : public ::testing::Test
   Node d_bv4_b;
   Node d_bv4_c;
   Node d_bv4_d;
+
+  Node d_fp35_pzero;
+  Node d_fp35_nzero;
+
+  Node d_fp35_a;
+  Node d_fp35_b;
+
+  Node d_rm;
 
   Node d_false;
   Node d_true;

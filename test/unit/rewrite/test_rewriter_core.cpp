@@ -26,30 +26,28 @@ TEST_F(TestRewriterCore, core_equal_eval)
   constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_EVAL;
   // applies
   Node equal0 = d_nm.mk_node(Kind::EQUAL, {d_true, d_true});
-  ASSERT_EQ(d_true, d_rewriter.rewrite(equal0));
-  Node equal0_1 = d_nm.mk_node(Kind::EQUAL, {equal0, d_false});
-  ASSERT_EQ(d_false, d_rewriter.rewrite(equal0_1));
+  test_rewrite(equal0, d_true);
+  test_rewrite(d_nm.mk_node(Kind::EQUAL, {equal0, d_false}), d_false);
+
   Node equal1 = d_nm.mk_node(
       Kind::EQUAL,
       {d_nm.mk_value(BitVector(2, "00")), d_nm.mk_value(BitVector(2, "00"))});
-  ASSERT_EQ(d_true, d_rewriter.rewrite(equal1));
-  Node equal1_1 = d_nm.mk_node(Kind::EQUAL, {equal1, d_false});
-  ASSERT_EQ(d_false, d_rewriter.rewrite(equal1_1));
-  Node equal2 = d_nm.mk_node(
-      Kind::EQUAL,
-      {d_nm.mk_value(BitVector(2, "10")), d_nm.mk_value(BitVector(2, "00"))});
-  ASSERT_EQ(d_false, d_rewriter.rewrite(equal2));
-  Node equal3 =
+  test_rewrite(equal1, d_true);
+  test_rewrite(d_nm.mk_node(Kind::EQUAL, {equal1, d_false}), d_false);
+
+  test_rewrite(d_nm.mk_node(Kind::EQUAL,
+                            {d_nm.mk_value(BitVector(2, "10")),
+                             d_nm.mk_value(BitVector(2, "00"))}),
+               d_false);
+  test_rewrite(
       d_nm.mk_node(Kind::EQUAL,
                    {d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, false)),
-                    d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, true))});
-  ASSERT_EQ(d_false, d_rewriter.rewrite(equal3));
-  Node equal4 = d_nm.mk_node(
-      Kind::EQUAL,
-      {d_nm.mk_value(RoundingMode::RNA), d_nm.mk_value(RoundingMode::RNA)});
-  ASSERT_EQ(d_true, d_rewriter.rewrite(equal4));
-  // empty cache
-  ASSERT_EQ(d_false, Rewriter().rewrite(equal0_1));
+                    d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, true))}),
+      d_false);
+  test_rewrite(d_nm.mk_node(Kind::EQUAL,
+                            {d_nm.mk_value(RoundingMode::RNA),
+                             d_nm.mk_value(RoundingMode::RNA)}),
+               d_true);
   // does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {d_b, d_false}));
 }

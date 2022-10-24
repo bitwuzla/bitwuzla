@@ -21,12 +21,8 @@ TEST_F(TestRewriterBool, bool_and_eval)
   constexpr RewriteRuleKind kind = RewriteRuleKind::AND_EVAL;
   // applies
   Node and0 = d_nm.mk_node(Kind::AND, {d_true, d_true});
-  ASSERT_EQ(d_true, d_rewriter.rewrite(and0));
-
-  Node and1 = d_nm.mk_node(Kind::AND, {and0, d_false});
-  ASSERT_EQ(d_false, d_rewriter.rewrite(and1));
-  // empty cache
-  ASSERT_EQ(d_false, Rewriter().rewrite(and1));
+  test_rewrite(and0, d_true);
+  test_rewrite(d_nm.mk_node(Kind::AND, {and0, d_false}), d_false);
   // does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::AND, {d_b, d_false}));
 }
@@ -518,12 +514,8 @@ TEST_F(TestRewriterBool, bool_not_eval)
   constexpr RewriteRuleKind kind = RewriteRuleKind::NOT_EVAL;
   // applies
   Node not0 = d_nm.mk_node(Kind::NOT, {d_false});
-  ASSERT_EQ(d_true, d_rewriter.rewrite(not0));
-
-  Node not1 = d_nm.mk_node(Kind::NOT, {not0});
-  ASSERT_EQ(d_false, d_rewriter.rewrite(not1));
-  // empty cache
-  ASSERT_EQ(d_false, Rewriter().rewrite(not1));
+  test_rewrite(not0, d_true);
+  test_rewrite(d_nm.mk_node(Kind::NOT, {not0}), d_false);
   // does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::NOT, {d_b}));
 }
