@@ -35,13 +35,16 @@ class Rewriter
  private:
   const Node& _rewrite(const Node& node);
 
-  /* Boolean ------------------------------------- */
-  Node rewrite_and(const Node& node);
-  Node rewrite_not(const Node& node);
+  /* Core ---------------------------------------- */
   Node rewrite_eq(const Node& node);
   Node rewrite_ite(const Node& node);
   /* Eliminated operators */
   Node rewrite_distinct(const Node& node);
+
+  /* Boolean ------------------------------------- */
+  Node rewrite_and(const Node& node);
+  Node rewrite_not(const Node& node);
+  /* Eliminated operators */
   Node rewrite_implies(const Node& node);
   Node rewrite_or(const Node& node);
   Node rewrite_xor(const Node& node);
@@ -172,6 +175,15 @@ enum class RewriteRuleKind
   EQUAL_CONCAT,
   EQUAL_ITE_BV1,
   EQUAL_ITE_DIS_BV1,
+
+  ITE_EVAL,
+  ITE_SAME,
+  ITE_THEN_ITE1,
+  ITE_THEN_ITE2,
+  ITE_THEN_ITE3,
+  ITE_ELSE_ITE1,
+  ITE_ELSE_ITE2,
+  ITE_ELSE_ITE3,
 
   NOT_EVAL,
   NOT_XOR,

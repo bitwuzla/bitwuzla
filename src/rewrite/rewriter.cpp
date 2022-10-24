@@ -245,7 +245,6 @@ Rewriter::rewrite_and(const Node& node)
     BZLA_APPLY_RW_RULE(AND_NOT_AND2);
     BZLA_APPLY_RW_RULE(AND_BV_LT_FALSE);
     BZLA_APPLY_RW_RULE(AND_BV_LT);
-    // TODO
   }
 
 DONE:
@@ -320,8 +319,24 @@ DONE:
 Node
 Rewriter::rewrite_ite(const Node& node)
 {
-  // TODO
-  return node;
+  RewriteRuleKind kind;
+  Node res;
+
+  if (d_enabled)
+  {
+    BZLA_APPLY_RW_RULE(ITE_EVAL);
+    BZLA_APPLY_RW_RULE(ITE_SAME);
+    BZLA_APPLY_RW_RULE(ITE_THEN_ITE1);
+    BZLA_APPLY_RW_RULE(ITE_THEN_ITE2);
+    BZLA_APPLY_RW_RULE(ITE_THEN_ITE3);
+    BZLA_APPLY_RW_RULE(ITE_ELSE_ITE1);
+    BZLA_APPLY_RW_RULE(ITE_ELSE_ITE2);
+    BZLA_APPLY_RW_RULE(ITE_ELSE_ITE3);
+    // TODO
+  }
+
+DONE:
+  return res;
 }
 
 /* BV rewrites -------------------------------------------------------------- */
@@ -376,7 +391,6 @@ Rewriter::rewrite_bv_and(const Node& node)
     BZLA_APPLY_RW_RULE(BV_AND_NOT_AND1);
     BZLA_APPLY_RW_RULE(BV_AND_NOT_AND2);
     BZLA_APPLY_RW_RULE(BV_AND_CONCAT);
-    // TODO
   }
 
 DONE:

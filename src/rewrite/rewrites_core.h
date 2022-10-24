@@ -56,6 +56,41 @@ template <>
 Node RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
                                                          const Node& node);
 
+/* ite ---------------------------------------------------------------------- */
+
+// const_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node);
+// equal_branches_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_SAME>::_apply(Rewriter& rewriter,
+                                                    const Node& node);
+// cond_if_dom_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_THEN_ITE1>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// cond_if_merge_if_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_THEN_ITE2>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// cond_if_merge_else_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_THEN_ITE3>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// cond_else_dom_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_ELSE_ITE1>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// cond_else_merge_if_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_ELSE_ITE2>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// cond_else_merge_else_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_ELSE_ITE3>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>

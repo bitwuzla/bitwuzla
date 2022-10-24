@@ -506,6 +506,273 @@ RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/* distinct ----------------------------------------------------------------- */
+
+/**
+ * Constant folding, matches when condition operands is value.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_EVAL>::_apply(Rewriter& rewriter,
+                                               const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 3);
+
+  if (node[0].is_value())
+  {
+    if (node[0].value<bool>())
+    {
+      return node[1];
+    }
+    return node[2];
+  }
+  return node;
+}
+
+/**
+ * match:  (ite c a a)
+ * result: a
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_SAME>::_apply(Rewriter& rewriter,
+                                               const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 3);
+
+  if (node[1] == node[2])
+  {
+    return node[1];
+  }
+  return node;
+}
+
+/**
+ * match:  (ite cond (ite cond a b) c)
+ * result: (ite cond a c)
+ *
+ * match:  (ite cond (not (ite cond a b)) c)
+ * result: (ite cond (not) a c)
+ *
+ * match:  (ite cond (bvnot (ite cond a b)) c)
+ * result: (ite cond (bvnot) a c)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_THEN_ITE1>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 3);
+  bool inverted     = node[1].is_inverted();
+  const Node& node1 = inverted ? node[1][0] : node[1];
+  if (node1.kind() == Kind::ITE && node1[0] == node[0])
+  {
+    return rewriter.mk_node(
+        Kind::ITE,
+        {node[0],
+         inverted ? rewriter.invert_node(node1[1]) : node1[1],
+         node[2]});
+  }
+  return node;
+}
+
+/**
+ * match:  (ite cond0 (ite cond1 a b) a)
+ * result: (ite (and cond0 (not cond1)) b a)
+ *
+ * match:  (ite cond0 (not (ite cond1 (not a) b)) a)
+ * result: (ite (and cond0 (not cond1)) (not b) a)
+ *
+ * match:  (ite cond0 (bvnot (ite cond1 (bvnot a) b)) a)
+ * result: (ite (and cond0 (not cond1)) (bvnot b) a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_THEN_ITE2>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 3);
+  bool inverted     = node[1].is_inverted();
+  const Node& node1 = inverted ? node[1][0] : node[1];
+  if (node1.kind() == Kind::ITE)
+  {
+    if (inverted && rewrite::utils::is_inverted_of(node1[1], node[2]))
+    {
+      return rewriter.mk_node(
+          Kind::ITE,
+          {rewriter.mk_node(Kind::AND,
+                            {node[0], rewriter.invert_node(node1[0])}),
+           rewriter.invert_node(node1[2]),
+           node[2]});
+    }
+    else if (!inverted && node1[1] == node[2])
+    {
+      return rewriter.mk_node(
+          Kind::ITE,
+          {rewriter.mk_node(Kind::AND,
+                            {node[0], rewriter.invert_node(node1[0])}),
+           node1[2],
+           node[2]});
+    }
+  }
+  return node;
+}
+
+/**
+ * match:  (ite cond0 (ite cond1 b a) a)
+ * result: (ite (and cond0 cond1) b a)
+ *
+ * match:  (ite cond0 (not (ite cond1 b (not a)) a)
+ * result: (ite (and cond0 cond1) (not b) a)
+ *
+ * match:  (ite cond0 (bvnot (ite cond1 b (bvnot a)) a)
+ * result: (ite (and cond0 cond1) (bvnot b) a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_THEN_ITE3>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 3);
+  bool inverted     = node[1].is_inverted();
+  const Node& node1 = inverted ? node[1][0] : node[1];
+  if (node1.kind() == Kind::ITE)
+  {
+    if (inverted && rewrite::utils::is_inverted_of(node1[2], node[2]))
+    {
+      return rewriter.mk_node(Kind::ITE,
+                              {rewriter.mk_node(Kind::AND, {node[0], node1[0]}),
+                               rewriter.invert_node(node1[1]),
+                               node[2]});
+    }
+    else if (!inverted && node1[2] == node[2])
+    {
+      return rewriter.mk_node(Kind::ITE,
+                              {rewriter.mk_node(Kind::AND, {node[0], node1[0]}),
+                               node1[1],
+                               node[2]});
+    }
+  }
+  return node;
+}
+
+/**
+ * match:  (ite cond a (ite cond b c))
+ * result: (ite cond a c)
+ *
+ * match:  (ite cond a (not (ite cond b c)))
+ * result: (ite cond a (not c))
+ *
+ * match:  (ite cond a (bvnot (ite cond b c)))
+ * result: (ite cond a (bvnot c))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_ELSE_ITE1>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 3);
+  bool inverted     = node[2].is_inverted();
+  const Node& node2 = inverted ? node[2][0] : node[2];
+  if (node2.kind() == Kind::ITE && node[0] == node2[0])
+  {
+    return rewriter.mk_node(
+        Kind::ITE,
+        {node[0],
+         node[1],
+         inverted ? rewriter.invert_node(node2[2]) : node2[2]});
+  }
+  return node;
+}
+
+/**
+ * match:  (ite cond0 a (ite cond1 a b))
+ * result: (ite (and (not cond0) (not cond1)) b a)
+ *
+ * match:  (ite cond0 a (not (ite cond1 (not a) b)))
+ * result: (ite (and (not cond0) (not cond1)) (not b) a)
+ *
+ * match:  (ite cond0 a (bvnot (ite cond1 (bvnot a) b)))
+ * result: (ite (and (not cond0) (not cond1)) (bvnot b) a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_ELSE_ITE2>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 3);
+  bool inverted     = node[2].is_inverted();
+  const Node& node2 = inverted ? node[2][0] : node[2];
+  if (node2.kind() == Kind::ITE)
+  {
+    if (inverted && rewrite::utils::is_inverted_of(node2[1], node[1]))
+    {
+      return rewriter.mk_node(
+          Kind::ITE,
+          {rewriter.mk_node(
+               Kind::AND,
+               {rewriter.invert_node(node[0]), rewriter.invert_node(node2[0])}),
+           rewriter.invert_node(node2[2]),
+           node[1]});
+    }
+    else if (!inverted && node2[1] == node[1])
+    {
+      return rewriter.mk_node(
+          Kind::ITE,
+          {rewriter.mk_node(
+               Kind::AND,
+               {rewriter.invert_node(node[0]), rewriter.invert_node(node2[0])}),
+           node2[2],
+           node[1]});
+    }
+  }
+  return node;
+}
+
+/**
+ * match:  (ite cond0 a (ite cond1 b a))
+ * result: (ite (and (not cond0) cond1) b a)
+ *
+ * match:  (ite cond0 a (not (ite cond1 b (not a)))
+ * result: (ite (and (not cond0) cond1) (not b) a)
+ *
+ * match:  (ite cond0 a (bvnot (ite cond1 b (bvnot a)))
+ * result: (ite (and (not cond0) cond1) (bvnot b) a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_ELSE_ITE3>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 3);
+  bool inverted     = node[2].is_inverted();
+  const Node& node2 = inverted ? node[2][0] : node[2];
+  if (node2.kind() == Kind::ITE)
+  {
+    if (inverted && rewrite::utils::is_inverted_of(node2[2], node[1]))
+    {
+      return rewriter.mk_node(
+          Kind::ITE,
+          {rewriter.mk_node(Kind::AND,
+                            {rewriter.invert_node(node[0]), node2[0]}),
+           rewriter.invert_node(node2[1]),
+           node[1]});
+    }
+    else if (!inverted && node2[2] == node[1])
+    {
+      return rewriter.mk_node(
+          Kind::ITE,
+          {rewriter.mk_node(Kind::AND,
+                            {rewriter.invert_node(node[0]), node2[0]}),
+           node2[1],
+           node[1]});
+    }
+  }
+  return node;
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>
