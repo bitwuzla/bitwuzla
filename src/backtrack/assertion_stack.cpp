@@ -19,6 +19,10 @@ AssertionStack::push_back(const Node& assertion)
 void
 AssertionStack::replace(const Node& assertion, const Node& replacement)
 {
+  if (assertion == replacement)
+  {
+    return;
+  }
   auto it = d_cache.find(assertion);
   assert(it != d_cache.end());
   size_t index = it->second;
