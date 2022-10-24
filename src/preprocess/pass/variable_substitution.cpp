@@ -12,7 +12,14 @@ using namespace node;
 void
 PassVariableSubstitution::apply(backtrack::AssertionView& assertions)
 {
+  if (d_substitutions.empty())
+  {
+    return;
+  }
+
+  NodeManager& nm = NodeManager::get();
   d_substitution_map.clear();
+  std::unordered_set<Node> skip_subst;
   size_t num_levels = d_substitutions.cur_level();
   size_t is         = 0;
   size_t ia         = 0;
@@ -35,20 +42,35 @@ PassVariableSubstitution::apply(backtrack::AssertionView& assertions)
     for (size_t size = assertions.size(); ia < size; ++ia)
     {
       const auto& [assertion, alevel] = assertions[ia];
+      // Only process assertions of current level.
       if (alevel != level)
       {
         break;
       }
+      // Skip substitution assertions if still needed.
+      if (skip_subst.find(assertion) != skip_subst.end())
+      {
+        continue;
+      }
       const Node& preprocessed =
           substitute(assertion, d_substitution_map, d_substitution_cache);
       const Node& rewritten = d_rewriter.rewrite(preprocessed);
-      if (assertion != rewritten)
+      assertions.replace(ia, rewritten);
+    }
+
+    // If variable still occurs in previous levels we need to keep the variable
+    // substitution assertion.
+    for (size_t i = is, size = d_substitutions.size(); i < size; ++i)
+    {
+      const auto& [var, term, slevel] = d_substitutions[i];
+      assert(slevel > level);
+      auto it = d_substitution_cache.find(var);
+      if (it != d_substitution_cache.end() && it->second == var)
       {
-        assertions.replace(assertion, rewritten);
+        skip_subst.insert(nm.mk_node(Kind::EQUAL, {var, term}));
       }
     }
   }
-  assert(ia == assertions.size());
   assert(is == d_substitutions.size());
 
   // TODO: add new variable substitutions
@@ -81,7 +103,8 @@ PassVariableSubstitution::register_assertion(const Node& assertion)
 Node
 PassVariableSubstitution::process(const Node& term)
 {
-  return substitute(term, d_substitution_map, d_substitution_cache);
+  return d_rewriter.rewrite(
+      substitute(term, d_substitution_map, d_substitution_cache));
 }
 
 /* --- PassVariableSubstitution private ------------------------------------- */
@@ -90,8 +113,8 @@ void
 PassVariableSubstitution::remove_indirect_cycles(
     std::unordered_map<Node, Node>& substitutions) const
 {
-  uint64_t order_num = 1;
-  node::unordered_node_ref_map<int64_t> order;
+  int64_t order_num = 1;
+  std::unordered_map<Node, int64_t> order;
   node::unordered_node_ref_set cache;
   node::node_ref_vector visit;
 

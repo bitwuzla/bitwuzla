@@ -23,7 +23,7 @@ PassFlattenAnd::apply(backtrack::AssertionView& assertions)
     if (assertion.kind() == Kind::AND)
     {
       visit.insert(visit.end(), assertion.rbegin(), assertion.rend());
-      assertions.replace(assertion, nm.mk_value(true));
+      assertions.replace(i, nm.mk_value(true));
     }
     while (!visit.empty())
     {

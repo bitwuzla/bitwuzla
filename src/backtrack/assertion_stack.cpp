@@ -17,18 +17,16 @@ AssertionStack::push_back(const Node& assertion)
 }
 
 void
-AssertionStack::replace(const Node& assertion, const Node& replacement)
+AssertionStack::replace(size_t index, const Node& replacement)
 {
-  if (assertion == replacement)
+  const Node& assertion = d_assertions[index].first;
+  auto it               = d_cache.find(assertion);
+  if (it != d_cache.end() && it->second == index)
   {
-    return;
+    d_cache.erase(it);
   }
-  auto it = d_cache.find(assertion);
-  assert(it != d_cache.end());
-  size_t index = it->second;
-  d_cache.erase(it);
-  d_assertions[index].first = replacement;
   d_cache.emplace(replacement, index);
+  d_assertions[index].first = replacement;
 }
 
 void
@@ -186,17 +184,9 @@ AssertionView::size() const
 }
 
 void
-AssertionView::replace(const Node& assertion, const Node& replacement)
+AssertionView::replace(size_t index, const Node& replacement)
 {
-  // Makes sure that we can only replace assertions that can be seen by this
-  // view.
-  assert(std::find_if(std::begin(d_assertions) + d_start_index,
-                      std::end(d_assertions),
-                      [assertion](const std::pair<Node, size_t>& p) {
-                        return p.first == assertion;
-                      })
-         != std::end(d_assertions));
-  d_assertions.replace(assertion, replacement);
+  d_assertions.replace(d_start_index + index, replacement);
 }
 
 void

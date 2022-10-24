@@ -7,8 +7,7 @@ PassRewrite::apply(backtrack::AssertionView& assertions)
 {
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    const Node& assertion = assertions[i].first;
-    assertions.replace(assertion, d_rewriter.rewrite(assertion));
+    assertions.replace(i, d_rewriter.rewrite(assertions[i].first));
   }
 }
 

@@ -15,8 +15,7 @@ PassElimLambda::apply(backtrack::AssertionView& assertions)
 {
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    const Node& assertion = assertions[i].first;
-    assertions.replace(assertion, process(assertion));
+    assertions.replace(i, process(assertions[i].first));
   }
 }
 
