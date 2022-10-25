@@ -62,6 +62,43 @@ TEST_F(TestVector, push_pop_mgr)
   ASSERT_DEATH(mgr.pop(), "d_scope_levels > 0");
 }
 
+TEST_F(TestVector, insert_at_level)
+{
+  backtrack::vector<int> vec;
+  vec.push();
+  vec.push();
+
+  vec.insert_at_level(0, 0);
+  vec.insert_at_level(1, 1);
+  vec.insert_at_level(2, 2);
+
+  ASSERT_EQ(vec.size(), 3);
+  ASSERT_EQ(vec[0], 0);
+  ASSERT_EQ(vec[1], 1);
+  ASSERT_EQ(vec[2], 2);
+
+  vec.insert_at_level(0, 0);
+  vec.insert_at_level(1, 1);
+  vec.insert_at_level(2, 2);
+  ASSERT_EQ(vec.size(), 6);
+  ASSERT_EQ(vec[0], 0);
+  ASSERT_EQ(vec[1], 0);
+  ASSERT_EQ(vec[2], 1);
+  ASSERT_EQ(vec[3], 1);
+  ASSERT_EQ(vec[4], 2);
+  ASSERT_EQ(vec[5], 2);
+
+  vec.pop();
+  ASSERT_EQ(vec.size(), 4);
+  vec.insert_at_level(0, 0);
+  vec.insert_at_level(0, 0);
+  ASSERT_EQ(vec.size(), 6);
+  ASSERT_EQ(vec[0], 0);
+  ASSERT_EQ(vec[1], 0);
+  ASSERT_EQ(vec[2], 0);
+  ASSERT_EQ(vec[3], 0);
+}
+
 TEST_F(TestVector, stress)
 {
   backtrack::BacktrackManager mgr;

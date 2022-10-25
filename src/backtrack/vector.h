@@ -52,6 +52,24 @@ class vector : public Backtrackable
     }
   }
 
+  void insert_at_level(std::size_t level, const T& value)
+  {
+    // If inserted at current level, just use push_back().
+    if (level == d_control.size())
+    {
+      push_back(value);
+      return;
+    }
+    assert(level < d_control.size());
+
+    std::size_t index = d_control[level];
+    d_data.emplace(d_data.begin() + index, value);
+    for (std::size_t i = level, size = d_control.size(); i < size; ++i)
+    {
+      ++d_control[i];
+    }
+  }
+
  private:
   std::vector<T> d_data;
 };
