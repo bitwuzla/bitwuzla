@@ -65,7 +65,7 @@ RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
  * match:  (= a true)
  * result: a
  *
- * match   (= a false)
+ * match:  (= a false)
  * result: (not a)
  */
 namespace {
@@ -138,6 +138,145 @@ RewriteRule<RewriteRuleKind::EQUAL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_eq_special_const(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (= (bvand a b) (_ bvX N))
+ * result: (and
+ *           (and
+ *             (= (bvnot (_ bv0 n)) a[N - 1 - i: N - i - n])
+ *             (= (bvnot (_ bv0 n)) b[N - 1 - i: N - i - n])
+ *             ...
+ *             (= (_ bv0 m) (bvand a[N - 1 - j: N - j - m]
+ *                                 b[N - 1 - j: N - j - m))
+ *             ...
+ *           ))
+ *          for ech slice of zeros and ones of size n and m in X.
+ *
+ * match:  (= (bvor a b) (_ bvX N))
+ * result: (and
+ *           (and
+ *             (= (_ bv0 n) a[N - 1 - i: N - i - n])
+ *             (= (_ bv0 n) b[N - 1 - i: N - i - n])
+ *             ...
+ *             (= (bvnot (_ bv0 m)) (bvand a[N - 1 - j: N - j - m]
+ *                                         b[N - 1 - j: N - j - m))
+ *             ...
+ *           ))
+ *          for ech slice of ones and zeros of size n and m in X.
+ */
+namespace {
+Node
+_rw_eq_const(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+
+  if (node[idx0].is_value())
+  {
+    BitVector val = node[idx0].value<BitVector>();
+
+    if (!val.is_zero() && !val.is_ones())
+    {
+      NodeManager& nm = NodeManager::get();
+      std::vector<Node> args;
+      Node node10, node11;
+
+      if (node[idx1].kind() == Kind::BV_AND)
+      {
+        for (uint64_t i = 0, cnt = 0, size = val.size(); i < size; i += cnt)
+        {
+          uint64_t val_size = val.size();
+          bool bit          = val.get_bit(val_size - 1);
+          cnt = bit ? val.count_leading_ones() : val.count_leading_zeros();
+          Node ext0 = rewriter.mk_node(Kind::BV_EXTRACT,
+                                       {node[idx1][0]},
+                                       {size - 1 - i, size - i - cnt});
+          Node ext1 = rewriter.mk_node(Kind::BV_EXTRACT,
+                                       {node[idx1][1]},
+                                       {size - 1 - i, size - i - cnt});
+          if (bit)
+          {
+            args.push_back(rewriter.mk_node(
+                Kind::EQUAL, {nm.mk_value(BitVector::mk_ones(cnt)), ext0}));
+            args.push_back(rewriter.mk_node(
+                Kind::EQUAL, {nm.mk_value(BitVector::mk_ones(cnt)), ext1}));
+          }
+          else
+          {
+            args.push_back(rewriter.mk_node(
+                Kind::EQUAL,
+                {nm.mk_value(BitVector::mk_zero(cnt)),
+                 rewriter.mk_node(Kind::BV_AND, {ext0, ext1})}));
+          }
+          if (val_size > cnt)
+          {
+            val.ibvextract(val_size - 1 - cnt, 0);
+          }
+        }
+      }
+      else if (node::utils::is_bv_or(node[idx1], node10, node11))
+      {
+        assert(!node10.is_null() && !node11.is_null());
+
+        for (uint64_t i = 0, cnt = 0, size = val.size(); i < size; i += cnt)
+        {
+          uint64_t val_size = val.size();
+          bool bit          = val.get_bit(val_size - 1);
+          cnt = bit ? val.count_leading_ones() : val.count_leading_zeros();
+          Node ext0 = rewriter.mk_node(
+              Kind::BV_EXTRACT, {node10}, {size - 1 - i, size - i - cnt});
+          Node ext1 = rewriter.mk_node(
+              Kind::BV_EXTRACT, {node11}, {size - 1 - i, size - i - cnt});
+          if (!bit)
+          {
+            args.push_back(rewriter.mk_node(
+                Kind::EQUAL, {nm.mk_value(BitVector::mk_zero(cnt)), ext0}));
+            args.push_back(rewriter.mk_node(
+                Kind::EQUAL, {nm.mk_value(BitVector::mk_zero(cnt)), ext1}));
+          }
+          else
+          {
+            args.push_back(rewriter.mk_node(
+                Kind::EQUAL,
+                {nm.mk_value(BitVector::mk_ones(cnt)),
+                 rewriter.mk_node(Kind::BV_OR, {ext0, ext1})}));
+          }
+          if (val_size > cnt)
+          {
+            val.ibvextract(val_size - 1 - cnt, 0);
+          }
+        }
+      }
+      uint64_t n = args.size();
+      if (n > 0)
+      {
+        Node res =
+            n > 1 ? rewriter.mk_node(Kind::AND, {args[0], args[1]}) : args[0];
+        for (uint64_t i = 2; i < n; ++i)
+        {
+          res = rewriter.mk_node(Kind::AND, {res, args[i]});
+        }
+        return res;
+      }
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_CONST>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  Node res = _rw_eq_const(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_const(rewriter, node, 1);
   }
   return res;
 }

@@ -165,6 +165,7 @@ enum class RewriteRuleKind
 
   EQUAL_EVAL,
   EQUAL_SPECIAL_CONST,
+  EQUAL_CONST,
   EQUAL_TRUE,
   EQUAL_ITE,
   // Level 1

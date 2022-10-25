@@ -103,6 +103,29 @@ TEST_F(TestRewriterCore, core_equal_special_const)
   }
 }
 
+TEST_F(TestRewriterCore, core_equal_const)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_CONST;
+  //// applies
+  for (uint64_t i = 1; i < (1u << 4) - 1; ++i)
+  {
+    test_rule<kind>(
+        d_nm.mk_node(Kind::EQUAL,
+                     {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}),
+                      d_nm.mk_value(BitVector::from_ui(4, i))}));
+  }
+  for (uint64_t i = 1; i < (1u << 4) - 1; ++i)
+  {
+    test_rule<kind>(d_nm.mk_node(Kind::EQUAL,
+                                 {d_nm.mk_node(Kind::BV_OR, {d_bv4_a, d_bv4_b}),
+                                  d_nm.mk_value(BitVector::from_ui(4, i))}));
+  }
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}), d_bv4_zero}));
+}
+
 TEST_F(TestRewriterCore, core_equal_true)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_TRUE;

@@ -299,6 +299,7 @@ Rewriter::rewrite_eq(const Node& node)
   {
     BZLA_APPLY_RW_RULE(EQUAL_EVAL);
     BZLA_APPLY_RW_RULE(EQUAL_SPECIAL_CONST);
+    BZLA_APPLY_RW_RULE(EQUAL_CONST);
     BZLA_APPLY_RW_RULE(EQUAL_TRUE);
     BZLA_APPLY_RW_RULE(EQUAL_ITE);
     // LEVEL 1 rewrites /////////////////////////////////////////
