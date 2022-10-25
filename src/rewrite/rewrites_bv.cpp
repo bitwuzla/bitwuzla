@@ -1032,8 +1032,8 @@ _rw_bv_and_concat(Rewriter& rewriter, const Node& node, size_t idx)
       && node[idx0][0].type() == node[idx1][0].type()
       && node[idx0][0].is_value() && node[idx1][1].is_value())
   {
-    BitVector val00 = node[idx0][0].value<BitVector>();
-    BitVector val11 = node[idx1][1].value<BitVector>();
+    const BitVector& val00 = node[idx0][0].value<BitVector>();
+    const BitVector& val11 = node[idx1][1].value<BitVector>();
     if (val00.is_zero())
     {
       if (val11.is_zero())

@@ -80,7 +80,7 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
     const Type& type0 = node[idx0].type();
     if (type0.is_bv())
     {
-      BitVector value0 = node[idx0].value<BitVector>();
+      const BitVector& value0 = node[idx0].value<BitVector>();
       if (value0.is_zero())
       {
         if (node[idx1].kind() == Kind::BV_XOR)
@@ -142,6 +142,10 @@ RewriteRule<RewriteRuleKind::EQUAL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  (= a a)
+ * result: true
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::EQUAL_TRUE>::_apply(Rewriter& rewriter,
