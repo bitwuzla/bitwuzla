@@ -3,7 +3,7 @@
 
 namespace bzla::test {
 
-using namespace bzla::options;
+using namespace bzla::option;
 
 class TestOptions : public ::testing::Test
 {

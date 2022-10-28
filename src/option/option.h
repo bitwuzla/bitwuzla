@@ -8,27 +8,42 @@
 #include <unordered_map>
 #include <vector>
 
-namespace bzla::options {
+namespace bzla::option {
 
 /* -------------------------------------------------------------------------- */
 
 enum class Option
 {
-  SAT_SOLVER,   // enum
   INCREMENTAL,  // bool
   LOG_LEVEL,    // numeric
+  SAT_SOLVER,   // enum
+  SEED,         // numeric
+
+  PROP_NPROPS,                  // numeric
+  PROP_NUPDATES,                // numeric
+  PROP_PATH_SEL,                // enum
+  PROP_PROB_PICK_INV_VALUE,     // numeric
+  PROP_PROB_PICK_RANDOM_INPUT,  // numeric
+  PROP_INEQ_BOUNDS,             // bool
+  PROP_OPT_LT_CONCAT_SEXT,      // bool
 
   NUM_OPTIONS
 };
 
 /* -------------------------------------------------------------------------- */
 
-enum SatSolver
+enum class SatSolver
 {
   CADICAL,
   CRYPTOMINISAT,
   KISSAT,
   LINGELING,
+};
+
+enum class PropPathSelection
+{
+  ESSENTIAL,
+  RANDOM,
 };
 
 /* -------------------------------------------------------------------------- */
@@ -288,9 +303,20 @@ class Options
   /** Constructor. */
   Options();
 
+  // general options
   OptionBool incremental;
   OptionNumeric log_level;
   OptionEnum<SatSolver> sat_solver;
+  OptionNumeric seed;
+
+  // propagation-based local search engine
+  OptionNumeric prop_nprops;
+  OptionNumeric prop_nupdates;
+  OptionEnum<PropPathSelection> prop_path_sel;
+  OptionNumeric prop_prob_pick_inv_value;
+  OptionNumeric prop_prob_pick_random_input;
+  OptionBool prop_ineq_bounds;
+  OptionBool prop_opt_lt_concat_sext;
 
  private:
   /**
@@ -350,6 +376,6 @@ class Options
 };
 
 /* -------------------------------------------------------------------------- */
-}  // namespace bzla::options
+}  // namespace bzla::option
 
 #endif

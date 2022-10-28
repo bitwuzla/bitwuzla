@@ -40,6 +40,7 @@ class BvSolver : public Solver
   /** Query assignment from SAT solver. */
   Node get_assignment(const Node& term) const;
 
+  /** The current set of assertions. */
   backtrack::AssertionView& d_assertion_view;
   backtrack::vector<Node> d_assumptions;
 

@@ -7,6 +7,7 @@
 #include "backtrack/assertion_stack.h"
 #include "backtrack/backtrackable.h"
 #include "node/node.h"
+#include "option/option.h"
 #include "preprocess/preprocessor.h"
 #include "rewrite/rewriter.h"
 #include "solver/bv/bv_solver.h"
@@ -41,6 +42,8 @@ class SolvingContext
   // std::vector<Node>& get_unsat_core();
   // bool is_in_unsat_core(const Node& term) const;
 
+  option::Options& options();
+
   backtrack::AssertionView& assertions();
 
   backtrack::BacktrackManager* backtrack_mgr();
@@ -50,17 +53,19 @@ class SolvingContext
  private:
   void register_assertion(const Node& formula);
 
+  option::Options d_options;
+
   backtrack::BacktrackManager d_backtrack_mgr;
   backtrack::AssertionStack d_assertions;
 
   preprocess::Preprocessor d_preprocessor;
   Rewriter d_rewriter;
 
-  /** Result of last solve() call. */
-  Result d_sat_state = Result::UNKNOWN;
-
   /** Bit-vector solver. */
   bv::BvSolver d_bv_solver;
+
+  /** Result of last solve() call. */
+  Result d_sat_state = Result::UNKNOWN;
 };
 
 }  // namespace bzla
