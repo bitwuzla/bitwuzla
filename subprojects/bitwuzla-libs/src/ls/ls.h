@@ -136,12 +136,12 @@ class LocalSearch
      */
     bool use_path_sel_essential = true;
     /**
-     * True to infer bounds for top-level inequalities for inverse value
-     * computation.
+     * True to infer bounds for top-level inequalities for invertibility
+     * conditions and inverse value computation.
      */
     bool use_ineq_bounds = false;
     /**
-     * True to enable optimization for inverse_value computation of
+     * True to enable optimization for inverse value computation of
      * inequalities over concat and sign extension operands.
      */
     bool use_opt_lt_concat_sext = false;
