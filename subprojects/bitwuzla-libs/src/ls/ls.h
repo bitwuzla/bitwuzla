@@ -387,7 +387,7 @@ class LocalSearch
   /** The set of roots. */
   std::vector<BitVectorNode*> d_roots;
   /** The set of unsatisfied roots. */
-  std::unordered_set<BitVectorNode*> d_roots_unsat;
+  std::unordered_set<uint64_t> d_roots_unsat;
   /**
    * The set of (to be considered) top-level inequalities. Maps inequality
    * roots to their sat assignment (true for top-level inequalities, false for

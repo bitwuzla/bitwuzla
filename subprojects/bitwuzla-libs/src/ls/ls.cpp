@@ -572,7 +572,8 @@ LocalSearch::update_unsat_roots(BitVectorNode* root)
 {
   assert(is_root_node(root));
 
-  auto it = d_roots_unsat.find(root);
+  uint64_t id = root->id();
+  auto it     = d_roots_unsat.find(id);
   if (it != d_roots_unsat.end())
   {
     if (root->assignment().is_true())
@@ -584,7 +585,7 @@ LocalSearch::update_unsat_roots(BitVectorNode* root)
   else if (root->assignment().is_false())
   {
     /* add to unsatisfied roots list */
-    d_roots_unsat.insert(root);
+    d_roots_unsat.insert(id);
   }
 }
 
@@ -704,9 +705,9 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
                << std::endl;
   BZLALSLOG(1) << std::endl;
 #ifndef NDEBUG
-  for (BitVectorNode* r : d_roots_unsat)
+  for (uint64_t id : d_roots_unsat)
   {
-    assert(r->assignment().is_false());
+    assert(get_node(id)->assignment().is_false());
   }
 #endif
 
@@ -774,9 +775,9 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
     }
   }
 #ifndef NDEBUG
-  for (BitVectorNode* r : d_roots_unsat)
+  for (uint64_t id : d_roots_unsat)
   {
-    assert(r->assignment().is_false());
+    assert(get_node(id)->assignment().is_false());
   }
 #endif
   return nupdates;
@@ -789,14 +790,14 @@ LocalSearch::move()
   if (BZLALSLOG_ENABLED(1))
   {
     BZLALSLOG(1) << "  unsatisfied roots:" << std::endl;
-    for (const auto r : d_roots_unsat)
+    for (uint64_t id : d_roots_unsat)
     {
-      BZLALSLOG(1) << "    - " << *r << std::endl;
+      BZLALSLOG(1) << "    - " << *(get_node(id)) << std::endl;
     }
     BZLALSLOG(1) << "  satisfied roots:" << std::endl;
-    for (const auto r : d_roots)
+    for (const BitVectorNode* r : d_roots)
     {
-      if (d_roots_unsat.find(r) != d_roots_unsat.end()) continue;
+      if (d_roots_unsat.find(r->id()) != d_roots_unsat.end()) continue;
       BZLALSLOG(1) << "    - " << *r << std::endl;
     }
   }
@@ -812,9 +813,8 @@ LocalSearch::move()
       return UNKNOWN;
 
     BitVectorNode* root =
-        d_rng
-            ->pick_from_set<std::unordered_set<BitVectorNode*>, BitVectorNode*>(
-                d_roots_unsat);
+        get_node(d_rng->pick_from_set<std::unordered_set<uint64_t>, uint64_t>(
+            d_roots_unsat));
 
     if (root->is_const() && root->domain().lo().is_false())
     {
