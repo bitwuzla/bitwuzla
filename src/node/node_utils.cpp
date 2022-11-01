@@ -122,6 +122,59 @@ is_bv_or(const Node& node, Node& child0, Node& child1)
   return false;
 }
 
+namespace {
+bool
+_is_bv_sext_aux(const Node& ite, const Node& ext, size_t idx)
+{
+  size_t idx0  = idx;
+  size_t idx1  = 1 - idx;
+  uint64_t msb = ext.type().bv_size() - 1;
+
+  if (ite[0][idx0].kind() == Kind::BV_EXTRACT && ite[0][idx1].is_value()
+      && ite[0][idx0][0] == ext && ite[0][idx0].index(0) == msb
+      && ite[0][idx0].index(1) == msb && ite[1].is_value()
+      && ((ite[0][idx1].value<BitVector>().is_one()
+           && ite[1].value<BitVector>().is_ones()
+           && ite[2].value<BitVector>().is_zero())
+          || (ite[0][idx1].value<BitVector>().is_zero()
+              && ite[1].value<BitVector>().is_zero()
+              && ite[2].value<BitVector>().is_ones())))
+  {
+    return true;
+  }
+  return false;
+}
+}  // namespace
+
+bool
+is_bv_sext(const Node& node, Node& child)
+{
+  if (node.kind() == Kind::BV_SIGN_EXTEND)
+  {
+    child = node[0];
+    return true;
+  }
+
+  if (node.kind() != Kind::BV_CONCAT)
+  {
+    return false;
+  }
+
+  const Node& ite = node[0];
+  if (ite.kind() != Kind::ITE || ite[0].kind() != Kind::EQUAL)
+  {
+    return false;
+  }
+
+  if (_is_bv_sext_aux(ite, node[1], 0) || _is_bv_sext_aux(ite, node[1], 1))
+  {
+    child = node[1];
+    return true;
+  }
+
+  return false;
+}
+
 bool
 is_bv_sub(const Node& node, Node& child0, Node& child1)
 {
