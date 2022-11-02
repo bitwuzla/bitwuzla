@@ -611,7 +611,7 @@ BvSolver::is_leaf(const Node& term) const
          // Quantifiers
          || k == Kind::FORALL
          || k == Kind::EXISTS
-         // array selects and function applications
+         // Array selects and function applications
          || k == Kind::SELECT
          || k == Kind::APPLY
          // FP predicates

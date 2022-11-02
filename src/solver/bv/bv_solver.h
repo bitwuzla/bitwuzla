@@ -33,8 +33,7 @@ class BvSolver : public Solver
 
   /** Return encoded bits associated with bit-blasted term. */
   const bb::AigBitblaster::Bits& get_bits(const Node& term) const;
-
-  /** Checks whether `term` is a leaf node for the bit-vector solver. */
+  /** Determine if `term` is a leaf node for the bit-vector solver. */
   bool is_leaf(const Node& term) const;
 
   /** Query assignment from SAT solver. */
