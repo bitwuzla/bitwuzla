@@ -574,6 +574,22 @@ BitVectorNode::compute_min_max_bounds(const BitVector& s,
   assert(false);
 }
 
+bool
+BitVectorNode::is_in_bounds(const BitVector& bv,
+                            const BitVector& min_lo,
+                            const BitVector& max_lo,
+                            const BitVector& min_hi,
+                            const BitVector& max_hi)
+{
+  assert(!min_lo.is_null() || !min_hi.is_null());
+  assert(min_lo.is_null() == max_lo.is_null());
+  assert(min_hi.is_null() == max_hi.is_null());
+  return (!min_lo.is_null() && bv.compare(min_lo) >= 0
+          && bv.compare(max_lo) <= 0)
+         || (!min_hi.is_null() && bv.compare(min_hi) >= 0
+             && bv.compare(max_hi) <= 0);
+}
+
 std::string
 BitVectorNode::to_string() const
 {
@@ -1459,10 +1475,7 @@ BitVectorMul::is_invertible(const BitVector& t,
       {
         const BitVector& xval = x.lo();
         if (xval.bvmul(s).compare(t) == 0
-            && ((!min_lo.is_null() && xval.compare(min_lo) >= 0
-                 && xval.compare(max_lo) <= 0)
-                || (!min_hi.is_null() && xval.compare(min_hi) >= 0
-                    && xval.compare(max_hi) <= 0)))
+            && is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
         {
           if (!is_essential_check)
           {
@@ -1480,10 +1493,7 @@ BitVectorMul::is_invertible(const BitVector& t,
         {
           BitVector inv = s.bvmodinv().ibvmul(t);
           if (x.match_fixed_bits(inv)
-              && ((!min_lo.is_null() && inv.compare(min_lo) >= 0
-                   && inv.compare(max_lo) <= 0)
-                  || (!min_hi.is_null() && inv.compare(min_hi) >= 0
-                      && inv.compare(max_hi) <= 0)))
+              && is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
           {
             if (!is_essential_check)
             {
@@ -1510,10 +1520,7 @@ BitVectorMul::is_invertible(const BitVector& t,
           BitVectorDomain d(x.bvextract(size - 1, size - ctz).bvconcat(y_ext));
           if (d.is_fixed())
           {
-            if ((!min_lo.is_null() && d.lo().compare(min_lo) >= 0
-                 && d.lo().compare(max_lo) <= 0)
-                || (!min_hi.is_null() && d.lo().compare(min_hi) >= 0
-                    && d.lo().compare(max_hi) <= 0))
+            if (is_in_bounds(d.lo(), min_lo, max_lo, min_hi, max_hi))
             {
               if (!is_essential_check)
               {
@@ -1573,10 +1580,7 @@ BitVectorMul::is_invertible(const BitVector& t,
     {
       /* s odd : t * s^-1 (unique solution) */
       BitVector inv = t.bvmul(s.bvmodinv());
-      if ((!min_lo.is_null() && inv.compare(min_lo) >= 0
-           && inv.compare(max_lo) <= 0)
-          || (!min_hi.is_null() && inv.compare(min_hi) >= 0
-              && inv.compare(max_hi) <= 0))
+      if (is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
       {
         if (!is_essential_check)
         {
@@ -4012,10 +4016,7 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
   if (d->is_fixed())
   {
     const BitVector& xval = d->lo();
-    if ((!min_lo.is_null() && xval.compare(min_lo) >= 0
-         && xval.compare(max_lo) <= 0)
-        || (!min_hi.is_null() && xval.compare(min_hi) >= 0
-            && xval.compare(max_hi) <= 0))
+    if (is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
     {
       if (!is_essential_check)
       {
@@ -4617,10 +4618,7 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
   if (d->is_fixed())
   {
     const BitVector& xval = d->lo();
-    if ((!min_lo.is_null() && xval.signed_compare(min_lo) >= 0
-         && xval.signed_compare(max_lo) <= 0)
-        || (!min_hi.is_null() && xval.signed_compare(min_hi) >= 0
-            && xval.signed_compare(max_hi) <= 0))
+    if (is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
     {
       if (!is_essential_check)
       {

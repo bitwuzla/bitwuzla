@@ -312,6 +312,21 @@ class BitVectorNode
   virtual std::string to_string() const;
 
  protected:
+  /**
+   * Determine if given BitVector is within either one of the given bounds.
+   * @param bv     The bit-vector.
+   * @param min_lo The minimum value of the lower range, ignored if null.
+   * @param max_lo The maximum value of the lower range, ignored if null.
+   * @param min_hi The minimum value of the upper range, ignored if null.
+   * @param max_hi The maximum value of the upper range, ignored if null.
+   * @return True if given bit-vector is within one of the given ranges.
+   */
+  static bool is_in_bounds(const BitVector& bv,
+                           const BitVector& min_lo,
+                           const BitVector& max_lo,
+                           const BitVector& min_hi,
+                           const BitVector& max_hi);
+
   BitVectorNode(RNG* rng, uint64_t size, BitVectorNode* child0);
   BitVectorNode(RNG* rng,
                 uint64_t size,
