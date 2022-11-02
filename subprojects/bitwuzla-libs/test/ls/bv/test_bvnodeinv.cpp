@@ -20,18 +20,12 @@ TEST_F(TestBvNodeInv, and)
 {
   test_binary<BitVectorAnd>(INV, NodeKind::BV_AND, 0);
   test_binary<BitVectorAnd>(INV, NodeKind::BV_AND, 1);
-  test_binary<BitVectorAnd>(
-      INV, NodeKind::BV_AND, 0, TestBvNode::BoundsKind::UNSIGNED);
-  test_binary<BitVectorAnd>(
-      INV, NodeKind::BV_AND, 1, TestBvNode::BoundsKind::UNSIGNED);
-  test_binary<BitVectorAnd>(
-      INV, NodeKind::BV_AND, 0, TestBvNode::BoundsKind::SIGNED);
-  test_binary<BitVectorAnd>(
-      INV, NodeKind::BV_AND, 1, TestBvNode::BoundsKind::SIGNED);
-  test_binary<BitVectorAnd>(
-      INV, NodeKind::BV_AND, 0, TestBvNode::BoundsKind::BOTH);
-  test_binary<BitVectorAnd>(
-      INV, NodeKind::BV_AND, 1, TestBvNode::BoundsKind::BOTH);
+  test_binary<BitVectorAnd>(INV, NodeKind::BV_AND, 0, UNSIGNED);
+  test_binary<BitVectorAnd>(INV, NodeKind::BV_AND, 1, UNSIGNED);
+  test_binary<BitVectorAnd>(INV, NodeKind::BV_AND, 0, SIGNED);
+  test_binary<BitVectorAnd>(INV, NodeKind::BV_AND, 1, SIGNED);
+  test_binary<BitVectorAnd>(INV, NodeKind::BV_AND, 0, BOTH);
+  test_binary<BitVectorAnd>(INV, NodeKind::BV_AND, 1, BOTH);
 }
 
 TEST_F(TestBvNodeInv, concat)
@@ -50,6 +44,12 @@ TEST_F(TestBvNodeInv, mul)
 {
   test_binary<BitVectorMul>(INV, NodeKind::BV_MUL, 0);
   test_binary<BitVectorMul>(INV, NodeKind::BV_MUL, 1);
+  test_binary<BitVectorMul>(INV, NodeKind::BV_MUL, 0, UNSIGNED);
+  test_binary<BitVectorMul>(INV, NodeKind::BV_MUL, 1, UNSIGNED);
+  test_binary<BitVectorMul>(INV, NodeKind::BV_MUL, 0, SIGNED);
+  test_binary<BitVectorMul>(INV, NodeKind::BV_MUL, 0, SIGNED);
+  test_binary<BitVectorMul>(INV, NodeKind::BV_MUL, 1, BOTH);
+  test_binary<BitVectorMul>(INV, NodeKind::BV_MUL, 1, BOTH);
 }
 
 TEST_F(TestBvNodeInv, shl)

@@ -225,6 +225,35 @@ BitVector::BitVector(uint64_t size,
   iset(rng, from, to, sign);
 }
 
+BitVector::BitVector(uint64_t size,
+                     RNG& rng,
+                     const BitVector& from0,
+                     const BitVector& to0,
+                     const BitVector& from1,
+                     const BitVector& to1,
+                     bool sign)
+    : BitVector(size)
+{
+  assert(!from0.is_null() || !from1.is_null());
+  assert(from0.is_null() == to0.is_null());
+  assert(from1.is_null() == to1.is_null());
+  if (!from0.is_null())
+  {
+    if (!from1.is_null())
+    {
+      iset(rng, from1, to1, sign);
+    }
+    else
+    {
+      iset(rng, from0, to0, sign);
+    }
+  }
+  else
+  {
+    iset(rng, from1, to1, sign);
+  }
+}
+
 BitVector::BitVector(uint64_t size, RNG& rng, uint64_t idx_hi, uint64_t idx_lo)
     : BitVector(size, rng)
 {

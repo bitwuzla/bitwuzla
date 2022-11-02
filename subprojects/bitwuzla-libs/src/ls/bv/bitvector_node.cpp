@@ -1392,6 +1392,37 @@ BitVectorMul::evaluate()
   _evaluate();
 }
 
+void
+BitVectorMul::compute_min_max_bounds(const BitVector& s,
+                                     const BitVector& t,
+                                     uint32_t pos_x,
+                                     BitVector& res_min_u,
+                                     BitVector& res_max_u,
+                                     BitVector& res_min_s,
+                                     BitVector& res_max_s)
+{
+  (void) t;
+
+  assert(res_min_u.is_null());
+  assert(res_max_u.is_null());
+  assert(res_min_s.is_null());
+  assert(res_max_s.is_null());
+
+  uint64_t size = s.size();
+  res_min_u     = BitVector::mk_zero(size);
+  res_max_u     = BitVector::mk_ones(size);
+
+  // tighten unsigned bounds wrt. to current unsigned bounds of x
+  d_children[pos_x]->tighten_bounds(&res_min_u,
+                                    &res_max_u,
+                                    nullptr,
+                                    nullptr,
+                                    res_min_u,
+                                    res_max_u,
+                                    res_min_s,
+                                    res_max_s);
+}
+
 bool
 BitVectorMul::is_invertible(const BitVector& t,
                             uint32_t pos_x,
@@ -1415,12 +1446,28 @@ BitVectorMul::is_invertible(const BitVector& t,
    */
   if (ic_wo)
   {
+    BitVector min_lo, max_lo, min_hi, max_hi;
+    compute_normalized_bounds(s, t, pos_x, min_lo, max_lo, min_hi, max_hi);
+    if (min_lo.is_null() && min_hi.is_null())
+    {
+      return false;
+    }
+
     if (x.has_fixed_bits())
     {
       if (x.is_fixed())
       {
-        if (x.lo().bvmul(s).compare(t) == 0)
+        const BitVector& xval = x.lo();
+        if (xval.bvmul(s).compare(t) == 0
+            && ((!min_lo.is_null() && xval.compare(min_lo) >= 0
+                 && xval.compare(max_lo) <= 0)
+                || (!min_hi.is_null() && xval.compare(min_hi) >= 0
+                    && xval.compare(max_hi) <= 0)))
         {
+          if (!is_essential_check)
+          {
+            d_inverse.reset(new BitVector(xval));
+          }
           return true;
         }
         return false;
@@ -1432,7 +1479,11 @@ BitVectorMul::is_invertible(const BitVector& t,
         if (s.get_lsb())
         {
           BitVector inv = s.bvmodinv().ibvmul(t);
-          if (x.match_fixed_bits(inv))
+          if (x.match_fixed_bits(inv)
+              && ((!min_lo.is_null() && inv.compare(min_lo) >= 0
+                   && inv.compare(max_lo) <= 0)
+                  || (!min_hi.is_null() && inv.compare(min_hi) >= 0
+                      && inv.compare(max_hi) <= 0)))
           {
             if (!is_essential_check)
             {
@@ -1456,72 +1507,126 @@ BitVectorMul::is_invertible(const BitVector& t,
         if (x.bvextract(size - ctz - 1, 0).match_fixed_bits(y_ext))
         {
           /* Result domain is x[size - 1:size - ctz] o y[size - ctz(s) - 1:0] */
-          if (!is_essential_check)
+          BitVectorDomain d(x.bvextract(size - 1, size - ctz).bvconcat(y_ext));
+          if (d.is_fixed())
           {
-            BitVectorDomain d(
-                x.bvextract(size - 1, size - ctz).bvconcat(y_ext));
-            if (d.is_fixed())
+            if ((!min_lo.is_null() && d.lo().compare(min_lo) >= 0
+                 && d.lo().compare(max_lo) <= 0)
+                || (!min_hi.is_null() && d.lo().compare(min_hi) >= 0
+                    && d.lo().compare(max_hi) <= 0))
             {
-              d_inverse.reset(new BitVector(d.lo()));
+              if (!is_essential_check)
+              {
+                d_inverse.reset(new BitVector(d.lo()));
+              }
+              return true;
             }
-            else
+            return false;
+          }
+          BitVectorDomainDualGenerator gen(
+              d,
+              d_rng,
+              min_lo.is_null() ? nullptr : &min_lo,
+              max_lo.is_null() ? nullptr : &max_lo,
+              min_hi.is_null() ? nullptr : &min_hi,
+              max_hi.is_null() ? nullptr : &max_hi);
+          if (gen.has_random())
+          {
+            if (!is_essential_check)
             {
-              BitVectorDomainGenerator gen(d, d_rng);
               d_inverse.reset(new BitVector(gen.random()));
             }
+            return true;
           }
-          return true;
+          return false;
         }
         return false;
       }
+      BitVectorDomainDualGenerator gen(x,
+                                       d_rng,
+                                       min_lo.is_null() ? nullptr : &min_lo,
+                                       max_lo.is_null() ? nullptr : &max_lo,
+                                       min_hi.is_null() ? nullptr : &min_hi,
+                                       max_hi.is_null() ? nullptr : &max_hi);
+      if (gen.has_random())
+      {
+        if (!is_essential_check)
+        {
+          d_inverse.reset(new BitVector(gen.random()));
+        }
+        return true;
+      }
+      return false;
+    }
+
+    if (s.is_zero())
+    {
+      /* s = 0 (=> t = 0): random bit-vector */
       if (!is_essential_check)
       {
-        BitVectorDomainGenerator gen(x, d_rng);
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
+        d_inverse.reset(
+            new BitVector(x.size(), *d_rng, min_lo, max_lo, min_hi, max_hi));
       }
       return true;
     }
-
-    if (!is_essential_check)
+    if (s.get_lsb())
     {
-      if (s.is_zero())
+      /* s odd : t * s^-1 (unique solution) */
+      BitVector inv = t.bvmul(s.bvmodinv());
+      if ((!min_lo.is_null() && inv.compare(min_lo) >= 0
+           && inv.compare(max_lo) <= 0)
+          || (!min_hi.is_null() && inv.compare(min_hi) >= 0
+              && inv.compare(max_hi) <= 0))
       {
-        /* s = 0 (=> t = 0): random bit-vector */
-        d_inverse.reset(new BitVector(x.size(), *d_rng));
+        if (!is_essential_check)
+        {
+          d_inverse.reset(new BitVector(std::move(inv)));
+        }
+        return true;
       }
-      else if (s.get_lsb())
+      return false;
+    }
+    else
+    {
+      /* s even: multiple solutions possible
+       *      + s = 2^n: t >> n
+       *                 with all bits shifted in randomly set to 0 or 1
+       *      + s = 2^n * m, m is odd: c * m^-1
+       *                               with c = t >> n and
+       *                               all bits shifted in set randomly and
+       *                               m^-1 the mod inverse of m
+       */
+      assert(t.count_trailing_zeros() >= s.count_trailing_zeros());
+      uint64_t n    = s.count_trailing_zeros();
+      uint64_t size = s.size();
+      BitVector right;
+      if (s.is_power_of_two())
       {
-        /* s odd : t * s^-1 (unique solution) */
-        d_inverse.reset(new BitVector(t.bvmul(s.bvmodinv())));
+        right = t.bvextract(size - 1, n);
       }
       else
       {
-        /* s even: multiple solutions possible
-         *      + s = 2^n: t >> n
-         *                 with all bits shifted in randomly set to 0 or 1
-         *      + s = 2^n * m, m is odd: c * m^-1
-         *                               with c = t >> n and
-         *                               all bits shifted in set randomly and
-         *                               m^-1 the mod inverse of m
-         */
-        assert(t.count_trailing_zeros() >= s.count_trailing_zeros());
-        uint64_t n    = s.count_trailing_zeros();
-        uint64_t size = s.size();
-        BitVector right;
-        if (s.is_power_of_two())
-        {
-          right = t.bvextract(size - 1, n);
-        }
-        else
-        {
-          right = s.bvshr(n)
-                      .ibvmodinv()
-                      .ibvmul(t.bvshr(n))
-                      .ibvextract(size - n - 1, 0);
-        }
-        d_inverse.reset(new BitVector(BitVector(n, *d_rng).ibvconcat(right)));
+        right = s.bvshr(n)
+                    .ibvmodinv()
+                    .ibvmul(t.bvshr(n))
+                    .ibvextract(size - n - 1, 0);
       }
+      BitVectorDomain d = BitVectorDomain(size - right.size()).bvconcat(right);
+      BitVectorDomainDualGenerator gen(d,
+                                       d_rng,
+                                       min_lo.is_null() ? nullptr : &min_lo,
+                                       max_lo.is_null() ? nullptr : &max_lo,
+                                       min_hi.is_null() ? nullptr : &min_hi,
+                                       max_hi.is_null() ? nullptr : &max_hi);
+      if (gen.has_random())
+      {
+        if (!is_essential_check)
+        {
+          d_inverse.reset(new BitVector(gen.random()));
+        }
+        return true;
+      }
+      return false;
     }
   }
 
@@ -1589,6 +1694,8 @@ BitVectorMul::is_consistent(const BitVector& t, uint32_t pos_x)
 const BitVector&
 BitVectorMul::inverse_value(const BitVector& t, uint32_t pos_x)
 {
+  (void) t;
+  (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
@@ -3986,6 +4093,8 @@ BitVectorUlt::is_consistent(const BitVector& t, uint32_t pos_x)
 const BitVector&
 BitVectorUlt::inverse_value(const BitVector& t, uint32_t pos_x)
 {
+  (void) t;
+  (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
@@ -4764,6 +4873,8 @@ BitVectorSlt::is_consistent(const BitVector& t, uint32_t pos_x)
 const BitVector&
 BitVectorSlt::inverse_value(const BitVector& t, uint32_t pos_x)
 {
+  (void) t;
+  (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());

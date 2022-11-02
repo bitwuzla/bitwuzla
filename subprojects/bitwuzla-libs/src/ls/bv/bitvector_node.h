@@ -809,6 +809,14 @@ class BitVectorMul : public BitVectorNode
 
   std::string to_string() const override;
 
+  void compute_min_max_bounds(const BitVector& s,
+                              const BitVector& t,
+                              uint32_t pos_x,
+                              BitVector& res_min_u,
+                              BitVector& res_max_u,
+                              BitVector& res_min_s,
+                              BitVector& res_max_s) override;
+
  private:
   /**
    * Evaluate the assignment of this node.

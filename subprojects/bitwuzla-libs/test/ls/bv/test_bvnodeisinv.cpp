@@ -40,6 +40,12 @@ TEST_F(TestBvNodeIsInv, mul)
 {
   test_binary<BitVectorMul>(IS_INV, NodeKind::BV_MUL, 0);
   test_binary<BitVectorMul>(IS_INV, NodeKind::BV_MUL, 1);
+  test_binary<BitVectorMul>(IS_INV, NodeKind::BV_MUL, 0, UNSIGNED);
+  test_binary<BitVectorMul>(IS_INV, NodeKind::BV_MUL, 1, UNSIGNED);
+  test_binary<BitVectorMul>(IS_INV, NodeKind::BV_MUL, 0, SIGNED);
+  test_binary<BitVectorMul>(IS_INV, NodeKind::BV_MUL, 1, SIGNED);
+  test_binary<BitVectorMul>(IS_INV, NodeKind::BV_MUL, 0, BOTH);
+  test_binary<BitVectorMul>(IS_INV, NodeKind::BV_MUL, 1, BOTH);
 }
 
 TEST_F(TestBvNodeIsInv, shl)

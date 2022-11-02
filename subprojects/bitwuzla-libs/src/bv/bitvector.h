@@ -150,6 +150,29 @@ class BitVector
             const BitVector& to,
             bool sign = false);
   /**
+   * Construct a random bit-vector of given size with one of the given ranges.
+   * @param size The size of the bit-vector.
+   * @param rng  The random number generator.
+   * @param from0 A bit-vector representing the lower bound of the first given
+   *              range (inclusive). Ignored if null.
+   * @param to0   A bit-vector representing the upper bound of the first given
+   *              range (inclusive). Must be null if `from0` is null. Ignored
+   *              if null.
+   * @param from1 A bit-vector representing the lower bound of the second given
+   *              range (inclusive). Ignored if null.
+   * @param to1   A bit-vector representing the upper bound of the second given
+   *              range (inclusive). Must be null if `from1` is null. Ignored
+   *              if null.
+   * @param sign True to interpret the given range as signed, else unsigned.
+   */
+  BitVector(uint64_t size,
+            RNG& rng,
+            const BitVector& from0,
+            const BitVector& to0,
+            const BitVector& from1,
+            const BitVector& to1,
+            bool sign = false);
+  /**
    * Construct a new bit-vector of given size and randomly set bits within given
    * index range. Bits outside of given index range are initialized with zero.
    * @param size   The size of the bit-vector.
