@@ -12,18 +12,18 @@
 # GTest_FOUND - Found GTest
 # GTest::GTest - GTest library
 
-find_package(GTest 1.10.0)
+find_package(GTest 1.12.1)
 
 if(NOT GTest_FOUND OR NOT TARGET GTest::gtest_main)
   include(ExternalProject)
 
-  set(GTest_VERSION "1.10.0")
+  set(GTest_VERSION "1.12.1")
 
   ExternalProject_Add(
     GTest-EP
     PREFIX "${CMAKE_BINARY_DIR}/deps"
     URL https://github.com/google/googletest/archive/refs/tags/release-${GTest_VERSION}.tar.gz
-    URL_HASH SHA1=9c89be7df9c5e8cb0bc20b3c4b39bf7e82686770
+    URL_HASH SHA1=cdddd449d4e3aa7bd421d4519c17139ea1890fe7
     DOWNLOAD_NAME gtest.tar.gz
     CMAKE_ARGS
       -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
