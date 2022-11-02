@@ -121,6 +121,82 @@ TEST_F(TestNodeUtils, is_bv_or)
       d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}), child0, child1));
 }
 
+TEST_F(TestNodeUtils, is_bv_sext)
+{
+  Node res, child;
+  RewriteRuleKind kind;
+  Node bvsext = d_nm.mk_node(Kind::BV_SIGN_EXTEND, {d_a4}, {3});
+  ASSERT_TRUE(utils::is_bv_sext(bvsext, child));
+  ASSERT_EQ(child, d_a4);
+  std::tie(res, kind) =
+      RewriteRule<RewriteRuleKind::BV_SIGN_EXTEND_ELIM>::apply(d_rewriter,
+                                                               bvsext);
+  assert(utils::is_bv_sext(res, child));
+  ASSERT_TRUE(utils::is_bv_sext(res, child));
+  ASSERT_EQ(child, d_a4);
+  bvsext = d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(
+           Kind::ITE,
+           {d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3}),
+                          d_nm.mk_value(BitVector::mk_one(1))}),
+            d_nm.mk_value(BitVector::mk_ones(3)),
+            d_nm.mk_value(BitVector::mk_zero(3))}),
+       d_a4});
+  ASSERT_TRUE(utils::is_bv_sext(bvsext, child));
+  ASSERT_EQ(child, d_a4);
+  bvsext = d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(
+           Kind::ITE,
+           {d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_value(BitVector::mk_one(1)),
+                          d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3})}),
+            d_nm.mk_value(BitVector::mk_ones(3)),
+            d_nm.mk_value(BitVector::mk_zero(3))}),
+       d_a4});
+  ASSERT_TRUE(utils::is_bv_sext(bvsext, child));
+  ASSERT_EQ(child, d_a4);
+  bvsext = d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(
+           Kind::ITE,
+           {d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3}),
+                          d_nm.mk_value(BitVector::mk_zero(1))}),
+            d_nm.mk_value(BitVector::mk_zero(3)),
+            d_nm.mk_value(BitVector::mk_ones(3))}),
+       d_a4});
+  ASSERT_TRUE(utils::is_bv_sext(bvsext, child));
+  ASSERT_EQ(child, d_a4);
+  bvsext = d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(
+           Kind::ITE,
+           {d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_value(BitVector::mk_zero(1)),
+                          d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3})}),
+            d_nm.mk_value(BitVector::mk_zero(3)),
+            d_nm.mk_value(BitVector::mk_ones(3))}),
+       d_a4});
+  ASSERT_TRUE(utils::is_bv_sext(bvsext, child));
+  ASSERT_EQ(child, d_a4);
+  bvsext = d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(
+           Kind::ITE,
+           {d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_value(BitVector::mk_zero(1)),
+                          d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {3, 3})}),
+            d_nm.mk_value(BitVector::mk_ones(3)),
+            d_nm.mk_value(BitVector::mk_zero(3))}),
+       d_a4});
+  ASSERT_FALSE(utils::is_bv_sext(bvsext, child));
+  ASSERT_FALSE(utils::is_bv_sext(
+      d_nm.mk_node(Kind::BV_ZERO_EXTEND, {d_a4}, {3}), child));
+}
+
 TEST_F(TestNodeUtils, is_bv_sub)
 {
   Node res, child0, child1;
@@ -130,8 +206,8 @@ TEST_F(TestNodeUtils, is_bv_sub)
   ASSERT_EQ(child0, d_a4);
   ASSERT_EQ(child1, d_b4);
   std::tie(res, kind) =
-      RewriteRule<RewriteRuleKind::BV_OR_ELIM>::apply(d_rewriter, bvsub);
-  ASSERT_TRUE(utils::is_bv_or(res, child0, child1));
+      RewriteRule<RewriteRuleKind::BV_SUB_ELIM>::apply(d_rewriter, bvsub);
+  ASSERT_TRUE(utils::is_bv_sub(res, child0, child1));
   ASSERT_EQ(child0, d_a4);
   ASSERT_EQ(child1, d_b4);
   ASSERT_FALSE(utils::is_bv_sub(
