@@ -61,7 +61,7 @@ BvBitblastSolver::check()
 
     if (level > 0)
     {
-      d_assumptions.push_back(assertion);
+      d_assumptions.insert_at_level(level, assertion);
     }
 
     bitblast(assertion);
