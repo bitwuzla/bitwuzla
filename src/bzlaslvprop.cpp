@@ -547,6 +547,15 @@ PropSolverState::print_statistics()
            (double) nupdates / d_time_statistics.d_check_sat);
 #ifndef NDEBUG
   BZLA_MSG(d_bzla->msg, 1, "");
+  BZLA_MSG(d_bzla->msg, 1, "conflicts:");
+  for (const auto &p : d_ls->d_statistics.d_nconf)
+  {
+    std::stringstream ss;
+    ss << std::setw(8) << p.second << " " << p.first;
+    BZLA_MSG(d_bzla->msg, 1, ss.str().c_str());
+  }
+
+  BZLA_MSG(d_bzla->msg, 1, "");
   BZLA_MSG(d_bzla->msg, 1, "value computations:");
   BZLA_MSG(d_bzla->msg, 1, "  inverse:");
   for (const auto &p : d_ls->d_statistics.d_ninv)
