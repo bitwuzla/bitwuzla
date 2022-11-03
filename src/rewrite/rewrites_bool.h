@@ -78,6 +78,10 @@ Node RewriteRule<RewriteRuleKind::AND_BV_LT>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::NOT_EVAL>::_apply(Rewriter& rewriter,
                                                     const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::NOT_NOT>::_apply(Rewriter& rewriter,
+                                                   const Node& node);
+
 // bool_xnor_and
 template <>
 Node RewriteRule<RewriteRuleKind::NOT_XOR>::_apply(Rewriter& rewriter,

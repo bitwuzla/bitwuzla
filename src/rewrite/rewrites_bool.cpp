@@ -580,6 +580,20 @@ RewriteRule<RewriteRuleKind::NOT_EVAL>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match:  (not (not a))
+ * result: a
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::NOT_NOT>::_apply(Rewriter& rewriter,
+                                              const Node& node)
+{
+  (void) rewriter;
+  if (node[0].kind() != Kind::NOT) return node;
+  return node[0][0];
+}
+
+/**
  * match:  (xnor a b) (rewritten to (not (xor a b)))
  * result: (= a b)
  */

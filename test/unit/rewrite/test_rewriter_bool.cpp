@@ -520,6 +520,17 @@ TEST_F(TestRewriterBool, bool_not_eval)
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::NOT, {d_b}));
 }
 
+TEST_F(TestRewriterBool, bool_not_not)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::NOT_NOT;
+  // applies
+  Node not0 = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::NOT, {d_b})});
+  test_rewrite(not0, d_b);
+  test_rewrite(d_nm.mk_node(Kind::NOT, {not0}), d_nm.mk_node(Kind::NOT, {d_b}));
+  // does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::NOT, {d_b}));
+}
+
 TEST_F(TestRewriterBool, bool_not_xor)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::NOT_XOR;

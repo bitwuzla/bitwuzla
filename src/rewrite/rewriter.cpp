@@ -275,6 +275,7 @@ Rewriter::rewrite_not(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(NOT_EVAL);
+    BZLA_APPLY_RW_RULE(NOT_NOT);
     BZLA_APPLY_RW_RULE(NOT_XOR);
     // TODO
   }

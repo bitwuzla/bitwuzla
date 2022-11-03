@@ -194,6 +194,7 @@ enum class RewriteRuleKind
   ITE_BV_OP,
 
   NOT_EVAL,
+  NOT_NOT,
   NOT_XOR,
 
   DISTINCT_CARD,
