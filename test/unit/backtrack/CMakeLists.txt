@@ -1,3 +1,4 @@
 add_unit_test(test_assertion_stack)
 add_unit_test(test_unordered_map)
+add_unit_test(test_unordered_set)
 add_unit_test(test_vector)
