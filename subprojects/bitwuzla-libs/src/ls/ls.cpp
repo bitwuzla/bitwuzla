@@ -309,7 +309,10 @@ LocalSearch<VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
       }
       else
       {
-        d_statistics.d_nconf += 1;
+#ifndef NDEBUG
+        d_statistics.d_nconf[cur->get_kind()] += 1;
+#endif
+        d_statistics.d_nconf_total += 1;
         break;
       }
 

@@ -100,11 +100,12 @@ class LocalSearch
     uint64_t d_nprops_inv  = 0;
     uint64_t d_nprops_cons = 0;
 
-    uint64_t d_nconf = 0;
+    uint64_t d_nconf_total = 0;
 
 #ifndef NDEBUG
     std::unordered_map<NodeKind, uint64_t> d_ninv;
     std::unordered_map<NodeKind, uint64_t> d_ncons;
+    std::unordered_map<NodeKind, uint64_t> d_nconf;
 #endif
   } d_statistics;
 
