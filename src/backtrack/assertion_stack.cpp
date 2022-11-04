@@ -61,13 +61,6 @@ AssertionStack::insert_at_level(size_t level, const Node& assertion)
   }
 }
 
-const std::pair<Node, size_t>&
-AssertionView::operator[](size_t index) const
-{
-  assert(d_start_index + index < d_assertions.size());
-  return d_assertions.get(d_start_index + index);
-}
-
 size_t
 AssertionStack::size() const
 {
@@ -87,15 +80,8 @@ AssertionStack::operator[](size_t index) const
   return d_assertions[index].first;
 }
 
-const std::pair<Node, size_t>&
-AssertionStack::get(size_t index) const
-{
-  assert(index < d_assertions.size());
-  return d_assertions[index];
-}
-
 AssertionView&
-AssertionStack::create_view()
+AssertionStack::view()
 {
   d_views.emplace_back(new AssertionView(*this));
   return *d_views.back();
@@ -142,10 +128,9 @@ AssertionStack::pop()
   size_t size = d_assertions.size();
   for (auto& view : d_views)
   {
-    if (view->d_cur_index > size)
+    if (view->begin() > size)
     {
-      view->d_cur_index   = size;
-      view->d_start_index = size;
+      view->set_index(size);
     }
   }
 }
@@ -153,7 +138,7 @@ AssertionStack::pop()
 /* --- AssertionView public ------------------------------------------------- */
 
 AssertionView::AssertionView(AssertionStack& assertions)
-    : d_assertions(assertions), d_cur_index(0), d_start_index(0)
+    : d_assertions(assertions), d_index(0)
 {
 }
 
@@ -161,40 +146,61 @@ const Node&
 AssertionView::next()
 {
   assert(!empty());
-  return d_assertions[d_cur_index++];
-}
-
-const std::pair<Node, size_t>&
-AssertionView::next_level()
-{
-  assert(!empty());
-  return d_assertions.get(d_cur_index++);
+  return d_assertions[d_index++];
 }
 
 bool
 AssertionView::empty() const
 {
-  return d_cur_index >= d_assertions.size();
+  return begin() >= end();
 }
 
 size_t
 AssertionView::size() const
 {
-  return d_assertions.size() - d_start_index;
+  return end() - begin();
+}
+
+const Node&
+AssertionView::operator[](size_t index) const
+{
+  return d_assertions[index];
+}
+
+size_t
+AssertionView::level(size_t index) const
+{
+  return d_assertions.level(index);
+}
+
+size_t
+AssertionView::begin() const
+{
+  return d_index;
+}
+
+size_t
+AssertionView::end() const
+{
+  return d_assertions.size();
+}
+
+void
+AssertionView::set_index(size_t index)
+{
+  assert(index <= d_assertions.size());
+  d_index = index;
 }
 
 void
 AssertionView::replace(size_t index, const Node& replacement)
 {
-  d_assertions.replace(d_start_index + index, replacement);
+  d_assertions.replace(index, replacement);
 }
 
 void
 AssertionView::insert_at_level(size_t level, const Node& assertion)
 {
-  // Makes sure that we can only insert assertions at levels that can be seen
-  // by this view.
-  assert(d_assertions.get(d_start_index).second <= level);
   d_assertions.insert_at_level(level, assertion);
 }
 

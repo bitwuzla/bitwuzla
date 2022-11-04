@@ -55,13 +55,6 @@ class AssertionVector
   /** Determines if vector was changed since last reset_changed() call. */
   bool changed() const { return d_changed; }
 
-  /** Reset assertions vector. */
-  void reset()
-  {
-    reset_changed();
-    d_assertions.clear();
-  }
-
   bool d_changed = false;
   std::vector<Node> d_assertions;
 };

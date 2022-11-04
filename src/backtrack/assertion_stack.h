@@ -26,26 +26,38 @@ class AssertionView
   /**
    * Get the next unprocessed assertion on the assertion stack.
    *
-   * This will move d_cur_index forward.
+   * This will move d_index forward.
    *
    * @return The next unprocessed assertion.
    */
   const Node& next();
 
-  /**
-   * Get the next unprocessed assertion and associated scope level.
-   *
-   * This will move d_cur_index forward.
-   *
-   * @return The next assertion and its associated scope level. */
-  const std::pair<Node, size_t>& next_level();
+  /** @return True if the view still has assertions to process. */
+  bool empty() const;
 
   /**
-   * @return True if the view still has assertions to process.
-   * @note This is decoupled from size() == 0, since size() computes the number
-   *       of elements relative to d_start_index.
+   * @return The number of assertions to process.
+   * @note The indices returned by begin() are the real indices in the
+   *       assertion stack and therefore begin() < size() does not hold.
    */
-  bool empty() const;
+  size_t size() const;
+
+  /**
+   * @return Assertion and its level at given index relative to d_start_index.
+   */
+  const Node& operator[](size_t index) const;
+
+  /** @return The level of the assertion at given index. */
+  size_t level(size_t index) const;
+
+  /** @return Start index of unprocessed assertions. */
+  size_t begin() const;
+
+  /** @return Points to index after the last unprocessed assertions. */
+  size_t end() const;
+
+  /** Update view to index. */
+  void set_index(size_t index);
 
   /**
    * Replace an assertion.
@@ -63,22 +75,12 @@ class AssertionView
    */
   void insert_at_level(size_t level, const Node& assertion);
 
-  /**
-   * @return Assertion and its level at given index relative to d_start_index.
-   */
-  const std::pair<Node, size_t>& operator[](size_t index) const;
-
-  /** @return The number of assertions relative to d_start_index. */
-  size_t size() const;
-
  private:
   AssertionView(AssertionStack& assertions);
   /** The underlying assertion stack. */
   AssertionStack& d_assertions;
   /** The index of the next assertion to process. */
-  size_t d_cur_index;
-  /** Start index of assertions since last pop(). */
-  size_t d_start_index;
+  size_t d_index;
 };
 
 class AssertionStack : public Backtrackable
@@ -130,8 +132,6 @@ class AssertionStack : public Backtrackable
    */
   const Node& operator[](size_t index) const;
 
-  const std::pair<Node, size_t>& get(size_t index) const;
-
   /** @return Iterator to the first assertion of the stack. */
   auto begin() const { return d_assertions.begin(); }
 
@@ -139,7 +139,7 @@ class AssertionStack : public Backtrackable
   auto end() const { return d_assertions.end(); }
 
   /** @return A new view for the assertion stack. */
-  AssertionView& create_view();
+  AssertionView& view();
 
   /* --- Backtrackable interface -------------------------------------------- */
 

@@ -55,9 +55,12 @@ BvBitblastSolver::~BvBitblastSolver() {}
 Result
 BvBitblastSolver::check()
 {
-  while (!d_assertion_view.empty())
+  for (size_t i = d_assertion_view.begin(), end = d_assertion_view.end();
+       i < end;
+       ++i)
   {
-    const auto& [assertion, level] = d_assertion_view.next_level();
+    const Node& assertion = d_assertion_view[i];
+    size_t level          = d_assertion_view.level(i);
 
     if (level > 0)
     {
@@ -67,6 +70,7 @@ BvBitblastSolver::check()
     bitblast(assertion);
     d_cnf_encoder->encode(bits(assertion)[0], level == 0);
   }
+  d_assertion_view.set_index(d_assertion_view.end());
 
   for (const Node& assumption : d_assumptions)
   {

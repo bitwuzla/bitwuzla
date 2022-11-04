@@ -78,7 +78,7 @@ SolvingContext::options() const
 backtrack::AssertionView&
 SolvingContext::assertions()
 {
-  return d_assertions.create_view();
+  return d_assertions.view();
 }
 
 backtrack::BacktrackManager*
