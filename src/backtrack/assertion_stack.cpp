@@ -112,7 +112,7 @@ AssertionStack::pop()
 {
   assert(!d_control.empty());
   size_t pop_to = d_control.back();
-  assert(pop_to < d_assertions.size());
+  assert(pop_to <= d_assertions.size());
   d_control.pop_back();
 
   // Pop back assertions
