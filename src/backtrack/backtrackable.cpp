@@ -24,22 +24,22 @@ Backtrackable::~Backtrackable()
 void
 BacktrackManager::push()
 {
-  ++d_scope_levels;
   for (auto& bt : d_backtrackables)
   {
     bt->push();
   }
+  ++d_scope_levels;
 }
 
 void
 BacktrackManager::pop()
 {
   assert(d_scope_levels > 0);
-  --d_scope_levels;
   for (auto& bt : d_backtrackables)
   {
     bt->pop();
   }
+  --d_scope_levels;
 }
 
 std::size_t
