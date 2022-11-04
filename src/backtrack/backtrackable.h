@@ -20,6 +20,8 @@ class BacktrackManager
   void push();
   /** Pop scope. */
   void pop();
+  /** @return Number of scopes levels. */
+  std::size_t num_levels() const;
 
  private:
   /** Registers a backtrackable object with this manager. */

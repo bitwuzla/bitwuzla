@@ -48,6 +48,14 @@ BacktrackManager::pop()
   }
 }
 
+std::size_t
+BacktrackManager::num_levels() const
+{
+  return d_scope_levels;
+}
+
+/* --- BacktrackManager private --------------------------------------------- */
+
 void
 BacktrackManager::register_backtrackable(Backtrackable* backtrackable)
 {
