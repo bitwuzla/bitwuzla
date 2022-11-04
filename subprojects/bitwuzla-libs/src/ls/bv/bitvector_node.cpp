@@ -5196,70 +5196,162 @@ BitVectorUrem::is_consistent(const BitVector& t, uint32_t pos_x)
   d_consistent.reset(nullptr);
 
   const BitVectorDomain& x = d_children[pos_x]->domain();
-  if (!x.has_fixed_bits()) return true;
+  bool t_is_ones           = t.is_ones();
+  bool x_has_fixed_bits    = x.has_fixed_bits();
+  uint64_t size            = t.size();
 
-  /* CC: pos_x = 0: (t = ones => mfb(x, ones)) &&
-   *                (t != ones =>
-   *                  (t > (ones - t) => mfb (x, t)) &&
-   *                  (t < (ones - t) => mfb(x, t) ||
-   *                   \exists y. (mfb(x, y) && y> 2*t))
-   *
-   *     pos_x = 1: mfb(x, 0) ||
-   *                ((t = ones => mfb(x, 0)) &&
-   *                 (t != ones => \exists y. (mfb(x, y) && y > t))) */
+  if (x_has_fixed_bits)
+  {
+    /* CC: pos_x = 0: (t = ones => mfb(x, ones)) &&
+     *                (t != ones =>
+     *                  (t > (ones - t) => mfb (x, t)) &&
+     *                  (t < (ones - t) => mfb(x, t) ||
+     *                   \exists y. (mfb(x, y) && y> 2*t))
+     *
+     *     pos_x = 1: mfb(x, 0) ||
+     *                ((t = ones => mfb(x, 0)) &&
+     *                 (t != ones => \exists y. (mfb(x, y) && y > t))) */
 
-  bool t_is_ones = t.is_ones();
-  uint64_t size  = t.size();
+    if (pos_x == 0)
+    {
+      bool mfb = x.match_fixed_bits(t);
 
+      // (t = ones => mfb(x, ones))
+      if (t_is_ones)
+      {
+        if (!mfb)
+        {
+          return false;
+        }
+        d_consistent.reset(new BitVector(BitVector::mk_ones(size)));
+        return true;
+      }
+
+      // mfb(x, t): pick t with probability 0.1
+      if (mfb && d_rng->pick_with_prob(100))
+      {
+        d_consistent.reset(new BitVector(t));
+        return true;
+      }
+
+      // (t != ones =>
+      //   (t > (ones - t) => mfb (x, t)) &&
+      //   (t < (ones - t) => mfb(x, t) ||
+      //    \exists y. (mfb(x, y) && y> 2*t))
+      int32_t cmp_t = t.compare(BitVector::mk_ones(size).ibvsub(t));
+
+      if (cmp_t > 0 && !mfb)
+      {
+        return false;
+      }
+
+      if (cmp_t < 0)
+      {
+        // x > t: pick s > t such that x = s + t does not overflow
+        //        -> t < s < ones - t
+        //        -> 2*t + 1 <= x <= ones
+        BitVector bvres = consistent_value_pos0_aux(t);
+        if (!bvres.is_null())
+        {
+          d_consistent.reset(new BitVector(bvres));
+          return true;
+        }
+        else if (!mfb)
+        {
+          return false;
+        }
+      }
+
+      assert(mfb);
+      d_consistent.reset(new BitVector(t));
+      return true;
+    }
+    else
+    {
+      BitVector zero = BitVector::mk_zero(size);
+      bool mfb       = x.match_fixed_bits(zero);
+
+      // t = ones => mfb(x, 0)
+      if (t_is_ones)
+      {
+        if (!mfb)
+        {
+          return false;
+        }
+        d_consistent.reset(new BitVector(zero));
+        return true;
+      }
+
+      // mfb(x, 0): pick 0 with probability 0.1
+      if (mfb && d_rng->pick_with_prob(100))
+      {
+        d_consistent.reset(new BitVector(zero));
+        return true;
+      }
+
+      // !mfb(x, 0) && (t != ones => \exists y. (mfb(x, y) && y > t))
+      BitVector min = t.bvinc();
+      if (x.is_fixed() && x.lo().compare(min) >= 0)
+      {
+        d_consistent.reset(new BitVector(x.lo()));
+        return true;
+      }
+      BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
+      if (gen.has_random())
+      {
+        d_consistent.reset(new BitVector(gen.random()));
+        return true;
+      }
+      else if (!mfb)
+      {
+        return false;
+      }
+
+      assert(mfb);
+      d_consistent.reset(new BitVector(zero));
+      return true;
+    }
+  }
+
+  assert(!x_has_fixed_bits);
   if (pos_x == 0)
   {
-    bool mfb = x.match_fixed_bits(t);
-
-    if (t_is_ones && !mfb) return false;
-
-    int32_t cmp_t = t.compare(BitVector::mk_ones(size).ibvsub(t));
-
-    if (cmp_t > 0 && !mfb)
+    if (t_is_ones)
     {
-      return false;
+      d_consistent.reset(new BitVector(BitVector::mk_ones(size)));
     }
-
-    if (cmp_t < 0 && !mfb)
+    else if (d_rng->pick_with_prob(100))
     {
-      /* x > t:
-       * pick s > t such that x = s + t does not overflow -> t < s < ones - t
-       * -> 2*t + 1 <= x <= ones */
-      BitVector bvres = consistent_value_pos0_aux(t);
-      bool res        = !bvres.is_null();
-      if (res)
+      d_consistent.reset(new BitVector(t));
+    }
+    else
+    {
+      BitVector max = BitVector::mk_ones(size).ibvsub(t);
+      BitVector min = t.bvinc();
+      if (min.compare(max) > 0)
       {
-        d_consistent.reset(new BitVector(bvres));
+        d_consistent.reset(new BitVector(t));
       }
-      return res;
+      else
+      {
+        d_consistent.reset(
+            new BitVector(BitVector(size, *d_rng, min, max).ibvadd(t)));
+      }
     }
   }
   else
   {
-    if (!x.match_fixed_bits(BitVector::mk_zero(size)))
+    if (t_is_ones || d_rng->pick_with_prob(100))
     {
-      if (t_is_ones)
-      {
-        return false;
-      }
-      BitVector min = t.bvinc();
-      if (x.is_fixed() && x.lo().compare(min) >= 0)
-      {
-        return true;
-      }
-      BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
-      bool res = gen.has_random();
-      if (res)
-      {
-        d_consistent.reset(new BitVector(gen.random()));
-      }
-      return res;
+      d_consistent.reset(new BitVector(BitVector::mk_zero(size)));
+    }
+    else
+    {
+      d_consistent.reset(
+          new BitVector(size, *d_rng, t.bvinc(), BitVector::mk_ones(size)));
     }
   }
+
   return true;
 }
 
@@ -5461,10 +5553,6 @@ BitVectorUrem::inverse_value(const BitVector& t, uint32_t pos_x)
 const BitVector&
 BitVectorUrem::consistent_value(const BitVector& t, uint32_t pos_x)
 {
-  const BitVectorDomain& x = d_children[pos_x]->domain();
-  assert(!x.is_fixed());
-  uint64_t size = x.size();
-
   /**
    * consistent value:
    *   pos_x = 0: t = ones: ones
@@ -5473,60 +5561,13 @@ BitVectorUrem::consistent_value(const BitVector& t, uint32_t pos_x)
    *   pos_x = 1: t = ones: 0
    *              else    : 0 or random value > t
    */
-
-  if (d_consistent == nullptr)
-  {
-    if (pos_x == 0)
-    {
-      if (t.is_ones())
-      {
-        assert(x.match_fixed_bits(BitVector::mk_ones(size)));
-        d_consistent.reset(new BitVector(BitVector::mk_ones(size)));
-      }
-      else if (x.match_fixed_bits(t) && d_rng->pick_with_prob(100))
-      {
-        d_consistent.reset(new BitVector(t));
-      }
-      else
-      {
-        if (x.has_fixed_bits())
-        {
-          assert(x.match_fixed_bits(t));
-          d_consistent.reset(new BitVector(t));
-        }
-        else
-        {
-          BitVector max = BitVector::mk_ones(size).ibvsub(t);
-          BitVector min = t.bvinc();
-          if (min.compare(max) > 0)
-          {
-            d_consistent.reset(new BitVector(t));
-          }
-          else
-          {
-            d_consistent.reset(
-                new BitVector(BitVector(size, *d_rng, min, max).ibvadd(t)));
-          }
-        }
-      }
-    }
-    else
-    {
-      BitVector zero = BitVector::mk_zero(size);
-      if (t.is_ones() || x.has_fixed_bits() || d_rng->pick_with_prob(100))
-      {
-        d_consistent.reset(new BitVector(zero));
-      }
-      else
-      {
-        assert(!x.has_fixed_bits());
-        d_consistent.reset(
-            new BitVector(size, *d_rng, t.bvinc(), BitVector::mk_ones(size)));
-      }
-    }
-  }
-
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
+#endif
   return *d_consistent;
 }
 
