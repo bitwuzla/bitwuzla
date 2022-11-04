@@ -19,12 +19,6 @@ Backtrackable::~Backtrackable()
   }
 }
 
-std::size_t
-Backtrackable::cur_level() const
-{
-  return d_control.size();
-}
-
 /* --- BacktrackManager public ---------------------------------------------- */
 
 void
