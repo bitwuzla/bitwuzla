@@ -69,8 +69,8 @@ SolvingContext::pop()
   d_backtrack_mgr.pop();
 }
 
-option::Options&
-SolvingContext::options()
+const option::Options&
+SolvingContext::options() const
 {
   return d_options;
 }

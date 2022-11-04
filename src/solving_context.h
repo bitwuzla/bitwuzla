@@ -45,7 +45,8 @@ class SolvingContext
   // std::vector<Node>& get_unsat_core();
   // bool is_in_unsat_core(const Node& term) const;
 
-  option::Options& options();
+  /** @return Context options object. */
+  const option::Options& options() const;
 
   backtrack::AssertionView& assertions();
 
