@@ -56,9 +56,9 @@ Options::Options()
                   {SatSolver::CRYPTOMINISAT, "cms"},
                   {SatSolver::KISSAT, "kissat"},
                   {SatSolver::LINGELING, "lingeling"}},
-                 "sat solver",
-                 "sat-engine",
-                 "SE"),
+                 "backend SAT solver",
+                 "sat-solver",
+                 "S"),
       seed(this,
            Option::SEED,
            42,
@@ -67,6 +67,22 @@ Options::Options()
            "seed for the random number generator",
            "seed",
            "s"),
+      verbosity(this,
+                Option::VERBOSITY,
+                0,
+                0,
+                VERBOSITY_MAX,
+                "verbosity level",
+                "verbosity",
+                "v"),
+      bv_solver(this,
+                Option::BV_SOLVER,
+                BvSolver::BITBLAST,
+                {{BvSolver::BITBLAST, "bitblast"},
+                 {BvSolver::PROP, "prop"},
+                 {BvSolver::PREPROP, "preprop"}},
+                "bv solver engine",
+                "bv-solver"),
       // propagation-based local search engine
       prop_nprops(this,
                   Option::PROP_NPROPS,
@@ -89,30 +105,37 @@ Options::Options()
                     PropPathSelection::ESSENTIAL,
                     {{PropPathSelection::ESSENTIAL, "essential"},
                      {PropPathSelection::RANDOM, "random"}},
-                    "propagation path selection mode",
+                    "propagation path selection mode for propagation-based "
+                    "local search engine",
                     "prop-path-sel"),
       prop_prob_pick_inv_value(
           this,
           Option::PROP_PROB_PICK_INV_VALUE,
+          990,
           0,
-          0,
-          1000,
+          PROB_100,
           "probability for producing inverse rather than consistent "
           "values (interpreted as <n>/1000)",
           "prop-prob-pick-inv-value"),
       prop_prob_pick_random_input(
           this,
           Option::PROP_PROB_PICK_RANDOM_INPUT,
+          10,
           0,
-          0,
-          1000,
+          PROB_100,
           "probability for selecting a random input instead of an essential "
           "input (interpreted as <n>/1000)",
           "prop-prob-pick-rand-input"),
+      prop_const_bits(this,
+                      Option::PROP_CONST_BITS,
+                      true,
+                      "use constant bits propagation",
+                      "prop-ineq-bounds"),
       prop_ineq_bounds(this,
                        Option::PROP_INEQ_BOUNDS,
                        true,
-                       "infer inequality bounds",
+                       "infer inequality bounds for invertibility conditions "
+                       "and inverse value computation",
                        "prop-ineq-bounds"),
       prop_opt_lt_concat_sext(
           this,
@@ -120,12 +143,17 @@ Options::Options()
           true,
           "optimization for inverse value computation of inequalities over "
           "concat and sign extension operands",
-          "prop-opt-lt-concat-sext")
+          "prop-opt-lt-concat-sext"),
+      prop_sext(this,
+                Option::PROP_SEXT,
+                true,
+                "use sign_extend nodes for "
+                "concats that represent sign_extend nodes for "
+                "propagation-based local search engine",
+                "prop-sext")
 {
   assert(d_options.size() == static_cast<size_t>(Option::NUM_OPTIONS));
 }
-
-/* --- Options private ------------------------------------------------------ */
 
 void
 Options::set_option_bool(Option opt, bool value)

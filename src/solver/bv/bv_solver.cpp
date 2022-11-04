@@ -18,6 +18,7 @@ BvSolver::is_leaf(const Node& term)
 {
   Kind k = term.kind();
   return k == Kind::CONSTANT
+         || k == Kind::VALUE
          // Quantifiers
          || k == Kind::FORALL
          || k == Kind::EXISTS
@@ -51,7 +52,10 @@ BvSolver::default_value(const Type& type)
 }
 
 BvSolver::BvSolver(SolvingContext& context)
-    : Solver(context), d_bitblast_solver(context)
+    : Solver(context),
+      d_bitblast_solver(context),
+      d_prop_solver(context, d_bitblast_solver),
+      d_cur_solver(context.options().bv_solver())
 {
 }
 
@@ -60,7 +64,22 @@ BvSolver::~BvSolver() {}
 Result
 BvSolver::check()
 {
-  d_sat_state = d_bitblast_solver.check();
+  switch (d_context.options().bv_solver())
+  {
+    case option::BvSolver::BITBLAST:
+      assert(d_cur_solver == option::BvSolver::BITBLAST);
+      d_sat_state = d_bitblast_solver.check();
+      break;
+    case option::BvSolver::PROP:
+      assert(d_cur_solver == option::BvSolver::PROP);
+      d_sat_state = d_prop_solver.check();
+      break;
+    case option::BvSolver::PREPROP:
+      d_cur_solver = option::BvSolver::PROP;
+      assert(false);
+      // TODO
+      break;
+  }
   return d_sat_state;
 }
 
@@ -333,7 +352,12 @@ BvSolver::assignment(const Node& term)
 {
   assert(is_leaf(term));
   assert(term.type().is_bool() || term.type().is_bv());
-  return d_bitblast_solver.value(term);
+  if (d_cur_solver == option::BvSolver::BITBLAST)
+  {
+    return d_bitblast_solver.value(term);
+  }
+  assert(d_cur_solver == option::BvSolver::PROP);
+  return d_prop_solver.value(term);
 }
 
 }  // namespace bzla::bv

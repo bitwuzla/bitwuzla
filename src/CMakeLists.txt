@@ -105,6 +105,7 @@ set(libbitwuzla_src_files
   sat/kissat.cpp
   solver/bv/bv_solver.cpp
   solver/bv/bv_bitblast_solver.cpp
+  solver/bv/bv_prop_solver.cpp
   solver/fp/floating_point.cpp
   solver/fp/rounding_mode.cpp
   solver/fp/symfpu_wrapper.cpp

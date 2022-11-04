@@ -1,7 +1,9 @@
 #ifndef BZLA_SOLVER_BV_BV_SOLVER_H_INCLUDED
 #define BZLA_SOLVER_BV_BV_SOLVER_H_INCLUDED
 
+#include "option/option.h"
 #include "solver/bv/bv_bitblast_solver.h"
+#include "solver/bv/bv_prop_solver.h"
 #include "solver/solver.h"
 
 namespace bzla::bv {
@@ -31,6 +33,11 @@ class BvSolver : public Solver
 
   /** Bitblast subsolver. */
   BvBitblastSolver d_bitblast_solver;
+  /** Propagation-based local search subsolver. */
+  BvPropSolver d_prop_solver;
+
+  /** The currently enabled subsolver. */
+  option::BvSolver d_cur_solver;
 };
 
 }  // namespace bzla::bv

@@ -225,7 +225,7 @@ Node
 Rewriter::rewrite_and(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -255,7 +255,7 @@ Node
 Rewriter::rewrite_distinct(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -270,7 +270,7 @@ Node
 Rewriter::rewrite_not(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -293,7 +293,7 @@ Node
 Rewriter::rewrite_eq(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -321,7 +321,7 @@ Node
 Rewriter::rewrite_ite(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -350,7 +350,7 @@ Node
 Rewriter::rewrite_bv_add(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -377,7 +377,7 @@ Node
 Rewriter::rewrite_bv_and(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -406,7 +406,7 @@ Node
 Rewriter::rewrite_bv_ashr(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -423,7 +423,7 @@ Node
 Rewriter::rewrite_bv_concat(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -443,7 +443,7 @@ Node
 Rewriter::rewrite_bv_extract(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -469,7 +469,7 @@ Node
 Rewriter::rewrite_bv_mul(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -494,7 +494,7 @@ Node
 Rewriter::rewrite_bv_not(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -511,7 +511,7 @@ Node
 Rewriter::rewrite_bv_shl(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -528,7 +528,7 @@ Node
 Rewriter::rewrite_bv_shr(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -547,7 +547,7 @@ Node
 Rewriter::rewrite_bv_slt(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -568,7 +568,7 @@ Node
 Rewriter::rewrite_bv_udiv(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -587,7 +587,7 @@ Node
 Rewriter::rewrite_bv_ult(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -608,7 +608,7 @@ Node
 Rewriter::rewrite_bv_urem(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -626,7 +626,7 @@ Node
 Rewriter::rewrite_bv_xor(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -679,7 +679,7 @@ Node
 Rewriter::rewrite_fp_abs(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -695,7 +695,7 @@ Node
 Rewriter::rewrite_fp_add(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -710,7 +710,7 @@ Node
 Rewriter::rewrite_fp_div(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -725,7 +725,7 @@ Node
 Rewriter::rewrite_fp_is_inf(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -741,7 +741,7 @@ Node
 Rewriter::rewrite_fp_is_nan(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -757,7 +757,7 @@ Node
 Rewriter::rewrite_fp_is_neg(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -772,7 +772,7 @@ Node
 Rewriter::rewrite_fp_is_normal(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -788,7 +788,7 @@ Node
 Rewriter::rewrite_fp_is_pos(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -803,7 +803,7 @@ Node
 Rewriter::rewrite_fp_is_subnormal(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -819,7 +819,7 @@ Node
 Rewriter::rewrite_fp_is_zero(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -835,7 +835,7 @@ Node
 Rewriter::rewrite_fp_le(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -851,7 +851,7 @@ Node
 Rewriter::rewrite_fp_lt(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -867,7 +867,7 @@ Node
 Rewriter::rewrite_fp_max(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -882,7 +882,7 @@ Node
 Rewriter::rewrite_fp_min(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -897,7 +897,7 @@ Node
 Rewriter::rewrite_fp_mul(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -912,7 +912,7 @@ Node
 Rewriter::rewrite_fp_neg(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -928,7 +928,7 @@ Node
 Rewriter::rewrite_fp_rem(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -946,7 +946,7 @@ Node
 Rewriter::rewrite_fp_rti(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -961,7 +961,7 @@ Node
 Rewriter::rewrite_fp_sqrt(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -976,7 +976,7 @@ Node
 Rewriter::rewrite_fp_to_fp_from_bv(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -992,7 +992,7 @@ Node
 Rewriter::rewrite_fp_to_fp_from_fp(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -1008,7 +1008,7 @@ Node
 Rewriter::rewrite_fp_to_fp_from_sbv(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {
@@ -1024,7 +1024,7 @@ Node
 Rewriter::rewrite_fp_to_fp_from_ubv(const Node& node)
 {
   RewriteRuleKind kind;
-  Node res;
+  Node res = node;
 
   if (d_enabled)
   {

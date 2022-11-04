@@ -41,7 +41,7 @@ class AssertionView
   const std::pair<Node, size_t>& next_level();
 
   /**
-   * @return Whether the view still has assertions to process.
+   * @return True if the view still has assertions to process.
    * @note This is decoupled from size() == 0, since size() computes the number
    *       of elements relative to d_start_index.
    */

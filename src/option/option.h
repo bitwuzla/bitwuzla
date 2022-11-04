@@ -18,19 +18,31 @@ enum class Option
   LOG_LEVEL,    // numeric
   SAT_SOLVER,   // enum
   SEED,         // numeric
+  VERBOSITY,    // numeric
+
+  BV_SOLVER,  // enum
 
   PROP_NPROPS,                  // numeric
   PROP_NUPDATES,                // numeric
   PROP_PATH_SEL,                // enum
   PROP_PROB_PICK_INV_VALUE,     // numeric
   PROP_PROB_PICK_RANDOM_INPUT,  // numeric
+  PROP_CONST_BITS,              // bool
   PROP_INEQ_BOUNDS,             // bool
   PROP_OPT_LT_CONCAT_SEXT,      // bool
+  PROP_SEXT,                    // bool
 
   NUM_OPTIONS
 };
 
 /* -------------------------------------------------------------------------- */
+
+enum class BvSolver
+{
+  BITBLAST,
+  PROP,
+  PREPROP,
+};
 
 enum class SatSolver
 {
@@ -300,6 +312,10 @@ class Options
   std::unordered_map<Option, OptionInfo*> d_options;
 
  public:
+  static constexpr uint64_t VERBOSITY_MAX = 4;
+  static constexpr uint64_t PROB_100      = 1000;
+  static constexpr uint64_t PROB_50       = 500;
+
   /** Constructor. */
   Options();
 
@@ -308,17 +324,21 @@ class Options
   OptionNumeric log_level;
   OptionEnum<SatSolver> sat_solver;
   OptionNumeric seed;
+  OptionNumeric verbosity;
 
-  // propagation-based local search engine
+  OptionEnum<BvSolver> bv_solver;
+
+  // BV: propagation-based local search engine
   OptionNumeric prop_nprops;
   OptionNumeric prop_nupdates;
   OptionEnum<PropPathSelection> prop_path_sel;
   OptionNumeric prop_prob_pick_inv_value;
   OptionNumeric prop_prob_pick_random_input;
+  OptionBool prop_const_bits;
   OptionBool prop_ineq_bounds;
   OptionBool prop_opt_lt_concat_sext;
+  OptionBool prop_sext;
 
- private:
   /**
    * Set current value of Boolean option.
    * @note This is mainly necessary to have access to options via their enum
@@ -365,6 +385,8 @@ class Options
    * @return The current value of an enum option.
    */
   const std::string& get_option_enum(Option opt) const;
+
+ private:
   /**
    * Register option.
    * @note This is mainly necessary to have access to options via their enum

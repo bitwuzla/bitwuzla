@@ -32,6 +32,9 @@ class Rewriter
    */
   Node invert_node(const Node& node);
 
+  /** Disable all rewrites except for operator elimination rewrites. */
+  void disable() { d_enabled = false; }
+
  private:
   const Node& _rewrite(const Node& node);
 

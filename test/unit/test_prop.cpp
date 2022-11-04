@@ -16,7 +16,7 @@ extern "C" {
 }
 
 #include "bv/bitvector.h"
-#include "ls/bitvector_domain.h"
+#include "ls/bv/bitvector_domain.h"
 #include "rng/rng.h"
 
 namespace bzla {
@@ -236,7 +236,7 @@ TestProp::test_prop_aux(BzlaNodeKind kind,
   }
 
   int32_t res = bzla_check_sat(bzla, -1, -1);
-  assert(res == BZLA_RESULT_SAT || res == BZLA_RESULT_UNSAT);
+  assert(res == BZLA_RESULT_SAT);
 
   bzla_bv_free(bzla->mm, t_bv);
   bzla_node_release(bzla, t);

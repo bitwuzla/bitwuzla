@@ -11,8 +11,9 @@ using namespace node;
 
 /* --- SolvingContext public ----------------------------------------------- */
 
-SolvingContext::SolvingContext()
-    : d_assertions(&d_backtrack_mgr),
+SolvingContext::SolvingContext(const option::Options& options)
+    : d_options(options),
+      d_assertions(&d_backtrack_mgr),
       d_preprocessor(*this),
       d_rewriter(),
       d_bv_solver(*this)
@@ -60,6 +61,12 @@ void
 SolvingContext::pop()
 {
   d_backtrack_mgr.pop();
+}
+
+option::Options&
+SolvingContext::options()
+{
+  return d_options;
 }
 
 backtrack::AssertionView&
