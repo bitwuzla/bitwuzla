@@ -289,7 +289,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       else
       {
 #ifndef NDEBUG
-        d_statistics.d_nconf[cur->get_kind()] += 1;
+        d_statistics.d_nconf[cur->kind()] += 1;
 #endif
         d_statistics.d_nconf_total += 1;
         break;
