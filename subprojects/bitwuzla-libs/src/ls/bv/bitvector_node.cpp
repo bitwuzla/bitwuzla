@@ -1473,19 +1473,26 @@ BitVectorMul::is_invertible(const BitVector& t,
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
+  /**
+   * IC_wo: ((-s | s) & t) = t
+   * IC:    IC_wo &&
+   *        (s = 0 || ((odd(s) => mfb(x, t * s^-1)) &&
+   *                  (!odd(s) => mfb (x << c, y << c))))
+   *        with c = ctz(s) and y = (t >> c) * (s >> c)^-1
+   *
+   * Inverse value:
+   *   s = 0 (=> t = 0): random bit-vector
+   *   s odd           : multiplicative inverse s^-1
+   *   s even          : random value in domain
+   *                     x[size - 1:size - ctz] o y[size - ctz(s) - 1:0]
+   *                     with y = (t >> ctz(s)) * (s >> ctz(s))^-1
+   */
   uint64_t pos_s           = 1 - pos_x;
   const BitVector& s       = child(pos_s)->assignment();
   const BitVectorDomain& x = child(pos_x)->domain();
 
-  /** IC_wo: ((-s | s) & t) = t */
   bool ic_wo = s.bvneg().ibvor(s).ibvand(t).compare(t) == 0;
 
-  /**
-   * IC: IC_wo &&
-   *     (s = 0 || ((odd(s) => mfb(x, t * s^-1)) &&
-   *               (!odd(s) => mfb (x << c, y << c))))
-   *     with c = ctz(s) and y = (t >> c) * (s >> c)^-1
-   */
   if (ic_wo)
   {
     BitVector min_lo, max_lo, min_hi, max_hi;
@@ -1669,23 +1676,54 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
-  const BitVectorDomain& x = child(pos_x)->domain();
-  if (!x.has_fixed_bits()) return true;
-
   /**
-   * CC: (t != 0 => xhi != 0) &&
-   *     (odd(t) => xhi[lsb] != 0) &&
-   *     (!odd(t) => \exists y. (mcb(x, y) && ctz(t) >= ctz(y))
+   * CC_wo: true
+   * CC:    (t != 0 => xhi != 0) &&
+   *        (odd(t) => xhi[lsb] != 0) &&
+   *        (!odd(t) => \exists y. (mcb(x, y) && ctz(t) >= ctz(y))
+   *
+   * Consistent value:
+   *   t = 0: random value
+   *   t > 0: t odd : random odd value
+   *          t even: random even value > 0 with ctz(x) <= ctz(t)
    */
 
-  if (x.hi().is_zero()) return t.is_zero();
-
-  bool is_odd = t.get_lsb();
-  if (is_odd && !x.hi().get_lsb()) return false;
-
-  if (!is_odd && x.has_fixed_bits())
+  const BitVectorDomain& x = child(pos_x)->domain();
+  uint64_t size            = t.size();
+  if (x.has_fixed_bits())
   {
-    uint64_t size  = t.size();
+    if (x.hi().is_zero())
+    {
+      if (t.is_zero())
+      {
+        d_consistent.reset(new BitVector(x.hi()));
+        return true;
+      }
+      return false;
+    }
+
+    if (t.get_lsb())  // odd
+    {
+      if (!x.hi().get_lsb())
+      {
+        return false;
+      }
+      if (x.is_fixed())
+      {
+        d_consistent.reset(new BitVector(x.lo()));
+      }
+      else
+      {
+        BitVectorDomainGenerator gen(x, d_rng, BitVector::mk_one(size), x.hi());
+        d_consistent.reset(new BitVector(gen.random()));
+        if (!d_consistent->get_lsb())
+        {
+          assert(!x.is_fixed_bit_false(0));
+          d_consistent->set_bit(0, true);
+        }
+      }
+      return true;
+    }
     uint64_t ctz_t = t.count_trailing_zeros();
     BitVectorDomainGenerator gen(
         x,
@@ -1694,7 +1732,8 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
         x.hi());
     assert(gen.has_random() || x.is_fixed());
     BitVector tmp = gen.has_random() ? gen.random() : x.lo();
-    bool res      = false;
+
+    bool res = false;
     for (uint64_t i = 0; i < size && i <= ctz_t; ++i)
     {
       if (!x.is_fixed_bit_false(i))
@@ -1715,8 +1754,55 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
         tmp.set_bit(i, true);
       }
       d_consistent.reset(new BitVector(tmp));
+      return true;
     }
-    return res;
+    return false;
+  }
+  if (t.is_zero())
+  {
+    d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng)));
+  }
+  else
+  {
+    d_consistent.reset(new BitVector(BitVector(
+        x.size(), *d_rng, BitVector::mk_one(size), BitVector::mk_ones(size))));
+
+    if (t.get_lsb())
+    {
+      if (!d_consistent->get_lsb())
+      {
+        d_consistent->set_bit(0, true);
+      }
+    }
+    else
+    {
+      assert(!x.has_fixed_bits());
+      uint64_t ctz_t = t.count_trailing_zeros();
+      /* choose consistent value as 2^n with prob 0.1 */
+      if (d_rng->pick_with_prob(100))
+      {
+        d_consistent->iset(0);
+        d_consistent->set_bit(d_rng->pick<uint64_t>(0, ctz_t - 1), true);
+      }
+      /* choose consistent value as t / 2^n with prob 0.1 */
+      else if (d_rng->pick_with_prob(100))
+      {
+        d_consistent->iset(t);
+        uint64_t r = d_rng->pick<uint64_t>(0, ctz_t);
+        if (r > 0)
+        {
+          d_consistent->ibvshr(r);
+        }
+      }
+      /* choose random value with ctz(t) >= ctz(res) with prob 0.8 */
+      else
+      {
+        if (d_consistent->count_trailing_zeros() > ctz_t)
+        {
+          d_consistent->set_bit(d_rng->pick<uint64_t>(0, ctz_t - 1), true);
+        }
+      }
+    }
   }
   return true;
 }
@@ -1742,84 +1828,13 @@ BitVectorMul::inverse_value(const BitVector& t, uint64_t pos_x)
 const BitVector&
 BitVectorMul::consistent_value(const BitVector& t, uint64_t pos_x)
 {
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
-
-  /**
-   * consistent value:
-   *   t = 0: random value
-   *   t > 0: t odd : random odd value
-   *          t even: random even value > 0 with ctz(x) <= ctz(t)
-   */
-
-  if (d_consistent == nullptr)
-  {
-    if (x.has_fixed_bits())
-    {
-      BitVectorDomainGenerator gen(x, d_rng);
-      d_consistent.reset(new BitVector(gen.random()));
-    }
-    else
-    {
-      d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng)));
-    }
-
-    if (!t.is_zero())
-    {
-      while (d_consistent->is_zero())
-      {
-        if (x.has_fixed_bits())
-        {
-          BitVectorDomainGenerator gen(x, d_rng);
-          d_consistent.reset(new BitVector(gen.random()));
-        }
-        else
-        {
-          d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng)));
-        }
-      }
-
-      if (t.get_lsb())
-      {
-        if (!d_consistent->get_lsb())
-        {
-          assert(!x.is_fixed_bit_false(0));
-          d_consistent->set_bit(0, true);
-        }
-      }
-      else
-      {
-        assert(!x.has_fixed_bits());
-        uint64_t ctz_t = t.count_trailing_zeros();
-        /* choose consistent value as 2^n with prob 0.1 */
-        if (d_rng->pick_with_prob(100))
-        {
-          d_consistent->iset(0);
-          d_consistent->set_bit(d_rng->pick<uint64_t>(0, ctz_t - 1), true);
-        }
-        /* choose consistent value as t / 2^n with prob 0.1 */
-        else if (d_rng->pick_with_prob(100))
-        {
-          d_consistent->iset(t);
-          uint64_t r = d_rng->pick<uint64_t>(0, ctz_t);
-          if (r > 0)
-          {
-            d_consistent->ibvshr(r);
-          }
-        }
-        /* choose random value with ctz(t) >= ctz(res) with prob 0.8 */
-        else
-        {
-          if (d_consistent->count_trailing_zeros() > ctz_t)
-          {
-            d_consistent->set_bit(d_rng->pick<uint64_t>(0, ctz_t - 1), true);
-          }
-        }
-      }
-    }
-  }
-
   assert(x.match_fixed_bits(*d_consistent));
+#endif
   return *d_consistent;
 }
 
