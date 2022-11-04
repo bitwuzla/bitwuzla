@@ -14,7 +14,7 @@ class PassRewrite : public PreprocessingPass
  public:
   PassRewrite(Rewriter& rewriter) : PreprocessingPass(rewriter) {}
 
-  void apply(backtrack::AssertionView& assertions) override;
+  void apply(AssertionVector& assertions) override;
 
   Node process(const Node& term) override;
 };

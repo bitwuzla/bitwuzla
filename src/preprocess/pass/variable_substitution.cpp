@@ -9,102 +9,110 @@ namespace bzla::preprocess::pass {
 
 using namespace node;
 
-void
-PassVariableSubstitution::apply(backtrack::AssertionView& assertions)
-{
-  if (d_substitutions.empty())
-  {
-    return;
-  }
+namespace {
 
-  NodeManager& nm = NodeManager::get();
-  d_substitution_map.clear();
-  std::unordered_set<Node> skip_subst;
-  size_t num_levels = d_substitutions.cur_level();
-  size_t is         = 0;
-  size_t ia         = 0;
-  for (size_t level = 0; level <= num_levels; ++level)
-  {
-    for (size_t size = d_substitutions.size(); is < size; ++is)
-    {
-      const auto& [var, term, slevel] = d_substitutions[is];
-      if (slevel != level)
-      {
-        break;
-      }
-      d_substitution_map.emplace(var, term);
-    }
-
-    remove_indirect_cycles(d_substitution_map);
-
-    // Process assertions for current level.
-    d_substitution_cache.clear();
-    for (size_t size = assertions.size(); ia < size; ++ia)
-    {
-      const auto& [assertion, alevel] = assertions[ia];
-      // Only process assertions of current level.
-      if (alevel != level)
-      {
-        break;
-      }
-      // Skip substitution assertions if still needed.
-      if (skip_subst.find(assertion) != skip_subst.end())
-      {
-        continue;
-      }
-      const Node& preprocessed =
-          substitute(assertion, d_substitution_map, d_substitution_cache);
-      const Node& rewritten = d_rewriter.rewrite(preprocessed);
-      assertions.replace(ia, rewritten);
-    }
-
-    // If variable still occurs in previous levels we need to keep the variable
-    // substitution assertion.
-    for (size_t i = is, size = d_substitutions.size(); i < size; ++i)
-    {
-      const auto& [var, term, slevel] = d_substitutions[i];
-      assert(slevel > level);
-      auto it = d_substitution_cache.find(var);
-      if (it != d_substitution_cache.end() && it->second == var)
-      {
-        skip_subst.insert(nm.mk_node(Kind::EQUAL, {var, term}));
-      }
-    }
-  }
-  assert(is == d_substitutions.size());
-
-  // TODO: add new variable substitutions
-}
-
-void
-PassVariableSubstitution::register_assertion(const Node& assertion)
+std::pair<Node, Node>
+get_var_term(const Node& assertion)
 {
   if (assertion.kind() == Kind::EQUAL)
   {
     if (assertion[0].kind() == Kind::CONSTANT)
     {
-      if (!is_direct_cycle(assertion[0], assertion[1]))
-      {
-        d_substitutions.emplace_back(
-            assertion[0], assertion[1], d_substitutions.cur_level());
-      }
+      return std::make_pair(assertion[0], assertion[1]);
     }
     else if (assertion[1].kind() == Kind::CONSTANT)
     {
-      if (!is_direct_cycle(assertion[1], assertion[0]))
-      {
-        d_substitutions.emplace_back(
-            assertion[1], assertion[0], d_substitutions.cur_level());
-      }
+      return std::make_pair(assertion[1], assertion[0]);
     }
   }
+  return std::make_pair(Node(), Node());
+}
+
+}  // namespace
+
+void
+PassVariableSubstitution::apply(AssertionVector& assertions)
+{
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  {
+    const Node& assertion = assertions[i];
+    if (register_assertion(assertion))
+    {
+      d_substitution_assertions.insert(assertion);
+    }
+  }
+
+  if (d_substitutions.empty())
+  {
+    return;
+  }
+
+  auto& substitution_map = d_cache.substitutions();
+
+  // Substitutions and cache will be repopulated below
+  substitution_map.clear();
+  d_cache.cache().clear();
+
+  // Compute substitution map and remove cycles
+  substitution_map.insert(d_substitutions.begin(), d_substitutions.end());
+  remove_indirect_cycles(substitution_map);
+
+  // Apply substitutions.
+  //
+  // Note: For substitution assertions, we only process the term side of the
+  // assertion and do not eliminate the assertion itself since we have to keep
+  // the variable equality for cases where the variable still occurs in
+  // lower levels (if variable substitution assertion was added in a scope > 0).
+  // We could check whether the variable occurs in lower levels, but for now
+  // we keep the assertion since this makes it simpler overall.
+  NodeManager& nm = NodeManager::get();
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  {
+    const Node& assertion = assertions[i];
+    // Keep variable substitution assertion, but apply substitutions in term.
+    if (d_substitution_assertions.find(assertion)
+        != d_substitution_assertions.end())
+    {
+      auto [var, term] = get_var_term(assertion);
+      assert(!var.is_null());
+      const Node& rewritten =
+          d_rewriter.rewrite(nm.mk_node(Kind::EQUAL, {var, process(term)}));
+      assertions.replace(i, rewritten);
+      // Add new substitution assertion to cache in order to avoid that this
+      // new assertion will be eliminated.
+      d_substitution_assertions.insert(rewritten);
+    }
+    else
+    {
+      assertions.replace(i, process(assertion));
+    }
+  }
+}
+
+bool
+PassVariableSubstitution::register_assertion(const Node& assertion)
+{
+  const auto [var, term] = get_var_term(assertion);
+  if (!var.is_null())
+  {
+    if (d_substitutions.find(var) != d_substitutions.end())
+    {
+      return false;
+    }
+    if (!is_direct_cycle(var, term))
+    {
+      d_substitutions.emplace(var, term);
+      return true;
+    }
+  }
+  return false;
 }
 
 Node
 PassVariableSubstitution::process(const Node& term)
 {
   return d_rewriter.rewrite(
-      substitute(term, d_substitution_map, d_substitution_cache));
+      substitute(term, d_cache.substitutions(), d_cache.cache()));
 }
 
 /* --- PassVariableSubstitution private ------------------------------------- */
@@ -214,11 +222,11 @@ PassVariableSubstitution::is_direct_cycle(const Node& var,
 
 Node
 PassVariableSubstitution::substitute(
-    const Node& assertion,
+    const Node& term,
     const std::unordered_map<Node, Node>& substitutions,
     std::unordered_map<Node, Node>& cache) const
 {
-  node::node_ref_vector visit{assertion};
+  node::node_ref_vector visit{term};
   NodeManager& nm = NodeManager::get();
 
   do
@@ -244,7 +252,8 @@ PassVariableSubstitution::substitute(
       auto its = substitutions.find(cur);
       if (its != substitutions.end())
       {
-        auto iit   = cache.find(its->second);
+        auto iit = cache.find(its->second);
+        assert(iit != cache.end());
         it->second = iit->second;
       }
       else if (cur.num_children() > 0)
@@ -273,7 +282,37 @@ PassVariableSubstitution::substitute(
     visit.pop_back();
   } while (!visit.empty());
 
-  return cache.at(assertion);
+  return cache.at(term);
+}
+
+/* --- PassVariableSubstitution::Cache -------------------------------------- */
+
+PassVariableSubstitution::Cache::Cache(backtrack::BacktrackManager* mgr)
+    : Backtrackable(mgr), d_map(mgr), d_cache(mgr)
+{
+  d_map.emplace_back();
+  d_cache.emplace_back();
+}
+
+void
+PassVariableSubstitution::Cache::push()
+{
+  // Make copy of previous level to allow calling process() after a pop()
+  // without calling preprocess().
+  d_map.emplace_back(d_map.back());
+  d_cache.emplace_back(d_cache.back());
+}
+
+std::unordered_map<Node, Node>&
+PassVariableSubstitution::Cache::substitutions()
+{
+  return d_map.back();
+}
+
+std::unordered_map<Node, Node>&
+PassVariableSubstitution::Cache::cache()
+{
+  return d_cache.back();
 }
 
 }  // namespace bzla::preprocess::pass

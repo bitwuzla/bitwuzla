@@ -23,6 +23,9 @@ class SolvingContext
   /** Solve the current set of assertions in the context. */
   Result solve();
 
+  /** Preprocess current set of assertions. */
+  Result preprocess();
+
   /** Assert formula to context. */
   void assert_formula(const Node& formula);
 
@@ -48,11 +51,11 @@ class SolvingContext
 
   backtrack::BacktrackManager* backtrack_mgr();
 
+  preprocess::Preprocessor& preprocessor() { return d_preprocessor; };
+
   Rewriter& rewriter();
 
  private:
-  void register_assertion(const Node& formula);
-
   option::Options d_options;
 
   backtrack::BacktrackManager d_backtrack_mgr;

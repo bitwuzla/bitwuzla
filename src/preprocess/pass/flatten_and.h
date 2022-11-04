@@ -14,7 +14,7 @@ class PassFlattenAnd : public PreprocessingPass
  public:
   PassFlattenAnd(Rewriter& rewriter) : PreprocessingPass(rewriter) {}
 
-  void apply(backtrack::AssertionView& assertions) override;
+  void apply(AssertionVector& assertions) override;
 };
 
 }  // namespace bzla::preprocess::pass

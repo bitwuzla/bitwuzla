@@ -10,16 +10,15 @@ namespace bzla::preprocess::pass {
 using namespace node;
 
 void
-PassFlattenAnd::apply(backtrack::AssertionView& assertions)
+PassFlattenAnd::apply(AssertionVector& assertions)
 {
   std::vector<Node> visit;
   std::unordered_set<Node> cache;
-  std::vector<std::pair<Node, size_t>> new_assertions;
 
   NodeManager& nm = NodeManager::get();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    const auto [assertion, level] = assertions[i];
+    const Node& assertion = assertions[i];
     if (assertion.kind() == Kind::AND)
     {
       visit.insert(visit.end(), assertion.rbegin(), assertion.rend());
@@ -38,14 +37,10 @@ PassFlattenAnd::apply(backtrack::AssertionView& assertions)
         }
         else
         {
-          new_assertions.emplace_back(cur, level);
+          assertions.push_back(cur);
         }
       }
     }
-  }
-  for (const auto& [assertion, level] : new_assertions)
-  {
-    assertions.insert_at_level(level, assertion);
   }
 }
 

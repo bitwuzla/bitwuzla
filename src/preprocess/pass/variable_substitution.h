@@ -1,6 +1,8 @@
 #ifndef BZLA_PREPROCESS_PASS_VARIABLE_SUBSTITUTION_H_INCLUDED
 #define BZLA_PREPROCESS_PASS_VARIABLE_SUBSTITUTION_H_INCLUDED
 
+#include "backtrack/unordered_map.h"
+#include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "node/unordered_node_ref_map.h"
 #include "preprocess/preprocessing_pass.h"
@@ -16,13 +18,14 @@ class PassVariableSubstitution : public PreprocessingPass
  public:
   PassVariableSubstitution(Rewriter& rewriter,
                            backtrack::BacktrackManager* backtrack_mgr)
-      : PreprocessingPass(rewriter), d_substitutions(backtrack_mgr)
+      : PreprocessingPass(rewriter),
+        d_substitutions(backtrack_mgr),
+        d_substitution_assertions(backtrack_mgr),
+        d_cache(backtrack_mgr)
   {
   }
 
-  void apply(backtrack::AssertionView& assertions) override;
-
-  void register_assertion(const Node& assertion);
+  void apply(AssertionVector& assertions) override;
 
   /** Process term and apply currently cached substitutions. */
   Node process(const Node& term) override;
@@ -32,16 +35,43 @@ class PassVariableSubstitution : public PreprocessingPass
 
   bool is_direct_cycle(const Node& var, const Node& term) const;
 
-  Node substitute(const Node& assertion,
+  Node substitute(const Node& term,
                   const std::unordered_map<Node, Node>& substitutions,
                   std::unordered_map<Node, Node>& cache) const;
 
-  backtrack::vector<std::tuple<Node, Node, size_t>> d_substitutions;
+  bool register_assertion(const Node& assertion);
 
-  /** Substitution cache of latest substitution pass. */
-  // TODO: Needs to be backtrackable, put into backtrack::vector?
-  std::unordered_map<Node, Node> d_substitution_map;
-  std::unordered_map<Node, Node> d_substitution_cache;
+  backtrack::unordered_map<Node, Node> d_substitutions;
+  backtrack::unordered_set<Node> d_substitution_assertions;
+
+  /** Backtrackable cache. */
+  class Cache : public backtrack::Backtrackable
+  {
+   public:
+    Cache(backtrack::BacktrackManager* mgr);
+
+    void push() override;
+
+    void pop() override
+    {
+      // Nothing to do
+    }
+
+    /** @return Current substitution map. */
+    std::unordered_map<Node, Node>& substitutions();
+
+    /** @return Current substitution cache. */
+    std::unordered_map<Node, Node>& cache();
+
+   private:
+    /** Backtrackable substitution map. One map per scope level. */
+    backtrack::vector<std::unordered_map<Node, Node>> d_map;
+    /** Backtrackable substitution cache. One cache per scope level. */
+    backtrack::vector<std::unordered_map<Node, Node>> d_cache;
+  };
+
+  /** Backtrackable substitution cache. */
+  Cache d_cache;
 };
 
 }  // namespace bzla::preprocess::pass

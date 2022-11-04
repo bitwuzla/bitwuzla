@@ -11,11 +11,11 @@ using namespace node;
 /* --- PassElimLambda public ------------------------------------------------ */
 
 void
-PassElimLambda::apply(backtrack::AssertionView& assertions)
+PassElimLambda::apply(AssertionVector& assertions)
 {
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    assertions.replace(i, process(assertions[i].first));
+    assertions.replace(i, process(assertions[i]));
   }
 }
 

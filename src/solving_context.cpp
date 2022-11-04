@@ -23,16 +23,22 @@ SolvingContext::SolvingContext(const option::Options& options)
 Result
 SolvingContext::solve()
 {
-  d_preprocessor.preprocess();
+  preprocess();
   d_sat_state = d_bv_solver.check();
   return d_sat_state;
+}
+
+Result
+SolvingContext::preprocess()
+{
+  return d_preprocessor.preprocess();
 }
 
 void
 SolvingContext::assert_formula(const Node& formula)
 {
   assert(formula.type().is_bool());
-  register_assertion(formula);
+  d_assertions.push_back(formula);
 }
 
 Node
@@ -85,15 +91,6 @@ Rewriter&
 SolvingContext::rewriter()
 {
   return d_rewriter;
-}
-
-void
-SolvingContext::register_assertion(const Node& assertion)
-{
-  if (d_assertions.push_back(assertion))
-  {
-    d_preprocessor.register_assertion(assertion);
-  }
 }
 
 }  // namespace bzla
