@@ -811,6 +811,14 @@ BitVectorAnd::is_invertible(const BitVector& t,
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
+  /**
+   * IC_wo: (t & s) = t
+   * IC:    IC_wo && ((s & hi_x) & m) = (t & m)
+   *        with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits
+   *
+   * Inverse value: (t & s) | (~s & rand)
+   */
+
   uint64_t pos_s           = 1 - pos_x;
   const BitVector& s       = child(pos_s)->assignment();
   BitVectorNode* op_x      = child(pos_x);
@@ -820,59 +828,83 @@ BitVectorAnd::is_invertible(const BitVector& t,
   BitVector* min_s         = op_x->min_s();
   BitVector* max_s         = op_x->max_s();
 
-  /** IC_wo: (t & s) = t */
-  bool res = t.bvand(s).compare(t) == 0;
+  bool ic               = t.bvand(s).compare(t) == 0;  // IC_wo
+  bool x_has_fixed_bits = x.has_fixed_bits();
 
-  /**
-   * IC: IC_wo && ((s & hi_x) & m) = (t & m)
-   *     with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits
-   */
-  if (res && x.has_fixed_bits())
+  if (ic && x_has_fixed_bits)
   {
     if (x.is_fixed() && x.lo().bvand(s).compare(t) != 0)
     {
       return false;
     }
     BitVector mask = x.lo().bvxnor(x.hi());
-    res            = s.bvand(x.hi()).ibvand(mask).compare(t.bvand(mask)) == 0;
+    ic             = s.bvand(x.hi()).ibvand(mask).compare(t.bvand(mask)) == 0;
   }
 
-  if (res && (min_u || max_u || min_s || max_s))
+  if (ic)
   {
-    BitVector min_lo, max_lo, min_hi, max_hi;
-    compute_normalized_bounds(s, t, pos_x, min_lo, max_lo, min_hi, max_hi);
-    if (min_hi.is_null() && max_hi.is_null() && min_lo.is_null()
-        && max_lo.is_null())
+    if (min_u || max_u || min_s || max_s)
     {
-      return false;
-    }
-    assert(!d_lo.is_null() && !d_hi.is_null());
-    if (d_lo.compare(d_hi) == 0)
-    {
+      BitVector min_lo, max_lo, min_hi, max_hi;
+      compute_normalized_bounds(s, t, pos_x, min_lo, max_lo, min_hi, max_hi);
+      if (min_hi.is_null() && max_hi.is_null() && min_lo.is_null()
+          && max_lo.is_null())
+      {
+        return false;
+      }
+      assert(!d_lo.is_null() && !d_hi.is_null());
+      if (d_lo.compare(d_hi) == 0)
+      {
+        if (!is_essential_check)
+        {
+          d_inverse.reset(new BitVector(d_lo));
+        }
+        return true;
+      }
+      BitVectorDomain tmp(x.lo().bvor(t), x.hi().bvand(s.bvxnor(t)));
+      BitVectorDomainDualGenerator gen(tmp,
+                                       d_rng,
+                                       min_lo.is_null() ? nullptr : &min_lo,
+                                       max_lo.is_null() ? nullptr : &max_lo,
+                                       min_hi.is_null() ? nullptr : &min_hi,
+                                       max_hi.is_null() ? nullptr : &max_hi);
+      if (!gen.has_random())
+      {
+        return false;
+      }
       if (!is_essential_check)
       {
-        d_inverse.reset(new BitVector(d_lo));
+        d_inverse.reset(new BitVector(gen.random()));
       }
       return true;
     }
-    BitVectorDomain tmp(x.lo().bvor(t), x.hi().bvand(s.bvxnor(t)));
-    BitVectorDomainDualGenerator gen(tmp,
-                                     d_rng,
-                                     min_lo.is_null() ? nullptr : &min_lo,
-                                     max_lo.is_null() ? nullptr : &max_lo,
-                                     min_hi.is_null() ? nullptr : &min_hi,
-                                     max_hi.is_null() ? nullptr : &max_hi);
-    if (!gen.has_random())
-    {
-      return false;
-    }
+
     if (!is_essential_check)
     {
-      d_inverse.reset(new BitVector(gen.random()));
+      BitVector rand;
+      if (x_has_fixed_bits)
+      {
+        if (x.is_fixed())
+        {
+          rand = x.lo();
+        }
+        else
+        {
+          BitVectorDomainGenerator gen(x, d_rng);
+          assert(gen.has_random());
+          rand = gen.random();
+        }
+      }
+      else
+      {
+        rand = BitVector(t.size(), *d_rng);
+      }
+      d_inverse.reset(new BitVector(t.bvand(s).bvor(s.bvnot().ibvand(rand))));
     }
     return true;
   }
-  return res;
+
+  return false;
 }
 
 bool
@@ -881,65 +913,62 @@ BitVectorAnd::is_consistent(const BitVector& t, uint64_t pos_x)
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
-  const BitVectorDomain& x = child(pos_x)->domain();
-  if (!x.has_fixed_bits()) return true;
+  /**
+   * CC_wo: true
+   * CC:    t & hi_x = t
+   *
+   * Consistent value: t | rand
+   */
 
-  /* CC: t & hi_x = t */
-  return t.compare(t.bvand(x.hi())) == 0;
+  const BitVectorDomain& x = child(pos_x)->domain();
+  if (x.has_fixed_bits())
+  {
+    if (t.compare(t.bvand(x.hi())) == 0)
+    {
+      if (x.is_fixed())
+      {
+        d_consistent.reset(new BitVector(x.lo()));
+      }
+      else
+      {
+        BitVectorDomainGenerator gen(x, d_rng);
+        d_consistent.reset(new BitVector(gen.random().ibvor(t)));
+      }
+      return true;
+    }
+    return false;
+  }
+  d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng).ibvor(t)));
+  return true;
 }
 
 const BitVector&
 BitVectorAnd::inverse_value(const BitVector& t, uint64_t pos_x)
 {
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
-
-  if (d_inverse == nullptr)
-  {
-    /** inverse value: (t & s) | (~s & rand) */
-
-    uint64_t size = t.size();
-    BitVector rand;
-    if (x.has_fixed_bits())
-    {
-      BitVectorDomainGenerator gen(x, d_rng);
-      assert(gen.has_random());
-      rand = gen.random();
-    }
-    else
-    {
-      rand = BitVector(size, *d_rng);
-    }
-    d_inverse.reset(new BitVector(t.bvand(s).bvor(s.bvnot().ibvand(rand))));
-  }
-
+  assert(d_inverse);
   assert(t.compare(d_inverse->bvand(s)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
+#endif
   return *d_inverse;
 }
 
 const BitVector&
 BitVectorAnd::consistent_value(const BitVector& t, uint64_t pos_x)
 {
-  assert(d_consistent == nullptr);
-
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
-
-  /** consistent value: t | rand */
-
-  if (x.has_fixed_bits())
-  {
-    BitVectorDomainGenerator gen(x, d_rng);
-    d_consistent.reset(new BitVector(gen.random().ibvor(t)));
-  }
-  else
-  {
-    d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng).ibvor(t)));
-  }
   assert(x.match_fixed_bits(*d_consistent));
+#endif
   return *d_consistent;
 }
 
