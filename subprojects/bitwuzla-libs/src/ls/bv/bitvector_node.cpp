@@ -1231,37 +1231,77 @@ BitVectorEq::is_invertible(const BitVector& t,
                            uint64_t pos_x,
                            bool is_essential_check)
 {
-  (void) is_essential_check;
-
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
+
+  /**
+   * IC_wo: true
+   * IC:    t = 0: (hi_x != lo_x) || (hi_x != s)
+   *        t = 1: mfb(x, s)
+   *
+   * Inverse value:
+   *   t = 0: random bit-vector != s
+   *   t = 1: s
+   */
 
   uint64_t pos_s           = 1 - pos_x;
   const BitVector& s       = child(pos_s)->assignment();
   const BitVectorDomain& x = child(pos_x)->domain();
 
-  /**
-   * IC: t = 0: (hi_x != lo_x) || (hi_x != s)
-   *     t = 1: mfb(x, s)
-   */
   if (x.has_fixed_bits())
   {
     if (x.is_fixed())
     {
       if (x.lo().bveq(s).compare(t) == 0)
       {
+        if (!is_essential_check)
+        {
+          d_inverse.reset(new BitVector(x.lo()));
+        }
         return true;
       }
       return false;
     }
     if (t.is_false())
     {
-      return x.hi().compare(x.lo()) || x.hi().compare(s);
+      if (x.hi().compare(x.lo()) || x.hi().compare(s))
+      {
+        BitVector res;
+        BitVectorDomainGenerator gen(x, d_rng);
+        do
+        {
+          assert(gen.has_random());
+          res = gen.random();
+        } while (s.compare(res) == 0);
+        d_inverse.reset(new BitVector(std::move(res)));
+        return true;
+      }
+      return false;
     }
-    return x.match_fixed_bits(s);
+    if (x.match_fixed_bits(s))
+    {
+      d_inverse.reset(new BitVector(s));
+      return true;
+    }
+    return false;
   }
 
-  /** IC_wo: true */
+  if (!is_essential_check)
+  {
+    if (t.is_false())
+    {
+      BitVector res;
+      do
+      {
+        res = BitVector(x.size(), *d_rng);
+      } while (s.compare(res) == 0);
+      d_inverse.reset(new BitVector(std::move(res)));
+    }
+    else
+    {
+      d_inverse.reset(new BitVector(s));
+    }
+  }
   return true;
 }
 
@@ -1271,80 +1311,61 @@ BitVectorEq::is_consistent(const BitVector& t, uint64_t pos_x)
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
+  /**
+   * CC_wo: true
+   * CC:    true
+   *
+   * Consistent value: random value
+   */
+
   (void) t;
-  (void) pos_x;
-  /* CC: true */
+  const BitVectorDomain& x = child(pos_x)->domain();
+  if (x.has_fixed_bits())
+  {
+    if (x.is_fixed())
+    {
+      d_consistent.reset(new BitVector(x.lo()));
+    }
+    else
+    {
+      BitVectorDomainGenerator gen(x, d_rng);
+      d_consistent.reset(new BitVector(gen.random()));
+    }
+  }
+  else
+  {
+    d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng)));
+  }
   return true;
 }
 
 const BitVector&
 BitVectorEq::inverse_value(const BitVector& t, uint64_t pos_x)
 {
-  assert(d_inverse == nullptr);
-
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
-
-  /**
-   * inverse value: t = 0: random bit-vector != s
-   *                t = 1: s
-   */
-
-  if (t.is_zero())
-  {
-    if (x.has_fixed_bits())
-    {
-      BitVector res;
-      BitVectorDomainGenerator gen(x, d_rng);
-      do
-      {
-        assert(gen.has_random());
-        res = gen.random();
-      } while (s.compare(res) == 0);
-      d_inverse.reset(new BitVector(std::move(res)));
-    }
-    else
-    {
-      BitVector res;
-      do
-      {
-        res = BitVector(x.size(), *d_rng);
-      } while (s.compare(res) == 0);
-      d_inverse.reset(new BitVector(std::move(res)));
-    }
-  }
-  else
-  {
-    assert(x.match_fixed_bits(s));
-    d_inverse.reset(new BitVector(s));
-  }
-
+  assert(d_inverse);
   assert(t.compare(d_inverse->bveq(s)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
+#endif
   return *d_inverse;
 }
 
 const BitVector&
 BitVectorEq::consistent_value(const BitVector& t, uint64_t pos_x)
 {
-  assert(d_consistent == nullptr);
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
-  (void) t;
-
-  /** consistent value: random value */
-  if (x.has_fixed_bits())
-  {
-    BitVectorDomainGenerator gen(x, d_rng);
-    d_consistent.reset(new BitVector(gen.random()));
-  }
-  else
-  {
-    d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng)));
-  }
   assert(x.match_fixed_bits(*d_consistent));
+#endif
   return *d_consistent;
 }
 
