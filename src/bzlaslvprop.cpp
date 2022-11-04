@@ -536,12 +536,10 @@ PropSolverState::print_statistics()
            1,
            "propagation steps per second: %.1f",
            (double) nprops / d_time_statistics.d_check_sat);
-#ifndef NDEBUG
   BZLA_MSG(d_bzla->msg,
            1,
            "propagation conflicts (non-recoverable): %u",
-           d_ls->d_statistics.d_nconf);
-#endif
+           d_ls->d_statistics.d_nconf_total);
   BZLA_MSG(d_bzla->msg, 1, "cone updates: %u", nupdates);
   BZLA_MSG(d_bzla->msg,
            1,
