@@ -1043,6 +1043,15 @@ BitVectorConcat::is_invertible(const BitVector& t,
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
+  /**
+   * IC_wo: pos_x = 0: s = t[size(s) - 1 : 0]
+   *        pos_x = 1: s = t[size(t) - 1 : size(t) - size(s)]
+   * IC:    IC_wo && mfb(x, tx)
+   *
+   * Inverse value:
+   *   pos_x = 0: t[size(t) - 1: size(s)]
+   *   pos_x = 1: t[size(x) - 1: 0]
+   */
   uint64_t pos_s           = 1 - pos_x;
   const BitVector& s       = child(pos_s)->assignment();
   const BitVectorDomain& x = child(pos_x)->domain();
@@ -1052,11 +1061,7 @@ BitVectorConcat::is_invertible(const BitVector& t,
   uint64_t bw_t = t.size();
   uint64_t bw_s = s.size();
 
-  /**
-   * IC_wo: s = ts
-   *   pos_x = 0: ts = t[size(s) - 1 : 0]
-   *   pos_x = 1: ts = t[size(t) - 1 : size(t) - size(s)]
-   */
+  // IC_wo
   if (pos_x == 0)
   {
     ic_wo = t.bvextract(bw_s - 1, 0).compare(s) == 0;
@@ -1069,21 +1074,20 @@ BitVectorConcat::is_invertible(const BitVector& t,
     tx    = t.bvextract(bw_t - bw_s - 1, 0);
   }
 
-  /** IC: IC_wo && mfb(x, tx) */
-  if (ic_wo && x.has_fixed_bits())
+  // IC
+  if (ic_wo)
   {
-    if (x.match_fixed_bits(tx))
+    if (x.has_fixed_bits() && !x.match_fixed_bits(tx))
     {
-      if (!is_essential_check)
-      {
-        d_inverse.reset(new BitVector(std::move(tx)));
-      }
-      return true;
+      return false;
     }
-    return false;
+    if (!is_essential_check)
+    {
+      d_inverse.reset(new BitVector(std::move(tx)));
+    }
+    return true;
   }
-
-  return ic_wo;
+  return false;
 }
 
 bool
@@ -1092,71 +1096,68 @@ BitVectorConcat::is_consistent(const BitVector& t, uint64_t pos_x)
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
-  const BitVectorDomain& x = child(pos_x)->domain();
-  if (!x.has_fixed_bits()) return true;
-
   /**
-   * CC: mfb(x, tx)
-   * with pos_x = 0: tx = t[size(t) - 1 : size(t) - size(x)]
-   *      pos_x = 1: tx = t[size(x) - 1 : 0]
+   * CC_wo: true
+   * CC:    mfb(x, tx)
+   *        with pos_x = 0: tx = t[size(t) - 1 : size(t) - size(x)]
+   *             pos_x = 1: tx = t[size(x) - 1 : 0]
+   *
+   * Consistent value:
+   *   pos_x = 0: t[msb, bw_x]
+   *   pos_x = 1: t[bw_x - 1, 0]
    */
 
-  uint64_t bw_t = t.size();
-  uint64_t bw_x = x.size();
+  const BitVectorDomain& x = child(pos_x)->domain();
+  uint64_t bw_t            = t.size();
+  uint64_t bw_x            = x.size();
+
   if (pos_x == 0)
   {
-    return x.match_fixed_bits(t.bvextract(bw_t - 1, bw_t - bw_x));
+    BitVector tx = t.bvextract(bw_t - 1, bw_t - bw_x);
+    if (!x.has_fixed_bits() || x.match_fixed_bits(tx))
+    {
+      d_consistent.reset(new BitVector(tx));
+      return true;
+    }
+    return false;
   }
-  return x.match_fixed_bits(t.bvextract(bw_x - 1, 0));
+  BitVector tx = t.bvextract(bw_x - 1, 0);
+  if (!x.has_fixed_bits() || x.match_fixed_bits(tx))
+  {
+    d_consistent.reset(new BitVector(tx));
+    return true;
+  }
+  return false;
 }
 
 const BitVector&
 BitVectorConcat::inverse_value(const BitVector& t, uint64_t pos_x)
 {
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
-  if (d_inverse == nullptr)
-  {
-    if (pos_x == 0)
-    {
-      /** inverse value: t[size(t) - 1: size(s)] */
-      d_inverse.reset(new BitVector(t.bvextract(t.size() - 1, s.size())));
-    }
-    else
-    {
-      /** inverse value: t[size(x) - 1: 0] */
-      d_inverse.reset(new BitVector(t.bvextract(x.size() - 1, 0)));
-    }
-  }
+  assert(d_inverse);
   assert(pos_x == 1 || t.compare(d_inverse->bvconcat(s)) == 0);
   assert(pos_x == 0 || t.compare(s.bvconcat(*d_inverse)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
+#endif
   return *d_inverse;
 }
 
 const BitVector&
 BitVectorConcat::consistent_value(const BitVector& t, uint64_t pos_x)
 {
-  assert(d_consistent == nullptr);
-
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
-  uint64_t bw_t = t.size();
-  uint64_t bw_x = x.size();
-
-  if (pos_x == 0)
-  {
-    /** consistent value: t[msb, bw_x] */
-    d_consistent.reset(new BitVector(t.bvextract(bw_t - 1, bw_t - bw_x)));
-  }
-  else
-  {
-    /** consistent value: t[bw_x - 1, 0] */
-    d_consistent.reset(new BitVector(t.bvextract(bw_x - 1, 0)));
-  }
   assert(x.match_fixed_bits(*d_consistent));
+#endif
   return *d_consistent;
 }
 
