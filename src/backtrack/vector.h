@@ -31,6 +31,8 @@ class vector : public Backtrackable
     d_data.emplace_back(std::forward<Args>(args)...);
   }
 
+  auto& back() { return d_data.back(); }
+
   auto begin() const { return d_data.begin(); }
 
   auto end() const { return d_data.end(); }
