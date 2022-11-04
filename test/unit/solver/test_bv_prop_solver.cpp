@@ -19,8 +19,14 @@ class TestBvPropSolver : public TestCommon
 {
  protected:
   static constexpr bool TEST_SLOW         = false;
-  static constexpr uint32_t TEST_NPROPS   = TEST_SLOW ? 110 : 55;
-  static constexpr uint32_t TEST_NUPDATES = TEST_SLOW ? 110 : 55;
+#if __APPLE__
+  static constexpr uint32_t TEST_NPROPS   = TEST_SLOW ? 120 : 90;
+  static constexpr uint32_t TEST_NUPDATES = TEST_SLOW ? 120 : 90;
+#else
+  static constexpr uint32_t TEST_NPROPS   = TEST_SLOW ? 120 : 55;
+  static constexpr uint32_t TEST_NUPDATES = TEST_SLOW ? 120 : 55;
+#endif
+
 
   void SetUp() override
   {
