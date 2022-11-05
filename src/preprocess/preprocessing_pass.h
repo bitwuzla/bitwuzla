@@ -1,62 +1,66 @@
 #ifndef BZLA_PREPROCESS_PREPROCESSING_PASS_H_INCLUDED
 #define BZLA_PREPROCESS_PREPROCESSING_PASS_H_INCLUDED
 
-#include "backtrack/assertion_stack.h"
 #include "rewrite/rewriter.h"
 
-namespace bzla::preprocess {
+namespace bzla {
+
+namespace backtrack {
+class AssertionView;
+}
+
+namespace preprocess {
 
 /**
- * Wrapper around std::vector<Node> for storing and manipulating assertions.
+ * Wrapper around AssertionView for manipulating assertions for a given level.
  */
 class AssertionVector
 {
   friend class Preprocessor;
 
  public:
+  AssertionVector(backtrack::AssertionView& view);
+
   /**
    * Push back new assertion.
    *
    * @note Sets the d_changed flag to true.
    */
-  void push_back(const Node& assertion)
-  {
-    d_changed = true;
-    d_assertions.push_back(assertion);
-  }
+  void push_back(const Node& assertion);
 
   /** @return The size of the vector. */
-  size_t size() const { return d_assertions.size(); }
+  size_t size() const;
 
-  /** @return Assertion at given position. */
-  const Node& operator[](std::size_t pos) const { return d_assertions[pos]; }
+  /** @return Assertion at given index. */
+  const Node& operator[](std::size_t index) const;
 
   /**
    * Replace assertion at index i.
    *
-   * @note Sets the d_changed flag to true if contents of vector changed.
+   * @note Sets the d_changed flag to true if contents of vector was modified.
    *
    * @param i The index of the assertion to replace.
    * @param assertion The new assertion.
    */
-  void replace(size_t i, const Node& assertion)
-  {
-    if (d_assertions[i] != assertion)
-    {
-      d_changed       = true;
-      d_assertions[i] = assertion;
-    }
-  }
+  void replace(size_t index, const Node& assertion);
 
  private:
   /** Reset d_changed. */
-  void reset_changed() { d_changed = false; }
+  void reset_changed();
 
-  /** Determines if vector was changed since last reset_changed() call. */
-  bool changed() const { return d_changed; }
+  /** Determines if vector was modified since last reset_changed() call. */
+  bool changed() const;
 
-  bool d_changed = false;
-  std::vector<Node> d_assertions;
+  /** The wrapper assertion view. */
+  backtrack::AssertionView& d_view;
+  /** The scope level of this set of assertions. */
+  size_t d_level;
+  /** Start index for assertions. */
+  size_t d_begin;
+  /** End index for assertions. */
+  size_t d_end;
+  /** Indicates whether vector was modified. */
+  bool d_changed;
 };
 
 /**
@@ -77,5 +81,6 @@ class PreprocessingPass
   Rewriter& d_rewriter;
 };
 
-}  // namespace bzla::preprocess
+}  // namespace preprocess
+}  // namespace bzla
 #endif

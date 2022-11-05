@@ -53,8 +53,14 @@ class AssertionView
   /** @return Start index of unprocessed assertions. */
   size_t begin() const;
 
-  /** @return Points to index after the last unprocessed assertions. */
+  /** @return Start index of unprocessed assertions of given level. */
+  size_t begin(size_t level) const;
+
+  /** @return Index after the last unprocessed assertions. */
   size_t end() const;
+
+  /** @return Index after the last unprocessed assertions of given level. */
+  size_t end(size_t level) const;
 
   /** Update view to index. */
   void set_index(size_t index);
@@ -115,6 +121,12 @@ class AssertionStack : public Backtrackable
 
   /** @return The number of assertions on the stack. */
   size_t size() const;
+
+  /** @return Start index of unprocessed assertions of given level. */
+  size_t begin(size_t level) const;
+
+  /** @return Index after the last unprocessed assertions of given level. */
+  size_t end(size_t level) const;
 
   /**
    * Get the level of the assertion at given index.

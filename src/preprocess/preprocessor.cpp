@@ -24,44 +24,30 @@ Preprocessor::preprocess()
     return Result::UNKNOWN;
   }
 
-  // Process assertions by scope level.
-  //
-  // Note: update() may insert new assertions at the end of the current level.
-  //       As a result, d_assertions.end() grows and .
-  for (size_t i = d_assertions.begin(); i < d_assertions.end();)
+  // Process assertions by level
+  while (!d_assertions.empty())
   {
-    // Collect all assertions of current level
-    size_t level = d_assertions.level(i);
-    std::vector<size_t> indices;
-    AssertionVector assertions;
-    for (size_t end = d_assertions.end();
-         i < end && d_assertions.level(i) == level;
-         ++i)
-    {
-      indices.push_back(i);
-      assertions.push_back(d_assertions[i]);
-    }
+    size_t level = d_assertions.level(d_assertions.begin());
 
     // Sync backtrack manager to level. This is required if there are levels
     // that do not contain any assertions.
     sync_scope(level);
 
+    // Create vector for current level
+    AssertionVector assertions(d_assertions);
+    assert(assertions.d_level == level);
+
     // Apply preprocessing passes until fixed-point
     apply(assertions);
 
-    // Update d_assertions and add new assertions to current level
-    update(level, assertions, indices);
-    assert(level == d_backtrack_mgr.num_levels());
-
-    // New assertions added for this level
-    i += assertions.size() - indices.size();
+    // Advance assertions to next level
+    d_assertions.set_index(d_assertions.begin() + assertions.size());
   }
+  assert(d_assertions.empty());
+
   // Sync backtrack manager to level. This is required if there are levels
   // that do not contain any assertions.
   sync_scope(d_global_backtrack_mgr.num_levels());
-
-  // Mark assertions as processed.
-  d_assertions.set_index(d_assertions.end());
 
   return Result::UNKNOWN;
 }
@@ -97,23 +83,6 @@ Preprocessor::apply(AssertionVector& assertions)
     d_pass_rewrite.apply(assertions);
     d_pass_variable_substitution.apply(assertions);
   } while (assertions.changed());
-}
-
-void
-Preprocessor::update(size_t level,
-                     AssertionVector& assertions,
-                     std::vector<size_t>& indices)
-{
-  // Update existing assertions
-  for (size_t i = 0, size = indices.size(); i < size; ++i)
-  {
-    d_assertions.replace(indices[i], assertions[i]);
-  }
-  // Add new assertions
-  for (size_t i = indices.size(), size = assertions.size(); i < size; ++i)
-  {
-    d_assertions.insert_at_level(level, assertions[i]);
-  }
 }
 
 void

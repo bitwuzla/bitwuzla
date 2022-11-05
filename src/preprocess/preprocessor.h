@@ -31,11 +31,6 @@ class Preprocessor
   /** Apply all preprocessing passes to assertions until fixed-point. */
   void apply(AssertionVector& assertions);
 
-  /** Update d_assertions for given level. */
-  void update(size_t level,
-              AssertionVector& assertions,
-              std::vector<size_t>& indices);
-
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);
 

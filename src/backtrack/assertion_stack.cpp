@@ -68,6 +68,26 @@ AssertionStack::size() const
 }
 
 size_t
+AssertionStack::begin(size_t level) const
+{
+  if (level > 0)
+  {
+    return d_control[level - 1];
+  }
+  return 0;
+}
+
+size_t
+AssertionStack::end(size_t level) const
+{
+  if (level == d_control.size())
+  {
+    return d_assertions.size();
+  }
+  return d_control[level];
+}
+
+size_t
 AssertionStack::level(size_t index) const
 {
   return d_assertions[index].second;
@@ -159,6 +179,18 @@ size_t
 AssertionView::size() const
 {
   return end() - begin();
+}
+
+size_t
+AssertionView::begin(size_t level) const
+{
+  return d_assertions.begin(level);
+}
+
+size_t
+AssertionView::end(size_t level) const
+{
+  return d_assertions.end(level);
 }
 
 const Node&
