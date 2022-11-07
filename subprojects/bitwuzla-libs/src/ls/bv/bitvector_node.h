@@ -787,14 +787,14 @@ class BitVectorShr : public BitVectorNode
                             std::unique_ptr<BitVector>* inverse_value);
   /**
    * Additional interface / helper for inverse_value.
-   * Cached result is stored in 'inverse_value'.
+   * Cached result is stored in `inverse`.
    */
   static void inverse_value(RNG* rng,
                             const BitVector& t,
                             const BitVector& s,
                             const BitVectorDomain& x,
                             uint64_t pos_x,
-                            std::unique_ptr<BitVector>& inverse_value);
+                            std::unique_ptr<BitVector>& inverse);
   /** Constructors. */
   BitVectorShr(RNG* rng,
                uint64_t size,
