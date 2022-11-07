@@ -674,8 +674,8 @@ BitVector::signed_compare(const BitVector& bv) const
     return -1;
   }
 
-  uint64_t msb_a = get_msb();
-  uint64_t msb_b = bv.get_msb();
+  uint64_t msb_a = msb();
+  uint64_t msb_b = bv.msb();
 
   if (msb_a && !msb_b)
   {
@@ -689,7 +689,7 @@ BitVector::signed_compare(const BitVector& bv) const
 }
 
 bool
-BitVector::get_bit(uint64_t idx) const
+BitVector::bit(uint64_t idx) const
 {
   assert(!is_null());
   assert(idx < size());
@@ -739,22 +739,22 @@ BitVector::flip_bit(uint64_t idx)
   }
   else
   {
-    set_bit(idx, get_bit(idx) ? false : true);
+    set_bit(idx, bit(idx) ? false : true);
   }
 }
 
 bool
-BitVector::get_lsb() const
+BitVector::lsb() const
 {
   assert(!is_null());
-  return get_bit(0);
+  return bit(0);
 }
 
 bool
-BitVector::get_msb() const
+BitVector::msb() const
 {
   assert(!is_null());
-  return get_bit(d_size - 1);
+  return bit(d_size - 1);
 }
 
 bool
@@ -762,7 +762,7 @@ BitVector::is_true() const
 {
   assert(!is_null());
   if (d_size > 1) return false;
-  return get_bit(0);
+  return bit(0);
 }
 
 bool
@@ -770,7 +770,7 @@ BitVector::is_false() const
 {
   assert(!is_null());
   if (d_size > 1) return false;
-  return !get_bit(0);
+  return !bit(0);
 }
 
 bool
@@ -932,7 +932,7 @@ BitVector::count_trailing_zeros() const
   {
     for (uint64_t i = 0; i < d_size; ++i)
     {
-      if (get_bit(i)) break;
+      if (bit(i)) break;
       res += 1;
     }
   }
@@ -1773,8 +1773,8 @@ BitVector::ibvslt(const BitVector& bv0, const BitVector& bv1)
   assert(!bv0.is_null());
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
-  bool msb_bv0 = bv0.get_msb();
-  bool msb_bv1 = bv1.get_msb();
+  bool msb_bv0 = bv0.msb();
+  bool msb_bv1 = bv1.msb();
   if (msb_bv0 && !msb_bv1)
   {
     if (is_gmp()) mpz_clear(d_val_gmp);
@@ -1800,8 +1800,8 @@ BitVector::ibvsle(const BitVector& bv0, const BitVector& bv1)
   assert(!bv0.is_null());
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
-  bool msb_bv0 = bv0.get_msb();
-  bool msb_bv1 = bv1.get_msb();
+  bool msb_bv0 = bv0.msb();
+  bool msb_bv1 = bv1.msb();
   if (msb_bv0 && !msb_bv1)
   {
     if (is_gmp()) mpz_clear(d_val_gmp);
@@ -1827,8 +1827,8 @@ BitVector::ibvsgt(const BitVector& bv0, const BitVector& bv1)
   assert(!bv0.is_null());
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
-  bool msb_bv0 = bv0.get_msb();
-  bool msb_bv1 = bv1.get_msb();
+  bool msb_bv0 = bv0.msb();
+  bool msb_bv1 = bv1.msb();
   if (msb_bv0 && !msb_bv1)
   {
     if (is_gmp()) mpz_clear(d_val_gmp);
@@ -1854,8 +1854,8 @@ BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1)
   assert(!bv0.is_null());
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
-  bool msb_bv0 = bv0.get_msb();
-  bool msb_bv1 = bv1.get_msb();
+  bool msb_bv0 = bv0.msb();
+  bool msb_bv1 = bv1.msb();
   if (msb_bv0 && !msb_bv1)
   {
     if (is_gmp()) mpz_clear(d_val_gmp);
@@ -2037,7 +2037,7 @@ BitVector::ibvashr(const BitVector& bv, uint64_t shift)
 {
   assert(!bv.is_null());
 
-  if (bv.get_msb())
+  if (bv.msb())
   {
     ibvnot(bv).ibvshr(shift).ibvnot();
   }
@@ -2055,7 +2055,7 @@ BitVector::ibvashr(const BitVector& bv, const BitVector& shift)
   assert(!shift.is_null());
   assert(bv.d_size == shift.d_size);
 
-  if (bv.get_msb())
+  if (bv.msb())
   {
     if (&shift == this)
     {
@@ -2203,8 +2203,8 @@ BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1)
   assert(!bv0.is_null());
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
-  bool is_signed_bv0 = bv0.get_msb();
-  bool is_signed_bv1 = bv1.get_msb();
+  bool is_signed_bv0 = bv0.msb();
+  bool is_signed_bv1 = bv1.msb();
 
   if (is_signed_bv0 && !is_signed_bv1)
   {
@@ -2250,8 +2250,8 @@ BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1)
   assert(!bv0.is_null());
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
-  bool is_signed_bv0 = bv0.get_msb();
-  bool is_signed_bv1 = bv1.get_msb();
+  bool is_signed_bv0 = bv0.msb();
+  bool is_signed_bv1 = bv1.msb();
 
   if (is_signed_bv0 && !is_signed_bv1)
   {
@@ -2503,7 +2503,7 @@ BitVector::ibvsext(const BitVector& bv, uint64_t n)
     {
       b = &bv;
     }
-    if (b->get_msb())
+    if (b->msb())
     {
       uint64_t b_size = b->d_size;
       uint64_t size   = b_size + n;
@@ -2649,7 +2649,7 @@ BitVector&
 BitVector::ibvmodinv(const BitVector& bv)
 {
   assert(!bv.is_null());
-  assert(bv.get_lsb()); /* must be odd */
+  assert(bv.lsb()); /* must be odd */
 
   const BitVector* pb;
   BitVector bb;

@@ -474,23 +474,23 @@ TestBitVector::test_ctor_random_bit_range(uint64_t size)
     BitVector bv3(size, *d_rng, up, lo);
     for (uint64_t j = lo; j <= up; ++j)
     {
-      if (bv1.get_bit(j) != bv2.get_bit(j) || bv1.get_bit(j) != bv3.get_bit(j)
-          || bv2.get_bit(j) != bv3.get_bit(j))
+      if (bv1.bit(j) != bv2.bit(j) || bv1.bit(j) != bv3.bit(j)
+          || bv2.bit(j) != bv3.bit(j))
       {
         break;
       }
     }
     for (uint64_t j = 0; j < lo; ++j)
     {
-      ASSERT_EQ(bv1.get_bit(j), 0);
-      ASSERT_EQ(bv2.get_bit(j), 0);
-      ASSERT_EQ(bv3.get_bit(j), 0);
+      ASSERT_EQ(bv1.bit(j), 0);
+      ASSERT_EQ(bv2.bit(j), 0);
+      ASSERT_EQ(bv3.bit(j), 0);
     }
     for (uint64_t j = up + 1; j < size; j++)
     {
-      ASSERT_EQ(bv1.get_bit(j), 0);
-      ASSERT_EQ(bv2.get_bit(j), 0);
-      ASSERT_EQ(bv3.get_bit(j), 0);
+      ASSERT_EQ(bv1.bit(j), 0);
+      ASSERT_EQ(bv2.bit(j), 0);
+      ASSERT_EQ(bv3.bit(j), 0);
     }
   }
 }
@@ -649,7 +649,7 @@ TestBitVector::test_extend_aux(BvFunKind fun_kind,
         {
           res = bv.bvsext(n);
         }
-        c = bv.get_msb() ? '1' : '0';
+        c = bv.msb() ? '1' : '0';
         break;
 
       default: assert(false);
@@ -2220,11 +2220,11 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
                                               : b1.to_uint64());
   int64_t a2 = static_cast<int64_t>(size > 64 ? b2.bvextract(63, 0).to_uint64()
                                               : b2.to_uint64());
-  if (b1.get_bit(size - 1))
+  if (b1.bit(size - 1))
   {
     a1 = static_cast<int64_t>((UINT64_MAX << size) | static_cast<uint64_t>(a1));
   }
-  if (b2.get_bit(size - 1))
+  if (b2.bit(size - 1))
   {
     a2 = static_cast<int64_t>((UINT64_MAX << size) | static_cast<uint64_t>(a2));
   }
@@ -3600,15 +3600,15 @@ TEST_F(TestBitVector, set_get_flip_bit)
   {
     BitVector bv(i, *d_rng);
     uint64_t n  = d_rng->pick<uint64_t>(0, i - 1);
-    uint32_t v  = bv.get_bit(n);
+    uint32_t v  = bv.bit(n);
     uint32_t vv = d_rng->flip_coin() ? 1 : 0;
     bv.set_bit(n, vv);
-    ASSERT_EQ(bv.get_bit(n), vv);
-    ASSERT_TRUE(v == vv || bv.get_bit(n) == (((~v) << 31) >> 31));
+    ASSERT_EQ(bv.bit(n), vv);
+    ASSERT_TRUE(v == vv || bv.bit(n) == (((~v) << 31) >> 31));
     bv.flip_bit(n);
-    ASSERT_EQ(bv.get_bit(n), (((~vv) << 31) >> 31));
+    ASSERT_EQ(bv.bit(n), (((~vv) << 31) >> 31));
   }
-  ASSERT_DEATH(BitVector(5).get_bit(5), "< size");
+  ASSERT_DEATH(BitVector(5).bit(5), "< size");
 }
 
 TEST_F(TestBitVector, is_zero)

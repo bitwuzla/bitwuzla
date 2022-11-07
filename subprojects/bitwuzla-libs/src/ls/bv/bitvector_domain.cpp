@@ -127,7 +127,7 @@ BitVectorDomain::is_fixed_bit(uint64_t idx) const
 {
   assert(!is_null());
   assert(idx < size());
-  return d_lo.get_bit(idx) == d_hi.get_bit(idx);
+  return d_lo.bit(idx) == d_hi.bit(idx);
 }
 
 bool
@@ -135,9 +135,9 @@ BitVectorDomain::is_fixed_bit_true(uint64_t idx) const
 {
   assert(!is_null());
   assert(idx < size());
-  bool b = d_lo.get_bit(idx);
+  bool b = d_lo.bit(idx);
   if (!b) return false;
-  return b == d_hi.get_bit(idx);
+  return b == d_hi.bit(idx);
 }
 
 bool
@@ -145,9 +145,9 @@ BitVectorDomain::is_fixed_bit_false(uint64_t idx) const
 {
   assert(!is_null());
   assert(idx < size());
-  bool b = d_lo.get_bit(idx);
+  bool b = d_lo.bit(idx);
   if (b) return false;
-  return b == d_hi.get_bit(idx);
+  return b == d_hi.bit(idx);
 }
 
 void
@@ -406,7 +406,7 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
     for (uint64_t i = 0, j = 0, j0 = 0; i < size; ++i)
     {
       uint64_t idx_i = size - 1 - i;
-      bool bit       = mmin.get_bit(idx_i);
+      bool bit       = mmin.bit(idx_i);
       if (!d_domain.is_fixed_bit(idx_i))
       {
         assert(j < cnt);
@@ -421,7 +421,7 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
       else if (d_domain.is_fixed_bit_false(idx_i) && bit)
       {
         assert(j > 0);
-        assert(!d_bits_min->get_bit(cnt - j0 - 1));
+        assert(!d_bits_min->bit(cnt - j0 - 1));
         d_bits_min->set_bit(cnt - j0 - 1, true);
         for (uint64_t k = j0 + 1; k < cnt; ++k)
         {
@@ -437,7 +437,7 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
     for (uint64_t i = 0, j = 0, j0 = 0; i < size; ++i)
     {
       uint64_t idx_i = size - 1 - i;
-      bool bit       = mmax.get_bit(idx_i);
+      bool bit       = mmax.bit(idx_i);
       if (!d_domain.is_fixed_bit(idx_i))
       {
         assert(j < cnt);
@@ -448,7 +448,7 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
       else if (d_domain.is_fixed_bit_true(idx_i) && !bit)
       {
         assert(j > 0);
-        assert(d_bits_max->get_bit(cnt - j0 - 1));
+        assert(d_bits_max->bit(cnt - j0 - 1));
         d_bits_max->set_bit(cnt - j0 - 1, false);
         for (uint64_t k = j0 + 1; k < cnt; ++k)
         {
@@ -531,7 +531,7 @@ BitVectorDomainGenerator::generate_next(bool random)
   {
     if (!d_domain.is_fixed_bit(i))
     {
-      res.set_bit(i, d_bits->get_bit(j++));
+      res.set_bit(i, d_bits->bit(j++));
     }
   }
 

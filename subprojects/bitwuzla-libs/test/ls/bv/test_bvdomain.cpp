@@ -465,8 +465,8 @@ TEST_F(TestBitVectorDomain, concat)
             else
             {
               ASSERT_TRUE(dconcat.is_fixed_bit(l));
-              ASSERT_TRUE(bvk.get_bit(l) || dconcat.is_fixed_bit_false(l));
-              ASSERT_TRUE(!bvk.get_bit(l) || dconcat.is_fixed_bit_true(l));
+              ASSERT_TRUE(bvk.bit(l) || dconcat.is_fixed_bit_false(l));
+              ASSERT_TRUE(!bvk.bit(l) || dconcat.is_fixed_bit_true(l));
             }
           }
         }

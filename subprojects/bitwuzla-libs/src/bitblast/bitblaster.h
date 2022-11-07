@@ -47,8 +47,8 @@ class BitblasterInterface
     Bits res;
     for (size_t i = 0, j = bv_value.size() - 1; i < bv_value.size(); ++i)
     {
-      res.push_back(bv_value.get_bit(j - i) ? d_bit_mgr.mk_true()
-                                            : d_bit_mgr.mk_false());
+      res.push_back(bv_value.bit(j - i) ? d_bit_mgr.mk_true()
+                                        : d_bit_mgr.mk_false());
     }
     return res;
   }

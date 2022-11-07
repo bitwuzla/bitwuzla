@@ -1522,7 +1522,7 @@ BitVectorMul::is_invertible(const BitVector& t,
       if (!s.is_zero())
       {
         /*-- s odd ------------------------------*/
-        if (s.get_lsb())
+        if (s.lsb())
         {
           BitVector inv = s.bvmodinv().ibvmul(t);
           if (x.match_fixed_bits(inv)
@@ -1609,7 +1609,7 @@ BitVectorMul::is_invertible(const BitVector& t,
       }
       return true;
     }
-    if (s.get_lsb())
+    if (s.lsb())
     {
       /* s odd : t * s^-1 (unique solution) */
       BitVector inv = t.bvmul(s.bvmodinv());
@@ -1702,9 +1702,9 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
       return false;
     }
 
-    if (t.get_lsb())  // odd
+    if (t.lsb())  // odd
     {
-      if (!x.hi().get_lsb())
+      if (!x.hi().lsb())
       {
         return false;
       }
@@ -1716,7 +1716,7 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
       {
         BitVectorDomainGenerator gen(x, d_rng, BitVector::mk_one(size), x.hi());
         d_consistent.reset(new BitVector(gen.random()));
-        if (!d_consistent->get_lsb())
+        if (!d_consistent->lsb())
         {
           assert(!x.is_fixed_bit_false(0));
           d_consistent->set_bit(0, true);
@@ -1767,9 +1767,9 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
     d_consistent.reset(new BitVector(BitVector(
         x.size(), *d_rng, BitVector::mk_one(size), BitVector::mk_ones(size))));
 
-    if (t.get_lsb())
+    if (t.lsb())
     {
-      if (!d_consistent->get_lsb())
+      if (!d_consistent->lsb())
       {
         d_consistent->set_bit(0, true);
       }
@@ -2896,7 +2896,7 @@ BitVectorAshr::is_invertible(const BitVector& t,
 
   if (pos_x == 1)
   {
-    if (s.get_msb())
+    if (s.msb())
     {
       return BitVectorShr::is_invertible(
           d_rng,
@@ -2952,7 +2952,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
    *     with c = (t[msb] = 1)
    */
 
-  bool is_signed = t.get_msb();
+  bool is_signed = t.msb();
   uint64_t cnt_t = is_signed ? t.count_leading_ones() : t.count_leading_zeros();
   uint64_t size  = t.size();
 
@@ -3054,9 +3054,9 @@ BitVectorAshr::inverse_value(const BitVector& t, uint64_t pos_x)
     if (pos_x == 0)
     {
       BitVectorShr::inverse_value(d_rng, t, s, x, 0, d_inverse);
-      if (t.get_msb())
+      if (t.msb())
       {
-        if (!d_inverse->get_msb())
+        if (!d_inverse->msb())
         {
           assert(!x.is_fixed_bit(x.size() - 1));
           d_inverse->set_bit(x.size() - 1, true);
@@ -3070,7 +3070,7 @@ BitVectorAshr::inverse_value(const BitVector& t, uint64_t pos_x)
       }
       else
       {
-        if (d_inverse->get_msb())
+        if (d_inverse->msb())
         {
           assert(!x.is_fixed_bit(x.size() - 1));
           d_inverse->set_bit(x.size() - 1, false);
@@ -3095,13 +3095,13 @@ BitVectorAshr::inverse_value(const BitVector& t, uint64_t pos_x)
        *                   + else : shift
        *
        */
-      if (!s.get_msb())
+      if (!s.msb())
       {
         BitVectorShr::inverse_value(d_rng, t, s, x, 1, d_inverse);
       }
       else
       {
-        assert(t.get_msb());
+        assert(t.msb());
         if (s.is_ones() && t.is_ones())
         {
           d_inverse.reset(new BitVector(size, *d_rng));
@@ -3152,7 +3152,7 @@ BitVectorAshr::consistent_value(const BitVector& t, uint64_t pos_x)
 
   if (d_consistent == nullptr)
   {
-    bool is_signed = t.get_msb();
+    bool is_signed = t.msb();
     uint64_t size  = x.size();
     uint64_t cnt_t =
         is_signed ? t.count_leading_ones() : t.count_leading_zeros();
@@ -3170,11 +3170,11 @@ BitVectorAshr::consistent_value(const BitVector& t, uint64_t pos_x)
         {
           d_consistent.reset(new BitVector(size, *d_rng));
         }
-        if (is_signed && !d_consistent->get_msb())
+        if (is_signed && !d_consistent->msb())
         {
           d_consistent->set_bit(size - 1, true);
         }
-        else if (!is_signed && d_consistent->get_msb())
+        else if (!is_signed && d_consistent->msb())
         {
           d_consistent->set_bit(size - 1, false);
         }

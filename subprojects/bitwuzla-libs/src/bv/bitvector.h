@@ -284,7 +284,7 @@ class BitVector
    * @param idx The index of the bit.
    * @return True if the bit at given index is 1, and false otherwise.
    */
-  bool get_bit(uint64_t idx) const;
+  bool bit(uint64_t idx) const;
   /**
    * Set the bit at given index to the given value.
    * @param idx   The index of the bit.
@@ -297,9 +297,9 @@ class BitVector
    */
   void flip_bit(uint64_t idx);
   /** @return True if the lsb (index 0) is 1, and false otherwise. */
-  bool get_lsb() const;
+  bool lsb() const;
   /** @return True if the msb (index size - 1) is 1, and false otherwise. */
-  bool get_msb() const;
+  bool msb() const;
 
   /** @return True if this bit-vector is one and of size 1. */
   bool is_true() const;
