@@ -62,7 +62,7 @@ CryptoMiniSat::fixed(int32_t lit)
   return cms_lit.sign() ? -d_assigned_map[var] : d_assigned_map[var];
 }
 
-SatSolver::Result
+Result
 CryptoMiniSat::solve()
 {
   reset();

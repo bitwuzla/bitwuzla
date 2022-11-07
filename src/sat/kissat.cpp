@@ -48,7 +48,7 @@ Kissat::fixed(int32_t lit)
   assert(false);
 }
 
-SatSolver::Result
+Result
 Kissat::solve()
 {
   int32_t res = kissat_solve(d_solver);

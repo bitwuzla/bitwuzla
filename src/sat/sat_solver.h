@@ -4,19 +4,13 @@
 #include <cstdint>
 #include <string>
 
+#include "solver/result.h"
+
 namespace bzla::sat {
 
 class SatSolver
 {
  public:
-  /** The result of a check satisfiability call. */
-  enum class Result
-  {
-    UNKNOWN,
-    SAT,
-    UNSAT,
-  };
-
   /**
    * Constructor.
    * @param name The name of the underlying SAT solver.

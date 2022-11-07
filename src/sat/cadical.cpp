@@ -42,7 +42,7 @@ Cadical::fixed(int32_t lit)
   return d_solver->fixed(lit);
 }
 
-SatSolver::Result
+Result
 Cadical::solve()
 {
   int32_t res = d_solver->solve();

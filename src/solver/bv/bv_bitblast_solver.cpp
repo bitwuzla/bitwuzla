@@ -77,16 +77,7 @@ BvBitblastSolver::check()
     d_sat_solver->assume(bits(assumption)[0].get_id());
   }
 
-  auto sat_res = d_sat_solver->solve();
-  if (sat_res == sat::SatSolver::Result::SAT)
-  {
-    return Result::SAT;
-  }
-  else if (sat_res == sat::SatSolver::Result::UNSAT)
-  {
-    return Result::UNSAT;
-  }
-  return Result::UNKNOWN;
+  return d_sat_solver->solve();
 }
 
 Node

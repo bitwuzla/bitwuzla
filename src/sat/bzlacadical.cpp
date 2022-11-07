@@ -68,10 +68,9 @@ static int32_t
 sat(BzlaSATMgr *smgr, int32_t limit)
 {
   (void) limit;
-  bzla::sat::SatSolver::Result res =
-      static_cast<bzla::sat::Cadical *>(smgr->solver)->solve();
-  if (res == bzla::sat::SatSolver::Result::SAT) return 10;
-  if (res == bzla::sat::SatSolver::Result::UNSAT) return 20;
+  bzla::Result res = static_cast<bzla::sat::Cadical *>(smgr->solver)->solve();
+  if (res == bzla::Result::SAT) return 10;
+  if (res == bzla::Result::UNSAT) return 20;
   return 0;
 }
 

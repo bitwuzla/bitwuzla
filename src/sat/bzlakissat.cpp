@@ -37,10 +37,9 @@ static int32_t
 sat(BzlaSATMgr *smgr, int32_t limit)
 {
   (void) limit;
-  bzla::sat::SatSolver::Result res =
-      static_cast<bzla::sat::Kissat *>(smgr->solver)->solve();
-  if (res == bzla::sat::SatSolver::Result::SAT) return 10;
-  if (res == bzla::sat::SatSolver::Result::UNSAT) return 20;
+  Result res = static_cast<bzla::sat::Kissat *>(smgr->solver)->solve();
+  if (res == Result::SAT) return 10;
+  if (res == Result::UNSAT) return 20;
   return 0;
 }
 
