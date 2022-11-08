@@ -3149,16 +3149,43 @@ BitVectorUdiv::is_invertible(const BitVector& t,
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
-  uint64_t pos_s           = 1 - pos_x;
-  const BitVector& s       = child(pos_s)->assignment();
-  const BitVectorDomain& x = child(pos_x)->domain();
-  BitVector s_mul_t, s_udiv_t;
-  bool ic_wo;
-
   /**
    * IC_wo: pos_x = 0: (s * t) / s = t
    *        pos_x = 1: s / (s / t) = t
+   * IC:    pos_x = 0: IC_wo &&
+   *                   (t = 0 => lo_x < s) &&
+   *                   ((t != 0 && s != 0 ) => \exists y. (
+   *                       mfb(x, y) && (~c => y < s * t + 1) &&
+   *                       (c => y <= ones)))
+   *                   with c = umulo(s, t + 1) && uaddo(t, 1)
+   *        pos_x = 1: IC_wo &&
+   *                   (t != ones => hi_x > 0) &&   .(covered by is_fixed check)
+   *                   ((s != 0 || t != 0) => (s / hi_x <= t) && \exists y. (
+   *                       mfb(x, y) &&
+   *                       (t = ones => y <= s / t) &&
+   *                       (t != ones => y > t + 1 && y <= s / t)))
+   *
+   * Inverse value:
+   *   pos_x = 0: t = ones: s = 1: ones
+   *              s = 0: random value
+   *              s * t does not overflow: - s * t
+   *                                       - v with v / s = t (0.5 prob)
+   *   pos_x = 1: t = ones: s  = t: 1 or 0
+   *                        s != t: 0
+   *              t = 0   : 0 < s < ones: random value > s
+   *                        s = 0       : random value > 0
+   *              t is a divisior of s: t / s or s with s / x = t (0.5 prob)
+   *              else : s with s / x = t
    */
+
+  uint64_t pos_s           = 1 - pos_x;
+  const BitVector& s       = child(pos_s)->assignment();
+  const BitVectorDomain& x = child(pos_x)->domain();
+  bool x_has_fixed_bits    = x.has_fixed_bits();
+  BitVector s_mul_t, s_udiv_t;
+  bool ic_wo;
+
+  // IC_wo
   if (pos_x == 0)
   {
     s_mul_t = s.bvmul(t);
@@ -3171,27 +3198,19 @@ BitVectorUdiv::is_invertible(const BitVector& t,
     ic_wo    = s.bvudiv(s_udiv_t).compare(t) == 0;
   }
 
-  /**
-   * IC: pos_x = 0: IC_wo &&
-   *                (t = 0 => lo_x < s) &&
-   *                ((t != 0 && s != 0 ) => \exists y. (
-   *                    mfb(x, y) && (~c => y < s * t + 1) &&
-   *                    (c => y <= ones)))
-   *                with c = umulo(s, t + 1) && uaddo(t, 1)
-   *     pos_x = 1: IC_wo &&
-   *                (t != ones => hi_x > 0) &&   ... covered by is_fixed check
-   *                ((s != 0 || t != 0) => (s / hi_x <= t) && \exists y. (
-   *                    mfb(x, y) &&
-   *                    (t = ones => y <= s / t) &&
-   *                    (t != ones => y > t + 1 && y <= s / t)))
-   */
-  if (ic_wo && x.has_fixed_bits())
+  // IC
+  if (ic_wo)
   {
     if (x.is_fixed())
     {
-      if ((pos_x == 0 && x.lo().bvudiv(s).compare(t) == 0)
-          || (pos_x == 1 && s.bvudiv(x.lo()).compare(t) == 0))
+      const BitVector& xval = x.lo();
+      if ((pos_x == 0 && xval.bvudiv(s).compare(t) == 0)
+          || (pos_x == 1 && s.bvudiv(xval).compare(t) == 0))
       {
+        if (!is_essential_check)
+        {
+          d_inverse.reset(new BitVector(xval));
+        }
         return true;
       }
       return false;
@@ -3199,45 +3218,117 @@ BitVectorUdiv::is_invertible(const BitVector& t,
 
     if (pos_x == 0)
     {
-      if (t.is_zero())
+      if (x_has_fixed_bits)
       {
-        return x.lo().compare(s) < 0;
-      }
-      else if (!s.is_zero())
-      {
-        BitVector& min = s_mul_t;
-        BitVector max  = min.bvadd(s);
-        if (max.compare(min) < 0)
+        if (t.is_zero())
         {
-          max = BitVector::mk_ones(s.size());
+          if (x.lo().compare(s) >= 0)
+          {
+            return false;
+          }
+        }
+        else if (!s.is_zero())
+        {
+          BitVector& min = s_mul_t;
+          BitVector max  = min.bvadd(s);
+          if (max.compare(min) < 0)
+          {
+            max = BitVector::mk_ones(s.size());
+          }
+          else
+          {
+            max.ibvdec();
+          }
+
+          BitVectorDomainGenerator gen(x, d_rng, min, max);
+          if (gen.has_next())
+          {
+            if (!is_essential_check)
+            {
+              d_inverse.reset(new BitVector(gen.random()));
+            }
+            return true;
+          }
+          return false;
+        }
+      }
+
+      if (!is_essential_check)
+      {
+        uint64_t size = x.size();
+        if (t.is_ones())
+        {
+          if (s.is_one())
+          {
+            assert(!x_has_fixed_bits);
+            d_inverse.reset(new BitVector(BitVector::mk_ones(size)));
+          }
+          else
+          {
+            assert(s.is_zero());
+            if (x_has_fixed_bits)
+            {
+              BitVectorDomainGenerator gen(x, d_rng);
+              assert(gen.has_random());
+              d_inverse.reset(new BitVector(gen.random()));
+            }
+            else
+            {
+              d_inverse.reset(new BitVector(size, *d_rng));
+            }
+          }
         }
         else
         {
-          max.ibvdec();
-        }
-
-        BitVectorDomainGenerator gen(x, d_rng, min, max);
-        if (gen.has_next())
-        {
-          if (!is_essential_check)
+          assert(!s.is_umul_overflow(t));
+          if (d_rng->flip_coin() && x.match_fixed_bits(s_mul_t))
           {
-            d_inverse.reset(new BitVector(gen.random()));
+            d_inverse.reset(new BitVector(std::move(s_mul_t)));
           }
-          return true;
+          else
+          {
+            /**
+             * determine upper and lower bounds:
+             * max = s * (t + 1) - 1
+             *       if s * (t + 1) does not overflow, else
+             *       ones
+             * min = s * t
+             */
+            BitVector max = t.bvinc();
+            if (s.is_umul_overflow(max))
+            {
+              max = BitVector::mk_ones(size);
+            }
+            else
+            {
+              max.ibvmul(s).ibvdec();
+            }
+            if (x_has_fixed_bits)
+            {
+              BitVectorDomainGenerator gen(x, d_rng, s_mul_t, max);
+              assert(gen.has_random());
+              d_inverse.reset(new BitVector(gen.random()));
+            }
+            else
+            {
+              d_inverse.reset(new BitVector(size, *d_rng, s_mul_t, max));
+            }
+          }
         }
-        return false;
       }
       return true;
     }
-    else if (!s.is_zero() || !t.is_zero())
+
+    if ((x_has_fixed_bits || !is_essential_check)
+        && (!s.is_zero() || !t.is_zero()))
     {
-      uint64_t size = s.size();
-      BitVector min, max;
-      if (s.bvudiv(x.hi()).compare(t) > 0)
+      if (x_has_fixed_bits && s.bvudiv(x.hi()).compare(t) > 0)
       {
         return false;
       }
 
+      uint64_t size = s.size();
+      BitVector min, max;
       if (t.is_ones())
       {
         min = BitVector::mk_zero(size);
@@ -3250,20 +3341,60 @@ BitVectorUdiv::is_invertible(const BitVector& t,
       }
       else
       {
+        assert(s.compare(t) >= 0);
         min = t.bvinc();
         min.ibvudiv(s, min).ibvinc();
         max = s_udiv_t;
       }
-      BitVectorDomainGenerator gen(x, d_rng, min, max);
-      if (gen.has_next())
+      if (x_has_fixed_bits)
       {
-        if (!is_essential_check)
+        BitVectorDomainGenerator gen(x, d_rng, min, max);
+        if (gen.has_random())
         {
+          if (!is_essential_check)
+          {
+            d_inverse.reset(new BitVector(gen.random()));
+          }
+          return true;
+        }
+        return false;
+      }
+      assert(!is_essential_check);
+      d_inverse.reset(new BitVector(size, *d_rng, min, max));
+    }
+    else if (!is_essential_check)
+    {
+      uint64_t size = s.size();
+      if (t.is_ones())
+      {
+        BitVector one = BitVector::mk_one(size);
+        if (s.compare(t) == 0 && x.match_fixed_bits(one)
+            && (!x.match_fixed_bits(BitVector::mk_zero(size))
+                || d_rng->flip_coin()))
+        {
+          d_inverse.reset(new BitVector(std::move(one)));
+        }
+        else
+        {
+          d_inverse.reset(new BitVector(BitVector::mk_zero(size)));
+        }
+      }
+      else
+      {
+        assert(t.is_zero() && s.is_zero());
+        BitVector min = BitVector::mk_one(size);
+        BitVector max = BitVector::mk_ones(size);
+        if (x.has_fixed_bits())
+        {
+          BitVectorDomainGenerator gen(x, d_rng, min, max);
+          assert(gen.has_random());
           d_inverse.reset(new BitVector(gen.random()));
         }
-        return true;
+        else
+        {
+          d_inverse.reset(new BitVector(size, *d_rng, min, max));
+        }
       }
-      return false;
     }
     return true;
   }
@@ -3367,182 +3498,18 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
 const BitVector&
 BitVectorUdiv::inverse_value(const BitVector& t, uint64_t pos_x)
 {
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
-  uint64_t size      = t.size();
-
-  if (d_inverse == nullptr)
-  {
-    if (pos_x == 0)
-    {
-      /**
-       * inverse value:
-       *   t = ones: s = 1: ones
-       *             s = 0: random value
-       *
-       *   s * t does not overflow: - s * t
-       *                            - v with v / s = t
-       *                            (0.5 prob)
-       */
-      if (t.is_ones())
-      {
-        if (s.is_one())
-        {
-          d_inverse.reset(new BitVector(BitVector::mk_ones(size)));
-        }
-        else
-        {
-          assert(s.is_zero());
-          if (x.has_fixed_bits())
-          {
-            BitVectorDomainGenerator gen(x, d_rng);
-            assert(gen.has_random());
-            d_inverse.reset(new BitVector(gen.random()));
-          }
-          else
-          {
-            d_inverse.reset(new BitVector(size, *d_rng));
-          }
-        }
-      }
-      else
-      {
-        assert(!s.is_umul_overflow(t));
-        BitVector mul = s.bvmul(t);
-        if (d_rng->flip_coin() && x.match_fixed_bits(mul))
-        {
-          d_inverse.reset(new BitVector(std::move(mul)));
-        }
-        else
-        {
-          /**
-           * determine upper and lower bounds:
-           * upper = s * (t + 1) - 1
-           *         if s * (t + 1) does not overflow, else
-           *         ones
-           * lower = s * t
-           */
-          BitVector up = t.bvinc();
-          if (s.is_umul_overflow(up))
-          {
-            up = BitVector::mk_ones(size);
-          }
-          else
-          {
-            up.ibvmul(s).ibvdec();
-          }
-          if (x.has_fixed_bits())
-          {
-            BitVectorDomainGenerator gen(x, d_rng, mul, up);
-            assert(gen.has_random());
-            d_inverse.reset(new BitVector(gen.random()));
-          }
-          else
-          {
-            d_inverse.reset(new BitVector(size, *d_rng, mul, up));
-          }
-        }
-      }
-    }
-    else
-    {
-      /**
-       * inverse value:
-       *   t = ones: s  = t: 1 or 0
-       *             s != t: 0
-       *
-       *   t = 0   : 0 < s < ones: random value > s
-       *             s = 0       : random value > 0
-       *
-       *   t is a divisior of s: t / s or s with s / x = t (0.5 prob)
-       *
-       *   else : s with s / x = t
-       */
-      if (t.is_ones())
-      {
-        BitVector one = BitVector::mk_one(size);
-        if (s.compare(t) == 0 && x.match_fixed_bits(one)
-            && (!x.match_fixed_bits(BitVector::mk_zero(size))
-                || d_rng->flip_coin()))
-        {
-          d_inverse.reset(new BitVector(std::move(one)));
-        }
-        else
-        {
-          d_inverse.reset(new BitVector(BitVector::mk_zero(size)));
-        }
-      }
-      else if (t.is_zero())
-      {
-        if (s.is_zero())
-        {
-          BitVector min = BitVector::mk_one(size);
-          BitVector max = BitVector::mk_ones(size);
-          if (x.has_fixed_bits())
-          {
-            BitVectorDomainGenerator gen(x, d_rng, min, max);
-            assert(gen.has_random());
-            d_inverse.reset(new BitVector(gen.random()));
-          }
-          else
-          {
-            d_inverse.reset(new BitVector(size, *d_rng, min, max));
-          }
-        }
-        else
-        {
-          assert(!s.is_ones());
-          BitVector max = BitVector::mk_ones(size);
-          if (x.has_fixed_bits())
-          {
-            BitVectorDomainGenerator gen(x, d_rng, s.bvinc(), max);
-            assert(gen.has_random());
-            d_inverse.reset(new BitVector(gen.random()));
-          }
-          else
-          {
-            d_inverse.reset(new BitVector(size, *d_rng, s.bvinc(), max));
-          }
-        }
-      }
-      else
-      {
-        assert(s.compare(t) >= 0);
-        BitVector rem = s.bvurem(t);
-        BitVector div = s.bvudiv(t);
-        if (d_rng->flip_coin() && rem.is_zero() && x.match_fixed_bits(div))
-        {
-          d_inverse.reset(new BitVector(std::move(div)));
-        }
-        else
-        {
-          /**
-           * determine upper and lower bounds:
-           * upper = s / t
-           * lower = s / (t + 1) + 1
-           */
-          BitVector lo = s.bvudiv(t.bvinc()).ibvinc();
-          assert(lo.compare(div) <= 0);
-          if (x.has_fixed_bits())
-          {
-            BitVectorDomainGenerator gen(x, d_rng, lo, div);
-            assert(gen.has_random());
-            d_inverse.reset(new BitVector(gen.random()));
-          }
-          else
-          {
-            d_inverse.reset(new BitVector(size, *d_rng, lo, div));
-          }
-        }
-      }
-    }
-  }
-
+  assert(d_inverse);
   assert(pos_x == 1 || t.compare(d_inverse->bvudiv(s)) == 0);
   assert(pos_x == 0 || t.compare(s.bvudiv(*d_inverse)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
+#endif
   return *d_inverse;
 }
 
