@@ -4883,21 +4883,119 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
-  const BitVectorDomain& x = child(pos_x)->domain();
-  if (!x.has_fixed_bits()) return true;
-
   /**
-   * CC:pos_x = 0: t = false || (const(x) => x_lo != smax)
-   *    pos_x = 1: t = false || (const(x) => x_lo != smin)
+   * CC_wo: true
+   * CC:    pos_x = 0: t = false || (const(x) => x_lo != smax)
+   *        pos_x = 1: t = false || (const(x) => x_lo != smin)
+   *
+   * Consistent value:
+   *   pos_x = 0: t = 1: random value <s max_signed
+   *              t = 0: random value
+   *   pos_x = 1: t = 1: random_value >s min_signed
+   *              t = 0: random value
    */
+
+  const BitVectorDomain& x = child(pos_x)->domain();
+  uint64_t size            = x.size();
 
   if (pos_x == 0)
   {
-    return t.is_false() || !x.is_fixed()
-           || x.lo().compare(BitVector::mk_max_signed(x.size())) != 0;
+    if (t.is_true())
+    {
+      if (x.has_fixed_bits())
+      {
+        // CC: pos_x = 0 && t && x_lo != smax
+        if (x.is_fixed())
+        {
+          if (x.lo().is_max_signed())
+          {
+            return false;
+          }
+          d_consistent.reset(new BitVector(x.lo()));
+        }
+        else
+        {
+          BitVectorDomainSignedGenerator gen(
+              x,
+              d_rng,
+              BitVector::mk_min_signed(size),
+              BitVector::mk_max_signed(size).ibvdec());
+          assert(gen.has_random());
+          d_consistent.reset(new BitVector(gen.random()));
+        }
+      }
+      else
+      {
+        // CC_wo: true
+        d_consistent.reset(
+            new BitVector(BitVector(size,
+                                    *d_rng,
+                                    BitVector::mk_min_signed(size),
+                                    BitVector::mk_max_signed(size).ibvdec(),
+                                    true)));
+      }
+      return true;
+    }
   }
-  return t.is_false() || !x.is_fixed()
-         || x.lo().compare(BitVector::mk_min_signed(x.size())) != 0;
+  else
+  {
+    if (t.is_true())
+    {
+      if (x.has_fixed_bits())
+      {
+        // CC: pos_x = 1 && t && x_hi != smin
+        if (x.is_fixed())
+        {
+          if (x.hi().is_min_signed())
+          {
+            return false;
+          }
+          d_consistent.reset(new BitVector(x.lo()));
+        }
+        else
+        {
+          BitVectorDomainSignedGenerator gen(
+              x,
+              d_rng,
+              BitVector::mk_min_signed(size).ibvinc(),
+              BitVector::mk_max_signed(size));
+          assert(gen.has_random());
+          d_consistent.reset(new BitVector(gen.random()));
+        }
+      }
+      else
+      {
+        // CC_wo: true
+        d_consistent.reset(
+            new BitVector(BitVector(size,
+                                    *d_rng,
+                                    BitVector::mk_min_signed(size).ibvinc(),
+                                    BitVector::mk_max_signed(size),
+                                    true)));
+      }
+      return true;
+    }
+  }
+  // CC: t = false
+  assert(t.is_false());
+  if (x.has_fixed_bits())
+  {
+    if (x.is_fixed())
+    {
+      d_consistent.reset(new BitVector(x.lo()));
+    }
+    else
+    {
+      BitVectorDomainGenerator gen(x, d_rng);
+      assert(gen.has_random());
+      d_consistent.reset(new BitVector(gen.random()));
+    }
+  }
+  else
+  {
+    d_consistent.reset(new BitVector(BitVector(size, *d_rng)));
+  }
+  return true;
 }
 
 const BitVector&
@@ -4921,79 +5019,14 @@ BitVectorSlt::inverse_value(const BitVector& t, uint64_t pos_x)
 const BitVector&
 BitVectorSlt::consistent_value(const BitVector& t, uint64_t pos_x)
 {
-  d_consistent.reset(nullptr);
-
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
+  assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
-  uint64_t size = x.size();
-  bool is_ult   = t.is_true();
-
-  /**
-   * consistent value:
-   *   pos_x = 0: t = 1: random value <s max_signed
-   *              t = 0: random value
-   *   pos_x = 1: t = 1: random_value >s min_signed
-   *              t = 0: random value
-   */
-
-  if (pos_x == 0 && is_ult)
-  {
-    if (x.has_fixed_bits())
-    {
-      BitVectorDomainSignedGenerator gen(
-          x,
-          d_rng,
-          BitVector::mk_min_signed(size),
-          BitVector::mk_max_signed(size).ibvdec());
-      assert(gen.has_random());
-      d_consistent.reset(new BitVector(gen.random()));
-    }
-    else
-    {
-      d_consistent.reset(
-          new BitVector(BitVector(size,
-                                  *d_rng,
-                                  BitVector::mk_min_signed(size),
-                                  BitVector::mk_max_signed(size).ibvdec(),
-                                  true)));
-    }
-  }
-  else if (pos_x == 1 && is_ult)
-  {
-    if (x.has_fixed_bits())
-    {
-      BitVectorDomainSignedGenerator gen(
-          x,
-          d_rng,
-          BitVector::mk_min_signed(size).ibvinc(),
-          BitVector::mk_max_signed(size));
-      assert(gen.has_random());
-      d_consistent.reset(new BitVector(gen.random()));
-    }
-    else
-    {
-      d_consistent.reset(
-          new BitVector(BitVector(size,
-                                  *d_rng,
-                                  BitVector::mk_min_signed(size).ibvinc(),
-                                  BitVector::mk_max_signed(size),
-                                  true)));
-    }
-  }
-  else
-  {
-    if (x.has_fixed_bits())
-    {
-      BitVectorDomainGenerator gen(x, d_rng);
-      assert(gen.has_random());
-      d_consistent.reset(new BitVector(gen.random()));
-    }
-    else
-    {
-      d_consistent.reset(new BitVector(BitVector(size, *d_rng)));
-    }
-  }
   assert(x.match_fixed_bits(*d_consistent));
+#endif
   return *d_consistent;
 }
 
