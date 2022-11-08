@@ -190,7 +190,7 @@ _rw_eq_const(Rewriter& rewriter, const Node& node, size_t idx)
         for (uint64_t i = 0, cnt = 0, size = val.size(); i < size; i += cnt)
         {
           uint64_t val_size = val.size();
-          bool bit          = val.get_bit(val_size - 1);
+          bool bit          = val.bit(val_size - 1);
           cnt = bit ? val.count_leading_ones() : val.count_leading_zeros();
           Node ext0 = rewriter.mk_node(Kind::BV_EXTRACT,
                                        {node[idx1][0]},
@@ -225,7 +225,7 @@ _rw_eq_const(Rewriter& rewriter, const Node& node, size_t idx)
         for (uint64_t i = 0, cnt = 0, size = val.size(); i < size; i += cnt)
         {
           uint64_t val_size = val.size();
-          bool bit          = val.get_bit(val_size - 1);
+          bool bit          = val.bit(val_size - 1);
           cnt = bit ? val.count_leading_ones() : val.count_leading_zeros();
           Node ext0 = rewriter.mk_node(
               Kind::BV_EXTRACT, {node10}, {size - 1 - i, size - i - cnt});

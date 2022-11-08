@@ -314,7 +314,7 @@ uint32_t
 bzla_bv_get_bit(const BzlaBitVector *bv, uint32_t pos)
 {
   assert(bv);
-  return bv->d_bv->get_bit(pos);
+  return bv->d_bv->bit(pos);
 }
 
 void
