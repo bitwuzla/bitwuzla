@@ -5105,152 +5105,307 @@ BitVectorUrem::is_invertible(const BitVector& t,
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
-  uint64_t pos_s           = 1 - pos_x;
-  const BitVector& s       = child(pos_s)->assignment();
-  const BitVectorDomain& x = child(pos_x)->domain();
-  bool ic_wo;
-
   /**
    * IC_wo: pos_x = 0: ~(-s) >= t
    *        pos_x = 1: (t + t - s) & s >= t
+   * IC:    pos_x = 0: IC_wo &&
+   *                   ((s = 0 || t = ones) => mfb(x, t)) &&
+   *                   ((s != 0 && t != ones) => \exists y. (
+   *                       mfb(x, s * y + t) &&
+   *                       !umulo(s, y) && !uaddo(s *y, t)))
+   *        pos_x = 1: IC_wo &&
+   *                   (s = t => (lo_x = 0 || hi_x > t)) &&
+   *                   (s != t => \exists y. (
+   *                       mfb(x, y) && y > t && (s - t) mod y = 0)
+   *
+   * Inverse value:
+   *   s = 0: t
+   *   else : - t
+   *          - s * n + b
+   *            with n such that (s * n + b) does not overflow
    */
+
+  uint64_t pos_s           = 1 - pos_x;
+  const BitVector& s       = child(pos_s)->assignment();
+  const BitVectorDomain& x = child(pos_x)->domain();
+  bool x_has_fixed_bits    = x.has_fixed_bits();
+  bool ic;
+
+  // IC_wo
   if (pos_x == 0)
   {
-    ic_wo = s.bvneg().ibvnot().compare(t) >= 0;
+    ic = s.bvneg().ibvnot().compare(t) >= 0;
   }
   else
   {
     assert(pos_x == 1);
-    ic_wo = t.bvadd(t).ibvsub(s).ibvand(s).compare(t) >= 0;
+    ic = t.bvadd(t).ibvsub(s).ibvand(s).compare(t) >= 0;
   }
 
-  /**
-   * IC: pos_x = 0: IC_wo &&
-   *                ((s = 0 || t = ones) => mfb(x, t)) &&
-   *                ((s != 0 && t != ones) => \exists y. (
-   *                    mfb(x, s * y + t) && !umulo(s, y) && !uaddo(s *y, t)))
-   *     pos_x = 1: IC_wo &&
-   *                (s = t => (lo_x = 0 || hi_x > t)) &&
-   *                (s != t => \exists y. (
-   *                    mfb(x, y) && y > t && (s - t) mod y = 0)
-   */
-  if (ic_wo && x.has_fixed_bits())
+  // IC
+  if (ic)
   {
-    if (x.is_fixed())
+    if (x_has_fixed_bits && x.is_fixed())
     {
       if ((pos_x == 0 && x.lo().bvurem(s).compare(t) == 0)
           || (pos_x == 1 && s.bvurem(x.lo()).compare(t) == 0))
       {
-        return true;
-      }
-      return false;
-    }
-
-    if (pos_x == 0)
-    {
-      if (s.is_zero() || t.is_ones())
-      {
-        return x.match_fixed_bits(t);
-      }
-      else
-      {
-        assert(s.compare(t) > 0);
-        if (!x.match_fixed_bits(t))
+        if (!is_essential_check)
         {
-          /* simplest solution (0 <= res < s: res = t) does not apply, thus
-           * x = s * n + t with n s.t. (s * n + t) does not overflow */
-          uint64_t size  = x.size();
-          BitVector ones = BitVector::mk_ones(size);
-          if (ones.bvsub(s).compare(t) < 0)
-          {
-            /* overflow for n = 1 -> only simplest solution possible, but
-             * simplest possible solution not applicable */
-            return false;
-          }
-          else
-          {
-            /* x = s * n + t, with n s.t. (s * n + t) does not overflow
-             * -> n <= (~0 - t) / s (truncated)
-             * -> ~0 - s * n >= t                                       */
-
-            /* s > t -> n_hi = ~0 / t (subtracting t is redundant) */
-            BitVector n_hi = ones.bvudiv(s);
-            assert(!n_hi.is_zero());
-            /* ~0 - s * n_hi < t ? decrease n_hi until >= t */
-            BitVector mul = s.bvmul(n_hi);
-            BitVector sub = ones.bvsub(mul);
-            while (sub.compare(t) < 0)
-            {
-              n_hi.ibvdec();
-              mul.ibvmul(s, n_hi);
-              sub.ibvsub(ones, mul);
-            }
-            /* hi = s * n_hi + t (upper bound for x) */
-            BitVector hi = mul.bvadd(t);
-            /* x->lo <= x <= hi */
-            BitVectorDomainGenerator gen(x, d_rng, x.lo(), hi);
-            while (gen.has_next())
-            {
-              BitVector bv = gen.next();
-              assert(x.match_fixed_bits(bv));
-              BitVector rem = bv.bvurem(s);
-              if (rem.compare(t) == 0)
-              {
-                if (!is_essential_check)
-                {
-                  d_inverse.reset(new BitVector(std::move(bv)));
-                }
-                return true;
-              }
-            }
-            return false;
-          }
+          d_inverse.reset(new BitVector(x.lo()));
         }
         return true;
       }
-    }
-    if (s.compare(t) == 0)
-    {
-      /* s = t: x = 0 or random x > t */
-      return x.lo().is_zero() || x.hi().compare(t) > 0;
-    }
-
-    /* s = x * n + t
-     *
-     * In general, x = s - t is always a solution with n = 1, but
-     * fixed bits of x may not match s - t. In this case, we look for a
-     * factor n s.t. x = (s - t) / n, where fixed bits match. */
-    assert(t.compare(s) <= 0);
-    BitVector n = s.bvsub(t);
-    /* Is (s - t) a solution?
-     *
-     * -> if yes we do not cache the result to enforce that inverse() selects
-     *    one of several possible choices rather than only this solution
-     */
-    if (!x.match_fixed_bits(n))
-    {
-      if (t.is_zero() && x.match_fixed_bits(BitVector::mk_one(x.size())))
-      {
-        /* we don't cache the result for the same reason as above */
-        return true;
-      }
-      /* s - t does not match const bits of x and one is not a possible
-       * solution. Find factor n of (s - t) s.t. n > t and n matches the const
-       * bits of x. Pick x = n.  */
-      BitVector bv = x.get_factor(d_rng, n, t, 10000);
-      assert(bv.is_null() || x.match_fixed_bits(bv));
-      if (!bv.is_null())
-      {
-        assert(s.bvurem(bv).compare(t) == 0);
-        d_inverse.reset(new BitVector(std::move(bv)));
-        return true;
-      }
       return false;
     }
-    return true;
+
+    if (pos_x == 0 && (x_has_fixed_bits || !is_essential_check))
+    {
+      if (s.is_zero() || t.is_ones())
+      {
+        if (!x_has_fixed_bits || x.match_fixed_bits(t))
+        {
+          if (!is_essential_check)
+          {
+            d_inverse.reset(new BitVector(t));
+          }
+          return true;
+        }
+        return false;
+      }
+      assert(s.compare(t) > 0);
+      // if simplest solution (0 <= res < s: res = t) does not apply,
+      // x = s * n + t with n s.t. (s * n + t) does not overflow
+      uint64_t size  = x.size();
+      BitVector ones = BitVector::mk_ones(size);
+      if (ones.bvsub(s).compare(t) < 0)
+      {
+        // overflow for n = 1 -> only simplest solution possible
+        if (!x_has_fixed_bits || x.match_fixed_bits(t))
+        {
+          // overflow for n = 1 -> only simplest solution (t) possible
+          if (!is_essential_check)
+          {
+            d_inverse.reset(new BitVector(t));
+          }
+          return true;
+        }
+        else
+        {
+          // simplest possible solution not applicable
+          return false;
+        }
+      }
+
+      // x = s * n + t, with n s.t. (s * n + t) does not overflow
+      // -> n <= (~0 - t) / s (truncated)
+      // -> ~0 - s * n >= t
+
+      // s > t -> n_hi = ~0 / t (subtracting t is redundant)
+      BitVector n_hi = ones.bvudiv(s);
+      assert(!n_hi.is_zero());
+      // ~0 - s * n_hi < t ? decrease n_hi until >= t
+      BitVector mul = s.bvmul(n_hi);
+      BitVector sub = ones.bvsub(mul);
+      while (sub.compare(t) < 0)
+      {
+        n_hi.ibvdec();
+        mul.ibvmul(s, n_hi);
+        sub.ibvsub(ones, mul);
+      }
+      // hi = s * n_hi + t (upper bound for x)
+      BitVector hi = mul.bvadd(t);
+      // x->lo <= x <= hi
+      BitVectorDomainGenerator gen(x, d_rng, x.lo(), hi);
+      bool res = false;
+      while (gen.has_next())
+      {
+        BitVector bv = gen.next();
+        assert(x.match_fixed_bits(bv));
+        BitVector rem = bv.bvurem(s);
+        if (rem.compare(t) == 0)
+        {
+          res = true;
+          if (!is_essential_check)
+          {
+            d_inverse.reset(new BitVector(std::move(bv)));
+          }
+          break;
+        }
+      }
+      // try to more randomly pick a candidate if there is one
+      if (res && !is_essential_check)
+      {
+        for (uint32_t cnt = 0; cnt < 10000; ++cnt)
+        {
+          BitVector bv  = gen.random();
+          BitVector rem = bv.bvurem(s);
+          if (rem.compare(t) == 0)
+          {
+            d_inverse.reset(new BitVector(std::move(bv)));
+            break;
+          }
+        }
+      }
+      return res;
+    }
+
+    if (pos_x == 1 && (x_has_fixed_bits || !is_essential_check))
+    {
+      uint64_t size = x.size();
+      if (t.is_ones())
+      {
+        BitVector zero = BitVector::mk_zero(size);
+        if (x_has_fixed_bits && !x.match_fixed_bits(zero))
+        {
+          return false;
+        }
+        if (!is_essential_check)
+        {
+          d_inverse.reset(new BitVector(std::move(zero)));
+        }
+        return true;
+      }
+
+      if (s.compare(t) == 0)
+      {
+        // s = t: x = 0 or random x > t
+        if (!x_has_fixed_bits || x.lo().is_zero() || x.hi().compare(t) > 0)
+        {
+          if (!is_essential_check)
+          {
+            BitVector zero = BitVector::mk_zero(size);
+            if (d_rng->pick_with_prob(250)
+                && (!x_has_fixed_bits || x.match_fixed_bits(zero)))
+            {
+              d_inverse.reset(new BitVector(std::move(zero)));
+            }
+            else if (x_has_fixed_bits)
+            {
+              if (x.is_fixed())
+              {
+                d_inverse.reset(new BitVector(x.lo()));
+              }
+              else
+              {
+                BitVectorDomainGenerator gen(
+                    x, d_rng, t.bvinc(), BitVector::mk_ones(size));
+                if (!gen.has_random())
+                {
+                  assert(x.match_fixed_bits(zero));
+                  d_inverse.reset(new BitVector(std::move(zero)));
+                }
+                else
+                {
+                  d_inverse.reset(new BitVector(gen.random()));
+                }
+              }
+            }
+            else
+            {
+              d_inverse.reset(new BitVector(
+                  size, *d_rng, t.bvinc(), BitVector::mk_ones(size)));
+            }
+          }
+          return true;
+        }
+        return false;
+      }
+
+      /* s = x * n + t
+       *
+       * In general, x = s - t is always a solution with n = 1, but
+       * fixed bits of x may not match s - t. In this case, we look for a
+       * factor n s.t. x = (s - t) / n, where fixed bits match. */
+      assert(t.compare(s) <= 0);
+      BitVector n = s.bvsub(t);
+      /* Is (s - t) a solution?
+       *
+       * -> if yes we do not immediately cache the result to enforce that
+       *    we select one of several possible inverse values rather than only
+       *    this solution
+       */
+      if (x_has_fixed_bits && !x.match_fixed_bits(n))
+      {
+        // if (t.is_zero() && x.match_fixed_bits(BitVector::mk_one(size)))
+        if (!t.is_zero() || !x.match_fixed_bits(BitVector::mk_one(size)))
+        {
+          // s - t does not match const bits of x and one is not a possible
+          // solution. Find factor n of (s - t) s.t. n > t and n matches the
+          // const bits of x. Pick x = n.
+          BitVector bv = x.get_factor(d_rng, n, t, 10000);
+          assert(bv.is_null() || x.match_fixed_bits(bv));
+          if (bv.is_null())
+          {
+            return false;
+          }
+          assert(s.bvurem(bv).compare(t) == 0);
+          d_inverse.reset(new BitVector(std::move(bv)));
+          return true;
+        }
+      }
+      if (!is_essential_check)
+      {
+        assert(s.compare(t) > 0);
+        assert(t.is_zero() || t.compare(s.bvdec()) != 0);
+
+        BitVector sub = s.bvsub(t);
+        assert(sub.compare(t) > 0);
+        bool x_match_sub = !x_has_fixed_bits || x.match_fixed_bits(sub);
+
+        if (d_rng->flip_coin() && x_match_sub)
+        {
+          d_inverse.reset(new BitVector(std::move(sub)));
+        }
+        else
+        {
+          BitVector one = BitVector::mk_one(size);
+          bool x_match_one =
+              t.is_zero() && (!x_has_fixed_bits || x.match_fixed_bits(one));
+
+          if (d_rng->pick_with_prob(100) && x_match_one)
+          {
+            d_inverse.reset(new BitVector(std::move(one)));
+          }
+          else
+          {
+            BitVector bv = x.get_factor(d_rng, sub, t, 10000);
+            assert(bv.is_null() || x.match_fixed_bits(bv));
+            if (!bv.is_null())
+            {
+              d_inverse.reset(new BitVector(std::move(bv)));
+            }
+            else
+            {
+              assert(x_match_one || x_match_sub);
+              if (x_match_one && x_match_sub)
+              {
+                if (d_rng->flip_coin())
+                {
+                  d_inverse.reset(new BitVector(std::move(sub)));
+                }
+                else
+                {
+                  d_inverse.reset(new BitVector(std::move(one)));
+                }
+              }
+              else if (x_match_one)
+              {
+                d_inverse.reset(new BitVector(std::move(one)));
+              }
+              else
+              {
+                d_inverse.reset(new BitVector(std::move(sub)));
+              }
+            }
+          }
+        }
+      }
+      return true;
+    }
   }
 
-  return ic_wo;
+  return ic;
 }
 
 bool
@@ -5422,195 +5577,18 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
 const BitVector&
 BitVectorUrem::inverse_value(const BitVector& t, uint64_t pos_x)
 {
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
-  uint64_t size      = t.size();
-
-  if (d_inverse == nullptr)
-  {
-    if (pos_x == 0)
-    {
-      /**
-       * inverse value:
-       *   s = 0: t
-       *   else : - t
-       *          - s * n + b
-       *            with n such that (s * n + b) does not overflow
-       */
-
-      assert(t.is_zero() || !s.is_one());
-      if (s.is_zero())
-      {
-        d_inverse.reset(new BitVector(t));
-      }
-      else
-      {
-        assert(s.compare(t) > 0);
-        assert(x.match_fixed_bits(t));
-        if (d_rng->flip_coin())
-        {
-          d_inverse.reset(new BitVector(t));
-        }
-        else
-        {
-          BitVector ones = BitVector::mk_ones(size);
-          if (ones.bvsub(s).compare(t) < 0)
-          {
-            /* overflow for n = 1 -> only simplest solution (t) possible */
-            d_inverse.reset(new BitVector(t));
-          }
-          else
-          {
-            /* x = s * n + t, with n s.t. (s * n + t) does not overflow
-             * -> n <= (~0 - t) / s (truncated)
-             * -> ~0 - s * n >= t                                       */
-
-            /* s > t -> n_hi = ~0 / t (subtracting t is redundant) */
-            BitVector n_hi = ones.bvudiv(s);
-            assert(!n_hi.is_zero());
-            /* ~0 - s * n_hi < t ? decrease n_hi until >= t */
-            BitVector mul = s.bvmul(n_hi);
-            BitVector sub = ones.bvsub(mul);
-            while (sub.compare(t) < 0)
-            {
-              n_hi.ibvdec();
-              mul.ibvmul(s, n_hi);
-              sub.ibvsub(ones, mul);
-            }
-            /* hi = s * n_hi + t (upper bound for x) */
-            BitVector hi = mul.bvadd(t);
-            /* x->lo <= x <= hi */
-            BitVectorDomainGenerator gen(x, d_rng, x.lo(), hi);
-            assert(gen.has_random());
-
-            for (uint32_t cnt = 0; cnt < 10000; ++cnt)
-            {
-              BitVector bv = gen.random();
-              assert(x.match_fixed_bits(bv));
-              BitVector rem = bv.bvurem(s);
-              if (rem.compare(t) == 0)
-              {
-                d_inverse.reset(new BitVector(std::move(bv)));
-                break;
-              }
-            }
-            if (d_inverse == nullptr)
-            {
-              d_inverse.reset(new BitVector(t));
-            }
-          }
-          assert(d_inverse->compare(t) >= 0);
-        }
-      }
-    }
-    else
-    {
-      /**
-       * inverse value:
-       *   t = ones: 0
-       *   s = t   : 0 or random value > t
-       *   s > t   : ((s - t) / n) > t
-       */
-      if (t.is_ones())
-      {
-        assert(s.is_ones());
-        d_inverse.reset(new BitVector(BitVector::mk_zero(size)));
-      }
-      else if (s.compare(t) == 0)
-      {
-        BitVector zero = BitVector::mk_zero(size);
-        if (d_rng->pick_with_prob(250) && x.match_fixed_bits(zero))
-        {
-          d_inverse.reset(new BitVector(std::move(zero)));
-        }
-        else
-        {
-          if (x.has_fixed_bits())
-          {
-            BitVectorDomainGenerator gen(
-                x, d_rng, t.bvinc(), BitVector::mk_ones(size));
-            if (!gen.has_random())
-            {
-              assert(x.match_fixed_bits(zero));
-              d_inverse.reset(new BitVector(std::move(zero)));
-            }
-            else
-            {
-              d_inverse.reset(new BitVector(gen.random()));
-            }
-          }
-          else
-          {
-            d_inverse.reset(new BitVector(
-                size, *d_rng, t.bvinc(), BitVector::mk_ones(size)));
-          }
-        }
-      }
-      else
-      {
-        assert(s.compare(t) > 0);
-        assert(t.is_zero() || t.compare(s.bvdec()) != 0);
-
-        BitVector sub = s.bvsub(t);
-        assert(sub.compare(t) > 0);
-        bool x_match_sub = x.match_fixed_bits(sub);
-
-        if (d_rng->flip_coin() && x_match_sub)
-        {
-          d_inverse.reset(new BitVector(std::move(sub)));
-        }
-        else
-        {
-          BitVector one    = BitVector::mk_one(size);
-          bool x_match_one = t.is_zero() && x.match_fixed_bits(one);
-
-          if (d_rng->pick_with_prob(100) && x_match_one)
-          {
-            d_inverse.reset(new BitVector(std::move(one)));
-          }
-          else
-          {
-            BitVector bv = x.get_factor(d_rng, sub, t, 10000);
-            assert(bv.is_null() || x.match_fixed_bits(bv));
-            if (!bv.is_null())
-            {
-              d_inverse.reset(new BitVector(std::move(bv)));
-            }
-            else
-            {
-              assert(x_match_one || x_match_sub);
-              if (x_match_one && x_match_sub)
-              {
-                if (d_rng->flip_coin())
-                {
-                  d_inverse.reset(new BitVector(std::move(sub)));
-                }
-                else
-                {
-                  d_inverse.reset(new BitVector(std::move(one)));
-                }
-              }
-              else if (x_match_one)
-              {
-                d_inverse.reset(new BitVector(std::move(one)));
-              }
-              else
-              {
-                d_inverse.reset(new BitVector(std::move(sub)));
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  assert(d_inverse != nullptr);
+  assert(d_inverse);
   assert(pos_x == 1 || t.compare(d_inverse->bvurem(s)) == 0);
   assert(pos_x == 0 || t.compare(s.bvurem(*d_inverse)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
+#endif
   return *d_inverse;
 }
 
