@@ -5890,48 +5890,6 @@ BitVectorIte::is_invertible(const BitVector& t,
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
-  uint64_t pos_s0          = pos_x == 0 ? 1 : 0;
-  uint64_t pos_s1          = pos_x == 2 ? 1 : 2;
-  const BitVector& s0      = child(pos_s0)->assignment();
-  const BitVector& s1      = child(pos_s1)->assignment();
-  const BitVectorDomain& x = child(pos_x)->domain();
-
-  /**
-   * IC: pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
-   *                (is_fixed_true(x) && s0 = t) ||
-   *                (is_fixed_false(x) && s1 = t)
-   *                with s0 the value for '_t' and s1 the value for '_e'
-   *     pos_x = 1: (s0 = true && mfb(x, t)) ||
-   *                (s0 = false && s1 = t)
-   *                with s0 the value for '_c' and s1 the value for '_e'
-   *     pos_x = 2: (s0 == false && mfb(x, t)) ||
-   *                (s1 == true && s1 = t)
-   *                with s0 the value for '_c' and s1 the value for '_t'
-   */
-  if (x.has_fixed_bits())
-  {
-    if (pos_x == 0)
-    {
-      if (x.is_fixed())
-      {
-        if (x.is_fixed_bit_true(0))
-        {
-          return s0.compare(t) == 0;
-        }
-        return s1.compare(t) == 0;
-      }
-      return s0.compare(t) == 0 || s1.compare(t) == 0;
-    }
-    if (pos_x == 1)
-    {
-      return (s0.is_true() && x.match_fixed_bits(t))
-             || (s0.is_false() && s1.compare(t) == 0);
-    }
-    assert(pos_x == 2);
-    return (s0.is_false() && x.match_fixed_bits(t))
-           || (s0.is_true() && s1.compare(t) == 0);
-  }
-
   /**
    * IC_wo: pos_x = 0: s0 == t || s1 == t
    *                   with s0 the value for the '_t' branch
@@ -5940,65 +5898,65 @@ BitVectorIte::is_invertible(const BitVector& t,
    *                   with s0 the value for condition '_c'
    *        pos_x = 2: s0 == false
    *                   with s0 the value for condition '_c'
-   */
-  if (pos_x == 0)
-  {
-    return s0.compare(t) == 0 || s1.compare(t) == 0;
-  }
-  if (pos_x == 1)
-  {
-    return s0.is_true() || s1.compare(t) == 0;
-  }
-  assert(pos_x == 2);
-  return s0.is_false() || s1.compare(t) == 0;
-}
-
-bool
-BitVectorIte::is_consistent(const BitVector& t, uint64_t pos_x)
-{
-  d_inverse.reset(nullptr);
-  d_consistent.reset(nullptr);
-
-  /** CC: true */
-  (void) t;
-  (void) pos_x;
-  return true;
-}
-
-const BitVector&
-BitVectorIte::inverse_value(const BitVector& t, uint64_t pos_x)
-{
-  assert(d_inverse == nullptr);
-
-  const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
-  uint64_t pos_s0     = pos_x == 0 ? 1 : 0;
-  uint64_t pos_s1     = pos_x == 2 ? 1 : 2;
-  const BitVector& s0 = child(pos_s0)->assignment();
-  const BitVector& s1 = child(pos_s1)->assignment();
-
-  /**
-   * inverse value:
+   * IC:    pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
+   *                   (is_fixed_true(x) && s0 = t) ||
+   *                   (is_fixed_false(x) && s1 = t)
+   *                   with s0 the value for '_t' and s1 the value for '_e'
+   *        pos_x = 1: (s0 = true && mfb(x, t)) ||
+   *                   (s0 = false && s1 = t)
+   *                   with s0 the value for '_c' and s1 the value for '_e'
+   *        pos_x = 2: (s0 == false && mfb(x, t)) ||
+   *                   (s1 == true && s1 = t)
+   *                   with s0 the value for '_c' and s1 the value for '_t'
+   *
+   * Inverse values:
    *   pos_x = 0: t = 0: random value >=s s
    *              t = 1: random value <s s
    *   pos_x = 1: t = 0: random value <=s s
    *              t = 1: random value >s s
    */
 
+  uint64_t pos_s0          = pos_x == 0 ? 1 : 0;
+  uint64_t pos_s1          = pos_x == 2 ? 1 : 2;
+  const BitVector& s0      = child(pos_s0)->assignment();
+  const BitVector& s1      = child(pos_s1)->assignment();
+  const BitVectorDomain& x = child(pos_x)->domain();
+  bool x_has_fixed_bits    = x.has_fixed_bits();
+
   if (pos_x == 0)
   {
     int32_t cmp0 = s0.compare(t) == 0;
     int32_t cmp1 = s1.compare(t) == 0;
-    if (cmp0 && cmp1)
+    if (x.is_fixed())
     {
-      if (x.has_fixed_bits())
+      if ((x.is_fixed_bit_true(0) && !cmp0)
+          || (!x.is_fixed_bit_true(0) && !cmp1))
       {
-        if (d_rng->flip_coin())
+        return false;
+      }
+      if (!is_essential_check)
+      {
+        d_inverse.reset(new BitVector(x.lo()));
+      }
+      return true;
+    }
+    if (cmp0 || cmp1)
+    {
+      if (cmp0 && cmp1)
+      {
+        if (x_has_fixed_bits)
         {
-          BitVector bv = BitVector::mk_true();
-          if (x.match_fixed_bits(bv))
+          if (d_rng->flip_coin())
           {
-            d_inverse.reset(new BitVector(std::move(bv)));
+            BitVector bv = BitVector::mk_true();
+            if (x.match_fixed_bits(bv))
+            {
+              d_inverse.reset(new BitVector(std::move(bv)));
+            }
+            else
+            {
+              d_inverse.reset(new BitVector(BitVector::mk_false()));
+            }
           }
           else
           {
@@ -6007,73 +5965,110 @@ BitVectorIte::inverse_value(const BitVector& t, uint64_t pos_x)
         }
         else
         {
-          d_inverse.reset(new BitVector(BitVector::mk_false()));
+          d_inverse.reset(new BitVector(d_rng->flip_coin()
+                                            ? BitVector::mk_true()
+                                            : BitVector::mk_false()));
         }
+      }
+      else if (cmp0)
+      {
+        d_inverse.reset(new BitVector(BitVector::mk_true()));
       }
       else
       {
-        d_inverse.reset(new BitVector(
-            d_rng->flip_coin() ? BitVector::mk_true() : BitVector::mk_false()));
+        assert(cmp1);
+        d_inverse.reset(new BitVector(BitVector::mk_false()));
       }
+      return true;
     }
-    else if (cmp0)
-    {
-      d_inverse.reset(new BitVector(BitVector::mk_true()));
-    }
-    else
-    {
-      assert(cmp1);
-      d_inverse.reset(new BitVector(BitVector::mk_false()));
-    }
-  }
-  else if ((pos_x == 1 && s0.is_zero()) || (pos_x == 2 && s0.is_one()))
-  {
-    /* return current assignment for disabled branch */
-    d_inverse.reset(
-        new BitVector(x.get_copy_with_fixed_bits(child(pos_x)->assignment())));
-  }
-  else
-  {
-    d_inverse.reset(new BitVector(t));
+    return false;
   }
 
-  assert(pos_x != 0 || t.compare(BitVector::bvite(*d_inverse, s0, s1)) == 0);
-  assert(pos_x != 1 || t.compare(BitVector::bvite(s0, *d_inverse, s1)) == 0);
-  assert(pos_x != 2 || t.compare(BitVector::bvite(s0, s1, *d_inverse)) == 0);
-  assert(x.match_fixed_bits(*d_inverse));
-  return *d_inverse;
+  if (pos_x == 1)
+  {
+    if (s0.is_true() && (!x_has_fixed_bits || x.match_fixed_bits(t)))
+    {
+      if (!is_essential_check)
+      {
+        d_inverse.reset(new BitVector(t));
+      }
+      return true;
+    }
+    if (s0.is_false() && s1.compare(t) == 0)
+    {
+      if (!is_essential_check)
+      {
+        // return current assignment for disabled branch
+        d_inverse.reset(new BitVector(
+            x.get_copy_with_fixed_bits(child(pos_x)->assignment())));
+      }
+      return true;
+    }
+    return false;
+  }
+
+  assert(pos_x == 2);
+
+  if (s0.is_false() && (!x_has_fixed_bits || x.match_fixed_bits(t)))
+  {
+    if (!is_essential_check)
+    {
+      d_inverse.reset(new BitVector(t));
+    }
+    return true;
+  }
+  if (s0.is_true() && s1.compare(t) == 0)
+  {
+    if (!is_essential_check)
+    {
+      // return current assignment for disabled branch
+      d_inverse.reset(new BitVector(
+          x.get_copy_with_fixed_bits(child(pos_x)->assignment())));
+    }
+    return true;
+  }
+  return false;
 }
 
-const BitVector&
-BitVectorIte::consistent_value(const BitVector& t, uint64_t pos_x)
+bool
+BitVectorIte::is_consistent(const BitVector& t, uint64_t pos_x)
 {
-  assert(d_consistent == nullptr);
-
-  const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
-  const BitVector& s0 = child(0)->assignment();
-  uint64_t size       = x.size();
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
 
   /**
-   * consistent value:
+   * CC_wo: true
+   * CC:    true
+   *
+   * Consistent value:
    *   pos_x = 0: 0 or 1
    *   pos_x > 0: disabled branch: current assignment
    *              enabled branch : t if bits in x match, else current assignment
    */
 
+  const BitVectorDomain& x = child(pos_x)->domain();
+  const BitVector& s0      = child(0)->assignment();
+  uint64_t size            = x.size();
+
   if (pos_x == 0)
   {
-    assert(!x.has_fixed_bits());
-    d_consistent.reset(new BitVector(d_rng->flip_coin()
-                                         ? BitVector::mk_one(size)
-                                         : BitVector::mk_zero(size)));
+    if (x.is_fixed())
+    {
+      d_consistent.reset(new BitVector(x.lo()));
+    }
+    else
+    {
+      d_consistent.reset(new BitVector(d_rng->flip_coin()
+                                           ? BitVector::mk_one(size)
+                                           : BitVector::mk_zero(size)));
+    }
   }
   else if ((pos_x == 1 && s0.is_false()) || (pos_x == 2 && s0.is_true())
            || !x.match_fixed_bits(t))
   {
-    /* If the current assignment does not match fixed bits in x, which can
-     * happen with const bits propagated from top-level constraints, we fix the
-     * assignment of those bits to match these const bits. */
+    // If the current assignment does not match fixed bits in x, which can
+    // happen with const bits propagated from top-level constraints, we fix the
+    // assignment of those bits to match these const bits.
     d_consistent.reset(
         new BitVector(x.get_copy_with_fixed_bits(child(pos_x)->assignment())));
   }
@@ -6081,8 +6076,40 @@ BitVectorIte::consistent_value(const BitVector& t, uint64_t pos_x)
   {
     d_consistent.reset(new BitVector(t));
   }
+  return true;
+}
 
+const BitVector&
+BitVectorIte::inverse_value(const BitVector& t, uint64_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
+  const BitVectorDomain& x = child(pos_x)->domain();
+  assert(!x.is_fixed());
+  uint64_t pos_s0     = pos_x == 0 ? 1 : 0;
+  uint64_t pos_s1     = pos_x == 2 ? 1 : 2;
+  const BitVector& s0 = child(pos_s0)->assignment();
+  const BitVector& s1 = child(pos_s1)->assignment();
+  assert(d_inverse);
+  assert(pos_x != 0 || t.compare(BitVector::bvite(*d_inverse, s0, s1)) == 0);
+  assert(pos_x != 1 || t.compare(BitVector::bvite(s0, *d_inverse, s1)) == 0);
+  assert(pos_x != 2 || t.compare(BitVector::bvite(s0, s1, *d_inverse)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
+#endif
+  return *d_inverse;
+}
+
+const BitVector&
+BitVectorIte::consistent_value(const BitVector& t, uint64_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
+  const BitVectorDomain& x = child(pos_x)->domain();
+  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
+#endif
   return *d_consistent;
 }
 
