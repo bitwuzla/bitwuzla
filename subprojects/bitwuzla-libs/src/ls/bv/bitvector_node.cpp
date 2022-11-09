@@ -6750,10 +6750,12 @@ BitVectorSignExtend::is_invertible(const BitVector& t,
    *         and t_x   = t[t_size - 1 - n : 0]
    *         and t_ext = t[t_size - 1, t_size - 1 - n]
    *         (i.e., it includes MSB of t_x)
+   * IC:     IC_wo && mfb(x, t_x)
+   *
+   * Inverse value: t_x
    */
   bool ic_wo = t_ext.is_zero() || t_ext.is_ones();
 
-  /** IC: IC_wo && mfb(x, t_x) */
   if (ic_wo && x.has_fixed_bits())
   {
     ic_wo = x.match_fixed_bits(t_x);
