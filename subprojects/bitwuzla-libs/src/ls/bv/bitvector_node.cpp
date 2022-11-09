@@ -6389,15 +6389,119 @@ BitVectorExtract::is_invertible(const BitVector& t,
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
-  (void) pos_x;
+  /**
+   * IC_wo: true
+   * IC:    mfb(x[hi:lo], t)
+   *
+   * Inverse value: x[msb: hi+1] o t o x[lo-1:0]
+   *
+   * We choose with probability s_prob_keep if we keep the current assignment
+   * of the don't care bits, i.e., all bits that are not determined by t, or if
+   * we set them randomly. If the current assignment does not match fixed bits
+   * in x, though, which can happen with const bits propagated from top-level
+   * constraints, we fix the assignment of those bits to match these const bits.
+   */
 
   const BitVectorDomain& x = child(pos_x)->domain();
+  if (!x.has_fixed_bits() || x.bvextract(d_hi, d_lo).match_fixed_bits(t))
+  {
+    if (!is_essential_check)
+    {
+      const BitVector& x_val = child(pos_x)->assignment();
+      uint64_t size          = x.size();
+      bool keep              = d_rng->pick_with_prob(s_prob_keep);
+      BitVector left, propagated, right;
 
-  /** IC_wo: true */
-  if (!x.has_fixed_bits()) return true;
-  // TODO: maybe we should cache the domain extraction
-  /** IC: mfb(x[hi:lo], t) */
-  return x.bvextract(d_hi, d_lo).match_fixed_bits(t);
+      if (d_hi < size - 1)
+      {
+        if (keep)
+        {
+          left =
+              x.get_copy_with_fixed_bits(x_val).ibvextract(size - 1, d_hi + 1);
+        }
+        else
+        {
+          if (x.has_fixed_bits())
+          {
+            if (d_x_slice_left == nullptr)
+            {
+              d_x_slice_left.reset(
+                  new BitVectorDomain(x.bvextract(size - 1, d_hi + 1)));
+            }
+            if (d_x_slice_left->is_fixed())
+            {
+              left = d_x_slice_left->lo();
+            }
+            else
+            {
+              BitVectorDomainGenerator gen(*d_x_slice_left, d_rng);
+              assert(gen.has_random());
+              left = gen.random();
+            }
+          }
+          else
+          {
+            left = BitVector(size - 1 - d_hi, *d_rng);
+          }
+        }
+      }
+
+      if (d_lo > 0)
+      {
+        if (keep)
+        {
+          right = x.get_copy_with_fixed_bits(x_val).bvextract(d_lo - 1, 0);
+        }
+        else
+        {
+          if (x.has_fixed_bits())
+          {
+            if (d_x_slice_right == nullptr)
+            {
+              d_x_slice_right.reset(
+                  new BitVectorDomain(x.bvextract(d_lo - 1, 0)));
+            }
+            if (d_x_slice_right->is_fixed())
+            {
+              right = d_x_slice_right->lo();
+            }
+            else
+            {
+              BitVectorDomainGenerator gen(*d_x_slice_right, d_rng);
+              assert(gen.has_random());
+              right = gen.random();
+            }
+          }
+          else
+          {
+            right = BitVector(d_lo, *d_rng);
+          }
+        }
+      }
+
+      if (left.is_null())
+      {
+        if (right.is_null())
+        {
+          d_inverse.reset(new BitVector(t));
+        }
+        else
+        {
+          d_inverse.reset(new BitVector(t.bvconcat(right)));
+        }
+      }
+      else if (right.is_null())
+      {
+        d_inverse.reset(new BitVector(left.bvconcat(t)));
+      }
+      else
+      {
+        d_inverse.reset(new BitVector(left.bvconcat(t).ibvconcat(right)));
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 bool
@@ -6410,114 +6514,15 @@ BitVectorExtract::is_consistent(const BitVector& t, uint64_t pos_x)
 const BitVector&
 BitVectorExtract::inverse_value(const BitVector& t, uint64_t pos_x)
 {
-  assert(d_inverse == nullptr);
+  (void) t;
   (void) pos_x;
-
+#ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
-  const BitVector& x_val = child(pos_x)->assignment();
-
-  /**
-   * inverse value: x[msb: hi+1] o t o x[lo-1:0]
-   *
-   * We choose with probability s_prob_keep if we keep the current assignment
-   * of the don't care bits, i.e., all bits that are not determined by t, or if
-   * we set them randomly. If the current assignment does not match fixed bits
-   * in x, though, which can happen with const bits propagated from top-level
-   * constraints, we fix the assignment of those bits to match these const bits.
-   */
-
-  uint64_t size = x.size();
-  bool keep     = d_rng->pick_with_prob(s_prob_keep);
-  BitVector left, propagated, right;
-
-  if (d_hi < size - 1)
-  {
-    if (keep)
-    {
-      left = x.get_copy_with_fixed_bits(x_val).ibvextract(size - 1, d_hi + 1);
-    }
-    else
-    {
-      if (x.has_fixed_bits())
-      {
-        if (d_x_slice_left == nullptr)
-        {
-          d_x_slice_left.reset(
-              new BitVectorDomain(x.bvextract(size - 1, d_hi + 1)));
-        }
-        if (d_x_slice_left->is_fixed())
-        {
-          left = d_x_slice_left->lo();
-        }
-        else
-        {
-          BitVectorDomainGenerator gen(*d_x_slice_left, d_rng);
-          assert(gen.has_random());
-          left = gen.random();
-        }
-      }
-      else
-      {
-        left = BitVector(size - 1 - d_hi, *d_rng);
-      }
-    }
-  }
-
-  if (d_lo > 0)
-  {
-    if (keep)
-    {
-      right = x.get_copy_with_fixed_bits(x_val).bvextract(d_lo - 1, 0);
-    }
-    else
-    {
-      if (x.has_fixed_bits())
-      {
-        if (d_x_slice_right == nullptr)
-        {
-          d_x_slice_right.reset(new BitVectorDomain(x.bvextract(d_lo - 1, 0)));
-        }
-        if (d_x_slice_right->is_fixed())
-        {
-          right = d_x_slice_right->lo();
-        }
-        else
-        {
-          BitVectorDomainGenerator gen(*d_x_slice_right, d_rng);
-          assert(gen.has_random());
-          right = gen.random();
-        }
-      }
-      else
-      {
-        right = BitVector(d_lo, *d_rng);
-      }
-    }
-  }
-
-  if (left.is_null())
-  {
-    if (right.is_null())
-    {
-      d_inverse.reset(new BitVector(t));
-    }
-    else
-    {
-      d_inverse.reset(new BitVector(t.bvconcat(right)));
-    }
-  }
-  else if (right.is_null())
-  {
-    d_inverse.reset(new BitVector(left.bvconcat(t)));
-  }
-  else
-  {
-    d_inverse.reset(new BitVector(left.bvconcat(t).ibvconcat(right)));
-  }
-
+  assert(d_inverse);
   assert(t.compare(d_inverse->bvextract(d_hi, d_lo)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
+#endif
   return *d_inverse;
 }
 
