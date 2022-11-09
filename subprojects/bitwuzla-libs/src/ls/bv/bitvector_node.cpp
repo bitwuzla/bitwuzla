@@ -6260,14 +6260,23 @@ BitVectorNot::is_invertible(const BitVector& t,
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
-  (void) pos_x;
+  /**
+   * IC_wo: true
+   * IC:    mfb(x, ~t)
+   *
+   * Inverse value: ~t
+   */
 
   const BitVectorDomain& x = child(pos_x)->domain();
-
-  /** IC_wo: true */
-  if (!x.has_fixed_bits()) return true;
-  /** IC: mfb(x, ~t) */
-  return x.match_fixed_bits(t.bvnot());
+  if (!x.has_fixed_bits() || x.match_fixed_bits(t.bvnot()))
+  {
+    if (!is_essential_check)
+    {
+      d_inverse.reset(new BitVector(t.bvnot()));
+    }
+    return true;
+  }
+  return false;
 }
 
 bool
@@ -6280,15 +6289,12 @@ BitVectorNot::is_consistent(const BitVector& t, uint64_t pos_x)
 const BitVector&
 BitVectorNot::inverse_value(const BitVector& t, uint64_t pos_x)
 {
-  assert(d_inverse == nullptr);
+  (void) t;
   (void) pos_x;
-
-  /** inverse value: ~t */
-  d_inverse.reset(new BitVector(t.bvnot()));
-
 #ifndef NDEBUG
-  const BitVectorDomain& x = child(0)->domain();
+  const BitVectorDomain& x = child(pos_x)->domain();
   assert(!x.is_fixed());
+  assert(d_inverse);
   assert(t.compare(d_inverse->bvnot()) == 0);
   assert(x.match_fixed_bits(*d_inverse));
 #endif
