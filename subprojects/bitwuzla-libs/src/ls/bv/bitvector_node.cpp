@@ -1995,7 +1995,7 @@ BitVectorShl::is_invertible(const BitVector& t,
           }
           else
           {
-            shift = s.bvextract(64, 0).to_uint64();
+            shift = s.bvextract(63, 0).to_uint64();
           }
         }
         else
@@ -2636,7 +2636,7 @@ BitVectorShr::inverse_value(RNG* rng,
         }
         else
         {
-          shift = s.bvextract(64, 0).to_uint64();
+          shift = s.bvextract(63, 0).to_uint64();
         }
       }
       else
