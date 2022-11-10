@@ -11,6 +11,21 @@ namespace ls {
 
 /* -------------------------------------------------------------------------- */
 
+// Note: These 3 macros should never be (member) functions:
+//       - some values can be moved with std::move
+//       - for BV_NODE_CACHE_INVERSE_IF, we don't want unnecessary calls to,
+//       e.g., gen.random(), when passed as an argument value (we only want it
+//       evaluated when it is indeed an invertibility check)
+#define BV_NODE_CACHE_CONSISTENT(val) d_consistent.reset(new BitVector(val))
+#define BV_NODE_CACHE_INVERSE(val) d_inverse.reset(new BitVector(val))
+#define BV_NODE_CACHE_INVERSE_IF(val) \
+  if (!is_essential_check)            \
+  {                                   \
+    BV_NODE_CACHE_INVERSE(val);       \
+  }
+
+/* -------------------------------------------------------------------------- */
+
 BitVectorNode::BitVectorNode(RNG* rng, uint64_t size)
     : BitVectorNode(rng, BitVector::mk_zero(size), BitVectorDomain(size))
 {
@@ -636,10 +651,7 @@ BitVectorAdd::is_invertible(const BitVector& t,
       return false;
     }
   }
-  if (!is_essential_check)
-  {
-    d_inverse.reset(new BitVector(std::move(sub)));
-  }
+  BV_NODE_CACHE_INVERSE_IF(std::move(sub));
   return true;
 }
 
@@ -664,17 +676,17 @@ BitVectorAdd::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     if (x.is_fixed())
     {
-      d_consistent.reset(new BitVector(x.lo()));
+      BV_NODE_CACHE_CONSISTENT(x.lo());
     }
     else
     {
       BitVectorDomainGenerator gen(x, d_rng);
-      d_consistent.reset(new BitVector(gen.random()));
+      BV_NODE_CACHE_CONSISTENT(gen.random());
     }
   }
   else
   {
-    d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng)));
+    BV_NODE_CACHE_CONSISTENT(BitVector(x.size(), *d_rng));
   }
   return true;
 }
@@ -856,10 +868,7 @@ BitVectorAnd::is_invertible(const BitVector& t,
       assert(!d_lo.is_null() && !d_hi.is_null());
       if (d_lo.compare(d_hi) == 0)
       {
-        if (!is_essential_check)
-        {
-          d_inverse.reset(new BitVector(d_lo));
-        }
+        BV_NODE_CACHE_INVERSE_IF(d_lo);
         return true;
       }
       BitVectorDomain tmp(x.lo().bvor(t), x.hi().bvand(s.bvxnor(t)));
@@ -873,10 +882,7 @@ BitVectorAnd::is_invertible(const BitVector& t,
       {
         return false;
       }
-      if (!is_essential_check)
-      {
-        d_inverse.reset(new BitVector(gen.random()));
-      }
+      BV_NODE_CACHE_INVERSE_IF(gen.random());
       return true;
     }
 
@@ -900,7 +906,7 @@ BitVectorAnd::is_invertible(const BitVector& t,
       {
         rand = BitVector(t.size(), *d_rng);
       }
-      d_inverse.reset(new BitVector(t.bvand(s).bvor(s.bvnot().ibvand(rand))));
+      BV_NODE_CACHE_INVERSE(t.bvand(s).bvor(s.bvnot().ibvand(rand)));
     }
     return true;
   }
@@ -928,18 +934,18 @@ BitVectorAnd::is_consistent(const BitVector& t, uint64_t pos_x)
     {
       if (x.is_fixed())
       {
-        d_consistent.reset(new BitVector(x.lo()));
+        BV_NODE_CACHE_CONSISTENT(x.lo());
       }
       else
       {
         BitVectorDomainGenerator gen(x, d_rng);
-        d_consistent.reset(new BitVector(gen.random().ibvor(t)));
+        BV_NODE_CACHE_CONSISTENT(gen.random().ibvor(t));
       }
       return true;
     }
     return false;
   }
-  d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng).ibvor(t)));
+  BV_NODE_CACHE_CONSISTENT(BitVector(x.size(), *d_rng).ibvor(t));
   return true;
 }
 
@@ -1083,10 +1089,7 @@ BitVectorConcat::is_invertible(const BitVector& t,
     {
       return false;
     }
-    if (!is_essential_check)
-    {
-      d_inverse.reset(new BitVector(std::move(tx)));
-    }
+    BV_NODE_CACHE_INVERSE_IF(std::move(tx));
     return true;
   }
   return false;
@@ -1257,10 +1260,7 @@ BitVectorEq::is_invertible(const BitVector& t,
     {
       if (x.lo().bveq(s).compare(t) == 0)
       {
-        if (!is_essential_check)
-        {
-          d_inverse.reset(new BitVector(x.lo()));
-        }
+        BV_NODE_CACHE_INVERSE_IF(x.lo());
         return true;
       }
       return false;
@@ -1276,14 +1276,14 @@ BitVectorEq::is_invertible(const BitVector& t,
           assert(gen.has_random());
           res = gen.random();
         } while (s.compare(res) == 0);
-        d_inverse.reset(new BitVector(std::move(res)));
+        BV_NODE_CACHE_INVERSE_IF(std::move(res));
         return true;
       }
       return false;
     }
     if (x.match_fixed_bits(s))
     {
-      d_inverse.reset(new BitVector(s));
+      BV_NODE_CACHE_INVERSE_IF(s);
       return true;
     }
     return false;
@@ -1298,11 +1298,11 @@ BitVectorEq::is_invertible(const BitVector& t,
       {
         res = BitVector(x.size(), *d_rng);
       } while (s.compare(res) == 0);
-      d_inverse.reset(new BitVector(std::move(res)));
+      BV_NODE_CACHE_INVERSE(std::move(res));
     }
     else
     {
-      d_inverse.reset(new BitVector(s));
+      BV_NODE_CACHE_INVERSE(s);
     }
   }
   return true;
@@ -1327,17 +1327,17 @@ BitVectorEq::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     if (x.is_fixed())
     {
-      d_consistent.reset(new BitVector(x.lo()));
+      BV_NODE_CACHE_CONSISTENT(x.lo());
     }
     else
     {
       BitVectorDomainGenerator gen(x, d_rng);
-      d_consistent.reset(new BitVector(gen.random()));
+      BV_NODE_CACHE_CONSISTENT(gen.random());
     }
   }
   else
   {
-    d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng)));
+    BV_NODE_CACHE_CONSISTENT(BitVector(x.size(), *d_rng));
   }
   return true;
 }
@@ -1514,10 +1514,7 @@ BitVectorMul::is_invertible(const BitVector& t,
         if (xval.bvmul(s).compare(t) == 0
             && is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
         {
-          if (!is_essential_check)
-          {
-            d_inverse.reset(new BitVector(xval));
-          }
+          BV_NODE_CACHE_INVERSE_IF(xval);
           return true;
         }
         return false;
@@ -1532,10 +1529,7 @@ BitVectorMul::is_invertible(const BitVector& t,
           if (x.match_fixed_bits(inv)
               && is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
           {
-            if (!is_essential_check)
-            {
-              d_inverse.reset(new BitVector(std::move(inv)));
-            }
+            BV_NODE_CACHE_INVERSE_IF(std::move(inv));
             return true;
           }
           return false;
@@ -1559,10 +1553,7 @@ BitVectorMul::is_invertible(const BitVector& t,
           {
             if (is_in_bounds(d.lo(), min_lo, max_lo, min_hi, max_hi))
             {
-              if (!is_essential_check)
-              {
-                d_inverse.reset(new BitVector(d.lo()));
-              }
+              BV_NODE_CACHE_INVERSE_IF(d.lo());
               return true;
             }
             return false;
@@ -1576,10 +1567,7 @@ BitVectorMul::is_invertible(const BitVector& t,
               max_hi.is_null() ? nullptr : &max_hi);
           if (gen.has_random())
           {
-            if (!is_essential_check)
-            {
-              d_inverse.reset(new BitVector(gen.random()));
-            }
+            BV_NODE_CACHE_INVERSE_IF(gen.random());
             return true;
           }
           return false;
@@ -1594,10 +1582,7 @@ BitVectorMul::is_invertible(const BitVector& t,
                                        max_hi.is_null() ? nullptr : &max_hi);
       if (gen.has_random())
       {
-        if (!is_essential_check)
-        {
-          d_inverse.reset(new BitVector(gen.random()));
-        }
+        BV_NODE_CACHE_INVERSE_IF(gen.random());
         return true;
       }
       return false;
@@ -1606,11 +1591,8 @@ BitVectorMul::is_invertible(const BitVector& t,
     if (s.is_zero())
     {
       /* s = 0 (=> t = 0): random bit-vector */
-      if (!is_essential_check)
-      {
-        d_inverse.reset(
-            new BitVector(x.size(), *d_rng, min_lo, max_lo, min_hi, max_hi));
-      }
+      BV_NODE_CACHE_INVERSE_IF(
+          BitVector(x.size(), *d_rng, min_lo, max_lo, min_hi, max_hi));
       return true;
     }
     if (s.lsb())
@@ -1619,10 +1601,7 @@ BitVectorMul::is_invertible(const BitVector& t,
       BitVector inv = t.bvmul(s.bvmodinv());
       if (is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
       {
-        if (!is_essential_check)
-        {
-          d_inverse.reset(new BitVector(std::move(inv)));
-        }
+        BV_NODE_CACHE_INVERSE_IF(std::move(inv));
         return true;
       }
       return false;
@@ -1661,10 +1640,7 @@ BitVectorMul::is_invertible(const BitVector& t,
                                        max_hi.is_null() ? nullptr : &max_hi);
       if (gen.has_random())
       {
-        if (!is_essential_check)
-        {
-          d_inverse.reset(new BitVector(gen.random()));
-        }
+        BV_NODE_CACHE_INVERSE_IF(gen.random());
         return true;
       }
       return false;
@@ -1700,7 +1676,7 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
     {
       if (t.is_zero())
       {
-        d_consistent.reset(new BitVector(x.hi()));
+        BV_NODE_CACHE_CONSISTENT(x.hi());
         return true;
       }
       return false;
@@ -1714,12 +1690,12 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
       }
       if (x.is_fixed())
       {
-        d_consistent.reset(new BitVector(x.lo()));
+        BV_NODE_CACHE_CONSISTENT(x.lo());
       }
       else
       {
         BitVectorDomainGenerator gen(x, d_rng, BitVector::mk_one(size), x.hi());
-        d_consistent.reset(new BitVector(gen.random()));
+        BV_NODE_CACHE_CONSISTENT(gen.random());
         if (!d_consistent->lsb())
         {
           assert(!x.is_fixed_bit_false(0));
@@ -1764,7 +1740,7 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
   }
   if (t.is_zero())
   {
-    d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng)));
+    BV_NODE_CACHE_CONSISTENT(BitVector(x.size(), *d_rng));
   }
   else
   {
@@ -1965,10 +1941,7 @@ BitVectorShl::is_invertible(const BitVector& t,
       if ((pos_x == 0 && xval.bvshl(s).compare(t) == 0)
           || (pos_x == 1 && s.bvshl(xval).compare(t) == 0))
       {
-        if (!is_essential_check)
-        {
-          d_inverse.reset(new BitVector(xval));
-        }
+        BV_NODE_CACHE_INVERSE_IF(xval);
         return true;
       }
       return false;
@@ -2011,11 +1984,11 @@ BitVectorShl::is_invertible(const BitVector& t,
           {
             BitVectorDomainGenerator gen(x, d_rng);
             assert(gen.has_random());
-            d_inverse.reset(new BitVector(gen.random()));
+            BV_NODE_CACHE_INVERSE(gen.random());
           }
           else
           {
-            d_inverse.reset(new BitVector(size, *d_rng));
+            BV_NODE_CACHE_INVERSE(BitVector(size, *d_rng));
           }
         }
         else if (shift > 0)
@@ -2039,12 +2012,12 @@ BitVectorShl::is_invertible(const BitVector& t,
           {
             left = BitVector(shift, *d_rng);
           }
-          d_inverse.reset(new BitVector(
-              std::move(left.ibvconcat(t.bvextract(size - 1, shift)))));
+          BV_NODE_CACHE_INVERSE(
+              std::move(left.ibvconcat(t.bvextract(size - 1, shift))));
         }
         else
         {
-          d_inverse.reset(new BitVector(t));
+          BV_NODE_CACHE_INVERSE(t);
         }
       }
     }
@@ -2063,11 +2036,11 @@ BitVectorShl::is_invertible(const BitVector& t,
             {
               BitVectorDomainGenerator gen(x, d_rng, x.lo(), x.hi());
               assert(gen.has_random());
-              d_inverse.reset(new BitVector(gen.random()));
+              BV_NODE_CACHE_INVERSE(gen.random());
             }
             else
             {
-              d_inverse.reset(new BitVector(size, *d_rng));
+              BV_NODE_CACHE_INVERSE(BitVector(size, *d_rng));
             }
           }
           return true;
@@ -2079,7 +2052,7 @@ BitVectorShl::is_invertible(const BitVector& t,
           {
             BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
             assert(gen.has_random());
-            d_inverse.reset(new BitVector(gen.random()));
+            BV_NODE_CACHE_INVERSE(gen.random());
             return true;
           }
           return false;
@@ -2090,7 +2063,7 @@ BitVectorShl::is_invertible(const BitVector& t,
       if (ic && !is_essential_check)
       {
         uint64_t shift = ctz_t - ctz_s;
-        d_inverse.reset(new BitVector(BitVector::from_ui(size, shift)));
+        BV_NODE_CACHE_INVERSE(BitVector::from_ui(size, shift));
       }
     }
   }
@@ -2128,12 +2101,12 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
       {
         if (x.is_fixed())
         {
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
           BitVectorDomainGenerator gen(x, d_rng);
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
         }
       }
       else
@@ -2212,7 +2185,7 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
       {
         if (BitVector::from_ui(size, max).compare(x.lo()) >= 0)
         {
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
           return true;
         }
         return false;
@@ -2222,7 +2195,7 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
           x, d_rng, x.lo(), BitVector::from_ui(size, max));
       if (gen.has_random())
       {
-        d_consistent.reset(new BitVector(gen.random()));
+        BV_NODE_CACHE_CONSISTENT(gen.random());
         return true;
       }
       return false;
@@ -2483,12 +2456,12 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
       {
         if (x.is_fixed())
         {
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
           BitVectorDomainGenerator gen(x, d_rng);
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
         }
       }
       else
@@ -2565,7 +2538,7 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
       {
         if (BitVector::from_ui(size, max).compare(x.lo()) >= 0)
         {
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
           return true;
         }
         return false;
@@ -2575,7 +2548,7 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
           x, d_rng, x.lo(), BitVector::from_ui(size, max));
       if (gen.has_random())
       {
-        d_consistent.reset(new BitVector(gen.random()));
+        BV_NODE_CACHE_CONSISTENT(gen.random());
         return true;
       }
       return false;
@@ -2932,7 +2905,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
             x, d_rng, BitVector::mk_zero(size), BitVector::mk_max_signed(size));
         if (gen.has_random())
         {
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
           return true;
         }
         return false;
@@ -2946,7 +2919,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
             x, d_rng, BitVector::mk_min_signed(size), BitVector::mk_ones(size));
         if (gen.has_random())
         {
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
           return true;
         }
         return false;
@@ -2958,7 +2931,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
       if (x.has_fixed_bits())
       {
         BitVectorDomainGenerator gen(x, d_rng);
-        d_consistent.reset(new BitVector(gen.random()));
+        BV_NODE_CACHE_CONSISTENT(gen.random());
       }
       else
       {
@@ -3030,7 +3003,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
     if (t.is_zero() || t.is_ones()
         || BitVector::from_ui(size, cnt_t).compare(x.lo()) > 0)
     {
-      d_consistent.reset(new BitVector(x.lo()));
+      BV_NODE_CACHE_CONSISTENT(x.lo());
       return true;
     }
     return false;
@@ -3042,7 +3015,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
         x, d_rng, BitVector::mk_zero(size), BitVector::from_ui(size, max));
     if (gen.has_random())
     {
-      d_consistent.reset(new BitVector(gen.random()));
+      BV_NODE_CACHE_CONSISTENT(gen.random());
       return true;
     }
     return false;
@@ -3215,10 +3188,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
       if ((pos_x == 0 && xval.bvudiv(s).compare(t) == 0)
           || (pos_x == 1 && s.bvudiv(xval).compare(t) == 0))
       {
-        if (!is_essential_check)
-        {
-          d_inverse.reset(new BitVector(xval));
-        }
+        BV_NODE_CACHE_INVERSE_IF(xval);
         return true;
       }
       return false;
@@ -3251,10 +3221,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
           BitVectorDomainGenerator gen(x, d_rng, min, max);
           if (gen.has_next())
           {
-            if (!is_essential_check)
-            {
-              d_inverse.reset(new BitVector(gen.random()));
-            }
+            BV_NODE_CACHE_INVERSE_IF(gen.random());
             return true;
           }
           return false;
@@ -3269,7 +3236,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
           if (s.is_one())
           {
             assert(!x_has_fixed_bits);
-            d_inverse.reset(new BitVector(BitVector::mk_ones(size)));
+            BV_NODE_CACHE_INVERSE(BitVector::mk_ones(size));
           }
           else
           {
@@ -3278,11 +3245,11 @@ BitVectorUdiv::is_invertible(const BitVector& t,
             {
               BitVectorDomainGenerator gen(x, d_rng);
               assert(gen.has_random());
-              d_inverse.reset(new BitVector(gen.random()));
+              BV_NODE_CACHE_INVERSE(gen.random());
             }
             else
             {
-              d_inverse.reset(new BitVector(size, *d_rng));
+              BV_NODE_CACHE_INVERSE(BitVector(size, *d_rng));
             }
           }
         }
@@ -3291,7 +3258,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
           assert(!s.is_umul_overflow(t));
           if (d_rng->flip_coin() && x.match_fixed_bits(s_mul_t))
           {
-            d_inverse.reset(new BitVector(std::move(s_mul_t)));
+            BV_NODE_CACHE_INVERSE(std::move(s_mul_t));
           }
           else
           {
@@ -3315,11 +3282,11 @@ BitVectorUdiv::is_invertible(const BitVector& t,
             {
               BitVectorDomainGenerator gen(x, d_rng, s_mul_t, max);
               assert(gen.has_random());
-              d_inverse.reset(new BitVector(gen.random()));
+              BV_NODE_CACHE_INVERSE(gen.random());
             }
             else
             {
-              d_inverse.reset(new BitVector(size, *d_rng, s_mul_t, max));
+              BV_NODE_CACHE_INVERSE(BitVector(size, *d_rng, s_mul_t, max));
             }
           }
         }
@@ -3359,16 +3326,13 @@ BitVectorUdiv::is_invertible(const BitVector& t,
         BitVectorDomainGenerator gen(x, d_rng, min, max);
         if (gen.has_random())
         {
-          if (!is_essential_check)
-          {
-            d_inverse.reset(new BitVector(gen.random()));
-          }
+          BV_NODE_CACHE_INVERSE_IF(gen.random());
           return true;
         }
         return false;
       }
       assert(!is_essential_check);
-      d_inverse.reset(new BitVector(size, *d_rng, min, max));
+      BV_NODE_CACHE_INVERSE(BitVector(size, *d_rng, min, max));
     }
     else if (!is_essential_check)
     {
@@ -3380,11 +3344,11 @@ BitVectorUdiv::is_invertible(const BitVector& t,
             && (!x.match_fixed_bits(BitVector::mk_zero(size))
                 || d_rng->flip_coin()))
         {
-          d_inverse.reset(new BitVector(std::move(one)));
+          BV_NODE_CACHE_INVERSE(std::move(one));
         }
         else
         {
-          d_inverse.reset(new BitVector(BitVector::mk_zero(size)));
+          BV_NODE_CACHE_INVERSE(BitVector::mk_zero(size));
         }
       }
       else
@@ -3396,11 +3360,11 @@ BitVectorUdiv::is_invertible(const BitVector& t,
         {
           BitVectorDomainGenerator gen(x, d_rng, min, max);
           assert(gen.has_random());
-          d_inverse.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_INVERSE(gen.random());
         }
         else
         {
-          d_inverse.reset(new BitVector(size, *d_rng, min, max));
+          BV_NODE_CACHE_INVERSE(BitVector(size, *d_rng, min, max));
         }
       }
     }
@@ -3460,7 +3424,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
         }
         if (x.is_fixed())
         {
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
@@ -3469,7 +3433,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
                                        BitVector::mk_zero(size),
                                        BitVector::mk_ones(size).ibvdec());
           assert(gen.has_random());
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
         }
       }
       else
@@ -3488,13 +3452,13 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
       {
         if (x.is_fixed())
         {
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
           BitVectorDomainGenerator gen(x, d_rng);
           assert(gen.has_random());
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
         }
       }
       else
@@ -3515,14 +3479,14 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
       {
         if (x.is_fixed())
         {
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
           BitVectorDomainGenerator gen(
               x, d_rng, BitVector::mk_one(size), x.hi());
           assert(gen.has_random());
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
         }
       }
       else
@@ -3546,7 +3510,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
       }
       else
       {
-        d_consistent.reset(new BitVector(std::move(bvres)));
+        BV_NODE_CACHE_CONSISTENT(std::move(bvres));
       }
       return true;
     }
@@ -3555,7 +3519,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
      * offset in [0, min(y - 1, ones - y * t)].  */
     BitVector y(size, *d_rng, BitVector::mk_one(size), ones.bvudiv(t));
     assert(!y.is_umul_overflow(t));
-    d_consistent.reset(new BitVector(y.bvmul(t)));
+    BV_NODE_CACHE_CONSISTENT(y.bvmul(t));
 
     /* Make sure that adding the offset to (y * t) does not overflow.
      * The maximum value of the offset is the minimum of
@@ -3575,7 +3539,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
     {
       if (t.is_ones())
       {
-        d_consistent.reset(new BitVector(x.hi()));
+        BV_NODE_CACHE_CONSISTENT(x.hi());
         return true;
       }
       return false;
@@ -3595,12 +3559,12 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
       }
       if (!match_zero || (match_one && d_rng->flip_coin()))
       {
-        d_consistent.reset(new BitVector(std::move(one)));
+        BV_NODE_CACHE_CONSISTENT(std::move(one));
       }
       else
       {
         assert(match_zero);
-        d_consistent.reset(new BitVector(std::move(zero)));
+        BV_NODE_CACHE_CONSISTENT(std::move(zero));
       }
       return true;
     }
@@ -3614,7 +3578,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
     {
       if (x.is_fixed())
       {
-        d_consistent.reset(new BitVector(x.lo()));
+        BV_NODE_CACHE_CONSISTENT(x.lo());
         return true;
       }
 
@@ -3635,7 +3599,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
       }
       if (res)
       {
-        d_consistent.reset(new BitVector(std::move(bvres)));
+        BV_NODE_CACHE_CONSISTENT(std::move(bvres));
         return true;
       }
       return false;
@@ -3648,7 +3612,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
       if (!bvres.is_umul_overflow(t)) break;
       max = bvres.ibvdec();
     }
-    d_consistent.reset(new BitVector(std::move(bvres)));
+    BV_NODE_CACHE_CONSISTENT(std::move(bvres));
   }
   return true;
 }
@@ -4015,10 +3979,7 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
     const BitVector& xval = d->lo();
     if (is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
     {
-      if (!is_essential_check)
-      {
-        d_inverse.reset(new BitVector(xval));
-      }
+      BV_NODE_CACHE_INVERSE_IF(xval);
       return true;
     }
     return false;
@@ -4033,10 +3994,7 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
                                      max_hi.is_null() ? nullptr : &max_hi);
     if (gen.has_random())
     {
-      if (!is_essential_check)
-      {
-        d_inverse.reset(new BitVector(gen.random()));
-      }
+      BV_NODE_CACHE_INVERSE_IF(gen.random());
       return true;
     }
     return false;
@@ -4050,18 +4008,19 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
       if (!min_hi.is_null() && d_rng->flip_coin())
       {
         assert(!max_hi.is_null());
-        d_inverse.reset(
-            new BitVector(d->size(), *d_rng, min_hi, max_hi, false));
+        BV_NODE_CACHE_INVERSE(
+            BitVector(d->size(), *d_rng, min_hi, max_hi, false));
       }
       else
       {
-        d_inverse.reset(
-            new BitVector(d->size(), *d_rng, min_lo, max_lo, false));
+        BV_NODE_CACHE_INVERSE(
+            BitVector(d->size(), *d_rng, min_lo, max_lo, false));
       }
     }
     else
     {
-      d_inverse.reset(new BitVector(d->size(), *d_rng, min_hi, max_hi, false));
+      BV_NODE_CACHE_INVERSE(
+          BitVector(d->size(), *d_rng, min_hi, max_hi, false));
     }
   }
   return true;
@@ -4101,7 +4060,7 @@ BitVectorUlt::is_consistent(const BitVector& t, uint64_t pos_x)
         // CC: pos_x = 0 && t && x_lo != ones
         if (x.is_fixed())
         {
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
@@ -4110,7 +4069,7 @@ BitVectorUlt::is_consistent(const BitVector& t, uint64_t pos_x)
                                        BitVector::mk_zero(size),
                                        BitVector::mk_ones(size).ibvdec());
           assert(gen.has_random());
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
         }
       }
       else
@@ -4138,14 +4097,14 @@ BitVectorUlt::is_consistent(const BitVector& t, uint64_t pos_x)
         // CC: pos_x = 1 && t && x_hi != 0
         if (x.is_fixed())
         {
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
           BitVectorDomainGenerator gen(
               x, d_rng, BitVector::mk_one(size), BitVector::mk_ones(size));
           assert(gen.has_random());
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
         }
       }
       else
@@ -4163,18 +4122,18 @@ BitVectorUlt::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     if (x.is_fixed())
     {
-      d_consistent.reset(new BitVector(x.lo()));
+      BV_NODE_CACHE_CONSISTENT(x.lo());
     }
     else
     {
       BitVectorDomainGenerator gen(x, d_rng);
       assert(gen.has_random());
-      d_consistent.reset(new BitVector(gen.random()));
+      BV_NODE_CACHE_CONSISTENT(gen.random());
     }
   }
   else
   {
-    d_consistent.reset(new BitVector(BitVector(size, *d_rng)));
+    BV_NODE_CACHE_CONSISTENT(BitVector(size, *d_rng));
   }
   return true;
 }
@@ -4652,10 +4611,7 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
     const BitVector& xval = d->lo();
     if (is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
     {
-      if (!is_essential_check)
-      {
-        d_inverse.reset(new BitVector(d->lo()));
-      }
+      BV_NODE_CACHE_INVERSE_IF(d->lo());
       return true;
     }
     return false;
@@ -4671,10 +4627,7 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
 
     if (gen.has_random())
     {
-      if (!is_essential_check)
-      {
-        d_inverse.reset(new BitVector(gen.random()));
-      }
+      BV_NODE_CACHE_INVERSE_IF(gen.random());
       return true;
     }
     return false;
@@ -4688,16 +4641,18 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
       if (!min_hi.is_null() && d_rng->flip_coin())
       {
         assert(!max_hi.is_null());
-        d_inverse.reset(new BitVector(d->size(), *d_rng, min_hi, max_hi, true));
+        BV_NODE_CACHE_INVERSE(
+            BitVector(d->size(), *d_rng, min_hi, max_hi, true));
       }
       else
       {
-        d_inverse.reset(new BitVector(d->size(), *d_rng, min_lo, max_lo, true));
+        BV_NODE_CACHE_INVERSE(
+            BitVector(d->size(), *d_rng, min_lo, max_lo, true));
       }
     }
     else
     {
-      d_inverse.reset(new BitVector(d->size(), *d_rng, min_hi, max_hi, true));
+      BV_NODE_CACHE_INVERSE(BitVector(d->size(), *d_rng, min_hi, max_hi, true));
     }
   }
   return true;
@@ -4911,7 +4866,7 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
           {
             return false;
           }
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
@@ -4921,7 +4876,7 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
               BitVector::mk_min_signed(size),
               BitVector::mk_max_signed(size).ibvdec());
           assert(gen.has_random());
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
         }
       }
       else
@@ -4950,7 +4905,7 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
           {
             return false;
           }
-          d_consistent.reset(new BitVector(x.lo()));
+          BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
@@ -4960,7 +4915,7 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
               BitVector::mk_min_signed(size).ibvinc(),
               BitVector::mk_max_signed(size));
           assert(gen.has_random());
-          d_consistent.reset(new BitVector(gen.random()));
+          BV_NODE_CACHE_CONSISTENT(gen.random());
         }
       }
       else
@@ -4982,18 +4937,18 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     if (x.is_fixed())
     {
-      d_consistent.reset(new BitVector(x.lo()));
+      BV_NODE_CACHE_CONSISTENT(x.lo());
     }
     else
     {
       BitVectorDomainGenerator gen(x, d_rng);
       assert(gen.has_random());
-      d_consistent.reset(new BitVector(gen.random()));
+      BV_NODE_CACHE_CONSISTENT(gen.random());
     }
   }
   else
   {
-    d_consistent.reset(new BitVector(BitVector(size, *d_rng)));
+    BV_NODE_CACHE_CONSISTENT(BitVector(size, *d_rng));
   }
   return true;
 }
@@ -5150,10 +5105,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
       if ((pos_x == 0 && x.lo().bvurem(s).compare(t) == 0)
           || (pos_x == 1 && s.bvurem(x.lo()).compare(t) == 0))
       {
-        if (!is_essential_check)
-        {
-          d_inverse.reset(new BitVector(x.lo()));
-        }
+        BV_NODE_CACHE_INVERSE_IF(x.lo());
         return true;
       }
       return false;
@@ -5165,10 +5117,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
       {
         if (!x_has_fixed_bits || x.match_fixed_bits(t))
         {
-          if (!is_essential_check)
-          {
-            d_inverse.reset(new BitVector(t));
-          }
+          BV_NODE_CACHE_INVERSE_IF(t);
           return true;
         }
         return false;
@@ -5184,10 +5133,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
         if (!x_has_fixed_bits || x.match_fixed_bits(t))
         {
           // overflow for n = 1 -> only simplest solution (t) possible
-          if (!is_essential_check)
-          {
-            d_inverse.reset(new BitVector(t));
-          }
+          BV_NODE_CACHE_INVERSE_IF(t);
           return true;
         }
         else
@@ -5226,10 +5172,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
         if (rem.compare(t) == 0)
         {
           res = true;
-          if (!is_essential_check)
-          {
-            d_inverse.reset(new BitVector(std::move(bv)));
-          }
+          BV_NODE_CACHE_INVERSE_IF(std::move(bv));
           break;
         }
       }
@@ -5242,7 +5185,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
           BitVector rem = bv.bvurem(s);
           if (rem.compare(t) == 0)
           {
-            d_inverse.reset(new BitVector(std::move(bv)));
+            BV_NODE_CACHE_INVERSE(std::move(bv));
             break;
           }
         }
@@ -5260,10 +5203,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
         {
           return false;
         }
-        if (!is_essential_check)
-        {
-          d_inverse.reset(new BitVector(std::move(zero)));
-        }
+        BV_NODE_CACHE_INVERSE_IF(std::move(zero));
         return true;
       }
 
@@ -5278,13 +5218,13 @@ BitVectorUrem::is_invertible(const BitVector& t,
             if (d_rng->pick_with_prob(250)
                 && (!x_has_fixed_bits || x.match_fixed_bits(zero)))
             {
-              d_inverse.reset(new BitVector(std::move(zero)));
+              BV_NODE_CACHE_INVERSE(std::move(zero));
             }
             else if (x_has_fixed_bits)
             {
               if (x.is_fixed())
               {
-                d_inverse.reset(new BitVector(x.lo()));
+                BV_NODE_CACHE_INVERSE(x.lo());
               }
               else
               {
@@ -5293,18 +5233,18 @@ BitVectorUrem::is_invertible(const BitVector& t,
                 if (!gen.has_random())
                 {
                   assert(x.match_fixed_bits(zero));
-                  d_inverse.reset(new BitVector(std::move(zero)));
+                  BV_NODE_CACHE_INVERSE(std::move(zero));
                 }
                 else
                 {
-                  d_inverse.reset(new BitVector(gen.random()));
+                  BV_NODE_CACHE_INVERSE(gen.random());
                 }
               }
             }
             else
             {
-              d_inverse.reset(new BitVector(
-                  size, *d_rng, t.bvinc(), BitVector::mk_ones(size)));
+              BV_NODE_CACHE_INVERSE(
+                  BitVector(size, *d_rng, t.bvinc(), BitVector::mk_ones(size)));
             }
           }
           return true;
@@ -5340,7 +5280,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
             return false;
           }
           assert(s.bvurem(bv).compare(t) == 0);
-          d_inverse.reset(new BitVector(std::move(bv)));
+          BV_NODE_CACHE_INVERSE_IF(std::move(bv));
           return true;
         }
       }
@@ -5355,7 +5295,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
 
         if (d_rng->flip_coin() && x_match_sub)
         {
-          d_inverse.reset(new BitVector(std::move(sub)));
+          BV_NODE_CACHE_INVERSE(std::move(sub));
         }
         else
         {
@@ -5365,7 +5305,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
 
           if (d_rng->pick_with_prob(100) && x_match_one)
           {
-            d_inverse.reset(new BitVector(std::move(one)));
+            BV_NODE_CACHE_INVERSE(std::move(one));
           }
           else
           {
@@ -5373,7 +5313,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
             assert(bv.is_null() || x.match_fixed_bits(bv));
             if (!bv.is_null())
             {
-              d_inverse.reset(new BitVector(std::move(bv)));
+              BV_NODE_CACHE_INVERSE(std::move(bv));
             }
             else
             {
@@ -5382,20 +5322,20 @@ BitVectorUrem::is_invertible(const BitVector& t,
               {
                 if (d_rng->flip_coin())
                 {
-                  d_inverse.reset(new BitVector(std::move(sub)));
+                  BV_NODE_CACHE_INVERSE(std::move(sub));
                 }
                 else
                 {
-                  d_inverse.reset(new BitVector(std::move(one)));
+                  BV_NODE_CACHE_INVERSE(std::move(one));
                 }
               }
               else if (x_match_one)
               {
-                d_inverse.reset(new BitVector(std::move(one)));
+                BV_NODE_CACHE_INVERSE(std::move(one));
               }
               else
               {
-                d_inverse.reset(new BitVector(std::move(sub)));
+                BV_NODE_CACHE_INVERSE(std::move(sub));
               }
             }
           }
@@ -5450,7 +5390,7 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
         {
           return false;
         }
-        d_consistent.reset(new BitVector(BitVector::mk_ones(size)));
+        BV_NODE_CACHE_CONSISTENT(BitVector::mk_ones(size));
         return true;
       }
 
@@ -5520,13 +5460,13 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
       BitVector min = t.bvinc();
       if (x.is_fixed() && x.lo().compare(min) >= 0)
       {
-        d_consistent.reset(new BitVector(x.lo()));
+        BV_NODE_CACHE_CONSISTENT(x.lo());
         return true;
       }
       BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
       if (gen.has_random())
       {
-        d_consistent.reset(new BitVector(gen.random()));
+        BV_NODE_CACHE_CONSISTENT(gen.random());
         return true;
       }
       else if (!mfb)
@@ -5545,7 +5485,7 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     if (t_is_ones)
     {
-      d_consistent.reset(new BitVector(BitVector::mk_ones(size)));
+      BV_NODE_CACHE_CONSISTENT(BitVector::mk_ones(size));
     }
     else if (d_rng->pick_with_prob(100))
     {
@@ -5570,7 +5510,7 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     if (t_is_ones || d_rng->pick_with_prob(100))
     {
-      d_consistent.reset(new BitVector(BitVector::mk_zero(size)));
+      BV_NODE_CACHE_CONSISTENT(BitVector::mk_zero(size));
     }
     else
     {
@@ -5729,10 +5669,7 @@ BitVectorXor::is_invertible(const BitVector& t,
       return false;
     }
   }
-  if (!is_essential_check)
-  {
-    d_inverse.reset(new BitVector(s.bvxor(t)));
-  }
+  BV_NODE_CACHE_INVERSE_IF(s.bvxor(t));
   return true;
 }
 
@@ -5755,13 +5692,13 @@ BitVectorXor::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     if (x.is_fixed())
     {
-      d_consistent.reset(new BitVector(x.lo()));
+      BV_NODE_CACHE_CONSISTENT(x.lo());
     }
     else
     {
       BitVectorDomainGenerator gen(x, d_rng);
       assert(gen.has_random());
-      d_consistent.reset(new BitVector(gen.random()));
+      BV_NODE_CACHE_CONSISTENT(gen.random());
     }
   }
   else
@@ -5934,50 +5871,49 @@ BitVectorIte::is_invertible(const BitVector& t,
       {
         return false;
       }
-      if (!is_essential_check)
-      {
-        d_inverse.reset(new BitVector(x.lo()));
-      }
+      BV_NODE_CACHE_INVERSE_IF(x.lo());
       return true;
     }
     if (cmp0 || cmp1)
     {
-      if (cmp0 && cmp1)
+      if (!is_essential_check)
       {
-        if (x_has_fixed_bits)
+        if (cmp0 && cmp1)
         {
-          if (d_rng->flip_coin())
+          if (x_has_fixed_bits)
           {
-            BitVector bv = BitVector::mk_true();
-            if (x.match_fixed_bits(bv))
+            if (d_rng->flip_coin())
             {
-              d_inverse.reset(new BitVector(std::move(bv)));
+              BitVector bv = BitVector::mk_true();
+              if (x.match_fixed_bits(bv))
+              {
+                BV_NODE_CACHE_INVERSE(std::move(bv));
+              }
+              else
+              {
+                BV_NODE_CACHE_INVERSE(BitVector::mk_false());
+              }
             }
             else
             {
-              d_inverse.reset(new BitVector(BitVector::mk_false()));
+              BV_NODE_CACHE_INVERSE(BitVector::mk_false());
             }
           }
           else
           {
-            d_inverse.reset(new BitVector(BitVector::mk_false()));
+            BV_NODE_CACHE_INVERSE(d_rng->flip_coin() ? BitVector::mk_true()
+                                                     : BitVector::mk_false());
           }
+        }
+        else if (cmp0)
+        {
+          BV_NODE_CACHE_INVERSE(BitVector::mk_true());
         }
         else
         {
-          d_inverse.reset(new BitVector(d_rng->flip_coin()
-                                            ? BitVector::mk_true()
-                                            : BitVector::mk_false()));
+          assert(cmp1);
+          BV_NODE_CACHE_INVERSE(BitVector::mk_false());
         }
-      }
-      else if (cmp0)
-      {
-        d_inverse.reset(new BitVector(BitVector::mk_true()));
-      }
-      else
-      {
-        assert(cmp1);
-        d_inverse.reset(new BitVector(BitVector::mk_false()));
       }
       return true;
     }
@@ -5988,20 +5924,14 @@ BitVectorIte::is_invertible(const BitVector& t,
   {
     if (s0.is_true() && (!x_has_fixed_bits || x.match_fixed_bits(t)))
     {
-      if (!is_essential_check)
-      {
-        d_inverse.reset(new BitVector(t));
-      }
+      BV_NODE_CACHE_INVERSE_IF(t);
       return true;
     }
     if (s0.is_false() && s1.compare(t) == 0)
     {
-      if (!is_essential_check)
-      {
-        // return current assignment for disabled branch
-        d_inverse.reset(new BitVector(
-            x.get_copy_with_fixed_bits(child(pos_x)->assignment())));
-      }
+      // return current assignment for disabled branch
+      BV_NODE_CACHE_INVERSE_IF(
+          x.get_copy_with_fixed_bits(child(pos_x)->assignment()));
       return true;
     }
     return false;
@@ -6011,20 +5941,14 @@ BitVectorIte::is_invertible(const BitVector& t,
 
   if (s0.is_false() && (!x_has_fixed_bits || x.match_fixed_bits(t)))
   {
-    if (!is_essential_check)
-    {
-      d_inverse.reset(new BitVector(t));
-    }
+    BV_NODE_CACHE_INVERSE_IF(t);
     return true;
   }
   if (s0.is_true() && s1.compare(t) == 0)
   {
-    if (!is_essential_check)
-    {
-      // return current assignment for disabled branch
-      d_inverse.reset(new BitVector(
-          x.get_copy_with_fixed_bits(child(pos_x)->assignment())));
-    }
+    // return current assignment for disabled branch
+    BV_NODE_CACHE_INVERSE_IF(
+        x.get_copy_with_fixed_bits(child(pos_x)->assignment()));
     return true;
   }
   return false;
@@ -6054,7 +5978,7 @@ BitVectorIte::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     if (x.is_fixed())
     {
-      d_consistent.reset(new BitVector(x.lo()));
+      BV_NODE_CACHE_CONSISTENT(x.lo());
     }
     else
     {
@@ -6270,10 +6194,7 @@ BitVectorNot::is_invertible(const BitVector& t,
   const BitVectorDomain& x = child(pos_x)->domain();
   if (!x.has_fixed_bits() || x.match_fixed_bits(t.bvnot()))
   {
-    if (!is_essential_check)
-    {
-      d_inverse.reset(new BitVector(t.bvnot()));
-    }
+    BV_NODE_CACHE_INVERSE_IF(t.bvnot());
     return true;
   }
   return false;
@@ -6384,8 +6305,6 @@ BitVectorExtract::is_invertible(const BitVector& t,
                                 uint64_t pos_x,
                                 bool is_essential_check)
 {
-  (void) is_essential_check;
-
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -6483,20 +6402,20 @@ BitVectorExtract::is_invertible(const BitVector& t,
       {
         if (right.is_null())
         {
-          d_inverse.reset(new BitVector(t));
+          BV_NODE_CACHE_INVERSE(t);
         }
         else
         {
-          d_inverse.reset(new BitVector(t.bvconcat(right)));
+          BV_NODE_CACHE_INVERSE(t.bvconcat(right));
         }
       }
       else if (right.is_null())
       {
-        d_inverse.reset(new BitVector(left.bvconcat(t)));
+        BV_NODE_CACHE_INVERSE(left.bvconcat(t));
       }
       else
       {
-        d_inverse.reset(new BitVector(left.bvconcat(t).ibvconcat(right)));
+        BV_NODE_CACHE_INVERSE(left.bvconcat(t).ibvconcat(right));
       }
     }
     return true;
@@ -6760,9 +6679,9 @@ BitVectorSignExtend::is_invertible(const BitVector& t,
   {
     ic_wo = x.match_fixed_bits(t_x);
   }
-  if (ic_wo && !is_essential_check)
+  if (ic_wo)
   {
-    d_inverse.reset(new BitVector(t_x));
+    BV_NODE_CACHE_INVERSE_IF(t_x);
   }
 
   return ic_wo;
@@ -6811,6 +6730,9 @@ operator<<(std::ostream& out, const BitVectorSignExtend& node)
 }
 
 /* -------------------------------------------------------------------------- */
+
+#undef BV_NODE_CACHE_INVERSE_IF
+#undef BV_NODE_CACHE_CONSISTENT
 
 }  // namespace ls
 }  // namespace bzla
