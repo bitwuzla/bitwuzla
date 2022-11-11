@@ -1,5 +1,5 @@
-#ifndef BZLA_SOLVER_FP_WORD_BLASTER_H_INCLUDED
-#define BZLA_SOLVER_FP_WORD_BLASTER_H_INCLUDED
+#ifndef BZLA_SOLVER_FP_WORD_BLASTER_OLD_H_INCLUDED
+#define BZLA_SOLVER_FP_WORD_BLASTER_OLD_H_INCLUDED
 
 extern "C" {
 #include "bzlabv.h"
@@ -15,7 +15,7 @@ extern "C" {
 namespace bzla {
 namespace fp {
 
-class SymFpuSymTraits;
+class SymFpuSymTraitsOld;
 
 /* -------------------------------------------------------------------------- */
 
@@ -43,15 +43,15 @@ struct BzlaNodeHashFunction
 /* -------------------------------------------------------------------------- */
 
 template <bool T>
-class SymFpuSymBV;
-class SymFpuSymRM;
-class SymFpuSymProp;
+class SymFpuSymBVOld;
+class SymFpuSymRMOld;
+class SymFpuSymPropOld;
 
-class WordBlaster
+class WordBlasterOld
 {
  public:
-  WordBlaster(Bzla *bzla);
-  ~WordBlaster();
+  WordBlasterOld(Bzla *bzla);
+  ~WordBlasterOld();
 
   BzlaNode *word_blast(BzlaNode *node);
   BzlaNode *get_word_blasted_node(BzlaNode *node);
@@ -63,19 +63,19 @@ class WordBlaster
   static void set_s_bzla(Bzla *bzla);
 
  private:
-  using SymUnpackedFloat = ::symfpu::unpackedFloat<SymFpuSymTraits>;
+  using SymUnpackedFloat = ::symfpu::unpackedFloat<SymFpuSymTraitsOld>;
   using UnpackedFloatMap =
       std::unordered_map<BzlaNode *, SymUnpackedFloat, BzlaNodeHashFunction>;
   using SymFpuSymRMMap =
-      std::unordered_map<BzlaNode *, SymFpuSymRM, BzlaNodeHashFunction>;
+      std::unordered_map<BzlaNode *, SymFpuSymRMOld, BzlaNodeHashFunction>;
   using SymFpuSymPropMap =
-      std::unordered_map<BzlaNode *, SymFpuSymProp, BzlaNodeHashFunction>;
+      std::unordered_map<BzlaNode *, SymFpuSymPropOld, BzlaNodeHashFunction>;
   using PackedFloatMap =
-      std::unordered_map<BzlaNode *, SymFpuSymBV<false>, BzlaNodeHashFunction>;
+      std::unordered_map<BzlaNode *, SymFpuSymBVOld<false>, BzlaNodeHashFunction>;
   using SymSBVMap =
-      std::unordered_map<BzlaNode *, SymFpuSymBV<true>, BzlaNodeHashFunction>;
+      std::unordered_map<BzlaNode *, SymFpuSymBVOld<true>, BzlaNodeHashFunction>;
   using SymUBVMap =
-      std::unordered_map<BzlaNode *, SymFpuSymBV<false>, BzlaNodeHashFunction>;
+      std::unordered_map<BzlaNode *, SymFpuSymBVOld<false>, BzlaNodeHashFunction>;
 
   struct Internal;
 

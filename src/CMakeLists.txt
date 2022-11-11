@@ -110,7 +110,7 @@ set(libbitwuzla_src_files
   solver/fp/floating_point.cpp
   solver/fp/rounding_mode.cpp
   solver/fp/symfpu_wrapper.cpp
-  solver/fp/word_blaster.cpp
+  solver/fp/word_blaster_old.cpp
   solver/solver.cpp
   solving_context.cpp
   utils/bzlahashint.c

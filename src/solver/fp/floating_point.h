@@ -24,6 +24,7 @@ class FloatingPointTypeInfo;
 namespace fp {
 class SymFpuTraits;
 class WordBlaster;
+class WordBlasterOld;
 }  // namespace fp
 
 using UnpackedFloat = ::symfpu::unpackedFloat<fp::SymFpuTraits>;
@@ -33,6 +34,7 @@ using UnpackedFloat = ::symfpu::unpackedFloat<fp::SymFpuTraits>;
 class FloatingPoint
 {
   friend fp::WordBlaster;
+  friend fp::WordBlasterOld;
 
  public:
   /**
@@ -370,7 +372,7 @@ std::ostream &operator<<(std::ostream &out, const FloatingPoint &fp);
  */
 class FloatingPointTypeInfo
 {
-  friend fp::WordBlaster;
+  friend fp::WordBlasterOld;
 
  public:
   /**

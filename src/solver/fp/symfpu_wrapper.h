@@ -21,8 +21,9 @@ namespace bzla {
 namespace fp {
 
 template <bool T>
-class SymFpuSymBV;
+class SymFpuSymBVOld;
 class WordBlaster;
+class WordBlasterOld;
 
 /* ========================================================================== */
 /* Glue for SymFPU: concrete.                                                 */
@@ -53,9 +54,10 @@ struct signedToLiteralType<false>
 template <bool is_signed>
 class SymFpuBV
 {
-  friend SymFpuSymBV<true>;
-  friend SymFpuSymBV<false>;
+  friend SymFpuSymBVOld<true>;
+  friend SymFpuSymBVOld<false>;
   friend WordBlaster;
+  friend WordBlasterOld;
 
  protected:
   using literalType = typename signedToLiteralType<is_signed>::literalType;
@@ -168,10 +170,10 @@ class SymFpuTraits
 /* Glue for SymFPU: symbolic.                                                 */
 /* ========================================================================== */
 
-class SymFpuSymRM;
-class SymFpuSymProp;
+class SymFpuSymRMOld;
+class SymFpuSymPropOld;
 template <bool T>
-class SymFpuSymBV;
+class SymFpuSymBVOld;
 
 /* Mapping between sorts. */
 template <bool T>
@@ -191,28 +193,29 @@ struct BzlaSignedToLitSort<false>
 /* Wrapper for propositions.                                                  */
 /* -------------------------------------------------------------------------- */
 
-class SymFpuSymProp
+class SymFpuSymPropOld
 {
   friend WordBlaster;
-  friend SymFpuSymBV<true>;
-  friend SymFpuSymBV<false>;
-  friend ::symfpu::ite<SymFpuSymProp, SymFpuSymProp>;
+  friend WordBlasterOld;
+  friend SymFpuSymBVOld<true>;
+  friend SymFpuSymBVOld<false>;
+  friend ::symfpu::ite<SymFpuSymPropOld, SymFpuSymPropOld>;
 
  public:
-  SymFpuSymProp(BzlaNode *node);
-  SymFpuSymProp(bool v);
-  SymFpuSymProp(const SymFpuSymProp &other);
-  ~SymFpuSymProp();
+  SymFpuSymPropOld(BzlaNode *node);
+  SymFpuSymPropOld(bool v);
+  SymFpuSymPropOld(const SymFpuSymPropOld &other);
+  ~SymFpuSymPropOld();
 
   BzlaNode *getNode() const { return d_node; }
 
-  SymFpuSymProp &operator=(const SymFpuSymProp &other);
+  SymFpuSymPropOld &operator=(const SymFpuSymPropOld &other);
 
-  SymFpuSymProp operator!(void) const;
-  SymFpuSymProp operator&&(const SymFpuSymProp &op) const;
-  SymFpuSymProp operator||(const SymFpuSymProp &op) const;
-  SymFpuSymProp operator==(const SymFpuSymProp &op) const;
-  SymFpuSymProp operator^(const SymFpuSymProp &op) const;
+  SymFpuSymPropOld operator!(void) const;
+  SymFpuSymPropOld operator&&(const SymFpuSymPropOld &op) const;
+  SymFpuSymPropOld operator||(const SymFpuSymPropOld &op) const;
+  SymFpuSymPropOld operator==(const SymFpuSymPropOld &op) const;
+  SymFpuSymPropOld operator^(const SymFpuSymPropOld &op) const;
 
  protected:
   bool check_node(const BzlaNode *node) const;
@@ -227,100 +230,101 @@ class SymFpuSymProp
 /* -------------------------------------------------------------------------- */
 
 template <bool is_signed>
-class SymFpuSymBV;
+class SymFpuSymBVOld;
 
 template <bool is_signed>
-class SymFpuSymBV
+class SymFpuSymBVOld
 {
   friend WordBlaster;
-  friend SymFpuSymBV<!is_signed>; /* Allow conversion between the sorts. */
-  friend ::symfpu::ite<SymFpuSymProp, SymFpuSymBV<is_signed> >;
+  friend WordBlasterOld;
+  friend SymFpuSymBVOld<!is_signed>; /* Allow conversion between the sorts. */
+  friend ::symfpu::ite<SymFpuSymPropOld, SymFpuSymBVOld<is_signed> >;
 
  public:
   /** Constructors for bit-vector nodes. */
-  SymFpuSymBV(BzlaNode *node);
-  SymFpuSymBV(const uint32_t w, const uint32_t val);
-  SymFpuSymBV(const SymFpuSymProp &p);
-  SymFpuSymBV(const SymFpuSymBV<is_signed> &other);
-  SymFpuSymBV(const SymFpuSymBV<!is_signed> &other);
-  SymFpuSymBV(const BitVector &bv);
-  SymFpuSymBV(const SymFpuBV<is_signed> &bv);
+  SymFpuSymBVOld(BzlaNode *node);
+  SymFpuSymBVOld(const uint32_t w, const uint32_t val);
+  SymFpuSymBVOld(const SymFpuSymPropOld &p);
+  SymFpuSymBVOld(const SymFpuSymBVOld<is_signed> &other);
+  SymFpuSymBVOld(const SymFpuSymBVOld<!is_signed> &other);
+  SymFpuSymBVOld(const BitVector &bv);
+  SymFpuSymBVOld(const SymFpuBV<is_signed> &bv);
   /** Constructors for Boolean nodes. */
-  SymFpuSymBV(bool v);
+  SymFpuSymBVOld(bool v);
   /** Destructor. */
-  ~SymFpuSymBV();
+  ~SymFpuSymBVOld();
 
-  SymFpuSymBV<is_signed> &operator=(const SymFpuSymBV<is_signed> &other);
+  SymFpuSymBVOld<is_signed> &operator=(const SymFpuSymBVOld<is_signed> &other);
 
   uint32_t getWidth(void) const;
   BzlaNode *getNode(void) const { return d_node; }
 
   /** Constant creation and test */
-  static SymFpuSymBV<is_signed> one(const uint32_t &w);
-  static SymFpuSymBV<is_signed> zero(const uint32_t &w);
-  static SymFpuSymBV<is_signed> allOnes(const uint32_t &w);
+  static SymFpuSymBVOld<is_signed> one(const uint32_t &w);
+  static SymFpuSymBVOld<is_signed> zero(const uint32_t &w);
+  static SymFpuSymBVOld<is_signed> allOnes(const uint32_t &w);
 
-  SymFpuSymProp isAllOnes() const;
-  SymFpuSymProp isAllZeros() const;
+  SymFpuSymPropOld isAllOnes() const;
+  SymFpuSymPropOld isAllZeros() const;
 
-  static SymFpuSymBV<is_signed> maxValue(const uint32_t &w);
-  static SymFpuSymBV<is_signed> minValue(const uint32_t &w);
+  static SymFpuSymBVOld<is_signed> maxValue(const uint32_t &w);
+  static SymFpuSymBVOld<is_signed> minValue(const uint32_t &w);
 
   /** Operators */
-  SymFpuSymBV<is_signed> operator<<(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator>>(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator|(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator&(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator+(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator-(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator*(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator/(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator%(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator-(void) const;
-  SymFpuSymBV<is_signed> operator~(void) const;
-  SymFpuSymBV<is_signed> increment() const;
-  SymFpuSymBV<is_signed> decrement() const;
-  SymFpuSymBV<is_signed> signExtendRightShift(
-      const SymFpuSymBV<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> operator<<(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> operator>>(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> operator|(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> operator&(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> operator+(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> operator-(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> operator*(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> operator/(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> operator%(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> operator-(void) const;
+  SymFpuSymBVOld<is_signed> operator~(void) const;
+  SymFpuSymBVOld<is_signed> increment() const;
+  SymFpuSymBVOld<is_signed> decrement() const;
+  SymFpuSymBVOld<is_signed> signExtendRightShift(
+      const SymFpuSymBVOld<is_signed> &op) const;
 
   /** Modular operations */
   // This back-end doesn't do any overflow checking so these are the same as
   // other operations
-  SymFpuSymBV<is_signed> modularLeftShift(
-      const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> modularRightShift(
-      const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> modularIncrement() const;
-  SymFpuSymBV<is_signed> modularDecrement() const;
-  SymFpuSymBV<is_signed> modularAdd(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> modularNegate() const;
+  SymFpuSymBVOld<is_signed> modularLeftShift(
+      const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> modularRightShift(
+      const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> modularIncrement() const;
+  SymFpuSymBVOld<is_signed> modularDecrement() const;
+  SymFpuSymBVOld<is_signed> modularAdd(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> modularNegate() const;
 
   /** Operators for Boolean nodes */
-  SymFpuSymProp operator!(void) const;
-  SymFpuSymProp operator&&(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator||(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator^(const SymFpuSymBV<is_signed> &op) const;
+  SymFpuSymPropOld operator!(void) const;
+  SymFpuSymPropOld operator&&(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymPropOld operator||(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymPropOld operator^(const SymFpuSymBVOld<is_signed> &op) const;
 
   /** Comparisons */
-  SymFpuSymProp operator==(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator<=(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator>=(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator<(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator>(const SymFpuSymBV<is_signed> &op) const;
+  SymFpuSymPropOld operator==(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymPropOld operator<=(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymPropOld operator>=(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymPropOld operator<(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymPropOld operator>(const SymFpuSymBVOld<is_signed> &op) const;
 
   /** Type conversion */
   // Bitwuzla nodes make no distinction between signed and unsigned, thus these
   // are trivial
-  SymFpuSymBV<true> toSigned(void) const;
-  SymFpuSymBV<false> toUnsigned(void) const;
+  SymFpuSymBVOld<true> toSigned(void) const;
+  SymFpuSymBVOld<false> toUnsigned(void) const;
 
   /** Bit hacks */
-  SymFpuSymBV<is_signed> extend(uint32_t extension) const;
-  SymFpuSymBV<is_signed> contract(uint32_t reduction) const;
-  SymFpuSymBV<is_signed> resize(uint32_t newSize) const;
-  SymFpuSymBV<is_signed> matchWidth(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> append(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> extract(uint32_t upper, uint32_t lower) const;
+  SymFpuSymBVOld<is_signed> extend(uint32_t extension) const;
+  SymFpuSymBVOld<is_signed> contract(uint32_t reduction) const;
+  SymFpuSymBVOld<is_signed> resize(uint32_t newSize) const;
+  SymFpuSymBVOld<is_signed> matchWidth(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> append(const SymFpuSymBVOld<is_signed> &op) const;
+  SymFpuSymBVOld<is_signed> extract(uint32_t upper, uint32_t lower) const;
 
  protected:
   using literalType = typename BzlaSignedToLitSort<is_signed>::BzlaLitSort;
@@ -342,23 +346,24 @@ class SymFpuSymBV
 /* Wrapper for rounding modes.                                                */
 /* -------------------------------------------------------------------------- */
 
-class SymFpuSymRM
+class SymFpuSymRMOld
 {
   friend WordBlaster;
-  friend symfpu::ite<SymFpuSymProp, SymFpuSymRM>;
+  friend WordBlasterOld;
+  friend symfpu::ite<SymFpuSymPropOld, SymFpuSymRMOld>;
 
  public:
   /* Constructors. */
-  SymFpuSymRM(BzlaNode *node);
-  SymFpuSymRM(const RoundingMode rm);
-  SymFpuSymRM(const SymFpuSymRM &other);
+  SymFpuSymRMOld(BzlaNode *node);
+  SymFpuSymRMOld(const RoundingMode rm);
+  SymFpuSymRMOld(const SymFpuSymRMOld &other);
   /* Destructor. */
-  ~SymFpuSymRM();
+  ~SymFpuSymRMOld();
 
   BzlaNode *getNode() const { return d_node; }
 
-  SymFpuSymProp valid(void) const;
-  SymFpuSymProp operator==(const SymFpuSymRM &other) const;
+  SymFpuSymPropOld valid(void) const;
+  SymFpuSymPropOld operator==(const SymFpuSymRMOld &other) const;
 
  protected:
   bool check_node(const BzlaNode *node) const;
@@ -373,23 +378,23 @@ class SymFpuSymRM
 /* Template parameter for SymFPU templates.                                   */
 /* -------------------------------------------------------------------------- */
 
-class SymFpuSymTraits
+class SymFpuSymTraitsOld
 {
  public:
   /* The six key types that SymFPU uses. */
   using bwt  = uint32_t;
-  using rm   = SymFpuSymRM;
+  using rm   = SymFpuSymRMOld;
   using fpt  = FloatingPointTypeInfo;
-  using prop = SymFpuSymProp;
-  using sbv  = SymFpuSymBV<true>;
-  using ubv  = SymFpuSymBV<false>;
+  using prop = SymFpuSymPropOld;
+  using sbv  = SymFpuSymBVOld<true>;
+  using ubv  = SymFpuSymBVOld<false>;
 
   /* Give concrete instances (wrapped nodes) for each rounding mode. */
-  static SymFpuSymRM RNE(void);
-  static SymFpuSymRM RNA(void);
-  static SymFpuSymRM RTP(void);
-  static SymFpuSymRM RTN(void);
-  static SymFpuSymRM RTZ(void);
+  static SymFpuSymRMOld RNE(void);
+  static SymFpuSymRMOld RNA(void);
+  static SymFpuSymRMOld RTP(void);
+  static SymFpuSymRMOld RTN(void);
+  static SymFpuSymRMOld RTZ(void);
 
   /* Properties used by Symfpu. */
   static void precondition(const bool b);
@@ -411,7 +416,7 @@ class SymFpuSymTraits
 
 namespace symfpu {
 
-#define BZLA_FP_ITE(T)                                              \
+#define BZLA_FP_ITE_OLD(T)                                          \
   template <>                                                       \
   struct ite<bool, T>                                               \
   {                                                                 \
@@ -420,42 +425,42 @@ namespace symfpu {
       return _c ? _t : _e;                                          \
     }                                                               \
   };
-BZLA_FP_ITE(bzla::fp::SymFpuTraits::rm);
-BZLA_FP_ITE(bzla::fp::SymFpuTraits::prop);
-BZLA_FP_ITE(bzla::fp::SymFpuTraits::sbv);
-BZLA_FP_ITE(bzla::fp::SymFpuTraits::ubv);
-#undef BZLA_FP_ITE
+BZLA_FP_ITE_OLD(bzla::fp::SymFpuTraits::rm);
+BZLA_FP_ITE_OLD(bzla::fp::SymFpuTraits::prop);
+BZLA_FP_ITE_OLD(bzla::fp::SymFpuTraits::sbv);
+BZLA_FP_ITE_OLD(bzla::fp::SymFpuTraits::ubv);
+#undef BZLA_FP_ITE_OLD
 
-#define BZLA_FP_SYM_ITE(T)                                  \
-  template <>                                               \
-  struct ite<bzla::fp::SymFpuSymProp, T>                    \
-  {                                                         \
-    static const T iteOp(const bzla::fp::SymFpuSymProp &_c, \
-                         const T &_t,                       \
-                         const T &_e)                       \
-    {                                                       \
-      BzlaNode *c = _c.getNode();                           \
-      BzlaNode *t = _t.getNode();                           \
-      BzlaNode *e = _e.getNode();                           \
-      assert(c);                                            \
-      assert(t);                                            \
-      assert(e);                                            \
-      Bzla *bzla = T::s_bzla;                               \
-      assert(bzla);                                         \
-      assert(bzla == bzla_node_real_addr(c)->bzla);         \
-      assert(bzla == bzla_node_real_addr(t)->bzla);         \
-      assert(bzla == bzla_node_real_addr(e)->bzla);         \
-      BzlaNode *ite = bzla_exp_cond(bzla, c, t, e);         \
-      T res(ite);                                           \
-      bzla_node_release(bzla, ite);                         \
-      return res;                                           \
-    }                                                       \
+#define BZLA_FP_SYM_ITE_OLD(T)                                 \
+  template <>                                                  \
+  struct ite<bzla::fp::SymFpuSymPropOld, T>                    \
+  {                                                            \
+    static const T iteOp(const bzla::fp::SymFpuSymPropOld &_c, \
+                         const T &_t,                          \
+                         const T &_e)                          \
+    {                                                          \
+      BzlaNode *c = _c.getNode();                              \
+      BzlaNode *t = _t.getNode();                              \
+      BzlaNode *e = _e.getNode();                              \
+      assert(c);                                               \
+      assert(t);                                               \
+      assert(e);                                               \
+      Bzla *bzla = T::s_bzla;                                  \
+      assert(bzla);                                            \
+      assert(bzla == bzla_node_real_addr(c)->bzla);            \
+      assert(bzla == bzla_node_real_addr(t)->bzla);            \
+      assert(bzla == bzla_node_real_addr(e)->bzla);            \
+      BzlaNode *ite = bzla_exp_cond(bzla, c, t, e);            \
+      T res(ite);                                              \
+      bzla_node_release(bzla, ite);                            \
+      return res;                                              \
+    }                                                          \
   };
-BZLA_FP_SYM_ITE(bzla::fp::SymFpuSymTraits::rm);
-BZLA_FP_SYM_ITE(bzla::fp::SymFpuSymTraits::prop);
-BZLA_FP_SYM_ITE(bzla::fp::SymFpuSymTraits::sbv);
-BZLA_FP_SYM_ITE(bzla::fp::SymFpuSymTraits::ubv);
-#undef BZLA_FP_SYM_ITE
+BZLA_FP_SYM_ITE_OLD(bzla::fp::SymFpuSymTraitsOld::rm);
+BZLA_FP_SYM_ITE_OLD(bzla::fp::SymFpuSymTraitsOld::prop);
+BZLA_FP_SYM_ITE_OLD(bzla::fp::SymFpuSymTraitsOld::sbv);
+BZLA_FP_SYM_ITE_OLD(bzla::fp::SymFpuSymTraitsOld::ubv);
+#undef BZLA_FP_SYM_ITE_OLD
 
 }  // namespace symfpu
 

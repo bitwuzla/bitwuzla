@@ -19,7 +19,7 @@
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "solver/fp/symfpu_wrapper.h"
-#include "solver/fp/word_blaster.h"
+#include "solver/fp/word_blaster_old.h"
 
 extern "C" {
 #include "bzlabv.h"
@@ -67,7 +67,7 @@ bzla_fp_free(Bzla *bzla, BzlaFloatingPoint *fp)
 {
   assert(bzla);
   assert(fp);
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   fp->d_fp.reset(nullptr);
   BZLA_DELETE(bzla->mm, fp);
 }
@@ -80,7 +80,7 @@ bzla_fp_copy(Bzla *bzla, const BzlaFloatingPoint *fp)
 
   BzlaFloatingPoint *res;
 
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(new bzla::FloatingPoint(*fp->d_fp));
   return res;
@@ -110,7 +110,7 @@ bzla_fp_as_bv(Bzla *bzla, BzlaFloatingPoint *fp)
 {
   assert(bzla);
   assert(fp);
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   bzla::BitVector bv = fp->d_fp->as_bv();
   BzlaBitVector *bbv = bzla_bv_new(bzla->mm, bv.size());
   bbv->d_bv.reset(new bzla::BitVector(bv));
@@ -125,7 +125,7 @@ bzla_fp_ieee_bv_as_bvs(Bzla *bzla,
                        BzlaBitVector **exp,
                        BzlaBitVector **sig)
 {
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   bzla::BitVector bsign, bexp, bsig;
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::FloatingPoint::ieee_bv_as_bvs(
@@ -180,7 +180,7 @@ bool
 bzla_fp_is_zero(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   return fp->d_fp->fpiszero();
 }
 
@@ -188,7 +188,7 @@ bool
 bzla_fp_is_normal(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   return fp->d_fp->fpisnormal();
 }
 
@@ -196,7 +196,7 @@ bool
 bzla_fp_is_subnormal(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   return fp->d_fp->fpissubnormal();
 }
 
@@ -204,7 +204,7 @@ bool
 bzla_fp_is_nan(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   return fp->d_fp->fpisnan();
 }
 
@@ -212,7 +212,7 @@ bool
 bzla_fp_is_inf(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   return fp->d_fp->fpisinf();
 }
 
@@ -220,7 +220,7 @@ bool
 bzla_fp_is_neg(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   return fp->d_fp->fpisneg();
 }
 
@@ -228,7 +228,7 @@ bool
 bzla_fp_is_pos(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   return fp->d_fp->fpispos();
 }
 
@@ -245,7 +245,7 @@ bzla_fp_eq(Bzla *bzla,
   assert(fp0->d_fp->size()->significandWidth()
          == fp1->d_fp->size()->significandWidth());
 
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   return fp0->d_fp->fpeq(*fp1->d_fp);
 }
 
@@ -262,7 +262,7 @@ bzla_fp_lt(Bzla *bzla,
   assert(fp0->d_fp->size()->significandWidth()
          == fp1->d_fp->size()->significandWidth());
 
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   return fp0->d_fp->fplt(*fp1->d_fp);
 }
 
@@ -279,7 +279,7 @@ bzla_fp_lte(Bzla *bzla,
   assert(fp0->d_fp->size()->significandWidth()
          == fp1->d_fp->size()->significandWidth());
 
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   return fp0->d_fp->fple(*fp1->d_fp);
 }
 
@@ -291,7 +291,7 @@ bzla_fp_zero(Bzla *bzla, BzlaSortId sort, bool sign)
   assert(bzla_sort_is_fp(bzla, sort));
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
@@ -309,7 +309,7 @@ bzla_fp_inf(Bzla *bzla, BzlaSortId sort, bool sign)
   assert(bzla_sort_is_fp(bzla, sort));
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
@@ -327,7 +327,7 @@ bzla_fp_nan(Bzla *bzla, BzlaSortId sort)
   assert(bzla_sort_is_fp(bzla, sort));
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
@@ -348,7 +348,7 @@ bzla_fp_fp(Bzla *bzla,
   assert(sig);
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(new bzla::FloatingPoint(
       bzla::FloatingPoint::fpfp(*sign->d_bv, *exp->d_bv, *sig->d_bv)));
@@ -366,7 +366,7 @@ bzla_fp_from_bv(Bzla *bzla, BzlaSortId sort, const BzlaBitVector *bv_const)
              + bzla_sort_fp_get_sig_width(bzla, sort)
          == bzla_bv_get_width(bv_const));
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
@@ -382,7 +382,7 @@ bzla_fp_abs(Bzla *bzla, const BzlaFloatingPoint *fp)
   assert(fp);
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(new bzla::FloatingPoint(fp->d_fp->fpabs()));
   return res;
@@ -395,7 +395,7 @@ bzla_fp_neg(Bzla *bzla, const BzlaFloatingPoint *fp)
   assert(fp);
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(new bzla::FloatingPoint(fp->d_fp->fpneg()));
   return res;
@@ -408,7 +408,7 @@ bzla_fp_sqrt(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
   assert(fp);
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(new bzla::FloatingPoint(fp->d_fp->fpsqrt(bzlarm2rm.at(rm))));
   return res;
@@ -421,7 +421,7 @@ bzla_fp_rti(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
   assert(fp);
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(new bzla::FloatingPoint(fp->d_fp->fprti(bzlarm2rm.at(rm))));
   return res;
@@ -441,7 +441,7 @@ bzla_fp_rem(Bzla *bzla,
          == fp1->d_fp->size()->significandWidth());
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(new bzla::FloatingPoint(fp0->d_fp->fprem(*fp1->d_fp)));
   return res;
@@ -462,7 +462,7 @@ bzla_fp_add(Bzla *bzla,
          == fp1->d_fp->size()->significandWidth());
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(
       new bzla::FloatingPoint(fp0->d_fp->fpadd(bzlarm2rm.at(rm), *fp1->d_fp)));
@@ -484,7 +484,7 @@ bzla_fp_mul(Bzla *bzla,
          == fp1->d_fp->size()->significandWidth());
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(
       new bzla::FloatingPoint(fp0->d_fp->fpmul(bzlarm2rm.at(rm), *fp1->d_fp)));
@@ -506,7 +506,7 @@ bzla_fp_div(Bzla *bzla,
          == fp1->d_fp->size()->significandWidth());
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(
       new bzla::FloatingPoint(fp0->d_fp->fpdiv(bzlarm2rm.at(rm), *fp1->d_fp)));
@@ -534,7 +534,7 @@ bzla_fp_fma(Bzla *bzla,
          == fp2->d_fp->size()->significandWidth());
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(new bzla::FloatingPoint(
       fp0->d_fp->fpfma(bzlarm2rm.at(rm), *fp1->d_fp, *fp2->d_fp)));
@@ -552,7 +552,7 @@ bzla_fp_convert(Bzla *bzla,
   assert(fp);
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
@@ -572,7 +572,7 @@ bzla_fp_convert_from_ubv(Bzla *bzla,
   assert(bv);
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
@@ -593,7 +593,7 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
   assert(bv);
 
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
@@ -610,7 +610,7 @@ bzla_fp_convert_from_real(Bzla *bzla,
                           const char *real)
 {
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
@@ -628,7 +628,7 @@ bzla_fp_convert_from_rational(Bzla *bzla,
                               const char *den)
 {
   BzlaFloatingPoint *res;
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
@@ -643,8 +643,8 @@ bzla_fp_word_blaster_get_introduced_ufs(Bzla *bzla, BzlaNodePtrStack *ufs)
 {
   assert(bzla);
   if (!bzla->word_blaster) return;
-  bzla::fp::WordBlaster *word_blaster =
-      static_cast<bzla::fp::WordBlaster *>(bzla->word_blaster);
+  bzla::fp::WordBlasterOld *word_blaster =
+      static_cast<bzla::fp::WordBlasterOld *>(bzla->word_blaster);
 
   std::vector<BzlaNode *> introduced_ufs;
   word_blaster->get_introduced_ufs(introduced_ufs);
@@ -659,7 +659,7 @@ bzla_fp_word_blaster_get_introduced_ufs(Bzla *bzla, BzlaNodePtrStack *ufs)
 void *
 bzla_fp_word_blaster_new(Bzla *bzla)
 {
-  return new bzla::fp::WordBlaster(bzla);
+  return new bzla::fp::WordBlasterOld(bzla);
 }
 
 void
@@ -667,9 +667,9 @@ bzla_fp_word_blaster_delete(Bzla *bzla)
 {
   assert(bzla);
   if (!bzla->word_blaster) return;
-  bzla::fp::WordBlaster *wb =
-      static_cast<bzla::fp::WordBlaster *>(bzla->word_blaster);
-  bzla::fp::WordBlaster::set_s_bzla(wb->get_bzla());
+  bzla::fp::WordBlasterOld *wb =
+      static_cast<bzla::fp::WordBlasterOld *>(bzla->word_blaster);
+  bzla::fp::WordBlasterOld::set_s_bzla(wb->get_bzla());
   delete wb;
   bzla->word_blaster = nullptr;
 }
@@ -679,8 +679,8 @@ bzla_fp_word_blaster_add_additional_assertions(Bzla *bzla)
 {
   assert(bzla);
   if (!bzla->word_blaster) return;
-  bzla::fp::WordBlaster *word_blaster =
-      static_cast<bzla::fp::WordBlaster *>(bzla->word_blaster);
+  bzla::fp::WordBlasterOld *word_blaster =
+      static_cast<bzla::fp::WordBlasterOld *>(bzla->word_blaster);
   word_blaster->add_additional_assertions();
 }
 
@@ -690,8 +690,8 @@ bzla_fp_word_blast(Bzla *bzla, BzlaNode *node)
   assert(bzla);
   assert(bzla->word_blaster);
   assert(node);
-  bzla::fp::WordBlaster::set_s_bzla(bzla);
-  BzlaNode *res = static_cast<bzla::fp::WordBlaster *>(bzla->word_blaster)
+  bzla::fp::WordBlasterOld::set_s_bzla(bzla);
+  BzlaNode *res = static_cast<bzla::fp::WordBlasterOld *>(bzla->word_blaster)
                       ->get_word_blasted_node(node);
   return bzla_simplify_exp(bzla, res);
 }
