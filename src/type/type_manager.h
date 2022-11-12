@@ -57,9 +57,9 @@ class TypeManager
   /**
    * Create function type.
    *
-   * @param types Codomain types and domain type of function with the domain
+   * @param types Domain types and codomain type of function with the codomain
    *              type being the last element of the vector.
-   * @return Function type of given codmain and domain types.
+   * @return Function type of given domain and codomain types.
    */
   Type mk_fun_type(const std::vector<Type>& types);
 
