@@ -122,6 +122,12 @@ Type::fp_sig_size() const
   return d_data->get_fp_sig_size();
 }
 
+uint64_t
+Type::fp_ieee_bv_size() const
+{
+  return d_data->get_fp_exp_size() + d_data->get_fp_sig_size();
+}
+
 const Type&
 Type::array_index() const
 {
@@ -201,4 +207,11 @@ hash<bzla::Type*>::operator()(const bzla::Type* type) const
   return type->id();
 }
 
+size_t
+hash<std::pair<bzla::Type, bzla::Type>>::operator()(
+    const std::pair<bzla::Type, bzla::Type>& p) const
+{
+  return std::hash<bzla::Type>{}(p.first) * 333444569u
+         + std::hash<bzla::Type>{}(p.second) * 76891121u;
+}
 }  // namespace std

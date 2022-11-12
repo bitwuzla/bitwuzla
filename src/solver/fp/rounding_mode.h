@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#define BZLA_RM_BV_SIZE 3
+
 namespace bzla {
 
 enum class RoundingMode

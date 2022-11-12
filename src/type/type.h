@@ -70,6 +70,12 @@ class Type
   uint64_t fp_sig_size() const;
 
   /**
+   * @return The size of the IEEE bit-vector representation of this
+   *         floating-point type.
+   */
+  uint64_t fp_ieee_bv_size() const;
+
+  /**
    * @return The index type of this array type.
    */
   const Type& array_index() const;
@@ -135,6 +141,12 @@ template <>
 struct hash<bzla::Type*>
 {
   size_t operator()(const bzla::Type* type) const;
+};
+
+template <>
+struct hash<std::pair<bzla::Type, bzla::Type>>
+{
+  size_t operator()(const std::pair<bzla::Type, bzla::Type>& p) const;
 };
 
 }  // namespace std
