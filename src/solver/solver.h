@@ -44,6 +44,9 @@ class Solver
    */
   const Node& get_cached_value(const Node& term) const;
 
+  /** Reset value cache. */
+  void reset_cached_values();
+
  private:
   /** Cache to store computed values. */
   std::unordered_map<Node, Node> d_value_cache;

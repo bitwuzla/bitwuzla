@@ -20,4 +20,10 @@ Solver::get_cached_value(const Node& term) const
   return it->second;
 }
 
+void
+Solver::reset_cached_values()
+{
+  d_value_cache.clear();
+}
+
 }  // namespace bzla

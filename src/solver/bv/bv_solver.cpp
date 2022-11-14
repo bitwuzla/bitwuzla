@@ -79,6 +79,7 @@ BvSolver::register_assertion(const Node& assertion, size_t level)
 Result
 BvSolver::check()
 {
+  reset_cached_values();
   switch (d_solver_engine.options().bv_solver())
   {
     case option::BvSolver::BITBLAST:
