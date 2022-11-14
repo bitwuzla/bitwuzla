@@ -2,6 +2,7 @@
 #define BZLA_PREPROCESS_PREPROCESSOR_H_INCLUDED
 
 #include "backtrack/assertion_stack.h"
+#include "backtrack/pop_callback.h"
 #include "preprocess/pass/elim_lambda.h"
 #include "preprocess/pass/flatten_and.h"
 #include "preprocess/pass/rewrite.h"
@@ -34,33 +35,6 @@ class Preprocessor
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);
 
-  /** Callback when d_global_backtrack_mgr.pop()) is called. */
-  class PopCallback : public backtrack::Backtrackable
-  {
-   public:
-    PopCallback(backtrack::BacktrackManager* mgr, Preprocessor& pp)
-        : Backtrackable(mgr), d_preprocessor(pp)
-    {
-    }
-
-    void push() override {}
-
-    void pop() override
-    {
-      // Only pop if preprocessor backtrack manager is in sync with global one.
-      if (d_preprocessor.d_backtrack_mgr.num_levels()
-          == d_preprocessor.d_global_backtrack_mgr.num_levels())
-      {
-        d_preprocessor.d_backtrack_mgr.pop();
-      }
-    }
-
-   private:
-    Preprocessor& d_preprocessor;
-  };
-
-  PopCallback d_pop_callback;
-
   /** Current set of assertions. */
   backtrack::AssertionView& d_assertions;
 
@@ -69,6 +43,9 @@ class Preprocessor
 
   /** Global backtrack manager of solving context. */
   const backtrack::BacktrackManager& d_global_backtrack_mgr;
+
+  /** Callback to sync d_backtrack_mgr with d_global_backtrack_mgr on pop(). */
+  backtrack::PopCallback d_pop_callback;
 
   /** Preprocessing passes */
   pass::PassRewrite d_pass_rewrite;

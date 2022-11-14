@@ -5,9 +5,9 @@
 namespace bzla::preprocess {
 
 Preprocessor::Preprocessor(SolvingContext& context)
-    : d_pop_callback(context.backtrack_mgr(), *this),
-      d_assertions(context.assertions()),
+    : d_assertions(context.assertions()),
       d_global_backtrack_mgr(*context.backtrack_mgr()),
+      d_pop_callback(context.backtrack_mgr(), &d_backtrack_mgr),
       d_pass_rewrite(context.rewriter()),
       d_pass_elim_lambda(context.rewriter()),
       d_pass_variable_substitution(context.rewriter(), &d_backtrack_mgr),
