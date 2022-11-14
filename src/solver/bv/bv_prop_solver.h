@@ -15,12 +15,14 @@ namespace bv {
 class BvPropSolver : public Solver
 {
  public:
-  BvPropSolver(SolvingContext& context, BvBitblastSolver& bb_solver);
+  BvPropSolver(SolverEngine& solver_engine, BvBitblastSolver& bb_solver);
   ~BvPropSolver();
 
   Result check() override;
 
   Node value(const Node& term) override;
+
+  void register_assertion(const Node& assertion, size_t level);
 
  private:
   struct
@@ -29,8 +31,6 @@ class BvPropSolver : public Solver
     uint64_t d_ntotal_bits = 0;
   } d_statistics;
 
-  /** Initialize LocalSearchBV bit-vector nodes. */
-  void init_nodes();
   /**
    * Helper to create LocalSearchBV bit-vector node representation of given
    * node. Maps `node` to resulting LS bit-vector node id in `d_node_map`.
@@ -39,8 +39,6 @@ class BvPropSolver : public Solver
    */
   uint64_t mk_node(const Node& node);
 
-  /** The current set of assertions. */
-  backtrack::AssertionView& d_assertion_view;
   /**
    * The associated bit-blasting solver, for bit-blasting to determine
    * constant bits information. We utilize the bit-blaster of the BB solver

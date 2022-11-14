@@ -40,10 +40,8 @@ class BvBitblastSolver::BitblastSatSolver : public bb::SatInterface
 
 /* --- BvSolver public ----------------------------------------------------- */
 
-BvBitblastSolver::BvBitblastSolver(SolvingContext& context)
-    : Solver(context),
-      d_assertion_view(context.assertions()),
-      d_assumptions(context.backtrack_mgr())
+BvBitblastSolver::BvBitblastSolver(SolverEngine& solver_engine)
+    : Solver(solver_engine), d_assumptions(solver_engine.backtrack_mgr())
 {
   d_sat_solver.reset(new sat::Cadical());
   d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
@@ -55,28 +53,10 @@ BvBitblastSolver::~BvBitblastSolver() {}
 Result
 BvBitblastSolver::check()
 {
-  for (size_t i = d_assertion_view.begin(), end = d_assertion_view.end();
-       i < end;
-       ++i)
-  {
-    const Node& assertion = d_assertion_view[i];
-    size_t level          = d_assertion_view.level(i);
-
-    if (level > 0)
-    {
-      d_assumptions.insert_at_level(level, assertion);
-    }
-
-    bitblast(assertion);
-    d_cnf_encoder->encode(bits(assertion)[0], level == 0);
-  }
-  d_assertion_view.set_index(d_assertion_view.end());
-
   for (const Node& assumption : d_assumptions)
   {
     d_sat_solver->assume(bits(assumption)[0].get_id());
   }
-
   return d_sat_solver->solve();
 }
 
@@ -157,14 +137,12 @@ BvBitblastSolver::bitblast(const Node& t)
         case Kind::FP_LE:
         case Kind::FP_LT:
         case Kind::FORALL:
-        case Kind::EXISTS:
         // Bit-vector abstractions
         case Kind::FP_TO_SBV:
         case Kind::FP_TO_UBV:
         // Both
         case Kind::SELECT:
-        case Kind::APPLY: register_abstraction(cur); [[fallthrough]];
-
+        case Kind::APPLY:
         case Kind::CONSTANT:
           assert(BvSolver::is_leaf(cur));
           it->second = type.is_bool()
@@ -211,7 +189,6 @@ BvBitblastSolver::bitblast(const Node& t)
           {
             // For all other cases we abstract equality as a Boolean constant.
             it->second = d_bitblaster.bv_constant(1);
-            register_abstraction(cur);
           }
         }
         break;
@@ -285,6 +262,7 @@ BvBitblastSolver::bitblast(const Node& t)
         case Kind::IMPLIES:
         case Kind::DISTINCT:
         case Kind::XOR:
+        case Kind::EXISTS:
 
         case Kind::BV_NAND:
         case Kind::BV_NEG:
@@ -353,13 +331,17 @@ BvBitblastSolver::bits(const Node& term) const
   return d_bitblaster_cache.at(term);
 }
 
-/* --- BvSolver private ---------------------------------------------------- */
-
 void
-BvBitblastSolver::register_abstraction(const Node& term)
+BvBitblastSolver::register_assertion(const Node& assertion, size_t level)
 {
-  (void) term;
-  // TODO:
+  if (level > 0)
+  {
+    assert(level == d_solver_engine.backtrack_mgr()->num_levels());
+    d_assumptions.push_back(assertion);
+  }
+
+  bitblast(assertion);
+  d_cnf_encoder->encode(bits(assertion)[0], level == 0);
 }
 
 }  // namespace bzla::bv

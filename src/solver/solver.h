@@ -8,12 +8,12 @@
 
 namespace bzla {
 
-class SolvingContext;
+class SolverEngine;
 
 class Solver
 {
  public:
-  Solver(SolvingContext& context) : d_context(context){};
+  Solver(SolverEngine& solver_engine) : d_solver_engine(solver_engine){};
 
   /** Check satisfiability for current solving context. */
   virtual Result check() = 0;
@@ -21,9 +21,12 @@ class Solver
   /** Compute value for given term. */
   virtual Node value(const Node& term) = 0;
 
+  /** Register term relevant to this solver. */
+  virtual void register_term(const Node& term){};
+
  protected:
-  /** Associated solving context. */
-  SolvingContext& d_context;
+  /** Associated solver engine. */
+  SolverEngine& d_solver_engine;
 
   /**
    * Store value for term.

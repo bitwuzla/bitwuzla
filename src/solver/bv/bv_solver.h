@@ -17,8 +17,10 @@ class BvSolver : public Solver
   /** Construct default value for given Boolean or bit-vector type. */
   static Node default_value(const Type& type);
 
-  BvSolver(SolvingContext& context);
+  BvSolver(SolverEngine& context);
   ~BvSolver();
+
+  void register_assertion(const Node& assertion, size_t level);
 
   Result check() override;
 

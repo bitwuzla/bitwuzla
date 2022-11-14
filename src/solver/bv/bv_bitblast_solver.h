@@ -17,7 +17,7 @@ class BvSolver;
 class BvBitblastSolver : public Solver
 {
  public:
-  BvBitblastSolver(SolvingContext& context);
+  BvBitblastSolver(SolverEngine& solver_engine);
   ~BvBitblastSolver();
 
   Result check() override;
@@ -31,14 +31,13 @@ class BvBitblastSolver : public Solver
   /** Return encoded bits associated with bit-blasted term. */
   const bb::AigBitblaster::Bits& bits(const Node& term) const;
 
+  void register_assertion(const Node& assertion, size_t level);
+
  private:
   /** Sat interface used for d_cnf_encoder. */
   class BitblastSatSolver;
 
-  void register_abstraction(const Node& term);
-
   /** The current set of assertions. */
-  backtrack::AssertionView& d_assertion_view;
   backtrack::vector<Node> d_assumptions;
 
   /** AIG Bit-blaster. */

@@ -15,12 +15,11 @@ namespace bzla::bv {
 
 using namespace bzla::node;
 
-BvPropSolver::BvPropSolver(SolvingContext& context, BvBitblastSolver& bb_solver)
-    : Solver(context),
-      d_assertion_view(context.assertions()),
-      d_bb_solver(bb_solver)
+BvPropSolver::BvPropSolver(SolverEngine& solver_engine,
+                           BvBitblastSolver& bb_solver)
+    : Solver(solver_engine), d_bb_solver(bb_solver)
 {
-  const option::Options& options = d_context.options();
+  const option::Options& options = d_solver_engine.options();
 
   d_ls.reset(new ls::LocalSearchBV(
       options.prop_nprops(), options.prop_nupdates(), options.seed()));
@@ -49,9 +48,9 @@ BvPropSolver::check()
   // double start                = bzla_util_time_stamp();
   Result sat_result = Result::UNKNOWN;
 
-  uint32_t verbosity = d_context.options().verbosity();
-  uint64_t nprops    = d_context.options().prop_nprops();
-  uint64_t nupdates  = d_context.options().prop_nupdates();
+  uint32_t verbosity = d_solver_engine.options().verbosity();
+  uint64_t nprops    = d_solver_engine.options().prop_nprops();
+  uint64_t nupdates  = d_solver_engine.options().prop_nupdates();
 
   uint32_t progress_steps     = 100;
   uint32_t progress_steps_inc = progress_steps * 10;
@@ -63,8 +62,6 @@ BvPropSolver::check()
   nupdates += d_ls->d_statistics.d_nupdates;
   d_ls->set_max_nupdates(nupdates);
   // BZLA_MSG(d_bzla->msg, 1, "Set model update limit to %zu", nupdates);
-
-  init_nodes();
 
   for (uint32_t j = 0;; ++j)
   {
@@ -124,21 +121,17 @@ BvPropSolver::value(const Node& term)
 }
 
 void
-BvPropSolver::init_nodes()
+BvPropSolver::register_assertion(const Node& assertion, size_t level)
 {
+  (void) level;
+
   node::node_ref_vector roots;
-  node::node_ref_vector visit;
+  node::node_ref_vector visit{assertion};
   node::unordered_node_ref_set cache;
 
-  while (!d_assertion_view.empty())
+  if (d_use_const_bits)
   {
-    const Node& cur = d_assertion_view.next();
-    roots.push_back(cur);
-    visit.push_back(cur);
-    if (d_use_const_bits)
-    {
-      d_bb_solver.bitblast(cur);
-    }
+    d_bb_solver.bitblast(assertion);
   }
 
   while (!visit.empty())

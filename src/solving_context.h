@@ -10,8 +10,8 @@
 #include "option/option.h"
 #include "preprocess/preprocessor.h"
 #include "rewrite/rewriter.h"
-#include "solver/bv/bv_solver.h"
 #include "solver/result.h"
+#include "solver/solver_engine.h"
 
 namespace bzla {
 
@@ -50,23 +50,33 @@ class SolvingContext
 
   backtrack::AssertionView& assertions();
 
+  /** @return The solving context backtrack manager. */
   backtrack::BacktrackManager* backtrack_mgr();
 
+  /** @return The solving context preprocessor. */
   preprocess::Preprocessor& preprocessor() { return d_preprocessor; };
 
+  /** @return The solving context rewriter. */
   Rewriter& rewriter();
 
  private:
-  option::Options d_options;
+  /** The configured solving context options. */
+  const option::Options d_options;
 
+  /** Manages push()/pop() requests. */
   backtrack::BacktrackManager d_backtrack_mgr;
+
+  /** Assertion stack of this solving context. */
   backtrack::AssertionStack d_assertions;
 
+  /** The solving context preprocessor. */
   preprocess::Preprocessor d_preprocessor;
+
+  /** The solving context rewriter. */
   Rewriter d_rewriter;
 
-  /** Bit-vector solver. */
-  bv::BvSolver d_bv_solver;
+  /** Solver engine that manages all solvers. */
+  SolverEngine d_solver_engine;
 
   /** Result of last solve() call. */
   Result d_sat_state = Result::UNKNOWN;

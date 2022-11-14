@@ -51,20 +51,35 @@ BvSolver::default_value(const Type& type)
   return nm.mk_value(BitVector::mk_zero(type.bv_size()));
 }
 
-BvSolver::BvSolver(SolvingContext& context)
-    : Solver(context),
-      d_bitblast_solver(context),
-      d_prop_solver(context, d_bitblast_solver),
-      d_cur_solver(context.options().bv_solver())
+BvSolver::BvSolver(SolverEngine& solver_engine)
+    : Solver(solver_engine),
+      d_bitblast_solver(solver_engine),
+      d_prop_solver(solver_engine, d_bitblast_solver),
+      d_cur_solver(solver_engine.options().bv_solver())
 {
 }
 
 BvSolver::~BvSolver() {}
 
+void
+BvSolver::register_assertion(const Node& assertion, size_t level)
+{
+  if (d_cur_solver == option::BvSolver::BITBLAST
+      || d_cur_solver == option::BvSolver::PREPROP)
+  {
+    d_bitblast_solver.register_assertion(assertion, level);
+  }
+  if (d_cur_solver == option::BvSolver::PROP
+      || d_cur_solver == option::BvSolver::PREPROP)
+  {
+    d_prop_solver.register_assertion(assertion, level);
+  }
+}
+
 Result
 BvSolver::check()
 {
-  switch (d_context.options().bv_solver())
+  switch (d_solver_engine.options().bv_solver())
   {
     case option::BvSolver::BITBLAST:
       assert(d_cur_solver == option::BvSolver::BITBLAST);
@@ -135,7 +150,6 @@ BvSolver::value(const Node& term)
         case Kind::FP_LE:
         case Kind::FP_LT:
         case Kind::FORALL:
-        case Kind::EXISTS:
         // Bit-vector abstractions
         case Kind::FP_TO_SBV:
         case Kind::FP_TO_UBV:
@@ -281,6 +295,7 @@ BvSolver::value(const Node& term)
         case Kind::IMPLIES:
         case Kind::DISTINCT:
         case Kind::XOR:
+        case Kind::EXISTS:
 
         case Kind::BV_NAND:
         case Kind::BV_NEG:
