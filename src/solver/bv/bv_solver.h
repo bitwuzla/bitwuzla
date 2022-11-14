@@ -26,6 +26,8 @@ class BvSolver : public Solver
 
   Node value(const Node& term) override;
 
+  void register_term(const Node& term) override { (void) term; }
+
  private:
   /** Query leaf assignment from subsolver. */
   Node assignment(const Node& term);

@@ -22,6 +22,8 @@ class BvPropSolver : public Solver
 
   Node value(const Node& term) override;
 
+  void register_term(const Node& term) override { (void) term; }
+
   void register_assertion(const Node& assertion, size_t level);
 
  private:

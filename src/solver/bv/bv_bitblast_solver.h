@@ -25,6 +25,8 @@ class BvBitblastSolver : public Solver
   /** Query value of leaf node. */
   Node value(const Node& term) override;
 
+  void register_term(const Node& term) override { (void) term; }
+
   /** Recursively bit-blast `term`. */
   void bitblast(const Node& term);
 

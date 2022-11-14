@@ -22,7 +22,7 @@ class Solver
   virtual Node value(const Node& term) = 0;
 
   /** Register term relevant to this solver. */
-  virtual void register_term(const Node& term){};
+  virtual void register_term(const Node& term) = 0;
 
  protected:
   /** Associated solver engine. */
