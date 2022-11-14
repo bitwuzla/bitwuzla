@@ -112,6 +112,7 @@ set(libbitwuzla_src_files
   solver/fp/symfpu_wrapper.cpp
   solver/fp/word_blaster_old.cpp
   solver/solver.cpp
+  solver/solver_engine.cpp
   solving_context.cpp
   utils/bzlahashint.c
   utils/bzlahashptr.c
