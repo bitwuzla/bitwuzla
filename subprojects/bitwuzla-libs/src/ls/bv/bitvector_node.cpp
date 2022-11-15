@@ -701,7 +701,6 @@ BitVectorAdd::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -719,7 +718,6 @@ BitVectorAdd::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -965,7 +963,6 @@ BitVectorAnd::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -983,7 +980,6 @@ BitVectorAnd::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -1156,7 +1152,6 @@ BitVectorConcat::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -1175,7 +1170,6 @@ BitVectorConcat::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -1370,7 +1364,6 @@ BitVectorEq::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -1388,7 +1381,6 @@ BitVectorEq::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -1850,7 +1842,6 @@ BitVectorMul::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -1869,7 +1860,6 @@ BitVectorMul::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -2285,7 +2275,6 @@ BitVectorShl::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -2304,7 +2293,6 @@ BitVectorShl::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -2636,7 +2624,6 @@ BitVectorShr::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -2786,7 +2773,6 @@ BitVectorShr::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -3125,7 +3111,6 @@ BitVectorAshr::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -3144,7 +3129,6 @@ BitVectorAshr::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -3759,7 +3743,6 @@ BitVectorUdiv::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -3778,7 +3761,6 @@ BitVectorUdiv::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -4291,7 +4273,6 @@ BitVectorUlt::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -4482,7 +4463,6 @@ BitVectorUlt::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -5132,7 +5112,6 @@ BitVectorSlt::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -5151,7 +5130,6 @@ BitVectorSlt::consistent_value(const BitVector& t, uint64_t pos_x)
 #ifndef NDEBUG
   assert(d_consistent);
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -5716,7 +5694,6 @@ BitVectorUrem::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -5734,7 +5711,6 @@ BitVectorUrem::consistent_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -5902,7 +5878,6 @@ BitVectorXor::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s     = 1 - pos_x;
   const BitVector& s = child(pos_s)->assignment();
   assert(d_inverse);
@@ -5920,7 +5895,6 @@ BitVectorXor::consistent_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -6197,7 +6171,6 @@ BitVectorIte::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   uint64_t pos_s0     = pos_x == 0 ? 1 : 0;
   uint64_t pos_s1     = pos_x == 2 ? 1 : 2;
   const BitVector& s0 = child(pos_s0)->assignment();
@@ -6218,7 +6191,6 @@ BitVectorIte::consistent_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
@@ -6401,7 +6373,6 @@ BitVectorNot::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(d_inverse);
   assert(t.compare(d_inverse->bvnot()) == 0);
   assert(x.match_fixed_bits(*d_inverse));
@@ -6624,7 +6595,6 @@ BitVectorExtract::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
   assert(d_inverse);
   assert(t.compare(d_inverse->bvextract(d_hi, d_lo)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
@@ -6889,7 +6859,6 @@ BitVectorSignExtend::inverse_value(const BitVector& t, uint64_t pos_x)
   (void) pos_x;
 #ifndef NDEBUG
   const BitVectorDomain& x = child(pos_x)->domain();
-  assert(!x.is_fixed());
 #endif
   assert(t.compare(d_inverse->bvsext(d_n)) == 0);
   assert(x.match_fixed_bits(*d_inverse));

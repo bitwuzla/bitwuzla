@@ -790,7 +790,6 @@ TestBvNode::test_binary(Kind kind,
             else if (kind == INV)
             {
               if (!op->is_invertible(t, pos_x)) continue;
-              if (x.is_fixed()) continue;
               BitVector inv = op->inverse_value(t, pos_x);
               int32_t cmp =
                   t.compare(eval_op_binary(op_kind, inv, s_val, pos_x));
@@ -808,7 +807,6 @@ TestBvNode::test_binary(Kind kind,
             else
             {
               assert(kind == CONS);
-              if (x.is_fixed()) continue;
               if (!op->is_consistent(t, pos_x)) continue;
               BitVector cons = op->consistent_value(t, pos_x);
               bool status =
