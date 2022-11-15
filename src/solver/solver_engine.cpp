@@ -175,7 +175,7 @@ SolverEngine::process_assertion(const Node& assertion, size_t level)
   // Send assertion to bit-vector solver.
   if (d_register_cache.find(assertion) == d_register_cache.end())
   {
-    d_bv_solver.register_assertion(assertion, level);
+    d_bv_solver.register_assertion(assertion, level == 0);
   }
 
   // Send theory leafs to corresponding solvers.
@@ -221,7 +221,7 @@ SolverEngine::process_lemmas()
   for (const Node& lemma : d_lemmas)
   {
     // TODO: check if this is what we want
-    process_assertion(lemma, 0);
+    process_assertion(lemma, true);
   }
   d_lemmas.clear();
 }
