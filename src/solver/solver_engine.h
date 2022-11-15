@@ -8,6 +8,7 @@
 #include "node/node.h"
 #include "rewrite/rewriter.h"
 #include "solver/bv/bv_solver.h"
+#include "solver/fun/fun_solver.h"
 #include "solver/result.h"
 
 namespace bzla {
@@ -41,7 +42,6 @@ class SolverEngine
   // method
   static bool is_fp_leaf(const Node& term);
   static bool is_array_leaf(const Node& term);
-  static bool is_fun_leaf(const Node& term);
   static bool is_quant_leaf(const Node& term);
 
   /**
@@ -92,7 +92,7 @@ class SolverEngine
   /** Theory solvers. */
   bv::BvSolver d_bv_solver;
   // fp::FpSolver d_fp_solver;
-  // fun::FunSolver d_fun_solver;
+  fun::FunSolver d_fun_solver;
   // array::ArraySolver d_array_solver;
   // quant::QuantSolver d_quant_solver;
 };

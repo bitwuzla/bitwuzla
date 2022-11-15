@@ -111,6 +111,7 @@ set(libbitwuzla_src_files
   solver/fp/rounding_mode.cpp
   solver/fp/symfpu_wrapper.cpp
   solver/fp/word_blaster_old.cpp
+  solver/fun/fun_solver.cpp
   solver/solver.cpp
   solver/solver_engine.cpp
   solving_context.cpp

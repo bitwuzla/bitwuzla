@@ -14,7 +14,8 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_assertions(context.assertions()),
       d_register_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
-      d_bv_solver(*this)
+      d_bv_solver(*this),
+      d_fun_solver(*this)
 {
 }
 
@@ -29,32 +30,16 @@ SolverEngine::solve()
     // Process lemmas generated in previous iteration.
     process_lemmas();
 
-    d_sat_state = d_bv_solver.check();
+    d_sat_state = d_bv_solver.solve();
     if (d_sat_state == Result::UNSAT)
     {
       break;
     }
     assert(d_sat_state == Result::SAT);
-    // d_sat_state = d_fp_solver.check();
-    // if (d_sat_state == Result::UNSAT)
-    //{
-    //   break;
-    // }
-    // d_sat_state = d_array_solver.check();
-    // if (d_sat_state == Result::UNSAT)
-    //{
-    //   break;
-    // }
-    // d_sat_state = d_uf_solver.check();
-    // if (d_sat_state == Result::UNSAT)
-    //{
-    //   break;
-    // }
-    // d_sat_state = d_quant_solver.check();
-    // if (d_sat_state == Result::UNSAT)
-    //{
-    //   break;
-    // }
+    // d_fp_solver.check();
+    // d_array_solver.check();
+    d_fun_solver.check();
+    // d_quant_solver.check();
   } while (!d_lemmas.empty());
 
   return d_sat_state;
@@ -80,7 +65,7 @@ SolverEngine::value(const Node& term)
   }
   else if (type.is_fun())
   {
-    // return d_fun_solver.value(term);
+    return d_fun_solver.value(term);
   }
   assert(false);
   return Node();
@@ -89,9 +74,16 @@ SolverEngine::value(const Node& term)
 void
 SolverEngine::lemma(const Node& lemma)
 {
-  auto [it, inserted] = d_lemma_cache.insert(lemma);
-  assert(inserted);
-  d_lemmas.push_back(lemma);
+  assert(lemma.type().is_bool());
+  Node rewritten = rewriter().rewrite(lemma);
+  // Lemmas should never simplify to true
+  assert(!rewritten.is_value() || !rewritten.value<bool>());
+  auto [it, inserted] = d_lemma_cache.insert(rewritten);
+  // There can be duplicates if we add more than one lemma per round.
+  if (inserted)
+  {
+    d_lemmas.push_back(rewritten);
+  }
 }
 
 Rewriter&
@@ -132,13 +124,6 @@ SolverEngine::is_array_leaf(const Node& term)
 {
   Kind k = term.kind();
   return k == Kind::SELECT || (k == Kind::EQUAL && (term[0].type().is_array()));
-}
-
-bool
-SolverEngine::is_fun_leaf(const Node& term)
-{
-  Kind k = term.kind();
-  return k == Kind::APPLY || (k == Kind::EQUAL && (term[0].type().is_fun()));
 }
 
 bool
@@ -213,10 +198,9 @@ SolverEngine::process_assertion(const Node& assertion, size_t level)
         assert(false);
         // d_array_solver.register_term(cur);
       }
-      else if (is_fun_leaf(cur))
+      else if (fun::FunSolver::is_leaf(cur))
       {
-        assert(false);
-        // d_fun_solver.register_term(cur);
+        d_fun_solver.register_term(cur);
       }
       else if (is_quant_leaf(cur))
       {
