@@ -62,33 +62,33 @@ BvSolver::BvSolver(SolverEngine& solver_engine)
 BvSolver::~BvSolver() {}
 
 void
-BvSolver::register_assertion(const Node& assertion, size_t level)
+BvSolver::register_assertion(const Node& assertion, bool top_level)
 {
   if (d_cur_solver == option::BvSolver::BITBLAST
       || d_cur_solver == option::BvSolver::PREPROP)
   {
-    d_bitblast_solver.register_assertion(assertion, level);
+    d_bitblast_solver.register_assertion(assertion, top_level);
   }
   if (d_cur_solver == option::BvSolver::PROP
       || d_cur_solver == option::BvSolver::PREPROP)
   {
-    d_prop_solver.register_assertion(assertion, level);
+    d_prop_solver.register_assertion(assertion, top_level);
   }
 }
 
 Result
-BvSolver::check()
+BvSolver::solve()
 {
   reset_cached_values();
   switch (d_solver_engine.options().bv_solver())
   {
     case option::BvSolver::BITBLAST:
       assert(d_cur_solver == option::BvSolver::BITBLAST);
-      d_sat_state = d_bitblast_solver.check();
+      d_sat_state = d_bitblast_solver.solve();
       break;
     case option::BvSolver::PROP:
       assert(d_cur_solver == option::BvSolver::PROP);
-      d_sat_state = d_prop_solver.check();
+      d_sat_state = d_prop_solver.solve();
       break;
     case option::BvSolver::PREPROP:
       d_cur_solver = option::BvSolver::PROP;

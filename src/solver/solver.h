@@ -15,14 +15,18 @@ class Solver
  public:
   Solver(SolverEngine& solver_engine) : d_solver_engine(solver_engine){};
 
-  /** Check satisfiability for current solving context. */
-  virtual Result check() = 0;
+  /** Check theory consistency of current solving context. */
+  virtual void check() { assert(false); };
 
   /** Compute value for given term. */
   virtual Node value(const Node& term) = 0;
 
   /** Register term relevant to this solver. */
-  virtual void register_term(const Node& term) = 0;
+  virtual void register_term(const Node& term)
+  {
+    (void) term;
+    assert(false);
+  }
 
  protected:
   /** Associated solver engine. */

@@ -51,13 +51,25 @@ BvBitblastSolver::BvBitblastSolver(SolverEngine& solver_engine)
 BvBitblastSolver::~BvBitblastSolver() {}
 
 Result
-BvBitblastSolver::check()
+BvBitblastSolver::solve()
 {
   for (const Node& assumption : d_assumptions)
   {
     d_sat_solver->assume(bits(assumption)[0].get_id());
   }
   return d_sat_solver->solve();
+}
+
+void
+BvBitblastSolver::register_assertion(const Node& assertion, bool top_level)
+{
+  if (!top_level)
+  {
+    d_assumptions.push_back(assertion);
+  }
+
+  bitblast(assertion);
+  d_cnf_encoder->encode(bits(assertion)[0], top_level);
 }
 
 Node
@@ -329,19 +341,6 @@ BvBitblastSolver::bits(const Node& term) const
 {
   assert(d_bitblaster_cache.find(term) != d_bitblaster_cache.end());
   return d_bitblaster_cache.at(term);
-}
-
-void
-BvBitblastSolver::register_assertion(const Node& assertion, size_t level)
-{
-  if (level > 0)
-  {
-    assert(level == d_solver_engine.backtrack_mgr()->num_levels());
-    d_assumptions.push_back(assertion);
-  }
-
-  bitblast(assertion);
-  d_cnf_encoder->encode(bits(assertion)[0], level == 0);
 }
 
 }  // namespace bzla::bv

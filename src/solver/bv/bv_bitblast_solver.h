@@ -8,32 +8,31 @@
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig_bitblaster.h"
 #include "sat/sat_solver.h"
+#include "solver/bv/bv_solver_interface.h"
 #include "solver/solver.h"
 
 namespace bzla::bv {
 
 class BvSolver;
 
-class BvBitblastSolver : public Solver
+class BvBitblastSolver : public Solver, public BvSolverInterface
 {
  public:
   BvBitblastSolver(SolverEngine& solver_engine);
   ~BvBitblastSolver();
 
-  Result check() override;
+  Result solve() override;
+
+  void register_assertion(const Node& assertion, bool top_level) override;
 
   /** Query value of leaf node. */
   Node value(const Node& term) override;
-
-  void register_term(const Node& term) override { (void) term; }
 
   /** Recursively bit-blast `term`. */
   void bitblast(const Node& term);
 
   /** Return encoded bits associated with bit-blasted term. */
   const bb::AigBitblaster::Bits& bits(const Node& term) const;
-
-  void register_assertion(const Node& assertion, size_t level);
 
  private:
   /** Sat interface used for d_cnf_encoder. */

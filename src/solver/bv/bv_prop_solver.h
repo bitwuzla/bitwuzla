@@ -5,6 +5,7 @@
 #include "ls/ls_bv.h"
 #include "node/node_ref_vector.h"
 #include "solver/bv/bv_bitblast_solver.h"
+#include "solver/bv/bv_solver_interface.h"
 
 namespace bzla {
 
@@ -12,19 +13,17 @@ class LocalSearchBV;
 
 namespace bv {
 
-class BvPropSolver : public Solver
+class BvPropSolver : public Solver, public BvSolverInterface
 {
  public:
   BvPropSolver(SolverEngine& solver_engine, BvBitblastSolver& bb_solver);
   ~BvPropSolver();
 
-  Result check() override;
+  Result solve() override;
+
+  void register_assertion(const Node& assertion, bool top_level) override;
 
   Node value(const Node& term) override;
-
-  void register_term(const Node& term) override { (void) term; }
-
-  void register_assertion(const Node& assertion, size_t level);
 
  private:
   struct

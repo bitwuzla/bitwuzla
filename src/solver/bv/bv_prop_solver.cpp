@@ -43,7 +43,7 @@ BvPropSolver::BvPropSolver(SolverEngine& solver_engine,
 BvPropSolver::~BvPropSolver() {}
 
 Result
-BvPropSolver::check()
+BvPropSolver::solve()
 {
   // double start                = bzla_util_time_stamp();
   Result sat_result = Result::UNKNOWN;
@@ -110,20 +110,10 @@ DONE:
   return sat_result;
 }
 
-Node
-BvPropSolver::value(const Node& term)
-{
-  assert(BvSolver::is_leaf(term));
-  auto it = d_node_map.find(term);
-  assert(it != d_node_map.end());
-  const BitVector& value = d_ls->get_assignment(it->second);
-  return NodeManager::get().mk_value(value);
-}
-
 void
-BvPropSolver::register_assertion(const Node& assertion, size_t level)
+BvPropSolver::register_assertion(const Node& assertion, bool top_level)
 {
-  (void) level;
+  (void) top_level;
 
   node::node_ref_vector roots;
   node::node_ref_vector visit{assertion};
@@ -161,6 +151,16 @@ BvPropSolver::register_assertion(const Node& assertion, size_t level)
     assert(d_node_map.find(root) != d_node_map.end());
     d_ls->register_root(d_node_map.at(root));
   }
+}
+
+Node
+BvPropSolver::value(const Node& term)
+{
+  assert(BvSolver::is_leaf(term));
+  auto it = d_node_map.find(term);
+  assert(it != d_node_map.end());
+  const BitVector& value = d_ls->get_assignment(it->second);
+  return NodeManager::get().mk_value(value);
 }
 
 uint64_t

@@ -4,11 +4,12 @@
 #include "option/option.h"
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solver/bv/bv_prop_solver.h"
+#include "solver/bv/bv_solver_interface.h"
 #include "solver/solver.h"
 
 namespace bzla::bv {
 
-class BvSolver : public Solver
+class BvSolver : public Solver, public BvSolverInterface
 {
  public:
   /** Determine if `term` is a leaf node for the bit-vector solver. */
@@ -20,13 +21,13 @@ class BvSolver : public Solver
   BvSolver(SolverEngine& context);
   ~BvSolver();
 
-  void register_assertion(const Node& assertion, size_t level);
-
-  Result check() override;
-
+  // Solver interface
   Node value(const Node& term) override;
 
-  void register_term(const Node& term) override { (void) term; }
+  // BvSolver interface
+  void register_assertion(const Node& assertion, bool top_level) override;
+
+  Result solve() override;
 
  private:
   /** Query leaf assignment from subsolver. */
