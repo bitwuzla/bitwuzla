@@ -634,7 +634,7 @@ BitVectorAdd::is_invertible(const BitVector& t,
 
   /**
    * IC_wo: true
-   * IC:    mfb(x, t - s)
+   * IC:    mcb(x, t - s)
    *
    * Inverse value: t - s
    */
@@ -651,6 +651,7 @@ BitVectorAdd::is_invertible(const BitVector& t,
       return false;
     }
   }
+  // Inverse value: t - s
   BV_NODE_CACHE_INVERSE_IF(std::move(sub));
   return true;
 }
@@ -681,11 +682,13 @@ BitVectorAdd::is_consistent(const BitVector& t, uint64_t pos_x)
     else
     {
       BitVectorDomainGenerator gen(x, d_rng);
+      // Consistent value: random value
       BV_NODE_CACHE_CONSISTENT(gen.random());
     }
   }
   else
   {
+    // Consistent value: random value
     BV_NODE_CACHE_CONSISTENT(BitVector(x.size(), *d_rng));
   }
   return true;
@@ -828,8 +831,10 @@ BitVectorAnd::is_invertible(const BitVector& t,
    * IC_wo: (t & s) = t
    * IC:    IC_wo && ((s & hi_x) & m) = (t & m)
    *        with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits
+   * TODO: + bounds
    *
    * Inverse value: (t & s) | (~s & rand)
+   * TODO: + bounds
    */
 
   uint64_t pos_s           = 1 - pos_x;
@@ -841,15 +846,18 @@ BitVectorAnd::is_invertible(const BitVector& t,
   BitVector* min_s         = op_x->min_s();
   BitVector* max_s         = op_x->max_s();
 
-  bool ic               = t.bvand(s).compare(t) == 0;  // IC_wo
+  // IC_wo: (t & s) = t
+  bool ic               = t.bvand(s).compare(t) == 0;
   bool x_has_fixed_bits = x.has_fixed_bits();
 
+  // IC: IC_wo && ((s & hi_x) & m) = (t & m)
   if (ic && x_has_fixed_bits)
   {
     if (x.is_fixed() && x.lo().bvand(s).compare(t) != 0)
     {
       return false;
     }
+    // m = ~(lo_x ^ hi_x)  ... mask out all non-const bits
     BitVector mask = x.lo().bvxnor(x.hi());
     ic             = s.bvand(x.hi()).ibvand(mask).compare(t.bvand(mask)) == 0;
   }
@@ -927,6 +935,7 @@ BitVectorAnd::is_consistent(const BitVector& t, uint64_t pos_x)
    * Consistent value: t | rand
    */
 
+  // CC: t & hi_x = t
   const BitVectorDomain& x = child(pos_x)->domain();
   if (x.has_fixed_bits())
   {
@@ -1054,7 +1063,7 @@ BitVectorConcat::is_invertible(const BitVector& t,
   /**
    * IC_wo: pos_x = 0: s = t[size(s) - 1 : 0]
    *        pos_x = 1: s = t[size(t) - 1 : size(t) - size(s)]
-   * IC:    IC_wo && mfb(x, tx)
+   * IC:    IC_wo && mcb(x, tx)
    *
    * Inverse value:
    *   pos_x = 0: t[size(t) - 1: size(s)]
@@ -1072,17 +1081,19 @@ BitVectorConcat::is_invertible(const BitVector& t,
   // IC_wo
   if (pos_x == 0)
   {
+    // pos_x = 0: s = t[size(s) - 1 : 0]
     ic_wo = t.bvextract(bw_s - 1, 0).compare(s) == 0;
     tx    = t.bvextract(bw_t - 1, bw_s);
   }
   else
   {
+    // pos_x = 1: s = t[size(t) - 1 : size(t) - size(s)]
     assert(pos_x == 1);
     ic_wo = t.bvextract(bw_t - 1, bw_t - bw_s).compare(s) == 0;
     tx    = t.bvextract(bw_t - bw_s - 1, 0);
   }
 
-  // IC
+  // IC: IC_wo && mcb(x, tx)
   if (ic_wo)
   {
     if (x.has_fixed_bits() && !x.match_fixed_bits(tx))
@@ -1103,7 +1114,7 @@ BitVectorConcat::is_consistent(const BitVector& t, uint64_t pos_x)
 
   /**
    * CC_wo: true
-   * CC:    mfb(x, tx)
+   * CC:    mcb(x, tx)
    *        with pos_x = 0: tx = t[size(t) - 1 : size(t) - size(x)]
    *             pos_x = 1: tx = t[size(x) - 1 : 0]
    *
@@ -1116,8 +1127,10 @@ BitVectorConcat::is_consistent(const BitVector& t, uint64_t pos_x)
   uint64_t bw_t            = t.size();
   uint64_t bw_x            = x.size();
 
+  // CC: mcb(x, tx)
   if (pos_x == 0)
   {
+    // Consistent value: pos_x = 0: tx = t[size(t) - 1 : size(t) - size(x)]
     BitVector tx = t.bvextract(bw_t - 1, bw_t - bw_x);
     if (!x.has_fixed_bits() || x.match_fixed_bits(tx))
     {
@@ -1126,6 +1139,7 @@ BitVectorConcat::is_consistent(const BitVector& t, uint64_t pos_x)
     }
     return false;
   }
+  // Consistent value: pos_x = 1: tx = t[size(x) - 1 : 0]
   BitVector tx = t.bvextract(bw_x - 1, 0);
   if (!x.has_fixed_bits() || x.match_fixed_bits(tx))
   {
@@ -1243,7 +1257,7 @@ BitVectorEq::is_invertible(const BitVector& t,
   /**
    * IC_wo: true
    * IC:    t = 0: (hi_x != lo_x) || (hi_x != s)
-   *        t = 1: mfb(x, s)
+   *        t = 1: mcb(x, s)
    *
    * Inverse value:
    *   t = 0: random bit-vector != s
@@ -1256,6 +1270,7 @@ BitVectorEq::is_invertible(const BitVector& t,
 
   if (x.has_fixed_bits())
   {
+    // fixed: IC: x == s = t
     if (x.is_fixed())
     {
       if (x.lo().bveq(s).compare(t) == 0)
@@ -1265,6 +1280,7 @@ BitVectorEq::is_invertible(const BitVector& t,
       }
       return false;
     }
+    // IC: t = 0: (hi_x != lo_x) || (hi_x != s)
     if (t.is_false())
     {
       if (x.hi().compare(x.lo()) || x.hi().compare(s))
@@ -1276,13 +1292,16 @@ BitVectorEq::is_invertible(const BitVector& t,
           assert(gen.has_random());
           res = gen.random();
         } while (s.compare(res) == 0);
+        // Inverse value: random bit-vector != s
         BV_NODE_CACHE_INVERSE_IF(std::move(res));
         return true;
       }
       return false;
     }
+    // IC: t = 1: mcb(x, s)
     if (x.match_fixed_bits(s))
     {
+      // Inverse value: s
       BV_NODE_CACHE_INVERSE_IF(s);
       return true;
     }
@@ -1332,11 +1351,13 @@ BitVectorEq::is_consistent(const BitVector& t, uint64_t pos_x)
     else
     {
       BitVectorDomainGenerator gen(x, d_rng);
+      // Consistent value: random value
       BV_NODE_CACHE_CONSISTENT(gen.random());
     }
   }
   else
   {
+    // Consistent value: random value
     BV_NODE_CACHE_CONSISTENT(BitVector(x.size(), *d_rng));
   }
   return true;
@@ -1480,9 +1501,10 @@ BitVectorMul::is_invertible(const BitVector& t,
   /**
    * IC_wo: ((-s | s) & t) = t
    * IC:    IC_wo &&
-   *        (s = 0 || ((odd(s) => mfb(x, t * s^-1)) &&
-   *                  (!odd(s) => mfb (x << c, y << c))))
+   *        (s = 0 || ((odd(s) => mcb(x, t * s^-1)) &&
+   *                  (!odd(s) => mcb (x << c, y << c))))
    *        with c = ctz(s) and y = (t >> c) * (s >> c)^-1
+   * TODO: + bounds
    *
    * Inverse value:
    *   s = 0 (=> t = 0): random bit-vector
@@ -1490,11 +1512,13 @@ BitVectorMul::is_invertible(const BitVector& t,
    *   s even          : random value in domain
    *                     x[size - 1:size - ctz] o y[size - ctz(s) - 1:0]
    *                     with y = (t >> ctz(s)) * (s >> ctz(s))^-1
+   * TODO: + bounds
    */
   uint64_t pos_s           = 1 - pos_x;
   const BitVector& s       = child(pos_s)->assignment();
   const BitVectorDomain& x = child(pos_x)->domain();
 
+  // IC_wo: ((-s | s) & t) = t
   bool ic_wo = s.bvneg().ibvor(s).ibvand(t).compare(t) == 0;
 
   if (ic_wo)
@@ -1508,6 +1532,7 @@ BitVectorMul::is_invertible(const BitVector& t,
 
     if (x.has_fixed_bits())
     {
+      // fixed: IC: x * s = t
       if (x.is_fixed())
       {
         const BitVector& xval = x.lo();
@@ -1520,15 +1545,21 @@ BitVectorMul::is_invertible(const BitVector& t,
         return false;
       }
 
+      // IC: IC_wo && s != 0 &&
+      //     ((odd(s) => mcb(x, t * s^-1)) && (!odd(s) => mcb (x << c, y << c)))
+      //     with c = ctz(s) and y = (t >> c) * (s >> c)^-1
       if (!s.is_zero())
       {
         /*-- s odd ------------------------------*/
+
         if (s.lsb())
         {
-          BitVector inv = s.bvmodinv().ibvmul(t);
+          // IC: odd: mcb(x, t * s^-1)
+          BitVector inv = s.bvmodinv().ibvmul(t);  // s^-1
           if (x.match_fixed_bits(inv)
               && is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
           {
+            // Inverse value: s^-1
             BV_NODE_CACHE_INVERSE_IF(std::move(inv));
             return true;
           }
@@ -1536,10 +1567,13 @@ BitVectorMul::is_invertible(const BitVector& t,
         }
 
         /*-- s even -----------------------------*/
-        /* Check if relevant bits of
-         *   y = (t >> ctz(s)) * (s >> ctz(s))^-1
-         * match corresponding constant bits of x, i.e.,
-         * mfb(x[size - ctz(s) - 1:0], y[size - ctz(s) - 1:0]). */
+
+        // IC: even: mcb (x << c, y << c)
+        //
+        // Check if relevant bits of
+        //   y = (t >> ctz(s)) * (s >> ctz(s))^-1
+        // match corresponding constant bits of x, i.e.,
+        // mcb(x[size - ctz(s) - 1:0], y[size - ctz(s) - 1:0]).
         uint64_t size   = x.size();
         uint64_t ctz    = s.count_trailing_zeros();
         BitVector y_ext = t.bvshr(ctz)
@@ -1547,12 +1581,15 @@ BitVectorMul::is_invertible(const BitVector& t,
                               .ibvextract(size - ctz - 1, 0);
         if (x.bvextract(size - ctz - 1, 0).match_fixed_bits(y_ext))
         {
-          /* Result domain is x[size - 1:size - ctz] o y[size - ctz(s) - 1:0] */
+          // Result domain is x[size - 1:size - ctz] o y[size - ctz(s) - 1:0]
           BitVectorDomain d(x.bvextract(size - 1, size - ctz).bvconcat(y_ext));
           if (d.is_fixed())
           {
             if (is_in_bounds(d.lo(), min_lo, max_lo, min_hi, max_hi))
             {
+              // Inverse value: random value in domain
+              //                x[size - 1:size - ctz] o y[size - ctz(s) - 1:0]
+              //                with y = (t >> ctz(s)) * (s >> ctz(s))^-1
               BV_NODE_CACHE_INVERSE_IF(d.lo());
               return true;
             }
@@ -1574,6 +1611,7 @@ BitVectorMul::is_invertible(const BitVector& t,
         }
         return false;
       }
+      // IC: IC_wo && s = 0
       BitVectorDomainDualGenerator gen(x,
                                        d_rng,
                                        min_lo.is_null() ? nullptr : &min_lo,
@@ -1582,25 +1620,27 @@ BitVectorMul::is_invertible(const BitVector& t,
                                        max_hi.is_null() ? nullptr : &max_hi);
       if (gen.has_random())
       {
+        // Inverse value: s = 0: random value
         BV_NODE_CACHE_INVERSE_IF(gen.random());
         return true;
       }
       return false;
     }
 
+    // no fixed bits
     if (s.is_zero())
     {
-      /* s = 0 (=> t = 0): random bit-vector */
+      // Inverse value: s = 0 (=> t = 0): random value
       BV_NODE_CACHE_INVERSE_IF(
           BitVector(x.size(), *d_rng, min_lo, max_lo, min_hi, max_hi));
       return true;
     }
     if (s.lsb())
     {
-      /* s odd : t * s^-1 (unique solution) */
       BitVector inv = t.bvmul(s.bvmodinv());
       if (is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
       {
+        // Inverse value: s odd : s^-1 (unique solution)
         BV_NODE_CACHE_INVERSE_IF(std::move(inv));
         return true;
       }
@@ -1608,14 +1648,13 @@ BitVectorMul::is_invertible(const BitVector& t,
     }
     else
     {
-      /* s even: multiple solutions possible
-       *      + s = 2^n: t >> n
-       *                 with all bits shifted in randomly set to 0 or 1
-       *      + s = 2^n * m, m is odd: c * m^-1
-       *                               with c = t >> n and
-       *                               all bits shifted in set randomly and
-       *                               m^-1 the mod inverse of m
-       */
+      // s even: multiple solutions possible
+      //         + s = 2^n: t >> n
+      //                    with all bits shifted in randomly set to 0 or 1
+      //         + s = 2^n * m, m is odd: c * m^-1
+      //                                  with c = t >> n and
+      //                                  all bits shifted in set randomly and
+      //                                  m^-1 the mod inverse of m
       assert(t.count_trailing_zeros() >= s.count_trailing_zeros());
       uint64_t n    = s.count_trailing_zeros();
       uint64_t size = s.size();
@@ -1640,6 +1679,10 @@ BitVectorMul::is_invertible(const BitVector& t,
                                        max_hi.is_null() ? nullptr : &max_hi);
       if (gen.has_random())
       {
+        // Inverse value: random value in domain
+        //                x[size - 1:size - ctz] o y[size - ctz(s) - 1:0]
+        //                with y = (t >> ctz(s)) * (s >> ctz(s))^-1
+        //                Note: (s >> ctz(s)) = 1 if s is a power of 2
         BV_NODE_CACHE_INVERSE_IF(gen.random());
         return true;
       }
@@ -1672,17 +1715,20 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
   uint64_t size            = t.size();
   if (x.has_fixed_bits())
   {
+    // CC: (t != 0 => xhi != 0)
     if (x.hi().is_zero())
     {
       if (t.is_zero())
       {
+        // fixed: x = 0
         BV_NODE_CACHE_CONSISTENT(x.hi());
         return true;
       }
       return false;
     }
 
-    if (t.lsb())  // odd
+    // CC: t odd: xhi[lsb] != 0)
+    if (t.lsb())
     {
       if (!x.hi().lsb())
       {
@@ -1690,10 +1736,12 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
       }
       if (x.is_fixed())
       {
+        // fixed: x * s = t
         BV_NODE_CACHE_CONSISTENT(x.lo());
       }
       else
       {
+        // Consistent value: t = odd: random odd value
         BitVectorDomainGenerator gen(x, d_rng, BitVector::mk_one(size), x.hi());
         BV_NODE_CACHE_CONSISTENT(gen.random());
         if (!d_consistent->lsb())
@@ -1704,6 +1752,8 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
       }
       return true;
     }
+
+    // CC: t even: \exists y. (mcb(x, y) && ctz(t) >= ctz(y))
     uint64_t ctz_t = t.count_trailing_zeros();
     BitVectorDomainGenerator gen(
         x,
@@ -1733,13 +1783,17 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
         } while (x.is_fixed_bit_false(i));
         tmp.set_bit(i, true);
       }
+      // Consistent value: t = even: random even value > 0 with ctz(x) <= ctz(t)
       d_consistent.reset(new BitVector(tmp));
       return true;
     }
     return false;
   }
+
+  // no fixed bits
   if (t.is_zero())
   {
+    // Consistent value: t = 0: random value
     BV_NODE_CACHE_CONSISTENT(BitVector(x.size(), *d_rng));
   }
   else
@@ -1749,6 +1803,7 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
 
     if (t.lsb())
     {
+      // Consistent value: t = odd: random odd value
       if (!d_consistent->lsb())
       {
         d_consistent->set_bit(0, true);
@@ -1756,6 +1811,7 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
     }
     else
     {
+      // Consistent value: t = even: random even value > 0 with ctz(x) <= ctz(t)
       assert(!x.has_fixed_bits());
       uint64_t ctz_t = t.count_trailing_zeros();
       /* choose consistent value as 2^n with prob 0.1 */
@@ -1896,10 +1952,10 @@ BitVectorShl::is_invertible(const BitVector& t,
    * IC_wo: pos_x = 0: (t >> s) << s = t
    *        pos_x = 1: ctz(s) <= ctz(t) &&
    *                   ((t = 0) || (s << (ctz(t) - ctz(s))) = t)
-   * IC:    pos_x = 0: IC_wo && mfb(x << s, t)
+   * IC:    pos_x = 0: IC_wo && mcb(x << s, t)
    *        pos_x = 1: IC_wo &&
    *                   ((t = 0) => (hi_x >= ctz(t) - ctz(s) || (s = 0))) &&
-   *                   ((t != 0) => mfb(x, ctz(t) - ctz(s)))
+   *                   ((t != 0) => mcb(x, ctz(t) - ctz(s)))
    *
    * Inverse value:
    *   pos_x = 0: t >> s (with bits shifted in set randomly)
@@ -1917,11 +1973,12 @@ BitVectorShl::is_invertible(const BitVector& t,
   bool x_has_fixed_bits    = x.has_fixed_bits();
   bool ic;
 
-  // IC_wo
+  // IC_wo: pos_x = 0: (t >> s) << s = t
   if (pos_x == 0)
   {
     ic = t.bvshr(s).ibvshl(s).compare(t) == 0;
   }
+  // IC_wo: pos_x = 1: ctz(s) <= ctz(t) &&
   else
   {
     assert(pos_x == 1);
@@ -1932,9 +1989,9 @@ BitVectorShl::is_invertible(const BitVector& t,
   }
 
   // IC
-
   if (ic)
   {
+    // fixed: x << s = t
     if (x.is_fixed())
     {
       const BitVector& xval = x.lo();
@@ -1947,6 +2004,7 @@ BitVectorShl::is_invertible(const BitVector& t,
       return false;
     }
 
+    // IC: pos_x = 0: IC_wo && mcb(x << s, t)
     if (pos_x == 0)
     {
       if (x_has_fixed_bits)
@@ -1977,6 +2035,7 @@ BitVectorShl::is_invertible(const BitVector& t,
         }
         assert(shift >= size || t.count_trailing_zeros() >= shift);
         assert(shift < size || t.count_trailing_zeros() == size);
+        // Inverse value: pos_x = 0: t >> s (with bits shifted in set randomly)
         if (shift >= size)
         {
           // random value
@@ -2023,6 +2082,9 @@ BitVectorShl::is_invertible(const BitVector& t,
     }
     else
     {
+      // IC: pos_x = 1: IC_wo &&
+      //                ((t = 0) => (hi_x >= ctz(t) - ctz(s) || (s = 0))) &&
+      //                ((t != 0) => mcb(x, ctz(t) - ctz(s)))
       uint64_t size = x.size();
       assert(ctz_t >= ctz_s);
       if (t.is_zero())
@@ -2031,7 +2093,7 @@ BitVectorShl::is_invertible(const BitVector& t,
         {
           if (!is_essential_check)
           {
-            // random value
+            // Inverse value: s = 0: random value
             if (x_has_fixed_bits)
             {
               BitVectorDomainGenerator gen(x, d_rng, x.lo(), x.hi());
@@ -2052,6 +2114,7 @@ BitVectorShl::is_invertible(const BitVector& t,
           {
             BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
             assert(gen.has_random());
+            // Inverse value: t = 0: ctz(t) - ctz(s) <= res < size
             BV_NODE_CACHE_INVERSE(gen.random());
             return true;
           }
@@ -2062,6 +2125,7 @@ BitVectorShl::is_invertible(const BitVector& t,
            || x.match_fixed_bits(BitVector::from_ui(x.size(), ctz_t - ctz_s));
       if (ic && !is_essential_check)
       {
+        // Inverse value: t != 0: ctz(t) - ctz(s)
         uint64_t shift = ctz_t - ctz_s;
         BV_NODE_CACHE_INVERSE(BitVector::from_ui(size, shift));
       }
@@ -2095,8 +2159,10 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
 
   if (pos_x == 0)
   {
+    // CC: pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x << y, t))
     if (ctz_t == size)
     {
+      // Consistent value: pos_x = 0: t = 0: random value
       if (x.has_fixed_bits())
       {
         if (x.is_fixed())
@@ -2116,6 +2182,7 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
     }
     else
     {
+      // Consistent value: pos_x = 0: t > 0: random value with ctz(x) <= ctz(t)
       if (x_has_fixed_bits)
       {
         if (x.is_fixed())
@@ -2178,6 +2245,8 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
   }
   else
   {
+    // CC: pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y))
+    // Consistent value: pos_x = 1: random value <= ctz(t)
     uint64_t max = ctz_t < size ? ctz_t : ((1u << size) - 1);
     if (x_has_fixed_bits)
     {
@@ -2333,10 +2402,10 @@ BitVectorShr::is_invertible(RNG* rng,
    * IC_wo: pos_x = 0: (t << s) >> s = t
    *        pos_x = 1: clz(s) <= clz(t) &&
    *                   ((t = 0) || (s >> (clz(t) - clz(s))) = t)
-   * IC:    pos_x = 0: IC_wo && mfb(x >> s, t)
+   * IC:    pos_x = 0: IC_wo && mcb(x >> s, t)
    *        pos_x = 1: IC_wo &&
    *                   ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
-   *                   ((t != 0) => mfb(x, clz(t) - clz(s)))
+   *                   ((t != 0) => mcb(x, clz(t) - clz(s)))
    *
    * Inverse value:
    *   pos_x = 0: t << s (with bits shifted in set randomly)
@@ -2353,10 +2422,12 @@ BitVectorShr::is_invertible(RNG* rng,
   // IC_wo
   if (pos_x == 0)
   {
+    // pos_x = 0: (t << s) >> s = t
     ic = t.bvshl(s).ibvshr(s).compare(t) == 0;
   }
   else
   {
+    // pos_x = 1: clz(s) <= clz(t) && ((t = 0) || (s >> (clz(t) - clz(s))) = t)
     assert(pos_x == 1);
     clz_t = t.count_leading_zeros();
     clz_s = s.count_leading_zeros();
@@ -2367,23 +2438,9 @@ BitVectorShr::is_invertible(RNG* rng,
   // IC
   if (ic)
   {
-    // if (x.is_fixed())
-    //{
-    //   const BitVector& xval = x.lo();
-    //   if ((pos_x == 0 && xval.bvshr(s).compare(t) == 0)
-    //       || (pos_x == 1 && s.bvshr(xval).compare(t) == 0))
-    //   {
-    //     if (inverse)
-    //     {
-    //       inverse->reset(new BitVector(xval));
-    //     }
-    //     return true;
-    //   }
-    //   return false;
-    // }
-
     if (pos_x == 0)
     {
+      // IC: pos_x = 0: IC_wo && mcb(x >> s, t)
       if (x_has_fixed_bits)
       {
         if (x.is_fixed())
@@ -2398,6 +2455,9 @@ BitVectorShr::is_invertible(RNG* rng,
     }
     else
     {
+      // IC: pos_x = 1: IC_wo &&
+      //                ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
+      //                ((t != 0) => mcb(x, clz(t) - clz(s)))
       uint64_t size = x.size();
       assert(clz_t >= clz_s);
       if (x.is_fixed())
@@ -2450,8 +2510,10 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
 
   if (pos_x == 0)
   {
+    // CC: pos_x = 0: \exists y. (y <= clz(t) /\ mcb(x >> y, t))
     if (clz_t == size)
     {
+      // Consistent value: pos_x = 0: t = 0: random
       if (x.has_fixed_bits())
       {
         if (x.is_fixed())
@@ -2471,8 +2533,12 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
     }
     else
     {
+      // Consistent value: pos_x = 0: t > 0: random value with clz(x) <= clz(t)
+      //                   pos_x = 1: t = 0: random
+      //                              t > 0: random value <= clz(t)
       if (x_has_fixed_bits)
       {
+        // fixed
         if (x.is_fixed())
         {
           uint64_t clz_x        = x.lo().count_leading_zeros();
@@ -2531,6 +2597,7 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
   }
   else
   {
+    // CC: pos_x = 1: t = 0 \/ \exists y. (y <= clz(t) /\ mcb(x, y))
     uint64_t max = clz_t < size ? clz_t : ((1u << size) - 1);
     if (x_has_fixed_bits)
     {
@@ -2591,13 +2658,13 @@ BitVectorShr::inverse_value(RNG* rng,
   uint64_t size = x.size();
   if (pos_x == 0)
   {
+    // pos_x = 0: t << s (with bits shifted in set randomly)
     if (x.is_fixed())
     {
       inverse.reset(new BitVector(x.lo()));
     }
     else
     {
-      // inverse value: t << s (with bits shifted in set randomly)
       // shift value can be normalized to fit into 64 bit (max bit-width
       // handled is UINT64_MAX)
       uint64_t shift;
@@ -2632,7 +2699,6 @@ BitVectorShr::inverse_value(RNG* rng,
       }
       else if (shift > 0)
       {
-        ////
         BitVector right;
         if (x.has_fixed_bits())
         {
@@ -2663,6 +2729,10 @@ BitVectorShr::inverse_value(RNG* rng,
   }
   else
   {
+    // pos_x = 1: s = 0 && t = 0: random
+    //            else          : shift = clz(t) - clz(s)
+    //                            + t = 0: shift <= res < size
+    //                            + else : shift
     if (x.is_fixed())
     {
       inverse.reset(new BitVector(x.lo()));
@@ -2801,9 +2871,9 @@ BitVectorAshr::is_invertible(const BitVector& t,
    *        pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
    *                   (s[msb] = 1 => IC_shr(~s >> x = ~t)
    *
-   * IC:    pos_x = 0: IC_wo && mfb(x >>a s, t)
+   * IC:    pos_x = 0: IC_wo && mcb(x >>a s, t)
    *        pos_x = 1: IC_wo &&
-   *                     (s[msb ] = 0 => IC_shr) &&
+   *                     (s[msb] = 0 => IC_shr) &&
    *                     (s[msb] = 1 => IC_shr(~s >> x = ~t))
    *
    * Inverse value:
@@ -2827,23 +2897,28 @@ BitVectorAshr::is_invertible(const BitVector& t,
     // IC_wo
     if (s.compare(BitVector::from_ui(size, size)) < 0)
     {
+      // pos_x = 0: (s < size(s) => (t << s) >>a s = t)
       ic = t.bvshl(s).ibvashr(s).compare(t) == 0;
     }
     else
     {
+      // pos_x = 0: (s >= size(s) => (t = ones || t = 0))
       ic = t.is_zero() || t.is_ones();
     }
 
-    // IC
+    // IC: pos_x = 0: IC_wo && mcb(x >>a s, t)
     ic = ic && (!x.has_fixed_bits() || x.bvashr(s).match_fixed_bits(t));
     if (ic && !is_essential_check)
     {
+      // Inverse value: pos_x = 0: IV_shr(x >> s = t) with msb = t[msb]
       BitVectorShr::inverse_value(d_rng, t, s, x, 0, d_inverse);
       d_inverse->set_bit(size - 1, t.msb());
     }
     return ic;
   }
 
+  // IC_wo: pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t)
+  // IC:    pos_x = 1: IC_wo && (s[msb] = 1 => IC_shr(~s >> x = ~t))
   if (s.msb())
   {
     return BitVectorShr::is_invertible(
@@ -2854,6 +2929,8 @@ BitVectorAshr::is_invertible(const BitVector& t,
         pos_x,
         is_essential_check ? nullptr : &d_inverse);
   }
+  // IC_wo: pos_x = 1: (s[msb] = 1 => IC_shr(~s >> x = ~t)
+  // IC:    pos_x = 1: IC_wo && (s[msb ] = 0 => IC_shr)
   return BitVectorShr::is_invertible(
       d_rng, t, s, x, pos_x, is_essential_check ? nullptr : &d_inverse);
 }
@@ -2891,12 +2968,20 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
 
   if (pos_x == 0)
   {
+    // fixed: x <<a s = t
     if (x.is_fixed())
     {
       uint64_t cnt_x = is_signed ? x.lo().count_leading_ones()
                                  : x.lo().count_leading_zeros();
-      return x.lo().bvashr(cnt_t - cnt_x).compare(t) == 0;
+      if (x.lo().bvashr(cnt_t - cnt_x).compare(t) == 0)
+      {
+        BV_NODE_CACHE_CONSISTENT(x.lo());
+        return true;
+      }
+      return false;
     }
+    // CC: pos_x = 0:
+    //     ((t = 0 \/ t = ones) => \exists y. (y[msb] = t[msb] /\ mcb(x, y)))
     if (!is_signed && t.is_zero())
     {
       if (x.has_fixed_bits())
@@ -2905,6 +2990,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
             x, d_rng, BitVector::mk_zero(size), BitVector::mk_max_signed(size));
         if (gen.has_random())
         {
+          // Consistent value: pos_x = 0: t = 0: random value
           BV_NODE_CACHE_CONSISTENT(gen.random());
           return true;
         }
@@ -2919,6 +3005,8 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
             x, d_rng, BitVector::mk_min_signed(size), BitVector::mk_ones(size));
         if (gen.has_random())
         {
+          // Consistent value:
+          // pos_x = 0: t > 0: random value with cnt(x) < cnt(t)
           BV_NODE_CACHE_CONSISTENT(gen.random());
           return true;
         }
@@ -2926,6 +3014,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
       }
     }
 
+    // Consistent value: cnt(t) = size: random value with msb set to t[msb]
     if (cnt_t == size)
     {
       if (x.has_fixed_bits())
@@ -2948,6 +3037,10 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
       return true;
     }
 
+    // CC: pos_x = 0:
+    //     ((t != 0 /\ t != ones) => \exists y. (
+    //        c => y <= clo(t) /\ ~c => y <= clz(t) /\ mcb(x, y))
+    //     with c = ((t << y)[msb] = 1)
     if (x.has_fixed_bits())
     {
       std::vector<BitVector> stack;
@@ -2978,26 +3071,23 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
       return false;
     }
 
-    if (cnt_t == size)
+    uint64_t shift = d_rng->pick<uint64_t>(0, cnt_t - 1);
+    if (shift == 0)
     {
       d_consistent.reset(new BitVector(t));
     }
     else
     {
-      uint64_t shift = d_rng->pick<uint64_t>(0, cnt_t - 1);
-      if (shift == 0)
-      {
-        d_consistent.reset(new BitVector(t));
-      }
-      else
-      {
-        d_consistent.reset(
-            new BitVector(t.bvextract(size - shift - 1, 0)
-                              .ibvconcat(BitVector(shift, *d_rng))));
-      }
+      d_consistent.reset(
+          new BitVector(t.bvextract(size - shift - 1, 0)
+                            .ibvconcat(BitVector(shift, *d_rng))));
     }
     return true;
   }
+  // CC: pos_x = 1:
+  //     t = 0 \/ t = ones \/
+  //     \exists y. (c => y < clo(t) /\ ~c => y < clz(t) /\ mcb(x, y)
+  //     with c = (t[msb] = 1)
   if (x.is_fixed())
   {
     if (t.is_zero() || t.is_ones()
@@ -3008,6 +3098,9 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
     }
     return false;
   }
+  // Consistent value:
+  //   pos_x = 1: t = 0: random value
+  //              t > 0: random value < cnt(t)
   uint64_t max = cnt_t < size ? cnt_t - 1 : ((1u << size) - 1);
   if (x.has_fixed_bits())
   {
@@ -3136,13 +3229,13 @@ BitVectorUdiv::is_invertible(const BitVector& t,
    * IC:    pos_x = 0: IC_wo &&
    *                   (t = 0 => lo_x < s) &&
    *                   ((t != 0 && s != 0 ) => \exists y. (
-   *                       mfb(x, y) && (~c => y < s * t + 1) &&
+   *                       mcb(x, y) && (~c => y < s * t + 1) &&
    *                       (c => y <= ones)))
    *                   with c = umulo(s, t + 1) && uaddo(t, 1)
    *        pos_x = 1: IC_wo &&
-   *                   (t != ones => hi_x > 0) &&   .(covered by is_fixed check)
+   *                   (t != ones => hi_x > 0) &&   (covered by is_fixed check)
    *                   ((s != 0 || t != 0) => (s / hi_x <= t) && \exists y. (
-   *                       mfb(x, y) &&
+   *                       mcb(x, y) &&
    *                       (t = ones => y <= s / t) &&
    *                       (t != ones => y > t + 1 && y <= s / t)))
    *
@@ -3169,11 +3262,13 @@ BitVectorUdiv::is_invertible(const BitVector& t,
   // IC_wo
   if (pos_x == 0)
   {
+    // pos_x = 0: (s * t) / s = t
     s_mul_t = s.bvmul(t);
     ic_wo   = s_mul_t.bvudiv(s).compare(t) == 0;
   }
   else
   {
+    // pos_x = 1: s / (s / t) = t
     assert(pos_x == 1);
     s_udiv_t = s.bvudiv(t);
     ic_wo    = s.bvudiv(s_udiv_t).compare(t) == 0;
@@ -3182,6 +3277,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
   // IC
   if (ic_wo)
   {
+    // fixed: x / s = t
     if (x.is_fixed())
     {
       const BitVector& xval = x.lo();
@@ -3196,10 +3292,17 @@ BitVectorUdiv::is_invertible(const BitVector& t,
 
     if (pos_x == 0)
     {
+      // IC: pos_x = 0: IC_wo &&
+      //                (t = 0 => x_lo < s) &&
+      //                ((t != 0 && s != 0 ) => \exists y. (
+      //                    mcb(x, y) && (~c => y < s * t + 1) &&
+      //                    (c => y <= ones)))
+      //                with c = umulo(s, t + 1) && uaddo(t, 1)
       if (x_has_fixed_bits)
       {
         if (t.is_zero())
         {
+          // IC: (t = 0 => x_lo < s) &&
           if (x.lo().compare(s) >= 0)
           {
             return false;
@@ -3207,6 +3310,9 @@ BitVectorUdiv::is_invertible(const BitVector& t,
         }
         else if (!s.is_zero())
         {
+          // IC: ((t != 0 && s != 0 ) => \exists y. (
+          //         mcb(x, y) && (~c => y < s * t + 1) &&
+          //         (c => y <= ones)))
           BitVector& min = s_mul_t;
           BitVector max  = min.bvadd(s);
           if (max.compare(min) < 0)
@@ -3235,11 +3341,13 @@ BitVectorUdiv::is_invertible(const BitVector& t,
         {
           if (s.is_one())
           {
+            // Inverse value: pos_x = 0: t = ones: s = 1: ones
             assert(!x_has_fixed_bits);
             BV_NODE_CACHE_INVERSE(BitVector::mk_ones(size));
           }
           else
           {
+            // Inverse value: pos_x = 0: s = 0: random value
             assert(s.is_zero());
             if (x_has_fixed_bits)
             {
@@ -3255,6 +3363,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
         }
         else
         {
+          // Inverse value: pos_x = 0: s * t does not overflow: - s * t
           assert(!s.is_umul_overflow(t));
           if (d_rng->flip_coin() && x.match_fixed_bits(s_mul_t))
           {
@@ -3294,6 +3403,12 @@ BitVectorUdiv::is_invertible(const BitVector& t,
       return true;
     }
 
+    // IC: pos_x = 1: IC_wo &&
+    //                (t != ones => hi_x > 0) &&   .(covered by is_fixed check)
+    //                ((s != 0 || t != 0) => (s / hi_x <= t) && \exists y. (
+    //                    mcb(x, y) &&
+    //                    (t = ones => y <= s / t) &&
+    //                    (t != ones => y > t + 1 && y <= s / t)))
     if ((x_has_fixed_bits || !is_essential_check)
         && (!s.is_zero() || !t.is_zero()))
     {
@@ -3336,6 +3451,13 @@ BitVectorUdiv::is_invertible(const BitVector& t,
     }
     else if (!is_essential_check)
     {
+      // Inverse value:
+      // pos_x = 1: t = ones: s = t:  1 or 0
+      //                      s != t: 0
+      //            t = 0   : 0 < s < ones: random value > s
+      //            s = 0   : random value > 0
+      //            t is a divisior of s: t / s or s with s / x = t (0.5 prob)
+      //            else    : s with s / x = t
       uint64_t size = s.size();
       if (t.is_ones())
       {
@@ -3384,15 +3506,15 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
    * CC_wo: true
    * CC:    pos_x = 0:
    *          (t != ones => x_hi >= t) && (t = 0 => x_lo != ones) &&
-   *          ((t != 0 && t != ones && t != 1 && !mfb(x, t)) =>
-   *           (!mulo(2, t) && \exists y,o.(mfb(x, y*t + o) && y >= 1 && o <= c
+   *          ((t != 0 && t != ones && t != 1 && !mcb(x, t)) =>
+   *           (!mulo(2, t) && \exists y,o.(mcb(x, y*t + o) && y >= 1 && o <= c
    *            && !mulo(y, t) && !addo(y * t, o))))
    *        with c = min(y − 1, x_hi − y * t)
    *
    *        pos_x = 1:
-   *          (t = ones => (mfb(x, 0) || mfb(x, 1))) &&
+   *          (t = ones => (mcb(x, 0) || mcb(x, 1))) &&
    *          (t != ones => (!mulo(x_lo, t) &&
-   *                     \exists y. (y > 0 && mfb(x, y) && !mulo(y, t))))
+   *                     \exists y. (y > 0 && mcb(x, y) && !mulo(y, t))))
    *
    * Consistent value:
    *   pos_x = 0: t = 0   : random value < ones
@@ -3428,6 +3550,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
         }
         else
         {
+          // Consistent value: pos_x = 0: t = 0 : random value < ones
           BitVectorDomainGenerator gen(x,
                                        d_rng,
                                        BitVector::mk_zero(size),
@@ -3438,6 +3561,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
       }
       else
       {
+        // Consistent value: pos_x = 0: t = 0 : random value < ones
         d_consistent.reset(new BitVector(size,
                                          *d_rng,
                                          BitVector::mk_zero(size),
@@ -3448,6 +3572,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
 
     if (t_is_ones)
     {
+      // Consistent value: pos_x = 0: t = ones : random value
       if (x.has_fixed_bits())
       {
         if (x.is_fixed())
@@ -3475,6 +3600,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
 
     if (t.is_one())
     {
+      // Consistent value: pos_x = 0: t = one : random value > 0
       if (x.has_fixed_bits())
       {
         if (x.is_fixed())
@@ -3497,6 +3623,9 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
       return true;
     }
 
+    // Consistent value: pos_x = 0: x = y * t + offset
+    //                              with y in [1, ones / t]
+    //                              and offset in [0, min(y - 1, ones - y * t)]
     if (x_has_fixed_bits)
     {
       BitVector bvres = consistent_value_pos0_aux(t);
@@ -3535,6 +3664,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
   }
   else
   {
+    // fixed
     if (x.hi().is_zero())
     {
       if (t.is_ones())
@@ -3551,12 +3681,14 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
 
     if (t.is_ones())
     {
+      // CC: pos_x = 1: (t = ones => (mcb(x, 0) || mcb(x, 1)))
       bool match_one  = !x_has_fixed_bits || x.match_fixed_bits(one);
       bool match_zero = !x_has_fixed_bits || x.match_fixed_bits(zero);
       if (!match_zero && !match_one)
       {
         return false;
       }
+      // Consistent value: pos_x = 1: t = ones: 0 or 1
       if (!match_zero || (match_one && d_rng->flip_coin()))
       {
         BV_NODE_CACHE_CONSISTENT(std::move(one));
@@ -3569,11 +3701,14 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
       return true;
     }
 
+    // CC: (t != ones => (!mulo(x_lo, t) && \exists y. (y > 0 && mcb(x, y) &&
+    //                   !mulo(y, t))))
     if (x_has_fixed_bits && x.lo().is_umul_overflow(t))
     {
       return false;
     }
 
+    // Consistent value: pos_x = 1: t != ones: x * t s.t. no overflow occurs
     if (x_has_fixed_bits)
     {
       if (x.is_fixed())
@@ -3872,9 +4007,11 @@ BitVectorUlt::is_invertible(const BitVector& t,
   /**
    * IC_wo: pos_x = 0: t = 0 || s != 0
    *        pos_x = 1: t = 0 || s != ones
+   * TODO: +bounds
    *
    * IC:    pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
    *        pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
+   * TODO: +bounds
    */
 
   if (opt_sext)
@@ -3967,6 +4104,8 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
                              uint64_t pos_x,
                              bool is_essential_check)
 {
+  // IC_wo: pos_x = 0: t = 0 || s != 0
+  //        pos_x = 1: t = 0 || s != ones
   BitVector min_lo, max_lo, min_hi, max_hi;
   compute_normalized_bounds(s, t, pos_x, min_lo, max_lo, min_hi, max_hi);
   if (min_lo.is_null() && min_hi.is_null())
@@ -3984,6 +4123,8 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
     }
     return false;
   }
+  // IC:pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
+  //    pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
   if (d->has_fixed_bits())
   {
     BitVectorDomainDualGenerator gen(*d,
@@ -4053,11 +4194,12 @@ BitVectorUlt::is_consistent(const BitVector& t, uint64_t pos_x)
     {
       if (x.has_fixed_bits())
       {
+        // CC: pos_x = 0: ~t || x_lo != ones
         if (x.lo().is_ones())
         {
           return false;
         }
-        // CC: pos_x = 0 && t && x_lo != ones
+        // Consistent value: pos_x = 0: t = 1: random value < ones
         if (x.is_fixed())
         {
           BV_NODE_CACHE_CONSISTENT(x.lo());
@@ -4075,6 +4217,7 @@ BitVectorUlt::is_consistent(const BitVector& t, uint64_t pos_x)
       else
       {
         // CC_wo: true
+        // Consistent value: pos_x = 0: t = 1: random value < ones
         d_consistent.reset(
             new BitVector(BitVector(size,
                                     *d_rng,
@@ -4090,11 +4233,12 @@ BitVectorUlt::is_consistent(const BitVector& t, uint64_t pos_x)
     {
       if (x.has_fixed_bits())
       {
+        // CC: pos_x = 1: ~t || x_hi != 0
         if (x.hi().is_zero())
         {
           return false;
         }
-        // CC: pos_x = 1 && t && x_hi != 0
+        // Consistent value: pos_x = 1: t = 1: random value > 0
         if (x.is_fixed())
         {
           BV_NODE_CACHE_CONSISTENT(x.lo());
@@ -4110,13 +4254,15 @@ BitVectorUlt::is_consistent(const BitVector& t, uint64_t pos_x)
       else
       {
         // CC_wo: true
+        // Consistent value: pos_x = 1: t = 1: random value > 0
         d_consistent.reset(new BitVector(BitVector(
             size, *d_rng, BitVector::mk_one(size), BitVector::mk_ones(size))));
       }
       return true;
     }
   }
-  // CC: t = false
+  // CC: t = false: true
+  // Consistent value: t = 0: random value
   assert(t.is_false());
   if (x.has_fixed_bits())
   {
@@ -4497,6 +4643,7 @@ BitVectorSlt::is_invertible(const BitVector& t,
   /**
    * IC_wo: pos_x = 0: t = 0 || s != min_signed_value
    *        pos_x = 1: t = 0 || s != max_signed_value
+   * TODO: +bounds
    *
    * IC: pos_x = 0: t = 1 => (s != min_signed_value &&
    *                 ((MSB(x) = 0 && lo_x < s) ||
@@ -4508,6 +4655,7 @@ BitVectorSlt::is_invertible(const BitVector& t,
    *                           (MSB(x) != 1 && s < 0 o hi_x[size-2:0])))
    *                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
    *                          (MSB(x) != 0 && s >= 1 o lo_x[size-2:0])))
+   * TODO: +bounds
    */
 
   if (opt_sext)
@@ -4599,6 +4747,8 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
                              uint64_t pos_x,
                              bool is_essential_check)
 {
+  // IC_wo: pos_x = 0: t = 0 || s != min_signed_value
+  //        pos_x = 1: t = 0 || s != max_signed_value
   BitVector min_lo, max_lo, min_hi, max_hi;
   compute_normalized_bounds(s, t, pos_x, min_lo, max_lo, min_hi, max_hi);
   if (min_lo.is_null() && min_hi.is_null())
@@ -4606,6 +4756,19 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
     return false;
   }
 
+  // IC: pos_x = 0: IC_wo &&
+  //                t = 1 => (s != min_signed_value &&
+  //                 ((MSB(x) = 0 && lo_x < s) ||
+  //                  (MSB(x) != 0 && 1 o lo_x[size-2:0] < s))) &&
+  //                t = 0 => ((MSB(x) = 1 && hi_x >= s) ||
+  //                          (MSB(x) != 1 && 0 o hi_x[size-2:0] >= s))))
+  //     pos_x = 1: IC_wo &&
+  //                t = 1 => (s != max_signed_value &&
+  //                          ((MSB(x) = 1 && s < hi_x) ||
+  //                           (MSB(x) != 1 && s < 0 o hi_x[size-2:0])))
+  //                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
+  //                          (MSB(x) != 0 && s >= 1 o lo_x[size-2:0])))
+  // TODO: +bounds
   if (d->is_fixed())
   {
     const BitVector& xval = d->lo();
@@ -4841,7 +5004,7 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
   /**
    * CC_wo: true
    * CC:    pos_x = 0: t = false || (const(x) => x_lo != smax)
-   *        pos_x = 1: t = false || (const(x) => x_lo != smin)
+   *        pos_x = 1: t = false || (const(x) => x_hi != smin)
    *
    * Consistent value:
    *   pos_x = 0: t = 1: random value <s max_signed
@@ -4859,17 +5022,20 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
     {
       if (x.has_fixed_bits())
       {
-        // CC: pos_x = 0 && t && x_lo != smax
+        // CC: pos_x = 0: t = false || (const(x) => x_lo != smax)
         if (x.is_fixed())
         {
           if (x.lo().is_max_signed())
           {
             return false;
           }
+          // Consistent value: pos_x = 0: t = 1: random value <s max_signed
           BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
+          // CC_wo: true
+          // Consistent value: pos_x = 0: t = 1: random value <s max_signed
           BitVectorDomainSignedGenerator gen(
               x,
               d_rng,
@@ -4882,6 +5048,7 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
       else
       {
         // CC_wo: true
+        // Consistent value: pos_x = 0: t = 1: random value <s max_signed
         d_consistent.reset(
             new BitVector(BitVector(size,
                                     *d_rng,
@@ -4898,17 +5065,20 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
     {
       if (x.has_fixed_bits())
       {
-        // CC: pos_x = 1 && t && x_hi != smin
+        // CC: pos_x = 1: t = false || (const(x) => x_hi != smin)
         if (x.is_fixed())
         {
           if (x.hi().is_min_signed())
           {
             return false;
           }
+          // Consistent value: pos_x = 1: t = 1: random value >s min_signed
           BV_NODE_CACHE_CONSISTENT(x.lo());
         }
         else
         {
+          // CC_wo: true
+          // Consistent value: pos_x = 1: t = 1: random value >s min_signed
           BitVectorDomainSignedGenerator gen(
               x,
               d_rng,
@@ -4921,6 +5091,7 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
       else
       {
         // CC_wo: true
+        // Consistent value: pos_x = 1: t = 1: random value <s max_signed
         d_consistent.reset(
             new BitVector(BitVector(size,
                                     *d_rng,
@@ -4931,7 +5102,8 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
       return true;
     }
   }
-  // CC: t = false
+  // CC: t = false: true
+  // Consistent value: t = 0: random value
   assert(t.is_false());
   if (x.has_fixed_bits())
   {
@@ -5064,20 +5236,14 @@ BitVectorUrem::is_invertible(const BitVector& t,
    * IC_wo: pos_x = 0: ~(-s) >= t
    *        pos_x = 1: (t + t - s) & s >= t
    * IC:    pos_x = 0: IC_wo &&
-   *                   ((s = 0 || t = ones) => mfb(x, t)) &&
+   *                   ((s = 0 || t = ones) => mcb(x, t)) &&
    *                   ((s != 0 && t != ones) => \exists y. (
-   *                       mfb(x, s * y + t) &&
+   *                       mcb(x, s * y + t) &&
    *                       !umulo(s, y) && !uaddo(s *y, t)))
    *        pos_x = 1: IC_wo &&
-   *                   (s = t => (lo_x = 0 || hi_x > t)) &&
+   *                   (s = t => (x_lo = 0 || hi_x > t)) &&
    *                   (s != t => \exists y. (
-   *                       mfb(x, y) && y > t && (s - t) mod y = 0)
-   *
-   * Inverse value:
-   *   s = 0: t
-   *   else : - t
-   *          - s * n + b
-   *            with n such that (s * n + b) does not overflow
+   *                       mcb(x, y) && y > t && (s - t) mod y = 0)
    */
 
   uint64_t pos_s           = 1 - pos_x;
@@ -5089,10 +5255,12 @@ BitVectorUrem::is_invertible(const BitVector& t,
   // IC_wo
   if (pos_x == 0)
   {
+    // pos_x = 0: ~(-s) >= t
     ic = s.bvneg().ibvnot().compare(t) >= 0;
   }
   else
   {
+    // (t + t - s) & s >= t
     assert(pos_x == 1);
     ic = t.bvadd(t).ibvsub(s).ibvand(s).compare(t) >= 0;
   }
@@ -5100,6 +5268,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
   // IC
   if (ic)
   {
+    // fixed: x % s = t
     if (x_has_fixed_bits && x.is_fixed())
     {
       if ((pos_x == 0 && x.lo().bvurem(s).compare(t) == 0)
@@ -5115,6 +5284,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
     {
       if (s.is_zero() || t.is_ones())
       {
+        // IC: pos_x = 0: IC_wo && ((s = 0 || t = ones) => mcb(x, t))
         if (!x_has_fixed_bits || x.match_fixed_bits(t))
         {
           BV_NODE_CACHE_INVERSE_IF(t);
@@ -5122,6 +5292,10 @@ BitVectorUrem::is_invertible(const BitVector& t,
         }
         return false;
       }
+      // IC: pos_x = 0: IC_wo &&
+      //                ((s != 0 && t != ones) => \exists y. (
+      //                    mcb(x, s * y + t) &&
+      //                    !umulo(s, y) && !uaddo(s *y, t)))
       assert(s.compare(t) > 0);
       // if simplest solution (0 <= res < s: res = t) does not apply,
       // x = s * n + t with n s.t. (s * n + t) does not overflow
@@ -5195,6 +5369,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
 
     if (pos_x == 1 && (x_has_fixed_bits || !is_essential_check))
     {
+      // IC: pos_x = 1: t = ones: mcb(x, 0)
       uint64_t size = x.size();
       if (t.is_ones())
       {
@@ -5207,6 +5382,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
         return true;
       }
 
+      // IC: pos_x = 1: IC_wo && (s = t => (lo_x = 0 || hi_x > t))
       if (s.compare(t) == 0)
       {
         // s = t: x = 0 or random x > t
@@ -5251,6 +5427,9 @@ BitVectorUrem::is_invertible(const BitVector& t,
         }
         return false;
       }
+
+      // IC: pos_x = 1: IC_wo && (s != t => \exists y. (
+      //                            mcb(x, y) && y > t && (s - t) mod y = 0)
 
       /* s = x * n + t
        *
@@ -5361,15 +5540,15 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
 
   if (x_has_fixed_bits)
   {
-    /* CC: pos_x = 0: (t = ones => mfb(x, ones)) &&
+    /* CC: pos_x = 0: (t = ones => mcb(x, ones)) &&
      *                (t != ones =>
-     *                  (t > (ones - t) => mfb (x, t)) &&
-     *                  (t < (ones - t) => mfb(x, t) ||
-     *                   \exists y. (mfb(x, y) && y> 2*t))
+     *                  (t > (ones - t) => mcb (x, t)) &&
+     *                  (t < (ones - t) => mcb(x, t) ||
+     *                   \exists y. (mcb(x, y) && y> 2*t))
      *
-     *     pos_x = 1: mfb(x, 0) ||
-     *                ((t = ones => mfb(x, 0)) &&
-     *                 (t != ones => \exists y. (mfb(x, y) && y > t)))
+     *     pos_x = 1: mcb(x, 0) ||
+     *                ((t = ones => mcb(x, 0)) &&
+     *                 (t != ones => \exists y. (mcb(x, y) && y > t)))
      *
      * Consistent value:
      *   pos_x = 0: t = ones: ones
@@ -5381,12 +5560,12 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
 
     if (pos_x == 0)
     {
-      bool mfb = x.match_fixed_bits(t);
+      bool mcb = x.match_fixed_bits(t);
 
-      // (t = ones => mfb(x, ones))
+      // CC: pos_x = 0: (t = ones => mcb(x, ones))
       if (t_is_ones)
       {
-        if (!mfb)
+        if (!mcb)
         {
           return false;
         }
@@ -5394,20 +5573,20 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
         return true;
       }
 
-      // mfb(x, t): pick t with probability 0.1
-      if (mfb && d_rng->pick_with_prob(100))
+      // mcb(x, t): pick t with probability 0.1
+      if (mcb && d_rng->pick_with_prob(100))
       {
         d_consistent.reset(new BitVector(t));
         return true;
       }
 
-      // (t != ones =>
-      //   (t > (ones - t) => mfb (x, t)) &&
-      //   (t < (ones - t) => mfb(x, t) ||
-      //    \exists y. (mfb(x, y) && y> 2*t))
+      // CC: pos_x = 0: (t != ones =>
+      //                   (t > (ones - t) => mcb (x, t)) &&
+      //                   (t < (ones - t) => mcb(x, t) ||
+      //                    \exists y. (mcb(x, y) && y> 2*t))
       int32_t cmp_t = t.compare(BitVector::mk_ones(size).ibvsub(t));
 
-      if (cmp_t > 0 && !mfb)
+      if (cmp_t > 0 && !mcb)
       {
         return false;
       }
@@ -5423,25 +5602,25 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
           d_consistent.reset(new BitVector(bvres));
           return true;
         }
-        else if (!mfb)
+        else if (!mcb)
         {
           return false;
         }
       }
 
-      assert(mfb);
+      assert(mcb);
       d_consistent.reset(new BitVector(t));
       return true;
     }
     else
     {
       BitVector zero = BitVector::mk_zero(size);
-      bool mfb       = x.match_fixed_bits(zero);
+      bool mcb       = x.match_fixed_bits(zero);
 
-      // t = ones => mfb(x, 0)
+      // CC: pos_x = 1: t = ones => mcb(x, 0)
       if (t_is_ones)
       {
-        if (!mfb)
+        if (!mcb)
         {
           return false;
         }
@@ -5449,14 +5628,15 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
         return true;
       }
 
-      // mfb(x, 0): pick 0 with probability 0.1
-      if (mfb && d_rng->pick_with_prob(100))
+      // mcb(x, 0): pick 0 with probability 0.1
+      if (mcb && d_rng->pick_with_prob(100))
       {
         d_consistent.reset(new BitVector(zero));
         return true;
       }
 
-      // !mfb(x, 0) && (t != ones => \exists y. (mfb(x, y) && y > t))
+      // CC: pos_x = 1: !mcb(x, 0) &&
+      //                (t != ones => \exists y. (mcb(x, y) && y > t))
       BitVector min = t.bvinc();
       if (x.is_fixed() && x.lo().compare(min) >= 0)
       {
@@ -5469,30 +5649,35 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
         BV_NODE_CACHE_CONSISTENT(gen.random());
         return true;
       }
-      else if (!mfb)
+      else if (!mcb)
       {
         return false;
       }
 
-      assert(mfb);
+      assert(mcb);
       d_consistent.reset(new BitVector(zero));
       return true;
     }
   }
 
+  // CC_wo: true
   assert(!x_has_fixed_bits);
   if (pos_x == 0)
   {
     if (t_is_ones)
     {
+      // Consistent value: pos_x = 0: t = ones: ones
       BV_NODE_CACHE_CONSISTENT(BitVector::mk_ones(size));
     }
     else if (d_rng->pick_with_prob(100))
     {
+      // Consistent value: pos_x = 0: t != ones: t
       d_consistent.reset(new BitVector(t));
     }
     else
     {
+      // Consistent value: pos_x = 0: t != ones: x = s * t with x > t
+      //                                         s.t. no overflow occurs
       BitVector max = BitVector::mk_ones(size).ibvsub(t);
       BitVector min = t.bvinc();
       if (min.compare(max) > 0)
@@ -5510,10 +5695,12 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     if (t_is_ones || d_rng->pick_with_prob(100))
     {
+      // Consistent value: pos_x = 1: t = ones: 0
       BV_NODE_CACHE_CONSISTENT(BitVector::mk_zero(size));
     }
     else
     {
+      // Consistent value: pos_x = 1: t != ones: 0 or random value > t
       d_consistent.reset(
           new BitVector(size, *d_rng, t.bvinc(), BitVector::mk_ones(size)));
     }
@@ -5654,7 +5841,7 @@ BitVectorXor::is_invertible(const BitVector& t,
 
   /**
    * IC_wo: true
-   * IC: mfb(x, s^t)
+   * IC: mcb(x, s^t)
    *
    * Inverse value: s ^ t
    */
@@ -5839,10 +6026,10 @@ BitVectorIte::is_invertible(const BitVector& t,
    *                   (is_fixed_true(x) && s0 = t) ||
    *                   (is_fixed_false(x) && s1 = t)
    *                   with s0 the value for '_t' and s1 the value for '_e'
-   *        pos_x = 1: (s0 = true && mfb(x, t)) ||
+   *        pos_x = 1: (s0 = true && mcb(x, t)) ||
    *                   (s0 = false && s1 = t)
    *                   with s0 the value for '_c' and s1 the value for '_e'
-   *        pos_x = 2: (s0 == false && mfb(x, t)) ||
+   *        pos_x = 2: (s0 == false && mcb(x, t)) ||
    *                   (s1 == true && s1 = t)
    *                   with s0 the value for '_c' and s1 the value for '_t'
    *
@@ -6186,7 +6373,7 @@ BitVectorNot::is_invertible(const BitVector& t,
 
   /**
    * IC_wo: true
-   * IC:    mfb(x, ~t)
+   * IC:    mcb(x, ~t)
    *
    * Inverse value: ~t
    */
@@ -6310,7 +6497,7 @@ BitVectorExtract::is_invertible(const BitVector& t,
 
   /**
    * IC_wo: true
-   * IC:    mfb(x[hi:lo], t)
+   * IC:    mcb(x[hi:lo], t)
    *
    * Inverse value: x[msb: hi+1] o t o x[lo-1:0]
    *
@@ -6669,7 +6856,7 @@ BitVectorSignExtend::is_invertible(const BitVector& t,
    *         and t_x   = t[t_size - 1 - n : 0]
    *         and t_ext = t[t_size - 1, t_size - 1 - n]
    *         (i.e., it includes MSB of t_x)
-   * IC:     IC_wo && mfb(x, t_x)
+   * IC:     IC_wo && mcb(x, t_x)
    *
    * Inverse value: t_x
    */
