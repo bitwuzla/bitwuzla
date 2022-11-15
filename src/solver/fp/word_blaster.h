@@ -7,6 +7,7 @@
 #include "node/node.h"
 #include "node/node_ref_vector.h"
 #include "solver/fp/floating_point.h"
+#include "solving_context.h"
 
 /* -------------------------------------------------------------------------- */
 
@@ -23,7 +24,7 @@ class SymFpuSymProp;
 class WordBlaster
 {
  public:
-  WordBlaster();
+  WordBlaster(SolvingContext& context);
   ~WordBlaster();
 
   Node word_blast(const Node& node);
@@ -52,6 +53,9 @@ class WordBlaster
   std::unordered_map<std::pair<Type, Type>, Node> d_sbv_ubv_uf_map;
 
   std::vector<Node> d_additional_assertions;
+
+  /** The associated solving context. */
+  SolvingContext& d_ctx;
 };
 
 /* -------------------------------------------------------------------------- */

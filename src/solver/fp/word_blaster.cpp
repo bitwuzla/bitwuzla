@@ -40,7 +40,10 @@ struct WordBlaster::Internal
 
 /* --- WordBlaster public --------------------------------------------------- */
 
-WordBlaster::WordBlaster() { d_internal.reset(new Internal()); }
+WordBlaster::WordBlaster(SolvingContext& context) : d_ctx(context)
+{
+  d_internal.reset(new Internal());
+}
 
 WordBlaster::~WordBlaster() {}
 
@@ -607,8 +610,7 @@ WordBlaster::add_additional_assertions()
 {
   for (const Node& node : d_additional_assertions)
   {
-    // TODO
-    // bzla_assert_exp(d_bzla, node);
+    d_ctx.assert_formula(node);
   }
   d_additional_assertions.clear();
 }
