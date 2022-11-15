@@ -60,6 +60,14 @@ bool is_bv_sub(const Node& node, Node& child0, Node& child1);
  * @param child1 The (resulting) second child of the extracted bvxnor node.
  */
 bool is_bv_xnor(const Node& node, Node& child0, Node& child1);
+
+/**
+ * @return n-ary node of given kind.
+ * @param kind The node kind.
+ * @param terms The children of the node.
+ * @param left_assoc Indicates whether to create left-assoc or right-assoc node.
+ */
+Node mk_nary(Kind kind, const std::vector<Node>& terms, bool left_assoc = true);
 }
 
 #endif

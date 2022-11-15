@@ -220,4 +220,34 @@ is_bv_xnor(const Node& node, Node& child0, Node& child1)
   return false;
 }
 
+Node
+mk_nary(Kind kind, const std::vector<Node>& terms, bool left_assoc)
+{
+  assert(!terms.empty());
+  if (terms.size() == 1)
+  {
+    return terms[0];
+  }
+
+  NodeManager& nm = NodeManager::get();
+  size_t size     = terms.size();
+  if (left_assoc)
+  {
+    Node res = nm.mk_node(kind, {terms[0], terms[1]});
+    for (size_t i = 3; i < size; ++i)
+    {
+      res = nm.mk_node(kind, {res, terms[i]});
+    }
+    return res;
+  }
+
+  // Right-associative
+  Node res = nm.mk_node(kind, {terms[size - 2], terms[size - 1]});
+  for (size_t i = 3; i < size; ++i)
+  {
+    res = nm.mk_node(kind, {terms[size - i], res});
+  }
+  return res;
+}
+
 }  // namespace bzla::node::utils
