@@ -207,11 +207,4 @@ hash<bzla::Type*>::operator()(const bzla::Type* type) const
   return type->id();
 }
 
-size_t
-hash<std::pair<bzla::Type, bzla::Type>>::operator()(
-    const std::pair<bzla::Type, bzla::Type>& p) const
-{
-  return std::hash<bzla::Type>{}(p.first) * 333444569u
-         + std::hash<bzla::Type>{}(p.second) * 76891121u;
-}
 }  // namespace std

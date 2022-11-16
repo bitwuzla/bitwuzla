@@ -5,6 +5,7 @@
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
 #include "solver/fp/symfpu_wrapper.h"
+#include "solver/solver_engine.h"
 #include "symfpu/core/classify.h"
 #include "symfpu/core/compare.h"
 #include "symfpu/core/convert.h"
@@ -40,7 +41,8 @@ struct WordBlaster::Internal
 
 /* --- WordBlaster public --------------------------------------------------- */
 
-WordBlaster::WordBlaster(SolvingContext& context) : d_ctx(context)
+WordBlaster::WordBlaster(SolverEngine& solver_engine)
+    : d_solver_engine(solver_engine)
 {
   d_internal.reset(new Internal());
 }
@@ -49,6 +51,48 @@ WordBlaster::~WordBlaster() {}
 
 Node
 WordBlaster::word_blast(const Node& node)
+{
+  assert(!node.is_null());
+  {
+    auto it = d_internal->d_packed_float_map.find(node);
+    if (it != d_internal->d_packed_float_map.end())
+    {
+      return it->second.getNode();
+    }
+  }
+  if (node.type().is_bool())
+  {
+    auto it = d_internal->d_prop_map.find(node);
+    if (it != d_internal->d_prop_map.end())
+    {
+      return it->second.getNode();
+    }
+  }
+  if (node.type().is_rm())
+  {
+    auto it = d_internal->d_rm_map.find(node);
+    if (it != d_internal->d_rm_map.end())
+    {
+      return it->second.getNode();
+    }
+  }
+  {
+    auto it = d_internal->d_unpacked_float_map.find(node);
+    if (it != d_internal->d_unpacked_float_map.end())
+    {
+      auto [iit, inserted] = d_internal->d_packed_float_map.emplace(
+          node,
+          symfpu::pack(node.type(), d_internal->d_unpacked_float_map.at(node)));
+      return iit->second.getNode();
+    }
+  }
+  return _word_blast(node);
+}
+
+/* --- WordBlaster private -------------------------------------------------- */
+
+Node
+WordBlaster::_word_blast(const Node& node)
 {
   assert((node.type().is_bv() && node.num_children()
           && (node[0].type().is_fp() || node[0].type().is_rm()))
@@ -62,7 +106,6 @@ WordBlaster::word_blast(const Node& node)
   do
   {
     const Node& cur = visit.back();
-    // TODO: assert that cur is not parameterized
     visit.pop_back();
 
     if (d_internal->d_prop_map.find(cur) != d_internal->d_prop_map.end()
@@ -82,8 +125,7 @@ WordBlaster::word_blast(const Node& node)
       visit.push_back(cur);
 
       /* We treat applies and quantifiers as variables. */
-      // TODO: Should this be a leaf node check? Why is exists not included?
-      //       what about select?
+      // TODO: Should this be a leaf node check?
       if (kind != node::Kind::APPLY)
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
@@ -145,7 +187,7 @@ WordBlaster::word_blast(const Node& node)
       {
         SymFpuSymRM rmvar(cur);
         d_internal->d_rm_map.emplace(cur, rmvar);
-        d_additional_assertions.push_back(rmvar.valid().getNode());
+        d_solver_engine.lemma(rmvar.valid().getNode());
       }
       else if (type.is_fp() && cur.is_value())
       {
@@ -171,7 +213,7 @@ WordBlaster::word_blast(const Node& node)
 
         SymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
         d_internal->d_unpacked_float_map.emplace(cur, uf);
-        d_additional_assertions.push_back(uf.valid(type).getNode());
+        d_solver_engine.lemma(uf.valid(type).getNode());
       }
       else if (kind == node::Kind::EQUAL && node[0].type().is_fp())
       {
@@ -557,92 +599,32 @@ WordBlaster::word_blast(const Node& node)
   return res;
 }
 
-Node
-WordBlaster::get_word_blasted_node(const Node& node)
-{
-  assert(!node.is_null());
-
-  if (d_internal->d_packed_float_map.find(node)
-      != d_internal->d_packed_float_map.end())
-  {
-    return d_internal->d_packed_float_map.at(node).getNode();
-  }
-
-  if (node.type().is_bool()
-      && d_internal->d_prop_map.find(node) != d_internal->d_prop_map.end())
-  {
-    return d_internal->d_prop_map.at(node).getNode();
-  }
-
-  if (node.type().is_rm()
-      && d_internal->d_rm_map.find(node) != d_internal->d_rm_map.end())
-  {
-    return d_internal->d_rm_map.at(node).getNode();
-  }
-
-  if (d_internal->d_unpacked_float_map.find(node)
-      != d_internal->d_unpacked_float_map.end())
-  {
-    d_internal->d_packed_float_map.emplace(
-        node,
-        symfpu::pack(node.type(), d_internal->d_unpacked_float_map.at(node)));
-    return d_internal->d_packed_float_map.at(node).getNode();
-  }
-
-  return word_blast(node);
-}
-
-void
-WordBlaster::get_introduced_ufs(node::node_ref_vector& ufs)
-{
-  for (const auto& p : d_min_max_uf_map)
-  {
-    ufs.push_back(p.second);
-  }
-  for (const auto& p : d_sbv_ubv_uf_map)
-  {
-    ufs.push_back(p.second);
-  }
-}
-
-void
-WordBlaster::add_additional_assertions()
-{
-  for (const Node& node : d_additional_assertions)
-  {
-    d_ctx.assert_formula(node);
-  }
-  d_additional_assertions.clear();
-}
-
-/* --- WordBlaster private -------------------------------------------------- */
-
 const Node&
 WordBlaster::min_max_uf(const Node& node)
 {
   const Type& type = node.type();
 
-  if (d_min_max_uf_map.find(type) != d_min_max_uf_map.end())
+  auto it = d_min_max_uf_map.find(type);
+  if (it != d_min_max_uf_map.end())
   {
-    return d_min_max_uf_map.at(type);
+    return it->second;
   }
 
   NodeManager& nm  = NodeManager::get();
   size_t nchildren = node.num_children();
   uint64_t size    = type.fp_ieee_bv_size();
-  Type type_bv1    = nm.mk_bv_type(1);
-  Type type_bv     = nm.mk_bv_type(size);
-  std::vector<Type> type_fun_args;
-  for (size_t i = 0; i < nchildren; ++i) type_fun_args.push_back(type_bv);
-  type_fun_args.push_back(type_bv1);
+
+  std::vector<Type> type_fun_args(nchildren, nm.mk_bv_type(size));
+  type_fun_args.push_back(nm.mk_bv_type(1));
   Type type_fun = nm.mk_fun_type(type_fun_args);
-  d_min_max_uf_map.emplace(
-      type_fun,
+
+  auto [iit, inserted] = d_min_max_uf_map.emplace(
+      type,
       nm.mk_const(
           type_fun,
           (node.kind() == node::Kind::FP_MIN ? "_fp_min_uf_" : "_fp_max_uf_")
               + std::to_string(node.id()) + "_"));
-  return d_min_max_uf_map.at(type_fun);
+  return iit->second;
 }
 
 const Node&
@@ -651,24 +633,25 @@ WordBlaster::sbv_ubv_uf(const Node& node)
   assert(node[0].type().is_rm());
   assert(node[1].type().is_fp());
 
-  Type type_bv = node.type();
-  Type type_fp = node[1].type();
-  std::pair<Type, Type> p(type_fp, type_bv);
+  NodeManager& nm = NodeManager::get();
+  Type type_bv    = node.type();
+  Type type_fp    = node[1].type();
+  Type type_fun   = nm.mk_fun_type({node[0].type(), type_fp, type_bv});
 
-  if (d_sbv_ubv_uf_map.find(p) != d_sbv_ubv_uf_map.end())
+  auto it = d_sbv_ubv_uf_map.find(type_fun);
+  if (it != d_sbv_ubv_uf_map.end())
   {
-    return d_sbv_ubv_uf_map.at(p);
+    return it->second;
   }
 
-  NodeManager& nm = NodeManager::get();
-  Type type_fun   = nm.mk_fun_type({node[0].type(), type_fp, type_bv});
-  d_sbv_ubv_uf_map.emplace(
+  auto [iit, inserted] = d_sbv_ubv_uf_map.emplace(
       type_fun,
       nm.mk_const(
           type_fun,
           (node.kind() == node::Kind::FP_TO_SBV ? "_fp_sbv_uf_" : "_fp_ubv_uf_")
               + std::to_string(node.id()) + "_"));
-  return d_sbv_ubv_uf_map.at(p);
+  assert(inserted);
+  return iit->second;
 }
 
 /* -------------------------------------------------------------------------- */

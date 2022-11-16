@@ -10,10 +10,10 @@ namespace bzla::fun {
 class FunSolver : public Solver
 {
  public:
-  /** Determine if `term` is a leaf node for the bit-vector solver. */
+  /** Determine if `term` is a leaf node for the function solver. */
   static bool is_leaf(const Node& term);
 
-  FunSolver(SolverEngine& context);
+  FunSolver(SolverEngine& solver_engine);
   ~FunSolver();
 
   void check() override;

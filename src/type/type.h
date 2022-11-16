@@ -143,12 +143,6 @@ struct hash<bzla::Type*>
   size_t operator()(const bzla::Type* type) const;
 };
 
-template <>
-struct hash<std::pair<bzla::Type, bzla::Type>>
-{
-  size_t operator()(const std::pair<bzla::Type, bzla::Type>& p) const;
-};
-
 }  // namespace std
 
 #endif

@@ -18,7 +18,7 @@ class BvSolver : public Solver, public BvSolverInterface
   /** Construct default value for given Boolean or bit-vector type. */
   static Node default_value(const Type& type);
 
-  BvSolver(SolverEngine& context);
+  BvSolver(SolverEngine& solver_engine);
   ~BvSolver();
 
   // Solver interface

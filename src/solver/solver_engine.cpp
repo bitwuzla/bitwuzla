@@ -15,6 +15,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_register_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
       d_bv_solver(*this),
+      d_fp_solver(*this),
       d_fun_solver(*this)
 {
 }
@@ -36,7 +37,7 @@ SolverEngine::solve()
       break;
     }
     assert(d_sat_state == Result::SAT);
-    // d_fp_solver.check();
+    d_fp_solver.check();
     // d_array_solver.check();
     d_fun_solver.check();
     // d_quant_solver.check();
@@ -57,7 +58,7 @@ SolverEngine::value(const Node& term)
   }
   else if (type.is_fp() || type.is_rm())
   {
-    // return d_fp_solver.value(term);
+    return d_fp_solver.value(term);
   }
   else if (type.is_array())
   {
@@ -105,19 +106,6 @@ SolverEngine::backtrack_mgr()
 }
 
 /* --- SolverEngine private ------------------------------------------------- */
-
-bool
-SolverEngine::is_fp_leaf(const Node& term)
-{
-  Kind k = term.kind();
-  return k == Kind::FP_IS_INF || k == Kind::FP_IS_NAN || k == Kind::FP_IS_NEG
-         || k == Kind::FP_IS_NORM || k == Kind::FP_IS_POS
-         || k == Kind::FP_IS_SUBNORM || k == Kind::FP_IS_ZERO
-         || k == Kind::FP_EQUAL || k == Kind::FP_LE || k == Kind::FP_LT
-         || k == Kind::FP_TO_SBV || k == Kind::FP_TO_UBV
-         || (k == Kind::EQUAL
-             && (term[0].type().is_fp() || term[0].type().is_rm()));
-}
 
 bool
 SolverEngine::is_array_leaf(const Node& term)
@@ -188,10 +176,10 @@ SolverEngine::process_assertion(const Node& assertion, size_t level)
     auto [it, inserted] = d_register_cache.insert(cur);
     if (inserted)
     {
-      if (is_fp_leaf(cur))
+      if (fp::FpSolver::is_leaf(cur))
       {
         assert(false);
-        // d_fp_solver.register_term(cur);
+        d_fp_solver.register_term(cur);
       }
       else if (is_array_leaf(cur))
       {

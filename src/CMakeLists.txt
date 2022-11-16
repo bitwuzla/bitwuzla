@@ -108,9 +108,11 @@ set(libbitwuzla_src_files
   solver/bv/bv_bitblast_solver.cpp
   solver/bv/bv_prop_solver.cpp
   solver/fp/floating_point.cpp
+  solver/fp/fp_solver.cpp
   solver/fp/rounding_mode.cpp
   solver/fp/symfpu_wrapper.cpp
   solver/fp/word_blaster_old.cpp
+  solver/fp/word_blaster.cpp
   solver/fun/fun_solver.cpp
   solver/solver.cpp
   solver/solver_engine.cpp
