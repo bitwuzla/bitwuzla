@@ -125,6 +125,7 @@ class Rewriter
   Node rewrite_fp_rem(const Node& node);
   Node rewrite_fp_rti(const Node& node);
   Node rewrite_fp_sqrt(const Node& node);
+  Node rewrite_fp_sub(const Node& node);
   Node rewrite_fp_to_fp_from_bv(const Node& node);
   Node rewrite_fp_to_fp_from_fp(const Node& node);
   Node rewrite_fp_to_fp_from_sbv(const Node& node);
@@ -421,9 +422,10 @@ enum class RewriteRuleKind
   FP_TO_FP_FROM_UBV_EVAL,
 
   //// Elimination rules
+  FP_EQUAL_ELIM,
   FP_GE_ELIM,
   FP_GT_ELIM,
-  FP_EQUAL_ELIM,
+  FP_SUB_ELIM,
 };
 
 template <RewriteRuleKind K>

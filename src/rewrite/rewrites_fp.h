@@ -216,6 +216,10 @@ Node RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL>::_apply(
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>
+Node RewriteRule<RewriteRuleKind::FP_EQUAL_ELIM>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
+template <>
 Node RewriteRule<RewriteRuleKind::FP_GE_ELIM>::_apply(Rewriter& rewriter,
                                                       const Node& node);
 
@@ -224,8 +228,8 @@ Node RewriteRule<RewriteRuleKind::FP_GT_ELIM>::_apply(Rewriter& rewriter,
                                                       const Node& node);
 
 template <>
-Node RewriteRule<RewriteRuleKind::FP_EQUAL_ELIM>::_apply(Rewriter& rewriter,
-                                                         const Node& node);
+Node RewriteRule<RewriteRuleKind::FP_SUB_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla

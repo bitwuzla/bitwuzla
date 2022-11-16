@@ -100,13 +100,22 @@ class TestRewriter : public ::testing::Test
 
     NodeManager& nm = NodeManager::get();
     std::vector<Node> children;
-    if (num_children >= 1)
+    if (kind == node::Kind::FP_SUB)
     {
+      children.push_back(nm.mk_const(nm.mk_rm_type()));
       children.push_back(nm.mk_const(type, "a"));
-    }
-    if (num_children >= 2)
-    {
       children.push_back(nm.mk_const(type, "b"));
+    }
+    else
+    {
+      if (num_children >= 1)
+      {
+        children.push_back(nm.mk_const(type, "a"));
+      }
+      if (num_children >= 2)
+      {
+        children.push_back(nm.mk_const(type, "b"));
+      }
     }
 
     Node node = nm.mk_node(kind, children, indices);

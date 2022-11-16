@@ -885,5 +885,15 @@ TEST_F(TestRewriterFp, fp_equal_elim)
 {
   test_elim_rule(Kind::FP_EQUAL, d_fp35_type);
 }
+
+TEST_F(TestRewriterFp, fp_ge_elim) { test_elim_rule(Kind::FP_GT, d_fp35_type); }
+
+TEST_F(TestRewriterFp, fp_gt_elim) { test_elim_rule(Kind::FP_GT, d_fp35_type); }
+
+TEST_F(TestRewriterFp, fp_sub_elim)
+{
+  test_elim_rule(Kind::FP_SUB, d_fp35_type);
+}
+
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla::test

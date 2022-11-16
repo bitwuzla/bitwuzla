@@ -719,7 +719,7 @@ RewriteRule<RewriteRuleKind::FP_GE_ELIM>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
   assert(node.num_children() == 2);
-  return rewriter.mk_node(Kind::FP_LT, {node[1], node[0]});
+  return rewriter.mk_node(Kind::FP_LE, {node[1], node[0]});
 }
 
 template <>
@@ -728,7 +728,7 @@ RewriteRule<RewriteRuleKind::FP_GT_ELIM>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
   assert(node.num_children() == 2);
-  return rewriter.mk_node(Kind::FP_LE, {node[1], node[0]});
+  return rewriter.mk_node(Kind::FP_LT, {node[1], node[0]});
 }
 
 template <>
@@ -736,6 +736,7 @@ Node
 RewriteRule<RewriteRuleKind::FP_EQUAL_ELIM>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
+  assert(node.num_children() == 2);
   return rewriter.mk_node(
       Kind::AND,
       {rewriter.mk_node(
@@ -750,6 +751,17 @@ RewriteRule<RewriteRuleKind::FP_EQUAL_ELIM>::_apply(Rewriter& rewriter,
                 Kind::AND,
                 {rewriter.mk_node(Kind::FP_IS_ZERO, {node[0]}),
                  rewriter.mk_node(Kind::FP_IS_ZERO, {node[1]})})})});
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_SUB_ELIM>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  assert(node.num_children() == 3);
+  return rewriter.mk_node(
+      Kind::FP_ADD,
+      {node[0], node[1], rewriter.mk_node(Kind::FP_NEG, {node[2]})});
 }
 
 /* -------------------------------------------------------------------------- */
