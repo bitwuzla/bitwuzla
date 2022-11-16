@@ -3,6 +3,7 @@
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
+#include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "sat/cadical.h"
 #include "solver/bv/bv_solver.h"
@@ -85,7 +86,7 @@ BvBitblastSolver::value(const Node& term)
   // Return default value if not bit-blasted
   if (it == d_bitblaster_cache.end())
   {
-    return BvSolver::default_value(type);
+    return utils::mk_default_value(type);
   }
 
   const auto& bits = it->second;

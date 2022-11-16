@@ -39,18 +39,6 @@ BvSolver::is_leaf(const Node& term)
              && !term[0].type().is_bv());
 }
 
-Node
-BvSolver::default_value(const Type& type)
-{
-  NodeManager& nm = NodeManager::get();
-  if (type.is_bool())
-  {
-    return nm.mk_value(false);
-  }
-  assert(type.is_bv());
-  return nm.mk_value(BitVector::mk_zero(type.bv_size()));
-}
-
 BvSolver::BvSolver(SolverEngine& solver_engine)
     : Solver(solver_engine),
       d_bitblast_solver(solver_engine),

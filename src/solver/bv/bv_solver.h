@@ -15,9 +15,6 @@ class BvSolver : public Solver, public BvSolverInterface
   /** Determine if `term` is a leaf node for the bit-vector solver. */
   static bool is_leaf(const Node& term);
 
-  /** Construct default value for given Boolean or bit-vector type. */
-  static Node default_value(const Type& type);
-
   BvSolver(SolverEngine& solver_engine);
   ~BvSolver();
 
