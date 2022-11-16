@@ -68,6 +68,12 @@ bool is_bv_xnor(const Node& node, Node& child0, Node& child1);
  * @param left_assoc Indicates whether to create left-assoc or right-assoc node.
  */
 Node mk_nary(Kind kind, const std::vector<Node>& terms, bool left_assoc = true);
+
+/**
+ * @return Default value for given type.
+ * @param type Type of default value.
+ */
+Node mk_default_value(const Type& type);
 }
 
 #endif

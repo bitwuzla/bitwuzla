@@ -2,6 +2,8 @@
 
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
+#include "solver/fp/floating_point.h"
+#include "solver/fp/rounding_mode.h"
 
 namespace bzla::node::utils {
 
@@ -248,6 +250,41 @@ mk_nary(Kind kind, const std::vector<Node>& terms, bool left_assoc)
     res = nm.mk_node(kind, {terms[size - i], res});
   }
   return res;
+}
+
+Node
+mk_default_value(const Type& type)
+{
+  NodeManager& nm = NodeManager::get();
+  if (type.is_bool())
+  {
+    return nm.mk_value(false);
+  }
+  else if (type.is_bv())
+  {
+    return nm.mk_value(BitVector::mk_zero(type.bv_size()));
+  }
+  else if (type.is_fp())
+  {
+    return nm.mk_value(FloatingPoint::fpzero(type, false));
+  }
+  else if (type.is_fun())
+  {
+    std::vector<Node> children;
+    const std::vector<Type>& types = type.fun_types();
+    for (size_t i = 0, size = types.size() - 1; i < size; ++i)
+    {
+      children.push_back(nm.mk_var(types[i]));
+    }
+    children.push_back(mk_default_value(types.back()));
+    return nm.mk_node(Kind::LAMBDA, children);
+  }
+  else if (type.is_array())
+  {
+    return nm.mk_const_array(type, mk_default_value(type.array_element()));
+  }
+  assert(type.is_rm());
+  return nm.mk_value(RoundingMode::RNA);
 }
 
 }  // namespace bzla::node::utils
