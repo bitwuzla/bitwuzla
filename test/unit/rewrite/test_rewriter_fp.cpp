@@ -145,6 +145,72 @@ TEST_F(TestRewriterFp, fp_div_eval)
   ASSERT_EQ(fpdiv4, d_rewriter.rewrite(fpdiv4));
 }
 
+/* fpfma -------------------------------------------------------------------- */
+
+TEST_F(TestRewriterFp, fp_fma_eval)
+{
+  //// applies
+  Node fpfma0 = d_nm.mk_node(
+      Kind::FP_FMA,
+      {d_nm.mk_value(RoundingMode::RNE),
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00110101"))),
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000"))),
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000")))});
+  test_rewrite(
+      fpfma0,
+      d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00110010"))));
+  Node fpfma1 = d_nm.mk_node(
+      Kind::FP_FMA,
+      {d_nm.mk_value(RoundingMode::RNA),
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100010"))),
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000"))),
+       fpfma0});
+  test_rewrite(
+      fpfma1,
+      d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00110111"))));
+  test_rewrite(
+      d_nm.mk_node(
+          Kind::FP_FMA,
+          {d_nm.mk_value(RoundingMode::RNA),
+           fpfma1,
+           d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00110101"))),
+           d_nm.mk_value(FloatingPoint::fpinf(d_fp35_type, false))}),
+      d_nm.mk_value(FloatingPoint::fpinf(d_fp35_type, false)));
+  test_rewrite(
+      d_nm.mk_node(Kind::FP_FMA,
+                   {d_nm.mk_value(RoundingMode::RTN), fpfma1, fpfma1, fpfma1}),
+      d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "01001100"))));
+  //// does not apply
+  Node fpfma2 = d_nm.mk_node(
+      Kind::FP_FMA,
+      {d_nm.mk_const(d_rm_type),
+       d_fp35_pzero,
+       d_fp35_pzero,
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000")))});
+  ASSERT_EQ(fpfma2, d_rewriter.rewrite(fpfma2));
+  Node fpfma3 = d_nm.mk_node(
+      Kind::FP_FMA,
+      {d_nm.mk_value(RoundingMode::RNE),
+       d_nm.mk_const(d_fp35_type),
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100010"))),
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000")))});
+  ASSERT_EQ(fpfma3, d_rewriter.rewrite(fpfma3));
+  Node fpfma4 = d_nm.mk_node(
+      Kind::FP_FMA,
+      {d_nm.mk_value(RoundingMode::RNE),
+       d_fp35_pzero,
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100010"))),
+       d_nm.mk_const(d_fp35_type)});
+  ASSERT_EQ(fpfma4, d_rewriter.rewrite(fpfma4));
+  Node fpfma5 = d_nm.mk_node(
+      Kind::FP_FMA,
+      {d_nm.mk_value(RoundingMode::RNE),
+       d_fp35_pzero,
+       d_nm.mk_const(d_fp35_type),
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100010")))});
+  ASSERT_EQ(fpfma5, d_rewriter.rewrite(fpfma5));
+}
+
 /* fpisinf ------------------------------------------------------------------ */
 
 TEST_F(TestRewriterFp, fp_is_inf_eval)

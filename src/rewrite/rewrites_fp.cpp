@@ -93,6 +93,33 @@ RewriteRule<RewriteRuleKind::FP_DIV_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/* fpfma -------------------------------------------------------------------- */
+
+/**
+ * Constant folding, matches when operand all operands are values.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_FMA_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 4);
+  assert(node[0].type().is_rm());
+  assert(node[1].type().is_fp());
+  assert(node[2].type().is_fp());
+  assert(node[3].type().is_fp());
+  for (const auto& c : node)
+  {
+    if (!c.is_value()) return node;
+  }
+  Node res = NodeManager::get().mk_value(
+      node[1].value<FloatingPoint>().fpfma(node[0].value<RoundingMode>(),
+                                           node[2].value<FloatingPoint>(),
+                                           node[3].value<FloatingPoint>()));
+  return res;
+}
+
 /* fpisinf ------------------------------------------------------------------ */
 
 /**

@@ -168,6 +168,7 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::FP_ADD: res = rewrite_fp_add(node); break;
     case node::Kind::FP_DIV: res = rewrite_fp_div(node); break;
     case node::Kind::FP_EQUAL: res = rewrite_fp_equal(node); break;
+    case node::Kind::FP_FMA: res = rewrite_fp_fma(node); break;
     case node::Kind::FP_GE: res = rewrite_fp_ge(node); break;
     case node::Kind::FP_GT: res = rewrite_fp_gt(node); break;
 
@@ -716,6 +717,21 @@ Rewriter::rewrite_fp_div(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_DIV_EVAL);
+  }
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_fp_fma(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res = node;
+
+  if (d_enabled)
+  {
+    BZLA_APPLY_RW_RULE(FP_FMA_EVAL);
   }
 
 DONE:

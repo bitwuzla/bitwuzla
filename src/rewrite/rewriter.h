@@ -106,6 +106,7 @@ class Rewriter
   Node rewrite_fp_add(const Node& node);
   Node rewrite_fp_div(const Node& node);
   Node rewrite_fp_equal(const Node& node);
+  Node rewrite_fp_fma(const Node& node);
   Node rewrite_fp_gt(const Node& node);
   Node rewrite_fp_ge(const Node& node);
   Node rewrite_fp_is_inf(const Node& node);
@@ -369,6 +370,7 @@ enum class RewriteRuleKind
 
   FP_ADD_EVAL,
   FP_DIV_EVAL,
+  FP_FMA_EVAL,
 
   FP_IS_INF_EVAL,
   FP_IS_INF_ABS_NEG,
