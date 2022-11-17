@@ -175,7 +175,7 @@ _rw_eq_const(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
 
-  if (node[idx0].is_value())
+  if (node[idx0].type().is_bv() && node[idx0].is_value())
   {
     BitVector val = node[idx0].value<BitVector>();
 

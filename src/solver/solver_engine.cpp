@@ -178,7 +178,6 @@ SolverEngine::process_assertion(const Node& assertion, size_t level)
     {
       if (fp::FpSolver::is_leaf(cur))
       {
-        assert(false);
         d_fp_solver.register_term(cur);
       }
       else if (is_array_leaf(cur))

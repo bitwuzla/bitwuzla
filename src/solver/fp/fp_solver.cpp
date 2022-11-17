@@ -89,7 +89,8 @@ FpSolver::value(const Node& term)
     {
       it->second = true;
 
-      Node wb    = d_word_blaster.word_blast(cur);
+      Node wb =
+          d_solver_engine.rewriter().rewrite(d_word_blaster.word_blast(cur));
       Node value = d_solver_engine.value(wb);
       assert(value.type().is_bv());
       const BitVector& bv = value.value<BitVector>();

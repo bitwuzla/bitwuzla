@@ -94,8 +94,9 @@ WordBlaster::word_blast(const Node& node)
 Node
 WordBlaster::_word_blast(const Node& node)
 {
-  assert((node.type().is_bv() && node.num_children()
-          && (node[0].type().is_fp() || node[0].type().is_rm()))
+  assert(node.type().is_bool()
+         || (node.type().is_bv() && node.num_children()
+             && (node[0].type().is_fp() || node[0].type().is_rm()))
          || node.type().is_fp() || node.type().is_rm());
 
   Node res;
