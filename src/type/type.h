@@ -102,6 +102,11 @@ class Type
   bool is_null() const;
 
   /**
+   * @return String representation of this type.
+   */
+  std::string str() const;
+
+  /**
    * Syntactical equality operator.
    *
    * @param other The type to compare against.

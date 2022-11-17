@@ -162,6 +162,14 @@ Type::is_null() const
   return d_data == nullptr;
 }
 
+std::string
+Type::str() const
+{
+  std::stringstream ss;
+  ss << *this;
+  return ss.str();
+}
+
 bool
 Type::operator==(const Type& other) const
 {
