@@ -1746,7 +1746,6 @@ static bool
 check_boolean_args_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p, int32_t nargs)
 {
   int32_t i;
-  uint32_t width;
   for (i = 1; i <= nargs; i++)
   {
     if (bitwuzla_term_is_array(p[i].exp))
@@ -1755,14 +1754,11 @@ check_boolean_args_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p, int32_t nargs)
       return !perr_smt2(
           parser, "argument %d of '%s' is an array term", i, p->node->name);
     }
-    if ((width = bitwuzla_term_bv_get_size(p[i].exp)) != 1)
+    if (!bitwuzla_term_is_bool(p[i].exp))
     {
       parser->perrcoo = p[i].coo;
-      return !perr_smt2(parser,
-                        "argument %d of '%s' is a bit-vector of width %d",
-                        i,
-                        p->node->name,
-                        width);
+      return !perr_smt2(
+          parser, "argument %d of '%s' is not a bool", i, p->node->name);
     }
   }
   return true;
@@ -1817,12 +1813,10 @@ static bool
 check_ite_args_sorts_match_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p)
 {
   assert(p->tag == BZLA_ITE_TAG_SMT2);
-  if (!bitwuzla_term_is_bv(p[1].exp)
-      || bitwuzla_term_bv_get_size(p[1].exp) != 1)
+  if (!bitwuzla_term_is_bool(p[1].exp))
   {
     parser->perrcoo = p[1].coo;
-    return !perr_smt2(parser,
-                      "first argument of 'ite' is not a bit-vector of size 1");
+    return !perr_smt2(parser, "first argument of 'ite' is not a bool");
   }
   if (bitwuzla_term_get_sort(p[2].exp) != bitwuzla_term_get_sort(p[3].exp))
   {
@@ -2874,10 +2868,10 @@ close_term(BzlaSMT2Parser *parser)
           parser, "'not' with %d arguments but expected exactly one", nargs);
     }
     tmp = item_cur[1].exp;
-    if (!bitwuzla_term_is_bv(tmp) || bitwuzla_term_bv_get_size(tmp) != 1)
+    if (!bitwuzla_term_is_bool(tmp))
     {
       parser->perrcoo = item_cur[1].coo;
-      return !perr_smt2(parser, "expected bit-vector of size 1");
+      return !perr_smt2(parser, "expected bool");
     }
     parser->work.top = item_cur;
     item_open->tag   = BZLA_EXP_TAG_SMT2;
@@ -5677,39 +5671,36 @@ check_sat(BzlaSMT2Parser *parser)
              1,
              "WARNING additional 'check-sat' command");
   }
-  if (bitwuzla_get_option(parser->bitwuzla, BITWUZLA_OPT_PARSE_INTERACTIVE))
+  BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
+           1,
+           "parsed %d commands in %.2f seconds",
+           parser->commands.all,
+           bzla_util_time_stamp() - parser->parse_start);
+  parser->res->result = bitwuzla_check_sat(bitwuzla);
+  parser->res->nsatcalls += 1;
+  if (parser->res->result == BITWUZLA_SAT)
   {
-    BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
-             1,
-             "parsed %d commands in %.2f seconds",
-             parser->commands.all,
-             bzla_util_time_stamp() - parser->parse_start);
-    parser->res->result = bitwuzla_check_sat(bitwuzla);
-    parser->res->nsatcalls += 1;
-    if (parser->res->result == BITWUZLA_SAT)
-    {
-      fprintf(parser->outfile, "sat\n");
-    }
-    else if (parser->res->result == BITWUZLA_UNSAT)
-    {
-      fprintf(parser->outfile, "unsat\n");
-    }
-    /* Do not print 'unknown' if we print DIMACS. 'unknown' is only returned if
-     * SAT solver is used non-incremental. */
-    else if (!bitwuzla_get_option(parser->bitwuzla, BITWUZLA_OPT_PRINT_DIMACS))
-    {
-      fprintf(parser->outfile, "unknown\n");
-    }
-    fflush(parser->outfile);
+    fprintf(parser->outfile, "sat\n");
   }
-  else
+  else if (parser->res->result == BITWUZLA_UNSAT)
   {
-    BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
-             1,
-             "parser not interactive, aborted on first "
-             "'check-sat' command");
-    parser->done = true;
+    fprintf(parser->outfile, "unsat\n");
   }
+  /* Do not print 'unknown' if we print DIMACS. 'unknown' is only returned if
+   * SAT solver is used non-incremental. */
+  else if (!bitwuzla_get_option(parser->bitwuzla, BITWUZLA_OPT_PRINT_DIMACS))
+  {
+    fprintf(parser->outfile, "unknown\n");
+  }
+  fflush(parser->outfile);
+  // else
+  //{
+  //   BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
+  //            1,
+  //            "parser not interactive, aborted on first "
+  //            "'check-sat' command");
+  //   parser->done = true;
+  // }
 }
 
 static int32_t
@@ -5753,7 +5744,7 @@ read_exp_list(BzlaSMT2Parser *parser,
 static int32_t
 read_command_smt2(BzlaSMT2Parser *parser)
 {
-  uint32_t i, width, level;
+  uint32_t i, level;
   int32_t tag;
   const BitwuzlaTerm *exp = 0;
   BzlaSMT2Coo coo;
@@ -5906,8 +5897,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
     case BZLA_ASSERT_TAG_SMT2:
       if (!parse_term_smt2(parser, &exp, &coo)) return 0;
       assert(!parser->error);
-      if (!bitwuzla_term_is_bv(exp)
-          || bitwuzla_sort_bv_get_size(bitwuzla_term_get_sort(exp)) != 1)
+      if (!bitwuzla_term_is_bool(exp))
       {
         parser->perrcoo = coo;
         return !perr_smt2(parser, "assert argument is not a formula");
@@ -5915,12 +5905,6 @@ read_command_smt2(BzlaSMT2Parser *parser)
       if (!read_rpar_smt2(parser, " after asserted expression"))
       {
         return 0;
-      }
-      if ((width = bitwuzla_term_bv_get_size(exp)) != 1)
-      {
-        parser->perrcoo = coo;
-        return !perr_smt2(
-            parser, "assert argument is a bit-vector of length %d", width);
       }
       bitwuzla_assert(bitwuzla, exp);
       assert(!parser->error);

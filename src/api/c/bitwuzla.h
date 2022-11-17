@@ -3455,6 +3455,15 @@ bool bitwuzla_sort_is_equal(const BitwuzlaSort *sort0,
 bool bitwuzla_sort_is_array(const BitwuzlaSort *sort);
 
 /**
+ * Determine if a sort is a Boolean sort.
+ *
+ * @param sort The sort.
+ *
+ * @return True if `sort` is a Boolean sort.
+ */
+bool bitwuzla_sort_is_bool(const BitwuzlaSort *sort);
+
+/**
  * Determine if a sort is a bit-vector sort.
  *
  * @param sort The sort.
@@ -3785,6 +3794,15 @@ bool bitwuzla_term_is_fp_value(const BitwuzlaTerm *term);
  * @return True if `term` is a rounding mode value.
  */
 bool bitwuzla_term_is_rm_value(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a Boolean term.
+ *
+ * @param term The term.
+ *
+ * @return True if `term` is a Boolean term.
+ */
+bool bitwuzla_term_is_bool(const BitwuzlaTerm *term);
 
 /**
  * Determine if a term is a bit-vector term.
