@@ -240,6 +240,12 @@ class FloatingPoint
   /** @return True if this floating-point is less than or equal `fp`. */
   bool fple(const FloatingPoint &fp) const;
 
+  /** @return True if this floating-point is less than `fp`. */
+  bool fpgt(const FloatingPoint &fp) const;
+
+  /** @return True if this floating-point is less than or equal `fp`. */
+  bool fpge(const FloatingPoint &fp) const;
+
   /**
    * Create a floating-point representing the absolute value of this
    * floating-point.

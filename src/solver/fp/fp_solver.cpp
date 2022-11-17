@@ -1,6 +1,9 @@
 #include "solver/fp/fp_solver.h"
 
+#include "node/node_kind.h"
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
+#include "node/unordered_node_ref_map.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "solver/solver_engine.h"
@@ -55,7 +58,57 @@ FpSolver::check()
 Node
 FpSolver::value(const Node& term)
 {
-  // TODO
+  assert(term.type().is_fp() || term.type().is_rm());
+
+  NodeManager& nm = NodeManager::get();
+  node::node_ref_vector visit{term};
+  node::unordered_node_ref_map<bool> visited;
+
+  do
+  {
+    const Node& cur = visit.back();
+    assert(cur.type().is_fp() || cur.type().is_rm());
+
+    if (!get_cached_value(cur).is_null())
+    {
+      visit.pop_back();
+      continue;
+    }
+
+    auto it = visited.find(cur);
+    if (it == visited.end())
+    {
+      visited.emplace(cur, false);
+      if (!is_leaf(cur))
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+      continue;
+    }
+    else if (!it->second)
+    {
+      it->second = true;
+
+      Node wb    = d_word_blaster.word_blast(cur);
+      Node value = d_solver_engine.value(wb);
+      assert(value.type().is_bv());
+      const BitVector& bv = value.value<BitVector>();
+      if (cur.type().is_rm())
+      {
+        uint64_t rm = bv.to_uint64();
+        value       = nm.mk_value(static_cast<RoundingMode>(rm));
+      }
+      else
+      {
+        assert(cur.type().is_fp());
+        value = nm.mk_value(FloatingPoint(cur.type(), bv));
+      }
+      cache_value(cur, value);
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+
+  return get_cached_value(term);
 }
 
 void

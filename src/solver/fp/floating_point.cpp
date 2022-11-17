@@ -331,6 +331,19 @@ FloatingPoint::fple(const FloatingPoint &fp) const
       *d_size, *d_uf, *fp.unpacked());
 }
 
+bool
+FloatingPoint::fpgt(const FloatingPoint &fp) const
+{
+  return symfpu::lessThan<fp::SymFpuTraits>(*d_size, *fp.unpacked(), *d_uf);
+}
+
+bool
+FloatingPoint::fpge(const FloatingPoint &fp) const
+{
+  return symfpu::lessThanOrEqual<fp::SymFpuTraits>(
+      *d_size, *fp.unpacked(), *d_uf);
+}
+
 FloatingPoint
 FloatingPoint::fpabs() const
 {
