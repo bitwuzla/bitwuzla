@@ -31,6 +31,7 @@ extern "C" {
 #include <unordered_map>
 
 #include "node/node_manager.h"
+#include "node/node_utils.h"
 #include "solver/fp/floating_point.h"
 #include "solving_context.h"
 
@@ -669,21 +670,6 @@ mk_term_chained(node::Kind kind, const std::vector<Node> &children)
     }
   }
   assert(!res.is_null());
-  return res;
-}
-
-static Node
-mk_term_binder(node::Kind kind, const std::vector<Node> &children)
-{
-  assert(children.size() >= 2);
-  NodeManager &nm = NodeManager::get();
-  Node res        = children.back();
-  for (size_t i = 1, size = children.size(); i < size; ++i)
-  {
-    const auto &var = children[size - 1 - i];
-    assert(var.kind() == node::Kind::VARIABLE);
-    res = nm.mk_node(kind, {var, res});
-  }
   return res;
 }
 
@@ -2223,7 +2209,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       //    "invalid number of arguments for kind 'lambda', expected at least "
       //    "2, got %u",
       //    argc);
-      term = mk_term_binder(node::Kind::LAMBDA, children);
+      term = node::utils::mk_binder(node::Kind::LAMBDA, children);
     }
     break;
 
@@ -2234,7 +2220,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       //    "invalid number of arguments for kind 'forall', expected at least "
       //    "2, got %u",
       //    argc);
-      term = mk_term_binder(node::Kind::FORALL, children);
+      term = node::utils::mk_binder(node::Kind::FORALL, children);
     }
     break;
 
@@ -2245,7 +2231,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       //    "invalid number of arguments for kind 'exists', expected at least "
       //    "2, got %u",
       //    argc);
-      term = mk_term_binder(node::Kind::EXISTS, children);
+      term = node::utils::mk_binder(node::Kind::EXISTS, children);
     }
     break;
 
