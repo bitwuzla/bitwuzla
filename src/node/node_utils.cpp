@@ -287,4 +287,19 @@ mk_default_value(const Type& type)
   return nm.mk_value(RoundingMode::RNA);
 }
 
+Node
+mk_binder(Kind kind, const std::vector<Node>& terms)
+{
+  assert(terms.size() >= 2);
+  NodeManager& nm = NodeManager::get();
+  Node res        = terms.back();
+  for (size_t i = 1, size = terms.size(); i < size; ++i)
+  {
+    const auto& var = terms[size - 1 - i];
+    assert(var.kind() == node::Kind::VARIABLE);
+    res = nm.mk_node(kind, {var, res});
+  }
+  return res;
+}
+
 }  // namespace bzla::node::utils

@@ -74,6 +74,15 @@ Node mk_nary(Kind kind, const std::vector<Node>& terms, bool left_assoc = true);
  * @param type Type of default value.
  */
 Node mk_default_value(const Type& type);
+
+/**
+ * @return Binder node of given kind.
+ * @param kind Binder kind.
+ * @param terms The children of the binder node, the terms[size - 1]
+ *              is the body of the binder and terms[0]...terms[size - 2]
+ *              are variables.
+ */
+Node mk_binder(Kind kind, const std::vector<Node>& terms);
 }
 
 #endif
