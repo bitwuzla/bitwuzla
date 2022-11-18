@@ -443,26 +443,22 @@ static std::unordered_map<node::Kind, BitwuzlaKind>
     assert(bzla_sort_is_valid((sort)->d_bzla->d_bzla, sort->d_bzla_sort));  \
   } while (0)
 
-#define BZLA_CHECK_SORT_IS_ARRAY(bzla, sort)                        \
-  BZLA_ABORT(!bzla_sort_is_fun(bzla, sort)                          \
-                 || bzla_sort_tuple_get_arity(                      \
-                        bzla, bzla_sort_fun_get_domain(bzla, sort)) \
-                        != 1,                                       \
-             "expected array sort");
+#define BZLA_CHECK_SORT_IS_ARRAY(sort) \
+  BZLA_ABORT(!sort->d_type.is_array(), "expected array sort");
 
-#define BZLA_CHECK_SORT_IS_BV(bzla, sort) \
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, sort), "expected bit-vector sort")
+#define BZLA_CHECK_SORT_IS_BV(sort) \
+  BZLA_ABORT(!sort->d_type.is_bv(), "expected bit-vector sort")
 
-#define BZLA_CHECK_SORT_IS_FP(bzla, sort) \
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, sort), "expected floating-point sort")
+#define BZLA_CHECK_SORT_IS_FP(sort) \
+  BZLA_ABORT(!sort->d_type.is_fp(), "expected floating-point sort")
 
 #define BZLA_CHECK_SORT_IS_FP_AT_IDX(bzla, sort, idx)    \
   BZLA_ABORT(!bzla_sort_is_fp(bzla, sort),               \
              "expected floating-point sort at index %u", \
              (idx))
 
-#define BZLA_CHECK_SORT_IS_FUN(bzla, sort) \
-  BZLA_ABORT(!bzla_sort_is_fun(bzla, sort), "expected function sort")
+#define BZLA_CHECK_SORT_IS_FUN(sort) \
+  BZLA_ABORT(!sort->d_type.is_fun(), "expected function sort")
 
 #define BZLA_CHECK_SORT_NOT_IS_FUN(bzla, sort)                            \
   do                                                                      \
@@ -1234,9 +1230,7 @@ bitwuzla_mk_bv_zero(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_BV(sort);
 
   Node term =
       NodeManager::get().mk_value(BitVector::mk_zero(sort->d_type.bv_size()));
@@ -1248,9 +1242,7 @@ bitwuzla_mk_bv_one(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_BV(sort);
 
   Node term =
       NodeManager::get().mk_value(BitVector::mk_one(sort->d_type.bv_size()));
@@ -1262,9 +1254,7 @@ bitwuzla_mk_bv_ones(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_BV(sort);
 
   Node term =
       NodeManager::get().mk_value(BitVector::mk_ones(sort->d_type.bv_size()));
@@ -1276,9 +1266,7 @@ bitwuzla_mk_bv_min_signed(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_BV(sort);
 
   Node term = NodeManager::get().mk_value(
       BitVector::mk_min_signed(sort->d_type.bv_size()));
@@ -1290,9 +1278,7 @@ bitwuzla_mk_bv_max_signed(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_BV(sort);
 
   Node term = NodeManager::get().mk_value(
       BitVector::mk_max_signed(sort->d_type.bv_size()));
@@ -1304,9 +1290,7 @@ bitwuzla_mk_fp_pos_zero(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FP(sort);
 
   Node term =
       NodeManager::get().mk_value(FloatingPoint::fpzero(sort->d_type, true));
@@ -1318,9 +1302,7 @@ bitwuzla_mk_fp_neg_zero(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO
-  // BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FP(sort);
 
   Node term =
       NodeManager::get().mk_value(FloatingPoint::fpzero(sort->d_type, false));
@@ -1332,9 +1314,7 @@ bitwuzla_mk_fp_pos_inf(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FP(sort);
 
   Node term =
       NodeManager::get().mk_value(FloatingPoint::fpinf(sort->d_type, true));
@@ -1346,9 +1326,7 @@ bitwuzla_mk_fp_neg_inf(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FP(sort);
 
   Node term =
       NodeManager::get().mk_value(FloatingPoint::fpinf(sort->d_type, false));
@@ -1360,9 +1338,7 @@ bitwuzla_mk_fp_nan(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FP(sort);
 
   Node term = NodeManager::get().mk_value(FloatingPoint::fpnan(sort->d_type));
   return export_term(bitwuzla, term);
@@ -2515,9 +2491,9 @@ bitwuzla_mk_const_array(Bitwuzla *bitwuzla,
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(sort);
   BZLA_CHECK_ARG_NOT_NULL(value);
+  BZLA_CHECK_SORT_IS_ARRAY(sort);
 
   // TODO: checks
-  // BZLA_CHECK_SORT_IS_ARRAY(bzla, bzla_sort);
   // BZLA_CHECK_TERM_BZLA(bzla, bzla_val);
   // BZLA_CHECK_TERM_NOT_IS_FUN(bzla_val);
   // BZLA_ABORT(bzla_node_get_sort_id(bzla_val)
@@ -3248,9 +3224,7 @@ uint32_t
 bitwuzla_sort_fp_get_exp_size(const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FP(sort);
 
   return sort->d_type.fp_exp_size();
 }
@@ -3259,9 +3233,7 @@ uint32_t
 bitwuzla_sort_fp_get_sig_size(const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FP(sort);
 
   return sort->d_type.fp_sig_size();
 }
@@ -3270,10 +3242,7 @@ const BitwuzlaSort *
 bitwuzla_sort_array_get_index(const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_ARRAY(bzla, bzla_sort);
-
+  BZLA_CHECK_SORT_IS_ARRAY(sort);
   return export_sort(sort->d_bzla, sort->d_type.array_index());
 }
 
@@ -3281,9 +3250,7 @@ const BitwuzlaSort *
 bitwuzla_sort_array_get_element(const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  // TODO: check
-  // BZLA_CHECK_SORT_IS_ARRAY(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_ARRAY(sort);
 
   return export_sort(sort->d_bzla, sort->d_type.array_element());
 }
@@ -3293,9 +3260,7 @@ bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort, size_t *size)
 {
   BZLA_CHECK_ARG_NOT_NULL(sort);
   BZLA_CHECK_ARG_NOT_NULL(size);
-
-  // TODO: checks
-  // BZLA_CHECK_SORT_IS_FUN(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FUN(sort);
 
   auto &sorts = sort->d_bzla->d_sorts;
   sorts.clear();
