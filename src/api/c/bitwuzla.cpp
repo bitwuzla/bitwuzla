@@ -9,7 +9,7 @@
  */
 
 extern "C" {
-#include "bitwuzla.h"
+#include "api/c/bitwuzla.h"
 
 #include "bzlabv.h"
 #include "bzlaconfig.h"

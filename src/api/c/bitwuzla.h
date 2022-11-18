@@ -8,8 +8,8 @@
  * See COPYING for more information on using this software.
  */
 
-#ifndef BITWUZLA_H_INCLUDED
-#define BITWUZLA_H_INCLUDED
+#ifndef BITWUZLA_API_C_H_INCLUDED
+#define BITWUZLA_API_C_H_INCLUDED
 
 #include <stdbool.h>
 #include <stdint.h>

@@ -101,7 +101,7 @@ class {bzla_enum:s}(Enum):
 # Template for the whole file
 FILE_TEMPLATE = """from enum import Enum
 
-cdef extern from \"bitwuzla.h\":
+cdef extern from \"api/c/bitwuzla.h\":
 {cenums:s}
 
 {pyenums:s}"""

@@ -13,7 +13,7 @@
 
 #include <Python.h>
 
-#include "bitwuzla.h"
+#include "api/c/bitwuzla.h"
 
 #if __cplusplus
 extern "C" {
