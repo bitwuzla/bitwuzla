@@ -1,28 +1,14 @@
-/***
- * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
- *
- * This file is part of Bitwuzla.
- *
- * Copyright (C) 2007-2022 by the authors listed in the AUTHORS file.
- *
- * See COPYING for more information on using this software.
- */
-
 #include <bitset>
 
-#include "test.h"
+#include "node/node_manager.h"
+#include "solver/fp/floating_point.h"
+#include "test/unit/test.h"
 
-extern "C" {
-#include "bzlabv.h"
-#include "bzlaexp.h"
-#include "bzlafp.h"
-}
+namespace bzla::test {
 
-class TestFp : public TestBitwuzla
-{
-};
+using namespace node;
 
-class TestFpInternal : public TestBzla
+class TestFp : public TestCommon
 {
  protected:
   enum RationalMode
@@ -35,135 +21,72 @@ class TestFpInternal : public TestBzla
 
   void SetUp() override
   {
-    TestBzla::SetUp();
-
-    d_f16  = bzla_sort_fp(d_bzla, 5, 11);
-    d_f32  = bzla_sort_fp(d_bzla, 8, 24);
-    d_f64  = bzla_sort_fp(d_bzla, 11, 53);
-    d_f128 = bzla_sort_fp(d_bzla, 15, 113);
-  }
-
-  void TearDown() override
-  {
-    bzla_sort_release(d_bzla, d_f16);
-    bzla_sort_release(d_bzla, d_f32);
-    bzla_sort_release(d_bzla, d_f64);
-    bzla_sort_release(d_bzla, d_f128);
-    TestBzla::TearDown();
+    TestCommon::SetUp();
+    d_fp16  = d_nm.mk_fp_type(5, 11);
+    d_fp32  = d_nm.mk_fp_type(8, 24);
+    d_fp64  = d_nm.mk_fp_type(11, 53);
+    d_fp128 = d_nm.mk_fp_type(15, 113);
   }
 
   void test_fp_as_bv(std::string sign, std::string exp, std::string sig)
   {
     assert(sign.size() == 1);
 
-    BzlaSortId sort_fp, sort_sign, sort_exp, sort_sig;
-    BzlaNode *node_fp, *node_bv_sign, *node_bv_exp, *node_bv_sig;
-    BzlaBitVector *bv_sign, *bv_exp, *bv_sig;
-    BzlaBitVector *res_bv, *res_sign, *res_exp, *res_sig, *tmp, *res_tmp;
-    BzlaFloatingPoint *fp;
-    uint32_t bw_sig, bw_exp;
+    Type type_sign = d_nm.mk_bv_type(1);
+    Type type_exp  = d_nm.mk_bv_type(exp.size());
+    Type type_sig  = d_nm.mk_bv_type(sig.size());
 
-    bv_sign = bzla_bv_char_to_bv(d_bzla->mm, sign.c_str());
-    bv_exp  = bzla_bv_char_to_bv(d_bzla->mm, exp.c_str());
-    bv_sig  = bzla_bv_char_to_bv(d_bzla->mm, sig.c_str());
+    BitVector bv_sign(1, sign);
+    BitVector bv_exp(exp.size(), exp);
+    BitVector bv_sig(sig.size(), sig);
 
-    bw_exp = exp.size();
-    bw_sig = sig.size() + 1;
+    Node node_sign = d_nm.mk_value(bv_sign);
+    Node node_exp  = d_nm.mk_value(bv_exp);
+    Node node_sig  = d_nm.mk_value(bv_sig);
 
-    sort_sign = bzla_sort_bv(d_bzla, 1);
-    sort_exp  = bzla_sort_bv(d_bzla, bw_exp);
-    sort_sig  = bzla_sort_bv(d_bzla, bw_sig);
+    Type type_fp = d_nm.mk_fp_type(exp.size(), sig.size() + 1);
+    Node node_fp = d_nm.mk_value(FloatingPoint::fpfp(bv_sign, bv_exp, bv_sig));
 
-    node_bv_sign = bzla_exp_bv_const(d_bzla, bv_sign);
-    node_bv_exp  = bzla_exp_bv_const(d_bzla, bv_exp);
-    node_bv_sig  = bzla_exp_bv_const(d_bzla, bv_sig);
+    FloatingPoint fp = node_fp.value<FloatingPoint>();
 
-    sort_fp = bzla_sort_fp(d_bzla, bw_exp, bw_sig);
-    node_fp = bzla_exp_fp_const(d_bzla, node_bv_sign, node_bv_exp, node_bv_sig);
+    BitVector res_bv = fp.as_bv();
+    BitVector res_sign, res_exp, res_sig;
+    FloatingPoint::ieee_bv_as_bvs(type_fp, res_bv, res_sign, res_exp, res_sig);
+    ASSERT_EQ(res_bv.compare(res_sign.bvconcat(res_exp).ibvconcat(res_sig)), 0);
 
-    fp = bzla_fp_get_fp(node_fp);
-
-    res_bv = bzla_fp_as_bv(d_bzla, fp);
-    bzla_fp_ieee_bv_as_bvs(
-        d_bzla, res_bv, sort_fp, &res_sign, &res_exp, &res_sig);
-    tmp     = bzla_bv_concat(d_bzla->mm, res_sign, res_exp);
-    res_tmp = bzla_bv_concat(d_bzla->mm, tmp, res_sig);
-    assert(bzla_bv_compare(res_bv, res_tmp) == 0);
-    ASSERT_EQ(bzla_bv_compare(res_bv, res_tmp), 0);
-
-    if (bzla_fp_is_nan(d_bzla, fp))
+    if (fp.fpisnan())
     {
-      BzlaFloatingPoint *nan = bzla_fp_nan(d_bzla, sort_fp);
-      ASSERT_EQ(bzla_fp_compare(fp, nan), 0);
-      bzla_fp_free(d_bzla, nan);
+      ASSERT_EQ(fp.compare(FloatingPoint::fpnan(type_fp)), 0);
     }
     else
     {
-      ASSERT_EQ(bzla_bv_compare(bv_sign, res_sign), 0);
-      ASSERT_EQ(bzla_bv_compare(bv_exp, res_exp), 0);
-      ASSERT_EQ(bzla_bv_compare(bv_sig, res_sig), 0);
+      ASSERT_EQ(bv_sign.compare(res_sign), 0);
+      ASSERT_EQ(bv_exp.compare(res_exp), 0);
+      ASSERT_EQ(bv_sig.compare(res_sig), 0);
     }
-
-    bzla_node_release(d_bzla, node_fp);
-    bzla_sort_release(d_bzla, sort_fp);
-    bzla_node_release(d_bzla, node_bv_sig);
-    bzla_node_release(d_bzla, node_bv_exp);
-    bzla_node_release(d_bzla, node_bv_sign);
-    bzla_sort_release(d_bzla, sort_sig);
-    bzla_sort_release(d_bzla, sort_exp);
-    bzla_sort_release(d_bzla, sort_sign);
-    bzla_bv_free(d_bzla->mm, tmp);
-    bzla_bv_free(d_bzla->mm, res_tmp);
-    bzla_bv_free(d_bzla->mm, bv_sig);
-    bzla_bv_free(d_bzla->mm, bv_exp);
-    bzla_bv_free(d_bzla->mm, bv_sign);
-    bzla_bv_free(d_bzla->mm, res_sig);
-    bzla_bv_free(d_bzla->mm, res_exp);
-    bzla_bv_free(d_bzla->mm, res_sign);
-    bzla_bv_free(d_bzla->mm, res_bv);
   }
 
-  void test_to_fp_from_real(BzlaRoundingMode rm,
+  void test_to_fp_from_real(RoundingMode rm,
                             std::vector<std::vector<const char *>> &expected)
   {
-    BzlaMemMgr *mm = d_bzla->mm;
-    BzlaFloatingPoint *fp;
-    BzlaBitVector *sign, *exp, *sig;
-    char *sign_str, *exp_str, *sig_str;
-
     assert(d_constants_dec.size() == expected.size());
     for (size_t i = 0, n = d_constants_dec.size(); i < n; ++i)
     {
-      fp = bzla_fp_convert_from_real(d_bzla, d_f16, rm, d_constants_dec[i]);
-      BzlaBitVector *bv = bzla_fp_as_bv(d_bzla, fp);
-      bzla_fp_ieee_bv_as_bvs(d_bzla, bv, d_f16, &sign, &exp, &sig);
-      bzla_bv_free(d_bzla->mm, bv);
-      sign_str = bzla_bv_to_char(mm, sign);
-      exp_str  = bzla_bv_to_char(mm, exp);
-      sig_str  = bzla_bv_to_char(mm, sig);
-      ASSERT_EQ(strcmp(sign_str, expected[i][0]), 0);
-      ASSERT_EQ(strcmp(exp_str, expected[i][1]), 0);
-      ASSERT_EQ(strcmp(sig_str, expected[i][2]), 0);
-
-      bzla_mem_freestr(mm, sign_str);
-      bzla_mem_freestr(mm, exp_str);
-      bzla_mem_freestr(mm, sig_str);
-      bzla_bv_free(mm, sign);
-      bzla_bv_free(mm, exp);
-      bzla_bv_free(mm, sig);
-      bzla_fp_free(d_bzla, fp);
+      FloatingPoint fp =
+          FloatingPoint::from_real(d_fp16, rm, d_constants_dec[i]);
+      BitVector sign, exp, sig;
+      FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
+      ASSERT_EQ(sign.to_string(), expected[i][0]);
+      ASSERT_EQ(exp.to_string(), expected[i][1]);
+      ASSERT_EQ(sig.to_string(), expected[i][2]);
     }
   }
 
   void test_to_fp_from_rational(
       RationalMode mode,
-      BzlaRoundingMode rm,
+      RoundingMode rm,
       std::vector<std::vector<const char *>> &expected)
   {
-    BzlaMemMgr *mm = d_bzla->mm;
-    BzlaFloatingPoint *fp;
-    BzlaBitVector *sign, *exp, *sig;
-    char *sign_str, *exp_str, *sig_str;
     std::vector<std::pair<const char *, const char *>> &constants =
         d_constants_rat;
 
@@ -183,25 +106,13 @@ class TestFpInternal : public TestBzla
     assert(constants.size() == expected.size());
     for (size_t i = 0, n = constants.size(); i < n; ++i)
     {
-      fp = bzla_fp_convert_from_rational(
-          d_bzla, d_f16, rm, constants[i].first, constants[i].second);
-      BzlaBitVector *bv = bzla_fp_as_bv(d_bzla, fp);
-      bzla_fp_ieee_bv_as_bvs(d_bzla, bv, d_f16, &sign, &exp, &sig);
-      bzla_bv_free(d_bzla->mm, bv);
-      sign_str = bzla_bv_to_char(mm, sign);
-      exp_str  = bzla_bv_to_char(mm, exp);
-      sig_str  = bzla_bv_to_char(mm, sig);
-      ASSERT_EQ(strcmp(sign_str, expected[i][0]), 0);
-      ASSERT_EQ(strcmp(exp_str, expected[i][1]), 0);
-      ASSERT_EQ(strcmp(sig_str, expected[i][2]), 0);
-
-      bzla_mem_freestr(mm, sign_str);
-      bzla_mem_freestr(mm, exp_str);
-      bzla_mem_freestr(mm, sig_str);
-      bzla_bv_free(mm, sign);
-      bzla_bv_free(mm, exp);
-      bzla_bv_free(mm, sig);
-      bzla_fp_free(d_bzla, fp);
+      FloatingPoint fp = FloatingPoint::from_rational(
+          d_fp16, rm, constants[i].first, constants[i].second);
+      BitVector sign, exp, sig;
+      FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
+      ASSERT_EQ(sign.to_string(), expected[i][0]);
+      ASSERT_EQ(exp.to_string(), expected[i][1]);
+      ASSERT_EQ(sig.to_string(), expected[i][2]);
     }
   }
 
@@ -1426,36 +1337,16 @@ class TestFpInternal : public TestBzla
       {"9993908270191.0", "10000000000000.0"},
       {"99984769515639.0", "100000000000000.0"},
   };
-  BzlaSortId d_f16;
-  BzlaSortId d_f32;
-  BzlaSortId d_f64;
-  BzlaSortId d_f128;
+  Type d_fp16;
+  Type d_fp32;
+  Type d_fp64;
+  Type d_fp128;
+
+  /** The node manager. */
+  NodeManager &d_nm = NodeManager::get();
 };
 
-TEST_F(TestFp, sort_fp)
-{
-  const BitwuzlaSort *f16, *f32, *f64, *f128;
-
-  f16 = bitwuzla_mk_fp_sort(d_bzla, 5, 11);
-  ASSERT_TRUE(bitwuzla_sort_is_fp(f16));
-
-  f32 = bitwuzla_mk_fp_sort(d_bzla, 8, 24);
-  ASSERT_TRUE(bitwuzla_sort_is_fp(f32));
-
-  f64 = bitwuzla_mk_fp_sort(d_bzla, 11, 53);
-  ASSERT_TRUE(bitwuzla_sort_is_fp(f64));
-
-  f128 = bitwuzla_mk_fp_sort(d_bzla, 15, 113);
-  ASSERT_TRUE(bitwuzla_sort_is_fp(f128));
-}
-
-TEST_F(TestFp, sort_rm)
-{
-  const BitwuzlaSort *rm = bitwuzla_mk_rm_sort(d_bzla);
-  ASSERT_TRUE(bitwuzla_sort_is_rm(rm));
-}
-
-TEST_F(TestFpInternal, fp_as_bv)
+TEST_F(TestFp, fp_as_bv)
 {
   for (uint64_t i = 0; i < (1u << 5); ++i)
   {
@@ -1471,55 +1362,66 @@ TEST_F(TestFpInternal, fp_as_bv)
   }
 }
 
-TEST_F(TestFpInternal, fp_is_const)
+TEST_F(TestFp, fp_is_value)
 {
-  BzlaSortId sorts[4] = {d_f16, d_f32, d_f64, d_f128};
+  Type types[4] = {d_fp16, d_fp32, d_fp64, d_fp128};
 
   for (uint32_t i = 0; i < 4; i++)
   {
-    BzlaNode *pzero = bzla_exp_fp_pos_zero(d_bzla, sorts[i]);
-    ASSERT_TRUE(bzla_node_is_fp_const_pos_zero(d_bzla, pzero));
-    ASSERT_TRUE(!bzla_node_is_fp_const_neg_zero(d_bzla, pzero));
-    ASSERT_TRUE(!bzla_node_is_fp_const_pos_inf(d_bzla, pzero));
-    ASSERT_TRUE(!bzla_node_is_fp_const_neg_inf(d_bzla, pzero));
-    ASSERT_TRUE(!bzla_node_is_fp_const_nan(d_bzla, pzero));
-    bzla_node_release(d_bzla, pzero);
-
-    BzlaNode *nzero = bzla_exp_fp_neg_zero(d_bzla, sorts[i]);
-    ASSERT_TRUE(!bzla_node_is_fp_const_pos_zero(d_bzla, nzero));
-    ASSERT_TRUE(bzla_node_is_fp_const_neg_zero(d_bzla, nzero));
-    ASSERT_TRUE(!bzla_node_is_fp_const_pos_inf(d_bzla, nzero));
-    ASSERT_TRUE(!bzla_node_is_fp_const_neg_inf(d_bzla, nzero));
-    ASSERT_TRUE(!bzla_node_is_fp_const_nan(d_bzla, nzero));
-    bzla_node_release(d_bzla, nzero);
-
-    BzlaNode *pinf = bzla_exp_fp_pos_inf(d_bzla, sorts[i]);
-    ASSERT_TRUE(!bzla_node_is_fp_const_pos_zero(d_bzla, pinf));
-    ASSERT_TRUE(!bzla_node_is_fp_const_neg_zero(d_bzla, pinf));
-    ASSERT_TRUE(bzla_node_is_fp_const_pos_inf(d_bzla, pinf));
-    ASSERT_TRUE(!bzla_node_is_fp_const_neg_inf(d_bzla, pinf));
-    ASSERT_TRUE(!bzla_node_is_fp_const_nan(d_bzla, pinf));
-    bzla_node_release(d_bzla, pinf);
-
-    BzlaNode *ninf = bzla_exp_fp_neg_inf(d_bzla, sorts[i]);
-    ASSERT_TRUE(!bzla_node_is_fp_const_pos_zero(d_bzla, ninf));
-    ASSERT_TRUE(!bzla_node_is_fp_const_neg_zero(d_bzla, ninf));
-    ASSERT_TRUE(!bzla_node_is_fp_const_pos_inf(d_bzla, ninf));
-    ASSERT_TRUE(bzla_node_is_fp_const_neg_inf(d_bzla, ninf));
-    ASSERT_TRUE(!bzla_node_is_fp_const_nan(d_bzla, ninf));
-    bzla_node_release(d_bzla, ninf);
-
-    BzlaNode *nan = bzla_exp_fp_nan(d_bzla, sorts[i]);
-    ASSERT_TRUE(!bzla_node_is_fp_const_pos_zero(d_bzla, nan));
-    ASSERT_TRUE(!bzla_node_is_fp_const_neg_zero(d_bzla, nan));
-    ASSERT_TRUE(!bzla_node_is_fp_const_pos_inf(d_bzla, nan));
-    ASSERT_TRUE(!bzla_node_is_fp_const_neg_inf(d_bzla, nan));
-    ASSERT_TRUE(bzla_node_is_fp_const_nan(d_bzla, nan));
-    bzla_node_release(d_bzla, nan);
+    {
+      Node value = d_nm.mk_value(FloatingPoint::fpzero(types[i], false));
+      ASSERT_TRUE(value.is_value());
+      FloatingPoint fp_value = value.value<FloatingPoint>();
+      ASSERT_TRUE(fp_value.fpiszero());
+      ASSERT_TRUE(fp_value.fpispos());
+      ASSERT_FALSE(fp_value.fpisneg());
+      ASSERT_FALSE(fp_value.fpisinf());
+      ASSERT_FALSE(fp_value.fpisnan());
+    }
+    {
+      Node value = d_nm.mk_value(FloatingPoint::fpzero(types[i], true));
+      ASSERT_TRUE(value.is_value());
+      FloatingPoint fp_value = value.value<FloatingPoint>();
+      ASSERT_TRUE(fp_value.fpiszero());
+      ASSERT_FALSE(fp_value.fpispos());
+      ASSERT_TRUE(fp_value.fpisneg());
+      ASSERT_FALSE(fp_value.fpisinf());
+      ASSERT_FALSE(fp_value.fpisnan());
+    }
+    {
+      Node value = d_nm.mk_value(FloatingPoint::fpinf(types[i], false));
+      ASSERT_TRUE(value.is_value());
+      FloatingPoint fp_value = value.value<FloatingPoint>();
+      ASSERT_FALSE(fp_value.fpiszero());
+      ASSERT_TRUE(fp_value.fpispos());
+      ASSERT_FALSE(fp_value.fpisneg());
+      ASSERT_TRUE(fp_value.fpisinf());
+      ASSERT_FALSE(fp_value.fpisnan());
+    }
+    {
+      Node value = d_nm.mk_value(FloatingPoint::fpinf(types[i], true));
+      ASSERT_TRUE(value.is_value());
+      FloatingPoint fp_value = value.value<FloatingPoint>();
+      ASSERT_FALSE(fp_value.fpiszero());
+      ASSERT_FALSE(fp_value.fpispos());
+      ASSERT_TRUE(fp_value.fpisneg());
+      ASSERT_TRUE(fp_value.fpisinf());
+      ASSERT_FALSE(fp_value.fpisnan());
+    }
+    {
+      Node value = d_nm.mk_value(FloatingPoint::fpnan(types[i]));
+      ASSERT_TRUE(value.is_value());
+      FloatingPoint fp_value = value.value<FloatingPoint>();
+      ASSERT_FALSE(fp_value.fpiszero());
+      ASSERT_FALSE(fp_value.fpispos());
+      ASSERT_FALSE(fp_value.fpisneg());
+      ASSERT_FALSE(fp_value.fpisinf());
+      ASSERT_TRUE(fp_value.fpisnan());
+    }
   }
 }
 
-TEST_F(TestFpInternal, fp_from_real_dec_str_rna)
+TEST_F(TestFp, fp_from_real_dec_str_rna)
 {
   std::vector<std::vector<const char *>> expected = {
       {"0", "00000", "0000000000"}, {"0", "00000", "0000000000"},
@@ -1614,10 +1516,10 @@ TEST_F(TestFpInternal, fp_from_real_dec_str_rna)
       {"0", "10010", "0010000000"},
   };
 
-  test_to_fp_from_real(BzlaRoundingMode::BZLA_RM_RNA, expected);
+  test_to_fp_from_real(RoundingMode::RNA, expected);
 }
 
-TEST_F(TestFpInternal, fp_from_real_dec_str_rne)
+TEST_F(TestFp, fp_from_real_dec_str_rne)
 {
   std::vector<std::vector<const char *>> expected = {
       {"0", "00000", "0000000000"}, {"0", "00000", "0000000000"},
@@ -1712,10 +1614,10 @@ TEST_F(TestFpInternal, fp_from_real_dec_str_rne)
       {"0", "10010", "0010000000"},
   };
 
-  test_to_fp_from_real(BzlaRoundingMode::BZLA_RM_RNE, expected);
+  test_to_fp_from_real(RoundingMode::RNE, expected);
 }
 
-TEST_F(TestFpInternal, fp_from_real_dec_str_rtn)
+TEST_F(TestFp, fp_from_real_dec_str_rtn)
 {
   std::vector<std::vector<const char *>> expected = {
       {"0", "00000", "0000000000"}, {"0", "00000", "0000000000"},
@@ -1810,10 +1712,10 @@ TEST_F(TestFpInternal, fp_from_real_dec_str_rtn)
       {"0", "10010", "0010000000"},
   };
 
-  test_to_fp_from_real(BzlaRoundingMode::BZLA_RM_RTN, expected);
+  test_to_fp_from_real(RoundingMode::RTN, expected);
 }
 
-TEST_F(TestFpInternal, fp_from_real_dec_str_rtp)
+TEST_F(TestFp, fp_from_real_dec_str_rtp)
 {
   std::vector<std::vector<const char *>> expected = {
 
@@ -1909,10 +1811,10 @@ TEST_F(TestFpInternal, fp_from_real_dec_str_rtp)
       {"0", "10010", "0010000000"},
   };
 
-  test_to_fp_from_real(BzlaRoundingMode::BZLA_RM_RTP, expected);
+  test_to_fp_from_real(RoundingMode::RTP, expected);
 }
 
-TEST_F(TestFpInternal, fp_from_real_dec_str_rtz)
+TEST_F(TestFp, fp_from_real_dec_str_rtz)
 {
   std::vector<std::vector<const char *>> expected = {
 
@@ -2008,10 +1910,10 @@ TEST_F(TestFpInternal, fp_from_real_dec_str_rtz)
       {"0", "10010", "0010000000"},
   };
 
-  test_to_fp_from_real(BzlaRoundingMode::BZLA_RM_RTZ, expected);
+  test_to_fp_from_real(RoundingMode::RTZ, expected);
 }
 
-TEST_F(TestFpInternal, fp_from_real_rat_str_rna)
+TEST_F(TestFp, fp_from_real_rat_str_rna)
 {
   std::vector<std::vector<const char *>> expected = {
       {"0", "01111", "0000000000"}, {"0", "01011", "1001100110"},
@@ -2141,13 +2043,13 @@ TEST_F(TestFpInternal, fp_from_real_rat_str_rna)
       {"0", "01110", "1111111111"}, {"0", "01111", "0000000000"},
   };
 
-  test_to_fp_from_rational(INT, BzlaRoundingMode::BZLA_RM_RNA, expected);
-  test_to_fp_from_rational(NUM_DEC, BzlaRoundingMode::BZLA_RM_RNA, expected);
-  test_to_fp_from_rational(DEN_DEC, BzlaRoundingMode::BZLA_RM_RNA, expected);
-  test_to_fp_from_rational(DEC, BzlaRoundingMode::BZLA_RM_RNA, expected);
+  test_to_fp_from_rational(INT, RoundingMode::RNA, expected);
+  test_to_fp_from_rational(NUM_DEC, RoundingMode::RNA, expected);
+  test_to_fp_from_rational(DEN_DEC, RoundingMode::RNA, expected);
+  test_to_fp_from_rational(DEC, RoundingMode::RNA, expected);
 }
 
-TEST_F(TestFpInternal, fp_from_real_rat_str_rne)
+TEST_F(TestFp, fp_from_real_rat_str_rne)
 {
   std::vector<std::vector<const char *>> expected = {
       {"0", "01111", "0000000000"}, {"0", "01011", "1001100110"},
@@ -2277,13 +2179,13 @@ TEST_F(TestFpInternal, fp_from_real_rat_str_rne)
       {"0", "01110", "1111111111"}, {"0", "01111", "0000000000"},
   };
 
-  test_to_fp_from_rational(INT, BzlaRoundingMode::BZLA_RM_RNE, expected);
-  test_to_fp_from_rational(NUM_DEC, BzlaRoundingMode::BZLA_RM_RNE, expected);
-  test_to_fp_from_rational(DEN_DEC, BzlaRoundingMode::BZLA_RM_RNE, expected);
-  test_to_fp_from_rational(DEC, BzlaRoundingMode::BZLA_RM_RNE, expected);
+  test_to_fp_from_rational(INT, RoundingMode::RNE, expected);
+  test_to_fp_from_rational(NUM_DEC, RoundingMode::RNE, expected);
+  test_to_fp_from_rational(DEN_DEC, RoundingMode::RNE, expected);
+  test_to_fp_from_rational(DEC, RoundingMode::RNE, expected);
 }
 
-TEST_F(TestFpInternal, fp_from_real_rat_str_rtn)
+TEST_F(TestFp, fp_from_real_rat_str_rtn)
 {
   std::vector<std::vector<const char *>> expected = {
       {"0", "01111", "0000000000"}, {"0", "01011", "1001100110"},
@@ -2413,13 +2315,13 @@ TEST_F(TestFpInternal, fp_from_real_rat_str_rtn)
       {"0", "01110", "1111111110"}, {"0", "01110", "1111111111"},
   };
 
-  test_to_fp_from_rational(INT, BzlaRoundingMode::BZLA_RM_RTN, expected);
-  test_to_fp_from_rational(NUM_DEC, BzlaRoundingMode::BZLA_RM_RTN, expected);
-  test_to_fp_from_rational(DEN_DEC, BzlaRoundingMode::BZLA_RM_RTN, expected);
-  test_to_fp_from_rational(DEC, BzlaRoundingMode::BZLA_RM_RTN, expected);
+  test_to_fp_from_rational(INT, RoundingMode::RTN, expected);
+  test_to_fp_from_rational(NUM_DEC, RoundingMode::RTN, expected);
+  test_to_fp_from_rational(DEN_DEC, RoundingMode::RTN, expected);
+  test_to_fp_from_rational(DEC, RoundingMode::RTN, expected);
 }
 
-TEST_F(TestFpInternal, fp_from_real_rat_str_rtp)
+TEST_F(TestFp, fp_from_real_rat_str_rtp)
 {
   std::vector<std::vector<const char *>> expected = {
       {"0", "01111", "0000000000"}, {"0", "01011", "1001100111"},
@@ -2549,13 +2451,13 @@ TEST_F(TestFpInternal, fp_from_real_rat_str_rtp)
       {"0", "01110", "1111111111"}, {"0", "01111", "0000000000"},
   };
 
-  test_to_fp_from_rational(INT, BzlaRoundingMode::BZLA_RM_RTP, expected);
-  test_to_fp_from_rational(NUM_DEC, BzlaRoundingMode::BZLA_RM_RTP, expected);
-  test_to_fp_from_rational(DEN_DEC, BzlaRoundingMode::BZLA_RM_RTP, expected);
-  test_to_fp_from_rational(DEC, BzlaRoundingMode::BZLA_RM_RTP, expected);
+  test_to_fp_from_rational(INT, RoundingMode::RTP, expected);
+  test_to_fp_from_rational(NUM_DEC, RoundingMode::RTP, expected);
+  test_to_fp_from_rational(DEN_DEC, RoundingMode::RTP, expected);
+  test_to_fp_from_rational(DEC, RoundingMode::RTP, expected);
 }
 
-TEST_F(TestFpInternal, fp_from_real_rat_str_rtz)
+TEST_F(TestFp, fp_from_real_rat_str_rtz)
 {
   std::vector<std::vector<const char *>> expected = {
       {"0", "01111", "0000000000"}, {"0", "01011", "1001100110"},
@@ -2685,8 +2587,10 @@ TEST_F(TestFpInternal, fp_from_real_rat_str_rtz)
       {"0", "01110", "1111111110"}, {"0", "01110", "1111111111"},
   };
 
-  test_to_fp_from_rational(INT, BzlaRoundingMode::BZLA_RM_RTZ, expected);
-  test_to_fp_from_rational(NUM_DEC, BzlaRoundingMode::BZLA_RM_RTZ, expected);
-  test_to_fp_from_rational(DEN_DEC, BzlaRoundingMode::BZLA_RM_RTZ, expected);
-  test_to_fp_from_rational(DEC, BzlaRoundingMode::BZLA_RM_RTZ, expected);
+  test_to_fp_from_rational(INT, RoundingMode::RTZ, expected);
+  test_to_fp_from_rational(NUM_DEC, RoundingMode::RTZ, expected);
+  test_to_fp_from_rational(DEN_DEC, RoundingMode::RTZ, expected);
+  test_to_fp_from_rational(DEC, RoundingMode::RTZ, expected);
 }
+
+}  // namespace bzla::test

@@ -43,10 +43,6 @@ set(test_names
   #util
 )
 
-if(SymFPU_FOUND)
-  list(APPEND test_names api fp)
-endif()
-
 macro(_add_unit_test test_name is_white)
   if((NOT ${is_white}) OR ENABLE_WHITEBOX_TESTS)
     add_executable(${test_name} ${test_name}.cpp)
