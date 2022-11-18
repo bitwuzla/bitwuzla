@@ -64,7 +64,7 @@ class SolverEngine
    * Processes given assertion and distributes reachable theory leafs to
    * solvers.
    */
-  void process_assertion(const Node& assertion, size_t level);
+  void process_assertion(const Node& assertion, bool top_level);
 
   /** Process lemmas added via lemma(). */
   void process_lemmas();
@@ -78,8 +78,10 @@ class SolverEngine
   backtrack::PopCallback d_pop_callback;
   /** Assertion view of unprocessed assertions. */
   backtrack::AssertionView& d_assertions;
-  /** Cache used by process_assertion(). */
-  backtrack::unordered_set<Node> d_register_cache;
+  /** Assertion cache used by process_assertion(). */
+  backtrack::unordered_set<Node> d_register_assertion_cache;
+  /** Term cache used by process_assertion(). */
+  backtrack::unordered_set<Node> d_register_term_cache;
 
   /** Lemmas added via lemma(). */
   std::vector<Node> d_lemmas;

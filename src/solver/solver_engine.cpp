@@ -12,7 +12,8 @@ SolverEngine::SolverEngine(SolvingContext& context)
     : d_context(context),
       d_pop_callback(context.backtrack_mgr(), &d_backtrack_mgr),
       d_assertions(context.assertions()),
-      d_register_cache(&d_backtrack_mgr),
+      d_register_assertion_cache(&d_backtrack_mgr),
+      d_register_term_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
       d_bv_solver(*this),
       d_fp_solver(*this),
@@ -37,6 +38,7 @@ SolverEngine::solve()
       break;
     }
     assert(d_sat_state == Result::SAT);
+    // TODO: process lemmas after each check()?
     d_fp_solver.check();
     // d_array_solver.check();
     d_fun_solver.check();
@@ -144,7 +146,7 @@ SolverEngine::process_assertions()
     preprocess::AssertionVector assertions(d_assertions);
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
-      process_assertion(assertions[i], level);
+      process_assertion(assertions[i], level == 0);
     }
 
     // Advance assertions to next level
@@ -158,12 +160,13 @@ SolverEngine::process_assertions()
 }
 
 void
-SolverEngine::process_assertion(const Node& assertion, size_t level)
+SolverEngine::process_assertion(const Node& assertion, bool top_level)
 {
   // Send assertion to bit-vector solver.
-  if (d_register_cache.find(assertion) == d_register_cache.end())
+  auto [it, inserted] = d_register_assertion_cache.insert(assertion);
+  if (inserted)
   {
-    d_bv_solver.register_assertion(assertion, level == 0);
+    d_bv_solver.register_assertion(assertion, top_level);
   }
 
   // Send theory leafs to corresponding solvers.
@@ -173,7 +176,7 @@ SolverEngine::process_assertion(const Node& assertion, size_t level)
     const Node& cur = visit.back();
     visit.pop_back();
 
-    auto [it, inserted] = d_register_cache.insert(cur);
+    auto [it, inserted] = d_register_term_cache.insert(cur);
     if (inserted)
     {
       if (fp::FpSolver::is_leaf(cur))
@@ -188,6 +191,10 @@ SolverEngine::process_assertion(const Node& assertion, size_t level)
       else if (fun::FunSolver::is_leaf(cur))
       {
         d_fun_solver.register_term(cur);
+        if (cur.kind() == Kind::APPLY)
+        {
+          visit.insert(visit.end(), cur.begin() + 1, cur.end());
+        }
       }
       else if (is_quant_leaf(cur))
       {
