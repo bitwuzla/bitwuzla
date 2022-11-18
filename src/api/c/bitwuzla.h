@@ -815,8 +815,6 @@ const BitwuzlaSort *bitwuzla_mk_array_sort(Bitwuzla *bitwuzla,
 /**
  * Create a Boolean sort.
  *
- * @note A Boolean sort is a bit-vector sort of size 1.
- *
  * @param bitwuzla The Bitwuzla instance.
  *
  * @return A Boolean sort.
@@ -902,22 +900,18 @@ const BitwuzlaSort *bitwuzla_mk_rm_sort(Bitwuzla *bitwuzla);
 /**
  * Create a true value.
  *
- * @note This creates a bit-vector value 1 of size 1.
- *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return A term representing the bit-vector value 1 of size 1.
+ * @return A term representing true.
  */
 const BitwuzlaTerm *bitwuzla_mk_true(Bitwuzla *bitwuzla);
 
 /**
  * Create a false value.
  *
- * @note This creates a bit-vector value 0 of size 1.
- *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return A term representing the bit-vector value 0 of size 1.
+ * @return A term representing false.
  */
 const BitwuzlaTerm *bitwuzla_mk_false(Bitwuzla *bitwuzla);
 
@@ -1448,7 +1442,7 @@ const BitwuzlaTerm *bitwuzla_mk_var(Bitwuzla *bitwuzla,
  * Requires that incremental solving has been enabled via
  * `bitwuzla_set_option()`.
  *
- * @note Assumptions added via this `bitwuzla_assume()` are not affected by
+ * @note Assumptions added via `bitwuzla_assume()` are not affected by
  *       context level changes and are only valid until the next
  *       `bitwuzla_check_sat()` call, no matter at which level they were
  *       assumed.
@@ -1468,7 +1462,7 @@ void bitwuzla_push(Bitwuzla *bitwuzla, uint32_t nlevels);
  * Requires that incremental solving has been enabled via
  * `bitwuzla_set_option()`.
  *
- * @note Assumptions added via this `bitwuzla_assume()` are not affected by
+ * @note Assumptions added via `bitwuzla_assume()` are not affected by
  *       context level changes and are only valid until the next
  *       `bitwuzla_check_sat()` call, no matter at which level they were
  *       assumed.
@@ -1565,7 +1559,7 @@ const BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla,
                                                     size_t *size);
 
 /**
- * Get the set unsat core (unsat assertions).
+ * Get the unsat core (unsat assertions).
  *
  * The unsat core consists of the set of assertions that force an input formula
  * to become unsatisfiable.
@@ -1788,8 +1782,6 @@ void bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file);
 
 /**
  * Print the current input formula.
- *
- * Requires that incremental solving is not enabled.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param format The output format for printing the formula. Either
@@ -2129,7 +2121,7 @@ const BitwuzlaTerm **bitwuzla_term_get_children(const BitwuzlaTerm *term,
  * @param term The term.
  * @param size Output parameter, stores the number of indices of `term`.
  *
- * @return The children of `term` as an array of terms.
+ * @return The indices of `term` as an array of indices.
  */
 uint32_t *bitwuzla_term_get_indices(const BitwuzlaTerm *term, size_t *size);
 
