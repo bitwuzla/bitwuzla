@@ -209,6 +209,11 @@ Rewriter::_rewrite(const Node& node)
       res = rewrite_fp_to_fp_from_ubv(node);
       break;
 
+    // There are no rewrites for constant arrays.
+    case node::Kind::CONST_ARRAY: res = node; break;
+    case node::Kind::SELECT: res = rewrite_select(node); break;
+    case node::Kind::STORE: res = rewrite_store(node); break;
+
     case node::Kind::APPLY: res = rewrite_apply(node); break;
     case node::Kind::LAMBDA: res = rewrite_lambda(node); break;
 
@@ -1070,6 +1075,21 @@ BZLA_ELIM_KIND_IMPL(fp_sub, FP_SUB_ELIM)
 #undef BZLA_ELIM_KIND_IMPL
 
 /* Array rewrites ----------------------------------------------------------- */
+Node
+Rewriter::rewrite_select(const Node& node)
+{
+  // TODO
+  return node;
+}
+
+Node
+Rewriter::rewrite_store(const Node& node)
+{
+  // TODO
+  return node;
+}
+
+/* Function rewrites -------------------------------------------------------- */
 
 Node
 Rewriter::rewrite_apply(const Node& node)

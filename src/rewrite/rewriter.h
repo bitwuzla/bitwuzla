@@ -134,6 +134,10 @@ class Rewriter
   Node rewrite_fp_to_fp_from_sbv(const Node& node);
   Node rewrite_fp_to_fp_from_ubv(const Node& node);
 
+  /* Array --------------------------------------- */
+  Node rewrite_select(const Node& node);
+  Node rewrite_store(const Node& node);
+
   /* Fun ----------------------------------------- */
   Node rewrite_apply(const Node& node);
   Node rewrite_lambda(const Node& node);
