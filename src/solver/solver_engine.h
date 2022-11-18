@@ -66,6 +66,9 @@ class SolverEngine
    */
   void process_assertion(const Node& assertion, bool top_level);
 
+  /** Traverse term and register terms to corresponding solvers. */
+  void process_term(const Node& term);
+
   /** Process lemmas added via lemma(). */
   void process_lemmas();
 
@@ -80,7 +83,7 @@ class SolverEngine
   backtrack::AssertionView& d_assertions;
   /** Assertion cache used by process_assertion(). */
   backtrack::unordered_set<Node> d_register_assertion_cache;
-  /** Term cache used by process_assertion(). */
+  /** Term cache used by process_term(). */
   backtrack::unordered_set<Node> d_register_term_cache;
 
   /** Lemmas added via lemma(). */
@@ -90,6 +93,9 @@ class SolverEngine
 
   /** Result of latest solve() call. */
   Result d_sat_state;
+
+  /** Indicates whether solver engine is currently in solving loop. */
+  bool d_in_solving_mode;
 
   /** Theory solvers. */
   bv::BvSolver d_bv_solver;

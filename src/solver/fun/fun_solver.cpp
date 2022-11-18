@@ -28,17 +28,19 @@ void
 FunSolver::check()
 {
   d_fun_models.clear();
-  for (const Node& apply : d_applies)
+  // Do not cache size here since d_applies may grow while iterating.
+  for (size_t i = 0; i < d_applies.size(); ++i)
   {
+    const Node& apply = d_applies[i];
     const Node& fun = apply[0];
     auto& fun_model = d_fun_models[fun];
 
-    Apply a(apply, d_solver_engine);
-    auto [it, inserted] = fun_model.insert(a);
+    Apply app(apply, d_solver_engine);
+    auto [it, inserted] = fun_model.insert(app);
     if (!inserted)
     {
       // Function congruence conflict
-      if (it->value() != a.value())
+      if (it->value() != app.value())
       {
         add_function_congruence_lemma(apply, it->get());
       }
@@ -99,6 +101,7 @@ FunSolver::add_function_congruence_lemma(const Node& a, const Node& b)
   assert(a.num_children() == b.num_children());
   assert(a.kind() == Kind::APPLY);
   assert(b.kind() == Kind::APPLY);
+  assert(a != b);
 
   NodeManager& nm = NodeManager::get();
   std::vector<Node> premise;

@@ -61,7 +61,7 @@ class FunSolver : public Solver
 
    private:
     /** Associated function application. */
-    const Node& d_apply;
+    Node d_apply;
     /** Cached hash value. */
     size_t d_hash;
     /** Value of the function application. */

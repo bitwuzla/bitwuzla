@@ -500,7 +500,10 @@ set(unsat_testcases
 #"write7.btor"
 #"write8.btor"
 #"write9.btor"
+
+"solver/fun/fun1.smt2"
 )
+
 # QF_BV-only unsat testcases (no incremental SAT solving required)
 set(unsat_testcases_qfbv
 #"3vl2.btor -rwl 0"

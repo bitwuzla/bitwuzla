@@ -61,6 +61,7 @@ def main():
     cmd_args = [args.binary]
     # FIXME: for now ignore options
     #cmd_args.extend(bzla_args)
+    cmd_args.append(bzla_args[0])
 
     testname, _ = os.path.splitext(bzla_args[0])
     outfilename = '{}.expect'.format(testname)

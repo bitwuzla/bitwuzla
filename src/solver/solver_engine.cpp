@@ -15,6 +15,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_register_assertion_cache(&d_backtrack_mgr),
       d_register_term_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
+      d_in_solving_mode(false),
       d_bv_solver(*this),
       d_fp_solver(*this),
       d_fun_solver(*this)
@@ -27,6 +28,7 @@ SolverEngine::solve()
   // Process unprocessed assertions.
   process_assertions();
 
+  d_in_solving_mode = true;
   do
   {
     // Process lemmas generated in previous iteration.
@@ -44,6 +46,9 @@ SolverEngine::solve()
     d_fun_solver.check();
     // d_quant_solver.check();
   } while (!d_lemmas.empty());
+  d_in_solving_mode = false;
+  // TODO: still need to check whether all solvers are done or if there are
+  //       still checks pending
 
   return d_sat_state;
 }
@@ -52,6 +57,11 @@ Node
 SolverEngine::value(const Node& term)
 {
   assert(d_sat_state == Result::SAT);
+
+  if (d_in_solving_mode)
+  {
+    process_term(term);
+  }
 
   const Type& type = term.type();
   if (type.is_bool() || type.is_bv())
@@ -168,9 +178,13 @@ SolverEngine::process_assertion(const Node& assertion, bool top_level)
   {
     d_bv_solver.register_assertion(assertion, top_level);
   }
+  process_term(assertion);
+}
 
-  // Send theory leafs to corresponding solvers.
-  node::node_ref_vector visit{assertion};
+void
+SolverEngine::process_term(const Node& term)
+{
+  node::node_ref_vector visit{term};
   do
   {
     const Node& cur = visit.back();
@@ -191,10 +205,6 @@ SolverEngine::process_assertion(const Node& assertion, bool top_level)
       else if (fun::FunSolver::is_leaf(cur))
       {
         d_fun_solver.register_term(cur);
-        if (cur.kind() == Kind::APPLY)
-        {
-          visit.insert(visit.end(), cur.begin() + 1, cur.end());
-        }
       }
       else if (is_quant_leaf(cur))
       {
@@ -214,7 +224,7 @@ SolverEngine::process_lemmas()
 {
   for (const Node& lemma : d_lemmas)
   {
-    // TODO: check if this is what we want
+    // TODO: check if we always want to add lemmas at the top level
     process_assertion(lemma, true);
   }
   d_lemmas.clear();
