@@ -57,7 +57,9 @@ class Rewriter
   Node rewrite_bv_and(const Node& node);
   Node rewrite_bv_ashr(const Node& node);
   Node rewrite_bv_concat(const Node& node);
+  Node rewrite_bv_dec(const Node& node);
   Node rewrite_bv_extract(const Node& node);
+  Node rewrite_bv_inc(const Node& node);
   Node rewrite_bv_mul(const Node& node);
   Node rewrite_bv_not(const Node& node);
   Node rewrite_bv_shl(const Node& node);
@@ -330,6 +332,8 @@ enum class RewriteRuleKind
   BV_XOR_EVAL,
 
   //// Elimination rules
+  BV_DEC_ELIM,
+  BV_INC_ELIM,
   BV_NAND_ELIM,
   BV_NEG_ELIM,
   BV_NOR_ELIM,

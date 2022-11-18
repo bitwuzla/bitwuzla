@@ -278,6 +278,8 @@ NodeManager::compute_type(Kind kind,
     case Kind::BV_ADD:
     case Kind::BV_AND:
     case Kind::BV_ASHR:
+    case Kind::BV_DEC:
+    case Kind::BV_INC:
     case Kind::BV_MUL:
     case Kind::BV_NAND:
     case Kind::BV_NEG:
@@ -486,6 +488,8 @@ NodeManager::check_type(Kind kind,
       break;
 
     // Unary bit-vector operators
+    case Kind::BV_DEC:
+    case Kind::BV_INC:
     case Kind::BV_REDAND:
     case Kind::BV_REDOR:
     case Kind::BV_REDXOR:

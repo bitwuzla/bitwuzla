@@ -37,7 +37,9 @@ enum class Kind
   BV_ASHR,
   BV_COMP,
   BV_CONCAT,
+  BV_DEC,
   BV_EXTRACT,
+  BV_INC,
   BV_MUL,
   BV_NAND,
   BV_NEG,
@@ -200,7 +202,9 @@ mk_kind_info()
   info.init(Kind::BV_ASHR)        = {2, 0, "BV_ASHR", "bvashr"};
   info.init(Kind::BV_COMP)        = {2, 0, "BV_COMP", "bvcomp"};
   info.init(Kind::BV_CONCAT)      = {2, 0, "BV_CONCAT", "concat"};
+  info.init(Kind::BV_DEC)         = {2, 0, "BV_DEC", "bvdec"};
   info.init(Kind::BV_EXTRACT)     = {1, 2, "BV_EXTRACT", "extract"};
+  info.init(Kind::BV_INC)         = {2, 0, "BV_DEC", "bvinc"};
   info.init(Kind::BV_MUL)         = {2, 0, "BV_MUL", "bvmul"};
   info.init(Kind::BV_NAND)        = {2, 0, "BV_NAND", "bvnand"};
   info.init(Kind::BV_NEG)         = {1, 0, "BV_NEG", "bvneg"};

@@ -116,7 +116,9 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::BV_ADD: res = rewrite_bv_add(node); break;
     case node::Kind::BV_ASHR: res = rewrite_bv_ashr(node); break;
     case node::Kind::BV_CONCAT: res = rewrite_bv_concat(node); break;
+    case node::Kind::BV_DEC: res = rewrite_bv_dec(node); break;
     case node::Kind::BV_EXTRACT: res = rewrite_bv_extract(node); break;
+    case node::Kind::BV_INC: res = rewrite_bv_inc(node); break;
     case node::Kind::BV_MUL: res = rewrite_bv_mul(node); break;
     case node::Kind::BV_NOT: res = rewrite_bv_not(node); break;
     case node::Kind::BV_SHL: res = rewrite_bv_shl(node); break;
@@ -644,6 +646,8 @@ DONE:
 
 /* Eliminated operators */
 
+BZLA_ELIM_KIND_IMPL(bv_dec, BV_DEC_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_inc, BV_INC_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_nand, BV_NAND_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_neg, BV_NEG_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_nor, BV_NOR_ELIM)

@@ -2717,6 +2717,28 @@ RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::_apply(Rewriter& rewriter,
 
 template <>
 Node
+RewriteRule<RewriteRuleKind::BV_DEC_ELIM>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  return rewriter.mk_node(
+      Kind::BV_SUB,
+      {node[0],
+       NodeManager::get().mk_value(BitVector::mk_one(node.type().bv_size()))});
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_INC_ELIM>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  return rewriter.mk_node(
+      Kind::BV_ADD,
+      {node[0],
+       NodeManager::get().mk_value(BitVector::mk_one(node.type().bv_size()))});
+}
+
+template <>
+Node
 RewriteRule<RewriteRuleKind::BV_NAND_ELIM>::_apply(Rewriter& rewriter,
                                                    const Node& node)
 {

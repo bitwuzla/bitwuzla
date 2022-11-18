@@ -2551,6 +2551,13 @@ TEST_F(TestRewriterBv, bv_xor_eval)
 
 /* --- Elimination Rules ---------------------------------------------------- */
 
+// not supported by parser
+#if 0
+TEST_F(TestRewriterBv, bv_dec_elim) { test_elim_rule_bv(Kind::BV_DEC); }
+
+TEST_F(TestRewriterBv, bv_inc_elim) { test_elim_rule_bv(Kind::BV_INC); }
+#endif
+
 TEST_F(TestRewriterBv, bv_nand_elim) { test_elim_rule_bv(Kind::BV_NAND); }
 
 TEST_F(TestRewriterBv, bv_neg_elim) { test_elim_rule_bv(Kind::BV_NEG); }
