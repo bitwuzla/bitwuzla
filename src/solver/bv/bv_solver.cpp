@@ -27,8 +27,8 @@ BvSolver::is_leaf(const Node& term)
          || k == Kind::APPLY
          // FP predicates
          || k == Kind::FP_IS_INF || k == Kind::FP_IS_NAN || k == Kind::FP_IS_NEG
-         || k == Kind::FP_IS_NORM || k == Kind::FP_IS_POS
-         || k == Kind::FP_IS_SUBNORM || k == Kind::FP_IS_ZERO
+         || k == Kind::FP_IS_NORMAL || k == Kind::FP_IS_POS
+         || k == Kind::FP_IS_SUBNORMAL || k == Kind::FP_IS_ZERO
          || k == Kind::FP_EQUAL || k == Kind::FP_LE
          || k == Kind::FP_LT
          // FP to BV conversion
@@ -131,9 +131,9 @@ BvSolver::value(const Node& term)
         case Kind::FP_IS_INF:
         case Kind::FP_IS_NAN:
         case Kind::FP_IS_NEG:
-        case Kind::FP_IS_NORM:
+        case Kind::FP_IS_NORMAL:
         case Kind::FP_IS_POS:
-        case Kind::FP_IS_SUBNORM:
+        case Kind::FP_IS_SUBNORMAL:
         case Kind::FP_IS_ZERO:
         case Kind::FP_EQUAL:
         case Kind::FP_LE:

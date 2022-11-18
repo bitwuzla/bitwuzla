@@ -292,9 +292,9 @@ TEST_F(TestNodeManager, check_type)
            Kind::FP_IS_INF,
            Kind::FP_IS_NAN,
            Kind::FP_IS_NEG,
-           Kind::FP_IS_NORM,
+           Kind::FP_IS_NORMAL,
            Kind::FP_IS_POS,
-           Kind::FP_IS_SUBNORM,
+           Kind::FP_IS_SUBNORMAL,
            Kind::FP_IS_ZERO,
        })
   {

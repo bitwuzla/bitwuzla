@@ -142,9 +142,9 @@ BvBitblastSolver::bitblast(const Node& t)
         case Kind::FP_IS_INF:
         case Kind::FP_IS_NAN:
         case Kind::FP_IS_NEG:
-        case Kind::FP_IS_NORM:
+        case Kind::FP_IS_NORMAL:
         case Kind::FP_IS_POS:
-        case Kind::FP_IS_SUBNORM:
+        case Kind::FP_IS_SUBNORMAL:
         case Kind::FP_IS_ZERO:
         case Kind::FP_EQUAL:
         case Kind::FP_LE:

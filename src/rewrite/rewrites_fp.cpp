@@ -250,7 +250,7 @@ RewriteRule<RewriteRuleKind::FP_IS_NORM_ABS_NEG>::_apply(Rewriter& rewriter,
   {
     return node;
   }
-  return rewriter.mk_node(Kind::FP_IS_NORM, {node[0][0]});
+  return rewriter.mk_node(Kind::FP_IS_NORMAL, {node[0][0]});
 }
 
 /* fpispos ------------------------------------------------------------------ */
@@ -307,7 +307,7 @@ RewriteRule<RewriteRuleKind::FP_IS_SUBNORM_ABS_NEG>::_apply(Rewriter& rewriter,
   {
     return node;
   }
-  return rewriter.mk_node(Kind::FP_IS_SUBNORM, {node[0][0]});
+  return rewriter.mk_node(Kind::FP_IS_SUBNORMAL, {node[0][0]});
 }
 
 /* fpiszero ----------------------------------------------------------------- */

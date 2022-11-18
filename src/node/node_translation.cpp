@@ -208,13 +208,13 @@ translate_bzla_node(NodeManager &nm, BzlaNode *node)
             res = nm.mk_node(Kind::FP_IS_NEG, children);
             break;
           case BZLA_FP_IS_NORM_NODE:
-            res = nm.mk_node(Kind::FP_IS_NORM, children);
+            res = nm.mk_node(Kind::FP_IS_NORMAL, children);
             break;
           case BZLA_FP_IS_POS_NODE:
             res = nm.mk_node(Kind::FP_IS_POS, children);
             break;
           case BZLA_FP_IS_SUBNORM_NODE:
-            res = nm.mk_node(Kind::FP_IS_SUBNORM, children);
+            res = nm.mk_node(Kind::FP_IS_SUBNORMAL, children);
             break;
           case BZLA_FP_IS_ZERO_NODE:
             res = nm.mk_node(Kind::FP_IS_ZERO, children);

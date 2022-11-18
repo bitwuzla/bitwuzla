@@ -276,9 +276,9 @@ static std::unordered_map<node::Kind, BitwuzlaKind>
         {node::Kind::FP_IS_INF, BITWUZLA_KIND_FP_IS_INF},
         {node::Kind::FP_IS_NAN, BITWUZLA_KIND_FP_IS_NAN},
         {node::Kind::FP_IS_NEG, BITWUZLA_KIND_FP_IS_NEG},
-        {node::Kind::FP_IS_NORM, BITWUZLA_KIND_FP_IS_NORMAL},
+        {node::Kind::FP_IS_NORMAL, BITWUZLA_KIND_FP_IS_NORMAL},
         {node::Kind::FP_IS_POS, BITWUZLA_KIND_FP_IS_POS},
-        {node::Kind::FP_IS_SUBNORM, BITWUZLA_KIND_FP_IS_SUBNORMAL},
+        {node::Kind::FP_IS_SUBNORMAL, BITWUZLA_KIND_FP_IS_SUBNORMAL},
         {node::Kind::FP_IS_ZERO, BITWUZLA_KIND_FP_IS_ZERO},
         {node::Kind::FP_LE, BITWUZLA_KIND_FP_LEQ},
         {node::Kind::FP_LT, BITWUZLA_KIND_FP_LT},
@@ -1996,14 +1996,14 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       // TODO: checks
       // BZLA_CHECK_MK_TERM_ARGS(
       //    kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
-      term = nm.mk_node(node::Kind::FP_IS_NORM, children);
+      term = nm.mk_node(node::Kind::FP_IS_NORMAL, children);
       break;
 
     case BITWUZLA_KIND_FP_IS_SUBNORMAL:
       // TODO: checks
       // BZLA_CHECK_MK_TERM_ARGS(
       //    kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
-      term = nm.mk_node(node::Kind::FP_IS_SUBNORM, children);
+      term = nm.mk_node(node::Kind::FP_IS_SUBNORMAL, children);
       break;
 
     case BITWUZLA_KIND_FP_IS_NAN:

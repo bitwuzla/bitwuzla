@@ -255,7 +255,7 @@ WordBlaster::_word_blast(const Node& node)
             symfpu::negate<SymFpuSymTraits>(
                 type, d_internal->d_unpacked_float_map.at(cur[0])));
       }
-      else if (kind == node::Kind::FP_IS_NORM)
+      else if (kind == node::Kind::FP_IS_NORMAL)
       {
         assert(d_internal->d_unpacked_float_map.find(cur[0])
                != d_internal->d_unpacked_float_map.end());
@@ -264,7 +264,7 @@ WordBlaster::_word_blast(const Node& node)
             symfpu::isNormal<SymFpuSymTraits>(
                 cur[0].type(), d_internal->d_unpacked_float_map.at(cur[0])));
       }
-      else if (kind == node::Kind::FP_IS_SUBNORM)
+      else if (kind == node::Kind::FP_IS_SUBNORMAL)
       {
         assert(d_internal->d_unpacked_float_map.find(cur[0])
                != d_internal->d_unpacked_float_map.end());

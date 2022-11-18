@@ -175,9 +175,11 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::FP_IS_INF: res = rewrite_fp_is_inf(node); break;
     case node::Kind::FP_IS_NAN: res = rewrite_fp_is_nan(node); break;
     case node::Kind::FP_IS_NEG: res = rewrite_fp_is_neg(node); break;
-    case node::Kind::FP_IS_NORM: res = rewrite_fp_is_normal(node); break;
+    case node::Kind::FP_IS_NORMAL: res = rewrite_fp_is_normal(node); break;
     case node::Kind::FP_IS_POS: res = rewrite_fp_is_pos(node); break;
-    case node::Kind::FP_IS_SUBNORM: res = rewrite_fp_is_subnormal(node); break;
+    case node::Kind::FP_IS_SUBNORMAL:
+      res = rewrite_fp_is_subnormal(node);
+      break;
     case node::Kind::FP_IS_ZERO: res = rewrite_fp_is_zero(node); break;
 
     case node::Kind::FP_LE: res = rewrite_fp_le(node); break;

@@ -105,9 +105,9 @@ TEST_F(TestFpSolver, fp_fma)
       d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NAN, {d_fp_a})}));
   ctx.assert_formula(
       d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NAN, {d_fp_b})}));
-  ctx.assert_formula(d_nm.mk_node(Kind::FP_IS_NORM, {d_fp_a}));
+  ctx.assert_formula(d_nm.mk_node(Kind::FP_IS_NORMAL, {d_fp_a}));
   ctx.assert_formula(
-      d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_SUBNORM, {d_fp_b})}));
+      d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_SUBNORMAL, {d_fp_b})}));
   ctx.assert_formula(d_nm.mk_node(
       Kind::EQUAL,
       {d_nm.mk_node(Kind::FP_FMA, {d_rm, d_fp_a, d_fp_b, d_fp_a}),
@@ -120,7 +120,7 @@ TEST_F(TestFpSolver, fp_fma)
   std::cout << "b: " << ctx.get_value(d_fp_b) << std::endl;
   std::cout << "rm: " << ctx.get_value(d_rm) << std::endl;
   std::cout << "(fp.isSubnormal a): "
-            << ctx.get_value(d_nm.mk_node(Kind::FP_IS_SUBNORM, {d_fp_a}))
+            << ctx.get_value(d_nm.mk_node(Kind::FP_IS_SUBNORMAL, {d_fp_a}))
             << std::endl;
   std::cout << "(fp.isZero b): "
             << ctx.get_value(d_nm.mk_node(Kind::FP_IS_ZERO, {d_fp_b}))

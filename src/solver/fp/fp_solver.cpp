@@ -15,8 +15,8 @@ FpSolver::is_leaf(const Node& term)
 {
   node::Kind k = term.kind();
   return k == node::Kind::FP_IS_INF || k == node::Kind::FP_IS_NAN
-         || k == node::Kind::FP_IS_NEG || k == node::Kind::FP_IS_NORM
-         || k == node::Kind::FP_IS_POS || k == node::Kind::FP_IS_SUBNORM
+         || k == node::Kind::FP_IS_NEG || k == node::Kind::FP_IS_NORMAL
+         || k == node::Kind::FP_IS_POS || k == node::Kind::FP_IS_SUBNORMAL
          || k == node::Kind::FP_IS_ZERO || k == node::Kind::FP_EQUAL
          || k == node::Kind::FP_LE || k == node::Kind::FP_LT
          || k == node::Kind::FP_TO_SBV || k == node::Kind::FP_TO_UBV

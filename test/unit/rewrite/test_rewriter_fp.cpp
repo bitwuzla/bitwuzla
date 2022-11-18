@@ -297,16 +297,17 @@ TEST_F(TestRewriterFp, fp_is_neg_eval)
 TEST_F(TestRewriterFp, fp_is_norm_eval)
 {
   //// applies
-  test_rewrite(d_nm.mk_node(Kind::FP_IS_NORM,
+  test_rewrite(d_nm.mk_node(Kind::FP_IS_NORMAL,
                             {d_nm.mk_value(FloatingPoint(
                                 d_fp35_type, BitVector(8, "00011011")))}),
                d_true);
-  test_rewrite(d_nm.mk_node(Kind::FP_IS_NORM,
+  test_rewrite(d_nm.mk_node(Kind::FP_IS_NORMAL,
                             {d_nm.mk_value(FloatingPoint(
                                 d_fp35_type, BitVector(8, "11111011")))}),
                d_false);
   //// does not apply
-  Node fpisnorm2 = d_nm.mk_node(Kind::FP_IS_NORM, {d_nm.mk_const(d_fp35_type)});
+  Node fpisnorm2 =
+      d_nm.mk_node(Kind::FP_IS_NORMAL, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpisnorm2, d_rewriter.rewrite(fpisnorm2));
 }
 
@@ -314,14 +315,14 @@ TEST_F(TestRewriterFp, fp_is_norm_abs_neg)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_NORM_ABS_NEG;
   //// applies
-  test_rule<kind>(
-      d_nm.mk_node(Kind::FP_IS_NORM, {d_nm.mk_node(Kind::FP_ABS, {d_fp35_a})}));
-  test_rule<kind>(
-      d_nm.mk_node(Kind::FP_IS_NORM, {d_nm.mk_node(Kind::FP_NEG, {d_fp35_a})}));
+  test_rule<kind>(d_nm.mk_node(Kind::FP_IS_NORMAL,
+                               {d_nm.mk_node(Kind::FP_ABS, {d_fp35_a})}));
+  test_rule<kind>(d_nm.mk_node(Kind::FP_IS_NORMAL,
+                               {d_nm.mk_node(Kind::FP_NEG, {d_fp35_a})}));
   //// does not apply
-  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_IS_NORM, {d_fp35_a}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_IS_NORMAL, {d_fp35_a}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
-      Kind::FP_IS_NORM, {d_nm.mk_node(Kind::FP_SQRT, {d_rm, d_fp35_a})}));
+      Kind::FP_IS_NORMAL, {d_nm.mk_node(Kind::FP_SQRT, {d_rm, d_fp35_a})}));
 }
 
 /* fpispos ------------------------------------------------------------------ */
@@ -347,21 +348,21 @@ TEST_F(TestRewriterFp, fp_is_pos_eval)
 TEST_F(TestRewriterFp, fp_is_subnorm_eval)
 {
   //// applies
-  test_rewrite(d_nm.mk_node(Kind::FP_IS_SUBNORM,
+  test_rewrite(d_nm.mk_node(Kind::FP_IS_SUBNORMAL,
                             {d_nm.mk_value(FloatingPoint(
                                 d_fp35_type, BitVector(8, "00011011")))}),
                d_false);
-  test_rewrite(d_nm.mk_node(Kind::FP_IS_SUBNORM,
+  test_rewrite(d_nm.mk_node(Kind::FP_IS_SUBNORMAL,
                             {d_nm.mk_value(FloatingPoint(
                                 d_fp35_type, BitVector(8, "11111011")))}),
                d_false);
-  test_rewrite(d_nm.mk_node(Kind::FP_IS_SUBNORM,
+  test_rewrite(d_nm.mk_node(Kind::FP_IS_SUBNORMAL,
                             {d_nm.mk_value(FloatingPoint(
                                 d_fp35_type, BitVector(8, "10001111")))}),
                d_true);
   //// does not apply
   Node fpissubnorm2 =
-      d_nm.mk_node(Kind::FP_IS_SUBNORM, {d_nm.mk_const(d_fp35_type)});
+      d_nm.mk_node(Kind::FP_IS_SUBNORMAL, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpissubnorm2, d_rewriter.rewrite(fpissubnorm2));
 }
 
@@ -369,14 +370,15 @@ TEST_F(TestRewriterFp, fp_is_subnorm_abs_neg)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_SUBNORM_ABS_NEG;
   //// applies
-  test_rule<kind>(d_nm.mk_node(Kind::FP_IS_SUBNORM,
+  test_rule<kind>(d_nm.mk_node(Kind::FP_IS_SUBNORMAL,
                                {d_nm.mk_node(Kind::FP_ABS, {d_fp35_a})}));
-  test_rule<kind>(d_nm.mk_node(Kind::FP_IS_SUBNORM,
+  test_rule<kind>(d_nm.mk_node(Kind::FP_IS_SUBNORMAL,
                                {d_nm.mk_node(Kind::FP_NEG, {d_fp35_a})}));
   //// does not apply
-  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_IS_SUBNORM, {d_fp35_a}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::FP_IS_SUBNORMAL, {d_fp35_a}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
-      Kind::FP_IS_SUBNORM, {d_nm.mk_node(Kind::FP_SQRT, {d_rm, d_fp35_a})}));
+      Kind::FP_IS_SUBNORMAL, {d_nm.mk_node(Kind::FP_SQRT, {d_rm, d_fp35_a})}));
 }
 
 /* fpiszero ----------------------------------------------------------------- */

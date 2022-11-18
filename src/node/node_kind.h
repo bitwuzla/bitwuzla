@@ -91,9 +91,9 @@ enum class Kind
   FP_IS_INF,
   FP_IS_NAN,
   FP_IS_NEG,
-  FP_IS_NORM,
+  FP_IS_NORMAL,
   FP_IS_POS,
-  FP_IS_SUBNORM,
+  FP_IS_SUBNORMAL,
   FP_IS_ZERO,
   FP_LE,
   FP_LT,
@@ -254,9 +254,10 @@ mk_kind_info()
   info.init(Kind::FP_IS_INF)        = {1, 0, "FP_IS_INF", "fp.isInfinite"};
   info.init(Kind::FP_IS_NAN)        = {1, 0, "FP_IS_NAN", "fp.isNaN"};
   info.init(Kind::FP_IS_NEG)        = {1, 0, "FP_IS_NEG", "fp.isNegative"};
-  info.init(Kind::FP_IS_NORM)       = {1, 0, "FP_IS_NORM", "fp.isNormal"};
+  info.init(Kind::FP_IS_NORMAL)      = {1, 0, "FP_IS_NORMAL", "fp.isNormal"};
   info.init(Kind::FP_IS_POS)        = {1, 0, "FP_IS_POS", "fp.isPositive"};
-  info.init(Kind::FP_IS_SUBNORM)    = {1, 0, "FP_IS_SUBNORM", "fp.isSubnormal"};
+  info.init(Kind::FP_IS_SUBNORMAL)   = {
+        1, 0, "FP_IS_SUBNORMAL", "fp.isSubnormal"};
   info.init(Kind::FP_IS_ZERO)        = {1, 0, "FP_IS_ZERO", "fp.isZero"};
   info.init(Kind::FP_LE)            = {2, 0, "FP_LE", "fp.leq"};
   info.init(Kind::FP_LT)            = {2, 0, "FP_LT", "fp.lt"};
