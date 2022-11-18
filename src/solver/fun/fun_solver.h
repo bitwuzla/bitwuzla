@@ -50,6 +50,9 @@ class FunSolver : public Solver
     /** @return Value of associated function application. */
     const Node& value() const;
 
+    /** @return Values of function application arguments. */
+    const std::vector<Node>& values() const;
+
     /** Compare two function applications based on d_values. */
     bool operator==(const Apply& other) const;
 

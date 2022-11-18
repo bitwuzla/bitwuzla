@@ -50,7 +50,37 @@ Node
 FunSolver::value(const Node& term)
 {
   assert(term.type().is_fun());
-  return Node();
+  auto it = d_fun_models.find(term);
+  if (it != d_fun_models.end())
+  {
+    NodeManager& nm                = NodeManager::get();
+    const std::vector<Type>& types = term.type().fun_types();
+    std::vector<Node> vars;
+    for (size_t i = 0, size = types.size() - 1; i < size; ++i)
+    {
+      vars.push_back(nm.mk_var(types[i]));
+    }
+
+    Node res              = utils::mk_default_value(types.back());
+    const auto& fun_model = it->second;
+
+    // Construct nested ITEs for function model
+    for (const auto& apply : fun_model)
+    {
+      const std::vector<Node>& values = apply.values();
+      assert(vars.size() == values.size());
+      std::vector<Node> eqs;
+      for (size_t i = 0, size = vars.size(); i < size; ++i)
+      {
+        eqs.push_back(nm.mk_node(Kind::EQUAL, {vars[i], values[i]}));
+      }
+      Node cond = utils::mk_nary(Kind::AND, eqs);
+      res       = nm.mk_node(Kind::ITE, {cond, apply.value(), res});
+    }
+    vars.push_back(res);
+    return utils::mk_binder(Kind::LAMBDA, vars);
+  }
+  return utils::mk_default_value(term.type());
 }
 
 void
@@ -108,6 +138,12 @@ const Node&
 FunSolver::Apply::value() const
 {
   return d_value;
+}
+
+const std::vector<Node>&
+FunSolver::Apply::values() const
+{
+  return d_values;
 }
 
 bool
