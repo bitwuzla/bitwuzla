@@ -38,16 +38,6 @@ std::string git_id();
 
 /* -------------------------------------------------------------------------- */
 
-/** The base for strings representing bit-vector values. */
-enum class BVBase
-{
-  BASE_BIN,  ///< binary
-  BASE_DEC,  ///< decimal
-  BASE_HEX,  ///< hexadecimal
-};
-
-/* -------------------------------------------------------------------------- */
-
 using Option = BitwuzlaOption;
 
 class OptionInfo;
@@ -650,6 +640,18 @@ class Term
   Kind kind() const;
 
   /**
+   * Get the sort of this term.
+   * @return The sort of the term.
+   */
+  const Sort& sort() const;
+
+  /**
+   * Get the number of child terms of this term.
+   * @return The number of children of this term.
+   */
+  size_t num_children() const;
+
+  /**
    * Get the child terms of this term.
    * @return The children of this term as a vector of terms.
    */
@@ -669,12 +671,6 @@ class Term
    * @return True if this term is an indexed term.
    */
   bool is_indexed() const;
-
-  /**
-   * Get the sort of this term.
-   * @return The sort of the term.
-   */
-  const Sort &sort() const;
 
   /**
    * Get the symbol of this term.
@@ -817,6 +813,23 @@ class Term
   std::shared_ptr<bzla::Node> d_node;
 };
 
+/**
+ * Syntactical equality operator.
+ *
+ * @param a The first term.
+ * @param b The second term.
+ * @return True if the given terms are equal.
+ */
+bool operator==(const Term &a, const Term &b);
+
+/**
+ * Print term to output stream.
+ * @param out The output stream.
+ * @param term The term.
+ * @return The output stream.
+ */
+std::ostream &operator<<(std::ostream &out, const Term &term);
+
 /* -------------------------------------------------------------------------- */
 
 class Sort
@@ -853,7 +866,7 @@ class Sort
    *
    * @return The index sort of the array sort.
    */
-  const Sort &array_get_index() const;
+  const Sort& array_get_index() const;
 
   /**
    * Get the element sort of an array sort.
@@ -862,7 +875,7 @@ class Sort
    *
    * @return The element sort of the array sort.
    */
-  const Sort &array_get_element() const;
+  const Sort& array_get_element() const;
 
   /**
    * Get the domain sorts of a function sort.
@@ -872,7 +885,7 @@ class Sort
    *
    * @return The domain sorts of the function sort.
    */
-  const std::vector<Sort> fun_get_domain() const;
+  std::vector<Sort> fun_get_domain() const;
 
   /**
    * Get the codomain sort of a function sort.
@@ -881,7 +894,7 @@ class Sort
    *
    * @return The codomain sort of the function sort.
    */
-  const Sort &fun_get_codomain() const;
+  const Sort& fun_get_codomain() const;
 
   /**
    * Get the arity of a function sort.
@@ -946,6 +959,14 @@ class Sort
  * @return True if the given sorts are equal.
  */
 bool operator==(const Sort &a, const Sort &b);
+
+/**
+ * Print sort to output stream.
+ * @param out The output stream.
+ * @param sort The sort.
+ * @return The output stream.
+ */
+std::ostream &operator<<(std::ostream &out, const Sort &sort);
 
 /* -------------------------------------------------------------------------- */
 
@@ -1072,14 +1093,6 @@ class Bitwuzla
   void assume_formula(const Term &term);
 
   /**
-   * Assert all added assumptions.
-   *
-   * @see
-   *   * `assume_formula`
-   */
-  void fixate_assumptions();
-
-  /**
    * Determine if an assumption is an unsat assumption.
    *
    * Unsat assumptions are assumptions that force an input formula to become
@@ -1197,7 +1210,7 @@ class Bitwuzla
    * @return A term representing the model value of term `term`.
    * @see `check_sat`
    */
-  const Term &get_value(const Term &term);
+  const Term& get_value(const Term &term);
   /**
    * Get string representation of the current model value of given bit-vector
    * term.
@@ -1205,7 +1218,7 @@ class Bitwuzla
    * @return Binary string representation of current model value of term \p
    *         term. Return value is valid until next `get_bv_value` call.
    */
-  const char *get_bv_value(const Term &term);
+  std::string get_bv_value(const Term &term);
   /**
    * Get string of IEEE 754 standard representation of the current model
    * value of given floating-point term.
@@ -1366,33 +1379,6 @@ class Bitwuzla
                Result &status,
                bool &is_smt2);
 
-  /**
-   * Substitute a set of keys with their corresponding values in the given
-   * term.
-   *
-   * @param term The term in which the keys are to be substituted.
-   * @param map  The substitution map.
-   * @return The resulting term from this substitution.
-   */
-  const Term &substitute_term(const Term &term,
-                              const std::unordered_map<Term, Term> map);
-
-  /**
-   * Substitute a set of keys with their corresponding values in the set of
-   * given terms.
-   *
-   * The terms in `terms` are replaced with the terms resulting from this
-   * substitutions.
-   *
-   * @param terms_size The size of the set of terms.
-   * @param terms The terms in which the keys are to be substituted.
-   * @param map_size The size of the substitution map.
-   * @param map_keys The keys.
-   * @param map_values The mapped values.
-   */
-  void substitute_terms(const std::vector<Term> &terms,
-                        const std::unordered_map<Term, Term> map);
-
  private:
   // TODO
 };
@@ -1455,8 +1441,7 @@ Sort mk_fp_sort(uint64_t exp_size, uint64_t sig_size);
  *   * `Sort::fun_domain_sorts`
  *   * `Sort::fun_codomain`
  */
-Sort mk_fun_sort(const std::vector<Sort> &domain,
-                 const std::vector<Sort> codomain);
+Sort mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain);
 
 /**
  * Create a Roundingmode sort.
@@ -1587,15 +1572,15 @@ Term mk_fp_nan(const Sort &sort);
  *
  * @param sort The sort of the value.
  * @param value A string representing the value.
- * @param base The base in which the string is given.
+ * @param base The base in which the string is given. 2 for binary, 10 for
+ *             decimal, and 16 for hexadecimal.
  *
  * @return A term of kind Kind::VALUE, representing the bit-vector value
  *         of given sort.
  * @see
  *   * `mk_bv_sort`
- *   * `BVBase`
  */
-Term mk_bv_value(const Sort &sort, const std::string &value, BVBase base);
+Term mk_bv_value(const Sort &sort, const std::string &value, uint8_t base = 2);
 
 /**
  * Create a bit-vector value from its unsigned integer representation.
@@ -1694,143 +1679,20 @@ Term mk_fp_value_from_rational(const Sort &sort,
 Term mk_rm_value(RoundingMode rm);
 
 /**
- * Create a term of given kind with one argument term.
- *
- * @param kind The operator kind.
- * @param arg The argument to the operator.
- *
- * @return A term representing an operation of given kind.
- *
- * @see
- *   * `Kind`
- */
-Term mk_term(Kind kind, const Term &arg);
-
-/**
- * Create a term of given kind with two argument terms.
- *
- * @param kind The operator kind.
- * @param arg0 The first argument to the operator.
- * @param arg1 The second argument to the operator.
- *
- * @return A term representing an operation of given kind.
- *
- * @see
- *   * `Kind`
- */
-Term mk_term(Kind kind, const Term &arg0, const Term &arg1);
-
-/**
- * Create a term of given kind with three argument terms.
- *
- * @param kind The operator kind.
- * @param arg0 The first argument to the operator.
- * @param arg1 The second argument to the operator.
- * @param arg2 The third argument to the operator.
- *
- * @return A term representing an operation of given kind.
- *
- * @see
- *   * `Kind`
- */
-Term mk_term(Kind kind, const Term &arg0, const Term &arg1, const Term &arg2);
-
-/**
  * Create a term of given kind with the given argument terms.
  *
  * @param kind The operator kind.
  * @param args The argument terms.
+ * @param indices The indices of this term, empty if not indexed.
  *
  * @return A term representing an operation of given kind.
  *
  * @see
  *   * `Kind`
  */
-Term mk_term(Kind kind, const std::vector<Term> &args);
-
-/**
- * Create an indexed term of given kind with one argument term and one index.
- *
- * @param kind The operator kind.
- * @param arg The argument term.
- * @param idx The index.
- *
- * @return A term representing an indexed operation of given kind.
- *
- * @see
- *   * `Kind`
- */
-Term mk_term_indexed(Kind kind, const Term &arg, uint64_t idx);
-
-/**
- * Create an indexed term of given kind with one argument term and two indices.
- *
- * @param kind The operator kind.
- * @param arg The argument term.
- * @param idx0 The first index.
- * @param idx1 The second index.
- *
- * @return A term representing an indexed operation of given kind.
- *
- * @see
- *   * `Kind`
- */
-Term mk_term_indexed(Kind kind, const Term &arg, uint64_t idx0, uint64_t idx1);
-
-/**
- * Create an indexed term of given kind with two argument terms and one index.
- *
- * @param kind The operator kind.
- * @param arg0 The first argument term.
- * @param arg1 The second argument term.
- * @param idx The index.
- *
- * @return A term representing an indexed operation of given kind.
- *
- * @see
- *   * `Kind`
- */
-Term mk_term_indexed(Kind kind,
-                     const Term &arg0,
-                     const Term &arg1,
-                     uint64_t idx);
-
-/**
- * Create an indexed term of given kind with two argument terms and two indices.
- *
- * @param kind The operator kind.
- * @param arg0 The first argument term.
- * @param arg1 The second argument term.
- * @param idx0 The first index.
- * @param idx1 The second index.
- *
- * @return A term representing an indexed operation of given kind.
- *
- * @see
- *   * `Kind`
- */
-Term mk_term_indexed(Kind kind,
-                     const Term &arg0,
-                     const Term &arg1,
-                     uint64_t idx0,
-                     uint64_t idx1);
-
-/**
- * Create an indexed term of given kind with the given argument terms and
- * indices.
- *
- * @param kind The operator kind.
- * @param args The argument terms.
- * @param idxs The indices.
- *
- * @return A term representing an indexed operation of given kind.
- *
- * @see
- *   * `Kind`
- */
-Term mk_term_indexed(Kind kind,
-                     const std::vector<Term> &args,
-                     const std::vector<uint32_t> &idxs);
+Term mk_term(Kind kind,
+             const std::vector<Term> &args,
+             const std::vector<uint64_t> indices = {});
 
 /**
  * Create a (first-order) constant of given sort with given symbol.
@@ -1851,21 +1713,6 @@ Term mk_term_indexed(Kind kind,
 Term mk_const(const Sort &sort, const std::string &symbol);
 
 /**
- * Create a one-dimensional constant array of given sort, initialized with
- * given value.
- *
- * @param sort The sort of the array.
- * @param value The term to initialize the elements of the array with.
- *
- * @return A term of Kind::CONST_ARRAY, representing a constant array of given
- *         sort.
- *
- * @see
- *   * `mk_array_sort`
- */
-Term mk_const_array(const Sort &sort, const Term &value);
-
-/**
  * Create a variable of given sort with given symbol.
  *
  * @note This creates a variable to be bound by quantifiers or lambdas.
@@ -1883,6 +1730,33 @@ Term mk_const_array(const Sort &sort, const Term &value);
  *   * `mk_rm_sort`
  */
 Term mk_var(const Sort &sort, const std::string &symbol);
+
+/**
+ * Substitute a set of keys with their corresponding values in the given
+ * term.
+ *
+ * @param term The term in which the keys are to be substituted.
+ * @param map  The substitution map.
+ * @return The resulting term from this substitution.
+ */
+Term substitute_term(const Term &term,
+                     const std::unordered_map<Term, Term> map);
+
+/**
+ * Substitute a set of keys with their corresponding values in the set of
+ * given terms.
+ *
+ * The terms in `terms` are replaced with the terms resulting from this
+ * substitutions.
+ *
+ * @param terms_size The size of the set of terms.
+ * @param terms The terms in which the keys are to be substituted.
+ * @param map_size The size of the substitution map.
+ * @param map_keys The keys.
+ * @param map_values The mapped values.
+ */
+void substitute_terms(std::vector<Term> &terms,
+                      const std::unordered_map<Term, Term> map);
 
 /* -------------------------------------------------------------------------- */
 
