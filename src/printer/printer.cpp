@@ -123,6 +123,8 @@ Printer::print(std::ostream& os,
         case Kind::BV_ASHR:
         case Kind::BV_COMP:
         case Kind::BV_CONCAT:
+        case Kind::BV_DEC:
+        case Kind::BV_INC:
         case Kind::BV_MUL:
         case Kind::BV_NAND:
         case Kind::BV_NEG:
@@ -164,6 +166,7 @@ Printer::print(std::ostream& os,
         case Kind::FP_DIV:
         case Kind::FP_EQUAL:
         case Kind::FP_FMA:
+        case Kind::FP_FP:
         case Kind::FP_GE:
         case Kind::FP_GT:
         case Kind::FP_IS_INF:

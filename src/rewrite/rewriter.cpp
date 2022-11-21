@@ -171,6 +171,7 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::FP_DIV: res = rewrite_fp_div(node); break;
     case node::Kind::FP_EQUAL: res = rewrite_fp_equal(node); break;
     case node::Kind::FP_FMA: res = rewrite_fp_fma(node); break;
+    case node::Kind::FP_FP: res = rewrite_fp_fp(node); break;
     case node::Kind::FP_GE: res = rewrite_fp_ge(node); break;
     case node::Kind::FP_GT: res = rewrite_fp_gt(node); break;
 
@@ -1061,6 +1062,7 @@ DONE:
 }
 
 BZLA_ELIM_KIND_IMPL(fp_equal, FP_EQUAL_ELIM)
+BZLA_ELIM_KIND_IMPL(fp_fp, FP_FP_ELIM)
 BZLA_ELIM_KIND_IMPL(fp_gt, FP_GT_ELIM)
 BZLA_ELIM_KIND_IMPL(fp_ge, FP_GE_ELIM)
 BZLA_ELIM_KIND_IMPL(fp_sub, FP_SUB_ELIM)

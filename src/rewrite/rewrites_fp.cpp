@@ -715,6 +715,20 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL>::_apply(Rewriter& rewriter,
 
 template <>
 Node
+RewriteRule<RewriteRuleKind::FP_FP_ELIM>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  assert(node.num_children() == 3);
+  return rewriter.mk_node(
+      Kind::FP_TO_FP_FROM_BV,
+      {rewriter.mk_node(
+          Kind::BV_CONCAT,
+          {node[0], rewriter.mk_node(Kind::BV_CONCAT, {node[1], node[2]})})},
+      {node[1].type().bv_size(), node[2].type().bv_size() + 1});
+}
+
+template <>
+Node
 RewriteRule<RewriteRuleKind::FP_GE_ELIM>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {

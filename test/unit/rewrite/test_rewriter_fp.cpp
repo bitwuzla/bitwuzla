@@ -888,7 +888,9 @@ TEST_F(TestRewriterFp, fp_equal_elim)
   test_elim_rule(Kind::FP_EQUAL, d_fp35_type);
 }
 
-TEST_F(TestRewriterFp, fp_ge_elim) { test_elim_rule(Kind::FP_GT, d_fp35_type); }
+TEST_F(TestRewriterFp, fp_fp_elim) { test_elim_rule(Kind::FP_FP, d_fp35_type); }
+
+TEST_F(TestRewriterFp, fp_ge_elim) { test_elim_rule(Kind::FP_GE, d_fp35_type); }
 
 TEST_F(TestRewriterFp, fp_gt_elim) { test_elim_rule(Kind::FP_GT, d_fp35_type); }
 

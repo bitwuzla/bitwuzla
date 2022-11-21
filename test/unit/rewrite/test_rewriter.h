@@ -106,6 +106,13 @@ class TestRewriter : public ::testing::Test
       children.push_back(nm.mk_const(type, "a"));
       children.push_back(nm.mk_const(type, "b"));
     }
+    else if (kind == node::Kind::FP_FP)
+    {
+      children.push_back(nm.mk_const(nm.mk_bv_type(1), "sign"));
+      children.push_back(nm.mk_const(nm.mk_bv_type(type.fp_exp_size()), "exp"));
+      children.push_back(
+          nm.mk_const(nm.mk_bv_type(type.fp_sig_size() - 1), "sig"));
+    }
     else
     {
       if (num_children >= 1)

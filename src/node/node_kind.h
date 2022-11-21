@@ -88,6 +88,7 @@ enum class Kind
   FP_DIV,
   FP_EQUAL,
   FP_FMA,
+  FP_FP,
   FP_GE,
   FP_GT,
   FP_IS_INF,
@@ -253,6 +254,7 @@ mk_kind_info()
   info.init(Kind::FP_DIV)            = {3, 0, "FP_DIV", "fp.div"};
   info.init(Kind::FP_EQUAL)          = {2, 0, "FP_EQUAL", "fp.eq"};
   info.init(Kind::FP_FMA)            = {4, 0, "FP_FMA", "fp.fma"};
+  info.init(Kind::FP_FP)             = {3, 0, "FP_FP", "fp"};
   info.init(Kind::FP_GE)             = {2, 0, "FP_GE", "fp.geq"};
   info.init(Kind::FP_GT)             = {2, 0, "FP_GT", "fp.gt"};
   info.init(Kind::FP_IS_INF)        = {1, 0, "FP_IS_INF", "fp.isInfinite"};

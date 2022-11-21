@@ -316,6 +316,9 @@ NodeManager::compute_type(Kind kind,
     case Kind::FP_SUB:
     case Kind::ITE: return children[1].type();
 
+    case Kind::FP_FP:
+      return d_tm.mk_fp_type(children[1].type().bv_size(),
+                             children[2].type().bv_size() + 1);
     case Kind::FP_TO_SBV:
     case Kind::FP_TO_UBV: return d_tm.mk_bv_type(indices[0]);
 
@@ -751,6 +754,24 @@ NodeManager::check_type(Kind kind,
           || children[1].type() != children[3].type())
       {
         ss << kind << ": Expected terms of the same floating-point type.";
+        return std::make_pair(false, ss.str());
+      }
+      break;
+
+    case Kind::FP_FP:
+      if (!children[0].type().is_bv() || children[0].type().bv_size() != 1)
+      {
+        ss << kind << ": Expected bit-vector term of size 1 at position 0";
+        return std::make_pair(false, ss.str());
+      }
+      if (!children[1].type().is_bv())
+      {
+        ss << kind << ": Expected bit-vector term at position 1";
+        return std::make_pair(false, ss.str());
+      }
+      if (!children[2].type().is_bv())
+      {
+        ss << kind << ": Expected bit-vector term at position 2";
         return std::make_pair(false, ss.str());
       }
       break;
