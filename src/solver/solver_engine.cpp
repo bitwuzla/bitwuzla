@@ -16,9 +16,11 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_register_term_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
       d_in_solving_mode(false),
+      d_stats(statistics()),
       d_bv_solver(*this),
       d_fp_solver(*this),
-      d_fun_solver(*this)
+      d_fun_solver(*this),
+      d_array_solver(*this)
 {
 }
 
@@ -42,7 +44,7 @@ SolverEngine::solve()
     assert(d_sat_state == Result::SAT);
     // TODO: process lemmas after each check()?
     d_fp_solver.check();
-    // d_array_solver.check();
+    d_array_solver.check();
     d_fun_solver.check();
     // d_quant_solver.check();
   } while (!d_lemmas.empty());
@@ -74,7 +76,7 @@ SolverEngine::value(const Node& term)
   }
   else if (type.is_array())
   {
-    // return d_array_solver.value(term);
+    return d_array_solver.value(term);
   }
   else if (type.is_fun())
   {
@@ -95,6 +97,7 @@ SolverEngine::lemma(const Node& lemma)
   // There can be duplicates if we add more than one lemma per round.
   if (inserted)
   {
+    ++d_stats.num_lemmas;
     d_lemmas.push_back(rewritten);
   }
 }
@@ -117,14 +120,13 @@ SolverEngine::backtrack_mgr()
   return &d_backtrack_mgr;
 }
 
-/* --- SolverEngine private ------------------------------------------------- */
-
-bool
-SolverEngine::is_array_leaf(const Node& term)
+util::Statistics&
+SolverEngine::statistics()
 {
-  Kind k = term.kind();
-  return k == Kind::SELECT || (k == Kind::EQUAL && (term[0].type().is_array()));
+  return d_statistics;
 }
+
+/* --- SolverEngine private ------------------------------------------------- */
 
 bool
 SolverEngine::is_quant_leaf(const Node& term)
@@ -197,10 +199,9 @@ SolverEngine::process_term(const Node& term)
       {
         d_fp_solver.register_term(cur);
       }
-      else if (is_array_leaf(cur))
+      else if (array::ArraySolver::is_leaf(cur))
       {
-        assert(false);
-        // d_array_solver.register_term(cur);
+        d_array_solver.register_term(cur);
       }
       else if (fun::FunSolver::is_leaf(cur))
       {
@@ -228,6 +229,11 @@ SolverEngine::process_lemmas()
     process_assertion(lemma, true);
   }
   d_lemmas.clear();
+}
+
+SolverEngine::Statistics::Statistics(util::Statistics& stats)
+    : num_lemmas(stats.new_stat<uint64_t>("solver::lemmas"))
+{
 }
 
 }  // namespace bzla

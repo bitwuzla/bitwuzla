@@ -1,0 +1,5 @@
+(declare-fun em () (Array (_ BitVec 32) (_ BitVec 8)))
+(declare-fun m () (Array (_ BitVec 32) (_ BitVec 8)))
+(declare-fun e () (Array (_ BitVec 32) (_ BitVec 8)))
+(assert (and (= (_ bv1 1) (ite (= m e) (_ bv1 1) (_ bv0 1))) (= (_ bv1 1) (ite (= e (store m (_ bv0 32) (_ bv1 8))) (_ bv1 1) (_ bv0 1))) (= (_ bv0 1) (ite (= m em) (_ bv1 1) (_ bv0 1)))))
+(check-sat)

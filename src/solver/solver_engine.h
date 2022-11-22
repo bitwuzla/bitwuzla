@@ -7,10 +7,12 @@
 #include "backtrack/unordered_set.h"
 #include "node/node.h"
 #include "rewrite/rewriter.h"
+#include "solver/array/array_solver.h"
 #include "solver/bv/bv_solver.h"
 #include "solver/fp/fp_solver.h"
 #include "solver/fun/fun_solver.h"
 #include "solver/result.h"
+#include "util/statistics.h"
 
 namespace bzla {
 
@@ -38,10 +40,11 @@ class SolverEngine
   /** @return Solver engine backtrack manager. */
   backtrack::BacktrackManager* backtrack_mgr();
 
+  util::Statistics& statistics();
+
  private:
   // temporary helpers, should be moved to corresponding solvers as static
   // method
-  static bool is_array_leaf(const Node& term);
   static bool is_quant_leaf(const Node& term);
 
   /**
@@ -97,11 +100,18 @@ class SolverEngine
   /** Indicates whether solver engine is currently in solving loop. */
   bool d_in_solving_mode;
 
+  util::Statistics d_statistics;
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    uint64_t& num_lemmas;
+  } d_stats;
+
   /** Theory solvers. */
   bv::BvSolver d_bv_solver;
   fp::FpSolver d_fp_solver;
   fun::FunSolver d_fun_solver;
-  // array::ArraySolver d_array_solver;
+  array::ArraySolver d_array_solver;
   // quant::QuantSolver d_quant_solver;
 };
 

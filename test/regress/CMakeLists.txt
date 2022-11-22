@@ -3,7 +3,7 @@
 #       support incremental solving
 
 # sat testcases, no QF_BV (incremental sat solving required)
-list(APPEND sat_testcases
+set(sat_testcases
 #"arraycond1.btor"
 #"arraycond10.btor"
 #"arraycond15.btor"
@@ -158,7 +158,14 @@ list(APPEND sat_testcases
 #"write19.btor"
 #"write20.btor"
 #"write5.btor"
+
+"solver/array/regrarray2.smt2"
+"solver/array/regrarray3.smt2"
+"solver/array/regrarray4.smt2"
+"solver/array/regrarray5.smt2"
+"solver/array/regrarray6.smt2"
 )
+
 # QF_BV-only sat testcases (no incremental SAT solving required)
 set(sat_testcases_qfbv
 #"const1.btor"
@@ -502,6 +509,7 @@ set(unsat_testcases
 #"write9.btor"
 
 "solver/fun/fun1.smt2"
+"solver/array/regrarray1.smt2"
 )
 
 # QF_BV-only unsat testcases (no incremental SAT solving required)
