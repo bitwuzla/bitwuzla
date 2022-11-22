@@ -57,8 +57,6 @@ class AssertionVector
   size_t d_level;
   /** Start index for assertions. */
   size_t d_begin;
-  /** End index for assertions. */
-  size_t d_end;
   /** Indicates whether vector was modified. */
   bool d_changed;
 };

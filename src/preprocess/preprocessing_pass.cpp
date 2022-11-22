@@ -10,14 +10,13 @@ AssertionVector::AssertionVector(backtrack::AssertionView& view)
     : d_view(view),
       d_level(view.level(view.begin())),
       d_begin(view.begin()),
-      d_end(view.end(d_level)),
       d_changed(false)
 {
 #ifndef NDEBUG
   // Assertion should all be from one level.
   assert(view.begin(d_level) <= view.begin());
   assert(size() > 0);
-  for (size_t i = d_begin; i < d_end; ++i)
+  for (size_t i = d_begin; i < d_view.end(d_level); ++i)
   {
     assert(d_view.level(i) == d_level);
   }
@@ -29,14 +28,12 @@ AssertionVector::push_back(const Node& assertion)
 {
   d_changed = true;
   d_view.insert_at_level(d_level, assertion);
-  // New assertion added to level, increment end index.
-  ++d_end;
 }
 
 size_t
 AssertionVector::size() const
 {
-  return d_end - d_begin;
+  return d_view.end(d_level) - d_begin;
 }
 
 const Node&
