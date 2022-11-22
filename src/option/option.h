@@ -32,7 +32,8 @@ enum class Option
   PROP_OPT_LT_CONCAT_SEXT,      // bool
   PROP_SEXT,                    // bool
 
-  NUM_OPTIONS
+  UNDEFINED,  // temporary, until API is done
+  NUM_OPTIONS,
 };
 
 /* -------------------------------------------------------------------------- */

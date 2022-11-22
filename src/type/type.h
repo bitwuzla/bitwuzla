@@ -85,9 +85,12 @@ class Type
    */
   const Type& array_element() const;
 
+  /** @return The arity of this function type. */
+  size_t fun_arity() const;
+
   /**
-   * @return The codomain types and domain type of this function type.
-   * @note Last element in vector is domain type.
+   * @return The domain types and codomain type of this function type.
+   * @note Last element in vector is codomain type.
    */
   const std::vector<Type>& fun_types() const;
 

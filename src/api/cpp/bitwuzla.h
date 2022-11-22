@@ -4,6 +4,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <optional>
 
 #include "api/option.h"
 
@@ -12,6 +13,10 @@
 namespace bzla {
 class Node;
 class Type;
+class SolvingContext;
+namespace option {
+class Options;
+}
 }  // namespace bzla
 
 /* -------------------------------------------------------------------------- */
@@ -38,12 +43,19 @@ std::string git_id();
 
 /* -------------------------------------------------------------------------- */
 
+class Bitwuzla;
+
 using Option = BitwuzlaOption;
 
-class OptionInfo;
+class OptionInfo
+{
+  // TODO
+};
 
 class Options
 {
+  friend Bitwuzla;
+
  public:
   /**
    * Set option.
@@ -121,7 +133,8 @@ class Options
   const OptionInfo &get_info(Option option) const;
 
  private:
-  // TODO
+  /** The wrapped internal options. */
+  std::unique_ptr<bzla::option::Options> d_options;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -155,13 +168,65 @@ enum class Kind
   /*! Bound variable. */
   VARIABLE,
 
-  // operators
+  //////// operators
+
+  //// Boolean
   /*! Boolean and.
    *
    *  SMT-LIB: \c and */
   AND,
+  /*! Disequality.
+   *
+   * SMT-LIB: \c distinct */
+  DISTINCT,
+  /*! Equality.
+   *
+   * SMT-LIB: \c = */
+  EQUAL,
+  /*! Boolean if and only if.
+   *
+   * SMT-LIB: \c = */
+  IFF,
+  /*! Boolean implies.
+   *
+   * SMT-LIB: \c => */
+  IMPLIES,
+  /*! Boolean not.
+   *
+   * SMT-LIB: \c not */
+  NOT,
+  /*! Boolean or.
+   *
+   * SMT-LIB: \c or */
+  OR,
+  /*! Boolean xor.
+   *
+   * SMT-LIB: \c xor */
+  XOR,
+
+  //// Core
+  /*! If-then-else.
+   *
+   * SMT-LIB: \c ite */
+  ITE,
+
+  //// Quantifiers
+  /*! Existential quantification.
+   *
+   * SMT-LIB: \c exists */
+  EXISTS,
+  /*! Universal quantification.
+   *
+   * SMT-LIB: \c forall */
+  FORALL,
+
+  //// Functions
   /*! Function application. */
   APPLY,
+  /*! Lambda. */
+  LAMBDA,
+
+  //// Arrays
   /*! Array select.
    *
    *  SMT-LIB: \c select */
@@ -170,6 +235,8 @@ enum class Kind
    *
    * SMT-LIB: \c store */
   ARRAY_STORE,
+
+  //// Bit-vectors
   /*! Bit-vector addition.
    *
    *  SMT-LIB: \c bvadd */
@@ -345,22 +412,36 @@ enum class Kind
    *
    * SMT-LIB: \c bvxor */
   BV_XOR,
-  /*! Disequality.
+  // indexed
+  /*! Bit-vector extract.
    *
-   * SMT-LIB: \c distinct */
-  DISTINCT,
-  /*! Equality.
+   * SMT-LIB: \c extract (indexed) */
+  BV_EXTRACT,
+  /*! Bit-vector repeat.
    *
-   * SMT-LIB: \c = */
-  EQUAL,
-  /*! Existential quantification.
+   * SMT-LIB: \c repeat (indexed) */
+  BV_REPEAT,
+  /*! Bit-vector rotate left by integer.
    *
-   * SMT-LIB: \c exists */
-  EXISTS,
-  /*! Universal quantification.
+   * SMT-LIB: \c rotate_left (indexed) */
+  BV_ROLI,
+  /*! Bit-vector rotate right by integer.
    *
-   * SMT-LIB: \c forall */
-  FORALL,
+   * SMT-LIB: \c rotate_right (indexed) */
+  BV_RORI,
+  /*! Bit-vector sign extend.
+   *
+   * SMT-LIB: \c sign_extend (indexed) */
+  BV_SIGN_EXTEND,
+  /*! Bit-vector zero extend.
+   *
+   * SMT-LIB: \c zero_extend (indexed) */
+  BV_ZERO_EXTEND,
+  /*! Floating-point to_fp from IEEE 754 bit-vector.
+   *
+   * SMT-LIB: \c to_fp (indexed) */
+
+  //// Floating-point arithmetic
   /*! Floating-point absolute value.
    *
    * SMT-LIB: \c fp.abs */
@@ -461,61 +542,7 @@ enum class Kind
    *
    * SMT-LIB: \c fp.sqrt */
   FP_SUB,
-  /*! Boolean if and only if.
-   *
-   * SMT-LIB: \c = */
-  IFF,
-  /*! Boolean implies.
-   *
-   * SMT-LIB: \c => */
-  IMPLIES,
-  /*! If-then-else.
-   *
-   * SMT-LIB: \c ite */
-  ITE,
-  /*! Lambda. */
-  LAMBDA,
-  /*! Boolean not.
-   *
-   * SMT-LIB: \c not */
-  NOT,
-  /*! Boolean or.
-   *
-   * SMT-LIB: \c or */
-  OR,
-  /*! Boolean xor.
-   *
-   * SMT-LIB: \c xor */
-  XOR,
-
   // indexed
-  /*! Bit-vector extract.
-   *
-   * SMT-LIB: \c extract (indexed) */
-  BV_EXTRACT,
-  /*! Bit-vector repeat.
-   *
-   * SMT-LIB: \c repeat (indexed) */
-  BV_REPEAT,
-  /*! Bit-vector rotate left by integer.
-   *
-   * SMT-LIB: \c rotate_left (indexed) */
-  BV_ROLI,
-  /*! Bit-vector rotate right by integer.
-   *
-   * SMT-LIB: \c rotate_right (indexed) */
-  BV_RORI,
-  /*! Bit-vector sign extend.
-   *
-   * SMT-LIB: \c sign_extend (indexed) */
-  BV_SIGN_EXTEND,
-  /*! Bit-vector zero extend.
-   *
-   * SMT-LIB: \c zero_extend (indexed) */
-  BV_ZERO_EXTEND,
-  /*! Floating-point to_fp from IEEE 754 bit-vector.
-   *
-   * SMT-LIB: \c to_fp (indexed) */
   FP_TO_FP_FROM_BV,
   /*! Floating-point to_fp from floating-point.
    *
@@ -629,7 +656,56 @@ class Sort;
 
 class Term
 {
+  friend Bitwuzla;
+  friend bool operator==(const Term &, const Term &);
+  friend std::ostream &operator<<(std::ostream &, const Term &);
+  friend std::hash<bitwuzla::Term>;
+  friend Term mk_true();
+  friend Term mk_false();
+  friend Term mk_bv_zero(const Sort &);
+  friend Term mk_bv_one(const Sort &);
+  friend Term mk_bv_ones(const Sort &);
+  friend Term mk_bv_min_signed(const Sort &);
+  friend Term mk_bv_max_signed(const Sort &);
+  friend Term mk_bv_value(const Sort &, const std::string &, uint8_t);
+  friend Term mk_bv_value_uint64(const Sort &, uint64_t);
+  friend Term mk_bv_value_int64(const Sort &, int64_t);
+  friend Term mk_fp_pos_zero(const Sort &);
+  friend Term mk_fp_neg_zero(const Sort &);
+  friend Term mk_fp_pos_inf(const Sort &);
+  friend Term mk_fp_neg_inf(const Sort &);
+  friend Term mk_fp_nan(const Sort &);
+  friend Term mk_fp_value(const Term &, const Term &, const Term &);
+  friend Term mk_fp_value_from_real(const Sort &,
+                                    const Term &,
+                                    const std::string &);
+  friend Term mk_fp_value_from_rational(const Sort &,
+                                        const Term &,
+                                        const std::string &,
+                                        const std::string &);
+  friend Term mk_rm_value(RoundingMode);
+  friend Term mk_term(Kind,
+                      const std::vector<Term> &,
+                      const std::vector<uint64_t>);
+  friend Term mk_const(
+      const Sort &, std::optional<std::reference_wrapper<const std::string>>);
+  friend Term mk_var(const Sort &,
+                     std::optional<std::reference_wrapper<const std::string>>);
+  friend Term substitute_term(const Term &,
+                              const std::unordered_map<Term, Term>);
+
  public:
+  /** Default constructor, creates null term. */
+  Term();
+  /** Destructor. */
+  ~Term();
+
+  /**
+   * Determine if this term is a null term.
+   * @return If this term is a null term.
+   */
+  bool is_null() const;
+
   /**
    * Get the kind of this term.
    *
@@ -643,7 +719,7 @@ class Term
    * Get the sort of this term.
    * @return The sort of the term.
    */
-  const Sort& sort() const;
+  Sort sort() const;
 
   /**
    * Get the number of child terms of this term.
@@ -655,7 +731,13 @@ class Term
    * Get the child terms of this term.
    * @return The children of this term as a vector of terms.
    */
-  const std::vector<Term> &children() const;
+  std::vector<Term> children() const;
+
+  /**
+   * Get the number of indices of this term.
+   * @return The number of indices of this term.
+   */
+  size_t num_indices() const;
 
   /**
    * Get the indices of an indexed term.
@@ -664,25 +746,22 @@ class Term
    *
    * @return The indices of this term as a vector of indices.
    */
-  const std::vector<uint32_t> &indices() const;
-
-  /**
-   * Determine if this term is an indexed term.
-   * @return True if this term is an indexed term.
-   */
-  bool is_indexed() const;
+  std::vector<uint64_t> indices() const;
 
   /**
    * Get the symbol of this term.
    * @return The symbol of this term. Empty if no symbol is defined.
    */
-  const std::string &symbol() const;
+  std::optional<std::reference_wrapper<const std::string>> symbol() const;
 
+#if 0
   /**
    * Set the symbol of this term.
    * @param symbol The symbol.
    */
-  void set_symbol(const std::string &symbol);
+  void set_symbol(
+      std::optional<std::reference_wrapper<const std::string>> symbol);
+#endif
 
   /**
    * Determine if this term is a constant.
@@ -802,13 +881,16 @@ class Term
 
   /**
    * Get the string representation of this term.
-   * @param format The output format for printing the term. Either `"btor"` for
-   * the BTOR format, or `"smt2"` for the SMT-LIB v2 format.
    * @return A string representation of this term.
    */
-  void str(const std::string &format);
+  std::string str();
 
  private:
+  /** Convert vector of terms to internal nodes. */
+  static std::vector<bzla::Node> term_vector_to_nodes(
+      const std::vector<Term> &terms);
+  /** Constructor from internal node. */
+  Term(const bzla::Node &node);
   /** The internal node wrapped by this term. */
   std::shared_ptr<bzla::Node> d_node;
 };
@@ -834,7 +916,57 @@ std::ostream &operator<<(std::ostream &out, const Term &term);
 
 class Sort
 {
+  friend Bitwuzla;
+  friend Term;
+  friend bool operator==(const Sort &a, const Sort &b);
+  friend std::ostream &operator<<(std::ostream &out, const Sort &sort);
+  friend std::hash<bitwuzla::Sort>;
+  friend Sort mk_array_sort(const Sort &, const Sort &);
+  friend Sort mk_bool_sort();
+  friend Sort mk_bv_sort(uint64_t);
+  friend Sort mk_fp_sort(uint64_t, uint64_t);
+  friend Sort mk_fun_sort(const std::vector<Sort> &, const Sort &);
+  friend Sort mk_rm_sort();
+  friend Term mk_bv_zero(const Sort &);
+  friend Term mk_bv_one(const Sort &);
+  friend Term mk_bv_ones(const Sort &);
+  friend Term mk_bv_min_signed(const Sort &);
+  friend Term mk_bv_max_signed(const Sort &);
+  friend Term mk_bv_value(const Sort &, const std::string &, uint8_t);
+  friend Term mk_bv_value_uint64(const Sort &, uint64_t);
+  friend Term mk_bv_value_int64(const Sort &, int64_t);
+  friend Term mk_fp_pos_zero(const Sort &);
+  friend Term mk_fp_neg_zero(const Sort &);
+  friend Term mk_fp_pos_inf(const Sort &);
+  friend Term mk_fp_neg_inf(const Sort &);
+  friend Term mk_fp_nan(const Sort &);
+  friend Term mk_fp_value_from_real(const Sort &,
+                                    const Term &,
+                                    const std::string &);
+  friend Term mk_fp_value_from_rational(const Sort &,
+                                        const Term &,
+                                        const std::string &,
+                                        const std::string &);
+  friend Term mk_term(Kind,
+                      const std::vector<Term> &,
+                      const std::vector<uint64_t>);
+  friend Term mk_const(
+      const Sort &, std::optional<std::reference_wrapper<const std::string>>);
+  friend Term mk_var(const Sort &,
+                     std::optional<std::reference_wrapper<const std::string>>);
+
  public:
+  /** Default constructor, creates null sort. */
+  Sort();
+  /** Destructor. */
+  ~Sort();
+
+  /**
+   * Determine if this sort is a null sort.
+   * @return If this sort is a null sort.
+   */
+  bool is_null() const;
+
   /**
    * Get the size of a bit-vector sort.
    *
@@ -866,7 +998,7 @@ class Sort
    *
    * @return The index sort of the array sort.
    */
-  const Sort& array_get_index() const;
+  Sort array_get_index() const;
 
   /**
    * Get the element sort of an array sort.
@@ -875,7 +1007,7 @@ class Sort
    *
    * @return The element sort of the array sort.
    */
-  const Sort& array_get_element() const;
+  Sort array_get_element() const;
 
   /**
    * Get the domain sorts of a function sort.
@@ -894,7 +1026,7 @@ class Sort
    *
    * @return The codomain sort of the function sort.
    */
-  const Sort& fun_get_codomain() const;
+  Sort fun_get_codomain() const;
 
   /**
    * Get the arity of a function sort.
@@ -947,6 +1079,11 @@ class Sort
   std::string str() const;
 
  private:
+  /** Convert vector of sorts to internal types. */
+  static std::vector<bzla::Type> sort_vector_to_types(
+      const std::vector<Sort> &sorts);
+  /** Constructor from internal type. */
+  Sort(const bzla::Type &type);
   /** The internal type wrapped by this sort. */
   std::shared_ptr<bzla::Type> d_type;
 };
@@ -1072,6 +1209,7 @@ class Bitwuzla
    * @param term The formula to assert.
    */
   void assert_formula(const Term &term);
+#if 0
   /**
    * Assume formula.
    *
@@ -1091,6 +1229,7 @@ class Bitwuzla
    *   * `::BITWUZLA_OPT_INCREMENTAL`
    */
   void assume_formula(const Term &term);
+#endif
 
   /**
    * Determine if an assumption is an unsat assumption.
@@ -1151,6 +1290,7 @@ class Bitwuzla
    *   * `check_sat`
    */
   std::vector<Term> bitwuzla_get_unsat_core();
+#if 0
   /**
    * Reset all added assumptions.
    *
@@ -1158,6 +1298,7 @@ class Bitwuzla
    *   * `assume_formula`
    */
   void reset_assumptions();
+#endif
 
   /**
    * Simplify the current input formula.
@@ -1198,7 +1339,7 @@ class Bitwuzla
    *   * `::BITWUZLA_OPT_INCREMENTAL`
    *   * `Result`
    */
-  Result check_sat();
+  Result check_sat(const std::vector<Term> &assumptions = {});
 
   /**
    * Get a term representing the model value of a given term.
@@ -1210,41 +1351,37 @@ class Bitwuzla
    * @return A term representing the model value of term `term`.
    * @see `check_sat`
    */
-  const Term& get_value(const Term &term);
+  Term get_value(const Term &term);
   /**
    * Get string representation of the current model value of given bit-vector
    * term.
    * @param term The term to query a model value for.
-   * @return Binary string representation of current model value of term \p
-   *         term. Return value is valid until next `get_bv_value` call.
+   * @param base The base in which the resulting string is to be given. 2 for
+   *             binary, 10 for decimal, and 16 for hexadecimal.
+   * @return String representation of current model value of term \p term.
    */
-  std::string get_bv_value(const Term &term);
+  std::string get_bv_value(const Term &term, uint8_t base = 2);
   /**
    * Get string of IEEE 754 standard representation of the current model
    * value of given floating-point term.
    *
    * @param term The term to query a model value for.
-   * @param sign Output parameter, stores binary string representation of the
-   *             sign bit.
-   * @param exponent Output parameter, stores binary string representation of
-   *                 the exponent bit-vector value.
-   * @param significand Output parameter, stores binary string representation
-   *                    of the significand bit-vector value.
+   * @param base The base in which the resulting string is to be given. 2 for
+   *             binary, 10 for decimal, and 16 for hexadecimal.
+   * @return String representation of current model value of term \p term.
    */
-  void get_fp_value(const Term &term,
-                    std::string &sign,
-                    std::string &exponent,
-                    std::string &significand);
+  std::string get_fp_value(const Term &term, uint8_t base = 2);
 
   /**
    * Get string representation of the current model value of given rounding
    * mode term.
    *
    * @param term The rounding mode term to query a model value for.
-   * @return String representation of rounding mode (RNA, RNE, RTN, RTP, RTZ).
+   * @return The rounding mode enum value.
    */
-  std::string get_rm_value(const Term &term);
+  RoundingMode get_rm_value(const Term &term);
 
+#if 0
   /**
    * Get the current model value of given array term.
    *
@@ -1313,6 +1450,7 @@ class Bitwuzla
    *   * `Result`
    */
   void print_model(std::ostream &out, const std::string &format);
+#endif
 
   /**
    * Print the current input formula to the given output stream.
@@ -1380,7 +1518,8 @@ class Bitwuzla
                bool &is_smt2);
 
  private:
-  // TODO
+  /** The associated solving context. */
+  std::unique_ptr<bzla::SolvingContext> d_ctx;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -1514,56 +1653,6 @@ Term mk_bv_min_signed(const Sort &sort);
 Term mk_bv_max_signed(const Sort &sort);
 
 /**
- * Create a floating-point positive zero value (SMT-LIB: `+zero`).
- * @param sort The sort of the value.
- * @return A term representing the floating-point positive zero value of given
- *         floating-point sort.
- * @see
- *  * `mk_fp_sort`
- */
-Term mk_fp_pos_zero(const Sort &sort);
-
-/**
- * Create a floating-point negative zero value (SMT-LIB: `-zero`).
- * @param sort The sort of the value.
- * @return A term representing the floating-point negative zero value of given
- *         floating-point sort.
- * @see
- *   * `mk_fp_sort`
- */
-Term mk_fp_neg_zero(const Sort &sort);
-
-/**
- * Create a floating-point positive infinity value (SMT-LIB: `+oo`).
- * @param sort The sort of the value.
- * @return A term representing the floating-point positive infinity value of
- *         given floating-point sort.
- * @see
- *   * `mk_fp_sort`
- */
-Term mk_fp_pos_inf(const Sort &sort);
-
-/**
- * Create a floating-point negative infinity value (SMT-LIB: `-oo`).
- * @param sort The sort of the value.
- * @return A term representing the floating-point negative infinity value of
- *         given floating-point sort.
- * @see
- *   * `mk_fp_sort`
- */
-Term mk_fp_neg_inf(const Sort &sort);
-
-/**
- * Create a floating-point NaN value.
- * @param sort The sort of the value.
- * @return A term representing the floating-point NaN value of given
- *         floating-point sort.
- * @see
- *   * `mk_fp_sort`
- */
-Term mk_fp_nan(const Sort &sort);
-
-/**
  * Create a bit-vector value from its string representation.
  *
  * Parameter `base` determines the base of the string representation.
@@ -1613,6 +1702,56 @@ Term mk_bv_value_uint64(const Sort &sort, uint64_t value);
  *   * `mk_bv_sort`
  */
 Term mk_bv_value_int64(const Sort &sort, int64_t value);
+
+/**
+ * Create a floating-point positive zero value (SMT-LIB: `+zero`).
+ * @param sort The sort of the value.
+ * @return A term representing the floating-point positive zero value of given
+ *         floating-point sort.
+ * @see
+ *  * `mk_fp_sort`
+ */
+Term mk_fp_pos_zero(const Sort &sort);
+
+/**
+ * Create a floating-point negative zero value (SMT-LIB: `-zero`).
+ * @param sort The sort of the value.
+ * @return A term representing the floating-point negative zero value of given
+ *         floating-point sort.
+ * @see
+ *   * `mk_fp_sort`
+ */
+Term mk_fp_neg_zero(const Sort &sort);
+
+/**
+ * Create a floating-point positive infinity value (SMT-LIB: `+oo`).
+ * @param sort The sort of the value.
+ * @return A term representing the floating-point positive infinity value of
+ *         given floating-point sort.
+ * @see
+ *   * `mk_fp_sort`
+ */
+Term mk_fp_pos_inf(const Sort &sort);
+
+/**
+ * Create a floating-point negative infinity value (SMT-LIB: `-oo`).
+ * @param sort The sort of the value.
+ * @return A term representing the floating-point negative infinity value of
+ *         given floating-point sort.
+ * @see
+ *   * `mk_fp_sort`
+ */
+Term mk_fp_neg_inf(const Sort &sort);
+
+/**
+ * Create a floating-point NaN value.
+ * @param sort The sort of the value.
+ * @return A term representing the floating-point NaN value of given
+ *         floating-point sort.
+ * @see
+ *   * `mk_fp_sort`
+ */
+Term mk_fp_nan(const Sort &sort);
 
 /**
  * Create a floating-point value from its IEEE 754 standard representation
@@ -1710,7 +1849,8 @@ Term mk_term(Kind kind,
  *   * `mk_fun_sort`
  *   * `mk_rm_sort`
  */
-Term mk_const(const Sort &sort, const std::string &symbol);
+Term mk_const(const Sort &sort,
+              std::optional<std::reference_wrapper<const std::string>> symbol);
 
 /**
  * Create a variable of given sort with given symbol.
@@ -1729,7 +1869,8 @@ Term mk_const(const Sort &sort, const std::string &symbol);
  *   * `mk_fun_sort`
  *   * `mk_rm_sort`
  */
-Term mk_var(const Sort &sort, const std::string &symbol);
+Term mk_var(const Sort &sort,
+            std::optional<std::reference_wrapper<const std::string>> symbol);
 
 /**
  * Substitute a set of keys with their corresponding values in the given

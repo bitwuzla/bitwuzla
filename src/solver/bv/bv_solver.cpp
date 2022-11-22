@@ -159,6 +159,16 @@ BvSolver::value(const Node& term)
               nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvnot());
           break;
 
+        case Kind::BV_DEC:
+          value =
+              nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvdec());
+          break;
+
+        case Kind::BV_INC:
+          value =
+              nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvinc());
+          break;
+
         case Kind::AND:
           value = nm.mk_value(get_cached_value(cur[0]).value<bool>()
                               && get_cached_value(cur[1]).value<bool>());
@@ -323,6 +333,7 @@ BvSolver::value(const Node& term)
         case Kind::FP_ADD:
         case Kind::FP_DIV:
         case Kind::FP_FMA:
+        case Kind::FP_FP:
         case Kind::FP_GE:
         case Kind::FP_GT:
         case Kind::FP_MAX:

@@ -142,6 +142,12 @@ Type::array_element() const
   return d_data->get_types()[1];
 }
 
+size_t
+Type::fun_arity() const
+{
+  return fun_types().size() - 1;
+}
+
 const std::vector<Type>&
 Type::fun_types() const
 {
