@@ -1720,14 +1720,6 @@ prev_item_was_lpar_smt2(BzlaSMT2Parser *parser)
   return !perr_smt2(parser, "expected '(' before '%s'", parser->token.start);
 }
 
-static bool
-is_boolean_exp_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p)
-{
-  (void) parser;
-  return !bitwuzla_term_is_array(p->exp) && !bitwuzla_term_is_fun(p->exp)
-         && bitwuzla_term_bv_get_size(p->exp) == 1;
-}
-
 static int32_t
 parse_uint32_smt2(BzlaSMT2Parser *parser, bool allow_zero, uint32_t *resptr)
 {
@@ -2646,7 +2638,7 @@ close_term_quant(BzlaSMT2Parser *parser,
     return !perr_smt2(
         parser, "expected expression as argument %d of '%s'", nargs, msg);
   }
-  if (!is_boolean_exp_smt2(parser, item_cur + nargs))
+  if (!bitwuzla_term_is_bool(item_cur[nargs].exp))
   {
     parser->perrcoo = item_cur[nargs].coo;
     return !perr_smt2(parser, "body of '%s' is not a boolean term", msg);
@@ -5665,7 +5657,7 @@ check_sat(BzlaSMT2Parser *parser)
   Bitwuzla *bitwuzla = parser->bitwuzla;
   BZLA_RESET_STACK(parser->sat_assuming_assumptions);
   if (parser->commands.check_sat++
-      && !bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_INCREMENTAL))
+      && (true || !bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_INCREMENTAL)))
   {
     BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
              1,
@@ -5834,7 +5826,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
     case BZLA_CHECK_SAT_ASSUMING_TAG_SMT2:
       configure_smt_comp_mode(parser);
       if (!read_lpar_smt2(parser, " after 'check-sat-assuming'")) return 0;
-      if (!bitwuzla_get_option(parser->bitwuzla, BITWUZLA_OPT_INCREMENTAL))
+      if (false && !bitwuzla_get_option(parser->bitwuzla, BITWUZLA_OPT_INCREMENTAL))
         return !perr_smt2(parser, "incremental solving is not enabled");
       if (!read_exp_list(parser, &exps, &coo))
       {
