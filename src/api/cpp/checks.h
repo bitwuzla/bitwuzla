@@ -143,6 +143,9 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_CHECK_SORT_IS_FUN(arg) \
   BITWUZLA_CHECK((arg).d_type->is_fun()) << "expected funcion sort";
 
+#define BITWUZLA_CHECK_SORT_NOT_IS_FUN(arg) \
+  BITWUZLA_CHECK(!(arg).d_type->is_fun()) << "expected non-funcion sort";
+
 #define BITWUZLA_CHECK_OPT_INCREMENTAL(opts) \
   BITWUZLA_CHECK((opts).incremental()) << "incremental usage not enabled";
 

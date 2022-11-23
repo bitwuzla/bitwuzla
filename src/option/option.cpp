@@ -166,6 +166,24 @@ Options::Options()
   assert(d_options.size() == static_cast<size_t>(Option::NUM_OPTIONS));
 }
 
+bool
+Options::is_bool(Option opt) const
+{
+  return d_options.at(opt)->is_bool();
+}
+
+bool
+Options::is_numeric(Option opt) const
+{
+  return d_options.at(opt)->is_numeric();
+}
+
+bool
+Options::is_enum(Option opt) const
+{
+  return d_options.at(opt)->is_enum();
+}
+
 void
 Options::set_option_bool(Option opt, bool value)
 {

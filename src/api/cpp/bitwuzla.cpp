@@ -541,41 +541,63 @@ operator<<(std::ostream &out, RoundingMode rm)
 void
 Options::set(Option option, uint64_t value)
 {
-  // TODO check
-  d_options->set_option_numeric(s_internal_options.at(option), value);
+  BITWUZLA_CHECK_NOT_NULL(d_options);
+  bzla::option::Option opt = s_internal_options.at(option);
+  BITWUZLA_CHECK(d_options->is_numeric(opt)) << "expected numeric option";
+  d_options->set_option_numeric(opt, value);
+}
+
+void
+Options::set(Option option, bool value)
+{
+  BITWUZLA_CHECK_NOT_NULL(d_options);
+  bzla::option::Option opt = s_internal_options.at(option);
+  BITWUZLA_CHECK(d_options->is_bool(opt)) << "expected Boolean option";
+  d_options->set_option_numeric(opt, value);
 }
 
 void
 Options::set(Option option, const std::string &mode)
 {
-  // TODO check
+  BITWUZLA_CHECK_NOT_NULL(d_options);
+  bzla::option::Option opt = s_internal_options.at(option);
+  BITWUZLA_CHECK(d_options->is_enum(opt))
+      << "expected option with option modes";
   d_options->set_option_enum(s_internal_options.at(option), mode);
 }
 
 uint64_t
 Options::get_numeric(Option option) const
 {
-  // TODO check;
-  return d_options->get_option_numeric(s_internal_options.at(option));
+  BITWUZLA_CHECK_NOT_NULL(d_options);
+  bzla::option::Option opt = s_internal_options.at(option);
+  BITWUZLA_CHECK(d_options->is_numeric(opt)) << "expected numeric option";
+  return d_options->get_option_numeric(opt);
 }
 
 bool
 Options::get_bool(Option option) const
 {
-  // TODO check
-  return d_options->get_option_bool(s_internal_options.at(option));
+  BITWUZLA_CHECK_NOT_NULL(d_options);
+  bzla::option::Option opt = s_internal_options.at(option);
+  BITWUZLA_CHECK(d_options->is_bool(opt)) << "expected Boolean option";
+  return d_options->get_option_bool(opt);
 }
 
 const std::string &
 Options::get_mode(Option option) const
 {
-  // TODO check
-  return d_options->get_option_enum(s_internal_options.at(option));
+  BITWUZLA_CHECK_NOT_NULL(d_options);
+  bzla::option::Option opt = s_internal_options.at(option);
+  BITWUZLA_CHECK(d_options->is_enum(opt))
+      << "expected option with option modes";
+  return d_options->get_option_enum(opt);
 }
 
 const OptionInfo &
 Options::get_info(Option option) const
 {
+  BITWUZLA_CHECK_NOT_NULL(d_options);
   // TODO
   (void) option;
 }
@@ -1108,7 +1130,6 @@ Result
 Bitwuzla::check_sat(const std::vector<Term> &assumptions)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
-  // TODO check
   assert(
       assumptions.empty());  // TODO assumption handling (not implemented yet)
   return s_results.at(d_ctx->solve());
@@ -1777,7 +1798,8 @@ Term
 mk_var(const Sort &sort,
        std::optional<std::reference_wrapper<const std::string>> symbol)
 {
-  // TODO check
+  BITWUZLA_CHECK_NOT_NULL(sort.d_type);
+  BITWUZLA_CHECK_SORT_NOT_IS_FUN(sort);
   return bzla::NodeManager::get().mk_var(*sort.d_type, symbol);
 }
 
@@ -1839,14 +1861,12 @@ namespace std {
 size_t
 std::hash<bitwuzla::Sort>::operator()(const bitwuzla::Sort &sort) const
 {
-  // TODO check
   return std::hash<bzla::Type>{}(*sort.d_type);
 }
 
 size_t
 std::hash<bitwuzla::Term>::operator()(const bitwuzla::Term &term) const
 {
-  // TODO check
   return std::hash<bzla::Node>{}(*term.d_node);
 }
 

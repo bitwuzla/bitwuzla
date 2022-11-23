@@ -343,6 +343,13 @@ class Options
   OptionBool prop_opt_lt_concat_sext;
   OptionBool prop_sext;
 
+  /** @return True if the given option is a Boolean option. */
+  bool is_bool(Option opt) const;
+  /** @return True if the given option is a numeric option. */
+  bool is_numeric(Option opt) const;
+  /** @return True if the given option is an enum option. */
+  bool is_enum(Option opt) const;
+
   /**
    * Set current value of Boolean option.
    * @note This is mainly necessary to have access to options via their enum
