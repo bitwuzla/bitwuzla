@@ -136,13 +136,34 @@ enum class Kind
  */
 struct KindInformation
 {
+  enum class Attribute
+  {
+    NONE,
+    LEFT_ASSOC,
+    RIGHT_ASSOC,
+    CHAINABLE,
+    PAIRWISE,
+  };
+
   static constexpr uint8_t s_nary = 5;
   uint8_t num_children            = 0;
   uint8_t num_indices             = 0;
   const char* enum_name           = nullptr;
   const char* smt2_name           = nullptr;
+  Attribute attribute             = Attribute::NONE;
 
   bool is_nary() const { return num_children == s_nary; }
+
+  bool is_left_associative() const
+  {
+    return attribute == Attribute::LEFT_ASSOC;
+  }
+  bool is_right_associative() const
+  {
+    return attribute == Attribute::RIGHT_ASSOC;
+  }
+  bool is_chainable() const { return attribute == Attribute::CHAINABLE; }
+  bool is_pairwise() const { return attribute == Attribute::PAIRWISE; }
 };
 
 /**
