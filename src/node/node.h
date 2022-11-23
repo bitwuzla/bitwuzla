@@ -72,6 +72,11 @@ class Node
   bool is_const() const;
 
   /**
+   * @return True if this node is a variable.
+   */
+  bool is_variable() const;
+
+  /**
    * @return True if this node is a NOT or BV_NOT node.
    */
   bool is_inverted() const;

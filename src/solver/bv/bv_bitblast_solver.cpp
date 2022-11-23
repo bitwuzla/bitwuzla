@@ -277,6 +277,8 @@ BvBitblastSolver::bitblast(const Node& t)
         case Kind::XOR:
         case Kind::EXISTS:
 
+        case Kind::BV_DEC:
+        case Kind::BV_INC:
         case Kind::BV_NAND:
         case Kind::BV_NEG:
         case Kind::BV_NOR:
@@ -314,6 +316,7 @@ BvBitblastSolver::bitblast(const Node& t)
         case Kind::FP_ADD:
         case Kind::FP_DIV:
         case Kind::FP_FMA:
+        case Kind::FP_FP:
         case Kind::FP_GE:
         case Kind::FP_GT:
         case Kind::FP_MAX:

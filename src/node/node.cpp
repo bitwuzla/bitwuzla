@@ -114,6 +114,12 @@ Node::is_const() const
 }
 
 bool
+Node::is_variable() const
+{
+  return d_data->get_kind() == node::Kind::VARIABLE;
+}
+
+bool
 Node::is_inverted() const
 {
   return d_data->get_kind() == node::Kind::NOT

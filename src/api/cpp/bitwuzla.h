@@ -637,9 +637,6 @@ enum class RoundingMode
    * SMT-LIB: \c RTZ \c roundTowardZero
    */
   RTZ = 4,
-#ifndef DOXYGEN_SKIP
-  MAX = 5,
-#endif
 };
 
 /**
@@ -1520,6 +1517,8 @@ class Bitwuzla
  private:
   /** The associated solving context. */
   std::unique_ptr<bzla::SolvingContext> d_ctx;
+  /** The result of the last check_sat() call. */
+  Result d_last_check_sat;
 };
 
 /* -------------------------------------------------------------------------- */

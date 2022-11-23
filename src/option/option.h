@@ -14,11 +14,13 @@ namespace bzla::option {
 
 enum class Option
 {
-  INCREMENTAL,  // bool
-  LOG_LEVEL,    // numeric
-  SAT_SOLVER,   // enum
-  SEED,         // numeric
-  VERBOSITY,    // numeric
+  INCREMENTAL,          // bool
+  LOG_LEVEL,            // numeric
+  PRODUCE_MODELS,       // bool
+  PRODUCE_UNSAT_CORES,  // bool
+  SAT_SOLVER,           // enum
+  SEED,                 // numeric
+  VERBOSITY,            // numeric
 
   BV_SOLVER,  // enum
 
@@ -32,7 +34,6 @@ enum class Option
   PROP_OPT_LT_CONCAT_SEXT,      // bool
   PROP_SEXT,                    // bool
 
-  UNDEFINED,  // temporary, until API is done
   NUM_OPTIONS,
 };
 
@@ -323,6 +324,8 @@ class Options
   // general options
   OptionBool incremental;
   OptionNumeric log_level;
+  OptionBool produce_models;
+  OptionBool produce_unsat_cores;
   OptionEnum<SatSolver> sat_solver;
   OptionNumeric seed;
   OptionNumeric verbosity;

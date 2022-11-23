@@ -153,27 +153,27 @@ struct KindInfo
     init(Kind::ITE, 3, 0, "ITE", "ite");
 
     /* Boolean */
-    init(Kind::AND, 2, 0, "AND", "and");
-    init(Kind::IMPLIES, 2, 0, "IMPLIES", "=>");
+    init(Kind::AND, 2, 0, "AND", "and", KindInfo::LEFT_ASSOC);
+    init(Kind::IMPLIES, 2, 0, "IMPLIES", "=>", KindInfo::RIGHT_ASSOC);
     init(Kind::NOT, 1, 0, "NOT", "not");
-    init(Kind::OR, 2, 0, "OR", "or");
-    init(Kind::XOR, 2, 0, "XOR", "xor");
+    init(Kind::OR, 2, 0, "OR", "or", KindInfo::LEFT_ASSOC);
+    init(Kind::XOR, 2, 0, "XOR", "xor", KindInfo::LEFT_ASSOC);
 
     /* Bit-vectors */
-    init(Kind::BV_ADD, 2, 0, "BV_ADD", "bvadd");
-    init(Kind::BV_AND, 2, 0, "BV_AND", "bvand");
+    init(Kind::BV_ADD, 2, 0, "BV_ADD", "bvadd", KindInfo::LEFT_ASSOC);
+    init(Kind::BV_AND, 2, 0, "BV_AND", "bvand", KindInfo::LEFT_ASSOC);
     init(Kind::BV_ASHR, 2, 0, "BV_ASHR", "bvashr");
-    init(Kind::BV_COMP, 2, 0, "BV_COMP", "bvcomp");
-    init(Kind::BV_CONCAT, 2, 0, "BV_CONCAT", "concat");
+    init(Kind::BV_COMP, 2, 0, "BV_COMP", "bvcomp", KindInfo::CHAINABLE);
+    init(Kind::BV_CONCAT, 2, 0, "BV_CONCAT", "concat", KindInfo::LEFT_ASSOC);
     init(Kind::BV_DEC, 2, 0, "BV_DEC", "bvdec");
     init(Kind::BV_EXTRACT, 1, 2, "BV_EXTRACT", "extract");
     init(Kind::BV_INC, 2, 0, "BV_DEC", "bvinc");
-    init(Kind::BV_MUL, 2, 0, "BV_MUL", "bvmul");
+    init(Kind::BV_MUL, 2, 0, "BV_MUL", "bvmul", KindInfo::LEFT_ASSOC);
     init(Kind::BV_NAND, 2, 0, "BV_NAND", "bvnand");
     init(Kind::BV_NEG, 1, 0, "BV_NEG", "bvneg");
     init(Kind::BV_NOR, 2, 0, "BV_NOR", "bvnor");
     init(Kind::BV_NOT, 1, 0, "BV_NOT", "bvnot");
-    init(Kind::BV_OR, 2, 0, "BV_OR", "bvor");
+    init(Kind::BV_OR, 2, 0, "BV_OR", "bvor", KindInfo::LEFT_ASSOC);
     init(Kind::BV_REDAND, 1, 0, "BV_REDAND", "bvredand");
     init(Kind::BV_REDOR, 1, 0, "BV_REDOR", "bvredor");
     init(Kind::BV_REDXOR, 1, 0, "BV_REDXOR", "bvredxor");
@@ -206,19 +206,19 @@ struct KindInfo
     init(Kind::BV_UMULO, 2, 0, "BV_UMULO", "bvumulo");
     init(Kind::BV_UREM, 2, 0, "BV_UREM", "bvurem");
     init(Kind::BV_USUBO, 2, 0, "BV_USUBO", "bvusubo");
-    init(Kind::BV_XNOR, 2, 0, "BV_XNOR", "bvxnor");
-    init(Kind::BV_XOR, 2, 0, "BV_XOR", "bvxor");
+    init(Kind::BV_XNOR, 2, 0, "BV_XNOR", "bvxnor", KindInfo::LEFT_ASSOC);
+    init(Kind::BV_XOR, 2, 0, "BV_XOR", "bvxor", KindInfo::LEFT_ASSOC);
     init(Kind::BV_ZERO_EXTEND, 1, 1, "BV_ZERO_EXTEND", "zero_extend");
 
     /* Floating-points */
     init(Kind::FP_ABS, 1, 0, "FP_ABS", "fp.abs");
     init(Kind::FP_ADD, 3, 0, "FP_ADD", "fp.add");
     init(Kind::FP_DIV, 3, 0, "FP_DIV", "fp.div");
-    init(Kind::FP_EQUAL, 2, 0, "FP_EQUAL", "fp.eq");
+    init(Kind::FP_EQUAL, 2, 0, "FP_EQUAL", "fp.eq", KindInfo::CHAINABLE);
     init(Kind::FP_FMA, 4, 0, "FP_FMA", "fp.fma");
     init(Kind::FP_FP, 3, 0, "FP_FP", "fp");
-    init(Kind::FP_GE, 2, 0, "FP_GE", "fp.geq");
-    init(Kind::FP_GT, 2, 0, "FP_GT", "fp.gt");
+    init(Kind::FP_GE, 2, 0, "FP_GE", "fp.geq", KindInfo::CHAINABLE);
+    init(Kind::FP_GT, 2, 0, "FP_GT", "fp.gt", KindInfo::CHAINABLE);
     init(Kind::FP_IS_INF, 1, 0, "FP_IS_INF", "fp.isInfinite");
     init(Kind::FP_IS_NAN, 1, 0, "FP_IS_NAN", "fp.isNaN");
     init(Kind::FP_IS_NEG, 1, 0, "FP_IS_NEG", "fp.isNegative");
@@ -226,8 +226,8 @@ struct KindInfo
     init(Kind::FP_IS_POS, 1, 0, "FP_IS_POS", "fp.isPositive");
     init(Kind::FP_IS_SUBNORMAL, 1, 0, "FP_IS_SUBNORMAL", "fp.isSubnormal");
     init(Kind::FP_IS_ZERO, 1, 0, "FP_IS_ZERO", "fp.isZero");
-    init(Kind::FP_LE, 2, 0, "FP_LE", "fp.leq");
-    init(Kind::FP_LT, 2, 0, "FP_LT", "fp.lt");
+    init(Kind::FP_LE, 2, 0, "FP_LE", "fp.leq", KindInfo::CHAINABLE);
+    init(Kind::FP_LT, 2, 0, "FP_LT", "fp.lt", KindInfo::CHAINABLE);
     init(Kind::FP_MAX, 2, 0, "FP_MAX", "fp.max");
     init(Kind::FP_MIN, 2, 0, "FP_MIN", "fp.min");
     init(Kind::FP_MUL, 3, 0, "FP_MUL", "fp.mul");

@@ -223,7 +223,7 @@ is_bv_xnor(const Node& node, Node& child0, Node& child1)
 }
 
 Node
-mk_nary(Kind kind, const std::vector<Node>& terms, bool left_assoc)
+mk_nary(Kind kind, const std::vector<Node>& terms)
 {
   assert(!terms.empty());
   if (terms.size() == 1)
@@ -233,7 +233,8 @@ mk_nary(Kind kind, const std::vector<Node>& terms, bool left_assoc)
 
   NodeManager& nm = NodeManager::get();
   size_t size     = terms.size();
-  if (left_assoc)
+
+  if (s_node_kind_info.is_left_associative(kind))
   {
     Node res = nm.mk_node(kind, {terms[0], terms[1]});
     for (size_t i = 3; i < size; ++i)
@@ -243,12 +244,45 @@ mk_nary(Kind kind, const std::vector<Node>& terms, bool left_assoc)
     return res;
   }
 
-  // Right-associative
-  Node res = nm.mk_node(kind, {terms[size - 2], terms[size - 1]});
-  for (size_t i = 3; i < size; ++i)
+  if (s_node_kind_info.is_right_associative(kind))
   {
-    res = nm.mk_node(kind, {terms[size - i], res});
+    Node res = nm.mk_node(kind, {terms[size - 2], terms[size - 1]});
+    for (size_t i = 3; i < size; ++i)
+    {
+      res = nm.mk_node(kind, {terms[size - i], res});
+    }
+    return res;
   }
+
+  if (s_node_kind_info.is_chainable(kind))
+  {
+    Node res = nm.mk_node(kind, {terms[0], terms[1]});
+    for (size_t i = 2; i < size; ++i)
+    {
+      res = nm.mk_node(node::Kind::AND,
+                       {res, nm.mk_node(kind, {terms[i - 1], terms[i]})});
+    }
+    return res;
+  }
+
+  assert(s_node_kind_info.is_pairwise(kind));
+  Node res;
+  for (size_t i = 0; i < size - 1; ++i)
+  {
+    for (size_t j = i + 1; j < size; ++j)
+    {
+      if (res.is_null())
+      {
+        res = nm.mk_node(kind, {terms[i], terms[j]});
+      }
+      else
+      {
+        res = nm.mk_node(node::Kind::AND,
+                         {res, nm.mk_node(kind, {terms[i], terms[j]})});
+      }
+    }
+  }
+  assert(!res.is_null());
   return res;
 }
 
