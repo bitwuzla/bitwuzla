@@ -101,7 +101,7 @@ Printer::print(std::ostream& os,
       }
       expect_space = true;
 
-      const KindInformation& info = s_node_kind_info[cur.kind()];
+      const char* symbol = s_node_kind_info.smt2_name(cur.kind());
       switch (cur.kind())
       {
         case Kind::CONST_ARRAY:
@@ -187,7 +187,7 @@ Printer::print(std::ostream& os,
         case Kind::FP_SQRT:
         case Kind::FP_SUB:
         case Kind::SELECT:
-        case Kind::STORE: os << "(" << info.smt2_name; break;
+        case Kind::STORE: os << "(" << symbol; break;
 
         case Kind::BV_EXTRACT:
         case Kind::BV_REPEAT:
@@ -201,7 +201,7 @@ Printer::print(std::ostream& os,
         case Kind::FP_TO_FP_FROM_UBV:
         case Kind::FP_TO_SBV:
         case Kind::FP_TO_UBV:
-          os << "((_ " << info.smt2_name;
+          os << "((_ " << symbol;
           for (size_t i = 0; i < cur.num_indices(); ++i)
           {
             os << " " << cur.index(i);
@@ -217,7 +217,7 @@ Printer::print(std::ostream& os,
         case Kind::EXISTS:
         case Kind::FORALL:
         case Kind::LAMBDA:
-          os << "(" << info.smt2_name << " ((";
+          os << "(" << symbol << " ((";
           print_symbol(os, cur[0]);
           os << " ";
           Printer::print(os, cur[0].type());

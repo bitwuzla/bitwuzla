@@ -94,8 +94,8 @@ class TestRewriter : public ::testing::Test
       GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
     }
 
-    size_t num_children = node::s_node_kind_info[kind].num_children;
-    size_t num_indices  = node::s_node_kind_info[kind].num_indices;
+    size_t num_children = node::s_node_kind_info.num_children(kind);
+    size_t num_indices  = node::s_node_kind_info.num_indices(kind);
     ASSERT_EQ(indices.size(), num_indices);
 
     NodeManager& nm = NodeManager::get();

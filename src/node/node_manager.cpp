@@ -359,19 +359,19 @@ NodeManager::check_type(Kind kind,
 {
   std::stringstream ss;
 
-  const KindInformation& info = s_node_kind_info[kind];
-  if ((!info.is_nary() && children.size() != info.num_children))
+  if ((!s_node_kind_info.is_nary(kind)
+       && children.size() != s_node_kind_info.num_children(kind)))
   {
     ss << kind << ": ";
-    ss << "Invalid number of children. Expected " << info.num_children
-       << ", got " << children.size();
+    ss << "Invalid number of children. Expected "
+       << s_node_kind_info.num_children(kind) << ", got " << children.size();
     return std::make_pair(false, ss.str());
   }
-  else if (indices.size() != info.num_indices)
+  else if (indices.size() != s_node_kind_info.num_indices(kind))
   {
     ss << kind << ": ";
-    ss << "Invalid number of indices. Expected " << info.num_indices << ", got "
-       << indices.size();
+    ss << "Invalid number of indices. Expected "
+       << s_node_kind_info.num_indices(kind) << ", got " << indices.size();
     return std::make_pair(false, ss.str());
   }
 
@@ -805,7 +805,7 @@ NodeManager::new_data(Kind kind,
   {
     data = new NodeDataIndexed(this, kind, children, indices);
   }
-  else if (s_node_kind_info[kind].is_nary())
+  else if (s_node_kind_info.is_nary(kind))
   {
     data = new NodeDataNary(this, kind, children);
   }
