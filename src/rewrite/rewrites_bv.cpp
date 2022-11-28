@@ -146,6 +146,9 @@ RewriteRule<RewriteRuleKind::BV_ADD_SAME>::_apply(Rewriter& rewriter,
 /**
  * match:  (bvadd a (bvmul a b))
  * result: (bvmul a (bvadd b (_ bv1 N)))
+ *
+ * @note Term a must not be a value as otherwise this rule would possibly cycle
+ *       with BV_MUL_CONST_ADD.
  */
 namespace {
 Node
@@ -154,7 +157,7 @@ _rw_bv_add_mul1(Rewriter& rewriter, const Node& node, size_t idx)
   assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
-  if (node[idx1].kind() == Kind::BV_MUL)
+  if (node[idx1].kind() == Kind::BV_MUL && !node[idx0].is_value())
   {
     if (node[idx1][0] == node[idx0])
     {
