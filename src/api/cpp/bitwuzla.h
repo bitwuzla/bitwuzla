@@ -52,6 +52,7 @@ class OptionInfo
   // TODO
 };
 
+// TODO parse command-line option string
 class Options
 {
   friend Bitwuzla;
@@ -1069,8 +1070,6 @@ class Sort
 
   /**
    * Get string representation of this sort.
-   * @param format The output format for printing the term. Either `"btor"` for
-   *               the BTOR format, or `"smt2"` for the SMT-LIB v2 format.
    * @return String representation of this sort.
    */
   std::string str() const;

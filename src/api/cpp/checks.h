@@ -73,11 +73,11 @@ class BitwuzlaExceptionStream
   std::stringstream d_stream;
 };
 
-#define BITWUZLA_CHECK(cond)                    \
-  BITWUZLA_PREDICT_TRUE(cond)                   \
-  ? (void) 0                                    \
-  : OstreamVoider()                             \
-          & BitwuzlaExceptionStream().ostream() \
+#define BITWUZLA_CHECK(cond)                              \
+  BITWUZLA_PREDICT_TRUE(cond)                             \
+  ? (void) 0                                              \
+  : bitwuzla::OstreamVoider()                             \
+          & bitwuzla::BitwuzlaExceptionStream().ostream() \
                 << "invalid call to '" << __PRETTY_FUNCTION__ << "', "
 
 #define BITWUZLA_CHECK_NOT_NULL(arg) \

@@ -1,5 +1,10 @@
 #include "api/cpp/bitwuzla.h"
 
+// TODO this should be refactored
+extern "C" {
+#include "bzlaconfig.h"
+}
+
 #include <array>
 
 #include "api/cpp/checks.h"
@@ -17,6 +22,8 @@
 #include "util/util.h"
 
 namespace bitwuzla {
+
+// TODO: assert that no node that reaches the API is a null node
 
 /* -------------------------------------------------------------------------- */
 
@@ -515,6 +522,55 @@ const std::unordered_map<bzla::node::Kind, Kind> s_kinds{
 
 /* -------------------------------------------------------------------------- */
 
+std::string
+copyright()
+{
+  return BZLA_LICENSE  // TODO refactor
+      "\n\n"
+      "This version of Bitwuzla is linked against the following\n"
+      "third party libraries. For copyright information of each\n"
+      "library see the corresponding url.\n"
+      "\n"
+      "  Btor2Tools - tools for the BTOR2 format\n"
+      "  https://https://github.com/Boolector/btor2tools\n"
+      "\n"
+      "  GMP - GNU Multiple Precision Arithmetic Library\n"
+      "  https://gmplib.org \n"
+#ifdef BZLA_USE_LINGELING
+      "\n"
+      "  Lingeling\n"
+      "  https://github.com/arminbiere/lingeling\n"
+#endif
+#ifdef BZLA_USE_CADICAL
+      "\n"
+      "  CaDiCaL\n"
+      "  https://github.com/arminbiere/cadical\n"
+#endif
+#ifdef BZLA_USE_CMS
+      "\n"
+      "  CryptoMiniSat\n"
+      "  https://github.com/msoos/cryptominisat\n"
+#endif
+      "\n"
+      "  SymFPU\n"
+      "  https://github.com/martin-cs/symfpu \n"
+      "";
+}
+
+std::string
+version()
+{
+  return BZLA_VERSION;  // TODO refactor
+}
+
+std::string
+git_id()
+{
+  return BZLA_GIT_ID;  // TODO refactor
+}
+
+/* -------------------------------------------------------------------------- */
+
 std::ostream &
 operator<<(std::ostream &out, Result result)
 {
@@ -542,6 +598,7 @@ void
 Options::set(Option option, uint64_t value)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
+  // TODO check bounds
   bzla::option::Option opt = s_internal_options.at(option);
   BITWUZLA_CHECK(d_options->is_numeric(opt)) << "expected numeric option";
   d_options->set_option_numeric(opt, value);
@@ -560,6 +617,7 @@ void
 Options::set(Option option, const std::string &mode)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
+  // TODO check if mode is valid
   bzla::option::Option opt = s_internal_options.at(option);
   BITWUZLA_CHECK(d_options->is_enum(opt))
       << "expected option with option modes";
@@ -640,7 +698,7 @@ Term::children() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_node);
   std::vector<Term> res;
-  for (const auto &node : *d_node)
+  for (const bzla::Node &node : *d_node)
   {
     res.push_back(node);
   }
@@ -896,6 +954,7 @@ Sort
 Sort::array_get_index() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_SORT_IS_ARRAY(*this);
   return d_type->array_index();
 }
 
@@ -903,6 +962,7 @@ Sort
 Sort::array_get_element() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_SORT_IS_ARRAY(*this);
   return d_type->array_element();
 }
 
@@ -910,6 +970,7 @@ std::vector<Sort>
 Sort::fun_get_domain() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_SORT_IS_FUN(*this);
   const std::vector<bzla::Type> types = d_type->fun_types();
   assert(types.size() > 0);
   std::vector<Sort> res;
@@ -924,6 +985,7 @@ Sort
 Sort::fun_get_codomain() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_SORT_IS_FUN(*this);
   const std::vector<bzla::Type> types = d_type->fun_types();
   assert(types.size() > 0);
   return types.back();
@@ -933,6 +995,7 @@ size_t
 Sort::fun_arity() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_SORT_IS_FUN(*this);
   return d_type->fun_arity();
 }
 
@@ -1086,6 +1149,7 @@ Bitwuzla::is_unsat_assumption(const Term &term)
   BITWUZLA_CHECK_OPT_INCREMENTAL(d_ctx->options());
   BITWUZLA_CHECK_NOT_NULL(term.d_node);
   BITWUZLA_CHECK_TERM_IS_BOOL(term);
+  // TODO check that given term is an assumption
   // TODO (not implemented yet)
   (void) term;
   return false;
