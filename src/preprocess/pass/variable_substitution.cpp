@@ -75,8 +75,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     {
       auto [var, term] = get_var_term(assertion);
       assert(!var.is_null());
-      const Node& rewritten =
-          d_rewriter.rewrite(nm.mk_node(Kind::EQUAL, {var, process(term)}));
+      Node rewritten = nm.mk_node(Kind::EQUAL, {var, process(term)});
       assertions.replace(i, rewritten);
       // Add new substitution assertion to cache in order to avoid that this
       // new assertion will be eliminated.
@@ -263,6 +262,7 @@ PassVariableSubstitution::substitute(
         {
           auto iit = cache.find(child);
           assert(iit != cache.end());
+          assert(!iit->second.is_null());
           children.push_back(iit->second);
         }
         if (cur.num_indices() > 0)
