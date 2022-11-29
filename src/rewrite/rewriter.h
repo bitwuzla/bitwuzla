@@ -2,6 +2,9 @@
 #define BZLA_REWRITE_REWRITER_H_INCLUDED
 
 #include <unordered_map>
+#ifndef NDEBUG
+#include <unordered_set>
+#endif
 
 #include "node/node.h"
 
@@ -150,6 +153,13 @@ class Rewriter
   bool d_enabled;
   /** Cache for rewritten nodes, maps node to its rewritten form. */
   std::unordered_map<Node, Node> d_cache;
+#ifndef NDEBUG
+  /** Cache for detecting rewrite cycles in debug mode. */
+  std::unordered_set<Node> d_rec_cache;
+#endif
+  uint64_t d_num_rec_calls = 0;
+  /** Indicates whether rewrite recursion limit was reached. */
+  bool d_recursion_limit_reached = false;
 };
 
 /* -------------------------------------------------------------------------- */

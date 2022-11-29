@@ -73,7 +73,18 @@ Rewriter::mk_node(node::Kind kind,
                   const std::vector<Node>& children,
                   const std::vector<uint64_t>& indices)
 {
-  return _rewrite(NodeManager::get().mk_node(kind, children, indices));
+  Node node = NodeManager::get().mk_node(kind, children, indices);
+  ++d_num_rec_calls;
+#ifndef NDEBUG
+  auto [it, inserted] = d_rec_cache.insert(node);
+  assert(inserted);  // Rewrite cycle detected if this fails.
+#endif
+  const Node& res = _rewrite(node);
+#ifndef NDEBUG
+  d_rec_cache.erase(node);
+#endif
+  --d_num_rec_calls;
+  return res;
 }
 
 Node
@@ -97,6 +108,15 @@ Rewriter::_rewrite(const Node& node)
   if (!inserted && !it->second.is_null())
   {
     return it->second;
+  }
+
+  // Limit rewrite recursion depth if we run into rewrite cycles in production
+  // mode. Ideally, this should not happen, but if it does, we do not crash.
+  if (d_num_rec_calls >= 4096)
+  {
+    d_recursion_limit_reached = true;
+    it->second                = node;
+    return node;
   }
 
   Node res;
@@ -230,6 +250,11 @@ Rewriter::_rewrite(const Node& node)
     default: assert(false);
   }
   assert(res.type() == node.type());
+
+  // Get iterator again in case a recursive call changed the size of d_cache
+  // and invalidated the iterator.
+  it = d_cache.find(node);
+  assert(it != d_cache.end());
   assert(it->second.is_null());
 
   // Cache result
