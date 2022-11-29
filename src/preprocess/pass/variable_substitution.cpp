@@ -59,19 +59,22 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
 
   // Apply substitutions.
   //
-  // Note: For substitution assertions, we only process the term side of the
-  // assertion and do not eliminate the assertion itself since we have to keep
-  // the variable equality for cases where the variable still occurs in
-  // lower levels (if variable substitution assertion was added in a scope > 0).
-  // We could check whether the variable occurs in lower levels, but for now
-  // we keep the assertion since this makes it simpler overall.
+  // Note: For non-top-level substitution assertions, we only process the term
+  // side of the assertion and do not eliminate the assertion itself since we
+  // have to keep the variable equality for cases where the variable still
+  // occurs in lower levels (if variable substitution assertion was added in a
+  // scope > 0). We could check whether the variable occurs in lower levels,
+  // but for now we keep the assertion since this makes it simpler overall.
+  bool top_level  = d_backtrack_mgr->num_levels() == 0;
   NodeManager& nm = NodeManager::get();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    // Keep variable substitution assertion, but apply substitutions in term.
-    if (d_substitution_assertions.find(assertion)
-        != d_substitution_assertions.end())
+    // Keep non-top-level variable substitution assertion, but apply
+    // substitutions in term.
+    if (!top_level
+        && d_substitution_assertions.find(assertion)
+               != d_substitution_assertions.end())
     {
       auto [var, term] = get_var_term(assertion);
       assert(!var.is_null());

@@ -19,6 +19,7 @@ class PassVariableSubstitution : public PreprocessingPass
   PassVariableSubstitution(Rewriter& rewriter,
                            backtrack::BacktrackManager* backtrack_mgr)
       : PreprocessingPass(rewriter),
+        d_backtrack_mgr(backtrack_mgr),
         d_substitutions(backtrack_mgr),
         d_substitution_assertions(backtrack_mgr),
         d_cache(backtrack_mgr)
@@ -41,6 +42,8 @@ class PassVariableSubstitution : public PreprocessingPass
 
   bool register_assertion(const Node& assertion);
 
+  /** Only required to check the current assertion level. */
+  const backtrack::BacktrackManager* d_backtrack_mgr;
   backtrack::unordered_map<Node, Node> d_substitutions;
   backtrack::unordered_set<Node> d_substitution_assertions;
 
