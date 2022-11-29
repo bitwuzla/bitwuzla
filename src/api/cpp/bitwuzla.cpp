@@ -7,7 +7,7 @@ extern "C" {
 
 #include <array>
 
-#include "api/cpp/checks.h"
+#include "api/checks.h"
 #include "bv/bitvector.h"
 #include "node/node.h"
 #include "node/node_kind.h"
