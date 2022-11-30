@@ -594,6 +594,28 @@ operator<<(std::ostream &out, RoundingMode rm)
 
 /* Options public ----------------------------------------------------------- */
 
+Options::Options() {}
+
+Options::~Options() {}
+
+bool
+Options::is_bool(Option option) const
+{
+  return d_options->is_bool(s_internal_options.at(option));
+}
+
+bool
+Options::is_numeric(Option option) const
+{
+  return d_options->is_numeric(s_internal_options.at(option));
+}
+
+bool
+Options::is_mode(Option option) const
+{
+  return d_options->is_enum(s_internal_options.at(option));
+}
+
 void
 Options::set(Option option, uint64_t value)
 {
@@ -670,6 +692,13 @@ bool
 Term::is_null() const
 {
   return d_node == nullptr;
+}
+
+uint64_t
+Term::id() const
+{
+  BITWUZLA_CHECK_NOT_NULL(d_node);
+  return d_node->id();
 }
 
 Kind
@@ -927,6 +956,13 @@ Sort::is_null() const
 }
 
 uint64_t
+Sort::id() const
+{
+  BITWUZLA_CHECK_NOT_NULL(d_type);
+  return d_type->id();
+}
+
+uint64_t
 Sort::bv_size() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
@@ -951,7 +987,7 @@ Sort::fp_sig_size() const
 }
 
 Sort
-Sort::array_get_index() const
+Sort::array_index() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_ARRAY(*this);
@@ -959,7 +995,7 @@ Sort::array_get_index() const
 }
 
 Sort
-Sort::array_get_element() const
+Sort::array_element() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_ARRAY(*this);
@@ -967,7 +1003,7 @@ Sort::array_get_element() const
 }
 
 std::vector<Sort>
-Sort::fun_get_domain() const
+Sort::fun_domain() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FUN(*this);
@@ -982,7 +1018,7 @@ Sort::fun_get_domain() const
 }
 
 Sort
-Sort::fun_get_codomain() const
+Sort::fun_codomain() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FUN(*this);
@@ -1156,7 +1192,7 @@ Bitwuzla::is_unsat_assumption(const Term &term)
 }
 
 std::vector<Term>
-Bitwuzla::bitwuzla_get_unsat_assumptions()
+Bitwuzla::get_unsat_assumptions()
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_INCREMENTAL(d_ctx->options());
@@ -1165,7 +1201,7 @@ Bitwuzla::bitwuzla_get_unsat_assumptions()
 }
 
 std::vector<Term>
-Bitwuzla::bitwuzla_get_unsat_core()
+Bitwuzla::get_unsat_core()
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(d_ctx->options());
@@ -1214,6 +1250,7 @@ Bitwuzla::get_bv_value(const Term &term, uint8_t base)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_NOT_NULL(term.d_node);
+  BITWUZLA_CHECK_VALUE_BASE(base);
   BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_SAT("get value");
   bzla::Node value = d_ctx->get_value(*term.d_node);
@@ -1226,6 +1263,7 @@ Bitwuzla::get_fp_value(const Term &term, uint8_t base)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_NOT_NULL(term.d_node);
+  BITWUZLA_CHECK_VALUE_BASE(base);
   BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_SAT("get value");
   const bzla::FloatingPoint &fp_value =
@@ -1236,6 +1274,28 @@ Bitwuzla::get_fp_value(const Term &term, uint8_t base)
   std::string prefix = base == 2 ? "#b" : (base == 16 ? "#x" : "");
   return "(fp " + prefix + sign.to_string(base) + " " + prefix
          + exp.to_string(base) + " " + prefix + sig.to_string(base);
+}
+
+void
+Bitwuzla::get_fp_value(const Term &term,
+                       std::string &sign,
+                       std::string &exponent,
+                       std::string &significand,
+                       uint8_t base)
+{
+  BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  BITWUZLA_CHECK_NOT_NULL(term.d_node);
+  BITWUZLA_CHECK_VALUE_BASE(base);
+  BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
+  BITWUZLA_CHECK_LAST_CALL_SAT("get value");
+  const bzla::FloatingPoint &fp_value =
+      d_ctx->get_value(*term.d_node).value<bzla::FloatingPoint>();
+  bzla::BitVector bv_sign, bv_exp, bv_sig;
+  bzla::FloatingPoint::ieee_bv_as_bvs(
+      term.d_node->type(), fp_value.as_bv(), bv_sign, bv_exp, bv_sig);
+  sign        = bv_sign.to_string(base);
+  exponent    = bv_exp.to_string(base);
+  significand = bv_sig.to_string(base);
 }
 
 RoundingMode
@@ -1425,10 +1485,7 @@ mk_bv_value(const Sort &sort, const std::string &value, uint8_t base)
   BITWUZLA_CHECK_NOT_NULL(sort.d_type);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
   BITWUZLA_CHECK_STR_NOT_EMPTY(value);
-  BITWUZLA_CHECK(base == 2 || base == 10 || base == 16)
-      << "argument 'base' must be either 2 (binary), 10 (decimal) or 16 "
-         "(hexadecimal), is '"
-      << base << "'";
+  BITWUZLA_CHECK_VALUE_BASE(base);
   BITWUZLA_CHECK(bzla::util::is_valid_bv_str(value, base))
       << "invalid "
       << (base == 2 ? "binary" : (base == 10 ? "decimal" : "hexadecimal"))
@@ -1851,16 +1908,14 @@ mk_term(Kind kind,
 }
 
 Term
-mk_const(const Sort &sort,
-         std::optional<std::reference_wrapper<const std::string>> symbol)
+mk_const(const Sort &sort, std::optional<const std::string> symbol)
 {
   BITWUZLA_CHECK_NOT_NULL(sort.d_type);
   return bzla::NodeManager::get().mk_const(*sort.d_type, symbol);
 }
 
 Term
-mk_var(const Sort &sort,
-       std::optional<std::reference_wrapper<const std::string>> symbol)
+mk_var(const Sort &sort, std::optional<const std::string> symbol)
 {
   BITWUZLA_CHECK_NOT_NULL(sort.d_type);
   BITWUZLA_CHECK_SORT_NOT_IS_FUN(sort);

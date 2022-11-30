@@ -65,9 +65,9 @@ set(libbitwuzla_src_files
   type/type_data.cpp
   type/type_manager.cpp
   option/option.cpp
-  parser/bzlabtor.c
-  parser/bzlabtor2.c
-  parser/bzlasmt2.c
+  #parser/bzlabtor.c
+  #parser/bzlabtor2.c
+  #parser/bzlasmt2.c
   preprocess/bzlaack.c
   preprocess/bzlader.c
   preprocess/bzlaelimapplies.c

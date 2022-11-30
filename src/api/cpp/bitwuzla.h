@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 
+#include "api/enums.h"
 #include "api/option.h"
 
 /* -------------------------------------------------------------------------- */
@@ -58,6 +59,27 @@ class Options
   friend Bitwuzla;
 
  public:
+  Options();
+  ~Options();
+  /**
+   * Determine if given option is a numeric option.
+   * @param option The option to query.
+   * @return True if `option` is a numeric option.
+   */
+  bool is_bool(Option option) const;
+  /**
+   * Determine if given option is a Boolean option.
+   * @param option The option to query.
+   * @return True if `option` is a Boolean option.
+   */
+  bool is_numeric(Option option) const;
+  /**
+   * Determine if given option is an option with a mode.
+   * @param option The option to query.
+   * @return True if `option` is an option with a mode.
+   */
+  bool is_mode(Option option) const;
+
   /**
    * Set option.
    *
@@ -126,7 +148,7 @@ class Options
    *
    * @param option The option.
    * @param info The option info to populate, will be valid until the next
-   *             `bitwuzla_get_option_info` call.
+   *             `get_option_info` call.
    *
    * @see
    *   * `BitwuzlaOptionInfo`
@@ -156,419 +178,6 @@ enum class Result
 std::ostream &operator<<(std::ostream &out, Result result);
 
 /* -------------------------------------------------------------------------- */
-
-/** The term kind. */
-enum class Kind
-{
-  /*! First order constant. */
-  CONSTANT,
-  /*! Constant array. */
-  CONST_ARRAY,
-  /*! Value. */
-  VALUE,
-  /*! Bound variable. */
-  VARIABLE,
-
-  //////// operators
-
-  //// Boolean
-  /*! Boolean and.
-   *
-   *  SMT-LIB: \c and */
-  AND,
-  /*! Disequality.
-   *
-   * SMT-LIB: \c distinct */
-  DISTINCT,
-  /*! Equality.
-   *
-   * SMT-LIB: \c = */
-  EQUAL,
-  /*! Boolean if and only if.
-   *
-   * SMT-LIB: \c = */
-  IFF,
-  /*! Boolean implies.
-   *
-   * SMT-LIB: \c => */
-  IMPLIES,
-  /*! Boolean not.
-   *
-   * SMT-LIB: \c not */
-  NOT,
-  /*! Boolean or.
-   *
-   * SMT-LIB: \c or */
-  OR,
-  /*! Boolean xor.
-   *
-   * SMT-LIB: \c xor */
-  XOR,
-
-  //// Core
-  /*! If-then-else.
-   *
-   * SMT-LIB: \c ite */
-  ITE,
-
-  //// Quantifiers
-  /*! Existential quantification.
-   *
-   * SMT-LIB: \c exists */
-  EXISTS,
-  /*! Universal quantification.
-   *
-   * SMT-LIB: \c forall */
-  FORALL,
-
-  //// Functions
-  /*! Function application. */
-  APPLY,
-  /*! Lambda. */
-  LAMBDA,
-
-  //// Arrays
-  /*! Array select.
-   *
-   *  SMT-LIB: \c select */
-  ARRAY_SELECT,
-  /*! Array store.
-   *
-   * SMT-LIB: \c store */
-  ARRAY_STORE,
-
-  //// Bit-vectors
-  /*! Bit-vector addition.
-   *
-   *  SMT-LIB: \c bvadd */
-  BV_ADD,
-  /*! Bit-vector and.
-   *
-   * SMT-LIB: \c bvand */
-  BV_AND,
-  /*! Bit-vector arithmetic right shift.
-   *
-   * SMT-LIB: \c bvashr */
-  BV_ASHR,
-  /*! Bit-vector comparison.
-   *
-   * SMT-LIB: \c bvcomp */
-  BV_COMP,
-  /*! Bit-vector concat.
-   *
-   * SMT-LIB: \c concat */
-  BV_CONCAT,
-  /*! Bit-vector decrement.
-   *
-   * Decrement by one. */
-  BV_DEC,
-  /*! Bit-vector increment.
-   *
-   * Increment by one. */
-  BV_INC,
-  /*! Bit-vector multiplication.
-   *
-   * SMT-LIB: \c bvmul */
-  BV_MUL,
-  /*! Bit-vector nand.
-   *
-   * SMT-LIB: \c bvnand */
-  BV_NAND,
-  /*! Bit-vector negation (two's complement).
-   *
-   * SMT-LIB: \c bvneg */
-  BV_NEG,
-  /*! Bit-vector nor.
-   *
-   * SMT-LIB: \c bvnor */
-  BV_NOR,
-  /*! Bit-vector not (one's complement).
-   *
-   * SMT-LIB: \c bvnot */
-  BV_NOT,
-  /*! Bit-vector or.
-   *
-   * SMT-LIB: \c bvor */
-  BV_OR,
-  /*! Bit-vector and reduction.
-   *
-   * Bit-wise *and* reduction, all bits are *and*'ed together into a single bit.
-   * This corresponds to bit-wise *and* reduction as known from Verilog. */
-  BV_REDAND,
-  /*! Bit-vector reduce or.
-   *
-   * Bit-wise *or* reduction, all bits are *or*'ed together into a single bit.
-   * This corresponds to bit-wise *or* reduction as known from Verilog. */
-  BV_REDOR,
-  /*! Bit-vector reduce xor.
-   *
-   * Bit-wise *xor* reduction, all bits are *xor*'ed together into a single bit.
-   * This corresponds to bit-wise *xor* reduction as known from Verilog. */
-  BV_REDXOR,
-  /*! Bit-vector rotate left (not indexed).
-   *
-   * This is a non-indexed variant of SMT-LIB \c rotate_left. */
-  BV_ROL,
-  /*! Bit-vector rotate right.
-   *
-   * This is a non-indexed variant of SMT-LIB \c rotate_right. */
-  BV_ROR,
-  /*! Bit-vector signed addition overflow test.
-   *
-   * Single bit to indicate if signed addition produces an overflow. */
-  BV_SADD_OVERFLOW,
-  /*! Bit-vector signed division overflow test.
-   *
-   * Single bit to indicate if signed division produces an overflow. */
-  BV_SDIV_OVERFLOW,
-  /*! Bit-vector signed division.
-   *
-   * SMT-LIB: \c bvsdiv */
-  BV_SDIV,
-  /*! Bit-vector signed greater than or equal.
-   *
-   * SMT-LIB: \c bvsle */
-  BV_SGE,
-  /*! Bit-vector signed greater than.
-   *
-   * SMT-LIB: \c bvslt */
-  BV_SGT,
-  /*! Bit-vector logical left shift.
-   *
-   * SMT-LIB: \c bvshl */
-  BV_SHL,
-  /*! Bit-vector logical right shift.
-   *
-   * SMT-LIB: \c bvshr */
-  BV_SHR,
-  /*! Bit-vector signed less than or equal.
-   *
-   * SMT-LIB: \c bvsle */
-  BV_SLE,
-  /*! Bit-vector signed less than.
-   *
-   * SMT-LIB: \c bvslt */
-  BV_SLT,
-  /*! Bit-vector signed modulo.
-   *
-   * SMT-LIB: \c bvsmod */
-  BV_SMOD,
-  /*! Bit-vector signed multiplication overflow test.
-   *
-   * SMT-LIB: \c bvsmod */
-  BV_SMUL_OVERFLOW,
-  /*! Bit-vector signed remainder.
-   *
-   * SMT-LIB: \c bvsrem */
-  BV_SREM,
-  /*! Bit-vector signed subtraction overflow test.
-   *
-   * Single bit to indicate if signed subtraction produces an overflow. */
-  BV_SSUB_OVERFLOW,
-  /*! Bit-vector subtraction.
-   *
-   * SMT-LIB: \c bvsub */
-  BV_SUB,
-  /*! Bit-vector unsigned addition overflow test.
-   *
-   * Single bit to indicate if unsigned addition produces an overflow. */
-  BV_UADD_OVERFLOW,
-  /*! Bit-vector unsigned division.
-   *
-   * SMT-LIB: \c bvudiv */
-  BV_UDIV,
-  /*! Bit-vector unsigned greater than or equal.
-   *
-   * SMT-LIB: \c bvuge */
-  BV_UGE,
-  /*! Bit-vector unsigned greater than.
-   *
-   * SMT-LIB: \c bvugt */
-  BV_UGT,
-  /*! Bit-vector unsigned less than or equal.
-   *
-   * SMT-LIB: \c bvule */
-  BV_ULE,
-  /*! Bit-vector unsigned less than.
-   *
-   * SMT-LIB: \c bvult */
-  BV_ULT,
-  /*! Bit-vector unsigned multiplication overflow test.
-   *
-   * Single bit to indicate if unsigned multiplication produces an overflow. */
-  BV_UMUL_OVERFLOW,
-  /*! Bit-vector unsigned remainder.
-   *
-   * SMT-LIB: \c bvurem */
-  BV_UREM,
-  /*! Bit-vector unsigned subtraction overflow test.
-   *
-   * Single bit to indicate if unsigned subtraction produces an overflow. */
-  BV_USUB_OVERFLOW,
-  /*! Bit-vector xnor.
-   *
-   * SMT-LIB: \c bvxnor */
-  BV_XNOR,
-  /*! Bit-vector xor.
-   *
-   * SMT-LIB: \c bvxor */
-  BV_XOR,
-  // indexed
-  /*! Bit-vector extract.
-   *
-   * SMT-LIB: \c extract (indexed) */
-  BV_EXTRACT,
-  /*! Bit-vector repeat.
-   *
-   * SMT-LIB: \c repeat (indexed) */
-  BV_REPEAT,
-  /*! Bit-vector rotate left by integer.
-   *
-   * SMT-LIB: \c rotate_left (indexed) */
-  BV_ROLI,
-  /*! Bit-vector rotate right by integer.
-   *
-   * SMT-LIB: \c rotate_right (indexed) */
-  BV_RORI,
-  /*! Bit-vector sign extend.
-   *
-   * SMT-LIB: \c sign_extend (indexed) */
-  BV_SIGN_EXTEND,
-  /*! Bit-vector zero extend.
-   *
-   * SMT-LIB: \c zero_extend (indexed) */
-  BV_ZERO_EXTEND,
-  /*! Floating-point to_fp from IEEE 754 bit-vector.
-   *
-   * SMT-LIB: \c to_fp (indexed) */
-
-  //// Floating-point arithmetic
-  /*! Floating-point absolute value.
-   *
-   * SMT-LIB: \c fp.abs */
-  FP_ABS,
-  /*! Floating-point addition.
-   *
-   * SMT-LIB: \c fp.add */
-  FP_ADD,
-  /*! Floating-point division.
-   *
-   * SMT-LIB: \c fp.div */
-  FP_DIV,
-  /*! Floating-point equality.
-   *
-   * SMT-LIB: \c fp.eq */
-  FP_EQUAL,
-  /*! Floating-point fused multiplcation and addition.
-   *
-   * SMT-LIB: \c fp.fma */
-  FP_FMA,
-  /*! Floating-point IEEE 754 value.
-   *
-   * SMT-LIB: \c fp */
-  FP_FP,
-  /*! Floating-point greater than or equal.
-   *
-   * SMT-LIB: \c fp.geq */
-  FP_GE,
-  /*! Floating-point greater than.
-   *
-   * SMT-LIB: \c fp.gt */
-  FP_GT,
-  /*! Floating-point is infinity tester.
-   *
-   * SMT-LIB: \c fp.isInfinite */
-  FP_IS_INF,
-  /*! Floating-point is Nan tester.
-   *
-   * SMT-LIB: \c fp.isNaN */
-  FP_IS_NAN,
-  /*! Floating-point is negative tester.
-   *
-   * SMT-LIB: \c fp.isNegative */
-  FP_IS_NEG,
-  /*! Floating-point is normal tester.
-   *
-   * SMT-LIB: \c fp.isNormal */
-  FP_IS_NORMAL,
-  /*! Floating-point is positive tester.
-   *
-   * SMT-LIB: \c fp.isPositive */
-  FP_IS_POS,
-  /*! Floating-point is subnormal tester.
-   *
-   * SMT-LIB: \c fp.isSubnormal */
-  FP_IS_SUBNORMAL,
-  /*! Floating-point is zero tester.
-   *
-   * SMT-LIB: \c fp.isZero */
-  FP_IS_ZERO,
-  /*! Floating-point less than or equal.
-   *
-   * SMT-LIB: \c fp.leq */
-  FP_LEQ,
-  /*! Floating-point less than.
-   *
-   * SMT-LIB: \c fp.lt */
-  FP_LT,
-  /*! Floating-point max.
-   *
-   * SMT-LIB: \c fp.max */
-  FP_MAX,
-  /*! Floating-point min.
-   *
-   * SMT-LIB: \c fp.min */
-  FP_MIN,
-  /*! Floating-point multiplcation.
-   *
-   * SMT-LIB: \c fp.mul */
-  FP_MUL,
-  /*! Floating-point negation.
-   *
-   * SMT-LIB: \c fp.neg */
-  FP_NEG,
-  /*! Floating-point remainder.
-   *
-   * SMT-LIB: \c fp.rem */
-  FP_REM,
-  /*! Floating-point round to integral.
-   *
-   * SMT-LIB: \c fp.roundToIntegral */
-  FP_RTI,
-  /*! Floating-point round to square root.
-   *
-   * SMT-LIB: \c fp.sqrt */
-  FP_SQRT,
-  /*! Floating-point round to subtraction.
-   *
-   * SMT-LIB: \c fp.sqrt */
-  FP_SUB,
-  // indexed
-  FP_TO_FP_FROM_BV,
-  /*! Floating-point to_fp from floating-point.
-   *
-   * SMT-LIB: \c to_fp (indexed) */
-  FP_TO_FP_FROM_FP,
-  /*! Floating-point to_fp from signed bit-vector value.
-   *
-   * SMT-LIB: \c to_fp (indexed) */
-  FP_TO_FP_FROM_SBV,
-  /*! Floating-point to_fp from unsigned bit-vector value.
-   *
-   * SMT-LIB: \c to_fp_unsigned (indexed) */
-  FP_TO_FP_FROM_UBV,
-  /*! Floating-point to_sbv.
-   *
-   * SMT-LIB: \c fp.to_sbv (indexed) */
-  FP_TO_SBV,
-  /*! Floating-point to_ubv.
-   *
-   * SMT-LIB: \c fp.to_ubv (indexed) */
-  FP_TO_UBV,
-#ifndef DOXYGEN_SKIP
-  NUM_KINDS,
-#endif
-};
 
 /**
  * Print kind to output stream.
@@ -685,10 +294,8 @@ class Term
   friend Term mk_term(Kind,
                       const std::vector<Term> &,
                       const std::vector<uint64_t>);
-  friend Term mk_const(
-      const Sort &, std::optional<std::reference_wrapper<const std::string>>);
-  friend Term mk_var(const Sort &,
-                     std::optional<std::reference_wrapper<const std::string>>);
+  friend Term mk_const(const Sort &, std::optional<const std::string>);
+  friend Term mk_var(const Sort &, std::optional<const std::string>);
   friend Term substitute_term(const Term &,
                               const std::unordered_map<Term, Term>);
 
@@ -705,10 +312,14 @@ class Term
   bool is_null() const;
 
   /**
+   * Get the id of this term.
+   * @return The term id.
+   */
+  uint64_t id() const;
+
+  /**
    * Get the kind of this term.
-   *
    * @return The kind.
-   *
    * @see Kind
    */
   Kind kind() const;
@@ -948,10 +559,8 @@ class Sort
   friend Term mk_term(Kind,
                       const std::vector<Term> &,
                       const std::vector<uint64_t>);
-  friend Term mk_const(
-      const Sort &, std::optional<std::reference_wrapper<const std::string>>);
-  friend Term mk_var(const Sort &,
-                     std::optional<std::reference_wrapper<const std::string>>);
+  friend Term mk_const(const Sort &, std::optional<const std::string>);
+  friend Term mk_var(const Sort &, std::optional<const std::string>);
 
  public:
   /** Default constructor, creates null sort. */
@@ -964,6 +573,12 @@ class Sort
    * @return If this sort is a null sort.
    */
   bool is_null() const;
+
+  /**
+   * Get the id of this sort.
+   * @return The sort id.
+   */
+  uint64_t id() const;
 
   /**
    * Get the size of a bit-vector sort.
@@ -996,7 +611,7 @@ class Sort
    *
    * @return The index sort of the array sort.
    */
-  Sort array_get_index() const;
+  Sort array_index() const;
 
   /**
    * Get the element sort of an array sort.
@@ -1005,7 +620,7 @@ class Sort
    *
    * @return The element sort of the array sort.
    */
-  Sort array_get_element() const;
+  Sort array_element() const;
 
   /**
    * Get the domain sorts of a function sort.
@@ -1015,7 +630,7 @@ class Sort
    *
    * @return The domain sorts of the function sort.
    */
-  std::vector<Sort> fun_get_domain() const;
+  std::vector<Sort> fun_domain() const;
 
   /**
    * Get the codomain sort of a function sort.
@@ -1024,7 +639,7 @@ class Sort
    *
    * @return The codomain sort of the function sort.
    */
-  Sort fun_get_codomain() const;
+  Sort fun_codomain() const;
 
   /**
    * Get the arity of a function sort.
@@ -1270,7 +885,7 @@ class Bitwuzla
    *   * `check_sat`
    *   * `::BITWUZLA_OPT_INCREMENTAL`
    */
-  std::vector<Term> bitwuzla_get_unsat_assumptions();
+  std::vector<Term> get_unsat_assumptions();
   /**
    * Get the unsat core (unsat assertions).
    *
@@ -1285,7 +900,7 @@ class Bitwuzla
    *   * `assert`
    *   * `check_sat`
    */
-  std::vector<Term> bitwuzla_get_unsat_core();
+  std::vector<Term> get_unsat_core();
 #if 0
   /**
    * Reset all added assumptions.
@@ -1367,6 +982,25 @@ class Bitwuzla
    * @return String representation of current model value of term \p term.
    */
   std::string get_fp_value(const Term &term, uint8_t base = 2);
+  /**
+   * Get sign, exponent and significand string of IEEE 754 standard
+   * representation of the current model value of given floating-point term.
+   *
+   * @param term The term to query a model value for.
+   * @param sign        Output parameter. The string representation of the sign
+   *                    bit.
+   * @param exponent    Output parameter. The string representation of the
+   *                    exponent.
+   * @param significand Output parameter. The string representation of the
+   *                    exponent.
+   * @param base The base in which the resulting string is to be given. 2 for
+   *             binary, 10 for decimal, and 16 for hexadecimal.
+   */
+  void get_fp_value(const Term &term,
+                    std::string &sign,
+                    std::string &exponent,
+                    std::string &significand,
+                    uint8_t base = 2);
 
   /**
    * Get string representation of the current model value of given rounding
@@ -1504,7 +1138,7 @@ class Bitwuzla
    *         and `Result::UNKNOWN` otherwise.
    *
    * @see
-   *   * `bitwuzla_parse`
+   *   * `parse`
    */
   Result parse(const std::string &format,
                std::ifstream &infile,
@@ -1659,7 +1293,7 @@ Term mk_bv_max_signed(const Sort &sort);
  *
  * @param sort The sort of the value.
  * @param value A string representing the value.
- * @param base The base in which the string is given. 2 for binary, 10 for
+ * @param base The base in which the string is given; 2 for binary, 10 for
  *             decimal, and 16 for hexadecimal.
  *
  * @return A term of kind Kind::VALUE, representing the bit-vector value
@@ -1848,7 +1482,7 @@ Term mk_term(Kind kind,
  *   * `mk_rm_sort`
  */
 Term mk_const(const Sort &sort,
-              std::optional<std::reference_wrapper<const std::string>> symbol);
+              std::optional<const std::string> symbol = std::nullopt);
 
 /**
  * Create a variable of given sort with given symbol.
@@ -1868,7 +1502,7 @@ Term mk_const(const Sort &sort,
  *   * `mk_rm_sort`
  */
 Term mk_var(const Sort &sort,
-            std::optional<std::reference_wrapper<const std::string>> symbol);
+            std::optional<const std::string> symbol = std::nullopt);
 
 /**
  * Substitute a set of keys with their corresponding values in the given

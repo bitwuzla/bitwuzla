@@ -93,6 +93,13 @@ class BitwuzlaExceptionStream
   BITWUZLA_CHECK(!(arg).empty())          \
       << "argument '" << #arg << "' must not be an empty string";
 
+#define BITWUZLA_CHECK_VALUE_BASE(arg)                                       \
+  BITWUZLA_CHECK(arg == 2 || arg == 10 || arg == 16)                         \
+      << "invalid base for string representations of values (must be 2 for " \
+         "binary, 10 for decimal"                                            \
+         "or 16 for hexadecimal), is '"                                      \
+      << arg << "'";
+
 #define BITWUZLA_CHECK_TERM_IS_ARRAY_AT_IDX(args, i)  \
   BITWUZLA_CHECK((args)[i].d_node->type().is_array()) \
       << "expected array term at index " << i;
