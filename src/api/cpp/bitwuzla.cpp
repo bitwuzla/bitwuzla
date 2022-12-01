@@ -623,7 +623,7 @@ Options::set(Option option, uint64_t value)
   // TODO check bounds
   bzla::option::Option opt = s_internal_options.at(option);
   BITWUZLA_CHECK(d_options->is_numeric(opt)) << "expected numeric option";
-  d_options->set_option_numeric(opt, value);
+  d_options->set<uint64_t>(opt, value);
 }
 
 void
@@ -632,7 +632,7 @@ Options::set(Option option, bool value)
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
   BITWUZLA_CHECK(d_options->is_bool(opt)) << "expected Boolean option";
-  d_options->set_option_numeric(opt, value);
+  d_options->set<bool>(opt, value);
 }
 
 void
@@ -643,7 +643,7 @@ Options::set(Option option, const std::string &mode)
   bzla::option::Option opt = s_internal_options.at(option);
   BITWUZLA_CHECK(d_options->is_enum(opt))
       << "expected option with option modes";
-  d_options->set_option_enum(s_internal_options.at(option), mode);
+  d_options->set<std::string>(s_internal_options.at(option), mode);
 }
 
 uint64_t
@@ -652,7 +652,7 @@ Options::get_numeric(Option option) const
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
   BITWUZLA_CHECK(d_options->is_numeric(opt)) << "expected numeric option";
-  return d_options->get_option_numeric(opt);
+  return d_options->get<uint64_t>(opt);
 }
 
 bool
@@ -661,7 +661,7 @@ Options::get_bool(Option option) const
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
   BITWUZLA_CHECK(d_options->is_bool(opt)) << "expected Boolean option";
-  return d_options->get_option_bool(opt);
+  return d_options->get<bool>(opt);
 }
 
 const std::string &
@@ -671,7 +671,7 @@ Options::get_mode(Option option) const
   bzla::option::Option opt = s_internal_options.at(option);
   BITWUZLA_CHECK(d_options->is_enum(opt))
       << "expected option with option modes";
-  return d_options->get_option_enum(opt);
+  return d_options->get<std::string>(opt);
 }
 
 const OptionInfo &

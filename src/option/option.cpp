@@ -4,9 +4,9 @@
 
 namespace bzla::option {
 
-/* --- OptionInfo public ---------------------------------------------------- */
+/* --- OptionBase public ---------------------------------------------------- */
 
-OptionInfo::OptionInfo(Options* options,
+OptionBase::OptionBase(Options* options,
                        Option opt,
                        const char* desc,
                        const char* lng,
@@ -17,24 +17,7 @@ OptionInfo::OptionInfo(Options* options,
   options->register_option(opt, this);
 }
 
-OptionInfo::~OptionInfo() {}
-
-const std::string&
-OptionInfo::get_option_enum() const
-{
-  assert(false);
-  static std::string s;
-  return s;
-}
-
-/* --- OptionInfo private --------------------------------------------------- */
-
-void
-OptionInfo::set_option_enum(const std::string& value)
-{
-  (void) value;
-  assert(false);
-}
+OptionBase::~OptionBase() {}
 
 /* --- Options public ------------------------------------------------------- */
 
@@ -166,6 +149,8 @@ Options::Options()
   assert(d_options.size() == static_cast<size_t>(Option::NUM_OPTIONS));
 }
 
+/* -------------------------------------------------------------------------- */
+
 bool
 Options::is_bool(Option opt) const
 {
@@ -184,46 +169,93 @@ Options::is_enum(Option opt) const
   return d_options.at(opt)->is_enum();
 }
 
+template <>
 void
-Options::set_option_bool(Option opt, bool value)
+Options::set(Option opt, const bool& value)
 {
   assert(d_options.at(opt)->is_bool());
   reinterpret_cast<OptionBool*>(d_options.at(opt))->set(value);
 }
 
+template <>
 void
-Options::set_option_numeric(Option opt, uint64_t value)
+Options::set(Option opt, const uint64_t& value)
 {
   assert(d_options.at(opt)->is_numeric());
   reinterpret_cast<OptionNumeric*>(d_options.at(opt))->set(value);
 }
 
+template <>
 void
-Options::set_option_enum(Option opt, const std::string& value)
+Options::set(Option opt, const std::string& value)
 {
   assert(d_options.at(opt)->is_enum());
-  d_options.at(opt)->set_option_enum(value);
+  reinterpret_cast<OptionEnum*>(d_options.at(opt))->set_str(value);
 }
 
-bool
-Options::get_option_bool(Option opt) const
+template <>
+const bool&
+Options::get(Option opt) const
 {
   assert(d_options.at(opt)->is_bool());
   return (*reinterpret_cast<OptionBool*>(d_options.at(opt)))();
 }
 
-uint64_t
-Options::get_option_numeric(Option opt) const
+template <>
+const uint64_t&
+Options::get(Option opt) const
 {
   assert(d_options.at(opt)->is_numeric());
   return (*reinterpret_cast<OptionNumeric*>(d_options.at(opt)))();
 }
 
+template <>
 const std::string&
-Options::get_option_enum(Option opt) const
+Options::get(Option opt) const
 {
   assert(d_options.at(opt)->is_enum());
-  return d_options.at(opt)->get_option_enum();
+  return reinterpret_cast<OptionEnum*>(d_options.at(opt))->get_str();
 }
 
+template <>
+const bool&
+Options::dflt(Option opt) const
+{
+  assert(d_options.at(opt)->is_bool());
+  return reinterpret_cast<OptionBool*>(d_options.at(opt))->dflt();
+}
+
+template <>
+const uint64_t&
+Options::dflt(Option opt) const
+{
+  assert(d_options.at(opt)->is_numeric());
+  return reinterpret_cast<OptionNumeric*>(d_options.at(opt))->dflt();
+}
+
+template <>
+const std::string&
+Options::dflt(Option opt) const
+{
+  assert(d_options.at(opt)->is_enum());
+  return reinterpret_cast<OptionEnum*>(d_options.at(opt))->dflt_str();
+}
+
+template <>
+const uint64_t&
+Options::min(Option opt) const
+{
+  assert(d_options.at(opt)->is_numeric());
+  return reinterpret_cast<OptionNumeric*>(d_options.at(opt))->min();
+}
+
+template <>
+const uint64_t&
+Options::max(Option opt) const
+{
+  assert(d_options.at(opt)->is_numeric());
+  return reinterpret_cast<OptionNumeric*>(d_options.at(opt))->max();
+}
+
+/* -------------------------------------------------------------------------- */
 }  // namespace bzla::option

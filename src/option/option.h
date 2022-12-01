@@ -65,7 +65,7 @@ enum class PropPathSelection
 class Options;
 
 /** The base class for option info data. */
-class OptionInfo
+class OptionBase
 {
   friend Options;
 
@@ -79,14 +79,14 @@ class OptionInfo
    * @param shrt      The short name of the option (`-<shrt>` for the CLI).
    * @param is_expert True if this is an expert option.
    */
-  OptionInfo(Options* options,
+  OptionBase(Options* options,
              Option opt,
              const char* desc,
              const char* lng,
              const char* shrt = nullptr,
              bool is_expert   = false);
-  OptionInfo() = delete;
-  virtual ~OptionInfo();
+  OptionBase() = delete;
+  virtual ~OptionBase();
 
   /** @return True if this option is a Boolean option. */
   virtual bool is_bool() const { return false; }
@@ -96,19 +96,6 @@ class OptionInfo
   virtual bool is_enum() const { return false; }
 
  protected:
-  /**
-   * Set current value of enum option.
-   * @param value The string representation of the enum value.
-   */
-  virtual void set_option_enum(const std::string& value);
-  /**
-   * Get the string representation of the current value of an enum options.
-   * @note This is mainly necessary to have access to options via their enum
-   *       identifier from external (the API).
-   * @return The current value of an enum option.
-   */
-  virtual const std::string& get_option_enum() const;
-
   /** The option description. */
   const char* d_description;
   /** The long name of the option (`--<lng>` in the CLI). */
@@ -120,7 +107,7 @@ class OptionInfo
 };
 
 /** Option info data for Boolean options. */
-class OptionBool : public OptionInfo
+class OptionBool : public OptionBase
 {
  public:
   /**
@@ -144,7 +131,7 @@ class OptionBool : public OptionInfo
              const char* lng,
              const char* shrt = nullptr,
              bool is_expert   = false)
-      : OptionInfo(options, opt, desc, lng, shrt, is_expert),
+      : OptionBase(options, opt, desc, lng, shrt, is_expert),
         d_value(value),
         d_default(value)
   {
@@ -154,15 +141,19 @@ class OptionBool : public OptionInfo
   bool is_bool() const override { return true; }
 
   /**
-   * Get the current value of a Boolean option.
-   * @return The current value of a Boolean option.
-   */
-  bool operator()() const { return d_value; }
-  /**
    * Set the current value of a Boolean option.
    * @param value The current value.
    */
   void set(bool value) { d_value = value; }
+
+  /**
+   * Get the current value of a Boolean option.
+   * @return The current value of a Boolean option.
+   */
+  const bool& operator()() const { return d_value; }
+
+  /** @return The default value of this option. */
+  const bool& dflt() const { return d_default; }
 
  private:
   /** The current value. */
@@ -172,7 +163,7 @@ class OptionBool : public OptionInfo
 };
 
 /** Option info data for numeric options. */
-class OptionNumeric : public OptionInfo
+class OptionNumeric : public OptionBase
 {
  public:
   /**
@@ -200,7 +191,7 @@ class OptionNumeric : public OptionInfo
                 const char* lng,
                 const char* shrt = nullptr,
                 bool is_expert   = false)
-      : OptionInfo(options, opt, desc, lng, shrt, is_expert),
+      : OptionBase(options, opt, desc, lng, shrt, is_expert),
         d_value(value),
         d_default(value),
         d_min(min),
@@ -212,15 +203,23 @@ class OptionNumeric : public OptionInfo
   bool is_numeric() const override { return true; }
 
   /**
-   * Get the current value of a numeric option.
-   * @return The current value of a numeric option.
-   */
-  uint64_t operator()() const { return d_value; }
-  /**
    * Set the current value of a numeric option.
    * @param value The current value.
    */
   void set(uint64_t value) { d_value = value; }
+
+  /**
+   * Get the current value of a numeric option.
+   * @return The current value of a numeric option.
+   */
+  const uint64_t& operator()() const { return d_value; }
+
+  /** @return The default value of this option. */
+  const uint64_t& dflt() const { return d_default; }
+  /** @return The minimum value of this option. */
+  const uint64_t& min() const { return d_min; }
+  /** @return The maximum value of this option. */
+  const uint64_t& max() const { return d_max; }
 
  private:
   /** The current value. */
@@ -233,9 +232,48 @@ class OptionNumeric : public OptionInfo
   uint64_t d_max;
 };
 
+/** Base class for option info data for options that take enum values. */
+class OptionEnum : public OptionBase
+{
+ public:
+  OptionEnum(Options* options,
+             Option opt,
+             const char* desc,
+             const char* lng,
+             const char* shrt = nullptr,
+             bool is_expert   = false)
+      : OptionBase(options, opt, desc, lng, shrt, is_expert)
+  {
+  }
+
+  OptionEnum() = delete;
+
+  bool is_enum() const override { return true; }
+
+  /**
+   * Set current value of enum option.
+   * @param value The string representation of the enum value.
+   */
+  virtual void set_str(const std::string& value) = 0;
+  /**
+   * Get the string representation of the current value of an enum option.
+   * @note This is mainly necessary to have access to options via their enum
+   *       identifier from external (the API).
+   * @return The current value of an enum option.
+   */
+  virtual const std::string& get_str() const = 0;
+  /**
+   * Get the string representation of the default value of an enum option.
+   * @note This is mainly necessary to have access to options via their enum
+   *       identifier from external (the API).
+   * @return The default value of an enum option.
+   */
+  virtual const std::string& dflt_str() const = 0;
+};
+
 /** Option info data for options that take enum values. */
 template <typename T>
-class OptionEnum : public OptionInfo
+class OptionEnumT : public OptionEnum
 {
   using String2EnumMap = std::unordered_map<std::string, T>;
   using Enum2StringMap = std::unordered_map<T, std::string>;
@@ -257,15 +295,15 @@ class OptionEnum : public OptionInfo
    * @param shrt        The short name of the option (`-<shrt>` in the CLI).
    * @param is_expert   True if this is an expert option.
    */
-  OptionEnum(Options* options,
-             Option opt,
-             T value,
-             const Enum2StringMap& enum2string,
-             const char* desc,
-             const char* lng,
-             const char* shrt = nullptr,
-             bool is_expert   = false)
-      : OptionInfo(options, opt, desc, lng, shrt, is_expert),
+  OptionEnumT(Options* options,
+              Option opt,
+              T value,
+              const Enum2StringMap& enum2string,
+              const char* desc,
+              const char* lng,
+              const char* shrt = nullptr,
+              bool is_expert   = false)
+      : OptionEnum(options, opt, desc, lng, shrt, is_expert),
         d_value(value),
         d_enum2string(enum2string)
   {
@@ -274,20 +312,27 @@ class OptionEnum : public OptionInfo
       d_string2enum.emplace(p.second, p.first);
     }
   }
-  OptionEnum() = delete;
+  OptionEnumT() = delete;
 
-  bool is_enum() const override { return true; }
-  T operator()() const { return d_value; }
+  const T& operator()() const { return d_value; }
+
+  /** @return The default value of this option. */
+  const T& dflt() const { return d_default; }
 
  private:
-  const std::string& get_option_enum() const override
+  const std::string& get_str() const override
   {
     return d_enum2string.at(d_value);
   }
 
-  void set_option_enum(const std::string& value) override
+  void set_str(const std::string& value) override
   {
     d_value = d_string2enum.at(value);
+  }
+
+  const std::string& dflt_str() const override
+  {
+    return d_enum2string.at(d_default);
   }
 
   /** The current enum value. */
@@ -307,11 +352,11 @@ class Options
   /* Note: d_options must be initialized first since initialization of public
    *       option members depends on it */
 
-  friend OptionInfo;
+  friend OptionBase;
 
  private:
   /** The registered options. */
-  std::unordered_map<Option, OptionInfo*> d_options;
+  std::unordered_map<Option, OptionBase*> d_options;
 
  public:
   static constexpr uint64_t VERBOSITY_MAX = 4;
@@ -326,16 +371,16 @@ class Options
   OptionNumeric log_level;
   OptionBool produce_models;
   OptionBool produce_unsat_cores;
-  OptionEnum<SatSolver> sat_solver;
+  OptionEnumT<SatSolver> sat_solver;
   OptionNumeric seed;
   OptionNumeric verbosity;
 
-  OptionEnum<BvSolver> bv_solver;
+  OptionEnumT<BvSolver> bv_solver;
 
   // BV: propagation-based local search engine
   OptionNumeric prop_nprops;
   OptionNumeric prop_nupdates;
-  OptionEnum<PropPathSelection> prop_path_sel;
+  OptionEnumT<PropPathSelection> prop_path_sel;
   OptionNumeric prop_prob_pick_inv_value;
   OptionNumeric prop_prob_pick_random_input;
   OptionBool prop_const_bits;
@@ -351,51 +396,54 @@ class Options
   bool is_enum(Option opt) const;
 
   /**
-   * Set current value of Boolean option.
+   * Set current value of option.
+   * @param opt The option to set.
    * @note This is mainly necessary to have access to options via their enum
    *       identifier from external (the API).
-   * @param value The value.
+   * @param value The value to set.
    */
-  void set_option_bool(Option opt, bool value);
-  /**
-   * Set current value of numeric option.
-   * @note This is mainly necessary to have access to options via their enum
-   *       identifier from external (the API).
-   * @param value The value.
-   */
-  void set_option_numeric(Option opt, uint64_t value);
-  /**
-   * Set current value of enum option.
-   * @note This is mainly necessary to have access to options via their enum
-   *       identifier from external (the API).
-   * @param value The string representation of the enum value.
-   */
-  void set_option_enum(Option opt, const std::string& value);
+  template <typename T>
+  void set(Option opt, const T& value);
 
   /**
-   * Get the current value of a Boolean option.
+   * Get the current value of option.
+   * @param opt The option to set.
    * @note This is mainly necessary to have access to options via their enum
    *       identifier from external (the API).
-   * @param opt The option.
-   * @return The current value of a Boolean option.
+   * @return The current value.
    */
-  bool get_option_bool(Option opt) const;
+  template <typename T>
+  const T& get(Option opt) const;
+
   /**
-   * Get the current value of a numeric option.
+   * Get the minimum value of option.
+   * @param opt The option to set.
    * @note This is mainly necessary to have access to options via their enum
    *       identifier from external (the API).
-   * @param opt The option.
-   * @return The current value of a numeric option.
+   * @return The minimum value.
    */
-  uint64_t get_option_numeric(Option opt) const;
+  template <typename T>
+  const T& min(Option opt) const;
+
   /**
-   * Get the string representation of the current value of an enum options.
+   * Get the maximum value of option.
+   * @param opt The option to set.
    * @note This is mainly necessary to have access to options via their enum
    *       identifier from external (the API).
-   * @param opt The option.
-   * @return The current value of an enum option.
+   * @return The maximum value.
    */
-  const std::string& get_option_enum(Option opt) const;
+  template <typename T>
+  const T& max(Option opt) const;
+
+  /**
+   * Get the maximum value of option.
+   * @param opt The option to set.
+   * @note This is mainly necessary to have access to options via their enum
+   *       identifier from external (the API).
+   * @return The maximum value.
+   */
+  template <typename T>
+  const T& dflt(Option opt) const;
 
  private:
   /**
@@ -405,8 +453,35 @@ class Options
    * @param opt  The option.
    * @param info The associated option info data.
    */
-  void register_option(Option opt, OptionInfo* info) { d_options[opt] = info; }
+  void register_option(Option opt, OptionBase* info) { d_options[opt] = info; }
 };
+
+// explicit instantiations
+template <>
+void Options::set(Option opt, const bool& value);
+template <>
+void Options::set(Option opt, const uint64_t& value);
+template <>
+void Options::set(Option opt, const std::string& value);
+
+template <>
+const bool& Options::get(Option opt) const;
+template <>
+const uint64_t& Options::get(Option opt) const;
+template <>
+const std::string& Options::get(Option opt) const;
+
+template <>
+const bool& Options::dflt(Option opt) const;
+template <>
+const uint64_t& Options::dflt(Option opt) const;
+template <>
+const std::string& Options::dflt(Option opt) const;
+
+template <>
+const uint64_t& Options::min(Option opt) const;
+template <>
+const uint64_t& Options::max(Option opt) const;
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla::option
