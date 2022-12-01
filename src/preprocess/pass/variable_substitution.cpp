@@ -125,9 +125,12 @@ PassVariableSubstitution::remove_indirect_cycles(
 {
   int64_t order_num = 1;
   std::unordered_map<Node, int64_t> order;
-  node::unordered_node_ref_set cache;
-  node::node_ref_vector visit;
+  node::unordered_node_ref_map<bool> cache;
+  node::node_ref_vector visit, nodes;
+  std::vector<size_t> marker{0};
 
+  // Compute topological order of substitutions. Assumes that direct cycles
+  // were already removed.
   for (const auto& [var, term] : substitutions)
   {
     visit.push_back(var);
@@ -135,7 +138,7 @@ PassVariableSubstitution::remove_indirect_cycles(
     {
       const Node& cur = visit.back();
 
-      auto [it, inserted] = order.emplace(cur, -1);
+      auto [it, inserted] = cache.emplace(cur, false);
       if (inserted)
       {
         if (cur.kind() == Kind::CONSTANT)
@@ -143,6 +146,8 @@ PassVariableSubstitution::remove_indirect_cycles(
           auto its = substitutions.find(cur);
           if (its != substitutions.end())
           {
+            // Mark first occurrence of substituted constant on the stack
+            marker.push_back(visit.size());
             visit.push_back(its->second);
           }
         }
@@ -152,32 +157,44 @@ PassVariableSubstitution::remove_indirect_cycles(
         }
         continue;
       }
-      else if (it->second == -1)
+      // Check if constant is first occurrence on the stack (i.e., marked)
+      else if (marker.back() == visit.size())
       {
-        if (cur.kind() == Kind::CONSTANT
-            && substitutions.find(cur) != substitutions.end())
-        {
-          it->second = order_num++;
-        }
-        else
-        {
-          int64_t max = 0;
-          for (const Node& child : cur)
-          {
-            auto iit = order.find(child);
-            assert(iit != order.end());
-            if (iit->second > max)
-            {
-              max = iit->second;
-            }
-          }
-          it->second = max;
-        }
+        assert(cur.kind() == Kind::CONSTANT);
+        assert(substitutions.find(cur) != substitutions.end());
+        marker.pop_back();
+        // Assign substitution rank
+        auto [it, inserted] = order.emplace(cur, order_num++);
+        assert(inserted);
+      }
+      else if (!it->second)
+      {
+        // Save node for computing rank in next phase
+        it->second = true;
+        nodes.push_back(cur);
       }
       visit.pop_back();
     } while (!visit.empty());
   }
 
+  // Compute ranking for all remaining nodes. Nodes on the vector are in
+  // post-order DFS.
+  for (const Node& cur : nodes)
+  {
+    int64_t max = 0;
+    for (const Node& child : cur)
+    {
+      auto iit = order.find(child);
+      assert(iit != order.end());
+      if (iit->second > max)
+      {
+        max = iit->second;
+      }
+    }
+    order.emplace(cur, max);
+  }
+
+  // Remove substitutions to break cycles.
   auto it = substitutions.begin();
   while (it != substitutions.end())
   {
@@ -186,7 +203,8 @@ PassVariableSubstitution::remove_indirect_cycles(
     assert(itv != order.end());
     assert(itt != order.end());
 
-    // Found cycle, remove this substitution.
+    // Found cycle if the rank of the term > rank of substituted constant.
+    // Remove cyclic substitution.
     if (itt->second > itv->second)
     {
       it = substitutions.erase(it);
