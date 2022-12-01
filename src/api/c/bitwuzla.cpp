@@ -305,136 +305,19 @@ bitwuzla_set_abort_callback(void (*fun)(const char *msg))
 }
 
 void
-bitwuzla_set_option(Bitwuzla *bitwuzla, BitwuzlaOption option, uint64_t value)
+bitwuzla_set_option(BitwuzlaOptions *options,
+                    BitwuzlaOption option,
+                    uint64_t value)
 {
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  // TODO check if setting options is still allowed
-
-  // TODO
-#if 0
-  Bzla *bzla     = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BzlaOption opt = BZLA_IMPORT_BITWUZLA_OPTION(option);
-
-  BZLA_CHECK_OPTION(bzla, opt);
-  BZLA_CHECK_OPTION_VALUE(bzla, opt, value);
-
-  if (option == BITWUZLA_OPT_INCREMENTAL)
+  BITWUZLA_CHECK_NOT_NULL(options);
+  if (options->d_options.is_bool(option))
   {
-    BZLA_ABORT(bzla->bzla_sat_bzla_called > 0,
-               "enabling/disabling incremental usage after having called "
-               "'bitwuzla_check_sat' is not allowed");
-  }
-
-  if (value)
-  {
-    if (option == BITWUZLA_OPT_INCREMENTAL)
-    {
-      BZLA_ABORT(bzla_opt_get(bzla,
-                              BZLA_IMPORT_BITWUZLA_OPTION(
-                                  BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION)),
-                 "incremental solving cannot be enabled "
-                 "if unconstrained optimization is enabled");
-    }
-    else if (option == BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION)
-    {
-      BZLA_ABORT(
-          bzla_opt_get(
-              bzla, BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_PRODUCE_MODELS)),
-          "unconstrained optimization cannot be enabled "
-          "if model generation is enabled");
-      BZLA_ABORT(
-          bzla_opt_get(bzla,
-                       BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_INCREMENTAL)),
-          "unconstrained optimization cannot be enabled "
-          "in incremental mode");
-    }
-    else if (option == BITWUZLA_OPT_FUN_DUAL_PROP)
-    {
-      BZLA_ABORT(bzla_opt_get(
-                     bzla, BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_FUN_JUST)),
-                 "enabling multiple optimization techniques is not allowed");
-      BZLA_ABORT(bzla_opt_get(bzla,
-                              BZLA_IMPORT_BITWUZLA_OPTION(
-                                  BITWUZLA_OPT_PP_NONDESTR_SUBST)),
-                 "non-destructive substitution is not supported with dual "
-                 "propagation");
-    }
-    else if (option == BITWUZLA_OPT_FUN_JUST)
-    {
-      BZLA_ABORT(
-          bzla_opt_get(bzla,
-                       BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_FUN_DUAL_PROP)),
-          "enabling multiple optimization techniques is not allowed");
-    }
-    else if (option == BITWUZLA_OPT_PP_NONDESTR_SUBST)
-    {
-      BZLA_ABORT(
-          bzla_opt_get(bzla,
-                       BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_FUN_DUAL_PROP)),
-          "non-destructive substitution is not supported with dual "
-          "propagation");
-    }
-    else if (option == BITWUZLA_OPT_PRODUCE_MODELS)
-    {
-      BZLA_ABORT(bzla_opt_get(bzla,
-                              BZLA_IMPORT_BITWUZLA_OPTION(
-                                  BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION)),
-                 "model generation cannot be enabled "
-                 "if unconstrained optimization is enabled");
-    }
+    options->d_options.set(option, value ? true : false);
   }
   else
   {
-    if (option == BITWUZLA_OPT_INCREMENTAL)
-    {
-      BZLA_ABORT(bzla_opt_get(bzla,
-                              BZLA_IMPORT_BITWUZLA_OPTION(
-                                  BITWUZLA_OPT_PRODUCE_UNSAT_CORES)),
-                 "incremental solving cannot be disabled "
-                 "when unsat cores are enabled");
-    }
+    options->d_options.set(option, value);
   }
-
-  uint32_t val = bzla_opt_get(bzla, opt);
-
-  if (opt == BZLA_OPT_SAT_ENGINE)
-  {
-    if (false
-#ifndef BZLA_USE_LINGELING
-        || value == BZLA_SAT_ENGINE_LINGELING
-#endif
-#ifndef BZLA_USE_CADICAL
-        || value == BZLA_SAT_ENGINE_CADICAL
-#endif
-#ifndef BZLA_USE_CMS
-        || value == BZLA_SAT_ENGINE_CMS
-#endif
-    )
-    {
-      BZLA_WARN(true,
-                "SAT solver %s not compiled in, using %s",
-                g_bzla_se_name[value],
-                g_bzla_se_name[val]);
-      value = val;
-    }
-  }
-#ifndef BZLA_USE_LINGELING
-  if (opt == BZLA_OPT_SAT_ENGINE_LGL_FORK)
-  {
-    value = val;
-    BZLA_WARN(true,
-              "SAT solver Lingeling not compiled in, will not set option "
-              "to clone/fork Lingeling");
-  }
-#endif
-  if (opt == BZLA_OPT_RW_LEVEL)
-  {
-    BZLA_ABORT(
-        BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
-        "setting rewrite level must be done before creating expressions");
-  }
-  bzla_opt_set(bzla, opt, value);
-#endif
 }
 
 void

@@ -620,9 +620,14 @@ void
 Options::set(Option option, uint64_t value)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
-  // TODO check bounds
   bzla::option::Option opt = s_internal_options.at(option);
   BITWUZLA_CHECK(d_options->is_numeric(opt)) << "expected numeric option";
+  BITWUZLA_CHECK(value >= d_options->min<uint64_t>(opt))
+      << "invalid option value, expected value >= "
+      << d_options->min<uint64_t>(opt);
+  BITWUZLA_CHECK(value <= d_options->max<uint64_t>(opt))
+      << "invalid option value, expected value <= "
+      << d_options->max<uint64_t>(opt);
   d_options->set<uint64_t>(opt, value);
 }
 
@@ -639,10 +644,11 @@ void
 Options::set(Option option, const std::string &mode)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
-  // TODO check if mode is valid
   bzla::option::Option opt = s_internal_options.at(option);
   BITWUZLA_CHECK(d_options->is_enum(opt))
       << "expected option with option modes";
+  BITWUZLA_CHECK(d_options->is_valid_enum(opt, mode))
+      << "invalid mode for option";
   d_options->set<std::string>(s_internal_options.at(option), mode);
 }
 

@@ -169,6 +169,13 @@ Options::is_enum(Option opt) const
   return d_options.at(opt)->is_enum();
 }
 
+bool
+Options::is_valid_enum(Option opt, const std::string& value) const
+{
+  assert(d_options.at(opt)->is_enum());
+  return reinterpret_cast<OptionEnum*>(d_options.at(opt))->is_valid(value);
+}
+
 template <>
 void
 Options::set(Option opt, const bool& value)

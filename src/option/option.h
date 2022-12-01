@@ -276,6 +276,12 @@ class OptionEnum : public OptionBase
    * @return The default value of an enum option.
    */
   virtual const std::string& dflt_str() const = 0;
+  /**
+   * Determine if the given string is a valid mode for an enum option.
+   * @param value The mode.
+   * @return True if it is valid.
+   */
+  virtual bool is_valid(const std::string& value) const = 0;
 };
 
 /** Option info data for options that take enum values. */
@@ -342,6 +348,11 @@ class OptionEnumT : public OptionEnum
     return d_enum2string.at(d_default);
   }
 
+  bool is_valid(const std::string& value) const override
+  {
+    return d_string2enum.find(value) != d_string2enum.end();
+  }
+
   /** The current enum value. */
   T d_value;
   /** The default enum value. */
@@ -401,6 +412,9 @@ class Options
   bool is_numeric(Option opt) const;
   /** @return True if the given option is an enum option. */
   bool is_enum(Option opt) const;
+
+  /** @return True if the given value is a valid mode for an enum option. */
+  bool is_valid_enum(Option opt, const std::string& value) const;
 
   /** @return The description of the given option. */
   const char* description(Option opt) const;
