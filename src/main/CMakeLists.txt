@@ -11,6 +11,13 @@ set_target_properties(bitwuzla-bin
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 install(TARGETS bitwuzla-bin DESTINATION bin)
 
+# Strip binary for production builds
+if(CMAKE_BUILD_TYPE STREQUAL "Production")
+  add_custom_command(TARGET bitwuzla-bin
+                     POST_BUILD
+                      COMMAND ${CMAKE_STRIP} $<TARGET_FILE:bitwuzla-bin>)
+endif()
+
 ## Static binary
 if(NOT BUILD_SHARED_LIBS AND NOT APPLE)
   set(BZLA_STATIC_FLAGS "-static")
