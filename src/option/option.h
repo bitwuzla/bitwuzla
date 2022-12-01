@@ -95,6 +95,13 @@ class OptionBase
   /** @return True if this option is an option that takes an enum value. */
   virtual bool is_enum() const { return false; }
 
+  /** @return The description of this option. */
+  const char* description() const { return d_description; }
+  /** @return The long name of this option. */
+  const char* lng() const { return d_long; }
+  /** @return The short name of this option. */
+  const char* shrt() const { return d_short; }
+
  protected:
   /** The option description. */
   const char* d_description;
@@ -394,6 +401,13 @@ class Options
   bool is_numeric(Option opt) const;
   /** @return True if the given option is an enum option. */
   bool is_enum(Option opt) const;
+
+  /** @return The description of the given option. */
+  const char* description(Option opt) const;
+  /** @return The long name of the given option. */
+  const char* lng(Option opt) const;
+  /** @return The short name of the given option. */
+  const char* shrt(Option opt) const;
 
   /**
    * Set current value of option.
