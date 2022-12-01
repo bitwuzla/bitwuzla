@@ -162,13 +162,6 @@ class Options
 
 /* -------------------------------------------------------------------------- */
 
-/** A satisfiability result. */
-enum class Result
-{
-  SAT     = 10,  ///< sat
-  UNSAT   = 20,  ///< unsat
-  UNKNOWN = 0,   ///< unknown
-};
 /**
  * Print result to output stream.
  * @param out The output stream.
@@ -188,66 +181,6 @@ std::ostream &operator<<(std::ostream &out, Result result);
 std::ostream &operator<<(std::ostream &out, Kind kind);
 
 /* -------------------------------------------------------------------------- */
-
-/**
- * Rounding mode for floating-point operations.
- *
- * For some floating-point operations, infinitely precise results may not be
- * representable in a given format. Hence, they are rounded modulo one of five
- * rounding modes to a representable floating-point number.
- *
- * \verbatim embed:rst:leading-asterisk
- * The following rounding modes follow the SMT-LIB theory for floating-point
- * arithmetic, which in turn is based on IEEE Standard 754 :cite:`IEEE754`.
- * The rounding modes are specified in Sections 4.3.1 and 4.3.2 of the IEEE
- * Standard 754.
- * \endverbatim
- */
-enum class RoundingMode
-{
-  /*!
-   * Round to the nearest even number.
-   * If the two nearest floating-point numbers bracketing an unrepresentable
-   * infinitely precise result are equally near, the one with an even least
-   * significant digit will be delivered.
-   *
-   * SMT-LIB: \c RNE \c roundNearestTiesToEven
-   */
-  RNE = 0,
-  /*!
-   * Round to the nearest number away from zero.
-   * If the two nearest floating-point numbers bracketing an unrepresentable
-   * infinitely precise result are equally near, the one with larger magnitude
-   * will be selected.
-   *
-   * SMT-LIB: \c RNA \c roundNearestTiesToAway
-   */
-  RNA = 1,
-  /*!
-   * Round towards negative infinity (-oo).
-   * The result shall be the format’s floating-point number (possibly -oo)
-   * closest to and no less than the infinitely precise result.
-   *
-   * SMT-LIB: \c RTN \c roundTowardNegative
-   */
-  RTN = 2,
-  /*!
-   * Round towards positive infinity (+oo).
-   * The result shall be the format’s floating-point number (possibly +oo)
-   * closest to and no less than the infinitely precise result.
-   *
-   * SMT-LIB: \c RTP \c roundTowardPositive
-   */
-  RTP = 3,
-  /*!
-   * Round towards zero.
-   * The result shall be the format’s floating-point number closest to and no
-   * greater in magnitude than the infinitely precise result.
-   *
-   * SMT-LIB: \c RTZ \c roundTowardZero
-   */
-  RTZ = 4,
-};
 
 /**
  * Print rounding mode to output stream.

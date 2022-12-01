@@ -11,6 +11,107 @@ namespace bitwuzla {
 #define ENUM(name) Bitwuzla##name
 #endif
 
+/* -------------------------------------------------------------------------- */
+/* Result                                                                     */
+/* -------------------------------------------------------------------------- */
+
+#ifdef BITWUZLA_API_USE_C_ENUMS
+#undef EVALUE
+#define EVALUE(name) BITWUZLA_##name
+#endif
+
+/** A satisfiability result. */
+enum ENUM(Result)
+{
+  EVALUE(SAT)     = 10,  ///< sat
+  EVALUE(UNSAT)   = 20,  ///< unsat
+  EVALUE(UNKNOWN) = 0,   ///< unknown
+};
+
+#ifdef BITWUZLA_API_USE_C_ENUMS
+typedef enum ENUM(Result) ENUM(Result);
+#endif
+
+/* -------------------------------------------------------------------------- */
+/* RoundingMode                                                               */
+/* -------------------------------------------------------------------------- */
+
+#ifdef BITWUZLA_API_USE_C_ENUMS
+#undef EVALUE
+#define EVALUE(name) BITWUZLA_RM_##name
+#endif
+
+/**
+ * Rounding mode for floating-point operations.
+ *
+ * For some floating-point operations, infinitely precise results may not be
+ * representable in a given format. Hence, they are rounded modulo one of five
+ * rounding modes to a representable floating-point number.
+ *
+ * \verbatim embed:rst:leading-asterisk
+ * The following rounding modes follow the SMT-LIB theory for floating-point
+ * arithmetic, which in turn is based on IEEE Standard 754 :cite:`IEEE754`.
+ * The rounding modes are specified in Sections 4.3.1 and 4.3.2 of the IEEE
+ * Standard 754.
+ * \endverbatim
+ */
+enum ENUM(RoundingMode)
+{
+  /*!
+   * Round to the nearest even number.
+   * If the two nearest floating-point numbers bracketing an unrepresentable
+   * infinitely precise result are equally near, the one with an even least
+   * significant digit will be delivered.
+   *
+   * SMT-LIB: \c RNE \c roundNearestTiesToEven
+   */
+  EVALUE(RNE) = 0,
+  /*!
+   * Round to the nearest number away from zero.
+   * If the two nearest floating-point numbers bracketing an unrepresentable
+   * infinitely precise result are equally near, the one with larger magnitude
+   * will be selected.
+   *
+   * SMT-LIB: \c RNA \c roundNearestTiesToAway
+   */
+  EVALUE(RNA) = 1,
+  /*!
+   * Round towards negative infinity (-oo).
+   * The result shall be the format’s floating-point number (possibly -oo)
+   * closest to and no less than the infinitely precise result.
+   *
+   * SMT-LIB: \c RTN \c roundTowardNegative
+   */
+  EVALUE(RTN) = 2,
+  /*!
+   * Round towards positive infinity (+oo).
+   * The result shall be the format’s floating-point number (possibly +oo)
+   * closest to and no less than the infinitely precise result.
+   *
+   * SMT-LIB: \c RTP \c roundTowardPositive
+   */
+  EVALUE(RTP) = 3,
+  /*!
+   * Round towards zero.
+   * The result shall be the format’s floating-point number closest to and no
+   * greater in magnitude than the infinitely precise result.
+   *
+   * SMT-LIB: \c RTZ \c roundTowardZero
+   */
+  EVALUE(RTZ) = 4,
+#ifndef DOXYGEN_SKIP
+  EVALUE(MAX) = 5,
+#endif
+};
+
+#ifdef BITWUZLA_API_USE_C_ENUMS
+typedef enum ENUM(RoundingMode) ENUM(RoundingMode);
+#endif
+
+/* -------------------------------------------------------------------------- */
+/* Term Kind                                                                  */
+/* -------------------------------------------------------------------------- */
+
 #ifdef BITWUZLA_API_USE_C_ENUMS
 #undef EVALUE
 #define EVALUE(name) BITWUZLA_KIND_##name
@@ -151,21 +252,18 @@ enum ENUM(Kind)
   EVALUE(BV_OR),
   /*! Bit-vector and reduction.
    *
-EVALUE(* Bit-wise *and* reduction), all bits are *and*'ed together into a
-single bit.
-   * This corresponds to bit-wise *and* reduction as known from Verilog. */
+   * Bit-wise *and* reduction), all bits are *and*'ed together into a single
+   * bit. This corresponds to bit-wise *and* reduction as known from Verilog. */
   EVALUE(BV_REDAND),
   /*! Bit-vector reduce or.
    *
-EVALUE(* Bit-wise *or* reduction), all bits are *or*'ed together into a single
-bit.
-   * This corresponds to bit-wise *or* reduction as known from Verilog. */
+   * Bit-wise *or* reduction), all bits are *or*'ed together into a single
+   * bit. This corresponds to bit-wise *or* reduction as known from Verilog. */
   EVALUE(BV_REDOR),
   /*! Bit-vector reduce xor.
    *
-EVALUE(* Bit-wise *xor* reduction), all bits are *xor*'ed together into a
-single bit.
-   * This corresponds to bit-wise *xor* reduction as known from Verilog. */
+   * Bit-wise *xor* reduction), all bits are *xor*'ed together into a single
+   * bit. This corresponds to bit-wise *xor* reduction as known from Verilog. */
   EVALUE(BV_REDXOR),
   /*! Bit-vector rotate left (not indexed).
    *
@@ -435,9 +533,9 @@ single bit.
 
 #ifdef BITWUZLA_API_USE_C_ENUMS
 typedef enum ENUM(Kind) ENUM(Kind);
-#undef EVALUE
-#define EVALUE(name) BITWUZLA_RM_##name
 #endif
+
+/* -------------------------------------------------------------------------- */
 
 #undef EVALUE
 #undef ENUM

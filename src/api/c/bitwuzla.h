@@ -82,22 +82,11 @@ struct BitwuzlaOptionInfo
 typedef struct BitwuzlaOptionInfo BitwuzlaOptionInfo;
 #endif
 
-/**
- * Get the string representation of a term kind.
- * @return A string representation of the given term kind.
- */
-const char *bitwuzla_kind_to_string(BitwuzlaKind kind);
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaResult (Satisfiability Result)                                     */
+/* -------------------------------------------------------------------------- */
 
-/** A satisfiability result. */
-enum BitwuzlaResult
-{
-  BITWUZLA_SAT     = 10, ///< sat
-  BITWUZLA_UNSAT   = 20, ///< unsat
-  BITWUZLA_UNKNOWN = 0,  ///< unknown
-};
-#ifndef DOXYGEN_SKIP
-typedef enum BitwuzlaResult BitwuzlaResult;
-#endif
+// Note: The BitwuzlaResult enum is defined in api/enums.h.
 
 /**
  * Get the string representation of a result.
@@ -105,71 +94,11 @@ typedef enum BitwuzlaResult BitwuzlaResult;
  */
 const char *bitwuzla_result_to_string(BitwuzlaResult result);
 
-/**
- * Rounding mode for floating-point operations.
- *
- * For some floating-point operations, infinitely precise results may not be
- * representable in a given format. Hence, they are rounded modulo one of five
- * rounding modes to a representable floating-point number.
- *
- * \verbatim embed:rst:leading-asterisk
- * The following rounding modes follow the SMT-LIB theory for floating-point
- * arithmetic, which in turn is based on IEEE Standard 754 :cite:`IEEE754`.
- * The rounding modes are specified in Sections 4.3.1 and 4.3.2 of the IEEE
- * Standard 754.
- * \endverbatim
- */
-enum BitwuzlaRoundingMode
-{
-  /*!
-   * Round to the nearest even number.
-   * If the two nearest floating-point numbers bracketing an unrepresentable
-   * infinitely precise result are equally near, the one with an even least
-   * significant digit will be delivered.
-   *
-   * SMT-LIB: \c RNE \c roundNearestTiesToEven
-   */
-  BITWUZLA_RM_RNE = 0,
-  /*!
-   * Round to the nearest number away from zero.
-   * If the two nearest floating-point numbers bracketing an unrepresentable
-   * infinitely precise result are equally near, the one with larger magnitude
-   * will be selected.
-   *
-   * SMT-LIB: \c RNA \c roundNearestTiesToAway
-   */
-  BITWUZLA_RM_RNA = 1,
-  /*!
-   * Round towards negative infinity (-oo).
-   * The result shall be the format’s floating-point number (possibly -oo)
-   * closest to and no less than the infinitely precise result.
-   *
-   * SMT-LIB: \c RTN \c roundTowardNegative
-   */
-  BITWUZLA_RM_RTN = 2,
-  /*!
-   * Round towards positive infinity (+oo).
-   * The result shall be the format’s floating-point number (possibly +oo)
-   * closest to and no less than the infinitely precise result.
-   *
-   * SMT-LIB: \c RTP \c roundTowardPositive
-   */
-  BITWUZLA_RM_RTP = 3,
-  /*!
-   * Round towards zero.
-   * The result shall be the format’s floating-point number closest to and no
-   * greater in magnitude than the infinitely precise result.
-   *
-   * SMT-LIB: \c RTZ \c roundTowardZero
-   */
-  BITWUZLA_RM_RTZ = 4,
-#ifndef DOXYGEN_SKIP
-  BITWUZLA_RM_MAX = 5,
-#endif
-};
-#ifndef DOXYGEN_SKIP
-typedef enum BitwuzlaRoundingMode BitwuzlaRoundingMode;
-#endif
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaRoundingMode                                                       */
+/* -------------------------------------------------------------------------- */
+
+// Note: The BitwuzlaRoundingMode enum is defined in api/enums.h.
 
 /**
  * Get the string representation of a rounding mode.
@@ -177,16 +106,38 @@ typedef enum BitwuzlaRoundingMode BitwuzlaRoundingMode;
  */
 const char *bitwuzla_rm_to_string(BitwuzlaRoundingMode rm);
 
-/** The Bitwuzla solver. */
-typedef struct Bitwuzla Bitwuzla;
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaKind (Term Kind)                                                   */
+/* -------------------------------------------------------------------------- */
+
+// Note: The BitwuzlaKind enum is defined in api/enums.h.
+
+/**
+ * Get the string representation of a term kind.
+ * @return A string representation of the given term kind.
+ */
+const char *bitwuzla_kind_to_string(BitwuzlaKind kind);
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaTerm                                                               */
+/* -------------------------------------------------------------------------- */
+
 /** A Bitwuzla term. */
 typedef uint64_t BitwuzlaTerm;
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaSort                                                               */
+/* -------------------------------------------------------------------------- */
+
 /** A Bitwuzla sort. */
 typedef uint64_t BitwuzlaSort;
 
 /* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
+
+/** The Bitwuzla solver. */
+typedef struct Bitwuzla Bitwuzla;
 
 /**
  * Create a new Bitwuzla instance.
