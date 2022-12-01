@@ -23,8 +23,8 @@ extern "C" {
 
 #define BITWUZLA_API_USE_C_ENUMS
 #include "api/enums.h"
-#undef BITWUZLA_API_USE_C_ENUMS
 #include "api/option.h"
+#undef BITWUZLA_API_USE_C_ENUMS
 
 /* -------------------------------------------------------------------------- */
 

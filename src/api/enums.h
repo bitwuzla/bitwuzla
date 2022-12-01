@@ -29,7 +29,9 @@ enum ENUM(Result)
 };
 
 #ifdef BITWUZLA_API_USE_C_ENUMS
+#ifndef DOXYGEN_SKIP
 typedef enum ENUM(Result) ENUM(Result);
+#endif
 #endif
 
 /* -------------------------------------------------------------------------- */
@@ -105,7 +107,9 @@ enum ENUM(RoundingMode)
 };
 
 #ifdef BITWUZLA_API_USE_C_ENUMS
+#ifndef DOXYGEN_SKIP
 typedef enum ENUM(RoundingMode) ENUM(RoundingMode);
+#endif
 #endif
 
 /* -------------------------------------------------------------------------- */
@@ -532,7 +536,9 @@ enum ENUM(Kind)
 };
 
 #ifdef BITWUZLA_API_USE_C_ENUMS
+#ifndef DOXYGEN_SKIP
 typedef enum ENUM(Kind) ENUM(Kind);
+#endif
 #endif
 
 /* -------------------------------------------------------------------------- */

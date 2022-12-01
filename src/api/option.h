@@ -1,9 +1,20 @@
-#ifndef BITWUZLA_API_OPTION_H_INCLUDED
-#define BITWUZLA_API_OPTION_H_INCLUDED
+#if (!defined(BITWUZLA_API_USE_C_ENUMS)               \
+     && !defined(BITWUZLA_API_OPTION_CPP_H_INCLUDED)) \
+    || (defined(BITWUZLA_API_USE_C_ENUMS)             \
+        && !defined(BITWUZLA_API_OPTION_C_H_INCLUDED))
 
-#if __cplusplus
-extern "C" {
+#ifndef BITWUZLA_API_USE_C_ENUMS
+namespace bitwuzla {
+#define ENUM(name) class name
+#define EVALUE(name) name
+#else
+#define ENUM(name) Bitwuzla##name
+#define EVALUE(name) BITWUZLA_OPT_##name
 #endif
+
+/* -------------------------------------------------------------------------- */
+/* Option                                                                     */
+/* -------------------------------------------------------------------------- */
 
 /**
  * The configuration options supported by Bitwuzla.
@@ -20,7 +31,7 @@ extern "C" {
  * Use `bitwuzla_get_option_str` to query enum options for the corresponding
  * string representation.
  */
-enum BitwuzlaOption
+enum ENUM(Option)
 {
   /* --------------------------- General Options --------------------------- */
 
@@ -41,7 +52,7 @@ enum BitwuzlaOption
    *  * **quant**:
    *    The quantifier engine.
    */
-  BITWUZLA_OPT_ENGINE,
+  EVALUE(ENGINE),
 
   /*! **Use non-zero exit codes for sat and unsat results.**
    *
@@ -57,7 +68,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_EXIT_CODES,
+  EVALUE(EXIT_CODES),
 
   /*! **Configure input file format.**
    *
@@ -79,7 +90,7 @@ enum BitwuzlaOption
    *    SMT-LIB v2 format :cite:`smtlib2`
    *    \endverbatim
    */
-  BITWUZLA_OPT_INPUT_FORMAT,
+  EVALUE(INPUT_FORMAT),
 
   /*! **Incremental solving.**
    *
@@ -92,16 +103,16 @@ enum BitwuzlaOption
    * * Enabling/disabling incremental solving after bitwuzla_check_sat()
    *   has been called is not supported.
    * * This option cannot be enabled in combination with option
-   *   `::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION`.
+   *   `::EVALUE(PP_UNCONSTRAINED_OPTIMIZATION`.
    */
-  BITWUZLA_OPT_INCREMENTAL,
+  EVALUE(INCREMENTAL),
 
   /*! **Log level.**
    *
    * Values:
    *  * An unsigned integer value (**default**: 0).
    */
-  BITWUZLA_OPT_LOGLEVEL,
+  EVALUE(LOGLEVEL),
 
   /*! **Configure output number format for bit-vector values.**
    *
@@ -125,7 +136,7 @@ enum BitwuzlaOption
    *    SMT-LIB v2 format :cite:`smtlib2`
    *    \endverbatim
    */
-  BITWUZLA_OPT_OUTPUT_FORMAT,
+  EVALUE(OUTPUT_FORMAT),
 
   /*! **Configure output number format for bit-vector values.**
    *
@@ -139,7 +150,7 @@ enum BitwuzlaOption
    *  * **dec**:
    *  Decimal number format.
    */
-  BITWUZLA_OPT_OUTPUT_NUMBER_FORMAT,
+  EVALUE(OUTPUT_NUMBER_FORMAT),
 
   /*! **Pretty printing.**
    *
@@ -147,7 +158,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_PRETTY_PRINT,
+  EVALUE(PRETTY_PRINT),
 
   /*! **Print DIMACS.**
    *
@@ -157,7 +168,7 @@ enum BitwuzlaOption
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_PRINT_DIMACS,
+  EVALUE(PRINT_DIMACS),
 
   /*! **Model generation.**
    *
@@ -167,9 +178,9 @@ enum BitwuzlaOption
    *  * **0**: disable [**default**]
    *
    * @note This option cannot be enabled in combination with option
-   *       `::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION`.
+   *       `::EVALUE(PP_UNCONSTRAINED_OPTIMIZATION`.
    */
-  BITWUZLA_OPT_PRODUCE_MODELS,
+  EVALUE(PRODUCE_MODELS),
 
   /*! **Unsat core generation.**
    *
@@ -177,7 +188,7 @@ enum BitwuzlaOption
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_PRODUCE_UNSAT_CORES,
+  EVALUE(PRODUCE_UNSAT_CORES),
 
   /*! **Configure the SAT solver engine.**
    *
@@ -193,21 +204,21 @@ enum BitwuzlaOption
    *  * **lingeling**:
    *    [Lingeling](https://github.com/arminbiere/lingeling)
    */
-  BITWUZLA_OPT_SAT_ENGINE,
+  EVALUE(SAT_ENGINE),
 
   /*! **Seed for random number generator.**
    *
    * Values:
    *  * An unsigned integer value (**default**: 0).
    */
-  BITWUZLA_OPT_SEED,
+  EVALUE(SEED),
 
   /*! **Verbosity level.**
    *
    * Values:
    *  * An unsigned integer value <= 4 (**default**: 0).
    */
-  BITWUZLA_OPT_VERBOSITY,
+  EVALUE(VERBOSITY),
 
   /* -------------- Rewriting/Preprocessing Options (Expert) --------------- */
 
@@ -221,7 +232,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_ACKERMANN,
+  EVALUE(PP_ACKERMANN),
 
   /*! **Beta reduction preprocessing.**
    *
@@ -237,7 +248,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_BETA_REDUCE,
+  EVALUE(PP_BETA_REDUCE),
 
   /*! **Eliminate bit-vector extracts (preprocessing).**
    *
@@ -247,7 +258,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_ELIMINATE_EXTRACTS,
+  EVALUE(PP_ELIMINATE_EXTRACTS),
 
   /*! **Eliminate ITEs (preprocessing).**
    *
@@ -257,7 +268,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_ELIMINATE_ITES,
+  EVALUE(PP_ELIMINATE_ITES),
 
   /*! **Extract lambdas (preprocessing).**
    *
@@ -269,7 +280,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_EXTRACT_LAMBDAS,
+  EVALUE(PP_EXTRACT_LAMBDAS),
 
   /*! **Merge lambda terms (preprocessing).**
    *
@@ -279,7 +290,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_MERGE_LAMBDAS,
+  EVALUE(PP_MERGE_LAMBDAS),
 
   /*! **Non-destructive term substitutions.**
    *
@@ -289,7 +300,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_NONDESTR_SUBST,
+  EVALUE(PP_NONDESTR_SUBST),
 
   /*! **Normalize bit-vector addition (global).**
    *
@@ -299,7 +310,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_NORMALIZE_ADD,
+  EVALUE(PP_NORMALIZE_ADD),
 
   /*! **Boolean skeleton preprocessing.**
    *
@@ -309,7 +320,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_SKELETON_PREPROC,
+  EVALUE(PP_SKELETON_PREPROC),
 
   /*! **Unconstrained optimization (preprocessing).**
    *
@@ -319,7 +330,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION,
+  EVALUE(PP_UNCONSTRAINED_OPTIMIZATION),
 
   /*! **Variable substitution preprocessing.**
    *
@@ -329,7 +340,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure preprocessing.
    */
-  BITWUZLA_OPT_PP_VAR_SUBST,
+  EVALUE(PP_VAR_SUBST),
 
   /*! **Propagate bit-vector extracts over arithmetic bit-vector operators.**
    *
@@ -339,7 +350,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure rewriting.
    */
-  BITWUZLA_OPT_RW_EXTRACT_ARITH,
+  EVALUE(RW_EXTRACT_ARITH),
 
   /*! **Rewrite level.**
    *
@@ -354,7 +365,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure rewriting.
    */
-  BITWUZLA_OPT_RW_LEVEL,
+  EVALUE(RW_LEVEL),
 
   /*! **Normalize bit-vector operations.**
    *
@@ -366,7 +377,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure rewriting.
    */
-  BITWUZLA_OPT_RW_NORMALIZE,
+  EVALUE(RW_NORMALIZE),
 
   /*! **Normalize bit-vector addition (local).**
    *
@@ -376,7 +387,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure rewriting.
    */
-  BITWUZLA_OPT_RW_NORMALIZE_ADD,
+  EVALUE(RW_NORMALIZE_ADD),
 
   /*! **Simplify constraints on construction.**
    *
@@ -386,7 +397,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure rewriting.
    */
-  BITWUZLA_OPT_RW_SIMPLIFY_CONSTRAINTS,
+  EVALUE(RW_SIMPLIFY_CONSTRAINTS),
 
   /*! **Eliminate bit-vector SLT nodes.**
    *
@@ -396,7 +407,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure rewriting.
    */
-  BITWUZLA_OPT_RW_SLT,
+  EVALUE(RW_SLT),
 
   /*! **Sort the children of AIG nodes by id.**
    *
@@ -406,7 +417,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure rewriting.
    */
-  BITWUZLA_OPT_RW_SORT_AIG,
+  EVALUE(RW_SORT_AIG),
 
   /*! **Sort the children of adder and multiplier circuits by id.**
    *
@@ -416,7 +427,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure rewriting.
    */
-  BITWUZLA_OPT_RW_SORT_AIGVEC,
+  EVALUE(RW_SORT_AIGVEC),
 
   /*! **Sort the children of commutative operations by id.**
    *
@@ -426,7 +437,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure rewriting.
    */
-  BITWUZLA_OPT_RW_SORT_EXP,
+  EVALUE(RW_SORT_EXP),
 
   /* --------------------- Fun Engine Options (Expert) --------------------- */
 
@@ -439,7 +450,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the fun solver engine.
    */
-  BITWUZLA_OPT_FUN_DUAL_PROP,
+  EVALUE(FUN_DUAL_PROP),
 
   /*! **Function solver engine:
    *    Assumption order for dual propagation optimization.**
@@ -456,7 +467,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the func solver engine.
    */
-  BITWUZLA_OPT_FUN_DUAL_PROP_QSORT,
+  EVALUE(FUN_DUAL_PROP_QSORT),
 
   /*! **Function solver engine:
    *    Eager lemmas.**
@@ -475,7 +486,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the func solver engine.
    */
-  BITWUZLA_OPT_FUN_EAGER_LEMMAS,
+  EVALUE(FUN_EAGER_LEMMAS),
 
   /*! **Function solver engine:
    *    Lazy synthesis.**
@@ -488,7 +499,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the func solver engine.
    */
-  BITWUZLA_OPT_FUN_LAZY_SYNTHESIZE,
+  EVALUE(FUN_LAZY_SYNTHESIZE),
 
   /*! **Function solver engine:
    *    Justification optimization.**
@@ -499,7 +510,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the func solver engine.
    */
-  BITWUZLA_OPT_FUN_JUST,
+  EVALUE(FUN_JUST),
 
   /*! **Function solver engine:
    *    Justification optimization heuristic.**
@@ -517,7 +528,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the func solver engine.
    */
-  BITWUZLA_OPT_FUN_JUST_HEURISTIC,
+  EVALUE(FUN_JUST_HEURISTIC),
 
   /*! **Function solver engine:
    *    Propagation-based local search sequential portfolio.**
@@ -532,8 +543,8 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the func solver engine.
    */
-  BITWUZLA_OPT_FUN_PREPROP,
-  BITWUZLA_OPT_FUN_PREPROPOLD,
+  EVALUE(FUN_PREPROP),
+  EVALUE(FUN_PREPROPOLD),
 
   /*! **Function solver engine:
    *    Stochastic local search sequential portfolio.**
@@ -548,7 +559,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the func solver engine.
    */
-  BITWUZLA_OPT_FUN_PRESLS,
+  EVALUE(FUN_PRESLS),
 
   /*! **Function solver engine:
    *    Represent store as lambda.**
@@ -561,7 +572,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the func solver engine.
    */
-  BITWUZLA_OPT_FUN_STORE_LAMBDAS,
+  EVALUE(FUN_STORE_LAMBDAS),
 
   /* --------------------- SLS Engine Options (Expert) --------------------- */
 
@@ -576,7 +587,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_JUST,
+  EVALUE(SLS_JUST),
 
   /*! **Stochastic local search solver engine:
    *    Group-wise moves.**
@@ -591,7 +602,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_GW,
+  EVALUE(SLS_MOVE_GW),
 
   /*! **Stochastic local search solver engine:
    *    Incremental move test.**
@@ -606,14 +617,14 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_INC_MOVE_TEST,
+  EVALUE(SLS_MOVE_INC_MOVE_TEST),
 
   /*! **Stochastic local search solver engine:
    *    Propagation moves.**
    *
    * Configure propagation moves, chosen with a ratio of number of propagation
-   * moves `::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to regular SLS moves
-   * `::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
+   * moves `::EVALUE(SLS_MOVE_PROP_NPROPS` to regular SLS moves
+   * `::EVALUE(SLS_MOVE_PROP_NSLSS`.
    *
    * Values:
    *  * **1**: enable
@@ -621,7 +632,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_PROP,
+  EVALUE(SLS_MOVE_PROP),
 
   /*! **Stochastic local search solver engine:
    *    Force random walks.**
@@ -636,45 +647,45 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_PROP_FORCE_RW,
+  EVALUE(SLS_MOVE_PROP_FORCE_RW),
 
   /*! **Stochastic local search solver engine:
    *    Number of propagation moves.**
    *
    * Configure the number of propagation moves to be performed when propagation
    * moves are enabled. Propagation moves are chosen with a ratio of
-   * `::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to
-   * `::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
+   * `::EVALUE(SLS_MOVE_PROP_NPROPS` to
+   * `::EVALUE(SLS_MOVE_PROP_NSLSS`.
    *
    * Values:
    *  * An unsigned integer value (**default**: 1)
    *
    * @see
-   *   * BITWUZLA_OPT_SLS_MOVE_PROP
-   *   * BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS
+   *   * EVALUE(SLS_MOVE_PROP
+   *   * EVALUE(SLS_MOVE_PROP_NSLSS
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS,
+  EVALUE(SLS_MOVE_PROP_NPROPS),
 
   /*! **Stochastic local search solver engine:
    *    Number of regular SLS moves.**
    *
    * Configure the number of regular SLS moves to be performed when propagation
    * moves are enabled. Propagation moves are chosen with a ratio of
-   * `::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to
-   * `::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
+   * `::EVALUE(SLS_MOVE_PROP_NPROPS` to
+   * `::EVALUE(SLS_MOVE_PROP_NSLSS`.
    *
    * Values:
    *  * An unsigned integer value (**default**: 1)
    *
    * @see
-   *   * BITWUZLA_OPT_SLS_MOVE_PROP
-   *   * BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS
+   *   * EVALUE(SLS_MOVE_PROP
+   *   * EVALUE(SLS_MOVE_PROP_NPROPS
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS,
+  EVALUE(SLS_MOVE_PROP_NSLSS),
 
   /*! **Stochastic local search solver engine:
    *    Randomize all candidates.**
@@ -688,7 +699,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_RAND_ALL,
+  EVALUE(SLS_MOVE_RAND_ALL),
 
   /*! **Stochastic local search solver engine:
    *    Randomize bit ranges.**
@@ -702,14 +713,14 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_RAND_RANGE,
+  EVALUE(SLS_MOVE_RAND_RANGE),
 
   /*! **Stochastic local search solver engine:
    *    Random walk.**
    *
    * Configure random walk moves, where one out of all possible neighbors is
    * randomly selected (with given probability
-   * `::BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK`) for a randomly selected
+   * `::EVALUE(SLS_PROB_MOVE_RAND_WALK`) for a randomly selected
    * candidate variable.
    *
    * Values:
@@ -717,11 +728,11 @@ enum BitwuzlaOption
    *  * **0**: disable [**default**]
    *
    * @see
-   *   * BITWUZLA_OPT_SLS_MOVE_PROB_RAND_WALK
+   *   * EVALUE(SLS_MOVE_PROB_RAND_WALK
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_RAND_WALK,
+  EVALUE(SLS_MOVE_RAND_WALK),
 
   /*! **Stochastic local search solver engine:
    *    Range-wise bit-flip moves.**
@@ -736,7 +747,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_RANGE,
+  EVALUE(SLS_MOVE_RANGE),
 
   /*! **Stochastic local search solver engine:
    *    Segment-wise bit-flip moves.**
@@ -751,7 +762,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_MOVE_SEGMENT,
+  EVALUE(SLS_MOVE_SEGMENT),
 
   /*! **Stochastic local search solver engine:
    *    Probability for random walks.**
@@ -763,11 +774,11 @@ enum BitwuzlaOption
    *  * An unsigned integer value <= 1000 (= 100%) (**default**: 100)
    *
    * @see
-   *   * BITWUZLA_OPT_SLS_MOVE_RAND_WALK
+   *   * EVALUE(SLS_MOVE_RAND_WALK
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK,
+  EVALUE(SLS_PROB_MOVE_RAND_WALK),
 
   /*! **Stochastic local search solver engine:
    *    Number of bit flips.**
@@ -779,7 +790,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_NFLIPS,
+  EVALUE(SLS_NFLIPS),
 
   /*! **Stochastic local search solver engine:
    *    Move strategy.**
@@ -801,7 +812,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_STRATEGY,
+  EVALUE(SLS_STRATEGY),
 
   /*! **Stochastic local search solver engine:
    *    Restarts.**
@@ -812,7 +823,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_USE_RESTARTS,
+  EVALUE(SLS_USE_RESTARTS),
 
   /*! **Stochastic local search solver engine:
    *    Bandit scheme.**
@@ -826,7 +837,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the sls solver engine.
    */
-  BITWUZLA_OPT_SLS_USE_BANDIT,
+  EVALUE(SLS_USE_BANDIT),
 
   /* -------------------- Prop Engine Options (Expert) --------------------- */
 
@@ -842,7 +853,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_ASHR,
+  EVALUE(PROP_ASHR),
 
   /*! **Propagation-based local search solver engine:
    *    Constant bits.**
@@ -855,7 +866,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_CONST_BITS,
+  EVALUE(PROP_CONST_BITS),
 
   /*! **Propagation-based local search solver engine:
    *    Domain propagators.**
@@ -869,7 +880,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_CONST_DOMAINS,
+  EVALUE(PROP_CONST_DOMAINS),
 
   /*! **Propagation-based local search solver engine:
    *    Entailed propagations.**
@@ -891,36 +902,36 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_ENTAILED,
+  EVALUE(PROP_ENTAILED),
 
   /*! **Propagation-based local search solver engine:
    *    Delta for flipping ite conditions with constant branches.**
    *
-   * Configure the delta by which `::BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST` is
+   * Configure the delta by which `::EVALUE(PROP_PROB_FLIP_COND_CONST` is
    * decreased or increased after a limit
-   * `::BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL` is reached.
+   * `::EVALUE(PROP_FLIP_COND_CONST_NPATHSEL` is reached.
    *
    * Values:
    *  * A signed integer value (**default**: 100).
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA,
+  EVALUE(PROP_FLIP_COND_CONST_DELTA),
 
   /*! **Propagation-based local search solver engine:
    *    Limit for flipping ite conditions with constant branches.**
    *
    * Configure the limit for how often the path to the condition for ite
    * operations with constant branches may be selected before
-   * `::BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST` is decreased or increased by
-   * `::BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA`.
+   * `::EVALUE(PROP_PROB_FLIP_COND_CONST` is decreased or increased by
+   * `::EVALUE(PROP_FLIP_COND_CONST_DELTA`.
    *
    * Values:
    *  * A signed integer value (**default**: 500).
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL,
+  EVALUE(PROP_FLIP_COND_CONST_NPATHSEL),
 
   /*! **Propagation-based local search solver engine:
    *    Infer bounds for inequalities for value computation.**
@@ -934,7 +945,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_INFER_INEQ_BOUNDS,
+  EVALUE(PROP_INFER_INEQ_BOUNDS),
 
   /*! **Propagation-based local search solver engine:
    *    No move on conflict.**
@@ -952,7 +963,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_NO_MOVE_ON_CONFLICT,
+  EVALUE(PROP_NO_MOVE_ON_CONFLICT),
 
   /*! **Propagation-based local search solver engine:
    *    Number of propagations.**
@@ -965,7 +976,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_NPROPS,
+  EVALUE(PROP_NPROPS),
 
   /*! **Propagation-based local search solver engine:
    *    Number of updates.**
@@ -978,7 +989,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_NUPDATES,
+  EVALUE(PROP_NUPDATES),
 
   /*! **Propagation-based local search solver engine:
    *    Path selection.**
@@ -993,7 +1004,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_PATH_SEL,
+  EVALUE(PROP_PATH_SEL),
 
   /*! **Propagation-based local search solver engine:
    *    Probability for producing inverse rather than consistent values.**
@@ -1003,7 +1014,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE,
+  EVALUE(PROP_PROB_FALLBACK_RANDOM_VALUE),
 
   /*! **Propagation-based local search solver engine:
    *    Probability for flipping one of the don't care bits for ands.**
@@ -1018,7 +1029,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_PROB_AND_FLIP,
+  EVALUE(PROP_PROB_AND_FLIP),
 
   /*! **Propagation-based local search solver engine:
    *    Probability for using the current assignment with one bit flipped for
@@ -1033,7 +1044,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_PROB_EQ_FLIP,
+  EVALUE(PROP_PROB_EQ_FLIP),
 
   /*! **Propagation-based local search solver engine:
    *    Probability for flipping ite condition.**
@@ -1047,7 +1058,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_PROB_FLIP_COND,
+  EVALUE(PROP_PROB_FLIP_COND),
 
   /*! **Propagation-based local search solver engine:
    *    Probability for flipping ite condition with constant branches.**
@@ -1061,7 +1072,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST,
+  EVALUE(PROP_PROB_FLIP_COND_CONST),
 
   /*! **Propagation-based local search solver engine:
    *    Probability for selecting random input.**
@@ -1074,7 +1085,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_PROB_RANDOM_INPUT,
+  EVALUE(PROP_PROB_RANDOM_INPUT),
 
   /*! **Propagation-based local search solver engine:
    *    Probability for flipping one of the don't care bits for extracts.**
@@ -1087,11 +1098,11 @@ enum BitwuzlaOption
    *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
    *
    * @see
-   *   * BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC
+   *   * EVALUE(PROP_PROB_SLICE_KEEP_DC
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
+  EVALUE(PROP_PROB_SLICE_FLIP),
 
   /*! **Propagation-based local search solver engine:
    *    Probability for keeping the value of don't care bits for extracts.**
@@ -1105,7 +1116,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
+  EVALUE(PROP_PROB_SLICE_KEEP_DC),
 
   /*! **Propagation-based local search solver engine:
    *    Probability for inverse values.**
@@ -1118,7 +1129,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_PROB_USE_INV_VALUE,
+  EVALUE(PROP_PROB_USE_INV_VALUE),
 
   /*! **Propagation-based local search solver engine:
    *    Bandit scheme.**
@@ -1134,7 +1145,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_USE_BANDIT,
+  EVALUE(PROP_USE_BANDIT),
 
   /*! **Propagation-based local search solver engine:
    *    Inverse value computation for inequalities over concats.**
@@ -1148,7 +1159,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT,
+  EVALUE(PROP_USE_INV_LT_CONCAT),
 
   /*! **Propagation-based local search solver engine:
    *    Restarts.**
@@ -1159,7 +1170,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_USE_RESTARTS,
+  EVALUE(PROP_USE_RESTARTS),
 
   /*! **Propagation-based local search solver engine:
    *    Value computation for sign extension.**
@@ -1173,7 +1184,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_SEXT,
+  EVALUE(PROP_SEXT),
 
   /*! **Propagation-based local search solver engine:
    *    Skip if no progress.**
@@ -1188,7 +1199,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_SKIP_NO_PROGRESS,
+  EVALUE(PROP_SKIP_NO_PROGRESS),
 
   /*! **Propagation-based local search solver engine:
    *    Value computation for xor.**
@@ -1202,7 +1213,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  BITWUZLA_OPT_PROP_XOR,
+  EVALUE(PROP_XOR),
 
   /* ------------------- AigProp Engine Options (Expert) ------------------- */
 
@@ -1217,7 +1228,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the aigprop solver engine.
    */
-  BITWUZLA_OPT_AIGPROP_NPROPS,
+  EVALUE(AIGPROP_NPROPS),
 
   /*! **AIG-level propagation-based local search solver engine:
    *    Bandit scheme.**
@@ -1233,7 +1244,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the aigprop solver engine.
    */
-  BITWUZLA_OPT_AIGPROP_USE_BANDIT,
+  EVALUE(AIGPROP_USE_BANDIT),
 
   /*! **AIG-level propagation-based local search solver engine:
    *    Restarts.**
@@ -1244,7 +1255,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option to configure the aigprop solver engine.
    */
-  BITWUZLA_OPT_AIGPROP_USE_RESTARTS,
+  EVALUE(AIGPROP_USE_RESTARTS),
 
   /* ----------------- Quantifier Eninge Options (Expert) ------------------ */
   /*! **Quantifier solver engine:
@@ -1259,7 +1270,7 @@ enum BitwuzlaOption
    *  @warning This is an expert option to configure the quantifier solver
    *  engine.
    */
-  BITWUZLA_OPT_QUANT_SYNTH_SK,
+  EVALUE(QUANT_SYNTH_SK),
 
   /*! **Quantifier solver engine:
    *    Quantifier instantiation synthesis.**
@@ -1274,7 +1285,7 @@ enum BitwuzlaOption
    *  @warning This is an expert option to configure the quantifier solver
    *  engine.
    */
-  BITWUZLA_OPT_QUANT_SYNTH_QI,
+  EVALUE(QUANT_SYNTH_QI),
 
   /*! **Quantifier solver engine:
    *    Skolemization.**
@@ -1288,7 +1299,7 @@ enum BitwuzlaOption
    *  @warning This is an expert option to configure the quantifier solver
    *  engine.
    */
-  BITWUZLA_OPT_QUANT_SKOLEM_UF,
+  EVALUE(QUANT_SKOLEM_UF),
 
   /*! **Quantifier solver engine:
    *    Eager Skolemization.**
@@ -1302,7 +1313,7 @@ enum BitwuzlaOption
    *  @warning This is an expert option to configure the quantifier solver
    *  engine.
    */
-  BITWUZLA_OPT_QUANT_EAGER_SKOLEM,
+  EVALUE(QUANT_EAGER_SKOLEM),
 
   /*! **Quantifier solver engine:
    *    Model-based Quantifier Instantiation.**
@@ -1314,9 +1325,9 @@ enum BitwuzlaOption
    *  @warning This is an expert option to configure the quantifier solver
    *  engine.
    */
-  BITWUZLA_OPT_QUANT_MBQI,
+  EVALUE(QUANT_MBQI),
 
-  BITWUZLA_OPT_QUANT_MODE,
+  EVALUE(QUANT_MODE),
 
   /* ------------------------ Other Expert Options ------------------------- */
 
@@ -1328,7 +1339,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option.
    */
-  BITWUZLA_OPT_CHECK_MODEL,
+  EVALUE(CHECK_MODEL),
 
   /*! **Check result when unconstrained optimization is enabled (debug only).**
    *
@@ -1338,7 +1349,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option.
    */
-  BITWUZLA_OPT_CHECK_UNCONSTRAINED,
+  EVALUE(CHECK_UNCONSTRAINED),
 
   /*! **Check unsat assumptions (debug only).**
    *
@@ -1348,7 +1359,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option.
    */
-  BITWUZLA_OPT_CHECK_UNSAT_ASSUMPTIONS,
+  EVALUE(CHECK_UNSAT_ASSUMPTIONS),
 
   /*! **Interpret sorts introduced with declare-sort as bit-vectors of given
    *    width.**
@@ -1360,7 +1371,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option.
    */
-  BITWUZLA_OPT_DECLSORT_BV_WIDTH,
+  EVALUE(DECLSORT_BV_WIDTH),
 
   /*! **Share partial models determined via local search with bit-blasting
    *    engine.**
@@ -1374,7 +1385,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option.
    */
-  BITWUZLA_OPT_LS_SHARE_SAT,
+  EVALUE(LS_SHARE_SAT),
 
   /*! **Interactive parsing mode.**
    *
@@ -1384,7 +1395,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option.
    */
-  BITWUZLA_OPT_PARSE_INTERACTIVE,
+  EVALUE(PARSE_INTERACTIVE),
 
   /*! **Use CaDiCaL's freeze/melt.**
    *
@@ -1394,7 +1405,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option.
    */
-  BITWUZLA_OPT_SAT_ENGINE_CADICAL_FREEZE,
+  EVALUE(SAT_ENGINE_CADICAL_FREEZE),
 
   /*! **Lingeling fork mode.**
    *
@@ -1404,7 +1415,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option.
    */
-  BITWUZLA_OPT_SAT_ENGINE_LGL_FORK,
+  EVALUE(SAT_ENGINE_LGL_FORK),
 
   /*! **Number of threads to use in the SAT solver.**
    *
@@ -1416,7 +1427,7 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option.
    */
-  BITWUZLA_OPT_SAT_ENGINE_N_THREADS,
+  EVALUE(SAT_ENGINE_N_THREADS),
 
   /*! **Enable SMT-COMP mode.**
    *
@@ -1428,16 +1439,34 @@ enum BitwuzlaOption
    *
    *  @warning This is an expert option.
    */
-  BITWUZLA_OPT_SMT_COMP_MODE,
+  EVALUE(SMT_COMP_MODE),
 
-  /* this MUST be the last entry! */
-  BITWUZLA_OPT_NUM_OPTS,
+#ifndef DOXYGEN_SKIP
+  EVALUE(NUM_OPTS),
+#endif
 };
+
+#ifdef BITWUZLA_API_USE_C_ENUMS
 #ifndef DOXYGEN_SKIP
 typedef enum BitwuzlaOption BitwuzlaOption;
 #endif
+#endif
 
-#if __cplusplus
-}
+#ifndef BITWUZLA_API_USE_C_ENUMS
+}  // namespace bitwuzla
+#endif
+
+#undef EVALUE
+#undef ENUM
+
+#endif
+
+#ifndef BITWUZLA_API_USE_C_ENUMS
+#ifndef BITWUZLA_API_OPTION_CPP_H_INCLUDED
+#define BITWUZLA_API_OPTION_CPP_H_INCLUDED
+#endif
+#else
+#ifndef BITWUZLA_API_OPTION_C_H_INCLUDED
+#define BITWUZLA_API_OPTION_C_H_INCLUDED
 #endif
 #endif

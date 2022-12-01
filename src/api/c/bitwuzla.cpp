@@ -167,6 +167,18 @@ import_kind(BitwuzlaKind kind)
   return static_cast<bitwuzla::Kind>(kind);
 }
 
+static BitwuzlaOption
+export_option(bitwuzla::Option option)
+{
+  return static_cast<BitwuzlaOption>(option);
+}
+
+static bitwuzla::Option
+import_option(BitwuzlaOption option)
+{
+  return static_cast<bitwuzla::Option>(option);
+}
+
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaKind                                                               */
 /* -------------------------------------------------------------------------- */
@@ -310,13 +322,13 @@ bitwuzla_set_option(BitwuzlaOptions *options,
                     uint64_t value)
 {
   BITWUZLA_CHECK_NOT_NULL(options);
-  if (options->d_options.is_bool(option))
+  if (options->d_options.is_bool(import_option(option)))
   {
-    options->d_options.set(option, value ? true : false);
+    options->d_options.set(import_option(option), value ? true : false);
   }
   else
   {
-    options->d_options.set(option, value);
+    options->d_options.set(import_option(option), value);
   }
 }
 
@@ -327,25 +339,25 @@ bitwuzla_set_option_str(BitwuzlaOptions *options,
 {
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_NOT_NULL(value);
-  options->d_options.set(option, value);
+  options->d_options.set(import_option(option), value);
 }
 
 uint64_t
 bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option)
 {
   BITWUZLA_CHECK_NOT_NULL(options);
-  if (options->d_options.is_bool(option))
+  if (options->d_options.is_bool(import_option(option)))
   {
-    return options->d_options.get_bool(option) ? 1 : 0;
+    return options->d_options.get_bool(import_option(option)) ? 1 : 0;
   }
-  return options->d_options.get_numeric(option);
+  return options->d_options.get_numeric(import_option(option));
 }
 
 const char *
 bitwuzla_get_option_str(BitwuzlaOptions *options, BitwuzlaOption option)
 {
   BITWUZLA_CHECK_NOT_NULL(options);
-  return options->d_options.get_mode(option).c_str();
+  return options->d_options.get_mode(import_option(option)).c_str();
 }
 
 void
@@ -1560,7 +1572,7 @@ bitwuzla_get_option_from_string(Bitwuzla *bitwuzla, const char *str)
   // }
   // return BZLA_EXPORT_BITWUZLA_OPTION(static_cast<BzlaOption>(
   //     bzla_hashptr_table_get(bzla->str2opt, str)->data.as_int));
-  return BITWUZLA_OPT_SEED;
+  return export_option(bitwuzla::Option::SEED);
 }
 
 /* bzla parser only --------------------------------------------------------- */

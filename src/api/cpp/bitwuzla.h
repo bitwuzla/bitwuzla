@@ -46,8 +46,6 @@ std::string git_id();
 
 class Bitwuzla;
 
-using Option = BitwuzlaOption;
-
 class OptionInfo
 {
   // TODO
@@ -151,7 +149,7 @@ class Options
    *             `get_option_info` call.
    *
    * @see
-   *   * `BitwuzlaOptionInfo`
+   *   * `OptionInfo`
    */
   const OptionInfo &get_info(Option option) const;
 
