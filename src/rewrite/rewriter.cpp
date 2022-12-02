@@ -209,8 +209,14 @@ Rewriter::_rewrite(const Node& node)
       res = rewrite_fp_to_fp_from_ubv(node);
       break;
 
+    // No rewrites for FP_TO_(U|S)BV conversion yet
+    case node::Kind::FP_TO_SBV:
+    case node::Kind::FP_TO_UBV:
+      break;
+
     // There are no rewrites for constant arrays.
     case node::Kind::CONST_ARRAY: res = node; break;
+
     case node::Kind::SELECT: res = rewrite_select(node); break;
     case node::Kind::STORE: res = rewrite_store(node); break;
 
@@ -219,6 +225,7 @@ Rewriter::_rewrite(const Node& node)
 
     case node::Kind::FORALL: res = rewrite_forall(node); break;
     case node::Kind::EXISTS: res = rewrite_exists(node); break;
+
 
     default: assert(false);
   }
