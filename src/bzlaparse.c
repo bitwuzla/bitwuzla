@@ -130,18 +130,17 @@ bzla_parse(FILE *infile,
   BZLA_INIT_STACK(mem, prefix);
   *parsed_smt2 = false;
 
-  // if (has_compressed_suffix(infile_name, ".btor"))
-  //{
-  //   parser_api = bzla_parsebtor_parser_api();
-  //   sprintf(msg, "parsing '%s'", infile_name);
-  // }
+  if (has_compressed_suffix(infile_name, ".btor"))
+  {
+    parser_api = bzla_parsebtor_parser_api();
+    sprintf(msg, "parsing '%s'", infile_name);
+  }
   // if (has_compressed_suffix(infile_name, ".btor2"))
   //{
   //   parser_api = bzla_parsebtor2_parser_api();
   //   sprintf(msg, "parsing '%s'", infile_name);
   // }
-  // else
-  if (has_compressed_suffix(infile_name, ".smt2"))
+  else if (has_compressed_suffix(infile_name, ".smt2"))
   {
     parser_api = bzla_parsesmt2_parser_api();
     sprintf(msg, "parsing '%s'", infile_name);
@@ -260,7 +259,7 @@ bzla_parse_btor(FILE *infile,
   assert(status);
 
   const BzlaParserAPI *parser_api;
-  // parser_api = bzla_parsebtor_parser_api();
+  parser_api = bzla_parsebtor_parser_api();
   return parse_aux(infile,
                    0,
                    infile_name,

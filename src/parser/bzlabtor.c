@@ -26,15 +26,13 @@
 
 /*------------------------------------------------------------------------*/
 
-void bitwuzla_set_bzla_id(Bitwuzla *bitwuzla,
-                          const BitwuzlaTerm *term,
-                          int32_t id);
+void bitwuzla_set_bzla_id(BitwuzlaTerm term, int32_t id);
 
 /*------------------------------------------------------------------------*/
 
-typedef struct BzlaBZLAParser BzlaBZLAParser;
+typedef struct BzlaBTORParser BzlaBTORParser;
 
-typedef const BitwuzlaTerm *(*BzlaOpParser)(BzlaBZLAParser *, uint32_t width);
+typedef BitwuzlaTerm (*BzlaOpParser)(BzlaBTORParser *, uint64_t width);
 
 #define SIZE_PARSERS 128
 
@@ -47,12 +45,13 @@ struct Info
 };
 
 BZLA_DECLARE_STACK(BzlaInfo, Info);
-BZLA_DECLARE_STACK(BitwuzlaTermPtr, BitwuzlaTerm *);
-BZLA_DECLARE_STACK(BitwuzlaTermConstPtr, const BitwuzlaTerm *);
+BZLA_DECLARE_STACK(BitwuzlaTerm, BitwuzlaTerm);
+BZLA_DECLARE_STACK(BitwuzlaSort, BitwuzlaSort);
 
-struct BzlaBZLAParser
+struct BzlaBTORParser
 {
   BzlaMemMgr *mem;
+  BitwuzlaOptions *options;
   Bitwuzla *bitwuzla;
 
   uint32_t nprefix;
@@ -64,12 +63,12 @@ struct BzlaBZLAParser
   int32_t saved_char;
   char *error;
 
-  BitwuzlaTermConstPtrStack exps;
+  BitwuzlaTermStack exps;
   BzlaInfoStack info;
 
-  BitwuzlaTermConstPtrStack regs;
-  BitwuzlaTermConstPtrStack lambdas;
-  BitwuzlaTermConstPtrStack params;
+  BitwuzlaTermStack regs;
+  BitwuzlaTermStack lambdas;
+  BitwuzlaTermStack params;
 
   BzlaCharStack op;
   BzlaCharStack constant;
@@ -78,13 +77,24 @@ struct BzlaBZLAParser
   BzlaOpParser *parsers;
   const char **ops;
 
-  uint32_t idx;
+  uint64_t idx;
 };
+
+static Bitwuzla *
+get_bitwuzla(BzlaBTORParser *parser)
+{
+  if (!parser->bitwuzla)
+  {
+    assert(parser->options);
+    parser->bitwuzla = bitwuzla_new(parser->options);
+  }
+  return parser->bitwuzla;
+}
 
 /*------------------------------------------------------------------------*/
 
 static const char *
-perr_btor(BzlaBZLAParser *parser, const char *fmt, ...)
+perr_btor(BzlaBTORParser *parser, const char *fmt, ...)
 {
   size_t bytes;
   va_list ap;
@@ -136,7 +146,7 @@ hash_op(const char *str, uint32_t salt)
 /*------------------------------------------------------------------------*/
 
 static int32_t
-nextch_btor(BzlaBZLAParser *parser)
+nextch_btor(BzlaBTORParser *parser)
 {
   int32_t ch;
 
@@ -159,7 +169,7 @@ nextch_btor(BzlaBZLAParser *parser)
 }
 
 static void
-savech_btor(BzlaBZLAParser *parser, int32_t ch)
+savech_btor(BzlaBTORParser *parser, int32_t ch)
 {
   assert(!parser->saved);
 
@@ -174,9 +184,10 @@ savech_btor(BzlaBZLAParser *parser, int32_t ch)
 }
 
 static const char *
-parse_non_negative_int(BzlaBZLAParser *parser, uint32_t *res_ptr)
+parse_non_negative_int(BzlaBTORParser *parser, uint64_t *res_ptr)
 {
-  int32_t res, ch;
+  int64_t res;
+  int32_t ch;
 
   ch = nextch_btor(parser);
   if (!isdigit(ch)) return perr_btor(parser, "expected digit");
@@ -201,9 +212,10 @@ parse_non_negative_int(BzlaBZLAParser *parser, uint32_t *res_ptr)
 }
 
 static const char *
-parse_positive_int(BzlaBZLAParser *parser, uint32_t *res_ptr)
+parse_positive_int(BzlaBTORParser *parser, uint64_t *res_ptr)
 {
-  int32_t res, ch;
+  int64_t res;
+  int32_t ch;
 
   ch = nextch_btor(parser);
   if (!isdigit(ch)) return perr_btor(parser, "expected digit");
@@ -221,7 +233,7 @@ parse_positive_int(BzlaBZLAParser *parser, uint32_t *res_ptr)
 }
 
 static const char *
-parse_non_zero_int(BzlaBZLAParser *parser, int32_t *res_ptr)
+parse_non_zero_int(BzlaBTORParser *parser, int32_t *res_ptr)
 {
   int32_t res, sign, ch;
 
@@ -254,18 +266,18 @@ parse_non_zero_int(BzlaBZLAParser *parser, int32_t *res_ptr)
   return 0;
 }
 
-static const BitwuzlaTerm *
-parse_exp(BzlaBZLAParser *parser,
-          uint32_t expected_width,
+static BitwuzlaTerm
+parse_exp(BzlaBTORParser *parser,
+          uint64_t expected_width,
           bool can_be_array,
           bool can_be_inverted,
           int32_t *rlit)
 {
   size_t idx;
   int32_t lit;
-  uint32_t width_res;
+  uint64_t width_res;
   const char *err_msg;
-  const BitwuzlaTerm *res;
+  BitwuzlaTerm res;
 
   lit     = 0;
   err_msg = parse_non_zero_int(parser, &lit);
@@ -287,12 +299,13 @@ parse_exp(BzlaBZLAParser *parser,
     return 0;
   }
 
-  if (bitwuzla_term_is_var(res) && bitwuzla_term_is_bound_var(res))
-  {
-    (void) perr_btor(
-        parser, "param '%d' cannot be used outside of its defined scope", lit);
-    return 0;
-  }
+  // if (bitwuzla_term_is_var(res) && bitwuzla_term_is_bound_var(res))
+  //{
+  //   (void) perr_btor(
+  //       parser, "param '%d' cannot be used outside of its defined scope",
+  //       lit);
+  //   return 0;
+  // }
 
   if (!can_be_array && bitwuzla_term_is_array(res))
   {
@@ -305,7 +318,7 @@ parse_exp(BzlaBZLAParser *parser,
   {
     if (bitwuzla_term_is_fun(res) || bitwuzla_term_is_array(res))
     {
-      const BitwuzlaSort *sort = bitwuzla_term_fun_get_codomain_sort(res);
+      BitwuzlaSort sort = bitwuzla_term_fun_get_codomain_sort(res);
       assert(bitwuzla_sort_is_bv(sort));
       width_res = bitwuzla_sort_bv_get_size(sort);
     }
@@ -330,13 +343,13 @@ parse_exp(BzlaBZLAParser *parser,
 
   if (lit < 0)
   {
-    res = bitwuzla_mk_term1(parser->bitwuzla, BITWUZLA_KIND_BV_NOT, res);
+    res = bitwuzla_mk_term1(BITWUZLA_KIND_BV_NOT, res);
   }
   return res;
 }
 
 static const char *
-parse_space(BzlaBZLAParser *parser)
+parse_space(BzlaBTORParser *parser)
 {
   int32_t ch;
 
@@ -356,7 +369,7 @@ SKIP:
 }
 
 static int32_t
-parse_symbol(BzlaBZLAParser *parser)
+parse_symbol(BzlaBTORParser *parser)
 {
   int32_t ch;
 
@@ -390,89 +403,89 @@ parse_symbol(BzlaBZLAParser *parser)
   return 1;
 }
 
-static const BitwuzlaTerm *
-parse_var(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_var(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *res;
-  const BitwuzlaSort *s;
+  BitwuzlaTerm res;
+  BitwuzlaSort s;
 
   if (!parse_symbol(parser)) return 0;
 
-  s   = bitwuzla_mk_bv_sort(parser->bitwuzla, width);
-  res = bitwuzla_mk_const(
-      parser->bitwuzla, s, parser->symbol.start[0] ? parser->symbol.start : 0);
-  bitwuzla_set_bzla_id(parser->bitwuzla, res, parser->idx);
+  s = bitwuzla_mk_bv_sort(width);
+  res =
+      bitwuzla_mk_const(s, parser->symbol.start[0] ? parser->symbol.start : 0);
+  bitwuzla_set_bzla_id(res, parser->idx);
   parser->info.start[parser->idx].var = 1;
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_param(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_param(BzlaBTORParser *parser, uint64_t width)
 {
   if (!parse_symbol(parser)) return 0;
-  const BitwuzlaSort *s   = bitwuzla_mk_bv_sort(parser->bitwuzla, width);
-  const BitwuzlaTerm *res = bitwuzla_mk_var(
-      parser->bitwuzla, s, parser->symbol.start[0] ? parser->symbol.start : 0);
+  BitwuzlaSort s = bitwuzla_mk_bv_sort(width);
+  BitwuzlaTerm res =
+      bitwuzla_mk_var(s, parser->symbol.start[0] ? parser->symbol.start : 0);
   BZLA_PUSH_STACK(parser->params, res);
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_param_exp(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_param_exp(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *res = parse_exp(parser, width, false, false, 0);
+  BitwuzlaTerm res = parse_exp(parser, width, false, false, 0);
   if (!res) return 0;
   if (bitwuzla_term_is_var(res)) return res;
   (void) perr_btor(parser, "expected parameter");
   return 0;
 }
 
-static const BitwuzlaTerm *
-parse_array(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_array(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *res;
-  const BitwuzlaSort *s, *is, *es;
-  uint32_t idx_width;
+  BitwuzlaTerm res;
+  BitwuzlaSort s, is, es;
+  uint64_t idx_width;
 
   if (parse_space(parser)) return 0;
   if (parse_positive_int(parser, &idx_width)) return 0;
   if (!parse_symbol(parser)) return 0;
 
-  is  = bitwuzla_mk_bv_sort(parser->bitwuzla, idx_width);
-  es  = bitwuzla_mk_bv_sort(parser->bitwuzla, width);
-  s   = bitwuzla_mk_array_sort(parser->bitwuzla, is, es);
-  res = bitwuzla_mk_const(
-      parser->bitwuzla, s, parser->symbol.start[0] ? parser->symbol.start : 0);
-  bitwuzla_set_bzla_id(parser->bitwuzla, res, parser->idx);
+  is = bitwuzla_mk_bv_sort(idx_width);
+  es = bitwuzla_mk_bv_sort(width);
+  s  = bitwuzla_mk_array_sort(is, es);
+  res =
+      bitwuzla_mk_const(s, parser->symbol.start[0] ? parser->symbol.start : 0);
+  bitwuzla_set_bzla_id(res, parser->idx);
   parser->info.start[parser->idx].array = 1;
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_array_exp(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_array_exp(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *res = parse_exp(parser, width, true, false, 0);
+  BitwuzlaTerm res = parse_exp(parser, width, true, false, 0);
   if (!res) return 0;
   if (bitwuzla_term_is_array(res)) return res;
   (void) perr_btor(parser, "expected array expression");
   return 0;
 }
 
-static const BitwuzlaTerm *
-parse_fun_exp(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_fun_exp(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *res = parse_exp(parser, width, true, false, 0);
+  BitwuzlaTerm res = parse_exp(parser, width, true, false, 0);
   if (!res) return 0;
   if (bitwuzla_term_is_fun(res) || bitwuzla_term_is_array(res)) return res;
   (void) perr_btor(parser, "expected function expression");
   return 0;
 }
 
-static const BitwuzlaTerm *
-parse_const(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_const(BzlaBTORParser *parser, uint64_t width)
 {
   int32_t ch;
-  uint32_t cwidth;
+  uint64_t cwidth;
 
   if (parse_space(parser)) return 0;
 
@@ -502,20 +515,19 @@ parse_const(BzlaBZLAParser *parser, uint32_t width)
     return 0;
   }
 
-  const BitwuzlaSort *sort = bitwuzla_mk_bv_sort(parser->bitwuzla, width);
+  BitwuzlaSort sort = bitwuzla_mk_bv_sort(width);
 
-  return bitwuzla_mk_bv_value(
-      parser->bitwuzla, sort, parser->constant.start, BITWUZLA_BV_BASE_BIN);
+  return bitwuzla_mk_bv_value(sort, parser->constant.start, 2);
 }
 
-static const BitwuzlaTerm *
-parse_consth(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_consth(BzlaBTORParser *parser, uint64_t width)
 {
   int32_t ch;
-  uint32_t cwidth;
+  uint64_t cwidth;
   char *tmp, *ext;
   BzlaBitVector *tmpbv, *extbv;
-  const BitwuzlaTerm *res;
+  BitwuzlaTerm res;
 
   if (parse_space(parser)) return 0;
 
@@ -569,8 +581,8 @@ parse_consth(BzlaBZLAParser *parser, uint32_t width)
   }
 
   assert(width == strlen(tmp));
-  const BitwuzlaSort *sort = bitwuzla_mk_bv_sort(parser->bitwuzla, width);
-  res = bitwuzla_mk_bv_value(parser->bitwuzla, sort, tmp, BITWUZLA_BV_BASE_BIN);
+  BitwuzlaSort sort = bitwuzla_mk_bv_sort(width);
+  res               = bitwuzla_mk_bv_value(sort, tmp, 2);
   bzla_mem_freestr(parser->mem, tmp);
 
   assert(bitwuzla_term_bv_get_size(res) == width);
@@ -578,14 +590,14 @@ parse_consth(BzlaBZLAParser *parser, uint32_t width)
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_constd(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_constd(BzlaBTORParser *parser, uint64_t width)
 {
   int32_t ch;
-  uint32_t cwidth;
+  uint64_t cwidth;
   char *tmp, *ext;
   BzlaBitVector *tmpbv, *extbv;
-  const BitwuzlaTerm *res;
+  BitwuzlaTerm res;
 
   if (parse_space(parser)) return 0;
 
@@ -657,8 +669,8 @@ parse_constd(BzlaBZLAParser *parser, uint32_t width)
   }
 
   assert(width == strlen(tmp));
-  const BitwuzlaSort *sort = bitwuzla_mk_bv_sort(parser->bitwuzla, width);
-  res = bitwuzla_mk_bv_value(parser->bitwuzla, sort, tmp, BITWUZLA_BV_BASE_BIN);
+  BitwuzlaSort sort = bitwuzla_mk_bv_sort(width);
+  res               = bitwuzla_mk_bv_value(sort, tmp, 2);
   bzla_mem_freestr(parser->mem, tmp);
 
   assert(bitwuzla_term_bv_get_size(res) == width);
@@ -666,90 +678,90 @@ parse_constd(BzlaBZLAParser *parser, uint32_t width)
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_zero(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_zero(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaSort *s = bitwuzla_mk_bv_sort(parser->bitwuzla, width);
-  return bitwuzla_mk_bv_zero(parser->bitwuzla, s);
+  BitwuzlaSort s = bitwuzla_mk_bv_sort(width);
+  return bitwuzla_mk_bv_zero(s);
 }
 
-static const BitwuzlaTerm *
-parse_one(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_one(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaSort *s = bitwuzla_mk_bv_sort(parser->bitwuzla, width);
-  return bitwuzla_mk_bv_one(parser->bitwuzla, s);
+  BitwuzlaSort s = bitwuzla_mk_bv_sort(width);
+  return bitwuzla_mk_bv_one(s);
 }
 
-static const BitwuzlaTerm *
-parse_ones(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_ones(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaSort *s = bitwuzla_mk_bv_sort(parser->bitwuzla, width);
-  return bitwuzla_mk_bv_ones(parser->bitwuzla, s);
+  BitwuzlaSort s = bitwuzla_mk_bv_sort(width);
+  return bitwuzla_mk_bv_ones(s);
 }
 
-static const BitwuzlaTerm *
-parse_root(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_root(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *res, *tmp;
+  BitwuzlaTerm res, tmp;
 
   if (parse_space(parser)) return 0;
   if (!(res = parse_exp(parser, width, false, true, 0))) return 0;
   if (width > 1)
   {
     tmp = res;
-    res = bitwuzla_mk_term1(parser->bitwuzla, BITWUZLA_KIND_BV_REDOR, tmp);
+    res = bitwuzla_mk_term1(BITWUZLA_KIND_BV_REDOR, tmp);
   }
-  bitwuzla_assert(parser->bitwuzla, res);
+  bitwuzla_assert(get_bitwuzla(parser), res);
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_unary(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
+static BitwuzlaTerm
+parse_unary(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
 {
   assert(width);
 
-  const BitwuzlaTerm *tmp, *res;
+  BitwuzlaTerm tmp, res;
 
   if (parse_space(parser)) return 0;
 
   if (!(tmp = parse_exp(parser, width, false, true, 0))) return 0;
 
-  res = bitwuzla_mk_term1(parser->bitwuzla, kind, tmp);
+  res = bitwuzla_mk_term1(kind, tmp);
   assert(bitwuzla_term_bv_get_size(res) == width);
 
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_not(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_not(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_unary(parser, BITWUZLA_KIND_BV_NOT, width);
 }
 
-static const BitwuzlaTerm *
-parse_neg(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_neg(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_unary(parser, BITWUZLA_KIND_BV_NEG, width);
 }
 
-static const BitwuzlaTerm *
-parse_inc(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_inc(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_unary(parser, BITWUZLA_KIND_BV_INC, width);
 }
 
-static const BitwuzlaTerm *
-parse_dec(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_dec(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_unary(parser, BITWUZLA_KIND_BV_DEC, width);
 }
 
-static const BitwuzlaTerm *
-parse_redunary(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
+static BitwuzlaTerm
+parse_redunary(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
 {
   assert(width == 1);
 
-  const BitwuzlaTerm *tmp, *res;
+  BitwuzlaTerm tmp, res;
 
   (void) width;
 
@@ -763,36 +775,36 @@ parse_redunary(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
     return 0;
   }
 
-  res = bitwuzla_mk_term1(parser->bitwuzla, kind, tmp);
+  res = bitwuzla_mk_term1(kind, tmp);
   assert(bitwuzla_term_bv_get_size(res) == 1);
 
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_redand(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_redand(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_redunary(parser, BITWUZLA_KIND_BV_REDAND, width);
 }
 
-static const BitwuzlaTerm *
-parse_redor(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_redor(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_redunary(parser, BITWUZLA_KIND_BV_REDOR, width);
 }
 
-static const BitwuzlaTerm *
-parse_redxor(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_redxor(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_redunary(parser, BITWUZLA_KIND_BV_REDXOR, width);
 }
 
-static const BitwuzlaTerm *
-parse_binary(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
+static BitwuzlaTerm
+parse_binary(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
 {
   assert(width);
 
-  const BitwuzlaTerm *l, *r, *res;
+  BitwuzlaTerm l, r, res;
 
   if (parse_space(parser)) return 0;
 
@@ -807,100 +819,100 @@ parse_binary(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
   if (!(r = parse_exp(parser, width, false, true, 0)))
     goto RELEASE_L_AND_RETURN_ERROR;
 
-  res = bitwuzla_mk_term2(parser->bitwuzla, kind, l, r);
+  res = bitwuzla_mk_term2(kind, l, r);
   assert(bitwuzla_term_bv_get_size(res) == width);
 
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_add(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_add(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_ADD, width);
 }
 
-static const BitwuzlaTerm *
-parse_and(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_and(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_AND, width);
 }
 
-static const BitwuzlaTerm *
-parse_smod(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_smod(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_SMOD, width);
 }
 
-static const BitwuzlaTerm *
-parse_srem(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_srem(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_SREM, width);
 }
 
-static const BitwuzlaTerm *
-parse_mul(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_mul(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_MUL, width);
 }
 
-static const BitwuzlaTerm *
-parse_sub(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_sub(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_SUB, width);
 }
 
-static const BitwuzlaTerm *
-parse_udiv(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_udiv(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_UDIV, width);
 }
 
-static const BitwuzlaTerm *
-parse_urem(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_urem(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_UREM, width);
 }
 
-static const BitwuzlaTerm *
-parse_xor(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_xor(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_XOR, width);
 }
 
-static const BitwuzlaTerm *
-parse_xnor(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_xnor(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_XNOR, width);
 }
 
-static const BitwuzlaTerm *
-parse_or(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_or(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_OR, width);
 }
 
-static const BitwuzlaTerm *
-parse_nor(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_nor(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_NOR, width);
 }
 
-static const BitwuzlaTerm *
-parse_nand(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_nand(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_NAND, width);
 }
 
-static const BitwuzlaTerm *
-parse_sdiv(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_sdiv(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_binary(parser, BITWUZLA_KIND_BV_SDIV, width);
 }
 
-static const BitwuzlaTerm *
-parse_logical(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
+static BitwuzlaTerm
+parse_logical(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
 {
-  const BitwuzlaTerm *l, *r, *res;
+  BitwuzlaTerm l, r, res;
 
   if (width != 1)
   {
@@ -930,31 +942,31 @@ parse_logical(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
     goto BIT_WIDTH_ERROR_RELEASE_L_AND_RETURN;
   }
 
-  res = bitwuzla_mk_term2(parser->bitwuzla, kind, l, r);
+  res = bitwuzla_mk_term2(kind, l, r);
   assert(bitwuzla_term_bv_get_size(res) == 1);
 
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_implies(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_implies(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_logical(parser, BITWUZLA_KIND_IMPLIES, width);
 }
 
-static const BitwuzlaTerm *
-parse_iff(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_iff(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_logical(parser, BITWUZLA_KIND_IFF, width);
 }
 
-static const BitwuzlaTerm *
-parse_compare_and_overflow(BzlaBZLAParser *parser,
+static BitwuzlaTerm
+parse_compare_and_overflow(BzlaBTORParser *parser,
                            BitwuzlaKind kind,
-                           uint32_t width,
+                           uint64_t width,
                            bool can_be_array)
 {
-  const BitwuzlaTerm *l, *r, *res;
+  BitwuzlaTerm l, r, res;
 
   if (width != 1)
   {
@@ -998,125 +1010,125 @@ parse_compare_and_overflow(BzlaBZLAParser *parser,
     }
   }
 
-  res = bitwuzla_mk_term2(parser->bitwuzla, kind, l, r);
+  res = bitwuzla_mk_term2(kind, l, r);
   assert(bitwuzla_term_bv_get_size(res) == 1);
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_eq(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_eq(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(parser, BITWUZLA_KIND_EQUAL, width, 1);
 }
 
-static const BitwuzlaTerm *
-parse_ne(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_ne(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(parser, BITWUZLA_KIND_DISTINCT, width, 1);
 }
 
-static const BitwuzlaTerm *
-parse_sgt(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_sgt(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(parser, BITWUZLA_KIND_BV_SGT, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_sgte(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_sgte(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(parser, BITWUZLA_KIND_BV_SGE, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_slt(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_slt(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(parser, BITWUZLA_KIND_BV_SLT, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_slte(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_slte(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(parser, BITWUZLA_KIND_BV_SLE, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_ugt(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_ugt(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(parser, BITWUZLA_KIND_BV_UGT, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_ugte(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_ugte(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(parser, BITWUZLA_KIND_BV_UGE, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_ult(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_ult(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(parser, BITWUZLA_KIND_BV_ULT, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_ulte(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_ulte(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(parser, BITWUZLA_KIND_BV_ULE, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_saddo(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_saddo(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(
       parser, BITWUZLA_KIND_BV_SADD_OVERFLOW, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_ssubo(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_ssubo(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(
       parser, BITWUZLA_KIND_BV_SSUB_OVERFLOW, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_smulo(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_smulo(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(
       parser, BITWUZLA_KIND_BV_SMUL_OVERFLOW, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_sdivo(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_sdivo(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(
       parser, BITWUZLA_KIND_BV_SDIV_OVERFLOW, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_uaddo(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_uaddo(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(
       parser, BITWUZLA_KIND_BV_UADD_OVERFLOW, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_usubo(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_usubo(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(
       parser, BITWUZLA_KIND_BV_USUB_OVERFLOW, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_umulo(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_umulo(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_compare_and_overflow(
       parser, BITWUZLA_KIND_BV_UMUL_OVERFLOW, width, 0);
 }
 
-static const BitwuzlaTerm *
-parse_concat(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_concat(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *l, *r, *res;
-  uint32_t lwidth, rwidth;
+  BitwuzlaTerm l, r, res;
+  uint64_t lwidth, rwidth;
 
   if (parse_space(parser)) return 0;
 
@@ -1145,17 +1157,17 @@ parse_concat(BzlaBZLAParser *parser, uint32_t width)
     return 0;
   }
 
-  res = bitwuzla_mk_term2(parser->bitwuzla, BITWUZLA_KIND_BV_CONCAT, l, r);
+  res = bitwuzla_mk_term2(BITWUZLA_KIND_BV_CONCAT, l, r);
   assert(bitwuzla_term_bv_get_size(res) == width);
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_shift(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
+static BitwuzlaTerm
+parse_shift(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
 {
-  const BitwuzlaTerm *l, *r, *res, *tmp;
+  BitwuzlaTerm l, r, res, tmp;
   int32_t lit;
-  uint32_t rwidth, rw;
+  uint64_t rwidth, rw;
 
   for (rwidth = 1; rwidth <= 30u && width != (1u << rwidth); rwidth++)
     ;
@@ -1188,7 +1200,7 @@ parse_shift(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
         return 0;
       }
       tmp = bitwuzla_mk_term1_indexed1(
-          parser->bitwuzla, BITWUZLA_KIND_BV_ZERO_EXTEND, r, width - rw);
+          BITWUZLA_KIND_BV_ZERO_EXTEND, r, width - rw);
       r = tmp;
     }
     else
@@ -1201,45 +1213,45 @@ parse_shift(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
       return 0;
     }
   }
-  res = bitwuzla_mk_term2(parser->bitwuzla, kind, l, r);
+  res = bitwuzla_mk_term2(kind, l, r);
   assert(bitwuzla_term_bv_get_size(res) == width);
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_rol(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_rol(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_shift(parser, BITWUZLA_KIND_BV_ROL, width);
 }
 
-static const BitwuzlaTerm *
-parse_ror(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_ror(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_shift(parser, BITWUZLA_KIND_BV_ROR, width);
 }
 
-static const BitwuzlaTerm *
-parse_sll(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_sll(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_shift(parser, BITWUZLA_KIND_BV_SHL, width);
 }
 
-static const BitwuzlaTerm *
-parse_sra(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_sra(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_shift(parser, BITWUZLA_KIND_BV_ASHR, width);
 }
 
-static const BitwuzlaTerm *
-parse_srl(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_srl(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_shift(parser, BITWUZLA_KIND_BV_SHR, width);
 }
 
-static const BitwuzlaTerm *
-parse_cond(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_cond(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *c, *t, *e;
+  BitwuzlaTerm c, t, e;
 
   if (parse_space(parser)) return 0;
 
@@ -1263,14 +1275,14 @@ parse_cond(BzlaBZLAParser *parser, uint32_t width)
   if (!(e = parse_exp(parser, width, false, true, 0)))
     goto RELEASE_C_AND_T_AND_RETURN_ERROR;
 
-  return bitwuzla_mk_term3(parser->bitwuzla, BITWUZLA_KIND_ITE, c, t, e);
+  return bitwuzla_mk_term3(BITWUZLA_KIND_ITE, c, t, e);
 }
 
-static const BitwuzlaTerm *
-parse_acond(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_acond(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *c, *t, *e;
-  uint32_t idxwidth;
+  BitwuzlaTerm c, t, e;
+  uint64_t idxwidth;
 
   idxwidth = 0;
 
@@ -1310,14 +1322,14 @@ parse_acond(BzlaBZLAParser *parser, uint32_t width)
     goto RELEASE_C_AND_T_AND_RETURN_ERROR;
   }
 
-  return bitwuzla_mk_term3(parser->bitwuzla, BITWUZLA_KIND_ITE, c, t, e);
+  return bitwuzla_mk_term3(BITWUZLA_KIND_ITE, c, t, e);
 }
 
-static const BitwuzlaTerm *
-parse_slice(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_slice(BzlaBTORParser *parser, uint64_t width)
 {
-  uint32_t argwidth, upper, lower, delta;
-  const BitwuzlaTerm *arg;
+  uint64_t argwidth, upper, lower, delta;
+  BitwuzlaTerm arg;
 
   if (parse_space(parser)) return 0;
 
@@ -1362,14 +1374,14 @@ parse_slice(BzlaBZLAParser *parser, uint32_t width)
   }
 
   return bitwuzla_mk_term1_indexed2(
-      parser->bitwuzla, BITWUZLA_KIND_BV_EXTRACT, arg, upper, lower);
+      BITWUZLA_KIND_BV_EXTRACT, arg, upper, lower);
 }
 
-static const BitwuzlaTerm *
-parse_read(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_read(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *array, *idx;
-  uint32_t idxwidth;
+  BitwuzlaTerm array, idx;
+  uint64_t idxwidth;
 
   if (parse_space(parser)) return 0;
 
@@ -1386,15 +1398,14 @@ parse_read(BzlaBZLAParser *parser, uint32_t width)
   if (!(idx = parse_exp(parser, idxwidth, false, true, 0)))
     goto RELEASE_ARRAY_AND_RETURN_ERROR;
 
-  return bitwuzla_mk_term2(
-      parser->bitwuzla, BITWUZLA_KIND_ARRAY_SELECT, array, idx);
+  return bitwuzla_mk_term2(BITWUZLA_KIND_ARRAY_SELECT, array, idx);
 }
 
-static const BitwuzlaTerm *
-parse_write(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_write(BzlaBTORParser *parser, uint64_t width)
 {
-  const BitwuzlaTerm *array, *idx, *val;
-  uint32_t idxwidth, valwidth;
+  BitwuzlaTerm array, idx, val;
+  uint64_t idxwidth, valwidth;
 
   idxwidth = 0;
   valwidth = 0;
@@ -1427,16 +1438,15 @@ parse_write(BzlaBZLAParser *parser, uint32_t width)
   if (!(val = parse_exp(parser, valwidth, false, true, 0)))
     goto RELEASE_ARRAY_AND_IDX_AND_RETURN_ERROR;
 
-  return bitwuzla_mk_term3(
-      parser->bitwuzla, BITWUZLA_KIND_ARRAY_STORE, array, idx, val);
+  return bitwuzla_mk_term3(BITWUZLA_KIND_ARRAY_STORE, array, idx, val);
 }
 
-static const BitwuzlaTerm *
-parse_lambda(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_lambda(BzlaBTORParser *parser, uint64_t width)
 {
-  uint32_t paramwidth;
-  const BitwuzlaTerm **args;
-  const BitwuzlaTerm *exp, *res;
+  uint64_t paramwidth;
+  BitwuzlaTerm *args;
+  BitwuzlaTerm exp, res;
 
   paramwidth = 0;
 
@@ -1449,11 +1459,11 @@ parse_lambda(BzlaBZLAParser *parser, uint32_t width)
   BZLA_NEWN(parser->mem, args, 2);
   if (!(args[0] = parse_param_exp(parser, paramwidth))) return 0;
 
-  if (bitwuzla_term_is_bound_var(args[0]))
-  {
-    perr_btor(parser, "param already bound by other lambda");
-    goto RELEASE_PARAM_AND_RETURN_ERROR;
-  }
+  // if (bitwuzla_term_is_bound_var(args[0]))
+  //{
+  //   perr_btor(parser, "param already bound by other lambda");
+  //   goto RELEASE_PARAM_AND_RETURN_ERROR;
+  // }
 
   if (parse_space(parser))
   {
@@ -1465,19 +1475,19 @@ parse_lambda(BzlaBZLAParser *parser, uint32_t width)
     goto RELEASE_PARAM_AND_RETURN_ERROR;
   args[1] = exp;
 
-  res = bitwuzla_mk_term(parser->bitwuzla, BITWUZLA_KIND_LAMBDA, 2, args);
+  res = bitwuzla_mk_term(BITWUZLA_KIND_LAMBDA, 2, args);
 
   BZLA_DELETEN(parser->mem, args, 2);
   BZLA_PUSH_STACK(parser->lambdas, res);
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_apply(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_apply(BzlaBTORParser *parser, uint64_t width)
 {
-  uint32_t i, arity;
-  const BitwuzlaTerm *res, *fun, *arg;
-  BitwuzlaTermConstPtrStack args;
+  uint64_t i, arity;
+  BitwuzlaTerm res, fun, arg;
+  BitwuzlaTermStack args;
 
   if (parse_space(parser)) return 0;
 
@@ -1505,19 +1515,17 @@ parse_apply(BzlaBZLAParser *parser, uint32_t width)
     BZLA_PUSH_STACK(args, arg);
   }
 
-  res = bitwuzla_mk_term(parser->bitwuzla,
-                         BITWUZLA_KIND_APPLY,
-                         BZLA_COUNT_STACK(args),
-                         args.start);
+  res =
+      bitwuzla_mk_term(BITWUZLA_KIND_APPLY, BZLA_COUNT_STACK(args), args.start);
   BZLA_RELEASE_STACK(args);
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_ext(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
+static BitwuzlaTerm
+parse_ext(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
 {
-  const BitwuzlaTerm *res, *arg;
-  uint32_t awidth, ewidth;
+  BitwuzlaTerm res, arg;
+  uint64_t awidth, ewidth;
 
   if (parse_space(parser)) return 0;
 
@@ -1544,25 +1552,25 @@ parse_ext(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
     goto RELEASE_ARG_AND_RETURN_ERROR;
   }
 
-  res = bitwuzla_mk_term1_indexed1(parser->bitwuzla, kind, arg, ewidth);
+  res = bitwuzla_mk_term1_indexed1(kind, arg, ewidth);
   assert(bitwuzla_term_bv_get_size(res) == width);
   return res;
 }
 
-static const BitwuzlaTerm *
-parse_sext(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_sext(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_ext(parser, BITWUZLA_KIND_BV_SIGN_EXTEND, width);
 }
 
-static const BitwuzlaTerm *
-parse_uext(BzlaBZLAParser *parser, uint32_t width)
+static BitwuzlaTerm
+parse_uext(BzlaBTORParser *parser, uint64_t width)
 {
   return parse_ext(parser, BITWUZLA_KIND_BV_ZERO_EXTEND, width);
 }
 
 static void
-new_parser(BzlaBZLAParser *parser, BzlaOpParser op_parser, const char *op)
+new_parser(BzlaBTORParser *parser, BzlaOpParser op_parser, const char *op)
 {
   uint32_t p, d;
 
@@ -1587,7 +1595,7 @@ new_parser(BzlaBZLAParser *parser, BzlaOpParser op_parser, const char *op)
 }
 
 static BzlaOpParser
-find_parser(BzlaBZLAParser *parser, const char *op)
+find_parser(BzlaBTORParser *parser, const char *op)
 {
   const char *str;
   uint32_t p, d;
@@ -1608,17 +1616,17 @@ find_parser(BzlaBZLAParser *parser, const char *op)
   return str ? parser->parsers[p] : 0;
 }
 
-static BzlaBZLAParser *
-new_bzla_parser(Bitwuzla *bitwuzla)
+static BzlaBTORParser *
+new_btor_parser()
 {
   BzlaMemMgr *mem = bzla_mem_mgr_new();
-  BzlaBZLAParser *res;
+  BzlaBTORParser *res;
 
   BZLA_NEW(mem, res);
   BZLA_CLR(res);
 
   res->mem      = mem;
-  res->bitwuzla = bitwuzla;
+  res->options  = bitwuzla_options_new();
 
   BZLA_NEWN(mem, res->parsers, SIZE_PARSERS);
   BZLA_NEWN(mem, res->ops, SIZE_PARSERS);
@@ -1703,7 +1711,7 @@ new_bzla_parser(Bitwuzla *bitwuzla)
 }
 
 static void
-delete_bzla_parser(BzlaBZLAParser *parser)
+delete_bzla_parser(BzlaBTORParser *parser)
 {
   BzlaMemMgr *mm = parser->mem;
 
@@ -1728,24 +1736,25 @@ delete_bzla_parser(BzlaBZLAParser *parser)
 /* Note: we need prefix in case of stdin as input (also applies to compressed
  * input files). */
 static const char *
-parse_bzla_parser(BzlaBZLAParser *parser,
+parse_bzla_parser(BzlaBTORParser *parser,
                   BzlaIntStack *prefix,
                   FILE *infile,
                   const char *infile_name,
                   FILE *outfile,
+                  Bitwuzla **bitwuzla,
                   BzlaParseResult *res)
 {
   BzlaOpParser op_parser;
   int32_t ch;
-  uint32_t width;
-  const BitwuzlaTerm *e;
+  uint64_t width;
+  BitwuzlaTerm e;
 
   assert(infile);
   assert(infile_name);
   (void) outfile;
 
-  BZLA_MSG(
-      bitwuzla_get_bzla_msg(parser->bitwuzla), 1, "parsing %s", infile_name);
+  // BZLA_MSG(
+  //     bitwuzla_get_bzla_msg(parser->bitwuzla), 1, "parsing %s", infile_name);
 
   parser->nprefix     = 0;
   parser->prefix      = prefix;
@@ -1837,16 +1846,17 @@ SKIP:
   if (ch != '\n') return perr_btor(parser, "expected new line");
 
   goto NEXT;
+  *bitwuzla = parser->bitwuzla;
 }
 
-static BzlaParserAPI parsebzla_parser_api = {
-    (BzlaInitParser) new_bzla_parser,
+static BzlaParserAPI parsebtor_parser_api = {
+    (BzlaInitParser) new_btor_parser,
     (BzlaResetParser) delete_bzla_parser,
     (BzlaParse) parse_bzla_parser,
 };
 
 const BzlaParserAPI *
-bzla_parsebzla_parser_api()
+bzla_parsebtor_parser_api()
 {
-  return &parsebzla_parser_api;
+  return &parsebtor_parser_api;
 }

@@ -1648,7 +1648,7 @@ bitwuzla_get_option_from_string(BitwuzlaOptions *options, const char *str)
 /* bzla parser only --------------------------------------------------------- */
 
 void
-bitwuzla_set_bzla_id(Bitwuzla *bitwuzla, BitwuzlaTerm term, int32_t id)
+bitwuzla_set_bzla_id(BitwuzlaTerm term, int32_t id)
 {
   // should not be needed
 #if 0
