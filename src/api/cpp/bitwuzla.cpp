@@ -1922,7 +1922,7 @@ mk_term(Kind kind,
     case Kind::BV_ZERO_EXTEND:
     case Kind::FP_TO_SBV:
     case Kind::FP_TO_UBV:
-      BITWUZLA_CHECK_MK_TERM_ARGC(kind, false, 1, args.size());
+      BITWUZLA_CHECK_MK_TERM_ARGC(kind, false, 2, args.size());
       BITWUZLA_CHECK_MK_TERM_IDXC(kind, 1, indices.size());
       switch (kind)
       {
