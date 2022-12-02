@@ -22,10 +22,8 @@
 
 /*------------------------------------------------------------------------*/
 
-void bitwuzla_set_bzla_id(Bitwuzla *bitwuzla,
-                          const BitwuzlaTerm *term,
-                          int32_t id);
-void bitwuzla_add_output(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
+void bitwuzla_set_bzla_id(BitwuzlaTerm term, int32_t id);
+void bitwuzla_add_output(Bitwuzla *bitwuzla, BitwuzlaTerm term);
 
 /*------------------------------------------------------------------------*/
 
@@ -112,8 +110,8 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
   BzlaIntHashTable *sortmap;
   BzlaIntHashTable *nodemap;
   BzlaIntHashTableIterator it;
-  const BitwuzlaTerm *e[3], *term, *tmp;
-  const BitwuzlaSort *sort, *sort_index, *sort_elem;
+  BitwuzlaTerm e[3], term, tmp;
+  BitwuzlaSort sort, sort_index, sort_elem;
   BzlaMemMgr *mm;
   BzlaMsg *msg;
 
@@ -178,8 +176,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
         goto DONE;
       }
       assert(bzla_hashint_map_contains(sortmap, line->sort.id));
-      sort =
-          (BitwuzlaSort *) bzla_hashint_map_get(sortmap, line->sort.id)->as_ptr;
+      sort = bzla_hashint_map_get(sortmap, line->sort.id)->as_int;
       assert(sort);
     }
 
@@ -190,10 +187,10 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
       signed_arg   = line->args[i];
       unsigned_arg = signed_arg < 0 ? -signed_arg : signed_arg;
       assert(bzla_hashint_map_contains(nodemap, unsigned_arg));
-      tmp = bzla_hashint_map_get(nodemap, unsigned_arg)->as_ptr;
+      tmp = bzla_hashint_map_get(nodemap, unsigned_arg)->as_int;
       if (signed_arg < 0)
       {
-        e[i] = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_BV_NOT, tmp);
+        e[i] = bitwuzla_mk_term1(BITWUZLA_KIND_BV_NOT, tmp);
       }
       else
       {
@@ -206,17 +203,17 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
     {
       case BTOR2_TAG_add:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_ADD, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, e[0], e[1]);
         break;
 
       case BTOR2_TAG_and:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_AND, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_AND, e[0], e[1]);
         break;
 
       case BTOR2_TAG_concat:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_CONCAT, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_CONCAT, e[0], e[1]);
         break;
 
       case BTOR2_TAG_const:
@@ -232,8 +229,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
                      line->sort.bitvec.width);
           goto DONE;
         }
-        term = bitwuzla_mk_bv_value(
-            bitwuzla, sort, line->constant, BITWUZLA_BV_BASE_BIN);
+        term = bitwuzla_mk_bv_value(sort, line->constant, BITWUZLA_BV_BASE_BIN);
         break;
 
       case BTOR2_TAG_constd:
@@ -249,8 +245,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
                      line->sort.bitvec.width);
           goto DONE;
         }
-        term = bitwuzla_mk_bv_value(
-            bitwuzla, sort, line->constant, BITWUZLA_BV_BASE_DEC);
+        term = bitwuzla_mk_bv_value(sort, line->constant, BITWUZLA_BV_BASE_DEC);
         break;
 
       case BTOR2_TAG_consth:
@@ -266,8 +261,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
                      line->sort.bitvec.width);
           goto DONE;
         }
-        term = bitwuzla_mk_bv_value(
-            bitwuzla, sort, line->constant, BITWUZLA_BV_BASE_HEX);
+        term = bitwuzla_mk_bv_value(sort, line->constant, BITWUZLA_BV_BASE_HEX);
         break;
 
       case BTOR2_TAG_constraint:
@@ -277,27 +271,27 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_dec:
         assert(line->nargs == 1);
-        term = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_BV_DEC, e[0]);
+        term = bitwuzla_mk_term1(BITWUZLA_KIND_BV_DEC, e[0]);
         break;
 
       case BTOR2_TAG_eq:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_EQUAL, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, e[0], e[1]);
         break;
 
       case BTOR2_TAG_iff:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_IFF, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_IFF, e[0], e[1]);
         break;
 
       case BTOR2_TAG_implies:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_IMPLIES, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_IMPLIES, e[0], e[1]);
         break;
 
       case BTOR2_TAG_inc:
         assert(line->nargs == 1);
-        term = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_BV_INC, e[0]);
+        term = bitwuzla_mk_term1(BITWUZLA_KIND_BV_INC, e[0]);
         break;
 
       case BTOR2_TAG_input:
@@ -308,149 +302,143 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_ite:
         assert(line->nargs == 3);
-        term = bitwuzla_mk_term3(bitwuzla, BITWUZLA_KIND_ITE, e[0], e[1], e[2]);
+        term = bitwuzla_mk_term3(BITWUZLA_KIND_ITE, e[0], e[1], e[2]);
         break;
 
       case BTOR2_TAG_mul:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_MUL, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, e[0], e[1]);
         break;
 
       case BTOR2_TAG_nand:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_NAND, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_NAND, e[0], e[1]);
         break;
 
       case BTOR2_TAG_neq:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_DISTINCT, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_DISTINCT, e[0], e[1]);
         break;
 
       case BTOR2_TAG_neg:
         assert(line->nargs == 1);
-        term = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_BV_NEG, e[0]);
+        term = bitwuzla_mk_term1(BITWUZLA_KIND_BV_NEG, e[0]);
         break;
 
       case BTOR2_TAG_nor:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_NOR, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_NOR, e[0], e[1]);
         break;
 
       case BTOR2_TAG_not:
         assert(line->nargs == 1);
-        term = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_BV_NOT, e[0]);
+        term = bitwuzla_mk_term1(BITWUZLA_KIND_BV_NOT, e[0]);
         break;
 
       case BTOR2_TAG_one:
         assert(line->nargs == 0);
-        term = bitwuzla_mk_bv_one(bitwuzla, sort);
+        term = bitwuzla_mk_bv_one(sort);
         break;
 
       case BTOR2_TAG_ones:
         assert(line->nargs == 0);
-        term = bitwuzla_mk_bv_ones(bitwuzla, sort);
+        term = bitwuzla_mk_bv_ones(sort);
         break;
 
       case BTOR2_TAG_or:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_OR, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_OR, e[0], e[1]);
         break;
 
       case BTOR2_TAG_output: bitwuzla_add_output(bitwuzla, e[0]); break;
 
       case BTOR2_TAG_read:
         assert(line->nargs == 2);
-        term =
-            bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_ARRAY_SELECT, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_ARRAY_SELECT, e[0], e[1]);
         break;
 
       case BTOR2_TAG_redand:
         assert(line->nargs == 1);
-        term = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_BV_REDAND, e[0]);
+        term = bitwuzla_mk_term1(BITWUZLA_KIND_BV_REDAND, e[0]);
         break;
 
       case BTOR2_TAG_redor:
         assert(line->nargs == 1);
-        term = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_BV_REDOR, e[0]);
+        term = bitwuzla_mk_term1(BITWUZLA_KIND_BV_REDOR, e[0]);
         break;
 
       case BTOR2_TAG_redxor:
         assert(line->nargs == 1);
-        term = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_BV_REDXOR, e[0]);
+        term = bitwuzla_mk_term1(BITWUZLA_KIND_BV_REDXOR, e[0]);
         break;
 
       case BTOR2_TAG_rol:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_ROL, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ROL, e[0], e[1]);
         break;
 
       case BTOR2_TAG_ror:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_ROR, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ROR, e[0], e[1]);
         break;
 
       case BTOR2_TAG_saddo:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(
-            bitwuzla, BITWUZLA_KIND_BV_SADD_OVERFLOW, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SADD_OVERFLOW, e[0], e[1]);
         break;
 
       case BTOR2_TAG_sdiv:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_SDIV, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SDIV, e[0], e[1]);
         break;
 
       case BTOR2_TAG_sdivo:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(
-            bitwuzla, BITWUZLA_KIND_BV_SDIV_OVERFLOW, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SDIV_OVERFLOW, e[0], e[1]);
         break;
 
       case BTOR2_TAG_sext:
         assert(line->nargs == 1);
         term = bitwuzla_mk_term1_indexed1(
-            bitwuzla, BITWUZLA_KIND_BV_SIGN_EXTEND, e[0], line->args[1]);
+            BITWUZLA_KIND_BV_SIGN_EXTEND, e[0], line->args[1]);
         break;
 
       case BTOR2_TAG_sgt:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_SGT, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SGT, e[0], e[1]);
         break;
 
       case BTOR2_TAG_sgte:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_SGE, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SGE, e[0], e[1]);
         break;
 
       case BTOR2_TAG_slice:
         assert(line->nargs == 1);
-        term = bitwuzla_mk_term1_indexed2(bitwuzla,
-                                          BITWUZLA_KIND_BV_EXTRACT,
-                                          e[0],
-                                          line->args[1],
-                                          line->args[2]);
+        term = bitwuzla_mk_term1_indexed2(
+            BITWUZLA_KIND_BV_EXTRACT, e[0], line->args[1], line->args[2]);
         break;
 
       case BTOR2_TAG_sll:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_SHL, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SHL, e[0], e[1]);
         break;
 
       case BTOR2_TAG_slt:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_SLT, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SLT, e[0], e[1]);
         break;
 
       case BTOR2_TAG_slte:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_SLE, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SLE, e[0], e[1]);
         break;
 
       case BTOR2_TAG_sort:
         if (line->sort.tag == BTOR2_TAG_SORT_bitvec)
         {
           assert(line->sort.bitvec.width);
-          sort = bitwuzla_mk_bv_sort(bitwuzla, line->sort.bitvec.width);
+          sort = bitwuzla_mk_bv_sort(line->sort.bitvec.width);
         }
         else
         {
@@ -466,8 +454,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
             goto DONE;
           }
           assert(bzla_hashint_map_contains(sortmap, j));
-          sort_index =
-              (BitwuzlaSort *) bzla_hashint_map_get(sortmap, j)->as_ptr;
+          sort_index = bzla_hashint_map_get(sortmap, j)->as_int;
           assert(sort_index);
           j = line->sort.array.element;
           assert(j);
@@ -480,124 +467,118 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
             goto DONE;
           }
           assert(bzla_hashint_map_contains(sortmap, j));
-          sort_elem = (BitwuzlaSort *) bzla_hashint_map_get(sortmap, j)->as_ptr;
+          sort_elem = bzla_hashint_map_get(sortmap, j)->as_int;
           assert(sort_elem);
-          sort = bitwuzla_mk_array_sort(bitwuzla, sort_index, sort_elem);
+          sort = bitwuzla_mk_array_sort(sort_index, sort_elem);
         }
         assert(!bzla_hashint_map_contains(sortmap, line->id));
-        bzla_hashint_map_add(sortmap, line->id)->as_ptr = (BitwuzlaSort *) sort;
+        bzla_hashint_map_add(sortmap, line->id)->as_int = sort;
         break;
 
       case BTOR2_TAG_smod:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_SMOD, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SMOD, e[0], e[1]);
         break;
 
       case BTOR2_TAG_smulo:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(
-            bitwuzla, BITWUZLA_KIND_BV_SMUL_OVERFLOW, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SMUL_OVERFLOW, e[0], e[1]);
         break;
 
       case BTOR2_TAG_sra:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_ASHR, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ASHR, e[0], e[1]);
         break;
 
       case BTOR2_TAG_srem:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_SREM, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SREM, e[0], e[1]);
         break;
 
       case BTOR2_TAG_srl:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_SHR, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SHR, e[0], e[1]);
         break;
 
       case BTOR2_TAG_ssubo:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(
-            bitwuzla, BITWUZLA_KIND_BV_SSUB_OVERFLOW, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SSUB_OVERFLOW, e[0], e[1]);
         break;
 
       case BTOR2_TAG_sub:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_SUB, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SUB, e[0], e[1]);
         break;
 
       case BTOR2_TAG_uaddo:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(
-            bitwuzla, BITWUZLA_KIND_BV_UADD_OVERFLOW, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_UADD_OVERFLOW, e[0], e[1]);
         break;
 
       case BTOR2_TAG_udiv:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_UDIV, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_UDIV, e[0], e[1]);
         break;
 
       case BTOR2_TAG_uext:
         assert(line->nargs == 1);
         term = bitwuzla_mk_term1_indexed1(
-            bitwuzla, BITWUZLA_KIND_BV_ZERO_EXTEND, e[0], line->args[1]);
+            BITWUZLA_KIND_BV_ZERO_EXTEND, e[0], line->args[1]);
         break;
 
       case BTOR2_TAG_ugt:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_UGT, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_UGT, e[0], e[1]);
         break;
 
       case BTOR2_TAG_ugte:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_UGE, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_UGE, e[0], e[1]);
         break;
 
       case BTOR2_TAG_ult:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_ULT, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ULT, e[0], e[1]);
         break;
 
       case BTOR2_TAG_ulte:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_ULE, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ULE, e[0], e[1]);
         break;
 
       case BTOR2_TAG_umulo:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(
-            bitwuzla, BITWUZLA_KIND_BV_UMUL_OVERFLOW, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_UMUL_OVERFLOW, e[0], e[1]);
         break;
 
       case BTOR2_TAG_urem:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_UREM, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_UREM, e[0], e[1]);
         break;
 
       case BTOR2_TAG_usubo:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(
-            bitwuzla, BITWUZLA_KIND_BV_USUB_OVERFLOW, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_USUB_OVERFLOW, e[0], e[1]);
         break;
 
       case BTOR2_TAG_write:
         assert(line->nargs == 3);
-        term = bitwuzla_mk_term3(
-            bitwuzla, BITWUZLA_KIND_ARRAY_STORE, e[0], e[1], e[2]);
+        term = bitwuzla_mk_term3(BITWUZLA_KIND_ARRAY_STORE, e[0], e[1], e[2]);
         break;
 
       case BTOR2_TAG_xnor:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_XNOR, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_XNOR, e[0], e[1]);
         break;
 
       case BTOR2_TAG_xor:
         assert(line->nargs == 2);
-        term = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_XOR, e[0], e[1]);
+        term = bitwuzla_mk_term2(BITWUZLA_KIND_BV_XOR, e[0], e[1]);
         break;
 
       case BTOR2_TAG_zero:
         assert(line->nargs == 0);
-        term = bitwuzla_mk_bv_zero(bitwuzla, sort);
+        term = bitwuzla_mk_bv_zero(sort);
         break;
 
       default:
@@ -615,7 +596,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
     if (term)
     {
       assert(!bzla_hashint_map_contains(nodemap, line->id));
-      bzla_hashint_map_add(nodemap, line->id)->as_ptr = (BitwuzlaTerm *) term;
+      bzla_hashint_map_add(nodemap, line->id)->as_int = term;
     }
   }
 DONE:
@@ -625,7 +606,7 @@ DONE:
     while (bzla_iter_hashint_has_next(&it))
     {
       j    = it.cur_pos;
-      term = bzla_iter_hashint_next_data(&it)->as_ptr;
+      term = bzla_iter_hashint_next_data(&it)->as_int;
     }
     bzla_hashint_map_delete(nodemap);
   }
