@@ -60,6 +60,7 @@ OptionEnumT<T>::is_valid(const std::string& value) const
 {
   return d_string2enum.find(value) != d_string2enum.end();
 }
+
 /* --- Options public ------------------------------------------------------- */
 
 Options::Options()

@@ -239,6 +239,23 @@ bitwuzla_result_to_string(BitwuzlaResult result)
 #endif
 
 /* -------------------------------------------------------------------------- */
+/* BitwuzlaOptions                                                            */
+/* -------------------------------------------------------------------------- */
+
+BitwuzlaOptions *
+bitwuzla_options_new()
+{
+  return new BitwuzlaOptions();
+}
+
+void
+bitwuzla_options_delete(BitwuzlaOptions *options)
+{
+  BITWUZLA_CHECK_NOT_NULL(options);
+  delete options;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
 

@@ -133,6 +133,34 @@ typedef uint64_t BitwuzlaTerm;
 typedef uint64_t BitwuzlaSort;
 
 /* -------------------------------------------------------------------------- */
+/* BitwuzlaOptions                                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Create a new BitwuzlaOptions instance.
+ *
+ * The returned instance must be deleted via `bitwuzla_options_delete()`.
+ *
+ * @return A pointer to the created BitwuzlaOptions instance.
+ *
+ * @see
+ *   * `bitwuzla_options_delete`
+ */
+BitwuzlaOptions *bitwuzla_options_new();
+
+/**
+ * Delete a BitwuzlaOptions instance.
+ *
+ * The given instance must have been created via `bitwuzla_options_new()`.
+ *
+ * @param bitwuzla The BitwuzlaOptions instance to delete.
+ *
+ * @see
+ *   * `bitwuzla_options_new`
+ */
+void bitwuzla_options_delete(BitwuzlaOptions *options);
+
+/* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -420,7 +448,7 @@ BitwuzlaSort bitwuzla_mk_fun_sort(uint64_t arity,
  *   * `bitwuzla_sort_is_rm`
  *   * `bitwuzla_term_is_rm`
  */
-BitwuzlaSort bitwuzla_mk_rm_sort(Bitwuzla *bitwuzla);
+BitwuzlaSort bitwuzla_mk_rm_sort();
 
 /**
  * Create a true value.

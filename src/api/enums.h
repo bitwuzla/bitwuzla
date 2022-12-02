@@ -435,7 +435,7 @@ enum ENUM(Kind)
   /*! Floating-point greater than or equal.
    *
    * SMT-LIB: \c fp.geq */
-  EVALUE(FP_GE),
+  EVALUE(FP_GEQ),
   /*! Floating-point greater than.
    *
    * SMT-LIB: \c fp.gt */

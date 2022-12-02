@@ -376,7 +376,7 @@ const std::unordered_map<Kind, bzla::node::Kind> s_internal_kinds = {
     {Kind::FP_EQUAL, bzla::node::Kind::FP_EQUAL},
     {Kind::FP_FMA, bzla::node::Kind::FP_FMA},
     {Kind::FP_FP, bzla::node::Kind::FP_FP},
-    {Kind::FP_GE, bzla::node::Kind::FP_GE},
+    {Kind::FP_GEQ, bzla::node::Kind::FP_GE},
     {Kind::FP_GT, bzla::node::Kind::FP_GT},
     {Kind::FP_IS_INF, bzla::node::Kind::FP_IS_INF},
     {Kind::FP_IS_NAN, bzla::node::Kind::FP_IS_NAN},
@@ -486,7 +486,7 @@ const std::unordered_map<bzla::node::Kind, Kind> s_kinds{
     {bzla::node::Kind::FP_EQUAL, Kind::FP_EQUAL},
     {bzla::node::Kind::FP_FMA, Kind::FP_FMA},
     {bzla::node::Kind::FP_FP, Kind::FP_FP},
-    {bzla::node::Kind::FP_GE, Kind::FP_GE},
+    {bzla::node::Kind::FP_GE, Kind::FP_GEQ},
     {bzla::node::Kind::FP_GT, Kind::FP_GT},
     {bzla::node::Kind::FP_IS_INF, Kind::FP_IS_INF},
     {bzla::node::Kind::FP_IS_NAN, Kind::FP_IS_NAN},
@@ -587,7 +587,7 @@ operator<<(std::ostream &out, RoundingMode rm)
 
 /* Options public ----------------------------------------------------------- */
 
-Options::Options() {}
+Options::Options() : d_options(new bzla::option::Options()) {}
 
 Options::~Options() {}
 
@@ -1690,7 +1690,7 @@ mk_term(Kind kind,
     case Kind::IFF:
     case Kind::BV_COMP:
     case Kind::FP_EQUAL:
-    case Kind::FP_GE:
+    case Kind::FP_GEQ:
     case Kind::FP_GT:
     case Kind::FP_LEQ:
     case Kind::FP_LT:
@@ -1710,7 +1710,7 @@ mk_term(Kind kind,
           BITWUZLA_CHECK_MK_TERM_ARGS_ANY_SORT(args, 0, true);
           break;
         case Kind::FP_EQUAL:
-        case Kind::FP_GE:
+        case Kind::FP_GEQ:
         case Kind::FP_GT:
         case Kind::FP_LEQ:
         case Kind::FP_LT:
