@@ -195,27 +195,27 @@ class BitwuzlaExceptionStream
             << "term with unexpected sort at index " << i;                     \
         if ((match))                                                           \
         {                                                                      \
-          BITWUZLA_CHECK(args[i].d_node->type() != args[i - 1].d_node->type()) \
-              << "terms with mismatching sort at indices " << i << " and "     \
-              << (i - 1);                                                      \
+          BITWUZLA_CHECK(args[i].d_node->type() == args[i - 1].d_node->type()) \
+              << "terms with mismatching sort at indices " << (i - 1)          \
+              << " and " << i;                                                 \
         }                                                                      \
       }                                                                        \
     }                                                                          \
   } while (0)
 
-#define BITWUZLA_CHECK_MK_TERM_ARGS_ANY_SORT(args, start, match)             \
-  do                                                                         \
-  {                                                                          \
-    for (size_t i = 0, argc = args.size(); i < argc; ++i)                    \
-    {                                                                        \
-      BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i].d_node, i);                     \
-      if (i > (start) && match)                                              \
-      {                                                                      \
-        BITWUZLA_CHECK(args[i].d_node->type() != args[i - 1].d_node->type()) \
-            << "terms with mismatching sort at indices " << i << " and "     \
-            << (i - 1);                                                      \
-      }                                                                      \
-    }                                                                        \
+#define BITWUZLA_CHECK_MK_TERM_ARGS_ANY_SORT(args, start, match)               \
+  do                                                                           \
+  {                                                                            \
+    for (size_t i = 0, argc = args.size(); i < argc; ++i)                      \
+    {                                                                          \
+      BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i].d_node, i);                       \
+      if (i > (start) && match)                                                \
+      {                                                                        \
+        BITWUZLA_CHECK(args[i].d_node->type() == args[i - 1].d_node->type())   \
+            << "terms with mismatching sort at indices " << (i - 1) << " and " \
+            << i;                                                              \
+      }                                                                        \
+    }                                                                          \
   } while (0)
 
 }  // namespace bitwuzla

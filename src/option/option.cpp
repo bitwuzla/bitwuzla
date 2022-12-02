@@ -65,6 +65,7 @@ OptionEnumT<T>::is_valid(const std::string& value) const
 
 Options::Options()
     : d_options(),
+      d_lng2option(),
       // general
       incremental(this,
                   Option::INCREMENTAL,
@@ -119,6 +120,8 @@ Options::Options()
                  {BvSolver::PREPROP, "preprop"}},
                 "bv solver engine",
                 "bv-solver"),
+      smt_comp_mode(
+          this, Option::SMT_COMP_MODE, false, "SMT-COMP mode", "smt-comp-mode"),
       // propagation-based local search engine
       prop_nprops(this,
                   Option::PROP_NPROPS,
@@ -225,6 +228,12 @@ Options::modes(Option opt) const
   return reinterpret_cast<OptionEnum*>(d_options.at(opt))->modes();
 }
 
+Option
+Options::option(const char* lng) const
+{
+  return d_lng2option.at(lng);
+}
+
 const char*
 Options::description(Option opt) const
 {
@@ -329,6 +338,15 @@ Options::max(Option opt) const
 {
   assert(d_options.at(opt)->is_numeric());
   return reinterpret_cast<OptionNumeric*>(d_options.at(opt))->max();
+}
+
+/* --- Options private ------------------------------------------------------ */
+
+void
+Options::register_option(Option opt, OptionBase* option)
+{
+  d_options[opt] = option;
+  d_lng2option.emplace(option->d_long, opt);
 }
 
 /* -------------------------------------------------------------------------- */

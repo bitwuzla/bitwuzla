@@ -15,6 +15,6 @@
 
 #include "bzlaparse.h"
 
-const BzlaParserAPI* bzla_parsebzla_parser_api();
+const BzlaParserAPI* bzla_parsebtor_parser_api();
 
 #endif

@@ -24,6 +24,7 @@ is_valid_bv_str(const std::string &value, uint8_t base)
     {
       if (c != '0' && c != '1') return false;
     }
+    return true;
   }
   if (base == 10)
   {
@@ -31,6 +32,7 @@ is_valid_bv_str(const std::string &value, uint8_t base)
     {
       if (value[i] < '0' || value[i] > '9') return false;
     }
+    return true;
   }
   assert(base == 16);
   for (const auto &c : value)

@@ -10,6 +10,8 @@
 
 extern "C" {
 #include "api/c/bitwuzla.h"
+
+#include "bzlaparse.h"
 }
 
 #include <cassert>
@@ -772,6 +774,26 @@ bitwuzla_mk_const(BitwuzlaSort sort, const char *symbol)
   return export_term(bitwuzla::mk_const(import_sort(sort)));
 }
 
+BitwuzlaTerm
+bitwuzla_mk_const_array(BitwuzlaSort sort, BitwuzlaTerm value)
+{
+  BITWUZLA_CHECK_SORT_ID(sort);
+  BITWUZLA_CHECK_TERM_ID(value);
+  return export_term(
+      bitwuzla::mk_const_array(import_sort(sort), import_term(value)));
+}
+
+BitwuzlaTerm
+bitwuzla_mk_var(BitwuzlaSort sort, const char *symbol)
+{
+  BITWUZLA_CHECK_SORT_ID(sort);
+  if (symbol)
+  {
+    return export_term(bitwuzla::mk_var(import_sort(sort), symbol));
+  }
+  return export_term(bitwuzla::mk_var(import_sort(sort)));
+}
+
 void
 bitwuzla_push(Bitwuzla *bitwuzla, uint64_t nlevels)
 {
@@ -985,15 +1007,43 @@ bitwuzla_parse(Bitwuzla *bitwuzla,
 }
 
 BitwuzlaResult
-bitwuzla_parse_format(Bitwuzla *bitwuzla,
-                      const char *format,
+bitwuzla_parse_format(const char *format,
                       FILE *infile,
                       const char *infile_name,
                       FILE *outfile,
                       char **error_msg,
+                      Bitwuzla **bitwuzla,
                       BitwuzlaResult *parsed_status)
 {
-  // TODO
+  BITWUZLA_CHECK_NOT_NULL(format);
+  BITWUZLA_CHECK_NOT_NULL(infile);
+  BITWUZLA_CHECK_NOT_NULL(outfile);
+  BITWUZLA_CHECK_NOT_NULL(error_msg);
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  BITWUZLA_CHECK_NOT_NULL(parsed_status);
+
+  int32_t bzla_res = 0;
+  if (strcmp(format, "smt2") == 0)
+  {
+    bzla_res = bzla_parse_smt2(
+        infile, infile_name, outfile, error_msg, bitwuzla, parsed_status);
+  }
+  else if (strcmp(format, "btor") == 0)
+  {
+    bzla_res = bzla_parse_btor(
+        infile, infile_name, outfile, error_msg, bitwuzla, parsed_status);
+  }
+  else
+  {
+    BITWUZLA_CHECK(strcmp(format, "btor2") == 0)
+        << "unexpected input format, expected 'smt2', 'btor', or 'btor2', got '"
+        << format << "'";
+    bzla_res = bzla_parse_btor2(
+        infile, infile_name, outfile, error_msg, bitwuzla, parsed_status);
+  }
+  if (bzla_res == BITWUZLA_SAT) return BITWUZLA_SAT;
+  if (bzla_res == BITWUZLA_UNSAT) return BITWUZLA_UNSAT;
+  assert(bzla_res == BITWUZLA_UNKNOWN);
   return BITWUZLA_UNKNOWN;
 }
 
@@ -1588,21 +1638,11 @@ bitwuzla_term_print_value_smt2(BitwuzlaTerm term, char *symbol, FILE *file)
 }
 
 BitwuzlaOption
-bitwuzla_get_option_from_string(Bitwuzla *bitwuzla, const char *str)
+bitwuzla_get_option_from_string(BitwuzlaOptions *options, const char *str)
 {
-  // TODO
-  // BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(str);
-
-  // Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
-
-  // if (!bzla_hashptr_table_get(bzla->str2opt, str))
-  //{
-  //   return BITWUZLA_OPT_NUM_OPTS;
-  // }
-  // return BZLA_EXPORT_BITWUZLA_OPTION(static_cast<BzlaOption>(
-  //     bzla_hashptr_table_get(bzla->str2opt, str)->data.as_int));
-  return export_option(bitwuzla::Option::SEED);
+  BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_NOT_NULL(str);
+  return export_option(options->d_options.option(str));
 }
 
 /* bzla parser only --------------------------------------------------------- */

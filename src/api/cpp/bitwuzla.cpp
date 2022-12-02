@@ -137,7 +137,7 @@ const std::unordered_map<Option, bzla::option::Option> s_internal_options = {
     {Option::SAT_ENGINE_CADICAL_FREEZE, bzla::option::Option::NUM_OPTIONS},
     {Option::SAT_ENGINE_LGL_FORK, bzla::option::Option::NUM_OPTIONS},
     {Option::SAT_ENGINE_N_THREADS, bzla::option::Option::NUM_OPTIONS},
-    {Option::SMT_COMP_MODE, bzla::option::Option::NUM_OPTIONS},
+    {Option::SMT_COMP_MODE, bzla::option::Option::SMT_COMP_MODE},
     {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
 };
 
@@ -257,7 +257,7 @@ const std::unordered_map<bzla::option::Option, Option> s_options = {
     // Option::SAT_ENGINE_CADICAL_FREEZE},
     //{bzla::option::Option::NUM_OPTIONS, Option::SAT_ENGINE_LGL_FORK},
     //{bzla::option::Option::NUM_OPTIONS, Option::SAT_ENGINE_N_THREADS},
-    //{bzla::option::Option::NUM_OPTIONS, Option::SMT_COMP_MODE},
+    {bzla::option::Option::SMT_COMP_MODE, Option::SMT_COMP_MODE},
     //{bzla::option::Option::NUM_OPTIONS, Option::NUM_OPTS},
 };
 
@@ -625,6 +625,18 @@ const char *
 Options::description(Option option) const
 {
   return d_options->description(s_internal_options.at(option));
+}
+
+std::vector<std::string>
+Options::modes(Option option) const
+{
+  return d_options->modes(s_internal_options.at(option));
+}
+
+Option
+Options::option(const char *lng) const
+{
+  return s_options.at(d_options->option(lng));
 }
 
 void
@@ -1665,6 +1677,16 @@ Term
 mk_rm_value(RoundingMode rm)
 {
   return bzla::NodeManager::get().mk_value(s_internal_rms.at(rm));
+}
+
+Term
+mk_const_array(const Sort &sort, const Term &term)
+{
+  // TODO
+  (void) sort;
+  (void) term;
+  assert(false);
+  return Term();
 }
 
 Term

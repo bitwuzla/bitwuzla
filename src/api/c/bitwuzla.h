@@ -868,6 +868,21 @@ BitwuzlaTerm bitwuzla_mk_term_indexed(BitwuzlaKind kind,
 BitwuzlaTerm bitwuzla_mk_const(BitwuzlaSort sort, const char *symbol);
 
 /**
+ * Create a one-dimensional constant array of given sort, initialized with
+ * given value.
+ *
+ * @param sort The sort of the array.
+ * @param value The term to initialize the elements of the array with.
+ *
+ * @return A term of kind BITWUZLA_KIND_CONST_ARRAY, representing a constant
+ *         array of given sort.
+ *
+ * @see
+ *   * `bitwuzla_mk_array_sort`
+ */
+BitwuzlaTerm bitwuzla_mk_const_array(BitwuzlaSort sort, BitwuzlaTerm value);
+
+/**
  * Create a variable of given sort with given symbol.
  *
  * @note This creates a variable to be bound by quantifiers or lambdas.
@@ -1308,7 +1323,6 @@ BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
  *
  * Requires that no terms have been created yet.
  *
- * @param bitwuzla The Bitwuzla instance.
  * @param format The input format for printing the model. Either `"btor"` for
  *               the BTOR format, `"btor2"` for the BTOR2 format, or `"smt2"`
  *               for the SMT-LIB v2 format.
@@ -1317,6 +1331,7 @@ BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
  * @param outfile The output file.
  * @param error_msg Output parameter, stores an error message in case a parse
  *                  error occurred, else \c NULL.
+ * @param bitwuzla The Bitwuzla instance created by the parser.
  * @param parsed_status Output parameter, stores the status of the input in case
  *                      of SMT-LIB v2 input, if given.
  *
@@ -1327,12 +1342,12 @@ BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
  * @see
  *   * `bitwuzla_parse`
  */
-BitwuzlaResult bitwuzla_parse_format(Bitwuzla *bitwuzla,
-                                     const char *format,
+BitwuzlaResult bitwuzla_parse_format(const char *format,
                                      FILE *infile,
                                      const char *infile_name,
                                      FILE *outfile,
                                      char **error_msg,
+                                     Bitwuzla **bitwuzla,
                                      BitwuzlaResult *parsed_status);
 
 /**

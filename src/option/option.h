@@ -22,7 +22,8 @@ enum class Option
   SEED,                 // numeric
   VERBOSITY,            // numeric
 
-  BV_SOLVER,  // enum
+  BV_SOLVER,      // enum
+  SMT_COMP_MODE,  // bool
 
   PROP_NPROPS,                  // numeric
   PROP_NUPDATES,                // numeric
@@ -355,14 +356,16 @@ class OptionEnumT : public OptionEnum
 
 class Options
 {
-  /* Note: d_options must be initialized first since initialization of public
-   *       option members depends on it */
+  /* Note: d_options and d_lng2option must be initialized first since
+   *       initialization of public option members depends on it */
 
   friend OptionBase;
 
  private:
   /** The registered options. */
   std::unordered_map<Option, OptionBase*> d_options;
+  /** Map long option name to option. */
+  std::unordered_map<const char*, Option> d_lng2option;
 
  public:
   static constexpr uint64_t VERBOSITY_MAX = 4;
@@ -382,6 +385,7 @@ class Options
   OptionNumeric verbosity;
 
   OptionEnumT<BvSolver> bv_solver;
+  OptionBool smt_comp_mode;
 
   // BV: propagation-based local search engine
   OptionNumeric prop_nprops;
@@ -415,6 +419,9 @@ class Options
    * @return The string representations of all valid modes for an enum option.
    */
   std::vector<std::string> modes(Option opt) const;
+
+  /** @return Option associated with the given long option name. */
+  Option option(const char* lng) const;
 
   /**
    * Set current value of option.
@@ -472,9 +479,9 @@ class Options
    * @note This is mainly necessary to have access to options via their enum
    *       identifier from external (the API).
    * @param opt  The option.
-   * @param info The associated option info data.
+   * @param option The associated option data.
    */
-  void register_option(Option opt, OptionBase* info) { d_options[opt] = info; }
+  void register_option(Option opt, OptionBase* option);
 };
 
 // explicit instantiations

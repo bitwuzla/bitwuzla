@@ -83,6 +83,12 @@ class Options
   /** @return The description of this option. */
   const char *description(Option option) const;
 
+  /** @return The modes of this option. */
+  std::vector<std::string> modes(Option option) const;
+
+  /** @return The option associated to the given long option name. */
+  Option option(const char *lng) const;
+
   /**
    * Set option.
    *
@@ -323,6 +329,7 @@ class Term
                                         const std::string &,
                                         const std::string &);
   friend Term mk_rm_value(RoundingMode);
+  friend Term mk_const_array(const Sort &, const Term &);
   friend Term mk_term(Kind,
                       const std::vector<Term> &,
                       const std::vector<uint64_t>);
@@ -588,6 +595,7 @@ class Sort
                                         const Term &,
                                         const std::string &,
                                         const std::string &);
+  friend Term mk_const_array(const Sort &, const Term &);
   friend Term mk_term(Kind,
                       const std::vector<Term> &,
                       const std::vector<uint64_t>);
@@ -1470,6 +1478,21 @@ Term mk_fp_value_from_rational(const Sort &sort,
                                const Term &rm,
                                const std::string &num,
                                const std::string &den);
+
+/**
+ * Create a one-dimensional constant array of given sort, initialized with
+ * given value.
+ *
+ * @param sort The sort of the array.
+ * @param value The term to initialize the elements of the array with.
+ *
+ * @return A term of kind Kind::CONST_ARRAY, representing a constant
+ *         array of given sort.
+ *
+ * @see
+ *   * `mk_array_sort`
+ */
+Term mk_const_array(const Sort &sort, const Term &term);
 
 /**
  * Create a rounding mode value.
