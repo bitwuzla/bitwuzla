@@ -13,6 +13,7 @@ extern "C" {
 }
 
 #include <cassert>
+#include <cstring>
 #include <unordered_map>
 
 #include "api/checks.h"
@@ -44,6 +45,9 @@ extern "C" {
 
 #define BITWUZLA_CHECK_KIND(kind) \
   BITWUZLA_CHECK((kind) < BITWUZLA_KIND_NUM_KINDS) << "invalid term kind";
+
+#define BITWUZLA_CHECK_OPTION(opt) \
+  BITWUZLA_CHECK((opt) < BITWUZLA_OPT_NUM_OPTS) << "invalid option";
 
 /* -------------------------------------------------------------------------- */
 
@@ -322,6 +326,7 @@ bitwuzla_set_option(BitwuzlaOptions *options,
                     uint64_t value)
 {
   BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_OPTION(option);
   if (options->d_options.is_bool(import_option(option)))
   {
     options->d_options.set(import_option(option), value ? true : false);
@@ -338,6 +343,7 @@ bitwuzla_set_option_str(BitwuzlaOptions *options,
                         const char *value)
 {
   BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_OPTION(option);
   BITWUZLA_CHECK_NOT_NULL(value);
   options->d_options.set(import_option(option), value);
 }
@@ -346,6 +352,7 @@ uint64_t
 bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option)
 {
   BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_OPTION(option);
   if (options->d_options.is_bool(import_option(option)))
   {
     return options->d_options.get_bool(import_option(option)) ? 1 : 0;
@@ -357,6 +364,7 @@ const char *
 bitwuzla_get_option_str(BitwuzlaOptions *options, BitwuzlaOption option)
 {
   BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_OPTION(option);
   return options->d_options.get_mode(import_option(option)).c_str();
 }
 
@@ -366,52 +374,55 @@ bitwuzla_get_option_info(BitwuzlaOptions *options,
                          BitwuzlaOptionInfo *info)
 {
   BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_OPTION(option);
   BITWUZLA_CHECK_NOT_NULL(info);
 
-  // TODO
-#if 0
-  Bzla *bzla     = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BzlaOption opt = BZLA_IMPORT_BITWUZLA_OPTION(option);
+  static thread_local bitwuzla::OptionInfo cpp_info;
+  cpp_info = bitwuzla::OptionInfo(options->d_options, import_option(option));
 
-  BZLA_CHECK_OPTION(bzla, opt);
-
-  BZLA_CLR(info);
+  std::memset(info, 0, sizeof(*info));
   info->opt        = option;
-  info->shrt       = bzla_opt_get_shrt(bzla, opt);
-  info->lng        = bzla_opt_get_lng(bzla, opt);
-  info->desc       = bzla_opt_get_desc(bzla, opt);
-  info->is_numeric = !bzla_opt_is_enum_option(bzla, opt);
+  info->shrt       = cpp_info.shrt;
+  info->lng        = cpp_info.lng;
+  info->desc       = cpp_info.description;
+  info->is_numeric = cpp_info.kind != bitwuzla::OptionInfo::Kind::MODE;
 
   if (info->is_numeric)
   {
-    info->numeric.cur_val = bzla_opt_get(bzla, opt);
-    info->numeric.def_val = bzla_opt_get_dflt(bzla, opt);
-    info->numeric.min_val = bzla_opt_get_min(bzla, opt);
-    info->numeric.max_val = bzla_opt_get_max(bzla, opt);
+    if (cpp_info.kind == bitwuzla::OptionInfo::Kind::BOOL)
+    {
+      info->numeric.cur =
+          std::get<bitwuzla::OptionInfo::Bool>(cpp_info.values).cur;
+      info->numeric.dflt =
+          std::get<bitwuzla::OptionInfo::Bool>(cpp_info.values).dflt;
+      info->numeric.min = 0;
+      info->numeric.max = 1;
+    }
+    else
+    {
+      info->numeric.cur =
+          std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).cur;
+      info->numeric.dflt =
+          std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).dflt;
+      info->numeric.min =
+          std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).min;
+      info->numeric.max =
+          std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).max;
+    }
   }
   else
   {
-    BZLA_RESET_STACK(bitwuzla->d_option_info_values);
-    info->string.cur_val = bzla_opt_get_str_value(bzla, opt);
-
-    int32_t def_val = bzla_opt_get_dflt(bzla, opt);
-    BzlaPtrHashTableIterator it;
-    BzlaOptHelp *oh;
-    bzla_iter_hashptr_init(&it, bzla->options[opt].options);
-    while (bzla_iter_hashptr_has_next(&it))
+    info->mode.cur =
+        std::get<bitwuzla::OptionInfo::Mode>(cpp_info.values).cur.c_str();
+    info->mode.num_modes =
+        std::get<bitwuzla::OptionInfo::Mode>(cpp_info.values).modes.size();
+    static thread_local std::vector<const char *> c_modes;
+    for (const auto &m :
+         std::get<bitwuzla::OptionInfo::Mode>(cpp_info.values).modes)
     {
-      oh = static_cast<BzlaOptHelp *>(it.bucket->data.as_ptr);
-      BZLA_PUSH_STACK(bitwuzla->d_option_info_values,
-                      static_cast<const char *>(bzla_iter_hashptr_next(&it)));
-      if (oh->val == def_val)
-      {
-        info->string.def_val = BZLA_TOP_STACK(bitwuzla->d_option_info_values);
-      }
+      c_modes.push_back(m.c_str());
     }
-    info->string.num_values = BZLA_COUNT_STACK(bitwuzla->d_option_info_values);
-    info->string.values     = bitwuzla->d_option_info_values.start;
   }
-#endif
 }
 
 BitwuzlaSort
@@ -868,8 +879,8 @@ bitwuzla_get_bv_value(Bitwuzla *bitwuzla, BitwuzlaTerm term)
 {
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_TERM_ID(term);
-  static thread_local std::string str =
-      bitwuzla->d_bitwuzla->get_bv_value(import_term(term));
+  static thread_local std::string str;
+  str = bitwuzla->d_bitwuzla->get_bv_value(import_term(term));
   return str.c_str();
 }
 
@@ -1193,7 +1204,8 @@ bitwuzla_term_get_indices(BitwuzlaTerm term, size_t *size)
 {
   BITWUZLA_CHECK_TERM_ID(term);
   BITWUZLA_CHECK_NOT_NULL(size);
-  static thread_local auto res = import_term(term).indices();
+  static thread_local std::vector<uint64_t> res;
+  res = import_term(term).indices();
   return res.data();
 }
 
@@ -1280,13 +1292,14 @@ const char *
 bitwuzla_term_get_symbol(BitwuzlaTerm term)
 {
   BITWUZLA_CHECK_TERM_ID(term);
-  static thread_local std::string str = "";
-  auto symbol                         = import_term(term).symbol();
+  static thread_local std::string str;
+  auto symbol = import_term(term).symbol();
   if (symbol)
   {
     str = (*symbol).get();
+    return str.c_str();
   }
-  return str.empty() ? nullptr : str.c_str();
+  return nullptr;
 }
 
 #if 0

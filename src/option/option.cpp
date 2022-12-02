@@ -19,6 +19,47 @@ OptionBase::OptionBase(Options* options,
 
 OptionBase::~OptionBase() {}
 
+/* --- OptionEnumT private -------------------------------------------------- */
+
+template <typename T>
+std::vector<std::string>
+OptionEnumT<T>::modes() const
+{
+  std::vector<std::string> res;
+  for (const auto& p : d_enum2string)
+  {
+    res.push_back(p.second);
+  }
+  return res;
+}
+
+template <typename T>
+const std::string&
+OptionEnumT<T>::get_str() const
+{
+  return d_enum2string.at(d_value);
+}
+
+template <typename T>
+void
+OptionEnumT<T>::set_str(const std::string& value)
+{
+  d_value = d_string2enum.at(value);
+}
+
+template <typename T>
+const std::string&
+OptionEnumT<T>::dflt_str() const
+{
+  return d_enum2string.at(d_default);
+}
+
+template <typename T>
+bool
+OptionEnumT<T>::is_valid(const std::string& value) const
+{
+  return d_string2enum.find(value) != d_string2enum.end();
+}
 /* --- Options public ------------------------------------------------------- */
 
 Options::Options()
@@ -174,6 +215,31 @@ Options::is_valid_enum(Option opt, const std::string& value) const
 {
   assert(d_options.at(opt)->is_enum());
   return reinterpret_cast<OptionEnum*>(d_options.at(opt))->is_valid(value);
+}
+
+std::vector<std::string>
+Options::modes(Option opt) const
+{
+  assert(d_options.at(opt)->is_enum());
+  return reinterpret_cast<OptionEnum*>(d_options.at(opt))->modes();
+}
+
+const char*
+Options::description(Option opt) const
+{
+  return d_options.at(opt)->description();
+}
+
+const char*
+Options::lng(Option opt) const
+{
+  return d_options.at(opt)->lng();
+}
+
+const char*
+Options::shrt(Option opt) const
+{
+  return d_options.at(opt)->shrt();
 }
 
 template <>

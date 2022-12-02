@@ -54,27 +54,27 @@ struct BitwuzlaOptionInfo
   {
     struct
     {
-      /** Current option value. */
-      uint64_t cur_val;
-      /** Default option value. */
-      uint64_t def_val;
-      /** Minimum option value. */
-      uint64_t min_val;
-      /** Maximum option value. */
-      uint64_t max_val;
+      /** Current numeric option value. */
+      uint64_t cur;
+      /** Default numeric option value. */
+      uint64_t dflt;
+      /** Minimum numeric option value. */
+      uint64_t min;
+      /** Maximum numeric option value. */
+      uint64_t max;
     } numeric;
 
     struct
     {
-      /** Current string option value. */
-      const char *cur_val;
-      /** Default string option value. */
-      const char *def_val;
-      /** Number of available string values. */
-      size_t num_values;
-      /** List of available string values. */
-      const char **values;
-    } string;
+      /** Current mode option value. */
+      const char *cur;
+      /** Default mode option value. */
+      const char *dflt;
+      /** Number of available modes. */
+      size_t num_modes;
+      /** List of available modes. */
+      char **modes;
+    } mode;
   };
 };
 

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <variant>
 
 #include "api/enums.h"
 #include "api/option.h"
@@ -45,16 +46,13 @@ std::string git_id();
 /* -------------------------------------------------------------------------- */
 
 class Bitwuzla;
-
-class OptionInfo
-{
-  // TODO
-};
+struct OptionInfo;
 
 // TODO parse command-line option string
 class Options
 {
   friend Bitwuzla;
+  friend OptionInfo;
 
  public:
   Options();
@@ -77,6 +75,13 @@ class Options
    * @return True if `option` is an option with a mode.
    */
   bool is_mode(Option option) const;
+
+  /** @return The long name of this option. */
+  const char *shrt(Option option) const;
+  /** @return The short name of this option. */
+  const char *lng(Option option) const;
+  /** @return The description of this option. */
+  const char *description(Option option) const;
 
   /**
    * Set option.
@@ -141,21 +146,117 @@ class Options
    */
   const std::string &get_mode(Option option) const;
 
-  /**
-   * Get the details of an option.
-   *
-   * @param option The option.
-   * @param info The option info to populate, will be valid until the next
-   *             `get_option_info` call.
-   *
-   * @see
-   *   * `OptionInfo`
-   */
-  const OptionInfo &get_info(Option option) const;
-
  private:
   /** The wrapped internal options. */
   std::unique_ptr<bzla::option::Options> d_options;
+};
+
+/**
+ * The struct holding all information about an option.
+ */
+struct OptionInfo
+{
+  /** The kind of the associated option. */
+  enum class Kind
+  {
+    BOOL,
+    NUMERIC,
+    MODE,
+  };
+
+  /** The option value data of a Boolean option. */
+  struct Bool
+  {
+    /** Current Boolean option value. */
+    bool cur;
+    /** Default Boolean option value. */
+    bool dflt;
+  };
+  /** The option value data of a numeric option. */
+  struct Numeric
+  {
+    /** Current numeric option value. */
+    uint64_t cur;
+    /** Default numeric option value. */
+    uint64_t dflt;
+    /** Minimum numeric option value. */
+    uint64_t min;
+    /** Maximum numeric option value. */
+    uint64_t max;
+  };
+  /** The option value data of an option with modes. */
+  struct Mode
+  {
+    /** Current mode option value. */
+    std::string cur;
+    /** Default mode option value. */
+    std::string dflt;
+    /** List of available modes. */
+    std::vector<std::string> modes;
+  };
+
+  /**
+   * Constructor.
+   * @param options The option configuration to query for the given option.
+   * @param option The option to query.
+   *
+   * @see
+   *  `Options`
+   */
+  OptionInfo(const Options &options, Option option);
+  /** Default constructor. */
+  OptionInfo() {}
+  /** Destructor. */
+  ~OptionInfo() {}
+
+  /** The associated option. */
+  Option opt;
+  /** The kind of the option. */
+  Kind kind;
+  /** Short option name. */
+  const char *shrt;
+  /** Long option name. */
+  const char *lng;
+  /** Option description. */
+  const char *description;
+
+  /** The values. */
+  std::variant<Bool, Numeric, Mode> values;
+
+  // union
+  //{
+  //   struct
+  //   {
+  //     /** Current option value. */
+  //     bool cur;
+  //     /** Default option value. */
+  //     bool dflt;
+  //   } val_bool;
+
+  //  struct
+  //  {
+  //    /** Current option value. */
+  //    uint64_t cur;
+  //    /** Default option value. */
+  //    uint64_t dflt;
+  //    /** Minimum option value. */
+  //    uint64_t min;
+  //    /** Maximum option value. */
+  //    uint64_t max;
+  //  } val_num;
+
+  //  struct
+  //  {
+  //    /** Current mode option value. */
+  //    std::string cur;
+  //    /** Default mode option value. */
+  //    std::string dflt;
+  //    /** Number of available mode values. */
+  //    size_t num_values;
+  //    /** List of available mode values. */
+  //    std::vector<std::string> values;
+  //  } val_mode;
+  //};
 };
 
 /* -------------------------------------------------------------------------- */

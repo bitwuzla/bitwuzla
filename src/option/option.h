@@ -282,6 +282,8 @@ class OptionEnum : public OptionBase
    * @return True if it is valid.
    */
   virtual bool is_valid(const std::string& value) const = 0;
+  /** @return A vector of string representations of available modes. */
+  virtual std::vector<std::string> modes() const = 0;
 };
 
 /** Option info data for options that take enum values. */
@@ -333,25 +335,11 @@ class OptionEnumT : public OptionEnum
   const T& dflt() const { return d_default; }
 
  private:
-  const std::string& get_str() const override
-  {
-    return d_enum2string.at(d_value);
-  }
-
-  void set_str(const std::string& value) override
-  {
-    d_value = d_string2enum.at(value);
-  }
-
-  const std::string& dflt_str() const override
-  {
-    return d_enum2string.at(d_default);
-  }
-
-  bool is_valid(const std::string& value) const override
-  {
-    return d_string2enum.find(value) != d_string2enum.end();
-  }
+  std::vector<std::string> modes() const override;
+  const std::string& get_str() const override;
+  void set_str(const std::string& value) override;
+  const std::string& dflt_str() const override;
+  bool is_valid(const std::string& value) const override;
 
   /** The current enum value. */
   T d_value;
@@ -422,6 +410,11 @@ class Options
   const char* lng(Option opt) const;
   /** @return The short name of the given option. */
   const char* shrt(Option opt) const;
+
+  /**
+   * @return The string representations of all valid modes for an enum option.
+   */
+  std::vector<std::string> modes(Option opt) const;
 
   /**
    * Set current value of option.

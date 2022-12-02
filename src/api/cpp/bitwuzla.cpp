@@ -609,6 +609,24 @@ Options::is_mode(Option option) const
   return d_options->is_enum(s_internal_options.at(option));
 }
 
+const char *
+Options::shrt(Option option) const
+{
+  return d_options->shrt(s_internal_options.at(option));
+}
+
+const char *
+Options::lng(Option option) const
+{
+  return d_options->lng(s_internal_options.at(option));
+}
+
+const char *
+Options::description(Option option) const
+{
+  return d_options->description(s_internal_options.at(option));
+}
+
 void
 Options::set(Option option, uint64_t value)
 {
@@ -673,12 +691,37 @@ Options::get_mode(Option option) const
   return d_options->get<std::string>(opt);
 }
 
-const OptionInfo &
-Options::get_info(Option option) const
+/* OptionInfo public -------------------------------------------------------- */
+
+OptionInfo::OptionInfo(const Options &options, Option option) : opt(option)
 {
-  BITWUZLA_CHECK_NOT_NULL(d_options);
-  // TODO
-  (void) option;
+  bzla::option::Option opt = s_internal_options.at(option);
+  shrt                     = options.d_options->shrt(opt);
+  lng                      = options.d_options->lng(opt);
+  description              = options.d_options->description(opt);
+
+  if (options.is_bool(option))
+  {
+    kind                        = Kind::BOOL;
+    std::get<Bool>(values).cur  = options.d_options->get<bool>(opt);
+    std::get<Bool>(values).dflt = options.d_options->dflt<bool>(opt);
+  }
+  else if (options.is_numeric(option))
+  {
+    kind                           = Kind::NUMERIC;
+    std::get<Numeric>(values).cur  = options.d_options->get<uint64_t>(opt);
+    std::get<Numeric>(values).dflt = options.d_options->dflt<uint64_t>(opt);
+    std::get<Numeric>(values).min  = options.d_options->min<uint64_t>(opt);
+    std::get<Numeric>(values).max  = options.d_options->max<uint64_t>(opt);
+  }
+  else
+  {
+    assert(options.is_mode(option));
+    kind                         = Kind::MODE;
+    std::get<Mode>(values).cur   = options.d_options->get<std::string>(opt);
+    std::get<Mode>(values).dflt  = options.d_options->dflt<std::string>(opt);
+    std::get<Mode>(values).modes = options.d_options->modes(opt);
+  }
 }
 
 /* Term public -------------------------------------------------------------- */
