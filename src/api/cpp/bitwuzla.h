@@ -1594,6 +1594,27 @@ void substitute_terms(std::vector<Term> &terms,
 
 namespace std {
 
+/**
+ * Get string representation of given kind.
+ * @param kind The kind.
+ * @return The string representation.
+ */
+std::string to_string(bitwuzla::Kind kind);
+
+/**
+ * Get string representation of given rounding mode.
+ * @param rm The roundingmode.
+ * @return The string representation.
+ */
+std::string to_string(bitwuzla::RoundingMode rm);
+
+/**
+ * Get string representation of given result.
+ * @param result The result.
+ * @return The string representation.
+ */
+std::string to_string(bitwuzla::Result result);
+
 template <>
 struct hash<bitwuzla::Sort>
 {

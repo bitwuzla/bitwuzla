@@ -45,6 +45,9 @@ extern "C" {
                  != Bitwuzla::term_map().end())        \
       << "invalid term id at index " << i;
 
+#define BITWUZLA_CHECK_RM(rm) \
+  BITWUZLA_CHECK((rm) < BITWUZLA_RM_MAX) << "invalid rounind mode";
+
 #define BITWUZLA_CHECK_KIND(kind) \
   BITWUZLA_CHECK((kind) < BITWUZLA_KIND_NUM_KINDS) << "invalid term kind";
 
@@ -194,9 +197,7 @@ bitwuzla_kind_to_string(BitwuzlaKind kind)
 {
   BITWUZLA_CHECK_KIND(kind);
   static thread_local std::string str;
-  std::stringstream ss;
-  ss << "BITWUZLA_KIND_" << static_cast<bitwuzla::Kind>(kind);
-  str = ss.str();
+  str = "BITWUZLA_KIND_" + std::to_string(static_cast<bitwuzla::Kind>(kind));
   return str.c_str();
 }
 
@@ -204,41 +205,27 @@ bitwuzla_kind_to_string(BitwuzlaKind kind)
 /* BitwuzlaRoundingMode                                                       */
 /* -------------------------------------------------------------------------- */
 
-#if 0
 const char *
 bitwuzla_rm_to_string(BitwuzlaRoundingMode rm)
 {
-  switch (rm)
-  {
-    case BITWUZLA_RM_RNA: return "RNA"; break;
-    case BITWUZLA_RM_RNE: return "RNE"; break;
-    case BITWUZLA_RM_RTN: return "RTN"; break;
-    case BITWUZLA_RM_RTP: return "RTP"; break;
-    default:
-      BZLA_ABORT(rm != BITWUZLA_RM_RTZ, "invalid rounding mode");
-      return "RTZ";
-  }
+  BITWUZLA_CHECK_RM(rm);
+  static thread_local std::string str;
+  str =
+      "BITWUZLA_RM_" + std::to_string(static_cast<bitwuzla::RoundingMode>(rm));
+  return str.c_str();
 }
-#endif
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaResult                                                             */
 /* -------------------------------------------------------------------------- */
 
-#if 0
 const char *
 bitwuzla_result_to_string(BitwuzlaResult result)
 {
-  switch (result)
-  {
-    case BITWUZLA_SAT: return "sat"; break;
-    case BITWUZLA_UNSAT: return "unsat"; break;
-    default:
-      BZLA_ABORT(result != BITWUZLA_UNKNOWN, "invalid result kind");
-      return "unknown";
-  }
+  static thread_local std::string str;
+  str = std::to_string(static_cast<bitwuzla::Result>(result));
+  return str.c_str();
 }
-#endif
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaOptions                                                            */
@@ -641,7 +628,7 @@ bitwuzla_mk_fp_value_from_rational(BitwuzlaSort sort,
 BitwuzlaTerm
 bitwuzla_mk_rm_value(BitwuzlaRoundingMode rm)
 {
-  BITWUZLA_CHECK(rm < BITWUZLA_RM_MAX) << "invalid rounding mode";
+  BITWUZLA_CHECK_RM(rm);
   return export_term(
       bitwuzla::mk_rm_value(static_cast<bitwuzla::RoundingMode>(rm)));
 }

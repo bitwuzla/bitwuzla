@@ -2044,6 +2044,30 @@ Sort::sort_vector_to_types(const std::vector<Sort> &sorts)
 
 namespace std {
 
+std::string
+to_string(bitwuzla::RoundingMode rm)
+{
+  std::stringstream ss;
+  ss << bitwuzla::s_internal_rms.at(rm);
+  return ss.str();
+}
+
+std::string
+to_string(bitwuzla::Kind kind)
+{
+  std::stringstream ss;
+  ss << bitwuzla::s_internal_kinds.at(kind);
+  return ss.str();
+}
+
+std::string
+to_string(bitwuzla::Result result)
+{
+  std::stringstream ss;
+  ss << bitwuzla::s_internal_results.at(result);
+  return ss.str();
+}
+
 size_t
 std::hash<bitwuzla::Sort>::operator()(const bitwuzla::Sort &sort) const
 {
