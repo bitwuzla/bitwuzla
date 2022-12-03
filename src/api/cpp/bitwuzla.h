@@ -90,7 +90,7 @@ class Options
   Option option(const char *lng) const;
 
   /**
-   * Set option.
+   * Set Boolean or numeric option.
    *
    * @param option The option.
    * @param val The option value.
@@ -99,17 +99,6 @@ class Options
    *   * `Option`
    */
   void set(Option option, uint64_t value);
-  /**
-   * Set option.
-   *
-   * @param option The option.
-   * @param val The option value.
-   *
-   * @see
-   *   * `Option`
-   */
-  void set(Option option, bool value);
-
   /**
    * Set option value for options with different modes.
    *
@@ -120,9 +109,19 @@ class Options
    *   * `Option`
    */
   void set(Option option, const std::string &mode);
+  /**
+   * Set option value for options with different modes.
+   *
+   * @param option The option.
+   * @param mode The option mode.
+   *
+   * @see
+   *   * `Option`
+   */
+  void set(Option option, const char *mode);
 
   /**
-   * Get the current value of a numeric option.
+   * Get the current value of a Boolean or numeric option.
    *
    * @param option The option.
    * @return The option value.
@@ -130,17 +129,7 @@ class Options
    * @see
    *   * `Option`
    */
-  uint64_t get_numeric(Option option) const;
-  /**
-   * Get the current value of a Boolean option.
-   *
-   * @param option The option.
-   * @return The option value.
-   *
-   * @see
-   *   * `Option`
-   */
-  bool get_bool(Option option) const;
+  uint64_t get(Option option) const;
   /**
    * Get the current value of an option with modes.
    *

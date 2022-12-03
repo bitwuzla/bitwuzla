@@ -333,14 +333,7 @@ bitwuzla_set_option(BitwuzlaOptions *options,
 {
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_OPTION(option);
-  if (options->d_options.is_bool(import_option(option)))
-  {
-    options->d_options.set(import_option(option), value ? true : false);
-  }
-  else
-  {
-    options->d_options.set(import_option(option), value);
-  }
+  options->d_options.set(import_option(option), value);
 }
 
 void
@@ -359,11 +352,7 @@ bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option)
 {
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_OPTION(option);
-  if (options->d_options.is_bool(import_option(option)))
-  {
-    return options->d_options.get_bool(import_option(option)) ? 1 : 0;
-  }
-  return options->d_options.get_numeric(import_option(option));
+  return options->d_options.get(import_option(option));
 }
 
 const char *

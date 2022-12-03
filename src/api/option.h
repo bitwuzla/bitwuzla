@@ -33,6 +33,24 @@ namespace bitwuzla {
  */
 enum ENUM(Option)
 {
+  // TODO: doc
+  EVALUE(BV_SOLVER),
+  /*! **Configure the SAT solver engine.**
+   *
+   * Values:
+   *  * **cadical** [**default**]:
+   *    [CaDiCaL](https://github.com/arminbiere/cadical)
+   *  * **cms**:
+   *    [CryptoMiniSat](https://github.com/msoos/cryptominisat)
+   *  * **gimsatul**:
+   *    [Gimsatul](https://github.com/arminbiere/gimsatul)
+   *  * **kissat**:
+   *    [Kissat](https://github.com/arminbiere/kissat)
+   *  * **lingeling**:
+   *    [Lingeling](https://github.com/arminbiere/lingeling)
+   */
+  EVALUE(SAT_SOLVER),
+
   /* --------------------------- General Options --------------------------- */
 
   /*! **Configure the solver engine.**
@@ -190,21 +208,7 @@ enum ENUM(Option)
    */
   EVALUE(PRODUCE_UNSAT_CORES),
 
-  /*! **Configure the SAT solver engine.**
-   *
-   * Values:
-   *  * **cadical** [**default**]:
-   *    [CaDiCaL](https://github.com/arminbiere/cadical)
-   *  * **cms**:
-   *    [CryptoMiniSat](https://github.com/msoos/cryptominisat)
-   *  * **gimsatul**:
-   *    [Gimsatul](https://github.com/arminbiere/gimsatul)
-   *  * **kissat**:
-   *    [Kissat](https://github.com/arminbiere/kissat)
-   *  * **lingeling**:
-   *    [Lingeling](https://github.com/arminbiere/lingeling)
-   */
-  EVALUE(SAT_ENGINE),
+  // EVALUE(SAT_ENGINE), // TODO: news: renamed
 
   /*! **Seed for random number generator.**
    *

@@ -29,6 +29,7 @@ namespace bitwuzla {
 
 /** Map api options to internal options. */
 const std::unordered_map<Option, bzla::option::Option> s_internal_options = {
+    {Option::BV_SOLVER, bzla::option::Option::BV_SOLVER},
     {Option::ENGINE, bzla::option::Option::NUM_OPTIONS},
     {Option::EXIT_CODES, bzla::option::Option::NUM_OPTIONS},
     {Option::INPUT_FORMAT, bzla::option::Option::NUM_OPTIONS},
@@ -40,7 +41,7 @@ const std::unordered_map<Option, bzla::option::Option> s_internal_options = {
     {Option::PRINT_DIMACS, bzla::option::Option::NUM_OPTIONS},
     {Option::PRODUCE_MODELS, bzla::option::Option::PRODUCE_MODELS},
     {Option::PRODUCE_UNSAT_CORES, bzla::option::Option::PRODUCE_UNSAT_CORES},
-    {Option::SAT_ENGINE, bzla::option::Option::NUM_OPTIONS},
+    {Option::SAT_SOLVER, bzla::option::Option::SAT_SOLVER},
     {Option::SEED, bzla::option::Option::SEED},
     {Option::VERBOSITY, bzla::option::Option::VERBOSITY},
     {Option::PP_ACKERMANN, bzla::option::Option::NUM_OPTIONS},
@@ -143,6 +144,7 @@ const std::unordered_map<Option, bzla::option::Option> s_internal_options = {
 
 /** Map internal options to api options. */
 const std::unordered_map<bzla::option::Option, Option> s_options = {
+    {bzla::option::Option::BV_SOLVER, Option::BV_SOLVER},
     //{bzla::option::Option::NUM_OPTIONS, Option::ENGINE},
     //{bzla::option::Option::NUM_OPTIONS, Option::EXIT_CODES},
     //{bzla::option::Option::NUM_OPTIONS, Option::INPUT_FORMAT},
@@ -154,7 +156,7 @@ const std::unordered_map<bzla::option::Option, Option> s_options = {
     //{bzla::option::Option::NUM_OPTIONS, Option::PRINT_DIMACS},
     {bzla::option::Option::PRODUCE_MODELS, Option::PRODUCE_MODELS},
     {bzla::option::Option::PRODUCE_UNSAT_CORES, Option::PRODUCE_UNSAT_CORES},
-    //{bzla::option::Option::NUM_OPTIONS, Option::SAT_ENGINE},
+    {bzla::option::Option::SAT_SOLVER, Option::SAT_SOLVER},
     {bzla::option::Option::SEED, Option::SEED},
     {bzla::option::Option::VERBOSITY, Option::VERBOSITY},
     //{bzla::option::Option::NUM_OPTIONS, Option::PP_ACKERMANN},
@@ -567,22 +569,50 @@ git_id()
 std::ostream &
 operator<<(std::ostream &out, Result result)
 {
-  out << s_internal_results.at(result);
-  return out;
+  try
+  {
+    out << s_internal_results.at(result);
+    return out;
+  }
+  catch (...)
+  {
+    throw BitwuzlaException("invalid result");
+  }
 }
 
 std::ostream &
 operator<<(std::ostream &out, Kind kind)
 {
-  out << s_internal_kinds.at(kind);
-  return out;
+  try
+  {
+    if (kind == Kind::IFF)
+    {
+      out << "IFF";
+    }
+    else
+    {
+      out << s_internal_kinds.at(kind);
+    }
+    return out;
+  }
+  catch (...)
+  {
+    throw BitwuzlaException("invalid term kind");
+  }
 }
 
 std::ostream &
 operator<<(std::ostream &out, RoundingMode rm)
 {
-  out << s_internal_rms.at(rm);
-  return out;
+  try
+  {
+    out << s_internal_rms.at(rm);
+    return out;
+  }
+  catch (...)
+  {
+    throw BitwuzlaException("invalid rounding mode");
+  }
 }
 
 /* Options public ----------------------------------------------------------- */
@@ -644,23 +674,22 @@ Options::set(Option option, uint64_t value)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_numeric(opt)) << "expected numeric option";
-  BITWUZLA_CHECK(value >= d_options->min<uint64_t>(opt))
-      << "invalid option value, expected value >= "
-      << d_options->min<uint64_t>(opt);
-  BITWUZLA_CHECK(value <= d_options->max<uint64_t>(opt))
-      << "invalid option value, expected value <= "
-      << d_options->max<uint64_t>(opt);
-  d_options->set<uint64_t>(opt, value);
-}
-
-void
-Options::set(Option option, bool value)
-{
-  BITWUZLA_CHECK_NOT_NULL(d_options);
-  bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_bool(opt)) << "expected Boolean option";
-  d_options->set<bool>(opt, value);
+  if (d_options->is_bool(opt))
+  {
+    d_options->set<bool>(opt, value != 0);
+  }
+  else
+  {
+    BITWUZLA_CHECK(d_options->is_numeric(opt))
+        << "expected Boolean or numeric option";
+    BITWUZLA_CHECK(value >= d_options->min<uint64_t>(opt))
+        << "invalid option value, expected value >= "
+        << d_options->min<uint64_t>(opt);
+    BITWUZLA_CHECK(value <= d_options->max<uint64_t>(opt))
+        << "invalid option value, expected value <= "
+        << d_options->max<uint64_t>(opt);
+    d_options->set<uint64_t>(opt, value);
+  }
 }
 
 void
@@ -675,22 +704,30 @@ Options::set(Option option, const std::string &mode)
   d_options->set<std::string>(s_internal_options.at(option), mode);
 }
 
-uint64_t
-Options::get_numeric(Option option) const
+void
+Options::set(Option option, const char *mode)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_numeric(opt)) << "expected numeric option";
-  return d_options->get<uint64_t>(opt);
+  BITWUZLA_CHECK(d_options->is_enum(opt))
+      << "expected option with option modes";
+  BITWUZLA_CHECK(d_options->is_valid_enum(opt, mode))
+      << "invalid mode for option";
+  d_options->set<std::string>(s_internal_options.at(option), mode);
 }
 
-bool
-Options::get_bool(Option option) const
+uint64_t
+Options::get(Option option) const
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_bool(opt)) << "expected Boolean option";
-  return d_options->get<bool>(opt);
+  if (d_options->is_bool(opt))
+  {
+    return d_options->get<bool>(opt);
+  }
+  BITWUZLA_CHECK(d_options->is_numeric(opt))
+      << "expected Boolean or numeric option";
+  return d_options->get<uint64_t>(opt);
 }
 
 const std::string &
@@ -714,25 +751,25 @@ OptionInfo::OptionInfo(const Options &options, Option option) : opt(option)
 
   if (options.is_bool(option))
   {
-    kind                        = Kind::BOOL;
-    std::get<Bool>(values).cur  = options.d_options->get<bool>(opt);
-    std::get<Bool>(values).dflt = options.d_options->dflt<bool>(opt);
+    kind   = Kind::BOOL;
+    values = Bool{options.d_options->get<bool>(opt),
+                  options.d_options->dflt<bool>(opt)};
   }
   else if (options.is_numeric(option))
   {
-    kind                           = Kind::NUMERIC;
-    std::get<Numeric>(values).cur  = options.d_options->get<uint64_t>(opt);
-    std::get<Numeric>(values).dflt = options.d_options->dflt<uint64_t>(opt);
-    std::get<Numeric>(values).min  = options.d_options->min<uint64_t>(opt);
-    std::get<Numeric>(values).max  = options.d_options->max<uint64_t>(opt);
+    kind   = Kind::NUMERIC;
+    values = Numeric{options.d_options->get<uint64_t>(opt),
+                     options.d_options->dflt<uint64_t>(opt),
+                     options.d_options->min<uint64_t>(opt),
+                     options.d_options->max<uint64_t>(opt)};
   }
   else
   {
     assert(options.is_mode(option));
-    kind                         = Kind::MODE;
-    std::get<Mode>(values).cur   = options.d_options->get<std::string>(opt);
-    std::get<Mode>(values).dflt  = options.d_options->dflt<std::string>(opt);
-    std::get<Mode>(values).modes = options.d_options->modes(opt);
+    kind   = Kind::MODE;
+    values = Mode{options.d_options->get<std::string>(opt),
+                  options.d_options->dflt<std::string>(opt),
+                  options.d_options->modes(opt)};
   }
 }
 
@@ -2047,25 +2084,53 @@ namespace std {
 std::string
 to_string(bitwuzla::RoundingMode rm)
 {
-  std::stringstream ss;
-  ss << bitwuzla::s_internal_rms.at(rm);
-  return ss.str();
+  try
+  {
+    std::stringstream ss;
+    ss << bitwuzla::s_internal_rms.at(rm);
+    return ss.str();
+  }
+  catch (...)
+  {
+    throw bitwuzla::BitwuzlaException("invalid rounding mode");
+  }
 }
 
 std::string
 to_string(bitwuzla::Kind kind)
 {
-  std::stringstream ss;
-  ss << bitwuzla::s_internal_kinds.at(kind);
-  return ss.str();
+  try
+  {
+    std::stringstream ss;
+    if (kind == bitwuzla::Kind::IFF)
+    {
+      ss << "IFF";
+    }
+    else
+    {
+      ss << bitwuzla::s_internal_kinds.at(kind);
+    }
+    return ss.str();
+  }
+  catch (...)
+  {
+    throw bitwuzla::BitwuzlaException("invalid term kind");
+  }
 }
 
 std::string
 to_string(bitwuzla::Result result)
 {
-  std::stringstream ss;
-  ss << bitwuzla::s_internal_results.at(result);
-  return ss.str();
+  try
+  {
+    std::stringstream ss;
+    ss << bitwuzla::s_internal_results.at(result);
+    return ss.str();
+  }
+  catch (...)
+  {
+    throw bitwuzla::BitwuzlaException("invalid result");
+  }
 }
 
 size_t

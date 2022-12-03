@@ -101,8 +101,10 @@ enum ENUM(RoundingMode)
    * SMT-LIB: \c RTZ \c roundTowardZero
    */
   EVALUE(RTZ) = 4,
+#ifdef BITWUZLA_API_USE_C_ENUMS
 #ifndef DOXYGEN_SKIP
   EVALUE(MAX) = 5,
+#endif
 #endif
 };
 
@@ -530,8 +532,10 @@ enum ENUM(Kind)
    *
    * SMT-LIB: \c fp.to_ubv (indexed) */
   EVALUE(FP_TO_UBV),
+#ifdef BITWUZLA_API_USE_C_ENUMS
 #ifndef DOXYGEN_SKIP
   EVALUE(NUM_KINDS),
+#endif
 #endif
 };
 

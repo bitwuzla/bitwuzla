@@ -10,7 +10,7 @@
 
 #include "test.h"
 
-class TestApi : public TestBitwuzla
+class TestCApi : public TestBitwuzla
 {
  protected:
   void SetUp() override
@@ -244,7 +244,7 @@ class TestApi : public TestBitwuzla
 /* BitwuzlaKind                                                               */
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestApi, kind_to_string)
+TEST_F(TestCApi, kind_to_string)
 {
   ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_CONST),
             std::string("BITWUZLA_KIND_CONST"));
@@ -452,7 +452,7 @@ TEST_F(TestApi, kind_to_string)
 /* BitwuzlaRoundingMode                                                       */
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestApi, rm_to_string)
+TEST_F(TestCApi, rm_to_string)
 {
   ASSERT_EQ(bitwuzla_rm_to_string(BITWUZLA_RM_RNA), std::string("RNA"));
   ASSERT_EQ(bitwuzla_rm_to_string(BITWUZLA_RM_RNE), std::string("RNE"));
@@ -467,7 +467,7 @@ TEST_F(TestApi, rm_to_string)
 /* BitwuzlaResult                                                             */
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestApi, result_to_string)
+TEST_F(TestCApi, result_to_string)
 {
   ASSERT_EQ(bitwuzla_result_to_string(BITWUZLA_SAT), std::string("sat"));
   ASSERT_EQ(bitwuzla_result_to_string(BITWUZLA_UNSAT), std::string("unsat"));
@@ -481,7 +481,7 @@ TEST_F(TestApi, result_to_string)
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestApi, set_option)
+TEST_F(TestCApi, set_option)
 {
   GTEST_SKIP();  // Currently not working with Node migration in API
   Bitwuzla *bzla_inc   = bitwuzla_new();
@@ -550,7 +550,7 @@ TEST_F(TestApi, set_option)
   bitwuzla_delete(bzla_ucopt);
 }
 
-TEST_F(TestApi, set_option_str)
+TEST_F(TestCApi, set_option_str)
 {
   GTEST_SKIP();  // Currently not working with Node migration in API
   Bitwuzla *bzla = bitwuzla_new();
@@ -565,7 +565,7 @@ TEST_F(TestApi, set_option_str)
   bitwuzla_delete(bzla);
 }
 
-TEST_F(TestApi, get_option_info)
+TEST_F(TestCApi, get_option_info)
 {
   GTEST_SKIP();  // Currently not working with Node migration in API
   Bitwuzla *bzla = bitwuzla_new();
@@ -589,7 +589,7 @@ TEST_F(TestApi, get_option_info)
   bitwuzla_delete(bzla);
 }
 
-TEST_F(TestApi, mk_array_sort)
+TEST_F(TestCApi, mk_array_sort)
 {
   ASSERT_DEATH(bitwuzla_mk_array_sort(nullptr, d_bv_sort1, d_bv_sort8),
                d_error_not_null);
@@ -598,12 +598,12 @@ TEST_F(TestApi, mk_array_sort)
   ASSERT_DEATH(bitwuzla_mk_array_sort(d_bzla, d_bv_sort1, nullptr),
                d_error_not_null);
 
-  //ASSERT_DEATH(
-  //    bitwuzla_mk_array_sort(d_other_bzla, d_other_bv_sort8, d_bv_sort8),
-  //    d_error_solver);
-  //ASSERT_DEATH(
-  //    bitwuzla_mk_array_sort(d_other_bzla, d_bv_sort8, d_other_bv_sort8),
-  //    d_error_solver);
+  // ASSERT_DEATH(
+  //     bitwuzla_mk_array_sort(d_other_bzla, d_other_bv_sort8, d_bv_sort8),
+  //     d_error_solver);
+  // ASSERT_DEATH(
+  //     bitwuzla_mk_array_sort(d_other_bzla, d_bv_sort8, d_other_bv_sort8),
+  //     d_error_solver);
 
   GTEST_SKIP();  // Currently not working with Node migration in API
   ASSERT_DEATH(bitwuzla_mk_array_sort(d_bzla, d_arr_sort_bv, d_bv_sort8),
@@ -616,18 +616,18 @@ TEST_F(TestApi, mk_array_sort)
                d_error_unexp_fun_sort);
 }
 
-TEST_F(TestApi, mk_bool_sort)
+TEST_F(TestCApi, mk_bool_sort)
 {
   ASSERT_DEATH(bitwuzla_mk_bool_sort(nullptr), d_error_not_null);
 }
 
-TEST_F(TestApi, mk_bv_sort)
+TEST_F(TestCApi, mk_bv_sort)
 {
   ASSERT_DEATH(bitwuzla_mk_bv_sort(nullptr, 4), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_sort(d_bzla, 0), d_error_zero);
 }
 
-TEST_F(TestApi, mk_fp_sort)
+TEST_F(TestCApi, mk_fp_sort)
 {
   ASSERT_DEATH(bitwuzla_mk_fp_sort(nullptr, 5, 8), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_sort(d_bzla, 0, 8),
@@ -640,7 +640,7 @@ TEST_F(TestApi, mk_fp_sort)
                "argument 'sig_size' must be > 1");
 }
 
-TEST_F(TestApi, mk_fun_sort)
+TEST_F(TestCApi, mk_fun_sort)
 {
   ASSERT_DEATH(bitwuzla_mk_fun_sort(nullptr,
                                     d_fun_domain_sort.size(),
@@ -656,126 +656,130 @@ TEST_F(TestApi, mk_fun_sort)
       bitwuzla_mk_fun_sort(d_bzla, empty.size(), empty.data(), d_bv_sort8),
       d_error_zero);
 
-//  ASSERT_DEATH(bitwuzla_mk_fun_sort(d_bzla,
-//                                    d_other_fun_domain_sort.size(),
-//                                    d_other_fun_domain_sort.data(),
-//                                    d_bv_sort8),
-//               d_error_solver);
-//  ASSERT_DEATH(bitwuzla_mk_fun_sort(d_bzla,
-//                                    d_fun_domain_sort.size(),
-//                                    d_fun_domain_sort.data(),
-//                                    d_other_bv_sort8),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_fun_sort(d_bzla,
+  //                                    d_other_fun_domain_sort.size(),
+  //                                    d_other_fun_domain_sort.data(),
+  //                                    d_bv_sort8),
+  //               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_fun_sort(d_bzla,
+  //                                    d_fun_domain_sort.size(),
+  //                                    d_fun_domain_sort.data(),
+  //                                    d_other_bv_sort8),
+  //               d_error_solver);
 }
 
-TEST_F(TestApi, mk_rm_sort)
+TEST_F(TestCApi, mk_rm_sort)
 {
   ASSERT_DEATH(bitwuzla_mk_rm_sort(nullptr), d_error_not_null);
 }
 
-TEST_F(TestApi, mk_true)
+TEST_F(TestCApi, mk_true)
 {
   ASSERT_DEATH(bitwuzla_mk_true(nullptr), d_error_not_null);
 }
 
-TEST_F(TestApi, mk_false)
+TEST_F(TestCApi, mk_false)
 {
   ASSERT_DEATH(bitwuzla_mk_false(nullptr), d_error_not_null);
 }
 
-TEST_F(TestApi, mk_bv_zero)
+TEST_F(TestCApi, mk_bv_zero)
 {
   ASSERT_DEATH(bitwuzla_mk_bv_zero(nullptr, d_bv_sort8), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_zero(d_bzla, nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_zero(d_bzla, d_fp_sort16), d_error_exp_bv_sort);
-//  ASSERT_DEATH(bitwuzla_mk_bv_zero(d_bzla, d_other_bv_sort8), d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_bv_zero(d_bzla, d_other_bv_sort8),
+  //  d_error_solver);
 }
 
-TEST_F(TestApi, mk_bv_one)
+TEST_F(TestCApi, mk_bv_one)
 {
   ASSERT_DEATH(bitwuzla_mk_bv_one(nullptr, d_bv_sort8), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_one(d_bzla, nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_one(d_bzla, d_fp_sort16), d_error_exp_bv_sort);
-//  ASSERT_DEATH(bitwuzla_mk_bv_one(d_bzla, d_other_bv_sort8), d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_bv_one(d_bzla, d_other_bv_sort8),
+  //  d_error_solver);
 }
 
-TEST_F(TestApi, mk_bv_ones)
+TEST_F(TestCApi, mk_bv_ones)
 {
   ASSERT_DEATH(bitwuzla_mk_bv_ones(nullptr, d_bv_sort8), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_ones(d_bzla, nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_ones(d_bzla, d_fp_sort16), d_error_exp_bv_sort);
-//  ASSERT_DEATH(bitwuzla_mk_bv_ones(d_bzla, d_other_bv_sort8), d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_bv_ones(d_bzla, d_other_bv_sort8),
+  //  d_error_solver);
 }
 
-TEST_F(TestApi, mk_bv_min_signed)
+TEST_F(TestCApi, mk_bv_min_signed)
 {
   ASSERT_DEATH(bitwuzla_mk_bv_min_signed(nullptr, d_bv_sort8),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_min_signed(d_bzla, nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_min_signed(d_bzla, d_fp_sort16),
                d_error_exp_bv_sort);
-//  ASSERT_DEATH(bitwuzla_mk_bv_min_signed(d_bzla, d_other_bv_sort8),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_bv_min_signed(d_bzla, d_other_bv_sort8),
+  //               d_error_solver);
 }
 
-TEST_F(TestApi, mk_bv_max_signed)
+TEST_F(TestCApi, mk_bv_max_signed)
 {
   ASSERT_DEATH(bitwuzla_mk_bv_max_signed(nullptr, d_fp_sort16),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_max_signed(d_bzla, nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_max_signed(d_bzla, d_fp_sort16),
                d_error_exp_bv_sort);
-//  ASSERT_DEATH(bitwuzla_mk_bv_max_signed(d_bzla, d_other_bv_sort8),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_bv_max_signed(d_bzla, d_other_bv_sort8),
+  //               d_error_solver);
 }
 
-TEST_F(TestApi, mk_fp_pos_zero)
+TEST_F(TestCApi, mk_fp_pos_zero)
 {
   ASSERT_DEATH(bitwuzla_mk_fp_pos_zero(nullptr, d_fp_sort16), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_pos_zero(d_bzla, nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_pos_zero(d_bzla, d_bv_sort8),
                d_error_exp_fp_sort);
-//  ASSERT_DEATH(bitwuzla_mk_fp_pos_zero(d_bzla, d_other_fp_sort16),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_fp_pos_zero(d_bzla, d_other_fp_sort16),
+  //               d_error_solver);
 }
 
-TEST_F(TestApi, mk_fp_neg_zero)
+TEST_F(TestCApi, mk_fp_neg_zero)
 {
   ASSERT_DEATH(bitwuzla_mk_fp_neg_zero(nullptr, d_fp_sort16), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_neg_zero(d_bzla, nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_neg_zero(d_bzla, d_bv_sort8),
                d_error_exp_fp_sort);
-//  ASSERT_DEATH(bitwuzla_mk_fp_neg_zero(d_bzla, d_other_fp_sort16),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_fp_neg_zero(d_bzla, d_other_fp_sort16),
+  //               d_error_solver);
 }
 
-TEST_F(TestApi, mk_fp_pos_inf)
+TEST_F(TestCApi, mk_fp_pos_inf)
 {
   ASSERT_DEATH(bitwuzla_mk_fp_pos_inf(nullptr, d_fp_sort16), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_pos_inf(d_bzla, nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_pos_inf(d_bzla, d_bv_sort8), d_error_exp_fp_sort);
-//  ASSERT_DEATH(bitwuzla_mk_fp_pos_inf(d_bzla, d_other_fp_sort16),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_fp_pos_inf(d_bzla, d_other_fp_sort16),
+  //               d_error_solver);
 }
 
-TEST_F(TestApi, mk_fp_neg_inf)
+TEST_F(TestCApi, mk_fp_neg_inf)
 {
   ASSERT_DEATH(bitwuzla_mk_fp_neg_inf(nullptr, d_fp_sort16), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_neg_inf(d_bzla, nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_neg_inf(d_bzla, d_bv_sort8), d_error_exp_fp_sort);
-//  ASSERT_DEATH(bitwuzla_mk_fp_neg_inf(d_bzla, d_other_fp_sort16),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_fp_neg_inf(d_bzla, d_other_fp_sort16),
+  //               d_error_solver);
 }
 
-TEST_F(TestApi, mk_fp_nan)
+TEST_F(TestCApi, mk_fp_nan)
 {
   ASSERT_DEATH(bitwuzla_mk_fp_nan(nullptr, d_fp_sort16), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_nan(d_bzla, nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_fp_nan(d_bzla, d_bv_sort8), d_error_exp_fp_sort);
-//  ASSERT_DEATH(bitwuzla_mk_fp_nan(d_bzla, d_other_fp_sort16), d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_fp_nan(d_bzla, d_other_fp_sort16),
+  //  d_error_solver);
 }
 
-TEST_F(TestApi, mk_bv_value)
+TEST_F(TestCApi, mk_bv_value)
 {
   ASSERT_NO_FATAL_FAILURE(
       bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "127", BITWUZLA_BV_BASE_DEC));
@@ -822,9 +826,9 @@ TEST_F(TestApi, mk_bv_value)
   ASSERT_DEATH(
       bitwuzla_mk_bv_value(d_bzla, d_fp_sort16, "010", BITWUZLA_BV_BASE_BIN),
       d_error_exp_bv_sort);
-//  ASSERT_DEATH(bitwuzla_mk_bv_value(
-//                   d_bzla, d_other_bv_sort8, "010", BITWUZLA_BV_BASE_BIN),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_bv_value(
+  //                   d_bzla, d_other_bv_sort8, "010", BITWUZLA_BV_BASE_BIN),
+  //               d_error_solver);
 
   ASSERT_DEATH(bitwuzla_mk_bv_value(
                    d_bzla, d_bv_sort8, "11111111010", BITWUZLA_BV_BASE_BIN),
@@ -847,7 +851,7 @@ TEST_F(TestApi, mk_bv_value)
                "invalid hex string");
 }
 
-TEST_F(TestApi, mk_bv_value_uint64)
+TEST_F(TestCApi, mk_bv_value_uint64)
 {
   ASSERT_DEATH(bitwuzla_mk_bv_value_uint64(nullptr, d_bv_sort8, 23),
                d_error_not_null);
@@ -855,11 +859,11 @@ TEST_F(TestApi, mk_bv_value_uint64)
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_value_uint64(d_bzla, d_fp_sort16, 23),
                d_error_exp_bv_sort);
-//  ASSERT_DEATH(bitwuzla_mk_bv_value_uint64(d_bzla, d_other_bv_sort8, 23),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_bv_value_uint64(d_bzla, d_other_bv_sort8, 23),
+  //               d_error_solver);
 }
 
-TEST_F(TestApi, mk_fp_value)
+TEST_F(TestCApi, mk_fp_value)
 {
   ASSERT_DEATH(bitwuzla_mk_fp_value(nullptr, d_bv_one1, d_bv_zero8, d_bv_zero8),
                d_error_not_null);
@@ -870,15 +874,15 @@ TEST_F(TestApi, mk_fp_value)
   ASSERT_DEATH(bitwuzla_mk_fp_value(d_bzla, d_bv_one1, d_bv_zero8, nullptr),
                d_error_not_null);
 
-//  ASSERT_DEATH(
-//      bitwuzla_mk_fp_value(d_bzla, d_other_bv_one1, d_bv_zero8, d_bv_zero8),
-//      d_error_solver);
-//  ASSERT_DEATH(
-//      bitwuzla_mk_fp_value(d_bzla, d_bv_one1, d_other_bv_zero8, d_bv_zero8),
-//      d_error_solver);
-//  ASSERT_DEATH(
-//      bitwuzla_mk_fp_value(d_bzla, d_bv_one1, d_bv_zero8, d_other_bv_zero8),
-//      d_error_solver);
+  //  ASSERT_DEATH(
+  //      bitwuzla_mk_fp_value(d_bzla, d_other_bv_one1, d_bv_zero8, d_bv_zero8),
+  //      d_error_solver);
+  //  ASSERT_DEATH(
+  //      bitwuzla_mk_fp_value(d_bzla, d_bv_one1, d_other_bv_zero8, d_bv_zero8),
+  //      d_error_solver);
+  //  ASSERT_DEATH(
+  //      bitwuzla_mk_fp_value(d_bzla, d_bv_one1, d_bv_zero8, d_other_bv_zero8),
+  //      d_error_solver);
 
   ASSERT_DEATH(
       bitwuzla_mk_fp_value(d_bzla, d_bv_zero8, d_bv_zero8, d_bv_zero8),
@@ -902,14 +906,14 @@ TEST_F(TestApi, mk_fp_value)
                d_error_exp_bv_value);
 }
 
-TEST_F(TestApi, mk_rm_value)
+TEST_F(TestCApi, mk_rm_value)
 {
   ASSERT_DEATH(bitwuzla_mk_rm_value(nullptr, BITWUZLA_RM_RNA),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_MAX), d_error_rm);
 }
 
-TEST_F(TestApi, mk_term_check_null)
+TEST_F(TestCApi, mk_term_check_null)
 {
   std::vector<const BitwuzlaTerm *> bv_args2 = {d_bv_zero8, d_bv_const8};
 
@@ -963,7 +967,7 @@ TEST_F(TestApi, mk_term_check_null)
       d_error_not_null);
 }
 
-TEST_F(TestApi, mk_term_check_cnt)
+TEST_F(TestCApi, mk_term_check_cnt)
 {
   const char *error_arg_cnt = "invalid number of arguments";
 
@@ -1430,7 +1434,7 @@ TEST_F(TestApi, mk_term_check_cnt)
                error_arg_cnt);
 }
 
-TEST_F(TestApi, mk_term_check_args)
+TEST_F(TestCApi, mk_term_check_args)
 {
   const char *error_inv_sort  = "unexpected sort";
   const char *error_mis_sort  = "mismatching sort";
@@ -2577,19 +2581,19 @@ TEST_F(TestApi, mk_term_check_args)
                error_inv_sort);
 }
 
-TEST_F(TestApi, mk_const)
+TEST_F(TestCApi, mk_const)
 {
   ASSERT_DEATH(bitwuzla_mk_const(nullptr, d_bv_sort8, "asdf"),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_const(d_bzla, nullptr, "asdf"), d_error_not_null);
-//  ASSERT_DEATH(bitwuzla_mk_const(d_bzla, d_other_bv_sort8, "asdf"),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_const(d_bzla, d_other_bv_sort8, "asdf"),
+  //               d_error_solver);
 
   ASSERT_NO_FATAL_FAILURE(bitwuzla_mk_const(d_bzla, d_bv_sort8, nullptr));
   ASSERT_NO_FATAL_FAILURE(bitwuzla_mk_const(d_bzla, d_bv_sort8, ""));
 }
 
-TEST_F(TestApi, mk_const_array)
+TEST_F(TestCApi, mk_const_array)
 {
   ASSERT_DEATH(bitwuzla_mk_const_array(nullptr, d_arr_sort_bv, d_bv_one1),
                d_error_not_null);
@@ -2598,15 +2602,18 @@ TEST_F(TestApi, mk_const_array)
   ASSERT_DEATH(bitwuzla_mk_const_array(d_bzla, d_arr_sort_bv, nullptr),
                d_error_not_null);
 
-//  ASSERT_DEATH(bitwuzla_mk_const_array(d_bzla, d_arr_sort_bv, d_other_bv_one1),
-//               d_error_solver);
-//  ASSERT_DEATH(bitwuzla_mk_const_array(d_bzla, d_other_arr_sort_bv, d_bv_one1),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_const_array(d_bzla, d_arr_sort_bv,
+  //  d_other_bv_one1),
+  //               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_const_array(d_bzla, d_other_arr_sort_bv,
+  //  d_bv_one1),
+  //               d_error_solver);
 
   ASSERT_DEATH(bitwuzla_mk_const_array(d_bzla, d_bv_sort8, d_bv_one1),
                d_error_exp_arr_sort);
-//  ASSERT_DEATH(bitwuzla_mk_const_array(d_bzla, d_other_arr_sort_bv, d_bv_one1),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_const_array(d_bzla, d_other_arr_sort_bv,
+  //  d_bv_one1),
+  //               d_error_solver);
   ASSERT_DEATH(bitwuzla_mk_const_array(d_bzla, d_arr_sort_bv, d_array),
                d_error_unexp_arr_term);
   ASSERT_DEATH(bitwuzla_mk_const_array(d_bzla, d_arr_sort_bvfp, d_fp_pzero32),
@@ -2616,18 +2623,18 @@ TEST_F(TestApi, mk_const_array)
       bitwuzla_mk_const_array(d_bzla, d_arr_sort_bvfp, d_fp_const16));
 }
 
-TEST_F(TestApi, mk_var)
+TEST_F(TestCApi, mk_var)
 {
   ASSERT_DEATH(bitwuzla_mk_var(nullptr, d_bv_sort8, "asdf"), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_var(d_bzla, nullptr, "asdf"), d_error_not_null);
-//  ASSERT_DEATH(bitwuzla_mk_var(d_bzla, d_other_bv_sort8, "asdf"),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_mk_var(d_bzla, d_other_bv_sort8, "asdf"),
+  //               d_error_solver);
 
   ASSERT_NO_FATAL_FAILURE(bitwuzla_mk_var(d_bzla, d_bv_sort8, nullptr));
   ASSERT_NO_FATAL_FAILURE(bitwuzla_mk_var(d_bzla, d_bv_sort8, ""));
 }
 
-TEST_F(TestApi, push)
+TEST_F(TestCApi, push)
 {
   ASSERT_DEATH(bitwuzla_push(d_bzla, 2), d_error_incremental);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
@@ -2636,7 +2643,7 @@ TEST_F(TestApi, push)
   ASSERT_NO_FATAL_FAILURE(bitwuzla_push(d_bzla, 0));
 }
 
-TEST_F(TestApi, pop)
+TEST_F(TestCApi, pop)
 {
   ASSERT_DEATH(bitwuzla_pop(d_bzla, 2), d_error_incremental);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
@@ -2645,11 +2652,11 @@ TEST_F(TestApi, pop)
   ASSERT_NO_FATAL_FAILURE(bitwuzla_pop(d_bzla, 0));
 }
 
-TEST_F(TestApi, assert)
+TEST_F(TestCApi, assert)
 {
   ASSERT_DEATH(bitwuzla_assert(nullptr, d_true), d_error_not_null);
   ASSERT_DEATH(bitwuzla_assert(d_bzla, nullptr), d_error_not_null);
-//  ASSERT_DEATH(bitwuzla_assert(d_bzla, d_other_true), d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_assert(d_bzla, d_other_true), d_error_solver);
   ASSERT_DEATH(bitwuzla_assert(d_bzla, d_bv_const8), d_error_exp_bool_term);
 
   ASSERT_DEATH(bitwuzla_assert(d_bzla, d_bool_var), d_error_unexp_param_term);
@@ -2662,14 +2669,14 @@ TEST_F(TestApi, assert)
   ASSERT_NO_FATAL_FAILURE(bitwuzla_assert(d_bzla, d_bv_one1));
 }
 
-TEST_F(TestApi, assume)
+TEST_F(TestCApi, assume)
 {
   ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bv_const1), d_error_incremental);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
 
   ASSERT_DEATH(bitwuzla_assume(nullptr, d_true), d_error_not_null);
   ASSERT_DEATH(bitwuzla_assume(d_bzla, nullptr), d_error_not_null);
-//  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_other_true), d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_other_true), d_error_solver);
   ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bv_const8), d_error_exp_bool_term);
 
   ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bool_var), d_error_unexp_param_term);
@@ -2681,7 +2688,7 @@ TEST_F(TestApi, assume)
   ASSERT_NO_FATAL_FAILURE(bitwuzla_assume(d_bzla, d_bv_one1));
 }
 
-TEST_F(TestApi, is_unsat_assumption)
+TEST_F(TestCApi, is_unsat_assumption)
 {
   ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1),
                d_error_incremental);
@@ -2700,8 +2707,8 @@ TEST_F(TestApi, is_unsat_assumption)
   bitwuzla_assume(d_bzla,
                   bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_BV_NOT, d_bv_const1));
   bitwuzla_check_sat(d_bzla);
-//  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_other_true),
-//               d_error_solver);
+  //  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_other_true),
+  //               d_error_solver);
   ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const8),
                d_error_exp_bool_term);
   ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_true),
@@ -2717,7 +2724,7 @@ TEST_F(TestApi, is_unsat_assumption)
   ASSERT_NO_FATAL_FAILURE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
 }
 
-TEST_F(TestApi, get_unsat_assumptions)
+TEST_F(TestCApi, get_unsat_assumptions)
 {
   size_t size;
   ASSERT_DEATH(bitwuzla_get_unsat_assumptions(d_bzla, &size),
@@ -2758,7 +2765,7 @@ TEST_F(TestApi, get_unsat_assumptions)
   ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
 }
 
-TEST_F(TestApi, get_unsat_core)
+TEST_F(TestCApi, get_unsat_core)
 {
   size_t size;
   ASSERT_DEATH(bitwuzla_get_unsat_core(d_bzla, &size), d_error_unsat_cores);
@@ -2795,7 +2802,7 @@ TEST_F(TestApi, get_unsat_core)
   ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
 }
 
-TEST_F(TestApi, fixate_assumptions)
+TEST_F(TestCApi, fixate_assumptions)
 {
   ASSERT_DEATH(bitwuzla_fixate_assumptions(d_bzla), d_error_incremental);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
@@ -2817,7 +2824,7 @@ TEST_F(TestApi, fixate_assumptions)
   ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
 }
 
-TEST_F(TestApi, reset_assumptions)
+TEST_F(TestCApi, reset_assumptions)
 {
   ASSERT_DEATH(bitwuzla_reset_assumptions(d_bzla), d_error_incremental);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
@@ -2838,7 +2845,7 @@ TEST_F(TestApi, reset_assumptions)
   ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
 }
 
-TEST_F(TestApi, simplify)
+TEST_F(TestCApi, simplify)
 {
   ASSERT_DEATH(bitwuzla_simplify(nullptr), d_error_not_null);
   bitwuzla_assert(d_bzla, d_bv_const1);
@@ -2846,7 +2853,7 @@ TEST_F(TestApi, simplify)
   ASSERT_TRUE(bitwuzla_simplify(d_bzla) == BITWUZLA_SAT);
 }
 
-TEST_F(TestApi, check_sat)
+TEST_F(TestCApi, check_sat)
 {
   ASSERT_DEATH(bitwuzla_check_sat(nullptr), d_error_not_null);
   ASSERT_NO_FATAL_FAILURE(bitwuzla_check_sat(d_bzla));
@@ -2858,7 +2865,7 @@ TEST_F(TestApi, check_sat)
   bitwuzla_delete(bzla);
 }
 
-TEST_F(TestApi, get_value)
+TEST_F(TestCApi, get_value)
 {
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
   ASSERT_DEATH(bitwuzla_get_value(d_bzla, d_bv_const8), d_error_produce_models);
@@ -2882,7 +2889,7 @@ TEST_F(TestApi, get_value)
                "'get-value' is currently not supported with quantifiers");
 }
 
-TEST_F(TestApi, get_bv_value)
+TEST_F(TestCApi, get_bv_value)
 {
   ASSERT_DEATH(bitwuzla_get_bv_value(d_bzla, d_bv_one1),
                d_error_produce_models);
@@ -2894,7 +2901,7 @@ TEST_F(TestApi, get_bv_value)
   ASSERT_TRUE(!strcmp("1", bitwuzla_get_bv_value(d_bzla, d_bv_one1)));
 }
 
-TEST_F(TestApi, get_rm_value)
+TEST_F(TestCApi, get_rm_value)
 {
   ASSERT_DEATH(bitwuzla_get_rm_value(d_bzla, d_bv_one1),
                d_error_produce_models);
@@ -2912,7 +2919,7 @@ TEST_F(TestApi, get_rm_value)
   ASSERT_TRUE(!strcmp("RTZ", bitwuzla_get_rm_value(d_bzla, d_rm_rtz)));
 }
 
-TEST_F(TestApi, get_array_value)
+TEST_F(TestCApi, get_array_value)
 {
   GTEST_SKIP();  // Currently not working with Node migration in API
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
@@ -2971,7 +2978,7 @@ TEST_F(TestApi, get_array_value)
   ASSERT_EQ(default_value, w);
 }
 
-TEST_F(TestApi, get_fun_value)
+TEST_F(TestCApi, get_fun_value)
 {
   GTEST_SKIP();  // Currently not working with Node migration in API
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
@@ -3015,7 +3022,7 @@ TEST_F(TestApi, get_fun_value)
   }
 }
 
-TEST_F(TestApi, get_fun_value2)
+TEST_F(TestCApi, get_fun_value2)
 {
   GTEST_SKIP();  // Currently not working with Node migration in API
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
@@ -3051,7 +3058,7 @@ TEST_F(TestApi, get_fun_value2)
   }
 }
 
-TEST_F(TestApi, print_model)
+TEST_F(TestCApi, print_model)
 {
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
   ASSERT_DEATH(bitwuzla_print_model(d_bzla, "btor", stdout),
@@ -3080,7 +3087,7 @@ TEST_F(TestApi, print_model)
                d_error_model_quant);
 }
 
-TEST_F(TestApi, dump_formula1)
+TEST_F(TestCApi, dump_formula1)
 {
   ASSERT_DEATH(bitwuzla_dump_formula(nullptr, "btor", stdout),
                d_error_not_null);
@@ -3112,7 +3119,7 @@ TEST_F(TestApi, dump_formula1)
                "dumping in incremental mode is currently not supported");
 }
 
-TEST_F(TestApi, parse)
+TEST_F(TestCApi, parse)
 {
   bool is_smt2;
   BitwuzlaResult status;
@@ -3187,7 +3194,7 @@ TEST_F(TestApi, parse)
   bitwuzla_delete(bzla);
 }
 
-TEST_F(TestApi, parse_format)
+TEST_F(TestCApi, parse_format)
 {
   BitwuzlaResult status;
   char *error_msg;
@@ -3267,33 +3274,33 @@ TEST_F(TestApi, parse_format)
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestApi, sort_hash)
+TEST_F(TestCApi, sort_hash)
 {
   ASSERT_DEATH(bitwuzla_sort_hash(nullptr), d_error_not_null);
 }
 
-TEST_F(TestApi, sort_bv_get_size)
+TEST_F(TestCApi, sort_bv_get_size)
 {
   ASSERT_DEATH(bitwuzla_sort_bv_get_size(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_sort_bv_get_size(d_fp_sort16), d_error_exp_bv_sort);
   ASSERT_EQ(bitwuzla_sort_bv_get_size(d_bv_sort8), 8);
 }
 
-TEST_F(TestApi, sort_fp_get_exp_size)
+TEST_F(TestCApi, sort_fp_get_exp_size)
 {
   ASSERT_DEATH(bitwuzla_sort_fp_get_exp_size(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_sort_fp_get_exp_size(d_bv_sort8), d_error_exp_fp_sort);
   ASSERT_EQ(bitwuzla_sort_fp_get_exp_size(d_fp_sort16), 5);
 }
 
-TEST_F(TestApi, sort_fp_get_sig_size)
+TEST_F(TestCApi, sort_fp_get_sig_size)
 {
   ASSERT_DEATH(bitwuzla_sort_fp_get_sig_size(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_sort_fp_get_sig_size(d_bv_sort8), d_error_exp_fp_sort);
   ASSERT_EQ(bitwuzla_sort_fp_get_sig_size(d_fp_sort16), 11);
 }
 
-TEST_F(TestApi, sort_array_get_index)
+TEST_F(TestCApi, sort_array_get_index)
 {
   ASSERT_DEATH(bitwuzla_sort_array_get_index(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_sort_array_get_index(d_bv_sort23),
@@ -3302,7 +3309,7 @@ TEST_F(TestApi, sort_array_get_index)
       bitwuzla_sort_is_bv(bitwuzla_sort_array_get_index(d_arr_sort_bvfp)));
 }
 
-TEST_F(TestApi, sort_array_get_element)
+TEST_F(TestCApi, sort_array_get_element)
 {
   ASSERT_DEATH(bitwuzla_sort_array_get_element(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_sort_array_get_element(d_bv_sort23),
@@ -3311,7 +3318,7 @@ TEST_F(TestApi, sort_array_get_element)
       bitwuzla_sort_is_fp(bitwuzla_sort_array_get_element(d_arr_sort_bvfp)));
 }
 
-TEST_F(TestApi, sort_fun_get_domain_sorts)
+TEST_F(TestCApi, sort_fun_get_domain_sorts)
 {
   size_t size;
   ASSERT_DEATH(bitwuzla_sort_fun_get_domain_sorts(nullptr, nullptr),
@@ -3329,21 +3336,21 @@ TEST_F(TestApi, sort_fun_get_domain_sorts)
   ASSERT_EQ(size, 3);
 }
 
-TEST_F(TestApi, sort_fun_get_codomain)
+TEST_F(TestCApi, sort_fun_get_codomain)
 {
   ASSERT_DEATH(bitwuzla_sort_fun_get_codomain(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_sort_fun_get_codomain(d_bv_sort32),
                d_error_exp_fun_sort);
 }
 
-TEST_F(TestApi, sort_fun_get_arity)
+TEST_F(TestCApi, sort_fun_get_arity)
 {
   ASSERT_DEATH(bitwuzla_sort_fun_get_arity(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_sort_fun_get_arity(d_bv_sort32), d_error_exp_fun_sort);
   ASSERT_EQ(bitwuzla_sort_fun_get_arity(d_fun_sort), 3);
 }
 
-TEST_F(TestApi, sort_is_equal)
+TEST_F(TestCApi, sort_is_equal)
 {
   ASSERT_DEATH(bitwuzla_sort_is_equal(nullptr, d_bv_sort1), d_error_not_null);
   ASSERT_DEATH(bitwuzla_sort_is_equal(d_bv_sort1, nullptr), d_error_not_null);
@@ -3352,7 +3359,7 @@ TEST_F(TestApi, sort_is_equal)
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort1, d_bv_sort1));
 }
 
-TEST_F(TestApi, sort_is_array)
+TEST_F(TestCApi, sort_is_array)
 {
   ASSERT_DEATH(bitwuzla_sort_is_array(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_sort_is_array(d_arr_sort_bv));
@@ -3364,7 +3371,7 @@ TEST_F(TestApi, sort_is_array)
   ASSERT_FALSE(bitwuzla_sort_is_array(d_fp_sort16));
 }
 
-TEST_F(TestApi, sort_is_bv)
+TEST_F(TestCApi, sort_is_bv)
 {
   ASSERT_DEATH(bitwuzla_sort_is_bv(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_sort_is_bv(d_bv_sort1));
@@ -3378,7 +3385,7 @@ TEST_F(TestApi, sort_is_bv)
   ASSERT_FALSE(bitwuzla_sort_is_bv(d_fun_sort));
 }
 
-TEST_F(TestApi, sort_is_fp)
+TEST_F(TestCApi, sort_is_fp)
 {
   ASSERT_DEATH(bitwuzla_sort_is_fp(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_sort_is_fp(d_fp_sort16));
@@ -3389,7 +3396,7 @@ TEST_F(TestApi, sort_is_fp)
   ASSERT_FALSE(bitwuzla_sort_is_fp(d_fun_sort_fp));
 }
 
-TEST_F(TestApi, sort_is_fun)
+TEST_F(TestCApi, sort_is_fun)
 {
   ASSERT_DEATH(bitwuzla_sort_is_fun(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_sort_is_fun(d_fun_sort));
@@ -3401,7 +3408,7 @@ TEST_F(TestApi, sort_is_fun)
   ASSERT_FALSE(bitwuzla_sort_is_fun(d_fp_sort16));
 }
 
-TEST_F(TestApi, sort_is_rm)
+TEST_F(TestCApi, sort_is_rm)
 {
   ASSERT_DEATH(bitwuzla_sort_is_rm(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_sort_is_rm(d_rm_sort));
@@ -3410,7 +3417,7 @@ TEST_F(TestApi, sort_is_rm)
   ASSERT_FALSE(bitwuzla_sort_is_rm(d_arr_sort_bv));
 }
 
-TEST_F(TestApi, sort_dump)
+TEST_F(TestCApi, sort_dump)
 {
   ASSERT_DEATH(bitwuzla_sort_dump(nullptr, "btor", stdout), d_error_not_null);
   ASSERT_DEATH(bitwuzla_sort_dump(d_bv_sort1, nullptr, stdout),
@@ -3425,7 +3432,7 @@ TEST_F(TestApi, sort_dump)
   std::cout << std::endl;
 }
 
-TEST_F(TestApi, regr1)
+TEST_F(TestCApi, regr1)
 {
   std::vector<const BitwuzlaSort *> domain({d_bv_sort8});
   const BitwuzlaSort *fun_sort =
@@ -3440,7 +3447,7 @@ TEST_F(TestApi, regr1)
       d_error_unexp_fun_term);
 }
 
-TEST_F(TestApi, regr2)
+TEST_F(TestCApi, regr2)
 {
   std::vector<const BitwuzlaSort *> domain({d_bv_sort8});
   const BitwuzlaSort *fun_sort =
@@ -3461,22 +3468,22 @@ TEST_F(TestApi, regr2)
 /* BitwuzlaTerm                                                               */
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestApi, term_hash)
+TEST_F(TestCApi, term_hash)
 {
   ASSERT_DEATH(bitwuzla_term_hash(nullptr), d_error_not_null);
 }
 
-TEST_F(TestApi, term_get_bitwuzla)
+TEST_F(TestCApi, term_get_bitwuzla)
 {
   ASSERT_DEATH(bitwuzla_term_get_bitwuzla(nullptr), d_error_not_null);
 }
 
-TEST_F(TestApi, term_get_sort)
+TEST_F(TestCApi, term_get_sort)
 {
   ASSERT_DEATH(bitwuzla_term_get_sort(nullptr), d_error_not_null);
 }
 
-TEST_F(TestApi, term_array_get_index_sort)
+TEST_F(TestCApi, term_array_get_index_sort)
 {
   ASSERT_DEATH(bitwuzla_term_array_get_index_sort(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_term_array_get_index_sort(d_bv_zero8),
@@ -3485,7 +3492,7 @@ TEST_F(TestApi, term_array_get_index_sort)
       bitwuzla_sort_is_fp(bitwuzla_term_array_get_index_sort(d_array_fpbv)));
 }
 
-TEST_F(TestApi, term_array_get_element_sort)
+TEST_F(TestCApi, term_array_get_element_sort)
 {
   ASSERT_DEATH(bitwuzla_term_array_get_element_sort(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_term_array_get_element_sort(d_bv_zero8),
@@ -3494,7 +3501,7 @@ TEST_F(TestApi, term_array_get_element_sort)
       bitwuzla_sort_is_bv(bitwuzla_term_array_get_element_sort(d_array_fpbv)));
 }
 
-TEST_F(TestApi, term_fun_get_domain_sorts)
+TEST_F(TestCApi, term_fun_get_domain_sorts)
 {
   size_t size;
   const BitwuzlaTerm *bv_term = bitwuzla_mk_const(d_bzla, d_bv_sort32, "bv");
@@ -3514,48 +3521,48 @@ TEST_F(TestApi, term_fun_get_domain_sorts)
   ASSERT_EQ(size, 3);
 }
 
-TEST_F(TestApi, term_fun_get_codomain_sort)
+TEST_F(TestCApi, term_fun_get_codomain_sort)
 {
   ASSERT_DEATH(bitwuzla_term_fun_get_codomain_sort(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_term_fun_get_codomain_sort(d_bv_zero8),
                d_error_exp_fun_term);
 }
 
-TEST_F(TestApi, term_bv_get_size)
+TEST_F(TestCApi, term_bv_get_size)
 {
   ASSERT_DEATH(bitwuzla_term_bv_get_size(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_term_bv_get_size(d_fp_const16), d_error_exp_bv_term);
   ASSERT_EQ(bitwuzla_term_bv_get_size(d_bv_zero8), 8);
 }
 
-TEST_F(TestApi, term_fp_get_exp_size)
+TEST_F(TestCApi, term_fp_get_exp_size)
 {
   ASSERT_DEATH(bitwuzla_term_fp_get_exp_size(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_term_fp_get_exp_size(d_bv_const8), d_error_exp_fp_term);
   ASSERT_EQ(bitwuzla_term_fp_get_exp_size(d_fp_const16), 5);
 }
 
-TEST_F(TestApi, term_fp_get_sig_size)
+TEST_F(TestCApi, term_fp_get_sig_size)
 {
   ASSERT_DEATH(bitwuzla_term_fp_get_sig_size(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_term_fp_get_sig_size(d_bv_const8), d_error_exp_fp_term);
   ASSERT_EQ(bitwuzla_term_fp_get_sig_size(d_fp_const16), 11);
 }
 
-TEST_F(TestApi, term_fun_get_arity)
+TEST_F(TestCApi, term_fun_get_arity)
 {
   ASSERT_DEATH(bitwuzla_term_fun_get_arity(nullptr), d_error_not_null);
   ASSERT_DEATH(bitwuzla_term_fun_get_arity(d_bv_const8), d_error_exp_fun_term);
   ASSERT_EQ(bitwuzla_term_fun_get_arity(d_fun), 3);
 }
 
-TEST_F(TestApi, term_get_symbol)
+TEST_F(TestCApi, term_get_symbol)
 {
   ASSERT_DEATH(bitwuzla_term_get_symbol(nullptr), d_error_not_null);
   ASSERT_EQ(std::string(bitwuzla_term_get_symbol(d_fun)), std::string("fun"));
 }
 
-TEST_F(TestApi, term_set_symbol)
+TEST_F(TestCApi, term_set_symbol)
 {
   ASSERT_DEATH(bitwuzla_term_set_symbol(nullptr, "fun"), d_error_not_null);
   ASSERT_DEATH(bitwuzla_term_set_symbol(d_fun, nullptr), d_error_exp_str);
@@ -3564,7 +3571,7 @@ TEST_F(TestApi, term_set_symbol)
             std::string("funfun"));
 }
 
-TEST_F(TestApi, term_is_equal_sort)
+TEST_F(TestCApi, term_is_equal_sort)
 {
   ASSERT_DEATH(bitwuzla_term_is_equal_sort(nullptr, d_bv_const1),
                d_error_not_null);
@@ -3576,7 +3583,7 @@ TEST_F(TestApi, term_is_equal_sort)
   ASSERT_FALSE(bitwuzla_term_is_equal_sort(d_bv_const1, d_bv_zero8));
 }
 
-TEST_F(TestApi, term_is_const)
+TEST_F(TestCApi, term_is_const)
 {
   ASSERT_DEATH(bitwuzla_term_is_const(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_const(d_array));
@@ -3588,7 +3595,7 @@ TEST_F(TestApi, term_is_const)
   ASSERT_FALSE(bitwuzla_term_is_const(d_store));
 }
 
-TEST_F(TestApi, term_is_var)
+TEST_F(TestCApi, term_is_var)
 {
   ASSERT_DEATH(bitwuzla_term_is_var(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_var(d_var1));
@@ -3596,7 +3603,7 @@ TEST_F(TestApi, term_is_var)
   ASSERT_FALSE(bitwuzla_term_is_var(d_fp_pzero32));
 }
 
-TEST_F(TestApi, term_is_bound_var)
+TEST_F(TestCApi, term_is_bound_var)
 {
   ASSERT_DEATH(bitwuzla_term_is_bound_var(nullptr), d_error_not_null);
   ASSERT_FALSE(bitwuzla_term_is_bound_var(d_var1));
@@ -3604,7 +3611,7 @@ TEST_F(TestApi, term_is_bound_var)
   ASSERT_DEATH(bitwuzla_term_is_bound_var(d_fp_pzero32), d_error_exp_var_term);
 }
 
-TEST_F(TestApi, term_is_array)
+TEST_F(TestCApi, term_is_array)
 {
   ASSERT_DEATH(bitwuzla_term_is_array(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_array(d_array));
@@ -3613,7 +3620,7 @@ TEST_F(TestApi, term_is_array)
   ASSERT_FALSE(bitwuzla_term_is_array(d_fp_pzero32));
 }
 
-TEST_F(TestApi, term_is_bv)
+TEST_F(TestCApi, term_is_bv)
 {
   ASSERT_DEATH(bitwuzla_term_is_bv(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_bv(d_bv_zero8));
@@ -3623,7 +3630,7 @@ TEST_F(TestApi, term_is_bv)
   ASSERT_FALSE(bitwuzla_term_is_bv(d_fun));
 }
 
-TEST_F(TestApi, term_is_fp)
+TEST_F(TestCApi, term_is_fp)
 {
   ASSERT_DEATH(bitwuzla_term_is_fp(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_fp(d_fp_pzero32));
@@ -3633,7 +3640,7 @@ TEST_F(TestApi, term_is_fp)
   ASSERT_FALSE(bitwuzla_term_is_fp(d_fun));
 }
 
-TEST_F(TestApi, term_is_fun)
+TEST_F(TestCApi, term_is_fun)
 {
   ASSERT_DEATH(bitwuzla_term_is_fun(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_fun(d_fun));
@@ -3642,28 +3649,28 @@ TEST_F(TestApi, term_is_fun)
   ASSERT_FALSE(bitwuzla_term_is_fun(d_fp_pzero32));
 }
 
-TEST_F(TestApi, term_is_rm)
+TEST_F(TestCApi, term_is_rm)
 {
   ASSERT_DEATH(bitwuzla_term_is_rm(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_rm(d_rm_const));
   ASSERT_FALSE(bitwuzla_term_is_rm(d_bv_zero8));
 }
 
-TEST_F(TestApi, term_is_bv_value)
+TEST_F(TestCApi, term_is_bv_value)
 {
   ASSERT_DEATH(bitwuzla_term_is_bv_value(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_bv_value(d_bv_zero8));
   ASSERT_FALSE(bitwuzla_term_is_bv_value(d_bv_const1));
 }
 
-TEST_F(TestApi, term_is_fp_value)
+TEST_F(TestCApi, term_is_fp_value)
 {
   ASSERT_DEATH(bitwuzla_term_is_fp_value(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_fp_value(d_fp_pzero32));
   ASSERT_FALSE(bitwuzla_term_is_fp_value(d_fp_const16));
 }
 
-TEST_F(TestApi, term_is_rm_value)
+TEST_F(TestCApi, term_is_rm_value)
 {
   ASSERT_DEATH(bitwuzla_term_is_rm_value(nullptr), d_error_not_null);
   ASSERT_TRUE(
@@ -3671,7 +3678,7 @@ TEST_F(TestApi, term_is_rm_value)
   ASSERT_FALSE(bitwuzla_term_is_rm_value(d_rm_const));
 }
 
-TEST_F(TestApi, term_is_bv_value_zero)
+TEST_F(TestCApi, term_is_bv_value_zero)
 {
   ASSERT_DEATH(bitwuzla_term_is_bv_value_zero(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_bv_value_zero(d_bv_zero8));
@@ -3681,7 +3688,7 @@ TEST_F(TestApi, term_is_bv_value_zero)
   ASSERT_FALSE(bitwuzla_term_is_bv_value_zero(d_bv_maxs8));
 }
 
-TEST_F(TestApi, term_is_bv_value_one)
+TEST_F(TestCApi, term_is_bv_value_one)
 {
   ASSERT_DEATH(bitwuzla_term_is_bv_value_one(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_bv_value_one(d_bv_one1));
@@ -3691,7 +3698,7 @@ TEST_F(TestApi, term_is_bv_value_one)
   ASSERT_FALSE(bitwuzla_term_is_bv_value_one(d_bv_zero8));
 }
 
-TEST_F(TestApi, term_is_bv_value_ones)
+TEST_F(TestCApi, term_is_bv_value_ones)
 {
   ASSERT_DEATH(bitwuzla_term_is_bv_value_ones(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_bv_value_ones(d_bv_ones23));
@@ -3701,7 +3708,7 @@ TEST_F(TestApi, term_is_bv_value_ones)
   ASSERT_FALSE(bitwuzla_term_is_bv_value_ones(d_bv_zero8));
 }
 
-TEST_F(TestApi, term_is_bv_value_min_signed)
+TEST_F(TestCApi, term_is_bv_value_min_signed)
 {
   ASSERT_DEATH(bitwuzla_term_is_bv_value_min_signed(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_bv_value_min_signed(d_bv_mins8));
@@ -3711,7 +3718,7 @@ TEST_F(TestApi, term_is_bv_value_min_signed)
   ASSERT_FALSE(bitwuzla_term_is_bv_value_min_signed(d_bv_zero8));
 }
 
-TEST_F(TestApi, term_is_bv_value_max_signed)
+TEST_F(TestCApi, term_is_bv_value_max_signed)
 {
   ASSERT_DEATH(bitwuzla_term_is_bv_value_max_signed(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_bv_value_max_signed(d_bv_maxs8));
@@ -3721,7 +3728,7 @@ TEST_F(TestApi, term_is_bv_value_max_signed)
   ASSERT_FALSE(bitwuzla_term_is_bv_value_max_signed(d_bv_zero8));
 }
 
-TEST_F(TestApi, term_is_fp_value_pos_zero)
+TEST_F(TestCApi, term_is_fp_value_pos_zero)
 {
   ASSERT_DEATH(bitwuzla_term_is_fp_value_pos_zero(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_fp_value_pos_zero(d_fp_pzero32));
@@ -3731,7 +3738,7 @@ TEST_F(TestApi, term_is_fp_value_pos_zero)
   ASSERT_FALSE(bitwuzla_term_is_fp_value_pos_zero(d_fp_nan32));
 }
 
-TEST_F(TestApi, term_is_fp_value_neg_zero)
+TEST_F(TestCApi, term_is_fp_value_neg_zero)
 {
   ASSERT_DEATH(bitwuzla_term_is_fp_value_neg_zero(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_fp_value_neg_zero(d_fp_nzero32));
@@ -3741,7 +3748,7 @@ TEST_F(TestApi, term_is_fp_value_neg_zero)
   ASSERT_FALSE(bitwuzla_term_is_fp_value_neg_zero(d_fp_nan32));
 }
 
-TEST_F(TestApi, term_is_fp_value_pos_inf)
+TEST_F(TestCApi, term_is_fp_value_pos_inf)
 {
   ASSERT_DEATH(bitwuzla_term_is_fp_value_pos_inf(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_fp_value_pos_inf(d_fp_pinf32));
@@ -3751,7 +3758,7 @@ TEST_F(TestApi, term_is_fp_value_pos_inf)
   ASSERT_FALSE(bitwuzla_term_is_fp_value_pos_inf(d_fp_nan32));
 }
 
-TEST_F(TestApi, term_is_fp_value_neg_inf)
+TEST_F(TestCApi, term_is_fp_value_neg_inf)
 {
   ASSERT_DEATH(bitwuzla_term_is_fp_value_neg_inf(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_fp_value_neg_inf(d_fp_ninf32));
@@ -3761,7 +3768,7 @@ TEST_F(TestApi, term_is_fp_value_neg_inf)
   ASSERT_FALSE(bitwuzla_term_is_fp_value_neg_inf(d_fp_nan32));
 }
 
-TEST_F(TestApi, term_is_fp_value_nan)
+TEST_F(TestCApi, term_is_fp_value_nan)
 {
   ASSERT_DEATH(bitwuzla_term_is_fp_value_nan(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_fp_value_nan(d_fp_nan32));
@@ -3771,7 +3778,7 @@ TEST_F(TestApi, term_is_fp_value_nan)
   ASSERT_FALSE(bitwuzla_term_is_fp_value_nan(d_fp_ninf32));
 }
 
-TEST_F(TestApi, term_is_rm_value_rna)
+TEST_F(TestCApi, term_is_rm_value_rna)
 {
   ASSERT_DEATH(bitwuzla_term_is_rm_value_rna(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_rm_value_rna(d_rm_rna));
@@ -3782,7 +3789,7 @@ TEST_F(TestApi, term_is_rm_value_rna)
   ASSERT_FALSE(bitwuzla_term_is_rm_value_rna(d_rm_rtz));
 }
 
-TEST_F(TestApi, term_is_rm_value_rne)
+TEST_F(TestCApi, term_is_rm_value_rne)
 {
   ASSERT_DEATH(bitwuzla_term_is_rm_value_rne(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_rm_value_rne(d_rm_rne));
@@ -3793,7 +3800,7 @@ TEST_F(TestApi, term_is_rm_value_rne)
   ASSERT_FALSE(bitwuzla_term_is_rm_value_rne(d_rm_rtz));
 }
 
-TEST_F(TestApi, term_is_rm_value_rtn)
+TEST_F(TestCApi, term_is_rm_value_rtn)
 {
   ASSERT_DEATH(bitwuzla_term_is_rm_value_rtn(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_rm_value_rtn(d_rm_rtn));
@@ -3804,7 +3811,7 @@ TEST_F(TestApi, term_is_rm_value_rtn)
   ASSERT_FALSE(bitwuzla_term_is_rm_value_rtn(d_rm_rtz));
 }
 
-TEST_F(TestApi, term_is_rm_value_rtp)
+TEST_F(TestCApi, term_is_rm_value_rtp)
 {
   ASSERT_DEATH(bitwuzla_term_is_rm_value_rtp(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_rm_value_rtp(d_rm_rtp));
@@ -3815,7 +3822,7 @@ TEST_F(TestApi, term_is_rm_value_rtp)
   ASSERT_FALSE(bitwuzla_term_is_rm_value_rtp(d_rm_rtz));
 }
 
-TEST_F(TestApi, term_is_rm_value_rtz)
+TEST_F(TestCApi, term_is_rm_value_rtz)
 {
   ASSERT_DEATH(bitwuzla_term_is_rm_value_rtz(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_rm_value_rtz(d_rm_rtz));
@@ -3826,7 +3833,7 @@ TEST_F(TestApi, term_is_rm_value_rtz)
   ASSERT_FALSE(bitwuzla_term_is_rm_value_rtz(d_rm_rtp));
 }
 
-TEST_F(TestApi, term_is_const_array)
+TEST_F(TestCApi, term_is_const_array)
 {
   ASSERT_DEATH(bitwuzla_term_is_const_array(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_const_array(
@@ -3835,7 +3842,7 @@ TEST_F(TestApi, term_is_const_array)
   ASSERT_FALSE(bitwuzla_term_is_const_array(d_array_fpbv));
 }
 
-TEST_F(TestApi, term_dump)
+TEST_F(TestCApi, term_dump)
 {
   ASSERT_DEATH(bitwuzla_term_dump(nullptr, "btor", stdout), d_error_not_null);
   ASSERT_DEATH(bitwuzla_term_dump(d_and_bv_const1, nullptr, stdout),
@@ -3851,7 +3858,7 @@ TEST_F(TestApi, term_dump)
   std::cout << std::endl;
 }
 
-TEST_F(TestApi, term_dump_regr0)
+TEST_F(TestCApi, term_dump_regr0)
 {
   testing::internal::CaptureStdout();
 
@@ -3869,7 +3876,7 @@ TEST_F(TestApi, term_dump_regr0)
   ASSERT_EQ(output, "RNE\nRNA\nRTN\nRTP\nRTZ");
 }
 
-TEST_F(TestApi, term_dump_regr1)
+TEST_F(TestCApi, term_dump_regr1)
 {
   const BitwuzlaSort *bv_sort5  = bitwuzla_mk_bv_sort(d_bzla, 5);
   const BitwuzlaSort *bv_sort10 = bitwuzla_mk_bv_sort(d_bzla, 10);
@@ -3918,7 +3925,7 @@ TEST_F(TestApi, term_dump_regr1)
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000001)");
 }
 
-TEST_F(TestApi, reset)
+TEST_F(TestCApi, reset)
 {
   Bitwuzla *bzla                         = bitwuzla_new();
   const BitwuzlaSort *s                  = bitwuzla_mk_bv_sort(bzla, 8);
@@ -3935,7 +3942,7 @@ TEST_F(TestApi, reset)
   bitwuzla_delete(bzla);
 }
 
-TEST_F(TestApi, indexed)
+TEST_F(TestCApi, indexed)
 {
   const BitwuzlaSort *fp_sort = bitwuzla_mk_fp_sort(d_bzla, 5, 11);
   const BitwuzlaSort *bv_sort = bitwuzla_mk_bv_sort(d_bzla, 8);
@@ -4002,7 +4009,7 @@ TEST_F(TestApi, indexed)
   ASSERT_EQ(indices[1], 0);
 }
 
-TEST_F(TestApi, terms)
+TEST_F(TestCApi, terms)
 {
   GTEST_SKIP();  // Currently not working with Node migration in API
   const BitwuzlaSort *fp_sort   = bitwuzla_mk_fp_sort(d_bzla, 5, 11);
@@ -4371,7 +4378,7 @@ TEST_F(TestApi, terms)
   ASSERT_EQ(size, 1);
 }
 
-TEST_F(TestApi, substitute)
+TEST_F(TestCApi, substitute)
 {
   GTEST_SKIP();  // Currently not working with Node migration in API
   const BitwuzlaSort *bv_sort              = bitwuzla_mk_bv_sort(d_bzla, 16);
@@ -4476,7 +4483,7 @@ TEST_F(TestApi, substitute)
   }
 }
 
-TEST_F(TestApi, term_dump1)
+TEST_F(TestCApi, term_dump1)
 {
   std::string filename     = "term_dump1.out";
   FILE *tmpfile            = fopen(filename.c_str(), "w");
@@ -4494,7 +4501,7 @@ TEST_F(TestApi, term_dump1)
   ASSERT_EQ("(bvnot a)", content);
 }
 
-TEST_F(TestApi, term_dump2)
+TEST_F(TestCApi, term_dump2)
 {
   std::string filename = "term_dump2.out";
   FILE *tmpfile        = fopen(filename.c_str(), "w");
@@ -4513,7 +4520,7 @@ TEST_F(TestApi, term_dump2)
   ASSERT_EQ("(declare-fun f ((_ BitVec 1)) (_ BitVec 1))\n", content);
 }
 
-TEST_F(TestApi, term_dump3)
+TEST_F(TestCApi, term_dump3)
 {
   std::string filename = "term_dump3.out";
   FILE *tmpfile        = fopen(filename.c_str(), "w");
@@ -4532,7 +4539,7 @@ TEST_F(TestApi, term_dump3)
   ASSERT_EQ("(declare-const a (Array (_ BitVec 1) (_ BitVec 1)))\n", content);
 }
 
-TEST_F(TestApi, dump_formula2)
+TEST_F(TestCApi, dump_formula2)
 {
   GTEST_SKIP();  // Currently not working with Node migration in API
   std::string filename = "formula_dump2.out";
@@ -4568,7 +4575,7 @@ TEST_F(TestApi, dump_formula2)
       content);
 }
 
-TEST_F(TestApi, arrayfun)
+TEST_F(TestCApi, arrayfun)
 {
   const BitwuzlaSort *bvsort = bitwuzla_mk_bv_sort(d_bzla, 4);
   std::vector<const BitwuzlaSort *> domain({bvsort});

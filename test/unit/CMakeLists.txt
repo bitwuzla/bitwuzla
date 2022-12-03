@@ -73,6 +73,7 @@ foreach(test ${test_names})
   add_unit_test(test_${test})
 endforeach()
 
+add_subdirectory(api)
 add_subdirectory(backtrack)
 add_subdirectory(node)
 add_subdirectory(option)
