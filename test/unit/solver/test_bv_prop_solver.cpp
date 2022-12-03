@@ -15,7 +15,7 @@ using namespace option;
 
 /* -------------------------------------------------------------------------- */
 
-class TestBvPropSolver : public TestCommon
+class TestBvPropSolver : public ::testing::Test
 {
  protected:
   static constexpr bool TEST_SLOW         = false;
@@ -30,7 +30,6 @@ class TestBvPropSolver : public TestCommon
 
   void SetUp() override
   {
-    TestCommon::SetUp();
     d_size = TEST_SLOW ? 4 : 3;
     d_options.set<std::string>(Option::BV_SOLVER, "prop");
     d_options.set<uint64_t>(Option::PROP_NPROPS, TEST_NPROPS);
