@@ -8,7 +8,7 @@
 # See COPYING for more information on using this software.
 ##
 
-#add_subdirectory(unit)
+add_subdirectory(unit)
 add_subdirectory(regress)
 
 if(PYTHON)

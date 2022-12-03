@@ -32,7 +32,7 @@ class TestBvPropSolver : public TestCommon
   {
     TestCommon::SetUp();
     d_size = TEST_SLOW ? 4 : 3;
-    d_options.set<uint64_t>(Option::BV_SOLVER, "prop");
+    d_options.set<std::string>(Option::BV_SOLVER, "prop");
     d_options.set<uint64_t>(Option::PROP_NPROPS, TEST_NPROPS);
     d_options.set<uint64_t>(Option::PROP_NUPDATES, TEST_NUPDATES);
     d_options.set<bool>(Option::PROP_CONST_BITS, true);

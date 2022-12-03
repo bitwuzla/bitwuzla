@@ -125,19 +125,18 @@ class TestBzla : public TestCommon
 class TestBitwuzla : public TestCommon
 {
  protected:
-  void SetUp() override { d_bzla = bitwuzla_new(); }
+  void SetUp() override { d_options = bitwuzla_options_new(); }
 
   void TearDown() override
   {
-    if (d_bzla)
+    if (d_options)
     {
-      bitwuzla_delete(d_bzla);
+      bitwuzla_options_delete(d_options);
     }
 
     TestCommon::TearDown();
   }
-
-  Bitwuzla *d_bzla = nullptr;
+  BitwuzlaOptions *d_options = nullptr;
 };
 
 class TestFile : public TestBitwuzla
@@ -165,9 +164,10 @@ class TestFile : public TestBitwuzla
     f_in = fopen(ss_in.str().c_str(), "r");
     assert(f_in);
 
-    bitwuzla_set_option(d_bzla, BITWUZLA_OPT_VERBOSITY, verbosity);
+    bitwuzla_set_option(d_options, BITWUZLA_OPT_VERBOSITY, verbosity);
+    Bitwuzla *bitwuzla = bitwuzla_new(d_options);
 
-    sat_res = bitwuzla_parse(d_bzla,
+    sat_res = bitwuzla_parse(bitwuzla,
                              f_in,
                              ss_in.str().c_str(),
                              d_log_file,
@@ -189,13 +189,13 @@ class TestFile : public TestBitwuzla
     if (d_dump)
     {
       assert(d_log_file);
-      bitwuzla_simplify(d_bzla);
-      bitwuzla_dump_formula(d_bzla, d_dump_format.c_str(), d_log_file);
+      bitwuzla_simplify(bitwuzla);
+      bitwuzla_dump_formula(bitwuzla, d_dump_format.c_str(), d_log_file);
     }
 
     if (d_check_sat && sat_res == BITWUZLA_UNKNOWN)
     {
-      sat_res = bitwuzla_check_sat(d_bzla);
+      sat_res = bitwuzla_check_sat(bitwuzla);
       fprintf(d_log_file,
               "%s\n",
               sat_res == BITWUZLA_SAT
@@ -205,7 +205,8 @@ class TestFile : public TestBitwuzla
 
     if (d_get_model)
     {
-      bitwuzla_print_model(d_bzla, (char *) d_model_format.c_str(), d_log_file);
+      // bitwuzla_print_model(d_bzla, (char *) d_model_format.c_str(),
+      // d_log_file);
     }
 
     if (expected != BITWUZLA_UNKNOWN)

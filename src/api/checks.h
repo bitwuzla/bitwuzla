@@ -100,6 +100,9 @@ class BitwuzlaExceptionStream
          "or 16 for hexadecimal), is '"                                      \
       << arg << "'";
 
+#define BITWUZLA_CHECK_TERM_IS_ARRAY(arg) \
+  BITWUZLA_CHECK((arg).d_node->type().is_array()) << "expected array term";
+
 #define BITWUZLA_CHECK_TERM_IS_ARRAY_AT_IDX(args, i)  \
   BITWUZLA_CHECK((args)[i].d_node->type().is_array()) \
       << "expected array term at index " << i;

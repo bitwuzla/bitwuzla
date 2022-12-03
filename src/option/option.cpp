@@ -1,7 +1,7 @@
 #include "option/option.h"
 
 #include <cassert>
-
+#include <iostream>
 namespace bzla::option {
 
 /* --- OptionBase public ---------------------------------------------------- */

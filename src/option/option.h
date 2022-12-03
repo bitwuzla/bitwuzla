@@ -365,7 +365,7 @@ class Options
   /** The registered options. */
   std::unordered_map<Option, OptionBase*> d_options;
   /** Map long option name to option. */
-  std::unordered_map<const char*, Option> d_lng2option;
+  std::unordered_map<std::string, Option> d_lng2option;
 
  public:
   static constexpr uint64_t VERBOSITY_MAX = 4;

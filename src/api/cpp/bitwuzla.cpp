@@ -1731,6 +1731,9 @@ mk_term(Kind kind,
         case Kind::EQUAL:
           BITWUZLA_CHECK_MK_TERM_ARGS_ANY_SORT(args, 0, true);
           break;
+        case Kind::BV_CONCAT:
+          BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, false);
+          break;
         case Kind::FP_EQUAL:
         case Kind::FP_GEQ:
         case Kind::FP_GT:
@@ -1823,7 +1826,8 @@ mk_term(Kind kind,
       switch (kind)
       {
         case Kind::ARRAY_SELECT:
-          BITWUZLA_CHECK_MK_TERM_ARGS_ANY_SORT(args, 0, true);
+          BITWUZLA_CHECK_MK_TERM_ARGS_ANY_SORT(args, 1, true);
+          BITWUZLA_CHECK_TERM_IS_ARRAY(args[0]);
           break;
         case Kind::FP_MAX:
         case Kind::FP_MIN:
@@ -1875,7 +1879,7 @@ mk_term(Kind kind,
                          == args[1].d_node->type())
               << "sort of index term does not match index sort of array";
           BITWUZLA_CHECK(args[0].d_node->type().array_element()
-                         == args[1].d_node->type())
+                         == args[2].d_node->type())
               << "sort of element term does not match element sort of array";
           break;
         default:
@@ -1892,25 +1896,26 @@ mk_term(Kind kind,
       break;
     // nary
     case Kind::APPLY: {
-      size_t paramc              = args.size() - 1;
-      const bzla::Type &type_fun = args[paramc].d_node->type();
+      BITWUZLA_CHECK(args.size() > 1) << "expected at least two arguments";
+      BITWUZLA_CHECK_TERM_IS_FUN_AT_IDX(args, 0);
+      const bzla::Type &type_fun = args[0].d_node->type();
       size_t arity               = type_fun.fun_arity();
-      const auto &types          = type_fun.fun_types();
       BITWUZLA_CHECK_MK_TERM_ARGC(kind, true, arity + 1, args.size());
       BITWUZLA_CHECK_MK_TERM_IDXC(kind, 0, indices.size());
+      size_t paramc = args.size() - 1;
       BITWUZLA_CHECK(paramc == arity)
           << "number of function arguments does not match function arity, "
              "expected '"
           << arity << "' but got '" << paramc << "'";
-      for (size_t i = 0; i < paramc; ++i)
+      const auto &types = type_fun.fun_types();
+      for (size_t i = 1; i <= paramc; ++i)
       {
         BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i].d_node, i);
         BITWUZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(args, i);
-        BITWUZLA_CHECK(types[i] == args[i].d_node->type())
+        BITWUZLA_CHECK(types[i - 1] == args[i].d_node->type())
             << "sort of argument at index " << i
-            << "does not match sort in function domain";
+            << " does not match sort in function domain";
       }
-      BITWUZLA_CHECK_TERM_IS_FUN_AT_IDX(args, paramc);
     }
     break;
 
@@ -1920,19 +1925,9 @@ mk_term(Kind kind,
     case Kind::BV_RORI:
     case Kind::BV_SIGN_EXTEND:
     case Kind::BV_ZERO_EXTEND:
-    case Kind::FP_TO_SBV:
-    case Kind::FP_TO_UBV:
-      BITWUZLA_CHECK_MK_TERM_ARGC(kind, false, 2, args.size());
+      BITWUZLA_CHECK_MK_TERM_ARGC(kind, false, 1, args.size());
       BITWUZLA_CHECK_MK_TERM_IDXC(kind, 1, indices.size());
-      switch (kind)
-      {
-        case Kind::FP_TO_SBV:
-        case Kind::FP_TO_UBV:
-          BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_fp, true);
-          BITWUZLA_CHECK_TERM_IS_RM_AT_IDX(args, 0);
-          break;
-        default: BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_bv, true);
-      }
+      BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_bv, true);
       break;
     // unary, indexed (2)
     case Kind::BV_EXTRACT:
@@ -1946,6 +1941,14 @@ mk_term(Kind kind,
           break;
         default: BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_bv, true);
       }
+      break;
+    // binary, indexed (1)
+    case Kind::FP_TO_SBV:
+    case Kind::FP_TO_UBV:
+      BITWUZLA_CHECK_MK_TERM_ARGC(kind, false, 2, args.size());
+      BITWUZLA_CHECK_MK_TERM_IDXC(kind, 1, indices.size());
+      BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_fp, true);
+      BITWUZLA_CHECK_TERM_IS_RM_AT_IDX(args, 0);
       break;
     // binary, indexed (2)
     case Kind::FP_TO_FP_FROM_FP:
