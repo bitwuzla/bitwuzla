@@ -167,7 +167,7 @@ Printer::print(std::ostream& os,
         case Kind::FP_EQUAL:
         case Kind::FP_FMA:
         case Kind::FP_FP:
-        case Kind::FP_GE:
+        case Kind::FP_GEQ:
         case Kind::FP_GT:
         case Kind::FP_IS_INF:
         case Kind::FP_IS_NAN:
@@ -176,7 +176,7 @@ Printer::print(std::ostream& os,
         case Kind::FP_IS_POS:
         case Kind::FP_IS_SUBNORMAL:
         case Kind::FP_IS_ZERO:
-        case Kind::FP_LE:
+        case Kind::FP_LEQ:
         case Kind::FP_LT:
         case Kind::FP_MAX:
         case Kind::FP_MIN:

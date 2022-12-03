@@ -111,7 +111,7 @@ class Rewriter
   Node rewrite_fp_fma(const Node& node);
   Node rewrite_fp_fp(const Node& node);
   Node rewrite_fp_gt(const Node& node);
-  Node rewrite_fp_ge(const Node& node);
+  Node rewrite_fp_geq(const Node& node);
   Node rewrite_fp_is_inf(const Node& node);
   Node rewrite_fp_is_nan(const Node& node);
   Node rewrite_fp_is_neg(const Node& node);
@@ -119,7 +119,7 @@ class Rewriter
   Node rewrite_fp_is_pos(const Node& node);
   Node rewrite_fp_is_subnormal(const Node& node);
   Node rewrite_fp_is_zero(const Node& node);
-  Node rewrite_fp_le(const Node& node);
+  Node rewrite_fp_leq(const Node& node);
   Node rewrite_fp_lt(const Node& node);
   Node rewrite_fp_max(const Node& node);
   Node rewrite_fp_min(const Node& node);
@@ -401,8 +401,8 @@ enum class RewriteRuleKind
   FP_IS_ZERO_EVAL,
   FP_IS_ZERO_ABS_NEG,
 
-  FP_LE_EVAL,
-  FP_LE_EQ,
+  FP_LEQ_EVAL,
+  FP_LEQ_EQ,
 
   FP_LT_EVAL,
   FP_LT_EQ,
@@ -433,7 +433,7 @@ enum class RewriteRuleKind
   //// Elimination rules
   FP_EQUAL_ELIM,
   FP_FP_ELIM,
-  FP_GE_ELIM,
+  FP_GEQ_ELIM,
   FP_GT_ELIM,
   FP_SUB_ELIM,
 };

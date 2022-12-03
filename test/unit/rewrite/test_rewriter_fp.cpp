@@ -413,7 +413,7 @@ TEST_F(TestRewriterFp, fp_is_zero_abs_neg)
 
 /* fple --------------------------------------------------------------------- */
 
-TEST_F(TestRewriterFp, fp_le_eval)
+TEST_F(TestRewriterFp, fp_leq_eval)
 {
   // evaluates to (fp #b0 #b010 #b0000")
   Node fpadd0 = d_nm.mk_node(
@@ -423,35 +423,35 @@ TEST_F(TestRewriterFp, fp_le_eval)
        d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000")))});
 
   //// applies
-  test_rewrite(d_nm.mk_node(Kind::FP_LE,
+  test_rewrite(d_nm.mk_node(Kind::FP_LEQ,
                             {d_fp35_pzero,
                              d_nm.mk_value(FloatingPoint(
                                  d_fp35_type, BitVector(8, "00100000")))}),
                d_true);
-  test_rewrite(d_nm.mk_node(Kind::FP_LE, {fpadd0, d_fp35_pzero}), d_false);
-  test_rewrite(d_nm.mk_node(Kind::FP_LE, {fpadd0, fpadd0}), d_true);
+  test_rewrite(d_nm.mk_node(Kind::FP_LEQ, {fpadd0, d_fp35_pzero}), d_false);
+  test_rewrite(d_nm.mk_node(Kind::FP_LEQ, {fpadd0, fpadd0}), d_true);
   //// does not apply
   Node fple2 = d_nm.mk_node(
-      Kind::FP_LE,
+      Kind::FP_LEQ,
       {d_nm.mk_const(d_fp35_type),
        d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000")))});
   ASSERT_EQ(fple2, d_rewriter.rewrite(fple2));
   Node fple3 =
-      d_nm.mk_node(Kind::FP_LE, {d_fp35_pzero, d_nm.mk_const(d_fp35_type)});
+      d_nm.mk_node(Kind::FP_LEQ, {d_fp35_pzero, d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fple3, d_rewriter.rewrite(fple3));
 }
 
-TEST_F(TestRewriterFp, fp_le_eq)
+TEST_F(TestRewriterFp, fp_leq_eq)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_LE_EQ;
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_LEQ_EQ;
   //// applies
-  test_rule<kind>(d_nm.mk_node(Kind::FP_LE, {d_fp35_a, d_fp35_a}));
-  test_rule<kind>(d_nm.mk_node(Kind::FP_LE,
+  test_rule<kind>(d_nm.mk_node(Kind::FP_LEQ, {d_fp35_a, d_fp35_a}));
+  test_rule<kind>(d_nm.mk_node(Kind::FP_LEQ,
                                {d_nm.mk_node(Kind::FP_NEG, {d_fp35_a}),
                                 d_nm.mk_node(Kind::FP_NEG, {d_fp35_a})}));
   //// does not apply
   test_rule_does_not_apply<kind>(
-      d_nm.mk_node(Kind::FP_LE, {d_fp35_a, d_fp35_b}));
+      d_nm.mk_node(Kind::FP_LEQ, {d_fp35_a, d_fp35_b}));
 }
 
 /* fplt --------------------------------------------------------------------- */
@@ -890,7 +890,10 @@ TEST_F(TestRewriterFp, fp_equal_elim)
 
 TEST_F(TestRewriterFp, fp_fp_elim) { test_elim_rule(Kind::FP_FP, d_fp35_type); }
 
-TEST_F(TestRewriterFp, fp_ge_elim) { test_elim_rule(Kind::FP_GE, d_fp35_type); }
+TEST_F(TestRewriterFp, fp_ge_elim)
+{
+  test_elim_rule(Kind::FP_GEQ, d_fp35_type);
+}
 
 TEST_F(TestRewriterFp, fp_gt_elim) { test_elim_rule(Kind::FP_GT, d_fp35_type); }
 

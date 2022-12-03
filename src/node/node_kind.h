@@ -89,7 +89,7 @@ enum class Kind
   FP_EQUAL,
   FP_FMA,
   FP_FP,
-  FP_GE,
+  FP_GEQ,
   FP_GT,
   FP_IS_INF,
   FP_IS_NAN,
@@ -98,7 +98,7 @@ enum class Kind
   FP_IS_POS,
   FP_IS_SUBNORMAL,
   FP_IS_ZERO,
-  FP_LE,
+  FP_LEQ,
   FP_LT,
   FP_MAX,
   FP_MIN,
@@ -167,7 +167,7 @@ struct KindInfo
     init(Kind::BV_CONCAT, 2, 0, "BV_CONCAT", "concat", KindInfo::LEFT_ASSOC);
     init(Kind::BV_DEC, 2, 0, "BV_DEC", "bvdec");
     init(Kind::BV_EXTRACT, 1, 2, "BV_EXTRACT", "extract");
-    init(Kind::BV_INC, 2, 0, "BV_DEC", "bvinc");
+    init(Kind::BV_INC, 2, 0, "BV_INC", "bvinc");
     init(Kind::BV_MUL, 2, 0, "BV_MUL", "bvmul", KindInfo::LEFT_ASSOC);
     init(Kind::BV_NAND, 2, 0, "BV_NAND", "bvnand");
     init(Kind::BV_NEG, 1, 0, "BV_NEG", "bvneg");
@@ -217,7 +217,7 @@ struct KindInfo
     init(Kind::FP_EQUAL, 2, 0, "FP_EQUAL", "fp.eq", KindInfo::CHAINABLE);
     init(Kind::FP_FMA, 4, 0, "FP_FMA", "fp.fma");
     init(Kind::FP_FP, 3, 0, "FP_FP", "fp");
-    init(Kind::FP_GE, 2, 0, "FP_GE", "fp.geq", KindInfo::CHAINABLE);
+    init(Kind::FP_GEQ, 2, 0, "FP_GEQ", "fp.geq", KindInfo::CHAINABLE);
     init(Kind::FP_GT, 2, 0, "FP_GT", "fp.gt", KindInfo::CHAINABLE);
     init(Kind::FP_IS_INF, 1, 0, "FP_IS_INF", "fp.isInfinite");
     init(Kind::FP_IS_NAN, 1, 0, "FP_IS_NAN", "fp.isNaN");
@@ -226,12 +226,12 @@ struct KindInfo
     init(Kind::FP_IS_POS, 1, 0, "FP_IS_POS", "fp.isPositive");
     init(Kind::FP_IS_SUBNORMAL, 1, 0, "FP_IS_SUBNORMAL", "fp.isSubnormal");
     init(Kind::FP_IS_ZERO, 1, 0, "FP_IS_ZERO", "fp.isZero");
-    init(Kind::FP_LE, 2, 0, "FP_LE", "fp.leq", KindInfo::CHAINABLE);
+    init(Kind::FP_LEQ, 2, 0, "FP_LEQ", "fp.leq", KindInfo::CHAINABLE);
     init(Kind::FP_LT, 2, 0, "FP_LT", "fp.lt", KindInfo::CHAINABLE);
     init(Kind::FP_MAX, 2, 0, "FP_MAX", "fp.max");
     init(Kind::FP_MIN, 2, 0, "FP_MIN", "fp.min");
     init(Kind::FP_MUL, 3, 0, "FP_MUL", "fp.mul");
-    init(Kind::FP_NEG, 1, 0, "FP_IS_NEG", "fp.neg");
+    init(Kind::FP_NEG, 1, 0, "FP_NEG", "fp.neg");
     init(Kind::FP_REM, 2, 0, "FP_REM", "fp.rem");
     init(Kind::FP_RTI, 2, 0, "FP_RTI", "fp.roundToIntegral");
     init(Kind::FP_SQRT, 2, 0, "FP_SQRT", "fp.sqrt");

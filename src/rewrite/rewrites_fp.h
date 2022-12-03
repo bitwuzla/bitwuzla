@@ -98,16 +98,16 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_IS_ZERO_ABS_NEG>::_apply(
     Rewriter& rewriter, const Node& node);
 
-/* fple --------------------------------------------------------------------- */
+/* fpleq -------------------------------------------------------------------- */
 
 // const_binary_fp_bool_exp
 template <>
-Node RewriteRule<RewriteRuleKind::FP_LE_EVAL>::_apply(Rewriter& rewriter,
-                                                      const Node& node);
+Node RewriteRule<RewriteRuleKind::FP_LEQ_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // fp_lte
 template <>
-Node RewriteRule<RewriteRuleKind::FP_LE_EQ>::_apply(Rewriter& rewriter,
-                                                    const Node& node);
+Node RewriteRule<RewriteRuleKind::FP_LEQ_EQ>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
 
 /* fplte -------------------------------------------------------------------- */
 
@@ -220,8 +220,8 @@ Node RewriteRule<RewriteRuleKind::FP_EQUAL_ELIM>::_apply(Rewriter& rewriter,
                                                          const Node& node);
 
 template <>
-Node RewriteRule<RewriteRuleKind::FP_GE_ELIM>::_apply(Rewriter& rewriter,
-                                                      const Node& node);
+Node RewriteRule<RewriteRuleKind::FP_GEQ_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 
 template <>
 Node RewriteRule<RewriteRuleKind::FP_GT_ELIM>::_apply(Rewriter& rewriter,

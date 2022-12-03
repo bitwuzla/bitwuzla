@@ -318,7 +318,7 @@ WordBlaster::_word_blast(const Node& node)
             symfpu::isPositive<SymFpuSymTraits>(
                 cur[0].type(), d_internal->d_unpacked_float_map.at(cur[0])));
       }
-      else if (kind == node::Kind::FP_LE)
+      else if (kind == node::Kind::FP_LEQ)
       {
         assert(d_internal->d_unpacked_float_map.find(cur[0])
                != d_internal->d_unpacked_float_map.end());

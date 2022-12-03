@@ -267,7 +267,9 @@ translate_bzla_node(NodeManager &nm, BzlaNode *node)
           case BZLA_BV_CONCAT_NODE:
             res = nm.mk_node(Kind::BV_CONCAT, children);
             break;
-          case BZLA_FP_LTE_NODE: res = nm.mk_node(Kind::FP_LE, children); break;
+          case BZLA_FP_LTE_NODE:
+            res = nm.mk_node(Kind::FP_LEQ, children);
+            break;
           case BZLA_FP_LT_NODE: res = nm.mk_node(Kind::FP_LT, children); break;
           case BZLA_FP_MIN_NODE:
             res = nm.mk_node(Kind::FP_MIN, children);

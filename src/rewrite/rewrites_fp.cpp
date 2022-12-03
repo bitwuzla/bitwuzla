@@ -355,8 +355,8 @@ RewriteRule<RewriteRuleKind::FP_IS_ZERO_ABS_NEG>::_apply(Rewriter& rewriter,
  */
 template <>
 Node
-RewriteRule<RewriteRuleKind::FP_LE_EVAL>::_apply(Rewriter& rewriter,
-                                                 const Node& node)
+RewriteRule<RewriteRuleKind::FP_LEQ_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
 {
   (void) rewriter;
   assert(node.num_children() == 2);
@@ -374,8 +374,8 @@ RewriteRule<RewriteRuleKind::FP_LE_EVAL>::_apply(Rewriter& rewriter,
  */
 template <>
 Node
-RewriteRule<RewriteRuleKind::FP_LE_EQ>::_apply(Rewriter& rewriter,
-                                               const Node& node)
+RewriteRule<RewriteRuleKind::FP_LEQ_EQ>::_apply(Rewriter& rewriter,
+                                                const Node& node)
 {
   assert(node.num_children() == 2);
   if (node[0] != node[1]) return node;
@@ -729,11 +729,11 @@ RewriteRule<RewriteRuleKind::FP_FP_ELIM>::_apply(Rewriter& rewriter,
 
 template <>
 Node
-RewriteRule<RewriteRuleKind::FP_GE_ELIM>::_apply(Rewriter& rewriter,
-                                                 const Node& node)
+RewriteRule<RewriteRuleKind::FP_GEQ_ELIM>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
 {
   assert(node.num_children() == 2);
-  return rewriter.mk_node(Kind::FP_LE, {node[1], node[0]});
+  return rewriter.mk_node(Kind::FP_LEQ, {node[1], node[0]});
 }
 
 template <>

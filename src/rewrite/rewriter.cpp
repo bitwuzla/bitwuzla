@@ -172,7 +172,7 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::FP_EQUAL: res = rewrite_fp_equal(node); break;
     case node::Kind::FP_FMA: res = rewrite_fp_fma(node); break;
     case node::Kind::FP_FP: res = rewrite_fp_fp(node); break;
-    case node::Kind::FP_GE: res = rewrite_fp_ge(node); break;
+    case node::Kind::FP_GEQ: res = rewrite_fp_geq(node); break;
     case node::Kind::FP_GT: res = rewrite_fp_gt(node); break;
 
     case node::Kind::FP_IS_INF: res = rewrite_fp_is_inf(node); break;
@@ -185,7 +185,7 @@ Rewriter::_rewrite(const Node& node)
       break;
     case node::Kind::FP_IS_ZERO: res = rewrite_fp_is_zero(node); break;
 
-    case node::Kind::FP_LE: res = rewrite_fp_le(node); break;
+    case node::Kind::FP_LEQ: res = rewrite_fp_leq(node); break;
     case node::Kind::FP_LT: res = rewrite_fp_lt(node); break;
     case node::Kind::FP_MAX: res = rewrite_fp_max(node); break;
     case node::Kind::FP_MIN: res = rewrite_fp_min(node); break;
@@ -869,15 +869,15 @@ DONE:
 }
 
 Node
-Rewriter::rewrite_fp_le(const Node& node)
+Rewriter::rewrite_fp_leq(const Node& node)
 {
   RewriteRuleKind kind;
   Node res = node;
 
   if (d_enabled)
   {
-    BZLA_APPLY_RW_RULE(FP_LE_EVAL);
-    BZLA_APPLY_RW_RULE(FP_LE_EQ);
+    BZLA_APPLY_RW_RULE(FP_LEQ_EVAL);
+    BZLA_APPLY_RW_RULE(FP_LEQ_EQ);
   }
 
 DONE:
@@ -1076,7 +1076,7 @@ DONE:
 BZLA_ELIM_KIND_IMPL(fp_equal, FP_EQUAL_ELIM)
 BZLA_ELIM_KIND_IMPL(fp_fp, FP_FP_ELIM)
 BZLA_ELIM_KIND_IMPL(fp_gt, FP_GT_ELIM)
-BZLA_ELIM_KIND_IMPL(fp_ge, FP_GE_ELIM)
+BZLA_ELIM_KIND_IMPL(fp_geq, FP_GEQ_ELIM)
 BZLA_ELIM_KIND_IMPL(fp_sub, FP_SUB_ELIM)
 
 #undef BZLA_ELIM_KIND_IMPL

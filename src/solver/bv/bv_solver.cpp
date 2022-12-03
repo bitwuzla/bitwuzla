@@ -29,7 +29,7 @@ BvSolver::is_leaf(const Node& term)
          || k == Kind::FP_IS_INF || k == Kind::FP_IS_NAN || k == Kind::FP_IS_NEG
          || k == Kind::FP_IS_NORMAL || k == Kind::FP_IS_POS
          || k == Kind::FP_IS_SUBNORMAL || k == Kind::FP_IS_ZERO
-         || k == Kind::FP_EQUAL || k == Kind::FP_LE
+         || k == Kind::FP_EQUAL || k == Kind::FP_LEQ
          || k == Kind::FP_LT
          // FP to BV conversion
          || k == Kind::FP_TO_SBV
@@ -136,7 +136,7 @@ BvSolver::value(const Node& term)
         case Kind::FP_IS_SUBNORMAL:
         case Kind::FP_IS_ZERO:
         case Kind::FP_EQUAL:
-        case Kind::FP_LE:
+        case Kind::FP_LEQ:
         case Kind::FP_LT:
         case Kind::FORALL:
         // Bit-vector abstractions
@@ -334,7 +334,7 @@ BvSolver::value(const Node& term)
         case Kind::FP_DIV:
         case Kind::FP_FMA:
         case Kind::FP_FP:
-        case Kind::FP_GE:
+        case Kind::FP_GEQ:
         case Kind::FP_GT:
         case Kind::FP_MAX:
         case Kind::FP_MIN:

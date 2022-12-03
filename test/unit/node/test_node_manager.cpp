@@ -304,7 +304,7 @@ TEST_F(TestNodeManager, check_type)
   ASSERT_EQ(nm.mk_node(Kind::FP_TO_FP_FROM_BV, {bv_const1}, {8, 24}).type(),
             nm.mk_fp_type(8, 24));
 
-  for (auto kind : {Kind::FP_EQUAL, Kind::FP_LE, Kind::FP_LT})
+  for (auto kind : {Kind::FP_EQUAL, Kind::FP_LEQ, Kind::FP_LT})
   {
     ASSERT_EQ(nm.mk_node(kind, {fp_const1, fp_const2}).type(), bool_type);
   }

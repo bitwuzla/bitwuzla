@@ -239,9 +239,9 @@ NodeManager::compute_type(Kind kind,
     case Kind::BV_SGT:
     case Kind::BV_SLE:
     case Kind::FP_EQUAL:
-    case Kind::FP_LE:
+    case Kind::FP_LEQ:
     case Kind::FP_LT:
-    case Kind::FP_GE:
+    case Kind::FP_GEQ:
     case Kind::FP_GT:
     case Kind::FP_IS_INF:
     case Kind::FP_IS_NAN:
@@ -567,9 +567,9 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::FP_EQUAL:
-    case Kind::FP_GE:
+    case Kind::FP_GEQ:
     case Kind::FP_GT:
-    case Kind::FP_LE:
+    case Kind::FP_LEQ:
     case Kind::FP_LT:
     case Kind::FP_MAX:
     case Kind::FP_MIN:
