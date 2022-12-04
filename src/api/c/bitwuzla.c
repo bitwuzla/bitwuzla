@@ -4673,3 +4673,18 @@ bitwuzla_add_output(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
 
   BZLA_PUSH_STACK(bzla->outputs, bzla_node_copy(bzla, bzla_term));
 }
+
+void
+bitwuzla_increment_refcount(Bitwuzla *bitwuzla, const BitwuzlaTerm *term) {
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  bzla_node_copy(bzla, bzla_term); // increment refs
+  bzla_node_inc_ext_ref_counter(bzla, bzla_term); // increment ext_refs
+}
+void
+bitwuzla_decrement_refcount(Bitwuzla *bitwuzla, const BitwuzlaTerm *term) {
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  bzla_node_dec_ext_ref_counter(bzla, bzla_term);
+  bzla_node_release(bzla, bzla_term);
+}

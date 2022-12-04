@@ -3956,6 +3956,8 @@ void bitwuzla_term_dump(const BitwuzlaTerm *term,
                         const char *format,
                         FILE *file);
 
+void bitwuzla_decrement_refcount(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
+void bitwuzla_increment_refcount(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 /* -------------------------------------------------------------------------- */
 
 #if __cplusplus
