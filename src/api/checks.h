@@ -89,6 +89,9 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_CHECK_NOT_ZERO(arg) \
   BITWUZLA_CHECK((arg) != 0) << "argument '" << #arg << "' must be > 0";
 
+#define BITWUZLA_CHECK_GREATER_ONE(arg) \
+  BITWUZLA_CHECK((arg) > 1) << "argument '" << #arg << "' must be > 1";
+
 #define BITWUZLA_CHECK_STR_NOT_EMPTY(arg) \
   BITWUZLA_CHECK(!(arg).empty())          \
       << "argument '" << #arg << "' must not be an empty string";
@@ -110,6 +113,10 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_CHECK_TERM_IS_BV(arg) \
   BITWUZLA_CHECK((arg).d_node->type().is_bv()) << "expected bit-vector term";
 
+#define BITWUZLA_CHECK_TERM_IS_BV_VALUE(arg)                               \
+  BITWUZLA_CHECK((arg).d_node->is_value() && (arg).d_node->type().is_bv()) \
+      << "expected bit-vector value";
+
 #define BITWUZLA_CHECK_TERM_IS_FP(arg)         \
   BITWUZLA_CHECK((arg).d_node->type().is_fp()) \
       << "expected floating-point term";
@@ -117,10 +124,13 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_CHECK_TERM_IS_RM(arg)                                      \
   BITWUZLA_CHECK((arg).d_node->type().is_rm()) << "expected rounding-mode " \
                                                   "term";
-
 #define BITWUZLA_CHECK_TERM_IS_RM_AT_IDX(args, i)  \
   BITWUZLA_CHECK((args)[i].d_node->type().is_rm()) \
       << "expected rounding-mode term at index " << i;
+
+#define BITWUZLA_CHECK_TERM_IS_RM_VALUE(arg)                               \
+  BITWUZLA_CHECK((arg).d_node->is_value() && (arg).d_node->type().is_rm()) \
+      << "expected rounding-mode value";
 
 #define BITWUZLA_CHECK_TERM_IS_BOOL(arg) \
   BITWUZLA_CHECK((arg).d_node->type().is_bool()) << "expected Boolean term";
@@ -192,11 +202,11 @@ class BitwuzlaExceptionStream
     for (size_t i = 0, argc = args.size(); i < argc; ++i)                      \
     {                                                                          \
       BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i].d_node, i);                       \
-      if (i > (start))                                                         \
+      if (i == start || i > start)                                             \
       {                                                                        \
         BITWUZLA_CHECK(args[i].d_node->type().is_sort_fun())                   \
             << "term with unexpected sort at index " << i;                     \
-        if ((match))                                                           \
+        if (i > start && (match))                                              \
         {                                                                      \
           BITWUZLA_CHECK(args[i].d_node->type() == args[i - 1].d_node->type()) \
               << "terms with mismatching sort at indices " << (i - 1)          \

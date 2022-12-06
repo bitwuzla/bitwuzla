@@ -1491,8 +1491,8 @@ mk_bv_sort(uint64_t size)
 Sort
 mk_fp_sort(uint64_t exp_size, uint64_t sig_size)
 {
-  BITWUZLA_CHECK_NOT_ZERO(exp_size);
-  BITWUZLA_CHECK_NOT_ZERO(sig_size);
+  BITWUZLA_CHECK_GREATER_ONE(exp_size);
+  BITWUZLA_CHECK_GREATER_ONE(sig_size);
   return bzla::NodeManager::get().mk_fp_type(exp_size, sig_size);
 }
 
@@ -1668,9 +1668,9 @@ mk_fp_value(const Term &bv_sign,
   BITWUZLA_CHECK_NOT_NULL(bv_sign.d_node);
   BITWUZLA_CHECK_NOT_NULL(bv_exponent.d_node);
   BITWUZLA_CHECK_NOT_NULL(bv_significand.d_node);
-  BITWUZLA_CHECK_TERM_IS_BV(bv_sign);
-  BITWUZLA_CHECK_TERM_IS_BV(bv_exponent);
-  BITWUZLA_CHECK_TERM_IS_BV(bv_significand);
+  BITWUZLA_CHECK_TERM_IS_BV_VALUE(bv_sign);
+  BITWUZLA_CHECK_TERM_IS_BV_VALUE(bv_exponent);
+  BITWUZLA_CHECK_TERM_IS_BV_VALUE(bv_significand);
   return bzla::NodeManager::get().mk_value(bzla::FloatingPoint(
       bzla::NodeManager::get().mk_fp_type(
           bv_exponent.d_node->type().bv_size(),
@@ -1686,7 +1686,7 @@ mk_fp_value_from_real(const Sort &sort, const Term &rm, const std::string &real)
   BITWUZLA_CHECK_NOT_NULL(sort.d_type);
   BITWUZLA_CHECK_NOT_NULL(rm.d_node);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
-  BITWUZLA_CHECK_TERM_IS_RM(rm);
+  BITWUZLA_CHECK_TERM_IS_RM_VALUE(rm);
   BITWUZLA_CHECK(bzla::util::is_valid_real_str(real)) << "invalid real string";
   return bzla::NodeManager::get().mk_value(bzla::FloatingPoint::from_real(
       *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), real));
@@ -1701,7 +1701,7 @@ mk_fp_value_from_rational(const Sort &sort,
   BITWUZLA_CHECK_NOT_NULL(sort.d_type);
   BITWUZLA_CHECK_NOT_NULL(rm.d_node);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
-  BITWUZLA_CHECK_TERM_IS_RM(rm);
+  BITWUZLA_CHECK_TERM_IS_RM_VALUE(rm);
   BITWUZLA_CHECK(bzla::util::is_valid_real_str(num))
       << "invalid real string for argument 'num'";
   BITWUZLA_CHECK(bzla::util::is_valid_real_str(den))
@@ -1865,6 +1865,9 @@ mk_term(Kind kind,
         case Kind::ARRAY_SELECT:
           BITWUZLA_CHECK_MK_TERM_ARGS_ANY_SORT(args, 1, true);
           BITWUZLA_CHECK_TERM_IS_ARRAY(args[0]);
+          BITWUZLA_CHECK(args[1].d_node->type()
+                         == args[0].d_node->type().array_index())
+              << "sort of index term does not match index sort of array";
           break;
         case Kind::FP_MAX:
         case Kind::FP_MIN:
@@ -1964,7 +1967,23 @@ mk_term(Kind kind,
     case Kind::BV_ZERO_EXTEND:
       BITWUZLA_CHECK_MK_TERM_ARGC(kind, false, 1, args.size());
       BITWUZLA_CHECK_MK_TERM_IDXC(kind, 1, indices.size());
-      BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_bv, true);
+      BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, true);
+      if (kind == Kind::BV_REPEAT)
+      {
+        BITWUZLA_CHECK(((uint64_t) (UINT64_MAX / indices[0]))
+                       >= args[0].d_node->type().bv_size())
+            << "resulting bit-vector size exceeds maximum "
+               "bit-vector size of "
+            << UINT64_MAX;
+      }
+      else if (kind == Kind::BV_SIGN_EXTEND || kind == Kind::BV_ZERO_EXTEND)
+      {
+        BITWUZLA_CHECK(indices[0]
+                       <= UINT64_MAX - args[0].d_node->type().bv_size())
+            << "extending term of bit-vector size "
+            << args[0].d_node->type().bv_size() << " with " << indices[0]
+            << " bits exceeds maximum bit-vector size of " << UINT64_MAX;
+      }
       break;
     // unary, indexed (2)
     case Kind::BV_EXTRACT:
@@ -1973,10 +1992,23 @@ mk_term(Kind kind,
       BITWUZLA_CHECK_MK_TERM_IDXC(kind, 2, indices.size());
       switch (kind)
       {
-        case Kind::FP_TO_FP_FROM_BV:
-          BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_fp, true);
+        case Kind::BV_EXTRACT:
+          BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, true);
+          BITWUZLA_CHECK(indices[0] < args[0].d_node->type().bv_size())
+              << "upper index must be less than the bit-width";
+          BITWUZLA_CHECK(indices[0] >= indices[1])
+              << "upper index must be greater or equal to lower index";
           break;
-        default: BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_bv, true);
+        case Kind::FP_TO_FP_FROM_BV:
+          BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, true);
+          BITWUZLA_CHECK_GREATER_ONE(indices[0]);
+          BITWUZLA_CHECK_GREATER_ONE(indices[1]);
+          BITWUZLA_CHECK(indices[0] + indices[1]
+                         == args[0].d_node->type().bv_size())
+              << "size of bit-vector does not match given floating-point "
+                 "format";
+          break;
+        default: assert(false);
       }
       break;
     // binary, indexed (1)
@@ -1993,9 +2025,11 @@ mk_term(Kind kind,
     case Kind::FP_TO_FP_FROM_UBV:
       BITWUZLA_CHECK_MK_TERM_ARGC(kind, false, 2, args.size());
       BITWUZLA_CHECK_MK_TERM_IDXC(kind, 2, indices.size());
+      BITWUZLA_CHECK_GREATER_ONE(indices[0]);
+      BITWUZLA_CHECK_GREATER_ONE(indices[1]);
       switch (kind)
       {
-        case Kind::FP_TO_FP_FROM_BV:
+        case Kind::FP_TO_FP_FROM_FP:
           BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_fp, true);
           break;
         default: BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_bv, true);

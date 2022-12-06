@@ -72,7 +72,7 @@ class TestCApi : public TestBitwuzla
 
     d_var1      = bitwuzla_mk_var(d_bzla, d_bv_sort8, "var1");
     d_var2      = bitwuzla_mk_var(d_bzla, d_bv_sort8, "var2");
-    d_bound_var = bitwuzla_mk_var(d_bzla, d_bv_sort8, "bount_var");
+    d_bound_var = bitwuzla_mk_var(d_bzla, d_bv_sort8, "bound_var");
     d_bool_var =
         bitwuzla_mk_var(d_bzla, bitwuzla_mk_bool_sort(d_bzla), "bool_var");
 
@@ -988,9 +988,9 @@ TEST_F(TestCApi, mk_term_check_cnt)
       d_rm_const, d_fp_const16, d_fp_const16};
   std::vector<const BitwuzlaTerm *> fun_args1 = {d_var1};
 
-  std::vector<uint32_t> idxs1    = {1};
-  std::vector<uint32_t> idxs2    = {2, 0};
-  std::vector<uint32_t> fp_idxs1 = {5, 8};
+  std::vector<uint64_t> idxs1    = {1};
+  std::vector<uint64_t> idxs2    = {2, 0};
+  std::vector<uint64_t> fp_idxs1 = {5, 8};
 
   // bool
   ASSERT_DEATH(
@@ -1436,7 +1436,7 @@ TEST_F(TestCApi, mk_term_check_cnt)
 
 TEST_F(TestCApi, mk_term_check_args)
 {
-  const char *error_inv_sort  = "unexpected sort";
+  const char *error_invalid_sort = "unexpected sort";
   const char *error_mis_sort  = "mismatching sort";
   const char *error_bvar_term = "expected unbound variable term";
   const char *error_dvar_term = "given variables are not distinct";
@@ -1448,54 +1448,54 @@ TEST_F(TestCApi, mk_term_check_args)
   const char *error_arr_element_sort =
       "sort of element term does not match element sort of array";
 
-  std::vector<const BitwuzlaTerm *> array_select_args2_inv_1 = {d_fp_const16,
-                                                                d_array_fpbv};
-  std::vector<const BitwuzlaTerm *> array_select_args2_inv_2 = {d_array_fpbv,
-                                                                d_bv_const8};
+  std::vector<const BitwuzlaTerm *> array_select_args2_invalid_1 = {
+      d_fp_const16, d_array_fpbv};
+  std::vector<const BitwuzlaTerm *> array_select_args2_invalid_2 = {
+      d_array_fpbv, d_bv_const8};
 
-  std::vector<const BitwuzlaTerm *> array_store_args3_inv_1 = {
+  std::vector<const BitwuzlaTerm *> array_store_args3_invalid_1 = {
       d_fp_const16, d_array_fpbv, d_bv_const8};
-  std::vector<const BitwuzlaTerm *> array_store_args3_inv_2 = {
+  std::vector<const BitwuzlaTerm *> array_store_args3_invalid_2 = {
       d_array_fpbv, d_bv_const8, d_bv_const8};
-  std::vector<const BitwuzlaTerm *> array_store_args3_inv_3 = {
+  std::vector<const BitwuzlaTerm *> array_store_args3_invalid_3 = {
       d_array_fpbv, d_fp_const16, d_fp_const16};
 
-  std::vector<const BitwuzlaTerm *> apply_args3_inv_1 = {
+  std::vector<const BitwuzlaTerm *> apply_args3_invalid_1 = {
       d_fun, d_bv_const8, d_fun};
-  std::vector<const BitwuzlaTerm *> apply_args3_inv_2 = {
+  std::vector<const BitwuzlaTerm *> apply_args3_invalid_2 = {
       d_fun, d_bv_const8, d_bv_const8, d_fp_pzero32};
 
-  std::vector<const BitwuzlaTerm *> bool_args1_inv = {d_bv_const8};
-  std::vector<const BitwuzlaTerm *> bool_args2_inv = {d_fp_pzero32,
-                                                      d_fp_pzero32};
+  std::vector<const BitwuzlaTerm *> bool_args1_invalid = {d_bv_const8};
+  std::vector<const BitwuzlaTerm *> bool_args2_invalid = {d_fp_pzero32,
+                                                          d_fp_pzero32};
   std::vector<const BitwuzlaTerm *> bool_args2_mis = {d_true, d_bv_const8};
 
   std::vector<const BitwuzlaTerm *> bv_args1     = {d_bv_const8};
-  std::vector<const BitwuzlaTerm *> bv_args1_inv = {d_fp_const16};
-  std::vector<const BitwuzlaTerm *> bv_args2_inv = {d_fp_const16, d_fp_const16};
+  std::vector<const BitwuzlaTerm *> bv_args1_invalid = {d_fp_const16};
+  std::vector<const BitwuzlaTerm *> bv_args2_invalid = {d_fp_const16,
+                                                        d_fp_const16};
   std::vector<const BitwuzlaTerm *> bv_args2_mis = {d_bv_one1, d_bv_const8};
   std::vector<const BitwuzlaTerm *> bv_args2_rm  = {d_rm_const, d_bv_const8};
-  std::vector<const BitwuzlaTerm *> bv_args2_rm_inv_1 = {d_bv_const8,
-                                                         d_bv_const8};
-  std::vector<const BitwuzlaTerm *> bv_args2_rm_inv_2 = {d_rm_const,
-                                                         d_fp_const16};
+  std::vector<const BitwuzlaTerm *> bv_args2_rm_invalid_1 = {d_bv_const8,
+                                                             d_bv_const8};
+  std::vector<const BitwuzlaTerm *> bv_args2_rm_invalid_2 = {d_rm_const,
+                                                             d_fp_const16};
 
   std::vector<const BitwuzlaTerm *> ite_death_args3_1 = {
       d_true, d_bv_const8, d_bv_one1};
-  std::vector<const BitwuzlaTerm *> ite_args3_inv_2 = {
+  std::vector<const BitwuzlaTerm *> ite_args3_invalid_2 = {
       d_bv_const8, d_bv_const8, d_bv_const8};
 
-  std::vector<const BitwuzlaTerm *> lambda_args2_inv_1 = {d_bv_const8,
-                                                          d_bv_const8};
-  std::vector<const BitwuzlaTerm *> lambda_args2_inv_2 = {d_bound_var,
-                                                          d_bv_const8};
-  std::vector<const BitwuzlaTerm *> lambda_args2_inv_3 = {d_var1, d_fun};
-  std::vector<const BitwuzlaTerm *> lambda_args3_inv_1 = {
+  std::vector<const BitwuzlaTerm *> lambda_args2_invalid_1 = {d_bv_const8,
+                                                              d_bv_const8};
+  std::vector<const BitwuzlaTerm *> lambda_args2_invalid_2 = {d_bound_var,
+                                                              d_bv_const8};
+  std::vector<const BitwuzlaTerm *> lambda_args3_invalid_1 = {
       d_var1, d_var1, d_bv_const8};
 
   const BitwuzlaTerm *lambda_body =
       bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, d_var2, d_bv_const8);
-  std::vector<const BitwuzlaTerm *> lambda_args3_inv_2 = {
+  std::vector<const BitwuzlaTerm *> lambda_args3_invalid_2 = {
       d_var1,
       d_var2,
       bitwuzla_mk_term2_indexed2(d_bzla,
@@ -1507,40 +1507,42 @@ TEST_F(TestCApi, mk_term_check_args)
 
   std::vector<const BitwuzlaTerm *> fp_args2_rm = {d_rm_const, d_fp_const16};
 
-  std::vector<const BitwuzlaTerm *> fp_args1_inv = {d_bv_one1};
-  std::vector<const BitwuzlaTerm *> fp_args2_inv = {d_bv_zero8, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> fp_args1_invalid = {d_bv_one1};
+  std::vector<const BitwuzlaTerm *> fp_args2_invalid = {d_bv_zero8,
+                                                        d_bv_const8};
   std::vector<const BitwuzlaTerm *> fp_args2_mis = {d_fp_pzero32, d_fp_const16};
-  std::vector<const BitwuzlaTerm *> fp_args2_rm_inv_1 = {d_bv_const8,
-                                                         d_fp_const16};
-  std::vector<const BitwuzlaTerm *> fp_args2_rm_inv_2 = {d_rm_const,
-                                                         d_bv_const8};
+  std::vector<const BitwuzlaTerm *> fp_args2_rm_invalid_1 = {d_bv_const8,
+                                                             d_fp_const16};
+  std::vector<const BitwuzlaTerm *> fp_args2_rm_invalid_2 = {d_rm_const,
+                                                             d_bv_const8};
   std::vector<const BitwuzlaTerm *> fp_args3_rm_mis   = {
         d_rm_const, d_fp_pzero32, d_fp_const16};
-  std::vector<const BitwuzlaTerm *> fp_args3_rm_inv_1 = {
+  std::vector<const BitwuzlaTerm *> fp_args3_rm_invalid_1 = {
       d_fp_const16, d_fp_const16, d_fp_const16};
-  std::vector<const BitwuzlaTerm *> fp_args3_rm_inv_2 = {
+  std::vector<const BitwuzlaTerm *> fp_args3_rm_invalid_2 = {
       d_rm_const, d_bv_zero8, d_fp_const16};
   std::vector<const BitwuzlaTerm *> fp_args4_mis = {
       d_rm_const, d_fp_pzero32, d_fp_const16, d_fp_const16};
-  std::vector<const BitwuzlaTerm *> fp_args4_rm_inv_1 = {
+  std::vector<const BitwuzlaTerm *> fp_args4_rm_invalid_1 = {
       d_rm_const, d_bv_zero8, d_fp_const16, d_fp_const16};
-  std::vector<const BitwuzlaTerm *> fp_args4_rm_inv_2 = {
+  std::vector<const BitwuzlaTerm *> fp_args4_rm_invalid_2 = {
       d_fp_const16, d_fp_const16, d_fp_const16, d_fp_const16};
 
-  std::vector<const BitwuzlaTerm *> fp_fp_args3_inv_1 = {
+  std::vector<const BitwuzlaTerm *> fp_fp_args3_invalid_1 = {
       d_bv_const8, d_bv_zero8, d_bv_ones23};
-  std::vector<const BitwuzlaTerm *> fp_fp_args3_inv_2 = {
+  std::vector<const BitwuzlaTerm *> fp_fp_args3_invalid_2 = {
       d_bv_one1, d_fp_pzero32, d_bv_ones23};
-  std::vector<const BitwuzlaTerm *> fp_fp_args3_inv_3 = {
+  std::vector<const BitwuzlaTerm *> fp_fp_args3_invalid_3 = {
       d_bv_one1, d_bv_zero8, d_fp_pzero32};
-  std::vector<const BitwuzlaTerm *> fp_fp_args3_inv_4 = {
+  std::vector<const BitwuzlaTerm *> fp_fp_args3_invalid_4 = {
       d_fp_pzero32, d_bv_zero8, d_bv_ones23};
 
-  std::vector<const BitwuzlaTerm *> quant_args2_inv_1 = {d_true, d_true};
-  std::vector<const BitwuzlaTerm *> quant_args2_inv_2 = {d_var1, d_bv_const8};
-  std::vector<const BitwuzlaTerm *> quant_args2_inv_3 = {d_bound_var,
-                                                         d_bv_const8};
-  std::vector<const BitwuzlaTerm *> quant_args3_inv   = {
+  std::vector<const BitwuzlaTerm *> quant_args2_invalid_1 = {d_true, d_true};
+  std::vector<const BitwuzlaTerm *> quant_args2_invalid_2 = {d_var1,
+                                                             d_bv_const8};
+  std::vector<const BitwuzlaTerm *> quant_args2_invalid_3 = {d_bound_var,
+                                                             d_bv_const8};
+  std::vector<const BitwuzlaTerm *> quant_args3_invalid   = {
         d_var1, d_var1, d_bv_const8};
 
   std::vector<uint32_t> bv_idxs1                 = {3};
@@ -1556,18 +1558,19 @@ TEST_F(TestCApi, mk_term_check_args)
   // bool
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_AND,
-                                bool_args2_inv.size(),
-                                bool_args2_inv.data()),
-               error_inv_sort);
+                                bool_args2_invalid.size(),
+                                bool_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_AND,
                                 bool_args2_mis.size(),
                                 bool_args2_mis.data()),
                error_mis_sort);
-  ASSERT_DEATH(
-      bitwuzla_mk_term(
-          d_bzla, BITWUZLA_KIND_IFF, fp_args2_inv.size(), fp_args2_inv.data()),
-      error_inv_sort);
+  ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
+                                BITWUZLA_KIND_IFF,
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_IFF,
                                 bool_args2_mis.size(),
@@ -1575,9 +1578,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_IMPLIES,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_IMPLIES,
                                 bool_args2_mis.size(),
@@ -1585,25 +1588,25 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_NOT,
-                                bool_args1_inv.size(),
-                                bool_args1_inv.data()),
-               error_inv_sort);
+                                bool_args1_invalid.size(),
+                                bool_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_OR,
-                                bool_args2_inv.size(),
-                                bool_args2_inv.data()),
-               error_inv_sort);
+                                bool_args2_invalid.size(),
+                                bool_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_XOR,
-                                bool_args2_inv.size(),
-                                bool_args2_inv.data()),
-               error_inv_sort);
+                                bool_args2_invalid.size(),
+                                bool_args2_invalid.data()),
+               error_invalid_sort);
   // bit-vectors
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ADD,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ADD,
                                 bv_args2_mis.size(),
@@ -1611,9 +1614,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_AND,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_AND,
                                 bv_args2_mis.size(),
@@ -1621,9 +1624,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ASHR,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ASHR,
                                 bv_args2_mis.size(),
@@ -1631,19 +1634,19 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_DEC,
-                                bv_args1_inv.size(),
-                                bv_args1_inv.data()),
-               error_inv_sort);
+                                bv_args1_invalid.size(),
+                                bv_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_INC,
-                                bv_args1_inv.size(),
-                                bv_args1_inv.data()),
-               error_inv_sort);
+                                bv_args1_invalid.size(),
+                                bv_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_MUL,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_MUL,
                                 bv_args2_mis.size(),
@@ -1651,9 +1654,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_NAND,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_NAND,
                                 bv_args2_mis.size(),
@@ -1661,14 +1664,14 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_NEG,
-                                bv_args1_inv.size(),
-                                bv_args1_inv.data()),
-               error_inv_sort);
+                                bv_args1_invalid.size(),
+                                bv_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_NOR,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_NOR,
                                 bv_args2_mis.size(),
@@ -1676,14 +1679,14 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_NOT,
-                                bv_args1_inv.size(),
-                                bv_args1_inv.data()),
-               error_inv_sort);
+                                bv_args1_invalid.size(),
+                                bv_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_OR,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_OR,
                                 bv_args2_mis.size(),
@@ -1691,24 +1694,24 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_REDAND,
-                                bv_args1_inv.size(),
-                                bv_args1_inv.data()),
-               error_inv_sort);
+                                bv_args1_invalid.size(),
+                                bv_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_REDOR,
-                                bv_args1_inv.size(),
-                                bv_args1_inv.data()),
-               error_inv_sort);
+                                bv_args1_invalid.size(),
+                                bv_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_REDXOR,
-                                bv_args1_inv.size(),
-                                bv_args1_inv.data()),
-               error_inv_sort);
+                                bv_args1_invalid.size(),
+                                bv_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_OR,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_OR,
                                 bv_args2_mis.size(),
@@ -1716,9 +1719,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ROL,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ROL,
                                 bv_args2_mis.size(),
@@ -1726,9 +1729,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ROR,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ROR,
                                 bv_args2_mis.size(),
@@ -1736,9 +1739,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SADD_OVERFLOW,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SADD_OVERFLOW,
                                 bv_args2_mis.size(),
@@ -1746,9 +1749,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SDIV_OVERFLOW,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SDIV_OVERFLOW,
                                 bv_args2_mis.size(),
@@ -1756,9 +1759,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SDIV,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SDIV,
                                 bv_args2_mis.size(),
@@ -1766,9 +1769,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SGE,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SGE,
                                 bv_args2_mis.size(),
@@ -1776,9 +1779,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SGT,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SGT,
                                 bv_args2_mis.size(),
@@ -1786,9 +1789,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SHL,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SHL,
                                 bv_args2_mis.size(),
@@ -1796,9 +1799,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SHR,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SHR,
                                 bv_args2_mis.size(),
@@ -1806,9 +1809,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SLE,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SLE,
                                 bv_args2_mis.size(),
@@ -1816,9 +1819,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SLT,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SLT,
                                 bv_args2_mis.size(),
@@ -1826,9 +1829,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SMOD,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SMOD,
                                 bv_args2_mis.size(),
@@ -1836,9 +1839,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SMUL_OVERFLOW,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SMUL_OVERFLOW,
                                 bv_args2_mis.size(),
@@ -1846,9 +1849,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SREM,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SREM,
                                 bv_args2_mis.size(),
@@ -1856,9 +1859,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SSUB_OVERFLOW,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SSUB_OVERFLOW,
                                 bv_args2_mis.size(),
@@ -1866,9 +1869,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SUB,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_SUB,
                                 bv_args2_mis.size(),
@@ -1876,9 +1879,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UADD_OVERFLOW,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UADD_OVERFLOW,
                                 bv_args2_mis.size(),
@@ -1886,9 +1889,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UDIV,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UDIV,
                                 bv_args2_mis.size(),
@@ -1896,9 +1899,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UGE,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UGE,
                                 bv_args2_mis.size(),
@@ -1906,9 +1909,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UGT,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UGT,
                                 bv_args2_mis.size(),
@@ -1916,9 +1919,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ULE,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ULE,
                                 bv_args2_mis.size(),
@@ -1926,9 +1929,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ULT,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_ULT,
                                 bv_args2_mis.size(),
@@ -1936,9 +1939,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UMUL_OVERFLOW,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UMUL_OVERFLOW,
                                 bv_args2_mis.size(),
@@ -1946,9 +1949,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UREM,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_UREM,
                                 bv_args2_mis.size(),
@@ -1956,9 +1959,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_USUB_OVERFLOW,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_USUB_OVERFLOW,
                                 bv_args2_mis.size(),
@@ -1966,9 +1969,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_XNOR,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_XNOR,
                                 bv_args2_mis.size(),
@@ -1976,9 +1979,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_XOR,
-                                bv_args2_inv.size(),
-                                bv_args2_inv.data()),
-               error_inv_sort);
+                                bv_args2_invalid.size(),
+                                bv_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_BV_XOR,
                                 bv_args2_mis.size(),
@@ -1987,18 +1990,18 @@ TEST_F(TestCApi, mk_term_check_args)
   // floating-point
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_ABS,
-                                fp_args1_inv.size(),
-                                fp_args1_inv.data()),
-               error_inv_sort);
+                                fp_args1_invalid.size(),
+                                fp_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_ADD,
-                                fp_args3_rm_inv_2.size(),
-                                fp_args3_rm_inv_2.data()),
-               error_inv_sort);
+                                fp_args3_rm_invalid_2.size(),
+                                fp_args3_rm_invalid_2.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_ADD,
-                                fp_args3_rm_inv_1.size(),
-                                fp_args3_rm_inv_1.data()),
+                                fp_args3_rm_invalid_1.size(),
+                                fp_args3_rm_invalid_1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_ADD,
@@ -2007,13 +2010,13 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_DIV,
-                                fp_args3_rm_inv_2.size(),
-                                fp_args3_rm_inv_2.data()),
-               error_inv_sort);
+                                fp_args3_rm_invalid_2.size(),
+                                fp_args3_rm_invalid_2.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_DIV,
-                                fp_args3_rm_inv_1.size(),
-                                fp_args3_rm_inv_1.data()),
+                                fp_args3_rm_invalid_1.size(),
+                                fp_args3_rm_invalid_1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_DIV,
@@ -2022,9 +2025,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_EQ,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_EQ,
                                 fp_args2_mis.size(),
@@ -2032,13 +2035,13 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_FMA,
-                                fp_args4_rm_inv_1.size(),
-                                fp_args4_rm_inv_1.data()),
-               error_inv_sort);
+                                fp_args4_rm_invalid_1.size(),
+                                fp_args4_rm_invalid_1.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_FMA,
-                                fp_args4_rm_inv_2.size(),
-                                fp_args4_rm_inv_2.data()),
+                                fp_args4_rm_invalid_2.size(),
+                                fp_args4_rm_invalid_2.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_FMA,
@@ -2047,29 +2050,29 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_FP,
-                                fp_fp_args3_inv_1.size(),
-                                fp_fp_args3_inv_1.data()),
+                                fp_fp_args3_invalid_1.size(),
+                                fp_fp_args3_invalid_1.data()),
                "invalid bit-vector size");
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_FP,
-                                fp_fp_args3_inv_2.size(),
-                                fp_fp_args3_inv_2.data()),
-               error_inv_sort);
+                                fp_fp_args3_invalid_2.size(),
+                                fp_fp_args3_invalid_2.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_FP,
-                                fp_fp_args3_inv_3.size(),
-                                fp_fp_args3_inv_3.data()),
-               error_inv_sort);
+                                fp_fp_args3_invalid_3.size(),
+                                fp_fp_args3_invalid_3.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_FP,
-                                fp_fp_args3_inv_4.size(),
-                                fp_fp_args3_inv_4.data()),
-               error_inv_sort);
+                                fp_fp_args3_invalid_4.size(),
+                                fp_fp_args3_invalid_4.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_GEQ,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_GEQ,
                                 fp_args2_mis.size(),
@@ -2077,9 +2080,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_GT,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_GT,
                                 fp_args2_mis.size(),
@@ -2087,44 +2090,44 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_IS_INF,
-                                fp_args1_inv.size(),
-                                fp_args1_inv.data()),
-               error_inv_sort);
+                                fp_args1_invalid.size(),
+                                fp_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_IS_NAN,
-                                fp_args1_inv.size(),
-                                fp_args1_inv.data()),
-               error_inv_sort);
+                                fp_args1_invalid.size(),
+                                fp_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_IS_NEG,
-                                fp_args1_inv.size(),
-                                fp_args1_inv.data()),
-               error_inv_sort);
+                                fp_args1_invalid.size(),
+                                fp_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_IS_NORMAL,
-                                fp_args1_inv.size(),
-                                fp_args1_inv.data()),
-               error_inv_sort);
+                                fp_args1_invalid.size(),
+                                fp_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_IS_POS,
-                                fp_args1_inv.size(),
-                                fp_args1_inv.data()),
-               error_inv_sort);
+                                fp_args1_invalid.size(),
+                                fp_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_IS_SUBNORMAL,
-                                fp_args1_inv.size(),
-                                fp_args1_inv.data()),
-               error_inv_sort);
+                                fp_args1_invalid.size(),
+                                fp_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_IS_ZERO,
-                                fp_args1_inv.size(),
-                                fp_args1_inv.data()),
-               error_inv_sort);
+                                fp_args1_invalid.size(),
+                                fp_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_LEQ,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_LEQ,
                                 fp_args2_mis.size(),
@@ -2132,9 +2135,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_LT,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_LT,
                                 fp_args2_mis.size(),
@@ -2142,9 +2145,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_MAX,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_MAX,
                                 fp_args2_mis.size(),
@@ -2152,9 +2155,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_MIN,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_MIN,
                                 fp_args2_mis.size(),
@@ -2162,18 +2165,18 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_IS_ZERO,
-                                fp_args1_inv.size(),
-                                fp_args1_inv.data()),
-               error_inv_sort);
+                                fp_args1_invalid.size(),
+                                fp_args1_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_MUL,
-                                fp_args3_rm_inv_2.size(),
-                                fp_args3_rm_inv_2.data()),
-               error_inv_sort);
+                                fp_args3_rm_invalid_2.size(),
+                                fp_args3_rm_invalid_2.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_MUL,
-                                fp_args3_rm_inv_1.size(),
-                                fp_args3_rm_inv_1.data()),
+                                fp_args3_rm_invalid_1.size(),
+                                fp_args3_rm_invalid_1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_MUL,
@@ -2182,9 +2185,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_REM,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_REM,
                                 fp_args2_mis.size(),
@@ -2192,9 +2195,9 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_RTI,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_RTI,
                                 fp_args2_mis.size(),
@@ -2202,19 +2205,19 @@ TEST_F(TestCApi, mk_term_check_args)
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_RTI,
-                                fp_args2_rm_inv_1.size(),
-                                fp_args2_rm_inv_1.data()),
+                                fp_args2_rm_invalid_1.size(),
+                                fp_args2_rm_invalid_1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_RTI,
-                                fp_args2_rm_inv_2.size(),
-                                fp_args2_rm_inv_2.data()),
-               error_inv_sort);
+                                fp_args2_rm_invalid_2.size(),
+                                fp_args2_rm_invalid_2.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_SQRT,
-                                fp_args2_inv.size(),
-                                fp_args2_inv.data()),
-               error_inv_sort);
+                                fp_args2_invalid.size(),
+                                fp_args2_invalid.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_SQRT,
                                 fp_args2_mis.size(),
@@ -2222,23 +2225,23 @@ TEST_F(TestCApi, mk_term_check_args)
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_SQRT,
-                                fp_args2_rm_inv_1.size(),
-                                fp_args2_rm_inv_1.data()),
+                                fp_args2_rm_invalid_1.size(),
+                                fp_args2_rm_invalid_1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_SQRT,
-                                fp_args2_rm_inv_2.size(),
-                                fp_args2_rm_inv_2.data()),
-               error_inv_sort);
+                                fp_args2_rm_invalid_2.size(),
+                                fp_args2_rm_invalid_2.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_SUB,
-                                fp_args3_rm_inv_2.size(),
-                                fp_args3_rm_inv_2.data()),
-               error_inv_sort);
+                                fp_args3_rm_invalid_2.size(),
+                                fp_args3_rm_invalid_2.data()),
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_SUB,
-                                fp_args3_rm_inv_1.size(),
-                                fp_args3_rm_inv_1.data()),
+                                fp_args3_rm_invalid_1.size(),
+                                fp_args3_rm_invalid_1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FP_SUB,
@@ -2248,39 +2251,39 @@ TEST_F(TestCApi, mk_term_check_args)
   // others
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_APPLY,
-                                apply_args3_inv_1.size(),
-                                apply_args3_inv_1.data()),
+                                apply_args3_invalid_1.size(),
+                                apply_args3_invalid_1.data()),
                d_error_unexp_fun_term);
   ASSERT_DEATH(
       bitwuzla_mk_term(d_bzla,
                        BITWUZLA_KIND_APPLY,
-                       apply_args3_inv_2.size(),
-                       apply_args3_inv_2.data()),
+                       apply_args3_invalid_2.size(),
+                       apply_args3_invalid_2.data()),
       "sorts of arguments to apply don't match domain sorts of given function");
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_ARRAY_SELECT,
-                                array_select_args2_inv_1.size(),
-                                array_select_args2_inv_1.data()),
+                                array_select_args2_invalid_1.size(),
+                                array_select_args2_invalid_1.data()),
                d_error_exp_arr_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_ARRAY_SELECT,
-                                array_select_args2_inv_2.size(),
-                                array_select_args2_inv_2.data()),
+                                array_select_args2_invalid_2.size(),
+                                array_select_args2_invalid_2.data()),
                error_arr_index_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_ARRAY_STORE,
-                                array_store_args3_inv_1.size(),
-                                array_store_args3_inv_1.data()),
+                                array_store_args3_invalid_1.size(),
+                                array_store_args3_invalid_1.data()),
                d_error_exp_arr_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_ARRAY_STORE,
-                                array_store_args3_inv_2.size(),
-                                array_store_args3_inv_2.data()),
+                                array_store_args3_invalid_2.size(),
+                                array_store_args3_invalid_2.data()),
                error_arr_index_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_ARRAY_STORE,
-                                array_store_args3_inv_3.size(),
-                                array_store_args3_inv_3.data()),
+                                array_store_args3_invalid_3.size(),
+                                array_store_args3_invalid_3.data()),
                error_arr_element_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_DISTINCT,
@@ -2294,48 +2297,48 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_EXISTS,
-                                quant_args2_inv_1.size(),
-                                quant_args2_inv_1.data()),
+                                quant_args2_invalid_1.size(),
+                                quant_args2_invalid_1.data()),
                d_error_exp_var_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_EXISTS,
-                                quant_args2_inv_2.size(),
-                                quant_args2_inv_2.data()),
+                                quant_args2_invalid_2.size(),
+                                quant_args2_invalid_2.data()),
                d_error_exp_bool_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_EXISTS,
-                                quant_args2_inv_3.size(),
-                                quant_args2_inv_3.data()),
+                                quant_args2_invalid_3.size(),
+                                quant_args2_invalid_3.data()),
                error_bvar_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_EXISTS,
-                                quant_args3_inv.size(),
-                                quant_args3_inv.data()),
+                                quant_args3_invalid.size(),
+                                quant_args3_invalid.data()),
                error_dvar_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FORALL,
-                                quant_args2_inv_1.size(),
-                                quant_args2_inv_1.data()),
+                                quant_args2_invalid_1.size(),
+                                quant_args2_invalid_1.data()),
                d_error_exp_var_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FORALL,
-                                quant_args2_inv_2.size(),
-                                quant_args2_inv_2.data()),
+                                quant_args2_invalid_2.size(),
+                                quant_args2_invalid_2.data()),
                d_error_exp_bool_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FORALL,
-                                quant_args2_inv_3.size(),
-                                quant_args2_inv_3.data()),
+                                quant_args2_invalid_3.size(),
+                                quant_args2_invalid_3.data()),
                error_bvar_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FORALL,
-                                quant_args3_inv.size(),
-                                quant_args3_inv.data()),
+                                quant_args3_invalid.size(),
+                                quant_args3_invalid.data()),
                error_dvar_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_ITE,
-                                ite_args3_inv_2.size(),
-                                ite_args3_inv_2.data()),
+                                ite_args3_invalid_2.size(),
+                                ite_args3_invalid_2.data()),
                d_error_exp_bool_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_ITE,
@@ -2344,37 +2347,32 @@ TEST_F(TestCApi, mk_term_check_args)
                error_mis_sort);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_LAMBDA,
-                                lambda_args2_inv_1.size(),
-                                lambda_args2_inv_1.data()),
+                                lambda_args2_invalid_1.size(),
+                                lambda_args2_invalid_1.data()),
                d_error_exp_var_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_LAMBDA,
-                                lambda_args2_inv_2.size(),
-                                lambda_args2_inv_2.data()),
+                                lambda_args2_invalid_2.size(),
+                                lambda_args2_invalid_2.data()),
                error_bvar_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_LAMBDA,
-                                lambda_args2_inv_3.size(),
-                                lambda_args2_inv_3.data()),
-               d_error_unexp_fun_term);
-  ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
-                                BITWUZLA_KIND_LAMBDA,
-                                lambda_args3_inv_1.size(),
-                                lambda_args3_inv_1.data()),
+                                lambda_args3_invalid_1.size(),
+                                lambda_args3_invalid_1.data()),
                error_dvar_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_LAMBDA,
-                                lambda_args3_inv_2.size(),
-                                lambda_args3_inv_2.data()),
+                                lambda_args3_invalid_2.size(),
+                                lambda_args3_invalid_2.data()),
                "expected bit-vector term or bit-vector function term");
   // indexed
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_EXTRACT,
-                                        bv_args1_inv.size(),
-                                        bv_args1_inv.data(),
+                                        bv_args1_invalid.size(),
+                                        bv_args1_invalid.data(),
                                         bv_idxs2.size(),
                                         bv_idxs2.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_EXTRACT,
                                         bv_args1.size(),
@@ -2391,11 +2389,11 @@ TEST_F(TestCApi, mk_term_check_args)
                "upper index must be < bit-vector size of given term");
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_REPEAT,
-                                        bv_args1_inv.size(),
-                                        bv_args1_inv.data(),
+                                        bv_args1_invalid.size(),
+                                        bv_args1_invalid.data(),
                                         bv_idxs1.size(),
                                         bv_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(
       bitwuzla_mk_term_indexed(d_bzla,
                                BITWUZLA_KIND_BV_REPEAT,
@@ -2406,25 +2404,25 @@ TEST_F(TestCApi, mk_term_check_args)
       "resulting bit-vector size of 'repeat' exceeds maximum bit-vector size");
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_ROLI,
-                                        bv_args1_inv.size(),
-                                        bv_args1_inv.data(),
+                                        bv_args1_invalid.size(),
+                                        bv_args1_invalid.data(),
                                         bv_idxs1.size(),
                                         bv_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_RORI,
-                                        bv_args1_inv.size(),
-                                        bv_args1_inv.data(),
+                                        bv_args1_invalid.size(),
+                                        bv_args1_invalid.data(),
                                         bv_idxs1.size(),
                                         bv_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_SIGN_EXTEND,
-                                        bv_args1_inv.size(),
-                                        bv_args1_inv.data(),
+                                        bv_args1_invalid.size(),
+                                        bv_args1_invalid.data(),
                                         bv_idxs1.size(),
                                         bv_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_SIGN_EXTEND,
                                         bv_args1.size(),
@@ -2434,11 +2432,11 @@ TEST_F(TestCApi, mk_term_check_args)
                "exceeds maximum bit-vector size");
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_ZERO_EXTEND,
-                                        bv_args1_inv.size(),
-                                        bv_args1_inv.data(),
+                                        bv_args1_invalid.size(),
+                                        bv_args1_invalid.data(),
                                         bv_idxs1.size(),
                                         bv_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_ZERO_EXTEND,
                                         bv_args1.size(),
@@ -2448,11 +2446,11 @@ TEST_F(TestCApi, mk_term_check_args)
                "exceeds maximum bit-vector size");
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_BV,
-                                        bv_args1_inv.size(),
-                                        bv_args1_inv.data(),
+                                        bv_args1_invalid.size(),
+                                        bv_args1_invalid.data(),
                                         fp_idxs1.size(),
                                         fp_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_BV,
                                         bv_args1.size(),
@@ -2469,18 +2467,18 @@ TEST_F(TestCApi, mk_term_check_args)
                error_sig_size);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_FP,
-                                        fp_args2_rm_inv_1.size(),
-                                        fp_args2_rm_inv_1.data(),
+                                        fp_args2_rm_invalid_1.size(),
+                                        fp_args2_rm_invalid_1.data(),
                                         fp_idxs1.size(),
                                         fp_idxs1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_FP,
-                                        fp_args2_rm_inv_2.size(),
-                                        fp_args2_rm_inv_2.data(),
+                                        fp_args2_rm_invalid_2.size(),
+                                        fp_args2_rm_invalid_2.data(),
                                         fp_idxs1.size(),
                                         fp_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_FP,
                                         fp_args2_rm.size(),
@@ -2497,18 +2495,18 @@ TEST_F(TestCApi, mk_term_check_args)
                error_sig_size);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_SBV,
-                                        bv_args2_rm_inv_1.size(),
-                                        bv_args2_rm_inv_1.data(),
+                                        bv_args2_rm_invalid_1.size(),
+                                        bv_args2_rm_invalid_1.data(),
                                         fp_idxs1.size(),
                                         fp_idxs1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_SBV,
-                                        bv_args2_rm_inv_2.size(),
-                                        bv_args2_rm_inv_2.data(),
+                                        bv_args2_rm_invalid_2.size(),
+                                        bv_args2_rm_invalid_2.data(),
                                         fp_idxs1.size(),
                                         fp_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_SBV,
                                         bv_args2_rm.size(),
@@ -2525,18 +2523,18 @@ TEST_F(TestCApi, mk_term_check_args)
                error_sig_size);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_UBV,
-                                        bv_args2_rm_inv_1.size(),
-                                        bv_args2_rm_inv_1.data(),
+                                        bv_args2_rm_invalid_1.size(),
+                                        bv_args2_rm_invalid_1.data(),
                                         fp_idxs1.size(),
                                         fp_idxs1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_UBV,
-                                        bv_args2_rm_inv_2.size(),
-                                        bv_args2_rm_inv_2.data(),
+                                        bv_args2_rm_invalid_2.size(),
+                                        bv_args2_rm_invalid_2.data(),
                                         fp_idxs1.size(),
                                         fp_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_FP_FROM_UBV,
                                         bv_args2_rm.size(),
@@ -2553,32 +2551,32 @@ TEST_F(TestCApi, mk_term_check_args)
                error_sig_size);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_SBV,
-                                        fp_args2_rm_inv_1.size(),
-                                        fp_args2_rm_inv_1.data(),
+                                        fp_args2_rm_invalid_1.size(),
+                                        fp_args2_rm_invalid_1.data(),
                                         bv_idxs1.size(),
                                         bv_idxs1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_SBV,
-                                        fp_args2_rm_inv_2.size(),
-                                        fp_args2_rm_inv_2.data(),
+                                        fp_args2_rm_invalid_2.size(),
+                                        fp_args2_rm_invalid_2.data(),
                                         bv_idxs1.size(),
                                         bv_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_UBV,
-                                        fp_args2_rm_inv_1.size(),
-                                        fp_args2_rm_inv_1.data(),
+                                        fp_args2_rm_invalid_1.size(),
+                                        fp_args2_rm_invalid_1.data(),
                                         bv_idxs1.size(),
                                         bv_idxs1.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_FP_TO_UBV,
-                                        fp_args2_rm_inv_2.size(),
-                                        fp_args2_rm_inv_2.data(),
+                                        fp_args2_rm_invalid_2.size(),
+                                        fp_args2_rm_invalid_2.data(),
                                         bv_idxs1.size(),
                                         bv_idxs1.data()),
-               error_inv_sort);
+               error_invalid_sort);
 }
 
 TEST_F(TestCApi, mk_const)
