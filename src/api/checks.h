@@ -103,6 +103,28 @@ class BitwuzlaExceptionStream
          "or 16 for hexadecimal), is '"                                      \
       << arg << "'";
 
+#define BITWUZLA_CHECK_FORMAT(str)                                 \
+  BITWUZLA_CHECK(str == "smt2" || str == "btor" || str == "btor2") \
+      << "invalid file format, expected 'smt2', 'btor' or 'btor2'";
+
+#define BITWUZLA_CHECK_OPT_INCREMENTAL(opts) \
+  BITWUZLA_CHECK((opts).incremental()) << "incremental usage not enabled";
+
+#define BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(opts) \
+  BITWUZLA_CHECK((opts).produce_unsat_cores())       \
+      << "unsat core production not enabled";
+
+#define BITWUZLA_CHECK_OPT_PRODUCE_MODELS(opts) \
+  BITWUZLA_CHECK((opts).produce_models()) << "model production not enabled";
+
+#define BITWUZLA_CHECK_LAST_CALL_SAT(what)        \
+  BITWUZLA_CHECK(d_last_check_sat == Result::SAT) \
+      << "cannot " << what << " if input formula is not sat";
+
+#define BITWUZLA_CHECK_LAST_CALL_UNSAT(what)        \
+  BITWUZLA_CHECK(d_last_check_sat == Result::UNSAT) \
+      << "cannot " << what << " if input formula is not unsat";
+
 #define BITWUZLA_CHECK_TERM_IS_ARRAY(arg) \
   BITWUZLA_CHECK((arg).d_node->type().is_array()) << "expected array term";
 
@@ -165,24 +187,6 @@ class BitwuzlaExceptionStream
 
 #define BITWUZLA_CHECK_SORT_NOT_IS_FUN(arg) \
   BITWUZLA_CHECK(!(arg).d_type->is_fun()) << "expected non-funcion sort";
-
-#define BITWUZLA_CHECK_OPT_INCREMENTAL(opts) \
-  BITWUZLA_CHECK((opts).incremental()) << "incremental usage not enabled";
-
-#define BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(opts) \
-  BITWUZLA_CHECK((opts).produce_unsat_cores())       \
-      << "unsat core production not enabled";
-
-#define BITWUZLA_CHECK_OPT_PRODUCE_MODELS(opts) \
-  BITWUZLA_CHECK((opts).produce_models()) << "model production not enabled";
-
-#define BITWUZLA_CHECK_LAST_CALL_SAT(what)        \
-  BITWUZLA_CHECK(d_last_check_sat == Result::SAT) \
-      << "cannot " << what << "if input formula is not sat";
-
-#define BITWUZLA_CHECK_LAST_CALL_UNSAT(what)        \
-  BITWUZLA_CHECK(d_last_check_sat == Result::UNSAT) \
-      << "cannot " << what << "if input formula is not unsat";
 
 #define BITWUZLA_CHECK_MK_TERM_ARGC(kind, is_nary, argc_expected, argc)       \
   BITWUZLA_CHECK((is_nary && argc >= argc_expected)                           \

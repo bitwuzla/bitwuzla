@@ -292,6 +292,7 @@ class Term
 {
   friend Bitwuzla;
   friend bool operator==(const Term &, const Term &);
+  friend bool operator!=(const Term &, const Term &);
   friend std::ostream &operator<<(std::ostream &, const Term &);
   friend std::hash<bitwuzla::Term>;
   friend Term mk_true();
@@ -542,6 +543,15 @@ class Term
 bool operator==(const Term &a, const Term &b);
 
 /**
+ * Syntactical disequality operator.
+ *
+ * @param a The first term.
+ * @param b The second term.
+ * @return True if the given terms are disequal.
+ */
+bool operator!=(const Term &a, const Term &b);
+
+/**
  * Print term to output stream.
  * @param out The output stream.
  * @param term The term.
@@ -556,6 +566,7 @@ class Sort
   friend Bitwuzla;
   friend Term;
   friend bool operator==(const Sort &a, const Sort &b);
+  friend bool operator!=(const Sort &a, const Sort &b);
   friend std::ostream &operator<<(std::ostream &out, const Sort &sort);
   friend std::hash<bitwuzla::Sort>;
   friend Sort mk_array_sort(const Sort &, const Sort &);
@@ -736,6 +747,15 @@ class Sort
  * @return True if the given sorts are equal.
  */
 bool operator==(const Sort &a, const Sort &b);
+
+/**
+ * Syntactical disequality operator.
+ *
+ * @param a The first sort.
+ * @param b The second sort.
+ * @return True if the given sorts are disequal.
+ */
+bool operator!=(const Sort &a, const Sort &b);
 
 /**
  * Print sort to output stream.
@@ -1122,66 +1142,71 @@ class Bitwuzla
    */
   void dump_formula(std::ostream &out, const std::string &format);
 
-  /**
-   * Parse input file.
-   *
-   * The format of the input file is auto detected.
-   * Requires that no terms have been created yet.
-   *
-   * @param infile      The input file stream.
-   * @param infile_name The name of the input file.
-   * @param error_msg   Output parameter, stores an error message in case a
-   *                    parse error occurred.
-   * @param status      Output parameter, stores the status of the input in
-   *                    case of SMT-LIB v2 input, if given.
-   * @param is_smt2     Output parameter, stores true if parsed input file
-   *                    has been detected as SMT-LIB v2 input, else false.
-   *
-   * @return `Result::SAT` if the input formula was simplified to true,
-   *         `Result::UNSAT` if it was simplified to false, and
-   *         `Result::UNKNOWN` otherwise.
-   */
-  Result parse(std::ifstream &infile,
-               const std::string &infile_name,
-               std::string &error_msg,
-               Result &status,
-               bool &is_smt2);
-  /**
-   * Parse input file, assumed to be given in the specified format.
-   *
-   * Requires that no terms have been created yet.
-   *
-   * @param format      The input format, also used for printing the model.
-   *                    Either `"btor"` for the BTOR format, `"btor2"` for
-   *                    the BTOR2 format, or `"smt2"` for the SMT-LIB v2
-   *                    format.
-   * @param infile      The input file stream.
-   * @param infile_name The name of the input file.
-   * @param error_msg   Output parameter, stores an error message in case a
-   *                    parse error occurred.
-   * @param status      Output parameter, stores the status of the input in
-   *                    case of SMT-LIB v2 input, if given.
-   *
-   * @return `Result::SAT` if the input formula was simplified to true,
-   *         `Result::UNSAT` if it was simplified to false,
-   *         and `Result::UNKNOWN` otherwise.
-   *
-   * @see
-   *   * `parse`
-   */
-  Result parse(const std::string &format,
-               std::ifstream &infile,
-               const std::string &infile_name,
-               std::string &error_msg,
-               Result &status,
-               bool &is_smt2);
-
  private:
   /** The associated solving context. */
-  std::unique_ptr<bzla::SolvingContext> d_ctx;
+  std::shared_ptr<bzla::SolvingContext> d_ctx;
   /** The result of the last check_sat() call. */
   Result d_last_check_sat;
+  /** The number of issued check-sat queries. */
+  uint64_t d_n_sat_calls;
 };
+
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Parse input file.
+ *
+ * The format of the input file is auto detected.
+ * Requires that no terms have been created yet.
+ *
+ * @param infile      The input file stream.
+ * @param infile_name The name of the input file.
+ * @param error_msg   Output parameter, stores an error message in case a
+ *                    parse error occurred.
+ * @param status      Output parameter, stores the status of the input in
+ *                    case of SMT-LIB v2 input, if given.
+ * @param is_smt2     Output parameter, stores true if parsed input file
+ *                    has been detected as SMT-LIB v2 input, else false.
+ *
+ * @return A pair of the Bitwuzla instance created by the parser and a result;
+ *         `Result::SAT` if the input formula was simplified to true,
+ *         `Result::UNSAT` if it was simplified to false, and
+ *         `Result::UNKNOWN` otherwise.
+ */
+std::pair<Bitwuzla, Result> parse(std::ifstream &infile,
+                                  const std::string &infile_name,
+                                  std::string &error_msg,
+                                  Result &status,
+                                  bool &is_smt2);
+/**
+ * Parse input file, assumed to be given in the specified format.
+ *
+ * Requires that no terms have been created yet.
+ *
+ * @param format      The input format, also used for printing the model.
+ *                    Either `"btor"` for the BTOR format, `"btor2"` for
+ *                    the BTOR2 format, or `"smt2"` for the SMT-LIB v2
+ *                    format.
+ * @param infile      The input file stream.
+ * @param infile_name The name of the input file.
+ * @param error_msg   Output parameter, stores an error message in case a
+ *                    parse error occurred.
+ * @param status      Output parameter, stores the status of the input in
+ *                    case of SMT-LIB v2 input, if given.
+ *
+ * @return A pair of the Bitwuzla instance created by the parser and a result;
+ *         `Result::SAT` if the input formula was simplified to true,
+ *         `Result::UNSAT` if it was simplified to false, and
+ *         `Result::UNKNOWN` otherwise.
+ *
+ * @see
+ *   * `parse`
+ */
+std::pair<Bitwuzla, Result> parse(const std::string &format,
+                                  std::ifstream &infile,
+                                  const std::string &infile_name,
+                                  std::string &error_msg,
+                                  Result &status);
 
 /* -------------------------------------------------------------------------- */
 

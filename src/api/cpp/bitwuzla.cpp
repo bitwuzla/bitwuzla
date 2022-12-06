@@ -1024,7 +1024,30 @@ Term::str()
 bool
 operator==(const Term &a, const Term &b)
 {
+  if (a.d_node == nullptr)
+  {
+    return b.d_node == nullptr;
+  }
+  if (b.d_node == nullptr)
+  {
+    return false;
+  }
   return *a.d_node == *b.d_node;
+}
+
+bool
+operator!=(const Term &a, const Term &b)
+{
+  if (a.d_node == nullptr)
+  {
+    return b.d_node != nullptr;
+    ;
+  }
+  if (b.d_node == nullptr)
+  {
+    return true;
+  }
+  return *a.d_node != *b.d_node;
 }
 
 std::ostream &
@@ -1172,7 +1195,31 @@ Sort::str() const
 bool
 operator==(const Sort &a, const Sort &b)
 {
-  return a.d_type == b.d_type;
+  if (a.d_type == nullptr)
+  {
+    return b.d_type == nullptr;
+    ;
+  }
+  if (b.d_type == nullptr)
+  {
+    return false;
+  }
+  return *a.d_type == *b.d_type;
+}
+
+bool
+operator!=(const Sort &a, const Sort &b)
+{
+  if (a.d_type == nullptr)
+  {
+    return b.d_type != nullptr;
+    ;
+  }
+  if (b.d_type == nullptr)
+  {
+    return true;
+  }
+  return *a.d_type != *b.d_type;
 }
 
 std::ostream &
@@ -1185,7 +1232,9 @@ operator<<(std::ostream &out, const Sort &sort)
 /* Bitwuzla public ---------------------------------------------------------- */
 
 Bitwuzla::Bitwuzla(const Options &options)
-    : d_ctx(new bzla::SolvingContext(*options.d_options))
+    : d_ctx(new bzla::SolvingContext(*options.d_options)),
+      d_last_check_sat(Result::UNKNOWN),
+      d_n_sat_calls(0)
 {
 }
 
@@ -1321,9 +1370,13 @@ Result
 Bitwuzla::check_sat(const std::vector<Term> &assumptions)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  BITWUZLA_CHECK(d_n_sat_calls == 0 || d_ctx->options().incremental())
+      << "multiple check-sat calls require that incremental solving is enabled";
+  d_n_sat_calls += 1;
   assert(
       assumptions.empty());  // TODO assumption handling (not implemented yet)
-  return s_results.at(d_ctx->solve());
+  d_last_check_sat = s_results.at(d_ctx->solve());
+  return d_last_check_sat;
 }
 
 Term
@@ -1341,6 +1394,7 @@ Bitwuzla::get_bv_value(const Term &term, uint8_t base)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_NOT_NULL(term.d_node);
+  BITWUZLA_CHECK_TERM_IS_BV(term);
   BITWUZLA_CHECK_VALUE_BASE(base);
   BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_SAT("get value");
@@ -1354,6 +1408,7 @@ Bitwuzla::get_fp_value(const Term &term, uint8_t base)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_NOT_NULL(term.d_node);
+  BITWUZLA_CHECK_TERM_IS_FP(term);
   BITWUZLA_CHECK_VALUE_BASE(base);
   BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_SAT("get value");
@@ -1376,6 +1431,7 @@ Bitwuzla::get_fp_value(const Term &term,
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_NOT_NULL(term.d_node);
+  BITWUZLA_CHECK_TERM_IS_FP(term);
   BITWUZLA_CHECK_VALUE_BASE(base);
   BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_SAT("get value");
@@ -1394,6 +1450,7 @@ Bitwuzla::get_rm_value(const Term &term)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_NOT_NULL(term.d_node);
+  BITWUZLA_CHECK_TERM_IS_RM(term);
   BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_SAT("get value");
   return s_rms.at(d_ctx->get_value(*term.d_node).value<bzla::RoundingMode>());
@@ -1427,46 +1484,53 @@ Bitwuzla::print_model(std::ostream &out, const std::string &format)
 void
 Bitwuzla::dump_formula(std::ostream &out, const std::string &format)
 {
+  BITWUZLA_CHECK_STR_NOT_EMPTY(format);
+  BITWUZLA_CHECK_FORMAT(format);
   // TODO
   (void) out;
-  (void) format;
-}
-
-Result
-Bitwuzla::parse(std::ifstream &infile,
-                const std::string &infile_name,
-                std::string &error_msg,
-                Result &status,
-                bool &is_smt2)
-{
-  // TODO
-  (void) infile;
-  (void) infile_name;
-  (void) error_msg;
-  (void) status;
-  (void) is_smt2;
-  return Result::UNKNOWN;
-}
-
-Result
-Bitwuzla::parse(const std::string &format,
-                std::ifstream &infile,
-                const std::string &infile_name,
-                std::string &error_msg,
-                Result &status,
-                bool &is_smt2)
-{
-  // TODO
-  (void) format;
-  (void) infile;
-  (void) infile_name;
-  (void) error_msg;
-  (void) status;
-  (void) is_smt2;
-  return Result::UNKNOWN;
+  assert(false);
 }
 
 /* -------------------------------------------------------------------------- */
+
+std::pair<Bitwuzla, Result>
+parse(std::ifstream &infile,
+      const std::string &infile_name,
+      std::string &error_msg,
+      Result &status,
+      bool &is_smt2)
+{
+  BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
+  // TODO
+  (void) infile;
+  (void) infile_name;
+  (void) error_msg;
+  (void) status;
+  (void) is_smt2;
+  return std::make_pair(Bitwuzla(Options()), Result::UNKNOWN);
+}
+
+std::pair<Bitwuzla, Result>
+parse(const std::string &format,
+      std::ifstream &infile,
+      const std::string &infile_name,
+      std::string &error_msg,
+      Result &status)
+{
+  BITWUZLA_CHECK_STR_NOT_EMPTY(format);
+  BITWUZLA_CHECK_FORMAT(format);
+  BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
+  // TODO
+  (void) format;
+  (void) infile;
+  (void) infile_name;
+  (void) error_msg;
+  (void) status;
+  return std::make_pair(Bitwuzla(Options()), Result::UNKNOWN);
+}
+
+/* -------------------------------------------------------------------------- */
+
 Sort
 mk_array_sort(const Sort &index, const Sort &element)
 {
@@ -2170,12 +2234,14 @@ to_string(bitwuzla::Result result)
 size_t
 std::hash<bitwuzla::Sort>::operator()(const bitwuzla::Sort &sort) const
 {
+  BITWUZLA_CHECK_NOT_NULL(sort.d_type);
   return std::hash<bzla::Type>{}(*sort.d_type);
 }
 
 size_t
 std::hash<bitwuzla::Term>::operator()(const bitwuzla::Term &term) const
 {
+  BITWUZLA_CHECK_NOT_NULL(term.d_node);
   return std::hash<bzla::Node>{}(*term.d_node);
 }
 

@@ -970,15 +970,32 @@ bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
 }
 
 BitwuzlaResult
-bitwuzla_parse(Bitwuzla *bitwuzla,
-               FILE *infile,
+bitwuzla_parse(FILE *infile,
                const char *infile_name,
                FILE *outfile,
                char **error_msg,
+               Bitwuzla **bitwuzla,
                BitwuzlaResult *parsed_status,
                bool *parsed_smt2)
 {
-  // TODO
+  BITWUZLA_CHECK_NOT_NULL(infile);
+  BITWUZLA_CHECK_NOT_NULL(infile_name);
+  BITWUZLA_CHECK_NOT_NULL(outfile);
+  BITWUZLA_CHECK_NOT_NULL(error_msg);
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  BITWUZLA_CHECK_NOT_NULL(parsed_status);
+  BITWUZLA_CHECK_NOT_NULL(parsed_smt2);
+
+  int32_t bzla_res = bzla_parse(infile,
+                                infile_name,
+                                outfile,
+                                error_msg,
+                                bitwuzla,
+                                parsed_status,
+                                parsed_smt2);
+  if (bzla_res == BITWUZLA_SAT) return BITWUZLA_SAT;
+  if (bzla_res == BITWUZLA_UNSAT) return BITWUZLA_UNSAT;
+  assert(bzla_res == BITWUZLA_UNKNOWN);
   return BITWUZLA_UNKNOWN;
 }
 
@@ -993,6 +1010,7 @@ bitwuzla_parse_format(const char *format,
 {
   BITWUZLA_CHECK_NOT_NULL(format);
   BITWUZLA_CHECK_NOT_NULL(infile);
+  BITWUZLA_CHECK_NOT_NULL(infile_name);
   BITWUZLA_CHECK_NOT_NULL(outfile);
   BITWUZLA_CHECK_NOT_NULL(error_msg);
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);

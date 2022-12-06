@@ -1289,15 +1289,15 @@ void bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
 /**
  * Parse input file.
  *
- * The format of the input file is auto detected.  
+ * The format of the input file is auto detected.
  * Requires that no terms have been created yet.
  *
- * @param bitwuzla The Bitwuzla instance.
  * @param infile The input file.
  * @param infile_name The name of the input file.
  * @param outfile The output file.
  * @param error_msg Output parameter, stores an error message in case a parse
  *                  error occurred, else \c NULL.
+ * @param bitwuzla The Bitwuzla instance created by the parser.
  * @param parsed_status Output parameter, stores the status of the input in case
  *                      of SMT-LIB v2 input, if given.
  * @param parsed_smt2 Output parameter, true if parsed input file has been
@@ -1310,11 +1310,11 @@ void bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
  * @see
  *   * `bitwuzla_parse_format`
  */
-BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
-                              FILE *infile,
+BitwuzlaResult bitwuzla_parse(FILE *infile,
                               const char *infile_name,
                               FILE *outfile,
                               char **error_msg,
+                              Bitwuzla **bitwuzla,
                               BitwuzlaResult *parsed_status,
                               bool *parsed_smt2);
 
