@@ -364,14 +364,16 @@ NodeManager::check_type(Kind kind,
   {
     ss << kind << ": ";
     ss << "Invalid number of children. Expected "
-       << s_node_kind_info.num_children(kind) << ", got " << children.size();
+       << std::to_string(s_node_kind_info.num_children(kind)) << ", got "
+       << children.size();
     return std::make_pair(false, ss.str());
   }
   else if (indices.size() != s_node_kind_info.num_indices(kind))
   {
     ss << kind << ": ";
     ss << "Invalid number of indices. Expected "
-       << s_node_kind_info.num_indices(kind) << ", got " << indices.size();
+       << std::to_string(s_node_kind_info.num_indices(kind)) << ", got "
+       << indices.size();
     return std::make_pair(false, ss.str());
   }
 

@@ -532,7 +532,7 @@ enum ENUM(Kind)
    *
    * SMT-LIB: \c fp.to_ubv (indexed) */
   EVALUE(FP_TO_UBV),
-#ifdef BITWUZLA_API_USE_C_ENUMS
+#if (!defined(NDEBUG) || defined(BITWUZLA_API_USE_C_ENUMS))
 #ifndef DOXYGEN_SKIP
   EVALUE(NUM_KINDS),
 #endif

@@ -165,9 +165,9 @@ struct KindInfo
     init(Kind::BV_ASHR, 2, 0, "BV_ASHR", "bvashr");
     init(Kind::BV_COMP, 2, 0, "BV_COMP", "bvcomp", KindInfo::CHAINABLE);
     init(Kind::BV_CONCAT, 2, 0, "BV_CONCAT", "concat", KindInfo::LEFT_ASSOC);
-    init(Kind::BV_DEC, 2, 0, "BV_DEC", "bvdec");
+    init(Kind::BV_DEC, 1, 0, "BV_DEC", "bvdec");
     init(Kind::BV_EXTRACT, 1, 2, "BV_EXTRACT", "extract");
-    init(Kind::BV_INC, 2, 0, "BV_INC", "bvinc");
+    init(Kind::BV_INC, 1, 0, "BV_INC", "bvinc");
     init(Kind::BV_MUL, 2, 0, "BV_MUL", "bvmul", KindInfo::LEFT_ASSOC);
     init(Kind::BV_NAND, 2, 0, "BV_NAND", "bvnand");
     init(Kind::BV_NEG, 1, 0, "BV_NEG", "bvneg");
@@ -178,7 +178,7 @@ struct KindInfo
     init(Kind::BV_REDOR, 1, 0, "BV_REDOR", "bvredor");
     init(Kind::BV_REDXOR, 1, 0, "BV_REDXOR", "bvredxor");
     init(Kind::BV_REPEAT, 1, 1, "BV_REPEAT", "repeat");
-    init(Kind::BV_ROL, 1, 1, "BV_ROL", "bvrol");
+    init(Kind::BV_ROL, 2, 0, "BV_ROL", "bvrol");
     init(Kind::BV_ROLI, 1, 1, "BV_ROLI", "rotate_left");
     init(Kind::BV_ROR, 2, 0, "BV_ROR", "bvror");
     init(Kind::BV_RORI, 1, 1, "BV_RORI", "rotate_right");
@@ -249,12 +249,12 @@ struct KindInfo
     init(Kind::STORE, 3, 0, "STORE", "store");
 
     /* Quantifiers */
-    init(Kind::EXISTS, 2, 0, "EXISTS", "exists");
-    init(Kind::FORALL, 2, 0, "FORALL", "forall");
+    init(Kind::EXISTS, 2, 0, "EXISTS", "exists", KindInfo::RIGHT_ASSOC);
+    init(Kind::FORALL, 2, 0, "FORALL", "forall", KindInfo::RIGHT_ASSOC);
 
     /* Functions */
     init(Kind::APPLY, KindInfo::s_nary, 0, "APPLY");
-    init(Kind::LAMBDA, 2, 0, "LAMBDA", "lambda");
+    init(Kind::LAMBDA, 2, 0, "LAMBDA", "lambda", KindInfo::RIGHT_ASSOC);
   }
 
   /** @return The number of children for this kind. */

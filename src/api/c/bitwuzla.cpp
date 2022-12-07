@@ -1357,7 +1357,7 @@ bitwuzla_term_get_symbol(BitwuzlaTerm term)
   auto symbol = import_term(term).symbol();
   if (symbol)
   {
-    str = (*symbol).get();
+    str = symbol->get();
     return str.c_str();
   }
   return nullptr;
@@ -1404,7 +1404,7 @@ bool
 bitwuzla_term_is_var(BitwuzlaTerm term)
 {
   BITWUZLA_CHECK_TERM_ID(term);
-  return import_term(term).is_var();
+  return import_term(term).is_variable();
 }
 
 #if 0

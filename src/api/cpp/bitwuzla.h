@@ -411,7 +411,7 @@ class Term
    * Determine if this term is a variable.
    * @return True if this term is a variable.
    */
-  bool is_var() const;
+  bool is_variable() const;
 
   /**
    * Determine if this term is a value.

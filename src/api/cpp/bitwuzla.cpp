@@ -862,7 +862,7 @@ Term::is_const() const
 }
 
 bool
-Term::is_var() const
+Term::is_variable() const
 {
   return d_node != nullptr && d_node->kind() == bzla::node::Kind::VARIABLE;
 }
@@ -1807,6 +1807,7 @@ mk_term(Kind kind,
     case Kind::BV_AND:
     case Kind::BV_CONCAT:
     case Kind::BV_MUL:
+    case Kind::BV_OR:
     case Kind::BV_XNOR:
     case Kind::BV_XOR:
     case Kind::EQUAL:
@@ -1817,6 +1818,9 @@ mk_term(Kind kind,
     case Kind::FP_GT:
     case Kind::FP_LEQ:
     case Kind::FP_LT:
+    case Kind::EXISTS:
+    case Kind::FORALL:
+    case Kind::LAMBDA:
       BITWUZLA_CHECK_MK_TERM_ARGC(kind, true, 2, args.size());
       BITWUZLA_CHECK_MK_TERM_IDXC(kind, 0, indices.size());
       switch (kind)
@@ -1842,6 +1846,20 @@ mk_term(Kind kind,
         case Kind::FP_LT:
           BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_fp, true);
           break;
+        case Kind::EXISTS:
+        case Kind::FORALL:
+          BITWUZLA_CHECK_TERM_IS_BOOL_AT_IDX(args, args.size() - 1);
+          [[fallthrough]];
+        case Kind::LAMBDA: {
+          bzla::node::unordered_node_ref_set cache;
+          for (size_t i = 0, n = args.size() - 1; i < n; ++i)
+          {
+            BITWUZLA_CHECK_TERM_IS_VAR_AT_IDX(args, i);
+            auto [it, inserted] = cache.insert(*args[i].d_node);
+            BITWUZLA_CHECK(inserted) << "expected set of distinct variables";
+          }
+        }
+        break;
         default: BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, true);
       }
       return bzla::node::utils::mk_nary(s_internal_kinds.at(kind),
@@ -1888,7 +1906,6 @@ mk_term(Kind kind,
     case Kind::BV_ASHR:
     case Kind::BV_NAND:
     case Kind::BV_NOR:
-    case Kind::BV_OR:
     case Kind::BV_ROL:
     case Kind::BV_ROR:
     case Kind::BV_SADD_OVERFLOW:
@@ -1919,9 +1936,6 @@ mk_term(Kind kind,
     case Kind::FP_REM:
     case Kind::FP_RTI:
     case Kind::FP_SQRT:
-    case Kind::EXISTS:
-    case Kind::FORALL:
-    case Kind::LAMBDA:
       BITWUZLA_CHECK_MK_TERM_ARGC(kind, false, 2, args.size());
       BITWUZLA_CHECK_MK_TERM_IDXC(kind, 0, indices.size());
       switch (kind)
@@ -1943,20 +1957,6 @@ mk_term(Kind kind,
           BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_fp, true);
           BITWUZLA_CHECK_TERM_IS_RM_AT_IDX(args, 0);
           break;
-        case Kind::EXISTS:
-        case Kind::FORALL:
-          BITWUZLA_CHECK_TERM_IS_BOOL_AT_IDX(args, args.size() - 1);
-          [[fallthrough]];
-        case Kind::LAMBDA: {
-          bzla::node::unordered_node_ref_set cache;
-          for (size_t i = 0, n = args.size() - 1; i < n; ++i)
-          {
-            BITWUZLA_CHECK_TERM_IS_VAR_AT_IDX(args, i);
-            auto [it, inserted] = cache.insert(*args[i].d_node);
-            BITWUZLA_CHECK(inserted) << "expected set of distinct variables";
-          }
-        }
-        break;
         default: BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, true);
       }
       break;
@@ -1985,6 +1985,9 @@ mk_term(Kind kind,
           BITWUZLA_CHECK(args[0].d_node->type().array_element()
                          == args[2].d_node->type())
               << "sort of element term does not match element sort of array";
+          break;
+        case Kind::FP_FP:
+          BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, false);
           break;
         default:
           BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_fp, true);
