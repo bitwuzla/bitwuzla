@@ -1342,7 +1342,8 @@ bitwuzla_sort_fun_get_domain_sorts(BitwuzlaSort sort, size_t *size)
   static thread_local std::vector<BitwuzlaSort> res;
   res.clear();
   auto sorts = import_sort(sort).fun_domain();
-  sorts.clear();
+  assert(sorts.size() == import_sort(sort).fun_arity());
+  res.clear();
   for (auto &sort : sorts)
   {
     res.push_back(export_sort(sort));

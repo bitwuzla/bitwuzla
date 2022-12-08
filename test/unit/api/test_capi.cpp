@@ -93,6 +93,16 @@ class TestCApi : public ::testing::Test
         bitwuzla_mk_term2(BITWUZLA_KIND_LAMBDA, d_bool_var, d_bool_lambda_body);
     d_bool_apply =
         bitwuzla_mk_term2(BITWUZLA_KIND_APPLY, d_bool_lambda, d_true);
+
+    d_exists_var = bitwuzla_mk_var(d_bv_sort8, nullptr);
+    d_exists     = bitwuzla_mk_term2(
+        BITWUZLA_KIND_EXISTS,
+        d_exists_var,
+        bitwuzla_mk_term2(
+            BITWUZLA_KIND_EQUAL,
+            d_bv_zero8,
+            bitwuzla_mk_term2(
+                BITWUZLA_KIND_BV_MUL, d_bv_const8, d_exists_var)));
   }
 
   /* sorts */
@@ -182,7 +192,7 @@ class TestCApi : public ::testing::Test
   const char *d_error_exp_assumption = "must be an assumption";
   const char *d_error_rm             = "invalid rounding mode";
   const char *d_error_unexp_arr_term = "unexpected array term";
-  const char *d_error_unexp_fun_term = "unexpected function term";
+  const char *d_error_unexp_fun_term = "expected non-function term";
   const char *d_error_unexp_param_term = "term must not be parameterized";
   const char *d_error_incremental      = "incremental usage not enabled";
   const char *d_error_produce_models   = "model production not enabled";
@@ -2313,44 +2323,63 @@ TEST_F(TestCApi, get_unsat_assumptions)
   }
 }
 
-#if 0
 TEST_F(TestCApi, get_unsat_core)
 {
+  GTEST_SKIP();  // TODO enable when implemented
   size_t size;
-  ASSERT_DEATH(bitwuzla_get_unsat_core(d_bzla, &size), d_error_unsat_cores);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-  ASSERT_DEATH(bitwuzla_get_unsat_core(d_bzla, &size), d_error_unsat_cores);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_UNSAT_CORES, 1);
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    Bitwuzla *bitwuzla       = bitwuzla_new(options);
+    ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, &size), d_error_unsat_cores);
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
+    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, &size), d_error_unsat_cores);
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_CORES, 1);
+    Bitwuzla *bitwuzla = bitwuzla_new(options);
 
-  ASSERT_DEATH(bitwuzla_get_unsat_core(nullptr, &size), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_get_unsat_core(d_bzla, nullptr), d_error_not_null);
+    ASSERT_DEATH(bitwuzla_get_unsat_core(nullptr, &size), d_error_not_null);
+    ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, nullptr), d_error_not_null);
 
-  bitwuzla_assert(d_bzla, d_true);
-  bitwuzla_assume(d_bzla, d_bv_const1);
-  bitwuzla_check_sat(d_bzla);
-  ASSERT_DEATH(bitwuzla_get_unsat_core(d_bzla, &size), d_error_unsat);
+    bitwuzla_assert(bitwuzla, d_true);
+    std::vector<BitwuzlaTerm> assumptions{d_bv_const1};
+    bitwuzla_check_sat_assuming(
+        bitwuzla, assumptions.size(), assumptions.data());
+    ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, &size), d_error_unsat);
 
-  bitwuzla_assume(d_bzla, d_bv_const1);
-  bitwuzla_assert(d_bzla, d_not_bv_const1);
-  bitwuzla_assume(d_bzla, d_and_bv_const1);
-  bitwuzla_assert(d_bzla, d_eq_bv_const8);
-  bitwuzla_check_sat(d_bzla);
-  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
-  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_and_bv_const1));
-  const BitwuzlaTerm **unsat_core = bitwuzla_get_unsat_core(d_bzla, &size);
-  ASSERT_TRUE(unsat_core[0] == d_not_bv_const1);
-  ASSERT_TRUE(size == 1);
+    bitwuzla_assert(bitwuzla, d_not_bv_const1);
+    assumptions.push_back(d_and_bv_const1);
+    bitwuzla_assert(bitwuzla, d_eq_bv_const8);
+    bitwuzla_check_sat_assuming(
+        bitwuzla, assumptions.size(), assumptions.data());
+    ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1));
+    ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_and_bv_const1));
+    BitwuzlaTerm *unsat_core = bitwuzla_get_unsat_core(bitwuzla, &size);
+    ASSERT_TRUE(unsat_core[0] == d_not_bv_const1);
+    ASSERT_TRUE(size == 1);
 
-  const BitwuzlaTerm **unsat_ass =
-      bitwuzla_get_unsat_assumptions(d_bzla, &size);
-  ASSERT_TRUE(unsat_ass[0] == d_bv_const1);
-  ASSERT_TRUE(unsat_ass[1] == d_and_bv_const1);
-  ASSERT_TRUE(size == 2);
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
-  bitwuzla_assert(d_bzla, unsat_ass[0]);
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
+    BitwuzlaTerm *unsat_ass = bitwuzla_get_unsat_assumptions(bitwuzla, &size);
+    ASSERT_TRUE(unsat_ass[0] == d_bv_const1);
+    ASSERT_TRUE(unsat_ass[1] == d_and_bv_const1);
+    ASSERT_TRUE(size == 2);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);
+    bitwuzla_assert(bitwuzla, unsat_ass[0]);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
 }
 
+#if 0
 TEST_F(TestCApi, fixate_assumptions)
 {
   ASSERT_DEATH(bitwuzla_fixate_assumptions(d_bzla), d_error_incremental);
@@ -2393,81 +2422,142 @@ TEST_F(TestCApi, reset_assumptions)
   bitwuzla_reset_assumptions(d_bzla);
   ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
 }
+#endif
 
 TEST_F(TestCApi, simplify)
 {
+  GTEST_SKIP();  // TODO enable when implemented
   ASSERT_DEATH(bitwuzla_simplify(nullptr), d_error_not_null);
-  bitwuzla_assert(d_bzla, d_bv_const1);
-  bitwuzla_assert(d_bzla, d_and_bv_const1);
-  ASSERT_TRUE(bitwuzla_simplify(d_bzla) == BITWUZLA_SAT);
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  Bitwuzla *bitwuzla       = bitwuzla_new(options);
+  bitwuzla_assert(bitwuzla, d_bv_const1);
+  bitwuzla_assert(bitwuzla, d_and_bv_const1);
+  ASSERT_TRUE(bitwuzla_simplify(bitwuzla) == BITWUZLA_SAT);
+  bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, check_sat)
 {
   ASSERT_DEATH(bitwuzla_check_sat(nullptr), d_error_not_null);
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_check_sat(d_bzla));
-  ASSERT_DEATH(bitwuzla_check_sat(d_bzla), d_error_incremental);
-
-  Bitwuzla *bzla = bitwuzla_new();
-  bitwuzla_set_option(bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_check_sat(bzla));
-  bitwuzla_delete(bzla);
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    Bitwuzla *bitwuzla       = bitwuzla_new(options);
+    ASSERT_NO_FATAL_FAILURE(bitwuzla_check_sat(bitwuzla));
+    ASSERT_DEATH(bitwuzla_check_sat(bitwuzla),
+                 "require that incremental solving is enabled");
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
+    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    ASSERT_NO_FATAL_FAILURE(bitwuzla_check_sat(bitwuzla));
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
 }
 
 TEST_F(TestCApi, get_value)
 {
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-  ASSERT_DEATH(bitwuzla_get_value(d_bzla, d_bv_const8), d_error_produce_models);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  ASSERT_DEATH(bitwuzla_get_value(nullptr, d_bv_const8), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_get_value(d_bzla, nullptr), d_error_not_null);
-  bitwuzla_assert(d_bzla, d_bv_const1);
-  bitwuzla_assume(d_bzla, d_not_bv_const1);
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
-  ASSERT_DEATH(bitwuzla_get_value(d_bzla, d_bv_const1), d_error_sat);
-  bitwuzla_check_sat(d_bzla);
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_get_value(d_bzla, d_bv_const1));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_get_value(d_bzla, d_not_bv_const1));
-
-  bitwuzla_set_option(d_other_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  bitwuzla_assert(d_other_bzla, d_other_exists);
-  ASSERT_DEATH(bitwuzla_get_value(d_other_bzla, d_other_bv_const8),
-               d_error_sat);
-  ASSERT_EQ(bitwuzla_check_sat(d_other_bzla), BITWUZLA_SAT);
-  ASSERT_DEATH(bitwuzla_get_value(d_other_bzla, d_other_bv_const8),
-               "'get-value' is currently not supported with quantifiers");
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
+    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const8),
+                 d_error_produce_models);
+  }
+  GTEST_SKIP();  // TODO enable when implemented
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    ASSERT_DEATH(bitwuzla_get_value(nullptr, d_bv_const8), d_error_not_null);
+    ASSERT_DEATH(bitwuzla_get_value(bitwuzla, 0), d_error_inv_term);
+    bitwuzla_assert(bitwuzla, d_bool_const);
+    std::vector<BitwuzlaTerm> assumptions{d_not_bv_const1};
+    ASSERT_EQ(bitwuzla_check_sat_assuming(
+                  bitwuzla, assumptions.size(), assumptions.data()),
+              BITWUZLA_UNSAT);
+    ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const1), d_error_sat);
+    bitwuzla_check_sat(bitwuzla);
+    ASSERT_NO_FATAL_FAILURE(bitwuzla_get_value(bitwuzla, d_bv_const1));
+    ASSERT_NO_FATAL_FAILURE(bitwuzla_get_value(bitwuzla, d_not_bv_const1));
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    bitwuzla_assert(bitwuzla, d_exists);
+    ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const8), d_error_sat);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);
+    ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const8),
+                 "'get-value' is currently not supported with quantifiers");
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
 }
 
 TEST_F(TestCApi, get_bv_value)
 {
-  ASSERT_DEATH(bitwuzla_get_bv_value(d_bzla, d_bv_one1),
-               d_error_produce_models);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  ASSERT_DEATH(bitwuzla_get_bv_value(nullptr, d_bv_one1), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_get_bv_value(d_bzla, nullptr), d_error_not_null);
-  bitwuzla_check_sat(d_bzla);
-  ASSERT_DEATH(bitwuzla_get_bv_value(d_bzla, d_fp_nan32), "not a bit-vector");
-  ASSERT_TRUE(!strcmp("1", bitwuzla_get_bv_value(d_bzla, d_bv_one1)));
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    Bitwuzla *bitwuzla       = bitwuzla_new(options);
+    ASSERT_DEATH(bitwuzla_get_bv_value(bitwuzla, d_bv_one1),
+                 d_error_produce_models);
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    ASSERT_DEATH(bitwuzla_get_bv_value(nullptr, d_bv_one1), d_error_not_null);
+    ASSERT_DEATH(bitwuzla_get_bv_value(bitwuzla, 0), d_error_inv_term);
+    bitwuzla_check_sat(bitwuzla);
+    ASSERT_DEATH(bitwuzla_get_bv_value(bitwuzla, d_fp_nan32),
+                 "expected bit-vector term");
+    ASSERT_TRUE(!strcmp("1", bitwuzla_get_bv_value(bitwuzla, d_bv_one1)));
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
 }
 
 TEST_F(TestCApi, get_rm_value)
 {
-  ASSERT_DEATH(bitwuzla_get_rm_value(d_bzla, d_bv_one1),
-               d_error_produce_models);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  ASSERT_DEATH(bitwuzla_get_rm_value(nullptr, d_bv_one1), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_get_rm_value(d_bzla, nullptr), d_error_not_null);
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    Bitwuzla *bitwuzla       = bitwuzla_new(options);
+    ASSERT_DEATH(bitwuzla_get_rm_value(bitwuzla, d_rm_const),
+                 d_error_produce_models);
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
+  {
+    BitwuzlaOptions *options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    ASSERT_DEATH(bitwuzla_get_rm_value(nullptr, d_bv_one1), d_error_not_null);
+    ASSERT_DEATH(bitwuzla_get_rm_value(bitwuzla, 0), d_error_inv_term);
 
-  bitwuzla_check_sat(d_bzla);
-  ASSERT_DEATH(bitwuzla_get_rm_value(d_bzla, d_fp_nan32),
-               "not a rounding mode");
-  ASSERT_TRUE(!strcmp("RNA", bitwuzla_get_rm_value(d_bzla, d_rm_rna)));
-  ASSERT_TRUE(!strcmp("RNE", bitwuzla_get_rm_value(d_bzla, d_rm_rne)));
-  ASSERT_TRUE(!strcmp("RTN", bitwuzla_get_rm_value(d_bzla, d_rm_rtn)));
-  ASSERT_TRUE(!strcmp("RTP", bitwuzla_get_rm_value(d_bzla, d_rm_rtp)));
-  ASSERT_TRUE(!strcmp("RTZ", bitwuzla_get_rm_value(d_bzla, d_rm_rtz)));
+    bitwuzla_check_sat(bitwuzla);
+    ASSERT_DEATH(bitwuzla_get_rm_value(bitwuzla, d_fp_nan32),
+                 "expected rounding-mode term");
+    ASSERT_EQ(BITWUZLA_RM_RNA, bitwuzla_get_rm_value(bitwuzla, d_rm_rna));
+    ASSERT_EQ(BITWUZLA_RM_RNE, bitwuzla_get_rm_value(bitwuzla, d_rm_rne));
+    ASSERT_EQ(BITWUZLA_RM_RTN, bitwuzla_get_rm_value(bitwuzla, d_rm_rtn));
+    ASSERT_EQ(BITWUZLA_RM_RTP, bitwuzla_get_rm_value(bitwuzla, d_rm_rtp));
+    ASSERT_EQ(BITWUZLA_RM_RTZ, bitwuzla_get_rm_value(bitwuzla, d_rm_rtz));
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
 }
 
+#if 0
 TEST_F(TestCApi, get_array_value)
 {
   GTEST_SKIP();  // Currently not working with Node migration in API
@@ -2635,41 +2725,46 @@ TEST_F(TestCApi, print_model)
   ASSERT_DEATH(bitwuzla_print_model(d_other_bzla, "smt2", stdout),
                d_error_model_quant);
 }
+#endif
 
 TEST_F(TestCApi, dump_formula1)
 {
+  GTEST_SKIP();  // TODO enable when implemented
   ASSERT_DEATH(bitwuzla_dump_formula(nullptr, "btor", stdout),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_dump_formula(d_bzla, nullptr, stdout), d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_dump_formula(d_bzla, "smt2", nullptr),
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  Bitwuzla *bitwuzla       = bitwuzla_new(options);
+  ASSERT_DEATH(bitwuzla_dump_formula(bitwuzla, nullptr, stdout),
+               d_error_exp_str);
+  ASSERT_DEATH(bitwuzla_dump_formula(bitwuzla, "smt2", nullptr),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_dump_formula(d_bzla, "asdf", stdout), d_error_format);
+  ASSERT_DEATH(bitwuzla_dump_formula(bitwuzla, "asdf", stdout), d_error_format);
 
-  ASSERT_DEATH(bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, 0),
-               "before creating expressions");
+  // TODO should this still throw?
+  // ASSERT_DEATH(bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_RW_LEVEL, 0),
+  //             "before creating expressions");
 
-  bitwuzla_assert(d_bzla, d_bv_const1);
+  bitwuzla_assert(bitwuzla, d_bv_const1);
   bitwuzla_assert(
-      d_bzla,
+      bitwuzla,
       bitwuzla_mk_term2(
-          d_bzla,
           BITWUZLA_KIND_EQUAL,
-          bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_APPLY, d_lambda, d_bv_const8),
+          bitwuzla_mk_term2(BITWUZLA_KIND_APPLY, d_lambda, d_bv_const8),
           d_bv_zero8));
 
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(d_bzla, "btor", stdout));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(d_bzla, "smt2", stdout));
-
-  bitwuzla_assert(d_other_bzla, d_other_exists);
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(d_other_bzla, "btor", stdout));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(d_other_bzla, "smt2", stdout));
-  bitwuzla_set_option(d_other_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-  ASSERT_DEATH(bitwuzla_dump_formula(d_other_bzla, "btor", stdout),
-               "dumping in incremental mode is currently not supported");
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(bitwuzla, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(bitwuzla, "smt2", stdout));
+  bitwuzla_assert(bitwuzla, d_exists);
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(bitwuzla, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(bitwuzla, "smt2", stdout));
+  // TODO test incremental
+  bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, parse)
 {
+  GTEST_SKIP();  // TODO enable when implemented
   bool is_smt2;
   BitwuzlaResult status;
   char *error_msg;
@@ -2678,73 +2773,75 @@ TEST_F(TestCApi, parse)
   ss << BZLA_REGRESS_DIR << infile_name;
   FILE *infile = fopen(ss.str().c_str(), "r");
 
-  ASSERT_DEATH(bitwuzla_parse(nullptr,
-                              infile,
-                              infile_name.c_str(),
-                              stdout,
-                              &error_msg,
-                              &status,
-                              &is_smt2),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parse(d_bzla,
-                              nullptr,
-                              infile_name.c_str(),
-                              stdout,
-                              &error_msg,
-                              &status,
-                              &is_smt2),
-               d_error_not_null);
-  ASSERT_DEATH(
-      bitwuzla_parse(
-          d_bzla, infile, nullptr, stdout, &error_msg, &status, &is_smt2),
-      d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_parse(d_bzla,
-                              infile,
-                              infile_name.c_str(),
-                              stdout,
-                              nullptr,
-                              &status,
-                              &is_smt2),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parse(d_bzla,
-                              infile,
-                              infile_name.c_str(),
-                              stdout,
-                              &error_msg,
-                              nullptr,
-                              &is_smt2),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parse(d_bzla,
-                              infile,
-                              infile_name.c_str(),
-                              stdout,
-                              &error_msg,
-                              &status,
-                              nullptr),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parse(d_bzla,
-                              infile,
-                              infile_name.c_str(),
-                              stdout,
-                              &error_msg,
-                              &status,
-                              &is_smt2),
-               "file parsing after having created expressions is not allowed");
+  // ASSERT_DEATH(bitwuzla_parse(nullptr,
+  //                             infile,
+  //                             infile_name.c_str(),
+  //                             stdout,
+  //                             &error_msg,
+  //                             &status,
+  //                             &is_smt2),
+  //              d_error_not_null);
+  // ASSERT_DEATH(bitwuzla_parse(d_bzla,
+  //                             nullptr,
+  //                             infile_name.c_str(),
+  //                             stdout,
+  //                             &error_msg,
+  //                             &status,
+  //                             &is_smt2),
+  //              d_error_not_null);
+  // ASSERT_DEATH(
+  //     bitwuzla_parse(
+  //         d_bzla, infile, nullptr, stdout, &error_msg, &status, &is_smt2),
+  //     d_error_exp_str);
+  // ASSERT_DEATH(bitwuzla_parse(d_bzla,
+  //                             infile,
+  //                             infile_name.c_str(),
+  //                             stdout,
+  //                             nullptr,
+  //                             &status,
+  //                             &is_smt2),
+  //              d_error_not_null);
+  // ASSERT_DEATH(bitwuzla_parse(d_bzla,
+  //                             infile,
+  //                             infile_name.c_str(),
+  //                             stdout,
+  //                             &error_msg,
+  //                             nullptr,
+  //                             &is_smt2),
+  //              d_error_not_null);
+  // ASSERT_DEATH(bitwuzla_parse(d_bzla,
+  //                             infile,
+  //                             infile_name.c_str(),
+  //                             stdout,
+  //                             &error_msg,
+  //                             &status,
+  //                             nullptr),
+  //              d_error_not_null);
+  // ASSERT_DEATH(bitwuzla_parse(d_bzla,
+  //                             infile,
+  //                             infile_name.c_str(),
+  //                             stdout,
+  //                             &error_msg,
+  //                             &status,
+  //                             &is_smt2),
+  //              "file parsing after having created expressions is not
+  //              allowed");
 
-  Bitwuzla *bzla = bitwuzla_new();
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_parse(bzla,
-                                         infile,
-                                         infile_name.c_str(),
-                                         stdout,
-                                         &error_msg,
-                                         &status,
-                                         &is_smt2));
-  ASSERT_TRUE(is_smt2);
-  bitwuzla_delete(bzla);
+  // Bitwuzla *bzla = bitwuzla_new();
+  // ASSERT_NO_FATAL_FAILURE(bitwuzla_parse(bzla,
+  //                                        infile,
+  //                                        infile_name.c_str(),
+  //                                        stdout,
+  //                                        &error_msg,
+  //                                        &status,
+  //                                        &is_smt2));
+  // ASSERT_TRUE(is_smt2);
+  // bitwuzla_delete(bzla);
 }
 
 TEST_F(TestCApi, parse_format)
 {
+  GTEST_SKIP();  // TODO enable when implemented
   BitwuzlaResult status;
   char *error_msg;
   std::string infile_name = "fp_regr1.smt2";
@@ -2752,71 +2849,73 @@ TEST_F(TestCApi, parse_format)
   ss << BZLA_REGRESS_DIR << infile_name;
   FILE *infile = fopen(ss.str().c_str(), "r");
 
-  ASSERT_DEATH(bitwuzla_parse_format(nullptr,
-                                     "btor",
-                                     infile,
-                                     infile_name.c_str(),
-                                     stdout,
-                                     &error_msg,
-                                     &status),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
-                                     nullptr,
-                                     infile,
-                                     infile_name.c_str(),
-                                     stdout,
-                                     &error_msg,
-                                     &status),
-               d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
-                                     "smt2",
-                                     nullptr,
-                                     infile_name.c_str(),
-                                     stdout,
-                                     &error_msg,
-                                     &status),
-               d_error_not_null);
-  ASSERT_DEATH(
-      bitwuzla_parse_format(
-          d_bzla, "btor", infile, nullptr, stdout, &error_msg, &status),
-      d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
-                                     "smt2",
-                                     infile,
-                                     infile_name.c_str(),
-                                     stdout,
-                                     nullptr,
-                                     &status),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
-                                     "btor",
-                                     infile,
-                                     infile_name.c_str(),
-                                     stdout,
-                                     &error_msg,
-                                     nullptr),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
-                                     "smt2",
-                                     infile,
-                                     infile_name.c_str(),
-                                     stdout,
-                                     &error_msg,
-                                     &status),
-               "file parsing after having created expressions is not allowed");
+  // ASSERT_DEATH(bitwuzla_parse_format(nullptr,
+  //                                    "btor",
+  //                                    infile,
+  //                                    infile_name.c_str(),
+  //                                    stdout,
+  //                                    &error_msg,
+  //                                    &status),
+  //              d_error_not_null);
+  // ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
+  //                                    nullptr,
+  //                                    infile,
+  //                                    infile_name.c_str(),
+  //                                    stdout,
+  //                                    &error_msg,
+  //                                    &status),
+  //              d_error_exp_str);
+  // ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
+  //                                    "smt2",
+  //                                    nullptr,
+  //                                    infile_name.c_str(),
+  //                                    stdout,
+  //                                    &error_msg,
+  //                                    &status),
+  //              d_error_not_null);
+  // ASSERT_DEATH(
+  //     bitwuzla_parse_format(
+  //         d_bzla, "btor", infile, nullptr, stdout, &error_msg, &status),
+  //     d_error_exp_str);
+  // ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
+  //                                    "smt2",
+  //                                    infile,
+  //                                    infile_name.c_str(),
+  //                                    stdout,
+  //                                    nullptr,
+  //                                    &status),
+  //              d_error_not_null);
+  // ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
+  //                                    "btor",
+  //                                    infile,
+  //                                    infile_name.c_str(),
+  //                                    stdout,
+  //                                    &error_msg,
+  //                                    nullptr),
+  //              d_error_not_null);
+  // ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
+  //                                    "smt2",
+  //                                    infile,
+  //                                    infile_name.c_str(),
+  //                                    stdout,
+  //                                    &error_msg,
+  //                                    &status),
+  //              "file parsing after having created expressions is not
+  //              allowed");
 
-  Bitwuzla *bzla = bitwuzla_new();
-  ASSERT_DEATH(bitwuzla_parse_format(bzla,
-                                     "asdf",
-                                     infile,
-                                     infile_name.c_str(),
-                                     stdout,
-                                     &error_msg,
-                                     &status),
-               d_error_format);
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_parse_format(
-      bzla, "smt2", infile, infile_name.c_str(), stdout, &error_msg, &status));
-  bitwuzla_delete(bzla);
+  // Bitwuzla *bzla = bitwuzla_new();
+  // ASSERT_DEATH(bitwuzla_parse_format(bzla,
+  //                                    "asdf",
+  //                                    infile,
+  //                                    infile_name.c_str(),
+  //                                    stdout,
+  //                                    &error_msg,
+  //                                    &status),
+  //              d_error_format);
+  // ASSERT_NO_FATAL_FAILURE(bitwuzla_parse_format(
+  //     bzla, "smt2", infile, infile_name.c_str(), stdout, &error_msg,
+  //     &status));
+  // bitwuzla_delete(bzla);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2825,33 +2924,33 @@ TEST_F(TestCApi, parse_format)
 
 TEST_F(TestCApi, sort_hash)
 {
-  ASSERT_DEATH(bitwuzla_sort_hash(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_hash(0), d_error_inv_sort);
 }
 
 TEST_F(TestCApi, sort_bv_get_size)
 {
-  ASSERT_DEATH(bitwuzla_sort_bv_get_size(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_bv_get_size(0), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_sort_bv_get_size(d_fp_sort16), d_error_exp_bv_sort);
   ASSERT_EQ(bitwuzla_sort_bv_get_size(d_bv_sort8), 8);
 }
 
 TEST_F(TestCApi, sort_fp_get_exp_size)
 {
-  ASSERT_DEATH(bitwuzla_sort_fp_get_exp_size(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_fp_get_exp_size(0), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_sort_fp_get_exp_size(d_bv_sort8), d_error_exp_fp_sort);
   ASSERT_EQ(bitwuzla_sort_fp_get_exp_size(d_fp_sort16), 5);
 }
 
 TEST_F(TestCApi, sort_fp_get_sig_size)
 {
-  ASSERT_DEATH(bitwuzla_sort_fp_get_sig_size(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_fp_get_sig_size(0), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_sort_fp_get_sig_size(d_bv_sort8), d_error_exp_fp_sort);
   ASSERT_EQ(bitwuzla_sort_fp_get_sig_size(d_fp_sort16), 11);
 }
 
 TEST_F(TestCApi, sort_array_get_index)
 {
-  ASSERT_DEATH(bitwuzla_sort_array_get_index(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_array_get_index(0), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_sort_array_get_index(d_bv_sort23),
                d_error_exp_arr_sort);
   ASSERT_TRUE(
@@ -2860,7 +2959,7 @@ TEST_F(TestCApi, sort_array_get_index)
 
 TEST_F(TestCApi, sort_array_get_element)
 {
-  ASSERT_DEATH(bitwuzla_sort_array_get_element(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_array_get_element(0), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_sort_array_get_element(d_bv_sort23),
                d_error_exp_arr_sort);
   ASSERT_TRUE(
@@ -2870,47 +2969,50 @@ TEST_F(TestCApi, sort_array_get_element)
 TEST_F(TestCApi, sort_fun_get_domain_sorts)
 {
   size_t size;
-  ASSERT_DEATH(bitwuzla_sort_fun_get_domain_sorts(nullptr, nullptr),
-               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_fun_get_domain_sorts(0, &size), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_sort_fun_get_domain_sorts(d_fun_sort, nullptr),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_sort_fun_get_domain_sorts(d_bv_sort32, &size),
                d_error_exp_fun_sort);
 
-  const BitwuzlaSort **domain_sorts =
+  BitwuzlaSort *domain_sorts =
       bitwuzla_sort_fun_get_domain_sorts(d_fun_sort, &size);
+  ASSERT_EQ(size, 3);
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort8, domain_sorts[0]));
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_fp_sort16, domain_sorts[1]));
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort32, domain_sorts[2]));
-  ASSERT_EQ(size, 3);
 }
 
 TEST_F(TestCApi, sort_fun_get_codomain)
 {
-  ASSERT_DEATH(bitwuzla_sort_fun_get_codomain(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_fun_get_codomain(0), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_sort_fun_get_codomain(d_bv_sort32),
                d_error_exp_fun_sort);
+  ASSERT_EQ(bitwuzla_sort_fun_get_codomain(d_fun_sort), d_bv_sort8);
 }
 
 TEST_F(TestCApi, sort_fun_get_arity)
 {
-  ASSERT_DEATH(bitwuzla_sort_fun_get_arity(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_fun_get_arity(0), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_sort_fun_get_arity(d_bv_sort32), d_error_exp_fun_sort);
   ASSERT_EQ(bitwuzla_sort_fun_get_arity(d_fun_sort), 3);
 }
 
 TEST_F(TestCApi, sort_is_equal)
 {
-  ASSERT_DEATH(bitwuzla_sort_is_equal(nullptr, d_bv_sort1), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_sort_is_equal(d_bv_sort1, nullptr), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_sort_is_equal(d_bv_sort1, d_other_bv_sort1),
-               "given sorts are not associated with the same solver instance");
+  ASSERT_DEATH(bitwuzla_sort_is_equal(0, d_bv_sort1), d_error_inv_sort);
+  ASSERT_DEATH(bitwuzla_sort_is_equal(d_bv_sort1, 0), d_error_inv_sort);
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort1, d_bv_sort1));
+  ASSERT_FALSE(bitwuzla_sort_is_equal(d_bv_sort1, d_bv_sort8));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort1, bitwuzla_mk_bv_sort(1)));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort8, bitwuzla_mk_bv_sort(8)));
+  ASSERT_TRUE(
+      bitwuzla_sort_is_equal(bitwuzla_mk_bv_sort(9), bitwuzla_mk_bv_sort(9)));
 }
 
 TEST_F(TestCApi, sort_is_array)
 {
-  ASSERT_DEATH(bitwuzla_sort_is_array(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_is_array(0), d_error_inv_sort);
   ASSERT_TRUE(bitwuzla_sort_is_array(d_arr_sort_bv));
   ASSERT_TRUE(bitwuzla_sort_is_array(d_arr_sort_bvfp));
   ASSERT_TRUE(bitwuzla_sort_is_array(d_arr_sort_fpbv));
@@ -2922,7 +3024,7 @@ TEST_F(TestCApi, sort_is_array)
 
 TEST_F(TestCApi, sort_is_bv)
 {
-  ASSERT_DEATH(bitwuzla_sort_is_bv(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_is_bv(0), d_error_inv_sort);
   ASSERT_TRUE(bitwuzla_sort_is_bv(d_bv_sort1));
   ASSERT_TRUE(bitwuzla_sort_is_bv(d_bv_sort8));
   ASSERT_TRUE(bitwuzla_sort_is_bv(d_bv_sort23));
@@ -2936,7 +3038,7 @@ TEST_F(TestCApi, sort_is_bv)
 
 TEST_F(TestCApi, sort_is_fp)
 {
-  ASSERT_DEATH(bitwuzla_sort_is_fp(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_is_fp(0), d_error_inv_sort);
   ASSERT_TRUE(bitwuzla_sort_is_fp(d_fp_sort16));
   ASSERT_TRUE(bitwuzla_sort_is_fp(d_fp_sort32));
   ASSERT_FALSE(bitwuzla_sort_is_fp(d_bv_sort8));
@@ -2947,19 +3049,19 @@ TEST_F(TestCApi, sort_is_fp)
 
 TEST_F(TestCApi, sort_is_fun)
 {
-  ASSERT_DEATH(bitwuzla_sort_is_fun(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_is_fun(0), d_error_inv_sort);
   ASSERT_TRUE(bitwuzla_sort_is_fun(d_fun_sort));
   ASSERT_TRUE(bitwuzla_sort_is_fun(d_fun_sort_fp));
-  ASSERT_TRUE(bitwuzla_sort_is_fun(d_arr_sort_bv));
-  ASSERT_TRUE(bitwuzla_sort_is_fun(d_arr_sort_bvfp));
-  ASSERT_TRUE(bitwuzla_sort_is_fun(d_arr_sort_fpbv));
+  ASSERT_FALSE(bitwuzla_sort_is_fun(d_arr_sort_bv));
+  ASSERT_FALSE(bitwuzla_sort_is_fun(d_arr_sort_bvfp));
+  ASSERT_FALSE(bitwuzla_sort_is_fun(d_arr_sort_fpbv));
   ASSERT_FALSE(bitwuzla_sort_is_fun(d_bv_sort8));
   ASSERT_FALSE(bitwuzla_sort_is_fun(d_fp_sort16));
 }
 
 TEST_F(TestCApi, sort_is_rm)
 {
-  ASSERT_DEATH(bitwuzla_sort_is_rm(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_is_rm(0), d_error_inv_sort);
   ASSERT_TRUE(bitwuzla_sort_is_rm(d_rm_sort));
   ASSERT_FALSE(bitwuzla_sort_is_rm(d_bv_sort8));
   ASSERT_FALSE(bitwuzla_sort_is_rm(d_fp_sort16));
@@ -2968,7 +3070,8 @@ TEST_F(TestCApi, sort_is_rm)
 
 TEST_F(TestCApi, sort_dump)
 {
-  ASSERT_DEATH(bitwuzla_sort_dump(nullptr, "btor", stdout), d_error_not_null);
+  GTEST_SKIP();  // TODO enable when implemented
+  ASSERT_DEATH(bitwuzla_sort_dump(0, "btor", stdout), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_sort_dump(d_bv_sort1, nullptr, stdout),
                d_error_exp_str);
   ASSERT_DEATH(bitwuzla_sort_dump(d_bv_sort1, "smt2", nullptr),
@@ -2983,29 +3086,25 @@ TEST_F(TestCApi, sort_dump)
 
 TEST_F(TestCApi, regr1)
 {
-  std::vector<const BitwuzlaSort *> domain({d_bv_sort8});
-  const BitwuzlaSort *fun_sort =
-      bitwuzla_mk_fun_sort(d_bzla, domain.size(), domain.data(), d_bv_sort8);
-  ASSERT_NO_FATAL_FAILURE(
-      bitwuzla_mk_array_sort(d_bzla, d_bv_sort8, d_bv_sort8));
-  std::vector<const BitwuzlaTerm *> args(
-      {bitwuzla_mk_const(d_bzla, d_bv_sort8, "x"),
-       bitwuzla_mk_const(d_bzla, fun_sort, "f")});
-  ASSERT_DEATH(
-      bitwuzla_mk_term(d_bzla, BITWUZLA_KIND_APPLY, args.size(), args.data()),
-      d_error_unexp_fun_term);
+  std::vector<BitwuzlaSort> domain({d_bv_sort8});
+  BitwuzlaSort fun_sort =
+      bitwuzla_mk_fun_sort(domain.size(), domain.data(), d_bv_sort8);
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_mk_array_sort(d_bv_sort8, d_bv_sort8));
+  std::vector<BitwuzlaTerm> args(
+      {bitwuzla_mk_const(d_bv_sort8, "x"), bitwuzla_mk_const(fun_sort, "f")});
+  ASSERT_DEATH(bitwuzla_mk_term(BITWUZLA_KIND_APPLY, args.size(), args.data()),
+               d_error_unexp_fun_term);
 }
 
 TEST_F(TestCApi, regr2)
 {
-  std::vector<const BitwuzlaSort *> domain({d_bv_sort8});
-  const BitwuzlaSort *fun_sort =
-      bitwuzla_mk_fun_sort(d_bzla, domain.size(), domain.data(), d_bv_sort8);
-  const BitwuzlaSort *array_sort =
-      bitwuzla_mk_array_sort(d_bzla, d_bv_sort8, d_bv_sort8);
+  std::vector<BitwuzlaSort> domain({d_bv_sort8});
+  BitwuzlaSort fun_sort =
+      bitwuzla_mk_fun_sort(domain.size(), domain.data(), d_bv_sort8);
+  BitwuzlaSort array_sort = bitwuzla_mk_array_sort(d_bv_sort8, d_bv_sort8);
   ASSERT_NE(fun_sort, array_sort);
-  const BitwuzlaTerm *fun   = bitwuzla_mk_const(d_bzla, fun_sort, 0);
-  const BitwuzlaTerm *array = bitwuzla_mk_const(d_bzla, array_sort, 0);
+  BitwuzlaTerm fun   = bitwuzla_mk_const(fun_sort, 0);
+  BitwuzlaTerm array = bitwuzla_mk_const(array_sort, 0);
   ASSERT_EQ(array_sort, bitwuzla_term_get_sort(array));
   ASSERT_EQ(fun_sort, bitwuzla_term_get_sort(fun));
   ASSERT_NE(bitwuzla_term_get_sort(fun), bitwuzla_term_get_sort(array));
@@ -3017,6 +3116,7 @@ TEST_F(TestCApi, regr2)
 /* BitwuzlaTerm                                                               */
 /* -------------------------------------------------------------------------- */
 
+#if 0
 TEST_F(TestCApi, term_hash)
 {
   ASSERT_DEATH(bitwuzla_term_hash(nullptr), d_error_not_null);

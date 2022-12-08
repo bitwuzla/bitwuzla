@@ -187,10 +187,10 @@ class BitwuzlaExceptionStream
   BITWUZLA_CHECK((arg).d_type->is_fp()) << "expected floating-point sort";
 
 #define BITWUZLA_CHECK_SORT_IS_FUN(arg) \
-  BITWUZLA_CHECK((arg).d_type->is_fun()) << "expected funcion sort";
+  BITWUZLA_CHECK((arg).d_type->is_fun()) << "expected function sort";
 
 #define BITWUZLA_CHECK_SORT_NOT_IS_FUN(arg) \
-  BITWUZLA_CHECK(!(arg).d_type->is_fun()) << "expected non-funcion sort";
+  BITWUZLA_CHECK(!(arg).d_type->is_fun()) << "expected non-function sort";
 
 #define BITWUZLA_CHECK_MK_TERM_ARGC(kind, is_nary, argc_expected, argc)       \
   BITWUZLA_CHECK((is_nary && argc >= argc_expected)                           \

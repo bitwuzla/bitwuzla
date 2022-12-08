@@ -1715,42 +1715,42 @@ TEST_F(TestApi, sort_hash)
   ASSERT_NO_THROW(std::hash<bitwuzla::Sort>{}(d_bv_sort8));
 }
 
-TEST_F(TestApi, sort_bv_get_size)
+TEST_F(TestApi, sort_bv_size)
 {
   ASSERT_THROW(bitwuzla::Sort().bv_size(), bitwuzla::BitwuzlaException);
   ASSERT_THROW(d_fp_sort16.bv_size(), bitwuzla::BitwuzlaException);
   ASSERT_EQ(d_bv_sort8.bv_size(), 8);
 }
 
-TEST_F(TestApi, sort_fp_get_exp_size)
+TEST_F(TestApi, sort_fp_exp_size)
 {
   ASSERT_THROW(bitwuzla::Sort().fp_exp_size(), bitwuzla::BitwuzlaException);
   ASSERT_THROW(d_bv_sort8.fp_exp_size(), bitwuzla::BitwuzlaException);
   ASSERT_EQ(d_fp_sort16.fp_exp_size(), 5);
 }
 
-TEST_F(TestApi, sort_fp_get_sig_size)
+TEST_F(TestApi, sort_fp_sig_size)
 {
   ASSERT_THROW(bitwuzla::Sort().fp_sig_size(), bitwuzla::BitwuzlaException);
   ASSERT_THROW(d_bv_sort8.fp_sig_size(), bitwuzla::BitwuzlaException);
   ASSERT_EQ(d_fp_sort16.fp_sig_size(), 11);
 }
 
-TEST_F(TestApi, sort_array_get_index)
+TEST_F(TestApi, sort_array_index)
 {
   ASSERT_THROW(bitwuzla::Sort().array_index(), bitwuzla::BitwuzlaException);
   ASSERT_THROW(d_bv_sort23.array_index(), bitwuzla::BitwuzlaException);
   ASSERT_TRUE(d_arr_sort_bvfp.array_index().is_bv());
 }
 
-TEST_F(TestApi, sort_array_get_element)
+TEST_F(TestApi, sort_array_element)
 {
   ASSERT_THROW(bitwuzla::Sort().array_element(), bitwuzla::BitwuzlaException);
   ASSERT_THROW(d_bv_sort23.array_element(), bitwuzla::BitwuzlaException);
   ASSERT_TRUE(d_arr_sort_bvfp.array_element().is_fp());
 }
 
-TEST_F(TestApi, sort_fun_get_domain_sorts)
+TEST_F(TestApi, sort_fun_domain_sorts)
 {
   ASSERT_THROW(bitwuzla::Sort().fun_domain(), bitwuzla::BitwuzlaException);
   ASSERT_THROW(d_bv_sort8.fun_domain(), bitwuzla::BitwuzlaException);
@@ -1761,14 +1761,14 @@ TEST_F(TestApi, sort_fun_get_domain_sorts)
   ASSERT_EQ(d_bv_sort32, domain_sorts[2]);
 }
 
-TEST_F(TestApi, sort_fun_get_codomain)
+TEST_F(TestApi, sort_fun_codomain)
 {
   ASSERT_THROW(bitwuzla::Sort().fun_codomain(), bitwuzla::BitwuzlaException);
   ASSERT_THROW(d_bv_sort8.fun_codomain(), bitwuzla::BitwuzlaException);
   ASSERT_EQ(d_fun_sort.fun_codomain(), d_bv_sort8);
 }
 
-TEST_F(TestApi, sort_fun_get_arity)
+TEST_F(TestApi, sort_fun_arity)
 {
   ASSERT_THROW(bitwuzla::Sort().fun_arity(), bitwuzla::BitwuzlaException);
   ASSERT_THROW(d_bv_sort8.fun_arity(), bitwuzla::BitwuzlaException);
