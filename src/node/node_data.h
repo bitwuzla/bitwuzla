@@ -13,8 +13,6 @@
 
 namespace bzla {
 
-class NodeManager;
-
 namespace node {
 
 enum class Kind;
@@ -157,11 +155,9 @@ class NodeData
   iterator end() const;
 
  protected:
-  NodeData(NodeManager* mgr, Kind kind);
+  NodeData(Kind kind);
 
  private:
-  /** The owning node manager. */
-  NodeManager* d_mgr = nullptr;
   /** Node id. */
   uint64_t d_id = 0;
   /** Node kind. */
@@ -187,9 +183,7 @@ class NodeDataChildren : public NodeData
   NodeDataChildren()  = delete;
   ~NodeDataChildren() = default;
 
-  NodeDataChildren(NodeManager* mgr,
-                   Kind kind,
-                   const std::vector<Node>& children);
+  NodeDataChildren(Kind kind, const std::vector<Node>& children);
 
   size_t hash() const override;
   bool equals(const NodeData& other) const override;
@@ -212,8 +206,7 @@ class NodeDataIndexed : public NodeDataChildren
 
  public:
   NodeDataIndexed() = delete;
-  NodeDataIndexed(NodeManager* mgr,
-                  Kind kind,
+  NodeDataIndexed(Kind kind,
                   const std::vector<Node>& children,
                   const std::vector<uint64_t>& indices);
   ~NodeDataIndexed() = default;
@@ -239,7 +232,7 @@ class NodeDataNary : public NodeData
   NodeDataNary()  = delete;
   ~NodeDataNary() = default;
 
-  NodeDataNary(NodeManager* mgr, Kind kind, const std::vector<Node>& children);
+  NodeDataNary(Kind kind, const std::vector<Node>& children);
 
   size_t hash() const override;
   bool equals(const NodeData& other) const override;
@@ -259,8 +252,7 @@ class NodeDataValue : public NodeData
 
  public:
   NodeDataValue() = delete;
-  NodeDataValue(NodeManager* mgr, const T& value)
-      : NodeData(mgr, Kind::VALUE), d_value(value){};
+  NodeDataValue(const T& value) : NodeData(Kind::VALUE), d_value(value){};
 
   ~NodeDataValue() = default;
 

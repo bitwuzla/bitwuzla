@@ -38,7 +38,7 @@ Node
 NodeManager::mk_const(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
-  NodeData* data = new NodeData(this, Kind::CONSTANT);
+  NodeData* data = new NodeData(Kind::CONSTANT);
   data->d_type   = t;
   init_id(data);
   if (symbol)
@@ -71,7 +71,7 @@ Node
 NodeManager::mk_var(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
-  NodeData* data = new NodeData(this, Kind::VARIABLE);
+  NodeData* data = new NodeData(Kind::VARIABLE);
   data->d_type   = t;
   init_id(data);
   if (symbol)
@@ -84,7 +84,7 @@ NodeManager::mk_var(const Type& t, const std::optional<std::string>& symbol)
 Node
 NodeManager::mk_value(bool value)
 {
-  NodeData* data  = new NodeDataValue(this, value);
+  NodeData* data  = new NodeDataValue(value);
   data->d_type    = mk_bool_type();
   auto found_data = find_or_insert_node(data);
   if (found_data)
@@ -98,7 +98,7 @@ NodeManager::mk_value(bool value)
 Node
 NodeManager::mk_value(const BitVector& value)
 {
-  NodeData* data  = new NodeDataValue(this, value);
+  NodeData* data  = new NodeDataValue(value);
   data->d_type    = mk_bv_type(value.size());
   auto found_data = find_or_insert_node(data);
   if (found_data)
@@ -112,7 +112,7 @@ NodeManager::mk_value(const BitVector& value)
 Node
 NodeManager::mk_value(const RoundingMode value)
 {
-  NodeData* data  = new NodeDataValue(this, value);
+  NodeData* data  = new NodeDataValue(value);
   data->d_type    = mk_rm_type();
   auto found_data = find_or_insert_node(data);
   if (found_data)
@@ -126,7 +126,7 @@ NodeManager::mk_value(const RoundingMode value)
 Node
 NodeManager::mk_value(const FloatingPoint& value)
 {
-  NodeData* data = new NodeDataValue(this, value);
+  NodeData* data = new NodeDataValue(value);
   data->d_type =
       mk_fp_type(value.get_exponent_size(), value.get_significand_size());
   auto found_data = find_or_insert_node(data);
@@ -818,15 +818,15 @@ NodeManager::new_data(Kind kind,
   NodeData* data;
   if (indices.size() > 0)
   {
-    data = new NodeDataIndexed(this, kind, children, indices);
+    data = new NodeDataIndexed(kind, children, indices);
   }
   else if (KindInfo::is_nary(kind))
   {
-    data = new NodeDataNary(this, kind, children);
+    data = new NodeDataNary(kind, children);
   }
   else
   {
-    data = new NodeDataChildren(this, kind, children);
+    data = new NodeDataChildren(kind, children);
   }
   return data;
 }

@@ -20,7 +20,7 @@ NodeDataKeyEqual::operator()(const NodeData* d0, const NodeData* d1) const
 
 /* --- NodeData public ----------------------------------------------------- */
 
-NodeData::NodeData(NodeManager* mgr, Kind kind) : d_mgr(mgr), d_kind(kind){};
+NodeData::NodeData(Kind kind) : d_kind(kind){};
 
 size_t
 NodeData::hash() const
@@ -142,7 +142,7 @@ NodeData::dec_ref()
   --d_refs;
   if (d_refs == 0)
   {
-    d_mgr->garbage_collect(this);
+    NodeManager::get().garbage_collect(this);
   }
 }
 
@@ -182,10 +182,8 @@ NodeData::end() const
 
 /* --- NodeDataChildren public --------------------------------------------- */
 
-NodeDataChildren::NodeDataChildren(NodeManager* mgr,
-                                   Kind kind,
-                                   const std::vector<Node>& children)
-    : NodeData(mgr, kind), d_num_children(children.size())
+NodeDataChildren::NodeDataChildren(Kind kind, const std::vector<Node>& children)
+    : NodeData(kind), d_num_children(children.size())
 {
   assert(d_num_children > 0);
   assert(d_num_children <= s_max_children);
@@ -242,11 +240,10 @@ NodeDataChildren::equals(const NodeData& other) const
 
 /* --- NodeDataIndexed public ---------------------------------------------- */
 
-NodeDataIndexed::NodeDataIndexed(NodeManager* mgr,
-                                 Kind kind,
+NodeDataIndexed::NodeDataIndexed(Kind kind,
                                  const std::vector<Node>& children,
                                  const std::vector<uint64_t>& indices)
-    : NodeDataChildren(mgr, kind, children), d_num_indices(indices.size())
+    : NodeDataChildren(kind, children), d_num_indices(indices.size())
 {
   assert(KindInfo::num_indices(kind) == indices.size());
   uint8_t i = 0;
@@ -290,10 +287,8 @@ NodeDataIndexed::equals(const NodeData& other) const
 
 /* --- NodeDataNary public ------------------------------------------------- */
 
-NodeDataNary::NodeDataNary(NodeManager* mgr,
-                           Kind kind,
-                           const std::vector<Node>& children)
-    : NodeData(mgr, kind), d_children(children)
+NodeDataNary::NodeDataNary(Kind kind, const std::vector<Node>& children)
+    : NodeData(kind), d_children(children)
 {
   assert(is_nary());
 };
