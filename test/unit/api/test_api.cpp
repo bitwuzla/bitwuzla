@@ -839,8 +839,7 @@ TEST_F(TestApi, mk_term_check_args)
 
   std::vector<bitwuzla::Term> lambda_args2_invalid_1 = {d_bv_const8,
                                                         d_bv_const8};
-  std::vector<bitwuzla::Term> lambda_args2_invalid_2 = {d_bound_var,
-                                                        d_bv_const8};
+  std::vector<bitwuzla::Term> lambda_args2 = {d_bound_var, d_bv_const8};
   std::vector<bitwuzla::Term> lambda_args3_invalid_1 = {
       d_var1, d_var1, d_bv_const8};
 
@@ -1248,8 +1247,7 @@ TEST_F(TestApi, mk_term_check_args)
       bitwuzla::mk_term(bitwuzla::Kind::LAMBDA, lambda_args3_invalid_1),
       bitwuzla::BitwuzlaException);
   ASSERT_NO_THROW(bitwuzla::mk_term(bitwuzla::Kind::LAMBDA, lambda_args3));
-  ASSERT_NO_THROW(
-      bitwuzla::mk_term(bitwuzla::Kind::LAMBDA, lambda_args2_invalid_2));
+  ASSERT_NO_THROW(bitwuzla::mk_term(bitwuzla::Kind::LAMBDA, lambda_args2));
   // indexed
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_EXTRACT, bv_args1_invalid, bv_idxs2),
@@ -1433,7 +1431,7 @@ TEST_F(TestApi, pop)
   }
 }
 
-TEST_F(TestApi, assert)
+TEST_F(TestApi, assert_formula)
 {
   bitwuzla::Options options;
   bitwuzla::Bitwuzla bitwuzla(options);
@@ -1443,9 +1441,9 @@ TEST_F(TestApi, assert)
                bitwuzla::BitwuzlaException);
 
   ASSERT_THROW(bitwuzla.assert_formula(d_bv_one1), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla.assert_formula(d_bool_var),
+               bitwuzla::BitwuzlaException);
   // TODO: this should throw, not implemented yet
-  // ASSERT_THROW(bitwuzla.assert_formula(d_bool_var),
-  // bitwuzla::BitwuzlaException);
   // ASSERT_THROW(bitwuzla.assert_formula(d_bool_lambda),
   // bitwuzla::BitwuzlaException);
   // ASSERT_THROW(bitwuzla.assert_formula(d_bool_lambda_body),

@@ -744,32 +744,39 @@ Options::get_mode(Option option) const
 
 OptionInfo::OptionInfo(const Options &options, Option option) : opt(option)
 {
-  bzla::option::Option opt = s_internal_options.at(option);
-  shrt                     = options.d_options->shrt(opt);
-  lng                      = options.d_options->lng(opt);
-  description              = options.d_options->description(opt);
+  try
+  {
+    bzla::option::Option opt = s_internal_options.at(option);
+    shrt                     = options.d_options->shrt(opt);
+    lng                      = options.d_options->lng(opt);
+    description              = options.d_options->description(opt);
 
-  if (options.is_bool(option))
-  {
-    kind   = Kind::BOOL;
-    values = Bool{options.d_options->get<bool>(opt),
-                  options.d_options->dflt<bool>(opt)};
+    if (options.is_bool(option))
+    {
+      kind   = Kind::BOOL;
+      values = Bool{options.d_options->get<bool>(opt),
+                    options.d_options->dflt<bool>(opt)};
+    }
+    else if (options.is_numeric(option))
+    {
+      kind   = Kind::NUMERIC;
+      values = Numeric{options.d_options->get<uint64_t>(opt),
+                       options.d_options->dflt<uint64_t>(opt),
+                       options.d_options->min<uint64_t>(opt),
+                       options.d_options->max<uint64_t>(opt)};
+    }
+    else
+    {
+      assert(options.is_mode(option));
+      kind   = Kind::MODE;
+      values = Mode{options.d_options->get<std::string>(opt),
+                    options.d_options->dflt<std::string>(opt),
+                    options.d_options->modes(opt)};
+    }
   }
-  else if (options.is_numeric(option))
+  catch (std::out_of_range &e)
   {
-    kind   = Kind::NUMERIC;
-    values = Numeric{options.d_options->get<uint64_t>(opt),
-                     options.d_options->dflt<uint64_t>(opt),
-                     options.d_options->min<uint64_t>(opt),
-                     options.d_options->max<uint64_t>(opt)};
-  }
-  else
-  {
-    assert(options.is_mode(option));
-    kind   = Kind::MODE;
-    values = Mode{options.d_options->get<std::string>(opt),
-                  options.d_options->dflt<std::string>(opt),
-                  options.d_options->modes(opt)};
+    throw BitwuzlaException("invalid option");
   }
 }
 
@@ -1307,6 +1314,7 @@ Bitwuzla::assert_formula(const Term &term)
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_NOT_NULL(term.d_node);
   BITWUZLA_CHECK_TERM_IS_BOOL(term);
+  BITWUZLA_CHECK_TERM_IS_NOT_VAR(term);
   d_ctx->assert_formula(*term.d_node);
 }
 
@@ -2064,7 +2072,8 @@ mk_term(Kind kind,
         case Kind::BV_EXTRACT:
           BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, true);
           BITWUZLA_CHECK(indices[0] < args[0].d_node->type().bv_size())
-              << "upper index must be less than the bit-width";
+              << "upper index must be less than the bit-vector size of given "
+                 "term";
           BITWUZLA_CHECK(indices[0] >= indices[1])
               << "upper index must be greater or equal to lower index";
           break;

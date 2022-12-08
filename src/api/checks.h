@@ -37,7 +37,7 @@ class BitwuzlaException : public std::exception
    * Get the exception message.
    * @return The exception message.
    */
-  std::string get_msg() const { return d_msg; }
+  std::string msg() const { return d_msg; }
 
   const char *what() const noexcept override { return d_msg.c_str(); }
 
@@ -164,6 +164,10 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_CHECK_TERM_IS_VAR_AT_IDX(args, i) \
   BITWUZLA_CHECK((args)[i].d_node->is_variable())  \
       << "expected variable at index " << i;
+
+#define BITWUZLA_CHECK_TERM_IS_NOT_VAR(arg)                                \
+  BITWUZLA_CHECK(!(arg).d_node->is_variable()) << "expected non-variable " \
+                                                  "term";
 
 #define BITWUZLA_CHECK_TERM_IS_FUN_AT_IDX(args, i)  \
   BITWUZLA_CHECK((args)[i].d_node->type().is_fun()) \
