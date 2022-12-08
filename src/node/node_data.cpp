@@ -1,5 +1,6 @@
 #include "node/node_data.h"
 
+#include "node/kind_info.h"
 #include "node/node.h"
 #include "node/node_manager.h"
 
@@ -37,7 +38,7 @@ NodeData::equals(const NodeData& other) const
 bool
 NodeData::has_children() const
 {
-  return s_node_kind_info.num_children(d_kind) > 0;
+  return KindInfo::num_children(d_kind) > 0;
 }
 
 size_t
@@ -92,7 +93,7 @@ NodeData::get_child(size_t index)
 bool
 NodeData::is_indexed() const
 {
-  return s_node_kind_info.num_indices(d_kind) > 0;
+  return KindInfo::num_indices(d_kind) > 0;
 }
 
 size_t
@@ -119,13 +120,13 @@ NodeData::get_index(size_t index) const
 bool
 NodeData::is_nary() const
 {
-  return s_node_kind_info.is_nary(d_kind);
+  return KindInfo::is_nary(d_kind);
 }
 
 std::optional<std::reference_wrapper<const std::string>>
 NodeData::get_symbol() const
 {
-  return d_mgr->get_symbol(this);
+  return NodeManager::get().get_symbol(this);
 }
 
 void
@@ -188,7 +189,7 @@ NodeDataChildren::NodeDataChildren(NodeManager* mgr,
 {
   assert(d_num_children > 0);
   assert(d_num_children <= s_max_children);
-  assert(s_node_kind_info.num_children(kind) > 0);
+  assert(KindInfo::num_children(kind) > 0);
   uint8_t i = 0;
   for (auto n : children)
   {
@@ -247,7 +248,7 @@ NodeDataIndexed::NodeDataIndexed(NodeManager* mgr,
                                  const std::vector<uint64_t>& indices)
     : NodeDataChildren(mgr, kind, children), d_num_indices(indices.size())
 {
-  assert(s_node_kind_info.num_indices(kind) == indices.size());
+  assert(KindInfo::num_indices(kind) == indices.size());
   uint8_t i = 0;
   for (auto idx : indices)
   {

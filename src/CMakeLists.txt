@@ -54,6 +54,7 @@ set(libbitwuzla_src_files
   dumper/bzladumpaig.c
   dumper/bzladumpbtor.c
   dumper/bzladumpsmt.c
+  node/kind_info.cpp
   node/node.cpp
   node/node_data.cpp
   node/node_kind.cpp

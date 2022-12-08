@@ -3,6 +3,7 @@
 #include <functional>
 
 #include "bv/bitvector.h"
+#include "node/kind_info.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
@@ -359,21 +360,19 @@ NodeManager::check_type(Kind kind,
 {
   std::stringstream ss;
 
-  if ((!s_node_kind_info.is_nary(kind)
-       && children.size() != s_node_kind_info.num_children(kind)))
+  if ((!KindInfo::is_nary(kind)
+       && children.size() != KindInfo::num_children(kind)))
   {
     ss << kind << ": ";
     ss << "Invalid number of children. Expected "
-       << std::to_string(s_node_kind_info.num_children(kind)) << ", got "
-       << children.size();
+       << KindInfo::num_children(kind) << ", got " << children.size();
     return std::make_pair(false, ss.str());
   }
-  else if (indices.size() != s_node_kind_info.num_indices(kind))
+  else if (indices.size() != KindInfo::num_indices(kind))
   {
     ss << kind << ": ";
-    ss << "Invalid number of indices. Expected "
-       << std::to_string(s_node_kind_info.num_indices(kind)) << ", got "
-       << indices.size();
+    ss << "Invalid number of indices. Expected " << KindInfo::num_indices(kind)
+       << ", got " << indices.size();
     return std::make_pair(false, ss.str());
   }
 
@@ -807,7 +806,7 @@ NodeManager::new_data(Kind kind,
   {
     data = new NodeDataIndexed(this, kind, children, indices);
   }
-  else if (s_node_kind_info.is_nary(kind))
+  else if (KindInfo::is_nary(kind))
   {
     data = new NodeDataNary(this, kind, children);
   }

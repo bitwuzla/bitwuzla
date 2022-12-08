@@ -1,6 +1,7 @@
 #include "node/node_utils.h"
 
 #include "bv/bitvector.h"
+#include "node/kind_info.h"
 #include "node/node_manager.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
@@ -234,7 +235,7 @@ mk_nary(Kind kind, const std::vector<Node>& terms)
   NodeManager& nm = NodeManager::get();
   size_t size     = terms.size();
 
-  if (s_node_kind_info.is_left_associative(kind))
+  if (KindInfo::is_left_associative(kind))
   {
     Node res = nm.mk_node(kind, {terms[0], terms[1]});
     for (size_t i = 2; i < size; ++i)
@@ -244,7 +245,7 @@ mk_nary(Kind kind, const std::vector<Node>& terms)
     return res;
   }
 
-  if (s_node_kind_info.is_right_associative(kind))
+  if (KindInfo::is_right_associative(kind))
   {
     Node res = nm.mk_node(kind, {terms[size - 2], terms[size - 1]});
     for (size_t i = 2; i < size; ++i)
@@ -254,7 +255,7 @@ mk_nary(Kind kind, const std::vector<Node>& terms)
     return res;
   }
 
-  if (s_node_kind_info.is_chainable(kind))
+  if (KindInfo::is_chainable(kind))
   {
     Node res = nm.mk_node(kind, {terms[0], terms[1]});
     for (size_t i = 2; i < size; ++i)
@@ -265,7 +266,7 @@ mk_nary(Kind kind, const std::vector<Node>& terms)
     return res;
   }
 
-  assert(s_node_kind_info.is_pairwise(kind));
+  assert(KindInfo::is_pairwise(kind));
   Node res;
   for (size_t i = 0; i < size - 1; ++i)
   {

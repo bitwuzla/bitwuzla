@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "bv/bitvector.h"
+#include "node/kind_info.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
 #include "solver/fp/floating_point.h"
@@ -101,7 +102,7 @@ Printer::print(std::ostream& os,
       }
       expect_space = true;
 
-      const char* symbol = s_node_kind_info.smt2_name(cur.kind());
+      const char* symbol = KindInfo::smt2_name(cur.kind());
       switch (cur.kind())
       {
         case Kind::CONST_ARRAY:
