@@ -262,13 +262,13 @@ TEST_F(TestApi, result_to_string)
 
 TEST_F(TestApi, set_option)
 {
-  //{
-  //  bitwuzla::Options opts;
-  //  opts.set(bitwuzla::Option::INCREMENTAL, true);
-  //  ASSERT_THROW(
-  //      opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true),
-  //      BitwuzlaException);
-  //}
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::INCREMENTAL, true);
+    //  ASSERT_THROW(
+    //      opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true),
+    //      BitwuzlaException);
+  }
   //{
   //  bitwuzla::Options opts;
   //  opts.set(bitwuzla::Option::FUN_DUAL_PROP, true);
