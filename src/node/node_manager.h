@@ -172,7 +172,7 @@ class NodeManager
    * aquired via NodeManager::get().
    */
   NodeManager()                              = default;
-  ~NodeManager()                             = default;
+  ~NodeManager();
   NodeManager(const NodeManager&)            = delete;
   NodeManager& operator=(const NodeManager&) = delete;
 

@@ -20,6 +20,20 @@ NodeManager::get()
   return mgr;
 }
 
+NodeManager::~NodeManager()
+{
+  // Cleanup remaining nodes without triggering garbage_collect().
+  for (std::unique_ptr<NodeData>& data : d_node_data)
+  {
+    if (data == nullptr) continue;
+    for (size_t i = 0, size = data->get_num_children(); i < size; ++i)
+    {
+      Node& child  = data->get_child(i);
+      child.d_data = nullptr;
+    }
+  }
+}
+
 Node
 NodeManager::mk_const(const Type& t, const std::optional<std::string>& symbol)
 {
