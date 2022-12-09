@@ -1544,6 +1544,8 @@ mk_array_sort(const Sort &index, const Sort &element)
 {
   BITWUZLA_CHECK_NOT_NULL(index.d_type);
   BITWUZLA_CHECK_NOT_NULL(element.d_type);
+  BITWUZLA_CHECK(!index.is_array())
+      << "array sorts not supported as index sort of array";
   return bzla::NodeManager::get().mk_array_type(*index.d_type, *element.d_type);
 }
 

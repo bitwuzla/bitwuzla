@@ -364,8 +364,9 @@ TEST_F(TestApi, mk_array_sort)
                bitwuzla::BitwuzlaException);
   ASSERT_THROW(bitwuzla::mk_array_sort(d_bv_sort1, bitwuzla::Sort()),
                bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_array_sort(d_arr_sort_bv, d_bv_sort8),
+               bitwuzla::BitwuzlaException);
 
-  ASSERT_NO_THROW(bitwuzla::mk_array_sort(d_arr_sort_bv, d_bv_sort8));
   ASSERT_NO_THROW(bitwuzla::mk_array_sort(d_bv_sort8, d_arr_sort_bv));
   ASSERT_NO_THROW(bitwuzla::mk_array_sort(d_fun_sort, d_bv_sort8));
   ASSERT_NO_THROW(bitwuzla::mk_array_sort(d_bv_sort8, d_fun_sort));
@@ -1891,13 +1892,13 @@ TEST_F(TestApi, term_hash)
   ASSERT_NO_THROW(std::hash<bitwuzla::Term>{}(d_bv_const8));
 }
 
-TEST_F(TestApi, term_get_sort)
+TEST_F(TestApi, term_sort)
 {
   ASSERT_THROW(bitwuzla::Term().sort(), bitwuzla::BitwuzlaException);
   ASSERT_EQ(d_bv_const8.sort(), d_bv_sort8);
 }
 
-TEST_F(TestApi, term_get_symbol)
+TEST_F(TestApi, term_symbol)
 {
   ASSERT_THROW(bitwuzla::Term().symbol(), bitwuzla::BitwuzlaException);
   bitwuzla::Term x = bitwuzla::mk_const(d_bv_sort8, "x");
