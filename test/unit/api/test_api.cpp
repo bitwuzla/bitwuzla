@@ -352,7 +352,7 @@ TEST_F(TestApi, option_info)
                   std::get<bitwuzla::OptionInfo::Mode>(info.values).cur);
       }
     }
-    catch (std::out_of_range &e)
+    catch (...)
     {
     }
   }

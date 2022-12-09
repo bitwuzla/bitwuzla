@@ -651,7 +651,7 @@ bitwuzla_mk_fp_neg_inf(BitwuzlaSort sort)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
-  return export_term(bitwuzla::mk_fp_pos_inf(import_sort(sort)));
+  return export_term(bitwuzla::mk_fp_neg_inf(import_sort(sort)));
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -977,7 +977,7 @@ bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size)
     res.push_back(export_term(term));
   }
   *size = res.size();
-  return res.data();
+  return *size > 0 ? res.data() : nullptr;
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -995,7 +995,7 @@ bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size)
     res.push_back(export_term(term));
   }
   *size = res.size();
-  return res.data();
+  return *size > 0 ? res.data() : nullptr;
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -1349,7 +1349,7 @@ bitwuzla_sort_fun_get_domain_sorts(BitwuzlaSort sort, size_t *size)
     res.push_back(export_sort(sort));
   }
   *size = res.size();
-  return res.data();
+  return *size > 0 ? res.data() : nullptr;
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -1478,7 +1478,8 @@ bitwuzla_term_get_children(BitwuzlaTerm term, size_t *size)
   {
     res.push_back(export_term(child));
   }
-  return res.data();
+  *size = res.size();
+  return *size > 0 ? res.data() : nullptr;
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -1490,7 +1491,8 @@ bitwuzla_term_get_indices(BitwuzlaTerm term, size_t *size)
   BITWUZLA_CHECK_NOT_NULL(size);
   static thread_local std::vector<uint64_t> res;
   res = import_term(term).indices();
-  return res.data();
+  *size = res.size();
+  return *size > 0 ? res.data() : nullptr;
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -1544,7 +1546,7 @@ bitwuzla_term_fun_get_domain_sorts(BitwuzlaTerm term, size_t *size)
     res.push_back(export_sort(sort));
   }
   *size = res.size();
-  return res.data();
+  return *size > 0 ? res.data() : nullptr;
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -1623,7 +1625,7 @@ bitwuzla_term_is_equal_sort(BitwuzlaTerm term0, BitwuzlaTerm term1)
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term0);
   BITWUZLA_CHECK_TERM_ID(term1);
-  return import_term(term0) == import_term(term1);
+  return import_term(term0).sort() == import_term(term1).sort();
   BITWUZLA_TRY_CATCH_END;
 }
 
