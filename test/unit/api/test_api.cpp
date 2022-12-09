@@ -536,11 +536,8 @@ TEST_F(TestApi, mk_fp_value)
                bitwuzla::BitwuzlaException);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_one1, d_bv_zero8, bitwuzla::Term()),
                bitwuzla::BitwuzlaException);
-
-  // TODO enable, currently fails in symfpu
-  // ASSERT_THROW(
-  //    bitwuzla::mk_fp_value( d_bv_zero8, d_bv_zero8, d_bv_zero8),
-  //    bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_zero8, d_bv_zero8, d_bv_zero8),
+               bitwuzla::BitwuzlaException);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_fp_const16, d_bv_zero8, d_bv_zero8),
                bitwuzla::BitwuzlaException);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_one1, d_fp_const16, d_bv_zero8),
