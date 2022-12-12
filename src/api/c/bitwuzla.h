@@ -301,13 +301,14 @@ void bitwuzla_set_abort_callback(void (*fun)(const char *msg));
  *
  * @see
  *   * `BitwuzlaOption`
+ *   * `bitwuzla_get_option`
  */
 void bitwuzla_set_option(BitwuzlaOptions *options,
                          BitwuzlaOption option,
                          uint64_t val);
 
 /**
- * Set option value for string options.
+ * Set option mode for options with modes.
  *
  * @param options The Bitwuzla options instance.
  * @param option The option.
@@ -315,10 +316,11 @@ void bitwuzla_set_option(BitwuzlaOptions *options,
  *
  * @see
  *   * `BitwuzlaOption`
+ *   * `bitwuzla_get_option_mode`
  */
-void bitwuzla_set_option_str(BitwuzlaOptions *options,
-                             BitwuzlaOption option,
-                             const char *val);
+void bitwuzla_set_option_mode(BitwuzlaOptions *options,
+                              BitwuzlaOption option,
+                              const char *val);
 
 /**
  * Get the current value of an option.
@@ -334,8 +336,7 @@ void bitwuzla_set_option_str(BitwuzlaOptions *options,
 uint64_t bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option);
 
 /**
- * Get the current value of an option as a string if option can be configured
- * via a string value.
+ * Get the current mode of an option as a string if option has modes.
  *
  * @param options The Bitwuzla options instance.
  * @param option The option.
@@ -344,10 +345,10 @@ uint64_t bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option);
  *
  * @see
  *   * `BitwuzlaOption`
- *   * `bitwuzla_set_option_str`
+ *   * `bitwuzla_set_option_mode`
  */
-const char *bitwuzla_get_option_str(BitwuzlaOptions *options,
-                                    BitwuzlaOption option);
+const char *bitwuzla_get_option_mode(BitwuzlaOptions *options,
+                                     BitwuzlaOption option);
 
 /**
  * Get the details of an option.

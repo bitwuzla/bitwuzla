@@ -406,9 +406,9 @@ bitwuzla_set_option(BitwuzlaOptions *options,
 }
 
 void
-bitwuzla_set_option_str(BitwuzlaOptions *options,
-                        BitwuzlaOption option,
-                        const char *value)
+bitwuzla_set_option_mode(BitwuzlaOptions *options,
+                         BitwuzlaOption option,
+                         const char *value)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
@@ -429,7 +429,7 @@ bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option)
 }
 
 const char *
-bitwuzla_get_option_str(BitwuzlaOptions *options, BitwuzlaOption option)
+bitwuzla_get_option_mode(BitwuzlaOptions *options, BitwuzlaOption option)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);

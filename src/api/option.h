@@ -208,8 +208,6 @@ enum ENUM(Option)
    */
   EVALUE(PRODUCE_UNSAT_CORES),
 
-  // EVALUE(SAT_ENGINE), // TODO: news: renamed
-
   /*! **Seed for random number generator.**
    *
    * Values:
