@@ -51,8 +51,6 @@ class HistogramStatistic
 class Statistics
 {
  public:
-  ~Statistics() { print(); }
-
   /** @return Reference to new statistic. */
   template <typename T>
   T& new_stat(const std::string& name)
