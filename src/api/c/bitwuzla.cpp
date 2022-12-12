@@ -1058,13 +1058,13 @@ bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term)
 }
 
 const char *
-bitwuzla_get_bv_value(Bitwuzla *bitwuzla, BitwuzlaTerm term)
+bitwuzla_get_bv_value(Bitwuzla *bitwuzla, BitwuzlaTerm term, uint8_t base)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_TERM_ID(term);
   static thread_local std::string str;
-  str = bitwuzla->d_bitwuzla->get_bv_value(import_term(term));
+  str = bitwuzla->d_bitwuzla->get_bv_value(import_term(term), base);
   return str.c_str();
   BITWUZLA_TRY_CATCH_END;
 }

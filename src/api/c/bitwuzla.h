@@ -1149,11 +1149,15 @@ BitwuzlaTerm bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param term The term to query a model value for.
+ * @param base        The base in which the output strings are given; 2 for
+ *                    binary, 10 for decimal, and 16 for hexadecimal.
  *
  * @return Binary string representation of current model value of term \p term.
  *         Return value is valid until next `bitwuzla_get_bv_value` call.
  */
-const char *bitwuzla_get_bv_value(Bitwuzla *bitwuzla, BitwuzlaTerm term);
+const char *bitwuzla_get_bv_value(Bitwuzla *bitwuzla,
+                                  BitwuzlaTerm term,
+                                  uint8_t base);
 
 /**
  * Get string of IEEE 754 standard representation of the current model value of

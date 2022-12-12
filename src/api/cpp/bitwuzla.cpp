@@ -1397,6 +1397,7 @@ Bitwuzla::get_value(const Term &term)
   return d_ctx->get_value(*term.d_node);
 }
 
+// TODO support base -10 for signed decimal values
 std::string
 Bitwuzla::get_bv_value(const Term &term, uint8_t base)
 {

@@ -500,24 +500,6 @@ TEST_F(TestApi, mk_bv_value)
                bitwuzla::BitwuzlaException);
   ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "12z4567890", 16),
                bitwuzla::BitwuzlaException);
-
-  // TODO enable
-  // bitwuzla::Options options;
-  // options.set(bitwuzla::Option::PRODUCE_MODELS, true);
-  // bitwuzla::Bitwuzla bitwuzla(options);
-  // bitwuzla.check_sat();
-  // ASSERT_EQ(std::string(bitwuzla.get_bv_value(
-  //              bitwuzla::mk_bv_value(
-  //                   d_bv_sort8, "-1", 10))),
-  //          "11111111");
-  // ASSERT_EQ(std::string(bitwuzla.get_bv_value(
-  //              bitwuzla::mk_bv_value(
-  //                   d_bv_sort8, "-123", 10))),
-  //          "10000101");
-  // ASSERT_EQ(std::string(bitwuzla.get_bv_value(
-  //              bitwuzla::mk_bv_value(
-  //                   d_bv_sort8, "-128", 10))),
-  //          "10000000");
 }
 
 TEST_F(TestApi, mk_bv_value_uint64)
@@ -1641,13 +1623,51 @@ TEST_F(TestApi, get_bv_value)
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_MODELS, true);
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_bv_value(bitwuzla::Term()),
+    ASSERT_THROW(bitwuzla.get_bv_value(d_bv_zero8),
                  bitwuzla::BitwuzlaException);
+
     bitwuzla::Result res = bitwuzla.check_sat();
     ASSERT_EQ(res, bitwuzla::Result::SAT);
+    ASSERT_THROW(bitwuzla.get_bv_value(bitwuzla::Term()),
+                 bitwuzla::BitwuzlaException);
     ASSERT_THROW(bitwuzla.get_bv_value(d_fp_nan32),
                  bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_bv_value(d_bv_zero8, 6),
+                 bitwuzla::BitwuzlaException);
     ASSERT_EQ("1", bitwuzla.get_bv_value(d_bv_one1));
+
+    bitwuzla::Term bv_maxs32 = bitwuzla::mk_bv_max_signed(d_bv_sort32);
+    ASSERT_EQ("01111111111111111111111111111111",
+              bitwuzla.get_bv_value(bv_maxs32));
+    ASSERT_EQ("2147483647", bitwuzla.get_bv_value(bv_maxs32, 10));
+    ASSERT_EQ("7fffffff", bitwuzla.get_bv_value(bv_maxs32, 16));
+    ASSERT_EQ(
+        bitwuzla.get_bv_value(bitwuzla::mk_bv_value(d_bv_sort8, "-1", 10)),
+        "11111111");
+    ASSERT_EQ(
+        bitwuzla.get_bv_value(bitwuzla::mk_bv_value(d_bv_sort8, "-1", 10), 10),
+        "255");
+    ASSERT_EQ(
+        bitwuzla.get_bv_value(bitwuzla::mk_bv_value(d_bv_sort8, "-1", 10), 16),
+        "ff");
+    ASSERT_EQ(
+        bitwuzla.get_bv_value(bitwuzla::mk_bv_value(d_bv_sort8, "-123", 10)),
+        "10000101");
+    ASSERT_EQ(bitwuzla.get_bv_value(
+                  bitwuzla::mk_bv_value(d_bv_sort8, "-123", 10), 10),
+              "133");
+    ASSERT_EQ(bitwuzla.get_bv_value(
+                  bitwuzla::mk_bv_value(d_bv_sort8, "-123", 10), 16),
+              "85");
+    ASSERT_EQ(
+        bitwuzla.get_bv_value(bitwuzla::mk_bv_value(d_bv_sort8, "-128", 10)),
+        "10000000");
+    ASSERT_EQ(bitwuzla.get_bv_value(
+                  bitwuzla::mk_bv_value(d_bv_sort8, "-128", 10), 10),
+              "128");
+    ASSERT_EQ(bitwuzla.get_bv_value(
+                  bitwuzla::mk_bv_value(d_bv_sort8, "-128", 10), 16),
+              "80");
   }
 }
 
