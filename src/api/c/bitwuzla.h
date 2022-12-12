@@ -1197,6 +1197,7 @@ void bitwuzla_get_fp_value(Bitwuzla *bitwuzla,
 BitwuzlaRoundingMode bitwuzla_get_rm_value(Bitwuzla *bitwuzla,
                                            BitwuzlaTerm term);
 
+#if 0
 /**
  * Get the current model value of given array term.
  *
@@ -1261,7 +1262,6 @@ void bitwuzla_get_fun_value(Bitwuzla *bitwuzla,
                             BitwuzlaTerm **values,
                             size_t *size);
 
-#if 0
 /**
  * Print a model for the current input formula.
  *
