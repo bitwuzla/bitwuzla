@@ -248,7 +248,7 @@ mk_nary(Kind kind, const std::vector<Node>& terms)
   if (KindInfo::is_right_associative(kind))
   {
     Node res = nm.mk_node(kind, {terms[size - 2], terms[size - 1]});
-    for (size_t i = 2; i < size; ++i)
+    for (size_t i = 3; i <= size; ++i)
     {
       res = nm.mk_node(kind, {terms[size - i], res});
     }
