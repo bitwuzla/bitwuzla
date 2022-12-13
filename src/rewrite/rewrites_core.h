@@ -39,19 +39,19 @@ Node RewriteRule<RewriteRuleKind::EQUAL_ITE_DIS_BV1>::_apply(Rewriter& rewriter,
 // add_left_eq
 // add_right_eq
 template <>
-Node RewriteRule<RewriteRuleKind::EQUAL_ADD>::_apply(Rewriter& rewriter,
-                                                     const Node& node);
+Node RewriteRule<RewriteRuleKind::EQUAL_BV_ADD>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 // add_add_1_eq
 // add_add_2_eq
 // add_add_3_eq
 // add_add_4_eq
 template <>
-Node RewriteRule<RewriteRuleKind::EQUAL_ADD_ADD>::_apply(Rewriter& rewriter,
-                                                         const Node& node);
+Node RewriteRule<RewriteRuleKind::EQUAL_BV_ADD_ADD>::_apply(Rewriter& rewriter,
+                                                            const Node& node);
 // concat_eq
 template <>
-Node RewriteRule<RewriteRuleKind::EQUAL_CONCAT>::_apply(Rewriter& rewriter,
-                                                        const Node& node);
+Node RewriteRule<RewriteRuleKind::EQUAL_BV_CONCAT>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
 
 /* distinct ----------------------------------------------------------------- */
 

@@ -302,9 +302,9 @@ TEST_F(TestRewriterCore, core_equal_ite)
       {d_nm.mk_node(Kind::ITE, {d_b, d_bv4_a, d_bv4_b}), d_bv4_c}));
 }
 
-TEST_F(TestRewriterCore, core_equal_add)
+TEST_F(TestRewriterCore, core_equal_bv_add)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_ADD;
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_BV_ADD;
   //// applies
   test_rule<kind>(d_nm.mk_node(
       Kind::EQUAL, {d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b}), d_bv4_a}));
@@ -325,9 +325,9 @@ TEST_F(TestRewriterCore, core_equal_add)
       Kind::EQUAL, {d_nm.mk_node(Kind::BV_SUB, {d_bv4_a, d_bv4_b}), d_bv4_a}));
 }
 
-TEST_F(TestRewriterCore, core_equal_add_add)
+TEST_F(TestRewriterCore, core_equal_bv_add_add)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_ADD_ADD;
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_BV_ADD_ADD;
   //// applies
   test_rule<kind>(
       d_nm.mk_node(Kind::EQUAL,
@@ -362,9 +362,9 @@ TEST_F(TestRewriterCore, core_equal_add_add)
       Kind::EQUAL, {d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b}), d_bv4_a}));
 }
 
-TEST_F(TestRewriterCore, core_equal_concat)
+TEST_F(TestRewriterCore, core_equal_bv_concat)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_CONCAT;
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_BV_CONCAT;
   Node c                         = d_nm.mk_const(d_nm.mk_bv_type(8));
   //// applies
   test_rule<kind>(

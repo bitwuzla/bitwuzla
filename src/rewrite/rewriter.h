@@ -200,9 +200,9 @@ enum class RewriteRuleKind
   // Level 1
   EQUAL_FALSE,
   // Level 3
-  EQUAL_ADD,
-  EQUAL_ADD_ADD,
-  EQUAL_CONCAT,
+  EQUAL_BV_ADD,
+  EQUAL_BV_ADD_ADD,
+  EQUAL_BV_CONCAT,
   EQUAL_ITE_BV1,
   EQUAL_ITE_DIS_BV1,
 

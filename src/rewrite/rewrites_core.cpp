@@ -503,8 +503,8 @@ _rw_eq_add(Rewriter& rewriter, const Node& node, size_t idx)
 
 template <>
 Node
-RewriteRule<RewriteRuleKind::EQUAL_ADD>::_apply(Rewriter& rewriter,
-                                                const Node& node)
+RewriteRule<RewriteRuleKind::EQUAL_BV_ADD>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
 {
   Node res = _rw_eq_add(rewriter, node, 0);
   if (res == node)
@@ -550,8 +550,8 @@ _rw_eq_add_add(Rewriter& rewriter, const Node& node, size_t idx)
 
 template <>
 Node
-RewriteRule<RewriteRuleKind::EQUAL_ADD_ADD>::_apply(Rewriter& rewriter,
-                                                    const Node& node)
+RewriteRule<RewriteRuleKind::EQUAL_BV_ADD_ADD>::_apply(Rewriter& rewriter,
+                                                       const Node& node)
 {
   Node res = _rw_eq_add_add(rewriter, node, 0);
   if (res == node)
@@ -612,8 +612,8 @@ _rw_eq_concat(Rewriter& rewriter, const Node& node, size_t idx)
 
 template <>
 Node
-RewriteRule<RewriteRuleKind::EQUAL_CONCAT>::_apply(Rewriter& rewriter,
-                                                   const Node& node)
+RewriteRule<RewriteRuleKind::EQUAL_BV_CONCAT>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
 {
   Node res = _rw_eq_concat(rewriter, node, 0);
   if (res == node)
