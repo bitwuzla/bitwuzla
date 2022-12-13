@@ -24,6 +24,7 @@ Result
 SolvingContext::solve()
 {
   preprocess();
+  d_rewriter.statistics().print();
   d_sat_state = d_solver_engine.solve();
   return d_sat_state;
 }

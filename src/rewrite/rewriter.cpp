@@ -12,7 +12,11 @@
   {                                                                \
     std::tie(res, kind) =                                          \
         RewriteRule<RewriteRuleKind::rw_rule>::apply(*this, node); \
-    if (res != node) goto DONE;                                    \
+    if (res != node)                                               \
+    {                                                              \
+      d_stats_rewrites << kind;                                    \
+      goto DONE;                                                   \
+    }                                                              \
   } while (false);
 
 #define BZLA_ELIM_KIND_IMPL(name, rule)           \
@@ -30,6 +34,13 @@
 namespace bzla {
 
 /* === Rewriter public ====================================================== */
+
+Rewriter::Rewriter(bool enabled)
+    : d_enabled(enabled),
+      d_stats_rewrites(
+          d_statistics.new_stat<util::HistogramStatistic>("rewriter::rewrite"))
+{
+}
 
 const Node&
 Rewriter::rewrite(const Node& node)
@@ -96,6 +107,12 @@ Rewriter::invert_node(const Node& node)
     return mk_node(node::Kind::NOT, {node});
   }
   return mk_node(node::Kind::BV_NOT, {node});
+}
+
+util::Statistics&
+Rewriter::statistics()
+{
+  return d_statistics;
 }
 
 /* === Rewriter private ===================================================== */
@@ -1151,6 +1168,314 @@ Rewriter::rewrite_exists(const Node& node)
 {
   // TODO
   return node;
+}
+
+std::ostream&
+operator<<(std::ostream& out, RewriteRuleKind kind)
+{
+  /* Boolean rewrites ---------------------------- */
+  switch (kind)
+  {
+    case RewriteRuleKind::AND_EVAL: out << "AND_EVAL"; break;
+    case RewriteRuleKind::AND_SPECIAL_CONST: out << "AND_SPECIAL_CONST"; break;
+    case RewriteRuleKind::AND_CONST: out << "AND_CONST"; break;
+    case RewriteRuleKind::AND_IDEM1: out << "AND_IDEM1"; break;
+    case RewriteRuleKind::AND_IDEM2: out << "AND_IDEM2"; break;
+    case RewriteRuleKind::AND_IDEM3: out << "AND_IDEM3"; break;
+    case RewriteRuleKind::AND_CONTRA1: out << "AND_CONTRA1"; break;
+    case RewriteRuleKind::AND_CONTRA2: out << "AND_CONTRA2"; break;
+    case RewriteRuleKind::AND_CONTRA3: out << "AND_CONTRA3"; break;
+    case RewriteRuleKind::AND_RESOL1: out << "AND_RESOL1"; break;
+    case RewriteRuleKind::AND_SUBSUM1: out << "AND_SUBSUM1"; break;
+    case RewriteRuleKind::AND_SUBSUM2: out << "AND_SUBSUM2"; break;
+    case RewriteRuleKind::AND_NOT_AND1: out << "AND_NOT_AND1"; break;
+    case RewriteRuleKind::AND_NOT_AND2: out << "AND_NOT_AND2"; break;
+    case RewriteRuleKind::AND_BV_LT_FALSE: out << "AND_BV_LT_FALSE"; break;
+    case RewriteRuleKind::AND_BV_LT: out << "AND_BV_LT"; break;
+
+    case RewriteRuleKind::EQUAL_EVAL: out << "EQUAL_EVAL"; break;
+    case RewriteRuleKind::EQUAL_SPECIAL_CONST:
+      out << "EQUAL_SPECIAL_CONST";
+      break;
+    case RewriteRuleKind::EQUAL_CONST: out << "EQUAL_CONST"; break;
+    case RewriteRuleKind::EQUAL_TRUE: out << "EQUAL_TRUE"; break;
+    case RewriteRuleKind::EQUAL_ITE: out << "EQUAL_ITE"; break;
+    case RewriteRuleKind::EQUAL_FALSE: out << "EQUAL_FALSE"; break;
+    case RewriteRuleKind::EQUAL_ADD: out << "EQUAL_ADD"; break;
+    case RewriteRuleKind::EQUAL_ADD_ADD: out << "EQUAL_ADD_ADD"; break;
+    case RewriteRuleKind::EQUAL_CONCAT: out << "EQUAL_CONCAT"; break;
+    case RewriteRuleKind::EQUAL_ITE_BV1: out << "EQUAL_ITE_BV1"; break;
+    case RewriteRuleKind::EQUAL_ITE_DIS_BV1: out << "EQUAL_ITE_DIS_BV1"; break;
+
+    case RewriteRuleKind::ITE_EVAL: out << "ITE_EVAL"; break;
+    case RewriteRuleKind::ITE_SAME: out << "ITE_SAME"; break;
+    case RewriteRuleKind::ITE_THEN_ITE1: out << "ITE_THEN_ITE1"; break;
+    case RewriteRuleKind::ITE_THEN_ITE2: out << "ITE_THEN_ITE2"; break;
+    case RewriteRuleKind::ITE_THEN_ITE3: out << "ITE_THEN_ITE3"; break;
+    case RewriteRuleKind::ITE_ELSE_ITE1: out << "ITE_ELSE_ITE1"; break;
+    case RewriteRuleKind::ITE_ELSE_ITE2: out << "ITE_ELSE_ITE2"; break;
+    case RewriteRuleKind::ITE_ELSE_ITE3: out << "ITE_ELSE_ITE3"; break;
+    case RewriteRuleKind::ITE_BOOL: out << "ITE_BOOL"; break;
+    case RewriteRuleKind::ITE_BV_CONCAT: out << "ITE_BV_CONCAT"; break;
+    case RewriteRuleKind::ITE_BV_OP: out << "ITE_BV_OP"; break;
+
+    case RewriteRuleKind::NOT_EVAL: out << "NOT_EVAL"; break;
+    case RewriteRuleKind::NOT_NOT: out << "NOT_NOT"; break;
+    case RewriteRuleKind::NOT_XOR: out << "NOT_XOR"; break;
+
+    case RewriteRuleKind::DISTINCT_CARD: out << "DISTINCT_CARD"; break;
+    case RewriteRuleKind::DISTINCT_ELIM: out << "DISTINCT_ELIM"; break;
+
+    case RewriteRuleKind::IMPLIES_ELIM: out << "IMPLIES_ELIM"; break;
+    case RewriteRuleKind::OR_ELIM: out << "OR_ELIM"; break;
+    case RewriteRuleKind::XOR_ELIM: out << "XOR_ELIM"; break;
+
+    case RewriteRuleKind::BV_ADD_EVAL: out << "BV_ADD_EVAL"; break;
+    case RewriteRuleKind::BV_ADD_SPECIAL_CONST:
+      out << "BV_ADD_SPECIAL_CONST";
+      break;
+    case RewriteRuleKind::BV_ADD_CONST: out << "BV_ADD_CONST"; break;
+    case RewriteRuleKind::BV_ADD_BV1: out << "BV_ADD_BV1"; break;
+    case RewriteRuleKind::BV_ADD_SAME: out << "BV_ADD_SAME"; break;
+    case RewriteRuleKind::BV_ADD_NOT: out << "BV_ADD_NOT"; break;
+    case RewriteRuleKind::BV_ADD_NEG: out << "BV_ADD_NEG"; break;
+    case RewriteRuleKind::BV_ADD_UREM: out << "BV_ADD_UREM"; break;
+    case RewriteRuleKind::BV_ADD_ITE: out << "BV_ADD_ITE"; break;
+    case RewriteRuleKind::BV_ADD_MUL1: out << "BV_ADD_MUL1"; break;
+    case RewriteRuleKind::BV_ADD_MUL2: out << "BV_ADD_MUL2"; break;
+    case RewriteRuleKind::BV_ADD_SHL: out << "BV_ADD_SHL"; break;
+
+    case RewriteRuleKind::BV_AND_EVAL: out << "BV_AND_EVAL"; break;
+    case RewriteRuleKind::BV_AND_SPECIAL_CONST:
+      out << "BV_AND_SPECIAL_CONST";
+      break;
+    case RewriteRuleKind::BV_AND_CONST: out << "BV_AND_CONST"; break;
+    case RewriteRuleKind::BV_AND_IDEM1: out << "BV_AND_IDEM1"; break;
+    case RewriteRuleKind::BV_AND_IDEM2: out << "BV_AND_IDEM2"; break;
+    case RewriteRuleKind::BV_AND_IDEM3: out << "BV_AND_IDEM3"; break;
+    case RewriteRuleKind::BV_AND_CONTRA1: out << "BV_AND_CONTRA1"; break;
+    case RewriteRuleKind::BV_AND_CONTRA2: out << "BV_AND_CONTRA2"; break;
+    case RewriteRuleKind::BV_AND_CONTRA3: out << "BV_AND_CONTRA3"; break;
+    case RewriteRuleKind::BV_AND_SUBSUM1: out << "BV_AND_SUBSUM1"; break;
+    case RewriteRuleKind::BV_AND_SUBSUM2: out << "BV_AND_SUBSUM2"; break;
+    case RewriteRuleKind::BV_AND_RESOL1: out << "BV_AND_RESOL1"; break;
+    case RewriteRuleKind::BV_AND_NOT_AND1: out << "BV_AND_NOT_AND1"; break;
+    case RewriteRuleKind::BV_AND_NOT_AND2: out << "BV_AND_NOT_AND2"; break;
+    case RewriteRuleKind::BV_AND_CONCAT: out << "BV_AND_CONCAT"; break;
+
+    case RewriteRuleKind::BV_ASHR_EVAL: out << "BV_ASHR_EVAL"; break;
+    case RewriteRuleKind::BV_ASHR_SPECIAL_CONST:
+      out << "BV_ASHR_SPECIAL_CONST";
+      break;
+
+    case RewriteRuleKind::BV_CONCAT_EVAL: out << "BV_CONCAT_EVAL"; break;
+    case RewriteRuleKind::BV_CONCAT_CONST: out << "BV_CONCAT_CONST"; break;
+    case RewriteRuleKind::BV_CONCAT_EXTRACT: out << "BV_CONCAT_EXTRACT"; break;
+    case RewriteRuleKind::BV_CONCAT_AND: out << "BV_CONCAT_AND"; break;
+
+    case RewriteRuleKind::BV_EXTRACT_EVAL: out << "BV_EXTRACT_EVAL"; break;
+    case RewriteRuleKind::BV_EXTRACT_FULL: out << "BV_EXTRACT_FULL"; break;
+    case RewriteRuleKind::BV_EXTRACT_EXTRACT:
+      out << "BV_EXTRACT_EXTRACT";
+      break;
+    case RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_RHS:
+      out << "BV_EXTRACT_CONCAT_FULL_RHS";
+      break;
+    case RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_LHS:
+      out << "BV_EXTRACT_CONCAT_FULL_LHS";
+      break;
+    case RewriteRuleKind::BV_EXTRACT_CONCAT_LHS_RHS:
+      out << "BV_EXTRACT_CONCAT_LHS_RHS";
+      break;
+    case RewriteRuleKind::BV_EXTRACT_CONCAT: out << "BV_EXTRACT_CONCAT"; break;
+    case RewriteRuleKind::BV_EXTRACT_AND: out << "BV_EXTRACT_AND"; break;
+    case RewriteRuleKind::BV_EXTRACT_ITE: out << "BV_EXTRACT_ITE"; break;
+    case RewriteRuleKind::BV_EXTRACT_ADD_MUL:
+      out << "BV_EXTRACT_ADD_MUL";
+      break;
+
+    case RewriteRuleKind::BV_MUL_EVAL: out << "BV_MUL_EVAL"; break;
+    case RewriteRuleKind::BV_MUL_SPECIAL_CONST:
+      out << "BV_MUL_SPECIAL_CONST";
+      break;
+    case RewriteRuleKind::BV_MUL_CONST: out << "BV_MUL_CONST"; break;
+    case RewriteRuleKind::BV_MUL_BV1: out << "BV_MUL_BV1"; break;
+    case RewriteRuleKind::BV_MUL_CONST_ADD: out << "BV_MUL_CONST_ADD"; break;
+    case RewriteRuleKind::BV_MUL_ITE: out << "BV_MUL_ITE"; break;
+    case RewriteRuleKind::BV_MUL_NEG: out << "BV_MUL_NEG"; break;
+    case RewriteRuleKind::BV_MUL_ONES: out << "BV_MUL_ONES"; break;
+    case RewriteRuleKind::BV_MUL_SHL: out << "BV_MUL_SHL"; break;
+
+    case RewriteRuleKind::BV_NOT_EVAL: out << "BV_NOT_EVAL"; break;
+    case RewriteRuleKind::BV_NOT_BV_NOT: out << "BV_NOT_BV_NOT"; break;
+
+    case RewriteRuleKind::BV_SHL_EVAL: out << "BV_SHL_EVAL"; break;
+    case RewriteRuleKind::BV_SHL_SPECIAL_CONST:
+      out << "BV_SHL_SPECIAL_CONST";
+      break;
+    case RewriteRuleKind::BV_SHL_CONST: out << "BV_SHL_CONST"; break;
+
+    case RewriteRuleKind::BV_SHR_EVAL: out << "BV_SHR_EVAL"; break;
+    case RewriteRuleKind::BV_SHR_SPECIAL_CONST:
+      out << "BV_SHR_SPECIAL_CONST";
+      break;
+    case RewriteRuleKind::BV_SHR_CONST: out << "BV_SHR_CONST"; break;
+    case RewriteRuleKind::BV_SHR_SAME: out << "BV_SHR_SAME"; break;
+    case RewriteRuleKind::BV_SHR_NOT: out << "BV_SHR_NOT"; break;
+
+    case RewriteRuleKind::BV_SLT_EVAL: out << "BV_SLT_EVAL"; break;
+    case RewriteRuleKind::BV_SLT_SPECIAL_CONST:
+      out << "BV_SLT_SPECIAL_CONST";
+      break;
+    case RewriteRuleKind::BV_SLT_SAME: out << "BV_SLT_SAME"; break;
+    case RewriteRuleKind::BV_SLT_BV1: out << "BV_SLT_BV1"; break;
+    case RewriteRuleKind::BV_SLT_ITE: out << "BV_SLT_ITE"; break;
+    case RewriteRuleKind::BV_SLT_CONCAT: out << "BV_SLT_CONCAT"; break;
+
+    case RewriteRuleKind::BV_UDIV_EVAL: out << "BV_UDIV_EVAL"; break;
+    case RewriteRuleKind::BV_UDIV_SPECIAL_CONST:
+      out << "BV_UDIV_SPECIAL_CONST";
+      break;
+    case RewriteRuleKind::BV_UDIV_BV1: out << "BV_UDIV_BV1"; break;
+    case RewriteRuleKind::BV_UDIV_SAME: out << "BV_UDIV_SAME"; break;
+    case RewriteRuleKind::BV_UDIV_POW2: out << "BV_UDIV_POW2"; break;
+
+    case RewriteRuleKind::BV_ULT_EVAL: out << "BV_ULT_EVAL"; break;
+    case RewriteRuleKind::BV_ULT_SPECIAL_CONST:
+      out << "BV_ULT_SPECIAL_CONST";
+      break;
+    case RewriteRuleKind::BV_ULT_SAME: out << "BV_ULT_SAME"; break;
+    case RewriteRuleKind::BV_ULT_BV1: out << "BV_ULT_BV1"; break;
+    case RewriteRuleKind::BV_ULT_ITE: out << "BV_ULT_ITE"; break;
+    case RewriteRuleKind::BV_ULT_CONCAT: out << "BV_ULT_CONCAT"; break;
+
+    case RewriteRuleKind::BV_UREM_EVAL: out << "BV_UREM_EVAL"; break;
+    case RewriteRuleKind::BV_UREM_SPECIAL_CONST:
+      out << "BV_UREM_SPECIAL_CONST";
+      break;
+    case RewriteRuleKind::BV_UREM_BV1: out << "BV_UREM_BV1"; break;
+    case RewriteRuleKind::BV_UREM_SAME: out << "BV_UREM_SAME"; break;
+
+    case RewriteRuleKind::BV_XOR_EVAL: out << "BV_XOR_EVAL"; break;
+
+    case RewriteRuleKind::BV_DEC_ELIM: out << "BV_DEC_ELIM"; break;
+    case RewriteRuleKind::BV_INC_ELIM: out << "BV_INC_ELIM"; break;
+    case RewriteRuleKind::BV_NAND_ELIM: out << "BV_NAND_ELIM"; break;
+    case RewriteRuleKind::BV_NEG_ELIM: out << "BV_NEG_ELIM"; break;
+    case RewriteRuleKind::BV_NOR_ELIM: out << "BV_NOR_ELIM"; break;
+    case RewriteRuleKind::BV_OR_ELIM: out << "BV_OR_ELIM"; break;
+    case RewriteRuleKind::BV_REDAND_ELIM: out << "BV_REDAND_ELIM"; break;
+    case RewriteRuleKind::BV_REDOR_ELIM: out << "BV_REDOR_ELIM"; break;
+    case RewriteRuleKind::BV_REDXOR_ELIM: out << "BV_REDXOR_ELIM"; break;
+    case RewriteRuleKind::BV_REPEAT_ELIM: out << "BV_REPEAT_ELIM"; break;
+    case RewriteRuleKind::BV_ROL_ELIM: out << "BV_ROL_ELIM"; break;
+    case RewriteRuleKind::BV_ROLI_ELIM: out << "BV_ROLI_ELIM"; break;
+    case RewriteRuleKind::BV_ROR_ELIM: out << "BV_ROR_ELIM"; break;
+    case RewriteRuleKind::BV_RORI_ELIM: out << "BV_RORI_ELIM"; break;
+    case RewriteRuleKind::BV_SADDO_ELIM: out << "BV_SADDO_ELIM"; break;
+    case RewriteRuleKind::BV_SDIV_ELIM: out << "BV_SDIV_ELIM"; break;
+    case RewriteRuleKind::BV_SDIVO_ELIM: out << "BV_SDIVO_ELIM"; break;
+    case RewriteRuleKind::BV_SGE_ELIM: out << "BV_SGE_ELIM"; break;
+    case RewriteRuleKind::BV_SGT_ELIM: out << "BV_SGT_ELIM"; break;
+    case RewriteRuleKind::BV_SIGN_EXTEND_ELIM:
+      out << "BV_SIGN_EXTEND_ELIM";
+      break;
+    case RewriteRuleKind::BV_SLE_ELIM: out << "BV_SLE_ELIM"; break;
+    case RewriteRuleKind::BV_SMOD_ELIM: out << "BV_SMOD_ELIM"; break;
+    case RewriteRuleKind::BV_SMULO_ELIM: out << "BV_SMULO_ELIM"; break;
+    case RewriteRuleKind::BV_SREM_ELIM: out << "BV_SREM_ELIM"; break;
+    case RewriteRuleKind::BV_SSUBO_ELIM: out << "BV_SSUBO_ELIM"; break;
+    case RewriteRuleKind::BV_SUB_ELIM: out << "BV_SUB_ELIM"; break;
+    case RewriteRuleKind::BV_UADDO_ELIM: out << "BV_UADDO_ELIM"; break;
+    case RewriteRuleKind::BV_UGE_ELIM: out << "BV_UGE_ELIM"; break;
+    case RewriteRuleKind::BV_UGT_ELIM: out << "BV_UGT_ELIM"; break;
+    case RewriteRuleKind::BV_ULE_ELIM: out << "BV_ULE_ELIM"; break;
+    case RewriteRuleKind::BV_UMULO_ELIM: out << "BV_UMULO_ELIM"; break;
+    case RewriteRuleKind::BV_USUBO_ELIM: out << "BV_USUBO_ELIM"; break;
+    case RewriteRuleKind::BV_XNOR_ELIM: out << "BV_XNOR_ELIM"; break;
+    case RewriteRuleKind::BV_XOR_ELIM: out << "BV_XOR_ELIM"; break;
+    case RewriteRuleKind::BV_ZERO_EXTEND_ELIM:
+      out << "BV_ZERO_EXTEND_ELIM";
+      break;
+
+    case RewriteRuleKind::FP_ABS_EVAL: out << "FP_ABS_EVAL"; break;
+    case RewriteRuleKind::FP_ABS_ABS_NEG: out << "FP_ABS_ABS_NEG"; break;
+
+    case RewriteRuleKind::FP_ADD_EVAL: out << "FP_ADD_EVAL"; break;
+    case RewriteRuleKind::FP_DIV_EVAL: out << "FP_DIV_EVAL"; break;
+    case RewriteRuleKind::FP_FMA_EVAL: out << "FP_FMA_EVAL"; break;
+
+    case RewriteRuleKind::FP_IS_INF_EVAL: out << "FP_IS_INF_EVAL"; break;
+    case RewriteRuleKind::FP_IS_INF_ABS_NEG: out << "FP_IS_INF_ABS_NEG"; break;
+
+    case RewriteRuleKind::FP_IS_NAN_EVAL: out << "FP_IS_NAN_EVAL"; break;
+    case RewriteRuleKind::FP_IS_NAN_ABS_NEG: out << "FP_IS_NAN_ABS_NEG"; break;
+
+    case RewriteRuleKind::FP_IS_NEG_EVAL: out << "FP_IS_NEG_EVAL"; break;
+
+    case RewriteRuleKind::FP_IS_NORM_EVAL: out << "FP_IS_NORM_EVAL"; break;
+    case RewriteRuleKind::FP_IS_NORM_ABS_NEG:
+      out << "FP_IS_NORM_ABS_NEG";
+      break;
+
+    case RewriteRuleKind::FP_IS_POS_EVAL: out << "FP_IS_POS_EVAL"; break;
+
+    case RewriteRuleKind::FP_IS_SUBNORM_EVAL:
+      out << "FP_IS_SUBNORM_EVAL";
+      break;
+    case RewriteRuleKind::FP_IS_SUBNORM_ABS_NEG:
+      out << "FP_IS_SUBNORM_ABS_NEG";
+      break;
+
+    case RewriteRuleKind::FP_IS_ZERO_EVAL: out << "FP_IS_ZERO_EVAL"; break;
+    case RewriteRuleKind::FP_IS_ZERO_ABS_NEG:
+      out << "FP_IS_ZERO_ABS_NEG";
+      break;
+
+    case RewriteRuleKind::FP_LEQ_EVAL: out << "FP_LEQ_EVAL"; break;
+    case RewriteRuleKind::FP_LEQ_EQ: out << "FP_LEQ_EQ"; break;
+
+    case RewriteRuleKind::FP_LT_EVAL: out << "FP_LT_EVAL"; break;
+    case RewriteRuleKind::FP_LT_EQ: out << "FP_LT_EQ"; break;
+
+    case RewriteRuleKind::FP_MIN_EVAL: out << "FP_MIN_EVAL"; break;
+    case RewriteRuleKind::FP_MIN_EQ: out << "FP_MIN_EQ"; break;
+
+    case RewriteRuleKind::FP_MAX_EVAL: out << "FP_MAX_EVAL"; break;
+    case RewriteRuleKind::FP_MAX_EQ: out << "FP_MAX_EQ"; break;
+
+    case RewriteRuleKind::FP_MUL_EVAL: out << "FP_MUL_EVAL"; break;
+
+    case RewriteRuleKind::FP_NEG_EVAL: out << "FP_NEG_EVAL"; break;
+    case RewriteRuleKind::FP_NEG_NEG: out << "FP_NEG_NEG"; break;
+
+    case RewriteRuleKind::FP_REM_EVAL: out << "FP_REM_EVAL"; break;
+    case RewriteRuleKind::FP_REM_SAME_DIV: out << "FP_REM_SAME_DIV"; break;
+    case RewriteRuleKind::FP_REM_ABS_NEG: out << "FP_REM_ABS_NEG"; break;
+    case RewriteRuleKind::FP_REM_NEG: out << "FP_REM_NEG"; break;
+
+    case RewriteRuleKind::FP_RTI_EVAL: out << "FP_RTI_EVAL"; break;
+    case RewriteRuleKind::FP_SQRT_EVAL: out << "FP_SQRT_EVAL"; break;
+    case RewriteRuleKind::FP_TO_FP_FROM_BV_EVAL:
+      out << "FP_TO_FP_FROM_BV_EVAL";
+      break;
+    case RewriteRuleKind::FP_TO_FP_FROM_FP_EVAL:
+      out << "FP_TO_FP_FROM_FP_EVAL";
+      break;
+    case RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL:
+      out << "FP_TO_FP_FROM_SBV_EVAL";
+      break;
+    case RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL:
+      out << "FP_TO_FP_FROM_UBV_EVAL";
+      break;
+
+    case RewriteRuleKind::FP_EQUAL_ELIM: out << "FP_EQUAL_ELIM"; break;
+    case RewriteRuleKind::FP_FP_ELIM: out << "FP_FP_ELIM"; break;
+    case RewriteRuleKind::FP_GEQ_ELIM: out << "FP_GEQ_ELIM"; break;
+    case RewriteRuleKind::FP_GT_ELIM: out << "FP_GT_ELIM"; break;
+    case RewriteRuleKind::FP_SUB_ELIM: out << "FP_SUB_ELIM"; break;
+  }
+  return out;
 }
 
 /* -------------------------------------------------------------------------- */

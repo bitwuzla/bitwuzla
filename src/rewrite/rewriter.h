@@ -7,6 +7,7 @@
 #endif
 
 #include "node/node.h"
+#include "util/statistics.h"
 
 namespace bzla {
 
@@ -20,7 +21,7 @@ class Rewriter
    * @param enabled True to enable rewriting, false to disable all rewrites
    *                except for operator elimination.
    */
-  Rewriter(bool enabled = true) : d_enabled(enabled) {}
+  Rewriter(bool enabled = true);
 
   const Node& rewrite(const Node& node);
 
@@ -37,6 +38,9 @@ class Rewriter
 
   /** Disable all rewrites except for operator elimination rewrites. */
   void disable() { d_enabled = false; }
+
+  /** @return The associated statistics instance. */
+  util::Statistics& statistics();
 
  private:
   const Node& _rewrite(const Node& node);
@@ -160,6 +164,9 @@ class Rewriter
   uint64_t d_num_rec_calls = 0;
   /** Indicates whether rewrite recursion limit was reached. */
   bool d_recursion_limit_reached = false;
+  /** The rewriter statistics. */
+  util::Statistics d_statistics;
+  util::HistogramStatistic& d_stats_rewrites;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -447,6 +454,8 @@ enum class RewriteRuleKind
   FP_GT_ELIM,
   FP_SUB_ELIM,
 };
+
+std::ostream& operator<<(std::ostream& out, RewriteRuleKind kind);
 
 template <RewriteRuleKind K>
 class RewriteRule
