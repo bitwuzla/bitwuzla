@@ -41,8 +41,8 @@ class BvBitblastSolver::BitblastSatSolver : public bb::SatInterface
 
 /* --- BvSolver public ----------------------------------------------------- */
 
-BvBitblastSolver::BvBitblastSolver(SolverEngine& solver_engine)
-    : Solver(solver_engine), d_assumptions(solver_engine.backtrack_mgr())
+BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
+    : Solver(env, state), d_assumptions(state.backtrack_mgr())
 {
   d_sat_solver.reset(new sat::Cadical());
   d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));

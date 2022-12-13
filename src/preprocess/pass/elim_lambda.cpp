@@ -1,5 +1,6 @@
 #include "preprocess/pass/elim_lambda.h"
 
+#include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
@@ -63,7 +64,7 @@ PassElimLambda::process(const Node& term)
     visit.pop_back();
   } while (!visit.empty());
 
-  return d_rewriter.rewrite(d_cache.at(term));
+  return d_env.rewriter().rewrite(d_cache.at(term));
 }
 
 /* --- PassElimLambda private ----------------------------------------------- */

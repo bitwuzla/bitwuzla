@@ -1,3 +1,4 @@
+#include "env.h"
 #include "gtest/gtest.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
@@ -21,8 +22,11 @@ class TestNodeUtils : public ::testing::Test
   }
 
  protected:
+  TestNodeUtils() : d_rewriter(d_env.rewriter()) {}
+
   NodeManager& d_nm = NodeManager::get();
-  Rewriter d_rewriter;
+  Env d_env;
+  Rewriter& d_rewriter;
   Type d_bv4_type;
   Node d_a;
   Node d_b;

@@ -16,7 +16,7 @@ namespace bv {
 class BvPropSolver : public Solver, public BvSolverInterface
 {
  public:
-  BvPropSolver(SolverEngine& solver_engine, BvBitblastSolver& bb_solver);
+  BvPropSolver(Env& env, SolverState& state, BvBitblastSolver& bb_solver);
   ~BvPropSolver();
 
   Result solve() override;

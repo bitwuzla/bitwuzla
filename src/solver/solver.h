@@ -5,15 +5,16 @@
 
 #include "node/node.h"
 #include "solver/result.h"
+#include "solver/solver_state.h"
 
 namespace bzla {
 
-class SolverEngine;
+class Env;
 
 class Solver
 {
  public:
-  Solver(SolverEngine& solver_engine) : d_solver_engine(solver_engine){};
+  Solver(Env& env, SolverState& state) : d_env(env), d_solver_state(state){};
 
   /** Check theory consistency of current solving context. */
   virtual void check() { assert(false); };
@@ -29,8 +30,11 @@ class Solver
   }
 
  protected:
-  /** Associated solver engine. */
-  SolverEngine& d_solver_engine;
+  /** Associated environment. */
+  Env& d_env;
+
+  /** Associated solver state. */
+  SolverState& d_solver_state;
 
   /**
    * Store value for term.

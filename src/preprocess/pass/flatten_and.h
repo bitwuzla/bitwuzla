@@ -12,7 +12,7 @@ namespace bzla::preprocess::pass {
 class PassFlattenAnd : public PreprocessingPass
 {
  public:
-  PassFlattenAnd(Rewriter& rewriter) : PreprocessingPass(rewriter) {}
+  PassFlattenAnd(Env& env) : PreprocessingPass(env) {}
 
   void apply(AssertionVector& assertions) override;
 };

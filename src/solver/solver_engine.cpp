@@ -1,5 +1,6 @@
 #include "solver/solver_engine.h"
 
+#include "env.h"
 #include "solving_context.h"
 
 namespace bzla {
@@ -16,11 +17,13 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_register_term_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
       d_in_solving_mode(false),
-      d_stats(statistics()),
-      d_bv_solver(*this),
-      d_fp_solver(*this),
-      d_fun_solver(*this),
-      d_array_solver(*this)
+      d_stats(context.env().statistics()),
+      d_env(context.env()),
+      d_solver_state(*this),
+      d_bv_solver(context.env(), d_solver_state),
+      d_fp_solver(context.env(), d_solver_state),
+      d_fun_solver(context.env(), d_solver_state),
+      d_array_solver(context.env(), d_solver_state)
 {
 }
 
@@ -90,7 +93,7 @@ void
 SolverEngine::lemma(const Node& lemma)
 {
   assert(lemma.type().is_bool());
-  Node rewritten = rewriter().rewrite(lemma);
+  Node rewritten = d_env.rewriter().rewrite(lemma);
   // Lemmas should never simplify to true
   assert(!rewritten.is_value() || !rewritten.value<bool>());
   auto [it, inserted] = d_lemma_cache.insert(rewritten);
@@ -102,28 +105,10 @@ SolverEngine::lemma(const Node& lemma)
   }
 }
 
-Rewriter&
-SolverEngine::rewriter()
-{
-  return d_context.rewriter();
-}
-
-const option::Options&
-SolverEngine::options() const
-{
-  return d_context.options();
-}
-
 backtrack::BacktrackManager*
 SolverEngine::backtrack_mgr()
 {
   return &d_backtrack_mgr;
-}
-
-util::Statistics&
-SolverEngine::statistics()
-{
-  return d_statistics;
 }
 
 /* --- SolverEngine private ------------------------------------------------- */

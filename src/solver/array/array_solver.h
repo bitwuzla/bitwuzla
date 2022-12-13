@@ -14,7 +14,7 @@ class ArraySolver : public Solver
   /** Determine if `term` is a leaf node for the array solver. */
   static bool is_leaf(const Node& term);
 
-  ArraySolver(SolverEngine& solver_engine);
+  ArraySolver(Env& env, SolverState& state);
   ~ArraySolver();
 
   void check() override;
@@ -39,7 +39,7 @@ class ArraySolver : public Solver
   class Access
   {
    public:
-    Access(const Node& access, SolverEngine& solver_engine);
+    Access(const Node& access, SolverState& state);
 
     /** @return Associated access node. */
     const Node& get() const;

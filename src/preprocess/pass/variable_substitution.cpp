@@ -1,9 +1,11 @@
 #include "preprocess/pass/variable_substitution.h"
 
+#include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
+#include "rewrite/rewriter.h"
 
 namespace bzla::preprocess::pass {
 
@@ -113,7 +115,7 @@ PassVariableSubstitution::register_assertion(const Node& assertion)
 Node
 PassVariableSubstitution::process(const Node& term)
 {
-  return d_rewriter.rewrite(
+  return d_env.rewriter().rewrite(
       substitute(term, d_cache.substitutions(), d_cache.cache()));
 }
 

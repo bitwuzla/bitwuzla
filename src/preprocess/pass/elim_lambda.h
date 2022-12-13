@@ -12,7 +12,7 @@ namespace bzla::preprocess::pass {
 class PassElimLambda : public PreprocessingPass
 {
  public:
-  PassElimLambda(Rewriter& rewriter) : PreprocessingPass(rewriter) {}
+  PassElimLambda(Env& env) : PreprocessingPass(env) {}
 
   void apply(AssertionVector& assertions) override;
 

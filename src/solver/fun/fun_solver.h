@@ -13,7 +13,7 @@ class FunSolver : public Solver
   /** Determine if `term` is a leaf node for the function solver. */
   static bool is_leaf(const Node& term);
 
-  FunSolver(SolverEngine& solver_engine);
+  FunSolver(Env& env, SolverState& state);
   ~FunSolver();
 
   void check() override;
@@ -42,7 +42,7 @@ class FunSolver : public Solver
   class Apply
   {
    public:
-    Apply(const Node& apply, SolverEngine& solver_engine);
+    Apply(const Node& apply, SolverState& state);
 
     /** @return Associated function application. */
     const Node& get() const;

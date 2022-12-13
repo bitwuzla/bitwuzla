@@ -1,11 +1,12 @@
 #include "solver/array/array_solver.h"
 
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
-#include "solver/solver_engine.h"
 //#include "util/logger.h"
+#include "env.h"
 
 namespace bzla::array {
 
@@ -20,11 +21,11 @@ ArraySolver::is_leaf(const Node& term)
   return k == Kind::SELECT || (k == Kind::EQUAL && (term[0].type().is_array()));
 }
 
-ArraySolver::ArraySolver(SolverEngine& solver_engine)
-    : Solver(solver_engine),
-      d_selects(solver_engine.backtrack_mgr()),
-      d_equalities(solver_engine.backtrack_mgr()),
-      d_stats(solver_engine.statistics())
+ArraySolver::ArraySolver(Env& env, SolverState& state)
+    : Solver(env, state),
+      d_selects(state.backtrack_mgr()),
+      d_equalities(state.backtrack_mgr()),
+      d_stats(env.statistics())
 {
 }
 
@@ -100,7 +101,7 @@ ArraySolver::check_access(const Node& access)
   }
 
   // Log(1) << "\ncheck: " << access;
-  Access acc(access, d_solver_engine);
+  Access acc(access, d_solver_state);
   // Log(2) << "index:   " << acc.index_value();
   // Log(2) << "element: " << acc.element_value();
   node_ref_vector visit{acc.array()};
@@ -128,11 +129,11 @@ ArraySolver::check_access(const Node& access)
     {
       if (array.kind() == Kind::STORE)
       {
-        Node index_value = d_solver_engine.value(array[1]);
+        Node index_value = d_solver_state.value(array[1]);
         // Check access-over-write consistency
         if (acc.index_value() == index_value)
         {
-          Node element_value = d_solver_engine.value(array[2]);
+          Node element_value = d_solver_state.value(array[2]);
           if (acc.element_value() != element_value)
           {
             // Log(2) << "\u2716 access store lemma";
@@ -150,7 +151,7 @@ ArraySolver::check_access(const Node& access)
       }
       else if (array.kind() == Kind::CONST_ARRAY)
       {
-        Node element_value = d_solver_engine.value(array[1]);
+        Node element_value = d_solver_state.value(array[1]);
         if (acc.element_value() != element_value)
         {
           add_access_const_array_lemma(acc, array);
@@ -158,7 +159,7 @@ ArraySolver::check_access(const Node& access)
       }
       else if (array.kind() == Kind::ITE)
       {
-        Node cond_value = d_solver_engine.value(array[0]);
+        Node cond_value = d_solver_state.value(array[0]);
         visit.push_back(cond_value.value<bool>() ? array[1] : array[2]);
         ++d_stats.num_propagations_down;
         // Log(2) << "D ite: " << visit.back();
@@ -177,7 +178,7 @@ ArraySolver::check_access(const Node& access)
         {
           if (parent.kind() == Kind::STORE)
           {
-            Node index_value = d_solver_engine.value(parent[1]);
+            Node index_value = d_solver_state.value(parent[1]);
             if (index_value != acc.index_value())
             {
               visit.push_back(parent);
@@ -188,7 +189,7 @@ ArraySolver::check_access(const Node& access)
           else if (parent.kind() == Kind::ITE)
           {
             assert(parent.type().is_array());
-            bool cond_value = d_solver_engine.value(parent[0]).value<bool>();
+            bool cond_value = d_solver_state.value(parent[0]).value<bool>();
             if ((cond_value && array == parent[1])
                 || (!cond_value && array == parent[2]))
             {
@@ -201,7 +202,7 @@ ArraySolver::check_access(const Node& access)
           {
             assert(parent.kind() == Kind::EQUAL);
             assert(parent[0].type().is_array());
-            bool eq_value = d_solver_engine.value(parent).value<bool>();
+            bool eq_value = d_solver_state.value(parent).value<bool>();
             if (eq_value)
             {
               if (parent[0] == array)
@@ -229,7 +230,7 @@ ArraySolver::check_equality(const Node& eq)
   assert(eq.kind() == Kind::EQUAL);
   assert(eq[0].type().is_array());
 
-  if (d_solver_engine.value(eq).value<bool>())
+  if (d_solver_state.value(eq).value<bool>())
   {
     // Find and check top-most array stores
     unordered_node_ref_set cache;
@@ -247,7 +248,7 @@ ArraySolver::check_equality(const Node& eq)
         }
         else if (cur.kind() == Kind::ITE)
         {
-          Node cond_value = d_solver_engine.value(cur[0]);
+          Node cond_value = d_solver_state.value(cur[0]);
           visit.push_back(cond_value.value<bool>() ? cur[1] : cur[2]);
         }
       }
@@ -274,7 +275,7 @@ ArraySolver::add_access_store_lemma(const Access& acc, const Node& store)
   d_stats.num_lemma_size << conjuncts.size();
   Node lemma = nm.mk_node(
       Kind::IMPLIES, {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
-  d_solver_engine.lemma(lemma);
+  d_solver_state.lemma(lemma);
 }
 
 void
@@ -289,7 +290,7 @@ ArraySolver::add_access_const_array_lemma(const Access& acc, const Node& array)
   d_stats.num_lemma_size << conjuncts.size();
   Node lemma = nm.mk_node(
       Kind::IMPLIES, {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
-  d_solver_engine.lemma(lemma);
+  d_solver_state.lemma(lemma);
 }
 
 void
@@ -308,7 +309,7 @@ ArraySolver::add_congruence_lemma(const Node& array,
   d_stats.num_lemma_size << conjuncts.size();
   Node lemma = nm.mk_node(
       Kind::IMPLIES, {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
-  d_solver_engine.lemma(lemma);
+  d_solver_state.lemma(lemma);
 }
 
 void
@@ -348,7 +349,7 @@ ArraySolver::collect_path_conditions(const Access& access,
     // Search downwards
     if (cur.kind() == Kind::STORE)
     {
-      if (d_solver_engine.value(cur[1]) != access.index_value())
+      if (d_solver_state.value(cur[1]) != access.index_value())
       {
         visit.push_back(cur[0]);
         path.emplace(cur[0], cur);
@@ -357,7 +358,7 @@ ArraySolver::collect_path_conditions(const Access& access,
     }
     else if (cur.kind() == Kind::ITE)
     {
-      Node cond_value = d_solver_engine.value(cur[0]);
+      Node cond_value = d_solver_state.value(cur[0]);
       if (cond_value.value<bool>())
       {
         visit.push_back(cur[1]);
@@ -385,7 +386,7 @@ ArraySolver::collect_path_conditions(const Access& access,
       {
         if (parent.kind() == Kind::STORE)
         {
-          Node index_value = d_solver_engine.value(parent[1]);
+          Node index_value = d_solver_state.value(parent[1]);
           if (index_value != access.index_value())
           {
             visit.push_back(parent);
@@ -396,7 +397,7 @@ ArraySolver::collect_path_conditions(const Access& access,
         else if (parent.kind() == Kind::ITE)
         {
           assert(parent.type().is_array());
-          bool cond_value = d_solver_engine.value(parent[0]).value<bool>();
+          bool cond_value = d_solver_state.value(parent[0]).value<bool>();
           if ((cond_value && cur == parent[1])
               || (!cond_value && cur == parent[2]))
           {
@@ -409,7 +410,7 @@ ArraySolver::collect_path_conditions(const Access& access,
         {
           assert(parent.kind() == Kind::EQUAL);
           assert(parent[0].type().is_array());
-          bool eq_value = d_solver_engine.value(parent).value<bool>();
+          bool eq_value = d_solver_state.value(parent).value<bool>();
           if (eq_value)
           {
             path.emplace(parent, cur);
@@ -459,7 +460,7 @@ ArraySolver::collect_path_conditions(const Access& access,
     }
     else if (cur.kind() == Kind::ITE)
     {
-      Node cond_value = d_solver_engine.value(cur[0]);
+      Node cond_value = d_solver_state.value(cur[0]);
       if (cond_value.value<bool>())
       {
         conditions.push_back(cur[0]);
@@ -505,7 +506,7 @@ ArraySolver::add_disequality_lemma(const Node& eq)
   Node lemma      = nm.mk_node(Kind::IMPLIES,
                           {nm.mk_node(Kind::NOT, {eq}),
                                 nm.mk_node(Kind::DISTINCT, {sel_a, sel_b})});
-  d_solver_engine.lemma(lemma);
+  d_solver_state.lemma(lemma);
   auto p = std::make_pair(sel_a, sel_b);
   d_disequality_lemma_cache.emplace(eq, p);
   return p;
@@ -562,18 +563,18 @@ ArraySolver::Statistics::Statistics(util::Statistics& stats)
 
 /* --- Access public -------------------------------------------------------- */
 
-ArraySolver::Access::Access(const Node& access, SolverEngine& solver_engine)
+ArraySolver::Access::Access(const Node& access, SolverState& state)
     : d_access(access), d_hash(0)
 {
   assert(access.kind() == Kind::SELECT || access.kind() == Kind::STORE);
 
   // Compute hash value of function applications based on the current function
   // argument model values.
-  d_index_value = solver_engine.value(index());
+  d_index_value = state.value(index());
   d_hash += std::hash<Node>{}(d_index_value);
 
   // Cache value of access
-  d_value = solver_engine.value(element());
+  d_value = state.value(element());
 }
 
 const Node&

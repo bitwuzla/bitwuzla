@@ -15,11 +15,12 @@ namespace bzla::bv {
 
 using namespace bzla::node;
 
-BvPropSolver::BvPropSolver(SolverEngine& solver_engine,
+BvPropSolver::BvPropSolver(Env& env,
+                           SolverState& state,
                            BvBitblastSolver& bb_solver)
-    : Solver(solver_engine), d_bb_solver(bb_solver)
+    : Solver(env, state), d_bb_solver(bb_solver)
 {
-  const option::Options& options = d_solver_engine.options();
+  const option::Options& options = d_env.options();
 
   d_ls.reset(new ls::LocalSearchBV(
       options.prop_nprops(), options.prop_nupdates(), options.seed()));
@@ -48,9 +49,9 @@ BvPropSolver::solve()
   // double start                = bzla_util_time_stamp();
   Result sat_result = Result::UNKNOWN;
 
-  uint32_t verbosity = d_solver_engine.options().verbosity();
-  uint64_t nprops    = d_solver_engine.options().prop_nprops();
-  uint64_t nupdates  = d_solver_engine.options().prop_nupdates();
+  uint32_t verbosity = d_env.options().verbosity();
+  uint64_t nprops    = d_env.options().prop_nprops();
+  uint64_t nupdates  = d_env.options().prop_nupdates();
 
   uint32_t progress_steps     = 100;
   uint32_t progress_steps_inc = progress_steps * 10;

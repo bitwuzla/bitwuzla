@@ -12,11 +12,13 @@
 #include "solver/fp/fp_solver.h"
 #include "solver/fun/fun_solver.h"
 #include "solver/result.h"
+#include "solver/solver_state.h"
 #include "util/statistics.h"
 
 namespace bzla {
 
 class SolvingContext;
+class Env;
 
 class SolverEngine
 {
@@ -25,28 +27,6 @@ class SolverEngine
  public:
   SolverEngine(SolvingContext& context);
 
-  /** Get value of given term. Queries corresponding solver for value. */
-  Node value(const Node& term);
-
-  /** Add a lemma. */
-  void lemma(const Node& lemma);
-
-  /** @return Rewriter. */
-  Rewriter& rewriter();
-
-  /** @return Options. */
-  const option::Options& options() const;
-
-  /** @return Solver engine backtrack manager. */
-  backtrack::BacktrackManager* backtrack_mgr();
-
-  util::Statistics& statistics();
-
- private:
-  // temporary helpers, should be moved to corresponding solvers as static
-  // method
-  static bool is_quant_leaf(const Node& term);
-
   /**
    * Solve current set of assertions.
    *
@@ -54,6 +34,20 @@ class SolverEngine
    *       declaration.
    */
   Result solve();
+
+  /** Get value of given term. Queries corresponding solver for value. */
+  Node value(const Node& term);
+
+  /** Add a lemma. */
+  void lemma(const Node& lemma);
+
+  /** @return Solver engine backtrack manager. */
+  backtrack::BacktrackManager* backtrack_mgr();
+
+ private:
+  // temporary helpers, should be moved to corresponding solvers as static
+  // method
+  static bool is_quant_leaf(const Node& term);
 
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);
@@ -100,12 +94,17 @@ class SolverEngine
   /** Indicates whether solver engine is currently in solving loop. */
   bool d_in_solving_mode;
 
-  util::Statistics d_statistics;
   struct Statistics
   {
     Statistics(util::Statistics& stats);
     uint64_t& num_lemmas;
   } d_stats;
+
+  /** Environment. */
+  Env& d_env;
+
+  /** Solver state. */
+  SolverState d_solver_state;
 
   /** Theory solvers. */
   bv::BvSolver d_bv_solver;

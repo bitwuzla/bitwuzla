@@ -1,3 +1,4 @@
+#include "env.h"
 #include "gtest/gtest.h"
 #include "node/kind_info.h"
 #include "node/node_manager.h"
@@ -11,6 +12,8 @@ static const char* s_solver_binary = std::getenv("SOLVER_BINARY");
 class TestRewriter : public ::testing::Test
 {
  protected:
+  TestRewriter() : d_rewriter(d_env.rewriter()) {}
+
   void SetUp() override
   {
     d_bool_type = d_nm.mk_bool_type();
@@ -133,7 +136,8 @@ class TestRewriter : public ::testing::Test
     {
       ss << "(declare-const " << child << " " << child.type() << ")\n";
     }
-    ss << "(assert (distinct " << node << " " << Rewriter().rewrite(node)
+    Env env;
+    ss << "(assert (distinct " << node << " " << env.rewriter().rewrite(node)
        << "))\n";
     ASSERT_EQ(check_sat(ss), "unsat");
   }
@@ -145,7 +149,8 @@ class TestRewriter : public ::testing::Test
     {
       GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
     }
-    Rewriter rewriter;
+    Env env;
+    Rewriter& rewriter = env.rewriter();
     std::stringstream ss;
     std::vector<std::reference_wrapper<const Node>> visit{node};
     std::unordered_set<Node> visited;
@@ -183,11 +188,13 @@ class TestRewriter : public ::testing::Test
 
   void test_rewrite(const Node& node, const Node& expected)
   {
+    Env env;
     ASSERT_EQ(expected, d_rewriter.rewrite(node));
-    ASSERT_EQ(expected, Rewriter().rewrite(node));
+    ASSERT_EQ(expected, env.rewriter().rewrite(node));
   }
 
-  Rewriter d_rewriter;
+  Env d_env;
+  Rewriter& d_rewriter;
 
   NodeManager& d_nm = NodeManager::get();
 

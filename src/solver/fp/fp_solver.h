@@ -4,11 +4,7 @@
 #include "solver/fp/word_blaster.h"
 #include "solver/solver.h"
 
-namespace bzla {
-
-class SolverEngine;
-
-namespace fp {
+namespace bzla::fp {
 
 class FpSolver : public Solver
 {
@@ -18,7 +14,7 @@ class FpSolver : public Solver
   /** Construct default value for given floating-point type. */
   static Node default_value(const Type& type);
 
-  FpSolver(SolverEngine& solver_engine);
+  FpSolver(Env& env, SolverState& state);
   ~FpSolver();
 
   void check() override;
@@ -34,7 +30,6 @@ class FpSolver : public Solver
   std::vector<Node> d_word_blast_queue;
 };
 
-}  // namespace fp
-}  // namespace bzla
+}  // namespace bzla::fp
 
 #endif

@@ -14,7 +14,7 @@ using namespace node;
 class TestPassVariableSubstitution : public TestPreprocessingPass
 {
  public:
-  TestPassVariableSubstitution() : d_btmgr(), d_pass(d_rw, &d_btmgr){};
+  TestPassVariableSubstitution() : d_btmgr(), d_pass(d_env, &d_btmgr){};
 
  protected:
   BacktrackManager d_btmgr;

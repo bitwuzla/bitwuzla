@@ -12,6 +12,7 @@
 namespace bzla {
 
 class SolvingContext;
+class Env;
 
 namespace preprocess {
 
@@ -34,6 +35,8 @@ class Preprocessor
 
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);
+
+  Env& d_env;
 
   /** Current set of assertions. */
   backtrack::AssertionView& d_assertions;

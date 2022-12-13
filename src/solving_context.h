@@ -6,10 +6,9 @@
 
 #include "backtrack/assertion_stack.h"
 #include "backtrack/backtrackable.h"
+#include "env.h"
 #include "node/node.h"
-#include "option/option.h"
 #include "preprocess/preprocessor.h"
-#include "rewrite/rewriter.h"
 #include "solver/result.h"
 #include "solver/solver_engine.h"
 
@@ -59,9 +58,12 @@ class SolvingContext
   /** @return The solving context rewriter. */
   Rewriter& rewriter();
 
+  /** @return The solving context environment. */
+  Env& env();
+
  private:
-  /** The configured solving context options. */
-  const option::Options d_options;
+  /** Solving context environment. */
+  Env d_env;
 
   /** Manages push()/pop() requests. */
   backtrack::BacktrackManager d_backtrack_mgr;
@@ -71,9 +73,6 @@ class SolvingContext
 
   /** The solving context preprocessor. */
   preprocess::Preprocessor d_preprocessor;
-
-  /** The solving context rewriter. */
-  Rewriter d_rewriter;
 
   /** Solver engine that manages all solvers. */
   SolverEngine d_solver_engine;

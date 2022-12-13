@@ -5,7 +5,7 @@
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
 #include "solver/fp/symfpu_wrapper.h"
-#include "solver/solver_engine.h"
+#include "solver/solver_state.h"
 #include "symfpu/core/classify.h"
 #include "symfpu/core/compare.h"
 #include "symfpu/core/convert.h"
@@ -41,8 +41,7 @@ struct WordBlaster::Internal
 
 /* --- WordBlaster public --------------------------------------------------- */
 
-WordBlaster::WordBlaster(SolverEngine& solver_engine)
-    : d_solver_engine(solver_engine)
+WordBlaster::WordBlaster(SolverState& state) : d_solver_state(state)
 {
   d_internal.reset(new Internal());
 }
@@ -188,7 +187,7 @@ WordBlaster::_word_blast(const Node& node)
       {
         SymFpuSymRM rmvar(cur);
         d_internal->d_rm_map.emplace(cur, rmvar);
-        d_solver_engine.lemma(rmvar.valid().getNode());
+        d_solver_state.lemma(rmvar.valid().getNode());
       }
       else if (type.is_fp() && cur.is_value())
       {
@@ -214,7 +213,7 @@ WordBlaster::_word_blast(const Node& node)
 
         SymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
         d_internal->d_unpacked_float_map.emplace(cur, uf);
-        d_solver_engine.lemma(uf.valid(type).getNode());
+        d_solver_state.lemma(uf.valid(type).getNode());
       }
       else if (kind == node::Kind::EQUAL && node[0].type().is_fp())
       {

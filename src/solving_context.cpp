@@ -12,10 +12,9 @@ using namespace node;
 /* --- SolvingContext public ----------------------------------------------- */
 
 SolvingContext::SolvingContext(const option::Options& options)
-    : d_options(options),
+    : d_env(options),
       d_assertions(&d_backtrack_mgr),
       d_preprocessor(*this),
-      d_rewriter(),
       d_solver_engine(*this)
 {
 }
@@ -24,8 +23,8 @@ Result
 SolvingContext::solve()
 {
   preprocess();
-  d_rewriter.statistics().print();
   d_sat_state = d_solver_engine.solve();
+  d_env.statistics().print();
   return d_sat_state;
 }
 
@@ -64,7 +63,7 @@ SolvingContext::pop()
 const option::Options&
 SolvingContext::options() const
 {
-  return d_options;
+  return d_env.options();
 }
 
 backtrack::AssertionView&
@@ -82,7 +81,13 @@ SolvingContext::backtrack_mgr()
 Rewriter&
 SolvingContext::rewriter()
 {
-  return d_rewriter;
+  return d_env.rewriter();
+}
+
+Env&
+SolvingContext::env()
+{
+  return d_env;
 }
 
 }  // namespace bzla

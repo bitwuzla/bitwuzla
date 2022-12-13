@@ -1,12 +1,13 @@
 #include "solver/fp/fp_solver.h"
 
+#include "env.h"
 #include "node/node_kind.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
+#include "rewrite/rewriter.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
-#include "solver/solver_engine.h"
 
 namespace bzla::fp {
 
@@ -36,8 +37,8 @@ FpSolver::default_value(const Type& type)
   return nm.mk_value(RoundingMode::RNE);
 }
 
-FpSolver::FpSolver(SolverEngine& solver_engine)
-    : Solver(solver_engine), d_word_blaster(solver_engine)
+FpSolver::FpSolver(Env& env, SolverState& state)
+    : Solver(env, state), d_word_blaster(state)
 {
 }
 
@@ -49,7 +50,7 @@ FpSolver::check()
   NodeManager& nm = NodeManager::get();
   for (const Node& node : d_word_blast_queue)
   {
-    d_solver_engine.lemma(
+    d_solver_state.lemma(
         nm.mk_node(node::Kind::EQUAL, {node, d_word_blaster.word_blast(node)}));
   }
   d_word_blast_queue.clear();
@@ -89,9 +90,8 @@ FpSolver::value(const Node& term)
     {
       it->second = true;
 
-      Node wb =
-          d_solver_engine.rewriter().rewrite(d_word_blaster.word_blast(cur));
-      Node value = d_solver_engine.value(wb);
+      Node wb    = d_env.rewriter().rewrite(d_word_blaster.word_blast(cur));
+      Node value = d_solver_state.value(wb);
       assert(value.type().is_bv());
       const BitVector& bv = value.value<BitVector>();
       if (cur.type().is_rm())

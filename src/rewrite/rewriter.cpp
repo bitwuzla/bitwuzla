@@ -1,5 +1,6 @@
 #include "rewrite/rewriter.h"
 
+#include "env.h"
 #include "node/node_kind.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
@@ -35,10 +36,11 @@ namespace bzla {
 
 /* === Rewriter public ====================================================== */
 
-Rewriter::Rewriter(bool enabled)
-    : d_enabled(enabled),
-      d_stats_rewrites(
-          d_statistics.new_stat<util::HistogramStatistic>("rewriter::rewrite"))
+Rewriter::Rewriter(Env& env, bool enabled)
+    : d_env(env),
+      d_enabled(enabled),
+      d_stats_rewrites(env.statistics().new_stat<util::HistogramStatistic>(
+          "rewriter::rewrite"))
 {
 }
 
@@ -107,12 +109,6 @@ Rewriter::invert_node(const Node& node)
     return mk_node(node::Kind::NOT, {node});
   }
   return mk_node(node::Kind::BV_NOT, {node});
-}
-
-util::Statistics&
-Rewriter::statistics()
-{
-  return d_statistics;
 }
 
 /* === Rewriter private ===================================================== */

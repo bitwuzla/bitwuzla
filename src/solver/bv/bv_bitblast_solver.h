@@ -18,7 +18,7 @@ class BvSolver;
 class BvBitblastSolver : public Solver, public BvSolverInterface
 {
  public:
-  BvBitblastSolver(SolverEngine& solver_engine);
+  BvBitblastSolver(Env& env, SolverState& state);
   ~BvBitblastSolver();
 
   Result solve() override;

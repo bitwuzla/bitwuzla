@@ -12,7 +12,7 @@
 
 namespace bzla {
 
-class SolverEngine;
+class SolverState;
 
 namespace fp {
 
@@ -26,7 +26,7 @@ class SymFpuSymProp;
 class WordBlaster
 {
  public:
-  WordBlaster(SolverEngine& solver_engine);
+  WordBlaster(SolverState& state);
   ~WordBlaster();
 
   /**
@@ -98,8 +98,8 @@ class WordBlaster
 
   std::vector<Node> d_additional_assertions;
 
-  /** The associated solver engine. */
-  SolverEngine& d_solver_engine;
+  /** The associated solver state. */
+  SolverState& d_solver_state;
 };
 
 /* -------------------------------------------------------------------------- */

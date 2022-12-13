@@ -10,7 +10,7 @@ using namespace node;
 class TestPassFlattenAnd : public TestPreprocessingPass
 {
  public:
-  TestPassFlattenAnd() : d_pass(d_rw){};
+  TestPassFlattenAnd() : d_pass(d_env){};
 
  protected:
   preprocess::pass::PassFlattenAnd d_pass;

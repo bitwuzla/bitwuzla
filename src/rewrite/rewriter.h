@@ -11,6 +11,8 @@
 
 namespace bzla {
 
+class Env;
+
 /* -------------------------------------------------------------------------- */
 
 class Rewriter
@@ -21,7 +23,7 @@ class Rewriter
    * @param enabled True to enable rewriting, false to disable all rewrites
    *                except for operator elimination.
    */
-  Rewriter(bool enabled = true);
+  Rewriter(Env& env, bool enabled = true);
 
   const Node& rewrite(const Node& node);
 
@@ -38,9 +40,6 @@ class Rewriter
 
   /** Disable all rewrites except for operator elimination rewrites. */
   void disable() { d_enabled = false; }
-
-  /** @return The associated statistics instance. */
-  util::Statistics& statistics();
 
  private:
   const Node& _rewrite(const Node& node);
@@ -153,6 +152,9 @@ class Rewriter
   Node rewrite_forall(const Node& node);
   Node rewrite_exists(const Node& node);
 
+  /** Associated environment. */
+  Env& d_env;
+
   /** True to enable rewriting, false to only enable operator elimination. */
   bool d_enabled;
   /** Cache for rewritten nodes, maps node to its rewritten form. */
@@ -164,8 +166,6 @@ class Rewriter
   uint64_t d_num_rec_calls = 0;
   /** Indicates whether rewrite recursion limit was reached. */
   bool d_recursion_limit_reached = false;
-  /** The rewriter statistics. */
-  util::Statistics d_statistics;
   util::HistogramStatistic& d_stats_rewrites;
 };
 

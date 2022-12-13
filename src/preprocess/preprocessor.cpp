@@ -1,17 +1,19 @@
 #include "preprocess/preprocessor.h"
 
+#include "env.h"
 #include "solving_context.h"
 
 namespace bzla::preprocess {
 
 Preprocessor::Preprocessor(SolvingContext& context)
-    : d_assertions(context.assertions()),
+    : d_env(context.env()),
+      d_assertions(context.assertions()),
       d_global_backtrack_mgr(*context.backtrack_mgr()),
       d_pop_callback(context.backtrack_mgr(), &d_backtrack_mgr),
-      d_pass_rewrite(context.rewriter()),
-      d_pass_elim_lambda(context.rewriter()),
-      d_pass_variable_substitution(context.rewriter(), &d_backtrack_mgr),
-      d_pass_flatten_and(context.rewriter())
+      d_pass_rewrite(d_env),
+      d_pass_elim_lambda(d_env),
+      d_pass_variable_substitution(d_env, &d_backtrack_mgr),
+      d_pass_flatten_and(d_env)
 {
 }
 

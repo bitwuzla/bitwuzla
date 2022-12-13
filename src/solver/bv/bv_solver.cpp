@@ -1,6 +1,7 @@
 #include "solver/bv/bv_solver.h"
 
 #include "bv/bitvector.h"
+#include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
@@ -39,11 +40,11 @@ BvSolver::is_leaf(const Node& term)
              && !term[0].type().is_bv());
 }
 
-BvSolver::BvSolver(SolverEngine& solver_engine)
-    : Solver(solver_engine),
-      d_bitblast_solver(solver_engine),
-      d_prop_solver(solver_engine, d_bitblast_solver),
-      d_cur_solver(solver_engine.options().bv_solver())
+BvSolver::BvSolver(Env& env, SolverState& state)
+    : Solver(env, state),
+      d_bitblast_solver(env, state),
+      d_prop_solver(env, state, d_bitblast_solver),
+      d_cur_solver(env.options().bv_solver())
 {
 }
 
@@ -68,7 +69,7 @@ Result
 BvSolver::solve()
 {
   reset_cached_values();
-  switch (d_solver_engine.options().bv_solver())
+  switch (d_env.options().bv_solver())
   {
     case option::BvSolver::BITBLAST:
       assert(d_cur_solver == option::BvSolver::BITBLAST);

@@ -2,7 +2,6 @@
 
 #include "node/node_manager.h"
 #include "node/node_utils.h"
-#include "solver/solver_engine.h"
 
 namespace bzla::fun {
 
@@ -17,8 +16,8 @@ FunSolver::is_leaf(const Node& term)
   return k == Kind::APPLY || (k == Kind::EQUAL && (term[0].type().is_fun()));
 }
 
-FunSolver::FunSolver(SolverEngine& solver_engine)
-    : Solver(solver_engine), d_applies(solver_engine.backtrack_mgr())
+FunSolver::FunSolver(Env& env, SolverState& state)
+    : Solver(env, state), d_applies(state.backtrack_mgr())
 {
 }
 
@@ -35,7 +34,7 @@ FunSolver::check()
     const Node& fun = apply[0];
     auto& fun_model = d_fun_models[fun];
 
-    Apply app(apply, d_solver_engine);
+    Apply app(apply, d_solver_state);
     auto [it, inserted] = fun_model.insert(app);
     if (!inserted)
     {
@@ -112,23 +111,23 @@ FunSolver::add_function_congruence_lemma(const Node& a, const Node& b)
   Node conclusion = nm.mk_node(Kind::EQUAL, {a, b});
   Node lemma      = nm.mk_node(Kind::IMPLIES,
                           {utils::mk_nary(Kind::AND, premise), conclusion});
-  d_solver_engine.lemma(lemma);
+  d_solver_state.lemma(lemma);
 }
 
 /* --- Apply public --------------------------------------------------------- */
 
-FunSolver::Apply::Apply(const Node& apply, SolverEngine& solver_engine)
+FunSolver::Apply::Apply(const Node& apply, SolverState& state)
     : d_apply(apply), d_hash(0)
 {
   // Compute hash value of function applications based on the current function
   // argument model values.
   for (size_t i = 1, size = apply.num_children(); i < size; ++i)
   {
-    d_values.emplace_back(solver_engine.value(apply[i]));
+    d_values.emplace_back(state.value(apply[i]));
     d_hash += std::hash<Node>{}(d_values.back());
   }
   // Cache value of function application
-  d_value = solver_engine.value(apply);
+  d_value = state.value(apply);
 }
 
 const Node&

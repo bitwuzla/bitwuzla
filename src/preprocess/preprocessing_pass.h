@@ -5,6 +5,8 @@
 
 namespace bzla {
 
+class Env;
+
 namespace backtrack {
 class AssertionView;
 }
@@ -67,7 +69,7 @@ class AssertionVector
 class PreprocessingPass
 {
  public:
-  PreprocessingPass(Rewriter& rewriter) : d_rewriter(rewriter) {}
+  PreprocessingPass(Env& env) : d_env(env) {}
 
   /** Apply preprocessing pass to the current set of assertions. */
   virtual void apply(AssertionVector& assertions) = 0;
@@ -76,7 +78,7 @@ class PreprocessingPass
   virtual Node process(const Node& term) { return term; }
 
  protected:
-  Rewriter& d_rewriter;
+  Env& d_env;
 };
 
 }  // namespace preprocess

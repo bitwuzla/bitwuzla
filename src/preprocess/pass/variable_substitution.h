@@ -6,7 +6,6 @@
 #include "backtrack/vector.h"
 #include "node/unordered_node_ref_map.h"
 #include "preprocess/preprocessing_pass.h"
-#include "rewrite/rewriter.h"
 
 namespace bzla::preprocess::pass {
 
@@ -16,9 +15,8 @@ namespace bzla::preprocess::pass {
 class PassVariableSubstitution : public PreprocessingPass
 {
  public:
-  PassVariableSubstitution(Rewriter& rewriter,
-                           backtrack::BacktrackManager* backtrack_mgr)
-      : PreprocessingPass(rewriter),
+  PassVariableSubstitution(Env& env, backtrack::BacktrackManager* backtrack_mgr)
+      : PreprocessingPass(env),
         d_backtrack_mgr(backtrack_mgr),
         d_substitutions(backtrack_mgr),
         d_substitution_assertions(backtrack_mgr),

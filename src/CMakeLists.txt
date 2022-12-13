@@ -54,6 +54,7 @@ set(libbitwuzla_src_files
   dumper/bzladumpaig.c
   dumper/bzladumpbtor.c
   dumper/bzladumpsmt.c
+  env.cpp
   node/kind_info.cpp
   node/node.cpp
   node/node_data.cpp
@@ -121,6 +122,7 @@ set(libbitwuzla_src_files
   solver/result.cpp
   solver/solver.cpp
   solver/solver_engine.cpp
+  solver/solver_state.cpp
   solving_context.cpp
   utils/bzlahashint.c
   utils/bzlahashptr.c

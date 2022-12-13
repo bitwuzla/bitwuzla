@@ -14,11 +14,12 @@ using namespace node;
 class TestPreprocessor : public ::testing::Test
 {
  public:
-  TestPreprocessor() : d_nm(NodeManager::get()){};
+  TestPreprocessor() : d_nm(NodeManager::get()), d_rw(d_env.rewriter()){};
 
  protected:
   NodeManager& d_nm;
-  Rewriter d_rw;
+  Env d_env;
+  Rewriter& d_rw;
   option::Options d_options;
 };
 
