@@ -593,11 +593,8 @@ _rw_eq_concat(Rewriter& rewriter, const Node& node, size_t idx)
     //       beneficial. Hence, we only rewrite if an extract on node[idx1]
     //       is rewritten to a non-extract.
 
-    // TODO: check why we only rewrite when ext1_lhs is a non-slice and
-    //       ext1_rhs is a slice
-    //       NOTE: disabled second condition for now since it makes no sense
-    if (ext1_lhs.kind() != Kind::BV_EXTRACT)
-    //&& ext1_rhs.kind() == Kind::BV_EXTRACT)
+    if (ext1_lhs.kind() != Kind::BV_EXTRACT
+        || ext1_rhs.kind() != Kind::BV_EXTRACT)
     {
       Node lhs = rewriter.mk_node(
           Kind::EQUAL,
