@@ -2921,7 +2921,7 @@ apply_concat_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(applies_concat_eq(bzla, e0, e1));
 
   uint32_t upper, lower;
-  BzlaNode *real_e0, *tmp1, *tmp2, *tmp3, *tmp4, *result, *eq1, *eq2;
+  BzlaNode *real_e0, *tmp2, *tmp4, *result, *eq1, *eq2;
 
   real_e0 = bzla_node_real_addr(e0);
 
@@ -2929,10 +2929,8 @@ apply_concat_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   upper = bzla_node_bv_get_width(bzla, real_e0) - 1;
   lower = upper - bzla_node_bv_get_width(bzla, real_e0->e[0]) + 1;
 
-  tmp1 = rewrite_bv_slice_exp(bzla, e0, upper, lower);
   tmp2 = rewrite_bv_slice_exp(bzla, e1, upper, lower);
   lower--;
-  tmp3 = rewrite_bv_slice_exp(bzla, e0, lower, 0);
   tmp4 = rewrite_bv_slice_exp(bzla, e1, lower, 0);
 
   /* creating two slices on e1 does not really improve the situation here,
@@ -2940,8 +2938,8 @@ apply_concat_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
    * from a slice (through further rewriting) */
   if (!(bzla_node_is_bv_slice(tmp2) && bzla_node_is_bv_slice(tmp4)))
   {
-    eq1    = rewrite_eq_exp(bzla, tmp1, tmp2);
-    eq2    = rewrite_eq_exp(bzla, tmp3, tmp4);
+    eq1    = rewrite_eq_exp(bzla, real_e0->e[0], tmp2);
+    eq2    = rewrite_eq_exp(bzla, real_e0->e[1], tmp4);
     result = rewrite_bv_and_exp(bzla, eq1, eq2);
     bzla_node_release(bzla, eq1);
     bzla_node_release(bzla, eq2);
@@ -2949,9 +2947,7 @@ apply_concat_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   else
     result = 0;
 
-  bzla_node_release(bzla, tmp1);
   bzla_node_release(bzla, tmp2);
-  bzla_node_release(bzla, tmp3);
   bzla_node_release(bzla, tmp4);
   BZLA_DEC_REC_RW_CALL(bzla);
   return result;
