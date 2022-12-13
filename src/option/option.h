@@ -93,8 +93,10 @@ class OptionBase
   virtual bool is_bool() const { return false; }
   /** @return True if this option is a numeric option. */
   virtual bool is_numeric() const { return false; }
-  /** @return True if this option is an option that takes an enum value. */
-  virtual bool is_enum() const { return false; }
+  /**
+   * @return True if this option is an option that takes a mode (an enum value).
+   */
+  virtual bool is_mode() const { return false; }
 
   /** @return The description of this option. */
   const char* description() const { return d_description; }
@@ -240,11 +242,14 @@ class OptionNumeric : public OptionBase
   uint64_t d_max;
 };
 
-/** Base class for option info data for options that take enum values. */
-class OptionEnum : public OptionBase
+/**
+ * Base class for option info data for options that have modes (take enum
+ * values).
+ */
+class OptionMode : public OptionBase
 {
  public:
-  OptionEnum(Options* options,
+  OptionMode(Options* options,
              Option opt,
              const char* desc,
              const char* lng,
@@ -254,31 +259,31 @@ class OptionEnum : public OptionBase
   {
   }
 
-  OptionEnum() = delete;
+  OptionMode() = delete;
 
-  bool is_enum() const override { return true; }
+  bool is_mode() const override { return true; }
 
   /**
-   * Set current value of enum option.
-   * @param value The string representation of the enum value.
+   * Set current mode.
+   * @param value The string representation of the mode value.
    */
   virtual void set_str(const std::string& value) = 0;
   /**
-   * Get the string representation of the current value of an enum option.
-   * @note This is mainly necessary to have access to options via their enum
+   * Get the string representation of the current value of a option with modes.
+   * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
-   * @return The current value of an enum option.
+   * @return The current value of an option that has modes.
    */
   virtual const std::string& get_str() const = 0;
   /**
-   * Get the string representation of the default value of an enum option.
-   * @note This is mainly necessary to have access to options via their enum
+   * Get the string representation of the default value of an option with modes.
+   * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
-   * @return The default value of an enum option.
+   * @return The default value of an option that has modes.
    */
   virtual const std::string& dflt_str() const = 0;
   /**
-   * Determine if the given string is a valid mode for an enum option.
+   * Determine if the given string is a valid mode for an option with modes.
    * @param value The mode.
    * @return True if it is valid.
    */
@@ -287,48 +292,48 @@ class OptionEnum : public OptionBase
   virtual std::vector<std::string> modes() const = 0;
 };
 
-/** Option info data for options that take enum values. */
+/** Option info data for options that have modes (take enum values). */
 template <typename T>
-class OptionEnumT : public OptionEnum
+class OptionModeT : public OptionMode
 {
-  using String2EnumMap = std::unordered_map<std::string, T>;
-  using Enum2StringMap = std::unordered_map<T, std::string>;
+  using String2ModeMap = std::unordered_map<std::string, T>;
+  using Mode2StringMap = std::unordered_map<T, std::string>;
 
  public:
   /**
    * Constructor.
    *
    * @note On construction, given uint64_t value determines the initial and the
-   *       default enum value of the option.
+   *       default mode (enum value) of the option.
    *
    * @param options     The associated options object.
    * @param opt         The corresponding option.
    * @param value       The initial and default value of the option.
-   * @param enum2string A map from option enum value to its string
+   * @param mode2string A map from option mode value to its string
    *                    representation for the CLI.
    * @param desc        The option description (used for the CLI help message).
    * @param lng         The long name of the option (`--<lng>` in the CLI).
    * @param shrt        The short name of the option (`-<shrt>` in the CLI).
    * @param is_expert   True if this is an expert option.
    */
-  OptionEnumT(Options* options,
+  OptionModeT(Options* options,
               Option opt,
               T value,
-              const Enum2StringMap& enum2string,
+              const Mode2StringMap& mode2string,
               const char* desc,
               const char* lng,
               const char* shrt = nullptr,
               bool is_expert   = false)
-      : OptionEnum(options, opt, desc, lng, shrt, is_expert),
+      : OptionMode(options, opt, desc, lng, shrt, is_expert),
         d_value(value),
-        d_enum2string(enum2string)
+        d_mode2string(mode2string)
   {
-    for (const auto& p : enum2string)
+    for (const auto& p : mode2string)
     {
-      d_string2enum.emplace(p.second, p.first);
+      d_string2mode.emplace(p.second, p.first);
     }
   }
-  OptionEnumT() = delete;
+  OptionModeT() = delete;
 
   const T& operator()() const { return d_value; }
 
@@ -342,14 +347,14 @@ class OptionEnumT : public OptionEnum
   const std::string& dflt_str() const override;
   bool is_valid(const std::string& value) const override;
 
-  /** The current enum value. */
+  /** The current mode. */
   T d_value;
-  /** The default enum value. */
+  /** The default mode. */
   T d_default;
-  /** A map from enum value to its string representation for the CLI. */
-  Enum2StringMap d_enum2string;
-  /** A map from string representation for the CLI to enum value. */
-  String2EnumMap d_string2enum;
+  /** A map from mode to its string representation for the CLI. */
+  Mode2StringMap d_mode2string;
+  /** A map from string representation for the CLI to mode. */
+  String2ModeMap d_string2mode;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -380,17 +385,17 @@ class Options
   OptionNumeric log_level;
   OptionBool produce_models;
   OptionBool produce_unsat_cores;
-  OptionEnumT<SatSolver> sat_solver;
+  OptionModeT<SatSolver> sat_solver;
   OptionNumeric seed;
   OptionNumeric verbosity;
 
-  OptionEnumT<BvSolver> bv_solver;
+  OptionModeT<BvSolver> bv_solver;
   OptionBool smt_comp_mode;
 
   // BV: propagation-based local search engine
   OptionNumeric prop_nprops;
   OptionNumeric prop_nupdates;
-  OptionEnumT<PropPathSelection> prop_path_sel;
+  OptionModeT<PropPathSelection> prop_path_sel;
   OptionNumeric prop_prob_pick_inv_value;
   OptionNumeric prop_prob_pick_random_input;
   OptionBool prop_const_bits;
@@ -402,11 +407,13 @@ class Options
   bool is_bool(Option opt) const;
   /** @return True if the given option is a numeric option. */
   bool is_numeric(Option opt) const;
-  /** @return True if the given option is an enum option. */
-  bool is_enum(Option opt) const;
+  /** @return True if the given option is an option with modes. */
+  bool is_mode(Option opt) const;
 
-  /** @return True if the given value is a valid mode for an enum option. */
-  bool is_valid_enum(Option opt, const std::string& value) const;
+  /**
+   * @return True if the given value is a valid mode for an option with modes.
+   */
+  bool is_valid_mode(Option opt, const std::string& value) const;
 
   /** @return The description of the given option. */
   const char* description(Option opt) const;
@@ -416,7 +423,8 @@ class Options
   const char* shrt(Option opt) const;
 
   /**
-   * @return The string representations of all valid modes for an enum option.
+   * @return The string representations of all valid modes for an option with
+   *         modes.
    */
   std::vector<std::string> modes(Option opt) const;
 
@@ -426,7 +434,7 @@ class Options
   /**
    * Set current value of option.
    * @param opt The option to set.
-   * @note This is mainly necessary to have access to options via their enum
+   * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
    * @param value The value to set.
    */
@@ -436,7 +444,7 @@ class Options
   /**
    * Get the current value of option.
    * @param opt The option to set.
-   * @note This is mainly necessary to have access to options via their enum
+   * @note This is mainly necessary to have access to options via their mod
    *       identifier from external (the API).
    * @return The current value.
    */
@@ -446,7 +454,7 @@ class Options
   /**
    * Get the minimum value of option.
    * @param opt The option to set.
-   * @note This is mainly necessary to have access to options via their enum
+   * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
    * @return The minimum value.
    */
@@ -456,7 +464,7 @@ class Options
   /**
    * Get the maximum value of option.
    * @param opt The option to set.
-   * @note This is mainly necessary to have access to options via their enum
+   * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
    * @return The maximum value.
    */
@@ -466,7 +474,7 @@ class Options
   /**
    * Get the maximum value of option.
    * @param opt The option to set.
-   * @note This is mainly necessary to have access to options via their enum
+   * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
    * @return The maximum value.
    */
@@ -476,7 +484,7 @@ class Options
  private:
   /**
    * Register option.
-   * @note This is mainly necessary to have access to options via their enum
+   * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
    * @param opt  The option.
    * @param option The associated option data.

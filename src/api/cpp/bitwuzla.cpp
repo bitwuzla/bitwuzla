@@ -636,7 +636,7 @@ Options::is_numeric(Option option) const
 bool
 Options::is_mode(Option option) const
 {
-  return d_options->is_enum(s_internal_options.at(option));
+  return d_options->is_mode(s_internal_options.at(option));
 }
 
 const char *
@@ -697,9 +697,9 @@ Options::set(Option option, const std::string &mode)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_enum(opt))
+  BITWUZLA_CHECK(d_options->is_mode(opt))
       << "expected option with option modes";
-  BITWUZLA_CHECK(d_options->is_valid_enum(opt, mode))
+  BITWUZLA_CHECK(d_options->is_valid_mode(opt, mode))
       << "invalid mode for option";
   d_options->set<std::string>(s_internal_options.at(option), mode);
 }
@@ -709,9 +709,9 @@ Options::set(Option option, const char *mode)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_enum(opt))
+  BITWUZLA_CHECK(d_options->is_mode(opt))
       << "expected option with option modes";
-  BITWUZLA_CHECK(d_options->is_valid_enum(opt, mode))
+  BITWUZLA_CHECK(d_options->is_valid_mode(opt, mode))
       << "invalid mode for option";
   d_options->set<std::string>(s_internal_options.at(option), mode);
 }
@@ -735,7 +735,7 @@ Options::get_mode(Option option) const
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_enum(opt))
+  BITWUZLA_CHECK(d_options->is_mode(opt))
       << "expected option with option modes";
   return d_options->get<std::string>(opt);
 }
