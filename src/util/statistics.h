@@ -2,6 +2,7 @@
 #define BZLA_UTIL_STATISTICS_INCLUDED
 
 #include <cassert>
+#include <chrono>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -48,6 +49,46 @@ class HistogramStatistic
   std::vector<std::string> d_names;
 };
 
+/** Statistic to compute elapsed time in code. */
+class TimerStatistic
+{
+ public:
+  friend class Timer;
+
+  TimerStatistic();
+
+  /** @return Cumulative elapsed milliseconds. */
+  uint64_t elapsed() const;
+
+  /** Start timer. */
+  void start();
+
+  /** Stop current timer. */
+  void stop();
+
+  /** @return Whether timer is currently running. */
+  bool running() const;
+
+ private:
+  std::chrono::steady_clock::duration d_elapsed;
+  std::chrono::steady_clock::time_point d_start;
+  bool d_running;
+};
+
+/**
+ * Timer for measuring elapsed time.
+ * Starts wrapped timer when constructd, stops timer when destructed.
+ */
+class Timer
+{
+ public:
+  Timer(TimerStatistic& stat);
+  ~Timer();
+
+ private:
+  TimerStatistic& d_stat;
+};
+
 class Statistics
 {
  public:
@@ -62,36 +103,10 @@ class Statistics
   }
 
   /** Print statistics to std::cout. */
-  void print() const
-  {
-    for (auto& [name, val] : d_stats)
-    {
-      if (std::holds_alternative<uint64_t>(val))
-      {
-        std::cout << name << ": " << std::get<uint64_t>(val) << std::endl;
-      }
-      else if (std::holds_alternative<double>(val))
-      {
-        std::cout << name << ": " << std::get<double>(val) << std::endl;
-      }
-      else
-      {
-        assert(std::holds_alternative<HistogramStatistic>(val));
-        auto& histo = std::get<HistogramStatistic>(val);
-        for (size_t i = 0, size = histo.values().size(); i < size; ++i)
-        {
-          if (histo.values()[i] > 0)
-          {
-            std::cout << name << "::" << histo.names()[i] << ": "
-                      << histo.values()[i] << std::endl;
-          }
-        }
-      }
-    }
-  }
+  void print() const;
 
  private:
-  using stat_value = std::variant<uint64_t, double, HistogramStatistic>;
+  using stat_value = std::variant<uint64_t, TimerStatistic, HistogramStatistic>;
   /** Registered statistic values. */
   std::unordered_map<std::string, stat_value> d_stats;
 };
