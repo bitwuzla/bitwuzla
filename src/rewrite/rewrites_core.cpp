@@ -623,6 +623,41 @@ RewriteRule<RewriteRuleKind::EQUAL_BV_CONCAT>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  (= (bvsub a b) c)
+ * result: (= (bvadd b c) a)
+ */
+namespace {
+Node
+_rw_sub_concat(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  Node child0, child1;
+  if (node::utils::is_bv_sub(node[idx0], child0, child1))
+  {
+    return rewriter.mk_node(
+        Kind::EQUAL,
+        {child0, rewriter.mk_node(Kind::BV_ADD, {child1, node[idx1]})});
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_BV_SUB>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  Node res = _rw_sub_concat(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_sub_concat(rewriter, node, 1);
+  }
+  return res;
+}
+
 /* distinct ----------------------------------------------------------------- */
 
 template <>

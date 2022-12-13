@@ -362,6 +362,29 @@ TEST_F(TestRewriterCore, core_equal_bv_add_add)
       Kind::EQUAL, {d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b}), d_bv4_a}));
 }
 
+TEST_F(TestRewriterCore, core_equal_bv_sub)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_BV_SUB;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::BV_SUB, {d_bv4_a, d_bv4_b}), d_bv4_a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::BV_SUB, {d_bv4_b, d_bv4_a}), d_bv4_a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_bv4_a, d_nm.mk_node(Kind::BV_SUB, {d_bv4_a, d_bv4_b})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_bv4_a, d_nm.mk_node(Kind::BV_SUB, {d_bv4_b, d_bv4_a})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::BV_SUB, {d_bv4_a, d_bv4_a}), d_bv4_a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_SUB, {d_nm.invert_node(d_bv4_a), d_bv4_b}),
+       d_bv4_a}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b}), d_bv4_a}));
+}
+
 TEST_F(TestRewriterCore, core_equal_bv_concat)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_BV_CONCAT;

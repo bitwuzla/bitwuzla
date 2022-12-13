@@ -52,6 +52,10 @@ Node RewriteRule<RewriteRuleKind::EQUAL_BV_ADD_ADD>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_BV_CONCAT>::_apply(Rewriter& rewriter,
                                                            const Node& node);
+// sub_eq
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_BV_SUB>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 
 /* distinct ----------------------------------------------------------------- */
 

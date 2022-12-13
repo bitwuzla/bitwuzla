@@ -203,6 +203,7 @@ enum class RewriteRuleKind
   EQUAL_BV_ADD,
   EQUAL_BV_ADD_ADD,
   EQUAL_BV_CONCAT,
+  EQUAL_BV_SUB,
   EQUAL_ITE_BV1,
   EQUAL_ITE_DIS_BV1,
 
