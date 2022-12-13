@@ -5,7 +5,9 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <unordered_map>
 #include <variant>
+#include <vector>
 
 #include "api/enums.h"
 #include "api/option.h"
