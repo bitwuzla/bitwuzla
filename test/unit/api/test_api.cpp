@@ -265,6 +265,26 @@ TEST_F(TestApi, set_option)
   {
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::INCREMENTAL, true);
+    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
+    opts.set("incremental", "false");
+    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), false);
+    opts.set("incremental", "true");
+    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
+    opts.set("incremental", "fAlse");
+    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), false);
+    opts.set("incremental", "True");
+    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
+    opts.set("incremental", "  faLsE  ");
+    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), false);
+    opts.set("incremental", "  tRUe   ");
+    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
+    opts.set("incremental", "0");
+    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), false);
+    opts.set("incremental", "1");
+    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
+    ASSERT_THROW(opts.set("incremental", "asdf"), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(opts.set("incremental", "2"), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(opts.set("incrremental", "true"), bitwuzla::BitwuzlaException);
     //  ASSERT_THROW(
     //      opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true),
     //      BitwuzlaException);
@@ -310,9 +330,14 @@ TEST_F(TestApi, set_option)
     ASSERT_EQ(opts.get(bitwuzla::Option::PRODUCE_UNSAT_CORES), 0);
     opts.set(bitwuzla::Option::PRODUCE_UNSAT_CORES, true);
     ASSERT_EQ(opts.get(bitwuzla::Option::PRODUCE_UNSAT_CORES), 1);
+
     ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 0);
     opts.set(bitwuzla::Option::VERBOSITY, 2);
     ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 2);
+    opts.set("verbosity", "3");
+    ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 3);
+    ASSERT_THROW(opts.set("verbositi", "3"), bitwuzla::BitwuzlaException);
+
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::BV_SOLVER), "bitblast");
     opts.set(bitwuzla::Option::BV_SOLVER, "prop");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::BV_SOLVER), "prop");

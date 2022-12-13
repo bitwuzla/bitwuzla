@@ -1,7 +1,8 @@
 #include "option/option.h"
 
+#include <algorithm>
 #include <cassert>
-#include <iostream>
+
 namespace bzla::option {
 
 /* --- OptionBase public ---------------------------------------------------- */
@@ -215,6 +216,12 @@ Options::is_mode(Option opt) const
 }
 
 bool
+Options::is_valid(const std::string& lng) const
+{
+  return d_lng2option.find(lng) != d_lng2option.end();
+}
+
+bool
 Options::is_valid_mode(Option opt, const std::string& value) const
 {
   assert(d_options.at(opt)->is_mode());
@@ -229,8 +236,16 @@ Options::modes(Option opt) const
 }
 
 Option
+Options::option(const std::string& lng) const
+{
+  assert(is_valid(lng));
+  return d_lng2option.at(lng);
+}
+
+Option
 Options::option(const char* lng) const
 {
+  assert(is_valid(lng));
   return d_lng2option.at(lng);
 }
 
@@ -274,6 +289,37 @@ Options::set(Option opt, const std::string& value)
 {
   assert(d_options.at(opt)->is_mode());
   reinterpret_cast<OptionMode*>(d_options.at(opt))->set_str(value);
+}
+
+void
+Options::set(const std::string& lng, const std::string& value)
+{
+  auto it = d_lng2option.find(lng);
+  assert(it != d_lng2option.end());
+  if (is_bool(it->second))
+  {
+    std::string v = value;
+    v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());
+    std::transform(v.begin(), v.end(), v.begin(), ::tolower);
+    if (v == "0" || v == "false")
+    {
+      set<bool>(it->second, false);
+    }
+    else
+    {
+      assert(v == "1" || v == "true");
+      set<bool>(it->second, true);
+    }
+  }
+  else if (is_numeric(it->second))
+  {
+    set<uint64_t>(it->second, std::stol(value));
+  }
+  else
+  {
+    assert(is_mode(it->second));
+    set<std::string>(it->second, value);
+  }
 }
 
 template <>

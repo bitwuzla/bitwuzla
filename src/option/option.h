@@ -410,6 +410,9 @@ class Options
   /** @return True if the given option is an option with modes. */
   bool is_mode(Option opt) const;
 
+  /** @return True if given string is a valid long name of an option. */
+  bool is_valid(const std::string& lng) const;
+
   /**
    * @return True if the given value is a valid mode for an option with modes.
    */
@@ -429,17 +432,28 @@ class Options
   std::vector<std::string> modes(Option opt) const;
 
   /** @return Option associated with the given long option name. */
+  Option option(const std::string& lng) const;
   Option option(const char* lng) const;
 
   /**
    * Set current value of option.
-   * @param opt The option to set.
    * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
+   * @param opt The option to set.
    * @param value The value to set.
    */
   template <typename T>
   void set(Option opt, const T& value);
+
+  /**
+   * Set current value of option, configured via the long option name and
+   * its value in string representation.
+   * @note This is mainly necessary for easy configuration of options via
+   *       the command line in main.
+   * @param lng The long name of the option to set.
+   * @param value The string representation of the value to set.
+   */
+  void set(const std::string& lng, const std::string& value);
 
   /**
    * Get the current value of option.

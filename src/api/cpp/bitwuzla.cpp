@@ -716,6 +716,30 @@ Options::set(Option option, const char *mode)
   d_options->set<std::string>(s_internal_options.at(option), mode);
 }
 
+void
+Options::set(const std::string &lng, const std::string &value)
+{
+  BITWUZLA_CHECK_STR_NOT_EMPTY(lng);
+  BITWUZLA_CHECK_STR_NOT_EMPTY(value);
+  BITWUZLA_CHECK(d_options->is_valid(lng)) << "invalid option";
+  bzla::option::Option opt = d_options->option(lng);
+  std::string v            = value;
+  v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());
+  std::transform(v.begin(), v.end(), v.begin(), ::tolower);
+  BITWUZLA_CHECK(!d_options->is_bool(opt) || v == "0" || v == "1" || v == "true"
+                 || v == "false")
+      << "invalid option value for Boolean option, expected '1', '0', 'true' "
+         "or 'false'; got '"
+      << value << "'";
+  BITWUZLA_CHECK(!d_options->is_numeric(opt)
+                 || bzla::util::is_valid_bv_str(value, 10))
+      << "invalid option value for numeric option";
+  BITWUZLA_CHECK(!d_options->is_mode(opt)
+                 || d_options->is_valid_mode(opt, value))
+      << "invalid option value for option with modes";
+  d_options->set(lng, value);
+}
+
 uint64_t
 Options::get(Option option) const
 {

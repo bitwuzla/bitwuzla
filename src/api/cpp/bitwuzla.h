@@ -50,7 +50,6 @@ std::string git_id();
 class Bitwuzla;
 struct OptionInfo;
 
-// TODO parse command-line option string
 class Options
 {
   friend Bitwuzla;
@@ -121,6 +120,13 @@ class Options
    *   * `Option`
    */
   void set(Option option, const char *mode);
+  /**
+   * Set current value of option, configured via the long option name and
+   * its value in string representation.
+   * @param lng The long name of the option to set.
+   * @param value The string representation of the value to set.
+   */
+  void set(const std::string &lng, const std::string &value);
 
   /**
    * Get the current value of a Boolean or numeric option.
@@ -834,7 +840,7 @@ class Bitwuzla
    * Push context levels.
    *
    * Requires that incremental solving has been enabled via
-   * `Options::set_option()`.
+   * `Options::set()`.
    *
    * @note Assumptions added via `assume()` are not affected by context level
    *       changes and are only valid until the next `check_sat()` call, no
@@ -843,7 +849,7 @@ class Bitwuzla
    * @param nlevels The number of context levels to push.
    *
    * @see
-   *   * `Options::set_option`
+   *   * `Options::set`
    *   * `::BITWUZLA_OPT_INCREMENTAL`
    */
   void push(uint32_t nlevels);
@@ -851,7 +857,7 @@ class Bitwuzla
    * Pop context levels.
    *
    * Requires that incremental solving has been enabled via
-   * `Options::set_option()`.
+   * `Options::set()`.
    *
    * @note Assumptions added via `assume()` are not affected by context level
    *       changes and are only valid until the next `check_sat()` call, no
@@ -860,7 +866,7 @@ class Bitwuzla
    * @param nlevels The number of context levels to pop.
    *
    * @see
-   *   * `Options::set_option`
+   *   * `Options::set`
    *   * `::BITWUZLA_OPT_INCREMENTAL`
    */
   void pop(uint32_t nlevels);
@@ -876,7 +882,7 @@ class Bitwuzla
    * Assume formula.
    *
    * Requires that incremental solving has been enabled via
-   * `Options::set_option()`.
+   * `Options::set()`.
    *
    * @note Assumptions added via this function are not affected by context
    *       level changes and are only valid until the next `check_sat()`
@@ -885,7 +891,7 @@ class Bitwuzla
    * @param term The formula to assume.
    *
    * @see
-   *   * `Options::set_option`
+   *   * `Options::set`
    *   * `is_unsat_assumption`
    *   * `get_unsat_assumptions`
    *   * `::BITWUZLA_OPT_INCREMENTAL`
@@ -901,7 +907,7 @@ class Bitwuzla
    * failed assumptions in MiniSAT.
    *
    * Requires that incremental solving has been enabled via
-   * `Options::set_option()`.
+   * `Options::set()`.
    *
    * Requires that the last `check_sat()` query returned `Result::UNSAT`.
    *
@@ -910,7 +916,7 @@ class Bitwuzla
    * @return True if given assumption is an unsat assumption.
    *
    * @see
-   *   * `Options::set_option`
+   *   * `Options::set`
    *   * `assume_formula`
    *   * `check_sat`
    *   * `::BITWUZLA_OPT_INCREMENTAL`
@@ -924,14 +930,14 @@ class Bitwuzla
    * failed assumptions in MiniSAT.
    *
    * Requires that incremental solving has been enabled via
-   * `Options::set_option()`.
+   * `Options::set()`.
    *
    * Requires that the last `check_sat()` query returned `Result::UNSAT`.
    *
    * @return A vctor with unsat assumptions.
    *
    * @see
-   *   * `Options::set_option`
+   *   * `Options::set`
    *   * `assume_formula`
    *   * `check_sat`
    *   * `::BITWUZLA_OPT_INCREMENTAL`
@@ -986,7 +992,7 @@ class Bitwuzla
    *
    * @note Assertions and assumptions are combined via Boolean and.  Multiple
    *       calls to this function require enabling incremental solving via
-   *       `Options::set_option()`.
+   *       `Options::set()`.
    *
    * @return `Result::SAT` if the input formula is satisfiable and
    *         `Result::UNSAT` if it is unsatisfiable, and `Result::UNKNOWN`
@@ -997,7 +1003,7 @@ class Bitwuzla
    * @see
    *   * `assert_formula`
    *   * `assume_formula`
-   *   * `Options::set_option`
+   *   * `Options::set`
    *   * `::BITWUZLA_OPT_INCREMENTAL`
    *   * `Result`
    */
