@@ -20,13 +20,27 @@ class Rewriter
  public:
   /**
    * Constructor.
-   * @param enabled True to enable rewriting, false to disable all rewrites
-   *                except for operator elimination.
+   * @param env   The associated environment.
+   * @param level The rewriting level; level 0 disables all rewrites
+   *              except for operator elimination, level 1 enables one-level
+   *              rewrites, level 2 multi-level rewrites.
    */
-  Rewriter(Env& env, bool enabled = true);
+  Rewriter(Env& env, uint8_t level = 0);
 
+  /**
+   * Rewrite given node.
+   * @param node The node to rewrite.
+   * @return The rewritten node or `node` if no rewrites applied.
+   */
   const Node& rewrite(const Node& node);
 
+  /**
+   * Create node and apply rewriting.
+   * @param kind     The kind of the node to create.
+   * @param children The children of the node to create.
+   * @param indices  The indices of the node to create.
+   * @return The created, rewritten node.
+   */
   const Node& mk_node(node::Kind kind,
                       const std::vector<Node>& children,
                       const std::vector<uint64_t>& indices = {});
@@ -37,9 +51,6 @@ class Rewriter
    * @return The inverted node.
    */
   Node invert_node(const Node& node);
-
-  /** Disable all rewrites except for operator elimination rewrites. */
-  void disable() { d_enabled = false; }
 
  private:
   const Node& _rewrite(const Node& node);
@@ -156,7 +167,7 @@ class Rewriter
   Env& d_env;
 
   /** True to enable rewriting, false to only enable operator elimination. */
-  bool d_enabled;
+  uint8_t d_level;
   /** Cache for rewritten nodes, maps node to its rewritten form. */
   std::unordered_map<Node, Node> d_cache;
 #ifndef NDEBUG

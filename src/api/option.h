@@ -84,6 +84,25 @@ enum ENUM(Option)
    *  * An unsigned integer value <= 4 (**default**: 0).
    */
   EVALUE(VERBOSITY),
+
+  /* ---------------- Bitwuzla-specific Options ----------------------------- */
+
+  // TODO: doc
+  EVALUE(BV_SOLVER),
+  /*! **Rewrite level.**
+   *
+   * Values:
+   * * **0**: no rewriting
+   * * **1**: term level rewriting
+   * * **2**: term level rewriting and basic preprocessing
+   * * **3**: term level rewriting and full preprocessing [**default**]
+   *
+   * @note Configuring the rewrite level after terms have been created
+   *       is not allowed.
+   *
+   *  @warning This is an expert option to configure rewriting.
+   */
+  EVALUE(REWRITE_LEVEL),
   /*! **Configure the SAT solver engine.**
    *
    * Values:
@@ -99,11 +118,6 @@ enum ENUM(Option)
    *    [Lingeling](https://github.com/arminbiere/lingeling)
    */
   EVALUE(SAT_SOLVER),
-
-  /* ---------------- Bitwuzla-specific Options ----------------------------- */
-
-  // TODO: doc
-  EVALUE(BV_SOLVER),
   /*! **Enable SMT-COMP mode.**
    *
    * Parser only option. Only effective when an SMT2 input file is parsed.
@@ -466,21 +480,6 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure rewriting.
    */
   EVALUE(RW_EXTRACT_ARITH),
-
-  /*! **Rewrite level.**
-   *
-   * Values:
-   * * **0**: no rewriting
-   * * **1**: term level rewriting
-   * * **2**: term level rewriting and basic preprocessing
-   * * **3**: term level rewriting and full preprocessing [**default**]
-   *
-   * @note Configuring the rewrite level after terms have been created
-   *       is not allowed.
-   *
-   *  @warning This is an expert option to configure rewriting.
-   */
-  EVALUE(RW_LEVEL),
 
   /*! **Normalize bit-vector operations.**
    *

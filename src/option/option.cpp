@@ -122,6 +122,14 @@ Options::Options()
                  "backend SAT solver",
                  "sat-solver",
                  "S"),
+      rewrite_level(this,
+                    Option::REWRITE_LEVEL,
+                    REWRITE_LEVEL_MAX,
+                    0,
+                    REWRITE_LEVEL_MAX,
+                    "rewrite level",
+                    "rewrite-level",
+                    "rwl"),
       smt_comp_mode(
           this, Option::SMT_COMP_MODE, false, "SMT-COMP mode", "smt-comp-mode"),
       // BV: propagation-based local search engine

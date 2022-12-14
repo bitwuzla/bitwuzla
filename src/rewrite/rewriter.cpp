@@ -36,12 +36,13 @@ namespace bzla {
 
 /* === Rewriter public ====================================================== */
 
-Rewriter::Rewriter(Env& env, bool enabled)
+Rewriter::Rewriter(Env& env, uint8_t level)
     : d_env(env),
-      d_enabled(enabled),
+      d_level(level),
       d_stats_rewrites(env.statistics().new_stat<util::HistogramStatistic>(
           "rewriter::rewrite"))
 {
+  assert(d_level <= option::Options::REWRITE_LEVEL_MAX);
 }
 
 const Node&
@@ -284,7 +285,7 @@ Rewriter::rewrite_and(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(AND_EVAL);
     BZLA_APPLY_RW_RULE(AND_SPECIAL_CONST);
@@ -314,7 +315,7 @@ Rewriter::rewrite_distinct(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(DISTINCT_CARD);
   }
@@ -329,7 +330,7 @@ Rewriter::rewrite_not(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(NOT_EVAL);
     BZLA_APPLY_RW_RULE(NOT_NOT);
@@ -353,16 +354,17 @@ Rewriter::rewrite_eq(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(EQUAL_EVAL);
     BZLA_APPLY_RW_RULE(EQUAL_SPECIAL_CONST);
     BZLA_APPLY_RW_RULE(EQUAL_CONST);
     BZLA_APPLY_RW_RULE(EQUAL_TRUE);
     BZLA_APPLY_RW_RULE(EQUAL_ITE);
-    // LEVEL 1 rewrites /////////////////////////////////////////
     BZLA_APPLY_RW_RULE(EQUAL_FALSE);
-    // LEVEL 3 rewrites /////////////////////////////////////////
+  }
+  if (d_level >= 2)
+  {
     BZLA_APPLY_RW_RULE(EQUAL_BV_ADD);
     BZLA_APPLY_RW_RULE(EQUAL_BV_ADD_ADD);
     BZLA_APPLY_RW_RULE(EQUAL_BV_CONCAT);
@@ -382,7 +384,7 @@ Rewriter::rewrite_ite(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(ITE_EVAL);
     BZLA_APPLY_RW_RULE(ITE_SAME);
@@ -393,7 +395,9 @@ Rewriter::rewrite_ite(const Node& node)
     BZLA_APPLY_RW_RULE(ITE_ELSE_ITE2);
     BZLA_APPLY_RW_RULE(ITE_ELSE_ITE3);
     BZLA_APPLY_RW_RULE(ITE_BOOL);
-    // LEVEL 3 rewrites /////////////////////////////////////////
+  }
+  if (d_level >= 2)
+  {
     BZLA_APPLY_RW_RULE(ITE_BV_CONCAT);
     BZLA_APPLY_RW_RULE(ITE_BV_OP);
     // TODO
@@ -411,7 +415,7 @@ Rewriter::rewrite_bv_add(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_ADD_EVAL);
     BZLA_APPLY_RW_RULE(BV_ADD_SPECIAL_CONST);
@@ -421,7 +425,9 @@ Rewriter::rewrite_bv_add(const Node& node)
     BZLA_APPLY_RW_RULE(BV_ADD_NOT);
     BZLA_APPLY_RW_RULE(BV_ADD_NEG);
     BZLA_APPLY_RW_RULE(BV_ADD_UREM);
-    // LEVEL 3 rewrites /////////////////////////////////////////
+  }
+  if (d_level >= 2)
+  {
     BZLA_APPLY_RW_RULE(BV_ADD_ITE);
     BZLA_APPLY_RW_RULE(BV_ADD_MUL1);
     BZLA_APPLY_RW_RULE(BV_ADD_MUL2);
@@ -438,7 +444,7 @@ Rewriter::rewrite_bv_and(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_AND_EVAL);
     BZLA_APPLY_RW_RULE(BV_AND_SPECIAL_CONST);
@@ -467,7 +473,7 @@ Rewriter::rewrite_bv_ashr(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_ASHR_EVAL);
     BZLA_APPLY_RW_RULE(BV_ASHR_SPECIAL_CONST);
@@ -484,13 +490,14 @@ Rewriter::rewrite_bv_concat(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_CONCAT_EVAL);
     BZLA_APPLY_RW_RULE(BV_CONCAT_CONST);
-    // LEVEL 1 rewrites /////////////////////////////////////////
     BZLA_APPLY_RW_RULE(BV_CONCAT_EXTRACT);
-    // LEVEL 3 rewrites /////////////////////////////////////////
+  }
+  if (d_level >= 2)
+  {
     BZLA_APPLY_RW_RULE(BV_CONCAT_AND);
   }
 
@@ -504,15 +511,19 @@ Rewriter::rewrite_bv_extract(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_EXTRACT_EVAL);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_FULL);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_EXTRACT);
-    // LEVEL 0-2 rewrites ///////////////////////////////////////
-    BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_FULL_LHS);
-    BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_FULL_RHS);
-    // LEVEL 3 rewrites /////////////////////////////////////////
+    if (d_level == 1)
+    {
+      BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_FULL_LHS);
+      BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_FULL_RHS);
+    }
+  }
+  if (d_level >= 2)
+  {
     BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT_LHS_RHS);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_AND);
@@ -530,13 +541,15 @@ Rewriter::rewrite_bv_mul(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_MUL_EVAL);
     BZLA_APPLY_RW_RULE(BV_MUL_SPECIAL_CONST);
     BZLA_APPLY_RW_RULE(BV_MUL_CONST);
     BZLA_APPLY_RW_RULE(BV_MUL_BV1);
-    // LEVEL 3 rewrites /////////////////////////////////////////
+  }
+  if (d_level >= 2)
+  {
     BZLA_APPLY_RW_RULE(BV_MUL_CONST_ADD);
     BZLA_APPLY_RW_RULE(BV_MUL_ONES);
     BZLA_APPLY_RW_RULE(BV_MUL_NEG);
@@ -555,7 +568,7 @@ Rewriter::rewrite_bv_not(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_NOT_EVAL);
     BZLA_APPLY_RW_RULE(BV_NOT_BV_NOT);
@@ -572,7 +585,7 @@ Rewriter::rewrite_bv_shl(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_SHL_EVAL);
     BZLA_APPLY_RW_RULE(BV_SHL_SPECIAL_CONST);
@@ -589,7 +602,7 @@ Rewriter::rewrite_bv_shr(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_SHR_EVAL);
     BZLA_APPLY_RW_RULE(BV_SHR_SPECIAL_CONST);
@@ -608,14 +621,16 @@ Rewriter::rewrite_bv_slt(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_SLT_EVAL);
     BZLA_APPLY_RW_RULE(BV_SLT_SPECIAL_CONST);
     BZLA_APPLY_RW_RULE(BV_SLT_SAME);
     BZLA_APPLY_RW_RULE(BV_SLT_BV1);
     BZLA_APPLY_RW_RULE(BV_SLT_ITE);
-    // LEVEL 3 rewrites /////////////////////////////////////////
+  }
+  if (d_level >= 2)
+  {
     BZLA_APPLY_RW_RULE(BV_SLT_CONCAT);
   }
 
@@ -629,7 +644,7 @@ Rewriter::rewrite_bv_udiv(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_UDIV_EVAL);
     BZLA_APPLY_RW_RULE(BV_UDIV_SPECIAL_CONST);
@@ -648,14 +663,16 @@ Rewriter::rewrite_bv_ult(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_ULT_EVAL);
     BZLA_APPLY_RW_RULE(BV_ULT_SPECIAL_CONST);
     BZLA_APPLY_RW_RULE(BV_ULT_SAME);
     BZLA_APPLY_RW_RULE(BV_ULT_BV1);
     BZLA_APPLY_RW_RULE(BV_ULT_ITE);
-    // LEVEL 3 rewrites /////////////////////////////////////////
+  }
+  if (d_level >= 2)
+  {
     BZLA_APPLY_RW_RULE(BV_ULT_CONCAT);
   }
 
@@ -669,7 +686,7 @@ Rewriter::rewrite_bv_urem(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_UREM_EVAL);
     BZLA_APPLY_RW_RULE(BV_UREM_SPECIAL_CONST);
@@ -687,7 +704,7 @@ Rewriter::rewrite_bv_xor(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_XOR_EVAL);
   }
@@ -742,7 +759,7 @@ Rewriter::rewrite_fp_abs(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_ABS_EVAL);
     BZLA_APPLY_RW_RULE(FP_ABS_ABS_NEG);
@@ -758,7 +775,7 @@ Rewriter::rewrite_fp_add(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_ADD_EVAL);
   }
@@ -773,7 +790,7 @@ Rewriter::rewrite_fp_div(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_DIV_EVAL);
   }
@@ -788,7 +805,7 @@ Rewriter::rewrite_fp_fma(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_FMA_EVAL);
   }
@@ -803,7 +820,7 @@ Rewriter::rewrite_fp_is_inf(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_IS_INF_EVAL);
     BZLA_APPLY_RW_RULE(FP_IS_INF_ABS_NEG);
@@ -819,7 +836,7 @@ Rewriter::rewrite_fp_is_nan(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_IS_NAN_EVAL);
     BZLA_APPLY_RW_RULE(FP_IS_NAN_ABS_NEG);
@@ -835,7 +852,7 @@ Rewriter::rewrite_fp_is_neg(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_IS_NEG_EVAL);
   }
@@ -850,7 +867,7 @@ Rewriter::rewrite_fp_is_normal(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_IS_NORM_EVAL);
     BZLA_APPLY_RW_RULE(FP_IS_NORM_ABS_NEG);
@@ -866,7 +883,7 @@ Rewriter::rewrite_fp_is_pos(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_IS_POS_EVAL);
   }
@@ -881,7 +898,7 @@ Rewriter::rewrite_fp_is_subnormal(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_IS_SUBNORM_EVAL);
     BZLA_APPLY_RW_RULE(FP_IS_SUBNORM_ABS_NEG);
@@ -897,7 +914,7 @@ Rewriter::rewrite_fp_is_zero(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_IS_ZERO_EVAL);
     BZLA_APPLY_RW_RULE(FP_IS_ZERO_ABS_NEG);
@@ -913,7 +930,7 @@ Rewriter::rewrite_fp_leq(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_LEQ_EVAL);
     BZLA_APPLY_RW_RULE(FP_LEQ_EQ);
@@ -929,7 +946,7 @@ Rewriter::rewrite_fp_lt(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_LT_EVAL);
     BZLA_APPLY_RW_RULE(FP_LT_EQ);
@@ -945,7 +962,7 @@ Rewriter::rewrite_fp_max(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_MAX_EQ);
   }
@@ -960,7 +977,7 @@ Rewriter::rewrite_fp_min(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_MIN_EQ);
   }
@@ -975,7 +992,7 @@ Rewriter::rewrite_fp_mul(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_MUL_EVAL);
   }
@@ -990,7 +1007,7 @@ Rewriter::rewrite_fp_neg(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_NEG_EVAL);
     BZLA_APPLY_RW_RULE(FP_NEG_NEG);
@@ -1006,7 +1023,7 @@ Rewriter::rewrite_fp_rem(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_REM_EVAL);
     BZLA_APPLY_RW_RULE(FP_REM_SAME_DIV);
@@ -1024,7 +1041,7 @@ Rewriter::rewrite_fp_rti(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_RTI_EVAL);
   }
@@ -1039,7 +1056,7 @@ Rewriter::rewrite_fp_sqrt(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_SQRT_EVAL);
   }
@@ -1054,7 +1071,7 @@ Rewriter::rewrite_fp_to_fp_from_bv(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_BV_EVAL);
     // TODO
@@ -1070,7 +1087,7 @@ Rewriter::rewrite_fp_to_fp_from_fp(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_FP_EVAL);
     // TODO
@@ -1086,7 +1103,7 @@ Rewriter::rewrite_fp_to_fp_from_sbv(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_SBV_EVAL);
     // TODO
@@ -1102,7 +1119,7 @@ Rewriter::rewrite_fp_to_fp_from_ubv(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_enabled)
+  if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_UBV_EVAL);
     // TODO

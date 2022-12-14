@@ -4,7 +4,9 @@
 
 namespace bzla {
 
-Env::Env(const option::Options& options) : d_options(options), d_rewriter(*this)
+Env::Env(const option::Options& options)
+    : d_options(options),
+      d_rewriter(*this, options.get<uint64_t>(option::Option::REWRITE_LEVEL))
 {
 }
 

@@ -1,6 +1,7 @@
 API:
 - enum `BitwuzlaOption`:
-  +  `SAT_ENGINE` -> `SAT_SOLVER`
+  + `SAT_ENGINE` -> `SAT_SOLVER`
+  + `RW_LEVEL` -> `REWRITE_LEVEL`
 
 - enum `BitwuzlaBVBase` -> `uint8_t` in { 2, 10, 16 }
   + `bitwuzla_mk_bv_value(Bitwuzl*, const BitwuzlaSort*, const char*, BitwuzlaBVBase)` ->

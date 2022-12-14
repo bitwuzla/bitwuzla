@@ -23,6 +23,7 @@ enum class Option
   VERBOSITY,            // numeric
 
   BV_SOLVER,      // enum
+  REWRITE_LEVEL,  // numeric
   SMT_COMP_MODE,  // bool
 
   PROP_NPROPS,                  // numeric
@@ -373,7 +374,8 @@ class Options
   std::unordered_map<std::string, Option> d_lng2option;
 
  public:
-  static constexpr uint64_t VERBOSITY_MAX = 4;
+  static constexpr uint8_t VERBOSITY_MAX     = 4;
+  static constexpr uint8_t REWRITE_LEVEL_MAX = 2;
   static constexpr uint64_t PROB_100      = 1000;
   static constexpr uint64_t PROB_50       = 500;
 
@@ -391,6 +393,7 @@ class Options
   // Bitwuzla-specific options
   OptionModeT<BvSolver> bv_solver;
   OptionModeT<SatSolver> sat_solver;
+  OptionNumeric rewrite_level;
   OptionBool smt_comp_mode;
 
   // BV: propagation-based local search engine

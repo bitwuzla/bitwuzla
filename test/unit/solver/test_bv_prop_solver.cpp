@@ -232,8 +232,8 @@ TestBvPropSolver::_test_prop_aux(Kind kind,
   Node const1 = s1 ? fix_bits(d_nm.mk_const(type), *d1) : Node();
   Node const2 = s2 ? fix_bits(d_nm.mk_const(type), *d2) : Node();
 
+  d_options.set<uint64_t>(Option::REWRITE_LEVEL, 0);
   SolvingContext ctx = SolvingContext(d_options);
-  ctx.rewriter().disable();
 
   if (s2)
   {
