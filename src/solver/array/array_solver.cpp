@@ -34,9 +34,10 @@ ArraySolver::~ArraySolver() {}
 void
 ArraySolver::check()
 {
+  util::Timer timer(d_stats.time_check);
   d_array_models.clear();
   d_check_access_cache.clear();
-  ++d_stats.num_check_calls;
+  ++d_stats.num_checks;
 
   // Do not cache size here since d_selects may grow while iterating.
   for (size_t i = 0; i < d_selects.size(); ++i)
@@ -551,13 +552,14 @@ ArraySolver::compute_parents(const Node& term)
 }
 
 ArraySolver::Statistics::Statistics(util::Statistics& stats)
-    : num_check_calls(stats.new_stat<uint64_t>("array::check_calls")),
+    : num_checks(stats.new_stat<uint64_t>("array::num_checks")),
       num_propagations(stats.new_stat<uint64_t>("array::propagations")),
       num_propagations_up(stats.new_stat<uint64_t>("array::propagations_up")),
       num_propagations_down(
           stats.new_stat<uint64_t>("array::propagations_down")),
       num_lemma_size(
-          stats.new_stat<util::HistogramStatistic>("array::lemma_size"))
+          stats.new_stat<util::HistogramStatistic>("array::lemma_size")),
+      time_check(stats.new_stat<util::TimerStatistic>("array::time_check"))
 {
 }
 

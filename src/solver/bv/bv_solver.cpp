@@ -44,7 +44,8 @@ BvSolver::BvSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_bitblast_solver(env, state),
       d_prop_solver(env, state, d_bitblast_solver),
-      d_cur_solver(env.options().bv_solver())
+      d_cur_solver(env.options().bv_solver()),
+      d_stats(env.statistics())
 {
 }
 
@@ -68,6 +69,8 @@ BvSolver::register_assertion(const Node& assertion, bool top_level)
 Result
 BvSolver::solve()
 {
+  util::Timer timer(d_stats.time_check);
+  ++d_stats.num_checks;
   reset_cached_values();
   switch (d_env.options().bv_solver())
   {
@@ -374,6 +377,12 @@ BvSolver::assignment(const Node& term)
   }
   assert(d_cur_solver == option::BvSolver::PROP);
   return d_prop_solver.value(term);
+}
+
+BvSolver::Statistics::Statistics(util::Statistics& stats)
+    : num_checks(stats.new_stat<uint64_t>("bv::num_checks")),
+      time_check(stats.new_stat<util::TimerStatistic>("bv::time_check"))
+{
 }
 
 }  // namespace bzla::bv

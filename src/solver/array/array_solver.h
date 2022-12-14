@@ -177,11 +177,12 @@ class ArraySolver : public Solver
   struct Statistics
   {
     Statistics(util::Statistics& stats);
-    uint64_t& num_check_calls;
+    uint64_t& num_checks;
     uint64_t& num_propagations;
     uint64_t& num_propagations_up;
     uint64_t& num_propagations_down;
     util::HistogramStatistic& num_lemma_size;
+    util::TimerStatistic& time_check;
   } d_stats;
 };
 

@@ -98,6 +98,8 @@ class SolverEngine
   {
     Statistics(util::Statistics& stats);
     uint64_t& num_lemmas;
+    util::TimerStatistic& time_register_term;
+    util::TimerStatistic& time_solve;
   } d_stats;
 
   /** Environment. */

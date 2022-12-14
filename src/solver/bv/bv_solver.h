@@ -6,6 +6,7 @@
 #include "solver/bv/bv_prop_solver.h"
 #include "solver/bv/bv_solver_interface.h"
 #include "solver/solver.h"
+#include "util/statistics.h"
 
 namespace bzla::bv {
 
@@ -40,6 +41,13 @@ class BvSolver : public Solver, public BvSolverInterface
 
   /** The currently enabled subsolver. */
   option::BvSolver d_cur_solver;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    uint64_t& num_checks;
+    util::TimerStatistic& time_check;
+  } d_stats;
 };
 
 }  // namespace bzla::bv

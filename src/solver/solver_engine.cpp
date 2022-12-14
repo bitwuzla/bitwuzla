@@ -30,6 +30,8 @@ SolverEngine::SolverEngine(SolvingContext& context)
 Result
 SolverEngine::solve()
 {
+  util::Timer timer(d_stats.time_solve);
+
   // Process unprocessed assertions.
   process_assertions();
 
@@ -171,6 +173,7 @@ SolverEngine::process_assertion(const Node& assertion, bool top_level)
 void
 SolverEngine::process_term(const Node& term)
 {
+  util::Timer timer(d_stats.time_register_term);
   node::node_ref_vector visit{term};
   do
   {
@@ -217,7 +220,10 @@ SolverEngine::process_lemmas()
 }
 
 SolverEngine::Statistics::Statistics(util::Statistics& stats)
-    : num_lemmas(stats.new_stat<uint64_t>("solver::lemmas"))
+    : num_lemmas(stats.new_stat<uint64_t>("solver::lemmas")),
+      time_register_term(
+          stats.new_stat<util::TimerStatistic>("solver::time_register_term")),
+      time_solve(stats.new_stat<util::TimerStatistic>("solver::time_solve"))
 {
 }
 
