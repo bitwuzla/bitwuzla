@@ -11,11 +11,6 @@
 extern "C" {
 #include "bzlasmt2.h"
 
-#include "bzlabv.h"
-#include "bzlacore.h"
-#include "bzlamsg.h"
-#include "bzlaopt.h"
-#include "utils/bzlamem.h"
 #include "utils/bzlautil.h"
 }
 
