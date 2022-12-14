@@ -70,7 +70,7 @@ set(libbitwuzla_src_files
   option/option.cpp
   parser/bzlabtor.c
   #parser/bzlabtor2.c
-  parser/bzlasmt2.c
+  parser/bzlasmt2.cpp
   preprocess/bzlaack.c
   preprocess/bzlader.c
   preprocess/bzlaelimapplies.c

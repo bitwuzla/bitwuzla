@@ -1908,22 +1908,6 @@ extern "C" {
 /* smt2 parser only --------------------------------------------------------- */
 
 void
-bitwuzla_term_var_mark_bool(BitwuzlaTerm term)
-{
-  // not needed anymore
-  // BZLA_CHECK_ARG_NOT_NULL(term);
-
-  // BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
-  // assert(bzla_node_get_ext_refs(bzla_term));
-  // Bzla *bzla = bzla_node_get_bzla(bzla_term);
-  // BZLA_CHECK_TERM_IS_BOOL(bzla, bzla_term);
-
-  // BzlaPtrHashBucket *b = bzla_hashptr_table_get(bzla->inputs, bzla_term);
-  // assert(b);
-  // b->data.flag = true;
-}
-
-void
 bitwuzla_term_print_value_smt2(BitwuzlaTerm term, char *symbol, FILE *file)
 {
   // TODO:
@@ -1947,7 +1931,7 @@ bitwuzla_get_option_from_string(BitwuzlaOptions *options, const char *str)
   return export_option(options->d_options.option(str));
 }
 
-/* bzla parser only --------------------------------------------------------- */
+/* btor parser only --------------------------------------------------------- */
 
 void
 bitwuzla_set_bzla_id(BitwuzlaTerm term, int32_t id)
@@ -1969,7 +1953,7 @@ bitwuzla_set_bzla_id(BitwuzlaTerm term, int32_t id)
 #endif
 }
 
-/* bzla parser only --------------------------------------------------------- */
+/* btor2 parser only -------------------------------------------------------- */
 
 void
 bitwuzla_add_output(Bitwuzla *bitwuzla, BitwuzlaTerm term)

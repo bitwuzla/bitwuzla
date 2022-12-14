@@ -8,12 +8,8 @@
  * See COPYING for more information on using this software.
  */
 
+extern "C" {
 #include "bzlasmt2.h"
-
-#include <ctype.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdbool.h>
 
 #include "bzlabv.h"
 #include "bzlacore.h"
@@ -21,19 +17,19 @@
 #include "bzlaopt.h"
 #include "utils/bzlamem.h"
 #include "utils/bzlautil.h"
+}
+
+#include <ctype.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdbool.h>
+
+#include <string>
 
 /*------------------------------------------------------------------------*/
 
 BZLA_DECLARE_STACK(BitwuzlaTerm, BitwuzlaTerm);
 BZLA_DECLARE_STACK(BitwuzlaSort, BitwuzlaSort);
-
-/*------------------------------------------------------------------------*/
-
-BitwuzlaOption bitwuzla_get_option_from_string(BitwuzlaOptions *options,
-                                               const char *str);
-
-void bitwuzla_term_print_value_smt2(BitwuzlaTerm, char *, FILE *);
-void bitwuzla_term_var_mark_bool(BitwuzlaTerm);
 
 /*------------------------------------------------------------------------*/
 
@@ -443,7 +439,7 @@ get_bitwuzla(BzlaSMT2Parser *parser)
 static void
 configure_smt_comp_mode(BzlaSMT2Parser *parser)
 {
-  const char *track  = 0;
+  // char *track  = 0;
   BitwuzlaOptions *options = parser->options;
 
   if (parser->track_mode_set
@@ -459,12 +455,12 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
     bitwuzla_set_option(options, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
     bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     bitwuzla_set_option(options, BITWUZLA_OPT_PP_NONDESTR_SUBST, 1);
-    track = "incremental";
+    // track = "incremental";
   }
   /* unsat core track */
   else if (bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_CORES))
   {
-    track = "unsat core";
+    // track = "unsat core";
   }
   /* single query track, model validation track */
   else
@@ -484,14 +480,14 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
       bitwuzla_set_option(options, BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
     }
 
-    if (bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_MODELS))
-    {
-      track = "model validation";
-    }
-    else
-    {
-      track = "single query";
-    }
+    // if (bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_MODELS))
+    //{
+    //   track = "model validation";
+    // }
+    // else
+    //{
+    //   track = "single query";
+    // }
   }
   // BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
   //          1,
@@ -874,11 +870,10 @@ open_new_scope(BzlaSMT2Parser *parser)
 static void
 close_current_scope(BzlaSMT2Parser *parser)
 {
-  double start;
   uint32_t i;
   BzlaSMT2Node *node, *next;
 
-  start = bzla_util_time_stamp();
+  // double start = bzla_util_time_stamp();
 
   if (!parser->global_declarations)
   {
@@ -1547,9 +1542,9 @@ read_token_smt2(BzlaSMT2Parser *parser)
            parser->coo.x,
            parser->coo.y,
            res,
-           res == EOF ? "<end-of-file>"
-                      : res == BZLA_INVALID_TAG_SMT2 ? "<error>"
-                                                     : parser->token.start);
+           res == EOF                     ? "<end-of-file>"
+           : res == BZLA_INVALID_TAG_SMT2 ? "<error>"
+                                          : parser->token.start);
     fflush(stdout);
   }
   return res;
@@ -1859,7 +1854,7 @@ check_bv_or_fp_args_smt2(BzlaSMT2Parser *parser,
 {
   uint32_t i;
   (void) check_fp;
-  char *is_str, *expected_str;
+  std::string is_str, expected_str;
   bool is_err;
 
   for (i = start; i <= nargs; i++)
@@ -1906,8 +1901,8 @@ check_bv_or_fp_args_smt2(BzlaSMT2Parser *parser,
                         "argument %u of '%s' is %s, expected %s term",
                         i,
                         p->node->name,
-                        is_str,
-                        expected_str);
+                        is_str.c_str(),
+                        expected_str.c_str());
     }
   }
   return true;
@@ -2232,7 +2227,7 @@ close_term_extend_bv_fun(BzlaSMT2Parser *parser,
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
   uint32_t width = bitwuzla_term_bv_get_size(item_cur[1].exp);
-  if ((uint32_t)(INT32_MAX - item_cur->num) < width)
+  if ((uint32_t) (INT32_MAX - item_cur->num) < width)
   {
     parser->perrcoo = item_cur->coo;
     return !perr_smt2(
@@ -2269,7 +2264,7 @@ close_term_rotate_bv_fun(BzlaSMT2Parser *parser,
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
-  uint32_t width          = bitwuzla_term_bv_get_size(item_cur[1].exp);
+  uint32_t width = bitwuzla_term_bv_get_size(item_cur[1].exp);
   BitwuzlaTerm exp =
       bitwuzla_mk_term1_indexed1(kind, item_cur[1].exp, item_cur->num % width);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
@@ -2613,10 +2608,9 @@ close_term_quant(BzlaSMT2Parser *parser,
 
   BitwuzlaTermStack args;
   uint32_t i;
-  char *msg;
   BzlaSMT2Node *sym;
 
-  msg = item_cur->tag == BZLA_FORALL_TAG_SMT2 ? "forall" : "exists";
+  std::string msg = item_cur->tag == BZLA_FORALL_TAG_SMT2 ? "forall" : "exists";
 
   for (i = 1; i < nargs; i++)
   {
@@ -2624,20 +2618,23 @@ close_term_quant(BzlaSMT2Parser *parser,
     {
       parser->perrcoo = item_cur[i].coo;
       return !perr_smt2(
-          parser, "expected symbol as argument %d of '%s'", i, msg);
+          parser, "expected symbol as argument %d of '%s'", i, msg.c_str());
     }
   }
   if (item_cur[nargs].tag != BZLA_SYMBOL_TAG_SMT2
       && item_cur[nargs].tag != BZLA_EXP_TAG_SMT2)
   {
     parser->perrcoo = item_cur[nargs].coo;
-    return !perr_smt2(
-        parser, "expected expression as argument %d of '%s'", nargs, msg);
+    return !perr_smt2(parser,
+                      "expected expression as argument %d of '%s'",
+                      nargs,
+                      msg.c_str());
   }
   if (!bitwuzla_term_is_bool(item_cur[nargs].exp))
   {
     parser->perrcoo = item_cur[nargs].coo;
-    return !perr_smt2(parser, "body of '%s' is not a boolean term", msg);
+    return !perr_smt2(
+        parser, "body of '%s' is not a boolean term", msg.c_str());
   }
   BZLA_INIT_STACK(parser->mem, args);
   for (i = 1; i < nargs; i++)
@@ -3284,7 +3281,7 @@ close_term(BzlaSMT2Parser *parser)
     if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
     if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
     width = bitwuzla_term_bv_get_size(item_cur[1].exp);
-    if (item_cur->num && ((uint32_t)(INT32_MAX / item_cur->num) < width))
+    if (item_cur->num && ((uint32_t) (INT32_MAX / item_cur->num) < width))
     {
       parser->perrcoo = item_cur->coo;
       return !perr_smt2(parser, "resulting bit-width of 'repeat' too large");
@@ -4064,7 +4061,7 @@ parse_open_term_indexed_parametric(BzlaSMT2Parser *parser,
     }
   }
 
-  item_open->tag   = tag;
+  item_open->tag   = static_cast<BzlaSMT2Tag>(tag);
   item_open->node  = node;
   parser->work.top = item_cur;
   if (!read_rpar_smt2(parser, msg)) return 0;
@@ -4577,7 +4574,7 @@ parse_open_term(BzlaSMT2Parser *parser, int32_t tag)
 
   if (parser->expecting_body) parser->expecting_body = 0;
 
-  item_cur = push_item_smt2(parser, tag);
+  item_cur = push_item_smt2(parser, static_cast<BzlaSMT2Tag>(tag));
 
   if (tag == BZLA_LPAR_TAG_SMT2)
   {
@@ -4641,8 +4638,8 @@ parse_open_term(BzlaSMT2Parser *parser, int32_t tag)
       tag = read_token_smt2(parser);
       if (!parse_sort(parser, tag, false, &s)) return 0;
 
-      q       = push_item_smt2(parser, BZLA_SYMBOL_TAG_SMT2);
-      q->node = sym;
+      q        = push_item_smt2(parser, BZLA_SYMBOL_TAG_SMT2);
+      q->node  = sym;
       sym->exp = bitwuzla_mk_var(s, sym->name);
     }
     parser->open++;
@@ -4843,7 +4840,7 @@ parse_bv_or_fp_sort(BzlaSMT2Parser *parser,
 
   int32_t tag;
   uint64_t width = 0, width_eb = 0, width_sb = 0;
-  char *msg;
+  std::string msg;
 
   if (skiptokens < 1 && !read_lpar_smt2(parser, 0))
   {
@@ -4917,7 +4914,7 @@ parse_bv_or_fp_sort(BzlaSMT2Parser *parser,
 
   BZLA_PUSH_STACK(parser->sorts, *resptr);
 
-  return read_rpar_smt2(parser, msg);
+  return read_rpar_smt2(parser, msg.c_str());
 }
 
 static int32_t
@@ -5027,7 +5024,6 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
 {
   uint32_t i;
   int32_t tag;
-  bool is_bool_var = false;
   BitwuzlaSortStack args;
   BzlaSMT2Node *fun;
   fun = 0;
@@ -5077,8 +5073,7 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
   }
 
   /* parse return sort */
-  tag         = read_token_smt2(parser);
-  is_bool_var = tag == BZLA_BOOL_TAG_SMT2;
+  tag = read_token_smt2(parser);
   if (!parse_sort(parser, tag, true, &sort))
   {
     BZLA_RELEASE_STACK(args);
@@ -5101,7 +5096,6 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
     else
     {
       fun->exp = bitwuzla_mk_const(sort, fun->name);
-      if (is_bool_var) bitwuzla_term_var_mark_bool(fun->exp);
       // BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
       //          2,
       //          "declared '%s' as bit-vector at line %d column %d",
@@ -5673,8 +5667,8 @@ check_sat(BzlaSMT2Parser *parser, uint32_t assc, BitwuzlaTerm *assumptions)
 static int32_t
 read_exp_list(BzlaSMT2Parser *parser, BitwuzlaTermStack *exps, BzlaSMT2Coo *coo)
 {
-  int32_t tag             = 0;
-  BitwuzlaTerm exp        = 0;
+  int32_t tag      = 0;
+  BitwuzlaTerm exp = 0;
 
   /* parse list of symbols/terms */
   BZLA_INIT_STACK(parser->mem, *exps);
@@ -5958,7 +5952,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
       break;
     }
 
-    case BZLA_GET_VALUE_TAG_SMT2:
+    case BZLA_GET_VALUE_TAG_SMT2: {
       if (!read_lpar_smt2(parser, " after 'get-value'")) return 0;
       if (!bitwuzla_get_option(parser->options, BITWUZLA_OPT_PRODUCE_MODELS))
       {
@@ -5991,6 +5985,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
       BZLA_RELEASE_STACK(exps);
       BZLA_RESET_STACK(parser->tokens);
       break;
+    }
 
     case BZLA_MODEL_TAG_SMT2:
       // FIXME model parsing for arrays currently disabled

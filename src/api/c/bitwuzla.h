@@ -2035,6 +2035,13 @@ bool bitwuzla_term_is_const_array(BitwuzlaTerm term);
  */
 void bitwuzla_term_dump(BitwuzlaTerm term, const char *format, FILE *file);
 
+/* smt2 parser only --------------------------------------------------------- */
+
+BitwuzlaOption bitwuzla_get_option_from_string(BitwuzlaOptions *options,
+                                               const char *str);
+
+void bitwuzla_term_print_value_smt2(BitwuzlaTerm, char *, FILE *);
+
 /* -------------------------------------------------------------------------- */
 
 #if __cplusplus
