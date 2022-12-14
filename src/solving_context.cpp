@@ -24,7 +24,10 @@ SolvingContext::solve()
 {
   preprocess();
   d_sat_state = d_solver_engine.solve();
-  d_env.statistics().print();
+  if (d_env.options().verbosity() > 0)
+  {
+    d_env.statistics().print();
+  }
   return d_sat_state;
 }
 
