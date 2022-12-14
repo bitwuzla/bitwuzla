@@ -1469,6 +1469,7 @@ TEST_F(TestApi, is_unsat_assumption)
 {
   {
     bitwuzla::Options options;
+    options.set(bitwuzla::Option::INCREMENTAL, false);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_const),
                  bitwuzla::BitwuzlaException);
@@ -1511,6 +1512,7 @@ TEST_F(TestApi, get_unsat_assumptions)
 {
   {
     bitwuzla::Options options;
+    options.set(bitwuzla::Option::INCREMENTAL, false);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_THROW(bitwuzla.get_unsat_assumptions(), bitwuzla::BitwuzlaException);
   }
@@ -1598,6 +1600,7 @@ TEST_F(TestApi, check_sat)
 {
   {
     bitwuzla::Options options;
+    options.set(bitwuzla::Option::INCREMENTAL, false);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_NO_THROW(bitwuzla.check_sat());
     ASSERT_THROW(bitwuzla.check_sat(), bitwuzla::BitwuzlaException);
