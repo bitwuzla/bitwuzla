@@ -2846,4 +2846,73 @@ TEST_F(TestApi, parse_format)
       bitwuzla::parse("smt2", istream, infile_name, error_msg, status);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Termination function                                                       */
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestApi, terminate)
+{
+  class TestTerminator : public bitwuzla::Terminator
+  {
+   public:
+    bool terminate() override { return true; }
+  };
+
+  bitwuzla::Sort bv_sort4 = bitwuzla::mk_bv_sort(4);
+  bitwuzla::Term x        = bitwuzla::mk_const(bv_sort4);
+  bitwuzla::Term s        = bitwuzla::mk_const(bv_sort4);
+  bitwuzla::Term t        = bitwuzla::mk_const(bv_sort4);
+  bitwuzla::Term a        = bitwuzla::mk_term(
+      bitwuzla::Kind::AND,
+      {bitwuzla::mk_term(bitwuzla::Kind::EQUAL,
+                         {bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, {x, x}),
+                                 bitwuzla::mk_bv_value_uint64(bv_sort4, 3)}),
+              bitwuzla::mk_term(
+           bitwuzla::Kind::NOT,
+           {bitwuzla::mk_term(bitwuzla::Kind::BV_UADD_OVERFLOW, {x, x})})});
+  bitwuzla::Term b = bitwuzla::mk_term(
+      bitwuzla::Kind::DISTINCT,
+      {bitwuzla::mk_term(
+           bitwuzla::Kind::BV_MUL,
+           {s, bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, {x, t})}),
+       bitwuzla::mk_term(
+           bitwuzla::Kind::BV_MUL,
+           {bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, {s, x}), t})});
+  // solved by rewriting
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    bitwuzla::Bitwuzla bitwuzla(opts);
+    bitwuzla.assert_formula(a);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+  }
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "prop");
+    bitwuzla::Bitwuzla bitwuzla(opts);
+    bitwuzla.assert_formula(a);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+  }
+  // not solved by rewriting, should be terminated in the prop case
+  TestTerminator tt;
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    bitwuzla::Bitwuzla bitwuzla(opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+  }
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "prop");
+    bitwuzla::Bitwuzla bitwuzla(opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+
 }  // namespace bzla::test

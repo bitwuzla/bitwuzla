@@ -1,5 +1,7 @@
 #include "env.h"
 
+#include "terminator.h"
+
 namespace bzla {
 
 Env::Env(const option::Options& options) : d_options(options), d_rewriter(*this)
@@ -23,6 +25,19 @@ Rewriter&
 Env::rewriter()
 {
   return d_rewriter;
+}
+
+void
+Env::configure_terminator(Terminator* terminator)
+{
+  d_terminator = terminator;
+}
+
+bool
+Env::terminate() const
+{
+  if (d_terminator == nullptr) return false;
+  return d_terminator->terminate();
 }
 
 }  // namespace bzla

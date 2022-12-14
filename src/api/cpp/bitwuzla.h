@@ -18,6 +18,7 @@ namespace bzla {
 class Node;
 class Type;
 class SolvingContext;
+class Terminator;
 namespace option {
 class Options;
 }
@@ -27,6 +28,8 @@ class Options;
 
 namespace bitwuzla {
 
+/* -------------------------------------------------------------------------- */
+/* Library info                                                               */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -46,6 +49,10 @@ std::string version();
 std::string git_id();
 
 /* -------------------------------------------------------------------------- */
+/* Options                                                                    */
+/* -------------------------------------------------------------------------- */
+
+// Note: enum class Option is declared in api/option.h
 
 class Bitwuzla;
 struct OptionInfo;
@@ -225,44 +232,13 @@ struct OptionInfo
 
   /** The values. */
   std::variant<Bool, Numeric, Mode> values;
-
-  // union
-  //{
-  //   struct
-  //   {
-  //     /** Current option value. */
-  //     bool cur;
-  //     /** Default option value. */
-  //     bool dflt;
-  //   } val_bool;
-
-  //  struct
-  //  {
-  //    /** Current option value. */
-  //    uint64_t cur;
-  //    /** Default option value. */
-  //    uint64_t dflt;
-  //    /** Minimum option value. */
-  //    uint64_t min;
-  //    /** Maximum option value. */
-  //    uint64_t max;
-  //  } val_num;
-
-  //  struct
-  //  {
-  //    /** Current mode option value. */
-  //    std::string cur;
-  //    /** Default mode option value. */
-  //    std::string dflt;
-  //    /** Number of available mode values. */
-  //    size_t num_values;
-  //    /** List of available mode values. */
-  //    std::vector<std::string> values;
-  //  } val_mode;
-  //};
 };
 
 /* -------------------------------------------------------------------------- */
+/* Result                                                                     */
+/* -------------------------------------------------------------------------- */
+
+// Note: enum class Result is declared in api/enums.h
 
 /**
  * Print result to output stream.
@@ -273,6 +249,10 @@ struct OptionInfo
 std::ostream &operator<<(std::ostream &out, Result result);
 
 /* -------------------------------------------------------------------------- */
+/* Kind                                                                       */
+/* -------------------------------------------------------------------------- */
+
+// Note: enum class Kind is declared in api/enums.h
 
 /**
  * Print kind to output stream.
@@ -283,6 +263,10 @@ std::ostream &operator<<(std::ostream &out, Result result);
 std::ostream &operator<<(std::ostream &out, Kind kind);
 
 /* -------------------------------------------------------------------------- */
+/* RoundingMode                                                               */
+/* -------------------------------------------------------------------------- */
+
+// Note: enum class RoundingMode is declared in api/enums.h
 
 /**
  * Print rounding mode to output stream.
@@ -292,6 +276,8 @@ std::ostream &operator<<(std::ostream &out, Kind kind);
  */
 std::ostream &operator<<(std::ostream &out, RoundingMode rm);
 
+/* -------------------------------------------------------------------------- */
+/* Term                                                                       */
 /* -------------------------------------------------------------------------- */
 
 class Sort;
@@ -568,6 +554,8 @@ bool operator!=(const Term &a, const Term &b);
 std::ostream &operator<<(std::ostream &out, const Term &term);
 
 /* -------------------------------------------------------------------------- */
+/* Sort                                                                       */
+/* -------------------------------------------------------------------------- */
 
 class Sort
 {
@@ -774,54 +762,50 @@ bool operator!=(const Sort &a, const Sort &b);
 std::ostream &operator<<(std::ostream &out, const Sort &sort);
 
 /* -------------------------------------------------------------------------- */
+/* Terminator                                                                 */
+/* -------------------------------------------------------------------------- */
 
+/** The termination callback configuration. */
+class Terminator
+{
+ public:
+  /** Destructor. */
+  virtual ~Terminator();
+  /**
+   * Termination function.
+   * If terminator has been connected, call to terminate connected
+   * Bitwuzla instance.
+   * @return True if the associated instance of Bitwuzla has been terminated.
+   */
+  virtual bool terminate() = 0;
+};
+
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** The Bitwuzla solver instance. */
 class Bitwuzla
 {
  public:
+  /**
+   * Constructor.
+   * @param options The associated options instance. Options must be configured
+   *                at this point.
+   */
   Bitwuzla(const Options &options);
+  /** Destructor. */
   ~Bitwuzla();
 
   /**
-   * If termination callback function has been configured via
-   * `set_termination_callback()`, call this termination function.
-   *
-   * @return True if this instance of Bitwuzla has been terminated.
-   *
-   * @see
-   *   * `set_termination_callback`
-   *   * `get_termination_callback_state`
+   * Connect or disconnect associated termination configuration instance.
+   * @note Only one terminator can be connected at a time. This will disconnect
+   *       a previously connected terminator before connecting a new one.
+   * @param terminator The terminator instance. Nullptr disconnects the
+   *                   currently associated terminator.
    */
-  bool terminate();
-  /**
-   * Configure a termination callback function.
-   *
-   * The `state` of the callback can be retrieved via
-   * `get_termination_callback_state()`.
-   *
-   * @param fun The callback function. Returns a value != 0 if this instance
-   *            of Bitwuzla has been terminated.
-   * @param state The argument to the callback function.
-   *
-   * @see
-   *   * `terminate`
-   *   * `get_termination_callback_state`
-   */
-  void set_termination_callback(std::function<int32_t(void *)> fun,
-                                void *state);
-  /**
-   * Get the state of the termination callback function.
-   *
-   * The returned object representing the state of the callback corresponds
-   * to the `state` configured as argument to the callback function via
-   * `set_termination_callback()`.
-   *
-   * @return The object passed as argument `state` to the callback function.
-   *
-   * @see
-   *   * `terminate`
-   *   * `set_termination_callback`
-   */
-  void *get_termination_callback_state();
+  void configure_terminator(Terminator *terminator);
+
   /**
    * Configure an abort callback function, which is called instead of exit
    * on abort conditions.
@@ -1154,9 +1138,13 @@ class Bitwuzla
   /** The associated solving context. */
   std::shared_ptr<bzla::SolvingContext> d_ctx;
   /** The result of the last check_sat() call. */
-  Result d_last_check_sat;
+  Result d_last_check_sat = Result::UNKNOWN;
   /** The number of issued check-sat queries. */
-  uint64_t d_n_sat_calls;
+  uint64_t d_n_sat_calls = 0;
+  /** The associated terminator. */
+  Terminator *d_terminator = nullptr;
+  /** The internal terminator. */
+  std::unique_ptr<bzla::Terminator> d_terminator_internal;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -1216,6 +1204,8 @@ std::pair<Bitwuzla, Result> parse(const std::string &format,
                                   std::string &error_msg,
                                   Result &status);
 
+/* -------------------------------------------------------------------------- */
+/* Sort creation                                                              */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -1283,6 +1273,10 @@ Sort mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain);
  *   * `Sort::is_rm`
  */
 Sort mk_rm_sort();
+
+/* -------------------------------------------------------------------------- */
+/* Term creation                                                              */
+/* -------------------------------------------------------------------------- */
 
 /**
  * Create a true value.
@@ -1580,6 +1574,10 @@ Term mk_const(const Sort &sort,
  */
 Term mk_var(const Sort &sort,
             std::optional<const std::string> symbol = std::nullopt);
+
+/* -------------------------------------------------------------------------- */
+/* Term substitution                                                          */
+/* -------------------------------------------------------------------------- */
 
 /**
  * Substitute a set of keys with their corresponding values in the given

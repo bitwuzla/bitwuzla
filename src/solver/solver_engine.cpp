@@ -42,11 +42,10 @@ SolverEngine::solve()
     process_lemmas();
 
     d_sat_state = d_bv_solver.solve();
-    if (d_sat_state == Result::UNSAT)
+    if (d_sat_state != Result::SAT)
     {
       break;
     }
-    assert(d_sat_state == Result::SAT);
     // TODO: process lemmas after each check()?
     d_fp_solver.check();
     d_array_solver.check();

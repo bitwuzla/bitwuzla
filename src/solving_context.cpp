@@ -1,10 +1,10 @@
 #include "solving_context.h"
 
 #include <cassert>
+#include <iostream>
 
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_set.h"
-
 namespace bzla {
 
 using namespace node;

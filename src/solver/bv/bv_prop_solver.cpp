@@ -66,8 +66,7 @@ BvPropSolver::solve()
 
   for (uint32_t j = 0;; ++j)
   {
-    // TODO add termination condition call
-    if ((nprops && d_ls->d_statistics.d_nprops >= nprops)
+    if (d_env.terminate() || (nprops && d_ls->d_statistics.d_nprops >= nprops)
         || (nupdates && d_ls->d_statistics.d_nupdates >= nupdates))
     {
       assert(sat_result == Result::UNKNOWN);
@@ -88,7 +87,6 @@ BvPropSolver::solve()
 
     if (res == bzla::ls::Result::UNSAT)
     {
-      printf("asdf\n");
       goto UNSAT;
     }
 
@@ -116,7 +114,6 @@ BvPropSolver::register_assertion(const Node& assertion, bool top_level)
 {
   (void) top_level;
 
-  node::node_ref_vector roots;
   node::node_ref_vector visit{assertion};
   node::unordered_node_ref_set cache;
 
@@ -147,11 +144,7 @@ BvPropSolver::register_assertion(const Node& assertion, bool top_level)
     }
   }
 
-  for (const Node& root : roots)
-  {
-    assert(d_node_map.find(root) != d_node_map.end());
-    d_ls->register_root(d_node_map.at(root));
-  }
+  d_ls->register_root(d_node_map.at(assertion));
 }
 
 Node

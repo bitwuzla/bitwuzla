@@ -398,4 +398,5 @@ TEST_F(TestBvPropSolver, eq) { test_prop(Kind::EQUAL); }
 TEST_F(TestBvPropSolver, ite) { test_prop(Kind::ITE); }
 
 /* -------------------------------------------------------------------------- */
+
 }  // namespace bzla::test
