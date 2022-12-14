@@ -2752,7 +2752,7 @@ TEST_F(TestApi, dump_formula2)
   FILE *tmpfile        = fopen(filename.c_str(), "w");
 
   bitwuzla::Options options;
-  options.set(bitwuzla::Option::PRETTY_PRINT, false);
+  // options.set(bitwuzla::Option::PRETTY_PRINT, false);
   bitwuzla::Sort bv1   = bitwuzla::mk_bv_sort(1);
   bitwuzla::Sort ar1_1 = bitwuzla::mk_array_sort(bv1, bv1);
   bitwuzla::Term a     = bitwuzla::mk_const(ar1_1, "a");

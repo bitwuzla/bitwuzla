@@ -441,16 +441,16 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
       || !bitwuzla_get_option(options, BITWUZLA_OPT_SMT_COMP_MODE))
     return;
 
-  bitwuzla_set_option(
-      options, BITWUZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
+  // bitwuzla_set_option(
+  //     options, BITWUZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
 
   /* incremental track */
   if (parser->print_success || parser->scope_level > 0)
   {
-    bitwuzla_set_option(options, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
+    // bitwuzla_set_option(options, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
     bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
-    bitwuzla_set_option(options, BITWUZLA_OPT_PP_NONDESTR_SUBST, 1);
-    // track = "incremental";
+    // bitwuzla_set_option(options, BITWUZLA_OPT_PP_NONDESTR_SUBST, 1);
+    //  track = "incremental";
   }
   /* unsat core track */
   else if (bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_CORES))
@@ -460,19 +460,19 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
   /* single query track, model validation track */
   else
   {
-    bitwuzla_set_option(options, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
-    bitwuzla_set_option(options, BITWUZLA_OPT_PP_NORMALIZE_ADD, 1);
+    // bitwuzla_set_option(options, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
+    // bitwuzla_set_option(options, BITWUZLA_OPT_PP_NORMALIZE_ADD, 1);
 
     if (!strcmp(parser->logic, "QF_BV"))
     {
-      bitwuzla_set_option(options, BITWUZLA_OPT_FUN_PREPROP, 1);
+      // bitwuzla_set_option(options, BITWUZLA_OPT_FUN_PREPROP, 1);
       bitwuzla_set_option(options, BITWUZLA_OPT_PROP_CONST_BITS, 1);
       bitwuzla_set_option(options, BITWUZLA_OPT_PROP_INFER_INEQ_BOUNDS, 1);
       bitwuzla_set_option(options, BITWUZLA_OPT_PROP_NPROPS, 10000);
       bitwuzla_set_option(options, BITWUZLA_OPT_PROP_NUPDATES, 2000000);
       bitwuzla_set_option(options, BITWUZLA_OPT_PROP_PROB_RANDOM_INPUT, 10);
       bitwuzla_set_option(options, BITWUZLA_OPT_PROP_SEXT, 1);
-      bitwuzla_set_option(options, BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
+      // bitwuzla_set_option(options, BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
     }
 
     // if (bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_MODELS))
@@ -5388,8 +5388,8 @@ declare_sort_smt2(BzlaSMT2Parser *parser)
   BzlaSMT2Node *sort_alias;
   BitwuzlaSort sort;
 
-  opt_bit_width =
-      bitwuzla_get_option(parser->options, BITWUZLA_OPT_DECLSORT_BV_WIDTH);
+  // opt_bit_width =
+  //     bitwuzla_get_option(parser->options, BITWUZLA_OPT_DECLSORT_BV_WIDTH);
   if (!opt_bit_width)
     return !perr_smt2(parser,
                       "'declare-sort' not supported if it is not interpreted"
@@ -5644,10 +5644,10 @@ check_sat(BzlaSMT2Parser *parser, uint32_t assc, BitwuzlaTerm *assumptions)
   }
   /* Do not print 'unknown' if we print DIMACS. 'unknown' is only returned if
    * SAT solver is used non-incremental. */
-  else if (!bitwuzla_get_option(parser->options, BITWUZLA_OPT_PRINT_DIMACS))
-  {
-    fprintf(parser->outfile, "unknown\n");
-  }
+  // else if (!bitwuzla_get_option(parser->options, BITWUZLA_OPT_PRINT_DIMACS))
+  //{
+  //   fprintf(parser->outfile, "unknown\n");
+  // }
   fflush(parser->outfile);
   // else
   //{
@@ -5884,15 +5884,15 @@ read_command_smt2(BzlaSMT2Parser *parser)
       if (!bitwuzla_get_option(parser->options, BITWUZLA_OPT_PRODUCE_MODELS))
         return !perr_smt2(parser, "model generation is not enabled");
       if (parser->res->result != BITWUZLA_SAT) break;
-      if (bitwuzla_get_option(parser->options, BITWUZLA_OPT_OUTPUT_FORMAT)
-          == BZLA_OUTPUT_FORMAT_BTOR)
-      {
-        // bitwuzla_print_model(bitwuzla, "btor", parser->outfile);
-      }
-      else
-      {
-        // bitwuzla_print_model(bitwuzla, "smt2", parser->outfile);
-      }
+      // if (bitwuzla_get_option(parser->options, BITWUZLA_OPT_OUTPUT_FORMAT)
+      //     == BZLA_OUTPUT_FORMAT_BTOR)
+      //{
+      //   // bitwuzla_print_model(bitwuzla, "btor", parser->outfile);
+      // }
+      // else
+      //{
+      //   // bitwuzla_print_model(bitwuzla, "smt2", parser->outfile);
+      // }
       fflush(parser->outfile);
       break;
 

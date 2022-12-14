@@ -4034,7 +4034,7 @@ TEST_F(TestCApi, dump_formula2)
   FILE *tmpfile        = fopen(filename.c_str(), "w");
 
   BitwuzlaOptions *options = bitwuzla_options_new();
-  bitwuzla_set_option(options, BITWUZLA_OPT_PRETTY_PRINT, 0);
+  // bitwuzla_set_option(options, BITWUZLA_OPT_PRETTY_PRINT, 0);
   Bitwuzla *bitwuzla = bitwuzla_new(options);
   BitwuzlaSort bv1   = bitwuzla_mk_bv_sort(1);
   BitwuzlaSort ar1_1 = bitwuzla_mk_array_sort(bv1, bv1);

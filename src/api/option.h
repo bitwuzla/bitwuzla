@@ -33,8 +33,57 @@ namespace bitwuzla {
  */
 enum ENUM(Option)
 {
-  // TODO: doc
-  EVALUE(BV_SOLVER),
+  /* ----------------- General Options -------------------------------------- */
+  /*! **Incremental solving.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   * @note
+   * * Enabling this option turns off some optimization techniques.
+   * * Enabling/disabling incremental solving after bitwuzla_check_sat()
+   *   has been called is not supported.
+   * * This option cannot be enabled in combination with option
+   *   `::EVALUE(PP_UNCONSTRAINED_OPTIMIZATION`.
+   */
+  EVALUE(INCREMENTAL),
+  /*! **Log level.**
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 0).
+   */
+  EVALUE(LOGLEVEL),
+  /*! **Model generation.**
+   *
+   * Values:
+   *  * **1**: enable, generate model for assertions only
+   *  * **2**: enable, generate model for all created terms
+   *  * **0**: disable [**default**]
+   *
+   * @note This option cannot be enabled in combination with option
+   *       `::EVALUE(PP_UNCONSTRAINED_OPTIMIZATION`.
+   */
+  EVALUE(PRODUCE_MODELS),
+  /*! **Unsat core generation.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  EVALUE(PRODUCE_UNSAT_CORES),
+  /*! **Seed for random number generator.**
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 0).
+   */
+  EVALUE(SEED),
+  /*! **Verbosity level.**
+   *
+   * Values:
+   *  * An unsigned integer value <= 4 (**default**: 0).
+   */
+  EVALUE(VERBOSITY),
   /*! **Configure the SAT solver engine.**
    *
    * Values:
@@ -51,8 +100,128 @@ enum ENUM(Option)
    */
   EVALUE(SAT_SOLVER),
 
-  /* --------------------------- General Options --------------------------- */
+  /* ---------------- Bitwuzla-specific Options ----------------------------- */
 
+  // TODO: doc
+  EVALUE(BV_SOLVER),
+  /*! **Enable SMT-COMP mode.**
+   *
+   * Parser only option. Only effective when an SMT2 input file is parsed.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option.
+   */
+  EVALUE(SMT_COMP_MODE),
+
+  /* ---------------- BV: Prop Engine Options (Expert) ---------------------- */
+
+  /*! **Propagation-based local search solver engine:
+   *    Constant bits.**
+   *
+   * Configure constant bit propagation (requries bit-blasting to AIG).
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(PROP_CONST_BITS),
+  /*! **Propagation-based local search solver engine:
+   *    Infer bounds for inequalities for value computation.**
+   *
+   * When enabled, infer bounds for value computation for inequalities based on
+   * satisfied top level inequalities.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(PROP_INFER_INEQ_BOUNDS),
+  /*! **Propagation-based local search solver engine:
+   *    Number of propagations.**
+   *
+   * Configure the number of propagations used as a limit for the
+   * propagation-based local search solver engine. No limit if 0.
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 0).
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(PROP_NPROPS),
+  /*! **Propagation-based local search solver engine:
+   *    Number of updates.**
+   *
+   * Configure the number of model value updates used as a limit for the
+   * propagation-based local search solver engine. No limit if 0.
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 0).
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(PROP_NUPDATES),
+  /*! **Propagation-based local search solver engine:
+   *    Path selection.**
+   *
+   * Configure mode for path selection.
+   *
+   * Values:
+   *  * **essential** [default]:
+   *    Select path based on essential inputs.
+   *  * **random**:
+   *    Select path randomly.
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(PROP_PATH_SEL),
+  /*! **Propagation-based local search solver engine:
+   *    Probability for selecting random input.**
+   *
+   * Configure the probability with which to select a random input instead of
+   * an essential input when selecting the path.
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(PROP_PROB_RANDOM_INPUT),
+  /*! **Propagation-based local search solver engine:
+   *    Probability for inverse values.**
+   *
+   * Configure the probability with which to choose an inverse value over a
+   * consistent value when aninverse value exists.
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 990).
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(PROP_PROB_USE_INV_VALUE),
+  /*! **Propagation-based local search solver engine:
+   *    Value computation for sign extension.**
+   *
+   * When enabled, detect sign extension operations (are rewritten on
+   * construction) and use value computation for sign extension.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(PROP_SEXT),
+
+/* ================ Old Options =========================================== */
+
+#if 0
   /*! **Configure the solver engine.**
    *
    * Values:
@@ -110,28 +279,6 @@ enum ENUM(Option)
    */
   EVALUE(INPUT_FORMAT),
 
-  /*! **Incremental solving.**
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   *
-   * @note
-   * * Enabling this option turns off some optimization techniques.
-   * * Enabling/disabling incremental solving after bitwuzla_check_sat()
-   *   has been called is not supported.
-   * * This option cannot be enabled in combination with option
-   *   `::EVALUE(PP_UNCONSTRAINED_OPTIMIZATION`.
-   */
-  EVALUE(INCREMENTAL),
-
-  /*! **Log level.**
-   *
-   * Values:
-   *  * An unsigned integer value (**default**: 0).
-   */
-  EVALUE(LOGLEVEL),
-
   /*! **Configure output number format for bit-vector values.**
    *
    * If unspecified, Bitwuzla will use BTOR format.
@@ -187,40 +334,6 @@ enum ENUM(Option)
    *  * **0**: disable [**default**]
    */
   EVALUE(PRINT_DIMACS),
-
-  /*! **Model generation.**
-   *
-   * Values:
-   *  * **1**: enable, generate model for assertions only
-   *  * **2**: enable, generate model for all created terms
-   *  * **0**: disable [**default**]
-   *
-   * @note This option cannot be enabled in combination with option
-   *       `::EVALUE(PP_UNCONSTRAINED_OPTIMIZATION`.
-   */
-  EVALUE(PRODUCE_MODELS),
-
-  /*! **Unsat core generation.**
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  EVALUE(PRODUCE_UNSAT_CORES),
-
-  /*! **Seed for random number generator.**
-   *
-   * Values:
-   *  * An unsigned integer value (**default**: 0).
-   */
-  EVALUE(SEED),
-
-  /*! **Verbosity level.**
-   *
-   * Values:
-   *  * An unsigned integer value <= 4 (**default**: 0).
-   */
-  EVALUE(VERBOSITY),
 
   /* -------------- Rewriting/Preprocessing Options (Expert) --------------- */
 
@@ -858,19 +971,6 @@ enum ENUM(Option)
   EVALUE(PROP_ASHR),
 
   /*! **Propagation-based local search solver engine:
-   *    Constant bits.**
-   *
-   * Configure constant bit propagation (requries bit-blasting to AIG).
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   *
-   *  @warning This is an expert option to configure the prop solver engine.
-   */
-  EVALUE(PROP_CONST_BITS),
-
-  /*! **Propagation-based local search solver engine:
    *    Domain propagators.**
    *
    * Configure the use of domain propagators for determining constant bits
@@ -936,20 +1036,6 @@ enum ENUM(Option)
   EVALUE(PROP_FLIP_COND_CONST_NPATHSEL),
 
   /*! **Propagation-based local search solver engine:
-   *    Infer bounds for inequalities for value computation.**
-   *
-   * When enabled, infer bounds for value computation for inequalities based on
-   * satisfied top level inequalities.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   *
-   *  @warning This is an expert option to configure the prop solver engine.
-   */
-  EVALUE(PROP_INFER_INEQ_BOUNDS),
-
-  /*! **Propagation-based local search solver engine:
    *    No move on conflict.**
    *
    * When enabled, no move is performed when running into a conflict during
@@ -966,47 +1052,6 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(PROP_NO_MOVE_ON_CONFLICT),
-
-  /*! **Propagation-based local search solver engine:
-   *    Number of propagations.**
-   *
-   * Configure the number of propagations used as a limit for the
-   * propagation-based local search solver engine. No limit if 0.
-   *
-   * Values:
-   *  * An unsigned integer value (**default**: 0).
-   *
-   *  @warning This is an expert option to configure the prop solver engine.
-   */
-  EVALUE(PROP_NPROPS),
-
-  /*! **Propagation-based local search solver engine:
-   *    Number of updates.**
-   *
-   * Configure the number of model value updates used as a limit for the
-   * propagation-based local search solver engine. No limit if 0.
-   *
-   * Values:
-   *  * An unsigned integer value (**default**: 0).
-   *
-   *  @warning This is an expert option to configure the prop solver engine.
-   */
-  EVALUE(PROP_NUPDATES),
-
-  /*! **Propagation-based local search solver engine:
-   *    Path selection.**
-   *
-   * Configure mode for path selection.
-   *
-   * Values:
-   *  * **essential** [default]:
-   *    Select path based on essential inputs.
-   *  * **random**:
-   *    Select path randomly.
-   *
-   *  @warning This is an expert option to configure the prop solver engine.
-   */
-  EVALUE(PROP_PATH_SEL),
 
   /*! **Propagation-based local search solver engine:
    *    Probability for producing inverse rather than consistent values.**
@@ -1077,19 +1122,6 @@ enum ENUM(Option)
   EVALUE(PROP_PROB_FLIP_COND_CONST),
 
   /*! **Propagation-based local search solver engine:
-   *    Probability for selecting random input.**
-   *
-   * Configure the probability with which to select a random input instead of
-   * an essential input when selecting the path.
-   *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
-   *
-   *  @warning This is an expert option to configure the prop solver engine.
-   */
-  EVALUE(PROP_PROB_RANDOM_INPUT),
-
-  /*! **Propagation-based local search solver engine:
    *    Probability for flipping one of the don't care bits for extracts.**
    *
    * Configure the probability with which to flip one of the don't care bits of
@@ -1119,19 +1151,6 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(PROP_PROB_SLICE_KEEP_DC),
-
-  /*! **Propagation-based local search solver engine:
-   *    Probability for inverse values.**
-   *
-   * Configure the probability with which to choose an inverse value over a
-   * consistent value when aninverse value exists.
-   *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 990).
-   *
-   *  @warning This is an expert option to configure the prop solver engine.
-   */
-  EVALUE(PROP_PROB_USE_INV_VALUE),
 
   /*! **Propagation-based local search solver engine:
    *    Bandit scheme.**
@@ -1173,20 +1192,6 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(PROP_USE_RESTARTS),
-
-  /*! **Propagation-based local search solver engine:
-   *    Value computation for sign extension.**
-   *
-   * When enabled, detect sign extension operations (are rewritten on
-   * construction) and use value computation for sign extension.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   *
-   *  @warning This is an expert option to configure the prop solver engine.
-   */
-  EVALUE(PROP_SEXT),
 
   /*! **Propagation-based local search solver engine:
    *    Skip if no progress.**
@@ -1259,7 +1264,7 @@ enum ENUM(Option)
    */
   EVALUE(AIGPROP_USE_RESTARTS),
 
-  /* ----------------- Quantifier Eninge Options (Expert) ------------------ */
+  /* ----------------- Quantifier Engine Options (Expert) -0----------------- */
   /*! **Quantifier solver engine:
    *    Skolem function synthesis.**
    *
@@ -1430,18 +1435,7 @@ enum ENUM(Option)
    *  @warning This is an expert option.
    */
   EVALUE(SAT_ENGINE_N_THREADS),
-
-  /*! **Enable SMT-COMP mode.**
-   *
-   * Parser only option. Only effective when an SMT2 input file is parsed.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   *
-   *  @warning This is an expert option.
-   */
-  EVALUE(SMT_COMP_MODE),
+#endif
 
 #ifndef DOXYGEN_SKIP
   EVALUE(NUM_OPTS),

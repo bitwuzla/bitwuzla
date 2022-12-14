@@ -385,11 +385,12 @@ class Options
   OptionNumeric log_level;
   OptionBool produce_models;
   OptionBool produce_unsat_cores;
-  OptionModeT<SatSolver> sat_solver;
   OptionNumeric seed;
   OptionNumeric verbosity;
 
+  // Bitwuzla-specific options
   OptionModeT<BvSolver> bv_solver;
+  OptionModeT<SatSolver> sat_solver;
   OptionBool smt_comp_mode;
 
   // BV: propagation-based local search engine
