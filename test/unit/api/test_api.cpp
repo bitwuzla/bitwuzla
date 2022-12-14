@@ -285,6 +285,9 @@ TEST_F(TestApi, set_option)
     ASSERT_THROW(opts.set("incremental", "asdf"), bitwuzla::BitwuzlaException);
     ASSERT_THROW(opts.set("incremental", "2"), bitwuzla::BitwuzlaException);
     ASSERT_THROW(opts.set("incrremental", "true"), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(opts.set(bitwuzla::Option::VERBOSITY, 5),
+                 bitwuzla::BitwuzlaException);
+    ASSERT_THROW(opts.set("VERBOSITY", "5"), bitwuzla::BitwuzlaException);
     //  ASSERT_THROW(
     //      opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true),
     //      BitwuzlaException);
@@ -341,10 +344,14 @@ TEST_F(TestApi, set_option)
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::BV_SOLVER), "bitblast");
     opts.set(bitwuzla::Option::BV_SOLVER, "prop");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::BV_SOLVER), "prop");
-    opts.set(bitwuzla::Option::BV_SOLVER, std::string("prop"));
-    ASSERT_EQ(opts.get_mode(bitwuzla::Option::BV_SOLVER), "prop");
-    opts.set(bitwuzla::Option::SAT_SOLVER, std::string("cadical"));
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    ASSERT_EQ(opts.get_mode(bitwuzla::Option::BV_SOLVER), "bitblast");
+    opts.set(bitwuzla::Option::SAT_SOLVER, "cadical");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
+    opts.set("sat-solver", "kissat");
+    ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "kissat");
+    ASSERT_THROW(opts.set("sat--solver", "kissat"),
+                 bitwuzla::BitwuzlaException);
     ASSERT_THROW(opts.set(bitwuzla::Option::BV_SOLVER, "asdf"),
                  bitwuzla::BitwuzlaException);
     ASSERT_THROW(opts.set(bitwuzla::Option::INCREMENTAL, "true"),

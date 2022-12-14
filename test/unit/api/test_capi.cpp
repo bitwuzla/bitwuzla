@@ -457,6 +457,9 @@ TEST_F(TestCApi, set_option)
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_INCREMENTAL), true);
+    ASSERT_DEATH(bitwuzla_set_option(options, BITWUZLA_OPT_VERBOSITY, 5),
+                 "expected value <=");
     //  ASSERT_DEATH(bitwuzla_set_option(
     //                   options, BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION,
     //                   1),
@@ -529,10 +532,10 @@ TEST_F(TestCApi, set_option)
     ASSERT_EQ(
         std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER)),
         "prop");
-    bitwuzla_set_option_mode(options, BITWUZLA_OPT_BV_SOLVER, "prop");
+    bitwuzla_set_option_mode(options, BITWUZLA_OPT_BV_SOLVER, "bitblast");
     ASSERT_EQ(
         std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER)),
-        "prop");
+        "bitblast");
     bitwuzla_set_option_mode(options, BITWUZLA_OPT_SAT_SOLVER, "cadical");
     ASSERT_EQ(
         std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_SAT_SOLVER)),
