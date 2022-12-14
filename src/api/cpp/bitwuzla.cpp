@@ -1,12 +1,16 @@
 #include "api/cpp/bitwuzla.h"
 
-// TODO this should be refactored
 extern "C" {
-#include "bzlaconfig.h"
+#include "bzlaconfig.h"  // TODO this should be refactored
+#include "bzlaparse.h"
 }
+
+// TODO this will not be needed after parser refactor
+#include <stdio.h>
 
 #include <array>
 
+#include "api/c/bitwuzla_options.h"
 #include "api/checks.h"
 #include "bv/bitvector.h"
 #include "node/node.h"
@@ -1552,40 +1556,17 @@ Bitwuzla::dump_formula(std::ostream &out, const std::string &format)
 
 /* -------------------------------------------------------------------------- */
 
-std::pair<Bitwuzla, Result>
-parse(std::ifstream &infile,
-      const std::string &infile_name,
-      std::string &error_msg,
-      Result &status,
-      bool &is_smt2)
+std::string
+parse(Options &options, const std::string &infile_name)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
-  // TODO
-  (void) infile;
-  (void) infile_name;
-  (void) error_msg;
-  (void) status;
-  (void) is_smt2;
-  // return std::make_pair(Bitwuzla(Options()), Result::UNKNOWN);
-}
-
-std::pair<Bitwuzla, Result>
-parse(const std::string &format,
-      std::ifstream &infile,
-      const std::string &infile_name,
-      std::string &error_msg,
-      Result &status)
-{
-  BITWUZLA_CHECK_STR_NOT_EMPTY(format);
-  BITWUZLA_CHECK_FORMAT(format);
-  BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
-  // TODO
-  (void) format;
-  (void) infile;
-  (void) infile_name;
-  (void) error_msg;
-  (void) status;
-  // return std::make_pair(Bitwuzla(Options()), Result::UNKNOWN);
+  BitwuzlaOptions coptions(options);
+  FILE *infile = fopen(infile_name.c_str(), "r");
+  BITWUZLA_CHECK(infile != nullptr) << "failed to open input file";
+  char *error_msg = nullptr;
+  (void) bzla_parse(&coptions, infile, infile_name.c_str(), stdout, &error_msg);
+  fclose(infile);
+  return error_msg ? error_msg : "";
 }
 
 /* -------------------------------------------------------------------------- */

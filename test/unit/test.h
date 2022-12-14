@@ -144,6 +144,7 @@ class TestFile : public TestBitwuzla
  protected:
   void run_test(const char *name, int32_t expected, uint32_t verbosity = 0u)
   {
+    (void) expected;
     if (!d_log_file)
     {
       std::string s(name);
@@ -155,17 +156,17 @@ class TestFile : public TestBitwuzla
 
     std::stringstream ss_in;
     FILE *f_in;
-    BitwuzlaResult parsed_status;
-    char *parse_err;
-    int32_t sat_res;
-    bool parsed_smt2;
+    // BitwuzlaResult parsed_status;
+    // char *parse_err;
+    // int32_t sat_res;
+    // bool parsed_smt2;
 
     ss_in << BZLA_REGRESS_DIR << name;
     f_in = fopen(ss_in.str().c_str(), "r");
     assert(f_in);
 
     bitwuzla_set_option(d_options, BITWUZLA_OPT_VERBOSITY, verbosity);
-    Bitwuzla *bitwuzla = bitwuzla_new(d_options);
+    // Bitwuzla *bitwuzla = bitwuzla_new(d_options);
 
     // TODO refactor
 #if 0

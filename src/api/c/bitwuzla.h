@@ -1291,69 +1291,24 @@ void bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file);
  */
 void bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
 
-/**
- * Parse input file.
- *
- * The format of the input file is auto detected.
- * Requires that no terms have been created yet.
- *
- * @param infile The input file.
- * @param infile_name The name of the input file.
- * @param outfile The output file.
- * @param error_msg Output parameter, stores an error message in case a parse
- *                  error occurred, else \c NULL.
- * @param bitwuzla The Bitwuzla instance created by the parser.
- * @param parsed_status Output parameter, stores the status of the input in case
- *                      of SMT-LIB v2 input, if given.
- * @param parsed_smt2 Output parameter, true if parsed input file has been
- *                    detected as SMT-LIB v2 input.
- *
- * @return `::BITWUZLA_SAT` if the input formula was simplified to true,
- *         `::BITWUZLA_UNSAT` if it was simplified to false,
- *         and `::BITWUZLA_UNKNOWN` otherwise.
- *
- * @see
- *   * `bitwuzla_parse_format`
- */
-BitwuzlaResult bitwuzla_parse(FILE *infile,
-                              const char *infile_name,
-                              FILE *outfile,
-                              char **error_msg,
-                              Bitwuzla **bitwuzla,
-                              BitwuzlaResult *parsed_status,
-                              bool *parsed_smt2);
+/* -------------------------------------------------------------------------- */
+/* Parsing                                                                    */
+/* -------------------------------------------------------------------------- */
 
 /**
- * Parse input file, assumed to be given in the specified format.
+ * Parse input file in smt2 format.
  *
- * Requires that no terms have been created yet.
  *
- * @param format The input format for printing the model. Either `"btor"` for
- *               the BTOR format, `"btor2"` for the BTOR2 format, or `"smt2"`
- *               for the SMT-LIB v2 format.
- * @param infile The input file.
+ * @param options The configuration options for the Bitwuzla instance
+ *                (created by the parser).
  * @param infile_name The name of the input file.
- * @param outfile The output file.
- * @param error_msg Output parameter, stores an error message in case a parse
- *                  error occurred, else \c NULL.
- * @param bitwuzla The Bitwuzla instance created by the parser.
- * @param parsed_status Output parameter, stores the status of the input in case
- *                      of SMT-LIB v2 input, if given.
- *
- * @return `::BITWUZLA_SAT` if the input formula was simplified to true,
- *         `::BITWUZLA_UNSAT` if it was simplified to false,
- *         and ::BITWUZLA_UNKNOWN` otherwise.
- *
- * @see
- *   * `bitwuzla_parse`
+ * @return The error message in case of an error, else NULL.
  */
-BitwuzlaResult bitwuzla_parse_format(const char *format,
-                                     FILE *infile,
-                                     const char *infile_name,
-                                     FILE *outfile,
-                                     char **error_msg,
-                                     Bitwuzla **bitwuzla,
-                                     BitwuzlaResult *parsed_status);
+const char *bitwuzla_parse(BitwuzlaOptions *options, const char *infile_name);
+
+/* -------------------------------------------------------------------------- */
+/* Term substitution                                                          */
+/* -------------------------------------------------------------------------- */
 
 /**
  * Substitute a set of keys with their corresponding values in the given term.

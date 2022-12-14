@@ -14,10 +14,12 @@ extern "C" {
 #include "bzlaparse.h"
 }
 
+// TODO this will not be needed after parser refactor
 #include <cassert>
 #include <cstring>
 #include <unordered_map>
 
+#include "api/c/bitwuzla_options.h"
 #include "api/checks.h"
 #include "api/cpp/bitwuzla.h"
 
@@ -92,11 +94,9 @@ class AbortStream
 
 /* -------------------------------------------------------------------------- */
 
-struct BitwuzlaOptions
-{
-  BitwuzlaOptions() : d_options(bitwuzla::Options()) {}
-  bitwuzla::Options d_options;
-};
+// TODO: move definition of struct BitwuzlaOptions back here from
+//       api/c/bitwuzla_options.h after the parser is rewritten and uses
+//       the C++ API
 
 /* -------------------------------------------------------------------------- */
 
@@ -1145,77 +1145,20 @@ bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
   BITWUZLA_TRY_CATCH_END;
 }
 
-BitwuzlaResult
-bitwuzla_parse(FILE *infile,
-               const char *infile_name,
-               FILE *outfile,
-               char **error_msg,
-               Bitwuzla **bitwuzla,
-               BitwuzlaResult *parsed_status,
-               bool *parsed_smt2)
+const char *
+bitwuzla_parse(BitwuzlaOptions *options, const char *infile_name)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(infile);
+  BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_NOT_NULL(infile_name);
-  BITWUZLA_CHECK_NOT_NULL(outfile);
-  BITWUZLA_CHECK_NOT_NULL(error_msg);
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  BITWUZLA_CHECK_NOT_NULL(parsed_status);
-  BITWUZLA_CHECK_NOT_NULL(parsed_smt2);
-  int32_t bzla_res = bzla_parse(infile,
-                                infile_name,
-                                outfile,
-                                error_msg,
-                                bitwuzla,
-                                parsed_status,
-                                parsed_smt2);
-  if (bzla_res == BITWUZLA_SAT) return BITWUZLA_SAT;
-  if (bzla_res == BITWUZLA_UNSAT) return BITWUZLA_UNSAT;
-  assert(bzla_res == BITWUZLA_UNKNOWN);
-  return BITWUZLA_UNKNOWN;
-  BITWUZLA_TRY_CATCH_END;
-}
 
-BitwuzlaResult
-bitwuzla_parse_format(const char *format,
-                      FILE *infile,
-                      const char *infile_name,
-                      FILE *outfile,
-                      char **error_msg,
-                      Bitwuzla **bitwuzla,
-                      BitwuzlaResult *parsed_status)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(format);
-  BITWUZLA_CHECK_NOT_NULL(infile);
-  BITWUZLA_CHECK_NOT_NULL(infile_name);
-  BITWUZLA_CHECK_NOT_NULL(outfile);
-  BITWUZLA_CHECK_NOT_NULL(error_msg);
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  BITWUZLA_CHECK_NOT_NULL(parsed_status);
-  int32_t bzla_res = 0;
-  if (strcmp(format, "smt2") == 0)
-  {
-    bzla_res = bzla_parse_smt2(
-        infile, infile_name, outfile, error_msg, bitwuzla, parsed_status);
-  }
-  else if (strcmp(format, "btor") == 0)
-  {
-    bzla_res = bzla_parse_btor(
-        infile, infile_name, outfile, error_msg, bitwuzla, parsed_status);
-  }
-  else
-  {
-    BITWUZLA_CHECK(strcmp(format, "btor2") == 0)
-        << "unexpected input format, expected 'smt2', 'btor', or 'btor2', got '"
-        << format << "'";
-    bzla_res = bzla_parse_btor2(
-        infile, infile_name, outfile, error_msg, bitwuzla, parsed_status);
-  }
-  if (bzla_res == BITWUZLA_SAT) return BITWUZLA_SAT;
-  if (bzla_res == BITWUZLA_UNSAT) return BITWUZLA_UNSAT;
-  assert(bzla_res == BITWUZLA_UNKNOWN);
-  return BITWUZLA_UNKNOWN;
+  FILE *infile = fopen(infile_name, "r");
+  BITWUZLA_CHECK(infile != nullptr) << "failed to open input file";
+
+  char *error_msg = nullptr;
+  (void) bzla_parse(options, infile, infile_name, stdout, &error_msg);
+  fclose(infile);
+  return error_msg;
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -1440,6 +1383,9 @@ bitwuzla_sort_dump(BitwuzlaSort sort, const char *format, FILE *file)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   // TODO
+  (void) sort;
+  (void) format;
+  (void) file;
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -1899,7 +1845,10 @@ void
 bitwuzla_term_dump(BitwuzlaTerm term, const char *format, FILE *file)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
-  // TODO:
+  // TODO
+  (void) term;
+  (void) format;
+  (void) file;
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -1921,6 +1870,9 @@ bitwuzla_term_print_value_smt2(BitwuzlaTerm term, char *symbol, FILE *file)
   // BZLA_ABORT(bzla->quantifiers->count,
   //            "'get-value' is currently not supported with quantifiers");
   // bzla_print_value_smt2(bzla, bzla_term, symbol, file);
+  (void) term;
+  (void) symbol;
+  (void) file;
 }
 
 BitwuzlaOption
@@ -1951,6 +1903,8 @@ bitwuzla_set_bzla_id(BitwuzlaTerm term, int32_t id)
       "expected bit-vector/array variable or UF");
   bzla_node_set_bzla_id(bzla, bzla_term, id);
 #endif
+  (void) term;
+  (void) id;
 }
 
 /* btor2 parser only -------------------------------------------------------- */
@@ -1970,5 +1924,7 @@ bitwuzla_add_output(Bitwuzla *bitwuzla, BitwuzlaTerm term)
 
   BZLA_PUSH_STACK(bzla->outputs, bzla_node_copy(bzla, bzla_term));
 #endif
+  (void) bitwuzla;
+  (void) term;
 }
 }

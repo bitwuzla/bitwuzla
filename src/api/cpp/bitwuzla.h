@@ -12,6 +12,8 @@
 #include "api/enums.h"
 #include "api/option.h"
 
+// TODO mark functions that may change in the future as experimental for release
+
 /* -------------------------------------------------------------------------- */
 
 namespace bzla {
@@ -63,7 +65,9 @@ class Options
   friend OptionInfo;
 
  public:
+  /** Constructor. */
   Options();
+  /** Destructor. */
   ~Options();
   /**
    * Determine if given option is a numeric option.
@@ -158,7 +162,7 @@ class Options
 
  private:
   /** The wrapped internal options. */
-  std::unique_ptr<bzla::option::Options> d_options;
+  std::shared_ptr<bzla::option::Options> d_options;
 };
 
 /**
@@ -1150,59 +1154,14 @@ class Bitwuzla
 /* -------------------------------------------------------------------------- */
 
 /**
- * Parse input file.
+ * Parse input file in SMT2 format.
  *
- * The format of the input file is auto detected.
- * Requires that no terms have been created yet.
- *
- * @param infile      The input file stream.
+ * @param options The configuration options for the Bitwuzla instance
+ *                (created by the parser).
  * @param infile_name The name of the input file.
- * @param error_msg   Output parameter, stores an error message in case a
- *                    parse error occurred.
- * @param status      Output parameter, stores the status of the input in
- *                    case of SMT-LIB v2 input, if given.
- * @param is_smt2     Output parameter, stores true if parsed input file
- *                    has been detected as SMT-LIB v2 input, else false.
- *
- * @return A pair of the Bitwuzla instance created by the parser and a result;
- *         `Result::SAT` if the input formula was simplified to true,
- *         `Result::UNSAT` if it was simplified to false, and
- *         `Result::UNKNOWN` otherwise.
+ * @return The error message in case of an error, empty if no error.
  */
-std::pair<Bitwuzla, Result> parse(std::ifstream &infile,
-                                  const std::string &infile_name,
-                                  std::string &error_msg,
-                                  Result &status,
-                                  bool &is_smt2);
-/**
- * Parse input file, assumed to be given in the specified format.
- *
- * Requires that no terms have been created yet.
- *
- * @param format      The input format, also used for printing the model.
- *                    Either `"btor"` for the BTOR format, `"btor2"` for
- *                    the BTOR2 format, or `"smt2"` for the SMT-LIB v2
- *                    format.
- * @param infile      The input file stream.
- * @param infile_name The name of the input file.
- * @param error_msg   Output parameter, stores an error message in case a
- *                    parse error occurred.
- * @param status      Output parameter, stores the status of the input in
- *                    case of SMT-LIB v2 input, if given.
- *
- * @return A pair of the Bitwuzla instance created by the parser and a result;
- *         `Result::SAT` if the input formula was simplified to true,
- *         `Result::UNSAT` if it was simplified to false, and
- *         `Result::UNKNOWN` otherwise.
- *
- * @see
- *   * `parse`
- */
-std::pair<Bitwuzla, Result> parse(const std::string &format,
-                                  std::ifstream &infile,
-                                  const std::string &infile_name,
-                                  std::string &error_msg,
-                                  Result &status);
+std::string parse(Options &options, const std::string &infile_name);
 
 /* -------------------------------------------------------------------------- */
 /* Sort creation                                                              */

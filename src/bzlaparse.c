@@ -34,23 +34,20 @@ has_compressed_suffix(const char *str, const char *suffix)
 
 /* return BITWUZLA_(SAT|UNSAT|UNKNOWN|PARSE_ERROR) */
 static int32_t
-parse_aux(FILE *infile,
+parse_aux(BitwuzlaOptions *options,
+          FILE *infile,
           BzlaIntStack *prefix,
           const char *infile_name,
           FILE *outfile,
           const BzlaParserAPI *parser_api,
-          char **error_msg,
-          Bitwuzla **bitwuzla,
-          BitwuzlaResult *status,
-          char *msg)
+          char **error_msg)
 {
-  assert(bitwuzla);
+  assert(options);
   assert(infile);
   assert(infile_name);
   assert(outfile);
   assert(parser_api);
   assert(error_msg);
-  assert(status);
 
   BzlaParser *parser;
   BzlaParseResult parse_res;
@@ -62,10 +59,10 @@ parse_aux(FILE *infile,
   *error_msg = 0;
 
   // BZLA_MSG(bmsg, 1, "%s", msg);
-  parser = parser_api->init(bitwuzla);
+  parser = parser_api->init(options);
 
   *error_msg = parser_api->parse(
-      parser, prefix, infile, infile_name, outfile, bitwuzla, &parse_res);
+      parser, prefix, infile, infile_name, outfile, &parse_res);
 
   if (*error_msg)
   {
@@ -91,8 +88,6 @@ parse_aux(FILE *infile,
     // }
   }
 
-  if (status) *status = parse_res.status;
-
   /* cleanup */
   parser_api->reset(parser);
 
@@ -100,35 +95,30 @@ parse_aux(FILE *infile,
 }
 
 int32_t
-bzla_parse(FILE *infile,
+bzla_parse(BitwuzlaOptions *options,
+           FILE *infile,
            const char *infile_name,
            FILE *outfile,
-           char **error_msg,
-           Bitwuzla **bitwuzla,
-           BitwuzlaResult *status,
-           bool *parsed_smt2)
+           char **error_msg)
 {
-  assert(bitwuzla);
+  assert(options);
   assert(infile);
   assert(infile_name);
   assert(outfile);
   assert(error_msg);
-  assert(status);
-  assert(parsed_smt2);
 
   const BzlaParserAPI *parser_api;
-  int32_t idx, first, second, res, ch;
+  // int32_t idx = 0, first, second, ch;
+  int32_t res;
   uint32_t len;
   char *msg;
   BzlaIntStack prefix;
 
   BzlaMemMgr *mem = bzla_mem_mgr_new();
 
-  idx = 0;
   len = 40 + strlen(infile_name);
   BZLA_NEWN(mem, msg, len);
   BZLA_INIT_STACK(mem, prefix);
-  *parsed_smt2 = false;
 
   if (has_compressed_suffix(infile_name, ".btor"))
   {
@@ -144,7 +134,6 @@ bzla_parse(FILE *infile,
   {
     parser_api = bzla_parsesmt2_parser_api();
     sprintf(msg, "parsing '%s'", infile_name);
-    *parsed_smt2 = true;
   }
   else
   {
@@ -225,15 +214,8 @@ bzla_parse(FILE *infile,
     // }
   }
 
-  res = parse_aux(infile,
-                  &prefix,
-                  infile_name,
-                  outfile,
-                  parser_api,
-                  error_msg,
-                  bitwuzla,
-                  status,
-                  msg);
+  res = parse_aux(
+      options, infile, &prefix, infile_name, outfile, parser_api, error_msg);
 
   /* cleanup */
   BZLA_RELEASE_STACK(prefix);
@@ -244,85 +226,58 @@ bzla_parse(FILE *infile,
 }
 
 int32_t
-bzla_parse_btor(FILE *infile,
+bzla_parse_btor(BitwuzlaOptions *options,
+                FILE *infile,
                 const char *infile_name,
                 FILE *outfile,
-                char **error_msg,
-                Bitwuzla **bitwuzla,
-                BitwuzlaResult *status)
+                char **error_msg)
 {
-  assert(bitwuzla);
+  assert(options);
   assert(infile);
   assert(infile_name);
   assert(outfile);
   assert(error_msg);
-  assert(status);
 
   const BzlaParserAPI *parser_api;
   parser_api = bzla_parsebtor_parser_api();
-  return parse_aux(infile,
-                   0,
-                   infile_name,
-                   outfile,
-                   parser_api,
-                   error_msg,
-                   bitwuzla,
-                   status,
-                   0);
+  return parse_aux(
+      options, infile, 0, infile_name, outfile, parser_api, error_msg);
 }
 
 int32_t
-bzla_parse_btor2(FILE *infile,
+bzla_parse_btor2(BitwuzlaOptions *options,
+                 FILE *infile,
                  const char *infile_name,
                  FILE *outfile,
-                 char **error_msg,
-                 Bitwuzla **bitwuzla,
-                 BitwuzlaResult *status)
+                 char **error_msg)
 {
-  assert(bitwuzla);
+  assert(options);
   assert(infile);
   assert(infile_name);
   assert(outfile);
   assert(error_msg);
-  assert(status);
 
-  const BzlaParserAPI *parser_api;
+  const BzlaParserAPI *parser_api = 0;
   // parser_api = bzla_parsebtor2_parser_api();
-  return parse_aux(infile,
-                   0,
-                   infile_name,
-                   outfile,
-                   parser_api,
-                   error_msg,
-                   bitwuzla,
-                   status,
-                   0);
+  return parse_aux(
+      options, infile, 0, infile_name, outfile, parser_api, error_msg);
 }
 
 int32_t
-bzla_parse_smt2(FILE *infile,
+bzla_parse_smt2(BitwuzlaOptions *options,
+                FILE *infile,
                 const char *infile_name,
                 FILE *outfile,
-                char **error_msg,
-                Bitwuzla **bitwuzla,
-                BitwuzlaResult *status)
+                char **error_msg)
 {
-  assert(bitwuzla);
+  assert(options);
   assert(infile);
   assert(infile_name);
   assert(outfile);
   assert(error_msg);
-  assert(status);
 
   const BzlaParserAPI *parser_api;
   parser_api = bzla_parsesmt2_parser_api();
-  return parse_aux(infile,
-                   0,
-                   infile_name,
-                   outfile,
-                   parser_api,
-                   error_msg,
-                   bitwuzla,
-                   status,
-                   0);
+  return parse_aux(
+      options, infile, 0, infile_name, outfile, parser_api, error_msg);
 }

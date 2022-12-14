@@ -1169,13 +1169,13 @@ insert_real_symbols_smt2(BzlaSMT2Parser *parser)
 }
 
 static BzlaSMT2Parser *
-new_smt2_parser()
+new_smt2_parser(BitwuzlaOptions *options)
 {
   BzlaSMT2Parser *res;
   BzlaMemMgr *mem = bzla_mem_mgr_new();
   BZLA_CNEW(mem, res);
   res->done          = false;
-  res->options       = bitwuzla_options_new();
+  res->options       = options;
   res->mem           = mem;
   res->scope_level   = 0;
   res->print_success = false;
@@ -6051,7 +6051,6 @@ parse_smt2_parser(BzlaSMT2Parser *parser,
                   FILE *infile,
                   const char *infile_name,
                   FILE *outfile,
-                  Bitwuzla **bitwuzla,
                   BzlaParseResult *res)
 {
   double start = bzla_util_time_stamp(), delta;
@@ -6115,7 +6114,6 @@ parse_smt2_parser(BzlaSMT2Parser *parser,
   //          "parsed %d commands in %.2f seconds",
   //          parser->commands.all,
   //          delta);
-  *bitwuzla = parser->bitwuzla;
   return 0;
 }
 

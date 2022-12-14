@@ -2803,17 +2803,13 @@ TEST_F(TestApi, arrayfun)
 
 TEST_F(TestApi, parse)
 {
-  GTEST_SKIP();  // TODO enable when implemented
   std::string infile_name = "fp_regr1.smt2";
   std::stringstream ss;
   ss << BZLA_REGRESS_DIR << infile_name;
-  FILE *infile = fopen(ss.str().c_str(), "r");
-  std::string error_msg;
-  bitwuzla::Result status;
-  bool is_smt2;
+  bitwuzla::Options options;
 
-  std::ifstream istream;  // TODO refactor
-  ASSERT_THROW(bitwuzla::parse(istream, "", error_msg, status, is_smt2),
+  ASSERT_THROW(bitwuzla::parse(options, ""), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::parse(options, infile_name),
                bitwuzla::BitwuzlaException);
 
   // TODO should this throw? (parsing after having created expressions)
@@ -2822,35 +2818,8 @@ TEST_F(TestApi, parse)
   //        ifile, infile_name, std::cout, error_msg, status, is_smt2),
   //    bitwuzla::BitwuzlaException);
 
-  auto [bitwuzla, result] =
-      bitwuzla::parse(istream, infile_name, error_msg, status, is_smt2);
-  ASSERT_TRUE(is_smt2);
-}
-
-TEST_F(TestApi, parse_format)
-{
-  GTEST_SKIP();  // TODO enable when implemented
-  std::string infile_name = "fp_regr1.smt2";
-  std::stringstream ss;
-  ss << BZLA_REGRESS_DIR << infile_name;
-  FILE *infile = fopen(ss.str().c_str(), "r");
-  std::string error_msg;
-  bitwuzla::Result status;
-
-  std::ifstream istream;  // TODO refactor
-  ASSERT_THROW(bitwuzla::parse("", istream, infile_name, error_msg, status),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::parse("smt2", istream, "", error_msg, status),
-               bitwuzla::BitwuzlaException);
-
-  // TODO should this throw? (parsing after having created expressions)
-  // ASSERT_THROW(
-  //    bitwuzla::parse(
-  //        "smt2", ifile, infile_name, std::cout, error_msg, status),
-  //    bitwuzla::BitwuzlaException);
-
-  auto [bitwuzla, result] =
-      bitwuzla::parse("smt2", istream, infile_name, error_msg, status);
+  std::string err = bitwuzla::parse(options, ss.str().c_str());
+  ASSERT_TRUE(err.empty());
 }
 
 /* -------------------------------------------------------------------------- */

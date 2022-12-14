@@ -1,8 +1,6 @@
 #include <iostream>
 
-extern "C" {
-#include "api/c/bitwuzla.h"
-}
+#include "api/cpp/bitwuzla.h"
 
 int32_t
 main(int32_t argc, char* argv[])
@@ -14,26 +12,12 @@ main(int32_t argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  const char* filename = argv[1];
-  FILE* smt2_input     = fopen(filename, "r");
-
-  char* err_msg;
-  BitwuzlaResult parsed_status;
-
-  Bitwuzla* bitwuzla;
-  bitwuzla_parse_format("smt2",
-                        smt2_input,
-                        filename,
-                        stdout,
-                        &err_msg,
-                        &bitwuzla,
-                        &parsed_status);
-
-  if (err_msg)
+  bitwuzla::Options options;
+  std::string err_msg = bitwuzla::parse(options, argv[1]);
+  if (err_msg.empty())
   {
-    std::cerr << "[error]" << err_msg << std::endl;
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
   }
-
-  return EXIT_SUCCESS;
+  std::cerr << "[error] " << err_msg << std::endl;
+  return EXIT_FAILURE;
 }

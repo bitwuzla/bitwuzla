@@ -23,7 +23,7 @@ typedef struct BzlaParser BzlaParser;
 typedef struct BzlaParseResult BzlaParseResult;
 typedef struct BzlaParserAPI BzlaParserAPI;
 
-typedef BzlaParser *(*BzlaInitParser)();
+typedef BzlaParser *(*BzlaInitParser)(BitwuzlaOptions *);
 
 typedef void (*BzlaResetParser)(void *);
 
@@ -32,7 +32,6 @@ typedef char *(*BzlaParse)(BzlaParser *,
                            FILE *,
                            const char *,
                            FILE *,
-                           Bitwuzla **bitwuzla,
                            BzlaParseResult *);
 
 struct BzlaParseResult
@@ -49,34 +48,29 @@ struct BzlaParserAPI
   BzlaParse parse;
 };
 
-int32_t bzla_parse(FILE *infile,
+int32_t bzla_parse(BitwuzlaOptions *options,
+                   FILE *infile,
                    const char *infile_name,
                    FILE *outfile,
-                   char **error_msg,
-                   Bitwuzla **bitwuzla,
-                   BitwuzlaResult *status,
-                   bool *parsed_smt2);
+                   char **error_msg);
 
-int32_t bzla_parse_btor(FILE *infile,
+int32_t bzla_parse_btor(BitwuzlaOptions *options,
+                        FILE *infile,
                         const char *infile_name,
                         FILE *outfile,
-                        char **error_msg,
-                        Bitwuzla **bitwuzla,
-                        BitwuzlaResult *status);
+                        char **error_msg);
 
-int32_t bzla_parse_btor2(FILE *infile,
+int32_t bzla_parse_btor2(BitwuzlaOptions *options,
+                         FILE *infile,
                          const char *infile_name,
                          FILE *outfile,
-                         char **error_msg,
-                         Bitwuzla **bitwuzla,
-                         BitwuzlaResult *status);
+                         char **error_msg);
 
-int32_t bzla_parse_smt2(FILE *infile,
+int32_t bzla_parse_smt2(BitwuzlaOptions *options,
+                        FILE *infile,
                         const char *infile_name,
                         FILE *outfile,
-                        char **error_msg,
-                        Bitwuzla **bitwuzla,
-                        BitwuzlaResult *status);
+                        char **error_msg);
 
 BzlaMsg *bitwuzla_get_bzla_msg(Bitwuzla *bitwuzla);
 #endif
