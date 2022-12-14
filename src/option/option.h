@@ -370,8 +370,8 @@ class Options
  private:
   /** The registered options. */
   std::unordered_map<Option, OptionBase*> d_options;
-  /** Map long option name to option. */
-  std::unordered_map<std::string, Option> d_lng2option;
+  /** Map short and long option name to option. */
+  std::unordered_map<std::string, Option> d_name2option;
 
  public:
   static constexpr uint8_t VERBOSITY_MAX     = 4;
@@ -414,8 +414,8 @@ class Options
   /** @return True if the given option is an option with modes. */
   bool is_mode(Option opt) const;
 
-  /** @return True if given string is a valid long name of an option. */
-  bool is_valid(const std::string& lng) const;
+  /** @return True if given string is a valid short or long option name. */
+  bool is_valid(const std::string& name) const;
 
   /**
    * @return True if the given value is a valid mode for an option with modes.
@@ -436,8 +436,8 @@ class Options
   std::vector<std::string> modes(Option opt) const;
 
   /** @return Option associated with the given long option name. */
-  Option option(const std::string& lng) const;
-  Option option(const char* lng) const;
+  Option option(const std::string& name) const;
+  Option option(const char* name) const;
 
   /**
    * Set current value of option.

@@ -66,7 +66,7 @@ OptionModeT<T>::is_valid(const std::string& value) const
 
 Options::Options()
     : d_options(),
-      d_lng2option(),
+      d_name2option(),
       // general
       incremental(this,
                   Option::INCREMENTAL,
@@ -101,7 +101,7 @@ Options::Options()
                 0,
                 VERBOSITY_MAX,
                 "verbosity level",
-                "verbosity",
+                "verbose",
                 "v"),
       // Bitwuzla-specific
       bv_solver(this,
@@ -179,7 +179,7 @@ Options::Options()
                       Option::PROP_CONST_BITS,
                       true,
                       "use constant bits propagation",
-                      "prop-ineq-bounds"),
+                      "prop-const-bits"),
       prop_ineq_bounds(this,
                        Option::PROP_INEQ_BOUNDS,
                        true,
@@ -225,9 +225,9 @@ Options::is_mode(Option opt) const
 }
 
 bool
-Options::is_valid(const std::string& lng) const
+Options::is_valid(const std::string& name) const
 {
-  return d_lng2option.find(lng) != d_lng2option.end();
+  return d_name2option.find(name) != d_name2option.end();
 }
 
 bool
@@ -245,17 +245,17 @@ Options::modes(Option opt) const
 }
 
 Option
-Options::option(const std::string& lng) const
+Options::option(const std::string& name) const
 {
-  assert(is_valid(lng));
-  return d_lng2option.at(lng);
+  assert(is_valid(name));
+  return d_name2option.at(name);
 }
 
 Option
-Options::option(const char* lng) const
+Options::option(const char* name) const
 {
-  assert(is_valid(lng));
-  return d_lng2option.at(lng);
+  assert(is_valid(name));
+  return d_name2option.at(name);
 }
 
 const char*
@@ -301,10 +301,10 @@ Options::set(Option opt, const std::string& value)
 }
 
 void
-Options::set(const std::string& lng, const std::string& value)
+Options::set(const std::string& name, const std::string& value)
 {
-  auto it = d_lng2option.find(lng);
-  assert(it != d_lng2option.end());
+  auto it = d_name2option.find(name);
+  assert(it != d_name2option.end());
   if (is_bool(it->second))
   {
     std::string v = value;
@@ -322,7 +322,7 @@ Options::set(const std::string& lng, const std::string& value)
   }
   else if (is_numeric(it->second))
   {
-    set<uint64_t>(it->second, std::stol(value));
+    set<uint64_t>(it->second, std::stoll(value));
   }
   else
   {
@@ -401,7 +401,13 @@ void
 Options::register_option(Option opt, OptionBase* option)
 {
   d_options[opt] = option;
-  d_lng2option.emplace(option->d_long, opt);
+  assert(d_name2option.find(option->d_long) == d_name2option.end());
+  d_name2option.emplace(option->d_long, opt);
+  if (option->d_short)
+  {
+    assert(d_name2option.find(option->d_short) == d_name2option.end());
+    d_name2option.emplace(option->d_short, opt);
+  }
 }
 
 /* -------------------------------------------------------------------------- */

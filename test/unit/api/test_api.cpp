@@ -390,6 +390,29 @@ TEST_F(TestApi, option_info)
   }
 }
 
+TEST_F(TestApi, option_set_args)
+{
+  bitwuzla::Options options;
+  options.set({"-v", "-v"});
+  ASSERT_EQ(options.get(bitwuzla::Option::VERBOSITY), 2);
+  options.set({"-v", "3"});
+  ASSERT_EQ(options.get(bitwuzla::Option::VERBOSITY), 3);
+  options.set({"-v=4"});
+  ASSERT_EQ(options.get(bitwuzla::Option::VERBOSITY), 4);
+  options.set({"-v=4"});
+  ASSERT_EQ(options.get(bitwuzla::Option::VERBOSITY), 4);
+  ASSERT_THROW(options.set({"-v=100"}), bitwuzla::BitwuzlaException);
+  options.set({"--no-incremental"});
+  ASSERT_EQ(options.get(bitwuzla::Option::INCREMENTAL), false);
+  options.set({"--incremental"});
+  ASSERT_EQ(options.get(bitwuzla::Option::INCREMENTAL), true);
+  options.set({"-S=cadical"});
+  ASSERT_EQ(options.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
+  options.set({"-S", "lingeling"});
+  ASSERT_EQ(options.get_mode(bitwuzla::Option::SAT_SOLVER), "lingeling");
+  ASSERT_THROW(options.set({"--no-verbose"}), bitwuzla::BitwuzlaException);
+}
+
 TEST_F(TestApi, mk_array_sort)
 {
   ASSERT_THROW(bitwuzla::mk_array_sort(bitwuzla::Sort(), d_bv_sort8),

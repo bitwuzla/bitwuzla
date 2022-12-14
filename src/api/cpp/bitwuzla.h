@@ -98,8 +98,8 @@ class Options
   /** @return The modes of this option. */
   std::vector<std::string> modes(Option option) const;
 
-  /** @return The option associated to the given long option name. */
-  Option option(const char *lng) const;
+  /** @return The option associated to the given short or long option name. */
+  Option option(const char *name) const;
 
   /**
    * Set Boolean or numeric option.
@@ -138,6 +138,24 @@ class Options
    * @param value The string representation of the value to set.
    */
   void set(const std::string &lng, const std::string &value);
+
+  /**
+   * Set options via command line arguments.
+   *
+   * Supports the following command line option format:
+   *  Short option names:
+   *    -short      ... {"-short"}
+   *    -short=val  ... {"-short=val"}
+   *    -short val  ... {"-short", "val"}
+   *
+   *  Long option names:
+   *    --long      ... {"--long"}
+   *    --long=val  ... {"--long=val"}
+   *    --long val  ... {"--long", "val"}
+   *
+   * @param args List of command line options.
+   */
+  void set(const std::vector<std::string> &args);
 
   /**
    * Get the current value of a Boolean or numeric option.
