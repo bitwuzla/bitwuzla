@@ -218,12 +218,10 @@ BvSolver::value(const Node& term)
         }
         break;
 
-        // TODO: maybe eliminate
         case Kind::BV_COMP: {
           bool equal = get_cached_value(cur[0]).value<BitVector>()
                        == get_cached_value(cur[1]).value<BitVector>();
-          value = nm.mk_value(
-              BitVector::from_ui(cur[0].type().bv_size(), equal ? 1 : 0));
+          value = nm.mk_value(BitVector::from_ui(1, equal ? 1 : 0));
         }
         break;
 
@@ -356,6 +354,11 @@ BvSolver::value(const Node& term)
         case Kind::STORE:
         case Kind::CONST_ARRAY: assert(false); break;
       }
+      assert(cur.type().is_bool() || cur.type().is_bv());
+      assert(!cur.type().is_bv()
+             || cur.type().bv_size() == value.type().bv_size());
+      assert(!cur.type().is_bool() || value.type().is_bool());
+
       cache_value(cur, value);
     }
     visit.pop_back();

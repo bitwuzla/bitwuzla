@@ -27,6 +27,14 @@ create_component_symbol(const Node& node, const std::string& s)
   assert(!s.empty());
   return "_fp_var_" + std::to_string(node.id()) + s + "_component_";
 }
+Node
+bv_to_bool(const Node& node)
+{
+  assert(node.type().is_bv() && node.type().bv_size() == 1);
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(node::Kind::EQUAL,
+                    {node, nm.mk_value(BitVector::mk_true())});
+}
 }  // namespace
 
 struct WordBlaster::Internal
@@ -187,7 +195,7 @@ WordBlaster::_word_blast(const Node& node)
       {
         SymFpuSymRM rmvar(cur);
         d_internal->d_rm_map.emplace(cur, rmvar);
-        d_solver_state.lemma(rmvar.valid().getNode());
+        d_solver_state.lemma(bv_to_bool(rmvar.valid().getNode()));
       }
       else if (type.is_fp() && cur.is_value())
       {
@@ -197,13 +205,13 @@ WordBlaster::_word_blast(const Node& node)
       else if (type.is_fp() && (cur.is_const() || kind == node::Kind::APPLY))
       {
         Node inf =
-            nm.mk_const(nm.mk_bool_type(), create_component_symbol(cur, "inf"));
+            nm.mk_const(nm.mk_bv_type(1), create_component_symbol(cur, "inf"));
         Node nan =
-            nm.mk_const(nm.mk_bool_type(), create_component_symbol(cur, "nan"));
-        Node sign = nm.mk_const(nm.mk_bool_type(),
-                                create_component_symbol(cur, "sign"));
-        Node zero = nm.mk_const(nm.mk_bool_type(),
-                                create_component_symbol(cur, "zero"));
+            nm.mk_const(nm.mk_bv_type(1), create_component_symbol(cur, "nan"));
+        Node sign =
+            nm.mk_const(nm.mk_bv_type(1), create_component_symbol(cur, "sign"));
+        Node zero =
+            nm.mk_const(nm.mk_bv_type(1), create_component_symbol(cur, "zero"));
         Node exp =
             nm.mk_const(nm.mk_bv_type(SymUnpackedFloat::exponentWidth(type)),
                         create_component_symbol(cur, "exp"));
@@ -213,7 +221,7 @@ WordBlaster::_word_blast(const Node& node)
 
         SymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
         d_internal->d_unpacked_float_map.emplace(cur, uf);
-        d_solver_state.lemma(uf.valid(type).getNode());
+        d_solver_state.lemma(bv_to_bool(uf.valid(type).getNode()));
       }
       else if (kind == node::Kind::EQUAL && node[0].type().is_fp())
       {
