@@ -266,7 +266,19 @@ main(int32_t argc, char* argv[])
     }
   }
 
-  options.set(args);
+  try
+  {
+    options.set(args);
+  }
+  catch (const bitwuzla::Exception& e)
+  {
+    // Remove the "invalid call to '...', prefix
+    const std::string& msg = e.msg();
+    size_t pos = msg.find("', ");
+    std::cerr << "[error] " << msg.substr(pos + 3) << std::endl;
+    return EXIT_FAILURE;
+  }
+
   std::string err_msg = bitwuzla::parse(options, filename);
   if (err_msg.empty())
   {

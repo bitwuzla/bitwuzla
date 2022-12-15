@@ -871,17 +871,17 @@ Options::set(const std::vector<std::string> &args)
           val          = std::stoull(value);
           uint64_t max = d_options->max<uint64_t>(option);
           BITWUZLA_CHECK(val <= max)
-              << "invalid value '" << value << "'for numeric option '" << opt
+              << "invalid value '" << value << "' for numeric option '" << opt
               << "', maximum is " << max;
           uint64_t min = d_options->min<uint64_t>(option);
           BITWUZLA_CHECK(val >= min)
-              << "invalid value '" << value << "'for numeric option '" << opt
+              << "invalid value '" << value << "' for numeric option '" << opt
               << "', minimum is " << max;
         }
         catch (const std::invalid_argument &e)
         {
           BITWUZLA_CHECK(false) << "invalid value '" << value
-                                << "'for numeric option '" << opt << "'";
+                                << "' for numeric option '" << opt << "'";
         }
       }
       set(s_options.at(option), val);
