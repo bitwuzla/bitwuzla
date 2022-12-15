@@ -18,6 +18,8 @@ class TypeManager
   friend TypeData;
 
  public:
+  ~TypeManager();
+
   /**
    * @return Boolean type.
    */

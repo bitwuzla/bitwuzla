@@ -23,6 +23,12 @@ NodeManager::get()
 NodeManager::~NodeManager()
 {
   // Cleanup remaining nodes without triggering garbage_collect().
+  //
+  // Note: Automatic reference counting of Node should actually prevent node
+  //       leaks. However, nodes that are stored in static memory and are
+  //       destructed after the NodeManager do not get garbage collected before
+  //       destructing the NodeManager. Hence, we have to make sure to
+  //       invalidate all nodes before destructing the node manager.
   for (std::unique_ptr<NodeData>& data : d_node_data)
   {
     if (data == nullptr) continue;

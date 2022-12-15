@@ -8,6 +8,32 @@
 namespace bzla::type {
 
 /* --- TypeManager public -------------------------------------------------- */
+
+TypeManager::~TypeManager()
+{
+  // Cleanup remaining types without triggering garbage_collect().
+  //
+  // Note: Automatic reference counting of Type should actually prevent type
+  //       leaks. However, types that are stored in static memory and are
+  //       destructed after the TypeManager do not get garbage collected before
+  //       destructing the NodeManager (the owner of TypeManager). Hence, we
+  //       have to make sure to invalidate all types before destructing the
+  //       type manager.
+  for (std::unique_ptr<TypeData>& data : d_node_data)
+  {
+    if (data == nullptr) continue;
+    if (data->d_kind == TypeData::Kind::ARRAY
+        || data->d_kind == TypeData::Kind::FUN)
+    {
+      auto& types = std::get<std::vector<Type>>(data->d_data);
+      for (auto& type : types)
+      {
+        type.d_data = nullptr;
+      }
+    }
+  }
+}
+
 Type
 TypeManager::mk_bool_type()
 {
