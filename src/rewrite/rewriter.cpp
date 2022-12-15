@@ -245,8 +245,7 @@ Rewriter::_rewrite(const Node& node)
 
     // No rewrites for FP_TO_(U|S)BV conversion yet
     case node::Kind::FP_TO_SBV:
-    case node::Kind::FP_TO_UBV:
-      break;
+    case node::Kind::FP_TO_UBV: res = node; break;
 
     // There are no rewrites for constant arrays.
     case node::Kind::CONST_ARRAY: res = node; break;
@@ -263,6 +262,7 @@ Rewriter::_rewrite(const Node& node)
 
     default: assert(false);
   }
+  assert(!res.is_null());
   assert(res.type() == node.type());
 
   // Get iterator again in case a recursive call changed the size of d_cache
