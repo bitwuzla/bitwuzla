@@ -1,7 +1,5 @@
 #include "rewrite/rewrites_bv.h"
 
-#include <iostream>
-
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
@@ -1051,7 +1049,7 @@ _rw_bv_and_concat(Rewriter& rewriter, const Node& node, size_t idx)
     }
     if (val00.is_ones() && val11.is_ones())
     {
-      return rewriter.mk_node(Kind::BV_CONCAT, {node[idx0][1], node[idx1][0]});
+      return rewriter.mk_node(Kind::BV_CONCAT, {node[idx1][0], node[idx0][1]});
     }
   }
   return node;
