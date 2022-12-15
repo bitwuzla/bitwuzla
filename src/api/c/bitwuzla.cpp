@@ -47,14 +47,14 @@ class AbortStream
 };
 
 #define BITWUZLA_ABORT \
-  bitwuzla::OstreamVoider() & AbortStream("bitwuzla: error: ").stream()
+  bzla::util::OstreamVoider() & AbortStream("bitwuzla: error: ").stream()
 
 #define BITWUZLA_TRY_CATCH_BEGIN \
   try                            \
   {
 #define BITWUZLA_TRY_CATCH_END \
   }                            \
-  catch (bitwuzla::BitwuzlaException & e) { BITWUZLA_ABORT << e.msg(); }
+  catch (bitwuzla::Exception & e) { BITWUZLA_ABORT << e.msg(); }
 
 /* -------------------------------------------------------------------------- */
 

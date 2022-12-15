@@ -583,7 +583,7 @@ operator<<(std::ostream &out, Result result)
   }
   catch (...)
   {
-    throw BitwuzlaException("invalid result");
+    throw Exception("invalid result");
   }
 }
 
@@ -604,7 +604,7 @@ operator<<(std::ostream &out, Kind kind)
   }
   catch (...)
   {
-    throw BitwuzlaException("invalid term kind");
+    throw Exception("invalid term kind");
   }
 }
 
@@ -618,8 +618,26 @@ operator<<(std::ostream &out, RoundingMode rm)
   }
   catch (...)
   {
-    throw BitwuzlaException("invalid rounding mode");
+    throw Exception("invalid rounding mode");
   }
+}
+
+/* Exception public --------------------------------------------------------- */
+
+Exception::Exception(const std::string &msg) : d_msg(msg) {}
+
+Exception::Exception(const std::stringstream &stream) : d_msg(stream.str()) {}
+
+const std::string &
+Exception::msg() const
+{
+  return d_msg;
+}
+
+const char *
+Exception::what() const noexcept
+{
+  return d_msg.c_str();
 }
 
 /* Options public ----------------------------------------------------------- */
@@ -939,7 +957,7 @@ OptionInfo::OptionInfo(const Options &options, Option option) : opt(option)
   }
   catch (std::out_of_range &e)
   {
-    throw BitwuzlaException("invalid option");
+    throw Exception("invalid option");
   }
 }
 
@@ -2374,7 +2392,7 @@ to_string(bitwuzla::RoundingMode rm)
   }
   catch (...)
   {
-    throw bitwuzla::BitwuzlaException("invalid rounding mode");
+    throw bitwuzla::Exception("invalid rounding mode");
   }
 }
 
@@ -2396,7 +2414,7 @@ to_string(bitwuzla::Kind kind)
   }
   catch (...)
   {
-    throw bitwuzla::BitwuzlaException("invalid term kind");
+    throw bitwuzla::Exception("invalid term kind");
   }
 }
 
@@ -2411,7 +2429,7 @@ to_string(bitwuzla::Result result)
   }
   catch (...)
   {
-    throw bitwuzla::BitwuzlaException("invalid result");
+    throw bitwuzla::Exception("invalid result");
   }
 }
 

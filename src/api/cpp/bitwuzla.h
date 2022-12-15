@@ -51,6 +51,36 @@ std::string version();
 std::string git_id();
 
 /* -------------------------------------------------------------------------- */
+/* Exception                                                                  */
+/* -------------------------------------------------------------------------- */
+
+class Exception : public std::exception
+{
+ public:
+  /**
+   * Constructor.
+   * @param msg The exception message.
+   */
+  Exception(const std::string &msg);
+  /**
+   * Constructor.
+   * @param stream The exception message given as a std::stringstream.
+   */
+  Exception(const std::stringstream &stream);
+  /**
+   * Get the exception message.
+   * @return The exception message.
+   */
+  const std::string &msg() const;
+
+  const char *what() const noexcept override;
+
+ protected:
+  /** The exception message. */
+  std::string d_msg;
+};
+
+/* -------------------------------------------------------------------------- */
 /* Options                                                                    */
 /* -------------------------------------------------------------------------- */
 

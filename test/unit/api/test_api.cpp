@@ -1,4 +1,3 @@
-#include "api/checks.h"
 #include "api/cpp/bitwuzla.h"
 #include "test/unit/test.h"
 
@@ -282,15 +281,14 @@ TEST_F(TestApi, set_option)
     ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), false);
     opts.set("incremental", "1");
     ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
-    ASSERT_THROW(opts.set("incremental", "asdf"), bitwuzla::BitwuzlaException);
-    ASSERT_THROW(opts.set("incremental", "2"), bitwuzla::BitwuzlaException);
-    ASSERT_THROW(opts.set("incrremental", "true"), bitwuzla::BitwuzlaException);
-    ASSERT_THROW(opts.set(bitwuzla::Option::VERBOSITY, 5),
-                 bitwuzla::BitwuzlaException);
-    ASSERT_THROW(opts.set("VERBOSITY", "5"), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(opts.set("incremental", "asdf"), bitwuzla::Exception);
+    ASSERT_THROW(opts.set("incremental", "2"), bitwuzla::Exception);
+    ASSERT_THROW(opts.set("incrremental", "true"), bitwuzla::Exception);
+    ASSERT_THROW(opts.set(bitwuzla::Option::VERBOSITY, 5), bitwuzla::Exception);
+    ASSERT_THROW(opts.set("VERBOSITY", "5"), bitwuzla::Exception);
     //  ASSERT_THROW(
     //      opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true),
-    //      BitwuzlaException);
+    //      Exception);
   }
   //{
   //  bitwuzla::Options opts;
@@ -298,35 +296,35 @@ TEST_F(TestApi, set_option)
   //  ASSERT_THROW(opts.set(bitwuzla::Option::FUN_JUST, true),
   //               "enabling multiple optimization techniques is not allowed");
   //  ASSERT_THROW(opts.set(bitwuzla::Option::PP_NONDESTR_SUBST, true),
-  //  BitwuzlaException);
+  //  Exception);
   //}
   //{
   //  bitwuzla::Options opts;
   //  opts.set(bitwuzla::Option::FUN_JUST, true);
   //  ASSERT_THROW(opts.set(bitwuzla::Option::FUN_DUAL_PROP, true),
-  //  BitwuzlaException);
+  //  Exception);
   //}
   {
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::PRODUCE_MODELS, true);
     // ASSERT_THROW(
     //     opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true),
-    //     BitwuzlaException);
+    //     Exception);
   }
   //{
   //  bitwuzla::Options opts;
   //  opts.set(bitwuzla::Option::PP_NONDESTR_SUBST, true);
   //  ASSERT_THROW(
   //      opts.set(bitwuzla::Option::FUN_DUAL_PROP, true),
-  //    BitwuzlaException);
+  //    Exception);
   //}
   //{
   //  bitwuzla::Options opts;
   //  opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true);
   //  ASSERT_THROW(opts.set(bitwuzla::Option::INCREMENTAL, true),
-  //  BitwuzlaException);
+  //  Exception);
   //  ASSERT_THROW(opts.set(bitwuzla::Option::PRODUCE_MODELS, true),
-  //  BitwuzlaException);
+  //  Exception);
   //}
   {
     bitwuzla::Options opts;
@@ -339,7 +337,7 @@ TEST_F(TestApi, set_option)
     ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 2);
     opts.set("verbosity", "3");
     ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 3);
-    ASSERT_THROW(opts.set("verbositi", "3"), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(opts.set("verbositi", "3"), bitwuzla::Exception);
 
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::BV_SOLVER), "bitblast");
     opts.set(bitwuzla::Option::BV_SOLVER, "prop");
@@ -350,12 +348,11 @@ TEST_F(TestApi, set_option)
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
     opts.set("sat-solver", "kissat");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "kissat");
-    ASSERT_THROW(opts.set("sat--solver", "kissat"),
-                 bitwuzla::BitwuzlaException);
+    ASSERT_THROW(opts.set("sat--solver", "kissat"), bitwuzla::Exception);
     ASSERT_THROW(opts.set(bitwuzla::Option::BV_SOLVER, "asdf"),
-                 bitwuzla::BitwuzlaException);
+                 bitwuzla::Exception);
     ASSERT_THROW(opts.set(bitwuzla::Option::INCREMENTAL, "true"),
-                 bitwuzla::BitwuzlaException);
+                 bitwuzla::Exception);
   }
 }
 
@@ -401,7 +398,7 @@ TEST_F(TestApi, option_set_args)
   ASSERT_EQ(options.get(bitwuzla::Option::VERBOSITY), 4);
   options.set({"-v=4"});
   ASSERT_EQ(options.get(bitwuzla::Option::VERBOSITY), 4);
-  ASSERT_THROW(options.set({"-v=100"}), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(options.set({"-v=100"}), bitwuzla::Exception);
   options.set({"--no-incremental"});
   ASSERT_EQ(options.get(bitwuzla::Option::INCREMENTAL), false);
   options.set({"--incremental"});
@@ -410,17 +407,17 @@ TEST_F(TestApi, option_set_args)
   ASSERT_EQ(options.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
   options.set({"-S", "lingeling"});
   ASSERT_EQ(options.get_mode(bitwuzla::Option::SAT_SOLVER), "lingeling");
-  ASSERT_THROW(options.set({"--no-verbose"}), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(options.set({"--no-verbose"}), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_array_sort)
 {
   ASSERT_THROW(bitwuzla::mk_array_sort(bitwuzla::Sort(), d_bv_sort8),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_array_sort(d_bv_sort1, bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_array_sort(d_arr_sort_bv, d_bv_sort8),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 
   ASSERT_NO_THROW(bitwuzla::mk_array_sort(d_bv_sort8, d_arr_sort_bv));
   ASSERT_NO_THROW(bitwuzla::mk_array_sort(d_fun_sort, d_bv_sort8));
@@ -429,99 +426,84 @@ TEST_F(TestApi, mk_array_sort)
 
 TEST_F(TestApi, mk_bv_sort)
 {
-  ASSERT_THROW(bitwuzla::mk_bv_sort(0), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_bv_sort(0), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_fp_sort)
 {
-  ASSERT_THROW(bitwuzla::mk_fp_sort(0, 8), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_fp_sort(5, 0), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_fp_sort(1, 2), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_fp_sort(2, 1), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_fp_sort(0, 8), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_fp_sort(5, 0), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_fp_sort(1, 2), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_fp_sort(2, 1), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_fun_sort)
 {
-  ASSERT_THROW(bitwuzla::mk_fun_sort({}, d_bv_sort8),
-               bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_fun_sort({}, d_bv_sort8), bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_fun_sort(d_fun_domain_sorts, bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_bv_zero)
 {
-  ASSERT_THROW(bitwuzla::mk_bv_zero(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_bv_zero(d_fp_sort16), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_bv_zero(bitwuzla::Sort()), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_bv_zero(d_fp_sort16), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_bv_one)
 {
-  ASSERT_THROW(bitwuzla::mk_bv_one(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_bv_one(d_fp_sort16), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_bv_one(bitwuzla::Sort()), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_bv_one(d_fp_sort16), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_bv_ones)
 {
-  ASSERT_THROW(bitwuzla::mk_bv_ones(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_bv_ones(d_fp_sort16), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_bv_ones(bitwuzla::Sort()), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_bv_ones(d_fp_sort16), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_bv_min_signed)
 {
   ASSERT_THROW(bitwuzla::mk_bv_min_signed(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_bv_min_signed(d_fp_sort16),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_bv_min_signed(d_fp_sort16), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_bv_max_signed)
 {
   ASSERT_THROW(bitwuzla::mk_bv_max_signed(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_bv_max_signed(d_fp_sort16),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_bv_max_signed(d_fp_sort16), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_fp_pos_zero)
 {
-  ASSERT_THROW(bitwuzla::mk_fp_pos_zero(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_fp_pos_zero(d_bv_sort8),
-               bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_fp_pos_zero(bitwuzla::Sort()), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_fp_pos_zero(d_bv_sort8), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_fp_neg_zero)
 {
-  ASSERT_THROW(bitwuzla::mk_fp_neg_zero(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_fp_neg_zero(d_bv_sort8),
-               bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_fp_neg_zero(bitwuzla::Sort()), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_fp_neg_zero(d_bv_sort8), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_fp_pos_inf)
 {
-  ASSERT_THROW(bitwuzla::mk_fp_pos_inf(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_fp_pos_inf(d_bv_sort8),
-               bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_fp_pos_inf(bitwuzla::Sort()), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_fp_pos_inf(d_bv_sort8), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_fp_neg_inf)
 {
-  ASSERT_THROW(bitwuzla::mk_fp_neg_inf(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_fp_neg_inf(d_bv_sort8),
-               bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_fp_neg_inf(bitwuzla::Sort()), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_fp_neg_inf(d_bv_sort8), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_fp_nan)
 {
-  ASSERT_THROW(bitwuzla::mk_fp_nan(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_fp_nan(d_bv_sort8), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_fp_nan(bitwuzla::Sort()), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_fp_nan(d_bv_sort8), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_bv_value)
@@ -529,77 +511,75 @@ TEST_F(TestApi, mk_bv_value)
   ASSERT_NO_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "127", 10));
   ASSERT_NO_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "-128", 10));
   ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "256", 10),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "-129", 10),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 
   ASSERT_THROW(bitwuzla::mk_bv_value(bitwuzla::Sort(), "010", 2),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "", 2),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "", 2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "", 2), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "", 2), bitwuzla::Exception);
 
   ASSERT_THROW(bitwuzla::mk_bv_value(d_fp_sort16, "010", 2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 
   ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "11111111010", 2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "1234567890", 10),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "1234567890aAbBcCdDeEfF", 16),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "1234567890", 2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "12z4567890", 10),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_bv_value(d_bv_sort8, "12z4567890", 16),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_bv_value_uint64)
 {
   ASSERT_THROW(bitwuzla::mk_bv_value_uint64(bitwuzla::Sort(), 23),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_bv_value_uint64(d_fp_sort16, 23),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_fp_value)
 {
   ASSERT_THROW(bitwuzla::mk_fp_value(bitwuzla::Term(), d_bv_zero8, d_bv_zero8),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_one1, bitwuzla::Term(), d_bv_zero8),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_one1, d_bv_zero8, bitwuzla::Term()),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_zero8, d_bv_zero8, d_bv_zero8),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_fp_const16, d_bv_zero8, d_bv_zero8),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_one1, d_fp_const16, d_bv_zero8),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_one1, d_bv_zero8, d_fp_const16),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 
   ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_const1, d_bv_zero8, d_bv_zero8),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_one1, d_bv_const8, d_bv_zero8),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_fp_value(d_bv_one1, d_bv_zero8, d_bv_const8),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_term_check_null)
 {
   bitwuzla::Term null;
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NOT, {null}),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_AND, {d_bv_zero8, null}),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_ADD,
                                  {d_rm_const, null, d_fp_const16}),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_term_check_cnt)
@@ -627,211 +607,211 @@ TEST_F(TestApi, mk_term_check_cnt)
 
   // bool
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::AND, bool_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::IFF, bool_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::IMPLIES, bool_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::NOT, bool_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::OR, bool_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::XOR, bool_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 
   // bit-vectors
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::APPLY, apply_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::APPLY, apply_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::ARRAY_SELECT, array_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::ARRAY_STORE, array_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_AND, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ASHR, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_CONCAT, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_DEC, bv_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_INC, bv_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NAND, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NEG, bv_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NOR, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NOT, bv_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_OR, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_REDAND, bv_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_REDOR, bv_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_REDXOR, bv_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_OR, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ROL, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ROR, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SADD_OVERFLOW, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SDIV_OVERFLOW, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SDIV, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SGE, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SGT, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SHL, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SHR, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SLE, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SLT, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SMOD, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SMUL_OVERFLOW, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SREM, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SSUB_OVERFLOW, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SUB, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UADD_OVERFLOW, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UDIV, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UGE, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UGT, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ULE, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ULT, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UMUL_OVERFLOW, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UREM, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_USUB_OVERFLOW, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_XNOR, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_XOR, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 
   // floating-point
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_ABS, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_ADD, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_DIV, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_EQUAL, fp_args1_rm),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_FMA, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_FP, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_GEQ, fp_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_GT, fp_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_INF, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_NAN, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_NEG, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_NORMAL, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_POS, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_SUBNORMAL, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_ZERO, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_LEQ, fp_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_LT, fp_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_MAX, fp_args3_rm),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_MIN, fp_args3_rm),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_ZERO, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_MUL, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_REM, fp_args3_rm),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_RTI, fp_args3_rm),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_SQRT, fp_args3_rm),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_SUB, fp_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 
   // others
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::DISTINCT, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::EQUAL, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::EXISTS, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FORALL, bv_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::ITE, ite_args2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::LAMBDA, fun_args1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 
   // indexed
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_EXTRACT, bv_args2, idxs2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_REPEAT, bv_args2, idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ROLI, bv_args2, idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_RORI, bv_args2, idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_SIGN_EXTEND, bv_args2, idxs1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_ZERO_EXTEND, bv_args2, idxs1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::FP_TO_FP_FROM_BV, bv_args2, fp_idxs1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(
                    bitwuzla::Kind::FP_TO_FP_FROM_FP, fp_args3_rm, fp_idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(
                    bitwuzla::Kind::FP_TO_FP_FROM_SBV, bv_args1_rm, fp_idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(
                    bitwuzla::Kind::FP_TO_FP_FROM_UBV, bv_args1_rm, fp_idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_TO_SBV, fp_args1, idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_TO_UBV, fp_args1, idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_term_check_args)
@@ -936,464 +916,464 @@ TEST_F(TestApi, mk_term_check_args)
 
   // bool
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::AND, bool_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::AND, bool_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::IFF, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::IFF, bool_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::IMPLIES, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::IMPLIES, bool_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::NOT, bool_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::OR, bool_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::XOR, bool_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   // bit-vectors
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_AND, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_AND, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ASHR, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ASHR, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_DEC, bv_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_INC, bv_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NAND, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NAND, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NEG, bv_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NOR, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NOR, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_NOT, bv_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_OR, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_OR, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_REDAND, bv_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_REDOR, bv_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_REDXOR, bv_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_OR, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_OR, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ROL, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ROL, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ROR, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ROR, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_SADD_OVERFLOW, bv_args2_invalid),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_SADD_OVERFLOW, bv_args2_mis),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_SDIV_OVERFLOW, bv_args2_invalid),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_SDIV_OVERFLOW, bv_args2_mis),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SDIV, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SDIV, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SGE, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SGE, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SGT, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SGT, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SHL, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SHL, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SHR, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SHR, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SLE, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SLE, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SLT, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SLT, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SMOD, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SMOD, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_SMUL_OVERFLOW, bv_args2_invalid),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_SMUL_OVERFLOW, bv_args2_mis),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SREM, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SREM, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_SSUB_OVERFLOW, bv_args2_invalid),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_SSUB_OVERFLOW, bv_args2_mis),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SUB, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_SUB, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_UADD_OVERFLOW, bv_args2_invalid),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_UADD_OVERFLOW, bv_args2_mis),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UDIV, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UDIV, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UGE, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UGE, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UGT, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UGT, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ULE, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ULE, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ULT, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_ULT, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_UMUL_OVERFLOW, bv_args2_invalid),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_UMUL_OVERFLOW, bv_args2_mis),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UREM, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_UREM, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_USUB_OVERFLOW, bv_args2_invalid),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_USUB_OVERFLOW, bv_args2_mis),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_XNOR, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_XNOR, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_XOR, bv_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::BV_XOR, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   // floating-point
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_ABS, fp_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_ADD, fp_args3_rm_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_ADD, fp_args3_rm_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_ADD, fp_args3_rm_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_DIV, fp_args3_rm_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_DIV, fp_args3_rm_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_DIV, fp_args3_rm_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_EQUAL, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_EQUAL, fp_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_FMA, fp_args4_rm_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_FMA, fp_args4_rm_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_FMA, fp_args4_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_FP, fp_fp_args3_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_FP, fp_fp_args3_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_FP, fp_fp_args3_invalid_3),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_FP, fp_fp_args3_invalid_4),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_GEQ, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_GEQ, fp_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_GT, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_GT, fp_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_INF, fp_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_NAN, fp_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_NEG, fp_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::FP_IS_NORMAL, fp_args1_invalid),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_POS, fp_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::FP_IS_SUBNORMAL, fp_args1_invalid),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_ZERO, fp_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_LEQ, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_LEQ, fp_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_LT, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_LT, fp_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_MAX, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_MAX, fp_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_MIN, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_MIN, fp_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_IS_ZERO, fp_args1_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_MUL, fp_args3_rm_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_MUL, fp_args3_rm_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_MUL, fp_args3_rm_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_REM, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_REM, fp_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_RTI, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_RTI, fp_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_RTI, fp_args2_rm_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_RTI, fp_args2_rm_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_SQRT, fp_args2_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_SQRT, fp_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::FP_SQRT, fp_args2_rm_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::FP_SQRT, fp_args2_rm_invalid_2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_SUB, fp_args3_rm_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_SUB, fp_args3_rm_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FP_SUB, fp_args3_rm_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   // others
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::APPLY, apply_args3_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::APPLY, apply_args3_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::ARRAY_SELECT,
                                  array_select_args2_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::ARRAY_SELECT,
                                  array_select_args2_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::ARRAY_STORE,
                                  array_store_args3_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::ARRAY_STORE,
                                  array_store_args3_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::ARRAY_STORE,
                                  array_store_args3_invalid_3),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::DISTINCT, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::EQUAL, bv_args2_mis),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::EXISTS, quant_args2_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::EXISTS, quant_args2_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::EXISTS, quant_args2_invalid_3),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::EXISTS, quant_args3_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FORALL, quant_args2_invalid_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FORALL, quant_args2_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FORALL, quant_args2_invalid_3),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::FORALL, quant_args3_invalid),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::ITE, ite_args3_invalid_2),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::ITE, ite_THROW_args3_1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::LAMBDA, lambda_args2_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::LAMBDA, lambda_args3_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_NO_THROW(bitwuzla::mk_term(bitwuzla::Kind::LAMBDA, lambda_args3));
   ASSERT_NO_THROW(bitwuzla::mk_term(bitwuzla::Kind::LAMBDA, lambda_args2));
   // indexed
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_EXTRACT, bv_args1_invalid, bv_idxs2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::BV_EXTRACT, bv_args1, bv_extract_idxs2_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::BV_EXTRACT, bv_args1, bv_extract_idxs2_invalid_2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_REPEAT, bv_args1_invalid, bv_idxs1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::BV_REPEAT, bv_args1, bv_repeat_idxs_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_ROLI, bv_args1_invalid, bv_idxs1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(bitwuzla::Kind::BV_RORI, bv_args1_invalid, bv_idxs1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(
                    bitwuzla::Kind::BV_SIGN_EXTEND, bv_args1_invalid, bv_idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::BV_SIGN_EXTEND, bv_args1, bv_extend_idxs_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(
                    bitwuzla::Kind::BV_ZERO_EXTEND, bv_args1_invalid, bv_idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::BV_ZERO_EXTEND, bv_args1, bv_extend_idxs_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_BV, bv_args1_invalid, fp_idxs2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_BV, bv_args1, fp_idxs2_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_BV, bv_args1, fp_idxs2_invalid_2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_FP, fp_args2_rm_invalid_1, fp_idxs2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_FP, fp_args2_rm_invalid_2, fp_idxs2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_FP, fp_args2_rm, fp_idxs2_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_FP, fp_args2_rm, fp_idxs2_invalid_2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_SBV, bv_args2_rm_invalid_1, fp_idxs2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_SBV, bv_args2_rm_invalid_2, fp_idxs2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_SBV, bv_args2_rm, fp_idxs2_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_SBV, bv_args2_rm, fp_idxs2_invalid_2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_UBV, bv_args2_rm_invalid_1, fp_idxs2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_UBV, bv_args2_rm_invalid_2, fp_idxs2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_UBV, bv_args2_rm, fp_idxs2_invalid_1),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(
       bitwuzla::mk_term(
           bitwuzla::Kind::FP_TO_FP_FROM_UBV, bv_args2_rm, fp_idxs2_invalid_2),
-      bitwuzla::BitwuzlaException);
+      bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(
                    bitwuzla::Kind::FP_TO_SBV, fp_args2_rm_invalid_1, bv_idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(
                    bitwuzla::Kind::FP_TO_SBV, fp_args2_rm_invalid_2, bv_idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(
                    bitwuzla::Kind::FP_TO_UBV, fp_args2_rm_invalid_1, bv_idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_term(
                    bitwuzla::Kind::FP_TO_UBV, fp_args2_rm_invalid_2, bv_idxs1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_const)
@@ -1401,23 +1381,23 @@ TEST_F(TestApi, mk_const)
   ASSERT_NO_THROW(bitwuzla::mk_const(d_bv_sort8));
   ASSERT_NO_THROW(bitwuzla::mk_const(d_bv_sort8, ""));
   ASSERT_THROW(bitwuzla::mk_const(bitwuzla::Sort(), "asdf"),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_const_array)
 {
   GTEST_SKIP();  // TODO enable when implemented
   ASSERT_THROW(bitwuzla::mk_const_array(bitwuzla::Sort(), d_bv_one1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_const_array(d_arr_sort_bv, bitwuzla::Term()),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 
   ASSERT_THROW(bitwuzla::mk_const_array(d_bv_sort8, d_bv_one1),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_const_array(d_arr_sort_bv, d_array),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_const_array(d_arr_sort_bvfp, d_fp_pzero32),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 
   ASSERT_NO_THROW(bitwuzla::mk_const_array(d_arr_sort_bvfp, d_fp_const16));
 }
@@ -1426,8 +1406,7 @@ TEST_F(TestApi, mk_var)
 {
   ASSERT_NO_THROW(bitwuzla::mk_var(d_bv_sort8));
   ASSERT_NO_THROW(bitwuzla::mk_var(d_bv_sort8, ""));
-  ASSERT_THROW(bitwuzla::mk_var(bitwuzla::Sort(), "asdf"),
-               bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::mk_var(bitwuzla::Sort(), "asdf"), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, push)
@@ -1436,7 +1415,7 @@ TEST_F(TestApi, push)
     bitwuzla::Options options;
     options.set(bitwuzla::Option::INCREMENTAL, false);
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.push(2), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.push(2), bitwuzla::Exception);
   }
   {
     bitwuzla::Options options;
@@ -1453,13 +1432,13 @@ TEST_F(TestApi, pop)
     bitwuzla::Options options;
     options.set(bitwuzla::Option::INCREMENTAL, false);
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.pop(0), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.pop(0), bitwuzla::Exception);
   }
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.pop(2), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.pop(2), bitwuzla::Exception);
     ASSERT_NO_THROW(bitwuzla.pop(0));
     bitwuzla.push(2);
     ASSERT_NO_THROW(bitwuzla.pop(2));
@@ -1470,19 +1449,16 @@ TEST_F(TestApi, assert_formula)
 {
   bitwuzla::Options options;
   bitwuzla::Bitwuzla bitwuzla(options);
-  ASSERT_THROW(bitwuzla.assert_formula(bitwuzla::Term()),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla.assert_formula(d_bv_const8),
-               bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla.assert_formula(bitwuzla::Term()), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla.assert_formula(d_bv_const8), bitwuzla::Exception);
 
-  ASSERT_THROW(bitwuzla.assert_formula(d_bv_one1), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla.assert_formula(d_bool_var),
-               bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla.assert_formula(d_bv_one1), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla.assert_formula(d_bool_var), bitwuzla::Exception);
   // TODO: this should throw, not implemented yet
   // ASSERT_THROW(bitwuzla.assert_formula(d_bool_lambda),
-  // bitwuzla::BitwuzlaException);
+  // bitwuzla::Exception);
   // ASSERT_THROW(bitwuzla.assert_formula(d_bool_lambda_body),
-  // bitwuzla::BitwuzlaException);
+  // bitwuzla::Exception);
 
   ASSERT_NO_THROW(bitwuzla.assert_formula(d_bool_apply));
   ASSERT_NO_THROW(bitwuzla.assert_formula(d_bool_const));
@@ -1495,7 +1471,7 @@ TEST_F(TestApi, is_unsat_assumption)
     options.set(bitwuzla::Option::INCREMENTAL, false);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_const),
-                 bitwuzla::BitwuzlaException);
+                 bitwuzla::Exception);
   }
   {
     GTEST_SKIP();  // TODO enable when implemented
@@ -1504,28 +1480,26 @@ TEST_F(TestApi, is_unsat_assumption)
     bitwuzla::Bitwuzla bitwuzla(options);
 
     ASSERT_THROW(bitwuzla.is_unsat_assumption(bitwuzla::Term()),
-                 bitwuzla::BitwuzlaException);
+                 bitwuzla::Exception);
 
     bitwuzla.assert_formula(d_true);
     bitwuzla.check_sat({d_bool_const});
     ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_const),
-                 bitwuzla::BitwuzlaException);
+                 bitwuzla::Exception);
 
     bitwuzla.check_sat(
         {d_bool_const,
          bitwuzla::mk_term(bitwuzla::Kind::BV_NOT, {d_bool_const})});
 
     ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bv_const8),
-                 bitwuzla::BitwuzlaException);
-    ASSERT_THROW(bitwuzla.is_unsat_assumption(d_true),
-                 bitwuzla::BitwuzlaException);
+                 bitwuzla::Exception);
+    ASSERT_THROW(bitwuzla.is_unsat_assumption(d_true), bitwuzla::Exception);
 
-    ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_var),
-                 bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_var), bitwuzla::Exception);
     ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_lambda),
-                 bitwuzla::BitwuzlaException);
+                 bitwuzla::Exception);
     ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_lambda_body),
-                 bitwuzla::BitwuzlaException);
+                 bitwuzla::Exception);
 
     ASSERT_NO_THROW(bitwuzla.is_unsat_assumption(d_bool_const));
   }
@@ -1537,7 +1511,7 @@ TEST_F(TestApi, get_unsat_assumptions)
     bitwuzla::Options options;
     options.set(bitwuzla::Option::INCREMENTAL, false);
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_unsat_assumptions(), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_unsat_assumptions(), bitwuzla::Exception);
   }
   {
     GTEST_SKIP();  // TODO enable when implemented
@@ -1547,7 +1521,7 @@ TEST_F(TestApi, get_unsat_assumptions)
 
     bitwuzla.assert_formula(d_true);
     bitwuzla.check_sat({d_bool_const});
-    ASSERT_THROW(bitwuzla.get_unsat_assumptions(), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_unsat_assumptions(), bitwuzla::Exception);
 
     bitwuzla.check_sat(
         {d_bool_const, d_not_bv_const1, d_and_bv_const1, d_eq_bv_const8});
@@ -1571,13 +1545,13 @@ TEST_F(TestApi, get_unsat_core)
   {
     bitwuzla::Options options;
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_unsat_core(), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_unsat_core(), bitwuzla::Exception);
   }
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_unsat_core(), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_unsat_core(), bitwuzla::Exception);
   }
   {
     GTEST_SKIP();  // TODO enable when implemented
@@ -1588,7 +1562,7 @@ TEST_F(TestApi, get_unsat_core)
 
     bitwuzla.assert_formula(d_true);
     bitwuzla.check_sat({d_bv_const1});
-    ASSERT_THROW(bitwuzla.get_unsat_core(), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_unsat_core(), bitwuzla::Exception);
 
     bitwuzla.check_sat(
         {d_bv_const1, d_not_bv_const1, d_and_bv_const1, d_eq_bv_const8});
@@ -1626,7 +1600,7 @@ TEST_F(TestApi, check_sat)
     options.set(bitwuzla::Option::INCREMENTAL, false);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_NO_THROW(bitwuzla.check_sat());
-    ASSERT_THROW(bitwuzla.check_sat(), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.check_sat(), bitwuzla::Exception);
   }
   {
     bitwuzla::Options options;
@@ -1642,7 +1616,7 @@ TEST_F(TestApi, get_value)
   {
     bitwuzla::Options options;
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::Exception);
   }
   GTEST_SKIP();  // TODO enable when implemented
   {
@@ -1650,11 +1624,10 @@ TEST_F(TestApi, get_value)
     options.set(bitwuzla::Option::INCREMENTAL, true);
     options.set(bitwuzla::Option::PRODUCE_MODELS, true);
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_value(bitwuzla::Term()),
-                 bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_value(bitwuzla::Term()), bitwuzla::Exception);
     bitwuzla.assert_formula(d_bool_const);
     ASSERT_EQ(bitwuzla.check_sat({d_not_bv_const1}), bitwuzla::Result::UNSAT);
-    ASSERT_THROW(bitwuzla.get_value(d_bool_const), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_value(d_bool_const), bitwuzla::Exception);
     bitwuzla.check_sat();
     ASSERT_NO_THROW(bitwuzla.get_value(d_bool_const));
     ASSERT_NO_THROW(bitwuzla.get_value(d_not_bv_const1));
@@ -1664,9 +1637,9 @@ TEST_F(TestApi, get_value)
     options.set(bitwuzla::Option::PRODUCE_MODELS, true);
     bitwuzla::Bitwuzla bitwuzla(options);
     bitwuzla.assert_formula(d_exists);
-    ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::Exception);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::SAT);
-    ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::Exception);
   }
 }
 
@@ -1675,23 +1648,19 @@ TEST_F(TestApi, get_bv_value)
   {
     bitwuzla::Options options;
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_bv_value(d_bv_one1), bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_bv_value(d_bv_one1), bitwuzla::Exception);
   }
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_MODELS, true);
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_bv_value(d_bv_zero8),
-                 bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_bv_value(d_bv_zero8), bitwuzla::Exception);
 
     bitwuzla::Result res = bitwuzla.check_sat();
     ASSERT_EQ(res, bitwuzla::Result::SAT);
-    ASSERT_THROW(bitwuzla.get_bv_value(bitwuzla::Term()),
-                 bitwuzla::BitwuzlaException);
-    ASSERT_THROW(bitwuzla.get_bv_value(d_fp_nan32),
-                 bitwuzla::BitwuzlaException);
-    ASSERT_THROW(bitwuzla.get_bv_value(d_bv_zero8, 6),
-                 bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_bv_value(bitwuzla::Term()), bitwuzla::Exception);
+    ASSERT_THROW(bitwuzla.get_bv_value(d_fp_nan32), bitwuzla::Exception);
+    ASSERT_THROW(bitwuzla.get_bv_value(d_bv_zero8, 6), bitwuzla::Exception);
     ASSERT_EQ("1", bitwuzla.get_bv_value(d_bv_one1));
 
     bitwuzla::Term bv_maxs32 = bitwuzla::mk_bv_max_signed(d_bv_sort32);
@@ -1734,18 +1703,15 @@ TEST_F(TestApi, get_rm_value)
   {
     bitwuzla::Options options;
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_bv_value(d_rm_const),
-                 bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_bv_value(d_rm_const), bitwuzla::Exception);
   }
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_MODELS, true);
     bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_rm_value(bitwuzla::Term()),
-                 bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_rm_value(bitwuzla::Term()), bitwuzla::Exception);
     bitwuzla.check_sat();
-    ASSERT_THROW(bitwuzla.get_rm_value(d_fp_nan32),
-                 bitwuzla::BitwuzlaException);
+    ASSERT_THROW(bitwuzla.get_rm_value(d_fp_nan32), bitwuzla::Exception);
     ASSERT_EQ(bitwuzla::RoundingMode::RNA, bitwuzla.get_rm_value(d_rm_rna));
     ASSERT_EQ(bitwuzla::RoundingMode::RNE, bitwuzla.get_rm_value(d_rm_rne));
     ASSERT_EQ(bitwuzla::RoundingMode::RTN, bitwuzla.get_rm_value(d_rm_rtn));
@@ -1759,10 +1725,8 @@ TEST_F(TestApi, dump_formula1)
   bitwuzla::Options options;
   bitwuzla::Bitwuzla bitwuzla(options);
 
-  ASSERT_THROW(bitwuzla.dump_formula(std::cout, ""),
-               bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla.dump_formula(std::cout, "asdf"),
-               bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla.dump_formula(std::cout, ""), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla.dump_formula(std::cout, "asdf"), bitwuzla::Exception);
 
   GTEST_SKIP();  // TODO enable when implemented
   bitwuzla.assert_formula(d_bool_const);
@@ -1787,49 +1751,49 @@ TEST_F(TestApi, dump_formula1)
 TEST_F(TestApi, sort_hash)
 {
   ASSERT_THROW(std::hash<bitwuzla::Sort>{}(bitwuzla::Sort()),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_NO_THROW(std::hash<bitwuzla::Sort>{}(d_bv_sort8));
 }
 
 TEST_F(TestApi, sort_bv_size)
 {
-  ASSERT_THROW(bitwuzla::Sort().bv_size(), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(d_fp_sort16.bv_size(), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::Sort().bv_size(), bitwuzla::Exception);
+  ASSERT_THROW(d_fp_sort16.bv_size(), bitwuzla::Exception);
   ASSERT_EQ(d_bv_sort8.bv_size(), 8);
 }
 
 TEST_F(TestApi, sort_fp_exp_size)
 {
-  ASSERT_THROW(bitwuzla::Sort().fp_exp_size(), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(d_bv_sort8.fp_exp_size(), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::Sort().fp_exp_size(), bitwuzla::Exception);
+  ASSERT_THROW(d_bv_sort8.fp_exp_size(), bitwuzla::Exception);
   ASSERT_EQ(d_fp_sort16.fp_exp_size(), 5);
 }
 
 TEST_F(TestApi, sort_fp_sig_size)
 {
-  ASSERT_THROW(bitwuzla::Sort().fp_sig_size(), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(d_bv_sort8.fp_sig_size(), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::Sort().fp_sig_size(), bitwuzla::Exception);
+  ASSERT_THROW(d_bv_sort8.fp_sig_size(), bitwuzla::Exception);
   ASSERT_EQ(d_fp_sort16.fp_sig_size(), 11);
 }
 
 TEST_F(TestApi, sort_array_index)
 {
-  ASSERT_THROW(bitwuzla::Sort().array_index(), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(d_bv_sort23.array_index(), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::Sort().array_index(), bitwuzla::Exception);
+  ASSERT_THROW(d_bv_sort23.array_index(), bitwuzla::Exception);
   ASSERT_TRUE(d_arr_sort_bvfp.array_index().is_bv());
 }
 
 TEST_F(TestApi, sort_array_element)
 {
-  ASSERT_THROW(bitwuzla::Sort().array_element(), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(d_bv_sort23.array_element(), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::Sort().array_element(), bitwuzla::Exception);
+  ASSERT_THROW(d_bv_sort23.array_element(), bitwuzla::Exception);
   ASSERT_TRUE(d_arr_sort_bvfp.array_element().is_fp());
 }
 
 TEST_F(TestApi, sort_fun_domain_sorts)
 {
-  ASSERT_THROW(bitwuzla::Sort().fun_domain(), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(d_bv_sort8.fun_domain(), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::Sort().fun_domain(), bitwuzla::Exception);
+  ASSERT_THROW(d_bv_sort8.fun_domain(), bitwuzla::Exception);
   auto domain_sorts = d_fun_sort.fun_domain();
   ASSERT_EQ(domain_sorts.size(), 3);
   ASSERT_EQ(d_bv_sort8, domain_sorts[0]);
@@ -1839,15 +1803,15 @@ TEST_F(TestApi, sort_fun_domain_sorts)
 
 TEST_F(TestApi, sort_fun_codomain)
 {
-  ASSERT_THROW(bitwuzla::Sort().fun_codomain(), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(d_bv_sort8.fun_codomain(), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::Sort().fun_codomain(), bitwuzla::Exception);
+  ASSERT_THROW(d_bv_sort8.fun_codomain(), bitwuzla::Exception);
   ASSERT_EQ(d_fun_sort.fun_codomain(), d_bv_sort8);
 }
 
 TEST_F(TestApi, sort_fun_arity)
 {
-  ASSERT_THROW(bitwuzla::Sort().fun_arity(), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(d_bv_sort8.fun_arity(), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::Sort().fun_arity(), bitwuzla::Exception);
+  ASSERT_THROW(d_bv_sort8.fun_arity(), bitwuzla::Exception);
   ASSERT_EQ(d_fun_sort.fun_arity(), 3);
 }
 
@@ -1938,7 +1902,7 @@ TEST_F(TestApi, regr1)
   std::vector<bitwuzla::Term> args(
       {bitwuzla::mk_const(d_bv_sort8, "x"), bitwuzla::mk_const(fun_sort, "f")});
   ASSERT_THROW(bitwuzla::mk_term(bitwuzla::Kind::APPLY, args),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, regr2)
@@ -1963,19 +1927,19 @@ TEST_F(TestApi, regr2)
 TEST_F(TestApi, term_hash)
 {
   ASSERT_THROW(std::hash<bitwuzla::Term>{}(bitwuzla::Term()),
-               bitwuzla::BitwuzlaException);
+               bitwuzla::Exception);
   ASSERT_NO_THROW(std::hash<bitwuzla::Term>{}(d_bv_const8));
 }
 
 TEST_F(TestApi, term_sort)
 {
-  ASSERT_THROW(bitwuzla::Term().sort(), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::Term().sort(), bitwuzla::Exception);
   ASSERT_EQ(d_bv_const8.sort(), d_bv_sort8);
 }
 
 TEST_F(TestApi, term_symbol)
 {
-  ASSERT_THROW(bitwuzla::Term().symbol(), bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::Term().symbol(), bitwuzla::Exception);
   bitwuzla::Term x = bitwuzla::mk_const(d_bv_sort8, "x");
   ASSERT_TRUE(!x.symbol() || x.symbol()->get() == "x");
 }
@@ -2834,15 +2798,14 @@ TEST_F(TestApi, parse)
   ss << BZLA_REGRESS_DIR << infile_name;
   bitwuzla::Options options;
 
-  ASSERT_THROW(bitwuzla::parse(options, ""), bitwuzla::BitwuzlaException);
-  ASSERT_THROW(bitwuzla::parse(options, infile_name),
-               bitwuzla::BitwuzlaException);
+  ASSERT_THROW(bitwuzla::parse(options, ""), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::parse(options, infile_name), bitwuzla::Exception);
 
   // TODO should this throw? (parsing after having created expressions)
   // ASSERT_THROW(
   //    bitwuzla::parse(
   //        ifile, infile_name, std::cout, error_msg, status, is_smt2),
-  //    bitwuzla::BitwuzlaException);
+  //    bitwuzla::Exception);
 
   std::string err = bitwuzla::parse(options, ss.str().c_str());
   ASSERT_TRUE(err.empty());

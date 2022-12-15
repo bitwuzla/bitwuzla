@@ -1,7 +1,30 @@
 #include <iostream>
 #include <sstream>
 
+#include "util/ostream_voider.h"
+
 namespace bitwuzla {
+
+class BitwuzlaExceptionStream
+{
+ public:
+  /** Constructor. */
+  BitwuzlaExceptionStream();
+  /**
+   * Destructor.
+   * @note This needs to be explicitly set to 'noexcept(false)' since it is
+   *       a destructor that throws an exception and in C++11 all destructors
+   *       default to noexcept(true) (else this triggers a call to
+   *       `std::terminate)`.
+   */
+  ~BitwuzlaExceptionStream() noexcept(false);
+  /** @return The associated stream. */
+  std::ostream &ostream();
+
+ private:
+  /** The stream for the expection message. */
+  std::stringstream d_stream;
+};
 
 #ifdef __has_builtin
 #if __has_builtin(__builtin_expect)
@@ -13,70 +36,10 @@ namespace bitwuzla {
 #define BITWUZLA_PREDICT_TRUE(arg) arg
 #endif
 
-class OstreamVoider
-{
- public:
-  OstreamVoider() = default;
-  void operator&(std::ostream &ostream) { (void) ostream; }
-};
-
-class BitwuzlaException : public std::exception
-{
- public:
-  /**
-   * Constructor.
-   * @param msg The exception message.
-   */
-  BitwuzlaException(const std::string &msg) : d_msg(msg) {}
-  /**
-   * Constructor.
-   * @param stream The exception message given as a std::stringstream.
-   */
-  BitwuzlaException(const std::stringstream &stream) : d_msg(stream.str()) {}
-  /**
-   * Get the exception message.
-   * @return The exception message.
-   */
-  std::string msg() const { return d_msg; }
-
-  const char *what() const noexcept override { return d_msg.c_str(); }
-
- protected:
-  /** The exception message. */
-  std::string d_msg;
-};
-
-class BitwuzlaExceptionStream
-{
- public:
-  /** Constructor. */
-  BitwuzlaExceptionStream() {}
-  /**
-   * Destructor.
-   * @note This needs to be explicitly set to 'noexcept(false)' since it is
-   *       a destructor that throws an exception and in C++11 all destructors
-   *       default to noexcept(true) (else this triggers a call to
-   *       `std::terminate)`.
-   */
-  ~BitwuzlaExceptionStream() noexcept(false)
-  {
-    if (std::uncaught_exceptions() == 0)
-    {
-      throw BitwuzlaException(d_stream.str());
-    }
-  }
-  /** @return The associated stream. */
-  std::ostream &ostream() { return d_stream; }
-
- private:
-  /** The stream for the expection message. */
-  std::stringstream d_stream;
-};
-
 #define BITWUZLA_CHECK(cond)                              \
   BITWUZLA_PREDICT_TRUE(cond)                             \
   ? (void) 0                                              \
-  : bitwuzla::OstreamVoider()                             \
+  : bzla::util::OstreamVoider()                           \
           & bitwuzla::BitwuzlaExceptionStream().ostream() \
                 << "invalid call to '" << __PRETTY_FUNCTION__ << "', "
 
