@@ -12,18 +12,21 @@
 (assert (= goal (_ bv3 2)))
 (push 1)
 (assert (= s0 goal))
+(set-info :status unsat)
 (check-sat)
 (pop 1)
 
 (assert (= s1 (ite (= o0 (_ bv1 1)) (bvadd s0 one) s0)))
 (push 1)
 (assert (= s1 goal))
+(set-info :status unsat)
 (check-sat)
 (pop 1)
 
 (assert (= s2 (ite (= o1 (_ bv1 1)) (bvadd s1 one) s1)))
 (push 1)
 (assert (= s2 goal))
+(set-info :status unsat)
 (check-sat)
 (pop 1)
 

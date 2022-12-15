@@ -35,5 +35,6 @@
 (push 1)
 
 (assert (= _substvar_296_ #b0))
+(set-info :status sat)
 (check-sat)
 (exit)

@@ -1,1 +1,0 @@
-    (bvsgt s t) abbreviates (bvslt t s)

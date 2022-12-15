@@ -9,5 +9,6 @@
 (check-sat)
 (pop 1)
 (assert (not (= (_ bv0 32) y)))
+(set-info :status unsat)
 (check-sat)
 (exit)

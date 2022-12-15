@@ -1,3 +1,5 @@
+(set-logic QF_FP)
+(set-info :status sat)
 (set-option :produce-models true)
 (declare-const s RoundingMode)
 (declare-const s5 RoundingMode)

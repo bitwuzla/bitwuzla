@@ -40,6 +40,7 @@
 (assert (= s0 zero))
 (push 1)
 (assert (= s0 goal))
+(set-info :status unsat)
 (check-sat)
 (pop 1)
 
@@ -47,6 +48,7 @@
 (assert (= s1 (ite (= r1 (_ bv1 1)) zero (ite (= e1 (_ bv1 1)) (bvadd s0 i1) s0))))
 (push 1)
 (assert (= s1 goal))
+(set-info :status unsat)
 (check-sat)
 (pop 1)
 
@@ -54,6 +56,7 @@
 (assert (= s2 (ite (= r2 (_ bv1 1)) zero (ite (= e2 (_ bv1 1)) (bvadd s1 i2) s1))))
 (push 1)
 (assert (= s2 goal))
+(set-info :status unsat)
 (check-sat)
 (pop 1)
 
@@ -61,6 +64,7 @@
 (assert (= s3 (ite (= r3 (_ bv1 1)) zero (ite (= e3 (_ bv1 1)) (bvadd s2 i3) s2))))
 (push 1)
 (assert (= s3 goal))
+(set-info :status unsat)
 (check-sat)
 (pop 1)
 
@@ -68,6 +72,7 @@
 (assert (= s4 (ite (= r4 (_ bv1 1)) zero (ite (= e4 (_ bv1 1)) (bvadd s3 i4) s3))))
 (push 1)
 (assert (= s4 goal))
+(set-info :status sat)
 (check-sat)
 (pop 1)
 
@@ -75,6 +80,7 @@
 (assert (= s5 (ite (= r5 (_ bv1 1)) zero (ite (= e5 (_ bv1 1)) (bvadd s4 i5) s4))))
 (push 1)
 (assert (= s5 goal))
+(set-info :status sat)
 (check-sat)
 (pop 1)
 
@@ -82,6 +88,7 @@
 (assert (= s6 (ite (= r6 (_ bv1 1)) zero (ite (= e6 (_ bv1 1)) (bvadd s5 i6) s5))))
 (push 1)
 (assert (= s6 goal))
+(set-info :status sat)
 (check-sat)
 (pop 1)
 
@@ -89,6 +96,7 @@
 (assert (= s7 (ite (= r7 (_ bv1 1)) zero (ite (= e7 (_ bv1 1)) (bvadd s6 i7) s6))))
 (push 1)
 (assert (= s7 goal))
+(set-info :status sat)
 (check-sat)
 (pop 1)
 

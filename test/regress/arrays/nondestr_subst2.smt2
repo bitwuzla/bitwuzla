@@ -177,5 +177,6 @@
 (define-fun |UNROLL#9033| () Bool (or (= ((_ extract 0 0) _substvar_5544_) #b1) (not (= ((_ extract 0 0) _substvar_4908_) #b1))))
 (define-fun |UNROLL#9031| () Bool (and |UNROLL#9032| |UNROLL#9033|))
 (assert (not |UNROLL#9031|))
+(set-info :status unsat)
 (check-sat)
 (exit)

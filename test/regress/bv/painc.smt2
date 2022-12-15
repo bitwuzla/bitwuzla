@@ -9,11 +9,13 @@
 (assert (= next_x (bvadd x one)))
 (push 1)
 (assert (bvslt next_x n))
+(set-info :status sat)
 (check-sat)
 (pop 1)
 
 (push 1)
 (assert (bvsge next_x n))
+(set-info :status sat)
 (check-sat)
 (pop 1)
 

@@ -174,5 +174,6 @@
 (push 1)
 (define-fun |UNROLL#9033| () Bool (or (= _substvar_1284_ #b1) (not (= _substvar_1239_ #b1))))
 (assert (not |UNROLL#9033|))
+(set-info :status unsat)
 (check-sat)
 (exit)

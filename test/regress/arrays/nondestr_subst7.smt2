@@ -2,6 +2,7 @@
 (set-info :source "benchmark VexRiscv-regch0-15-unrolled from http://svn.clifford.at/fmbench/2018A/")
 (set-info :license "MIT")
 (set-info :category "industrial")
+(set-info :status sat)
 (set-logic QF_ABV)
 (declare-fun _substvar_1_ () (_ BitVec 1))
 (declare-fun _substvar_2_ () (_ BitVec 1))

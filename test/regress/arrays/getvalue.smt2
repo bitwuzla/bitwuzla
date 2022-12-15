@@ -1,5 +1,6 @@
-(set-option :produce-models true)
 (set-logic QF_AUFBVFP)
+(set-info :status sat)
+(set-option :produce-models true)
 (declare-const bv (_ BitVec 32))
 (declare-const rm RoundingMode)
 (declare-const flp (_ FloatingPoint 5 11))

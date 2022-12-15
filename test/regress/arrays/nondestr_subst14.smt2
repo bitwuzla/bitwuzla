@@ -96,11 +96,13 @@
 
 (push 1)
 (assert false)
+(set-info :status unsat)
 (check-sat)
 (pop 1)
 
 (assert (= (= _substvar_560_ (_ bv0 32)) _substvar_541_))
 (push 1)
 (assert (not (= _substvar_560_ (_ bv0 32))))
+(set-info :status sat)
 (check-sat)
 (exit)

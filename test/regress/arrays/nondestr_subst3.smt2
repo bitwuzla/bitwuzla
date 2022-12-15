@@ -1,4 +1,5 @@
 (set-logic QF_ABV)
+(set-info :status sat)
 (declare-fun a () (_ BitVec 2))
 (declare-fun b () (_ BitVec 2))
 (declare-fun c () Bool)

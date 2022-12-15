@@ -1,4 +1,5 @@
 (set-logic QF_BV)
+(set-info :status sat)
 (set-option :produce-models true)
 (declare-fun val1()  (_ BitVec 16))
 (declare-fun val2()  (_ BitVec 16))
