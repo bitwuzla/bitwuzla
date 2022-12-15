@@ -118,6 +118,7 @@ set(libbitwuzla_src_files
   solver/fp/word_blaster.cpp
   solver/fun/fun_solver.cpp
   solver/array/array_solver.cpp
+  solver/quant/quant_solver.cpp
   solver/result.cpp
   solver/solver.cpp
   solver/solver_engine.cpp

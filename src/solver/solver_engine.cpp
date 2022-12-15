@@ -23,7 +23,8 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_bv_solver(context.env(), d_solver_state),
       d_fp_solver(context.env(), d_solver_state),
       d_fun_solver(context.env(), d_solver_state),
-      d_array_solver(context.env(), d_solver_state)
+      d_array_solver(context.env(), d_solver_state),
+      d_quant_solver(context.env(), d_solver_state)
 {
 }
 
@@ -50,7 +51,7 @@ SolverEngine::solve()
     d_fp_solver.check();
     d_array_solver.check();
     d_fun_solver.check();
-    // d_quant_solver.check();
+    d_quant_solver.check();
   } while (!d_lemmas.empty());
   d_in_solving_mode = false;
   // TODO: still need to check whether all solvers are done or if there are
@@ -113,12 +114,6 @@ SolverEngine::backtrack_mgr()
 }
 
 /* --- SolverEngine private ------------------------------------------------- */
-
-bool
-SolverEngine::is_quant_leaf(const Node& term)
-{
-  return term.kind() == Kind::FORALL;
-}
 
 void
 SolverEngine::sync_scope(size_t level)
@@ -194,10 +189,9 @@ SolverEngine::process_term(const Node& term)
       {
         d_fun_solver.register_term(cur);
       }
-      else if (is_quant_leaf(cur))
+      else if (quant::QuantSolver::is_leaf(cur))
       {
-        assert(false);
-        // d_quant_solver.register_term(cur);
+        d_quant_solver.register_term(cur);
       }
       else
       {

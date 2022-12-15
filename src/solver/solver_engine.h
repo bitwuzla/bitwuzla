@@ -11,6 +11,7 @@
 #include "solver/bv/bv_solver.h"
 #include "solver/fp/fp_solver.h"
 #include "solver/fun/fun_solver.h"
+#include "solver/quant/quant_solver.h"
 #include "solver/result.h"
 #include "solver/solver_state.h"
 #include "util/statistics.h"
@@ -45,10 +46,6 @@ class SolverEngine
   backtrack::BacktrackManager* backtrack_mgr();
 
  private:
-  // temporary helpers, should be moved to corresponding solvers as static
-  // method
-  static bool is_quant_leaf(const Node& term);
-
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);
 
@@ -113,7 +110,7 @@ class SolverEngine
   fp::FpSolver d_fp_solver;
   fun::FunSolver d_fun_solver;
   array::ArraySolver d_array_solver;
-  // quant::QuantSolver d_quant_solver;
+  quant::QuantSolver d_quant_solver;
 };
 
 }  // namespace bzla
