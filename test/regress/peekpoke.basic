@@ -1,8 +1,0 @@
-10 read a
-20 read d
-30 load d
-40 poke a
-50 peek a
-60 eq d
-70 jmp 70
-80 exit 1

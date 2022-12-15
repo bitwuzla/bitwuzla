@@ -1280,7 +1280,7 @@ macro(add_test_case option testcase)
       ${tcase}
       ${CMAKE_CURRENT_BINARY_DIR}
   )
-  set_tests_properties(${TESTNAME} PROPERTIES LABELS "testcases")
+  set_tests_properties(${TESTNAME} PROPERTIES LABELS "regress")
 endmacro()
 
 if(CaDiCaL_FOUND)
