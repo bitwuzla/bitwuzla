@@ -3,11 +3,6 @@
 
 #include <memory>
 
-extern "C" {
-#include "bzlabv.h"
-#include "bzlasort.h"
-}
-
 #include "bv/bitvector.h"
 #include "solver/fp/rounding_mode.h"
 #include "type/type.h"
@@ -364,7 +359,6 @@ class FloatingPoint
                                                  const char *num,
                                                  const char *den);
 
-  static inline Bzla *s_bzla = nullptr;
   std::unique_ptr<FloatingPointTypeInfo> d_size;
   std::unique_ptr<UnpackedFloat> d_uf;
 };
@@ -381,12 +375,6 @@ class FloatingPointTypeInfo
   friend fp::WordBlasterOld;
 
  public:
-  /**
-   * Constructor.
-   * @param sort The Bitwuzla floating-point sort.
-   */
-  FloatingPointTypeInfo(const BzlaSortId sort);
-
   /**
    * Constructor.
    * @param type The Bitwuzla floating-point type.
@@ -429,7 +417,6 @@ class FloatingPointTypeInfo
   uint32_t packedSignificandWidth() const { return d_ssize - 1; }
 
  private:
-  static inline Bzla *s_bzla = nullptr;
   /** The size of exponent. */
   uint32_t d_esize;
   /** The size of significand. */

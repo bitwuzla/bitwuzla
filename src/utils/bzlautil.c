@@ -636,6 +636,7 @@ bzla_util_file_has_suffix(const char *path, const char *suffix)
 char g_bzla_strbuf[BUFFER_SIZE];
 int32_t g_bzla_strbufpos = 0;
 
+#if 0
 char *
 bzla_util_node2string(const BzlaNode *exp)
 {
@@ -709,6 +710,7 @@ bzla_util_node2string(const BzlaNode *exp)
 
   return bufstart;
 }
+#endif
 
 /*------------------------------------------------------------------------*/
 

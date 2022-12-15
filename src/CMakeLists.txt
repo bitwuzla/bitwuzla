@@ -12,43 +12,42 @@ set(libbitwuzla_src_files
   aigprop.c
   backtrack/assertion_stack.cpp
   backtrack/backtrackable.cpp
-  bzlaaig.c
-  bzlaaigvec.c
-  bzlaass.c
-  bzlabeta.c
+  #bzlaaig.c
+  #bzlaaigvec.c
+  #bzlaass.c
+  #bzlabeta.c
   bzlabv.cpp
-  bzlabvdomain.c
-  bzlabvprop.c
-  bzlaconsutils.c
-  bzlacore.c
-  bzladbg.c
-  bzladcr.c
-  bzlaessutils.c
-  bzlaexp.c
-  bzlainvutils.c
-  bzlalsutils.c
-  bzlamodel.c
-  bzlamsg.c
-  bzlanode.c
-  bzlaopt.c
+  #bzlabvdomain.c
+  #bzlabvprop.c
+  #bzlaconsutils.c
+  #bzlacore.c
+  #bzladbg.c
+  #bzladcr.c
+  #bzlaessutils.c
+  #bzlaexp.c
+  #bzlainvutils.c
+  #bzlalsutils.c
+  #bzlamodel.c
+  #bzlamsg.c
+  #bzlanode.c
+  #bzlaopt.c
   bzlaparse.c
-  bzlaprintmodel.c
-  bzlaproputils.c
-  bzlarewrite.c
-  bzlarm.c
-  bzlarwcache.c
-  bzlasat.c
-  bzlaslsutils.c
-  bzlaslvaigprop.c
-  bzlaslvfun.c
-  bzlaslvprop.cpp
-  bzlaslvpropold.c
-  bzlaslvquant.cpp
-  bzlaslvsls.c
-  bzlasort.c
-  bzlasubst.c
-  bzlafp.cpp
-  bzlasynthterm.cpp
+  #bzlaprintmodel.c
+  #bzlaproputils.c
+  #bzlarewrite.c
+  #bzlarm.c
+  #bzlarwcache.c
+  #bzlasat.c
+  #bzlaslsutils.c
+  #bzlaslvaigprop.c
+  #bzlaslvfun.c
+  #bzlaslvprop.cpp
+  #bzlaslvpropold.c
+  #bzlaslvquant.cpp
+  #bzlaslvsls.c
+  #bzlasort.c
+  #bzlasubst.c
+  #bzlasynthterm.cpp
   api/checks.cpp
   api/c/bitwuzla.cpp
   api/cpp/bitwuzla.cpp
@@ -116,7 +115,6 @@ set(libbitwuzla_src_files
   solver/fp/fp_solver.cpp
   solver/fp/rounding_mode.cpp
   solver/fp/symfpu_wrapper.cpp
-  solver/fp/word_blaster_old.cpp
   solver/fp/word_blaster.cpp
   solver/fun/fun_solver.cpp
   solver/array/array_solver.cpp
@@ -125,15 +123,15 @@ set(libbitwuzla_src_files
   solver/solver_engine.cpp
   solver/solver_state.cpp
   solving_context.cpp
-  utils/bzlahashint.c
-  utils/bzlahashptr.c
+  #utils/bzlahashint.c
+  #utils/bzlahashptr.c
   utils/bzlamem.c
-  utils/bzlanodeiter.c
-  utils/bzlanodemap.c
-  utils/bzlaoptparse.c
-  utils/bzlapartgen.c
-  utils/bzlarng.cpp
-  utils/bzlaunionfind.c
+  #utils/bzlanodeiter.c
+  #utils/bzlanodemap.c
+  #utils/bzlaoptparse.c
+  #utils/bzlapartgen.c
+  #utils/bzlarng.cpp
+  #utils/bzlaunionfind.c
   utils/bzlautil.c
   utils/bzlaabort.c
 )

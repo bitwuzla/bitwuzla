@@ -34,7 +34,7 @@ set(test_names
   #propoldinv
   #rotate
   #queue
-  satmgr
+  #satmgr
   #shift
   #smtaxioms
   #sort

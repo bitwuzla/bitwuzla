@@ -100,16 +100,6 @@ FloatingPoint::fpfp(const BitVector &sign,
 
 /* --- FloatingPoint public ------------------------------------------------- */
 
-FloatingPointTypeInfo::FloatingPointTypeInfo(const BzlaSortId sort)
-    : d_esize(bzla_sort_fp_get_exp_width(s_bzla, sort)),
-      d_ssize(bzla_sort_fp_get_sig_width(s_bzla, sort))
-{
-  assert(s_bzla);
-  assert(bzla_sort_is_fp(s_bzla, sort));
-  NodeManager &nm = NodeManager::get();
-  d_type          = nm.mk_fp_type(d_esize, d_ssize);
-}
-
 FloatingPoint::FloatingPoint(const Type &type)
 {
   d_size.reset(new FloatingPointTypeInfo(type));
