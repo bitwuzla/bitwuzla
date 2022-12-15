@@ -51,7 +51,14 @@ FpSolver::check()
   for (const Node& node : d_word_blast_queue)
   {
     d_solver_state.lemma(
-        nm.mk_node(node::Kind::EQUAL, {node, d_word_blaster.word_blast(node)}));
+        nm.mk_node(node::Kind::EQUAL,
+                   {node,
+                    nm.mk_node(node::Kind::ITE,
+                               {nm.mk_node(node::Kind::EQUAL,
+                                           {d_word_blaster.word_blast(node),
+                                            nm.mk_value(BitVector::mk_true())}),
+                                nm.mk_value(true),
+                                nm.mk_value(false)})}));
   }
   d_word_blast_queue.clear();
 }

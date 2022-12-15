@@ -206,7 +206,6 @@ BvBitblastSolver::bitblast(const Node& t)
         }
         break;
 
-        // TODO: maybe eliminate
         case Kind::BV_COMP:
           assert(type.is_bv());
           it->second = d_bitblaster.bv_eq(bits(cur[0]), bits(cur[1]));

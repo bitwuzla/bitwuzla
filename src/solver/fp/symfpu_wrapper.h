@@ -636,44 +636,50 @@ BZLA_FP_ITE(bzla::fp::SymFpuTraits::sbv);
 BZLA_FP_ITE(bzla::fp::SymFpuTraits::ubv);
 #undef BZLA_FP_ITE
 
-#define BZLA_FP_SYM_ITE(S, T)                                                 \
-  template <>                                                                 \
-  struct ite<bzla::fp::SymFpuSymPropOld, S>                                   \
-  {                                                                           \
-    static const S iteOp(const bzla::fp::SymFpuSymPropOld &_c,                \
-                         const S &_t,                                         \
-                         const S &_e)                                         \
-    {                                                                         \
-      BzlaNode *c = _c.getNode();                                             \
-      BzlaNode *t = _t.getNode();                                             \
-      BzlaNode *e = _e.getNode();                                             \
-      assert(c);                                                              \
-      assert(t);                                                              \
-      assert(e);                                                              \
-      Bzla *bzla = S::s_bzla;                                                 \
-      assert(bzla);                                                           \
-      assert(bzla == bzla_node_real_addr(c)->bzla);                           \
-      assert(bzla == bzla_node_real_addr(t)->bzla);                           \
-      assert(bzla == bzla_node_real_addr(e)->bzla);                           \
-      BzlaNode *ite = bzla_exp_cond(bzla, c, t, e);                           \
-      S res(ite);                                                             \
-      bzla_node_release(bzla, ite);                                           \
-      return res;                                                             \
-    }                                                                         \
-  };                                                                          \
-  template <>                                                                 \
-  struct ite<bzla::fp::SymFpuSymProp, T>                                      \
-  {                                                                           \
-    static const T iteOp(const bzla::fp::SymFpuSymProp &_c,                   \
-                         const T &_t,                                         \
-                         const T &_e)                                         \
-    {                                                                         \
-      assert(!_c.getNode().is_null());                                        \
-      assert(!_t.getNode().is_null());                                        \
-      assert(!_e.getNode().is_null());                                        \
-      return bzla::NodeManager::get().mk_node(                                \
-          bzla::node::Kind::ITE, {_c.getNode(), _t.getNode(), _e.getNode()}); \
-    }                                                                         \
+#define BZLA_FP_SYM_ITE(S, T)                                            \
+  template <>                                                            \
+  struct ite<bzla::fp::SymFpuSymPropOld, S>                              \
+  {                                                                      \
+    static const S iteOp(const bzla::fp::SymFpuSymPropOld &_c,           \
+                         const S &_t,                                    \
+                         const S &_e)                                    \
+    {                                                                    \
+      BzlaNode *c = _c.getNode();                                        \
+      BzlaNode *t = _t.getNode();                                        \
+      BzlaNode *e = _e.getNode();                                        \
+      assert(c);                                                         \
+      assert(t);                                                         \
+      assert(e);                                                         \
+      Bzla *bzla = S::s_bzla;                                            \
+      assert(bzla);                                                      \
+      assert(bzla == bzla_node_real_addr(c)->bzla);                      \
+      assert(bzla == bzla_node_real_addr(t)->bzla);                      \
+      assert(bzla == bzla_node_real_addr(e)->bzla);                      \
+      BzlaNode *ite = bzla_exp_cond(bzla, c, t, e);                      \
+      S res(ite);                                                        \
+      bzla_node_release(bzla, ite);                                      \
+      return res;                                                        \
+    }                                                                    \
+  };                                                                     \
+  template <>                                                            \
+  struct ite<bzla::fp::SymFpuSymProp, T>                                 \
+  {                                                                      \
+    static const T iteOp(const bzla::fp::SymFpuSymProp &_c,              \
+                         const T &_t,                                    \
+                         const T &_e)                                    \
+    {                                                                    \
+      assert(!_c.getNode().is_null());                                   \
+      assert(!_t.getNode().is_null());                                   \
+      assert(!_e.getNode().is_null());                                   \
+      bzla::NodeManager &nm = bzla::NodeManager::get();                  \
+      return nm.mk_node(                                                 \
+          bzla::node::Kind::ITE,                                         \
+          {nm.mk_node(                                                   \
+               bzla::node::Kind::EQUAL,                                  \
+               {_c.getNode(), nm.mk_value(bzla::BitVector::mk_true())}), \
+           _t.getNode(),                                                 \
+           _e.getNode()});                                               \
+    }                                                                    \
   };
 BZLA_FP_SYM_ITE(bzla::fp::SymFpuSymTraitsOld::rm,
                 bzla::fp::SymFpuSymTraits::rm);
