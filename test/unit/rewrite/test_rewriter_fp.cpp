@@ -847,6 +847,17 @@ TEST_F(TestRewriterFp, fp_to_fp_from_sbv_eval)
   ASSERT_EQ(tofpfromsbv4, d_rewriter.rewrite(tofpfromsbv4));
 }
 
+TEST_F(TestRewriterFp, fp_to_fp_from_sbv_bv1_elim)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_TO_FP_FROM_SBV_BV1_ELIM;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_TO_FP_FROM_SBV, {d_rm, d_bv1_a}, {5, 11}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::FP_TO_FP_FROM_SBV, {d_rm, d_bv4_a}, {5, 11}));
+}
+
 /* to_fp: from_ubv ---------------------------------------------------------- */
 
 TEST_F(TestRewriterFp, fp_to_fp_from_ubv_eval)

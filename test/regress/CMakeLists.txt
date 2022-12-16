@@ -1236,6 +1236,7 @@ if(SymFPU_FOUND)
     "solver/fp/Float-no-simp1-main.smt2"
     "solver/fp/Float-no-simp3-main.smt2"
     "solver/fp/fp_fromsbv.smt2"
+    "solver/fp/fp_fromsbv2.smt2"
     "solver/fp/fp_inf.smt2"
     "solver/fp/fp_max.smt2"
     "solver/fp/fp_min.smt2"

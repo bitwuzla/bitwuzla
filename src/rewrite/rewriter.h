@@ -456,7 +456,10 @@ enum class RewriteRuleKind
   FP_SQRT_EVAL,
   FP_TO_FP_FROM_BV_EVAL,
   FP_TO_FP_FROM_FP_EVAL,
+
   FP_TO_FP_FROM_SBV_EVAL,
+  FP_TO_FP_FROM_SBV_BV1_ELIM,
+
   FP_TO_FP_FROM_UBV_EVAL,
 
   //// Elimination rules

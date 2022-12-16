@@ -1074,7 +1074,6 @@ Rewriter::rewrite_fp_to_fp_from_bv(const Node& node)
   if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_BV_EVAL);
-    // TODO
   }
 
 DONE:
@@ -1090,7 +1089,6 @@ Rewriter::rewrite_fp_to_fp_from_fp(const Node& node)
   if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_FP_EVAL);
-    // TODO
   }
 
 DONE:
@@ -1106,7 +1104,7 @@ Rewriter::rewrite_fp_to_fp_from_sbv(const Node& node)
   if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_SBV_EVAL);
-    // TODO
+    BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_SBV_BV1_ELIM);
   }
 
 DONE:
@@ -1122,7 +1120,6 @@ Rewriter::rewrite_fp_to_fp_from_ubv(const Node& node)
   if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_UBV_EVAL);
-    // TODO
   }
 
 DONE:
@@ -1479,6 +1476,9 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
       break;
     case RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL:
       out << "FP_TO_FP_FROM_SBV_EVAL";
+      break;
+    case RewriteRuleKind::FP_TO_FP_FROM_SBV_BV1_ELIM:
+      out << "FP_TO_FP_FROM_SBV_BV1_ELIM";
       break;
     case RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL:
       out << "FP_TO_FP_FROM_UBV_EVAL";

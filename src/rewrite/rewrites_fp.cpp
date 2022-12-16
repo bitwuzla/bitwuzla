@@ -686,6 +686,43 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Conditional elimination, eliminated if to be converted node is of
+ * bit-vector size one.
+ *
+ * match:  ((_ to_fp N M) r a) with size(a) = 1
+ * result: (ite
+ *            (= a #b1)
+ *            (fp.neg ((_ to_fp_unsigned N M) r a))
+ *            ((_ to_fp_unsigned N M) r a))
+ *
+ * @note This is imposed by SymFPU, it does not allow conversions from signed
+ *        bit-vectors of size one.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_SBV_BV1_ELIM>::_apply(
+    Rewriter& rewriter, const Node& node)
+{
+  assert(node.num_children() == 2);
+  assert(node.num_indices() == 2);
+  assert(node[1].type().is_bv());
+  if (node[1].type().bv_size() == 1)
+  {
+    Node to_ubv = rewriter.mk_node(Kind::FP_TO_FP_FROM_UBV,
+                                   {node[0], node[1]},
+                                   {node.index(0), node.index(1)});
+    return rewriter.mk_node(
+        Kind::ITE,
+        {rewriter.mk_node(
+             Kind::EQUAL,
+             {node[1], NodeManager::get().mk_value(BitVector::mk_one(1))}),
+         rewriter.mk_node(Kind::FP_NEG, {to_ubv}),
+         to_ubv});
+  }
+  return node;
+}
+
 /* to_fp: from_ubv ---------------------------------------------------------- */
 
 /**

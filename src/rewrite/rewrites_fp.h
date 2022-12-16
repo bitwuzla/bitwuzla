@@ -206,6 +206,10 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL>::_apply(
     Rewriter& rewriter, const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_SBV_BV1_ELIM>::_apply(
+    Rewriter& rewriter, const Node& node);
+
 /* to_fp: from_ubv ---------------------------------------------------------- */
 
 // const_fp_to_fp_from_ubv_exp
