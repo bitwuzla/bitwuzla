@@ -3,26 +3,12 @@
 #include <sstream>
 
 #include "node/node_manager.h"
+#include "node/node_utils.h"
 
 namespace bzla {
 namespace fp {
 
 using namespace node;
-
-/* -------------------------------------------------------------------------- */
-
-namespace {
-Node
-bool_to_bv(const Node &node)
-{
-  assert(node.type().is_bool());
-  NodeManager &nm = NodeManager::get();
-  return nm.mk_node(Kind::ITE,
-                    {nm.mk_node(Kind::EQUAL, {node, nm.mk_value(true)}),
-                     nm.mk_value(BitVector::mk_true()),
-                     nm.mk_value(BitVector::mk_false())});
-}
-}  // namespace
 
 /* --- SymFpuBV public ------------------------------------------------------ */
 
@@ -883,8 +869,9 @@ SymFpuSymProp
 SymFpuSymBV<is_signed>::operator<=(const SymFpuSymBV<is_signed> &op) const
 {
   NodeManager &nm = NodeManager::get();
-  return bool_to_bv(is_signed ? nm.mk_node(Kind::BV_SLE, {d_node, op.d_node})
-                              : nm.mk_node(Kind::BV_ULE, {d_node, op.d_node}));
+  return node::utils::bool_to_bv1(
+      is_signed ? nm.mk_node(Kind::BV_SLE, {d_node, op.d_node})
+                : nm.mk_node(Kind::BV_ULE, {d_node, op.d_node}));
 }
 
 template <bool is_signed>
@@ -892,8 +879,9 @@ SymFpuSymProp
 SymFpuSymBV<is_signed>::operator>=(const SymFpuSymBV<is_signed> &op) const
 {
   NodeManager &nm = NodeManager::get();
-  return bool_to_bv(is_signed ? nm.mk_node(Kind::BV_SGE, {d_node, op.d_node})
-                              : nm.mk_node(Kind::BV_UGE, {d_node, op.d_node}));
+  return node::utils::bool_to_bv1(
+      is_signed ? nm.mk_node(Kind::BV_SGE, {d_node, op.d_node})
+                : nm.mk_node(Kind::BV_UGE, {d_node, op.d_node}));
 }
 
 template <bool is_signed>
@@ -901,8 +889,9 @@ SymFpuSymProp
 SymFpuSymBV<is_signed>::operator<(const SymFpuSymBV<is_signed> &op) const
 {
   NodeManager &nm = NodeManager::get();
-  return bool_to_bv(is_signed ? nm.mk_node(Kind::BV_SLT, {d_node, op.d_node})
-                              : nm.mk_node(Kind::BV_ULT, {d_node, op.d_node}));
+  return node::utils::bool_to_bv1(
+      is_signed ? nm.mk_node(Kind::BV_SLT, {d_node, op.d_node})
+                : nm.mk_node(Kind::BV_ULT, {d_node, op.d_node}));
 }
 
 template <bool is_signed>
@@ -910,8 +899,9 @@ SymFpuSymProp
 SymFpuSymBV<is_signed>::operator>(const SymFpuSymBV<is_signed> &op) const
 {
   NodeManager &nm = NodeManager::get();
-  return bool_to_bv(is_signed ? nm.mk_node(Kind::BV_SGT, {d_node, op.d_node})
-                              : nm.mk_node(Kind::BV_UGT, {d_node, op.d_node}));
+  return node::utils::bool_to_bv1(
+      is_signed ? nm.mk_node(Kind::BV_SGT, {d_node, op.d_node})
+                : nm.mk_node(Kind::BV_UGT, {d_node, op.d_node}));
 }
 
 template <bool is_signed>
@@ -1048,7 +1038,7 @@ SymFpuSymRM::valid(void) const
   assert(!d_node.is_null());
   NodeManager &nm = NodeManager::get();
   uint64_t size   = d_node.type().bv_size();
-  return bool_to_bv(
+  return node::utils::bool_to_bv1(
       nm.mk_node(Kind::BV_ULT,
                  {d_node, nm.mk_value(BitVector::from_ui(size, BZLA_RM_MAX))}));
 }

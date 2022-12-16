@@ -337,4 +337,24 @@ mk_binder(Kind kind, const std::vector<Node>& terms)
   return res;
 }
 
+Node
+bv1_to_bool(const Node& node)
+{
+  assert(node.type().is_bv() && node.type().bv_size() == 1);
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(node::Kind::EQUAL,
+                    {node, nm.mk_value(BitVector::mk_true())});
+}
+
+Node
+bool_to_bv1(const Node& node)
+{
+  assert(node.type().is_bool());
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(Kind::ITE,
+                    {nm.mk_node(Kind::EQUAL, {node, nm.mk_value(true)}),
+                     nm.mk_value(BitVector::mk_true()),
+                     nm.mk_value(BitVector::mk_false())});
+}
+
 }  // namespace bzla::node::utils

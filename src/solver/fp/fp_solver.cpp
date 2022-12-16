@@ -4,6 +4,7 @@
 #include "node/node_kind.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
+#include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "rewrite/rewriter.h"
 #include "solver/fp/floating_point.h"
@@ -50,8 +51,21 @@ FpSolver::check()
   NodeManager& nm = NodeManager::get();
   for (const Node& node : d_word_blast_queue)
   {
-    d_solver_state.lemma(
-        nm.mk_node(node::Kind::EQUAL, {node, d_word_blaster.word_blast(node)}));
+    Node wb = d_word_blaster.word_blast(node);
+
+    if (wb == node) continue;
+
+    if (node.type().is_bool())
+    {
+      assert(wb.type().is_bv() && wb.type().bv_size() == 1);
+      d_solver_state.lemma(
+          nm.mk_node(node::Kind::EQUAL, {node, node::utils::bv1_to_bool(wb)}));
+    }
+    else
+    {
+      assert(node.type().is_bv() && node.type() == wb.type());
+      d_solver_state.lemma(nm.mk_node(node::Kind::EQUAL, {node, wb}));
+    }
   }
   d_word_blast_queue.clear();
 }

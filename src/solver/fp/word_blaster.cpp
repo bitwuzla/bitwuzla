@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "node/node_ref_vector.h"
+#include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "solver/fp/symfpu_wrapper.h"
 #include "solver/solver_state.h"
@@ -26,14 +27,6 @@ create_component_symbol(const Node& node, const std::string& s)
   assert(!node.is_null());
   assert(!s.empty());
   return "_fp_var_" + std::to_string(node.id()) + s + "_component_";
-}
-Node
-bv_to_bool(const Node& node)
-{
-  assert(node.type().is_bv() && node.type().bv_size() == 1);
-  NodeManager& nm = NodeManager::get();
-  return nm.mk_node(node::Kind::EQUAL,
-                    {node, nm.mk_value(BitVector::mk_true())});
 }
 }  // namespace
 
@@ -195,7 +188,7 @@ WordBlaster::_word_blast(const Node& node)
       {
         SymFpuSymRM rmvar(cur);
         d_internal->d_rm_map.emplace(cur, rmvar);
-        d_solver_state.lemma(bv_to_bool(rmvar.valid().getNode()));
+        d_solver_state.lemma(node::utils::bv1_to_bool(rmvar.valid().getNode()));
       }
       else if (type.is_fp() && cur.is_value())
       {
@@ -221,7 +214,8 @@ WordBlaster::_word_blast(const Node& node)
 
         SymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
         d_internal->d_unpacked_float_map.emplace(cur, uf);
-        d_solver_state.lemma(bv_to_bool(uf.valid(type).getNode()));
+        d_solver_state.lemma(
+            node::utils::bv1_to_bool(uf.valid(type).getNode()));
       }
       else if (kind == node::Kind::EQUAL && node[0].type().is_fp())
       {

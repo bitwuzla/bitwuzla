@@ -82,6 +82,22 @@ Node mk_default_value(const Type& type);
  *              are variables.
  */
 Node mk_binder(Kind kind, const std::vector<Node>& terms);
+
+/**
+ * Create a node that represents the conversion from a bit-vector node
+ * of size 1 to a Boolean node.
+ * @param node The node to convert.
+ * @return The conversion node.
+ */
+Node bv1_to_bool(const Node& node);
+
+/**
+ * Create a node that represents the conversion from a Boolean node to a
+ * bit-vector node of size 1.
+ * @param node The node to convert.
+ * @return The conversion node.
+ */
+Node bool_to_bv1(const Node& node);
 }
 
 #endif
