@@ -5,7 +5,10 @@
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
+#include "solver/array/array_solver.h"
 #include "solver/fp/symfpu_wrapper.h"
+#include "solver/fun/fun_solver.h"
+#include "solver/quant/quant_solver.h"
 #include "solver/solver_state.h"
 #include "symfpu/core/classify.h"
 #include "symfpu/core/compare.h"
@@ -91,6 +94,15 @@ WordBlaster::word_blast(const Node& node)
 
 /* --- WordBlaster private -------------------------------------------------- */
 
+namespace {
+bool
+is_leaf(const Node& node)
+{
+  return array::ArraySolver::is_leaf(node) || fun::FunSolver::is_leaf(node)
+         || quant::QuantSolver::is_leaf(node);
+}
+}  // namespace
+
 Node
 WordBlaster::_word_blast(const Node& node)
 {
@@ -125,9 +137,7 @@ WordBlaster::_word_blast(const Node& node)
       visited.emplace(cur, false);
       visit.push_back(cur);
 
-      /* We treat applies and quantifiers as variables. */
-      // TODO: Should this be a leaf node check?
-      if (kind != node::Kind::APPLY)
+      if (!is_leaf(cur))
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
@@ -153,7 +163,7 @@ WordBlaster::_word_blast(const Node& node)
         assert(d_internal->d_unpacked_float_map.find(cur[2])
                != d_internal->d_unpacked_float_map.end());
 
-        // Consruct ITEs over unpacked float components
+        // Construct ITEs over unpacked float components
         auto uf1 = d_internal->d_unpacked_float_map.at(cur[1]);
         auto uf2 = d_internal->d_unpacked_float_map.at(cur[2]);
 
@@ -184,7 +194,7 @@ WordBlaster::_word_blast(const Node& node)
       {
         d_internal->d_rm_map.emplace(cur, SymFpuSymRM(cur));
       }
-      else if (type.is_rm() && (cur.is_const() || kind == node::Kind::APPLY))
+      else if (type.is_rm() && (cur.is_const() || is_leaf(cur)))
       {
         SymFpuSymRM rmvar(cur);
         d_internal->d_rm_map.emplace(cur, rmvar);
@@ -195,7 +205,7 @@ WordBlaster::_word_blast(const Node& node)
         d_internal->d_unpacked_float_map.emplace(
             cur, *cur.value<FloatingPoint>().unpacked());
       }
-      else if (type.is_fp() && (cur.is_const() || kind == node::Kind::APPLY))
+      else if (type.is_fp() && (cur.is_const() || is_leaf(cur)))
       {
         Node inf =
             nm.mk_const(nm.mk_bv_type(1), create_component_symbol(cur, "inf"));

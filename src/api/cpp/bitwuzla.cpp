@@ -1714,7 +1714,8 @@ parse(Options &options, const std::string &infile_name)
   BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
   BitwuzlaOptions coptions(options);
   FILE *infile = fopen(infile_name.c_str(), "r");
-  BITWUZLA_CHECK(infile != nullptr) << "failed to open input file";
+  BITWUZLA_CHECK(infile != nullptr)
+      << "failed to open input file '" << infile_name << "'";
   char *error_msg = nullptr;
   (void) bzla_parse(&coptions, infile, infile_name.c_str(), stdout, &error_msg);
   fclose(infile);
