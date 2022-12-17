@@ -335,7 +335,7 @@ TEST_F(TestApi, set_option)
     ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 0);
     opts.set(bitwuzla::Option::VERBOSITY, 2);
     ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 2);
-    opts.set("verbosity", "3");
+    opts.set("verbose", "3");
     ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 3);
     ASSERT_THROW(opts.set("verbositi", "3"), bitwuzla::Exception);
 
