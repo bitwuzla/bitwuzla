@@ -1,5 +1,5 @@
 (set-option :incremental false)
-(set-info :status unknown)
+(set-info :status unsat)
 (set-logic QF_AUFBV)
 (declare-fun a2 () (Array (_ BitVec 8) (_ BitVec 16)))
 (declare-fun v0 () (_ BitVec 12))

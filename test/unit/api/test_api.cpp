@@ -2795,7 +2795,7 @@ TEST_F(TestApi, parse)
 {
   std::string infile_name = "fp_regr1.smt2";
   std::stringstream ss;
-  ss << BZLA_REGRESS_DIR << infile_name;
+  ss << BZLA_REGRESS_DIR << "solver/fp/" << infile_name;
   bitwuzla::Options options;
 
   ASSERT_THROW(bitwuzla::parse(options, ""), bitwuzla::Exception);

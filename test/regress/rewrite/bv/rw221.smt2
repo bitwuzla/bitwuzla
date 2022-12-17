@@ -1,4 +1,5 @@
 (set-logic QF_BV)
+(set-info :status unsat)
 (declare-fun b () Bool)
 (declare-fun x () (_ BitVec 4))
 (declare-fun y () (_ BitVec 4))

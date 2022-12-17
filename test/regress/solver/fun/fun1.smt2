@@ -1,4 +1,5 @@
 (set-logic QF_UFBV)
+(set-info :status unsat)
 (declare-fun f (Bool) Bool)
 (declare-const a Bool)
 (declare-const b Bool)

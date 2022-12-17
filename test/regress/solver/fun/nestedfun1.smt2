@@ -1,4 +1,5 @@
 (set-logic QF_AUFBV)
+(set-info :status sat)
 (declare-fun j () (_ BitVec 32))
 (declare-fun k () (_ BitVec 32))
 (declare-fun a () (Array (_ BitVec 32) (_ BitVec 32)))

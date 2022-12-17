@@ -2,6 +2,7 @@
 (set-info :source "Minkeyrink Solver")
 (set-info :difficulty "1")
 (set-info :category "industrial")
+(set-info :status unsat)
 (set-logic QF_BV)
 (declare-fun sym0 () (_ BitVec 8))
 (declare-fun sym1 () (_ BitVec 8))

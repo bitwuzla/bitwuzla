@@ -1,3 +1,4 @@
+(set-info :status unsat) 
 (declare-fun m () (Array (_ BitVec 8) (_ BitVec 8)))
 (assert
  (and

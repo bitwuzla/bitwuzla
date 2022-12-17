@@ -1,3 +1,4 @@
+(set-info :status sat)
 (declare-const x (_ BitVec 9))
 (declare-fun t () (_ BitVec 9))
 (declare-fun m () (Array (_ BitVec 9) (_ BitVec 8)))

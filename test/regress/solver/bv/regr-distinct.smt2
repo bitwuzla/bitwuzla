@@ -1,3 +1,4 @@
+(set-info :status unsat)
 (declare-fun c0 () (_ BitVec 4))
 (declare-fun c1 () (_ BitVec 4))
 (declare-fun c2 () (_ BitVec 4))

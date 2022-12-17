@@ -1,3 +1,4 @@
+(set-info :status sat)
 (declare-const I (_ BitVec 8))
 (declare-fun R () (_ BitVec 8))
 (assert

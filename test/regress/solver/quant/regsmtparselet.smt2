@@ -1,4 +1,5 @@
 (set-logic BV)
+(set-info :status unsat)
 (assert
  (let ( (a!2 true)
 (a!3 true)

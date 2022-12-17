@@ -1,4 +1,5 @@
 (set-logic QF_BV)
+(set-info :status sat)
 (assert (= ((_ rotate_left 0) (_ bv3 4)) (_ bv3 4)))
 (assert (= ((_ rotate_left 1) (_ bv3 4)) (_ bv6 4)))
 (assert (= ((_ rotate_left 2) (_ bv3 4)) (_ bv12 4)))

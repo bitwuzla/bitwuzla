@@ -2789,7 +2789,7 @@ TEST_F(TestCApi, parse)
 {
   std::string infile_name = "fp_regr1.smt2";
   std::stringstream ss;
-  ss << BZLA_REGRESS_DIR << infile_name;
+  ss << BZLA_REGRESS_DIR << "solver/fp/" << infile_name;
   BitwuzlaOptions *options = bitwuzla_options_new();
   ASSERT_DEATH(bitwuzla_parse(nullptr, infile_name.c_str()), d_error_not_null);
   ASSERT_DEATH(bitwuzla_parse(options, nullptr), d_error_not_null);

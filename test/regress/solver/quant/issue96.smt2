@@ -1,4 +1,5 @@
 (set-logic BV)
+(set-info :status sat)
 (declare-fun _substvar_12_ () Bool)
 (declare-const v6 Bool)
 (declare-const v12 Bool)

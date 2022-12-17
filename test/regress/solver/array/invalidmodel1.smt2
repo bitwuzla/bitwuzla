@@ -1,4 +1,5 @@
 (set-logic QF_ABV)
+(set-info :status sat)
 (declare-fun a () (Array (_ BitVec 4) (_ BitVec 4)))
 (declare-fun b () (Array (_ BitVec 4) (_ BitVec 4)))
 (declare-fun c () (Array (_ BitVec 4) (_ BitVec 4)))

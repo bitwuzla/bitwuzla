@@ -1,4 +1,5 @@
 (set-logic QF_AUFBV)
+(set-info :status sat)
 (declare-fun a0 () (Array (_ BitVec 32) (_ BitVec 32)))
 (define-fun f0 ((p0 (_ BitVec 32)) (x0 (_ BitVec 32))) (_ BitVec 32) (select a0 (bvadd p0 x0)))
 (define-fun g0 ((p0 (_ BitVec 32))) (_ BitVec 32) (_ bv0 32))
