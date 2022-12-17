@@ -1,3 +1,4 @@
+(set-info :status unsat)
 (declare-const y (_ FloatingPoint 8 24))
 (assert
  (distinct

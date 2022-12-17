@@ -1,4 +1,5 @@
 (set-logic QF_BVFP)
+(set-info :status sat)
 (declare-fun _substvar_114_ () (_ BitVec 56))
 (define-fun fp32_mantissa_bit_visible_for_int32 ((f Float32)) Bool (fp.gt f (_ +zero 8 24)))
 (define-fun raw_cast_fp32_int56 ((f Float32)) (_ BitVec 56) (ite (fp32_mantissa_bit_visible_for_int32 (_ +zero 8 24)) _substvar_114_ #x00000000000000))

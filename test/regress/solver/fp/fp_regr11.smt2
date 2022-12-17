@@ -1,4 +1,5 @@
 (define-sort FP8 () (_ FloatingPoint 3 5))
+(set-info :status sat)
 (declare-fun e () FP8)
 (declare-fun r () FP8)
 (declare-const rm RoundingMode)

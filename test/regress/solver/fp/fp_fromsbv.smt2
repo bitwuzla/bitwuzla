@@ -1,4 +1,5 @@
 (set-logic QF_BVFP)
+(set-info :status unsat)
 (declare-const x (_ BitVec 1))
 (declare-const rm RoundingMode)
 (assert (or

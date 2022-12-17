@@ -1,4 +1,5 @@
 (set-logic QF_FP)
+(set-info :status unsat)
 (define-fun x () Float64 (_ +oo 11 53))
 (define-fun y () Float64 (_ -oo 11 53))
 (assert (= x y))

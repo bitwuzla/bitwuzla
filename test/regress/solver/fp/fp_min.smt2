@@ -1,4 +1,5 @@
 (set-logic QF_FP)
+(set-info :status unsat)
 (define-fun x () Float64 (_ +zero 11 53))
 (define-fun y () Float64 (_ -zero 11 53))
 (assert (= (fp.min x y) x))

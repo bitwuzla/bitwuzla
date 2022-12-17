@@ -1,4 +1,5 @@
 (set-logic QF_FP)
+(set-info :status sat)
 (define-sort FPN () (_ FloatingPoint 11 53))
 (define-sort FP16 () Float16)
 (define-sort FP32 () Float32)

@@ -1,4 +1,5 @@
 (set-info :smt-lib-version 2.6)
+(set-info :status unsat)
 (set-logic ALL)
 (declare-const rm RoundingMode)
 (assert (distinct ((_ to_fp 5 11) rm #b1) (fp.neg ((_ to_fp_unsigned 5 11) rm #b1))))

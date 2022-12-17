@@ -14,7 +14,7 @@ import os
 import subprocess
 import sys
 
-def check(expected, out, err, output_dir):
+def check(testfile, expected, out, err, output_dir):
     out = out.decode()
     err = err.decode()
     if err:
@@ -25,6 +25,22 @@ def check(expected, out, err, output_dir):
             pass
 
     cmp = '{}{}'.format(out, err)
+    if not expected:
+        n_check_sat = 0
+        n_status = 0
+        with open(testfile, 'r') as infile:
+            for line in infile:
+                line = line.strip()
+                if line.startswith("(set-info :status"):
+                    n_status += 1
+                    l = line.split()[-1][:-1].strip()
+                    assert l == "sat" or l == "unsat"
+                    expected = l if not expected else expected + l
+                    expected += "\n"
+                elif line.startswith("(check-sat"):
+                    n_check_sat += 1
+        assert n_check_sat == n_status
+
     if expected.strip() != cmp.strip():
         print("Expected:\n{}".format(expected.encode()), file=sys.stderr)
         print('-' * 80, file=sys.stderr)
@@ -59,9 +75,7 @@ def main():
 
     bzla_args = args.testcase.split()
     cmd_args = [args.binary]
-    # FIXME: for now ignore options
-    #cmd_args.extend(bzla_args)
-    cmd_args.append(bzla_args[0])
+    cmd_args.extend(bzla_args)
 
     testname, _ = os.path.splitext(bzla_args[0])
     outfilename = '{}.expect'.format(testname)
@@ -82,11 +96,10 @@ def main():
         expected = 'sat'
     elif args.check_unsat:
         expected = 'unsat'
-    else:
-        assert args.check_output
+    elif args.check_output:
         with open(outfilename, 'r') as outfile:
             expected = outfile.read()
-    check(expected, out, err, args.output_dir)
+    check(bzla_args[0], expected, out, err, args.output_dir)
 
 
 if __name__ == '__main__':

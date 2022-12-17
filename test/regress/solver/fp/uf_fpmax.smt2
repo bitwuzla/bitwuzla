@@ -1,3 +1,4 @@
+(set-info :status unsat)
 (declare-const x (_ FloatingPoint 8 24))
 (declare-const y (_ FloatingPoint 8 24))
 (assert (fp.isZero (fp.max x y)))

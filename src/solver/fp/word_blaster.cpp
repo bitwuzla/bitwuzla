@@ -227,7 +227,7 @@ WordBlaster::_word_blast(const Node& node)
         d_solver_state.lemma(
             node::utils::bv1_to_bool(uf.valid(type).getNode()));
       }
-      else if (kind == node::Kind::EQUAL && node[0].type().is_fp())
+      else if (kind == node::Kind::EQUAL && cur[0].type().is_fp())
       {
         assert(d_internal->d_unpacked_float_map.find(cur[0])
                != d_internal->d_unpacked_float_map.end());
@@ -240,7 +240,7 @@ WordBlaster::_word_blast(const Node& node)
                 d_internal->d_unpacked_float_map.at(cur[0]),
                 d_internal->d_unpacked_float_map.at(cur[1])));
       }
-      else if (kind == node::Kind::EQUAL && node[0].type().is_rm())
+      else if (kind == node::Kind::EQUAL && cur[0].type().is_rm())
       {
         assert(d_internal->d_rm_map.find(cur[0]) != d_internal->d_rm_map.end());
         assert(d_internal->d_rm_map.find(cur[1]) != d_internal->d_rm_map.end());

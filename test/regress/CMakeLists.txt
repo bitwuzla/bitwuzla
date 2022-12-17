@@ -2,8 +2,9 @@
 #       sat solving and those that don't while Kissat and Gimsatul don't
 #       support incremental solving
 
-# sat testcases, no QF_BV (incremental sat solving required)
-set(sat_testcases
+### sat and unsat testcases, no QF_BV (incremental sat solving required)
+set(testcases
+## sat
 #"preprocess/array/regrembeddedconstraint10.btor -rwl 0"
 #"preprocess/array/regrembeddedconstraint10.btor -rwl 1"
 #"preprocess/array/regrembeddedconstraint10.btor -rwl 2"
@@ -165,183 +166,7 @@ set(sat_testcases
 "solver/quant/quant_regr6.smt2"
 "solver/quant/quant_regr7.smt2"
 "solver/quant/quant_regr9.smt2"
-)
-
-# QF_BV-only sat testcases (no incremental SAT solving required)
-set(sat_testcases_qfbv
-#"preprocess/bv/substcyclic1.btor"
-#"preprocess/bv/substitute1.btor"
-#"preprocess/bv/substitute3.btor"
-#"preprocess/bv/substitute4.btor"
-#"preprocess/bv/substitute40.btor"
-#"preprocess/bv/substitute5.btor"
-"preprocess/bv/substitute5.smt2"
-#"preprocess/bv/ultsubst1.btor -rwl 0"
-#"preprocess/bv/ultsubst1.btor -rwl 2"
-#"preprocess/bv/ultsubst2.btor -rwl 0"
-#"preprocess/bv/ultsubst2.btor -rwl 2"
-#"preprocess/bv/ultsubst3.btor -rwl 0"
-#"preprocess/bv/ultsubst3.btor -rwl 2"
-#"preprocess/bv/ultsubst4.btor -rwl 0"
-#"preprocess/bv/ultsubst4.btor -rwl 2"
-#"preprocess/bv/ultsubst5.btor -rwl 0"
-#"preprocess/bv/ultsubst5.btor -rwl 2"
-#"preprocess/bv/ultsubst6.btor -rwl 0"
-#"preprocess/bv/ultsubst6.btor -rwl 2"
-#"preprocess/bv/ultsubst7.btor -rwl 0"
-#"preprocess/bv/ultsubst7.btor -rwl 2"
-#"preprocess/bv/ultsubst8.btor -rwl 0"
-#"preprocess/bv/ultsubst8.btor -rwl 2"
-#"preprocess/bv/ultsubst9.btor -rwl 0"
-#"preprocess/bv/ultsubst9.btor -rwl 2"
-#"rewrite/bv/rw1.btor"
-#"rewrite/bv/rw10.btor"
-#"rewrite/bv/rw11.btor"
-#"rewrite/bv/rw113.btor -rwl 0"
-#"rewrite/bv/rw113.btor -rwl 1"
-#"rewrite/bv/rw114.btor -rwl 0"
-#"rewrite/bv/rw114.btor -rwl 1"
-#"rewrite/bv/rw12.btor"
-#"rewrite/bv/rw121.btor -rwl 0"
-#"rewrite/bv/rw121.btor -rwl 1"
-#"rewrite/bv/rw122.btor -rwl 0"
-#"rewrite/bv/rw122.btor -rwl 1"
-#"rewrite/bv/rw13.btor"
-#"rewrite/bv/rw132.btor -rwl 0"
-#"rewrite/bv/rw132.btor -rwl 1"
-#"rewrite/bv/rw133.btor -rwl 0"
-#"rewrite/bv/rw133.btor -rwl 1"
-#"rewrite/bv/rw135.btor -rwl 0"
-#"rewrite/bv/rw135.btor -rwl 3"
-#"rewrite/bv/rw137.btor -rwl 0"
-#"rewrite/bv/rw137.btor -rwl 3"
-#"rewrite/bv/rw138.btor -rwl 0"
-#"rewrite/bv/rw138.btor -rwl 3"
-#"rewrite/bv/rw139.btor -rwl 0"
-#"rewrite/bv/rw139.btor -rwl 3"
-#"rewrite/bv/rw14.btor"
-#"rewrite/bv/rw140.btor -rwl 0"
-#"rewrite/bv/rw140.btor -rwl 3"
-#"rewrite/bv/rw141.btor -rwl 0"
-#"rewrite/bv/rw141.btor -rwl 3"
-#"rewrite/bv/rw142.btor -rwl 0"
-#"rewrite/bv/rw142.btor -rwl 3"
-#"rewrite/bv/rw143.btor -rwl 0"
-#"rewrite/bv/rw143.btor -rwl 3"
-#"rewrite/bv/rw148.btor -rwl 0"
-#"rewrite/bv/rw148.btor -rwl 3"
-#"rewrite/bv/rw15.btor"
-#"rewrite/bv/rw153.btor -rwl 0"
-#"rewrite/bv/rw153.btor -rwl 3"
-#"rewrite/bv/rw157.btor"
-#"rewrite/bv/rw166.btor -rwl 1"
-#"rewrite/bv/rw167.btor -rwl 1"
-#"rewrite/bv/rw168.btor -rwl 1"
-#"rewrite/bv/rw169.btor -rwl 1"
-#"rewrite/bv/rw179.btor -rwl 3"
-#"rewrite/bv/rw2.btor"
-"rewrite/bv/rw212.smt2 -rwl 3"
-"rewrite/bv/rw216.smt2 -rwl 3"
-#"rewrite/bv/rw3.btor"
-#"rewrite/bv/rw4.btor"
-#"rewrite/bv/rw44.btor -rwl 0"
-#"rewrite/bv/rw44.btor -rwl 1"
-#"rewrite/bv/rw45.btor -rwl 0"
-#"rewrite/bv/rw45.btor -rwl 1"
-#"rewrite/bv/rw5.btor"
-#"rewrite/bv/rw58.btor -rwl 0"
-#"rewrite/bv/rw58.btor -rwl 3"
-#"rewrite/bv/rw59.btor -rwl 0"
-#"rewrite/bv/rw59.btor -rwl 3"
-#"rewrite/bv/rw6.btor"
-#"rewrite/bv/rw7.btor"
-#"rewrite/bv/rw8.btor"
-#"rewrite/bv/rw9.btor"
-#"solver/bv/const1.btor"
-#"solver/bv/factor18446744073709551617const.btor"
-#"solver/bv/factor18446744073709551617xconst.btor"
-#"solver/bv/factor18446744073709551617yconst.btor"
-#"solver/bv/factor2209.btor"
-#"solver/bv/factor4294967295.btor"
-#"solver/bv/factor4294967297.btor"
-#"solver/bv/lin0.btor"
-#"solver/bv/lin1.btor"
-#"solver/bv/lin2.btor"
-#"solver/bv/lin3.btor"
-#"solver/bv/lin4.btor"
-#"solver/bv/normaddneg0.btor"
-#"solver/bv/normaddneg1.btor"
-"solver/bv/prop/prop_bvurem.smt2 --fun-preprop"
-"solver/bv/prop/prop_essential_checks_cycle.smt2 -E prop --prop-sext --prop-infer-ineq-bounds --prop-use-inv-lt-concat"
-"solver/bv/prop/prop_ineq_bounds_cycle.smt2 -E prop --prop-sext --prop-infer-ineq-bounds --prop-use-inv-lt-concat"
-"solver/bv/prop/prop_top_level_const_bits.smt2 -SE lingeling --fun-preprop"
-#"solver/bv/proxybug.btor"
-#"solver/bv/redand3twice.btor"
-"solver/bv/redand3twice.smt2"
-#"solver/bv/redor3.btor"
-#"solver/bv/regrdomabst1.btor"
-#"solver/bv/regrdomabst2.btor"
-#"solver/bv/regrdomabst3.btor"
-#"solver/bv/regrdomabst4.btor"
-#"solver/bv/regrembeddedconstraint11.btor -rwl 0"
-#"solver/bv/regrembeddedconstraint11.btor -rwl 1"
-#"solver/bv/regrembeddedconstraint11.btor -rwl 2"
-#"solver/bv/regrembeddedconstraint11.btor -rwl 3"
-#"solver/bv/regrembeddedconstraint3.btor -rwl 0"
-#"solver/bv/regrembeddedconstraint3.btor -rwl 1"
-#"solver/bv/regrembeddedconstraint3.btor -rwl 2"
-#"solver/bv/regrembeddedconstraint3.btor -rwl 3"
-#"solver/bv/regrembeddedconstraint9.btor -rwl 0"
-#"solver/bv/regrembeddedconstraint9.btor -rwl 1"
-#"solver/bv/regrembeddedconstraint9.btor -rwl 2"
-#"solver/bv/regrembeddedconstraint9.btor -rwl 3"
-#"solver/bv/regrmark1.btor -rwl 0"
-#"solver/bv/regrmark1.btor -rwl 1"
-#"solver/bv/regrmark1.btor -rwl 2"
-#"solver/bv/regrmark1.btor -rwl 3"
-#"solver/bv/regrmodel3.btor"
-#"solver/bv/regrmodel4.btor"
-#"solver/bv/regrrwbinexpconcatzeroconst.btor"
-#"solver/bv/regrw8simp.btor"
-#"solver/bv/rol_same_bw.btor"
-#"solver/bv/ror_same_bw.btor"
-"solver/bv/saddo1.smt2"
-"solver/bv/sc12fuzzcheck2.smt2"
-"solver/bv/sdivo1.smt2"
-#"solver/bv/slicesubst1.btor -rwl 0"
-#"solver/bv/slicesubst1.btor -rwl 2"
-#"solver/bv/sll_same_bw.btor"
-"solver/bv/smtashr1.smt2"
-"solver/bv/smtashr2.smt2"
-"solver/bv/smtashr3.smt2"
-"solver/bv/smtlshr1.smt2"
-"solver/bv/smtlshr2.smt2"
-"solver/bv/smtlshr3.smt2"
-"solver/bv/smtrepeat.smt2"
-"solver/bv/smtrotate.smt2"
-"solver/bv/smtshl1.smt2"
-"solver/bv/smtshl2.smt2"
-"solver/bv/smtshl3.smt2"
-"solver/bv/smtsignextend.smt2"
-"solver/bv/smttrue.smt2"
-"solver/bv/smtzeroextend.smt2"
-"solver/bv/smulo1.smt2"
-#"solver/bv/sqrt25.btor"
-#"solver/bv/sqrt4.btor"
-#"solver/bv/sqrt4295098369.btor"
-#"solver/bv/sqrt49.btor"
-#"solver/bv/sqrt9.btor"
-#"solver/bv/srl_same_bw.btor"
-"solver/bv/ssubo1.smt2"
-"solver/bv/uaddo1.smt2"
-"solver/bv/umulo1.smt2"
-"solver/bv/usubo1.smt2"
-#"solver/bv/var1.btor"
-#"solver/bv/var2.btor"
-)
-
-# unsat testcases, no QF_BV (incremental sat solving required)
-set(unsat_testcases
+## unsat
 #"preprocess/array/regrembeddedconstraint1.btor -rwl 0"
 #"preprocess/array/regrembeddedconstraint1.btor -rwl 1"
 #"preprocess/array/regrembeddedconstraint1.btor -rwl 2"
@@ -516,8 +341,179 @@ set(unsat_testcases
 "solver/quant/regrnormquant.smt2"
 )
 
-# QF_BV-only unsat testcases (no incremental SAT solving required)
-set(unsat_testcases_qfbv
+### QF_BV-only testcases (no incremental SAT solving required)
+set(testcases_qfbv
+## sat
+#"preprocess/bv/substcyclic1.btor"
+#"preprocess/bv/substitute1.btor"
+#"preprocess/bv/substitute3.btor"
+#"preprocess/bv/substitute4.btor"
+#"preprocess/bv/substitute40.btor"
+#"preprocess/bv/substitute5.btor"
+"preprocess/bv/substitute5.smt2"
+#"preprocess/bv/ultsubst1.btor -rwl 0"
+#"preprocess/bv/ultsubst1.btor -rwl 2"
+#"preprocess/bv/ultsubst2.btor -rwl 0"
+#"preprocess/bv/ultsubst2.btor -rwl 2"
+#"preprocess/bv/ultsubst3.btor -rwl 0"
+#"preprocess/bv/ultsubst3.btor -rwl 2"
+#"preprocess/bv/ultsubst4.btor -rwl 0"
+#"preprocess/bv/ultsubst4.btor -rwl 2"
+#"preprocess/bv/ultsubst5.btor -rwl 0"
+#"preprocess/bv/ultsubst5.btor -rwl 2"
+#"preprocess/bv/ultsubst6.btor -rwl 0"
+#"preprocess/bv/ultsubst6.btor -rwl 2"
+#"preprocess/bv/ultsubst7.btor -rwl 0"
+#"preprocess/bv/ultsubst7.btor -rwl 2"
+#"preprocess/bv/ultsubst8.btor -rwl 0"
+#"preprocess/bv/ultsubst8.btor -rwl 2"
+#"preprocess/bv/ultsubst9.btor -rwl 0"
+#"preprocess/bv/ultsubst9.btor -rwl 2"
+#"rewrite/bv/rw1.btor"
+#"rewrite/bv/rw10.btor"
+#"rewrite/bv/rw11.btor"
+#"rewrite/bv/rw113.btor -rwl 0"
+#"rewrite/bv/rw113.btor -rwl 1"
+#"rewrite/bv/rw114.btor -rwl 0"
+#"rewrite/bv/rw114.btor -rwl 1"
+#"rewrite/bv/rw12.btor"
+#"rewrite/bv/rw121.btor -rwl 0"
+#"rewrite/bv/rw121.btor -rwl 1"
+#"rewrite/bv/rw122.btor -rwl 0"
+#"rewrite/bv/rw122.btor -rwl 1"
+#"rewrite/bv/rw13.btor"
+#"rewrite/bv/rw132.btor -rwl 0"
+#"rewrite/bv/rw132.btor -rwl 1"
+#"rewrite/bv/rw133.btor -rwl 0"
+#"rewrite/bv/rw133.btor -rwl 1"
+#"rewrite/bv/rw135.btor -rwl 0"
+#"rewrite/bv/rw135.btor -rwl 3"
+#"rewrite/bv/rw137.btor -rwl 0"
+#"rewrite/bv/rw137.btor -rwl 3"
+#"rewrite/bv/rw138.btor -rwl 0"
+#"rewrite/bv/rw138.btor -rwl 3"
+#"rewrite/bv/rw139.btor -rwl 0"
+#"rewrite/bv/rw139.btor -rwl 3"
+#"rewrite/bv/rw14.btor"
+#"rewrite/bv/rw140.btor -rwl 0"
+#"rewrite/bv/rw140.btor -rwl 3"
+#"rewrite/bv/rw141.btor -rwl 0"
+#"rewrite/bv/rw141.btor -rwl 3"
+#"rewrite/bv/rw142.btor -rwl 0"
+#"rewrite/bv/rw142.btor -rwl 3"
+#"rewrite/bv/rw143.btor -rwl 0"
+#"rewrite/bv/rw143.btor -rwl 3"
+#"rewrite/bv/rw148.btor -rwl 0"
+#"rewrite/bv/rw148.btor -rwl 3"
+#"rewrite/bv/rw15.btor"
+#"rewrite/bv/rw153.btor -rwl 0"
+#"rewrite/bv/rw153.btor -rwl 3"
+#"rewrite/bv/rw157.btor"
+#"rewrite/bv/rw166.btor -rwl 1"
+#"rewrite/bv/rw167.btor -rwl 1"
+#"rewrite/bv/rw168.btor -rwl 1"
+#"rewrite/bv/rw169.btor -rwl 1"
+#"rewrite/bv/rw179.btor -rwl 3"
+#"rewrite/bv/rw2.btor"
+"rewrite/bv/rw212.smt2 -rwl 3"
+"rewrite/bv/rw216.smt2 -rwl 3"
+#"rewrite/bv/rw3.btor"
+#"rewrite/bv/rw4.btor"
+#"rewrite/bv/rw44.btor -rwl 0"
+#"rewrite/bv/rw44.btor -rwl 1"
+#"rewrite/bv/rw45.btor -rwl 0"
+#"rewrite/bv/rw45.btor -rwl 1"
+#"rewrite/bv/rw5.btor"
+#"rewrite/bv/rw58.btor -rwl 0"
+#"rewrite/bv/rw58.btor -rwl 3"
+#"rewrite/bv/rw59.btor -rwl 0"
+#"rewrite/bv/rw59.btor -rwl 3"
+#"rewrite/bv/rw6.btor"
+#"rewrite/bv/rw7.btor"
+#"rewrite/bv/rw8.btor"
+#"rewrite/bv/rw9.btor"
+#"solver/bv/const1.btor"
+#"solver/bv/factor18446744073709551617const.btor"
+#"solver/bv/factor18446744073709551617xconst.btor"
+#"solver/bv/factor18446744073709551617yconst.btor"
+#"solver/bv/factor2209.btor"
+#"solver/bv/factor4294967295.btor"
+#"solver/bv/factor4294967297.btor"
+#"solver/bv/lin0.btor"
+#"solver/bv/lin1.btor"
+#"solver/bv/lin2.btor"
+#"solver/bv/lin3.btor"
+#"solver/bv/lin4.btor"
+#"solver/bv/normaddneg0.btor"
+#"solver/bv/normaddneg1.btor"
+"solver/bv/prop/prop_bvurem.smt2 --fun-preprop"
+"solver/bv/prop/prop_essential_checks_cycle.smt2 -E prop --prop-sext --prop-infer-ineq-bounds --prop-use-inv-lt-concat"
+"solver/bv/prop/prop_ineq_bounds_cycle.smt2 -E prop --prop-sext --prop-infer-ineq-bounds --prop-use-inv-lt-concat"
+"solver/bv/prop/prop_top_level_const_bits.smt2 -SE lingeling --fun-preprop"
+#"solver/bv/proxybug.btor"
+#"solver/bv/redand3twice.btor"
+"solver/bv/redand3twice.smt2"
+#"solver/bv/redor3.btor"
+#"solver/bv/regrdomabst1.btor"
+#"solver/bv/regrdomabst2.btor"
+#"solver/bv/regrdomabst3.btor"
+#"solver/bv/regrdomabst4.btor"
+#"solver/bv/regrembeddedconstraint11.btor -rwl 0"
+#"solver/bv/regrembeddedconstraint11.btor -rwl 1"
+#"solver/bv/regrembeddedconstraint11.btor -rwl 2"
+#"solver/bv/regrembeddedconstraint11.btor -rwl 3"
+#"solver/bv/regrembeddedconstraint3.btor -rwl 0"
+#"solver/bv/regrembeddedconstraint3.btor -rwl 1"
+#"solver/bv/regrembeddedconstraint3.btor -rwl 2"
+#"solver/bv/regrembeddedconstraint3.btor -rwl 3"
+#"solver/bv/regrembeddedconstraint9.btor -rwl 0"
+#"solver/bv/regrembeddedconstraint9.btor -rwl 1"
+#"solver/bv/regrembeddedconstraint9.btor -rwl 2"
+#"solver/bv/regrembeddedconstraint9.btor -rwl 3"
+#"solver/bv/regrmark1.btor -rwl 0"
+#"solver/bv/regrmark1.btor -rwl 1"
+#"solver/bv/regrmark1.btor -rwl 2"
+#"solver/bv/regrmark1.btor -rwl 3"
+#"solver/bv/regrmodel3.btor"
+#"solver/bv/regrmodel4.btor"
+#"solver/bv/regrrwbinexpconcatzeroconst.btor"
+#"solver/bv/regrw8simp.btor"
+#"solver/bv/rol_same_bw.btor"
+#"solver/bv/ror_same_bw.btor"
+"solver/bv/saddo1.smt2"
+"solver/bv/sc12fuzzcheck2.smt2"
+"solver/bv/sdivo1.smt2"
+#"solver/bv/slicesubst1.btor -rwl 0"
+#"solver/bv/slicesubst1.btor -rwl 2"
+#"solver/bv/sll_same_bw.btor"
+"solver/bv/smtashr1.smt2"
+"solver/bv/smtashr2.smt2"
+"solver/bv/smtashr3.smt2"
+"solver/bv/smtlshr1.smt2"
+"solver/bv/smtlshr2.smt2"
+"solver/bv/smtlshr3.smt2"
+"solver/bv/smtrepeat.smt2"
+"solver/bv/smtrotate.smt2"
+"solver/bv/smtshl1.smt2"
+"solver/bv/smtshl2.smt2"
+"solver/bv/smtshl3.smt2"
+"solver/bv/smtsignextend.smt2"
+"solver/bv/smttrue.smt2"
+"solver/bv/smtzeroextend.smt2"
+"solver/bv/smulo1.smt2"
+#"solver/bv/sqrt25.btor"
+#"solver/bv/sqrt4.btor"
+#"solver/bv/sqrt4295098369.btor"
+#"solver/bv/sqrt49.btor"
+#"solver/bv/sqrt9.btor"
+#"solver/bv/srl_same_bw.btor"
+"solver/bv/ssubo1.smt2"
+"solver/bv/uaddo1.smt2"
+"solver/bv/umulo1.smt2"
+"solver/bv/usubo1.smt2"
+#"solver/bv/var1.btor"
+#"solver/bv/var2.btor"
+## unsat
 #"preprocess/bv/substitute10.btor"
 #"preprocess/bv/substitute11.btor"
 #"preprocess/bv/substitute12.btor"
@@ -1214,7 +1210,8 @@ set(cmp_testcases
 )
 
 if(SymFPU_FOUND)
-  list(APPEND sat_testcases_qfbv
+  list(APPEND testcases_qfbv
+    ## sat
     "solver/fp/fp_regr1.smt2"
     "solver/fp/fp_regr10.smt2"
     "solver/fp/fp_regr11.smt2"
@@ -1223,16 +1220,16 @@ if(SymFPU_FOUND)
     "solver/fp/fp_regr6.smt2"
     "solver/fp/fp_sort.smt2"
     "solver/fp/fp_to_fp.smt2"
+    ## unsat
   )
-  list(APPEND sat_testcases
+  list(APPEND testcases
+    ## sat
     "solver/fp/checkmodelfp1.smt2"
     "solver/fp/fp_regr4.smt2"
     "solver/fp/fp_regr7.smt2"
     "solver/fp/fp_regr8.smt2"
     "solver/quant/quant_regr29.smt2"
-  )
-
-  list(APPEND unsat_testcases
+    ## unsat
     "solver/fp/Float-no-simp1-main.smt2"
     "solver/fp/Float-no-simp3-main.smt2"
     "solver/fp/fp_fromsbv.smt2"
@@ -1242,6 +1239,7 @@ if(SymFPU_FOUND)
     "solver/fp/fp_min.smt2"
     "solver/fp/fp_misc.smt2"
     "solver/fp/fp_nan.smt2"
+    "solver/fp/fp_rm.smt2"
     "solver/fp/fp_zero.smt2"
     "solver/fp/uf_fpmax.smt2"
     "solver/fp/uf_fpmin.smt2"
@@ -1249,14 +1247,17 @@ if(SymFPU_FOUND)
     "solver/fp/uf_toubv.smt2"
     "solver/quant/quant_regr27.smt2"
     "solver/quant/quant_regr28.smt2"
+    ## incremental
+    "solver/fp/fp_regr5.smt2 -i"
   )
 
   list(APPEND cmp_testcases
-    "solver/fp/fp_rational.smt2"
-    "solver/fp/fp_real.smt2"
-    "solver/fp/fp_regr5.smt2 -i"
-    "solver/fp/fp_regr9.smt2"
-    "solver/fp/getvalue.smt2"
+    # TODO: disable due to missing support for models
+    # "solver/fp/fp_rational.smt2"
+    # "solver/fp/fp_real.smt2"
+    # "solver/fp/fp_regr9.smt2"
+    # TODO: disabled because const arrays not yet supported
+    #"solver/fp/getvalue.smt2"
   )
 endif()
 
@@ -1281,67 +1282,43 @@ macro(add_test_case option testcase)
 endmacro()
 
 if(CaDiCaL_FOUND)
-  foreach(testcase ${sat_testcases})
-    add_test_case("--check-sat" "${testcase} -SE cadical")
+  foreach(testcase ${testcases})
+    add_test_case("" "${testcase} -S cadical")
   endforeach()
-  foreach(testcase ${sat_testcases_qfbv})
-    add_test_case("--check-sat" "${testcase} -SE cadical")
-  endforeach()
-  foreach(testcase ${unsat_testcases})
-    add_test_case("--check-unsat" "${testcase} -SE cadical")
-  endforeach()
-  foreach(testcase ${unsat_testcases_qfbv})
-    add_test_case("--check-unsat" "${testcase} -SE cadical")
+  foreach(testcase ${testcases_qfbv})
+    add_test_case("" "${testcase} -S cadical")
   endforeach()
   foreach(testcase ${cmp_testcases})
-    add_test_case("--check-output" "${testcase} -SE cadical")
+    add_test_case("--check-output" "${testcase} -S cadical")
   endforeach()
 endif()
 if(CryptoMiniSat_FOUND)
-  foreach(testcase ${sat_testcases})
-    add_test_case("--check-sat" "${testcase} -SE cms")
+  foreach(testcase ${testcases})
+    add_test_case("" "${testcase} -S cms")
   endforeach()
-  foreach(testcase ${sat_testcases_qfbv})
-    add_test_case("--check-sat" "${testcase} -SE cms")
-  endforeach()
-  foreach(testcase ${unsat_testcases})
-    add_test_case("--check-unsat" "${testcase} -SE cms")
-  endforeach()
-  foreach(testcase ${unsat_testcases_qfbv})
-    add_test_case("--check-unsat" "${testcase} -SE cms")
+  foreach(testcase ${testcases_qfbv})
+    add_test_case("" "${testcase} -S cms")
   endforeach()
 endif()
 # FIXME: Disabled for now, Gimsatul support is highly experimental at the moment
 #        (no official API) and some testcases faile due to inconsistent clauses
 #        being added
 #if(Gimsatul_FOUND)
-#  foreach(testcase ${sat_testcases_qfbv})
-#    add_test_case("--check-sat" "${testcase} -SE gimsatul")
-#  endforeach()
-#  foreach(testcase ${unsat_testcases_qfbv})
-#    add_test_case("--check-unsat" "${testcase} -SE gimsatul")
+#  foreach(testcase ${testcases_qfbv})
+#    add_test_case("" "${testcase} -S gimsatul")
 #  endforeach()
 #endif()
 if(Kissat_FOUND)
-  foreach(testcase ${sat_testcases_qfbv})
-    add_test_case("--check-sat" "${testcase} -SE kissat")
+  foreach(testcase ${testcases_qfbv})
+    add_test_case("" "${testcase} -S kissat")
   endforeach()
-    foreach(testcase ${unsat_testcases_qfbv})
-      add_test_case("--check-unsat" "${testcase} -SE kissat")
-    endforeach()
 endif()
 if(Lingeling_FOUND)
-  foreach(testcase ${sat_testcases})
-    add_test_case("--check-sat" "${testcase} -SE lingeling")
+  foreach(testcase ${testcases})
+    add_test_case("" "${testcase} -S lingeling")
   endforeach()
-  foreach(testcase ${sat_testcases_qfbv})
-    add_test_case("--check-sat" "${testcase} -SE lingeling")
-  endforeach()
-  foreach(testcase ${unsat_testcases})
-    add_test_case("--check-unsat" "${testcase} -SE lingeling")
-  endforeach()
-  foreach(testcase ${unsat_testcases_qfbv})
-    add_test_case("--check-unsat" "${testcase} -SE lingeling")
+  foreach(testcase ${testcases_qfbv})
+    add_test_case("" "${testcase} -S lingeling")
   endforeach()
 endif()
 

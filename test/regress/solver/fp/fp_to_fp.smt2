@@ -1,4 +1,5 @@
 (set-logic QF_FP)
+(set-info :status sat)
 (define-fun x () Float16 (_ +zero 5 11))
 (define-fun y () Float16 (_ +zero 5 11))
 (declare-const a Float16);

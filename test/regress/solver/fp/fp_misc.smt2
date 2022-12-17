@@ -1,4 +1,5 @@
 (set-logic QF_FP)
+(set-info :status unsat)
 (declare-const a Float16);
 (declare-const b Float16);
 (declare-const rm RoundingMode);
