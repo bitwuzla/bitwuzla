@@ -63,6 +63,42 @@ KindInfo::is_pairwise(Kind kind)
          == KindAttribute::PAIRWISE;
 }
 
+bool
+KindInfo::is_bool(Kind kind)
+{
+  return Kind::AND <= kind && kind <= Kind::XOR;
+}
+
+bool
+KindInfo::is_bv(Kind kind)
+{
+  return Kind::BV_ADD <= kind && kind <= Kind::BV_ZERO_EXTEND;
+}
+
+bool
+KindInfo::is_fp(Kind kind)
+{
+  return Kind::FP_ABS <= kind && kind <= Kind::FP_TO_UBV;
+}
+
+bool
+KindInfo::is_array(Kind kind)
+{
+  return Kind::CONST_ARRAY <= kind && kind <= Kind::STORE;
+}
+
+bool
+KindInfo::is_fun(Kind kind)
+{
+  return kind == Kind::APPLY || kind == Kind::LAMBDA;
+}
+
+bool
+KindInfo::is_quant(Kind kind)
+{
+  return kind == Kind::EXISTS || kind == Kind::FORALL;
+}
+
 constexpr void
 KindInfo::init(Kind kind,
                uint8_t num_children,

@@ -39,6 +39,24 @@ struct KindInfo
   /** @return Is given kind pairwise chainable (e.g. DISTINCT). */
   static bool is_pairwise(Kind kind);
 
+  /** @return Whether given kind is a boolean kind. */
+  static bool is_bool(Kind kind);
+
+  /** @return Whether given kind is a bit-vector kind. */
+  static bool is_bv(Kind kind);
+
+  /** @return Whether given kind is a floating-point kind. */
+  static bool is_fp(Kind kind);
+
+  /** @return Whether given kind is an array kind. */
+  static bool is_array(Kind kind);
+
+  /** @return Whether given kind is a function kind. */
+  static bool is_fun(Kind kind);
+
+  /** @return Whether given kind is a quantifier kind. */
+  static bool is_quant(Kind kind);
+
  private:
   static constexpr uint8_t s_nary = UINT8_MAX;
 
