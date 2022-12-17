@@ -1,0 +1,6 @@
+(set-logic QF_ABV)
+(set-info :status sat)
+(declare-const a0 (Array (_ BitVec 1) (_ BitVec 1) ))
+(declare-const a1 (Array (_ BitVec 1) (_ BitVec 1) ))
+(assert (= #b1 (ite (= a0 a1) #b1 #b0)))
+(check-sat)

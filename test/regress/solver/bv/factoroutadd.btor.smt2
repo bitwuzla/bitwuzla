@@ -1,0 +1,8 @@
+(set-logic QF_BV)
+(set-info :status sat)
+(declare-const v0 (_ BitVec 32))
+(declare-const v1 (_ BitVec 32))
+(declare-const v2 (_ BitVec 32))
+(declare-const v3 (_ BitVec 1))
+(assert (distinct (_ bv0 32) (ite (= v3 #b1) (bvadd (bvadd v0 v1) v2) (bvadd v0 (bvadd v1 v2)))))
+(check-sat)

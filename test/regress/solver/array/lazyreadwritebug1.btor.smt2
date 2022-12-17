@@ -1,0 +1,5 @@
+(set-logic QF_ABV)
+(set-info :status sat)
+(declare-const a0 (Array (_ BitVec 1) (_ BitVec 2) ))
+(assert (= #b1 ((_ extract 0 0) (select (store (store a0 (bvnot #b0) (bvnot #b00)) #b0 #b00) (bvnot #b0)))))
+(check-sat)

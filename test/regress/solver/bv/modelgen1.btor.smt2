@@ -1,0 +1,6 @@
+(set-logic QF_BV)
+(set-info :status sat)
+(declare-const v0 (_ BitVec 8))
+(declare-const v1 (_ BitVec 8))
+(assert (= #b1 (bvule ((_ extract 7 6) (bvudiv v0 v1)) (bvudiv ((_ extract 7 6) v0) ((_ extract 7 6) v1)))))
+(check-sat)

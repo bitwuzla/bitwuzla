@@ -1,0 +1,6 @@
+(set-logic QF_BV)
+(set-info :status unsat)
+(declare-const v0 (_ BitVec 8))
+(declare-const v1 (_ BitVec 8))
+(assert (= #b1 (bvor (bvor (bvnot (ite (= (ite (bvslt v0 v1) #b1 #b0) ((_ extract 7 7) (bvxor (bvsub v0 v1) (bvand (bvxor v0 v1) (bvxor (bvsub v0 v1) v0))))) #b1 #b0)) (bvnot (ite (= (ite (bvslt v0 v1) #b1 #b0) ((_ extract 7 7) (bvor (bvand v0 (bvnot v1)) (bvand (bvxnor v0 v1) (bvsub v0 v1))))) #b1 #b0))) (bvor (bvnot (ite (= (ite (bvsle v0 v1) #b1 #b0) ((_ extract 7 7) (bvand (bvor v0 (bvnot v1)) (bvor (bvxor v0 v1) (bvnot (bvsub v1 v0)))))) #b1 #b0)) (bvnot (ite (= (ite (bvsle v0 v1) #b1 #b0) ((_ extract 7 7) (bvadd (bvashr (bvxnor v0 v1) ((_ zero_extend 5) (_ bv1 3))) (bvand v0 (bvnot v1))))) #b1 #b0))))))
+(check-sat)

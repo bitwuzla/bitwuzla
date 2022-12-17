@@ -1,0 +1,5 @@
+(set-logic QF_BV)
+(set-info :status sat)
+(declare-const v0 (_ BitVec 8))
+(assert (= #b1 (ite (= v0 (bvadd v0 (bvnot #b11111111))) #b1 #b0)))
+(check-sat)

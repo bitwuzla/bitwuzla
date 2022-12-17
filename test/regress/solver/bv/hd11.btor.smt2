@@ -1,0 +1,6 @@
+(set-logic QF_BV)
+(set-info :status unsat)
+(declare-const v0 (_ BitVec 32))
+(declare-const v1 (_ BitVec 5))
+(assert (= #b1 (bvor (bvor (bvor (bvnot (ite (= (bvashr v0 ((_ zero_extend 27) v1)) (bvsub (bvlshr (bvadd v0 #x80000000) ((_ zero_extend 27) v1)) (bvlshr #x80000000 ((_ zero_extend 27) v1)))) #b1 #b0)) (bvnot (ite (= (bvashr v0 ((_ zero_extend 27) v1)) (bvsub (bvxor (bvlshr v0 ((_ zero_extend 27) v1)) (bvlshr #x80000000 ((_ zero_extend 27) v1))) (bvlshr #x80000000 ((_ zero_extend 27) v1)))) #b1 #b0))) (bvor (bvnot (ite (= (bvashr v0 ((_ zero_extend 27) v1)) (bvsub (bvlshr v0 ((_ zero_extend 27) v1)) (bvadd (bvlshr (bvand v0 #x80000000) ((_ zero_extend 27) v1)) (bvlshr (bvand v0 #x80000000) ((_ zero_extend 27) v1))))) #b1 #b0)) (bvnot (ite (= (bvashr v0 ((_ zero_extend 27) v1)) (bvor (bvlshr v0 ((_ zero_extend 27) v1)) (bvshl (bvneg (bvlshr v0 ((_ zero_extend 27) (_ bv31 5)))) ((_ zero_extend 27) (bvsub (_ bv31 5) v1))))) #b1 #b0)))) (bvnot (ite (= (bvashr v0 ((_ zero_extend 27) v1)) (bvxor (bvlshr (bvxor v0 (bvneg (bvlshr v0 ((_ zero_extend 27) (_ bv31 5))))) ((_ zero_extend 27) v1)) (bvneg (bvlshr v0 ((_ zero_extend 27) (_ bv31 5)))))) #b1 #b0)))))
+(check-sat)

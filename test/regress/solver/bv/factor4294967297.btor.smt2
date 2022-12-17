@@ -1,0 +1,6 @@
+(set-logic QF_BV)
+(set-info :status sat)
+(declare-const v0 (_ BitVec 23))
+(declare-const v1 (_ BitVec 10))
+(assert (= #b1 (ite (= (bvmul ((_ zero_extend 11) v0) ((_ zero_extend 24) v1)) (_ bv4294967297 34)) #b1 #b0)))
+(check-sat)

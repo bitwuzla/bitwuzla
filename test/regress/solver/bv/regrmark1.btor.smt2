@@ -1,0 +1,8 @@
+(set-logic QF_BV)
+(set-info :status sat)
+(declare-const v0 (_ BitVec 2))
+(declare-const v1 (_ BitVec 1))
+(declare-const v2 (_ BitVec 1))
+(declare-const v3 (_ BitVec 1))
+(assert (= #b1 (bvand (ite (= (concat v0 (bvand v1 v2)) (_ bv0 3)) #b1 #b0) (bvand (ite (= v2 (ite (= (concat v0 (bvand v1 v2)) (_ bv0 3)) #b1 #b0)) #b1 #b0) v3))))
+(check-sat)

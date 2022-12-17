@@ -1,0 +1,8 @@
+(set-logic QF_ABV)
+(set-info :status sat)
+(declare-const v0 (_ BitVec 32))
+(declare-const v1 (_ BitVec 7))
+(declare-const a0 (Array (_ BitVec 7) (_ BitVec 32) ))
+(declare-const v2 (_ BitVec 7))
+(assert (= #b1 (bvnot (bvand #b1 (ite (= (bvand #b1 (bvand #b1 (bvnot (ite (= (bvand #b1 (ite (= v0 (select (store a0 v1 v0) (bvadd (ite (= #b0 #b1) #b0000000 (ite (= (bvand #b1 (ite (= #b1 (ite (= (ite (bvult (select (store a0 v1 v0) (bvadd (ite (= (bvand #b1 (ite (= #b1 (ite (= (ite (bvult (select (store a0 v1 v0) #b0000000) v0) #b1 #b0) #b1) #b1 #b0)) #b1 #b0)) #b1) v2 #b0000000) (bvudiv (bvadd #b0000000 (bvadd #b0000001 (bvnot (ite (= (bvand #b1 (ite (= #b1 (ite (= (ite (bvult (select (store a0 v1 v0) #b0000000) v0) #b1 #b0) #b1) #b1 #b0)) #b1 #b0)) #b1) v2 #b0000000)))) #b0000010))) v0) #b1 #b0) #b1) #b1 #b0)) #b1 #b0)) #b1) #b0000000 (ite (= (bvand #b1 (ite (= #b1 (ite (= (ite (bvult (select (store a0 v1 v0) #b0000000) v0) #b1 #b0) #b1) #b1 #b0)) #b1 #b0)) #b1) v2 #b0000000))) (bvudiv (bvadd #b0000000 (bvadd #b0000001 (bvnot (ite (= #b0 #b1) #b0000000 (ite (= (bvand #b1 (ite (= #b1 (ite (= (ite (bvult (select (store a0 v1 v0) (bvadd (ite (= (bvand #b1 (ite (= #b1 (ite (= (ite (bvult (select (store a0 v1 v0) #b0000000) v0) #b1 #b0) #b1) #b1 #b0)) #b1 #b0)) #b1) v2 #b0000000) (bvudiv (bvadd #b0000000 (bvadd #b0000001 (bvnot (ite (= (bvand #b1 (ite (= #b1 (ite (= (ite (bvult (select (store a0 v1 v0) #b0000000) v0) #b1 #b0) #b1) #b1 #b0)) #b1 #b0)) #b1) v2 #b0000000)))) #b0000010))) v0) #b1 #b0) #b1) #b1 #b0)) #b1 #b0)) #b1) #b0000000 (ite (= (bvand #b1 (ite (= #b1 (ite (= (ite (bvult (select (store a0 v1 v0) #b0000000) v0) #b1 #b0) #b1) #b1 #b0)) #b1 #b0)) #b1) v2 #b0000000)))))) #b0000010)))) #b1 #b0)) #b1) #b1 #b0)))) #b0) #b1 #b0)))))
+(check-sat)

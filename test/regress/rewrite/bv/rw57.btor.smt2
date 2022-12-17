@@ -1,0 +1,8 @@
+(set-logic QF_BV)
+(set-info :status unsat)
+(declare-const v0 (_ BitVec 1))
+(declare-const v1 (_ BitVec 4))
+(declare-const v2 (_ BitVec 4))
+(declare-const v3 (_ BitVec 4))
+(assert (= #b1 (bvor (bvnot (ite (= (ite (= v0 #b1) (bvurem v1 v2) (bvurem v1 v3)) (bvurem v1 (ite (= v0 #b1) v2 v3))) #b1 #b0)) (bvnot (ite (= (ite (= v0 #b1) (bvurem v1 v3) (bvurem v2 v3)) (bvurem (ite (= v0 #b1) v1 v2) v3)) #b1 #b0)))))
+(check-sat)

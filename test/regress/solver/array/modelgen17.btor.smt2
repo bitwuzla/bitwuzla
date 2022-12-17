@@ -1,0 +1,8 @@
+(set-logic QF_ABV)
+(set-info :status sat)
+(declare-const a0 (Array (_ BitVec 3) (_ BitVec 2) ))
+(declare-const v0 (_ BitVec 2))
+(declare-const v1 (_ BitVec 4))
+(declare-const v2 (_ BitVec 2))
+(assert (= #b1 (bvand (ite (= (bvadd (concat (_ bv0 3) ((_ extract 3 3) (bvmul (concat (_ bv0 1) (concat (_ bv0 3) (ite (= (store a0 (_ bv0 3) (bvnot v0)) a0) #b1 #b0))) (bvnot (_ bv0 5))))) (bvnot v1)) (_ bv0 4)) #b1 #b0) (ite (= v0 v2) #b1 #b0))))
+(check-sat)

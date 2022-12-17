@@ -1,0 +1,6 @@
+(set-logic QF_BV)
+(set-info :status unsat)
+(declare-const v0 (_ BitVec 30))
+(declare-const v1 (_ BitVec 1))
+(assert (= #b1 (bvnot ((_ extract 1 1) (bvshl (concat v0 (bvnot (_ bv0 2))) ((_ zero_extend 27) (concat (_ bv0 4) v1)))))))
+(check-sat)
