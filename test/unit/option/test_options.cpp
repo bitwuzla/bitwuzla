@@ -19,7 +19,7 @@ TEST_F(TestOptions, opt_bool)
   ASSERT_EQ(d_opts.incremental(), true);
   ASSERT_EQ(d_opts.get<bool>(Option::INCREMENTAL), true);
   ASSERT_DEATH(d_opts.get<uint64_t>(Option::INCREMENTAL), "is_numeric");
-  ASSERT_DEATH(d_opts.get<std::string>(Option::INCREMENTAL), "is_enum");
+  ASSERT_DEATH(d_opts.get<std::string>(Option::INCREMENTAL), "is_mode");
 }
 
 TEST_F(TestOptions, opt_num)
@@ -33,7 +33,7 @@ TEST_F(TestOptions, opt_num)
   ASSERT_EQ(d_opts.log_level(), 1);
   ASSERT_EQ(d_opts.get<uint64_t>(Option::LOG_LEVEL), 1);
   ASSERT_DEATH(d_opts.get<bool>(Option::LOG_LEVEL), "is_bool");
-  ASSERT_DEATH(d_opts.get<std::string>(Option::LOG_LEVEL), "is_enum");
+  ASSERT_DEATH(d_opts.get<std::string>(Option::LOG_LEVEL), "is_mode");
 }
 
 TEST_F(TestOptions, opt_enum)
