@@ -95,7 +95,7 @@ set(testcases
 "solver/array/fifo32in04k05.smt2"
 "solver/array/hang_min_32.smt2"
 "solver/array/invalidmodel1.smt2"
-"solver/array/invalidmodel2.smt2 -xl=0 -ml=0 -rwl=2" # TODO: disabled because of options
+#"solver/array/invalidmodel2.smt2 -xl=0 -ml=0 -rwl=2" # TODO: disabled because of options
 #"solver/array/invalidmodel3.btor"
 #"solver/array/lazyreadwritebug1.btor"
 #"solver/array/random1.btor"
@@ -145,7 +145,7 @@ set(testcases
 #"solver/array/write5.btor"
 "solver/bv/smt2pushpop0.smt2 -i"
 #"solver/fun/lambda1.btor"
-"solver/fun/nestedfun1.smt2 -rwl 2"
+#"solver/fun/nestedfun1.smt2 -rwl 2" # TODO disabled because of options
 "solver/fun/regrencparamapps.smt2"
 "solver/quant/issue96.smt2"
 "solver/quant/quant_regr1.smt2"
@@ -191,7 +191,7 @@ set(testcases
 "preprocess/fun/lambda_elim2.smt2"
 #"rewrite/array/3vl1.btor -rwl 0"
 #"rewrite/array/3vl1.btor -rwl 2"
-"rewrite/array/rw213.smt2 -rwl 3"
+#"rewrite/array/rw213.smt2 -rwl 3" # TODO disabled because of options
 #"solver/array/arraycond11.btor"
 #"solver/array/arraycond12.btor"
 #"solver/array/arraycond13.btor"
@@ -326,7 +326,7 @@ set(testcases
 #"solver/array/write7.btor"
 #"solver/array/write8.btor"
 #"solver/array/write9.btor"
-"solver/bv/prop/prels-funs.smt2 --fun-preprop"
+#"solver/bv/prop/prels-funs.smt2 --bv-solver=preprop" # TODO preprop currently not supported
 #"solver/bv/regrexpleak2.btor -rwl 0"
 "solver/fun/fun1.smt2"
 #"solver/fun/lambda2.btor"
@@ -452,10 +452,10 @@ set(testcases_qfbv
 #"solver/bv/lin4.btor"
 #"solver/bv/normaddneg0.btor"
 #"solver/bv/normaddneg1.btor"
-"solver/bv/prop/prop_bvurem.smt2 --fun-preprop"
-"solver/bv/prop/prop_essential_checks_cycle.smt2 -E prop --prop-sext --prop-infer-ineq-bounds --prop-use-inv-lt-concat"
-"solver/bv/prop/prop_ineq_bounds_cycle.smt2 -E prop --prop-sext --prop-infer-ineq-bounds --prop-use-inv-lt-concat"
-"solver/bv/prop/prop_top_level_const_bits.smt2 -SE lingeling --fun-preprop"
+#"solver/bv/prop/prop_bvurem.smt2 --bv-solver=preprop" # TODO preprop currently not supported
+"solver/bv/prop/prop_essential_checks_cycle.smt2 --bv-solver=prop --prop-sext --prop-ineq-bounds" # --prop-use-inv-lt-concat" # TODO option currently disabled
+"solver/bv/prop/prop_ineq_bounds_cycle.smt2 --bv-solver=prop --prop-sext --prop-ineq-bounds" # --prop-use-inv-lt-concat" # TODO option currently disabled
+#"solver/bv/prop/prop_top_level_const_bits.smt2 -S lingeling --bv-solver=preprop" # TODO preprop currently not supported
 #"solver/bv/proxybug.btor"
 #"solver/bv/redand3twice.btor"
 "solver/bv/redand3twice.smt2"
@@ -696,15 +696,15 @@ set(testcases_qfbv
 #"rewrite/bv/rw21.btor -rwl 1"
 #"rewrite/bv/rw210.btor -rwl 3"
 #"rewrite/bv/rw211.btor -rwl 3"
-"rewrite/bv/rw214.smt2 -rwl 3"
-"rewrite/bv/rw215.smt2 -rwl 3"
-"rewrite/bv/rw217.smt2 -rwl 3"
-"rewrite/bv/rw218.smt2 -rwl 3"
-"rewrite/bv/rw219.smt2 -rwl 3"
+#"rewrite/bv/rw214.smt2 -rwl 3" # TODO disabled because of options
+#"rewrite/bv/rw215.smt2 -rwl 3" # TODO disabled because of options
+#"rewrite/bv/rw217.smt2 -rwl 3" # TODO disabled because of options
+#"rewrite/bv/rw218.smt2 -rwl 3" # TODO disabled because of options
+#"rewrite/bv/rw219.smt2 -rwl 3" # TODO disabled because of options
 #"rewrite/bv/rw22.btor -rwl 0"
 #"rewrite/bv/rw22.btor -rwl 1"
-"rewrite/bv/rw220.smt2 -rwl 3"
-"rewrite/bv/rw221.smt2 -rwl 3"
+#"rewrite/bv/rw220.smt2 -rwl 3" # TODO disabled because of options
+#"rewrite/bv/rw221.smt2 -rwl 3" # TODO disabled because of options
 #"rewrite/bv/rw23.btor -rwl 0"
 #"rewrite/bv/rw23.btor -rwl 1"
 #"rewrite/bv/rw24.btor -rwl 0"
@@ -977,7 +977,7 @@ set(cmp_testcases
 "solver/bv/getvalue1.smt2"
 "solver/bv/getvalue2.smt2"
 "solver/bv/getvalue3.smt2"
-"solver/bv/prop/prop_not_sat.smt2 -E prop --prop-nprops=10000 --prop-nupdates=2000000"
+"solver/bv/prop/prop_not_sat.smt2 --bv-solver=prop --prop-nprops=10000 --prop-nupdates=2000000"
 #"solver/bv/regnegadd1.btor -db"
 #"solver/bv/regr-5smod3.btor -m -d"
 #"solver/bv/regr-5srem3.btor -m -d"
