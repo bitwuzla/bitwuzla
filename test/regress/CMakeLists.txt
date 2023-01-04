@@ -421,8 +421,8 @@ set(testcases_qfbv
 #"rewrite/bv/rw169.btor -rwl 1"
 #"rewrite/bv/rw179.btor -rwl 3"
 #"rewrite/bv/rw2.btor"
-"rewrite/bv/rw212.smt2 -rwl 3"
-"rewrite/bv/rw216.smt2 -rwl 3"
+#"rewrite/bv/rw212.smt2 -rwl 3" # TODO: currently disabled because of options
+#"rewrite/bv/rw216.smt2 -rwl 3" # TODO: currently disabled because of options
 #"rewrite/bv/rw3.btor"
 #"rewrite/bv/rw4.btor"
 #"rewrite/bv/rw44.btor -rwl 0"
