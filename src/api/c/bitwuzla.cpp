@@ -1857,22 +1857,20 @@ extern "C" {
 /* smt2 parser only --------------------------------------------------------- */
 
 void
-bitwuzla_term_print_value_smt2(BitwuzlaTerm term, char *symbol, FILE *file)
+bitwuzla_term_print_value_smt2(Bitwuzla *bitwuzla,
+                               BitwuzlaTerm term,
+                               char *symbol,
+                               FILE *file)
 {
-  // TODO:
-  // BZLA_CHECK_ARG_NOT_NULL(term);
-
-  // BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
-  // assert(bzla_node_get_ext_refs(bzla_term));
-  // Bzla *bzla = bzla_node_get_bzla(bzla_term);
-  // BZLA_CHECK_OPT_PRODUCE_MODELS(bzla);
-  // BZLA_CHECK_SAT(bzla, "print model value");
-  // BZLA_ABORT(bzla->quantifiers->count,
-  //            "'get-value' is currently not supported with quantifiers");
-  // bzla_print_value_smt2(bzla, bzla_term, symbol, file);
-  (void) term;
-  (void) symbol;
-  (void) file;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM_ID(term);
+  BITWUZLA_CHECK_NOT_NULL(symbol);
+  BITWUZLA_CHECK_NOT_NULL(file);
+  fprintf(file,
+          "(%s %s)",
+          symbol,
+          bitwuzla->d_bitwuzla->get_value(import_term(term)).str().c_str());
+  BITWUZLA_TRY_CATCH_END;
 }
 
 BitwuzlaOption

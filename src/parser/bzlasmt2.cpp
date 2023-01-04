@@ -5971,7 +5971,8 @@ read_command_smt2(BzlaSMT2Parser *parser)
       {
         if (BZLA_COUNT_STACK(exps) > 1) fputs("\n ", parser->outfile);
         exp = BZLA_PEEK_STACK(exps, i);
-        bitwuzla_term_print_value_smt2(exp, symbols, parser->outfile);
+        bitwuzla_term_print_value_smt2(
+            parser->bitwuzla, exp, symbols, parser->outfile);
         symbols += strlen(symbols) + 1;
         assert(symbols <= parser->tokens.top);
       }

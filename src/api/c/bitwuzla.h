@@ -1995,7 +1995,7 @@ void bitwuzla_term_dump(BitwuzlaTerm term, const char *format, FILE *file);
 BitwuzlaOption bitwuzla_get_option_from_string(BitwuzlaOptions *options,
                                                const char *str);
 
-void bitwuzla_term_print_value_smt2(BitwuzlaTerm, char *, FILE *);
+void bitwuzla_term_print_value_smt2(Bitwuzla *, BitwuzlaTerm, char *, FILE *);
 
 /* -------------------------------------------------------------------------- */
 
