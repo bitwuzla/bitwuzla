@@ -5645,9 +5645,10 @@ check_sat(BzlaSMT2Parser *parser, uint32_t assc, BitwuzlaTerm *assumptions)
   /* Do not print 'unknown' if we print DIMACS. 'unknown' is only returned if
    * SAT solver is used non-incremental. */
   // else if (!bitwuzla_get_option(parser->options, BITWUZLA_OPT_PRINT_DIMACS))
-  //{
-  //   fprintf(parser->outfile, "unknown\n");
-  // }
+  else
+  {
+    fprintf(parser->outfile, "unknown\n");
+  }
   fflush(parser->outfile);
   // else
   //{
