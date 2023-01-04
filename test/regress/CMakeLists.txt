@@ -26,6 +26,7 @@ set(testcases
 #"preprocess/array/regrembeddedconstraint8.btor -rwl 2"
 #"preprocess/array/regrembeddedconstraint8.btor -rwl 3"
 #"preprocess/array/regrlemmaloop_embeddedconstraints.btor -rwl 1"
+"rewrite/array/hang_min_32.smt2"
 #"rewrite/array/regr3vl1.btor -rwl 0"
 #"rewrite/array/regr3vl1.btor -rwl 1"
 #"rewrite/array/regr3vl1.btor -rwl 2"
@@ -93,7 +94,6 @@ set(testcases
 "solver/array/extarraywrite3sat.smt2"
 "solver/array/fifo32ia04k05.smt2"
 "solver/array/fifo32in04k05.smt2"
-"solver/array/hang_min_32.smt2"
 "solver/array/invalidmodel1.smt2"
 #"solver/array/invalidmodel2.smt2 -xl=0 -ml=0 -rwl=2" # TODO: disabled because of options
 #"solver/array/invalidmodel3.btor"
