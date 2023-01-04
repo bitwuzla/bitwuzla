@@ -143,7 +143,6 @@ set(testcases
 #"solver/array/write19.btor"
 #"solver/array/write20.btor"
 #"solver/array/write5.btor"
-"solver/bv/smt2pushpop0.smt2 -i"
 #"solver/fun/lambda1.btor"
 #"solver/fun/nestedfun1.smt2 -rwl 2" # TODO disabled because of options
 "solver/fun/regrencparamapps.smt2"
@@ -341,6 +340,30 @@ set(testcases
 #"solver/quant/quant_regr8.smt2"# TODO disabled because of quants
 #"solver/quant/regrnormquant.smt2"# TODO disabled because of quants
 #"solver/quant/regsmtparselet.smt2"# TODO disabled because of quants
+## incremental
+#"preprocess/array/nondestr_subst1.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst10.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst11.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst12.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst13.smt2 -i --nondestr-subst" # TODO disabled because of options
+##"preprocess/array/nondestr_subst14.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst15.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst16.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst17.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst18.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst19.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst2.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst20.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst3.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst4.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst5.smt2 -i --nondestr-subst" # TODO disabled because of options
+##"preprocess/array/nondestr_subst6.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst7.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/array/nondestr_subst8.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"preprocess/bv/nondestr_subst9.smt2 -i --nondestr-subst" # TODO disabled because of options
+#"solver/array/issue32.smt2 -i" # TODO disabled because of const arrays
+"solver/bv/painc.smt2 -i"
+"solver/bv/smt2pushpop0.smt2 -i"
 ## tbd
 #"solver/quant/quant_regr27.smt2"
 #"solver/quant/quant_regr28.smt2"
@@ -1187,30 +1210,6 @@ set(cmp_testcases
 "parser/smt2perr187.smt2"
 "parser/smt2perr188.smt2"
 "parser/smt2perr189.smt2"
-
-# incremental testcases
-"preprocess/array/nondestr_subst1.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst10.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst11.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst12.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst13.smt2 -i --nondestr-subst"
-#"preprocess/array/nondestr_subst14.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst15.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst16.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst17.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst18.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst19.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst2.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst20.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst3.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst4.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst5.smt2 -i --nondestr-subst"
-#"preprocess/array/nondestr_subst6.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst7.smt2 -i --nondestr-subst"
-"preprocess/array/nondestr_subst8.smt2 -i --nondestr-subst"
-"preprocess/bv/nondestr_subst9.smt2 -i --nondestr-subst"
-#"solver/array/issue32.smt2 -i" # TODO disabled because of const arrays
-"solver/bv/painc.smt2 -i"
 )
 
 if(SymFPU_FOUND)
