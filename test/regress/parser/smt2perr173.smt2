@@ -1,1 +1,1 @@
-(declare-const a (_ BitVec 4294967296))
+(declare-const a (_ BitVec 18446744073709551617))

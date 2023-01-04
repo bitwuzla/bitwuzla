@@ -1,1 +1,1 @@
-(assert (=> (_ bv0 1) (_ bv1 2)))
+(assert (=> true (_ bv1 2)))

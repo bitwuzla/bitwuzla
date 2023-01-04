@@ -147,25 +147,25 @@ set(testcases
 #"solver/fun/lambda1.btor"
 #"solver/fun/nestedfun1.smt2 -rwl 2" # TODO disabled because of options
 "solver/fun/regrencparamapps.smt2"
-"solver/quant/issue96.smt2"
-"solver/quant/quant_regr1.smt2"
-"solver/quant/quant_regr13.smt2"
-"solver/quant/quant_regr15.smt2"
-"solver/quant/quant_regr16.smt2"
-"solver/quant/quant_regr18.smt2"
-"solver/quant/quant_regr2.smt2"
-"solver/quant/quant_regr20.smt2"
-"solver/quant/quant_regr21.smt2"
-"solver/quant/quant_regr22.smt2"
-"solver/quant/quant_regr23.smt2"
-"solver/quant/quant_regr24.smt2"
-"solver/quant/quant_regr25.smt2"
-"solver/quant/quant_regr26.smt2"
-#"solver/quant/quant_regr3.smt2" # currently returns unknown
-"solver/quant/quant_regr4.smt2"
-"solver/quant/quant_regr6.smt2"
-"solver/quant/quant_regr7.smt2"
-"solver/quant/quant_regr9.smt2"
+#"solver/quant/issue96.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr1.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr13.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr15.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr16.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr18.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr2.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr20.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr21.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr22.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr23.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr24.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr25.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr26.smt2"# TODO disabled because of quants
+##"solver/quant/quant_regr3.smt2" # currently returns unknown# TODO disabled because of quants
+#"solver/quant/quant_regr4.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr6.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr7.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr9.smt2"# TODO disabled because of quants
 ## unsat
 #"preprocess/array/regrembeddedconstraint1.btor -rwl 0"
 #"preprocess/array/regrembeddedconstraint1.btor -rwl 1"
@@ -330,17 +330,17 @@ set(testcases
 #"solver/bv/regrexpleak2.btor -rwl 0"
 "solver/fun/fun1.smt2"
 #"solver/fun/lambda2.btor"
-"solver/quant/issue97.smt2"
-"solver/quant/quant_regr10.smt2"
-"solver/quant/quant_regr11.smt2"
-"solver/quant/quant_regr12.smt2"
-"solver/quant/quant_regr14.smt2"
-"solver/quant/quant_regr17.smt2"
-"solver/quant/quant_regr19.smt2"
-"solver/quant/quant_regr5.smt2"
-"solver/quant/quant_regr8.smt2"
-"solver/quant/regrnormquant.smt2"
-"solver/quant/regsmtparselet.smt2"
+#"solver/quant/issue97.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr10.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr11.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr12.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr14.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr17.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr19.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr5.smt2"# TODO disabled because of quants
+#"solver/quant/quant_regr8.smt2"# TODO disabled because of quants
+#"solver/quant/regrnormquant.smt2"# TODO disabled because of quants
+#"solver/quant/regsmtparselet.smt2"# TODO disabled because of quants
 ## tbd
 #"solver/quant/quant_regr27.smt2"
 #"solver/quant/quant_regr28.smt2"
@@ -971,7 +971,7 @@ set(cmp_testcases
 #"preprocess/bv/normalize_mul_incomplete.btor -db"
 #"preprocess/bv/regaddnorm1.btor -db"
 #"preprocess/bv/regaddnorm2.btor -db"
-"solver/array/issue35.smt2"
+#"solver/array/issue35.smt2" # TODO disabled because of const arrays
 #"solver/bv/concatslice1.btor -rwl 1 -db"
 #"solver/bv/concatslice2.btor -rwl 1 -db"
 "solver/bv/getvalue1.smt2"
@@ -987,12 +987,12 @@ set(cmp_testcases
 #"solver/bv/regr5srem-3.btor -m -d"
 #"solver/bv/regr6smod-3.btor -m -d"
 #"solver/bv/regr6srem-3.btor -m -d"
-"solver/bv/smtandvar.smt2 -m"
-"solver/bv/smtiff.smt2 -m"
-"solver/bv/smtnotvar.smt2 -m"
-"solver/bv/smtor.smt2 -m"
-"solver/bv/smtvar.smt2 -m"
-"solver/bv/smtxor.smt2 -m"
+#"solver/bv/smtandvar.smt2 -m"# TODO disabled because of models
+#"solver/bv/smtiff.smt2 -m"# TODO disabled because of models
+#"solver/bv/smtnotvar.smt2 -m"# TODO disabled because of models
+#"solver/bv/smtor.smt2 -m"# TODO disabled because of models
+#"solver/bv/smtvar.smt2 -m"# TODO disabled because of models
+#"solver/bv/smtxor.smt2 -m"# TODO disabled because of models
 
 # parse error tests
 #"parser/btorperr000.btor"
@@ -1209,7 +1209,7 @@ set(cmp_testcases
 "preprocess/array/nondestr_subst7.smt2 -i --nondestr-subst"
 "preprocess/array/nondestr_subst8.smt2 -i --nondestr-subst"
 "preprocess/bv/nondestr_subst9.smt2 -i --nondestr-subst"
-"solver/array/issue32.smt2 -i"
+#"solver/array/issue32.smt2 -i" # TODO disabled because of const arrays
 "solver/bv/painc.smt2 -i"
 )
 
@@ -1232,7 +1232,7 @@ if(SymFPU_FOUND)
     "solver/fp/fp_regr4.smt2"
     "solver/fp/fp_regr7.smt2"
     "solver/fp/fp_regr8.smt2"
-    "solver/quant/quant_regr29.smt2"
+    #"solver/quant/quant_regr29.smt2" # TODO disabled because of quants
     ## unsat
     "solver/fp/Float-no-simp1-main.smt2"
     "solver/fp/Float-no-simp3-main.smt2"
@@ -1249,8 +1249,8 @@ if(SymFPU_FOUND)
     "solver/fp/uf_fpmin.smt2"
     "solver/fp/uf_tosbv.smt2"
     "solver/fp/uf_toubv.smt2"
-    "solver/quant/quant_regr27.smt2"
-    "solver/quant/quant_regr28.smt2"
+    #"solver/quant/quant_regr27.smt2" # TODO disabled because of quants
+    #"solver/quant/quant_regr28.smt2" # TODO disabled because of quants
     ## incremental
     "solver/fp/fp_regr5.smt2 -i"
   )

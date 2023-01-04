@@ -1,1 +1,1 @@
-regress/parser/smt2perr112.smt2:2:14: expected bit-vector of size 1
+regress/parser/smt2perr112.smt2:2:14: expected bool

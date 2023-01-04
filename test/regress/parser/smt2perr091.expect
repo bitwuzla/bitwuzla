@@ -1,1 +1,1 @@
-regress/parser/smt2perr091.smt2:1:14: first argument of 'ite' is not a bit-vector of size 1
+regress/parser/smt2perr091.smt2:1:14: first argument of 'ite' is not a bool
