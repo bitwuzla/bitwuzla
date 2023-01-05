@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <unordered_map>
+#include <map>
 #include <unordered_set>
 #include <variant>
 #include <vector>
@@ -108,7 +108,7 @@ class Statistics
  private:
   using stat_value = std::variant<uint64_t, TimerStatistic, HistogramStatistic>;
   /** Registered statistic values. */
-  std::unordered_map<std::string, stat_value> d_stats;
+  std::map<std::string, stat_value> d_stats;
 };
 
 }  // namespace bzla::util
