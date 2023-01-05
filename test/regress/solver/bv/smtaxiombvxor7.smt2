@@ -1,5 +1,5 @@
-
 (set-logic QF_BV)
+(set-info :status unsat)
 (declare-fun s () (_ BitVec 7))
 (declare-fun t () (_ BitVec 7))
 (assert (not (= (bvxor s t) (bvor (bvand s (bvnot t)) (bvand (bvnot s) t)))))

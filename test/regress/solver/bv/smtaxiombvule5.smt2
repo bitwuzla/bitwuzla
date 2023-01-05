@@ -1,5 +1,5 @@
-
 (set-logic QF_BV)
+(set-info :status unsat)
 (declare-fun s () (_ BitVec 5))
 (declare-fun t () (_ BitVec 5))
 (assert (not (= (bvule s t) (or (bvult s t) (= s t)))))

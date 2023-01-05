@@ -21,16 +21,13 @@ set(test_names
   #misc
   #modelgen
   #modelgensmt2
-  #overflow
   #prop
   #propold
   #propoldcomplete
   #propoldcons
   #propoldinv
-  #rotate
   #satmgr
   #shift
-  #smtaxioms
   #util
 )
 
