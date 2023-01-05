@@ -14,18 +14,13 @@ set(test_names
   #constbits
   #essutils
   #exp
-  #hash
   #inc
-  #inthash
-  #inthashmap
   #invutils
   #lambda
   #logic
-  #mem
   #misc
   #modelgen
   #modelgensmt2
-  #nodemap
   #overflow
   #prop
   #propold
@@ -33,13 +28,9 @@ set(test_names
   #propoldcons
   #propoldinv
   #rotate
-  #queue
   #satmgr
   #shift
   #smtaxioms
-  #sort
-  #stack
-  #unionfind
   #util
 )
 
