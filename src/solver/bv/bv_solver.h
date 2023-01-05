@@ -51,6 +51,7 @@ class BvSolver : public Solver, public BvSolverInterface
   {
     Statistics(util::Statistics& stats);
     uint64_t& num_checks;
+    uint64_t& num_assertions;
     util::TimerStatistic& time_check;
   } d_stats;
 };

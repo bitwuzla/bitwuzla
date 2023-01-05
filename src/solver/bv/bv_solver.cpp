@@ -57,11 +57,13 @@ BvSolver::register_assertion(const Node& assertion, bool top_level)
   if (d_cur_solver == option::BvSolver::BITBLAST
       || d_cur_solver == option::BvSolver::PREPROP)
   {
+    ++d_stats.num_assertions;
     d_bitblast_solver.register_assertion(assertion, top_level);
   }
   if (d_cur_solver == option::BvSolver::PROP
       || d_cur_solver == option::BvSolver::PREPROP)
   {
+    ++d_stats.num_assertions;
     d_prop_solver.register_assertion(assertion, top_level);
   }
 }
@@ -384,6 +386,7 @@ BvSolver::assignment(const Node& term)
 
 BvSolver::Statistics::Statistics(util::Statistics& stats)
     : num_checks(stats.new_stat<uint64_t>("bv::num_checks")),
+      num_assertions(stats.new_stat<uint64_t>("bv::num_assertions")),
       time_check(stats.new_stat<util::TimerStatistic>("bv::time_check"))
 {
 }
