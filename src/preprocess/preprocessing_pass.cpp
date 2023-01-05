@@ -26,8 +26,10 @@ AssertionVector::AssertionVector(backtrack::AssertionView& view)
 void
 AssertionVector::push_back(const Node& assertion)
 {
-  d_changed = true;
-  d_view.insert_at_level(d_level, assertion);
+  if (d_view.insert_at_level(d_level, assertion))
+  {
+    d_changed = true;
+  }
 }
 
 size_t
