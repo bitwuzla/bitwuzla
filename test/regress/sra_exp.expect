@@ -1,7 +1,0 @@
-1 var 5 v1
-2 slice 1 1 4 4
-3 var 5 v2
-4 srl 5 -1 3
-5 srl 5 1 3
-6 cond 5 2 -4 5
-7 root 5 6

@@ -1,6 +1,0 @@
-1 var 32 v1
-2 slice 1 1 31 31
-3 zero 32
-4 cond 32 2 -3 3
-5 concat 64 4 1
-6 root 64 5
