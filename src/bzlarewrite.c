@@ -7500,8 +7500,8 @@ SWAP_OPERANDS:
     ADD_RW_RULE(bcond_if_eq, e0, e1);
     ADD_RW_RULE(bcond_else_eq, e0, e1);
     ADD_RW_RULE(distrib_add_mul_eq, e0, e1);
-    ADD_RW_RULE(concat_eq, e0, e1);
 #if 0
+    ADD_RW_RULE(concat_eq, e0, e1);
     ADD_RW_RULE (zero_eq_and_eq, e0, e1);
 #endif
 
