@@ -182,7 +182,7 @@ constexpr KindInfo::KindInfo()
   init(Kind::BV_UMULO, 2, 0, "BV_UMULO", "bvumulo");
   init(Kind::BV_UREM, 2, 0, "BV_UREM", "bvurem");
   init(Kind::BV_USUBO, 2, 0, "BV_USUBO", "bvusubo");
-  init(Kind::BV_XNOR, 2, 0, "BV_XNOR", "bvxnor", KindInfo::LEFT_ASSOC);
+  init(Kind::BV_XNOR, 2, 0, "BV_XNOR", "bvxnor");
   init(Kind::BV_XOR, 2, 0, "BV_XOR", "bvxor", KindInfo::LEFT_ASSOC);
   init(Kind::BV_ZERO_EXTEND, 1, 1, "BV_ZERO_EXTEND", "zero_extend");
 

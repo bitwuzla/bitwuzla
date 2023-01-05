@@ -2005,7 +2005,6 @@ mk_term(Kind kind,
     case Kind::BV_CONCAT:
     case Kind::BV_MUL:
     case Kind::BV_OR:
-    case Kind::BV_XNOR:
     case Kind::BV_XOR:
     case Kind::EQUAL:
     case Kind::IFF:
@@ -2128,6 +2127,7 @@ mk_term(Kind kind,
     case Kind::BV_UMUL_OVERFLOW:
     case Kind::BV_UREM:
     case Kind::BV_USUB_OVERFLOW:
+    case Kind::BV_XNOR:
     case Kind::FP_MAX:
     case Kind::FP_MIN:
     case Kind::FP_REM:
