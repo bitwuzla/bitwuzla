@@ -3,5 +3,5 @@
 (declare-const v0 (_ BitVec 8))
 (declare-const v1 (_ BitVec 8))
 (declare-const v2 (_ BitVec 8))
-(assert (= #b1 (bvnot (bvor (bvnot (ite (bvsle v0 v1) #b1 #b0)) (ite (= (bvand (ite (bvsle v0 v2) #b1 #b0) (ite (bvsle v2 v1) #b1 #b0)) (bvule (bvsub v2 v0) (bvsub v1 v0))) #b1 #b0)))))
+(assert (not (or (not (bvsle v0 v1)) (= (and (bvsle v0 v2) (bvsle v2 v1)) (bvule (bvsub v2 v0) (bvsub v1 v0))))))
 (check-sat)

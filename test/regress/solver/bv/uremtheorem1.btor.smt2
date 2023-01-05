@@ -2,5 +2,5 @@
 (set-info :status unsat)
 (declare-const v0 (_ BitVec 8))
 (declare-const v1 (_ BitVec 8))
-(assert (= #b1 (bvnot (bvand (bvor (bvnot (ite (distinct v1 (_ bv0 8)) #b1 #b0)) (bvule (bvurem v0 v1) v0)) (bvor (bvnot (ite (distinct v1 (_ bv0 8)) #b1 #b0)) (bvule (bvurem v0 v1) v1))))))
+(assert (not (and (or (not (distinct v1 (_ bv0 8))) (bvule (bvurem v0 v1) v0)) (or (not (distinct v1 (_ bv0 8))) (bvule (bvurem v0 v1) v1)))))
 (check-sat)

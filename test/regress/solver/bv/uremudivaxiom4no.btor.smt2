@@ -4,5 +4,5 @@
 (declare-const v1 (_ BitVec 4))
 (declare-const v2 (_ BitVec 4))
 (declare-const v3 (_ BitVec 4))
-(assert (= #b1 (bvnot (bvor (bvnot (bvnot (ite (= v1 (_ bv0 4)) #b1 #b0))) (ite (= (bvand (bvand (ite (= v0 (bvadd v3 (bvmul v1 v2))) #b1 #b0) (ite (bvult v3 v1) #b1 #b0)) (bvand (bvnot (bvumulo v1 v2)) (bvnot (bvuaddo v3 (bvmul v1 v2))))) (bvand (ite (= v2 (bvudiv v0 v1)) #b1 #b0) (ite (= v3 (bvurem v0 v1)) #b1 #b0))) #b1 #b0)))))
+(assert (not (or (not (not (= v1 (_ bv0 4)))) (= (and (and (= v0 (bvadd v3 (bvmul v1 v2))) (bvult v3 v1)) (and (not (bvumulo v1 v2)) (not (bvuaddo v3 (bvmul v1 v2))))) (and (= v2 (bvudiv v0 v1)) (= v3 (bvurem v0 v1)))))))
 (check-sat)
