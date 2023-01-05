@@ -2939,7 +2939,7 @@ apply_concat_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   if (!(bzla_node_is_bv_slice(tmp2) && bzla_node_is_bv_slice(tmp4)))
   {
     eq1 = rewrite_eq_exp(bzla, bzla_node_cond_invert(e0, real_e0->e[0]), tmp2);
-    eq2 = rewrite_eq_exp(bzla, bzla_node_cond_invert(e1, real_e0->e[1]), tmp4);
+    eq2 = rewrite_eq_exp(bzla, bzla_node_cond_invert(e0, real_e0->e[1]), tmp4);
     result = rewrite_bv_and_exp(bzla, eq1, eq2);
     bzla_node_release(bzla, eq1);
     bzla_node_release(bzla, eq2);
