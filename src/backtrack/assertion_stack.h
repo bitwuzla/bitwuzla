@@ -78,8 +78,9 @@ class AssertionView
    *
    * @param level The level to insert the assertion to.
    * @param assertion The assertion to insert.
+   * @return True if assertion was inserted, and false otherwise.
    */
-  void insert_at_level(size_t level, const Node& assertion);
+  bool insert_at_level(size_t level, const Node& assertion);
 
  private:
   AssertionView(AssertionStack& assertions);
@@ -116,8 +117,9 @@ class AssertionStack : public Backtrackable
    *
    * @param level The level to insert the assertion to.
    * @param assertion The assertion to insert.
+   * @return True if assertion was inserted, and false otherwise.
    */
-  void insert_at_level(size_t level, const Node& assertion);
+  bool insert_at_level(size_t level, const Node& assertion);
 
   /** @return The number of assertions on the stack. */
   size_t size() const;

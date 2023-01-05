@@ -29,14 +29,13 @@ AssertionStack::replace(size_t index, const Node& replacement)
   d_assertions[index].first = replacement;
 }
 
-void
+bool
 AssertionStack::insert_at_level(size_t level, const Node& assertion)
 {
   // If inserted at current level, just use push_back().
   if (level == d_control.size())
   {
-    push_back(assertion);
-    return;
+    return push_back(assertion);
   }
   assert(level < d_control.size());
 
@@ -47,7 +46,7 @@ AssertionStack::insert_at_level(size_t level, const Node& assertion)
     // Assertion already added in a previous level.
     if (it->second < index)
     {
-      return;
+      return false;
     }
     // Assertion added to lower level, update index.
     it->second = index;
@@ -59,6 +58,7 @@ AssertionStack::insert_at_level(size_t level, const Node& assertion)
   {
     ++d_control[i];
   }
+  return true;
 }
 
 size_t
@@ -230,10 +230,10 @@ AssertionView::replace(size_t index, const Node& replacement)
   d_assertions.replace(index, replacement);
 }
 
-void
+bool
 AssertionView::insert_at_level(size_t level, const Node& assertion)
 {
-  d_assertions.insert_at_level(level, assertion);
+  return d_assertions.insert_at_level(level, assertion);
 }
 
 }  // namespace bzla::backtrack
