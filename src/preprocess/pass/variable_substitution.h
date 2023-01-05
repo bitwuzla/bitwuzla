@@ -15,14 +15,8 @@ namespace bzla::preprocess::pass {
 class PassVariableSubstitution : public PreprocessingPass
 {
  public:
-  PassVariableSubstitution(Env& env, backtrack::BacktrackManager* backtrack_mgr)
-      : PreprocessingPass(env),
-        d_backtrack_mgr(backtrack_mgr),
-        d_substitutions(backtrack_mgr),
-        d_substitution_assertions(backtrack_mgr),
-        d_cache(backtrack_mgr)
-  {
-  }
+  PassVariableSubstitution(Env& env,
+                           backtrack::BacktrackManager* backtrack_mgr);
 
   void apply(AssertionVector& assertions) override;
 
@@ -73,6 +67,15 @@ class PassVariableSubstitution : public PreprocessingPass
 
   /** Backtrackable substitution cache. */
   Cache d_cache;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    util::TimerStatistic& time_apply;
+    util::TimerStatistic& time_direct_cycle_check;
+    util::TimerStatistic& time_remove_cycles;
+    uint64_t& num_substs;
+  } d_stats;
 };
 
 }  // namespace bzla::preprocess::pass

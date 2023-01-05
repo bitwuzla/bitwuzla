@@ -32,9 +32,21 @@ get_var_term(const Node& assertion)
 
 }  // namespace
 
+PassVariableSubstitution::PassVariableSubstitution(
+    Env& env, backtrack::BacktrackManager* backtrack_mgr)
+    : PreprocessingPass(env),
+      d_backtrack_mgr(backtrack_mgr),
+      d_substitutions(backtrack_mgr),
+      d_substitution_assertions(backtrack_mgr),
+      d_cache(backtrack_mgr),
+      d_stats(env.statistics())
+{
+}
+
 void
 PassVariableSubstitution::apply(AssertionVector& assertions)
 {
+  util::Timer timer(d_stats.time_apply);
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
@@ -57,7 +69,12 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
 
   // Compute substitution map and remove cycles
   substitution_map.insert(d_substitutions.begin(), d_substitutions.end());
-  remove_indirect_cycles(substitution_map);
+  {
+    util::Timer timer_cycles(d_stats.time_remove_cycles);
+    remove_indirect_cycles(substitution_map);
+  }
+
+  d_stats.num_substs = substitution_map.size();
 
   // Apply substitutions.
   //
@@ -222,6 +239,7 @@ bool
 PassVariableSubstitution::is_direct_cycle(const Node& var,
                                           const Node& term) const
 {
+  util::Timer timer(d_stats.time_direct_cycle_check);
   node::unordered_node_ref_set cache;
   node::node_ref_vector visit{term};
   do
@@ -336,6 +354,17 @@ std::unordered_map<Node, Node>&
 PassVariableSubstitution::Cache::cache()
 {
   return d_cache.back();
+}
+
+PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
+    : time_apply(stats.new_stat<util::TimerStatistic>(
+        "preprocess::varsubst::time_apply")),
+      time_direct_cycle_check(stats.new_stat<util::TimerStatistic>(
+          "preprocess::varsubst::time_direct_cycle_check")),
+      time_remove_cycles(stats.new_stat<util::TimerStatistic>(
+          "preprocess::varsubst::time_remove_cycles")),
+      num_substs(stats.new_stat<uint64_t>("preprocess::varsubst::num_substs"))
+{
 }
 
 }  // namespace bzla::preprocess::pass
