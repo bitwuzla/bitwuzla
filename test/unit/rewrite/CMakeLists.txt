@@ -1,5 +1,4 @@
-add_unit_test(test_rewriter_bool)
-add_unit_test(test_rewriter_bv)
-add_unit_test(test_rewriter_bv_overflow)
 add_unit_test(test_rewriter_core)
-add_unit_test(test_rewriter_fp)
+add_subdirectory(bool)
+add_subdirectory(bv)
+add_subdirectory(fp)

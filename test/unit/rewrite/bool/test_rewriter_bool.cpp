@@ -2,7 +2,7 @@
 #include "node/node_manager.h"
 #include "rewrite/rewriter.h"
 #include "rewrite/rewrites_bool.h"
-#include "test_rewriter.h"
+#include "test/unit/rewrite/test_rewriter.h"
 
 namespace bzla::test {
 
