@@ -34,7 +34,7 @@ TEST_F(TestPassVariableSubstitution, subst1)
   d_pass.apply(assertions);
 
   ASSERT_EQ(d_as.size(), 1);
-  ASSERT_EQ(d_as[0], eq);
+  ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_pass.process(eq), d_nm.mk_value(true));
 }
 
@@ -54,7 +54,7 @@ TEST_F(TestPassVariableSubstitution, subst2)
 
   Node expected = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {y, t})});
   ASSERT_EQ(d_as.size(), 2);
-  ASSERT_EQ(d_as[0], eq);
+  ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_as[1], expected);
   ASSERT_EQ(d_pass.process(eq), d_nm.mk_value(true));
   ASSERT_EQ(d_pass.process(di), expected);
@@ -86,7 +86,7 @@ TEST_F(TestPassVariableSubstitution, cycle2)
 
   preprocess::AssertionVector assertions(d_as.view());
   d_pass.apply(assertions);
-  ASSERT_EQ(d_as[0], eq1);
+  ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_as[1], d_nm.mk_value(true));
   ASSERT_EQ(d_as[2], y);
 }
@@ -108,9 +108,9 @@ TEST_F(TestPassVariableSubstitution, cycle3)
   d_pass.apply(assertions);
 
   Node y_and_z = d_nm.mk_node(Kind::AND, {y, z});
-  ASSERT_EQ(d_as[0], y_and_z);
-  ASSERT_EQ(d_as[1], d_nm.mk_node(Kind::EQUAL, {y, y_and_z}));
-  ASSERT_EQ(d_as[2], eq1);
+  ASSERT_EQ(d_as[0], x_and_z);
+  ASSERT_EQ(d_as[1], d_nm.mk_value(true));
+  ASSERT_EQ(d_as[2], d_nm.mk_node(Kind::EQUAL, {x, x_and_z}));
 }
 
 TEST_F(TestPassVariableSubstitution, cycle4)
@@ -130,8 +130,8 @@ TEST_F(TestPassVariableSubstitution, cycle4)
   d_pass.apply(assertions);
 
   ASSERT_EQ(d_as[0], d_nm.mk_value(true));
-  ASSERT_EQ(d_as[1], d_nm.mk_node(Kind::EQUAL, {y, x}));
-  ASSERT_EQ(d_as[2], eq3);
+  ASSERT_EQ(d_as[1], d_nm.mk_value(true));
+  ASSERT_EQ(d_as[2], d_nm.mk_value(true));
 }
 
 /* --- Incremental tests ---------------------------------------------------- */
@@ -156,7 +156,7 @@ TEST_F(TestPassVariableSubstitution, inc1)
 
   Node expected = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {y, t})});
   ASSERT_EQ(as.size(), 2);
-  ASSERT_EQ(as[0], eq);
+  ASSERT_EQ(as[0], d_nm.mk_value(true));
   ASSERT_EQ(as[1], expected);
   ASSERT_EQ(pp.process(eq), d_nm.mk_value(true));
   ASSERT_EQ(pp.process(di), expected);
@@ -164,7 +164,7 @@ TEST_F(TestPassVariableSubstitution, inc1)
   ctx.pop();
   ctx.preprocess();
   ASSERT_EQ(as.size(), 1);
-  ASSERT_EQ(as[0], eq);
+  ASSERT_EQ(as[0], d_nm.mk_value(true));
   ASSERT_EQ(pp.process(eq), d_nm.mk_value(true));
   ASSERT_EQ(pp.process(di), expected);
 }
