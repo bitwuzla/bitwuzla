@@ -29,20 +29,6 @@ FpSolver::is_theory_leaf(const Node& term)
              && (term[0].type().is_fp() || term[0].type().is_rm()));
 }
 
-bool
-FpSolver::is_leaf(const Node& node)
-{
-  if (array::ArraySolver::is_theory_leaf(node)
-      || fun::FunSolver::is_theory_leaf(node)
-      || quant::QuantSolver::is_theory_leaf(node))
-  {
-    return true;
-  }
-  node::Kind k = node.kind();
-  return k == node::Kind::FP_TO_FP_FROM_BV || k == node::Kind::FP_TO_FP_FROM_SBV
-         || k == node::Kind::FP_TO_FP_FROM_UBV;
-}
-
 Node
 FpSolver::default_value(const Type& type)
 {
@@ -87,6 +73,29 @@ FpSolver::check()
   d_word_blast_queue.clear();
 }
 
+namespace {
+/**
+ * Determine if given node is a leaf node for the value computation of the
+ * floating-point solver, i.e., a term of floating-point or rounding mode type
+ * that belongs to any of the other theories or is a conversion from a term
+ * that belongs to other theories.
+ * @param node The node to query.
+ */
+bool
+is_leaf(const Node& node)
+{
+  if (array::ArraySolver::is_theory_leaf(node)
+      || fun::FunSolver::is_theory_leaf(node)
+      || quant::QuantSolver::is_theory_leaf(node))
+  {
+    return true;
+  }
+  node::Kind k = node.kind();
+  return k == node::Kind::FP_TO_FP_FROM_BV || k == node::Kind::FP_TO_FP_FROM_SBV
+         || k == node::Kind::FP_TO_FP_FROM_UBV;
+}
+}  // namespace
+
 Node
 FpSolver::value(const Node& term)
 {
@@ -111,9 +120,9 @@ FpSolver::value(const Node& term)
     if (it == visited.end())
     {
       visited.emplace(cur, false);
-      assert(!is_leaf(cur) || cur.type().is_fp() || cur.type().is_rm());
       if (!is_leaf(cur))
       {
+        assert(cur.type().is_fp() || cur.type().is_rm());
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
       continue;

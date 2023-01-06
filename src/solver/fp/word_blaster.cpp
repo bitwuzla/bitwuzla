@@ -5,8 +5,11 @@
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
+#include "solver/array/array_solver.h"
 #include "solver/fp/fp_solver.h"
 #include "solver/fp/symfpu_wrapper.h"
+#include "solver/fun/fun_solver.h"
+#include "solver/quant/quant_solver.h"
 #include "solver/solver_state.h"
 #include "symfpu/core/classify.h"
 #include "symfpu/core/compare.h"
@@ -22,12 +25,27 @@ namespace bzla {
 namespace fp {
 
 namespace {
+
 std::string
 create_component_symbol(const Node& node, const std::string& s)
 {
   assert(!node.is_null());
   assert(!s.empty());
   return "_fp_var_" + std::to_string(node.id()) + s + "_component_";
+}
+
+/**
+ * Determine if given node is a leaf node for the word blaster, i.e., a term of
+ * floating-point or rounding mode type that belongs to any of the other
+ * theories.
+ * @param node The node to query.
+ */
+bool
+is_leaf(const Node& node)
+{
+  return array::ArraySolver::is_theory_leaf(node)
+         || fun::FunSolver::is_theory_leaf(node)
+         || quant::QuantSolver::is_theory_leaf(node);
 }
 }  // namespace
 
@@ -126,7 +144,7 @@ WordBlaster::_word_blast(const Node& node)
       visited.emplace(cur, false);
       visit.push_back(cur);
 
-      if (!FpSolver::is_leaf(cur))
+      if (!is_leaf(cur))
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
@@ -183,7 +201,7 @@ WordBlaster::_word_blast(const Node& node)
       {
         d_internal->d_rm_map.emplace(cur, SymFpuSymRM(cur));
       }
-      else if (type.is_rm() && (cur.is_const() || FpSolver::is_leaf(cur)))
+      else if (type.is_rm() && (cur.is_const() || is_leaf(cur)))
       {
         SymFpuSymRM rmvar(cur);
         d_internal->d_rm_map.emplace(cur, rmvar);
@@ -194,7 +212,7 @@ WordBlaster::_word_blast(const Node& node)
         d_internal->d_unpacked_float_map.emplace(
             cur, *cur.value<FloatingPoint>().unpacked());
       }
-      else if (type.is_fp() && (cur.is_const() || FpSolver::is_leaf(cur)))
+      else if (type.is_fp() && (cur.is_const() || is_leaf(cur)))
       {
         Node inf =
             nm.mk_const(nm.mk_bv_type(1), create_component_symbol(cur, "inf"));
