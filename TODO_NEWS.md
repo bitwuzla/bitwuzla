@@ -31,6 +31,9 @@ API:
 - All functions that took `const BitwuzlaTerm*` and `const BitwuzlaSort*`
   now take `BitwuzlaTerm` and `BitwuzlaSort` as arguments.
 
+- `bitwuzla_mk_fp_value_from_real` -> `bitwuzla_mk_fp_from_real`
+- `bitwuzla_mk_fp_value_from_rational` -> `bitwuzla_mk_fp_from_rational`
+
 - Functions to set and get options (option info) changed their signature and/or name.
   In particular, they now take a `BitwuzlaOptions*` instead of `Bitwuzla*` argument:
   + Create options instance with `bitwuzla_options_new()`

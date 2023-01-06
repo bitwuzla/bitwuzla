@@ -708,31 +708,29 @@ bitwuzla_mk_fp_value(BitwuzlaTerm bv_sign,
 }
 
 BitwuzlaTerm
-bitwuzla_mk_fp_value_from_real(BitwuzlaSort sort,
-                               BitwuzlaTerm rm,
-                               const char *real)
+bitwuzla_mk_fp_from_real(BitwuzlaSort sort, BitwuzlaTerm rm, const char *real)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   BITWUZLA_CHECK_TERM_ID(rm);
   BITWUZLA_CHECK_NOT_NULL(real);
-  return export_term(bitwuzla::mk_fp_value_from_real(
-      import_sort(sort), import_term(rm), real));
+  return export_term(
+      bitwuzla::mk_fp_from_real(import_sort(sort), import_term(rm), real));
   BITWUZLA_TRY_CATCH_END;
 }
 
 BitwuzlaTerm
-bitwuzla_mk_fp_value_from_rational(BitwuzlaSort sort,
-                                   BitwuzlaTerm rm,
-                                   const char *num,
-                                   const char *den)
+bitwuzla_mk_fp_from_rational(BitwuzlaSort sort,
+                             BitwuzlaTerm rm,
+                             const char *num,
+                             const char *den)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   BITWUZLA_CHECK_TERM_ID(rm);
   BITWUZLA_CHECK_NOT_NULL(num);
   BITWUZLA_CHECK_NOT_NULL(den);
-  return export_term(bitwuzla::mk_fp_value_from_rational(
+  return export_term(bitwuzla::mk_fp_from_rational(
       import_sort(sort), import_term(rm), num, den));
   BITWUZLA_TRY_CATCH_END;
 }

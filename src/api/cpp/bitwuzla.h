@@ -357,13 +357,11 @@ class Term
   friend Term mk_fp_neg_inf(const Sort &);
   friend Term mk_fp_nan(const Sort &);
   friend Term mk_fp_value(const Term &, const Term &, const Term &);
-  friend Term mk_fp_value_from_real(const Sort &,
-                                    const Term &,
-                                    const std::string &);
-  friend Term mk_fp_value_from_rational(const Sort &,
-                                        const Term &,
-                                        const std::string &,
-                                        const std::string &);
+  friend Term mk_fp_from_real(const Sort &, const Term &, const std::string &);
+  friend Term mk_fp_from_rational(const Sort &,
+                                  const Term &,
+                                  const std::string &,
+                                  const std::string &);
   friend Term mk_rm_value(RoundingMode);
   friend Term mk_const_array(const Sort &, const Term &);
   friend Term mk_term(Kind,
@@ -636,13 +634,11 @@ class Sort
   friend Term mk_fp_pos_inf(const Sort &);
   friend Term mk_fp_neg_inf(const Sort &);
   friend Term mk_fp_nan(const Sort &);
-  friend Term mk_fp_value_from_real(const Sort &,
-                                    const Term &,
-                                    const std::string &);
-  friend Term mk_fp_value_from_rational(const Sort &,
-                                        const Term &,
-                                        const std::string &,
-                                        const std::string &);
+  friend Term mk_fp_from_real(const Sort &, const Term &, const std::string &);
+  friend Term mk_fp_from_rational(const Sort &,
+                                  const Term &,
+                                  const std::string &,
+                                  const std::string &);
   friend Term mk_const_array(const Sort &, const Term &);
   friend Term mk_term(Kind,
                       const std::vector<Term> &,
@@ -1467,40 +1463,48 @@ Term mk_fp_value(const Term &bv_sign,
  * Create a floating-point value from its real representation, given as a
  * decimal string, with respect to given rounding mode.
  *
+ * @note Given rounding mode may be an arbitrary, non-value rounding mode term.
+ *       If it is a value, the returned term will be a floating-point value,
+ *       else a non-value floating-point term.
+ *
  * @param sort The sort of the value.
  * @param rm The rounding mode.
  * @param real The decimal string representing a real value.
  *
- * @return A term of kind Kind::VALUE, representing the floating-point
- *         value of given sort.
+ * @return A floating-point representation of the given real string. If `rm`
+ *         is of kind Kind::VALUE the floating-point will be of kind
+ *         Kind::VALUE, else it will be a non-value term.
  *
  * @see
  *   * `mk_fp_sort`
  */
-Term mk_fp_value_from_real(const Sort &sort,
-                           const Term &rm,
-                           const std::string &real);
+Term mk_fp_from_real(const Sort &sort, const Term &rm, const std::string &real);
 
 /**
  * Create a floating-point value from its rational representation, given as a
  * two decimal strings representing the numerator and denominator, with respect
  * to given rounding mode.
  *
+ * @note Given rounding mode may be an arbitrary, non-value rounding mode term.
+ *       If it is a value, the returned term will be a floating-point value,
+ *       else a non-value floating-point term.
+ *
  * @param sort The sort of the value.
  * @param rm The rounding mode.
  * @param num The decimal string representing the numerator.
  * @param den The decimal string representing the denominator.
  *
- * @return A term of kind Kind::VALUE, representing the floating-point
- *         value of given sort.
+ * @return A floating-point representation of the given rational string. If
+ *         `rm` is of kind Kind::VALUE the floating-point will be of kind
+ *         Kind::VALUE, else it will be a non-value term.
  *
  * @see
  *   * `mk_fp_sort`
  */
-Term mk_fp_value_from_rational(const Sort &sort,
-                               const Term &rm,
-                               const std::string &num,
-                               const std::string &den);
+Term mk_fp_from_rational(const Sort &sort,
+                         const Term &rm,
+                         const std::string &num,
+                         const std::string &den);
 
 /**
  * Create a one-dimensional constant array of given sort, initialized with

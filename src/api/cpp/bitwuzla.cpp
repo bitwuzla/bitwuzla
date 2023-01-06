@@ -1241,7 +1241,7 @@ operator!=(const Term &a, const Term &b)
 std::ostream &
 operator<<(std::ostream &out, const Term &term)
 {
-  out << term.d_node;
+  out << *term.d_node;
   return out;
 }
 
@@ -1942,33 +1942,107 @@ mk_fp_value(const Term &bv_sign,
 }
 
 Term
-mk_fp_value_from_real(const Sort &sort, const Term &rm, const std::string &real)
+mk_fp_from_real(const Sort &sort, const Term &rm, const std::string &real)
 {
   BITWUZLA_CHECK_NOT_NULL(sort.d_type);
   BITWUZLA_CHECK_NOT_NULL(rm.d_node);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
-  BITWUZLA_CHECK_TERM_IS_RM_VALUE(rm);
+  BITWUZLA_CHECK_TERM_IS_RM(rm);
   BITWUZLA_CHECK(bzla::util::is_valid_real_str(real)) << "invalid real string";
-  return bzla::NodeManager::get().mk_value(bzla::FloatingPoint::from_real(
-      *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), real));
+
+  if (rm.d_node->is_value())
+  {
+    return bzla::NodeManager::get().mk_value(bzla::FloatingPoint::from_real(
+        *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), real));
+  }
+
+  bzla::NodeManager &nm = bzla::NodeManager::get();
+
+  bzla::Node rna = nm.mk_value(bzla::RoundingMode::RNA);
+  bzla::Node rne = nm.mk_value(bzla::RoundingMode::RNE);
+  bzla::Node rtn = nm.mk_value(bzla::RoundingMode::RTN);
+  bzla::Node rtp = nm.mk_value(bzla::RoundingMode::RTP);
+  bzla::Node rtz = nm.mk_value(bzla::RoundingMode::RTZ);
+
+  bzla::Node fp_rna = nm.mk_value(bzla::FloatingPoint::from_real(
+      *sort.d_type, rna.value<bzla::RoundingMode>(), real));
+  bzla::Node fp_rne = nm.mk_value(bzla::FloatingPoint::from_real(
+      *sort.d_type, rne.value<bzla::RoundingMode>(), real));
+  bzla::Node fp_rtn = nm.mk_value(bzla::FloatingPoint::from_real(
+      *sort.d_type, rtn.value<bzla::RoundingMode>(), real));
+  bzla::Node fp_rtp = nm.mk_value(bzla::FloatingPoint::from_real(
+      *sort.d_type, rtp.value<bzla::RoundingMode>(), real));
+  bzla::Node fp_rtz = nm.mk_value(bzla::FloatingPoint::from_real(
+      *sort.d_type, rtz.value<bzla::RoundingMode>(), real));
+
+  bzla::Node cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtp});
+  bzla::Node ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rtp, fp_rtz});
+
+  cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtn});
+  ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rtn, ite});
+
+  cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rne});
+  ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rne, ite});
+
+  cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rna});
+  ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rna, ite});
+
+  return ite;
 }
 
 Term
-mk_fp_value_from_rational(const Sort &sort,
-                          const Term &rm,
-                          const std::string &num,
-                          const std::string &den)
+mk_fp_from_rational(const Sort &sort,
+                    const Term &rm,
+                    const std::string &num,
+                    const std::string &den)
 {
   BITWUZLA_CHECK_NOT_NULL(sort.d_type);
   BITWUZLA_CHECK_NOT_NULL(rm.d_node);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
-  BITWUZLA_CHECK_TERM_IS_RM_VALUE(rm);
+  BITWUZLA_CHECK_TERM_IS_RM(rm);
   BITWUZLA_CHECK(bzla::util::is_valid_real_str(num))
       << "invalid real string for argument 'num'";
   BITWUZLA_CHECK(bzla::util::is_valid_real_str(den))
       << "invalid real string for argument 'den'";
-  return bzla::NodeManager::get().mk_value(bzla::FloatingPoint::from_rational(
-      *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), num, den));
+
+  if (rm.d_node->is_value())
+  {
+    return bzla::NodeManager::get().mk_value(bzla::FloatingPoint::from_rational(
+        *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), num, den));
+  }
+
+  bzla::NodeManager &nm = bzla::NodeManager::get();
+
+  bzla::Node rna = nm.mk_value(bzla::RoundingMode::RNA);
+  bzla::Node rne = nm.mk_value(bzla::RoundingMode::RNE);
+  bzla::Node rtn = nm.mk_value(bzla::RoundingMode::RTN);
+  bzla::Node rtp = nm.mk_value(bzla::RoundingMode::RTP);
+  bzla::Node rtz = nm.mk_value(bzla::RoundingMode::RTZ);
+
+  bzla::Node fp_rna = nm.mk_value(bzla::FloatingPoint::from_rational(
+      *sort.d_type, rna.value<bzla::RoundingMode>(), num, den));
+  bzla::Node fp_rne = nm.mk_value(bzla::FloatingPoint::from_rational(
+      *sort.d_type, rne.value<bzla::RoundingMode>(), num, den));
+  bzla::Node fp_rtn = nm.mk_value(bzla::FloatingPoint::from_rational(
+      *sort.d_type, rtn.value<bzla::RoundingMode>(), num, den));
+  bzla::Node fp_rtp = nm.mk_value(bzla::FloatingPoint::from_rational(
+      *sort.d_type, rtp.value<bzla::RoundingMode>(), num, den));
+  bzla::Node fp_rtz = nm.mk_value(bzla::FloatingPoint::from_rational(
+      *sort.d_type, rtz.value<bzla::RoundingMode>(), num, den));
+
+  bzla::Node cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtp});
+  bzla::Node ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rtp, fp_rtz});
+
+  cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtn});
+  ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rtn, ite});
+
+  cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rne});
+  ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rne, ite});
+
+  cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rna});
+  ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rna, ite});
+
+  return ite;
 }
 
 Term

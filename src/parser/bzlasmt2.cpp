@@ -2525,13 +2525,13 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   if (item_cur[2].tag == BZLA_REAL_CONSTANT_TAG_SMT2)
   {
     BitwuzlaSort s = bitwuzla_mk_fp_sort(item_cur->idx0, item_cur->idx1);
-    exp = bitwuzla_mk_fp_value_from_real(s, item_cur[1].exp, item_cur[2].str);
+    exp = bitwuzla_mk_fp_from_real(s, item_cur[1].exp, item_cur[2].str);
     bzla_mem_freestr(parser->mem, item_cur[2].str);
   }
   else if (item_cur[2].tag == BZLA_REAL_DIV_TAG_SMT2)
   {
     BitwuzlaSort s = bitwuzla_mk_fp_sort(item_cur->idx0, item_cur->idx1);
-    exp            = bitwuzla_mk_fp_value_from_rational(
+    exp            = bitwuzla_mk_fp_from_rational(
         s, item_cur[1].exp, item_cur[2].strs[0], item_cur[2].strs[1]);
     bzla_mem_freestr(parser->mem, item_cur[2].strs[0]);
     bzla_mem_freestr(parser->mem, item_cur[2].strs[1]);

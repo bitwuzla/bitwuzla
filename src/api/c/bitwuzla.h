@@ -646,40 +646,48 @@ BitwuzlaTerm bitwuzla_mk_fp_value(BitwuzlaTerm bv_sign,
  * Create a floating-point value from its real representation, given as a
  * decimal string, with respect to given rounding mode.
  *
+ * @note Given rounding mode may be an arbitrary, non-value rounding mode term.
+ *       If it is a value, the returned term will be a floating-point value,
+ *       else a non-value floating-point term.
+ *
  * @param sort The sort of the value.
  * @param rm The rounding mode.
  * @param real The decimal string representing a real value.
  *
- * @return A term of kind BITWUZLA_KIND_VAL, representing the floating-point
- *         value of given sort.
- *
+ * @return A floating-point representation of the given real string. If `rm`
+ *         is of kind BITWUZLA_KIND_VALUE the floating-point will be of kind
+ *         BITWUZLA_KIND_VALUE, else it will be a non-value term.
  * @see
  *   * `bitwuzla_mk_fp_sort`
  */
-BitwuzlaTerm bitwuzla_mk_fp_value_from_real(BitwuzlaSort sort,
-                                            BitwuzlaTerm rm,
-                                            const char *real);
+BitwuzlaTerm bitwuzla_mk_fp_from_real(BitwuzlaSort sort,
+                                      BitwuzlaTerm rm,
+                                      const char *real);
 
 /**
  * Create a floating-point value from its rational representation, given as a
  * two decimal strings representing the numerator and denominator, with respect
  * to given rounding mode.
  *
+ * @note Given rounding mode may be an arbitrary, non-value rounding mode term.
+ *       If it is a value, the returned term will be a floating-point value,
+ *       else a non-value floating-point term.
+ *
  * @param sort The sort of the value.
  * @param rm The rounding mode.
  * @param num The decimal string representing the numerator.
  * @param den The decimal string representing the denominator.
  *
- * @return A term of kind BITWUZLA_KIND_VAL, representing the floating-point
- *         value of given sort.
- *
+ * @return A floating-point representation of the given rational string. If
+ *         `rm` is of kind BITWUZLA_KIND_VALUE the floating-point will be of
+ *         kind BITWUZLA_KIND_VALUE, else it will be a non-value term.
  * @see
  *   * `bitwuzla_mk_fp_sort`
  */
-BitwuzlaTerm bitwuzla_mk_fp_value_from_rational(BitwuzlaSort sort,
-                                                BitwuzlaTerm rm,
-                                                const char *num,
-                                                const char *den);
+BitwuzlaTerm bitwuzla_mk_fp_from_rational(BitwuzlaSort sort,
+                                          BitwuzlaTerm rm,
+                                          const char *num,
+                                          const char *den);
 
 /**
  * Create a rounding mode value.

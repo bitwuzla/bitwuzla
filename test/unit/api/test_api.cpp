@@ -2565,40 +2565,58 @@ TEST_F(TestApi, terms)
     ASSERT_EQ(tterm, term);
   }
 
-  bitwuzla::Term t;
+  bitwuzla::Term bv_const = bitwuzla::mk_const(bv_sort);
+  ASSERT_EQ(bv_const.kind(), bitwuzla::Kind::CONSTANT);
+  ASSERT_TRUE(bv_const.children().empty());
 
-  t = bitwuzla::mk_const(bv_sort);
-  ASSERT_EQ(t.kind(), bitwuzla::Kind::CONSTANT);
-  ASSERT_TRUE(t.children().empty());
+  bitwuzla::Term rm_const = bitwuzla::mk_const(bitwuzla::mk_rm_sort());
+  ASSERT_EQ(rm_const.kind(), bitwuzla::Kind::CONSTANT);
+  ASSERT_TRUE(rm_const.children().empty());
 
-  t = bitwuzla::mk_var(bv_sort);
-  ASSERT_EQ(t.kind(), bitwuzla::Kind::VARIABLE);
-  ASSERT_TRUE(t.children().empty());
+  bitwuzla::Term bv_var = bitwuzla::mk_var(bv_sort);
+  ASSERT_EQ(bv_var.kind(), bitwuzla::Kind::VARIABLE);
+  ASSERT_TRUE(bv_var.children().empty());
 
-  t = bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RNA);
-  ASSERT_EQ(t.kind(), bitwuzla::Kind::VALUE);
-  ASSERT_TRUE(t.children().empty());
+  bitwuzla::Term rm_val = bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RNA);
+  ASSERT_EQ(rm_val.kind(), bitwuzla::Kind::VALUE);
+  ASSERT_TRUE(rm_val.children().empty());
 
-  t = bitwuzla::mk_fp_value_from_real(d_fp_sort16, t, "1.1");
-  ASSERT_EQ(t.kind(), bitwuzla::Kind::VALUE);
-  ASSERT_TRUE(t.children().empty());
+  bitwuzla::Term fp_from_real_val =
+      bitwuzla::mk_fp_from_real(d_fp_sort16, rm_val, "1.1");
+  ASSERT_EQ(fp_from_real_val.kind(), bitwuzla::Kind::VALUE);
+  ASSERT_TRUE(fp_from_real_val.children().empty());
 
-  t = bitwuzla::mk_fp_nan(d_fp_sort16);
-  ASSERT_EQ(t.kind(), bitwuzla::Kind::VALUE);
-  ASSERT_TRUE(t.children().empty());
+  bitwuzla::Term fp_from_real =
+      bitwuzla::mk_fp_from_real(d_fp_sort16, rm_const, "1.1");
+  ASSERT_EQ(fp_from_real.kind(), bitwuzla::Kind::ITE);
+  ASSERT_FALSE(fp_from_real.children().empty());
 
-  t = bitwuzla::mk_bv_one(bv_sort);
-  ASSERT_EQ(t.kind(), bitwuzla::Kind::VALUE);
-  ASSERT_TRUE(t.children().empty());
+  bitwuzla::Term fp_from_rat_val =
+      bitwuzla::mk_fp_from_rational(d_fp_sort16, rm_val, "1", "2");
+  ASSERT_EQ(fp_from_rat_val.kind(), bitwuzla::Kind::VALUE);
+  ASSERT_TRUE(fp_from_rat_val.children().empty());
 
-  t = bitwuzla::mk_bv_value(bv_sort, "43", 10);
-  ASSERT_EQ(t.kind(), bitwuzla::Kind::VALUE);
-  ASSERT_TRUE(t.children().empty());
+  bitwuzla::Term fp_from_rat =
+      bitwuzla::mk_fp_from_rational(d_fp_sort16, rm_const, "1", "2");
+  ASSERT_EQ(fp_from_rat.kind(), bitwuzla::Kind::ITE);
+  ASSERT_FALSE(fp_from_rat.children().empty());
+
+  bitwuzla::Term fp_nan = bitwuzla::mk_fp_nan(d_fp_sort16);
+  ASSERT_EQ(fp_nan.kind(), bitwuzla::Kind::VALUE);
+  ASSERT_TRUE(fp_nan.children().empty());
+
+  bitwuzla::Term bv_one = bitwuzla::mk_bv_one(bv_sort);
+  ASSERT_EQ(bv_one.kind(), bitwuzla::Kind::VALUE);
+  ASSERT_TRUE(bv_one.children().empty());
+
+  bitwuzla::Term bv_val = bitwuzla::mk_bv_value(bv_sort, "43", 10);
+  ASSERT_EQ(bv_val.kind(), bitwuzla::Kind::VALUE);
+  ASSERT_TRUE(bv_val.children().empty());
 
   // TODO enable when implemented
-  // t = bitwuzla::mk_const_array(array_sort, t);
-  // ASSERT_EQ(t.kind(), bitwuzla::Kind::VALUE);
-  // ASSERT_TRUE(t.children().empty());
+  // bitwuzla::Term const_array = bitwuzla::mk_const_array(array_sort, bv_val);
+  // ASSERT_EQ(const_array.kind(), bitwuzla::Kind::VALUE);
+  // ASSERT_TRUE(const_array.children().empty());
 #endif
 }
 
