@@ -339,107 +339,106 @@ ArraySolver::collect_path_conditions(const Access& access,
   {
     const auto& p   = visit.front();
     const Node& cur = p.first;
-    visit.erase(visit.begin());
+    bool prop_up    = p.second;
 
     // Found target array
     if (cur == array)
     {
-      prop_up_to_target = p.second;
+      prop_up_to_target = prop_up;
       break;
     }
 
     auto [it, inserted] = cache.insert(cur);
-    if (!inserted)
+    if (inserted)
     {
-      continue;
-    }
-
-    // Search downwards
-    if (cur.kind() == Kind::STORE)
-    {
-      if (d_solver_state.value(cur[1]) != access.index_value())
+      // Search downwards
+      if (cur.kind() == Kind::STORE)
       {
-        visit.emplace_back(cur[0], false);
-        path.emplace(cur[0], cur);
-        Log(3) << "D: " << cur[0] << " -> " << cur;
-      }
-    }
-    else if (cur.kind() == Kind::ITE)
-    {
-      Node cond_value = d_solver_state.value(cur[0]);
-      if (cond_value.value<bool>())
-      {
-        visit.emplace_back(cur[1], false);
-        path.emplace(cur[1], cur);
-        Log(3) << "D: " << cur[1] << " -> " << cur;
-      }
-      else
-      {
-        visit.emplace_back(cur[2], false);
-        path.emplace(cur[2], cur);
-        Log(3) << "D: " << cur[2] << " -> " << cur;
-      }
-    }
-    else
-    {
-      assert(cur.kind() == Kind::CONSTANT || cur.kind() == Kind::CONST_ARRAY);
-    }
-
-    // Search upwards
-    if (d_active_parents.find(cur) != d_active_parents.end())
-    {
-      auto itp = d_parents.find(cur);
-      assert(itp != d_parents.end());
-      for (const Node& parent : itp->second)
-      {
-        if (parent.kind() == Kind::STORE)
+        if (d_solver_state.value(cur[1]) != access.index_value())
         {
-          Node index_value = d_solver_state.value(parent[1]);
-          if (index_value != access.index_value())
-          {
-            visit.emplace_back(parent, true);
-            path.emplace(parent, cur);
-            Log(3) << "U: " << parent << " -> " << cur;
-          }
+          visit.emplace_back(cur[0], false);
+          path.emplace(cur[0], cur);
+          Log(3) << "D: " << cur[0] << " -> " << cur;
         }
-        else if (parent.kind() == Kind::ITE)
+      }
+      else if (cur.kind() == Kind::ITE)
+      {
+        Node cond_value = d_solver_state.value(cur[0]);
+        if (cond_value.value<bool>())
         {
-          assert(parent.type().is_array());
-          bool cond_value = d_solver_state.value(parent[0]).value<bool>();
-          if ((cond_value && cur == parent[1])
-              || (!cond_value && cur == parent[2]))
-          {
-            visit.emplace_back(parent, true);
-            path.emplace(parent, cur);
-            Log(3) << "U: " << parent << " -> " << cur;
-          }
+          visit.emplace_back(cur[1], false);
+          path.emplace(cur[1], cur);
+          Log(3) << "D: " << cur[1] << " -> " << cur;
         }
         else
         {
-          assert(parent.kind() == Kind::EQUAL);
-          assert(parent[0].type().is_array());
-          bool eq_value = d_solver_state.value(parent).value<bool>();
-          if (eq_value)
+          visit.emplace_back(cur[2], false);
+          path.emplace(cur[2], cur);
+          Log(3) << "D: " << cur[2] << " -> " << cur;
+        }
+      }
+      else
+      {
+        assert(cur.kind() == Kind::CONSTANT || cur.kind() == Kind::CONST_ARRAY);
+      }
+
+      // Search upwards
+      if (d_active_parents.find(cur) != d_active_parents.end())
+      {
+        auto itp = d_parents.find(cur);
+        assert(itp != d_parents.end());
+        for (const Node& parent : itp->second)
+        {
+          if (parent.kind() == Kind::STORE)
           {
-            path.emplace(parent, cur);
-            Log(3) << "U: " << parent << " -> " << cur;
-            if (parent[0] == cur)
+            Node index_value = d_solver_state.value(parent[1]);
+            if (index_value != access.index_value())
             {
-              visit.emplace_back(parent[1], false);
-              path.emplace(parent[1], parent);
-              Log(3) << "D: " << parent[1] << " -> " << parent;
+              visit.emplace_back(parent, true);
+              path.emplace(parent, cur);
+              Log(3) << "U: " << parent << " -> " << cur;
             }
-            else
+          }
+          else if (parent.kind() == Kind::ITE)
+          {
+            assert(parent.type().is_array());
+            bool cond_value = d_solver_state.value(parent[0]).value<bool>();
+            if ((cond_value && cur == parent[1])
+                || (!cond_value && cur == parent[2]))
             {
-              assert(parent[1] == cur);
-              visit.emplace_back(parent[0], false);
-              path.emplace(parent[0], parent);
-              Log(3) << "D: " << parent[0] << " -> " << parent;
+              visit.emplace_back(parent, true);
+              path.emplace(parent, cur);
+              Log(3) << "U: " << parent << " -> " << cur;
+            }
+          }
+          else
+          {
+            assert(parent.kind() == Kind::EQUAL);
+            assert(parent[0].type().is_array());
+            bool eq_value = d_solver_state.value(parent).value<bool>();
+            if (eq_value)
+            {
+              path.emplace(parent, cur);
+              Log(3) << "U: " << parent << " -> " << cur;
+              if (parent[0] == cur)
+              {
+                visit.emplace_back(parent[1], false);
+                path.emplace(parent[1], parent);
+                Log(3) << "D: " << parent[1] << " -> " << parent;
+              }
+              else
+              {
+                assert(parent[1] == cur);
+                visit.emplace_back(parent[0], false);
+                path.emplace(parent[0], parent);
+                Log(3) << "D: " << parent[0] << " -> " << parent;
+              }
             }
           }
         }
       }
     }
+    visit.erase(visit.begin());
   } while (!visit.empty());
 
   // TODO: make cache for conditions to filter out duplicates
@@ -487,6 +486,7 @@ ArraySolver::add_path_condition(const Access& access,
     {
       conditions.push_back(
           nm.mk_node(Kind::DISTINCT, {array[1], access.index()}));
+      Log(3) << "  cond: " << conditions.back();
     }
   }
   else if (array.kind() == Kind::ITE)
@@ -500,10 +500,12 @@ ArraySolver::add_path_condition(const Access& access,
     {
       conditions.push_back(nm.mk_node(Kind::NOT, {array[0]}));
     }
+    Log(3) << "  cond: " << conditions.back();
   }
   else if (array.kind() == Kind::EQUAL)
   {
     conditions.push_back(array);
+    Log(3) << "  cond: " << conditions.back();
   }
   else
   {
@@ -521,9 +523,11 @@ ArraySolver::add_disequality_lemma(const Node& eq)
   }
 
   NodeManager& nm = NodeManager::get();
+  std::stringstream ss;
+  ss << "@diseq_wit_" << eq.id();
   const Node& a   = eq[0];
   const Node& b   = eq[1];
-  Node k          = nm.mk_const(a.type().array_index());
+  Node k          = nm.mk_const(a.type().array_index(), ss.str());
   Node sel_a      = nm.mk_node(Kind::SELECT, {a, k});
   Node sel_b      = nm.mk_node(Kind::SELECT, {b, k});
   Node lemma      = nm.mk_node(Kind::IMPLIES,

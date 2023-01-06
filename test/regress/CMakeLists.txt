@@ -109,6 +109,7 @@ set(testcases
 "solver/array/regrarray6.smt2"
 "solver/array/regrarray7.smt2"
 "solver/array/regrarray8.smt2"
+"solver/array/regrarray9.smt2"
 #"solver/array/regrbetacache1.btor.smt2 -br all" # TODO disabled because of -br
 #"solver/array/regrbetacache2.btor.smt2 -br all" # TODO currently broken since we don't allow to mix lambdas with arrays
 #"solver/array/regrcollectprem.btor.smt2" # TODO missing
