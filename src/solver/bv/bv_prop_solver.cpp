@@ -216,6 +216,12 @@ BvPropSolver::mk_node(const Node& node)
                           domain,
                           {d_node_map.at(node[0]), d_node_map.at(node[1])});
       break;
+    case Kind::BV_ASHR:
+      assert(node.num_children() == 2);
+      res = d_ls->mk_node(bzla::ls::NodeKind::BV_ASHR,
+                          domain,
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+      break;
     case Kind::BV_CONCAT:
       assert(node.num_children() == 2);
       {
