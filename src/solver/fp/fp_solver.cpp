@@ -32,9 +32,15 @@ FpSolver::is_theory_leaf(const Node& term)
 bool
 FpSolver::is_leaf(const Node& node)
 {
-  return array::ArraySolver::is_theory_leaf(node)
-         || fun::FunSolver::is_theory_leaf(node)
-         || quant::QuantSolver::is_theory_leaf(node);
+  if (array::ArraySolver::is_theory_leaf(node)
+      || fun::FunSolver::is_theory_leaf(node)
+      || quant::QuantSolver::is_theory_leaf(node))
+  {
+    return true;
+  }
+  node::Kind k = node.kind();
+  return k == node::Kind::FP_TO_FP_FROM_BV || k == node::Kind::FP_TO_FP_FROM_SBV
+         || k == node::Kind::FP_TO_FP_FROM_UBV;
 }
 
 Node
@@ -105,6 +111,7 @@ FpSolver::value(const Node& term)
     if (it == visited.end())
     {
       visited.emplace(cur, false);
+      assert(!is_leaf(cur) || cur.type().is_fp() || cur.type().is_rm());
       if (!is_leaf(cur))
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
