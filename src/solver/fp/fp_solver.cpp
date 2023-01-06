@@ -108,7 +108,7 @@ FpSolver::value(const Node& term)
   do
   {
     const Node& cur = visit.back();
-    assert(cur.type().is_fp() || cur.type().is_rm());
+    assert(is_theory_leaf(cur) || cur.type().is_fp() || cur.type().is_rm());
 
     if (!get_cached_value(cur).is_null())
     {
@@ -122,7 +122,6 @@ FpSolver::value(const Node& term)
       visited.emplace(cur, false);
       if (!is_leaf(cur))
       {
-        assert(cur.type().is_fp() || cur.type().is_rm());
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
       continue;
@@ -140,10 +139,15 @@ FpSolver::value(const Node& term)
         uint64_t rm = bv.to_uint64();
         value       = nm.mk_value(static_cast<RoundingMode>(rm));
       }
+      else if (cur.type().is_fp())
+      {
+        value = nm.mk_value(FloatingPoint(cur.type(), bv));
+      }
       else
       {
-        assert(cur.type().is_fp());
-        value = nm.mk_value(FloatingPoint(cur.type(), bv));
+        assert(cur.type().is_bool());
+        assert(is_theory_leaf(cur));
+        value = nm.mk_value(bv.is_true());
       }
       cache_value(cur, value);
     }
