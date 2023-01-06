@@ -19,6 +19,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_in_solving_mode(false),
       d_stats(context.env().statistics()),
       d_env(context.env()),
+      d_logger(d_env.logger()),
       d_solver_state(*this),
       d_bv_solver(context.env(), d_solver_state),
       d_fp_solver(context.env(), d_solver_state),
@@ -95,6 +96,7 @@ void
 SolverEngine::lemma(const Node& lemma)
 {
   assert(lemma.type().is_bool());
+  Log(2) << "lemma: " << lemma;
   Node rewritten = d_env.rewriter().rewrite(lemma);
   // Lemmas should never simplify to true
   assert(!rewritten.is_value() || !rewritten.value<bool>());

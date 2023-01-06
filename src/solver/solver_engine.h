@@ -101,6 +101,8 @@ class SolverEngine
 
   /** Environment. */
   Env& d_env;
+  /** Logger instance. */
+  util::Logger& d_logger;
 
   /** Solver state. */
   SolverState d_solver_state;
