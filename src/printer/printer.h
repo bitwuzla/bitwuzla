@@ -32,5 +32,21 @@ class Printer
   static void print_symbol(std::ostream& os, const Node& node);
 };
 
+namespace printer {
+
+/** Struct to set maximum printing depth of nodes via stream manipulator. */
+struct set_depth
+{
+  set_depth(size_t depth) : d_depth(depth) {}
+  size_t depth() const { return d_depth; }
+
+ private:
+  size_t d_depth;
+};
+
+std::ostream& operator<<(std::ostream& ostream, const set_depth& d);
+
+}  // namespace printer
+
 }  // namespace bzla
 #endif

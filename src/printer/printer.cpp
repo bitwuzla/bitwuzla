@@ -442,4 +442,15 @@ Printer::letify(std::ostream& os,
   }
 }
 
+namespace printer {
+
+std::ostream&
+operator<<(std::ostream& ostream, const set_depth& d)
+{
+  ostream.iword(Printer::s_stream_index_maximum_depth) = d.depth();
+  return ostream;
+}
+
+}  // namespace printer
+
 }  // namespace bzla
