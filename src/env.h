@@ -3,6 +3,7 @@
 
 #include "option/option.h"
 #include "rewrite/rewriter.h"
+#include "util/logger.h"
 #include "util/statistics.h"
 
 namespace bzla {
@@ -24,10 +25,11 @@ class Env
   /** @return The associated statistics instance. */
   util::Statistics& statistics();
 
-  /** @return The assoicated rewriter instance. */
+  /** @return The associated rewriter instance. */
   Rewriter& rewriter();
 
-  // util::Logger& logger() const;
+  /** @return The associated logger instance. */
+  util::Logger& logger();
 
   /**
    * Configure associated termination configuration instance.
@@ -55,6 +57,8 @@ class Env
   Rewriter d_rewriter;
   /** The associated terminator. */
   Terminator* d_terminator = nullptr;
+  /** The associated logger class. */
+  util::Logger d_logger;
 };
 
 }  // namespace bzla

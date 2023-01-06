@@ -6,7 +6,8 @@ namespace bzla {
 
 Env::Env(const option::Options& options)
     : d_options(options),
-      d_rewriter(*this, options.get<uint64_t>(option::Option::REWRITE_LEVEL))
+      d_rewriter(*this, options.get<uint64_t>(option::Option::REWRITE_LEVEL)),
+      d_logger(options.log_level(), options.verbosity())
 {
 }
 
@@ -27,6 +28,12 @@ Rewriter&
 Env::rewriter()
 {
   return d_rewriter;
+}
+
+util::Logger&
+Env::logger()
+{
+  return d_logger;
 }
 
 void
