@@ -14,7 +14,6 @@ set(test_names
   #constbits
   #essutils
   #exp
-  #inc
   #invutils
   #lambda
   #logic

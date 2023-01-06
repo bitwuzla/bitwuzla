@@ -40,9 +40,9 @@ class TestRewriterBvOverflow : public TestRewriter
       {
         for (int32_t j = 0; j < max; ++j)
         {
-          option::Options d_options;
-          d_options.set<uint64_t>(option::Option::REWRITE_LEVEL, rwl);
-          SolvingContext ctx = SolvingContext(d_options);
+          option::Options options;
+          options.set<uint64_t>(option::Option::REWRITE_LEVEL, rwl);
+          SolvingContext ctx = SolvingContext(options);
 
           int32_t result = 0;
 
@@ -95,9 +95,9 @@ class TestRewriterBvOverflow : public TestRewriter
         {
           if (!exclude_second_zero || j != 0)
           {
-            option::Options d_options;
-            d_options.set<uint64_t>(option::Option::REWRITE_LEVEL, rwl);
-            SolvingContext ctx = SolvingContext(d_options);
+            option::Options options;
+            options.set<uint64_t>(option::Option::REWRITE_LEVEL, rwl);
+            SolvingContext ctx = SolvingContext(options);
 
             switch (kind)
             {
