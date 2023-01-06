@@ -18,11 +18,23 @@ using namespace node;
 
 /* --- Printer public ------------------------------------------------------- */
 
+int32_t Printer::s_stream_index_maximum_depth = std::ios_base::xalloc();
+
 void
 Printer::print(std::ostream& os, const Node& node)
 {
+  size_t depth = os.iword(Printer::s_stream_index_maximum_depth);
   unordered_node_ref_map<std::string> let_map;
-  letify(os, node, let_map);
+  bool annotate = depth && node.num_children() > 0;
+  if (annotate)
+  {
+    os << "(!@t" << node.id() << " ";
+  }
+  letify(os, node, let_map, depth);
+  if (annotate)
+  {
+    os << ")";
+  }
 }
 
 void
@@ -64,14 +76,18 @@ Printer::print(std::ostream& os, const Type& type)
 void
 Printer::print(std::ostream& os,
                const Node& node,
-               node::unordered_node_ref_map<std::string>& let_map)
+               node::unordered_node_ref_map<std::string>& let_map,
+               size_t max_depth)
 {
-  node::node_ref_vector visit{node};
+  std::vector<std::pair<ConstNodeRef, size_t>> visit;
+  visit.emplace_back(node, 0);
   node::unordered_node_ref_map<bool> cache;
   bool expect_space = false;
   do
   {
-    const Node& cur = visit.back();
+    const auto& p    = visit.back();
+    const Node& cur  = p.first;
+    size_t cur_depth = p.second;
 
     auto [it, inserted] = cache.emplace(cur, false);
     if (inserted)
@@ -79,6 +95,13 @@ Printer::print(std::ostream& os,
       Kind kind = cur.kind();
       if (kind == Kind::VALUE || kind == Kind::CONSTANT
           || kind == Kind::VARIABLE)
+      {
+        it->second = true;
+        continue;
+      }
+
+      // Stop at maximum depth
+      if (max_depth && cur_depth >= max_depth)
       {
         it->second = true;
         continue;
@@ -93,7 +116,7 @@ Printer::print(std::ostream& os,
 
       for (size_t i = 0, size = cur.num_children(); i < size; ++i)
       {
-        visit.push_back(cur[size - 1 - i]);
+        visit.emplace_back(cur[size - 1 - i], cur_depth + 1);
       }
 
       if (expect_space)
@@ -225,7 +248,7 @@ Printer::print(std::ostream& os,
           os << ")) ";
           visit.pop_back();  // Pop variable
           visit.pop_back();  // Pop body
-          letify(os, cur[1], let_map);
+          letify(os, cur[1], let_map, max_depth);
           break;
 
         case Kind::VALUE:
@@ -278,6 +301,10 @@ Printer::print(std::ostream& os,
       {
         print_symbol(os, cur);
       }
+      else if (max_depth && cur_depth >= max_depth)
+      {
+        os << "@t" << cur.id();
+      }
       else
       {
         auto lit = let_map.find(cur);
@@ -308,9 +335,11 @@ Printer::print_symbol(std::ostream& os, const Node& node)
 void
 Printer::letify(std::ostream& os,
                 const Node& node,
-                node::unordered_node_ref_map<std::string>& let_map)
+                node::unordered_node_ref_map<std::string>& let_map,
+                size_t max_depth)
 {
   node::node_ref_vector visit{node}, lets;
+  std::vector<size_t> depth{0};
   node::unordered_node_ref_map<bool> cache;
   node::unordered_node_ref_map<uint64_t> refs;
 
@@ -320,6 +349,8 @@ Printer::letify(std::ostream& os,
   {
     const Node& cur = visit.back();
     visit.pop_back();
+    size_t cur_depth = depth.back();
+    depth.pop_back();
 
     // Do not go below binders
     auto kind = cur.kind();
@@ -329,12 +360,19 @@ Printer::letify(std::ostream& os,
       continue;
     }
 
+    // Do not go further than the maximum specified depth.
+    if (max_depth > 0 && cur_depth >= max_depth)
+    {
+      continue;
+    }
+
     auto [it, inserted] = cache.emplace(cur, false);
     if (inserted)
     {
       for (size_t i = 0, size = cur.num_children(); i < size; ++i)
       {
         visit.push_back(cur[i]);
+        depth.push_back(cur_depth + 1);
         ++refs[cur[i]];
         if (refs[cur[i]] == 2 && cur[i].num_children() > 0)
         {
@@ -388,7 +426,7 @@ Printer::letify(std::ostream& os,
       ss << "_let" << i;
 
       os << "(" << ss.str() << " ";
-      print(os, lets[i], let_map);
+      print(os, lets[i], let_map, max_depth);
       os << ")";
 
       let_map[lets[i]] = ss.str();
@@ -396,7 +434,7 @@ Printer::letify(std::ostream& os,
     os << ") ";
   }
 
-  print(os, node, let_map);
+  print(os, node, let_map, max_depth);
 
   if (lets.size() > 0)
   {
