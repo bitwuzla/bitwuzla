@@ -5605,7 +5605,7 @@ print_success(BzlaSMT2Parser *parser)
   fflush(parser->outfile);
 }
 
-static void
+static int32_t
 check_sat(BzlaSMT2Parser *parser, uint32_t assc, BitwuzlaTerm *assumptions)
 {
   assert(!parser->error);
@@ -5649,6 +5649,16 @@ check_sat(BzlaSMT2Parser *parser, uint32_t assc, BitwuzlaTerm *assumptions)
   {
     fprintf(parser->outfile, "unknown\n");
   }
+  if (parser->res->status == BITWUZLA_SAT
+      && parser->res->result == BITWUZLA_UNSAT)
+  {
+    return !perr_smt2(parser, "'unsat' but status of benchmark is 'sat'");
+  }
+  if (parser->res->status == BITWUZLA_UNSAT
+      && parser->res->result == BITWUZLA_SAT)
+  {
+    return !perr_smt2(parser, "'sat' but status of benchmark is 'unsat'");
+  }
   fflush(parser->outfile);
   // else
   //{
@@ -5658,6 +5668,7 @@ check_sat(BzlaSMT2Parser *parser, uint32_t assc, BitwuzlaTerm *assumptions)
   //            "'check-sat' command");
   //   parser->done = true;
   // }
+  return 1;
 }
 
 static int32_t
@@ -5784,7 +5795,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
     case BZLA_CHECK_SAT_TAG_SMT2:
       configure_smt_comp_mode(parser);
       if (!read_rpar_smt2(parser, " after 'check-sat'")) return 0;
-      check_sat(parser, 0, NULL);
+      if (!check_sat(parser, 0, NULL)) return 0;
       break;
 
     case BZLA_CHECK_SAT_ASSUMING_TAG_SMT2:
@@ -5814,7 +5825,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
         BZLA_RELEASE_STACK(exps);
         return 0;
       }
-      check_sat(parser, BZLA_COUNT_STACK(exps), exps.start);
+      if (!check_sat(parser, BZLA_COUNT_STACK(exps), exps.start)) return 0;
       for (i = 0; i < BZLA_COUNT_STACK(exps); i++)
       {
         exp = BZLA_PEEK_STACK(exps, i);
