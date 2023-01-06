@@ -1,12 +1,12 @@
 #include "solver/array/array_solver.h"
 
+#include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
-//#include "util/logger.h"
-#include "env.h"
+#include "util/logger.h"
 
 namespace bzla::array {
 
@@ -25,7 +25,8 @@ ArraySolver::ArraySolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_selects(state.backtrack_mgr()),
       d_equalities(state.backtrack_mgr()),
-      d_stats(env.statistics())
+      d_stats(env.statistics()),
+      d_logger(env.options().log_level(), env.options().verbosity())
 {
 }
 
@@ -34,6 +35,7 @@ ArraySolver::~ArraySolver() {}
 void
 ArraySolver::check()
 {
+  Log(1) << "\n*** check arrays";
   util::Timer timer(d_stats.time_check);
   d_array_models.clear();
   d_check_access_cache.clear();
@@ -101,16 +103,16 @@ ArraySolver::check_access(const Node& access)
     return;
   }
 
-  // Log(1) << "\ncheck: " << access;
+  Log(1) << "\ncheck: " << access;
   Access acc(access, d_solver_state);
-  // Log(2) << "index:   " << acc.index_value();
-  // Log(2) << "element: " << acc.element_value();
+  Log(2) << "index:   " << acc.index_value();
+  Log(2) << "element: " << acc.element_value();
   node_ref_vector visit{acc.array()};
   do
   {
     const Node& array = visit.back();
     visit.pop_back();
-    // Log(2) << "> array: " << array;
+    Log(2) << "> array: " << array;
     ++d_stats.num_propagations;
 
     auto& array_model   = d_array_models[array];
@@ -120,9 +122,9 @@ ArraySolver::check_access(const Node& access)
       // Check congruence conflict
       if (acc.element_value() != it->element_value())
       {
-        // Log(2) << "\u2716 congruence lemma";
-        // Log(2) << "access1: " << acc.get();
-        // Log(2) << "access2: " << it->get();
+        Log(2) << "\u2716 congruence lemma";
+        Log(2) << "access1: " << acc.get();
+        Log(2) << "access2: " << it->get();
         add_congruence_lemma(array, acc, *it);
       }
     }
@@ -137,9 +139,9 @@ ArraySolver::check_access(const Node& access)
           Node element_value = d_solver_state.value(array[2]);
           if (acc.element_value() != element_value)
           {
-            // Log(2) << "\u2716 access store lemma";
-            // Log(2) << "access: " << acc.get();
-            // Log(2) << "store: " << array;
+            Log(2) << "\u2716 access store lemma";
+            Log(2) << "access: " << acc.get();
+            Log(2) << "store: " << array;
             add_access_store_lemma(acc, array);
           }
         }
@@ -147,7 +149,7 @@ ArraySolver::check_access(const Node& access)
         {
           visit.push_back(array[0]);
           ++d_stats.num_propagations_down;
-          // Log(2) << "D store: " << visit.back();
+          Log(2) << "D store: " << visit.back();
         }
       }
       else if (array.kind() == Kind::CONST_ARRAY)
@@ -163,7 +165,7 @@ ArraySolver::check_access(const Node& access)
         Node cond_value = d_solver_state.value(array[0]);
         visit.push_back(cond_value.value<bool>() ? array[1] : array[2]);
         ++d_stats.num_propagations_down;
-        // Log(2) << "D ite: " << visit.back();
+        Log(2) << "D ite: " << visit.back();
       }
       else
       {
@@ -184,7 +186,7 @@ ArraySolver::check_access(const Node& access)
             {
               visit.push_back(parent);
               ++d_stats.num_propagations_up;
-              // Log(2) << "U store: " << visit.back();
+              Log(2) << "U store: " << visit.back();
             }
           }
           else if (parent.kind() == Kind::ITE)
@@ -196,7 +198,7 @@ ArraySolver::check_access(const Node& access)
             {
               visit.push_back(parent);
               ++d_stats.num_propagations_up;
-              // Log(2) << "U ite: " << visit.back();
+              Log(2) << "U ite: " << visit.back();
             }
           }
           else
@@ -216,7 +218,7 @@ ArraySolver::check_access(const Node& access)
                 visit.push_back(parent[0]);
               }
               ++d_stats.num_propagations_up;
-              // Log(2) << "U eq: " << visit.back();
+              Log(2) << "U eq: " << visit.back();
             }
           }
         }
@@ -323,21 +325,26 @@ ArraySolver::collect_path_conditions(const Access& access,
     return;
   }
 
-  node_ref_vector visit{access.array()};
-  unordered_node_ref_map<Node> path;
-  unordered_node_ref_set cache;
-
-  // Log(3) << "collect path: " << access.get();
-  // Log(3) << "start: " << visit.back();
-  // Log(3) << "goal:  " << array;
+  Log(3) << "collect path: " << access.get();
+  Log(3) << "start: " << access.array();
+  Log(3) << "goal:  " << array;
 
   // Find shortest path from access to array
+  std::vector<std::pair<ConstNodeRef, bool>> visit;
+  visit.emplace_back(access.array(), false);
+  unordered_node_ref_map<Node> path;
+  unordered_node_ref_set cache;
+  bool prop_up_to_target = false;
   do
   {
-    const Node& cur = visit.front();
+    const auto& p   = visit.front();
+    const Node& cur = p.first;
     visit.erase(visit.begin());
+
+    // Found target array
     if (cur == array)
     {
+      prop_up_to_target = p.second;
       break;
     }
 
@@ -352,9 +359,9 @@ ArraySolver::collect_path_conditions(const Access& access,
     {
       if (d_solver_state.value(cur[1]) != access.index_value())
       {
-        visit.push_back(cur[0]);
+        visit.emplace_back(cur[0], false);
         path.emplace(cur[0], cur);
-        // Log(3) << "D: " << cur[0] << " -> " << cur;
+        Log(3) << "D: " << cur[0] << " -> " << cur;
       }
     }
     else if (cur.kind() == Kind::ITE)
@@ -362,15 +369,15 @@ ArraySolver::collect_path_conditions(const Access& access,
       Node cond_value = d_solver_state.value(cur[0]);
       if (cond_value.value<bool>())
       {
-        visit.push_back(cur[1]);
+        visit.emplace_back(cur[1], false);
         path.emplace(cur[1], cur);
-        // Log(3) << "D: " << cur[1] << " -> " << cur;
+        Log(3) << "D: " << cur[1] << " -> " << cur;
       }
       else
       {
-        visit.push_back(cur[2]);
+        visit.emplace_back(cur[2], false);
         path.emplace(cur[2], cur);
-        // Log(3) << "D: " << cur[2] << " -> " << cur;
+        Log(3) << "D: " << cur[2] << " -> " << cur;
       }
     }
     else
@@ -390,9 +397,9 @@ ArraySolver::collect_path_conditions(const Access& access,
           Node index_value = d_solver_state.value(parent[1]);
           if (index_value != access.index_value())
           {
-            visit.push_back(parent);
+            visit.emplace_back(parent, true);
             path.emplace(parent, cur);
-            // Log(3) << "U: " << parent << " -> " << cur;
+            Log(3) << "U: " << parent << " -> " << cur;
           }
         }
         else if (parent.kind() == Kind::ITE)
@@ -402,9 +409,9 @@ ArraySolver::collect_path_conditions(const Access& access,
           if ((cond_value && cur == parent[1])
               || (!cond_value && cur == parent[2]))
           {
-            visit.push_back(parent);
+            visit.emplace_back(parent, true);
             path.emplace(parent, cur);
-            // Log(3) << "U: " << parent << " -> " << cur;
+            Log(3) << "U: " << parent << " -> " << cur;
           }
         }
         else
@@ -415,19 +422,19 @@ ArraySolver::collect_path_conditions(const Access& access,
           if (eq_value)
           {
             path.emplace(parent, cur);
-            // Log(3) << "U: " << parent << " -> " << cur;
+            Log(3) << "U: " << parent << " -> " << cur;
             if (parent[0] == cur)
             {
-              visit.push_back(parent[1]);
+              visit.emplace_back(parent[1], false);
               path.emplace(parent[1], parent);
-              // Log(3) << "U: " << parent[1] << " -> " << parent;
+              Log(3) << "D: " << parent[1] << " -> " << parent;
             }
             else
             {
               assert(parent[1] == cur);
-              visit.push_back(parent[0]);
+              visit.emplace_back(parent[0], false);
               path.emplace(parent[0], parent);
-              // Log(3) << "U: " << parent[0] << " -> " << parent;
+              Log(3) << "D: " << parent[0] << " -> " << parent;
             }
           }
         }
@@ -437,11 +444,17 @@ ArraySolver::collect_path_conditions(const Access& access,
 
   // TODO: make cache for conditions to filter out duplicates
   // Construct path conditions
+
+  // If access was propagated upwards to target array, we have to include its
+  // propagation condition.
+  if (prop_up_to_target)
+  {
+    add_path_condition(access, array, conditions);
+  }
 #ifndef NDEBUG
   unordered_node_ref_set pcache;
 #endif
-  NodeManager& nm = NodeManager::get();
-  auto it         = path.find(array);
+  auto it = path.find(array);
   while (true)
   {
     assert(it != path.end());
@@ -450,42 +463,51 @@ ArraySolver::collect_path_conditions(const Access& access,
     auto [itc, inserted] = pcache.insert(cur);
     assert(inserted);
 #endif
-    if (cur.kind() == Kind::STORE)
-    {
-      // Do not include the access itself
-      if (cur != access.get())
-      {
-        conditions.push_back(
-            nm.mk_node(Kind::DISTINCT, {cur[1], access.index()}));
-      }
-    }
-    else if (cur.kind() == Kind::ITE)
-    {
-      Node cond_value = d_solver_state.value(cur[0]);
-      if (cond_value.value<bool>())
-      {
-        conditions.push_back(cur[0]);
-      }
-      else
-      {
-        conditions.push_back(nm.mk_node(Kind::NOT, {cur[0]}));
-      }
-    }
-    else if (cur.kind() == Kind::EQUAL)
-    {
-      conditions.push_back(cur);
-    }
-    else
-    {
-      assert(cur.kind() == Kind::CONSTANT);
-    }
+    add_path_condition(access, cur, conditions);
     // Found start array
     if (cur == access.array())
     {
       break;
     }
     it = path.find(cur);
-    assert(path.find(cur) != path.end());
+  }
+}
+
+void
+ArraySolver::add_path_condition(const Access& access,
+                                const Node& array,
+                                std::vector<Node>& conditions)
+{
+  Log(3) << "path: " << array;
+  NodeManager& nm = NodeManager::get();
+  if (array.kind() == Kind::STORE)
+  {
+    // Do not include the access itself
+    if (array != access.get())
+    {
+      conditions.push_back(
+          nm.mk_node(Kind::DISTINCT, {array[1], access.index()}));
+    }
+  }
+  else if (array.kind() == Kind::ITE)
+  {
+    Node cond_value = d_solver_state.value(array[0]);
+    if (cond_value.value<bool>())
+    {
+      conditions.push_back(array[0]);
+    }
+    else
+    {
+      conditions.push_back(nm.mk_node(Kind::NOT, {array[0]}));
+    }
+  }
+  else if (array.kind() == Kind::EQUAL)
+  {
+    conditions.push_back(array);
+  }
+  else
+  {
+    assert(array.kind() == Kind::CONSTANT);
   }
 }
 

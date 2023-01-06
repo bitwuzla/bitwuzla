@@ -4,6 +4,7 @@
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "solver/solver.h"
+#include "util/logger.h"
 #include "util/statistics.h"
 
 namespace bzla::array {
@@ -138,6 +139,11 @@ class ArraySolver : public Solver
                                const Node& array,
                                std::vector<Node>& conditions);
 
+  /** Add path condition for given array to conditions vector. */
+  void add_path_condition(const Access& access,
+                          const Node& array,
+                          std::vector<Node>& conditions);
+
   /**
    * Compute the parents for the array terms in given term.
    *
@@ -188,6 +194,8 @@ class ArraySolver : public Solver
     util::HistogramStatistic& num_lemma_size;
     util::TimerStatistic& time_check;
   } d_stats;
+
+  util::Logger d_logger;
 };
 
 }  // namespace bzla::array
