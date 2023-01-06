@@ -26,13 +26,11 @@ class TestPreprocessor : public ::testing::Test
 TEST_F(TestPreprocessor, ctor_dtor)
 {
   SolvingContext ctx(d_options);
-  Preprocessor pp(ctx);
 }
 
 TEST_F(TestPreprocessor, inc1)
 {
   SolvingContext ctx(d_options);
-  Preprocessor pp(ctx);
 
   ctx.push();
   ctx.pop();
@@ -41,7 +39,6 @@ TEST_F(TestPreprocessor, inc1)
 TEST_F(TestPreprocessor, inc2)
 {
   SolvingContext ctx(d_options);
-  Preprocessor pp(ctx);
 
   ctx.push();
   ctx.pop();
