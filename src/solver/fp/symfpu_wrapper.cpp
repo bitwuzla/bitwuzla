@@ -487,9 +487,21 @@ SymFpuTraits::invariant(const bool &p)
 
 /* --- SymFpuSymProp -------------------------------------------------------- */
 
-SymFpuSymProp::SymFpuSymProp(const Node &node) : d_node(node)
+SymFpuSymProp::SymFpuSymProp(const Node &node)
 {
-  assert(check_node(node));
+  if (node.type().is_bool())
+  {
+    NodeManager &nm = NodeManager::get();
+    d_node          = nm.mk_node(Kind::ITE,
+                        {node,
+                                  nm.mk_value(BitVector::mk_true()),
+                                  nm.mk_value(BitVector::mk_false())});
+  }
+  else
+  {
+    d_node = node;
+  }
+  assert(check_node(d_node));
 }
 
 SymFpuSymProp::SymFpuSymProp(bool v)
