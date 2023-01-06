@@ -9,8 +9,12 @@ namespace bzla::quant {
 class QuantSolver : public Solver
 {
  public:
-  /** Determine if `term` is a leaf node for the quant solver. */
-  static bool is_leaf(const Node& term);
+  /**
+   * Determine if given term is a leaf node for other solvers than the
+   * quant solver.
+   * @param term The term to query.
+   */
+  static bool is_theory_leaf(const Node& term);
 
   QuantSolver(Env& env, SolverState& state);
   ~QuantSolver();

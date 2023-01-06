@@ -7,13 +7,16 @@
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "rewrite/rewriter.h"
+#include "solver/array/array_solver.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
+#include "solver/fun/fun_solver.h"
+#include "solver/quant/quant_solver.h"
 
 namespace bzla::fp {
 
 bool
-FpSolver::is_leaf(const Node& term)
+FpSolver::is_theory_leaf(const Node& term)
 {
   node::Kind k = term.kind();
   return k == node::Kind::FP_IS_INF || k == node::Kind::FP_IS_NAN
@@ -24,6 +27,14 @@ FpSolver::is_leaf(const Node& term)
          || k == node::Kind::FP_TO_SBV || k == node::Kind::FP_TO_UBV
          || (k == node::Kind::EQUAL
              && (term[0].type().is_fp() || term[0].type().is_rm()));
+}
+
+bool
+FpSolver::is_leaf(const Node& node)
+{
+  return array::ArraySolver::is_theory_leaf(node)
+         || fun::FunSolver::is_theory_leaf(node)
+         || quant::QuantSolver::is_theory_leaf(node);
 }
 
 Node

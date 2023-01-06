@@ -13,7 +13,12 @@ namespace bzla::bv {
 class BvSolver : public Solver, public BvSolverInterface
 {
  public:
-  /** Determine if `term` is a leaf node for the bit-vector solver. */
+  /**
+   * Determine if given term is a leaf node for the bit-vector solver, i.e.,
+   * a term of Boolean or bit-vector type that belongs to any of the other
+   * theories.
+   * @param term The term to query.
+   */
   static bool is_leaf(const Node& term);
 
   BvSolver(Env& env, SolverState& state);

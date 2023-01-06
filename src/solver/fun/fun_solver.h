@@ -10,8 +10,12 @@ namespace bzla::fun {
 class FunSolver : public Solver
 {
  public:
-  /** Determine if `term` is a leaf node for the function solver. */
-  static bool is_leaf(const Node& term);
+  /**
+   * Determine if given term is a leaf node for other solvers than the
+   * function solver.
+   * @param term The term to query.
+   */
+  static bool is_theory_leaf(const Node& term);
 
   FunSolver(Env& env, SolverState& state);
   ~FunSolver();

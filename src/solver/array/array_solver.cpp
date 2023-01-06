@@ -15,7 +15,7 @@ using namespace node;
 /* --- ArraySolver public --------------------------------------------------- */
 
 bool
-ArraySolver::is_leaf(const Node& term)
+ArraySolver::is_theory_leaf(const Node& term)
 {
   Kind k = term.kind();
   return k == Kind::SELECT || (k == Kind::EQUAL && (term[0].type().is_array()));

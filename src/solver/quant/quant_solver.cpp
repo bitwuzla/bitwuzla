@@ -9,7 +9,7 @@ using namespace node;
 /* --- QuantSolver public --------------------------------------------------- */
 
 bool
-QuantSolver::is_leaf(const Node& term)
+QuantSolver::is_theory_leaf(const Node& term)
 {
   return term.kind() == Kind::FORALL;
 }

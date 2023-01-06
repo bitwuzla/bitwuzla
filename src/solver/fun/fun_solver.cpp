@@ -10,7 +10,7 @@ using namespace node;
 /* --- FunSolver public ----------------------------------------------------- */
 
 bool
-FunSolver::is_leaf(const Node& term)
+FunSolver::is_theory_leaf(const Node& term)
 {
   Kind k = term.kind();
   return k == Kind::APPLY || (k == Kind::EQUAL && (term[0].type().is_fun()));

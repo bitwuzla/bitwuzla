@@ -177,19 +177,19 @@ SolverEngine::process_term(const Node& term)
     auto [it, inserted] = d_register_term_cache.insert(cur);
     if (inserted)
     {
-      if (fp::FpSolver::is_leaf(cur))
+      if (fp::FpSolver::is_theory_leaf(cur))
       {
         d_fp_solver.register_term(cur);
       }
-      else if (array::ArraySolver::is_leaf(cur))
+      else if (array::ArraySolver::is_theory_leaf(cur))
       {
         d_array_solver.register_term(cur);
       }
-      else if (fun::FunSolver::is_leaf(cur))
+      else if (fun::FunSolver::is_theory_leaf(cur))
       {
         d_fun_solver.register_term(cur);
       }
-      else if (quant::QuantSolver::is_leaf(cur))
+      else if (quant::QuantSolver::is_theory_leaf(cur))
       {
         d_quant_solver.register_term(cur);
       }

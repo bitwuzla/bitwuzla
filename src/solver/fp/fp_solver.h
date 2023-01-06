@@ -9,7 +9,18 @@ namespace bzla::fp {
 class FpSolver : public Solver
 {
  public:
-  /** Determine if `term` is a leaf node for the floating-point solver. */
+  /**
+   * Determine if given term is a leaf node for other solvers than the
+   * floating-point solver.
+   * @param term The term to query.
+   */
+  static bool is_theory_leaf(const Node& term);
+  /**
+   * Determine if given term is a leaf node for the floating-point solver,
+   * i.e., a term of floating-point or rounding mode type that belongs to any
+   * of the other theories.
+   * @param term The term to query.
+   */
   static bool is_leaf(const Node& term);
   /** Construct default value for given floating-point type. */
   static Node default_value(const Type& type);
