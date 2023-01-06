@@ -27,6 +27,10 @@ class Logger
     Line(uint64_t level, const char* prefix = nullptr);
     ~Line();
     std::ostream& stream();
+
+   private:
+    /** Stream flags saved on construction and restored on destruction. */
+    std::ios_base::fmtflags d_flags;
   };
 
   Logger(uint64_t log_level, uint64_t verbosity);

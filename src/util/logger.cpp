@@ -7,8 +7,10 @@ namespace bzla::util {
 Logger::Line::Line(uint64_t level, const char* prefix)
 {
   auto& os = stream();
+  // Save stream flags for restoring them later.
+  d_flags = os.flags();
   // Set depth for node printing to 1
-  os.iword(Printer::s_stream_index_maximum_depth) = 1;
+  os << printer::set_depth(1);
   if (prefix)
   {
     os << prefix << " ";
@@ -18,9 +20,10 @@ Logger::Line::Line(uint64_t level, const char* prefix)
 
 Logger::Line::~Line()
 {
-  auto& os                                        = stream();
-  os.iword(Printer::s_stream_index_maximum_depth) = 0;
+  auto& os = stream();
   os << std::endl;
+  // Reset stream flags.
+  os.flags(d_flags);
 }
 
 std::ostream&
