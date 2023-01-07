@@ -335,7 +335,7 @@ class LocalSearch
   /** Map from node id to nodes. */
   NodesIdTable d_nodes;
   /** The set of roots. */
-  std::vector<Node<VALUE>*> d_roots;
+  std::unordered_set<uint64_t> d_roots;
   /** The set of unsatisfied roots. */
   std::unordered_set<uint64_t> d_roots_unsat;
   /**

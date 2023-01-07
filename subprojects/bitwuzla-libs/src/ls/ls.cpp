@@ -130,7 +130,7 @@ LocalSearch<VALUE>::register_root(uint64_t id)
 {
   assert(id < d_nodes.size());  // API check
   Node<VALUE>* root = get_node(id);
-  d_roots.push_back(root);
+  d_roots.insert(root->id());
   if (root->is_inequality())
   {
     d_roots_ineq.insert({root, true});
@@ -183,8 +183,7 @@ bool
 LocalSearch<VALUE>::is_root_node(const Node<VALUE>* node) const
 {
   assert(node);
-  assert(d_parents.find(node->id()) != d_parents.end());
-  return d_parents.at(node->id()).empty();
+  return d_roots.find(node->id()) != d_roots.end();
 }
 
 template <class VALUE>
@@ -434,10 +433,10 @@ LocalSearch<VALUE>::move()
       BZLALSLOG(1) << "    - " << *(get_node(id)) << std::endl;
     }
     BZLALSLOG(1) << "  satisfied roots:" << std::endl;
-    for (const Node<VALUE>* r : d_roots)
+    for (uint64_t id : d_roots)
     {
-      if (d_roots_unsat.find(r->id()) != d_roots_unsat.end()) continue;
-      BZLALSLOG(1) << "    - " << *r << std::endl;
+      if (d_roots_unsat.find(id) != d_roots_unsat.end()) continue;
+      BZLALSLOG(1) << "    - " << get_node(id) << std::endl;
     }
   }
 
