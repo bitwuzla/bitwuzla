@@ -1,0 +1,3 @@
+add_unit_test(test_bv_solver)
+add_unit_test(test_bv_prop_solver)
+
