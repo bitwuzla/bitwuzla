@@ -3,17 +3,10 @@ find_package(GoogleTest REQUIRED)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/tests)
 
 set(test_names
-  #bv
   #bvprop
   #lambda
-  #misc
   #modelgen
   #modelgensmt2
-  #prop
-  #propold
-  #propoldcomplete
-  #propoldcons
-  #propoldinv
 )
 
 macro(_add_unit_test test_name is_white)
