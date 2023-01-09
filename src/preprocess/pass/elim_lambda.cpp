@@ -64,7 +64,7 @@ PassElimLambda::process(const Node& term)
     visit.pop_back();
   } while (!visit.empty());
 
-  return d_env.rewriter().rewrite(d_cache.at(term));
+  return d_cache.at(term);
 }
 
 /* --- PassElimLambda private ----------------------------------------------- */
