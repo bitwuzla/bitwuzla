@@ -7,6 +7,10 @@ namespace bzla {
 
 class Env;
 
+namespace util {
+  class Logger;
+}
+
 namespace backtrack {
 class AssertionView;
 }
@@ -69,7 +73,7 @@ class AssertionVector
 class PreprocessingPass
 {
  public:
-  PreprocessingPass(Env& env) : d_env(env) {}
+  PreprocessingPass(Env& env);
 
   /** Apply preprocessing pass to the current set of assertions. */
   virtual void apply(AssertionVector& assertions) = 0;
@@ -79,6 +83,7 @@ class PreprocessingPass
 
  protected:
   Env& d_env;
+  util::Logger& d_logger;
 };
 
 }  // namespace preprocess

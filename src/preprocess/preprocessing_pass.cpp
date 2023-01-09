@@ -1,6 +1,7 @@
 #include "preprocess/preprocessing_pass.h"
 
 #include "backtrack/assertion_stack.h"
+#include "env.h"
 
 namespace bzla::preprocess {
 
@@ -69,6 +70,13 @@ bool
 AssertionVector::changed() const
 {
   return d_changed;
+}
+
+/* --- PreprocessingPass public --------------------------------------------- */
+
+PreprocessingPass::PreprocessingPass(Env& env)
+    : d_env(env), d_logger(env.logger())
+{
 }
 
 }  // namespace bzla::preprocess
