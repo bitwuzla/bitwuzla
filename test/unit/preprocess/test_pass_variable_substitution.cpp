@@ -24,8 +24,8 @@ class TestPassVariableSubstitution : public TestPreprocessingPass
 
 TEST_F(TestPassVariableSubstitution, subst1)
 {
-  Node x  = d_nm.mk_const(d_nm.mk_bool_type());
-  Node t  = d_nm.mk_const(d_nm.mk_bool_type());
+  Node x  = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+  Node t  = d_nm.mk_const(d_nm.mk_bool_type(), "t");
   Node eq = d_nm.mk_node(Kind::EQUAL, {x, t});
 
   d_as.push_back(eq);
@@ -108,9 +108,9 @@ TEST_F(TestPassVariableSubstitution, cycle3)
   d_pass.apply(assertions);
 
   Node y_and_z = d_nm.mk_node(Kind::AND, {y, z});
-  ASSERT_EQ(d_as[0], x_and_z);
-  ASSERT_EQ(d_as[1], d_nm.mk_value(true));
-  ASSERT_EQ(d_as[2], d_nm.mk_node(Kind::EQUAL, {x, x_and_z}));
+  ASSERT_EQ(d_as[0], y_and_z);
+  ASSERT_EQ(d_as[1], d_nm.mk_node(Kind::EQUAL, {y, y_and_z}));
+  ASSERT_EQ(d_as[2], d_nm.mk_value(true));
 }
 
 TEST_F(TestPassVariableSubstitution, cycle4)
@@ -131,6 +131,29 @@ TEST_F(TestPassVariableSubstitution, cycle4)
 
   ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_as[1], d_nm.mk_value(true));
+  ASSERT_EQ(d_as[2], d_nm.mk_value(true));
+}
+
+TEST_F(TestPassVariableSubstitution, cycle5)
+{
+  Node x   = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+  Node y   = d_nm.mk_const(d_nm.mk_bool_type(), "y");
+  Node z   = d_nm.mk_const(d_nm.mk_bool_type(), "z");
+  Node eq1 = d_nm.mk_node(Kind::EQUAL, {x, y});
+  Node eq2 = d_nm.mk_node(Kind::EQUAL, {y, z});
+  Node eq3 = d_nm.mk_node(Kind::EQUAL, {z, x});
+
+  d_as.push_back(eq1);
+  d_as.push_back(eq2);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+  ASSERT_EQ(d_as[0], d_nm.mk_value(true));
+  ASSERT_EQ(d_as[1], d_nm.mk_value(true));
+
+  d_as.push_back(eq3);
+  preprocess::AssertionVector assertions2(d_as.view());
+  d_pass.apply(assertions);
   ASSERT_EQ(d_as[2], d_nm.mk_value(true));
 }
 

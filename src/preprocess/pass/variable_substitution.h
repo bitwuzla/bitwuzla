@@ -32,11 +32,11 @@ class PassVariableSubstitution : public PreprocessingPass
                   const std::unordered_map<Node, Node>& substitutions,
                   std::unordered_map<Node, Node>& cache) const;
 
-  bool register_assertion(const Node& assertion);
-
   /** Only required to check the current assertion level. */
   const backtrack::BacktrackManager* d_backtrack_mgr;
+  /** Current set of variable substitutions. */
   backtrack::unordered_map<Node, Node> d_substitutions;
+  /** Current set of variable substitution assertions. */
   backtrack::unordered_set<Node> d_substitution_assertions;
 
   /** Backtrackable cache. */
@@ -72,6 +72,7 @@ class PassVariableSubstitution : public PreprocessingPass
   {
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_apply;
+    util::TimerStatistic& time_register;
     util::TimerStatistic& time_direct_cycle_check;
     util::TimerStatistic& time_remove_cycles;
     uint64_t& num_substs;

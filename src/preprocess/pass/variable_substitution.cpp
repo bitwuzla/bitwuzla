@@ -6,6 +6,7 @@
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
 #include "rewrite/rewriter.h"
+#include "util/logger.h"
 
 namespace bzla::preprocess::pass {
 
@@ -49,34 +50,61 @@ void
 PassVariableSubstitution::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats.time_apply);
-  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  Log(1) << "Apply variable substitution";
+
+  auto& substitution_map = d_cache.substitutions();
+  bool process_term      = !substitution_map.empty();
+
+  // Check current set of assertions for variable substitutions
+  std::unordered_map<Node, Node> new_substs;
   {
-    const Node& assertion = assertions[i];
-    if (register_assertion(assertion))
+    util::Timer timer(d_stats.time_register);
+    for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
-      d_substitution_assertions.insert(assertion);
+      const Node& assertion  = assertions[i];
+      const auto [var, term] = get_var_term(assertion);
+      // Either no variable substitution or already have a substitution
+      if (var.is_null() || d_substitutions.find(var) != d_substitutions.end())
+      {
+        continue;
+      }
+
+      // If we already have substitutions, process the term first to ensure
+      // that all variables in this term are substituted before we check for
+      // cycles. This allows us to incrementally add new substitutions and
+      // check for cycles.
+      Node term_processed = process_term ? process(term) : term;
+
+      // Do not add direct substitution cycles
+      if (!is_direct_cycle(var, term_processed))
+      {
+        d_substitutions.emplace(var, term_processed);
+        d_substitution_assertions.insert(assertion);
+        new_substs.emplace(var, term_processed);
+      }
     }
+    Log(1) << "Found " << new_substs.size() << " new substitutions";
   }
 
-  if (d_substitutions.empty())
+  // Remove substitution cycles
+  {
+    util::Timer timer_cycles(d_stats.time_remove_cycles);
+    remove_indirect_cycles(new_substs);
+    Log(1) << new_substs.size() << " substitutions after cycle removal";
+  }
+
+  // Add new substitutions to substitution map
+  substitution_map.insert(new_substs.begin(), new_substs.end());
+  d_stats.num_substs = substitution_map.size();
+
+  // No substitutions
+  if (substitution_map.empty())
   {
     return;
   }
 
-  auto& substitution_map = d_cache.substitutions();
-
-  // Substitutions and cache will be repopulated below
-  substitution_map.clear();
+  // Reset substitution cache since we have new substitutions
   d_cache.cache().clear();
-
-  // Compute substitution map and remove cycles
-  substitution_map.insert(d_substitutions.begin(), d_substitutions.end());
-  {
-    util::Timer timer_cycles(d_stats.time_remove_cycles);
-    remove_indirect_cycles(substitution_map);
-  }
-
-  d_stats.num_substs = substitution_map.size();
 
   // Apply substitutions.
   //
@@ -110,25 +138,6 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       assertions.replace(i, process(assertion));
     }
   }
-}
-
-bool
-PassVariableSubstitution::register_assertion(const Node& assertion)
-{
-  const auto [var, term] = get_var_term(assertion);
-  if (!var.is_null())
-  {
-    if (d_substitutions.find(var) != d_substitutions.end())
-    {
-      return false;
-    }
-    if (!is_direct_cycle(var, term))
-    {
-      d_substitutions.emplace(var, term);
-      return true;
-    }
-  }
-  return false;
 }
 
 Node
@@ -185,8 +194,8 @@ PassVariableSubstitution::remove_indirect_cycles(
         assert(substitutions.find(cur) != substitutions.end());
         marker.pop_back();
         // Assign substitution rank
-        auto [it, inserted] = order.emplace(cur, order_num++);
-        assert(inserted);
+        assert(order.find(cur) == order.end());
+        order.emplace(cur, order_num++);
       }
       else if (!it->second)
       {
@@ -248,6 +257,12 @@ PassVariableSubstitution::is_direct_cycle(const Node& var,
   {
     const Node& cur = visit.front();
     visit.erase(visit.begin());
+
+    // var cannot be in cur
+    if (cur.id() < var.id())
+    {
+      continue;
+    }
 
     auto [it, inserted] = cache.insert(cur);
     if (inserted)
@@ -331,6 +346,8 @@ PassVariableSubstitution::substitute(
 PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
     : time_apply(stats.new_stat<util::TimerStatistic>(
         "preprocess::varsubst::time_apply")),
+      time_register(stats.new_stat<util::TimerStatistic>(
+          "preprocess::varsubst::time_register")),
       time_direct_cycle_check(stats.new_stat<util::TimerStatistic>(
           "preprocess::varsubst::time_direct_cycle_check")),
       time_remove_cycles(stats.new_stat<util::TimerStatistic>(
