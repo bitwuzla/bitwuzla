@@ -11,7 +11,7 @@ AssertionVector::AssertionVector(backtrack::AssertionView& view)
     : d_view(view),
       d_level(view.level(view.begin())),
       d_begin(view.begin()),
-      d_changed(false)
+      d_modified(0)
 {
 #ifndef NDEBUG
   // Assertion should all be from one level.
@@ -29,7 +29,7 @@ AssertionVector::push_back(const Node& assertion)
 {
   if (d_view.insert_at_level(d_level, assertion))
   {
-    d_changed = true;
+    ++d_modified;
   }
 }
 
@@ -53,7 +53,7 @@ AssertionVector::replace(size_t index, const Node& assertion)
   size_t real_index = d_begin + index;
   if (d_view[real_index] != assertion)
   {
-    d_changed = true;
+    ++d_modified;
     d_view.replace(real_index, assertion);
   }
 }
@@ -61,15 +61,21 @@ AssertionVector::replace(size_t index, const Node& assertion)
 /* --- AssertionVector private ---------------------------------------------- */
 
 void
-AssertionVector::reset_changed()
+AssertionVector::reset_modified()
 {
-  d_changed = false;
+  d_modified = 0;
+}
+
+size_t
+AssertionVector::num_modified() const
+{
+  return d_modified;
 }
 
 bool
-AssertionVector::changed() const
+AssertionVector::modified() const
 {
-  return d_changed;
+  return d_modified > 0;
 }
 
 /* --- PreprocessingPass public --------------------------------------------- */

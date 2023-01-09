@@ -14,6 +14,10 @@ namespace bzla {
 class SolvingContext;
 class Env;
 
+namespace util {
+class Logger;
+}
+
 namespace preprocess {
 
 class Preprocessor
@@ -37,6 +41,7 @@ class Preprocessor
   void sync_scope(size_t level);
 
   Env& d_env;
+  util::Logger& d_logger;
 
   /** Current set of assertions. */
   backtrack::AssertionView& d_assertions;
@@ -55,6 +60,14 @@ class Preprocessor
   pass::PassElimLambda d_pass_elim_lambda;
   pass::PassVariableSubstitution d_pass_variable_substitution;
   pass::PassFlattenAnd d_pass_flatten_and;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    util::TimerStatistic& time_preprocess;
+    util::TimerStatistic& time_process;
+    uint64_t& num_iterations;
+  } d_stats;
 };
 
 }  // namespace preprocess

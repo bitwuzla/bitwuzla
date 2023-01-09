@@ -2,24 +2,29 @@
 
 #include "env.h"
 #include "solving_context.h"
+#include "util/logger.h"
 
 namespace bzla::preprocess {
 
 Preprocessor::Preprocessor(SolvingContext& context)
     : d_env(context.env()),
+      d_logger(d_env.logger()),
       d_assertions(context.assertions()),
       d_global_backtrack_mgr(*context.backtrack_mgr()),
       d_pop_callback(context.backtrack_mgr(), &d_backtrack_mgr),
       d_pass_rewrite(d_env),
       d_pass_elim_lambda(d_env),
       d_pass_variable_substitution(d_env, &d_backtrack_mgr),
-      d_pass_flatten_and(d_env)
+      d_pass_flatten_and(d_env),
+      d_stats(d_env.statistics())
 {
 }
 
 Result
 Preprocessor::preprocess()
 {
+  util::Timer timer(d_stats.time_preprocess);
+
   // No assertions to process, return.
   if (d_assertions.empty())
   {
@@ -57,6 +62,7 @@ Preprocessor::preprocess()
 Node
 Preprocessor::process(const Node& term)
 {
+  util::Timer timer(d_stats.time_process);
   // TODO: add more passes
   Node processed = d_pass_variable_substitution.process(term);
   return d_pass_rewrite.process(processed);
@@ -67,6 +73,7 @@ Preprocessor::process(const Node& term)
 void
 Preprocessor::apply(AssertionVector& assertions)
 {
+  Msg(1) << "Preprocessing " << assertions.size() << " assertions";
   if (assertions.size() == 0)
   {
     return;
@@ -79,12 +86,21 @@ Preprocessor::apply(AssertionVector& assertions)
   do
   {
     // Reset changed flag.
-    assertions.reset_changed();
+    assertions.reset_modified();
+    ++d_stats.num_iterations;
 
+    size_t cnt = assertions.num_modified();
     d_pass_flatten_and.apply(assertions);
+    Msg(2) << assertions.num_modified() - cnt << " after and flattening";
+
+    cnt = assertions.num_modified();
     d_pass_rewrite.apply(assertions);
+    Msg(2) << assertions.num_modified() - cnt << " after rewriting";
+
+    cnt = assertions.num_modified();
     d_pass_variable_substitution.apply(assertions);
-  } while (assertions.changed());
+    Msg(2) << assertions.num_modified() - cnt << " after variable substitution";
+  } while (assertions.modified());
 }
 
 void
@@ -94,6 +110,15 @@ Preprocessor::sync_scope(size_t level)
   {
     d_backtrack_mgr.push();
   }
+}
+
+Preprocessor::Statistics::Statistics(util::Statistics& stats)
+    : time_preprocess(
+        stats.new_stat<util::TimerStatistic>("preprocessor::time_preprocess")),
+      time_process(
+          stats.new_stat<util::TimerStatistic>("preprocessor::time_process")),
+      num_iterations(stats.new_stat<uint64_t>("preprocessor::num_iterations"))
+{
 }
 
 }  // namespace bzla::preprocess

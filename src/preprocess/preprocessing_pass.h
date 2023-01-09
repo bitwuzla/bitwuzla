@@ -30,7 +30,7 @@ class AssertionVector
   /**
    * Push back new assertion.
    *
-   * @note Sets the d_changed flag to true.
+   * @note Increments d_changed.
    */
   void push_back(const Node& assertion);
 
@@ -43,7 +43,7 @@ class AssertionVector
   /**
    * Replace assertion at index i.
    *
-   * @note Sets the d_changed flag to true if contents of vector was modified.
+   * @note Increments d_changed if contents of vector was modified.
    *
    * @param i The index of the assertion to replace.
    * @param assertion The new assertion.
@@ -52,10 +52,13 @@ class AssertionVector
 
  private:
   /** Reset d_changed. */
-  void reset_changed();
+  void reset_modified();
 
-  /** Determines if vector was modified since last reset_changed() call. */
-  bool changed() const;
+  /** @return The number of changed/added assertions since the last reset. */
+  size_t num_modified() const;
+
+  /** Determines if vector was modified since the last reset. */
+  bool modified() const;
 
   /** The wrapper assertion view. */
   backtrack::AssertionView& d_view;
@@ -63,8 +66,8 @@ class AssertionVector
   size_t d_level;
   /** Start index for assertions. */
   size_t d_begin;
-  /** Indicates whether vector was modified. */
-  bool d_changed;
+  /** Number of modified (changed, added) assertions since last reset. */
+  size_t d_modified;
 };
 
 /**
