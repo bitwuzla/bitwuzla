@@ -1115,17 +1115,145 @@ TEST_F(TestRewriterBv, bv_concat_extract)
 TEST_F(TestRewriterBv, bv_concat_and)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::BV_CONCAT_AND;
+  Node bv4_add = d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b});
   //// applies
+  // match:  (bvconcat (bvand a b) c)
   test_rule<kind>(
       d_nm.mk_node(Kind::BV_CONCAT,
                    {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}), d_bv4_c}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_zero}), d_bv4_zero}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}), bv4_add}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {d_nm.mk_node(Kind::BV_AND, {bv4_add, d_bv4_b}), bv4_add}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, bv4_add}), bv4_add}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_b}), d_bv4_c}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_b}), bv4_add}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {d_nm.mk_node(Kind::BV_AND, {bv4_add, d_bv4_b}), bv4_add}));
+  // match:  (bvconcat (bvnot (bvand a b)) c)
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b})),
+       d_bv4_c}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_zero})),
+       d_bv4_zero}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b})),
+       bv4_add}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {bv4_add, d_bv4_b})),
+       bv4_add}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_a, bv4_add})),
+       bv4_add}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_b})),
+       d_bv4_c}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_b})),
+       bv4_add}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {bv4_add, d_bv4_b})),
+       bv4_add}));
+  // match:  (bvconcat a (bvand b c))
   test_rule<kind>(
       d_nm.mk_node(Kind::BV_CONCAT,
                    {d_bv4_c, d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_bv4_zero, d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_zero})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {bv4_add, d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {bv4_add, d_nm.mk_node(Kind::BV_AND, {bv4_add, d_bv4_b})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {bv4_add, d_nm.mk_node(Kind::BV_AND, {d_bv4_a, bv4_add})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {bv4_add, d_nm.mk_node(Kind::BV_AND, {bv4_add, d_bv4_b})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_bv4_c, d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_b})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {bv4_add, d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_b})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, bv4_add}), bv4_add}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {bv4_add, d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, bv4_add})}));
+  // match:  (bvconcat a (bvnot (bvand b c)))
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_bv4_c,
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}))}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_CONCAT,
+                               {d_bv4_zero,
+                                d_nm.invert_node(d_nm.mk_node(
+                                    Kind::BV_AND, {d_bv4_zero, d_bv4_zero}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {bv4_add,
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {bv4_add,
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {bv4_add, d_bv4_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {bv4_add,
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_a, bv4_add}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {bv4_add,
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {bv4_add, d_bv4_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_bv4_c,
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {bv4_add,
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_bv4_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, bv4_add})),
+       bv4_add}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {bv4_add,
+       d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, bv4_add}))}));
   //// does not apply
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::BV_CONCAT,
                    {d_nm.mk_node(Kind::BV_OR, {d_bv4_a, d_bv4_b}), d_bv4_c}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_CONCAT,
+                   {d_nm.mk_node(Kind::BV_AND, {bv4_add, bv4_add}), d_bv4_c}));
 }
 
 /* bvconcat ----------------------------------------------------------------- */

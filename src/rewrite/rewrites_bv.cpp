@@ -9,6 +9,22 @@ namespace bzla {
 
 using namespace node;
 
+namespace {
+/** @return True if given node is either a CONSTANT or a VALUE. */
+bool
+is_const_val(const Node& node)
+{
+  const Kind& kind = node.kind();
+  return kind == Kind::CONSTANT || kind == Kind::VALUE;
+}
+/** @return True if given node is either a CONSTANT, a VALUE or a BV_EXTRACT. */
+bool
+is_const_val_extract(const Node& node)
+{
+  return is_const_val(node) || node.kind() == Kind::BV_EXTRACT;
+}
+}  // namespace
+
 /* bvadd -------------------------------------------------------------------- */
 
 /**
@@ -1210,8 +1226,16 @@ RewriteRule<RewriteRuleKind::BV_CONCAT_EXTRACT>::_apply(Rewriter& rewriter,
  * match:  (bvconcat (bvand a b) c)
  * result: (bvand (bvconcat a c) (bvconcat b c))
  *
+ * match:  (bvconcat (bvnot (bvand a b)) c)
+ * result: (bvand (bvconcat a (bvnot c)) (bvconcat b (bvnot c)))
+ *
  * match:  (bvconcat a (bvand b c))
  * result: (bvand (bvconcat a b) (bvconcat a c))
+ *
+ * match:  (bvconcat a (bvnot (bvand b c)))
+ * result: (bvand (bvconcat (bvnot a) b) (bvconcat (bvnot a) c))
+ *
+ * where `a` or `b` are either a constant or value.
  */
 template <>
 Node
@@ -1219,19 +1243,37 @@ RewriteRule<RewriteRuleKind::BV_CONCAT_AND>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
   assert(node.num_children() == 2);
-  if (node[0].kind() == Kind::BV_AND)
+  bool inverted0    = node[0].is_inverted();
+  const Node& node0 = inverted0 ? node[0][0] : node[0];
+  bool inverted1    = node[1].is_inverted();
+  const Node& node1 = inverted1 ? node[1][0] : node[1];
+  if (node0.kind() == Kind::BV_AND
+      && (is_const_val(node0[0]) || is_const_val(node0[1])))
   {
-    return rewriter.mk_node(
-        Kind::BV_AND,
-        {rewriter.mk_node(Kind::BV_CONCAT, {node[0][0], node[1]}),
-         rewriter.mk_node(Kind::BV_CONCAT, {node[0][1], node[1]})});
+    return rewriter.invert_node_if(
+        inverted0,
+        rewriter.mk_node(
+            Kind::BV_AND,
+            {rewriter.mk_node(
+                 Kind::BV_CONCAT,
+                 {node0[0], rewriter.invert_node_if(inverted0, node[1])}),
+             rewriter.mk_node(
+                 Kind::BV_CONCAT,
+                 {node0[1], rewriter.invert_node_if(inverted0, node[1])})}));
   }
-  else if (node[1].kind() == Kind::BV_AND)
+  else if (node1.kind() == Kind::BV_AND
+           && (is_const_val(node1[0]) || is_const_val(node1[1])))
   {
-    return rewriter.mk_node(
-        Kind::BV_AND,
-        {rewriter.mk_node(Kind::BV_CONCAT, {node[0], node[1][0]}),
-         rewriter.mk_node(Kind::BV_CONCAT, {node[0], node[1][1]})});
+    return rewriter.invert_node_if(
+        inverted1,
+        rewriter.mk_node(
+            Kind::BV_AND,
+            {rewriter.mk_node(
+                 Kind::BV_CONCAT,
+                 {rewriter.invert_node_if(inverted1, node[0]), node1[0]}),
+             rewriter.mk_node(
+                 Kind::BV_CONCAT,
+                 {rewriter.invert_node_if(inverted1, node[0]), node1[1]})}));
   }
   return node;
 }
@@ -1441,17 +1483,6 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT>::_apply(Rewriter& rewriter,
   }
   return node;
 }
-
-namespace {
-/** @return True if given node is either a CONSTANT, a VALUE or a BV_EXTRACT. */
-bool
-is_const_val_extract(const Node& node)
-{
-  const Kind& kind = node.kind();
-  return kind == Kind::CONSTANT || kind == Kind::VALUE
-         || kind == Kind::BV_EXTRACT;
-}
-}  // namespace
 
 /**
  * match:  ((_ extract u l) (bvand a b))
