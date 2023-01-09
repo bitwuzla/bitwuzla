@@ -3,15 +3,22 @@
 #include <unordered_set>
 #include <vector>
 
+#include "env.h"
 #include "node/node_manager.h"
 
 namespace bzla::preprocess::pass {
 
 using namespace node;
 
+PassFlattenAnd::PassFlattenAnd(Env& env)
+    : PreprocessingPass(env), d_stats(env.statistics())
+{
+}
+
 void
 PassFlattenAnd::apply(AssertionVector& assertions)
 {
+  util::Timer timer(d_stats.time_apply);
   std::vector<Node> visit;
   std::unordered_set<Node> cache;
 
@@ -34,6 +41,7 @@ PassFlattenAnd::apply(AssertionVector& assertions)
         if (cur.kind() == Kind::AND)
         {
           visit.insert(visit.end(), cur.rbegin(), cur.rend());
+          ++d_stats.num_flattened;
         }
         else
         {
@@ -42,6 +50,14 @@ PassFlattenAnd::apply(AssertionVector& assertions)
       }
     }
   }
+}
+
+PassFlattenAnd::Statistics::Statistics(util::Statistics& stats)
+    : time_apply(stats.new_stat<util::TimerStatistic>(
+        "preprocessor::flatten_and::time_apply")),
+      num_flattened(
+          stats.new_stat<uint64_t>("preprocessor::flatten_and::num_flattened"))
+{
 }
 
 }  // namespace bzla::preprocess::pass

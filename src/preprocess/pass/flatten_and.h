@@ -12,9 +12,17 @@ namespace bzla::preprocess::pass {
 class PassFlattenAnd : public PreprocessingPass
 {
  public:
-  PassFlattenAnd(Env& env) : PreprocessingPass(env) {}
+  PassFlattenAnd(Env& env);
 
   void apply(AssertionVector& assertions) override;
+
+ private:
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    util::TimerStatistic& time_apply;
+    uint64_t& num_flattened;
+  } d_stats;
 };
 
 }  // namespace bzla::preprocess::pass
