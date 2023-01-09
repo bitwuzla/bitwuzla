@@ -120,8 +120,11 @@ RewriteRule<RewriteRuleKind::BV_ADD_BV1>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
   assert(node.num_children() == 2);
-  if (node[0].type().bv_size() != 1) return node;
-  return rewriter.mk_node(Kind::BV_XOR, {node[0], node[1]});
+  if (node[0].type().bv_size() == 1)
+  {
+    return rewriter.mk_node(Kind::BV_XOR, {node[0], node[1]});
+  }
+  return node;
 }
 
 /**
@@ -134,11 +137,14 @@ RewriteRule<RewriteRuleKind::BV_ADD_SAME>::_apply(Rewriter& rewriter,
                                                   const Node& node)
 {
   assert(node.num_children() == 2);
-  if (node[0] != node[1]) return node;
-  return rewriter.mk_node(Kind::BV_SHL,
-                          {node[0],
-                           NodeManager::get().mk_value(
-                               BitVector::mk_one(node[0].type().bv_size()))});
+  if (node[0] == node[1])
+  {
+    return rewriter.mk_node(Kind::BV_SHL,
+                            {node[0],
+                             NodeManager::get().mk_value(
+                                 BitVector::mk_one(node[0].type().bv_size()))});
+  }
+  return node;
 }
 
 /**
@@ -1281,19 +1287,14 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_EXTRACT>::_apply(Rewriter& rewriter,
 {
   assert(node.num_children() == 1);
   assert(node.num_indices() == 2);
-  if (node[0].kind() == Kind::BV_EXTRACT)
+  bool inverted     = node[0].is_inverted();
+  const Node& node0 = inverted ? node[0][0] : node[0];
+  if (node0.kind() == Kind::BV_EXTRACT)
   {
     return rewriter.mk_node(
         Kind::BV_EXTRACT,
-        {node[0][0]},
-        {node[0].index(1) + node.index(0), node[0].index(1) + node.index(1)});
-  }
-  else if (node[0].is_inverted() && node[0][0].kind() == Kind::BV_EXTRACT)
-  {
-    return rewriter.mk_node(Kind::BV_EXTRACT,
-                            {rewriter.invert_node(node[0][0][0])},
-                            {node[0][0].index(1) + node.index(0),
-                             node[0][0].index(1) + node.index(1)});
+        {rewriter.invert_node_if(inverted, node0[0])},
+        {node0.index(1) + node.index(0), node0.index(1) + node.index(1)});
   }
   return node;
 }
@@ -1320,11 +1321,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_RHS>::_apply(
     uint64_t m = node0[1].type().bv_size();
     if (node.index(0) == m - 1 && node.index(1) == 0)
     {
-      if (inverted)
-      {
-        return rewriter.invert_node(node0[1]);
-      }
-      return node0[1];
+      return rewriter.invert_node_if(inverted, node0[1]);
     }
   }
   return node;
@@ -1353,11 +1350,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_LHS>::_apply(
     uint64_t m = node0[1].type().bv_size();
     if (node.index(0) == n + m - 1 && node.index(1) == m)
     {
-      if (inverted)
-      {
-        return rewriter.invert_node(node0[0]);
-      }
-      return node0[0];
+      return rewriter.invert_node_if(inverted, node0[0]);
     }
   }
   return node;
@@ -1393,21 +1386,15 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_CONCAT_LHS_RHS>::_apply(
     uint64_t l = node.index(1);
     if (u < m)
     {
-      if (inverted)
-      {
-        return rewriter.mk_node(
-            Kind::BV_EXTRACT, {rewriter.invert_node(node0[1])}, {u, l});
-      }
-      return rewriter.mk_node(Kind::BV_EXTRACT, {node0[1]}, {u, l});
+      return rewriter.mk_node(Kind::BV_EXTRACT,
+                              {rewriter.invert_node_if(inverted, node0[1])},
+                              {u, l});
     }
     else if (l >= m)
     {
-      if (inverted)
-      {
-        return rewriter.mk_node(
-            Kind::BV_EXTRACT, {rewriter.invert_node(node0[0])}, {u - m, l - m});
-      }
-      return rewriter.mk_node(Kind::BV_EXTRACT, {node0[0]}, {u - m, l - m});
+      return rewriter.mk_node(Kind::BV_EXTRACT,
+                              {rewriter.invert_node_if(inverted, node0[0])},
+                              {u - m, l - m});
     }
   }
   return node;
@@ -1532,11 +1519,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_ITE>::_apply(Rewriter& rewriter,
         {node0[0],
            rewriter.mk_node(Kind::BV_EXTRACT, {node0[1]}, {u, l}),
            rewriter.mk_node(Kind::BV_EXTRACT, {node0[2]}, {u, l})});
-    if (inverted)
-    {
-      res = rewriter.invert_node(res);
-    }
-    return res;
+    return rewriter.invert_node_if(inverted, res);
   }
   return node;
 }
@@ -1574,11 +1557,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_ADD_MUL>::_apply(Rewriter& rewriter,
           node0.kind(),
           {rewriter.mk_node(Kind::BV_EXTRACT, {node0[0]}, {u, l}),
            rewriter.mk_node(Kind::BV_EXTRACT, {node0[1]}, {u, l})});
-      if (inverted)
-      {
-        res = rewriter.invert_node(res);
-      }
-      return res;
+      return rewriter.invert_node_if(inverted, res);
     }
   }
   return node;
@@ -2274,23 +2253,15 @@ RewriteRule<RewriteRuleKind::BV_SLT_ITE>::_apply(Rewriter& rewriter,
   if (node0.kind() == Kind::ITE && node1.kind() == Kind::ITE
       && node0[0] == node1[0] && (node0[1] == node1[1] || node0[2] == node1[2]))
   {
-    if (inverted)
-    {
-      return rewriter.mk_node(
-          Kind::ITE,
-          {node0[0],
-           rewriter.mk_node(Kind::BV_SLT,
-                            {rewriter.invert_node(node0[1]),
-                             rewriter.invert_node(node1[1])}),
-           rewriter.mk_node(Kind::BV_SLT,
-                            {rewriter.invert_node(node0[2]),
-                             rewriter.invert_node(node1[2])})});
-    }
     return rewriter.mk_node(
         Kind::ITE,
         {node0[0],
-         rewriter.mk_node(Kind::BV_SLT, {node0[1], node1[1]}),
-         rewriter.mk_node(Kind::BV_SLT, {node0[2], node1[2]})});
+         rewriter.mk_node(Kind::BV_SLT,
+                          {rewriter.invert_node_if(inverted, node0[1]),
+                           rewriter.invert_node_if(inverted, node1[1])}),
+         rewriter.mk_node(Kind::BV_SLT,
+                          {rewriter.invert_node_if(inverted, node0[2]),
+                           rewriter.invert_node_if(inverted, node1[2])})});
   }
   return node;
 }
@@ -2529,11 +2500,15 @@ RewriteRule<RewriteRuleKind::BV_ULT_BV1>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
   assert(node.num_children() == 2);
-  if (node[0].type().bv_size() != 1) return node;
-  return rewriter.mk_node(
-      Kind::EQUAL,
-      {rewriter.mk_node(Kind::BV_AND, {rewriter.invert_node(node[0]), node[1]}),
-       NodeManager::get().mk_value(BitVector::mk_one(1))});
+  if (node[0].type().bv_size() == 1)
+  {
+    return rewriter.mk_node(
+        Kind::EQUAL,
+        {rewriter.mk_node(Kind::BV_AND,
+                          {rewriter.invert_node(node[0]), node[1]}),
+         NodeManager::get().mk_value(BitVector::mk_one(1))});
+  }
+  return node;
 }
 
 /**
@@ -2583,28 +2558,20 @@ RewriteRule<RewriteRuleKind::BV_ULT_ITE>::_apply(Rewriter& rewriter,
   if (node0.kind() == Kind::ITE && node1.kind() == Kind::ITE
       && node0[0] == node1[0] && (node0[1] == node1[1] || node0[2] == node1[2]))
   {
-    if (inverted)
-    {
-      return rewriter.mk_node(
-          Kind::ITE,
-          {node0[0],
-           rewriter.mk_node(Kind::BV_ULT,
-                            {rewriter.invert_node(node0[1]),
-                             rewriter.invert_node(node1[1])}),
-           rewriter.mk_node(Kind::BV_ULT,
-                            {rewriter.invert_node(node0[2]),
-                             rewriter.invert_node(node1[2])})});
-    }
     return rewriter.mk_node(
         Kind::ITE,
         {node0[0],
-         rewriter.mk_node(Kind::BV_ULT, {node0[1], node1[1]}),
-         rewriter.mk_node(Kind::BV_ULT, {node0[2], node1[2]})});
+         rewriter.mk_node(Kind::BV_ULT,
+                          {rewriter.invert_node_if(inverted, node0[1]),
+                           rewriter.invert_node_if(inverted, node1[1])}),
+         rewriter.mk_node(Kind::BV_ULT,
+                          {rewriter.invert_node_if(inverted, node0[2]),
+                           rewriter.invert_node_if(inverted, node1[2])})});
   }
   return node;
 }
 
-/* bvudiv ------------------------------------------------------------------- */
+/* bvurem ------------------------------------------------------------------- */
 
 /**
  * Constant folding, matches when all operands are values.

@@ -112,6 +112,13 @@ Rewriter::invert_node(const Node& node)
   return mk_node(node::Kind::BV_NOT, {node});
 }
 
+Node
+Rewriter::invert_node_if(bool condition, const Node& node)
+{
+  assert(node.type().is_bool() || node.type().is_bv());
+  return condition ? invert_node(node) : node;
+}
+
 /* === Rewriter private ===================================================== */
 
 const Node&

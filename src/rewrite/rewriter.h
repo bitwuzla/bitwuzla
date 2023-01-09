@@ -51,6 +51,13 @@ class Rewriter
    * @return The inverted node.
    */
   Node invert_node(const Node& node);
+  /**
+   * Helper to conditionally create an inverted Boolean or bit-vector node.
+   * @param condition True to invert the given node.
+   * @param node The node to invert.
+   * @return The inverted node.
+   */
+  Node invert_node_if(bool condition, const Node& node);
 
  private:
   const Node& _rewrite(const Node& node);
