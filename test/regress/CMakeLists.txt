@@ -1141,7 +1141,7 @@ set(testcases_qfbv
 "solver/bv/nextpoweroftwo016.smt2"
 "solver/bv/prim8bugreduced.btor.smt2"
 "solver/bv/problem_130.smt2"
-"solver/bv/regr-distinct.smt2"
+"solver/bv/regrdistinct.smt2"
 "solver/bv/regrcalypto1.smt2"
 "solver/bv/regrcalypto2.smt2"
 "solver/bv/regrcalypto3.smt2"
