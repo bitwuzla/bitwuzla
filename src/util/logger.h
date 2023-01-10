@@ -16,6 +16,9 @@
       ? (void) 0                  \
       : bzla::util::OstreamVoider() & d_logger.log(level).stream()
 
+#define Warn(cond) \
+  !(cond) ? (void) 0 : bzla::util::OstreamVoider() & d_logger.warn().stream()
+
 namespace bzla::util {
 
 class Logger
@@ -42,6 +45,8 @@ class Logger
   Line log(uint64_t level);
 
   Line msg(uint64_t level);
+
+  Line warn();
 
  private:
   uint64_t d_log_level;

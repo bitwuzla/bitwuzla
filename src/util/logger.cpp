@@ -15,7 +15,11 @@ Logger::Line::Line(uint64_t level, const char* prefix)
   {
     os << prefix << " ";
   }
-  os << std::setw(static_cast<int32_t>(2 * (level - 1))) << " ";
+  int32_t indent = 2 * (level - 1);
+  if (indent)
+  {
+    os << std::setw(indent) << " ";
+  }
 }
 
 Logger::Line::~Line()
@@ -59,5 +63,11 @@ Logger::Line
 Logger::msg(uint64_t level)
 {
   return Line(level, "[bzla]");
+}
+
+Logger::Line
+Logger::warn()
+{
+  return Line(1, "[bzla] warning:");
 }
 }  // namespace bzla::util
