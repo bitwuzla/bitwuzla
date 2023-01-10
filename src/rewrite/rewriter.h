@@ -11,6 +11,10 @@
 
 namespace bzla {
 
+namespace util {
+class Logger;
+}
+
 class Env;
 
 /* -------------------------------------------------------------------------- */
@@ -172,6 +176,8 @@ class Rewriter
 
   /** Associated environment. */
   Env& d_env;
+  /** Logger instance */
+  util::Logger& d_logger;
 
   /** True to enable rewriting, false to only enable operator elimination. */
   uint8_t d_level;
@@ -180,6 +186,8 @@ class Rewriter
 #ifndef NDEBUG
   /** Cache for detecting rewrite cycles in debug mode. */
   std::unordered_set<Node> d_rec_cache;
+  /** Counter for new nodes created during rewriting. */
+  uint64_t d_num_nodes = 0;
 #endif
   uint64_t d_num_rec_calls = 0;
   /** Indicates whether rewrite recursion limit was reached. */

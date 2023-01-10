@@ -233,6 +233,24 @@ enum ENUM(Option)
    */
   EVALUE(PROP_SEXT),
 
+  /*! **Debug:
+   *    Threshold for number of new nodes introduced for recursive call of
+   *    rewrite(). **
+   *
+   *  Prints a warning number of newly introduced nodes is above threshold.
+   *
+   *  @warning This is an expert debug option.
+   */
+  EVALUE(DBG_RW_NODE_THRESH),
+  /*! **Debug:
+   *    Threshold for formula size increase after preprocessing in percent. **
+   *
+   *  Prints a warning if formula size increase is above threshold.
+   *
+   *  @warning This is an expert debug option.
+   */
+  EVALUE(DBG_PP_NODE_THRESH),
+
 /* ================ Old Options =========================================== */
 
 #if 0

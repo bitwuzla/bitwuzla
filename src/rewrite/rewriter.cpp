@@ -4,9 +4,11 @@
 #include "node/node_kind.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
+#include "node/unordered_node_ref_set.h"
 #include "rewrite/rewrites_bool.h"
 #include "rewrite/rewrites_bv.h"
 #include "rewrite/rewrites_fp.h"
+#include "util/logger.h"
 
 #define BZLA_APPLY_RW_RULE(rw_rule)                                \
   do                                                               \
@@ -34,10 +36,51 @@
 
 namespace bzla {
 
+#ifndef NDEBUG
+namespace {
+
+std::pair<size_t, size_t>
+diff(uint64_t max_id, const Node& rewritten)
+{
+  node::node_ref_vector visit{rewritten};
+  std::vector<size_t> depths{0};
+  size_t max_depth = 0;
+  node::unordered_node_ref_set cache;
+  do
+  {
+    const Node& cur = visit.back();
+    size_t depth    = depths.back();
+    visit.pop_back();
+    depths.pop_back();
+    if (cur.id() < max_id)
+    {
+      continue;
+    }
+    if (depth > max_depth)
+    {
+      max_depth = depth;
+    }
+    auto [it, inserted] = cache.insert(cur);
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      for (size_t i = 0; i < cur.num_children(); ++i)
+      {
+        depths.push_back(depth + 1);
+      }
+    }
+  } while (!visit.empty());
+  return std::make_pair(cache.size(), max_depth);
+}
+
+}  // namespace
+#endif
+
 /* === Rewriter public ====================================================== */
 
 Rewriter::Rewriter(Env& env, uint8_t level)
     : d_env(env),
+      d_logger(env.logger()),
       d_level(level),
       d_stats_rewrites(env.statistics().new_stat<util::HistogramStatistic>(
           "rewriter::rewrite"))
@@ -69,7 +112,22 @@ Rewriter::rewrite(const Node& node)
           children.push_back(d_cache.at(c));
           assert(!children.back().is_null());
         }
+#ifndef NDEBUG
+        // Reset nodes counter
+        d_num_nodes = 0;
+        // Save current maximum node id
+        int64_t max_id = NodeManager::get().max_node_id();
+#endif
         it->second = _rewrite(nm.mk_node(cur.kind(), children, cur.indices()));
+#ifndef NDEBUG
+        uint64_t thresh = d_env.options().dbg_rw_node_inc();
+        if (thresh > 0 && d_num_nodes > 0)
+        {
+          auto [new_nodes, depth] = diff(max_id, it->second);
+          Warn(new_nodes >= thresh) << "_rewrite() introduced " << new_nodes
+                                    << " new nodes up to depth " << depth;
+        }
+#endif
       }
       else
       {
@@ -87,6 +145,9 @@ Rewriter::mk_node(node::Kind kind,
                   const std::vector<Node>& children,
                   const std::vector<uint64_t>& indices)
 {
+#ifndef NDEBUG
+  uint64_t max_id = NodeManager::get().max_node_id();
+#endif
   Node node = NodeManager::get().mk_node(kind, children, indices);
   ++d_num_rec_calls;
 #ifndef NDEBUG
@@ -95,6 +156,10 @@ Rewriter::mk_node(node::Kind kind,
 #endif
   const Node& res = _rewrite(node);
 #ifndef NDEBUG
+  if (res.id() >= max_id)
+  {
+    ++d_num_nodes;
+  }
   d_rec_cache.erase(node);
 #endif
   --d_num_rec_calls;

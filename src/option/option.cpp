@@ -199,7 +199,28 @@ Options::Options()
                 "use sign_extend nodes for "
                 "concats that represent sign_extend nodes for "
                 "propagation-based local search engine",
-                "prop-sext")
+                "prop-sext"),
+      dbg_rw_node_inc(
+          this,
+          Option::DBG_RW_NODE_THRESH,
+          0,
+          0,
+          UINT64_MAX,
+          "warn threshold [#] for new nodes created through rewriting steps",
+          "dbg-rw-node-thresh",
+          nullptr,
+          true),
+      dbg_pp_node_inc(this,
+                      Option::DBG_PP_NODE_THRESH,
+                      0,
+                      0,
+                      100,
+                      "warn threshold [%] for new nodes created through "
+                      "preprocessing in total",
+                      "dbg-pp-node-thresh",
+                      nullptr,
+                      true)
+
 {
   assert(d_options.size() == static_cast<size_t>(Option::NUM_OPTIONS));
 }

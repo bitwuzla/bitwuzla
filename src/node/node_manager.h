@@ -165,6 +165,11 @@ class NodeManager
       const std::vector<Node>& children,
       const std::vector<uint64_t>& indices = {});
 
+#ifndef NDEBUG
+  /** @return Current maximum node id. */
+  uint64_t max_node_id() const { return d_node_id_counter; }
+#endif
+
  private:
   /**
    * Constructor, copy constructor, copy assignment and destructor are private

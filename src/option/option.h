@@ -36,6 +36,9 @@ enum class Option
   PROP_OPT_LT_CONCAT_SEXT,      // bool
   PROP_SEXT,                    // bool
 
+  DBG_RW_NODE_THRESH,  // numeric
+  DBG_PP_NODE_THRESH,  // numeric
+
   NUM_OPTIONS,
 };
 
@@ -406,6 +409,10 @@ class Options
   OptionBool prop_ineq_bounds;
   OptionBool prop_opt_lt_concat_sext;
   OptionBool prop_sext;
+
+  // Debug options
+  OptionNumeric dbg_rw_node_inc;
+  OptionNumeric dbg_pp_node_inc;
 
   /** @return True if the given option is a Boolean option. */
   bool is_bool(Option opt) const;
