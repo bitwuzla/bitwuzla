@@ -90,6 +90,7 @@ set(libbitwuzla_src_files
   preprocess/bzlaunconstrained.c
   preprocess/bzlavarsubst.c
   preprocess/pass/elim_lambda.cpp
+  preprocess/pass/embedded_constraints.cpp
   preprocess/pass/rewrite.cpp
   preprocess/pass/variable_substitution.cpp
   preprocess/pass/flatten_and.cpp

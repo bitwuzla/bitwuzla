@@ -34,6 +34,7 @@ Preprocessor::Preprocessor(SolvingContext& context)
       d_pop_callback(context.backtrack_mgr(), &d_backtrack_mgr),
       d_pass_rewrite(d_env),
       d_pass_elim_lambda(d_env),
+      d_pass_embedded_constraints(d_env, &d_backtrack_mgr),
       d_pass_variable_substitution(d_env, &d_backtrack_mgr),
       d_pass_flatten_and(d_env),
       d_stats(d_env.statistics())
@@ -130,6 +131,8 @@ Preprocessor::apply(AssertionVector& assertions)
 
     cnt = assertions.num_modified();
     d_pass_variable_substitution.apply(assertions);
+    Msg(2) << assertions.num_modified() - cnt << " after variable substitution";
+    d_pass_embedded_constraints.apply(assertions);
     Msg(2) << assertions.num_modified() - cnt << " after variable substitution";
   } while (assertions.modified());
 

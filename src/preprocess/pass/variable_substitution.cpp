@@ -32,6 +32,8 @@ get_var_term(const Node& assertion)
 
 }  // namespace
 
+/* --- PassVariableSubstitution public -------------------------------------- */
+
 PassVariableSubstitution::PassVariableSubstitution(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env),
@@ -326,6 +328,17 @@ PassVariableSubstitution::substitute(
   return cache.at(term);
 }
 
+PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
+    : time_apply(stats.new_stat<util::TimerStatistic>(
+        "preprocess::varsubst::time_apply")),
+      time_direct_cycle_check(stats.new_stat<util::TimerStatistic>(
+          "preprocess::varsubst::time_direct_cycle_check")),
+      time_remove_cycles(stats.new_stat<util::TimerStatistic>(
+          "preprocess::varsubst::time_remove_cycles")),
+      num_substs(stats.new_stat<uint64_t>("preprocess::varsubst::num_substs"))
+{
+}
+
 /* --- PassVariableSubstitution::Cache -------------------------------------- */
 
 PassVariableSubstitution::Cache::Cache(backtrack::BacktrackManager* mgr)
@@ -354,17 +367,6 @@ std::unordered_map<Node, Node>&
 PassVariableSubstitution::Cache::cache()
 {
   return d_cache.back();
-}
-
-PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
-    : time_apply(stats.new_stat<util::TimerStatistic>(
-        "preprocess::varsubst::time_apply")),
-      time_direct_cycle_check(stats.new_stat<util::TimerStatistic>(
-          "preprocess::varsubst::time_direct_cycle_check")),
-      time_remove_cycles(stats.new_stat<util::TimerStatistic>(
-          "preprocess::varsubst::time_remove_cycles")),
-      num_substs(stats.new_stat<uint64_t>("preprocess::varsubst::num_substs"))
-{
 }
 
 }  // namespace bzla::preprocess::pass

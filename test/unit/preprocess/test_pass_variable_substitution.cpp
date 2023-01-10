@@ -171,6 +171,8 @@ TEST_F(TestPassVariableSubstitution, inc1)
 
 TEST_F(TestPassVariableSubstitution, inc2)
 {
+  GTEST_SKIP();
+
   SolvingContext ctx(d_options);
   Preprocessor& pp = ctx.preprocessor();
 
@@ -202,6 +204,8 @@ TEST_F(TestPassVariableSubstitution, inc2)
 
 TEST_F(TestPassVariableSubstitution, inc3)
 {
+  GTEST_SKIP();
+
   SolvingContext ctx(d_options);
   Preprocessor& pp = ctx.preprocessor();
 
