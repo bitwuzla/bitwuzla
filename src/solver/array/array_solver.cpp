@@ -41,17 +41,24 @@ ArraySolver::check()
   d_check_access_cache.clear();
   ++d_stats.num_checks;
 
-  // Do not cache size here since d_selects may grow while iterating.
-  for (size_t i = 0; i < d_selects.size(); ++i)
+  // Check selects and equalities until fixed-point
+  size_t i_sel = 0, i_eq = 0;
+  while (i_sel < d_selects.size() || i_eq < d_equalities.size())
   {
-    check_access(d_selects[i]);
-  }
+    // Do not cache size here since d_selects may grow while iterating.
+    while (i_sel < d_selects.size())
+    {
+      check_access(d_selects[i_sel++]);
+    }
 
-  for (size_t i = 0; i < d_equalities.size(); ++i)
-  {
-    check_equality(d_equalities[i]);
+    // Do not cache size here since d_selects may grow while iterating.
+    while (i_eq < d_equalities.size())
+    {
+      check_equality(d_equalities[i_eq++]);
+    }
+    // TODO: in case of equality we also have to propagate constant arrays
+    // upwards
   }
-  // TODO: in case of equality we also have to propagate constant arrays upwards
 }
 
 Node
@@ -126,6 +133,7 @@ ArraySolver::check_access(const Node& access)
         Log(2) << "access1: " << acc.get();
         Log(2) << "access2: " << it->get();
         add_congruence_lemma(array, acc, *it);
+        break;
       }
     }
     else
@@ -143,6 +151,7 @@ ArraySolver::check_access(const Node& access)
             Log(2) << "access: " << acc.get();
             Log(2) << "store: " << array;
             add_access_store_lemma(acc, array);
+            break;
           }
         }
         else
@@ -158,6 +167,7 @@ ArraySolver::check_access(const Node& access)
         if (acc.element_value() != element_value)
         {
           add_access_const_array_lemma(acc, array);
+          break;
         }
       }
       else if (array.kind() == Kind::ITE)
@@ -235,7 +245,7 @@ ArraySolver::check_equality(const Node& eq)
 
   if (d_solver_state.value(eq).value<bool>())
   {
-    // Find and check top-most array stores
+    // Check store terms under equality
     unordered_node_ref_set cache;
     node_ref_vector visit{eq[0], eq[1]};
     do
@@ -248,6 +258,7 @@ ArraySolver::check_equality(const Node& eq)
         if (cur.kind() == Kind::STORE)
         {
           check_access(cur);
+          visit.push_back(cur[0]);
         }
         else if (cur.kind() == Kind::ITE)
         {
@@ -260,6 +271,9 @@ ArraySolver::check_equality(const Node& eq)
   else
   {
     auto [sel_a, sel_b] = add_disequality_lemma(eq);
+    // TODO: optimization: if sel_a and sel_b are created, we don't have to
+    // check them since they very likely have the same values (since
+    // unconstrained, and disequality lemma was just sent)
     check_access(sel_a);
     check_access(sel_b);
   }

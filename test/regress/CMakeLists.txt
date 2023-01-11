@@ -211,12 +211,12 @@ set(testcases
 "solver/array/ext24.btor.smt2"
 "solver/array/ext25.btor.smt2"
 "solver/array/ext26.btor.smt2"
-#"solver/array/ext27.btor.smt2" # TODO sat instead of unsat
+"solver/array/ext27.btor.smt2"
 "solver/array/ext28.btor.smt2"
 "solver/array/ext29.btor.smt2"
 "solver/array/ext5.btor.smt2"
 "solver/array/ext7.btor.smt2"
-#"solver/array/ext9.btor.smt2" # TODO sat instead of unsat
+"solver/array/ext9.btor.smt2"
 "solver/array/extarraywrite1.btor.smt2"
 "solver/array/extarraywrite2.btor.smt2"
 "solver/array/extarraywrite3.smt2"
@@ -305,7 +305,7 @@ set(testcases
 "solver/array/write2.btor.smt2"
 "solver/array/write21.btor.smt2"
 "solver/array/write22.btor.smt2"
-#"solver/array/write23.btor.smt2" # TODO sat instead of unsat
+"solver/array/write23.btor.smt2"
 "solver/array/write24.btor.smt2"
 "solver/array/write3.btor.smt2"
 "solver/array/write4.btor.smt2"
