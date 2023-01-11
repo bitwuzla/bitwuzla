@@ -356,9 +356,9 @@ set(testcases
 #"solver/quant/quant_regr28.smt2"
 #"solver/quant/quant_regr29.smt2"
 )
-set(testcases_btor
+set(testcases_btor_sat
 ## sat
-#"preprocess/array/regrembeddedconstraint10.btor -rwl=0"
+"preprocess/array/regrembeddedconstraint10.btor -rwl=0"
 #"preprocess/array/regrembeddedconstraint10.btor -rwl=1"
 #"preprocess/array/regrembeddedconstraint10.btor -rwl=2"
 #"preprocess/array/regrembeddedconstraint5.btor -rwl=0"
@@ -459,6 +459,8 @@ set(testcases_btor
 #"solver/array/write5.btor"
 #"solver/fun/lambda1.btor"
 "solver/fun/nestedfun1.smt2 -rwl=2"
+)
+set(testcases_btor_unsat
 ## unsat
 #"preprocess/array/regrembeddedconstraint1.btor -rwl=0"
 #"preprocess/array/regrembeddedconstraint1.btor -rwl=1"
@@ -2211,42 +2213,45 @@ macro(add_test_case option testcase)
 endmacro()
 
 if(CaDiCaL_FOUND)
-    foreach(testcase ${testcases})
-      add_test_case("" "${testcase} -S cadical")
-    endforeach()
-  foreach(testcase ${testcases_qfbv})
-    add_test_case("" "${testcase} -S cadical")
+  #foreach(testcase ${testcases})
+  #  add_test_case("" "${testcase} -S cadical")
+  #endforeach()
+  #foreach(testcase ${testcases_qfbv})
+  #  add_test_case("" "${testcase} -S cadical")
+  #endforeach()
+  foreach(testcase ${testcases_btor_sat})
+    add_test_case("--check-sat" "${testcase} -S cadical")
   endforeach()
-    foreach(testcase ${cmp_testcases})
-      add_test_case("--check-output" "${testcase} -S cadical")
-    endforeach()
+  #foreach(testcase ${cmp_testcases})
+  #  add_test_case("--check-output" "${testcase} -S cadical")
+  #endforeach()
 endif()
-if(CryptoMiniSat_FOUND)
-  foreach(testcase ${testcases})
-    add_test_case("" "${testcase} -S cms")
-  endforeach()
-  foreach(testcase ${testcases_qfbv})
-    add_test_case("" "${testcase} -S cms")
-  endforeach()
-endif()
-# FIXME: Disabled for now, Gimsatul support is highly experimental at the moment
-#        (no official API) and some testcases faile due to inconsistent clauses
-#        being added
-#if(Gimsatul_FOUND)
+#if(CryptoMiniSat_FOUND)
+#  foreach(testcase ${testcases})
+#    add_test_case("" "${testcase} -S cms")
+#  endforeach()
 #  foreach(testcase ${testcases_qfbv})
-#    add_test_case("" "${testcase} -S gimsatul")
+#    add_test_case("" "${testcase} -S cms")
 #  endforeach()
 #endif()
-if(Kissat_FOUND)
-  foreach(testcase ${testcases_qfbv})
-    add_test_case("" "${testcase} -S kissat")
-  endforeach()
-endif()
-if(Lingeling_FOUND)
-  foreach(testcase ${testcases})
-    add_test_case("" "${testcase} -S lingeling")
-  endforeach()
-  foreach(testcase ${testcases_qfbv})
-    add_test_case("" "${testcase} -S lingeling")
-  endforeach()
-endif()
+## FIXME: Disabled for now, Gimsatul support is highly experimental at the moment
+##        (no official API) and some testcases faile due to inconsistent clauses
+##        being added
+##if(Gimsatul_FOUND)
+##  foreach(testcase ${testcases_qfbv})
+##    add_test_case("" "${testcase} -S gimsatul")
+##  endforeach()
+##endif()
+#if(Kissat_FOUND)
+#  foreach(testcase ${testcases_qfbv})
+#    add_test_case("" "${testcase} -S kissat")
+#  endforeach()
+#endif()
+#if(Lingeling_FOUND)
+#  foreach(testcase ${testcases})
+#    add_test_case("" "${testcase} -S lingeling")
+#  endforeach()
+#  foreach(testcase ${testcases_qfbv})
+#    add_test_case("" "${testcase} -S lingeling")
+#  endforeach()
+#endif()

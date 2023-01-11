@@ -69,7 +69,7 @@ set(libbitwuzla_src_files
   util/statistics.cpp
   util/logger.cpp
   option/option.cpp
-  parser/bzlabtor.c
+  parser/bzlabtor.cpp
   #parser/bzlabtor2.c
   parser/bzlasmt2.cpp
   preprocess/bzlaack.c

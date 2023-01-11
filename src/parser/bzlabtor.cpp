@@ -8,14 +8,8 @@
  * See COPYING for more information on using this software.
  */
 
+extern "C" {
 #include "bzlabtor.h"
-
-#include <assert.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "bzlabv.h"
 #include "bzlamsg.h"
@@ -23,10 +17,14 @@
 #include "utils/bzlamem.h"
 #include "utils/bzlastack.h"
 #include "utils/bzlautil.h"
+}
 
-/*------------------------------------------------------------------------*/
-
-void bitwuzla_set_bzla_id(BitwuzlaTerm term, int32_t id);
+#include <assert.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*------------------------------------------------------------------------*/
 
@@ -431,7 +429,6 @@ parse_var(BzlaBTORParser *parser, uint64_t width)
   s = bitwuzla_mk_bv_sort(width);
   res =
       bitwuzla_mk_const(s, parser->symbol.start[0] ? parser->symbol.start : 0);
-  bitwuzla_set_bzla_id(res, parser->idx);
   parser->info.start[parser->idx].var = 1;
   return res;
 }
@@ -473,7 +470,6 @@ parse_array(BzlaBTORParser *parser, uint64_t width)
   s  = bitwuzla_mk_array_sort(is, es);
   res =
       bitwuzla_mk_const(s, parser->symbol.start[0] ? parser->symbol.start : 0);
-  bitwuzla_set_bzla_id(res, parser->idx);
   parser->info.start[parser->idx].array = 1;
   return res;
 }
@@ -1645,8 +1641,8 @@ new_btor_parser(BitwuzlaOptions *options)
   BZLA_NEW(mem, res);
   BZLA_CLR(res);
 
-  res->mem      = mem;
-  res->options  = options;
+  res->mem     = mem;
+  res->options = options;
 
   BZLA_NEWN(mem, res->parsers, SIZE_PARSERS);
   BZLA_NEWN(mem, res->ops, SIZE_PARSERS);
