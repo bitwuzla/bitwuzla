@@ -33,9 +33,11 @@ set(libbitwuzla_src_files
   parser/bzlasmt2.cpp
   preprocess/pass/elim_lambda.cpp
   preprocess/pass/embedded_constraints.cpp
-  preprocess/pass/rewrite.cpp
-  preprocess/pass/variable_substitution.cpp
   preprocess/pass/flatten_and.cpp
+  preprocess/pass/rewrite.cpp
+  preprocess/pass/rewrite.cpp
+  preprocess/pass/skeleton_preproc.cpp
+  preprocess/pass/variable_substitution.cpp
   preprocess/preprocessing_pass.cpp
   preprocess/preprocessor.cpp
   rewrite/rewrite_utils.cpp
