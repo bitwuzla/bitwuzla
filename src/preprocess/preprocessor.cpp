@@ -132,8 +132,9 @@ Preprocessor::apply(AssertionVector& assertions)
     cnt = assertions.num_modified();
     d_pass_variable_substitution.apply(assertions);
     Msg(2) << assertions.num_modified() - cnt << " after variable substitution";
+    cnt = assertions.num_modified();
     d_pass_embedded_constraints.apply(assertions);
-    Msg(2) << assertions.num_modified() - cnt << " after variable substitution";
+    Msg(2) << assertions.num_modified() - cnt << " after embedded constraints";
   } while (assertions.modified());
 
 #ifndef NDEBUG

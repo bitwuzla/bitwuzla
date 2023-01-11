@@ -40,7 +40,6 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
       d_substitutions.emplace(assertion, nm.mk_value(true));
     }
   }
-  d_stats.num_substs = d_substitutions.size();
   if (d_substitutions.empty())
   {
     return;
@@ -49,7 +48,7 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    const Node& ass = assertion.kind() == Kind::NOT ? assertion[0] : assertion;
+    const Node& ass       = assertion.is_inverted() ? assertion[0] : assertion;
     if (ass.num_children() > 0)
     {
       std::vector<Node> children;
@@ -97,8 +96,8 @@ PassEmbeddedConstraints::substitute(const Node& node)
       auto its = d_substitutions.find(cur);
       if (its != d_substitutions.end())
       {
-        assert(it->first.get().type() == its->second.type());
         it->second = its->second;
+        d_stats.num_substs += 1;
       }
       else if (cur.num_children() > 0)
       {
@@ -112,14 +111,10 @@ PassEmbeddedConstraints::substitute(const Node& node)
         }
         if (cur.num_indices() > 0)
         {
-          assert(it->first.get().type()
-                 == nm.mk_node(cur.kind(), children, cur.indices()).type());
           it->second = nm.mk_node(cur.kind(), children, cur.indices());
         }
         else
         {
-          assert(it->first.get().type()
-                 == nm.mk_node(cur.kind(), children).type());
           it->second = nm.mk_node(cur.kind(), children);
         }
       }
