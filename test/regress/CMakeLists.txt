@@ -315,8 +315,8 @@ set(testcases
 "solver/array/write9.btor.smt2"
 "solver/bv/prop/prels-funs.smt2 --bv-solver=preprop"
 "solver/fun/fun1.smt2"
-# "solver/fun/lambda2.btor.smt2" # TODO missin
-#"solver/quant/issue97.smt2"# TODO disabled because of quants
+# "solver/fun/lambda2.btor.smt2" # TODO missing
+#"s24 slice 1 -14 1 1er/quant/issue97.smt2"# TODO disabled because of quants
 #"solver/quant/quant_regr10.smt2"# TODO disabled because of quants
 #"solver/quant/quant_regr11.smt2"# TODO disabled because of quants
 #"solver/quant/quant_regr12.smt2"# TODO disabled because of quants

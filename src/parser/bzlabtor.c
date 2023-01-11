@@ -316,11 +316,21 @@ parse_exp(BzlaBTORParser *parser,
 
   if (expected_width)
   {
-    if (bitwuzla_term_is_fun(res) || bitwuzla_term_is_array(res))
+    if (bitwuzla_term_is_fun(res))
     {
       BitwuzlaSort sort = bitwuzla_term_fun_get_codomain_sort(res);
       assert(bitwuzla_sort_is_bv(sort));
       width_res = bitwuzla_sort_bv_get_size(sort);
+    }
+    else if (bitwuzla_term_is_array(res))
+    {
+      BitwuzlaSort sort = bitwuzla_term_array_get_element_sort(res);
+      assert(bitwuzla_sort_is_bv(sort));
+      width_res = bitwuzla_sort_bv_get_size(sort);
+    }
+    else if (bitwuzla_term_is_bool(res))
+    {
+      width_res = 1;
     }
     else
     {
@@ -343,7 +353,14 @@ parse_exp(BzlaBTORParser *parser,
 
   if (lit < 0)
   {
-    res = bitwuzla_mk_term1(BITWUZLA_KIND_BV_NOT, res);
+    if (bitwuzla_term_is_bool(res))
+    {
+      res = bitwuzla_mk_term1(BITWUZLA_KIND_NOT, res);
+    }
+    else
+    {
+      res = bitwuzla_mk_term1(BITWUZLA_KIND_BV_NOT, res);
+    }
   }
   return res;
 }
@@ -681,6 +698,7 @@ parse_constd(BzlaBTORParser *parser, uint64_t width)
 static BitwuzlaTerm
 parse_zero(BzlaBTORParser *parser, uint64_t width)
 {
+  (void) parser;
   BitwuzlaSort s = bitwuzla_mk_bv_sort(width);
   return bitwuzla_mk_bv_zero(s);
 }
@@ -688,6 +706,7 @@ parse_zero(BzlaBTORParser *parser, uint64_t width)
 static BitwuzlaTerm
 parse_one(BzlaBTORParser *parser, uint64_t width)
 {
+  (void) parser;
   BitwuzlaSort s = bitwuzla_mk_bv_sort(width);
   return bitwuzla_mk_bv_one(s);
 }
@@ -695,6 +714,7 @@ parse_one(BzlaBTORParser *parser, uint64_t width)
 static BitwuzlaTerm
 parse_ones(BzlaBTORParser *parser, uint64_t width)
 {
+  (void) parser;
   BitwuzlaSort s = bitwuzla_mk_bv_sort(width);
   return bitwuzla_mk_bv_ones(s);
 }
@@ -1011,7 +1031,7 @@ parse_compare_and_overflow(BzlaBTORParser *parser,
   }
 
   res = bitwuzla_mk_term2(kind, l, r);
-  assert(bitwuzla_term_bv_get_size(res) == 1);
+  assert(bitwuzla_term_is_bool(res));
   return res;
 }
 
@@ -1617,7 +1637,7 @@ find_parser(BzlaBTORParser *parser, const char *op)
 }
 
 static BzlaBTORParser *
-new_btor_parser()
+new_btor_parser(BitwuzlaOptions *options)
 {
   BzlaMemMgr *mem = bzla_mem_mgr_new();
   BzlaBTORParser *res;
@@ -1626,7 +1646,7 @@ new_btor_parser()
   BZLA_CLR(res);
 
   res->mem      = mem;
-  res->options  = bitwuzla_options_new();
+  res->options  = options;
 
   BZLA_NEWN(mem, res->parsers, SIZE_PARSERS);
   BZLA_NEWN(mem, res->ops, SIZE_PARSERS);
@@ -1736,12 +1756,11 @@ delete_bzla_parser(BzlaBTORParser *parser)
 /* Note: we need prefix in case of stdin as input (also applies to compressed
  * input files). */
 static const char *
-parse_bzla_parser(BzlaBTORParser *parser,
+parse_btor_parser(BzlaBTORParser *parser,
                   BzlaIntStack *prefix,
                   FILE *infile,
                   const char *infile_name,
                   FILE *outfile,
-                  Bitwuzla **bitwuzla,
                   BzlaParseResult *res)
 {
   BzlaOpParser op_parser;
@@ -1751,7 +1770,6 @@ parse_bzla_parser(BzlaBTORParser *parser,
 
   assert(infile);
   assert(infile_name);
-  (void) outfile;
 
   // BZLA_MSG(
   //     bitwuzla_get_bzla_msg(parser->bitwuzla), 1, "parsing %s", infile_name);
@@ -1780,7 +1798,23 @@ NEXT:
 
     if (res)
     {
-      res->status = BITWUZLA_UNKNOWN;
+      res->result = bitwuzla_check_sat(get_bitwuzla(parser));
+      if (res->result == BITWUZLA_SAT)
+      {
+        fprintf(outfile, "sat\n");
+      }
+      else if (res->result == BITWUZLA_UNSAT)
+      {
+        fprintf(outfile, "unsat\n");
+      }
+      /* Do not print 'unknown' if we print DIMACS. 'unknown' is only returned
+       * if SAT solver is used non-incremental. */
+      // else if (!bitwuzla_get_option(parser->options,
+      // BITWUZLA_OPT_PRINT_DIMACS))
+      else
+      {
+        fprintf(outfile, "unknown\n");
+      }
     }
 
     return 0;
@@ -1846,13 +1880,12 @@ SKIP:
   if (ch != '\n') return perr_btor(parser, "expected new line");
 
   goto NEXT;
-  *bitwuzla = parser->bitwuzla;
 }
 
 static BzlaParserAPI parsebtor_parser_api = {
     (BzlaInitParser) new_btor_parser,
     (BzlaResetParser) delete_bzla_parser,
-    (BzlaParse) parse_bzla_parser,
+    (BzlaParse) parse_btor_parser,
 };
 
 const BzlaParserAPI *

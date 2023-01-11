@@ -255,8 +255,9 @@ main(int32_t argc, char* argv[])
       return EXIT_SUCCESS;
     }
     // Check if argument is the intput file.
-    // Note: For now only supports .smt2 suffix
-    else if (arg.find(".smt2") == arg.size() - 5)
+    // Note: For now only supports .smt2 and .btor suffices
+    else if (arg.find(".smt2") == arg.size() - 5
+             || arg.find(".btor") == arg.size() - 5)
     {
       filename = arg;
     }
