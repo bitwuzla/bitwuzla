@@ -11,12 +11,8 @@
 extern "C" {
 #include "bzlabtor.h"
 
-#include "bzlabv.h"
-#include "bzlamsg.h"
 #include "bzlaparse.h"
-#include "utils/bzlamem.h"
 #include "utils/bzlastack.h"
-#include "utils/bzlautil.h"
 }
 
 #include <assert.h>
@@ -695,9 +691,6 @@ static BitwuzlaTerm
 parse_consth(BzlaBTORParser *parser, uint64_t width)
 {
   int32_t ch;
-  uint64_t cwidth;
-  char *tmp, *ext;
-  BzlaBitVector *tmpbv, *extbv;
   BitwuzlaTerm res;
 
   if (parse_space(parser)) return 0;
@@ -717,44 +710,11 @@ parse_consth(BzlaBTORParser *parser, uint64_t width)
 
   savech_btor(parser, ch);
 
-  cwidth = BZLA_COUNT_STACK(parser->constant);
   BZLA_PUSH_STACK(parser->constant, 0);
   BZLA_RESET_STACK(parser->constant);
 
-  tmp = bzla_util_hex_to_bin_str_n(parser->mem, parser->constant.start, cwidth);
-  cwidth = strlen(tmp);
-
-  if (cwidth > width)
-  {
-    (void) perr_btor(parser,
-                     "hexadecimal constant '%s' exceeds bit width %d",
-                     parser->constant.start,
-                     width);
-    bzla_mem_freestr(parser->mem, tmp);
-    return 0;
-  }
-
-  if (cwidth < width)
-  {
-    tmpbv = 0;
-    if (!strcmp(tmp, ""))
-      extbv = bzla_bv_new(parser->mem, width - cwidth);
-    else
-    {
-      tmpbv = bzla_bv_char_to_bv(parser->mem, tmp);
-      extbv = bzla_bv_uext(parser->mem, tmpbv, width - cwidth);
-    }
-    ext = bzla_bv_to_char(parser->mem, extbv);
-    bzla_mem_freestr(parser->mem, tmp);
-    bzla_bv_free(parser->mem, extbv);
-    if (tmpbv) bzla_bv_free(parser->mem, tmpbv);
-    tmp = ext;
-  }
-
-  assert(width == strlen(tmp));
   BitwuzlaSort sort = bitwuzla_mk_bv_sort(width);
-  res               = bitwuzla_mk_bv_value(sort, tmp, 2);
-  bzla_mem_freestr(parser->mem, tmp);
+  res               = bitwuzla_mk_bv_value(sort, parser->constant.start, 16);
 
   assert(term_get_bv_size(res) == width);
 
@@ -765,9 +725,6 @@ static BitwuzlaTerm
 parse_constd(BzlaBTORParser *parser, uint64_t width)
 {
   int32_t ch;
-  uint64_t cwidth;
-  char *tmp, *ext;
-  BzlaBitVector *tmpbv, *extbv;
   BitwuzlaTerm res;
 
   if (parse_space(parser)) return 0;
@@ -792,18 +749,11 @@ parse_constd(BzlaBTORParser *parser, uint64_t width)
       (void) perr_btor(parser, "digit after '0'");
       return 0;
     }
-
-    tmp = bzla_mem_strdup(parser->mem, "");
   }
   else
   {
     while (isdigit(ch = nextch_btor(parser)))
       BZLA_PUSH_STACK(parser->constant, ch);
-
-    cwidth = BZLA_COUNT_STACK(parser->constant);
-
-    tmp =
-        bzla_util_dec_to_bin_str_n(parser->mem, parser->constant.start, cwidth);
   }
 
   BZLA_PUSH_STACK(parser->constant, 0);
@@ -811,38 +761,8 @@ parse_constd(BzlaBTORParser *parser, uint64_t width)
 
   savech_btor(parser, ch);
 
-  cwidth = strlen(tmp);
-  if (cwidth > width)
-  {
-    (void) perr_btor(parser,
-                     "decimal constant '%s' exceeds bit width %d",
-                     parser->constant.start,
-                     width);
-    bzla_mem_freestr(parser->mem, tmp);
-    return 0;
-  }
-
-  if (cwidth < width)
-  {
-    tmpbv = 0;
-    if (!strcmp(tmp, ""))
-      extbv = bzla_bv_new(parser->mem, width - cwidth);
-    else
-    {
-      tmpbv = bzla_bv_char_to_bv(parser->mem, tmp);
-      extbv = bzla_bv_uext(parser->mem, tmpbv, width - cwidth);
-    }
-    ext = bzla_bv_to_char(parser->mem, extbv);
-    bzla_mem_freestr(parser->mem, tmp);
-    bzla_bv_free(parser->mem, extbv);
-    if (tmpbv) bzla_bv_free(parser->mem, tmpbv);
-    tmp = ext;
-  }
-
-  assert(width == strlen(tmp));
   BitwuzlaSort sort = bitwuzla_mk_bv_sort(width);
-  res               = bitwuzla_mk_bv_value(sort, tmp, 2);
-  bzla_mem_freestr(parser->mem, tmp);
+  res               = bitwuzla_mk_bv_value(sort, parser->constant.start, 10);
 
   assert(term_get_bv_size(res) == width);
 
@@ -1363,29 +1283,8 @@ parse_shift(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
   rw = term_get_bv_size(r);
   if (width != rw)
   {
-    if (bzla_util_is_power_of_2(width))
-    {
-      if (rw != bzla_util_log_2(width))
-      {
-        (void) perr_btor(parser,
-                         "literal '%d' has width '%d' but expected '%d'",
-                         lit,
-                         rw,
-                         bzla_util_log_2(width));
-        return 0;
-      }
-      tmp = mk_term(BITWUZLA_KIND_BV_ZERO_EXTEND, {r}, {width - rw});
-      r = tmp;
-    }
-    else
-    {
-      (void) perr_btor(parser,
-                       "literal '%d' has width '%d' but expected '%d'",
-                       lit,
-                       rw,
-                       width);
-      return 0;
-    }
+    tmp = mk_term(BITWUZLA_KIND_BV_ZERO_EXTEND, {r}, {width - rw});
+    r   = tmp;
   }
   res = mk_term(kind, {l, r});
   assert(term_get_bv_size(res) == width);
