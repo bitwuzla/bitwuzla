@@ -54,16 +54,15 @@ BvSolver::~BvSolver() {}
 void
 BvSolver::register_assertion(const Node& assertion, bool top_level)
 {
+  ++d_stats.num_assertions;
   if (d_cur_solver == option::BvSolver::BITBLAST
       || d_cur_solver == option::BvSolver::PREPROP)
   {
-    ++d_stats.num_assertions;
     d_bitblast_solver.register_assertion(assertion, top_level);
   }
   if (d_cur_solver == option::BvSolver::PROP
       || d_cur_solver == option::BvSolver::PREPROP)
   {
-    ++d_stats.num_assertions;
     d_prop_solver.register_assertion(assertion, top_level);
   }
 }
