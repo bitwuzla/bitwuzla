@@ -2,7 +2,6 @@
 #define BZLA_PREPROCESS_PASS_ELIM_LAMBDA_H_INCLUDED
 
 #include "preprocess/preprocessing_pass.h"
-#include "rewrite/rewriter.h"
 
 namespace bzla::preprocess::pass {
 

@@ -1,7 +1,7 @@
 #ifndef BZLA_PREPROCESS_PREPROCESSING_PASS_H_INCLUDED
 #define BZLA_PREPROCESS_PREPROCESSING_PASS_H_INCLUDED
 
-#include "rewrite/rewriter.h"
+#include "node/node.h"
 
 namespace bzla {
 

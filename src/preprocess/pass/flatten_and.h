@@ -2,7 +2,7 @@
 #define BZLA_PREPROCESS_PASS_FLATTEN_AND_H_INCLUDED
 
 #include "preprocess/preprocessing_pass.h"
-#include "rewrite/rewriter.h"
+#include "util/statistics.h"
 
 namespace bzla::preprocess::pass {
 

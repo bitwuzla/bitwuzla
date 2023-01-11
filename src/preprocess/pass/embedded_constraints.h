@@ -4,6 +4,7 @@
 #include "backtrack/unordered_map.h"
 #include "node/unordered_node_ref_map.h"
 #include "preprocess/preprocessing_pass.h"
+#include "util/statistics.h"
 
 namespace bzla::preprocess::pass {
 
