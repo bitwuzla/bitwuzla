@@ -10,6 +10,7 @@
 #include "sat/sat_solver.h"
 #include "solver/bv/bv_solver_interface.h"
 #include "solver/solver.h"
+#include "util/statistics.h"
 
 namespace bzla::bv {
 
@@ -51,6 +52,12 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   std::unique_ptr<sat::SatSolver> d_sat_solver;
   /** SAT solver interface for CNF encoder, which wraps `d_sat_solver`. */
   std::unique_ptr<BitblastSatSolver> d_bitblast_sat_solver;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    util::TimerStatistic& time_sat;
+  } d_stats;
 };
 
 }  // namespace bzla::bv

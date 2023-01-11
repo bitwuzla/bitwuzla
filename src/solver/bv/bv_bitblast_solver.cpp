@@ -39,10 +39,12 @@ class BvBitblastSolver::BitblastSatSolver : public bb::SatInterface
   sat::SatSolver& d_solver;
 };
 
-/* --- BvSolver public ----------------------------------------------------- */
+/* --- BvBitblastSolver public ---------------------------------------------- */
 
 BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
-    : Solver(env, state), d_assumptions(state.backtrack_mgr())
+    : Solver(env, state),
+      d_assumptions(state.backtrack_mgr()),
+      d_stats(env.statistics())
 {
   d_sat_solver.reset(new sat::Cadical());
   d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
@@ -58,6 +60,8 @@ BvBitblastSolver::solve()
   {
     d_sat_solver->assume(bits(assumption)[0].get_id());
   }
+
+  util::Timer timer(d_stats.time_sat);
   return d_sat_solver->solve();
 }
 
@@ -344,6 +348,13 @@ BvBitblastSolver::bits(const Node& term) const
 {
   assert(d_bitblaster_cache.find(term) != d_bitblaster_cache.end());
   return d_bitblaster_cache.at(term);
+}
+
+/* --- BvBitblastSolver private --------------------------------------------- */
+
+BvBitblastSolver::Statistics::Statistics(util::Statistics& stats)
+    : time_sat(stats.new_stat<util::TimerStatistic>("bv::bitblast::time_sat"))
+{
 }
 
 }  // namespace bzla::bv
