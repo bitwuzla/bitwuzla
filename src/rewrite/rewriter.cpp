@@ -5,6 +5,7 @@
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_set.h"
+#include "rewrite/rewrites_array.h"
 #include "rewrite/rewrites_bool.h"
 #include "rewrite/rewrites_bv.h"
 #include "rewrite/rewrites_fp.h"
@@ -1210,8 +1211,16 @@ BZLA_ELIM_KIND_IMPL(fp_sub, FP_SUB_ELIM)
 Node
 Rewriter::rewrite_select(const Node& node)
 {
-  // TODO
-  return node;
+  RewriteRuleKind kind;
+  Node res = node;
+
+  if (d_level >= 1)
+  {
+    BZLA_APPLY_RW_RULE(ARRAY_PROP_SELECT);
+  }
+
+DONE:
+  return res;
 }
 
 Node
@@ -1561,6 +1570,8 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::FP_GEQ_ELIM: out << "FP_GEQ_ELIM"; break;
     case RewriteRuleKind::FP_GT_ELIM: out << "FP_GT_ELIM"; break;
     case RewriteRuleKind::FP_SUB_ELIM: out << "FP_SUB_ELIM"; break;
+
+    case RewriteRuleKind::ARRAY_PROP_SELECT: out << "ARRAY_PROP_SELECT"; break;
   }
   return out;
 }

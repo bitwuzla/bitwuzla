@@ -483,6 +483,10 @@ enum class RewriteRuleKind
   FP_GEQ_ELIM,
   FP_GT_ELIM,
   FP_SUB_ELIM,
+
+  /* Array rewrites ---------------------------- */
+
+  ARRAY_PROP_SELECT,
 };
 
 std::ostream& operator<<(std::ostream& out, RewriteRuleKind kind);

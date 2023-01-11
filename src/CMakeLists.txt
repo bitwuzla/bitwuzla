@@ -98,6 +98,7 @@ set(libbitwuzla_src_files
   preprocess/preprocessor.cpp
   rewrite/rewrite_utils.cpp
   rewrite/rewriter.cpp
+  rewrite/rewrites_array.cpp
   rewrite/rewrites_bool.cpp
   rewrite/rewrites_core.cpp
   rewrite/rewrites_bv.cpp
