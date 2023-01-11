@@ -1528,21 +1528,8 @@ RESTART:
 static int32_t
 read_token_smt2(BzlaSMT2Parser *parser)
 {
-  int32_t res;
   parser->lastcoo = parser->coo;
-  res             = read_token_aux_smt2(parser);
-  if (bitwuzla_get_option(parser->options, BITWUZLA_OPT_VERBOSITY) >= 4)
-  {
-    printf("[bzlasmt2] line %-8d column %-4d token %08x %s\n",
-           parser->coo.x,
-           parser->coo.y,
-           res,
-           res == EOF                     ? "<end-of-file>"
-           : res == BZLA_INVALID_TAG_SMT2 ? "<error>"
-                                          : parser->token.start);
-    fflush(stdout);
-  }
-  return res;
+  return read_token_aux_smt2(parser);
 }
 
 static int32_t
