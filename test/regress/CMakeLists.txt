@@ -359,105 +359,105 @@ set(testcases
 set(testcases_btor_sat
 ## sat
 "preprocess/array/regrembeddedconstraint10.btor -rwl=0"
-#"preprocess/array/regrembeddedconstraint10.btor -rwl=1"
-#"preprocess/array/regrembeddedconstraint10.btor -rwl=2"
-#"preprocess/array/regrembeddedconstraint5.btor -rwl=0"
-#"preprocess/array/regrembeddedconstraint5.btor -rwl=1"
-#"preprocess/array/regrembeddedconstraint5.btor -rwl=2"
-#"preprocess/array/regrembeddedconstraint6.btor -rwl=0"
-#"preprocess/array/regrembeddedconstraint6.btor -rwl=1"
-#"preprocess/array/regrembeddedconstraint6.btor -rwl=2"
-#"preprocess/array/regrembeddedconstraint7.btor -rwl=0"
-#"preprocess/array/regrembeddedconstraint7.btor -rwl=1"
-#"preprocess/array/regrembeddedconstraint7.btor -rwl=2"
-#"preprocess/array/regrembeddedconstraint8.btor -rwl=0"
-#"preprocess/array/regrembeddedconstraint8.btor -rwl=1"
-#"preprocess/array/regrembeddedconstraint8.btor -rwl=2"
-#"preprocess/array/regrlemmaloop_embeddedconstraints.btor -rwl=1"
-#"rewrite/array/regr3vl1.btor -rwl=0"
-#"rewrite/array/regr3vl1.btor -rwl=1"
-#"rewrite/array/regr3vl1.btor -rwl=2"
-#"rewrite/array/regr3vl2.btor -rwl=0"
-#"rewrite/array/regr3vl2.btor -rwl=1"
-#"rewrite/array/regr3vl2.btor -rwl=2"
-#"rewrite/array/regr3vl3.btor -rwl=0"
-#"rewrite/array/regr3vl3.btor -rwl=1"
-#"rewrite/array/regr3vl3.btor -rwl=2"
-#"rewrite/array/regr3vl4.btor -rwl=0"
-#"rewrite/array/regr3vl4.btor -rwl=1"
-#"rewrite/array/regr3vl4.btor -rwl=2"
-#"rewrite/array/regrbfs1.btor -rwl=0"
-#"rewrite/array/regrbfs1.btor -rwl=1"
-#"rewrite/array/regrbfs1.btor -rwl=2"
-#"rewrite/array/rw134.btor -rwl=0"
-#"rewrite/array/rw16.btor -rwl=0"
-#"rewrite/array/rw16.btor -rwl=1"
-#"rewrite/array/rw17.btor -rwl=0"
-#"rewrite/array/rw17.btor -rwl=1"
-#"rewrite/array/rw18.btor -rwl=0"
-#"rewrite/array/rw18.btor -rwl=1"
-#"rewrite/array/rwpropindexpluszero1.btor -rwl=0"
-#"rewrite/array/rwpropindexpluszero1.btor"
-#"rewrite/array/rwpropindexpluszero2.btor -rwl=0"
-#"rewrite/array/rwpropindexpluszero2.btor"
-#"rewrite/array/rwpropindexpluszero3.btor -rwl=0"
-#"rewrite/array/rwpropindexpluszero3.btor"
-#"rewrite/array/rwpropindexpluszero4.btor -rwl=0"
-#"rewrite/array/rwpropindexpluszero4.btor"
-#"rewrite/array/rwpropindexpluszero5.btor -rwl=0"
-#"rewrite/array/rwpropindexpluszero5.btor"
-#"rewrite/array/rwpropindexpluszero6.btor -rwl=0"
-#"rewrite/array/rwpropindexpluszero6.btor"
-#"rewrite/array/rwpropindexpluszero7.btor -rwl=0"
-#"rewrite/array/rwpropindexpluszero7.btor"
-#"rewrite/array/rwpropindexpluszero8.btor -rwl=0"
-#"rewrite/array/rwpropindexpluszero8.btor"
-#"rewrite/array/rwr1.btor -br all"
-#"rewrite/array/rww1.btor"
-#"solver/array/arraycond1.btor"
-#"solver/array/arraycond10.btor"
-#"solver/array/arraycond15.btor"
-#"solver/array/arraycond16.btor"
-#"solver/array/arraycond17.btor"
-#"solver/array/arraycond2.btor"
-#"solver/array/arraycond4.btor"
-#"solver/array/ext1.btor"
-#"solver/array/ext12.btor"
-#"solver/array/ext14.btor"
-#"solver/array/ext17.btor"
-#"solver/array/ext20.btor"
-#"solver/array/ext3.btor"
-#"solver/array/ext4.btor"
-#"solver/array/ext6.btor"
-#"solver/array/ext8.btor"
-#"solver/array/invalidmodel3.btor"
-#"solver/array/lazyreadwritebug1.btor"
-#"solver/array/random1.btor"
+"preprocess/array/regrembeddedconstraint10.btor -rwl=1"
+"preprocess/array/regrembeddedconstraint10.btor -rwl=2"
+"preprocess/array/regrembeddedconstraint5.btor -rwl=0"
+"preprocess/array/regrembeddedconstraint5.btor -rwl=1"
+"preprocess/array/regrembeddedconstraint5.btor -rwl=2"
+"preprocess/array/regrembeddedconstraint6.btor -rwl=0"
+"preprocess/array/regrembeddedconstraint6.btor -rwl=1"
+"preprocess/array/regrembeddedconstraint6.btor -rwl=2"
+"preprocess/array/regrembeddedconstraint7.btor -rwl=0"
+"preprocess/array/regrembeddedconstraint7.btor -rwl=1"
+"preprocess/array/regrembeddedconstraint7.btor -rwl=2"
+"preprocess/array/regrembeddedconstraint8.btor -rwl=0"
+"preprocess/array/regrembeddedconstraint8.btor -rwl=1"
+"preprocess/array/regrembeddedconstraint8.btor -rwl=2"
+"preprocess/array/regrlemmaloop_embeddedconstraints.btor -rwl=1"
+"rewrite/array/regr3vl1.btor -rwl=0"
+"rewrite/array/regr3vl1.btor -rwl=1"
+"rewrite/array/regr3vl1.btor -rwl=2"
+"rewrite/array/regr3vl2.btor -rwl=0"
+"rewrite/array/regr3vl2.btor -rwl=1"
+"rewrite/array/regr3vl2.btor -rwl=2"
+"rewrite/array/regr3vl3.btor -rwl=0"
+"rewrite/array/regr3vl3.btor -rwl=1"
+"rewrite/array/regr3vl3.btor -rwl=2"
+"rewrite/array/regr3vl4.btor -rwl=0"
+"rewrite/array/regr3vl4.btor -rwl=1"
+"rewrite/array/regr3vl4.btor -rwl=2"
+"rewrite/array/regrbfs1.btor -rwl=0"
+"rewrite/array/regrbfs1.btor -rwl=1"
+"rewrite/array/regrbfs1.btor -rwl=2"
+"rewrite/array/rw134.btor -rwl=0"
+"rewrite/array/rw16.btor -rwl=0"
+"rewrite/array/rw16.btor -rwl=1"
+"rewrite/array/rw17.btor -rwl=0"
+"rewrite/array/rw17.btor -rwl=1"
+"rewrite/array/rw18.btor -rwl=0"
+"rewrite/array/rw18.btor -rwl=1"
+"rewrite/array/rwpropindexpluszero1.btor -rwl=0"
+"rewrite/array/rwpropindexpluszero1.btor"
+"rewrite/array/rwpropindexpluszero2.btor -rwl=0"
+"rewrite/array/rwpropindexpluszero2.btor"
+"rewrite/array/rwpropindexpluszero3.btor -rwl=0"
+"rewrite/array/rwpropindexpluszero3.btor"
+"rewrite/array/rwpropindexpluszero4.btor -rwl=0"
+"rewrite/array/rwpropindexpluszero4.btor"
+"rewrite/array/rwpropindexpluszero5.btor -rwl=0"
+"rewrite/array/rwpropindexpluszero5.btor"
+"rewrite/array/rwpropindexpluszero6.btor -rwl=0"
+"rewrite/array/rwpropindexpluszero6.btor"
+"rewrite/array/rwpropindexpluszero7.btor -rwl=0"
+"rewrite/array/rwpropindexpluszero7.btor"
+"rewrite/array/rwpropindexpluszero8.btor -rwl=0"
+"rewrite/array/rwpropindexpluszero8.btor"
+#"rewrite/array/rwr1.btor -br all" # TODO disaled because of -br
+"rewrite/array/rww1.btor"
+"solver/array/arraycond1.btor"
+"solver/array/arraycond10.btor"
+"solver/array/arraycond15.btor"
+"solver/array/arraycond16.btor"
+"solver/array/arraycond17.btor"
+"solver/array/arraycond2.btor"
+"solver/array/arraycond4.btor"
+"solver/array/ext1.btor"
+"solver/array/ext12.btor"
+"solver/array/ext14.btor"
+"solver/array/ext17.btor"
+"solver/array/ext20.btor"
+"solver/array/ext3.btor"
+"solver/array/ext4.btor"
+"solver/array/ext6.btor"
+"solver/array/ext8.btor"
+"solver/array/invalidmodel3.btor"
+"solver/array/lazyreadwritebug1.btor"
+"solver/array/random1.btor"
 #"solver/array/random1.btor2"
-#"solver/array/random2.btor"
-#"solver/array/random3.btor"
-#"solver/array/random4.btor"
-#"solver/array/read12.btor"
-#"solver/array/read13.btor"
-#"solver/array/read14.btor"
-#"solver/array/read15.btor"
-#"solver/array/read18.btor"
-#"solver/array/read3.btor"
-#"solver/array/regprim11simp.btor"
-#"solver/array/regprim11simp.btor"
-#"solver/array/regrbetacache1.btor -br all"
-#"solver/array/regrbetacache2.btor -br all" # currently broken since we don't allow to mix lambdas with arrays
-#"solver/array/regrcollectprem.btor"
-#"solver/array/regrmodel1.btor"
-#"solver/array/upprop1.btor"
-#"solver/array/write11.btor"
-#"solver/array/write12.btor"
-#"solver/array/write15.btor"
-#"solver/array/write18.btor"
-#"solver/array/write19.btor"
-#"solver/array/write20.btor"
-#"solver/array/write5.btor"
-#"solver/fun/lambda1.btor"
+"solver/array/random2.btor"
+"solver/array/random3.btor"
+"solver/array/random4.btor"
+"solver/array/read12.btor"
+"solver/array/read13.btor"
+"solver/array/read14.btor"
+"solver/array/read15.btor"
+"solver/array/read18.btor"
+"solver/array/read3.btor"
+"solver/array/regprim11simp.btor"
+"solver/array/regprim11simp.btor"
+#"solver/array/regrbetacache1.btor -br all" # TODO disabled because of -br
+#"solver/array/regrbetacache2.btor -br all" # currently broken since we don't allow to mix lambdas with arrays # TODO disabled because of -br
+"solver/array/regrcollectprem.btor"
+"solver/array/regrmodel1.btor"
+"solver/array/upprop1.btor"
+"solver/array/write11.btor"
+"solver/array/write12.btor"
+"solver/array/write15.btor"
+"solver/array/write18.btor"
+"solver/array/write19.btor"
+"solver/array/write20.btor"
+"solver/array/write5.btor"
+"solver/fun/lambda1.btor"
 "solver/fun/nestedfun1.smt2 -rwl=2"
 )
 set(testcases_btor_unsat
@@ -2213,45 +2213,45 @@ macro(add_test_case option testcase)
 endmacro()
 
 if(CaDiCaL_FOUND)
-  #foreach(testcase ${testcases})
-  #  add_test_case("" "${testcase} -S cadical")
-  #endforeach()
-  #foreach(testcase ${testcases_qfbv})
-  #  add_test_case("" "${testcase} -S cadical")
-  #endforeach()
+  foreach(testcase ${testcases})
+    add_test_case("" "${testcase} -S cadical")
+  endforeach()
+  foreach(testcase ${testcases_qfbv})
+    add_test_case("" "${testcase} -S cadical")
+  endforeach()
   foreach(testcase ${testcases_btor_sat})
     add_test_case("--check-sat" "${testcase} -S cadical")
   endforeach()
-  #foreach(testcase ${cmp_testcases})
-  #  add_test_case("--check-output" "${testcase} -S cadical")
-  #endforeach()
+  foreach(testcase ${cmp_testcases})
+    add_test_case("--check-output" "${testcase} -S cadical")
+  endforeach()
 endif()
-#if(CryptoMiniSat_FOUND)
-#  foreach(testcase ${testcases})
-#    add_test_case("" "${testcase} -S cms")
-#  endforeach()
+if(CryptoMiniSat_FOUND)
+  foreach(testcase ${testcases})
+    add_test_case("" "${testcase} -S cms")
+  endforeach()
+  foreach(testcase ${testcases_qfbv})
+    add_test_case("" "${testcase} -S cms")
+  endforeach()
+endif()
+# FIXME: Disabled for now, Gimsatul support is highly experimental at the moment
+#        (no official API) and some testcases faile due to inconsistent clauses
+#        being added
+#if(Gimsatul_FOUND)
 #  foreach(testcase ${testcases_qfbv})
-#    add_test_case("" "${testcase} -S cms")
+#    add_test_case("" "${testcase} -S gimsatul")
 #  endforeach()
 #endif()
-## FIXME: Disabled for now, Gimsatul support is highly experimental at the moment
-##        (no official API) and some testcases faile due to inconsistent clauses
-##        being added
-##if(Gimsatul_FOUND)
-##  foreach(testcase ${testcases_qfbv})
-##    add_test_case("" "${testcase} -S gimsatul")
-##  endforeach()
-##endif()
-#if(Kissat_FOUND)
-#  foreach(testcase ${testcases_qfbv})
-#    add_test_case("" "${testcase} -S kissat")
-#  endforeach()
-#endif()
-#if(Lingeling_FOUND)
-#  foreach(testcase ${testcases})
-#    add_test_case("" "${testcase} -S lingeling")
-#  endforeach()
-#  foreach(testcase ${testcases_qfbv})
-#    add_test_case("" "${testcase} -S lingeling")
-#  endforeach()
-#endif()
+if(Kissat_FOUND)
+  foreach(testcase ${testcases_qfbv})
+    add_test_case("" "${testcase} -S kissat")
+  endforeach()
+endif()
+if(Lingeling_FOUND)
+  foreach(testcase ${testcases})
+    add_test_case("" "${testcase} -S lingeling")
+  endforeach()
+  foreach(testcase ${testcases_qfbv})
+    add_test_case("" "${testcase} -S lingeling")
+  endforeach()
+endif()

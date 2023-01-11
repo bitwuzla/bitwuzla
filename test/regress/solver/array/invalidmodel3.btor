@@ -11,7 +11,7 @@
 15 constd 12 16
 17 var 32 _substvar_10_
 18 write 32 12 14 15 17
-19 apply 32 18 12
+19 read 32 18 12
 20 eq 1 1 19
 21 root 1 20
 22 constd 32 12
@@ -20,6 +20,6 @@
 25 eq 1 17 24
 26 root 1 25
 27 write 32 12 5 15 1
-28 apply 32 27 15
+28 read 32 27 15
 29 eq 1 23 28
 30 root 1 29
