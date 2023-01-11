@@ -85,8 +85,11 @@ BvSolver::solve()
       break;
     case option::BvSolver::PREPROP:
       d_cur_solver = option::BvSolver::PROP;
-      assert(false);
-      // TODO
+      d_sat_state  = d_prop_solver.solve();
+      if (d_sat_state == Result::UNKNOWN)
+      {
+        d_sat_state = d_bitblast_solver.solve();
+      }
       break;
   }
   return d_sat_state;
