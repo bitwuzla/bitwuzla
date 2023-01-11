@@ -129,7 +129,7 @@ set(testcases
 "solver/array/smtextarray3sat6.smt2"
 "solver/array/smtextarray3sat7.smt2"
 "solver/array/swapmem002se.smt2"
-#"solver/array/upprop1.btor.smt2" # TODO unsat instead of sat
+"solver/array/upprop1.btor.smt2"
 "solver/array/wchains002se.smt2"
 "solver/array/write11.btor.smt2"
 "solver/array/write12.btor.smt2"
