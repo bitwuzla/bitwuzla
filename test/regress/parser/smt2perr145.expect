@@ -1,1 +1,1 @@
-regress/parser/smt2perr145.smt2:1:14: decimal constant '15' needs 4 bits which exceeds bit-width '3'
+bitwuzla: error:  invalid call to 'bitwuzla::Term bitwuzla::mk_bv_value(const Sort&, const std::string&, uint8_t)', value '15' does not fit into a bit-vector of size '3'

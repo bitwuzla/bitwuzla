@@ -10,8 +10,6 @@
 
 extern "C" {
 #include "bzlasmt2.h"
-
-#include "utils/bzlautil.h"
 }
 
 #include <ctype.h>
@@ -4109,7 +4107,7 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
   assert(parser);
   assert(item_cur);
 
-  uint64_t width, width2;
+  uint64_t width;
   int32_t tag;
   BzlaSMT2Node *node;
   BitwuzlaTerm exp;
@@ -4268,60 +4266,16 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
   else if (tag == BZLA_SYMBOL_TAG_SMT2
            && is_bvconst_str_smt2(parser->token.start))
   {
-    char *constr, *decstr;
+    std::string value(parser->token.start + 2);
     BzlaSMT2Coo coo;
     exp    = 0;
-    decstr = bzla_mem_strdup(parser->mem, parser->token.start + 2);
-    constr = bzla_util_dec_to_bin_str(parser->mem, parser->token.start + 2);
     coo    = parser->coo;
     coo.y += 2;
     if (parse_uint64_smt2(parser, false, &width))
     {
-      width2 = strlen(constr);
-      if (width2 > width)
-      {
-        parser->perrcoo = coo;
-        (void) perr_smt2(parser,
-                         "decimal constant '%s' needs %d bits which "
-                         "exceeds bit-width '%d'",
-                         decstr,
-                         width2,
-                         width);
-      }
-      else if (width2 == width)
-      {
-        s   = bitwuzla_mk_bv_sort(width);
-        exp = bitwuzla_mk_bv_value(s, constr, 2);
-      }
-      else if (!width2)
-      {
-        s   = bitwuzla_mk_bv_sort(width);
-        exp = bitwuzla_mk_bv_zero(s);
-      }
-      else
-      {
-        BzlaBitVector *constrbv = 0, *uconstrbv;
-        uint32_t w              = width - width2;
-        char *uconstr;
-        if (!strcmp(constr, ""))
-        {
-          uconstrbv = bzla_bv_new(parser->mem, w);
-        }
-        else
-        {
-          constrbv  = bzla_bv_char_to_bv(parser->mem, constr);
-          uconstrbv = bzla_bv_uext(parser->mem, constrbv, w);
-        }
-        uconstr = bzla_bv_to_char(parser->mem, uconstrbv);
-        s       = bitwuzla_mk_bv_sort(strlen(uconstr));
-        exp     = bitwuzla_mk_bv_value(s, uconstr, 2);
-        bzla_mem_freestr(parser->mem, uconstr);
-        bzla_bv_free(parser->mem, uconstrbv);
-        if (constrbv) bzla_bv_free(parser->mem, constrbv);
-      }
+      s   = bitwuzla_mk_bv_sort(width);
+      exp = bitwuzla_mk_bv_value(s, value.c_str(), 10);
     }
-    bzla_mem_freestr(parser->mem, decstr);
-    bzla_mem_freestr(parser->mem, constr);
     if (!exp) return 0;
     assert(bitwuzla_term_bv_get_size(exp) == width);
     assert(item_cur > parser->work.start);
@@ -4546,7 +4500,7 @@ parse_open_term(BzlaSMT2Parser *parser, int32_t tag)
 {
   assert(parser);
 
-  uint32_t width, width2;
+  uint32_t width;
   BzlaSMT2Item *item_cur;
   BzlaSMT2Node *sym, *new_sym;
   BitwuzlaSort s;
@@ -4668,35 +4622,11 @@ parse_open_term(BzlaSMT2Parser *parser, int32_t tag)
   }
   else if (tag == BZLA_HEXADECIMAL_CONSTANT_TAG_SMT2)
   {
-    char *constr, *uconstr;
-    BzlaBitVector *constrbv = 0, *uconstrbv;
-    constr = bzla_util_hex_to_bin_str(parser->mem, parser->token.start + 2);
-    width2 = strlen(constr);
-    width  = strlen(parser->token.start + 2) * 4;
-    assert(width2 <= width);
-    uint32_t w = width - width2;
-    if (width2 == width)
-    {
-      uconstr = bzla_mem_strdup(parser->mem, constr);
-    }
-    else
-    {
-      if (!strcmp(constr, ""))
-        uconstrbv = bzla_bv_new(parser->mem, w);
-      else
-      {
-        constrbv  = bzla_bv_char_to_bv(parser->mem, constr);
-        uconstrbv = bzla_bv_uext(parser->mem, constrbv, w);
-      }
-      uconstr = bzla_bv_to_char(parser->mem, uconstrbv);
-      bzla_bv_free(parser->mem, uconstrbv);
-      if (constrbv) bzla_bv_free(parser->mem, constrbv);
-    }
+    std::string value(parser->token.start + 2);
+    width         = strlen(parser->token.start + 2) * 4;
     item_cur->tag = BZLA_EXP_TAG_SMT2;
-    s             = bitwuzla_mk_bv_sort(strlen(uconstr));
-    item_cur->exp = bitwuzla_mk_bv_value(s, uconstr, 2);
-    bzla_mem_freestr(parser->mem, uconstr);
-    bzla_mem_freestr(parser->mem, constr);
+    s             = bitwuzla_mk_bv_sort(width);
+    item_cur->exp = bitwuzla_mk_bv_value(s, value.c_str(), 16);
   }
   else if (tag == BZLA_DECIMAL_CONSTANT_TAG_SMT2
            || tag == BZLA_REAL_CONSTANT_TAG_SMT2)
@@ -6048,7 +5978,7 @@ parse_smt2_parser(BzlaSMT2Parser *parser,
                   FILE *outfile,
                   BzlaParseResult *res)
 {
-  double start = bzla_util_time_stamp(), delta;
+  // double start = bzla_util_time_stamp(), delta;
 
   parser->nprefix     = 0;
   parser->prefix      = prefix;
@@ -6058,7 +5988,7 @@ parse_smt2_parser(BzlaSMT2Parser *parser,
   parser->infile_name = bzla_mem_strdup(parser->mem, infile_name);
   parser->outfile     = outfile;
   parser->saved       = false;
-  parser->parse_start = start;
+  parser->parse_start = 0;
   BZLA_CLR(res);
   parser->res   = res;
   parser->logic = 0;
@@ -6102,8 +6032,8 @@ parse_smt2_parser(BzlaSMT2Parser *parser,
   //                parser->infile_name);
   //   }
   // }
-  delta = bzla_util_time_stamp() - start;
-  if (delta < 0) delta = 0;
+  // delta = bzla_util_time_stamp() - start;
+  // if (delta < 0) delta = 0;
   // BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
   //          1,
   //          "parsed %d commands in %.2f seconds",

@@ -11,9 +11,6 @@
 #ifndef BZLASMT2_H_INLCUDED
 #define BZLASMT2_H_INLCUDED
 
-#include <stdio.h>
-
-#include "bzlanode.h"
 #include "bzlaparse.h"
 
 const BzlaParserAPI* bzla_parsesmt2_parser_api();
