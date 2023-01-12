@@ -122,6 +122,12 @@ template <>
 Node RewriteRule<RewriteRuleKind::DISTINCT_ELIM>::_apply(Rewriter& rewriter,
                                                          const Node& node);
 
+/* --- Commutative Operator Normalization ----------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::NORMALIZE_COMM>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla
 #endif

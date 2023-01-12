@@ -206,135 +206,135 @@ Rewriter::_rewrite(const Node& node)
     return node;
   }
 
+  // Normalize before rewriting
+  Node n = normalize_commutative(node);
+
   Node res;
-  switch (node.kind())
+  switch (n.kind())
   {
-    case node::Kind::AND: res = rewrite_and(node); break;
-    case node::Kind::DISTINCT: res = rewrite_distinct(node); break;
-    case node::Kind::IMPLIES: res = rewrite_implies(node); break;
-    case node::Kind::NOT: res = rewrite_not(node); break;
-    case node::Kind::OR: res = rewrite_or(node); break;
-    case node::Kind::XOR: res = rewrite_xor(node); break;
+    case node::Kind::AND: res = rewrite_and(n); break;
+    case node::Kind::DISTINCT: res = rewrite_distinct(n); break;
+    case node::Kind::IMPLIES: res = rewrite_implies(n); break;
+    case node::Kind::NOT: res = rewrite_not(n); break;
+    case node::Kind::OR: res = rewrite_or(n); break;
+    case node::Kind::XOR: res = rewrite_xor(n); break;
 
-    case node::Kind::EQUAL: res = rewrite_eq(node); break;
-    case node::Kind::ITE: res = rewrite_ite(node); break;
+    case node::Kind::EQUAL: res = rewrite_eq(n); break;
+    case node::Kind::ITE: res = rewrite_ite(n); break;
 
-    case node::Kind::BV_AND: res = rewrite_bv_and(node); break;
-    case node::Kind::BV_ADD: res = rewrite_bv_add(node); break;
-    case node::Kind::BV_ASHR: res = rewrite_bv_ashr(node); break;
-    case node::Kind::BV_CONCAT: res = rewrite_bv_concat(node); break;
-    case node::Kind::BV_DEC: res = rewrite_bv_dec(node); break;
-    case node::Kind::BV_EXTRACT: res = rewrite_bv_extract(node); break;
-    case node::Kind::BV_INC: res = rewrite_bv_inc(node); break;
-    case node::Kind::BV_MUL: res = rewrite_bv_mul(node); break;
-    case node::Kind::BV_NOT: res = rewrite_bv_not(node); break;
-    case node::Kind::BV_SHL: res = rewrite_bv_shl(node); break;
-    case node::Kind::BV_SHR: res = rewrite_bv_shr(node); break;
-    case node::Kind::BV_SLT: res = rewrite_bv_slt(node); break;
-    case node::Kind::BV_UDIV: res = rewrite_bv_udiv(node); break;
-    case node::Kind::BV_ULT: res = rewrite_bv_ult(node); break;
-    case node::Kind::BV_UREM: res = rewrite_bv_urem(node); break;
+    case node::Kind::BV_AND: res = rewrite_bv_and(n); break;
+    case node::Kind::BV_ADD: res = rewrite_bv_add(n); break;
+    case node::Kind::BV_ASHR: res = rewrite_bv_ashr(n); break;
+    case node::Kind::BV_CONCAT: res = rewrite_bv_concat(n); break;
+    case node::Kind::BV_DEC: res = rewrite_bv_dec(n); break;
+    case node::Kind::BV_EXTRACT: res = rewrite_bv_extract(n); break;
+    case node::Kind::BV_INC: res = rewrite_bv_inc(n); break;
+    case node::Kind::BV_MUL: res = rewrite_bv_mul(n); break;
+    case node::Kind::BV_NOT: res = rewrite_bv_not(n); break;
+    case node::Kind::BV_SHL: res = rewrite_bv_shl(n); break;
+    case node::Kind::BV_SHR: res = rewrite_bv_shr(n); break;
+    case node::Kind::BV_SLT: res = rewrite_bv_slt(n); break;
+    case node::Kind::BV_UDIV: res = rewrite_bv_udiv(n); break;
+    case node::Kind::BV_ULT: res = rewrite_bv_ult(n); break;
+    case node::Kind::BV_UREM: res = rewrite_bv_urem(n); break;
     case node::Kind::BV_COMP:
-      res = node; // TODO
+      res = n;  // TODO
       break;
 
     /* Eliminated bit-vector operators */
-    case node::Kind::BV_NAND: res = rewrite_bv_nand(node); break;
-    case node::Kind::BV_NEG: res = rewrite_bv_neg(node); break;
-    case node::Kind::BV_NOR: res = rewrite_bv_nor(node); break;
-    case node::Kind::BV_OR: res = rewrite_bv_or(node); break;
-    case node::Kind::BV_REDAND: res = rewrite_bv_redand(node); break;
-    case node::Kind::BV_REDOR: res = rewrite_bv_redor(node); break;
-    case node::Kind::BV_REDXOR: res = rewrite_bv_redxor(node); break;
-    case node::Kind::BV_REPEAT: res = rewrite_bv_repeat(node); break;
-    case node::Kind::BV_ROL: res = rewrite_bv_rol(node); break;
-    case node::Kind::BV_ROLI: res = rewrite_bv_roli(node); break;
-    case node::Kind::BV_ROR: res = rewrite_bv_ror(node); break;
-    case node::Kind::BV_RORI: res = rewrite_bv_rori(node); break;
-    case node::Kind::BV_SADDO: res = rewrite_bv_saddo(node); break;
-    case node::Kind::BV_SDIV: res = rewrite_bv_sdiv(node); break;
-    case node::Kind::BV_SDIVO: res = rewrite_bv_sdivo(node); break;
-    case node::Kind::BV_SGE: res = rewrite_bv_sge(node); break;
-    case node::Kind::BV_SGT: res = rewrite_bv_sgt(node); break;
-    case node::Kind::BV_SIGN_EXTEND: res = rewrite_bv_sign_extend(node); break;
-    case node::Kind::BV_SLE: res = rewrite_bv_sle(node); break;
-    case node::Kind::BV_SMOD: res = rewrite_bv_smod(node); break;
-    case node::Kind::BV_SMULO: res = rewrite_bv_smulo(node); break;
-    case node::Kind::BV_SREM: res = rewrite_bv_srem(node); break;
-    case node::Kind::BV_SSUBO: res = rewrite_bv_ssubo(node); break;
-    case node::Kind::BV_SUB: res = rewrite_bv_sub(node); break;
-    case node::Kind::BV_UMULO: res = rewrite_bv_umulo(node); break;
-    case node::Kind::BV_UADDO: res = rewrite_bv_uaddo(node); break;
-    case node::Kind::BV_UGE: res = rewrite_bv_uge(node); break;
-    case node::Kind::BV_UGT: res = rewrite_bv_ugt(node); break;
-    case node::Kind::BV_ULE: res = rewrite_bv_ule(node); break;
-    case node::Kind::BV_USUBO: res = rewrite_bv_usubo(node); break;
-    case node::Kind::BV_XNOR: res = rewrite_bv_xnor(node); break;
-    case node::Kind::BV_XOR: res = rewrite_bv_xor(node); break;
-    case node::Kind::BV_ZERO_EXTEND: res = rewrite_bv_zero_extend(node); break;
+    case node::Kind::BV_NAND: res = rewrite_bv_nand(n); break;
+    case node::Kind::BV_NEG: res = rewrite_bv_neg(n); break;
+    case node::Kind::BV_NOR: res = rewrite_bv_nor(n); break;
+    case node::Kind::BV_OR: res = rewrite_bv_or(n); break;
+    case node::Kind::BV_REDAND: res = rewrite_bv_redand(n); break;
+    case node::Kind::BV_REDOR: res = rewrite_bv_redor(n); break;
+    case node::Kind::BV_REDXOR: res = rewrite_bv_redxor(n); break;
+    case node::Kind::BV_REPEAT: res = rewrite_bv_repeat(n); break;
+    case node::Kind::BV_ROL: res = rewrite_bv_rol(n); break;
+    case node::Kind::BV_ROLI: res = rewrite_bv_roli(n); break;
+    case node::Kind::BV_ROR: res = rewrite_bv_ror(n); break;
+    case node::Kind::BV_RORI: res = rewrite_bv_rori(n); break;
+    case node::Kind::BV_SADDO: res = rewrite_bv_saddo(n); break;
+    case node::Kind::BV_SDIV: res = rewrite_bv_sdiv(n); break;
+    case node::Kind::BV_SDIVO: res = rewrite_bv_sdivo(n); break;
+    case node::Kind::BV_SGE: res = rewrite_bv_sge(n); break;
+    case node::Kind::BV_SGT: res = rewrite_bv_sgt(n); break;
+    case node::Kind::BV_SIGN_EXTEND: res = rewrite_bv_sign_extend(n); break;
+    case node::Kind::BV_SLE: res = rewrite_bv_sle(n); break;
+    case node::Kind::BV_SMOD: res = rewrite_bv_smod(n); break;
+    case node::Kind::BV_SMULO: res = rewrite_bv_smulo(n); break;
+    case node::Kind::BV_SREM: res = rewrite_bv_srem(n); break;
+    case node::Kind::BV_SSUBO: res = rewrite_bv_ssubo(n); break;
+    case node::Kind::BV_SUB: res = rewrite_bv_sub(n); break;
+    case node::Kind::BV_UMULO: res = rewrite_bv_umulo(n); break;
+    case node::Kind::BV_UADDO: res = rewrite_bv_uaddo(n); break;
+    case node::Kind::BV_UGE: res = rewrite_bv_uge(n); break;
+    case node::Kind::BV_UGT: res = rewrite_bv_ugt(n); break;
+    case node::Kind::BV_ULE: res = rewrite_bv_ule(n); break;
+    case node::Kind::BV_USUBO: res = rewrite_bv_usubo(n); break;
+    case node::Kind::BV_XNOR: res = rewrite_bv_xnor(n); break;
+    case node::Kind::BV_XOR: res = rewrite_bv_xor(n); break;
+    case node::Kind::BV_ZERO_EXTEND: res = rewrite_bv_zero_extend(n); break;
 
-    case node::Kind::FP_ABS: res = rewrite_fp_abs(node); break;
-    case node::Kind::FP_ADD: res = rewrite_fp_add(node); break;
-    case node::Kind::FP_DIV: res = rewrite_fp_div(node); break;
-    case node::Kind::FP_EQUAL: res = rewrite_fp_equal(node); break;
-    case node::Kind::FP_FMA: res = rewrite_fp_fma(node); break;
-    case node::Kind::FP_FP: res = rewrite_fp_fp(node); break;
-    case node::Kind::FP_GEQ: res = rewrite_fp_geq(node); break;
-    case node::Kind::FP_GT: res = rewrite_fp_gt(node); break;
+    case node::Kind::FP_ABS: res = rewrite_fp_abs(n); break;
+    case node::Kind::FP_ADD: res = rewrite_fp_add(n); break;
+    case node::Kind::FP_DIV: res = rewrite_fp_div(n); break;
+    case node::Kind::FP_EQUAL: res = rewrite_fp_equal(n); break;
+    case node::Kind::FP_FMA: res = rewrite_fp_fma(n); break;
+    case node::Kind::FP_FP: res = rewrite_fp_fp(n); break;
+    case node::Kind::FP_GEQ: res = rewrite_fp_geq(n); break;
+    case node::Kind::FP_GT: res = rewrite_fp_gt(n); break;
 
-    case node::Kind::FP_IS_INF: res = rewrite_fp_is_inf(node); break;
-    case node::Kind::FP_IS_NAN: res = rewrite_fp_is_nan(node); break;
-    case node::Kind::FP_IS_NEG: res = rewrite_fp_is_neg(node); break;
-    case node::Kind::FP_IS_NORMAL: res = rewrite_fp_is_normal(node); break;
-    case node::Kind::FP_IS_POS: res = rewrite_fp_is_pos(node); break;
-    case node::Kind::FP_IS_SUBNORMAL:
-      res = rewrite_fp_is_subnormal(node);
-      break;
-    case node::Kind::FP_IS_ZERO: res = rewrite_fp_is_zero(node); break;
+    case node::Kind::FP_IS_INF: res = rewrite_fp_is_inf(n); break;
+    case node::Kind::FP_IS_NAN: res = rewrite_fp_is_nan(n); break;
+    case node::Kind::FP_IS_NEG: res = rewrite_fp_is_neg(n); break;
+    case node::Kind::FP_IS_NORMAL: res = rewrite_fp_is_normal(n); break;
+    case node::Kind::FP_IS_POS: res = rewrite_fp_is_pos(n); break;
+    case node::Kind::FP_IS_SUBNORMAL: res = rewrite_fp_is_subnormal(n); break;
+    case node::Kind::FP_IS_ZERO: res = rewrite_fp_is_zero(n); break;
 
-    case node::Kind::FP_LEQ: res = rewrite_fp_leq(node); break;
-    case node::Kind::FP_LT: res = rewrite_fp_lt(node); break;
-    case node::Kind::FP_MAX: res = rewrite_fp_max(node); break;
-    case node::Kind::FP_MIN: res = rewrite_fp_min(node); break;
-    case node::Kind::FP_MUL: res = rewrite_fp_mul(node); break;
-    case node::Kind::FP_NEG: res = rewrite_fp_neg(node); break;
-    case node::Kind::FP_REM: res = rewrite_fp_rem(node); break;
-    case node::Kind::FP_RTI: res = rewrite_fp_rti(node); break;
-    case node::Kind::FP_SQRT: res = rewrite_fp_sqrt(node); break;
-    case node::Kind::FP_SUB: res = rewrite_fp_sub(node); break;
+    case node::Kind::FP_LEQ: res = rewrite_fp_leq(n); break;
+    case node::Kind::FP_LT: res = rewrite_fp_lt(n); break;
+    case node::Kind::FP_MAX: res = rewrite_fp_max(n); break;
+    case node::Kind::FP_MIN: res = rewrite_fp_min(n); break;
+    case node::Kind::FP_MUL: res = rewrite_fp_mul(n); break;
+    case node::Kind::FP_NEG: res = rewrite_fp_neg(n); break;
+    case node::Kind::FP_REM: res = rewrite_fp_rem(n); break;
+    case node::Kind::FP_RTI: res = rewrite_fp_rti(n); break;
+    case node::Kind::FP_SQRT: res = rewrite_fp_sqrt(n); break;
+    case node::Kind::FP_SUB: res = rewrite_fp_sub(n); break;
 
-    case node::Kind::FP_TO_FP_FROM_BV:
-      res = rewrite_fp_to_fp_from_bv(node);
-      break;
-    case node::Kind::FP_TO_FP_FROM_FP:
-      res = rewrite_fp_to_fp_from_fp(node);
-      break;
+    case node::Kind::FP_TO_FP_FROM_BV: res = rewrite_fp_to_fp_from_bv(n); break;
+    case node::Kind::FP_TO_FP_FROM_FP: res = rewrite_fp_to_fp_from_fp(n); break;
     case node::Kind::FP_TO_FP_FROM_SBV:
-      res = rewrite_fp_to_fp_from_sbv(node);
+      res = rewrite_fp_to_fp_from_sbv(n);
       break;
     case node::Kind::FP_TO_FP_FROM_UBV:
-      res = rewrite_fp_to_fp_from_ubv(node);
+      res = rewrite_fp_to_fp_from_ubv(n);
       break;
 
     // No rewrites for FP_TO_(U|S)BV conversion yet
     case node::Kind::FP_TO_SBV:
-    case node::Kind::FP_TO_UBV: res = node; break;
+    case node::Kind::FP_TO_UBV: res = n; break;
 
     // There are no rewrites for constant arrays.
-    case node::Kind::CONST_ARRAY: res = node; break;
+    case node::Kind::CONST_ARRAY: res = n; break;
 
-    case node::Kind::SELECT: res = rewrite_select(node); break;
-    case node::Kind::STORE: res = rewrite_store(node); break;
+    case node::Kind::SELECT: res = rewrite_select(n); break;
+    case node::Kind::STORE: res = rewrite_store(n); break;
 
-    case node::Kind::APPLY: res = rewrite_apply(node); break;
-    case node::Kind::LAMBDA: res = rewrite_lambda(node); break;
+    case node::Kind::APPLY: res = rewrite_apply(n); break;
+    case node::Kind::LAMBDA: res = rewrite_lambda(n); break;
 
-    case node::Kind::FORALL: res = rewrite_forall(node); break;
-    case node::Kind::EXISTS: res = rewrite_exists(node); break;
-
+    case node::Kind::FORALL: res = rewrite_forall(n); break;
+    case node::Kind::EXISTS: res = rewrite_exists(n); break;
 
     default: assert(false);
   }
+
+  // Normalize again
+  res = normalize_commutative(res);
+
   assert(!res.is_null());
   assert(res.type() == node.type());
 
@@ -1263,6 +1263,23 @@ Rewriter::rewrite_exists(const Node& node)
   return node;
 }
 
+/* Normalization ------------------------------------------------------------ */
+
+Node
+Rewriter::normalize_commutative(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res = node;
+
+  if (d_level >= 1)
+  {
+    BZLA_APPLY_RW_RULE(NORMALIZE_COMM);
+  }
+
+DONE:
+  return res;
+}
+
 std::ostream&
 operator<<(std::ostream& out, RewriteRuleKind kind)
 {
@@ -1576,6 +1593,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::FP_SUB_ELIM: out << "FP_SUB_ELIM"; break;
 
     case RewriteRuleKind::ARRAY_PROP_SELECT: out << "ARRAY_PROP_SELECT"; break;
+    case RewriteRuleKind::NORMALIZE_COMM: out << "NORMALIZE_COMM"; break;
   }
   return out;
 }

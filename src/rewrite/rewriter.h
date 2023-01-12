@@ -174,6 +174,9 @@ class Rewriter
   Node rewrite_forall(const Node& node);
   Node rewrite_exists(const Node& node);
 
+  /* Normalization */
+  Node normalize_commutative(const Node& node);
+
   /** Associated environment. */
   Env& d_env;
   /** Logger instance */
@@ -253,6 +256,8 @@ enum class RewriteRuleKind
 
   DISTINCT_CARD,
   DISTINCT_ELIM,
+
+  NORMALIZE_COMM,
 
   //// Elimination rules
   IMPLIES_ELIM,

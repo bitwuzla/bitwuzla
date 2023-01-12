@@ -33,6 +33,9 @@ struct KindInfo
   /** @return Is given kind right associative. */
   static bool is_right_associative(Kind kind);
 
+  /** @return Is given kind commutative. */
+  static bool is_commutative(Kind kind);
+
   /** @return Is given kind chainable (e.g. EQUAL). */
   static bool is_chainable(Kind kind);
 
@@ -76,6 +79,7 @@ struct KindInfo
     const char* d_enum_name   = nullptr;
     const char* d_smt2_name   = nullptr;
     KindAttribute d_attribute = KindAttribute::NONE;
+    bool is_commutative       = false;
   };
 
   /** Initialize kind information for given `kind`. */
@@ -84,7 +88,8 @@ struct KindInfo
                       uint8_t num_indices,
                       const char* enum_name,
                       const char* smt2_name   = "",
-                      KindAttribute attribute = NONE);
+                      KindAttribute attribute = NONE,
+                      bool is_commutative     = false);
 
   constexpr KindInfo();
 

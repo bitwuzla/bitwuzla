@@ -50,6 +50,12 @@ KindInfo::is_right_associative(Kind kind)
 }
 
 bool
+KindInfo::is_commutative(Kind kind)
+{
+  return get().d_info[static_cast<size_t>(kind)].is_commutative;
+}
+
+bool
 KindInfo::is_chainable(Kind kind)
 {
   return get().d_info[static_cast<size_t>(kind)].d_attribute
@@ -105,11 +111,16 @@ KindInfo::init(Kind kind,
                uint8_t num_indices,
                const char* enum_name,
                const char* smt2_name,
-               KindAttribute attribute)
+               KindAttribute attribute,
+               bool is_commutative)
 {
   ++d_num_inited;
-  d_info[static_cast<size_t>(kind)] = {
-      num_children, num_indices, enum_name, smt2_name, attribute};
+  d_info[static_cast<size_t>(kind)] = {num_children,
+                                       num_indices,
+                                       enum_name,
+                                       smt2_name,
+                                       attribute,
+                                       is_commutative};
 }
 
 constexpr KindInfo::KindInfo()
@@ -125,31 +136,31 @@ constexpr KindInfo::KindInfo()
        "DISTINCT",
        "distinct",
        KindInfo::PAIRWISE);
-  init(Kind::EQUAL, 2, 0, "EQUAL", "=", KindInfo::CHAINABLE);
+  init(Kind::EQUAL, 2, 0, "EQUAL", "=", KindInfo::CHAINABLE, true);
   init(Kind::ITE, 3, 0, "ITE", "ite");
 
   /* Boolean */
-  init(Kind::AND, 2, 0, "AND", "and", KindInfo::LEFT_ASSOC);
+  init(Kind::AND, 2, 0, "AND", "and", KindInfo::LEFT_ASSOC, true);
   init(Kind::IMPLIES, 2, 0, "IMPLIES", "=>", KindInfo::RIGHT_ASSOC);
   init(Kind::NOT, 1, 0, "NOT", "not");
-  init(Kind::OR, 2, 0, "OR", "or", KindInfo::LEFT_ASSOC);
-  init(Kind::XOR, 2, 0, "XOR", "xor", KindInfo::LEFT_ASSOC);
+  init(Kind::OR, 2, 0, "OR", "or", KindInfo::LEFT_ASSOC, true);
+  init(Kind::XOR, 2, 0, "XOR", "xor", KindInfo::LEFT_ASSOC, true);
 
   /* Bit-vectors */
-  init(Kind::BV_ADD, 2, 0, "BV_ADD", "bvadd", KindInfo::LEFT_ASSOC);
-  init(Kind::BV_AND, 2, 0, "BV_AND", "bvand", KindInfo::LEFT_ASSOC);
+  init(Kind::BV_ADD, 2, 0, "BV_ADD", "bvadd", KindInfo::LEFT_ASSOC, true);
+  init(Kind::BV_AND, 2, 0, "BV_AND", "bvand", KindInfo::LEFT_ASSOC, true);
   init(Kind::BV_ASHR, 2, 0, "BV_ASHR", "bvashr");
-  init(Kind::BV_COMP, 2, 0, "BV_COMP", "bvcomp", KindInfo::CHAINABLE);
+  init(Kind::BV_COMP, 2, 0, "BV_COMP", "bvcomp", KindInfo::CHAINABLE, true);
   init(Kind::BV_CONCAT, 2, 0, "BV_CONCAT", "concat", KindInfo::LEFT_ASSOC);
   init(Kind::BV_DEC, 1, 0, "BV_DEC", "bvdec");
   init(Kind::BV_EXTRACT, 1, 2, "BV_EXTRACT", "extract");
   init(Kind::BV_INC, 1, 0, "BV_INC", "bvinc");
-  init(Kind::BV_MUL, 2, 0, "BV_MUL", "bvmul", KindInfo::LEFT_ASSOC);
-  init(Kind::BV_NAND, 2, 0, "BV_NAND", "bvnand");
+  init(Kind::BV_MUL, 2, 0, "BV_MUL", "bvmul", KindInfo::LEFT_ASSOC, true);
+  init(Kind::BV_NAND, 2, 0, "BV_NAND", "bvnand", KindInfo::NONE, true);
   init(Kind::BV_NEG, 1, 0, "BV_NEG", "bvneg");
-  init(Kind::BV_NOR, 2, 0, "BV_NOR", "bvnor");
+  init(Kind::BV_NOR, 2, 0, "BV_NOR", "bvnor", KindInfo::NONE, true);
   init(Kind::BV_NOT, 1, 0, "BV_NOT", "bvnot");
-  init(Kind::BV_OR, 2, 0, "BV_OR", "bvor", KindInfo::LEFT_ASSOC);
+  init(Kind::BV_OR, 2, 0, "BV_OR", "bvor", KindInfo::LEFT_ASSOC, true);
   init(Kind::BV_REDAND, 1, 0, "BV_REDAND", "bvredand");
   init(Kind::BV_REDOR, 1, 0, "BV_REDOR", "bvredor");
   init(Kind::BV_REDXOR, 1, 0, "BV_REDXOR", "bvredxor");
@@ -158,7 +169,7 @@ constexpr KindInfo::KindInfo()
   init(Kind::BV_ROLI, 1, 1, "BV_ROLI", "rotate_left");
   init(Kind::BV_ROR, 2, 0, "BV_ROR", "bvror");
   init(Kind::BV_RORI, 1, 1, "BV_RORI", "rotate_right");
-  init(Kind::BV_SADDO, 2, 0, "BV_SADDO", "bvsaddo");
+  init(Kind::BV_SADDO, 2, 0, "BV_SADDO", "bvsaddo", KindInfo::NONE, true);
   init(Kind::BV_SDIV, 2, 0, "BV_SDIV", "bvsdiv");
   init(Kind::BV_SDIVO, 2, 0, "BV_SDIVO", "bvsdivo");
   init(Kind::BV_SGE, 2, 0, "BV_SGE", "bvsge");
@@ -173,17 +184,17 @@ constexpr KindInfo::KindInfo()
   init(Kind::BV_SREM, 2, 0, "BV_SREM", "bvsrem");
   init(Kind::BV_SSUBO, 2, 0, "BV_SSUBO", "bvssubo");
   init(Kind::BV_SUB, 2, 0, "BV_SUB", "bvsub");
-  init(Kind::BV_UADDO, 2, 0, "BV_UADDO", "bvuaddo");
+  init(Kind::BV_UADDO, 2, 0, "BV_UADDO", "bvuaddo", KindInfo::NONE, true);
   init(Kind::BV_UDIV, 2, 0, "BV_UDIV", "bvudiv");
   init(Kind::BV_UGE, 2, 0, "BV_UGE", "bvuge");
   init(Kind::BV_UGT, 2, 0, "BV_UGT", "bvugt");
   init(Kind::BV_ULE, 2, 0, "BV_ULE", "bvule");
   init(Kind::BV_ULT, 2, 0, "BV_ULT", "bvult");
-  init(Kind::BV_UMULO, 2, 0, "BV_UMULO", "bvumulo");
+  init(Kind::BV_UMULO, 2, 0, "BV_UMULO", "bvumulo", KindInfo::NONE, true);
   init(Kind::BV_UREM, 2, 0, "BV_UREM", "bvurem");
   init(Kind::BV_USUBO, 2, 0, "BV_USUBO", "bvusubo");
-  init(Kind::BV_XNOR, 2, 0, "BV_XNOR", "bvxnor");
-  init(Kind::BV_XOR, 2, 0, "BV_XOR", "bvxor", KindInfo::LEFT_ASSOC);
+  init(Kind::BV_XNOR, 2, 0, "BV_XNOR", "bvxnor", KindInfo::NONE, true);
+  init(Kind::BV_XOR, 2, 0, "BV_XOR", "bvxor", KindInfo::LEFT_ASSOC, true);
   init(Kind::BV_ZERO_EXTEND, 1, 1, "BV_ZERO_EXTEND", "zero_extend");
 
   /* Floating-points */

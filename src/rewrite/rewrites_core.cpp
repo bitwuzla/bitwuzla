@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "bv/bitvector.h"
+#include "node/kind_info.h"
 #include "node/node.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
@@ -1172,6 +1173,45 @@ RewriteRule<RewriteRuleKind::DISTINCT_ELIM>::_apply(Rewriter& rewriter,
   }
   assert(!res.is_null());
   return res;
+}
+
+/* --- Commutative Operator Normalization ----------------------------------- */
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORMALIZE_COMM>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  (void) rewriter;
+  Kind k = node.kind();
+  // Note: We do not use rewriter.mk_node() here since rewriting will happen
+  // after normalization.
+  if (KindInfo::is_commutative(k))
+  {
+    if (node.num_children() == 2)
+    {
+      if (node[0].id() > node[1].id())
+      {
+        return NodeManager::get().mk_node(k, {node[1], node[0]});
+      }
+    }
+  }
+  else if (k == Kind::FP_ADD || k == Kind::FP_MUL)
+  {
+    if (node[1].id() > node[2].id())
+    {
+      return NodeManager::get().mk_node(k, {node[0], node[2], node[1]});
+    }
+  }
+  else if (k == Kind::FP_FMA)
+  {
+    if (node[1].id() > node[2].id())
+    {
+      return NodeManager::get().mk_node(node.kind(),
+                                        {node[0], node[2], node[1], node[3]});
+    }
+  }
+  return node;
 }
 
 }  // namespace bzla
