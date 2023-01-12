@@ -467,6 +467,50 @@ RewriteRule<RewriteRuleKind::EQUAL_ITE_DIS_BV1>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match: (= v (ite c v w)) with v and w being values
+ * result: c
+ *
+ * match: (= v (ite c w v)) with v and w being values
+ * result: !c
+ */
+namespace {
+Node
+_rw_eq_ite_lift_bv1(Rewriter& rewriter, const Node& node, size_t idx0)
+{
+  size_t idx1 = 1 - idx0;
+
+  if (node[idx0].is_value() && node[idx1].kind() == Kind::ITE
+      && node[idx1][1].is_value() && node[idx1][2].is_value())
+  {
+    // result: c
+    if (node[idx0] == node[idx1][1])
+    {
+      return node[idx1][0];
+    }
+    // result: !c
+    else if (node[idx0] == node[idx1][0])
+    {
+      return rewriter.mk_node(Kind::NOT, {node[idx1][0]});
+    }
+  }
+  return node;
+}
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_ITE_LIFT_COND>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  Node res = _rw_eq_ite_lift_bv1(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_ite_lift_bv1(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
  * match:  (= (bvadd a b) a)
  * result: (= b (_ bv0 N))
  *

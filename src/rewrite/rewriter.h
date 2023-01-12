@@ -232,6 +232,7 @@ enum class RewriteRuleKind
   EQUAL_BV_SUB,
   EQUAL_ITE_BV1,
   EQUAL_ITE_DIS_BV1,
+  EQUAL_ITE_LIFT_COND,
 
   ITE_EVAL,
   ITE_SAME,

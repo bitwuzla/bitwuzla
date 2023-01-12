@@ -36,6 +36,11 @@ Node RewriteRule<RewriteRuleKind::EQUAL_ITE_BV1>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_ITE_DIS_BV1>::_apply(Rewriter& rewriter,
                                                              const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_ITE_LIFT_COND>::_apply(
+    Rewriter& rewriter, const Node& node);
+
 // add_left_eq
 // add_right_eq
 template <>
