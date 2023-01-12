@@ -1,6 +1,8 @@
 #ifndef BZLA_PREPROCESS_PASS_ELIM_LAMBDA_H_INCLUDED
 #define BZLA_PREPROCESS_PASS_ELIM_LAMBDA_H_INCLUDED
 
+#include <unordered_map>
+
 #include "preprocess/preprocessing_pass.h"
 
 namespace bzla::preprocess::pass {
