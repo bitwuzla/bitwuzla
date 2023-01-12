@@ -14,8 +14,6 @@
 #include <stdio.h>
 
 #include "api/c/bitwuzla.h"
-//#include "bzlamsg.h"
-#include "utils/bzlastack.h"
 
 /*------------------------------------------------------------------------*/
 
@@ -28,7 +26,7 @@ typedef BzlaParser *(*BzlaInitParser)(BitwuzlaOptions *);
 typedef void (*BzlaResetParser)(void *);
 
 typedef char *(*BzlaParse)(BzlaParser *,
-                           BzlaIntStack *prefix,
+                           // BzlaIntStack *prefix,
                            FILE *,
                            const char *,
                            FILE *,

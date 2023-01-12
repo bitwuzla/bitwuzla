@@ -10,6 +10,8 @@
 
 extern "C" {
 #include "bzlasmt2.h"
+
+#include "utils/bzlastack.h"
 }
 
 #include <ctype.h>
@@ -17,6 +19,7 @@ extern "C" {
 #include <stdarg.h>
 #include <stdbool.h>
 
+#include <cassert>
 #include <string>
 
 /*------------------------------------------------------------------------*/
@@ -378,7 +381,7 @@ typedef struct BzlaSMT2Parser
   int32_t savedch;
   int32_t last_end_of_line_ycoo;
   int32_t open;
-  uint32_t nprefix;
+  // uint32_t nprefix;
   int32_t sorted_var;
   bool isvarbinding;
   const char *expecting_body;
@@ -390,7 +393,7 @@ typedef struct BzlaSMT2Parser
   FILE *outfile;
   double parse_start;
   bool store_tokens; /* needed for parsing terms in get-value */
-  BzlaIntStack *prefix;
+  // BzlaIntStack *prefix;
   BzlaCharStack token, tokens;
   BitwuzlaSortStack sorts;
   BzlaSMT2ItemStack work;
@@ -661,9 +664,9 @@ nextch_smt2(BzlaSMT2Parser *parser)
   int32_t res;
   if (parser->saved)
     res = parser->savedch, parser->saved = false;
-  else if (parser->prefix
-           && parser->nprefix < BZLA_COUNT_STACK(*parser->prefix))
-    res = parser->prefix->start[parser->nprefix++];
+  // else if (parser->prefix
+  //          && parser->nprefix < BZLA_COUNT_STACK(*parser->prefix))
+  //   res = parser->prefix->start[parser->nprefix++];
   else
     res = getc(parser->infile);
   if (res == '\n')
@@ -5972,7 +5975,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
 
 static const char *
 parse_smt2_parser(BzlaSMT2Parser *parser,
-                  BzlaIntStack *prefix,
+                  // BzlaIntStack *prefix,
                   FILE *infile,
                   const char *infile_name,
                   FILE *outfile,
@@ -5980,8 +5983,8 @@ parse_smt2_parser(BzlaSMT2Parser *parser,
 {
   // double start = bzla_util_time_stamp(), delta;
 
-  parser->nprefix     = 0;
-  parser->prefix      = prefix;
+  // parser->nprefix     = 0;
+  // parser->prefix      = prefix;
   parser->nextcoo.x   = 1;
   parser->nextcoo.y   = 1;
   parser->infile      = infile;

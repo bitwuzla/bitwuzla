@@ -10,13 +10,13 @@
 
 #include "bzlaparse.h"
 
+#include <assert.h>
 #include <ctype.h>
 
 #include "parser/bzlabtor.h"
 #include "parser/bzlabtor2.h"
 #include "parser/bzlasmt2.h"
 #include "utils/bzlamem.h"
-#include "utils/bzlastack.h"
 
 static bool
 has_compressed_suffix(const char *str, const char *suffix)
@@ -34,7 +34,7 @@ has_compressed_suffix(const char *str, const char *suffix)
 static int32_t
 parse_aux(BitwuzlaOptions *options,
           FILE *infile,
-          BzlaIntStack *prefix,
+          // BzlaIntStack *prefix,
           const char *infile_name,
           FILE *outfile,
           const BzlaParserAPI *parser_api,
@@ -60,7 +60,7 @@ parse_aux(BitwuzlaOptions *options,
   parser = parser_api->init(options);
 
   *error_msg = parser_api->parse(
-      parser, prefix, infile, infile_name, outfile, &parse_res);
+      parser, /*prefix,*/ infile, infile_name, outfile, &parse_res);
 
   if (*error_msg)
   {
@@ -110,13 +110,13 @@ bzla_parse(BitwuzlaOptions *options,
   int32_t res;
   uint32_t len;
   char *msg;
-  BzlaIntStack prefix;
+  // BzlaIntStack prefix;
 
   BzlaMemMgr *mem = bzla_mem_mgr_new();
 
   len = 40 + strlen(infile_name);
   BZLA_NEWN(mem, msg, len);
-  BZLA_INIT_STACK(mem, prefix);
+  // BZLA_INIT_STACK(mem, prefix);
 
   if (has_compressed_suffix(infile_name, ".btor"))
   {
@@ -212,11 +212,15 @@ bzla_parse(BitwuzlaOptions *options,
     // }
   }
 
-  res = parse_aux(
-      options, infile, &prefix, infile_name, outfile, parser_api, error_msg);
+  res = parse_aux(options,
+                  infile,
+                  /*&prefix,*/ infile_name,
+                  outfile,
+                  parser_api,
+                  error_msg);
 
   /* cleanup */
-  BZLA_RELEASE_STACK(prefix);
+  // BZLA_RELEASE_STACK(prefix);
   BZLA_DELETEN(mem, msg, len);
   bzla_mem_mgr_delete(mem);
 
@@ -239,7 +243,7 @@ bzla_parse_btor(BitwuzlaOptions *options,
   const BzlaParserAPI *parser_api;
   parser_api = bzla_parsebtor_parser_api();
   return parse_aux(
-      options, infile, 0, infile_name, outfile, parser_api, error_msg);
+      options, infile, /*0,*/ infile_name, outfile, parser_api, error_msg);
 }
 
 int32_t
@@ -258,7 +262,7 @@ bzla_parse_btor2(BitwuzlaOptions *options,
   const BzlaParserAPI *parser_api = 0;
   // parser_api = bzla_parsebtor2_parser_api();
   return parse_aux(
-      options, infile, 0, infile_name, outfile, parser_api, error_msg);
+      options, infile, /*0,*/ infile_name, outfile, parser_api, error_msg);
 }
 
 int32_t
@@ -277,5 +281,5 @@ bzla_parse_smt2(BitwuzlaOptions *options,
   const BzlaParserAPI *parser_api;
   parser_api = bzla_parsesmt2_parser_api();
   return parse_aux(
-      options, infile, 0, infile_name, outfile, parser_api, error_msg);
+      options, infile, /*0,*/ infile_name, outfile, parser_api, error_msg);
 }

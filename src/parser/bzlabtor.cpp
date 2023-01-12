@@ -12,7 +12,6 @@ extern "C" {
 #include "bzlabtor.h"
 
 #include "bzlaparse.h"
-#include "utils/bzlastack.h"
 }
 
 #include <assert.h>
@@ -22,6 +21,10 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 /*------------------------------------------------------------------------*/
@@ -29,8 +32,6 @@ extern "C" {
 typedef struct BzlaBTORParser BzlaBTORParser;
 
 typedef BitwuzlaTerm (*BzlaOpParser)(BzlaBTORParser *, uint64_t width);
-
-#define SIZE_PARSERS 128
 
 typedef struct Info Info;
 
@@ -40,38 +41,28 @@ struct Info
   uint32_t array : 1;
 };
 
-BZLA_DECLARE_STACK(BzlaInfo, Info);
-BZLA_DECLARE_STACK(BitwuzlaTerm, BitwuzlaTerm);
-BZLA_DECLARE_STACK(BitwuzlaSort, BitwuzlaSort);
-
 struct BzlaBTORParser
 {
-  BzlaMemMgr *mem;
   BitwuzlaOptions *options;
   Bitwuzla *bitwuzla;
 
-  uint32_t nprefix;
-  BzlaIntStack *prefix;
+  // uint32_t nprefix;
+  // BzlaIntStack *prefix;
   FILE *infile;
   const char *infile_name;
   uint32_t lineno;
   bool saved;
   int32_t saved_char;
-  char *error;
+  std::string error;
 
-  BitwuzlaTermStack exps;
-  BzlaInfoStack info;
+  std::vector<BitwuzlaTerm> exps;
+  std::vector<Info> info;
 
-  BitwuzlaTermStack regs;
-  BitwuzlaTermStack lambdas;
-  BitwuzlaTermStack params;
+  std::vector<BitwuzlaTerm> regs;
+  std::vector<BitwuzlaTerm> lambdas;
+  std::vector<BitwuzlaTerm> params;
 
-  BzlaCharStack op;
-  BzlaCharStack constant;
-  BzlaCharStack symbol;
-
-  BzlaOpParser *parsers;
-  const char **ops;
+  std::unordered_map<std::string, BzlaOpParser> parsers;
 
   uint64_t idx;
 };
@@ -245,54 +236,22 @@ sort_get_bv_size(BitwuzlaSort sort)
 
 /*------------------------------------------------------------------------*/
 
-static const char *
-perr_btor(BzlaBTORParser *parser, const char *fmt, ...)
+static std::string
+parse_error_msg(BzlaBTORParser *parser, const std::string &msg)
 {
-  size_t bytes;
-  va_list ap;
-
-  if (!parser->error)
-  {
-    va_start(ap, fmt);
-    bytes = bzla_mem_parse_error_msg_length(parser->infile_name, fmt, ap);
-    va_end(ap);
-
-    va_start(ap, fmt);
-    parser->error = bzla_mem_parse_error_msg(
-        parser->mem, parser->infile_name, parser->lineno, 0, fmt, ap, bytes);
-    va_end(ap);
-  }
-
-  return parser->error;
+  std::stringstream ss;
+  ss << parser->infile_name << ":" << parser->lineno << ": " << msg;
+  return ss.str();
 }
 
-/*------------------------------------------------------------------------*/
-
-static uint32_t bzla_primes_btor[4] = {
-    111130391, 22237357, 33355519, 444476887};
-
-#define BZLA_PRIMES_BZLA \
-  ((sizeof bzla_primes_btor) / sizeof bzla_primes_btor[0])
-
-static uint32_t
-hash_op(const char *str, uint32_t salt)
+static std::string
+perr_btor(BzlaBTORParser *parser, const std::string &msg)
 {
-  uint32_t i, res;
-  const char *p;
-
-  assert(salt < BZLA_PRIMES_BZLA);
-
-  res = 0;
-  i   = salt;
-  for (p = str; *p; p++)
+  if (parser->error.empty())
   {
-    res += bzla_primes_btor[i++] * (uint32_t) *p;
-    if (i == BZLA_PRIMES_BZLA) i = 0;
+    parser->error = parse_error_msg(parser, msg);
   }
-
-  res &= SIZE_PARSERS - 1;
-
-  return res;
+  return parser->error;
 }
 
 /*------------------------------------------------------------------------*/
@@ -307,11 +266,11 @@ nextch_btor(BzlaBTORParser *parser)
     ch            = parser->saved_char;
     parser->saved = false;
   }
-  else if (parser->prefix
-           && parser->nprefix < BZLA_COUNT_STACK(*parser->prefix))
-  {
-    ch = parser->prefix->start[parser->nprefix++];
-  }
+  // else if (parser->prefix
+  //          && parser->nprefix < BZLA_COUNT_STACK(*parser->prefix))
+  //{
+  //   ch = parser->prefix->start[parser->nprefix++];
+  // }
   else
     ch = getc(parser->infile);
 
@@ -335,7 +294,7 @@ savech_btor(BzlaBTORParser *parser, int32_t ch)
   }
 }
 
-static const char *
+static std::string
 parse_non_negative_int(BzlaBTORParser *parser, uint64_t *res_ptr)
 {
   int64_t res;
@@ -360,10 +319,10 @@ parse_non_negative_int(BzlaBTORParser *parser, uint64_t *res_ptr)
   savech_btor(parser, ch);
   *res_ptr = res;
 
-  return 0;
+  return "";
 }
 
-static const char *
+static std::string
 parse_positive_int(BzlaBTORParser *parser, uint64_t *res_ptr)
 {
   int64_t res;
@@ -381,10 +340,10 @@ parse_positive_int(BzlaBTORParser *parser, uint64_t *res_ptr)
   savech_btor(parser, ch);
   *res_ptr = res;
 
-  return 0;
+  return "";
 }
 
-static const char *
+static std::string
 parse_non_zero_int(BzlaBTORParser *parser, int32_t *res_ptr)
 {
   int32_t res, sign, ch;
@@ -415,7 +374,7 @@ parse_non_zero_int(BzlaBTORParser *parser, int32_t *res_ptr)
   res *= sign;
   *res_ptr = res;
 
-  return 0;
+  return "";
 }
 
 static BitwuzlaTerm
@@ -426,15 +385,13 @@ parse_exp(BzlaBTORParser *parser,
           int32_t *rlit)
 {
   size_t idx;
-  int32_t lit;
   uint64_t width_res;
-  const char *err_msg;
   BitwuzlaTerm res;
 
-  lit     = 0;
-  err_msg = parse_non_zero_int(parser, &lit);
+  int32_t lit         = 0;
+  std::string err_msg = parse_non_zero_int(parser, &lit);
+  if (!err_msg.empty()) return 0;
   if (rlit) *rlit = lit;
-  if (err_msg) return 0;
 
   if (!can_be_inverted && lit < 0)
   {
@@ -445,9 +402,9 @@ parse_exp(BzlaBTORParser *parser,
   idx = abs(lit);
   assert(idx);
 
-  if (idx >= BZLA_COUNT_STACK(parser->exps) || !(res = parser->exps.start[idx]))
+  if (idx >= parser->exps.size() || !(res = parser->exps[idx]))
   {
-    (void) perr_btor(parser, "literal '%d' undefined", lit);
+    (void) perr_btor(parser, "literal '" + std::to_string(lit) + "' undefined");
     return 0;
   }
 
@@ -461,8 +418,9 @@ parse_exp(BzlaBTORParser *parser,
 
   if (!can_be_array && bitwuzla_term_is_array(res))
   {
-    (void) perr_btor(
-        parser, "literal '%d' refers to an unexpected array expression", lit);
+    (void) perr_btor(parser,
+                     "literal '" + std::to_string(lit)
+                         + "' refers to an unexpected array expression");
     return 0;
   }
 
@@ -494,10 +452,9 @@ parse_exp(BzlaBTORParser *parser,
     if (expected_width != width_res)
     {
       (void) perr_btor(parser,
-                       "literal '%d' has width '%d' but expected '%d'",
-                       lit,
-                       width_res,
-                       expected_width);
+                       "literal '" + std::to_string(lit) + "' has width '"
+                           + std::to_string(width_res) + "' but expected '"
+                           + std::to_string(expected_width) + "'");
 
       return 0;
     }
@@ -517,27 +474,25 @@ parse_exp(BzlaBTORParser *parser,
   return res;
 }
 
-static const char *
+static int32_t
 parse_space(BzlaBTORParser *parser)
 {
-  int32_t ch;
-
-  ch = nextch_btor(parser);
+  int32_t ch = nextch_btor(parser);
   if (ch != ' ' && ch != '\t')
-    return perr_btor(parser, "expected space or tab");
+    return perr_btor(parser, "expected space or tab").empty();
 
 SKIP:
   ch = nextch_btor(parser);
   if (ch == ' ' || ch == '\t') goto SKIP;
 
-  if (!ch) return perr_btor(parser, "unexpected character");
+  if (!ch) return perr_btor(parser, "unexpected character").empty();
 
   savech_btor(parser, ch);
 
-  return 0;
+  return 1;
 }
 
-static int32_t
+static std::pair<std::string, bool>
 parse_symbol(BzlaBTORParser *parser)
 {
   int32_t ch;
@@ -549,27 +504,25 @@ parse_symbol(BzlaBTORParser *parser)
   {
   UNEXPECTED_EOF:
     (void) perr_btor(parser, "unexpected EOF");
-    return 0;
+    return std::make_pair("", false);
   }
 
-  assert(BZLA_EMPTY_STACK(parser->symbol));
+  std::stringstream symbol;
 
   if (ch != '\n')
   {
-    BZLA_PUSH_STACK(parser->symbol, ch);
+    symbol << static_cast<char>(ch);
 
     while (!isspace(ch = nextch_btor(parser)))
     {
       if (!isprint(ch)) perr_btor(parser, "invalid character");
       if (ch == EOF) goto UNEXPECTED_EOF;
-      BZLA_PUSH_STACK(parser->symbol, ch);
+      symbol << static_cast<char>(ch);
     }
   }
 
   savech_btor(parser, ch);
-  BZLA_PUSH_STACK(parser->symbol, 0);
-  BZLA_RESET_STACK(parser->symbol);
-  return 1;
+  return std::make_pair(symbol.str(), true);
 }
 
 static BitwuzlaTerm
@@ -578,23 +531,23 @@ parse_var(BzlaBTORParser *parser, uint64_t width)
   BitwuzlaTerm res;
   BitwuzlaSort s;
 
-  if (!parse_symbol(parser)) return 0;
+  auto [symbol, success] = parse_symbol(parser);
+  if (!success) return 0;
 
   s = bitwuzla_mk_bv_sort(width);
-  res =
-      bitwuzla_mk_const(s, parser->symbol.start[0] ? parser->symbol.start : 0);
-  parser->info.start[parser->idx].var = 1;
+  res = bitwuzla_mk_const(s, symbol[0] ? symbol.c_str() : 0);
+  parser->info[parser->idx].var = 1;
   return res;
 }
 
 static BitwuzlaTerm
 parse_param(BzlaBTORParser *parser, uint64_t width)
 {
-  if (!parse_symbol(parser)) return 0;
+  auto [symbol, success] = parse_symbol(parser);
+  if (!success) return 0;
   BitwuzlaSort s = bitwuzla_mk_bv_sort(width);
-  BitwuzlaTerm res =
-      bitwuzla_mk_var(s, parser->symbol.start[0] ? parser->symbol.start : 0);
-  BZLA_PUSH_STACK(parser->params, res);
+  BitwuzlaTerm res = bitwuzla_mk_var(s, symbol[0] ? symbol.c_str() : 0);
+  parser->params.push_back(res);
   return res;
 }
 
@@ -615,16 +568,16 @@ parse_array(BzlaBTORParser *parser, uint64_t width)
   BitwuzlaSort s, is, es;
   uint64_t idx_width;
 
-  if (parse_space(parser)) return 0;
-  if (parse_positive_int(parser, &idx_width)) return 0;
-  if (!parse_symbol(parser)) return 0;
+  if (!parse_space(parser)) return 0;
+  if (!parse_positive_int(parser, &idx_width).empty()) return 0;
+  auto [symbol, success] = parse_symbol(parser);
+  if (!success) return 0;
 
   is = bitwuzla_mk_bv_sort(idx_width);
   es = bitwuzla_mk_bv_sort(width);
   s  = bitwuzla_mk_array_sort(is, es);
-  res =
-      bitwuzla_mk_const(s, parser->symbol.start[0] ? parser->symbol.start : 0);
-  parser->info.start[parser->idx].array = 1;
+  res = bitwuzla_mk_const(s, symbol[0] ? symbol.c_str() : 0);
+  parser->info[parser->idx].array = 1;
   return res;
 }
 
@@ -654,9 +607,10 @@ parse_const(BzlaBTORParser *parser, uint64_t width)
   int32_t ch;
   uint64_t cwidth;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
-  assert(BZLA_EMPTY_STACK(parser->constant));
+  std::stringstream constant;
+
   while (!isspace(ch = nextch_btor(parser)) && ch != EOF && ch != ';')
   {
     if (ch != '0' && ch != '1')
@@ -665,26 +619,23 @@ parse_const(BzlaBTORParser *parser, uint64_t width)
       return 0;
     }
 
-    BZLA_PUSH_STACK(parser->constant, ch);
+    constant << static_cast<char>(ch);
   }
 
   savech_btor(parser, ch);
-  cwidth = BZLA_COUNT_STACK(parser->constant);
-  BZLA_PUSH_STACK(parser->constant, 0);
-  BZLA_RESET_STACK(parser->constant);
+  cwidth = constant.str().size();
 
   if (cwidth != width)
   {
     (void) perr_btor(parser,
-                     "binary constant '%s' exceeds bit width %d",
-                     parser->constant.start,
-                     width);
+                     "binary constant '" + constant.str()
+                         + "' exceeds bit width " + std::to_string(width));
     return 0;
   }
 
   BitwuzlaSort sort = bitwuzla_mk_bv_sort(width);
 
-  return bitwuzla_mk_bv_value(sort, parser->constant.start, 2);
+  return bitwuzla_mk_bv_value(sort, constant.str().c_str(), 2);
 }
 
 static BitwuzlaTerm
@@ -693,10 +644,9 @@ parse_consth(BzlaBTORParser *parser, uint64_t width)
   int32_t ch;
   BitwuzlaTerm res;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
-  assert(BZLA_EMPTY_STACK(parser->constant));
-
+  std::stringstream constant;
   while (!isspace(ch = nextch_btor(parser)) && ch != EOF && ch != ';')
   {
     if (!isxdigit(ch))
@@ -704,17 +654,13 @@ parse_consth(BzlaBTORParser *parser, uint64_t width)
       (void) perr_btor(parser, "expected hexidecimal digit");
       return 0;
     }
-
-    BZLA_PUSH_STACK(parser->constant, ch);
+    constant << static_cast<char>(ch);
   }
 
   savech_btor(parser, ch);
 
-  BZLA_PUSH_STACK(parser->constant, 0);
-  BZLA_RESET_STACK(parser->constant);
-
   BitwuzlaSort sort = bitwuzla_mk_bv_sort(width);
-  res               = bitwuzla_mk_bv_value(sort, parser->constant.start, 16);
+  res               = bitwuzla_mk_bv_value(sort, constant.str().c_str(), 16);
 
   assert(term_get_bv_size(res) == width);
 
@@ -727,18 +673,16 @@ parse_constd(BzlaBTORParser *parser, uint64_t width)
   int32_t ch;
   BitwuzlaTerm res;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
-  assert(BZLA_EMPTY_STACK(parser->constant));
-
+  std::stringstream constant;
   ch = nextch_btor(parser);
   if (!isdigit(ch))
   {
     (void) perr_btor(parser, "expected digit");
     return 0;
   }
-
-  BZLA_PUSH_STACK(parser->constant, ch);
+  constant << static_cast<char>(ch);
 
   if (ch == '0')
   {
@@ -752,17 +696,13 @@ parse_constd(BzlaBTORParser *parser, uint64_t width)
   }
   else
   {
-    while (isdigit(ch = nextch_btor(parser)))
-      BZLA_PUSH_STACK(parser->constant, ch);
+    while (isdigit(ch = nextch_btor(parser))) constant << static_cast<char>(ch);
   }
-
-  BZLA_PUSH_STACK(parser->constant, 0);
-  BZLA_RESET_STACK(parser->constant);
 
   savech_btor(parser, ch);
 
   BitwuzlaSort sort = bitwuzla_mk_bv_sort(width);
-  res               = bitwuzla_mk_bv_value(sort, parser->constant.start, 10);
+  res               = bitwuzla_mk_bv_value(sort, constant.str().c_str(), 10);
 
   assert(term_get_bv_size(res) == width);
 
@@ -798,7 +738,7 @@ parse_root(BzlaBTORParser *parser, uint64_t width)
 {
   BitwuzlaTerm res, tmp;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
   if (!(res = parse_exp(parser, width, false, true, 0))) return 0;
   if (width > 1)
   {
@@ -816,7 +756,7 @@ parse_unary(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
 
   BitwuzlaTerm tmp, res;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(tmp = parse_exp(parser, width, false, true, 0))) return 0;
 
@@ -860,7 +800,7 @@ parse_redunary(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
 
   (void) width;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(tmp = parse_exp(parser, 0, false, true, 0))) return 0;
 
@@ -901,11 +841,11 @@ parse_binary(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
 
   BitwuzlaTerm l, r, res;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(l = parse_exp(parser, width, false, true, 0))) return 0;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_L_AND_RETURN_ERROR:
     return 0;
@@ -1011,11 +951,12 @@ parse_logical(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
 
   if (width != 1)
   {
-    (void) perr_btor(parser, "logical operator bit width '%d'", width);
+    (void) perr_btor(
+        parser, "logical operator bit width '" + std::to_string(width) + "'");
     return 0;
   }
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(l = parse_exp(parser, 0, false, true, 0))) return 0;
 
@@ -1027,7 +968,7 @@ parse_logical(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
     return 0;
   }
 
-  if (parse_space(parser)) goto RELEASE_L_AND_RETURN_ERROR;
+  if (!parse_space(parser)) goto RELEASE_L_AND_RETURN_ERROR;
 
   if (!(r = parse_exp(parser, 0, false, true, 0)))
     goto RELEASE_L_AND_RETURN_ERROR;
@@ -1065,16 +1006,17 @@ parse_compare_and_overflow(BzlaBTORParser *parser,
 
   if (width != 1)
   {
-    (void) perr_btor(
-        parser, "comparison or overflow operator returns %d bits", width);
+    (void) perr_btor(parser,
+                     "comparison or overflow operator returns "
+                         + std::to_string(width) + "bits");
     return 0;
   }
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(l = parse_exp(parser, 0, can_be_array, true, 0))) return 0;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_L_AND_RETURN_ERROR:
     return 0;
@@ -1225,11 +1167,11 @@ parse_concat(BzlaBTORParser *parser, uint64_t width)
   BitwuzlaTerm l, r, res;
   uint64_t lwidth, rwidth;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(l = parse_exp(parser, 0, false, true, 0))) return 0;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_L_AND_RETURN_ERROR:
     return 0;
@@ -1244,10 +1186,9 @@ parse_concat(BzlaBTORParser *parser, uint64_t width)
   if (lwidth + rwidth != width)
   {
     (void) perr_btor(parser,
-                     "operands widths %d and %d do not add up to %d",
-                     lwidth,
-                     rwidth,
-                     width);
+                     "operands widths " + std::to_string(lwidth) + " and "
+                         + std::to_string(rwidth) + " do not add up to "
+                         + std::to_string(width));
 
     return 0;
   }
@@ -1267,11 +1208,11 @@ parse_shift(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
   for (rwidth = 1; rwidth <= 30u && width != (1u << rwidth); rwidth++)
     ;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(l = parse_exp(parser, width, false, true, &lit))) return 0;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_L_AND_RETURN_ERROR:
     return 0;
@@ -1326,11 +1267,11 @@ parse_cond(BzlaBTORParser *parser, uint64_t width)
 {
   BitwuzlaTerm c, t, e;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(c = parse_exp(parser, 1, false, true, 0))) return 0;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_C_AND_RETURN_ERROR:
     return 0;
@@ -1339,7 +1280,7 @@ parse_cond(BzlaBTORParser *parser, uint64_t width)
   if (!(t = parse_exp(parser, width, false, true, 0)))
     goto RELEASE_C_AND_RETURN_ERROR;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_C_AND_T_AND_RETURN_ERROR:
     goto RELEASE_C_AND_RETURN_ERROR;
@@ -1357,15 +1298,15 @@ parse_acond(BzlaBTORParser *parser, uint64_t width)
   BitwuzlaTerm c, t, e;
   uint64_t idx_size = 0;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
-  if (parse_positive_int(parser, &idx_size)) return 0;
+  if (!parse_positive_int(parser, &idx_size).empty()) return 0;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(c = parse_exp(parser, 1, false, true, 0))) return 0;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_C_AND_RETURN_ERROR:
     return 0;
@@ -1380,7 +1321,7 @@ parse_acond(BzlaBTORParser *parser, uint64_t width)
     goto RELEASE_C_AND_RETURN_ERROR;
   }
 
-  if (parse_space(parser)) goto RELEASE_C_AND_T_AND_RETURN_ERROR;
+  if (!parse_space(parser)) goto RELEASE_C_AND_T_AND_RETURN_ERROR;
 
   if (!(e = parse_array_exp(parser, width)))
     goto RELEASE_C_AND_T_AND_RETURN_ERROR;
@@ -1400,11 +1341,11 @@ parse_slice(BzlaBTORParser *parser, uint64_t width)
   uint64_t argwidth, upper, lower, delta;
   BitwuzlaTerm arg;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(arg = parse_exp(parser, 0, false, true, 0))) return 0;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_ARG_AND_RETURN_ERROR:
     return 0;
@@ -1412,23 +1353,28 @@ parse_slice(BzlaBTORParser *parser, uint64_t width)
 
   argwidth = term_get_bv_size(arg);
 
-  if (parse_non_negative_int(parser, &upper)) goto RELEASE_ARG_AND_RETURN_ERROR;
+  if (!parse_non_negative_int(parser, &upper).empty())
+    goto RELEASE_ARG_AND_RETURN_ERROR;
 
   if (upper >= argwidth)
   {
-    (void) perr_btor(
-        parser, "upper index '%d' >= argument width '%d", upper, argwidth);
+    (void) perr_btor(parser,
+                     "upper index '" + std::to_string(upper)
+                         + "' >= argument width '" + std::to_string(argwidth));
     goto RELEASE_ARG_AND_RETURN_ERROR;
   }
 
-  if (parse_space(parser)) goto RELEASE_ARG_AND_RETURN_ERROR;
+  if (!parse_space(parser)) goto RELEASE_ARG_AND_RETURN_ERROR;
 
-  if (parse_non_negative_int(parser, &lower)) goto RELEASE_ARG_AND_RETURN_ERROR;
+  if (!parse_non_negative_int(parser, &lower).empty())
+    goto RELEASE_ARG_AND_RETURN_ERROR;
 
   if (upper < lower)
   {
-    (void) perr_btor(
-        parser, "upper index '%d' smaller than lower index '%d'", upper, lower);
+    (void) perr_btor(parser,
+                     "upper index '" + std::to_string(upper)
+                         + "' smaller than lower index '"
+                         + std::to_string(lower) + "'");
     goto RELEASE_ARG_AND_RETURN_ERROR;
   }
 
@@ -1436,9 +1382,9 @@ parse_slice(BzlaBTORParser *parser, uint64_t width)
   if (delta != width)
   {
     (void) perr_btor(parser,
-                     "slice width '%d' not equal to expected width '%d'",
-                     delta,
-                     width);
+                     "slice width '" + std::to_string(delta)
+                         + "' not equal to expected width '"
+                         + std::to_string(width) + "'");
     goto RELEASE_ARG_AND_RETURN_ERROR;
   }
 
@@ -1451,11 +1397,11 @@ parse_read(BzlaBTORParser *parser, uint64_t width)
   BitwuzlaTerm array, idx;
   uint64_t idxwidth;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(array = parse_array_exp(parser, width))) return 0;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_ARRAY_AND_RETURN_ERROR:
     return 0;
@@ -1477,15 +1423,15 @@ parse_write(BzlaBTORParser *parser, uint64_t width)
 
   idxwidth = 0;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
-  if (parse_positive_int(parser, &idxwidth)) return 0;
+  if (!parse_positive_int(parser, &idxwidth).empty()) return 0;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(array = parse_array_exp(parser, width))) return 0;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_ARRAY_AND_RETURN_ERROR:
     return 0;
@@ -1494,7 +1440,7 @@ parse_write(BzlaBTORParser *parser, uint64_t width)
   if (!(idx = parse_exp(parser, idxwidth, false, true, 0)))
     goto RELEASE_ARRAY_AND_RETURN_ERROR;
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_ARRAY_AND_IDX_AND_RETURN_ERROR:
     goto RELEASE_ARRAY_AND_RETURN_ERROR;
@@ -1512,19 +1458,19 @@ static BitwuzlaTerm
 parse_lambda(BzlaBTORParser *parser, uint64_t width)
 {
   uint64_t paramwidth;
-  BitwuzlaTerm *args;
+  std::vector<BitwuzlaTerm> args;
   BitwuzlaTerm exp, res;
 
   paramwidth = 0;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
-  if (parse_positive_int(parser, &paramwidth)) return 0;
+  if (!parse_positive_int(parser, &paramwidth).empty()) return 0;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
-  BZLA_NEWN(parser->mem, args, 2);
-  if (!(args[0] = parse_param_exp(parser, paramwidth))) return 0;
+  args.push_back(parse_param_exp(parser, paramwidth));
+  if (args[0] == 0) return 0;
 
   // if (bitwuzla_term_is_bound_var(args[0]))
   //{
@@ -1532,7 +1478,7 @@ parse_lambda(BzlaBTORParser *parser, uint64_t width)
   //   goto RELEASE_PARAM_AND_RETURN_ERROR;
   // }
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_PARAM_AND_RETURN_ERROR:
     return 0;
@@ -1540,12 +1486,11 @@ parse_lambda(BzlaBTORParser *parser, uint64_t width)
 
   if (!(exp = parse_exp(parser, width, true, true, 0)))
     goto RELEASE_PARAM_AND_RETURN_ERROR;
-  args[1] = exp;
+  args.push_back(exp);
 
   res = mk_term(BITWUZLA_KIND_LAMBDA, {args[0], args[1]});
 
-  BZLA_DELETEN(parser->mem, args, 2);
-  BZLA_PUSH_STACK(parser->lambdas, res);
+  parser->lambdas.push_back(res);
   return res;
 }
 
@@ -1554,41 +1499,32 @@ parse_apply(BzlaBTORParser *parser, uint64_t width)
 {
   uint64_t i, arity;
   BitwuzlaTerm res, fun, arg;
-  BitwuzlaTermStack args;
+  std::vector<BitwuzlaTerm> args;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(fun = parse_fun_exp(parser, width))) return 0;
 
-  BZLA_INIT_STACK(parser->mem, args);
-
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_FUN_AND_RETURN_ERROR:
-    BZLA_RELEASE_STACK(args);
     return 0;
   }
 
   arity = bitwuzla_sort_fun_get_arity(bitwuzla_term_get_sort(fun));
-  BZLA_PUSH_STACK(args, fun);
+  args.push_back(fun);
   for (i = 0; i < arity; i++)
   {
     arg = parse_exp(parser, 0, false, true, 0);
     if (!arg) goto RELEASE_FUN_AND_RETURN_ERROR;
 
     if (i < arity - 1)
-      if (parse_space(parser)) goto RELEASE_FUN_AND_RETURN_ERROR;
+      if (!parse_space(parser)) goto RELEASE_FUN_AND_RETURN_ERROR;
 
-    BZLA_PUSH_STACK(args, arg);
+    args.push_back(arg);
   }
 
-  std::vector<BitwuzlaTerm> cargs;
-  for (size_t i = 0, n = BZLA_COUNT_STACK(args); i < n; ++i)
-  {
-    cargs.push_back(args.start[i]);
-  }
-  res = mk_term(BITWUZLA_KIND_APPLY, cargs);
-  BZLA_RELEASE_STACK(args);
+  res = mk_term(BITWUZLA_KIND_APPLY, args);
   return res;
 }
 
@@ -1598,28 +1534,27 @@ parse_ext(BzlaBTORParser *parser, BitwuzlaKind kind, uint64_t width)
   BitwuzlaTerm res, arg;
   uint64_t awidth, ewidth;
 
-  if (parse_space(parser)) return 0;
+  if (!parse_space(parser)) return 0;
 
   if (!(arg = parse_exp(parser, 0, false, true, 0))) return 0;
 
   awidth = term_get_bv_size(arg);
 
-  if (parse_space(parser))
+  if (!parse_space(parser))
   {
   RELEASE_ARG_AND_RETURN_ERROR:
     return 0;
   }
 
-  if (parse_non_negative_int(parser, &ewidth))
+  if (!parse_non_negative_int(parser, &ewidth).empty())
     goto RELEASE_ARG_AND_RETURN_ERROR;
 
   if (awidth + ewidth != width)
   {
     (void) perr_btor(parser,
-                     "argument width of %d plus %d does not match %d",
-                     awidth,
-                     ewidth,
-                     width);
+                     "argument width of " + std::to_string(awidth) + " plus "
+                         + std::to_string(ewidth) + " does not match "
+                         + std::to_string(width));
     goto RELEASE_ARG_AND_RETURN_ERROR;
   }
 
@@ -1640,175 +1575,94 @@ parse_uext(BzlaBTORParser *parser, uint64_t width)
   return parse_ext(parser, BITWUZLA_KIND_BV_ZERO_EXTEND, width);
 }
 
-static void
-new_parser(BzlaBTORParser *parser, BzlaOpParser op_parser, const char *op)
-{
-  uint32_t p, d;
-
-  p = hash_op(op, 0);
-  assert(p < SIZE_PARSERS);
-
-  if (parser->ops[p])
-  {
-    d = hash_op(op, 1);
-    if (!(d & 1)) d++;
-
-    do
-    {
-      p += d;
-      if (p >= SIZE_PARSERS) p -= SIZE_PARSERS;
-      assert(p < SIZE_PARSERS);
-    } while (parser->ops[p]);
-  }
-
-  parser->ops[p]     = op;
-  parser->parsers[p] = op_parser;
-}
-
-static BzlaOpParser
-find_parser(BzlaBTORParser *parser, const char *op)
-{
-  const char *str;
-  uint32_t p, d;
-
-  p = hash_op(op, 0);
-  if ((str = parser->ops[p]) && strcasecmp(str, op))
-  {
-    d = hash_op(op, 1);
-    if (!(d & 1)) d++;
-
-    do
-    {
-      p += d;
-      if (p >= SIZE_PARSERS) p -= SIZE_PARSERS;
-    } while ((str = parser->ops[p]) && strcasecmp(str, op));
-  }
-
-  return str ? parser->parsers[p] : 0;
-}
-
 static BzlaBTORParser *
 new_btor_parser(BitwuzlaOptions *options)
 {
-  BzlaMemMgr *mem = bzla_mem_mgr_new();
-  BzlaBTORParser *res;
+  BzlaBTORParser *res = new BzlaBTORParser();
 
-  BZLA_NEW(mem, res);
-  BZLA_CLR(res);
-
-  res->mem     = mem;
   res->options = options;
 
-  BZLA_NEWN(mem, res->parsers, SIZE_PARSERS);
-  BZLA_NEWN(mem, res->ops, SIZE_PARSERS);
-  BZLA_CLRN(res->ops, SIZE_PARSERS);
+  res->parsers.emplace("add", parse_add);
+  res->parsers.emplace("and", parse_and);
+  res->parsers.emplace("array", parse_array);
+  res->parsers.emplace("concat", parse_concat);
+  res->parsers.emplace("cond", parse_cond);
+  res->parsers.emplace("acond", parse_acond);
+  res->parsers.emplace("const", parse_const);
+  res->parsers.emplace("constd", parse_constd);
+  res->parsers.emplace("consth", parse_consth);
+  res->parsers.emplace("eq", parse_eq);
+  res->parsers.emplace("iff", parse_iff);
+  res->parsers.emplace("implies", parse_implies);
+  res->parsers.emplace("mul", parse_mul);
+  res->parsers.emplace("nand", parse_nand);
+  res->parsers.emplace("neg", parse_neg);
+  res->parsers.emplace("inc", parse_inc);
+  res->parsers.emplace("dec", parse_dec);
+  res->parsers.emplace("ne", parse_ne);
+  res->parsers.emplace("nor", parse_nor);
+  res->parsers.emplace("not", parse_not);
+  res->parsers.emplace("one", parse_one);
+  res->parsers.emplace("ones", parse_ones);
+  res->parsers.emplace("or", parse_or);
+  res->parsers.emplace("read", parse_read);
+  res->parsers.emplace("redand", parse_redand);
+  res->parsers.emplace("redor", parse_redor);
+  res->parsers.emplace("redxor", parse_redxor);
+  res->parsers.emplace("rol", parse_rol);
+  res->parsers.emplace("root", parse_root); /* only in parser */
+  res->parsers.emplace("ror", parse_ror);
+  res->parsers.emplace("saddo", parse_saddo);
+  res->parsers.emplace("sdivo", parse_sdivo);
+  res->parsers.emplace("sdiv", parse_sdiv);
+  res->parsers.emplace("sext", parse_sext);
+  res->parsers.emplace("sgte", parse_sgte);
+  res->parsers.emplace("sgt", parse_sgt);
+  res->parsers.emplace("slice", parse_slice);
+  res->parsers.emplace("sll", parse_sll);
+  res->parsers.emplace("slte", parse_slte);
+  res->parsers.emplace("slt", parse_slt);
+  res->parsers.emplace("smod", parse_smod);
+  res->parsers.emplace("smulo", parse_smulo);
+  res->parsers.emplace("sra", parse_sra);
+  res->parsers.emplace("srem", parse_srem);
+  res->parsers.emplace("srl", parse_srl);
+  res->parsers.emplace("ssubo", parse_ssubo);
+  res->parsers.emplace("sub", parse_sub);
+  res->parsers.emplace("uaddo", parse_uaddo);
+  res->parsers.emplace("udiv", parse_udiv);
+  res->parsers.emplace("uext", parse_uext);
+  res->parsers.emplace("ugte", parse_ugte);
+  res->parsers.emplace("ugt", parse_ugt);
+  res->parsers.emplace("ulte", parse_ulte);
+  res->parsers.emplace("ult", parse_ult);
+  res->parsers.emplace("umulo", parse_umulo);
+  res->parsers.emplace("urem", parse_urem);
+  res->parsers.emplace("usubo", parse_usubo);
+  res->parsers.emplace("var", parse_var);
+  res->parsers.emplace("write", parse_write);
+  res->parsers.emplace("xnor", parse_xnor);
+  res->parsers.emplace("xor", parse_xor);
+  res->parsers.emplace("zero", parse_zero);
+  res->parsers.emplace("param", parse_param);
+  res->parsers.emplace("lambda", parse_lambda);
+  res->parsers.emplace("apply", parse_apply);
 
-  BZLA_INIT_STACK(mem, res->exps);
-  BZLA_INIT_STACK(mem, res->info);
-  BZLA_INIT_STACK(mem, res->regs);
-  BZLA_INIT_STACK(mem, res->lambdas);
-  BZLA_INIT_STACK(mem, res->params);
-  BZLA_INIT_STACK(mem, res->op);
-  BZLA_INIT_STACK(mem, res->constant);
-  BZLA_INIT_STACK(mem, res->symbol);
-
-  new_parser(res, parse_add, "add");
-  new_parser(res, parse_and, "and");
-  new_parser(res, parse_array, "array");
-  new_parser(res, parse_concat, "concat");
-  new_parser(res, parse_cond, "cond");
-  new_parser(res, parse_acond, "acond");
-  new_parser(res, parse_const, "const");
-  new_parser(res, parse_constd, "constd");
-  new_parser(res, parse_consth, "consth");
-  new_parser(res, parse_eq, "eq");
-  new_parser(res, parse_iff, "iff");
-  new_parser(res, parse_implies, "implies");
-  new_parser(res, parse_mul, "mul");
-  new_parser(res, parse_nand, "nand");
-  new_parser(res, parse_neg, "neg");
-  new_parser(res, parse_inc, "inc");
-  new_parser(res, parse_dec, "dec");
-  new_parser(res, parse_ne, "ne");
-  new_parser(res, parse_nor, "nor");
-  new_parser(res, parse_not, "not");
-  new_parser(res, parse_one, "one");
-  new_parser(res, parse_ones, "ones");
-  new_parser(res, parse_or, "or");
-  new_parser(res, parse_read, "read");
-  new_parser(res, parse_redand, "redand");
-  new_parser(res, parse_redor, "redor");
-  new_parser(res, parse_redxor, "redxor");
-  new_parser(res, parse_rol, "rol");
-  new_parser(res, parse_root, "root"); /* only in parser */
-  new_parser(res, parse_ror, "ror");
-  new_parser(res, parse_saddo, "saddo");
-  new_parser(res, parse_sdivo, "sdivo");
-  new_parser(res, parse_sdiv, "sdiv");
-  new_parser(res, parse_sext, "sext");
-  new_parser(res, parse_sgte, "sgte");
-  new_parser(res, parse_sgt, "sgt");
-  new_parser(res, parse_slice, "slice");
-  new_parser(res, parse_sll, "sll");
-  new_parser(res, parse_slte, "slte");
-  new_parser(res, parse_slt, "slt");
-  new_parser(res, parse_smod, "smod");
-  new_parser(res, parse_smulo, "smulo");
-  new_parser(res, parse_sra, "sra");
-  new_parser(res, parse_srem, "srem");
-  new_parser(res, parse_srl, "srl");
-  new_parser(res, parse_ssubo, "ssubo");
-  new_parser(res, parse_sub, "sub");
-  new_parser(res, parse_uaddo, "uaddo");
-  new_parser(res, parse_udiv, "udiv");
-  new_parser(res, parse_uext, "uext");
-  new_parser(res, parse_ugte, "ugte");
-  new_parser(res, parse_ugt, "ugt");
-  new_parser(res, parse_ulte, "ulte");
-  new_parser(res, parse_ult, "ult");
-  new_parser(res, parse_umulo, "umulo");
-  new_parser(res, parse_urem, "urem");
-  new_parser(res, parse_usubo, "usubo");
-  new_parser(res, parse_var, "var");
-  new_parser(res, parse_write, "write");
-  new_parser(res, parse_xnor, "xnor");
-  new_parser(res, parse_xor, "xor");
-  new_parser(res, parse_zero, "zero");
-  new_parser(res, parse_param, "param");
-  new_parser(res, parse_lambda, "lambda");
-  new_parser(res, parse_apply, "apply");
-
+  res->parsers.at("var");
   return res;
 }
 
 static void
 delete_bzla_parser(BzlaBTORParser *parser)
 {
-  BzlaMemMgr *mm = parser->mem;
-
-  BZLA_RELEASE_STACK(parser->exps);
-  BZLA_RELEASE_STACK(parser->info);
-  BZLA_RELEASE_STACK(parser->regs);
-  BZLA_RELEASE_STACK(parser->lambdas);
-  BZLA_RELEASE_STACK(parser->params);
-
-  BZLA_RELEASE_STACK(parser->op);
-  BZLA_RELEASE_STACK(parser->constant);
-  BZLA_RELEASE_STACK(parser->symbol);
-
-  BZLA_DELETEN(mm, parser->parsers, SIZE_PARSERS);
-  BZLA_DELETEN(mm, parser->ops, SIZE_PARSERS);
-
-  bzla_mem_freestr(mm, parser->error);
-  BZLA_DELETE(mm, parser);
-  bzla_mem_mgr_delete(mm);
+  delete parser;
 }
 
 /* Note: we need prefix in case of stdin as input (also applies to compressed
  * input files). */
 static const char *
 parse_btor_parser(BzlaBTORParser *parser,
-                  BzlaIntStack *prefix,
+                  // BzlaIntStack *prefix,
                   FILE *infile,
                   const char *infile_name,
                   FILE *outfile,
@@ -1825,20 +1679,17 @@ parse_btor_parser(BzlaBTORParser *parser,
   // BZLA_MSG(
   //     bitwuzla_get_bzla_msg(parser->bitwuzla), 1, "parsing %s", infile_name);
 
-  parser->nprefix     = 0;
-  parser->prefix      = prefix;
+  // parser->nprefix     = 0;
+  // parser->prefix      = prefix;
   parser->infile      = infile;
   parser->infile_name = infile_name;
   parser->lineno      = 1;
   parser->saved       = false;
 
-  BZLA_INIT_STACK(parser->mem, parser->lambdas);
-  BZLA_INIT_STACK(parser->mem, parser->params);
-
-  BZLA_CLR(res);
+  memset(res, 0, sizeof *(res));
 
 NEXT:
-  assert(!parser->error);
+  assert(parser->error.empty());
   ch = nextch_btor(parser);
   if (isspace(ch)) /* also skip empty lines */
     goto NEXT;
@@ -1880,47 +1731,70 @@ NEXT:
     goto NEXT;
   }
 
-  if (!isdigit(ch)) return perr_btor(parser, "expected ';' or digit");
+  if (!isdigit(ch))
+  {
+    (void) perr_btor(parser, "expected ';' or digit");
+    return parser->error.c_str();
+  }
 
   savech_btor(parser, ch);
 
-  if (parse_positive_int(parser, &parser->idx)) return parser->error;
+  if (!parse_positive_int(parser, &parser->idx).empty())
+  {
+    return parser->error.c_str();
+  }
 
-  while (BZLA_COUNT_STACK(parser->exps) <= parser->idx)
+  while (parser->exps.size() <= parser->idx)
   {
     Info info;
     memset(&info, 0, sizeof info);
-    BZLA_PUSH_STACK(parser->info, info);
-    BZLA_PUSH_STACK(parser->exps, 0);
+    parser->info.push_back(info);
+    parser->exps.push_back(0);
   }
 
-  if (parser->exps.start[parser->idx])
-    return perr_btor(parser, "'%d' defined twice", parser->idx);
+  if (parser->exps[parser->idx])
+  {
+    (void) perr_btor(parser,
+                     "'" + std::to_string(parser->idx) + "' defined twice");
+    return parser->error.c_str();
+  }
 
-  if (parse_space(parser)) return parser->error;
+  if (!parse_space(parser))
+  {
+    return parser->error.c_str();
+  }
 
-  assert(BZLA_EMPTY_STACK(parser->op));
+  std::stringstream op;
   while (!isspace(ch = nextch_btor(parser)) && ch != EOF)
-    BZLA_PUSH_STACK(parser->op, ch);
+  {
+    op << static_cast<char>(ch);
+  }
 
-  BZLA_PUSH_STACK(parser->op, 0);
-  BZLA_RESET_STACK(parser->op);
   savech_btor(parser, ch);
 
-  if (parse_space(parser)) return parser->error;
+  if (!parse_space(parser))
+  {
+    return parser->error.c_str();
+  }
 
-  if (parse_positive_int(parser, &width)) return parser->error;
+  if (!parse_positive_int(parser, &width).empty())
+  {
+    return parser->error.c_str();
+  }
 
-  if (!(op_parser = find_parser(parser, parser->op.start)))
-    return perr_btor(parser, "invalid operator '%s'", parser->op.start);
+  if (!(op_parser = parser->parsers.at(op.str())))
+  {
+    (void) perr_btor(parser, "invalid operator '" + op.str() + "'");
+    return parser->error.c_str();
+  }
 
   if (!(e = op_parser(parser, width)))
   {
-    assert(parser->error);
-    return parser->error;
+    assert(!parser->error.empty());
+    return parser->error.c_str();
   }
 
-  parser->exps.start[parser->idx] = e;
+  parser->exps[parser->idx] = e;
 
 SKIP:
   ch = nextch_btor(parser);
@@ -1928,7 +1802,11 @@ SKIP:
 
   if (ch == ';') goto COMMENTS; /* ... and force new line */
 
-  if (ch != '\n') return perr_btor(parser, "expected new line");
+  if (ch != '\n')
+  {
+    (void) perr_btor(parser, "expected new line");
+    return parser->error.c_str();
+  }
 
   goto NEXT;
 }
