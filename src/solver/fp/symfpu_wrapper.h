@@ -6,9 +6,6 @@
 
 extern "C" {
 #include "bzlabvstruct.h"
-#include "bzlacore.h"
-#include "bzlaexp.h"
-#include "bzlanode.h"
 }
 
 #include <cstdint>

@@ -13,8 +13,6 @@
 #include <assert.h>
 #include <limits.h>
 
-#include "bzlacore.h"
-#include "dumper/bzladumpbtor.h"
 #include "utils/bzlastack.h"
 #ifndef NDEBUG
 #include <float.h>

@@ -14,7 +14,7 @@
 #include <stdio.h>
 
 #include "api/c/bitwuzla.h"
-#include "bzlamsg.h"
+//#include "bzlamsg.h"
 #include "utils/bzlastack.h"
 
 /*------------------------------------------------------------------------*/
@@ -72,5 +72,5 @@ int32_t bzla_parse_smt2(BitwuzlaOptions *options,
                         FILE *outfile,
                         char **error_msg);
 
-BzlaMsg *bitwuzla_get_bzla_msg(Bitwuzla *bitwuzla);
+//BzlaMsg *bitwuzla_get_bzla_msg(Bitwuzla *bitwuzla);
 #endif

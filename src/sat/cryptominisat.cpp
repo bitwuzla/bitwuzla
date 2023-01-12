@@ -4,10 +4,6 @@
 
 #include "sat/cryptominisat.h"
 
-extern "C" {
-#include "bzlaopt.h"
-}
-
 namespace bzla::sat {
 
 /* --- CryptoMiniSat public ------------------------------------------------- */

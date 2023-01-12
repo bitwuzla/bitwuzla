@@ -122,7 +122,7 @@ msg () {
 
 #--------------------------------------------------------------------------#
 
-[ ! -e src/bzlamain.c ] && die "$0 not called from Bitwuzla base directory"
+[ ! -e src/main/main.cpp ] && die "$0 not called from Bitwuzla base directory"
 
 while [ $# -gt 0 ]
 do

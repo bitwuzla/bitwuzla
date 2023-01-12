@@ -12,8 +12,6 @@
 
 #include <ctype.h>
 
-#include "bzlacore.h"
-#include "bzlaopt.h"
 #include "parser/bzlabtor.h"
 #include "parser/bzlabtor2.h"
 #include "parser/bzlasmt2.h"

@@ -4,7 +4,6 @@
 
 extern "C" {
 #include "bzlabvstruct.h"
-#include "bzlacore.h"
 }
 
 #include <gmpxx.h>

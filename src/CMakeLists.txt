@@ -9,58 +9,18 @@
 ##
 
 set(libbitwuzla_src_files
-  aigprop.c
   backtrack/assertion_stack.cpp
   backtrack/backtrackable.cpp
-  #bzlaaig.c
-  #bzlaaigvec.c
-  #bzlaass.c
-  #bzlabeta.c
-  bzlabv.cpp
-  #bzlabvdomain.c
-  #bzlabvprop.c
-  #bzlaconsutils.c
-  #bzlacore.c
-  #bzladbg.c
-  #bzladcr.c
-  #bzlaessutils.c
-  #bzlaexp.c
-  #bzlainvutils.c
-  #bzlalsutils.c
-  #bzlamodel.c
-  #bzlamsg.c
-  #bzlanode.c
-  #bzlaopt.c
   bzlaparse.c
-  #bzlaprintmodel.c
-  #bzlaproputils.c
-  #bzlarewrite.c
-  #bzlarm.c
-  #bzlarwcache.c
-  #bzlasat.c
-  #bzlaslsutils.c
-  #bzlaslvaigprop.c
-  #bzlaslvfun.c
-  #bzlaslvprop.cpp
-  #bzlaslvpropold.c
-  #bzlaslvquant.cpp
-  #bzlaslvsls.c
-  #bzlasort.c
-  #bzlasubst.c
-  #bzlasynthterm.cpp
   api/checks.cpp
   api/c/bitwuzla.cpp
   api/cpp/bitwuzla.cpp
-  dumper/bzladumpaig.c
-  dumper/bzladumpbtor.c
-  dumper/bzladumpsmt.c
   env.cpp
   node/kind_info.cpp
   node/node.cpp
   node/node_data.cpp
   node/node_kind.cpp
   node/node_manager.cpp
-  node/node_translation.cpp
   node/node_utils.cpp
   printer/printer.cpp
   type/type.cpp
@@ -70,25 +30,7 @@ set(libbitwuzla_src_files
   util/logger.cpp
   option/option.cpp
   parser/bzlabtor.cpp
-  #parser/bzlabtor2.c
   parser/bzlasmt2.cpp
-  preprocess/bzlaack.c
-  preprocess/bzlader.c
-  preprocess/bzlaelimapplies.c
-  preprocess/bzlaelimites.c
-  preprocess/bzlaelimslices.c
-  preprocess/bzlaembed.c
-  preprocess/bzlaextract.c
-  preprocess/bzlamerge.c
-  preprocess/bzlaminiscope.c
-  preprocess/bzlanormadd.c
-  preprocess/bzlanormquant.c
-  preprocess/bzlapputils.c
-  preprocess/bzlapreprocess.c
-  preprocess/bzlaskel.c
-  preprocess/bzlaskolemize.c
-  preprocess/bzlaunconstrained.c
-  preprocess/bzlavarsubst.c
   preprocess/pass/elim_lambda.cpp
   preprocess/pass/embedded_constraints.cpp
   preprocess/pass/rewrite.cpp
@@ -103,11 +45,6 @@ set(libbitwuzla_src_files
   rewrite/rewrites_core.cpp
   rewrite/rewrites_bv.cpp
   rewrite/rewrites_fp.cpp
-  sat/bzlacadical.cpp
-  sat/bzlacms.cpp
-  sat/bzlalgl.c
-  sat/bzlagimsatul.c
-  sat/bzlakissat.cpp
   sat/cadical.cpp
   sat/cryptominisat.cpp
   sat/kissat.cpp
@@ -127,15 +64,7 @@ set(libbitwuzla_src_files
   solver/solver_engine.cpp
   solver/solver_state.cpp
   solving_context.cpp
-  #utils/bzlahashint.c
-  #utils/bzlahashptr.c
   utils/bzlamem.c
-  #utils/bzlanodeiter.c
-  #utils/bzlanodemap.c
-  #utils/bzlaoptparse.c
-  #utils/bzlapartgen.c
-  #utils/bzlarng.cpp
-  #utils/bzlaunionfind.c
   utils/bzlautil.c
   utils/bzlaabort.c
 )

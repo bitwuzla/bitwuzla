@@ -1052,7 +1052,7 @@ SymFpuSymRM::valid(void) const
   uint64_t size   = d_node.type().bv_size();
   return node::utils::bool_to_bv1(
       nm.mk_node(Kind::BV_ULT,
-                 {d_node, nm.mk_value(BitVector::from_ui(size, BZLA_RM_MAX))}));
+                 {d_node, nm.mk_value(BitVector::from_ui(size, static_cast<uint64_t>(RoundingMode::NUM_RM)))}));
 }
 
 SymFpuSymProp
