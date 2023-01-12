@@ -9,12 +9,16 @@
 
 namespace bzla {
 
+namespace util {
+class Logger;
+}
+
 class Env;
 
 class Solver
 {
  public:
-  Solver(Env& env, SolverState& state) : d_env(env), d_solver_state(state){};
+  Solver(Env& env, SolverState& state);
 
   /** Check theory consistency of current solving context. */
   virtual void check() { assert(false); };
@@ -32,6 +36,8 @@ class Solver
  protected:
   /** Associated environment. */
   Env& d_env;
+  /** Logger instance. */
+  util::Logger& d_logger;
 
   /** Associated solver state. */
   SolverState& d_solver_state;

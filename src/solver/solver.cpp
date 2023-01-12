@@ -1,6 +1,11 @@
 #include "solver.h"
 
+#include "env.h"
+
 namespace bzla {
+
+Solver::Solver(Env& env, SolverState& state)
+    : d_env(env), d_logger(env.logger()), d_solver_state(state){};
 
 void
 Solver::cache_value(const Node& term, const Node& value)
