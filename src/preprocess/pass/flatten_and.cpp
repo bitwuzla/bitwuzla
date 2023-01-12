@@ -54,9 +54,9 @@ PassFlattenAnd::apply(AssertionVector& assertions)
 
 PassFlattenAnd::Statistics::Statistics(util::Statistics& stats)
     : time_apply(stats.new_stat<util::TimerStatistic>(
-        "preprocessor::flatten_and::time_apply")),
+        "preprocess::flatten_and::time_apply")),
       num_flattened(
-          stats.new_stat<uint64_t>("preprocessor::flatten_and::num_flattened"))
+          stats.new_stat<uint64_t>("preprocess::flatten_and::num_flattened"))
 {
 }
 
