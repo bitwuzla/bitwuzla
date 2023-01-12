@@ -36,6 +36,9 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   const bb::AigBitblaster::Bits& bits(const Node& term) const;
 
  private:
+  /** Update AIG and CNF statistics. */
+  void update_statistics();
+
   /** Sat interface used for d_cnf_encoder. */
   class BitblastSatSolver;
 
@@ -57,6 +60,11 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   {
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_sat;
+    uint64_t& num_aig_ands;
+    uint64_t& num_aig_consts;
+    uint64_t& num_cnf_vars;
+    uint64_t& num_cnf_clauses;
+    uint64_t& num_cnf_literals;
   } d_stats;
 };
 
