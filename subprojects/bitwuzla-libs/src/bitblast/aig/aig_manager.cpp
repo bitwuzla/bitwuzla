@@ -347,6 +347,12 @@ AigManager::mk_ite(const AigNode& c, const AigNode& a, const AigNode& b)
   return mk_or(mk_and(c, a), mk_and(mk_not(c), b));
 }
 
+const AigManager::Statistics&
+AigManager::statistics() const
+{
+  return d_statistics;
+}
+
 void
 AigManager::init_id(AigNodeData* d)
 {
@@ -681,6 +687,11 @@ AigManager::garbage_collect(AigNodeData* d)
       {
         visit.push_back(data);
       }
+      --d_statistics.num_ands;
+    }
+    else
+    {
+      --d_statistics.num_consts;
     }
 
     // Delete node data

@@ -26,6 +26,13 @@ class SatInterface
 class AigCnfEncoder
 {
  public:
+  struct Statistics
+  {
+    uint64_t num_vars     = 0;  // Number of added variables
+    uint64_t num_clauses  = 0;  // Number of added clauses
+    uint64_t num_literals = 0;  // Number of added literals
+  };
+
   AigCnfEncoder(SatInterface& sat_solver) : d_sat_solver(sat_solver){};
 
   /**
@@ -38,6 +45,9 @@ class AigCnfEncoder
   void encode(const AigNode& node, bool top_level = false);
 
   int32_t value(const AigNode& node);
+
+  /** @return CNF statistics. */
+  const Statistics& statistics() const;
 
  private:
   /** Encode AIG to CNF. */
@@ -53,6 +63,8 @@ class AigCnfEncoder
   std::vector<bool> d_aig_encoded;
   /** SAT solver. */
   SatInterface& d_sat_solver;
+  /** CNF statistics. */
+  Statistics d_statistics;
 };
 }  // namespace bzla::bb
 #endif

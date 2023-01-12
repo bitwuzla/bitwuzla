@@ -87,6 +87,13 @@ class BitInterface<AigNode>
   friend class AigNodeData;
 
  public:
+  struct Statistics
+  {
+    uint64_t num_ands       = 0;  // Current number of AND gates
+    uint64_t num_consts     = 0;  // Current number of AIG constants
+    uint64_t num_duplicates = 0;  // Number of successful AND gate lookups
+  };
+
   BitInterface<AigNode>();
   ~BitInterface<AigNode>();
 
@@ -98,6 +105,9 @@ class BitInterface<AigNode>
   AigNode mk_or(const AigNode& a, const AigNode& b);
   AigNode mk_iff(const AigNode& a, const AigNode& b);
   AigNode mk_ite(const AigNode& c, const AigNode& a, const AigNode& b);
+
+  /** @return AIG statistics. */
+  const Statistics& statistics() const;
 
  private:
   /** Counter for AIG ids. */
@@ -147,12 +157,7 @@ class BitInterface<AigNode>
   /** Indicates whether AIG manager is in garbage collection mode. */
   bool d_gc_mode = false;
 
-  struct
-  {
-    uint64_t num_ands   = 0;
-    uint64_t num_consts = 0;
-    uint64_t num_duplicates = 0;
-  } d_statistics;
+  Statistics d_statistics;
 };
 
 }  // namespace bzla::bb

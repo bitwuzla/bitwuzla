@@ -52,8 +52,10 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level)
       for (const AigNode& child : children)
       {
         d_sat_solver.add(-child.get_id());
+        ++d_statistics.num_literals;
       }
       d_sat_solver.add(0);
+      ++d_statistics.num_clauses;
     }
     // Top-level and
     else
@@ -61,6 +63,7 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level)
       for (const AigNode& child : children)
       {
         d_sat_solver.add_clause({child.get_id()});
+        ++d_statistics.num_clauses;
       }
     }
   }
@@ -91,6 +94,12 @@ AigCnfEncoder::value(const AigNode& aig)
   return aig.is_negated() ? -val : val;
 }
 
+const AigCnfEncoder::Statistics&
+AigCnfEncoder::statistics() const
+{
+  return d_statistics;
+}
+
 void
 AigCnfEncoder::_encode(const AigNode& aig)
 {
@@ -115,6 +124,8 @@ AigCnfEncoder::_encode(const AigNode& aig)
       if (cur->is_true() || cur->is_false())
       {
         d_sat_solver.add_clause({std::abs(cur->get_id())});
+        ++d_statistics.num_clauses;
+        ++d_statistics.num_literals;
       }
     }
     else
@@ -148,6 +159,8 @@ AigCnfEncoder::_encode(const AigNode& aig)
         d_sat_solver.add_clause({-x, a});
         d_sat_solver.add_clause({-x, b});
         d_sat_solver.add_clause({x, -a, -b});
+        d_statistics.num_clauses += 3;
+        d_statistics.num_literals += 7;
       }
     }
   } while (!visit.empty());
@@ -181,5 +194,6 @@ AigCnfEncoder::set_encoded(const AigNode& aig)
   size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
   assert(pos < d_aig_encoded.size());
   d_aig_encoded[pos] = true;
+  ++d_statistics.num_vars;
 }
 }  // namespace bzla::bb

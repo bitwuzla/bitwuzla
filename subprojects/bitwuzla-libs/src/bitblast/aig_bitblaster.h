@@ -5,8 +5,15 @@
 
 namespace bzla::bb {
 
-using AigBitblaster = BitblasterInterface<AigNode>;
+class AigBitblaster : public BitblasterInterface<AigNode>
+{
+ public:
+  /** @return Number of created AND gates. */
+  uint64_t num_aig_ands() const;
+  /** @return Number of AIG constants. */
+  uint64_t num_aig_consts() const;
+};
 
-}
+}  // namespace bzla::bb
 
 #endif

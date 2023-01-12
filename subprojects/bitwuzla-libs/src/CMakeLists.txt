@@ -6,6 +6,7 @@ set(libbzlabb_src_files
   bitblast/aig/aig_manager.cpp
   bitblast/aig/aig_cnf.cpp
   bitblast/aig/aig_printer.cpp
+  bitblast/aig_bitblaster.cpp
 )
 
 set(libbzlals_src_files

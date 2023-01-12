@@ -389,6 +389,10 @@ class BitblasterInterface
     return res;
   }
 
+ protected:
+
+  BitInterface<T> d_bit_mgr;
+
  private:
   T ult_helper(const Bits& a, const Bits& b)
   {
@@ -573,8 +577,6 @@ class BitblasterInterface
     Bits r(rem.rbegin(), rem.rend() - 1);
     return std::make_pair(quot, r);
   }
-
-  BitInterface<T> d_bit_mgr;
 };
 
 }  // namespace bzla::bb
