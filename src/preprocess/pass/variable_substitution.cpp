@@ -17,6 +17,7 @@ namespace {
 std::pair<Node, Node>
 get_var_term(const Node& assertion)
 {
+  NodeManager& nm = NodeManager::get();
   if (assertion.kind() == Kind::EQUAL)
   {
     if (assertion[0].kind() == Kind::CONSTANT)
@@ -28,6 +29,15 @@ get_var_term(const Node& assertion)
       return std::make_pair(assertion[1], assertion[0]);
     }
   }
+  else if (assertion.is_const())
+  {
+    return std::make_pair(assertion, nm.mk_value(true));
+  }
+  else if (assertion.is_inverted() && assertion[0].is_const())
+  {
+    return std::make_pair(assertion[0], nm.mk_value(false));
+  }
+  // TODO: more substitution normalizations
   return std::make_pair(Node(), Node());
 }
 
