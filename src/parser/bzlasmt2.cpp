@@ -10,20 +10,339 @@
 
 extern "C" {
 #include "bzlasmt2.h"
-
-#include "utils/bzlastack.h"
 }
 
 #include <ctype.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <cassert>
 #include <string>
 
 /*------------------------------------------------------------------------*/
 
+#define BZLA_NEWN(mm, ptr, nelems)                                         \
+  do                                                                       \
+  {                                                                        \
+    (ptr) = (typeof(ptr)) bzla_mem_malloc((mm), (nelems) * sizeof *(ptr)); \
+  } while (0)
+
+#define BZLA_CNEWN(mm, ptr, nelems)                                       \
+  do                                                                      \
+  {                                                                       \
+    (ptr) = (typeof(ptr)) bzla_mem_calloc((mm), (nelems), sizeof *(ptr)); \
+  } while (0)
+
+#define BZLA_CLRN(ptr, nelems)                  \
+  do                                            \
+  {                                             \
+    memset((ptr), 0, (nelems) * sizeof *(ptr)); \
+  } while (0)
+
+#define BZLA_DELETEN(mm, ptr, nelems)                     \
+  do                                                      \
+  {                                                       \
+    bzla_mem_free((mm), (ptr), (nelems) * sizeof *(ptr)); \
+  } while (0)
+
+#define BZLA_REALLOC(mm, p, o, n)                             \
+  do                                                          \
+  {                                                           \
+    (p) = (typeof(p)) bzla_mem_realloc(                       \
+        (mm), (p), ((o) * sizeof *(p)), ((n) * sizeof *(p))); \
+  } while (0)
+
+#define BZLA_NEW(mm, ptr) BZLA_NEWN((mm), (ptr), 1)
+
+#define BZLA_CNEW(mm, ptr) BZLA_CNEWN((mm), (ptr), 1)
+
+#define BZLA_CLR(ptr) BZLA_CLRN((ptr), 1)
+
+#define BZLA_DELETE(mm, ptr) BZLA_DELETEN((mm), (ptr), 1)
+
+#define BZLA_ENLARGE(mm, p, o, n)            \
+  do                                         \
+  {                                          \
+    size_t internaln = (o) ? 2 * (o) : 1;    \
+    BZLA_REALLOC((mm), (p), (o), internaln); \
+    (n) = internaln;                         \
+  } while (0)
+
+struct BzlaMemMgr
+{
+  size_t allocated;
+  size_t maxallocated;
+  size_t sat_allocated;
+  size_t sat_maxallocated;
+};
+
+typedef struct BzlaMemMgr BzlaMemMgr;
+
+#define ADJUST()                                                            \
+  do                                                                        \
+  {                                                                         \
+    if (mm->maxallocated < mm->allocated) mm->maxallocated = mm->allocated; \
+  } while (0)
+
+#define SAT_ADJUST()                              \
+  do                                              \
+  {                                               \
+    if (mm->sat_maxallocated < mm->sat_allocated) \
+      mm->sat_maxallocated = mm->sat_allocated;   \
+  } while (0)
+
+BzlaMemMgr *
+bzla_mem_mgr_new(void)
+{
+  BzlaMemMgr *mm = (BzlaMemMgr *) malloc(sizeof(BzlaMemMgr));
+  if (!mm) abort();
+  mm->allocated        = 0;
+  mm->maxallocated     = 0;
+  mm->sat_allocated    = 0;
+  mm->sat_maxallocated = 0;
+  return mm;
+}
+
+void *
+bzla_mem_malloc(BzlaMemMgr *mm, size_t size)
+{
+  void *result;
+  if (!size) return 0;
+  assert(mm);
+  result = malloc(size);
+  if (!result) abort();
+  mm->allocated += size;
+  ADJUST();
+  return result;
+}
+
+void *
+bzla_mem_realloc(BzlaMemMgr *mm, void *p, size_t old_size, size_t new_size)
+{
+  void *result;
+  assert(mm);
+  assert(!p == !old_size);
+  assert(mm->allocated >= old_size);
+  result = realloc(p, new_size);
+  if (!result) abort();
+  mm->allocated -= old_size;
+  mm->allocated += new_size;
+  ADJUST();
+  return result;
+}
+
+void *
+bzla_mem_calloc(BzlaMemMgr *mm, size_t nobj, size_t size)
+{
+  size_t bytes = nobj * size;
+  void *result;
+  assert(mm);
+  result = calloc(nobj, size);
+  if (!result) abort();
+  mm->allocated += bytes;
+  ADJUST();
+  return result;
+}
+
+void
+bzla_mem_free(BzlaMemMgr *mm, void *p, size_t freed)
+{
+  assert(mm);
+  assert(!p == !freed);
+  assert(mm->allocated >= freed);
+  mm->allocated -= freed;
+  free(p);
+}
+
+char *
+bzla_mem_strdup(BzlaMemMgr *mm, const char *str)
+{
+  char *res;
+
+  if (str)
+  {
+    res = (char *) bzla_mem_malloc(mm, strlen(str) + 1);
+    strcpy(res, str);
+  }
+  else
+    res = 0;
+
+  return res;
+}
+
+void
+bzla_mem_freestr(BzlaMemMgr *mm, char *str)
+{
+  if (str) bzla_mem_free(mm, str, strlen(str) + 1);
+}
+
+void
+bzla_mem_mgr_delete(BzlaMemMgr *mm)
+{
+  assert(mm);
+  assert(getenv("BZLALEAK") || getenv("BZLALEAKMEM") || !mm->allocated);
+  free(mm);
+}
+
+size_t
+bzla_mem_parse_error_msg_length(const char *name, const char *fmt, va_list ap)
+{
+  /* Additional characters for:
+
+  "<name>:<lineno>:[<columno>:] "
+
+  */
+  size_t bytes = strlen(name) + 25;
+  const char *p;
+
+  for (p = fmt; *p; p++)
+  {
+    if (*p == '%')
+    {
+      p++;
+      assert(*p);
+      if (*p == 'c')
+      {
+        (void) va_arg(ap, int32_t);
+        bytes += 1;
+      }
+      else if (*p == 'd' || *p == 'u')
+      {
+        (void) va_arg(ap, uint32_t);
+        bytes += 12;
+      }
+      else
+      {
+        assert(*p == 's');
+        bytes += strlen(va_arg(ap, const char *));
+      }
+    }
+    else
+      bytes++;
+  }
+
+  return bytes;
+}
+
+char *
+bzla_mem_parse_error_msg(BzlaMemMgr *mem,
+                         const char *name,
+                         int32_t lineno,
+                         int32_t columno,
+                         const char *fmt,
+                         va_list ap,
+                         size_t bytes)
+{
+  char *res;
+  char *tmp;
+
+  tmp = (char *) bzla_mem_malloc(mem, bytes);
+  if (columno > 0)
+    sprintf(tmp, "%s:%d:%d: ", name, lineno, columno);
+  else
+    sprintf(tmp, "%s:%d: ", name, lineno);
+  assert(strlen(tmp) + 1 < bytes);
+  vsprintf(tmp + strlen(tmp), fmt, ap);
+  res = bzla_mem_strdup(mem, tmp);
+  bzla_mem_free(mem, tmp, bytes);
+
+  return res;
+}
+
+/*------------------------------------------------------------------------*/
+
+#define BZLA_DECLARE_STACK(name, type)    \
+  typedef struct name##Stack name##Stack; \
+  struct name##Stack                      \
+  {                                       \
+    BzlaMemMgr *mm;                       \
+    type *start;                          \
+    type *top;                            \
+    type *end;                            \
+  }
+
+#define BZLA_INIT_STACK(mem, stack) \
+  do                                \
+  {                                 \
+    (stack).mm    = mem;            \
+    (stack).start = 0;              \
+    (stack).top   = 0;              \
+    (stack).end   = 0;              \
+  } while (0)
+
+#define BZLA_COUNT_STACK(stack) \
+  (assert((stack).mm), (size_t) ((stack).top - (stack).start))
+
+#define BZLA_EMPTY_STACK(stack) \
+  (assert((stack).mm), (stack).top == (stack).start)
+
+#define BZLA_RESET_STACK(stack)                      \
+  do                                                 \
+  {                                                  \
+    assert((stack).mm), (stack).top = (stack).start; \
+  } while (0)
+
+#define BZLA_SIZE_STACK(stack) \
+  (assert((stack).mm), (size_t) ((stack).end - (stack).start))
+
+#define BZLA_FULL_STACK(stack) (assert((stack).mm), (stack).top == (stack).end)
+
+#define BZLA_RELEASE_STACK(stack)                                      \
+  do                                                                   \
+  {                                                                    \
+    assert((stack).mm);                                                \
+    BZLA_DELETEN((stack).mm, (stack).start, BZLA_SIZE_STACK((stack))); \
+    BZLA_INIT_STACK((stack).mm, (stack));                              \
+  } while (0)
+
+#define BZLA_ENLARGE_STACK(stack)                                \
+  do                                                             \
+  {                                                              \
+    assert((stack).mm);                                          \
+    size_t old_size  = BZLA_SIZE_STACK(stack), new_size;         \
+    size_t old_count = BZLA_COUNT_STACK(stack);                  \
+    BZLA_ENLARGE((stack).mm, (stack).start, old_size, new_size); \
+    (stack).top = (stack).start + old_count;                     \
+    (stack).end = (stack).start + new_size;                      \
+  } while (0)
+
+#define BZLA_PUSH_STACK(stack, elem)                           \
+  do                                                           \
+  {                                                            \
+    assert((stack).mm);                                        \
+    if (BZLA_FULL_STACK((stack))) BZLA_ENLARGE_STACK((stack)); \
+    *((stack).top++) = (elem);                                 \
+  } while (0)
+
+#define BZLA_PUSH_STACK_IF(cond, stack, elem) \
+  do                                          \
+  {                                           \
+    assert((stack).mm);                       \
+    if (cond) BZLA_PUSH_STACK(stack, elem);   \
+  } while (0)
+
+#define BZLA_POP_STACK(stack) \
+  (assert((stack).mm), assert(!BZLA_EMPTY_STACK(stack)), (*--(stack).top))
+
+#define BZLA_TOP_STACK(stack) \
+  (assert((stack).mm), assert(!BZLA_EMPTY_STACK(stack)), (stack).top[-1])
+
+#define BZLA_PEEK_STACK(stack, idx)                  \
+  (assert((stack).mm),                               \
+   assert((size_t) (idx) < BZLA_COUNT_STACK(stack)), \
+   (stack).start[idx])
+
+BZLA_DECLARE_STACK(BzlaInt, int32_t);
+
+BZLA_DECLARE_STACK(BzlaUInt, uint32_t);
+
+BZLA_DECLARE_STACK(BzlaChar, char);
+
+BZLA_DECLARE_STACK(BzlaCharPtr, char *);
+
+BZLA_DECLARE_STACK(BzlaVoidPtr, void *);
 BZLA_DECLARE_STACK(BitwuzlaTerm, BitwuzlaTerm);
 BZLA_DECLARE_STACK(BitwuzlaSort, BitwuzlaSort);
 

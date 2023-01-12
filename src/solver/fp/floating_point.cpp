@@ -1,14 +1,9 @@
 #include "solver/fp/floating_point.h"
 
-#include "solver/fp/symfpu_wrapper.h"
-
-extern "C" {
-#include "bzlabvstruct.h"
-}
-
 #include <gmpxx.h>
 
 #include "node/node_manager.h"
+#include "solver/fp/symfpu_wrapper.h"
 #include "symfpu/core/add.h"
 #include "symfpu/core/classify.h"
 #include "symfpu/core/compare.h"

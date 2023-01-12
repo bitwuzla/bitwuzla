@@ -12,11 +12,11 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "parser/bzlabtor.h"
 #include "parser/bzlabtor2.h"
 #include "parser/bzlasmt2.h"
-#include "utils/bzlamem.h"
 
 static bool
 has_compressed_suffix(const char *str, const char *suffix)
@@ -108,20 +108,13 @@ bzla_parse(BitwuzlaOptions *options,
   const BzlaParserAPI *parser_api;
   // int32_t idx = 0, first, second, ch;
   int32_t res;
-  uint32_t len;
-  char *msg;
   // BzlaIntStack prefix;
 
-  BzlaMemMgr *mem = bzla_mem_mgr_new();
-
-  len = 40 + strlen(infile_name);
-  BZLA_NEWN(mem, msg, len);
   // BZLA_INIT_STACK(mem, prefix);
 
   if (has_compressed_suffix(infile_name, ".btor"))
   {
     parser_api = bzla_parsebtor_parser_api();
-    sprintf(msg, "parsing '%s'", infile_name);
   }
   // if (has_compressed_suffix(infile_name, ".btor2"))
   //{
@@ -131,7 +124,6 @@ bzla_parse(BitwuzlaOptions *options,
   else if (has_compressed_suffix(infile_name, ".smt2"))
   {
     parser_api = bzla_parsesmt2_parser_api();
-    sprintf(msg, "parsing '%s'", infile_name);
   }
   else
   {
@@ -221,8 +213,6 @@ bzla_parse(BitwuzlaOptions *options,
 
   /* cleanup */
   // BZLA_RELEASE_STACK(prefix);
-  BZLA_DELETEN(mem, msg, len);
-  bzla_mem_mgr_delete(mem);
 
   return res;
 }

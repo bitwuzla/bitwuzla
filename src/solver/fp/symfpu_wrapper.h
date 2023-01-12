@@ -1,18 +1,13 @@
 #ifndef BZLA_SOLVER_FP_SYMFPU_WRAPPER_H_INCLUDED
 #define BZLA_SOLVER_FP_SYMFPU_WRAPPER_H_INCLUDED
 
-#include "solver/fp/floating_point.h"
-#include "solver/fp/rounding_mode.h"
-
-extern "C" {
-#include "bzlabvstruct.h"
-}
-
 #include <cstdint>
 
 #include "bv/bitvector.h"
 #include "node/node.h"
 #include "node/node_manager.h"
+#include "solver/fp/floating_point.h"
+#include "solver/fp/rounding_mode.h"
 #include "symfpu/core/ite.h"
 #include "symfpu/utils/numberOfRoundingModes.h"
 

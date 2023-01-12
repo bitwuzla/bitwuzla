@@ -66,9 +66,6 @@ set(libbitwuzla_src_files
   solver/solver_engine.cpp
   solver/solver_state.cpp
   solving_context.cpp
-  utils/bzlamem.c
-  utils/bzlautil.c
-  utils/bzlaabort.c
 )
 
 #set(bitwuzla_src_files
@@ -85,9 +82,6 @@ target_include_directories(bitwuzla
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)
-
-target_include_directories(bitwuzla PRIVATE ${Btor2Tools_INCLUDE_DIR})
-target_link_libraries(bitwuzla ${Btor2Tools_LIBRARIES})
 
 target_include_directories(bitwuzla PRIVATE subprojects/bitwuzla-libs/src)
 target_link_libraries(bitwuzla bzlabb bzlabv bzlals bzlarng)
