@@ -126,6 +126,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
   // but for now we keep the assertion since this makes it simpler overall.
   bool top_level  = d_backtrack_mgr->num_levels() == 0;
   NodeManager& nm = NodeManager::get();
+  Rewriter& rewriter = d_env.rewriter();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
@@ -137,10 +138,14 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     {
       auto [var, term] = get_var_term(assertion);
       assert(!var.is_null());
-      Node rewritten = nm.mk_node(Kind::EQUAL, {var, process(term)});
+      // Make sure to rewrite the assertion, otherwise we may run into loops
+      // with rewriter pass due to the substitution normalizations in
+      // get_var_term(), e.g., a -- subst --> a = true -- rewrite --> a.
+      Node rewritten =
+          rewriter.rewrite(nm.mk_node(Kind::EQUAL, {var, process(term)}));
       assertions.replace(i, rewritten);
       // Add new substitution assertion to cache in order to avoid that this
-      // new assertion will be eliminated.
+      // new assertion will be eliminated by variable substitution.
       d_substitution_assertions.insert(rewritten);
     }
     else
