@@ -51,6 +51,7 @@ FpSolver::~FpSolver() {}
 void
 FpSolver::check()
 {
+  reset_cached_values();
   NodeManager& nm = NodeManager::get();
   for (const Node& node : d_word_blast_queue)
   {
