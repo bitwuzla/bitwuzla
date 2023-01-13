@@ -565,7 +565,7 @@ class Term
    * Get the string representation of this term.
    * @return A string representation of this term.
    */
-  std::string str();
+  std::string str() const;
 
  private:
   /** Convert vector of terms to internal nodes. */

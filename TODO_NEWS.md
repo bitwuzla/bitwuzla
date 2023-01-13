@@ -80,6 +80,10 @@ API:
 - Remove support for `bitwuzla_get_fun_value`
 - Remove support for `bitwuzla_print_model`
 
+New API functions:
+
+- `bitwuzla_term_to_string(BitwuzlaTerm term)`
+- `bitwuzla_sort_to_string(BitwuzlaSort sort)`
 
 ## TODO
 - changes in parsing functions

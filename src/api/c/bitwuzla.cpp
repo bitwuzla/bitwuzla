@@ -148,7 +148,8 @@ struct Bitwuzla
 
 /* -------------------------------------------------------------------------- */
 
-static BitwuzlaSort
+namespace {
+BitwuzlaSort
 export_sort(const bitwuzla::Sort &sort)
 {
   assert(!sort.is_null());
@@ -168,13 +169,13 @@ export_sort(const bitwuzla::Sort &sort)
   return sort_id;
 }
 
-static const bitwuzla::Sort &
+const bitwuzla::Sort &
 import_sort(BitwuzlaSort sort_id)
 {
   return *Bitwuzla::sort_map().at(sort_id).first;
 }
 
-static BitwuzlaTerm
+BitwuzlaTerm
 export_term(const bitwuzla::Term &term)
 {
   assert(!term.is_null());
@@ -194,35 +195,37 @@ export_term(const bitwuzla::Term &term)
   return term_id;
 }
 
-static const bitwuzla::Term &
+const bitwuzla::Term &
 import_term(BitwuzlaSort term_id)
 {
   return *Bitwuzla::term_map().at(term_id).first;
 }
 
-static BitwuzlaKind
+BitwuzlaKind
 export_kind(bitwuzla::Kind kind)
 {
   return static_cast<BitwuzlaKind>(kind);
 }
 
-static bitwuzla::Kind
+bitwuzla::Kind
 import_kind(BitwuzlaKind kind)
 {
   return static_cast<bitwuzla::Kind>(kind);
 }
 
-static BitwuzlaOption
+BitwuzlaOption
 export_option(bitwuzla::Option option)
 {
   return static_cast<BitwuzlaOption>(option);
 }
 
-static bitwuzla::Option
+bitwuzla::Option
 import_option(BitwuzlaOption option)
 {
   return static_cast<bitwuzla::Option>(option);
 }
+
+}  // namespace
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaKind                                                               */
@@ -266,6 +269,36 @@ bitwuzla_result_to_string(BitwuzlaResult result)
   BITWUZLA_CHECK_RESULT(result);
   static thread_local std::string str;
   str = std::to_string(static_cast<bitwuzla::Result>(result));
+  return str.c_str();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaTerm                                                               */
+/* -------------------------------------------------------------------------- */
+
+const char *
+bitwuzla_term_to_string(BitwuzlaTerm term)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM_ID(term);
+  static thread_local std::string str;
+  str = import_term(term).str();
+  return str.c_str();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaSort                                                               */
+/* -------------------------------------------------------------------------- */
+
+const char *
+bitwuzla_sort_to_string(BitwuzlaSort sort)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_SORT_ID(sort);
+  static thread_local std::string str;
+  str = import_sort(sort).str();
   return str.c_str();
   BITWUZLA_TRY_CATCH_END;
 }

@@ -1207,7 +1207,7 @@ Term::is_const_array() const
 }
 
 std::string
-Term::str()
+Term::str() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_node);
   return d_node->str();

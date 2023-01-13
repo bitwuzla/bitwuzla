@@ -91,6 +91,8 @@ typedef struct BitwuzlaOptionInfo BitwuzlaOptionInfo;
 /**
  * Get the string representation of a result.
  * @return A string representation of the given result.
+ * @note The returned char* pointer is only valid until the next
+ *       `bitwuzla_result_to_string` call.
  */
 const char *bitwuzla_result_to_string(BitwuzlaResult result);
 
@@ -103,6 +105,8 @@ const char *bitwuzla_result_to_string(BitwuzlaResult result);
 /**
  * Get the string representation of a rounding mode.
  * @return A string representation of the rounding mode.
+ * @note The returned char* pointer is only valid until the next
+ *       `bitwuzla_rm_to_string` call.
  */
 const char *bitwuzla_rm_to_string(BitwuzlaRoundingMode rm);
 
@@ -115,6 +119,8 @@ const char *bitwuzla_rm_to_string(BitwuzlaRoundingMode rm);
 /**
  * Get the string representation of a term kind.
  * @return A string representation of the given term kind.
+ * @note The returned char* pointer is only valid until the next
+ *       `bitwuzla_kind_to_string` call.
  */
 const char *bitwuzla_kind_to_string(BitwuzlaKind kind);
 
@@ -125,12 +131,28 @@ const char *bitwuzla_kind_to_string(BitwuzlaKind kind);
 /** A Bitwuzla term. */
 typedef uint64_t BitwuzlaTerm;
 
+/**
+ * Get the string representation of a term.
+ * @return A string representation of the given term.
+ * @note The returned char* pointer is only valid until the next
+ *       `bitwuzla_term_to_string` call.
+ */
+const char *bitwuzla_term_to_string(BitwuzlaTerm term);
+
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */
 
 /** A Bitwuzla sort. */
 typedef uint64_t BitwuzlaSort;
+
+/**
+ * Get the string representation of a sort.
+ * @return A string representation of the given sort.
+ * @note The returned char* pointer is only valid until the next
+ *       `bitwuzla_sort_to_string` call.
+ */
+const char *bitwuzla_sort_to_string(BitwuzlaSort sort);
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaOptions                                                            */

@@ -3992,63 +3992,26 @@ TEST_F(TestCApi, substitute)
   bitwuzla_options_delete(options);
 }
 
-TEST_F(TestCApi, term_dump1)
+TEST_F(TestCApi, term_print1)
 {
-  GTEST_SKIP();  // TODO enable when implemented
-  std::string filename     = "term_dump1.out";
-  FILE *tmpfile            = fopen(filename.c_str(), "w");
-  BitwuzlaSort bv1         = bitwuzla_mk_bool_sort();
-  BitwuzlaTerm a           = bitwuzla_mk_const(bv1, "a");
-  BitwuzlaTerm nota        = bitwuzla_mk_term1(BITWUZLA_KIND_NOT, a);
-  bitwuzla_term_dump(nota, "smt2", tmpfile);
-  fclose(tmpfile);
-
-  std::ifstream ifs(filename);
-  std::string content((std::istreambuf_iterator<char>(ifs)),
-                      (std::istreambuf_iterator<char>()));
-  unlink(filename.c_str());
-
-  ASSERT_EQ("(bvnot a)", content);
+  ASSERT_DEATH(bitwuzla_term_to_string(0), d_error_inv_term);
+  BitwuzlaTerm a = bitwuzla_mk_const(d_bv_sort1, "a");
+  BitwuzlaTerm t = bitwuzla_mk_term1(BITWUZLA_KIND_BV_NOT, a);
+  ASSERT_EQ(std::string(bitwuzla_term_to_string(t)), "(bvnot a)");
 }
 
-TEST_F(TestCApi, term_dump2)
+TEST_F(TestCApi, term_print2)
 {
-  GTEST_SKIP();  // TODO enable when implemented
-  std::string filename = "term_dump2.out";
-  FILE *tmpfile        = fopen(filename.c_str(), "w");
-
-  BitwuzlaSort bv1   = bitwuzla_mk_bv_sort(1);
-  BitwuzlaSort fn1_1 = bitwuzla_mk_fun_sort(1, &bv1, bv1);
-  BitwuzlaTerm f     = bitwuzla_mk_const(fn1_1, "f");
-  bitwuzla_term_dump(f, "smt2", tmpfile);
-  fclose(tmpfile);
-
-  std::ifstream ifs(filename);
-  std::string content((std::istreambuf_iterator<char>(ifs)),
-                      (std::istreambuf_iterator<char>()));
-  unlink(filename.c_str());
-
-  ASSERT_EQ("(declare-fun f ((_ BitVec 1)) (_ BitVec 1))\n", content);
+  BitwuzlaSort fn1_1 = bitwuzla_mk_fun_sort(1, &d_bv_sort1, d_bv_sort1);
+  BitwuzlaTerm t     = bitwuzla_mk_const(fn1_1, "f");
+  ASSERT_EQ(std::string(bitwuzla_term_to_string(t)), "f");
 }
 
-TEST_F(TestCApi, term_dump3)
+TEST_F(TestCApi, term_print3)
 {
-  GTEST_SKIP();  // TODO enable when implemented
-  std::string filename = "term_dump3.out";
-  FILE *tmpfile        = fopen(filename.c_str(), "w");
-
-  BitwuzlaSort bv1   = bitwuzla_mk_bv_sort(1);
-  BitwuzlaSort ar1_1 = bitwuzla_mk_array_sort(bv1, bv1);
-  BitwuzlaTerm a     = bitwuzla_mk_const(ar1_1, "a");
-  bitwuzla_term_dump(a, "smt2", tmpfile);
-  fclose(tmpfile);
-
-  std::ifstream ifs(filename);
-  std::string content((std::istreambuf_iterator<char>(ifs)),
-                      (std::istreambuf_iterator<char>()));
-  unlink(filename.c_str());
-
-  ASSERT_EQ("(declare-const a (Array (_ BitVec 1) (_ BitVec 1)))\n", content);
+  BitwuzlaSort ar1_1 = bitwuzla_mk_array_sort(d_bv_sort1, d_bv_sort1);
+  BitwuzlaTerm t     = bitwuzla_mk_const(ar1_1, "a");
+  ASSERT_EQ(std::string(bitwuzla_term_to_string(t)), "a");
 }
 
 TEST_F(TestCApi, dump_formula2)
