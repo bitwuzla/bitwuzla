@@ -91,7 +91,7 @@ class BitInterface<AigNode>
   {
     uint64_t num_ands       = 0;  // Current number of AND gates
     uint64_t num_consts     = 0;  // Current number of AIG constants
-    uint64_t num_duplicates = 0;  // Number of successful AND gate lookups
+    uint64_t num_shared = 0;  // Number of successful AND gate lookups
   };
 
   BitInterface<AigNode>();

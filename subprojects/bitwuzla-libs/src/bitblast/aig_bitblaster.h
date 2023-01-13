@@ -12,6 +12,8 @@ class AigBitblaster : public BitblasterInterface<AigNode>
   uint64_t num_aig_ands() const;
   /** @return Number of AIG constants. */
   uint64_t num_aig_consts() const;
+  /** @return Number of shared AND gates. */
+  uint64_t num_aig_shared() const;
 };
 
 }  // namespace bzla::bb

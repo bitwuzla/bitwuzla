@@ -372,7 +372,7 @@ AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
   auto [inserted, lookup] = d_unique_table.insert(d);
   if (!inserted)
   {
-    ++d_statistics.num_duplicates;
+    ++d_statistics.num_shared;
     delete d;
     return lookup;
   }
