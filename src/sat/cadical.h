@@ -11,11 +11,12 @@ namespace bzla::sat {
 class CadicalTerminator : public CaDiCaL::Terminator
 {
  public:
-  CadicalTerminator() : CaDiCaL::Terminator() {}
+  CadicalTerminator(bzla::Terminator* terminator);
   ~CadicalTerminator() {}
   bool terminate() override;
-  void *d_state            = nullptr;
-  int32_t (*f_fun)(void *) = nullptr;
+
+ private:
+  bzla::Terminator* d_terminator = nullptr;
 };
 
 class Cadical : public SatSolver
@@ -29,7 +30,7 @@ class Cadical : public SatSolver
   bool failed(int32_t lit) override;
   int32_t fixed(int32_t lit) override;
   Result solve() override;
-  void set_terminate(int32_t (*fun)(void *), void *state) override;
+  void set_terminate(Terminator* terminator) override;
   const char *get_name() const override { return "CaDiCaL"; }
   const char *get_version() const override;
 

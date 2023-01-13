@@ -2876,7 +2876,59 @@ TEST_F(TestApi, terminate)
     bitwuzla.assert_formula(a);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
   }
-  // not solved by rewriting, should be terminated in the prop case
+  // not solved by rewriting, should be terminated when configured
+  TestTerminator tt;
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    bitwuzla::Bitwuzla bitwuzla(opts);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+  }
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    bitwuzla::Bitwuzla bitwuzla(opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "prop");
+    bitwuzla::Bitwuzla bitwuzla(opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+}
+
+TEST_F(TestApi, terminate_sat)
+{
+  class TestTerminator : public bitwuzla::Terminator
+  {
+   public:
+    bool terminate() override
+    {
+      sleep(1);
+      return true;
+    }
+  };
+
+  bitwuzla::Sort bv_sort32 = bitwuzla::mk_bv_sort(32);
+  bitwuzla::Term x         = bitwuzla::mk_const(bv_sort32);
+  bitwuzla::Term s         = bitwuzla::mk_const(bv_sort32);
+  bitwuzla::Term t         = bitwuzla::mk_const(bv_sort32);
+  bitwuzla::Term b         = bitwuzla::mk_term(
+      bitwuzla::Kind::DISTINCT,
+      {bitwuzla::mk_term(
+           bitwuzla::Kind::BV_MUL,
+           {s, bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, {x, t})}),
+               bitwuzla::mk_term(
+           bitwuzla::Kind::BV_MUL,
+           {bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, {s, x}), t})});
+  // not solved by bit-blasting, should be terminated in the SAT solver when
+  // configured
   TestTerminator tt;
   {
     bitwuzla::Options opts;
@@ -2884,11 +2936,12 @@ TEST_F(TestApi, terminate)
     bitwuzla::Bitwuzla bitwuzla(opts);
     bitwuzla.configure_terminator(&tt);
     bitwuzla.assert_formula(b);
-    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
   {
     bitwuzla::Options opts;
-    opts.set(bitwuzla::Option::BV_SOLVER, "prop");
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
     bitwuzla::Bitwuzla bitwuzla(opts);
     bitwuzla.configure_terminator(&tt);
     bitwuzla.assert_formula(b);

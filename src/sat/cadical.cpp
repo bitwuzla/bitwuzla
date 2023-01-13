@@ -2,6 +2,11 @@
 
 namespace bzla::sat {
 
+CadicalTerminator::CadicalTerminator(bzla::Terminator* terminator)
+    : CaDiCaL::Terminator(), d_terminator(terminator)
+{
+}
+
 Cadical::Cadical()
 {
   d_solver.reset(new CaDiCaL::Solver());
@@ -52,13 +57,11 @@ Cadical::solve()
 }
 
 void
-Cadical::set_terminate(int32_t (*fun)(void *), void *state)
+Cadical::set_terminate(Terminator* terminator)
 {
-  CadicalTerminator *term = new CadicalTerminator();
-  term->d_state           = state;
-  term->f_fun             = fun;
+  CadicalTerminator* term = new CadicalTerminator(terminator);
   d_term.reset(term);
-  if (fun)
+  if (terminator)
   {
     d_solver->connect_terminator(d_term.get());
   }
@@ -77,8 +80,8 @@ Cadical::get_version() const
 bool
 CadicalTerminator::terminate()
 {
-  if (!f_fun) return false;
-  return f_fun(d_state);
+  if (!d_terminator) return false;
+  return d_terminator->terminate();
 }
 
 }  // namespace bzla::sat

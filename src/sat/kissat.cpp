@@ -6,7 +6,22 @@
 
 #include <cassert>
 
+/*------------------------------------------------------------------------*/
+
 namespace bzla::sat {
+
+/*------------------------------------------------------------------------*/
+
+namespace {
+int32_t
+kissat_terminate_wrapper(void* state)
+{
+  bzla::Terminator* terminator = static_cast<bzla::Terminator*>(state);
+  return terminator->terminate();
+}
+}  // namespace
+
+/*------------------------------------------------------------------------*/
 
 Kissat::Kissat() { d_solver = kissat_init(); }
 
@@ -58,9 +73,12 @@ Kissat::solve()
 }
 
 void
-Kissat::set_terminate(int32_t (*fun)(void *), void *state)
+Kissat::set_terminate(Terminator* terminator)
 {
-  kissat_set_terminate(d_solver, state, fun);
+  if (terminator)
+  {
+    kissat_set_terminate(d_solver, terminator, kissat_terminate_wrapper);
+  }
 }
 
 const char *
@@ -68,6 +86,8 @@ Kissat::get_version() const
 {
   return kissat_version();
 }
+
+/*------------------------------------------------------------------------*/
 
 }  // namespace bzla::sat
 

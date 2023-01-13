@@ -5,6 +5,7 @@
 #include <string>
 
 #include "solver/result.h"
+#include "terminator.h"
 
 namespace bzla::sat {
 
@@ -52,12 +53,10 @@ class SatSolver
    */
   virtual Result solve() = 0;
   /**
-   * Configure a termination callback function.
-   * @param fun The callback function, returns a value != 0 if SAT solver has
-   *            been terminated.
-   * @param state The argument to the callback function.
+   * Configure a termination callback function via a terminator.
+   * @param terminator The terminator.
    */
-  virtual void set_terminate(int32_t (*fun)(void *), void *state) = 0;
+  virtual void set_terminate(Terminator *terminator) = 0;
 
   // virtual int32_t repr(int32_t) = 0;
 

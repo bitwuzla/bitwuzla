@@ -70,11 +70,9 @@ CryptoMiniSat::solve()
 }
 
 void
-CryptoMiniSat::set_terminate(int32_t (*fun)(void *), void *state)
+CryptoMiniSat::set_terminate(Terminator *terminator)
 {
-  (void) fun;
-  (void) state;
-  assert(false);
+  (void) terminator;
 }
 
 const char *

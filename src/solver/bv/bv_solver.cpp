@@ -71,6 +71,12 @@ Result
 BvSolver::solve()
 {
   util::Timer timer(d_stats.time_check);
+
+  if (d_env.terminate())
+  {
+    return Result::UNKNOWN;
+  }
+
   ++d_stats.num_checks;
   reset_cached_values();
   switch (d_env.options().bv_solver())
