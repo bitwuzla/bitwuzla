@@ -358,6 +358,7 @@ BvBitblastSolver::update_statistics()
 {
   d_stats.num_aig_ands = d_bitblaster.num_aig_ands();
   d_stats.num_aig_consts = d_bitblaster.num_aig_consts();
+  d_stats.num_aig_shared   = d_bitblaster.num_aig_shared();
   auto& cnf_stats = d_cnf_encoder->statistics();
   d_stats.num_cnf_vars = cnf_stats.num_vars;
   d_stats.num_cnf_clauses = cnf_stats.num_clauses;
@@ -368,12 +369,16 @@ BvBitblastSolver::update_statistics()
 }
 
 BvBitblastSolver::Statistics::Statistics(util::Statistics& stats)
-    : time_sat(stats.new_stat<util::TimerStatistic>("bv::bitblast::sat::time_solve")),
+    : time_sat(
+        stats.new_stat<util::TimerStatistic>("bv::bitblast::sat::time_solve")),
       num_aig_ands(stats.new_stat<uint64_t>("bv::bitblast::aig::num_ands")),
       num_aig_consts(stats.new_stat<uint64_t>("bv::bitblast::aig::num_consts")),
+      num_aig_shared(stats.new_stat<uint64_t>("bv::bitblast::aig::num_shared")),
       num_cnf_vars(stats.new_stat<uint64_t>("bv::bitblast::cnf::num_vars")),
-      num_cnf_clauses(stats.new_stat<uint64_t>("bv::bitblast::cnf::num_clauses")),
-      num_cnf_literals(stats.new_stat<uint64_t>("bv::bitblast::cnf::num_literals"))
+      num_cnf_clauses(
+          stats.new_stat<uint64_t>("bv::bitblast::cnf::num_clauses")),
+      num_cnf_literals(
+          stats.new_stat<uint64_t>("bv::bitblast::cnf::num_literals"))
 {
 }
 
