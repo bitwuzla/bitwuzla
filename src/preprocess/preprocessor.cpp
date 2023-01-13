@@ -115,6 +115,7 @@ Preprocessor::apply(AssertionVector& assertions)
   // one-shot passes
   d_pass_elim_lambda.apply(assertions);
 
+  auto& options  = d_env.options();
   bool skel_done = false;
   // fixed-point passes
   do
@@ -123,19 +124,27 @@ Preprocessor::apply(AssertionVector& assertions)
     assertions.reset_modified();
     ++d_stats.num_iterations;
 
-    size_t cnt = assertions.num_modified();
-    d_pass_flatten_and.apply(assertions);
-    Msg(2) << assertions.num_modified() - cnt << " after and flattening";
+    size_t cnt;
+    if (options.pp_flatten_and())
+    {
+      cnt = assertions.num_modified();
+      d_pass_flatten_and.apply(assertions);
+      Msg(2) << assertions.num_modified() - cnt << " after and flattening";
+    }
 
     cnt = assertions.num_modified();
     d_pass_rewrite.apply(assertions);
     Msg(2) << assertions.num_modified() - cnt << " after rewriting";
 
-    cnt = assertions.num_modified();
-    d_pass_variable_substitution.apply(assertions);
-    Msg(2) << assertions.num_modified() - cnt << " after variable substitution";
+    if (options.pp_variable_subst())
+    {
+      cnt = assertions.num_modified();
+      d_pass_variable_substitution.apply(assertions);
+      Msg(2) << assertions.num_modified() - cnt
+             << " after variable substitution";
+    }
 
-    if (!skel_done)
+    if (options.pp_skeleton_preproc() && !skel_done)
     {
       cnt = assertions.num_modified();
       d_pass_skeleton_preproc.apply(assertions);
@@ -144,9 +153,13 @@ Preprocessor::apply(AssertionVector& assertions)
              << " after skeleton simplification";
     }
 
-    cnt = assertions.num_modified();
-    d_pass_embedded_constraints.apply(assertions);
-    Msg(2) << assertions.num_modified() - cnt << " after embedded constraints";
+    if (options.pp_embedded_constr())
+    {
+      cnt = assertions.num_modified();
+      d_pass_embedded_constraints.apply(assertions);
+      Msg(2) << assertions.num_modified() - cnt
+             << " after embedded constraints";
+    }
   } while (assertions.modified());
 
 #ifndef NDEBUG

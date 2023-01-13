@@ -233,6 +233,38 @@ enum ENUM(Option)
    */
   EVALUE(PROP_SEXT),
 
+  /*! **Preprocessing: Embedded constraint substitution**
+   *
+   * When enabled, substitutes assertions that occur as sub-expression in the
+   * formula with their respective Boolean value.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PP_EMBEDDED_CONSTR),
+  /*! **Preprocessing: AND flattening**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PP_FLATTEN_AND),
+  /*! **Preprocessing: Boolean skeleton preprocessing**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PP_SKELETON_PREPROC),
+  /*! **Preprocessing: Variable substitution**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PP_VARIABLE_SUBST),
+
   /*! **Debug:
    *    Threshold for number of new nodes introduced for recursive call of
    *    rewrite(). **

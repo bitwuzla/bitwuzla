@@ -200,6 +200,29 @@ Options::Options()
                 "concats that represent sign_extend nodes for "
                 "propagation-based local search engine",
                 "prop-sext"),
+
+      // Preprocessing
+      pp_embedded_constr(this,
+                         Option::PP_EMBEDDED_CONSTR,
+                         true,
+                         "enable embedded contraint preprocessing pass",
+                         "pp-embedded"),
+      pp_flatten_and(this,
+                     Option::PP_FLATTEN_AND,
+                     true,
+                     "enable AND flattening preprocessing pass",
+                     "pp-flatten-and"),
+      pp_skeleton_preproc(this,
+                          Option::PP_SKELETON_PREPROC,
+                          false,
+                          "enable skeleton preprocessing pass",
+                          "pp-skeleton-preproc"),
+      pp_variable_subst(this,
+                        Option::PP_VARIABLE_SUBST,
+                        true,
+                        "enable variable substitution preprocessing pass",
+                        "pp-variable-subst"),
+
       dbg_rw_node_inc(
           this,
           Option::DBG_RW_NODE_THRESH,

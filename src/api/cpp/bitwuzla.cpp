@@ -147,6 +147,12 @@ const std::unordered_map<Option, bzla::option::Option> s_internal_options = {
     //{Option::SAT_ENGINE_N_THREADS, bzla::option::Option::NUM_OPTIONS},
     {Option::SMT_COMP_MODE, bzla::option::Option::SMT_COMP_MODE},
     {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
+
+    {Option::PP_EMBEDDED_CONSTR, bzla::option::Option::PP_EMBEDDED_CONSTR},
+    {Option::PP_FLATTEN_AND, bzla::option::Option::PP_FLATTEN_AND},
+    {Option::PP_SKELETON_PREPROC, bzla::option::Option::PP_SKELETON_PREPROC},
+    {Option::PP_VARIABLE_SUBST, bzla::option::Option::PP_VARIABLE_SUBST},
+
     {Option::DBG_RW_NODE_THRESH, bzla::option::Option::DBG_RW_NODE_THRESH},
     {Option::DBG_PP_NODE_THRESH, bzla::option::Option::DBG_PP_NODE_THRESH},
 };
@@ -269,6 +275,12 @@ const std::unordered_map<bzla::option::Option, Option> s_options = {
     //{bzla::option::Option::NUM_OPTIONS, Option::SAT_ENGINE_LGL_FORK},
     //{bzla::option::Option::NUM_OPTIONS, Option::SAT_ENGINE_N_THREADS},
     {bzla::option::Option::SMT_COMP_MODE, Option::SMT_COMP_MODE},
+
+    {bzla::option::Option::PP_EMBEDDED_CONSTR, Option::PP_EMBEDDED_CONSTR},
+    {bzla::option::Option::PP_FLATTEN_AND, Option::PP_FLATTEN_AND},
+    {bzla::option::Option::PP_SKELETON_PREPROC, Option::PP_SKELETON_PREPROC},
+    {bzla::option::Option::PP_VARIABLE_SUBST, Option::PP_VARIABLE_SUBST},
+
     {bzla::option::Option::DBG_RW_NODE_THRESH, Option::DBG_RW_NODE_THRESH},
     {bzla::option::Option::DBG_PP_NODE_THRESH, Option::DBG_PP_NODE_THRESH},
     //{bzla::option::Option::NUM_OPTIONS, Option::NUM_OPTS},
