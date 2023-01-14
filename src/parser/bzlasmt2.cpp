@@ -19,6 +19,7 @@ extern "C" {
 #include <string.h>
 
 #include <cassert>
+#include <iostream>
 #include <string>
 
 /*------------------------------------------------------------------------*/
@@ -5623,16 +5624,9 @@ define_sort_smt2(BzlaSMT2Parser *parser)
 static int32_t
 declare_sort_smt2(BzlaSMT2Parser *parser)
 {
-  uint64_t arity, opt_bit_width = 0;
+  uint64_t arity = 0;
   BzlaSMT2Node *sort_alias;
   BitwuzlaSort sort;
-
-  // opt_bit_width =
-  //     bitwuzla_get_option(parser->options, BITWUZLA_OPT_DECLSORT_BV_WIDTH);
-  if (!opt_bit_width)
-    return !perr_smt2(parser,
-                      "'declare-sort' not supported if it is not interpreted"
-                      " as a bit-vector, try --declsort-bv-width=<n>");
 
   sort_alias = 0;
   if (!read_symbol(parser, " after 'declare-sort'", &sort_alias)) return 0;
@@ -5650,9 +5644,11 @@ declare_sort_smt2(BzlaSMT2Parser *parser)
 
   if (!parse_uint64_smt2(parser, true, &arity)) return 0;
   if (arity != 0)
+  {
     return !perr_smt2(parser, "sort arity other than 0 not supported");
+  }
 
-  sort                   = bitwuzla_mk_bv_sort(opt_bit_width);
+  sort                   = bitwuzla_mk_uninterpreted_sort(sort_alias->name);
   sort_alias->sort       = 1;
   sort_alias->sort_alias = sort;
   BZLA_PUSH_STACK(parser->sorts, sort);

@@ -212,6 +212,12 @@ NodeManager::mk_fun_type(const std::vector<Type>& types)
 }
 
 Type
+NodeManager::mk_uninterpreted_type(const std::optional<std::string>& symbol)
+{
+  return d_tm.mk_uninterpreted_type(symbol);
+}
+
+Type
 NodeManager::compute_type(Kind kind,
                           const std::vector<Node>& children,
                           const std::vector<uint64_t>& indices)

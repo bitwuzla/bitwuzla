@@ -70,6 +70,14 @@ TypeManager::mk_fun_type(const std::vector<Type>& types)
   return Type(find_or_create_type(TypeData::Kind::FUN, types));
 }
 
+Type
+TypeManager::mk_uninterpreted_type(const std::optional<std::string>& symbol)
+{
+  TypeData* data = new TypeData(this, symbol);
+  init_id(data);
+  return data;
+}
+
 /* --- TypeManager private ------------------------------------------------- */
 
 void

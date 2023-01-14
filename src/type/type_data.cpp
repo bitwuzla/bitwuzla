@@ -1,10 +1,10 @@
 #include "type/type_data.h"
 
 #include <cassert>
+#include <iostream>
 
 #include "type/type.h"
 #include "type/type_manager.h"
-
 namespace bzla::type {
 
 size_t
@@ -66,6 +66,10 @@ TypeDataKeyEqual::operator()(const TypeData* d0, const TypeData* d1) const
       }
     }
   }
+  else if (kind == TypeData::Kind::UNINTERPRETED)
+  {
+    return false;
+  }
 
   return true;
 }
@@ -88,6 +92,11 @@ TypeData::TypeData(TypeManager* mgr, uint64_t exp_size, uint64_t sig_size)
 {
 }
 
+TypeData::TypeData(TypeManager* mgr, const std::optional<std::string>& symbol)
+    : d_mgr(mgr), d_kind(Kind::UNINTERPRETED), d_data(symbol)
+{
+}
+
 TypeData::~TypeData() {}
 
 uint64_t
@@ -107,6 +116,13 @@ TypeData::get_types() const
 {
   assert(d_kind == Kind::ARRAY || d_kind == Kind::FUN);
   return std::get<std::vector<Type>>(d_data);
+}
+
+const std::optional<std::string>&
+TypeData::get_symbol() const
+{
+  assert(d_kind == Kind::UNINTERPRETED);
+  return std::get<std::optional<std::string>>(d_data);
 }
 
 uint64_t

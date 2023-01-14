@@ -474,6 +474,16 @@ BitwuzlaSort bitwuzla_mk_fun_sort(uint64_t arity,
 BitwuzlaSort bitwuzla_mk_rm_sort();
 
 /**
+ * Create an uninterpreted sort.
+ * @param symbol The symbol of the sort. May be NULL.
+ * @return A uninterpreted sort.
+ * @see
+ *   * `bitwuzla_sort_is_uninterpreted`
+ *   * `bitwuzla_term_is_uninterpreted`
+ */
+BitwuzlaSort bitwuzla_mk_uninterpreted_sort(const char *symbol);
+
+/**
  * Create a true value.
  * @return A term representing true.
  */
@@ -1481,6 +1491,15 @@ BitwuzlaSort bitwuzla_sort_fun_get_codomain(BitwuzlaSort sort);
 uint64_t bitwuzla_sort_fun_get_arity(BitwuzlaSort sort);
 
 /**
+ * Get the symbol of an uninterpreted sort.
+ * @param sort The sort.
+ * @return The symbol; NULL if no symbol is defined.
+ * @note The returned char* pointer is only valid until the next
+ *       `bitwuzla_sort_uninterpreted_get_symbol` call.
+ */
+const char *bitwuzla_sort_get_uninterpreted_symbol(BitwuzlaSort sort);
+
+/**
  * Determine if two sorts are equal.
  *
  * @param sort0 The first sort.
@@ -1543,6 +1562,15 @@ bool bitwuzla_sort_is_fun(BitwuzlaSort sort);
  * @return True if `sort` is a Roundingmode sort.
  */
 bool bitwuzla_sort_is_rm(BitwuzlaSort sort);
+
+/**
+ * Determine if a sort is an uninterpreted sort.
+ *
+ * @param sort The sort.
+ *
+ * @return True if `sort` is a uninterpreted sort.
+ */
+bool bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort);
 
 /**
  * Print sort.
@@ -1863,6 +1891,15 @@ bool bitwuzla_term_is_fp(BitwuzlaTerm term);
  * @return True if `term` is a rounding mode term.
  */
 bool bitwuzla_term_is_rm(BitwuzlaTerm term);
+
+/**
+ * Determine if a term is a term of uninterpreted sort.
+ *
+ * @param term The term.
+ *
+ * @return True if `term` is a term of uninterpreted sort.
+ */
+bool bitwuzla_term_is_uninterpreted(BitwuzlaTerm term);
 
 /**
  * Determine if a term is a bit-vector value representing zero.

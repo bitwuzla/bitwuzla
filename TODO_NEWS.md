@@ -84,6 +84,10 @@ New API functions:
 
 - `bitwuzla_term_to_string(BitwuzlaTerm term)`
 - `bitwuzla_sort_to_string(BitwuzlaSort sort)`
+- `bitwuzla_mk_uninterpreted_sort()`
+- `bitwuzla_sort_is_uninterpreted()`
+- `bitwuzla_term_is_uninterpreted()`
+- `bitwuzla_sort_get_uninterpreted_symbol(BitwuzlaSort sort)`
 
 ## TODO
 - changes in parsing functions

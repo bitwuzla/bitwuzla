@@ -2,6 +2,7 @@
 #define BZLA_TYPE_TYPE_MANAGER_H_INCLUDED
 
 #include <memory>
+#include <optional>
 #include <unordered_set>
 #include <vector>
 
@@ -64,6 +65,14 @@ class TypeManager
    * @return Function type of given domain and codomain types.
    */
   Type mk_fun_type(const std::vector<Type>& types);
+
+  /**
+   * Create uninterpreted type.
+   * @param symbol The symbol of the uninterpreted type.
+   * @return The uninterpreted type.
+   */
+  Type mk_uninterpreted_type(
+      const std::optional<std::string>& symbol = std::nullopt);
 
  private:
   /** Initialize type data. */

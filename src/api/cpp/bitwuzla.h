@@ -620,6 +620,7 @@ class Sort
   friend Sort mk_bv_sort(uint64_t);
   friend Sort mk_fp_sort(uint64_t, uint64_t);
   friend Sort mk_fun_sort(const std::vector<Sort> &, const Sort &);
+  friend Sort mk_uninterpreted_sort(std::optional<const std::string>);
   friend Sort mk_rm_sort();
   friend Term mk_bv_zero(const Sort &);
   friend Term mk_bv_one(const Sort &);
@@ -732,6 +733,12 @@ class Sort
   size_t fun_arity() const;
 
   /**
+   * Get the symbol of an uninterpreted sort.
+   * @return The symbol.
+   */
+  std::optional<std::string> uninterpreted_symbol() const;
+
+  /**
    * Determine if this sort is an array sort.
    * @return True if this sort is an array sort.
    */
@@ -766,6 +773,12 @@ class Sort
    * @return True if this sort is a Roundingmode sort.
    */
   bool is_rm() const;
+
+  /**
+   * Determine if this sort is an uninterpreted sort.
+   * @return True if this sort is an uninterpreted sort.
+   */
+  bool is_uninterpreted() const;
 
   /**
    * Get string representation of this sort.
@@ -1276,6 +1289,20 @@ Sort mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain);
  *   * `Sort::is_rm`
  */
 Sort mk_rm_sort();
+
+/**
+ * Create an uninterpreted sort.
+ *
+ * @note Only 0-arity uninterpreted sorts are supported.
+ *
+ * @param symbol The symbol of the sort.
+ * @return An uninterpreted sort.
+ *
+ * @see
+ *   * `Sort::is_uninterpreted`
+ */
+Sort mk_uninterpreted_sort(
+    std::optional<const std::string> symbol = std::nullopt);
 
 /* -------------------------------------------------------------------------- */
 /* Term creation                                                              */

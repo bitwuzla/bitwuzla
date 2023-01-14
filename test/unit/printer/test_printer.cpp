@@ -74,6 +74,56 @@ class TestPrinter : public TestCommon
   Type d_type_rm    = d_nm.mk_rm_type();
 };
 
+TEST_F(TestPrinter, print_type)
+{
+  {
+    std::stringstream ss;
+    Printer::print(ss, d_nm.mk_bool_type());
+    ASSERT_EQ(ss.str(), "Bool");
+  }
+  {
+    std::stringstream ss;
+    Printer::print(ss, d_nm.mk_rm_type());
+    ASSERT_EQ(ss.str(), "RoundingMode");
+  }
+  {
+    std::stringstream ss;
+    Type t = d_nm.mk_uninterpreted_type();
+    Printer::print(ss, t);
+    ASSERT_EQ(ss.str(), "@bzla.sort" + std::to_string(t.id()));
+  }
+  {
+    std::stringstream ss;
+    Printer::print(ss, d_nm.mk_uninterpreted_type("foo"));
+    ASSERT_EQ(ss.str(), "foo");
+  }
+  {
+    std::stringstream ss;
+    Printer::print(ss, d_type_bv);
+    ASSERT_EQ(ss.str(), "(_ BitVec 8)");
+  }
+  {
+    std::stringstream ss;
+    Printer::print(ss, d_type_fp);
+    ASSERT_EQ(ss.str(), "(_ FloatingPoint 5 11)");
+  }
+  {
+    std::stringstream ss;
+    Printer::print(ss, d_nm.mk_array_type(d_type_bv, d_type_fp));
+    ASSERT_EQ(ss.str(), "(Array (_ BitVec 8) (_ FloatingPoint 5 11))");
+  }
+  {
+    std::stringstream ss;
+    Printer::print(ss, d_nm.mk_fun_type({d_type_bv, d_type_fp}));
+    ASSERT_EQ(ss.str(), "(_ BitVec 8) -> (_ FloatingPoint 5 11)");
+  }
+  {
+    std::stringstream ss;
+    Printer::print(ss, d_nm.mk_fun_type({d_type_bool, d_type_bv, d_type_fp}));
+    ASSERT_EQ(ss.str(), "Bool (_ BitVec 8) -> (_ FloatingPoint 5 11)");
+  }
+}
+
 TEST_F(TestPrinter, print_value)
 {
   {

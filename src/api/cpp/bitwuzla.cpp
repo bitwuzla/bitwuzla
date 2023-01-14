@@ -1341,6 +1341,14 @@ Sort::fun_arity() const
   return d_type->fun_arity();
 }
 
+std::optional<std::string>
+Sort::uninterpreted_symbol() const
+{
+  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_SORT_IS_UNINTEPRETED(*this);
+  return d_type->uninterpreted_symbol();
+}
+
 bool
 Sort::is_array() const
 {
@@ -1375,6 +1383,12 @@ bool
 Sort::is_rm() const
 {
   return d_type != nullptr && d_type->is_rm();
+}
+
+bool
+Sort::is_uninterpreted() const
+{
+  return d_type != nullptr && d_type->is_uninterpreted();
 }
 
 std::string
@@ -1774,6 +1788,12 @@ Sort
 mk_rm_sort()
 {
   return bzla::NodeManager::get().mk_rm_type();
+}
+
+Sort
+mk_uninterpreted_sort(std::optional<const std::string> symbol)
+{
+  return bzla::NodeManager::get().mk_uninterpreted_type(symbol);
 }
 
 Term

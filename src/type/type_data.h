@@ -3,6 +3,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
+#include <string>
 #include <variant>
 #include <vector>
 
@@ -26,7 +28,8 @@ class TypeData
     FP,
     RM,
     ARRAY,
-    FUN
+    FUN,
+    UNINTERPRETED,
   };
 
   TypeData() = delete;
@@ -48,6 +51,13 @@ class TypeData
    * @return The vector of stored types.
    */
   const std::vector<Type>& get_types() const;
+
+  /**
+   * Return the symbol for uninterpreted types.
+   *
+   * @return The symbol.
+   */
+  const std::optional<std::string>& get_symbol() const;
 
   /**
    * @return The size of a bit-vector type.
@@ -82,6 +92,9 @@ class TypeData
   TypeData(TypeManager* mgr, uint64_t size);
   /** Constructor for creating floating-point type data. */
   TypeData(TypeManager* mgr, uint64_t exp_size, uint64_t sig_size);
+  /** Constructor for uninterpreted type data. */
+  TypeData(TypeManager* mgr,
+           const std::optional<std::string>& symbol = std::nullopt);
 
   /** Pointer to type manager that owns this object. */
   TypeManager* d_mgr = nullptr;
@@ -97,8 +110,12 @@ class TypeData
    * (1) size of a bit-vector type (for Kind::BV)
    * (2) exponent and significand size of a floating-point type (for Kind::FP)
    * (3) types for array and function types (for Kind::ARRAY, Kind::FUN).
+   * (4) the symbol for uninterpreted types (Kind::UNINTERPRETED)
    */
-  std::variant<uint64_t, std::pair<uint64_t, uint64_t>, std::vector<Type>>
+  std::variant<uint64_t,
+               std::pair<uint64_t, uint64_t>,
+               std::vector<Type>,
+               std::optional<std::string>>
       d_data;
 };
 

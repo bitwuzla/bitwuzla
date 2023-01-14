@@ -2,6 +2,7 @@
 #define BZLA_TYPE_TYPE_H_INCLUDED
 
 #include <cstdint>
+#include <optional>
 #include <ostream>
 #include <vector>
 
@@ -55,6 +56,11 @@ class Type
   bool is_fun() const;
 
   /**
+   * @return True if this type is an uninterpreted type.
+   */
+  bool is_uninterpreted() const;
+
+  /**
    * @return The size of this bit-vector type.
    */
   uint64_t bv_size() const;
@@ -93,6 +99,12 @@ class Type
    * @note Last element in vector is codomain type.
    */
   const std::vector<Type>& fun_types() const;
+
+  /**
+   * @return The symbol of this uninterpreted type if defined, and else an
+   *         empty string.
+   */
+  const std::optional<std::string>& uninterpreted_symbol() const;
 
   /**
    * @return The id of this type.

@@ -591,6 +591,18 @@ bitwuzla_mk_rm_sort()
   BITWUZLA_TRY_CATCH_END;
 }
 
+BitwuzlaSort
+bitwuzla_mk_uninterpreted_sort(const char *symbol)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  if (symbol)
+  {
+    return export_sort(bitwuzla::mk_uninterpreted_sort(std::string(symbol)));
+  }
+  return export_sort(bitwuzla::mk_uninterpreted_sort());
+  BITWUZLA_TRY_CATCH_END;
+}
+
 BitwuzlaTerm
 bitwuzla_mk_true()
 {
@@ -1345,6 +1357,18 @@ bitwuzla_sort_fun_get_arity(BitwuzlaSort sort)
   BITWUZLA_TRY_CATCH_END;
 }
 
+const char *
+bitwuzla_sort_get_uninterpreted_symbol(BitwuzlaSort sort)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_SORT_ID(sort);
+  static thread_local std::string str;
+  const std::optional<std::string> s = import_sort(sort).uninterpreted_symbol();
+  if (s) str = *s;
+  return s ? str.c_str() : nullptr;
+  BITWUZLA_TRY_CATCH_END;
+}
+
 bool
 bitwuzla_sort_is_equal(BitwuzlaSort sort0, BitwuzlaSort sort1)
 {
@@ -1406,6 +1430,15 @@ bitwuzla_sort_is_rm(BitwuzlaSort sort)
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   return import_sort(sort).is_rm();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+bool
+bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_SORT_ID(sort);
+  return import_sort(sort).is_uninterpreted();
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -1725,6 +1758,15 @@ bitwuzla_term_is_rm(BitwuzlaTerm term)
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   return import_term(term).sort().is_rm();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+bool
+bitwuzla_term_is_uninterpreted(BitwuzlaTerm term)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM_ID(term);
+  return import_term(term).sort().is_uninterpreted();
   BITWUZLA_TRY_CATCH_END;
 }
 

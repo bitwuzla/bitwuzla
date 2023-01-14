@@ -16,14 +16,18 @@ class TestCApi : public ::testing::Test
  protected:
   void SetUp() override
   {
+    d_bool_sort = bitwuzla_mk_bool_sort();
+
     d_bv_sort1  = bitwuzla_mk_bv_sort(1);
     d_bv_sort8  = bitwuzla_mk_bv_sort(8);
+    d_bv_sort16 = bitwuzla_mk_bv_sort(16);
     d_bv_sort23 = bitwuzla_mk_bv_sort(23);
     d_bv_sort32 = bitwuzla_mk_bv_sort(32);
 
     d_fp_sort16 = bitwuzla_mk_fp_sort(5, 11);
     d_fp_sort32 = bitwuzla_mk_fp_sort(8, 24);
     d_rm_sort   = bitwuzla_mk_rm_sort();
+    d_un_sort   = bitwuzla_mk_uninterpreted_sort(nullptr);
 
     d_arr_sort_bvfp = bitwuzla_mk_array_sort(d_bv_sort8, d_fp_sort16);
     d_arr_sort_fpbv = bitwuzla_mk_array_sort(d_fp_sort16, d_bv_sort8);
@@ -51,6 +55,7 @@ class TestCApi : public ::testing::Test
     d_bv_const8  = bitwuzla_mk_const(d_bv_sort8, "bv_const8");
     d_fp_const16 = bitwuzla_mk_const(d_fp_sort16, "fp_const16");
     d_rm_const   = bitwuzla_mk_const(d_rm_sort, "rm_const");
+    d_un_const   = bitwuzla_mk_const(d_un_sort, "un_const");
 
     d_rm_rna = bitwuzla_mk_rm_value(BITWUZLA_RM_RNA);
     d_rm_rne = bitwuzla_mk_rm_value(BITWUZLA_RM_RNE);
@@ -109,16 +114,19 @@ class TestCApi : public ::testing::Test
   BitwuzlaSort d_arr_sort_bv;
   BitwuzlaSort d_arr_sort_bvfp;
   BitwuzlaSort d_arr_sort_fpbv;
+  BitwuzlaSort d_bool_sort;
   BitwuzlaSort d_bv_sort1;
+  BitwuzlaSort d_bv_sort8;
+  BitwuzlaSort d_bv_sort16;
   BitwuzlaSort d_bv_sort23;
   BitwuzlaSort d_bv_sort32;
-  BitwuzlaSort d_bv_sort8;
   BitwuzlaSort d_fp_sort16;
   BitwuzlaSort d_fp_sort32;
   BitwuzlaSort d_fun_sort;
   BitwuzlaSort d_fun_sort_fp;
   std::vector<BitwuzlaSort> d_fun_domain_sort;
   BitwuzlaSort d_rm_sort;
+  BitwuzlaSort d_un_sort;
 
   /* terms */
   BitwuzlaTerm d_true;
@@ -138,6 +146,7 @@ class TestCApi : public ::testing::Test
   BitwuzlaTerm d_bv_const8;
   BitwuzlaTerm d_fp_const16;
   BitwuzlaTerm d_rm_const;
+  BitwuzlaTerm d_un_const;
 
   BitwuzlaTerm d_rm_rna;
   BitwuzlaTerm d_rm_rne;
@@ -614,6 +623,19 @@ TEST_F(TestCApi, mk_fun_sort)
 }
 
 TEST_F(TestCApi, mk_rm_sort) { ASSERT_NO_FATAL_FAILURE(bitwuzla_mk_rm_sort()); }
+
+TEST_F(TestCApi, mk_uninterpreted_sort)
+{
+  BitwuzlaSort s1 = bitwuzla_mk_uninterpreted_sort(nullptr);
+  BitwuzlaSort s2 = bitwuzla_mk_uninterpreted_sort("foo");
+  BitwuzlaSort s3 = bitwuzla_mk_uninterpreted_sort("foo");
+  ASSERT_TRUE(bitwuzla_sort_is_uninterpreted(s1));
+  ASSERT_TRUE(bitwuzla_sort_is_uninterpreted(s2));
+  ASSERT_TRUE(bitwuzla_sort_is_uninterpreted(s3));
+  ASSERT_FALSE(bitwuzla_sort_is_equal(s1, s2));
+  ASSERT_FALSE(bitwuzla_sort_is_equal(s1, s3));
+  ASSERT_FALSE(bitwuzla_sort_is_equal(s2, s3));
+}
 
 TEST_F(TestCApi, mk_true) { ASSERT_NO_FATAL_FAILURE(bitwuzla_mk_true()); }
 
@@ -2880,6 +2902,23 @@ TEST_F(TestCApi, sort_fun_get_arity)
   ASSERT_EQ(bitwuzla_sort_fun_get_arity(d_fun_sort), 3);
 }
 
+TEST_F(TestCApi, sort_get_uninterpreted_symbol)
+{
+  ASSERT_DEATH(bitwuzla_sort_get_uninterpreted_symbol(0), d_error_inv_sort);
+  ASSERT_DEATH(bitwuzla_sort_get_uninterpreted_symbol(d_bv_sort8),
+               "expected uninterpreted sort");
+  BitwuzlaSort s1 = bitwuzla_mk_uninterpreted_sort(nullptr);
+  BitwuzlaSort s2 = bitwuzla_mk_uninterpreted_sort("foo");
+  BitwuzlaSort s3 = bitwuzla_mk_uninterpreted_sort("foo");
+  BitwuzlaSort s4 = bitwuzla_mk_uninterpreted_sort("bar");
+  ASSERT_EQ(bitwuzla_sort_get_uninterpreted_symbol(s1), nullptr);
+  ASSERT_EQ(std::string(bitwuzla_sort_get_uninterpreted_symbol(s2)),
+            std::string("foo"));
+  ASSERT_EQ(std::string(bitwuzla_sort_get_uninterpreted_symbol(s3)),
+            std::string("foo"));
+  ASSERT_EQ(std::string(bitwuzla_sort_get_uninterpreted_symbol(s4)),
+            std::string("bar"));
+}
 TEST_F(TestCApi, sort_is_equal)
 {
   ASSERT_DEATH(bitwuzla_sort_is_equal(0, d_bv_sort1), d_error_inv_sort);
@@ -2902,6 +2941,7 @@ TEST_F(TestCApi, sort_is_array)
   ASSERT_FALSE(bitwuzla_sort_is_array(d_fun_sort_fp));
   ASSERT_FALSE(bitwuzla_sort_is_array(d_bv_sort8));
   ASSERT_FALSE(bitwuzla_sort_is_array(d_fp_sort16));
+  ASSERT_FALSE(bitwuzla_sort_is_array(d_un_sort));
 }
 
 TEST_F(TestCApi, sort_is_bv)
@@ -2916,6 +2956,7 @@ TEST_F(TestCApi, sort_is_bv)
   ASSERT_FALSE(bitwuzla_sort_is_bv(d_arr_sort_bvfp));
   ASSERT_FALSE(bitwuzla_sort_is_bv(d_arr_sort_fpbv));
   ASSERT_FALSE(bitwuzla_sort_is_bv(d_fun_sort));
+  ASSERT_FALSE(bitwuzla_sort_is_bv(d_un_sort));
 }
 
 TEST_F(TestCApi, sort_is_fp)
@@ -2927,6 +2968,7 @@ TEST_F(TestCApi, sort_is_fp)
   ASSERT_FALSE(bitwuzla_sort_is_fp(d_arr_sort_bv));
   ASSERT_FALSE(bitwuzla_sort_is_fp(d_arr_sort_bvfp));
   ASSERT_FALSE(bitwuzla_sort_is_fp(d_fun_sort_fp));
+  ASSERT_FALSE(bitwuzla_sort_is_fp(d_un_sort));
 }
 
 TEST_F(TestCApi, sort_is_fun)
@@ -2939,6 +2981,7 @@ TEST_F(TestCApi, sort_is_fun)
   ASSERT_FALSE(bitwuzla_sort_is_fun(d_arr_sort_fpbv));
   ASSERT_FALSE(bitwuzla_sort_is_fun(d_bv_sort8));
   ASSERT_FALSE(bitwuzla_sort_is_fun(d_fp_sort16));
+  ASSERT_FALSE(bitwuzla_sort_is_fun(d_un_sort));
 }
 
 TEST_F(TestCApi, sort_is_rm)
@@ -2948,6 +2991,17 @@ TEST_F(TestCApi, sort_is_rm)
   ASSERT_FALSE(bitwuzla_sort_is_rm(d_bv_sort8));
   ASSERT_FALSE(bitwuzla_sort_is_rm(d_fp_sort16));
   ASSERT_FALSE(bitwuzla_sort_is_rm(d_arr_sort_bv));
+  ASSERT_FALSE(bitwuzla_sort_is_rm(d_un_sort));
+}
+
+TEST_F(TestCApi, sort_is_uninterpreted)
+{
+  ASSERT_DEATH(bitwuzla_sort_is_uninterpreted(0), d_error_inv_sort);
+  ASSERT_FALSE(bitwuzla_sort_is_uninterpreted(d_rm_sort));
+  ASSERT_FALSE(bitwuzla_sort_is_uninterpreted(d_bv_sort8));
+  ASSERT_FALSE(bitwuzla_sort_is_uninterpreted(d_fp_sort16));
+  ASSERT_FALSE(bitwuzla_sort_is_uninterpreted(d_arr_sort_bv));
+  ASSERT_TRUE(bitwuzla_sort_is_uninterpreted(d_un_sort));
 }
 
 TEST_F(TestCApi, sort_dump)
@@ -3188,6 +3242,13 @@ TEST_F(TestCApi, term_is_rm)
   ASSERT_DEATH(bitwuzla_term_is_rm(0), d_error_inv_term);
   ASSERT_TRUE(bitwuzla_term_is_rm(d_rm_const));
   ASSERT_FALSE(bitwuzla_term_is_rm(d_bv_zero8));
+}
+
+TEST_F(TestCApi, term_is_uninterpreted)
+{
+  ASSERT_DEATH(bitwuzla_term_is_uninterpreted(0), d_error_inv_term);
+  ASSERT_TRUE(bitwuzla_term_is_uninterpreted(d_un_const));
+  ASSERT_FALSE(bitwuzla_term_is_uninterpreted(d_bv_zero8));
 }
 
 TEST_F(TestCApi, term_is_bv_value)
@@ -3547,27 +3608,24 @@ TEST_F(TestCApi, indexed)
 
 TEST_F(TestCApi, terms)
 {
-  BitwuzlaSort fp_sort             = bitwuzla_mk_fp_sort(5, 11);
-  BitwuzlaSort bv_sort             = bitwuzla_mk_bv_sort(16);
-  BitwuzlaSort bool_sort           = bitwuzla_mk_bool_sort();
-  BitwuzlaSort array_sort          = bitwuzla_mk_array_sort(bv_sort, bv_sort);
-  BitwuzlaSort rm_sort             = bitwuzla_mk_rm_sort();
-  std::vector<BitwuzlaSort> domain = {bv_sort, bv_sort, bv_sort};
+  BitwuzlaSort array_sort = bitwuzla_mk_array_sort(d_bv_sort16, d_bv_sort16);
+  std::vector<BitwuzlaSort> domain = {d_bv_sort16, d_bv_sort16, d_bv_sort16};
   BitwuzlaSort fun_sort =
-      bitwuzla_mk_fun_sort(domain.size(), domain.data(), bv_sort);
+      bitwuzla_mk_fun_sort(domain.size(), domain.data(), d_bv_sort16);
 
   std::vector<BitwuzlaTerm> fp_args = {d_rm_rna,
-                                       bitwuzla_mk_const(fp_sort, nullptr),
-                                       bitwuzla_mk_const(fp_sort, nullptr),
-                                       bitwuzla_mk_const(fp_sort, nullptr)};
+                                       bitwuzla_mk_const(d_fp_sort16, nullptr),
+                                       bitwuzla_mk_const(d_fp_sort16, nullptr),
+                                       bitwuzla_mk_const(d_fp_sort16, nullptr)};
 
-  std::vector<BitwuzlaTerm> bv_args = {bitwuzla_mk_const(bv_sort, nullptr),
-                                       bitwuzla_mk_const(bv_sort, nullptr),
-                                       bitwuzla_mk_const(bv_sort, nullptr),
-                                       bitwuzla_mk_const(bv_sort, nullptr)};
+  std::vector<BitwuzlaTerm> bv_args = {bitwuzla_mk_const(d_bv_sort16, nullptr),
+                                       bitwuzla_mk_const(d_bv_sort16, nullptr),
+                                       bitwuzla_mk_const(d_bv_sort16, nullptr),
+                                       bitwuzla_mk_const(d_bv_sort16, nullptr)};
 
-  std::vector<BitwuzlaTerm> bool_args = {bitwuzla_mk_const(bool_sort, nullptr),
-                                         bitwuzla_mk_const(bool_sort, nullptr)};
+  std::vector<BitwuzlaTerm> bool_args = {
+      bitwuzla_mk_const(d_bool_sort, nullptr),
+      bitwuzla_mk_const(d_bool_sort, nullptr)};
 
   for (size_t i = 0; i < BITWUZLA_KIND_NUM_KINDS; ++i)
   {
@@ -3695,8 +3753,9 @@ TEST_F(TestCApi, terms)
       case BITWUZLA_KIND_EXISTS:
       case BITWUZLA_KIND_FORALL:
       case BITWUZLA_KIND_LAMBDA: {
-        std::vector<BitwuzlaTerm> args = {bitwuzla_mk_var(bv_sort, nullptr),
-                                          bitwuzla_mk_var(bv_sort, nullptr)};
+        std::vector<BitwuzlaTerm> args = {
+            bitwuzla_mk_var(d_bv_sort16, nullptr),
+            bitwuzla_mk_var(d_bv_sort16, nullptr)};
         // body
         args.push_back(
             bitwuzla_mk_term(BITWUZLA_KIND_BV_SLT, args.size(), args.data()));
@@ -3838,17 +3897,19 @@ TEST_F(TestCApi, terms)
 
   size_t size;
 
-  BitwuzlaTerm bv_const = bitwuzla_mk_const(bv_sort, nullptr);
-  ASSERT_EQ(bitwuzla_term_get_kind(bv_const), BITWUZLA_KIND_CONSTANT);
-  ASSERT_EQ(bitwuzla_term_get_children(bv_const, &size), nullptr);
+  ASSERT_EQ(bitwuzla_term_get_kind(d_bv_const8), BITWUZLA_KIND_CONSTANT);
+  ASSERT_EQ(bitwuzla_term_get_children(d_bv_const8, &size), nullptr);
   ASSERT_EQ(size, 0);
 
-  BitwuzlaTerm rm_const = bitwuzla_mk_const(rm_sort, nullptr);
-  ASSERT_EQ(bitwuzla_term_get_kind(rm_const), BITWUZLA_KIND_CONSTANT);
-  ASSERT_EQ(bitwuzla_term_get_children(rm_const, &size), nullptr);
+  ASSERT_EQ(bitwuzla_term_get_kind(d_rm_const), BITWUZLA_KIND_CONSTANT);
+  ASSERT_EQ(bitwuzla_term_get_children(d_rm_const, &size), nullptr);
   ASSERT_EQ(size, 0);
 
-  BitwuzlaTerm bv_var = bitwuzla_mk_var(bv_sort, nullptr);
+  ASSERT_EQ(bitwuzla_term_get_kind(d_un_const), BITWUZLA_KIND_CONSTANT);
+  ASSERT_EQ(bitwuzla_term_get_children(d_un_const, &size), nullptr);
+  ASSERT_EQ(size, 0);
+
+  BitwuzlaTerm bv_var = bitwuzla_mk_var(d_bv_sort16, nullptr);
   ASSERT_EQ(bitwuzla_term_get_kind(bv_var), BITWUZLA_KIND_VARIABLE);
   ASSERT_EQ(bitwuzla_term_get_children(bv_var, &size), nullptr);
   ASSERT_EQ(size, 0);
@@ -3865,7 +3926,7 @@ TEST_F(TestCApi, terms)
   ASSERT_EQ(size, 0);
 
   BitwuzlaTerm fp_from_real =
-      bitwuzla_mk_fp_from_real(d_fp_sort16, rm_const, "1.1");
+      bitwuzla_mk_fp_from_real(d_fp_sort16, d_rm_const, "1.1");
   ASSERT_EQ(bitwuzla_term_get_kind(fp_from_real), BITWUZLA_KIND_ITE);
   ASSERT_NE(bitwuzla_term_get_children(fp_from_real, &size), nullptr);
   ASSERT_EQ(size, 3);
@@ -3877,7 +3938,7 @@ TEST_F(TestCApi, terms)
   ASSERT_EQ(size, 0);
 
   BitwuzlaTerm fp_from_rational =
-      bitwuzla_mk_fp_from_rational(d_fp_sort16, rm_const, "1", "2");
+      bitwuzla_mk_fp_from_rational(d_fp_sort16, d_rm_const, "1", "2");
   ASSERT_EQ(bitwuzla_term_get_kind(fp_from_rational), BITWUZLA_KIND_ITE);
   ASSERT_NE(bitwuzla_term_get_children(fp_from_rational, &size), nullptr);
   ASSERT_EQ(size, 3);
@@ -3887,12 +3948,12 @@ TEST_F(TestCApi, terms)
   ASSERT_EQ(bitwuzla_term_get_children(fp_nan, &size), nullptr);
   ASSERT_EQ(size, 0);
 
-  BitwuzlaTerm bv_one = bitwuzla_mk_bv_one(bv_sort);
+  BitwuzlaTerm bv_one = bitwuzla_mk_bv_one(d_bv_sort16);
   ASSERT_EQ(bitwuzla_term_get_kind(bv_one), BITWUZLA_KIND_VALUE);
   ASSERT_EQ(bitwuzla_term_get_children(bv_one, &size), nullptr);
   ASSERT_EQ(size, 0);
 
-  BitwuzlaTerm bv_val = bitwuzla_mk_bv_value(bv_sort, "43", 10);
+  BitwuzlaTerm bv_val = bitwuzla_mk_bv_value(d_bv_sort16, "43", 10);
   ASSERT_EQ(bitwuzla_term_get_kind(bv_val), BITWUZLA_KIND_VALUE);
   ASSERT_EQ(bitwuzla_term_get_children(bv_val, &size), nullptr);
   ASSERT_EQ(size, 0);
@@ -3909,15 +3970,13 @@ TEST_F(TestCApi, substitute)
   GTEST_SKIP();  // TODO enable when implemented
   BitwuzlaOptions *options         = bitwuzla_options_new();
   Bitwuzla *bitwuzla               = bitwuzla_new(options);
-  BitwuzlaSort bv_sort             = bitwuzla_mk_bv_sort(16);
-  BitwuzlaSort bool_sort           = bitwuzla_mk_bool_sort();
-  std::vector<BitwuzlaSort> domain = {bv_sort, bv_sort, bv_sort};
+  std::vector<BitwuzlaSort> domain = {d_bv_sort16, d_bv_sort16, d_bv_sort16};
   BitwuzlaSort fun_sort =
-      bitwuzla_mk_fun_sort(domain.size(), domain.data(), bool_sort);
-  BitwuzlaSort array_sort = bitwuzla_mk_array_sort(bv_sort, bv_sort);
+      bitwuzla_mk_fun_sort(domain.size(), domain.data(), d_bool_sort);
+  BitwuzlaSort array_sort = bitwuzla_mk_array_sort(d_bv_sort16, d_bv_sort16);
 
-  BitwuzlaTerm bv_const = bitwuzla_mk_const(bv_sort, 0);
-  BitwuzlaTerm bv_value = bitwuzla_mk_bv_value(bv_sort, "143", 10);
+  BitwuzlaTerm bv_const = bitwuzla_mk_const(d_bv_sort16, 0);
+  BitwuzlaTerm bv_value = bitwuzla_mk_bv_value(d_bv_sort16, "143", 10);
 
   // simple substitution const -> value
   {
@@ -3930,8 +3989,8 @@ TEST_F(TestCApi, substitute)
 
   // (sdiv x y) -> (sdiv value y)
   {
-    BitwuzlaTerm x = bitwuzla_mk_const(bv_sort, 0);
-    BitwuzlaTerm y = bitwuzla_mk_const(bv_sort, 0);
+    BitwuzlaTerm x = bitwuzla_mk_const(d_bv_sort16, 0);
+    BitwuzlaTerm y = bitwuzla_mk_const(d_bv_sort16, 0);
 
     std::vector<BitwuzlaTerm> keys   = {x};
     std::vector<BitwuzlaTerm> values = {bv_value};
@@ -3948,21 +4007,21 @@ TEST_F(TestCApi, substitute)
   // partial substitution of variables in quantified formula
   {
     std::vector<BitwuzlaTerm> args = {bitwuzla_mk_const(fun_sort, 0),
-                                      bitwuzla_mk_var(bv_sort, "x"),
-                                      bitwuzla_mk_var(bv_sort, "y"),
-                                      bitwuzla_mk_var(bv_sort, "z")};
+                                      bitwuzla_mk_var(d_bv_sort16, "x"),
+                                      bitwuzla_mk_var(d_bv_sort16, "y"),
+                                      bitwuzla_mk_var(d_bv_sort16, "z")};
     args.push_back(
         bitwuzla_mk_term(BITWUZLA_KIND_APPLY, args.size(), args.data()));
     BitwuzlaTerm q = bitwuzla_mk_term(
         BITWUZLA_KIND_FORALL, args.size() - 1, args.data() + 1);
 
     std::vector<BitwuzlaTerm> keys   = {args[1], args[2]};
-    std::vector<BitwuzlaTerm> values = {bitwuzla_mk_const(bv_sort, 0),
-                                        bitwuzla_mk_const(bv_sort, 0)};
+    std::vector<BitwuzlaTerm> values = {bitwuzla_mk_const(d_bv_sort16, 0),
+                                        bitwuzla_mk_const(d_bv_sort16, 0)};
 
     // Build expected
     std::vector<BitwuzlaTerm> args_expected = {
-        args[0], values[0], values[1], bitwuzla_mk_var(bv_sort, 0)};
+        args[0], values[0], values[1], bitwuzla_mk_var(d_bv_sort16, 0)};
     args_expected.push_back(bitwuzla_mk_term(
         BITWUZLA_KIND_APPLY, args_expected.size(), args_expected.data()));
     BitwuzlaTerm expected =
@@ -3975,7 +4034,7 @@ TEST_F(TestCApi, substitute)
 
   // substitute term in constant array
   {
-    BitwuzlaTerm term        = bitwuzla_mk_const(bv_sort, 0);
+    BitwuzlaTerm term        = bitwuzla_mk_const(d_bv_sort16, 0);
     BitwuzlaTerm const_array = bitwuzla_mk_const_array(array_sort, term);
 
     std::vector<BitwuzlaTerm> keys   = {term};

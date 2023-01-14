@@ -65,6 +65,21 @@ Printer::print(std::ostream& os, const Type& type)
     print(os, type.array_element());
     os << ")";
   }
+  else if (type.is_uninterpreted())
+  {
+    const std::optional<std::string>& symbol = type.uninterpreted_symbol();
+    os << (symbol ? *symbol : "@bzla.sort" + std::to_string(type.id()));
+  }
+  else if (type.is_fun())
+  {
+    const auto& types = type.fun_types();
+    size_t n          = types.size();
+    for (size_t i = 0; i < n - 1; ++i)
+    {
+      os << types[i] << " ";
+    }
+    os << "-> " << types[n - 1];
+  }
   else
   {
     assert(false);

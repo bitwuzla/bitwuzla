@@ -82,23 +82,33 @@ Type::is_fp() const
   assert(d_data != nullptr);
   return d_data->get_kind() == type::TypeData::Kind::FP;
 }
+
 bool
 Type::is_rm() const
 {
   assert(d_data != nullptr);
   return d_data->get_kind() == type::TypeData::Kind::RM;
 }
+
 bool
 Type::is_array() const
 {
   assert(d_data != nullptr);
   return d_data->get_kind() == type::TypeData::Kind::ARRAY;
 }
+
 bool
 Type::is_fun() const
 {
   assert(d_data != nullptr);
   return d_data->get_kind() == type::TypeData::Kind::FUN;
+}
+
+bool
+Type::is_uninterpreted() const
+{
+  assert(d_data != nullptr);
+  return d_data->get_kind() == type::TypeData::Kind::UNINTERPRETED;
 }
 
 uint64_t
@@ -153,6 +163,12 @@ Type::fun_types() const
 {
   assert(is_fun());
   return d_data->get_types();
+}
+
+const std::optional<std::string>&
+Type::uninterpreted_symbol() const
+{
+  return d_data->get_symbol();
 }
 
 uint64_t

@@ -155,6 +155,10 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_CHECK_SORT_NOT_IS_FUN(arg) \
   BITWUZLA_CHECK(!(arg).d_type->is_fun()) << "expected non-function sort";
 
+#define BITWUZLA_CHECK_SORT_IS_UNINTEPRETED(arg)   \
+  BITWUZLA_CHECK((arg).d_type->is_uninterpreted()) \
+      << "expected uninterpreted sort";
+
 #define BITWUZLA_CHECK_MK_TERM_ARGC(kind, is_nary, argc_expected, argc)       \
   BITWUZLA_CHECK((is_nary && argc >= argc_expected)                           \
                  || (!is_nary && argc == argc_expected))                      \

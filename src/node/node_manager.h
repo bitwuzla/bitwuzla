@@ -159,6 +159,14 @@ class NodeManager
    */
   Type mk_fun_type(const std::vector<Type>& types);
 
+  /**
+   * Create uninterpreted type.
+   * @param The symbol of the uninterpreted type.
+   * @return Uninterpreted type.
+   */
+  Type mk_uninterpreted_type(
+      const std::optional<std::string>& symbol = std::nullopt);
+
   /** Type checking of children and indices based on kind. */
   std::pair<bool, std::string> check_type(
       node::Kind kind,
