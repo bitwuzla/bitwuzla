@@ -3,6 +3,7 @@
 
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
+#include "node/unordered_node_ref_set.h"
 #include "solver/solver.h"
 #include "util/logger.h"
 #include "util/statistics.h"
@@ -142,7 +143,8 @@ class ArraySolver : public Solver
   /** Add path condition for given array to conditions vector. */
   void add_path_condition(const Access& access,
                           const Node& array,
-                          std::vector<Node>& conditions);
+                          std::vector<Node>& conditions,
+                          node::unordered_node_ref_set& cache);
 
   /**
    * Compute the parents for the array terms in given term.
@@ -151,6 +153,9 @@ class ArraySolver : public Solver
    * of access nodes.
    */
   void compute_parents(const Node& term);
+
+  /** Send de-duplicated lemma to solver state */
+  void lemma(const Node& lemma);
 
   /** Registered array selects. */
   backtrack::vector<Node> d_selects;
@@ -183,6 +188,9 @@ class ArraySolver : public Solver
    * which acts as witnesses for array disequality.
    */
   std::unordered_map<Node, std::pair<Node, Node>> d_disequality_lemma_cache;
+
+  /** Lemma cache for finding duplicate lemmas in current check() call. */
+  std::unordered_set<Node> d_lemma_cache;
 
   struct Statistics
   {

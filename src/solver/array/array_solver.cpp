@@ -39,6 +39,7 @@ ArraySolver::check()
   util::Timer timer(d_stats.time_check);
   d_array_models.clear();
   d_check_access_cache.clear();
+  d_lemma_cache.clear();
   ++d_stats.num_checks;
 
   // Check selects and equalities until fixed-point
@@ -141,10 +142,12 @@ ArraySolver::check_access(const Node& access)
       if (array.kind() == Kind::STORE)
       {
         Node index_value = d_solver_state.value(array[1]);
+        Log(2) << "index: " << index_value;
         // Check access-over-write consistency
         if (acc.index_value() == index_value)
         {
           Node element_value = d_solver_state.value(array[2]);
+          Log(2) << "value: " << element_value;
           if (acc.element_value() != element_value)
           {
             Log(2) << "\u2716 access store lemma";
@@ -290,9 +293,9 @@ ArraySolver::add_access_store_lemma(const Access& acc, const Node& store)
   collect_path_conditions(acc, store, conjuncts);
   conjuncts.push_back(nm.mk_node(Kind::EQUAL, {acc.index(), store[1]}));
   d_stats.num_lemma_size << conjuncts.size();
-  Node lemma = nm.mk_node(
+  Node lem = nm.mk_node(
       Kind::IMPLIES, {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
-  d_solver_state.lemma(lemma);
+  lemma(lem);
 }
 
 void
@@ -305,9 +308,9 @@ ArraySolver::add_access_const_array_lemma(const Access& acc, const Node& array)
   std::vector<Node> conjuncts;
   collect_path_conditions(acc, array, conjuncts);
   d_stats.num_lemma_size << conjuncts.size();
-  Node lemma = nm.mk_node(
+  Node lem = nm.mk_node(
       Kind::IMPLIES, {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
-  d_solver_state.lemma(lemma);
+  lemma(lem);
 }
 
 void
@@ -324,9 +327,9 @@ ArraySolver::add_congruence_lemma(const Node& array,
   collect_path_conditions(acc2, array, conjuncts);
   conjuncts.push_back(nm.mk_node(Kind::EQUAL, {acc1.index(), acc2.index()}));
   d_stats.num_lemma_size << conjuncts.size();
-  Node lemma = nm.mk_node(
+  Node lem = nm.mk_node(
       Kind::IMPLIES, {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
-  d_solver_state.lemma(lemma);
+  lemma(lem);
 }
 
 void
@@ -460,9 +463,10 @@ ArraySolver::collect_path_conditions(const Access& access,
 
   // If access was propagated upwards to target array, we have to include its
   // propagation condition.
+  node::unordered_node_ref_set cond_cache;
   if (prop_up_to_target)
   {
-    add_path_condition(access, array, conditions);
+    add_path_condition(access, array, conditions, cond_cache);
   }
 #ifndef NDEBUG
   unordered_node_ref_set pcache;
@@ -476,7 +480,7 @@ ArraySolver::collect_path_conditions(const Access& access,
     auto [itc, inserted] = pcache.insert(cur);
     assert(inserted);
 #endif
-    add_path_condition(access, cur, conditions);
+    add_path_condition(access, cur, conditions, cond_cache);
     // Found start array
     if (cur == access.array())
     {
@@ -489,18 +493,18 @@ ArraySolver::collect_path_conditions(const Access& access,
 void
 ArraySolver::add_path_condition(const Access& access,
                                 const Node& array,
-                                std::vector<Node>& conditions)
+                                std::vector<Node>& conditions,
+                                node::unordered_node_ref_set& cache)
 {
   Log(3) << "path: " << array;
   NodeManager& nm = NodeManager::get();
+  Node cond;
   if (array.kind() == Kind::STORE)
   {
-    // Do not include the access itself
-    if (array != access.get())
+    // Access got only propagated if store index is different from access index.
+    if (access.index_value() != d_solver_state.value(array[1]))
     {
-      conditions.push_back(
-          nm.mk_node(Kind::DISTINCT, {array[1], access.index()}));
-      Log(3) << "  cond: " << conditions.back();
+      cond = nm.mk_node(Kind::DISTINCT, {array[1], access.index()});
     }
   }
   else if (array.kind() == Kind::ITE)
@@ -508,22 +512,34 @@ ArraySolver::add_path_condition(const Access& access,
     Node cond_value = d_solver_state.value(array[0]);
     if (cond_value.value<bool>())
     {
-      conditions.push_back(array[0]);
+      cond = array[0];
     }
     else
     {
-      conditions.push_back(nm.mk_node(Kind::NOT, {array[0]}));
+      cond = nm.mk_node(Kind::NOT, {array[0]});
     }
-    Log(3) << "  cond: " << conditions.back();
   }
   else if (array.kind() == Kind::EQUAL)
   {
-    conditions.push_back(array);
-    Log(3) << "  cond: " << conditions.back();
+    cond = array;
   }
   else
   {
     assert(array.kind() == Kind::CONSTANT);
+  }
+
+  if (!cond.is_null())
+  {
+    auto [it, inserted] = cache.insert(cond);
+    if (inserted)
+    {
+      conditions.push_back(cond);
+      Log(3) << "  cond: " << cond;
+    }
+    else
+    {
+      Log(3) << "  duplicate";
+    }
   }
 }
 
@@ -544,10 +560,10 @@ ArraySolver::add_disequality_lemma(const Node& eq)
   Node k          = nm.mk_const(a.type().array_index(), ss.str());
   Node sel_a      = nm.mk_node(Kind::SELECT, {a, k});
   Node sel_b      = nm.mk_node(Kind::SELECT, {b, k});
-  Node lemma      = nm.mk_node(Kind::IMPLIES,
-                          {nm.mk_node(Kind::NOT, {eq}),
+  Node lem        = nm.mk_node(Kind::IMPLIES,
+                        {nm.mk_node(Kind::NOT, {eq}),
                                 nm.mk_node(Kind::DISTINCT, {sel_a, sel_b})});
-  d_solver_state.lemma(lemma);
+  lemma(lem);
   auto p = std::make_pair(sel_a, sel_b);
   d_disequality_lemma_cache.emplace(eq, p);
   return p;
@@ -589,6 +605,18 @@ ArraySolver::compute_parents(const Node& term)
       visit.push_back(cur[2]);
     }
   } while (!visit.empty());
+}
+
+void
+ArraySolver::lemma(const Node& lemma)
+{
+  Node lem            = d_env.rewriter().rewrite(lemma);
+  auto [it, inserted] = d_lemma_cache.insert(lem);
+  // Do not send duplicate lemmas in this check() round.
+  if (inserted)
+  {
+    d_solver_state.lemma(lem);
+  }
 }
 
 ArraySolver::Statistics::Statistics(util::Statistics& stats)
