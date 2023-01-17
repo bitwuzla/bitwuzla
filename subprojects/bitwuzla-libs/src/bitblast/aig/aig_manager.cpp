@@ -2,6 +2,12 @@
 
 namespace bzla::bb {
 
+bool
+operator<(const AigNode& a, const AigNode& b)
+{
+  return a.get_id() < b.get_id();
+}
+
 /**
  * AigNodeData storing all node data.
  */

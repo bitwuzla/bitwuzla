@@ -63,6 +63,8 @@ class AigNode
   bool d_negated = false;
 };
 
+bool operator<(const AigNode& a, const AigNode& b);
+
 // AigNodeUniqueTable
 class AigNodeUniqueTable
 {

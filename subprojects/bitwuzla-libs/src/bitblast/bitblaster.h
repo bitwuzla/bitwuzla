@@ -322,44 +322,22 @@ class BitblasterInterface
 
   virtual Bits bv_add(const Bits& a, const Bits& b)
   {
-    Bits res;
-    size_t size = a.size();
-    res.resize(size);
-
-    T cout;
-    std::tie(res[size - 1], cout) = half_adder(a[size - 1], b[size - 1]);
-    for (size_t i = 1, j = size - 2; i < size; ++i, --j)
+    // Normalize operands s.t. operands with fixed bits come first
+    if (a > b)
     {
-      std::tie(res[j], cout) = full_adder(a[j], b[j], cout);
+      return add_helper(b, a);
     }
-    return res;
+    return add_helper(a, b);
   }
 
   virtual Bits bv_mul(const Bits& a, const Bits& b)
   {
-    Bits res;
-    size_t size = a.size();
-    res.reserve(size);
-
-    for (size_t i = 0; i < size; ++i)
+    // Normalize operands s.t. operands with fixed bits come first
+    if (a > b)
     {
-      res.push_back(d_bit_mgr.mk_and(a[i], b[size - 1]));
+      return mul_helper(b, a);
     }
-
-    for (size_t i = 1, ib = size - 2; i < size; ++i, --ib)
-    {
-      T cout;
-      const T& b_bit = b[ib];
-
-      std::tie(res[ib], cout) =
-          half_adder(res[ib], d_bit_mgr.mk_and(a[size - 1], b_bit));
-      for (size_t j = 1, ir = ib - 1, ia = size - 2; j <= ib; ++j, --ir, --ia)
-      {
-        std::tie(res[ir], cout) =
-            full_adder(res[ir], d_bit_mgr.mk_and(a[ia], b_bit), cout);
-      }
-    }
-    return res;
+    return mul_helper(a, b);
   }
 
   virtual Bits bv_udiv(const Bits& a, const Bits& b)
@@ -394,6 +372,48 @@ class BitblasterInterface
   BitInterface<T> d_bit_mgr;
 
  private:
+  Bits add_helper(const Bits& a, const Bits& b)
+  {
+    Bits res;
+    size_t size = a.size();
+    res.resize(size);
+
+    T cout;
+    std::tie(res[size - 1], cout) = half_adder(a[size - 1], b[size - 1]);
+    for (size_t i = 1, j = size - 2; i < size; ++i, --j)
+    {
+      std::tie(res[j], cout) = full_adder(a[j], b[j], cout);
+    }
+    return res;
+  }
+
+  Bits mul_helper(const Bits& a, const Bits& b)
+  {
+    Bits res;
+    size_t size = a.size();
+    res.reserve(size);
+
+    for (size_t i = 0; i < size; ++i)
+    {
+      res.push_back(d_bit_mgr.mk_and(a[i], b[size - 1]));
+    }
+
+    for (size_t i = 1, ib = size - 2; i < size; ++i, --ib)
+    {
+      T cout;
+      const T& b_bit = b[ib];
+
+      std::tie(res[ib], cout) =
+          half_adder(res[ib], d_bit_mgr.mk_and(a[size - 1], b_bit));
+      for (size_t j = 1, ir = ib - 1, ia = size - 2; j <= ib; ++j, --ir, --ia)
+      {
+        std::tie(res[ir], cout) =
+            full_adder(res[ir], d_bit_mgr.mk_and(a[ia], b_bit), cout);
+      }
+    }
+    return res;
+  }
+
   T ult_helper(const Bits& a, const Bits& b)
   {
     size_t lsb = a.size() - 1;
