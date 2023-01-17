@@ -25,7 +25,6 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
   util::Timer timer(d_stats.time_apply);
 
   NodeManager& nm = NodeManager::get();
-  d_cache.clear();
 
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
@@ -125,7 +124,9 @@ PassEmbeddedConstraints::substitute(const Node& node)
     }
     visit.pop_back();
   } while (!visit.empty());
-  return d_cache.at(node);
+  auto it = d_cache.find(node);
+  assert(it != d_cache.end());
+  return it->second;
 }
 
 PassEmbeddedConstraints::Statistics::Statistics(util::Statistics& stats)

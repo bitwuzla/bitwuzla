@@ -2,7 +2,6 @@
 #define BZLA_PREPROCESS_PASS_EMBEDDED_CONSTRAINTS_H_INCLUDED
 
 #include "backtrack/unordered_map.h"
-#include "node/unordered_node_ref_map.h"
 #include "preprocess/preprocessing_pass.h"
 #include "util/statistics.h"
 
@@ -35,9 +34,8 @@ class PassEmbeddedConstraints : public PreprocessingPass
   backtrack::unordered_map<Node, Node> d_substitutions;
   /**
    * Cache of processed nodes that maybe shared across substitutions.
-   * Clear after a call to process to avoid sharing.
    */
-  node::unordered_node_ref_map<Node> d_cache;
+  backtrack::unordered_map<Node, Node> d_cache;
 };
 
 }  // namespace bzla::preprocess::pass
