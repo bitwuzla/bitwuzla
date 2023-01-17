@@ -98,6 +98,7 @@ PassElimLambda::reduce(const Node& node) const
     {
       if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
       {
+        assert(d_cache.find(cur) != d_cache.end());
         visit.push_back(d_cache.at(cur));
       }
       else
@@ -110,6 +111,7 @@ PassElimLambda::reduce(const Node& node) const
     {
       if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
       {
+        assert(d_cache.find(cur) != d_cache.end());
         it->second = cache.at(d_cache.at(cur));
       }
       else
@@ -126,8 +128,9 @@ PassElimLambda::reduce(const Node& node) const
         {
           it->second = nm.mk_node(cur.kind(), children, cur.indices());
         }
-        else if (cur.kind() == Kind::VARIABLE)
+        else if (substitutions.find(cur) != substitutions.end())
         {
+          assert(cur.kind() == Kind::VARIABLE);
           it->second = substitutions.at(cur);
         }
         else
