@@ -51,8 +51,20 @@ SolverEngine::solve()
     }
     // TODO: process lemmas after each check()?
     d_fp_solver.check();
+    if (!d_lemmas.empty())
+    {
+      continue;
+    }
     d_array_solver.check();
+    if (!d_lemmas.empty())
+    {
+      continue;
+    }
     d_fun_solver.check();
+    if (!d_lemmas.empty())
+    {
+      continue;
+    }
     d_quant_solver.check();
   } while (!d_lemmas.empty());
   d_in_solving_mode = false;
@@ -97,11 +109,13 @@ void
 SolverEngine::lemma(const Node& lemma)
 {
   assert(lemma.type().is_bool());
-  Log(2) << "lemma: " << printer::set_depth(0) << lemma;
+  Log(2) << "lemma: " << lemma;
   Node rewritten = d_env.rewriter().rewrite(lemma);
   // Lemmas should never simplify to true
   assert(!rewritten.is_value() || !rewritten.value<bool>());
   auto [it, inserted] = d_lemma_cache.insert(rewritten);
+  // Solvers should not send lemma duplicates.
+  assert(inserted);
   // There can be duplicates if we add more than one lemma per round.
   if (inserted)
   {

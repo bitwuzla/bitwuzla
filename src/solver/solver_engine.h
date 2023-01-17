@@ -39,7 +39,10 @@ class SolverEngine
   /** Get value of given term. Queries corresponding solver for value. */
   Node value(const Node& term);
 
-  /** Add a lemma. */
+  /** Add a lemma.
+   *
+   * @note: A solver is not allowed to send duplicate lemmas.
+   */
   void lemma(const Node& lemma);
 
   /** @return Solver engine backtrack manager. */
