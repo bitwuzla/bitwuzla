@@ -84,8 +84,8 @@ TEST_F(TestRewriterFp, fp_add_eval)
   Node fpadd3 = d_nm.mk_node(
       Kind::FP_ADD,
       {d_nm.mk_value(RoundingMode::RNE),
-       d_nm.mk_const(d_fp35_type),
-       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000")))});
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000"))),
+       d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpadd3, d_rewriter.rewrite(fpadd3));
   Node fpadd4 = d_nm.mk_node(Kind::FP_ADD,
                              {d_nm.mk_value(RoundingMode::RNE),
@@ -191,8 +191,8 @@ TEST_F(TestRewriterFp, fp_fma_eval)
   Node fpfma3 = d_nm.mk_node(
       Kind::FP_FMA,
       {d_nm.mk_value(RoundingMode::RNE),
-       d_nm.mk_const(d_fp35_type),
        d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100010"))),
+       d_nm.mk_const(d_fp35_type),
        d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000")))});
   ASSERT_EQ(fpfma3, d_rewriter.rewrite(fpfma3));
   Node fpfma4 = d_nm.mk_node(
@@ -568,8 +568,8 @@ TEST_F(TestRewriterFp, fp_mul_eval)
   Node fpmul3 = d_nm.mk_node(
       Kind::FP_MUL,
       {d_nm.mk_value(RoundingMode::RNE),
-       d_nm.mk_const(d_fp35_type),
-       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000")))});
+       d_nm.mk_value(FloatingPoint(d_fp35_type, BitVector(8, "00100000"))),
+       d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpmul3, d_rewriter.rewrite(fpmul3));
   Node fpmul4 = d_nm.mk_node(Kind::FP_MUL,
                              {d_nm.mk_value(RoundingMode::RNE),

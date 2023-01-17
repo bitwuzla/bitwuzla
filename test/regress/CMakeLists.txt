@@ -414,6 +414,8 @@ set(testcases_btor_sat
 "solver/array/write5.btor"
 "solver/fun/lambda1.btor"
 "solver/fun/nestedfun1.smt2 -rwl=2"
+"solver/fun/regrmodel3.btor"
+"solver/fun/regrmodel4.btor"
 )
 set(testcases_btor_unsat
 "preprocess/array/regrembeddedconstraint1.btor -rwl=0"
@@ -544,8 +546,6 @@ set(testcases_btor_unsat
 "solver/array/write8.btor"
 "solver/array/write9.btor"
 "solver/fun/lambda2.btor"
-"solver/fun/regrmodel3.btor"
-"solver/fun/regrmodel4.btor"
 )
 
 ### QF_BV-only testcases (no incremental SAT solving required)
