@@ -26,6 +26,8 @@ Logger::Line::~Line()
 {
   auto& os = stream();
   os << std::endl;
+  // Reset node print depth
+  os << printer::set_depth(0);
   // Reset stream flags.
   os.flags(d_flags);
 }
