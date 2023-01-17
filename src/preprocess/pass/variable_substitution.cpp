@@ -91,6 +91,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
         d_substitutions.emplace(var, term_processed);
         d_substitution_assertions.insert(assertion);
         new_substs.emplace(var, term_processed);
+        Log(2) << "Add substitution: " << var << " -> " << term_processed;
       }
     }
     Log(1) << "Found " << new_substs.size() << " new substitutions";
@@ -214,29 +215,47 @@ PassVariableSubstitution::remove_indirect_cycles(
       }
       else if (!it->second)
       {
-        // Save node for computing rank in next phase
         it->second = true;
-        nodes.push_back(cur);
       }
       visit.pop_back();
     } while (!visit.empty());
   }
 
-  // Compute ranking for all remaining nodes. Nodes on the vector are in
-  // post-order DFS.
-  for (const Node& cur : nodes)
+  cache.clear();
+
+  // Compute ranking for all remaining nodes.
+  for (const auto& [var, term] : substitutions)
   {
-    int64_t max = 0;
-    for (const Node& child : cur)
+    visit.push_back(term);
+    do
     {
-      auto iit = order.find(child);
-      assert(iit != order.end());
-      if (iit->second > max)
+      const Node& cur     = visit.back();
+      auto [it, inserted] = cache.emplace(cur, false);
+      if (inserted)
       {
-        max = iit->second;
+        visit.insert(visit.end(), cur.begin(), cur.end());
+        continue;
       }
-    }
-    order.emplace(cur, max);
+      else if (!it->second)
+      {
+        if (order.find(cur) == order.end())
+        {
+          int64_t max = 0;
+          for (const Node& child : cur)
+          {
+            auto iit = order.find(child);
+            assert(iit != order.end());
+            if (iit->second > max)
+            {
+              max = iit->second;
+            }
+          }
+          order.emplace(cur, max);
+        }
+        it->second = true;
+      }
+      visit.pop_back();
+    } while (!visit.empty());
   }
 
   // Remove substitutions to break cycles.
@@ -253,6 +272,8 @@ PassVariableSubstitution::remove_indirect_cycles(
     if (itt->second > itv->second)
     {
       it = substitutions.erase(it);
+      Log(2) << "Remove cyclic substitution: " << itv->first << " -> "
+             << itt->first;
     }
     else
     {
