@@ -22,6 +22,7 @@ extern "C" {
 #include "api/c/bitwuzla_options.h"
 #include "api/checks.h"
 #include "api/cpp/bitwuzla.h"
+#include "terminator.h"
 
 /* -------------------------------------------------------------------------- */
 
@@ -94,6 +95,38 @@ class AbortStream
 
 /* -------------------------------------------------------------------------- */
 
+class CTerminator : public bitwuzla::Terminator
+{
+ public:
+  /**
+   * Constructor.
+   * @param fun The associated termination function.
+   * @param state The associated state.
+   */
+  CTerminator(int32_t (*fun)(void *), void *state) : f_fun(fun), d_state(state)
+  {
+  }
+
+  bool terminate() override
+  {
+    if (f_fun == nullptr)
+    {
+      return false;
+    }
+    return f_fun(d_state);
+  }
+
+  void *get_state() { return d_state; }
+
+ private:
+  /** The associated termination function. */
+  int32_t (*f_fun)(void *);
+  /** The associated state. */
+  void *d_state;
+};
+
+/* -------------------------------------------------------------------------- */
+
 // TODO: move definition of struct BitwuzlaOptions back here from
 //       api/c/bitwuzla_options.h after the parser is rewritten and uses
 //       the C++ API
@@ -139,6 +172,8 @@ struct Bitwuzla
 
   /** The associated bitwuzla instance. */
   std::unique_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
+  /** The currently configured terminator. */
+  std::unique_ptr<CTerminator> d_terminator;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -389,7 +424,7 @@ bitwuzla_terminate(Bitwuzla *bitwuzla)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  // TODO:
+  bitwuzla->d_terminator->terminate();
   return false;
   BITWUZLA_TRY_CATCH_END;
 }
@@ -402,8 +437,8 @@ bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_NOT_NULL(fun);
-  BITWUZLA_CHECK_NOT_NULL(state);
-  // TODO
+  bitwuzla->d_terminator.reset(new CTerminator(fun, state));
+  bitwuzla->d_bitwuzla->configure_terminator(bitwuzla->d_terminator.get());
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -412,8 +447,7 @@ bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  // TODO
-  return nullptr;
+  return bitwuzla->d_terminator ? bitwuzla->d_terminator->get_state() : nullptr;
   BITWUZLA_TRY_CATCH_END;
 }
 

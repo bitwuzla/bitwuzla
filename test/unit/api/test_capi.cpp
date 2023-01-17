@@ -11,6 +11,8 @@
 #include "api/c/bitwuzla.h"
 #include "test/unit/test.h"
 
+namespace bzla::test {
+
 class TestCApi : public ::testing::Test
 {
  protected:
@@ -4127,3 +4129,124 @@ TEST_F(TestCApi, arrayfun)
   ASSERT_TRUE(!bitwuzla_term_is_array(f));
   ASSERT_TRUE(bitwuzla_term_is_array(a));
 }
+
+/* -------------------------------------------------------------------------- */
+/* Termination function                                                       */
+/* -------------------------------------------------------------------------- */
+
+namespace {
+int32_t
+test_terminate1(void *state)
+{
+  (void) state;
+  return true;
+}
+int32_t
+test_terminate2(void *state)
+{
+  (void) state;
+  sleep(1);
+  return true;
+}
+}  // namespace
+
+TEST_F(TestCApi, terminate)
+{
+  BitwuzlaSort bv_sort4 = bitwuzla_mk_bv_sort(4);
+  BitwuzlaTerm x        = bitwuzla_mk_const(bv_sort4, nullptr);
+  BitwuzlaTerm s        = bitwuzla_mk_const(bv_sort4, nullptr);
+  BitwuzlaTerm t        = bitwuzla_mk_const(bv_sort4, nullptr);
+  BitwuzlaTerm a        = bitwuzla_mk_term2(
+      BITWUZLA_KIND_AND,
+      bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL,
+                        bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, x, x),
+                        bitwuzla_mk_bv_value_uint64(bv_sort4, 3)),
+      bitwuzla_mk_term1(
+          BITWUZLA_KIND_NOT,
+          bitwuzla_mk_term2(BITWUZLA_KIND_BV_UADD_OVERFLOW, x, x)));
+  BitwuzlaTerm b = bitwuzla_mk_term2(
+      BITWUZLA_KIND_DISTINCT,
+      bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL,
+                        s,
+                        bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, x, t)),
+      bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL,
+                        bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, s, x),
+                        t));
+  // solved by rewriting
+  {
+    BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
+    Bitwuzla *bitwuzla = bitwuzla_new(opts);
+    bitwuzla_assert(bitwuzla, a);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+  }
+  {
+    BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
+    Bitwuzla *bitwuzla = bitwuzla_new(opts);
+    bitwuzla_assert(bitwuzla, a);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+  }
+  // not solved by rewriting, should be terminated when configured
+  {
+    BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
+    Bitwuzla *bitwuzla = bitwuzla_new(opts);
+    bitwuzla_assert(bitwuzla, b);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+  }
+  {
+    BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
+    Bitwuzla *bitwuzla = bitwuzla_new(opts);
+    bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
+    bitwuzla_assert(bitwuzla, b);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+  }
+  {
+    BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
+    Bitwuzla *bitwuzla = bitwuzla_new(opts);
+    bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
+    bitwuzla_assert(bitwuzla, b);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+  }
+}
+
+TEST_F(TestCApi, terminate_sat)
+{
+  BitwuzlaSort bv_sort32 = bitwuzla_mk_bv_sort(32);
+  BitwuzlaTerm x         = bitwuzla_mk_const(bv_sort32, nullptr);
+  BitwuzlaTerm s         = bitwuzla_mk_const(bv_sort32, nullptr);
+  BitwuzlaTerm t         = bitwuzla_mk_const(bv_sort32, nullptr);
+  BitwuzlaTerm b         = bitwuzla_mk_term2(
+      BITWUZLA_KIND_DISTINCT,
+      bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL,
+                        s,
+                        bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, x, t)),
+      bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL,
+                        bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, s, x),
+                        t));
+  // not solved by bit-blasting, should be terminated in the SAT solver when
+  // configured
+  {
+    BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
+    Bitwuzla *bitwuzla = bitwuzla_new(opts);
+    bitwuzla_set_termination_callback(bitwuzla, test_terminate2, nullptr);
+    bitwuzla_assert(bitwuzla, b);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+  }
+  {
+    BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
+    Bitwuzla *bitwuzla = bitwuzla_new(opts);
+    bitwuzla_set_termination_callback(bitwuzla, test_terminate2, nullptr);
+    bitwuzla_assert(bitwuzla, b);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+
+}  // namespace bzla::test
