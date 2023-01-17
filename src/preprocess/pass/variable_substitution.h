@@ -2,7 +2,6 @@
 #define BZLA_PREPROCESS_PASS_VARIABLE_SUBSTITUTION_H_INCLUDED
 
 #include "backtrack/unordered_map.h"
-#include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "node/unordered_node_ref_map.h"
 #include "preprocess/preprocessing_pass.h"
@@ -38,7 +37,8 @@ class PassVariableSubstitution : public PreprocessingPass
   /** Current set of variable substitutions. */
   backtrack::unordered_map<Node, Node> d_substitutions;
   /** Current set of variable substitution assertions. */
-  backtrack::unordered_set<Node> d_substitution_assertions;
+  backtrack::unordered_map<Node, std::pair<Node, Node>>
+      d_substitution_assertions;
 
   /** Backtrackable cache. */
   class Cache : public backtrack::Backtrackable

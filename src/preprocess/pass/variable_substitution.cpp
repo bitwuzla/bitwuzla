@@ -72,11 +72,24 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
       const Node& assertion  = assertions[i];
-      const auto [var, term] = get_var_term(assertion);
-      // Either no variable substitution or already have a substitution
-      if (var.is_null() || d_substitutions.find(var) != d_substitutions.end())
+      auto [var, term]       = get_var_term(assertion);
+      // No variable substitution
+      if (var.is_null())
       {
         continue;
+      }
+      // If var already substituted, check if term is also a variable.
+      else if (d_substitutions.find(var) != d_substitutions.end())
+      {
+        if (term.is_const()
+            && d_substitutions.find(term) == d_substitutions.end())
+        {
+          std::swap(var, term);
+        }
+        else
+        {
+          continue;
+        }
       }
 
       // If we already have substitutions, process the term first to ensure
@@ -89,7 +102,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       if (!is_direct_cycle(var, term_processed))
       {
         d_substitutions.emplace(var, term_processed);
-        d_substitution_assertions.insert(assertion);
+        d_substitution_assertions.emplace(assertion, std::make_pair(var, term));
         new_substs.emplace(var, term_processed);
         Log(2) << "Add substitution: " << var << " -> " << term_processed;
       }
@@ -133,26 +146,26 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     const Node& assertion = assertions[i];
     // Keep non-top-level variable substitution assertion, but apply
     // substitutions in term.
-    if (!top_level
-        && d_substitution_assertions.find(assertion)
-               != d_substitution_assertions.end())
+    if (!top_level)
     {
-      auto [var, term] = get_var_term(assertion);
-      assert(!var.is_null());
-      // Make sure to rewrite the assertion, otherwise we may run into loops
-      // with rewriter pass due to the substitution normalizations in
-      // get_var_term(), e.g., a -- subst --> a = true -- rewrite --> a.
-      Node rewritten =
-          rewriter.rewrite(nm.mk_node(Kind::EQUAL, {var, process(term)}));
-      assertions.replace(i, rewritten);
-      // Add new substitution assertion to cache in order to avoid that this
-      // new assertion will be eliminated by variable substitution.
-      d_substitution_assertions.insert(rewritten);
+      auto it = d_substitution_assertions.find(assertion);
+      if (it != d_substitution_assertions.end())
+      {
+        const auto& [var, term] = it->second;
+        assert(!var.is_null());
+        // Make sure to rewrite the assertion, otherwise we may run into loops
+        // with rewriter pass due to the substitution normalizations in
+        // get_var_term(), e.g., a -- subst --> a = true -- rewrite --> a.
+        Node rewritten =
+            rewriter.rewrite(nm.mk_node(Kind::EQUAL, {var, process(term)}));
+        assertions.replace(i, rewritten);
+        // Add new substitution assertion to cache in order to avoid that this
+        // new assertion will be eliminated by variable substitution.
+        d_substitution_assertions.emplace(rewritten, std::make_pair(var, term));
+        continue;
+      }
     }
-    else
-    {
-      assertions.replace(i, process(assertion));
-    }
+    assertions.replace(i, process(assertion));
   }
 }
 
