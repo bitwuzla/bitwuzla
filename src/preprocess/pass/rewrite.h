@@ -12,11 +12,18 @@ namespace bzla::preprocess::pass {
 class PassRewrite : public PreprocessingPass
 {
  public:
-  PassRewrite(Env& env) : PreprocessingPass(env) {}
+  PassRewrite(Env& env);
 
   void apply(AssertionVector& assertions) override;
 
   Node process(const Node& term) override;
+
+ private:
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    util::TimerStatistic& time_apply;
+  } d_stats;
 };
 
 }  // namespace bzla::preprocess::pass
