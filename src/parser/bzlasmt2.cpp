@@ -5257,7 +5257,6 @@ parse_sort(BzlaSMT2Parser *parser,
 static int32_t
 declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
 {
-  uint32_t i;
   int32_t tag;
   BitwuzlaSortStack args;
   BzlaSMT2Node *fun;
@@ -5343,24 +5342,6 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
   {
     /* check if arguments have bit-vector sort, all other sorts are not
      * supported for uninterpreted functions */
-    for (i = 0; i < BZLA_COUNT_STACK(args); i++)
-    {
-      BitwuzlaSort sort_arg = BZLA_PEEK_STACK(args, i);
-      if (bitwuzla_sort_is_fun(sort_arg) || bitwuzla_sort_is_array(sort_arg))
-      {
-        BZLA_RELEASE_STACK(args);
-        return !perr_smt2(parser,
-                          "array and function sorts not supported "
-                          "for arguments of uninterpreted functions");
-      }
-    }
-    if (bitwuzla_sort_is_fun(sort) || bitwuzla_sort_is_array(sort))
-    {
-      BZLA_RELEASE_STACK(args);
-      return !perr_smt2(parser,
-                        "array and function sorts not supported as "
-                        "return sort for uninterpreted functions");
-    }
 
     s        = bitwuzla_mk_fun_sort(BZLA_COUNT_STACK(args), args.start, sort);
     fun->exp = bitwuzla_mk_const(s, fun->name);
@@ -5455,11 +5436,6 @@ define_fun_smt2(BzlaSMT2Parser *parser)
   if (!parse_sort(parser, tag, true, &sort)) return 0;
   if (bitwuzla_sort_is_array(sort))
   {
-    if (nargs)
-    {
-      return !perr_smt2(parser, "sort Array is not supported for arity > 0");
-    }
-
     if (!parser->commands.model)
     {
       // BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),

@@ -32,6 +32,7 @@ set(libbitwuzla_src_files
   parser/bzlabtor.cpp
   parser/bzlasmt2.cpp
   preprocess/pass/elim_lambda.cpp
+  preprocess/pass/elim_uninterpreted.cpp
   preprocess/pass/embedded_constraints.cpp
   preprocess/pass/flatten_and.cpp
   preprocess/pass/rewrite.cpp

@@ -16,6 +16,8 @@ class TypeManager;
 class Type
 {
   friend type::TypeManager;
+  friend bool operator==(const Type& a, const Type& b);
+  friend bool operator!=(const Type& a, const Type& b);
 
  public:
   Type() = default;
@@ -121,28 +123,30 @@ class Type
    */
   std::string str() const;
 
-  /**
-   * Syntactical equality operator.
-   *
-   * @param other The type to compare against.
-   * @return True if this type and other are equal.
-   */
-  bool operator==(const Type& other) const;
-
-  /**
-   * Syntactical disequality operator.
-   *
-   * @param other The type to compare against.
-   * @return True if this type and other are disequal.
-   */
-  bool operator!=(const Type& other) const;
-
  private:
   Type(type::TypeData* d);
 
   /** Type payload */
   type::TypeData* d_data = nullptr;
 };
+
+/**
+ * Syntactical equality operator.
+ *
+ * @param a The first type to compare.
+ * @param b The second type to compare.
+ * @return True if the types are equal.
+ */
+bool operator==(const Type& a, const Type& b);
+
+/**
+ * Syntactical disequality operator.
+ *
+ * @param a The first type to compare.
+ * @param b The second type to compare.
+ * @return True if the types are disequal.
+ */
+bool operator!=(const Type& a, const Type& b);
 
 /** Print type to stream. */
 std::ostream& operator<<(std::ostream& out, const Type& type);

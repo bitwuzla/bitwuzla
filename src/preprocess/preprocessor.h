@@ -4,6 +4,7 @@
 #include "backtrack/assertion_stack.h"
 #include "backtrack/pop_callback.h"
 #include "preprocess/pass/elim_lambda.h"
+#include "preprocess/pass/elim_uninterpreted.h"
 #include "preprocess/pass/embedded_constraints.h"
 #include "preprocess/pass/flatten_and.h"
 #include "preprocess/pass/rewrite.h"
@@ -60,6 +61,7 @@ class Preprocessor
   /** Preprocessing passes */
   pass::PassRewrite d_pass_rewrite;
   pass::PassElimLambda d_pass_elim_lambda;
+  pass::PassElimUninterpreted d_pass_elim_uninterpreted;
   pass::PassEmbeddedConstraints d_pass_embedded_constraints;
   pass::PassVariableSubstitution d_pass_variable_substitution;
   pass::PassFlattenAnd d_pass_flatten_and;

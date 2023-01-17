@@ -192,18 +192,6 @@ Type::str() const
   return ss.str();
 }
 
-bool
-Type::operator==(const Type& other) const
-{
-  return d_data == other.d_data;
-}
-
-bool
-Type::operator!=(const Type& other) const
-{
-  return d_data != other.d_data;
-}
-
 /* --- Type private -------------------------------------------------------- */
 
 Type::Type(type::TypeData* data) : d_data(data)
@@ -213,6 +201,18 @@ Type::Type(type::TypeData* data) : d_data(data)
 }
 
 /* --- Other --------------------------------------------------------------- */
+
+bool
+operator==(const Type& a, const Type& b)
+{
+  return a.d_data == b.d_data;
+}
+
+bool
+operator!=(const Type& a, const Type& b)
+{
+  return a.d_data != b.d_data;
+}
 
 std::ostream&
 operator<<(std::ostream& out, const Type& type)

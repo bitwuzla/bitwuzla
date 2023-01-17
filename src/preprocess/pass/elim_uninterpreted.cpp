@@ -1,0 +1,229 @@
+#include "preprocess/pass/elim_uninterpreted.h"
+
+#include <cmath>
+
+#include "env.h"
+#include "node/node_manager.h"
+#include "node/node_ref_vector.h"
+#include "node/unordered_node_ref_set.h"
+
+namespace bzla::preprocess::pass {
+
+using namespace bzla::node;
+
+/* --- PassElimUninterpreted public ----------------------------------------- */
+
+PassElimUninterpreted::PassElimUninterpreted(
+    Env& env, backtrack::BacktrackManager* backtrack_mgr)
+    : PreprocessingPass(env),
+      d_stats(env.statistics()),
+      d_backtrack_mgr(backtrack_mgr),
+      d_substitutions(backtrack_mgr)
+{
+}
+
+void
+PassElimUninterpreted::apply(AssertionVector& assertions)
+{
+  util::Timer timer(d_stats.time_apply);
+
+  node_ref_vector visit;
+  unordered_node_ref_set visited;
+  std::unordered_map<std::reference_wrapper<const Type>,
+                     uint64_t,
+                     std::hash<Type>>
+      cnt;
+  unordered_node_ref_set uns;
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  {
+    visit.push_back(assertions[i]);
+  }
+
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = visited.emplace(cur);
+    visit.pop_back();
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      if (cur.type().is_uninterpreted())
+      {
+        auto [iit, iinserted] = cnt.emplace(cur.type(), 1);
+        if (!inserted) iit->second += 1;
+        uns.emplace(cur);
+      }
+      // don't increase count but cache nodes that need a type substitution
+      else if (cur.is_const())
+      {
+        if (cur.type().is_fun())
+        {
+          for (auto& t : cur.type().fun_types())
+          {
+            if (t.is_uninterpreted())
+            {
+              uns.emplace(cur);
+              break;
+            }
+          }
+        }
+        else if (cur.type().is_array())
+        {
+          assert(!cur.type().array_element().is_uninterpreted());
+          if (cur.type().array_index().is_uninterpreted())
+          {
+            uns.emplace(cur);
+          }
+        }
+      }
+    }
+  } while (!visit.empty());
+
+  NodeManager& nm = NodeManager::get();
+  for (auto& un : uns)
+  {
+    const Node& u = un.get();
+    assert(u.is_const());
+    if (u.type().is_uninterpreted())
+    {
+      auto it = cnt.find(u.type());
+      assert(it != cnt.end());
+      d_substitutions.emplace(
+          u, nm.mk_const(nm.mk_bv_type(std::ceil(std::log2l(it->second)))));
+    }
+    else if (u.type().is_fun())
+    {
+      std::vector<Type> types = u.type().fun_types();
+      for (size_t i = 0, n = types.size(); i < n; ++i)
+      {
+        if (types[i].is_uninterpreted())
+        {
+          auto it = cnt.find(types[i]);
+          assert(it != cnt.end());
+          types[i] = nm.mk_bv_type(std::ceil(std::log2l(it->second)));
+        }
+      }
+      d_substitutions.emplace(u, nm.mk_const(nm.mk_fun_type(types)));
+    }
+    else
+    {
+      assert(u.type().is_array());
+      Type index   = u.type().array_index();
+      Type element = u.type().array_element();
+      assert(index.is_uninterpreted() || element.is_uninterpreted());
+      if (index.is_uninterpreted())
+      {
+        auto it = cnt.find(index);
+        assert(it != cnt.end());
+        index = nm.mk_bv_type(std::ceil(std::log2l(it->second)));
+      }
+      if (element.is_uninterpreted())
+      {
+        auto it = cnt.find(element);
+        assert(it != cnt.end());
+        element = nm.mk_bv_type(std::ceil(std::log2l(it->second)));
+        d_substitutions.emplace(u,
+                                nm.mk_const(nm.mk_array_type(index, element)));
+      }
+    }
+  }
+
+  if (d_substitutions.empty())
+  {
+    return;
+  }
+
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  {
+    const Node& assertion = assertions[i];
+    const Node& ass       = assertion.is_inverted() ? assertion[0] : assertion;
+    if (ass.num_children() > 0)
+    {
+      std::vector<Node> children;
+      for (const Node& child : ass)
+      {
+        children.push_back(process(child));
+      }
+      Node rewritten = ass.num_indices() > 0
+                           ? nm.mk_node(ass.kind(), children, ass.indices())
+                           : nm.mk_node(ass.kind(), children);
+      if (assertion.is_inverted())
+      {
+        rewritten = nm.invert_node(rewritten);
+      }
+      assertions.replace(i, rewritten);
+    }
+  }
+}
+
+Node
+PassElimUninterpreted::process(const Node& node)
+{
+  return d_env.rewriter().rewrite(substitute(node));
+}
+
+/* --- PassEmbeddedConstraints private -------------------------------------- */
+
+Node
+PassElimUninterpreted::substitute(const Node& node)
+{
+  NodeManager& nm = NodeManager::get();
+  node_ref_vector visit{node};
+
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = d_cache.emplace(cur, Node());
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      auto its = d_substitutions.find(cur);
+      if (its != d_substitutions.end())
+      {
+        it->second = its->second;
+        d_stats.num_substs += 1;
+      }
+      else if (cur.num_children() > 0)
+      {
+        std::vector<Node> children;
+        for (const Node& child : cur)
+        {
+          auto itc = d_cache.find(child);
+          assert(itc != d_cache.end());
+          assert(!itc->second.is_null());
+          children.push_back(itc->second);
+        }
+        if (cur.num_indices() > 0)
+        {
+          it->second = nm.mk_node(cur.kind(), children, cur.indices());
+        }
+        else
+        {
+          it->second = nm.mk_node(cur.kind(), children);
+        }
+      }
+      else
+      {
+        it->second = cur;
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+  auto it = d_cache.find(node);
+  assert(it != d_cache.end());
+  return it->second;
+}
+
+PassElimUninterpreted::Statistics::Statistics(util::Statistics& stats)
+    : time_apply(stats.new_stat<util::TimerStatistic>(
+        "preprocess::uninterpreted::time_apply")),
+      num_substs(
+          stats.new_stat<uint64_t>("preprocess::uninterpreted::num_substs"))
+{
+}
+
+}  // namespace bzla::preprocess::pass
