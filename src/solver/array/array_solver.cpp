@@ -182,7 +182,8 @@ ArraySolver::check_access(const Node& access)
       }
       else
       {
-        assert(array.kind() == Kind::CONSTANT);
+        assert(array.kind() == Kind::CONSTANT || array.kind() == Kind::SELECT
+               || array.kind() == Kind::APPLY);
       }
 
       // Propagate upwards
@@ -396,7 +397,8 @@ ArraySolver::collect_path_conditions(const Access& access,
       }
       else
       {
-        assert(cur.kind() == Kind::CONSTANT || cur.kind() == Kind::CONST_ARRAY);
+        assert(cur.kind() == Kind::CONSTANT || cur.kind() == Kind::CONST_ARRAY
+               || cur.kind() == Kind::SELECT || cur.kind() == Kind::APPLY);
       }
 
       // Search upwards
@@ -525,7 +527,8 @@ ArraySolver::add_path_condition(const Access& access,
   }
   else
   {
-    assert(array.kind() == Kind::CONSTANT);
+    assert(array.kind() == Kind::CONSTANT || array.kind() == Kind::CONST_ARRAY
+           || array.kind() == Kind::SELECT || array.kind() == Kind::APPLY);
   }
 
   if (!cond.is_null())
