@@ -204,6 +204,7 @@ enum class RewriteRuleKind
 {
   /* Boolean rewrites ---------------------------- */
 
+  // Level 1+
   AND_EVAL,
   AND_SPECIAL_CONST,
   AND_CONST,
@@ -221,14 +222,14 @@ enum class RewriteRuleKind
   AND_BV_LT_FALSE,
   AND_BV_LT,
 
+  // Level 1+
   EQUAL_EVAL,
   EQUAL_SPECIAL_CONST,
   EQUAL_CONST,
   EQUAL_TRUE,
   EQUAL_ITE,
-  // Level 1
   EQUAL_FALSE,
-  // Level 3
+  // Level 2+
   EQUAL_BV_ADD,
   EQUAL_BV_ADD_ADD,
   EQUAL_BV_CONCAT,
@@ -238,6 +239,7 @@ enum class RewriteRuleKind
   EQUAL_ITE_DIS_BV1,
   EQUAL_ITE_LIFT_COND,
 
+  // Level 1+
   ITE_EVAL,
   ITE_SAME,
   ITE_THEN_ITE1,
@@ -247,20 +249,25 @@ enum class RewriteRuleKind
   ITE_ELSE_ITE2,
   ITE_ELSE_ITE3,
   ITE_BOOL,
-  // Level 3
+  // Level 2+
   ITE_BV_CONCAT,
   ITE_BV_OP,
 
+  // Level 1+
   NOT_EVAL,
   NOT_NOT,
   NOT_XOR,
 
-  DISTINCT_CARD,
+  // Level 0+
   DISTINCT_ELIM,
+  // Level 1+
+  DISTINCT_CARD,
 
+  // Level 1+
   NORMALIZE_COMM,
 
   //// Elimination rules
+  // Level 0+
   IMPLIES_ELIM,
   OR_ELIM,
   XOR_ELIM,
@@ -268,6 +275,7 @@ enum class RewriteRuleKind
   /* BV rewrites --------------------------------- */
 
   //// bvadd
+  // Level 1+
   BV_ADD_EVAL,
   BV_ADD_SPECIAL_CONST,
   BV_ADD_CONST,
@@ -276,7 +284,7 @@ enum class RewriteRuleKind
   BV_ADD_NOT,
   BV_ADD_NEG,
   BV_ADD_UREM,
-  // Level 3
+  // Level 2+
   BV_ADD_ITE,
   BV_ADD_MUL1,
   BV_ADD_MUL2,
@@ -285,6 +293,7 @@ enum class RewriteRuleKind
   BV_ADD_NORM_MUL_CONST,
 
   //// bvand
+  // Level 1+
   BV_AND_EVAL,
   BV_AND_SPECIAL_CONST,
   BV_AND_CONST,
@@ -302,25 +311,27 @@ enum class RewriteRuleKind
   BV_AND_CONCAT,
 
   //// bvashr
+  // Level 1+
   BV_ASHR_EVAL,
   BV_ASHR_SPECIAL_CONST,
 
   //// bvconcat
+  // Level 1+
   BV_CONCAT_EVAL,
   BV_CONCAT_CONST,
-  // Level 1
   BV_CONCAT_EXTRACT,
-  // Level 3
+  // Level 2+
   BV_CONCAT_AND,
 
   //// bvextract
+  // Level 1+
   BV_EXTRACT_EVAL,
   BV_EXTRACT_FULL,
   BV_EXTRACT_EXTRACT,
-  BV_EXTRACT_CONCAT_FULL_RHS,
-  // Level 0-2
+  // Level 1
   BV_EXTRACT_CONCAT_FULL_LHS,
-  // Level 3
+  BV_EXTRACT_CONCAT_FULL_RHS,
+  // Level 2+
   BV_EXTRACT_CONCAT_LHS_RHS,
   BV_EXTRACT_CONCAT,
   BV_EXTRACT_AND,
@@ -328,11 +339,12 @@ enum class RewriteRuleKind
   BV_EXTRACT_ADD_MUL,
 
   //// bvmul
+  // Level 1+
   BV_MUL_EVAL,
   BV_MUL_SPECIAL_CONST,
   BV_MUL_CONST,
   BV_MUL_BV1,
-  // Level 3
+  // Level 2+
   BV_MUL_CONST_ADD,
   BV_MUL_ITE,
   BV_MUL_NEG,
@@ -340,15 +352,18 @@ enum class RewriteRuleKind
   BV_MUL_SHL,
 
   //// bvnot
+  // Level 1+
   BV_NOT_EVAL,
   BV_NOT_BV_NOT,
 
   //// bvshl
+  // Level 1+
   BV_SHL_EVAL,
   BV_SHL_SPECIAL_CONST,
   BV_SHL_CONST,
 
   //// bvlshr
+  // Level 1+
   BV_SHR_EVAL,
   BV_SHR_SPECIAL_CONST,
   BV_SHR_CONST,
@@ -356,15 +371,17 @@ enum class RewriteRuleKind
   BV_SHR_NOT,
 
   //// bvslt
+  // Level 1+
   BV_SLT_EVAL,
   BV_SLT_SPECIAL_CONST,
   BV_SLT_SAME,
   BV_SLT_BV1,
   BV_SLT_ITE,
-  // Level 3
+  // Level 2+
   BV_SLT_CONCAT,
 
   //// bvudiv
+  // Level 1+
   BV_UDIV_EVAL,
   BV_UDIV_SPECIAL_CONST,
   BV_UDIV_BV1,
@@ -372,24 +389,28 @@ enum class RewriteRuleKind
   BV_UDIV_POW2,
 
   //// bvult
+  // Level 1+
   BV_ULT_EVAL,
   BV_ULT_SPECIAL_CONST,
   BV_ULT_SAME,
   BV_ULT_BV1,
   BV_ULT_ITE,
-  // Level 3
+  // Level 2+
   BV_ULT_CONCAT,
 
   //// bvurem
+  // Level 1+
   BV_UREM_EVAL,
   BV_UREM_SPECIAL_CONST,
   BV_UREM_BV1,
   BV_UREM_SAME,
 
   //// bvxor
+  // Level 1+
   BV_XOR_EVAL,
 
   //// Elimination rules
+  // Level 1+
   BV_DEC_ELIM,
   BV_INC_ELIM,
   BV_NAND_ELIM,
@@ -428,65 +449,112 @@ enum class RewriteRuleKind
 
   /* FP rewrites --------------------------------- */
 
+  //// fp.abs
+  // Level 1+
   FP_ABS_EVAL,
   FP_ABS_ABS_NEG,
 
+  //// fp.add
+  // Level 1+
   FP_ADD_EVAL,
+
+  //// fp.div
+  // Level 1+
   FP_DIV_EVAL,
+
+  //// fp.fma
+  // Level 1+
   FP_FMA_EVAL,
 
+  //// fp.isInfinite
+  // Level 1+
   FP_IS_INF_EVAL,
   FP_IS_INF_ABS_NEG,
 
+  //// fp.isNaN
+  // Level 1+
   FP_IS_NAN_EVAL,
   FP_IS_NAN_ABS_NEG,
 
+  //// fp.isNeg
+  // Level 1+
   FP_IS_NEG_EVAL,
 
+  //// fp.isNormal
+  // Level 1+
   FP_IS_NORM_EVAL,
   FP_IS_NORM_ABS_NEG,
 
+  //// fp.isPos
+  // Level 1+
   FP_IS_POS_EVAL,
 
+  //// fp.isSubnormal
+  // Level 1+
   FP_IS_SUBNORM_EVAL,
   FP_IS_SUBNORM_ABS_NEG,
 
+  //// fp.isZero
+  // Level 1+
   FP_IS_ZERO_EVAL,
   FP_IS_ZERO_ABS_NEG,
 
+  // Level 1+
   FP_LEQ_EVAL,
   FP_LEQ_EQ,
 
+  //// fp.lt
+  // Level 1+
   FP_LT_EVAL,
   FP_LT_EQ,
 
+  //// fp.min
+  // Level 1+
   FP_MIN_EVAL,
   FP_MIN_EQ,
 
+  //// fp.max
+  // Level 1+
   FP_MAX_EVAL,
   FP_MAX_EQ,
 
+  //// fp.mul
+  // Level 1+
   FP_MUL_EVAL,
 
+  //// fp.neg
+  // Level 1+
   FP_NEG_EVAL,
   FP_NEG_NEG,
 
+  //// fp.rem
+  // Level 1+
   FP_REM_EVAL,
   FP_REM_SAME_DIV,
   FP_REM_ABS_NEG,
   FP_REM_NEG,
 
+  //// fp.roundToIntegral
+  // Level 1+
   FP_RTI_EVAL,
+
+  //// fp.sqrt
+  // Level 1+
   FP_SQRT_EVAL,
+
+  //// to_fp
+  // Level 1+
   FP_TO_FP_FROM_BV_EVAL,
   FP_TO_FP_FROM_FP_EVAL,
-
   FP_TO_FP_FROM_SBV_EVAL,
   FP_TO_FP_FROM_SBV_BV1_ELIM,
 
+  //// to_fp_unsigned
+  // Level 1+
   FP_TO_FP_FROM_UBV_EVAL,
 
   //// Elimination rules
+  // Level 0+
   FP_EQUAL_ELIM,
   FP_FP_ELIM,
   FP_GEQ_ELIM,
@@ -495,6 +563,8 @@ enum class RewriteRuleKind
 
   /* Array rewrites ---------------------------- */
 
+  //// select
+  // Level 1+
   ARRAY_PROP_SELECT,
 };
 
