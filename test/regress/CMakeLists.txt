@@ -17,6 +17,7 @@ set(testcases
 "preprocess/array/regrembeddedconstraint8.btor.smt2 -rwl=0"
 "preprocess/array/regrembeddedconstraint8.btor.smt2 -rwl=1"
 "preprocess/array/regrembeddedconstraint8.btor.smt2"
+"preprocess/regrinc1.smt2 -i"
 "rewrite/array/hang_min_32.smt2"
 #"rewrite/array/regr3vl4.btor.smt2 -rwl=0" # TODO sign_extend over bvugt
 #"rewrite/array/regr3vl4.btor.smt2 -rwl=1" # TODO sign_extend over bvugt

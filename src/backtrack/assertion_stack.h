@@ -171,7 +171,11 @@ class AssertionStack : public Backtrackable
  private:
   /** Assertion associated with their current scope level. */
   std::vector<std::pair<Node, size_t>> d_assertions;
-  /** Assertion cache to avoid pushing duplicates. */
+  /**
+   * Assertion cache to avoid pushing duplicates. Maps assertion to the index
+   * of the first occurence of the assertion. Duplicates may still be on the
+   * stack due to replace().
+   */
   std::unordered_map<Node, size_t> d_cache;
   /** Registered views. */
   std::vector<std::unique_ptr<AssertionView>> d_views;

@@ -21,11 +21,18 @@ AssertionStack::replace(size_t index, const Node& replacement)
 {
   const Node& assertion = d_assertions[index].first;
   auto it               = d_cache.find(assertion);
+  // Only delete from cache if assertion is the first occurence.
   if (it != d_cache.end() && it->second == index)
   {
     d_cache.erase(it);
   }
-  d_cache.emplace(replacement, index);
+  auto [iit, inserted] = d_cache.emplace(replacement, index);
+  // New assertion already on stack, update cached index if index is the first
+  // occurence of replacement on the stack.
+  if (!inserted && iit->second > index)
+  {
+    iit->second = index;
+  }
   d_assertions[index].first = replacement;
 }
 
