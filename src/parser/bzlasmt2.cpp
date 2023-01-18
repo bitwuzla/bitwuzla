@@ -5161,7 +5161,7 @@ parse_array_sort(BzlaSMT2Parser *parser, int32_t tag, BitwuzlaSort *sort)
     tag = read_token_smt2(parser);
     if (!parse_sort(parser, tag, false, &index)) return 0;
     tag = read_token_smt2(parser);
-    if (!parse_sort(parser, tag, false, &value)) return 0;
+    if (!parse_sort(parser, tag, true, &value)) return 0;
     if (!read_rpar_smt2(parser, " after element sort of Array")) return 0;
     *sort = bitwuzla_mk_array_sort(index, value);
     BZLA_PUSH_STACK(parser->sorts, *sort);
@@ -5313,45 +5313,15 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
     BZLA_RELEASE_STACK(args);
     return 0;
   }
-  /* bit-vector/array variable */
+  /* 0-arity constant */
   if (BZLA_EMPTY_STACK(args))
   {
-    if (bitwuzla_sort_is_fun(sort))
-    {
-      fun->exp = bitwuzla_mk_const(sort, fun->name);
-      // BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
-      //          2,
-      //          "declared bit-vector array '%s' at line %d column %d",
-      //          fun->name,
-      //          fun->coo.x,
-      //          fun->coo.y);
-      parser->need_arrays = true;
-    }
-    else
-    {
-      fun->exp = bitwuzla_mk_const(sort, fun->name);
-      // BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
-      //          2,
-      //          "declared '%s' as bit-vector at line %d column %d",
-      //          fun->name,
-      //          fun->coo.x,
-      //          fun->coo.y);
-    }
+    fun->exp = bitwuzla_mk_const(sort, fun->name);
   }
   else
   {
-    /* check if arguments have bit-vector sort, all other sorts are not
-     * supported for uninterpreted functions */
-
     s        = bitwuzla_mk_fun_sort(BZLA_COUNT_STACK(args), args.start, sort);
     fun->exp = bitwuzla_mk_const(s, fun->name);
-    // BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
-    //          2,
-    //          "declared '%s' as uninterpreted function at line %d column %d",
-    //          fun->name,
-    //          fun->coo.x,
-    //          fun->coo.y);
-    parser->need_functions = true;
   }
   BZLA_RELEASE_STACK(args);
   return read_rpar_smt2(parser, " to close declaration");
