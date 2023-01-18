@@ -285,7 +285,8 @@ enum class RewriteRuleKind
   BV_ADD_NEG,
   BV_ADD_UREM,
   // Level 2+
-  BV_ADD_ITE,
+  BV_ADD_ITE1,
+  BV_ADD_ITE2,
   BV_ADD_MUL1,
   BV_ADD_MUL2,
   BV_ADD_SHL,
@@ -387,6 +388,8 @@ enum class RewriteRuleKind
   BV_UDIV_BV1,
   BV_UDIV_SAME,
   BV_UDIV_POW2,
+  // Level 2+
+  BV_UDIV_ITE,
 
   //// bvult
   // Level 1+

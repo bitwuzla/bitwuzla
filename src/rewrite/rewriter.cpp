@@ -503,7 +503,8 @@ Rewriter::rewrite_bv_add(const Node& node)
   }
   if (d_level >= 2)
   {
-    BZLA_APPLY_RW_RULE(BV_ADD_ITE);
+    BZLA_APPLY_RW_RULE(BV_ADD_ITE1);
+    BZLA_APPLY_RW_RULE(BV_ADD_ITE2);
     BZLA_APPLY_RW_RULE(BV_ADD_MUL1);
     BZLA_APPLY_RW_RULE(BV_ADD_MUL2);
     BZLA_APPLY_RW_RULE(BV_ADD_SHL);
@@ -726,6 +727,10 @@ Rewriter::rewrite_bv_udiv(const Node& node)
     BZLA_APPLY_RW_RULE(BV_UDIV_BV1);
     BZLA_APPLY_RW_RULE(BV_UDIV_SAME);
     BZLA_APPLY_RW_RULE(BV_UDIV_POW2);
+  }
+  if (d_level >= 2)
+  {
+    BZLA_APPLY_RW_RULE(BV_UDIV_ITE);
   }
 
 DONE:
@@ -1358,7 +1363,8 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_ADD_NOT: out << "BV_ADD_NOT"; break;
     case RewriteRuleKind::BV_ADD_NEG: out << "BV_ADD_NEG"; break;
     case RewriteRuleKind::BV_ADD_UREM: out << "BV_ADD_UREM"; break;
-    case RewriteRuleKind::BV_ADD_ITE: out << "BV_ADD_ITE"; break;
+    case RewriteRuleKind::BV_ADD_ITE1: out << "BV_ADD_ITE1"; break;
+    case RewriteRuleKind::BV_ADD_ITE2: out << "BV_ADD_ITE2"; break;
     case RewriteRuleKind::BV_ADD_MUL1: out << "BV_ADD_MUL1"; break;
     case RewriteRuleKind::BV_ADD_MUL2: out << "BV_ADD_MUL2"; break;
     case RewriteRuleKind::BV_ADD_SHL: out << "BV_ADD_SHL"; break;
@@ -1460,6 +1466,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_UDIV_BV1: out << "BV_UDIV_BV1"; break;
     case RewriteRuleKind::BV_UDIV_SAME: out << "BV_UDIV_SAME"; break;
     case RewriteRuleKind::BV_UDIV_POW2: out << "BV_UDIV_POW2"; break;
+    case RewriteRuleKind::BV_UDIV_ITE: out << "BV_UDIV_ITE"; break;
 
     case RewriteRuleKind::BV_ULT_EVAL: out << "BV_ULT_EVAL"; break;
     case RewriteRuleKind::BV_ULT_SPECIAL_CONST:

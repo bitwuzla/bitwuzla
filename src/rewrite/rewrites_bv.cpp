@@ -434,12 +434,49 @@ RewriteRule<RewriteRuleKind::BV_ADD_UREM>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match:  (bvadd (ite c a b) (ite c a d))
+ * result: (ite c (bvadd a a) (bvadd b d))
+ *
+ * match:  (bvadd (ite c a b) (ite c c b))
+ * result: (ite c (bvadd b b) (bvadd a c))
+ *
+ * match:  (bvadd (bvnot (ite c a b)) (bvnot (ite c a d)))
+ * result: (ite c (bvadd (bvnot a) (bvnot a)) (bvadd (bvnot b) (bvnot d)))
+ *
+ * match:  (bvadd (bvnot (ite c a b)) (bvnot (ite c c b)))
+ * result: (ite c (bvadd (bvnot b) (bvnot b)) (bvadd (bvnot a) (bvnot c)))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_ITE1>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  bool inverted     = node[0].is_inverted() && node[1].is_inverted();
+  const Node& node0 = inverted ? node[0][0] : node[0];
+  const Node& node1 = inverted ? node[1][0] : node[1];
+  if (node0.kind() == Kind::ITE && node1.kind() == Kind::ITE
+      && node0[0] == node1[0] && (node0[1] == node1[1] || node0[2] == node1[2]))
+  {
+    return rewriter.mk_node(
+        Kind::ITE,
+        {node0[0],
+         rewriter.mk_node(Kind::BV_ADD,
+                          {rewriter.invert_node_if(inverted, node0[1]),
+                           rewriter.invert_node_if(inverted, node1[1])}),
+         rewriter.mk_node(Kind::BV_ADD,
+                          {rewriter.invert_node_if(inverted, node0[2]),
+                           rewriter.invert_node_if(inverted, node1[2])})});
+  }
+  return node;
+}
+
+/**
  * match:  (bvadd a (ite c 0 e)) or (bvadd a (ite c t 0))
  * result: (ite c a (bvadd e a)) or (ite c (bvadd t a) a)
  */
 namespace {
 Node
-_rw_bv_add_ite(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_bv_add_ite2(Rewriter& rewriter, const Node& node, size_t idx)
 {
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
@@ -461,13 +498,13 @@ _rw_bv_add_ite(Rewriter& rewriter, const Node& node, size_t idx)
 
 template <>
 Node
-RewriteRule<RewriteRuleKind::BV_ADD_ITE>::_apply(Rewriter& rewriter,
-                                                 const Node& node)
+RewriteRule<RewriteRuleKind::BV_ADD_ITE2>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
 {
-  Node res = _rw_bv_add_ite(rewriter, node, 0);
+  Node res = _rw_bv_add_ite2(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_bv_add_ite(rewriter, node, 1);
+    res = _rw_bv_add_ite2(rewriter, node, 1);
   }
   return res;
 }
@@ -2422,6 +2459,43 @@ RewriteRule<RewriteRuleKind::BV_UDIV_SAME>::_apply(Rewriter& rewriter,
     Node zero       = nm.mk_value(BitVector::mk_zero(size));
     return rewriter.mk_node(
         Kind::ITE, {rewriter.mk_node(Kind::EQUAL, {node[0], zero}), ones, one});
+  }
+  return node;
+}
+
+/**
+ * match:  (bvudiv (ite c a b) (ite c a d))
+ * result: (ite c (bvudiv a a) (bvudiv b d))
+ *
+ * match:  (bvudiv (ite c a b) (ite c c b))
+ * result: (ite c (bvudiv b b) (bvudiv a c))
+ *
+ * match:  (bvudiv (bvnot (ite c a b)) (bvnot (ite c a d)))
+ * result: (ite c (bvudiv (bvnot a) (bvnot a)) (bvudiv (bvnot b) (bvnot d)))
+ *
+ * match:  (bvudiv (bvnot (ite c a b)) (bvnot (ite c c b)))
+ * result: (ite c (bvudiv (bvnot b) (bvnot b)) (bvudiv (bvnot a) (bvnot c)))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UDIV_ITE>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  bool inverted     = node[0].is_inverted() && node[1].is_inverted();
+  const Node& node0 = inverted ? node[0][0] : node[0];
+  const Node& node1 = inverted ? node[1][0] : node[1];
+  if (node0.kind() == Kind::ITE && node1.kind() == Kind::ITE
+      && node0[0] == node1[0] && (node0[1] == node1[1] || node0[2] == node1[2]))
+  {
+    return rewriter.mk_node(
+        Kind::ITE,
+        {node0[0],
+         rewriter.mk_node(Kind::BV_UDIV,
+                          {rewriter.invert_node_if(inverted, node0[1]),
+                           rewriter.invert_node_if(inverted, node1[1])}),
+         rewriter.mk_node(Kind::BV_UDIV,
+                          {rewriter.invert_node_if(inverted, node0[2]),
+                           rewriter.invert_node_if(inverted, node1[2])})});
   }
   return node;
 }
