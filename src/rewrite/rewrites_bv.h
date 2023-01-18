@@ -44,9 +44,6 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_NEG>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_CONST>::_apply(Rewriter& rewriter,
                                                         const Node& node);
-// const_neg_lhs_add (TODO tbd)
-// const_neg_rhs_add (TODO tbd)
-
 // push_ite_add
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_ITE>::_apply(Rewriter& rewriter,

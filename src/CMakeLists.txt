@@ -47,6 +47,7 @@ set(libbitwuzla_src_files
   rewrite/rewrites_bool.cpp
   rewrite/rewrites_core.cpp
   rewrite/rewrites_bv.cpp
+  rewrite/rewrites_bv_norm.cpp
   rewrite/rewrites_fp.cpp
   sat/cadical.cpp
   sat/cryptominisat.cpp

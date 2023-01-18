@@ -1358,6 +1358,9 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_ADD_MUL1: out << "BV_ADD_MUL1"; break;
     case RewriteRuleKind::BV_ADD_MUL2: out << "BV_ADD_MUL2"; break;
     case RewriteRuleKind::BV_ADD_SHL: out << "BV_ADD_SHL"; break;
+    case RewriteRuleKind::BV_ADD_NORM_MUL_CONST:
+      out << "BV_ADD_NORM_MUL_CONST";
+      break;
 
     case RewriteRuleKind::BV_AND_EVAL: out << "BV_AND_EVAL"; break;
     case RewriteRuleKind::BV_AND_SPECIAL_CONST:

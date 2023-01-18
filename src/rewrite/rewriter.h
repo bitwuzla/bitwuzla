@@ -280,6 +280,8 @@ enum class RewriteRuleKind
   BV_ADD_MUL1,
   BV_ADD_MUL2,
   BV_ADD_SHL,
+  // normalization
+  BV_ADD_NORM_MUL_CONST,
 
   //// bvand
   BV_AND_EVAL,
