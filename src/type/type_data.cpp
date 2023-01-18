@@ -84,12 +84,15 @@ TypeData::TypeData(TypeManager* mgr, Kind kind, const std::vector<Type>& types)
 TypeData::TypeData(TypeManager* mgr, uint64_t size)
     : d_mgr(mgr), d_kind(Kind::BV), d_data(size)
 {
+  assert(size);
 }
 
 TypeData::TypeData(TypeManager* mgr, uint64_t exp_size, uint64_t sig_size)
     : d_mgr(mgr), d_kind(Kind::FP), d_data(std::make_pair(exp_size, sig_size))
 
 {
+  assert(exp_size);
+  assert(sig_size);
 }
 
 TypeData::TypeData(TypeManager* mgr, const std::optional<std::string>& symbol)

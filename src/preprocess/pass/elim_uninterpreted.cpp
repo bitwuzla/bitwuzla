@@ -11,6 +11,15 @@ namespace bzla::preprocess::pass {
 
 using namespace bzla::node;
 
+namespace {
+uint64_t
+bv_size_from_value(uint64_t value)
+{
+  assert(value);
+  return value > 1 ? std::ceil(std::log2l(value)) : 1;
+}
+}  // namespace
+
 /* --- PassElimUninterpreted public ----------------------------------------- */
 
 PassElimUninterpreted::PassElimUninterpreted(
@@ -89,7 +98,7 @@ PassElimUninterpreted::apply(AssertionVector& assertions)
       auto it = cnt.find(u.type());
       assert(it != cnt.end());
       d_substitutions.emplace(
-          u, nm.mk_const(nm.mk_bv_type(std::ceil(std::log2l(it->second)))));
+          u, nm.mk_const(nm.mk_bv_type(bv_size_from_value(it->second))));
     }
     else if (u.type().is_fun())
     {
@@ -100,7 +109,7 @@ PassElimUninterpreted::apply(AssertionVector& assertions)
         {
           auto it = cnt.find(types[i]);
           assert(it != cnt.end());
-          types[i] = nm.mk_bv_type(std::ceil(std::log2l(it->second)));
+          types[i] = nm.mk_bv_type(bv_size_from_value(it->second));
         }
       }
       d_substitutions.emplace(u, nm.mk_const(nm.mk_fun_type(types)));
@@ -115,13 +124,13 @@ PassElimUninterpreted::apply(AssertionVector& assertions)
       {
         auto it = cnt.find(index);
         assert(it != cnt.end());
-        index = nm.mk_bv_type(std::ceil(std::log2l(it->second)));
+        index = nm.mk_bv_type(bv_size_from_value(it->second));
       }
       if (element.is_uninterpreted())
       {
         auto it = cnt.find(element);
         assert(it != cnt.end());
-        element = nm.mk_bv_type(std::ceil(std::log2l(it->second)));
+        element = nm.mk_bv_type(bv_size_from_value(it->second));
         d_substitutions.emplace(u,
                                 nm.mk_const(nm.mk_array_type(index, element)));
       }
