@@ -442,7 +442,8 @@ Rewriter::rewrite_eq(const Node& node)
     BZLA_APPLY_RW_RULE(EQUAL_BV_ADD_ADD);
     BZLA_APPLY_RW_RULE(EQUAL_BV_CONCAT);
     // BZLA_APPLY_RW_RULE(EQUAL_BV_SUB); // TODO tbd if this should be enabled
-    BZLA_APPLY_RW_RULE(EQUAL_ITE_BV1);
+    BZLA_APPLY_RW_RULE(EQUAL_ITE_SAME);
+    BZLA_APPLY_RW_RULE(EQUAL_ITE_INVERTED);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_DIS_BV1);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_LIFT_COND);
     // TODO
@@ -1315,7 +1316,10 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::EQUAL_BV_ADD_ADD: out << "EQUAL_BV_ADD_ADD"; break;
     case RewriteRuleKind::EQUAL_BV_CONCAT: out << "EQUAL_BV_CONCAT"; break;
     case RewriteRuleKind::EQUAL_BV_SUB: out << "EQUAL_BV_SUB"; break;
-    case RewriteRuleKind::EQUAL_ITE_BV1: out << "EQUAL_ITE_BV1"; break;
+    case RewriteRuleKind::EQUAL_ITE_SAME: out << "EQUAL_ITE_SAME"; break;
+    case RewriteRuleKind::EQUAL_ITE_INVERTED:
+      out << "EQUAL_ITE_INVERTED";
+      break;
     case RewriteRuleKind::EQUAL_ITE_DIS_BV1: out << "EQUAL_ITE_DIS_BV1"; break;
     case RewriteRuleKind::EQUAL_ITE_LIFT_COND:
       out << "EQUAL_ITE_LIFT_COND";

@@ -366,20 +366,74 @@ RewriteRule<RewriteRuleKind::EQUAL_ITE>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match: (= a (ite c a b))
+ * resutl: (or c (= a b))
+ *
+ * match: (= a (ite c b a))
+ * resutl: (or (not c) (= a b))
+ */
+namespace {
+Node
+_rw_eq_ite_same(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::ITE)
+  {
+    if (node[idx0][1] == node[idx1])
+    {
+      return rewriter.mk_node(
+          Kind::OR,
+          {node[idx0][0],
+           rewriter.mk_node(Kind::EQUAL, {node[idx1], node[idx0][2]})});
+    }
+    if (node[idx0][2] == node[idx1])
+    {
+      return rewriter.mk_node(
+          Kind::OR,
+          {rewriter.invert_node(node[idx0][0]),
+           rewriter.mk_node(Kind::EQUAL, {node[idx1], node[idx0][1]})});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_ITE_SAME>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  Node res = _rw_eq_ite_same(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_ite_same(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
  * match:  (= a (not (ite c a b)))
  * result: (and (not c) (= a (not b)))
  *
  * match:  (= a (not (ite c b a)))
  * result: (and c (= a (not b)))
+ *
+ * match:  (= a (bvnot (ite c a b)))
+ * result: (and (not c) (= a (bvnot b)))
+ *
+ * match:  (= a (bvnot (ite c b a)))
+ * result: (and c (= a (bvnot b)))
  */
 namespace {
 Node
-_rw_eq_ite_bv1(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_eq_ite_inverted(Rewriter& rewriter, const Node& node, size_t idx)
 {
   assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
-  if (node[idx0].kind() == Kind::NOT && node[idx0][0].kind() == Kind::ITE)
+  if (node[idx0].is_inverted() && node[idx0][0].kind() == Kind::ITE)
   {
     if (node[idx0][0][1] == node[idx1])
     {
@@ -397,7 +451,7 @@ _rw_eq_ite_bv1(Rewriter& rewriter, const Node& node, size_t idx)
           {node[idx0][0][0],
            rewriter.mk_node(
                Kind::EQUAL,
-               {node[idx1], rewriter.mk_node(Kind::NOT, {node[idx0][0][1]})})});
+               {node[idx1], rewriter.invert_node(node[idx0][0][1])})});
     }
   }
   return node;
@@ -406,13 +460,13 @@ _rw_eq_ite_bv1(Rewriter& rewriter, const Node& node, size_t idx)
 
 template <>
 Node
-RewriteRule<RewriteRuleKind::EQUAL_ITE_BV1>::_apply(Rewriter& rewriter,
-                                                    const Node& node)
+RewriteRule<RewriteRuleKind::EQUAL_ITE_INVERTED>::_apply(Rewriter& rewriter,
+                                                         const Node& node)
 {
-  Node res = _rw_eq_ite_bv1(rewriter, node, 0);
+  Node res = _rw_eq_ite_inverted(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_eq_ite_bv1(rewriter, node, 1);
+    res = _rw_eq_ite_inverted(rewriter, node, 1);
   }
   return res;
 }

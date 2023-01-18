@@ -115,7 +115,6 @@ Node RewriteRule<RewriteRuleKind::BV_AND_SUBSUM2>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_RESOL1>::_apply(Rewriter& rewriter,
                                                          const Node& node);
-// contr_rec_and
 // subst1_and
 // subst2_and
 template <>

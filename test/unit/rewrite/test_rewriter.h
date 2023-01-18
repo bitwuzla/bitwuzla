@@ -22,10 +22,10 @@ class TestRewriter : public ::testing::Test
     d_fp35_type = d_nm.mk_fp_type(3, 5);
     d_rm_type   = d_nm.mk_rm_type();
 
-    d_a = d_nm.mk_const(d_nm.mk_bool_type());
-    d_b = d_nm.mk_const(d_nm.mk_bool_type());
-    d_c = d_nm.mk_const(d_nm.mk_bool_type());
-    d_d = d_nm.mk_const(d_nm.mk_bool_type());
+    d_a = d_nm.mk_const(d_nm.mk_bool_type(), "a");
+    d_b = d_nm.mk_const(d_nm.mk_bool_type(), "b");
+    d_c = d_nm.mk_const(d_nm.mk_bool_type(), "c");
+    d_d = d_nm.mk_const(d_nm.mk_bool_type(), "d");
 
     d_bv4_zero  = d_nm.mk_value(BitVector::mk_zero(4));
     d_bv1_zero  = d_nm.mk_value(BitVector::mk_zero(1));
@@ -34,20 +34,20 @@ class TestRewriter : public ::testing::Test
     d_bv4_ones  = d_nm.mk_value(BitVector::mk_ones(4));
     d_bv1_ones  = d_nm.mk_value(BitVector::mk_ones(1));
 
-    d_bv4_a = d_nm.mk_const(d_bv4_type);
-    d_bv4_b = d_nm.mk_const(d_bv4_type);
-    d_bv4_c = d_nm.mk_const(d_bv4_type);
-    d_bv4_d = d_nm.mk_const(d_bv4_type);
-    d_bv1_a = d_nm.mk_const(d_bv1_type);
-    d_bv1_b = d_nm.mk_const(d_bv1_type);
+    d_bv4_a = d_nm.mk_const(d_bv4_type, "a_bv4");
+    d_bv4_b = d_nm.mk_const(d_bv4_type, "b_bv4");
+    d_bv4_c = d_nm.mk_const(d_bv4_type, "c_bv4");
+    d_bv4_d = d_nm.mk_const(d_bv4_type, "d_bv4");
+    d_bv1_a = d_nm.mk_const(d_bv1_type, "a_bv1");
+    d_bv1_b = d_nm.mk_const(d_bv1_type, "b_bv1");
 
     d_fp35_pzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, false));
     d_fp35_nzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, true));
 
-    d_fp35_a = d_nm.mk_const(d_fp35_type);
-    d_fp35_b = d_nm.mk_const(d_fp35_type);
+    d_fp35_a = d_nm.mk_const(d_fp35_type, "a_fp35");
+    d_fp35_b = d_nm.mk_const(d_fp35_type, "b_fp35");
 
-    d_rm = d_nm.mk_const(d_rm_type);
+    d_rm = d_nm.mk_const(d_rm_type, "rm");
 
     d_false     = d_nm.mk_value(false);
     d_true      = d_nm.mk_value(true);

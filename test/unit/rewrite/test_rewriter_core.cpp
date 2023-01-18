@@ -405,9 +405,30 @@ TEST_F(TestRewriterCore, core_equal_bv_concat)
       Kind::EQUAL, {d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b}), d_bv4_c}));
 }
 
-TEST_F(TestRewriterCore, core_equal_ite_bv1)
+TEST_F(TestRewriterCore, core_equal_ite_same)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_ITE_BV1;
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_ITE_SAME;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_a, d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::ITE, {d_c, d_bv4_a, d_bv4_b}), d_bv4_a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_fp35_a, d_nm.mk_node(Kind::ITE, {d_c, d_fp35_a, d_fp35_b})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_fp35_a, d_nm.mk_node(Kind::ITE, {d_c, d_fp35_b, d_fp35_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_a, d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b}))}));
+}
+
+TEST_F(TestRewriterCore, core_equal_ite_inverted)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_ITE_INVERTED;
   //// applies
   test_rule<kind>(d_nm.mk_node(
       Kind::EQUAL,
@@ -421,11 +442,15 @@ TEST_F(TestRewriterCore, core_equal_ite_bv1)
   test_rule<kind>(d_nm.mk_node(
       Kind::EQUAL,
       {d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})), d_b}));
-  //// does not apply
-  test_rule_does_not_apply<kind>(d_nm.mk_node(
+  test_rule<kind>(d_nm.mk_node(
       Kind::EQUAL,
       {d_bv4_a,
-       d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_b, d_bv4_a, d_bv4_b}))}));
+       d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_bv4_a, d_bv4_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_a,
+       d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_bv4_b, d_bv4_a}))}));
+  //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::EQUAL,
       {d_c, d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b}))}));
