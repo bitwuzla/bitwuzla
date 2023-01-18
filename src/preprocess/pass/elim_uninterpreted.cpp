@@ -51,15 +51,18 @@ PassElimUninterpreted::apply(AssertionVector& assertions)
   do
   {
     const Node& cur     = visit.back();
-    auto [it, inserted] = visited.emplace(cur);
+    auto [vit, vinserted] = visited.emplace(cur);
     visit.pop_back();
-    if (inserted)
+    if (vinserted)
     {
       visit.insert(visit.end(), cur.begin(), cur.end());
       if (cur.type().is_uninterpreted())
       {
-        auto [iit, iinserted] = cnt.emplace(cur.type(), 1);
-        if (!inserted) iit->second += 1;
+        auto [cit, cinserted] = cnt.emplace(cur.type(), 1);
+        if (!cinserted)
+        {
+          cit->second += 1;
+        }
         uns.emplace(cur);
       }
       // don't increase count but cache nodes that need a type substitution
@@ -131,9 +134,8 @@ PassElimUninterpreted::apply(AssertionVector& assertions)
         auto it = cnt.find(element);
         assert(it != cnt.end());
         element = nm.mk_bv_type(bv_size_from_value(it->second));
-        d_substitutions.emplace(u,
-                                nm.mk_const(nm.mk_array_type(index, element)));
       }
+      d_substitutions.emplace(u, nm.mk_const(nm.mk_array_type(index, element)));
     }
   }
 

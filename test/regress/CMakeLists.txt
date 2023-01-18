@@ -52,6 +52,7 @@ set(testcases
 #"rewrite/array/rwr1.btor.smt2 -br all" # TODO disabled due to -br
 "rewrite/array/rww1.btor.smt2"
 "solver/declsort0.smt2"
+"solver/declsort1.smt2"
 "solver/array/arraycond1.btor.smt2"
 "solver/array/arraycond10.btor.smt2"
 "solver/array/arraycond15.btor.smt2"
