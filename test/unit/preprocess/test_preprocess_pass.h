@@ -12,12 +12,12 @@ using namespace node;
 class TestPreprocessingPass : public ::testing::Test
 {
  public:
-  TestPreprocessingPass() : d_nm(NodeManager::get()), d_rw(d_env.rewriter()){};
+  TestPreprocessingPass() : d_nm(NodeManager::get()) {}
 
  protected:
   NodeManager& d_nm;
-  Env d_env;
-  Rewriter& d_rw;
+  option::Options d_options;
+  backtrack::BacktrackManager d_bm;
   AssertionStack d_as;
 };
 

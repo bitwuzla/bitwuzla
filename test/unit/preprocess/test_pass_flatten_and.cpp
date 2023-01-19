@@ -13,6 +13,7 @@ class TestPassFlattenAnd : public TestPreprocessingPass
   TestPassFlattenAnd() : d_pass(d_env){};
 
  protected:
+  Env d_env;
   preprocess::pass::PassFlattenAnd d_pass;
 };
 
