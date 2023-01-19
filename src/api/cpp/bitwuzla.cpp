@@ -1617,9 +1617,20 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
   BITWUZLA_CHECK(d_n_sat_calls == 0 || d_ctx->options().incremental())
       << "multiple check-sat calls require that incremental solving is enabled";
   d_n_sat_calls += 1;
-  assert(
-      assumptions.empty());  // TODO assumption handling (not implemented yet)
-  d_last_check_sat = s_results.at(d_ctx->solve());
+  if (!assumptions.empty())
+  {
+    d_ctx->push();
+    for (const Term &term : assumptions)
+    {
+      d_ctx->assert_formula(*term.d_node);
+    }
+    d_last_check_sat = s_results.at(d_ctx->solve());
+    d_ctx->pop();
+  }
+  else
+  {
+    d_last_check_sat = s_results.at(d_ctx->solve());
+  }
   return d_last_check_sat;
 }
 
