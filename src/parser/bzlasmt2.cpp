@@ -3303,11 +3303,6 @@ close_term(BzlaSMT2Parser *parser)
       parser->perrcoo = item_cur[2].coo;
       return !perr_smt2(parser, "second argument of 'store' is a function");
     }
-    if (bitwuzla_term_is_array(item_cur[3].exp))
-    {
-      parser->perrcoo = item_cur[3].coo;
-      return !perr_smt2(parser, "third argument of 'store' is an array");
-    }
     if (bitwuzla_term_get_sort(item_cur[2].exp)
         != bitwuzla_term_array_get_index_sort(item_cur[1].exp))
     {
