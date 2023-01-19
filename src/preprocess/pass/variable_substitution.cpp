@@ -3,6 +3,7 @@
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
+#include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
 #include "rewrite/rewriter.h"
@@ -333,8 +334,6 @@ PassVariableSubstitution::substitute(
     std::unordered_map<Node, Node>& cache) const
 {
   node::node_ref_vector visit{term};
-  NodeManager& nm = NodeManager::get();
-
   do
   {
     const Node& cur = visit.back();
@@ -362,7 +361,7 @@ PassVariableSubstitution::substitute(
         assert(iit != cache.end());
         it->second = iit->second;
       }
-      else if (cur.num_children() > 0)
+      else
       {
         std::vector<Node> children;
         for (const Node& child : cur)
@@ -372,18 +371,7 @@ PassVariableSubstitution::substitute(
           assert(!iit->second.is_null());
           children.push_back(iit->second);
         }
-        if (cur.num_indices() > 0)
-        {
-          it->second = nm.mk_node(cur.kind(), children, cur.indices());
-        }
-        else
-        {
-          it->second = nm.mk_node(cur.kind(), children);
-        }
-      }
-      else
-      {
-        it->second = cur;
+        it->second = utils::rebuild_node(cur, children);
       }
     }
     visit.pop_back();

@@ -5,6 +5,7 @@
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
+#include "node/node_utils.h"
 
 namespace bzla::preprocess {
 
@@ -95,7 +96,6 @@ PreprocessingPass::substitute(const Node& node,
                               const SubstitutionMap& substitutions,
                               SubstitutionMap& cache) const
 {
-  NodeManager& nm = NodeManager::get();
   node::node_ref_vector visit{node};
   uint64_t num_substs = 0;
 
@@ -116,7 +116,7 @@ PreprocessingPass::substitute(const Node& node,
         it->second = its->second;
         num_substs += 1;
       }
-      else if (cur.num_children() > 0)
+      else
       {
         std::vector<Node> children;
         for (const Node& child : cur)
@@ -126,18 +126,7 @@ PreprocessingPass::substitute(const Node& node,
           assert(!itc->second.is_null());
           children.push_back(itc->second);
         }
-        if (cur.num_indices() > 0)
-        {
-          it->second = nm.mk_node(cur.kind(), children, cur.indices());
-        }
-        else
-        {
-          it->second = nm.mk_node(cur.kind(), children);
-        }
-      }
-      else
-      {
-        it->second = cur;
+        it->second = node::utils::rebuild_node(cur, children);
       }
     }
     visit.pop_back();

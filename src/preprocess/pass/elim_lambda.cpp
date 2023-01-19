@@ -3,6 +3,7 @@
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
+#include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 
 namespace bzla::preprocess::pass {
@@ -23,7 +24,6 @@ PassElimLambda::apply(AssertionVector& assertions)
 Node
 PassElimLambda::process(const Node& term)
 {
-  NodeManager& nm = NodeManager::get();
   node::node_ref_vector visit{term};
 
   do
@@ -51,13 +51,9 @@ PassElimLambda::process(const Node& term)
       {
         it->second = reduce(cur);
       }
-      else if (children.size() > 0)
-      {
-        it->second = nm.mk_node(cur.kind(), children, cur.indices());
-      }
       else
       {
-        it->second = cur;
+        it->second = utils::rebuild_node(cur, children);
       }
     }
 
@@ -86,7 +82,6 @@ PassElimLambda::reduce(const Node& node) const
   }
   assert(body.kind() != Kind::LAMBDA);
 
-  NodeManager& nm = NodeManager::get();
   node::unordered_node_ref_map<Node> cache;
   node::node_ref_vector visit{body};
   do
@@ -114,6 +109,11 @@ PassElimLambda::reduce(const Node& node) const
         assert(d_cache.find(cur) != d_cache.end());
         it->second = cache.at(d_cache.at(cur));
       }
+      else if (substitutions.find(cur) != substitutions.end())
+      {
+        assert(cur.kind() == Kind::VARIABLE);
+        it->second = substitutions.at(cur);
+      }
       else
       {
         std::vector<Node> children;
@@ -123,20 +123,7 @@ PassElimLambda::reduce(const Node& node) const
           assert(iit != cache.end());
           children.push_back(iit->second);
         }
-
-        if (children.size() > 0)
-        {
-          it->second = nm.mk_node(cur.kind(), children, cur.indices());
-        }
-        else if (substitutions.find(cur) != substitutions.end())
-        {
-          assert(cur.kind() == Kind::VARIABLE);
-          it->second = substitutions.at(cur);
-        }
-        else
-        {
-          it->second = cur;
-        }
+        it->second = utils::rebuild_node(cur, children);
       }
     }
     visit.pop_back();
