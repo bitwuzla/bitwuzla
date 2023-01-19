@@ -149,6 +149,10 @@ NodeManager::mk_node(Kind kind,
                      const std::vector<Node>& children,
                      const std::vector<uint64_t>& indices)
 {
+  assert(kind != Kind::CONSTANT);
+  assert(kind != Kind::CONST_ARRAY);
+  assert(kind != Kind::VALUE);
+  assert(kind != Kind::VARIABLE);
   NodeData* data  = new_data(kind, children, indices);
   auto found_data = find_or_insert_node(data);
   if (found_data)
