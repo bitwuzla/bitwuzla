@@ -1,3 +1,4 @@
+add_whitebox_unit_test(test_pass_contradicting_ands)
 add_unit_test(test_pass_flatten_and)
 add_unit_test(test_pass_variable_substitution)
 add_unit_test(test_preprocessor)

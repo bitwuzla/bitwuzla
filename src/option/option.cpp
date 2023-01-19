@@ -202,6 +202,11 @@ Options::Options()
                 "prop-sext"),
 
       // Preprocessing
+      pp_contr_ands(this,
+                    Option::PP_CONTRADICTING_ANDS,
+                    true,
+                    "enable contradicting ands preprocessing pass",
+                    "pp-contr-ands"),
       pp_embedded_constr(this,
                          Option::PP_EMBEDDED_CONSTR,
                          true,

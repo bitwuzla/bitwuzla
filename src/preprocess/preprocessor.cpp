@@ -33,6 +33,7 @@ Preprocessor::Preprocessor(SolvingContext& context)
       d_global_backtrack_mgr(*context.backtrack_mgr()),
       d_pop_callback(context.backtrack_mgr(), &d_backtrack_mgr),
       d_pass_rewrite(d_env),
+      d_pass_contr_ands(d_env, &d_backtrack_mgr),
       d_pass_elim_lambda(d_env),
       d_pass_elim_uninterpreted(d_env, &d_backtrack_mgr),
       d_pass_embedded_constraints(d_env, &d_backtrack_mgr),
@@ -166,6 +167,14 @@ Preprocessor::apply(AssertionVector& assertions)
       Msg(2) << assertions.num_modified() - cnt
              << " after embedded constraints";
     }
+
+    if (options.pp_contr_ands())
+    {
+      cnt = assertions.num_modified();
+      d_pass_contr_ands.apply(assertions);
+      Msg(2) << assertions.num_modified() - cnt << " after contradicting ands";
+    }
+
   } while (assertions.modified());
 
 #ifndef NDEBUG
