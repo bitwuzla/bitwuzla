@@ -1212,8 +1212,6 @@ BZLA_ELIM_KIND_IMPL(fp_gt, FP_GT_ELIM)
 BZLA_ELIM_KIND_IMPL(fp_geq, FP_GEQ_ELIM)
 BZLA_ELIM_KIND_IMPL(fp_sub, FP_SUB_ELIM)
 
-#undef BZLA_ELIM_KIND_IMPL
-
 /* Array rewrites ----------------------------------------------------------- */
 Node
 Rewriter::rewrite_select(const Node& node)
@@ -1262,12 +1260,7 @@ Rewriter::rewrite_forall(const Node& node)
   return node;
 }
 
-Node
-Rewriter::rewrite_exists(const Node& node)
-{
-  // TODO
-  return node;
-}
+BZLA_ELIM_KIND_IMPL(exists, EXISTS_ELIM)
 
 /* Normalization ------------------------------------------------------------ */
 
@@ -1608,6 +1601,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
 
     case RewriteRuleKind::ARRAY_PROP_SELECT: out << "ARRAY_PROP_SELECT"; break;
     case RewriteRuleKind::NORMALIZE_COMM: out << "NORMALIZE_COMM"; break;
+    case RewriteRuleKind::EXISTS_ELIM: out << "EXISTS_ELIM"; break;
   }
   return out;
 }

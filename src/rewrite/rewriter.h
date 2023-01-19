@@ -569,6 +569,9 @@ enum class RewriteRuleKind
   //// select
   // Level 1+
   ARRAY_PROP_SELECT,
+
+  /* Quantifier rewrites*/
+  EXISTS_ELIM,
 };
 
 std::ostream& operator<<(std::ostream& out, RewriteRuleKind kind);

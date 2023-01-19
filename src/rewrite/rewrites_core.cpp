@@ -1268,4 +1268,18 @@ RewriteRule<RewriteRuleKind::NORMALIZE_COMM>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/* --- Quantifiers ---------------------------------------------------------- */
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EXISTS_ELIM>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  assert(node[1].kind() != Kind::EXISTS);
+  return rewriter.mk_node(
+      Kind::NOT,
+      {rewriter.mk_node(Kind::FORALL,
+                        {node[0], rewriter.mk_node(Kind::NOT, {node[1]})})});
+}
+
 }  // namespace bzla
