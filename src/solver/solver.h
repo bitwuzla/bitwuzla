@@ -20,8 +20,12 @@ class Solver
  public:
   Solver(Env& env, SolverState& state);
 
-  /** Check theory consistency of current solving context. */
-  virtual void check() { assert(false); };
+  /**
+   * Check theory consistency of current solving context.
+   *
+   * @return True if solver check is complete.
+   */
+  virtual bool check() { assert(false); return false; };
 
   /** Compute value for given term. */
   virtual Node value(const Node& term) = 0;

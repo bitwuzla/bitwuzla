@@ -21,7 +21,7 @@ class FpSolver : public Solver
   FpSolver(Env& env, SolverState& state);
   ~FpSolver();
 
-  void check() override;
+  bool check() override;
 
   Node value(const Node& term) override;
 

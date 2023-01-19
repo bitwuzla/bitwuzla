@@ -48,7 +48,7 @@ FpSolver::FpSolver(Env& env, SolverState& state)
 
 FpSolver::~FpSolver() {}
 
-void
+bool
 FpSolver::check()
 {
   reset_cached_values();
@@ -72,6 +72,7 @@ FpSolver::check()
     }
   }
   d_word_blast_queue.clear();
+  return true;
 }
 
 namespace {

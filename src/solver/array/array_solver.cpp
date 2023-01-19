@@ -32,7 +32,7 @@ ArraySolver::ArraySolver(Env& env, SolverState& state)
 
 ArraySolver::~ArraySolver() {}
 
-void
+bool
 ArraySolver::check()
 {
   Log(1) << "\n*** check arrays";
@@ -60,6 +60,7 @@ ArraySolver::check()
     // TODO: in case of equality we also have to propagate constant arrays
     // upwards
   }
+  return true;
 }
 
 Node

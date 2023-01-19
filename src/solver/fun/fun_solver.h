@@ -20,7 +20,7 @@ class FunSolver : public Solver
   FunSolver(Env& env, SolverState& state);
   ~FunSolver();
 
-  void check() override;
+  bool check() override;
 
   Node value(const Node& term) override;
 

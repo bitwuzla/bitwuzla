@@ -23,7 +23,7 @@ class ArraySolver : public Solver
   ArraySolver(Env& env, SolverState& state);
   ~ArraySolver();
 
-  void check() override;
+  bool check() override;
 
   Node value(const Node& term) override;
 

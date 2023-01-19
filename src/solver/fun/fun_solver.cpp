@@ -23,7 +23,7 @@ FunSolver::FunSolver(Env& env, SolverState& state)
 
 FunSolver::~FunSolver() {}
 
-void
+bool
 FunSolver::check()
 {
   d_fun_models.clear();
@@ -45,6 +45,7 @@ FunSolver::check()
       }
     }
   }
+  return true;
 }
 
 Node
