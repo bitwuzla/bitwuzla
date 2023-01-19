@@ -98,6 +98,15 @@ Node bv1_to_bool(const Node& node);
  * @return The conversion node.
  */
 Node bool_to_bv1(const Node& node);
+
+/**
+ * Rebuild node with same kind and indices but new vector of children.
+ *
+ * @param node The node to rebuild.
+ * @param children The new children of the node.
+ * @return Rebuilt node.
+ */
+Node rebuild_node(const Node& node, const std::vector<Node>& children);
 }
 
 #endif

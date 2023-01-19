@@ -357,4 +357,29 @@ bool_to_bv1(const Node& node)
                      nm.mk_value(BitVector::mk_false())});
 }
 
+Node
+rebuild_node(const Node& node, const std::vector<Node>& children)
+{
+  assert(node.num_children() == children.size());
+  if (node.num_children() == 0)
+  {
+    assert(children.empty());
+    return node;
+  }
+  else if (node.kind() == Kind::CONST_ARRAY)
+  {
+    assert(children.size() == 1);
+    return NodeManager::get().mk_const_array(node.type(), children[0]);
+  }
+  else
+  {
+    NodeManager& nm = NodeManager::get();
+    if (node.num_indices() > 0)
+    {
+      return nm.mk_node(node.kind(), children, node.indices());
+    }
+    return nm.mk_node(node.kind(), children);
+  }
+}
+
 }  // namespace bzla::node::utils
