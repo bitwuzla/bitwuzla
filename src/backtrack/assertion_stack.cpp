@@ -134,7 +134,8 @@ AssertionStack::pop()
     const auto& [assertion, level] = d_assertions.back();
     auto it                        = d_cache.find(assertion);
     // Only remove from cache if the assertion is at the correct index.
-    if (it->second == d_assertions.size() - 1)
+    // Original assertion might have been removed already due to replace().
+    if (it != d_cache.end() && it->second == d_assertions.size() - 1)
     {
       d_cache.erase(it);
     }
