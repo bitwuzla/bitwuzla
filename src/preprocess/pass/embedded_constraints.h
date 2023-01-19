@@ -26,8 +26,6 @@ class PassEmbeddedConstraints : public PreprocessingPass
     uint64_t& num_substs;
   } d_stats;
 
-  /** Replace all occurrences of `d_substititutions` in `node. */
-  Node substitute(const Node& node);
   /** Only required to check the current assertion level. */
   const backtrack::BacktrackManager* d_backtrack_mgr;
   /** Backtrackable substitution map. */

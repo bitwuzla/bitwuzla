@@ -1,7 +1,10 @@
 #include "preprocess/preprocessing_pass.h"
 
 #include "backtrack/assertion_stack.h"
+#include "backtrack/unordered_map.h"
 #include "env.h"
+#include "node/node_manager.h"
+#include "node/node_ref_vector.h"
 
 namespace bzla::preprocess {
 
@@ -83,6 +86,65 @@ AssertionVector::modified() const
 PreprocessingPass::PreprocessingPass(Env& env)
     : d_env(env), d_logger(env.logger())
 {
+}
+
+/* --- PreprocessingPass protected ------------------------------------------ */
+
+std::pair<Node, uint64_t>
+PreprocessingPass::substitute(const Node& node,
+                              const SubstitutionMap& substitutions,
+                              SubstitutionMap& cache) const
+{
+  NodeManager& nm = NodeManager::get();
+  node::node_ref_vector visit{node};
+  uint64_t num_substs = 0;
+
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, Node());
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      auto its = substitutions.find(cur);
+      if (its != substitutions.end())
+      {
+        it->second = its->second;
+        num_substs += 1;
+      }
+      else if (cur.num_children() > 0)
+      {
+        std::vector<Node> children;
+        for (const Node& child : cur)
+        {
+          auto itc = cache.find(child);
+          assert(itc != cache.end());
+          assert(!itc->second.is_null());
+          children.push_back(itc->second);
+        }
+        if (cur.num_indices() > 0)
+        {
+          it->second = nm.mk_node(cur.kind(), children, cur.indices());
+        }
+        else
+        {
+          it->second = nm.mk_node(cur.kind(), children);
+        }
+      }
+      else
+      {
+        it->second = cur;
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+  auto it = cache.find(node);
+  assert(it != cache.end());
+  return std::make_pair(it->second, num_substs);
 }
 
 }  // namespace bzla::preprocess

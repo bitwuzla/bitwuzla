@@ -13,6 +13,8 @@ namespace util {
 
 namespace backtrack {
 class AssertionView;
+template <class K, class V>
+class unordered_map;
 }
 
 namespace preprocess {
@@ -75,17 +77,46 @@ class AssertionVector
  */
 class PreprocessingPass
 {
+  using SubstitutionMap = backtrack::unordered_map<Node, Node>;
+
  public:
+  /**
+   * Constructor.
+   * @param env The associated environment.
+   */
   PreprocessingPass(Env& env);
 
-  /** Apply preprocessing pass to the current set of assertions. */
+  /**
+   * Apply preprocessing pass to the current set of assertions.
+   * @param assertions The current set of assertions.
+   */
   virtual void apply(AssertionVector& assertions) = 0;
 
-  /** Apply preprocessing pass to given term. */
+  /**
+   * Apply preprocessing pass to given term.
+   * @param term The term to apply this preprocessing pass to.
+   */
   virtual Node process(const Node& term) { return term; }
 
  protected:
+  /**
+   * Replace all occurrences of `substititutions` in `node.
+   * @param node          The node.
+   * @param substitutions A Map from node that should be substituted to node to
+   *                      substitute with.
+   * @param cache         The substitution cache, maps node to its substitution
+   *                      if applicable, else to itself.
+   * @return The rewritten form of the node with all occurrences in the
+   *         substitution map replaced by their substitutions and the number
+   *         of substitutions performed.
+   */
+  std::pair<Node, uint64_t> substitute(const Node& node,
+                                       const SubstitutionMap& substitutions,
+                                       SubstitutionMap& cache) const;
+
+  /** The associated environment. */
   Env& d_env;
+  /** The associated logger. */
   util::Logger& d_logger;
 };
 
