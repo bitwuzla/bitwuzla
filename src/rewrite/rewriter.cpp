@@ -4,6 +4,7 @@
 #include "node/node_kind.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
+#include "node/node_utils.h"
 #include "node/unordered_node_ref_set.h"
 #include "rewrite/rewrites_array.h"
 #include "rewrite/rewrites_bool.h"
@@ -92,7 +93,6 @@ Rewriter::Rewriter(Env& env, uint8_t level)
 const Node&
 Rewriter::rewrite(const Node& node)
 {
-  NodeManager& nm = NodeManager::get();
   node::node_ref_vector visit{node};
   do
   {
@@ -119,7 +119,7 @@ Rewriter::rewrite(const Node& node)
         // Save current maximum node id
         int64_t max_id = NodeManager::get().max_node_id();
 #endif
-        it->second = _rewrite(nm.mk_node(cur.kind(), children, cur.indices()));
+        it->second = _rewrite(node::utils::rebuild_node(cur, children));
 #ifndef NDEBUG
         uint64_t thresh = d_env.options().dbg_rw_node_inc();
         if (thresh > 0 && d_num_nodes > 0)
