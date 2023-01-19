@@ -124,25 +124,28 @@ set(testcases
 "solver/array/write5.btor.smt2"
 "solver/fun/nestedfun1.smt2 -rwl=2"
 "solver/fun/regrencparamapps.smt2"
-#"solver/quant/issue96.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr1.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr13.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr15.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr16.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr18.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr2.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr20.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr21.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr22.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr23.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr24.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr25.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr26.smt2"# TODO disabled because of quants
-##"solver/quant/quant_regr3.smt2" # currently returns unknown# TODO disabled because of quants
-#"solver/quant/quant_regr4.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr6.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr7.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr9.smt2"# TODO disabled because of quants
+"solver/quant/issue96.smt2"
+"solver/quant/quant_regr1.smt2"
+"solver/quant/quant_regr13.smt2"
+"solver/quant/quant_regr15.smt2"
+"solver/quant/quant_regr16.smt2"
+"solver/quant/quant_regr18.smt2"
+"solver/quant/quant_regr2.smt2"
+"solver/quant/quant_regr20.smt2"
+"solver/quant/quant_regr21.smt2"
+"solver/quant/quant_regr22.smt2"
+"solver/quant/quant_regr23.smt2"
+"solver/quant/quant_regr24.smt2"
+"solver/quant/quant_regr25.smt2"
+"solver/quant/quant_regr26.smt2"
+"solver/quant/quant_regr3.smt2"
+"solver/quant/quant_regr4.smt2"
+"solver/quant/quant_regr6.smt2"
+"solver/quant/quant_regr7.smt2"
+"solver/quant/quant_regr9.smt2"
+"solver/quant/quant_regr27.smt2"
+"solver/quant/quant_regr28.smt2"
+"solver/quant/quant_regr29.smt2"
 ## unsat
 "preprocess/array/regrembeddedconstraint1.btor.smt2 -rwl=0"
 "preprocess/array/regrembeddedconstraint1.btor.smt2 -rwl=1"
@@ -274,17 +277,17 @@ set(testcases
 "solver/array/write9.btor.smt2"
 "solver/bv/prop/prels-funs.smt2 --bv-solver=preprop"
 "solver/fun/fun1.smt2"
-#"s24 slice 1 -14 1 1er/quant/issue97.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr10.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr11.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr12.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr14.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr17.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr19.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr5.smt2"# TODO disabled because of quants
-#"solver/quant/quant_regr8.smt2"# TODO disabled because of quants
-#"solver/quant/regrnormquant.smt2"# TODO disabled because of quants
-#"solver/quant/regsmtparselet.smt2"# TODO disabled because of quants
+"solver/quant/issue97.smt2"
+"solver/quant/quant_regr10.smt2"
+"solver/quant/quant_regr11.smt2"
+"solver/quant/quant_regr12.smt2"
+"solver/quant/quant_regr14.smt2"
+"solver/quant/quant_regr17.smt2"
+"solver/quant/quant_regr19.smt2"
+"solver/quant/quant_regr5.smt2"
+"solver/quant/quant_regr8.smt2"
+"solver/quant/regrnormquant.smt2"
+"solver/quant/regsmtparselet.smt2"
 ## incremental
 #"preprocess/array/nondestr_subst1.smt2 -i --nondestr-subst" # TODO disabled because of options
 #"preprocess/array/nondestr_subst10.smt2 -i --nondestr-subst" # TODO disabled because of options
@@ -309,10 +312,6 @@ set(testcases
 #"solver/array/issue32.smt2 -i" # TODO disabled because of const arrays
 "solver/bv/painc.smt2 -i"
 "solver/bv/smt2pushpop0.smt2 -i"
-## tbd
-#"solver/quant/quant_regr27.smt2"
-#"solver/quant/quant_regr28.smt2"
-#"solver/quant/quant_regr29.smt2"
 )
 set(testcases_btor_sat
 "preprocess/array/regrembeddedconstraint10.btor -rwl=0"

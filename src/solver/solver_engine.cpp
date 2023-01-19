@@ -49,7 +49,6 @@ SolverEngine::solve()
     {
       break;
     }
-    // TODO: process lemmas after each check()?
     d_fp_solver.check();
     if (!d_lemmas.empty())
     {
@@ -65,11 +64,13 @@ SolverEngine::solve()
     {
       continue;
     }
-    d_quant_solver.check();
+    bool quant_done = d_quant_solver.check();
+    if (!quant_done)
+    {
+      d_sat_state = Result::UNKNOWN;
+    }
   } while (!d_lemmas.empty());
   d_in_solving_mode = false;
-  // TODO: still need to check whether all solvers are done or if there are
-  //       still checks pending
 
   return d_sat_state;
 }
@@ -177,6 +178,7 @@ SolverEngine::process_assertion(const Node& assertion, bool top_level)
   if (inserted)
   {
     d_bv_solver.register_assertion(assertion, top_level);
+    d_quant_solver.register_assertion(assertion);
   }
   process_term(assertion);
 }
