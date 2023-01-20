@@ -20,14 +20,13 @@ using namespace bzla::node;
 bool
 FpSolver::is_theory_leaf(const Node& term)
 {
-  node::Kind k = term.kind();
-  return k == node::Kind::FP_IS_INF || k == node::Kind::FP_IS_NAN
-         || k == node::Kind::FP_IS_NEG || k == node::Kind::FP_IS_NORMAL
-         || k == node::Kind::FP_IS_POS || k == node::Kind::FP_IS_SUBNORMAL
-         || k == node::Kind::FP_IS_ZERO || k == node::Kind::FP_EQUAL
-         || k == node::Kind::FP_LEQ || k == node::Kind::FP_LT
-         || k == node::Kind::FP_TO_SBV || k == node::Kind::FP_TO_UBV
-         || (k == node::Kind::EQUAL
+  Kind k = term.kind();
+  return k == Kind::FP_IS_INF || k == Kind::FP_IS_NAN || k == Kind::FP_IS_NEG
+         || k == Kind::FP_IS_NORMAL || k == Kind::FP_IS_POS
+         || k == Kind::FP_IS_SUBNORMAL || k == Kind::FP_IS_ZERO
+         || k == Kind::FP_EQUAL || k == Kind::FP_LEQ || k == Kind::FP_LT
+         || k == Kind::FP_TO_SBV || k == Kind::FP_TO_UBV
+         || (k == Kind::EQUAL
              && (term[0].type().is_fp() || term[0].type().is_rm()));
 }
 
@@ -65,12 +64,12 @@ FpSolver::check()
     {
       assert(wb.type().is_bv() && wb.type().bv_size() == 1);
       d_solver_state.lemma(
-          nm.mk_node(node::Kind::EQUAL, {node, node::utils::bv1_to_bool(wb)}));
+          nm.mk_node(Kind::EQUAL, {node, node::utils::bv1_to_bool(wb)}));
     }
     else
     {
       assert(node.type().is_bv() && node.type() == wb.type());
-      d_solver_state.lemma(nm.mk_node(node::Kind::EQUAL, {node, wb}));
+      d_solver_state.lemma(nm.mk_node(Kind::EQUAL, {node, wb}));
     }
   }
   d_word_blast_queue.clear();
@@ -94,9 +93,9 @@ is_leaf(const Node& node)
   {
     return true;
   }
-  node::Kind k = node.kind();
-  return k == node::Kind::FP_TO_FP_FROM_BV || k == node::Kind::FP_TO_FP_FROM_SBV
-         || k == node::Kind::FP_TO_FP_FROM_UBV;
+  Kind k = node.kind();
+  return k == Kind::FP_TO_FP_FROM_BV || k == Kind::FP_TO_FP_FROM_SBV
+         || k == Kind::FP_TO_FP_FROM_UBV;
 }
 }  // namespace
 
@@ -106,8 +105,8 @@ FpSolver::value(const Node& term)
   assert(term.type().is_fp() || term.type().is_rm());
 
   NodeManager& nm = NodeManager::get();
-  node::node_ref_vector visit{term};
-  node::unordered_node_ref_map<bool> visited;
+  node_ref_vector visit{term};
+  unordered_node_ref_map<bool> visited;
 
   do
   {
