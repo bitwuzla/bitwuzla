@@ -430,13 +430,13 @@ LocalSearch<VALUE>::move()
     BZLALSLOG(1) << "  unsatisfied roots:" << std::endl;
     for (uint64_t id : d_roots_unsat)
     {
-      BZLALSLOG(1) << "    - " << *(get_node(id)) << std::endl;
+      BZLALSLOG(1) << "    - " << *get_node(id) << std::endl;
     }
     BZLALSLOG(1) << "  satisfied roots:" << std::endl;
     for (uint64_t id : d_roots)
     {
       if (d_roots_unsat.find(id) != d_roots_unsat.end()) continue;
-      BZLALSLOG(1) << "    - " << get_node(id) << std::endl;
+      BZLALSLOG(1) << "    - " << *get_node(id) << std::endl;
     }
   }
 
