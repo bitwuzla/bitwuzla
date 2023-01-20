@@ -233,6 +233,15 @@ enum ENUM(Option)
    */
   EVALUE(PROP_SEXT),
 
+  /*! **Preprocessing: Find contradicting bit-vector ands**
+   *
+   * When enabled, substitutes contradicting nodes of kind #BV_AND with zero.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PP_CONTRADICTING_ANDS),
   /*! **Preprocessing: Embedded constraint substitution**
    *
    * When enabled, substitutes assertions that occur as sub-expression in the
