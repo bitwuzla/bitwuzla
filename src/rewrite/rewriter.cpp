@@ -203,7 +203,7 @@ Rewriter::_rewrite(const Node& node)
   {
     d_recursion_limit_reached = true;
     it->second                = node;
-    return node;
+    return it->second;
   }
 
   // Normalize before rewriting
