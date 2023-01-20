@@ -64,6 +64,9 @@ class Rewriter
   Node invert_node_if(bool condition, const Node& node);
 
  private:
+  /** The limit for recursive calls to _rewrite(). */
+  static constexpr uint64_t RECURSION_LIMIT = 4096;
+
   const Node& _rewrite(const Node& node);
 
   /* Core ---------------------------------------- */

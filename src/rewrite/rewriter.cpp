@@ -199,7 +199,7 @@ Rewriter::_rewrite(const Node& node)
 
   // Limit rewrite recursion depth if we run into rewrite cycles in production
   // mode. Ideally, this should not happen, but if it does, we do not crash.
-  if (d_num_rec_calls >= 4096)
+  if (d_num_rec_calls >= RECURSION_LIMIT)
   {
     d_recursion_limit_reached = true;
     it->second                = node;

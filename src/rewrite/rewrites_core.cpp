@@ -367,10 +367,10 @@ RewriteRule<RewriteRuleKind::EQUAL_ITE>::_apply(Rewriter& rewriter,
 
 /**
  * match: (= a (ite c a b))
- * resutl: (or c (= a b))
+ * result: (or c (= a b))
  *
  * match: (= a (ite c b a))
- * resutl: (or (not c) (= a b))
+ * result: (or (not c) (= a b))
  */
 namespace {
 Node
