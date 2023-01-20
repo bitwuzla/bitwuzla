@@ -201,6 +201,7 @@ Rewriter::_rewrite(const Node& node)
   // mode. Ideally, this should not happen, but if it does, we do not crash.
   if (d_num_rec_calls >= RECURSION_LIMIT)
   {
+    assert(false);
     d_recursion_limit_reached = true;
     it->second                = node;
     return it->second;
