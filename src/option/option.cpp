@@ -219,7 +219,7 @@ Options::Options()
                      "pp-flatten-and"),
       pp_skeleton_preproc(this,
                           Option::PP_SKELETON_PREPROC,
-                          false,
+                          true,
                           "enable skeleton preprocessing pass",
                           "pp-skeleton-preproc"),
       pp_variable_subst(this,

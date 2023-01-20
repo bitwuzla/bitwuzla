@@ -36,6 +36,12 @@ class TestBvPropSolver : public ::testing::Test
     d_options.set<uint64_t>(Option::PROP_NUPDATES, TEST_NUPDATES);
     d_options.set<bool>(Option::PROP_CONST_BITS, true);
     d_options.set<uint64_t>(Option::SEED, 1234);
+    d_options.set<uint64_t>(Option::REWRITE_LEVEL, 0);
+    d_options.pp_contr_ands.set(false);
+    d_options.pp_embedded_constr.set(false);
+    d_options.pp_flatten_and.set(false);
+    d_options.pp_skeleton_preproc.set(false);
+    d_options.pp_variable_subst.set(false);
   }
 
   /**
@@ -232,7 +238,6 @@ TestBvPropSolver::_test_prop_aux(Kind kind,
   Node const1 = s1 ? fix_bits(d_nm.mk_const(type), *d1) : Node();
   Node const2 = s2 ? fix_bits(d_nm.mk_const(type), *d2) : Node();
 
-  d_options.set<uint64_t>(Option::REWRITE_LEVEL, 0);
   SolvingContext ctx = SolvingContext(d_options);
 
   if (s2)
