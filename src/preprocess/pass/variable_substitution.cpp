@@ -1,5 +1,6 @@
 #include "preprocess/pass/variable_substitution.h"
 
+#include "bv/bitvector.h"
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
@@ -14,20 +15,187 @@ namespace bzla::preprocess::pass {
 using namespace node;
 
 namespace {
+bool
+get_linear_bv_term_aux(
+    const Node& node, BitVector& factor, Node& lhs, Node& rhs, uint32_t& bound)
+{
+  assert(node.type().is_bv());
+
+  if (bound == 0)
+  {
+    return false;
+  }
+
+  bound -= 1;
+
+  NodeManager& nm = NodeManager::get();
+  if (node.is_inverted())
+  {
+    // node = ~subterm
+    //      = -1 - subterm
+    //      = -1 - (factor * lhs + rhs)
+    //      = (-factor) * lhs + (-1 -rhs)
+    //      = (-factor) * lhs + ~rhs
+
+    BitVector tmp_factor;
+    if (!get_linear_bv_term_aux(
+            nm.invert_node(node), tmp_factor, lhs, rhs, bound))
+    {
+      return false;
+    }
+    rhs = nm.invert_node(rhs);
+    assert(!factor.is_null());
+    factor.ibvneg();
+  }
+  else if (node.kind() == Kind::BV_ADD)
+  {
+    Node tmp, other;
+    if (get_linear_bv_term_aux(node[0], factor, lhs, tmp, bound))
+    {
+      // node = node[0] + node[1]
+      //      = (factor * lhs + rhs) + node[1]
+      //      = factor * lhs + (node[1] + rhs)
+      other = node[1];
+    }
+    else if (get_linear_bv_term_aux(node[1], factor, lhs, tmp, bound))
+    {
+      // node = node[0] + node[1]
+      //      = node[0] + (factor * lhs + rhs)
+      //      = factor * lhs + (node[0] + rhs)
+      other = node[0];
+    }
+    else
+    {
+      return false;
+    }
+    rhs = nm.mk_node(Kind::BV_ADD, {other, tmp});
+  }
+  else if (node.kind() == Kind::BV_MUL)
+  {
+    Node tmp, other;
+    if (node[0].is_value() && node[0].value<BitVector>().lsb())
+    {
+      if (!get_linear_bv_term_aux(node[1], factor, lhs, tmp, bound))
+      {
+        return false;
+      }
+      // node = node[0] * node[1]
+      //      = node[0] * (factor * lhs + rhs)
+      //      = (node[0] * factor) * lhs + node[0] * rhs
+      //      = (other * factor) * lhs + other * rhs
+      other = node[0];
+    }
+    else if (node[1].is_value() && node[1].value<BitVector>().lsb())
+    {
+      if (!get_linear_bv_term_aux(node[0], factor, lhs, tmp, bound))
+      {
+        return false;
+      }
+      // node = node[0] * node[1]
+      //      = (factor * lhs + rhs) * node[1]
+      //      = (node[1] * factor) * lhs + node[1] * rhs
+      //      = (other * factor) * lhs + other * rhs
+      other = node[1];
+    }
+    else
+    {
+      return false;
+    }
+    assert(!other.is_inverted());
+    assert(!factor.is_null());
+    factor.ibvmul(other.value<BitVector>());
+    rhs = nm.mk_node(Kind::BV_MUL, {other, tmp});
+  }
+  else if (node.is_const())
+  {
+    uint64_t size = node.type().bv_size();
+    lhs           = node;
+    rhs           = nm.mk_value(BitVector::mk_zero(size));
+    factor        = BitVector::mk_one(size);
+  }
+  else
+  {
+    return false;
+  }
+
+  assert(lhs.is_const());
+  return true;
+}
+
+bool
+get_linear_bv_term(const Node& node, BitVector& factor, Node& lhs, Node& rhs)
+{
+  uint32_t bound = 100;
+  bool res       = get_linear_bv_term_aux(node, factor, lhs, rhs, bound);
+  return res;
+}
+
+}  // namespace
 
 std::pair<Node, Node>
-get_var_term(const Node& assertion)
+PassVariableSubstitution::normalize_substitution(const Node& node)
+{
+  assert(node.kind() == Kind::EQUAL);
+  assert(node[0].type().is_bv());
+  assert(!node[0].is_const());
+  assert(!node[1].is_const());
+
+  auto [it, inserted] = d_norm_subst_cache.insert(node);
+  if (inserted)
+  {
+    NodeManager& nm   = NodeManager::get();
+    const Node& left  = node[0];
+    const Node& right = node[1];
+    Node var, subst, tmp;
+    BitVector factor;
+    if (get_linear_bv_term(left, factor, var, tmp))
+    {
+      subst = nm.mk_node(Kind::BV_SUB, {right, tmp});
+      d_stats.num_linear_eq += 1;
+    }
+    else if (get_linear_bv_term(right, factor, var, tmp))
+    {
+      subst = nm.mk_node(Kind::BV_SUB, {left, tmp});
+      d_stats.num_linear_eq += 1;
+    }
+    else
+    {
+      // no substitution found
+      return std::make_pair(Node(), Node());
+    }
+    d_stats.num_gauss_elim += 1;
+    subst = nm.mk_node(Kind::BV_MUL, {subst, nm.mk_value(factor.ibvmodinv())});
+    if (var.is_inverted())
+    {
+      var   = nm.invert_node(var);
+      subst = nm.invert_node(subst);
+    }
+    return std::make_pair(var, subst);
+  }
+  return std::make_pair(Node(), Node());
+}
+
+std::pair<Node, Node>
+PassVariableSubstitution::find_substitution(const Node& assertion)
 {
   NodeManager& nm = NodeManager::get();
+
   if (assertion.kind() == Kind::EQUAL)
   {
     if (assertion[0].kind() == Kind::CONSTANT)
     {
       return std::make_pair(assertion[0], assertion[1]);
     }
-    else if (assertion[1].kind() == Kind::CONSTANT)
+
+    if (assertion[1].kind() == Kind::CONSTANT)
     {
       return std::make_pair(assertion[1], assertion[0]);
+    }
+
+    if (assertion[0].type().is_bv() && !assertion[0].is_const()
+        && !assertion[1].is_const())
+    {
+      return normalize_substitution(assertion);
     }
   }
   else if (assertion.is_const())
@@ -41,8 +209,6 @@ get_var_term(const Node& assertion)
   // TODO: more substitution normalizations
   return std::make_pair(Node(), Node());
 }
-
-}  // namespace
 
 /* --- PassVariableSubstitution public -------------------------------------- */
 
@@ -73,7 +239,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
       const Node& assertion  = assertions[i];
-      auto [var, term]       = get_var_term(assertion);
+      auto [var, term]       = find_substitution(assertion);
       // No variable substitution
       if (var.is_null())
       {
@@ -156,7 +322,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
         assert(!var.is_null());
         // Make sure to rewrite the assertion, otherwise we may run into loops
         // with rewriter pass due to the substitution normalizations in
-        // get_var_term(), e.g., a -- subst --> a = true -- rewrite --> a.
+        // find_substitution(), e.g., a -- subst --> a = true -- rewrite --> a.
         Node rewritten =
             rewriter.rewrite(nm.mk_node(Kind::EQUAL, {var, process(term)}));
         assertions.replace(i, rewritten);
@@ -389,7 +555,12 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
           "preprocess::varsubst::time_direct_cycle_check")),
       time_remove_cycles(stats.new_stat<util::TimerStatistic>(
           "preprocess::varsubst::time_remove_cycles")),
-      num_substs(stats.new_stat<uint64_t>("preprocess::varsubst::num_substs"))
+      num_substs(stats.new_stat<uint64_t>("preprocess::varsubst::num_substs")),
+      num_linear_eq(
+          stats.new_stat<uint64_t>("preprocess::varsubst::num_linear_eq")),
+      num_gauss_elim(
+          stats.new_stat<uint64_t>("preprocess::varsubst::num_gauss_elim"))
+
 {
 }
 

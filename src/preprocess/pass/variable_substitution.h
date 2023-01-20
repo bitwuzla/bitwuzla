@@ -2,6 +2,7 @@
 #define BZLA_PREPROCESS_PASS_VARIABLE_SUBSTITUTION_H_INCLUDED
 
 #include "backtrack/unordered_map.h"
+#include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "node/unordered_node_ref_map.h"
 #include "preprocess/preprocessing_pass.h"
@@ -28,6 +29,15 @@ class PassVariableSubstitution : public PreprocessingPass
 
   bool is_direct_cycle(const Node& var, const Node& term) const;
 
+  /**
+   * Extract variable substitution, if possible.
+   * @param assertion The assertion to extract a variable substitution from.
+   * @return A pair that maps variable to substiution, if successful, and
+   *         a pair of null nodes, otherwise.
+   */
+  std::pair<Node, Node> find_substitution(const Node& assertion);
+  std::pair<Node, Node> normalize_substitution(const Node& node);
+
   Node substitute(const Node& term,
                   const std::unordered_map<Node, Node>& substitutions,
                   std::unordered_map<Node, Node>& cache) const;
@@ -39,6 +49,9 @@ class PassVariableSubstitution : public PreprocessingPass
   /** Current set of variable substitution assertions. */
   backtrack::unordered_map<Node, std::pair<Node, Node>>
       d_substitution_assertions;
+
+  // TODO obsolete if we generally cache
+  backtrack::unordered_set<Node> d_norm_subst_cache;
 
   /** Backtrackable cache. */
   class Cache : public backtrack::Backtrackable
@@ -77,6 +90,8 @@ class PassVariableSubstitution : public PreprocessingPass
     util::TimerStatistic& time_direct_cycle_check;
     util::TimerStatistic& time_remove_cycles;
     uint64_t& num_substs;
+    uint64_t& num_linear_eq;
+    uint64_t& num_gauss_elim;
   } d_stats;
 };
 
