@@ -865,6 +865,8 @@ Options::set(const std::vector<std::string> &args)
       {
         val = !val;
       }
+      auto it = s_options.find(option);
+      BITWUZLA_CHECK(it != s_options.end()) << "invalid option '" << opt << "'";
       set(s_options.at(option), val);
       continue;
     }
