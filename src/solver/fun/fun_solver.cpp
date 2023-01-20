@@ -90,6 +90,7 @@ FunSolver::register_term(const Node& term)
 {
   // For now we only expect function applications
   assert(term.kind() == Kind::APPLY);
+  assert(term[0].kind() != Kind::LAMBDA);
   d_applies.push_back(term);
 }
 

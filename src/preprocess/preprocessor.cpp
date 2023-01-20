@@ -88,7 +88,8 @@ Preprocessor::process(const Node& term)
 {
   util::Timer timer(d_stats.time_process);
   // TODO: add more passes
-  Node processed = d_pass_variable_substitution.process(term);
+  Node processed = d_pass_elim_lambda.process(term);
+  processed      = d_pass_variable_substitution.process(processed);
   return d_pass_rewrite.process(processed);
 }
 
@@ -114,9 +115,6 @@ Preprocessor::apply(AssertionVector& assertions)
   }
 #endif
 
-  // one-shot passes
-  d_pass_elim_lambda.apply(assertions);
-
   auto& options  = d_env.options();
   bool skel_done = false;
   // fixed-point passes
@@ -133,11 +131,6 @@ Preprocessor::apply(AssertionVector& assertions)
       d_pass_flatten_and.apply(assertions);
       Msg(2) << assertions.num_modified() - cnt << " after and flattening";
     }
-
-    cnt = assertions.num_modified();
-    d_pass_elim_uninterpreted.apply(assertions);
-    Msg(2) << assertions.num_modified() - cnt
-           << " after uninterpreted const/var elimination";
 
     cnt = assertions.num_modified();
     d_pass_rewrite.apply(assertions);
@@ -174,6 +167,15 @@ Preprocessor::apply(AssertionVector& assertions)
       d_pass_contr_ands.apply(assertions);
       Msg(2) << assertions.num_modified() - cnt << " after contradicting ands";
     }
+
+    cnt = assertions.num_modified();
+    d_pass_elim_lambda.apply(assertions);
+    Msg(2) << assertions.num_modified() - cnt << " after lambda elimination";
+
+    cnt = assertions.num_modified();
+    d_pass_elim_uninterpreted.apply(assertions);
+    Msg(2) << assertions.num_modified() - cnt
+           << " after uninterpreted const/var elimination";
 
   } while (assertions.modified());
 
