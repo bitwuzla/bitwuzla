@@ -1,0 +1,7 @@
+(declare-const x Bool)
+(define-sort FP () Float32)
+(declare-const s FP)
+(declare-const u FP)
+(declare-fun f (FP) Bool)
+(assert (distinct (f (fp.fma RNE s u (ite x (fp (_ bv0 1) (_ bv0 8) (_ bv0 23)) (fp (_ bv1 1) (_ bv0 8) (_ bv0 23))))) (f (ite x (fp (_ bv0 1) (_ bv0 8) (_ bv0 23)) (fp (_ bv1 1) (_ bv0 8) (_ bv0 23))))))
+(check-sat)

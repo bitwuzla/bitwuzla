@@ -2138,7 +2138,7 @@ if(SymFPU_FOUND)
     # "solver/fp/fp_real.smt2"
     # "solver/fp/fp_regr9.smt2"
     # TODO: disabled because const arrays not yet supported
-    #"solver/fp/getvalue.smt2"
+    #"solver/getvalue.smt2"
   )
 endif()
 

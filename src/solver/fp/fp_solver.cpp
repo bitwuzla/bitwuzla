@@ -15,6 +15,8 @@
 
 namespace bzla::fp {
 
+using namespace bzla::node;
+
 bool
 FpSolver::is_theory_leaf(const Node& term)
 {
@@ -124,32 +126,53 @@ FpSolver::value(const Node& term)
       visited.emplace(cur, false);
       if (!is_leaf(cur))
       {
-        visit.insert(visit.end(), cur.begin(), cur.end());
+        if (cur.kind() == Kind::ITE && !is_theory_leaf(cur[0]))
+        {
+          visit.push_back(d_solver_state.value(cur[0]).value<bool>() ? cur[1]
+                                                                     : cur[2]);
+        }
+        else
+        {
+          visit.insert(visit.end(), cur.begin(), cur.end());
+        }
       }
       continue;
     }
     else if (!it->second)
     {
       it->second = true;
+      Node value;
 
-      Node wb    = d_env.rewriter().rewrite(d_word_blaster.word_blast(cur));
-      Node value = d_solver_state.value(wb);
-      assert(value.type().is_bv());
-      const BitVector& bv = value.value<BitVector>();
-      if (cur.type().is_rm())
+      if (cur.kind() == Kind::ITE)
       {
-        uint64_t rm = bv.to_uint64();
-        value       = nm.mk_value(static_cast<RoundingMode>(rm));
-      }
-      else if (cur.type().is_fp())
-      {
-        value = nm.mk_value(FloatingPoint(cur.type(), bv));
+        bool cond = is_theory_leaf(cur[0])
+                        ? get_cached_value(cur[0]).value<bool>()
+                        : d_solver_state.value(cur[0]).value<bool>();
+        assert(!cond || !get_cached_value(cur[1]).is_null());
+        assert(cond || !get_cached_value(cur[2]).is_null());
+        value = cond ? get_cached_value(cur[1]) : get_cached_value(cur[2]);
       }
       else
       {
-        assert(cur.type().is_bool());
-        assert(is_theory_leaf(cur));
-        value = nm.mk_value(bv.is_true());
+        Node wb = d_env.rewriter().rewrite(d_word_blaster.word_blast(cur));
+        value   = d_solver_state.value(wb);
+        assert(value.type().is_bv());
+        const BitVector& bv = value.value<BitVector>();
+        if (cur.type().is_rm())
+        {
+          uint64_t rm = bv.to_uint64();
+          value       = nm.mk_value(static_cast<RoundingMode>(rm));
+        }
+        else if (cur.type().is_fp())
+        {
+          value = nm.mk_value(FloatingPoint(cur.type(), bv));
+        }
+        else if (cur.type().is_bool())
+        {
+          assert(is_theory_leaf(cur));
+          assert(value.type().bv_size() == 1);
+          value = nm.mk_value(value.value<BitVector>().is_true());
+        }
       }
       cache_value(cur, value);
     }
