@@ -6,7 +6,9 @@
 #include "node/kind_info.h"
 #include "node/node.h"
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
 #include "node/node_utils.h"
+#include "node/unordered_node_ref_set.h"
 #include "rewrite/rewrite_utils.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
@@ -70,6 +72,54 @@ RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
  * result: (not a)
  */
 namespace {
+
+/**
+ * match:  (= (_ bv0 N) (bvnot (bvand a b))
+ * result: (and (= (bvnot (_ bv0 N )) a) (= (bvnot (_ bv0 N)) b))
+ *
+ * match:  (= (bvnot (_ bv0 N)) (bvand a b))
+ * result: (bvand (= (bvnot (_ bv0 N)) a) (= (bvnot (_ bv0 N)) b))
+ *
+ * @note: Traverses all leaf nodes of given BV_AND to avoid recursive calls of
+ *        _rw_eq_special_const().
+ */
+Node
+_rw_eq_special_push_ones(Rewriter& rewriter, const Node& node)
+{
+  bool is_or = node.kind() == Kind::BV_NOT;
+  assert(!is_or || node[0].kind() == Kind::BV_AND);
+  assert(is_or || node.kind() == Kind::BV_AND);
+
+  Node ones =
+      NodeManager::get().mk_value(BitVector::mk_ones(node.type().bv_size()));
+
+  std::vector<Node> eqs;
+  node::node_ref_vector visit;
+  node::unordered_node_ref_set cache;
+
+  visit.push_back(is_or ? node[0] : node);
+  do
+  {
+    const Node& cur = visit.back();
+    visit.pop_back();
+
+    auto [it, inserted] = cache.insert(cur);
+    if (inserted)
+    {
+      if (cur.kind() == Kind::BV_AND)
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+      else
+      {
+        eqs.push_back(rewriter.mk_node(Kind::EQUAL, {cur, ones}));
+      }
+    }
+  } while (!visit.empty());
+
+  return utils::mk_nary(Kind::AND, eqs);
+}
+
 Node
 _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 {
@@ -89,14 +139,11 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
           // 0 == a ^ b  --->  a = b
           return rewriter.mk_node(Kind::EQUAL, {node[idx1][0], node[idx1][1]});
         }
-        Node or0, or1;
-        if (node::utils::is_bv_or(node[idx1], or0, or1))
+        if (node[idx1].kind() == Kind::BV_NOT
+            && node[idx1][0].kind() == Kind::BV_AND)
         {
-          // 0 == a | b  ---> a == 0 && b == 0
-          return rewriter.mk_node(
-              Kind::AND,
-              {rewriter.mk_node(Kind::EQUAL, {or0, node[idx0]}),
-               rewriter.mk_node(Kind::EQUAL, {or1, node[idx0]})});
+          // 0 == ~(a & b)  ---> a == 1..1 && b == 1..1
+          return _rw_eq_special_push_ones(rewriter, node[idx1]);
         }
       }
       else if (value0.is_ones())
@@ -104,10 +151,7 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
         if (node[idx1].kind() == Kind::BV_AND)
         {
           // 1..1 == a & b  ---> a == 1..1 && b == 1..1
-          return rewriter.mk_node(
-              Kind::AND,
-              {rewriter.mk_node(Kind::EQUAL, {node[idx1][0], node[idx0]}),
-               rewriter.mk_node(Kind::EQUAL, {node[idx1][1], node[idx0]})});
+          return _rw_eq_special_push_ones(rewriter, node[idx1]);
         }
         Node xnor0, xnor1;
         if (node::utils::is_bv_xnor(node[idx1], xnor0, xnor1))
