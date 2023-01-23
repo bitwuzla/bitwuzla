@@ -23,22 +23,28 @@ void
 PassEmbeddedConstraints::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats.time_apply);
+  Log(1) << "Apply embedded constraints preprocessing pass";
 
   NodeManager& nm = NodeManager::get();
-
+  uint64_t n_substs = 0;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
     if (assertion.is_value()) continue;
     if (assertion.is_inverted())
     {
+      Log(2) << "Add substitution: " << assertion[0] << " -> false";
+      n_substs += 1;
       d_substitutions.emplace(assertion[0], nm.mk_value(false));
     }
     else
     {
+      Log(2) << "Add substitution: " << assertion << " -> true";
+      n_substs += 1;
       d_substitutions.emplace(assertion, nm.mk_value(true));
     }
   }
+  Log(1) << "Found " << n_substs << " new substitutions";
   if (d_substitutions.empty())
   {
     return;
@@ -65,6 +71,7 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
       assertions.replace(i, rewritten);
     }
   }
+  Log(1) << d_stats.num_substs << " embedded constraint substitutions";
 }
 
 Node
