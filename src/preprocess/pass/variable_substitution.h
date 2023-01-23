@@ -37,6 +37,7 @@ class PassVariableSubstitution : public PreprocessingPass
    */
   std::pair<Node, Node> find_substitution(const Node& assertion);
   std::pair<Node, Node> normalize_substitution_eq(const Node& node);
+  std::pair<Node, Node> normalize_substitution_bvult(const Node& node);
 
   Node substitute(const Node& term,
                   const std::unordered_map<Node, Node>& substitutions,
@@ -92,6 +93,7 @@ class PassVariableSubstitution : public PreprocessingPass
     uint64_t& num_substs;
     uint64_t& num_linear_eq;
     uint64_t& num_gauss_elim;
+    uint64_t& num_norm_bvult;
   } d_stats;
 };
 

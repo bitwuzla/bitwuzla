@@ -177,6 +177,90 @@ PassVariableSubstitution::normalize_substitution_eq(const Node& node)
   return {};
 }
 
+Kind
+get_subst_inv_ineq_kind(Kind kind)
+{
+  if (kind == Kind::BV_ULT) return Kind::BV_UGT;
+  if (kind == Kind::BV_ULE) return Kind::BV_UGE;
+  if (kind == Kind::BV_UGT) return Kind::BV_ULT;
+  assert(kind == Kind::BV_UGE);
+  return Kind::BV_ULE;
+}
+
+std::pair<Node, Node>
+PassVariableSubstitution::normalize_substitution_bvult(const Node& node)
+{
+  assert(node.kind() == Kind::BV_ULT
+         || (node.is_inverted() && node[0].kind() == Kind::BV_ULT));
+
+  bool inverted = node.is_inverted();
+  const Node& n = inverted ? node[0] : node;
+  Kind kind     = inverted ? Kind::BV_UGE : Kind::BV_ULT;
+  Node var, right;
+
+  if (n[0].is_const())
+  {
+    var   = n[0];
+    right = n[1];
+  }
+  else if (n[1].is_const())
+  {
+    var   = n[1];
+    right = n[0];
+    kind  = get_subst_inv_ineq_kind(n.kind());
+  }
+  else
+  {
+    return {};
+  }
+
+  NodeManager& nm = NodeManager::get();
+
+  // ((bvnot a) <ineq_kind> b) is equal to (<inv_ineq_kind> (a bvnot b))
+  if (var.is_inverted())
+  {
+    var   = var[0];
+    right = nm.invert_node(right);
+    kind  = get_subst_inv_ineq_kind(n.kind());
+  }
+
+  if (!right.is_value())
+  {
+    return {};
+  }
+
+  const BitVector& value = right.value<BitVector>();
+
+  if (kind == Kind::BV_ULT || kind == Kind::BV_ULE)
+  {
+    uint64_t clz = value.count_leading_zeros();
+    if (clz > 0)
+    {
+      d_stats.num_norm_bvult += 1;
+      Node subst =
+          nm.mk_node(Kind::BV_CONCAT,
+                     {nm.mk_value(BitVector::mk_zero(clz)),
+                      nm.mk_const(nm.mk_bv_type(var.type().bv_size() - clz))});
+      return {var, subst};
+    }
+  }
+  else
+  {
+    assert(kind == Kind::BV_UGT || kind == Kind::BV_UGE);
+    uint64_t clo = value.count_leading_ones();
+    if (clo > 0)
+    {
+      d_stats.num_norm_bvult += 1;
+      Node subst =
+          nm.mk_node(Kind::BV_CONCAT,
+                     {nm.mk_value(BitVector::mk_ones(clo)),
+                      nm.mk_const(nm.mk_bv_type(var.type().bv_size() - clo))});
+      return {var, subst};
+    }
+  }
+  return {};
+}
+
 std::pair<Node, Node>
 PassVariableSubstitution::find_substitution(const Node& assertion)
 {
@@ -198,6 +282,13 @@ PassVariableSubstitution::find_substitution(const Node& assertion)
     {
       return normalize_substitution_eq(assertion);
     }
+  }
+  else if (d_env.options().pp_variable_subst_norm_bvult()
+           && (assertion.kind() == Kind::BV_ULT
+               || (assertion.is_inverted()
+                   && assertion[0].kind() == Kind::BV_ULT)))
+  {
+    return normalize_substitution_bvult(assertion);
   }
   else if (assertion.is_const())
   {
@@ -560,7 +651,9 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
       num_linear_eq(stats.new_stat<uint64_t>(
           "preprocess::varsubst::normalize_eq::num_linear_eq")),
       num_gauss_elim(stats.new_stat<uint64_t>(
-          "preprocess::varsubst::normalize_eq::num_gauss_elim"))
+          "preprocess::varsubst::normalize_eq::num_gauss_elim")),
+      num_norm_bvult(stats.new_stat<uint64_t>(
+          "preprocess::varsubst::normalize_bvult::num_norm_bvult"))
 
 {
 }

@@ -156,6 +156,8 @@ const std::unordered_map<Option, bzla::option::Option> s_internal_options = {
     {Option::PP_VARIABLE_SUBST, bzla::option::Option::PP_VARIABLE_SUBST},
     {Option::PP_VARIABLE_SUBST_NORM_EQ,
      bzla::option::Option::PP_VARIABLE_SUBST_NORM_EQ},
+    {Option::PP_VARIABLE_SUBST_NORM_BVULT,
+     bzla::option::Option::PP_VARIABLE_SUBST_NORM_BVULT},
 
     {Option::DBG_RW_NODE_THRESH, bzla::option::Option::DBG_RW_NODE_THRESH},
     {Option::DBG_PP_NODE_THRESH, bzla::option::Option::DBG_PP_NODE_THRESH},
@@ -285,8 +287,10 @@ const std::unordered_map<bzla::option::Option, Option> s_options = {
     {bzla::option::Option::PP_EMBEDDED_CONSTR, Option::PP_EMBEDDED_CONSTR},
     {bzla::option::Option::PP_FLATTEN_AND, Option::PP_FLATTEN_AND},
     {bzla::option::Option::PP_SKELETON_PREPROC, Option::PP_SKELETON_PREPROC},
-    {bzla::option::Option::PP_VARIABLE_SUBST_NORM_EQ,
-     Option::PP_VARIABLE_SUBST_NORM_EQ},
+    {bzla::option::Option::PP_VARIABLE_SUBST_NORM_BVULT,
+     Option::PP_VARIABLE_SUBST_NORM_BVULT},
+    {bzla::option::Option::PP_VARIABLE_SUBST_NORM_BVULT,
+     Option::PP_VARIABLE_SUBST_NORM_BVULT},
 
     {bzla::option::Option::DBG_RW_NODE_THRESH, Option::DBG_RW_NODE_THRESH},
     {bzla::option::Option::DBG_PP_NODE_THRESH, Option::DBG_PP_NODE_THRESH},
