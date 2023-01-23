@@ -273,6 +273,13 @@ enum ENUM(Option)
    *  * **0**: disable
    */
   EVALUE(PP_VARIABLE_SUBST),
+  /*! **Preprocessing: Variable substitution: Equality Normalization**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PP_VARIABLE_SUBST_NORM_EQ),
 
   /*! **Debug:
    *    Threshold for number of new nodes introduced for recursive call of

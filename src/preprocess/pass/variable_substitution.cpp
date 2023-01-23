@@ -133,12 +133,14 @@ get_linear_bv_term(const Node& node, BitVector& factor, Node& lhs, Node& rhs)
 }  // namespace
 
 std::pair<Node, Node>
-PassVariableSubstitution::normalize_substitution(const Node& node)
+PassVariableSubstitution::normalize_substitution_eq(const Node& node)
 {
   assert(node.kind() == Kind::EQUAL);
-  assert(node[0].type().is_bv());
-  assert(!node[0].is_const());
-  assert(!node[1].is_const());
+
+  if (!node[0].type().is_bv() || node[0].is_const() || node[1].is_const())
+  {
+    return {};
+  }
 
   auto [it, inserted] = d_norm_subst_cache.insert(node);
   if (inserted)
@@ -161,7 +163,7 @@ PassVariableSubstitution::normalize_substitution(const Node& node)
     else
     {
       // no substitution found
-      return std::make_pair(Node(), Node());
+      return {};
     }
     d_stats.num_gauss_elim += 1;
     subst = nm.mk_node(Kind::BV_MUL, {subst, nm.mk_value(factor.ibvmodinv())});
@@ -172,7 +174,7 @@ PassVariableSubstitution::normalize_substitution(const Node& node)
     }
     return std::make_pair(var, subst);
   }
-  return std::make_pair(Node(), Node());
+  return {};
 }
 
 std::pair<Node, Node>
@@ -192,10 +194,9 @@ PassVariableSubstitution::find_substitution(const Node& assertion)
       return std::make_pair(assertion[1], assertion[0]);
     }
 
-    if (assertion[0].type().is_bv() && !assertion[0].is_const()
-        && !assertion[1].is_const())
+    if (d_env.options().pp_variable_subst_norm_eq())
     {
-      return normalize_substitution(assertion);
+      return normalize_substitution_eq(assertion);
     }
   }
   else if (assertion.is_const())
@@ -556,10 +557,10 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
       time_remove_cycles(stats.new_stat<util::TimerStatistic>(
           "preprocess::varsubst::time_remove_cycles")),
       num_substs(stats.new_stat<uint64_t>("preprocess::varsubst::num_substs")),
-      num_linear_eq(
-          stats.new_stat<uint64_t>("preprocess::varsubst::num_linear_eq")),
-      num_gauss_elim(
-          stats.new_stat<uint64_t>("preprocess::varsubst::num_gauss_elim"))
+      num_linear_eq(stats.new_stat<uint64_t>(
+          "preprocess::varsubst::normalize_eq::num_linear_eq")),
+      num_gauss_elim(stats.new_stat<uint64_t>(
+          "preprocess::varsubst::normalize_eq::num_gauss_elim"))
 
 {
 }

@@ -227,6 +227,13 @@ Options::Options()
                         true,
                         "enable variable substitution preprocessing pass",
                         "pp-variable-subst"),
+      pp_variable_subst_norm_eq(
+          this,
+          Option::PP_VARIABLE_SUBST_NORM_EQ,
+          false,
+          "enable equality normalization via Gaussian elimination if variable "
+          "substitution preprocessing pass is enabled",
+          "pp-variable-subst-norm-eq"),
 
       dbg_rw_node_inc(
           this,
