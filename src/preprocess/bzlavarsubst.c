@@ -294,6 +294,7 @@ bzla_substitute_var_exps(Bzla *bzla)
 
     bzla_hashptr_table_delete(substs);
   }
+  bzla->stats.var_substitutions += count;
 
   delta = bzla_util_time_stamp() - start;
   bzla->time.subst += delta;
