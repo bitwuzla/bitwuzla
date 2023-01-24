@@ -62,10 +62,7 @@ class PassVariableSubstitution : public PreprocessingPass
 
     void push() override;
 
-    void pop() override
-    {
-      // Nothing to do
-    }
+    void pop() override;
 
     /** @return Current substitution map. */
     std::unordered_map<Node, Node>& substitutions();
@@ -75,9 +72,9 @@ class PassVariableSubstitution : public PreprocessingPass
 
    private:
     /** Backtrackable substitution map. One map per scope level. */
-    backtrack::vector<std::unordered_map<Node, Node>> d_map;
+    std::vector<std::unordered_map<Node, Node>> d_map;
     /** Backtrackable substitution cache. One cache per scope level. */
-    backtrack::vector<std::unordered_map<Node, Node>> d_cache;
+    std::vector<std::unordered_map<Node, Node>> d_cache;
   };
 
   /** Backtrackable substitution cache. */

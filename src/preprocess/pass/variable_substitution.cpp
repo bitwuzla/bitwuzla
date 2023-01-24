@@ -661,7 +661,7 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
 /* --- PassVariableSubstitution::Cache -------------------------------------- */
 
 PassVariableSubstitution::Cache::Cache(backtrack::BacktrackManager* mgr)
-    : Backtrackable(mgr), d_map(mgr), d_cache(mgr)
+    : Backtrackable(mgr)
 {
   d_map.emplace_back();
   d_cache.emplace_back();
@@ -674,6 +674,13 @@ PassVariableSubstitution::Cache::push()
   // without calling preprocess().
   d_map.emplace_back(d_map.back());
   d_cache.emplace_back(d_cache.back());
+}
+
+void
+PassVariableSubstitution::Cache::pop()
+{
+  d_map.pop_back();
+  d_cache.pop_back();
 }
 
 std::unordered_map<Node, Node>&
