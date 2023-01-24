@@ -224,12 +224,19 @@ PassVariableSubstitution::normalize_substitution_bvult(const Node& node)
     kind  = get_subst_inv_ineq_kind(n.kind());
   }
 
-  if (!right.is_value())
+  BitVector value;
+  if (right.is_value())
+  {
+    value = right.value<BitVector>();
+  }
+  else if (right.is_inverted() && right[0].is_value())
+  {
+    value = right[0].value<BitVector>().bvnot();
+  }
+  else
   {
     return {};
   }
-
-  const BitVector& value = right.value<BitVector>();
 
   if (kind == Kind::BV_ULT || kind == Kind::BV_ULE)
   {
