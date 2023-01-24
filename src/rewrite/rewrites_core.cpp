@@ -327,6 +327,66 @@ RewriteRule<RewriteRuleKind::EQUAL_CONST>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match:  (= (= a #b1) b)
+ * result: (= a (ite b #b1 #b0))
+ *
+ * match:  (= (= a #b0) b)
+ * result: (= a (ite b #b0 #b1))
+ */
+namespace {
+Node
+_rw_eq_eq_const_bv1(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+
+  if (node[idx0].kind() == Kind::EQUAL && node[idx0][0].type().is_bv()
+      && node[idx0][0].type().bv_size() == 1)
+  {
+    Node a;
+    BitVector t_value;
+    if (node[idx0][0].is_value())
+    {
+      a       = node[idx0][1];
+      t_value = node[idx0][0].value<BitVector>();
+    }
+    else if (node[idx0][1].is_value())
+    {
+      a       = node[idx0][0];
+      t_value = node[idx0][1].value<BitVector>();
+    }
+    else
+    {
+      return node;
+    }
+    NodeManager& nm = NodeManager::get();
+    BitVector e_value =
+        t_value.is_one() ? BitVector::mk_false() : BitVector::mk_true();
+    return rewriter.mk_node(
+        Kind::EQUAL,
+        {a,
+         rewriter.mk_node(
+             Kind::ITE,
+             {node[idx1], nm.mk_value(t_value), nm.mk_value(e_value)})});
+  }
+  return node;
+}
+}  // namespace
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_EQUAL_CONST_BV1>::_apply(Rewriter& rewriter,
+                                                            const Node& node)
+{
+  Node res = _rw_eq_eq_const_bv1(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_eq_const_bv1(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
  * match:  (= a a)
  * result: true
  */

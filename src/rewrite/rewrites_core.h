@@ -16,6 +16,10 @@ Node RewriteRule<RewriteRuleKind::EQUAL_SPECIAL_CONST>::_apply(
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_CONST>::_apply(Rewriter& rewriter,
                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_EQUAL_CONST_BV1>::_apply(
+    Rewriter& rewriter, const Node& node);
+
 // true_eq
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_TRUE>::_apply(Rewriter& rewriter,
@@ -35,6 +39,7 @@ Node RewriteRule<RewriteRuleKind::EQUAL_ITE_SAME>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_ITE_INVERTED>::_apply(
     Rewriter& rewriter, const Node& node);
+
 // bcond_uneq_if_eq
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_ITE_DIS_BV1>::_apply(Rewriter& rewriter,

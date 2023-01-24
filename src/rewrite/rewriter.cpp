@@ -443,6 +443,7 @@ Rewriter::rewrite_eq(const Node& node)
     BZLA_APPLY_RW_RULE(EQUAL_BV_ADD_ADD);
     BZLA_APPLY_RW_RULE(EQUAL_BV_CONCAT);
     // BZLA_APPLY_RW_RULE(EQUAL_BV_SUB); // TODO tbd if this should be enabled
+    BZLA_APPLY_RW_RULE(EQUAL_EQUAL_CONST_BV1);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_SAME);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_INVERTED);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_DIS_BV1);
@@ -1308,6 +1309,9 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
       out << "EQUAL_SPECIAL_CONST";
       break;
     case RewriteRuleKind::EQUAL_CONST: out << "EQUAL_CONST"; break;
+    case RewriteRuleKind::EQUAL_EQUAL_CONST_BV1:
+      out << "EQUAL_EQUAL_CONST_BV1";
+      break;
     case RewriteRuleKind::EQUAL_TRUE: out << "EQUAL_TRUE"; break;
     case RewriteRuleKind::EQUAL_ITE: out << "EQUAL_ITE"; break;
     case RewriteRuleKind::EQUAL_FALSE: out << "EQUAL_FALSE"; break;

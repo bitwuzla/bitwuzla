@@ -126,6 +126,23 @@ TEST_F(TestRewriterCore, core_equal_const)
       {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}), d_bv4_zero}));
 }
 
+TEST_F(TestRewriterCore, core_equal_equal_const_bv1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_EQUAL_CONST_BV1;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_one}), d_b}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::EQUAL, {d_bv1_one, d_bv1_a}), d_b}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_b, d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_one})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_b, d_nm.mk_node(Kind::EQUAL, {d_bv1_one, d_bv1_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::EQUAL, {d_bv4_a, d_bv4_zero}), d_b}));
+}
+
 TEST_F(TestRewriterCore, core_equal_true)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_TRUE;
