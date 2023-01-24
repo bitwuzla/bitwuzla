@@ -280,14 +280,14 @@ enum ENUM(Option)
    *  * **0**: disable
    */
   EVALUE(PP_VARIABLE_SUBST_NORM_EQ),
-  /*! **Preprocessing: Variable substitution: Bit-Vector Unsigned Inequality
+  /*! **Preprocessing: Variable substitution: Bit-Vector Inequality
    * Normalization**
    *
    * Values:
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  EVALUE(PP_VARIABLE_SUBST_NORM_BVULT),
+  EVALUE(PP_VARIABLE_SUBST_NORM_BV_INEQ),
 
   /*! **Debug:
    *    Threshold for number of new nodes introduced for recursive call of

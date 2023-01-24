@@ -36,13 +36,13 @@ enum class Option
   PROP_OPT_LT_CONCAT_SEXT,      // bool
   PROP_SEXT,                    // bool
 
-  PP_CONTRADICTING_ANDS,         // bool
-  PP_EMBEDDED_CONSTR,            // bool
-  PP_FLATTEN_AND,                // bool
-  PP_SKELETON_PREPROC,           // bool
-  PP_VARIABLE_SUBST,             // bool
-  PP_VARIABLE_SUBST_NORM_EQ,     // bool
-  PP_VARIABLE_SUBST_NORM_BVULT,  // bool
+  PP_CONTRADICTING_ANDS,           // bool
+  PP_EMBEDDED_CONSTR,              // bool
+  PP_FLATTEN_AND,                  // bool
+  PP_SKELETON_PREPROC,             // bool
+  PP_VARIABLE_SUBST,               // bool
+  PP_VARIABLE_SUBST_NORM_EQ,       // bool
+  PP_VARIABLE_SUBST_NORM_BV_INEQ,  // bool
 
   DBG_RW_NODE_THRESH,  // numeric
   DBG_PP_NODE_THRESH,  // numeric
@@ -425,7 +425,7 @@ class Options
   OptionBool pp_skeleton_preproc;
   OptionBool pp_variable_subst;
   OptionBool pp_variable_subst_norm_eq;
-  OptionBool pp_variable_subst_norm_bvult;
+  OptionBool pp_variable_subst_norm_bv_ineq;
 
   // Debug options
   OptionNumeric dbg_rw_node_inc;

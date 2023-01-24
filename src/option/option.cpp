@@ -234,13 +234,13 @@ Options::Options()
           "enable equality normalization via Gaussian elimination if variable "
           "substitution preprocessing pass is enabled",
           "pp-variable-subst-norm-eq"),
-      pp_variable_subst_norm_bvult(
+      pp_variable_subst_norm_bv_ineq(
           this,
-          Option::PP_VARIABLE_SUBST_NORM_BVULT,
+          Option::PP_VARIABLE_SUBST_NORM_BV_INEQ,
           false,
           "enable bit-vector unsigned inequality normalization if variable "
           "substitution preprocessing pass is enabled",
-          "pp-variable-subst-norm-bvult"),
+          "pp-variable-subst-norm-bv-ineq"),
 
       dbg_rw_node_inc(
           this,

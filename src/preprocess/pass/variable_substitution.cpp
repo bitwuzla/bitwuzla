@@ -183,19 +183,27 @@ get_subst_inv_ineq_kind(Kind kind)
   if (kind == Kind::BV_ULT) return Kind::BV_UGT;
   if (kind == Kind::BV_ULE) return Kind::BV_UGE;
   if (kind == Kind::BV_UGT) return Kind::BV_ULT;
-  assert(kind == Kind::BV_UGE);
-  return Kind::BV_ULE;
+  if (kind == Kind::BV_UGE) return Kind::BV_ULE;
+  if (kind == Kind::BV_SLT) return Kind::BV_SGT;
+  if (kind == Kind::BV_SLE) return Kind::BV_SGE;
+  if (kind == Kind::BV_SGT) return Kind::BV_SLT;
+  assert(kind == Kind::BV_SGE);
+  return Kind::BV_SLE;
 }
 
 std::pair<Node, Node>
-PassVariableSubstitution::normalize_substitution_bvult(const Node& node)
+PassVariableSubstitution::normalize_substitution_bv_ineq(const Node& node)
 {
-  assert(node.kind() == Kind::BV_ULT
-         || (node.is_inverted() && node[0].kind() == Kind::BV_ULT));
+  assert(node.kind() == Kind::BV_ULT || node.kind() == Kind::BV_SLT
+         || (node.is_inverted()
+             && (node[0].kind() == Kind::BV_ULT
+                 || node[0].kind() == Kind::BV_SLT)));
 
   bool inverted = node.is_inverted();
   const Node& n = inverted ? node[0] : node;
-  Kind kind     = inverted ? Kind::BV_UGE : Kind::BV_ULT;
+  Kind kind     = inverted
+                      ? (n.kind() == Kind::BV_ULT ? Kind::BV_UGE : Kind::BV_SGE)
+                      : n.kind();
   Node var, right;
 
   if (n[0].is_const())
@@ -243,7 +251,7 @@ PassVariableSubstitution::normalize_substitution_bvult(const Node& node)
     uint64_t clz = value.count_leading_zeros();
     if (clz > 0)
     {
-      d_stats.num_norm_bvult += 1;
+      d_stats.num_norm_bv_ult += 1;
       Node subst =
           nm.mk_node(Kind::BV_CONCAT,
                      {nm.mk_value(BitVector::mk_zero(clz)),
@@ -251,17 +259,51 @@ PassVariableSubstitution::normalize_substitution_bvult(const Node& node)
       return {var, subst};
     }
   }
-  else
+  else if (kind == Kind::BV_UGT || kind == Kind::BV_UGE)
   {
-    assert(kind == Kind::BV_UGT || kind == Kind::BV_UGE);
     uint64_t clo = value.count_leading_ones();
     if (clo > 0)
     {
-      d_stats.num_norm_bvult += 1;
+      d_stats.num_norm_bv_ult += 1;
       Node subst =
           nm.mk_node(Kind::BV_CONCAT,
                      {nm.mk_value(BitVector::mk_ones(clo)),
                       nm.mk_const(nm.mk_bv_type(var.type().bv_size() - clo))});
+      return {var, subst};
+    }
+  }
+  else if (kind == Kind::BV_SLT || kind == Kind::BV_SLE)
+  {
+    if (value.msb())
+    {
+      d_stats.num_norm_bv_slt += 1;
+      uint64_t clz = 0;
+      if (value.size() > 1)
+      {
+        clz = value.bvextract(value.size() - 2, 0).count_leading_zeros();
+      }
+      Node subst = nm.mk_node(
+          Kind::BV_CONCAT,
+          {nm.mk_value(BitVector::mk_min_signed(clz + 1)),
+           nm.mk_const(nm.mk_bv_type(var.type().bv_size() - clz - 1))});
+      return {var, subst};
+    }
+  }
+  else
+  {
+    assert(kind == Kind::BV_SGT || kind == Kind::BV_SGE);
+    if (!value.msb())
+    {
+      d_stats.num_norm_bv_slt += 1;
+      uint64_t clo = 0;
+      if (value.size() > 1)
+      {
+        clo = value.bvextract(value.size() - 2, 0).count_leading_ones();
+      }
+      Node subst = nm.mk_node(
+          Kind::BV_CONCAT,
+          {nm.mk_value(BitVector::mk_max_signed(clo + 1)),
+           nm.mk_const(nm.mk_bv_type(var.type().bv_size() - clo - 1))});
       return {var, subst};
     }
   }
@@ -290,12 +332,14 @@ PassVariableSubstitution::find_substitution(const Node& assertion)
       return normalize_substitution_eq(assertion);
     }
   }
-  else if (d_env.options().pp_variable_subst_norm_bvult()
+  else if (d_env.options().pp_variable_subst_norm_bv_ineq()
            && (assertion.kind() == Kind::BV_ULT
+               || assertion.kind() == Kind::BV_SLT
                || (assertion.is_inverted()
-                   && assertion[0].kind() == Kind::BV_ULT)))
+                   && (assertion[0].kind() == Kind::BV_ULT
+                       || assertion[0].kind() == Kind::BV_SLT))))
   {
-    return normalize_substitution_bvult(assertion);
+    return normalize_substitution_bv_ineq(assertion);
   }
   else if (assertion.is_const())
   {
@@ -677,8 +721,10 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
           "preprocess::varsubst::normalize_eq::num_linear_eq")),
       num_gauss_elim(stats.new_stat<uint64_t>(
           "preprocess::varsubst::normalize_eq::num_gauss_elim")),
-      num_norm_bvult(stats.new_stat<uint64_t>(
-          "preprocess::varsubst::normalize_bvult::num_norm_bvult"))
+      num_norm_bv_ult(stats.new_stat<uint64_t>(
+          "preprocess::varsubst::normalize_bv_ult::num_norm_bv_ult")),
+      num_norm_bv_slt(stats.new_stat<uint64_t>(
+          "preprocess::varsubst::normalize_bv_slt::num_norm_bv_slt"))
 
 {
 }
