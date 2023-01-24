@@ -307,7 +307,6 @@ PassVariableSubstitution::find_substitution(const Node& assertion)
 PassVariableSubstitution::PassVariableSubstitution(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env),
-      d_backtrack_mgr(backtrack_mgr),
       d_substitutions(backtrack_mgr),
       d_substitution_assertions(backtrack_mgr),
       d_cache(backtrack_mgr),
@@ -391,27 +390,46 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
 
   // Apply substitutions.
   //
-  // Note: For non-top-level substitution assertions, we only process the term
-  // side of the assertion and do not eliminate the assertion itself since we
-  // have to keep the variable equality for cases where the variable still
-  // occurs in lower levels (if variable substitution assertion was added in a
-  // scope > 0). We could check whether the variable occurs in lower levels,
-  // but for now we keep the assertion since this makes it simpler overall.
-  bool top_level  = d_backtrack_mgr->num_levels() == 0;
+  // Note: We have to be careful when applying the substitutions to
+  // substitution constraints since we can not always simplify them to true.
+  //
+  // For example:
+  //
+  // 1. check-sat call
+  //
+  //   a = t, F1[a], F2[b]
+  //
+  //   --> true, F1[a/t], F2[b]
+  //
+  // 2. check-sat call
+  //
+  //   true, F1[a/t], F2[b], b = s, F3[b]
+  //
+  //   --> true, F1[a/t], F2[b], b = s, F3[b/s]
+  //
+  // We are not allowed to substitute b = s with true since b occurs in one of
+  // the assertions of a previous check-sat call. Since we only preprocess
+  // newly added assertions b will not be globally substituted in all
+  // assertions and therefore we have to keep the substitution constraint b = s
+  // around. As a solution we only fully substitute initial assertions, i.e.,
+  // assertions from the first check-sat call.
+  // We could check whether a variable to be substituted occurs in assertions
+  // of previous check-sat calls in order to optimize this, but for now we keep
+  // the assertion since this avoids an additional traversal over previous
+  // assertions that we don't have access to in this pass.
+  bool initial_assertions = assertions.initial_assertions();
   NodeManager& nm = NodeManager::get();
   Rewriter& rewriter = d_env.rewriter();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    // Keep non-top-level variable substitution assertion, but apply
-    // substitutions in term.
-    if (!top_level)
+    // Only do full substitution on initial assertions.
+    if (!initial_assertions)
     {
       auto it = d_substitution_assertions.find(assertion);
       if (it != d_substitution_assertions.end())
       {
         const auto& [var, term] = it->second;
-        assert(!var.is_null());
         // Make sure to rewrite the assertion, otherwise we may run into loops
         // with rewriter pass due to the substitution normalizations in
         // find_substitution(), e.g., a -- subst --> a = true -- rewrite --> a.

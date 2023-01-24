@@ -43,8 +43,6 @@ class PassVariableSubstitution : public PreprocessingPass
                   const std::unordered_map<Node, Node>& substitutions,
                   std::unordered_map<Node, Node>& cache) const;
 
-  /** Only required to check the current assertion level. */
-  const backtrack::BacktrackManager* d_backtrack_mgr;
   /** Current set of variable substitutions. */
   backtrack::unordered_map<Node, Node> d_substitutions;
   /** Current set of variable substitution assertions. */

@@ -52,6 +52,13 @@ class AssertionVector
    */
   void replace(size_t index, const Node& assertion);
 
+  /**
+   * Determines whether the assertions in the vector are the intial assertions
+   * on the assertion stack, i.e., the assertions on the stack before the first
+   * check-sat call.
+   */
+  bool initial_assertions() const;
+
  private:
   /** Reset d_changed. */
   void reset_modified();

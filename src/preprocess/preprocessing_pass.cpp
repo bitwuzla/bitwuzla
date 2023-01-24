@@ -62,6 +62,12 @@ AssertionVector::replace(size_t index, const Node& assertion)
   }
 }
 
+bool
+AssertionVector::initial_assertions() const
+{
+  return d_begin == 0;
+}
+
 /* --- AssertionVector private ---------------------------------------------- */
 
 void
