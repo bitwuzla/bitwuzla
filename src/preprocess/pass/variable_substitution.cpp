@@ -215,7 +215,7 @@ PassVariableSubstitution::normalize_substitution_bv_ineq(const Node& node)
   {
     var   = n[1];
     right = n[0];
-    kind  = get_subst_inv_ineq_kind(n.kind());
+    kind  = get_subst_inv_ineq_kind(kind);
   }
   else
   {
