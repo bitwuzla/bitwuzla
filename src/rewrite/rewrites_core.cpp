@@ -832,7 +832,7 @@ RewriteRule<RewriteRuleKind::EQUAL_BV_CONCAT>::_apply(Rewriter& rewriter,
  */
 namespace {
 Node
-_rw_sub_concat(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_eq_bv_sub(Rewriter& rewriter, const Node& node, size_t idx)
 {
   assert(node.num_children() == 2);
   size_t idx0 = idx;
@@ -853,10 +853,10 @@ Node
 RewriteRule<RewriteRuleKind::EQUAL_BV_SUB>::_apply(Rewriter& rewriter,
                                                    const Node& node)
 {
-  Node res = _rw_sub_concat(rewriter, node, 0);
+  Node res = _rw_eq_bv_sub(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_sub_concat(rewriter, node, 1);
+    res = _rw_eq_bv_sub(rewriter, node, 1);
   }
   return res;
 }
