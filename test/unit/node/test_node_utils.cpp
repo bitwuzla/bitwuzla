@@ -214,6 +214,16 @@ TEST_F(TestNodeUtils, is_bv_sub)
   ASSERT_TRUE(utils::is_bv_sub(res, child0, child1));
   ASSERT_EQ(child0, d_a4);
   ASSERT_EQ(child1, d_b4);
+  ASSERT_TRUE(utils::is_bv_sub(
+      d_nm.mk_node(Kind::BV_ADD,
+                   {d_nm.mk_node(Kind::BV_ADD,
+                                 {d_nm.invert_node(d_a4),
+                                  d_nm.mk_value(BitVector::mk_one(4))}),
+                    d_b4}),
+      child0,
+      child1));
+  ASSERT_EQ(child0, d_b4);
+  ASSERT_EQ(child1, d_a4);
   ASSERT_FALSE(utils::is_bv_sub(
       d_nm.mk_node(Kind::BV_AND, {d_a4, d_b4}), child0, child1));
 }

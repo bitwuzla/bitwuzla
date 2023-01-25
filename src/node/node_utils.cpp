@@ -190,9 +190,9 @@ is_bv_sub(const Node& node, Node& child0, Node& child1)
 
   if (node.kind() == Kind::BV_ADD)
   {
-    if (node::utils::is_bv_neg(node[0], child0))
+    if (node::utils::is_bv_neg(node[0], child1))
     {
-      child1 = node[1];
+      child0 = node[1];
       return true;
     }
     if (node::utils::is_bv_neg(node[1], child1))
