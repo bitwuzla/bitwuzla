@@ -1,0 +1,6 @@
+(set-logic QF_AFP)
+(declare-fun a () (Array Bool (Array Bool Bool)))
+(assert (= a (store a true (store (select a false) false true))))
+(assert (= (select (select a true) false) false))
+(set-info :status unsat)
+(check-sat)

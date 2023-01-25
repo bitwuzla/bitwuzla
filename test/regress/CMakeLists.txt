@@ -76,6 +76,8 @@ set(testcases
 "solver/array/extarraywrite3sat.smt2"
 "solver/array/fifo32ia04k05.smt2"
 "solver/array/fifo32in04k05.smt2"
+"solver/array/duplicatelemma1.smt2"
+"solver/array/duplicatelemma2.smt2"
 "solver/array/invalidmodel1.smt2"
 #"solver/array/invalidmodel2.smt2 -xl=0 -ml=0 -rwl=2" # TODO: disabled because of options
 "solver/array/invalidmodel3.btor.smt2"
@@ -98,6 +100,7 @@ set(testcases
 "solver/array/regrarray7.smt2"
 "solver/array/regrarray8.smt2"
 "solver/array/regrarray9.smt2"
+"solver/array/regrarray10.smt2"
 #"solver/array/regrbetacache1.btor.smt2 -br all" # TODO disabled because of -br
 #"solver/array/regrbetacache2.btor.smt2 -br all" # TODO currently broken since we don't allow to mix lambdas with arrays
 "solver/array/smtextarray1sat0.smt2"

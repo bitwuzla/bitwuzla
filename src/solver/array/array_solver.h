@@ -1,6 +1,9 @@
 #ifndef BZLA_SOLVER_ARRAY_ARRAY_SOLVER_H_INCLUDED
 #define BZLA_SOLVER_ARRAY_ARRAY_SOLVER_H_INCLUDED
 
+#include <map>
+#include <unordered_map>
+
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "node/unordered_node_ref_set.h"
@@ -157,6 +160,11 @@ class ArraySolver : public Solver
   /** Send de-duplicated lemma to solver state */
   void lemma(const Node& lemma);
 
+  Node get_index_value_pairs(const Node& term, std::map<Node, Node>& map);
+
+  bool is_equal(const Access& acc1, const Access& acc2);
+  bool is_equal(const Access& acc, const Node& a);
+
   /** Registered array selects. */
   backtrack::vector<Node> d_selects;
 
@@ -191,6 +199,31 @@ class ArraySolver : public Solver
 
   /** Lemma cache for finding duplicate lemmas in current check() call. */
   std::unordered_set<Node> d_lemma_cache;
+
+  /**
+   * Hash node pair (a, b).
+   *
+   * Position of nodes is irrelevant, i.e, hash(a, b) = hash(b, a)
+   */
+  struct HashPair
+  {
+    size_t operator()(const std::pair<Node, Node>& p) const;
+  };
+
+  /**
+   * Compare node pair (a, b).
+   *
+   * Position of nodes is irrelevant, i.e, (a, b) = (b, a)
+   */
+  struct KeyEqualPair
+  {
+    bool operator()(const std::pair<Node, Node>& p1,
+                    const std::pair<Node, Node>& p2) const;
+  };
+
+  /** Maps currently registered equalities to their current model value. */
+  std::unordered_map<std::pair<Node, Node>, bool, HashPair, KeyEqualPair>
+      d_active_equalities;
 
   struct Statistics
   {
