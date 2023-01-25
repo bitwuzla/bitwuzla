@@ -173,6 +173,9 @@ using ConstNodeRef = std::reference_wrapper<const Node>;
 bool operator==(const Node& a, const Node& b);
 /** Syntactical disequality over two nodes. */
 bool operator!=(const Node& a, const Node& b);
+/** Compare nodes by node id. */
+bool operator<(const Node& a, const Node& b);
+
 /** Print node to stream. */
 std::ostream& operator<<(std::ostream& out, const Node& node);
 

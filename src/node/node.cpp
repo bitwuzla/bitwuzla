@@ -275,6 +275,12 @@ operator!=(const Node& a, const Node& b)
   return a.d_data != b.d_data;
 }
 
+bool
+operator<(const Node& a, const Node& b)
+{
+  return a.id() < b.id();
+}
+
 std::ostream&
 operator<<(std::ostream& out, const Node& node)
 {
