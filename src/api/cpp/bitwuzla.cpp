@@ -2114,11 +2114,11 @@ mk_rm_value(RoundingMode rm)
 Term
 mk_const_array(const Sort &sort, const Term &term)
 {
-  // TODO
-  (void) sort;
-  (void) term;
-  assert(false);
-  return Term();
+  BITWUZLA_CHECK(sort.d_type->is_array())
+      << "sort for constant array is not an array sort";
+  BITWUZLA_CHECK(sort.d_type->array_element() == term.d_node->type())
+      << "sort for constant array element does not match given array sort";
+  return bzla::NodeManager::get().mk_const_array(*sort.d_type, *term.d_node);
 }
 
 Term
