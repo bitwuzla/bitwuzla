@@ -205,6 +205,10 @@ class LocalSearch
 
   virtual uint64_t invert_node(uint64_t id) = 0;
 
+  /**
+   * Kick off normalization of nodes.
+   * Call this at the beginning of a satisfiability check.
+   */
   virtual void normalize() {}
 
   /**

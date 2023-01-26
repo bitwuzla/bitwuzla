@@ -6415,13 +6415,15 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
                                    BitVectorNode* child0,
                                    uint64_t hi,
                                    uint64_t lo,
-                                   bool register_for_normalize)
+                                   bool normalize)
     : BitVectorNode(rng, size, child0), d_hi(hi), d_lo(lo)
 {
+  assert(hi < child0->size());
+  assert(lo <= hi);
   assert(size == hi - lo + 1);
   d_x_slice_left.reset(nullptr);
   d_x_slice_right.reset(nullptr);
-  if (register_for_normalize)
+  if (normalize)
   {
     child0->register_extract(this);
   }
@@ -6433,44 +6435,51 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
                                    BitVectorNode* child0,
                                    uint64_t hi,
                                    uint64_t lo,
-                                   bool register_for_normalize)
+                                   bool normalize)
     : BitVectorNode(rng, domain, child0), d_hi(hi), d_lo(lo)
 {
-  assert(hi < size());
+  assert(hi < child0->size());
   assert(lo <= hi);
   assert(domain.size() == hi - lo + 1);
   d_x_slice_left.reset(nullptr);
   d_x_slice_right.reset(nullptr);
-  if (register_for_normalize)
+  if (normalize)
   {
     child0->register_extract(this);
   }
   _evaluate_and_set_domain();
 }
 
-BitVectorNode*
-BitVectorExtract::child(uint64_t pos) const
+uint64_t
+BitVectorExtract::hi() const
 {
-  assert(pos == 0);
-  if (d_normalized)
-  {
-    return d_normalized;
-  }
-  assert(dynamic_cast<BitVectorNode*>(d_children[pos]) != nullptr);
-  return reinterpret_cast<BitVectorNode*>(d_children[pos]);
+  return d_hi;
+}
+
+uint64_t
+BitVectorExtract::lo() const
+{
+  return d_lo;
+}
+
+void
+BitVectorExtract::normalize(BitVectorNode* node)
+{
+  assert(!d_child0_original);
+  assert(!node || node->size() == size());
+  assert(!node || node->assignment() == d_assignment);
+  d_child0_original = child(0);
+  d_hi_original     = d_hi;
+  d_lo_original     = d_lo;
+  d_children[0]     = node;
+  d_hi              = size() - 1;
+  d_lo              = 0;
 }
 
 void
 BitVectorExtract::_evaluate()
 {
-  // Note: We cannot use child(0) here since it is an overriden virtual
-  //       function, which is called via _evaluate_and_set_domain()
-  //       during construction.
-  assert(dynamic_cast<BitVectorNode*>(d_children[0]) != nullptr);
-  BitVectorNode* child0 = d_normalized
-                              ? d_normalized
-                              : reinterpret_cast<BitVectorNode*>(d_children[0]);
-  d_assignment.ibvextract(child0->assignment(), d_hi, d_lo);
+  d_assignment.ibvextract(child(0)->assignment(), d_hi, d_lo);
 }
 
 void
@@ -6522,6 +6531,7 @@ BitVectorExtract::is_invertible(const BitVector& t,
    */
 
   const BitVectorDomain& x = child(pos_x)->domain();
+
   if (!x.has_fixed_bits() || x.bvextract(d_hi, d_lo).match_fixed_bits(t))
   {
     if (!is_essential_check)
@@ -6653,9 +6663,10 @@ BitVectorExtract::consistent_value(const BitVector& t, uint64_t pos_x)
 std::string
 BitVectorExtract::to_string() const
 {
-  return "[" + std::to_string(d_id) + "] extract [" + std::to_string(d_hi) + ":"
-         + std::to_string(d_lo) + "]: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] extract "
+         + (d_child0_original ? "(normalized) " : "") + "["
+         + std::to_string(d_hi) + ":" + std::to_string(d_lo)
+         + "]: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
 }
 
 std::ostream&

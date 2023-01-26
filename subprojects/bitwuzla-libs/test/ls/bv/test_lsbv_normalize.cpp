@@ -41,23 +41,28 @@ class TestLsBvNormalize : public ::testing::Test
   {
     assert(extracts.size() == expected.size());
     std::vector<BitVectorExtract*> registered;
+    std::vector<BitVectorNode*> child0s;
     for (auto ex : extracts)
     {
-      uint64_t id = d_ls->mk_indexed_node(NodeKind::BV_EXTRACT,
-                                          ex.first - ex.second + 1,
-                                          d_id,
-                                          {ex.first, ex.second});
-      registered.push_back(static_cast<BitVectorExtract*>(d_ls->get_node(id)));
+      BitVectorExtract* e = static_cast<BitVectorExtract*>(
+          d_ls->get_node(d_ls->mk_indexed_node(NodeKind::BV_EXTRACT,
+                                               ex.first - ex.second + 1,
+                                               d_id,
+                                               {ex.first, ex.second})));
+      registered.push_back(e);
+      child0s.push_back(e->child(0));
     }
     d_ls->normalize_extracts(d_node);
     for (size_t i = 0, size = extracts.size(); i < size; ++i)
     {
       BitVectorExtract* ex      = registered[i];
-      BitVectorNode* normalized = ex->d_normalized;
-      ASSERT_EQ(normalized == nullptr, expected[i].size() <= 1);
+      BitVectorNode* child0     = child0s[i];
+      BitVectorNode* normalized = ex->child(0);
+      BitVectorNode* orig       = ex->d_child0_original;
+      ASSERT_EQ(orig == nullptr, expected[i].size() <= 1);
+      ASSERT_EQ(orig == nullptr, child0 == normalized);
       if (expected[i].size() > 1)
       {
-        ASSERT_EQ(d_ls->d_parents.at(normalized->id()).size(), 1);
         ASSERT_EQ(*d_ls->d_parents.at(normalized->id()).begin(), ex->id());
         ASSERT_TRUE(normalized->kind() == NodeKind::BV_CONCAT);
         for (auto p : expected[i])

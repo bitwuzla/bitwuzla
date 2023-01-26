@@ -53,7 +53,7 @@ class BitVectorNode : public Node<BitVector>
    * @param pos The index of the child to get.
    * @return The child at the given index.
    */
-  virtual BitVectorNode* child(uint64_t pos) const;
+  BitVectorNode* child(uint64_t pos) const;
 
   /**
    * Get the domain of this node.
@@ -65,7 +65,7 @@ class BitVectorNode : public Node<BitVector>
    * Get the bit-vector size of the node.
    * @return The size of this node.
    */
-  uint64_t size() { return d_assignment.size(); }
+  uint64_t size() const { return d_assignment.size(); }
 
   /**
    * Register parent extract for normalization.
@@ -1748,23 +1748,40 @@ std::ostream& operator<<(std::ostream& out, const BitVectorNot& node);
 class BitVectorExtract : public BitVectorNode
 {
  public:
-  /** Constructors. */
+  /**
+   * Constructor.
+   * @param rng       The associated random number generator.
+   * @param size      The size of the extract node.
+   * @param child0    The child at index 0.
+   * @param hi        The upper index.
+   * @param lo        The lower index.
+   * @param normalize True if this extract should be registered in its child
+   *                  node for normalization.
+   */
   BitVectorExtract(RNG* rng,
                    uint64_t size,
                    BitVectorNode* child0,
                    uint64_t hi,
                    uint64_t lo,
-                   bool register_for_normalize);
+                   bool normalize);
+  /**
+   * Constructor.
+   * @param rng       The associated random number generator.
+   * @param domain    The associated bit-vector domain.
+   * @param child0    The child at index 0.
+   * @param hi        The upper index.
+   * @param lo        The lower index.
+   * @param normalize True if this extract should be registered in its child
+   *                  node for normalization.
+   */
   BitVectorExtract(RNG* rng,
                    const BitVectorDomain& domain,
                    BitVectorNode* child0,
                    uint64_t hi,
                    uint64_t lo,
-                   bool register_for_normalize);
+                   bool normalize);
 
   NodeKind kind() const override { return NodeKind::BV_EXTRACT; }
-
-  BitVectorNode* child(uint64_t pos) const override;
 
   void evaluate() override;
 
@@ -1794,11 +1811,18 @@ class BitVectorExtract : public BitVectorNode
   std::string to_string() const override;
 
   /** @return The upper index of this extract. */
-  uint64_t hi() { return d_hi; }
+  uint64_t hi() const;
   /** @return The lower index of this extract. */
-  uint64_t lo() { return d_lo; }
+  uint64_t lo() const;
 
-  void set_normalized(BitVectorNode* node) { d_normalized = node; }
+  /**
+   * Normalize node.
+   * This caches the original child and indices, replaces the child with
+   * the normalized node and resets its indices to represent a full slice
+   * (upper index is msb, lower index is lsb).
+   * @param node The normalized representation of the child node.
+   */
+  void normalize(BitVectorNode* node);
 
  private:
   /**
@@ -1841,8 +1865,6 @@ class BitVectorExtract : public BitVectorNode
   /** The lower index. */
   uint64_t d_lo;
 
-  BitVectorNode* d_normalized = nullptr;
-
   /**
    * Left part of don't care bits, that is, all bits > d_hi.
    * Nullptr if d_hi = msb.
@@ -1855,6 +1877,22 @@ class BitVectorExtract : public BitVectorNode
    * Cache for inverse_value.
    */
   std::unique_ptr<BitVectorDomain> d_x_slice_right;
+
+  /**
+   * Cache the original child node that has been replaced with a normalized
+   * node. We cache to be able to restore in incremental mode.
+   */
+  BitVectorNode* d_child0_original = nullptr;
+  /**
+   * Cache the original upper index, replaced by the msb index after
+   * normalization. We cache to be able to restore in incremental mode.
+   */
+  uint64_t d_hi_original = 0;
+  /**
+   * Cache the original lower index, replaced by the msb index after
+   * normalization. We cache to be able to restore in incremental mode.
+   */
+  uint64_t d_lo_original = 0;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorExtract& node);

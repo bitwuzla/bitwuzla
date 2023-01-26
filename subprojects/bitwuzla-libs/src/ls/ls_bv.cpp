@@ -191,7 +191,7 @@ LocalSearchBV::_mk_indexed_node(NodeKind kind,
                                 const BitVectorDomain& domain,
                                 uint64_t child0,
                                 const std::vector<uint64_t>& indices,
-                                bool register_for_normalize)
+                                bool normalize)
 {
   // API check
   assert(kind == NodeKind::BV_EXTRACT || kind == NodeKind::BV_SEXT);
@@ -215,13 +215,9 @@ LocalSearchBV::_mk_indexed_node(NodeKind kind,
   {
     BitVectorNode* ch0 = get_node(child0);
     assert(ch0);
-    res.reset(new BitVectorExtract(d_rng.get(),
-                                   domain,
-                                   ch0,
-                                   indices[0],
-                                   indices[1],
-                                   register_for_normalize));
-    if (register_for_normalize)
+    res.reset(new BitVectorExtract(
+        d_rng.get(), domain, ch0, indices[0], indices[1], normalize));
+    if (normalize)
     {
       d_to_normalize_nodes.insert(ch0);
     }
@@ -533,8 +529,13 @@ LocalSearchBV::normalize_extracts(BitVectorNode* node)
     {
       uint64_t id = normalized->id();
       assert(d_parents[id].empty());
+      // The normalized node is uniquely created for each normalized child1
+      // of an extract, thus only that extract is its parent.
       d_parents[id] = {ex->id()};
-      ex->set_normalized(normalized);
+      // Remove this extract from the parents list of the normalized child
+      assert(!d_parents[ex->child(0)->id()].empty());
+      d_parents[ex->child(0)->id()].erase(ex->id());
+      ex->normalize(normalized);
     }
   }
 }
