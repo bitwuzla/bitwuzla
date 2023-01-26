@@ -86,7 +86,7 @@ class SolverEngine
   /** Lemmas added via lemma(). */
   std::vector<Node> d_lemmas;
   /** Lemma cache. */
-  std::unordered_set<Node> d_lemma_cache;
+  backtrack::unordered_set<Node> d_lemma_cache;
 
   /** Result of latest solve() call. */
   Result d_sat_state;

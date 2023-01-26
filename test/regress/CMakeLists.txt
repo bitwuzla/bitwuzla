@@ -78,6 +78,7 @@ set(testcases
 "solver/array/fifo32in04k05.smt2"
 "solver/array/duplicatelemma1.smt2"
 "solver/array/duplicatelemma2.smt2"
+#"solver/array/duplicatelemma3.smt2 -i" # TODO: disabled because of equality over constant arrays
 "solver/array/invalidmodel1.smt2"
 #"solver/array/invalidmodel2.smt2 -xl=0 -ml=0 -rwl=2" # TODO: disabled because of options
 "solver/array/invalidmodel3.btor.smt2"

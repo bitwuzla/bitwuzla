@@ -16,6 +16,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_assertions(context.assertions()),
       d_register_assertion_cache(&d_backtrack_mgr),
       d_register_term_cache(&d_backtrack_mgr),
+      d_lemma_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
       d_in_solving_mode(false),
       d_stats(context.env().statistics()),
