@@ -242,6 +242,7 @@ Options::Options()
           "substitution preprocessing pass is enabled",
           "pp-variable-subst-norm-bv-ineq"),
 
+      // Debugging
       dbg_rw_node_inc(
           this,
           Option::DBG_RW_NODE_THRESH,
