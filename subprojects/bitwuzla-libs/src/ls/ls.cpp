@@ -33,6 +33,7 @@ operator<<(std::ostream& out, const NodeKind& kind)
   switch (kind)
   {
     case NodeKind::AND: out << "and"; break;
+    case NodeKind::CONST: out << "const"; break;
     case NodeKind::EQ: out << "eq"; break;
     case NodeKind::ITE: out << "ite"; break;
     case NodeKind::NOT: out << "not"; break;

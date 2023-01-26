@@ -205,6 +205,8 @@ class LocalSearch
 
   virtual uint64_t invert_node(uint64_t id) = 0;
 
+  virtual void normalize() {}
+
   /**
    * Get the assignment of the node given by id.
    * @param id The id of the node to query.

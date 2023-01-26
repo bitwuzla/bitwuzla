@@ -26,6 +26,7 @@ set(test_ls_bv_names
 
 set(test_ls_bv_names_white
   test_lsbv
+  test_lsbv_normalize
 )
 
 foreach(test ${test_ls_bv_names})

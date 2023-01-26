@@ -16,6 +16,10 @@ namespace ls {
 
 /* -------------------------------------------------------------------------- */
 
+class BitVectorExtract;
+
+/* -------------------------------------------------------------------------- */
+
 class BitVectorNode : public Node<BitVector>
 {
  public:
@@ -49,7 +53,7 @@ class BitVectorNode : public Node<BitVector>
    * @param pos The index of the child to get.
    * @return The child at the given index.
    */
-  BitVectorNode* child(uint64_t pos) const;
+  virtual BitVectorNode* child(uint64_t pos) const;
 
   /**
    * Get the domain of this node.
@@ -62,6 +66,17 @@ class BitVectorNode : public Node<BitVector>
    * @return The size of this node.
    */
   uint64_t size() { return d_assignment.size(); }
+
+  /**
+   * Register parent extract for normalization.
+   * @param node The parent extract node to register.
+   */
+  void register_extract(BitVectorNode* node);
+  /**
+   * Get the set of parent extracts for normalization.
+   * @return The set of registered extracts.
+   */
+  const std::vector<BitVectorExtract*>& get_extracts() { return d_extracts; }
 
   /**
    * Tighten signed and/or unsigned bounds of this node wrt. to the given
@@ -267,6 +282,8 @@ class BitVectorNode : public Node<BitVector>
   std::unique_ptr<BitVector> d_max_s;
   /** Signed lower bound (incl) for inverse value computation. */
   std::unique_ptr<BitVector> d_min_s;
+
+  std::vector<BitVectorExtract*> d_extracts;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -1732,15 +1749,22 @@ class BitVectorExtract : public BitVectorNode
 {
  public:
   /** Constructors. */
-  BitVectorExtract(
-      RNG* rng, uint64_t size, BitVectorNode* child0, uint64_t hi, uint64_t lo);
+  BitVectorExtract(RNG* rng,
+                   uint64_t size,
+                   BitVectorNode* child0,
+                   uint64_t hi,
+                   uint64_t lo,
+                   bool register_for_normalize);
   BitVectorExtract(RNG* rng,
                    const BitVectorDomain& domain,
                    BitVectorNode* child0,
                    uint64_t hi,
-                   uint64_t lo);
+                   uint64_t lo,
+                   bool register_for_normalize);
 
   NodeKind kind() const override { return NodeKind::BV_EXTRACT; }
+
+  BitVectorNode* child(uint64_t pos) const override;
 
   void evaluate() override;
 
@@ -1769,6 +1793,13 @@ class BitVectorExtract : public BitVectorNode
 
   std::string to_string() const override;
 
+  /** @return The upper index of this extract. */
+  uint64_t hi() { return d_hi; }
+  /** @return The lower index of this extract. */
+  uint64_t lo() { return d_lo; }
+
+  void set_normalized(BitVectorNode* node) { d_normalized = node; }
+
  private:
   /**
    * Probability for keeping the current value of don't care bits (rather than
@@ -1776,24 +1807,6 @@ class BitVectorExtract : public BitVectorNode
    */
   static constexpr uint32_t s_prob_keep = 500;
 
-  /** The upper index. */
-  uint64_t d_hi;
-  /** The lower index. */
-  uint64_t d_lo;
-  /**
-   * Left part of don't care bits, that is, all bits > d_hi.
-   * Nullptr if d_hi = msb.
-   * Cache for inverse_value.
-   */
-  std::unique_ptr<BitVectorDomain> d_x_slice_left;
-  /**
-   * Right part of don't care bits, that is, all bits < d_lo.
-   * Nullptr if d_lo = 0.
-   * Cache for inverse_value.
-   */
-  std::unique_ptr<BitVectorDomain> d_x_slice_right;
-
- private:
   /**
    * Evaluate the assignment of this node.
    *
@@ -1822,6 +1835,26 @@ class BitVectorExtract : public BitVectorNode
    *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
+
+  /** The upper index. */
+  uint64_t d_hi;
+  /** The lower index. */
+  uint64_t d_lo;
+
+  BitVectorNode* d_normalized = nullptr;
+
+  /**
+   * Left part of don't care bits, that is, all bits > d_hi.
+   * Nullptr if d_hi = msb.
+   * Cache for inverse_value.
+   */
+  std::unique_ptr<BitVectorDomain> d_x_slice_left;
+  /**
+   * Right part of don't care bits, that is, all bits < d_lo.
+   * Nullptr if d_lo = 0.
+   * Cache for inverse_value.
+   */
+  std::unique_ptr<BitVectorDomain> d_x_slice_right;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorExtract& node);

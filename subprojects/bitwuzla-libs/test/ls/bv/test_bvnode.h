@@ -1155,7 +1155,7 @@ TestBvNode::test_extract(Kind kind)
           /* For this test, we don't care about current assignment and domain
            * of the op, thus we initialize them with 0 and 'x..x',
            * respectively. */
-          BitVectorExtract op(d_rng.get(), bw_t, op_x.get(), hi, lo);
+          BitVectorExtract op(d_rng.get(), bw_t, op_x.get(), hi, lo, false);
 
           if (kind == IS_CONS || kind == IS_ESS || kind == IS_INV)
           {
