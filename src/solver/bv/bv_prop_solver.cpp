@@ -11,6 +11,7 @@
 #include "solver/bv/bv_solver.h"
 #include "solver/result.h"
 #include "solving_context.h"
+
 namespace bzla::bv {
 
 using namespace bzla::node;
@@ -18,7 +19,7 @@ using namespace bzla::node;
 BvPropSolver::BvPropSolver(Env& env,
                            SolverState& state,
                            BvBitblastSolver& bb_solver)
-    : Solver(env, state), d_bb_solver(bb_solver)
+    : Solver(env, state), d_bb_solver(bb_solver), d_stats(env.statistics())
 {
   const option::Options& options = d_env.options();
 
@@ -46,7 +47,15 @@ BvPropSolver::~BvPropSolver() {}
 Result
 BvPropSolver::solve()
 {
-  // double start                = bzla_util_time_stamp();
+  util::Timer timer(d_stats.time_check);
+
+  if (d_env.terminate())
+  {
+    return Result::UNKNOWN;
+  }
+
+  ++d_stats.num_checks;
+
   Result sat_result = Result::UNKNOWN;
 
   uint32_t verbosity = d_env.options().verbosity();
@@ -104,9 +113,19 @@ SAT:
 UNSAT:
   sat_result = Result::UNSAT;
 DONE:
-  // print_progress();
+  d_stats.num_moves += d_ls->d_statistics.d_nmoves;
+  d_stats.num_props += d_ls->d_statistics.d_nprops;
+  d_stats.num_props_inv += d_ls->d_statistics.d_nprops_inv;
+  d_stats.num_props_cons += d_ls->d_statistics.d_nprops_cons;
+  d_stats.num_updates += d_ls->d_statistics.d_nupdates;
+  d_stats.num_conflicts += d_ls->d_statistics.d_nconf_total;
+#ifndef NDEBUG
+  d_stats.num_props_inv_per_kind.import_map(d_ls->d_statistics.d_ninv);
+  d_stats.num_props_cons_per_kind.import_map(d_ls->d_statistics.d_ncons);
+  d_stats.num_props_conflicts_per_kind.import_map(d_ls->d_statistics.d_nconf);
+#endif
 
-  // d_time_statistics.d_check_sat += bzla_util_time_stamp() - start;
+  // print_progress();
 
   return sat_result;
 }
@@ -115,6 +134,8 @@ void
 BvPropSolver::register_assertion(const Node& assertion, bool top_level)
 {
   (void) top_level;
+
+  d_stats.num_assertions += 1;
 
   node::node_ref_vector visit{assertion};
   node::unordered_node_ref_set cache;
@@ -193,15 +214,15 @@ BvPropSolver::mk_node(const Node& node)
       if (bits[i].is_true())
       {
         domain.fix_bit(idx, true);
-        d_statistics.d_nfixed_bits += 1;
+        d_stats.num_bits_fixed += 1;
       }
       else if (bits[i].is_false())
       {
         domain.fix_bit(idx, false);
-        d_statistics.d_nfixed_bits += 1;
+        d_stats.num_bits_fixed += 1;
       }
     }
-    d_statistics.d_ntotal_bits += size;
+    d_stats.num_bits_total += size;
   }
 
   switch (node.kind())
@@ -337,4 +358,24 @@ BvPropSolver::mk_node(const Node& node)
   return res;
 }
 
+BvPropSolver::Statistics::Statistics(util::Statistics& stats)
+    : num_checks(stats.new_stat<uint64_t>("bv::prop:num_checks")),
+      num_assertions(stats.new_stat<uint64_t>("bv::prop:num_assertions")),
+      num_bits_fixed(stats.new_stat<uint64_t>("bv::prop:num_bits_fixed")),
+      num_bits_total(stats.new_stat<uint64_t>("bv::prop:num_bits_total")),
+      num_moves(stats.new_stat<uint64_t>("bv::prop:num_moves")),
+      num_props(stats.new_stat<uint64_t>("bv::prop:num_props")),
+      num_props_inv(stats.new_stat<uint64_t>("bv::prop:num_props_inv")),
+      num_props_cons(stats.new_stat<uint64_t>("bv::prop:num_props_cons")),
+      num_updates(stats.new_stat<uint64_t>("bv::prop:num_updates")),
+      num_conflicts(stats.new_stat<uint64_t>("bv::prop:num_conflicts")),
+      num_props_inv_per_kind(
+          stats.new_stat<util::HistogramStatistic>("bv::prop::num_props_inv")),
+      num_props_cons_per_kind(
+          stats.new_stat<util::HistogramStatistic>("bv::prop::num_props_cons")),
+      num_props_conflicts_per_kind(
+          stats.new_stat<util::HistogramStatistic>("bv::prop::num_conflicts")),
+      time_check(stats.new_stat<util::TimerStatistic>("bv::prop::time_check"))
+{
+}
 }  // namespace bzla::bv

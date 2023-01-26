@@ -4,9 +4,10 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <unordered_set>
 #include <variant>
 #include <vector>
@@ -34,6 +35,16 @@ class HistogramStatistic
       d_names[index] = ss.str();
     }
     ++d_values[index];
+  }
+
+  template <typename K, typename V>
+  void import_map(const std::unordered_map<K, V>& map)
+  {
+    for (auto& p : map)
+    {
+      *this << p.first;
+      d_values[static_cast<size_t>(p.first)] = p.second;
+    }
   }
 
   /** @return Stored counters for values. */

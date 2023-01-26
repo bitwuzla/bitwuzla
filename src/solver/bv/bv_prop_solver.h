@@ -6,6 +6,7 @@
 #include "node/node_ref_vector.h"
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solver/bv/bv_solver_interface.h"
+#include "util/statistics.h"
 
 namespace bzla {
 
@@ -26,12 +27,6 @@ class BvPropSolver : public Solver, public BvSolverInterface
   Node value(const Node& term) override;
 
  private:
-  struct
-  {
-    uint64_t d_nfixed_bits = 0;
-    uint64_t d_ntotal_bits = 0;
-  } d_statistics;
-
   /**
    * Helper to create LocalSearchBV bit-vector node representation of given
    * node. Maps `node` to resulting LS bit-vector node id in `d_node_map`.
@@ -54,6 +49,27 @@ class BvPropSolver : public Solver, public BvSolverInterface
   bool d_use_const_bits = false;
   /** True to use sign_extend nodes for concats that represent sign_extends. */
   bool d_use_sext = false;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    uint64_t& num_checks;
+    uint64_t& num_assertions;
+    uint64_t& num_bits_fixed;
+    uint64_t& num_bits_total;
+    uint64_t& num_moves;
+    uint64_t& num_props;
+    uint64_t& num_props_inv;
+    uint64_t& num_props_cons;
+    uint64_t& num_updates;
+    uint64_t& num_conflicts;
+#ifndef NDEBUG
+    util::HistogramStatistic& num_props_inv_per_kind;
+    util::HistogramStatistic& num_props_cons_per_kind;
+    util::HistogramStatistic& num_props_conflicts_per_kind;
+#endif
+    util::TimerStatistic& time_check;
+  } d_stats;
 };
 }  // namespace bv
 }  // namespace bzla
