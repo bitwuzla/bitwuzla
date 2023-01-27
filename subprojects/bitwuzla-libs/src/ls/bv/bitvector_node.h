@@ -286,6 +286,8 @@ class BitVectorNode : public Node<BitVector>
   std::vector<BitVectorExtract*> d_extracts;
 };
 
+std::ostream& operator<<(std::ostream& out, const BitVectorNode& node);
+
 /* -------------------------------------------------------------------------- */
 
 class BitVectorAdd : public BitVectorNode
@@ -326,8 +328,6 @@ class BitVectorAdd : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -358,8 +358,6 @@ class BitVectorAdd : public BitVectorNode
    */
   void _evaluate_and_set_domain();
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorAdd& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -413,8 +411,6 @@ class BitVectorAnd : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -449,8 +445,6 @@ class BitVectorAnd : public BitVectorNode
   /** Cache for current upper bound wrt. s and t and fixed bits in x. */
   BitVector d_hi;
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorAnd& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -501,8 +495,6 @@ class BitVectorConcat : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -533,8 +525,6 @@ class BitVectorConcat : public BitVectorNode
    */
   void _evaluate_and_set_domain();
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorConcat& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -578,8 +568,6 @@ class BitVectorEq : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -610,8 +598,6 @@ class BitVectorEq : public BitVectorNode
    */
   void _evaluate_and_set_domain();
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorEq& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -659,8 +645,6 @@ class BitVectorMul : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
   void compute_min_max_bounds(const BitVector& s,
                               const BitVector& t,
                               uint64_t pos_x,
@@ -699,8 +683,6 @@ class BitVectorMul : public BitVectorNode
    */
   void _evaluate_and_set_domain();
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorMul& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -752,8 +734,6 @@ class BitVectorShl : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -784,8 +764,6 @@ class BitVectorShl : public BitVectorNode
    */
   void _evaluate_and_set_domain();
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorShl& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -857,8 +835,6 @@ class BitVectorShr : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -889,8 +865,6 @@ class BitVectorShr : public BitVectorNode
    */
   void _evaluate_and_set_domain();
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorShr& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -951,8 +925,6 @@ class BitVectorAshr : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -983,8 +955,6 @@ class BitVectorAshr : public BitVectorNode
    */
   void _evaluate_and_set_domain();
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorAshr& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -1052,8 +1022,6 @@ class BitVectorUdiv : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -1090,8 +1058,6 @@ class BitVectorUdiv : public BitVectorNode
    */
   BitVector consistent_value_pos0_aux(const BitVector& t);
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorUdiv& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -1158,8 +1124,6 @@ class BitVectorUlt : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
   void compute_min_max_bounds(const BitVector& s,
                               const BitVector& t,
                               uint64_t pos_x,
@@ -1245,8 +1209,6 @@ class BitVectorUlt : public BitVectorNode
    */
   bool d_opt_concat_sext = false;
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorUlt& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -1304,8 +1266,6 @@ class BitVectorSlt : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
   void compute_min_max_bounds(const BitVector& s,
                               const BitVector& t,
                               uint64_t pos_x,
@@ -1390,8 +1350,6 @@ class BitVectorSlt : public BitVectorNode
    */
   bool d_opt_concat_sext = false;
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorSlt& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -1454,8 +1412,6 @@ class BitVectorUrem : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -1494,8 +1450,6 @@ class BitVectorUrem : public BitVectorNode
   /** Cached inverse_value result. */
   std::unique_ptr<BitVectorDomain> d_inverse_domain;
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorUrem& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -1537,8 +1491,6 @@ class BitVectorXor : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -1569,8 +1521,6 @@ class BitVectorXor : public BitVectorNode
    */
   void _evaluate_and_set_domain();
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorXor& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -1636,8 +1586,6 @@ class BitVectorIte : public BitVectorNode
 
   uint64_t select_path(const BitVector& t) override;
 
-  std::string to_string() const override;
-
  private:
   uint64_t select_path_non_const(std::vector<uint64_t>& inputs) const override;
   /**
@@ -1669,8 +1617,6 @@ class BitVectorIte : public BitVectorNode
    */
   void _evaluate_and_set_domain();
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorIte& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -1708,8 +1654,6 @@ class BitVectorNot : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
-
  private:
   /**
    * Evaluate the assignment of this node.
@@ -1740,8 +1684,6 @@ class BitVectorNot : public BitVectorNode
    */
   void _evaluate_and_set_domain();
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorNot& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -1895,8 +1837,6 @@ class BitVectorExtract : public BitVectorNode
   uint64_t d_lo_original = 0;
 };
 
-std::ostream& operator<<(std::ostream& out, const BitVectorExtract& node);
-
 /* -------------------------------------------------------------------------- */
 
 class BitVectorSignExtend : public BitVectorNode
@@ -1993,8 +1933,6 @@ class BitVectorSignExtend : public BitVectorNode
   /** The number of bits to extend with. */
   uint64_t d_n;
 };
-
-std::ostream& operator<<(std::ostream& out, const BitVectorSignExtend& node);
 
 /* -------------------------------------------------------------------------- */
 

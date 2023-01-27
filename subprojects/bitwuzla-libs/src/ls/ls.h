@@ -384,4 +384,13 @@ class LocalSearch
 /* -------------------------------------------------------------------------- */
 }  // namespace ls
 }  // namespace bzla
+
+namespace std {
+/**
+ * Get the string representation of a given node kind.
+ * @param kind The node kind.
+ * @return The string representation.
+ */
+std::string to_string(bzla::ls::NodeKind kind);
+}  // namespace std
 #endif

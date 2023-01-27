@@ -30,31 +30,7 @@ class OstreamVoider
 std::ostream&
 operator<<(std::ostream& out, const NodeKind& kind)
 {
-  switch (kind)
-  {
-    case NodeKind::AND: out << "and"; break;
-    case NodeKind::CONST: out << "const"; break;
-    case NodeKind::EQ: out << "eq"; break;
-    case NodeKind::ITE: out << "ite"; break;
-    case NodeKind::NOT: out << "not"; break;
-    case NodeKind::XOR: out << "xor"; break;
-    case NodeKind::BV_ADD: out << "bvadd"; break;
-    case NodeKind::BV_AND: out << "bvand"; break;
-    case NodeKind::BV_ASHR: out << "bvashr"; break;
-    case NodeKind::BV_CONCAT: out << "bvconcat"; break;
-    case NodeKind::BV_EXTRACT: out << "bvextract"; break;
-    case NodeKind::BV_MUL: out << "bvmul"; break;
-    case NodeKind::BV_NOT: out << "bvnot"; break;
-    case NodeKind::BV_SEXT: out << "bvsext"; break;
-    case NodeKind::BV_SHL: out << "bvshl"; break;
-    case NodeKind::BV_SHR: out << "bvshr"; break;
-    case NodeKind::BV_SLT: out << "bvslt"; break;
-    case NodeKind::BV_UDIV: out << "bvudiv"; break;
-    case NodeKind::BV_ULT: out << "bvult"; break;
-    case NodeKind::BV_UREM: out << "bvurem"; break;
-    case NodeKind::BV_XOR: out << "bvxor"; break;
-    default: assert(false);
-  }
+  out << std::to_string(kind);
   return out;
 }
 
@@ -533,3 +509,36 @@ template class LocalSearch<BitVector>;
 
 }  // namespace ls
 }  // namespace bzla
+
+namespace std {
+std::string
+to_string(bzla::ls::NodeKind kind)
+{
+  switch (kind)
+  {
+    case bzla::ls::NodeKind::AND: return "and";
+    case bzla::ls::NodeKind::CONST: return "const";
+    case bzla::ls::NodeKind::EQ: return "eq";
+    case bzla::ls::NodeKind::ITE: return "ite";
+    case bzla::ls::NodeKind::NOT: return "not";
+    case bzla::ls::NodeKind::XOR: return "xor";
+    case bzla::ls::NodeKind::BV_ADD: return "bvadd";
+    case bzla::ls::NodeKind::BV_AND: return "bvand";
+    case bzla::ls::NodeKind::BV_ASHR: return "bvashr";
+    case bzla::ls::NodeKind::BV_CONCAT: return "bvconcat";
+    case bzla::ls::NodeKind::BV_EXTRACT: return "bvextract";
+    case bzla::ls::NodeKind::BV_MUL: return "bvmul";
+    case bzla::ls::NodeKind::BV_NOT: return "bvnot";
+    case bzla::ls::NodeKind::BV_SEXT: return "bvsext";
+    case bzla::ls::NodeKind::BV_SHL: return "bvshl";
+    case bzla::ls::NodeKind::BV_SHR: return "bvshr";
+    case bzla::ls::NodeKind::BV_SLT: return "bvslt";
+    case bzla::ls::NodeKind::BV_UDIV: return "bvudiv";
+    case bzla::ls::NodeKind::BV_ULT: return "bvult";
+    case bzla::ls::NodeKind::BV_UREM: return "bvurem";
+    case bzla::ls::NodeKind::BV_XOR: return "bvxor";
+    default: assert(false);
+  }
+  return "";
+}
+}  // namespace std

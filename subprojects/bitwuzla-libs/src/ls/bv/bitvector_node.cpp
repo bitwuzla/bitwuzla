@@ -122,8 +122,8 @@ BitVectorNode::set_assignment(const BitVector& assignment)
 std::string
 BitVectorNode::to_string() const
 {
-  return "[" + std::to_string(d_id) + "] const: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] " + std::to_string(kind()) + ": "
+         + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
 }
 
 std::vector<std::string>
@@ -582,6 +582,13 @@ BitVectorNode::is_in_bounds(const BitVector& bv,
              && bv.compare(max_hi) <= 0);
 }
 
+std::ostream&
+operator<<(std::ostream& out, const BitVectorNode& node)
+{
+  out << node.to_string();
+  return out;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorAdd::BitVectorAdd(RNG* rng,
@@ -730,20 +737,6 @@ BitVectorAdd::consistent_value(const BitVector& t, uint64_t pos_x)
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
-}
-
-std::string
-BitVectorAdd::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] add: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorAdd& node)
-{
-  out << node.to_string();
-  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -994,20 +987,6 @@ BitVectorAnd::consistent_value(const BitVector& t, uint64_t pos_x)
   return *d_consistent;
 }
 
-std::string
-BitVectorAnd::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] and: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorAnd& node)
-{
-  out << node.to_string();
-  return out;
-}
-
 /* -------------------------------------------------------------------------- */
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
@@ -1182,20 +1161,6 @@ BitVectorConcat::consistent_value(const BitVector& t, uint64_t pos_x)
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
-}
-
-std::string
-BitVectorConcat::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] concat: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorConcat& node)
-{
-  out << node.to_string();
-  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1393,20 +1358,6 @@ BitVectorEq::consistent_value(const BitVector& t, uint64_t pos_x)
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
-}
-
-std::string
-BitVectorEq::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] eq: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorEq& node)
-{
-  out << node.to_string();
-  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1874,20 +1825,6 @@ BitVectorMul::consistent_value(const BitVector& t, uint64_t pos_x)
   return *d_consistent;
 }
 
-std::string
-BitVectorMul::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] mul: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorMul& node)
-{
-  out << node.to_string();
-  return out;
-}
-
 /* -------------------------------------------------------------------------- */
 
 BitVectorShl::BitVectorShl(RNG* rng,
@@ -2305,20 +2242,6 @@ BitVectorShl::consistent_value(const BitVector& t, uint64_t pos_x)
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
-}
-
-std::string
-BitVectorShl::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] shl: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorShl& node)
-{
-  out << node.to_string();
-  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2787,20 +2710,6 @@ BitVectorShr::consistent_value(const BitVector& t, uint64_t pos_x)
   return *d_consistent;
 }
 
-std::string
-BitVectorShr::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] shr: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorShr& node)
-{
-  out << node.to_string();
-  return out;
-}
-
 /* -------------------------------------------------------------------------- */
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
@@ -3141,20 +3050,6 @@ BitVectorAshr::consistent_value(const BitVector& t, uint64_t pos_x)
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
-}
-
-std::string
-BitVectorAshr::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] ashr: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorAshr& node)
-{
-  out << node.to_string();
-  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -3843,20 +3738,6 @@ BitVectorUdiv::consistent_value_pos0_aux(const BitVector& t)
   return res;
 }
 
-std::string
-BitVectorUdiv::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] udiv: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorUdiv& node)
-{
-  out << node.to_string();
-  return out;
-}
-
 /* -------------------------------------------------------------------------- */
 
 BitVectorUlt::BitVectorUlt(RNG* rng,
@@ -4475,20 +4356,6 @@ BitVectorUlt::consistent_value(const BitVector& t, uint64_t pos_x)
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
-}
-
-std::string
-BitVectorUlt::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] ult: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorUlt& node)
-{
-  out << node.to_string();
-  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -5145,20 +5012,6 @@ BitVectorSlt::consistent_value(const BitVector& t, uint64_t pos_x)
   return *d_consistent;
 }
 
-std::string
-BitVectorSlt::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] slt: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorSlt& node)
-{
-  out << node.to_string();
-  return out;
-}
-
 /* -------------------------------------------------------------------------- */
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
@@ -5750,20 +5603,6 @@ BitVectorUrem::consistent_value_pos0_aux(const BitVector& t)
   return BitVector();
 }
 
-std::string
-BitVectorUrem::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] urem: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorUrem& node)
-{
-  out << node.to_string();
-  return out;
-}
-
 /* -------------------------------------------------------------------------- */
 
 BitVectorXor::BitVectorXor(RNG* rng,
@@ -5908,20 +5747,6 @@ BitVectorXor::consistent_value(const BitVector& t, uint64_t pos_x)
   assert(x.match_fixed_bits(*d_consistent));
 #endif
   return *d_consistent;
-}
-
-std::string
-BitVectorXor::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] xor: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorXor& node)
-{
-  out << node.to_string();
-  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -6278,20 +6103,6 @@ BitVectorIte::select_path(const BitVector& t)
   return pos_x;
 }
 
-std::string
-BitVectorIte::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] ite: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorIte& node)
-{
-  out << node.to_string();
-  return out;
-}
-
 /* -------------------------------------------------------------------------- */
 
 BitVectorNot::BitVectorNot(RNG* rng, uint64_t size, BitVectorNode* child0)
@@ -6394,20 +6205,6 @@ const BitVector&
 BitVectorNot::consistent_value(const BitVector& t, uint64_t pos_x)
 {
   return inverse_value(t, pos_x);
-}
-
-std::string
-BitVectorNot::to_string() const
-{
-  return "[" + std::to_string(d_id) + "] not: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorNot& node)
-{
-  out << node.to_string();
-  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -6671,13 +6468,6 @@ BitVectorExtract::to_string() const
          + "]: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
 }
 
-std::ostream&
-operator<<(std::ostream& out, const BitVectorExtract& node)
-{
-  out << node.to_string();
-  return out;
-}
-
 /* -------------------------------------------------------------------------- */
 
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
@@ -6931,13 +6721,6 @@ BitVectorSignExtend::to_string() const
 {
   return "[" + std::to_string(d_id) + "] sext: " + d_domain.to_string() + " ("
          + d_assignment.to_string() + ")";
-}
-
-std::ostream&
-operator<<(std::ostream& out, const BitVectorSignExtend& node)
-{
-  out << node.to_string();
-  return out;
 }
 
 /* -------------------------------------------------------------------------- */
