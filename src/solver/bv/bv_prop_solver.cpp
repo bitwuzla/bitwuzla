@@ -369,12 +369,14 @@ BvPropSolver::Statistics::Statistics(util::Statistics& stats)
       num_props_cons(stats.new_stat<uint64_t>("bv::prop:num_props_cons")),
       num_updates(stats.new_stat<uint64_t>("bv::prop:num_updates")),
       num_conflicts(stats.new_stat<uint64_t>("bv::prop:num_conflicts")),
+#ifndef NDEBUG
       num_props_inv_per_kind(
           stats.new_stat<util::HistogramStatistic>("bv::prop::num_props_inv")),
       num_props_cons_per_kind(
           stats.new_stat<util::HistogramStatistic>("bv::prop::num_props_cons")),
       num_props_conflicts_per_kind(
           stats.new_stat<util::HistogramStatistic>("bv::prop::num_conflicts")),
+#endif
       time_check(stats.new_stat<util::TimerStatistic>("bv::prop::time_check"))
 {
 }
