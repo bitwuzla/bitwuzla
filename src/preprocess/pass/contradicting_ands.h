@@ -20,13 +20,6 @@ class PassContradictingAnds : public PreprocessingPass
   Node process(const Node& node) override;
 
  private:
-  struct Statistics
-  {
-    Statistics(util::Statistics& stats);
-    util::TimerStatistic& time_apply;
-    uint64_t& num_substs;
-  } d_stats;
-
   /**
    * Determine if given node is a contradicting end.
    * @param node    The node to check.
@@ -48,6 +41,13 @@ class PassContradictingAnds : public PreprocessingPass
    * Clear after a call to process to avoid sharing.
    */
   backtrack::unordered_map<Node, Node> d_cache;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    util::TimerStatistic& time_apply;
+    uint64_t& num_substs;
+  } d_stats;
 };
 
 }  // namespace bzla::preprocess::pass

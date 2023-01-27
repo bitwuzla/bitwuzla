@@ -19,22 +19,19 @@ class PassElimUninterpreted : public PreprocessingPass
   Node process(const Node& node) override;
 
  private:
+  /** Only required to check the current assertion level. */
+  const backtrack::BacktrackManager* d_backtrack_mgr;
+  /** Backtrackable substitution map. */
+  backtrack::unordered_map<Node, Node> d_substitutions;
+  /** Cache of processed nodes that maybe shared across substitutions. */
+  backtrack::unordered_map<Node, Node> d_cache;
+
   struct Statistics
   {
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_apply;
     uint64_t& num_substs;
   } d_stats;
-
-  /** Only required to check the current assertion level. */
-  const backtrack::BacktrackManager* d_backtrack_mgr;
-  /** Backtrackable substitution map. */
-  backtrack::unordered_map<Node, Node> d_substitutions;
-  /**
-   * Cache of processed nodes that maybe shared across substitutions.
-   * Clear after a call to process to avoid sharing.
-   */
-  backtrack::unordered_map<Node, Node> d_cache;
 };
 
 }  // namespace bzla::preprocess::pass

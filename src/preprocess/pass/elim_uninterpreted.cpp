@@ -11,6 +11,8 @@ namespace bzla::preprocess::pass {
 
 using namespace bzla::node;
 
+/* -------------------------------------------------------------------------- */
+
 namespace {
 uint64_t
 bv_size_from_value(uint64_t value)
@@ -25,9 +27,9 @@ bv_size_from_value(uint64_t value)
 PassElimUninterpreted::PassElimUninterpreted(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env),
-      d_stats(env.statistics()),
       d_backtrack_mgr(backtrack_mgr),
-      d_substitutions(backtrack_mgr)
+      d_substitutions(backtrack_mgr),
+      d_stats(env.statistics())
 {
 }
 
