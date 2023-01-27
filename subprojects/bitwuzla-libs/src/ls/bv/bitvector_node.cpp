@@ -108,12 +108,14 @@ BitVectorNode::is_not() const
 bool
 BitVectorNode::is_value_false() const
 {
+  assert(!d_is_value || d_domain.size() > 1 || !d_domain.is_fixed_bit_true(0));
   return d_is_value && d_assignment.is_false();
 }
 
 void
 BitVectorNode::set_assignment(const BitVector& assignment)
 {
+  assert(d_domain.match_fixed_bits(assignment));
   d_assignment.iset(assignment);
 }
 
