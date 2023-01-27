@@ -306,6 +306,18 @@ class LocalSearch
    */
   void update_unsat_roots(Node<VALUE>* root);
   /**
+   * Recompute normalized node ids.
+   *
+   * Nodes maintain two ids, the main identifier which is accessed via
+   * Node::id() and passed to the user and used to internally, uniquely
+   * identify a node, and the normalized id, which is relevant for cone updates.
+   * If a normalization performs any (semi-)destructive rewriting resulting in
+   * children with a higher id than their parent, this function must be called
+   * after normalization (in LocalSearch::normalize()) to recompute their
+   * normalized ids in a post-order DAG traversal manner.
+   */
+  void normalize_ids();
+  /**
    * Compute min/max bounds for children of given node.
    *
    * If the bounds are depending on the current assignment, this must be called

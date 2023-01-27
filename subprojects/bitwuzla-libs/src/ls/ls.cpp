@@ -333,6 +333,39 @@ LocalSearch<VALUE>::update_unsat_roots(Node<VALUE>* root)
 }
 
 template <class VALUE>
+void
+LocalSearch<VALUE>::normalize_ids()
+{
+  uint64_t id = 0;
+  std::unordered_map<Node<VALUE>*, bool> cache;
+
+  std::vector<Node<VALUE>*> visit;
+  for (auto root : d_roots)
+  {
+    visit.push_back(get_node(root));
+  }
+
+  do
+  {
+    Node<VALUE>* cur    = visit.back();
+    auto [it, inserted] = cache.emplace(cur, true);
+    if (inserted)
+    {
+      for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+      {
+        visit.push_back((*cur)[i]);
+      }
+    }
+    else
+    {
+      it->second = false;
+      visit.pop_back();
+      cur->set_normalized_id(id++);
+    }
+  } while (!visit.empty());
+}
+
+template <class VALUE>
 uint64_t
 LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
 {
@@ -356,9 +389,9 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
   node->set_assignment(assignment);
   uint64_t nupdates = 1;
 
-  std::vector<uint64_t> cone;
+  std::vector<Node<VALUE>*> cone;
   std::vector<Node<VALUE>*> to_visit;
-  std::unordered_set<uint64_t> visited;
+  std::unordered_set<Node<VALUE>*> visited;
 
   /* reset cone */
   const std::unordered_set<uint64_t>& parents = d_parents.at(node->id());
@@ -372,9 +405,9 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
     Node<VALUE>* cur = to_visit.back();
     to_visit.pop_back();
 
-    if (visited.find(cur->id()) != visited.end()) continue;
-    visited.insert(cur->id());
-    cone.push_back(cur->id());
+    if (visited.find(cur) != visited.end()) continue;
+    visited.insert(cur);
+    cone.push_back(cur);
 
     const std::unordered_set<uint64_t>& parents = d_parents.at(cur->id());
     for (uint64_t p : parents)
@@ -389,11 +422,13 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
     update_unsat_roots(node);
   }
 
-  std::sort(cone.begin(), cone.end());
+  std::sort(
+      cone.begin(), cone.end(), [](const Node<VALUE>* a, const Node<VALUE>* b) {
+        return a->normalized_id() < b->normalized_id();
+      });
 
-  for (uint64_t id : cone)
+  for (Node<VALUE>* cur : cone)
   {
-    Node<VALUE>* cur = get_node(id);
     BZLALSLOG(2) << "  node: " << *cur << " -> ";
     cur->evaluate();
     nupdates += 1;
