@@ -331,13 +331,14 @@ LocalSearch<VALUE>::normalize_ids()
       {
         visit.push_back((*cur)[i]);
       }
+      continue;
     }
-    else
+    else if (it->second)
     {
       it->second = false;
-      visit.pop_back();
       cur->set_normalized_id(id++);
     }
+    visit.pop_back();
   } while (!visit.empty());
 }
 

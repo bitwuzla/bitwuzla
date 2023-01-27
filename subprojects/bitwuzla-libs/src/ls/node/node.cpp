@@ -183,6 +183,21 @@ Node<VALUE>::select_path_non_const(std::vector<uint64_t>& res_inputs) const
 }
 
 template <class VALUE>
+void
+Node<VALUE>::set_id(uint64_t id)
+{
+  d_id            = id;
+  d_normalized_id = id;
+}
+
+template <class VALUE>
+void
+Node<VALUE>::set_normalized_id(uint64_t id)
+{
+  d_normalized_id = id;
+}
+
+template <class VALUE>
 std::vector<std::string>
 Node<VALUE>::log() const
 {

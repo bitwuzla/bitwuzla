@@ -54,7 +54,6 @@ LocalSearchBV::mk_node(const BitVector& assignment,
   std::unique_ptr<BitVectorNode> res(
       new BitVectorNode(d_rng.get(), assignment, domain));
   res->set_id(id);
-  res->set_normalized_id(id);
   d_nodes.push_back(std::move(res));
   assert(get_node(id) == d_nodes.back().get());
   assert(d_parents.find(id) == d_parents.end());
@@ -229,7 +228,6 @@ LocalSearchBV::_mk_indexed_node(NodeKind kind,
         d_rng.get(), domain, get_node(child0), indices[0]));
   }
   res->set_id(id);
-  res->set_normalized_id(id);
   d_nodes.push_back(std::move(res));
   assert(get_node(id) == d_nodes.back().get());
   assert(d_parents.find(id) == d_parents.end());

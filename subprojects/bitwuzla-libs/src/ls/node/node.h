@@ -161,12 +161,12 @@ class Node
    * Set id of this node.
    * @param id The id to set.
    */
-  void set_id(uint64_t id) { d_id = id; }
+  void set_id(uint64_t id);
   /**
    * Set normalized id of this node.
    * @param id The id to set.
    */
-  void set_normalized_id(uint64_t id) { d_normalized_id = id; }
+  void set_normalized_id(uint64_t id);
   /**
    * Get id of this node.
    * @return The id of this node.
