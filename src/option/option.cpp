@@ -230,7 +230,7 @@ Options::Options()
       pp_variable_subst_norm_eq(
           this,
           Option::PP_VARIABLE_SUBST_NORM_EQ,
-          false,
+          true,
           "enable equality normalization via Gaussian elimination if variable "
           "substitution preprocessing pass is enabled",
           "pp-variable-subst-norm-eq"),
