@@ -69,8 +69,6 @@ ArraySolver::check()
     {
       check_equality(d_equalities[i_eq++]);
     }
-    // TODO: in case of equality we also have to propagate constant arrays
-    // upwards
   }
   return true;
 }
@@ -133,6 +131,9 @@ ArraySolver::check_access(const Node& access)
   {
     return;
   }
+
+  // equality over constant arrays not yet supported
+  assert(access.kind() != Kind::CONST_ARRAY);
 
   Log(1) << "\ncheck: " << access;
   Access acc(access, d_solver_state);
@@ -298,6 +299,10 @@ ArraySolver::check_equality(const Node& eq)
           assert(cur.type().is_array());
           check_access(cur);
         }
+        else if (cur.kind() == Kind::CONST_ARRAY)
+        {
+          check_access(cur);
+        }
       }
     } while (!visit.empty());
   }
@@ -338,8 +343,18 @@ ArraySolver::add_access_const_array_lemma(const Access& acc, const Node& array)
   std::vector<Node> conjuncts;
   collect_path_conditions(acc, array, conjuncts);
   d_stats.num_lemma_size << conjuncts.size();
-  Node lem = nm.mk_node(
-      Kind::IMPLIES, {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
+  Node lem;
+
+  // Direct access on constant array
+  if (conjuncts.empty())
+  {
+    lem = conclusion;
+  }
+  else
+  {
+    lem = nm.mk_node(Kind::IMPLIES,
+                     {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
+  }
   lemma(lem);
 }
 
