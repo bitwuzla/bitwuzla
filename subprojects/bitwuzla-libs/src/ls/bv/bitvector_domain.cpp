@@ -329,11 +329,11 @@ BitVectorDomain::get_factor(RNG *rng,
 }
 
 std::string
-BitVectorDomain::to_string() const
+BitVectorDomain::str() const
 {
   assert(!is_null());
-  std::string res(d_lo.to_string());
-  std::string hi(d_hi.to_string());
+  std::string res(d_lo.str());
+  std::string hi(d_hi.str());
   for (size_t i = 0, n = size(); i < n; ++i)
   {
     if (res[i] != hi[i])
@@ -785,7 +785,7 @@ BitVectorDomainSignedGenerator::random()
 std::ostream &
 operator<<(std::ostream &out, const BitVectorDomain &d)
 {
-  out << d.to_string();
+  out << d.str();
   return out;
 }
 

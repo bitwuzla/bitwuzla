@@ -511,36 +511,32 @@ TEST_F(TestBitVectorDomain, extract)
   }
 }
 
-TEST_F(TestBitVectorDomain, to_string)
+TEST_F(TestBitVectorDomain, str)
 {
-  ASSERT_EQ(BitVectorDomain(1).to_string(), "x");
-  ASSERT_EQ(BitVectorDomain(10).to_string(), "xxxxxxxxxx");
+  ASSERT_EQ(BitVectorDomain(1).str(), "x");
+  ASSERT_EQ(BitVectorDomain(10).str(), "xxxxxxxxxx");
   ASSERT_EQ(
       BitVectorDomain(BitVector::from_ui(10, 4), BitVector::from_ui(10, 5))
-          .to_string(),
+          .str(),
       "000000010x");
-  ASSERT_EQ(BitVectorDomain("00000000").to_string(), "00000000");
-  ASSERT_EQ(BitVectorDomain("11111111").to_string(), "11111111");
-  ASSERT_EQ(BitVectorDomain("10110100").to_string(), "10110100");
-  ASSERT_EQ(BitVectorDomain("x01xxxxx").to_string(), "x01xxxxx");
-  ASSERT_EQ(BitVectorDomain("xxxxxxxx").to_string(), "xxxxxxxx");
-  ASSERT_EQ(BitVectorDomain(BitVector(4, "0000")).to_string(), "0000");
-  ASSERT_EQ(BitVectorDomain(BitVector(8, "1010")).to_string(), "00001010");
-  ASSERT_EQ(BitVectorDomain(4, 0).to_string(), "0000");
-  ASSERT_EQ(BitVectorDomain(8, 5).to_string(), "00000101");
-  ASSERT_EQ(BitVectorDomain(BitVectorDomain(8, 5)).to_string(), "00000101");
-  ASSERT_EQ(
-      BitVectorDomain(BitVector(4, "1000"), BitVector(4, "0111")).to_string(),
-      "ixxx");
-  ASSERT_EQ(
-      BitVectorDomain(BitVector(4, "0100"), BitVector(4, "1011")).to_string(),
-      "xixx");
-  ASSERT_EQ(
-      BitVectorDomain(BitVector(4, "0110"), BitVector(4, "1001")).to_string(),
-      "xiix");
-  ASSERT_EQ(
-      BitVectorDomain(BitVector(4, "1001"), BitVector(4, "0110")).to_string(),
-      "ixxi");
+  ASSERT_EQ(BitVectorDomain("00000000").str(), "00000000");
+  ASSERT_EQ(BitVectorDomain("11111111").str(), "11111111");
+  ASSERT_EQ(BitVectorDomain("10110100").str(), "10110100");
+  ASSERT_EQ(BitVectorDomain("x01xxxxx").str(), "x01xxxxx");
+  ASSERT_EQ(BitVectorDomain("xxxxxxxx").str(), "xxxxxxxx");
+  ASSERT_EQ(BitVectorDomain(BitVector(4, "0000")).str(), "0000");
+  ASSERT_EQ(BitVectorDomain(BitVector(8, "1010")).str(), "00001010");
+  ASSERT_EQ(BitVectorDomain(4, 0).str(), "0000");
+  ASSERT_EQ(BitVectorDomain(8, 5).str(), "00000101");
+  ASSERT_EQ(BitVectorDomain(BitVectorDomain(8, 5)).str(), "00000101");
+  ASSERT_EQ(BitVectorDomain(BitVector(4, "1000"), BitVector(4, "0111")).str(),
+            "ixxx");
+  ASSERT_EQ(BitVectorDomain(BitVector(4, "0100"), BitVector(4, "1011")).str(),
+            "xixx");
+  ASSERT_EQ(BitVectorDomain(BitVector(4, "0110"), BitVector(4, "1001")).str(),
+            "xiix");
+  ASSERT_EQ(BitVectorDomain(BitVector(4, "1001"), BitVector(4, "0110")).str(),
+            "ixxi");
 }
 
 /* -------------------------------------------------------------------------- */

@@ -45,7 +45,7 @@ class BitVectorNode : public Node<BitVector>
   bool is_not() const override;
   bool is_value_false() const override;
   void set_assignment(const BitVector& assignment) override;
-  std::string to_string() const override;
+  std::string str() const override;
   std::vector<std::string> log() const override;
 
   /**
@@ -1750,7 +1750,7 @@ class BitVectorExtract : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
+  std::string str() const override;
 
   /** @return The upper index of this extract. */
   uint64_t hi() const;
@@ -1898,7 +1898,7 @@ class BitVectorSignExtend : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  std::string to_string() const override;
+  std::string str() const override;
 
  private:
   /**

@@ -249,7 +249,7 @@ class BitVector
    *             for hexadecimal representation.
    * @return The string representation.
    */
-  std::string to_string(uint32_t base = 2) const;
+  std::string str(uint32_t base = 2) const;
   /**
    * Get the uint64_t representation of this bit-vector.
    * @param size The size of this bit-vector, must be <= 64.

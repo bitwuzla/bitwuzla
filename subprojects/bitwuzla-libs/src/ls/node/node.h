@@ -179,7 +179,7 @@ class Node
   uint64_t normalized_id() const { return d_normalized_id; }
 
   /** Get the string representation of this node. */
-  virtual std::string to_string() const = 0;
+  virtual std::string str() const = 0;
 
   /**
    * Get logging info of this node.

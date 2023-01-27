@@ -768,20 +768,16 @@ TestBvNode::test_binary(Kind kind,
                       << std::endl;
                 }
                 std::cout << "min_u: "
-                          << (op_x->min_u() ? op_x->min_u()->to_string()
-                                            : "(nil)")
+                          << (op_x->min_u() ? op_x->min_u()->str() : "(nil)")
                           << std::endl;
                 std::cout << "max_u: "
-                          << (op_x->max_u() ? op_x->max_u()->to_string()
-                                            : "(nil)")
+                          << (op_x->max_u() ? op_x->max_u()->str() : "(nil)")
                           << std::endl;
                 std::cout << "min_s: "
-                          << (op_x->min_s() ? op_x->min_s()->to_string()
-                                            : "(nil)")
+                          << (op_x->min_s() ? op_x->min_s()->str() : "(nil)")
                           << std::endl;
                 std::cout << "max_s: "
-                          << (op_x->max_s() ? op_x->max_s()->to_string()
-                                            : "(nil)")
+                          << (op_x->max_s() ? op_x->max_s()->str() : "(nil)")
                           << std::endl;
               }
               assert(res == status);

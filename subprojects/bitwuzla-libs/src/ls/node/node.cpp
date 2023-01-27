@@ -198,7 +198,7 @@ Node<VALUE>::log() const
 std::ostream&
 operator<<(std::ostream& out, const Node<BitVector>& node)
 {
-  out << node.to_string();
+  out << node.str();
   return out;
 }
 

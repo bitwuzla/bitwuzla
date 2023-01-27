@@ -120,10 +120,10 @@ BitVectorNode::set_assignment(const BitVector& assignment)
 }
 
 std::string
-BitVectorNode::to_string() const
+BitVectorNode::str() const
 {
   return "[" + std::to_string(d_id) + "] " + std::to_string(kind()) + ": "
-         + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+         + d_domain.str() + " (" + d_assignment.str() + ")";
 }
 
 std::vector<std::string>
@@ -585,7 +585,7 @@ BitVectorNode::is_in_bounds(const BitVector& bv,
 std::ostream&
 operator<<(std::ostream& out, const BitVectorNode& node)
 {
-  out << node.to_string();
+  out << node.str();
   return out;
 }
 
@@ -6460,12 +6460,12 @@ BitVectorExtract::consistent_value(const BitVector& t, uint64_t pos_x)
 }
 
 std::string
-BitVectorExtract::to_string() const
+BitVectorExtract::str() const
 {
   return "[" + std::to_string(d_id) + "] extract "
          + (d_child0_original ? "(normalized) " : "") + "["
          + std::to_string(d_hi) + ":" + std::to_string(d_lo)
-         + "]: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+         + "]: " + d_domain.str() + " (" + d_assignment.str() + ")";
 }
 
 /* -------------------------------------------------------------------------- */
@@ -6717,10 +6717,10 @@ BitVectorSignExtend::consistent_value(const BitVector& t, uint64_t pos_x)
 }
 
 std::string
-BitVectorSignExtend::to_string() const
+BitVectorSignExtend::str() const
 {
-  return "[" + std::to_string(d_id) + "] sext: " + d_domain.to_string() + " ("
-         + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] sext: " + d_domain.str() + " ("
+         + d_assignment.str() + ")";
 }
 
 /* -------------------------------------------------------------------------- */

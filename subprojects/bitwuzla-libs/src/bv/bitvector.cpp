@@ -587,7 +587,7 @@ BitVector::operator!=(const BitVector& bv) const
 }
 
 std::string
-BitVector::to_string(uint32_t base) const
+BitVector::str(uint32_t base) const
 {
   if (is_null()) return "(nil)";
 
@@ -3270,7 +3270,7 @@ BitVector::shift_is_uint64(uint64_t* res) const
 std::ostream&
 operator<<(std::ostream& out, const BitVector& bv)
 {
-  out << bv.to_string();
+  out << bv.str();
   return out;
 }
 

@@ -150,7 +150,7 @@ TestBvDomainGen::test_next_aux(const std::string& str_d,
       assert(gen->has_random());
       ASSERT_TRUE(gen->has_random());
       BitVector res       = gen->random();
-      std::string res_str = res.to_string();
+      std::string res_str = res.str();
       ASSERT_NE(std::find(expected.begin(), expected.end(), res_str),
                 expected.end());
       results.insert(res_str);
@@ -158,7 +158,7 @@ TestBvDomainGen::test_next_aux(const std::string& str_d,
       if (gen->has_next() && d_rng->flip_coin())
       {
         res     = gen->next();
-        res_str = res.to_string();
+        res_str = res.str();
         ASSERT_NE(std::find(expected.begin(), expected.end(), res_str),
                   expected.end());
         results.insert(res_str);
@@ -216,7 +216,7 @@ TestBvDomainGen::test_next_signed_aux(const std::string& str_d,
       assert(gen->has_random());
       ASSERT_TRUE(gen->has_random());
       BitVector res       = gen->random();
-      std::string res_str = res.to_string();
+      std::string res_str = res.str();
       ASSERT_NE(std::find(expected.begin(), expected.end(), res_str),
                 expected.end());
       results.insert(res_str);
@@ -224,7 +224,7 @@ TestBvDomainGen::test_next_signed_aux(const std::string& str_d,
       if (gen->has_next() && d_rng->flip_coin())
       {
         res     = gen->next();
-        res_str = res.to_string();
+        res_str = res.str();
         ASSERT_NE(std::find(expected.begin(), expected.end(), res_str),
                   expected.end());
         results.insert(res_str);

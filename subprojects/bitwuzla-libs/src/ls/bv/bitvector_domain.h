@@ -228,7 +228,7 @@ class BitVectorDomain
    * Unset bits are represented as `x`, invalid bits are represented as `i`.
    * @return A string representation of this bit-vector domain.
    */
-  std::string to_string() const;
+  std::string str() const;
 
  private:
   /**

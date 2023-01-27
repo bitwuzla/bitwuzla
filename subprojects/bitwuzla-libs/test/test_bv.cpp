@@ -656,8 +656,8 @@ TestBitVector::test_extend_aux(BvFunKind fun_kind,
     }
     assert(size + n == res.size());
     ASSERT_EQ(size + n, res.size());
-    std::string res_str = res.to_string();
-    std::string bv_str  = bv.to_string();
+    std::string res_str = res.str();
+    std::string bv_str  = bv.str();
     uint64_t len        = size - n;
     ASSERT_EQ(bv_str.compare(0, len, res_str, n, len), 0);
     ASSERT_EQ(std::string(n, c).compare(0, n, res_str, 0, n), 0);
@@ -2666,8 +2666,8 @@ TestBitVector::test_extract_aux(BvFunKind fun_kind, const BitVector& bv)
       res = bv.bvextract(hi, lo);
     }
     ASSERT_EQ(res.size(), hi - lo + 1);
-    std::string res_str = res.to_string();
-    std::string bv_str  = bv.to_string();
+    std::string res_str = res.str();
+    std::string bv_str  = bv.str();
     uint64_t len        = hi - lo + 1;
     ASSERT_EQ(bv_str.compare(size - hi - 1, len, res_str, 0, len), 0);
   }
@@ -3173,38 +3173,38 @@ TestBitVector::test_udivurem(uint64_t size)
 
 TEST_F(TestBitVector, ctor_dtor)
 {
-  ASSERT_EQ(BitVector(1).to_string(), "0");
-  ASSERT_EQ(BitVector(10).to_string(), "0000000000");
+  ASSERT_EQ(BitVector(1).str(), "0");
+  ASSERT_EQ(BitVector(10).str(), "0000000000");
 
-  ASSERT_EQ(BitVector(6, "101010").to_string(), "101010");
-  ASSERT_EQ(BitVector(6, "000101010").to_string(), "101010");
-  ASSERT_EQ(BitVector(8, "101010").to_string(), "00101010");
-  ASSERT_EQ(BitVector(8, "128", 10).to_string(), "10000000");
+  ASSERT_EQ(BitVector(6, "101010").str(), "101010");
+  ASSERT_EQ(BitVector(6, "000101010").str(), "101010");
+  ASSERT_EQ(BitVector(8, "101010").str(), "00101010");
+  ASSERT_EQ(BitVector(8, "128", 10).str(), "10000000");
 
-  ASSERT_EQ(BitVector(8, "-3", 10).to_string(), "11111101");
-  ASSERT_EQ(BitVector(8, "-127", 10).to_string(), "10000001");
-  ASSERT_EQ(BitVector(8, "-128", 10).to_string(), "10000000");
+  ASSERT_EQ(BitVector(8, "-3", 10).str(), "11111101");
+  ASSERT_EQ(BitVector(8, "-127", 10).str(), "10000001");
+  ASSERT_EQ(BitVector(8, "-128", 10).str(), "10000000");
 
-  ASSERT_EQ(BitVector(8, "a1", 16).to_string(), "10100001");
-  ASSERT_EQ(BitVector(8, "F1", 16).to_string(), "11110001");
+  ASSERT_EQ(BitVector(8, "a1", 16).str(), "10100001");
+  ASSERT_EQ(BitVector(8, "F1", 16).str(), "11110001");
 
-  ASSERT_EQ(BitVector::from_si(8, -3).to_string(), "11111101");
-  ASSERT_EQ(BitVector::from_si(8, -127).to_string(), "10000001");
-  ASSERT_EQ(BitVector::from_si(8, -128).to_string(), "10000000");
+  ASSERT_EQ(BitVector::from_si(8, -3).str(), "11111101");
+  ASSERT_EQ(BitVector::from_si(8, -127).str(), "10000001");
+  ASSERT_EQ(BitVector::from_si(8, -128).str(), "10000000");
 
   ASSERT_EQ(
-      BitVector::from_si(68, -3).to_string(),
+      BitVector::from_si(68, -3).str(),
       "11111111111111111111111111111111111111111111111111111111111111111101");
   ASSERT_EQ(
-      BitVector::from_ui(68, static_cast<uint64_t>(-3)).to_string(),
+      BitVector::from_ui(68, static_cast<uint64_t>(-3)).str(),
       "00001111111111111111111111111111111111111111111111111111111111111101");
   ASSERT_EQ(
-      BitVector::from_ui(68, 3).to_string(),
+      BitVector::from_ui(68, 3).str(),
       "00000000000000000000000000000000000000000000000000000000000000000011");
 
-  ASSERT_EQ(BitVector::from_ui(11, 1234).to_string(), "10011010010");
-  ASSERT_EQ(BitVector::from_ui(16, 1234).to_string(), "0000010011010010");
-  ASSERT_EQ(BitVector::from_ui(16, 65535).to_string(), "1111111111111111");
+  ASSERT_EQ(BitVector::from_ui(11, 1234).str(), "10011010010");
+  ASSERT_EQ(BitVector::from_ui(16, 1234).str(), "0000010011010010");
+  ASSERT_EQ(BitVector::from_ui(16, 65535).str(), "1111111111111111");
 
   ASSERT_DEATH(BitVector(0), "> 0");
   ASSERT_DEATH(BitVector(2, "101010"), "fits_in_size");
@@ -3303,63 +3303,59 @@ TEST_F(TestBitVector, ctor_random_bit_range)
   test_ctor_random_bit_range(33);
 }
 
-TEST_F(TestBitVector, to_string)
+TEST_F(TestBitVector, str)
 {
-  ASSERT_EQ(BitVector(1).to_string(), "0");
-  ASSERT_EQ(BitVector(10).to_string(), "0000000000");
-  ASSERT_EQ(BitVector(6, "101010").to_string(), "101010");
-  ASSERT_EQ(BitVector(8, "101010").to_string(), "00101010");
-  ASSERT_EQ(BitVector::from_ui(16, 1234).to_string(), "0000010011010010");
-  ASSERT_EQ(BitVector::from_ui(16, 65530).to_string(), "1111111111111010");
-  ASSERT_EQ(BitVector::from_ui(16, 65535).to_string(), "1111111111111111");
-  ASSERT_EQ(BitVector::from_ui(32, 4294967295).to_string(),
+  ASSERT_EQ(BitVector(1).str(), "0");
+  ASSERT_EQ(BitVector(10).str(), "0000000000");
+  ASSERT_EQ(BitVector(6, "101010").str(), "101010");
+  ASSERT_EQ(BitVector(8, "101010").str(), "00101010");
+  ASSERT_EQ(BitVector::from_ui(16, 1234).str(), "0000010011010010");
+  ASSERT_EQ(BitVector::from_ui(16, 65530).str(), "1111111111111010");
+  ASSERT_EQ(BitVector::from_ui(16, 65535).str(), "1111111111111111");
+  ASSERT_EQ(BitVector::from_ui(32, 4294967295).str(),
             "11111111111111111111111111111111");
-  ASSERT_EQ(BitVector::from_ui(64, UINT64_MAX).to_string(),
+  ASSERT_EQ(BitVector::from_ui(64, UINT64_MAX).str(),
             "1111111111111111111111111111111111111111111111111111111111111111");
   ASSERT_EQ(
-      BitVector::from_ui(65, UINT64_MAX).to_string(),
+      BitVector::from_ui(65, UINT64_MAX).str(),
       "01111111111111111111111111111111111111111111111111111111111111111");
   ASSERT_EQ(
-      BitVector::from_si(68, -3).to_string(),
+      BitVector::from_si(68, -3).str(),
       "11111111111111111111111111111111111111111111111111111111111111111101");
   ASSERT_EQ(
-      BitVector::from_ui(68, static_cast<uint64_t>(-3)).to_string(),
+      BitVector::from_ui(68, static_cast<uint64_t>(-3)).str(),
       "00001111111111111111111111111111111111111111111111111111111111111101");
   ASSERT_EQ(
-      BitVector::from_ui(68, 3).to_string(),
+      BitVector::from_ui(68, 3).str(),
       "00000000000000000000000000000000000000000000000000000000000000000011");
 
-  ASSERT_EQ(BitVector(10).to_string(10), "0");
-  ASSERT_EQ(BitVector(6, "101010").to_string(10), "42");
-  ASSERT_EQ(BitVector(8, "101010").to_string(10), "42");
-  ASSERT_EQ(BitVector::from_ui(16, 1234).to_string(10), "1234");
-  ASSERT_EQ(BitVector::from_ui(16, 65530).to_string(10), "65530");
-  ASSERT_EQ(BitVector::from_ui(16, 65535).to_string(10), "65535");
-  ASSERT_EQ(BitVector::from_ui(32, 4294967295).to_string(10), "4294967295");
-  ASSERT_EQ(BitVector::from_ui(64, UINT64_MAX).to_string(10),
-            "18446744073709551615");
-  ASSERT_EQ(BitVector::from_ui(65, UINT64_MAX).to_string(10),
-            "18446744073709551615");
-  ASSERT_EQ(BitVector::from_si(68, -3).to_string(10), "295147905179352825853");
-  ASSERT_EQ(BitVector::from_ui(68, static_cast<uint64_t>(-3)).to_string(10),
+  ASSERT_EQ(BitVector(10).str(10), "0");
+  ASSERT_EQ(BitVector(6, "101010").str(10), "42");
+  ASSERT_EQ(BitVector(8, "101010").str(10), "42");
+  ASSERT_EQ(BitVector::from_ui(16, 1234).str(10), "1234");
+  ASSERT_EQ(BitVector::from_ui(16, 65530).str(10), "65530");
+  ASSERT_EQ(BitVector::from_ui(16, 65535).str(10), "65535");
+  ASSERT_EQ(BitVector::from_ui(32, 4294967295).str(10), "4294967295");
+  ASSERT_EQ(BitVector::from_ui(64, UINT64_MAX).str(10), "18446744073709551615");
+  ASSERT_EQ(BitVector::from_ui(65, UINT64_MAX).str(10), "18446744073709551615");
+  ASSERT_EQ(BitVector::from_si(68, -3).str(10), "295147905179352825853");
+  ASSERT_EQ(BitVector::from_ui(68, static_cast<uint64_t>(-3)).str(10),
             "18446744073709551613");
-  ASSERT_EQ(BitVector::from_ui(68, 3).to_string(10), "3");
+  ASSERT_EQ(BitVector::from_ui(68, 3).str(10), "3");
 
-  ASSERT_EQ(BitVector(10).to_string(16), "0");
-  ASSERT_EQ(BitVector(6, "101010").to_string(16), "2a");
-  ASSERT_EQ(BitVector(8, "101010").to_string(16), "2a");
-  ASSERT_EQ(BitVector::from_ui(16, 1234).to_string(16), "4d2");
-  ASSERT_EQ(BitVector::from_ui(16, 65530).to_string(16), "fffa");
-  ASSERT_EQ(BitVector::from_ui(16, 65535).to_string(16), "ffff");
-  ASSERT_EQ(BitVector::from_ui(32, 4294967295).to_string(16), "ffffffff");
-  ASSERT_EQ(BitVector::from_ui(64, UINT64_MAX).to_string(16),
-            "ffffffffffffffff");
-  ASSERT_EQ(BitVector::from_ui(65, UINT64_MAX).to_string(16),
-            "ffffffffffffffff");
-  ASSERT_EQ(BitVector::from_si(68, -3).to_string(16), "ffffffffffffffffd");
-  ASSERT_EQ(BitVector::from_ui(68, static_cast<uint64_t>(-3)).to_string(16),
+  ASSERT_EQ(BitVector(10).str(16), "0");
+  ASSERT_EQ(BitVector(6, "101010").str(16), "2a");
+  ASSERT_EQ(BitVector(8, "101010").str(16), "2a");
+  ASSERT_EQ(BitVector::from_ui(16, 1234).str(16), "4d2");
+  ASSERT_EQ(BitVector::from_ui(16, 65530).str(16), "fffa");
+  ASSERT_EQ(BitVector::from_ui(16, 65535).str(16), "ffff");
+  ASSERT_EQ(BitVector::from_ui(32, 4294967295).str(16), "ffffffff");
+  ASSERT_EQ(BitVector::from_ui(64, UINT64_MAX).str(16), "ffffffffffffffff");
+  ASSERT_EQ(BitVector::from_ui(65, UINT64_MAX).str(16), "ffffffffffffffff");
+  ASSERT_EQ(BitVector::from_si(68, -3).str(16), "ffffffffffffffffd");
+  ASSERT_EQ(BitVector::from_ui(68, static_cast<uint64_t>(-3)).str(16),
             "fffffffffffffffd");
-  ASSERT_EQ(BitVector::from_ui(68, 3).to_string(16), "3");
+  ASSERT_EQ(BitVector::from_ui(68, 3).str(16), "3");
 }
 
 TEST_F(TestBitVector, to_uint64)
