@@ -76,9 +76,9 @@ class TestFp : public TestCommon
           FloatingPoint::from_real(d_fp16, rm, d_constants_dec[i]);
       BitVector sign, exp, sig;
       FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
-      ASSERT_EQ(sign.to_string(), expected[i][0]);
-      ASSERT_EQ(exp.to_string(), expected[i][1]);
-      ASSERT_EQ(sig.to_string(), expected[i][2]);
+      ASSERT_EQ(sign.str(), expected[i][0]);
+      ASSERT_EQ(exp.str(), expected[i][1]);
+      ASSERT_EQ(sig.str(), expected[i][2]);
     }
   }
 
@@ -110,9 +110,9 @@ class TestFp : public TestCommon
           d_fp16, rm, constants[i].first, constants[i].second);
       BitVector sign, exp, sig;
       FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
-      ASSERT_EQ(sign.to_string(), expected[i][0]);
-      ASSERT_EQ(exp.to_string(), expected[i][1]);
-      ASSERT_EQ(sig.to_string(), expected[i][2]);
+      ASSERT_EQ(sign.str(), expected[i][0]);
+      ASSERT_EQ(exp.str(), expected[i][1]);
+      ASSERT_EQ(sig.str(), expected[i][2]);
     }
   }
 

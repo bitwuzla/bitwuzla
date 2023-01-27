@@ -1669,7 +1669,7 @@ Bitwuzla::get_bv_value(const Term &term, uint8_t base)
   BITWUZLA_CHECK_LAST_CALL_SAT("get value");
   bzla::Node value = d_ctx->get_value(*term.d_node);
   assert(value.is_value());
-  return value.value<bzla::BitVector>().to_string(base);
+  return value.value<bzla::BitVector>().str(base);
 }
 
 std::string
@@ -1687,8 +1687,8 @@ Bitwuzla::get_fp_value(const Term &term, uint8_t base)
   bzla::FloatingPoint::ieee_bv_as_bvs(
       term.d_node->type(), fp_value.as_bv(), sign, exp, sig);
   std::string prefix = base == 2 ? "#b" : (base == 16 ? "#x" : "");
-  return "(fp " + prefix + sign.to_string(base) + " " + prefix
-         + exp.to_string(base) + " " + prefix + sig.to_string(base);
+  return "(fp " + prefix + sign.str(base) + " " + prefix + exp.str(base) + " "
+         + prefix + sig.str(base);
 }
 
 void
@@ -1709,9 +1709,9 @@ Bitwuzla::get_fp_value(const Term &term,
   bzla::BitVector bv_sign, bv_exp, bv_sig;
   bzla::FloatingPoint::ieee_bv_as_bvs(
       term.d_node->type(), fp_value.as_bv(), bv_sign, bv_exp, bv_sig);
-  sign        = bv_sign.to_string(base);
-  exponent    = bv_exp.to_string(base);
-  significand = bv_sig.to_string(base);
+  sign        = bv_sign.str(base);
+  exponent    = bv_exp.str(base);
+  significand = bv_sig.str(base);
 }
 
 RoundingMode
