@@ -32,8 +32,6 @@ class PassContradictingAnds : public PreprocessingPass
   std::pair<node::unordered_node_ref_set, bool> is_contradicting_and(
       const Node& node, node::unordered_node_ref_set& visited);
 
-  /** Only required to check the current assertion level. */
-  const backtrack::BacktrackManager* d_backtrack_mgr;
   /** Backtrackable substitution map. */
   backtrack::unordered_map<Node, Node> d_substitutions;
   /**

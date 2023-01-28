@@ -19,8 +19,6 @@ class PassEmbeddedConstraints : public PreprocessingPass
   Node process(const Node& node) override;
 
  private:
-  /** Only required to check the current assertion level. */
-  const backtrack::BacktrackManager* d_backtrack_mgr;
   /** Backtrackable substitution map. */
   backtrack::unordered_map<Node, Node> d_substitutions;
   /** Cache of processed nodes that maybe shared across substitutions. */

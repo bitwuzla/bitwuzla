@@ -13,8 +13,8 @@ using namespace bzla::node;
 PassEmbeddedConstraints::PassEmbeddedConstraints(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env),
-      d_backtrack_mgr(backtrack_mgr),
       d_substitutions(backtrack_mgr),
+      d_cache(backtrack_mgr),
       d_stats(env.statistics())
 {
 }
