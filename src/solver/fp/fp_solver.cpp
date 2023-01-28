@@ -43,7 +43,10 @@ FpSolver::default_value(const Type& type)
 }
 
 FpSolver::FpSolver(Env& env, SolverState& state)
-    : Solver(env, state), d_word_blaster(state)
+    : Solver(env, state),
+      d_word_blaster(state),
+      d_word_blast_queue(state.backtrack_mgr()),
+      d_word_blast_index(state.backtrack_mgr())
 {
 }
 
@@ -54,8 +57,11 @@ FpSolver::check()
 {
   reset_cached_values();
   NodeManager& nm = NodeManager::get();
-  for (const Node& node : d_word_blast_queue)
+  for (size_t i = d_word_blast_index.get(), size = d_word_blast_queue.size();
+       i < size;
+       ++i)
   {
+    const Node& node = d_word_blast_queue[i];
     Node wb = d_word_blaster.word_blast(node);
 
     if (wb == node) continue;
@@ -72,7 +78,7 @@ FpSolver::check()
       d_solver_state.lemma(nm.mk_node(Kind::EQUAL, {node, wb}));
     }
   }
-  d_word_blast_queue.clear();
+  d_word_blast_index = d_word_blast_queue.size();
   return true;
 }
 

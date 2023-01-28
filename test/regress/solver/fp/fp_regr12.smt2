@@ -1,0 +1,8 @@
+(declare-const A (_ BitVec 1))
+(push 1)
+(assert (and false (= ((_ to_fp 8 24) ((_ zero_extend 31) A)) (fp (_ bv0 1) (_ bv0 8) (_ bv0 23)))))
+(set-info :status unsat)
+(check-sat)
+(pop 1)
+(set-info :status sat)
+(check-sat)
