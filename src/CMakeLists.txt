@@ -36,6 +36,7 @@ set(libbitwuzla_src_files
   preprocess/pass/elim_uninterpreted.cpp
   preprocess/pass/embedded_constraints.cpp
   preprocess/pass/flatten_and.cpp
+  preprocess/pass/normalize.cpp
   preprocess/pass/rewrite.cpp
   preprocess/pass/rewrite.cpp
   preprocess/pass/skeleton_preproc.cpp

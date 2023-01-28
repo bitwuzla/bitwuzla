@@ -7,6 +7,8 @@ namespace bzla::test {
 
 using namespace node;
 
+/* -------------------------------------------------------------------------- */
+
 class TestPassContradictingAnds : public TestPreprocessingPass
 {
  protected:
@@ -40,8 +42,6 @@ class TestPassContradictingAnds : public TestPreprocessingPass
     ASSERT_EQ(as[0], expected);
   }
 
-  std::unique_ptr<preprocess::pass::PassContradictingAnds> d_pass;
-  std::unique_ptr<Env> d_env;
   Type d_bv8  = d_nm.mk_bv_type(8);
   Node d_a    = d_nm.mk_const(d_bv8, "a");
   Node d_b    = d_nm.mk_const(d_bv8, "b");
@@ -49,7 +49,12 @@ class TestPassContradictingAnds : public TestPreprocessingPass
   Node d_d    = d_nm.mk_const(d_bv8, "d");
   Node d_e    = d_nm.mk_const(d_bv8, "d");
   Node d_zero = d_nm.mk_value(BitVector::mk_zero(8));
+
+  std::unique_ptr<preprocess::pass::PassContradictingAnds> d_pass;
+  std::unique_ptr<Env> d_env;
 };
+
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestPassContradictingAnds, bvand_does_not_apply1)
 {
@@ -106,6 +111,8 @@ TEST_F(TestPassContradictingAnds, bvand5)
            {d_a, d_nm.mk_node(Kind::BV_AND, {d_c, d_nm.invert_node(d_b)})}),
        d_nm.mk_node(Kind::BV_AND, {d_nm.invert_node(d_c), d_a})}));
 };
+
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestPassContradictingAnds, assertion1)
 {
@@ -173,4 +180,6 @@ TEST_F(TestPassContradictingAnds, assertion2)
                         {d_nm.mk_node(Kind::BV_ADD, {d_d, and1_subst}),
                          d_nm.mk_node(Kind::BV_UDIV, {d_zero, d_e})})}));
 };
+
+/* -------------------------------------------------------------------------- */
 }  // namespace bzla::test

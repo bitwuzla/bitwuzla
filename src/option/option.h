@@ -39,6 +39,7 @@ enum class Option
   PP_CONTRADICTING_ANDS,           // bool
   PP_EMBEDDED_CONSTR,              // bool
   PP_FLATTEN_AND,                  // bool
+  PP_NORMALIZE,                    // bool
   PP_SKELETON_PREPROC,             // bool
   PP_VARIABLE_SUBST,               // bool
   PP_VARIABLE_SUBST_NORM_EQ,       // bool
@@ -422,6 +423,7 @@ class Options
   OptionBool pp_contr_ands;
   OptionBool pp_embedded_constr;
   OptionBool pp_flatten_and;
+  OptionBool pp_normalize;
   OptionBool pp_skeleton_preproc;
   OptionBool pp_variable_subst;
   OptionBool pp_variable_subst_norm_eq;

@@ -8,6 +8,7 @@
 #include "preprocess/pass/elim_uninterpreted.h"
 #include "preprocess/pass/embedded_constraints.h"
 #include "preprocess/pass/flatten_and.h"
+#include "preprocess/pass/normalize.h"
 #include "preprocess/pass/rewrite.h"
 #include "preprocess/pass/skeleton_preproc.h"
 #include "preprocess/pass/variable_substitution.h"
@@ -68,6 +69,7 @@ class Preprocessor
   pass::PassVariableSubstitution d_pass_variable_substitution;
   pass::PassFlattenAnd d_pass_flatten_and;
   pass::PassSkeletonPreproc d_pass_skeleton_preproc;
+  pass::PassNormalize d_pass_normalize;
 
   struct Statistics
   {

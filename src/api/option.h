@@ -259,6 +259,13 @@ enum ENUM(Option)
    *  * **0**: disable
    */
   EVALUE(PP_FLATTEN_AND),
+  /*! **Preprocessing: Normalization**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PP_NORMALIZE),
   /*! **Preprocessing: Boolean skeleton preprocessing**
    *
    * Values:
