@@ -26,6 +26,7 @@ ArraySolver::ArraySolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_selects(state.backtrack_mgr()),
       d_equalities(state.backtrack_mgr()),
+      d_active_parents(state.backtrack_mgr()),
       d_stats(env.statistics()),
       d_logger(env.options().log_level(), env.options().verbosity())
 {

@@ -7,29 +7,34 @@ class TestUnorderedMap : public ::testing::Test
 {
 };
 
-TEST_F(TestUnorderedMap, ctor_dtor) { backtrack::unordered_map<int, bool> map; }
+TEST_F(TestUnorderedMap, ctor_dtor)
+{
+  backtrack::BacktrackManager mgr;
+  backtrack::unordered_map<int, bool> map(&mgr);
+}
 
 TEST_F(TestUnorderedMap, push_pop)
 {
-  backtrack::unordered_map<int, bool> map;
+  backtrack::BacktrackManager mgr;
+  backtrack::unordered_map<int, bool> map(&mgr);
   map.emplace(0, true);
   map.emplace(1, false);
   map.emplace(2, true);
-  map.push();
+  mgr.push();
   ASSERT_EQ(map.size(), 3);
   ASSERT_FALSE(map.empty());
   map.emplace(3, true);
   map.emplace(4, true);
   map.emplace(3, true);  // duplicate
   ASSERT_EQ(map.size(), 5);
-  map.pop();
+  mgr.pop();
   ASSERT_EQ(map.size(), 3);
   ASSERT_EQ(map.find(3), map.end());
   ASSERT_EQ(map.find(4), map.end());
   ASSERT_NE(map.find(0), map.end());
   ASSERT_NE(map.find(1), map.end());
   ASSERT_NE(map.find(2), map.end());
-  ASSERT_DEATH(map.pop(), "d_control.empty");
+  ASSERT_DEATH(mgr.pop(), "d_scope_levels > 0");
 }
 
 TEST_F(TestUnorderedMap, push_pop_mgr)

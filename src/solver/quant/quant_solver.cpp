@@ -34,7 +34,10 @@ QuantSolver::is_theory_leaf(const Node& term)
 QuantSolver::QuantSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_quantifiers(state.backtrack_mgr()),
+      d_assertions(state.backtrack_mgr()),
       d_process_cache(state.backtrack_mgr()),
+      d_consts(state.backtrack_mgr()),
+      d_ground_terms(state.backtrack_mgr()),
       d_stats(env.statistics())
 {
 }

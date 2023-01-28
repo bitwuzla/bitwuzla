@@ -7,20 +7,25 @@ class TestVector : public ::testing::Test
 {
 };
 
-TEST_F(TestVector, ctor_dtor) { backtrack::vector<int> vec; }
+TEST_F(TestVector, ctor_dtor)
+{
+  backtrack::BacktrackManager mgr;
+  backtrack::vector<int> vec(&mgr);
+}
 
 TEST_F(TestVector, push_pop)
 {
-  backtrack::vector<int> vec;
+  backtrack::BacktrackManager mgr;
+  backtrack::vector<int> vec(&mgr);
   vec.push_back(0);
   vec.push_back(1);
   vec.push_back(2);
-  vec.push();
+  mgr.push();
   ASSERT_EQ(vec.size(), 3);
   vec.push_back(3);
   vec.push_back(4);
   ASSERT_EQ(vec.size(), 5);
-  vec.pop();
+  mgr.pop();
   ASSERT_EQ(vec.size(), 3);
   ASSERT_EQ(vec[0], 0);
   ASSERT_EQ(vec[1], 1);
@@ -64,9 +69,10 @@ TEST_F(TestVector, push_pop_mgr)
 
 TEST_F(TestVector, insert_at_level)
 {
-  backtrack::vector<int> vec;
-  vec.push();
-  vec.push();
+  backtrack::BacktrackManager mgr;
+  backtrack::vector<int> vec(&mgr);
+  mgr.push();
+  mgr.push();
 
   vec.insert_at_level(0, 0);
   vec.insert_at_level(1, 1);
@@ -88,7 +94,7 @@ TEST_F(TestVector, insert_at_level)
   ASSERT_EQ(vec[4], 2);
   ASSERT_EQ(vec[5], 2);
 
-  vec.pop();
+  mgr.pop();
   ASSERT_EQ(vec.size(), 4);
   vec.insert_at_level(0, 0);
   vec.insert_at_level(0, 0);

@@ -360,6 +360,7 @@ PassVariableSubstitution::PassVariableSubstitution(
     : PreprocessingPass(env),
       d_substitutions(backtrack_mgr),
       d_substitution_assertions(backtrack_mgr),
+      d_norm_subst_cache(backtrack_mgr),
       d_cache(backtrack_mgr),
       d_stats(env.statistics())
 {

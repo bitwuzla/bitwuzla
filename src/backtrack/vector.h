@@ -12,7 +12,7 @@ template <class T>
 class vector : public Backtrackable
 {
  public:
-  vector() = default;
+  vector() = delete;
   vector(BacktrackManager* mgr) : Backtrackable(mgr) {}
 
   /* --- std::vector interface ---------------------------------------------- */

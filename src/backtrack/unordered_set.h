@@ -13,7 +13,7 @@ template <class T>
 class unordered_set : public Backtrackable
 {
  public:
-  unordered_set() = default;
+  unordered_set() = delete;
   unordered_set(BacktrackManager* mgr) : Backtrackable(mgr) {}
 
   /* --- std::unordered_map interface --------------------------------------- */

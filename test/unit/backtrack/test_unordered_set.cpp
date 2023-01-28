@@ -7,29 +7,34 @@ class TestUnorderedSet : public ::testing::Test
 {
 };
 
-TEST_F(TestUnorderedSet, ctor_dtor) { backtrack::unordered_set<int> set; }
+TEST_F(TestUnorderedSet, ctor_dtor)
+{
+  backtrack::BacktrackManager mgr;
+  backtrack::unordered_set<int> set(&mgr);
+}
 
 TEST_F(TestUnorderedSet, push_pop)
 {
-  backtrack::unordered_set<int> set;
+  backtrack::BacktrackManager mgr;
+  backtrack::unordered_set<int> set(&mgr);
   set.insert(0);
   set.insert(1);
   set.insert(2);
-  set.push();
+  mgr.push();
   ASSERT_EQ(set.size(), 3);
   ASSERT_FALSE(set.empty());
   set.insert(3);
   set.insert(4);
   set.insert(3);  // duplicate
   ASSERT_EQ(set.size(), 5);
-  set.pop();
+  mgr.pop();
   ASSERT_EQ(set.size(), 3);
   ASSERT_EQ(set.find(3), set.end());
   ASSERT_EQ(set.find(4), set.end());
   ASSERT_NE(set.find(0), set.end());
   ASSERT_NE(set.find(1), set.end());
   ASSERT_NE(set.find(2), set.end());
-  ASSERT_DEATH(set.pop(), "d_control.empty");
+  ASSERT_DEATH(mgr.pop(), "d_scope_levels > 0");
 }
 
 TEST_F(TestUnorderedSet, push_pop_mgr)
