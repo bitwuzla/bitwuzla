@@ -312,6 +312,8 @@ template <class VALUE>
 void
 LocalSearch<VALUE>::normalize_ids()
 {
+  if (d_roots.empty()) return;
+
   uint64_t id = 0;
   std::unordered_map<Node<VALUE>*, bool> cache;
 
