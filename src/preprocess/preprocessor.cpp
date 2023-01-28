@@ -126,16 +126,16 @@ Preprocessor::apply(AssertionVector& assertions)
     ++d_stats.num_iterations;
 
     size_t cnt;
+    cnt = assertions.num_modified();
+    d_pass_rewrite.apply(assertions);
+    Msg(2) << assertions.num_modified() - cnt << " after rewriting";
+
     if (options.pp_flatten_and())
     {
       cnt = assertions.num_modified();
       d_pass_flatten_and.apply(assertions);
       Msg(2) << assertions.num_modified() - cnt << " after and flattening";
     }
-
-    cnt = assertions.num_modified();
-    d_pass_rewrite.apply(assertions);
-    Msg(2) << assertions.num_modified() - cnt << " after rewriting";
 
     if (options.pp_variable_subst())
     {
