@@ -8,7 +8,7 @@ bool
 AssertionStack::push_back(const Node& assertion)
 {
   assert(assertion.type().is_bool());
-  auto [it, inserted] = d_cache.emplace(assertion, d_assertions.size());
+  auto [it, inserted] = d_cache.emplace(assertion, d_control.size());
   if (inserted)
   {
     d_assertions.emplace_back(assertion, d_control.size());
@@ -19,19 +19,19 @@ AssertionStack::push_back(const Node& assertion)
 void
 AssertionStack::replace(size_t index, const Node& replacement)
 {
-  const Node& assertion = d_assertions[index].first;
+  const auto& [assertion, level] = d_assertions[index];
   auto it               = d_cache.find(assertion);
   // Only delete from cache if assertion is the first occurence.
-  if (it != d_cache.end() && it->second == index)
+  if (it != d_cache.end() && it->second == level)
   {
     d_cache.erase(it);
   }
-  auto [iit, inserted] = d_cache.emplace(replacement, index);
+  auto [iit, inserted] = d_cache.emplace(replacement, level);
   // New assertion already on stack, update cached index if index is the first
   // occurence of replacement on the stack.
-  if (!inserted && iit->second > index)
+  if (!inserted && iit->second > level)
   {
-    iit->second = index;
+    iit->second = level;
   }
   d_assertions[index].first = replacement;
 }
@@ -47,16 +47,16 @@ AssertionStack::insert_at_level(size_t level, const Node& assertion)
   assert(level < d_control.size());
 
   size_t index        = d_control[level];
-  auto [it, inserted] = d_cache.emplace(assertion, index);
+  auto [it, inserted] = d_cache.emplace(assertion, level);
   if (!inserted)
   {
     // Assertion already added in a previous level.
-    if (it->second < index)
+    if (it->second <= level)
     {
       return false;
     }
     // Assertion added to lower level, update index.
-    it->second = index;
+    it->second = level;
   }
 
   // Add assertion to given level and update control stack.
@@ -135,7 +135,7 @@ AssertionStack::pop()
     auto it                        = d_cache.find(assertion);
     // Only remove from cache if the assertion is at the correct index.
     // Original assertion might have been removed already due to replace().
-    if (it != d_cache.end() && it->second == d_assertions.size() - 1)
+    if (it != d_cache.end() && it->second == level)
     {
       d_cache.erase(it);
     }
@@ -148,7 +148,7 @@ AssertionStack::pop()
     assert(level <= d_control.size());
     auto it = d_cache.find(assertion);
     assert(it != d_cache.end());
-    assert(it->second < d_assertions.size());
+    assert(it->second <= level);
   }
 #endif
 
