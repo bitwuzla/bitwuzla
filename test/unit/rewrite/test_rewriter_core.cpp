@@ -510,6 +510,35 @@ TEST_F(TestRewriterCore, core_equal_ite_dis_bv1)
        d_nm.invert_node(d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b}))}));
 }
 
+TEST_F(TestRewriterCore, core_equal_inv)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_INV;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL,
+                               {d_nm.invert_node(d_a), d_nm.invert_node(d_b)}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.invert_node(d_bv4_a), d_nm.invert_node(d_bv4_b)}));
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL,
+                               {d_nm.mk_node(Kind::BV_NEG, {d_bv4_a}),
+                                d_nm.mk_node(Kind::BV_NEG, {d_bv4_b})}));
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL,
+                               {d_nm.mk_node(Kind::FP_NEG, {d_fp35_a}),
+                                d_nm.mk_node(Kind::FP_NEG, {d_fp35_b})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL, {d_nm.invert_node(d_a), d_b}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL, {d_bv4_a, d_nm.invert_node(d_bv4_b)}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_node(Kind::BV_NEG, {d_bv4_a}),
+                    d_nm.mk_node(Kind::BV_NOT, {d_bv4_b})}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_node(Kind::FP_NEG, {d_fp35_a}),
+                    d_nm.mk_node(Kind::FP_ABS, {d_fp35_b})}));
+}
+
 /* distinct ----------------------------------------------------------------- */
 
 TEST_F(TestRewriterCore, core_distinct_card)

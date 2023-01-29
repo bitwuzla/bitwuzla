@@ -424,6 +424,34 @@ RewriteRule<RewriteRuleKind::EQUAL_FALSE>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match:  (= (not a) (not b))
+ * result: (= a b)
+ *
+ * match:  (= (bvnot a) (bvnot b))
+ * result: (= a b)
+ *
+ * match:  (= (bvneg a) (bvneg b))
+ * result: (= a b)
+ *
+ * match:  (= (fp.neg a) (fp.neg b))
+ * result: (= a b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_INV>::_apply(Rewriter& rewriter,
+                                                const Node& node)
+{
+  assert(node.num_children() == 2);
+  if ((node[0].is_inverted() && node[1].is_inverted())
+      || (node[0].kind() == Kind::BV_NEG && node[1].kind() == Kind::BV_NEG)
+      || (node[0].kind() == Kind::FP_NEG && node[1].kind() == Kind::FP_NEG))
+  {
+    return rewriter.mk_node(Kind::EQUAL, {node[0][0], node[1][0]});
+  }
+  return node;
+}
+
+/**
  * match:  (= (ite x a b) (ite x c d))
  *         with either a = c or b = d
  * result: (ite x (= a c) (= b d))

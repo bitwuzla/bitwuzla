@@ -28,6 +28,9 @@ Node RewriteRule<RewriteRuleKind::EQUAL_TRUE>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_FALSE>::_apply(Rewriter& rewriter,
                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_INV>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
 // bcond_eq
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_ITE>::_apply(Rewriter& rewriter,

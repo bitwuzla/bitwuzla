@@ -409,7 +409,6 @@ Rewriter::rewrite_not(const Node& node)
     BZLA_APPLY_RW_RULE(NOT_EVAL);
     BZLA_APPLY_RW_RULE(NOT_NOT);
     BZLA_APPLY_RW_RULE(NOT_XOR);
-    // TODO
   }
 
 DONE:
@@ -436,6 +435,7 @@ Rewriter::rewrite_eq(const Node& node)
     BZLA_APPLY_RW_RULE(EQUAL_TRUE);
     BZLA_APPLY_RW_RULE(EQUAL_ITE);
     BZLA_APPLY_RW_RULE(EQUAL_FALSE);
+    BZLA_APPLY_RW_RULE(EQUAL_INV);
   }
   if (d_level >= 2)
   {
@@ -448,7 +448,6 @@ Rewriter::rewrite_eq(const Node& node)
     BZLA_APPLY_RW_RULE(EQUAL_ITE_INVERTED);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_DIS_BV1);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_LIFT_COND);
-    // TODO
   }
 
 DONE:
@@ -1315,6 +1314,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::EQUAL_TRUE: out << "EQUAL_TRUE"; break;
     case RewriteRuleKind::EQUAL_ITE: out << "EQUAL_ITE"; break;
     case RewriteRuleKind::EQUAL_FALSE: out << "EQUAL_FALSE"; break;
+    case RewriteRuleKind::EQUAL_INV: out << "EQUAL_INV"; break;
     case RewriteRuleKind::EQUAL_BV_ADD: out << "EQUAL_BV_ADD"; break;
     case RewriteRuleKind::EQUAL_BV_ADD_ADD: out << "EQUAL_BV_ADD_ADD"; break;
     case RewriteRuleKind::EQUAL_BV_CONCAT: out << "EQUAL_BV_CONCAT"; break;
