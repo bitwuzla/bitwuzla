@@ -19,8 +19,12 @@ class PassNormalize : public PreprocessingPass
  private:
   static node::unordered_node_ref_map<uint64_t> compute_factors(
       const Node& node);
-  static std::pair<Node, bool> normalize_eq_mul(const Node& node0,
-                                                const Node& node1);
+  static std::tuple<node::unordered_node_ref_map<uint64_t>,
+                    node::unordered_node_ref_map<uint64_t>,
+                    bool>
+  get_normalized_factors(const Node& node0, const Node& node1);
+  static std::pair<Node, bool> normalize_eq_add_mul(const Node& node0,
+                                                    const Node& node1);
 
   /**
    * Cache of processed nodes that maybe shared across substitutions.

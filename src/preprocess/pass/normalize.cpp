@@ -69,20 +69,21 @@ PassNormalize::compute_factors(const Node& node)
   return factors;
 }
 
-std::pair<Node, bool>
-PassNormalize::normalize_eq_mul(const Node& node0, const Node& node1)
+std::tuple<unordered_node_ref_map<uint64_t>,
+           unordered_node_ref_map<uint64_t>,
+           bool>
+PassNormalize::get_normalized_factors(const Node& node0, const Node& node1)
 {
-  assert(node0.kind() == Kind::BV_MUL);
-  assert(node1.kind() == Kind::BV_MUL);
-
+  assert(node0.kind() == node1.kind());
   bool normalized = false;
+  Kind kind       = node0.kind();
   auto factors0   = compute_factors(node0);
   auto factors1   = compute_factors(node1);
   unordered_node_ref_map<uint64_t> res0, res1;
   // normalize common factors and record entries that are not in factors1
   for (auto& f : factors0)
   {
-    if (f.first.get().kind() == Kind::BV_MUL)
+    if (f.first.get().kind() == kind)
     {
       continue;
     }
@@ -109,7 +110,7 @@ PassNormalize::normalize_eq_mul(const Node& node0, const Node& node1)
   // check factors1 for entries that are not in factors0
   for (auto& f : factors1)
   {
-    if (f.first.get().kind() == Kind::BV_MUL)
+    if (f.first.get().kind() == kind)
     {
       continue;
     }
@@ -119,69 +120,92 @@ PassNormalize::normalize_eq_mul(const Node& node0, const Node& node1)
       res1.insert(f);
     }
   }
-  NodeManager& nm = NodeManager::get();
+
+  // factors on both sides cancelled out
   if (res0.empty() && res1.empty())
   {
+    return {{}, {}, true};
+  }
+
+  return {res0, res1, normalized};
+}
+
+std::pair<Node, bool>
+PassNormalize::normalize_eq_add_mul(const Node& node0, const Node& node1)
+{
+  assert(node0.kind() == node1.kind());
+  assert(node0.kind() == Kind::BV_MUL || node0.kind() == Kind::BV_ADD);
+
+  NodeManager& nm = NodeManager::get();
+  Kind kind       = node0.kind();
+  Node dflt       = nm.mk_value(kind == Kind::BV_ADD
+                              ? BitVector::mk_zero(node0.type().bv_size())
+                              : BitVector::mk_one(node0.type().bv_size()));
+
+  auto [factors0, factors1, normalized] = get_normalized_factors(node0, node1);
+
+  if (factors0.empty() && factors1.empty())
+  {
+    assert(normalized);
     return {nm.mk_value(true), true};
   }
-  std::vector<Node> vlhs, vrhs;
-  if (res0.empty())
+
+  std::vector<Node> lhs, rhs;
+  if (factors0.empty())
   {
-    vlhs.push_back(nm.mk_value(BitVector::mk_one(node0.type().bv_size())));
+    lhs.push_back(dflt);
   }
-  if (res1.empty())
+  if (factors1.empty())
   {
-    vrhs.push_back(nm.mk_value(BitVector::mk_one(node1.type().bv_size())));
+    rhs.push_back(dflt);
   }
   if (normalized)
   {
-    for (auto& f : res0)
+    for (auto& f : factors0)
     {
       assert(f.second);
       for (size_t i = 0, n = f.second; i < n; ++i)
       {
-        vlhs.push_back(f.first);
+        lhs.push_back(f.first);
       }
     }
-    for (auto& f : res1)
+    for (auto& f : factors1)
     {
       assert(f.second);
       for (size_t i = 0, n = f.second; i < n; ++i)
       {
-        vrhs.push_back(f.first);
+        rhs.push_back(f.first);
       }
     }
   }
-  assert(vlhs.empty() == vrhs.empty());
+  assert(lhs.empty() == rhs.empty());
 
-  Node lhs, rhs;
-  if (vlhs.empty())
+  if (lhs.empty())
   {
-    lhs = node0;
-    rhs = node1;
+    return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
   }
-  else
+
+  std::sort(lhs.begin(), lhs.end(), [](const Node& a, const Node& b) {
+    return a.id() < b.id();
+  });
+  std::sort(rhs.begin(), rhs.end(), [](const Node& a, const Node& b) {
+    return a.id() < b.id();
+  });
+
+  Node l, r;
+  size_t n = lhs.size();
+  l        = lhs[n - 1];
+  for (size_t i = 1; i < n; ++i)
   {
-    std::sort(vlhs.begin(), vlhs.end(), [](const Node& a, const Node& b) {
-      return a.id() < b.id();
-    });
-    std::sort(vrhs.begin(), vrhs.end(), [](const Node& a, const Node& b) {
-      return a.id() < b.id();
-    });
-    size_t n = vlhs.size();
-    lhs      = vlhs[n - 1];
-    for (size_t i = 1; i < n; ++i)
-    {
-      lhs = nm.mk_node(Kind::BV_MUL, {vlhs[n - i - 1], lhs});
-    }
-    n   = vrhs.size();
-    rhs = vrhs[n - 1];
-    for (size_t i = 1; i < n; ++i)
-    {
-      rhs = nm.mk_node(Kind::BV_MUL, {vrhs[n - i - 1], rhs});
-    }
+    l = nm.mk_node(kind, {lhs[n - i - 1], l});
   }
-  return {nm.mk_node(Kind::EQUAL, {lhs, rhs}), normalized};
+  n = rhs.size();
+  r = rhs[n - 1];
+  for (size_t i = 1; i < n; ++i)
+  {
+    r = nm.mk_node(kind, {rhs[n - i - 1], r});
+  }
+  return {nm.mk_node(Kind::EQUAL, {l, r}), true};
 }
 
 void
@@ -218,10 +242,11 @@ PassNormalize::process(const Node& node)
         assert(!itc->second.is_null());
         children.push_back(itc->second);
       }
-      if (cur.kind() == Kind::EQUAL && children[0].kind() == Kind::BV_MUL
-          && children[1].kind() == Kind::BV_MUL)
+      if (cur.kind() == Kind::EQUAL && children[0].kind() == children[1].kind()
+          && (children[0].kind() == Kind::BV_ADD
+              || children[0].kind() == Kind::BV_MUL))
       {
-        auto [res, normalized] = normalize_eq_mul(children[0], children[1]);
+        auto [res, normalized] = normalize_eq_add_mul(children[0], children[1]);
         it->second             = res;
         if (normalized) d_stats.num_normalizations += 1;
       }
