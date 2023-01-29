@@ -691,15 +691,7 @@ PassVariableSubstitution::substitute(
       }
       else
       {
-        std::vector<Node> children;
-        for (const Node& child : cur)
-        {
-          auto iit = cache.find(child);
-          assert(iit != cache.end());
-          assert(!iit->second.is_null());
-          children.push_back(iit->second);
-        }
-        it->second = utils::rebuild_node(cur, children);
+        it->second = utils::rebuild_node(cur, cache);
       }
     }
     visit.pop_back();

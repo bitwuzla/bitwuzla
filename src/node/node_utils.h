@@ -107,6 +107,16 @@ Node bool_to_bv1(const Node& node);
  * @return Rebuilt node.
  */
 Node rebuild_node(const Node& node, const std::vector<Node>& children);
+
+/**
+ * Rebuild node with same kind and indices but new children taken from cache.
+ *
+ * @param node The node to rebuild.
+ * @param cache The node cache for children.
+ * @return Rebuilt node.
+ */
+Node rebuild_node(const Node& node,
+                  const std::unordered_map<Node, Node>& cache);
 }
 
 #endif

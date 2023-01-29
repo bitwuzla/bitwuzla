@@ -382,4 +382,39 @@ rebuild_node(const Node& node, const std::vector<Node>& children)
   }
 }
 
+Node
+rebuild_node(const Node& node, const std::unordered_map<Node, Node>& cache)
+{
+  std::vector<Node> children;
+
+  bool changed = false;
+  for (const Node& child : node)
+  {
+    auto iit = cache.find(child);
+    assert(iit != cache.end());
+    assert(!iit->second.is_null());
+    children.push_back(iit->second);
+    changed |= iit->second != child;
+  }
+
+  if (!changed || node.num_children() == 0)
+  {
+    return node;
+  }
+  else if (node.kind() == Kind::CONST_ARRAY)
+  {
+    assert(children.size() == 1);
+    return NodeManager::get().mk_const_array(node.type(), children[0]);
+  }
+  else
+  {
+    NodeManager& nm = NodeManager::get();
+    if (node.num_indices() > 0)
+    {
+      return nm.mk_node(node.kind(), children, node.indices());
+    }
+    return nm.mk_node(node.kind(), children);
+  }
+}
+
 }  // namespace bzla::node::utils

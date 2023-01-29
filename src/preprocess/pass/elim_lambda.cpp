@@ -82,7 +82,7 @@ PassElimLambda::reduce(const Node& node) const
   }
   assert(body.kind() != Kind::LAMBDA);
 
-  node::unordered_node_ref_map<Node> cache;
+  std::unordered_map<Node, Node> cache;
   node::node_ref_vector visit{body};
   do
   {
@@ -116,14 +116,7 @@ PassElimLambda::reduce(const Node& node) const
       }
       else
       {
-        std::vector<Node> children;
-        for (const Node& child : cur)
-        {
-          auto iit = cache.find(child);
-          assert(iit != cache.end());
-          children.push_back(iit->second);
-        }
-        it->second = utils::rebuild_node(cur, children);
+        it->second = utils::rebuild_node(cur, cache);
       }
     }
     visit.pop_back();

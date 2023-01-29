@@ -107,19 +107,13 @@ Rewriter::rewrite(const Node& node)
     {
       if (cur.num_children())
       {
-        std::vector<Node> children;
-        for (const auto& c : cur)
-        {
-          children.push_back(d_cache.at(c));
-          assert(!children.back().is_null());
-        }
 #ifndef NDEBUG
         // Reset nodes counter
         d_num_nodes = 0;
         // Save current maximum node id
         int64_t max_id = NodeManager::get().max_node_id();
 #endif
-        it->second = _rewrite(node::utils::rebuild_node(cur, children));
+        it->second = _rewrite(node::utils::rebuild_node(cur, d_cache));
 #ifndef NDEBUG
         uint64_t thresh = d_env.options().dbg_rw_node_inc();
         if (thresh > 0 && d_num_nodes > 0)
