@@ -234,6 +234,8 @@ enum class RewriteRuleKind
   EQUAL_ITE,
   EQUAL_FALSE,
   EQUAL_INV,
+  EQUAL_CONST_BV_ADD,
+  EQUAL_CONST_BV_MUL,
   // Level 2+
   EQUAL_BV_ADD,
   EQUAL_BV_ADD_ADD,

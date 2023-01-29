@@ -52,6 +52,14 @@ template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_ITE_LIFT_COND>::_apply(
     Rewriter& rewriter, const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_CONST_BV_ADD>::_apply(
+    Rewriter& rewriter, const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_CONST_BV_MUL>::_apply(
+    Rewriter& rewriter, const Node& node);
+
 // add_left_eq
 // add_right_eq
 template <>

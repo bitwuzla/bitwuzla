@@ -319,6 +319,85 @@ TEST_F(TestRewriterCore, core_equal_ite)
       {d_nm.mk_node(Kind::ITE, {d_b, d_bv4_a, d_bv4_b}), d_bv4_c}));
 }
 
+TEST_F(TestRewriterCore, core_equal_const_bv_add)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_CONST_BV_ADD;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_ones}), d_bv4_one}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_ADD, {d_bv4_ones, d_bv4_a}), d_bv4_one}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_one, d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_ones})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_one, d_nm.mk_node(Kind::BV_ADD, {d_bv4_ones, d_bv4_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b}), d_bv4_one}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_ones}), d_bv4_b}));
+}
+
+TEST_F(TestRewriterCore, core_equal_const_bv_mul)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_CONST_BV_MUL;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, d_bv4_ones}), d_bv4_one}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_MUL,
+                    {d_bv4_a, d_nm.mk_value(BitVector::from_ui(4, 3))}),
+       d_nm.mk_value(BitVector::from_ui(4, 2))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_MUL, {d_bv4_ones, d_bv4_a}), d_bv4_one}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_MUL,
+                    {d_nm.mk_value(BitVector::from_ui(4, 3)), d_bv4_a}),
+       d_bv4_zero}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_one, d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, d_bv4_ones})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_value(BitVector::from_ui(4, 2)),
+       d_nm.mk_node(Kind::BV_MUL,
+                    {d_bv4_a, d_nm.mk_value(BitVector::from_ui(4, 3))})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_one, d_nm.mk_node(Kind::BV_MUL, {d_bv4_ones, d_bv4_a})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_MUL,
+                    {d_nm.mk_value(BitVector::from_ui(4, 5)), d_bv4_a}),
+       d_nm.mk_value(BitVector::from_ui(4, 3))}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_MUL,
+                    {d_nm.mk_value(BitVector::from_ui(4, 4)), d_bv4_a}),
+       d_nm.mk_value(BitVector::from_ui(4, 3))}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_MUL,
+                    {d_nm.mk_value(BitVector::from_ui(4, 5)), d_bv4_a}),
+       d_bv4_b}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_b,
+       d_nm.mk_node(Kind::BV_MUL,
+                    {d_nm.mk_value(BitVector::from_ui(4, 5)), d_bv4_a})}));
+}
+
 TEST_F(TestRewriterCore, core_equal_bv_add)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_BV_ADD;

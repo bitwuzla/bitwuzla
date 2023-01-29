@@ -698,6 +698,114 @@ RewriteRule<RewriteRuleKind::EQUAL_ITE_LIFT_COND>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match:  (= (bvadd a (_ bvX N)) (_ bvY N))
+ * result: (= a (bvsub (_ bvY N) (_ bvX N)))
+ *
+ * match:  (= (bvadd (_ bvX N) a) (_ bvY N))
+ * result: (= a (bvsub (_ bvY N) (_ bvX N)))
+ */
+namespace {
+Node
+_rw_eq_const_bv_add(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_ADD && node[idx1].is_value())
+  {
+    if (node[idx0][0].is_value())
+    {
+      return rewriter.mk_node(
+          Kind::EQUAL,
+          {node[idx0][1],
+           NodeManager::get().mk_value(node[idx1].value<BitVector>().bvsub(
+               node[idx0][0].value<BitVector>()))});
+    }
+    if (node[idx0][1].is_value())
+    {
+      return rewriter.mk_node(
+          Kind::EQUAL,
+          {node[idx0][0],
+           NodeManager::get().mk_value(node[idx1].value<BitVector>().bvsub(
+               node[idx0][1].value<BitVector>()))});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_CONST_BV_ADD>::_apply(Rewriter& rewriter,
+                                                         const Node& node)
+{
+  Node res = _rw_eq_const_bv_add(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_const_bv_add(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (= (bvmul a (_ bvX N)) (_ bvY N)) if X is odd
+ * result: (= a (bvmul (_ bvY N) inv)) with inv the mod inverse of X
+ *
+ * match:  (= (bvmul (_ bvX N) a) (_ bvY N)) if X is odd
+ * result: (= a (bvmul (_ bvY N) inv)) with inv the mod inverse of X
+ */
+namespace {
+Node
+_rw_eq_const_bv_mul(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_MUL && node[idx1].is_value())
+  {
+    if (node[idx0][0].is_value())
+    {
+      const BitVector& val = node[idx0][0].value<BitVector>();
+      if (val.lsb())
+      {
+        return rewriter.mk_node(
+            Kind::EQUAL,
+            {node[idx0][1],
+             NodeManager::get().mk_value(
+                 node[idx1].value<BitVector>().bvmul(val.bvmodinv()))});
+      }
+    }
+    if (node[idx0][1].is_value())
+    {
+      const BitVector& val = node[idx0][1].value<BitVector>();
+      if (val.lsb())
+      {
+        return rewriter.mk_node(
+            Kind::EQUAL,
+            {node[idx0][0],
+             NodeManager::get().mk_value(
+                 node[idx1].value<BitVector>().bvmul(val.bvmodinv()))});
+      }
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_CONST_BV_MUL>::_apply(Rewriter& rewriter,
+                                                         const Node& node)
+{
+  Node res = _rw_eq_const_bv_mul(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_const_bv_mul(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
  * match:  (= (bvadd a b) a)
  * result: (= b (_ bv0 N))
  *
@@ -706,7 +814,7 @@ RewriteRule<RewriteRuleKind::EQUAL_ITE_LIFT_COND>::_apply(Rewriter& rewriter,
  */
 namespace {
 Node
-_rw_eq_add(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_eq_bv_add(Rewriter& rewriter, const Node& node, size_t idx)
 {
   assert(node.num_children() == 2);
   size_t idx0 = idx;
@@ -737,10 +845,10 @@ Node
 RewriteRule<RewriteRuleKind::EQUAL_BV_ADD>::_apply(Rewriter& rewriter,
                                                    const Node& node)
 {
-  Node res = _rw_eq_add(rewriter, node, 0);
+  Node res = _rw_eq_bv_add(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_eq_add(rewriter, node, 1);
+    res = _rw_eq_bv_add(rewriter, node, 1);
   }
   return res;
 }
