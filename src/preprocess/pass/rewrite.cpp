@@ -16,7 +16,13 @@ PassRewrite::apply(AssertionVector& assertions)
   auto& rw = d_env.rewriter();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    assertions.replace(i, rw.rewrite(assertions[i]));
+    const Node& assertion = assertions[i];
+    if (cache_assertion(assertion))
+    {
+      Node rewritten = rw.rewrite(assertion);
+      assertions.replace(i, rewritten);
+      cache_assertion(rewritten);
+    }
   }
 }
 

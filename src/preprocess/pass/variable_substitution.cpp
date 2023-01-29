@@ -382,6 +382,10 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
       const Node& assertion  = assertions[i];
+      if (!cache_assertion(assertion))
+      {
+        continue;
+      }
       auto [var, term]       = find_substitution(assertion);
       // No variable substitution
       if (var.is_null())

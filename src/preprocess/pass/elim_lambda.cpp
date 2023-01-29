@@ -12,12 +12,24 @@ using namespace node;
 
 /* --- PassElimLambda public ------------------------------------------------ */
 
+PassElimLambda::PassElimLambda(Env& env,
+                               backtrack::BacktrackManager* backtrack_mgr)
+    : PreprocessingPass(env, backtrack_mgr)
+{
+}
+
 void
 PassElimLambda::apply(AssertionVector& assertions)
 {
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    assertions.replace(i, process(assertions[i]));
+    const Node& assertion = assertions[i];
+    if (cache_assertion(assertion))
+    {
+      const Node& processed = process(assertion);
+      assertions.replace(i, processed);
+      cache_assertion(processed);
+    }
   }
 }
 

@@ -68,7 +68,16 @@ PassContradictingAnds::apply(AssertionVector& assertions)
   unordered_node_ref_set visited;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    visit.push_back(assertions[i]);
+    const Node& assertion = assertions[i];
+    if (cache_assertion(assertion))
+    {
+      visit.push_back(assertions[i]);
+    }
+  }
+
+  if (visit.empty())
+  {
+    return;
   }
 
   NodeManager& nm = NodeManager::get();
@@ -123,6 +132,7 @@ PassContradictingAnds::apply(AssertionVector& assertions)
         rewritten = nm.invert_node(rewritten);
       }
       assertions.replace(i, rewritten);
+      cache_assertion(rewritten);
     }
   }
 }
