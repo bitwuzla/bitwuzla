@@ -14,13 +14,14 @@ using namespace node;
 
 PassElimLambda::PassElimLambda(Env& env,
                                backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr)
+    : PreprocessingPass(env, backtrack_mgr), d_stats(env.statistics())
 {
 }
 
 void
 PassElimLambda::apply(AssertionVector& assertions)
 {
+  util::Timer timer(d_stats.time_apply);
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
@@ -61,6 +62,7 @@ PassElimLambda::process(const Node& term)
       // Eliminate function applications on lambdas
       if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
       {
+        ++d_stats.num_elim;
         it->second = reduce(cur);
       }
       else
@@ -135,6 +137,13 @@ PassElimLambda::reduce(const Node& node) const
   } while (!visit.empty());
 
   return cache.at(body);
+}
+
+PassElimLambda::Statistics::Statistics(util::Statistics& stats)
+    : time_apply(
+        stats.new_stat<util::TimerStatistic>("preprocess::lambda::time_apply")),
+      num_elim(stats.new_stat<uint64_t>("preprocess::lambda::num_elim"))
+{
 }
 
 }  // namespace bzla::preprocess::pass
