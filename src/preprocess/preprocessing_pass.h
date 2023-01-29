@@ -1,6 +1,9 @@
 #ifndef BZLA_PREPROCESS_PREPROCESSING_PASS_H_INCLUDED
 #define BZLA_PREPROCESS_PREPROCESSING_PASS_H_INCLUDED
 
+#include <unordered_map>
+
+#include "backtrack/unordered_set.h"
 #include "node/node.h"
 
 namespace bzla {
@@ -91,7 +94,7 @@ class PreprocessingPass
    * Constructor.
    * @param env The associated environment.
    */
-  PreprocessingPass(Env& env);
+  PreprocessingPass(Env& env, backtrack::BacktrackManager* backtrack_mgr);
 
   /**
    * Apply preprocessing pass to the current set of assertions.
@@ -117,14 +120,29 @@ class PreprocessingPass
    *         substitution map replaced by their substitutions and the number
    *         of substitutions performed.
    */
-  std::pair<Node, uint64_t> substitute(const Node& node,
-                                       const SubstitutionMap& substitutions,
-                                       SubstitutionMap& cache) const;
+  std::pair<Node, uint64_t> substitute(
+      const Node& node,
+      const SubstitutionMap& substitutions,
+      backtrack::unordered_map<Node, Node>& cache) const;
+
+  /**
+   * Mark assertion as processed.
+   *
+   * @param assertion The assertion to cache.
+   * @return Whether assertion was added to the cache or not.x
+   */
+  bool cache_assertion(const Node& assertion);
+
+  /** @return Whether assertion was already processed. */
+  bool processed(const Node& assertion);
 
   /** The associated environment. */
   Env& d_env;
   /** The associated logger. */
   util::Logger& d_logger;
+
+ private:
+  backtrack::unordered_set<Node> d_processed_assertions;
 };
 
 }  // namespace preprocess

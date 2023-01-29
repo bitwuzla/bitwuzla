@@ -357,7 +357,7 @@ PassVariableSubstitution::find_substitution(const Node& assertion)
 
 PassVariableSubstitution::PassVariableSubstitution(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env),
+    : PreprocessingPass(env, backtrack_mgr),
       d_substitutions(backtrack_mgr),
       d_substitution_assertions(backtrack_mgr),
       d_norm_subst_cache(backtrack_mgr),

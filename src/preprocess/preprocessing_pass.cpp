@@ -90,8 +90,9 @@ AssertionVector::modified() const
 
 /* --- PreprocessingPass public --------------------------------------------- */
 
-PreprocessingPass::PreprocessingPass(Env& env)
-    : d_env(env), d_logger(env.logger())
+PreprocessingPass::PreprocessingPass(Env& env,
+                                     backtrack::BacktrackManager* backtrack_mgr)
+    : d_env(env), d_logger(env.logger()), d_processed_assertions(backtrack_mgr)
 {
 }
 
@@ -100,7 +101,7 @@ PreprocessingPass::PreprocessingPass(Env& env)
 std::pair<Node, uint64_t>
 PreprocessingPass::substitute(const Node& node,
                               const SubstitutionMap& substitutions,
-                              SubstitutionMap& cache) const
+                              backtrack::unordered_map<Node, Node>& cache) const
 {
   node::node_ref_vector visit{node};
   uint64_t num_substs = 0;
@@ -140,6 +141,18 @@ PreprocessingPass::substitute(const Node& node,
   auto it = cache.find(node);
   assert(it != cache.end());
   return std::make_pair(it->second, num_substs);
+}
+
+bool
+PreprocessingPass::cache_assertion(const Node& assertion)
+{
+  return d_processed_assertions.insert(assertion).second;
+}
+
+bool
+PreprocessingPass::processed(const Node& assertion)
+{
+  return d_processed_assertions.find(assertion) != d_processed_assertions.end();
 }
 
 }  // namespace bzla::preprocess

@@ -17,7 +17,7 @@ using namespace node;
 
 PassSkeletonPreproc::PassSkeletonPreproc(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env),
+    : PreprocessingPass(env, backtrack_mgr),
       d_assertions(backtrack_mgr),
       d_stats(env.statistics())
 {

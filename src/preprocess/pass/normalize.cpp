@@ -14,7 +14,9 @@ using namespace bzla::node;
 
 PassNormalize::PassNormalize(Env& env,
                              backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env), d_cache(backtrack_mgr), d_stats(env.statistics())
+    : PreprocessingPass(env, backtrack_mgr),
+      d_cache(backtrack_mgr),
+      d_stats(env.statistics())
 {
 }
 

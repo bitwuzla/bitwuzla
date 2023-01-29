@@ -1,3 +1,4 @@
+#include "backtrack/backtrackable.h"
 #include "gtest/gtest.h"
 #include "preprocess/pass/flatten_and.h"
 #include "test/unit/preprocess/test_preprocess_pass.h"
@@ -10,10 +11,11 @@ using namespace node;
 class TestPassFlattenAnd : public TestPreprocessingPass
 {
  public:
-  TestPassFlattenAnd() : d_pass(d_env){};
+  TestPassFlattenAnd() : d_pass(d_env, &d_bm){};
 
  protected:
   Env d_env;
+  backtrack::BacktrackManager d_bm;
   preprocess::pass::PassFlattenAnd d_pass;
 };
 

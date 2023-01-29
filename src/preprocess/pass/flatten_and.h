@@ -12,7 +12,7 @@ namespace bzla::preprocess::pass {
 class PassFlattenAnd : public PreprocessingPass
 {
  public:
-  PassFlattenAnd(Env& env);
+  PassFlattenAnd(Env& env, backtrack::BacktrackManager* backtrack_mgr);
 
   void apply(AssertionVector& assertions) override;
 

@@ -4,8 +4,8 @@
 
 namespace bzla::preprocess::pass {
 
-PassRewrite::PassRewrite(Env& env)
-    : PreprocessingPass(env), d_stats(env.statistics())
+PassRewrite::PassRewrite(Env& env, backtrack::BacktrackManager* backtrack_mgr)
+    : PreprocessingPass(env, backtrack_mgr), d_stats(env.statistics())
 {
 }
 

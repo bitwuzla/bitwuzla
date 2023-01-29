@@ -12,7 +12,7 @@ namespace bzla::preprocess::pass {
 class PassRewrite : public PreprocessingPass
 {
  public:
-  PassRewrite(Env& env);
+  PassRewrite(Env& env, backtrack::BacktrackManager* backtrack_mgr);
 
   void apply(AssertionVector& assertions) override;
 

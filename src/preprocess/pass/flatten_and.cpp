@@ -10,8 +10,9 @@ namespace bzla::preprocess::pass {
 
 using namespace node;
 
-PassFlattenAnd::PassFlattenAnd(Env& env)
-    : PreprocessingPass(env), d_stats(env.statistics())
+PassFlattenAnd::PassFlattenAnd(Env& env,
+                               backtrack::BacktrackManager* backtrack_mgr)
+    : PreprocessingPass(env, backtrack_mgr), d_stats(env.statistics())
 {
 }
 

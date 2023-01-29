@@ -13,7 +13,10 @@ namespace bzla::preprocess::pass {
 class PassElimLambda : public PreprocessingPass
 {
  public:
-  PassElimLambda(Env& env) : PreprocessingPass(env) {}
+  PassElimLambda(Env& env, backtrack::BacktrackManager* backtrack_mgr)
+      : PreprocessingPass(env, backtrack_mgr)
+  {
+  }
 
   void apply(AssertionVector& assertions) override;
 
