@@ -151,16 +151,16 @@ PassNormalize::normalize_eq_add_mul(const Node& node0, const Node& node1)
   }
 
   std::vector<Node> lhs, rhs;
-  if (factors0.empty())
-  {
-    lhs.push_back(dflt);
-  }
-  if (factors1.empty())
-  {
-    rhs.push_back(dflt);
-  }
   if (normalized)
   {
+    if (factors0.empty())
+    {
+      lhs.push_back(dflt);
+    }
+    if (factors1.empty())
+    {
+      rhs.push_back(dflt);
+    }
     for (auto& f : factors0)
     {
       assert(f.second);
