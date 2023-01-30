@@ -318,6 +318,9 @@ set(testcases
 #"solver/array/issue32.smt2 -i" # TODO disabled because of const arrays
 "solver/bv/painc.smt2 -i"
 "solver/bv/smt2pushpop0.smt2 -i"
+
+"backtrack/assertion_stack1.smt2 -i"
+"backtrack/assertion_stack2.smt2 -i"
 )
 set(testcases_btor_sat
 "preprocess/array/regrembeddedconstraint10.btor -rwl=0"

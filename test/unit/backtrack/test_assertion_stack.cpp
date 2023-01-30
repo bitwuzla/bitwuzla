@@ -83,7 +83,7 @@ TEST_F(TestAssertionStack, insert_at_level)
   ASSERT_EQ(as[0], a1);
   ASSERT_EQ(as[1], a2);
   ASSERT_EQ(as[2], a3);
-  ASSERT_EQ(as[3], a3);
+  ASSERT_EQ(as[3], nm.mk_value(true));
   ASSERT_EQ(as.level(0), 0);
   ASSERT_EQ(as.level(1), 0);
   ASSERT_EQ(as.level(2), 0);
@@ -96,13 +96,13 @@ TEST_F(TestAssertionStack, insert_at_level)
   ASSERT_EQ(as[0], a1);
   ASSERT_EQ(as[1], a2);
   ASSERT_EQ(as[2], a3);
-  ASSERT_EQ(as[3], a3);
+  ASSERT_EQ(as[3], nm.mk_value(true));
 
   as.insert_at_level(1, a4);
   ASSERT_EQ(as[0], a1);
   ASSERT_EQ(as[1], a2);
   ASSERT_EQ(as[2], a3);
-  ASSERT_EQ(as[3], a3);
+  ASSERT_EQ(as[3], nm.mk_value(true));
   ASSERT_EQ(as[4], a4);
   ASSERT_EQ(as.level(0), 0);
   ASSERT_EQ(as.level(1), 0);

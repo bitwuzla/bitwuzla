@@ -1,0 +1,7 @@
+(declare-const x1 Bool)
+(declare-const x Bool)
+(assert (and x x1))
+(push 1)
+(assert x1)
+(set-info :status sat)
+(check-sat)

@@ -93,8 +93,8 @@ class AssertionView
 class AssertionStack : public Backtrackable
 {
  public:
-  AssertionStack() = default;
-  AssertionStack(BacktrackManager* mgr) : Backtrackable(mgr) {}
+  AssertionStack();
+  AssertionStack(BacktrackManager* mgr);
 
   /**
    * Push new assertion onto stack.
@@ -169,6 +169,8 @@ class AssertionStack : public Backtrackable
   void pop() override;
 
  private:
+  void remove(size_t level, const Node& assertion);
+
   /** Assertion associated with their current scope level. */
   std::vector<std::pair<Node, size_t>> d_assertions;
   /**
@@ -179,6 +181,9 @@ class AssertionStack : public Backtrackable
   std::unordered_map<Node, size_t> d_cache;
   /** Registered views. */
   std::vector<std::unique_ptr<AssertionView>> d_views;
+
+  /** Cached true node. */
+  Node d_true;
 };
 
 }  // namespace bzla::backtrack
