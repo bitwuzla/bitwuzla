@@ -22,7 +22,7 @@ class PassEmbeddedConstraints : public PreprocessingPass
   /** Backtrackable substitution map. */
   backtrack::unordered_map<Node, Node> d_substitutions;
   /** Cache of processed nodes that maybe shared across substitutions. */
-  backtrack::unordered_map<Node, Node> d_cache;
+  std::unordered_map<Node, Node> d_cache;
 
   struct Statistics
   {

@@ -30,7 +30,7 @@ class PassNormalize : public PreprocessingPass
    * Cache of processed nodes that maybe shared across substitutions.
    * Clear after a call to process to avoid sharing.
    */
-  backtrack::unordered_map<Node, Node> d_cache;
+  std::unordered_map<Node, Node> d_cache;
 
   struct Statistics
   {

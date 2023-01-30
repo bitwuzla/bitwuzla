@@ -81,6 +81,17 @@ Preprocessor::preprocess()
   // that do not contain any assertions.
   sync_scope(d_global_backtrack_mgr.num_levels());
 
+  d_env.rewriter().clear_cache();
+  d_pass_rewrite.clear_cache();
+  d_pass_contr_ands.clear_cache();
+  d_pass_elim_lambda.clear_cache();
+  d_pass_elim_uninterpreted.clear_cache();
+  d_pass_embedded_constraints.clear_cache();
+  d_pass_variable_substitution.clear_cache();
+  d_pass_flatten_and.clear_cache();
+  d_pass_skeleton_preproc.clear_cache();
+  d_pass_normalize.clear_cache();
+
   return Result::UNKNOWN;
 }
 

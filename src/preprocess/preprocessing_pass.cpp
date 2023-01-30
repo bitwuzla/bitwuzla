@@ -92,8 +92,14 @@ AssertionVector::modified() const
 
 PreprocessingPass::PreprocessingPass(Env& env,
                                      backtrack::BacktrackManager* backtrack_mgr)
-    : d_env(env), d_logger(env.logger()), d_processed_assertions(backtrack_mgr)
+    : d_env(env), d_logger(env.logger())
 {
+}
+
+void
+PreprocessingPass::clear_cache()
+{
+  d_processed_assertions.clear();
 }
 
 /* --- PreprocessingPass protected ------------------------------------------ */
@@ -101,7 +107,7 @@ PreprocessingPass::PreprocessingPass(Env& env,
 std::pair<Node, uint64_t>
 PreprocessingPass::substitute(const Node& node,
                               const SubstitutionMap& substitutions,
-                              backtrack::unordered_map<Node, Node>& cache) const
+                              std::unordered_map<Node, Node>& cache) const
 {
   node::node_ref_vector visit{node};
   uint64_t num_substs = 0;

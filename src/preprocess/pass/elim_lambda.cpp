@@ -22,6 +22,7 @@ void
 PassElimLambda::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats.time_apply);
+  d_cache.clear();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
@@ -32,6 +33,7 @@ PassElimLambda::apply(AssertionVector& assertions)
       cache_assertion(processed);
     }
   }
+  d_cache.clear();
 }
 
 Node

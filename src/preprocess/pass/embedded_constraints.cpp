@@ -14,7 +14,6 @@ PassEmbeddedConstraints::PassEmbeddedConstraints(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr),
       d_substitutions(backtrack_mgr),
-      d_cache(backtrack_mgr),
       d_stats(env.statistics())
 {
 }
@@ -50,6 +49,7 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
     return;
   }
 
+  d_cache.clear();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
@@ -71,6 +71,7 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
       assertions.replace(i, rewritten);
     }
   }
+  d_cache.clear();
   Log(1) << d_stats.num_substs << " embedded constraint substitutions";
 }
 

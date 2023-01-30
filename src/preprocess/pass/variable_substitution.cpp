@@ -142,39 +142,34 @@ PassVariableSubstitution::normalize_substitution_eq(const Node& node)
     return {};
   }
 
-  auto [it, inserted] = d_norm_subst_cache.insert(node);
-  if (inserted)
+  NodeManager& nm   = NodeManager::get();
+  const Node& left  = node[0];
+  const Node& right = node[1];
+  Node var, subst, tmp;
+  BitVector factor;
+  if (get_linear_bv_term(left, factor, var, tmp))
   {
-    NodeManager& nm   = NodeManager::get();
-    const Node& left  = node[0];
-    const Node& right = node[1];
-    Node var, subst, tmp;
-    BitVector factor;
-    if (get_linear_bv_term(left, factor, var, tmp))
-    {
-      subst = nm.mk_node(Kind::BV_SUB, {right, tmp});
-      d_stats.num_linear_eq += 1;
-    }
-    else if (get_linear_bv_term(right, factor, var, tmp))
-    {
-      subst = nm.mk_node(Kind::BV_SUB, {left, tmp});
-      d_stats.num_linear_eq += 1;
-    }
-    else
-    {
-      // no substitution found
-      return {};
-    }
-    d_stats.num_gauss_elim += 1;
-    subst = nm.mk_node(Kind::BV_MUL, {subst, nm.mk_value(factor.ibvmodinv())});
-    if (var.is_inverted())
-    {
-      var   = nm.invert_node(var);
-      subst = nm.invert_node(subst);
-    }
-    return std::make_pair(var, subst);
+    subst = nm.mk_node(Kind::BV_SUB, {right, tmp});
+    d_stats.num_linear_eq += 1;
   }
-  return {};
+  else if (get_linear_bv_term(right, factor, var, tmp))
+  {
+    subst = nm.mk_node(Kind::BV_SUB, {left, tmp});
+    d_stats.num_linear_eq += 1;
+  }
+  else
+  {
+    // no substitution found
+    return {};
+  }
+  d_stats.num_gauss_elim += 1;
+  subst = nm.mk_node(Kind::BV_MUL, {subst, nm.mk_value(factor.ibvmodinv())});
+  if (var.is_inverted())
+  {
+    var   = nm.invert_node(var);
+    subst = nm.invert_node(subst);
+  }
+  return std::make_pair(var, subst);
 }
 
 Kind
@@ -360,7 +355,6 @@ PassVariableSubstitution::PassVariableSubstitution(
     : PreprocessingPass(env, backtrack_mgr),
       d_substitutions(backtrack_mgr),
       d_substitution_assertions(backtrack_mgr),
-      d_norm_subst_cache(backtrack_mgr),
       d_cache(backtrack_mgr),
       d_stats(env.statistics())
 {
@@ -500,6 +494,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     }
     assertions.replace(i, process(assertion));
   }
+  d_cache.cache().clear();
 }
 
 Node

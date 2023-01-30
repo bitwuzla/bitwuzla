@@ -179,6 +179,12 @@ Rewriter::invert_node_if(bool condition, const Node& node)
   return condition ? invert_node(node) : node;
 }
 
+void
+Rewriter::clear_cache()
+{
+  d_cache.clear();
+}
+
 /* === Rewriter private ===================================================== */
 
 const Node&

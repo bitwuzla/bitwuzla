@@ -63,6 +63,9 @@ class Rewriter
    */
   Node invert_node_if(bool condition, const Node& node);
 
+  /** Clear rewrite cache. */
+  void clear_cache();
+
  private:
   /** The limit for recursive calls to _rewrite(). */
   static constexpr uint64_t RECURSION_LIMIT = 4096;

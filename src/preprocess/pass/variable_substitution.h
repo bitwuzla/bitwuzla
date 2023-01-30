@@ -49,9 +49,6 @@ class PassVariableSubstitution : public PreprocessingPass
   backtrack::unordered_map<Node, std::pair<Node, Node>>
       d_substitution_assertions;
 
-  // TODO obsolete if we generally cache
-  backtrack::unordered_set<Node> d_norm_subst_cache;
-
   /** Backtrackable cache. */
   class Cache : public backtrack::Backtrackable
   {

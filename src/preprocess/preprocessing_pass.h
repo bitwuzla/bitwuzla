@@ -108,6 +108,8 @@ class PreprocessingPass
    */
   virtual Node process(const Node& term) { return term; }
 
+  void clear_cache();
+
  protected:
   /**
    * Replace all occurrences of `substititutions` in `node.
@@ -123,7 +125,7 @@ class PreprocessingPass
   std::pair<Node, uint64_t> substitute(
       const Node& node,
       const SubstitutionMap& substitutions,
-      backtrack::unordered_map<Node, Node>& cache) const;
+      std::unordered_map<Node, Node>& cache) const;
 
   /**
    * Mark assertion as processed.
@@ -142,7 +144,7 @@ class PreprocessingPass
   util::Logger& d_logger;
 
  private:
-  backtrack::unordered_set<Node> d_processed_assertions;
+  std::unordered_set<Node> d_processed_assertions;
 };
 
 }  // namespace preprocess

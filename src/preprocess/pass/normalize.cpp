@@ -14,9 +14,7 @@ using namespace bzla::node;
 
 PassNormalize::PassNormalize(Env& env,
                              backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr),
-      d_cache(backtrack_mgr),
-      d_stats(env.statistics())
+    : PreprocessingPass(env, backtrack_mgr), d_stats(env.statistics())
 {
 }
 
@@ -215,6 +213,7 @@ PassNormalize::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats.time_apply);
 
+  d_cache.clear();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
@@ -225,6 +224,7 @@ PassNormalize::apply(AssertionVector& assertions)
       cache_assertion(processed);
     }
   }
+  d_cache.clear();
 }
 
 Node

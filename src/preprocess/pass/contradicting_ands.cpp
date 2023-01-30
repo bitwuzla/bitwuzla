@@ -15,7 +15,6 @@ PassContradictingAnds::PassContradictingAnds(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr),
       d_substitutions(backtrack_mgr),
-      d_cache(backtrack_mgr),
       d_stats(env.statistics())
 {
 }
@@ -69,7 +68,7 @@ PassContradictingAnds::apply(AssertionVector& assertions)
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    if (cache_assertion(assertion))
+    if (!processed(assertion))
     {
       visit.push_back(assertions[i]);
     }
@@ -113,9 +112,14 @@ PassContradictingAnds::apply(AssertionVector& assertions)
     return;
   }
 
+  d_cache.clear();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
+    if (!cache_assertion(assertion))
+    {
+      continue;
+    }
     const Node& ass       = assertion.is_inverted() ? assertion[0] : assertion;
     if (ass.num_children() > 0)
     {
@@ -135,6 +139,7 @@ PassContradictingAnds::apply(AssertionVector& assertions)
       cache_assertion(rewritten);
     }
   }
+  d_cache.clear();
 }
 
 Node
