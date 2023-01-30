@@ -152,10 +152,14 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_variable_subst())
     {
-      cnt = assertions.num_modified();
-      d_pass_variable_substitution.apply(assertions);
-      Msg(2) << assertions.num_modified() - cnt
-             << " after variable substitution";
+      do
+      {
+        assertions.reset_modified();
+        cnt = assertions.num_modified();
+        d_pass_variable_substitution.apply(assertions);
+        Msg(2) << assertions.num_modified() - cnt
+               << " after variable substitution";
+      } while (assertions.modified());
     }
 
     if (options.pp_skeleton_preproc() && !skel_done)
