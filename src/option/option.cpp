@@ -204,7 +204,7 @@ Options::Options()
       // Preprocessing
       pp_contr_ands(this,
                     Option::PP_CONTRADICTING_ANDS,
-                    true,
+                    false,
                     "enable contradicting ands preprocessing pass",
                     "pp-contr-ands"),
       pp_embedded_constr(this,
