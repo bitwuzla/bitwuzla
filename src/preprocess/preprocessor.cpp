@@ -81,6 +81,7 @@ Preprocessor::preprocess()
   // that do not contain any assertions.
   sync_scope(d_global_backtrack_mgr.num_levels());
 
+  // Clear rewriter and preprocessing pass caches
   d_env.rewriter().clear_cache();
   d_pass_rewrite.clear_cache();
   d_pass_contr_ands.clear_cache();
@@ -129,6 +130,7 @@ Preprocessor::apply(AssertionVector& assertions)
 
   auto& options  = d_env.options();
   bool skel_done = false;
+  bool uninterpreted_done = false;
   // fixed-point passes
   do
   {
@@ -184,10 +186,14 @@ Preprocessor::apply(AssertionVector& assertions)
     d_pass_elim_lambda.apply(assertions);
     Msg(2) << assertions.num_modified() - cnt << " after lambda elimination";
 
-    cnt = assertions.num_modified();
-    d_pass_elim_uninterpreted.apply(assertions);
-    Msg(2) << assertions.num_modified() - cnt
-           << " after uninterpreted const/var elimination";
+    if (!uninterpreted_done)
+    {
+      cnt = assertions.num_modified();
+      d_pass_elim_uninterpreted.apply(assertions);
+      Msg(2) << assertions.num_modified() - cnt
+             << " after uninterpreted const/var elimination";
+      uninterpreted_done = true;
+    }
 
     if (options.pp_normalize())
     {
