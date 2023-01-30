@@ -34,45 +34,28 @@ PassContradictingAnds::is_contradicting_and(const Node& node,
     const Node& cur = visit.back();
     visited.emplace(cur);
     visit.pop_back();
+    bool inverted = cur.is_inverted();
 
-    if (cur.is_inverted())
+    auto [it, inserted] = children.emplace(inverted ? cur[0] : cur, !inverted);
+    if (inserted)
     {
-      auto [it, inserted] = children.emplace(cur[0], false);
-      if (inserted)
+      if (cur.kind() == Kind::BV_AND)
       {
-        if (cur.kind() == Kind::BV_AND)
-        {
-          visit.insert(visit.end(), cur.begin(), cur.end());
-        }
+        visit.insert(visit.end(), cur.begin(), cur.end());
       }
       else
       {
-        if (it->second)
-        {
-          return std::make_pair(unordered_node_ref_set(), true);
-        }
+        leafs.insert(cur);
       }
     }
     else
     {
-      auto [it, inserted] = children.emplace(cur, true);
-      if (inserted)
+      if (it->second == inverted)
       {
-        if (cur.kind() == Kind::BV_AND)
-        {
-          visit.insert(visit.end(), cur.begin(), cur.end());
-        }
-      }
-      else
-      {
-        if (!it->second)
-        {
-          return std::make_pair(unordered_node_ref_set(), true);
-        }
+        return std::make_pair(unordered_node_ref_set(), true);
       }
     }
   } while (!visit.empty());
-  for (const auto& l : leafs) std::cout << l << std::endl;
   return std::make_pair(leafs, false);
 }
 
@@ -130,9 +113,7 @@ PassContradictingAnds::apply(AssertionVector& assertions)
       std::vector<Node> children;
       for (const Node& child : ass)
       {
-        Node p = process(child);
-        // std::cout << "child: " << child << " -> " << p << std::endl;
-        children.push_back(p);
+        children.push_back(process(child));
       }
       Node rewritten = ass.num_indices() > 0
                            ? nm.mk_node(ass.kind(), children, ass.indices())
@@ -155,7 +136,7 @@ PassContradictingAnds::process(const Node& node)
   return res;
 }
 
-/* --- PassEmbeddedConstraints private -------------------------------------- */
+/* --- PassContradictingAnds pricate----------------------------------------- */
 
 PassContradictingAnds::Statistics::Statistics(util::Statistics& stats)
     : time_apply(stats.new_stat<util::TimerStatistic>(
