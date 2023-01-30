@@ -60,6 +60,7 @@ ArraySolver::check()
     bool val = d_solver_state.value(eq).value<bool>();
     d_active_equalities[std::make_pair(eq[0], eq[1])] = val;
     Log(2) << "  " << (val ? "true" : "false") << ": " << eq;
+    compute_parents(eq);
   }
 
   // Check selects and equalities until fixed-point
@@ -120,7 +121,6 @@ ArraySolver::register_term(const Node& term)
   {
     assert(term[0].type().is_array());
     d_equalities.push_back(term);
-    compute_parents(term);
   }
   else
   {

@@ -130,6 +130,7 @@ set(testcases
 "solver/array/write19.btor.smt2"
 "solver/array/write20.btor.smt2"
 "solver/array/write5.btor.smt2"
+"solver/array/computeparents.smt2 -i"
 "solver/fun/nestedfun1.smt2 -rwl=2"
 "solver/fun/regrencparamapps.smt2"
 "solver/quant/issue96.smt2"
