@@ -1,5 +1,7 @@
 #include "preprocess/pass/normalize.h"
 
+#include <cmath>
+
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
@@ -184,37 +186,17 @@ PassNormalize::get_normalized_factors(const Node& node0,
   return {res0, res1, normalized};
 }
 
-std::pair<Node, bool>
-PassNormalize::normalize_eq_add_mul(const Node& node0,
-                                    const Node& node1,
-                                    bool share_aware)
+std::pair<Node, Node>
+PassNormalize::_normalize_eq_mul(
+    const unordered_node_ref_map<uint64_t>& factors0,
+    const unordered_node_ref_map<uint64_t>& factors1,
+    uint64_t bv_size)
 {
-  assert(node0.kind() == node1.kind());
-  assert(node0.kind() == Kind::BV_MUL || node0.kind() == Kind::BV_ADD);
-
   NodeManager& nm = NodeManager::get();
-  Kind kind       = node0.kind();
-  Node dflt       = nm.mk_value(kind == Kind::BV_ADD
-                              ? BitVector::mk_zero(node0.type().bv_size())
-                              : BitVector::mk_one(node0.type().bv_size()));
-
-  auto [factors0, factors1, normalized] =
-      get_normalized_factors(node0, node1, share_aware);
-
-  if (!normalized)
-  {
-    return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
-  }
-
-  if (factors0.empty() && factors1.empty())
-  {
-    return {nm.mk_value(true), true};
-  }
-
   std::vector<Node> lhs, rhs;
   if (factors0.empty())
   {
-    lhs.push_back(dflt);
+    lhs.push_back(nm.mk_value(BitVector::mk_one(bv_size)));
   }
   else
   {
@@ -229,7 +211,7 @@ PassNormalize::normalize_eq_add_mul(const Node& node0,
   }
   if (factors1.empty())
   {
-    rhs.push_back(dflt);
+    rhs.push_back(nm.mk_value(BitVector::mk_one(bv_size)));
   }
   else
   {
@@ -251,20 +233,166 @@ PassNormalize::normalize_eq_add_mul(const Node& node0,
     return a.id() < b.id();
   });
 
-  Node l, r;
+  Node left, right;
   size_t n = lhs.size();
-  l        = lhs[n - 1];
+  left     = lhs[n - 1];
   for (size_t i = 1; i < n; ++i)
   {
-    l = nm.mk_node(kind, {lhs[n - i - 1], l});
+    left = nm.mk_node(Kind::BV_MUL, {lhs[n - i - 1], left});
   }
   n = rhs.size();
-  r = rhs[n - 1];
+  right = rhs[n - 1];
   for (size_t i = 1; i < n; ++i)
   {
-    r = nm.mk_node(kind, {rhs[n - i - 1], r});
+    right = nm.mk_node(Kind::BV_MUL, {rhs[n - i - 1], right});
   }
-  return {nm.mk_node(Kind::EQUAL, {l, r}), true};
+  return {left, right};
+}
+
+namespace {
+Node
+get_factorized_add(const Node& node, uint64_t factor)
+{
+  NodeManager& nm = NodeManager::get();
+  uint64_t size   = node.type().bv_size();
+  Node res        = node;
+  if (BitVector::fits_in_size(size, factor))
+  {
+    if (factor > 1)
+    {
+      res = nm.mk_node(Kind::BV_MUL,
+                       {nm.mk_value(BitVector::from_ui(size, factor)), res});
+    }
+  }
+  else
+  {
+    uint64_t max = std::pow(2, size) - 1;
+    while (!BitVector::fits_in_size(size, factor))
+    {
+      Node tmp = nm.mk_node(Kind::BV_MUL,
+                            {nm.mk_value(BitVector::from_ui(size, max)), node});
+      if (res == node)
+      {
+        res = tmp;
+      }
+      else
+      {
+        res = nm.mk_node(Kind::BV_ADD, {tmp, res});
+      }
+      factor -= max;
+    }
+    assert(factor);
+    res = nm.mk_node(Kind::BV_ADD,
+                     {factor > 1 ? nm.mk_node(
+                          Kind::BV_MUL,
+                          {nm.mk_value(BitVector::from_ui(size, factor)), node})
+                                 : node,
+                      res});
+  }
+  return res;
+}
+}  // namespace
+
+std::pair<Node, Node>
+PassNormalize::_normalize_eq_add(
+    const unordered_node_ref_map<uint64_t>& factors0,
+    const unordered_node_ref_map<uint64_t>& factors1,
+    uint64_t bv_size)
+{
+  NodeManager& nm = NodeManager::get();
+
+  size_t size0 = factors0.empty() ? 1 : factors0.size();
+  size_t size1 = factors1.empty() ? 1 : factors1.size();
+  std::vector<Node> lhs(size0), rhs(size1);
+  if (factors0.empty())
+  {
+    lhs[0] = nm.mk_value(BitVector::mk_zero(bv_size));
+  }
+  else
+  {
+    size_t i = 0;
+    for (auto& f : factors0)
+    {
+      assert(f.second);
+      lhs[i++] = f.first;
+    }
+  }
+  if (factors1.empty())
+  {
+    rhs[0] = nm.mk_value(BitVector::mk_zero(bv_size));
+  }
+  else
+  {
+    size_t i = 0;
+    for (auto& f : factors1)
+    {
+      assert(f.second);
+      rhs[i++] = f.first;
+    }
+  }
+  assert(!lhs.empty() && !rhs.empty());
+
+  std::sort(lhs.begin(), lhs.end(), [](const Node& a, const Node& b) {
+    return a.id() < b.id();
+  });
+  std::sort(rhs.begin(), rhs.end(), [](const Node& a, const Node& b) {
+    return a.id() < b.id();
+  });
+
+  size_t size = lhs.size();
+  Node left   = lhs[size - 1];
+  auto it     = factors0.find(left);
+  left        = get_factorized_add(left, it == factors0.end() ? 1 : it->second);
+  for (size_t i = 1; i < size; ++i)
+  {
+    Node l = lhs[size - i - 1];
+    it     = factors0.find(l);
+    l      = get_factorized_add(l, it == factors0.end() ? 1 : it->second);
+    left   = nm.mk_node(Kind::BV_ADD, {l, left});
+  }
+  size       = rhs.size();
+  Node right = rhs[size - 1];
+  it         = factors1.find(right);
+  right      = get_factorized_add(right, it == factors1.end() ? 1 : it->second);
+  for (size_t i = 1; i < size; ++i)
+  {
+    Node r = rhs[size - i - 1];
+    it     = factors1.find(r);
+    r      = get_factorized_add(r, it == factors1.end() ? 1 : it->second);
+    right  = nm.mk_node(Kind::BV_ADD, {r, right});
+  }
+  return {left, right};
+}
+
+std::pair<Node, bool>
+PassNormalize::normalize_eq_add_mul(const Node& node0,
+                                    const Node& node1,
+                                    bool share_aware)
+{
+  assert(node0.kind() == node1.kind());
+  assert(node0.kind() == Kind::BV_MUL || node0.kind() == Kind::BV_ADD);
+
+  NodeManager& nm = NodeManager::get();
+
+  auto [factors0, factors1, normalized] =
+      get_normalized_factors(node0, node1, share_aware);
+
+  if (!normalized)
+  {
+    return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
+  }
+
+  if (factors0.empty() && factors1.empty())
+  {
+    return {nm.mk_value(true), true};
+  }
+
+  auto [left, right] =
+      node0.kind() == Kind::BV_ADD
+          ? _normalize_eq_add(factors0, factors1, node0.type().bv_size())
+          : _normalize_eq_mul(factors0, factors1, node0.type().bv_size());
+
+  return {nm.mk_node(Kind::EQUAL, {left, right}), true};
 }
 
 void
@@ -320,7 +448,7 @@ PassNormalize::process(const Node& node)
       {
         auto [res, normalized] =
             normalize_eq_add_mul(children[0], children[1], share_aware);
-        it->second             = res;
+        it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }
       else

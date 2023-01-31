@@ -731,9 +731,12 @@ TEST_F(TestPassNormalize, add_normalize5)
   Node add_cd_a_cd = add(add_cd, add_a_cd);
   Node add1        = add(add_ab, add_cd_a_cd);
 
-  test_assertion(equal(add0, add1),
-                 equal(add(d_a, add(d_b, d_e)), add(d_c, add(d_c, d_d))),
-                 equal(add(d_a, add(d_b, d_e)), add(d_c, add(d_c, d_d))));
+  test_assertion(
+      equal(add0, add1),
+      equal(add(d_a, add(d_b, d_e)),
+            add(mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_c), d_d)),
+      equal(add(d_a, add(d_b, d_e)),
+            add(mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_c), d_d)));
 }
 
 TEST_F(TestPassNormalize, add_normalize6)
@@ -750,16 +753,13 @@ TEST_F(TestPassNormalize, add_normalize6)
   Node add_ab_ab_ab_ab = add(add_ab_ab, add_ab_ab);
   Node add1            = add(add_a_ab_ab, add_ab_ab_ab_ab);
 
-  test_assertion(
-      equal(add0, add1),
-      equal(
-          add(d_d, d_e),
-          add(d_a,
-              add(d_a, add(d_a, add(d_a, add(d_b, add(d_b, add(d_b, d_b)))))))),
-      equal(add(d_d, d_e),
-            add(d_a,
-                add(d_a,
-                    add(d_a, add(d_a, add(d_b, add(d_b, add(d_b, d_b)))))))));
+  test_assertion(equal(add0, add1),
+                 equal(add(d_d, d_e),
+                       add(mul(d_nm.mk_value(BitVector::from_ui(8, 4)), d_a),
+                           mul(d_nm.mk_value(BitVector::from_ui(8, 4)), d_b))),
+                 equal(add(d_d, d_e),
+                       add(mul(d_nm.mk_value(BitVector::from_ui(8, 4)), d_a),
+                           mul(d_nm.mk_value(BitVector::from_ui(8, 4)), d_b))));
 }
 
 TEST_F(TestPassNormalize, add_normalize7)
@@ -835,16 +835,8 @@ TEST_F(TestPassNormalize, add_normalize9)
            equal(add(d_e,
                      add(mul_ad,
                          d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))),
-                 add(d_a,
-                     add(d_a,
-                         add(d_a,
-                             add(d_a,
-                                 add(d_a,
-                                     add(d_a,
-                                         add(d_b,
-                                             add(d_b,
-                                                 add(d_b,
-                                                     add(d_b, d_b)))))))))))}),
+                 add(mul(d_nm.mk_value(BitVector::from_ui(8, 6)), d_a),
+                     mul(d_nm.mk_value(BitVector::from_ui(8, 5)), d_b)))}),
       d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
 }
 
@@ -870,19 +862,89 @@ TEST_F(TestPassNormalize, add_normalize10)
       d_nm.mk_node(
           Kind::AND,
           {d_true,
-           equal(
-               add(d_a,
-                   add(d_a,
-                       add(d_a,
-                           add(d_a,
-                               add(d_a,
-                                   add(d_a,
-                                       add(d_b,
-                                           add(d_b,
-                                               add(d_b, add(d_b, d_b)))))))))),
-               add(d_e,
-                   add(mul_ad,
-                       d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))))}),
+           equal(add(mul(d_nm.mk_value(BitVector::from_ui(8, 6)), d_a),
+                     mul(d_nm.mk_value(BitVector::from_ui(8, 5)), d_b)),
+                 add(d_e,
+                     add(mul_ad,
+                         d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))))}),
+      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
+}
+
+TEST_F(TestPassNormalize, add_normalize11)
+{
+  Type bv_type = d_nm.mk_bv_type(2);
+  Node a       = d_nm.mk_const(bv_type, "a");
+  Node b       = d_nm.mk_const(bv_type, "b");
+  Node c       = d_nm.mk_const(bv_type, "c");
+  Node d       = d_nm.mk_const(bv_type, "d");
+  Node e       = d_nm.mk_const(bv_type, "e");
+  Node zero    = d_nm.mk_value(BitVector::mk_zero(2));
+  Node one     = d_nm.mk_value(BitVector::mk_one(2));
+  // (a + b) + ((a * d) + (e + (ite (a + b == b + a) 0 1))
+  Node add_ab = add(a, b);
+  Node mul_ad = mul(a, d);
+  Node add_e_ite =
+      add(e, d_nm.mk_node(Kind::ITE, {equal(add(a, b), add(b, a)), zero, one}));
+  Node add_ad_e_ite = add(mul_ad, add_e_ite);
+  Node add0         = add(add_ab, add_ad_e_ite);
+  // (a + ((a + b) + (a + b))) + (((a + b) + (a + b)) + ((a + b) + (a + b)))
+  Node add_ab_ab       = add(add_ab, add_ab);
+  Node add_a_ab_ab     = add(a, add_ab_ab);
+  Node add_ab_ab_ab_ab = add(add_ab_ab, add_ab_ab);
+  Node add1            = add(add_a_ab_ab, add_ab_ab_ab_ab);
+
+  test_assertion(
+      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}),
+      d_nm.mk_node(
+          Kind::AND,
+          {d_true,
+           equal(add(e,
+                     add(mul_ad, d_nm.mk_node(Kind::ITE, {d_true, zero, one}))),
+                 add(add(mul(d_nm.mk_value(BitVector::from_ui(2, 3)), a),
+                         mul(d_nm.mk_value(BitVector::from_ui(2, 3)), a)),
+                     add(mul(d_nm.mk_value(BitVector::from_ui(2, 2)), b),
+                         mul(d_nm.mk_value(BitVector::from_ui(2, 3)), b))))}),
+      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
+}
+
+TEST_F(TestPassNormalize, add_normalize12)
+{
+  Type bv_type = d_nm.mk_bv_type(2);
+  Node a       = d_nm.mk_const(bv_type, "a");
+  Node b       = d_nm.mk_const(bv_type, "b");
+  Node c       = d_nm.mk_const(bv_type, "c");
+  Node d       = d_nm.mk_const(bv_type, "d");
+  Node e       = d_nm.mk_const(bv_type, "e");
+  Node zero    = d_nm.mk_value(BitVector::mk_zero(2));
+  Node one     = d_nm.mk_value(BitVector::mk_one(2));
+  // (a + b) + ((a * d) + (e + (ite (a + b == b + a) 0 1))
+  Node add_ab = add(a, b);
+  Node mul_ad = mul(a, d);
+  Node add_e_ite =
+      add(e, d_nm.mk_node(Kind::ITE, {equal(add(a, b), add(b, a)), zero, one}));
+  Node add_ad_e_ite = add(mul_ad, add_e_ite);
+  Node add0         = add(add_ab, add_ad_e_ite);
+  // (a + ((a + b) + (a + b))) +
+  // (((a + b) + (a + b)) + (((a + b) + (a + b)) + ((a + b) + (a + b))))
+  Node add_ab_ab       = add(add_ab, add_ab);
+  Node add_a_ab_ab     = add(a, add_ab_ab);
+  Node add_ab_ab_ab_ab = add(add_ab_ab, add_ab_ab);
+  Node add1            = add(add_ab_ab, add(add_a_ab_ab, add_ab_ab_ab_ab));
+
+  test_assertion(
+      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}),
+      d_nm.mk_node(
+          Kind::AND,
+          {d_true,
+           equal(add(e,
+                     add(mul_ad, d_nm.mk_node(Kind::ITE, {d_true, zero, one}))),
+                 add(add(mul(d_nm.mk_value(BitVector::from_ui(2, 2)), a),
+                         add(mul(d_nm.mk_value(BitVector::from_ui(2, 3)), a),
+                             mul(d_nm.mk_value(BitVector::from_ui(2, 3)), a))),
+                     add(b,
+                         add(mul(d_nm.mk_value(BitVector::from_ui(2, 3)), b),
+                             mul(d_nm.mk_value(BitVector::from_ui(2, 3)),
+                                 b)))))}),
       d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
 }
 

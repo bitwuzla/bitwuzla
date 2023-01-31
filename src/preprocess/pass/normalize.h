@@ -58,6 +58,30 @@ class PassNormalize : public PreprocessingPass
   std::pair<Node, bool> normalize_eq_add_mul(const Node& node0,
                                              const Node& node1,
                                              bool share_aware);
+  /**
+   * Helper to normalize equality over multiplication.
+   * @param factors0 The normalized factors of the left hand side of the
+   * equality.
+   * @param factors1 The normalized factors of the right hand side of the
+   * equality.
+   * @param A pair of lhs and rhs normalized nodes.
+   */
+  std::pair<Node, Node> _normalize_eq_mul(
+      const node::unordered_node_ref_map<uint64_t>& factors0,
+      const node::unordered_node_ref_map<uint64_t>& factors1,
+      uint64_t bv_size);
+  /**
+   * Helper to normalize equality over addition.
+   * @param factors0 The normalized factors of the left hand side of the
+   * equality.
+   * @param factors1 The normalized factors of the right hand side of the
+   * equality.
+   * @param A pair of lhs and rhs normalized nodes.
+   */
+  std::pair<Node, Node> _normalize_eq_add(
+      const node::unordered_node_ref_map<uint64_t>& factors0,
+      const node::unordered_node_ref_map<uint64_t>& factors1,
+      uint64_t bv_size);
 
   /**
    * Cache of processed nodes that maybe shared across substitutions.
