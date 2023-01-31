@@ -201,26 +201,23 @@ PassNormalize::normalize_eq_add_mul(const Node& node0,
   auto [factors0, factors1, normalized] =
       get_normalized_factors(node0, node1, share_aware);
 
-  if (factors0.empty() && factors1.empty())
+  if (!normalized)
   {
-    if (normalized)
-    {
-      return {nm.mk_value(true), true};
-    }
     return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
   }
 
-  std::vector<Node> lhs, rhs;
-  if (normalized)
+  if (factors0.empty() && factors1.empty())
   {
-    if (factors0.empty())
-    {
-      lhs.push_back(dflt);
-    }
-    if (factors1.empty())
-    {
-      rhs.push_back(dflt);
-    }
+    return {nm.mk_value(true), true};
+  }
+
+  std::vector<Node> lhs, rhs;
+  if (factors0.empty())
+  {
+    lhs.push_back(dflt);
+  }
+  else
+  {
     for (auto& f : factors0)
     {
       assert(f.second);
@@ -229,6 +226,13 @@ PassNormalize::normalize_eq_add_mul(const Node& node0,
         lhs.push_back(f.first);
       }
     }
+  }
+  if (factors1.empty())
+  {
+    rhs.push_back(dflt);
+  }
+  else
+  {
     for (auto& f : factors1)
     {
       assert(f.second);
@@ -238,12 +242,7 @@ PassNormalize::normalize_eq_add_mul(const Node& node0,
       }
     }
   }
-  assert(lhs.empty() == rhs.empty());
-
-  if (lhs.empty())
-  {
-    return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
-  }
+  assert(!lhs.empty() && !rhs.empty());
 
   std::sort(lhs.begin(), lhs.end(), [](const Node& a, const Node& b) {
     return a.id() < b.id();
