@@ -1,6 +1,8 @@
 #ifndef BZLA_NODE_NODE_UTILS_H_INCLUDED
 #define BZLA_NODE_NODE_UTILS_H_INCLUDED
 
+#include <unordered_map>
+
 #include "node/node.h"
 
 namespace bzla::node::utils {
