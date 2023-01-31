@@ -69,22 +69,65 @@ PassNormalize::compute_factors(const Node& node)
   return factors;
 }
 
+namespace {
+std::unordered_map<Node, uint64_t>
+_count_parents(const node_ref_vector& nodes, Kind kind)
+{
+  std::unordered_map<Node, uint64_t> parents;
+  node::unordered_node_ref_set cache;
+  for (size_t i = 0, size = nodes.size(); i < size; ++i)
+  {
+    node::node_ref_vector visit{nodes[i]};
+    parents.emplace(nodes[i], 1);
+    do
+    {
+      const Node& cur     = visit.back();
+      auto [it, inserted] = cache.insert(cur);
+      visit.pop_back();
+      if (inserted && cur.kind() == kind)
+      {
+        for (auto& child : cur)
+        {
+          parents[child] += 1;
+          visit.push_back(child);
+        }
+      }
+    } while (!visit.empty());
+  }
+  return parents;
+}
+}  // namespace
+
 std::tuple<unordered_node_ref_map<uint64_t>,
            unordered_node_ref_map<uint64_t>,
            bool>
-PassNormalize::get_normalized_factors(const Node& node0, const Node& node1)
+PassNormalize::get_normalized_factors(const Node& node0,
+                                      const Node& node1,
+                                      bool share_aware)
 {
   assert(node0.kind() == node1.kind());
   bool normalized = false;
   Kind kind       = node0.kind();
   auto factors0   = compute_factors(node0);
   auto factors1   = compute_factors(node1);
+  auto parents    = _count_parents({node0, node1}, kind);
   unordered_node_ref_map<uint64_t> res0, res1;
   // normalize common factors and record entries that are not in factors1
   for (auto& f : factors0)
   {
     if (f.first.get().kind() == kind)
     {
+      if (share_aware)
+      {
+        // do not normalize if node of given kind has parent references
+        // from outside the 'kind' chain starting with node0, node1
+        assert(d_parents.find(f.first) != d_parents.end());
+        assert(parents.find(f.first) != parents.end());
+        if (parents[f.first] < d_parents[f.first])
+        {
+          return {{}, {}, false};
+        }
+      }
       continue;
     }
     auto fit = factors1.find(f.first);
@@ -112,6 +155,17 @@ PassNormalize::get_normalized_factors(const Node& node0, const Node& node1)
   {
     if (f.first.get().kind() == kind)
     {
+      if (share_aware)
+      {
+        // do not normalize if node of given kind has parent references
+        // from outside the 'kind' chain starting with node1
+        assert(d_parents.find(f.first) != d_parents.end());
+        assert(parents.find(f.first) != parents.end());
+        if (parents[f.first] < d_parents[f.first])
+        {
+          return {{}, {}, false};
+        }
+      }
       continue;
     }
     auto fit = factors0.find(f.first);
@@ -131,7 +185,9 @@ PassNormalize::get_normalized_factors(const Node& node0, const Node& node1)
 }
 
 std::pair<Node, bool>
-PassNormalize::normalize_eq_add_mul(const Node& node0, const Node& node1)
+PassNormalize::normalize_eq_add_mul(const Node& node0,
+                                    const Node& node1,
+                                    bool share_aware)
 {
   assert(node0.kind() == node1.kind());
   assert(node0.kind() == Kind::BV_MUL || node0.kind() == Kind::BV_ADD);
@@ -142,12 +198,16 @@ PassNormalize::normalize_eq_add_mul(const Node& node0, const Node& node1)
                               ? BitVector::mk_zero(node0.type().bv_size())
                               : BitVector::mk_one(node0.type().bv_size()));
 
-  auto [factors0, factors1, normalized] = get_normalized_factors(node0, node1);
+  auto [factors0, factors1, normalized] =
+      get_normalized_factors(node0, node1, share_aware);
 
   if (factors0.empty() && factors1.empty())
   {
-    assert(normalized);
-    return {nm.mk_value(true), true};
+    if (normalized)
+    {
+      return {nm.mk_value(true), true};
+    }
+    return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
   }
 
   std::vector<Node> lhs, rhs;
@@ -214,6 +274,9 @@ PassNormalize::apply(AssertionVector& assertions)
   util::Timer timer(d_stats.time_apply);
 
   d_cache.clear();
+  assert(d_parents.empty());
+  d_parents = count_parents(assertions);
+
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
@@ -224,12 +287,14 @@ PassNormalize::apply(AssertionVector& assertions)
       cache_assertion(processed);
     }
   }
+  d_parents.clear();
   d_cache.clear();
 }
 
 Node
 PassNormalize::process(const Node& node)
 {
+  bool share_aware = d_env.options().pp_normalize_share_aware();
   node_ref_vector visit{node};
   do
   {
@@ -254,7 +319,8 @@ PassNormalize::process(const Node& node)
           && (children[0].kind() == Kind::BV_ADD
               || children[0].kind() == Kind::BV_MUL))
       {
-        auto [res, normalized] = normalize_eq_add_mul(children[0], children[1]);
+        auto [res, normalized] =
+            normalize_eq_add_mul(children[0], children[1], share_aware);
         it->second             = res;
         if (normalized) d_stats.num_normalizations += 1;
       }

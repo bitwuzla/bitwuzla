@@ -15,6 +15,7 @@ class TestPassNormalize : public TestPreprocessingPass
   TestPassNormalize()
   {
     d_options.rewrite_level.set(0);
+    d_options.pp_normalize_share_aware.set(false);
     d_env.reset(new Env(d_options));
     d_pass.reset(new PassNormalize(*d_env, &d_bm));
   };
@@ -38,8 +39,8 @@ class TestPassNormalize : public TestPreprocessingPass
                             const unordered_node_ref_map<uint64_t>& expected0,
                             const unordered_node_ref_map<uint64_t>& expected1)
   {
-    auto factors0 = PassNormalize::compute_factors(node[0]);
-    auto factors1 = PassNormalize::compute_factors(node[1]);
+    auto factors0 = d_pass->compute_factors(node[0]);
+    auto factors1 = d_pass->compute_factors(node[1]);
     const unordered_node_ref_map<uint64_t>* factors[2]{&factors0, &factors1};
     const unordered_node_ref_map<uint64_t>* expected[2]{&expected0, &expected1};
     for (size_t i = 0; i < 2; ++i)
@@ -66,17 +67,33 @@ class TestPassNormalize : public TestPreprocessingPass
     }
   }
 
-  void test_assertion(const Node& node, const Node& expected)
+  void test_assertion(const Node& node,
+                      const Node& expected,
+                      const Node& expected_shares)
   {
-    AssertionStack as;
-    as.push_back(node);
-    ASSERT_EQ(as.size(), 1);
+    {
+      AssertionStack as;
+      as.push_back(node);
+      ASSERT_EQ(as.size(), 1);
+      preprocess::AssertionVector assertions(as.view());
+      d_pass->apply(assertions);
+      ASSERT_EQ(as.size(), 1);
+      ASSERT_EQ(as[0], expected);
+    }
 
-    preprocess::AssertionVector assertions(as.view());
-    d_pass->apply(assertions);
-
-    ASSERT_EQ(as.size(), 1);
-    ASSERT_EQ(as[0], expected);
+    if (!expected_shares.is_null())
+    {
+      d_options.pp_normalize_share_aware.set(true);
+      d_env.reset(new Env(d_options));
+      d_pass.reset(new PassNormalize(*d_env, &d_bm));
+      AssertionStack as;
+      as.push_back(node);
+      ASSERT_EQ(as.size(), 1);
+      preprocess::AssertionVector assertions(as.view());
+      d_pass->apply(assertions);
+      ASSERT_EQ(as.size(), 1);
+      ASSERT_EQ(as[0], expected_shares);
+    }
   }
 
   Type d_bv_type = d_nm.mk_bv_type(8);
@@ -372,13 +389,14 @@ TEST_F(TestPassNormalize, compute_factors7)
 TEST_F(TestPassNormalize, mul_normalize00)
 {
   // (a * b) = (b * a)
-  test_assertion(equal(mul(d_a, d_b), mul(d_b, d_a)), d_true);
+  test_assertion(equal(mul(d_a, d_b), mul(d_b, d_a)), d_true, d_true);
 }
 
 TEST_F(TestPassNormalize, mul_normalize01)
 {
   // (a * b) = (b * a) * (a * b)
   test_assertion(equal(mul(d_a, d_b), mul(mul(d_b, d_a), mul(d_a, d_b))),
+                 equal(d_one, mul(d_a, d_b)),
                  equal(d_one, mul(d_a, d_b)));
 }
 
@@ -395,7 +413,7 @@ TEST_F(TestPassNormalize, mul_normalize0)
   Node mul_bcde = mul(d_b, mul_cde);
   Node mul1     = mul(d_a, mul_bcde);
 
-  test_assertion(equal(mul0, mul1), d_true);
+  test_assertion(equal(mul0, mul1), d_true, d_true);
 }
 
 TEST_F(TestPassNormalize, mul_normalize1)
@@ -411,7 +429,7 @@ TEST_F(TestPassNormalize, mul_normalize1)
   Node mul_bcde = mul(d_b, mul_cde);
   Node mul1     = mul(d_a, mul_bcde);
 
-  test_assertion(equal(mul0, mul1), equal(d_a, d_c));
+  test_assertion(equal(mul0, mul1), equal(d_a, d_c), equal(d_a, d_c));
 }
 
 TEST_F(TestPassNormalize, mul_normalize2)
@@ -427,7 +445,7 @@ TEST_F(TestPassNormalize, mul_normalize2)
   Node mul_bcae = mul(d_b, mul_cae);
   Node mul1     = mul(d_a, mul_bcae);
 
-  test_assertion(equal(mul0, mul1), equal(d_d, d_a));
+  test_assertion(equal(mul0, mul1), equal(d_d, d_a), equal(d_d, d_a));
 }
 
 TEST_F(TestPassNormalize, mul_normalize3)
@@ -444,7 +462,9 @@ TEST_F(TestPassNormalize, mul_normalize3)
   Node mul_bcde = mul(d_b, mul_cde);
   Node mul1     = mul(d_a, mul_bcde);
 
-  test_assertion(equal(mul0, mul1), equal(mul(d_a, d_b), d_one));
+  test_assertion(equal(mul0, mul1),
+                 equal(mul(d_a, d_b), d_one),
+                 equal(mul(d_a, d_b), d_one));
 }
 
 TEST_F(TestPassNormalize, mul_normalize4)
@@ -460,7 +480,9 @@ TEST_F(TestPassNormalize, mul_normalize4)
   Node mul_cd_a_cd = mul(mul_cd, mul_a_cd);
   Node mul1        = mul(mul_ab, mul_cd_a_cd);
 
-  test_assertion(equal(mul0, mul1), equal(mul(d_b, d_e), mul(d_c, d_d)));
+  test_assertion(equal(mul0, mul1),
+                 equal(mul(d_b, d_e), mul(d_c, d_d)),
+                 equal(mul(d_b, d_e), mul(d_c, d_d)));
 }
 
 TEST_F(TestPassNormalize, mul_normalize5)
@@ -478,6 +500,7 @@ TEST_F(TestPassNormalize, mul_normalize5)
   Node mul1        = mul(mul_ab, mul_cd_a_cd);
 
   test_assertion(equal(mul0, mul1),
+                 equal(mul(d_a, mul(d_b, d_e)), mul(d_c, mul(d_c, d_d))),
                  equal(mul(d_a, mul(d_b, d_e)), mul(d_c, mul(d_c, d_d))));
 }
 
@@ -497,6 +520,10 @@ TEST_F(TestPassNormalize, mul_normalize6)
 
   test_assertion(
       equal(mul0, mul1),
+      equal(
+          mul(d_d, d_e),
+          mul(d_a,
+              mul(d_a, mul(d_a, mul(d_a, mul(d_b, mul(d_b, mul(d_b, d_b)))))))),
       equal(mul(d_d, d_e),
             mul(d_a,
                 mul(d_a,
@@ -519,7 +546,7 @@ TEST_F(TestPassNormalize, mul_normalize7)
   Node mul_cd_a_cd = mul(mul_cd, add_a_cd);
   Node mul1        = mul(add_ab, mul_cd_a_cd);
 
-  test_assertion(equal(mul0, mul1), equal(mul0, mul1));
+  test_assertion(equal(mul0, mul1), equal(mul0, mul1), equal(mul0, mul1));
 }
 
 TEST_F(TestPassNormalize, mul_normalize8)
@@ -547,7 +574,8 @@ TEST_F(TestPassNormalize, mul_normalize8)
           mul(mul_ab,
               mul(add_ad,
                   mul(d_e, d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})))),
-          mul1));
+          mul1),
+      equal(mul0, mul1));
 }
 
 TEST_F(TestPassNormalize, mul_normalize9)
@@ -584,7 +612,8 @@ TEST_F(TestPassNormalize, mul_normalize9)
                                          mul(d_b,
                                              mul(d_b,
                                                  mul(d_b,
-                                                     mul(d_b, d_b)))))))))))}));
+                                                     mul(d_b, d_b)))))))))))}),
+      d_nm.mk_node(Kind::AND, {d_true, equal(mul0, mul1)}));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -592,13 +621,14 @@ TEST_F(TestPassNormalize, mul_normalize9)
 TEST_F(TestPassNormalize, add_normalize00)
 {
   // (a + b) = (b + a)
-  test_assertion(equal(add(d_a, d_b), add(d_b, d_a)), d_true);
+  test_assertion(equal(add(d_a, d_b), add(d_b, d_a)), d_true, d_true);
 }
 
 TEST_F(TestPassNormalize, add_normalize01)
 {
   // (a + b) = (b + a) + (a + b)
   test_assertion(equal(add(d_a, d_b), add(add(d_b, d_a), add(d_a, d_b))),
+                 equal(d_zero, add(d_a, d_b)),
                  equal(d_zero, add(d_a, d_b)));
 }
 
@@ -615,7 +645,7 @@ TEST_F(TestPassNormalize, add_normalize0)
   Node add_bcde = add(d_b, add_cde);
   Node add1     = add(d_a, add_bcde);
 
-  test_assertion(equal(add0, add1), d_true);
+  test_assertion(equal(add0, add1), d_true, d_true);
 }
 
 TEST_F(TestPassNormalize, add_normalize1)
@@ -631,7 +661,7 @@ TEST_F(TestPassNormalize, add_normalize1)
   Node add_bcde = add(d_b, add_cde);
   Node add1     = add(d_a, add_bcde);
 
-  test_assertion(equal(add0, add1), equal(d_a, d_c));
+  test_assertion(equal(add0, add1), equal(d_a, d_c), equal(d_a, d_c));
 }
 
 TEST_F(TestPassNormalize, add_normalize2)
@@ -647,7 +677,7 @@ TEST_F(TestPassNormalize, add_normalize2)
   Node add_bcae = add(d_b, add_cae);
   Node add1     = add(d_a, add_bcae);
 
-  test_assertion(equal(add0, add1), equal(d_d, d_a));
+  test_assertion(equal(add0, add1), equal(d_d, d_a), equal(d_d, d_a));
 }
 
 TEST_F(TestPassNormalize, add_normalize3)
@@ -664,7 +694,9 @@ TEST_F(TestPassNormalize, add_normalize3)
   Node add_bcde = add(d_b, add_cde);
   Node add1     = add(d_a, add_bcde);
 
-  test_assertion(equal(add0, add1), equal(add(d_a, d_b), d_zero));
+  test_assertion(equal(add0, add1),
+                 equal(add(d_a, d_b), d_zero),
+                 equal(add(d_a, d_b), d_zero));
 }
 
 TEST_F(TestPassNormalize, add_normalize4)
@@ -680,7 +712,9 @@ TEST_F(TestPassNormalize, add_normalize4)
   Node add_cd_a_cd = add(add_cd, add_a_cd);
   Node add1        = add(add_ab, add_cd_a_cd);
 
-  test_assertion(equal(add0, add1), equal(add(d_b, d_e), add(d_c, d_d)));
+  test_assertion(equal(add0, add1),
+                 equal(add(d_b, d_e), add(d_c, d_d)),
+                 equal(add(d_b, d_e), add(d_c, d_d)));
 }
 
 TEST_F(TestPassNormalize, add_normalize5)
@@ -698,6 +732,7 @@ TEST_F(TestPassNormalize, add_normalize5)
   Node add1        = add(add_ab, add_cd_a_cd);
 
   test_assertion(equal(add0, add1),
+                 equal(add(d_a, add(d_b, d_e)), add(d_c, add(d_c, d_d))),
                  equal(add(d_a, add(d_b, d_e)), add(d_c, add(d_c, d_d))));
 }
 
@@ -717,6 +752,10 @@ TEST_F(TestPassNormalize, add_normalize6)
 
   test_assertion(
       equal(add0, add1),
+      equal(
+          add(d_d, d_e),
+          add(d_a,
+              add(d_a, add(d_a, add(d_a, add(d_b, add(d_b, add(d_b, d_b)))))))),
       equal(add(d_d, d_e),
             add(d_a,
                 add(d_a,
@@ -739,7 +778,7 @@ TEST_F(TestPassNormalize, add_normalize7)
   Node add_cd_a_cd = add(add_cd, mul_a_cd);
   Node add1        = add(mul_ab, add_cd_a_cd);
 
-  test_assertion(equal(add0, add1), equal(add0, add1));
+  test_assertion(equal(add0, add1), equal(add0, add1), equal(add0, add1));
 }
 
 TEST_F(TestPassNormalize, add_normalize8)
@@ -767,7 +806,84 @@ TEST_F(TestPassNormalize, add_normalize8)
           add(add_ab,
               add(mul_ad,
                   add(d_e, d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})))),
-          add1));
+          add1),
+      equal(add0, add1));
+}
+
+TEST_F(TestPassNormalize, add_normalize9)
+{
+  // (a + b) + ((a * d) + (e + (ite (a + b == b + a) 0 1))
+  Node add_ab = add(d_a, d_b);
+  Node mul_ad = mul(d_a, d_d);
+  Node add_e_ite =
+      add(d_e,
+          d_nm.mk_node(Kind::ITE,
+                       {equal(add(d_a, d_b), add(d_b, d_a)), d_zero, d_one}));
+  Node add_ad_e_ite = add(mul_ad, add_e_ite);
+  Node add0         = add(add_ab, add_ad_e_ite);
+  // (a + ((a + b) + (a + b))) + (((a + b) + (a + b)) + ((a + b) + (a + b)))
+  Node add_ab_ab       = add(add_ab, add_ab);
+  Node add_a_ab_ab     = add(d_a, add_ab_ab);
+  Node add_ab_ab_ab_ab = add(add_ab_ab, add_ab_ab);
+  Node add1            = add(add_a_ab_ab, add_ab_ab_ab_ab);
+
+  test_assertion(
+      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}),
+      d_nm.mk_node(
+          Kind::AND,
+          {d_true,
+           equal(add(d_e,
+                     add(mul_ad,
+                         d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))),
+                 add(d_a,
+                     add(d_a,
+                         add(d_a,
+                             add(d_a,
+                                 add(d_a,
+                                     add(d_a,
+                                         add(d_b,
+                                             add(d_b,
+                                                 add(d_b,
+                                                     add(d_b, d_b)))))))))))}),
+      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
+}
+
+TEST_F(TestPassNormalize, add_normalize10)
+{
+  // (a + ((a + b) + (a + b))) + (((a + b) + (a + b)) + ((a + b) + (a + b)))
+  Node add_ab          = add(d_a, d_b);
+  Node add_ab_ab       = add(add_ab, add_ab);
+  Node add_a_ab_ab     = add(d_a, add_ab_ab);
+  Node add_ab_ab_ab_ab = add(add_ab_ab, add_ab_ab);
+  Node add0            = add(add_a_ab_ab, add_ab_ab_ab_ab);
+  // (a + b) + ((a * d) + (e + (ite (a + b == b + a) 0 1))
+  Node mul_ad = mul(d_a, d_d);
+  Node add_e_ite =
+      add(d_e,
+          d_nm.mk_node(Kind::ITE,
+                       {equal(add(d_a, d_b), add(d_b, d_a)), d_zero, d_one}));
+  Node add_ad_e_ite = add(mul_ad, add_e_ite);
+  Node add1         = add(add_ab, add_ad_e_ite);
+
+  test_assertion(
+      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}),
+      d_nm.mk_node(
+          Kind::AND,
+          {d_true,
+           equal(
+               add(d_a,
+                   add(d_a,
+                       add(d_a,
+                           add(d_a,
+                               add(d_a,
+                                   add(d_a,
+                                       add(d_b,
+                                           add(d_b,
+                                               add(d_b, add(d_b, d_b)))))))))),
+               add(d_e,
+                   add(mul_ad,
+                       d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))))}),
+      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
 }
 
 /* -------------------------------------------------------------------------- */

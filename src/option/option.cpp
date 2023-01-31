@@ -222,6 +222,12 @@ Options::Options()
                    true,
                    "enable normalization pass",
                    "pp-normalize"),
+      pp_normalize_share_aware(this,
+                               Option::PP_NORMALIZE_SHARE_AWARE,
+                               true,
+                               "disable normalizations in normalization pass "
+                               "that may yield blow-up on the bit-level",
+                               "pp-normalize-share-aware"),
       pp_skeleton_preproc(this,
                           Option::PP_SKELETON_PREPROC,
                           true,

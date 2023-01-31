@@ -266,6 +266,16 @@ enum ENUM(Option)
    *  * **0**: disable
    */
   EVALUE(PP_NORMALIZE),
+  /*! **Preprocessing: Normalization: Enable share awareness normlization**
+   *
+   * When enabled, this disables normalizations that may yield blow-up on the
+   * bit-level.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PP_NORMALIZE_SHARE_AWARE),
   /*! **Preprocessing: Boolean skeleton preprocessing**
    *
    * Values:
