@@ -280,7 +280,7 @@ PassNormalize::apply(AssertionVector& assertions)
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    if (cache_assertion(assertion))
+    if (!processed(assertion))
     {
       const Node& processed = process(assertion);
       assertions.replace(i, processed);
