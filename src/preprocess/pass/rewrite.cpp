@@ -24,6 +24,16 @@ PassRewrite::apply(AssertionVector& assertions)
       cache_assertion(rewritten);
     }
   }
+
+#ifndef NDEBUG
+  Env env(d_env.options());
+  auto& rww = env.rewriter();
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  {
+    const Node& assertion = assertions[i];
+    assert(rww.rewrite(assertion) == assertion);
+  }
+#endif
 }
 
 Node

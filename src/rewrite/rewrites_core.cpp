@@ -117,7 +117,13 @@ _rw_eq_special_push_ones(Rewriter& rewriter, const Node& node)
     }
   } while (!visit.empty());
 
-  return utils::mk_nary(Kind::AND, eqs);
+  assert(eqs.size() > 1);
+  Node res = rewriter.mk_node(Kind::AND, {eqs[0], eqs[1]});
+  for (size_t i = 2, size = eqs.size(); i < size; ++i)
+  {
+    res = rewriter.mk_node(Kind::AND, {res, eqs[i]});
+  }
+  return res;
 }
 
 Node
