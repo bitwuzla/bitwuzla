@@ -38,6 +38,13 @@ bool
 ArraySolver::check()
 {
   Log(1) << "\n*** check arrays";
+
+  // Nothing to check
+  if (d_equalities.empty() && d_selects.empty())
+  {
+    return true;
+  }
+
   util::Timer timer(d_stats.time_check);
   d_array_models.clear();
   d_check_access_cache.clear();
