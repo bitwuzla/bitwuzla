@@ -44,18 +44,26 @@ class BitVector
   /**
    * Construct a bit-vector of given size from given uint64 value.
    *
+   * Truncates value if `truncate` is true and the value cannot be
+   * represented with `size` bits.
+   *
    * @note For signed values, use `from_si()` instead. It guarantees that
    *       negative values are sign extended to `size` if `size > 64`, which
    *       is not the case with `from_ui()` (which zero extends the value).
    *
-   * @param size  The size of the bit-vector.
-   * @param value A uint64 representing the bit-vector value. The value must be
-   *              representable with `size` bits.
-   * @param sign  True if given value should be interpreted as signed integer.
+   * @param size     The size of the bit-vector.
+   * @param value    A uint64 representing the bit-vector value. The value must
+   *                 be representable with `size` bits if `truncate` is false.
+   * @param truncate True to allow truncating the value if it is not
+   *                 representable with `size` bits.
    */
-  static BitVector from_ui(uint64_t size, uint64_t value);
+  static BitVector from_ui(uint64_t size,
+                           uint64_t value,
+                           bool truncate = false);
   /**
    * Construct a bit-vector of given size from given int64 value.
+   *
+   * @note Asserts that given value fits into a bit-vector of given size.
    *
    * @note For signed values, always use this function. It guarantees that
    *       negative values are sign extended to `size` if `size > 64`, which
@@ -64,7 +72,6 @@ class BitVector
    * @param size  The size of the bit-vector.
    * @param value A int64 representing the bit-vector value. The value must be
    *              representable with `size` bits.
-   * @param sign  True if given value should be interpreted as signed integer.
    */
   static BitVector from_si(uint64_t size, int64_t value);
 

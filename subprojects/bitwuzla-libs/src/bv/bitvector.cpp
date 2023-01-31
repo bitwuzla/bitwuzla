@@ -292,10 +292,10 @@ BitVector::BitVector(uint64_t size, const std::string& value, uint32_t base)
 }
 
 BitVector
-BitVector::from_ui(uint64_t size, uint64_t value)
+BitVector::from_ui(uint64_t size, uint64_t value, bool truncate)
 {
   assert(size > 0);
-  assert(fits_in_size(size, value));
+  assert(truncate || fits_in_size(size, value));
 
   BitVector res(size);
   if (res.is_gmp())
