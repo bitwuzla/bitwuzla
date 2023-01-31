@@ -31,7 +31,8 @@ PassRewrite::apply(AssertionVector& assertions)
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    assert(rww.rewrite(assertion) == assertion);
+    const Node& rewritten = rww.rewrite(assertion);
+    assert(rewritten == assertion);
   }
 #endif
 }

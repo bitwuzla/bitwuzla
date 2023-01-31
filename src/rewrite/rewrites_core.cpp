@@ -160,7 +160,7 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
           return _rw_eq_special_push_ones(rewriter, node[idx1]);
         }
         Node xnor0, xnor1;
-        if (node::utils::is_bv_xnor(node[idx1], xnor0, xnor1))
+        if (rewriter.is_bv_xnor(node[idx1], xnor0, xnor1))
         {
           // 1..1 == a XNOR b  --->  a = b
           return rewriter.mk_node(Kind::EQUAL, {xnor0, xnor1});
@@ -269,7 +269,7 @@ _rw_eq_const(Rewriter& rewriter, const Node& node, size_t idx)
           }
         }
       }
-      else if (node::utils::is_bv_or(node[idx1], node10, node11))
+      else if (rewriter.is_bv_or(node[idx1], node10, node11))
       {
         assert(!node10.is_null() && !node11.is_null());
 
@@ -980,7 +980,7 @@ _rw_eq_bv_sub(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
   Node child0, child1;
-  if (node::utils::is_bv_sub(node[idx0], child0, child1))
+  if (rewriter.is_bv_sub(node[idx0], child0, child1))
   {
     return rewriter.mk_node(
         Kind::EQUAL,

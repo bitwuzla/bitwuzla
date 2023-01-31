@@ -374,8 +374,7 @@ _rw_and_subsum1(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
   Node or0, or1;
-  if (node[idx0].kind() == Kind::AND
-      && node::utils::is_or(node[idx1], or0, or1))
+  if (node[idx0].kind() == Kind::AND && rewriter.is_or(node[idx1], or0, or1))
   {
     if (node[idx0][0] == or0 || node[idx0][0] == or1 || node[idx][1] == or0
         || node[idx0][1] == or1)
@@ -413,7 +412,7 @@ _rw_and_subsum2(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
   Node or0, or1;
-  if (node::utils::is_or(node[idx1], or0, or1))
+  if (rewriter.is_or(node[idx1], or0, or1))
   {
     if (node[idx0] == or0 || node[idx0] == or1)
     {
@@ -604,7 +603,7 @@ RewriteRule<RewriteRuleKind::NOT_XOR>::_apply(Rewriter& rewriter,
 {
   assert(node.num_children() == 1);
   Node xnor0, xnor1;
-  if (node::utils::is_xnor(node, xnor0, xnor1))
+  if (rewriter.is_xnor(node, xnor0, xnor1))
   {
     return rewriter.mk_node(Kind::EQUAL, {xnor0, xnor1});
   }

@@ -323,7 +323,7 @@ _rw_bv_add_neg(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
   Node neg0;
-  if (node::utils::is_bv_neg(node[idx1], neg0))
+  if (rewriter.is_bv_neg(node[idx1], neg0))
   {
     if (node[idx0] == neg0)
     {
@@ -366,7 +366,7 @@ _rw_bv_add_urem(Rewriter& rewriter, const Node& node, size_t idx)
   const Node& a = node[idx1];
   // (bvadd a (bvneg (bvmul (bvudiv a b) b)))
   Node neg0;
-  if (node::utils::is_bv_neg(node[idx0], neg0))
+  if (rewriter.is_bv_neg(node[idx0], neg0))
   {
     const Node& mul = neg0;
     if (mul.kind() == Kind::BV_MUL)
@@ -388,25 +388,22 @@ _rw_bv_add_urem(Rewriter& rewriter, const Node& node, size_t idx)
   else if (node[idx0].kind() == Kind::BV_MUL)
   {
     const Node& mul = node[idx0];
-    if (node::utils::is_bv_neg(mul[0], neg0) && neg0.kind() == Kind::BV_UDIV)
+    if (rewriter.is_bv_neg(mul[0], neg0) && neg0.kind() == Kind::BV_UDIV)
     {
       udiv = &neg0;
       b    = &mul[1];
     }
-    else if (node::utils::is_bv_neg(mul[1], neg0)
-             && neg0.kind() == Kind::BV_UDIV)
+    else if (rewriter.is_bv_neg(mul[1], neg0) && neg0.kind() == Kind::BV_UDIV)
     {
       udiv = &neg0;
       b    = &mul[0];
     }
-    else if (mul[0].kind() == Kind::BV_UDIV
-             && node::utils::is_bv_neg(mul[1], neg0))
+    else if (mul[0].kind() == Kind::BV_UDIV && rewriter.is_bv_neg(mul[1], neg0))
     {
       udiv = &mul[0];
       b    = &neg0;
     }
-    else if (mul[1].kind() == Kind::BV_UDIV
-             && node::utils::is_bv_neg(mul[0], neg0))
+    else if (mul[1].kind() == Kind::BV_UDIV && rewriter.is_bv_neg(mul[0], neg0))
     {
       udiv = &mul[1];
       b    = &neg0;
@@ -918,7 +915,7 @@ _rw_bv_and_subsum1(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx1 = 1 - idx;
   Node or0, or1;
   if (node[idx0].kind() == Kind::BV_AND
-      && node::utils::is_bv_or(node[idx1], or0, or1))
+      && rewriter.is_bv_or(node[idx1], or0, or1))
   {
     if (node[idx0][0] == or0 || node[idx0][0] == or1 || node[idx0][1] == or0
         || node[idx0][1] == or1)
@@ -956,7 +953,7 @@ _rw_bv_and_subsum2(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
   Node or0, or1;
-  if (node::utils::is_bv_or(node[idx1], or0, or1))
+  if (rewriter.is_bv_or(node[idx1], or0, or1))
   {
     if (node[idx0] == or0 || node[idx0] == or1)
     {
@@ -1884,16 +1881,16 @@ RewriteRule<RewriteRuleKind::BV_MUL_NEG>::_apply(Rewriter& rewriter,
 {
   assert(node.num_children() == 2);
   Node neg0, neg1;
-  if (node::utils::is_bv_neg(node[0], neg0))
+  if (rewriter.is_bv_neg(node[0], neg0))
   {
-    if (node::utils::is_bv_neg(node[1], neg1))
+    if (rewriter.is_bv_neg(node[1], neg1))
     {
       return rewriter.mk_node(Kind::BV_MUL, {neg0, neg1});
     }
     return rewriter.mk_node(Kind::BV_NEG,
                             {rewriter.mk_node(Kind::BV_MUL, {neg0, node[1]})});
   }
-  else if (node::utils::is_bv_neg(node[1], neg1))
+  else if (rewriter.is_bv_neg(node[1], neg1))
   {
     return rewriter.mk_node(Kind::BV_NEG,
                             {rewriter.mk_node(Kind::BV_MUL, {node[0], neg1})});
