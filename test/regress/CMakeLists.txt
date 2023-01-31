@@ -133,6 +133,7 @@ set(testcases
 "solver/fun/nestedfun1.smt2 -rwl=2"
 "solver/fun/regrencparamapps.smt2"
 "solver/quant/issue96.smt2"
+"solver/quant/duplicatelemma1.smt2"
 "solver/quant/quant_regr1.smt2"
 "solver/quant/quant_regr13.smt2"
 "solver/quant/quant_regr15.smt2"

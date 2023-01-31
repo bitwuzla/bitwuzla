@@ -110,20 +110,21 @@ QuantSolver::register_assertion(const Node& assertion)
 void
 QuantSolver::lemma(const Node& lemma, LemmaKind kind)
 {
-  auto [it, inserted] = d_lemma_cache.insert(lemma);
+  const Node& rewritten = d_env.rewriter().rewrite(lemma);
+  auto [it, inserted]   = d_lemma_cache.insert(rewritten);
   if (inserted)
   {
-    if (!lemma.is_value() || !lemma.value<bool>())
+    if (!rewritten.is_value() || !rewritten.value<bool>())
     {
       d_stats.lemmas << kind;
       ++d_stats.num_lemmas;
-      d_solver_state.lemma(lemma);
+      d_solver_state.lemma(rewritten);
       d_added_lemma = true;
     }
   }
   else
   {
-    Log(2) << "Duplicate lemma: " << lemma;
+    Log(2) << "Duplicate lemma: " << rewritten;
   }
 }
 
@@ -389,8 +390,12 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
     }
     d_mbqi_solver->pop();
   }
-  Log(2) << "mbqi: all inactive";
-  return num_inactive == to_check.size();
+  bool done = num_inactive == to_check.size();
+  if (done)
+  {
+    Log(2) << "mbqi: all inactive";
+  }
+  return done;
 }
 
 const Node&
