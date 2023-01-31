@@ -29,6 +29,12 @@ AssertionStack::replace(size_t index, const Node& replacement)
 {
   const auto& [assertion, level] = d_assertions[index];
   assert(d_cache.find(assertion) != d_cache.end());
+  // If assertion is already a value, we do not need to perform the replacement.
+  if (assertion.is_value())
+  {
+    assert(assertion == replacement);
+    return;
+  }
   d_cache.erase(assertion);
 
   auto [it, inserted] = d_cache.emplace(replacement, level);
@@ -50,7 +56,7 @@ AssertionStack::replace(size_t index, const Node& replacement)
     {
       // Do not add replacement to stack, since assertion already exists in
       // previous level.
-      d_assertions[index].first = d_true;
+      d_assertions[index].first = replacement.is_value() ? replacement : d_true;
     }
   }
 }
@@ -154,8 +160,7 @@ AssertionStack::pop()
   {
     const auto& [assertion, level] = d_assertions.back();
     auto it                        = d_cache.find(assertion);
-    // Only remove from cache if the assertion is at the correct index.
-    // Original assertion might have been removed already due to replace().
+    assert(it != d_cache.end() || assertion.is_value());
     if (it != d_cache.end() && it->second == level)
     {
       d_cache.erase(it);
@@ -169,7 +174,7 @@ AssertionStack::pop()
     assert(level <= d_control.size());
     auto it = d_cache.find(assertion);
     assert(it != d_cache.end());
-    assert(it->second == level || assertion == d_true);
+    assert(it->second == level || assertion.is_value());
   }
 #endif
 
@@ -189,9 +194,9 @@ AssertionStack::pop()
 void
 AssertionStack::remove(size_t level, const Node& assertion)
 {
-  if (assertion == d_true)
+  if (assertion.is_value())
   {
-    // No need to replace true with true
+    // No need to replace true/false
     return;
   }
 

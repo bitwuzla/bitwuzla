@@ -1,0 +1,6 @@
+(assert false)
+(assert (distinct (_ bv0 32) (_ bv0 32)))
+(push 1)
+(set-info :status unsat)
+(check-sat)
+(pop 1)
