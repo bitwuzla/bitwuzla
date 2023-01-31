@@ -325,6 +325,7 @@ set(testcases
 "backtrack/assertion_stack1.smt2 -i"
 "backtrack/assertion_stack2.smt2 -i"
 "backtrack/assertion_stack3.smt2 -i"
+"backtrack/assertion_stack4.smt2 -i"
 )
 set(testcases_btor_sat
 "preprocess/array/regrembeddedconstraint10.btor -rwl=0"

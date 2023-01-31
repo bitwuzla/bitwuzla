@@ -55,8 +55,14 @@ AssertionStack::replace(size_t index, const Node& replacement)
     else
     {
       // Do not add replacement to stack, since assertion already exists in
-      // previous level.
+      // previous level. Add true/false instead and update level accordingly.
       d_assertions[index].first = replacement.is_value() ? replacement : d_true;
+      std::tie(it, inserted) =
+          d_cache.emplace(d_assertions[index].first, level);
+      if (!inserted && it->second > level)
+      {
+        it->second = level;
+      }
     }
   }
 }
@@ -208,6 +214,11 @@ AssertionStack::remove(size_t level, const Node& assertion)
     if (d_assertions[i].first == assertion)
     {
       d_assertions[i].first = d_true;
+      auto [it, inserted]   = d_cache.emplace(d_true, level);
+      if (!inserted && it->second > level)
+      {
+        it->second = level;
+      }
 #ifndef NDEBUG
       removed = true;
 #endif
