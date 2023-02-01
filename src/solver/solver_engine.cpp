@@ -197,11 +197,7 @@ SolverEngine::process_term(const Node& term)
     auto [it, inserted] = d_register_term_cache.insert(cur);
     if (inserted)
     {
-      if (fp::FpSolver::is_theory_leaf(cur))
-      {
-        d_fp_solver.register_term(cur);
-      }
-      else if (array::ArraySolver::is_theory_leaf(cur))
+      if (array::ArraySolver::is_theory_leaf(cur))
       {
         d_array_solver.register_term(cur);
       }
@@ -215,6 +211,10 @@ SolverEngine::process_term(const Node& term)
       }
       else
       {
+        if (fp::FpSolver::is_theory_leaf(cur))
+        {
+          d_fp_solver.register_term(cur);
+        }
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
     }
