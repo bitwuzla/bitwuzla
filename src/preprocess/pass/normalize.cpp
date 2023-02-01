@@ -20,13 +20,30 @@ PassNormalize::PassNormalize(Env& env,
 {
 }
 
+namespace {
+bool
+is_leaf(Kind kind,
+        const Node& node,
+        const std::unordered_map<Node, uint64_t>& parents,
+        const std::unordered_map<Node, uint64_t>& parents_in_chain)
+{
+  if (node.kind() != kind) return true;
+  auto p = parents.find(node);
+  if (p == parents.end()) return false;
+  auto pp = parents_in_chain.find(node);
+  if (pp == parents_in_chain.end()) return false;
+  return pp->second < p->second;
+}
+}  // namespace
+
 std::unordered_map<Node, uint64_t>
 PassNormalize::compute_factors(
     const Node& node, const std::unordered_map<Node, uint64_t>& parents)
 {
   bool share_aware = !parents.empty();
   Kind kind = node.kind();
-  std::unordered_map<Node, uint64_t> factors;
+  std::unordered_map<Node, uint64_t> factors;  // all traversed nodes
+  std::unordered_map<Node, uint64_t> res;      // only leafs
 
   // compute reference count as initial factors
   node_ref_vector visit{node};
@@ -45,7 +62,7 @@ PassNormalize::compute_factors(
           // from outside the current 'kind' chain
           assert(d_parents.find(cur) != d_parents.end());
           assert(parents.find(cur) != parents.end());
-          if (parents.at(cur) < d_parents.at(cur))
+          if (is_leaf(kind, cur, d_parents, parents))
           {
             continue;
           }
@@ -74,7 +91,7 @@ PassNormalize::compute_factors(
         // from outside the current 'kind' chain
         assert(d_parents.find(cur) != d_parents.end());
         assert(parents.find(cur) != parents.end());
-        if (parents.at(cur) < d_parents.at(cur))
+        if (is_leaf(kind, cur, d_parents, parents))
         {
           continue;
         }
@@ -86,14 +103,23 @@ PassNormalize::compute_factors(
       {
         assert(factors.find(child) != factors.end());
         factors[child] = fit->second + factors[child] - 1;
-        if (cur.kind() == kind)
+        if (is_leaf(kind, child, d_parents, parents))
         {
-          visit.push_back(child);
+          auto rit = res.find(child);
+          if (rit == res.end())
+          {
+            res.emplace(child, factors[child]);
+          }
+          else
+          {
+            rit->second = factors[child];
+          }
         }
+        visit.push_back(child);
       }
     }
   } while (!visit.empty());
-  return factors;
+  return res;
 }
 
 namespace {
@@ -144,18 +170,9 @@ PassNormalize::get_normalized_factors(const Node& node0,
   // normalize common factors and record entries that are not in factors1
   for (const auto& f : factors0)
   {
-    if (f.first.kind() == kind)
-    {
-      if (!share_aware) continue;
-      // treat as leaf if node of given kind has parent references
-      // from outside the 'kind' chain starting with node0, node1
-      assert(d_parents.find(f.first) != d_parents.end());
-      assert(parents.find(f.first) != parents.end());
-      if (parents[f.first] == d_parents[f.first])
-      {
-        continue;
-      }
-    }
+    assert(f.first.kind() != kind
+           || (share_aware && parents.at(f.first) != d_parents.at(f.first)));
+
     auto fit = factors1.find(f.first);
     if (fit == factors1.end())
     {
@@ -179,18 +196,8 @@ PassNormalize::get_normalized_factors(const Node& node0,
   // check factors1 for entries that are not in factors0
   for (const auto& f : factors1)
   {
-    if (f.first.kind() == kind)
-    {
-      if (!share_aware) continue;
-      // treat as leaf if node of given kind has parent references
-      // from outside the 'kind' chain starting with node0, node1
-      assert(d_parents.find(f.first) != d_parents.end());
-      assert(parents.find(f.first) != parents.end());
-      if (parents[f.first] == d_parents[f.first])
-      {
-        continue;
-      }
-    }
+    assert(f.first.kind() != kind
+           || (share_aware && parents.at(f.first) != d_parents.at(f.first)));
     auto fit = factors0.find(f.first);
     if (fit == factors0.end())
     {
@@ -282,7 +289,7 @@ _normalize_factors_add(std::unordered_map<Node, uint64_t>& factors0,
 
   // (a - b + c = -d + e) is normalized to (a + c + d = b + e)
 
-  // ~x = ~(x + 1)
+  // ~x = ~(x + 1) + 1
   // -x = ~x + 1
 
   NodeManager& nm = NodeManager::get();

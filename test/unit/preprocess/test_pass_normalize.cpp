@@ -141,24 +141,8 @@ TEST_F(TestPassNormalize, compute_factors0)
   Node mul1     = mul(d_a, mul_bcde);
 
   test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 1},
-                        {d_b, 1},
-                        {d_c, 1},
-                        {d_d, 1},
-                        {d_e, 1},
-                        {mul_ab, 1},
-                        {mul_cd, 1},
-                        {mul_cd_e, 1},
-                        {mul0, 1}},
-                       {{d_a, 1},
-                        {d_b, 1},
-                        {d_c, 1},
-                        {d_d, 1},
-                        {d_e, 1},
-                        {mul_de, 1},
-                        {mul_cde, 1},
-                        {mul_bcde, 1},
-                        {mul1, 1}});
+                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}});
 }
 
 TEST_F(TestPassNormalize, compute_factors1)
@@ -175,23 +159,8 @@ TEST_F(TestPassNormalize, compute_factors1)
   Node mul1     = mul(d_a, mul_bcde);
 
   test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 2},
-                        {d_b, 1},
-                        {d_d, 1},
-                        {d_e, 1},
-                        {mul_ab, 1},
-                        {mul_ad, 1},
-                        {mul_ad_e, 1},
-                        {mul0, 1}},
-                       {{d_a, 1},
-                        {d_b, 1},
-                        {d_c, 1},
-                        {d_d, 1},
-                        {d_e, 1},
-                        {mul_de, 1},
-                        {mul_cde, 1},
-                        {mul_bcde, 1},
-                        {mul1, 1}});
+                       {{d_a, 2}, {d_b, 1}, {d_d, 1}, {d_e, 1}},
+                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}});
 }
 
 TEST_F(TestPassNormalize, compute_factors2)
@@ -208,23 +177,8 @@ TEST_F(TestPassNormalize, compute_factors2)
   Node mul1     = mul(d_a, mul_bcae);
 
   test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 1},
-                        {d_b, 1},
-                        {d_c, 1},
-                        {d_d, 1},
-                        {d_e, 1},
-                        {mul_ab, 1},
-                        {mul_cd, 1},
-                        {mul_cd_e, 1},
-                        {mul0, 1}},
-                       {{d_a, 2},
-                        {d_b, 1},
-                        {d_c, 1},
-                        {d_e, 1},
-                        {mul_ae, 1},
-                        {mul_cae, 1},
-                        {mul_bcae, 1},
-                        {mul1, 1}});
+                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                       {{d_a, 2}, {d_b, 1}, {d_c, 1}, {d_e, 1}});
 }
 
 TEST_F(TestPassNormalize, compute_factors3)
@@ -242,25 +196,8 @@ TEST_F(TestPassNormalize, compute_factors3)
   Node mul1     = mul(d_a, mul_bcde);
 
   test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 2},
-                        {d_b, 2},
-                        {d_c, 1},
-                        {d_d, 1},
-                        {d_e, 1},
-                        {mul_ab, 2},
-                        {mul_cd, 1},
-                        {mul_e_ab, 1},
-                        {mul_cd_e_ab, 1},
-                        {mul0, 1}},
-                       {{d_a, 1},
-                        {d_b, 1},
-                        {d_c, 1},
-                        {d_d, 1},
-                        {d_e, 1},
-                        {mul_de, 1},
-                        {mul_cde, 1},
-                        {mul_bcde, 1},
-                        {mul1, 1}});
+                       {{d_a, 2}, {d_b, 2}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}});
 }
 
 TEST_F(TestPassNormalize, compute_factors4)
@@ -277,24 +214,8 @@ TEST_F(TestPassNormalize, compute_factors4)
   Node mul1        = mul(mul_ab, mul_cd_a_cd);
 
   test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 2},
-                        {d_b, 2},
-                        {d_c, 1},
-                        {d_d, 1},
-                        {d_e, 1},
-                        {mul_ab, 2},
-                        {mul_cd, 1},
-                        {mul_e_ab, 1},
-                        {mul_cd_e_ab, 1},
-                        {mul0, 1}},
-                       {{d_a, 2},
-                        {d_b, 1},
-                        {d_c, 2},
-                        {d_d, 2},
-                        {mul_ab, 1},
-                        {mul_cd, 2},
-                        {mul_cd_a_cd, 1},
-                        {mul1, 1}});
+                       {{d_a, 2}, {d_b, 2}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                       {{d_a, 2}, {d_b, 1}, {d_c, 2}, {d_d, 2}});
 }
 
 TEST_F(TestPassNormalize, compute_factors5)
@@ -312,23 +233,8 @@ TEST_F(TestPassNormalize, compute_factors5)
   Node mul1        = mul(mul_ab, mul_cd_a_cd);
 
   test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 3},
-                        {d_b, 2},
-                        {d_d, 1},
-                        {d_e, 1},
-                        {mul_ab, 2},
-                        {mul_ad, 1},
-                        {mul_e_ab, 1},
-                        {mul_ad_e_ab, 1},
-                        {mul0, 1}},
-                       {{d_a, 2},
-                        {d_b, 1},
-                        {d_c, 2},
-                        {d_d, 2},
-                        {mul_ab, 1},
-                        {mul_cd, 2},
-                        {mul_cd_a_cd, 1},
-                        {mul1, 1}});
+                       {{d_a, 3}, {d_b, 2}, {d_d, 1}, {d_e, 1}},
+                       {{d_a, 2}, {d_b, 1}, {d_c, 2}, {d_d, 2}});
 }
 
 TEST_F(TestPassNormalize, compute_factors6)
@@ -346,22 +252,8 @@ TEST_F(TestPassNormalize, compute_factors6)
   Node mul1            = mul(mul_a_ab_ab, mul_ab_ab_ab_ab);
 
   test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 3},
-                        {d_b, 2},
-                        {d_d, 1},
-                        {d_e, 1},
-                        {mul_ab, 2},
-                        {mul_ad, 1},
-                        {mul_e_ab, 1},
-                        {mul_ad_e_ab, 1},
-                        {mul0, 1}},
-                       {{d_a, 7},
-                        {d_b, 6},
-                        {mul_ab, 6},
-                        {mul_ab_ab, 3},
-                        {mul_a_ab_ab, 1},
-                        {mul_ab_ab_ab_ab, 1},
-                        {mul1, 1}});
+                       {{d_a, 3}, {d_b, 2}, {d_d, 1}, {d_e, 1}},
+                       {{d_a, 7}, {d_b, 6}});
 }
 
 TEST_F(TestPassNormalize, compute_factors7)
@@ -380,23 +272,8 @@ TEST_F(TestPassNormalize, compute_factors7)
   Node mul_cd_a_cd = mul(mul_cd, add_a_cd);
   Node mul1        = mul(add_ab, mul_cd_a_cd);
 
-  test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 1},
-                        {d_b, 1},
-                        {d_e, 1},
-                        {mul_ab, 1},
-                        {add_ab, 1},
-                        {add_ad, 1},
-                        {mul_e_ab, 1},
-                        {mul_ad_e_ab, 1},
-                        {mul0, 1}},
-                       {{d_c, 1},
-                        {d_d, 1},
-                        {add_ab, 1},
-                        {add_a_cd, 1},
-                        {mul_cd, 1},
-                        {mul_cd_a_cd, 1},
-                        {mul1, 1}});
+  test_compute_factors(
+      equal(mul0, mul1), {{d_a, 1}, {d_b, 1}, {d_e, 1}}, {{d_c, 1}, {d_d, 1}});
 }
 
 /* -------------------------------------------------------------------------- */
