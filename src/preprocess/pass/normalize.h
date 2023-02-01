@@ -51,9 +51,9 @@ class PassNormalize : public PreprocessingPass
   std::tuple<std::unordered_map<Node, uint64_t>,
              std::unordered_map<Node, uint64_t>,
              bool>
-  get_normalized_factors(const Node& node0,
-                         const Node& node1,
-                         bool share_aware);
+  get_normalized_factors_for_eq(const Node& node0,
+                                const Node& node1,
+                                bool share_aware);
   /**
    * Normalize equality over addition or multiplication.
    * @param node0 The left hand side of the equality.

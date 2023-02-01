@@ -149,139 +149,11 @@ _count_parents(const node_ref_vector& nodes, Kind kind)
   }
   return parents;
 }
-}  // namespace
 
-std::tuple<std::unordered_map<Node, uint64_t>,
-           std::unordered_map<Node, uint64_t>,
-           bool>
-PassNormalize::get_normalized_factors(const Node& node0,
-                                      const Node& node1,
-                                      bool share_aware)
-{
-  assert(node0.kind() == node1.kind());
-  bool normalized = false;
-  Kind kind       = node0.kind();
-  std::unordered_map<Node, uint64_t> parents =
-      share_aware ? _count_parents({node0, node1}, kind)
-                  : std::unordered_map<Node, uint64_t>();
-  auto factors0 = compute_factors(node0, parents);
-  auto factors1 = compute_factors(node1, parents);
-  std::unordered_map<Node, uint64_t> res0, res1;
-  // normalize common factors and record entries that are not in factors1
-  for (const auto& f : factors0)
-  {
-    assert(f.first.kind() != kind
-           || (share_aware && parents.at(f.first) != d_parents.at(f.first)));
-
-    auto fit = factors1.find(f.first);
-    if (fit == factors1.end())
-    {
-      res0.insert(f);
-      continue;
-    }
-    if (f.second == fit->second) continue;
-    if (f.second > fit->second)
-    {
-      assert(res0.find(f.first) == res0.end());
-      res0.emplace(f.first, f.second - fit->second);
-      normalized = true;
-    }
-    else
-    {
-      assert(res1.find(f.first) == res1.end());
-      res1.emplace(f.first, fit->second - f.second);
-      normalized = true;
-    }
-  }
-  // check factors1 for entries that are not in factors0
-  for (const auto& f : factors1)
-  {
-    assert(f.first.kind() != kind
-           || (share_aware && parents.at(f.first) != d_parents.at(f.first)));
-    auto fit = factors0.find(f.first);
-    if (fit == factors0.end())
-    {
-      res1.insert(f);
-    }
-  }
-
-  // factors on both sides cancelled out
-  if (res0.empty() && res1.empty())
-  {
-    return {{}, {}, true};
-  }
-
-  return {res0, res1, normalized};
-}
-
-std::pair<Node, Node>
-PassNormalize::_normalize_eq_mul(
-    const std::unordered_map<Node, uint64_t>& factors0,
-    const std::unordered_map<Node, uint64_t>& factors1,
-    uint64_t bv_size)
-{
-  NodeManager& nm = NodeManager::get();
-  std::vector<Node> lhs, rhs;
-  if (factors0.empty())
-  {
-    lhs.push_back(nm.mk_value(BitVector::mk_one(bv_size)));
-  }
-  else
-  {
-    for (const auto& f : factors0)
-    {
-      assert(f.second);
-      for (size_t i = 0, n = f.second; i < n; ++i)
-      {
-        lhs.push_back(f.first);
-      }
-    }
-  }
-  if (factors1.empty())
-  {
-    rhs.push_back(nm.mk_value(BitVector::mk_one(bv_size)));
-  }
-  else
-  {
-    for (const auto& f : factors1)
-    {
-      assert(f.second);
-      for (size_t i = 0, n = f.second; i < n; ++i)
-      {
-        rhs.push_back(f.first);
-      }
-    }
-  }
-  assert(!lhs.empty() && !rhs.empty());
-
-  std::sort(lhs.begin(), lhs.end(), [](const Node& a, const Node& b) {
-    return a.id() < b.id();
-  });
-  std::sort(rhs.begin(), rhs.end(), [](const Node& a, const Node& b) {
-    return a.id() < b.id();
-  });
-
-  Node left, right;
-  size_t n = lhs.size();
-  left     = lhs[n - 1];
-  for (size_t i = 1; i < n; ++i)
-  {
-    left = nm.mk_node(Kind::BV_MUL, {lhs[n - i - 1], left});
-  }
-  n = rhs.size();
-  right = rhs[n - 1];
-  for (size_t i = 1; i < n; ++i)
-  {
-    right = nm.mk_node(Kind::BV_MUL, {rhs[n - i - 1], right});
-  }
-  return {left, right};
-}
-
-namespace {
 bool
-_normalize_factors_add(std::unordered_map<Node, uint64_t>& factors0,
-                       std::unordered_map<Node, uint64_t>& factors1,
-                       uint64_t bv_size)
+_normalize_factors_eq_add(std::unordered_map<Node, uint64_t>& factors0,
+                          std::unordered_map<Node, uint64_t>& factors1,
+                          uint64_t bv_size)
 {
   // Note: Factors must already be normalized in the sense that they only
   //       either appear on the left or right hand side (this function must
@@ -379,7 +251,148 @@ _normalize_factors_add(std::unordered_map<Node, uint64_t>& factors0,
 
   return normalized;
 }
+}  // namespace
 
+std::tuple<std::unordered_map<Node, uint64_t>,
+           std::unordered_map<Node, uint64_t>,
+           bool>
+PassNormalize::get_normalized_factors_for_eq(const Node& node0,
+                                             const Node& node1,
+                                             bool share_aware)
+{
+  assert(node0.kind() == node1.kind());
+  bool normalized = false;
+  Kind kind       = node0.kind();
+  std::unordered_map<Node, uint64_t> parents =
+      share_aware ? _count_parents({node0, node1}, kind)
+                  : std::unordered_map<Node, uint64_t>();
+  auto factors0 = compute_factors(node0, parents);
+  auto factors1 = compute_factors(node1, parents);
+  std::unordered_map<Node, uint64_t> res0, res1;
+  // normalize common factors and record entries that are not in factors1
+  for (const auto& f : factors0)
+  {
+    assert(f.first.kind() != kind
+           || (share_aware && parents.at(f.first) != d_parents.at(f.first)));
+
+    auto fit = factors1.find(f.first);
+    if (fit == factors1.end())
+    {
+      res0.insert(f);
+      continue;
+    }
+    if (f.second == fit->second) continue;
+    if (f.second > fit->second)
+    {
+      assert(res0.find(f.first) == res0.end());
+      res0.emplace(f.first, f.second - fit->second);
+      normalized = true;
+    }
+    else
+    {
+      assert(res1.find(f.first) == res1.end());
+      res1.emplace(f.first, fit->second - f.second);
+      normalized = true;
+    }
+  }
+  // check factors1 for entries that are not in factors0
+  for (const auto& f : factors1)
+  {
+    assert(f.first.kind() != kind
+           || (share_aware && parents.at(f.first) != d_parents.at(f.first)));
+    auto fit = factors0.find(f.first);
+    if (fit == factors0.end())
+    {
+      res1.insert(f);
+    }
+  }
+
+  // factors on both sides cancelled out
+  if (res0.empty() && res1.empty())
+  {
+    return {{}, {}, true};
+  }
+
+  if (kind == Kind::BV_ADD)
+  {
+    uint64_t bv_size = node0.type().bv_size();
+    if (_normalize_factors_eq_add(res0, res1, bv_size) && !normalized)
+    {
+      normalized = true;
+    }
+    if (_normalize_factors_eq_add(res1, res0, bv_size) && !normalized)
+    {
+      normalized = true;
+    }
+  }
+
+  return {res0, res1, normalized};
+}
+
+std::pair<Node, Node>
+PassNormalize::_normalize_eq_mul(
+    const std::unordered_map<Node, uint64_t>& factors0,
+    const std::unordered_map<Node, uint64_t>& factors1,
+    uint64_t bv_size)
+{
+  NodeManager& nm = NodeManager::get();
+  std::vector<Node> lhs, rhs;
+  if (factors0.empty())
+  {
+    lhs.push_back(nm.mk_value(BitVector::mk_one(bv_size)));
+  }
+  else
+  {
+    for (const auto& f : factors0)
+    {
+      assert(f.second);
+      for (size_t i = 0, n = f.second; i < n; ++i)
+      {
+        lhs.push_back(f.first);
+      }
+    }
+  }
+  if (factors1.empty())
+  {
+    rhs.push_back(nm.mk_value(BitVector::mk_one(bv_size)));
+  }
+  else
+  {
+    for (const auto& f : factors1)
+    {
+      assert(f.second);
+      for (size_t i = 0, n = f.second; i < n; ++i)
+      {
+        rhs.push_back(f.first);
+      }
+    }
+  }
+  assert(!lhs.empty() && !rhs.empty());
+
+  std::sort(lhs.begin(), lhs.end(), [](const Node& a, const Node& b) {
+    return a.id() < b.id();
+  });
+  std::sort(rhs.begin(), rhs.end(), [](const Node& a, const Node& b) {
+    return a.id() < b.id();
+  });
+
+  Node left, right;
+  size_t n = lhs.size();
+  left     = lhs[n - 1];
+  for (size_t i = 1; i < n; ++i)
+  {
+    left = nm.mk_node(Kind::BV_MUL, {lhs[n - i - 1], left});
+  }
+  n = rhs.size();
+  right = rhs[n - 1];
+  for (size_t i = 1; i < n; ++i)
+  {
+    right = nm.mk_node(Kind::BV_MUL, {rhs[n - i - 1], right});
+  }
+  return {left, right};
+}
+
+namespace {
 Node
 get_factorized_add(const Node& node, uint64_t factor)
 {
@@ -528,20 +541,7 @@ PassNormalize::normalize_eq_add_mul(const Node& node0,
   NodeManager& nm = NodeManager::get();
 
   auto [factors0, factors1, normalized] =
-      get_normalized_factors(node0, node1, share_aware);
-
-  if (node0.kind() == Kind::BV_ADD)
-  {
-    uint64_t bv_size = node0.type().bv_size();
-    if (_normalize_factors_add(factors0, factors1, bv_size) && !normalized)
-    {
-      normalized = true;
-    }
-    if (_normalize_factors_add(factors1, factors0, bv_size) && !normalized)
-    {
-      normalized = true;
-    }
-  }
+      get_normalized_factors_for_eq(node0, node1, share_aware);
 
   if (!normalized)
   {
