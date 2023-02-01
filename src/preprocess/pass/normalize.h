@@ -19,15 +19,20 @@ class PassNormalize : public PreprocessingPass
 
  private:
   /**
-   * Compute the 'factors' (the number of occurrences) of subterms of a chain
+   * Compute the 'factors' (the number of occurrences) of the leafs of a chain
    * of nodes of the kind of the given top node. That is, (bvmul a (bvmul c d))
    * would result in {{a -> 1}, {c -> 1}, {d -> 1}}, and (bvmul a (bvadd c d))
    * in {{a -> 1}, {(bvadd c d) -> 1}}.
+   *
+   * @note If parents are given (share aware normalization), we treat subterms
+   *       of the same kind as the top node as leafs if they have parents
+   *       outside of this chain.
+   *
    * @param node The top node.
    * @param parents The parents count of the equality over adders/multipliers
-   *                this node is one of the operands of.
-   * @return A map from node to its occurrence count. Empty if share_aware
-   *         is true and this occurrence count is > 1.
+   *                this node is one of the operands of. Empty if we do
+   *                not normalize in a share aware manner.
+   * @return A map from node to its occurrence count.
    */
   std::unordered_map<Node, uint64_t> compute_factors(
       const Node& node, const std::unordered_map<Node, uint64_t>& parents);
