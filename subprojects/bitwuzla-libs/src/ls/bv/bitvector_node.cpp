@@ -5180,20 +5180,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
       // x->lo <= x <= hi
       BitVectorDomainGenerator gen(x, d_rng, x.lo(), hi);
       bool res = false;
-      while (gen.has_next())
-      {
-        BitVector bv = gen.next();
-        assert(x.match_fixed_bits(bv));
-        BitVector rem = bv.bvurem(s);
-        if (rem.compare(t) == 0)
-        {
-          res = true;
-          BV_NODE_CACHE_INVERSE_IF(std::move(bv));
-          break;
-        }
-      }
-      // try to more randomly pick a candidate if there is one
-      if (res && !is_essential_check)
+      if (!is_essential_check)
       {
         for (uint32_t cnt = 0; cnt < 10000; ++cnt)
         {
@@ -5201,6 +5188,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
           BitVector rem = bv.bvurem(s);
           if (rem.compare(t) == 0)
           {
+            res = true;
             BV_NODE_CACHE_INVERSE(std::move(bv));
             break;
           }
