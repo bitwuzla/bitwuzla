@@ -1027,6 +1027,28 @@ TEST_F(TestPassNormalize, add_normalize_neg3)
                  equal(add(mul(d_two, d_a), d_b), mul(d_two, d_b)));
 }
 
+TEST_F(TestPassNormalize, add_normalize_neg4)
+{
+  // (a + b) + ((a + d) + (e + ~(a + b))
+  Node add_ab      = add(d_a, d_b);
+  Node add_ad      = add(d_a, d_d);
+  Node add_e_ab    = add(d_e, inv(add_ab));
+  Node add_ad_e_ab = add(add_ad, add_e_ab);
+  Node add0        = add(add_ab, add_ad_e_ab);
+  // (a + ((a + b) + ~(a + b))) + (((a + b) + ~(a + b)) + ((a + b) + ~(a + b)))
+  Node add_ab_ab       = add(add_ab, inv(add_ab));
+  Node add_a_ab_ab     = add(d_a, add_ab_ab);
+  Node add_ab_ab_ab_ab = add(add_ab_ab, add_ab_ab);
+  Node add1            = add(add_a_ab_ab, add_ab_ab_ab_ab);
+
+  test_assertion(
+      equal(add0, add1),
+      equal(
+          add(d_d, d_e),
+          add(mul(d_two, d_a), add(mul(d_two, d_b), mul(d_two, inv(add_ab))))),
+      equal(add(d_d, d_e), add(mul(d_two, add_ab), mul(d_two, inv(add_ab)))));
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test

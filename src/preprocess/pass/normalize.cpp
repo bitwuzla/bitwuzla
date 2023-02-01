@@ -484,6 +484,7 @@ PassNormalize::_normalize_eq_add(std::unordered_map<Node, uint64_t>& factors0,
     if (!rvalue.is_zero())
     {
       val = nm.mk_value(lvalue.ibvsub(rvalue));
+      rvalue = BitVector::mk_zero(bv_size);
     }
     else
     {
