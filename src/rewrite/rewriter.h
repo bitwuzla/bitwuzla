@@ -416,6 +416,8 @@ enum class RewriteRuleKind
   // Level 1+
   BV_NOT_EVAL,
   BV_NOT_BV_NOT,
+  // Level 2+
+  BV_NOT_BV_NEG,
 
   //// bvshl
   // Level 1+

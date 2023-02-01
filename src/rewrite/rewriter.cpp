@@ -810,6 +810,10 @@ Rewriter::rewrite_bv_not(const Node& node)
     BZLA_APPLY_RW_RULE(BV_NOT_BV_NOT);
     // TODO
   }
+  if (d_level >= 2)
+  {
+    BZLA_APPLY_RW_RULE(BV_NOT_BV_NEG);
+  }
 
 DONE:
   return res;
@@ -1598,6 +1602,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
 
     case RewriteRuleKind::BV_NOT_EVAL: out << "BV_NOT_EVAL"; break;
     case RewriteRuleKind::BV_NOT_BV_NOT: out << "BV_NOT_BV_NOT"; break;
+    case RewriteRuleKind::BV_NOT_BV_NEG: out << "BV_NOT_BV_NEG"; break;
 
     case RewriteRuleKind::BV_SHL_EVAL: out << "BV_SHL_EVAL"; break;
     case RewriteRuleKind::BV_SHL_SPECIAL_CONST:

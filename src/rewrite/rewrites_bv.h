@@ -260,6 +260,10 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_NOT_BV_NOT>::_apply(Rewriter& rewriter,
                                                          const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NOT_BV_NEG>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
 /* bvshl -------------------------------------------------------------------- */
 
 // const_binary_bv_exp

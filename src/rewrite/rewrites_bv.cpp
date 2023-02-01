@@ -1959,6 +1959,27 @@ RewriteRule<RewriteRuleKind::BV_NOT_BV_NOT>::_apply(Rewriter& rewriter,
   return node[0][0];
 }
 
+/**
+ * match:  (bvnot (bneg a))
+ * result: (bvadd a (bvnot (_ bv0 N)))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_NOT_BV_NEG>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  Node a;
+  if (rewriter.is_bv_neg(node[0], a))
+  {
+    return rewriter.mk_node(Kind::BV_ADD,
+                            {a,
+                             NodeManager::get().mk_value(
+                                 BitVector::mk_ones(node.type().bv_size()))});
+  }
+  return node;
+}
+
 /* bvshl -------------------------------------------------------------------- */
 
 /**
