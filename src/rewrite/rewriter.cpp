@@ -163,7 +163,7 @@ Rewriter::mk_node(node::Kind kind,
   return res;
 }
 
-Node
+const Node&
 Rewriter::invert_node(const Node& node)
 {
   assert(node.type().is_bool() || node.type().is_bv());
@@ -174,7 +174,7 @@ Rewriter::invert_node(const Node& node)
   return mk_node(node::Kind::BV_NOT, {node});
 }
 
-Node
+const Node&
 Rewriter::invert_node_if(bool condition, const Node& node)
 {
   assert(node.type().is_bool() || node.type().is_bv());
@@ -258,17 +258,16 @@ Rewriter::is_bv_neg(const Node& node, Node& child)
   }
   if (node.kind() == Kind::BV_ADD)
   {
-    if (node[0] == one && node[1].is_inverted())
+    if (node[0] == one)
     {
-      child = node[1][0];
+      child = invert_node(node[1]);
       return true;
     }
-    if (node[1] == one && node[0].is_inverted())
+    if (node[1] == one)
     {
-      child = node[0][0];
+      child = invert_node(node[0]);
       return true;
     }
-    return false;
   }
   return false;
 }
