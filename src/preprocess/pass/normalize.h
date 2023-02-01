@@ -26,7 +26,8 @@ class PassNormalize : public PreprocessingPass
    * @return A map from node to its occurrence count. Empty if share_aware
    *         is true and this occurrence count is > 1.
    */
-  node::unordered_node_ref_map<uint64_t> compute_factors(const Node& node);
+  node::unordered_node_ref_map<uint64_t> compute_factors(
+      const Node& node, const std::unordered_map<Node, uint64_t>& parents);
   /**
    * Helper to determine the normalized set of 'factors' (occurrences) for an
    * equality over the given two nodes of the same kind.

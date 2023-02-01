@@ -39,8 +39,8 @@ class TestPassNormalize : public TestPreprocessingPass
                             const unordered_node_ref_map<uint64_t>& expected0,
                             const unordered_node_ref_map<uint64_t>& expected1)
   {
-    auto factors0 = d_pass->compute_factors(node[0]);
-    auto factors1 = d_pass->compute_factors(node[1]);
+    auto factors0 = d_pass->compute_factors(node[0], {});
+    auto factors1 = d_pass->compute_factors(node[1], {});
     const unordered_node_ref_map<uint64_t>* factors[2]{&factors0, &factors1};
     const unordered_node_ref_map<uint64_t>* expected[2]{&expected0, &expected1};
     for (size_t i = 0; i < 2; ++i)
@@ -613,7 +613,18 @@ TEST_F(TestPassNormalize, mul_normalize9)
                                              mul(d_b,
                                                  mul(d_b,
                                                      mul(d_b, d_b)))))))))))}),
-      d_nm.mk_node(Kind::AND, {d_true, equal(mul0, mul1)}));
+      d_nm.mk_node(
+          Kind::AND,
+          {d_true,
+           equal(mul(d_e,
+                     mul(add_ad,
+                         d_nm.mk_node(Kind::ITE,
+                                      {equal(mul(d_a, d_b), mul(d_b, d_a)),
+                                       d_zero,
+                                       d_one}))),
+                 mul(d_a,
+                     mul(mul_ab,
+                         mul(mul_ab, mul(mul_ab, mul(mul_ab, mul_ab))))))}));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -837,7 +848,17 @@ TEST_F(TestPassNormalize, add_normalize9)
                          d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))),
                  add(mul(d_nm.mk_value(BitVector::from_ui(8, 6)), d_a),
                      mul(d_nm.mk_value(BitVector::from_ui(8, 5)), d_b)))}),
-      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
+      d_nm.mk_node(
+          Kind::AND,
+          {d_true,
+           equal(add(d_e,
+                     add(mul_ad,
+                         d_nm.mk_node(Kind::ITE,
+                                      {equal(add(d_a, d_b), add(d_b, d_a)),
+                                       d_zero,
+                                       d_one}))),
+                 add(d_a,
+                     mul(d_nm.mk_value(BitVector::from_ui(8, 5)), add_ab)))}));
 }
 
 TEST_F(TestPassNormalize, add_normalize10)
@@ -867,7 +888,16 @@ TEST_F(TestPassNormalize, add_normalize10)
                  add(d_e,
                      add(mul_ad,
                          d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))))}),
-      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
+      d_nm.mk_node(
+          Kind::AND,
+          {d_true,
+           equal(add(d_a, mul(d_nm.mk_value(BitVector::from_ui(8, 5)), add_ab)),
+                 add(d_e,
+                     add(mul_ad,
+                         d_nm.mk_node(Kind::ITE,
+                                      {equal(add(d_a, d_b), add(d_b, d_a)),
+                                       d_zero,
+                                       d_one}))))}));
 }
 
 TEST_F(TestPassNormalize, add_normalize11)
@@ -901,7 +931,15 @@ TEST_F(TestPassNormalize, add_normalize11)
            equal(add(e,
                      add(mul_ad, d_nm.mk_node(Kind::ITE, {d_true, zero, one}))),
                  add(mul(d_nm.mk_value(BitVector::from_ui(2, 2)), a), b))}),
-      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
+      d_nm.mk_node(
+          Kind::AND,
+          {d_true,
+           equal(
+               add(e,
+                   add(mul_ad,
+                       d_nm.mk_node(Kind::ITE,
+                                    {equal(add(a, b), add(b, a)), zero, one}))),
+               add(a, add_ab))}));
 }
 
 TEST_F(TestPassNormalize, add_normalize12)
@@ -936,7 +974,15 @@ TEST_F(TestPassNormalize, add_normalize12)
            equal(add(e,
                      add(mul_ad, d_nm.mk_node(Kind::ITE, {d_true, zero, one}))),
                  add(zero, mul(d_nm.mk_value(BitVector::from_ui(2, 3)), b)))}),
-      d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
+      d_nm.mk_node(
+          Kind::AND,
+          {d_true,
+           equal(
+               add(e,
+                   add(mul_ad,
+                       d_nm.mk_node(Kind::ITE,
+                                    {equal(add(a, b), add(b, a)), zero, one}))),
+               add(a, mul(d_nm.mk_value(BitVector::from_ui(2, 3)), add_ab)))}));
 }
 
 /* -------------------------------------------------------------------------- */

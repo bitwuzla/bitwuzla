@@ -21,8 +21,10 @@ PassNormalize::PassNormalize(Env& env,
 }
 
 unordered_node_ref_map<uint64_t>
-PassNormalize::compute_factors(const Node& node)
+PassNormalize::compute_factors(
+    const Node& node, const std::unordered_map<Node, uint64_t>& parents)
 {
+  bool share_aware = !parents.empty();
   Kind kind = node.kind();
   unordered_node_ref_map<uint64_t> factors;
 
@@ -37,6 +39,17 @@ PassNormalize::compute_factors(const Node& node)
     {
       if (cur.kind() == kind)
       {
+        if (share_aware)
+        {
+          // treat as leaf if node of given kind has parent references
+          // from outside the current 'kind' chain
+          assert(d_parents.find(cur) != d_parents.end());
+          assert(parents.find(cur) != parents.end());
+          if (parents.at(cur) < d_parents.at(cur))
+          {
+            continue;
+          }
+        }
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
     }
@@ -55,6 +68,18 @@ PassNormalize::compute_factors(const Node& node)
     visit.pop_back();
     if (inserted && cur.kind() == kind)
     {
+      if (share_aware)
+      {
+        // treat as leaf if node of given kind has parent references
+        // from outside the current 'kind' chain
+        assert(d_parents.find(cur) != d_parents.end());
+        assert(parents.find(cur) != parents.end());
+        if (parents.at(cur) < d_parents.at(cur))
+        {
+          continue;
+        }
+      }
+
       auto fit = factors.find(cur);
       assert(fit != factors.end());
       for (auto& child : cur)
@@ -110,27 +135,26 @@ PassNormalize::get_normalized_factors(const Node& node0,
   assert(node0.kind() == node1.kind());
   bool normalized = false;
   Kind kind       = node0.kind();
-  auto factors0   = compute_factors(node0);
-  auto factors1   = compute_factors(node1);
-  auto parents    = _count_parents({node0, node1}, kind);
+  std::unordered_map<Node, uint64_t> parents =
+      share_aware ? _count_parents({node0, node1}, kind)
+                  : std::unordered_map<Node, uint64_t>();
+  auto factors0 = compute_factors(node0, parents);
+  auto factors1 = compute_factors(node1, parents);
   unordered_node_ref_map<uint64_t> res0, res1;
   // normalize common factors and record entries that are not in factors1
   for (auto& f : factors0)
   {
     if (f.first.get().kind() == kind)
     {
-      if (share_aware)
+      if (!share_aware) continue;
+      // treat as leaf if node of given kind has parent references
+      // from outside the 'kind' chain starting with node0, node1
+      assert(d_parents.find(f.first) != d_parents.end());
+      assert(parents.find(f.first) != parents.end());
+      if (parents[f.first] == d_parents[f.first])
       {
-        // do not normalize if node of given kind has parent references
-        // from outside the 'kind' chain starting with node0, node1
-        assert(d_parents.find(f.first) != d_parents.end());
-        assert(parents.find(f.first) != parents.end());
-        if (parents[f.first] < d_parents[f.first])
-        {
-          return {{}, {}, false};
-        }
+        continue;
       }
-      continue;
     }
     auto fit = factors1.find(f.first);
     if (fit == factors1.end())
@@ -157,18 +181,15 @@ PassNormalize::get_normalized_factors(const Node& node0,
   {
     if (f.first.get().kind() == kind)
     {
-      if (share_aware)
+      if (!share_aware) continue;
+      // treat as leaf if node of given kind has parent references
+      // from outside the 'kind' chain starting with node0, node1
+      assert(d_parents.find(f.first) != d_parents.end());
+      assert(parents.find(f.first) != parents.end());
+      if (parents[f.first] == d_parents[f.first])
       {
-        // do not normalize if node of given kind has parent references
-        // from outside the 'kind' chain starting with node1
-        assert(d_parents.find(f.first) != d_parents.end());
-        assert(parents.find(f.first) != parents.end());
-        if (parents[f.first] < d_parents[f.first])
-        {
-          return {{}, {}, false};
-        }
+        continue;
       }
-      continue;
     }
     auto fit = factors0.find(f.first);
     if (fit == factors0.end())
