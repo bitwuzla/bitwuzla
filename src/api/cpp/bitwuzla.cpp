@@ -291,6 +291,7 @@ const std::unordered_map<bzla::option::Option, Option> s_options = {
     {bzla::option::Option::PP_NORMALIZE_SHARE_AWARE,
      Option::PP_NORMALIZE_SHARE_AWARE},
     {bzla::option::Option::PP_SKELETON_PREPROC, Option::PP_SKELETON_PREPROC},
+    {bzla::option::Option::PP_VARIABLE_SUBST, Option::PP_VARIABLE_SUBST},
     {bzla::option::Option::PP_VARIABLE_SUBST_NORM_EQ,
      Option::PP_VARIABLE_SUBST_NORM_EQ},
     {bzla::option::Option::PP_VARIABLE_SUBST_NORM_BV_INEQ,
