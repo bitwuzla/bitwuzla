@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
@@ -228,12 +229,12 @@ print_version()
 }
 
 [[noreturn]] void
-_exit(int32_t status)
+bzla_exit(int32_t status)
 {
 #ifndef NDEBUG
-  std::quick_exit(status);
-#else
   std::exit(status);
+#else
+  std::quick_exit(status);
 #endif
 }
 
@@ -252,17 +253,17 @@ main(int32_t argc, char* argv[])
     if (arg == "-h" || arg == "--help")
     {
       print_help(options);
-      _exit(EXIT_SUCCESS);
+      bzla_exit(EXIT_SUCCESS);
     }
     else if (arg == "-c" || arg == "--copyright")
     {
       print_copyright();
-      _exit(EXIT_SUCCESS);
+      bzla_exit(EXIT_SUCCESS);
     }
     else if (arg == "-V" || arg == "--version")
     {
       print_version();
-      _exit(EXIT_SUCCESS);
+      bzla_exit(EXIT_SUCCESS);
     }
     // Check if argument is the intput file.
     // Note: For now only supports .smt2 and .btor suffices
@@ -287,14 +288,14 @@ main(int32_t argc, char* argv[])
     const std::string& msg = e.msg();
     size_t pos = msg.find("', ");
     std::cerr << "[error] " << msg.substr(pos + 3) << std::endl;
-    _exit(EXIT_FAILURE);
+    bzla_exit(EXIT_FAILURE);
   }
 
   std::string err_msg = bitwuzla::parse(options, filename);
   if (err_msg.empty())
   {
-    _exit(EXIT_SUCCESS);
+    bzla_exit(EXIT_SUCCESS);
   }
   std::cerr << "[error] " << err_msg << std::endl;
-  _exit(EXIT_FAILURE);
+  bzla_exit(EXIT_FAILURE);
 }
