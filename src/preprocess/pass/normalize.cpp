@@ -93,6 +93,7 @@ PassNormalize::compute_factors(
         assert(parents.find(cur) != parents.end());
         if (is_leaf(kind, cur, d_parents, parents))
         {
+          res.emplace(cur, factors[cur]);
           continue;
         }
       }
