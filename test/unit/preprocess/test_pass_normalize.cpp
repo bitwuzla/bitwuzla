@@ -900,10 +900,7 @@ TEST_F(TestPassNormalize, add_normalize11)
           {d_true,
            equal(add(e,
                      add(mul_ad, d_nm.mk_node(Kind::ITE, {d_true, zero, one}))),
-                 add(add(mul(d_nm.mk_value(BitVector::from_ui(2, 3)), a),
-                         mul(d_nm.mk_value(BitVector::from_ui(2, 3)), a)),
-                     add(mul(d_nm.mk_value(BitVector::from_ui(2, 2)), b),
-                         mul(d_nm.mk_value(BitVector::from_ui(2, 3)), b))))}),
+                 add(mul(d_nm.mk_value(BitVector::from_ui(2, 2)), a), b))}),
       d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
 }
 
@@ -938,13 +935,7 @@ TEST_F(TestPassNormalize, add_normalize12)
           {d_true,
            equal(add(e,
                      add(mul_ad, d_nm.mk_node(Kind::ITE, {d_true, zero, one}))),
-                 add(add(mul(d_nm.mk_value(BitVector::from_ui(2, 2)), a),
-                         add(mul(d_nm.mk_value(BitVector::from_ui(2, 3)), a),
-                             mul(d_nm.mk_value(BitVector::from_ui(2, 3)), a))),
-                     add(b,
-                         add(mul(d_nm.mk_value(BitVector::from_ui(2, 3)), b),
-                             mul(d_nm.mk_value(BitVector::from_ui(2, 3)),
-                                 b)))))}),
+                 add(zero, mul(d_nm.mk_value(BitVector::from_ui(2, 3)), b)))}),
       d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}));
 }
 

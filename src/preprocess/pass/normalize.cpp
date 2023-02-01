@@ -253,43 +253,23 @@ namespace {
 Node
 get_factorized_add(const Node& node, uint64_t factor)
 {
+  assert(factor);
   NodeManager& nm = NodeManager::get();
   uint64_t size   = node.type().bv_size();
-  Node res        = node;
-  if (BitVector::fits_in_size(size, factor))
+  if (factor == 1)
   {
-    if (factor > 1)
-    {
-      res = nm.mk_node(Kind::BV_MUL,
-                       {nm.mk_value(BitVector::from_ui(size, factor)), res});
-    }
+    return node;
   }
-  else
+  BitVector fact = BitVector::from_ui(size, factor, true);
+  if (fact.is_zero())
   {
-    uint64_t max = std::pow(2, size) - 1;
-    while (!BitVector::fits_in_size(size, factor))
-    {
-      Node tmp = nm.mk_node(Kind::BV_MUL,
-                            {nm.mk_value(BitVector::from_ui(size, max)), node});
-      if (res == node)
-      {
-        res = tmp;
-      }
-      else
-      {
-        res = nm.mk_node(Kind::BV_ADD, {tmp, res});
-      }
-      factor -= max;
-    }
-    assert(factor);
-    res = nm.mk_node(Kind::BV_ADD,
-                     {factor > 1 ? nm.mk_node(
-                          Kind::BV_MUL,
-                          {nm.mk_value(BitVector::from_ui(size, factor)), node})
-                                 : node,
-                      res});
+    return nm.mk_value(fact);
   }
-  return res;
+  if (fact.is_one())
+  {
+    return node;
+  }
+  return nm.mk_node(Kind::BV_MUL, {nm.mk_value(fact), node});
 }
 }  // namespace
 
