@@ -1,8 +1,9 @@
 #ifndef BZLA_PREPROCESS_PASS_NORMALIZE_H_INCLUDED
 #define BZLA_PREPROCESS_PASS_NORMALIZE_H_INCLUDED
 
+#include <unordered_map>
+
 #include "backtrack/unordered_map.h"
-#include "node/unordered_node_ref_map.h"
 #include "preprocess/preprocessing_pass.h"
 #include "util/statistics.h"
 
@@ -23,10 +24,12 @@ class PassNormalize : public PreprocessingPass
    * would result in {{a -> 1}, {c -> 1}, {d -> 1}}, and (bvmul a (bvadd c d))
    * in {{a -> 1}, {(bvadd c d) -> 1}}.
    * @param node The top node.
+   * @param parents The parents count of the equality over adders/multipliers
+   *                this node is one of the operands of.
    * @return A map from node to its occurrence count. Empty if share_aware
    *         is true and this occurrence count is > 1.
    */
-  node::unordered_node_ref_map<uint64_t> compute_factors(
+  std::unordered_map<Node, uint64_t> compute_factors(
       const Node& node, const std::unordered_map<Node, uint64_t>& parents);
   /**
    * Helper to determine the normalized set of 'factors' (occurrences) for an
@@ -40,8 +43,8 @@ class PassNormalize : public PreprocessingPass
    *         flag to indicate if normalization was successful. The resulting
    *         sets may be empty (only both, or none).
    */
-  std::tuple<node::unordered_node_ref_map<uint64_t>,
-             node::unordered_node_ref_map<uint64_t>,
+  std::tuple<std::unordered_map<Node, uint64_t>,
+             std::unordered_map<Node, uint64_t>,
              bool>
   get_normalized_factors(const Node& node0,
                          const Node& node1,
@@ -68,8 +71,8 @@ class PassNormalize : public PreprocessingPass
    * @param A pair of lhs and rhs normalized nodes.
    */
   std::pair<Node, Node> _normalize_eq_mul(
-      const node::unordered_node_ref_map<uint64_t>& factors0,
-      const node::unordered_node_ref_map<uint64_t>& factors1,
+      const std::unordered_map<Node, uint64_t>& factors0,
+      const std::unordered_map<Node, uint64_t>& factors1,
       uint64_t bv_size);
   /**
    * Helper to normalize equality over addition.
@@ -80,8 +83,8 @@ class PassNormalize : public PreprocessingPass
    * @param A pair of lhs and rhs normalized nodes.
    */
   std::pair<Node, Node> _normalize_eq_add(
-      const node::unordered_node_ref_map<uint64_t>& factors0,
-      const node::unordered_node_ref_map<uint64_t>& factors1,
+      std::unordered_map<Node, uint64_t>& factors0,
+      std::unordered_map<Node, uint64_t>& factors1,
       uint64_t bv_size);
 
   /**

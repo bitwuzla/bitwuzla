@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "preprocess/pass/normalize.h"
+#include "rewrite/rewrites_bv.h"
 #include "test/unit/preprocess/test_preprocess_pass.h"
 
 namespace bzla::test {
@@ -20,6 +21,15 @@ class TestPassNormalize : public TestPreprocessingPass
     d_pass.reset(new PassNormalize(*d_env, &d_bm));
   };
 
+  Node neg(const Node& a) const
+  {
+    return RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(
+               d_env->rewriter(), d_nm.mk_node(Kind::BV_NEG, {a}))
+        .first;
+  }
+
+  Node inv(const Node& a) const { return d_nm.mk_node(Kind::BV_NOT, {a}); }
+
   Node add(const Node& a, const Node& b) const
   {
     return d_nm.mk_node(Kind::BV_ADD, {a, b});
@@ -36,13 +46,14 @@ class TestPassNormalize : public TestPreprocessingPass
   }
 
   void test_compute_factors(const Node& node,
-                            const unordered_node_ref_map<uint64_t>& expected0,
-                            const unordered_node_ref_map<uint64_t>& expected1)
+                            const std::unordered_map<Node, uint64_t>& expected0,
+                            const std::unordered_map<Node, uint64_t>& expected1)
   {
     auto factors0 = d_pass->compute_factors(node[0], {});
     auto factors1 = d_pass->compute_factors(node[1], {});
-    const unordered_node_ref_map<uint64_t>* factors[2]{&factors0, &factors1};
-    const unordered_node_ref_map<uint64_t>* expected[2]{&expected0, &expected1};
+    const std::unordered_map<Node, uint64_t>* factors[2]{&factors0, &factors1};
+    const std::unordered_map<Node, uint64_t>* expected[2]{&expected0,
+                                                          &expected1};
     for (size_t i = 0; i < 2; ++i)
     {
       for (auto& p : *expected[i])
@@ -104,6 +115,10 @@ class TestPassNormalize : public TestPreprocessingPass
   Node d_e       = d_nm.mk_const(d_bv_type, "e");
   Node d_one     = d_nm.mk_value(BitVector::mk_one(8));
   Node d_zero    = d_nm.mk_value(BitVector::mk_zero(8));
+  Node d_two     = d_nm.mk_value(BitVector::from_ui(8, 2));
+  Node d_four    = d_nm.mk_value(BitVector::from_ui(8, 4));
+  Node d_five    = d_nm.mk_value(BitVector::from_ui(8, 5));
+  Node d_six     = d_nm.mk_value(BitVector::from_ui(8, 6));
   Node d_true    = d_nm.mk_value(true);
 
   std::unique_ptr<preprocess::pass::PassNormalize> d_pass;
@@ -742,12 +757,9 @@ TEST_F(TestPassNormalize, add_normalize5)
   Node add_cd_a_cd = add(add_cd, add_a_cd);
   Node add1        = add(add_ab, add_cd_a_cd);
 
-  test_assertion(
-      equal(add0, add1),
-      equal(add(d_a, add(d_b, d_e)),
-            add(mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_c), d_d)),
-      equal(add(d_a, add(d_b, d_e)),
-            add(mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_c), d_d)));
+  test_assertion(equal(add0, add1),
+                 equal(add(d_a, add(d_b, d_e)), add(mul(d_two, d_c), d_d)),
+                 equal(add(d_a, add(d_b, d_e)), add(mul(d_two, d_c), d_d)));
 }
 
 TEST_F(TestPassNormalize, add_normalize6)
@@ -765,12 +777,8 @@ TEST_F(TestPassNormalize, add_normalize6)
   Node add1            = add(add_a_ab_ab, add_ab_ab_ab_ab);
 
   test_assertion(equal(add0, add1),
-                 equal(add(d_d, d_e),
-                       add(mul(d_nm.mk_value(BitVector::from_ui(8, 4)), d_a),
-                           mul(d_nm.mk_value(BitVector::from_ui(8, 4)), d_b))),
-                 equal(add(d_d, d_e),
-                       add(mul(d_nm.mk_value(BitVector::from_ui(8, 4)), d_a),
-                           mul(d_nm.mk_value(BitVector::from_ui(8, 4)), d_b))));
+                 equal(add(d_d, d_e), add(mul(d_four, d_a), mul(d_four, d_b))),
+                 equal(add(d_d, d_e), add(mul(d_four, d_a), mul(d_four, d_b))));
 }
 
 TEST_F(TestPassNormalize, add_normalize7)
@@ -846,8 +854,7 @@ TEST_F(TestPassNormalize, add_normalize9)
            equal(add(d_e,
                      add(mul_ad,
                          d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))),
-                 add(mul(d_nm.mk_value(BitVector::from_ui(8, 6)), d_a),
-                     mul(d_nm.mk_value(BitVector::from_ui(8, 5)), d_b)))}),
+                 add(mul(d_six, d_a), mul(d_five, d_b)))}),
       d_nm.mk_node(
           Kind::AND,
           {d_true,
@@ -857,8 +864,7 @@ TEST_F(TestPassNormalize, add_normalize9)
                                       {equal(add(d_a, d_b), add(d_b, d_a)),
                                        d_zero,
                                        d_one}))),
-                 add(d_a,
-                     mul(d_nm.mk_value(BitVector::from_ui(8, 5)), add_ab)))}));
+                 add(d_a, mul(d_five, add_ab)))}));
 }
 
 TEST_F(TestPassNormalize, add_normalize10)
@@ -883,15 +889,14 @@ TEST_F(TestPassNormalize, add_normalize10)
       d_nm.mk_node(
           Kind::AND,
           {d_true,
-           equal(add(mul(d_nm.mk_value(BitVector::from_ui(8, 6)), d_a),
-                     mul(d_nm.mk_value(BitVector::from_ui(8, 5)), d_b)),
+           equal(add(mul(d_six, d_a), mul(d_five, d_b)),
                  add(d_e,
                      add(mul_ad,
                          d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))))}),
       d_nm.mk_node(
           Kind::AND,
           {d_true,
-           equal(add(d_a, mul(d_nm.mk_value(BitVector::from_ui(8, 5)), add_ab)),
+           equal(add(d_a, mul(d_five, add_ab)),
                  add(d_e,
                      add(mul_ad,
                          d_nm.mk_node(Kind::ITE,
@@ -983,6 +988,43 @@ TEST_F(TestPassNormalize, add_normalize12)
                        d_nm.mk_node(Kind::ITE,
                                     {equal(add(a, b), add(b, a)), zero, one}))),
                add(a, mul(d_nm.mk_value(BitVector::from_ui(2, 3)), add_ab)))}));
+}
+
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestPassNormalize, add_normalize_neg0)
+{
+  // (a + b) = (-b + -a)
+  test_assertion(equal(add(d_a, d_b), add(neg(d_b), neg(d_a))),
+                 equal(add(mul(d_two, d_a), mul(d_two, d_b)), d_zero),
+                 equal(add(mul(d_two, d_a), mul(d_two, d_b)), d_zero));
+}
+
+TEST_F(TestPassNormalize, add_normalize_neg1)
+{
+  // (a + b) + c = (-b + -a) + (b + c)
+  test_assertion(equal(add(add(d_a, d_b), d_c),
+                       add(add(neg(d_b), neg(d_a)), add(d_b, d_c))),
+                 equal(add(mul(d_two, d_a), d_b), d_zero),
+                 equal(add(mul(d_two, d_a), d_b), d_zero));
+}
+
+TEST_F(TestPassNormalize, add_normalize_neg2)
+{
+  // (a + ~b) + c + 2 = (-b + -a) + (b + c)
+  test_assertion(equal(add(add(add(d_a, inv(d_b)), d_c), d_two),
+                       add(add(neg(d_b), neg(d_a)), add(d_b, d_c))),
+                 equal(add(d_one, mul(d_two, d_a)), d_b),
+                 equal(add(d_one, mul(d_two, d_a)), d_b));
+}
+
+TEST_F(TestPassNormalize, add_normalize_neg3)
+{
+  // (a + ~(b + 1)) + c + 2 = (-b + -a) + (b + c)
+  test_assertion(equal(add(add(add(d_a, inv(add(d_b, d_one))), d_c), d_two),
+                       add(add(neg(d_b), neg(d_a)), add(d_b, d_c))),
+                 equal(add(mul(d_two, d_a), d_b), mul(d_two, d_b)),
+                 equal(add(mul(d_two, d_a), d_b), mul(d_two, d_b)));
 }
 
 /* -------------------------------------------------------------------------- */
