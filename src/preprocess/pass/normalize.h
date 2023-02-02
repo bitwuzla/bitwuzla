@@ -141,6 +141,8 @@ class PassNormalize : public PreprocessingPass
    */
   std::unordered_map<Node, uint64_t> d_parents;
 
+  std::unordered_set<Node> d_parents_cache;
+
   struct Statistics
   {
     Statistics(util::Statistics& stats);

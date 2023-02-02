@@ -111,8 +111,15 @@ class PreprocessingPass
   void clear_cache();
 
  protected:
-  /** @return The parents count for all currently reachable nodes. */
-  std::unordered_map<Node, uint64_t> count_parents(AssertionVector& assertions);
+  /**
+   * Count number of parents for all nodes reachable from `node`.
+   *
+   * @param parents Parents map to store result.
+   * @param cache Traversal cache.
+   */
+  void count_parents(const Node& node,
+                     std::unordered_map<Node, uint64_t>& parents,
+                     std::unordered_set<Node>& cache);
 
   /**
    * Replace all occurrences of `substititutions` in `node.

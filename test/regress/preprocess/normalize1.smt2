@@ -1,0 +1,5 @@
+(declare-const x (_ BitVec 32))
+(declare-const y (_ BitVec 32))
+(assert (bvuge (bvmul (bvshl (_ bv1 32) (_ bv1 32)) x) (bvmul (bvadd (bvshl (_ bv1 32) (_ bv1 32)) y) (bvadd (bvshl (_ bv1 32) (_ bv1 32)) y))))
+(set-info :status sat)
+(check-sat)

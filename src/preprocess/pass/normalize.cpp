@@ -759,7 +759,10 @@ PassNormalize::apply(AssertionVector& assertions)
 
   d_cache.clear();
   assert(d_parents.empty());
-  d_parents = count_parents(assertions);
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  {
+    count_parents(assertions[i], d_parents, d_parents_cache);
+  }
 
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
@@ -772,6 +775,7 @@ PassNormalize::apply(AssertionVector& assertions)
     }
   }
   d_parents.clear();
+  d_parents_cache.clear();
   d_cache.clear();
 }
 
@@ -798,11 +802,8 @@ PassNormalize::process(const Node& node)
         assert(itc != d_cache.end());
         assert(!itc->second.is_null());
         children.push_back(itc->second);
-        if (child != itc->second)
-        {
-          d_parents[itc->second] += 1;
-        }
       }
+
       Kind k = cur.kind();
       if (k == Kind::EQUAL && children[0].kind() == children[1].kind()
           && (children[0].kind() == Kind::BV_ADD
@@ -832,6 +833,9 @@ PassNormalize::process(const Node& node)
       {
         it->second = node::utils::rebuild_node(cur, children);
       }
+
+      // Count parents for newly constructed nodes
+      count_parents(it->second, d_parents, d_parents_cache);
     }
     visit.pop_back();
   } while (!visit.empty());

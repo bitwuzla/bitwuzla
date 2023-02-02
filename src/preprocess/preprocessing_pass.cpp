@@ -105,31 +105,27 @@ PreprocessingPass::clear_cache()
 
 /* --- PreprocessingPass protected ------------------------------------------ */
 
-std::unordered_map<Node, uint64_t>
-PreprocessingPass::count_parents(AssertionVector& assertions)
+void
+PreprocessingPass::count_parents(const Node& node,
+                                 std::unordered_map<Node, uint64_t>& parents,
+                                 std::unordered_set<Node>& cache)
 {
-  std::unordered_map<Node, uint64_t> parents;
-  node::unordered_node_ref_set cache;
-  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  node::node_ref_vector visit{node};
+  parents.emplace(node, 0);
+  do
   {
-    node::node_ref_vector visit{assertions[i]};
-    parents.emplace(assertions[i], 0);
-    do
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.insert(cur);
+    visit.pop_back();
+    if (inserted)
     {
-      const Node& cur     = visit.back();
-      auto [it, inserted] = cache.insert(cur);
-      visit.pop_back();
-      if (inserted)
+      for (auto& child : cur)
       {
-        for (auto& child : cur)
-        {
-          parents[child] += 1;
-          visit.push_back(child);
-        }
+        parents[child] += 1;
+        visit.push_back(child);
       }
-    } while (!visit.empty());
-  }
-  return parents;
+    }
+  } while (!visit.empty());
 }
 
 std::pair<Node, uint64_t>
