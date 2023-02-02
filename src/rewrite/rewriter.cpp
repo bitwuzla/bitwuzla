@@ -595,6 +595,7 @@ Rewriter::rewrite_eq(const Node& node)
     BZLA_APPLY_RW_RULE(EQUAL_INV);
     BZLA_APPLY_RW_RULE(EQUAL_CONST_BV_ADD);
     BZLA_APPLY_RW_RULE(EQUAL_CONST_BV_MUL);
+    BZLA_APPLY_RW_RULE(EQUAL_CONST_BV_NOT);
   }
   if (d_level >= 2)
   {
@@ -1483,6 +1484,9 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
       break;
     case RewriteRuleKind::EQUAL_CONST_BV_MUL:
       out << "EQUAL_CONST_BV_MUL";
+      break;
+    case RewriteRuleKind::EQUAL_CONST_BV_NOT:
+      out << "EQUAL_CONST_BV_NOT";
       break;
     case RewriteRuleKind::EQUAL_BV_ADD: out << "EQUAL_BV_ADD"; break;
     case RewriteRuleKind::EQUAL_BV_ADD_ADD: out << "EQUAL_BV_ADD_ADD"; break;

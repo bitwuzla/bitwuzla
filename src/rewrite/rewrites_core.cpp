@@ -811,6 +811,38 @@ RewriteRule<RewriteRuleKind::EQUAL_CONST_BV_MUL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+namespace {
+
+Node
+_rw_eq_const_bv_not(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+
+  if (node[idx0].is_value() && node[idx1].kind() == Kind::BV_NOT)
+  {
+    return rewriter.mk_node(
+        Kind::EQUAL,
+        {rewriter.mk_node(Kind::BV_NOT, {node[idx0]}), node[idx1][0]});
+  }
+  return node;
+}
+
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_CONST_BV_NOT>::_apply(Rewriter& rewriter,
+                                                         const Node& node)
+{
+  Node res = _rw_eq_const_bv_not(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_eq_const_bv_not(rewriter, node, 1);
+  }
+  return res;
+}
+
 /**
  * match:  (= (bvadd a b) a)
  * result: (= b (_ bv0 N))

@@ -60,6 +60,10 @@ template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_CONST_BV_MUL>::_apply(
     Rewriter& rewriter, const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_CONST_BV_NOT>::_apply(
+    Rewriter& rewriter, const Node& node);
+
 // add_left_eq
 // add_right_eq
 template <>
