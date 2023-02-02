@@ -395,9 +395,7 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::BV_UDIV: res = rewrite_bv_udiv(n); break;
     case node::Kind::BV_ULT: res = rewrite_bv_ult(n); break;
     case node::Kind::BV_UREM: res = rewrite_bv_urem(n); break;
-    case node::Kind::BV_COMP:
-      res = n;  // TODO
-      break;
+    case node::Kind::BV_COMP: res = rewrite_bv_comp(n); break;
 
     /* Eliminated bit-vector operators */
     case node::Kind::BV_NAND: res = rewrite_bv_nand(n); break;
@@ -996,6 +994,7 @@ BZLA_ELIM_KIND_IMPL(bv_usubo, BV_USUBO_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_xnor, BV_XNOR_ELIM)
 // BZLA_ELIM_KIND_IMPL(bv_xor, BV_XOR_ELIM) do not eliminate
 BZLA_ELIM_KIND_IMPL(bv_zero_extend, BV_ZERO_EXTEND_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_comp, BV_COMP_ELIM)
 
 /* FP rewrites -------------------------------------------------------------- */
 
@@ -1699,6 +1698,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_ZERO_EXTEND_ELIM:
       out << "BV_ZERO_EXTEND_ELIM";
       break;
+    case RewriteRuleKind::BV_COMP_ELIM: out << "BV_COMP_ELIM"; break;
 
     case RewriteRuleKind::FP_ABS_EVAL: out << "FP_ABS_EVAL"; break;
     case RewriteRuleKind::FP_ABS_ABS_NEG: out << "FP_ABS_ABS_NEG"; break;

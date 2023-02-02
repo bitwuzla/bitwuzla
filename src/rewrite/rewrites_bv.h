@@ -554,5 +554,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_ZERO_EXTEND_ELIM>::_apply(
     Rewriter& rewriter, const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::BV_COMP_ELIM>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
 }  // namespace bzla
 #endif

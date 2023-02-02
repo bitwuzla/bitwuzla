@@ -186,6 +186,7 @@ class Rewriter
   Node rewrite_bv_usubo(const Node& node);
   Node rewrite_bv_xnor(const Node& node);
   Node rewrite_bv_zero_extend(const Node& node);
+  Node rewrite_bv_comp(const Node& node);
 
   /* FP ------------------------------------------ */
   Node rewrite_fp_abs(const Node& node);
@@ -513,6 +514,7 @@ enum class RewriteRuleKind
   BV_XNOR_ELIM,
   BV_XOR_ELIM,
   BV_ZERO_EXTEND_ELIM,
+  BV_COMP_ELIM,
 
   /* FP rewrites --------------------------------- */
 

@@ -3555,6 +3555,18 @@ RewriteRule<RewriteRuleKind::BV_ZERO_EXTEND_ELIM>::_apply(Rewriter& rewriter,
   return node[0];
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_COMP_ELIM>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  NodeManager& nm = NodeManager::get();
+  return rewriter.mk_node(Kind::ITE,
+                          {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]}),
+                           nm.mk_value(BitVector::mk_one(1)),
+                           nm.mk_value(BitVector::mk_zero(1))});
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla
