@@ -42,8 +42,8 @@ class PassNormalize : public PreprocessingPass
    * @param node0 The left hand side node of the equality.
    * @param node1 The right hand side node of the equality.
    * @param share_aware True to detect occurrences > 1, i.e., nodes of given
-   *                    kind that have mutiple parents. If true, we do not
-   *                    normalize such nodes to avoid blow-up on the bit-level.
+   *                    kind that have multiple parents. If true, we do not
+   *                    normalize such nodes to avoid blow-up.
    * @return A set of normalized factors per node, with a boolean
    *         flag to indicate if normalization was successful. The resulting
    *         sets may be empty (only both, or none).
@@ -59,8 +59,8 @@ class PassNormalize : public PreprocessingPass
    * @param node0 The left hand side of the equality.
    * @param node1 The right hand side of the equality.
    * @param share_aware True to detect occurrences > 1, i.e., nodes of given
-   *                    kind that have mutiple parents. If true, we do not
-   *                    normalize such nodes to avoid blow-up on the bit-level.
+   *                    kind that have multiple parents. If true, we do not
+   *                    normalize such nodes to avoid blow-up.
    * @param A pair of normalized node and a boolean flag to indicate if
    *        normalization was successful.
    */
@@ -91,6 +91,42 @@ class PassNormalize : public PreprocessingPass
       std::unordered_map<Node, uint64_t>& factors0,
       std::unordered_map<Node, uint64_t>& factors1,
       uint64_t bv_size);
+
+  /**
+   * General normalization of adder and multiplier chains to extract common
+   * parts.
+   */
+  std::pair<Node, bool> normalize_add_mul(const Node& node0,
+                                          const Node& node1,
+                                          bool share_aware);
+
+  /**
+   * Helper to normalize common parts of lhs and rhs.
+   *
+   * @param kind Operator kind used to join operands in lhs.
+   * @param lhs The normalized operands of the left hand side.
+   * @param rhs The normalized operands of the right hand side.
+   * @return Normalized left and right node.
+   */
+  std::pair<Node, Node> normalize_common(
+      node::Kind kind,
+      std::unordered_map<Node, uint64_t>& lhs,
+      std::unordered_map<Node, uint64_t>& rhs);
+
+  /**
+   * Helper to extract top-most adder or multiplier from node.
+   * @return The top-most adder or multiplier.
+   */
+  Node get_top(const Node& node);
+
+  /**
+   * Helper to rebuild top-most node found via get_top().
+   *
+   * @param node The node passed to get_top().
+   * @param top The node of returned by get_top(node).
+   * @param normalized The normalized node that should replace top.
+   */
+  Node rebuild_top(const Node& node, const Node& top, const Node& normalized);
 
   /**
    * Cache of processed nodes that maybe shared across substitutions.

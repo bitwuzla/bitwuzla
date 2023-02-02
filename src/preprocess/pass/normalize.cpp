@@ -370,12 +370,8 @@ PassNormalize::_normalize_eq_mul(
   }
   assert(!lhs.empty() && !rhs.empty());
 
-  std::sort(lhs.begin(), lhs.end(), [](const Node& a, const Node& b) {
-    return a.id() < b.id();
-  });
-  std::sort(rhs.begin(), rhs.end(), [](const Node& a, const Node& b) {
-    return a.id() < b.id();
-  });
+  std::sort(lhs.begin(), lhs.end());
+  std::sort(rhs.begin(), rhs.end());
 
   Node left, right;
   size_t n = lhs.size();
@@ -455,12 +451,8 @@ PassNormalize::_normalize_eq_add(std::unordered_map<Node, uint64_t>& factors0,
   }
   assert(!lhs.empty() && !rhs.empty());
 
-  std::sort(lhs.begin(), lhs.end(), [](const Node& a, const Node& b) {
-    return a.id() < b.id();
-  });
-  std::sort(rhs.begin(), rhs.end(), [](const Node& a, const Node& b) {
-    return a.id() < b.id();
-  });
+  std::sort(lhs.begin(), lhs.end());
+  std::sort(rhs.begin(), rhs.end());
 
   BitVector lvalue = BitVector::mk_zero(bv_size);
   BitVector rvalue = BitVector::mk_zero(bv_size);
@@ -562,6 +554,181 @@ PassNormalize::normalize_eq_add_mul(const Node& node0,
   return {nm.mk_node(Kind::EQUAL, {left, right}), true};
 }
 
+namespace {
+
+void
+push_factorized(Kind kind,
+                const Node& n,
+                uint64_t occs,
+                std::vector<Node>& nodes)
+{
+  if (kind == Kind::BV_ADD)
+  {
+    if (occs > 0)
+    {
+      NodeManager& nm = NodeManager::get();
+      size_t size     = n.type().bv_size();
+      nodes.push_back(
+          nm.mk_node(Kind::BV_MUL,
+                     {nm.mk_value(BitVector::from_ui(size, occs, true)), n}));
+    }
+  }
+  else
+  {
+    assert(kind == Kind::BV_MUL);
+    nodes.insert(nodes.end(), occs, n);
+  }
+}
+
+}  // namespace
+
+std::pair<Node, Node>
+PassNormalize::normalize_common(Kind kind,
+                                std::unordered_map<Node, uint64_t>& lhs,
+                                std::unordered_map<Node, uint64_t>& rhs)
+{
+  std::vector<Node> lhs_norm, rhs_norm, common;
+  assert(!lhs.empty());
+  assert(!rhs.empty());
+
+  for (auto it0 = lhs.begin(), end = lhs.end(); it0 != end; ++it0)
+  {
+    auto it1 = rhs.find(it0->first);
+    if (it1 != rhs.end())
+    {
+      auto occs = std::min(it0->second, it1->second);
+      assert(occs > 0);
+      it0->second -= occs;
+      it1->second -= occs;
+      push_factorized(kind, it0->first, occs, common);
+    }
+  }
+
+  for (const auto& [n, occs] : lhs)
+  {
+    push_factorized(kind, n, occs, lhs_norm);
+  }
+  for (const auto& [n, occs] : rhs)
+  {
+    push_factorized(kind, n, occs, rhs_norm);
+  }
+
+  if (!common.empty())
+  {
+    std::sort(common.begin(), common.end());
+    Node com = utils::mk_nary(kind, common);
+    lhs_norm.push_back(com);
+    rhs_norm.push_back(com);
+  }
+
+  assert(!lhs_norm.empty());
+  assert(!rhs_norm.empty());
+
+  std::sort(lhs_norm.begin(), lhs_norm.end());
+  std::sort(rhs_norm.begin(), rhs_norm.end());
+
+  Node left  = utils::mk_nary(kind, lhs_norm);
+  Node right = utils::mk_nary(kind, rhs_norm);
+
+  return {left, right};
+}
+
+std::pair<Node, bool>
+PassNormalize::normalize_add_mul(const Node& node0,
+                                 const Node& node1,
+                                 bool share_aware)
+{
+  NodeManager& nm = NodeManager::get();
+
+  Node top_lhs = get_top(node0);
+  Node top_rhs = get_top(node1);
+
+  Kind kind = top_lhs.kind();
+  if (kind == top_rhs.kind() && (kind == Kind::BV_ADD || kind == Kind::BV_MUL))
+  {
+    // Note: parents could also be computed based on node0 and node1, but
+    //       get_top() and rebuild_top() do not handle this case yet.
+    std::unordered_map<Node, uint64_t> parents =
+        share_aware ? _count_parents({top_lhs, top_rhs}, kind)
+                    : std::unordered_map<Node, uint64_t>();
+
+    auto lhs           = compute_factors(top_lhs, parents);
+    auto rhs           = compute_factors(top_rhs, parents);
+    auto [left, right] = normalize_common(kind, lhs, rhs);
+    auto rebuilt_left  = rebuild_top(node0, top_lhs, left);
+    auto rebuilt_right = rebuild_top(node1, top_rhs, right);
+    return {nm.mk_node(Kind::EQUAL, {rebuilt_left, rebuilt_right}), false};
+  }
+  return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
+}
+
+Node
+PassNormalize::get_top(const Node& node)
+{
+  Node cur = node;
+  Kind k;
+  while (true)
+  {
+    k = cur.kind();
+    if (k == Kind::BV_NOT || k == Kind::BV_SHL || k == Kind::BV_SHR
+        || k == Kind::BV_EXTRACT)
+    {
+      cur = cur[0];
+    }
+    else
+    {
+      break;
+    }
+  }
+  return cur;
+}
+
+Node
+PassNormalize::rebuild_top(const Node& node,
+                           const Node& top,
+                           const Node& normalized)
+{
+  (void) top;
+
+  node_ref_vector visit{node};
+  std::unordered_map<Node, Node> cache;
+
+  Kind k;
+  do
+  {
+    const Node& cur = visit.back();
+
+    auto [it, inserted] = cache.emplace(cur, Node());
+
+    if (inserted)
+    {
+      k = cur.kind();
+      if (k == Kind::BV_NOT || k == Kind::BV_SHL || k == Kind::BV_SHR
+          || k == Kind::BV_EXTRACT)
+      {
+        visit.push_back(cur[0]);
+        // Other children stay the same
+        for (size_t i = 1, size = cur.num_children(); i < size; ++i)
+        {
+          cache.emplace(cur[i], cur[i]);
+        }
+        continue;
+      }
+      else
+      {
+        assert(cur == top);
+        it->second = normalized;
+      }
+    }
+    else if (it->second.is_null())
+    {
+      it->second = utils::rebuild_node(cur, cache);
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+  return cache.at(node);
+}
+
 void
 PassNormalize::apply(AssertionVector& assertions)
 {
@@ -615,6 +782,13 @@ PassNormalize::process(const Node& node)
       {
         auto [res, normalized] =
             normalize_eq_add_mul(children[0], children[1], share_aware);
+        it->second = res;
+        if (normalized) d_stats.num_normalizations += 1;
+      }
+      else if (cur.kind() == Kind::EQUAL)
+      {
+        auto [res, normalized] =
+            normalize_add_mul(children[0], children[1], share_aware);
         it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }
