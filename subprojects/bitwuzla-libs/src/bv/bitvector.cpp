@@ -311,10 +311,10 @@ BitVector::from_ui(uint64_t size, uint64_t value, bool truncate)
 }
 
 BitVector
-BitVector::from_si(uint64_t size, int64_t value)
+BitVector::from_si(uint64_t size, int64_t value, bool truncate)
 {
   assert(size > 0);
-  assert(fits_in_size(size, static_cast<uint64_t>(value), true));
+  assert(truncate || fits_in_size(size, static_cast<uint64_t>(value), true));
 
   BitVector res(size);
   if (res.is_gmp())

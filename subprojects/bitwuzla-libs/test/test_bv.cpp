@@ -3206,6 +3206,9 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_EQ(BitVector::from_ui(16, 1234).str(), "0000010011010010");
   ASSERT_EQ(BitVector::from_ui(16, 65535).str(), "1111111111111111");
 
+  ASSERT_EQ(BitVector::from_ui(6, 141, true).str(), "001101");
+  ASSERT_EQ(BitVector::from_si(6, -129, true).str(), "111111");
+
   ASSERT_DEATH(BitVector(0), "> 0");
   ASSERT_DEATH(BitVector(2, "101010"), "fits_in_size");
   ASSERT_DEATH(BitVector(6, "a01010"), "is_valid_bin_str");
@@ -3309,7 +3312,6 @@ TEST_F(TestBitVector, str)
   ASSERT_EQ(BitVector(10).str(), "0000000000");
   ASSERT_EQ(BitVector(6, "101010").str(), "101010");
   ASSERT_EQ(BitVector(8, "101010").str(), "00101010");
-  ASSERT_EQ(BitVector::from_ui(6, 141, true).str(), "001101");
   ASSERT_EQ(BitVector::from_ui(16, 1234).str(), "0000010011010010");
   ASSERT_EQ(BitVector::from_ui(16, 65530).str(), "1111111111111010");
   ASSERT_EQ(BitVector::from_ui(16, 65535).str(), "1111111111111111");

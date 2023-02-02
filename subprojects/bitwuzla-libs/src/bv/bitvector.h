@@ -63,7 +63,8 @@ class BitVector
   /**
    * Construct a bit-vector of given size from given int64 value.
    *
-   * @note Asserts that given value fits into a bit-vector of given size.
+   * Truncates value if `truncate` is true and the value cannot be
+   * represented with `size` bits.
    *
    * @note For signed values, always use this function. It guarantees that
    *       negative values are sign extended to `size` if `size > 64`, which
@@ -71,9 +72,11 @@ class BitVector
    *
    * @param size  The size of the bit-vector.
    * @param value A int64 representing the bit-vector value. The value must be
-   *              representable with `size` bits.
+   *              representable with `size` bits if `truncate` is false.
+   * @param truncate True to allow truncating the value if it is not
+   *                 representable with `size` bits.
    */
-  static BitVector from_si(uint64_t size, int64_t value);
+  static BitVector from_si(uint64_t size, int64_t value, bool truncate = false);
 
   /**
    * Create a true bit-vector (value 1 of size 1).
