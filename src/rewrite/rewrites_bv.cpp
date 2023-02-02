@@ -1980,6 +1980,21 @@ RewriteRule<RewriteRuleKind::BV_NOT_BV_NEG>::_apply(Rewriter& rewriter,
   return node;
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_NOT_BV_CONCAT>::_apply(Rewriter& rewriter,
+                                                       const Node& node)
+{
+  if (node[0].kind() == Kind::BV_CONCAT
+      && (node[0][0].is_value() || node[0][1].is_value()))
+  {
+    return rewriter.mk_node(Kind::BV_CONCAT,
+                            {rewriter.mk_node(Kind::BV_NOT, {node[0][0]}),
+                             rewriter.mk_node(Kind::BV_NOT, {node[0][1]})});
+  }
+  return node;
+}
+
 /* bvshl -------------------------------------------------------------------- */
 
 /**
