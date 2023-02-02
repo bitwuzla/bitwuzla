@@ -575,7 +575,8 @@ push_factorized(Kind kind,
   }
   else
   {
-    assert(kind == Kind::BV_MUL);
+    assert(kind == Kind::BV_MUL || kind == Kind::BV_XOR
+           || kind == Kind::BV_AND);
     nodes.insert(nodes.end(), occs, n);
   }
 }
@@ -590,6 +591,24 @@ PassNormalize::normalize_common(Kind kind,
   std::vector<Node> lhs_norm, rhs_norm, common;
   assert(!lhs.empty());
   assert(!rhs.empty());
+
+  if (kind == Kind::BV_AND)
+  {
+    for (auto it = lhs.begin(), end = lhs.end(); it != end; ++it)
+    {
+      if (it->second > 1)
+      {
+        it->second = 1;
+      }
+    }
+    for (auto it = rhs.begin(), end = rhs.end(); it != end; ++it)
+    {
+      if (it->second > 1)
+      {
+        it->second = 1;
+      }
+    }
+  }
 
   for (auto it0 = lhs.begin(), end = lhs.end(); it0 != end; ++it0)
   {
@@ -634,9 +653,10 @@ PassNormalize::normalize_common(Kind kind,
 }
 
 std::pair<Node, bool>
-PassNormalize::normalize_add_mul(const Node& node0,
-                                 const Node& node1,
-                                 bool share_aware)
+PassNormalize::normalize_comm_assoc(Kind parent_kind,
+                                    const Node& node0,
+                                    const Node& node1,
+                                    bool share_aware)
 {
   NodeManager& nm = NodeManager::get();
 
@@ -644,22 +664,25 @@ PassNormalize::normalize_add_mul(const Node& node0,
   Node top_rhs = get_top(node1);
 
   Kind kind = top_lhs.kind();
-  if (kind == top_rhs.kind() && (kind == Kind::BV_ADD || kind == Kind::BV_MUL))
+  if (kind != top_rhs.kind()
+      || (kind != Kind::BV_ADD && kind != Kind::BV_MUL && kind != Kind::BV_AND
+          && kind != Kind::BV_XOR))
   {
-    // Note: parents could also be computed based on node0 and node1, but
-    //       get_top() and rebuild_top() do not handle this case yet.
-    std::unordered_map<Node, uint64_t> parents =
-        share_aware ? _count_parents({top_lhs, top_rhs}, kind)
-                    : std::unordered_map<Node, uint64_t>();
-
-    auto lhs           = compute_factors(top_lhs, parents);
-    auto rhs           = compute_factors(top_rhs, parents);
-    auto [left, right] = normalize_common(kind, lhs, rhs);
-    auto rebuilt_left  = rebuild_top(node0, top_lhs, left);
-    auto rebuilt_right = rebuild_top(node1, top_rhs, right);
-    return {nm.mk_node(Kind::EQUAL, {rebuilt_left, rebuilt_right}), false};
+    return {nm.mk_node(parent_kind, {node0, node1}), false};
   }
-  return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
+
+  // Note: parents could also be computed based on node0 and node1, but
+  //       get_top() and rebuild_top() do not handle this case yet.
+  std::unordered_map<Node, uint64_t> parents =
+      share_aware ? _count_parents({top_lhs, top_rhs}, kind)
+                  : std::unordered_map<Node, uint64_t>();
+
+  auto lhs           = compute_factors(top_lhs, parents);
+  auto rhs           = compute_factors(top_rhs, parents);
+  auto [left, right] = normalize_common(kind, lhs, rhs);
+  auto rebuilt_left  = rebuild_top(node0, top_lhs, left);
+  auto rebuilt_right = rebuild_top(node1, top_rhs, right);
+  return {nm.mk_node(parent_kind, {rebuilt_left, rebuilt_right}), false};
 }
 
 Node
@@ -775,8 +798,13 @@ PassNormalize::process(const Node& node)
         assert(itc != d_cache.end());
         assert(!itc->second.is_null());
         children.push_back(itc->second);
+        if (child != itc->second)
+        {
+          d_parents[itc->second] += 1;
+        }
       }
-      if (cur.kind() == Kind::EQUAL && children[0].kind() == children[1].kind()
+      Kind k = cur.kind();
+      if (k == Kind::EQUAL && children[0].kind() == children[1].kind()
           && (children[0].kind() == Kind::BV_ADD
               || children[0].kind() == Kind::BV_MUL))
       {
@@ -785,10 +813,18 @@ PassNormalize::process(const Node& node)
         it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }
-      else if (cur.kind() == Kind::EQUAL)
+      else if (k == Kind::EQUAL || k == Kind::BV_ULT || k == Kind::BV_SLT)
       {
         auto [res, normalized] =
-            normalize_add_mul(children[0], children[1], share_aware);
+            normalize_comm_assoc(k, children[0], children[1], share_aware);
+        it->second = res;
+        if (normalized) d_stats.num_normalizations += 1;
+      }
+      else if ((k == Kind::BV_AND || k == Kind::BV_ADD || k == Kind::BV_MUL)
+               && (cur[0].kind() == cur[1].kind() && cur[0].kind() != k))
+      {
+        auto [res, normalized] =
+            normalize_comm_assoc(k, children[0], children[1], share_aware);
         it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }

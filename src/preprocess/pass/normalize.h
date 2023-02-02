@@ -96,9 +96,10 @@ class PassNormalize : public PreprocessingPass
    * General normalization of adder and multiplier chains to extract common
    * parts.
    */
-  std::pair<Node, bool> normalize_add_mul(const Node& node0,
-                                          const Node& node1,
-                                          bool share_aware);
+  std::pair<Node, bool> normalize_comm_assoc(node::Kind parent_kind,
+                                             const Node& node0,
+                                             const Node& node1,
+                                             bool share_aware);
 
   /**
    * Helper to normalize common parts of lhs and rhs.
