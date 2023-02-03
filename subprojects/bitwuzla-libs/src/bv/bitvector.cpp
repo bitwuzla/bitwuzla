@@ -625,10 +625,10 @@ BitVector::str(uint32_t base) const
 }
 
 uint64_t
-BitVector::to_uint64() const
+BitVector::to_uint64(bool truncate) const
 {
   assert(!is_null());
-  assert(d_size <= 64);
+  assert(truncate || d_size <= 64);
   if (is_gmp())
   {
     return mpz_get_ui(d_val_gmp);

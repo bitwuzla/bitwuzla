@@ -263,9 +263,11 @@ class BitVector
   /**
    * Get the uint64_t representation of this bit-vector.
    * @param size The size of this bit-vector, must be <= 64.
+   * @param truncate True to allow truncating the value if it is not
+   *                 representable with 64 bits.
    * @return The uint64_t representation.
    */
-  uint64_t to_uint64() const;
+  uint64_t to_uint64(bool truncate = false) const;
 
   /** @return the size of this bit-vector. */
   uint64_t size() const { return d_size; }

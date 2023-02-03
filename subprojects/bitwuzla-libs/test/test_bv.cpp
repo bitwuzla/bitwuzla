@@ -3371,6 +3371,7 @@ TEST_F(TestBitVector, to_uint64)
     ASSERT_EQ(x, y);
   }
   ASSERT_NO_FATAL_FAILURE(BitVector(28).to_uint64());
+  ASSERT_EQ(BitVector(128, std::string(65, '1')).to_uint64(true), UINT64_MAX);
   ASSERT_DEATH(BitVector(128).to_uint64(), "d_size <= 64");
 }
 
