@@ -40,6 +40,18 @@ class TestPassNormalize : public TestPreprocessingPass
     return d_nm.mk_node(Kind::BV_MUL, {a, b});
   }
 
+  Node aand(const Node& a, const Node& b) const
+  {
+    return d_nm.mk_node(Kind::BV_AND, {a, b});
+  }
+
+  Node oor(const Node& a, const Node& b) const
+  {
+    return RewriteRule<RewriteRuleKind::BV_OR_ELIM>::apply(
+               d_env->rewriter(), d_nm.mk_node(Kind::BV_OR, {a, b}))
+        .first;
+  }
+
   Node equal(const Node& a, const Node& b) const
   {
     return d_nm.mk_node(Kind::EQUAL, {a, b});
@@ -864,6 +876,21 @@ TEST_F(TestPassNormalize, add_normalize12)
                  add(a, add(inv(add_ab), one)))}));
 }
 
+TEST_F(TestPassNormalize, add_normalize13)
+{
+  // (a & b) + (a | b)
+  Node and_ab = aand(d_a, d_b);
+  Node or_ab  = oor(d_a, d_b);
+  Node add0   = add(and_ab, or_ab);
+  // s + t
+  Node add1 = add(d_a, d_b);
+  test_assertion(equal(add0, add1),
+                 equal(add(and_ab, d_nm.mk_value(BitVector::mk_ones(8))),
+                       add(add(d_a, d_b), aand(inv(d_a), inv(d_b)))),
+                 equal(add(and_ab, d_nm.mk_value(BitVector::mk_ones(8))),
+                       add(add(d_a, d_b), aand(inv(d_a), inv(d_b)))));
+}
+
 /* -------------------------------------------------------------------------- */
 
 TEST_F(TestPassNormalize, add_normalize_neg0)
@@ -918,8 +945,8 @@ TEST_F(TestPassNormalize, add_normalize_neg4)
   Node add1            = add(add_a_ab_ab, add_ab_ab_ab_ab);
 
   test_assertion(equal(add0, add1),
-                 equal(add(d_two, add(d_d, d_e)), d_zero),
-                 equal(add(d_two, add(d_d, d_e)), d_zero));
+                 equal(add(add(d_d, d_e), d_two), d_zero),
+                 equal(add(add(d_d, d_e), d_two), d_zero));
 }
 
 //(not (= s (bvadd (bvadd (bvadd s t) (bvmul s t)) (bvmul t (bvnot s)))))

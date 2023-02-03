@@ -25,10 +25,11 @@ bool
 is_leaf(Kind kind,
         const Node& node,
         const std::unordered_map<Node, uint64_t>& parents,
-        const std::unordered_map<Node, uint64_t>& parents_in_chain)
+        const std::unordered_map<Node, uint64_t>& parents_in_chain,
+        bool consider_neg)
 {
   if (!(node.kind() == kind
-        || (kind == Kind::BV_ADD && node.is_inverted()
+        || (consider_neg && kind == Kind::BV_ADD && node.is_inverted()
             && node[0].kind() == kind)))
   {
     return true;
@@ -71,7 +72,7 @@ PassNormalize::compute_factors(
           // from outside the current 'kind' chain
           assert(d_parents.find(cur) != d_parents.end());
           assert(parents.find(cur) != parents.end());
-          if (is_leaf(kind, cur, d_parents, parents))
+          if (is_leaf(kind, cur, d_parents, parents, consider_neg))
           {
             continue;
           }
@@ -104,7 +105,7 @@ PassNormalize::compute_factors(
         // from outside the current 'kind' chain
         assert(d_parents.find(cur) != d_parents.end());
         assert(parents.find(cur) != parents.end());
-        if (is_leaf(kind, cur, d_parents, parents))
+        if (is_leaf(kind, cur, d_parents, parents, consider_neg))
         {
           res.emplace(cur, factors[cur]);
           continue;
@@ -127,7 +128,7 @@ PassNormalize::compute_factors(
         {
           factors[child] = fit->second + factors[child] - 1;
         }
-        if (is_leaf(kind, child, d_parents, parents))
+        if (is_leaf(kind, child, d_parents, parents, consider_neg))
         {
           auto rit = res.find(child);
           if (rit == res.end())
@@ -199,90 +200,65 @@ _normalize_factors_eq_add(std::unordered_map<Node, uint64_t>& factors0,
 
   NodeManager& nm = NodeManager::get();
   Node one        = nm.mk_value(BitVector::mk_one(bv_size));
-  BitVector value = BitVector::mk_zero(bv_size);
-  node_ref_vector erase;
+  bool normalized = false;
 
-  for (const auto& f : factors0)
+  // summarize values
+  BitVector lvalue = BitVector::mk_zero(bv_size);
+  for (auto& f : factors0)
+  {
+    if (f.first.is_value())
+    {
+      lvalue.ibvadd(f.first.value<BitVector>().bvmul(
+          BitVector::from_ui(bv_size, f.second, true)));
+      f.second   = 0;
+      normalized = true;
+    }
+  }
+
+  // move negated occurrences to other side
+  for (auto& f : factors0)
   {
     const Node& cur = f.first;
     uint64_t factor = f.second;
     if (!factor)
     {
-      erase.push_back(cur);  // cache for deletion
+      continue;
     }
-    else if (cur.is_value())
-    {
-      erase.push_back(cur);  // cache for deletion
-      const BitVector& cur_val = cur.value<BitVector>();
-      if (factor > 1)
-      {
-        BitVector fact = BitVector::from_ui(bv_size, factor, true);
-        if (!fact.is_zero())
-        {
-          if (fact.is_one())
-          {
-            value.ibvadd(cur_val);
-          }
-          else
-          {
-            value.ibvadd(cur_val.bvmul(fact));
-          }
-        }
-      }
-      else
-      {
-        value.ibvadd(cur_val);
-      }
-    }
-    else if (cur.is_inverted())
+    if (cur.is_inverted())
     {
       Node neg;
       if (cur[0].kind() == Kind::BV_ADD)
       {
         if (cur[0][0] == one)
         {
-          erase.push_back(cur);  // cache for deletion
+          f.second = 0;
           neg = cur[0][1];
-          value.ibvsub(BitVector::from_ui(bv_size, factor, true));
+          lvalue.ibvsub(BitVector::from_ui(bv_size, factor, true));
         }
         else if (cur[0][1] == one)
         {
-          erase.push_back(cur);  // cache for deletion
+          f.second = 0;
           neg = cur[0][0];
-          value.ibvsub(BitVector::from_ui(bv_size, factor, true));
+          lvalue.ibvsub(BitVector::from_ui(bv_size, factor, true));
         }
       }
       else
       {
-        erase.push_back(cur);  // cache for deletion
+        f.second = 0;
         neg = cur[0];
       }
       if (!neg.is_null())
       {
-        auto it = factors1.find(neg);
-        if (it == factors1.end())
-        {
-          factors1.emplace(neg, factor);
-        }
-        else
-        {
-          it->second += factor;
-        }
-        value.ibvsub(BitVector::from_ui(bv_size, factor, true));
+        normalized = true;
+        factors1[neg] += factor;
+        lvalue.ibvsub(BitVector::from_ui(bv_size, factor, true));
       }
     }
   }
-  bool normalized = !erase.empty();
-  for (auto& node : erase)
+  if (!lvalue.is_zero())
   {
-    assert(factors0.find(node) != factors0.end());
-    factors0.erase(node);
-  }
-  if (!value.is_zero())
-  {
-    Node val = nm.mk_value(value);
-    assert(factors0.find(val) == factors0.end());
-    factors0.emplace(nm.mk_value(value), 1);
+    Node val = nm.mk_value(lvalue);
+    factors0[val] += 1;
   }
 
   return normalized;
@@ -430,13 +406,10 @@ get_factorized_add(const Node& node, const BitVector& factor)
 {
   assert(!node.is_null());
   NodeManager& nm = NodeManager::get();
+  assert(!factor.is_zero());
   if (factor.is_one())
   {
     return node;
-  }
-  if (factor.is_zero())
-  {
-    return nm.mk_value(factor);
   }
   if (factor.is_ones())
   {
@@ -460,7 +433,6 @@ PassNormalize::_normalize_eq_add(std::unordered_map<Node, uint64_t>& factors0,
 
   for (const auto& f : factors0)
   {
-    assert(f.second);
     BitVector factor = BitVector::from_ui(bv_size, f.second, true);
     if (factor.is_zero())
     {
@@ -477,7 +449,6 @@ PassNormalize::_normalize_eq_add(std::unordered_map<Node, uint64_t>& factors0,
   }
   for (const auto& f : factors1)
   {
-    assert(f.second);
     BitVector factor = BitVector::from_ui(bv_size, f.second, true);
     if (factor.is_zero())
     {
@@ -493,48 +464,28 @@ PassNormalize::_normalize_eq_add(std::unordered_map<Node, uint64_t>& factors0,
     }
   }
 
-  std::sort(lhs.begin(), lhs.end());
-  std::sort(rhs.begin(), rhs.end());
-
-  Node left  = lhs.empty() ? Node() : node::utils::mk_nary(Kind::BV_ADD, lhs);
-  Node right = rhs.empty() ? Node() : node::utils::mk_nary(Kind::BV_ADD, rhs);
   // normalize values, e.g., (a + 2 = b + 3) -> (a - 1 = b)
   if (!lvalue.is_zero())
   {
-    if (!rvalue.is_zero())
-    {
-      lvalue.ibvsub(rvalue);
-      rvalue = BitVector::mk_zero(bv_size);
-    }
+    lvalue.ibvsub(rvalue);
     if (!lvalue.is_zero())
     {
-      left = left.is_null()
-                 ? nm.mk_value(lvalue)
-                 : (lvalue.is_ones() ? nm.mk_node(Kind::BV_NEG, {left})
-                                     : nm.mk_node(Kind::BV_ADD,
-                                                  {nm.mk_value(lvalue), left}));
+      lhs.push_back(nm.mk_value(lvalue));
     }
   }
   else if (!rvalue.is_zero())
   {
-    right = right.is_null()
-                ? nm.mk_value(rvalue)
-                : (rvalue.is_ones() ? nm.mk_node(Kind::BV_NEG, {right})
-                                    : nm.mk_node(Kind::BV_ADD,
-                                                 {nm.mk_value(rvalue), right}));
+    rhs.push_back(nm.mk_value(rvalue));
   }
-  if (left.is_null())
-  {
-    assert(lvalue.is_zero());
-    left = nm.mk_value(lvalue);
-  }
-  if (right.is_null())
-  {
-    assert(rvalue.is_zero());
-    right = nm.mk_value(rvalue);
-  }
-  return {left.is_null() ? nm.mk_value(BitVector::mk_zero(bv_size)) : left,
-          right.is_null() ? nm.mk_value(BitVector::mk_zero(bv_size)) : right};
+
+  std::sort(lhs.begin(), lhs.end());
+  std::sort(rhs.begin(), rhs.end());
+
+  Node left  = lhs.empty() ? nm.mk_value(BitVector::mk_zero(bv_size))
+                           : node::utils::mk_nary(Kind::BV_ADD, lhs);
+  Node right = rhs.empty() ? nm.mk_value(BitVector::mk_zero(bv_size))
+                           : node::utils::mk_nary(Kind::BV_ADD, rhs);
+  return {left, right};
 }
 
 std::pair<Node, bool>
