@@ -34,7 +34,7 @@ class PassNormalize : public PreprocessingPass
    *                not normalize in a share aware manner.
    * @return A map from node to its occurrence count.
    */
-  std::unordered_map<Node, uint64_t> compute_factors(
+  std::unordered_map<Node, BitVector> compute_factors(
       const Node& node,
       const std::unordered_map<Node, uint64_t>& parents,
       bool consider_neg);
@@ -50,8 +50,8 @@ class PassNormalize : public PreprocessingPass
    *         flag to indicate if normalization was successful. The resulting
    *         sets may be empty (only both, or none).
    */
-  std::tuple<std::unordered_map<Node, uint64_t>,
-             std::unordered_map<Node, uint64_t>,
+  std::tuple<std::unordered_map<Node, BitVector>,
+             std::unordered_map<Node, BitVector>,
              bool>
   get_normalized_factors_for_eq(const Node& node0,
                                 const Node& node1,
@@ -78,8 +78,8 @@ class PassNormalize : public PreprocessingPass
    * @param A pair of lhs and rhs normalized nodes.
    */
   std::pair<Node, Node> _normalize_eq_mul(
-      const std::unordered_map<Node, uint64_t>& factors0,
-      const std::unordered_map<Node, uint64_t>& factors1,
+      const std::unordered_map<Node, BitVector>& factors0,
+      const std::unordered_map<Node, BitVector>& factors1,
       uint64_t bv_size);
   /**
    * Helper to normalize equality over addition.
@@ -90,8 +90,8 @@ class PassNormalize : public PreprocessingPass
    * @param A pair of lhs and rhs normalized nodes.
    */
   std::pair<Node, Node> _normalize_eq_add(
-      std::unordered_map<Node, uint64_t>& factors0,
-      std::unordered_map<Node, uint64_t>& factors1,
+      std::unordered_map<Node, BitVector>& factors0,
+      std::unordered_map<Node, BitVector>& factors1,
       uint64_t bv_size);
 
   /**
@@ -113,8 +113,8 @@ class PassNormalize : public PreprocessingPass
    */
   std::pair<Node, Node> normalize_common(
       node::Kind kind,
-      std::unordered_map<Node, uint64_t>& lhs,
-      std::unordered_map<Node, uint64_t>& rhs);
+      std::unordered_map<Node, BitVector>& lhs,
+      std::unordered_map<Node, BitVector>& rhs);
 
   /**
    * Helper to extract top-most adder or multiplier from node.

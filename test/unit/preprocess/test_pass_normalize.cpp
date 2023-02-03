@@ -71,20 +71,24 @@ class TestPassNormalize : public TestPreprocessingPass
         std::cout << "factors:" << std::endl;
         for (const auto& f : factors)
         {
-          std::cout << "  " << f.first << ": " << f.second << std::endl;
+          std::cout << "  " << f.first << ": " << f.second.to_uint64(true)
+                    << std::endl;
         }
       }
       assert(it != factors.end());
-      if (it->second != p.second)
+      uint64_t size = it->second.size();
+      uint64_t factor =
+          it->second.bvsext(size < 64 ? 64 - size : 0).to_uint64(true);
+      if (factor != p.second)
       {
-        std::cout << it->first << " with " << it->second
+        std::cout << it->first << " with " << factor
                   << ", expected: " << p.second << std::endl;
         for (auto& f : factors)
         {
-          std::cout << " - " << f.first << ": " << f.second << std::endl;
+          std::cout << " - " << f.first << ": " << factor << std::endl;
         }
       }
-      ASSERT_EQ(it->second, p.second);
+      ASSERT_EQ(factor, p.second);
     }
   }
 
@@ -95,31 +99,9 @@ class TestPassNormalize : public TestPreprocessingPass
   {
     auto factors0 = d_pass->compute_factors(node[0], {}, consider_neg);
     auto factors1 = d_pass->compute_factors(node[1], {}, consider_neg);
-    const std::unordered_map<Node, uint64_t>* factors[2]{&factors0, &factors1};
-    const std::unordered_map<Node, uint64_t>* expected[2]{&expected0,
-                                                          &expected1};
-    for (size_t i = 0; i < 2; ++i)
-    {
-      for (auto& p : *expected[i])
-      {
-        auto it = factors[i]->find(p.first);
-        if (it == factors[i]->end())
-        {
-          std::cout << "missing factor for: " << p.first << std::endl;
-        }
-        assert(it != factors[i]->end());
-        if (it->second != p.second)
-        {
-          std::cout << "factors" << i << ": " << it->first << " with "
-                    << it->second << ", expected: " << p.second << std::endl;
-          for (auto& f : *factors[i])
-          {
-            std::cout << " - " << f.first << ": " << f.second << std::endl;
-          }
-        }
-        ASSERT_EQ(it->second, p.second);
-      }
-    }
+
+    test_compute_factors(node[0], expected0, consider_neg);
+    test_compute_factors(node[1], expected1, consider_neg);
   }
 
   void test_assertion(const Node& node,
@@ -938,16 +920,16 @@ TEST_F(TestPassNormalize, add_normalize12)
       d_nm.mk_node(Kind::AND, {d_true, equal(add0, add1)}),
       d_nm.mk_node(Kind::AND,
                    {d_true,
-                    equal(add(add(e, mul_ad),
+                    equal(add(add(add(b, e), mul_ad),
                               d_nm.mk_node(Kind::ITE, {d_true, zero, one})),
-                          add(inv(b), one))}),
+                          zero)}),
       d_nm.mk_node(
           Kind::AND,
           {d_true,
-           equal(add(add(e, mul_ad),
+           equal(add(add(add(e, add_ab), mul_ad),
                      d_nm.mk_node(Kind::ITE,
                                   {equal(add(a, b), add(b, a)), zero, one})),
-                 add(a, add(inv(add_ab), one)))}));
+                 a)}));
 }
 
 TEST_F(TestPassNormalize, add_normalize13)
