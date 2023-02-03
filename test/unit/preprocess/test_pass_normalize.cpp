@@ -58,11 +58,43 @@ class TestPassNormalize : public TestPreprocessingPass
   }
 
   void test_compute_factors(const Node& node,
-                            const std::unordered_map<Node, uint64_t>& expected0,
-                            const std::unordered_map<Node, uint64_t>& expected1)
+                            const std::unordered_map<Node, uint64_t>& expected,
+                            bool consider_neg)
   {
-    auto factors0 = d_pass->compute_factors(node[0], {}, false);
-    auto factors1 = d_pass->compute_factors(node[1], {}, false);
+    auto factors = d_pass->compute_factors(node, {}, consider_neg);
+    for (auto& p : expected)
+    {
+      auto it = factors.find(p.first);
+      if (it == factors.end())
+      {
+        std::cout << "missing factor for: " << p.first << std::endl;
+        std::cout << "factors:" << std::endl;
+        for (const auto& f : factors)
+        {
+          std::cout << "  " << f.first << ": " << f.second << std::endl;
+        }
+      }
+      assert(it != factors.end());
+      if (it->second != p.second)
+      {
+        std::cout << it->first << " with " << it->second
+                  << ", expected: " << p.second << std::endl;
+        for (auto& f : factors)
+        {
+          std::cout << " - " << f.first << ": " << f.second << std::endl;
+        }
+      }
+      ASSERT_EQ(it->second, p.second);
+    }
+  }
+
+  void test_compute_factors(const Node& node,
+                            const std::unordered_map<Node, uint64_t>& expected0,
+                            const std::unordered_map<Node, uint64_t>& expected1,
+                            bool consider_neg)
+  {
+    auto factors0 = d_pass->compute_factors(node[0], {}, consider_neg);
+    auto factors1 = d_pass->compute_factors(node[1], {}, consider_neg);
     const std::unordered_map<Node, uint64_t>* factors[2]{&factors0, &factors1};
     const std::unordered_map<Node, uint64_t>* expected[2]{&expected0,
                                                           &expected1};
@@ -154,7 +186,8 @@ TEST_F(TestPassNormalize, compute_factors0)
 
   test_compute_factors(equal(mul0, mul1),
                        {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}});
+                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                       false);
 }
 
 TEST_F(TestPassNormalize, compute_factors1)
@@ -172,7 +205,8 @@ TEST_F(TestPassNormalize, compute_factors1)
 
   test_compute_factors(equal(mul0, mul1),
                        {{d_a, 2}, {d_b, 1}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}});
+                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                       false);
 }
 
 TEST_F(TestPassNormalize, compute_factors2)
@@ -190,7 +224,8 @@ TEST_F(TestPassNormalize, compute_factors2)
 
   test_compute_factors(equal(mul0, mul1),
                        {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 2}, {d_b, 1}, {d_c, 1}, {d_e, 1}});
+                       {{d_a, 2}, {d_b, 1}, {d_c, 1}, {d_e, 1}},
+                       false);
 }
 
 TEST_F(TestPassNormalize, compute_factors3)
@@ -209,7 +244,8 @@ TEST_F(TestPassNormalize, compute_factors3)
 
   test_compute_factors(equal(mul0, mul1),
                        {{d_a, 2}, {d_b, 2}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}});
+                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                       false);
 }
 
 TEST_F(TestPassNormalize, compute_factors4)
@@ -227,7 +263,8 @@ TEST_F(TestPassNormalize, compute_factors4)
 
   test_compute_factors(equal(mul0, mul1),
                        {{d_a, 2}, {d_b, 2}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 2}, {d_b, 1}, {d_c, 2}, {d_d, 2}});
+                       {{d_a, 2}, {d_b, 1}, {d_c, 2}, {d_d, 2}},
+                       false);
 }
 
 TEST_F(TestPassNormalize, compute_factors5)
@@ -246,7 +283,8 @@ TEST_F(TestPassNormalize, compute_factors5)
 
   test_compute_factors(equal(mul0, mul1),
                        {{d_a, 3}, {d_b, 2}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 2}, {d_b, 1}, {d_c, 2}, {d_d, 2}});
+                       {{d_a, 2}, {d_b, 1}, {d_c, 2}, {d_d, 2}},
+                       false);
 }
 
 TEST_F(TestPassNormalize, compute_factors6)
@@ -265,7 +303,8 @@ TEST_F(TestPassNormalize, compute_factors6)
 
   test_compute_factors(equal(mul0, mul1),
                        {{d_a, 3}, {d_b, 2}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 7}, {d_b, 6}});
+                       {{d_a, 7}, {d_b, 6}},
+                       false);
 }
 
 TEST_F(TestPassNormalize, compute_factors7)
@@ -284,8 +323,43 @@ TEST_F(TestPassNormalize, compute_factors7)
   Node mul_cd_a_cd = mul(mul_cd, add_a_cd);
   Node mul1        = mul(add_ab, mul_cd_a_cd);
 
+  test_compute_factors(equal(mul0, mul1),
+                       {{d_a, 1}, {d_b, 1}, {d_e, 1}},
+                       {{d_c, 1}, {d_d, 1}},
+                       false);
+}
+
+TEST_F(TestPassNormalize, compute_factors_neg0)
+{
+  // (a + b) + ((-a + d) + (-e + (a + b))
+  Node add_ab      = add(d_a, d_b);
+  Node add_ad      = add(neg(d_a), d_d);
+  Node add_e_ab    = add(neg(d_e), add_ab);
+  Node add_ad_e_ab = add(add_ad, add_e_ab);
+  Node add0        = add(add_ab, add_ad_e_ab);
+
   test_compute_factors(
-      equal(mul0, mul1), {{d_a, 1}, {d_b, 1}, {d_e, 1}}, {{d_c, 1}, {d_d, 1}});
+      add0,
+      {{d_a, 2}, {inv(d_a), 1}, {d_b, 2}, {inv(d_e), 1}, {d_one, 2}},
+      true);
+}
+
+TEST_F(TestPassNormalize, compute_factors_neg1)
+{
+  // (a + b) + (-(a + d) + (e + -(a + b))
+  Node add_ab      = add(d_a, d_b);
+  Node add_ad      = add(d_a, d_d);
+  Node add_e_ab    = add(d_e, neg(add_ab));
+  Node add_ad_e_ab = add(neg(add_ad), add_e_ab);
+  Node add0        = add(add_ab, add_ad_e_ab);
+
+  test_compute_factors(add0,
+                       {{d_a, UINT64_MAX},
+                        {d_b, 0},
+                        {d_e, 1},
+                        {d_one, 2},
+                        {d_nm.mk_value(BitVector::mk_ones(8).ibvdec()), 1}},
+                       true);
 }
 
 /* -------------------------------------------------------------------------- */
