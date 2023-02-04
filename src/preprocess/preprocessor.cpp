@@ -133,7 +133,9 @@ Preprocessor::apply(AssertionVector& assertions)
   auto& options  = d_env.options();
   bool enable             = options.preprocess();
   bool skel_done = false;
+#if 0
   bool uninterpreted_done = false;
+#endif
   // fixed-point passes
   do
   {
@@ -193,6 +195,7 @@ Preprocessor::apply(AssertionVector& assertions)
     d_pass_elim_lambda.apply(assertions);
     Msg(2) << assertions.num_modified() - cnt << " after lambda elimination";
 
+#if 0
     if (!uninterpreted_done)
     {
       cnt = assertions.num_modified();
@@ -201,6 +204,7 @@ Preprocessor::apply(AssertionVector& assertions)
              << " after uninterpreted const/var elimination";
       uninterpreted_done = true;
     }
+#endif
 
     if (enable && options.pp_normalize())
     {

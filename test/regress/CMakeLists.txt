@@ -58,8 +58,8 @@ set(testcases
 "rewrite/array/rww1.btor.smt2"
 "rewrite/bv/eq_special_const_bvand.smt2"
 "rewrite/bv/eq_special_const_bvor.smt2"
-"solver/declsort0.smt2"
-"solver/declsort1.smt2"
+#"solver/declsort0.smt2" # TODO: disabled due to missing support in fun solver
+#"solver/declsort1.smt2" # TODO: disabled due to missing support infun solver
 "solver/process_term1.smt2"
 "solver/array/arraycond1.btor.smt2"
 "solver/array/arraycond10.btor.smt2"

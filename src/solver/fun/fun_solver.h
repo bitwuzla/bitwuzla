@@ -32,6 +32,8 @@ class FunSolver : public Solver
 
   /** Registered function applications. */
   backtrack::vector<Node> d_applies;
+  /** Registered equalities. */
+  backtrack::vector<Node> d_equalities;
 
   /**
    * Utility class used to store function applications in d_fun_models.

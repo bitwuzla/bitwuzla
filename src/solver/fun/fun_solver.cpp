@@ -9,15 +9,30 @@ using namespace node;
 
 /* --- FunSolver public ----------------------------------------------------- */
 
+namespace {
+
+void
+unsupported()
+{
+  std::cerr << "[bitwuzla] Uninterpreted sorts not yet supported" << std::endl;
+  abort();
+}
+
+}  // namespace
+
 bool
 FunSolver::is_theory_leaf(const Node& term)
 {
   Kind k = term.kind();
-  return k == Kind::APPLY || (k == Kind::EQUAL && (term[0].type().is_fun()));
+  return k == Kind::APPLY
+         || (k == Kind::EQUAL
+             && (term[0].type().is_fun() || term[0].type().is_uninterpreted()));
 }
 
 FunSolver::FunSolver(Env& env, SolverState& state)
-    : Solver(env, state), d_applies(state.backtrack_mgr())
+    : Solver(env, state),
+      d_applies(state.backtrack_mgr()),
+      d_equalities(state.backtrack_mgr())
 {
 }
 
@@ -27,6 +42,11 @@ bool
 FunSolver::check()
 {
   d_fun_models.clear();
+  if (!d_equalities.empty())
+  {
+    unsupported();
+  }
+
   // Do not cache size here since d_applies may grow while iterating.
   for (size_t i = 0; i < d_applies.size(); ++i)
   {
@@ -88,10 +108,15 @@ FunSolver::value(const Node& term)
 void
 FunSolver::register_term(const Node& term)
 {
-  // For now we only expect function applications
-  assert(term.kind() == Kind::APPLY);
-  assert(term[0].kind() != Kind::LAMBDA);
-  d_applies.push_back(term);
+  if (term.kind() == Kind::APPLY)
+  {
+    assert(term[0].kind() != Kind::LAMBDA);
+    d_applies.push_back(term);
+  }
+  else
+  {
+    d_equalities.push_back(term);
+  }
 }
 
 /* --- FunSolver private ---------------------------------------------------- */
@@ -125,6 +150,10 @@ FunSolver::Apply::Apply(const Node& apply, SolverState& state)
   // argument model values.
   for (size_t i = 1, size = apply.num_children(); i < size; ++i)
   {
+    if (apply[i].type().is_uninterpreted())
+    {
+      unsupported();
+    }
     d_values.emplace_back(state.value(apply[i]));
     d_hash += std::hash<Node>{}(d_values.back());
   }
