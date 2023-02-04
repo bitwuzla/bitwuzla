@@ -664,8 +664,8 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
 
   Kind kind = top_lhs.kind();
   if (kind != top_rhs.kind()
-      || (kind != Kind::BV_ADD && kind != Kind::BV_MUL && kind != Kind::BV_AND
-          && kind != Kind::BV_XOR))
+      || (kind != Kind::BV_ADD && kind != Kind::BV_MUL))
+    // && kind != Kind::BV_AND && kind != Kind::BV_XOR))
   {
     return {nm.mk_node(parent_kind, {node0, node1}), false};
   }
@@ -820,6 +820,7 @@ PassNormalize::process(const Node& node)
         it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }
+#if 0
       else if ((k == Kind::BV_AND || k == Kind::BV_ADD || k == Kind::BV_MUL)
                && (cur[0].kind() == cur[1].kind() && cur[0].kind() != k))
       {
@@ -828,6 +829,7 @@ PassNormalize::process(const Node& node)
         it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }
+#endif
       else
       {
         it->second = node::utils::rebuild_node(cur, children);
