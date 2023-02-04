@@ -10,18 +10,8 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level)
   if (top_level)
   {
     std::unordered_set<int64_t> cache;
-    std::vector<std::reference_wrapper<const AigNode>> visit;
+    std::vector<std::reference_wrapper<const AigNode>> visit{node};
     std::vector<std::reference_wrapper<const AigNode>> children;
-    if (node.is_and())
-    {
-      visit.push_back(node[1]);
-      visit.push_back(node[0]);
-    }
-    else
-    {
-      visit.push_back(node);
-    }
-
     do
     {
       const AigNode& cur = visit.back();
@@ -46,25 +36,10 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level)
     } while (!visit.empty());
     assert(!children.empty());
 
-    // Top-level or
-    if (node.is_and() && node.is_negated())
+    for (const AigNode& child : children)
     {
-      for (const AigNode& child : children)
-      {
-        d_sat_solver.add(-child.get_id());
-        ++d_statistics.num_literals;
-      }
-      d_sat_solver.add(0);
+      d_sat_solver.add_clause({child.get_id()});
       ++d_statistics.num_clauses;
-    }
-    // Top-level and
-    else
-    {
-      for (const AigNode& child : children)
-      {
-        d_sat_solver.add_clause({child.get_id()});
-        ++d_statistics.num_clauses;
-      }
     }
   }
   else
