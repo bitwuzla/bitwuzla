@@ -37,14 +37,15 @@ enum class Option
   PROP_SEXT,                    // bool
 
   PP_CONTRADICTING_ANDS,           // bool
+  PP_ELIM_BV_EXTRACTS,             // bool
   PP_EMBEDDED_CONSTR,              // bool
   PP_FLATTEN_AND,                  // bool
   PP_NORMALIZE,                    // bool
   PP_NORMALIZE_SHARE_AWARE,        // bool
   PP_SKELETON_PREPROC,             // bool
   PP_VARIABLE_SUBST,               // bool
-  PP_VARIABLE_SUBST_NORM_EQ,       // bool
   PP_VARIABLE_SUBST_NORM_BV_INEQ,  // bool
+  PP_VARIABLE_SUBST_NORM_EQ,       // bool
 
   DBG_RW_NODE_THRESH,  // numeric
   DBG_PP_NODE_THRESH,  // numeric
@@ -422,6 +423,7 @@ class Options
 
   // Preprocessing
   OptionBool pp_contr_ands;
+  OptionBool pp_elim_bv_extracts;
   OptionBool pp_embedded_constr;
   OptionBool pp_flatten_and;
   OptionBool pp_normalize;

@@ -242,6 +242,15 @@ enum ENUM(Option)
    *  * **0**: disable
    */
   EVALUE(PP_CONTRADICTING_ANDS),
+  /*! **Preprocessing: Eliminate bit-vector extracts on bit-vector constants**
+   *
+   * When enabled, eliminates bit-vector extracts on constants.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PP_ELIM_BV_EXTRACTS),
   /*! **Preprocessing: Embedded constraint substitution**
    *
    * When enabled, substitutes assertions that occur as sub-expression in the

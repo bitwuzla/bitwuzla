@@ -141,7 +141,7 @@ class PreprocessingPass
    * Mark assertion as processed.
    *
    * @param assertion The assertion to cache.
-   * @return Whether assertion was added to the cache or not.x
+   * @return Whether assertion was added to the cache or not.
    */
   bool cache_assertion(const Node& assertion);
 

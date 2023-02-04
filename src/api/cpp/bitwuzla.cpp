@@ -149,6 +149,7 @@ const std::unordered_map<Option, bzla::option::Option> s_internal_options = {
 
     {Option::PP_CONTRADICTING_ANDS,
      bzla::option::Option::PP_CONTRADICTING_ANDS},
+    {Option::PP_ELIM_BV_EXTRACTS, bzla::option::Option::PP_ELIM_BV_EXTRACTS},
     {Option::PP_EMBEDDED_CONSTR, bzla::option::Option::PP_EMBEDDED_CONSTR},
     {Option::PP_FLATTEN_AND, bzla::option::Option::PP_FLATTEN_AND},
     {Option::PP_NORMALIZE, bzla::option::Option::PP_NORMALIZE},
@@ -285,6 +286,7 @@ const std::unordered_map<bzla::option::Option, Option> s_options = {
 
     {bzla::option::Option::PP_CONTRADICTING_ANDS,
      Option::PP_CONTRADICTING_ANDS},
+    {bzla::option::Option::PP_ELIM_BV_EXTRACTS, Option::PP_ELIM_BV_EXTRACTS},
     {bzla::option::Option::PP_EMBEDDED_CONSTR, Option::PP_EMBEDDED_CONSTR},
     {bzla::option::Option::PP_FLATTEN_AND, Option::PP_FLATTEN_AND},
     {bzla::option::Option::PP_NORMALIZE, Option::PP_NORMALIZE},

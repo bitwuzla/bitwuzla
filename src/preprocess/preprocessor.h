@@ -4,6 +4,7 @@
 #include "backtrack/assertion_stack.h"
 #include "backtrack/pop_callback.h"
 #include "preprocess/pass/contradicting_ands.h"
+#include "preprocess/pass/elim_extract.h"
 #include "preprocess/pass/elim_lambda.h"
 #include "preprocess/pass/elim_uninterpreted.h"
 #include "preprocess/pass/embedded_constraints.h"
@@ -70,6 +71,7 @@ class Preprocessor
   pass::PassFlattenAnd d_pass_flatten_and;
   pass::PassSkeletonPreproc d_pass_skeleton_preproc;
   pass::PassNormalize d_pass_normalize;
+  pass::PassElimExtract d_pass_elim_extract;
 
   struct Statistics
   {
