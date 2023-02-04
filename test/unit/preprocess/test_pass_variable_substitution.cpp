@@ -14,19 +14,17 @@ using namespace node;
 class TestPassVariableSubstitution : public TestPreprocessingPass
 {
  public:
-  TestPassVariableSubstitution()
+  TestPassVariableSubstitution() : d_pass(d_env, &d_bm)
   {
     d_options.rewrite_level.set(0);
     d_options.pp_embedded_constr.set(false);
     d_options.pp_flatten_and.set(false);
     d_options.pp_skeleton_preproc.set(false);
-    d_env.reset(new Env());
-    d_pass.reset(new preprocess::pass::PassVariableSubstitution(*d_env, &d_bm));
   };
 
  protected:
-  std::unique_ptr<Env> d_env;
-  std::unique_ptr<preprocess::pass::PassVariableSubstitution> d_pass;
+  Env d_env;
+  preprocess::pass::PassVariableSubstitution d_pass;
 };
 
 TEST_F(TestPassVariableSubstitution, subst1)
@@ -38,11 +36,11 @@ TEST_F(TestPassVariableSubstitution, subst1)
   d_as.push_back(eq);
 
   preprocess::AssertionVector assertions(d_as.view());
-  d_pass->apply(assertions);
+  d_pass.apply(assertions);
 
   ASSERT_EQ(d_as.size(), 1);
   ASSERT_EQ(d_as[0], d_nm.mk_value(true));
-  ASSERT_EQ(d_pass->process(eq), d_nm.mk_value(true));
+  ASSERT_EQ(d_pass.process(eq), d_nm.mk_value(true));
 }
 
 TEST_F(TestPassVariableSubstitution, subst2)
@@ -57,14 +55,14 @@ TEST_F(TestPassVariableSubstitution, subst2)
   d_as.push_back(di);
 
   preprocess::AssertionVector assertions(d_as.view());
-  d_pass->apply(assertions);
+  d_pass.apply(assertions);
 
   Node expected = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {y, t})});
   ASSERT_EQ(d_as.size(), 2);
   ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_as[1], expected);
-  ASSERT_EQ(d_pass->process(eq), d_nm.mk_value(true));
-  ASSERT_EQ(d_pass->process(di), expected);
+  ASSERT_EQ(d_pass.process(eq), d_nm.mk_value(true));
+  ASSERT_EQ(d_pass.process(di), expected);
 }
 
 TEST_F(TestPassVariableSubstitution, cycle1)
@@ -75,7 +73,7 @@ TEST_F(TestPassVariableSubstitution, cycle1)
   d_as.push_back(eq);
 
   preprocess::AssertionVector assertions(d_as.view());
-  d_pass->apply(assertions);
+  d_pass.apply(assertions);
   ASSERT_EQ(assertions[0], eq);
 }
 
@@ -92,7 +90,7 @@ TEST_F(TestPassVariableSubstitution, cycle2)
   d_as.push_back(x_and_y);
 
   preprocess::AssertionVector assertions(d_as.view());
-  d_pass->apply(assertions);
+  d_pass.apply(assertions);
   ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_as[1], d_nm.mk_value(true));
   ASSERT_EQ(d_as[2], y);
@@ -112,7 +110,7 @@ TEST_F(TestPassVariableSubstitution, cycle3)
   d_as.push_back(eq1);
 
   preprocess::AssertionVector assertions(d_as.view());
-  d_pass->apply(assertions);
+  d_pass.apply(assertions);
 
   Node y_and_z = d_nm.mk_node(Kind::AND, {y, z});
   ASSERT_EQ(d_as[0], y_and_z);
@@ -134,7 +132,7 @@ TEST_F(TestPassVariableSubstitution, cycle4)
   d_as.push_back(eq3);
 
   preprocess::AssertionVector assertions(d_as.view());
-  d_pass->apply(assertions);
+  d_pass.apply(assertions);
 
   ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_as[1], d_nm.mk_value(true));
@@ -154,13 +152,13 @@ TEST_F(TestPassVariableSubstitution, cycle5)
   d_as.push_back(eq2);
 
   preprocess::AssertionVector assertions(d_as.view());
-  d_pass->apply(assertions);
+  d_pass.apply(assertions);
   ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_as[1], d_nm.mk_value(true));
 
   d_as.push_back(eq3);
   preprocess::AssertionVector assertions2(d_as.view());
-  d_pass->apply(assertions);
+  d_pass.apply(assertions);
   ASSERT_EQ(d_as[2], d_nm.mk_value(true));
 }
 
