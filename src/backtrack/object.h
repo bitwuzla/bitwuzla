@@ -21,7 +21,7 @@ class object : public Backtrackable
     return *this;
   }
 
-  const T& get() const { return d_data.back(); }
+  typename std::vector<T>::const_reference get() const { return d_data.back(); }
 
   /* --- Backtrackable interface -------------------------------------------- */
 
