@@ -55,6 +55,8 @@ FpSolver::~FpSolver() {}
 bool
 FpSolver::check()
 {
+  Log(1) << "\n*** check fp";
+
   reset_cached_values();
   NodeManager& nm = NodeManager::get();
   for (size_t i = d_word_blast_index.get(), size = d_word_blast_queue.size();

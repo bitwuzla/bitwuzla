@@ -42,6 +42,9 @@ SolverEngine::solve()
   d_in_solving_mode = true;
   do
   {
+    // Reset term registration flag
+    d_new_terms_registered = false;
+
     // Process lemmas generated in previous iteration.
     process_lemmas();
 
@@ -70,7 +73,10 @@ SolverEngine::solve()
     {
       d_sat_state = Result::UNKNOWN;
     }
-  } while (!d_lemmas.empty());
+
+    // If new terms were registered during the check phase, we have to make sure
+    // that all theory solvers are able to check newly registered terms.
+  } while (!d_lemmas.empty() || d_new_terms_registered);
   d_in_solving_mode = false;
 
   return d_sat_state;
@@ -200,20 +206,24 @@ SolverEngine::process_term(const Node& term)
       if (array::ArraySolver::is_theory_leaf(cur))
       {
         d_array_solver.register_term(cur);
+        d_new_terms_registered = true;
       }
       else if (fun::FunSolver::is_theory_leaf(cur))
       {
         d_fun_solver.register_term(cur);
+        d_new_terms_registered = true;
       }
       else if (quant::QuantSolver::is_theory_leaf(cur))
       {
         d_quant_solver.register_term(cur);
+        d_new_terms_registered = true;
       }
       else
       {
         if (fp::FpSolver::is_theory_leaf(cur))
         {
           d_fp_solver.register_term(cur);
+          d_new_terms_registered = true;
         }
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
