@@ -36,6 +36,7 @@ enum class Option
   PROP_OPT_LT_CONCAT_SEXT,      // bool
   PROP_SEXT,                    // bool
 
+  PREPROCESS,                      // bool
   PP_CONTRADICTING_ANDS,           // bool
   PP_ELIM_BV_EXTRACTS,             // bool
   PP_EMBEDDED_CONSTR,              // bool
@@ -422,6 +423,7 @@ class Options
   OptionBool prop_sext;
 
   // Preprocessing
+  OptionBool preprocess;
   OptionBool pp_contr_ands;
   OptionBool pp_elim_bv_extracts;
   OptionBool pp_embedded_constr;

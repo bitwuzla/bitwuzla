@@ -202,6 +202,8 @@ Options::Options()
                 "prop-sext"),
 
       // Preprocessing
+      preprocess(
+          this, Option::PREPROCESS, true, "enable preprocessing", "preprocess"),
       pp_contr_ands(this,
                     Option::PP_CONTRADICTING_ANDS,
                     false,

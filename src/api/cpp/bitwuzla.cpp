@@ -147,6 +147,7 @@ const std::unordered_map<Option, bzla::option::Option> s_internal_options = {
     {Option::SMT_COMP_MODE, bzla::option::Option::SMT_COMP_MODE},
     {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
 
+    {Option::PREPROCESS, bzla::option::Option::PREPROCESS},
     {Option::PP_CONTRADICTING_ANDS,
      bzla::option::Option::PP_CONTRADICTING_ANDS},
     {Option::PP_ELIM_BV_EXTRACTS, bzla::option::Option::PP_ELIM_BV_EXTRACTS},
@@ -284,6 +285,7 @@ const std::unordered_map<bzla::option::Option, Option> s_options = {
     //{bzla::option::Option::NUM_OPTIONS, Option::SAT_ENGINE_N_THREADS},
     {bzla::option::Option::SMT_COMP_MODE, Option::SMT_COMP_MODE},
 
+    {bzla::option::Option::PREPROCESS, Option::PREPROCESS},
     {bzla::option::Option::PP_CONTRADICTING_ANDS,
      Option::PP_CONTRADICTING_ANDS},
     {bzla::option::Option::PP_ELIM_BV_EXTRACTS, Option::PP_ELIM_BV_EXTRACTS},

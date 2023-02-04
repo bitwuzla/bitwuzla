@@ -233,6 +233,15 @@ enum ENUM(Option)
    */
   EVALUE(PROP_SEXT),
 
+  /*! **Preprocessing**
+   *
+   * When enabled, applies all enabled preprocessing passes.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PREPROCESS),
   /*! **Preprocessing: Find contradicting bit-vector ands**
    *
    * When enabled, substitutes contradicting nodes of kind #BV_AND with zero.
