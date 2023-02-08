@@ -1,6 +1,9 @@
 #ifndef BZLA_SOLVER_FP_SYMFPU_WRAPPER_H_INCLUDED
 #define BZLA_SOLVER_FP_SYMFPU_WRAPPER_H_INCLUDED
 
+#include <symfpu/core/ite.h>
+#include <symfpu/utils/numberOfRoundingModes.h>
+
 #include <cstdint>
 
 #include "bv/bitvector.h"
@@ -8,8 +11,6 @@
 #include "node/node_manager.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
-#include "symfpu/core/ite.h"
-#include "symfpu/utils/numberOfRoundingModes.h"
 
 namespace bzla {
 namespace fp {

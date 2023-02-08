@@ -1,5 +1,7 @@
 #include <bitwuzla/cpp/bitwuzla.h>
 
+#include <fstream>
+
 #include "test/unit/test.h"
 
 namespace bzla::test {
@@ -2827,13 +2829,15 @@ TEST_F(TestApi, arrayfun)
 
 TEST_F(TestApi, parse)
 {
-  std::string infile_name = "fp_regr1.smt2";
-  std::stringstream ss;
-  ss << BZLA_REGRESS_DIR << "solver/fp/" << infile_name;
+  const char* filename = "parse.smt2";
+  std::ofstream smt2(filename);
+  smt2 << "(set-logic QF_BV)\n";
+  smt2 << "(check-sat)\n";
+  smt2 << "(exit)\n" << std::flush;
   bitwuzla::Options options;
 
   ASSERT_THROW(bitwuzla::parse(options, ""), bitwuzla::Exception);
-  ASSERT_THROW(bitwuzla::parse(options, infile_name), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::parse(options, "parsex.smt2"), bitwuzla::Exception);
 
   // TODO should this throw? (parsing after having created expressions)
   // ASSERT_THROW(
@@ -2841,8 +2845,9 @@ TEST_F(TestApi, parse)
   //        ifile, infile_name, std::cout, error_msg, status, is_smt2),
   //    bitwuzla::Exception);
 
-  std::string err = bitwuzla::parse(options, ss.str().c_str());
+  std::string err = bitwuzla::parse(options, filename);
   ASSERT_TRUE(err.empty());
+  std::remove(filename);
 }
 
 /* -------------------------------------------------------------------------- */

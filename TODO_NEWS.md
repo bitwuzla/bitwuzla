@@ -26,9 +26,7 @@ API:
   + `BITWUZLA_KIND_VAR`   -> `BITWUZLA_KIND_VARIABLE`
   + `BITWUZLA_KIND_FP_EQ` -> `BITWUZLA_KIND_FP_EQUAL`
 
-- `BitwuzlaTerm` is now a `uint64_t` instead of a struct
-- `BitwuzlaSort` is now a `uint64_t` instead of a struct
-- All functions that took `const BitwuzlaTerm*` and `const BitwuzlaSort*`
+- `BitwuzlaTerm` is now a `uint64_t` instead of a struct `BitwuzlaSort` is now a `uint64_t` instead of a struct All functions that took `const BitwuzlaTerm*` and `const BitwuzlaSort*`
   now take `BitwuzlaTerm` and `BitwuzlaSort` as arguments.
 
 - `bitwuzla_mk_fp_value_from_real` -> `bitwuzla_mk_fp_from_real`
@@ -90,6 +88,10 @@ New API functions:
 - `bitwuzla_sort_is_uninterpreted()`
 - `bitwuzla_term_is_uninterpreted()`
 - `bitwuzla_sort_get_uninterpreted_symbol(BitwuzlaSort sort)`
+
+Python API:
+- Module renamed to `bitwuzla` from `pybitwuzla`
+- Functions and classes now reflect the functionality of the new C++ API
 
 ## TODO
 - changes in parsing functions

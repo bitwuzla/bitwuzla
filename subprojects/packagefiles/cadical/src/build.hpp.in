@@ -1,0 +1,5 @@
+#define VERSION "@version@"
+#define IDENTIFIER ""
+#define COMPILER "@compiler@"
+#define FLAGS ""
+#define DATE ""

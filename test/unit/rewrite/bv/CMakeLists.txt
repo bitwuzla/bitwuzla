@@ -1,4 +1,0 @@
-add_unit_test(test_rewriter_bv)
-add_unit_test(test_rewriter_bv_norm)
-add_unit_test(test_rewriter_bv_overflow)
-add_unit_test(test_rewriter_bv_rotate)

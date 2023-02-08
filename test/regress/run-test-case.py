@@ -70,7 +70,6 @@ def main():
     ap.add_argument('output_dir')
     ap.add_argument('--check-sat', action='store_true', default=False)
     ap.add_argument('--check-unsat', action='store_true', default=False)
-    ap.add_argument('--check-output', action='store_true', default=False)
     args = ap.parse_args()
 
     bzla_args = args.testcase.split()
@@ -96,7 +95,7 @@ def main():
         expected = 'sat'
     elif args.check_unsat:
         expected = 'unsat'
-    elif args.check_output:
+    if os.path.exists(outfilename):
         with open(outfilename, 'r') as outfile:
             expected = outfile.read()
     check(bzla_args[0], expected, out, err, args.output_dir)

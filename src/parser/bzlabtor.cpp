@@ -8,11 +8,7 @@
  * See COPYING for more information on using this software.
  */
 
-extern "C" {
 #include "bzlabtor.h"
-
-#include "bzlaparse.h"
-}
 
 #include <assert.h>
 #include <ctype.h>
@@ -26,6 +22,8 @@ extern "C" {
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "bzlaparse.h"
 
 /*------------------------------------------------------------------------*/
 

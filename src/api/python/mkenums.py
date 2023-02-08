@@ -8,14 +8,13 @@
 # See COPYING for more information on using this software.
 ##
 #
-# Generate pybitwuzla_enums.pxd from bitwuzla.h
+# Generate enums.pxd and option.pxd includes from enums.h and option.h.
 #
-# Usage: mkenums.py path/to/bitwuzla.h path/to/outputfile
+# Usage: mkenums.py path/to/header.h path/to/outputfile
 #
 
 import argparse
 import sys
-import os
 import re
 from collections import OrderedDict
 
@@ -62,7 +61,6 @@ def extract_enums(header):
         if enum:
             assert value_prefix
             enum_name = enum.group(1)
-            print(enum_name)
 
             # Get the next line
             line = next(line_iter)
@@ -205,10 +203,6 @@ def main():
     ap.add_argument('input_file')
     ap.add_argument('output_file')
     args = ap.parse_args()
-
-    # We expect to only have three arguments
-    if len(sys.argv) != 3:
-        raise ValueError("invalid number of arguments")
 
     if not args.input_file.endswith('enums.h') and not args.input_file.endswith('option.h'):
         raise ValueError("Expected enums.h or option.h as input file")

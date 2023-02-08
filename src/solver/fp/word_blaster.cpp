@@ -1,5 +1,15 @@
 #include "solver/fp/word_blaster.h"
 
+#include <symfpu/core/classify.h>
+#include <symfpu/core/compare.h>
+#include <symfpu/core/convert.h>
+#include <symfpu/core/divide.h>
+#include <symfpu/core/fma.h>
+#include <symfpu/core/packing.h>
+#include <symfpu/core/remainder.h>
+#include <symfpu/core/sqrt.h>
+#include <symfpu/core/unpackedFloat.h>
+
 #include <sstream>
 
 #include "node/node_ref_vector.h"
@@ -11,15 +21,6 @@
 #include "solver/fun/fun_solver.h"
 #include "solver/quant/quant_solver.h"
 #include "solver/solver_state.h"
-#include "symfpu/core/classify.h"
-#include "symfpu/core/compare.h"
-#include "symfpu/core/convert.h"
-#include "symfpu/core/divide.h"
-#include "symfpu/core/fma.h"
-#include "symfpu/core/packing.h"
-#include "symfpu/core/remainder.h"
-#include "symfpu/core/sqrt.h"
-#include "symfpu/core/unpackedFloat.h"
 
 namespace bzla {
 namespace fp {

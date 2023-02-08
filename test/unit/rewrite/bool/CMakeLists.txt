@@ -1,1 +1,0 @@
-add_unit_test(test_rewriter_bool)

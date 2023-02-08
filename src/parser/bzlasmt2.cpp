@@ -8,9 +8,7 @@
  * See COPYING for more information on using this software.
  */
 
-extern "C" {
 #include "bzlasmt2.h"
-}
 
 #include <ctype.h>
 #include <limits.h>
@@ -24,16 +22,16 @@ extern "C" {
 
 /*------------------------------------------------------------------------*/
 
-#define BZLA_NEWN(mm, ptr, nelems)                                         \
-  do                                                                       \
-  {                                                                        \
-    (ptr) = (typeof(ptr)) bzla_mem_malloc((mm), (nelems) * sizeof *(ptr)); \
+#define BZLA_NEWN(mm, ptr, nelems)                                             \
+  do                                                                           \
+  {                                                                            \
+    (ptr) = (__typeof__(ptr)) bzla_mem_malloc((mm), (nelems) * sizeof *(ptr)); \
   } while (0)
 
-#define BZLA_CNEWN(mm, ptr, nelems)                                       \
-  do                                                                      \
-  {                                                                       \
-    (ptr) = (typeof(ptr)) bzla_mem_calloc((mm), (nelems), sizeof *(ptr)); \
+#define BZLA_CNEWN(mm, ptr, nelems)                                           \
+  do                                                                          \
+  {                                                                           \
+    (ptr) = (__typeof__(ptr)) bzla_mem_calloc((mm), (nelems), sizeof *(ptr)); \
   } while (0)
 
 #define BZLA_CLRN(ptr, nelems)                  \
@@ -51,7 +49,7 @@ extern "C" {
 #define BZLA_REALLOC(mm, p, o, n)                             \
   do                                                          \
   {                                                           \
-    (p) = (typeof(p)) bzla_mem_realloc(                       \
+    (p) = (__typeof__(p)) bzla_mem_realloc(                   \
         (mm), (p), ((o) * sizeof *(p)), ((n) * sizeof *(p))); \
   } while (0)
 

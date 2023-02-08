@@ -12,19 +12,19 @@ from libc.stdio cimport FILE
 from libcpp cimport bool
 from cpython.ref cimport PyObject
 from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t
-from pybitwuzla import BitwuzlaException
+from bitwuzla import BitwuzlaException
 
 cdef inline int raise_py_error() except *:
     raise BitwuzlaException(
-            pybitwuzla_get_err_msg().decode('utf-8').split(':', 1)[1].strip())
+            py_bitwuzla_get_err_msg().decode('utf-8').split(':', 1)[1].strip())
 
-cdef extern from "pybitwuzla_abort.h":
-    void pybitwuzla_abort_fun(const char* msg)
-    const char * pybitwuzla_get_err_msg()
+cdef extern from "abort.h":
+    void py_bitwuzla_abort_fun(const char* msg)
+    const char * py_bitwuzla_get_err_msg()
 
-cdef extern from "pybitwuzla_utils.h":
-    void pybitwuzla_delete(Bitwuzla *bitwuzla)
-    void pybitwuzla_set_term(
+cdef extern from "utils.h":
+    void py_bitwuzla_delete(Bitwuzla *bitwuzla)
+    void py_bitwuzla_set_term(
             Bitwuzla *bitwuzla, PyObject *fun, PyObject *state)
 
 cdef extern from "bitwuzla/c/bitwuzla.h":

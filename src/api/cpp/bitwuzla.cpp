@@ -1,9 +1,7 @@
 #include <bitwuzla/cpp/bitwuzla.h>
 
-extern "C" {
-#include "bzlaconfig.h"  // TODO this should be refactored
 #include "bzlaparse.h"
-}
+#include "config.h"
 
 // TODO this will not be needed after parser refactor
 #include <stdio.h>

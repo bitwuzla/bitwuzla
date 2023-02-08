@@ -23,16 +23,9 @@ https://github.com/bitwuzla/bitwuzla
 
 ## Required Dependencies
 
-- [CMake >= 3.7](https://cmake.org)
+- [Meson >= 0.64](https://mesonbuild.com)
 - [GMP v6.1 (GNU Multi-Precision arithmetic library)](https://gmplib.org)
-- [Btor2Tools](https://github.com/boolector/btor2tools)
 - [SymFPU](https://github.com/martin-cs/symfpu)
-- At least one of the supported SAT solvers, see below.
-
-**Note:**
-If you don't want to install Btor2Tools or SymFPU system-wide, use scripts
-`setup-btor2tools.sh` and `setup-symfpu.sh` in the `contrib` directory to build
-and set up.
 
 ## Optional Dependencies
 
@@ -40,16 +33,12 @@ Bitwuzla can be built with support for the following SAT solvers:
 - [CaDiCaL](https://github.com/arminbiere/cadical) (default)
 - [CryptoMiniSat](https://github.com/msoos/cryptominisat)
 - [Kissat](https://github.com/arminbiere/kissat)
-- [Lingeling](http://fmv.jku.at/lingeling)
-- [MiniSAT](https://github.com/niklasso/minisat)
-- [PicoSAT](http://fmv.jku.at/picosat)
-
-To build and set up any of these SAT solvers, use scripts
-`setup-{cadical, cms, kissat, lingeling, minisat, picosat}.sh` in the `contrib`
-directory.
 
 **Note:**
-Bitwuzla can be built with support for multiple SAT solvers.
+- If the build system does not find SymFPU or one of the supported SAT solvers
+  installed on your system, it can download and build a suitable version
+  itself.
+- Bitwuzla can be built with support for multiple SAT solvers.
 
 
 ## Build
@@ -64,40 +53,35 @@ Assume that we build Bitwuzla with CaDiCaL:
 git clone https://github.com/bitwuzla/bitwuzla
 cd bitwuzla
 
-# Download and build CaDiCaL
-./contrib/setup-cadical.sh
+# Configure Bitwuzla
+./configure.py
 
-# Download and build BTOR2Tools
-./contrib/setup-btor2tools.sh
-
-# Download and build SymFPU
-./contrib/setup-symfpu.sh
-
-# Build Bitwuzla
-./configure.sh && cd build && make
+# Build
+cd build && ninja
 ```
 
-All binaries (`bitwuzla`, unit tests) are created in directory
-`bitwuzla/build/bin`, and all libraries (libbitwuzla.a, libbitwuzla.so) are
-created in directory `bitwuzla/build/lib`.
+The `bitwuzla` binary can be found in directory `build/src/main`,
+the built libraries (libbitwuzla.a, libbitwuzla.so) in `build/src`.
 
-For more build configuration options of Bitwuzla, see `configure.sh -h`.
+For more build configuration options of Bitwuzla, see `./configure.py -h`.
 
 #### Building Bitwuzla with Python Bindings
 
 To build Bitwuzla with Python bindings you need to install
 [Cython](http://cython.org/).
 
-Additionally, `Btor2Tools` and SAT solvers must be compiled with flag `-fPIC`
-(see build instructions of these tools for more details on how to build as
-shared library). The provided `contrib/setup-\*.sh` scripts automatically
-compile all dependencies with `-fPIC`.
+```
+pip install cython
+```
+
 Then, from Bitwuzla's root directory, configure and build Bitwuzla as follows:
 ```
-./configure.sh --python
+./configure.py --python
 cd build
-make
+ninja
 ```
+
+The built python module can be found in directory `build/src/api/python`.
 
 #### Building the API documentation
 
@@ -119,12 +103,12 @@ The documentation is generated into `build/docs/sphinx`.
 Make sure to build Bitwuzla with Python bindings, else the documentation of
 its Python API will not be included.
 
-### Windows
+### Windows (TODO)
 
 For instructions on how to build Bitwuzla on Windows, see [here](
   https://github.com/bitwuzla/bitwuzla/blob/main/docs/building_on_windows.rst).
 
-### Linking against Bitwuzla in CMake projects
+### Linking against Bitwuzla in CMake projects (TODO)
 
 Bitwuzla's build system provides a CMake package configuration, which can be
 used by the `find_package()` command to provide information about Bitwuzla's

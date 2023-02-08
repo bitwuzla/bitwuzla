@@ -10,6 +10,8 @@
 
 #include <bitwuzla/c/bitwuzla.h>
 
+#include <fstream>
+
 #include "test/unit/test.h"
 
 namespace bzla::test {
@@ -2813,17 +2815,21 @@ TEST_F(TestCApi, dump_formula1)
 
 TEST_F(TestCApi, parse)
 {
-  std::string infile_name = "fp_regr1.smt2";
-  std::stringstream ss;
-  ss << BZLA_REGRESS_DIR << "solver/fp/" << infile_name;
+  const char *filename = "parse.smt2";
+  std::ofstream smt2(filename);
+  smt2 << "(set-logic QF_BV)\n";
+  smt2 << "(check-sat)\n";
+  smt2 << "(exit)\n" << std::flush;
+
   BitwuzlaOptions *options = bitwuzla_options_new();
-  ASSERT_DEATH(bitwuzla_parse(nullptr, infile_name.c_str()), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parse(nullptr, filename), d_error_not_null);
   ASSERT_DEATH(bitwuzla_parse(options, nullptr), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parse(options, infile_name.c_str()),
+  ASSERT_DEATH(bitwuzla_parse(options, "parsex.smt2"),
                "failed to open input file");
-  const char *err = bitwuzla_parse(options, ss.str().c_str());
+  const char *err = bitwuzla_parse(options, filename);
   ASSERT_EQ(err, nullptr);
   bitwuzla_options_delete(options);
+  std::remove(filename);
 }
 
 /* -------------------------------------------------------------------------- */

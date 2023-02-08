@@ -10,9 +10,9 @@
 
 extern "C" {
 #include <bitwuzla/c/bitwuzla.h>
+}
 
 #include "bzlaparse.h"
-}
 
 // TODO this will not be needed after parser refactor
 #include <bitwuzla/cpp/bitwuzla.h>

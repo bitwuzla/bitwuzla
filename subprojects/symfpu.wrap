@@ -1,0 +1,9 @@
+[wrap-git]
+url = https://github.com/martin-cs/symfpu.git
+revision = 22d993d880f66b2e470c3928e0e61bdf61419702
+depth = 1
+
+patch_directory = symfpu
+
+[provide]
+symfpu = symfpu_dep

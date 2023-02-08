@@ -22,17 +22,17 @@ jobs:
 
         include:
           - name: production
-            config:
+            config: -Dtesting=enabled -Dunit-testing=disabled
 
           - name: production-clang
-            config:
+            config: -Dtesting=enabled -Dunit-testing=disabled
             env: CC=clang CXX=clang++
 
           - name: debug
-            config: debug
+            config: --buildtype=debug
 
           - name: debug-clang
-            config: debug
+            config: --buildtype=debug
             env: CC=clang CXX=clang++
 
     name: ${{ matrix.os }}:${{ matrix.name }}
@@ -43,44 +43,52 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev
+          sudo apt-get install -y libgmp-dev ninja-build
+          python3 -m pip install meson pytest
+          echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
 
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install gmp
+          brew install gmp pkgconfig ninja
+          python3 -m pip install meson pytest
+          echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.BZLA_LIBS_KEY }}
           submodules: 'recursive'
 
-      - name: Restore Dependencies
-        id: restore-deps
-        uses: actions/cache@v2
+      - name: Restore Subprojects
+        id: subprojects-restore
+        uses: actions/cache/restore@v3
         with:
-          path: deps/install
-          key: ${{ runner.os }}-deps-${{ hashFiles('contrib/setup-*') }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          path: |
+            subprojects
+            build/subprojects
+          key: ${{ runner.os }}-${{ matrix.name }}-${{ hashFiles('subprojects/*.wrap', 'subprojects/packagefiles/**') }}-${{ hashFiles('.github/workflows/ci.yml') }}
 
-      - name: Setup Dependencies
-        if: steps.restore-deps.outputs.cache-hit != 'true'
-        run: |
-          ./contrib/setup-btor2tools.sh
-          ./contrib/setup-cadical.sh
-          ./contrib/setup-cms.sh
-          ./contrib/setup-kissat.sh
-          ./contrib/setup-lingeling.sh
-          ./contrib/setup-symfpu.sh
+      - name: Wrap
+        if: steps.subprojects-restore.outputs.cache-hit != 'true'
+        run: meson wrap install gtest
 
       - name: Configure
-        run: |
-          ${{ matrix.env }} ./configure.sh ${{ matrix.config }}
+        run: ${{ matrix.env }} meson setup build/ ${{ matrix.config }}
 
       - name: Build
-        run: make -j2
+        run: ninja
         working-directory: build
 
-      - name: Run CTest
-        run: ctest -j2 --output-on-failure
+      - name: Save Subprojects
+        id: subprojects-save
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            subprojects
+            build/subprojects
+          key: ${{ steps.subprojects-restore.outputs.cache-primary-key }}
+
+      - name: Test
+        run: meson test --print-errorlogs
         working-directory: build

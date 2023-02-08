@@ -1,21 +1,21 @@
 #include "solver/fp/floating_point.h"
 
 #include <gmpxx.h>
+#include <symfpu/core/add.h>
+#include <symfpu/core/classify.h>
+#include <symfpu/core/compare.h>
+#include <symfpu/core/convert.h>
+#include <symfpu/core/divide.h>
+#include <symfpu/core/fma.h>
+#include <symfpu/core/multiply.h>
+#include <symfpu/core/packing.h>
+#include <symfpu/core/remainder.h>
+#include <symfpu/core/sign.h>
+#include <symfpu/core/sqrt.h>
+#include <symfpu/core/unpackedFloat.h>
 
 #include "node/node_manager.h"
 #include "solver/fp/symfpu_wrapper.h"
-#include "symfpu/core/add.h"
-#include "symfpu/core/classify.h"
-#include "symfpu/core/compare.h"
-#include "symfpu/core/convert.h"
-#include "symfpu/core/divide.h"
-#include "symfpu/core/fma.h"
-#include "symfpu/core/multiply.h"
-#include "symfpu/core/packing.h"
-#include "symfpu/core/remainder.h"
-#include "symfpu/core/sign.h"
-#include "symfpu/core/sqrt.h"
-#include "symfpu/core/unpackedFloat.h"
 
 template <bool T>
 class SymFpuSymBV;
