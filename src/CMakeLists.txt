@@ -137,6 +137,7 @@ install(EXPORT bitwuzla-export
   DESTINATION lib/cmake/Bitwuzla)
 
 # Install header files
+install(FILES api/enums.h api/option.h DESTINATION include/bitwuzla/api)
 install(FILES api/c/bitwuzla.h DESTINATION include/bitwuzla/api/c)
 install(FILES api/cpp/bitwuzla.h DESTINATION include/bitwuzla/api/cpp)
 
