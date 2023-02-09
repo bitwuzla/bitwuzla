@@ -2011,7 +2011,7 @@ mk_fp_value(const Term &bv_sign,
 }
 
 Term
-mk_fp_from_real(const Sort &sort, const Term &rm, const std::string &real)
+mk_fp_value(const Sort &sort, const Term &rm, const std::string &real)
 {
   BITWUZLA_CHECK_NOT_NULL(sort.d_type);
   BITWUZLA_CHECK_NOT_NULL(rm.d_node);
@@ -2060,10 +2060,10 @@ mk_fp_from_real(const Sort &sort, const Term &rm, const std::string &real)
 }
 
 Term
-mk_fp_from_rational(const Sort &sort,
-                    const Term &rm,
-                    const std::string &num,
-                    const std::string &den)
+mk_fp_value(const Sort &sort,
+            const Term &rm,
+            const std::string &num,
+            const std::string &den)
 {
   BITWUZLA_CHECK_NOT_NULL(sort.d_type);
   BITWUZLA_CHECK_NOT_NULL(rm.d_node);

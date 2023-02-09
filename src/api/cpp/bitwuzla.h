@@ -357,11 +357,11 @@ class Term
   friend Term mk_fp_neg_inf(const Sort &);
   friend Term mk_fp_nan(const Sort &);
   friend Term mk_fp_value(const Term &, const Term &, const Term &);
-  friend Term mk_fp_from_real(const Sort &, const Term &, const std::string &);
-  friend Term mk_fp_from_rational(const Sort &,
-                                  const Term &,
-                                  const std::string &,
-                                  const std::string &);
+  friend Term mk_fp_value(const Sort &, const Term &, const std::string &);
+  friend Term mk_fp_value(const Sort &,
+                          const Term &,
+                          const std::string &,
+                          const std::string &);
   friend Term mk_rm_value(RoundingMode);
   friend Term mk_const_array(const Sort &, const Term &);
   friend Term mk_term(Kind,
@@ -635,11 +635,11 @@ class Sort
   friend Term mk_fp_pos_inf(const Sort &);
   friend Term mk_fp_neg_inf(const Sort &);
   friend Term mk_fp_nan(const Sort &);
-  friend Term mk_fp_from_real(const Sort &, const Term &, const std::string &);
-  friend Term mk_fp_from_rational(const Sort &,
-                                  const Term &,
-                                  const std::string &,
-                                  const std::string &);
+  friend Term mk_fp_value(const Sort &, const Term &, const std::string &);
+  friend Term mk_fp_value(const Sort &,
+                          const Term &,
+                          const std::string &,
+                          const std::string &);
   friend Term mk_const_array(const Sort &, const Term &);
   friend Term mk_term(Kind,
                       const std::vector<Term> &,
@@ -1505,7 +1505,7 @@ Term mk_fp_value(const Term &bv_sign,
  * @see
  *   * `mk_fp_sort`
  */
-Term mk_fp_from_real(const Sort &sort, const Term &rm, const std::string &real);
+Term mk_fp_value(const Sort &sort, const Term &rm, const std::string &real);
 
 /**
  * Create a floating-point value from its rational representation, given as a
@@ -1528,10 +1528,10 @@ Term mk_fp_from_real(const Sort &sort, const Term &rm, const std::string &real);
  * @see
  *   * `mk_fp_sort`
  */
-Term mk_fp_from_rational(const Sort &sort,
-                         const Term &rm,
-                         const std::string &num,
-                         const std::string &den);
+Term mk_fp_value(const Sort &sort,
+                 const Term &rm,
+                 const std::string &num,
+                 const std::string &den);
 
 /**
  * Create a one-dimensional constant array of given sort, initialized with

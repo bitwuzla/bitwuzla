@@ -2626,22 +2626,22 @@ TEST_F(TestApi, terms)
   ASSERT_TRUE(rm_val.children().empty());
 
   bitwuzla::Term fp_from_real_val =
-      bitwuzla::mk_fp_from_real(d_fp_sort16, rm_val, "1.1");
+      bitwuzla::mk_fp_value(d_fp_sort16, rm_val, "1.1");
   ASSERT_EQ(fp_from_real_val.kind(), bitwuzla::Kind::VALUE);
   ASSERT_TRUE(fp_from_real_val.children().empty());
 
   bitwuzla::Term fp_from_real =
-      bitwuzla::mk_fp_from_real(d_fp_sort16, d_rm_const, "1.1");
+      bitwuzla::mk_fp_value(d_fp_sort16, d_rm_const, "1.1");
   ASSERT_EQ(fp_from_real.kind(), bitwuzla::Kind::ITE);
   ASSERT_FALSE(fp_from_real.children().empty());
 
   bitwuzla::Term fp_from_rat_val =
-      bitwuzla::mk_fp_from_rational(d_fp_sort16, rm_val, "1", "2");
+      bitwuzla::mk_fp_value(d_fp_sort16, rm_val, "1", "2");
   ASSERT_EQ(fp_from_rat_val.kind(), bitwuzla::Kind::VALUE);
   ASSERT_TRUE(fp_from_rat_val.children().empty());
 
   bitwuzla::Term fp_from_rat =
-      bitwuzla::mk_fp_from_rational(d_fp_sort16, d_rm_const, "1", "2");
+      bitwuzla::mk_fp_value(d_fp_sort16, d_rm_const, "1", "2");
   ASSERT_EQ(fp_from_rat.kind(), bitwuzla::Kind::ITE);
   ASSERT_FALSE(fp_from_rat.children().empty());
 
