@@ -72,47 +72,48 @@ target_include_directories(bzlals
 # Install
 
 install(TARGETS bzlabv
-  EXPORT bzlabv-export
+  EXPORT bitwuzla-export
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
 install(TARGETS bzlabb
-  EXPORT bzlabb-export
+  EXPORT bitwuzla-export
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
 install(TARGETS bzlals
-  EXPORT bzlals-export
+  EXPORT bitwuzla-export
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
 install(TARGETS bzlarng
-  EXPORT bzlarng-export
+  EXPORT bitwuzla-export
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
-install(EXPORT bzlabv-export
+install(EXPORT bitwuzla-export
   FILE BzlaBVTargets.cmake
   NAMESPACE BzlaBV::
-  DESTINATION lib/cmake/BzlaBV)
+  DESTINATION lib/cmake/Bitwuzla)
 
-install(EXPORT bzlabb-export
+install(EXPORT bitwuzla-export
   FILE BzlaBBTargets.cmake
   NAMESPACE BzlaBB::
-  DESTINATION lib/cmake/BzlaBB)
+  DESTINATION lib/cmake/Bitwuzla)
 
-install(EXPORT bzlals-export
+install(EXPORT bitwuzla-export
   FILE BzlaLSTargets.cmake
   NAMESPACE BzlaLS::
-  DESTINATION lib/cmake/BzlaLS)
+  DESTINATION lib/cmake/Bitwuzla)
 
-install(EXPORT bzlarng-export
+install(EXPORT bitwuzla-export
   FILE BzlaRNGTargets.cmake
   NAMESPACE BzlaRNG::
-  DESTINATION lib/cmake/BzlaRNG)
+  DESTINATION lib/cmake/Bitwuzla)
 
-install(FILES ls.h ls_bv.h bitvector.h DESTINATION include/bzlalibs)
+install(FILES ls/ls.h ls/ls_bv.h DESTINATION include/bitwuzla/ls)
+install(FILES bv/bitvector.h DESTINATION include/bitwuzla/bv)
