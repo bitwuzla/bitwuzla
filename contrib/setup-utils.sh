@@ -16,7 +16,7 @@ die () {
   exit 1
 }
 
-[ ! -e src/bzlamain.c ] && die "$0 not called from Bitwuzla base directory"
+[ ! -e src/main/main.cpp ] && die "$0 not called from Bitwuzla base directory"
 
 DEPS_DIR="$(pwd)/deps"
 CONTRIB_DIR="$(pwd)/contrib"

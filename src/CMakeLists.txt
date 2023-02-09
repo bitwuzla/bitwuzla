@@ -82,43 +82,43 @@ set(libbitwuzla_src_files
 # Bitwuzla library
 
 add_library(bitwuzla ${libbitwuzla_src_files})
-target_link_libraries(bitwuzla ${LIBRARIES})
+target_link_libraries(bitwuzla PRIVATE ${LIBRARIES})
 target_include_directories(bitwuzla
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)
 
 target_include_directories(bitwuzla PRIVATE subprojects/bitwuzla-libs/src)
-target_link_libraries(bitwuzla bzlabb bzlabv bzlals bzlarng)
+target_link_libraries(bitwuzla PRIVATE bzlabb bzlabv bzlals bzlarng)
 
 if(GMP_FOUND)
   target_include_directories(bitwuzla PRIVATE ${GMP_INCLUDE_DIR})
-  target_link_libraries(bitwuzla ${GMP_LIBRARIES})
+  target_link_libraries(bitwuzla PRIVATE ${GMP_LIBRARIES})
 endif()
 
 if(Lingeling_FOUND)
   target_include_directories(bitwuzla PRIVATE ${Lingeling_INCLUDE_DIR})
-  target_link_libraries(bitwuzla ${Lingeling_LIBRARIES})
+  target_link_libraries(bitwuzla PRIVATE ${Lingeling_LIBRARIES})
 endif()
 
 if(CaDiCaL_FOUND)
   target_include_directories(bitwuzla PRIVATE ${CaDiCaL_INCLUDE_DIR})
-  target_link_libraries(bitwuzla ${CaDiCaL_LIBRARIES})
+  target_link_libraries(bitwuzla PRIVATE ${CaDiCaL_LIBRARIES})
 endif()
 
 if(CryptoMiniSat_FOUND)
   target_include_directories(bitwuzla PRIVATE ${CryptoMiniSat_INCLUDE_DIR})
-  target_link_libraries(bitwuzla ${CryptoMiniSat_LIBRARIES})
+  target_link_libraries(bitwuzla PRIVATE ${CryptoMiniSat_LIBRARIES})
 endif()
 
 if(Kissat_FOUND)
   target_include_directories(bitwuzla PRIVATE ${Kissat_INCLUDE_DIR})
-  target_link_libraries(bitwuzla ${Kissat_LIBRARIES})
+  target_link_libraries(bitwuzla PRIVATE ${Kissat_LIBRARIES})
 endif()
 
 if(Gimsatul_FOUND)
   target_include_directories(bitwuzla PRIVATE ${Gimsatul_INCLUDE_DIR})
-  target_link_libraries(bitwuzla ${Gimsatul_LIBRARIES})
+  target_link_libraries(bitwuzla PRIVATE ${Gimsatul_LIBRARIES})
 endif()
 
 if(SymFPU_FOUND)
@@ -137,6 +137,7 @@ install(EXPORT bitwuzla-export
   DESTINATION lib/cmake/Bitwuzla)
 
 # Install header files
-install(FILES api/c/bitwuzla.h DESTINATION include/bitwuzla)
+install(FILES api/c/bitwuzla.h DESTINATION include/bitwuzla/api/c)
+install(FILES api/cpp/bitwuzla.h DESTINATION include/bitwuzla/api/cpp)
 
 add_subdirectory(main)

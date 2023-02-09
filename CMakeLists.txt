@@ -211,7 +211,6 @@ endif()
 
 #-----------------------------------------------------------------------------#
 
-find_package(Btor2Tools REQUIRED)
 find_package(GMP REQUIRED)
 
 if(NOT IS_WINDOWS_BUILD AND (USE_CMS OR TESTING))

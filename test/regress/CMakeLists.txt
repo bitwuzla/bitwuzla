@@ -676,7 +676,7 @@ set(testcases_qfbv
 "solver/bv/prop/prop_bvurem.smt2 --bv-solver=preprop"
 "solver/bv/prop/prop_essential_checks_cycle.smt2 --bv-solver=prop --prop-sext --prop-ineq-bounds" # --prop-use-inv-lt-concat" # TODO option currently disabled
 "solver/bv/prop/prop_ineq_bounds_cycle.smt2 --bv-solver=prop --prop-sext --prop-ineq-bounds" # --prop-use-inv-lt-concat" # TODO option currently disabled
-"solver/bv/prop/prop_top_level_const_bits.smt2 -S lingeling --bv-solver=preprop"
+"solver/bv/prop/prop_top_level_const_bits.smt2 --bv-solver=preprop"
 "solver/bv/proxybug.btor.smt2"
 "solver/bv/redand3twice.btor.smt2"
 "solver/bv/redand3twice.smt2"
