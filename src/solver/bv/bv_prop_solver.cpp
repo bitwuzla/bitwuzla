@@ -180,6 +180,10 @@ BvPropSolver::value(const Node& term)
     return utils::mk_default_value(term.type());
   }
   const BitVector& value = d_ls->get_assignment(it->second);
+  if (term.type().is_bool())
+  {
+    return NodeManager::get().mk_value(value.is_true());
+  }
   return NodeManager::get().mk_value(value);
 }
 
