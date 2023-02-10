@@ -7,6 +7,8 @@ namespace bzla::bb {
 class SatInterface
 {
  public:
+   virtual ~SatInterface() {};
+
   /**
    * Add literal to current clause.
    *
