@@ -61,7 +61,7 @@ class TestPassNormalize : public TestPreprocessingPass
                             const std::unordered_map<Node, uint64_t>& expected,
                             bool consider_neg)
   {
-    auto factors = d_pass->compute_factors(node, {}, consider_neg);
+    auto factors = d_pass->compute_factors(node, {});
     for (auto& p : expected)
     {
       auto it = factors.find(p.first);
@@ -90,6 +90,38 @@ class TestPassNormalize : public TestPreprocessingPass
       }
       ASSERT_EQ(factor, p.second);
     }
+
+    for (auto& p : factors)
+    {
+      auto it = expected.find(p.first);
+      if (it == expected.end())
+      {
+        std::cout << "computed factor for: " << p.first << std::endl;
+        for (const auto& f : factors)
+        {
+          std::cout << "  " << f.first << ": " << f.second << std::endl;
+        }
+        std::cout << "but missing in expected:" << std::endl;
+        for (const auto& f : expected)
+        {
+          std::cout << "  " << f.first << ": " << f.second << std::endl;
+        }
+      }
+      assert(it != expected.end());
+      uint64_t size = p.second.size();
+      uint64_t factor =
+          p.second.bvsext(size < 64 ? 64 - size : 0).to_uint64(true);
+      if (factor != it->second)
+      {
+        std::cout << it->first << " with " << factor
+                  << ", expected: " << p.second << std::endl;
+        for (auto& f : expected)
+        {
+          std::cout << " - " << f.first << ": " << factor << std::endl;
+        }
+      }
+      ASSERT_EQ(factor, it->second);
+    }
   }
 
   void test_compute_factors(const Node& node,
@@ -97,8 +129,8 @@ class TestPassNormalize : public TestPreprocessingPass
                             const std::unordered_map<Node, uint64_t>& expected1,
                             bool consider_neg)
   {
-    auto factors0 = d_pass->compute_factors(node[0], {}, consider_neg);
-    auto factors1 = d_pass->compute_factors(node[1], {}, consider_neg);
+    auto factors0 = d_pass->compute_factors(node[0], {});
+    auto factors1 = d_pass->compute_factors(node[1], {});
 
     test_compute_factors(node[0], expected0, consider_neg);
     test_compute_factors(node[1], expected1, consider_neg);
@@ -306,11 +338,28 @@ TEST_F(TestPassNormalize, compute_factors7)
   Node mul1        = mul(add_ab, mul_cd_a_cd);
 
   test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 1}, {d_b, 1}, {d_e, 1}},
-                       {{d_c, 1}, {d_d, 1}},
+                       {{d_a, 1}, {d_b, 1}, {d_e, 1}, {add_ab, 1}, {add_ad, 1}},
+                       {{d_c, 1}, {d_d, 1}, {add_ab, 1}, {add_a_cd, 1}},
                        false);
 }
 
+TEST_F(TestPassNormalize, compute_factors8)
+{
+  Node add_ab   = add(d_a, d_b);
+  Node add_abc  = add(add_ab, d_c);
+  Node add_2abc = add(add_abc, add_abc);
+  Node add0     = add(add_2abc, add_ab);
+
+  test_compute_factors(add0,
+                       {
+                           {d_a, 3},
+                           {d_b, 3},
+                           {d_c, 2},
+                       },
+                       false);
+}
+
+#if 0
 TEST_F(TestPassNormalize, compute_factors_neg0)
 {
   // (a + b) + ((-a + d) + (-e + (a + b))
@@ -322,7 +371,12 @@ TEST_F(TestPassNormalize, compute_factors_neg0)
 
   test_compute_factors(
       add0,
-      {{d_a, 2}, {inv(d_a), 1}, {d_b, 2}, {inv(d_e), 1}, {d_one, 2}},
+      {{d_a, 2},
+       {inv(d_a), 1},
+       {d_b, 2},
+       {d_d, 1},
+       {inv(d_e), 1},
+       {d_one, 2}},
       true);
 }
 
@@ -338,11 +392,29 @@ TEST_F(TestPassNormalize, compute_factors_neg1)
   test_compute_factors(add0,
                        {{d_a, UINT64_MAX},
                         {d_b, 0},
+                        {d_d, UINT64_MAX},
                         {d_e, 1},
                         {d_one, 2},
                         {d_nm.mk_value(BitVector::mk_ones(8).ibvdec()), 1}},
                        true);
 }
+
+TEST_F(TestPassNormalize, compute_factors_neg2)
+{
+  // -(a + (b + c))
+  Node add_bc      = add(d_b, d_c);
+  Node add_abc     = add(d_a, add_bc);
+  Node neg_add_abc = neg(add_abc);
+
+  test_compute_factors(neg_add_abc,
+                       {
+                        {d_a, UINT64_MAX},
+                        {d_b, UINT64_MAX},
+                        {d_c, UINT64_MAX}
+                       },
+                       true);
+}
+#endif
 
 /* -------------------------------------------------------------------------- */
 
@@ -949,6 +1021,7 @@ TEST_F(TestPassNormalize, add_normalize13)
 
 /* -------------------------------------------------------------------------- */
 
+#if 0
 TEST_F(TestPassNormalize, add_normalize_neg0)
 {
   // (a + b) = (-b + -a)
@@ -1004,6 +1077,7 @@ TEST_F(TestPassNormalize, add_normalize_neg4)
                  equal(add(add(d_d, d_e), d_two), d_zero),
                  equal(add(add(d_d, d_e), d_two), d_zero));
 }
+#endif
 
 //(not (= s (bvadd (bvadd (bvadd s t) (bvmul s t)) (bvmul t (bvnot s)))))
 

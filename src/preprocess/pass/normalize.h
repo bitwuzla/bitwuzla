@@ -35,9 +35,7 @@ class PassNormalize : public PreprocessingPass
    * @return A map from node to its occurrence count.
    */
   std::unordered_map<Node, BitVector> compute_factors(
-      const Node& node,
-      const std::unordered_map<Node, uint64_t>& parents,
-      bool consider_neg);
+      const Node& node, const std::unordered_map<Node, uint64_t>& parents);
   /**
    * Helper to determine the normalized set of 'factors' (occurrences) for an
    * equality over the given two nodes of the same kind.

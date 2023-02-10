@@ -6,6 +6,7 @@
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
+#include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
 
 namespace bzla::preprocess::pass {
@@ -25,12 +26,9 @@ bool
 is_leaf(Kind kind,
         const Node& node,
         const std::unordered_map<Node, uint64_t>& parents,
-        const std::unordered_map<Node, uint64_t>& parents_in_chain,
-        bool consider_neg)
+        const std::unordered_map<Node, uint64_t>& parents_in_chain)
 {
-  if (!(node.kind() == kind
-        || (consider_neg && kind == Kind::BV_ADD && node.is_inverted()
-            && node[0].kind() == kind)))
+  if (node.kind() != kind)
   {
     return true;
   }
@@ -44,30 +42,29 @@ is_leaf(Kind kind,
 
 std::unordered_map<Node, BitVector>
 PassNormalize::compute_factors(
-    const Node& node,
-    const std::unordered_map<Node, uint64_t>& parents,
-    bool consider_neg)
+    const Node& node, const std::unordered_map<Node, uint64_t>& parents)
 {
   bool share_aware = !parents.empty();
-  Kind kind = node.kind();
-  uint64_t size    = node.type().bv_size();
-  BitVector one    = BitVector::mk_one(size);
+  Kind kind        = node.kind();
+  BitVector zero   = BitVector::mk_zero(node.type().bv_size());
 
-  std::unordered_map<Node, BitVector> factors;  // all traversed nodes
+  node_ref_vector nodes;
+  unordered_node_ref_set intermediate;
+  unordered_node_ref_map<BitVector> coeffs;
   std::unordered_map<Node, BitVector> res;      // only leafs
 
-  // compute reference count as initial factors
+  // Collect all traversed nodes (intermediate nodes of specified kind and
+  // leafs) and initialize coefficients for each node to zero.
   node_ref_vector visit{node};
   do
   {
     const Node& cur     = visit.back();
-    auto [it, inserted] = factors.emplace(cur, one);
+    auto [it, inserted] = coeffs.emplace(cur, zero);
     visit.pop_back();
     if (inserted)
     {
-      if (cur.kind() == kind
-          || (consider_neg && kind == Kind::BV_ADD && cur.is_inverted()
-              && cur[0].kind() == kind))
+      nodes.push_back(cur);
+      if (cur.kind() == kind)
       {
         if (share_aware)
         {
@@ -75,89 +72,46 @@ PassNormalize::compute_factors(
           // from outside the current 'kind' chain
           assert(d_parents.find(cur) != d_parents.end());
           assert(parents.find(cur) != parents.end());
-          if (is_leaf(kind, cur, d_parents, parents, consider_neg))
+          if (is_leaf(kind, cur, d_parents, parents))
           {
             continue;
           }
         }
+        intermediate.insert(cur);
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
     }
-    else
-    {
-      it->second.ibvinc();
-    }
   } while (!visit.empty());
-  // compute factors by pushing initial factors to leafs
-  BitVector value = BitVector::mk_zero(size);
-  visit.push_back(node);
-  unordered_node_ref_set cache;
-  do
-  {
-    const Node& cur     = visit.back();
-    auto [it, inserted] = cache.insert(cur);
-    visit.pop_back();
-    if (inserted
-        && (cur.kind() == kind
-            || (consider_neg && kind == Kind::BV_ADD && cur.is_inverted()
-                && cur[0].kind() == kind)))
-    {
-      if (share_aware)
-      {
-        // treat as leaf if node of given kind has parent references
-        // from outside the current 'kind' chain
-        assert(d_parents.find(cur) != d_parents.end());
-        assert(parents.find(cur) != parents.end());
-        if (is_leaf(kind, cur, d_parents, parents, consider_neg))
-        {
-          res.emplace(cur, factors[cur]);
-          continue;
-        }
-      }
 
-      auto fit = factors.find(cur);
-      assert(fit != factors.end());
-      for (auto& child : cur)
+  // Compute leaf coefficients by pushing initial top node coefficient to leafs.
+  //
+  // Note: We have to ensure that parents are fully processed before we compute
+  //       the coefficient for its children. Hence, we sort the nodes in
+  //       ascending order and process the nodes with the higher IDs first.
+  std::sort(nodes.begin(), nodes.end());
+  assert(nodes.back() == node);
+  coeffs[node].ibvinc();  // Set initial coefficient of top node
+  for (auto it = nodes.rbegin(), rend = nodes.rend(); it != rend; ++it)
+  {
+    const Node& cur = *it;
+    auto fit        = coeffs.find(cur);
+    assert(fit != coeffs.end());
+
+    // If it's an intermediate node, push factor down to children
+    if (intermediate.find(cur) != intermediate.end())
+    {
+      assert(cur.kind() == kind);
+      for (const auto& child : cur)
       {
-        assert(factors.find(child) != factors.end());
-        if (cur.is_inverted())
-        {
-          assert(consider_neg);
-          assert(child.kind() == Kind::BV_ADD);
-          factors[child].ibvsub(fit->second).ibvdec();
-          value.ibvsub(fit->second);
-        }
-        else
-        {
-          factors[child].ibvadd(fit->second).ibvdec();
-        }
-        if (is_leaf(kind, child, d_parents, parents, consider_neg))
-        {
-          auto rit = res.find(child);
-          if (rit == res.end())
-          {
-            res.emplace(child, factors[child]);
-          }
-          else
-          {
-            rit->second = factors[child];
-          }
-        }
-        visit.push_back(child);
+        assert(coeffs.find(child) != coeffs.end());
+        coeffs[child].ibvadd(fit->second);
       }
     }
-  } while (!visit.empty());
-  if (!value.is_zero())
-  {
-    Node v  = NodeManager::get().mk_value(value);
-    auto it = res.find(v);
-    if (it == res.end())
-    {
-      res.emplace(v, one);
-    }
+    // If it's a leaf, just copy the result
     else
     {
-      it->second.ibvinc();
+      assert(res.find(cur) == res.end());
+      res.emplace(cur, coeffs[cur]);
     }
   }
   return res;
@@ -304,8 +258,8 @@ PassNormalize::get_normalized_factors_for_eq(const Node& node0,
   std::unordered_map<Node, uint64_t> parents =
       share_aware ? _count_parents({node0, node1}, kind)
                   : std::unordered_map<Node, uint64_t>();
-  auto factors0 = compute_factors(node0, parents, true);
-  auto factors1 = compute_factors(node1, parents, true);
+  auto factors0 = compute_factors(node0, parents);
+  auto factors1 = compute_factors(node1, parents);
   std::unordered_map<Node, BitVector> res0, res1;
   // normalize common factors and record entries that are not in factors1
   for (const auto& f : factors0)
@@ -676,8 +630,8 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
       share_aware ? _count_parents({top_lhs, top_rhs}, kind)
                   : std::unordered_map<Node, uint64_t>();
 
-  auto lhs           = compute_factors(top_lhs, parents, false);
-  auto rhs           = compute_factors(top_rhs, parents, false);
+  auto lhs           = compute_factors(top_lhs, parents);
+  auto rhs           = compute_factors(top_rhs, parents);
   auto [left, right] = normalize_common(kind, lhs, rhs);
   auto rebuilt_left  = rebuild_top(node0, top_lhs, left);
   auto rebuilt_right = rebuild_top(node1, top_rhs, right);
