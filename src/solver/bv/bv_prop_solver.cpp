@@ -175,7 +175,10 @@ BvPropSolver::value(const Node& term)
 {
   assert(BvSolver::is_leaf(term));
   auto it = d_node_map.find(term);
-  assert(it != d_node_map.end());
+  if (it == d_node_map.end())
+  {
+    return utils::mk_default_value(term.type());
+  }
   const BitVector& value = d_ls->get_assignment(it->second);
   return NodeManager::get().mk_value(value);
 }
