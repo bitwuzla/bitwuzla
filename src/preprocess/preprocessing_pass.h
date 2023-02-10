@@ -95,6 +95,7 @@ class PreprocessingPass
    * @param env The associated environment.
    */
   PreprocessingPass(Env& env, backtrack::BacktrackManager* backtrack_mgr);
+  virtual ~PreprocessingPass() {};
 
   /**
    * Apply preprocessing pass to the current set of assertions.
