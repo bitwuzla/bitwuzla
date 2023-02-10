@@ -150,11 +150,7 @@ mk_default_value(const Type& type)
       children.push_back(nm.mk_var(types[i]));
     }
     children.push_back(mk_default_value(types.back()));
-    if (children.size() > 2)
-    {
-      return mk_nary(Kind::LAMBDA, children);
-    }
-    return nm.mk_node(Kind::LAMBDA, children);
+    return mk_nary(Kind::LAMBDA, children);
   }
   else if (type.is_array())
   {
