@@ -6,7 +6,6 @@
 
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
-#include "node/unordered_node_ref_set.h"
 #include "solver/solver.h"
 #include "util/logger.h"
 #include "util/statistics.h"
@@ -147,7 +146,7 @@ class ArraySolver : public Solver
   void add_path_condition(const Access& access,
                           const Node& array,
                           std::vector<Node>& conditions,
-                          node::unordered_node_ref_set& cache);
+                          std::unordered_set<Node>& cache);
 
   /**
    * Compute the parents for the array terms in given term.

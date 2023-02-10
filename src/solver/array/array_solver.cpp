@@ -521,7 +521,7 @@ ArraySolver::collect_path_conditions(const Access& access,
   // Construct path conditions
   // If access was propagated upwards to target array, we have to include its
   // propagation condition.
-  node::unordered_node_ref_set cond_cache;
+  std::unordered_set<Node> cond_cache;
   if (prop_up_to_target)
   {
     add_path_condition(access, array, conditions, cond_cache);
@@ -552,7 +552,7 @@ void
 ArraySolver::add_path_condition(const Access& access,
                                 const Node& array,
                                 std::vector<Node>& conditions,
-                                node::unordered_node_ref_set& cache)
+                                std::unordered_set<Node>& cache)
 {
   Log(3) << "path: " << array;
   NodeManager& nm = NodeManager::get();
@@ -597,7 +597,7 @@ ArraySolver::add_path_condition(const Access& access,
     }
     else
     {
-      Log(3) << "  duplicate";
+      Log(3) << "  duplicate: " << cond;
     }
   }
 }
