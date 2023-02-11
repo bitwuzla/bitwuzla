@@ -138,34 +138,39 @@ BvPropSolver::register_assertion(const Node& assertion, bool top_level)
   d_stats.num_assertions += 1;
 
   node::node_ref_vector visit{assertion};
-  node::unordered_node_ref_set cache;
+  node::unordered_node_ref_map<bool> cache;
 
   if (d_use_const_bits)
   {
     d_bb_solver.bitblast(assertion);
   }
 
-  while (!visit.empty())
+  do
   {
     const Node& cur = visit.back();
-    visit.pop_back();
 
-    if (d_node_map.find(cur) != d_node_map.end()) continue;
-
-    if (cache.find(cur) != cache.end())
+    if (d_node_map.find(cur) != d_node_map.end())
     {
-      d_node_map[cur] = mk_node(cur);
+      visit.pop_back();
+      continue;
     }
-    else
+
+    auto [it, inserted] = cache.emplace(cur, true);
+
+    if (inserted)
     {
-      cache.emplace(cur);
-      visit.push_back(cur);
       if (!BvSolver::is_leaf(cur))
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
     }
-  }
+    else if (it->second)
+    {
+      it->second      = false;
+      d_node_map[cur] = mk_node(cur);
+      visit.pop_back();
+    }
+  } while (!visit.empty());
 
   d_ls->register_root(d_node_map.at(assertion));
 }
