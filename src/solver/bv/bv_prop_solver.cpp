@@ -345,9 +345,16 @@ BvPropSolver::mk_node(const Node& node)
     case Kind::BV_COMP:
     case Kind::EQUAL:
       assert(node.num_children() == 2);
-      res = d_ls->mk_node(bzla::ls::NodeKind::EQ,
-                          domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+      if (BvSolver::is_leaf(node))
+      {
+        res = d_ls->mk_node(domain.lo(), domain);
+      }
+      else
+      {
+        res = d_ls->mk_node(bzla::ls::NodeKind::EQ,
+                            domain,
+                            {d_node_map.at(node[0]), d_node_map.at(node[1])});
+      }
       break;
     case Kind::ITE:
       assert(node.num_children() == 3);
