@@ -8,7 +8,8 @@
  * See COPYING for more information on using this software.
  */
 
-#include "api/c/bitwuzla.h"
+#include <bitwuzla/c/bitwuzla.h>
+
 #include "test/unit/test.h"
 
 namespace bzla::test {

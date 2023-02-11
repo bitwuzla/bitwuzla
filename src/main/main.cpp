@@ -1,11 +1,11 @@
+#include <bitwuzla/cpp/bitwuzla.h>
+
 #include <cassert>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
 #include <sstream>
-
-#include "api/cpp/bitwuzla.h"
 
 namespace {
 

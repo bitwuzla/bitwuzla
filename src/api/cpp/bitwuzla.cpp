@@ -1,4 +1,4 @@
-#include "api/cpp/bitwuzla.h"
+#include <bitwuzla/cpp/bitwuzla.h>
 
 extern "C" {
 #include "bzlaconfig.h"  // TODO this should be refactored

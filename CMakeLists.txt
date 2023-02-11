@@ -353,6 +353,7 @@ endif()
 #-----------------------------------------------------------------------------#
 # Source directories
 
+include_directories(include)
 include_directories(src ${CMAKE_CURRENT_BINARY_DIR}/src)
 add_subdirectory(src)
 if(TESTING)
@@ -413,6 +414,8 @@ install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/BitwuzlaConfigVersion.cmake
   DESTINATION lib/cmake/Bitwuzla
 )
+
+install(DIRECTORY include/bitwuzla DESTINATION include)
 
 #-----------------------------------------------------------------------------#
 # Build API documentation

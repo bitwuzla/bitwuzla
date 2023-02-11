@@ -22,8 +22,8 @@ extern "C" {
 #endif
 
 #define BITWUZLA_API_USE_C_ENUMS
-#include "api/enums.h"
-#include "api/option.h"
+#include <bitwuzla/enums.h>
+#include <bitwuzla/option.h>
 #undef BITWUZLA_API_USE_C_ENUMS
 
 /* -------------------------------------------------------------------------- */
@@ -2051,8 +2051,8 @@ bool bitwuzla_term_is_const_array(BitwuzlaTerm term);
  * Print term .
  *
  * @param term The term.
- * @param format The output format for printing the term. Either `"btor"` for the
- *               BTOR format, or `"smt2"` for the SMT-LIB v2 format.
+ * @param format The output format for printing the term. Either `"btor"` for
+ * the BTOR format, or `"smt2"` for the SMT-LIB v2 format.
  * @param file The file to print the term to.
  */
 void bitwuzla_term_dump(BitwuzlaTerm term, const char *format, FILE *file);

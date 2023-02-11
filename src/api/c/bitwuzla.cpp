@@ -9,19 +9,20 @@
  */
 
 extern "C" {
-#include "api/c/bitwuzla.h"
+#include <bitwuzla/c/bitwuzla.h>
 
 #include "bzlaparse.h"
 }
 
 // TODO this will not be needed after parser refactor
+#include <bitwuzla/cpp/bitwuzla.h>
+
 #include <cassert>
 #include <cstring>
 #include <unordered_map>
 
 #include "api/c/bitwuzla_options.h"
 #include "api/checks.h"
-#include "api/cpp/bitwuzla.h"
 #include "terminator.h"
 
 /* -------------------------------------------------------------------------- */

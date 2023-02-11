@@ -12,8 +12,7 @@
 #define PYBITWUZLA_UTILS_H_INCLUDED
 
 #include <Python.h>
-
-#include "api/c/bitwuzla.h"
+#include <bitwuzla/c/bitwuzla.h>
 
 #if __cplusplus
 extern "C" {

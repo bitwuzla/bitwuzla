@@ -4,7 +4,7 @@
 #ifndef BITWUZLA_API_C_BITWUZLA_OPTIONS_H_INCLUDED
 #define BITWUZLA_API_C_BITWUZLA_OPTIONS_H_INCLUDED
 
-#include "api/cpp/bitwuzla.h"
+#include <bitwuzla/cpp/bitwuzla.h>
 
 struct BitwuzlaOptions
 {

@@ -83,10 +83,6 @@ set(libbitwuzla_src_files
 
 add_library(bitwuzla ${libbitwuzla_src_files})
 target_link_libraries(bitwuzla ${LIBRARIES})
-target_include_directories(bitwuzla
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>)
 
 target_include_directories(bitwuzla PRIVATE subprojects/bitwuzla-libs/src)
 target_link_libraries(bitwuzla bzlabb bzlabv bzlals bzlarng)
@@ -135,10 +131,5 @@ install(EXPORT bitwuzla-export
   FILE BitwuzlaTargets.cmake
   NAMESPACE Bitwuzla::
   DESTINATION lib/cmake/Bitwuzla)
-
-# Install header files
-install(FILES api/enums.h api/option.h DESTINATION include/bitwuzla/api)
-install(FILES api/c/bitwuzla.h DESTINATION include/bitwuzla/api/c)
-install(FILES api/cpp/bitwuzla.h DESTINATION include/bitwuzla/api/cpp)
 
 add_subdirectory(main)

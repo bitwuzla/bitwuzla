@@ -1,6 +1,6 @@
 #include "api/checks.h"
 
-#include "api/cpp/bitwuzla.h"
+#include <bitwuzla/cpp/bitwuzla.h>
 
 namespace bitwuzla {
 

@@ -1,6 +1,9 @@
 #ifndef BITWUZLA_API_CPP_H_INCLUDED
 #define BITWUZLA_API_CPP_H_INCLUDED
 
+#include <bitwuzla/enums.h>
+#include <bitwuzla/option.h>
+
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -8,9 +11,6 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-
-#include "api/enums.h"
-#include "api/option.h"
 
 // TODO mark functions that may change in the future as experimental for release
 

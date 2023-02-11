@@ -1,4 +1,5 @@
-#include "api/cpp/bitwuzla.h"
+#include <bitwuzla/cpp/bitwuzla.h>
+
 #include "test/unit/test.h"
 
 namespace bzla::test {

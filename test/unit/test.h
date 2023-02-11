@@ -19,7 +19,8 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-#include "api/c/bitwuzla.h"
+#include <bitwuzla/c/bitwuzla.h>
+
 #include "bzlaconfig.h"
 }
 

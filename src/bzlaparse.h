@@ -11,9 +11,8 @@
 #ifndef BZLAPARSE_H_INCLUDED
 #define BZLAPARSE_H_INCLUDED
 
+#include <bitwuzla/c/bitwuzla.h>
 #include <stdio.h>
-
-#include "api/c/bitwuzla.h"
 
 /*------------------------------------------------------------------------*/
 
