@@ -360,6 +360,24 @@ bitwuzla_options_delete(BitwuzlaOptions *options)
   BITWUZLA_TRY_CATCH_END;
 }
 
+bool
+bitwuzla_option_is_numeric(BitwuzlaOptions *options, BitwuzlaOption option)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  return options->d_options.is_numeric(static_cast<bitwuzla::Option>(option));
+  BITWUZLA_TRY_CATCH_END;
+}
+
+bool
+bitwuzla_option_is_mode(BitwuzlaOptions *options, BitwuzlaOption option)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  return options->d_options.is_mode(static_cast<bitwuzla::Option>(option));
+  BITWUZLA_TRY_CATCH_END;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */

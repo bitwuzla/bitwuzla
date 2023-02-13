@@ -82,6 +82,8 @@ API:
 
 New API functions:
 
+- `bitwuzla_option_is_numeric(BitwuzlaOptions*, BitwuzlaOption)`
+- `bitwuzla_option_is_mode(BitwuzlaOptions*, BitwuzlaOption)`
 - `bitwuzla_term_to_string(BitwuzlaTerm term)`
 - `bitwuzla_sort_to_string(BitwuzlaSort sort)`
 - `bitwuzla_mk_uninterpreted_sort()`

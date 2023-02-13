@@ -5668,7 +5668,7 @@ set_info_smt2(BzlaSMT2Parser *parser)
 static int32_t
 set_option_smt2(BzlaSMT2Parser *parser)
 {
-  int32_t tag, val, verb = 0;
+  int32_t tag, verb = 0;
   char *opt;
   BitwuzlaOption o;
 
@@ -5761,14 +5761,28 @@ set_option_smt2(BzlaSMT2Parser *parser)
       assert(parser->error);
       return 0;
     }
-    val = bitwuzla_get_option(parser->options, o);
-    if (tag == BZLA_FALSE_TAG_SMT2)
-      val = 0;
-    else if (tag == BZLA_TRUE_TAG_SMT2)
-      val = 1;
+    if (bitwuzla_option_is_mode(parser->options, o))
+    {
+      bitwuzla_set_option_mode(parser->options, o, parser->token.start);
+    }
     else
-      val = verb ? val + atoi(parser->token.start) : atoi(parser->token.start);
-    bitwuzla_set_option(parser->options, o, val);
+    {
+      uint32_t val = bitwuzla_get_option(parser->options, o);
+      if (tag == BZLA_FALSE_TAG_SMT2)
+      {
+        val = 0;
+      }
+      else if (tag == BZLA_TRUE_TAG_SMT2)
+      {
+        val = 1;
+      }
+      else
+      {
+        val =
+            verb ? val + atoi(parser->token.start) : atoi(parser->token.start);
+      }
+      bitwuzla_set_option(parser->options, o, val);
+    }
   }
   return skip_sexprs(parser, 1);
 }

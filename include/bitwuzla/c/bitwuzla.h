@@ -182,6 +182,18 @@ BitwuzlaOptions *bitwuzla_options_new();
  */
 void bitwuzla_options_delete(BitwuzlaOptions *options);
 
+/**
+ * Determine if a given option is a numeric (or Boolean) option.
+ * @return True if the given option is a numeric or Boolean option.
+ */
+bool bitwuzla_option_is_numeric(BitwuzlaOptions *options,
+                                BitwuzlaOption option);
+/**
+ * Determine if a given option is an option with a mode
+ * @return True if the given option is an option with a mode.
+ */
+bool bitwuzla_option_is_mode(BitwuzlaOptions *options, BitwuzlaOption option);
+
 /* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
