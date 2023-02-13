@@ -16,6 +16,7 @@ namespace bzla::bv {
 class BvSolverInterface
 {
  public:
+  virtual ~BvSolverInterface(){};
   /** Register assertion in current scope level. */
   virtual void register_assertion(const Node& assertion, bool top_level) = 0;
   /** Solve current set of registered assertions. */

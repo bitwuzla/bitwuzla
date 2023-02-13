@@ -43,7 +43,7 @@ class Backtrackable
  public:
   Backtrackable() = default;
   Backtrackable(BacktrackManager* mgr);
-  ~Backtrackable();
+  virtual ~Backtrackable();
 
   /** Create new scope. */
   virtual void push() = 0;

@@ -1543,6 +1543,7 @@ delete_smt2_parser(BzlaSMT2Parser *parser)
   if (parser->infile_name) bzla_mem_freestr(mem, parser->infile_name);
   if (parser->error) bzla_mem_freestr(mem, parser->error);
   if (parser->logic) bzla_mem_freestr(mem, parser->logic);
+  if (parser->bitwuzla) bitwuzla_delete(parser->bitwuzla);
 
   BZLA_RELEASE_STACK(parser->sorts);
 

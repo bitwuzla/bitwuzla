@@ -26,7 +26,7 @@ TypeDataHash::operator()(const TypeData* d) const
     const auto& types = d->get_types();
     for (size_t i = 0, size = types.size(); i < size; ++i)
     {
-      hash += s_primes[i % sizeof(s_primes)] * types[i].id();
+      hash += s_primes[i % s_primes.size()] * types[i].id();
     }
   }
   return hash;

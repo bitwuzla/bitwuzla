@@ -286,7 +286,7 @@ class NodeDataValue : public NodeData
  */
 struct NodeDataHash
 {
-  static constexpr size_t s_primes[4] = {
+  static constexpr std::array<size_t, 4> s_primes = {
       333444569u, 76891121u, 456790003u, 111130391u};
   size_t operator()(const NodeData* d) const;
 };

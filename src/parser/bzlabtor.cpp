@@ -1655,6 +1655,7 @@ new_btor_parser(BitwuzlaOptions *options)
 static void
 delete_bzla_parser(BzlaBTORParser *parser)
 {
+  if (parser->bitwuzla) bitwuzla_delete(parser->bitwuzla);
   delete parser;
 }
 

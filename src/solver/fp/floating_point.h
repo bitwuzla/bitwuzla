@@ -1,6 +1,7 @@
 #ifndef BZLA_SOLVER_FP_FLOATING_POINT_H_INCLUDED
 #define BZLA_SOLVER_FP_FLOATING_POINT_H_INCLUDED
 
+#include <array>
 #include <memory>
 
 #include "bv/bitvector.h"
@@ -324,7 +325,7 @@ class FloatingPoint
   BitVector as_bv() const;
 
  private:
-  static inline uint32_t s_hash_primes[] = {
+  static inline std::array<uint32_t, 6> s_hash_primes = {
       333444569u, 111130391u, 22237357u, 33355519u, 456790003u, 76891121u};
 
   /**

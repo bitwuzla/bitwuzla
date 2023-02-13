@@ -558,6 +558,7 @@ TEST_F(TestCApi, set_option)
     ASSERT_DEATH(
         bitwuzla_set_option_mode(options, BITWUZLA_OPT_INCREMENTAL, "true"),
         "expected option with option modes");
+    bitwuzla_options_delete(options);
   }
 }
 
@@ -4180,6 +4181,8 @@ TEST_F(TestCApi, terminate)
     Bitwuzla *bitwuzla = bitwuzla_new(opts);
     bitwuzla_assert(bitwuzla, a);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
   }
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
@@ -4187,6 +4190,8 @@ TEST_F(TestCApi, terminate)
     Bitwuzla *bitwuzla = bitwuzla_new(opts);
     bitwuzla_assert(bitwuzla, a);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
   }
   // not solved by rewriting, should be terminated when configured
   {
@@ -4195,6 +4200,8 @@ TEST_F(TestCApi, terminate)
     Bitwuzla *bitwuzla = bitwuzla_new(opts);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
   }
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
@@ -4203,6 +4210,8 @@ TEST_F(TestCApi, terminate)
     bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
   }
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
@@ -4211,6 +4220,8 @@ TEST_F(TestCApi, terminate)
     bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
   }
 }
 
@@ -4237,6 +4248,8 @@ TEST_F(TestCApi, terminate_sat)
     bitwuzla_set_termination_callback(bitwuzla, test_terminate2, nullptr);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
   }
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
@@ -4245,6 +4258,8 @@ TEST_F(TestCApi, terminate_sat)
     bitwuzla_set_termination_callback(bitwuzla, test_terminate2, nullptr);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
   }
 }
 

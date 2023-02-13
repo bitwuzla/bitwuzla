@@ -19,6 +19,7 @@ class Solver
 {
  public:
   Solver(Env& env, SolverState& state);
+  virtual ~Solver(){};
 
   /**
    * Check theory consistency of current solving context.

@@ -299,7 +299,7 @@ NodeDataNary::hash() const
   size_t hash = NodeData::hash();
   for (size_t i = 0, size = d_children.size(); i < size; ++i)
   {
-    hash += NodeDataHash::s_primes[i % sizeof(NodeDataHash::s_primes)]
+    hash += NodeDataHash::s_primes[i % NodeDataHash::s_primes.size()]
             * d_children[i].id();
   }
   return hash;

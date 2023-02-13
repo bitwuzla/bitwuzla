@@ -1559,7 +1559,13 @@ parse(Options &options, const std::string &infile_name)
   char *error_msg = nullptr;
   (void) bzla_parse(&coptions, infile, infile_name.c_str(), stdout, &error_msg);
   fclose(infile);
-  return error_msg ? error_msg : "";
+  if (error_msg)
+  {
+    std::string emsg(error_msg);
+    free(error_msg);
+    return emsg;
+  }
+  return "";
 }
 
 /* -------------------------------------------------------------------------- */
