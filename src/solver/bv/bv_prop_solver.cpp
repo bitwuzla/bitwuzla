@@ -11,6 +11,7 @@
 #include "solver/bv/bv_solver.h"
 #include "solver/result.h"
 #include "solving_context.h"
+#include "util/logger.h"
 
 namespace bzla::bv {
 
@@ -68,12 +69,19 @@ BvPropSolver::solve()
   d_ls->normalize();
 
   // incremental: increase limit by given nprops/nupdates
-  nprops += d_ls->d_statistics.d_nprops;
+  if (nprops)
+  {
+    nprops += d_ls->d_statistics.d_nprops;
+  }
   d_ls->set_max_nprops(nprops);
-  // BZLA_MSG(d_bzla->msg, 1, "Set propagation limit to %zu", nprops);
-  nupdates += d_ls->d_statistics.d_nupdates;
+  Log(1) << "set propagation limit to " << nprops;
+
+  if (nupdates)
+  {
+    nupdates += d_ls->d_statistics.d_nupdates;
+  }
   d_ls->set_max_nupdates(nupdates);
-  // BZLA_MSG(d_bzla->msg, 1, "Set model update limit to %zu", nupdates);
+  Log(1) << "set cone update limit to " << nupdates;
 
   for (uint32_t j = 0;; ++j)
   {
