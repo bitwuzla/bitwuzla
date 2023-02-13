@@ -1766,6 +1766,9 @@ class BitVectorExtract : public BitVectorNode
    */
   void normalize(BitVectorNode* node);
 
+  /** @return True if this extract is normalized. */
+  bool is_normalized() const;
+
  private:
   /**
    * Probability for keeping the current value of don't care bits (rather than

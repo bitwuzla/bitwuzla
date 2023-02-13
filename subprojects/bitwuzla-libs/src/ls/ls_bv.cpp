@@ -501,6 +501,8 @@ LocalSearchBV::normalize_extracts(BitVectorNode* node)
 
   for (BitVectorExtract* ex : extracts)
   {
+    if (ex->is_normalized()) continue;
+
     uint64_t hi               = ex->hi();
     uint64_t lo               = ex->lo();
     BitVectorNode* normalized = nullptr;

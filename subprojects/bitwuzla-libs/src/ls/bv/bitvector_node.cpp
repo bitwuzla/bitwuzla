@@ -6264,6 +6264,12 @@ BitVectorExtract::normalize(BitVectorNode* node)
   d_lo              = 0;
 }
 
+bool
+BitVectorExtract::is_normalized() const
+{
+  return d_child0_original != nullptr;
+}
+
 void
 BitVectorExtract::_evaluate()
 {
