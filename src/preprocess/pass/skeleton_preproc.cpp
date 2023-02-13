@@ -94,7 +94,11 @@ PassSkeletonPreproc::encode(const Node& assertion)
     auto [it, inserted] = d_encode_cache.emplace(cur, false);
     if (inserted)
     {
-      visit.insert(visit.end(), cur.begin(), cur.end());
+      Kind k = cur.kind();
+      if (k == Kind::AND || k == Kind::ITE || k == Kind::EQUAL)
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
       continue;
     }
     else if (!it->second)
