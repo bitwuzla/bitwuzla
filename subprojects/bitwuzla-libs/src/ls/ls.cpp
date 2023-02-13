@@ -502,7 +502,11 @@ LocalSearch<VALUE>::move()
                << std::endl;
   BZLALSLOG(1) << std::endl;
 
-  if (d_roots_unsat.empty()) return Result::SAT;
+  if (d_roots_unsat.empty())
+  {
+    BZLALSLOG(1) << " all roots satisfied";
+    return Result::SAT;
+  }
   return Result::UNKNOWN;
 }
 
