@@ -366,7 +366,7 @@ class Term
   friend Term mk_const_array(const Sort &, const Term &);
   friend Term mk_term(Kind,
                       const std::vector<Term> &,
-                      const std::vector<uint64_t>);
+                      const std::vector<uint64_t> &);
   friend Term mk_const(const Sort &, std::optional<const std::string>);
   friend Term mk_var(const Sort &, std::optional<const std::string>);
   friend Term substitute_term(const Term &,
@@ -643,7 +643,7 @@ class Sort
   friend Term mk_const_array(const Sort &, const Term &);
   friend Term mk_term(Kind,
                       const std::vector<Term> &,
-                      const std::vector<uint64_t>);
+                      const std::vector<uint64_t> &);
   friend Term mk_const(const Sort &, std::optional<const std::string>);
   friend Term mk_var(const Sort &, std::optional<const std::string>);
 
@@ -1572,7 +1572,7 @@ Term mk_rm_value(RoundingMode rm);
  */
 Term mk_term(Kind kind,
              const std::vector<Term> &args,
-             const std::vector<uint64_t> indices = {});
+             const std::vector<uint64_t> &indices = {});
 
 /**
  * Create a (first-order) constant of given sort with given symbol.

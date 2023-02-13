@@ -1909,7 +1909,7 @@ mk_const_array(const Sort &sort, const Term &term)
 Term
 mk_term(Kind kind,
         const std::vector<Term> &args,
-        const std::vector<uint64_t> indices)
+        const std::vector<uint64_t> &indices)
 {
   switch (kind)
   {
