@@ -1,0 +1,6 @@
+(set-option :bv-solver prop)
+(set-info :status sat)
+(declare-const _x0 RoundingMode)
+(declare-const _x1 (_ BitVec 16))
+(assert (let ((_let0 ((_ to_fp_unsigned 11 53) _x0 ((_ zero_extend 12) _x1))))(distinct ((_ to_fp_unsigned 11 53) _x0 ((_ fp.to_ubv 3) _x0 _let0)) _let0)))
+(check-sat)
