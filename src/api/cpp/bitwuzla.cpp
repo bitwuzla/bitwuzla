@@ -42,7 +42,9 @@ _init_reverse(const std::unordered_map<K, V> &map)
   std::unordered_map<V, K> reversed;
   for (const auto &[k, v] : map)
   {
-    reversed.emplace(v, k);
+    auto [it, inserted] = reversed.emplace(v, k);
+    (void) it;
+    assert(inserted);
   }
   return reversed;
 }
@@ -230,7 +232,6 @@ static const std::unordered_map<Kind, bzla::node::Kind> s_internal_kinds = {
     {Kind::AND, bzla::node::Kind::AND},
     {Kind::DISTINCT, bzla::node::Kind::DISTINCT},
     {Kind::EQUAL, bzla::node::Kind::EQUAL},
-    {Kind::IFF, bzla::node::Kind::EQUAL},
     {Kind::IMPLIES, bzla::node::Kind::IMPLIES},
     {Kind::NOT, bzla::node::Kind::NOT},
     {Kind::OR, bzla::node::Kind::OR},
@@ -1976,6 +1977,11 @@ mk_term(Kind kind,
         }
         break;
         default: BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, true);
+      }
+      if (kind == Kind::IFF)
+      {
+        return bzla::node::utils::mk_nary(bzla::node::Kind::EQUAL,
+                                          Term::term_vector_to_nodes(args));
       }
       return bzla::node::utils::mk_nary(s_internal_kinds.at(kind),
                                         Term::term_vector_to_nodes(args));
