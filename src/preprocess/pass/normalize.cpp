@@ -160,6 +160,8 @@ PassNormalize::normalize_add(const Node& node,
                              PassNormalize::CoefficientsMap& coeffs,
                              bool share_aware)
 {
+  assert(node.kind() == Kind::BV_ADD);
+
   uint64_t bv_size = node.type().bv_size();
   BitVector bvzero = BitVector::mk_zero(bv_size);
   BitVector value  = BitVector::mk_zero(bv_size);
@@ -308,16 +310,15 @@ PassNormalize::get_normalized_coefficients_for_eq(const Node& node0,
   std::unordered_map<Node, uint64_t> parents =
       share_aware ? _count_parents({node0, node1}, kind)
                   : std::unordered_map<Node, uint64_t>();
-  auto coeffs0 = compute_coefficients(node0, parents);
-  auto coeffs1 = compute_coefficients(node1, parents);
-
-  bool normalized            = false;
-  auto [normalized0, value0] = normalize_add(node0, coeffs0, share_aware);
-  auto [normalized1, value1] = normalize_add(node1, coeffs1, share_aware);
-  normalized                 = normalized0 || normalized1;
+  auto coeffs0    = compute_coefficients(node0, parents);
+  auto coeffs1    = compute_coefficients(node1, parents);
+  bool normalized = false;
 
   if (kind == Kind::BV_ADD)
   {
+    auto [normalized0, value0] = normalize_add(node0, coeffs0, share_aware);
+    auto [normalized1, value1] = normalize_add(node1, coeffs1, share_aware);
+    normalized                 = normalized0 || normalized1;
     if (_normalize_coefficients_eq_add(coeffs0, coeffs1, value0))
     {
       normalized = true;
