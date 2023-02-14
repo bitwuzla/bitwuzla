@@ -59,46 +59,68 @@ class TestPassNormalize : public TestPreprocessingPass
 
   void test_compute_coefficients(
       const Node& node,
-      const std::unordered_map<Node, uint64_t>& expected,
+      const std::unordered_map<Node, int64_t>& expected,
       bool consider_neg)
   {
-    auto factors = d_pass->compute_coefficients(node, {});
+    auto coeffs = d_pass->compute_coefficients(node, {});
+
+    if (consider_neg)
+    {
+      if (node.kind() == Kind::BV_ADD)
+      {
+        auto [normalized, value] = d_pass->normalize_add(node, coeffs, false);
+        if (!value.is_zero())
+        {
+          auto [it, inserted] = coeffs.emplace(
+              d_nm.mk_value(value), BitVector::mk_one(node.type().bv_size()));
+          if (!inserted)
+          {
+            it->second.ibvinc();
+          }
+        }
+      }
+    }
     for (auto& p : expected)
     {
-      auto it = factors.find(p.first);
-      if (it == factors.end())
+      auto it = coeffs.find(p.first);
+      if (it == coeffs.end())
       {
         std::cout << "missing factor for: " << p.first << std::endl;
-        std::cout << "factors:" << std::endl;
-        for (const auto& f : factors)
+        std::cout << "coeffs:" << std::endl;
+        for (const auto& f : coeffs)
         {
-          std::cout << "  " << f.first << ": " << f.second.to_uint64(true)
+          std::cout << "  " << f.first << ": "
+                    << ((int64_t) f.second.bvsext(64 - f.second.size())
+                            .to_uint64(true))
                     << std::endl;
         }
       }
-      assert(it != factors.end());
-      uint64_t size = it->second.size();
-      uint64_t factor =
-          it->second.bvsext(size < 64 ? 64 - size : 0).to_uint64(true);
+      ASSERT_TRUE(it != coeffs.end());
+      assert(it->second.size() < 64);
+      int64_t factor =
+          it->second.bvsext(64 - it->second.size()).to_uint64(true);
       if (factor != p.second)
       {
         std::cout << it->first << " with " << factor
                   << ", expected: " << p.second << std::endl;
-        for (auto& f : factors)
+        for (auto& f : coeffs)
         {
-          std::cout << " - " << f.first << ": " << factor << std::endl;
+          std::cout << " - " << f.first << ": "
+                    << ((int64_t) f.second.bvsext(64 - f.second.size())
+                            .to_uint64(true))
+                    << std::endl;
         }
       }
       ASSERT_EQ(factor, p.second);
     }
 
-    for (auto& p : factors)
+    for (auto& p : coeffs)
     {
       auto it = expected.find(p.first);
       if (it == expected.end())
       {
         std::cout << "computed factor for: " << p.first << std::endl;
-        for (const auto& f : factors)
+        for (const auto& f : coeffs)
         {
           std::cout << "  " << f.first << ": " << f.second << std::endl;
         }
@@ -108,31 +130,18 @@ class TestPassNormalize : public TestPreprocessingPass
           std::cout << "  " << f.first << ": " << f.second << std::endl;
         }
       }
-      assert(it != expected.end());
-      uint64_t size = p.second.size();
-      uint64_t factor =
-          p.second.bvsext(size < 64 ? 64 - size : 0).to_uint64(true);
-      if (factor != it->second)
-      {
-        std::cout << it->first << " with " << factor
-                  << ", expected: " << p.second << std::endl;
-        for (auto& f : expected)
-        {
-          std::cout << " - " << f.first << ": " << factor << std::endl;
-        }
-      }
-      ASSERT_EQ(factor, it->second);
+      ASSERT_TRUE(it != expected.end());
     }
   }
 
   void test_compute_coefficients(
       const Node& node,
-      const std::unordered_map<Node, uint64_t>& expected0,
-      const std::unordered_map<Node, uint64_t>& expected1,
+      const std::unordered_map<Node, int64_t>& expected0,
+      const std::unordered_map<Node, int64_t>& expected1,
       bool consider_neg)
   {
-    auto factors0 = d_pass->compute_coefficients(node[0], {});
-    auto factors1 = d_pass->compute_coefficients(node[1], {});
+    auto coeffs0 = d_pass->compute_coefficients(node[0], {});
+    auto coeffs1 = d_pass->compute_coefficients(node[1], {});
 
     test_compute_coefficients(node[0], expected0, consider_neg);
     test_compute_coefficients(node[1], expected1, consider_neg);
@@ -174,6 +183,7 @@ class TestPassNormalize : public TestPreprocessingPass
   Node d_d       = d_nm.mk_const(d_bv_type, "d");
   Node d_e       = d_nm.mk_const(d_bv_type, "e");
   Node d_one     = d_nm.mk_value(BitVector::mk_one(8));
+  Node d_ones    = d_nm.mk_value(BitVector::mk_ones(8));
   Node d_zero    = d_nm.mk_value(BitVector::mk_zero(8));
   Node d_two     = d_nm.mk_value(BitVector::from_ui(8, 2));
   Node d_four    = d_nm.mk_value(BitVector::from_ui(8, 4));
@@ -362,7 +372,6 @@ TEST_F(TestPassNormalize, compute_coefficients8)
                             false);
 }
 
-#if 0
 TEST_F(TestPassNormalize, compute_coefficients_neg0)
 {
   // (a + b) + ((-a + d) + (-e + (a + b))
@@ -372,15 +381,15 @@ TEST_F(TestPassNormalize, compute_coefficients_neg0)
   Node add_ad_e_ab = add(add_ad, add_e_ab);
   Node add0        = add(add_ab, add_ad_e_ab);
 
-  test_compute_coefficients(
-      add0,
-      {{d_a, 2},
-       {inv(d_a), 1},
-       {d_b, 2},
-       {d_d, 1},
-       {inv(d_e), 1},
-       {d_one, 2}},
-      true);
+  test_compute_coefficients(add0,
+                            {{d_a, 2},
+                             {inv(d_a), 1},
+                             {d_b, 2},
+                             {d_d, 1},
+                             {inv(d_e), 1},
+                             {d_one, 0},
+                             {d_two, 1}},
+                            true);
 }
 
 TEST_F(TestPassNormalize, compute_coefficients_neg1)
@@ -393,13 +402,14 @@ TEST_F(TestPassNormalize, compute_coefficients_neg1)
   Node add0        = add(add_ab, add_ad_e_ab);
 
   test_compute_coefficients(add0,
-                       {{d_a, UINT64_MAX},
-                        {d_b, 0},
-                        {d_d, UINT64_MAX},
-                        {d_e, 1},
-                        {d_one, 2},
-                        {d_nm.mk_value(BitVector::mk_ones(8).ibvdec()), 1}},
-                       true);
+                            {{d_a, -1},
+                             {d_b, 0},
+                             {d_d, -1},
+                             {d_e, 1},
+                             {d_one, 0},
+                             {inv(add_ab), 0},
+                             {inv(add_ad), 0}},
+                            true);
 }
 
 TEST_F(TestPassNormalize, compute_coefficients_neg2)
@@ -410,14 +420,31 @@ TEST_F(TestPassNormalize, compute_coefficients_neg2)
   Node neg_add_abc = neg(add_abc);
 
   test_compute_coefficients(neg_add_abc,
-                       {
-                        {d_a, UINT64_MAX},
-                        {d_b, UINT64_MAX},
-                        {d_c, UINT64_MAX}
-                       },
-                       true);
+                            {
+                                {d_a, -1},
+                                {d_b, -1},
+                                {d_c, -1},
+                                {d_one, 0},
+                                {inv(add_abc), 0},
+                            },
+                            true);
 }
-#endif
+
+TEST_F(TestPassNormalize, compute_coefficients_neg3)
+{
+  // (a + b) + ~(a + b)
+  Node add_ab = add(d_a, d_b);
+
+  test_compute_coefficients(add(add_ab, inv(add_ab)),
+                            {
+                                {d_a, 0},
+                                {d_b, 0},
+                                {inv(add_ab), 0},
+                                {d_ones, 1},
+                                {inv(add_ab), 0},
+                            },
+                            true);
+}
 
 /* -------------------------------------------------------------------------- */
 
@@ -1015,11 +1042,10 @@ TEST_F(TestPassNormalize, add_normalize13)
   Node add0   = add(and_ab, or_ab);
   // s + t
   Node add1 = add(d_a, d_b);
-  test_assertion(equal(add0, add1),
-                 equal(add(and_ab, d_nm.mk_value(BitVector::mk_ones(8))),
-                       add(add(d_a, d_b), aand(inv(d_a), inv(d_b)))),
-                 equal(add(and_ab, d_nm.mk_value(BitVector::mk_ones(8))),
-                       add(add(d_a, d_b), aand(inv(d_a), inv(d_b)))));
+  test_assertion(
+      equal(add0, add1),
+      equal(add(d_ones, and_ab), add(add(d_a, d_b), aand(inv(d_a), inv(d_b)))),
+      equal(add(d_ones, and_ab), add(add(d_a, d_b), aand(inv(d_a), inv(d_b)))));
 }
 
 /* -------------------------------------------------------------------------- */
