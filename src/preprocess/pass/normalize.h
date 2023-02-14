@@ -18,6 +18,7 @@ class PassNormalize : public PreprocessingPass
   Node process(const Node& node) override;
 
  private:
+  using CoefficientsMap = std::unordered_map<Node, BitVector>;
   /**
    * Compute the 'coefficients' (the number of occurrences) of the leafs of a
    * chain of nodes of the kind of the given top node. That is, (bvmul a (bvmul
@@ -48,9 +49,7 @@ class PassNormalize : public PreprocessingPass
    *         flag to indicate if normalization was successful. The resulting
    *         sets may be empty (only both, or none).
    */
-  std::tuple<std::unordered_map<Node, BitVector>,
-             std::unordered_map<Node, BitVector>,
-             bool>
+  std::tuple<CoefficientsMap, CoefficientsMap, bool>
   get_normalized_coefficients_for_eq(const Node& node0,
                                      const Node& node1,
                                      bool share_aware);
@@ -75,10 +74,9 @@ class PassNormalize : public PreprocessingPass
    * equality.
    * @param A pair of lhs and rhs normalized nodes.
    */
-  std::pair<Node, Node> _normalize_eq_mul(
-      const std::unordered_map<Node, BitVector>& coeffs0,
-      const std::unordered_map<Node, BitVector>& coeffs1,
-      uint64_t bv_size);
+  std::pair<Node, Node> _normalize_eq_mul(const CoefficientsMap& coeffs0,
+                                          const CoefficientsMap& coeffs1,
+                                          uint64_t bv_size);
   /**
    * Helper to normalize equality over addition.
    * @param coeffs0 The normalized coefficients of the left hand side of the
@@ -87,10 +85,13 @@ class PassNormalize : public PreprocessingPass
    * equality.
    * @param A pair of lhs and rhs normalized nodes.
    */
-  std::pair<Node, Node> _normalize_eq_add(
-      std::unordered_map<Node, BitVector>& coeffs0,
-      std::unordered_map<Node, BitVector>& coeffs1,
-      uint64_t bv_size);
+  std::pair<Node, Node> _normalize_eq_add(CoefficientsMap& coeffs0,
+                                          CoefficientsMap& coeffs1,
+                                          uint64_t bv_size);
+
+  bool _normalize_coefficients_eq_add(PassNormalize::CoefficientsMap& coeffs0,
+                                      PassNormalize::CoefficientsMap& coeffs1,
+                                      uint64_t bv_size);
 
   /**
    * General normalization of adder and multiplier chains to extract common
@@ -109,10 +110,9 @@ class PassNormalize : public PreprocessingPass
    * @param rhs The normalized operands of the right hand side.
    * @return Normalized left and right node.
    */
-  std::pair<Node, Node> normalize_common(
-      node::Kind kind,
-      std::unordered_map<Node, BitVector>& lhs,
-      std::unordered_map<Node, BitVector>& rhs);
+  std::pair<Node, Node> normalize_common(node::Kind kind,
+                                         CoefficientsMap& lhs,
+                                         CoefficientsMap& rhs);
 
   /**
    * Helper to extract top-most adder or multiplier from node.

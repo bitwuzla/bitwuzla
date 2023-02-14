@@ -40,7 +40,7 @@ is_leaf(Kind kind,
 }
 }  // namespace
 
-std::unordered_map<Node, BitVector>
+PassNormalize::CoefficientsMap
 PassNormalize::compute_coefficients(
     const Node& node, const std::unordered_map<Node, uint64_t>& parents)
 {
@@ -51,7 +51,7 @@ PassNormalize::compute_coefficients(
   node_ref_vector nodes;
   unordered_node_ref_set intermediate;
   unordered_node_ref_map<BitVector> coeffs;
-  std::unordered_map<Node, BitVector> res;      // only leafs
+  CoefficientsMap res;  // only leafs
 
   // Collect all traversed nodes (intermediate nodes of specified kind and
   // leafs) and initialize coefficients for each node to zero.
@@ -147,11 +147,13 @@ _count_parents(const node_ref_vector& nodes, Kind kind)
   }
   return parents;
 }
+}  // namespace
 
 bool
-_normalize_coefficients_eq_add(std::unordered_map<Node, BitVector>& coeffs0,
-                               std::unordered_map<Node, BitVector>& coeffs1,
-                               uint64_t bv_size)
+PassNormalize::_normalize_coefficients_eq_add(
+    PassNormalize::CoefficientsMap& coeffs0,
+    PassNormalize::CoefficientsMap& coeffs1,
+    uint64_t bv_size)
 {
   // Note: Coefficients must already be normalized in the sense that they only
   //       either appear on the left or right hand side (this function must
@@ -244,11 +246,8 @@ _normalize_coefficients_eq_add(std::unordered_map<Node, BitVector>& coeffs0,
 
   return normalized;
 }
-}  // namespace
 
-std::tuple<std::unordered_map<Node, BitVector>,
-           std::unordered_map<Node, BitVector>,
-           bool>
+std::tuple<PassNormalize::CoefficientsMap, PassNormalize::CoefficientsMap, bool>
 PassNormalize::get_normalized_coefficients_for_eq(const Node& node0,
                                                   const Node& node1,
                                                   bool share_aware)
@@ -261,7 +260,7 @@ PassNormalize::get_normalized_coefficients_for_eq(const Node& node0,
                   : std::unordered_map<Node, uint64_t>();
   auto coeffs0 = compute_coefficients(node0, parents);
   auto coeffs1 = compute_coefficients(node1, parents);
-  std::unordered_map<Node, BitVector> res0, res1;
+  CoefficientsMap res0, res1;
   // normalize common coefficients and record entries that are not in coeffs1
   for (const auto& f : coeffs0)
   {
@@ -323,10 +322,9 @@ PassNormalize::get_normalized_coefficients_for_eq(const Node& node0,
 }
 
 std::pair<Node, Node>
-PassNormalize::_normalize_eq_mul(
-    const std::unordered_map<Node, BitVector>& coeffs0,
-    const std::unordered_map<Node, BitVector>& coeffs1,
-    uint64_t bv_size)
+PassNormalize::_normalize_eq_mul(const PassNormalize::CoefficientsMap& coeffs0,
+                                 const PassNormalize::CoefficientsMap& coeffs1,
+                                 uint64_t bv_size)
 {
   NodeManager& nm = NodeManager::get();
   std::vector<Node> lhs, rhs;
@@ -403,8 +401,8 @@ get_factorized_add(const Node& node, const BitVector& coeff)
 }  // namespace
 
 std::pair<Node, Node>
-PassNormalize::_normalize_eq_add(std::unordered_map<Node, BitVector>& coeffs0,
-                                 std::unordered_map<Node, BitVector>& coeffs1,
+PassNormalize::_normalize_eq_add(PassNormalize::CoefficientsMap& coeffs0,
+                                 PassNormalize::CoefficientsMap& coeffs1,
                                  uint64_t bv_size)
 {
   NodeManager& nm = NodeManager::get();
@@ -533,8 +531,8 @@ push_factorized(Kind kind,
 
 std::pair<Node, Node>
 PassNormalize::normalize_common(Kind kind,
-                                std::unordered_map<Node, BitVector>& lhs,
-                                std::unordered_map<Node, BitVector>& rhs)
+                                PassNormalize::CoefficientsMap& lhs,
+                                PassNormalize::CoefficientsMap& rhs)
 {
   std::vector<Node> lhs_norm, rhs_norm, common;
   assert(!lhs.empty());
