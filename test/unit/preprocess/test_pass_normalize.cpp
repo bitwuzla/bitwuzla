@@ -57,11 +57,12 @@ class TestPassNormalize : public TestPreprocessingPass
     return d_nm.mk_node(Kind::EQUAL, {a, b});
   }
 
-  void test_compute_factors(const Node& node,
-                            const std::unordered_map<Node, uint64_t>& expected,
-                            bool consider_neg)
+  void test_compute_coefficients(
+      const Node& node,
+      const std::unordered_map<Node, uint64_t>& expected,
+      bool consider_neg)
   {
-    auto factors = d_pass->compute_factors(node, {});
+    auto factors = d_pass->compute_coefficients(node, {});
     for (auto& p : expected)
     {
       auto it = factors.find(p.first);
@@ -124,16 +125,17 @@ class TestPassNormalize : public TestPreprocessingPass
     }
   }
 
-  void test_compute_factors(const Node& node,
-                            const std::unordered_map<Node, uint64_t>& expected0,
-                            const std::unordered_map<Node, uint64_t>& expected1,
-                            bool consider_neg)
+  void test_compute_coefficients(
+      const Node& node,
+      const std::unordered_map<Node, uint64_t>& expected0,
+      const std::unordered_map<Node, uint64_t>& expected1,
+      bool consider_neg)
   {
-    auto factors0 = d_pass->compute_factors(node[0], {});
-    auto factors1 = d_pass->compute_factors(node[1], {});
+    auto factors0 = d_pass->compute_coefficients(node[0], {});
+    auto factors1 = d_pass->compute_coefficients(node[1], {});
 
-    test_compute_factors(node[0], expected0, consider_neg);
-    test_compute_factors(node[1], expected1, consider_neg);
+    test_compute_coefficients(node[0], expected0, consider_neg);
+    test_compute_coefficients(node[1], expected1, consider_neg);
   }
 
   void test_assertion(const Node& node,
@@ -185,7 +187,7 @@ class TestPassNormalize : public TestPreprocessingPass
 
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestPassNormalize, compute_factors0)
+TEST_F(TestPassNormalize, compute_coefficients0)
 {
   // (a * b) * ((c * d) * e)
   Node mul_ab   = mul(d_a, d_b);
@@ -198,13 +200,13 @@ TEST_F(TestPassNormalize, compute_factors0)
   Node mul_bcde = mul(d_b, mul_cde);
   Node mul1     = mul(d_a, mul_bcde);
 
-  test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       false);
+  test_compute_coefficients(equal(mul0, mul1),
+                            {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                            {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                            false);
 }
 
-TEST_F(TestPassNormalize, compute_factors1)
+TEST_F(TestPassNormalize, compute_coefficients1)
 {
   // (a * b) * ((a * d) * e)
   Node mul_ab   = mul(d_a, d_b);
@@ -217,13 +219,13 @@ TEST_F(TestPassNormalize, compute_factors1)
   Node mul_bcde = mul(d_b, mul_cde);
   Node mul1     = mul(d_a, mul_bcde);
 
-  test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 2}, {d_b, 1}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       false);
+  test_compute_coefficients(equal(mul0, mul1),
+                            {{d_a, 2}, {d_b, 1}, {d_d, 1}, {d_e, 1}},
+                            {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                            false);
 }
 
-TEST_F(TestPassNormalize, compute_factors2)
+TEST_F(TestPassNormalize, compute_coefficients2)
 {
   // (a * b) * ((c * d) * e)
   Node mul_ab   = mul(d_a, d_b);
@@ -236,13 +238,13 @@ TEST_F(TestPassNormalize, compute_factors2)
   Node mul_bcae = mul(d_b, mul_cae);
   Node mul1     = mul(d_a, mul_bcae);
 
-  test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 2}, {d_b, 1}, {d_c, 1}, {d_e, 1}},
-                       false);
+  test_compute_coefficients(equal(mul0, mul1),
+                            {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                            {{d_a, 2}, {d_b, 1}, {d_c, 1}, {d_e, 1}},
+                            false);
 }
 
-TEST_F(TestPassNormalize, compute_factors3)
+TEST_F(TestPassNormalize, compute_coefficients3)
 {
   // (a * b) * ((c * d) * (e * (a * b))
   Node mul_ab      = mul(d_a, d_b);
@@ -256,13 +258,13 @@ TEST_F(TestPassNormalize, compute_factors3)
   Node mul_bcde = mul(d_b, mul_cde);
   Node mul1     = mul(d_a, mul_bcde);
 
-  test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 2}, {d_b, 2}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       false);
+  test_compute_coefficients(equal(mul0, mul1),
+                            {{d_a, 2}, {d_b, 2}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                            {{d_a, 1}, {d_b, 1}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                            false);
 }
 
-TEST_F(TestPassNormalize, compute_factors4)
+TEST_F(TestPassNormalize, compute_coefficients4)
 {
   // (a * b) * ((c * d) * (e * (a * b))
   Node mul_ab      = mul(d_a, d_b);
@@ -275,13 +277,13 @@ TEST_F(TestPassNormalize, compute_factors4)
   Node mul_cd_a_cd = mul(mul_cd, mul_a_cd);
   Node mul1        = mul(mul_ab, mul_cd_a_cd);
 
-  test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 2}, {d_b, 2}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 2}, {d_b, 1}, {d_c, 2}, {d_d, 2}},
-                       false);
+  test_compute_coefficients(equal(mul0, mul1),
+                            {{d_a, 2}, {d_b, 2}, {d_c, 1}, {d_d, 1}, {d_e, 1}},
+                            {{d_a, 2}, {d_b, 1}, {d_c, 2}, {d_d, 2}},
+                            false);
 }
 
-TEST_F(TestPassNormalize, compute_factors5)
+TEST_F(TestPassNormalize, compute_coefficients5)
 {
   // (a * b) * ((a * d) * (e * (a * b))
   Node mul_ab      = mul(d_a, d_b);
@@ -295,13 +297,13 @@ TEST_F(TestPassNormalize, compute_factors5)
   Node mul_cd_a_cd = mul(mul_cd, mul_a_cd);
   Node mul1        = mul(mul_ab, mul_cd_a_cd);
 
-  test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 3}, {d_b, 2}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 2}, {d_b, 1}, {d_c, 2}, {d_d, 2}},
-                       false);
+  test_compute_coefficients(equal(mul0, mul1),
+                            {{d_a, 3}, {d_b, 2}, {d_d, 1}, {d_e, 1}},
+                            {{d_a, 2}, {d_b, 1}, {d_c, 2}, {d_d, 2}},
+                            false);
 }
 
-TEST_F(TestPassNormalize, compute_factors6)
+TEST_F(TestPassNormalize, compute_coefficients6)
 {
   // (a * b) * ((a * d) * (e * (a * b))
   Node mul_ab      = mul(d_a, d_b);
@@ -315,13 +317,13 @@ TEST_F(TestPassNormalize, compute_factors6)
   Node mul_ab_ab_ab_ab = mul(mul_ab_ab, mul_ab_ab);
   Node mul1            = mul(mul_a_ab_ab, mul_ab_ab_ab_ab);
 
-  test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 3}, {d_b, 2}, {d_d, 1}, {d_e, 1}},
-                       {{d_a, 7}, {d_b, 6}},
-                       false);
+  test_compute_coefficients(equal(mul0, mul1),
+                            {{d_a, 3}, {d_b, 2}, {d_d, 1}, {d_e, 1}},
+                            {{d_a, 7}, {d_b, 6}},
+                            false);
 }
 
-TEST_F(TestPassNormalize, compute_factors7)
+TEST_F(TestPassNormalize, compute_coefficients7)
 {
   // (a * b) * ((a + d) * (e * (a + b))
   Node mul_ab      = mul(d_a, d_b);
@@ -337,30 +339,31 @@ TEST_F(TestPassNormalize, compute_factors7)
   Node mul_cd_a_cd = mul(mul_cd, add_a_cd);
   Node mul1        = mul(add_ab, mul_cd_a_cd);
 
-  test_compute_factors(equal(mul0, mul1),
-                       {{d_a, 1}, {d_b, 1}, {d_e, 1}, {add_ab, 1}, {add_ad, 1}},
-                       {{d_c, 1}, {d_d, 1}, {add_ab, 1}, {add_a_cd, 1}},
-                       false);
+  test_compute_coefficients(
+      equal(mul0, mul1),
+      {{d_a, 1}, {d_b, 1}, {d_e, 1}, {add_ab, 1}, {add_ad, 1}},
+      {{d_c, 1}, {d_d, 1}, {add_ab, 1}, {add_a_cd, 1}},
+      false);
 }
 
-TEST_F(TestPassNormalize, compute_factors8)
+TEST_F(TestPassNormalize, compute_coefficients8)
 {
   Node add_ab   = add(d_a, d_b);
   Node add_abc  = add(add_ab, d_c);
   Node add_2abc = add(add_abc, add_abc);
   Node add0     = add(add_2abc, add_ab);
 
-  test_compute_factors(add0,
-                       {
-                           {d_a, 3},
-                           {d_b, 3},
-                           {d_c, 2},
-                       },
-                       false);
+  test_compute_coefficients(add0,
+                            {
+                                {d_a, 3},
+                                {d_b, 3},
+                                {d_c, 2},
+                            },
+                            false);
 }
 
 #if 0
-TEST_F(TestPassNormalize, compute_factors_neg0)
+TEST_F(TestPassNormalize, compute_coefficients_neg0)
 {
   // (a + b) + ((-a + d) + (-e + (a + b))
   Node add_ab      = add(d_a, d_b);
@@ -369,7 +372,7 @@ TEST_F(TestPassNormalize, compute_factors_neg0)
   Node add_ad_e_ab = add(add_ad, add_e_ab);
   Node add0        = add(add_ab, add_ad_e_ab);
 
-  test_compute_factors(
+  test_compute_coefficients(
       add0,
       {{d_a, 2},
        {inv(d_a), 1},
@@ -380,7 +383,7 @@ TEST_F(TestPassNormalize, compute_factors_neg0)
       true);
 }
 
-TEST_F(TestPassNormalize, compute_factors_neg1)
+TEST_F(TestPassNormalize, compute_coefficients_neg1)
 {
   // (a + b) + (-(a + d) + (e + -(a + b))
   Node add_ab      = add(d_a, d_b);
@@ -389,7 +392,7 @@ TEST_F(TestPassNormalize, compute_factors_neg1)
   Node add_ad_e_ab = add(neg(add_ad), add_e_ab);
   Node add0        = add(add_ab, add_ad_e_ab);
 
-  test_compute_factors(add0,
+  test_compute_coefficients(add0,
                        {{d_a, UINT64_MAX},
                         {d_b, 0},
                         {d_d, UINT64_MAX},
@@ -399,14 +402,14 @@ TEST_F(TestPassNormalize, compute_factors_neg1)
                        true);
 }
 
-TEST_F(TestPassNormalize, compute_factors_neg2)
+TEST_F(TestPassNormalize, compute_coefficients_neg2)
 {
   // -(a + (b + c))
   Node add_bc      = add(d_b, d_c);
   Node add_abc     = add(d_a, add_bc);
   Node neg_add_abc = neg(add_abc);
 
-  test_compute_factors(neg_add_abc,
+  test_compute_coefficients(neg_add_abc,
                        {
                         {d_a, UINT64_MAX},
                         {d_b, UINT64_MAX},

@@ -19,10 +19,10 @@ class PassNormalize : public PreprocessingPass
 
  private:
   /**
-   * Compute the 'factors' (the number of occurrences) of the leafs of a chain
-   * of nodes of the kind of the given top node. That is, (bvmul a (bvmul c d))
-   * would result in {{a -> 1}, {c -> 1}, {d -> 1}}, and (bvmul a (bvadd c d))
-   * in {{a -> 1}, {(bvadd c d) -> 1}}.
+   * Compute the 'coefficients' (the number of occurrences) of the leafs of a
+   * chain of nodes of the kind of the given top node. That is, (bvmul a (bvmul
+   * c d)) would result in {{a -> 1}, {c -> 1}, {d -> 1}}, and (bvmul a (bvadd
+   * c d)) in {{a -> 1}, {(bvadd c d) -> 1}}.
    *
    * @note If parents are given (share aware normalization), we treat subterms
    *       of the same kind as the top node as leafs if they have parents
@@ -34,26 +34,26 @@ class PassNormalize : public PreprocessingPass
    *                not normalize in a share aware manner.
    * @return A map from node to its occurrence count.
    */
-  std::unordered_map<Node, BitVector> compute_factors(
+  std::unordered_map<Node, BitVector> compute_coefficients(
       const Node& node, const std::unordered_map<Node, uint64_t>& parents);
   /**
-   * Helper to determine the normalized set of 'factors' (occurrences) for an
-   * equality over the given two nodes of the same kind.
+   * Helper to determine the normalized set of 'coefficients' (occurrences) for
+   * an equality over the given two nodes of the same kind.
    * @param node0 The left hand side node of the equality.
    * @param node1 The right hand side node of the equality.
    * @param share_aware True to detect occurrences > 1, i.e., nodes of given
    *                    kind that have multiple parents. If true, we do not
    *                    normalize such nodes to avoid blow-up.
-   * @return A set of normalized factors per node, with a boolean
+   * @return A set of normalized coefficients per node, with a boolean
    *         flag to indicate if normalization was successful. The resulting
    *         sets may be empty (only both, or none).
    */
   std::tuple<std::unordered_map<Node, BitVector>,
              std::unordered_map<Node, BitVector>,
              bool>
-  get_normalized_factors_for_eq(const Node& node0,
-                                const Node& node1,
-                                bool share_aware);
+  get_normalized_coefficients_for_eq(const Node& node0,
+                                     const Node& node1,
+                                     bool share_aware);
   /**
    * Normalize equality over addition or multiplication.
    * @param node0 The left hand side of the equality.
@@ -69,27 +69,27 @@ class PassNormalize : public PreprocessingPass
                                              bool share_aware);
   /**
    * Helper to normalize equality over multiplication.
-   * @param factors0 The normalized factors of the left hand side of the
+   * @param coeffs0 The normalized coefficients of the left hand side of the
    * equality.
-   * @param factors1 The normalized factors of the right hand side of the
+   * @param coeffs1 The normalized coefficients of the right hand side of the
    * equality.
    * @param A pair of lhs and rhs normalized nodes.
    */
   std::pair<Node, Node> _normalize_eq_mul(
-      const std::unordered_map<Node, BitVector>& factors0,
-      const std::unordered_map<Node, BitVector>& factors1,
+      const std::unordered_map<Node, BitVector>& coeffs0,
+      const std::unordered_map<Node, BitVector>& coeffs1,
       uint64_t bv_size);
   /**
    * Helper to normalize equality over addition.
-   * @param factors0 The normalized factors of the left hand side of the
+   * @param coeffs0 The normalized coefficients of the left hand side of the
    * equality.
-   * @param factors1 The normalized factors of the right hand side of the
+   * @param coeffs1 The normalized coefficients of the right hand side of the
    * equality.
    * @param A pair of lhs and rhs normalized nodes.
    */
   std::pair<Node, Node> _normalize_eq_add(
-      std::unordered_map<Node, BitVector>& factors0,
-      std::unordered_map<Node, BitVector>& factors1,
+      std::unordered_map<Node, BitVector>& coeffs0,
+      std::unordered_map<Node, BitVector>& coeffs1,
       uint64_t bv_size);
 
   /**

@@ -41,7 +41,7 @@ is_leaf(Kind kind,
 }  // namespace
 
 std::unordered_map<Node, BitVector>
-PassNormalize::compute_factors(
+PassNormalize::compute_coefficients(
     const Node& node, const std::unordered_map<Node, uint64_t>& parents)
 {
   bool share_aware = !parents.empty();
@@ -97,7 +97,7 @@ PassNormalize::compute_factors(
     auto fit        = coeffs.find(cur);
     assert(fit != coeffs.end());
 
-    // If it's an intermediate node, push factor down to children
+    // If it's an intermediate node, push coefficient down to children
     if (intermediate.find(cur) != intermediate.end())
     {
       assert(cur.kind() == kind);
@@ -149,13 +149,14 @@ _count_parents(const node_ref_vector& nodes, Kind kind)
 }
 
 bool
-_normalize_factors_eq_add(std::unordered_map<Node, BitVector>& factors0,
-                          std::unordered_map<Node, BitVector>& factors1,
-                          uint64_t bv_size)
+_normalize_coefficients_eq_add(std::unordered_map<Node, BitVector>& coeffs0,
+                               std::unordered_map<Node, BitVector>& coeffs1,
+                               uint64_t bv_size)
 {
-  // Note: Factors must already be normalized in the sense that they only
+  // Note: Coefficients must already be normalized in the sense that they only
   //       either appear on the left or right hand side (this function must
-  //       be called with factors determined by get_normalized_factors()).
+  //       be called with coefficients determined by
+  //       get_normalized_coefficients_for_eq()).
 
   // (a - b + c = -d + e) is normalized to (a + c + d = b + e)
 
@@ -169,7 +170,7 @@ _normalize_factors_eq_add(std::unordered_map<Node, BitVector>& factors0,
 
   // summarize values
   BitVector lvalue = BitVector::mk_zero(bv_size);
-  for (auto& f : factors0)
+  for (auto& f : coeffs0)
   {
     if (f.first.is_value())
     {
@@ -180,11 +181,11 @@ _normalize_factors_eq_add(std::unordered_map<Node, BitVector>& factors0,
   }
 
   // move negated occurrences to other side
-  for (auto& f : factors0)
+  for (auto& f : coeffs0)
   {
     const Node& cur = f.first;
-    BitVector factor = f.second;
-    if (factor.is_zero())
+    BitVector coeff = f.second;
+    if (coeff.is_zero())
     {
       continue;
     }
@@ -196,13 +197,13 @@ _normalize_factors_eq_add(std::unordered_map<Node, BitVector>& factors0,
         if (cur[0][0] == one)
         {
           neg = cur[0][1];
-          lvalue.ibvsub(factor);
+          lvalue.ibvsub(coeff);
           f.second = bvzero;
         }
         else if (cur[0][1] == one)
         {
           neg = cur[0][0];
-          lvalue.ibvsub(factor);
+          lvalue.ibvsub(coeff);
           f.second = bvzero;
         }
       }
@@ -214,26 +215,26 @@ _normalize_factors_eq_add(std::unordered_map<Node, BitVector>& factors0,
       if (!neg.is_null())
       {
         normalized = true;
-        auto it    = factors1.find(neg);
-        if (it == factors1.end())
+        auto it    = coeffs1.find(neg);
+        if (it == coeffs1.end())
         {
-          factors1.emplace(neg, factor);
+          coeffs1.emplace(neg, coeff);
         }
         else
         {
-          it->second.ibvadd(factor);
+          it->second.ibvadd(coeff);
         }
-        lvalue.ibvsub(factor);
+        lvalue.ibvsub(coeff);
       }
     }
   }
   if (!lvalue.is_zero())
   {
     Node val = nm.mk_value(lvalue);
-    auto it  = factors0.find(val);
-    if (it == factors0.end())
+    auto it  = coeffs0.find(val);
+    if (it == coeffs0.end())
     {
-      factors0.emplace(val, BitVector::mk_one(bv_size));
+      coeffs0.emplace(val, BitVector::mk_one(bv_size));
     }
     else
     {
@@ -248,9 +249,9 @@ _normalize_factors_eq_add(std::unordered_map<Node, BitVector>& factors0,
 std::tuple<std::unordered_map<Node, BitVector>,
            std::unordered_map<Node, BitVector>,
            bool>
-PassNormalize::get_normalized_factors_for_eq(const Node& node0,
-                                             const Node& node1,
-                                             bool share_aware)
+PassNormalize::get_normalized_coefficients_for_eq(const Node& node0,
+                                                  const Node& node1,
+                                                  bool share_aware)
 {
   assert(node0.kind() == node1.kind());
   bool normalized = false;
@@ -258,17 +259,17 @@ PassNormalize::get_normalized_factors_for_eq(const Node& node0,
   std::unordered_map<Node, uint64_t> parents =
       share_aware ? _count_parents({node0, node1}, kind)
                   : std::unordered_map<Node, uint64_t>();
-  auto factors0 = compute_factors(node0, parents);
-  auto factors1 = compute_factors(node1, parents);
+  auto coeffs0 = compute_coefficients(node0, parents);
+  auto coeffs1 = compute_coefficients(node1, parents);
   std::unordered_map<Node, BitVector> res0, res1;
-  // normalize common factors and record entries that are not in factors1
-  for (const auto& f : factors0)
+  // normalize common coefficients and record entries that are not in coeffs1
+  for (const auto& f : coeffs0)
   {
     assert(f.first.kind() != kind
            || (share_aware && parents.at(f.first) != d_parents.at(f.first)));
 
-    auto fit = factors1.find(f.first);
-    if (fit == factors1.end())
+    auto fit = coeffs1.find(f.first);
+    if (fit == coeffs1.end())
     {
       res0.insert(f);
       continue;
@@ -287,19 +288,19 @@ PassNormalize::get_normalized_factors_for_eq(const Node& node0,
       normalized = true;
     }
   }
-  // check factors1 for entries that are not in factors0
-  for (const auto& f : factors1)
+  // check coeffs1 for entries that are not in coeffs0
+  for (const auto& f : coeffs1)
   {
     assert(f.first.kind() != kind
            || (share_aware && parents.at(f.first) != d_parents.at(f.first)));
-    auto fit = factors0.find(f.first);
-    if (fit == factors0.end())
+    auto fit = coeffs0.find(f.first);
+    if (fit == coeffs0.end())
     {
       res1.insert(f);
     }
   }
 
-  // factors on both sides cancelled out
+  // coeffs on both sides cancelled out
   if (res0.empty() && res1.empty())
   {
     return {{}, {}, true};
@@ -308,11 +309,11 @@ PassNormalize::get_normalized_factors_for_eq(const Node& node0,
   if (kind == Kind::BV_ADD)
   {
     uint64_t bv_size = node0.type().bv_size();
-    if (_normalize_factors_eq_add(res0, res1, bv_size) && !normalized)
+    if (_normalize_coefficients_eq_add(res0, res1, bv_size) && !normalized)
     {
       normalized = true;
     }
-    if (_normalize_factors_eq_add(res1, res0, bv_size) && !normalized)
+    if (_normalize_coefficients_eq_add(res1, res0, bv_size) && !normalized)
     {
       normalized = true;
     }
@@ -323,19 +324,19 @@ PassNormalize::get_normalized_factors_for_eq(const Node& node0,
 
 std::pair<Node, Node>
 PassNormalize::_normalize_eq_mul(
-    const std::unordered_map<Node, BitVector>& factors0,
-    const std::unordered_map<Node, BitVector>& factors1,
+    const std::unordered_map<Node, BitVector>& coeffs0,
+    const std::unordered_map<Node, BitVector>& coeffs1,
     uint64_t bv_size)
 {
   NodeManager& nm = NodeManager::get();
   std::vector<Node> lhs, rhs;
-  if (factors0.empty())
+  if (coeffs0.empty())
   {
     lhs.push_back(nm.mk_value(BitVector::mk_one(bv_size)));
   }
   else
   {
-    for (const auto& f : factors0)
+    for (const auto& f : coeffs0)
     {
       if (f.second.is_zero())
       {
@@ -345,13 +346,13 @@ PassNormalize::_normalize_eq_mul(
       lhs.insert(lhs.end(), f.second.to_uint64(true), f.first);
     }
   }
-  if (factors1.empty())
+  if (coeffs1.empty())
   {
     rhs.push_back(nm.mk_value(BitVector::mk_one(bv_size)));
   }
   else
   {
-    for (const auto& f : factors1)
+    for (const auto& f : coeffs1)
     {
       if (f.second.is_zero())
       {
@@ -384,26 +385,26 @@ PassNormalize::_normalize_eq_mul(
 
 namespace {
 Node
-get_factorized_add(const Node& node, const BitVector& factor)
+get_factorized_add(const Node& node, const BitVector& coeff)
 {
   assert(!node.is_null());
   NodeManager& nm = NodeManager::get();
-  assert(!factor.is_zero());
-  if (factor.is_one())
+  assert(!coeff.is_zero());
+  if (coeff.is_one())
   {
     return node;
   }
-  if (factor.is_ones())
+  if (coeff.is_ones())
   {
     return nm.mk_node(Kind::BV_NEG, {node});
   }
-  return nm.mk_node(Kind::BV_MUL, {nm.mk_value(factor), node});
+  return nm.mk_node(Kind::BV_MUL, {nm.mk_value(coeff), node});
 }
 }  // namespace
 
 std::pair<Node, Node>
-PassNormalize::_normalize_eq_add(std::unordered_map<Node, BitVector>& factors0,
-                                 std::unordered_map<Node, BitVector>& factors1,
+PassNormalize::_normalize_eq_add(std::unordered_map<Node, BitVector>& coeffs0,
+                                 std::unordered_map<Node, BitVector>& coeffs1,
                                  uint64_t bv_size)
 {
   NodeManager& nm = NodeManager::get();
@@ -413,38 +414,38 @@ PassNormalize::_normalize_eq_add(std::unordered_map<Node, BitVector>& factors0,
 
   std::vector<Node> lhs, rhs;
 
-  for (const auto& f : factors0)
+  for (const auto& f : coeffs0)
   {
     const Node& cur         = f.first;
-    const BitVector& factor = f.second;
-    if (factor.is_zero())
+    const BitVector& coeff  = f.second;
+    if (coeff.is_zero())
     {
       continue;
     }
     if (cur.is_value())
     {
-      lvalue.ibvadd(factor.bvmul(cur.value<BitVector>()));
+      lvalue.ibvadd(coeff.bvmul(cur.value<BitVector>()));
     }
     else
     {
-      lhs.push_back(get_factorized_add(cur, factor));
+      lhs.push_back(get_factorized_add(cur, coeff));
     }
   }
-  for (const auto& f : factors1)
+  for (const auto& f : coeffs1)
   {
     const Node& cur         = f.first;
-    const BitVector& factor = f.second;
-    if (factor.is_zero())
+    const BitVector& coeff  = f.second;
+    if (coeff.is_zero())
     {
       continue;
     }
     if (cur.is_value())
     {
-      rvalue.ibvadd(factor.bvmul(cur.value<BitVector>()));
+      rvalue.ibvadd(coeff.bvmul(cur.value<BitVector>()));
     }
     else
     {
-      rhs.push_back(get_factorized_add(cur, factor));
+      rhs.push_back(get_factorized_add(cur, coeff));
     }
   }
 
@@ -482,23 +483,23 @@ PassNormalize::normalize_eq_add_mul(const Node& node0,
 
   NodeManager& nm = NodeManager::get();
 
-  auto [factors0, factors1, normalized] =
-      get_normalized_factors_for_eq(node0, node1, share_aware);
+  auto [coeffs0, coeffs1, normalized] =
+      get_normalized_coefficients_for_eq(node0, node1, share_aware);
 
   if (!normalized)
   {
     return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
   }
 
-  if (factors0.empty() && factors1.empty())
+  if (coeffs0.empty() && coeffs1.empty())
   {
     return {nm.mk_value(true), true};
   }
 
   auto [left, right] =
       node0.kind() == Kind::BV_ADD
-          ? _normalize_eq_add(factors0, factors1, node0.type().bv_size())
-          : _normalize_eq_mul(factors0, factors1, node0.type().bv_size());
+          ? _normalize_eq_add(coeffs0, coeffs1, node0.type().bv_size())
+          : _normalize_eq_mul(coeffs0, coeffs1, node0.type().bv_size());
 
   return {nm.mk_node(Kind::EQUAL, {left, right}), true};
 }
@@ -630,8 +631,8 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
       share_aware ? _count_parents({top_lhs, top_rhs}, kind)
                   : std::unordered_map<Node, uint64_t>();
 
-  auto lhs           = compute_factors(top_lhs, parents);
-  auto rhs           = compute_factors(top_rhs, parents);
+  auto lhs           = compute_coefficients(top_lhs, parents);
+  auto rhs           = compute_coefficients(top_rhs, parents);
   auto [left, right] = normalize_common(kind, lhs, rhs);
   auto rebuilt_left  = rebuild_top(node0, top_lhs, left);
   auto rebuilt_right = rebuild_top(node1, top_rhs, right);
