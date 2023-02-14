@@ -13,8 +13,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "utils/bzlaabort.h"
-
 struct CallbackState
 {
   int32_t (*callback)(void *);
@@ -41,9 +39,9 @@ terminate_callback(void *state)
   res = PyObject_CallObject((PyObject *) cbstate->fun,
                             (PyObject *) cbstate->state);
   if (PyErr_Occurred()) PyErr_Print();
-  BZLA_ABORT(!res, "call to callback termination function failed");
-  BZLA_ABORT(!PyBool_Check(res),
-             "expected Boolean result for termination callback");
+  //  BZLA_ABORT(!res, "call to callback termination function failed");
+  //  BZLA_ABORT(!PyBool_Check(res),
+  //             "expected Boolean result for termination callback");
   if (res == Py_True)
   {
     cbstate->done = 1;
@@ -66,8 +64,8 @@ pybitwuzla_set_term(Bitwuzla *bitwuzla, PyObject *fun, PyObject *state)
   PyObject *t, *tmp;
   CallbackState *cbstate;
 
-  BZLA_ABORT(!PyCallable_Check(fun),
-             "termination callback parameter is not callable");
+  // BZLA_ABORT(!PyCallable_Check(fun),
+  //            "termination callback parameter is not callable");
 
   Py_XINCREF(fun);   /* inc ref to new callback */
   Py_XINCREF(state); /* inc ref to new state */

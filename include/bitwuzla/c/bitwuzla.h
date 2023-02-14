@@ -194,138 +194,6 @@ bool bitwuzla_option_is_numeric(BitwuzlaOptions *options,
  */
 bool bitwuzla_option_is_mode(BitwuzlaOptions *options, BitwuzlaOption option);
 
-/* -------------------------------------------------------------------------- */
-/* Bitwuzla                                                                   */
-/* -------------------------------------------------------------------------- */
-
-/** The Bitwuzla solver. */
-typedef struct Bitwuzla Bitwuzla;
-
-/**
- * Create a new Bitwuzla instance.
- *
- * The returned instance must be deleted via `bitwuzla_delete()`.
- *
- * @param options The associated options.
- * @return A pointer to the created Bitwuzla instance.
- *
- * @see
- *   * `bitwuzla_delete`
- */
-Bitwuzla *bitwuzla_new(const BitwuzlaOptions *options);
-
-/**
- * Delete a Bitwuzla instance.
- *
- * The given instance must have been created via `bitwuzla_new()`.
- *
- * @param bitwuzla The Bitwuzla instance to delete.
- *
- * @see
- *   * `bitwuzla_new`
- */
-void bitwuzla_delete(Bitwuzla *bitwuzla);
-
-/**
- * Reset a Bitwuzla instance.
- *
- * This deletes the given instance and creates a new instance in place.
- * The given instance must have been created via `bitwuzla_new()`.
- *
- * @note All sorts and terms associated with the given instance are released
- *       and thus invalidated.
- *
- * @param bitwuzla The Bitwuzla instance to reset.
- *
- * @see
- *   * `bitwuzla_new`
- */
-void bitwuzla_reset(Bitwuzla *bitwuzla);
-
-/**
- * Get copyright information.
- *
- * @param bitwuzla The Bitwuzla instance.
- */
-const char *bitwuzla_copyright(Bitwuzla *bitwuzla);
-
-/**
- * Get version information.
- *
- * @param bitwuzla The Bitwuzla instance.
- */
-const char *bitwuzla_version(Bitwuzla *bitwuzla);
-
-/**
- * Get git information.
- *
- * @param bitwuzla The Bitwuzla instance.
- */
-const char *bitwuzla_git_id(Bitwuzla *bitwuzla);
-
-/**
- * If termination callback function has been configured via
- * `bitwuzla_set_termination_callback()`, call this termination function.
- *
- * @param bitwuzla The Bitwuzla instance.
- *
- * @return True if `bitwuzla` has been terminated.
- *
- * @see
- *   * `bitwuzla_set_termination_callback`
- *   * `bitwuzla_get_termination_callback_state`
- */
-bool bitwuzla_terminate(Bitwuzla *bitwuzla);
-
-/**
- * Configure a termination callback function.
- *
- * The `state` of the callback can be retrieved via
- * `bitwuzla_get_termination_callback_state()`.
- *
- * @param bitwuzla The Bitwuzla instance.
- * @param fun The callback function, returns a value != 0 if `bitwuzla` has
- *            been terminated.
- * @param state The argument to the callback function.
- *
- * @see
- *   * `bitwuzla_terminate`
- *   * `bitwuzla_get_termination_callback_state`
- */
-void bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
-                                       int32_t (*fun)(void *),
-                                       void *state);
-
-/**
- * Get the state of the termination callback function.
- *
- * The returned object representing the state of the callback corresponds to
- * the `state` configured as argument to the callback function via
- * `bitwuzla_set_termination_callback()`.
- *
- * @param bitwuzla The Bitwuzla instance.
- *
- * @return The object passed as argument `state` to the callback function.
- *
- * @see
- *   * `bitwuzla_terminate`
- *   * `bitwuzla_set_termination_callback`
- */
-void *bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla);
-
-/**
- * Configure an abort callback function, which is called instead of exit
- * on abort conditions.
- *
- * @note This function is not thread safe (the function pointer is maintained
- *       as a global variable). It you use threading, make sure to set the
- *       abort callback prior to creating threads.
- *
- * @param fun The callback function, the argument `msg` explains the reason
- *            for the abort.
- */
-void bitwuzla_set_abort_callback(void (*fun)(const char *msg));
-
 /**
  * Set option.
  *
@@ -398,6 +266,136 @@ const char *bitwuzla_get_option_mode(BitwuzlaOptions *options,
 void bitwuzla_get_option_info(BitwuzlaOptions *options,
                               BitwuzlaOption option,
                               BitwuzlaOptionInfo *info);
+
+/* -------------------------------------------------------------------------- */
+/* Library info                                                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Get copyright information.
+ */
+const char *bitwuzla_copyright();
+
+/**
+ * Get version information.
+ */
+const char *bitwuzla_version();
+
+/**
+ * Get git information.
+ */
+const char *bitwuzla_git_id();
+
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** The Bitwuzla solver. */
+typedef struct Bitwuzla Bitwuzla;
+
+/**
+ * Create a new Bitwuzla instance.
+ *
+ * The returned instance must be deleted via `bitwuzla_delete()`.
+ *
+ * @param options The associated options.
+ * @return A pointer to the created Bitwuzla instance.
+ *
+ * @see
+ *   * `bitwuzla_delete`
+ */
+Bitwuzla *bitwuzla_new(const BitwuzlaOptions *options);
+
+/**
+ * Delete a Bitwuzla instance.
+ *
+ * The given instance must have been created via `bitwuzla_new()`.
+ *
+ * @param bitwuzla The Bitwuzla instance to delete.
+ *
+ * @see
+ *   * `bitwuzla_new`
+ */
+void bitwuzla_delete(Bitwuzla *bitwuzla);
+
+/**
+ * Reset a Bitwuzla instance.
+ *
+ * This deletes the given instance and creates a new instance in place.
+ * The given instance must have been created via `bitwuzla_new()`.
+ *
+ * @note All sorts and terms associated with the given instance are released
+ *       and thus invalidated.
+ *
+ * @param bitwuzla The Bitwuzla instance to reset.
+ *
+ * @see
+ *   * `bitwuzla_new`
+ */
+void bitwuzla_reset(Bitwuzla *bitwuzla);
+
+/**
+ * If termination callback function has been configured via
+ * `bitwuzla_set_termination_callback()`, call this termination function.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ *
+ * @return True if `bitwuzla` has been terminated.
+ *
+ * @see
+ *   * `bitwuzla_set_termination_callback`
+ *   * `bitwuzla_get_termination_callback_state`
+ */
+bool bitwuzla_terminate(Bitwuzla *bitwuzla);
+
+/**
+ * Configure a termination callback function.
+ *
+ * The `state` of the callback can be retrieved via
+ * `bitwuzla_get_termination_callback_state()`.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param fun The callback function, returns a value != 0 if `bitwuzla` has
+ *            been terminated.
+ * @param state The argument to the callback function.
+ *
+ * @see
+ *   * `bitwuzla_terminate`
+ *   * `bitwuzla_get_termination_callback_state`
+ */
+void bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
+                                       int32_t (*fun)(void *),
+                                       void *state);
+
+/**
+ * Get the state of the termination callback function.
+ *
+ * The returned object representing the state of the callback corresponds to
+ * the `state` configured as argument to the callback function via
+ * `bitwuzla_set_termination_callback()`.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ *
+ * @return The object passed as argument `state` to the callback function.
+ *
+ * @see
+ *   * `bitwuzla_terminate`
+ *   * `bitwuzla_set_termination_callback`
+ */
+void *bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla);
+
+/**
+ * Configure an abort callback function, which is called instead of exit
+ * on abort conditions.
+ *
+ * @note This function is not thread safe (the function pointer is maintained
+ *       as a global variable). It you use threading, make sure to set the
+ *       abort callback prior to creating threads.
+ *
+ * @param fun The callback function, the argument `msg` explains the reason
+ *            for the abort.
+ */
+void bitwuzla_set_abort_callback(void (*fun)(const char *msg));
 
 /**
  * Create an array sort.

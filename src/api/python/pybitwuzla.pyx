@@ -15,7 +15,7 @@ The Python API of the SMT solver Bitwuzla.
 cimport bitwuzla_api
 from libc.stdlib cimport malloc, free
 from libc.stdio cimport stdout, FILE, fopen, fclose
-from libc.stdint cimport int32_t, uint32_t, uint64_t
+from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t
 from libcpp cimport bool as cbool
 from cpython.ref cimport PyObject
 from cpython cimport array
@@ -25,6 +25,7 @@ import math, os, sys
 import tempfile
 
 include "pybitwuzla_enums.pxd"
+include "pybitwuzla_options.pxd"
 
 class BitwuzlaException(Exception):
     """Bitwuzla exception class."""
@@ -58,40 +59,32 @@ cdef _to_result(BitwuzlaResult result):
         return Result.UNSAT
     return Result.UNKNOWN
 
-cdef const bitwuzla_api.BitwuzlaTerm** _alloc_terms(size):
-    cdef const bitwuzla_api.BitwuzlaTerm **terms = \
-        <const bitwuzla_api.BitwuzlaTerm **> \
-            malloc(size * sizeof(bitwuzla_api.BitwuzlaTerm*))
+cdef bitwuzla_api.BitwuzlaTerm* _alloc_terms(size):
+    cdef bitwuzla_api.BitwuzlaTerm *terms = \
+        <bitwuzla_api.BitwuzlaTerm *> \
+            malloc(size * sizeof(bitwuzla_api.BitwuzlaTerm))
     if not terms:
         raise MemoryError()
     return terms
 
-cdef const bitwuzla_api.BitwuzlaTerm** _alloc_terms_const(size):
-    cdef const bitwuzla_api.BitwuzlaTerm **terms = \
-        <const bitwuzla_api.BitwuzlaTerm **> \
-            malloc(size * sizeof(bitwuzla_api.BitwuzlaTerm*))
-    if not terms:
-        raise MemoryError()
-    return terms
-
-cdef const bitwuzla_api.BitwuzlaSort** _alloc_sorts_const(size):
-    cdef const bitwuzla_api.BitwuzlaSort **sorts = \
-        <const bitwuzla_api.BitwuzlaSort **> \
-            malloc(size * sizeof(bitwuzla_api.BitwuzlaSort*))
+cdef bitwuzla_api.BitwuzlaSort* _alloc_sorts(size):
+    cdef bitwuzla_api.BitwuzlaSort *sorts = \
+        <bitwuzla_api.BitwuzlaSort *> \
+            malloc(size * sizeof(bitwuzla_api.BitwuzlaSort))
     if not sorts:
         raise MemoryError()
     return sorts
 
-cdef _to_term(Bitwuzla bitwuzla, const bitwuzla_api.BitwuzlaTerm* term):
+cdef _to_term(Bitwuzla bitwuzla, bitwuzla_api.BitwuzlaTerm term):
     t = BitwuzlaTerm(bitwuzla)
     t.set(term)
     return t
 
 cdef _to_terms(Bitwuzla bitwuzla, size,
-               const bitwuzla_api.BitwuzlaTerm **c_terms):
+               bitwuzla_api.BitwuzlaTerm *c_terms):
     return [_to_term(bitwuzla, c_terms[i]) for i in range(size)]
 
-cdef _to_sort(Bitwuzla bitwuzla, const bitwuzla_api.BitwuzlaSort* sort):
+cdef _to_sort(Bitwuzla bitwuzla, bitwuzla_api.BitwuzlaSort sort):
     s = BitwuzlaSort(bitwuzla)
     s.set(sort)
     return s
@@ -103,12 +96,12 @@ cdef _to_sort(Bitwuzla bitwuzla, const bitwuzla_api.BitwuzlaSort* sort):
 cdef class BitwuzlaSort:
     """Class representing a Bitwuzla sort."""
     cdef Bitwuzla bitwuzla
-    cdef const bitwuzla_api.BitwuzlaSort *_c_sort
+    cdef bitwuzla_api.BitwuzlaSort _c_sort
 
-    cdef set(self, const bitwuzla_api.BitwuzlaSort* sort):
-        self._c_sort = <const bitwuzla_api.BitwuzlaSort*> sort
+    cdef set(self, bitwuzla_api.BitwuzlaSort sort):
+        self._c_sort = <bitwuzla_api.BitwuzlaSort> sort
 
-    cdef const bitwuzla_api.BitwuzlaSort* ptr(self):
+    cdef bitwuzla_api.BitwuzlaSort ptr(self):
         return self._c_sort
 
     def __init__(self, Bitwuzla bitwuzla):
@@ -164,7 +157,7 @@ cdef class BitwuzlaSort:
            :rtype: list(BitwuzlaSort)
         """
         cdef size_t size
-        cdef const bitwuzla_api.BitwuzlaSort** sorts = \
+        cdef bitwuzla_api.BitwuzlaSort* sorts = \
                 bitwuzla_api.bitwuzla_sort_fun_get_domain_sorts(self.ptr(),
                                                                 &size)
         return [_to_sort(self.bitwuzla, sorts[i]) for i in range(size)]
@@ -227,12 +220,12 @@ cdef class BitwuzlaSort:
 cdef class BitwuzlaTerm:
     """Class representing a Bitwuzla term."""
     cdef Bitwuzla bitwuzla
-    cdef const bitwuzla_api.BitwuzlaTerm *_c_term
+    cdef bitwuzla_api.BitwuzlaTerm _c_term
 
-    cdef set(self, const bitwuzla_api.BitwuzlaTerm* term):
-        self._c_term = <const bitwuzla_api.BitwuzlaTerm*> term
+    cdef set(self, bitwuzla_api.BitwuzlaTerm term):
+        self._c_term = <bitwuzla_api.BitwuzlaTerm> term
 
-    cdef const bitwuzla_api.BitwuzlaTerm* ptr(self):
+    cdef bitwuzla_api.BitwuzlaTerm ptr(self):
         return self._c_term
 
     def __init__(self, Bitwuzla bitwuzla):
@@ -266,7 +259,7 @@ cdef class BitwuzlaTerm:
         """:return: The children of the term.
            :rtype: list(BitwuzlaTerm)
         """
-        cdef const bitwuzla_api.BitwuzlaTerm** children
+        cdef bitwuzla_api.BitwuzlaTerm* children
         cdef size_t size
         children = bitwuzla_api.bitwuzla_term_get_children(self.ptr(), &size)
         return _to_terms(self.bitwuzla, size, children)
@@ -275,7 +268,7 @@ cdef class BitwuzlaTerm:
         """:return: Indices of indexed operator.
            :rtype: list(int)
         """
-        cdef uint32_t* indices
+        cdef uint64_t* indices
         cdef size_t size
         indices = bitwuzla_api.bitwuzla_term_get_indices(self.ptr(), &size)
         return [indices[i] for i in range(size)]
@@ -304,15 +297,15 @@ cdef class BitwuzlaTerm:
         """
         return _to_str(bitwuzla_api.bitwuzla_term_get_symbol(self.ptr()))
 
-    def set_symbol(self, str symbol):
-        """set_symbol(symbol)
+    #def set_symbol(self, str symbol):
+    #    """set_symbol(symbol)
 
-           Set the symbol of the term.
+    #       Set the symbol of the term.
 
-           :param symbol: Symbol of the term.
-           :type symbol: str
-        """
-        bitwuzla_api.bitwuzla_term_set_symbol(self.ptr(), _to_cstr(symbol))
+    #       :param symbol: Symbol of the term.
+    #       :type symbol: str
+    #    """
+    #    bitwuzla_api.bitwuzla_term_set_symbol(self.ptr(), _to_cstr(symbol))
 
     def is_array(self):
         """:return: True if term is an array, False otherwise.
@@ -344,11 +337,11 @@ cdef class BitwuzlaTerm:
         """
         return bitwuzla_api.bitwuzla_term_is_var(self.ptr())
 
-    def is_bound_var(self):
-        """:return: True if term is a bound variable, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_bound_var(self.ptr())
+    #def is_bound_var(self):
+    #    """:return: True if term is a bound variable, False otherwise.
+    #       :rtype: bool
+    #    """
+    #    return bitwuzla_api.bitwuzla_term_is_bound_var(self.ptr())
 
     def is_bv_value(self):
         """:return: True if term is a bit-vector value, False otherwise.
@@ -461,6 +454,94 @@ cdef class BitwuzlaTerm:
 
 # -------------------------------------------------------------------------- #
 
+# -------------------------------------------------------------------------- #
+# Library info                                                               #
+# -------------------------------------------------------------------------- #
+
+def copyright(self):
+    """:return: The copyright information.
+       :rtype: str
+    """
+    cdef const char * c_str
+    c_str = bitwuzla_api.bitwuzla_copyright()
+    return _to_str(c_str)
+
+def version(self):
+    """:return: The version number.
+       :rtype: str
+    """
+    cdef const char * c_str
+    c_str = bitwuzla_api.bitwuzla_version()
+    return _to_str(c_str)
+
+def git_id(self):
+    """:return: The git commit sha.
+       :rtype: str
+    """
+    cdef const char * c_str
+    c_str = bitwuzla_api.bitwuzla_git_id()
+    return _to_str(c_str)
+
+
+# --------------------------------------------------------------------------- #
+# Wrapper class for BitwuzlaOptions
+# --------------------------------------------------------------------------- #
+
+cdef class Options:
+    cdef bitwuzla_api.BitwuzlaOptions *_c_options
+
+    def __init__(self):
+        self._c_options = bitwuzla_api.bitwuzla_options_new()
+        if self._c_options is NULL:
+            raise MemoryError()
+
+    def __dealloc__(self):
+        if self._c_options is not NULL:
+            bitwuzla_api.bitwuzla_options_delete(self._c_options)
+
+    cdef bitwuzla_api.BitwuzlaOptions* ptr(self):
+        return self._c_options
+
+    def set_option(self, opt, value):
+        """set_option(opt, value)
+
+           Set option ``opt`` to ``value``.
+
+           :param opt:   Option.
+           :type opt:    BitwuzlaOption
+           :param value: Option value.
+
+           .. seealso::
+                For a list of available options see :class:`~pybitwuzla.Option`
+        """
+        if not isinstance(opt, Option):
+            raise ValueError("Given 'opt' is not an option object")
+        if isinstance(value, str):
+            bitwuzla_api.bitwuzla_set_option_mode(
+                    self.ptr(), opt.value, _to_cstr(value))
+        else:
+            bitwuzla_api.bitwuzla_set_option(self.ptr(), opt.value, value)
+
+    def get_option(self, opt):
+        """get_option(opt)
+
+           Get the current value of option ``opt``.
+
+           :param opt: Option.
+           :type opt: BitwuzlaOption
+           :return: Option value.
+
+           .. seealso::
+                For a list of available options see :class:`~pybitwuzla.Option`
+        """
+        if not isinstance(opt, Option):
+            raise ValueError("Given 'opt' is not an option object")
+        cdef bitwuzla_api.BitwuzlaOptionInfo info
+        bitwuzla_api.bitwuzla_get_option_info(self.ptr(), opt.value, &info)
+        if info.is_numeric:
+            return info.numeric.cur
+        return _to_str(info.mode.cur)
+
 
 # --------------------------------------------------------------------------- #
 # Wrapper class for Bitwuzla solver
@@ -470,8 +551,8 @@ cdef class Bitwuzla:
     """Class representing a Bitwuzla solver instance."""
     cdef bitwuzla_api.Bitwuzla *_c_bitwuzla
 
-    def __init__(self):
-        self._c_bitwuzla = bitwuzla_api.bitwuzla_new()
+    def __init__(self, Options options):
+        self._c_bitwuzla = bitwuzla_api.bitwuzla_new(options.ptr())
         if self._c_bitwuzla is NULL:
             raise MemoryError()
         bitwuzla_api.bitwuzla_set_abort_callback(
@@ -544,30 +625,6 @@ cdef class Bitwuzla:
     # ------------------------------------------------------------------------
     # Bitwuzla API functions (general)
     # ------------------------------------------------------------------------
-
-    def copyright(self):
-        """:return: The copyright information.
-           :rtype: str
-        """
-        cdef const char * c_str
-        c_str = bitwuzla_api.bitwuzla_copyright(self.ptr())
-        return _to_str(c_str)
-
-    def version(self):
-        """:return: The version number.
-           :rtype: str
-        """
-        cdef const char * c_str
-        c_str = bitwuzla_api.bitwuzla_version(self.ptr())
-        return _to_str(c_str)
-
-    def git_id(self):
-        """:return: The git commit sha.
-           :rtype: str
-        """
-        cdef const char * c_str
-        c_str = bitwuzla_api.bitwuzla_git_id(self.ptr())
-        return _to_str(c_str)
 
     def push(self, uint32_t levels = 1):
         """push(levels = 1)
@@ -676,7 +733,7 @@ cdef class Bitwuzla:
            :rtype:   list(BitwuzlaTerm)
         """
 
-        cdef const bitwuzla_api.BitwuzlaTerm** core
+        cdef bitwuzla_api.BitwuzlaTerm* core
         cdef size_t size
         core = bitwuzla_api.bitwuzla_get_unsat_core(self.ptr(), &size)
         return _to_terms(self, size, core)
@@ -695,7 +752,7 @@ cdef class Bitwuzla:
         return _to_term(self, bitwuzla_api.bitwuzla_get_value(self.ptr(),
                                                               term.ptr()))
 
-    def get_value_str(self, BitwuzlaTerm term):
+    def get_value_str(self, BitwuzlaTerm term, uint8_t base = 2):
         """get_value_str(term)
 
            Get string representation of model value of a `term`.
@@ -714,131 +771,137 @@ cdef class Bitwuzla:
         cdef const char* sign
         cdef const char* exponent
         cdef const char* significand
-        cdef const bitwuzla_api.BitwuzlaTerm** array_indices
-        cdef const bitwuzla_api.BitwuzlaTerm** array_values
-        cdef const bitwuzla_api.BitwuzlaTerm* array_default_value
+        cdef bitwuzla_api.BitwuzlaTerm* array_indices
+        cdef bitwuzla_api.BitwuzlaTerm* array_values
+        cdef bitwuzla_api.BitwuzlaTerm array_default_value
         cdef size_t array_size
-        cdef const bitwuzla_api.BitwuzlaTerm*** fun_args
-        cdef const bitwuzla_api.BitwuzlaTerm** fun_values
+        cdef bitwuzla_api.BitwuzlaTerm** fun_args
+        cdef bitwuzla_api.BitwuzlaTerm* fun_values
         cdef size_t fun_arity, fun_size
 
         if term.is_array():
-            bitwuzla_api.bitwuzla_get_array_value(self.ptr(),
-                                                  term.ptr(),
-                                                  &array_indices,
-                                                  &array_values,
-                                                  &array_size,
-                                                  &array_default_value)
+            raise BitwuzlaException("unimplemented")
+            return None
+            #bitwuzla_api.bitwuzla_get_array_value(self.ptr(),
+            #                                      term.ptr(),
+            #                                      &array_indices,
+            #                                      &array_values,
+            #                                      &array_size,
+            #                                      &array_default_value)
 
-            if array_default_value is not NULL:
-                val = defaultdict(lambda: self.get_value_str(
-                                    _to_term(self, array_default_value)))
-            else:
-                val = dict()
+            #if array_default_value is not NULL:
+            #    val = defaultdict(lambda: self.get_value_str(
+            #                        _to_term(self, array_default_value)))
+            #else:
+            #    val = dict()
 
-            for i in range(array_size):
-                vi = self.get_value_str(_to_term(self, array_indices[i]))
-                ve = self.get_value_str(_to_term(self, array_values[i]))
-                val[vi] = ve
+            #for i in range(array_size):
+            #    vi = self.get_value_str(_to_term(self, array_indices[i]))
+            #    ve = self.get_value_str(_to_term(self, array_values[i]))
+            #    val[vi] = ve
 
-            return val
+            #return val
         elif term.is_bv():
             return _to_str(bitwuzla_api.bitwuzla_get_bv_value(self.ptr(),
-                                                              term.ptr()))
+                                                              term.ptr(),
+                                                              base))
         elif term.is_fp():
             bitwuzla_api.bitwuzla_get_fp_value(self.ptr(),
                                                term.ptr(),
                                                &sign,
                                                &exponent,
-                                               &significand)
+                                               &significand,
+                                               base)
             return (_to_str(sign), _to_str(exponent), _to_str(significand))
         elif term.is_fun():
-            bitwuzla_api.bitwuzla_get_fun_value(self.ptr(),
-                                                term.ptr(),
-                                                &fun_args,
-                                                &fun_arity,
-                                                &fun_values,
-                                                &fun_size)
+            raise BitwuzlaException("unimplemented")
+            return None
+            #bitwuzla_api.bitwuzla_get_fun_value(self.ptr(),
+            #                                    term.ptr(),
+            #                                    &fun_args,
+            #                                    &fun_arity,
+            #                                    &fun_values,
+            #                                    &fun_size)
 
-            val = dict()
-            for i in range(fun_size):
-                args = [self.get_value_str(_to_term(self, fun_args[i][j])) \
-                            for j in range(fun_arity)]
-                val[tuple(args)] = self.get_value_str(_to_term(self,
-                                                               fun_values[i]))
-            return val
+            #val = dict()
+            #for i in range(fun_size):
+            #    args = [self.get_value_str(_to_term(self, fun_args[i][j])) \
+            #                for j in range(fun_arity)]
+            #    val[tuple(args)] = self.get_value_str(_to_term(self,
+            #                                                   fun_values[i]))
+            #return val
         else:
             assert term.is_rm()
-            return _to_str(bitwuzla_api.bitwuzla_get_rm_value(self.ptr(),
-                                                              term.ptr()))
+            return RoundingMode(bitwuzla_api.bitwuzla_get_rm_value(self.ptr(),
+                                                                   term.ptr()))
 
-    def get_model(self, fmt='smt2'):
-        """get_model(fmt = "smt2")
+    #def get_model(self, fmt='smt2'):
+    #    """get_model(fmt = "smt2")
 
-           Get the model as a string in format ``fmt``.
+    #       Get the model as a string in format ``fmt``.
 
-           :param fmt: Model format. Available formats: "btor", "smt2"
-           :type: str
+    #       :param fmt: Model format. Available formats: "btor", "smt2"
+    #       :type: str
 
-           :return: String representation of model in format ``fmt``.
-           :rtype: str
-        """
-        cdef FILE * out
-        with tempfile.NamedTemporaryFile('r') as f:
-            out = fopen(_to_cstr(f.name), 'w')
-            bitwuzla_api.bitwuzla_print_model(self.ptr(), _to_cstr(fmt), out)
-            fclose(out)
-            return f.read().strip()
+    #       :return: String representation of model in format ``fmt``.
+    #       :rtype: str
+    #    """
+    #    cdef FILE * out
+    #    with tempfile.NamedTemporaryFile('r') as f:
+    #        out = fopen(_to_cstr(f.name), 'w')
+    #        bitwuzla_api.bitwuzla_print_model(self.ptr(), _to_cstr(fmt), out)
+    #        fclose(out)
+    #        return f.read().strip()
 
 
-    def dump_formula(self, fmt='smt2'):
-        """dump_formula(fmt = "smt2")
+    #def dump_formula(self, fmt='smt2'):
+    #    """dump_formula(fmt = "smt2")
 
-           Dump the current formula as a string in format ``fmt``.
+    #       Dump the current formula as a string in format ``fmt``.
 
-           :param fmt: Model format. Available formats: "btor", "smt2"
-           :type: str
+    #       :param fmt: Model format. Available formats: "btor", "smt2"
+    #       :type: str
 
-           :return: String representation of formula in format ``fmt``.
-           :rtype: str
-        """
-        cdef FILE * out
-        with tempfile.NamedTemporaryFile('r') as f:
-            out = fopen(_to_cstr(f.name), 'w')
-            bitwuzla_api.bitwuzla_dump_formula(self.ptr(), _to_cstr(fmt), out)
-            fclose(out)
-            return f.read().strip()
+    #       :return: String representation of formula in format ``fmt``.
+    #       :rtype: str
+    #    """
+    #    cdef FILE * out
+    #    with tempfile.NamedTemporaryFile('r') as f:
+    #        out = fopen(_to_cstr(f.name), 'w')
+    #        bitwuzla_api.bitwuzla_dump_formula(self.ptr(), _to_cstr(fmt), out)
+    #        fclose(out)
+    #        return f.read().strip()
 
     # ------------------------------------------------------------------------
     # Assumption handling
 
-    def assume_formula(self, *formulas):
-        """assume_formula(formula,...)
-
-           Assume one or more formulas.
-
-           You must enable incremental usage via
-           :func:`~pybitwuzla.Bitwuzla.set_option` before you can add
-           assumptions.
-           In contrast to assertions added via
-           :func:`~pybitwuzla.Bitwuzla.assert_formula`, assumptions
-           are discarded after each call to
-           :func:`~pybitwuzla.Bitwuzla.check_sat`.
-           Assumptions and assertions are logically combined via Boolean
-           *and*.
-           Assumption handling in Bitwuzla is analogous to assumptions
-           in MiniSAT.
-
-           :param formula: Boolean term.
-           :type formula: BitwuzlaTerm
-        """
-        for i in range(len(formulas)):
-            f = formulas[i]
-            if not isinstance(f, BitwuzlaTerm):
-              raise BitwuzlaException("Argument at position {0:d} is not "\
-                                       "a BitwuzlaTerm".format(i))
-            n = <BitwuzlaTerm> f
-            bitwuzla_api.bitwuzla_assume(self.ptr(), n.ptr())
+#    def assume_formula(self, *formulas):
+#        """assume_formula(formula,...)
+#
+#           Assume one or more formulas.
+#
+#           You must enable incremental usage via
+#           :func:`~pybitwuzla.Bitwuzla.set_option` before you can add
+#           assumptions.
+#           In contrast to assertions added via
+#           :func:`~pybitwuzla.Bitwuzla.assert_formula`, assumptions
+#           are discarded after each call to
+#           :func:`~pybitwuzla.Bitwuzla.check_sat`.
+#           Assumptions and assertions are logically combined via Boolean
+#           *and*.
+#           Assumption handling in Bitwuzla is analogous to assumptions
+#           in MiniSAT.
+#
+#           :param formula: Boolean term.
+#           :type formula: BitwuzlaTerm
+#        """
+#        for i in range(len(formulas)):
+#            f = formulas[i]
+#            if not isinstance(f, BitwuzlaTerm):
+#              raise BitwuzlaException("Argument at position {0:d} is not "\
+#                                       "a BitwuzlaTerm".format(i))
+#            n = <BitwuzlaTerm> f
+#            bitwuzla_api.bitwuzla_assume(self.ptr(), n.ptr())
 
     def is_unsat_assumption(self, *assumptions):
         """is_unsat_assumption(assumption,...)
@@ -870,24 +933,24 @@ cdef class Bitwuzla:
                     self.ptr(), n.ptr()) == 1)
         return res
 
-    def fixate_assumptions(self):
-        """Assert all assumptions added since the last
-           :func:`~pybitwuzla.Bitwuzla.check_sat` call as assertions.
-
-           .. seealso::
-                :func:`~pybitwuzla.Bitwuzla.assume_formula`.
-        """
-        bitwuzla_api.bitwuzla_fixate_assumptions(self.ptr())
-
-    def reset_assumptions(self):
-        """Remove all assumptions added since the last
-           :func:`~pybitwuzla.Bitwuzla.check_sat` call.
-
-           .. seealso::
-                :func:`~pybitwuzla.Bitwuzla.assume_formula`.
-        """
-        bitwuzla_api.bitwuzla_reset_assumptions(self.ptr())
-
+#    def fixate_assumptions(self):
+#        """Assert all assumptions added since the last
+#           :func:`~pybitwuzla.Bitwuzla.check_sat` call as assertions.
+#
+#           .. seealso::
+#                :func:`~pybitwuzla.Bitwuzla.assume_formula`.
+#        """
+#        bitwuzla_api.bitwuzla_fixate_assumptions(self.ptr())
+#
+#    def reset_assumptions(self):
+#        """Remove all assumptions added since the last
+#           :func:`~pybitwuzla.Bitwuzla.check_sat` call.
+#
+#           .. seealso::
+#                :func:`~pybitwuzla.Bitwuzla.assume_formula`.
+#        """
+#        bitwuzla_api.bitwuzla_reset_assumptions(self.ptr())
+#
     def get_unsat_assumptions(self):
         """Return list of unsatisfiable assumptions previously added via
            :func:`~pybitwuzla.Bitwuzla.assume_formula`.
@@ -898,56 +961,13 @@ cdef class Bitwuzla:
            :return:  List of unsatisfiable assumptions
            :rtype:   list(BitwuzlaTerm)
         """
-        cdef const bitwuzla_api.BitwuzlaTerm** assumptions
+        cdef bitwuzla_api.BitwuzlaTerm* assumptions
         cdef size_t size
         assumptions = \
             bitwuzla_api.bitwuzla_get_unsat_assumptions(self.ptr(), &size)
 
         return _to_terms(self, size, assumptions)
 
-
-    # ------------------------------------------------------------------------
-    # Options
-
-    def set_option(self, opt, value):
-        """set_option(opt, value)
-
-           Set option ``opt`` to ``value``.
-
-           :param opt:   Option.
-           :type opt:    BitwuzlaOption
-           :param value: Option value.
-
-           .. seealso::
-                For a list of available options see :class:`~pybitwuzla.Option`
-        """
-        if not isinstance(opt, Option):
-            raise ValueError("Given 'opt' is not an option object")
-        if isinstance(value, str):
-            bitwuzla_api.bitwuzla_set_option_str(
-                    self.ptr(), opt.value, _to_cstr(value))
-        else:
-            bitwuzla_api.bitwuzla_set_option(self.ptr(), opt.value, value)
-
-    def get_option(self, opt):
-        """get_option(opt)
-
-           Get the current value of option ``opt``.
-
-           :param opt: Option.
-           :type opt: BitwuzlaOption
-           :return: Option value.
-
-           .. seealso::
-                For a list of available options see :class:`~pybitwuzla.Option`
-        """
-        if not isinstance(opt, Option):
-            raise ValueError("Given 'opt' is not an option object")
-        cdef bitwuzla_api.BitwuzlaOptionInfo info
-        bitwuzla_api.bitwuzla_get_option_info(self.ptr(), opt.value, &info)
-        if info.is_numeric:
-            return info.numeric.cur_val
-        return _to_str(info.string.cur_val)
 
     # ------------------------------------------------------------------------
     # Sort methods
@@ -958,7 +978,7 @@ cdef class Bitwuzla:
            :return: Sort of type Boolean.
            :rtype: BitwuzlaSort
         """
-        return _to_sort(self, bitwuzla_api.bitwuzla_mk_bool_sort(self.ptr()))
+        return _to_sort(self, bitwuzla_api.bitwuzla_mk_bool_sort())
 
     def mk_bv_sort(self, uint32_t width):
         """mk_bv_sort(width)
@@ -971,8 +991,7 @@ cdef class Bitwuzla:
            :return:  Bit-vector sort of bit width ``width``.
            :rtype: pybitwuzla.BitwuzlaSort
         """
-        return _to_sort(self,
-                        bitwuzla_api.bitwuzla_mk_bv_sort(self.ptr(), width))
+        return _to_sort(self, bitwuzla_api.bitwuzla_mk_bv_sort(width))
 
     def mk_array_sort(self, BitwuzlaSort index, BitwuzlaSort elem):
         """mk_array_sort(index, elem)
@@ -988,8 +1007,7 @@ cdef class Bitwuzla:
            :rtype: BitwuzlaSort
           """
         return _to_sort(self,
-                        bitwuzla_api.bitwuzla_mk_array_sort(self.ptr(),
-                                                            index.ptr(),
+                        bitwuzla_api.bitwuzla_mk_array_sort(index.ptr(),
                                                             elem.ptr()))
 
     def mk_fun_sort(self, list domain, BitwuzlaSort codomain):
@@ -1006,8 +1024,7 @@ cdef class Bitwuzla:
            :rtype: BitwuzlaSort
           """
         cdef uint32_t arity = len(domain)
-        cdef const bitwuzla_api.BitwuzlaSort **c_domain = \
-                _alloc_sorts_const(arity)
+        cdef bitwuzla_api.BitwuzlaSort *c_domain = _alloc_sorts(arity)
         for i in range(arity):
             if not isinstance(domain[i], BitwuzlaSort):
                 raise ValueError('Argument at position {} ' \
@@ -1015,8 +1032,7 @@ cdef class Bitwuzla:
             c_domain[i] = (<BitwuzlaSort> domain[i]).ptr()
 
         sort = _to_sort(self,
-                        bitwuzla_api.bitwuzla_mk_fun_sort(self.ptr(),
-                                                          arity,
+                        bitwuzla_api.bitwuzla_mk_fun_sort(arity,
                                                           c_domain,
                                                           codomain.ptr()))
         free(c_domain)
@@ -1037,8 +1053,7 @@ cdef class Bitwuzla:
            :rtype: BitwuzlaSort
         """
         return _to_sort(self,
-                        bitwuzla_api.bitwuzla_mk_fp_sort(self.ptr(),
-                                                         exp_size, sig_size))
+                        bitwuzla_api.bitwuzla_mk_fp_sort(exp_size, sig_size))
 
     def mk_rm_sort(self):
         """mk_rm_sort()
@@ -1048,7 +1063,7 @@ cdef class Bitwuzla:
            :return: Rounding mode sort.
            :rtype: BitwuzlaSort
         """
-        return _to_sort(self, bitwuzla_api.bitwuzla_mk_rm_sort(self.ptr()))
+        return _to_sort(self, bitwuzla_api.bitwuzla_mk_rm_sort())
 
     # ------------------------------------------------------------------------
     # Value methods
@@ -1075,23 +1090,20 @@ cdef class Bitwuzla:
         is_str = isinstance(value, str)
         if is_str and (value.startswith('0x') or value.startswith('#x')):
             term.set(bitwuzla_api.bitwuzla_mk_bv_value(
-                                self.ptr(),
                                 sort.ptr(),
                                 _to_cstr(value[2:]),
-                                BITWUZLA_BV_BASE_HEX))
+                                16))
         elif is_str and (value.startswith('0b') or value.startswith('#b')):
             term.set(bitwuzla_api.bitwuzla_mk_bv_value(
-                                self.ptr(),
                                 sort.ptr(),
                                 _to_cstr(value[2:]),
-                                BITWUZLA_BV_BASE_BIN))
+                                2))
         elif (is_str and value.lstrip('-').isnumeric()) \
              or isinstance(value, int):
             term.set(bitwuzla_api.bitwuzla_mk_bv_value(
-                                self.ptr(),
                                 sort.ptr(),
                                 _to_cstr(str(value)),
-                                BITWUZLA_BV_BASE_DEC))
+                                10))
         else:
             raise ValueError("Cannot convert '{}' to " \
                              "bit-vector value.".format(value))
@@ -1109,8 +1121,7 @@ cdef class Bitwuzla:
                     where all bits are set to 1.
            :rtype: BitwuzlaTerm
         """
-        return _to_term(self, bitwuzla_api.bitwuzla_mk_bv_ones(self.ptr(),
-                                                               sort.ptr()))
+        return _to_term(self, bitwuzla_api.bitwuzla_mk_bv_ones(sort.ptr()))
 
     def mk_bv_min_signed(self, BitwuzlaSort sort):
         """mk_bv_min_signed(sort)
@@ -1127,8 +1138,7 @@ cdef class Bitwuzla:
 
         """
         return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_bv_min_signed(self.ptr(),
-                                                               sort.ptr()))
+                        bitwuzla_api.bitwuzla_mk_bv_min_signed(sort.ptr()))
 
     def mk_bv_max_signed(self, BitwuzlaSort sort):
         """mk_bv_max_signed(sort)
@@ -1144,8 +1154,7 @@ cdef class Bitwuzla:
            :rtype: BitwuzlaTerm
         """
         return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_bv_max_signed(self.ptr(),
-                                                               sort.ptr()))
+                        bitwuzla_api.bitwuzla_mk_bv_max_signed(sort.ptr()))
 
     # Floating-point values
 
@@ -1186,7 +1195,6 @@ cdef class Bitwuzla:
 
         return _to_term(self,
                         bitwuzla_api.bitwuzla_mk_fp_value(
-                            self.ptr(),
                             val_sign.ptr(),
                             val_exp.ptr(),
                             val_significand.ptr()))
@@ -1215,16 +1223,14 @@ cdef class Bitwuzla:
         if isinstance(value, str) and '/' in value:
             num, den = value.split('/')
             return _to_term(self,
-                            bitwuzla_api.bitwuzla_mk_fp_value_from_rational(
-                                self.ptr(),
+                            bitwuzla_api.bitwuzla_mk_fp_from_rational(
                                 sort.ptr(),
                                 rm.ptr(),
                                 _to_cstr(num),
                                 _to_cstr(den)))
 
         return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_fp_value_from_real(
-                            self.ptr(),
+                        bitwuzla_api.bitwuzla_mk_fp_from_real(
                             sort.ptr(),
                             rm.ptr(),
                             _to_cstr(str(value))))
@@ -1242,9 +1248,7 @@ cdef class Bitwuzla:
                     of given floating-point sort.
            :rtype: BitwuzlaTerm
         """
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_fp_pos_zero(self.ptr(),
-                                                             sort.ptr()))
+        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_pos_zero(sort.ptr()))
 
     def mk_fp_neg_zero(self, BitwuzlaSort sort):
         """mk_fp_neg_zero(sort)
@@ -1258,9 +1262,7 @@ cdef class Bitwuzla:
                     of given floating-point sort.
            :rtype: BitwuzlaTerm
         """
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_fp_neg_zero(self.ptr(),
-                                                             sort.ptr()))
+        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_neg_zero(sort.ptr()))
 
     def mk_fp_pos_inf(self, BitwuzlaSort sort):
         """mk_fp_pos_inf(sort)
@@ -1274,9 +1276,7 @@ cdef class Bitwuzla:
                     value of given floating-point sort.
            :rtype: BitwuzlaTerm
         """
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_fp_pos_inf(self.ptr(),
-                                                            sort.ptr()))
+        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_pos_inf(sort.ptr()))
 
     def mk_fp_neg_inf(self, BitwuzlaSort sort):
         """mk_fp_neg_inf(sort)
@@ -1290,9 +1290,7 @@ cdef class Bitwuzla:
                     value of given floating-point sort.
            :rtype: BitwuzlaTerm
         """
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_fp_neg_inf(self.ptr(),
-                                                            sort.ptr()))
+        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_neg_inf(sort.ptr()))
 
     def mk_fp_nan(self, BitwuzlaSort sort):
         """mk_fp_nan(sort)
@@ -1306,8 +1304,7 @@ cdef class Bitwuzla:
                     floating-point sort.
            :rtype: BitwuzlaTerm
         """
-        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_nan(self.ptr(),
-                                                              sort.ptr()))
+        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_nan(sort.ptr()))
 
     def mk_rm_value(self, rm):
         """mk_rm_value(rm)
@@ -1322,8 +1319,7 @@ cdef class Bitwuzla:
         """
         if not isinstance(rm, RoundingMode):
             raise ValueError("Given 'rm' is not a RoundingMode value")
-        return _to_term(self, bitwuzla_api.bitwuzla_mk_rm_value(self.ptr(),
-                                                                rm.value))
+        return _to_term(self, bitwuzla_api.bitwuzla_mk_rm_value(rm.value))
 
 
     # ------------------------------------------------------------------------
@@ -1343,8 +1339,7 @@ cdef class Bitwuzla:
            :rtype: BitwuzlaTerm
         """
         return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_const(self.ptr(),
-                                                       sort.ptr(),
+                        bitwuzla_api.bitwuzla_mk_const(sort.ptr(),
                                                        _to_cstr(symbol)))
 
     def mk_const_array(self, BitwuzlaSort sort, BitwuzlaTerm value):
@@ -1362,8 +1357,7 @@ cdef class Bitwuzla:
            :rtype: BitwuzlaTerm
         """
         return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_const_array(self.ptr(),
-                                                             sort.ptr(),
+                        bitwuzla_api.bitwuzla_mk_const_array(sort.ptr(),
                                                              value.ptr()))
 
     def mk_var(self, BitwuzlaSort sort, str symbol = None):
@@ -1384,8 +1378,7 @@ cdef class Bitwuzla:
                 :class:`~pybitwuzla.Kind.LAMBDA`.
         """
         return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_var(self.ptr(),
-                                                     sort.ptr(),
+                        bitwuzla_api.bitwuzla_mk_var(sort.ptr(),
                                                      _to_cstr(symbol)))
 
     def mk_term(self, kind, terms, indices = None):
@@ -1413,8 +1406,8 @@ cdef class Bitwuzla:
             raise ValueError('Expected list or tuple for indices')
 
         num_terms = len(terms)
-        cdef const bitwuzla_api.BitwuzlaTerm **c_terms =\
-                _alloc_terms_const(num_terms)
+        cdef bitwuzla_api.BitwuzlaTerm *c_terms =\
+                _alloc_terms(num_terms)
 
         for i in range(num_terms):
             if not isinstance(terms[i], BitwuzlaTerm):
@@ -1428,75 +1421,74 @@ cdef class Bitwuzla:
         if indices:
             c_indices = array.array('I', indices)
             term.set(bitwuzla_api.bitwuzla_mk_term_indexed(
-                            self.ptr(),
                             kind.value,
                             num_terms,
                             c_terms,
                             len(indices),
-                            c_indices.data.as_uints))
+                            <uint64_t*> c_indices.data.as_ulonglongs))
         else:
             term.set(bitwuzla_api.bitwuzla_mk_term(
-                        self.ptr(), kind.value, num_terms, c_terms))
+                        kind.value, num_terms, c_terms))
         free(c_terms)
         return term
 
 
-    def substitute(self, terms, dict subst_map):
-        """substitute(terms, subst_map)
-
-           Substitute constants or variables in ``terms`` by applying
-           substitutions in ``subst_map``.
-
-           :param terms: List of terms to apply substitutions.
-           :type terms: list(BitwuzlaTerm)
-           :param subst_map: The substitution map mapping constants or
-                             variables to terms.
-           :type subst_map: dict(BitwuzlaTerm,BitwuzlaTerm)
-
-           :return: List of terms with substitutions applied.
-           :rtype: list(BitwuzlaTerm)
-        """
-        if not isinstance(terms, BitwuzlaTerm) and not isinstance(terms, list):
-            raise ValueError('Expected BitwuzlaTerm or list of ' \
-                             'BitwuzlaTerm but got {}'.format(type(terms)))
-        got_term = False
-        if isinstance(terms, BitwuzlaTerm):
-            got_term = True
-            terms = [terms]
-
-        num_terms = len(terms)
-        size_map = len(subst_map)
-        cdef const bitwuzla_api.BitwuzlaTerm **c_terms = _alloc_terms(num_terms)
-        cdef const bitwuzla_api.BitwuzlaTerm **c_keys = \
-                _alloc_terms_const(size_map)
-        cdef const bitwuzla_api.BitwuzlaTerm **c_values = \
-                _alloc_terms_const(size_map)
-
-        for i in range(num_terms):
-            if not isinstance(terms[i], BitwuzlaTerm):
-                raise ValueError('Expected BitwuzlaTerm but got {}'.format(
-                                    type(terms[i])))
-            c_terms[i] = (<BitwuzlaTerm> terms[i]).ptr()
-
-        i = 0
-        for k, v in subst_map.items():
-            if not isinstance(k, BitwuzlaTerm):
-                raise ValueError('Expected BitwuzlaTerm as key ' \
-                                 'but got {}'.format(type(terms[i])))
-            if not isinstance(v, BitwuzlaTerm):
-                raise ValueError('Expected BitwuzlaTerm as value ' \
-                                 'but got {}'.format(type(terms[i])))
-            c_keys[i] = (<BitwuzlaTerm> k).ptr()
-            c_values[i] = (<BitwuzlaTerm> v).ptr()
-            i += 1
-
-        bitwuzla_api.bitwuzla_substitute_terms(self.ptr(),
-                                                num_terms,
-                                                c_terms,
-                                                size_map,
-                                                c_keys,
-                                                c_values)
-
-        if got_term:
-            return _to_term(self, c_terms[0])
-        return _to_terms(self, num_terms, c_terms)
+#    def substitute(self, terms, dict subst_map):
+#        """substitute(terms, subst_map)
+#
+#           Substitute constants or variables in ``terms`` by applying
+#           substitutions in ``subst_map``.
+#
+#           :param terms: List of terms to apply substitutions.
+#           :type terms: list(BitwuzlaTerm)
+#           :param subst_map: The substitution map mapping constants or
+#                             variables to terms.
+#           :type subst_map: dict(BitwuzlaTerm,BitwuzlaTerm)
+#
+#           :return: List of terms with substitutions applied.
+#           :rtype: list(BitwuzlaTerm)
+#        """
+#        if not isinstance(terms, BitwuzlaTerm) and not isinstance(terms, list):
+#            raise ValueError('Expected BitwuzlaTerm or list of ' \
+#                             'BitwuzlaTerm but got {}'.format(type(terms)))
+#        got_term = False
+#        if isinstance(terms, BitwuzlaTerm):
+#            got_term = True
+#            terms = [terms]
+#
+#        num_terms = len(terms)
+#        size_map = len(subst_map)
+#        cdef bitwuzla_api.BitwuzlaTerm *c_terms = _alloc_terms(num_terms)
+#        cdef bitwuzla_api.BitwuzlaTerm *c_keys = \
+#                _alloc_terms(size_map)
+#        cdef bitwuzla_api.BitwuzlaTerm *c_values = \
+#                _alloc_terms(size_map)
+#
+#        for i in range(num_terms):
+#            if not isinstance(terms[i], BitwuzlaTerm):
+#                raise ValueError('Expected BitwuzlaTerm but got {}'.format(
+#                                    type(terms[i])))
+#            c_terms[i] = (<BitwuzlaTerm> terms[i]).ptr()
+#
+#        i = 0
+#        for k, v in subst_map.items():
+#            if not isinstance(k, BitwuzlaTerm):
+#                raise ValueError('Expected BitwuzlaTerm as key ' \
+#                                 'but got {}'.format(type(terms[i])))
+#            if not isinstance(v, BitwuzlaTerm):
+#                raise ValueError('Expected BitwuzlaTerm as value ' \
+#                                 'but got {}'.format(type(terms[i])))
+#            c_keys[i] = (<BitwuzlaTerm> k).ptr()
+#            c_values[i] = (<BitwuzlaTerm> v).ptr()
+#            i += 1
+#
+#        bitwuzla_api.bitwuzla_substitute_terms(self.ptr(),
+#                                                num_terms,
+#                                                c_terms,
+#                                                size_map,
+#                                                c_keys,
+#                                                c_values)
+#
+#        if got_term:
+#            return _to_term(self, c_terms[0])
+#        return _to_terms(self, num_terms, c_terms)

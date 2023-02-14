@@ -13,6 +13,7 @@
 # Usage: mkenums.py path/to/bitwuzla.h path/to/outputfile
 #
 
+import argparse
 import sys
 import os
 import re
@@ -29,7 +30,7 @@ class BitwuzlaEnumParseError(Exception):
 
 def extract_enums(header):
     """
-    Given the file "bitwuzla.h", constructs a dictionary representing the set
+    Given the file "enums.h", constructs a dictionary representing the set
     of all Bitwuzla enums and corresponding values
     """
 
@@ -47,14 +48,21 @@ def extract_enums(header):
     bzla_enums = OrderedDict()
 
     # For each line ...
+    value_prefix = None
     for line in line_iter:
 
-        # Do we see the _start_ of an enum?
-        if line.startswith("enum Bitwuzla"):
+        prefix = re.match(r'#define EVALUE\(name\) (\w+)_##name', line)
+        if prefix:
+            assert value_prefix is None
+            value_prefix = prefix.group(1)
 
-            # Obtain the enum name by splitting the line and taking the second
-            # part
-            enum_name = line.split(" ")[1]
+        # Do we see the _start_ of an enum?
+        # Find start of enum defined as `ENUM(<enum_name>)`
+        enum = re.match(r'enum ENUM\((\w+)\)', line)
+        if enum:
+            assert value_prefix
+            enum_name = enum.group(1)
+            print(enum_name)
 
             # Get the next line
             line = next(line_iter)
@@ -69,17 +77,17 @@ def extract_enums(header):
             # Keep iterating until our line starts with the closing curly
             while not line.startswith("};"):
 
-                # Find enum value in line starting with prefix `BITWUZLA_`.
-                line_values = re.findall(r'^(BITWUZLA_[A-Z_]+)', line)
-                assert len(line_values) <= 1
-                if line_values:
-                    enum_vals.extend(line_values)
+                # Find enum value in line defined as `EVALUE(<value>)`.
+                evalue = re.match(r'EVALUE\((\w+)\)', line)
+                if evalue:
+                    enum_vals.append(f'{value_prefix}_{evalue.group(1)}')
 
                 # Consume the next line
                 line = next(line_iter)
 
             # Store this enum with its associated set of values
             bzla_enums[enum_name] = enum_vals
+            value_prefix = None
 
     # Return our dictionary of enums
     return bzla_enums
@@ -87,7 +95,7 @@ def extract_enums(header):
 
 # Template for one enum
 C_ENUM_TEMPLATE = """
-    cdef enum {bzla_enum:s}:
+    cdef enum Bitwuzla{bzla_enum:s}:
         {values:s}
 """
 
@@ -101,7 +109,7 @@ class {bzla_enum:s}(Enum):
 # Template for the whole file
 FILE_TEMPLATE = """from enum import Enum
 
-cdef extern from \"api/c/bitwuzla.h\":
+cdef extern from \"bitwuzla/c/bitwuzla.h\":
 {cenums:s}
 
 {pyenums:s}"""
@@ -193,23 +201,23 @@ def main():
     Entry point
     """
 
+    ap = argparse.ArgumentParser()
+    ap.add_argument('input_file')
+    ap.add_argument('output_file')
+    args = ap.parse_args()
+
     # We expect to only have three arguments
     if len(sys.argv) != 3:
         raise ValueError("invalid number of arguments")
 
-    # Script arguments
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-
-    # We expect our last argument to be a file 'bitwuzla.h'
-    if os.path.basename(output_file) == "bitwuzla.h":
-        raise ValueError("bitwuzla.h not specified")
+    if not args.input_file.endswith('enums.h') and not args.input_file.endswith('option.h'):
+        raise ValueError("Expected enums.h or option.h as input file")
 
     # Extract all of our enums
-    bzla_enums = extract_enums(input_file)
+    bzla_enums = extract_enums(args.input_file)
 
     # Generate our output file
-    generate_output(bzla_enums, output_file)
+    generate_output(bzla_enums, args.output_file)
 
     return 0
 

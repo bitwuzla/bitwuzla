@@ -12,34 +12,51 @@ find_package(PythonExtensions REQUIRED)
 find_package(Cython REQUIRED)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_LIST_DIR})               # bitwuzla_api.pxd
-include_directories(${CMAKE_CURRENT_LIST_DIR}/../c/)         # bitwuzla.h
+include_directories(${CMAKE_CURRENT_LIST_DIR})    # bitwuzla_api.pxd
+include_directories(${CMAKE_SOURCE_DIR}/include)  # bitwuzla public headers
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-set(generated_file "${CMAKE_CURRENT_BINARY_DIR}/pybitwuzla_enums.pxd")
+set(generated_enums_file "${CMAKE_CURRENT_BINARY_DIR}/pybitwuzla_enums.pxd")
 
-# Generate pybitwuzla_enums.pxd from bitwuzla.h
+# Generate pybitwuzla_enums.pxd from enums.h
 add_custom_command(
   COMMAND
     "${PYTHON_EXECUTABLE}"
     "${CMAKE_CURRENT_LIST_DIR}/mkenums.py"
-    "${CMAKE_CURRENT_LIST_DIR}/../c/bitwuzla.h"
-    "${generated_file}"
+    "${CMAKE_SOURCE_DIR}/include/bitwuzla/enums.h"
+    "${generated_enums_file}"
   OUTPUT
-    "${generated_file}"
+    "${generated_enums_file}"
   DEPENDS
     "${CMAKE_CURRENT_LIST_DIR}/mkenums.py"
-    "${CMAKE_CURRENT_LIST_DIR}/../c/bitwuzla.h"
+    "${CMAKE_SOURCE_DIR}/include/bitwuzla/enums.h"
   COMMENT
     "Generate pybitwuzla_enums.pxd"
+)
+
+set(generated_options_file "${CMAKE_CURRENT_BINARY_DIR}/pybitwuzla_options.pxd")
+add_custom_command(
+  COMMAND
+    "${PYTHON_EXECUTABLE}"
+    "${CMAKE_CURRENT_LIST_DIR}/mkenums.py"
+    "${CMAKE_SOURCE_DIR}/include/bitwuzla/option.h"
+    "${generated_options_file}"
+  OUTPUT
+    "${generated_options_file}"
+  DEPENDS
+    "${CMAKE_CURRENT_LIST_DIR}/mkenums.py"
+    "${CMAKE_SOURCE_DIR}/include/bitwuzla/option.h"
+  COMMENT
+    "Generate pybitwuzla_options.pxd"
 )
 
 add_custom_target(
     pybitwuzla_enums
     DEPENDS
-      "${generated_file}"
+      "${generated_enums_file}"
+      "${generated_options_file}"
       "${CMAKE_CURRENT_LIST_DIR}/mkenums.py"
-      "${CMAKE_CURRENT_LIST_DIR}/../c/bitwuzla.h"
+      "${CMAKE_SOURCE_DIR}/include/bitwuzla/enums.h"
 )
 add_cython_target(pybitwuzla CXX)  # implicitely uses pybitwuzla.pyx
 

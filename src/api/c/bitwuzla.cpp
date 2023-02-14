@@ -378,107 +378,6 @@ bitwuzla_option_is_mode(BitwuzlaOptions *options, BitwuzlaOption option)
   BITWUZLA_TRY_CATCH_END;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Bitwuzla                                                                   */
-/* -------------------------------------------------------------------------- */
-
-Bitwuzla *
-bitwuzla_new(const BitwuzlaOptions *options)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  return new Bitwuzla(options);
-  BITWUZLA_TRY_CATCH_END;
-}
-
-void
-bitwuzla_delete(Bitwuzla *bitwuzla)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  delete bitwuzla;
-  BITWUZLA_TRY_CATCH_END;
-}
-
-void
-bitwuzla_reset(Bitwuzla *bitwuzla)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  bitwuzla->reset();
-  BITWUZLA_TRY_CATCH_END;
-}
-
-const char *
-bitwuzla_copyright(Bitwuzla *bitwuzla)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  static thread_local std::string str = bitwuzla::copyright();
-  return str.c_str();
-  BITWUZLA_TRY_CATCH_END;
-}
-
-const char *
-bitwuzla_version(Bitwuzla *bitwuzla)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  static thread_local std::string str = bitwuzla::version();
-  return str.c_str();
-  BITWUZLA_TRY_CATCH_END;
-}
-
-const char *
-bitwuzla_git_id(Bitwuzla *bitwuzla)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  static thread_local std::string str = bitwuzla::git_id();
-  return str.c_str();
-  BITWUZLA_TRY_CATCH_END;
-}
-
-bool
-bitwuzla_terminate(Bitwuzla *bitwuzla)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  bitwuzla->d_terminator->terminate();
-  return false;
-  BITWUZLA_TRY_CATCH_END;
-}
-
-void
-bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
-                                  int32_t (*fun)(void *),
-                                  void *state)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  BITWUZLA_CHECK_NOT_NULL(fun);
-  bitwuzla->d_terminator.reset(new CTerminator(fun, state));
-  bitwuzla->d_bitwuzla->configure_terminator(bitwuzla->d_terminator.get());
-  BITWUZLA_TRY_CATCH_END;
-}
-
-void *
-bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  return bitwuzla->d_terminator ? bitwuzla->d_terminator->get_state() : nullptr;
-  BITWUZLA_TRY_CATCH_END;
-}
-
-void
-bitwuzla_set_abort_callback(void (*fun)(const char *msg))
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(fun);
-  // TODO
-  BITWUZLA_TRY_CATCH_END;
-}
-
 void
 bitwuzla_set_option(BitwuzlaOptions *options,
                     BitwuzlaOption option,
@@ -580,6 +479,108 @@ bitwuzla_get_option_info(BitwuzlaOptions *options,
       c_modes.push_back(m.c_str());
     }
   }
+  BITWUZLA_TRY_CATCH_END;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Library info                                                               */
+/* -------------------------------------------------------------------------- */
+
+const char *
+bitwuzla_copyright()
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  static thread_local std::string str = bitwuzla::copyright();
+  return str.c_str();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+const char *
+bitwuzla_version()
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  static thread_local std::string str = bitwuzla::version();
+  return str.c_str();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+const char *
+bitwuzla_git_id()
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  static thread_local std::string str = bitwuzla::git_id();
+  return str.c_str();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla                                                                   */
+/* -------------------------------------------------------------------------- */
+
+Bitwuzla *
+bitwuzla_new(const BitwuzlaOptions *options)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  return new Bitwuzla(options);
+  BITWUZLA_TRY_CATCH_END;
+}
+
+void
+bitwuzla_delete(Bitwuzla *bitwuzla)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  delete bitwuzla;
+  BITWUZLA_TRY_CATCH_END;
+}
+
+void
+bitwuzla_reset(Bitwuzla *bitwuzla)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  bitwuzla->reset();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+bool
+bitwuzla_terminate(Bitwuzla *bitwuzla)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  bitwuzla->d_terminator->terminate();
+  return false;
+  BITWUZLA_TRY_CATCH_END;
+}
+
+void
+bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
+                                  int32_t (*fun)(void *),
+                                  void *state)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  BITWUZLA_CHECK_NOT_NULL(fun);
+  bitwuzla->d_terminator.reset(new CTerminator(fun, state));
+  bitwuzla->d_bitwuzla->configure_terminator(bitwuzla->d_terminator.get());
+  BITWUZLA_TRY_CATCH_END;
+}
+
+void *
+bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  return bitwuzla->d_terminator ? bitwuzla->d_terminator->get_state() : nullptr;
+  BITWUZLA_TRY_CATCH_END;
+}
+
+void
+bitwuzla_set_abort_callback(void (*fun)(const char *msg))
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(fun);
+  // TODO
   BITWUZLA_TRY_CATCH_END;
 }
 
