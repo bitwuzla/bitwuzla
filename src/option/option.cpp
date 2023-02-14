@@ -200,6 +200,11 @@ Options::Options()
                 "concats that represent sign_extend nodes for "
                 "propagation-based local search engine",
                 "prop-sext"),
+      prop_normalize(this,
+                     Option::PROP_NORMALIZE,
+                     true,
+                     "enable normalization for local search",
+                     "prop-normalize"),
 
       // Preprocessing
       preprocess(

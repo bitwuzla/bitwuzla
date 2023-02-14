@@ -799,7 +799,7 @@ PassNormalize::process(const Node& node)
   return d_env.rewriter().rewrite(it->second);
 }
 
-/* --- PassEmbeddedConstraints private -------------------------------------- */
+/* --- PassNormalize private ------------------------------------------------ */
 
 PassNormalize::Statistics::Statistics(util::Statistics& stats)
     : time_apply(stats.new_stat<util::TimerStatistic>(
@@ -809,4 +809,5 @@ PassNormalize::Statistics::Statistics(util::Statistics& stats)
 {
 }
 
+/* -------------------------------------------------------------------------- */
 }  // namespace bzla::preprocess::pass

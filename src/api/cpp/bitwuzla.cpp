@@ -148,6 +148,7 @@ static const std::unordered_map<Option, bzla::option::Option>
         //{Option::PROP_USE_INV_LT_CONCAT, bzla::option::Option::NUM_OPTIONS},
         //{Option::PROP_USE_RESTARTS, bzla::option::Option::NUM_OPTIONS},
         {Option::PROP_SEXT, bzla::option::Option::PROP_SEXT},
+        {Option::PROP_NORMALIZE, bzla::option::Option::PROP_NORMALIZE},
         //{Option::PROP_SKIP_NO_PROGRESS, bzla::option::Option::NUM_OPTIONS},
         //{Option::PROP_XOR, bzla::option::Option::NUM_OPTIONS},
         //{Option::AIGPROP_NPROPS, bzla::option::Option::NUM_OPTIONS},

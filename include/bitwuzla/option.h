@@ -232,6 +232,19 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(PROP_SEXT),
+  /*! **Propagation-based local search solver engine:
+   *    Local search specific normalization.**
+   *
+   * When enabled, perform normalizations for local search, on the local search
+   * layer (does not affect node layer).
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(PROP_NORMALIZE),
 
   /*! **Preprocessing**
    *

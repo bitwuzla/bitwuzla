@@ -66,7 +66,10 @@ BvPropSolver::solve()
   uint32_t progress_steps     = 100;
   uint32_t progress_steps_inc = progress_steps * 10;
 
-  d_ls->normalize();
+  if (d_env.options().prop_normalize())
+  {
+    d_ls->normalize();
+  }
 
   // incremental: increase limit by given nprops/nupdates
   if (nprops)
