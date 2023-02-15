@@ -62,7 +62,8 @@ class TestPassNormalize : public TestPreprocessingPass
       const std::unordered_map<Node, int64_t>& expected,
       bool consider_neg)
   {
-    auto coeffs = d_pass->compute_coefficients(node, {});
+    PassNormalize::CoefficientsMap coeffs;
+    d_pass->compute_coefficients(node, {}, coeffs);
 
     if (consider_neg)
     {
@@ -140,8 +141,9 @@ class TestPassNormalize : public TestPreprocessingPass
       const std::unordered_map<Node, int64_t>& expected1,
       bool consider_neg)
   {
-    auto coeffs0 = d_pass->compute_coefficients(node[0], {});
-    auto coeffs1 = d_pass->compute_coefficients(node[1], {});
+    PassNormalize::CoefficientsMap coeffs0, coeffs1;
+    d_pass->compute_coefficients(node[0], {}, coeffs0);
+    d_pass->compute_coefficients(node[1], {}, coeffs1);
 
     test_compute_coefficients(node[0], expected0, consider_neg);
     test_compute_coefficients(node[1], expected1, consider_neg);

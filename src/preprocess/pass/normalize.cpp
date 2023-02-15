@@ -76,9 +76,11 @@ is_leaf(Kind kind,
 }
 }  // namespace
 
-PassNormalize::CoefficientsMap
+void
 PassNormalize::compute_coefficients(
-    const Node& node, const std::unordered_map<Node, uint64_t>& parents)
+    const Node& node,
+    const std::unordered_map<Node, uint64_t>& parents,
+    PassNormalize::CoefficientsMap& coeffs)
 {
   bool share_aware = !parents.empty();
   Kind kind        = node.kind();
@@ -86,8 +88,7 @@ PassNormalize::compute_coefficients(
 
   node_ref_vector nodes;
   unordered_node_ref_set intermediate;
-  unordered_node_ref_map<BitVector> coeffs;
-  CoefficientsMap res;  // only leafs
+  unordered_node_ref_map<BitVector> cfs;  // all coefficients
 
   // Collect all traversed nodes (intermediate nodes of specified kind and
   // leafs) and initialize coefficients for each node to zero.
@@ -95,7 +96,7 @@ PassNormalize::compute_coefficients(
   do
   {
     const Node& cur     = visit.back();
-    auto [it, inserted] = coeffs.emplace(cur, zero);
+    auto [it, inserted] = cfs.emplace(cur, zero);
     visit.pop_back();
     if (inserted)
     {
@@ -126,12 +127,12 @@ PassNormalize::compute_coefficients(
   //       ascending order and process the nodes with the higher IDs first.
   std::sort(nodes.begin(), nodes.end());
   assert(nodes.back() == node);
-  coeffs[node].ibvinc();  // Set initial coefficient of top node
+  cfs[node].ibvinc();  // Set initial coefficient of top node
   for (auto it = nodes.rbegin(), rend = nodes.rend(); it != rend; ++it)
   {
     const Node& cur = *it;
-    auto fit        = coeffs.find(cur);
-    assert(fit != coeffs.end());
+    auto fit        = cfs.find(cur);
+    assert(fit != cfs.end());
 
     // If it's an intermediate node, push coefficient down to children
     if (intermediate.find(cur) != intermediate.end())
@@ -139,18 +140,20 @@ PassNormalize::compute_coefficients(
       assert(cur.kind() == kind);
       for (const auto& child : cur)
       {
-        assert(coeffs.find(child) != coeffs.end());
-        coeffs[child].ibvadd(fit->second);
+        assert(cfs.find(child) != cfs.end());
+        cfs[child].ibvadd(fit->second);
       }
     }
     // If it's a leaf, just copy the result
     else
     {
-      assert(res.find(cur) == res.end());
-      res.emplace(cur, coeffs[cur]);
+      auto [it, inserted] = coeffs.emplace(cur, cfs[cur]);
+      if (!inserted)
+      {
+        it->second.ibvadd(cfs[cur]);
+      }
     }
   }
-  return res;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -184,11 +187,12 @@ PassNormalize::normalize_add(const Node& node,
     // ~x = ~(x + 1) + 1 = - x - 1
     else if (cur.is_inverted() && cur[0].kind() == Kind::BV_ADD)
     {
+      CoefficientsMap cfs;
       BitVector coeff = coeffs.at(cur).bvneg();
       f.second        = bvzero;
       auto parents = share_aware ? _count_parents({node, cur[0]}, Kind::BV_ADD)
                                  : std::unordered_map<Node, uint64_t>();
-      auto cfs     = compute_coefficients(cur[0], parents);
+      compute_coefficients(cur[0], parents, cfs);
       for (auto& f : cfs)
       {
         f.second.ibvmul(coeff);
@@ -310,8 +314,9 @@ PassNormalize::get_normalized_coefficients_for_eq(const Node& node0,
   std::unordered_map<Node, uint64_t> parents =
       share_aware ? _count_parents({node0, node1}, kind)
                   : std::unordered_map<Node, uint64_t>();
-  auto coeffs0    = compute_coefficients(node0, parents);
-  auto coeffs1    = compute_coefficients(node1, parents);
+  CoefficientsMap coeffs0, coeffs1;
+  compute_coefficients(node0, parents, coeffs0);
+  compute_coefficients(node1, parents, coeffs1);
   bool normalized = false;
 
   if (kind == Kind::BV_ADD)
@@ -558,6 +563,8 @@ PassNormalize::normalize_eq_add_mul(const Node& node0,
   return {nm.mk_node(Kind::EQUAL, {left, right}), true};
 }
 
+/* -------------------------------------------------------------------------- */
+
 namespace {
 
 void
@@ -685,8 +692,9 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
       share_aware ? _count_parents({top_lhs, top_rhs}, kind)
                   : std::unordered_map<Node, uint64_t>();
 
-  auto lhs           = compute_coefficients(top_lhs, parents);
-  auto rhs           = compute_coefficients(top_rhs, parents);
+  CoefficientsMap lhs, rhs;
+  compute_coefficients(top_lhs, parents, lhs);
+  compute_coefficients(top_rhs, parents, rhs);
   auto [left, right] = normalize_common(kind, lhs, rhs);
   auto rebuilt_left  = rebuild_top(node0, top_lhs, left);
   auto rebuilt_right = rebuild_top(node1, top_rhs, right);

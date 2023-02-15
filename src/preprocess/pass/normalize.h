@@ -33,10 +33,11 @@ class PassNormalize : public PreprocessingPass
    * @param parents The parents count of the equality over adders/multipliers
    *                this node is one of the operands of. Empty if we do
    *                not normalize in a share aware manner.
-   * @return A map from node to its occurrence count.
+   * @param coeffs The resulting map from node to its occurrence count.
    */
-  std::unordered_map<Node, BitVector> compute_coefficients(
-      const Node& node, const std::unordered_map<Node, uint64_t>& parents);
+  void compute_coefficients(const Node& node,
+                            const std::unordered_map<Node, uint64_t>& parents,
+                            CoefficientsMap& coeffs);
 
   /**
    * Normalize factors for bit-vector add.
