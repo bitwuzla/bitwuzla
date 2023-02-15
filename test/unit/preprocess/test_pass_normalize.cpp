@@ -69,7 +69,7 @@ class TestPassNormalize : public TestPreprocessingPass
     {
       if (node.kind() == Kind::BV_ADD)
       {
-        auto [normalized, value] = d_pass->normalize_add(node, coeffs, false);
+        auto [normalized, value] = d_pass->normalize_add(node, coeffs);
         if (!value.is_zero())
         {
           auto [it, inserted] = coeffs.emplace(

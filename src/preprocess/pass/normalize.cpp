@@ -51,7 +51,9 @@ _count_parents(const node_ref_vector& nodes, Kind kind)
 
 PassNormalize::PassNormalize(Env& env,
                              backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr), d_stats(env.statistics())
+    : PreprocessingPass(env, backtrack_mgr),
+      d_share_aware(d_env.options().pp_normalize_share_aware()),
+      d_stats(env.statistics())
 {
 }
 
@@ -82,7 +84,6 @@ PassNormalize::compute_coefficients(
     const std::unordered_map<Node, uint64_t>& parents,
     PassNormalize::CoefficientsMap& coeffs)
 {
-  bool share_aware = !parents.empty();
   Kind kind        = node.kind();
   BitVector zero   = BitVector::mk_zero(node.type().bv_size());
 
@@ -103,7 +104,7 @@ PassNormalize::compute_coefficients(
       nodes.push_back(cur);
       if (cur.kind() == kind)
       {
-        if (share_aware)
+        if (d_share_aware)
         {
           // treat as leaf if node of given kind has parent references
           // from outside the current 'kind' chain
@@ -160,8 +161,7 @@ PassNormalize::compute_coefficients(
 
 std::pair<bool, BitVector>
 PassNormalize::normalize_add(const Node& node,
-                             PassNormalize::CoefficientsMap& coeffs,
-                             bool share_aware)
+                             PassNormalize::CoefficientsMap& coeffs)
 {
   assert(node.kind() == Kind::BV_ADD);
 
@@ -190,8 +190,9 @@ PassNormalize::normalize_add(const Node& node,
       CoefficientsMap cfs;
       BitVector coeff = coeffs.at(cur).bvneg();
       f.second        = bvzero;
-      auto parents = share_aware ? _count_parents({node, cur[0]}, Kind::BV_ADD)
-                                 : std::unordered_map<Node, uint64_t>();
+      auto parents    = d_share_aware
+                            ? _count_parents({node, cur[0]}, Kind::BV_ADD)
+                            : std::unordered_map<Node, uint64_t>();
       compute_coefficients(cur[0], parents, cfs);
       for (auto& f : cfs)
       {
@@ -304,16 +305,15 @@ PassNormalize::_normalize_coefficients_eq_add(
 
 std::tuple<PassNormalize::CoefficientsMap, PassNormalize::CoefficientsMap, bool>
 PassNormalize::get_normalized_coefficients_for_eq(const Node& node0,
-                                                  const Node& node1,
-                                                  bool share_aware)
+                                                  const Node& node1)
 {
   assert(node0.kind() == node1.kind());
 
   Kind kind = node0.kind();
 
   std::unordered_map<Node, uint64_t> parents =
-      share_aware ? _count_parents({node0, node1}, kind)
-                  : std::unordered_map<Node, uint64_t>();
+      d_share_aware ? _count_parents({node0, node1}, kind)
+                    : std::unordered_map<Node, uint64_t>();
   CoefficientsMap coeffs0, coeffs1;
   compute_coefficients(node0, parents, coeffs0);
   compute_coefficients(node1, parents, coeffs1);
@@ -321,8 +321,8 @@ PassNormalize::get_normalized_coefficients_for_eq(const Node& node0,
 
   if (kind == Kind::BV_ADD)
   {
-    auto [normalized0, value0] = normalize_add(node0, coeffs0, share_aware);
-    auto [normalized1, value1] = normalize_add(node1, coeffs1, share_aware);
+    auto [normalized0, value0] = normalize_add(node0, coeffs0);
+    auto [normalized1, value1] = normalize_add(node1, coeffs1);
     normalized                 = normalized0 || normalized1;
     if (_normalize_coefficients_eq_add(coeffs0, coeffs1, value0))
     {
@@ -339,7 +339,7 @@ PassNormalize::get_normalized_coefficients_for_eq(const Node& node0,
   for (const auto& f : coeffs0)
   {
     assert(f.first.kind() != kind
-           || (share_aware && parents.at(f.first) != d_parents.at(f.first)));
+           || (d_share_aware && parents.at(f.first) != d_parents.at(f.first)));
 
     auto fit = coeffs1.find(f.first);
     if (fit == coeffs1.end())
@@ -365,7 +365,7 @@ PassNormalize::get_normalized_coefficients_for_eq(const Node& node0,
   for (const auto& f : coeffs1)
   {
     assert(f.first.kind() != kind
-           || (share_aware && parents.at(f.first) != d_parents.at(f.first)));
+           || (d_share_aware && parents.at(f.first) != d_parents.at(f.first)));
     auto fit = coeffs0.find(f.first);
     if (fit == coeffs0.end())
     {
@@ -533,9 +533,7 @@ PassNormalize::_normalize_eq_add(PassNormalize::CoefficientsMap& coeffs0,
 }
 
 std::pair<Node, bool>
-PassNormalize::normalize_eq_add_mul(const Node& node0,
-                                    const Node& node1,
-                                    bool share_aware)
+PassNormalize::normalize_eq_add_mul(const Node& node0, const Node& node1)
 {
   assert(node0.kind() == node1.kind());
   assert(node0.kind() == Kind::BV_MUL || node0.kind() == Kind::BV_ADD);
@@ -543,7 +541,7 @@ PassNormalize::normalize_eq_add_mul(const Node& node0,
   NodeManager& nm = NodeManager::get();
 
   auto [coeffs0, coeffs1, normalized] =
-      get_normalized_coefficients_for_eq(node0, node1, share_aware);
+      get_normalized_coefficients_for_eq(node0, node1);
 
   if (!normalized)
   {
@@ -670,8 +668,7 @@ PassNormalize::normalize_common(Kind kind,
 std::pair<Node, bool>
 PassNormalize::normalize_comm_assoc(Kind parent_kind,
                                     const Node& node0,
-                                    const Node& node1,
-                                    bool share_aware)
+                                    const Node& node1)
 {
   NodeManager& nm = NodeManager::get();
 
@@ -689,8 +686,8 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
   // Note: parents could also be computed based on node0 and node1, but
   //       get_top() and rebuild_top() do not handle this case yet.
   std::unordered_map<Node, uint64_t> parents =
-      share_aware ? _count_parents({top_lhs, top_rhs}, kind)
-                  : std::unordered_map<Node, uint64_t>();
+      d_share_aware ? _count_parents({top_lhs, top_rhs}, kind)
+                    : std::unordered_map<Node, uint64_t>();
 
   CoefficientsMap lhs, rhs;
   compute_coefficients(top_lhs, parents, lhs);
@@ -798,7 +795,6 @@ PassNormalize::apply(AssertionVector& assertions)
 Node
 PassNormalize::process(const Node& node)
 {
-  bool share_aware = d_env.options().pp_normalize_share_aware();
   node_ref_vector visit{node};
   do
   {
@@ -825,15 +821,14 @@ PassNormalize::process(const Node& node)
           && (children[0].kind() == Kind::BV_ADD
               || children[0].kind() == Kind::BV_MUL))
       {
-        auto [res, normalized] =
-            normalize_eq_add_mul(children[0], children[1], share_aware);
+        auto [res, normalized] = normalize_eq_add_mul(children[0], children[1]);
         it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }
       else if (k == Kind::EQUAL || k == Kind::BV_ULT || k == Kind::BV_SLT)
       {
         auto [res, normalized] =
-            normalize_comm_assoc(k, children[0], children[1], share_aware);
+            normalize_comm_assoc(k, children[0], children[1]);
         it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }
@@ -842,7 +837,7 @@ PassNormalize::process(const Node& node)
                && (cur[0].kind() == cur[1].kind() && cur[0].kind() != k))
       {
         auto [res, normalized] =
-            normalize_comm_assoc(k, children[0], children[1], share_aware);
+            normalize_comm_assoc(k, children[0], children[1]);
         it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }

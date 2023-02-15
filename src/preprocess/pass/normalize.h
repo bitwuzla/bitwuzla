@@ -44,9 +44,6 @@ class PassNormalize : public PreprocessingPass
    * @param node The adder node.
    * @param coeffs The coefficients of the adder as determined by
    *               compute_coefficients().
-   * @param share_aware True to detect occurrences > 1, i.e., nodes of given
-   *                    kind that have multiple parents. If true, we do not
-   *                    normalize such nodes to avoid blow-up.
    * @return A boolean flag to indicate if the adder was normalized, and a
    *         bit-vector value representing the summarized, normalized leaf
    *         values of the giver adder. After normalize_add() is called, it
@@ -54,37 +51,27 @@ class PassNormalize : public PreprocessingPass
    *         in the coefficents map.
    */
   std::pair<bool, BitVector> normalize_add(const Node& node,
-                                           CoefficientsMap& coeffs,
-                                           bool share_aware);
+                                           CoefficientsMap& coeffs);
   /**
    * Helper to determine the normalized set of 'coefficients' (occurrences) for
    * an equality over the given two nodes of the same kind.
    * @param node0 The left hand side node of the equality.
    * @param node1 The right hand side node of the equality.
-   * @param share_aware True to detect occurrences > 1, i.e., nodes of given
-   *                    kind that have multiple parents. If true, we do not
-   *                    normalize such nodes to avoid blow-up.
    * @return A set of normalized coefficients per node, with a boolean
    *         flag to indicate if normalization was successful. The resulting
    *         sets may be empty (only both, or none).
    */
   std::tuple<CoefficientsMap, CoefficientsMap, bool>
-  get_normalized_coefficients_for_eq(const Node& node0,
-                                     const Node& node1,
-                                     bool share_aware);
+  get_normalized_coefficients_for_eq(const Node& node0, const Node& node1);
   /**
    * Normalize equality over addition or multiplication.
    * @param node0 The left hand side of the equality.
    * @param node1 The right hand side of the equality.
-   * @param share_aware True to detect occurrences > 1, i.e., nodes of given
-   *                    kind that have multiple parents. If true, we do not
-   *                    normalize such nodes to avoid blow-up.
    * @param A pair of normalized node and a boolean flag to indicate if
    *        normalization was successful.
    */
   std::pair<Node, bool> normalize_eq_add_mul(const Node& node0,
-                                             const Node& node1,
-                                             bool share_aware);
+                                             const Node& node1);
   /**
    * Helper to normalize equality over multiplication.
    * @param coeffs0 The normalized coefficients of the left hand side of the
@@ -123,13 +110,11 @@ class PassNormalize : public PreprocessingPass
                                       BitVector& value);
 
   /**
-   * General normalization of adder and multiplier chains to extract common
-   * parts.
+   * General normalization of associative and commutative operators.
    */
   std::pair<Node, bool> normalize_comm_assoc(node::Kind parent_kind,
                                              const Node& node0,
-                                             const Node& node1,
-                                             bool share_aware);
+                                             const Node& node1);
 
   /**
    * Helper to normalize common parts of lhs and rhs.
@@ -157,6 +142,13 @@ class PassNormalize : public PreprocessingPass
    * @param normalized The normalized node that should replace top.
    */
   Node rebuild_top(const Node& node, const Node& top, const Node& normalized);
+
+  /**
+   * True to detect occurrences > 1, i.e., nodes of given kind that have
+   * multiple parents. If true, we do not normalize such nodes to avoid
+   * blow-up.
+   */
+  bool d_share_aware = false;
 
   /**
    * Cache of processed nodes that maybe shared across substitutions.
