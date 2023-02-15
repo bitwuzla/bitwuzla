@@ -46,11 +46,24 @@ class PassNormalize : public PreprocessingPass
    *               compute_coefficients().
    * @return A boolean flag to indicate if the adder was normalized, and a
    *         bit-vector value representing the summarized, normalized leaf
-   *         values of the giver adder. After normalize_add() is called, it
-   *         can be asserted that no values with a coefficient > 0 occurs
+   *         values of the given adder. After normalize_add() is called, it
+   *         can be asserted that no values with a coefficient > 0 occur
    *         in the coefficents map.
    */
   std::pair<bool, BitVector> normalize_add(const Node& node,
+                                           CoefficientsMap& coeffs);
+  /**
+   * Normalize factors for bit-vector and.
+   * @param node The adder node.
+   * @param coeffs The coefficients of the and as determined by
+   *               compute_coefficients().
+   * @return A boolean flag to indicate if the and was normalized, and a
+   *         bit-vector value representing the constant folded, normalized
+   *         leaf values of the given and. After normalize_and() is called,
+   *         it can be asserted that no values with a coefficient > 0 occur
+   *         in the coefficents map.
+   */
+  std::pair<bool, BitVector> normalize_and(const Node& node,
                                            CoefficientsMap& coeffs);
   /**
    * Helper to determine the normalized set of 'coefficients' (occurrences) for

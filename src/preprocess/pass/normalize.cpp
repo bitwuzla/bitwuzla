@@ -167,7 +167,7 @@ PassNormalize::normalize_add(const Node& node,
 
   uint64_t bv_size = node.type().bv_size();
   BitVector bvzero = BitVector::mk_zero(bv_size);
-  BitVector value  = BitVector::mk_zero(bv_size);
+  BitVector value  = bvzero;
   bool normalized  = false;
 
   node_ref_vector visit;
@@ -207,6 +207,36 @@ PassNormalize::normalize_add(const Node& node,
     }
   }
 
+  return {normalized, value};
+}
+
+/* -------------------------------------------------------------------------- */
+
+std::pair<bool, BitVector>
+PassNormalize::normalize_and(const Node& node,
+                             PassNormalize::CoefficientsMap& coeffs)
+{
+  BitVector bvzero = BitVector::mk_zero(node.type().bv_size());
+  BitVector bvone  = BitVector::mk_one(node.type().bv_size());
+  BitVector value  = bvone;
+  bool normalized  = false;
+
+  for (auto& f : coeffs)
+  {
+    const Node& cur = f.first;
+    // constant fold values
+    if (cur.is_value())
+    {
+      value.ibvand(f.second);
+      f.second   = bvzero;
+      normalized = true;
+    }
+    // normalize coefficient to 1
+    else if (f.second.compare(bvone) > 0)
+    {
+      f.second = bvone;
+    }
+  }
   return {normalized, value};
 }
 
@@ -600,24 +630,6 @@ PassNormalize::normalize_common(Kind kind,
   assert(!rhs.empty());
 
   BitVector one = BitVector::mk_one(lhs.begin()->first.type().bv_size());
-
-  if (kind == Kind::BV_AND)
-  {
-    for (auto it = lhs.begin(), end = lhs.end(); it != end; ++it)
-    {
-      if (it->second.compare(one) > 0)
-      {
-        it->second = one;
-      }
-    }
-    for (auto it = rhs.begin(), end = rhs.end(); it != end; ++it)
-    {
-      if (it->second.compare(one) > 0)
-      {
-        it->second = one;
-      }
-    }
-  }
 
   for (auto it0 = lhs.begin(), end = lhs.end(); it0 != end; ++it0)
   {
