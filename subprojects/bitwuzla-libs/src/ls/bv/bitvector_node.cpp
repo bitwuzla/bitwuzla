@@ -6459,7 +6459,7 @@ BitVectorExtract::str() const
 {
   return "[" + std::to_string(d_id) + "] (" + std::to_string(d_normalized_id)
          + ") " + std::to_string(kind()) + ": "
-         + (d_child0_original ? "(normalized) " : "") + "["
+         + (is_normalized() ? "(normalized) " : "") + "["
          + std::to_string(d_hi) + ":" + std::to_string(d_lo)
          + "]: " + d_domain.str() + " (" + d_assignment.str() + ")";
 }
