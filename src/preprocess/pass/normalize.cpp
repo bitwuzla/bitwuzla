@@ -187,6 +187,23 @@ PassNormalize::compute_common_coefficients(Kind kind,
                                            PassNormalize::CoefficientsMap& rhs,
                                            std::vector<Node>& common)
 {
+  // TODO: Ideally, we would factor out common combinations of common leafs,
+  //       when possible. For example, (a * b) and (a * b, b * a) currently
+  //       results in
+  //         lhs = {a: 0, b: 0}
+  //         rhs = {a: 1, b: 1} and
+  //         common = {a, b},
+  //       but could be
+  //         lhs = {a: 0, b: 0}
+  //         rhs = {a: 0, b: 0, a * b: 1} and
+  //         common = {a * b}.
+  //       Related problem: ((a * b) * ((c * d) * (e * (a * b)))) and
+  //                        (a * (b * (c * (d * e))))
+  //       results in
+  //         left = (a * (b * (a * (b * (c * (d * e))))))
+  //         right = (a * (b * (c * (d * e))))
+  //       but multiplier (a * b) could be shared:
+  //         left = (a * b) * (a * b) * (c * (d * e))
   for (auto it0 = lhs.begin(), end = lhs.end(); it0 != end; ++it0)
   {
     auto it1 = rhs.find(it0->first);
@@ -404,6 +421,33 @@ PassNormalize::normalize_coefficients_eq(
 
   std::vector<Node> common;
   compute_common_coefficients(kind, coeffs0, coeffs1, common);
+
+  if (kind == Kind::BV_MUL && !common.empty())
+  {
+    NodeManager& nm = NodeManager::get();
+    BitVector bvone = BitVector::mk_one(node0.type().bv_size());
+    std::sort(common.begin(), common.end());
+    size_t n = common.size();
+    Node com = common[n - 1];
+    for (size_t i = 1; i < n; ++i)
+    {
+      com = nm.mk_node(Kind::BV_MUL, {common[n - i - 1], com});
+    }
+    {
+      auto [it, inserted] = coeffs0.emplace(com, bvone);
+      if (!inserted)
+      {
+        coeffs0[com].ibvinc();
+      }
+    }
+    {
+      auto [it, inserted] = coeffs1.emplace(com, bvone);
+      if (!inserted)
+      {
+        coeffs1[com].ibvinc();
+      }
+    }
+  }
 }
 
 std::pair<Node, Node>

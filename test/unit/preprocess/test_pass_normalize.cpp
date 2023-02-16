@@ -459,9 +459,10 @@ TEST_F(TestPassNormalize, mul_normalize00)
 TEST_F(TestPassNormalize, mul_normalize01)
 {
   // (a * b) = (b * a) * (a * b)
-  test_assertion(equal(mul(d_a, d_b), mul(mul(d_b, d_a), mul(d_a, d_b))),
-                 equal(d_one, mul(d_a, d_b)),
-                 equal(d_one, mul(d_a, d_b)));
+  Node mul_ab = mul(d_a, d_b);
+  test_assertion(equal(mul_ab, mul(mul(d_b, d_a), mul_ab)),
+                 equal(mul(d_a, d_b), mul(d_a, mul(d_b, mul_ab))),
+                 equal(mul(d_a, d_b), mul(d_a, mul(d_b, mul_ab))));
 }
 
 TEST_F(TestPassNormalize, mul_normalize0)
@@ -493,7 +494,10 @@ TEST_F(TestPassNormalize, mul_normalize1)
   Node mul_bcde = mul(d_b, mul_cde);
   Node mul1     = mul(d_a, mul_bcde);
 
-  test_assertion(equal(mul0, mul1), equal(d_a, d_c), equal(d_a, d_c));
+  Node common = mul(d_a, mul(d_b, mul(d_d, d_e)));
+  test_assertion(equal(mul0, mul1),
+                 equal(mul(d_a, common), mul(d_c, common)),
+                 equal(mul(d_a, common), mul(d_c, common)));
 }
 
 TEST_F(TestPassNormalize, mul_normalize2)
@@ -509,7 +513,11 @@ TEST_F(TestPassNormalize, mul_normalize2)
   Node mul_bcae = mul(d_b, mul_cae);
   Node mul1     = mul(d_a, mul_bcae);
 
-  test_assertion(equal(mul0, mul1), equal(d_d, d_a), equal(d_d, d_a));
+  Node common = mul(d_a, mul(d_b, mul(d_c, d_e)));
+
+  test_assertion(equal(mul0, mul1),
+                 equal(mul(d_d, common), mul(d_a, common)),
+                 equal(mul(d_d, common), mul(d_a, common)));
 }
 
 TEST_F(TestPassNormalize, mul_normalize3)
@@ -526,9 +534,10 @@ TEST_F(TestPassNormalize, mul_normalize3)
   Node mul_bcde = mul(d_b, mul_cde);
   Node mul1     = mul(d_a, mul_bcde);
 
+  Node common = mul(d_a, mul(d_b, mul(d_c, mul(d_d, d_e))));
   test_assertion(equal(mul0, mul1),
-                 equal(mul(d_a, d_b), d_one),
-                 equal(mul(d_a, d_b), d_one));
+                 equal(mul(d_a, mul(d_b, common)), common),
+                 equal(mul(d_a, mul(d_b, common)), common));
 }
 
 TEST_F(TestPassNormalize, mul_normalize4)
@@ -544,9 +553,10 @@ TEST_F(TestPassNormalize, mul_normalize4)
   Node mul_cd_a_cd = mul(mul_cd, mul_a_cd);
   Node mul1        = mul(mul_ab, mul_cd_a_cd);
 
+  Node common = mul(d_a, mul(d_a, mul(d_b, mul(d_c, d_d))));
   test_assertion(equal(mul0, mul1),
-                 equal(mul(d_b, d_e), mul(d_c, d_d)),
-                 equal(mul(d_b, d_e), mul(d_c, d_d)));
+                 equal(mul(d_b, mul(d_e, common)), mul(d_c, mul(d_d, common))),
+                 equal(mul(d_b, mul(d_e, common)), mul(d_c, mul(d_d, common))));
 }
 
 TEST_F(TestPassNormalize, mul_normalize5)
@@ -563,9 +573,12 @@ TEST_F(TestPassNormalize, mul_normalize5)
   Node mul_cd_a_cd = mul(mul_cd, mul_a_cd);
   Node mul1        = mul(mul_ab, mul_cd_a_cd);
 
+  Node common = mul(d_a, mul(d_a, mul(d_b, d_d)));
   test_assertion(equal(mul0, mul1),
-                 equal(mul(d_a, mul(d_b, d_e)), mul(d_c, mul(d_c, d_d))),
-                 equal(mul(d_a, mul(d_b, d_e)), mul(d_c, mul(d_c, d_d))));
+                 equal(mul(d_a, mul(d_b, mul(d_e, common))),
+                       mul(d_c, mul(d_c, mul(d_d, common)))),
+                 equal(mul(d_a, mul(d_b, mul(d_e, common))),
+                       mul(d_c, mul(d_c, mul(d_d, common)))));
 }
 
 TEST_F(TestPassNormalize, mul_normalize6)
@@ -582,16 +595,23 @@ TEST_F(TestPassNormalize, mul_normalize6)
   Node mul_ab_ab_ab_ab = mul(mul_ab_ab, mul_ab_ab);
   Node mul1            = mul(mul_a_ab_ab, mul_ab_ab_ab_ab);
 
+  Node common = mul(d_a, mul(d_a, mul(d_a, mul(d_b, d_b))));
+
   test_assertion(
       equal(mul0, mul1),
-      equal(
-          mul(d_d, d_e),
-          mul(d_a,
-              mul(d_a, mul(d_a, mul(d_a, mul(d_b, mul(d_b, mul(d_b, d_b)))))))),
-      equal(mul(d_d, d_e),
+      equal(mul(d_d, mul(d_e, common)),
             mul(d_a,
                 mul(d_a,
-                    mul(d_a, mul(d_a, mul(d_b, mul(d_b, mul(d_b, d_b)))))))));
+                    mul(d_a,
+                        mul(d_a,
+                            mul(d_b, mul(d_b, mul(d_b, mul(d_b, common))))))))),
+      equal(
+          mul(d_d, mul(d_e, common)),
+          mul(d_a,
+              mul(d_a,
+                  mul(d_a,
+                      mul(d_a,
+                          mul(d_b, mul(d_b, mul(d_b, mul(d_b, common))))))))));
 }
 
 TEST_F(TestPassNormalize, mul_normalize7)
@@ -610,11 +630,13 @@ TEST_F(TestPassNormalize, mul_normalize7)
   Node mul_cd_a_cd = mul(mul_cd, add_a_cd);
   Node mul1        = mul(add_ab, mul_cd_a_cd);
 
-  test_assertion(
-      equal(mul0, mul1),
-      equal(mul(d_a, mul(d_b, mul(d_e, add_ad))), mul(d_c, mul(d_d, add_a_cd))),
-      equal(mul(d_a, mul(d_b, mul(d_e, add_ad))),
-            mul(d_c, mul(d_d, add_a_cd))));
+  Node common = add_ab;
+
+  test_assertion(equal(mul0, mul1),
+                 equal(mul(d_a, mul(d_b, mul(d_e, mul(common, add_ad)))),
+                       mul(d_c, mul(d_d, mul(common, add_a_cd)))),
+                 equal(mul(d_a, mul(d_b, mul(d_e, mul(common, add_ad)))),
+                       mul(d_c, mul(d_d, mul(common, add_a_cd)))));
 }
 
 TEST_F(TestPassNormalize, mul_normalize8)
@@ -669,33 +691,42 @@ TEST_F(TestPassNormalize, mul_normalize9)
   Node mul_ab_ab_ab_ab = mul(mul_ab_ab, mul_ab_ab);
   Node mul1            = mul(mul_a_ab_ab, mul_ab_ab_ab_ab);
 
+  Node common = mul_ab;
+
   test_assertion(
       d_nm.mk_node(Kind::AND, {d_true, equal(mul0, mul1)}),
       d_nm.mk_node(
           Kind::AND,
           {d_true,
-           equal(mul(d_e,
-                     mul(add_ad,
-                         d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))),
-                 mul(d_a,
-                     mul(d_a,
-                         mul(d_a,
-                             mul(d_a,
-                                 mul(d_a,
-                                     mul(d_a,
-                                         mul(d_b,
-                                             mul(d_b,
-                                                 mul(d_b,
-                                                     mul(d_b, d_b)))))))))))}),
+           equal(
+               mul(d_e,
+                   mul(common,
+                       mul(add_ad,
+                           d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})))),
+               mul(d_a,
+                   mul(d_a,
+                       mul(d_a,
+                           mul(d_a,
+                               mul(d_a,
+                                   mul(d_a,
+                                       mul(d_b,
+                                           mul(d_b,
+                                               mul(d_b,
+                                                   mul(d_b,
+                                                       mul(d_b,
+                                                           common))))))))))))}),
       d_nm.mk_node(
           Kind::AND,
           {d_true,
-           equal(mul(d_e,
-                     mul(add_ad,
-                         d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))),
-                 mul(d_a,
-                     mul(mul_ab,
-                         mul(mul_ab, mul(mul_ab, mul(mul_ab, mul_ab))))))}));
+           equal(
+               mul(d_e,
+                   mul(common,
+                       mul(add_ad,
+                           d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})))),
+               mul(d_a,
+                   mul(common,
+                       mul(common,
+                           mul(common, mul(common, mul(common, common)))))))}));
 }
 
 /* -------------------------------------------------------------------------- */
