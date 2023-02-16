@@ -40,42 +40,58 @@ class PassNormalize : public PreprocessingPass
                             CoefficientsMap& coeffs);
 
   /**
+   * Factor out common subterms of given left hand side and right hand side
+   * operands of a given kind.
+   * @param kind The operator kind.
+   * @param lhs The coefficients of the left hand side.
+   * @param rhs The coefficients of the right hand side.
+   * @param common The resulting, factored out common subterms. Occurrences of
+   *               common subterms are removed from `lhs` and `rhs`, e.g., if
+   *               `a` appears twice in lhs and once in rhs, then `common`
+   *               will contain `a`, lhs will contain `a: 1` and rhs `a: 0`
+   *               after calling this function.
+   */
+  void compute_common_coefficients(node::Kind kind,
+                                   CoefficientsMap& lhs,
+                                   CoefficientsMap& rhs,
+                                   std::vector<Node>& common);
+
+  /**
    * Normalize factors for bit-vector add.
    * @param node The adder node.
    * @param coeffs The coefficients of the adder as determined by
    *               compute_coefficients().
-   * @return A boolean flag to indicate if the adder was normalized, and a
-   *         bit-vector value representing the summarized, normalized leaf
+   * @return A bit-vector value representing the summarized, normalized leaf
    *         values of the given adder. After normalize_add() is called, it
    *         can be asserted that no values with a coefficient > 0 occur
    *         in the coefficents map.
    */
-  std::pair<bool, BitVector> normalize_add(const Node& node,
-                                           CoefficientsMap& coeffs);
+  BitVector normalize_add(const Node& node, CoefficientsMap& coeffs);
   /**
    * Normalize factors for bit-vector and.
    * @param node The adder node.
    * @param coeffs The coefficients of the and as determined by
    *               compute_coefficients().
-   * @return A boolean flag to indicate if the and was normalized, and a
-   *         bit-vector value representing the constant folded, normalized
+   * @return A bit-vector value representing the constant folded, normalized
    *         leaf values of the given and. After normalize_and() is called,
    *         it can be asserted that no values with a coefficient > 0 occur
    *         in the coefficents map.
    */
-  std::pair<bool, BitVector> normalize_and(const Node& node,
-                                           CoefficientsMap& coeffs);
+  BitVector normalize_and(const Node& node, CoefficientsMap& coeffs);
   /**
    * Helper to determine the normalized set of 'coefficients' (occurrences) for
    * an equality over the given two nodes of the same kind.
    * @param node0 The left hand side node of the equality.
    * @param node1 The right hand side node of the equality.
-   * @return A set of normalized coefficients per node, with a boolean
-   *         flag to indicate if normalization was successful. The resulting
-   *         sets may be empty (only both, or none).
+   * @param coeffs0 The left hand side coefficients, to be updated during
+   *                this function call.
+   * @param coeffs1 The right hand side coefficients, to be updated during
+   *                this function call.
    */
-  std::tuple<CoefficientsMap, CoefficientsMap, bool>
-  get_normalized_coefficients_for_eq(const Node& node0, const Node& node1);
+  void normalize_coefficients_eq(const Node& node0,
+                                 const Node& node1,
+                                 CoefficientsMap& coeffs0,
+                                 CoefficientsMap& coeffs1);
   /**
    * Normalize equality over addition or multiplication.
    * @param node0 The left hand side of the equality.
@@ -91,12 +107,10 @@ class PassNormalize : public PreprocessingPass
    *                equality.
    * @param coeffs1 The normalized coefficients of the right hand side of the
    *                equality.
-   * @param bv_size The bit-vector size of the operands of the equality.
    * @param A pair of lhs and rhs normalized nodes.
    */
   std::pair<Node, Node> _normalize_eq_mul(const CoefficientsMap& coeffs0,
-                                          const CoefficientsMap& coeffs1,
-                                          uint64_t bv_size);
+                                          const CoefficientsMap& coeffs1);
   /**
    * Helper to normalize equality over addition.
    * @param coeffs0 The normalized coefficients of the left hand side of the
@@ -117,10 +131,12 @@ class PassNormalize : public PreprocessingPass
    * @param coeffs1 The normalized coefficients of the right hand side of the
    *                equality.
    * @param value   The summarized lhs value as determined by normalize_add.
+   *                Is updated during normalization and not added to the
+   *                coefficients map.
    */
-  bool _normalize_coefficients_eq_add(PassNormalize::CoefficientsMap& coeffs0,
-                                      PassNormalize::CoefficientsMap& coeffs1,
-                                      BitVector& value);
+  void normalize_coefficients_eq_add(PassNormalize::CoefficientsMap& coeffs0,
+                                     PassNormalize::CoefficientsMap& coeffs1,
+                                     BitVector& value);
 
   /**
    * General normalization of associative and commutative operators.

@@ -69,7 +69,7 @@ class TestPassNormalize : public TestPreprocessingPass
     {
       if (node.kind() == Kind::BV_ADD)
       {
-        auto [normalized, value] = d_pass->normalize_add(node, coeffs);
+        auto value = d_pass->normalize_add(node, coeffs);
         if (!value.is_zero())
         {
           auto [it, inserted] = coeffs.emplace(
@@ -610,7 +610,11 @@ TEST_F(TestPassNormalize, mul_normalize7)
   Node mul_cd_a_cd = mul(mul_cd, add_a_cd);
   Node mul1        = mul(add_ab, mul_cd_a_cd);
 
-  test_assertion(equal(mul0, mul1), equal(mul0, mul1), equal(mul0, mul1));
+  test_assertion(
+      equal(mul0, mul1),
+      equal(mul(d_a, mul(d_b, mul(d_e, add_ad))), mul(d_c, mul(d_d, add_a_cd))),
+      equal(mul(d_a, mul(d_b, mul(d_e, add_ad))),
+            mul(d_c, mul(d_d, add_a_cd))));
 }
 
 TEST_F(TestPassNormalize, mul_normalize8)
@@ -635,11 +639,17 @@ TEST_F(TestPassNormalize, mul_normalize8)
   test_assertion(
       equal(mul0, mul1),
       equal(
-          mul(mul_ab,
-              mul(add_ad,
-                  mul(d_e, d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})))),
-          mul1),
-      equal(mul0, mul1));
+          mul(d_a,
+              mul(d_b,
+                  mul(d_e,
+                      mul(add_ad,
+                          d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))))),
+          mul(d_c, mul(d_d, mul(add_ab, add_a_cd)))),
+      equal(mul(d_e,
+                mul(mul_ab,
+                    mul(add_ad,
+                        d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})))),
+            mul(d_c, mul(d_d, mul(add_ab, add_a_cd)))));
 }
 
 TEST_F(TestPassNormalize, mul_normalize9)
@@ -682,10 +692,7 @@ TEST_F(TestPassNormalize, mul_normalize9)
           {d_true,
            equal(mul(d_e,
                      mul(add_ad,
-                         d_nm.mk_node(Kind::ITE,
-                                      {equal(mul(d_a, d_b), mul(d_b, d_a)),
-                                       d_zero,
-                                       d_one}))),
+                         d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one}))),
                  mul(d_a,
                      mul(mul_ab,
                          mul(mul_ab, mul(mul_ab, mul(mul_ab, mul_ab))))))}));
@@ -849,7 +856,11 @@ TEST_F(TestPassNormalize, add_normalize7)
   Node add_cd_a_cd = add(add_cd, mul_a_cd);
   Node add1        = add(mul_ab, add_cd_a_cd);
 
-  test_assertion(equal(add0, add1), equal(add0, add1), equal(add0, add1));
+  test_assertion(
+      equal(add0, add1),
+      equal(add(add(add(d_a, d_b), d_e), mul_ad), add(add(d_c, d_d), mul_a_cd)),
+      equal(add(add(add(d_a, d_b), d_e), mul_ad),
+            add(add(d_c, d_d), mul_a_cd)));
 }
 
 TEST_F(TestPassNormalize, add_normalize8)
@@ -857,28 +868,25 @@ TEST_F(TestPassNormalize, add_normalize8)
   // (a + b) + ((a * d) + (e + (ite (a + b == b + a) 0 1))
   Node add_ab = add(d_a, d_b);
   Node mul_ad = mul(d_a, d_d);
-  Node add_e_ite =
-      add(d_e,
-          d_nm.mk_node(Kind::ITE,
-                       {equal(add(d_a, d_b), add(d_b, d_a)), d_zero, d_one}));
+  Node ite          = d_nm.mk_node(Kind::ITE,
+                          {equal(add(d_a, d_b), add(d_b, d_a)), d_zero, d_one});
+  Node add_e_ite    = add(d_e, ite);
   Node add_ad_e_ite = add(mul_ad, add_e_ite);
   Node add0         = add(add_ab, add_ad_e_ite);
-  // (a + b) * ((c * d) * (a + (c + d))
-  Node mul_ab      = mul(d_a, d_b);
+  // (a + b) + ((c + d) + (a * (c * d))
   Node add_cd      = add(d_c, d_d);
   Node mul_cd      = mul(d_c, d_d);
   Node mul_a_cd    = mul(d_a, mul_cd);
   Node add_cd_a_cd = add(add_cd, mul_a_cd);
   Node add1        = add(add_ab, add_cd_a_cd);
 
-  test_assertion(
-      equal(add0, add1),
-      equal(
-          add(add_ab,
-              add(mul_ad,
-                  add(d_e, d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})))),
-          add1),
-      equal(add0, add1));
+  test_assertion(equal(add0, add1),
+                 equal(add(add(d_e, mul_ad),
+                           d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})),
+                       add(add(d_c, d_d), mul_a_cd)),
+                 equal(add(add(d_e, mul_ad),
+                           d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})),
+                       add(add(d_c, d_d), mul_a_cd)));
 }
 
 TEST_F(TestPassNormalize, add_normalize9)
@@ -908,14 +916,11 @@ TEST_F(TestPassNormalize, add_normalize9)
                     equal(add(add(d_e, mul_ad),
                               d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})),
                           add(a6, b5))}),
-      d_nm.mk_node(
-          Kind::AND,
-          {d_true,
-           equal(add(add(d_e, mul_ad),
-                     d_nm.mk_node(
-                         Kind::ITE,
-                         {equal(add(d_a, d_b), add(d_b, d_a)), d_zero, d_one})),
-                 add(d_a, mul(d_five, add_ab)))}));
+      d_nm.mk_node(Kind::AND,
+                   {d_true,
+                    equal(add(add(d_e, mul_ad),
+                              d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})),
+                          add(d_a, mul(d_five, add_ab)))}));
 }
 
 TEST_F(TestPassNormalize, add_normalize10)
@@ -946,14 +951,12 @@ TEST_F(TestPassNormalize, add_normalize10)
            equal(add(a6, b5),
                  add(add(d_e, mul_ad),
                      d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})))}),
-      d_nm.mk_node(Kind::AND,
-                   {d_true,
-                    equal(add(d_a, mul(d_five, add_ab)),
-                          add(add(d_e, mul_ad),
-                              d_nm.mk_node(Kind::ITE,
-                                           {equal(add(d_a, d_b), add(d_b, d_a)),
-                                            d_zero,
-                                            d_one})))}));
+      d_nm.mk_node(
+          Kind::AND,
+          {d_true,
+           equal(add(d_a, mul(d_five, add_ab)),
+                 add(add(d_e, mul_ad),
+                     d_nm.mk_node(Kind::ITE, {d_true, d_zero, d_one})))}));
 }
 
 TEST_F(TestPassNormalize, add_normalize11)
@@ -987,13 +990,11 @@ TEST_F(TestPassNormalize, add_normalize11)
            equal(add(add(e, mul_ad),
                      d_nm.mk_node(Kind::ITE, {d_true, zero, one})),
                  add(b, mul(d_nm.mk_value(BitVector::from_ui(2, 2)), a)))}),
-      d_nm.mk_node(
-          Kind::AND,
-          {d_true,
-           equal(add(add(e, mul_ad),
-                     d_nm.mk_node(Kind::ITE,
-                                  {equal(add(a, b), add(b, a)), zero, one})),
-                 add(a, add_ab))}));
+      d_nm.mk_node(Kind::AND,
+                   {d_true,
+                    equal(add(add(e, mul_ad),
+                              d_nm.mk_node(Kind::ITE, {d_true, zero, one})),
+                          add(a, add_ab))}));
 }
 
 TEST_F(TestPassNormalize, add_normalize12)
@@ -1009,8 +1010,8 @@ TEST_F(TestPassNormalize, add_normalize12)
   // (a + b) + ((a * d) + (e + (ite (a + b == b + a) 0 1))
   Node add_ab = add(a, b);
   Node mul_ad = mul(a, d);
-  Node add_e_ite =
-      add(e, d_nm.mk_node(Kind::ITE, {equal(add(a, b), add(b, a)), zero, one}));
+  Node ite = d_nm.mk_node(Kind::ITE, {equal(add(a, b), add(b, a)), zero, one});
+  Node add_e_ite    = add(e, ite);
   Node add_ad_e_ite = add(mul_ad, add_e_ite);
   Node add0         = add(add_ab, add_ad_e_ite);
   // (a + ((a + b) + (a + b))) +
@@ -1027,13 +1028,11 @@ TEST_F(TestPassNormalize, add_normalize12)
                     equal(add(add(add(b, e), mul_ad),
                               d_nm.mk_node(Kind::ITE, {d_true, zero, one})),
                           zero)}),
-      d_nm.mk_node(
-          Kind::AND,
-          {d_true,
-           equal(add(add(add(e, add_ab), mul_ad),
-                     d_nm.mk_node(Kind::ITE,
-                                  {equal(add(a, b), add(b, a)), zero, one})),
-                 a)}));
+      d_nm.mk_node(Kind::AND,
+                   {d_true,
+                    equal(add(add(add(e, add_ab), mul_ad),
+                              d_nm.mk_node(Kind::ITE, {d_true, zero, one})),
+                          a)}));
 }
 
 TEST_F(TestPassNormalize, add_normalize13)
