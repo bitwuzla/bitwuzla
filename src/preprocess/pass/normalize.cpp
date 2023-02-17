@@ -397,14 +397,21 @@ PassNormalize::normalize_coefficients_eq_add(
       }
       if (!neg.is_null())
       {
-        auto it    = coeffs1.find(neg);
-        if (it == coeffs1.end())
+        if (neg.is_value())
         {
-          coeffs1.emplace(neg, coeff);
+          value.ibvsub(neg.value<BitVector>().bvmul(coeff));
         }
         else
         {
-          it->second.ibvadd(coeff);
+          auto it = coeffs1.find(neg);
+          if (it == coeffs1.end())
+          {
+            coeffs1.emplace(neg, coeff);
+          }
+          else
+          {
+            it->second.ibvadd(coeff);
+          }
         }
         value.ibvsub(coeff);
       }
