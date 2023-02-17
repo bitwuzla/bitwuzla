@@ -16,15 +16,20 @@ using namespace bzla::node;
 /* -------------------------------------------------------------------------- */
 
 namespace {
-std::unordered_map<Node, uint64_t>
-_count_parents(const node_ref_vector& nodes, Kind kind)
+void
+_count_parents(const node_ref_vector& nodes,
+               Kind kind,
+               std::unordered_map<Node, uint64_t>& parents)
 {
-  std::unordered_map<Node, uint64_t> parents;
   node::unordered_node_ref_set cache;
   for (size_t i = 0, size = nodes.size(); i < size; ++i)
   {
     node::node_ref_vector visit{nodes[i]};
-    parents.emplace(nodes[i], 1);
+    auto [it, inserted] = parents.emplace(nodes[i], 1);
+    if (!inserted)
+    {
+      parents[nodes[i]] += 1;
+    }
     do
     {
       const Node& cur     = visit.back();
@@ -43,7 +48,6 @@ _count_parents(const node_ref_vector& nodes, Kind kind)
       }
     } while (!visit.empty());
   }
-  return parents;
 }
 
 void
@@ -253,9 +257,11 @@ PassNormalize::normalize_add(const Node& node,
       CoefficientsMap cfs;
       BitVector coeff = coeffs.at(cur).bvneg();
       f.second        = bvzero;
-      auto parents    = d_share_aware
-                            ? _count_parents({node, cur[0]}, Kind::BV_ADD)
-                            : std::unordered_map<Node, uint64_t>();
+      std::unordered_map<Node, uint64_t> parents;
+      if (d_share_aware)
+      {
+        _count_parents({node, cur[0]}, Kind::BV_ADD, parents);
+      }
       compute_coefficients(cur[0], parents, cfs);
       for (auto& f : cfs)
       {
@@ -414,9 +420,11 @@ PassNormalize::normalize_coefficients_eq(
 
   Kind kind = node0.kind();
 
-  std::unordered_map<Node, uint64_t> parents =
-      d_share_aware ? _count_parents({node0, node1}, kind)
-                    : std::unordered_map<Node, uint64_t>();
+  std::unordered_map<Node, uint64_t> parents;
+  if (d_share_aware)
+  {
+    _count_parents({node0, node1}, kind, parents);
+  }
 
   compute_coefficients(node0, parents, coeffs0);
   compute_coefficients(node1, parents, coeffs1);
@@ -752,9 +760,11 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
 
   // Note: parents could also be computed based on node0 and node1, but
   //       get_top() and rebuild_top() do not handle this case yet.
-  std::unordered_map<Node, uint64_t> parents =
-      d_share_aware ? _count_parents({top_lhs, top_rhs}, kind)
-                    : std::unordered_map<Node, uint64_t>();
+  std::unordered_map<Node, uint64_t> parents;
+  if (d_share_aware)
+  {
+    _count_parents({top_lhs, top_rhs}, kind, parents);
+  }
 
   CoefficientsMap lhs, rhs;
   compute_coefficients(top_lhs, parents, lhs);
