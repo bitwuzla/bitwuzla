@@ -188,6 +188,7 @@ class TestPassNormalize : public TestPreprocessingPass
   Node d_ones    = d_nm.mk_value(BitVector::mk_ones(8));
   Node d_zero    = d_nm.mk_value(BitVector::mk_zero(8));
   Node d_two     = d_nm.mk_value(BitVector::from_ui(8, 2));
+  Node d_three   = d_nm.mk_value(BitVector::from_ui(8, 3));
   Node d_four    = d_nm.mk_value(BitVector::from_ui(8, 4));
   Node d_five    = d_nm.mk_value(BitVector::from_ui(8, 5));
   Node d_six     = d_nm.mk_value(BitVector::from_ui(8, 6));
@@ -727,6 +728,31 @@ TEST_F(TestPassNormalize, mul_normalize9)
                    mul(common,
                        mul(common,
                            mul(common, mul(common, mul(common, common)))))))}));
+}
+
+TEST_F(TestPassNormalize, mul_normalize10)
+{
+  // 2 * (a * b) * ((3 * (a * d)) * (e * (a * (5 * b)))
+  Node mul_2ab       = mul(d_two, mul(d_a, d_b));
+  Node mul_3ad       = mul(d_three, mul(d_a, d_d));
+  Node mul_a5b       = mul(d_a, mul(d_five, d_b));
+  Node mul_e_a5b     = mul(d_e, mul_a5b);
+  Node mul_3ad_e_a5b = mul(mul_3ad, mul_e_a5b);
+  Node mul0          = mul(mul_2ab, mul_3ad_e_a5b);
+  // (a * b) * (2 * (3 * ((c * d) * (a * (c * d))))
+  Node mul_ab       = mul(d_a, d_b);
+  Node mul_cd       = mul(d_c, d_d);
+  Node mul_a_cd     = mul(d_a, mul_cd);
+  Node mul_6cd_a_cd = mul(d_two, mul(d_three, mul(mul_cd, mul_a_cd)));
+  Node mul1         = mul(mul_ab, mul_6cd_a_cd);
+
+  Node thirty = d_nm.mk_value(BitVector::from_ui(8, 30));
+  Node common = mul(d_a, mul(d_a, mul(d_b, d_d)));
+  test_assertion(equal(mul0, mul1),
+                 equal(mul(d_a, mul(d_b, mul(d_e, mul(thirty, common)))),
+                       mul(d_c, mul(d_c, mul(d_d, mul(d_six, common))))),
+                 equal(mul(d_a, mul(d_b, mul(d_e, mul(thirty, common)))),
+                       mul(d_c, mul(d_c, mul(d_d, mul(d_six, common))))));
 }
 
 /* -------------------------------------------------------------------------- */

@@ -303,6 +303,32 @@ PassNormalize::normalize_and(const Node& node,
 
 /* -------------------------------------------------------------------------- */
 
+BitVector
+PassNormalize::normalize_mul(const Node& node,
+                             PassNormalize::CoefficientsMap& coeffs)
+{
+  assert(node.kind() == Kind::BV_MUL);
+
+  uint64_t bv_size = node.type().bv_size();
+  BitVector bvzero = BitVector::mk_zero(bv_size);
+  BitVector value  = BitVector::mk_one(bv_size);
+
+  for (auto& f : coeffs)
+  {
+    const Node& cur = f.first;
+
+    // constant fold values
+    if (cur.is_value())
+    {
+      value.ibvmul(cur.value<BitVector>().bvmul(f.second));
+      f.second = bvzero;
+    }
+  }
+  return value;
+}
+
+/* -------------------------------------------------------------------------- */
+
 void
 PassNormalize::normalize_coefficients_eq_add(
     PassNormalize::CoefficientsMap& coeffs0,
@@ -410,6 +436,40 @@ PassNormalize::normalize_coefficients_eq(
       if (it == coeffs0.end())
       {
         coeffs0.emplace(val, BitVector::mk_one(value0.size()));
+      }
+      else
+      {
+        assert(it->second.is_zero());
+        it->second.ibvinc();
+      }
+    }
+  }
+  else
+  {
+    assert(kind == Kind::BV_MUL);
+    auto value0 = normalize_mul(node0, coeffs0);
+    auto value1 = normalize_mul(node1, coeffs1);
+    if (!value0.is_one())
+    {
+      Node val = NodeManager::get().mk_value(value0);
+      auto it  = coeffs0.find(val);
+      if (it == coeffs0.end())
+      {
+        coeffs0.emplace(val, BitVector::mk_one(value0.size()));
+      }
+      else
+      {
+        assert(it->second.is_zero());
+        it->second.ibvinc();
+      }
+    }
+    if (!value1.is_one())
+    {
+      Node val = NodeManager::get().mk_value(value1);
+      auto it  = coeffs1.find(val);
+      if (it == coeffs1.end())
+      {
+        coeffs1.emplace(val, BitVector::mk_one(value1.size()));
       }
       else
       {

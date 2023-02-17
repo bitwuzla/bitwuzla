@@ -79,6 +79,17 @@ class PassNormalize : public PreprocessingPass
    */
   BitVector normalize_and(const Node& node, CoefficientsMap& coeffs);
   /**
+   * Normalize factors for bit-vector multiplication.
+   * @param node The adder node.
+   * @param coeffs The coefficients of the multiplier as determined by
+   *               compute_coefficients().
+   * @return A bit-vector value representing the summarized, normalized leaf
+   *         values of the given adder. After normalize_add() is called, it
+   *         can be asserted that no values with a coefficient > 0 occur
+   *         in the coefficents map.
+   */
+  BitVector normalize_mul(const Node& node, CoefficientsMap& coeffs);
+  /**
    * Helper to determine the normalized set of 'coefficients' (occurrences) for
    * an equality over the given two nodes of the same kind.
    * @param node0 The left hand side node of the equality.
