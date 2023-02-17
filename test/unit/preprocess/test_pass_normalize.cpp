@@ -63,13 +63,14 @@ class TestPassNormalize : public TestPreprocessingPass
       bool consider_neg)
   {
     PassNormalize::CoefficientsMap coeffs;
-    d_pass->compute_coefficients(node, {}, coeffs);
+    PassNormalize::ParentsMap parents;
+    d_pass->compute_coefficients(node, parents, coeffs);
 
     if (consider_neg)
     {
       if (node.kind() == Kind::BV_ADD)
       {
-        auto value = d_pass->normalize_add(node, coeffs);
+        auto value = d_pass->normalize_add(node, coeffs, parents);
         if (!value.is_zero())
         {
           auto [it, inserted] = coeffs.emplace(
@@ -1108,7 +1109,6 @@ TEST_F(TestPassNormalize, add_normalize13)
 
 /* -------------------------------------------------------------------------- */
 
-#if 0
 TEST_F(TestPassNormalize, add_normalize_neg0)
 {
   // (a + b) = (-b + -a)
@@ -1142,8 +1142,8 @@ TEST_F(TestPassNormalize, add_normalize_neg3)
   // (a + ~(b + 1)) + c + 2 = (-b + -a) + (b + c)
   test_assertion(equal(add(add(add(d_a, inv(add(d_b, d_one))), d_c), d_two),
                        add(add(neg(d_b), neg(d_a)), add(d_b, d_c))),
-                 equal(add(mul(d_two, d_a), add(inv(d_b), d_one)), d_zero),
-                 equal(add(mul(d_two, d_a), add(inv(d_b), d_one)), d_zero));
+                 equal(mul(d_two, d_a), d_b),
+                 equal(mul(d_two, d_a), d_b));
 }
 
 TEST_F(TestPassNormalize, add_normalize_neg4)
@@ -1164,8 +1164,23 @@ TEST_F(TestPassNormalize, add_normalize_neg4)
                  equal(add(add(d_d, d_e), d_two), d_zero),
                  equal(add(add(d_d, d_e), d_two), d_zero));
 }
-#endif
 
+TEST_F(TestPassNormalize, add_normalize_neg5)
+{
+  // ((a + ~(a + (b + ~(a + b)))) + c)
+  Node add_ab = add(d_a, d_b);
+  Node add0   = add(add(d_a, inv(add(d_a, add(d_b, inv(add_ab))))), d_c);
+  // (-b + ((-a + ~(b + c)) + ((b + c) + ~(a + b))))
+  Node add_bc = add(d_b, d_c);
+  Node add1 =
+      add(neg(d_b), add(add(neg(d_a), inv(add_bc)), add(add_bc, inv(add_ab))));
+
+  Node m3a = mul(d_nm.mk_value(BitVector::from_si(8, -3)), d_a);
+  Node m2b = mul(d_nm.mk_value(BitVector::from_si(8, -2)), d_b);
+  test_assertion(equal(add0, add1),
+                 equal(add(d_c, d_two), add(m3a, m2b)),
+                 equal(add(d_c, d_two), add(m3a, m2b)));
+}
 //(not (= s (bvadd (bvadd (bvadd s t) (bvmul s t)) (bvmul t (bvnot s)))))
 
 /* -------------------------------------------------------------------------- */

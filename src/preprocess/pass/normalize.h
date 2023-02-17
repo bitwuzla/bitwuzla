@@ -12,13 +12,15 @@ namespace bzla::preprocess::pass {
 class PassNormalize : public PreprocessingPass
 {
  public:
+  using ParentsMap      = std::unordered_map<Node, uint64_t>;
+  using CoefficientsMap = std::unordered_map<Node, BitVector>;
+
   PassNormalize(Env& env, backtrack::BacktrackManager* backtrack_mgr);
 
   void apply(AssertionVector& assertions) override;
   Node process(const Node& node) override;
 
  private:
-  using CoefficientsMap = std::unordered_map<Node, BitVector>;
   /**
    * Compute the 'coefficients' (the number of occurrences) of the leafs of a
    * chain of nodes of the kind of the given top node. That is, (bvmul a (bvmul
@@ -61,12 +63,15 @@ class PassNormalize : public PreprocessingPass
    * @param node The adder node.
    * @param coeffs The coefficients of the adder as determined by
    *               compute_coefficients().
+   * @param parents The parents information of this adder.
    * @return A bit-vector value representing the summarized, normalized leaf
    *         values of the given adder. After normalize_add() is called, it
    *         can be asserted that no values with a coefficient > 0 occur
    *         in the coefficents map.
    */
-  BitVector normalize_add(const Node& node, CoefficientsMap& coeffs);
+  BitVector normalize_add(const Node& node,
+                          CoefficientsMap& coeffs,
+                          ParentsMap& parents);
   /**
    * Normalize factors for bit-vector and.
    * @param node The adder node.
