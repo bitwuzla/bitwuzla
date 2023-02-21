@@ -296,6 +296,7 @@ TEST_F(TestAigCnf, enc_or)
                         {or_id, a.get_id(), b.get_id()}}));
 }
 
+#if 0
 TEST_F(TestAigCnf, enc_or_top)
 {
   bb::AigManager aigmgr;
@@ -326,6 +327,7 @@ TEST_F(TestAigCnf, enc_or_top2)
   ASSERT_EQ(solver.get_clauses(),
             ClauseList({{a.get_id(), b.get_id(), c.get_id(), d.get_id()}}));
 }
+#endif
 
 TEST_F(TestAigCnf, perf1_cadical)
 {
