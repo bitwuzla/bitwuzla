@@ -107,10 +107,10 @@ class TestAigCnf : public TestCommon
     // std::string result = output.str();
     // size_t newline_pos = result.find_last_of('\n');
     // return result.substr(0, newline_pos);
-    auto status = WEXITSTATUS(pclose(fp));
+    auto status = pclose(fp);
     remove(filename);
     fclose(file);
-    switch (status)
+    switch (WEXITSTATUS(status))
     {
       case 10: return "sat";
       case 20: return "unsat";
