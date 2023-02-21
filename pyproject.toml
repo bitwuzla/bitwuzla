@@ -1,0 +1,20 @@
+[build-system]
+build-backend = 'mesonpy'
+requires = ['meson-python', 'cython']
+
+[project]
+name = 'bitwuzla'
+version = '1.0.0-dev'
+description = 'Bitwuzla Satisfiability Modulo Theories Solver'
+requires-python = '>= 3.8'
+license = {file = 'COPYING'}
+authors = [
+  {name = 'Aina Niemetz'},
+  {name = 'Mathias Preiner'},
+]
+
+[tool.meson-python.args]
+dist = []
+setup = ['-Dpython=true']
+compile = ['python-bindings']
+install = []
