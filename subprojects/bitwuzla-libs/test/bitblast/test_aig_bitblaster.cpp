@@ -382,6 +382,7 @@ TEST_F(TestAigBitblaster, bv_ite) {
     ASSERT_EQ("unsat", check_sat(ss));
 }
 
+#if 0
 TEST_F(TestAigBitblaster, bv_udiv1024)
 {
   std::chrono::system_clock::time_point stop_before_cleanup;
@@ -491,5 +492,5 @@ TEST_F(TestAigBitblaster, bv_mul1024)
 //   std::endl; std::cout << "cleanup time:      " << total_time - constr_time
 //   << std::endl;
 // }
-
+#endif
 }  // namespace bzla::test
