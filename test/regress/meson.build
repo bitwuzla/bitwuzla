@@ -2170,6 +2170,7 @@ foreach t : regress_tests
     args += ' '.join(test_case)
     args += meson.current_build_dir()
     args += run_regress_script_options
-    test(name, python, args: args, suite: 'regress', timeout: 120)
+    test(name, python, args: args, suite: 'regress', depends: bitwuzla_bin,
+         timeout: 120)
   endforeach
 endforeach
