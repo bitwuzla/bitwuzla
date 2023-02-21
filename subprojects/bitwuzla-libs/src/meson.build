@@ -23,7 +23,7 @@ rng_sources = [
 ]
 
 gmp_dep = dependency('gmp',
-                     version: '>=6.2.1',
+                     version: '>=6.1',
                      required: true,
                      static: build_static)
 
