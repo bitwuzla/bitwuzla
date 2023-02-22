@@ -26,7 +26,8 @@ def configure_build(builddir, opts):
     subprocess.run(cmd)
 
 def _feat(val):
-    assert val is bool
+    if val is None:
+        return 'auto'
     if val:
         return 'enabled'
     return 'disabled'
@@ -88,9 +89,9 @@ def main():
     if args.assertions is not None:
         build_opts.append(f'-Db_ndebug={_bool(args.assertions)}')
     if args.testing is not None:
-        build_opts.append('-Dtesting={_feat(args.testing)}')
+        build_opts.append(f'-Dtesting={_feat(args.testing)}')
     if args.unit_testing is not None:
-        build_opts.append('-Dtesting={_feat(args.unit_testing)}')
+        build_opts.append(f'-Dtesting={_feat(args.unit_testing)}')
     if args.coverage:
         build_opts.append('-Db_coverage=true')
     if args.python:
