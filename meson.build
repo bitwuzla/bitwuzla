@@ -33,9 +33,6 @@ else
   enable_unit_testing = get_option('unit-testing').enabled()
 endif
 
-# Note: For now we directly include bzla-libs until it gets merged to the repo.
-subdir('lib/bzla-libs')
-
 subdir('src')
 
 if enable_python

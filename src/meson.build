@@ -120,6 +120,9 @@ gmp_dep = dependency('gmp',
 # Subproject dependencies
 cadical_dep = dependency('cadical', required: true)
 symfpu_dep = dependency('symfpu', required: true)
+bitwuzla_bv_dep = dependency('bitwuzla_bv', required: true)
+bitwuzla_bb_dep = dependency('bitwuzla_bb', required: true)
+bitwuzla_ls_dep = dependency('bitwuzla_ls', required: true)
 
 dependencies = [
   symfpu_dep,
