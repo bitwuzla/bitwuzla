@@ -242,8 +242,13 @@ TestBitVector::_and(uint64_t x, uint64_t y, uint64_t size)
 uint64_t
 TestBitVector::_nand(uint64_t x, uint64_t y, uint64_t size)
 {
-  uint64_t shift = 64 - (size > 64 ? 0 : size);
-  return (((~(x & y)) << shift) >> shift);
+  uint64_t res = ~(x & y);
+  if (size < 64)
+  {
+    uint64_t shift = 64 - size;
+    res            = ((res << shift) >> shift);
+  }
+  return res;
 }
 
 uint64_t
@@ -256,15 +261,25 @@ TestBitVector::_or(uint64_t x, uint64_t y, uint64_t size)
 uint64_t
 TestBitVector::_nor(uint64_t x, uint64_t y, uint64_t size)
 {
-  uint64_t shift = 64 - (size > 64 ? 0 : size);
-  return ((~(x | y)) << shift) >> shift;
+  uint64_t res = ~(x | y);
+  if (size < 64)
+  {
+    uint64_t shift = 64 - size;
+    res            = (res << shift) >> shift;
+  }
+  return res;
 }
 
 uint64_t
 TestBitVector::_xnor(uint64_t x, uint64_t y, uint64_t size)
 {
-  uint64_t shift = 64 - (size > 64 ? 0 : size);
-  return ((~(x ^ y)) << shift) >> shift;
+  uint64_t res = ~(x ^ y);
+  if (size < 64)
+  {
+    uint64_t shift = 64 - size;
+    res            = (res << shift) >> shift;
+  }
+  return res;
 }
 
 uint64_t
