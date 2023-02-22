@@ -3,6 +3,7 @@
 import argparse
 import os
 import subprocess
+import shutil
 import sys
 
 def info(msg):
@@ -42,6 +43,9 @@ def _bool(val):
 def main():
     if not os.path.exists('src/main/main.cpp'):
         die('not called from Bitwuzla base directory')
+
+    if shutil.which('meson') is None:
+        die('meson not found on system, please install via pip.')
 
     ap = argparse.ArgumentParser()
     ap.add_argument('buildtype', nargs='?',
