@@ -50,6 +50,7 @@ ls_lib = library('bitwuzlals',
                  dependencies: gmp_dep,
                  install: true)
 
+# Exported dependencies
 inc = include_directories('.')
 bitwuzla_bv_dep = declare_dependency(include_directories: inc,
                                      link_with: bv_lib,

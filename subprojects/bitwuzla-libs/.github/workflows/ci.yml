@@ -30,10 +30,10 @@ jobs:
             env: CC=clang CXX=clang++
 
           - name: debug
-            config: debug
+            config: -Dbuildtype=debug
 
           - name: debug-clang
-            config: debug
+            config: -Dbuildtype=debug
             env: CC=clang CXX=clang++
 
     name: ${{ matrix.os }}:${{ matrix.name }}
@@ -47,7 +47,10 @@ jobs:
           sudo apt-get install -y \
             build-essential \
             libgmp-dev \
-            libgtest-dev
+            libgtest-dev \
+            ninja-build
+          python3 -m pip install meson
+          echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
           cd /usr/src/googletest
           sudo cmake .
           sudo cmake --build . --target install
@@ -56,20 +59,20 @@ jobs:
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install gmp
-          brew install googletest
+          brew install gmp pkgconfig ninja googletest
+          python3 -m pip install meson
+          echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Configure
-        run: |
-          ${{ matrix.env }} ./configure.sh ${{ matrix.config }}
+        run: ${{ matrix.env }} meson setup build ${{ matrix.config }}
 
       - name: Build
-        run: make -j2
+        run: meson compile
         working-directory: build
 
-      - name: Run CTest
-        run: ctest -j2 --output-on-failure
+      - name: Test
+        run: meson test --print-errorlogs
         working-directory: build
