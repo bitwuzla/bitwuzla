@@ -327,6 +327,23 @@ PassVariableSubstitution::find_substitution(const Node& assertion)
       return normalize_substitution_eq(assertion);
     }
   }
+  else if (assertion.is_inverted() && assertion[0].kind() == Kind::EQUAL
+           && (assertion[0][0].type().is_bool()
+               || (assertion[0][0].type().is_bv()
+                   && assertion[0][0].type().bv_size() == 1)))
+  {
+    // a != b is the same as a == ~b
+    NodeManager& nm = NodeManager::get();
+    const Node& eq  = assertion[0];
+    if (eq[0].is_const())
+    {
+      return {eq[0], nm.invert_node(eq[1])};
+    }
+    if (eq[1].is_const())
+    {
+      return {eq[1], nm.invert_node(eq[0])};
+    }
+  }
   else if (d_env.options().pp_variable_subst_norm_bv_ineq()
            && (assertion.kind() == Kind::BV_ULT
                || assertion.kind() == Kind::BV_SLT

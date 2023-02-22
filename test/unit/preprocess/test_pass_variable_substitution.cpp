@@ -182,19 +182,21 @@ TEST_F(TestPassVariableSubstitution, inc1)
   ctx.preprocess();
   auto as = ctx.assertions();
 
-  Node expected = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {y, t})});
+  Node not_t = d_nm.invert_node(t);
   ASSERT_EQ(as.size(), 2);
   ASSERT_EQ(as[0], d_nm.mk_node(Kind::EQUAL, {y, y}));
-  ASSERT_EQ(as[1], expected);
-  ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {y, y}));
-  ASSERT_EQ(pp.process(di), expected);
+  ASSERT_EQ(as[1], d_nm.mk_node(Kind::EQUAL, {y, not_t}));
+  ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {not_t, not_t}));
+  ASSERT_EQ(pp.process(di),
+            d_nm.invert_node(d_nm.mk_node(Kind::EQUAL, {not_t, t})));
 
   ctx.pop();
   ctx.preprocess();
   ASSERT_EQ(as.size(), 1);
   ASSERT_EQ(as[0], d_nm.mk_node(Kind::EQUAL, {y, y}));
   ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {y, y}));
-  ASSERT_EQ(pp.process(di), expected);
+  ASSERT_EQ(pp.process(di),
+            d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {y, t})}));
 }
 
 TEST_F(TestPassVariableSubstitution, inc2)
@@ -216,17 +218,18 @@ TEST_F(TestPassVariableSubstitution, inc2)
   ctx.preprocess();
   auto as = ctx.assertions();
 
-  Node y_and_y = d_nm.mk_node(Kind::AND, {y, y});
-  ASSERT_EQ(as[0], di);
-  ASSERT_EQ(as[1], eq);
-  ASSERT_EQ(as[2], y_and_y);
-  ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {y, y}));
-  ASSERT_EQ(pp.process(x_and_y), y_and_y);
+  Node not_y       = d_nm.invert_node(y);
+  Node not_y_and_y = d_nm.mk_node(Kind::AND, {not_y, y});
+  ASSERT_EQ(as[0], d_nm.invert_node(d_nm.mk_node(Kind::EQUAL, {not_y, y})));
+  ASSERT_EQ(as[1], d_nm.mk_node(Kind::EQUAL, {not_y, y}));
+  ASSERT_EQ(as[2], not_y_and_y);
+  ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {not_y, y}));
+  ASSERT_EQ(pp.process(x_and_y), not_y_and_y);
 
   ctx.pop();
   ctx.preprocess();
-  ASSERT_EQ(pp.process(eq), eq);
-  ASSERT_EQ(pp.process(x_and_y), x_and_y);
+  ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {not_y, y}));
+  ASSERT_EQ(pp.process(x_and_y), not_y_and_y);
 }
 
 TEST_F(TestPassVariableSubstitution, inc3)
@@ -253,26 +256,28 @@ TEST_F(TestPassVariableSubstitution, inc3)
   ctx.preprocess();
   auto as = ctx.assertions();
 
-  Node y_and_z = d_nm.mk_node(Kind::AND, {y, z});
-  Node y_and_y = d_nm.mk_node(Kind::AND, {y, y});
-  ASSERT_EQ(as[0], di);
-  ASSERT_EQ(as[1], eq);
-  ASSERT_EQ(as[2], y_and_y);
-  ASSERT_EQ(as[3], y_and_z);
-  ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {y, y}));
-  ASSERT_EQ(pp.process(x_and_y), y_and_y);
-  ASSERT_EQ(pp.process(x_and_z), y_and_z);
+  Node not_y       = d_nm.invert_node(y);
+  Node not_y_eq_y  = d_nm.mk_node(Kind::EQUAL, {not_y, y});
+  Node not_y_and_z = d_nm.mk_node(Kind::AND, {not_y, z});
+  Node not_y_and_y = d_nm.mk_node(Kind::AND, {not_y, y});
+  ASSERT_EQ(as[0], d_nm.invert_node(not_y_eq_y));
+  ASSERT_EQ(as[1], not_y_eq_y);
+  ASSERT_EQ(as[2], not_y_and_y);
+  ASSERT_EQ(as[3], not_y_and_z);
+  ASSERT_EQ(pp.process(eq), not_y_eq_y);
+  ASSERT_EQ(pp.process(x_and_y), not_y_and_y);
+  ASSERT_EQ(pp.process(x_and_z), not_y_and_z);
 
   ctx.pop();
-  ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {y, y}));
-  ASSERT_EQ(pp.process(x_and_y), y_and_y);
-  ASSERT_EQ(pp.process(x_and_z), y_and_z);
+  ASSERT_EQ(pp.process(eq), not_y_eq_y);
+  ASSERT_EQ(pp.process(x_and_y), not_y_and_y);
+  ASSERT_EQ(pp.process(x_and_z), not_y_and_z);
 
   ctx.pop();
   ctx.pop();
-  ASSERT_EQ(pp.process(eq), eq);
-  ASSERT_EQ(pp.process(x_and_y), x_and_y);
-  ASSERT_EQ(pp.process(x_and_z), x_and_z);
+  ASSERT_EQ(pp.process(eq), not_y_eq_y);
+  ASSERT_EQ(pp.process(x_and_y), not_y_and_y);
+  ASSERT_EQ(pp.process(x_and_z), not_y_and_z);
 }
 
 }  // namespace bzla::test
