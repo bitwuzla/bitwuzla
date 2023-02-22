@@ -1,4 +1,4 @@
-[wrap-file]
+[wrap-git]
 directory = bitwuzla-libs
 
 [provide]
