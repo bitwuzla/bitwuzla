@@ -6,7 +6,7 @@ requires = ['meson-python', 'cython']
 name = 'bitwuzla'
 version = '1.0.0-dev'
 description = 'Bitwuzla Satisfiability Modulo Theories Solver'
-requires-python = '>= 3.8'
+requires-python = '>= 3.7'
 license = {file = 'COPYING'}
 authors = [
   {name = 'Aina Niemetz'},

@@ -23,29 +23,31 @@ https://github.com/bitwuzla/bitwuzla
 
 ## Required Dependencies
 
+- [Python >= 3.7](https://www.python.org)
 - [Meson >= 0.64](https://mesonbuild.com)
+- [Ninja](https://ninja-build.org)
 - [GMP v6.1 (GNU Multi-Precision arithmetic library)](https://gmplib.org)
+- [CaDiCaL](https://github.com/arminbiere/cadical)
 - [SymFPU](https://github.com/martin-cs/symfpu)
 
 ## Optional Dependencies
 
-Bitwuzla can be built with support for the following SAT solvers:
-- [CaDiCaL](https://github.com/arminbiere/cadical) (default)
+Bitwuzla can be optionally built with support for the following SAT solvers:
 - [CryptoMiniSat](https://github.com/msoos/cryptominisat)
 - [Kissat](https://github.com/arminbiere/kissat)
 
-**Note:**
+**Note**
 - If the build system does not find SymFPU or one of the supported SAT solvers
   installed on your system, it can download and build a suitable version
   itself.
 - Bitwuzla can be built with support for multiple SAT solvers.
 
 
-## Build
+# Build
 
 Bitwuzla can be built on Linux, macOS and Windows.
 
-### Linux and Unix-like OS
+## Linux and Unix-like OS
 
 Assume that we build Bitwuzla with CaDiCaL:
 ```
@@ -57,33 +59,37 @@ cd bitwuzla
 ./configure.py
 
 # Build
-cd build && ninja
+cd build && meson compile
 ```
 
 The `bitwuzla` binary can be found in directory `build/src/main`,
-the built libraries (libbitwuzla.a, libbitwuzla.so) in `build/src`.
+the built libraries (`libbitwuzla.*`) in `build/src`.
 
 For more build configuration options of Bitwuzla, see `./configure.py -h`.
 
-#### Building Bitwuzla with Python Bindings
+## Windows (TODO)
 
-To build Bitwuzla with Python bindings you need to install
-[Cython](http://cython.org/).
+For instructions on how to build Bitwuzla on Windows, see [here](
+  https://github.com/bitwuzla/bitwuzla/blob/main/docs/building_on_windows.rst).
+
+
+## Python Bindings
+
+Bitwuzla Python bindings can be installed via `pip` as follows:
 
 ```
-pip install cython
+pip install bitwuzla
 ```
 
-Then, from Bitwuzla's root directory, configure and build Bitwuzla as follows:
+If you want to install a local version of the Bitwuzla Python bindings
+
 ```
-./configure.py --python
-cd build
-ninja
+git clone https://github.com/bitwuzla/bitwuzla
+cd bitwuzla
+pip install .
 ```
 
-The built python module can be found in directory `build/src/api/python`.
-
-#### Building the API documentation
+## API documentation (TODO)
 
 To build the API documentation of Bitwuzla, it is required to install
 * [Doxygen](https://www.doxygen.nl)
@@ -99,14 +105,9 @@ make docs
 ```
 The documentation is generated into `build/docs/sphinx`.
 
-**Note:**
+**Note**
 Make sure to build Bitwuzla with Python bindings, else the documentation of
 its Python API will not be included.
-
-### Windows (TODO)
-
-For instructions on how to build Bitwuzla on Windows, see [here](
-  https://github.com/bitwuzla/bitwuzla/blob/main/docs/building_on_windows.rst).
 
 ### Linking against Bitwuzla in CMake projects (TODO)
 

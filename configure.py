@@ -25,6 +25,7 @@ def configure_build(builddir, opts):
     cmd.extend(opts)
     info(' '.join(cmd))
     subprocess.run(cmd)
+    info(f'compile Bitwuzla with: cd {builddir} && meson compile')
 
 def _feat(val):
     if val is None:
