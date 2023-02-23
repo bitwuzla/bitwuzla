@@ -120,18 +120,9 @@ gmp_dep = dependency('gmp',
 # Subproject dependencies
 cadical_dep = dependency('cadical', required: true)
 symfpu_dep = dependency('symfpu', required: true)
-bitwuzla_bv_dep = dependency('bitwuzla_bv', required: true)
-bitwuzla_bb_dep = dependency('bitwuzla_bb', required: true)
-bitwuzla_ls_dep = dependency('bitwuzla_ls', required: true)
+bitwuzla_libs_dep = dependency('bitwuzla_libs', required: true)
 
-dependencies = [
-  symfpu_dep,
-  cadical_dep,
-  gmp_dep,
-  bitwuzla_bv_dep,
-  bitwuzla_bb_dep,
-  bitwuzla_ls_dep
-]
+dependencies = [symfpu_dep, cadical_dep, gmp_dep, bitwuzla_libs_dep]
 
 # Public header include directory
 bitwuzla_inc = include_directories('../include')
@@ -144,9 +135,8 @@ bitwuzla_lib = library('bitwuzla',
                       install: true)
 
 # Create library dependency
-public_dependencies = [bitwuzla_bv_dep, bitwuzla_bb_dep, bitwuzla_ls_dep]
 bitwuzla_dep = declare_dependency(include_directories: bitwuzla_inc,
-                                  dependencies: public_dependencies,
+                                  dependencies: bitwuzla_libs_dep,
                                   link_with: bitwuzla_lib)
 
 subdir('main')

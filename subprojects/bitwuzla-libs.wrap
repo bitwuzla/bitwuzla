@@ -5,3 +5,4 @@ directory = bitwuzla-libs
 bitwuzla_bb = bitwuzla_bb_dep
 bitwuzla_bv = bitwuzla_bv_dep
 bitwuzla_ls = bitwuzla_ls_dep
+bitwuzla_libs = bitwuzla_libs_dep
