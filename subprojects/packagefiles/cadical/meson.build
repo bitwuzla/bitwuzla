@@ -5,7 +5,7 @@ project('cadical',
   default_options: [
     'cpp_std=c++11',
     'buildtype=release',
-    'optimization=3',
+    'b_ndebug=if-release',
     'warning_level=0'
   ]
 )
