@@ -98,7 +98,7 @@ def main():
     if args.testing is not None:
         build_opts.append(f'-Dtesting={_feat(args.testing)}')
     if args.unit_testing is not None:
-        build_opts.append(f'-Dtesting={_feat(args.unit_testing)}')
+        build_opts.append(f'-Dunit_testing={_feat(args.unit_testing)}')
     if args.coverage:
         build_opts.append('-Db_coverage=true')
     if args.python:

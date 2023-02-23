@@ -22,10 +22,10 @@ jobs:
 
         include:
           - name: production
-            config: -Dtesting=enabled -Dunit-testing=disabled
+            config: -Dtesting=enabled -Dunit_testing=disabled
 
           - name: production-clang
-            config: -Dtesting=enabled -Dunit-testing=disabled
+            config: -Dtesting=enabled -Dunit_testing=disabled
             env: CC=clang CXX=clang++
 
           - name: debug

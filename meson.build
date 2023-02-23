@@ -30,10 +30,10 @@ else
   enable_testing = get_option('testing').enabled()
 endif
 
-if get_option('unit-testing').auto()
+if get_option('unit_testing').auto()
   enable_unit_testing = enable_testing
 else
-  enable_unit_testing = get_option('unit-testing').enabled()
+  enable_unit_testing = get_option('unit_testing').enabled()
 endif
 
 subdir('src')
