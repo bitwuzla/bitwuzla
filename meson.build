@@ -13,6 +13,7 @@ project('bitwuzla',
     'warning_level=3'
   ]
 )
+bitwuzla_lib_soversion = 0
 
 # Build parameters
 build_static = get_option('default_library') == 'static' and get_option('b_sanitize') == 'none'

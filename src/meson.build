@@ -140,6 +140,7 @@ bitwuzla_lib = library('bitwuzla',
                       sources,
                       include_directories: bitwuzla_inc,
                       dependencies: dependencies,
+                      soversion: bitwuzla_lib_soversion,
                       install: true)
 
 # Create library dependency
