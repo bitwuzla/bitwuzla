@@ -6,7 +6,7 @@ project('bitwuzla-libs',
     'cpp_std=c++17',
     'buildtype=release',
     'default_library=static',
-    'optimization=3'
+    'b_ndebug=if-release'
   ]
 )
 
