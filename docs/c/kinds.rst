@@ -9,3 +9,4 @@ Kinds
   * Example
 
 .. doxygenenum:: BitwuzlaKind
+    :project: Bitwuzla_c

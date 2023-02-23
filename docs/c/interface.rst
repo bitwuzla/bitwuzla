@@ -14,22 +14,21 @@ Types
 Bitwuzla
 ^^^^^^^^^^^^^^^
 .. doxygentypedef:: Bitwuzla
+    :project: Bitwuzla_c
 
 BitwuzlaSort
 ^^^^^^^^^^^^^^^
 .. doxygentypedef:: BitwuzlaSort
+    :project: Bitwuzla_c
 
 BitwuzlaTerm
 ^^^^^^^^^^^^^^^
 .. doxygentypedef:: BitwuzlaTerm
+    :project: Bitwuzla_c
 
 
 Enums
 ------
-
-BitwuzlaBVBase
-^^^^^^^^^^^^^^^
-.. doxygenenum:: BitwuzlaBVBase
 
 BitwuzlaKind
 ^^^^^^^^^^^^
@@ -44,19 +43,23 @@ get options.
 BitwuzlaOptionInfo
 ^^^^^^^^^^^^^^^^^^
 .. doxygenstruct:: BitwuzlaOptionInfo
-  :members:
+    :project: Bitwuzla_c
+    :members:
 
 BitwuzlaResult
 ^^^^^^^^^^^^^^^
 .. doxygenenum:: BitwuzlaResult
+    :project: Bitwuzla_c
 
 BitwuzlaRoundingMode
 ^^^^^^^^^^^^^^^^^^^^^
 .. doxygenenum:: BitwuzlaRoundingMode
+    :project: Bitwuzla_c
 
 
 Functions
 ---------
 
 .. doxygenfile:: bitwuzla.h
-  :sections: func
+    :project: Bitwuzla_c
+    :sections: func

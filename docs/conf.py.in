@@ -15,12 +15,12 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-# Specify where to find pybitwuzla
+# Specify where to find bitwuzla
 import sys
-sys.path.insert(0, "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+sys.path.insert(0, "@bitwuzla_python_dir@")
 
 # Add path to enable custom extensions
-sys.path.insert(0, '${CMAKE_CURRENT_SOURCE_DIR}/extensions/')
+sys.path.insert(0, '@current_source_dir@/extensions/')
 
 # -- Project information -----------------------------------------------------
 
@@ -70,14 +70,12 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['${CMAKE_CURRENT_SOURCE_DIR}/_static']
+html_static_path = ['@current_source_dir@/_static']
 html_css_files = ['custom.css']
 html_show_sourcelink = False
 
 # -- Breathe configuration ---------------------------------------------------
-breathe_default_project = "Bitwuzla"
-
-breathe_domain_by_extension = {"h" : "c"}
+breathe_domain_by_extension = {"h" : "cpp"}
 
 # -- SMT-LIB syntax highlighting ---------------------------------------------
 from pygments.lexer import RegexLexer

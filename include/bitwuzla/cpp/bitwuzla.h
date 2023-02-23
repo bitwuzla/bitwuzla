@@ -895,7 +895,7 @@ class Bitwuzla
    *
    * @see
    *   * `Options::set`
-   *   * `::BITWUZLA_OPT_INCREMENTAL`
+   *   * `Option::INCREMENTAL`
    */
   void push(uint32_t nlevels);
   /**
@@ -912,7 +912,7 @@ class Bitwuzla
    *
    * @see
    *   * `Options::set`
-   *   * `::BITWUZLA_OPT_INCREMENTAL`
+   *   * `Option::INCREMENTAL`
    */
   void pop(uint32_t nlevels);
 
@@ -939,7 +939,7 @@ class Bitwuzla
    *   * `Options::set`
    *   * `is_unsat_assumption`
    *   * `get_unsat_assumptions`
-   *   * `::BITWUZLA_OPT_INCREMENTAL`
+   *   * `Option::INCREMENTAL`
    */
   void assume_formula(const Term &term);
 #endif
@@ -964,7 +964,7 @@ class Bitwuzla
    *   * `Options::set`
    *   * `assume_formula`
    *   * `check_sat`
-   *   * `::BITWUZLA_OPT_INCREMENTAL`
+   *   * `Option::INCREMENTAL`
    */
   bool is_unsat_assumption(const Term &term);
   /**
@@ -985,7 +985,7 @@ class Bitwuzla
    *   * `Options::set`
    *   * `assume_formula`
    *   * `check_sat`
-   *   * `::BITWUZLA_OPT_INCREMENTAL`
+   *   * `Option::INCREMENTAL`
    */
   std::vector<Term> get_unsat_assumptions();
   /**
@@ -1049,7 +1049,7 @@ class Bitwuzla
    *   * `assert_formula`
    *   * `assume_formula`
    *   * `Options::set`
-   *   * `::BITWUZLA_OPT_INCREMENTAL`
+   *   * `Option::INCREMENTAL`
    *   * `Result`
    */
   Result check_sat(const std::vector<Term> &assumptions = {});

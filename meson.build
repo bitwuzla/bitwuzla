@@ -9,7 +9,8 @@ project('bitwuzla',
     'buildtype=release',
     'b_ndebug=if-release',
     'default_library=static',
-    'strip=true'
+    'strip=true',
+    'warning_level=3'
   ]
 )
 
@@ -48,6 +49,10 @@ if enable_testing
   if enable_python
     subdir('test/python')
   endif
+endif
+
+if get_option('docs')
+  subdir('docs')
 endif
 
 # Install public headers

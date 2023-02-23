@@ -1,16 +1,14 @@
-.. _c_options:
+.. _cpp_options:
 
 Options
-=======
+========
 
 .. todo::
    - Update options documentation for new architecture
    - Add OptionInfo documentation
 
-**Bitwuzla** supports two kinds of options: options that expect an unsigned
-integer as option value and are configured via :c:func:`bitwuzla_set_option()`,
-and options that are configured via a value string with
-:c:func:`bitwuzla_set_option_str()`.
+**Bitwuzla** supports two kinds of options: options are configured via
+:cpp:func:`bitwuzla::Options::set()`.
 For example, the following will enable the propagation-based local search
 solver engine, enable model generation and set the verbosity level to 2.
 
@@ -42,15 +40,16 @@ The source code for this example can be found at `examples/c/options.c <https://
 .. literalinclude:: ../../examples/c/options.c
      :language: c
 
+
 A Comprehensive List of All Configurable Options
 ------------------------------------------------
 
-The kind of an option is defined via enum :c:enum:`BitwuzlaOption`.
+The kind of an option is defined via enum :cpp:enum:`Option`.
 
 .. note::
 
   Some options are labeled as "expert" options. Use with caution.
 
-.. doxygenenum:: BitwuzlaOption
-    :project: Bitwuzla_c
+.. doxygenenum:: bitwuzla::Option
+   :project: Bitwuzla_cpp
 

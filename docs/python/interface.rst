@@ -9,25 +9,25 @@ Enums
 
 Option
 ^^^^^^
-.. autoclass:: pybitwuzla.Option
+.. autoclass:: bitwuzla.Option
    :members:
    :undoc-members:
 
 Kind
 ^^^^
-.. autoclass:: pybitwuzla.Kind
+.. autoclass:: bitwuzla.Kind
    :members:
    :undoc-members:
 
 Result
 ^^^^^^
-.. autoclass:: pybitwuzla.Result
+.. autoclass:: bitwuzla.Result
    :members:
    :undoc-members:
 
 RoundingMode
 ^^^^^^^^^^^^
-.. autoclass:: pybitwuzla.RoundingMode
+.. autoclass:: bitwuzla.RoundingMode
    :members:
    :undoc-members:
 
@@ -37,19 +37,19 @@ Classes
 
 Bitwuzla
 ^^^^^^^^
-.. autoclass:: pybitwuzla.Bitwuzla
+.. autoclass:: bitwuzla.Bitwuzla
    :members:
    :undoc-members:
 
 BitwuzlaSort
 ^^^^^^^^^^^^
-.. autoclass:: pybitwuzla.BitwuzlaSort
+.. autoclass:: bitwuzla.BitwuzlaSort
    :members:
    :undoc-members:
 
 BitwuzlaTerm
 ^^^^^^^^^^^^
-.. autoclass:: pybitwuzla.BitwuzlaTerm
+.. autoclass:: bitwuzla.BitwuzlaTerm
    :members:
    :undoc-members:
 

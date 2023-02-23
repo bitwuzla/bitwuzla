@@ -1,7 +1,7 @@
 option('python', type: 'boolean', value: false)
 option('testing', type: 'feature', value: 'auto')
 option('unit-testing', type: 'feature', value: 'auto')
-# option('documentation', type: 'boolean', value: 'false')
+option('docs', type: 'boolean', value: 'false')
 
 #option('cryptominisat', type: 'boolean', value: false)
 #option('kissat', type: 'boolean', value: false)

@@ -14,7 +14,7 @@ def die(msg):
 
 def configure_build(builddir, opts):
     cmd = ['meson']
-    if os.path.exists(os.path.join(builddir, 'meson-private')):
+    if os.path.exists(os.path.join(builddir, 'meson-private', 'build.dat')):
         cmd.append('configure')
         if not opts:
             info(f'{builddir} already up-to-date')
@@ -102,7 +102,7 @@ def main():
     if args.python:
         build_opts.append('-Dpython=true')
     if args.docs:
-        build_opts.append('-Ddocumentation=true')
+        build_opts.append('-Ddocs=true')
 
     if sanitize:
         build_opts.append(f'-Db_sanitize={",".join(sanitize)}')
