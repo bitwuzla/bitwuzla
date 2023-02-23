@@ -75,6 +75,8 @@ def main():
                     help='unit testing')
     ap.add_argument('--docs', action='store_true',
                     help='build documentation')
+    ap.add_argument('--wipe', action='store_true',
+                    help='delete build directory if it already exists')
     args = ap.parse_args()
 
     build_opts = []
@@ -106,6 +108,9 @@ def main():
 
     if sanitize:
         build_opts.append(f'-Db_sanitize={",".join(sanitize)}')
+
+    if args.wipe and os.path.exists(args.build_dir):
+        shutil.rmtree(args.build_dir)
 
     configure_build(args.build_dir, build_opts)
 
