@@ -61,3 +61,6 @@ bitwuzla_bb_dep = declare_dependency(include_directories: inc,
 bitwuzla_ls_dep = declare_dependency(include_directories: inc,
                                      link_with: ls_lib,
                                      dependencies: gmp_dep)
+bitwuzla_libs_dep = declare_dependency(include_directories: inc,
+                                       link_with: [bv_lib, bb_lib, ls_lib],
+                                       dependencies: gmp_dep)
