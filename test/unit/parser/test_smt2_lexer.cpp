@@ -28,6 +28,20 @@ class TestSmt2Lexer : public ::testing::Test
   }
 };
 
+TEST_F(TestSmt2Lexer, comments)
+{
+  std::stringstream infile;
+  infile << "   " << std::endl
+         << "; foo" << std::endl
+         << "; bar" << std::endl
+         << "  ; foo" << std::endl
+         << "    " << std::endl
+         << std::endl
+         << "foobar";
+  Lexer lexer(&infile);
+  next_token(lexer, Token::SYMBOL, "foobar");
+}
+
 TEST_F(TestSmt2Lexer, command1)
 {
   std::stringstream infile;

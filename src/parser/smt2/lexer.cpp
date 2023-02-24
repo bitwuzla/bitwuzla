@@ -48,19 +48,22 @@ Lexer::next_token_aux()
   // parser->last_node = 0;
   std::stringstream token;
 
-RESTART:
-  do
+  for (;;)
   {
-    d_coo = d_next_coo;
-    if ((ch = next_char()) == EOF)
+    do
     {
-      assert(EOF < 0);
-      return Token::ENDOFFILE;
-    }
-  } while (std::isspace(ch));
+      d_coo = d_next_coo;
+      if ((ch = next_char()) == EOF)
+      {
+        assert(EOF < 0);
+        return Token::ENDOFFILE;
+      }
+    } while (std::isspace(ch));
 
-  if (ch == ';')
-  {
+    if (ch != ';')
+    {
+      break;
+    }
     while ((ch = next_char()) != '\n')
     {
       if (ch == EOF)
@@ -69,7 +72,6 @@ RESTART:
         return Token::INVALID;
       }
     }
-    goto RESTART;
   }
 
   if (ch == '(')
