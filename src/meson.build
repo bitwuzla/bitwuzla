@@ -64,6 +64,7 @@ sources = files([
   'option/option.cpp',
   'parser/bzlabtor.cpp',
   'parser/bzlasmt2.cpp',
+  'parser/smt2/lexer.cpp',
   'preprocess/assertion_tracker.cpp',
   'preprocess/assertion_vector.cpp',
   'preprocess/pass/contradicting_ands.cpp',

@@ -31,6 +31,11 @@ unit_tests = [
     ]
   ],
 
+  ['parser',
+    [
+      'smt2_lexer',
+    ]
+  ],
   ['preprocess',
     [
       'assertion_tracker',
