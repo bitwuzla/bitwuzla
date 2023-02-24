@@ -1,1 +1,1 @@
-option('testing', type: 'feature', value: 'auto', yield: true)
+option('unit_testing', type: 'feature', value: 'auto', yield: true)
