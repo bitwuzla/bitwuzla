@@ -120,6 +120,31 @@ TEST_F(TestSmt2Lexer, command4)
   next_token(lexer, Token::ENDOFFILE);
 }
 
+TEST_F(TestSmt2Lexer, command5)
+{
+  std::stringstream infile;
+  infile << "(get-value (((_ to_fp 5 11) RTP (/ 1.2 5)))";
+  Lexer lexer(&infile);
+  next_token(lexer, Token::LPAR);
+  next_token(lexer, Token::SYMBOL, "get-value");
+  next_token(lexer, Token::LPAR);
+  next_token(lexer, Token::LPAR);
+  next_token(lexer, Token::LPAR);
+  next_token(lexer, Token::UNDERSCORE);
+  next_token(lexer, Token::SYMBOL, "to_fp");
+  next_token(lexer, Token::DECIMAL_CONSTANT, "5");
+  next_token(lexer, Token::DECIMAL_CONSTANT, "11");
+  next_token(lexer, Token::RPAR);
+  next_token(lexer, Token::SYMBOL, "RTP");
+  next_token(lexer, Token::LPAR);
+  next_token(lexer, Token::SYMBOL, "/");
+  next_token(lexer, Token::REAL_CONSTANT, "1.2");
+  next_token(lexer, Token::DECIMAL_CONSTANT, "5");
+  next_token(lexer, Token::RPAR);
+  next_token(lexer, Token::RPAR);
+  next_token(lexer, Token::RPAR);
+}
+
 TEST_F(TestSmt2Lexer, input1)
 {
   std::stringstream infile;
