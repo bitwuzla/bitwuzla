@@ -143,9 +143,9 @@ class Lexer
 
   Lexer(std::istream* infile);
   Token next_token();
-  const std::string& token();
-  bool error();
-  const std::string& error_msg();
+  const std::string& token() const;
+  bool error() const;
+  const std::string& error_msg() const;
 
  private:
   inline static const std::string s_printable_ascii_chars =
@@ -177,13 +177,13 @@ class Lexer
   };
 
   void init_char_classes();
-  uint32_t char_class(int32_t ch);
-  bool is_char_class(int32_t ch, CharacterClass cclass);
+  uint32_t char_class(int32_t ch) const;
+  bool is_char_class(int32_t ch, CharacterClass cclass) const;
   Token next_token_aux();
   int32_t next_char();
   void push_char(std::stringstream& token, int32_t ch);
   void save_char(int32_t ch);
-  std::string err_char(int32_t ch);
+  std::string err_char(int32_t ch) const;
 
   std::istream* d_infile = nullptr;
 

@@ -22,19 +22,19 @@ Lexer::next_token()
 }
 
 const std::string&
-Lexer::token()
+Lexer::token() const
 {
   return d_token;
 }
 
 bool
-Lexer::error()
+Lexer::error() const
 {
   return !d_error.empty();
 }
 
 const std::string&
-Lexer::error_msg()
+Lexer::error_msg() const
 {
   return d_error;
 }
@@ -405,7 +405,7 @@ Lexer::save_char(int32_t ch)
 }
 
 std::string
-Lexer::err_char(int32_t ch)
+Lexer::err_char(int32_t ch) const
 {
   std::stringstream ss;
   ss << "character '" << static_cast<char>(ch) << "'";
@@ -450,7 +450,7 @@ Lexer::init_char_classes()
 }
 
 uint32_t
-Lexer::char_class(int32_t ch)
+Lexer::char_class(int32_t ch) const
 {
   if (ch < 0 || ch >= 256)
   {
@@ -460,7 +460,7 @@ Lexer::char_class(int32_t ch)
 }
 
 bool
-Lexer::is_char_class(int32_t ch, CharacterClass cclass)
+Lexer::is_char_class(int32_t ch, CharacterClass cclass) const
 {
   return char_class(ch) & static_cast<uint32_t>(cclass);
 }
