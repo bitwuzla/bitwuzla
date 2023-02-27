@@ -34,6 +34,7 @@ unit_tests = [
   ['parser',
     [
       'smt2_lexer',
+      'smt2_symbol_table',
     ]
   ],
   ['preprocess',

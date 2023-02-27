@@ -15,17 +15,17 @@ class SymbolTable
     bool d_is_sort;
     uint64_t d_scope_level;
     Lexer::Coordinate d_coo;
-    std::string d_name;
+    std::string d_symbol;
     bitwuzla::Term d_term;
     bitwuzla::Sort d_sort;
   };
 
-  Node* find(const std::string& name);
-  void insert(Token token, const std::string& name, uint64_t scope_level);
+  Node* find(const std::string& symbol) const;
+  void insert(Token token, const std::string& symbol, uint64_t scope_level);
   void remove(Node* node);
 
  private:
-  std::unordered_map<std::string, std::vector<Node>> d_table;
+  std::unordered_map<std::string, std::vector<std::unique_ptr<Node>>> d_table;
 };
 
 }  // namespace parser::smt2
