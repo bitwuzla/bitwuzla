@@ -29,8 +29,6 @@ to_string(bzla::parser::smt2::Token token)
     case bzla::parser::smt2::Token::INVALID: return "<invalid token>";
     case bzla::parser::smt2::Token::ENDOFFILE: return "<eof token>";
     case bzla::parser::smt2::Token::PARENT: return "<parent token>";
-    case bzla::parser::smt2::Token::LPAR: return "(";
-    case bzla::parser::smt2::Token::RPAR: return ")";
     case bzla::parser::smt2::Token::SYMBOL: return "<symbol token>";
     case bzla::parser::smt2::Token::ATTRIBUTE: return "<attribute token>";
     case bzla::parser::smt2::Token::EXP: return "<expression token>";
@@ -38,6 +36,7 @@ to_string(bzla::parser::smt2::Token token)
     case bzla::parser::smt2::Token::PARLETBIND: return "<parletbind token>";
     case bzla::parser::smt2::Token::SORTED_VAR: return "<sorted_var token>";
     case bzla::parser::smt2::Token::SORTED_VARS: return "<sorted_vars token>";
+
     case bzla::parser::smt2::Token::DECIMAL_CONSTANT:
       return "<decimal constant token>";
     case bzla::parser::smt2::Token::HEXADECIMAL_CONSTANT:
@@ -48,6 +47,10 @@ to_string(bzla::parser::smt2::Token token)
       return "<string constant token>";
     case bzla::parser::smt2::Token::REAL_CONSTANT:
       return "<real constant token>";
+
+    case bzla::parser::smt2::Token::LPAR: return "(";
+    case bzla::parser::smt2::Token::RPAR: return ")";
+
     // Reserved words
     case bzla::parser::smt2::Token::BANG: return "!";
     case bzla::parser::smt2::Token::UNDERSCORE: return "_";

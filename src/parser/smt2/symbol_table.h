@@ -30,6 +30,7 @@ class SymbolTable
   void remove(Node* node);
 
  private:
+  Node* insert(Token token);
   void init_reserved_words();
   void init_commands();
   void init_keywords();

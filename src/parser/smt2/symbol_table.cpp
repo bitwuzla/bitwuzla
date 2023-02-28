@@ -89,113 +89,119 @@ SymbolTable::find(const std::string& symbol) const
 
 /* SymbolTable private ------------------------------------------------------ */
 
+SymbolTable::Node*
+SymbolTable::insert(Token token)
+{
+  insert(token, std::to_string(token));
+}
+
 void
 SymbolTable::init_reserved_words()
 {
-  insert(Token::BANG, "!");
-  insert(Token::UNDERSCORE, "_");
-  insert(Token::AS, "as");
-  insert(Token::BINARY_RESERVED_WORD, "BINARY");
-  insert(Token::DECIMAL_RESERVED_WORD, "DECIMAL");
-  insert(Token::EXISTS, "exists");
-  insert(Token::HEXADECIMAL_RESERVED_WORD, "HEXADECIMAL");
-  insert(Token::FORALL, "forall");
-  insert(Token::LET, "let");
-  insert(Token::NUMERAL_RESERVED_WORD, "NUMERAL");
-  insert(Token::PAR, "par");
-  insert(Token::STRING_RESERVED_WORD, "STRING");
+  insert(Token::BANG);
+  insert(Token::UNDERSCORE);
+  insert(Token::AS);
+  insert(Token::BINARY_RESERVED_WORD);
+  insert(Token::DECIMAL_RESERVED_WORD);
+  insert(Token::EXISTS);
+  insert(Token::HEXADECIMAL_RESERVED_WORD);
+  insert(Token::FORALL);
+  insert(Token::LET);
+  insert(Token::NUMERAL_RESERVED_WORD);
+  insert(Token::PAR);
+  insert(Token::STRING_RESERVED_WORD);
 }
 
 void
 SymbolTable::init_commands()
 {
-  insert(Token::ASSERT, "assert");
-  insert(Token::CHECK_SAT, "check-sat");
-  insert(Token::CHECK_SAT_ASSUMING, "check-sat-assuming");
-  insert(Token::DECLARE_CONST, "declare-const");
-  insert(Token::DECLARE_FUN, "declare-fun");
-  insert(Token::DECLARE_SORT, "declare-sort");
-  insert(Token::DEFINE_FUN, "define-fun");
-  insert(Token::DEFINE_SORT, "define-sort");
-  insert(Token::ECHO, "echo");
-  insert(Token::EXIT, "exit");
-  insert(Token::GET_ASSERTIONS, "get-assertions");
-  insert(Token::GET_ASSIGNMENT, "get-assignment");
-  insert(Token::GET_INFO, "get-info");
-  insert(Token::GET_MODEL, "get-model");
-  insert(Token::GET_OPTION, "get-option");
-  insert(Token::GET_PROOF, "get-proof");
-  insert(Token::GET_UNSAT_ASSUMPTIONS, "get-unsat-assumptions");
-  insert(Token::GET_UNSAT_CORE, "get-unsat-core");
-  insert(Token::GET_VALUE, "get-value");
-  insert(Token::POP, "pop");
-  insert(Token::PUSH, "push");
-  insert(Token::RESET, "reset");
-  insert(Token::RESET_ASSERTIONS, "reset-assertions");
-  insert(Token::SET_INFO, "set-info");
-  insert(Token::SET_LOGIC, "set-logic");
-  insert(Token::SET_OPTION, "set-option");
+  insert(Token::ASSERT);
+  insert(Token::CHECK_SAT);
+  insert(Token::CHECK_SAT_ASSUMING);
+  insert(Token::DECLARE_CONST);
+  insert(Token::DECLARE_FUN);
+  insert(Token::DECLARE_SORT);
+  insert(Token::DEFINE_FUN);
+  insert(Token::DEFINE_SORT);
+  insert(Token::ECHO);
+  insert(Token::EXIT);
+  insert(Token::GET_ASSERTIONS);
+  insert(Token::GET_ASSIGNMENT);
+  insert(Token::GET_INFO);
+  insert(Token::GET_MODEL);
+  insert(Token::GET_OPTION);
+  insert(Token::GET_PROOF);
+  insert(Token::GET_UNSAT_ASSUMPTIONS);
+  insert(Token::GET_UNSAT_CORE);
+  insert(Token::GET_VALUE);
+  insert(Token::POP);
+  insert(Token::PUSH);
+  insert(Token::RESET);
+  insert(Token::RESET_ASSERTIONS);
+  insert(Token::SET_INFO);
+  insert(Token::SET_LOGIC);
+  insert(Token::SET_OPTION);
 }
 
 void
 SymbolTable::init_keywords()
 {
-  insert(Token::ALL_STATISTICS, ":all-statistics");
-  insert(Token::AUTHORS, ":authors");
-  insert(Token::ASSERTION_STACK_LEVELS, ":assertion-stack-levels");
-  insert(Token::CATEGORY, ":category");
-  insert(Token::CHAINABLE, ":chainable");
-  insert(Token::DEFINITION, ":definition");
-  insert(Token::DIAG_OUTPUT_CHANNEL, ":diagnostic-output-channel");
-  insert(Token::ERROR_BEHAVIOR, ":error-behavior");
-  insert(Token::EXTENSIONS, ":extensions");
-  insert(Token::FUNS, ":funs");
-  insert(Token::FUNS_DESCRIPTION, ":funs-description");
-  insert(Token::GLOBAL_DECLARATIONS, ":global-declarations");
-  insert(Token::INTERACTIVE_MODE, ":interactive-mode");
-  insert(Token::LANGUAGE, ":language");
-  insert(Token::LEFT_ASSOC, ":left-assoc");
-  insert(Token::LICENSE, ":license");
-  insert(Token::NAME, ":name");
-  insert(Token::NAMED, ":named");
-  insert(Token::NOTES, ":notes");
-  insert(Token::PATTERN, ":pattern");
-  insert(Token::PRINT_SUCCESS, ":print-success");
-  insert(Token::PRODUCE_ASSIGNMENTS, ":produce-assignments");
-  insert(Token::PRODUCE_MODELS, ":produce-models");
-  insert(Token::PRODUCE_PROOFS, ":produce-proofs");
-  insert(Token::PRODUCE_UNSAT_ASSUMPTIONS, ":produce-unsat-assumptions");
-  insert(Token::PRODUCE_UNSAT_CORES, ":produce-unsat-cores");
-  insert(Token::RANDOM_SEED, ":random-seed");
-  insert(Token::REASON_UNKNOWN, ":reason-unknown");
-  insert(Token::REGULAR_OUTPUT_CHANNEL, ":regular-output-channel");
-  insert(Token::REPRODUCIBLE_RESOURCE_LIMIT, ":reproducible-resource-limit");
-  insert(Token::RIGHT_ASSOC, ":right-assoc");
-  insert(Token::SMTLIB_VERSION, ":smt-lib-version");
-  insert(Token::SORTS, ":sorts");
-  insert(Token::SORTS_DESCRIPTION, ":sorts-description");
-  insert(Token::SOURCE, ":source");
-  insert(Token::STATUS, ":status");
-  insert(Token::THEORIES, ":theories");
-  insert(Token::VALUES, ":values");
-  insert(Token::VERBOSITY, ":verbosity");
-  insert(Token::VERSION, ":version");
+  insert(Token::ALL_STATISTICS);
+  insert(Token::AUTHORS);
+  insert(Token::ASSERTION_STACK_LEVELS);
+  insert(Token::CATEGORY);
+  insert(Token::CHAINABLE);
+  insert(Token::DEFINITION);
+  insert(Token::DIAG_OUTPUT_CHANNEL);
+  insert(Token::ERROR_BEHAVIOR);
+  insert(Token::EXTENSIONS);
+  insert(Token::FUNS);
+  insert(Token::FUNS_DESCRIPTION);
+  insert(Token::GLOBAL_DECLARATIONS);
+  insert(Token::INTERACTIVE_MODE);
+  insert(Token::LANGUAGE);
+  insert(Token::LEFT_ASSOC);
+  insert(Token::LICENSE);
+  insert(Token::NAME);
+  insert(Token::NAMED);
+  insert(Token::NOTES);
+  insert(Token::PATTERN);
+  insert(Token::PRINT_SUCCESS);
+  insert(Token::PRODUCE_ASSIGNMENTS);
+  insert(Token::PRODUCE_MODELS);
+  insert(Token::PRODUCE_PROOFS);
+  insert(Token::PRODUCE_UNSAT_ASSUMPTIONS);
+  insert(Token::PRODUCE_UNSAT_CORES);
+  insert(Token::RANDOM_SEED);
+  insert(Token::REASON_UNKNOWN);
+  insert(Token::REGULAR_OUTPUT_CHANNEL);
+  insert(Token::REPRODUCIBLE_RESOURCE_LIMIT);
+  insert(Token::RIGHT_ASSOC);
+  insert(Token::SMTLIB_VERSION);
+  insert(Token::SORTS);
+  insert(Token::SORTS_DESCRIPTION);
+  insert(Token::SOURCE);
+  insert(Token::STATUS);
+  insert(Token::THEORIES);
+  insert(Token::VALUES);
+  insert(Token::VERBOSITY);
+  insert(Token::VERSION);
 }
 
 void
 SymbolTable::init_core_symbols()
 {
-  insert(Token::AND, "and");
-  insert(Token::BOOL, "Bool");
-  insert(Token::DISTINCT, "distinct");
-  insert(Token::EQUAL, "=");
-  insert(Token::FALSE, "false");
-  insert(Token::IMPLIES, "=>");
-  insert(Token::ITE, "ite");
-  insert(Token::NOT, "not");
-  insert(Token::OR, "or");
-  insert(Token::TRUE, "true");
-  insert(Token::XOR, "xor");
+  insert(Token::AND);
+  insert(Token::BOOL);
+  insert(Token::DISTINCT);
+  insert(Token::EQUAL);
+  insert(Token::FALSE);
+  insert(Token::IMPLIES);
+  insert(Token::ITE);
+  insert(Token::NOT);
+  insert(Token::OR);
+  insert(Token::TRUE);
+  insert(Token::XOR);
 }
 
 }  // namespace parser::smt2
