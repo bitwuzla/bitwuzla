@@ -1,3 +1,6 @@
+#ifndef BZLA_PARSER_SMT2_SYMBOL_TABLE_H_INCLUDED
+#define BZLA_PARSER_SMT2_SYMBOL_TABLE_H_INCLUDED
+
 #include "bitwuzla/cpp/bitwuzla.h"
 #include "parser/smt2/lexer.h"
 
@@ -21,12 +24,21 @@ class SymbolTable
   };
 
   Node* find(const std::string& symbol) const;
-  void insert(Token token, const std::string& symbol, uint64_t scope_level);
+  Node* insert(Token token,
+               const std::string& symbol,
+               uint64_t scope_level = 0);
   void remove(Node* node);
 
  private:
+  void init_reserved_words();
+  void init_commands();
+  void init_keywords();
+  void init_core_symbols();
+
   std::unordered_map<std::string, std::vector<std::unique_ptr<Node>>> d_table;
 };
 
 }  // namespace parser::smt2
 }  // namespace bzla
+
+#endif

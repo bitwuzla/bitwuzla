@@ -1,3 +1,6 @@
+#ifndef BZLA_PARSER_SMT2_LEXER_H_INCLUDED
+#define BZLA_PARSER_SMT2_LEXER_H_INCLUDED
+
 #include <array>
 
 #include "parser/smt2/token.h"
@@ -20,6 +23,8 @@ class Lexer
   const std::string& token() const;
   bool error() const;
   const std::string& error_msg() const;
+  const Coordinate& coo() const;
+  const Coordinate& last_coo() const;
 
  private:
   inline static const std::string s_printable_ascii_chars =
@@ -63,10 +68,10 @@ class Lexer
 
   std::array<uint32_t, 256> d_char_classes{};  // value-initialized to 0
 
-  Coordinate d_coo{0, 0};
-  Coordinate d_next_coo{0, 0};
-  Coordinate d_last_coo{0, 0};
-  uint64_t d_last_coo_nl_col = 0;
+  Coordinate d_coo{1, 1};
+  Coordinate d_next_coo{1, 1};
+  Coordinate d_last_coo{1, 1};
+  uint64_t d_last_coo_nl_col = 1;
 
   std::string d_token;
 
@@ -78,3 +83,5 @@ class Lexer
 
 }  // namespace parser::smt2
 }  // namespace bzla
+
+#endif

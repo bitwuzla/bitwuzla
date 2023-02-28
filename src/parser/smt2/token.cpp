@@ -12,112 +12,151 @@ is_token_class(Token token, TokenClass tclass)
 std::ostream&
 operator<<(std::ostream& out, Token token)
 {
-  switch (token)
-  {
-    case Token::INVALID: out << "TOKEN_INVALID"; break;
-    case Token::ENDOFFILE: out << "TOKEN_EOF"; break;
-    case Token::PARENT: out << "TOKEN_PARENT"; break;
-    case Token::LPAR: out << "TOKEN_LPAR"; break;
-    case Token::RPAR: out << "TOKEN_RPAR"; break;
-    case Token::SYMBOL: out << "TOKEN_SYMBOL"; break;
-    case Token::ATTRIBUTE: out << "TOKEN_ATTRIBUTE"; break;
-    case Token::EXP: out << "TOKEN_EXP"; break;
-    case Token::LETBIND: out << "TOKEN_LETBIND"; break;
-    case Token::PARLETBIND: out << "TOKEN_PARLETBIND"; break;
-    case Token::SORTED_VAR: out << "TOKEN_SORTED_VAR"; break;
-    case Token::SORTED_VARS: out << "TOKEN_SORTED_VARS"; break;
-    case Token::DECIMAL_CONSTANT: out << "TOKEN_DECIMAL_CONSTANT"; break;
-    case Token::HEXADECIMAL_CONSTANT:
-      out << "TOKEN_HEXADECIMAL_CONSTANT";
-      break;
-    case Token::BINARY_CONSTANT: out << "TOKEN_BINARY_CONSTANT"; break;
-    case Token::STRING_CONSTANT: out << "TOKEN_STRING_CONSTANT"; break;
-    case Token::REAL_CONSTANT: out << "TOKEN_REAL_CONSTANT"; break;
-    case Token::PAR: out << "TOKEN_PAR"; break;
-    case Token::NUMERAL_RESERVED_WORD:
-      out << "TOKEN_NUMERAL_RESERVED_WORD";
-      break;
-    case Token::DECIMAL_RESERVED_WORD:
-      out << "TOKEN_DECIMAL_RESERVED_WORD";
-      break;
-    case Token::STRING_RESERVED_WORD:
-      out << "TOKEN_STRING_RESERVED_WORD";
-      break;
-    case Token::UNDERSCORE: out << "TOKEN_UNDERSCORE"; break;
-    case Token::BANG: out << "TOKEN_BANG"; break;
-    case Token::AS: out << "TOKEN_AS"; break;
-    case Token::LET: out << "TOKEN_LET"; break;
-    case Token::FORALL: out << "TOKEN_FORALL"; break;
-    case Token::EXISTS: out << "TOKEN_EXISTS"; break;
-    case Token::SET_LOGIC: out << "TOKEN_SET_LOGIC"; break;
-    case Token::SET_OPTION: out << "TOKEN_SET_OPTION"; break;
-    case Token::SET_INFO: out << "TOKEN_SET_INFO"; break;
-    case Token::DECLARE_SORT: out << "TOKEN_DECLARE_SORT"; break;
-    case Token::DEFINE_SORT: out << "TOKEN_DEFINE_SORT"; break;
-    case Token::DECLARE_FUN: out << "TOKEN_DECLARE_SORT"; break;
-    case Token::DEFINE_FUN: out << "TOKEN_DEFINE_FUN"; break;
-    case Token::DECLARE_CONST: out << "TOKEN_DECLARE_CONST"; break;
-    case Token::PUSH: out << "TOKEN_PUSH"; break;
-    case Token::POP: out << "TOKEN_POP"; break;
-    case Token::ASSERT: out << "TOKEN_ASSERT"; break;
-    case Token::CHECK_SAT: out << "TOKEN_CHECK_SAT"; break;
-    case Token::CHECK_SAT_ASSUMING: out << "TOKEN_CHECK_SAT_ASSUMING"; break;
-    case Token::GET_ASSERTIONS: out << "TOKEN_GET_ASSERTIONS"; break;
-    case Token::GET_ASSIGNMENT: out << "TOKEN_GET_ASSIGNMENT"; break;
-    case Token::GET_INFO: out << "TOKEN_GET_INFO"; break;
-    case Token::GET_OPTION: out << "TOKEN_GET_OPTION"; break;
-    case Token::GET_PROOF: out << "TOKEN_GET_PROOF"; break;
-    case Token::GET_UNSAT_ASSUMPTIONS:
-      out << "TOKEN_GET_UNSAT_ASSUMPTIONS";
-      break;
-    case Token::GET_UNSAT_CORE: out << "TOKEN_GET_UNSAT_CORE"; break;
-    case Token::GET_VALUE: out << "TOKEN_GET_VALUE"; break;
-    case Token::EXIT: out << "TOKEN_EXIT"; break;
-    case Token::GET_MODEL: out << "TOKEN_GET_MODEL"; break;
-    case Token::ECHO: out << "TOKEN_ECHO"; break;
-    case Token::ALL_STATISTICS: out << "TOKEN_ALL_STATISTICS"; break;
-    case Token::AUTHORS: out << "TOKEN_AUTHORS"; break;
-    case Token::AXIOMS: out << "TOKEN_AXIOMS"; break;
-    case Token::CHAINABLE: out << "TOKEN_CHAINABLE"; break;
-    case Token::DEFINITION: out << "TOKEN_DEFINITION"; break;
-    case Token::DIAG_OUTPUT_CHANNEL: out << "TOKEN_DIAG_OUTPUT_CHANNEL"; break;
-    case Token::ERROR_BEHAVIOR: out << "TOKEN_ERROR_BEHAVIOR"; break;
-    case Token::EXPAND_DEFINITIONS: out << "TOKEN_EXPAND_DEFINITIONS"; break;
-    case Token::EXTENSIONS: out << "TOKEN_EXTENSIONS"; break;
-    case Token::FUNS: out << "TOKEN_FUNS"; break;
-    case Token::FUNS_DESCRIPTION: out << "TOKEN_FUNS_DESCRIPTION"; break;
-    case Token::INTERACTIVE_MODE: out << "TOKEN_INTERACTIVE_MODE"; break;
-    case Token::PRODUCE_ASSERTIONS: out << "TOKEN_PRODUCE_ASSERTIONS"; break;
-    case Token::LANGUAGE: out << "TOKEN_LANGUAGE"; break;
-    case Token::LEFT_ASSOC: out << "TOKEN_LEFT_ASSOC"; break;
-    case Token::NAME: out << "TOKEN_NAME"; break;
-    case Token::NAMED: out << "TOKEN_NAMED"; break;
-    case Token::NOTES: out << "TOKEN_NOTES"; break;
-    case Token::PRINT_SUCCESS: out << "TOKEN_PRINT_SUCCESS"; break;
-    case Token::PRODUCE_ASSIGNMENTS: out << "TOKEN_PRODUCE_ASSIGNMENTS"; break;
-    case Token::PRODUCE_MODELS: out << "TOKEN_PRODUCE_MODELS"; break;
-    case Token::PRODUCE_PROOFS: out << "TOKEN_PRODUCE_PROOFS"; break;
-    case Token::PRODUCE_UNSAT_ASSUMPTIONS:
-      out << "TOKEN_PRODUCE_UNSAT_ASSUMPTIONS";
-      break;
-    case Token::PRODUCE_UNSAT_CORES: out << "TOKEN_PRODUCE_UNSAT_CORES"; break;
-    case Token::RANDOM_SEED: out << "TOKEN_PRODUCE_RANDOM_SEED"; break;
-    case Token::REASON_UNKNOWN: out << "TOKEN_REASON_UNKNOWN"; break;
-    case Token::REGULAR_OUTPUT_CHANNEL:
-      out << "TOKEN_REGULAR_OUTPUT_CHANNEL";
-      break;
-    case Token::RIGHT_ASSOC: out << "TOKEN_RIGHT_ASSOC"; break;
-    case Token::SORTS: out << "TOKEN_SORTS"; break;
-    case Token::SORTS_DESCRIPTION: out << "TOKEN_SORTS_DESCRIPTION"; break;
-    case Token::STATUS: out << "TOKEN_STATUS"; break;
-    case Token::THEORIES: out << "TOKEN_THEORIES"; break;
-    case Token::VALUES: out << "TOKEN_VALUES"; break;
-    case Token::VERBOSITY: out << "TOKEN_VERBOSITY"; break;
-    case Token::VERSION: out << "TOKEN_VERSION"; break;
-    case Token::GLOBAL_DECLARATIONS: out << "TOKEN_GLOBAL_DECLARATIONS"; break;
-  }
+  out << std::to_string(token);
   return out;
 }
 
 }  // namespace parser::smt2
 }  // namespace bzla
+
+namespace std {
+
+std::string
+to_string(bzla::parser::smt2::Token token)
+{
+  switch (token)
+  {
+    case bzla::parser::smt2::Token::INVALID: return "<invalid token>";
+    case bzla::parser::smt2::Token::ENDOFFILE: return "<eof token>";
+    case bzla::parser::smt2::Token::PARENT: return "<parent token>";
+    case bzla::parser::smt2::Token::LPAR: return "(";
+    case bzla::parser::smt2::Token::RPAR: return ")";
+    case bzla::parser::smt2::Token::SYMBOL: return "<symbol token>";
+    case bzla::parser::smt2::Token::ATTRIBUTE: return "<attribute token>";
+    case bzla::parser::smt2::Token::EXP: return "<expression token>";
+    case bzla::parser::smt2::Token::LETBIND: return "<letbind token>";
+    case bzla::parser::smt2::Token::PARLETBIND: return "<parletbind token>";
+    case bzla::parser::smt2::Token::SORTED_VAR: return "<sorted_var token>";
+    case bzla::parser::smt2::Token::SORTED_VARS: return "<sorted_vars token>";
+    case bzla::parser::smt2::Token::DECIMAL_CONSTANT:
+      return "<decimal constant token>";
+    case bzla::parser::smt2::Token::HEXADECIMAL_CONSTANT:
+      return "<hexadecimal constant token>";
+    case bzla::parser::smt2::Token::BINARY_CONSTANT:
+      return "<binary constant token>";
+    case bzla::parser::smt2::Token::STRING_CONSTANT:
+      return "<string constant token>";
+    case bzla::parser::smt2::Token::REAL_CONSTANT:
+      return "<real constant token>";
+    // Reserved words
+    case bzla::parser::smt2::Token::BANG: return "!";
+    case bzla::parser::smt2::Token::UNDERSCORE: return "_";
+    case bzla::parser::smt2::Token::AS: return "as";
+    case bzla::parser::smt2::Token::BINARY_RESERVED_WORD: return "BINARY";
+    case bzla::parser::smt2::Token::DECIMAL_RESERVED_WORD: return "DECIMAL";
+    case bzla::parser::smt2::Token::EXISTS: return "exists";
+    case bzla::parser::smt2::Token::FORALL: return "forall";
+    case bzla::parser::smt2::Token::HEXADECIMAL_RESERVED_WORD:
+      return "HEXADECIMAL";
+    case bzla::parser::smt2::Token::LET: return "let";
+    case bzla::parser::smt2::Token::NUMERAL_RESERVED_WORD: return "NUMERAL";
+    case bzla::parser::smt2::Token::PAR: return "par";
+    case bzla::parser::smt2::Token::STRING_RESERVED_WORD: return "STRING";
+    // Commands
+    case bzla::parser::smt2::Token::ASSERT: return "assert";
+    case bzla::parser::smt2::Token::CHECK_SAT: return "check-sat";
+    case bzla::parser::smt2::Token::CHECK_SAT_ASSUMING:
+      return "check-sat-assuming";
+    case bzla::parser::smt2::Token::DECLARE_CONST: return "declare-const";
+    case bzla::parser::smt2::Token::DECLARE_FUN: return "declare-fun";
+    case bzla::parser::smt2::Token::DECLARE_SORT: return "declare-sort";
+    case bzla::parser::smt2::Token::DEFINE_FUN: return "define-fun";
+    case bzla::parser::smt2::Token::DEFINE_SORT: return "define-sort";
+    case bzla::parser::smt2::Token::ECHO: return "echo";
+    case bzla::parser::smt2::Token::EXIT: return "exit";
+    case bzla::parser::smt2::Token::GET_ASSERTIONS: return "get-assertions";
+    case bzla::parser::smt2::Token::GET_ASSIGNMENT: return "get-assignment";
+    case bzla::parser::smt2::Token::GET_INFO: return "get-info";
+    case bzla::parser::smt2::Token::GET_OPTION: return "get-option";
+    case bzla::parser::smt2::Token::GET_MODEL: return "get-model";
+    case bzla::parser::smt2::Token::GET_PROOF: return "get-proof";
+    case bzla::parser::smt2::Token::GET_UNSAT_ASSUMPTIONS:
+      return "get-unsat-assumptions";
+    case bzla::parser::smt2::Token::GET_UNSAT_CORE: return "get-unsat-core";
+    case bzla::parser::smt2::Token::GET_VALUE: return "get-value";
+    case bzla::parser::smt2::Token::POP: return "pop";
+    case bzla::parser::smt2::Token::PUSH: return "push";
+    case bzla::parser::smt2::Token::RESET: return "reset";
+    case bzla::parser::smt2::Token::RESET_ASSERTIONS: return "reset-assertions";
+    case bzla::parser::smt2::Token::SET_LOGIC: return "set-logic";
+    case bzla::parser::smt2::Token::SET_INFO: return "set-info";
+    case bzla::parser::smt2::Token::SET_OPTION: return "set-option";
+    // Keywords
+    case bzla::parser::smt2::Token::ALL_STATISTICS: return ":all-statistics";
+    case bzla::parser::smt2::Token::ASSERTION_STACK_LEVELS:
+      return ":assertion-stack-levels";
+    case bzla::parser::smt2::Token::AUTHORS: return ":authors";
+    case bzla::parser::smt2::Token::CATEGORY: return ":category";
+    case bzla::parser::smt2::Token::CHAINABLE: return ":chainable";
+    case bzla::parser::smt2::Token::DEFINITION: return ":definition";
+    case bzla::parser::smt2::Token::DIAG_OUTPUT_CHANNEL:
+      return ":diagnostic-output-channel";
+    case bzla::parser::smt2::Token::ERROR_BEHAVIOR: return ":error-behavior";
+    case bzla::parser::smt2::Token::EXTENSIONS: return ":extensions";
+    case bzla::parser::smt2::Token::FUNS: return ":funs";
+    case bzla::parser::smt2::Token::FUNS_DESCRIPTION:
+      return ":funs-description";
+    case bzla::parser::smt2::Token::INTERACTIVE_MODE:
+      return ":interactive-mode";
+    case bzla::parser::smt2::Token::LANGUAGE: return ":language";
+    case bzla::parser::smt2::Token::LEFT_ASSOC: return ":left-assoc";
+    case bzla::parser::smt2::Token::LICENSE: return ":license";
+    case bzla::parser::smt2::Token::NAME: return ":name";
+    case bzla::parser::smt2::Token::NAMED: return ":named";
+    case bzla::parser::smt2::Token::NOTES: return ":notes";
+    case bzla::parser::smt2::Token::PATTERN: return ":pattern";
+    case bzla::parser::smt2::Token::PRINT_SUCCESS: return ":print-success";
+    case bzla::parser::smt2::Token::PRODUCE_ASSIGNMENTS:
+      return ":produce-assignments";
+    case bzla::parser::smt2::Token::PRODUCE_MODELS: return ":produce-models";
+    case bzla::parser::smt2::Token::PRODUCE_PROOFS: return ":produce-proofs";
+    case bzla::parser::smt2::Token::PRODUCE_UNSAT_ASSUMPTIONS:
+      return "TOKEN_PRODUCE_UNSAT_ASSUMPTIONS";
+    case bzla::parser::smt2::Token::PRODUCE_UNSAT_CORES:
+      return ":produce-unsat-cores";
+    case bzla::parser::smt2::Token::RANDOM_SEED: return ":random-seed";
+    case bzla::parser::smt2::Token::REASON_UNKNOWN: return ":reason-unknown";
+    case bzla::parser::smt2::Token::REGULAR_OUTPUT_CHANNEL:
+      return ":regular-output-channel";
+    case bzla::parser::smt2::Token::REPRODUCIBLE_RESOURCE_LIMIT:
+      return ":reproducible-resource-limit";
+    case bzla::parser::smt2::Token::RIGHT_ASSOC: return ":right-assoc";
+    case bzla::parser::smt2::Token::SMTLIB_VERSION: return ":smt-lib-version";
+    case bzla::parser::smt2::Token::SORTS: return ":sorts";
+    case bzla::parser::smt2::Token::SORTS_DESCRIPTION:
+      return ":sorts-description";
+    case bzla::parser::smt2::Token::STATUS: return ":status";
+    case bzla::parser::smt2::Token::SOURCE: return ":source";
+    case bzla::parser::smt2::Token::THEORIES: return ":theoreis";
+    case bzla::parser::smt2::Token::VALUES: return ":values";
+    case bzla::parser::smt2::Token::VERBOSITY: return ":verbosity";
+    case bzla::parser::smt2::Token::VERSION: return ":version";
+    case bzla::parser::smt2::Token::GLOBAL_DECLARATIONS:
+      return ":global-declarations";
+    // Core symbols
+    case bzla::parser::smt2::Token::AND: return "and";
+    case bzla::parser::smt2::Token::BOOL: return "Bool";
+    case bzla::parser::smt2::Token::DISTINCT: return "distinct";
+    case bzla::parser::smt2::Token::EQUAL: return "=";
+    case bzla::parser::smt2::Token::FALSE: return "false";
+    case bzla::parser::smt2::Token::IMPLIES: return "=>";
+    case bzla::parser::smt2::Token::ITE: return "ite";
+    case bzla::parser::smt2::Token::NOT: return "not";
+    case bzla::parser::smt2::Token::OR: return "or";
+    case bzla::parser::smt2::Token::TRUE: return "true";
+    case bzla::parser::smt2::Token::XOR: return "xor";
+  }
+  return "<unsupported token>";
+}
+
+}  // namespace std

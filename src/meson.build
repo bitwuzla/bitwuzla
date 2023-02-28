@@ -65,6 +65,7 @@ sources = files([
   'parser/bzlabtor.cpp',
   'parser/bzlasmt2.cpp',
   'parser/smt2/lexer.cpp',
+  'parser/smt2/parser.cpp',
   'parser/smt2/symbol_table.cpp',
   'parser/smt2/token.cpp',
   'preprocess/assertion_tracker.cpp',

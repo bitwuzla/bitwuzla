@@ -39,13 +39,23 @@ Lexer::error_msg() const
   return d_error;
 }
 
+const Lexer::Coordinate&
+Lexer::coo() const
+{
+  return d_coo;
+}
+
+const Lexer::Coordinate&
+Lexer::last_coo() const
+{
+  return d_last_coo;
+}
+
 Token
 Lexer::next_token_aux()
 {
-  // BzlaSMT2Node *node;
   int32_t ch;
   d_token.clear();
-  // parser->last_node = 0;
   std::stringstream token;
 
   for (;;)
@@ -69,6 +79,7 @@ Lexer::next_token_aux()
       if (ch == EOF)
       {
         d_error = "unexpected end-of-file in comment";
+        d_token = token.str();
         return Token::INVALID;
       }
     }
@@ -90,6 +101,7 @@ Lexer::next_token_aux()
     if ((ch = next_char()) == EOF)
     {
       d_error = "unexpected end-of-file after '#'";
+      d_token = token.str();
       return Token::INVALID;
     }
     if (ch == 'b')
@@ -98,11 +110,13 @@ Lexer::next_token_aux()
       if ((ch = next_char()) == EOF)
       {
         d_error = "unexpected end-of-file after '#b'";
+        d_token = token.str();
         return Token::INVALID;
       }
       if (ch != '0' && ch != '1')
       {
         d_error = "expected '0' or '1' after '#b'";
+        d_token = token.str();
         return Token::INVALID;
       }
       push_char(token, ch);
@@ -122,11 +136,13 @@ Lexer::next_token_aux()
       if ((ch = next_char()) == EOF)
       {
         d_error = "unexpected end-of-file after '#x'";
+        d_token = token.str();
         return Token::INVALID;
       }
       if (!is_char_class(ch, CharacterClass::HEXADECIMAL_DIGIT))
       {
         d_error = "expected hexa-decimal digit after '#x'";
+        d_token = token.str();
         return Token::INVALID;
       }
       push_char(token, ch);
@@ -146,6 +162,7 @@ Lexer::next_token_aux()
     else
     {
       d_error = "expected 'x' or 'b' after '#'";
+      d_token = token.str();
       return Token::INVALID;
     }
   }
@@ -157,6 +174,7 @@ Lexer::next_token_aux()
       if ((ch = next_char()) == EOF)
       {
         d_error = "unexpected " + err_char(ch) + " in string";
+        d_token = token.str();
         return Token::INVALID;
       }
       if (ch == '"')
@@ -173,6 +191,7 @@ Lexer::next_token_aux()
       if (!is_char_class(ch, CharacterClass::STRING))
       {
         d_error = "invalid " + err_char(ch) + " in string";
+        d_token = token.str();
         return Token::INVALID;
       }
       push_char(token, ch);
@@ -186,19 +205,12 @@ Lexer::next_token_aux()
       if ((ch = next_char()) == EOF)
       {
         d_error = "unexpected " + err_char(ch) + " in quoted symbol";
+        d_token = token.str();
         return Token::INVALID;
       }
       push_char(token, ch);
       if (ch == '|')
       {
-        // if (!(node = find_symbol_smt2(parser, parser->token.start)))
-        //{
-        //   node       = new_node_smt2(parser, BZLA_SYMBOL_TAG_SMT2);
-        //   node->name = bzla_mem_strdup(parser->mem, parser->token.start);
-        //   assert(!find_symbol_smt2(parser, node->name));
-        //   insert_symbol_smt2(parser, node);
-        // }
-        // parser->last_node = node;
         d_token = token.str();
         return Token::SYMBOL;
       }
@@ -210,11 +222,13 @@ Lexer::next_token_aux()
     if ((ch = next_char()) == EOF)
     {
       d_error = "unexpected end-of-file after ':'";
+      d_token = token.str();
       return Token::INVALID;
     }
     if (!is_char_class(ch, CharacterClass::KEYWORD))
     {
       d_error = "unexpected " + err_char(ch) + " after ':'";
+      d_token = token.str();
       return Token::INVALID;
     }
     push_char(token, ch);
@@ -229,14 +243,6 @@ Lexer::next_token_aux()
       push_char(token, ch);
     }
     save_char(ch);
-    // if (!(node = find_symbol_smt2(parser, parser->token.start)))
-    //{
-    //   node       = new_node_smt2(parser, BZLA_ATTRIBUTE_TAG_SMT2);
-    //   node->name = bzla_mem_strdup(parser->mem, parser->token.start);
-    //   assert(!find_symbol_smt2(parser, node->name));
-    //   insert_symbol_smt2(parser, node);
-    // }
-    // parser->last_node = node;
     d_token = token.str();
     return Token::ATTRIBUTE;
   }
@@ -252,11 +258,13 @@ Lexer::next_token_aux()
       if ((ch = next_char()) == EOF)
       {
         d_error = "unexpected end-of-file after '0.'";
+        d_token = token.str();
         return Token::INVALID;
       }
       if (!is_char_class(ch, CharacterClass::DECIMAL_DIGIT))
       {
         d_error = "expected decimal digit after '0.'";
+        d_token = token.str();
         return Token::INVALID;
       }
       push_char(token, ch);
@@ -294,6 +302,7 @@ Lexer::next_token_aux()
       if ((ch = next_char()) == EOF)
       {
         d_error = "unexpected end-of-file after '" + token.str() + "'";
+        d_token = token.str();
         return Token::INVALID;
       }
       push_char(token, ch);
@@ -328,24 +337,18 @@ Lexer::next_token_aux()
     {
       return Token::UNDERSCORE;
     }
-    // if (!(node = find_symbol_smt2(parser, parser->token.start)))
-    //{
-    //   node       = new_node_smt2(parser, BZLA_SYMBOL_TAG_SMT2);
-    //   node->name = bzla_mem_strdup(parser->mem, parser->token.start);
-    //   assert(!find_symbol_smt2(parser, node->name));
-    //   insert_symbol_smt2(parser, node);
-    // }
-    // parser->last_node = node;
     d_token = token.str();
     return Token::SYMBOL;
   }
   else
   {
     d_error = "illegal " + err_char(ch);
+    d_token = token.str();
     return Token::INVALID;
   }
 
   d_error = "internal tokenizer error";
+  d_token = token.str();
   return Token::INVALID;
 }
 
