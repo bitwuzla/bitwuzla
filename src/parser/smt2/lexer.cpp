@@ -128,7 +128,7 @@ Lexer::next_token_aux()
       }
       save_char(ch);
       d_token = token.str();
-      return Token::BINARY_CONSTANT;
+      return Token::BINARY_VALUE;
     }
     else if (ch == 'x')
     {
@@ -157,7 +157,7 @@ Lexer::next_token_aux()
       }
       save_char(ch);
       d_token = token.str();
-      return Token::HEXADECIMAL_CONSTANT;
+      return Token::HEXADECIMAL_VALUE;
     }
     else
     {
@@ -185,7 +185,7 @@ Lexer::next_token_aux()
         {
           save_char(ch);
           d_token = token.str();
-          return Token::STRING_CONSTANT;
+          return Token::STRING_VALUE;
         }
       }
       if (!is_char_class(ch, CharacterClass::STRING))
@@ -248,12 +248,12 @@ Lexer::next_token_aux()
   }
   else if (ch == '0')
   {
-    Token res = Token::DECIMAL_CONSTANT;
+    Token res = Token::DECIMAL_VALUE;
     push_char(token, ch);
     ch = next_char();
     if (ch == '.')
     {
-      res = Token::REAL_CONSTANT;
+      res = Token::REAL_VALUE;
       push_char(token, ch);
       if ((ch = next_char()) == EOF)
       {
@@ -284,7 +284,7 @@ Lexer::next_token_aux()
   }
   else if (is_char_class(ch, CharacterClass::DECIMAL_DIGIT))
   {
-    Token res = Token::DECIMAL_CONSTANT;
+    Token res = Token::DECIMAL_VALUE;
     push_char(token, ch);
     for (;;)
     {
@@ -297,7 +297,7 @@ Lexer::next_token_aux()
     }
     if (ch == '.')
     {
-      res = Token::REAL_CONSTANT;
+      res = Token::REAL_VALUE;
       push_char(token, ch);
       if ((ch = next_char()) == EOF)
       {

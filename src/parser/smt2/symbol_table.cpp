@@ -175,7 +175,7 @@ SymbolTable::init_keywords()
   insert(Token::RANDOM_SEED);
   insert(Token::REASON_UNKNOWN);
   insert(Token::REGULAR_OUTPUT_CHANNEL);
-  insert(Token::REPRODUCIBLE_RESOURCE_LIMIT);
+  insert(Token::REPR_RESOURCE_LIMIT);
   insert(Token::RIGHT_ASSOC);
   insert(Token::SMTLIB_VERSION);
   insert(Token::SORTS);
