@@ -59,7 +59,9 @@ class Parser
   void error(const std::string& error_msg,
              const Lexer::Coordinate* coo = nullptr);
   void error_invalid();
-  void error_eof(Token token, const Lexer::Coordinate* coo = nullptr);
+  void error_eof(Token token);
+
+  bool check_token(Token token);
 
   void print_success();
 

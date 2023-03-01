@@ -106,12 +106,8 @@ Parser::parse_command()
 {
   Token token = next_token();
 
-  if (token == Token::ENDOFFILE || token == Token::INVALID)
+  if (!check_token(token))
   {
-    if (d_lexer->error())
-    {
-      error(d_lexer->error_msg());
-    }
     return false;
   }
 
@@ -123,14 +119,8 @@ Parser::parse_command()
   }
 
   token = next_token();
-  if (token == Token::ENDOFFILE)
+  if (!check_token(token))
   {
-    error_eof(token, &d_lexer->last_coo());
-    return false;
-  }
-  if (token == Token::INVALID)
-  {
-    error_invalid();
     return false;
   }
   if (!is_token_class(token, TokenClass::COMMAND))
@@ -518,14 +508,8 @@ bool
 Parser::parse_command_set_option()
 {
   Token token = next_token();
-  if (token == Token::INVALID)
+  if (!check_token(token))
   {
-    error_invalid();
-    return false;
-  }
-  if (token == Token::ENDOFFILE)
-  {
-    error_eof(token);
     return false;
   }
   if (token == Token::RPAR)
@@ -537,14 +521,8 @@ Parser::parse_command_set_option()
   if (token == Token::REGULAR_OUTPUT_CHANNEL)
   {
     token = next_token();
-    if (token == Token::INVALID)
+    if (!check_token(token))
     {
-      error_invalid();
-      return false;
-    }
-    if (token == Token::ENDOFFILE)
-    {
-      error_eof(token);
       return false;
     }
     const std::string& outfile_name = d_lexer->token();
@@ -563,14 +541,8 @@ Parser::parse_command_set_option()
   else if (token == Token::PRINT_SUCCESS)
   {
     token = next_token();
-    if (token == Token::INVALID)
+    if (!check_token(token))
     {
-      error_invalid();
-      return false;
-    }
-    if (token == Token::ENDOFFILE)
-    {
-      error_eof(token);
       return false;
     }
     if (token == Token::TRUE)
@@ -592,14 +564,8 @@ Parser::parse_command_set_option()
   else if (token == Token::GLOBAL_DECLARATIONS)
   {
     token = next_token();
-    if (token == Token::INVALID)
+    if (!check_token(token))
     {
-      error_invalid();
-      return false;
-    }
-    if (token == Token::ENDOFFILE)
-    {
-      error_eof(token);
       return false;
     }
     if (token == Token::TRUE)
@@ -626,7 +592,11 @@ Parser::parse_command_set_option()
   {
     assert(!d_lexer->token().empty());
     std::string opt = d_lexer->token();
-    (void) next_token();
+    token           = next_token();
+    if (!check_token(token))
+    {
+      return false;
+    }
     assert(!d_lexer->token().empty());
     try
     {
@@ -689,9 +659,26 @@ Parser::error_invalid()
 }
 
 void
-Parser::error_eof(Token token, const Lexer::Coordinate* coo)
+Parser::error_eof(Token token)
 {
-  error("unexpected end-of-file after '" + std::to_string(token) + "'", coo);
+  error("unexpected end-of-file after '" + std::to_string(token) + "'",
+        &d_lexer->last_coo());
+}
+
+bool
+Parser::check_token(Token token)
+{
+  if (token == Token::ENDOFFILE)
+  {
+    error_eof(token);
+    return false;
+  }
+  if (token == Token::INVALID)
+  {
+    error_invalid();
+    return false;
+  }
+  return true;
 }
 
 void
@@ -703,6 +690,8 @@ Parser::print_success()
     d_out->flush();
   }
 }
+
+/* Parser::Statistics ------------------------------------------------------- */
 
 Parser::Statistics::Statistics()
     : num_assertions(d_stats.new_stat<uint64_t>("parser::smt2:num_assertions")),
