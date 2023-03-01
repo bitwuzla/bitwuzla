@@ -257,6 +257,13 @@ Options::Options()
           "enable equality normalization via Gaussian elimination if variable "
           "substitution preprocessing pass is enabled",
           "pp-variable-subst-norm-eq"),
+      pp_variable_subst_norm_diseq(
+          this,
+          Option::PP_VARIABLE_SUBST_NORM_DISEQ,
+          false,
+          "enable disequality normalization if variable substitution "
+          "preprocessing pass is enabled",
+          "pp-variable-subst-norm-diseq"),
       pp_variable_subst_norm_bv_ineq(
           this,
           Option::PP_VARIABLE_SUBST_NORM_BV_INEQ,
