@@ -54,6 +54,8 @@ class Parser
   bool parse_command_set_logic();
   bool parse_command_set_option();
 
+  SymbolTable::Node* parse_symbol(const std::string& error_msg);
+
   bool skip_rpars(uint64_t nrpars);
 
   void error(const std::string& error_msg,
@@ -63,6 +65,10 @@ class Parser
 
   bool check_token(Token token);
 
+  size_t enable_theory(const std::string& logic,
+                       const std::string& theory,
+                       size_t size_prefix);
+  bool is_supported_logic(const std::string& logic);
   void print_success();
 
   std::unique_ptr<Lexer> d_lexer;
@@ -87,6 +93,8 @@ class Parser
   bool d_print_success = false;
   bool d_global_decl   = false;
   bool d_done = false;
+
+  std::string d_logic;
 
   std::string d_error;
   Lexer::Coordinate* d_err_coo = nullptr;

@@ -1,7 +1,8 @@
 #include "parser/smt2/parser.h"
 
-#include "bitwuzla/cpp/bitwuzla.h"
+#include <iostream>
 
+#include "bitwuzla/cpp/bitwuzla.h"
 namespace bzla {
 namespace parser::smt2 {
 
@@ -467,41 +468,29 @@ Parser::parse_command_set_info()
 bool
 Parser::parse_command_set_logic()
 {
-  //    case BZLA_SET_LOGIC_TAG_SMT2:
-  //      if (!read_symbol(parser, " after set-logic", &logic))
-  //      {
-  //        return 0;
-  //      }
-  //      if (tag == EOF)
-  //      {
-  //        parser->perrcoo = parser->lastcoo;
-  //        return !perr_smt2(parser, "unexpected end-of-file after
-  //        'set-logic'");
-  //      }
-  //      if (tag == BZLA_INVALID_TAG_SMT2)
-  //      {
-  //        assert(parser->error);
-  //        return 0;
-  //      }
-  //      assert(logic);
-  //      if (is_supported_logic(logic->name))
-  //      {
-  //        parser->logic = bzla_mem_strdup(parser->mem, logic->name);
-  //      }
-  //      else
-  //      {
-  //        return !perr_smt2(parser, "unsupported logic '%s'", logic->name);
-  //      }
-  //      // BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla), 2, "logic %s",
-  //      logic->name); if (!read_rpar_smt2(parser, " after logic")) return 0;
-  //      if (parser->commands.set_logic++)
-  //      {
-  //        //  BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
-  //        //           1,
-  //        //           "WARNING additional 'set-logic' command");
-  //      }
-  //      print_success(parser);
-  //      break;
+  SymbolTable::Node* logic = parse_symbol(" after 'set-logic'");
+  if (logic == nullptr)
+  {
+    return false;
+  }
+  d_logic = logic->d_symbol;
+  assert(!d_logic.empty());
+  if (!is_supported_logic(d_logic))
+  {
+    error("unsupported logic '" + d_logic + "'");
+    return false;
+  }
+  Msg(1) << "logic " << d_logic;
+  if (skip_rpars(1))
+  {
+    if (d_statistics.num_set_logic++)
+    {
+      Msg(1) << "warning: additional 'set-logic' command";
+    }
+    print_success();
+    return true;
+  }
+  return false;
 }
 
 bool
@@ -616,6 +605,26 @@ Parser::parse_command_set_option()
   return false;
 }
 
+/* -------------------------------------------------------------------------- */
+
+SymbolTable::Node*
+Parser::parse_symbol(const std::string& error_msg)
+{
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return nullptr;
+  }
+  if (token != Token::SYMBOL)
+  {
+    error("expected symbol" + error_msg + " but reached end of file");
+  }
+  assert(d_last_node->d_token == Token::SYMBOL);
+  return d_last_node;
+}
+
+/* -------------------------------------------------------------------------- */
+
 bool
 Parser::skip_rpars(uint64_t nrpars)
 {
@@ -661,7 +670,7 @@ Parser::error_invalid()
 void
 Parser::error_eof(Token token)
 {
-  error("unexpected end-of-file after '" + std::to_string(token) + "'",
+  error("unexpected end of file after '" + std::to_string(token) + "'",
         &d_lexer->last_coo());
 }
 
@@ -679,6 +688,61 @@ Parser::check_token(Token token)
     return false;
   }
   return true;
+}
+
+size_t
+Parser::enable_theory(const std::string& logic,
+                      const std::string& theory,
+                      size_t size_prefix)
+{
+  if (size_prefix < logic.size())
+  {
+    size_t size_theory = theory.size();
+    std::string l      = logic.substr(size_prefix, size_theory);
+    if (l == theory)
+    {
+      if (theory == "A")
+      {
+        d_table.init_array_symbols();
+      }
+      else if (theory == "BV")
+      {
+        d_table.init_bv_symbols();
+      }
+      else if (theory == "FP" || theory == "FPLRA")
+      {
+        d_table.init_fp_symbols();
+      }
+      size_prefix += size_theory;
+    }
+  }
+  return size_prefix;
+}
+
+bool
+Parser::is_supported_logic(const std::string& logic)
+{
+  size_t size = logic.size(), size_prefix = 0;
+
+  if (size < 3)
+  {
+    return false;
+  }
+
+  if (logic == "ALL")
+  {
+    d_table.init_array_symbols();
+    d_table.init_bv_symbols();
+    d_table.init_fp_symbols();
+    return true;
+  }
+  size_prefix = enable_theory(logic, "QF_", size_prefix);
+  size_prefix = enable_theory(logic, "A", size_prefix);
+  size_prefix = enable_theory(logic, "UF", size_prefix);
+  size_prefix = enable_theory(logic, "BV", size_prefix);
+  size_prefix = enable_theory(logic, "FPLRA", size_prefix);
+  size_prefix = enable_theory(logic, "FP", size_prefix);
+  return size_prefix == size;
 }
 
 void

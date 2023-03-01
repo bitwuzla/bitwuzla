@@ -78,7 +78,7 @@ Lexer::next_token_aux()
     {
       if (ch == EOF)
       {
-        d_error = "unexpected end-of-file in comment";
+        d_error = "unexpected end of file in comment";
         d_token = token.str();
         return Token::INVALID;
       }
@@ -100,7 +100,7 @@ Lexer::next_token_aux()
     push_char(token, ch);
     if ((ch = next_char()) == EOF)
     {
-      d_error = "unexpected end-of-file after '#'";
+      d_error = "unexpected end of file after '#'";
       d_token = token.str();
       return Token::INVALID;
     }
@@ -109,7 +109,7 @@ Lexer::next_token_aux()
       push_char(token, ch);
       if ((ch = next_char()) == EOF)
       {
-        d_error = "unexpected end-of-file after '#b'";
+        d_error = "unexpected end of file after '#b'";
         d_token = token.str();
         return Token::INVALID;
       }
@@ -135,7 +135,7 @@ Lexer::next_token_aux()
       push_char(token, ch);
       if ((ch = next_char()) == EOF)
       {
-        d_error = "unexpected end-of-file after '#x'";
+        d_error = "unexpected end of file after '#x'";
         d_token = token.str();
         return Token::INVALID;
       }
@@ -221,7 +221,7 @@ Lexer::next_token_aux()
     push_char(token, ch);
     if ((ch = next_char()) == EOF)
     {
-      d_error = "unexpected end-of-file after ':'";
+      d_error = "unexpected end of file after ':'";
       d_token = token.str();
       return Token::INVALID;
     }
@@ -257,7 +257,7 @@ Lexer::next_token_aux()
       push_char(token, ch);
       if ((ch = next_char()) == EOF)
       {
-        d_error = "unexpected end-of-file after '0.'";
+        d_error = "unexpected end of file after '0.'";
         d_token = token.str();
         return Token::INVALID;
       }
@@ -301,7 +301,7 @@ Lexer::next_token_aux()
       push_char(token, ch);
       if ((ch = next_char()) == EOF)
       {
-        d_error = "unexpected end-of-file after '" + token.str() + "'";
+        d_error = "unexpected end of file after '" + token.str() + "'";
         d_token = token.str();
         return Token::INVALID;
       }

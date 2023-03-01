@@ -29,6 +29,10 @@ class SymbolTable
                uint64_t scope_level = 0);
   void remove(Node* node);
 
+  void init_array_symbols();
+  void init_bv_symbols();
+  void init_fp_symbols();
+
  private:
   Node* insert(Token token);
   void init_reserved_words();

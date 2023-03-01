@@ -204,5 +204,120 @@ SymbolTable::init_core_symbols()
   insert(Token::XOR);
 }
 
+void
+SymbolTable::init_array_symbols()
+{
+  insert(Token::ARRAY);
+  insert(Token::ARRAY_SELECT);
+  insert(Token::ARRAY_STORE);
+}
+
+void
+SymbolTable::init_bv_symbols()
+{
+  insert(Token::BV_BITVEC);
+  insert(Token::BV_ADD);
+  insert(Token::BV_AND);
+  insert(Token::BV_ASHR);
+  insert(Token::BV_COMP);
+  insert(Token::BV_CONCAT);
+  insert(Token::BV_EXTRACT);
+  insert(Token::BV_LSHR);
+  insert(Token::BV_MUL);
+  insert(Token::BV_NAND);
+  insert(Token::BV_NEG);
+  insert(Token::BV_NOR);
+  insert(Token::BV_NOT);
+  insert(Token::BV_OR);
+  insert(Token::BV_REPEAT);
+  insert(Token::BV_ROTATE_LEFT);
+  insert(Token::BV_ROTATE_RIGHT);
+  insert(Token::BV_SDIV);
+  insert(Token::BV_SGE);
+  insert(Token::BV_SGT);
+  insert(Token::BV_SHL);
+  insert(Token::BV_SIGN_EXTEND);
+  insert(Token::BV_SLE);
+  insert(Token::BV_SLT);
+  insert(Token::BV_SMOD);
+  insert(Token::BV_SREM);
+  insert(Token::BV_SUB);
+  insert(Token::BV_UDIV);
+  insert(Token::BV_UGE);
+  insert(Token::BV_UGT);
+  insert(Token::BV_ULE);
+  insert(Token::BV_ULT);
+  insert(Token::BV_UREM);
+  insert(Token::BV_XNOR);
+  insert(Token::BV_XOR);
+  insert(Token::BV_ZERO_EXTEND);
+  insert(Token::BV_REDOR);
+  insert(Token::BV_REDAND);
+  insert(Token::BV_REDXOR);
+  insert(Token::BV_SADDO);
+  insert(Token::BV_UADDO);
+  insert(Token::BV_SDIVO);
+  insert(Token::BV_SMULO);
+  insert(Token::BV_UMULO);
+  insert(Token::BV_SSUBO);
+  insert(Token::BV_USUBO);
+}
+
+void
+SymbolTable::init_fp_symbols()
+{
+  insert(Token::FP_FLOATINGPOINT);
+  insert(Token::FP_FLOAT16);
+  insert(Token::FP_FLOAT32);
+  insert(Token::FP_FLOAT64);
+  insert(Token::FP_FLOAT128);
+  insert(Token::FP_ROUNDINGMODE);
+  insert(Token::FP_RM_RNA);
+  insert(Token::FP_RM_RNA_LONG);
+  insert(Token::FP_RM_RNE);
+  insert(Token::FP_RM_RNE_LONG);
+  insert(Token::FP_RM_RTN);
+  insert(Token::FP_RM_RTN_LONG);
+  insert(Token::FP_RM_RTP);
+  insert(Token::FP_RM_RTP_LONG);
+  insert(Token::FP_RM_RTZ);
+  insert(Token::FP_RM_RTZ_LONG);
+  insert(Token::FP_ABS);
+  insert(Token::FP_ADD);
+  insert(Token::FP_DIV);
+  insert(Token::FP_EQ);
+  insert(Token::FP_FMA);
+  insert(Token::FP_FP);
+  insert(Token::FP_GEQ);
+  insert(Token::FP_GT);
+  insert(Token::FP_IS_INF);
+  insert(Token::FP_IS_NAN);
+  insert(Token::FP_IS_NEG);
+  insert(Token::FP_IS_NORMAL);
+  insert(Token::FP_IS_POS);
+  insert(Token::FP_IS_SUBNORMAL);
+  insert(Token::FP_IS_ZERO);
+  insert(Token::FP_LEQ);
+  insert(Token::FP_LT);
+  insert(Token::FP_MAX);
+  insert(Token::FP_MIN);
+  insert(Token::FP_MUL);
+  insert(Token::FP_NAN);
+  insert(Token::FP_NEG);
+  insert(Token::FP_NEG_INF);
+  insert(Token::FP_NEG_ZERO);
+  insert(Token::FP_POS_INF);
+  insert(Token::FP_POS_ZERO);
+  insert(Token::FP_REM);
+  insert(Token::FP_RTI);
+  insert(Token::FP_SQRT);
+  insert(Token::FP_SUB);
+  insert(Token::FP_TO_FP);
+  insert(Token::FP_TO_FP_UNSIGNED);
+  insert(Token::FP_TO_SBV);
+  insert(Token::FP_TO_UBV);
+  insert(Token::REAL_DIV);
+}
+
 }  // namespace parser::smt2
 }  // namespace bzla
