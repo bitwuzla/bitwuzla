@@ -96,6 +96,8 @@ class Parser
 
   std::string d_logic;
 
+  bitwuzla::Result d_status;
+
   std::string d_error;
   Lexer::Coordinate* d_err_coo = nullptr;
 

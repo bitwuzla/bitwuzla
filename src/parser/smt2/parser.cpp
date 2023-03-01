@@ -459,10 +459,55 @@ Parser::parse_command_push()
 bool
 Parser::parse_command_set_info()
 {
-  //    case BZLA_SET_INFO_TAG_SMT2:
-  //      if (!set_info_smt2(parser)) return 0;
-  //      print_success(parser);
-  //      break;
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return false;
+  }
+  if (token != Token::ATTRIBUTE)
+  {
+    error("missing keyword after 'set-info'");
+    return false;
+  }
+  if (token == Token::STATUS)
+  {
+    token = next_token();
+    if (!check_token(token))
+    {
+      return false;
+    }
+    if (token != Token::SYMBOL)
+    {
+      error("invalid value for ':status'");
+      return false;
+    }
+    assert(!d_lexer->token().empty());
+    const std::string& status = d_lexer->token();
+    if (status == "sat")
+    {
+      d_status = bitwuzla::Result::SAT;
+    }
+    else if (status == "unsat")
+    {
+      d_status = bitwuzla::Result::UNSAT;
+    }
+    else if (status == "unknown")
+    {
+      d_status = bitwuzla::Result::UNKNOWN;
+    }
+    else
+    {
+      error("invalid value '" + status + "' for ':status'");
+      return false;
+    }
+    Msg(1) << "parsed status '" << d_status << "'";
+  }
+  if (skip_rpars(1))
+  {
+    print_success();
+    return true;
+  }
+  return false;
 }
 
 bool
