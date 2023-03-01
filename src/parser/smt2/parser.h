@@ -54,9 +54,9 @@ class Parser
   bool parse_command_set_logic();
   bool parse_command_set_option();
 
-  SymbolTable::Node* parse_symbol(const std::string& error_msg);
+  bool parse_rpars(uint64_t nrpars);
 
-  bool skip_rpars(uint64_t nrpars);
+  SymbolTable::Node* parse_symbol(const std::string& error_msg);
 
   void error(const std::string& error_msg,
              const Lexer::Coordinate* coo = nullptr);

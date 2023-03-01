@@ -502,7 +502,7 @@ Parser::parse_command_set_info()
     }
     Msg(1) << "parsed status '" << d_status << "'";
   }
-  if (skip_rpars(1))
+  if (parse_rpars(1))
   {
     print_success();
     return true;
@@ -526,7 +526,7 @@ Parser::parse_command_set_logic()
     return false;
   }
   Msg(1) << "logic " << d_logic;
-  if (skip_rpars(1))
+  if (parse_rpars(1))
   {
     if (d_statistics.num_set_logic++)
     {
@@ -642,7 +642,7 @@ Parser::parse_command_set_option()
       return false;
     }
   }
-  if (skip_rpars(1))
+  if (parse_rpars(1))
   {
     print_success();
     return true;
@@ -652,26 +652,8 @@ Parser::parse_command_set_option()
 
 /* -------------------------------------------------------------------------- */
 
-SymbolTable::Node*
-Parser::parse_symbol(const std::string& error_msg)
-{
-  Token token = next_token();
-  if (!check_token(token))
-  {
-    return nullptr;
-  }
-  if (token != Token::SYMBOL)
-  {
-    error("expected symbol" + error_msg + " but reached end of file");
-  }
-  assert(d_last_node->d_token == Token::SYMBOL);
-  return d_last_node;
-}
-
-/* -------------------------------------------------------------------------- */
-
 bool
-Parser::skip_rpars(uint64_t nrpars)
+Parser::parse_rpars(uint64_t nrpars)
 {
   while (nrpars > 0)
   {
@@ -694,6 +676,24 @@ Parser::skip_rpars(uint64_t nrpars)
   }
   return true;
 }
+
+SymbolTable::Node*
+Parser::parse_symbol(const std::string& error_msg)
+{
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return nullptr;
+  }
+  if (token != Token::SYMBOL)
+  {
+    error("expected symbol" + error_msg + " but reached end of file");
+  }
+  assert(d_last_node->d_token == Token::SYMBOL);
+  return d_last_node;
+}
+
+/* -------------------------------------------------------------------------- */
 
 void
 Parser::error(const std::string& error_msg, const Lexer::Coordinate* coo)
