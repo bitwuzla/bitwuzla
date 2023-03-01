@@ -409,6 +409,8 @@ Options::modes(Option option) const
 Option
 Options::option(const char *name) const
 {
+  BITWUZLA_CHECK(d_options->is_valid(name))
+      << "invalid option '" << name << "'";
   return s_options.at(d_options->option(name));
 }
 

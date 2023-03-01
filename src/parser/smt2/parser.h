@@ -1,6 +1,8 @@
 #ifndef BZLA_PARSER_SMT2_PARSER_H_INCLUDED
 #define BZLA_PARSER_SMT2_PARSER_H_INCLUDED
 
+#include <fstream>
+
 #include "parser/smt2/lexer.h"
 #include "parser/smt2/symbol_table.h"
 #include "util/logger.h"
@@ -16,7 +18,8 @@ namespace parser::smt2 {
 class Parser
 {
  public:
-  Parser(std::istream* infile,
+  Parser(bitwuzla::Options& options,
+         std::istream* infile,
          const std::string& infile_name,
          uint64_t log_level = 0,
          uint64_t verbosity = 0);
@@ -51,12 +54,19 @@ class Parser
   bool parse_command_set_logic();
   bool parse_command_set_option();
 
+  bool skip_rpars(uint64_t nrpars);
+
   void error(const std::string& error_msg,
              const Lexer::Coordinate* coo = nullptr);
+  void error_invalid();
+  void error_eof(Token token, const Lexer::Coordinate* coo = nullptr);
+
+  void print_success();
 
   std::unique_ptr<Lexer> d_lexer;
   SymbolTable d_table;
 
+  bitwuzla::Options& d_options;
   const std::string& d_infile_name;
 
   std::unique_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
@@ -68,6 +78,12 @@ class Parser
 
   uint64_t d_log_level;
   uint64_t d_verbosity;
+
+  std::ofstream d_outfile;
+  std::ostream* d_out = &std::cout;
+
+  bool d_print_success = false;
+  bool d_global_decl   = false;
   bool d_done = false;
 
   std::string d_error;

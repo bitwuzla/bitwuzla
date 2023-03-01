@@ -7,11 +7,13 @@ namespace parser::smt2 {
 
 /* Parser public ------------------------------------------------------------ */
 
-Parser::Parser(std::istream* infile,
+Parser::Parser(bitwuzla::Options& options,
+               std::istream* infile,
                const std::string& infile_name,
                uint64_t log_level,
                uint64_t verbosity)
-    : d_lexer(new Lexer(infile)),
+    : d_options(options),
+      d_lexer(new Lexer(infile)),
       d_infile_name(infile_name),
       d_logger(log_level, verbosity),
       d_log_level(log_level),
@@ -123,13 +125,12 @@ Parser::parse_command()
   token = next_token();
   if (token == Token::ENDOFFILE)
   {
-    error("unexpected end-of-file after '('", &d_lexer->last_coo());
+    error_eof(token, &d_lexer->last_coo());
     return false;
   }
   if (token == Token::INVALID)
   {
-    assert(d_lexer->error());
-    error(d_lexer->error_msg());
+    error_invalid();
     return false;
   }
   if (!is_token_class(token, TokenClass::COMMAND))
@@ -516,10 +517,158 @@ Parser::parse_command_set_logic()
 bool
 Parser::parse_command_set_option()
 {
-  //    case BZLA_SET_OPTION_TAG_SMT2:
-  //      if (!set_option_smt2(parser)) return 0;
-  //      print_success(parser);
-  //      break;
+  Token token = next_token();
+  if (token == Token::INVALID)
+  {
+    error_invalid();
+    return false;
+  }
+  if (token == Token::ENDOFFILE)
+  {
+    error_eof(token);
+    return false;
+  }
+  if (token == Token::RPAR)
+  {
+    error("missing keyword after 'set-option'");
+    return false;
+  }
+
+  if (token == Token::REGULAR_OUTPUT_CHANNEL)
+  {
+    token = next_token();
+    if (token == Token::INVALID)
+    {
+      error_invalid();
+      return false;
+    }
+    if (token == Token::ENDOFFILE)
+    {
+      error_eof(token);
+      return false;
+    }
+    const std::string& outfile_name = d_lexer->token();
+    assert(!outfile_name.empty());
+    try
+    {
+      d_outfile.open(outfile_name, std::ofstream::out);
+    }
+    catch (...)
+    {
+      error("cannot create '" + outfile_name + "'");
+      return false;
+    }
+    d_out = &d_outfile;
+  }
+  else if (token == Token::PRINT_SUCCESS)
+  {
+    token = next_token();
+    if (token == Token::INVALID)
+    {
+      error_invalid();
+      return false;
+    }
+    if (token == Token::ENDOFFILE)
+    {
+      error_eof(token);
+      return false;
+    }
+    if (token == Token::TRUE)
+    {
+      d_print_success = true;
+      // configure_smt_comp_mode();
+    }
+    else if (token == Token::FALSE)
+    {
+      d_print_success = false;
+    }
+    else
+    {
+      assert(!d_lexer->token().empty());
+      error("expected Boolean argument at '" + d_lexer->token() + "'");
+      return false;
+    }
+  }
+  else if (token == Token::GLOBAL_DECLARATIONS)
+  {
+    token = next_token();
+    if (token == Token::INVALID)
+    {
+      error_invalid();
+      return false;
+    }
+    if (token == Token::ENDOFFILE)
+    {
+      error_eof(token);
+      return false;
+    }
+    if (token == Token::TRUE)
+    {
+      d_global_decl = true;
+    }
+    else if (token == Token::FALSE)
+    {
+      d_global_decl = false;
+    }
+    else
+    {
+      assert(!d_lexer->token().empty());
+      error("expected Boolean argument at '" + d_lexer->token() + "'");
+      return false;
+    }
+  }
+  else if (token == Token::PRODUCE_UNSAT_ASSUMPTIONS)
+  {
+    // nothing to do, always true
+  }
+  // Bitwuzla options
+  else
+  {
+    assert(!d_lexer->token().empty());
+    std::string opt = d_lexer->token();
+    (void) next_token();
+    assert(!d_lexer->token().empty());
+    try
+    {
+      d_options.set(opt, d_lexer->token());
+    }
+    catch (bitwuzla::Exception& e)
+    {
+      error(e.msg());
+      return false;
+    }
+  }
+  if (skip_rpars(1))
+  {
+    print_success();
+    return true;
+  }
+  return false;
+}
+
+bool
+Parser::skip_rpars(uint64_t nrpars)
+{
+  while (nrpars > 0)
+  {
+    Token token = next_token();
+    if (token == Token::ENDOFFILE)
+    {
+      if (nrpars > 0)
+      {
+        error("missing ')' at end of file");
+        return false;
+      }
+      return true;
+    }
+    if (token != Token::RPAR)
+    {
+      error("missing ')'");
+      return false;
+    }
+    nrpars -= 1;
+  }
+  return true;
 }
 
 void
@@ -529,6 +678,30 @@ Parser::error(const std::string& error_msg, const Lexer::Coordinate* coo)
   if (!coo) coo = &d_lexer->coo();
   d_error = d_infile_name + ":" + std::to_string(coo->col) + ":"
             + std::to_string(coo->line) + ": " + error_msg;
+}
+
+void
+Parser::error_invalid()
+{
+  assert(d_lexer);
+  assert(d_lexer->error());
+  error(d_lexer->error_msg());
+}
+
+void
+Parser::error_eof(Token token, const Lexer::Coordinate* coo)
+{
+  error("unexpected end-of-file after '" + std::to_string(token) + "'", coo);
+}
+
+void
+Parser::print_success()
+{
+  if (d_print_success)
+  {
+    *d_out << "success" << std::endl;
+    d_out->flush();
+  }
 }
 
 Parser::Statistics::Statistics()
