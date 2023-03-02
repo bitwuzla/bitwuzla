@@ -121,8 +121,7 @@ Parser::parse_command()
   if (token != Token::LPAR)
   {
     assert(d_lexer->has_token());
-    error("expected '(' at '" + d_lexer->token() + "'");
-    return false;
+    return error("expected '(' at '" + d_lexer->token() + "'");
   }
 
   token = next_token();
@@ -133,8 +132,7 @@ Parser::parse_command()
   if (!is_token_class(token, TokenClass::COMMAND))
   {
     assert(d_lexer->has_token());
-    error("expected command at '" + d_lexer->token() + "'");
-    return false;
+    return error("expected command at '" + d_lexer->token() + "'");
   }
 
   switch (token)
@@ -162,8 +160,7 @@ Parser::parse_command()
 
     default:
       assert(d_lexer->has_token());
-      error("unsupported command '" + d_lexer->token() + "'");
-      return false;
+      return error("unsupported command '" + d_lexer->token() + "'");
   }
 
   d_statistics.num_commands += 1;
@@ -472,8 +469,7 @@ Parser::parse_command_set_info()
   }
   if (token != Token::ATTRIBUTE)
   {
-    error("missing keyword after 'set-info'");
-    return false;
+    return error("missing keyword after 'set-info'");
   }
   if (token == Token::STATUS)
   {
@@ -484,8 +480,7 @@ Parser::parse_command_set_info()
     }
     if (token != Token::SYMBOL)
     {
-      error("invalid value for ':status'");
-      return false;
+      return error("invalid value for ':status'");
     }
     assert(d_lexer->has_token());
     const std::string& status = d_lexer->token();
@@ -503,8 +498,7 @@ Parser::parse_command_set_info()
     }
     else
     {
-      error("invalid value '" + status + "' for ':status'");
-      return false;
+      return error("invalid value '" + status + "' for ':status'");
     }
     Msg(1) << "parsed status '" << d_status << "'";
   }
@@ -519,17 +513,16 @@ Parser::parse_command_set_info()
 bool
 Parser::parse_command_set_logic()
 {
-  SymbolTable::Node* logic = parse_symbol(" after 'set-logic'");
-  if (logic == nullptr)
+  if (!parse_symbol(" after 'set-logic'"))
   {
     return false;
   }
+  SymbolTable::Node* logic = pop_node_arg();
+  assert(!logic->d_symbol.empty());
   d_logic = logic->d_symbol;
-  assert(!d_logic.empty());
   if (!is_supported_logic(d_logic))
   {
-    error("unsupported logic '" + d_logic + "'");
-    return false;
+    return error("unsupported logic '" + d_logic + "'");
   }
   Msg(1) << "logic " << d_logic;
   if (parse_rpars(1))
@@ -554,8 +547,7 @@ Parser::parse_command_set_option()
   }
   if (token == Token::RPAR)
   {
-    error("missing keyword after 'set-option'");
-    return false;
+    return error("missing keyword after 'set-option'");
   }
 
   if (token == Token::REGULAR_OUTPUT_CHANNEL)
@@ -573,8 +565,7 @@ Parser::parse_command_set_option()
     }
     catch (...)
     {
-      error("cannot create '" + outfile_name + "'");
-      return false;
+      return error("cannot create '" + outfile_name + "'");
     }
     d_out = &d_outfile;
   }
@@ -597,8 +588,7 @@ Parser::parse_command_set_option()
     else
     {
       assert(d_lexer->has_token());
-      error("expected Boolean argument at '" + d_lexer->token() + "'");
-      return false;
+      return error("expected Boolean argument at '" + d_lexer->token() + "'");
     }
   }
   else if (token == Token::GLOBAL_DECLARATIONS)
@@ -619,8 +609,7 @@ Parser::parse_command_set_option()
     else
     {
       assert(d_lexer->has_token());
-      error("expected Boolean argument at '" + d_lexer->token() + "'");
-      return false;
+      return error("expected Boolean argument at '" + d_lexer->token() + "'");
     }
   }
   else if (token == Token::PRODUCE_UNSAT_ASSUMPTIONS)
@@ -644,8 +633,7 @@ Parser::parse_command_set_option()
     }
     catch (bitwuzla::Exception& e)
     {
-      error(e.msg());
-      return false;
+      return error(e.msg());
     }
   }
   if (parse_rpars(1))
@@ -666,8 +654,7 @@ Parser::parse_lpars(uint64_t nlpars)
     Token token = next_token();
     if (token != Token::LPAR)
     {
-      error("missing '('");
-      return false;
+      return error("missing '('");
     }
     nlpars -= 1;
   }
@@ -684,15 +671,13 @@ Parser::parse_rpars(uint64_t nrpars)
     {
       if (nrpars > 0)
       {
-        error("missing ')' at end of file");
-        return false;
+        return error("missing ')' at end of file");
       }
       return true;
     }
     if (token != Token::RPAR)
     {
-      error("missing ')'");
-      return false;
+      return error("missing ')'");
     }
     nrpars -= 1;
   }
@@ -718,25 +703,23 @@ Parser::parse_uint64()
     }
     catch (...)
     {
-      error("invalid 64 bit integer '" + d_lexer->token() + "'");
-      return false;
+      return error("invalid 64 bit integer '" + d_lexer->token() + "'");
     }
   }
-  error("expected decimal value");
-  return false;
+  return error("expected decimal value");
 }
 
-SymbolTable::Node*
+bool
 Parser::parse_symbol(const std::string& error_msg, bool shadow)
 {
   Token token = next_token();
   if (!check_token(token))
   {
-    return nullptr;
+    return false;
   }
   if (token != Token::SYMBOL)
   {
-    error("expected symbol" + error_msg);
+    return error("expected symbol" + error_msg);
   }
   assert(d_last_node->d_token == Token::SYMBOL);
   // shadow previously defined symbols
@@ -745,7 +728,8 @@ Parser::parse_symbol(const std::string& error_msg, bool shadow)
     d_last_node        = d_table.insert(token, d_lexer->token());
     d_last_node->d_coo = d_lexer->coo();
   }
-  return d_last_node;
+  d_work_args.push_back(d_last_node);
+  return true;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -807,20 +791,17 @@ Parser::parse_open_term(Token token)
     {
       d_work.emplace_back(Token::LETBIND, d_lexer->coo());
       d_is_var_binding          = false;
-      SymbolTable::Node* symbol = parse_symbol("", true);
-      if (!symbol)
+      if (!parse_symbol("", true))
       {
         return false;
       }
-      d_work_args.push_back(symbol);
     }
     else if (d_is_sorted_var)
     {
       // parse <sorted_var>: <symbol> <sort>
       d_work.emplace_back(Token::SORTED_VAR, d_lexer->coo());
       d_is_sorted_var           = false;
-      SymbolTable::Node* symbol = parse_symbol(" in sorted var", true);
-      if (!symbol)
+      if (!parse_symbol(" in sorted var", true))
       {
         return false;
       }
@@ -829,17 +810,18 @@ Parser::parse_open_term(Token token)
         return false;
       }
       bitwuzla::Sort sort = pop_sort_arg();
+      SymbolTable::Node* symbol = pop_node_arg();
+      assert(!symbol->d_symbol.empty());
+      d_work_args.push_back(bitwuzla::mk_var(sort, symbol->d_symbol));
     }
   }
   else if (d_is_var_binding)
   {
-    error("expected var binding");
-    return false;
+    return error("expected var binding");
   }
   else if (d_is_sorted_var)
   {
-    error("expected sorted variable");
-    return false;
+    return error("expected sorted variable");
   }
   else if (is_symbol(token))
   {
@@ -851,17 +833,17 @@ Parser::parse_open_term(Token token)
   }
   else if (token == Token::NAMED)
   {
-    SymbolTable::Node* symbol = parse_symbol(" in sorted var", true);
-    if (!symbol)
+    if (!parse_symbol(" in sorted var", true))
     {
       return false;
     }
+    SymbolTable::Node* symbol = pop_node_arg();
+    assert(!symbol->d_symbol.empty());
     if (symbol->d_coo.line)
     {
-      error("symbol '" + symbol->d_symbol + "' already defined at line "
-            + std::to_string(symbol->d_coo.line) + " column "
-            + std::to_string(symbol->d_coo.col));
-      return false;
+      return error("symbol '" + symbol->d_symbol + "' already defined at line "
+                   + std::to_string(symbol->d_coo.line) + " column "
+                   + std::to_string(symbol->d_coo.col));
     }
     symbol->d_coo = d_lexer->coo();
     d_work.emplace_back(Token::SYMBOL, symbol, d_lexer->coo());
@@ -887,8 +869,7 @@ Parser::parse_open_term(Token token)
   }
   else
   {
-    error("unexpected token");
-    return false;
+    return error("unexpected token");
   }
   return true;
 }
@@ -904,8 +885,7 @@ Parser::parse_open_term_as()
 
   if (token != Token::SYMBOL)
   {
-    error("expected identifier");
-    return false;
+    return error("expected identifier");
   }
 
   SymbolTable::Node* node = d_last_node;
@@ -922,8 +902,7 @@ Parser::parse_open_term_as()
     const bitwuzla::Sort& sort = peek_sort_arg();
     if (!sort.is_array())
     {
-      error("expected array sort");
-      return false;
+      return error("expected array sort");
     }
     if (!parse_rpars(1))
     {
@@ -933,8 +912,7 @@ Parser::parse_open_term_as()
     close_term_scope();
     return true;
   }
-  error("invalid identifier '" + iden + "'");
-  return false;
+  return error("invalid identifier '" + iden + "'");
 }
 
 bool
@@ -1009,8 +987,7 @@ Parser::parse_open_term_indexed()
       if (!std::all_of(
               v.begin(), v.end(), [](char c) { return std::isdigit(c); }))
       {
-        error("invalid bit-vector value '" + val + "'");
-        return false;
+        return error("invalid bit-vector value '" + val + "'");
       }
       d_work_args.push_back(v);
     }
@@ -1027,8 +1004,7 @@ Parser::parse_open_term_indexed()
     }
     if (!allow_zero && peek_uint64_arg() == 0)
     {
-      error("expected non-zero index");
-      return false;
+      return error("expected non-zero index");
     }
   }
 
@@ -1120,13 +1096,11 @@ Parser::parse_open_term_symbol()
 
   if (is_token_class(token, TokenClass::COMMAND))
   {
-    error("unexpected command '" + node->d_symbol + "'");
-    return false;
+    return error("unexpected command '" + node->d_symbol + "'");
   }
   if (is_token_class(token, TokenClass::KEYWORD))
   {
-    error("unexpected keyword '" + node->d_symbol + "'");
-    return false;
+    return error("unexpected keyword '" + node->d_symbol + "'");
   }
   if (is_token_class(token, TokenClass::RESERVED))
   {
@@ -1165,8 +1139,7 @@ Parser::parse_open_term_symbol()
     else if (token != Token::BANG)
     {
       assert(!node->d_symbol.empty());
-      error("unsupported reserved word '" + node->d_symbol + "'");
-      return false;
+      return error("unsupported reserved word '" + node->d_symbol + "'");
     }
   }
   else if (token == Token::SYMBOL)
@@ -1174,8 +1147,7 @@ Parser::parse_open_term_symbol()
     if (node->d_term.is_null())
     {
       assert(!node->d_symbol.empty());
-      error("undefined symbol '" + node->d_symbol + "'");
-      return false;
+      return error("undefined symbol '" + node->d_symbol + "'");
     }
     cur.d_token = Token::EXP;
   }
@@ -1191,31 +1163,27 @@ Parser::parse_open_term_symbol()
   }
   else if (token == Token::ATTRIBUTE)
   {
-    error("unexpected attribute '" + std::to_string(token) + "'");
-    return false;
+    return error("unexpected attribute '" + std::to_string(token) + "'");
   }
   else if (is_token_class(token, TokenClass::CORE))
   {
     if (token == Token::BOOL)
     {
-      error("unexpected '" + std::to_string(token) + "'");
-      return false;
+      return error("unexpected '" + std::to_string(token) + "'");
     }
   }
   else if (d_arrays_enabled && is_token_class(token, TokenClass::ARRAY))
   {
     if (token == Token::ARRAY)
     {
-      error("unexpected '" + std::to_string(token) + "'");
-      return false;
+      return error("unexpected '" + std::to_string(token) + "'");
     }
   }
   else if (d_bv_enabled && is_token_class(token, TokenClass::BV))
   {
     if (token == Token::BV_BITVEC)
     {
-      error("unexpected '" + std::to_string(token) + "'");
-      return false;
+      return error("unexpected '" + std::to_string(token) + "'");
     }
   }
   else if (d_fp_enabled && is_token_class(token, TokenClass::FP))
@@ -1224,8 +1192,7 @@ Parser::parse_open_term_symbol()
         || token == Token::FP_FLOAT32 || token == Token::FP_FLOAT64
         || token == Token::FP_FLOAT128)
     {
-      error("unexpected '" + std::to_string(token) + "'");
-      return false;
+      return error("unexpected '" + std::to_string(token) + "'");
     }
 
     if (token == Token::FP_RM_RNA_LONG || token == Token::FP_RM_RNA)
@@ -1256,8 +1223,7 @@ Parser::parse_open_term_symbol()
   }
   else if (token != Token::REAL_DIV)
   {
-    error("unexpected token '" + std::to_string(token) + "'");
-    return false;
+    return error("unexpected token '" + std::to_string(token) + "'");
   }
   return true;
 }
@@ -1322,8 +1288,7 @@ Parser::parse_sort()
     }
     if (token != Token::UNDERSCORE)
     {
-      error("expected '_' or 'Array'");
-      return false;
+      return error("expected '_' or 'Array'");
     }
     return parse_sort_bv_fp();
   }
@@ -1333,14 +1298,12 @@ Parser::parse_sort()
     SymbolTable::Node* sort = d_table.find(d_lexer->token());
     if (!sort || sort->d_sort.is_null())
     {
-      error("invalid sort '" + d_lexer->token() + "'");
-      return false;
+      return error("invalid sort '" + d_lexer->token() + "'");
     }
     d_work_args.push_back(sort->d_sort);
     return true;
   }
-  error("expected '(' or sort keyword");
-  return false;
+  return error("expected '(' or sort keyword");
 }
 
 bool
@@ -1382,8 +1345,7 @@ Parser::parse_sort_bv_fp()
     uint64_t size = pop_uint64_arg();
     if (size == 0)
     {
-      error("invalid bit-vector size '0'");
-      return false;
+      return error("invalid bit-vector size '0'");
     }
     if (!parse_rpars(1))
     {
@@ -1401,8 +1363,7 @@ Parser::parse_sort_bv_fp()
     uint64_t esize = pop_uint64_arg();
     if (esize == 0)
     {
-      error("invalid exponent bit-vector size '0'");
-      return false;
+      return error("invalid exponent bit-vector size '0'");
     }
     if (!parse_uint64())
     {
@@ -1411,8 +1372,7 @@ Parser::parse_sort_bv_fp()
     uint64_t ssize = pop_uint64_arg();
     if (ssize == 0)
     {
-      error("invalid significand bit-vector size '0'");
-      return false;
+      return error("invalid significand bit-vector size '0'");
     }
     if (!parse_rpars(1))
     {
@@ -1421,9 +1381,8 @@ Parser::parse_sort_bv_fp()
     d_work_args.push_back(bitwuzla::mk_fp_sort(esize, ssize));
     return true;
   }
-  error("expected '" + std::to_string(Token::BV_BITVEC) + "' or '"
-        + std::to_string(Token::FP_FLOATINGPOINT) + "'");
-  return false;
+  return error("expected '" + std::to_string(Token::BV_BITVEC) + "' or '"
+               + std::to_string(Token::FP_FLOATINGPOINT) + "'");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1444,28 +1403,29 @@ Parser::close_term_scope()
 
 /* -------------------------------------------------------------------------- */
 
-void
+bool
 Parser::error(const std::string& error_msg, const Lexer::Coordinate* coo)
 {
   assert(d_lexer);
   if (!coo) coo = &d_lexer->coo();
   d_error = d_infile_name + ":" + std::to_string(coo->col) + ":"
             + std::to_string(coo->line) + ": " + error_msg;
+  return false;
 }
 
-void
+bool
 Parser::error_invalid()
 {
   assert(d_lexer);
   assert(d_lexer->error());
-  error(d_lexer->error_msg());
+  return error(d_lexer->error_msg());
 }
 
-void
+bool
 Parser::error_eof(Token token)
 {
-  error("unexpected end of file after '" + std::to_string(token) + "'",
-        &d_lexer->last_coo());
+  return error("unexpected end of file after '" + std::to_string(token) + "'",
+               &d_lexer->last_coo());
 }
 
 bool
@@ -1473,13 +1433,11 @@ Parser::check_token(Token token)
 {
   if (token == Token::ENDOFFILE)
   {
-    error_eof(token);
-    return false;
+    return error_eof(token);
   }
   if (token == Token::INVALID)
   {
-    error_invalid();
-    return false;
+    return error_invalid();
   }
   return true;
 }

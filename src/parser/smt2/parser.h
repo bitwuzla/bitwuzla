@@ -73,8 +73,7 @@ class Parser
 
   bool parse_uint64();
 
-  SymbolTable::Node* parse_symbol(const std::string& error_msg,
-                                  bool shadow = false);
+  bool parse_symbol(const std::string& error_msg, bool shadow = false);
 
   bool parse_term(bool look_ahead = false, Token la_char = Token::INVALID);
   bool parse_open_term(Token token);
@@ -92,10 +91,10 @@ class Parser
   void open_term_scope();
   void close_term_scope();
 
-  void error(const std::string& error_msg,
+  bool error(const std::string& error_msg,
              const Lexer::Coordinate* coo = nullptr);
-  void error_invalid();
-  void error_eof(Token token);
+  bool error_invalid();
+  bool error_eof(Token token);
 
   bool check_token(Token token);
 
