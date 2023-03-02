@@ -71,6 +71,8 @@ class Parser
   bool parse_lpars(uint64_t nlpars);
   bool parse_rpars(uint64_t nrpars);
 
+  bool parse_uint64();
+
   SymbolTable::Node* parse_symbol(const std::string& error_msg,
                                   bool shadow = false);
 
@@ -82,6 +84,8 @@ class Parser
   bool parse_open_term_symbol();
 
   bool parse_sort();
+  bool parse_sort_array();
+  bool parse_sort_bv_fp();
 
   bool close_term(Token token);
 

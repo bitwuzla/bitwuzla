@@ -697,6 +697,33 @@ Parser::parse_rpars(uint64_t nrpars)
   return true;
 }
 
+bool
+Parser::parse_uint64()
+{
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return false;
+  }
+  if (token == Token::DECIMAL_VALUE)
+  {
+    assert(!d_lexer->token().empty());
+    try
+    {
+      uint64_t val = std::stoll(d_lexer->token());
+      d_work_args.push_back(val);
+      return true;
+    }
+    catch (...)
+    {
+      error("invalid 64 bit integer '" + d_lexer->token() + "'");
+      return false;
+    }
+  }
+  error("expected decimal value");
+  return false;
+}
+
 SymbolTable::Node*
 Parser::parse_symbol(const std::string& error_msg, bool shadow)
 {
@@ -1043,6 +1070,174 @@ bool
 Parser::close_term(Token token)
 {
   // TODO
+}
+
+/* -------------------------------------------------------------------------- */
+
+bool
+Parser::parse_sort()
+{
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return false;
+  }
+
+  if (token == Token::BOOL)
+  {
+    d_work_args.push_back(bitwuzla::mk_bool_sort());
+    return true;
+  }
+  if (token == Token::FP_FLOAT16)
+  {
+    d_work_args.push_back(bitwuzla::mk_fp_sort(5, 11));
+    return true;
+  }
+  if (token == Token::FP_FLOAT32)
+  {
+    d_work_args.push_back(bitwuzla::mk_fp_sort(8, 24));
+    return true;
+  }
+  if (token == Token::FP_FLOAT64)
+  {
+    d_work_args.push_back(bitwuzla::mk_fp_sort(11, 53));
+    return true;
+  }
+  if (token == Token::FP_FLOAT128)
+  {
+    d_work_args.push_back(bitwuzla::mk_fp_sort(15, 113));
+    return true;
+  }
+  if (token == Token::FP_ROUNDINGMODE)
+  {
+    d_work_args.push_back(bitwuzla::mk_rm_sort());
+    return true;
+  }
+  if (token == Token::LPAR)
+  {
+    token = next_token();
+    if (!check_token(token))
+    {
+      return false;
+    }
+    if (token == Token::ARRAY)
+    {
+      return parse_sort_array();
+    }
+    if (token != Token::UNDERSCORE)
+    {
+      error("expected '_' or 'Array'");
+      return false;
+    }
+    return parse_sort_bv_fp();
+  }
+  if (token == Token::SYMBOL)
+  {
+    assert(!d_lexer->token().empty());
+    SymbolTable::Node* sort = d_table.find(d_lexer->token());
+    if (!sort || sort->d_sort.is_null())
+    {
+      error("invalid sort '" + d_lexer->token() + "'");
+      return false;
+    }
+    d_work_args.push_back(sort->d_sort);
+    return true;
+  }
+  error("expected '(' or sort keyword");
+  return false;
+}
+
+bool
+Parser::parse_sort_array()
+{
+  if (!parse_sort())
+  {
+    return false;
+  }
+  assert(std::holds_alternative<bitwuzla::Sort>(d_work_args.back()));
+  bitwuzla::Sort index = std::get<bitwuzla::Sort>(d_work_args.back());
+  d_work_args.pop_back();
+  if (!parse_sort())
+  {
+    return false;
+  }
+  assert(std::holds_alternative<bitwuzla::Sort>(d_work_args.back()));
+  bitwuzla::Sort element = std::get<bitwuzla::Sort>(d_work_args.back());
+  d_work_args.pop_back();
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  d_work_args.push_back(bitwuzla::mk_array_sort(index, element));
+  return true;
+}
+
+bool
+Parser::parse_sort_bv_fp()
+{
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return false;
+  }
+
+  if (token == Token::BV_BITVEC)
+  {
+    if (!parse_uint64())
+    {
+      return false;
+    }
+    assert(std::holds_alternative<uint64_t>(d_work_args.back()));
+    uint64_t size = std::get<uint64_t>(d_work_args.back());
+    d_work_args.pop_back();
+    if (size == 0)
+    {
+      error("invalid bit-vector size '0'");
+      return false;
+    }
+    if (!parse_rpars(1))
+    {
+      return false;
+    }
+    d_work_args.push_back(bitwuzla::mk_bv_sort(size));
+    return true;
+  }
+  if (token == Token::FP_FLOATINGPOINT)
+  {
+    if (!parse_uint64())
+    {
+      return false;
+    }
+    assert(std::holds_alternative<uint64_t>(d_work_args.back()));
+    uint64_t esize = std::get<uint64_t>(d_work_args.back());
+    d_work_args.pop_back();
+    if (esize == 0)
+    {
+      error("invalid exponent bit-vector size '0'");
+      return false;
+    }
+    if (!parse_uint64())
+    {
+      return false;
+    }
+    assert(std::holds_alternative<uint64_t>(d_work_args.back()));
+    uint64_t ssize = std::get<uint64_t>(d_work_args.back());
+    d_work_args.pop_back();
+    if (ssize == 0)
+    {
+      error("invalid significand bit-vector size '0'");
+      return false;
+    }
+    if (!parse_rpars(1))
+    {
+      return false;
+    }
+    d_work_args.push_back(bitwuzla::mk_fp_sort(esize, ssize));
+    return true;
+  }
+  error("expected '" + std::to_string(Token::BV_BITVEC) + "' or '"
+        + std::to_string(Token::FP_FLOATINGPOINT) + "'");
+  return false;
 }
 
 /* -------------------------------------------------------------------------- */
