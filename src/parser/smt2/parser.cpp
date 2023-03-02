@@ -518,7 +518,7 @@ Parser::parse_command_set_logic()
     return false;
   }
   SymbolTable::Node* logic = pop_node_arg();
-  assert(!logic->d_symbol.empty());
+  assert(logic->has_symbol());
   d_logic = logic->d_symbol;
   if (!is_supported_logic(d_logic))
   {
@@ -811,7 +811,7 @@ Parser::parse_open_term(Token token)
       }
       bitwuzla::Sort sort = pop_sort_arg();
       SymbolTable::Node* symbol = pop_node_arg();
-      assert(!symbol->d_symbol.empty());
+      assert(symbol->has_symbol());
       d_work_args.push_back(bitwuzla::mk_var(sort, symbol->d_symbol));
     }
   }
@@ -838,7 +838,7 @@ Parser::parse_open_term(Token token)
       return false;
     }
     SymbolTable::Node* symbol = pop_node_arg();
-    assert(!symbol->d_symbol.empty());
+    assert(symbol->has_symbol());
     if (symbol->d_coo.line)
     {
       return error("symbol '" + symbol->d_symbol + "' already defined at line "
@@ -890,7 +890,7 @@ Parser::parse_open_term_as()
 
   SymbolTable::Node* node = d_last_node;
   assert(node);
-  assert(!node->d_symbol.empty());
+  assert(node->has_symbol());
   const std::string& iden = node->d_symbol;
 
   if (iden == "const" || iden == "const-array")
@@ -1138,7 +1138,7 @@ Parser::parse_open_term_symbol()
     }
     else if (token != Token::BANG)
     {
-      assert(!node->d_symbol.empty());
+      assert(node->has_symbol());
       return error("unsupported reserved word '" + node->d_symbol + "'");
     }
   }
@@ -1146,7 +1146,7 @@ Parser::parse_open_term_symbol()
   {
     if (node->d_term.is_null())
     {
-      assert(!node->d_symbol.empty());
+      assert(node->has_symbol());
       return error("undefined symbol '" + node->d_symbol + "'");
     }
     cur.d_token = Token::EXP;

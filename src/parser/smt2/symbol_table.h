@@ -13,6 +13,7 @@ class SymbolTable
   struct Node
   {
     Node(Token token, const std::string& name, uint64_t scope_level);
+    bool has_symbol() const;
     Token d_token;
     bool d_is_bound;
     bool d_is_sort;

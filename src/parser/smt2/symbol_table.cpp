@@ -17,6 +17,12 @@ SymbolTable::Node::Node(Token token,
 {
 }
 
+bool
+SymbolTable::Node::has_symbol() const
+{
+  return !d_symbol.empty();
+}
+
 SymbolTable::Node*
 SymbolTable::insert(Token token,
                     const std::string& symbol,
