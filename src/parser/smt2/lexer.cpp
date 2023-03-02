@@ -21,6 +21,12 @@ Lexer::next_token()
   return next_token_aux();
 }
 
+bool
+Lexer::has_token() const
+{
+  return !d_token.empty();
+}
+
 const std::string&
 Lexer::token() const
 {

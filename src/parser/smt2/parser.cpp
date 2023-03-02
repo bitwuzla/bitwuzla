@@ -95,7 +95,7 @@ Parser::next_token()
   Token token = d_lexer->next_token();
   if (token == Token::SYMBOL || token == Token::ATTRIBUTE)
   {
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     SymbolTable::Node* node = d_table.find(d_lexer->token());
     if (!node)
     {
@@ -118,7 +118,7 @@ Parser::parse_command()
 
   if (token != Token::LPAR)
   {
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     error("expected '(' at '" + d_lexer->token() + "'");
     return false;
   }
@@ -130,7 +130,7 @@ Parser::parse_command()
   }
   if (!is_token_class(token, TokenClass::COMMAND))
   {
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     error("expected command at '" + d_lexer->token() + "'");
     return false;
   }
@@ -159,7 +159,7 @@ Parser::parse_command()
     case Token::SET_OPTION: return parse_command_set_option();
 
     default:
-      assert(!d_lexer->token().empty());
+      assert(d_lexer->has_token());
       error("unsupported command '" + d_lexer->token() + "'");
       return false;
   }
@@ -485,7 +485,7 @@ Parser::parse_command_set_info()
       error("invalid value for ':status'");
       return false;
     }
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     const std::string& status = d_lexer->token();
     if (status == "sat")
     {
@@ -594,7 +594,7 @@ Parser::parse_command_set_option()
     }
     else
     {
-      assert(!d_lexer->token().empty());
+      assert(d_lexer->has_token());
       error("expected Boolean argument at '" + d_lexer->token() + "'");
       return false;
     }
@@ -616,7 +616,7 @@ Parser::parse_command_set_option()
     }
     else
     {
-      assert(!d_lexer->token().empty());
+      assert(d_lexer->has_token());
       error("expected Boolean argument at '" + d_lexer->token() + "'");
       return false;
     }
@@ -628,14 +628,14 @@ Parser::parse_command_set_option()
   // Bitwuzla options
   else
   {
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     std::string opt = d_lexer->token();
     token           = next_token();
     if (!check_token(token))
     {
       return false;
     }
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     try
     {
       d_options.set(opt, d_lexer->token());
@@ -707,7 +707,7 @@ Parser::parse_uint64()
   }
   if (token == Token::DECIMAL_VALUE)
   {
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     try
     {
       uint64_t val = std::stoll(d_lexer->token());
@@ -871,21 +871,21 @@ Parser::parse_open_term(Token token)
   }
   else if (token == Token::BINARY_VALUE)
   {
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     std::string val     = d_lexer->token().substr(2);
     bitwuzla::Sort sort = bitwuzla::mk_bv_sort(val.size());
     d_work_args.push_back(bitwuzla::mk_bv_value(sort, val));
   }
   else if (token == Token::HEXADECIMAL_VALUE)
   {
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     std::string val     = d_lexer->token().substr(2);
     bitwuzla::Sort sort = bitwuzla::mk_bv_sort(val.size() * 4);
     d_work_args.push_back(bitwuzla::mk_bv_value(sort, val, 16));
   }
   else if (token == Token::DECIMAL_VALUE || token == Token::REAL_VALUE)
   {
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     d_work_args.push_back(d_lexer->token().empty());
   }
   else
@@ -1133,7 +1133,7 @@ Parser::parse_sort()
   }
   if (token == Token::SYMBOL)
   {
-    assert(!d_lexer->token().empty());
+    assert(d_lexer->has_token());
     SymbolTable::Node* sort = d_table.find(d_lexer->token());
     if (!sort || sort->d_sort.is_null())
     {

@@ -20,6 +20,7 @@ class Lexer
 
   Lexer(std::istream* infile);
   Token next_token();
+  bool has_token() const;
   const std::string& token() const;
   bool error() const;
   const std::string& error_msg() const;
