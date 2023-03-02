@@ -20,6 +20,10 @@ Parser::Parser(bitwuzla::Options& options,
       d_log_level(log_level),
       d_verbosity(verbosity)
 {
+  d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
+                       | static_cast<uint32_t>(TokenClass::CORE)
+                       | static_cast<uint32_t>(TokenClass::KEYWORD)
+                       | static_cast<uint32_t>(TokenClass::RESERVED);
 }
 
 std::string
@@ -653,6 +657,22 @@ Parser::parse_command_set_option()
 /* -------------------------------------------------------------------------- */
 
 bool
+Parser::parse_lpars(uint64_t nlpars)
+{
+  while (nlpars > 0)
+  {
+    Token token = next_token();
+    if (token != Token::LPAR)
+    {
+      error("missing '('");
+      return false;
+    }
+    nlpars -= 1;
+  }
+  return true;
+}
+
+bool
 Parser::parse_rpars(uint64_t nrpars)
 {
   while (nrpars > 0)
@@ -678,7 +698,7 @@ Parser::parse_rpars(uint64_t nrpars)
 }
 
 SymbolTable::Node*
-Parser::parse_symbol(const std::string& error_msg)
+Parser::parse_symbol(const std::string& error_msg, bool shadow)
 {
   Token token = next_token();
   if (!check_token(token))
@@ -687,10 +707,342 @@ Parser::parse_symbol(const std::string& error_msg)
   }
   if (token != Token::SYMBOL)
   {
-    error("expected symbol" + error_msg + " but reached end of file");
+    error("expected symbol" + error_msg);
   }
   assert(d_last_node->d_token == Token::SYMBOL);
+  // shadow previously defined symbols
+  if (shadow && d_last_node->d_coo.line)
+  {
+    d_last_node        = d_table.insert(token, d_lexer->token());
+    d_last_node->d_coo = d_lexer->coo();
+  }
   return d_last_node;
+}
+
+/* -------------------------------------------------------------------------- */
+
+bool
+Parser::parse_term(bool look_ahead, Token la_char)
+{
+  /* Note: we need look ahead and tokens string only for get-value
+   *       (for parsing a term list and printing the originally parsed,
+   *       non-simplified expression) */
+  Token token;
+  bitwuzla::Term res;
+  d_term_open = 0;
+
+  do
+  {
+    if (look_ahead)
+    {
+      token      = la_char;
+      look_ahead = false;
+    }
+    else
+    {
+      token = next_token();
+    }
+    if (!check_token(token))
+    {
+      return false;
+    }
+
+    if (token == Token::RPAR)
+    {
+      if (!close_term(token))
+      {
+        return false;
+      }
+    }
+    else
+    {
+      if (!parse_open_term(token))
+      {
+        return false;
+      }
+    }
+  } while (d_term_open > 0);
+  assert(d_work_args.size() > 0);
+  return true;
+}
+
+bool
+Parser::parse_open_term(Token token)
+{
+  d_expect_body = false;
+
+  if (token == Token::LPAR)
+  {
+    d_work_args_control.push_back(d_work_args.size());
+
+    if (d_is_var_binding)
+    {
+      d_work.emplace_back(Token::LETBIND, d_lexer->coo());
+      d_is_var_binding          = false;
+      SymbolTable::Node* symbol = parse_symbol("", true);
+      if (!symbol)
+      {
+        return false;
+      }
+      d_work_args.push_back(symbol);
+    }
+    else if (d_is_sorted_var)
+    {
+      // parse <sorted_var>: <symbol> <sort>
+      d_work.emplace_back(Token::SORTED_VAR, d_lexer->coo());
+      d_is_sorted_var           = false;
+      SymbolTable::Node* symbol = parse_symbol(" in sorted var", true);
+      if (!symbol)
+      {
+        return false;
+      }
+      if (!parse_sort())
+      {
+        return false;
+      }
+      assert(std::holds_alternative<bitwuzla::Sort>(d_work_args.back()));
+      bitwuzla::Sort sort = std::get<bitwuzla::Sort>(d_work_args.back());
+      d_work_args.pop_back();
+      d_work_args.push_back(bitwuzla::mk_var(sort, symbol->d_symbol));
+    }
+    d_term_open += 1;
+  }
+  else if (d_is_var_binding)
+  {
+    error("expected var binding");
+    return false;
+  }
+  else if (d_is_sorted_var)
+  {
+    error("expected sorted variable");
+    return false;
+  }
+  else if (is_symbol(token))
+  {
+    d_work.emplace_back(token, d_last_node, d_lexer->coo());
+    if (!parse_open_term_symbol())
+    {
+      return false;
+    }
+  }
+  else if (token == Token::NAMED)
+  {
+    SymbolTable::Node* symbol = parse_symbol(" in sorted var", true);
+    if (!symbol)
+    {
+      return false;
+    }
+    if (symbol->d_coo.line)
+    {
+      error("symbol '" + symbol->d_symbol + "' already defined at line "
+            + std::to_string(symbol->d_coo.line) + " column "
+            + std::to_string(symbol->d_coo.col));
+      return false;
+    }
+    symbol->d_coo = d_lexer->coo();
+    d_work.emplace_back(Token::SYMBOL, symbol, d_lexer->coo());
+  }
+  else if (token == Token::BINARY_VALUE)
+  {
+    assert(!d_lexer->token().empty());
+    std::string val     = d_lexer->token().substr(2);
+    bitwuzla::Sort sort = bitwuzla::mk_bv_sort(val.size());
+    d_work_args.push_back(bitwuzla::mk_bv_value(sort, val));
+  }
+  else if (token == Token::HEXADECIMAL_VALUE)
+  {
+    assert(!d_lexer->token().empty());
+    std::string val     = d_lexer->token().substr(2);
+    bitwuzla::Sort sort = bitwuzla::mk_bv_sort(val.size() * 4);
+    d_work_args.push_back(bitwuzla::mk_bv_value(sort, val, 16));
+  }
+  else if (token == Token::DECIMAL_VALUE || token == Token::REAL_VALUE)
+  {
+    assert(!d_lexer->token().empty());
+    d_work_args.push_back(d_lexer->token().empty());
+  }
+  else
+  {
+    error("unexpected token");
+    return false;
+  }
+  return true;
+}
+
+bool
+Parser::parse_open_term_as()
+{
+  // TODO
+}
+
+bool
+Parser::parse_open_term_indexed()
+{
+  // TODO
+}
+
+bool
+Parser::parse_open_term_quant()
+{
+  // TODO
+}
+
+bool
+Parser::parse_open_term_symbol()
+{
+  ParsedItem& cur         = d_work.back();
+  SymbolTable::Node* node = std::get<SymbolTable::Node*>(cur.d_parsed);
+  Token token             = node->d_token;
+
+  if (is_token_class(token, TokenClass::COMMAND))
+  {
+    error("unexpected command '" + node->d_symbol + "'");
+    return false;
+  }
+  if (is_token_class(token, TokenClass::KEYWORD))
+  {
+    error("unexpected keyword '" + node->d_symbol + "'");
+    return false;
+  }
+  if (is_token_class(token, TokenClass::RESERVED))
+  {
+    if (token == Token::LET)
+    {
+      if (!parse_lpars(1))
+      {
+        return false;
+      }
+      d_work_args_control.push_back(d_work_args.size());
+      d_term_open += 1;
+      d_work.emplace_back(Token::PARLETBIND, d_lexer->coo());
+      assert(!d_is_var_binding);
+      d_is_var_binding = true;
+    }
+    else if (token == Token::FORALL || token == Token::EXISTS)
+    {
+      if (!parse_open_term_quant())
+      {
+        return false;
+      }
+    }
+    else if (token == Token::UNDERSCORE)
+    {
+      if (!parse_open_term_indexed())
+      {
+        return false;
+      }
+    }
+    else if (token == Token::AS)
+    {
+      if (!parse_open_term_as())
+      {
+        return false;
+      }
+    }
+    else if (token != Token::BANG)
+    {
+      assert(!node->d_symbol.empty());
+      error("unsupported reserved word '" + node->d_symbol + "'");
+      return false;
+    }
+  }
+  else if (token == Token::SYMBOL)
+  {
+    if (node->d_term.is_null())
+    {
+      assert(!node->d_symbol.empty());
+      error("undefined symbol '" + node->d_symbol + "'");
+      return false;
+    }
+    cur.d_token = Token::EXP;
+  }
+  else if (token == Token::TRUE)
+  {
+    d_work.pop_back();
+    d_work_args.push_back(bitwuzla::mk_true());
+  }
+  else if (token == Token::FALSE)
+  {
+    d_work.pop_back();
+    d_work_args.push_back(bitwuzla::mk_false());
+  }
+  else if (token == Token::ATTRIBUTE)
+  {
+    error("unexpected attribute '" + std::to_string(token) + "'");
+    return false;
+  }
+  else if (is_token_class(token, TokenClass::CORE))
+  {
+    if (token == Token::BOOL)
+    {
+      error("unexpected '" + std::to_string(token) + "'");
+      return false;
+    }
+  }
+  else if (d_arrays_enabled && is_token_class(token, TokenClass::ARRAY))
+  {
+    if (token == Token::ARRAY)
+    {
+      error("unexpected '" + std::to_string(token) + "'");
+      return false;
+    }
+  }
+  else if (d_bv_enabled && is_token_class(token, TokenClass::BV))
+  {
+    if (token == Token::BV_BITVEC)
+    {
+      error("unexpected '" + std::to_string(token) + "'");
+      return false;
+    }
+  }
+  else if (d_fp_enabled && is_token_class(token, TokenClass::FP))
+  {
+    if (token == Token::FP_FLOATINGPOINT || token == Token::FP_FLOAT16
+        || token == Token::FP_FLOAT32 || token == Token::FP_FLOAT64
+        || token == Token::FP_FLOAT128)
+    {
+      error("unexpected '" + std::to_string(token) + "'");
+      return false;
+    }
+
+    if (token == Token::FP_RM_RNA_LONG || token == Token::FP_RM_RNA)
+    {
+      d_work.pop_back();
+      d_work_args.push_back(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RNA));
+    }
+    else if (token == Token::FP_RM_RNE_LONG || token == Token::FP_RM_RNE)
+    {
+      d_work.pop_back();
+      d_work_args.push_back(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RNE));
+    }
+    else if (token == Token::FP_RM_RTN_LONG || token == Token::FP_RM_RTN)
+    {
+      d_work.pop_back();
+      d_work_args.push_back(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTN));
+    }
+    else if (token == Token::FP_RM_RTP_LONG || token == Token::FP_RM_RTP)
+    {
+      d_work.pop_back();
+      d_work_args.push_back(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTP));
+    }
+    else if (token == Token::FP_RM_RTZ_LONG || token == Token::FP_RM_RTZ)
+    {
+      d_work.pop_back();
+      d_work_args.push_back(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTZ));
+    }
+  }
+  else if (token != Token::REAL_DIV)
+  {
+    error("unexpected token '" + std::to_string(token) + "'");
+    return false;
+  }
+  return true;
+}
+
+bool
+Parser::close_term(Token token)
+{
+  // TODO
 }
 
 /* -------------------------------------------------------------------------- */
@@ -735,6 +1087,12 @@ Parser::check_token(Token token)
   return true;
 }
 
+bool
+Parser::is_symbol(Token token)
+{
+  return token == Token::SYMBOL || token == Token::ATTRIBUTE
+         || (static_cast<uint32_t>(token) & d_token_class_mask) > 0;
+}
 size_t
 Parser::enable_theory(const std::string& logic,
                       const std::string& theory,
@@ -749,14 +1107,21 @@ Parser::enable_theory(const std::string& logic,
       if (theory == "A")
       {
         d_table.init_array_symbols();
+        d_token_class_mask |= static_cast<uint32_t>(TokenClass::ARRAY);
+        d_arrays_enabled = true;
       }
       else if (theory == "BV")
       {
         d_table.init_bv_symbols();
+        d_token_class_mask |= static_cast<uint32_t>(TokenClass::BV);
+        d_bv_enabled = true;
       }
       else if (theory == "FP" || theory == "FPLRA")
       {
         d_table.init_fp_symbols();
+        d_token_class_mask |= static_cast<uint32_t>(TokenClass::FP);
+        d_token_class_mask |= static_cast<uint32_t>(TokenClass::REALS);
+        d_fp_enabled = true;
       }
       size_prefix += size_theory;
     }
@@ -779,6 +1144,13 @@ Parser::is_supported_logic(const std::string& logic)
     d_table.init_array_symbols();
     d_table.init_bv_symbols();
     d_table.init_fp_symbols();
+    d_token_class_mask |= static_cast<uint32_t>(TokenClass::ARRAY);
+    d_token_class_mask |= static_cast<uint32_t>(TokenClass::BV);
+    d_token_class_mask |= static_cast<uint32_t>(TokenClass::FP);
+    d_token_class_mask |= static_cast<uint32_t>(TokenClass::REALS);
+    d_arrays_enabled = true;
+    d_bv_enabled     = true;
+    d_fp_enabled     = true;
     return true;
   }
   size_prefix = enable_theory(logic, "QF_", size_prefix);
@@ -798,6 +1170,27 @@ Parser::print_success()
     *d_out << "success" << std::endl;
     d_out->flush();
   }
+}
+
+/* Parser::ParsedItem ------------------------------------------------------- */
+
+Parser::ParsedItem::ParsedItem(Token token, const Lexer::Coordinate& coo)
+    : d_token(token), d_coo(coo)
+{
+}
+
+Parser::ParsedItem::ParsedItem(Token token,
+                               const std::string& str,
+                               const Lexer::Coordinate& coo)
+    : d_token(token), d_parsed(str), d_coo(coo)
+{
+}
+
+Parser::ParsedItem::ParsedItem(Token token,
+                               SymbolTable::Node* node,
+                               const Lexer::Coordinate& coo)
+    : d_token(token), d_parsed(node), d_coo(coo)
+{
 }
 
 /* Parser::Statistics ------------------------------------------------------- */

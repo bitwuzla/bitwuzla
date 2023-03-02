@@ -29,6 +29,20 @@ class Parser
   void configure_terminator(bitwuzla::Terminator* terminator);
 
  private:
+  struct ParsedItem
+  {
+    ParsedItem(Token token, const Lexer::Coordinate& coo);
+    ParsedItem(Token token,
+               const std::string& str,
+               const Lexer::Coordinate& coo);
+    ParsedItem(Token token,
+               SymbolTable::Node* node,
+               const Lexer::Coordinate& coo);
+    Token d_token;
+    std::variant<std::string, SymbolTable::Node*> d_parsed;
+    Lexer::Coordinate d_coo;
+  };
+
   bool terminate();
 
   Token next_token();
@@ -54,9 +68,22 @@ class Parser
   bool parse_command_set_logic();
   bool parse_command_set_option();
 
+  bool parse_lpars(uint64_t nlpars);
   bool parse_rpars(uint64_t nrpars);
 
-  SymbolTable::Node* parse_symbol(const std::string& error_msg);
+  SymbolTable::Node* parse_symbol(const std::string& error_msg,
+                                  bool shadow = false);
+
+  bool parse_term(bool look_ahead = false, Token la_char = Token::INVALID);
+  bool parse_open_term(Token token);
+  bool parse_open_term_as();
+  bool parse_open_term_indexed();
+  bool parse_open_term_quant();
+  bool parse_open_term_symbol();
+
+  bool parse_sort();
+
+  bool close_term(Token token);
 
   void error(const std::string& error_msg,
              const Lexer::Coordinate* coo = nullptr);
@@ -65,10 +92,13 @@ class Parser
 
   bool check_token(Token token);
 
+  bool is_symbol(Token token);
+
   size_t enable_theory(const std::string& logic,
                        const std::string& theory,
                        size_t size_prefix);
   bool is_supported_logic(const std::string& logic);
+
   void print_success();
 
   std::unique_ptr<Lexer> d_lexer;
@@ -83,8 +113,9 @@ class Parser
 
   /** The associated logger class. */
   util::Logger d_logger;
-
+  /** The log level. */
   uint64_t d_log_level;
+  /** The verbosity level. */
   uint64_t d_verbosity;
 
   std::ofstream d_outfile;
@@ -92,11 +123,31 @@ class Parser
 
   bool d_print_success = false;
   bool d_global_decl   = false;
-  bool d_done = false;
-
+  bool d_arrays_enabled = false;
+  bool d_bv_enabled     = false;
+  bool d_fp_enabled     = false;
   std::string d_logic;
 
   bitwuzla::Result d_status;
+
+  std::vector<ParsedItem> d_work;
+  std::vector<std::variant<uint64_t,
+                           std::string,
+                           bitwuzla::Term,
+                           bitwuzla::Sort,
+                           SymbolTable::Node*>>
+      d_work_args;
+  std::vector<uint64_t> d_work_args_control;
+
+  uint64_t d_token_class_mask = 0;
+
+  // TODO: this might be redundant with d_work_args_control.size()
+  uint64_t d_term_open = 0;
+
+  bool d_expect_body    = false;
+  bool d_is_sorted_var  = false;
+  bool d_is_var_binding = false;
+  bool d_done           = false;
 
   std::string d_error;
   Lexer::Coordinate* d_err_coo = nullptr;
