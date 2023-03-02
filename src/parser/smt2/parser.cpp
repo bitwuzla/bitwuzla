@@ -802,7 +802,7 @@ Parser::parse_open_term(Token token)
 
   if (token == Token::LPAR)
   {
-    open_term();
+    open_term_scope();
     if (d_is_var_binding)
     {
       d_work.emplace_back(Token::LETBIND, d_lexer->coo());
@@ -896,7 +896,45 @@ Parser::parse_open_term(Token token)
 bool
 Parser::parse_open_term_as()
 {
-  // TODO
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return false;
+  }
+
+  if (token != Token::SYMBOL)
+  {
+    error("expected identifier");
+    return false;
+  }
+
+  SymbolTable::Node* node = d_last_node;
+  assert(node);
+  assert(!node->d_symbol.empty());
+  const std::string& iden = node->d_symbol;
+
+  if (iden == "const" || iden == "const-array")
+  {
+    if (!parse_sort())
+    {
+      return false;
+    }
+    const bitwuzla::Sort& sort = peek_sort_arg();
+    if (!sort.is_array())
+    {
+      error("expected array sort");
+      return false;
+    }
+    if (!parse_rpars(1))
+    {
+      return false;
+    }
+    assert(d_work_args.size() - d_work_args_control.back() == 1);
+    close_term_scope();
+    return true;
+  }
+  error("invalid identifier '" + iden + "'");
+  return false;
 }
 
 bool
@@ -987,7 +1025,7 @@ Parser::parse_open_term_indexed()
     {
       return false;
     }
-    if (!allow_zero && std::get<uint64_t>(d_work_args.back()) == 0)
+    if (!allow_zero && peek_uint64_arg() == 0)
     {
       error("expected non-zero index");
       return false;
@@ -1004,7 +1042,7 @@ Parser::parse_open_term_indexed()
 #ifndef NDEBUG
     size_t nargs = d_work_args.size() - d_work_args_control.back();
 #endif
-    d_work_args_control.pop_back();
+    close_term_scope();
     switch (token_kind)
     {
       case Token::FP_NAN:
@@ -1052,7 +1090,7 @@ Parser::parse_open_term_indexed()
   else
   {
     // ((_ <indexed_op> <idxs) <terms>) -> (<indexed_op> <idxs> <terms>)
-    (void) d_work_args_control.pop_back();
+    close_term_scope();
     assert(node);
     d_work.emplace_back(token_kind, node, std::move(coo));
   }
@@ -1066,7 +1104,7 @@ Parser::parse_open_term_quant()
   {
     return false;
   }
-  open_term();
+  open_term_scope();
   d_work.emplace_back(Token::SORTED_VARS, d_lexer->coo());
   assert(!d_is_sorted_var);
   d_is_sorted_var = true;
@@ -1098,7 +1136,7 @@ Parser::parse_open_term_symbol()
       {
         return false;
       }
-      open_term();
+      open_term_scope();
       d_work.emplace_back(Token::PARLETBIND, d_lexer->coo());
       assert(!d_is_var_binding);
       d_is_var_binding = true;
@@ -1388,11 +1426,20 @@ Parser::parse_sort_bv_fp()
   return false;
 }
 
+/* -------------------------------------------------------------------------- */
+
 void
-Parser::open_term()
+Parser::open_term_scope()
 {
   d_work_args_control.push_back(d_work_args.size());
   d_term_open += 1;
+}
+
+void
+Parser::close_term_scope()
+{
+  d_work_args_control.pop_back();
+  d_term_open -= 1;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1567,6 +1614,20 @@ Parser::pop_node_arg()
   SymbolTable::Node* res = std::get<SymbolTable::Node*>(d_work_args.back());
   d_work_args.pop_back();
   return res;
+}
+
+uint64_t
+Parser::peek_uint64_arg()
+{
+  assert(std::holds_alternative<uint64_t>(d_work_args.back()));
+  return std::get<uint64_t>(d_work_args.back());
+}
+
+const bitwuzla::Sort&
+Parser::peek_sort_arg()
+{
+  assert(std::holds_alternative<bitwuzla::Sort>(d_work_args.back()));
+  return std::get<bitwuzla::Sort>(d_work_args.back());
 }
 
 /* Parser::ParsedItem ------------------------------------------------------- */

@@ -82,13 +82,15 @@ class Parser
   bool parse_open_term_indexed();
   bool parse_open_term_quant();
   bool parse_open_term_symbol();
-  void open_term();
 
   bool parse_sort();
   bool parse_sort_array();
   bool parse_sort_bv_fp();
 
   bool close_term(Token token);
+
+  void open_term_scope();
+  void close_term_scope();
 
   void error(const std::string& error_msg,
              const Lexer::Coordinate* coo = nullptr);
@@ -111,6 +113,9 @@ class Parser
   bitwuzla::Term pop_term_arg();
   std::string pop_str_arg();
   SymbolTable::Node* pop_node_arg();
+
+  uint64_t peek_uint64_arg();
+  const bitwuzla::Sort& peek_sort_arg();
 
   std::unique_ptr<Lexer> d_lexer;
   SymbolTable d_table;
