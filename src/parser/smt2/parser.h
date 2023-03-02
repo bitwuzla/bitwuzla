@@ -82,6 +82,7 @@ class Parser
   bool parse_open_term_indexed();
   bool parse_open_term_quant();
   bool parse_open_term_symbol();
+  void open_term();
 
   bool parse_sort();
   bool parse_sort_array();

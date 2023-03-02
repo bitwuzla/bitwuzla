@@ -1,8 +1,10 @@
 #include "parser/smt2/parser.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "bitwuzla/cpp/bitwuzla.h"
+
 namespace bzla {
 namespace parser::smt2 {
 
@@ -800,8 +802,7 @@ Parser::parse_open_term(Token token)
 
   if (token == Token::LPAR)
   {
-    d_work_args_control.push_back(d_work_args.size());
-
+    open_term();
     if (d_is_var_binding)
     {
       d_work.emplace_back(Token::LETBIND, d_lexer->coo());
@@ -829,7 +830,6 @@ Parser::parse_open_term(Token token)
       }
       bitwuzla::Sort sort = pop_sort_arg();
     }
-    d_term_open += 1;
   }
   else if (d_is_var_binding)
   {
@@ -902,13 +902,175 @@ Parser::parse_open_term_as()
 bool
 Parser::parse_open_term_indexed()
 {
-  // TODO
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return false;
+  }
+
+  Lexer::Coordinate coo   = d_lexer->coo();
+  Token token_kind        = token;
+  bitwuzla::Kind kind     = bitwuzla::Kind::VALUE;
+  SymbolTable::Node* node = d_last_node;
+
+  bool allow_zero = false;
+  uint64_t nidxs  = 1;
+
+  switch (token)
+  {
+    case Token::BV_REPEAT:
+      kind       = bitwuzla::Kind::BV_REPEAT;
+      allow_zero = true;
+      break;
+
+    case Token::BV_ROTATE_LEFT:
+      kind       = bitwuzla::Kind::BV_ROLI;
+      allow_zero = true;
+      break;
+
+    case Token::BV_ROTATE_RIGHT:
+      kind       = bitwuzla::Kind::BV_RORI;
+      allow_zero = true;
+      break;
+
+    case Token::BV_SIGN_EXTEND:
+      kind       = bitwuzla::Kind::BV_SIGN_EXTEND;
+      allow_zero = true;
+      break;
+
+    case Token::BV_ZERO_EXTEND:
+      kind       = bitwuzla::Kind::BV_ZERO_EXTEND;
+      allow_zero = true;
+      break;
+
+    case Token::BV_EXTRACT:
+      kind  = bitwuzla::Kind::BV_EXTRACT;
+      nidxs = 2;
+      break;
+
+    case Token::FP_NAN:
+    case Token::FP_NEG_INF:
+    case Token::FP_NEG_ZERO:
+    case Token::FP_POS_INF:
+    case Token::FP_POS_ZERO:
+    case Token::FP_TO_FP:
+    case Token::FP_TO_FP_UNSIGNED: nidxs = 2; break;
+
+    case Token::FP_TO_SBV: kind = bitwuzla::Kind::FP_TO_SBV; break;
+
+    case Token::FP_TO_UBV: kind = bitwuzla::Kind::FP_TO_UBV; break;
+
+    case Token::SYMBOL: {
+      assert(d_lexer->has_token());
+      const std::string& val = d_lexer->token();
+      if (val[0] != 'b' || val[1] != 'v')
+      {
+        return false;
+      }
+      std::string v = val.substr(2);
+      if (!std::all_of(
+              v.begin(), v.end(), [](char c) { return std::isdigit(c); }))
+      {
+        error("invalid bit-vector value '" + val + "'");
+        return false;
+      }
+      d_work_args.push_back(v);
+    }
+    break;
+
+    default: assert(false);
+  }
+
+  for (uint64_t i = 0; i < nidxs; ++i)
+  {
+    if (!parse_uint64())
+    {
+      return false;
+    }
+    if (!allow_zero && std::get<uint64_t>(d_work_args.back()) == 0)
+    {
+      error("expected non-zero index");
+      return false;
+    }
+  }
+
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+
+  if (kind == bitwuzla::Kind::VALUE)
+  {
+#ifndef NDEBUG
+    size_t nargs = d_work_args.size() - d_work_args_control.back();
+#endif
+    d_work_args_control.pop_back();
+    switch (token_kind)
+    {
+      case Token::FP_NAN:
+      case Token::FP_NEG_INF:
+      case Token::FP_NEG_ZERO:
+      case Token::FP_POS_INF:
+      case Token::FP_POS_ZERO: {
+        assert(nargs == 2);
+        uint64_t ssize      = pop_uint64_arg();
+        uint64_t esize      = pop_uint64_arg();
+        bitwuzla::Sort sort = bitwuzla::mk_fp_sort(esize, ssize);
+        if (token_kind == Token::FP_NAN)
+        {
+          d_work_args.push_back(bitwuzla::mk_fp_nan(sort));
+        }
+        else if (token_kind == Token::FP_NEG_INF)
+        {
+          d_work_args.push_back(bitwuzla::mk_fp_neg_inf(sort));
+        }
+        else if (token_kind == Token::FP_POS_INF)
+        {
+          d_work_args.push_back(bitwuzla::mk_fp_pos_inf(sort));
+        }
+        else if (token_kind == Token::FP_NEG_ZERO)
+        {
+          d_work_args.push_back(bitwuzla::mk_fp_neg_zero(sort));
+        }
+        else if (token_kind == Token::FP_POS_ZERO)
+        {
+          d_work_args.push_back(bitwuzla::mk_fp_pos_zero(sort));
+        }
+      }
+      break;
+
+      default: {
+        assert(token_kind == Token::SYMBOL);
+        assert(nargs == 2);
+        uint64_t size       = pop_uint64_arg();
+        std::string val     = pop_str_arg();
+        bitwuzla::Sort sort = bitwuzla::mk_bv_sort(size);
+        d_work_args.push_back(bitwuzla::mk_bv_value(sort, val, 10));
+      }
+    }
+  }
+  else
+  {
+    // ((_ <indexed_op> <idxs) <terms>) -> (<indexed_op> <idxs> <terms>)
+    (void) d_work_args_control.pop_back();
+    assert(node);
+    d_work.emplace_back(token_kind, node, std::move(coo));
+  }
+  return true;
 }
 
 bool
 Parser::parse_open_term_quant()
 {
-  // TODO
+  if (!parse_lpars(1))
+  {
+    return false;
+  }
+  open_term();
+  d_work.emplace_back(Token::SORTED_VARS, d_lexer->coo());
+  assert(!d_is_sorted_var);
+  d_is_sorted_var = true;
+  return true;
 }
 
 bool
@@ -936,8 +1098,7 @@ Parser::parse_open_term_symbol()
       {
         return false;
       }
-      d_work_args_control.push_back(d_work_args.size());
-      d_term_open += 1;
+      open_term();
       d_work.emplace_back(Token::PARLETBIND, d_lexer->coo());
       assert(!d_is_var_binding);
       d_is_var_binding = true;
@@ -1225,6 +1386,13 @@ Parser::parse_sort_bv_fp()
   error("expected '" + std::to_string(Token::BV_BITVEC) + "' or '"
         + std::to_string(Token::FP_FLOATINGPOINT) + "'");
   return false;
+}
+
+void
+Parser::open_term()
+{
+  d_work_args_control.push_back(d_work_args.size());
+  d_term_open += 1;
 }
 
 /* -------------------------------------------------------------------------- */
