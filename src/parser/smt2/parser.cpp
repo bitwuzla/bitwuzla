@@ -827,10 +827,7 @@ Parser::parse_open_term(Token token)
       {
         return false;
       }
-      assert(std::holds_alternative<bitwuzla::Sort>(d_work_args.back()));
-      bitwuzla::Sort sort = std::get<bitwuzla::Sort>(d_work_args.back());
-      d_work_args.pop_back();
-      d_work_args.push_back(bitwuzla::mk_var(sort, symbol->d_symbol));
+      bitwuzla::Sort sort = pop_sort_arg();
     }
     d_term_open += 1;
   }
@@ -1154,16 +1151,12 @@ Parser::parse_sort_array()
   {
     return false;
   }
-  assert(std::holds_alternative<bitwuzla::Sort>(d_work_args.back()));
-  bitwuzla::Sort index = std::get<bitwuzla::Sort>(d_work_args.back());
-  d_work_args.pop_back();
+  bitwuzla::Sort index = pop_sort_arg();
   if (!parse_sort())
   {
     return false;
   }
-  assert(std::holds_alternative<bitwuzla::Sort>(d_work_args.back()));
-  bitwuzla::Sort element = std::get<bitwuzla::Sort>(d_work_args.back());
-  d_work_args.pop_back();
+  bitwuzla::Sort element = pop_sort_arg();
   if (!parse_rpars(1))
   {
     return false;
@@ -1187,9 +1180,7 @@ Parser::parse_sort_bv_fp()
     {
       return false;
     }
-    assert(std::holds_alternative<uint64_t>(d_work_args.back()));
-    uint64_t size = std::get<uint64_t>(d_work_args.back());
-    d_work_args.pop_back();
+    uint64_t size = pop_uint64_arg();
     if (size == 0)
     {
       error("invalid bit-vector size '0'");
@@ -1208,9 +1199,7 @@ Parser::parse_sort_bv_fp()
     {
       return false;
     }
-    assert(std::holds_alternative<uint64_t>(d_work_args.back()));
-    uint64_t esize = std::get<uint64_t>(d_work_args.back());
-    d_work_args.pop_back();
+    uint64_t esize = pop_uint64_arg();
     if (esize == 0)
     {
       error("invalid exponent bit-vector size '0'");
@@ -1220,9 +1209,7 @@ Parser::parse_sort_bv_fp()
     {
       return false;
     }
-    assert(std::holds_alternative<uint64_t>(d_work_args.back()));
-    uint64_t ssize = std::get<uint64_t>(d_work_args.back());
-    d_work_args.pop_back();
+    uint64_t ssize = pop_uint64_arg();
     if (ssize == 0)
     {
       error("invalid significand bit-vector size '0'");
@@ -1365,6 +1352,53 @@ Parser::print_success()
     *d_out << "success" << std::endl;
     d_out->flush();
   }
+}
+
+/* -------------------------------------------------------------------------- */
+
+uint64_t
+Parser::pop_uint64_arg()
+{
+  assert(std::holds_alternative<uint64_t>(d_work_args.back()));
+  uint64_t res = std::get<uint64_t>(d_work_args.back());
+  d_work_args.pop_back();
+  return res;
+}
+
+bitwuzla::Sort
+Parser::pop_sort_arg()
+{
+  assert(std::holds_alternative<bitwuzla::Sort>(d_work_args.back()));
+  bitwuzla::Sort res = std::get<bitwuzla::Sort>(d_work_args.back());
+  d_work_args.pop_back();
+  return res;
+}
+
+bitwuzla::Term
+Parser::pop_term_arg()
+{
+  assert(std::holds_alternative<bitwuzla::Term>(d_work_args.back()));
+  bitwuzla::Term res = std::get<bitwuzla::Term>(d_work_args.back());
+  d_work_args.pop_back();
+  return res;
+}
+
+std::string
+Parser::pop_str_arg()
+{
+  assert(std::holds_alternative<std::string>(d_work_args.back()));
+  std::string res = std::get<std::string>(d_work_args.back());
+  d_work_args.pop_back();
+  return res;
+}
+
+SymbolTable::Node*
+Parser::pop_node_arg()
+{
+  assert(std::holds_alternative<SymbolTable::Node*>(d_work_args.back()));
+  SymbolTable::Node* res = std::get<SymbolTable::Node*>(d_work_args.back());
+  d_work_args.pop_back();
+  return res;
 }
 
 /* Parser::ParsedItem ------------------------------------------------------- */

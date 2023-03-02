@@ -105,6 +105,12 @@ class Parser
 
   void print_success();
 
+  uint64_t pop_uint64_arg();
+  bitwuzla::Sort pop_sort_arg();
+  bitwuzla::Term pop_term_arg();
+  std::string pop_str_arg();
+  SymbolTable::Node* pop_node_arg();
+
   std::unique_ptr<Lexer> d_lexer;
   SymbolTable d_table;
 
