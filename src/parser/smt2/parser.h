@@ -87,6 +87,19 @@ class Parser
   bool parse_sort_bv_fp();
 
   bool close_term(Token token);
+  bool close_term_as();
+  bool close_term_bang();
+  bool close_term_core();
+  bool close_term_array();
+  bool close_term_bv();
+  bool close_term_fp();
+  bool close_term_fun_app();
+  bool close_term_let();
+  bool close_term_letbind();
+  bool close_term_parletbind();
+  bool close_term_quant();
+  bool close_term_sorted_var();
+  bool close_term_sorted_vars();
 
   void open_term_scope();
   void close_term_scope();

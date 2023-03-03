@@ -1106,6 +1106,7 @@ Parser::parse_open_term_symbol()
   {
     if (token == Token::LET)
     {
+      d_work.emplace_back(token, d_lexer->coo());
       if (!parse_lpars(1))
       {
         return false;
@@ -1117,6 +1118,7 @@ Parser::parse_open_term_symbol()
     }
     else if (token == Token::FORALL || token == Token::EXISTS)
     {
+      d_work.emplace_back(token, d_lexer->coo());
       if (!parse_open_term_quant())
       {
         return false;
@@ -1131,6 +1133,7 @@ Parser::parse_open_term_symbol()
     }
     else if (token == Token::AS)
     {
+      d_work.emplace_back(token, d_lexer->coo());
       if (!parse_open_term_as())
       {
         return false;
@@ -1140,6 +1143,10 @@ Parser::parse_open_term_symbol()
     {
       assert(node->has_symbol());
       return error("unsupported reserved word '" + node->d_symbol + "'");
+    }
+    else
+    {
+      d_work.emplace_back(token, d_lexer->coo());
     }
   }
   else if (token == Token::SYMBOL)
@@ -1231,7 +1238,1415 @@ Parser::parse_open_term_symbol()
 bool
 Parser::close_term(Token token)
 {
-  // TODO
+  uint64_t nopen = d_term_open;
+  if (!nopen)
+  {
+    return error("expected expression");
+  }
+
+  assert(d_work.size());
+  const ParsedItem& item = d_work.back();
+
+  if (d_expect_body)
+  {
+    return error("body to '" + std::to_string(item.d_token) + "' missing");
+  }
+
+  bool res = false;
+  switch (item.d_token)
+  {
+    case Token::SYMBOL: res = close_term_fun_app(); break;
+    case Token::AS: res = close_term_as(); break;
+    case Token::BANG: res = close_term_bang(); break;
+
+    case Token::AND:
+    case Token::DISTINCT:
+    case Token::EQUAL:
+    case Token::IMPLIES:
+    case Token::ITE:
+    case Token::NOT:
+    case Token::OR:
+    case Token::XOR: res = close_term_core(); break;
+
+    case Token::ARRAY_SELECT:
+    case Token::ARRAY_STORE: res = close_term_array(); break;
+
+    case Token::BV_ADD:
+    case Token::BV_AND:
+    case Token::BV_ASHR:
+    case Token::BV_COMP:
+    case Token::BV_CONCAT:
+    case Token::BV_EXTRACT:
+    case Token::BV_LSHR:
+    case Token::BV_MUL:
+    case Token::BV_NAND:
+    case Token::BV_NEG:
+    case Token::BV_NOR:
+    case Token::BV_NOT:
+    case Token::BV_OR:
+    case Token::BV_REPEAT:
+    case Token::BV_ROTATE_LEFT:
+    case Token::BV_ROTATE_RIGHT:
+    case Token::BV_SDIV:
+    case Token::BV_SGE:
+    case Token::BV_SGT:
+    case Token::BV_SHL:
+    case Token::BV_SIGN_EXTEND:
+    case Token::BV_SLE:
+    case Token::BV_SLT:
+    case Token::BV_SMOD:
+    case Token::BV_SREM:
+    case Token::BV_SUB:
+    case Token::BV_UDIV:
+    case Token::BV_UGE:
+    case Token::BV_UGT:
+    case Token::BV_ULE:
+    case Token::BV_ULT:
+    case Token::BV_UREM:
+    case Token::BV_XNOR:
+    case Token::BV_XOR:
+    case Token::BV_ZERO_EXTEND:
+    case Token::BV_REDOR:
+    case Token::BV_REDAND:
+    case Token::BV_REDXOR:
+    case Token::BV_SADDO:
+    case Token::BV_UADDO:
+    case Token::BV_SDIVO:
+    case Token::BV_SMULO:
+    case Token::BV_UMULO:
+    case Token::BV_SSUBO:
+    case Token::BV_USUBO: res = close_term_bv(); break;
+
+    case Token::FP_ABS:
+    case Token::FP_ADD:
+    case Token::FP_DIV:
+    case Token::FP_EQ:
+    case Token::FP_FMA:
+    case Token::FP_FP:
+    case Token::FP_GEQ:
+    case Token::FP_GT:
+    case Token::FP_IS_INF:
+    case Token::FP_IS_NAN:
+    case Token::FP_IS_NEG:
+    case Token::FP_IS_NORMAL:
+    case Token::FP_IS_POS:
+    case Token::FP_IS_SUBNORMAL:
+    case Token::FP_IS_ZERO:
+    case Token::FP_LEQ:
+    case Token::FP_LT:
+    case Token::FP_MAX:
+    case Token::FP_MIN:
+    case Token::FP_MUL:
+    case Token::FP_NAN:
+    case Token::FP_NEG:
+    case Token::FP_NEG_INF:
+    case Token::FP_NEG_ZERO:
+    case Token::FP_POS_INF:
+    case Token::FP_POS_ZERO:
+    case Token::FP_REM:
+    case Token::FP_RTI:
+    case Token::FP_SQRT:
+    case Token::FP_SUB:
+    case Token::FP_TO_FP:
+    case Token::FP_TO_FP_UNSIGNED:
+    case Token::FP_TO_SBV:
+    case Token::FP_TO_UBV:
+    case Token::REAL_DIV: res = close_term_fp(); break;
+
+    case Token::EXISTS:
+    case Token::FORALL: res = close_term_quant(); break;
+
+    case Token::LET: res = close_term_let(); break;
+
+    case Token::LETBIND: res = close_term_letbind(); break;
+
+    case Token::PARLETBIND: res = close_term_parletbind(); break;
+
+    case Token::SORTED_VAR: res = close_term_sorted_var(); break;
+
+    case Token::SORTED_VARS: res = close_term_sorted_vars(); break;
+
+    default:
+      return error("unsupported term kind '" + std::to_string(token) + "'");
+  }
+
+#if 0
+  item_cur = item_open + 1;
+  if (item_cur == parser->work.top)
+    return !perr_smt2(parser, "unexpected '()'");
+  nargs = parser->work.top - item_cur - 1;
+  tag   = item_cur->tag;
+
+  /* check if operands are expressions -------------------------------------- */
+  if (tag != BZLA_LET_TAG_SMT2 && tag != BZLA_LETBIND_TAG_SMT2
+      && tag != BZLA_PARLETBINDING_TAG_SMT2 && tag != BZLA_REAL_DIV_TAG_SMT2
+      && tag != BZLA_SORTED_VAR_TAG_SMT2 && tag != BZLA_SORTED_VARS_TAG_SMT2
+      && tag != BZLA_FORALL_TAG_SMT2 && tag != BZLA_EXISTS_TAG_SMT2
+      && tag != BZLA_BANG_TAG_SMT2)
+  {
+    i = 1;
+    for (; i <= nargs; i++)
+    {
+      if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
+      {
+        parser->perrcoo = item_cur[i].coo;
+        if (item_cur[i].tag == BZLA_REAL_CONSTANT_TAG_SMT2
+            || item_cur[i].tag == BZLA_REAL_DIV_TAG_SMT2)
+        {
+          if (tag == BZLA_FP_TO_FP_TAG_SMT2) continue;
+          return !perr_smt2(parser, "Real constants not supported");
+        }
+        return !perr_smt2(parser, "expected expression");
+      }
+    }
+  }
+
+  assert(open > 0);
+  parser->open = open - 1;
+
+  return 1;
+#endif
+  close_term_scope();
+  return res;
+}
+
+bool
+Parser::close_term_as()
+{
+#if 0
+    if (nargs != 1)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(
+          parser,
+          "expected exactly one argument for ((as ...) but got %u",
+          nargs);
+    }
+    exp = bitwuzla_mk_const_array(item_cur->sort, item_cur[1].exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+#endif
+}
+
+bool
+Parser::close_term_bang()
+{
+#if 0
+    if (nargs != 3)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(
+          parser,
+          "invalid annotation syntax, expected 3 arguments got %u",
+          nargs);
+    }
+    if (item_cur[1].tag != BZLA_EXP_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[1].coo;
+      return !perr_smt2(
+          parser,
+          "invalid annotation syntax, expected expression as first argument");
+    }
+    if (item_cur[2].tag != BZLA_NAMED_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser,
+                        "invalid annotation syntax, expected :named attribute "
+                        "as second argument");
+    }
+    if (item_cur[3].tag != BZLA_SYMBOL_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[3].coo;
+      return !perr_smt2(
+          parser,
+          "invalid annotation syntax, expected symbol as third argument");
+    }
+    tmp = item_cur[1].exp;
+    // bitwuzla_term_set_symbol(tmp, item_cur[3].node->name);
+    parser->work.top = item_cur;
+    item_open->tag   = BZLA_EXP_TAG_SMT2;
+    item_open->exp   = tmp;
+#endif
+}
+
+bool
+Parser::close_term_array()
+{
+#if 0
+  /* ARRAY: SELECT ---------------------------------------------------------- */
+  else if (tag == BZLA_ARRAY_SELECT_TAG_SMT2)
+  {
+    if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
+    if (!bitwuzla_term_is_array(item_cur[1].exp))
+    {
+      parser->perrcoo = item_cur[1].coo;
+      return !perr_smt2(parser, "first argument of 'select' is not an array");
+    }
+    if (bitwuzla_term_is_array(item_cur[2].exp))
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser, "second argument of 'select' is an array");
+    }
+    if (bitwuzla_term_is_fun(item_cur[2].exp))
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser, "second argument of 'select' is a function");
+    }
+    if (bitwuzla_term_get_sort(item_cur[2].exp)
+        != bitwuzla_term_array_get_index_sort(item_cur[1].exp))
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(
+          parser,
+          "index sort of array (first) argument and sort of index "
+          "(second) argument to 'select' do not match");
+    }
+    exp = bitwuzla_mk_term2(
+        BITWUZLA_KIND_ARRAY_SELECT, item_cur[1].exp, item_cur[2].exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  }
+  /* ARRAY: STORE ----------------------------------------------------------- */
+  else if (tag == BZLA_ARRAY_STORE_TAG_SMT2)
+  {
+    if (!check_nargs_smt2(parser, item_cur, nargs, 3)) return 0;
+    if (!bitwuzla_term_is_array(item_cur[1].exp))
+    {
+      parser->perrcoo = item_cur[1].coo;
+      return !perr_smt2(parser, "first argument of 'store' is not an array");
+    }
+    if (bitwuzla_term_is_array(item_cur[2].exp))
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser, "second argument of 'store' is an array");
+    }
+    if (bitwuzla_term_is_fun(item_cur[2].exp))
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser, "second argument of 'store' is a function");
+    }
+    if (bitwuzla_term_get_sort(item_cur[2].exp)
+        != bitwuzla_term_array_get_index_sort(item_cur[1].exp))
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(
+          parser,
+          "index sort of array (first) argument and sort of index "
+          "(second) argument to 'store' do not match");
+    }
+    if (bitwuzla_term_get_sort(item_cur[3].exp)
+        != bitwuzla_term_array_get_element_sort(item_cur[1].exp))
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(
+          parser,
+          "element sort of array (first) argument and sort of element "
+          "(second) argument to 'store' do not match");
+    }
+    exp = bitwuzla_mk_term3(BITWUZLA_KIND_ARRAY_STORE,
+                            item_cur[1].exp,
+                            item_cur[2].exp,
+                            item_cur[3].exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  }
+#endif
+}
+
+bool
+Parser::close_term_core()
+{
+#if 0
+  /* CORE: NOT -------------------------------------------------------------- */
+  else if (tag == BZLA_NOT_TAG_SMT2)
+  {
+    if (nargs != 1)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(
+          parser, "'not' with %d arguments but expected exactly one", nargs);
+    }
+    tmp = item_cur[1].exp;
+    if (!bitwuzla_term_is_bool(tmp))
+    {
+      parser->perrcoo = item_cur[1].coo;
+      return !perr_smt2(parser, "expected bool");
+    }
+    parser->work.top = item_cur;
+    item_open->tag   = BZLA_EXP_TAG_SMT2;
+    item_open->exp   = bitwuzla_mk_term1(BITWUZLA_KIND_NOT, tmp);
+  }
+  /* CORE: IMPLIES ---------------------------------------------------------- */
+  else if (tag == BZLA_IMPLIES_TAG_SMT2)
+  {
+    if (!close_term_bin_bool(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_IMPLIES))
+    {
+      return 0;
+    }
+  }
+  /* CORE: AND -------------------------------------------------------------- */
+  else if (tag == BZLA_AND_TAG_SMT2)
+  {
+    if (!close_term_bin_bool(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_AND))
+    {
+      return 0;
+    }
+  }
+  /* CORE: OR --------------------------------------------------------------- */
+  else if (tag == BZLA_OR_TAG_SMT2)
+  {
+    if (!close_term_bin_bool(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_OR))
+    {
+      return 0;
+    }
+  }
+  /* CORE: XOR -------------------------------------------------------------- */
+  else if (tag == BZLA_XOR_TAG_SMT2)
+  {
+    if (!close_term_bin_bool(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_XOR))
+    {
+      return 0;
+    }
+  }
+  /* CORE: EQUAL ------------------------------------------------------------ */
+  else if (tag == BZLA_EQUAL_TAG_SMT2)
+  {
+    if (!nargs)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(parser, "arguments to '=' missing");
+    }
+    if (nargs == 1)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(parser, "only one argument to '='");
+    }
+    if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
+    BitwuzlaTermStack args;
+    BZLA_INIT_STACK(parser->mem, args);
+    for (uint32_t i = 1; i <= nargs; i++)
+      BZLA_PUSH_STACK(args, item_cur[i].exp);
+    exp = bitwuzla_mk_term(BITWUZLA_KIND_EQUAL, nargs, args.start);
+    BZLA_RELEASE_STACK(args);
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  }
+  /* CORE: DISTINCT --------------------------------------------------------- */
+  else if (tag == BZLA_DISTINCT_TAG_SMT2)
+  {
+    if (!nargs)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(parser, "arguments to 'distinct' missing");
+    }
+    if (nargs == 1)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(parser, "only one argument to 'distinct'");
+    }
+    if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
+    BitwuzlaTermStack args;
+    BZLA_INIT_STACK(parser->mem, args);
+    for (uint32_t i = 1; i <= nargs; i++)
+      BZLA_PUSH_STACK(args, item_cur[i].exp);
+    exp = bitwuzla_mk_term(BITWUZLA_KIND_DISTINCT, nargs, args.start);
+    BZLA_RELEASE_STACK(args);
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  }
+  /* CORE: ITE -------------------------------------------------------------- */
+  else if (tag == BZLA_ITE_TAG_SMT2)
+  {
+    if (!check_nargs_smt2(parser, item_cur, nargs, 3)) return 0;
+    if (!check_ite_args_sorts_match_smt2(parser, item_cur)) return 0;
+    exp = bitwuzla_mk_term3(
+        BITWUZLA_KIND_ITE, item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  }
+#endif
+}
+
+bool
+Parser::close_term_bv()
+{
+#if 0
+  /* BV: EXTRACT ------------------------------------------------------------ */
+  else if (tag == BZLA_BV_EXTRACT_TAG_SMT2)
+  {
+    if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
+    if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
+    width = bitwuzla_term_bv_get_size(item_cur[1].exp);
+    if (width <= (uint32_t) item_cur->idx0)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(parser,
+                        "first (high) 'extract' parameter %u too large "
+                        "for bit-vector argument of bit-width %u",
+                        item_cur->idx0,
+                        width);
+    }
+    exp = bitwuzla_mk_term1_indexed2(BITWUZLA_KIND_BV_EXTRACT,
+                                     item_cur[1].exp,
+                                     item_cur->idx0,
+                                     item_cur->idx1);
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  }
+  /* BV: NOT ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_NOT_TAG_SMT2)
+  {
+    if (!close_term_unary_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_NOT))
+    {
+      return 0;
+    }
+  }
+  /* BV: NEG ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_NEG_TAG_SMT2)
+  {
+    if (!close_term_unary_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_NEG))
+    {
+      return 0;
+    }
+  }
+  /* BV: REDOR -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_REDOR_TAG_SMT2)
+  {
+    if (!close_term_unary_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_REDOR))
+    {
+      return 0;
+    }
+  }
+  /* BV: REDXOR ------------------------------------------------------------- */
+  else if (tag == BZLA_BV_REDXOR_TAG_SMT2)
+  {
+    if (!close_term_unary_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_REDXOR))
+    {
+      return 0;
+    }
+  }
+  /* BV: REDAND ------------------------------------------------------------- */
+  else if (tag == BZLA_BV_REDAND_TAG_SMT2)
+  {
+    if (!close_term_unary_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_REDAND))
+    {
+      return 0;
+    }
+  }
+  /* BV: CONCAT ------------------------------------------------------------- */
+  else if (tag == BZLA_BV_CONCAT_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_left_associative(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_CONCAT))
+    {
+      return 0;
+    }
+  }
+  /* BV: AND ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_AND_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_left_associative(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_AND))
+    {
+      return 0;
+    }
+  }
+  /* BV: OR ----------------------------------------------------------------- */
+  else if (tag == BZLA_BV_OR_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_left_associative(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_OR))
+    {
+      return 0;
+    }
+  }
+  /* BV: XOR ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_XOR_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_left_associative(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_XOR))
+    {
+      return 0;
+    }
+  }
+  /* BV: ADD ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_ADD_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_left_associative(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ADD))
+    {
+      return 0;
+    }
+  }
+  /* BV: SUB ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SUB_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_left_associative(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SUB))
+    {
+      return 0;
+    }
+  }
+  /* BV: MUL ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_MUL_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_left_associative(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_MUL))
+    {
+      return 0;
+    }
+  }
+  /* BV: UDIV --------------------------------------------------------------- */
+  else if (tag == BZLA_BV_UDIV_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UDIV))
+    {
+      return 0;
+    }
+  }
+  /* BV: UREM --------------------------------------------------------------- */
+  else if (tag == BZLA_BV_UREM_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UREM))
+    {
+      return 0;
+    }
+  }
+  /* BV: SHL ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SHL_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SHL))
+    {
+      return 0;
+    }
+  }
+  /* BV: LSHR --------------------------------------------------------------- */
+  else if (tag == BZLA_BV_LSHR_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SHR))
+    {
+      return 0;
+    }
+  }
+  /* BV: ULT ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_ULT_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ULT))
+    {
+      return 0;
+    }
+  }
+  /* BV: NAND --------------------------------------------------------------- */
+  else if (tag == BZLA_BV_NAND_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_NAND))
+    {
+      return 0;
+    }
+  }
+  /* BV: NOR ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_NOR_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_NOR))
+    {
+      return 0;
+    }
+  }
+  /* BV: XNOR --------------------------------------------------------------- */
+  else if (tag == BZLA_BV_XNOR_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_XNOR))
+    {
+      return 0;
+    }
+  }
+  /* BV: COMP --------------------------------------------------------------- */
+  else if (tag == BZLA_BV_COMP_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_COMP))
+    {
+      return 0;
+    }
+  }
+  /* BV: SDIV --------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SDIV_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SDIV))
+    {
+      return 0;
+    }
+  }
+  /* BV: SREM --------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SREM_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SREM))
+    {
+      return 0;
+    }
+  }
+  /* BV: SMOD --------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SMOD_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SMOD))
+    {
+      return 0;
+    }
+  }
+  /* BV: ASHR --------------------------------------------------------------- */
+  else if (tag == BZLA_BV_ASHR_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ASHR))
+    {
+      return 0;
+    }
+  }
+  /* BV: REPEAT ------------------------------------------------------------- */
+  else if (tag == BZLA_BV_REPEAT_TAG_SMT2)
+  {
+    if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
+    if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
+    width = bitwuzla_term_bv_get_size(item_cur[1].exp);
+    if (item_cur->num && ((uint32_t) (INT32_MAX / item_cur->num) < width))
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(parser, "resulting bit-width of 'repeat' too large");
+    }
+    exp = bitwuzla_mk_term1_indexed1(
+        BITWUZLA_KIND_BV_REPEAT, item_cur[1].exp, item_cur->num);
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  }
+  /* BV: ZERO EXTEND -------------------------------------------------------- */
+  else if (tag == BZLA_BV_ZERO_EXTEND_TAG_SMT2)
+  {
+    if (!close_term_extend_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ZERO_EXTEND))
+    {
+      return 0;
+    }
+  }
+  /* BV: SIGN EXTEND -------------------------------------------------------- */
+  else if (tag == BZLA_BV_SIGN_EXTEND_TAG_SMT2)
+  {
+    if (!close_term_extend_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SIGN_EXTEND))
+    {
+      return 0;
+    }
+  }
+  /* BV: ROTATE LEFT -------------------------------------------------------- */
+  else if (tag == BZLA_BV_ROTATE_LEFT_TAG_SMT2)
+  {
+    if (!close_term_rotate_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ROLI))
+    {
+      return 0;
+    }
+  }
+  /* BV: ROTATE RIGHT ------------------------------------------------------- */
+  else if (tag == BZLA_BV_ROTATE_RIGHT_TAG_SMT2)
+  {
+    if (!close_term_rotate_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_RORI))
+    {
+      return 0;
+    }
+  }
+  /* BV: ULE ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_ULE_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ULE))
+    {
+      return 0;
+    }
+  }
+  /* BV: UGT ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_UGT_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UGT))
+    {
+      return 0;
+    }
+  }
+  /* BV: UGE ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_UGE_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UGE))
+    {
+      return 0;
+    }
+  }
+  /* BV: SLT ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SLT_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SLT))
+    {
+      return 0;
+    }
+  }
+  /* BV: SLE ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SLE_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SLE))
+    {
+      return 0;
+    }
+  }
+  /* BV: SGT ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SGT_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SGT))
+    {
+      return 0;
+    }
+  }
+  /* BV: SGE ---------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SGE_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SGE))
+    {
+      return 0;
+    }
+  }
+  /* BV: SADDO -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SADDO_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SADD_OVERFLOW))
+    {
+      return 0;
+    }
+  }
+  /* BV: UADDO -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_UADDO_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UADD_OVERFLOW))
+    {
+      return 0;
+    }
+  }
+  /* BV: SDIVO -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SDIVO_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SDIV_OVERFLOW))
+    {
+      return 0;
+    }
+  }
+  /* BV: SMULO -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SMULO_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SMUL_OVERFLOW))
+    {
+      return 0;
+    }
+  }
+  /* BV: UMULO -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_UMULO_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UMUL_OVERFLOW))
+    {
+      return 0;
+    }
+  }
+  /* BV: SSUBO -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SSUBO_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SSUB_OVERFLOW))
+    {
+      return 0;
+    }
+  }
+  /* BV: USUBO -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_USUBO_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_USUB_OVERFLOW))
+    {
+      return 0;
+    }
+  }
+#endif
+}
+
+bool
+Parser::close_term_fp()
+{
+#if 0
+  /* FP: (fp (_ BitVec 1) (_ BitVec n) (_ BitVec m)) -------------------- */
+  else if (tag == BZLA_FP_FP_TAG_SMT2)
+  {
+    if (nargs < 3)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(
+          parser, "argument to '%s' missing", item_cur->node->name);
+    }
+    for (i = 1; i <= nargs; i++)
+    {
+      if (!bitwuzla_term_is_bv(item_cur[i].exp))
+      {
+        return !perr_smt2(
+            parser,
+            "invalid argument to '%s', expected bit-vector expression",
+            item_cur->node->name);
+      }
+    }
+    if (bitwuzla_term_bv_get_size(item_cur[1].exp) != 1)
+      return !perr_smt2(parser,
+                        "first argument to '%s' invalid, expected "
+                        "bit-vector sort of size 1",
+                        item_cur->node->name);
+    if (bitwuzla_term_is_bv_value(item_cur[1].exp)
+        && bitwuzla_term_is_bv_value(item_cur[2].exp)
+        && bitwuzla_term_is_bv_value(item_cur[3].exp))
+    {
+      exp = bitwuzla_mk_fp_value(
+          item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
+    }
+    else
+    {
+      exp = bitwuzla_mk_term3(BITWUZLA_KIND_FP_FP,
+                              item_cur[1].exp,
+                              item_cur[2].exp,
+                              item_cur[3].exp);
+    }
+    assert(exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  }
+  /* FP: fp.abs ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_ABS_TAG_SMT2)
+  {
+    if (!close_term_unary_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_ABS))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.neg ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_NEG_TAG_SMT2)
+  {
+    if (!close_term_unary_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_NEG))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.sqrt ------------------------------------------------------------ */
+  else if (tag == BZLA_FP_SQRT_TAG_SMT2)
+  {
+    if (!close_term_unary_rm_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_SQRT))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.roundToIntegral ------------------------------------------------- */
+  else if (tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2)
+  {
+    if (!close_term_unary_rm_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_RTI))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.add ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_ADD_TAG_SMT2)
+  {
+    if (!close_term_bin_rm_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_ADD))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.sub ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_SUB_TAG_SMT2)
+  {
+    if (!close_term_bin_rm_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_SUB))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.mul ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_MUL_TAG_SMT2)
+  {
+    if (!close_term_bin_rm_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_MUL))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.div ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_DIV_TAG_SMT2)
+  {
+    if (!close_term_bin_rm_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_DIV))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.fma ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_FMA_TAG_SMT2)
+  {
+    if (!check_nargs_smt2(parser, item_cur, nargs, 4)) return 0;
+    if (!check_rm_fp_args_smt2(parser, item_cur, nargs)) return 0;
+    if (!check_arg_sorts_match_smt2(parser, item_cur, 1, 3)) return 0;
+    BitwuzlaTerm args[] = {
+        item_cur[1].exp, item_cur[2].exp, item_cur[3].exp, item_cur[4].exp};
+    exp = bitwuzla_mk_term(BITWUZLA_KIND_FP_FMA, 4, args);
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  }
+  /* FP: fp.rem ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_REM_TAG_SMT2)
+  {
+    if (!close_term_bin_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_REM))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.min ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_MIN_TAG_SMT2)
+  {
+    if (!close_term_bin_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_MIN))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.max ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_MAX_TAG_SMT2)
+  {
+    if (!close_term_bin_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_MAX))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.eq -------------------------------------------------------------- */
+  else if (tag == BZLA_FP_EQ_TAG_SMT2)
+  {
+    if (!close_term_bin_fp_fun_chainable(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_EQUAL))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.leq ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_LEQ_TAG_SMT2)
+  {
+    if (!close_term_bin_fp_fun_chainable(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_LEQ))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.lt -------------------------------------------------------------- */
+  else if (tag == BZLA_FP_LT_TAG_SMT2)
+  {
+    if (!close_term_bin_fp_fun_chainable(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_LT))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.geq ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_GEQ_TAG_SMT2)
+  {
+    if (!close_term_bin_fp_fun_chainable(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_GEQ))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.gt -------------------------------------------------------------- */
+  else if (tag == BZLA_FP_GT_TAG_SMT2)
+  {
+    if (!close_term_bin_fp_fun_chainable(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_GT))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isNormal -------------------------------------------------------- */
+  else if (tag == BZLA_FP_IS_NORMAL_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_NORMAL))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isSubnormal ----------------------------------------------------- */
+  else if (tag == BZLA_FP_IS_SUBNORMAL_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_SUBNORMAL))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isZero ---------------------------------------------------------- */
+  else if (tag == BZLA_FP_IS_ZERO_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_ZERO))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isInfinite ------------------------------------------------------ */
+  else if (tag == BZLA_FP_IS_INF_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_INF))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isNaN ----------------------------------------------------------- */
+  else if (tag == BZLA_FP_IS_NAN_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_NAN))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isNegative ------------------------------------------------------ */
+  else if (tag == BZLA_FP_IS_NEG_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_NEG))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isPositive ------------------------------------------------------ */
+  else if (tag == BZLA_FP_IS_POS_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_POS))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.to_sbv fp.to_ubv ------------------------------------------------ */
+  else if (tag == BZLA_FP_TO_SBV_TAG_SMT2 || tag == BZLA_FP_TO_UBV_TAG_SMT2)
+  {
+    assert(item_cur->idx0);
+    if (item_cur[1].tag != BZLA_EXP_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[1].coo;
+      return !perr_smt2(parser, "expected expression");
+    }
+    if (!bitwuzla_term_is_rm(item_cur[1].exp))
+    {
+      return !perr_smt2(
+          parser,
+          "invalid argument to '%s', expected bit-vector expression",
+          item_cur->node->name);
+    }
+    if (item_cur[2].tag != BZLA_EXP_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser, "expected expression");
+    }
+    if (!bitwuzla_term_is_fp(item_cur[2].exp))
+    {
+      return !perr_smt2(
+          parser,
+          "invalid argument to '%s', expected bit-vector expression",
+          item_cur->node->name);
+    }
+    if (tag == BZLA_FP_TO_SBV_TAG_SMT2)
+    {
+      exp = bitwuzla_mk_term2_indexed1(BITWUZLA_KIND_FP_TO_SBV,
+                                       item_cur[1].exp,
+                                       item_cur[2].exp,
+                                       item_cur->idx0);
+    }
+    else
+    {
+      exp = bitwuzla_mk_term2_indexed1(BITWUZLA_KIND_FP_TO_UBV,
+                                       item_cur[1].exp,
+                                       item_cur[2].exp,
+                                       item_cur->idx0);
+    }
+    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  }
+  /* FP: to_fp -------------------------------------------------------------- */
+  else if (tag == BZLA_FP_TO_FP_TAG_SMT2)
+  {
+    if (nargs == 1)
+    {
+      /* (_ to_fp eb sb) (_ BitVec m) */
+      if (item_cur[1].tag != BZLA_EXP_TAG_SMT2)
+      {
+        parser->perrcoo = item_cur[1].coo;
+        return !perr_smt2(parser, "expected expression");
+      }
+      if (!bitwuzla_term_is_bv(item_cur[1].exp))
+      {
+        return !perr_smt2(
+            parser,
+            "invalid argument to '%s', expected bit-vector expression",
+            item_cur->node->name);
+      }
+      assert(item_cur->idx0);
+      assert(item_cur->idx1);
+      exp = bitwuzla_mk_term1_indexed2(BITWUZLA_KIND_FP_TO_FP_FROM_BV,
+                                       item_cur[1].exp,
+                                       item_cur->idx0,
+                                       item_cur->idx1);
+      release_exp_and_overwrite(parser, item_open, item_cur, exp);
+    }
+    else
+    {
+      close_term_to_fp_two_args(parser, item_open, item_cur, nargs);
+    }
+  }
+  /* FP: to_fp_unsigned ----------------------------------------------------- */
+  else if (tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
+  {
+    close_term_to_fp_two_args(parser, item_open, item_cur, nargs);
+  }
+  /* Real: / ---------------------------------------------------------------- */
+  else if (tag == BZLA_REAL_DIV_TAG_SMT2)
+  {
+    if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
+    if (!check_real_arg_smt2(parser, item_cur, 1)) return 0;
+    if (!check_real_arg_smt2(parser, item_cur, 2)) return 0;
+    parser->work.top   = item_cur;
+    item_open->tag     = BZLA_REAL_DIV_TAG_SMT2;
+    item_open->node    = item_cur[0].node;
+    item_open->strs[0] = item_cur[1].str;
+    item_open->strs[1] = item_cur[2].str;
+  }
+#endif
+}
+
+bool
+Parser::close_term_fun_app()
+{
+#if 0
+      BitwuzlaTermStack fargs;
+      BZLA_INIT_STACK(parser->mem, fargs);
+
+      BitwuzlaTerm fun = item_cur[0].exp;
+      if (nargs != bitwuzla_term_fun_get_arity(fun))
+      {
+        BZLA_RELEASE_STACK(fargs);
+        return !perr_smt2(parser, "invalid number of arguments");
+      }
+
+      size_t size;
+      BitwuzlaSort *domain_sorts =
+          bitwuzla_term_fun_get_domain_sorts(fun, &size);
+
+      BZLA_PUSH_STACK(fargs, fun);
+      for (i = 1; i <= nargs; i++)
+      {
+        if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
+        {
+          BZLA_RELEASE_STACK(fargs);
+          parser->perrcoo = item_cur[i].coo;
+          return !perr_smt2(parser, "expected expression");
+        }
+        BZLA_PUSH_STACK(fargs, item_cur[i].exp);
+        assert(i - 1 < size);
+        assert(domain_sorts[i - 1]);
+        if (!bitwuzla_sort_is_equal(
+                domain_sorts[i - 1],
+                bitwuzla_term_get_sort(BZLA_PEEK_STACK(fargs, i))))
+        {
+          BZLA_RELEASE_STACK(fargs);
+          return !perr_smt2(parser, "invalid sort for argument %d", i);
+        }
+      }
+      parser->work.top = item_cur;
+      item_open->tag   = BZLA_EXP_TAG_SMT2;
+      item_open->exp   = bitwuzla_mk_term(
+          BITWUZLA_KIND_APPLY, BZLA_COUNT_STACK(fargs), fargs.start);
+      BZLA_RELEASE_STACK(fargs);
+#endif
+}
+
+bool
+Parser::close_term_let()
+{
+#if 0
+    for (i = 1; i < nargs; i++)
+    {
+      if (item_cur[i].tag != BZLA_SYMBOL_TAG_SMT2)
+      {
+        parser->perrcoo = item_cur[i].coo;
+        return !perr_smt2(parser, "expected symbol as argument %d of 'let'", i);
+      }
+    }
+    if (item_cur[nargs].tag != BZLA_SYMBOL_TAG_SMT2)
+    {
+      if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
+      {
+        parser->perrcoo = item_cur[i].coo;
+        return !perr_smt2(
+            parser, "expected expression as argument %d of 'let'", nargs);
+      }
+    }
+    item_open[0].tag = BZLA_EXP_TAG_SMT2;
+    item_open[0].exp = item_cur[nargs].exp;
+    for (i = 1; i < nargs; i++)
+    {
+      assert(item_cur[i].tag == BZLA_SYMBOL_TAG_SMT2);
+      sym = item_cur[i].node;
+      assert(sym);
+      assert(sym->coo.x);
+      assert(sym->tag == BZLA_SYMBOL_TAG_SMT2);
+      remove_symbol_smt2(parser, sym);
+    }
+    parser->work.top = item_cur;
+#endif
+}
+
+bool
+Parser::close_term_letbind()
+{
+#if 0
+    assert(item_cur[1].tag == BZLA_SYMBOL_TAG_SMT2);
+    if (nargs == 1)
+      return !perr_smt2(
+          parser, "term to be bound to '%s' missing", item_cur[1].node->name);
+    if (nargs > 2)
+    {
+      parser->perrcoo = item_cur[3].coo;
+      return !perr_smt2(
+          parser, "second term bound to '%s'", item_cur[1].node->name);
+    }
+    if (item_cur[2].tag != BZLA_EXP_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser, "expected expression in 'let' var binding");
+    }
+    item_open[0] = item_cur[1];
+    assert(!item_open[0].node->exp);
+    assert(item_cur[2].tag == BZLA_EXP_TAG_SMT2);
+    item_open[0].node->exp = item_cur[2].exp;
+    assert(!item_open[0].node->bound);
+    item_open[0].node->bound = 1;
+    parser->work.top         = item_cur;
+    assert(!parser->isvarbinding);
+    parser->isvarbinding = true;
+#endif
+}
+
+bool
+Parser::close_term_parletbind()
+{
+#if 0
+    assert(parser->isvarbinding);
+    parser->isvarbinding = false;
+#ifndef NDEBUG
+    for (i = 1; i <= nargs; i++)
+      assert(item_cur[i].tag == BZLA_SYMBOL_TAG_SMT2);
+#endif
+    for (i = 0; i < nargs; i++) item_open[i] = item_cur[i + 1];
+    parser->work.top = item_open + nargs;
+    assert(!parser->expecting_body);
+    parser->expecting_body = "let";
+#endif
+}
+
+bool
+Parser::close_term_quant()
+{
+#if 0
+  /* forall (<sorted_var>+) <term> ------------------------------------------ */
+  else if (tag == BZLA_FORALL_TAG_SMT2)
+  {
+    if (!close_term_quant(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FORALL))
+    {
+      return 0;
+    }
+  }
+  /* exists (<sorted_var>+) <term> ------------------------------------------ */
+  else if (tag == BZLA_EXISTS_TAG_SMT2)
+  {
+    if (!close_term_quant(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_EXISTS))
+    {
+      return 0;
+    }
+  }
+#endif
+}
+
+bool
+Parser::close_term_sorted_var()
+{
+#if 0
+    assert(item_cur[1].tag == BZLA_SYMBOL_TAG_SMT2);
+    if (nargs != 1)
+    {
+      parser->perrcoo = item_cur[1].coo;
+      return !perr_smt2(parser,
+                        "expected only one variable at sorted var '%s'",
+                        item_cur[1].node->name);
+    }
+    parser->work.top = item_cur;
+    item_open->tag   = BZLA_SYMBOL_TAG_SMT2;
+    item_open->node  = item_cur[1].node;
+    assert(bitwuzla_term_is_var(item_open->node->exp));
+    assert(!parser->sorted_var);
+    parser->sorted_var = 1;
+#endif
+}
+
+bool
+Parser::close_term_sorted_vars()
+{
+#if 0
+    assert(parser->sorted_var);
+    parser->sorted_var = 0;
+#ifndef NDEBUG
+    for (i = 1; i <= nargs; i++)
+    {
+      assert(item_cur[i].tag == BZLA_SYMBOL_TAG_SMT2);
+      assert(bitwuzla_term_is_var(item_cur[i].node->exp));
+    }
+#endif
+    for (i = 0; i < nargs; i++) item_open[i] = item_cur[i + 1];
+    parser->work.top = item_open + nargs;
+    assert(!parser->expecting_body);
+    parser->expecting_body = "quantifier";
+#endif
 }
 
 /* -------------------------------------------------------------------------- */
