@@ -1465,193 +1465,159 @@ Parser::close_term_bang(const ParsedItem& item_open)
 }
 
 bool
+Parser::pop_args(const ParsedItem& item_open,
+                 size_t nexp,
+                 std::vector<bitwuzla::Term>& args)
+{
+  if (nexp > 0 && nargs() != nexp)
+  {
+    return error("expected " + std::to_string(nexp) + " arguments to '"
+                     + std::to_string(item_open.d_token) + "', got '"
+                     + std::to_string(nargs()) + "'",
+                 &item_open.d_coo);
+  }
+  nexp = nargs();
+  assert(args.empty());
+  args.reserve(nexp);
+  for (size_t i = 0; i < nexp; ++i)
+  {
+    size_t idx = nexp - i - 1;
+    if (!peek_is_term_arg())
+    {
+      return error("expected term as argument at index " + std::to_string(idx)
+                       + " to '" + std::to_string(item_open.d_token) + "'",
+                   &item_open.d_coo);
+    }
+    args[idx] = pop_term_arg();
+  }
+  return true;
+}
+
+bool
 Parser::close_term_array(const ParsedItem& item_open)
 {
   Token token = item_open.d_token;
+  std::vector<bitwuzla::Term> args;
   if (token == Token::ARRAY_SELECT)
   {
-    if (nargs() != 2)
+    if (!pop_args(item_open, 2, args))
     {
-      return error("expected 2 arguments to '" + std::to_string(token)
-                   + "', got '" + std::to_string(nargs()) + "'");
+      return false;
     }
-    if (!peek_is_term_arg())
+    if (!args[0].sort().is_array())
     {
-      return error("expected term as second argument to '"
-                   + std::to_string(token) + "'");
-    }
-    bitwuzla::Term index = pop_term_arg();
-    if (!peek_is_term_arg())
-    {
-      return error("expected term as first argument to '"
-                   + std::to_string(token) + "'");
-    }
-    bitwuzla::Term array = pop_term_arg();
-    if (!array.sort().is_array())
-    {
-      return error("expected array as first argument to '"
-                   + std::to_string(token) + "'");
+      return error(
+          "expected array as first argument to '" + std::to_string(token) + "'",
+          &item_open.d_coo);
     }
     d_work_args.push_back(
-        bitwuzla::mk_term(bitwuzla::Kind::ARRAY_SELECT, {array, index}));
+        bitwuzla::mk_term(bitwuzla::Kind::ARRAY_SELECT, {args[0], args[1]}));
     return true;
   }
 
   assert(item_open.d_token == Token::ARRAY_STORE);
-  if (nargs() != 3)
+  if (!pop_args(item_open, 3, args))
   {
-    return error("expected 3 arguments to '" + std::to_string(token)
-                 + "', got '" + std::to_string(nargs()) + "'");
+    return false;
   }
-  if (!peek_is_term_arg())
+  if (!args[0].sort().is_array())
   {
-    return error("expected term as third argument to '" + std::to_string(token)
-                 + "'");
+    return error(
+        "expected array as first argument to '" + std::to_string(token) + "'",
+        &item_open.d_coo);
   }
-  bitwuzla::Term element = pop_term_arg();
-  if (!peek_is_term_arg())
+  if (args[1].sort() != args[0].sort().array_index())
   {
-    return error("expected term as second argument to '" + std::to_string(token)
-                 + "'");
+    return error("index sort of array and sort of index do not match",
+                 &item_open.d_coo);
   }
-  bitwuzla::Term index = pop_term_arg();
-  if (!peek_is_term_arg())
+  if (args[2].sort() != args[0].sort().array_element())
   {
-    return error("expected term as first argument to '" + std::to_string(token)
-                 + "'");
+    return error("element sort of array and sort of element do not match",
+                 &item_open.d_coo);
   }
-  bitwuzla::Term array = pop_term_arg();
-  if (!array.sort().is_array())
-  {
-    return error("expected array as first argument to '" + std::to_string(token)
-                 + "'");
-  }
-  if (index.sort() != array.sort().array_index())
-  {
-    return error("index sort of array and sort of index do not match");
-  }
-  if (element.sort() != array.sort().array_element())
-  {
-    return error("element sort of array and sort of element do not match");
-  }
-  d_work_args.push_back(
-      bitwuzla::mk_term(bitwuzla::Kind::ARRAY_STORE, {array, index, element}));
+  d_work_args.push_back(bitwuzla::mk_term(bitwuzla::Kind::ARRAY_STORE, args));
   return true;
 }
 
 bool
 Parser::close_term_core(const ParsedItem& item_open)
 {
-#if 0
-  /* CORE: NOT -------------------------------------------------------------- */
-  else if (tag == BZLA_NOT_TAG_SMT2)
+  Token token = item_open.d_token;
+  std::vector<bitwuzla::Term> args;
+  size_t nexp = 0;
+  bitwuzla::Kind kind;
+
+  switch (token)
   {
-    if (nargs != 1)
-    {
-      parser->perrcoo = item_cur->coo;
-      return !perr_smt2(
-          parser, "'not' with %d arguments but expected exactly one", nargs);
-    }
-    tmp = item_cur[1].exp;
-    if (!bitwuzla_term_is_bool(tmp))
-    {
-      parser->perrcoo = item_cur[1].coo;
-      return !perr_smt2(parser, "expected bool");
-    }
-    parser->work.top = item_cur;
-    item_open->tag   = BZLA_EXP_TAG_SMT2;
-    item_open->exp   = bitwuzla_mk_term1(BITWUZLA_KIND_NOT, tmp);
+    case Token::AND:
+      nexp = 0;
+      kind = bitwuzla::Kind::AND;
+      break;
+    case Token::DISTINCT:
+      nexp = 0;
+      kind = bitwuzla::Kind::DISTINCT;
+      break;
+    case Token::EQUAL:
+      nexp = 0;
+      kind = bitwuzla::Kind::EQUAL;
+      break;
+    case Token::IMPLIES:
+      nexp = 0;
+      kind = bitwuzla::Kind::IMPLIES;
+      break;
+    case Token::ITE:
+      nexp = 3;
+      kind = bitwuzla::Kind::ITE;
+      break;
+    case Token::NOT:
+      nexp = 1;
+      kind = bitwuzla::Kind::NOT;
+      break;
+    case Token::OR:
+      nexp = 0;
+      kind = bitwuzla::Kind::OR;
+      break;
+    case Token::XOR:
+      nexp = 0;
+      kind = bitwuzla::Kind::XOR;
+      break;
+    default: assert(false);
   }
-  /* CORE: IMPLIES ---------------------------------------------------------- */
-  else if (tag == BZLA_IMPLIES_TAG_SMT2)
+  if (!pop_args(item_open, nexp, args))
   {
-    if (!close_term_bin_bool(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_IMPLIES))
-    {
-      return 0;
-    }
+    return false;
   }
-  /* CORE: AND -------------------------------------------------------------- */
-  else if (tag == BZLA_AND_TAG_SMT2)
+  if (token == Token::ITE)
   {
-    if (!close_term_bin_bool(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_AND))
+    if (!args[0].sort().is_bool())
     {
-      return 0;
+      return error("expected Boolean term at index 0 as argument to '"
+                       + std::to_string(token) + "'",
+                   &item_open.d_coo);
+    }
+    if (args[1].sort() != args[2].sort())
+    {
+      return error(
+          "expected terms of same sort at indices 1 and 2 as argument to '"
+              + std::to_string(token) + "'",
+          &item_open.d_coo);
     }
   }
-  /* CORE: OR --------------------------------------------------------------- */
-  else if (tag == BZLA_OR_TAG_SMT2)
+  else
   {
-    if (!close_term_bin_bool(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_OR))
+    for (size_t i = 0, n = args.size(); i < n; ++i)
     {
-      return 0;
+      if (!args[i].sort().is_bool())
+      {
+        return error("expected Boolean term at index " + std::to_string(i)
+                         + " as argument to '" + std::to_string(token) + "'",
+                     &item_open.d_coo);
+      }
     }
   }
-  /* CORE: XOR -------------------------------------------------------------- */
-  else if (tag == BZLA_XOR_TAG_SMT2)
-  {
-    if (!close_term_bin_bool(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_XOR))
-    {
-      return 0;
-    }
-  }
-  /* CORE: EQUAL ------------------------------------------------------------ */
-  else if (tag == BZLA_EQUAL_TAG_SMT2)
-  {
-    if (!nargs)
-    {
-      parser->perrcoo = item_cur->coo;
-      return !perr_smt2(parser, "arguments to '=' missing");
-    }
-    if (nargs == 1)
-    {
-      parser->perrcoo = item_cur->coo;
-      return !perr_smt2(parser, "only one argument to '='");
-    }
-    if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
-    BitwuzlaTermStack args;
-    BZLA_INIT_STACK(parser->mem, args);
-    for (uint32_t i = 1; i <= nargs; i++)
-      BZLA_PUSH_STACK(args, item_cur[i].exp);
-    exp = bitwuzla_mk_term(BITWUZLA_KIND_EQUAL, nargs, args.start);
-    BZLA_RELEASE_STACK(args);
-    release_exp_and_overwrite(parser, item_open, item_cur, exp);
-  }
-  /* CORE: DISTINCT --------------------------------------------------------- */
-  else if (tag == BZLA_DISTINCT_TAG_SMT2)
-  {
-    if (!nargs)
-    {
-      parser->perrcoo = item_cur->coo;
-      return !perr_smt2(parser, "arguments to 'distinct' missing");
-    }
-    if (nargs == 1)
-    {
-      parser->perrcoo = item_cur->coo;
-      return !perr_smt2(parser, "only one argument to 'distinct'");
-    }
-    if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
-    BitwuzlaTermStack args;
-    BZLA_INIT_STACK(parser->mem, args);
-    for (uint32_t i = 1; i <= nargs; i++)
-      BZLA_PUSH_STACK(args, item_cur[i].exp);
-    exp = bitwuzla_mk_term(BITWUZLA_KIND_DISTINCT, nargs, args.start);
-    BZLA_RELEASE_STACK(args);
-    release_exp_and_overwrite(parser, item_open, item_cur, exp);
-  }
-  /* CORE: ITE -------------------------------------------------------------- */
-  else if (tag == BZLA_ITE_TAG_SMT2)
-  {
-    if (!check_nargs_smt2(parser, item_cur, nargs, 3)) return 0;
-    if (!check_ite_args_sorts_match_smt2(parser, item_cur)) return 0;
-    exp = bitwuzla_mk_term3(
-        BITWUZLA_KIND_ITE, item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
-    release_exp_and_overwrite(parser, item_open, item_cur, exp);
-  }
-#endif
+  d_work_args.push_back(bitwuzla::mk_term(kind, args));
+  return true;
 }
 
 bool

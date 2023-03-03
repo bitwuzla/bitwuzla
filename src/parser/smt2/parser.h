@@ -138,6 +138,10 @@ class Parser
   bool peek_is_str_arg() const;
   bool peek_is_node_arg() const;
 
+  bool pop_args(const ParsedItem& item_open,
+                size_t nexp,
+                std::vector<bitwuzla::Term>& args);
+
   std::unique_ptr<Lexer> d_lexer;
   SymbolTable d_table;
 
