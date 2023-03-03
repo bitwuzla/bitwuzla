@@ -2204,47 +2204,41 @@ Parser::close_term_fp(const ParsedItem& item_open)
 bool
 Parser::close_term_fun_app(const ParsedItem& item_open)
 {
-#if 0
-      BitwuzlaTermStack fargs;
-      BZLA_INIT_STACK(parser->mem, fargs);
-
-      BitwuzlaTerm fun = item_cur[0].exp;
-      if (nargs != bitwuzla_term_fun_get_arity(fun))
-      {
-        BZLA_RELEASE_STACK(fargs);
-        return !perr_smt2(parser, "invalid number of arguments");
-      }
-
-      size_t size;
-      BitwuzlaSort *domain_sorts =
-          bitwuzla_term_fun_get_domain_sorts(fun, &size);
-
-      BZLA_PUSH_STACK(fargs, fun);
-      for (i = 1; i <= nargs; i++)
-      {
-        if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
-        {
-          BZLA_RELEASE_STACK(fargs);
-          parser->perrcoo = item_cur[i].coo;
-          return !perr_smt2(parser, "expected expression");
-        }
-        BZLA_PUSH_STACK(fargs, item_cur[i].exp);
-        assert(i - 1 < size);
-        assert(domain_sorts[i - 1]);
-        if (!bitwuzla_sort_is_equal(
-                domain_sorts[i - 1],
-                bitwuzla_term_get_sort(BZLA_PEEK_STACK(fargs, i))))
-        {
-          BZLA_RELEASE_STACK(fargs);
-          return !perr_smt2(parser, "invalid sort for argument %d", i);
-        }
-      }
-      parser->work.top = item_cur;
-      item_open->tag   = BZLA_EXP_TAG_SMT2;
-      item_open->exp   = bitwuzla_mk_term(
-          BITWUZLA_KIND_APPLY, BZLA_COUNT_STACK(fargs), fargs.start);
-      BZLA_RELEASE_STACK(fargs);
-#endif
+  assert(std::holds_alternative<SymbolTable::Node*>(item_open.d_parsed));
+  SymbolTable::Node* node = std::get<SymbolTable::Node*>(item_open.d_parsed);
+  bitwuzla::Term& fun     = node->d_term;
+  assert(!fun.is_null());
+  if (!fun.sort().is_fun())
+  {
+    return error("expected fun");
+  }
+  size_t arity = fun.sort().fun_arity();
+  if (nargs() != arity)
+  {
+    return error("expected " + std::to_string(arity) + " arguments to '"
+                     + std::to_string(item_open.d_token) + "', got '"
+                     + std::to_string(nargs()) + "'",
+                 &item_open.d_coo);
+  }
+  std::vector<bitwuzla::Term> args;
+  if (!pop_args(item_open, arity, args))
+  {
+    return false;
+  }
+  const std::vector<bitwuzla::Sort>& domain = fun.sort().fun_domain();
+  assert(args.size() == arity);
+  assert(domain.size() == arity);
+  for (size_t i = 0; i < arity; ++i)
+  {
+    if (domain[i] != args[i].sort())
+    {
+      return error("expected term of sort '" + domain[i].str() + "', got '"
+                   + args[i].sort().str() + "'");
+    }
+  }
+  args.insert(args.begin(), fun);
+  d_work_args.push_back(bitwuzla::mk_term(bitwuzla::Kind::APPLY, args));
+  return true;
 }
 
 bool
