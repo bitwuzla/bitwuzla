@@ -865,7 +865,7 @@ Parser::parse_open_term(Token token)
   else if (token == Token::DECIMAL_VALUE || token == Token::REAL_VALUE)
   {
     assert(d_lexer->has_token());
-    d_work_args.push_back(d_lexer->token().empty());
+    d_work_args.push_back(d_lexer->token());
   }
   else
   {
@@ -1829,359 +1829,376 @@ Parser::close_term_bv(const ParsedItem& item_open)
 bool
 Parser::close_term_fp(const ParsedItem& item_open)
 {
-#if 0
-  /* FP: (fp (_ BitVec 1) (_ BitVec n) (_ BitVec m)) -------------------- */
-  else if (tag == BZLA_FP_FP_TAG_SMT2)
+  Token token = item_open.d_token;
+  std::vector<bitwuzla::Term> args;
+  std::vector<uint64_t> idxs;
+  size_t nexp = 0, nidxs = 0;
+  bool has_rm = false;
+  bitwuzla::Kind kind;
+
+  if (token == Token::FP_TO_FP)
   {
-    if (nargs < 3)
+    if (!nargs() || nargs() > 2)
     {
-      parser->perrcoo = item_cur->coo;
-      return !perr_smt2(
-          parser, "argument to '%s' missing", item_cur->node->name);
+      return error("expected 1 or 2 arguments to '"
+                       + std::to_string(item_open.d_token) + "', got '"
+                       + std::to_string(nargs()) + "'",
+                   &item_open.d_coo);
     }
-    for (i = 1; i <= nargs; i++)
+    if (nargs() == 1)
     {
-      if (!bitwuzla_term_is_bv(item_cur[i].exp))
+      // ((_ to_fp eb sb) (_ BitVec m))
+      if (!pop_args(item_open, 3, args, 2, &idxs))
       {
-        return !perr_smt2(
-            parser,
-            "invalid argument to '%s', expected bit-vector expression",
-            item_cur->node->name);
+        return false;
       }
+      assert(args.size() == 1);
+      assert(idxs.size() == 2);
+      if (!args[0].sort().is_bv())
+      {
+        return error("expected bit-vector term at index 0 as argument to '"
+                         + std::to_string(token) + "'",
+                     &item_open.d_coo);
+      }
+      if (args[0].sort().bv_size() != idxs[0] + idxs[1])
+      {
+        return error("size of bit-vector term '"
+                     + std::to_string(args[0].sort().bv_size())
+                     + " does not match floating-point format '"
+                     + std::to_string(idxs[0]) + " " + std::to_string(idxs[1])
+                     + "'");
+      }
+      d_work_args.push_back(
+          bitwuzla::mk_term(bitwuzla::Kind::FP_TO_FP_FROM_BV, args, idxs));
+      return true;
     }
-    if (bitwuzla_term_bv_get_size(item_cur[1].exp) != 1)
-      return !perr_smt2(parser,
-                        "first argument to '%s' invalid, expected "
-                        "bit-vector sort of size 1",
-                        item_cur->node->name);
-    if (bitwuzla_term_is_bv_value(item_cur[1].exp)
-        && bitwuzla_term_is_bv_value(item_cur[2].exp)
-        && bitwuzla_term_is_bv_value(item_cur[3].exp))
+
+    // ((_ to_fp eb sb) RoundingMode (_ FloatingPoint eb sb))
+    // ((_ to_fp eb sb) RoundingMode (_ BitVec m))
+    // ((_ to_fp eb sb) RoundingMode Real)
+    idxs.reserve(2);
+    if (peek_is_str_arg())
     {
-      exp = bitwuzla_mk_fp_value(
-          item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
+      std::string s0, s1 = pop_str_arg();
+      if (peek_is_str_arg())
+      {
+        s0 = pop_str_arg();
+      }
+      if (!peek_is_term_arg())
+      {
+        return error("expected term as argument at index 0 to '"
+                         + std::to_string(item_open.d_token) + "'",
+                     &item_open.d_coo);
+      }
+      bitwuzla::Term rm = pop_term_arg();
+      if (!rm.sort().is_rm())
+      {
+        return error("expected rounding-mode term at index 0 as argument to '"
+                         + std::to_string(token) + "'",
+                     &item_open.d_coo);
+      }
+      if (!peek_is_uint64_arg())
+      {
+        error("expected integer as index to '"
+                  + std::to_string(item_open.d_token) + "'",
+              &item_open.d_coo);
+      }
+      idxs[1] = pop_uint64_arg();
+      if (!peek_is_uint64_arg())
+      {
+        error("expected integer as index to '"
+                  + std::to_string(item_open.d_token) + "'",
+              &item_open.d_coo);
+      }
+      idxs[0] = pop_uint64_arg();
+      if (s0.empty())
+      {
+        d_work_args.push_back(bitwuzla::mk_fp_value(
+            bitwuzla::mk_fp_sort(idxs[0], idxs[1]), rm, s1));
+      }
+      else
+      {
+        d_work_args.push_back(bitwuzla::mk_fp_value(
+            bitwuzla::mk_fp_sort(idxs[0], idxs[1]), rm, s0, s1));
+      }
     }
     else
     {
-      exp = bitwuzla_mk_term3(BITWUZLA_KIND_FP_FP,
-                              item_cur[1].exp,
-                              item_cur[2].exp,
-                              item_cur[3].exp);
-    }
-    assert(exp);
-    release_exp_and_overwrite(parser, item_open, item_cur, exp);
-  }
-  /* FP: fp.abs ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_ABS_TAG_SMT2)
-  {
-    if (!close_term_unary_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_ABS))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.neg ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_NEG_TAG_SMT2)
-  {
-    if (!close_term_unary_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_NEG))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.sqrt ------------------------------------------------------------ */
-  else if (tag == BZLA_FP_SQRT_TAG_SMT2)
-  {
-    if (!close_term_unary_rm_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_SQRT))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.roundToIntegral ------------------------------------------------- */
-  else if (tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2)
-  {
-    if (!close_term_unary_rm_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_RTI))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.add ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_ADD_TAG_SMT2)
-  {
-    if (!close_term_bin_rm_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_ADD))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.sub ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_SUB_TAG_SMT2)
-  {
-    if (!close_term_bin_rm_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_SUB))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.mul ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_MUL_TAG_SMT2)
-  {
-    if (!close_term_bin_rm_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_MUL))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.div ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_DIV_TAG_SMT2)
-  {
-    if (!close_term_bin_rm_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_DIV))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.fma ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_FMA_TAG_SMT2)
-  {
-    if (!check_nargs_smt2(parser, item_cur, nargs, 4)) return 0;
-    if (!check_rm_fp_args_smt2(parser, item_cur, nargs)) return 0;
-    if (!check_arg_sorts_match_smt2(parser, item_cur, 1, 3)) return 0;
-    BitwuzlaTerm args[] = {
-        item_cur[1].exp, item_cur[2].exp, item_cur[3].exp, item_cur[4].exp};
-    exp = bitwuzla_mk_term(BITWUZLA_KIND_FP_FMA, 4, args);
-    release_exp_and_overwrite(parser, item_open, item_cur, exp);
-  }
-  /* FP: fp.rem ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_REM_TAG_SMT2)
-  {
-    if (!close_term_bin_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_REM))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.min ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_MIN_TAG_SMT2)
-  {
-    if (!close_term_bin_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_MIN))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.max ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_MAX_TAG_SMT2)
-  {
-    if (!close_term_bin_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_MAX))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.eq -------------------------------------------------------------- */
-  else if (tag == BZLA_FP_EQ_TAG_SMT2)
-  {
-    if (!close_term_bin_fp_fun_chainable(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_EQUAL))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.leq ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_LEQ_TAG_SMT2)
-  {
-    if (!close_term_bin_fp_fun_chainable(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_LEQ))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.lt -------------------------------------------------------------- */
-  else if (tag == BZLA_FP_LT_TAG_SMT2)
-  {
-    if (!close_term_bin_fp_fun_chainable(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_LT))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.geq ------------------------------------------------------------- */
-  else if (tag == BZLA_FP_GEQ_TAG_SMT2)
-  {
-    if (!close_term_bin_fp_fun_chainable(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_GEQ))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.gt -------------------------------------------------------------- */
-  else if (tag == BZLA_FP_GT_TAG_SMT2)
-  {
-    if (!close_term_bin_fp_fun_chainable(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_GT))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.isNormal -------------------------------------------------------- */
-  else if (tag == BZLA_FP_IS_NORMAL_TAG_SMT2)
-  {
-    if (!close_term_unary_bool_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_NORMAL))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.isSubnormal ----------------------------------------------------- */
-  else if (tag == BZLA_FP_IS_SUBNORMAL_TAG_SMT2)
-  {
-    if (!close_term_unary_bool_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_SUBNORMAL))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.isZero ---------------------------------------------------------- */
-  else if (tag == BZLA_FP_IS_ZERO_TAG_SMT2)
-  {
-    if (!close_term_unary_bool_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_ZERO))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.isInfinite ------------------------------------------------------ */
-  else if (tag == BZLA_FP_IS_INF_TAG_SMT2)
-  {
-    if (!close_term_unary_bool_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_INF))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.isNaN ----------------------------------------------------------- */
-  else if (tag == BZLA_FP_IS_NAN_TAG_SMT2)
-  {
-    if (!close_term_unary_bool_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_NAN))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.isNegative ------------------------------------------------------ */
-  else if (tag == BZLA_FP_IS_NEG_TAG_SMT2)
-  {
-    if (!close_term_unary_bool_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_NEG))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.isPositive ------------------------------------------------------ */
-  else if (tag == BZLA_FP_IS_POS_TAG_SMT2)
-  {
-    if (!close_term_unary_bool_fp_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FP_IS_POS))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.to_sbv fp.to_ubv ------------------------------------------------ */
-  else if (tag == BZLA_FP_TO_SBV_TAG_SMT2 || tag == BZLA_FP_TO_UBV_TAG_SMT2)
-  {
-    assert(item_cur->idx0);
-    if (item_cur[1].tag != BZLA_EXP_TAG_SMT2)
-    {
-      parser->perrcoo = item_cur[1].coo;
-      return !perr_smt2(parser, "expected expression");
-    }
-    if (!bitwuzla_term_is_rm(item_cur[1].exp))
-    {
-      return !perr_smt2(
-          parser,
-          "invalid argument to '%s', expected bit-vector expression",
-          item_cur->node->name);
-    }
-    if (item_cur[2].tag != BZLA_EXP_TAG_SMT2)
-    {
-      parser->perrcoo = item_cur[2].coo;
-      return !perr_smt2(parser, "expected expression");
-    }
-    if (!bitwuzla_term_is_fp(item_cur[2].exp))
-    {
-      return !perr_smt2(
-          parser,
-          "invalid argument to '%s', expected bit-vector expression",
-          item_cur->node->name);
-    }
-    if (tag == BZLA_FP_TO_SBV_TAG_SMT2)
-    {
-      exp = bitwuzla_mk_term2_indexed1(BITWUZLA_KIND_FP_TO_SBV,
-                                       item_cur[1].exp,
-                                       item_cur[2].exp,
-                                       item_cur->idx0);
-    }
-    else
-    {
-      exp = bitwuzla_mk_term2_indexed1(BITWUZLA_KIND_FP_TO_UBV,
-                                       item_cur[1].exp,
-                                       item_cur[2].exp,
-                                       item_cur->idx0);
-    }
-    release_exp_and_overwrite(parser, item_open, item_cur, exp);
-  }
-  /* FP: to_fp -------------------------------------------------------------- */
-  else if (tag == BZLA_FP_TO_FP_TAG_SMT2)
-  {
-    if (nargs == 1)
-    {
-      /* (_ to_fp eb sb) (_ BitVec m) */
-      if (item_cur[1].tag != BZLA_EXP_TAG_SMT2)
+      if (!peek_is_uint64_arg())
       {
-        parser->perrcoo = item_cur[1].coo;
-        return !perr_smt2(parser, "expected expression");
+        error("expected integer as index to '"
+                  + std::to_string(item_open.d_token) + "'",
+              &item_open.d_coo);
       }
-      if (!bitwuzla_term_is_bv(item_cur[1].exp))
+      idxs[1] = pop_uint64_arg();
+      if (!peek_is_uint64_arg())
       {
-        return !perr_smt2(
-            parser,
-            "invalid argument to '%s', expected bit-vector expression",
-            item_cur->node->name);
+        error("expected integer as index to '"
+                  + std::to_string(item_open.d_token) + "'",
+              &item_open.d_coo);
       }
-      assert(item_cur->idx0);
-      assert(item_cur->idx1);
-      exp = bitwuzla_mk_term1_indexed2(BITWUZLA_KIND_FP_TO_FP_FROM_BV,
-                                       item_cur[1].exp,
-                                       item_cur->idx0,
-                                       item_cur->idx1);
-      release_exp_and_overwrite(parser, item_open, item_cur, exp);
+      idxs[0] = pop_uint64_arg();
+      if (!peek_is_term_arg())
+      {
+        return error("expected term as argument at index 1 to '"
+                         + std::to_string(item_open.d_token) + "'",
+                     &item_open.d_coo);
+      }
+      bitwuzla::Term term = pop_term_arg();
+      if (!peek_is_term_arg())
+      {
+        return error("expected term as argument at index 0 to '"
+                         + std::to_string(item_open.d_token) + "'",
+                     &item_open.d_coo);
+      }
+      bitwuzla::Term rm = pop_term_arg();
+      if (!term.sort().is_bv() && !term.sort().is_fp())
+      {
+        return error(
+            "expected bit-vector or floating-point term at index 1 as argument "
+            "to '"
+                + std::to_string(token) + "'",
+            &item_open.d_coo);
+      }
+      if (!rm.sort().is_rm())
+      {
+        return error("expected rounding-mode term at index 0 as argument to '"
+                         + std::to_string(token) + "'",
+                     &item_open.d_coo);
+      }
+      d_work_args.push_back(bitwuzla::mk_term(
+          term.sort().is_bv() ? bitwuzla::Kind::FP_TO_FP_FROM_UBV
+                              : bitwuzla::Kind::FP_TO_FP_FROM_FP,
+          {rm, term},
+          idxs));
     }
-    else
+    return true;
+  }
+  if (token == Token::REAL_DIV)
+  {
+    if (nargs() != 2)
     {
-      close_term_to_fp_two_args(parser, item_open, item_cur, nargs);
+      return error("expected 2 arguments to '"
+                       + std::to_string(item_open.d_token) + "', got '"
+                       + std::to_string(nargs()) + "'",
+                   &item_open.d_coo);
+    }
+    if (!peek_is_str_arg())
+    {
+      return error(
+          "expected string representation of denominator as argument to '"
+              + std::to_string(item_open.d_token) + "'",
+          &item_open.d_coo);
+    }
+    if (!std::holds_alternative<std::string>(
+            d_work_args[d_work_args.size() - 2]))
+    {
+      return error(
+          "expected string representation of denominator as argument to '"
+              + std::to_string(item_open.d_token) + "'",
+          &item_open.d_coo);
+    }
+    // nothing to do, we leave the strings on the args stack and only close
+    // the current term
+    return true;
+  }
+
+  switch (token)
+  {
+    case Token::FP_ABS:
+      nexp = 1;
+      kind = bitwuzla::Kind::FP_ABS;
+      break;
+    case Token::FP_ADD:
+      nexp   = 3;
+      has_rm = true;
+      kind   = bitwuzla::Kind::FP_ADD;
+      break;
+    case Token::FP_DIV:
+      nexp   = 3;
+      has_rm = true;
+      kind   = bitwuzla::Kind::FP_DIV;
+      break;
+    case Token::FP_EQ:
+      nexp = 0;
+      kind = bitwuzla::Kind::FP_EQUAL;
+      break;
+    case Token::FP_FMA:
+      nexp   = 4;
+      has_rm = true;
+      kind   = bitwuzla::Kind::FP_FMA;
+      break;
+    case Token::FP_FP:
+      nexp = 3;
+      kind = bitwuzla::Kind::FP_FP;
+      break;
+    case Token::FP_GEQ:
+      nexp = 0;
+      kind = bitwuzla::Kind::FP_GEQ;
+      break;
+    case Token::FP_GT:
+      nexp = 0;
+      kind = bitwuzla::Kind::FP_GT;
+      break;
+    case Token::FP_IS_INF:
+      nexp = 1;
+      kind = bitwuzla::Kind::FP_IS_INF;
+      break;
+    case Token::FP_IS_NAN:
+      nexp = 1;
+      kind = bitwuzla::Kind::FP_IS_NAN;
+      break;
+    case Token::FP_IS_NEG:
+      nexp = 1;
+      kind = bitwuzla::Kind::FP_IS_NEG;
+      break;
+    case Token::FP_IS_NORMAL:
+      nexp = 1;
+      kind = bitwuzla::Kind::FP_IS_NORMAL;
+      break;
+    case Token::FP_IS_POS:
+      nexp = 1;
+      kind = bitwuzla::Kind::FP_IS_POS;
+      break;
+    case Token::FP_IS_SUBNORMAL:
+      nexp = 1;
+      kind = bitwuzla::Kind::FP_IS_SUBNORMAL;
+      break;
+    case Token::FP_IS_ZERO:
+      nexp = 1;
+      kind = bitwuzla::Kind::FP_IS_ZERO;
+      break;
+    case Token::FP_LEQ:
+      nexp = 0;
+      kind = bitwuzla::Kind::FP_LEQ;
+      break;
+    case Token::FP_LT:
+      nexp = 0;
+      kind = bitwuzla::Kind::FP_LT;
+      break;
+    case Token::FP_MAX:
+      nexp = 2;
+      kind = bitwuzla::Kind::FP_MAX;
+      break;
+    case Token::FP_MIN:
+      nexp = 2;
+      kind = bitwuzla::Kind::FP_MIN;
+      break;
+    case Token::FP_MUL:
+      nexp   = 3;
+      has_rm = true;
+      kind   = bitwuzla::Kind::FP_MUL;
+      break;
+    case Token::FP_NEG:
+      nexp = 1;
+      kind = bitwuzla::Kind::FP_NEG;
+      break;
+    case Token::FP_REM:
+      nexp = 2;
+      kind = bitwuzla::Kind::FP_REM;
+      break;
+    case Token::FP_RTI:
+      nexp   = 2;
+      has_rm = true;
+      kind   = bitwuzla::Kind::FP_RTI;
+      break;
+    case Token::FP_SQRT:
+      nexp   = 2;
+      has_rm = true;
+      kind   = bitwuzla::Kind::FP_SQRT;
+      break;
+    case Token::FP_SUB:
+      nexp   = 3;
+      has_rm = true;
+      kind   = bitwuzla::Kind::FP_SUB;
+      break;
+    case Token::FP_TO_FP_UNSIGNED:
+      nexp   = 2;
+      nidxs  = 2;
+      has_rm = true;
+      kind   = bitwuzla::Kind::FP_TO_FP_FROM_UBV;
+      break;
+    case Token::FP_TO_SBV:
+      nexp   = 2;
+      nidxs  = 2;
+      has_rm = true;
+      kind   = bitwuzla::Kind::FP_TO_SBV;
+      break;
+    case Token::FP_TO_UBV:
+      nexp   = 2;
+      nidxs  = 2;
+      has_rm = true;
+      kind   = bitwuzla::Kind::FP_TO_UBV;
+      break;
+    default: assert(false);
+  }
+  if (!pop_args(item_open, nexp, args, nidxs, &idxs))
+  {
+    return false;
+  }
+  assert(args.size());
+
+  if (token == Token::FP_FP)
+  {
+    if (!args[0].sort().is_bv() || args[0].sort().bv_size() != 1)
+    {
+      return error(
+          "expected bit-vector term of size 1 at index 0 as argument to '"
+              + std::to_string(token) + "'",
+          &item_open.d_coo);
+    }
+    if (!args[1].sort().is_bv())
+    {
+      return error("expected bit-vector term at index 1 as argument to '"
+                       + std::to_string(token) + "'",
+                   &item_open.d_coo);
+    }
+    if (!args[2].sort().is_bv())
+    {
+      return error("expected bit-vector term at index 2 as argument to '"
+                       + std::to_string(token) + "'",
+                   &item_open.d_coo);
+    }
+    if (args[0].is_value() && args[1].is_value() && args[2].is_value())
+    {
+      d_work_args.push_back(bitwuzla::mk_fp_value(args[0], args[1], args[2]));
+      return true;
     }
   }
-  /* FP: to_fp_unsigned ----------------------------------------------------- */
-  else if (tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
+  else
   {
-    close_term_to_fp_two_args(parser, item_open, item_cur, nargs);
+    for (size_t i = 0, n = args.size(); i < n; ++i)
+    {
+      if (has_rm && i == 0)
+      {
+        return error("expected rounding-mode term at index 0 as argument to '"
+                         + std::to_string(token) + "'",
+                     &item_open.d_coo);
+      }
+      else
+      {
+        if (!args[i].sort().is_fp())
+        {
+          return error("expected floating-point term at index "
+                           + std::to_string(i) + " as argument to '"
+                           + std::to_string(token) + "'",
+                       &item_open.d_coo);
+        }
+      }
+      if ((!has_rm && i > 0) || (has_rm && i > 1))
+      {
+        if (args[i].sort() != args[i - 1].sort())
+        {
+          return error("expected terms of same sort at indices "
+                           + std::to_string(i - 1) + " and " + std::to_string(i)
+                           + " as argument to '" + std::to_string(token) + "'",
+                       &item_open.d_coo);
+        }
+      }
+    }
   }
-  /* Real: / ---------------------------------------------------------------- */
-  else if (tag == BZLA_REAL_DIV_TAG_SMT2)
-  {
-    if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
-    if (!check_real_arg_smt2(parser, item_cur, 1)) return 0;
-    if (!check_real_arg_smt2(parser, item_cur, 2)) return 0;
-    parser->work.top   = item_cur;
-    item_open->tag     = BZLA_REAL_DIV_TAG_SMT2;
-    item_open->node    = item_cur[0].node;
-    item_open->strs[0] = item_cur[1].str;
-    item_open->strs[1] = item_cur[2].str;
-  }
-#endif
+  d_work_args.push_back(bitwuzla::mk_term(kind, args, idxs));
+  return true;
 }
 
 bool
@@ -2787,7 +2804,8 @@ Parser::pop_args(const ParsedItem& item_open,
   assert(nexp > 0 || nidxs == 0);
   if (nexp > 0 && nargs() != nexp)
   {
-    return error("expected " + std::to_string(nexp) + " arguments to '"
+    return error("expected " + std::to_string(nexp) + " argument"
+                     + (nexp > 1 ? "s" : "") + " to '"
                      + std::to_string(item_open.d_token) + "', got '"
                      + std::to_string(nargs()) + "'",
                  &item_open.d_coo);
