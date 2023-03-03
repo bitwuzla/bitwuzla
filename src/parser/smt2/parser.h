@@ -87,19 +87,19 @@ class Parser
   bool parse_sort_bv_fp();
 
   bool close_term(Token token);
-  bool close_term_as();
-  bool close_term_bang();
-  bool close_term_core();
-  bool close_term_array();
-  bool close_term_bv();
-  bool close_term_fp();
-  bool close_term_fun_app();
-  bool close_term_let();
-  bool close_term_letbind();
-  bool close_term_parletbind();
-  bool close_term_quant();
-  bool close_term_sorted_var();
-  bool close_term_sorted_vars();
+  bool close_term_as(const ParsedItem& item_open);
+  bool close_term_bang(const ParsedItem& item_open);
+  bool close_term_core(const ParsedItem& item_open);
+  bool close_term_array(const ParsedItem& item_open);
+  bool close_term_bv(const ParsedItem& item_open);
+  bool close_term_fp(const ParsedItem& item_open);
+  bool close_term_fun_app(const ParsedItem& item_open);
+  bool close_term_let(const ParsedItem& item_open);
+  bool close_term_letbind(const ParsedItem& item_open);
+  bool close_term_parletbind(const ParsedItem& item_open);
+  bool close_term_quant(const ParsedItem& item_open);
+  bool close_term_sorted_var(const ParsedItem& item_open);
+  bool close_term_sorted_vars(const ParsedItem& item_open);
 
   void open_term_scope();
   void close_term_scope();
@@ -120,14 +120,23 @@ class Parser
 
   void print_success();
 
+  size_t nargs() const;
+
   uint64_t pop_uint64_arg();
   bitwuzla::Sort pop_sort_arg();
   bitwuzla::Term pop_term_arg();
   std::string pop_str_arg();
   SymbolTable::Node* pop_node_arg();
 
-  uint64_t peek_uint64_arg();
-  const bitwuzla::Sort& peek_sort_arg();
+  uint64_t peek_uint64_arg() const;
+  const bitwuzla::Sort& peek_sort_arg() const;
+  SymbolTable::Node* peek_node_arg() const;
+
+  bool peek_is_uint64_arg() const;
+  bool peek_is_sort_arg() const;
+  bool peek_is_term_arg() const;
+  bool peek_is_str_arg() const;
+  bool peek_is_node_arg() const;
 
   std::unique_ptr<Lexer> d_lexer;
   SymbolTable d_table;
