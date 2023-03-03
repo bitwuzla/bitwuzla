@@ -140,7 +140,9 @@ class Parser
 
   bool pop_args(const ParsedItem& item_open,
                 size_t nexp,
-                std::vector<bitwuzla::Term>& args);
+                std::vector<bitwuzla::Term>& args,
+                size_t nidxs                = 0,
+                std::vector<uint64_t>* idxs = nullptr);
 
   std::unique_ptr<Lexer> d_lexer;
   SymbolTable d_table;

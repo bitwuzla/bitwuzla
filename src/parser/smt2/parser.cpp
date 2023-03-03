@@ -1465,35 +1465,6 @@ Parser::close_term_bang(const ParsedItem& item_open)
 }
 
 bool
-Parser::pop_args(const ParsedItem& item_open,
-                 size_t nexp,
-                 std::vector<bitwuzla::Term>& args)
-{
-  if (nexp > 0 && nargs() != nexp)
-  {
-    return error("expected " + std::to_string(nexp) + " arguments to '"
-                     + std::to_string(item_open.d_token) + "', got '"
-                     + std::to_string(nargs()) + "'",
-                 &item_open.d_coo);
-  }
-  nexp = nargs();
-  assert(args.empty());
-  args.reserve(nexp);
-  for (size_t i = 0; i < nexp; ++i)
-  {
-    size_t idx = nexp - i - 1;
-    if (!peek_is_term_arg())
-    {
-      return error("expected term as argument at index " + std::to_string(idx)
-                       + " to '" + std::to_string(item_open.d_token) + "'",
-                   &item_open.d_coo);
-    }
-    args[idx] = pop_term_arg();
-  }
-  return true;
-}
-
-bool
 Parser::close_term_array(const ParsedItem& item_open)
 {
   Token token = item_open.d_token;
@@ -1623,431 +1594,236 @@ Parser::close_term_core(const ParsedItem& item_open)
 bool
 Parser::close_term_bv(const ParsedItem& item_open)
 {
-#if 0
-  /* BV: EXTRACT ------------------------------------------------------------ */
-  else if (tag == BZLA_BV_EXTRACT_TAG_SMT2)
+  Token token = item_open.d_token;
+  std::vector<bitwuzla::Term> args;
+  std::vector<uint64_t> idxs;
+  size_t nexp = 0, nidxs = 0;
+  bitwuzla::Kind kind;
+
+  switch (token)
   {
-    if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
-    if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
-    width = bitwuzla_term_bv_get_size(item_cur[1].exp);
-    if (width <= (uint32_t) item_cur->idx0)
-    {
-      parser->perrcoo = item_cur->coo;
-      return !perr_smt2(parser,
-                        "first (high) 'extract' parameter %u too large "
-                        "for bit-vector argument of bit-width %u",
-                        item_cur->idx0,
-                        width);
-    }
-    exp = bitwuzla_mk_term1_indexed2(BITWUZLA_KIND_BV_EXTRACT,
-                                     item_cur[1].exp,
-                                     item_cur->idx0,
-                                     item_cur->idx1);
-    release_exp_and_overwrite(parser, item_open, item_cur, exp);
+    case Token::BV_ADD:
+      nexp = 0;
+      kind = bitwuzla::Kind::BV_ADD;
+      break;
+    case Token::BV_AND:
+      nexp = 0;
+      kind = bitwuzla::Kind::BV_AND;
+      break;
+    case Token::BV_ASHR:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_ASHR;
+      break;
+    case Token::BV_COMP:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_COMP;
+      break;
+    case Token::BV_CONCAT:
+      nexp = 0;
+      kind = bitwuzla::Kind::BV_CONCAT;
+      break;
+    case Token::BV_EXTRACT:
+      nexp  = 1;
+      nidxs = 2;
+      kind  = bitwuzla::Kind::BV_EXTRACT;
+      break;
+    case Token::BV_LSHR:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SHR;
+      break;
+    case Token::BV_MUL:
+      nexp = 0;
+      kind = bitwuzla::Kind::BV_MUL;
+      break;
+    case Token::BV_NAND:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_NAND;
+      break;
+    case Token::BV_NEG:
+      nexp = 1;
+      kind = bitwuzla::Kind::BV_NEG;
+      break;
+    case Token::BV_NOR:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_NOR;
+      break;
+    case Token::BV_NOT:
+      nexp = 1;
+      kind = bitwuzla::Kind::BV_NOT;
+      break;
+    case Token::BV_OR:
+      nexp = 0;
+      kind = bitwuzla::Kind::BV_OR;
+      break;
+    case Token::BV_REPEAT:
+      nexp  = 1;
+      nidxs = 1;
+      kind  = bitwuzla::Kind::BV_REPEAT;
+      break;
+    case Token::BV_ROTATE_LEFT:
+      nexp  = 1;
+      nidxs = 1;
+      kind  = bitwuzla::Kind::BV_ROLI;
+      break;
+    case Token::BV_ROTATE_RIGHT:
+      nexp  = 1;
+      nidxs = 1;
+      kind  = bitwuzla::Kind::BV_RORI;
+      break;
+    case Token::BV_SDIV:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SDIV;
+      break;
+    case Token::BV_SGE:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SGE;
+      break;
+    case Token::BV_SGT:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SGT;
+      break;
+    case Token::BV_SHL:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SHL;
+      break;
+    case Token::BV_SIGN_EXTEND:
+      nexp  = 1;
+      nidxs = 1;
+      kind  = bitwuzla::Kind::BV_SIGN_EXTEND;
+      break;
+    case Token::BV_SLE:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SLE;
+      break;
+    case Token::BV_SLT:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SLT;
+      break;
+    case Token::BV_SMOD:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SMOD;
+      break;
+    case Token::BV_SREM:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SREM;
+      break;
+    case Token::BV_SUB:
+      nexp = 0;
+      kind = bitwuzla::Kind::BV_SUB;
+      break;
+    case Token::BV_UDIV:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_UDIV;
+      break;
+    case Token::BV_UGE:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_UGE;
+      break;
+    case Token::BV_UGT:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_UGT;
+      break;
+    case Token::BV_ULE:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_ULE;
+      break;
+    case Token::BV_ULT:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_ULT;
+      break;
+    case Token::BV_UREM:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_UREM;
+      break;
+    case Token::BV_XNOR:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_XNOR;
+      break;
+    case Token::BV_XOR:
+      nexp = 0;
+      kind = bitwuzla::Kind::BV_XOR;
+      break;
+    case Token::BV_ZERO_EXTEND:
+      nexp  = 1;
+      nidxs = 1;
+      kind  = bitwuzla::Kind::BV_ZERO_EXTEND;
+      break;
+    case Token::BV_REDOR:
+      nexp = 1;
+      kind = bitwuzla::Kind::BV_REDOR;
+      break;
+    case Token::BV_REDAND:
+      nexp = 1;
+      kind = bitwuzla::Kind::BV_REDAND;
+      break;
+    case Token::BV_REDXOR:
+      nexp = 1;
+      kind = bitwuzla::Kind::BV_REDXOR;
+      break;
+    case Token::BV_SADDO:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SADD_OVERFLOW;
+      break;
+    case Token::BV_UADDO:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_UADD_OVERFLOW;
+      break;
+    case Token::BV_SDIVO:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SDIV_OVERFLOW;
+      break;
+    case Token::BV_SMULO:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SMUL_OVERFLOW;
+      break;
+    case Token::BV_UMULO:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_UMUL_OVERFLOW;
+      break;
+    case Token::BV_SSUBO:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_SSUB_OVERFLOW;
+      break;
+    case Token::BV_USUBO:
+      nexp = 2;
+      kind = bitwuzla::Kind::BV_USUB_OVERFLOW;
+      break;
+    default: assert(false);
   }
-  /* BV: NOT ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_NOT_TAG_SMT2)
+  if (!pop_args(item_open, nexp, args, nidxs, &idxs))
   {
-    if (!close_term_unary_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_NOT))
-    {
-      return 0;
-    }
+    return false;
   }
-  /* BV: NEG ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_NEG_TAG_SMT2)
+  assert(args.size());
+  for (size_t i = 0, n = args.size(); i < n; ++i)
   {
-    if (!close_term_unary_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_NEG))
+    if (!args[i].sort().is_bv())
     {
-      return 0;
+      return error("expected bit-vector term at index " + std::to_string(i)
+                       + " as argument to '" + std::to_string(token) + "'",
+                   &item_open.d_coo);
     }
-  }
-  /* BV: REDOR -------------------------------------------------------------- */
-  else if (tag == BZLA_BV_REDOR_TAG_SMT2)
-  {
-    if (!close_term_unary_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_REDOR))
+    if (i > 0)
     {
-      return 0;
-    }
-  }
-  /* BV: REDXOR ------------------------------------------------------------- */
-  else if (tag == BZLA_BV_REDXOR_TAG_SMT2)
-  {
-    if (!close_term_unary_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_REDXOR))
-    {
-      return 0;
-    }
-  }
-  /* BV: REDAND ------------------------------------------------------------- */
-  else if (tag == BZLA_BV_REDAND_TAG_SMT2)
-  {
-    if (!close_term_unary_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_REDAND))
-    {
-      return 0;
-    }
-  }
-  /* BV: CONCAT ------------------------------------------------------------- */
-  else if (tag == BZLA_BV_CONCAT_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_CONCAT))
-    {
-      return 0;
-    }
-  }
-  /* BV: AND ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_AND_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_AND))
-    {
-      return 0;
-    }
-  }
-  /* BV: OR ----------------------------------------------------------------- */
-  else if (tag == BZLA_BV_OR_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_OR))
-    {
-      return 0;
-    }
-  }
-  /* BV: XOR ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_XOR_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_XOR))
-    {
-      return 0;
-    }
-  }
-  /* BV: ADD ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_ADD_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ADD))
-    {
-      return 0;
-    }
-  }
-  /* BV: SUB ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SUB_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SUB))
-    {
-      return 0;
-    }
-  }
-  /* BV: MUL ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_MUL_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_MUL))
-    {
-      return 0;
-    }
-  }
-  /* BV: UDIV --------------------------------------------------------------- */
-  else if (tag == BZLA_BV_UDIV_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UDIV))
-    {
-      return 0;
-    }
-  }
-  /* BV: UREM --------------------------------------------------------------- */
-  else if (tag == BZLA_BV_UREM_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UREM))
-    {
-      return 0;
-    }
-  }
-  /* BV: SHL ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SHL_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SHL))
-    {
-      return 0;
-    }
-  }
-  /* BV: LSHR --------------------------------------------------------------- */
-  else if (tag == BZLA_BV_LSHR_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SHR))
-    {
-      return 0;
-    }
-  }
-  /* BV: ULT ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_ULT_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ULT))
-    {
-      return 0;
-    }
-  }
-  /* BV: NAND --------------------------------------------------------------- */
-  else if (tag == BZLA_BV_NAND_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_NAND))
-    {
-      return 0;
-    }
-  }
-  /* BV: NOR ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_NOR_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_NOR))
-    {
-      return 0;
-    }
-  }
-  /* BV: XNOR --------------------------------------------------------------- */
-  else if (tag == BZLA_BV_XNOR_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_XNOR))
-    {
-      return 0;
-    }
-  }
-  /* BV: COMP --------------------------------------------------------------- */
-  else if (tag == BZLA_BV_COMP_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_COMP))
-    {
-      return 0;
-    }
-  }
-  /* BV: SDIV --------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SDIV_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SDIV))
-    {
-      return 0;
-    }
-  }
-  /* BV: SREM --------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SREM_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SREM))
-    {
-      return 0;
+      if (args[i].sort() != args[i - 1].sort())
+      {
+        return error("expected terms of same sort at indices "
+                         + std::to_string(i - 1) + " and " + std::to_string(i)
+                         + " as argument to '" + std::to_string(token) + "'",
+                     &item_open.d_coo);
+      }
     }
   }
-  /* BV: SMOD --------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SMOD_TAG_SMT2)
+  if (token == Token::BV_EXTRACT)
   {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SMOD))
+    if (idxs[0] < idxs[1])
     {
-      return 0;
+      return error("upper index must be >= lower index as argument to '"
+                   + std::to_string(token) + "'");
     }
   }
-  /* BV: ASHR --------------------------------------------------------------- */
-  else if (tag == BZLA_BV_ASHR_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ASHR))
-    {
-      return 0;
-    }
-  }
-  /* BV: REPEAT ------------------------------------------------------------- */
-  else if (tag == BZLA_BV_REPEAT_TAG_SMT2)
-  {
-    if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
-    if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
-    width = bitwuzla_term_bv_get_size(item_cur[1].exp);
-    if (item_cur->num && ((uint32_t) (INT32_MAX / item_cur->num) < width))
-    {
-      parser->perrcoo = item_cur->coo;
-      return !perr_smt2(parser, "resulting bit-width of 'repeat' too large");
-    }
-    exp = bitwuzla_mk_term1_indexed1(
-        BITWUZLA_KIND_BV_REPEAT, item_cur[1].exp, item_cur->num);
-    release_exp_and_overwrite(parser, item_open, item_cur, exp);
-  }
-  /* BV: ZERO EXTEND -------------------------------------------------------- */
-  else if (tag == BZLA_BV_ZERO_EXTEND_TAG_SMT2)
-  {
-    if (!close_term_extend_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ZERO_EXTEND))
-    {
-      return 0;
-    }
-  }
-  /* BV: SIGN EXTEND -------------------------------------------------------- */
-  else if (tag == BZLA_BV_SIGN_EXTEND_TAG_SMT2)
-  {
-    if (!close_term_extend_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SIGN_EXTEND))
-    {
-      return 0;
-    }
-  }
-  /* BV: ROTATE LEFT -------------------------------------------------------- */
-  else if (tag == BZLA_BV_ROTATE_LEFT_TAG_SMT2)
-  {
-    if (!close_term_rotate_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ROLI))
-    {
-      return 0;
-    }
-  }
-  /* BV: ROTATE RIGHT ------------------------------------------------------- */
-  else if (tag == BZLA_BV_ROTATE_RIGHT_TAG_SMT2)
-  {
-    if (!close_term_rotate_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_RORI))
-    {
-      return 0;
-    }
-  }
-  /* BV: ULE ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_ULE_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_ULE))
-    {
-      return 0;
-    }
-  }
-  /* BV: UGT ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_UGT_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UGT))
-    {
-      return 0;
-    }
-  }
-  /* BV: UGE ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_UGE_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UGE))
-    {
-      return 0;
-    }
-  }
-  /* BV: SLT ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SLT_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SLT))
-    {
-      return 0;
-    }
-  }
-  /* BV: SLE ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SLE_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SLE))
-    {
-      return 0;
-    }
-  }
-  /* BV: SGT ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SGT_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SGT))
-    {
-      return 0;
-    }
-  }
-  /* BV: SGE ---------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SGE_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SGE))
-    {
-      return 0;
-    }
-  }
-  /* BV: SADDO -------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SADDO_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SADD_OVERFLOW))
-    {
-      return 0;
-    }
-  }
-  /* BV: UADDO -------------------------------------------------------------- */
-  else if (tag == BZLA_BV_UADDO_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UADD_OVERFLOW))
-    {
-      return 0;
-    }
-  }
-  /* BV: SDIVO -------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SDIVO_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SDIV_OVERFLOW))
-    {
-      return 0;
-    }
-  }
-  /* BV: SMULO -------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SMULO_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SMUL_OVERFLOW))
-    {
-      return 0;
-    }
-  }
-  /* BV: UMULO -------------------------------------------------------------- */
-  else if (tag == BZLA_BV_UMULO_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UMUL_OVERFLOW))
-    {
-      return 0;
-    }
-  }
-  /* BV: SSUBO -------------------------------------------------------------- */
-  else if (tag == BZLA_BV_SSUBO_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SSUB_OVERFLOW))
-    {
-      return 0;
-    }
-  }
-  /* BV: USUBO -------------------------------------------------------------- */
-  else if (tag == BZLA_BV_USUBO_TAG_SMT2)
-  {
-    if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_USUB_OVERFLOW))
-    {
-      return 0;
-    }
-  }
-#endif
+  d_work_args.push_back(bitwuzla::mk_term(kind, args, idxs));
+  return true;
 }
 
 bool
@@ -2999,6 +2775,54 @@ bool
 Parser::peek_is_node_arg() const
 {
   return std::holds_alternative<SymbolTable::Node*>(d_work_args.back());
+}
+
+bool
+Parser::pop_args(const ParsedItem& item_open,
+                 size_t nexp,
+                 std::vector<bitwuzla::Term>& args,
+                 size_t nidxs,
+                 std::vector<uint64_t>* idxs)
+{
+  assert(nexp > 0 || nidxs == 0);
+  if (nexp > 0 && nargs() != nexp)
+  {
+    return error("expected " + std::to_string(nexp) + " arguments to '"
+                     + std::to_string(item_open.d_token) + "', got '"
+                     + std::to_string(nargs()) + "'",
+                 &item_open.d_coo);
+  }
+  nexp = nargs();
+  assert(args.empty());
+  args.reserve(nexp);
+  for (size_t i = 0, n = nexp - nidxs; i < n; ++i)
+  {
+    size_t idx = n - i - 1;
+    if (!peek_is_term_arg())
+    {
+      return error("expected term as argument at index " + std::to_string(idx)
+                       + " to '" + std::to_string(item_open.d_token) + "'",
+                   &item_open.d_coo);
+    }
+    args[idx] = pop_term_arg();
+  }
+  assert(!idxs || idxs->empty());
+  if (idxs)
+  {
+    idxs->reserve(nidxs);
+    for (size_t i = 0; i < nidxs; ++i)
+    {
+      size_t idx = nidxs - i - 1;
+      if (!peek_is_uint64_arg())
+      {
+        return error("expected integer argument at index " + std::to_string(idx)
+                         + " to '" + std::to_string(item_open.d_token) + "'",
+                     &item_open.d_coo);
+      }
+      (*idxs)[idx] = pop_uint64_arg();
+    }
+  }
+  return true;
 }
 
 /* Parser::ParsedItem ------------------------------------------------------- */
