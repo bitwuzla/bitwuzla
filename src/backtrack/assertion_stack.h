@@ -70,8 +70,9 @@ class AssertionView
    *
    * @param index The index of the assertion to be replaced.
    * @param replacement The new assertion.
+   * @return True if assertion was replaced, and false otherwise.
    */
-  void replace(size_t index, const Node& replacement);
+  bool replace(size_t index, const Node& replacement);
 
   /**
    * Insert assertion at given level.
@@ -109,8 +110,9 @@ class AssertionStack : public Backtrackable
    *
    * @param index The index of the assertion to be replaced.
    * @param replacement The new assertion.
+   * @return True if assertion was replaced, and false otherwise.
    */
-  void replace(size_t index, const Node& replacement);
+  bool replace(size_t index, const Node& replacement);
 
   /**
    * Insert assertion at given level.

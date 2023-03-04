@@ -24,7 +24,7 @@ AssertionStack::push_back(const Node& assertion)
   return inserted;
 }
 
-void
+bool
 AssertionStack::replace(size_t index, const Node& replacement)
 {
   const auto& [assertion, level] = d_assertions[index];
@@ -33,7 +33,7 @@ AssertionStack::replace(size_t index, const Node& replacement)
   if (assertion.is_value())
   {
     assert(assertion == replacement);
-    return;
+    return false;
   }
   d_cache.erase(assertion);
 
@@ -65,6 +65,7 @@ AssertionStack::replace(size_t index, const Node& replacement)
       }
     }
   }
+  return true;
 }
 
 bool
@@ -297,10 +298,10 @@ AssertionView::set_index(size_t index)
   d_index = index;
 }
 
-void
+bool
 AssertionView::replace(size_t index, const Node& replacement)
 {
-  d_assertions.replace(index, replacement);
+  return d_assertions.replace(index, replacement);
 }
 
 bool
