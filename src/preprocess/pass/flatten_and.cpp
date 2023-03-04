@@ -26,7 +26,7 @@ PassFlattenAnd::apply(AssertionVector& assertions)
   NodeManager& nm = NodeManager::get();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    const Node& assertion = assertions[i];
+    Node assertion = assertions[i];
     if (assertion.kind() == Kind::AND)
     {
       visit.insert(visit.end(), assertion.rbegin(), assertion.rend());
@@ -46,7 +46,7 @@ PassFlattenAnd::apply(AssertionVector& assertions)
         }
         else
         {
-          assertions.push_back(cur);
+          assertions.push_back(cur, assertion);
         }
       }
     }

@@ -50,6 +50,12 @@ PassElimExtract::PassElimExtract(Env& env,
 void
 PassElimExtract::apply(AssertionVector& assertions)
 {
+  // Disabled if unsat cores enabled.
+  if (d_env.options().produce_unsat_cores())
+  {
+    return;
+  }
+
   util::Timer timer(d_stats.time_apply);
   d_cache.clear();
 
@@ -71,7 +77,6 @@ PassElimExtract::apply(AssertionVector& assertions)
     {
       continue;
     }
-    // std::cout << "\nc: " << c << std::endl;
     std::unordered_set<std::pair<uint64_t, uint64_t>> indices;
     uint64_t size = c.type().bv_size();
 
@@ -104,7 +109,8 @@ PassElimExtract::apply(AssertionVector& assertions)
     }
 
     Node concat = utils::mk_nary(Kind::BV_CONCAT, consts);
-    assertions.push_back(nm.mk_node(Kind::EQUAL, {c, concat}));
+    Node null;
+    assertions.push_back(nm.mk_node(Kind::EQUAL, {c, concat}), null);
     cache_assertion(c);
   }
 

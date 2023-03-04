@@ -428,7 +428,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       // Do not add direct substitution cycles
       if (!is_direct_cycle(var, term_processed))
       {
-        d_substitutions.emplace(var, term_processed);
+        d_substitutions.emplace(var, std::make_pair(term_processed, assertion));
         d_substitution_assertions.emplace(assertion, std::make_pair(var, term));
         new_substs.emplace(var, term_processed);
         Log(2) << "Add substitution: " << var << " -> " << term_processed;
@@ -502,16 +502,20 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
         // Make sure to rewrite the assertion, otherwise we may run into loops
         // with rewriter pass due to the substitution normalizations in
         // find_substitution(), e.g., a -- subst --> a = true -- rewrite --> a.
+        std::vector<Node> parents;
+        Node processed = process(term, parents);
         Node rewritten =
-            rewriter.rewrite(nm.mk_node(Kind::EQUAL, {var, process(term)}));
-        assertions.replace(i, rewritten);
+            rewriter.rewrite(nm.mk_node(Kind::EQUAL, {var, processed}));
+        assertions.replace(i, rewritten, parents);
         // Add new substitution assertion to cache in order to avoid that this
         // new assertion will be eliminated by variable substitution.
         d_substitution_assertions.emplace(rewritten, std::make_pair(var, term));
         continue;
       }
     }
-    assertions.replace(i, process(assertion));
+    std::vector<Node> parents;
+    Node replacement = process(assertion, parents);
+    assertions.replace(i, replacement, parents);
   }
   d_cache.cache().clear();
 }
@@ -519,8 +523,9 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
 Node
 PassVariableSubstitution::process(const Node& term)
 {
+  std::vector<Node> parents;
   return d_env.rewriter().rewrite(
-      substitute(term, d_cache.substitutions(), d_cache.cache()));
+      substitute(term, d_cache.substitutions(), d_cache.cache(), parents));
 }
 
 /* --- PassVariableSubstitution private ------------------------------------- */
@@ -677,8 +682,10 @@ Node
 PassVariableSubstitution::substitute(
     const Node& term,
     const std::unordered_map<Node, Node>& substitutions,
-    std::unordered_map<Node, Node>& cache) const
+    std::unordered_map<Node, Node>& cache,
+    std::vector<Node>& substituted) const
 {
+  bool track_assertions = d_env.options().produce_unsat_cores();
   node::node_ref_vector visit{term};
   do
   {
@@ -706,6 +713,12 @@ PassVariableSubstitution::substitute(
         auto iit = cache.find(its->second);
         assert(iit != cache.end());
         it->second = iit->second;
+        if (track_assertions)
+        {
+          assert(d_substitutions.find(cur) != d_substitutions.end());
+          // Track assertion
+          substituted.push_back(d_substitutions.find(cur)->second.second);
+        }
       }
       else
       {
@@ -716,6 +729,13 @@ PassVariableSubstitution::substitute(
   } while (!visit.empty());
 
   return cache.at(term);
+}
+
+Node
+PassVariableSubstitution::process(const Node& term, std::vector<Node>& parents)
+{
+  return d_env.rewriter().rewrite(
+      substitute(term, d_cache.substitutions(), d_cache.cache(), parents));
 }
 
 PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)

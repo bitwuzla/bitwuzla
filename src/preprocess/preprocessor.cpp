@@ -32,6 +32,9 @@ Preprocessor::Preprocessor(SolvingContext& context)
       d_assertions(context.assertions()),
       d_global_backtrack_mgr(*context.backtrack_mgr()),
       d_pop_callback(context.backtrack_mgr(), &d_backtrack_mgr),
+      d_assertion_tracker(d_env.options().produce_unsat_cores()
+                              ? new AssertionTracker(&d_backtrack_mgr)
+                              : nullptr),
       d_pass_rewrite(d_env, &d_backtrack_mgr),
       d_pass_contr_ands(d_env, &d_backtrack_mgr),
       d_pass_elim_lambda(d_env, &d_backtrack_mgr),
@@ -67,7 +70,7 @@ Preprocessor::preprocess()
     sync_scope(level);
 
     // Create vector for current level
-    AssertionVector assertions(d_assertions);
+    AssertionVector assertions(d_assertions, d_assertion_tracker.get());
     assert(assertions.d_level == level);
 
     // Apply preprocessing passes until fixed-point
@@ -106,6 +109,13 @@ Preprocessor::process(const Node& term)
   Node processed = d_pass_elim_lambda.process(term);
   processed      = d_pass_variable_substitution.process(processed);
   return d_pass_rewrite.process(processed);
+}
+
+std::vector<Node>
+Preprocessor::original_assertions(const std::vector<Node>& assertions) const
+{
+  assert(d_assertion_tracker != nullptr);
+  return d_assertion_tracker->parents(assertions);
 }
 
 /* --- Preprocessor private ------------------------------------------------- */

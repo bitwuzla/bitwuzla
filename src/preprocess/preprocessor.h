@@ -3,6 +3,7 @@
 
 #include "backtrack/assertion_stack.h"
 #include "backtrack/pop_callback.h"
+#include "preprocess/assertion_tracker.h"
 #include "preprocess/pass/contradicting_ands.h"
 #include "preprocess/pass/elim_extract.h"
 #include "preprocess/pass/elim_lambda.h"
@@ -39,6 +40,9 @@ class Preprocessor
   /** Preprocess given term based on last preprocess() call. */
   Node process(const Node& term);
 
+  std::vector<Node> original_assertions(
+      const std::vector<Node>& assertions) const;
+
  private:
   /** Apply all preprocessing passes to assertions until fixed-point. */
   void apply(AssertionVector& assertions);
@@ -60,6 +64,9 @@ class Preprocessor
 
   /** Callback to sync d_backtrack_mgr with d_global_backtrack_mgr on pop(). */
   backtrack::PopCallback d_pop_callback;
+
+  /** Assertion tracking for unsat cores. */
+  std::unique_ptr<AssertionTracker> d_assertion_tracker;
 
   /** Preprocessing passes */
   pass::PassRewrite d_pass_rewrite;

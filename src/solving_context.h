@@ -38,11 +38,14 @@ class SolvingContext
    */
   Node get_value(const Node& term);
 
-  void push();
-  void pop();
-
-  // std::vector<Node>& get_unsat_core();
+  /** @return Unsat core of previous check_sat() call. */
+  std::vector<Node> get_unsat_core();
   // bool is_in_unsat_core(const Node& term) const;
+
+  /** Increase assertion stack level. */
+  void push();
+  /** Decrease assertion stack level. */
+  void pop();
 
   /** @return Context options object. */
   const option::Options& options() const;
@@ -70,6 +73,11 @@ class SolvingContext
 
   /** Assertion stack of this solving context. */
   backtrack::AssertionStack d_assertions;
+
+#ifndef NDEBUG
+  /** Original input assertions added via assert_formula(). */
+  backtrack::unordered_set<Node> d_original_assertions;
+#endif
 
   /** The solving context preprocessor. */
   preprocess::Preprocessor d_preprocessor;

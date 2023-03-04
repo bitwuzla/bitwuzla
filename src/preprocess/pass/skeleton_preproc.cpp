@@ -27,6 +27,13 @@ void
 PassSkeletonPreproc::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats.time_apply);
+
+  // Disabled if unsat cores enabled.
+  if (d_env.options().produce_unsat_cores())
+  {
+    return;
+  }
+
   d_sat_solver.reset(new sat::Cadical());
   d_encode_cache.clear();
 
@@ -52,15 +59,16 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
       if (assertion_lits.find(l) == assertion_lits.end())
       {
         auto val = d_sat_solver->fixed(lit(node));
+        Node null;
         if (val < 0)
         {
           ++d_stats.num_new_assertions;
-          assertions.push_back(nm.mk_node(Kind::NOT, {node}));
+          assertions.push_back(nm.mk_node(Kind::NOT, {node}), null);
         }
         else if (val > 0)
         {
           ++d_stats.num_new_assertions;
-          assertions.push_back(node);
+          assertions.push_back(node, null);
         }
       }
     }
