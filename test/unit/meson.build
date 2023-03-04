@@ -33,6 +33,7 @@ unit_tests = [
 
   ['preprocess',
     [
+      'assertion_tracker',
       'pass_contradicting_ands',
       'pass_normalize',
       'pass_flatten_and',
