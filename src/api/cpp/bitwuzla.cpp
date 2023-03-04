@@ -1226,6 +1226,7 @@ Bitwuzla::push(uint32_t nlevels)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_INCREMENTAL(d_ctx->options());
+  solver_state_change();
   for (uint32_t i = 0; i < nlevels; ++i)
   {
     d_ctx->push();
@@ -1242,6 +1243,7 @@ Bitwuzla::pop(uint32_t nlevels)
       << ") greater than number of pushed context levels ("
       << d_ctx->backtrack_mgr()->num_levels() << ")";
 
+  solver_state_change();
   for (uint32_t i = 0; i < nlevels; ++i)
   {
     d_ctx->pop();
@@ -1255,6 +1257,7 @@ Bitwuzla::assert_formula(const Term &term)
   BITWUZLA_CHECK_NOT_NULL(term.d_node);
   BITWUZLA_CHECK_TERM_IS_BOOL(term);
   BITWUZLA_CHECK_TERM_IS_NOT_VAR(term);
+  solver_state_change();
   d_ctx->assert_formula(*term.d_node);
 }
 
@@ -1310,6 +1313,7 @@ Result
 Bitwuzla::simplify()
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  solver_state_change();
   // TODO (not implemented yet)
   return Result::UNKNOWN;
 }
@@ -1320,6 +1324,7 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK(d_n_sat_calls == 0 || d_ctx->options().incremental())
       << "multiple check-sat calls require that incremental solving is enabled";
+  solver_state_change();
   d_n_sat_calls += 1;
   if (!assumptions.empty())
   {
@@ -1329,7 +1334,10 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
       d_ctx->assert_formula(*term.d_node);
     }
     d_last_check_sat = s_results.at(d_ctx->solve());
-    d_ctx->pop();
+    // Delay pop until other methods are called that change solver state. This
+    // allows users to query values and unsat cores after a check-sat with
+    // assumptions.
+    d_pending_pop = true;
   }
   else
   {
@@ -1449,6 +1457,19 @@ Bitwuzla::dump_formula(std::ostream &out, const std::string &format)
   // TODO
   (void) out;
   assert(false);
+}
+
+/* Bitwuzla private ----------------------------------------------------------
+ */
+
+void
+Bitwuzla::solver_state_change()
+{
+  if (d_pending_pop)
+  {
+    d_ctx->pop();
+    d_pending_pop = false;
+  }
 }
 
 /* -------------------------------------------------------------------------- */

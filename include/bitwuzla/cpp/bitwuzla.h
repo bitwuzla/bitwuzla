@@ -1196,6 +1196,9 @@ class Bitwuzla
   void dump_formula(std::ostream &out, const std::string &format);
 
  private:
+  /** Helper called when solver state changes. */
+  void solver_state_change();
+
   /** The associated solving context. */
   std::shared_ptr<bzla::SolvingContext> d_ctx;
   /** The result of the last check_sat() call. */
@@ -1206,6 +1209,8 @@ class Bitwuzla
   Terminator *d_terminator = nullptr;
   /** The internal terminator. */
   std::unique_ptr<bzla::Terminator> d_terminator_internal;
+  /** Indicates a pending pop from check-sat with assumptions. */
+  bool d_pending_pop = false;
 };
 
 /* -------------------------------------------------------------------------- */
