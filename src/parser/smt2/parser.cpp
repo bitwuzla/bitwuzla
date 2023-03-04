@@ -2210,7 +2210,7 @@ Parser::close_term_fun_app(const ParsedItem& item_open)
   assert(!fun.is_null());
   if (!fun.sort().is_fun())
   {
-    return error("expected fun");
+    return error("expected fun", &item_open.d_coo);
   }
   size_t arity = fun.sort().fun_arity();
   if (nargs() != arity)
@@ -2233,7 +2233,8 @@ Parser::close_term_fun_app(const ParsedItem& item_open)
     if (domain[i] != args[i].sort())
     {
       return error("expected term of sort '" + domain[i].str() + "', got '"
-                   + args[i].sort().str() + "'");
+                       + args[i].sort().str() + "'",
+                   &item_open.d_coo);
     }
   }
   args.insert(args.begin(), fun);
@@ -2244,85 +2245,69 @@ Parser::close_term_fun_app(const ParsedItem& item_open)
 bool
 Parser::close_term_let(const ParsedItem& item_open)
 {
-#if 0
-    for (i = 1; i < nargs; i++)
-    {
-      if (item_cur[i].tag != BZLA_SYMBOL_TAG_SMT2)
-      {
-        parser->perrcoo = item_cur[i].coo;
-        return !perr_smt2(parser, "expected symbol as argument %d of 'let'", i);
-      }
-    }
-    if (item_cur[nargs].tag != BZLA_SYMBOL_TAG_SMT2)
-    {
-      if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
-      {
-        parser->perrcoo = item_cur[i].coo;
-        return !perr_smt2(
-            parser, "expected expression as argument %d of 'let'", nargs);
-      }
-    }
-    item_open[0].tag = BZLA_EXP_TAG_SMT2;
-    item_open[0].exp = item_cur[nargs].exp;
-    for (i = 1; i < nargs; i++)
-    {
-      assert(item_cur[i].tag == BZLA_SYMBOL_TAG_SMT2);
-      sym = item_cur[i].node;
-      assert(sym);
-      assert(sym->coo.x);
-      assert(sym->tag == BZLA_SYMBOL_TAG_SMT2);
-      remove_symbol_smt2(parser, sym);
-    }
-    parser->work.top = item_cur;
-#endif
+  if (nargs() == 0 || !peek_is_term_arg())
+  {
+    return error("expected (single) term as argument to '"
+                     + std::to_string(item_open.d_token) + "'",
+                 &item_open.d_coo);
+  }
+  bitwuzla::Term term = pop_term_arg();
+  for (size_t i = 0, n = nargs(); i < n; ++i)
+  {
+    assert(peek_is_node_arg());
+    SymbolTable::Node* symbol = pop_node_arg();
+    assert(symbol);
+    assert(symbol->d_token == Token::SYMBOL);
+    assert(symbol->d_coo.line);
+    assert(!symbol->d_term.is_null());
+    d_table.remove(symbol);
+  }
+  d_work_args.push_back(term);
+  return true;
 }
 
 bool
 Parser::close_term_letbind(const ParsedItem& item_open)
 {
-#if 0
-    assert(item_cur[1].tag == BZLA_SYMBOL_TAG_SMT2);
-    if (nargs == 1)
-      return !perr_smt2(
-          parser, "term to be bound to '%s' missing", item_cur[1].node->name);
-    if (nargs > 2)
-    {
-      parser->perrcoo = item_cur[3].coo;
-      return !perr_smt2(
-          parser, "second term bound to '%s'", item_cur[1].node->name);
-    }
-    if (item_cur[2].tag != BZLA_EXP_TAG_SMT2)
-    {
-      parser->perrcoo = item_cur[2].coo;
-      return !perr_smt2(parser, "expected expression in 'let' var binding");
-    }
-    item_open[0] = item_cur[1];
-    assert(!item_open[0].node->exp);
-    assert(item_cur[2].tag == BZLA_EXP_TAG_SMT2);
-    item_open[0].node->exp = item_cur[2].exp;
-    assert(!item_open[0].node->bound);
-    item_open[0].node->bound = 1;
-    parser->work.top         = item_cur;
-    assert(!parser->isvarbinding);
-    parser->isvarbinding = true;
-#endif
+  if (nargs() != 2)
+  {
+    return error("expected 2 arguments to variable binding, got '"
+                     + std::to_string(nargs()) + "'",
+                 &item_open.d_coo);
+  }
+  if (!peek_is_term_arg())
+  {
+    return error("expected term", &item_open.d_coo);
+  }
+  bitwuzla::Term term = pop_term_arg();
+  assert(peek_is_node_arg());
+  SymbolTable::Node* symbol = peek_node_arg();
+  assert(symbol->d_term.is_null());
+  assert(!symbol->d_is_bound);
+  symbol->d_term     = term;
+  symbol->d_is_bound = true;
+  d_is_var_binding   = true;
+  return true;
 }
 
 bool
 Parser::close_term_parletbind(const ParsedItem& item_open)
 {
-#if 0
-    assert(parser->isvarbinding);
-    parser->isvarbinding = false;
+  assert(d_is_var_binding);
+  d_is_var_binding = false;
 #ifndef NDEBUG
-    for (i = 1; i <= nargs; i++)
-      assert(item_cur[i].tag == BZLA_SYMBOL_TAG_SMT2);
+  for (size_t i = 0, n = nargs(); i < n; ++i)
+  {
+    assert(peek_is_node_arg());
+    SymbolTable::Node* symbol = peek_node_arg();
+    assert(symbol->d_token == Token::SYMBOL);
+    assert(!symbol->d_term.is_null());
+    assert(symbol->d_is_bound);
+  }
 #endif
-    for (i = 0; i < nargs; i++) item_open[i] = item_cur[i + 1];
-    parser->work.top = item_open + nargs;
-    assert(!parser->expecting_body);
-    parser->expecting_body = "let";
-#endif
+  assert(!d_expect_body);
+  d_expect_body = true;
+  return true;
 }
 
 bool
