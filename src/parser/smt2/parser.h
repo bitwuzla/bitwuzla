@@ -130,6 +130,7 @@ class Parser
 
   uint64_t peek_uint64_arg() const;
   const bitwuzla::Sort& peek_sort_arg() const;
+  const bitwuzla::Term& peek_term_arg() const;
   SymbolTable::Node* peek_node_arg() const;
 
   bool peek_is_uint64_arg() const;

@@ -2295,16 +2295,6 @@ Parser::close_term_parletbind(const ParsedItem& item_open)
 {
   assert(d_is_var_binding);
   d_is_var_binding = false;
-#ifndef NDEBUG
-  for (size_t i = 0, n = nargs(); i < n; ++i)
-  {
-    assert(peek_is_node_arg());
-    SymbolTable::Node* symbol = peek_node_arg();
-    assert(symbol->d_token == Token::SYMBOL);
-    assert(!symbol->d_term.is_null());
-    assert(symbol->d_is_bound);
-  }
-#endif
   assert(!d_expect_body);
   d_expect_body = true;
   return true;
@@ -2313,67 +2303,56 @@ Parser::close_term_parletbind(const ParsedItem& item_open)
 bool
 Parser::close_term_quant(const ParsedItem& item_open)
 {
-#if 0
-  /* forall (<sorted_var>+) <term> ------------------------------------------ */
-  else if (tag == BZLA_FORALL_TAG_SMT2)
+  assert(item_open.d_token == Token::FORALL
+         || item_open.d_token == Token::EXISTS);
+  if (!peek_is_term_arg() || !peek_term_arg().sort().is_bool())
   {
-    if (!close_term_quant(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_FORALL))
+    return error("expected Boolean term as body to '"
+                     + std::to_string(item_open.d_token) + "'",
+                 &item_open.d_coo);
+  }
+  std::vector<bitwuzla::Term> args;
+  pop_args(item_open, nargs(), args);
+  for (size_t i = 0, n = nargs() - 1; i < n; ++i)
+  {
+    if (!args[i].is_variable())
     {
-      return 0;
+      return error("expected variable at index " + std::to_string(i)
+                       + " as argument to '" + std::to_string(item_open.d_token)
+                       + "'",
+                   &item_open.d_coo);
     }
   }
-  /* exists (<sorted_var>+) <term> ------------------------------------------ */
-  else if (tag == BZLA_EXISTS_TAG_SMT2)
-  {
-    if (!close_term_quant(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_EXISTS))
-    {
-      return 0;
-    }
-  }
-#endif
+  d_work_args.push_back(bitwuzla::mk_term(item_open.d_token == Token::FORALL
+                                              ? bitwuzla::Kind::FORALL
+                                              : bitwuzla::Kind::EXISTS,
+                                          args));
+  return true;
 }
 
 bool
 Parser::close_term_sorted_var(const ParsedItem& item_open)
 {
-#if 0
-    assert(item_cur[1].tag == BZLA_SYMBOL_TAG_SMT2);
-    if (nargs != 1)
-    {
-      parser->perrcoo = item_cur[1].coo;
-      return !perr_smt2(parser,
-                        "expected only one variable at sorted var '%s'",
-                        item_cur[1].node->name);
-    }
-    parser->work.top = item_cur;
-    item_open->tag   = BZLA_SYMBOL_TAG_SMT2;
-    item_open->node  = item_cur[1].node;
-    assert(bitwuzla_term_is_var(item_open->node->exp));
-    assert(!parser->sorted_var);
-    parser->sorted_var = 1;
-#endif
+  if (nargs() != 1)
+  {
+    return error("expected one single variable at sorted variable expression",
+                 &item_open.d_coo);
+  }
+  assert(peek_is_term_arg());
+  assert(peek_term_arg().is_variable());
+  assert(!d_is_sorted_var);
+  d_is_sorted_var = true;
+  return true;
 }
 
 bool
 Parser::close_term_sorted_vars(const ParsedItem& item_open)
 {
-#if 0
-    assert(parser->sorted_var);
-    parser->sorted_var = 0;
-#ifndef NDEBUG
-    for (i = 1; i <= nargs; i++)
-    {
-      assert(item_cur[i].tag == BZLA_SYMBOL_TAG_SMT2);
-      assert(bitwuzla_term_is_var(item_cur[i].node->exp));
-    }
-#endif
-    for (i = 0; i < nargs; i++) item_open[i] = item_cur[i + 1];
-    parser->work.top = item_open + nargs;
-    assert(!parser->expecting_body);
-    parser->expecting_body = "quantifier";
-#endif
+  assert(d_is_sorted_var);
+  d_is_sorted_var = false;
+  assert(!d_expect_body);
+  d_expect_body = true;
+  return true;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2734,6 +2713,13 @@ Parser::peek_sort_arg() const
 {
   assert(std::holds_alternative<bitwuzla::Sort>(d_work_args.back()));
   return std::get<bitwuzla::Sort>(d_work_args.back());
+}
+
+const bitwuzla::Term&
+Parser::peek_term_arg() const
+{
+  assert(std::holds_alternative<bitwuzla::Term>(d_work_args.back()));
+  return std::get<bitwuzla::Term>(d_work_args.back());
 }
 
 SymbolTable::Node*
