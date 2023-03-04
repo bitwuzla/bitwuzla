@@ -44,6 +44,7 @@ class BvBitblastSolver::BitblastSatSolver : public bb::SatInterface
 BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_assumptions(state.backtrack_mgr()),
+      d_last_result(Result::UNKNOWN),
       d_stats(env.statistics())
 {
   d_sat_solver.reset(new sat::Cadical());
@@ -63,12 +64,19 @@ BvBitblastSolver::solve()
 
   update_statistics();
   util::Timer timer(d_stats.time_sat);
-  return d_sat_solver->solve();
+  d_last_result = d_sat_solver->solve();
+  return d_last_result;
 }
 
 void
 BvBitblastSolver::register_assertion(const Node& assertion, bool top_level)
 {
+  // All assertions are assumptions.
+  if (d_env.options().produce_unsat_cores())
+  {
+    top_level = false;
+  }
+
   if (!top_level)
   {
     d_assumptions.push_back(assertion);
@@ -349,6 +357,21 @@ BvBitblastSolver::bits(const Node& term) const
 {
   assert(d_bitblaster_cache.find(term) != d_bitblaster_cache.end());
   return d_bitblaster_cache.at(term);
+}
+
+void
+BvBitblastSolver::unsat_core(std::vector<Node>& core) const
+{
+  assert(d_last_result == Result::UNSAT);
+  assert(d_env.options().produce_unsat_cores());
+
+  for (const Node& assumption : d_assumptions)
+  {
+    if (d_sat_solver->failed(bits(assumption)[0].get_id()))
+    {
+      core.push_back(assumption);
+    }
+  }
 }
 
 /* --- BvBitblastSolver private --------------------------------------------- */

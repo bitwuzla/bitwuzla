@@ -32,6 +32,9 @@ class BvSolver : public Solver, public BvSolverInterface
 
   Result solve() override;
 
+  /** Get unsat core of last solve() call. */
+  void unsat_core(std::vector<Node>& core) const;
+
  private:
   /** Query leaf assignment from subsolver. */
   Node assignment(const Node& term);

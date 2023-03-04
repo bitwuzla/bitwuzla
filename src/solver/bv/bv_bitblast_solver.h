@@ -35,6 +35,9 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   /** Return encoded bits associated with bit-blasted term. */
   const bb::AigBitblaster::Bits& bits(const Node& term) const;
 
+  /** Get unsat core of last solve() call. */
+  void unsat_core(std::vector<Node>& core) const;
+
  private:
   /** Update AIG and CNF statistics. */
   void update_statistics();
@@ -55,6 +58,8 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   std::unique_ptr<sat::SatSolver> d_sat_solver;
   /** SAT solver interface for CNF encoder, which wraps `d_sat_solver`. */
   std::unique_ptr<BitblastSatSolver> d_bitblast_sat_solver;
+  /** Result of last solve() call. */
+  Result d_last_result;
 
   struct Statistics
   {

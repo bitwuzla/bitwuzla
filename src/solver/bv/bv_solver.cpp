@@ -377,6 +377,12 @@ BvSolver::value(const Node& term)
   return get_cached_value(term);
 }
 
+void
+BvSolver::unsat_core(std::vector<Node>& core) const
+{
+  d_bitblast_solver.unsat_core(core);
+}
+
 /* --- BvBitblastSolver private --------------------------------------------- */
 
 Node
