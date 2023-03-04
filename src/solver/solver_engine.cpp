@@ -114,6 +114,13 @@ SolverEngine::value(const Node& term)
 }
 
 void
+SolverEngine::unsat_core(std::vector<Node>& core) const
+{
+  assert(d_sat_state == Result::UNSAT);
+  d_bv_solver.unsat_core(core);
+}
+
+void
 SolverEngine::lemma(const Node& lemma)
 {
   assert(lemma.type().is_bool());

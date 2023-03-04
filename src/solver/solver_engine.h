@@ -39,6 +39,9 @@ class SolverEngine
   /** Get value of given term. Queries corresponding solver for value. */
   Node value(const Node& term);
 
+  /** Get unsat core of last solve() call. */
+  void unsat_core(std::vector<Node>& core) const;
+
   /** Add a lemma.
    *
    * @note: A solver is not allowed to send duplicate lemmas.
