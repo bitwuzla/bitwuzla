@@ -282,7 +282,7 @@ Parser::parse_command_check_sat(bool with_assumptions)
 bool
 Parser::parse_command_declare_fun(bool is_const)
 {
-  if (!parse_symbol(""))
+  if (!parse_symbol(is_const ? "after 'declare-const'" : "after 'declare-fun'"))
   {
     return false;
   }
@@ -346,11 +346,35 @@ Parser::parse_command_declare_fun(bool is_const)
 bool
 Parser::parse_command_declare_sort()
 {
-  //    case BZLA_DECLARE_SORT_TAG_SMT2:
-  //      configure_smt_comp_mode(parser);
-  //      if (!declare_sort_smt2(parser)) return 0;
-  //      print_success(parser);
-  //      break;
+  if (!parse_symbol("after 'declare-sort'"))
+  {
+    return false;
+  }
+  assert(nargs() == 1);
+  SymbolTable::Node* symbol = pop_node_arg();
+  if (symbol->d_coo.line)
+  {
+    return error("symbol '" + symbol->d_symbol + "' alread defined at line "
+                 + std::to_string(symbol->d_coo.line) + " column "
+                 + std::to_string(symbol->d_coo.col));
+  }
+  symbol->d_coo = d_lexer->coo();
+  if (!parse_uint64())
+  {
+    return false;
+  }
+  if (pop_uint64_arg() != 0)
+  {
+    return error("'declare-sort' of arity > 0 not supported");
+  }
+  symbol->d_sort = bitwuzla::mk_uninterpreted_sort(symbol->d_symbol);
+  symbol->d_coo  = d_lexer->coo();
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  print_success();
+  return true;
 }
 
 bool
