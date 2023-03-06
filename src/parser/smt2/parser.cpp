@@ -459,10 +459,46 @@ Parser::parse_command_define_fun()
 bool
 Parser::parse_command_define_sort()
 {
-  //    case BZLA_DEFINE_SORT_TAG_SMT2:
-  //      if (!define_sort_smt2(parser)) return 0;
-  //      print_success(parser);
-  //      break;
+  if (!parse_symbol("after 'define-sort'"))
+  {
+    return false;
+  }
+  assert(nargs() == 1);
+  SymbolTable::Node* symbol = pop_node_arg();
+  if (symbol->d_coo.line)
+  {
+    return error("symbol '" + symbol->d_symbol + "' alread defined at line "
+                 + std::to_string(symbol->d_coo.line) + " column "
+                 + std::to_string(symbol->d_coo.col));
+  }
+  symbol->d_coo = d_lexer->coo();
+
+  if (!parse_lpars(1))
+  {
+    return false;
+  }
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return false;
+  }
+  if (token != Token::LPAR)
+  {
+    return error("parameterized 'define-sort' not supported, expected ')'");
+  }
+
+  if (!parse_sort())
+  {
+    return false;
+  }
+  symbol->d_sort = pop_sort_arg();
+
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  print_success();
+  return true;
 }
 
 bool
