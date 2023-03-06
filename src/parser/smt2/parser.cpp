@@ -84,6 +84,15 @@ Parser::configure_terminator(bitwuzla::Terminator* terminator)
 
 /* Parser private ----------------------------------------------------------- */
 
+void
+Parser::init_bitwuzla()
+{
+  if (!d_bitwuzla)
+  {
+    d_bitwuzla.reset(new bitwuzla::Bitwuzla(d_options));
+  }
+}
+
 bool
 Parser::terminate()
 {
@@ -139,7 +148,7 @@ Parser::parse_command()
   {
     case Token::ASSERT: return parse_command_assert();
     case Token::CHECK_SAT: return parse_command_check_sat();
-    case Token::CHECK_SAT_ASSUMING: return parse_command_check_sat_assuming();
+    case Token::CHECK_SAT_ASSUMING: return parse_command_check_sat(true);
     case Token::DECLARE_CONST: return parse_command_declare_const();
     case Token::DECLARE_SORT: return parse_command_declare_sort();
     case Token::DECLARE_FUN: return parse_command_declare_fun();
@@ -170,75 +179,104 @@ Parser::parse_command()
 bool
 Parser::parse_command_assert()
 {
-  //    case BZLA_ASSERT_TAG_SMT2:
-  //      if (!parse_term_smt2(parser, &exp, &coo)) return 0;
-  //      assert(!parser->error);
-  //      if (!bitwuzla_term_is_bool(exp))
-  //      {
-  //        parser->perrcoo = coo;
-  //        return !perr_smt2(parser, "assert argument is not a formula");
-  //      }
-  //      if (!read_rpar_smt2(parser, " after asserted expression"))
-  //      {
-  //        return 0;
-  //      }
-  //      bitwuzla_assert(get_bitwuzla(parser), exp);
-  //      assert(!parser->error);
-  //      parser->commands.asserts++;
-  //      print_success(parser);
-  //      break;
+  init_bitwuzla();
+  if (!parse_term())
+  {
+    return false;
+  }
+  assert(peek_is_term_arg());
+  bitwuzla::Term term = pop_term_arg();
+  if (!term.sort().is_bool())
+  {
+    return error("asserted term is not a formula");
+  }
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  d_bitwuzla->assert_formula(term);
+  d_statistics.num_commands += 1;
+  print_success();
+  return true;
 }
 
 bool
-Parser::parse_command_check_sat()
+Parser::parse_command_check_sat(bool with_assumptions)
 {
-  //    case BZLA_CHECK_SAT_TAG_SMT2:
-  //      configure_smt_comp_mode(parser);
-  //      if (!read_rpar_smt2(parser, " after 'check-sat'")) return 0;
-  //      if (!check_sat(parser, 0, NULL)) return 0;
-  //      break;
-}
-
-bool
-Parser::parse_command_check_sat_assuming()
-{
-  //    case BZLA_CHECK_SAT_ASSUMING_TAG_SMT2:
-  //      configure_smt_comp_mode(parser);
-  //      if (!read_lpar_smt2(parser, " after 'check-sat-assuming'")) return 0;
-  //      if (false
-  //          && !bitwuzla_get_option(parser->options,
-  //          BITWUZLA_OPT_INCREMENTAL))
-  //        return !perr_smt2(parser, "incremental solving is not enabled");
-  //      if (!read_exp_list(parser, &exps, &coo))
-  //      {
-  //        BZLA_RELEASE_STACK(exps);
-  //        return 0;
-  //      }
-  //      for (i = 0; i < BZLA_COUNT_STACK(exps); i++)
-  //      {
-  //        exp = BZLA_PEEK_STACK(exps, i);
-  //        if (bitwuzla_term_is_array(exp))
-  //        {
-  //          parser->perrcoo = coo;
-  //          BZLA_RELEASE_STACK(exps);
-  //          return !perr_smt2(
-  //              parser, "assumption argument is an array and not a formula");
-  //        }
-  //      }
-  //      if (!read_rpar_smt2(parser, " after 'check-sat-assuming'"))
-  //      {
-  //        BZLA_RELEASE_STACK(exps);
-  //        return 0;
-  //      }
-  //      if (!check_sat(parser, BZLA_COUNT_STACK(exps), exps.start)) return 0;
-  //      for (i = 0; i < BZLA_COUNT_STACK(exps); i++)
-  //      {
-  //        exp = BZLA_PEEK_STACK(exps, i);
-  //        BZLA_PUSH_STACK(parser->sat_assuming_assumptions, exp);
-  //      }
-  //      BZLA_RELEASE_STACK(exps);
-  //      BZLA_RESET_STACK(parser->tokens);
-  //      break;
+  init_bitwuzla();
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  if (d_statistics.num_commands
+      && !d_options.get(bitwuzla::Option::INCREMENTAL))
+  {
+    return error("incremental solving not enabled");
+  }
+  d_statistics.num_commands += 1;
+  Msg(1) << "parsed " << d_statistics.num_commands << " commands in "
+         << d_statistics.time_parse.elapsed() << " seconds";
+  if (with_assumptions)
+  {
+    if (!parse_lpars(1))
+    {
+      return false;
+    }
+    if (!parse_term_list())
+    {
+      return false;
+    }
+    std::vector<bitwuzla::Term> assumptions;
+    assumptions.reserve(nargs());
+    for (size_t i = 0, n = nargs(); i < n; ++i)
+    {
+      size_t idx = n - i - 1;
+      assert(peek_is_term_arg());
+      assumptions[idx] = pop_term_arg();
+      if (!assumptions[idx].sort().is_bool())
+      {
+        return error("assumption at index " + std::to_string(idx)
+                     + " is not a formula");
+      }
+    }
+    d_result = d_bitwuzla->check_sat(assumptions);
+  }
+  else
+  {
+    d_result = d_bitwuzla->check_sat();
+  }
+  d_statistics.num_check_sat += 1;
+  if (d_result == bitwuzla::Result::SAT)
+  {
+    (*d_out) << "sat" << std::endl;
+    if (d_status == bitwuzla::Result::UNSAT)
+    {
+      return error("'sat' but status is 'unsat'");
+    }
+  }
+  else if (d_result == bitwuzla::Result::UNSAT)
+  {
+    (*d_out) << "unsat" << std::endl;
+    if (d_status == bitwuzla::Result::SAT)
+    {
+      return error("'unsat' but status is 'sat'");
+    }
+  }
+  else
+  {
+    // TODO: do not print unknown when printing DIMACS
+    (*d_out) << "unknown" << std::endl;
+  }
+  d_out->flush();
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  if (!d_options.get(bitwuzla::Option::INCREMENTAL))
+  {
+    d_done = true;
+  }
+  return true;
 }
 
 bool
@@ -776,6 +814,28 @@ Parser::parse_term(bool look_ahead, Token la_char)
     }
   } while (d_term_open > 0);
   assert(d_work_args.size() > 0);
+  return true;
+}
+
+bool
+Parser::parse_term_list()
+{
+  for (;;)
+  {
+    Token la = next_token();
+    if (!check_token(la))
+    {
+      return false;
+    }
+    if (la == Token::RPAR)
+    {
+      break;
+    }
+    if (!parse_term(true, la))
+    {
+      return false;
+    }
+  }
   return true;
 }
 

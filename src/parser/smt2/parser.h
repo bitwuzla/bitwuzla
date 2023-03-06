@@ -43,14 +43,15 @@ class Parser
     Lexer::Coordinate d_coo;
   };
 
+  void init_bitwuzla();
+
   bool terminate();
 
   Token next_token();
 
   bool parse_command();
   bool parse_command_assert();
-  bool parse_command_check_sat();
-  bool parse_command_check_sat_assuming();
+  bool parse_command_check_sat(bool with_assumptions = false);
   bool parse_command_declare_const();
   bool parse_command_declare_sort();
   bool parse_command_declare_fun();
@@ -76,6 +77,7 @@ class Parser
   bool parse_symbol(const std::string& error_msg, bool shadow = false);
 
   bool parse_term(bool look_ahead = false, Token la_char = Token::INVALID);
+  bool parse_term_list();
   bool parse_open_term(Token token);
   bool parse_open_term_as();
   bool parse_open_term_indexed();
@@ -145,15 +147,14 @@ class Parser
                 size_t nidxs                = 0,
                 std::vector<uint64_t>* idxs = nullptr);
 
-  std::unique_ptr<Lexer> d_lexer;
-  SymbolTable d_table;
-
   bitwuzla::Options& d_options;
+  std::unique_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
+  bitwuzla::Terminator* d_terminator = nullptr;
+
   const std::string& d_infile_name;
 
-  std::unique_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
-
-  bitwuzla::Terminator* d_terminator = nullptr;
+  std::unique_ptr<Lexer> d_lexer;
+  SymbolTable d_table;
 
   /** The associated logger class. */
   util::Logger d_logger;
@@ -172,7 +173,8 @@ class Parser
   bool d_fp_enabled     = false;
   std::string d_logic;
 
-  bitwuzla::Result d_status;
+  bitwuzla::Result d_status = bitwuzla::Result::UNKNOWN;
+  bitwuzla::Result d_result = bitwuzla::Result::UNKNOWN;
 
   std::vector<ParsedItem> d_work;
   std::vector<std::variant<uint64_t,
