@@ -73,7 +73,10 @@ class Parser
 
   bool parse_uint64();
 
-  bool parse_symbol(const std::string& error_msg, bool shadow = false);
+  bool parse_symbol(const std::string& error_msg,
+                    bool shadow     = false,
+                    bool look_ahead = false,
+                    Token la_char   = Token::INVALID);
 
   bool parse_term(bool look_ahead = false, Token la_char = Token::INVALID);
   bool parse_term_list();
