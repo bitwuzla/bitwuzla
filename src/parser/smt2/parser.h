@@ -52,9 +52,8 @@ class Parser
   bool parse_command();
   bool parse_command_assert();
   bool parse_command_check_sat(bool with_assumptions = false);
-  bool parse_command_declare_const();
   bool parse_command_declare_sort();
-  bool parse_command_declare_fun();
+  bool parse_command_declare_fun(bool is_const = false);
   bool parse_command_define_fun();
   bool parse_command_define_sort();
   bool parse_command_echo();
@@ -84,7 +83,7 @@ class Parser
   bool parse_open_term_quant();
   bool parse_open_term_symbol();
 
-  bool parse_sort();
+  bool parse_sort(bool look_ahead = false, Token la_char = Token::INVALID);
   bool parse_sort_array();
   bool parse_sort_bv_fp();
 

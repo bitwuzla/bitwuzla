@@ -149,7 +149,7 @@ Parser::parse_command()
     case Token::ASSERT: return parse_command_assert();
     case Token::CHECK_SAT: return parse_command_check_sat();
     case Token::CHECK_SAT_ASSUMING: return parse_command_check_sat(true);
-    case Token::DECLARE_CONST: return parse_command_declare_const();
+    case Token::DECLARE_CONST: return parse_command_declare_fun(true);
     case Token::DECLARE_SORT: return parse_command_declare_sort();
     case Token::DECLARE_FUN: return parse_command_declare_fun();
     case Token::DEFINE_FUN: return parse_command_define_fun();
@@ -280,21 +280,67 @@ Parser::parse_command_check_sat(bool with_assumptions)
 }
 
 bool
-Parser::parse_command_declare_const()
+Parser::parse_command_declare_fun(bool is_const)
 {
-  //    case BZLA_DECLARE_CONST_TAG_SMT2:
-  //      if (!declare_fun_smt2(parser, true)) return 0;
-  //      print_success(parser);
-  //      break;
-}
+  if (!parse_symbol(""))
+  {
+    return false;
+  }
+  assert(nargs() == 1);
+  SymbolTable::Node* symbol = pop_node_arg();
+  if (symbol->d_coo.line)
+  {
+    return error("symbol '" + symbol->d_symbol + "' alread defined at line "
+                 + std::to_string(symbol->d_coo.line) + " column "
+                 + std::to_string(symbol->d_coo.col));
+  }
+  symbol->d_coo = d_lexer->coo();
 
-bool
-Parser::parse_command_declare_fun()
-{
-  //    case BZLA_DECLARE_FUN_TAG_SMT2:
-  //      if (!declare_fun_smt2(parser, false)) return 0;
-  //      print_success(parser);
-  //      break;
+  std::vector<bitwuzla::Sort> domain;
+  if (!is_const)
+  {
+    if (!parse_rpars(1))
+    {
+      return false;
+    }
+    Token la;
+    do
+    {
+      la = next_token();
+      if (!parse_sort(true, la))
+      {
+        return false;
+      }
+    } while (la != Token::RPAR);
+    domain.reserve(nargs());
+    for (size_t i = 0, n = nargs(); i < n; ++i)
+    {
+      size_t idx = n - i - 1;
+      assert(peek_is_sort_arg());
+      domain[idx] = pop_sort_arg();
+    }
+  }
+
+  if (!parse_sort())
+  {
+    return false;
+  }
+  bitwuzla::Sort sort = pop_sort_arg();
+  if (domain.size())
+  {
+    symbol->d_term = bitwuzla::mk_const(bitwuzla::mk_fun_sort(domain, sort),
+                                        symbol->d_symbol);
+  }
+  else
+  {
+    symbol->d_term = bitwuzla::mk_const(sort, symbol->d_symbol);
+  }
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  print_success();
+  return true;
 }
 
 bool
@@ -773,7 +819,7 @@ Parser::parse_symbol(const std::string& error_msg, bool shadow)
 /* -------------------------------------------------------------------------- */
 
 bool
-Parser::parse_term(bool look_ahead, Token la_char)
+Parser::parse_term(bool look_ahead, Token la)
 {
   /* Note: we need look ahead and tokens string only for get-value
    *       (for parsing a term list and printing the originally parsed,
@@ -786,7 +832,7 @@ Parser::parse_term(bool look_ahead, Token la_char)
   {
     if (look_ahead)
     {
-      token      = la_char;
+      token      = la;
       look_ahead = false;
     }
     else
@@ -2353,6 +2399,7 @@ Parser::close_term_letbind(const ParsedItem& item_open)
 bool
 Parser::close_term_parletbind(const ParsedItem& item_open)
 {
+  (void) item_open;
   assert(d_is_var_binding);
   d_is_var_binding = false;
   assert(!d_expect_body);
@@ -2408,6 +2455,7 @@ Parser::close_term_sorted_var(const ParsedItem& item_open)
 bool
 Parser::close_term_sorted_vars(const ParsedItem& item_open)
 {
+  (void) item_open;
   assert(d_is_sorted_var);
   d_is_sorted_var = false;
   assert(!d_expect_body);
@@ -2418,9 +2466,18 @@ Parser::close_term_sorted_vars(const ParsedItem& item_open)
 /* -------------------------------------------------------------------------- */
 
 bool
-Parser::parse_sort()
+Parser::parse_sort(bool look_ahead, Token la)
 {
-  Token token = next_token();
+  Token token;
+  if (look_ahead)
+  {
+    token      = la;
+    look_ahead = false;
+  }
+  else
+  {
+    token = next_token();
+  }
   if (!check_token(token))
   {
     return false;
@@ -2719,7 +2776,7 @@ Parser::nargs() const
 uint64_t
 Parser::pop_uint64_arg()
 {
-  assert(std::holds_alternative<uint64_t>(d_work_args.back()));
+  assert(peek_is_uint64_arg());
   uint64_t res = std::get<uint64_t>(d_work_args.back());
   d_work_args.pop_back();
   return res;
@@ -2728,7 +2785,7 @@ Parser::pop_uint64_arg()
 bitwuzla::Sort
 Parser::pop_sort_arg()
 {
-  assert(std::holds_alternative<bitwuzla::Sort>(d_work_args.back()));
+  assert(peek_is_sort_arg());
   bitwuzla::Sort res = std::get<bitwuzla::Sort>(d_work_args.back());
   d_work_args.pop_back();
   return res;
@@ -2737,7 +2794,7 @@ Parser::pop_sort_arg()
 bitwuzla::Term
 Parser::pop_term_arg()
 {
-  assert(std::holds_alternative<bitwuzla::Term>(d_work_args.back()));
+  assert(peek_is_term_arg());
   bitwuzla::Term res = std::get<bitwuzla::Term>(d_work_args.back());
   d_work_args.pop_back();
   return res;
@@ -2746,7 +2803,7 @@ Parser::pop_term_arg()
 std::string
 Parser::pop_str_arg()
 {
-  assert(std::holds_alternative<std::string>(d_work_args.back()));
+  assert(peek_is_str_arg());
   std::string res = std::get<std::string>(d_work_args.back());
   d_work_args.pop_back();
   return res;
@@ -2755,7 +2812,7 @@ Parser::pop_str_arg()
 SymbolTable::Node*
 Parser::pop_node_arg()
 {
-  assert(std::holds_alternative<SymbolTable::Node*>(d_work_args.back()));
+  assert(peek_is_node_arg());
   SymbolTable::Node* res = std::get<SymbolTable::Node*>(d_work_args.back());
   d_work_args.pop_back();
   return res;
