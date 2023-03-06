@@ -29,6 +29,7 @@ class SymbolTable
                const std::string& symbol,
                uint64_t scope_level = 0);
   void remove(Node* node);
+  void pop_scope(uint64_t scope_level);
 
   void init_array_symbols();
   void init_bv_symbols();

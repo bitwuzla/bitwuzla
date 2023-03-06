@@ -110,7 +110,7 @@ Parser::next_token()
     SymbolTable::Node* node = d_table.find(d_lexer->token());
     if (!node)
     {
-      node = d_table.insert(token, d_lexer->token());
+      node = d_table.insert(token, d_lexer->token(), d_scope_level);
     }
     d_last_node = node;
   }
@@ -665,33 +665,56 @@ Parser::parse_command_get_value()
 bool
 Parser::parse_command_pop()
 {
-  //    case BZLA_POP_TAG_SMT2:
-  //      (void) parse_uint64_smt2(parser, true, &level);
-  //      if (!read_rpar_smt2(parser, " after 'pop'")) return 0;
-  //      if (level > parser->scope_level)
-  //      {
-  //        return !perr_smt2(parser,
-  //                          "popping more scopes (%u) than created via push
-  //                          (%u)", level, parser->scope_level);
-  //      }
-  //      for (i = 0; i < level; i++) close_current_scope(parser);
-  //      bitwuzla_pop(get_bitwuzla(parser), level);
-  //      print_success(parser);
-  //      break;
+  init_bitwuzla();
+
+  if (!parse_uint64())
+  {
+    return false;
+  }
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  uint64_t nlevels = pop_uint64_arg();
+  if (nlevels > d_scope_level)
+  {
+    return error("attempting to pop '" + std::to_string(nlevels)
+                 + "' but only '" + std::to_string(nlevels)
+                 + "' have been pushed previously");
+  }
+
+  if (!d_global_decl)
+  {
+    // remove symbols from current scope
+    for (size_t i = 0; i < nlevels; ++i)
+    {
+      d_table.pop_scope(d_scope_level);
+      d_scope_level -= 1;
+    }
+  }
+  d_bitwuzla->pop(nlevels);
+  print_success();
+  return true;
 }
 
 bool
 Parser::parse_command_push()
 {
-  //    case BZLA_PUSH_TAG_SMT2:
-  //      level = 0;
-  //      (void) parse_uint64_smt2(parser, true, &level);
-  //      if (!read_rpar_smt2(parser, " after 'push'")) return 0;
-  //      for (i = 0; i < level; i++) open_new_scope(parser);
-  //      configure_smt_comp_mode(parser);
-  //      bitwuzla_push(get_bitwuzla(parser), level);
-  //      print_success(parser);
-  //      break;
+  init_bitwuzla();
+
+  if (!parse_uint64())
+  {
+    return false;
+  }
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  uint64_t nlevels = pop_uint64_arg();
+  d_scope_level += nlevels;
+  d_bitwuzla->push(nlevels);
+  print_success();
+  return true;
 }
 
 bool
@@ -963,7 +986,7 @@ Parser::parse_symbol(const std::string& error_msg,
   // shadow previously defined symbols
   if (shadow && d_last_node->d_coo.line)
   {
-    d_last_node        = d_table.insert(token, d_lexer->token());
+    d_last_node        = d_table.insert(token, d_lexer->token(), d_scope_level);
     d_last_node->d_coo = d_lexer->coo();
   }
   d_work_args.push_back(d_last_node);

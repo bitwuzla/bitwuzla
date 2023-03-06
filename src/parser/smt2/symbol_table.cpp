@@ -63,6 +63,18 @@ SymbolTable::remove(Node* node)
   }
 }
 
+void
+SymbolTable::pop_scope(uint64_t scope_level)
+{
+  for (auto& p : d_table)
+  {
+    while (p.second.back()->d_scope_level >= scope_level)
+    {
+      p.second.pop_back();
+    }
+  }
+}
+
 SymbolTable::Node*
 SymbolTable::find(const std::string& symbol) const
 {

@@ -177,6 +177,7 @@ class Parser
 
   bitwuzla::Result d_status = bitwuzla::Result::UNKNOWN;
   bitwuzla::Result d_result = bitwuzla::Result::UNKNOWN;
+  uint64_t d_scope_level    = 0;
 
   std::vector<ParsedItem> d_work;
   std::vector<std::variant<uint64_t,
