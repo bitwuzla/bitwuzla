@@ -16,8 +16,8 @@ Parser::Parser(bitwuzla::Options& options,
                uint64_t log_level,
                uint64_t verbosity)
     : d_options(options),
-      d_lexer(new Lexer(infile)),
       d_infile_name(infile_name),
+      d_lexer(new Lexer(infile)),
       d_logger(log_level, verbosity),
       d_log_level(log_level),
       d_verbosity(verbosity)
