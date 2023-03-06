@@ -504,21 +504,42 @@ Parser::parse_command_define_sort()
 bool
 Parser::parse_command_echo()
 {
-  //    case BZLA_ECHO_TAG_SMT2:
-  //      if (!echo_smt2(parser)) return 0;
-  //      break;
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return false;
+  }
+  if (token != Token::STRING_VALUE)
+  {
+    return error("expected string after 'echo'");
+  }
+
+  assert(d_lexer->has_token());
+  std::string echo = d_lexer->token();
+
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+
+  (*d_out) << echo;
+  d_out->flush();
+
+  return true;
 }
 
 bool
 Parser::parse_command_exit()
 {
-  //    case BZLA_EXIT_TAG_SMT2:
-  //      if (!read_rpar_smt2(parser, " after 'exit'")) return 0;
-  //      assert(!parser->commands.exits);
-  //      parser->commands.exits++;
-  //      parser->done = true;
-  //      print_success(parser);
-  //      break;
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  assert(!d_statistics.num_exit);
+  d_statistics.num_exit += 1;
+  d_done = true;
+  print_success();
+  return true;
 }
 
 bool
