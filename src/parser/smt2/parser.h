@@ -20,9 +20,7 @@ class Parser
  public:
   Parser(bitwuzla::Options& options,
          std::istream* infile,
-         const std::string& infile_name,
-         uint64_t log_level = 0,
-         uint64_t verbosity = 0);
+         const std::string& infile_name);
 
   std::string parse();
 
@@ -90,7 +88,7 @@ class Parser
   bool parse_sort_array();
   bool parse_sort_bv_fp();
 
-  bool close_term(Token token);
+  bool close_term();
   bool close_term_as(const ParsedItem& item_open);
   bool close_term_bang(const ParsedItem& item_open);
   bool close_term_core(const ParsedItem& item_open);
@@ -158,12 +156,12 @@ class Parser
   std::unique_ptr<Lexer> d_lexer;
   SymbolTable d_table;
 
-  /** The associated logger class. */
-  util::Logger d_logger;
   /** The log level. */
   uint64_t d_log_level;
   /** The verbosity level. */
   uint64_t d_verbosity;
+  /** The associated logger class. */
+  util::Logger d_logger;
 
   std::ofstream d_outfile;
   std::ostream* d_out = &std::cout;

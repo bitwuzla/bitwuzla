@@ -146,6 +146,7 @@ to_string(bzla::parser::smt2::Token token)
     case Token::ARRAY_STORE: return "store";
     // BV
     case Token::BV_BITVEC: return "BitVec";
+    case Token::BV_VALUE: return "<bvX token>";
     case Token::BV_ADD: return "bvadd";
     case Token::BV_AND: return "bvand";
     case Token::BV_ASHR: return "bvashr";

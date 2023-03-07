@@ -2,10 +2,13 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
 #include <sstream>
+
+#include "parser/smt2/parser.h"
 
 namespace {
 
@@ -236,7 +239,7 @@ main(int32_t argc, char* argv[])
   bitwuzla::Options options;
 
   std::vector<std::string> args;
-  std::string filename;
+  std::string infile_name;
   for (int32_t i = 1; i < argc; ++i)
   {
     std::string arg(argv[i]);
@@ -260,7 +263,7 @@ main(int32_t argc, char* argv[])
     else if (arg.find(".smt2") == arg.size() - 5
              || arg.find(".btor") == arg.size() - 5)
     {
-      filename = arg;
+      infile_name = arg;
     }
     else
     {
@@ -281,7 +284,10 @@ main(int32_t argc, char* argv[])
     std::exit(EXIT_FAILURE);
   }
 
-  std::string err_msg = bitwuzla::parse(options, filename);
+  std::ifstream infile(infile_name.c_str(), std::ifstream::in);
+  bzla::parser::smt2::Parser parser(options, &infile, infile_name);
+  std::string err_msg = parser.parse();
+
   if (err_msg.empty())
   {
     std::exit(EXIT_SUCCESS);

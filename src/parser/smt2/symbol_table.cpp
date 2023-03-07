@@ -17,6 +17,14 @@ SymbolTable::Node::Node(Token token,
 {
 }
 
+SymbolTable::SymbolTable()
+{
+  init_reserved_words();
+  init_commands();
+  init_keywords();
+  init_core_symbols();
+}
+
 bool
 SymbolTable::Node::has_symbol() const
 {
@@ -107,7 +115,7 @@ SymbolTable::find(const std::string& symbol) const
 
 /* SymbolTable private ------------------------------------------------------ */
 
-SymbolTable::Node*
+void
 SymbolTable::insert(Token token)
 {
   insert(token, std::to_string(token));
@@ -336,6 +344,23 @@ SymbolTable::init_fp_symbols()
   insert(Token::FP_TO_UBV);
   insert(Token::REAL_DIV);
 }
+
+#ifndef NDEBUG
+void
+SymbolTable::print() const
+{
+  std::cout << "SymbolTable: " << std::endl;
+  for (auto& p : d_table)
+  {
+    std::cout << " ";
+    for (auto& n : p.second)
+    {
+      std::cout << " (" << n->d_symbol << ", " << n->d_scope_level << ")";
+    }
+    std::cout << std::endl;
+  }
+}
+#endif
 
 }  // namespace parser::smt2
 }  // namespace bzla

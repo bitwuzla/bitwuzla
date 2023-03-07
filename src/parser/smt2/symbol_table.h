@@ -24,6 +24,8 @@ class SymbolTable
     bitwuzla::Sort d_sort;
   };
 
+  SymbolTable();
+
   Node* find(const std::string& symbol) const;
   Node* insert(Token token,
                const std::string& symbol,
@@ -34,9 +36,12 @@ class SymbolTable
   void init_array_symbols();
   void init_bv_symbols();
   void init_fp_symbols();
+#ifndef NDEBUG
+  void print() const;
+#endif
 
  private:
-  Node* insert(Token token);
+  void insert(Token token);
   void init_reserved_words();
   void init_commands();
   void init_keywords();

@@ -12,20 +12,19 @@ namespace parser::smt2 {
 
 Parser::Parser(bitwuzla::Options& options,
                std::istream* infile,
-               const std::string& infile_name,
-               uint64_t log_level,
-               uint64_t verbosity)
+               const std::string& infile_name)
     : d_options(options),
       d_infile_name(infile_name),
       d_lexer(new Lexer(infile)),
-      d_logger(log_level, verbosity),
-      d_log_level(log_level),
-      d_verbosity(verbosity)
+      d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
+      d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
+      d_logger(d_log_level, d_verbosity)
 {
   d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
                        | static_cast<uint32_t>(TokenClass::CORE)
                        | static_cast<uint32_t>(TokenClass::KEYWORD)
                        | static_cast<uint32_t>(TokenClass::RESERVED);
+  d_work_args_control.push_back(0);
 }
 
 std::string
@@ -36,40 +35,41 @@ Parser::parse()
   while (parse_command() && !d_done && !terminate())
     ;
 
-  // this should be in parser, and parser has to store the msg of lexer
-  if (d_lexer->error()) return d_lexer->error_msg();
-
-  if (!terminate() && d_verbosity)
+  if (d_error.empty())
   {
-    if (d_statistics.num_commands == 0)
+    if (!terminate() && d_verbosity)
     {
-      Msg(1) << "warning: no commands in '" << d_infile_name << "'";
-    }
-    else
-    {
-      if (d_statistics.num_set_logic == 0)
+      if (d_statistics.num_commands == 0)
       {
-        Msg(1) << "warning: no 'set-logic' command in '" << d_infile_name
-               << "'";
+        Msg(1) << "warning: no commands in '" << d_infile_name << "'";
       }
-      if (d_statistics.num_assertions == 0)
+      else
       {
-        Msg(1) << "warning: no 'assert' command in '" << d_infile_name << "'";
-      }
-      if (d_statistics.num_check_sat == 0)
-      {
-        Msg(1) << "warning: no 'check-sat' command in '" << d_infile_name
-               << "'";
-      }
-      if (d_statistics.num_exit == 0)
-      {
-        Msg(1) << "warning: no 'exit' command in '" << d_infile_name << "'";
+        if (d_statistics.num_set_logic == 0)
+        {
+          Msg(1) << "warning: no 'set-logic' command in '" << d_infile_name
+                 << "'";
+        }
+        if (d_statistics.num_assertions == 0)
+        {
+          Msg(1) << "warning: no 'assert' command in '" << d_infile_name << "'";
+        }
+        if (d_statistics.num_check_sat == 0)
+        {
+          Msg(1) << "warning: no 'check-sat' command in '" << d_infile_name
+                 << "'";
+        }
+        if (d_statistics.num_exit == 0)
+        {
+          Msg(1) << "warning: no 'exit' command in '" << d_infile_name << "'";
+        }
       }
     }
   }
 
-  Msg(1) << "parsed " << d_statistics.num_commands << " in "
+  Msg(1) << "parsed " << d_statistics.num_commands << " commands in "
          << d_statistics.time_parse.elapsed() << " seconds";
+  return d_error;
 }
 
 void
@@ -113,6 +113,7 @@ Parser::next_token()
       node = d_table.insert(token, d_lexer->token(), d_scope_level);
     }
     d_last_node = node;
+    token       = d_last_node->d_token;
   }
   return token;
 }
@@ -138,11 +139,15 @@ Parser::parse_command()
   {
     return false;
   }
+
   if (!is_token_class(token, TokenClass::COMMAND))
   {
+    printf("error\n");
     assert(d_lexer->has_token());
     return error("expected command at '" + d_lexer->token() + "'");
   }
+
+  Msg(2) << "parse command '" << token << std::endl;
 
   switch (token)
   {
@@ -203,11 +208,7 @@ bool
 Parser::parse_command_check_sat(bool with_assumptions)
 {
   init_bitwuzla();
-  if (!parse_rpars(1))
-  {
-    return false;
-  }
-  if (d_statistics.num_commands
+  if (d_statistics.num_check_sat
       && !d_options.get(bitwuzla::Option::INCREMENTAL))
   {
     return error("incremental solving not enabled");
@@ -226,7 +227,7 @@ Parser::parse_command_check_sat(bool with_assumptions)
       return false;
     }
     std::vector<bitwuzla::Term> assumptions;
-    assumptions.reserve(nargs());
+    assumptions.resize(nargs());
     for (size_t i = 0, n = nargs(); i < n; ++i)
     {
       size_t idx       = n - i - 1;
@@ -310,7 +311,7 @@ Parser::parse_command_declare_fun(bool is_const)
         return false;
       }
     } while (la != Token::RPAR);
-    domain.reserve(nargs());
+    domain.resize(nargs());
     for (size_t i = 0, n = nargs(); i < n; ++i)
     {
       size_t idx  = n - i - 1;
@@ -725,7 +726,7 @@ Parser::parse_command_set_info()
   {
     return false;
   }
-  if (token != Token::ATTRIBUTE)
+  if (!is_token_class(token, TokenClass::KEYWORD))
   {
     return error("missing keyword after 'set-info'");
   }
@@ -1023,7 +1024,7 @@ Parser::parse_term(bool look_ahead, Token la)
 
     if (token == Token::RPAR)
     {
-      if (!close_term(token))
+      if (!close_term())
       {
         return false;
       }
@@ -1065,6 +1066,7 @@ Parser::parse_term_list()
 bool
 Parser::parse_open_term(Token token)
 {
+  assert(token != Token::RPAR);
   d_expect_body = false;
 
   if (token == Token::LPAR)
@@ -1108,7 +1110,14 @@ Parser::parse_open_term(Token token)
   }
   else if (is_symbol(token))
   {
-    d_work.emplace_back(token, d_last_node, d_lexer->coo());
+    if (token == Token::SYMBOL)
+    {
+      d_work.emplace_back(token, d_last_node, d_lexer->coo());
+    }
+    else
+    {
+      d_work.emplace_back(token, d_lexer->coo());
+    }
     if (!parse_open_term_symbol())
     {
       return false;
@@ -1215,6 +1224,15 @@ Parser::parse_open_term_indexed()
 
   bool allow_zero = false;
   uint64_t nidxs  = 1;
+
+  if (token == Token::SYMBOL)
+  {
+    token_kind = Token::BV_VALUE;
+  }
+  else
+  {
+    d_work.emplace_back(token, d_lexer->coo());
+  }
 
   switch (token)
   {
@@ -1335,7 +1353,7 @@ Parser::parse_open_term_indexed()
       break;
 
       default: {
-        assert(token_kind == Token::SYMBOL);
+        assert(token_kind == Token::BV_VALUE);
         assert(nargs() == 2);
         uint64_t size       = pop_uint64_arg();
         std::string val     = pop_str_arg();
@@ -1371,23 +1389,22 @@ Parser::parse_open_term_quant()
 bool
 Parser::parse_open_term_symbol()
 {
-  ParsedItem& cur         = d_work.back();
-  SymbolTable::Node* node = std::get<SymbolTable::Node*>(cur.d_parsed);
-  Token token             = node->d_token;
+  ParsedItem& cur = d_work.back();
+  Token token     = cur.d_token;
 
   if (is_token_class(token, TokenClass::COMMAND))
   {
-    return error("unexpected command '" + node->d_symbol + "'");
+    return error("unexpected command '" + std::to_string(token) + "'");
   }
   if (is_token_class(token, TokenClass::KEYWORD))
   {
-    return error("unexpected keyword '" + node->d_symbol + "'");
+    return error("unexpected keyword '" + std::to_string(token) + "'");
   }
+
   if (is_token_class(token, TokenClass::RESERVED))
   {
     if (token == Token::LET)
     {
-      d_work.emplace_back(token, d_lexer->coo());
       if (!parse_lpars(1))
       {
         return false;
@@ -1399,7 +1416,6 @@ Parser::parse_open_term_symbol()
     }
     else if (token == Token::FORALL || token == Token::EXISTS)
     {
-      d_work.emplace_back(token, d_lexer->coo());
       if (!parse_open_term_quant())
       {
         return false;
@@ -1407,6 +1423,7 @@ Parser::parse_open_term_symbol()
     }
     else if (token == Token::UNDERSCORE)
     {
+      d_work.pop_back();
       if (!parse_open_term_indexed())
       {
         return false;
@@ -1414,30 +1431,34 @@ Parser::parse_open_term_symbol()
     }
     else if (token == Token::AS)
     {
-      d_work.emplace_back(token, d_lexer->coo());
       if (!parse_open_term_as())
       {
         return false;
       }
     }
-    else if (token != Token::BANG)
+    else if (token == Token::BANG)
     {
-      assert(node->has_symbol());
-      return error("unsupported reserved word '" + node->d_symbol + "'");
+      d_work.emplace_back(token, d_lexer->coo());
     }
     else
     {
-      d_work.emplace_back(token, d_lexer->coo());
+      return error("unsupported reserved word '" + std::to_string(token) + "'");
     }
   }
   else if (token == Token::SYMBOL)
   {
+    SymbolTable::Node* node = std::get<SymbolTable::Node*>(cur.d_parsed);
     if (node->d_term.is_null())
     {
       assert(node->has_symbol());
       return error("undefined symbol '" + node->d_symbol + "'");
     }
-    cur.d_token = Token::EXP;
+    if (!node->d_term.sort().is_fun())
+    {
+      d_work.pop_back();
+      assert(!node->d_term.is_null());
+      d_work_args.push_back(node->d_term);
+    }
   }
   else if (token == Token::TRUE)
   {
@@ -1517,7 +1538,7 @@ Parser::parse_open_term_symbol()
 }
 
 bool
-Parser::close_term(Token token)
+Parser::close_term()
 {
   uint64_t nopen = d_term_open;
   if (!nopen)
@@ -1527,6 +1548,7 @@ Parser::close_term(Token token)
 
   assert(d_work.size());
   const ParsedItem& item = d_work.back();
+  d_work.pop_back();
 
   if (d_expect_body)
   {
@@ -1552,6 +1574,7 @@ Parser::close_term(Token token)
     case Token::ARRAY_SELECT:
     case Token::ARRAY_STORE: res = close_term_array(item); break;
 
+    case Token::BV_VALUE:
     case Token::BV_ADD:
     case Token::BV_AND:
     case Token::BV_ASHR:
@@ -1648,49 +1671,10 @@ Parser::close_term(Token token)
     case Token::SORTED_VARS: res = close_term_sorted_vars(item); break;
 
     default:
-      return error("unsupported term kind '" + std::to_string(token) + "'");
+      return error("unsupported term kind '" + std::to_string(item.d_token)
+                   + "'");
   }
-
-#if 0
-  item_cur = item_open + 1;
-  if (item_cur == parser->work.top)
-    return !perr_smt2(parser, "unexpected '()'");
-  nargs = parser->work.top - item_cur - 1;
-  tag   = item_cur->tag;
-
-  /* check if operands are expressions -------------------------------------- */
-  if (tag != BZLA_LET_TAG_SMT2 && tag != BZLA_LETBIND_TAG_SMT2
-      && tag != BZLA_PARLETBINDING_TAG_SMT2 && tag != BZLA_REAL_DIV_TAG_SMT2
-      && tag != BZLA_SORTED_VAR_TAG_SMT2 && tag != BZLA_SORTED_VARS_TAG_SMT2
-      && tag != BZLA_FORALL_TAG_SMT2 && tag != BZLA_EXISTS_TAG_SMT2
-      && tag != BZLA_BANG_TAG_SMT2)
-  {
-    i = 1;
-    for (; i <= nargs; i++)
-    {
-      if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
-      {
-        parser->perrcoo = item_cur[i].coo;
-        if (item_cur[i].tag == BZLA_REAL_CONSTANT_TAG_SMT2
-            || item_cur[i].tag == BZLA_REAL_DIV_TAG_SMT2)
-        {
-          if (tag == BZLA_FP_TO_FP_TAG_SMT2) continue;
-          return !perr_smt2(parser, "Real constants not supported");
-        }
-        return !perr_smt2(parser, "expected expression");
-      }
-    }
-  }
-
-  assert(open > 0);
-  parser->open = open - 1;
-
-  return 1;
-#endif
-  if (!parse_rpars(1))
-  {
-    return false;
-  }
+  assert(peek_is_term_arg());
   close_term_scope();
   return res;
 }
@@ -1858,6 +1842,19 @@ Parser::close_term_core(const ParsedItem& item_open)
           &item_open.d_coo);
     }
   }
+  else if (token == Token::EQUAL || token == Token::DISTINCT)
+  {
+    for (size_t i = 1, n = args.size(); i < n; ++i)
+    {
+      if (args[i].sort() != args[i - 1].sort())
+      {
+        return error("expected terms of same sort at indices "
+                         + std::to_string(i - 1) + " and " + std::to_string(i)
+                         + " as argument to '" + std::to_string(token) + "'",
+                     &item_open.d_coo);
+      }
+    }
+  }
   else
   {
     for (size_t i = 0, n = args.size(); i < n; ++i)
@@ -1882,6 +1879,16 @@ Parser::close_term_bv(const ParsedItem& item_open)
   std::vector<uint64_t> idxs;
   size_t nexp = 0, nidxs = 0;
   bitwuzla::Kind kind;
+
+  if (token == Token::BV_VALUE)
+  {
+    assert(nargs() == 2);
+    uint64_t size   = pop_uint64_arg();
+    std::string val = pop_str_arg();
+    d_work_args.push_back(
+        bitwuzla::mk_bv_value(bitwuzla::mk_bv_sort(size), val, 10));
+    return true;
+  }
 
   switch (token)
   {
@@ -2105,7 +2112,8 @@ Parser::close_term_bv(const ParsedItem& item_open)
                    + std::to_string(token) + "'");
     }
   }
-  d_work_args.push_back(bitwuzla::mk_term(kind, args, idxs));
+  bitwuzla::Term res = bitwuzla::mk_term(kind, args, idxs);
+  d_work_args.push_back(res);
   return true;
 }
 
@@ -2159,7 +2167,7 @@ Parser::close_term_fp(const ParsedItem& item_open)
     // ((_ to_fp eb sb) RoundingMode (_ FloatingPoint eb sb))
     // ((_ to_fp eb sb) RoundingMode (_ BitVec m))
     // ((_ to_fp eb sb) RoundingMode Real)
-    idxs.reserve(2);
+    idxs.resize(2);
     if (peek_is_str_arg())
     {
       std::string s0, s1 = pop_str_arg();
@@ -2812,8 +2820,12 @@ Parser::error(const std::string& error_msg, const Lexer::Coordinate* coo)
 {
   assert(d_lexer);
   if (!coo) coo = &d_lexer->coo();
-  d_error = d_infile_name + ":" + std::to_string(coo->col) + ":"
-            + std::to_string(coo->line) + ": " + error_msg;
+  d_error = d_infile_name + ":" + std::to_string(coo->line) + ":"
+            + std::to_string(coo->col) + ": " + error_msg;
+#ifndef NDEBUG
+  std::cout << "[error] " << d_error << std::endl;
+  assert(false);
+#endif
   return false;
 }
 
@@ -3060,7 +3072,7 @@ Parser::pop_args(const ParsedItem& item_open,
   }
   nexp = nargs();
   assert(args.empty());
-  args.reserve(nexp);
+  args.resize(nexp);
   for (size_t i = 0, n = nexp - nidxs; i < n; ++i)
   {
     size_t idx = n - i - 1;
@@ -3070,12 +3082,14 @@ Parser::pop_args(const ParsedItem& item_open,
                        + " to '" + std::to_string(item_open.d_token) + "'",
                    &item_open.d_coo);
     }
-    args[idx] = pop_term_arg();
+    bitwuzla::Term term = pop_term_arg();
+    assert(!term.is_null());
+    args[idx] = term;
   }
   assert(!idxs || idxs->empty());
   if (idxs)
   {
-    idxs->reserve(nidxs);
+    idxs->resize(nidxs);
     for (size_t i = 0; i < nidxs; ++i)
     {
       size_t idx = nidxs - i - 1;
