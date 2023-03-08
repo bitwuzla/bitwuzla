@@ -41,6 +41,7 @@ class Parser
     Lexer::Coordinate d_coo;
   };
 
+  void init_logic();
   void init_bitwuzla();
 
   bool terminate();
@@ -116,8 +117,8 @@ class Parser
   bool is_symbol(Token token);
 
   size_t enable_theory(const std::string& logic,
-                       const std::string& theory,
-                       size_t size_prefix);
+                       const std::string& theory = "",
+                       size_t size_prefix        = 0);
   bool is_supported_logic(const std::string& logic);
 
   void print_success();

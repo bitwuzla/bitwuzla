@@ -85,6 +85,15 @@ Parser::configure_terminator(bitwuzla::Terminator* terminator)
 /* Parser private ----------------------------------------------------------- */
 
 void
+Parser::init_logic()
+{
+  if (d_logic.empty())
+  {
+    enable_theory("ALL");
+  }
+}
+
+void
 Parser::init_bitwuzla()
 {
   if (!d_bitwuzla)
@@ -184,6 +193,7 @@ Parser::parse_command()
 bool
 Parser::parse_command_assert()
 {
+  init_logic();
   init_bitwuzla();
   if (!parse_term())
   {
@@ -207,6 +217,7 @@ Parser::parse_command_assert()
 bool
 Parser::parse_command_check_sat(bool with_assumptions)
 {
+  init_logic();
   init_bitwuzla();
   if (d_statistics.num_check_sat
       && !d_options.get(bitwuzla::Option::INCREMENTAL))
@@ -281,6 +292,7 @@ Parser::parse_command_check_sat(bool with_assumptions)
 bool
 Parser::parse_command_declare_fun(bool is_const)
 {
+  init_logic();
   if (!parse_symbol(is_const ? "after 'declare-const'" : "after 'declare-fun'"))
   {
     return false;
@@ -303,14 +315,18 @@ Parser::parse_command_declare_fun(bool is_const)
       return false;
     }
     Token la;
-    do
+    for (;;)
     {
       la = next_token();
+      if (la == Token::RPAR)
+      {
+        break;
+      }
       if (!parse_sort(true, la))
       {
         return false;
       }
-    } while (la != Token::RPAR);
+    }
     domain.resize(nargs());
     for (size_t i = 0, n = nargs(); i < n; ++i)
     {
@@ -345,6 +361,7 @@ Parser::parse_command_declare_fun(bool is_const)
 bool
 Parser::parse_command_declare_sort()
 {
+  init_logic();
   if (!parse_symbol("after 'declare-sort'"))
   {
     return false;
@@ -379,6 +396,7 @@ Parser::parse_command_declare_sort()
 bool
 Parser::parse_command_define_fun()
 {
+  init_logic();
   if (!parse_symbol("after 'define-fun'"))
   {
     return false;
@@ -460,6 +478,7 @@ Parser::parse_command_define_fun()
 bool
 Parser::parse_command_define_sort()
 {
+  init_logic();
   if (!parse_symbol("after 'define-sort'"))
   {
     return false;
@@ -546,6 +565,8 @@ Parser::parse_command_exit()
 bool
 Parser::parse_command_get_model()
 {
+  init_logic();
+  init_bitwuzla();
   //    case BZLA_GET_MODEL_TAG_SMT2:
   //      if (!read_rpar_smt2(parser, " after 'get-model'")) return 0;
   //      if (!bitwuzla_get_option(parser->options,
@@ -569,6 +590,8 @@ Parser::parse_command_get_model()
 bool
 Parser::parse_command_get_unsat_assumptions()
 {
+  init_logic();
+  init_bitwuzla();
   //    case BZLA_GET_UNSAT_ASSUMPTIONS_TAG_SMT2: {
   //      if (!read_rpar_smt2(parser, " after 'get-unsat-assumptions'")) return
   //      0; if (parser->res->result != BITWUZLA_UNSAT) break; fputc('(',
@@ -598,6 +621,8 @@ Parser::parse_command_get_unsat_assumptions()
 bool
 Parser::parse_command_get_unsat_core()
 {
+  init_logic();
+  init_bitwuzla();
   //    case BZLA_GET_UNSAT_CORE_TAG_SMT2: {
   //      if (!read_rpar_smt2(parser, " after 'get-unsat-assumptions'")) return
   //      0; if (parser->res->result != BITWUZLA_UNSAT) break; fputc('(',
@@ -625,6 +650,8 @@ Parser::parse_command_get_unsat_core()
 bool
 Parser::parse_command_get_value()
 {
+  init_logic();
+  init_bitwuzla();
   //    case BZLA_GET_VALUE_TAG_SMT2: {
   //      if (!read_lpar_smt2(parser, " after 'get-value'")) return 0;
   //      if (!bitwuzla_get_option(parser->options,
@@ -666,6 +693,7 @@ Parser::parse_command_get_value()
 bool
 Parser::parse_command_pop()
 {
+  init_logic();
   init_bitwuzla();
 
   if (!parse_uint64())
@@ -701,6 +729,7 @@ Parser::parse_command_pop()
 bool
 Parser::parse_command_push()
 {
+  init_logic();
   init_bitwuzla();
 
   if (!parse_uint64())
@@ -1229,10 +1258,6 @@ Parser::parse_open_term_indexed()
   {
     token_kind = Token::BV_VALUE;
   }
-  else
-  {
-    d_work.emplace_back(token, d_lexer->coo());
-  }
 
   switch (token)
   {
@@ -1317,7 +1342,6 @@ Parser::parse_open_term_indexed()
 
   if (kind == bitwuzla::Kind::VALUE)
   {
-    close_term_scope();
     switch (token_kind)
     {
       case Token::FP_NAN:
@@ -1365,10 +1389,10 @@ Parser::parse_open_term_indexed()
   else
   {
     // ((_ <indexed_op> <idxs) <terms>) -> (<indexed_op> <idxs> <terms>)
-    close_term_scope();
     assert(node);
     d_work.emplace_back(token_kind, node, std::move(coo));
   }
+  close_term_scope();
   return true;
 }
 
@@ -2462,9 +2486,12 @@ Parser::close_term_fp(const ParsedItem& item_open)
     {
       if (has_rm && i == 0)
       {
-        return error("expected rounding-mode term at index 0 as argument to '"
-                         + std::to_string(token) + "'",
-                     &item_open.d_coo);
+        if (!args[i].sort().is_rm())
+        {
+          return error("expected rounding-mode term at index 0 as argument to '"
+                           + std::to_string(token) + "'",
+                       &item_open.d_coo);
+        }
       }
       else
       {
@@ -2869,6 +2896,21 @@ Parser::enable_theory(const std::string& logic,
                       const std::string& theory,
                       size_t size_prefix)
 {
+  if (logic == "ALL")
+  {
+    d_table.init_array_symbols();
+    d_table.init_bv_symbols();
+    d_table.init_fp_symbols();
+    d_token_class_mask |= static_cast<uint32_t>(TokenClass::ARRAY);
+    d_token_class_mask |= static_cast<uint32_t>(TokenClass::BV);
+    d_token_class_mask |= static_cast<uint32_t>(TokenClass::FP);
+    d_token_class_mask |= static_cast<uint32_t>(TokenClass::REALS);
+    d_arrays_enabled = true;
+    d_bv_enabled     = true;
+    d_fp_enabled     = true;
+    return size_prefix;
+  }
+
   if (size_prefix < logic.size())
   {
     size_t size_theory = theory.size();
@@ -2912,16 +2954,7 @@ Parser::is_supported_logic(const std::string& logic)
 
   if (logic == "ALL")
   {
-    d_table.init_array_symbols();
-    d_table.init_bv_symbols();
-    d_table.init_fp_symbols();
-    d_token_class_mask |= static_cast<uint32_t>(TokenClass::ARRAY);
-    d_token_class_mask |= static_cast<uint32_t>(TokenClass::BV);
-    d_token_class_mask |= static_cast<uint32_t>(TokenClass::FP);
-    d_token_class_mask |= static_cast<uint32_t>(TokenClass::REALS);
-    d_arrays_enabled = true;
-    d_bv_enabled     = true;
-    d_fp_enabled     = true;
+    enable_theory("ALL");
     return true;
   }
   size_prefix = enable_theory(logic, "QF_", size_prefix);
