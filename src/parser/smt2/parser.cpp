@@ -1310,13 +1310,16 @@ Parser::parse_open_term_indexed()
       allow_zero = true;
       break;
 
+    case Token::FP_TO_FP:
+    case Token::FP_TO_FP_UNSIGNED:
+      // only used to mark as non-value, ignored
+      kind = bitwuzla::Kind::FP_TO_FP_FROM_UBV;
+      [[fallthrough]];
     case Token::FP_NAN:
     case Token::FP_NEG_INF:
     case Token::FP_NEG_ZERO:
     case Token::FP_POS_INF:
-    case Token::FP_POS_ZERO:
-    case Token::FP_TO_FP:
-    case Token::FP_TO_FP_UNSIGNED: nidxs = 2; break;
+    case Token::FP_POS_ZERO: nidxs = 2; break;
 
     case Token::FP_TO_SBV: kind = bitwuzla::Kind::FP_TO_SBV; break;
 
@@ -2172,16 +2175,26 @@ Parser::close_term_fp(const ParsedItem& item_open)
   bool has_rm = false;
   bitwuzla::Kind kind;
 
-  if (token == Token::FP_TO_FP)
+  if (token == Token::FP_TO_FP || token == Token::FP_TO_FP_UNSIGNED)
   {
-    if (!nargs() || nargs() > 2)
+    size_t size_args = nargs();
+    assert(size_args > 2);
+    if (token != Token::FP_TO_FP && size_args > 4)
     {
       return error("expected 1 or 2 arguments to '"
                        + std::to_string(item_open.d_token) + "', got '"
-                       + std::to_string(nargs()) + "'",
+                       + std::to_string(size_args - 2) + "'",
                    &item_open.d_coo);
     }
-    if (nargs() == 1)
+    else if (token == Token::FP_TO_FP_UNSIGNED && size_args != 4)
+    {
+      return error("expected 2 arguments to '"
+                       + std::to_string(item_open.d_token) + "', got '"
+                       + std::to_string(size_args - 2) + "'",
+                   &item_open.d_coo);
+    }
+
+    if (size_args == 3)
     {
       // ((_ to_fp eb sb) (_ BitVec m))
       if (!pop_args(item_open, 3, args, 2, &idxs))
@@ -2209,12 +2222,10 @@ Parser::close_term_fp(const ParsedItem& item_open)
       return true;
     }
 
-    // ((_ to_fp eb sb) RoundingMode (_ FloatingPoint eb sb))
-    // ((_ to_fp eb sb) RoundingMode (_ BitVec m))
-    // ((_ to_fp eb sb) RoundingMode Real)
     idxs.resize(2);
     if (peek_is_str_arg())
     {
+      // ((_ to_fp eb sb) RoundingMode Real)
       std::string s0, s1 = pop_str_arg();
       if (peek_is_str_arg())
       {
@@ -2260,20 +2271,9 @@ Parser::close_term_fp(const ParsedItem& item_open)
     }
     else
     {
-      if (!peek_is_uint64_arg())
-      {
-        error("expected integer as index to '"
-                  + std::to_string(item_open.d_token) + "'",
-              &item_open.d_coo);
-      }
-      idxs[1] = pop_uint64_arg();
-      if (!peek_is_uint64_arg())
-      {
-        error("expected integer as index to '"
-                  + std::to_string(item_open.d_token) + "'",
-              &item_open.d_coo);
-      }
-      idxs[0] = pop_uint64_arg();
+      // ((_ to_fp eb sb) RoundingMode (_ FloatingPoint eb sb))
+      // ((_ to_fp eb sb) RoundingMode (_ BitVec m))
+      // ((_ to_fp_unsigned eb sb) RoundingMode (_ BitVec m))
       if (!peek_is_term_arg())
       {
         return error("expected term as argument at index 1 to '"
@@ -2302,8 +2302,26 @@ Parser::close_term_fp(const ParsedItem& item_open)
                          + std::to_string(token) + "'",
                      &item_open.d_coo);
       }
+      // indices
+      if (!peek_is_uint64_arg())
+      {
+        error("expected integer as index to '"
+                  + std::to_string(item_open.d_token) + "'",
+              &item_open.d_coo);
+      }
+      idxs[1] = pop_uint64_arg();
+      if (!peek_is_uint64_arg())
+      {
+        error("expected integer as index to '"
+                  + std::to_string(item_open.d_token) + "'",
+              &item_open.d_coo);
+      }
+      idxs[0] = pop_uint64_arg();
+
       d_work_args.push_back(bitwuzla::mk_term(
-          term.sort().is_bv() ? bitwuzla::Kind::FP_TO_FP_FROM_UBV
+          term.sort().is_bv() ? (token == Token::FP_TO_FP_UNSIGNED
+                                     ? bitwuzla::Kind::FP_TO_FP_FROM_UBV
+                                     : bitwuzla::Kind::FP_TO_FP_FROM_SBV)
                               : bitwuzla::Kind::FP_TO_FP_FROM_FP,
           {rm, term},
           idxs));
@@ -2447,12 +2465,6 @@ Parser::close_term_fp(const ParsedItem& item_open)
       nexp   = 3;
       has_rm = true;
       kind   = bitwuzla::Kind::FP_SUB;
-      break;
-    case Token::FP_TO_FP_UNSIGNED:
-      nexp   = 2;
-      nidxs  = 2;
-      has_rm = true;
-      kind   = bitwuzla::Kind::FP_TO_FP_FROM_UBV;
       break;
     case Token::FP_TO_SBV:
       nexp   = 2;
