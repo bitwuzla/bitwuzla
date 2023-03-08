@@ -132,9 +132,15 @@ Parser::parse_command()
 {
   Token token = next_token();
 
-  if (!check_token(token))
+  if (token == Token::ENDOFFILE)
   {
-    return false;
+    d_done = true;
+    return true;
+  }
+
+  if (token == Token::INVALID)
+  {
+    return error_invalid();
   }
 
   if (token != Token::LPAR)
@@ -2868,8 +2874,7 @@ Parser::error_invalid()
 bool
 Parser::error_eof(Token token)
 {
-  return error("unexpected end of file after '" + std::to_string(token) + "'",
-               &d_lexer->last_coo());
+  return error("unexpected end of file", &d_lexer->last_coo());
 }
 
 bool
