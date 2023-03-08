@@ -78,7 +78,7 @@ class Parser
                     Token la_char   = Token::INVALID);
 
   bool parse_term(bool look_ahead = false, Token la_char = Token::INVALID);
-  bool parse_term_list();
+  bool parse_term_list(std::vector<std::string>* repr = nullptr);
   bool parse_open_term(Token token);
   bool parse_open_term_as();
   bool parse_open_term_indexed();

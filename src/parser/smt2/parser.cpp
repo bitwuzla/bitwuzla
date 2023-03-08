@@ -162,7 +162,7 @@ Parser::parse_command()
     return error("expected command at '" + d_lexer->token() + "'");
   }
 
-  Msg(2) << "parse command '" << token << std::endl;
+  Msg(1) << "parse command '" << token << "'";
 
   switch (token)
   {
@@ -287,10 +287,6 @@ Parser::parse_command_check_sat(bool with_assumptions)
   if (!parse_rpars(1))
   {
     return false;
-  }
-  if (!d_options.get(bitwuzla::Option::INCREMENTAL))
-  {
-    d_done = true;
   }
   return true;
 }
@@ -668,42 +664,61 @@ Parser::parse_command_get_value()
 {
   init_logic();
   init_bitwuzla();
-  //    case BZLA_GET_VALUE_TAG_SMT2: {
-  //      if (!read_lpar_smt2(parser, " after 'get-value'")) return 0;
-  //      if (!bitwuzla_get_option(parser->options,
-  //      BITWUZLA_OPT_PRODUCE_MODELS))
-  //      {
-  //        return !perr_smt2(parser, "model generation is not enabled");
-  //      }
-  //      if (parser->res->result != BITWUZLA_SAT) break;
-  //      if (!read_exp_list(parser, &exps, &coo))
-  //      {
-  //        BZLA_RELEASE_STACK(exps);
-  //        return 0;
-  //      }
-  //      if (!read_rpar_smt2(parser, " after 'get-value'"))
-  //      {
-  //        BZLA_RELEASE_STACK(exps);
-  //        return 0;
-  //      }
-  //      fputc('(', parser->outfile);
-  //      char *symbols = parser->tokens.start;
-  //      for (i = 0; i < BZLA_COUNT_STACK(exps); i++)
-  //      {
-  //        if (BZLA_COUNT_STACK(exps) > 1) fputs("\n ", parser->outfile);
-  //        exp = BZLA_PEEK_STACK(exps, i);
-  //        bitwuzla_term_print_value_smt2(
-  //            parser->bitwuzla, exp, symbols, parser->outfile);
-  //        symbols += strlen(symbols) + 1;
-  //        assert(symbols <= parser->tokens.top);
-  //      }
-  //      if (BZLA_COUNT_STACK(exps) > 1) fputc('\n', parser->outfile);
-  //      fprintf(parser->outfile, ")\n");
-  //      fflush(parser->outfile);
-  //      BZLA_RELEASE_STACK(exps);
-  //      BZLA_RESET_STACK(parser->tokens);
-  //      break;
-  //    }
+  if (!d_options.get(bitwuzla::Option::PRODUCE_MODELS))
+  {
+    return error("model generation is not enabled");
+  }
+  if (d_result != bitwuzla::Result::SAT)
+  {
+    return true;
+  }
+  if (!parse_lpars(1))
+  {
+    return false;
+  }
+  std::vector<std::string> repr;
+  if (!parse_term_list(&repr))
+  {
+    return false;
+  }
+  if (!parse_rpars(1))
+  {
+    return false;
+  }
+  size_t size_args = nargs();
+  std::vector<bitwuzla::Term> args(size_args);
+  for (size_t i = 0; i < size_args; ++i)
+  {
+    size_t idx = size_args - i - 1;
+    args[idx]  = pop_term_arg();
+  }
+  (*d_out) << "(";
+  std::stringstream ss;
+  if (size_args > 1)
+  {
+    (*d_out) << std::endl;
+    ss << std::endl;
+  }
+  ss << " ";
+  const std::string& pref = ss.str();
+  for (size_t i = 0; i < size_args; ++i)
+  {
+    (*d_out) << "(";
+    if (i > 0)
+    {
+      (*d_out) << pref;
+    }
+    (*d_out) << repr[i] << " " << d_bitwuzla->get_value(args[i]);
+    (*d_out) << ")";
+  }
+  if (size_args > 1)
+  {
+    (*d_out) << std::endl;
+  }
+  (*d_out) << ")" << std::endl;
+  ;
+  d_out->flush();
+  return true;
 }
 
 bool
@@ -1093,7 +1108,7 @@ Parser::parse_term(bool look_ahead, Token la)
 }
 
 bool
-Parser::parse_term_list()
+Parser::parse_term_list(std::vector<std::string>* repr)
 {
   for (;;)
   {
@@ -1105,6 +1120,13 @@ Parser::parse_term_list()
     if (la == Token::RPAR)
     {
       break;
+    }
+    if (repr && la == Token::SYMBOL)
+    {
+      assert(d_last_node->has_symbol());
+      repr->push_back(d_last_node->d_is_piped
+                          ? "|" + d_last_node->d_symbol + "|"
+                          : d_last_node->d_symbol);
     }
     if (!parse_term(true, la))
     {
@@ -2889,10 +2911,10 @@ Parser::error(const std::string& error_msg, const Lexer::Coordinate* coo)
   if (!coo) coo = &d_lexer->coo();
   d_error = d_infile_name + ":" + std::to_string(coo->line) + ":"
             + std::to_string(coo->col) + ": " + error_msg;
-#ifndef NDEBUG
-  std::cout << "[error] " << d_error << std::endl;
-  assert(false);
-#endif
+  //#ifndef NDEBUG
+  //  std::cout << "[error] " << d_error << std::endl;
+  //  assert(false);
+  //#endif
   return false;
 }
 

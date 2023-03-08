@@ -9,11 +9,9 @@ SymbolTable::Node::Node(Token token,
                         const std::string& symbol,
                         uint64_t scope_level)
     : d_token(token),
-      d_is_bound(false),
-      d_is_sort(false),
+      d_symbol(symbol),
       d_scope_level(scope_level),
-      d_coo({0, 0}),
-      d_symbol(symbol)
+      d_coo({0, 0})
 {
 }
 
@@ -41,6 +39,7 @@ SymbolTable::insert(Token token,
   {
     std::string sym = symbol.substr(1, symbol.size() - 2);
     node            = new Node(token, sym, scope_level);
+    node->d_is_piped = true;
     d_table[sym].emplace_back(node);
   }
   else

@@ -12,16 +12,16 @@ class SymbolTable
  public:
   struct Node
   {
-    Node(Token token, const std::string& name, uint64_t scope_level);
+    Node(Token token, const std::string& symbol, uint64_t scope_level);
     bool has_symbol() const;
     Token d_token;
-    bool d_is_bound;
-    bool d_is_sort;
+    std::string d_symbol;
     uint64_t d_scope_level;
     Lexer::Coordinate d_coo;
-    std::string d_symbol;
     bitwuzla::Term d_term;
     bitwuzla::Sort d_sort;
+    bool d_is_bound = false;
+    bool d_is_piped = false;
   };
 
   SymbolTable();

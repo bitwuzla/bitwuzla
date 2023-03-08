@@ -1385,7 +1385,7 @@ tests_smt2 = [
   # ['solver/fp/fp_real.smt2'],
   # ['solver/fp/fp_regr9.smt2'],
   # TODO: disabled because const arrays not yet supported
-  #['solver/getvalue.smt2'],
+  #['solver/array/getvalue.smt2'],
 ]
 
 tests_btor_sat = [
