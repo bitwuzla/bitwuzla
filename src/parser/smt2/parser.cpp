@@ -1016,7 +1016,7 @@ Parser::parse_symbol(const std::string& error_msg,
   }
   if (token != Token::SYMBOL)
   {
-    return error("expected symbol" + error_msg);
+    return error("expected symbol " + error_msg);
   }
   assert(d_last_node->d_token == Token::SYMBOL);
   // shadow previously defined symbols
@@ -1115,13 +1115,15 @@ Parser::parse_open_term(Token token)
       {
         return false;
       }
+      assert(peek_is_node_arg());
+      peek_node_arg()->d_coo = d_lexer->coo();
     }
     else if (d_is_sorted_var)
     {
       // parse <sorted_var>: <symbol> <sort>
       d_work.emplace_back(Token::SORTED_VAR, d_lexer->coo());
       d_is_sorted_var           = false;
-      if (!parse_symbol(" in sorted var", true))
+      if (!parse_symbol("in sorted var", true))
       {
         return false;
       }
@@ -1161,7 +1163,7 @@ Parser::parse_open_term(Token token)
   else if (token == Token::NAMED)
   {
     d_work_args.push_back(d_last_node);
-    if (!parse_symbol(" in sorted var", true))
+    if (!parse_symbol("in sorted var", true))
     {
       return false;
     }
@@ -1705,7 +1707,6 @@ Parser::close_term()
       return error("unsupported term kind '" + std::to_string(item.d_token)
                    + "'");
   }
-  assert(peek_is_term_arg());
   close_term_scope();
   return res;
 }
@@ -2124,7 +2125,7 @@ Parser::close_term_bv(const ParsedItem& item_open)
                        + " as argument to '" + std::to_string(token) + "'",
                    &item_open.d_coo);
     }
-    if (i > 0)
+    if (i > 0 && kind != bitwuzla::Kind::BV_CONCAT)
     {
       if (args[i].sort() != args[i - 1].sort())
       {
@@ -2442,13 +2443,13 @@ Parser::close_term_fp(const ParsedItem& item_open)
       break;
     case Token::FP_TO_SBV:
       nexp   = 2;
-      nidxs  = 2;
+      nidxs  = 1;
       has_rm = true;
       kind   = bitwuzla::Kind::FP_TO_SBV;
       break;
     case Token::FP_TO_UBV:
       nexp   = 2;
-      nidxs  = 2;
+      nidxs  = 1;
       has_rm = true;
       kind   = bitwuzla::Kind::FP_TO_UBV;
       break;
