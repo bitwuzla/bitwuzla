@@ -466,7 +466,7 @@ Options::set(const std::string &lng, const std::string &value)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(lng);
   BITWUZLA_CHECK_STR_NOT_EMPTY(value);
-  BITWUZLA_CHECK(d_options->is_valid(lng)) << "invalid option";
+  BITWUZLA_CHECK(d_options->is_valid(lng)) << "invalid option '" << lng << "'";
   bzla::option::Option opt = d_options->option(lng);
   std::string v            = value;
   v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());

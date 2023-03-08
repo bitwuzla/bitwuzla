@@ -922,13 +922,14 @@ Parser::parse_command_set_option()
   // Bitwuzla options
   else
   {
-    assert(d_lexer->has_token());
-    std::string opt = d_lexer->token();
-    token           = next_token();
     if (!check_token(token))
     {
       return false;
     }
+    assert(d_lexer->has_token());
+    assert(d_lexer->token()[0] == ':');
+    std::string opt = d_lexer->token().substr(1);
+    token           = next_token();
     assert(d_lexer->has_token());
     try
     {
