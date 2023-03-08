@@ -1032,6 +1032,7 @@ Parser::parse_symbol(const std::string& error_msg,
   if (shadow && d_last_node->d_coo.line)
   {
     d_last_node        = d_table.insert(token, d_lexer->token(), d_scope_level);
+    assert(d_last_node->has_symbol());
     d_last_node->d_coo = d_lexer->coo();
   }
   d_work_args.push_back(d_last_node);

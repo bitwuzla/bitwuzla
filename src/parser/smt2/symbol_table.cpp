@@ -55,8 +55,9 @@ void
 SymbolTable::remove(Node* node)
 {
   const std::string& symbol = node->d_symbol;
-  assert(d_table.find(symbol) != d_table.end());
-  auto& chain = d_table.find(symbol)->second;
+  auto it                   = d_table.find(symbol);
+  assert(it != d_table.end());
+  auto& chain = it->second;
   assert(chain.size() > 0);
   for (size_t i = 0, size = chain.size(); i < size; ++i)
   {
@@ -69,17 +70,32 @@ SymbolTable::remove(Node* node)
       break;
     }
   }
+  if (chain.empty())
+  {
+    d_table.erase(it);
+  }
 }
 
 void
 SymbolTable::pop_scope(uint64_t scope_level)
 {
+  std::vector<std::string> erase;
   for (auto& p : d_table)
   {
-    while (p.second.back()->d_scope_level >= scope_level)
+    assert(p.second.size());
+    assert(p.second.back());
+    while (!p.second.empty() && p.second.back()->d_scope_level >= scope_level)
     {
       p.second.pop_back();
     }
+    if (p.second.empty())
+    {
+      erase.push_back(p.first);
+    }
+  }
+  for (auto& s : erase)
+  {
+    d_table.erase(s);
   }
 }
 
@@ -352,7 +368,8 @@ SymbolTable::print() const
   std::cout << "SymbolTable: " << std::endl;
   for (auto& p : d_table)
   {
-    std::cout << " ";
+    assert(!p.first.empty());
+    std::cout << "'" << p.first << "' (" << p.second.size() << "): ";
     for (auto& n : p.second)
     {
       std::cout << " (" << n->d_symbol << ", " << n->d_scope_level << ")";
