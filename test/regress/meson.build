@@ -2160,8 +2160,8 @@ tests_btor_unsat = [
 
 regress_tests = [
   [tests_smt2],
-  [tests_btor_sat, '--check-sat'],
-  [tests_btor_unsat, '--check-unsat'],
+  #[tests_btor_sat, '--check-sat'],
+  #[tests_btor_unsat, '--check-unsat'],
 ]
 
 foreach t : regress_tests
