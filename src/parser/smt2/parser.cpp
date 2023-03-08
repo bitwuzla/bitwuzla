@@ -517,7 +517,7 @@ Parser::parse_command_define_sort()
   {
     return false;
   }
-  if (token != Token::LPAR)
+  if (token != Token::RPAR)
   {
     return error("parameterized 'define-sort' not supported, expected ')'");
   }
@@ -557,7 +557,7 @@ Parser::parse_command_echo()
     return false;
   }
 
-  (*d_out) << echo;
+  (*d_out) << echo << std::endl;
   d_out->flush();
 
   return true;
@@ -770,7 +770,7 @@ Parser::parse_command_set_info()
   {
     return false;
   }
-  if (!is_token_class(token, TokenClass::KEYWORD))
+  if (!is_token_class(token, TokenClass::KEYWORD) && token != Token::ATTRIBUTE)
   {
     return error("missing keyword after 'set-info'");
   }
@@ -2202,7 +2202,7 @@ Parser::close_term_fp(const ParsedItem& item_open)
     if (size_args == 3)
     {
       // ((_ to_fp eb sb) (_ BitVec m))
-      if (!pop_args(item_open, 3, args, 2, &idxs))
+      if (!pop_args(item_open, 1, args, 2, &idxs))
       {
         return false;
       }
@@ -2983,7 +2983,7 @@ Parser::is_supported_logic(const std::string& logic)
 {
   size_t size = logic.size(), size_prefix = 0;
 
-  if (size < 3)
+  if (size < 2)
   {
     return false;
   }
@@ -3137,7 +3137,7 @@ Parser::pop_args(const ParsedItem& item_open,
     return error("expected " + std::to_string(nexp) + " argument"
                      + (nexp > 1 ? "s" : "") + " to '"
                      + std::to_string(item_open.d_token) + "', got '"
-                     + std::to_string(nargs()) + "'",
+                     + std::to_string(size_args) + "'",
                  &item_open.d_coo);
   }
   assert(args.empty());
