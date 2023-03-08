@@ -2586,7 +2586,7 @@ Parser::close_term_fun_app(const ParsedItem& item_open)
   assert(domain.size() == arity);
   for (size_t i = 1; i < arity; ++i)
   {
-    if (domain[i] != args[i].sort())
+    if (domain[i - 1] != args[i].sort())
     {
       return error("expected term of sort '" + domain[i].str() + "', got '"
                        + args[i].sort().str() + "'",
