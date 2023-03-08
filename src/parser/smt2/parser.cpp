@@ -333,8 +333,9 @@ Parser::parse_command_declare_fun(bool is_const)
         return false;
       }
     }
-    domain.resize(nargs());
-    for (size_t i = 0, n = nargs(); i < n; ++i)
+    size_t size_args = nargs();
+    domain.resize(size_args);
+    for (size_t i = 0, n = size_args; i < n; ++i)
     {
       size_t idx  = n - i - 1;
       domain[idx] = pop_sort_arg();
@@ -1149,7 +1150,8 @@ Parser::parse_open_term(Token token)
       bitwuzla::Sort sort = pop_sort_arg();
       SymbolTable::Node* symbol = pop_node_arg();
       assert(symbol->has_symbol());
-      d_work_args.push_back(bitwuzla::mk_var(sort, symbol->d_symbol));
+      symbol->d_term =bitwuzla::mk_var(sort, symbol->d_symbol);
+      d_work_args.push_back(symbol->d_term);
     }
   }
   else if (d_is_var_binding)
@@ -2665,9 +2667,10 @@ Parser::close_term_quant(const ParsedItem& item_open)
                      + std::to_string(item_open.d_token) + "'",
                  &item_open.d_coo);
   }
+  size_t size_args = nargs();
   std::vector<bitwuzla::Term> args;
-  pop_args(item_open, nargs(), args);
-  for (size_t i = 0, n = nargs() - 1; i < n; ++i)
+  pop_args(item_open, size_args, args);
+  for (size_t i = 0, n = size_args - 1; i < n; ++i)
   {
     if (!args[i].is_variable())
     {
