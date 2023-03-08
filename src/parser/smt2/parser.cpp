@@ -805,12 +805,16 @@ Parser::parse_command_set_info()
     }
     Msg(1) << "parsed status '" << d_status << "'";
   }
-  if (parse_rpars(1))
+  do
   {
-    print_success();
-    return true;
-  }
-  return false;
+    token = next_token();
+    if (!check_token(token))
+    {
+      return false;
+    }
+  } while (token != Token::RPAR);
+  print_success();
+  return true;
 }
 
 bool
