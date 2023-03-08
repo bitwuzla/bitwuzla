@@ -9,7 +9,7 @@ namespace parser::smt2 {
 
 enum class TokenClass
 {
-  BITS = 6,
+  BITS = 8,
   SIZE = (1 << BITS),
   MASK = (SIZE - 1),
 
@@ -34,7 +34,7 @@ enum class Token
   RPAR      = 4 + static_cast<int32_t>(TokenClass::MISC),
   SYMBOL    = 5 + static_cast<int32_t>(TokenClass::MISC),
   ATTRIBUTE = 6 + static_cast<int32_t>(TokenClass::MISC),
-  EXP       = 7 + static_cast<int32_t>(TokenClass::MISC),
+  FUN_APP   = 7 + static_cast<int32_t>(TokenClass::MISC),
   /* <var_binding> */
   LETBIND = 8 + static_cast<int32_t>(TokenClass::MISC),
   /* (<var_binding>+) */

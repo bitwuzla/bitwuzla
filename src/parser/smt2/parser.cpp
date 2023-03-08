@@ -424,10 +424,18 @@ Parser::parse_command_define_fun()
 
   std::vector<bitwuzla::Term> args;
   Token la;
-  do
+  for (;;)
   {
     la = next_token();
-    if (!parse_symbol("in sorted var", true, true, la))
+    if (la == Token::RPAR)
+    {
+      break;
+    }
+    if (la != Token::LPAR)
+    {
+      return error("missing '('");
+    }
+    if (!parse_symbol("in sorted var", true))
     {
       return false;
     }
@@ -436,9 +444,10 @@ Parser::parse_command_define_fun()
     {
       return false;
     }
+    parse_rpars(1);
     symbol->d_term = bitwuzla::mk_var(pop_sort_arg(), symbol->d_symbol);
     args.push_back(symbol->d_term);
-  } while (la != Token::RPAR);
+  }
 
   if (!parse_sort())
   {
@@ -1399,6 +1408,7 @@ Parser::parse_open_term_indexed()
   {
     // ((_ <indexed_op> <idxs) <terms>) -> (<indexed_op> <idxs> <terms>)
     assert(node);
+    assert(token_kind != Token::SYMBOL);
     d_work.emplace_back(token_kind, node, std::move(coo));
   }
   close_term_scope();
@@ -1486,11 +1496,12 @@ Parser::parse_open_term_symbol()
       assert(node->has_symbol());
       return error("undefined symbol '" + node->d_symbol + "'");
     }
-    if (!node->d_term.sort().is_fun())
+    d_work.pop_back();
+    assert(!node->d_term.is_null());
+    d_work_args.push_back(node->d_term);
+    if (node->d_term.sort().is_fun())
     {
-      d_work.pop_back();
-      assert(!node->d_term.is_null());
-      d_work_args.push_back(node->d_term);
+      d_work.emplace_back(Token::FUN_APP, d_lexer->coo());
     }
   }
   else if (token == Token::TRUE)
@@ -1591,7 +1602,6 @@ Parser::close_term()
   bool res = false;
   switch (item.d_token)
   {
-    case Token::SYMBOL: res = close_term_fun_app(item); break;
     case Token::AS: res = close_term_as(item); break;
     case Token::BANG: res = close_term_bang(item); break;
 
@@ -1692,6 +1702,8 @@ Parser::close_term()
 
     case Token::EXISTS:
     case Token::FORALL: res = close_term_quant(item); break;
+
+    case Token::FUN_APP: res = close_term_fun_app(item); break;
 
     case Token::LET: res = close_term_let(item); break;
 
@@ -2530,31 +2542,31 @@ Parser::close_term_fp(const ParsedItem& item_open)
 bool
 Parser::close_term_fun_app(const ParsedItem& item_open)
 {
-  assert(std::holds_alternative<SymbolTable::Node*>(item_open.d_parsed));
-  SymbolTable::Node* node = std::get<SymbolTable::Node*>(item_open.d_parsed);
-  bitwuzla::Term& fun     = node->d_term;
+  assert(nargs() > 0);
+
+  std::vector<bitwuzla::Term> args;
+  if (!pop_args(item_open, 0, args))
+  {
+    return false;
+  }
+  bitwuzla::Term& fun = args[0];
   assert(!fun.is_null());
+  assert(args[0].sort().is_fun());
   if (!fun.sort().is_fun())
   {
     return error("expected fun", &item_open.d_coo);
   }
   size_t arity = fun.sort().fun_arity();
-  if (nargs() != arity)
+  if (args.size() - 1 != arity)
   {
     return error("expected " + std::to_string(arity) + " arguments to '"
                      + std::to_string(item_open.d_token) + "', got '"
-                     + std::to_string(nargs()) + "'",
+                     + std::to_string(args.size() - 1) + "'",
                  &item_open.d_coo);
   }
-  std::vector<bitwuzla::Term> args;
-  if (!pop_args(item_open, arity, args))
-  {
-    return false;
-  }
   const std::vector<bitwuzla::Sort>& domain = fun.sort().fun_domain();
-  assert(args.size() == arity);
   assert(domain.size() == arity);
-  for (size_t i = 0; i < arity; ++i)
+  for (size_t i = 1; i < arity; ++i)
   {
     if (domain[i] != args[i].sort())
     {
@@ -2563,7 +2575,6 @@ Parser::close_term_fun_app(const ParsedItem& item_open)
                    &item_open.d_coo);
     }
   }
-  args.insert(args.begin(), fun);
   d_work_args.push_back(bitwuzla::mk_term(bitwuzla::Kind::APPLY, args));
   return true;
 }
