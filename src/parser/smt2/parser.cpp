@@ -1289,6 +1289,7 @@ Parser::parse_open_term_indexed()
     case Token::BV_EXTRACT:
       kind  = bitwuzla::Kind::BV_EXTRACT;
       nidxs = 2;
+      allow_zero = true;
       break;
 
     case Token::FP_NAN:
@@ -3095,7 +3096,8 @@ Parser::pop_args(const ParsedItem& item_open,
                  std::vector<uint64_t>* idxs)
 {
   assert(nexp > 0 || nidxs == 0);
-  if (nexp > 0 && nargs() != nexp)
+  size_t size_args = nargs() - nidxs;
+  if (nexp > 0 && size_args != nexp)
   {
     return error("expected " + std::to_string(nexp) + " argument"
                      + (nexp > 1 ? "s" : "") + " to '"
@@ -3103,12 +3105,11 @@ Parser::pop_args(const ParsedItem& item_open,
                      + std::to_string(nargs()) + "'",
                  &item_open.d_coo);
   }
-  nexp = nargs();
   assert(args.empty());
-  args.resize(nexp);
-  for (size_t i = 0, n = nexp - nidxs; i < n; ++i)
+  args.resize(size_args);
+  for (size_t i = 0; i < size_args; ++i)
   {
-    size_t idx = n - i - 1;
+    size_t idx = size_args - i - 1;
     if (!peek_is_term_arg())
     {
       return error("expected term as argument at index " + std::to_string(idx)
