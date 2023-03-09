@@ -113,7 +113,7 @@ class Parser
              const Lexer::Coordinate& coo = {0, 0});
   bool error_arg(const std::string& error_msg);
   bool error_invalid();
-  bool error_eof(Token token);
+  bool error_eof();
 
   bool check_token(Token token);
 
@@ -127,6 +127,7 @@ class Parser
   void print_success();
 
   size_t nargs() const;
+  const Lexer::Coordinate& arg_coo(size_t idx) const;
 
   template <typename T>
   void push_arg(const T& arg, const Lexer::Coordinate* coo = nullptr)
@@ -146,12 +147,18 @@ class Parser
   const bitwuzla::Term& peek_term_arg() const;
   SymbolTable::Node* peek_node_arg() const;
 
+  uint64_t peek_uint64_arg(size_t idx) const;
+  const bitwuzla::Sort& peek_sort_arg(size_t idx) const;
+  const bitwuzla::Term& peek_term_arg(size_t idx) const;
+  SymbolTable::Node* peek_node_arg(size_t idx) const;
+
   bool peek_is_uint64_arg() const;
   bool peek_is_sort_arg() const;
   bool peek_is_term_arg() const;
   bool peek_is_str_arg() const;
   bool peek_is_node_arg() const;
 
+  bool check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs);
   bool pop_args(const ParsedItem& item_open,
                 size_t nexp,
                 std::vector<bitwuzla::Term>& args,

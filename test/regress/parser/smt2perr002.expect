@@ -1,1 +1,1 @@
-regress/parser/smt2perr002.smt2:2:12: expected terms of same sort at indices 0 and 1 as argument to 'bvsle'
+regress/parser/smt2perr002.smt2:3:10: expected terms of same sort at indices 0 and 1 as argument to 'bvsle'
