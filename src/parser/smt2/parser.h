@@ -110,7 +110,7 @@ class Parser
   bool skip_sexprs(uint64_t nopen = 0);
 
   bool error(const std::string& error_msg,
-             const Lexer::Coordinate* coo = nullptr);
+             const Lexer::Coordinate& coo = {0, 0});
   bool error_invalid();
   bool error_eof(Token token);
 
