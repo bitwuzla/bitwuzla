@@ -3221,6 +3221,13 @@ Parser::pop_args(const ParsedItem& item_open,
                      + std::to_string(size_args),
                  &item_open.d_coo);
   }
+  if (nexp == 0 && size_args < 2)
+  {
+    return error("expected at least 2 arguments to '"
+                     + std::to_string(item_open.d_token) + "', got "
+                     + std::to_string(size_args),
+                 &item_open.d_coo);
+  }
   assert(args.empty());
   args.resize(size_args);
   for (size_t i = 0; i < size_args; ++i)

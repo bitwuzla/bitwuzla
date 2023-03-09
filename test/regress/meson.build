@@ -1225,7 +1225,7 @@ tests_smt2 = [
   ['parser/smt2perr067.smt2'],
   ['parser/smt2perr068.smt2'],
   ['parser/smt2perr069.smt2'],
-  #['parser/smt2perr070.smt2'],
+  ['parser/smt2perr070.smt2'],
   #['parser/smt2perr071.smt2'],
   #['parser/smt2perr072.smt2'],
   #['parser/smt2perr073.smt2'],
