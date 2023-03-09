@@ -1,1 +1,1 @@
-regress/parser/smt2perr045.smt2:3:1: expected bit-width but reached end-of-file
+regress/parser/smt2perr045.smt2:3:1: unexpected end of file

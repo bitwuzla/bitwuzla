@@ -1,1 +1,1 @@
-regress/parser/smt2perr058.smt2:1:19: invalid value '#x12' after ':status'
+regress/parser/smt2perr058.smt2:1:19: invalid value '#x12' for ':status'

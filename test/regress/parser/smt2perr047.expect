@@ -1,1 +1,1 @@
-regress/parser/smt2perr047.smt2:1:36: expected bit-width at '-1'
+regress/parser/smt2perr047.smt2:1:36: expected 64 bit integer

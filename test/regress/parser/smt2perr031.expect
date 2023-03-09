@@ -1,1 +1,1 @@
-regress/parser/smt2perr031.smt2:2:1: reached end-of-file but expected '(' or sort keyword
+regress/parser/smt2perr031.smt2:2:1: unexpected end of file

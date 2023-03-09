@@ -1,1 +1,1 @@
-regress/parser/smt2perr019.smt2:2:3: invalid (non-printable) character (code 12) in string
+regress/parser/smt2perr019.smt2:2:3: illegal (non-printable) character (code 12) in string

@@ -1,1 +1,1 @@
-regress/parser/smt2perr008.smt2:3:9: assert argument is not a formula
+regress/parser/smt2perr008.smt2:3:9: asserted term is not a formula

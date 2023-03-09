@@ -107,6 +107,8 @@ class Parser
   void open_term_scope();
   void close_term_scope();
 
+  bool skip_sexprs(uint64_t nopen = 0);
+
   bool error(const std::string& error_msg,
              const Lexer::Coordinate* coo = nullptr);
   bool error_invalid();

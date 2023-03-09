@@ -1,1 +1,1 @@
-regress/parser/smt2perr039.smt2:1:28: expected '_' at 'asdf'
+regress/parser/smt2perr039.smt2:1:28: expected '_' or 'Array'

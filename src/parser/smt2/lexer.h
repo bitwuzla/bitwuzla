@@ -65,6 +65,10 @@ class Lexer
   void save_char(int32_t ch);
   std::string err_char(int32_t ch) const;
 
+  bool is_printable(int32_t ch) const;
+
+  Token error(int32_t ch, const std::string& error_msg);
+
   std::istream* d_infile = nullptr;
 
   std::array<uint32_t, 256> d_char_classes{};  // value-initialized to 0
