@@ -1,1 +1,1 @@
-regress/parser/smt2perr153.smt2:2:1: expected '(' after 'exists' at end-of-file
+regress/parser/smt2perr153.smt2:2:1: missing '('

@@ -1,1 +1,1 @@
-regress/parser/smt2perr129.smt2:1:14: expected '(' after 'let' at '#x0'
+regress/parser/smt2perr129.smt2:1:14: missing '('

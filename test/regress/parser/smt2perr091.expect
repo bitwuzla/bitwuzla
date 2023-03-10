@@ -1,1 +1,1 @@
-regress/parser/smt2perr091.smt2:1:14: first argument of 'ite' is not a bool
+regress/parser/smt2perr091.smt2:1:14: expected Boolean term at index 0 as argument to 'ite'

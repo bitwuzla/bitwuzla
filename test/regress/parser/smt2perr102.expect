@@ -1,1 +1,1 @@
-regress/parser/smt2perr102.smt2:2:16: first argument of 'store' is not an array
+regress/parser/smt2perr102.smt2:2:16: expected array as first argument to 'store'

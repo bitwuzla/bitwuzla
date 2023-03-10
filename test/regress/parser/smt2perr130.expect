@@ -1,1 +1,1 @@
-regress/parser/smt2perr130.smt2:1:14: expected '(' before '_'
+regress/parser/smt2perr130.smt2:1:16: missing '(' before '_'

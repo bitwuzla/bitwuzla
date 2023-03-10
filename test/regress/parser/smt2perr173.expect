@@ -1,1 +1,1 @@
-regress/parser/smt2perr173.smt2:1:28: invalid 64-bit integer '18446744073709551617'
+regress/parser/smt2perr173.smt2:1:28: invalid 64 bit integer '18446744073709551617'

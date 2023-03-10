@@ -1,0 +1,2 @@
+regress/parser/smt2perr190.smt2:1:19: 'declare-sort' of arity > 0 not supported
+

@@ -1,1 +1,1 @@
-regress/parser/smt2perr178.smt2:1:13: illegal backslash '\'
+regress/parser/smt2perr178.smt2:1:13: missing ')'

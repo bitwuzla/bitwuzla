@@ -1,1 +1,1 @@
-regress/parser/smt2perr087.smt2:1:10: one argument to 'ite' missing
+regress/parser/smt2perr087.smt2:1:10: expected 3 arguments to 'ite', got 2

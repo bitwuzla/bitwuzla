@@ -1,1 +1,1 @@
-regress/parser/smt2perr074.smt2:2:10: argument to 'xor' missing
+regress/parser/smt2perr074.smt2:2:10: expected at least 2 arguments to 'xor', got 1

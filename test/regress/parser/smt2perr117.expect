@@ -1,1 +1,1 @@
-regress/parser/smt2perr117.smt2:1:10: resulting bit-width of 'zero_extend' too large
+regress/parser/smt2perr117.smt2:1:28: index '18446744073709551608' as argument to 'zero_extend' too large, resulting bit-vector size exceeds maximum bit-vector size of 18446744073709551615

@@ -1,1 +1,1 @@
-regress/parser/smt2perr105.smt2:2:10: element sort of array (first) argument and sort of element (second) argument to 'store' do not match
+regress/parser/smt2perr105.smt2:2:29: element sort of array and sort of element do not match

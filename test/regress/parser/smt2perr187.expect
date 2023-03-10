@@ -1,1 +1,1 @@
-regress/parser/smt2perr187.smt2:1:48: expected positive 32 bit integer > 1 for significand size, got '1'
+regress/parser/smt2perr187.smt2:1:48: expected index > 1, got '1'

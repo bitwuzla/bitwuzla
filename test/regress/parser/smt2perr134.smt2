@@ -1,1 +1,1 @@
-(assert (and (_ zero_extend
+(assert (= (_ zero_extend 2)

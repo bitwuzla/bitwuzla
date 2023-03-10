@@ -1,1 +1,1 @@
-regress/parser/smt2perr101.smt2:2:10: one argument to 'store' missing
+regress/parser/smt2perr101.smt2:2:10: expected 3 arguments to 'store', got 2

@@ -1,1 +1,1 @@
-regress/parser/smt2perr162.smt2:2:19: argument 2 of 'xor' is an array term
+regress/parser/smt2perr162.smt2:2:19: expected Boolean term at index 1 as argument to 'xor'

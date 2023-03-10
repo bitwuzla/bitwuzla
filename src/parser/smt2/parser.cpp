@@ -1024,7 +1024,7 @@ Parser::parse_uint64()
     assert(d_lexer->has_token());
     try
     {
-      uint64_t val = std::stoll(d_lexer->token());
+      uint64_t val = std::stoull(d_lexer->token());
       push_arg(val);
       return true;
     }
@@ -1281,6 +1281,10 @@ Parser::parse_open_term_as()
     }
     assert(nargs() == 1);
     // ((as const(-array) <sort>) <term>) -> (as const(-array) sort term)
+    if (d_work.size() < 2 || d_work[d_work.size() - 2].d_token != Token::LPAR)
+    {
+      return error("missing '(' before '(as'", d_work.back().d_coo);
+    }
     close_term_scope();
     return true;
   }
@@ -1302,7 +1306,7 @@ Parser::parse_open_term_indexed()
   bitwuzla::Kind kind     = bitwuzla::Kind::VALUE;
   SymbolTable::Node* node = d_last_node;
 
-  bool allow_zero = false;
+  uint64_t min    = 0;
   uint64_t nidxs  = 1;
 
   if (token == Token::SYMBOL)
@@ -1312,35 +1316,19 @@ Parser::parse_open_term_indexed()
 
   switch (token)
   {
-    case Token::BV_REPEAT:
-      kind       = bitwuzla::Kind::BV_REPEAT;
-      allow_zero = true;
-      break;
+    case Token::BV_REPEAT: kind = bitwuzla::Kind::BV_REPEAT; break;
 
-    case Token::BV_ROTATE_LEFT:
-      kind       = bitwuzla::Kind::BV_ROLI;
-      allow_zero = true;
-      break;
+    case Token::BV_ROTATE_LEFT: kind = bitwuzla::Kind::BV_ROLI; break;
 
-    case Token::BV_ROTATE_RIGHT:
-      kind       = bitwuzla::Kind::BV_RORI;
-      allow_zero = true;
-      break;
+    case Token::BV_ROTATE_RIGHT: kind = bitwuzla::Kind::BV_RORI; break;
 
-    case Token::BV_SIGN_EXTEND:
-      kind       = bitwuzla::Kind::BV_SIGN_EXTEND;
-      allow_zero = true;
-      break;
+    case Token::BV_SIGN_EXTEND: kind = bitwuzla::Kind::BV_SIGN_EXTEND; break;
 
-    case Token::BV_ZERO_EXTEND:
-      kind       = bitwuzla::Kind::BV_ZERO_EXTEND;
-      allow_zero = true;
-      break;
+    case Token::BV_ZERO_EXTEND: kind = bitwuzla::Kind::BV_ZERO_EXTEND; break;
 
     case Token::BV_EXTRACT:
       kind  = bitwuzla::Kind::BV_EXTRACT;
       nidxs = 2;
-      allow_zero = true;
       break;
 
     case Token::FP_TO_FP:
@@ -1352,18 +1340,28 @@ Parser::parse_open_term_indexed()
     case Token::FP_NEG_INF:
     case Token::FP_NEG_ZERO:
     case Token::FP_POS_INF:
-    case Token::FP_POS_ZERO: nidxs = 2; break;
+    case Token::FP_POS_ZERO:
+      nidxs = 2;
+      min   = 2;
+      break;
 
-    case Token::FP_TO_SBV: kind = bitwuzla::Kind::FP_TO_SBV; break;
+    case Token::FP_TO_SBV:
+      kind = bitwuzla::Kind::FP_TO_SBV;
+      min  = 1;
+      break;
 
-    case Token::FP_TO_UBV: kind = bitwuzla::Kind::FP_TO_UBV; break;
+    case Token::FP_TO_UBV:
+      kind = bitwuzla::Kind::FP_TO_UBV;
+      min  = 1;
+      break;
 
     case Token::SYMBOL: {
       assert(d_lexer->has_token());
+      min                    = 1;
       const std::string& val = d_lexer->token();
-      if (val[0] != 'b' || val[1] != 'v')
+      if (val[0] != 'b' && val[1] != 'v')
       {
-        return false;
+        return error("invalid indexed term '" + val + "'");
       }
       std::string v = val.substr(2);
       if (!std::all_of(
@@ -1384,9 +1382,14 @@ Parser::parse_open_term_indexed()
     {
       return false;
     }
-    if (!allow_zero && peek_uint64_arg() == 0)
+    if (min > peek_uint64_arg())
     {
-      return error("expected non-zero index");
+      if (peek_uint64_arg() == 0)
+      {
+        return error_arg("expected non-zero index");
+      }
+      return error_arg("expected index > " + std::to_string(min - 1) + ", got '"
+                       + std::to_string(peek_uint64_arg()) + "'");
     }
   }
 
@@ -1445,6 +1448,10 @@ Parser::parse_open_term_indexed()
   else
   {
     // ((_ <indexed_op> <idxs) <terms>) -> (<indexed_op> <idxs> <terms>)
+    if (d_work.size() < 2 || d_work[d_work.size() - 2].d_token != Token::LPAR)
+    {
+      return error("missing '(' before '(_'", d_work.back().d_coo);
+    }
     assert(node);
     assert(token_kind != Token::SYMBOL);
     close_term_scope();
@@ -1505,6 +1512,10 @@ Parser::parse_open_term_symbol()
     else if (token == Token::UNDERSCORE)
     {
       d_work.pop_back();
+      if (d_work.back().d_token != Token::LPAR)
+      {
+        return error("missing '(' before '_'");
+      }
       if (!parse_open_term_indexed())
       {
         return false;
@@ -1519,6 +1530,10 @@ Parser::parse_open_term_symbol()
     }
     else if (token == Token::BANG)
     {
+      if (d_work.back().d_token != Token::LPAR)
+      {
+        return error("missing '(' before '" + std::to_string(token) + "'");
+      }
       d_work.emplace_back(token, d_lexer->coo());
     }
     else
@@ -1562,7 +1577,8 @@ Parser::parse_open_term_symbol()
   }
   else if (token == Token::ATTRIBUTE)
   {
-    return error("unexpected attribute '" + std::to_string(token) + "'");
+    assert(d_lexer->has_token());
+    return error("unexpected attribute '" + d_lexer->token() + "'");
   }
   else if (is_token_class(token, TokenClass::CORE))
   {
@@ -1585,39 +1601,50 @@ Parser::parse_open_term_symbol()
       return error("unexpected '" + std::to_string(token) + "'");
     }
   }
-  else if (d_fp_enabled && is_token_class(token, TokenClass::FP))
+  else if (d_fp_enabled)
   {
-    if (token == Token::FP_FLOATINGPOINT || token == Token::FP_FLOAT16
-        || token == Token::FP_FLOAT32 || token == Token::FP_FLOAT64
-        || token == Token::FP_FLOAT128)
+    if (token == Token::REAL_DIV
+        && (d_work.size() < 3
+            || d_work[d_work.size() - 3].d_token != Token::FP_TO_FP))
     {
-      return error("unexpected '" + std::to_string(token) + "'");
+      return error("invalid term, '" + std::to_string(token)
+                   + "' only allowed to represent rational values under '"
+                   + std::to_string(Token::FP_TO_FP) + "'");
     }
+    if (is_token_class(token, TokenClass::FP))
+    {
+      if (token == Token::FP_FLOATINGPOINT || token == Token::FP_FLOAT16
+          || token == Token::FP_FLOAT32 || token == Token::FP_FLOAT64
+          || token == Token::FP_FLOAT128)
+      {
+        return error("unexpected '" + std::to_string(token) + "'");
+      }
 
-    if (token == Token::FP_RM_RNA_LONG || token == Token::FP_RM_RNA)
-    {
-      d_work.pop_back();
-      push_arg(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RNA));
-    }
-    else if (token == Token::FP_RM_RNE_LONG || token == Token::FP_RM_RNE)
-    {
-      d_work.pop_back();
-      push_arg(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RNE));
-    }
-    else if (token == Token::FP_RM_RTN_LONG || token == Token::FP_RM_RTN)
-    {
-      d_work.pop_back();
-      push_arg(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTN));
-    }
-    else if (token == Token::FP_RM_RTP_LONG || token == Token::FP_RM_RTP)
-    {
-      d_work.pop_back();
-      push_arg(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTP));
-    }
-    else if (token == Token::FP_RM_RTZ_LONG || token == Token::FP_RM_RTZ)
-    {
-      d_work.pop_back();
-      push_arg(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTZ));
+      if (token == Token::FP_RM_RNA_LONG || token == Token::FP_RM_RNA)
+      {
+        d_work.pop_back();
+        push_arg(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RNA));
+      }
+      else if (token == Token::FP_RM_RNE_LONG || token == Token::FP_RM_RNE)
+      {
+        d_work.pop_back();
+        push_arg(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RNE));
+      }
+      else if (token == Token::FP_RM_RTN_LONG || token == Token::FP_RM_RTN)
+      {
+        d_work.pop_back();
+        push_arg(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTN));
+      }
+      else if (token == Token::FP_RM_RTP_LONG || token == Token::FP_RM_RTP)
+      {
+        d_work.pop_back();
+        push_arg(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTP));
+      }
+      else if (token == Token::FP_RM_RTZ_LONG || token == Token::FP_RM_RTZ)
+      {
+        d_work.pop_back();
+        push_arg(bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTZ));
+      }
     }
   }
   else if (token != Token::REAL_DIV)
@@ -1640,13 +1667,17 @@ Parser::close_term()
   const ParsedItem& item = d_work.back();
   if (item.d_token == Token::LPAR)
   {
-    return error("unexpected '()'");
+    if (nargs() == 0)
+    {
+      return error("unexpected '()'", item.d_coo);
+    }
+    return error("missing identifier, invalid term", item.d_coo);
   }
   d_work.pop_back();
 
   if (d_expect_body)
   {
-    return error("body to '" + std::to_string(item.d_token) + "' missing");
+    return error("missing body to '" + std::to_string(item.d_token));
   }
 
   bool res = false;
@@ -1768,6 +1799,11 @@ Parser::close_term()
     default:
       return error("unsupported term kind '" + std::to_string(item.d_token)
                    + "'");
+  }
+  if (d_work.size() == 0 || d_work.back().d_token != Token::LPAR)
+  {
+    return error("missing '(' before '" + std::to_string(item.d_token) + "'",
+                 item.d_coo);
   }
   close_term_scope();
   return res;
@@ -2333,18 +2369,20 @@ Parser::parse_sort_bv_fp()
       return false;
     }
     uint64_t esize = pop_uint64_arg();
-    if (esize == 0)
+    if (esize < 2)
     {
-      return error("invalid exponent bit-vector size '0'");
+      return error("invalid exponent size '" + std::to_string(esize)
+                   + "', must be > 1");
     }
     if (!parse_uint64())
     {
       return false;
     }
     uint64_t ssize = pop_uint64_arg();
-    if (ssize == 0)
+    if (ssize < 2)
     {
-      return error("invalid significand bit-vector size '0'");
+      return error("invalid significand size '" + std::to_string(ssize)
+                   + "', must be > 1");
     }
     if (!parse_rpars(1))
     {
@@ -3000,6 +3038,11 @@ Parser::pop_args(const ParsedItem& item_open,
                          + std::to_string(token) + "'",
                      arg_coo(idx));
       }
+      if (args[1].sort() != args[0].sort().array_index())
+      {
+        return error("index sort of array and sort of index do not match",
+                     arg_coo(idx + 1));
+      }
       break;
     case Token::ARRAY_STORE:
       args[0] = peek_term_arg(idx);
@@ -3314,11 +3357,43 @@ Parser::pop_args(const ParsedItem& item_open,
   }
   if (token == Token::BV_EXTRACT)
   {
+    if ((*idxs)[0] >= args[0].sort().bv_size())
+    {
+      return error("upper index '" + std::to_string((*idxs)[0])
+                       + "' too high for bit-vector of size "
+                       + std::to_string(args[0].sort().bv_size())
+                       + " as argument to '" + std::to_string(token) + "'",
+                   arg_coo(idx_idxs));
+    }
     if ((*idxs)[0] < (*idxs)[1])
     {
       return error("upper index must be >= lower index as argument to '"
                        + std::to_string(token) + "'",
                    arg_coo(idx_idxs));
+    }
+  }
+  else if (token == Token::BV_REPEAT)
+  {
+    if (((uint64_t) (UINT64_MAX / (*idxs)[0])) < args[0].sort().bv_size())
+    {
+      return error(
+          "index '" + std::to_string((*idxs)[0]) + "' as argument to '"
+              + std::to_string(token)
+              + "' too large, resulting bit-vector size exceeds maximum "
+              + "bit-vector size of " + std::to_string(UINT64_MAX),
+          arg_coo(idx_idxs));
+    }
+  }
+  else if (token == Token::BV_SIGN_EXTEND || token == Token::BV_ZERO_EXTEND)
+  {
+    if ((*idxs)[0] > UINT64_MAX - args[0].sort().bv_size())
+    {
+      return error(
+          "index '" + std::to_string((*idxs)[0]) + "' as argument to '"
+              + std::to_string(token)
+              + "' too large, resulting bit-vector size exceeds maximum "
+              + "bit-vector size of " + std::to_string(UINT64_MAX),
+          arg_coo(idx_idxs));
     }
   }
   else if (token == Token::FP_TO_FP && args[0].sort().is_bv())
@@ -3334,6 +3409,7 @@ Parser::pop_args(const ParsedItem& item_open,
   }
 
   d_work_args.resize(d_work_args.size() - n_args - n_idxs);
+  d_work_args_coo.resize(d_work_args_coo.size() - n_args - n_idxs);
   return true;
 }
 

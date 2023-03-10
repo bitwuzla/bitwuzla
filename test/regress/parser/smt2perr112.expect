@@ -1,1 +1,1 @@
-regress/parser/smt2perr112.smt2:2:14: expected bool
+regress/parser/smt2perr112.smt2:2:14: expected Boolean term at index 0 as argument to 'not'

@@ -1,1 +1,1 @@
-regress/parser/smt2perr171.smt2:2:43: first argument to 'fp' invalid, expected bit-vector sort of size 1
+regress/parser/smt2perr171.smt2:2:21: expected bit-vector term of size 1 at index 0 as argument to 'fp'

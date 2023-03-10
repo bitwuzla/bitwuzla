@@ -1,1 +1,1 @@
-regress/parser/smt2perr081.smt2:3:10: sorts of arguments 1 and 2 of '=' do not match
+regress/parser/smt2perr081.smt2:3:14: expected terms of same sort at indices 0 and 1 as argument to '='

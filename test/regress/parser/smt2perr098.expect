@@ -1,1 +1,1 @@
-regress/parser/smt2perr098.smt2:1:17: first argument of 'select' is not an array
+regress/parser/smt2perr098.smt2:1:17: expected array as first argument to 'select'

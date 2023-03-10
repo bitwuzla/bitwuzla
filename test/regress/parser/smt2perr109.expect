@@ -1,1 +1,1 @@
-regress/parser/smt2perr109.smt2:2:27: argument 2 of 'concat' is an array, expected bit-vector term
+regress/parser/smt2perr109.smt2:2:27: expected bit-vector term at index 1 as argument to 'concat'

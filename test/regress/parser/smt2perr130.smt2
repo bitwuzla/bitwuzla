@@ -1,1 +1,1 @@
-(assert (#x0 _
+(assert (= #x0 _

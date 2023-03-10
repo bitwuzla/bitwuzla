@@ -1,1 +1,1 @@
-regress/parser/smt2perr076.smt2:1:10: arguments to '=' missing
+regress/parser/smt2perr076.smt2:1:10: expected at least 2 arguments to '=', got 0

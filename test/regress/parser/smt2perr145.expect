@@ -1,1 +1,1 @@
-bitwuzla: error:  invalid call to 'bitwuzla::Term bitwuzla::mk_bv_value(const Sort&, const std::string&, uint8_t)', value '15' does not fit into a bit-vector of size '3'
+regress/parser/smt2perr145.smt2:2:1: missing ')' at end of file

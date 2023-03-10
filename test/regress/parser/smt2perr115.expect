@@ -1,1 +1,1 @@
-regress/parser/smt2perr115.smt2:2:16: argument 1 of 'bvand' is an array, expected bit-vector term
+regress/parser/smt2perr115.smt2:2:16: expected bit-vector term at index 0 as argument to 'bvand'

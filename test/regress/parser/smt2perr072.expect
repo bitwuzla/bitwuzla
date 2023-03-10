@@ -1,1 +1,1 @@
-regress/parser/smt2perr072.smt2:1:18: argument 2 of '=>' is not a bool
+regress/parser/smt2perr072.smt2:1:18: expected Boolean term at index 1 as argument to '=>'

@@ -1,1 +1,1 @@
-regress/parser/smt2perr084.smt2:1:10: only one argument to 'distinct'
+regress/parser/smt2perr084.smt2:1:10: expected at least 2 arguments to 'distinct', got 1

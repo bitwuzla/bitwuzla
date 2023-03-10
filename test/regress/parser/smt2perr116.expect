@@ -1,1 +1,1 @@
-regress/parser/smt2perr116.smt2:1:10: resulting bit-width of 'repeat' too large
+regress/parser/smt2perr116.smt2:1:23: index '562949953421313' as argument to 'repeat' too large, resulting bit-vector size exceeds maximum bit-vector size of 18446744073709551615
