@@ -150,6 +150,7 @@ class Parser
   uint64_t peek_uint64_arg(size_t idx) const;
   const bitwuzla::Sort& peek_sort_arg(size_t idx) const;
   const bitwuzla::Term& peek_term_arg(size_t idx) const;
+  const std::string& peek_str_arg(size_t idx) const;
   SymbolTable::Node* peek_node_arg(size_t idx) const;
 
   bool peek_is_uint64_arg() const;
@@ -158,11 +159,13 @@ class Parser
   bool peek_is_term_arg() const;
   bool peek_is_term_arg(size_t idx) const;
   bool peek_is_str_arg() const;
+  bool peek_is_str_arg(size_t idx) const;
   bool peek_is_node_arg() const;
 
   bool pop_args(const ParsedItem& item_open,
                 std::vector<bitwuzla::Term>& args,
-                std::vector<uint64_t>* idxs = nullptr);
+                std::vector<uint64_t>* idxs    = nullptr,
+                std::vector<std::string>* strs = nullptr);
 
   bitwuzla::Options& d_options;
   std::unique_ptr<bitwuzla::Bitwuzla> d_bitwuzla;

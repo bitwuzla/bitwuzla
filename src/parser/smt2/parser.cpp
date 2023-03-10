@@ -1962,143 +1962,54 @@ Parser::close_term_fp(const ParsedItem& item_open)
   Token token = item_open.d_token;
   std::vector<bitwuzla::Term> args;
   std::vector<uint64_t> idxs;
+  std::vector<std::string> strs;
   bitwuzla::Kind kind;
 
   if (token == Token::FP_TO_FP || token == Token::FP_TO_FP_UNSIGNED)
   {
-    size_t size_args = nargs();
-    assert(size_args > 2);
-    if (token != Token::FP_TO_FP && size_args > 4)
+    if (!pop_args(item_open, args, &idxs, &strs))
     {
-      return error("expected 1 or 2 arguments to '"
-                       + std::to_string(item_open.d_token) + "', got "
-                       + std::to_string(size_args - 2),
-                   item_open.d_coo);
+      return false;
     }
-    else if (token == Token::FP_TO_FP_UNSIGNED && size_args != 4)
+    if (!strs.empty())
     {
-      return error("expected 2 arguments to '"
-                       + std::to_string(item_open.d_token) + "', got "
-                       + std::to_string(size_args - 2),
-                   item_open.d_coo);
-    }
-
-    if (size_args == 3)
-    {
-      // ((_ to_fp eb sb) (_ BitVec m))
-      if (!pop_args(item_open, args, &idxs))
-      {
-        return false;
-      }
       assert(args.size() == 1);
-      assert(idxs.size() == 2);
-      push_arg(bitwuzla::mk_term(bitwuzla::Kind::FP_TO_FP_FROM_BV, args, idxs),
-               &item_open.d_coo);
-      return true;
-    }
-
-    idxs.resize(2);
-    if (peek_is_str_arg())
-    {
-      // ((_ to_fp eb sb) RoundingMode Real)
-      std::string s0, s1 = pop_str_arg();
-      if (peek_is_str_arg())
-      {
-        s0 = pop_str_arg();
-      }
-      if (!peek_is_term_arg())
-      {
-        return error("expected term as argument at index 0 to '"
-                         + std::to_string(item_open.d_token) + "'",
-                     d_work_args_coo.back());
-      }
-      if (!peek_term_arg().sort().is_rm())
-      {
-        return error_arg(
-            "expected rounding-mode term at index 0 as argument to '"
-            + std::to_string(token) + "'");
-      }
-      bitwuzla::Term rm = pop_term_arg();
-      if (!peek_is_uint64_arg())
-      {
-        error_arg("expected integer as index to '"
-                  + std::to_string(item_open.d_token) + "'");
-      }
-      idxs[1] = pop_uint64_arg();
-      if (!peek_is_uint64_arg())
-      {
-        error_arg("expected integer as index to '"
-                  + std::to_string(item_open.d_token) + "'");
-      }
-      idxs[0] = pop_uint64_arg();
-      if (s0.empty())
+      if (strs.size() == 1)
       {
         push_arg(bitwuzla::mk_fp_value(
-                     bitwuzla::mk_fp_sort(idxs[0], idxs[1]), rm, s1),
+                     bitwuzla::mk_fp_sort(idxs[0], idxs[1]), args[0], strs[0]),
                  &item_open.d_coo);
       }
       else
       {
-        push_arg(bitwuzla::mk_fp_value(
-                     bitwuzla::mk_fp_sort(idxs[0], idxs[1]), rm, s0, s1),
+        assert(strs.size() == 2);
+        push_arg(bitwuzla::mk_fp_value(bitwuzla::mk_fp_sort(idxs[0], idxs[1]),
+                                       args[0],
+                                       strs[0],
+                                       strs[1]),
                  &item_open.d_coo);
       }
     }
-    else
+    if (args.size() == 1)
     {
-      // ((_ to_fp eb sb) RoundingMode (_ FloatingPoint eb sb))
-      // ((_ to_fp eb sb) RoundingMode (_ BitVec m))
-      // ((_ to_fp_unsigned eb sb) RoundingMode (_ BitVec m))
-      if (!peek_is_term_arg())
-      {
-        return error_arg("expected term as argument at index 1 to '"
-                         + std::to_string(item_open.d_token) + "'");
-      }
-      if (!peek_term_arg().sort().is_bv() && !peek_term_arg().sort().is_fp())
-      {
-        return error_arg(
-            "expected bit-vector or floating-point term at index 1 as argument "
-            "to '"
-            + std::to_string(token) + "'");
-      }
-      bitwuzla::Term term = pop_term_arg();
-      if (!peek_is_term_arg())
-      {
-        return error_arg("expected term as argument at index 0 to '"
-                         + std::to_string(item_open.d_token) + "'");
-      }
-      if (!peek_term_arg().sort().is_rm())
-      {
-        return error_arg(
-            "expected rounding-mode term at index 0 as argument to '"
-            + std::to_string(token) + "'");
-      }
-      bitwuzla::Term rm = pop_term_arg();
-      // indices
-      if (!peek_is_uint64_arg())
-      {
-        error_arg("expected integer as index to '"
-                  + std::to_string(item_open.d_token) + "'");
-      }
-      idxs[1] = pop_uint64_arg();
-      if (!peek_is_uint64_arg())
-      {
-        error_arg("expected integer as index to '"
-                  + std::to_string(item_open.d_token) + "'");
-      }
-      idxs[0] = pop_uint64_arg();
-
-      push_arg(bitwuzla::mk_term(term.sort().is_bv()
-                                     ? (token == Token::FP_TO_FP_UNSIGNED
-                                            ? bitwuzla::Kind::FP_TO_FP_FROM_UBV
-                                            : bitwuzla::Kind::FP_TO_FP_FROM_SBV)
-                                     : bitwuzla::Kind::FP_TO_FP_FROM_FP,
-                                 {rm, term},
-                                 idxs),
+      assert(idxs.size() == 2);
+      assert(strs.empty());
+      push_arg(bitwuzla::mk_term(bitwuzla::Kind::FP_TO_FP_FROM_BV, args, idxs),
                &item_open.d_coo);
+      return true;
     }
+    assert(args.size() == 2);
+    push_arg(bitwuzla::mk_term(args[1].sort().is_bv()
+                                   ? (token == Token::FP_TO_FP_UNSIGNED
+                                          ? bitwuzla::Kind::FP_TO_FP_FROM_UBV
+                                          : bitwuzla::Kind::FP_TO_FP_FROM_SBV)
+                                   : bitwuzla::Kind::FP_TO_FP_FROM_FP,
+                               {args[0], args[1]},
+                               idxs),
+             &item_open.d_coo);
     return true;
   }
+
   if (token == Token::REAL_DIV)
   {
     if (nargs() != 2)
@@ -2115,8 +2026,7 @@ Parser::close_term_fp(const ParsedItem& item_open)
               + std::to_string(item_open.d_token) + "'",
           item_open.d_coo);
     }
-    if (!std::holds_alternative<std::string>(
-            d_work_args[d_work_args.size() - 2]))
+    if (!peek_is_str_arg(d_work_args.size() - 2))
     {
       return error(
           "expected string representation of denominator as argument to '"
@@ -2756,6 +2666,14 @@ Parser::peek_term_arg(size_t idx) const
   return std::get<bitwuzla::Term>(d_work_args[idx]);
 }
 
+const std::string&
+Parser::peek_str_arg(size_t idx) const
+{
+  assert(idx < d_work_args.size());
+  assert(std::holds_alternative<std::string>(d_work_args[idx]));
+  return std::get<std::string>(d_work_args[idx]);
+}
+
 SymbolTable::Node*
 Parser::peek_node_arg(size_t idx) const
 {
@@ -2809,6 +2727,16 @@ Parser::peek_is_str_arg() const
 }
 
 bool
+Parser::peek_is_str_arg(size_t idx) const
+{
+  if (idx >= d_work_args.size())
+  {
+    return false;
+  }
+  return std::holds_alternative<std::string>(d_work_args[idx]);
+}
+
+bool
 Parser::peek_is_node_arg() const
 {
   return std::holds_alternative<SymbolTable::Node*>(d_work_args.back());
@@ -2817,7 +2745,8 @@ Parser::peek_is_node_arg() const
 bool
 Parser::pop_args(const ParsedItem& item_open,
                  std::vector<bitwuzla::Term>& args,
-                 std::vector<uint64_t>* idxs)
+                 std::vector<uint64_t>* idxs,
+                 std::vector<std::string>* strs)
 {
   Token token     = item_open.d_token;
   bool has_rm     = false;
@@ -2929,7 +2858,8 @@ Parser::pop_args(const ParsedItem& item_open,
       n_idxs = 1;
       break;
 
-    case Token::FP_TO_FP: n_idxs = 2; break;
+    case Token::FP_TO_FP:
+    case Token::FP_TO_FP_UNSIGNED: n_idxs = 2; break;
 
     default: assert(false);
   }
@@ -2950,10 +2880,28 @@ Parser::pop_args(const ParsedItem& item_open,
   }
   else if (token == Token::FP_TO_FP)
   {
-    if (cnt_args == 0)
+    if (peek_is_str_arg())
     {
-      return error("expected at least 1 argument to '" + std::to_string(token)
+      if (cnt_args != 2 && cnt_args != 3)
+      {
+        return error("expected 2 arguments to '" + std::to_string(token)
+                         + "', got " + std::to_string(cnt_args),
+                     item_open.d_coo);
+      }
+    }
+    else if (cnt_args != 1 && cnt_args != 2)
+    {
+      return error("expected 1 or 2 arguments to '" + std::to_string(token)
                        + "', got " + std::to_string(cnt_args),
+                   item_open.d_coo);
+    }
+  }
+  else if (token == Token::FP_TO_FP_UNSIGNED)
+  {
+    if (cnt_args != 2)
+    {
+      return error("expected 2 arguments to '" + std::to_string(token)
+                       + "', got " + std::to_string(cnt_args - 2),
                    item_open.d_coo);
     }
   }
@@ -3236,15 +3184,55 @@ Parser::pop_args(const ParsedItem& item_open,
       }
       break;
 
+    case Token::FP_TO_FP_UNSIGNED:
     case Token::FP_TO_FP:
+      args[0] = peek_term_arg(idx);
       if (n_args == 1)
       {
-        args[0] = peek_term_arg(idx);
         if (!args[0].sort().is_bv())
         {
           return error("expected bit-vector term at index 0 as argument to '"
                            + std::to_string(token) + "'",
                        arg_coo(idx));
+        }
+        break;
+      }
+      if (!args[0].sort().is_rm())
+      {
+        return error("expected rounding-mode term at index 0 as argument to '"
+                         + std::to_string(token) + "'",
+                     arg_coo(idx));
+      }
+      if (peek_is_str_arg(idx + 1))
+      {
+        assert(strs);
+        assert(strs->empty());
+        strs->resize(cnt_args - 1);
+        // ((_ to_fp eb sb) RoundingMode Real)
+        (*strs)[0] = peek_str_arg(idx + 1);
+        if (cnt_args == 3)
+        {
+          (*strs)[1] = peek_str_arg(idx + 2);
+        }
+      }
+      else
+      {
+        // ((_ to_fp eb sb) RoundingMode (_ FloatingPoint eb sb))
+        // ((_ to_fp eb sb) RoundingMode (_ BitVec m))
+        // ((_ to_fp_unsigned eb sb) RoundingMode (_ BitVec m))
+        if (!peek_is_term_arg(idx + 1))
+        {
+          return error_arg("expected term as argument at index 1 to '"
+                           + std::to_string(token) + "'");
+        }
+        args[1] = peek_term_arg(idx + 1);
+        if (!args[1].sort().is_bv() && !args[1].sort().is_fp())
+        {
+          return error_arg(
+              "expected bit-vector or floating-point term at index 1 as "
+              "argument "
+              "to '"
+              + std::to_string(token) + "'");
         }
       }
       break;
@@ -3333,7 +3321,7 @@ Parser::pop_args(const ParsedItem& item_open,
                    arg_coo(idx_idxs));
     }
   }
-  else if (token == Token::FP_TO_FP)
+  else if (token == Token::FP_TO_FP && args[0].sort().is_bv())
   {
     if (args[0].sort().bv_size() != (*idxs)[0] + (*idxs)[1])
     {
