@@ -153,16 +153,15 @@ class Parser
   SymbolTable::Node* peek_node_arg(size_t idx) const;
 
   bool peek_is_uint64_arg() const;
+  bool peek_is_uint64_arg(size_t idx) const;
   bool peek_is_sort_arg() const;
   bool peek_is_term_arg() const;
+  bool peek_is_term_arg(size_t idx) const;
   bool peek_is_str_arg() const;
   bool peek_is_node_arg() const;
 
-  bool check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs);
   bool pop_args(const ParsedItem& item_open,
-                size_t nexp,
                 std::vector<bitwuzla::Term>& args,
-                size_t nidxs                = 0,
                 std::vector<uint64_t>* idxs = nullptr);
 
   bitwuzla::Options& d_options;

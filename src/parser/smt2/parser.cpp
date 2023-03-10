@@ -1832,7 +1832,7 @@ Parser::close_term_array(const ParsedItem& item_open)
   std::vector<bitwuzla::Term> args;
   if (token == Token::ARRAY_SELECT)
   {
-    if (!pop_args(item_open, 2, args))
+    if (!pop_args(item_open, args))
     {
       return false;
     }
@@ -1843,7 +1843,7 @@ Parser::close_term_array(const ParsedItem& item_open)
   }
 
   assert(item_open.d_token == Token::ARRAY_STORE);
-  if (!pop_args(item_open, 3, args))
+  if (!pop_args(item_open, args))
   {
     return false;
   }
@@ -1857,46 +1857,21 @@ Parser::close_term_core(const ParsedItem& item_open)
 {
   Token token = item_open.d_token;
   std::vector<bitwuzla::Term> args;
-  size_t nexp = 0;
   bitwuzla::Kind kind;
 
   switch (token)
   {
-    case Token::AND:
-      nexp = 0;
-      kind = bitwuzla::Kind::AND;
-      break;
-    case Token::DISTINCT:
-      nexp = 0;
-      kind = bitwuzla::Kind::DISTINCT;
-      break;
-    case Token::EQUAL:
-      nexp = 0;
-      kind = bitwuzla::Kind::EQUAL;
-      break;
-    case Token::IMPLIES:
-      nexp = 0;
-      kind = bitwuzla::Kind::IMPLIES;
-      break;
-    case Token::ITE:
-      nexp = 3;
-      kind = bitwuzla::Kind::ITE;
-      break;
-    case Token::NOT:
-      nexp = 1;
-      kind = bitwuzla::Kind::NOT;
-      break;
-    case Token::OR:
-      nexp = 0;
-      kind = bitwuzla::Kind::OR;
-      break;
-    case Token::XOR:
-      nexp = 0;
-      kind = bitwuzla::Kind::XOR;
-      break;
+    case Token::AND: kind = bitwuzla::Kind::AND; break;
+    case Token::DISTINCT: kind = bitwuzla::Kind::DISTINCT; break;
+    case Token::EQUAL: kind = bitwuzla::Kind::EQUAL; break;
+    case Token::IMPLIES: kind = bitwuzla::Kind::IMPLIES; break;
+    case Token::ITE: kind = bitwuzla::Kind::ITE; break;
+    case Token::NOT: kind = bitwuzla::Kind::NOT; break;
+    case Token::OR: kind = bitwuzla::Kind::OR; break;
+    case Token::XOR: kind = bitwuzla::Kind::XOR; break;
     default: assert(false);
   }
-  if (!pop_args(item_open, nexp, args))
+  if (!pop_args(item_open, args))
   {
     return false;
   }
@@ -1910,7 +1885,6 @@ Parser::close_term_bv(const ParsedItem& item_open)
   Token token = item_open.d_token;
   std::vector<bitwuzla::Term> args;
   std::vector<uint64_t> idxs;
-  size_t nexp = 0, nidxs = 0;
   bitwuzla::Kind kind;
 
   if (token == Token::BV_VALUE)
@@ -1925,195 +1899,54 @@ Parser::close_term_bv(const ParsedItem& item_open)
 
   switch (token)
   {
-    case Token::BV_ADD:
-      nexp = 0;
-      kind = bitwuzla::Kind::BV_ADD;
-      break;
-    case Token::BV_AND:
-      nexp = 0;
-      kind = bitwuzla::Kind::BV_AND;
-      break;
-    case Token::BV_ASHR:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_ASHR;
-      break;
-    case Token::BV_COMP:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_COMP;
-      break;
-    case Token::BV_CONCAT:
-      nexp = 0;
-      kind = bitwuzla::Kind::BV_CONCAT;
-      break;
-    case Token::BV_EXTRACT:
-      nexp  = 1;
-      nidxs = 2;
-      kind  = bitwuzla::Kind::BV_EXTRACT;
-      break;
-    case Token::BV_LSHR:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SHR;
-      break;
-    case Token::BV_MUL:
-      nexp = 0;
-      kind = bitwuzla::Kind::BV_MUL;
-      break;
-    case Token::BV_NAND:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_NAND;
-      break;
-    case Token::BV_NEG:
-      nexp = 1;
-      kind = bitwuzla::Kind::BV_NEG;
-      break;
-    case Token::BV_NOR:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_NOR;
-      break;
-    case Token::BV_NOT:
-      nexp = 1;
-      kind = bitwuzla::Kind::BV_NOT;
-      break;
-    case Token::BV_OR:
-      nexp = 0;
-      kind = bitwuzla::Kind::BV_OR;
-      break;
-    case Token::BV_REPEAT:
-      nexp  = 1;
-      nidxs = 1;
-      kind  = bitwuzla::Kind::BV_REPEAT;
-      break;
-    case Token::BV_ROTATE_LEFT:
-      nexp  = 1;
-      nidxs = 1;
-      kind  = bitwuzla::Kind::BV_ROLI;
-      break;
-    case Token::BV_ROTATE_RIGHT:
-      nexp  = 1;
-      nidxs = 1;
-      kind  = bitwuzla::Kind::BV_RORI;
-      break;
-    case Token::BV_SDIV:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SDIV;
-      break;
-    case Token::BV_SGE:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SGE;
-      break;
-    case Token::BV_SGT:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SGT;
-      break;
-    case Token::BV_SHL:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SHL;
-      break;
-    case Token::BV_SIGN_EXTEND:
-      nexp  = 1;
-      nidxs = 1;
-      kind  = bitwuzla::Kind::BV_SIGN_EXTEND;
-      break;
-    case Token::BV_SLE:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SLE;
-      break;
-    case Token::BV_SLT:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SLT;
-      break;
-    case Token::BV_SMOD:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SMOD;
-      break;
-    case Token::BV_SREM:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SREM;
-      break;
-    case Token::BV_SUB:
-      nexp = 0;
-      kind = bitwuzla::Kind::BV_SUB;
-      break;
-    case Token::BV_UDIV:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_UDIV;
-      break;
-    case Token::BV_UGE:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_UGE;
-      break;
-    case Token::BV_UGT:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_UGT;
-      break;
-    case Token::BV_ULE:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_ULE;
-      break;
-    case Token::BV_ULT:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_ULT;
-      break;
-    case Token::BV_UREM:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_UREM;
-      break;
-    case Token::BV_XNOR:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_XNOR;
-      break;
-    case Token::BV_XOR:
-      nexp = 0;
-      kind = bitwuzla::Kind::BV_XOR;
-      break;
-    case Token::BV_ZERO_EXTEND:
-      nexp  = 1;
-      nidxs = 1;
-      kind  = bitwuzla::Kind::BV_ZERO_EXTEND;
-      break;
-    case Token::BV_REDOR:
-      nexp = 1;
-      kind = bitwuzla::Kind::BV_REDOR;
-      break;
-    case Token::BV_REDAND:
-      nexp = 1;
-      kind = bitwuzla::Kind::BV_REDAND;
-      break;
-    case Token::BV_REDXOR:
-      nexp = 1;
-      kind = bitwuzla::Kind::BV_REDXOR;
-      break;
-    case Token::BV_SADDO:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SADD_OVERFLOW;
-      break;
-    case Token::BV_UADDO:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_UADD_OVERFLOW;
-      break;
-    case Token::BV_SDIVO:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SDIV_OVERFLOW;
-      break;
-    case Token::BV_SMULO:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SMUL_OVERFLOW;
-      break;
-    case Token::BV_UMULO:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_UMUL_OVERFLOW;
-      break;
-    case Token::BV_SSUBO:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_SSUB_OVERFLOW;
-      break;
-    case Token::BV_USUBO:
-      nexp = 2;
-      kind = bitwuzla::Kind::BV_USUB_OVERFLOW;
-      break;
+    case Token::BV_ADD: kind = bitwuzla::Kind::BV_ADD; break;
+    case Token::BV_AND: kind = bitwuzla::Kind::BV_AND; break;
+    case Token::BV_ASHR: kind = bitwuzla::Kind::BV_ASHR; break;
+    case Token::BV_COMP: kind = bitwuzla::Kind::BV_COMP; break;
+    case Token::BV_CONCAT: kind = bitwuzla::Kind::BV_CONCAT; break;
+    case Token::BV_EXTRACT: kind = bitwuzla::Kind::BV_EXTRACT; break;
+    case Token::BV_LSHR: kind = bitwuzla::Kind::BV_SHR; break;
+    case Token::BV_MUL: kind = bitwuzla::Kind::BV_MUL; break;
+    case Token::BV_NAND: kind = bitwuzla::Kind::BV_NAND; break;
+    case Token::BV_NEG: kind = bitwuzla::Kind::BV_NEG; break;
+    case Token::BV_NOR: kind = bitwuzla::Kind::BV_NOR; break;
+    case Token::BV_NOT: kind = bitwuzla::Kind::BV_NOT; break;
+    case Token::BV_OR: kind = bitwuzla::Kind::BV_OR; break;
+    case Token::BV_REPEAT: kind = bitwuzla::Kind::BV_REPEAT; break;
+    case Token::BV_ROTATE_LEFT: kind = bitwuzla::Kind::BV_ROLI; break;
+    case Token::BV_ROTATE_RIGHT: kind = bitwuzla::Kind::BV_RORI; break;
+    case Token::BV_SDIV: kind = bitwuzla::Kind::BV_SDIV; break;
+    case Token::BV_SGE: kind = bitwuzla::Kind::BV_SGE; break;
+    case Token::BV_SGT: kind = bitwuzla::Kind::BV_SGT; break;
+    case Token::BV_SHL: kind = bitwuzla::Kind::BV_SHL; break;
+    case Token::BV_SIGN_EXTEND: kind = bitwuzla::Kind::BV_SIGN_EXTEND; break;
+    case Token::BV_SLE: kind = bitwuzla::Kind::BV_SLE; break;
+    case Token::BV_SLT: kind = bitwuzla::Kind::BV_SLT; break;
+    case Token::BV_SMOD: kind = bitwuzla::Kind::BV_SMOD; break;
+    case Token::BV_SREM: kind = bitwuzla::Kind::BV_SREM; break;
+    case Token::BV_SUB: kind = bitwuzla::Kind::BV_SUB; break;
+    case Token::BV_UDIV: kind = bitwuzla::Kind::BV_UDIV; break;
+    case Token::BV_UGE: kind = bitwuzla::Kind::BV_UGE; break;
+    case Token::BV_UGT: kind = bitwuzla::Kind::BV_UGT; break;
+    case Token::BV_ULE: kind = bitwuzla::Kind::BV_ULE; break;
+    case Token::BV_ULT: kind = bitwuzla::Kind::BV_ULT; break;
+    case Token::BV_UREM: kind = bitwuzla::Kind::BV_UREM; break;
+    case Token::BV_XNOR: kind = bitwuzla::Kind::BV_XNOR; break;
+    case Token::BV_XOR: kind = bitwuzla::Kind::BV_XOR; break;
+    case Token::BV_ZERO_EXTEND: kind = bitwuzla::Kind::BV_ZERO_EXTEND; break;
+    case Token::BV_REDOR: kind = bitwuzla::Kind::BV_REDOR; break;
+    case Token::BV_REDAND: kind = bitwuzla::Kind::BV_REDAND; break;
+    case Token::BV_REDXOR: kind = bitwuzla::Kind::BV_REDXOR; break;
+    case Token::BV_SADDO: kind = bitwuzla::Kind::BV_SADD_OVERFLOW; break;
+    case Token::BV_UADDO: kind = bitwuzla::Kind::BV_UADD_OVERFLOW; break;
+    case Token::BV_SDIVO: kind = bitwuzla::Kind::BV_SDIV_OVERFLOW; break;
+    case Token::BV_SMULO: kind = bitwuzla::Kind::BV_SMUL_OVERFLOW; break;
+    case Token::BV_UMULO: kind = bitwuzla::Kind::BV_UMUL_OVERFLOW; break;
+    case Token::BV_SSUBO: kind = bitwuzla::Kind::BV_SSUB_OVERFLOW; break;
+    case Token::BV_USUBO: kind = bitwuzla::Kind::BV_USUB_OVERFLOW; break;
     default: assert(false);
   }
-  if (!pop_args(item_open, nexp, args, nidxs, &idxs))
+  if (!pop_args(item_open, args, &idxs))
   {
     return false;
   }
@@ -2129,7 +1962,6 @@ Parser::close_term_fp(const ParsedItem& item_open)
   Token token = item_open.d_token;
   std::vector<bitwuzla::Term> args;
   std::vector<uint64_t> idxs;
-  size_t nexp = 0, nidxs = 0;
   bitwuzla::Kind kind;
 
   if (token == Token::FP_TO_FP || token == Token::FP_TO_FP_UNSIGNED)
@@ -2154,7 +1986,7 @@ Parser::close_term_fp(const ParsedItem& item_open)
     if (size_args == 3)
     {
       // ((_ to_fp eb sb) (_ BitVec m))
-      if (!pop_args(item_open, 1, args, 2, &idxs))
+      if (!pop_args(item_open, args, &idxs))
       {
         return false;
       }
@@ -2298,119 +2130,36 @@ Parser::close_term_fp(const ParsedItem& item_open)
 
   switch (token)
   {
-    case Token::FP_ABS:
-      nexp = 1;
-      kind = bitwuzla::Kind::FP_ABS;
-      break;
-    case Token::FP_ADD:
-      nexp   = 3;
-      kind   = bitwuzla::Kind::FP_ADD;
-      break;
-    case Token::FP_DIV:
-      nexp   = 3;
-      kind   = bitwuzla::Kind::FP_DIV;
-      break;
-    case Token::FP_EQ:
-      nexp = 0;
-      kind = bitwuzla::Kind::FP_EQUAL;
-      break;
-    case Token::FP_FMA:
-      nexp   = 4;
-      kind   = bitwuzla::Kind::FP_FMA;
-      break;
-    case Token::FP_FP:
-      nexp = 3;
-      kind = bitwuzla::Kind::FP_FP;
-      break;
-    case Token::FP_GEQ:
-      nexp = 0;
-      kind = bitwuzla::Kind::FP_GEQ;
-      break;
-    case Token::FP_GT:
-      nexp = 0;
-      kind = bitwuzla::Kind::FP_GT;
-      break;
-    case Token::FP_IS_INF:
-      nexp = 1;
-      kind = bitwuzla::Kind::FP_IS_INF;
-      break;
-    case Token::FP_IS_NAN:
-      nexp = 1;
-      kind = bitwuzla::Kind::FP_IS_NAN;
-      break;
-    case Token::FP_IS_NEG:
-      nexp = 1;
-      kind = bitwuzla::Kind::FP_IS_NEG;
-      break;
-    case Token::FP_IS_NORMAL:
-      nexp = 1;
-      kind = bitwuzla::Kind::FP_IS_NORMAL;
-      break;
-    case Token::FP_IS_POS:
-      nexp = 1;
-      kind = bitwuzla::Kind::FP_IS_POS;
-      break;
-    case Token::FP_IS_SUBNORMAL:
-      nexp = 1;
-      kind = bitwuzla::Kind::FP_IS_SUBNORMAL;
-      break;
-    case Token::FP_IS_ZERO:
-      nexp = 1;
-      kind = bitwuzla::Kind::FP_IS_ZERO;
-      break;
-    case Token::FP_LEQ:
-      nexp = 0;
-      kind = bitwuzla::Kind::FP_LEQ;
-      break;
-    case Token::FP_LT:
-      nexp = 0;
-      kind = bitwuzla::Kind::FP_LT;
-      break;
-    case Token::FP_MAX:
-      nexp = 2;
-      kind = bitwuzla::Kind::FP_MAX;
-      break;
-    case Token::FP_MIN:
-      nexp = 2;
-      kind = bitwuzla::Kind::FP_MIN;
-      break;
-    case Token::FP_MUL:
-      nexp   = 3;
-      kind   = bitwuzla::Kind::FP_MUL;
-      break;
-    case Token::FP_NEG:
-      nexp = 1;
-      kind = bitwuzla::Kind::FP_NEG;
-      break;
-    case Token::FP_REM:
-      nexp = 2;
-      kind = bitwuzla::Kind::FP_REM;
-      break;
-    case Token::FP_RTI:
-      nexp   = 2;
-      kind   = bitwuzla::Kind::FP_RTI;
-      break;
-    case Token::FP_SQRT:
-      nexp   = 2;
-      kind   = bitwuzla::Kind::FP_SQRT;
-      break;
-    case Token::FP_SUB:
-      nexp   = 3;
-      kind   = bitwuzla::Kind::FP_SUB;
-      break;
-    case Token::FP_TO_SBV:
-      nexp   = 2;
-      nidxs  = 1;
-      kind   = bitwuzla::Kind::FP_TO_SBV;
-      break;
-    case Token::FP_TO_UBV:
-      nexp   = 2;
-      nidxs  = 1;
-      kind   = bitwuzla::Kind::FP_TO_UBV;
-      break;
+    case Token::FP_ABS: kind = bitwuzla::Kind::FP_ABS; break;
+    case Token::FP_ADD: kind = bitwuzla::Kind::FP_ADD; break;
+    case Token::FP_DIV: kind = bitwuzla::Kind::FP_DIV; break;
+    case Token::FP_EQ: kind = bitwuzla::Kind::FP_EQUAL; break;
+    case Token::FP_FMA: kind = bitwuzla::Kind::FP_FMA; break;
+    case Token::FP_FP: kind = bitwuzla::Kind::FP_FP; break;
+    case Token::FP_GEQ: kind = bitwuzla::Kind::FP_GEQ; break;
+    case Token::FP_GT: kind = bitwuzla::Kind::FP_GT; break;
+    case Token::FP_IS_INF: kind = bitwuzla::Kind::FP_IS_INF; break;
+    case Token::FP_IS_NAN: kind = bitwuzla::Kind::FP_IS_NAN; break;
+    case Token::FP_IS_NEG: kind = bitwuzla::Kind::FP_IS_NEG; break;
+    case Token::FP_IS_NORMAL: kind = bitwuzla::Kind::FP_IS_NORMAL; break;
+    case Token::FP_IS_POS: kind = bitwuzla::Kind::FP_IS_POS; break;
+    case Token::FP_IS_SUBNORMAL: kind = bitwuzla::Kind::FP_IS_SUBNORMAL; break;
+    case Token::FP_IS_ZERO: kind = bitwuzla::Kind::FP_IS_ZERO; break;
+    case Token::FP_LEQ: kind = bitwuzla::Kind::FP_LEQ; break;
+    case Token::FP_LT: kind = bitwuzla::Kind::FP_LT; break;
+    case Token::FP_MAX: kind = bitwuzla::Kind::FP_MAX; break;
+    case Token::FP_MIN: kind = bitwuzla::Kind::FP_MIN; break;
+    case Token::FP_MUL: kind = bitwuzla::Kind::FP_MUL; break;
+    case Token::FP_NEG: kind = bitwuzla::Kind::FP_NEG; break;
+    case Token::FP_REM: kind = bitwuzla::Kind::FP_REM; break;
+    case Token::FP_RTI: kind = bitwuzla::Kind::FP_RTI; break;
+    case Token::FP_SQRT: kind = bitwuzla::Kind::FP_SQRT; break;
+    case Token::FP_SUB: kind = bitwuzla::Kind::FP_SUB; break;
+    case Token::FP_TO_SBV: kind = bitwuzla::Kind::FP_TO_SBV; break;
+    case Token::FP_TO_UBV: kind = bitwuzla::Kind::FP_TO_UBV; break;
     default: assert(false);
   }
-  if (!pop_args(item_open, nexp, args, nidxs, &idxs))
+  if (!pop_args(item_open, args, &idxs))
   {
     return false;
   }
@@ -2432,7 +2181,7 @@ Parser::close_term_fun_app(const ParsedItem& item_open)
   assert(nargs() > 0);
 
   std::vector<bitwuzla::Term> args;
-  if (!pop_args(item_open, 0, args))
+  if (!pop_args(item_open, args))
   {
     return false;
   }
@@ -2502,7 +2251,7 @@ Parser::close_term_quant(const ParsedItem& item_open)
   assert(item_open.d_token == Token::FORALL
          || item_open.d_token == Token::EXISTS);
   std::vector<bitwuzla::Term> args;
-  pop_args(item_open, nargs(), args);
+  pop_args(item_open, args);
   push_arg(bitwuzla::mk_term(item_open.d_token == Token::FORALL
                                  ? bitwuzla::Kind::FORALL
                                  : bitwuzla::Kind::EXISTS,
@@ -3022,6 +2771,16 @@ Parser::peek_is_uint64_arg() const
 }
 
 bool
+Parser::peek_is_uint64_arg(size_t idx) const
+{
+  if (idx >= d_work_args.size())
+  {
+    return false;
+  }
+  return std::holds_alternative<uint64_t>(d_work_args[idx]);
+}
+
+bool
 Parser::peek_is_sort_arg() const
 {
   return std::holds_alternative<bitwuzla::Sort>(d_work_args.back());
@@ -3031,6 +2790,16 @@ bool
 Parser::peek_is_term_arg() const
 {
   return std::holds_alternative<bitwuzla::Term>(d_work_args.back());
+}
+
+bool
+Parser::peek_is_term_arg(size_t idx) const
+{
+  if (idx >= d_work_args.size())
+  {
+    return false;
+  }
+  return std::holds_alternative<bitwuzla::Term>(d_work_args[idx]);
 }
 
 bool
@@ -3046,26 +2815,194 @@ Parser::peek_is_node_arg() const
 }
 
 bool
-Parser::check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs)
+Parser::pop_args(const ParsedItem& item_open,
+                 std::vector<bitwuzla::Term>& args,
+                 std::vector<uint64_t>* idxs)
 {
   Token token     = item_open.d_token;
+  bool has_rm     = false;
+  size_t n_args   = 0;
+  size_t n_idxs   = 0;
+
+  switch (token)
+  {
+    case Token::AND:
+    case Token::DISTINCT:
+    case Token::EQUAL:
+    case Token::IMPLIES:
+    case Token::OR:
+    case Token::XOR:
+    case Token::BV_ADD:
+    case Token::BV_AND:
+    case Token::BV_CONCAT:
+    case Token::BV_MUL:
+    case Token::BV_OR:
+    case Token::BV_SUB:
+    case Token::BV_XOR:
+    case Token::FUN_APP:
+    case Token::FORALL:
+    case Token::EXISTS:
+    case Token::FP_EQ:
+    case Token::FP_GEQ:
+    case Token::FP_GT:
+    case Token::FP_LEQ:
+    case Token::FP_LT: break;
+
+    case Token::NOT:
+    case Token::BV_NEG:
+    case Token::BV_NOT:
+    case Token::BV_REDOR:
+    case Token::BV_REDAND:
+    case Token::BV_REDXOR:
+    case Token::FP_ABS:
+    case Token::FP_IS_INF:
+    case Token::FP_IS_NAN:
+    case Token::FP_IS_NEG:
+    case Token::FP_IS_NORMAL:
+    case Token::FP_IS_POS:
+    case Token::FP_IS_SUBNORMAL:
+    case Token::FP_IS_ZERO:
+    case Token::FP_NEG: n_args = 1; break;
+
+    case Token::ARRAY_SELECT:
+    case Token::BV_ASHR:
+    case Token::BV_COMP:
+    case Token::BV_LSHR:
+    case Token::BV_NAND:
+    case Token::BV_NOR:
+    case Token::BV_SDIV:
+    case Token::BV_SGE:
+    case Token::BV_SGT:
+    case Token::BV_SHL:
+    case Token::BV_SLE:
+    case Token::BV_SLT:
+    case Token::BV_SMOD:
+    case Token::BV_SREM:
+    case Token::BV_UDIV:
+    case Token::BV_UGE:
+    case Token::BV_UGT:
+    case Token::BV_ULE:
+    case Token::BV_ULT:
+    case Token::BV_UREM:
+    case Token::BV_XNOR:
+    case Token::BV_SADDO:
+    case Token::BV_UADDO:
+    case Token::BV_SDIVO:
+    case Token::BV_SMULO:
+    case Token::BV_UMULO:
+    case Token::BV_SSUBO:
+    case Token::BV_USUBO:
+    case Token::FP_MAX:
+    case Token::FP_MIN:
+    case Token::FP_NAN:
+    case Token::FP_REM:
+    case Token::FP_RTI:
+    case Token::FP_SQRT: n_args = 2; break;
+
+    case Token::ARRAY_STORE:
+    case Token::ITE:
+    case Token::FP_FP:
+    case Token::FP_ADD:
+    case Token::FP_DIV:
+    case Token::FP_MUL:
+    case Token::FP_SUB: n_args = 3; break;
+
+    case Token::FP_FMA: n_args = 4; break;
+
+    case Token::BV_EXTRACT:
+      n_args = 1;
+      n_idxs = 2;
+      break;
+
+    case Token::BV_REPEAT:
+    case Token::BV_ROTATE_LEFT:
+    case Token::BV_ROTATE_RIGHT:
+    case Token::BV_SIGN_EXTEND:
+    case Token::BV_ZERO_EXTEND:
+      n_args = 1;
+      n_idxs = 1;
+      break;
+
+    case Token::FP_TO_SBV:
+    case Token::FP_TO_UBV:
+      n_args = 2;
+      n_idxs = 1;
+      break;
+
+    case Token::FP_TO_FP: n_idxs = 2; break;
+
+    default: assert(false);
+  }
+
+  // check number of arguments
+  assert(n_args > 0 || n_args == 0);
+  size_t cnt_args = nargs() - n_idxs;
+  if (n_args > 0)
+  {
+    if (cnt_args != n_args)
+    {
+      return error("expected " + std::to_string(n_args) + " argument"
+                       + (n_args > 1 ? "s" : "") + " to '"
+                       + std::to_string(token) + "', got "
+                       + std::to_string(cnt_args),
+                   item_open.d_coo);
+    }
+  }
+  else if (token == Token::FP_TO_FP)
+  {
+    if (cnt_args == 0)
+    {
+      return error("expected at least 1 argument to '" + std::to_string(token)
+                       + "', got " + std::to_string(cnt_args),
+                   item_open.d_coo);
+    }
+  }
+  else if (cnt_args < 2)
+  {
+    return error("expected at least 2 arguments to '" + std::to_string(token)
+                     + "', got " + std::to_string(cnt_args),
+                 item_open.d_coo);
+  }
+
+  // actual number of arguments
+  n_args = cnt_args;
+
+  // check arguments and indices and pop
   size_t idx_idxs = d_work_args_control.back();  // start index of indices
   size_t idx      = idx_idxs + n_idxs;           // start index of args
-  bool has_rm     = false;
+  assert(args.empty());
+  args.resize(n_args);
+  if (idxs)
+  {
+    assert(idxs->empty());
+    idxs->resize(n_idxs);
+  }
+
+#ifndef NDEBUG
+  for (size_t i = idx, n = idx + n_args; i < n; ++i)
+  {
+    assert(peek_is_term_arg(i));
+  }
+  for (size_t i = idx_idxs, n = idx_idxs + n_idxs; i < n; ++i)
+  {
+    assert(peek_is_uint64_arg(i));
+  }
+#endif
 
   switch (token)
   {
     case Token::DISTINCT:
     case Token::EQUAL:
-      for (size_t i = idx + 1, n = idx + n_args; i < n; ++i)
+      args[0] = peek_term_arg(idx);
+      for (size_t i = 1, j = idx + i; i < n_args; ++i, ++j)
       {
-        if (peek_term_arg(i).sort() != peek_term_arg(i - 1).sort())
+        args[i] = peek_term_arg(j);
+        if (args[i].sort() != args[i - 1].sort())
         {
           return error("expected terms of same sort at indices "
-                           + std::to_string(i - idx - 1) + " and "
-                           + std::to_string(i - idx) + " as argument to '"
-                           + std::to_string(token) + "'",
-                       arg_coo(i));
+                           + std::to_string(i - 1) + " and " + std::to_string(i)
+                           + " as argument to '" + std::to_string(token) + "'",
+                       arg_coo(j));
         }
       }
       break;
@@ -3075,26 +3012,29 @@ Parser::check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs)
     case Token::NOT:
     case Token::OR:
     case Token::XOR:
-      for (size_t i = idx, n = idx + n_args; i < n; ++i)
+      for (size_t i = 0, j = idx; i < n_args; ++i, ++j)
       {
-        if (!peek_term_arg(i).sort().is_bool())
+        args[i] = peek_term_arg(j);
+        if (!args[i].sort().is_bool())
         {
-          return error("expected Boolean term at index "
-                           + std::to_string(i - idx) + " as argument to '"
-                           + std::to_string(token) + "'",
-                       arg_coo(i));
+          return error("expected Boolean term at index " + std::to_string(i)
+                           + " as argument to '" + std::to_string(token) + "'",
+                       arg_coo(j));
         }
       }
       break;
 
     case Token::ITE:
-      if (!peek_term_arg(idx).sort().is_bool())
+      args[0] = peek_term_arg(idx);
+      args[1] = peek_term_arg(idx + 1);
+      args[2] = peek_term_arg(idx + 2);
+      if (!args[0].sort().is_bool())
       {
         return error("expected Boolean term at index 0 as argument to '"
                          + std::to_string(token) + "'",
                      arg_coo(idx));
       }
-      if (peek_term_arg(idx + 1).sort() != peek_term_arg(idx + 2).sort())
+      if (args[1].sort() != args[2].sort())
       {
         return error(
             "expected terms of same sort at indices 1 and 2 as argument to '"
@@ -3104,7 +3044,9 @@ Parser::check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs)
       break;
 
     case Token::ARRAY_SELECT:
-      if (!peek_term_arg(idx).sort().is_array())
+      args[0] = peek_term_arg(idx);
+      args[1] = peek_term_arg(idx + 1);
+      if (!args[0].sort().is_array())
       {
         return error("expected array as first argument to '"
                          + std::to_string(token) + "'",
@@ -3112,27 +3054,27 @@ Parser::check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs)
       }
       break;
     case Token::ARRAY_STORE:
-      if (!peek_term_arg(idx).sort().is_array())
+      args[0] = peek_term_arg(idx);
+      args[1] = peek_term_arg(idx + 1);
+      args[2] = peek_term_arg(idx + 2);
+      if (!args[0].sort().is_array())
       {
         return error("expected array as first argument to '"
                          + std::to_string(token) + "'",
                      arg_coo(idx));
       }
-      if (peek_term_arg(idx + 1).sort()
-          != peek_term_arg(idx).sort().array_index())
+      if (args[1].sort() != args[0].sort().array_index())
       {
         return error("index sort of array and sort of index do not match",
                      arg_coo(idx + 1));
       }
-      if (peek_term_arg(idx + 2).sort()
-          != peek_term_arg(idx).sort().array_element())
+      if (args[2].sort() != args[0].sort().array_element())
       {
         return error("element sort of array and sort of element do not match",
                      arg_coo(idx + 2));
       }
       break;
 
-    case Token::BV_VALUE:
     case Token::BV_ADD:
     case Token::BV_AND:
     case Token::BV_ASHR:
@@ -3178,54 +3120,47 @@ Parser::check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs)
     case Token::BV_UMULO:
     case Token::BV_SSUBO:
     case Token::BV_USUBO:
-      for (size_t i = idx, n = idx + n_args; i < n; ++i)
+      for (size_t i = 0, j = idx; i < n_args; ++i, ++j)
       {
-        if (!peek_term_arg(i).sort().is_bv())
+        args[i] = peek_term_arg(j);
+        if (!args[i].sort().is_bv())
         {
-          return error("expected bit-vector term at index "
-                           + std::to_string(i - idx) + " as argument to '"
-                           + std::to_string(token) + "'",
-                       arg_coo(i));
+          return error("expected bit-vector term at index " + std::to_string(i)
+                           + " as argument to '" + std::to_string(token) + "'",
+                       arg_coo(j));
         }
-        if (i > idx && token != Token::BV_CONCAT)
+        if (i > 0 && token != Token::BV_CONCAT)
         {
-          if (peek_term_arg(i).sort() != peek_term_arg(i - 1).sort())
+          if (args[i].sort() != args[i - 1].sort())
           {
             return error("expected terms of same sort at indices "
-                             + std::to_string(i - idx - 1) + " and "
-                             + std::to_string(i - idx) + " as argument to '"
+                             + std::to_string(i - 1) + " and "
+                             + std::to_string(i) + " as argument to '"
                              + std::to_string(token) + "'",
-                         arg_coo(i));
+                         arg_coo(j));
           }
-        }
-      }
-      if (token == Token::BV_EXTRACT)
-      {
-        if (peek_uint64_arg(idx_idxs) < peek_uint64_arg(idx_idxs + 1))
-        {
-          return error("upper index must be >= lower index as argument to '"
-                           + std::to_string(token) + "'",
-                       arg_coo(idx_idxs));
         }
       }
       break;
 
     case Token::FP_FP:
-      if (!peek_term_arg(idx).sort().is_bv()
-          || peek_term_arg(idx).sort().bv_size() != 1)
+      args[0] = peek_term_arg(idx);
+      args[1] = peek_term_arg(idx + 1);
+      args[2] = peek_term_arg(idx + 2);
+      if (!args[0].sort().is_bv() || args[0].sort().bv_size() != 1)
       {
         return error(
             "expected bit-vector term of size 1 at index 0 as argument to '"
                 + std::to_string(token) + "'",
             arg_coo(idx));
       }
-      if (!peek_term_arg(idx + 1).sort().is_bv())
+      if (!args[1].sort().is_bv())
       {
         return error("expected bit-vector term at index 1 as argument to '"
                          + std::to_string(token) + "'",
                      arg_coo(idx + 1));
       }
-      if (!peek_term_arg(idx + 2).sort().is_bv())
+      if (!args[2].sort().is_bv())
       {
         return error("expected bit-vector term at index 2 as argument to '"
                          + std::to_string(token) + "'",
@@ -3264,37 +3199,38 @@ Parser::check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs)
     case Token::FP_REM:
     case Token::FP_ABS:
     case Token::FP_EQ:
-      for (size_t i = idx, n = idx + n_args; i < n; ++i)
+      for (size_t i = 0, j = idx; i < n_args; ++i, ++j)
       {
-        if (has_rm && i == idx)
+        args[i] = peek_term_arg(j);
+        if (has_rm && i == 0)
         {
-          if (!peek_term_arg(i).sort().is_rm())
+          if (!args[0].sort().is_rm())
           {
             return error(
                 "expected rounding-mode term at index 0 as argument to '"
                     + std::to_string(token) + "'",
-                arg_coo(i));
+                arg_coo(j));
           }
         }
         else
         {
-          if (!peek_term_arg(i).sort().is_fp())
+          if (!args[i].sort().is_fp())
           {
             return error("expected floating-point term at index "
-                             + std::to_string(i - idx) + " as argument to '"
+                             + std::to_string(i) + " as argument to '"
                              + std::to_string(token) + "'",
-                         arg_coo(i));
+                         arg_coo(j));
           }
         }
-        if ((!has_rm && i > idx) || (has_rm && i > idx + 1))
+        if ((!has_rm && i > 0) || (has_rm && i > 1))
         {
-          if (peek_term_arg(i).sort() != peek_term_arg(i - 1).sort())
+          if (args[i].sort() != args[i - 1].sort())
           {
             return error("expected terms of same sort at indices "
-                             + std::to_string(i - idx - 1) + " and "
-                             + std::to_string(i - idx) + " as argument to '"
+                             + std::to_string(i - 1) + " and "
+                             + std::to_string(i) + " as argument to '"
                              + std::to_string(token) + "'",
-                         arg_coo(i));
+                         arg_coo(j));
           }
         }
       }
@@ -3303,33 +3239,28 @@ Parser::check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs)
     case Token::FP_TO_FP:
       if (n_args == 1)
       {
-        if (!peek_term_arg(idx).sort().is_bv())
+        args[0] = peek_term_arg(idx);
+        if (!args[0].sort().is_bv())
         {
           return error("expected bit-vector term at index 0 as argument to '"
                            + std::to_string(token) + "'",
                        arg_coo(idx));
         }
-        if (peek_term_arg(idx).sort().bv_size()
-            != peek_uint64_arg(idx_idxs) + peek_uint64_arg(idx_idxs + 1))
-        {
-          return error("size of bit-vector term '"
-                       + std::to_string(peek_term_arg(idx).sort().bv_size())
-                       + " does not match floating-point format '"
-                       + std::to_string(peek_uint64_arg(idx_idxs)) + " "
-                       + std::to_string(peek_uint64_arg(idx_idxs + 1)) + "'");
-        }
       }
       break;
 
     case Token::FUN_APP: {
-      const bitwuzla::Term& fun = peek_term_arg(idx);
-      (void) fun;
-      assert(!fun.is_null());
-      if (!fun.sort().is_fun())
+      for (size_t i = 0, j = idx; i < n_args; ++i, ++j)
+      {
+        args[i] = peek_term_arg(j);
+      }
+      args[0] = peek_term_arg(idx);  // fun
+      assert(!args[0].is_null());
+      if (!args[0].sort().is_fun())
       {
         return error("expected fun", arg_coo(idx));
       }
-      size_t arity = fun.sort().fun_arity();
+      size_t arity = args[0].sort().fun_arity();
       if (n_args - 1 != arity)
       {
         return error("expected " + std::to_string(arity) + " arguments to '"
@@ -3337,14 +3268,14 @@ Parser::check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs)
                          + std::to_string(n_args - 1),
                      item_open.d_coo);
       }
-      const std::vector<bitwuzla::Sort>& domain = fun.sort().fun_domain();
+      const std::vector<bitwuzla::Sort>& domain = args[0].sort().fun_domain();
       assert(domain.size() == arity);
       for (size_t i = 1; i < arity; ++i)
       {
-        if (domain[i - 1] != peek_term_arg(idx + i).sort())
+        if (domain[i - 1] != args[i].sort())
         {
           return error("expected term of sort '" + domain[i].str() + "', got "
-                           + peek_term_arg(idx + i).sort().str(),
+                           + args[i].sort().str(),
                        arg_coo(idx + i));
         }
       }
@@ -3353,20 +3284,27 @@ Parser::check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs)
 
     case Token::FORALL:
     case Token::EXISTS: {
-      if (!peek_is_term_arg() || !peek_term_arg().sort().is_bool())
+      for (size_t i = 0, j = idx; i < n_args; ++i, ++j)
       {
-        return error("expected Boolean term as body to '"
-                         + std::to_string(item_open.d_token) + "'",
-                     item_open.d_coo);
-      }
-      for (size_t i = idx, n = idx + n_args - 1; i < n; ++i)
-      {
-        if (!peek_term_arg(i).is_variable())
+        args[i] = peek_term_arg(j);
+        if (i < n_args - 1)
         {
-          return error("expected variable at index " + std::to_string(i)
-                           + " as argument to '"
-                           + std::to_string(item_open.d_token) + "'",
-                       arg_coo(i));
+          if (!args[i].is_variable())
+          {
+            return error("expected variable at index " + std::to_string(i)
+                             + " as argument to '"
+                             + std::to_string(item_open.d_token) + "'",
+                         arg_coo(j));
+          }
+        }
+        else
+        {
+          if (!args[i].sort().is_bool())
+          {
+            return error("expected Boolean term as body to '"
+                             + std::to_string(item_open.d_token) + "'",
+                         arg_coo(j));
+          }
         }
       }
     }
@@ -3374,68 +3312,40 @@ Parser::check_args(const ParsedItem& item_open, size_t n_args, size_t n_idxs)
 
     default: assert(false);
   }
-  return true;
-}
 
-bool
-Parser::pop_args(const ParsedItem& item_open,
-                 size_t nexp,
-                 std::vector<bitwuzla::Term>& args,
-                 size_t nidxs,
-                 std::vector<uint64_t>* idxs)
-{
-  assert(nexp > 0 || nidxs == 0);
-  size_t size_args = nargs() - nidxs;
-  if (nexp > 0 && size_args != nexp)
+  for (size_t i = 0, j = idx_idxs; i < n_idxs; ++i, ++j)
   {
-    return error("expected " + std::to_string(nexp) + " argument"
-                     + (nexp > 1 ? "s" : "") + " to '"
-                     + std::to_string(item_open.d_token) + "', got "
-                     + std::to_string(size_args),
-                 item_open.d_coo);
-  }
-  if (nexp == 0 && size_args < 2)
-  {
-    return error("expected at least 2 arguments to '"
-                     + std::to_string(item_open.d_token) + "', got "
-                     + std::to_string(size_args),
-                 item_open.d_coo);
-  }
-  if (!check_args(item_open, size_args, nidxs))
-  {
-    return false;
-  }
-  assert(args.empty());
-  args.resize(size_args);
-  for (size_t i = 0; i < size_args; ++i)
-  {
-    size_t idx = size_args - i - 1;
-    if (!peek_is_term_arg())
+    assert(idxs);
+    if (!peek_is_uint64_arg(j))
     {
-      return error_arg("expected term as argument at index "
-                       + std::to_string(idx) + " to '"
-                       + std::to_string(item_open.d_token) + "'");
+      return error("expected integer argument at index " + std::to_string(idx)
+                       + " to '" + std::to_string(item_open.d_token) + "'",
+                   arg_coo(j));
     }
-    bitwuzla::Term term = pop_term_arg();
-    assert(!term.is_null());
-    args[idx] = term;
+    (*idxs)[i] = peek_uint64_arg(j);
   }
-  assert(!idxs || idxs->empty());
-  if (idxs)
+  if (token == Token::BV_EXTRACT)
   {
-    idxs->resize(nidxs);
-    for (size_t i = 0; i < nidxs; ++i)
+    if ((*idxs)[0] < (*idxs)[1])
     {
-      size_t idx = nidxs - i - 1;
-      if (!peek_is_uint64_arg())
-      {
-        return error("expected integer argument at index " + std::to_string(idx)
-                         + " to '" + std::to_string(item_open.d_token) + "'",
-                     item_open.d_coo);
-      }
-      (*idxs)[idx] = pop_uint64_arg();
+      return error("upper index must be >= lower index as argument to '"
+                       + std::to_string(token) + "'",
+                   arg_coo(idx_idxs));
     }
   }
+  else if (token == Token::FP_TO_FP)
+  {
+    if (args[0].sort().bv_size() != (*idxs)[0] + (*idxs)[1])
+    {
+      return error("size of bit-vector term '"
+                   + std::to_string(args[0].sort().bv_size())
+                   + " does not match floating-point format '"
+                   + std::to_string((*idxs)[0]) + " "
+                   + std::to_string((*idxs)[1]) + "'");
+    }
+  }
+
+  d_work_args.resize(d_work_args.size() - n_args - n_idxs);
   return true;
 }
 
