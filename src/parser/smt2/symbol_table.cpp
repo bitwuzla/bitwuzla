@@ -58,17 +58,8 @@ SymbolTable::remove(Node* node)
   assert(it != d_table.end());
   auto& chain = it->second;
   assert(chain.size() > 0);
-  for (size_t i = 0, size = chain.size(); i < size; ++i)
-  {
-    size_t idx = size - i - 1;
-    Node* n    = chain[idx].get();
-    if (node == n)
-    {
-      assert(n->d_symbol == symbol);
-      chain.erase(chain.begin() + idx);
-      break;
-    }
-  }
+  assert(chain.back()->d_symbol == symbol);
+  chain.pop_back();
   if (chain.empty())
   {
     d_table.erase(it);
@@ -115,17 +106,11 @@ SymbolTable::find(const std::string& symbol) const
   {
     return nullptr;
   }
-
-  for (size_t i = 0, size = chain.size(); i < size; ++i)
-  {
-    size_t idx = size - i - 1;
-    Node* n    = chain[idx].get();
-    if (n->d_symbol == sym)
-    {
-      return n;
-    }
-  }
-  return nullptr;
+  assert(chain.back()->d_symbol
+         == (symbol[0] == '|' && symbol[symbol.size() - 1] == '|'
+                 ? symbol.substr(1, symbol.size() - 2)
+                 : symbol));
+  return chain.back().get();
 }
 
 /* SymbolTable private ------------------------------------------------------ */
