@@ -66,9 +66,8 @@ Parser::parse()
       }
     }
   }
-
   Msg(1) << "parsed " << d_statistics.num_commands << " commands in "
-         << d_statistics.time_parse.elapsed() << " seconds";
+         << ((double) d_statistics.time_parse.elapsed() / 1000) << " seconds";
   return d_error;
 }
 
@@ -162,28 +161,30 @@ Parser::parse_command()
 
   Msg(1) << "parse command '" << token << "'";
 
+  bool res = false;
   switch (token)
   {
-    case Token::ASSERT: return parse_command_assert();
-    case Token::CHECK_SAT: return parse_command_check_sat();
-    case Token::CHECK_SAT_ASSUMING: return parse_command_check_sat(true);
-    case Token::DECLARE_CONST: return parse_command_declare_fun(true);
-    case Token::DECLARE_SORT: return parse_command_declare_sort();
-    case Token::DECLARE_FUN: return parse_command_declare_fun();
-    case Token::DEFINE_FUN: return parse_command_define_fun();
-    case Token::DEFINE_SORT: return parse_command_define_sort();
-    case Token::ECHO: return parse_command_echo();
-    case Token::EXIT: return parse_command_exit();
-    case Token::GET_MODEL: return parse_command_get_model();
+    case Token::ASSERT: res = parse_command_assert(); break;
+    case Token::CHECK_SAT: res = parse_command_check_sat(); break;
+    case Token::CHECK_SAT_ASSUMING: res = parse_command_check_sat(true); break;
+    case Token::DECLARE_CONST: res = parse_command_declare_fun(true); break;
+    case Token::DECLARE_SORT: res = parse_command_declare_sort(); break;
+    case Token::DECLARE_FUN: res = parse_command_declare_fun(); break;
+    case Token::DEFINE_FUN: res = parse_command_define_fun(); break;
+    case Token::DEFINE_SORT: res = parse_command_define_sort(); break;
+    case Token::ECHO: res = parse_command_echo(); break;
+    case Token::EXIT: res = parse_command_exit(); break;
+    case Token::GET_MODEL: res = parse_command_get_model(); break;
     case Token::GET_UNSAT_ASSUMPTIONS:
-      return parse_command_get_unsat_assumptions();
-    case Token::GET_UNSAT_CORE: return parse_command_get_unsat_core();
-    case Token::GET_VALUE: return parse_command_get_value();
-    case Token::POP: return parse_command_pop();
-    case Token::PUSH: return parse_command_push();
-    case Token::SET_INFO: return parse_command_set_info();
-    case Token::SET_LOGIC: return parse_command_set_logic();
-    case Token::SET_OPTION: return parse_command_set_option();
+      res = parse_command_get_unsat_assumptions();
+      break;
+    case Token::GET_UNSAT_CORE: res = parse_command_get_unsat_core(); break;
+    case Token::GET_VALUE: res = parse_command_get_value(); break;
+    case Token::POP: res = parse_command_pop(); break;
+    case Token::PUSH: res = parse_command_push(); break;
+    case Token::SET_INFO: res = parse_command_set_info(); break;
+    case Token::SET_LOGIC: res = parse_command_set_logic(); break;
+    case Token::SET_OPTION: res = parse_command_set_option(); break;
 
     default:
       assert(d_lexer->has_token());
@@ -191,7 +192,7 @@ Parser::parse_command()
   }
 
   d_statistics.num_commands += 1;
-  return true;
+  return res;
 }
 
 bool
@@ -214,7 +215,6 @@ Parser::parse_command_assert()
     return false;
   }
   d_bitwuzla->assert_formula(term);
-  d_statistics.num_commands += 1;
   print_success();
   return true;
 }
@@ -229,9 +229,6 @@ Parser::parse_command_check_sat(bool with_assumptions)
   {
     return error("incremental solving not enabled");
   }
-  d_statistics.num_commands += 1;
-  Msg(1) << "parsed " << d_statistics.num_commands << " commands in "
-         << d_statistics.time_parse.elapsed() << " seconds";
   if (with_assumptions)
   {
     if (!parse_lpars(1))
