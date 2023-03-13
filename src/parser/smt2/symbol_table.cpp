@@ -34,19 +34,8 @@ SymbolTable::insert(Token token,
                     const std::string& symbol,
                     uint64_t scope_level)
 {
-  Node* node;
-  if (symbol[0] == '|' && symbol[symbol.size() - 1] == '|')
-  {
-    std::string sym = symbol.substr(1, symbol.size() - 2);
-    node            = new Node(token, sym, scope_level);
-    node->d_is_piped = true;
-    d_table[sym].emplace_back(node);
-  }
-  else
-  {
-    node = new Node(token, symbol, scope_level);
-    d_table[symbol].emplace_back(node);
-  }
+  Node* node = new Node(token, symbol, scope_level);
+  d_table[symbol].emplace_back(node);
   return node;
 }
 
@@ -92,28 +81,57 @@ SymbolTable::pop_scope(uint64_t scope_level)
 SymbolTable::Node*
 SymbolTable::find(const std::string& symbol) const
 {
-  auto it = d_table.find(symbol[0] == '|' && symbol[symbol.size() - 1] == '|'
-                             ? symbol.substr(1, symbol.size() - 2)
-                             : symbol);
+  auto it = d_table.find(symbol);
   if (it == d_table.end())
   {
     return nullptr;
   }
-
-  const std::string& sym = it->first;
-  auto& chain            = it->second;
-  if (chain.size() == 0)
-  {
-    return nullptr;
-  }
-  assert(chain.back()->d_symbol
-         == (symbol[0] == '|' && symbol[symbol.size() - 1] == '|'
-                 ? symbol.substr(1, symbol.size() - 2)
-                 : symbol));
-  return chain.back().get();
+  assert(it->second.size());
+  return it->second.back().get();
 }
 
 /* SymbolTable private ------------------------------------------------------ */
+
+std::size_t
+SymbolTable::SymbolHash::operator()(const std::string& s) const
+{
+  size_t res  = 0;
+  size_t pos  = 0;
+  size_t size = s.size();
+  assert(size > 0);
+
+  // ignore pipes in quoted symbols, '|x|' and 'x' have the same hash value
+  if (s[0] == '|' && s[size - 1] == '|')
+  {
+    pos = 1;
+    size -= 1;
+  }
+
+  for (size_t i = 0; pos < size; ++pos)
+  {
+    res += s[pos];
+    res *= s_primes[i];
+    i = i == s_primes.size() ? 0 : i + 1;
+  }
+  return res;
+}
+
+bool
+SymbolTable::SymbolEqual::operator()(const std::string& lhs,
+                                     const std::string& rhs) const
+{
+  size_t lhs_max = lhs.size() - 1;
+  if (lhs[0] == '|' && lhs[lhs_max] == '|' && rhs[0] != '|')
+  {
+    return lhs.compare(1, lhs_max - 1, rhs) == 0;
+  }
+  size_t rhs_max = rhs.size() - 1;
+  if (rhs[0] == '|' && rhs[rhs_max] == '|' && lhs[0] != '|')
+  {
+    return rhs.compare(1, rhs_max - 1, lhs) == 0;
+  }
+  return lhs == rhs;
+}
 
 void
 SymbolTable::insert(Token token)

@@ -1124,9 +1124,7 @@ Parser::parse_term_list(std::vector<std::string>* repr)
     if (repr && la == Token::SYMBOL)
     {
       assert(d_last_node->has_symbol());
-      repr->push_back(d_last_node->d_is_piped
-                          ? "|" + d_last_node->d_symbol + "|"
-                          : d_last_node->d_symbol);
+      repr->push_back(d_last_node->d_symbol);
     }
     if (!parse_term(true, la))
     {
