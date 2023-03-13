@@ -31,13 +31,10 @@ class Parser
   {
     ParsedItem(Token token, const Lexer::Coordinate& coo);
     ParsedItem(Token token,
-               const std::string& str,
-               const Lexer::Coordinate& coo);
-    ParsedItem(Token token,
                SymbolTable::Node* node,
                const Lexer::Coordinate& coo);
     Token d_token;
-    std::variant<std::string, SymbolTable::Node*> d_parsed;
+    SymbolTable::Node* d_node = nullptr;
     Lexer::Coordinate d_coo;
   };
 

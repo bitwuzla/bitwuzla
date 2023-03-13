@@ -1538,8 +1538,9 @@ Parser::parse_open_term_symbol()
   }
   else if (token == Token::SYMBOL)
   {
-    SymbolTable::Node* node = std::get<SymbolTable::Node*>(cur.d_parsed);
-    if (node->d_term.is_null())
+    SymbolTable::Node* node = cur.d_node;
+    assert(cur.d_node);
+    if (cur.d_node->d_term.is_null())
     {
       assert(node->has_symbol());
       return error("undefined symbol '" + node->d_symbol + "'");
@@ -3416,16 +3417,9 @@ Parser::ParsedItem::ParsedItem(Token token, const Lexer::Coordinate& coo)
 }
 
 Parser::ParsedItem::ParsedItem(Token token,
-                               const std::string& str,
-                               const Lexer::Coordinate& coo)
-    : d_token(token), d_parsed(str), d_coo(coo)
-{
-}
-
-Parser::ParsedItem::ParsedItem(Token token,
                                SymbolTable::Node* node,
                                const Lexer::Coordinate& coo)
-    : d_token(token), d_parsed(node), d_coo(coo)
+    : d_token(token), d_node(node), d_coo(coo)
 {
 }
 
