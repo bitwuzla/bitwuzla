@@ -159,7 +159,7 @@ Parser::parse_command()
     return error("expected command at '" + d_lexer->token() + "'");
   }
 
-  Msg(1) << "parse command '" << token << "'";
+  Log(2) << "parse command '" << token << "'";
 
   bool res = false;
   switch (token)
@@ -216,6 +216,7 @@ Parser::parse_command_assert()
   }
   d_bitwuzla->assert_formula(term);
   print_success();
+  d_statistics.num_assertions += 1;
   return true;
 }
 
