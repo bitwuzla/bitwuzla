@@ -10,16 +10,22 @@ namespace parser::smt2 {
 
 /* Parser public ------------------------------------------------------------ */
 
-Parser::Parser(bitwuzla::Options& options,
-               std::istream* infile,
-               const std::string& infile_name)
+Parser::Parser(bitwuzla::Options& options, const std::string& infile_name)
     : d_options(options),
       d_infile_name(infile_name),
-      d_lexer(new Lexer(infile)),
       d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
       d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
       d_logger(d_log_level, d_verbosity)
 {
+  FILE* infile = std::fopen(infile_name.c_str(), "r");
+  if (!infile)
+  {
+    d_error = "failed to open '" + infile_name + "'";
+  }
+  else
+  {
+    d_lexer.reset(new Lexer(infile));
+  }
   d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
                        | static_cast<uint32_t>(TokenClass::CORE)
                        | static_cast<uint32_t>(TokenClass::KEYWORD)
@@ -31,6 +37,11 @@ std::string
 Parser::parse()
 {
   util::Timer timer(d_statistics.time_parse);
+
+  if (!d_error.empty())
+  {
+    return d_error;
+  }
 
   while (parse_command() && !d_done && !terminate())
     ;
@@ -115,10 +126,11 @@ Parser::next_token()
   if (token == Token::SYMBOL || token == Token::ATTRIBUTE)
   {
     assert(d_lexer->has_token());
-    SymbolTable::Node* node = d_table.find(d_lexer->token());
+    std::string symbol      = d_lexer->token();
+    SymbolTable::Node* node = d_table.find(symbol);
     if (!node)
     {
-      node = d_table.insert(token, d_lexer->token(), d_scope_level);
+      node = d_table.insert(token, symbol, d_scope_level);
     }
     d_last_node = node;
     token       = d_last_node->d_token;
@@ -156,7 +168,7 @@ Parser::parse_command()
   if (!is_token_class(token, TokenClass::COMMAND))
   {
     assert(d_lexer->has_token());
-    return error("expected command at '" + d_lexer->token() + "'");
+    return error("expected command at '" + std::string(d_lexer->token()) + "'");
   }
 
   Log(2) << "parse command '" << token << "'";
@@ -188,7 +200,8 @@ Parser::parse_command()
 
     default:
       assert(d_lexer->has_token());
-      return error("unsupported command '" + d_lexer->token() + "'");
+      return error("unsupported command '" + std::string(d_lexer->token())
+                   + "'");
   }
 
   d_statistics.num_commands += 1;
@@ -804,7 +817,8 @@ Parser::parse_command_set_info()
       {
         return error("missing value for ':status'");
       }
-      return error("invalid value '" + d_lexer->token() + "' for ':status'");
+      return error("invalid value '" + std::string(d_lexer->token())
+                   + "' for ':status'");
     }
     assert(d_lexer->has_token());
     const std::string& status = d_lexer->token();
@@ -912,7 +926,8 @@ Parser::parse_command_set_option()
     else
     {
       assert(d_lexer->has_token());
-      return error("expected Boolean argument at '" + d_lexer->token() + "'");
+      return error("expected Boolean argument at '"
+                   + std::string(d_lexer->token()) + "'");
     }
   }
   else if (token == Token::GLOBAL_DECLARATIONS)
@@ -933,7 +948,8 @@ Parser::parse_command_set_option()
     else
     {
       assert(d_lexer->has_token());
-      return error("expected Boolean argument at '" + d_lexer->token() + "'");
+      return error("expected Boolean argument at '"
+                   + std::string(d_lexer->token()) + "'");
     }
   }
   else if (token == Token::PRODUCE_UNSAT_ASSUMPTIONS)
@@ -949,8 +965,8 @@ Parser::parse_command_set_option()
     }
     assert(d_lexer->has_token());
     assert(d_lexer->token()[0] == ':');
-    std::string opt = d_lexer->token().substr(1);
-    token           = next_token();
+    std::string opt = d_lexer->token() + 1;
+    (void) next_token();
     assert(d_lexer->has_token());
     try
     {
@@ -1028,7 +1044,8 @@ Parser::parse_uint64()
     }
     catch (...)
     {
-      return error("invalid 64 bit integer '" + d_lexer->token() + "'");
+      return error("invalid 64 bit integer '" + std::string(d_lexer->token())
+                   + "'");
     }
   }
   return error("expected 64 bit integer");
@@ -1218,14 +1235,14 @@ Parser::parse_open_term(Token token)
   else if (token == Token::BINARY_VALUE)
   {
     assert(d_lexer->has_token());
-    std::string val     = d_lexer->token().substr(2);
+    std::string val     = d_lexer->token() + 2;
     bitwuzla::Sort sort = bitwuzla::mk_bv_sort(val.size());
     push_arg(bitwuzla::mk_bv_value(sort, val));
   }
   else if (token == Token::HEXADECIMAL_VALUE)
   {
     assert(d_lexer->has_token());
-    std::string val     = d_lexer->token().substr(2);
+    std::string val     = d_lexer->token() + 2;
     bitwuzla::Sort sort = bitwuzla::mk_bv_sort(val.size() * 4);
     push_arg(bitwuzla::mk_bv_value(sort, val, 16));
   }
@@ -1575,7 +1592,8 @@ Parser::parse_open_term_symbol()
   else if (token == Token::ATTRIBUTE)
   {
     assert(d_lexer->has_token());
-    return error("unexpected attribute '" + d_lexer->token() + "'");
+    return error("unexpected attribute '" + std::string(d_lexer->token())
+                 + "'");
   }
   else if (is_token_class(token, TokenClass::CORE))
   {
@@ -1890,7 +1908,7 @@ Parser::close_term_core(const ParsedItem& item_open)
 {
   Token token = item_open.d_token;
   std::vector<bitwuzla::Term> args;
-  bitwuzla::Kind kind;
+  bitwuzla::Kind kind = bitwuzla::Kind::VALUE;
 
   switch (token)
   {
@@ -1918,7 +1936,7 @@ Parser::close_term_bv(const ParsedItem& item_open)
   Token token = item_open.d_token;
   std::vector<bitwuzla::Term> args;
   std::vector<uint64_t> idxs;
-  bitwuzla::Kind kind;
+  bitwuzla::Kind kind = bitwuzla::Kind::VALUE;
 
   if (token == Token::BV_VALUE)
   {
@@ -1996,7 +2014,7 @@ Parser::close_term_fp(const ParsedItem& item_open)
   std::vector<bitwuzla::Term> args;
   std::vector<uint64_t> idxs;
   std::vector<std::string> strs;
-  bitwuzla::Kind kind;
+  bitwuzla::Kind kind = bitwuzla::Kind::VALUE;
 
   if (token == Token::FP_TO_FP || token == Token::FP_TO_FP_UNSIGNED)
   {
@@ -2298,10 +2316,11 @@ Parser::parse_sort(bool look_ahead, Token la)
   if (token == Token::SYMBOL)
   {
     assert(d_lexer->has_token());
-    SymbolTable::Node* sort = d_table.find(d_lexer->token());
+    std::string symbol      = d_lexer->token();
+    SymbolTable::Node* sort = d_table.find(symbol);
     if (!sort || sort->d_sort.is_null())
     {
-      return error("invalid sort '" + d_lexer->token() + "'");
+      return error("invalid sort '" + symbol + "'");
     }
     push_arg(sort->d_sort, &sort->d_coo);
     return true;

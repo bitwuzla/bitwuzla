@@ -8,7 +8,7 @@
 namespace bzla {
 namespace parser::smt2 {
 
-Lexer::Lexer(std::istream* infile) : d_infile(infile)
+Lexer::Lexer(FILE* infile) : d_infile(infile)
 {
   assert(infile);
   init_char_classes();
@@ -19,18 +19,6 @@ Lexer::next_token()
 {
   d_last_coo = d_coo;
   return next_token_aux();
-}
-
-bool
-Lexer::has_token() const
-{
-  return !d_token.empty();
-}
-
-const std::string&
-Lexer::token() const
-{
-  return d_token;
 }
 
 bool
@@ -45,24 +33,11 @@ Lexer::error_msg() const
   return d_error;
 }
 
-const Lexer::Coordinate&
-Lexer::coo() const
-{
-  return d_coo;
-}
-
-const Lexer::Coordinate&
-Lexer::last_coo() const
-{
-  return d_last_coo;
-}
-
 Token
 Lexer::next_token_aux()
 {
   int32_t ch;
   d_token.clear();
-  std::stringstream token;
 
   for (;;)
   {
@@ -71,6 +46,7 @@ Lexer::next_token_aux()
       d_coo = d_next_coo;
       if ((ch = next_char()) == EOF)
       {
+        d_token.push_back(0);
         return Token::ENDOFFILE;
       }
     } while (is_printable(ch) && std::isspace(ch));
@@ -83,6 +59,7 @@ Lexer::next_token_aux()
     {
       if (ch == EOF)
       {
+        d_token.push_back(0);
         return error(ch, "unexpected end of file in comment");
       }
     }
@@ -90,55 +67,62 @@ Lexer::next_token_aux()
 
   if (ch == '(')
   {
-    push_char(token, ch);
+    push_char(ch);
+    d_token.push_back(0);
     return Token::LPAR;
   }
   if (ch == ')')
   {
-    push_char(token, ch);
+    push_char(ch);
+    d_token.push_back(0);
     return Token::RPAR;
   }
   if (ch == '#')
   {
-    push_char(token, ch);
+    push_char(ch);
     if ((ch = next_char()) == EOF)
     {
+      d_token.push_back(0);
       return error(ch, "unexpected end of file after '#'");
     }
     if (ch == 'b')
     {
-      push_char(token, ch);
+      push_char(ch);
       if ((ch = next_char()) == EOF)
       {
+        d_token.push_back(0);
         return error(ch, "unexpected end of file after '#b'");
       }
       if (ch != '0' && ch != '1')
       {
+        d_token.push_back(0);
         return error(ch, "expected '0' or '1' after '#b'");
       }
-      push_char(token, ch);
+      push_char(ch);
       for (;;)
       {
         ch = next_char();
         if (ch != '0' && ch != '1') break;
-        push_char(token, ch);
+        push_char(ch);
       }
       save_char(ch);
-      d_token = token.str();
+      d_token.push_back(0);
       return Token::BINARY_VALUE;
     }
     if (ch == 'x')
     {
-      push_char(token, ch);
+      push_char(ch);
       if ((ch = next_char()) == EOF)
       {
+        d_token.push_back(0);
         return error(ch, "unexpected end of file after '#x'");
       }
       if (!is_char_class(ch, CharacterClass::HEXADECIMAL_DIGIT))
       {
+        d_token.push_back(0);
         return error(ch, "expected hexa-decimal digit after '#x'");
       }
-      push_char(token, ch);
+      push_char(ch);
       for (;;)
       {
         ch = next_char();
@@ -146,31 +130,33 @@ Lexer::next_token_aux()
         {
           break;
         }
-        push_char(token, ch);
+        push_char(ch);
       }
       save_char(ch);
-      d_token = token.str();
+      d_token.push_back(0);
       return Token::HEXADECIMAL_VALUE;
     }
+    d_token.push_back(0);
     return error(ch, "expected 'x' or 'b' after '#'");
   }
   if (ch == '"')
   {
-    push_char(token, ch);
+    push_char(ch);
     for (;;)
     {
       if ((ch = next_char()) == EOF)
       {
+        d_token.push_back(0);
         return error(ch, "unexpected end of file in string");
       }
       if (ch == '"')
       {
-        push_char(token, ch);
+        push_char(ch);
         ch = next_char();
         if (ch != '"')
         {
           save_char(ch);
-          d_token = token.str();
+          d_token.push_back(0);
           return Token::STRING_VALUE;
         }
       }
@@ -178,44 +164,49 @@ Lexer::next_token_aux()
       {
         if (is_printable(ch))
         {
+          d_token.push_back(0);
           return error(ch, "illegal " + err_char(ch) + " in string");
         }
+        d_token.push_back(0);
         return error(ch,
                      "illegal (non-printable) character (code "
                          + std::to_string(ch) + ") in string");
       }
-      push_char(token, ch);
+      push_char(ch);
     }
   }
   else if (ch == '|')
   {
-    push_char(token, ch);
+    push_char(ch);
     for (;;)
     {
       if ((ch = next_char()) == EOF)
       {
+        d_token.push_back(0);
         return error(ch, "unexpected end of file in quoted symbol");
       }
-      push_char(token, ch);
+      push_char(ch);
       if (ch == '|')
       {
-        d_token = token.str();
+        d_token.push_back(0);
         return Token::SYMBOL;
       }
     }
   }
   else if (ch == ':')
   {
-    push_char(token, ch);
+    push_char(ch);
     if ((ch = next_char()) == EOF)
     {
+      d_token.push_back(0);
       return error(ch, "unexpected end of file after ':'");
     }
     if (!is_char_class(ch, CharacterClass::KEYWORD))
     {
+      d_token.push_back(0);
       return error(ch, "unexpected " + err_char(ch) + " after ':'");
     }
-    push_char(token, ch);
+    push_char(ch);
     for (;;)
     {
       ch = next_char();
@@ -224,30 +215,32 @@ Lexer::next_token_aux()
         break;
       }
       assert(ch != EOF);
-      push_char(token, ch);
+      push_char(ch);
     }
     save_char(ch);
-    d_token = token.str();
+    d_token.push_back(0);
     return Token::ATTRIBUTE;
   }
   else if (ch == '0')
   {
     Token res = Token::DECIMAL_VALUE;
-    push_char(token, ch);
+    push_char(ch);
     ch = next_char();
     if (ch == '.')
     {
       res = Token::REAL_VALUE;
-      push_char(token, ch);
+      push_char(ch);
       if ((ch = next_char()) == EOF)
       {
+        d_token.push_back(0);
         return error(ch, "unexpected end of file after '0.'");
       }
       if (!is_char_class(ch, CharacterClass::DECIMAL_DIGIT))
       {
+        d_token.push_back(0);
         return error(ch, "expected decimal digit after '0.'");
       }
-      push_char(token, ch);
+      push_char(ch);
       for (;;)
       {
         ch = next_char();
@@ -255,17 +248,17 @@ Lexer::next_token_aux()
         {
           break;
         }
-        push_char(token, ch);
+        push_char(ch);
       }
     }
     save_char(ch);
-    d_token = token.str();
+    d_token.push_back(0);
     return res;
   }
   else if (is_char_class(ch, CharacterClass::DECIMAL_DIGIT))
   {
     Token res = Token::DECIMAL_VALUE;
-    push_char(token, ch);
+    push_char(ch);
     for (;;)
     {
       ch = next_char();
@@ -273,17 +266,19 @@ Lexer::next_token_aux()
       {
         break;
       }
-      push_char(token, ch);
+      push_char(ch);
     }
     if (ch == '.')
     {
       res = Token::REAL_VALUE;
-      push_char(token, ch);
+      push_char(ch);
       if ((ch = next_char()) == EOF)
       {
-        return error(ch, "unexpected end of file after '" + token.str() + "'");
+        d_token.push_back(0);
+        return error(
+            ch, "unexpected end of file after '" + std::string(token()) + "'");
       }
-      push_char(token, ch);
+      push_char(ch);
       for (;;)
       {
         ch = next_char();
@@ -291,16 +286,16 @@ Lexer::next_token_aux()
         {
           break;
         }
-        push_char(token, ch);
+        push_char(ch);
       }
     }
     save_char(ch);
-    d_token = token.str();
+    d_token.push_back(0);
     return res;
   }
   else if (is_char_class(ch, CharacterClass::SYMBOL))
   {
-    push_char(token, ch);
+    push_char(ch);
     for (;;)
     {
       ch = next_char();
@@ -308,16 +303,17 @@ Lexer::next_token_aux()
       {
         break;
       }
-      push_char(token, ch);
+      push_char(ch);
     }
     save_char(ch);
-    if (token.str() == "_")
+    d_token.push_back(0);
+    if (d_token[0] == '_' && d_token[1] == 0)
     {
       return Token::UNDERSCORE;
     }
-    d_token = token.str();
     return Token::SYMBOL;
   }
+  d_token.push_back(0);
   if (is_printable(ch))
   {
     return error(ch, "illegal" + err_char(ch));
@@ -325,61 +321,6 @@ Lexer::next_token_aux()
   return error(
       ch,
       "illegal (non-printable) character (code " + std::to_string(ch) + ")");
-}
-
-int32_t
-Lexer::next_char()
-{
-  int32_t res;
-  if (d_saved)
-  {
-    res     = d_saved_char;
-    d_saved = false;
-  }
-  else
-  {
-    res = d_infile->get();
-  }
-  if (res == '\n')
-  {
-    d_next_coo.line += 1;
-    assert(d_next_coo.line > 0);
-    d_last_coo_nl_col = d_next_coo.col;
-    d_next_coo.col    = 1;
-  }
-  else
-  {
-    d_next_coo.col += 1;
-    assert(d_next_coo.col > 0);
-  }
-  return res;
-}
-
-void
-Lexer::push_char(std::stringstream& token, int32_t ch)
-{
-  assert(ch != EOF);
-  assert(ch >= 0 && ch < 256);
-  token << static_cast<char>(ch);
-}
-
-void
-Lexer::save_char(int32_t ch)
-{
-  assert(!d_saved);
-  d_saved      = true;
-  d_saved_char = ch;
-  if (ch == '\n')
-  {
-    assert(d_next_coo.line > 1);
-    d_next_coo.line -= 1;
-    d_next_coo.col = d_last_coo_nl_col;
-  }
-  else
-  {
-    assert(d_next_coo.col > 1);
-    d_next_coo.col -= 1;
-  }
 }
 
 std::string
@@ -398,15 +339,8 @@ Lexer::error(int32_t ch, const std::string& error_msg)
     save_char(ch);
   }
   d_coo   = d_next_coo;
-  d_token = error_msg;
   d_error = error_msg;
   return Token::INVALID;
-}
-
-bool
-Lexer::is_printable(int32_t ch) const
-{
-  return s_printable_ascii_chars.find(ch) != std::string::npos;
 }
 
 void
@@ -444,22 +378,6 @@ Lexer::init_char_classes()
   {
     d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::KEYWORD);
   }
-}
-
-uint32_t
-Lexer::char_class(int32_t ch) const
-{
-  if (ch < 0 || ch >= 256)
-  {
-    return 0;
-  }
-  return d_char_classes[ch];
-}
-
-bool
-Lexer::is_char_class(int32_t ch, CharacterClass cclass) const
-{
-  return char_class(ch) & static_cast<uint32_t>(cclass);
 }
 
 }  // namespace parser::smt2

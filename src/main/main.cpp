@@ -8,6 +8,7 @@
 #include <numeric>
 #include <sstream>
 
+#include "parser/smt2/lexer.h"
 #include "parser/smt2/parser.h"
 
 namespace {
@@ -284,14 +285,21 @@ main(int32_t argc, char* argv[])
     std::exit(EXIT_FAILURE);
   }
 
-  std::ifstream infile(infile_name.c_str(), std::ifstream::in);
-  bzla::parser::smt2::Parser parser(options, &infile, infile_name);
+#if 0
+  FILE* infile = fopen(infile_name.c_str(), "r");
+  bzla::parser::smt2::Lexer lexer(infile);
+  bzla::parser::smt2::Token token;
+  do {
+    token = lexer.next_token();
+  } while (token != bzla::parser::smt2::Token::ENDOFFILE);
+#else
+  bzla::parser::smt2::Parser parser(options, infile_name);
   std::string err_msg = parser.parse();
-
   if (err_msg.empty())
   {
     std::exit(EXIT_SUCCESS);
   }
   std::cerr << "[error] " << err_msg << std::endl;
   std::exit(EXIT_FAILURE);
+#endif
 }

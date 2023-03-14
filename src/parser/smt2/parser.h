@@ -18,9 +18,7 @@ namespace parser::smt2 {
 class Parser
 {
  public:
-  Parser(bitwuzla::Options& options,
-         std::istream* infile,
-         const std::string& infile_name);
+  Parser(bitwuzla::Options& options, const std::string& infile_name);
 
   std::string parse();
 
