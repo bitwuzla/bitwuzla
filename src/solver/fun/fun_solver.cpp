@@ -12,9 +12,9 @@ using namespace node;
 namespace {
 
 void
-unsupported()
+unsupported(const char* msg)
 {
-  std::cerr << "[bitwuzla] Uninterpreted sorts not yet supported" << std::endl;
+  std::cerr << "[bitwuzla] " << msg << std::endl;
   abort();
 }
 
@@ -44,7 +44,7 @@ FunSolver::check()
   d_fun_models.clear();
   if (!d_equalities.empty())
   {
-    unsupported();
+    unsupported("Equalities over functions not yet supported.");
   }
 
   // Do not cache size here since d_applies may grow while iterating.
@@ -152,7 +152,7 @@ FunSolver::Apply::Apply(const Node& apply, SolverState& state)
   {
     if (apply[i].type().is_uninterpreted())
     {
-      unsupported();
+      unsupported("Uninterpreted sorts not yet supported");
     }
     d_values.emplace_back(state.value(apply[i]));
     d_hash += std::hash<Node>{}(d_values.back());
