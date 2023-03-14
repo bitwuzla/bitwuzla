@@ -123,7 +123,7 @@ to_string(bzla::parser::smt2::Token token)
     case Token::SORTS_DESCRIPTION: return ":sorts-description";
     case Token::STATUS: return ":status";
     case Token::SOURCE: return ":source";
-    case Token::THEORIES: return ":theoreis";
+    case Token::THEORIES: return ":theories";
     case Token::VALUES: return ":values";
     case Token::VERBOSITY: return ":verbosity";
     case Token::VERSION: return ":version";
