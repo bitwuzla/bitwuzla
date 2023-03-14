@@ -1204,6 +1204,7 @@ Parser::parse_open_term(Token token)
   {
     if (token == Token::SYMBOL)
     {
+      assert(d_last_node);
       d_work.emplace_back(token, d_last_node, d_lexer->coo());
     }
     else
@@ -1490,6 +1491,8 @@ Parser::parse_open_term_quant()
 bool
 Parser::parse_open_term_symbol()
 {
+  assert(!d_work.empty());
+
   ParsedItem& cur = d_work.back();
   Token token     = cur.d_token;
 
@@ -1525,7 +1528,7 @@ Parser::parse_open_term_symbol()
     else if (token == Token::UNDERSCORE)
     {
       d_work.pop_back();
-      if (d_work.back().d_token != Token::LPAR)
+      if (d_work.empty() || d_work.back().d_token != Token::LPAR)
       {
         return error("missing '(' before '_'");
       }
@@ -1567,7 +1570,7 @@ Parser::parse_open_term_symbol()
     assert(!node->d_term.is_null());
     if (!node->d_term.sort().is_fun())
     {
-      if (d_work.back().d_token == Token::LPAR)
+      if (d_work.size() && d_work.back().d_token == Token::LPAR)
       {
         return error("unexpected function application, '" + node->d_symbol
                      + "' is not a function");
@@ -1688,7 +1691,6 @@ Parser::close_term()
     }
     return error("missing identifier, invalid term", item.d_coo);
   }
-  d_work.pop_back();
 
   if (d_expect_body)
   {
@@ -1815,11 +1817,12 @@ Parser::close_term()
       return error("unsupported term kind '" + std::to_string(item.d_token)
                    + "'");
   }
-  if (d_work.size() == 0 || d_work.back().d_token != Token::LPAR)
+  if (d_work.size() < 2 || d_work[d_work.size() - 2].d_token != Token::LPAR)
   {
     return error("missing '(' before '" + std::to_string(item.d_token) + "'",
                  item.d_coo);
   }
+  d_work.pop_back();
   close_term_scope();
   return res;
 }
@@ -2424,6 +2427,7 @@ Parser::open_term_scope()
 void
 Parser::close_term_scope()
 {
+  assert(d_work.size());
   assert(d_work.back().d_token == Token::LPAR);
   d_work.pop_back();
   d_work_args_control.pop_back();
@@ -3339,8 +3343,8 @@ Parser::pop_args(const ParsedItem& item_open,
           if (!args[i].is_variable())
           {
             return error("expected variable at index " + std::to_string(i)
-                             + " as argument to '"
-                             + std::to_string(item_open.d_token) + "'",
+                             + " as argument to '" + std::to_string(token)
+                             + "'",
                          arg_coo(j));
           }
         }
@@ -3349,7 +3353,7 @@ Parser::pop_args(const ParsedItem& item_open,
           if (!args[i].sort().is_bool())
           {
             return error("expected Boolean term as body to '"
-                             + std::to_string(item_open.d_token) + "'",
+                             + std::to_string(token) + "'",
                          arg_coo(j));
           }
         }
@@ -3366,7 +3370,7 @@ Parser::pop_args(const ParsedItem& item_open,
     if (!peek_is_uint64_arg(j))
     {
       return error("expected integer argument at index " + std::to_string(idx)
-                       + " to '" + std::to_string(item_open.d_token) + "'",
+                       + " to '" + std::to_string(token) + "'",
                    arg_coo(j));
     }
     (*idxs)[i] = peek_uint64_arg(j);

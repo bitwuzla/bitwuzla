@@ -79,6 +79,7 @@ TEST_F(TestSmt2SymbolTable, insert_quoted1)
   ASSERT_EQ(y_new->d_scope_level, 2);
   table.remove(x_quoted);
   x_quoted = table.find("|x|");
+  assert(x_quoted != nullptr);
   ASSERT_NE(x_quoted, nullptr);
   ASSERT_EQ(x, x_quoted);
   ASSERT_EQ(x_quoted->d_symbol, "x");
