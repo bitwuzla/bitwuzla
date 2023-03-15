@@ -32,6 +32,12 @@ to_string(bzla::parser::smt2::Token token)
     case Token::PARENT: return "<parent token>";
     case Token::SYMBOL: return "<symbol token>";
     case Token::ATTRIBUTE: return "<attribute token>";
+    case Token::OPEN: return "<open item token>";
+    case Token::IDX: return "<index token>";
+    case Token::SORT: return "<sort token>";
+    case Token::TERM: return "<term token>";
+    case Token::STRING: return "<string token>";
+    case Token::STRINGS: return "<strings token>";
     case Token::FUN_APP: return "<function application token>";
     case Token::LETBIND: return "<letbind token>";
     case Token::PARLETBIND: return "<parletbind token>";

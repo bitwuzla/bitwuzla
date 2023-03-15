@@ -34,6 +34,12 @@ enum class Token
   RPAR,
   SYMBOL,
   ATTRIBUTE,
+  OPEN,     // place holder for open item
+  IDX,      // index argument
+  SORT,     // sort argument
+  TERM,     // term argument
+  STRING,   // string argument
+  STRINGS,  // strings argument
   FUN_APP,
   /* <var_binding> */
   LETBIND,

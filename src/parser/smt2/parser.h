@@ -27,13 +27,28 @@ class Parser
  private:
   struct ParsedItem
   {
-    ParsedItem(Token token, const Lexer::Coordinate& coo);
-    ParsedItem(Token token,
-               SymbolTable::Node* node,
-               const Lexer::Coordinate& coo);
+    ParsedItem() {}
+
+    ParsedItem(Token token, const Lexer::Coordinate& coo)
+        : d_token(token), d_coo(coo)
+    {
+    }
+
+    template <typename T>
+    ParsedItem(Token token, T item, const Lexer::Coordinate& coo)
+        : d_token(token), d_coo(coo), d_item(item)
+    {
+    }
+
     Token d_token;
-    SymbolTable::Node* d_node = nullptr;
     Lexer::Coordinate d_coo;
+    std::variant<SymbolTable::Node*,
+                 bitwuzla::Sort,
+                 bitwuzla::Term,
+                 uint64_t,
+                 std::string,
+                 std::array<std::string, 2>>
+        d_item;
   };
 
   void init_logic();
@@ -85,22 +100,22 @@ class Parser
   bool parse_sort_bv_fp();
 
   bool close_term();
-  bool close_term_as(const ParsedItem& item_open);
-  bool close_term_bang(const ParsedItem& item_open);
-  bool close_term_core(const ParsedItem& item_open);
-  bool close_term_array(const ParsedItem& item_open);
-  bool close_term_bv(const ParsedItem& item_open);
-  bool close_term_fp(const ParsedItem& item_open);
-  bool close_term_fun_app(const ParsedItem& item_open);
-  bool close_term_let(const ParsedItem& item_open);
-  bool close_term_letbind(const ParsedItem& item_open);
-  bool close_term_parletbind(const ParsedItem& item_open);
-  bool close_term_quant(const ParsedItem& item_open);
-  bool close_term_sorted_var(const ParsedItem& item_open);
-  bool close_term_sorted_vars(const ParsedItem& item_open);
+  bool close_term_as(ParsedItem& item_open);
+  bool close_term_bang(ParsedItem& item_open);
+  bool close_term_core(ParsedItem& item_open);
+  bool close_term_array(ParsedItem& item_open);
+  bool close_term_bv(ParsedItem& item_open);
+  bool close_term_fp(ParsedItem& item_open);
+  bool close_term_fun_app(ParsedItem& item_open);
+  bool close_term_let(ParsedItem& item_open);
+  bool close_term_letbind(ParsedItem& item_open);
+  bool close_term_parletbind(ParsedItem& item_open);
+  bool close_term_quant(ParsedItem& item_open);
+  bool close_term_sorted_var(ParsedItem& item_open);
+  bool close_term_sorted_vars(ParsedItem& item_open);
 
   void open_term_scope();
-  void close_term_scope();
+  void close_term_scope(const bitwuzla::Term& term = bitwuzla::Term());
 
   bool skip_sexprs(uint64_t nopen = 0);
 
@@ -122,13 +137,65 @@ class Parser
   void print_success();
 
   size_t nargs() const;
+  size_t nopen() const;
+  size_t idx_open() const;
+  ParsedItem& item_open();
   const Lexer::Coordinate& arg_coo(size_t idx) const;
+
+  ParsedItem& push_item(Token token, const Lexer::Coordinate& coo)
+  {
+    if (peek_item_is_token(Token::OPEN))
+    {
+      set_item(d_work.back(), token, coo);
+    }
+    else
+    {
+      d_work.emplace_back(token, coo);
+    }
+    return d_work.back();
+  }
+  template <typename T>
+  ParsedItem& push_item(Token token, T item, const Lexer::Coordinate& coo)
+  {
+    if (peek_item_is_token(Token::OPEN))
+    {
+      set_item(d_work.back(), token, item, &coo);
+    }
+    else
+    {
+      d_work.emplace_back(token, item, coo);
+    }
+    return d_work.back();
+  }
+
+  bool peek_item_is_token(Token token) const;
+  bool peek_item_is_token(Token token, size_t idx) const;
+
+  void set_item(ParsedItem& item, Token token, const Lexer::Coordinate& coo)
+  {
+    item.d_token = token;
+    item.d_coo   = coo;
+  }
+  template <typename T>
+  void set_item(ParsedItem& item,
+                Token token,
+                T t,
+                const Lexer::Coordinate* coo = nullptr)
+  {
+    item.d_token = token;
+    item.d_item  = t;
+    if (coo)
+    {
+      d_work.back().d_coo = *coo;
+    }
+  }
 
   template <typename T>
   void push_arg(const T& arg, const Lexer::Coordinate* coo = nullptr)
   {
-    d_work_args.push_back(arg);
-    d_work_args_coo.push_back(coo ? *coo : d_lexer->coo());
+    ParsedItem& item = item_open();
+    item.d_item      = arg;
+    item.d_coo       = coo ? *coo : d_lexer->coo();
   }
 
   uint64_t pop_uint64_arg();
@@ -162,6 +229,11 @@ class Parser
                 std::vector<uint64_t>* idxs    = nullptr,
                 std::vector<std::string>* strs = nullptr);
 
+#ifndef NDEBUG
+  void print_work_stack();
+  void print_work_control_stack();
+#endif
+
   bitwuzla::Options& d_options;
   std::unique_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
   bitwuzla::Terminator* d_terminator = nullptr;
@@ -193,19 +265,9 @@ class Parser
   uint64_t d_scope_level    = 0;
 
   std::vector<ParsedItem> d_work;
-  std::vector<std::variant<uint64_t,
-                           std::string,
-                           bitwuzla::Term,
-                           bitwuzla::Sort,
-                           SymbolTable::Node*>>
-      d_work_args;
-  std::vector<Lexer::Coordinate> d_work_args_coo;
-  std::vector<uint64_t> d_work_args_control;
+  std::vector<uint64_t> d_work_control;
 
   uint64_t d_token_class_mask = 0;
-
-  // TODO: this might be redundant with d_work_args_control.size()
-  uint64_t d_term_open = 0;
 
   bool d_expect_body    = false;
   bool d_is_sorted_var  = false;
