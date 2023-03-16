@@ -300,6 +300,7 @@ Parser::parse_command_declare_fun(bool is_const)
   }
   SymbolTable::Node* symbol = pop_node_arg(true);
 
+  bitwuzla::Sort sort;
   std::vector<bitwuzla::Sort> domain;
   if (!is_const)
   {
@@ -315,19 +316,18 @@ Parser::parse_command_declare_fun(bool is_const)
       {
         break;
       }
-      if (!parse_sort(true, la))
+      if (!parse_sort(sort, true, la))
       {
         return false;
       }
-      domain.push_back(pop_sort_arg());
+      domain.push_back(sort);
     }
   }
 
-  if (!parse_sort())
+  if (!parse_sort(sort))
   {
     return false;
   }
-  bitwuzla::Sort sort = pop_sort_arg();
 
   if (domain.size())
   {
@@ -404,6 +404,7 @@ Parser::parse_command_define_fun()
     return false;
   }
 
+  bitwuzla::Sort sort;
   std::vector<bitwuzla::Term> args;
   Token la;
   for (;;)
@@ -422,20 +423,19 @@ Parser::parse_command_define_fun()
       return false;
     }
     SymbolTable::Node* symbol = peek_node_arg();
-    if (!parse_sort())
+    if (!parse_sort(sort))
     {
       return false;
     }
     parse_rpars(1);
-    symbol->d_term = bitwuzla::mk_var(pop_sort_arg(), symbol->d_symbol);
+    symbol->d_term = bitwuzla::mk_var(sort, symbol->d_symbol);
     args.push_back(symbol->d_term);
   }
 
-  if (!parse_sort())
+  if (!parse_sort(sort))
   {
     return false;
   }
-  bitwuzla::Sort sort = pop_sort_arg();
 
   if (!parse_term())
   {
@@ -504,11 +504,10 @@ Parser::parse_command_define_sort()
     return error("parameterized 'define-sort' not supported, expected ')'");
   }
 
-  if (!parse_sort())
+  if (!parse_sort(symbol->d_sort))
   {
     return false;
   }
-  symbol->d_sort = pop_sort_arg();
 
   if (!parse_rpars(1))
   {
@@ -1151,11 +1150,11 @@ Parser::parse_open_term(Token token)
       {
         return false;
       }
-      if (!parse_sort())
+      bitwuzla::Sort sort;
+      if (!parse_sort(sort))
       {
         return false;
       }
-      bitwuzla::Sort sort = pop_sort_arg();
       SymbolTable::Node* symbol = peek_node_arg();
       assert(symbol->has_symbol());
       symbol->d_term = bitwuzla::mk_var(sort, symbol->d_symbol);
@@ -1221,7 +1220,7 @@ Parser::parse_open_term(Token token)
   else if (token == Token::DECIMAL_VALUE || token == Token::REAL_VALUE)
   {
     assert(d_lexer->has_token());
-    push_item(Token::TERM, d_lexer->token(), d_lexer->coo());
+    push_item(Token::STRING, d_lexer->token(), d_lexer->coo());
   }
   else
   {
@@ -1251,11 +1250,11 @@ Parser::parse_open_term_as()
 
   if (iden == "const" || iden == "const-array")
   {
-    if (!parse_sort())
+    bitwuzla::Sort sort;
+    if (!parse_sort(sort))
     {
       return false;
     }
-    const bitwuzla::Sort& sort = peek_sort_arg();
     if (!sort.is_array())
     {
       return error("expected array sort");
@@ -1264,13 +1263,17 @@ Parser::parse_open_term_as()
     {
       return false;
     }
-    assert(nargs() == 1);
     // ((as const(-array) <sort>) <term>) -> (as const(-array) sort term)
-    if (idx_open() == 0 || d_work[idx_open()].d_token != Token::LPAR)
+    if (idx_open() < 2 || d_work[idx_open() - 2].d_token != Token::LPAR)
     {
       return error("missing '(' before '(as'", d_work.back().d_coo);
     }
-    close_term_scope();
+    // store sort in AS item
+    assert(item_open().d_token == Token::AS);
+    set_item(item_open(), item_open().d_token, sort);
+    assert(d_work[idx_open() - 1].d_token == Token::LPAR);
+    d_work.erase(d_work.begin() + idx_open() - 1);
+    d_work_control.pop_back();
     return true;
   }
   return error("invalid identifier '" + iden + "'");
@@ -1829,29 +1832,31 @@ Parser::close_term()
 }
 
 bool
-Parser::close_term_as(ParsedItem& item_open)
+Parser::close_term_as(ParsedItem& item)
 {
-  if (nargs() != 2)
+  if (nargs() != 1)
   {
     return error("expected exactly 1 term argument to 'as', got "
                      + std::to_string(nargs() > 0 ? nargs() - 1 : 0),
-                 item_open.d_coo);
+                 item.d_coo);
   }
-  bitwuzla::Term term = pop_term_arg();
-  bitwuzla::Sort sort = pop_sort_arg();
-  assert(sort.is_array());
-  set_item(item_open, Token::TERM, bitwuzla::mk_const_array(sort, term));
+  assert(std::holds_alternative<bitwuzla::Sort>(item.d_item));
+  assert(std::get<bitwuzla::Sort>(item.d_item).is_array());
+  set_item(item_open(),
+           Token::TERM,
+           bitwuzla::mk_const_array(std::get<bitwuzla::Sort>(item.d_item),
+                                    pop_term_arg()));
   return true;
 }
 
 bool
-Parser::close_term_bang(ParsedItem& item_open)
+Parser::close_term_bang(ParsedItem& item)
 {
   if (nargs() != 3)
   {
     return error("invalid annotation syntax, expected 3 arguments, got "
                      + std::to_string(nargs()),
-                 item_open.d_coo);
+                 item.d_coo);
   }
   if (!peek_is_node_arg())
   {
@@ -1876,43 +1881,42 @@ Parser::close_term_bang(ParsedItem& item_open)
         "invalid annotation syntax, expected term as first argument");
   }
   symbol->d_term = pop_term_arg();
-  set_item(item_open, Token::TERM, symbol->d_term);
+  set_item(item, Token::TERM, symbol->d_term);
   return true;
 }
 
 bool
-Parser::close_term_array(ParsedItem& item_open)
+Parser::close_term_array(ParsedItem& item)
 {
-  Token token = item_open.d_token;
+  Token token = item.d_token;
   std::vector<bitwuzla::Term> args;
   if (token == Token::ARRAY_SELECT)
   {
-    if (!pop_args(item_open, args))
+    if (!pop_args(item, args))
     {
       return false;
     }
     set_item(
-        item_open,
+        item,
         Token::TERM,
         bitwuzla::mk_term(bitwuzla::Kind::ARRAY_SELECT, {args[0], args[1]}));
     return true;
   }
 
-  assert(item_open.d_token == Token::ARRAY_STORE);
-  if (!pop_args(item_open, args))
+  assert(item.d_token == Token::ARRAY_STORE);
+  if (!pop_args(item, args))
   {
     return false;
   }
-  set_item(item_open,
-           Token::TERM,
-           bitwuzla::mk_term(bitwuzla::Kind::ARRAY_STORE, args));
+  set_item(
+      item, Token::TERM, bitwuzla::mk_term(bitwuzla::Kind::ARRAY_STORE, args));
   return true;
 }
 
 bool
-Parser::close_term_core(ParsedItem& item_open)
+Parser::close_term_core(ParsedItem& item)
 {
-  Token token = item_open.d_token;
+  Token token = item.d_token;
   std::vector<bitwuzla::Term> args;
   bitwuzla::Kind kind = bitwuzla::Kind::VALUE;
 
@@ -1928,18 +1932,18 @@ Parser::close_term_core(ParsedItem& item_open)
     case Token::XOR: kind = bitwuzla::Kind::XOR; break;
     default: assert(false);
   }
-  if (!pop_args(item_open, args))
+  if (!pop_args(item, args))
   {
     return false;
   }
-  set_item(item_open, Token::TERM, bitwuzla::mk_term(kind, args));
+  set_item(item, Token::TERM, bitwuzla::mk_term(kind, args));
   return true;
 }
 
 bool
-Parser::close_term_bv(ParsedItem& item_open)
+Parser::close_term_bv(ParsedItem& item)
 {
-  Token token = item_open.d_token;
+  Token token = item.d_token;
   std::vector<bitwuzla::Term> args;
   std::vector<uint64_t> idxs;
   bitwuzla::Kind kind = bitwuzla::Kind::VALUE;
@@ -1949,7 +1953,7 @@ Parser::close_term_bv(ParsedItem& item_open)
     assert(nargs() == 2);
     uint64_t size   = pop_uint64_arg();
     std::string val = pop_str_arg();
-    set_item(item_open,
+    set_item(item,
              Token::TERM,
              bitwuzla::mk_bv_value(bitwuzla::mk_bv_sort(size), val, 10));
     return true;
@@ -2004,19 +2008,19 @@ Parser::close_term_bv(ParsedItem& item_open)
     case Token::BV_USUBO: kind = bitwuzla::Kind::BV_USUB_OVERFLOW; break;
     default: assert(false);
   }
-  if (!pop_args(item_open, args, &idxs))
+  if (!pop_args(item, args, &idxs))
   {
     return false;
   }
   assert(args.size());
-  set_item(item_open, Token::TERM, bitwuzla::mk_term(kind, args, idxs));
+  set_item(item, Token::TERM, bitwuzla::mk_term(kind, args, idxs));
   return true;
 }
 
 bool
-Parser::close_term_fp(ParsedItem& item_open)
+Parser::close_term_fp(ParsedItem& item)
 {
-  Token token = item_open.d_token;
+  Token token = item.d_token;
   std::vector<bitwuzla::Term> args;
   std::vector<uint64_t> idxs;
   std::vector<std::string> strs;
@@ -2024,7 +2028,7 @@ Parser::close_term_fp(ParsedItem& item_open)
 
   if (token == Token::FP_TO_FP || token == Token::FP_TO_FP_UNSIGNED)
   {
-    if (!pop_args(item_open, args, &idxs, &strs))
+    if (!pop_args(item, args, &idxs, &strs))
     {
       return false;
     }
@@ -2033,7 +2037,7 @@ Parser::close_term_fp(ParsedItem& item_open)
       assert(args.size() == 1);
       if (strs.size() == 1)
       {
-        set_item(item_open,
+        set_item(item,
                  Token::TERM,
                  bitwuzla::mk_fp_value(
                      bitwuzla::mk_fp_sort(idxs[0], idxs[1]), args[0], strs[0]));
@@ -2041,7 +2045,7 @@ Parser::close_term_fp(ParsedItem& item_open)
       else
       {
         assert(strs.size() == 2);
-        set_item(item_open,
+        set_item(item,
                  Token::TERM,
                  bitwuzla::mk_fp_value(bitwuzla::mk_fp_sort(idxs[0], idxs[1]),
                                        args[0],
@@ -2054,13 +2058,13 @@ Parser::close_term_fp(ParsedItem& item_open)
     {
       assert(idxs.size() == 2);
       assert(strs.empty());
-      set_item(item_open,
+      set_item(item,
                Token::TERM,
                bitwuzla::mk_term(bitwuzla::Kind::FP_TO_FP_FROM_BV, args, idxs));
       return true;
     }
     assert(args.size() == 2);
-    set_item(item_open,
+    set_item(item,
              Token::TERM,
              bitwuzla::mk_term(args[1].sort().is_bv()
                                    ? (token == Token::FP_TO_FP_UNSIGNED
@@ -2076,24 +2080,23 @@ Parser::close_term_fp(ParsedItem& item_open)
   {
     if (nargs() != 2)
     {
-      return error("expected 2 arguments to '"
-                       + std::to_string(item_open.d_token) + "', got "
-                       + std::to_string(nargs()),
-                   item_open.d_coo);
+      return error("expected 2 arguments to '" + std::to_string(item.d_token)
+                       + "', got " + std::to_string(nargs()),
+                   item.d_coo);
     }
     if (!peek_is_str_arg())
     {
       return error(
           "expected string representation of denominator as argument to '"
-              + std::to_string(item_open.d_token) + "'",
-          item_open.d_coo);
+              + std::to_string(item.d_token) + "'",
+          item.d_coo);
     }
     if (!peek_is_str_arg(d_work.size() - 2))
     {
       return error(
           "expected string representation of denominator as argument to '"
-              + std::to_string(item_open.d_token) + "'",
-          item_open.d_coo);
+              + std::to_string(item.d_token) + "'",
+          item.d_coo);
     }
     // nothing to do, we leave the strings on the args stack and only close
     // the current term
@@ -2131,7 +2134,7 @@ Parser::close_term_fp(ParsedItem& item_open)
     case Token::FP_TO_UBV: kind = bitwuzla::Kind::FP_TO_UBV; break;
     default: assert(false);
   }
-  if (!pop_args(item_open, args, &idxs))
+  if (!pop_args(item, args, &idxs))
   {
     return false;
   }
@@ -2139,39 +2142,37 @@ Parser::close_term_fp(ParsedItem& item_open)
   if (token == Token::FP_FP && args[0].is_value() && args[1].is_value()
       && args[2].is_value())
   {
-    set_item(item_open,
-             Token::TERM,
-             bitwuzla::mk_fp_value(args[0], args[1], args[2]));
+    set_item(
+        item, Token::TERM, bitwuzla::mk_fp_value(args[0], args[1], args[2]));
     return true;
   }
-  set_item(item_open, Token::TERM, bitwuzla::mk_term(kind, args, idxs));
+  set_item(item, Token::TERM, bitwuzla::mk_term(kind, args, idxs));
   return true;
 }
 
 bool
-Parser::close_term_fun_app(ParsedItem& item_open)
+Parser::close_term_fun_app(ParsedItem& item)
 {
   assert(nargs() > 0);
 
   std::vector<bitwuzla::Term> args;
-  if (!pop_args(item_open, args))
+  if (!pop_args(item, args))
   {
     return false;
   }
-  set_item(
-      item_open, Token::TERM, bitwuzla::mk_term(bitwuzla::Kind::APPLY, args));
+  set_item(item, Token::TERM, bitwuzla::mk_term(bitwuzla::Kind::APPLY, args));
   return true;
 }
 
 bool
-Parser::close_term_let(ParsedItem& item_open)
+Parser::close_term_let(ParsedItem& item)
 {
   if (nargs() == 0 || !peek_is_term_arg())
   {
     return error_arg("expected (single) term as argument to '"
-                     + std::to_string(item_open.d_token) + "'");
+                     + std::to_string(item.d_token) + "'");
   }
-  set_item(item_open, Token::TERM, pop_term_arg());
+  set_item(item, Token::TERM, pop_term_arg());
   for (size_t i = 0, n = nargs(); i < n; ++i)
   {
     SymbolTable::Node* symbol = pop_node_arg();
@@ -2185,13 +2186,13 @@ Parser::close_term_let(ParsedItem& item_open)
 }
 
 bool
-Parser::close_term_letbind(ParsedItem& item_open)
+Parser::close_term_letbind(ParsedItem& item)
 {
   if (nargs() != 2)
   {
     return error("expected 2 arguments to variable binding, got "
                      + std::to_string(nargs()),
-                 item_open.d_coo);
+                 item.d_coo);
   }
   if (!peek_is_term_arg())
   {
@@ -2210,9 +2211,9 @@ Parser::close_term_letbind(ParsedItem& item_open)
 }
 
 bool
-Parser::close_term_parletbind(ParsedItem& item_open)
+Parser::close_term_parletbind(ParsedItem& item)
 {
-  (void) item_open;
+  (void) item;
   assert(d_is_var_binding);
   d_is_var_binding = false;
   assert(!d_expect_body);
@@ -2223,28 +2224,27 @@ Parser::close_term_parletbind(ParsedItem& item_open)
 }
 
 bool
-Parser::close_term_quant(ParsedItem& item_open)
+Parser::close_term_quant(ParsedItem& item)
 {
-  assert(item_open.d_token == Token::FORALL
-         || item_open.d_token == Token::EXISTS);
+  assert(item.d_token == Token::FORALL || item.d_token == Token::EXISTS);
   std::vector<bitwuzla::Term> args;
-  pop_args(item_open, args);
-  set_item(item_open,
-           Token::TERM,
-           bitwuzla::mk_term(item_open.d_token == Token::FORALL
-                                 ? bitwuzla::Kind::FORALL
-                                 : bitwuzla::Kind::EXISTS,
-                             args));
+  pop_args(item, args);
+  set_item(
+      item,
+      Token::TERM,
+      bitwuzla::mk_term(item.d_token == Token::FORALL ? bitwuzla::Kind::FORALL
+                                                      : bitwuzla::Kind::EXISTS,
+                        args));
   return true;
 }
 
 bool
-Parser::close_term_sorted_var(ParsedItem& item_open)
+Parser::close_term_sorted_var(ParsedItem& item)
 {
   if (nargs() != 1)
   {
     return error("expected one single variable at sorted variable expression",
-                 item_open.d_coo);
+                 item.d_coo);
   }
   assert(peek_is_term_arg());
   assert(peek_term_arg().is_variable());
@@ -2256,9 +2256,9 @@ Parser::close_term_sorted_var(ParsedItem& item_open)
 }
 
 bool
-Parser::close_term_sorted_vars(ParsedItem& item_open)
+Parser::close_term_sorted_vars(ParsedItem& item)
 {
-  (void) item_open;
+  (void) item;
   assert(d_is_sorted_var);
   d_is_sorted_var = false;
   assert(!d_expect_body);
@@ -2271,16 +2271,13 @@ Parser::close_term_sorted_vars(ParsedItem& item_open)
 /* -------------------------------------------------------------------------- */
 
 bool
-Parser::parse_sort(bool look_ahead, Token la)
+Parser::parse_sort(bitwuzla::Sort& sort, bool look_ahead, Token la)
 {
   Token token = look_ahead ? la : next_token();
   if (!check_token(token))
   {
     return false;
   }
-
-  bitwuzla::Sort sort;
-  Lexer::Coordinate* coo = nullptr;
 
   if (token == Token::BOOL)
   {
@@ -2315,7 +2312,11 @@ Parser::parse_sort(bool look_ahead, Token la)
     }
     if (token == Token::ARRAY)
     {
-      return parse_sort_array();
+      return parse_sort_array(sort);
+    }
+    if (token == Token::AS)
+    {
+      return parse_open_term_as();
     }
     if (token != Token::UNDERSCORE)
     {
@@ -2329,7 +2330,7 @@ Parser::parse_sort(bool look_ahead, Token la)
       }
       return error("expected '_'");
     }
-    return parse_sort_bv_fp();
+    return parse_sort_bv_fp(sort);
   }
   else if (token == Token::SYMBOL)
   {
@@ -2341,26 +2342,23 @@ Parser::parse_sort(bool look_ahead, Token la)
       return error("invalid sort '" + symbol + "'");
     }
     sort = node->d_sort;
-    coo  = &node->d_coo;
   }
   else
   {
     return error("expected '(' or sort keyword");
   }
-  push_item(Token::SORT, sort, coo ? *coo : d_lexer->coo());
   return true;
 }
 
 bool
-Parser::parse_sort_array()
+Parser::parse_sort_array(bitwuzla::Sort& sort)
 {
-  uint64_t idx = d_work.size();
-  if (!parse_sort())
+  bitwuzla::Sort index, element;
+  if (!parse_sort(index))
   {
     return false;
   }
-  Lexer::Coordinate coo = d_lexer->coo();
-  if (!parse_sort())
+  if (!parse_sort(element))
   {
     return false;
   }
@@ -2368,15 +2366,12 @@ Parser::parse_sort_array()
   {
     return false;
   }
-  bitwuzla::Sort sort =
-      bitwuzla::mk_array_sort(peek_sort_arg(idx), peek_sort_arg(idx + 1));
-  d_work.resize(d_work.size() - 2);
-  push_item(Token::SORT, sort, coo);
+  sort = bitwuzla::mk_array_sort(index, element);
   return true;
 }
 
 bool
-Parser::parse_sort_bv_fp()
+Parser::parse_sort_bv_fp(bitwuzla::Sort& sort)
 {
   Token token = next_token();
   if (!check_token(token))
@@ -2384,7 +2379,6 @@ Parser::parse_sort_bv_fp()
     return false;
   }
 
-  Lexer::Coordinate coo = d_lexer->coo();
   if (token == Token::BV_BITVEC)
   {
     if (!parse_uint64())
@@ -2400,7 +2394,7 @@ Parser::parse_sort_bv_fp()
     {
       return false;
     }
-    push_item(Token::SORT, bitwuzla::mk_bv_sort(size), coo);
+    sort = bitwuzla::mk_bv_sort(size);
     return true;
   }
   if (token == Token::FP_FLOATINGPOINT)
@@ -2429,7 +2423,7 @@ Parser::parse_sort_bv_fp()
     {
       return false;
     }
-    push_item(Token::SORT, bitwuzla::mk_fp_sort(esize, ssize), coo);
+    sort = bitwuzla::mk_fp_sort(esize, ssize);
     return true;
   }
   return error("expected '" + std::to_string(Token::BV_BITVEC) + "' or '"
@@ -2631,15 +2625,6 @@ Parser::pop_uint64_arg()
   return res;
 }
 
-bitwuzla::Sort
-Parser::pop_sort_arg()
-{
-  assert(peek_is_sort_arg());
-  bitwuzla::Sort res = std::get<bitwuzla::Sort>(d_work.back().d_item);
-  d_work.pop_back();
-  return res;
-}
-
 bitwuzla::Term
 Parser::pop_term_arg()
 {
@@ -2672,12 +2657,12 @@ Parser::pop_node_arg(bool set_coo)
 }
 
 bool
-Parser::pop_args(const ParsedItem& item_open,
+Parser::pop_args(const ParsedItem& item,
                  std::vector<bitwuzla::Term>& args,
                  std::vector<uint64_t>* idxs,
                  std::vector<std::string>* strs)
 {
-  Token token     = item_open.d_token;
+  Token token     = item.d_token;
   bool has_rm     = false;
   size_t n_args   = 0;
   size_t n_idxs   = 0;
@@ -2804,7 +2789,7 @@ Parser::pop_args(const ParsedItem& item_open,
                        + (n_args > 1 ? "s" : "") + " to '"
                        + std::to_string(token) + "', got "
                        + std::to_string(cnt_args),
-                   item_open.d_coo);
+                   item.d_coo);
     }
   }
   else if (token == Token::FP_TO_FP)
@@ -2815,14 +2800,14 @@ Parser::pop_args(const ParsedItem& item_open,
       {
         return error("expected 2 arguments to '" + std::to_string(token)
                          + "', got " + std::to_string(cnt_args),
-                     item_open.d_coo);
+                     item.d_coo);
       }
     }
     else if (cnt_args != 1 && cnt_args != 2)
     {
       return error("expected 1 or 2 arguments to '" + std::to_string(token)
                        + "', got " + std::to_string(cnt_args),
-                   item_open.d_coo);
+                   item.d_coo);
     }
   }
   else if (token == Token::FP_TO_FP_UNSIGNED)
@@ -2831,14 +2816,14 @@ Parser::pop_args(const ParsedItem& item_open,
     {
       return error("expected 2 arguments to '" + std::to_string(token)
                        + "', got " + std::to_string(cnt_args - 2),
-                   item_open.d_coo);
+                   item.d_coo);
     }
   }
   else if (cnt_args < 2)
   {
     return error("expected at least 2 arguments to '" + std::to_string(token)
                      + "', got " + std::to_string(cnt_args),
-                 item_open.d_coo);
+                 item.d_coo);
   }
 
   // actual number of arguments
@@ -3187,7 +3172,7 @@ Parser::pop_args(const ParsedItem& item_open,
         return error("expected " + std::to_string(arity) + " arguments to '"
                          + std::to_string(token) + "', got "
                          + std::to_string(n_args - 1),
-                     item_open.d_coo);
+                     item.d_coo);
       }
       const std::vector<bitwuzla::Sort>& domain = args[0].sort().fun_domain();
       assert(domain.size() == arity);

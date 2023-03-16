@@ -1127,7 +1127,7 @@ tests_smt2 = [
   #['preprocess/bv/normalize_mul_incomplete.btor', ['-db']],
   #['preprocess/bv/regaddnorm1.btor', ['-db']],
   #['preprocess/bv/regaddnorm2.btor', ['-db']],
-  #['solver/array/issue35.smt2'], # TODO disabled because of const arrays
+  ['solver/array/issue35.smt2'],
   #['solver/bv/concatslice1.btor', ['-rwl=1 -db']],
   #['solver/bv/concatslice2.btor', ['-rwl=1 -db']],
   ['solver/bv/getvalue1.smt2'],

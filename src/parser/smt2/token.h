@@ -36,7 +36,6 @@ enum class Token
   ATTRIBUTE,
   OPEN,     // place holder for open item
   IDX,      // index argument
-  SORT,     // sort argument
   TERM,     // term argument
   STRING,   // string argument
   STRINGS,  // strings argument

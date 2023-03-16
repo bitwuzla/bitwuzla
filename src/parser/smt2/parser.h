@@ -110,9 +110,11 @@ class Parser
   bool parse_open_term_quant();
   bool parse_open_term_symbol();
 
-  bool parse_sort(bool look_ahead = false, Token la_char = Token::INVALID);
-  bool parse_sort_array();
-  bool parse_sort_bv_fp();
+  bool parse_sort(bitwuzla::Sort& sort,
+                  bool look_ahead = false,
+                  Token la_char   = Token::INVALID);
+  bool parse_sort_array(bitwuzla::Sort& sort);
+  bool parse_sort_bv_fp(bitwuzla::Sort& sort);
 
   bool close_term();
   bool close_term_as(ParsedItem& item_open);
@@ -247,7 +249,6 @@ class Parser
   }
 
   uint64_t pop_uint64_arg();
-  bitwuzla::Sort pop_sort_arg();
   bitwuzla::Term pop_term_arg();
   std::string pop_str_arg();
   SymbolTable::Node* pop_node_arg(bool set_coo = false);
@@ -256,11 +257,6 @@ class Parser
   {
     assert(peek_is_uint64_arg());
     return std::get<uint64_t>(d_work.back().d_item);
-  }
-  const bitwuzla::Sort& peek_sort_arg() const
-  {
-    assert(peek_is_sort_arg());
-    return std::get<bitwuzla::Sort>(d_work.back().d_item);
   }
   const bitwuzla::Term& peek_term_arg() const
   {
@@ -277,11 +273,6 @@ class Parser
   {
     assert(peek_is_uint64_arg(idx));
     return std::get<uint64_t>(d_work[idx].d_item);
-  }
-  const bitwuzla::Sort& peek_sort_arg(size_t idx) const
-  {
-    assert(peek_is_sort_arg(idx));
-    return std::get<bitwuzla::Sort>(d_work[idx].d_item);
   }
   const bitwuzla::Term& peek_term_arg(size_t idx) const
   {
@@ -310,18 +301,6 @@ class Parser
     assert(idx >= d_work.size() || d_work[idx].d_token != Token::IDX
            || std::holds_alternative<uint64_t>(d_work[idx].d_item));
     return idx < d_work.size() && d_work[idx].d_token == Token::IDX;
-  }
-  bool peek_is_sort_arg() const
-  {
-    assert(d_work.back().d_token != Token::SORT
-           || std::holds_alternative<bitwuzla::Sort>(d_work.back().d_item));
-    return d_work.back().d_token == Token::SORT;
-  }
-  bool peek_is_sort_arg(size_t idx) const
-  {
-    assert(idx > d_work.size() || d_work[idx].d_token != Token::SORT
-           || std::holds_alternative<bitwuzla::Sort>(d_work[idx].d_item));
-    return idx < d_work.size() && d_work[idx].d_token == Token::SORT;
   }
   bool peek_is_term_arg() const
   {

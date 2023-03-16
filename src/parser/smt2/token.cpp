@@ -34,7 +34,6 @@ to_string(bzla::parser::smt2::Token token)
     case Token::ATTRIBUTE: return "<attribute token>";
     case Token::OPEN: return "<open item token>";
     case Token::IDX: return "<index token>";
-    case Token::SORT: return "<sort token>";
     case Token::TERM: return "<term token>";
     case Token::STRING: return "<string token>";
     case Token::STRINGS: return "<strings token>";
