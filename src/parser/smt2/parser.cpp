@@ -319,13 +319,7 @@ Parser::parse_command_declare_fun(bool is_const)
       {
         return false;
       }
-    }
-    size_t size_args = nargs();
-    domain.resize(size_args);
-    for (size_t i = 0, n = size_args; i < n; ++i)
-    {
-      size_t idx  = n - i - 1;
-      domain[idx] = pop_sort_arg();
+      domain.push_back(pop_sort_arg());
     }
   }
 
