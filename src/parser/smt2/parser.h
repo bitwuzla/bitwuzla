@@ -51,10 +51,25 @@ class Parser
         d_item;
   };
 
-  void init_logic();
-  void init_bitwuzla();
+  void init_logic()
+  {
+    if (d_logic.empty())
+    {
+      enable_theory("ALL");
+    }
+  }
+  void init_bitwuzla()
+  {
+    if (!d_bitwuzla)
+    {
+      d_bitwuzla.reset(new bitwuzla::Bitwuzla(d_options));
+    }
+  }
 
-  bool terminate();
+  bool terminate()
+  {
+    return d_terminator != nullptr && d_terminator->terminate();
+  }
 
   Token next_token();
 
@@ -125,9 +140,24 @@ class Parser
   bool error_invalid();
   bool error_eof();
 
-  bool check_token(Token token);
+  bool check_token(Token token)
+  {
+    if (token == Token::ENDOFFILE)
+    {
+      return error_eof();
+    }
+    if (token == Token::INVALID)
+    {
+      return error_invalid();
+    }
+    return true;
+  }
 
-  bool is_symbol(Token token);
+  bool is_symbol(Token token) const
+  {
+    return token == Token::SYMBOL || token == Token::ATTRIBUTE
+           || (static_cast<uint32_t>(token) & d_token_class_mask) > 0;
+  }
 
   size_t enable_theory(const std::string& logic,
                        const std::string& theory = "",
@@ -136,10 +166,22 @@ class Parser
 
   void print_success();
 
-  size_t nargs() const;
-  size_t nopen() const;
-  size_t idx_open() const;
-  ParsedItem& item_open();
+  size_t nargs() const
+  {
+    assert(idx_open() < d_work.size());
+    return d_work.size() - idx_open() - 1;
+  }
+
+  size_t nopen() const { return d_work_control.size() - 1; }
+
+  size_t idx_open() const { return d_work_control.back(); }
+
+  ParsedItem& item_open()
+  {
+    assert(idx_open() < d_work.size());
+    return d_work[idx_open()];
+  }
+
   const Lexer::Coordinate& arg_coo(size_t idx) const;
 
   ParsedItem& push_item(Token token, const Lexer::Coordinate& coo)
@@ -168,8 +210,14 @@ class Parser
     return d_work.back();
   }
 
-  bool peek_item_is_token(Token token) const;
-  bool peek_item_is_token(Token token, size_t idx) const;
+  bool peek_item_is_token(Token token) const
+  {
+    return d_work.size() && d_work.back().d_token == token;
+  }
+  bool peek_item_is_token(Token token, size_t idx) const
+  {
+    return idx < d_work.size() && d_work[idx].d_token == token;
+  }
 
   void set_item(ParsedItem& item, Token token, const Lexer::Coordinate& coo)
   {
@@ -204,25 +252,113 @@ class Parser
   std::string pop_str_arg();
   SymbolTable::Node* pop_node_arg(bool set_coo = false);
 
-  uint64_t peek_uint64_arg() const;
-  const bitwuzla::Sort& peek_sort_arg() const;
-  const bitwuzla::Term& peek_term_arg() const;
-  SymbolTable::Node* peek_node_arg() const;
+  uint64_t peek_uint64_arg() const
+  {
+    assert(peek_is_uint64_arg());
+    return std::get<uint64_t>(d_work.back().d_item);
+  }
+  const bitwuzla::Sort& peek_sort_arg() const
+  {
+    assert(peek_is_sort_arg());
+    return std::get<bitwuzla::Sort>(d_work.back().d_item);
+  }
+  const bitwuzla::Term& peek_term_arg() const
+  {
+    assert(peek_is_term_arg());
+    return std::get<bitwuzla::Term>(d_work.back().d_item);
+  }
+  SymbolTable::Node* peek_node_arg() const
+  {
+    assert(peek_is_node_arg());
+    return std::get<SymbolTable::Node*>(d_work.back().d_item);
+  }
 
-  uint64_t peek_uint64_arg(size_t idx) const;
-  const bitwuzla::Sort& peek_sort_arg(size_t idx) const;
-  const bitwuzla::Term& peek_term_arg(size_t idx) const;
-  const std::string& peek_str_arg(size_t idx) const;
-  SymbolTable::Node* peek_node_arg(size_t idx) const;
+  uint64_t peek_uint64_arg(size_t idx) const
+  {
+    assert(peek_is_uint64_arg(idx));
+    return std::get<uint64_t>(d_work[idx].d_item);
+  }
+  const bitwuzla::Sort& peek_sort_arg(size_t idx) const
+  {
+    assert(peek_is_sort_arg(idx));
+    return std::get<bitwuzla::Sort>(d_work[idx].d_item);
+  }
+  const bitwuzla::Term& peek_term_arg(size_t idx) const
+  {
+    assert(peek_is_term_arg(idx));
+    return std::get<bitwuzla::Term>(d_work[idx].d_item);
+  }
+  const std::string& peek_str_arg(size_t idx) const
+  {
+    assert(peek_is_str_arg(idx));
+    return std::get<std::string>(d_work[idx].d_item);
+  }
+  SymbolTable::Node* peek_node_arg(size_t idx) const
+  {
+    assert(peek_is_node_arg(idx));
+    return std::get<SymbolTable::Node*>(d_work[idx].d_item);
+  }
 
-  bool peek_is_uint64_arg() const;
-  bool peek_is_uint64_arg(size_t idx) const;
-  bool peek_is_sort_arg() const;
-  bool peek_is_term_arg() const;
-  bool peek_is_term_arg(size_t idx) const;
-  bool peek_is_str_arg() const;
-  bool peek_is_str_arg(size_t idx) const;
-  bool peek_is_node_arg() const;
+  bool peek_is_uint64_arg() const
+  {
+    assert(d_work.back().d_token != Token::IDX
+           || std::holds_alternative<uint64_t>(d_work.back().d_item));
+    return d_work.back().d_token == Token::IDX;
+  }
+  bool peek_is_uint64_arg(size_t idx) const
+  {
+    assert(idx >= d_work.size() || d_work[idx].d_token != Token::IDX
+           || std::holds_alternative<uint64_t>(d_work[idx].d_item));
+    return idx < d_work.size() && d_work[idx].d_token == Token::IDX;
+  }
+  bool peek_is_sort_arg() const
+  {
+    assert(d_work.back().d_token != Token::SORT
+           || std::holds_alternative<bitwuzla::Sort>(d_work.back().d_item));
+    return d_work.back().d_token == Token::SORT;
+  }
+  bool peek_is_sort_arg(size_t idx) const
+  {
+    assert(idx > d_work.size() || d_work[idx].d_token != Token::SORT
+           || std::holds_alternative<bitwuzla::Sort>(d_work[idx].d_item));
+    return idx < d_work.size() && d_work[idx].d_token == Token::SORT;
+  }
+  bool peek_is_term_arg() const
+  {
+    assert(d_work.back().d_token != Token::TERM
+           || std::holds_alternative<bitwuzla::Term>(d_work.back().d_item));
+    return d_work.back().d_token == Token::TERM;
+  }
+  bool peek_is_term_arg(size_t idx) const
+  {
+    assert(idx > d_work.size() || d_work[idx].d_token != Token::TERM
+           || std::holds_alternative<bitwuzla::Term>(d_work[idx].d_item));
+    return idx < d_work.size() && d_work[idx].d_token == Token::TERM;
+  }
+  bool peek_is_str_arg() const
+  {
+    assert(d_work.back().d_token != Token::STRING
+           || std::holds_alternative<std::string>(d_work.back().d_item));
+    return d_work.back().d_token == Token::STRING;
+  }
+  bool peek_is_str_arg(size_t idx) const
+  {
+    assert(idx > d_work.size() || d_work[idx].d_token != Token::STRING
+           || std::holds_alternative<std::string>(d_work[idx].d_item));
+    return idx < d_work.size() && d_work[idx].d_token == Token::STRING;
+  }
+  bool peek_is_node_arg() const
+  {
+    assert(d_work.back().d_token != Token::SYMBOL
+           || std::holds_alternative<SymbolTable::Node*>(d_work.back().d_item));
+    return d_work.back().d_token == Token::SYMBOL;
+  }
+  bool peek_is_node_arg(size_t idx) const
+  {
+    assert(idx > d_work.size() || d_work[idx].d_token != Token::SYMBOL
+           || std::holds_alternative<SymbolTable::Node*>(d_work[idx].d_item));
+    return idx < d_work.size() && d_work[idx].d_token == Token::SYMBOL;
+  }
 
   bool pop_args(const ParsedItem& item_open,
                 std::vector<bitwuzla::Term>& args,
