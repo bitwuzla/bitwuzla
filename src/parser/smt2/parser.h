@@ -49,6 +49,8 @@ class Parser
                  std::string,
                  std::array<std::string, 2>>
         d_item;
+    std::vector<uint64_t> d_uints;
+    std::vector<Lexer::Coordinate> d_uints_coo;
   };
 
   void init_logic()
@@ -95,7 +97,7 @@ class Parser
   bool parse_lpars(uint64_t nlpars);
   bool parse_rpars(uint64_t nrpars);
 
-  bool parse_uint64();
+  bool parse_uint64(uint64_t& uint);
 
   bool parse_symbol(const std::string& error_msg,
                     bool shadow     = false,
@@ -248,16 +250,10 @@ class Parser
     item.d_coo       = coo ? *coo : d_lexer->coo();
   }
 
-  uint64_t pop_uint64_arg();
   bitwuzla::Term pop_term_arg();
   std::string pop_str_arg();
   SymbolTable::Node* pop_node_arg(bool set_coo = false);
 
-  uint64_t peek_uint64_arg() const
-  {
-    assert(peek_is_uint64_arg());
-    return std::get<uint64_t>(d_work.back().d_item);
-  }
   const bitwuzla::Term& peek_term_arg() const
   {
     assert(peek_is_term_arg());
@@ -269,11 +265,6 @@ class Parser
     return std::get<SymbolTable::Node*>(d_work.back().d_item);
   }
 
-  uint64_t peek_uint64_arg(size_t idx) const
-  {
-    assert(peek_is_uint64_arg(idx));
-    return std::get<uint64_t>(d_work[idx].d_item);
-  }
   const bitwuzla::Term& peek_term_arg(size_t idx) const
   {
     assert(peek_is_term_arg(idx));
@@ -290,18 +281,6 @@ class Parser
     return std::get<SymbolTable::Node*>(d_work[idx].d_item);
   }
 
-  bool peek_is_uint64_arg() const
-  {
-    assert(d_work.back().d_token != Token::IDX
-           || std::holds_alternative<uint64_t>(d_work.back().d_item));
-    return d_work.back().d_token == Token::IDX;
-  }
-  bool peek_is_uint64_arg(size_t idx) const
-  {
-    assert(idx >= d_work.size() || d_work[idx].d_token != Token::IDX
-           || std::holds_alternative<uint64_t>(d_work[idx].d_item));
-    return idx < d_work.size() && d_work[idx].d_token == Token::IDX;
-  }
   bool peek_is_term_arg() const
   {
     assert(d_work.back().d_token != Token::TERM
@@ -341,7 +320,6 @@ class Parser
 
   bool pop_args(const ParsedItem& item_open,
                 std::vector<bitwuzla::Term>& args,
-                std::vector<uint64_t>* idxs    = nullptr,
                 std::vector<std::string>* strs = nullptr);
 
 #ifndef NDEBUG

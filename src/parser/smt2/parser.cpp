@@ -363,15 +363,15 @@ Parser::parse_command_declare_sort()
                      + std::to_string(peek_node_arg()->d_coo.col));
   }
   SymbolTable::Node* symbol = pop_node_arg(true);
-  if (!parse_uint64())
+  uint64_t uint;
+  if (!parse_uint64(uint))
   {
     return false;
   }
-  if (peek_uint64_arg() != 0)
+  if (uint != 0)
   {
-    return error_arg("'declare-sort' of arity > 0 not supported");
+    return error("'declare-sort' of arity > 0 not supported");
   }
-  (void) pop_uint64_arg();
   symbol->d_sort = bitwuzla::mk_uninterpreted_sort(symbol->d_symbol);
   if (!parse_rpars(1))
   {
@@ -711,7 +711,8 @@ Parser::parse_command_pop()
   init_logic();
   init_bitwuzla();
 
-  if (!parse_uint64())
+  uint64_t nlevels;
+  if (!parse_uint64(nlevels))
   {
     return false;
   }
@@ -719,13 +720,12 @@ Parser::parse_command_pop()
   {
     return false;
   }
-  if (peek_uint64_arg() > d_scope_level)
+  if (nlevels > d_scope_level)
   {
-    return error_arg("attempting to pop '" + std::to_string(peek_uint64_arg())
-                     + "' but only '" + std::to_string(peek_uint64_arg())
+    return error_arg("attempting to pop '" + std::to_string(nlevels)
+                     + "' but only '" + std::to_string(nlevels)
                      + "' have been pushed previously");
   }
-  uint64_t nlevels = pop_uint64_arg();
 
   if (!d_global_decl)
   {
@@ -747,7 +747,8 @@ Parser::parse_command_push()
   init_logic();
   init_bitwuzla();
 
-  if (!parse_uint64())
+  uint64_t nlevels;
+  if (!parse_uint64(nlevels))
   {
     return false;
   }
@@ -755,7 +756,6 @@ Parser::parse_command_push()
   {
     return false;
   }
-  uint64_t nlevels = pop_uint64_arg();
   d_scope_level += nlevels;
   d_bitwuzla->push(nlevels);
   print_success();
@@ -996,7 +996,7 @@ Parser::parse_rpars(uint64_t nrpars)
 }
 
 bool
-Parser::parse_uint64()
+Parser::parse_uint64(uint64_t& uint)
 {
   Token token = next_token();
   if (!check_token(token))
@@ -1008,8 +1008,7 @@ Parser::parse_uint64()
     assert(d_lexer->has_token());
     try
     {
-      uint64_t val = std::stoull(d_lexer->token());
-      push_item(Token::IDX, val, d_lexer->coo());
+      uint = std::stoull(d_lexer->token());
       return true;
     }
     catch (...)
@@ -1364,21 +1363,25 @@ Parser::parse_open_term_indexed()
     default: assert(false);
   }
 
+  ParsedItem& item = item_open();
   for (uint64_t i = 0; i < nidxs; ++i)
   {
-    if (!parse_uint64())
+    uint64_t idx;
+    if (!parse_uint64(idx))
     {
       return false;
     }
-    if (min > peek_uint64_arg())
+    if (min > idx)
     {
-      if (peek_uint64_arg() == 0)
+      if (idx == 0)
       {
-        return error_arg("expected non-zero index");
+        return error("expected non-zero index");
       }
-      return error_arg("expected index > " + std::to_string(min - 1) + ", got '"
-                       + std::to_string(peek_uint64_arg()) + "'");
+      return error("expected index > " + std::to_string(min - 1) + ", got '"
+                   + std::to_string(idx) + "'");
     }
+    item.d_uints.push_back(idx);
+    item.d_uints_coo.push_back(d_lexer->coo());
   }
 
   if (!parse_rpars(1))
@@ -1396,10 +1399,9 @@ Parser::parse_open_term_indexed()
       case Token::FP_NEG_ZERO:
       case Token::FP_POS_INF:
       case Token::FP_POS_ZERO: {
-        assert(nargs() == 2);
-        uint64_t ssize      = pop_uint64_arg();
-        uint64_t esize      = pop_uint64_arg();
-        bitwuzla::Sort sort = bitwuzla::mk_fp_sort(esize, ssize);
+        assert(item.d_uints.size() == 2);
+        bitwuzla::Sort sort =
+            bitwuzla::mk_fp_sort(item.d_uints[0], item.d_uints[1]);
         if (token_kind == Token::FP_NAN)
         {
           term = bitwuzla::mk_fp_nan(sort);
@@ -1425,10 +1427,9 @@ Parser::parse_open_term_indexed()
 
       default: {
         assert(token_kind == Token::BV_VALUE);
-        assert(nargs() == 2);
-        uint64_t size       = pop_uint64_arg();
+        assert(item.d_uints.size() == 1);
         std::string val     = pop_str_arg();
-        bitwuzla::Sort sort = bitwuzla::mk_bv_sort(size);
+        bitwuzla::Sort sort = bitwuzla::mk_bv_sort(item.d_uints[0]);
         term                = bitwuzla::mk_bv_value(sort, val, 10);
       }
     }
@@ -1447,10 +1448,10 @@ Parser::parse_open_term_indexed()
       return error("missing '(' before '(_'", d_work[idx - 1].d_coo);
     }
     // ((_ <indexed_op> <idxs>) <terms>) -> (<indexed_op> <idxs> <terms>)
-    d_work[idx - 1].d_token = token_kind;
-    d_work[idx - 1].d_item  = node;
-    d_work[idx - 1].d_coo   = coo;
-    d_work.erase(d_work.begin() + idx);
+    d_work[idx].d_token = token_kind;
+    d_work[idx].d_item  = node;
+    d_work[idx].d_coo   = coo;
+    d_work.erase(d_work.begin() + idx - 1);
     d_work_control.pop_back();
   }
   return true;
@@ -1948,17 +1949,6 @@ Parser::close_term_bv(ParsedItem& item)
   std::vector<uint64_t> idxs;
   bitwuzla::Kind kind = bitwuzla::Kind::VALUE;
 
-  if (token == Token::BV_VALUE)
-  {
-    assert(nargs() == 2);
-    uint64_t size   = pop_uint64_arg();
-    std::string val = pop_str_arg();
-    set_item(item,
-             Token::TERM,
-             bitwuzla::mk_bv_value(bitwuzla::mk_bv_sort(size), val, 10));
-    return true;
-  }
-
   switch (token)
   {
     case Token::BV_ADD: kind = bitwuzla::Kind::BV_ADD; break;
@@ -2008,12 +1998,12 @@ Parser::close_term_bv(ParsedItem& item)
     case Token::BV_USUBO: kind = bitwuzla::Kind::BV_USUB_OVERFLOW; break;
     default: assert(false);
   }
-  if (!pop_args(item, args, &idxs))
+  if (!pop_args(item, args))
   {
     return false;
   }
   assert(args.size());
-  set_item(item, Token::TERM, bitwuzla::mk_term(kind, args, idxs));
+  set_item(item, Token::TERM, bitwuzla::mk_term(kind, args, item.d_uints));
   return true;
 }
 
@@ -2022,13 +2012,12 @@ Parser::close_term_fp(ParsedItem& item)
 {
   Token token = item.d_token;
   std::vector<bitwuzla::Term> args;
-  std::vector<uint64_t> idxs;
   std::vector<std::string> strs;
   bitwuzla::Kind kind = bitwuzla::Kind::VALUE;
 
   if (token == Token::FP_TO_FP || token == Token::FP_TO_FP_UNSIGNED)
   {
-    if (!pop_args(item, args, &idxs, &strs))
+    if (!pop_args(item, args, &strs))
     {
       return false;
     }
@@ -2040,27 +2029,31 @@ Parser::close_term_fp(ParsedItem& item)
         set_item(item,
                  Token::TERM,
                  bitwuzla::mk_fp_value(
-                     bitwuzla::mk_fp_sort(idxs[0], idxs[1]), args[0], strs[0]));
+                     bitwuzla::mk_fp_sort(item.d_uints[0], item.d_uints[1]),
+                     args[0],
+                     strs[0]));
       }
       else
       {
         assert(strs.size() == 2);
         set_item(item,
                  Token::TERM,
-                 bitwuzla::mk_fp_value(bitwuzla::mk_fp_sort(idxs[0], idxs[1]),
-                                       args[0],
-                                       strs[0],
-                                       strs[1]));
+                 bitwuzla::mk_fp_value(
+                     bitwuzla::mk_fp_sort(item.d_uints[0], item.d_uints[1]),
+                     args[0],
+                     strs[0],
+                     strs[1]));
       }
       return true;
     }
     if (args.size() == 1)
     {
-      assert(idxs.size() == 2);
+      assert(item.d_uints.size() == 2);
       assert(strs.empty());
       set_item(item,
                Token::TERM,
-               bitwuzla::mk_term(bitwuzla::Kind::FP_TO_FP_FROM_BV, args, idxs));
+               bitwuzla::mk_term(
+                   bitwuzla::Kind::FP_TO_FP_FROM_BV, args, item.d_uints));
       return true;
     }
     assert(args.size() == 2);
@@ -2072,7 +2065,7 @@ Parser::close_term_fp(ParsedItem& item)
                                           : bitwuzla::Kind::FP_TO_FP_FROM_SBV)
                                    : bitwuzla::Kind::FP_TO_FP_FROM_FP,
                                {args[0], args[1]},
-                               idxs));
+                               item.d_uints));
     return true;
   }
 
@@ -2134,7 +2127,7 @@ Parser::close_term_fp(ParsedItem& item)
     case Token::FP_TO_UBV: kind = bitwuzla::Kind::FP_TO_UBV; break;
     default: assert(false);
   }
-  if (!pop_args(item, args, &idxs))
+  if (!pop_args(item, args))
   {
     return false;
   }
@@ -2146,7 +2139,7 @@ Parser::close_term_fp(ParsedItem& item)
         item, Token::TERM, bitwuzla::mk_fp_value(args[0], args[1], args[2]));
     return true;
   }
-  set_item(item, Token::TERM, bitwuzla::mk_term(kind, args, idxs));
+  set_item(item, Token::TERM, bitwuzla::mk_term(kind, args, item.d_uints));
   return true;
 }
 
@@ -2381,11 +2374,11 @@ Parser::parse_sort_bv_fp(bitwuzla::Sort& sort)
 
   if (token == Token::BV_BITVEC)
   {
-    if (!parse_uint64())
+    uint64_t size;
+    if (!parse_uint64(size))
     {
       return false;
     }
-    uint64_t size = pop_uint64_arg();
     if (size == 0)
     {
       return error("invalid bit-vector size '0'");
@@ -2399,21 +2392,21 @@ Parser::parse_sort_bv_fp(bitwuzla::Sort& sort)
   }
   if (token == Token::FP_FLOATINGPOINT)
   {
-    if (!parse_uint64())
+    uint64_t esize;
+    if (!parse_uint64(esize))
     {
       return false;
     }
-    uint64_t esize = pop_uint64_arg();
     if (esize < 2)
     {
       return error("invalid exponent size '" + std::to_string(esize)
                    + "', must be > 1");
     }
-    if (!parse_uint64())
+    uint64_t ssize;
+    if (!parse_uint64(ssize))
     {
       return false;
     }
-    uint64_t ssize = pop_uint64_arg();
     if (ssize < 2)
     {
       return error("invalid significand size '" + std::to_string(ssize)
@@ -2616,15 +2609,6 @@ Parser::arg_coo(size_t idx) const
   return d_work[idx].d_coo;
 }
 
-uint64_t
-Parser::pop_uint64_arg()
-{
-  assert(peek_is_uint64_arg());
-  uint64_t res = std::get<uint64_t>(d_work.back().d_item);
-  d_work.pop_back();
-  return res;
-}
-
 bitwuzla::Term
 Parser::pop_term_arg()
 {
@@ -2659,7 +2643,6 @@ Parser::pop_node_arg(bool set_coo)
 bool
 Parser::pop_args(const ParsedItem& item,
                  std::vector<bitwuzla::Term>& args,
-                 std::vector<uint64_t>* idxs,
                  std::vector<std::string>* strs)
 {
   Token token     = item.d_token;
@@ -2780,7 +2763,7 @@ Parser::pop_args(const ParsedItem& item,
 
   // check number of arguments
   assert(n_args > 0 || n_args == 0);
-  size_t cnt_args = nargs() - n_idxs;
+  size_t cnt_args = nargs();
   if (n_args > 0)
   {
     if (cnt_args != n_args)
@@ -2826,21 +2809,24 @@ Parser::pop_args(const ParsedItem& item,
                  item.d_coo);
   }
 
+  // check number of indices
+  if (item.d_uints.size() < n_idxs)
+  {
+    return error("expected " + std::to_string(n_idxs) + " "
+                     + (n_idxs > 1 ? "indices" : "index") + " as argument to '"
+                     + std::to_string(token) + "', got "
+                     + std::to_string(item.d_uints.size()),
+                 item.d_coo);
+  }
+
   // actual number of arguments
   n_args = cnt_args;
 
   // check arguments and indices and pop
-  size_t idx_idxs = idx_open() + 1;     // start index of indices
-  size_t idx      = idx_idxs + n_idxs;  // start index of args
-  assert(idx_idxs < d_work.size());
+  size_t idx = idx_open() + 1;  // start index of args
   assert(idx < d_work.size());
   assert(args.empty());
   args.resize(n_args);
-  if (idxs)
-  {
-    assert(idxs->empty());
-    idxs->resize(n_idxs);
-  }
 
   for (size_t i = idx, n = idx + n_args; i < n; ++i)
   {
@@ -3219,71 +3205,61 @@ Parser::pop_args(const ParsedItem& item,
     default: assert(false);
   }
 
-  for (size_t i = 0, j = idx_idxs; i < n_idxs; ++i, ++j)
-  {
-    assert(idxs);
-    if (!peek_is_uint64_arg(j))
-    {
-      return error("expected integer argument at index " + std::to_string(idx)
-                       + " to '" + std::to_string(token) + "'",
-                   arg_coo(j));
-    }
-    (*idxs)[i] = peek_uint64_arg(j);
-  }
+  // check indices
   if (token == Token::BV_EXTRACT)
   {
-    if ((*idxs)[0] >= args[0].sort().bv_size())
+    if (item.d_uints[0] >= args[0].sort().bv_size())
     {
-      return error("upper index '" + std::to_string((*idxs)[0])
+      return error("upper index '" + std::to_string(item.d_uints[0])
                        + "' too high for bit-vector of size "
                        + std::to_string(args[0].sort().bv_size())
                        + " as argument to '" + std::to_string(token) + "'",
-                   arg_coo(idx_idxs));
+                   item.d_uints_coo[0]);
     }
-    if ((*idxs)[0] < (*idxs)[1])
+    if (item.d_uints[0] < item.d_uints[1])
     {
       return error("upper index must be >= lower index as argument to '"
                        + std::to_string(token) + "'",
-                   arg_coo(idx_idxs));
+                   item.d_uints_coo[0]);
     }
   }
   else if (token == Token::BV_REPEAT)
   {
-    if (((uint64_t) (UINT64_MAX / (*idxs)[0])) < args[0].sort().bv_size())
+    if (((uint64_t) (UINT64_MAX / item.d_uints[0])) < args[0].sort().bv_size())
     {
       return error(
-          "index '" + std::to_string((*idxs)[0]) + "' as argument to '"
+          "index '" + std::to_string(item.d_uints[0]) + "' as argument to '"
               + std::to_string(token)
               + "' too large, resulting bit-vector size exceeds maximum "
               + "bit-vector size of " + std::to_string(UINT64_MAX),
-          arg_coo(idx_idxs));
+          item.d_uints_coo[0]);
     }
   }
   else if (token == Token::BV_SIGN_EXTEND || token == Token::BV_ZERO_EXTEND)
   {
-    if ((*idxs)[0] > UINT64_MAX - args[0].sort().bv_size())
+    if (item.d_uints[0] > UINT64_MAX - args[0].sort().bv_size())
     {
       return error(
-          "index '" + std::to_string((*idxs)[0]) + "' as argument to '"
+          "index '" + std::to_string(item.d_uints[0]) + "' as argument to '"
               + std::to_string(token)
               + "' too large, resulting bit-vector size exceeds maximum "
               + "bit-vector size of " + std::to_string(UINT64_MAX),
-          arg_coo(idx_idxs));
+          item.d_uints_coo[0]);
     }
   }
   else if (token == Token::FP_TO_FP && args[0].sort().is_bv())
   {
-    if (args[0].sort().bv_size() != (*idxs)[0] + (*idxs)[1])
+    if (args[0].sort().bv_size() != item.d_uints[0] + item.d_uints[1])
     {
       return error("size of bit-vector term '"
                    + std::to_string(args[0].sort().bv_size())
                    + " does not match floating-point format '"
-                   + std::to_string((*idxs)[0]) + " "
-                   + std::to_string((*idxs)[1]) + "'");
+                   + std::to_string(item.d_uints[0]) + " "
+                   + std::to_string(item.d_uints[1]) + "'");
     }
   }
 
-  d_work.resize(d_work.size() - n_args - n_idxs);
+  d_work.resize(d_work.size() - n_args);
   return true;
 }
 
@@ -3324,6 +3300,15 @@ Parser::print_work_stack()
                   << (node ? node->d_symbol : "(nil)");
       }
       std::cout << std::endl;
+    }
+    if (w.d_uints.size())
+    {
+      std::cout << "    d_uints: {";
+      for (uint64_t u : w.d_uints)
+      {
+        std::cout << " " << u;
+      }
+      std::cout << " }" << std::endl;
     }
   }
 }

@@ -35,7 +35,6 @@ enum class Token
   SYMBOL,
   ATTRIBUTE,
   OPEN,     // place holder for open item
-  IDX,      // index argument
   TERM,     // term argument
   STRING,   // string argument
   STRINGS,  // strings argument
