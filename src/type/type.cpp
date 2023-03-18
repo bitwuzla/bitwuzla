@@ -65,50 +65,43 @@ Type::operator=(Type&& other)
 bool
 Type::is_bool() const
 {
-  assert(d_data != nullptr);
-  return d_data->get_kind() == type::TypeData::Kind::BOOL;
+  return d_data && d_data->get_kind() == type::TypeData::Kind::BOOL;
 }
 
 bool
 Type::is_bv() const
 {
-  assert(d_data != nullptr);
-  return d_data->get_kind() == type::TypeData::Kind::BV;
+  return d_data && d_data->get_kind() == type::TypeData::Kind::BV;
 }
 
 bool
 Type::is_fp() const
 {
-  assert(d_data != nullptr);
-  return d_data->get_kind() == type::TypeData::Kind::FP;
+  return d_data && d_data->get_kind() == type::TypeData::Kind::FP;
 }
 
 bool
 Type::is_rm() const
 {
-  assert(d_data != nullptr);
-  return d_data->get_kind() == type::TypeData::Kind::RM;
+  return d_data && d_data->get_kind() == type::TypeData::Kind::RM;
 }
 
 bool
 Type::is_array() const
 {
-  assert(d_data != nullptr);
-  return d_data->get_kind() == type::TypeData::Kind::ARRAY;
+  return d_data && d_data->get_kind() == type::TypeData::Kind::ARRAY;
 }
 
 bool
 Type::is_fun() const
 {
-  assert(d_data != nullptr);
-  return d_data->get_kind() == type::TypeData::Kind::FUN;
+  return d_data && d_data->get_kind() == type::TypeData::Kind::FUN;
 }
 
 bool
 Type::is_uninterpreted() const
 {
-  assert(d_data != nullptr);
-  return d_data->get_kind() == type::TypeData::Kind::UNINTERPRETED;
+  return d_data && d_data->get_kind() == type::TypeData::Kind::UNINTERPRETED;
 }
 
 uint64_t
