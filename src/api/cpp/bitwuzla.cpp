@@ -926,6 +926,10 @@ std::string
 Term::str() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_node);
+  if (!d_node)
+  {
+    return "(nil)";
+  }
   return d_node->str();
 }
 
@@ -961,7 +965,7 @@ operator!=(const Term &a, const Term &b)
 std::ostream &
 operator<<(std::ostream &out, const Term &term)
 {
-  out << *term.d_node;
+  out << (term.d_node ? term.d_node->str() : "(nil)");
   return out;
 }
 
@@ -1111,6 +1115,10 @@ std::string
 Sort::str() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_type);
+  if (!d_type)
+  {
+    return "(nil)";
+  }
   return d_type->str();
 }
 
@@ -1147,7 +1155,7 @@ operator!=(const Sort &a, const Sort &b)
 std::ostream &
 operator<<(std::ostream &out, const Sort &sort)
 {
-  out << *sort.d_type;
+  out << (sort.d_type ? sort.d_type->str() : "(nil)");
   return out;
 }
 
