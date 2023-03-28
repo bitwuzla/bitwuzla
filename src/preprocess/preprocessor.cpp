@@ -140,9 +140,11 @@ Preprocessor::apply(AssertionVector& assertions)
   }
 #endif
 
-  auto& options  = d_env.options();
-  bool enable             = options.preprocess();
-  bool skel_done          = false;
+  auto& options = d_env.options();
+  bool enable   = options.preprocess();
+  // Only apply skeleton preprocessing once to the initial assertions since it
+  // is not incremental yet.
+  bool skel_done          = !assertions.initial_assertions();
   bool uninterpreted_done = false;
   // fixed-point passes
   do
