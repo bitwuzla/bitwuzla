@@ -40,16 +40,24 @@ class PassVariableSubstitution : public PreprocessingPass
   std::pair<Node, Node> normalize_substitution_bv_ineq(const Node& node);
 
   Node substitute(const Node& term,
+                  const Node& excl_var,
                   const std::unordered_map<Node, Node>& substitutions,
                   std::unordered_map<Node, Node>& cache,
                   std::vector<Node>& substituted) const;
 
   Node process(const Node& term, std::vector<Node>& substituted);
 
+  Node process(const Node& term,
+               const Node& excl_var,
+               std::vector<Node>& substituted);
+
   /** Current set of variable substitutions. */
   backtrack::unordered_map<Node, std::pair<Node, Node>> d_substitutions;
-  /** Current set of variable substitution assertions. */
-  backtrack::unordered_map<Node, std::pair<Node, Node>>
+  /**
+   * Current set of variable substitution assertions, maps assertion index to
+   * [var, term] pair.
+   */
+  backtrack::unordered_map<size_t, std::pair<Node, Node>>
       d_substitution_assertions;
 
   /** Backtrackable cache. */

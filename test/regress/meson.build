@@ -19,6 +19,7 @@ tests_smt2 = [
   ['preprocess/rewrite2.smt2'],
   ['preprocess/rewrite3.smt2'],
   ['preprocess/normalize1.smt2'],
+  ['preprocess/varsubst1.smt2', ['-i']],
   ['rewrite/array/hang_min_32.smt2'],
   #['rewrite/array/regr3vl4.btor.smt2', ['-rwl=0']], # TODO sign_extend over bvugt
   #['rewrite/array/regr3vl4.btor.smt2', ['-rwl=1']], # TODO sign_extend over bvugt
