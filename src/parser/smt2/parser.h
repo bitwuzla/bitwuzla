@@ -242,14 +242,6 @@ class Parser
     }
   }
 
-  template <typename T>
-  void push_arg(const T& arg, const Lexer::Coordinate* coo = nullptr)
-  {
-    ParsedItem& item = item_open();
-    item.d_item      = arg;
-    item.d_coo       = coo ? *coo : d_lexer->coo();
-  }
-
   bitwuzla::Term pop_term_arg();
   std::string pop_str_arg();
   SymbolTable::Node* pop_node_arg(bool set_coo = false);
@@ -283,8 +275,10 @@ class Parser
 
   bool peek_is_term_arg() const
   {
-    assert(d_work.back().d_token != Token::TERM
-           || std::holds_alternative<bitwuzla::Term>(d_work.back().d_item));
+    assert(
+        d_work.size()
+        && (d_work.back().d_token != Token::TERM
+            || std::holds_alternative<bitwuzla::Term>(d_work.back().d_item)));
     return d_work.back().d_token == Token::TERM;
   }
   bool peek_is_term_arg(size_t idx) const
@@ -295,8 +289,9 @@ class Parser
   }
   bool peek_is_str_arg() const
   {
-    assert(d_work.back().d_token != Token::STRING
-           || std::holds_alternative<std::string>(d_work.back().d_item));
+    assert(d_work.size()
+           && (d_work.back().d_token != Token::STRING
+               || std::holds_alternative<std::string>(d_work.back().d_item)));
     return d_work.back().d_token == Token::STRING;
   }
   bool peek_is_str_arg(size_t idx) const
@@ -307,8 +302,10 @@ class Parser
   }
   bool peek_is_node_arg() const
   {
-    assert(d_work.back().d_token != Token::SYMBOL
-           || std::holds_alternative<SymbolTable::Node*>(d_work.back().d_item));
+    assert(d_work.size()
+           && (d_work.back().d_token != Token::SYMBOL
+               || std::holds_alternative<SymbolTable::Node*>(
+                   d_work.back().d_item)));
     return d_work.back().d_token == Token::SYMBOL;
   }
   bool peek_is_node_arg(size_t idx) const

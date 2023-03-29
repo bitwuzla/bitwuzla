@@ -320,7 +320,7 @@ Parser::parse_command_declare_fun(bool is_const)
       {
         return false;
       }
-      domain.push_back(sort);
+      domain.emplace_back(sort);
     }
   }
 
@@ -429,7 +429,7 @@ Parser::parse_command_define_fun()
     }
     parse_rpars(1);
     symbol->d_term = bitwuzla::mk_var(sort, symbol->d_symbol);
-    args.push_back(symbol->d_term);
+    args.emplace_back(symbol->d_term);
   }
 
   if (!parse_sort(sort))
@@ -442,16 +442,16 @@ Parser::parse_command_define_fun()
     return false;
   }
 
-  if (peek_term_arg().sort() != sort)
+  bitwuzla::Term body = pop_term_arg();
+  if (body.sort() != sort)
   {
     return error_arg("expected term of sort '" + sort.str() + "' but got '"
-                     + peek_term_arg().sort().str());
+                     + body.sort().str());
   }
-  bitwuzla::Term body = pop_term_arg();
 
   if (args.size())
   {
-    args.push_back(body);
+    args.emplace_back(body);
     symbol->d_term = bitwuzla::mk_term(bitwuzla::Kind::LAMBDA, args);
   }
   else
@@ -1110,7 +1110,7 @@ Parser::parse_term_list(std::vector<std::string>* repr)
     if (repr && la == Token::SYMBOL)
     {
       assert(d_last_node->has_symbol());
-      repr->push_back(d_last_node->d_symbol);
+      repr->emplace_back(d_last_node->d_symbol);
     }
     if (!parse_term(true, la))
     {
@@ -1381,7 +1381,7 @@ Parser::parse_open_term_indexed()
                    + std::to_string(idx) + "'");
     }
     item.d_uints.push_back(idx);
-    item.d_uints_coo.push_back(d_lexer->coo());
+    item.d_uints_coo.emplace_back(d_lexer->coo());
   }
 
   if (!parse_rpars(1))
@@ -1823,9 +1823,7 @@ Parser::close_term()
     }
     else
     {
-      bitwuzla::Term term =
-          peek_is_term_arg() ? pop_term_arg() : bitwuzla::Term();
-      close_term_scope(term);
+      close_term_scope(peek_is_term_arg() ? pop_term_arg() : bitwuzla::Term());
     }
   }
 
@@ -1875,7 +1873,7 @@ Parser::close_term_bang(ParsedItem& item)
     return error_arg(
         "invalid annotation syntax, expected ':named' as second argument");
   }
-  (void) pop_node_arg();
+  d_work.pop_back();
   if (!peek_is_term_arg())
   {
     return error_arg(
@@ -2392,7 +2390,7 @@ Parser::parse_sort_bv_fp(bitwuzla::Sort& sort)
   }
   if (token == Token::FP_FLOATINGPOINT)
   {
-    uint64_t esize;
+    uint64_t esize = 0;
     if (!parse_uint64(esize))
     {
       return false;
@@ -2402,7 +2400,7 @@ Parser::parse_sort_bv_fp(bitwuzla::Sort& sort)
       return error("invalid exponent size '" + std::to_string(esize)
                    + "', must be > 1");
     }
-    uint64_t ssize;
+    uint64_t ssize = 0;
     if (!parse_uint64(ssize))
     {
       return false;
