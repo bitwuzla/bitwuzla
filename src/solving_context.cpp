@@ -3,8 +3,10 @@
 #include <cassert>
 #include <iostream>
 
+#include "check/check_model.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_set.h"
+
 namespace bzla {
 
 using namespace node;
@@ -14,9 +16,7 @@ using namespace node;
 SolvingContext::SolvingContext(const option::Options& options)
     : d_env(options),
       d_assertions(&d_backtrack_mgr),
-#ifndef NDEBUG
       d_original_assertions(&d_backtrack_mgr),
-#endif
       d_preprocessor(*this),
       d_solver_engine(*this)
 {
@@ -31,6 +31,15 @@ SolvingContext::solve()
   {
     d_env.statistics().print();
   }
+
+#ifndef NDEBUG
+  if (d_sat_state == Result::SAT && options().dbg_check_model())
+  {
+    check::CheckModel cm(*this);
+    assert(cm.check());
+  }
+#endif
+
   return d_sat_state;
 }
 
@@ -44,10 +53,10 @@ void
 SolvingContext::assert_formula(const Node& formula)
 {
   assert(formula.type().is_bool());
-  d_assertions.push_back(formula);
-#ifndef NDEBUG
-  d_original_assertions.insert(formula);
-#endif
+  if (d_assertions.push_back(formula))
+  {
+    d_original_assertions.push_back(formula);
+  }
 }
 
 Node
@@ -67,11 +76,13 @@ SolvingContext::get_unsat_core()
   res = d_preprocessor.original_assertions(core);
 
 #ifndef NDEBUG
+  std::unordered_set<Node> orig(d_original_assertions.begin(),
+                                d_original_assertions.end());
   for (const Node& a : res)
   {
     // We should always be able to trace back to the original assertion, if
     // not, some information is not properly tracked in the preprocessor.
-    assert(d_original_assertions.find(a) != d_original_assertions.end());
+    assert(orig.find(a) != orig.end());
   }
 #endif
 
@@ -100,6 +111,12 @@ backtrack::AssertionView&
 SolvingContext::assertions()
 {
   return d_assertions.view();
+}
+
+const backtrack::vector<Node>&
+SolvingContext::original_assertions() const
+{
+  return d_original_assertions;
 }
 
 backtrack::BacktrackManager*

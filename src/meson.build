@@ -53,6 +53,7 @@ sources = files([
   'backtrack/assertion_stack.cpp',
   'backtrack/backtrackable.cpp',
   'bzlaparse.cpp',
+  'check/check_model.cpp',
   'env.cpp',
   'node/kind_info.cpp',
   'node/node.cpp',

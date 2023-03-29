@@ -52,6 +52,7 @@ enum class Option
 
   DBG_RW_NODE_THRESH,  // numeric
   DBG_PP_NODE_THRESH,  // numeric
+  DBG_CHECK_MODEL,     // bool
 
   NUM_OPTIONS,
 };
@@ -442,6 +443,7 @@ class Options
   // Debug options
   OptionNumeric dbg_rw_node_inc;
   OptionNumeric dbg_pp_node_inc;
+  OptionBool dbg_check_model;
 
   /** @return True if the given option is a Boolean option. */
   bool is_bool(Option opt) const;

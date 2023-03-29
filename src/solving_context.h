@@ -52,6 +52,8 @@ class SolvingContext
 
   backtrack::AssertionView& assertions();
 
+  const backtrack::vector<Node>& original_assertions() const;
+
   /** @return The solving context backtrack manager. */
   backtrack::BacktrackManager* backtrack_mgr();
 
@@ -74,10 +76,8 @@ class SolvingContext
   /** Assertion stack of this solving context. */
   backtrack::AssertionStack d_assertions;
 
-#ifndef NDEBUG
   /** Original input assertions added via assert_formula(). */
-  backtrack::unordered_set<Node> d_original_assertions;
-#endif
+  backtrack::vector<Node> d_original_assertions;
 
   /** The solving context preprocessor. */
   preprocess::Preprocessor d_preprocessor;

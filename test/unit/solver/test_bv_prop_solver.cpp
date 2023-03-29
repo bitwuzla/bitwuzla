@@ -42,6 +42,7 @@ class TestBvPropSolver : public ::testing::Test
     d_options.pp_flatten_and.set(false);
     d_options.pp_skeleton_preproc.set(false);
     d_options.pp_variable_subst.set(false);
+    d_options.dbg_check_model.set(false);
   }
 
   /**

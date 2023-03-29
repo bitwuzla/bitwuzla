@@ -292,7 +292,12 @@ Options::Options()
                       "preprocessing in total",
                       "dbg-pp-node-thresh",
                       nullptr,
-                      true)
+                      true),
+      dbg_check_model(this,
+                      Option::DBG_CHECK_MODEL,
+                      true,
+                      "check model for each satisfiable query",
+                      "check-model")
 
 {
   assert(d_options.size() == static_cast<size_t>(Option::NUM_OPTIONS));
