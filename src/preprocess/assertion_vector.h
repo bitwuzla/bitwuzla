@@ -55,6 +55,9 @@ class AssertionVector
    */
   bool initial_assertions() const;
 
+  /** Return assertion stack index at which the assertion vector starts. */
+  size_t start_index() const;
+
  private:
   /** Reset d_changed. */
   void reset_modified();

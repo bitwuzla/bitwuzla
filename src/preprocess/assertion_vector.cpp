@@ -78,6 +78,12 @@ AssertionVector::initial_assertions() const
   return d_begin == 0;
 }
 
+size_t
+AssertionVector::start_index() const
+{
+  return d_begin;
+}
+
 /* --- AssertionVector private ---------------------------------------------- */
 
 void
