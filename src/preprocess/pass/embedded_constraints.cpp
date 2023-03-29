@@ -32,14 +32,12 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
     if (assertion.is_value()) continue;
     if (assertion.is_inverted())
     {
-      Log(2) << "Add substitution: " << assertion[0] << " -> false";
       assert(!assertion[0].is_variable());
       n_substs += 1;
       d_substitutions.emplace(assertion[0], nm.mk_value(false));
     }
     else
     {
-      Log(2) << "Add substitution: " << assertion << " -> true";
       assert(!assertion.is_variable());
       n_substs += 1;
       d_substitutions.emplace(assertion, nm.mk_value(true));
