@@ -35,7 +35,12 @@ SymbolTable::insert(Token token,
                     uint64_t scope_level)
 {
   Node* node = new Node(token, symbol, scope_level);
-  d_table[symbol].emplace_back(node);
+  auto [it, inserted] = d_table.emplace(symbol, node);
+  if (!inserted)
+  {
+    node->d_next = it->second;
+    it->second   = node;
+  }
   return node;
 }
 
@@ -45,11 +50,11 @@ SymbolTable::remove(Node* node)
   const std::string& symbol = node->d_symbol;
   auto it                   = d_table.find(symbol);
   assert(it != d_table.end());
-  auto& chain = it->second;
-  assert(chain.size() > 0);
-  assert(chain.back()->d_symbol == symbol);
-  chain.pop_back();
-  if (chain.empty())
+  Node* n = it->second;
+  assert(n->d_symbol == symbol);
+  it->second = n->d_next;
+  delete n;
+  if (!it->second)
   {
     d_table.erase(it);
   }
@@ -58,16 +63,18 @@ SymbolTable::remove(Node* node)
 void
 SymbolTable::pop_scope(uint64_t scope_level)
 {
+  // TODO use indices
   std::vector<std::string> erase;
   for (auto& p : d_table)
   {
-    assert(p.second.size());
-    assert(p.second.back());
-    while (!p.second.empty() && p.second.back()->d_scope_level >= scope_level)
+    assert(p.second);
+    while (p.second && p.second->d_scope_level >= scope_level)
     {
-      p.second.pop_back();
+      Node* n  = p.second;
+      p.second = n->d_next;
+      delete n;
     }
-    if (p.second.empty())
+    if (!p.second)
     {
       erase.push_back(p.first);
     }
@@ -86,8 +93,8 @@ SymbolTable::find(const std::string& symbol) const
   {
     return nullptr;
   }
-  assert(it->second.size());
-  return it->second.back().get();
+  assert(it->second);
+  return it->second;
 }
 
 /* SymbolTable private ------------------------------------------------------ */
@@ -371,8 +378,8 @@ SymbolTable::print() const
   for (auto& p : d_table)
   {
     assert(!p.first.empty());
-    std::cout << "'" << p.first << "' (" << p.second.size() << "): ";
-    for (auto& n : p.second)
+    std::cout << "'" << p.first << "': ";
+    for (Node* n = p.second; n; n = n->d_next)
     {
       std::cout << " (" << n->d_symbol << ", " << n->d_scope_level << ")";
     }

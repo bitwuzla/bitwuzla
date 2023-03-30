@@ -23,6 +23,7 @@ class SymbolTable
     bitwuzla::Term d_term;
     bitwuzla::Sort d_sort;
     bool d_is_bound = false;
+    Node* d_next    = nullptr;
   };
 
   SymbolTable();
@@ -60,11 +61,7 @@ class SymbolTable
   void init_keywords();
   void init_core_symbols();
 
-  std::unordered_map<std::string,
-                     std::vector<std::unique_ptr<Node>>,
-                     SymbolHash,
-                     SymbolEqual>
-      d_table;
+  std::unordered_map<std::string, Node*, SymbolHash, SymbolEqual> d_table;
 };
 
 }  // namespace parser::smt2
