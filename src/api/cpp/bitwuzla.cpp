@@ -98,6 +98,9 @@ static const std::unordered_map<Option, bzla::option::Option>
 
         {Option::DBG_RW_NODE_THRESH, bzla::option::Option::DBG_RW_NODE_THRESH},
         {Option::DBG_PP_NODE_THRESH, bzla::option::Option::DBG_PP_NODE_THRESH},
+        {Option::DBG_CHECK_MODEL, bzla::option::Option::DBG_CHECK_MODEL},
+        {Option::DBG_CHECK_UNSAT_CORE,
+         bzla::option::Option::DBG_CHECK_UNSAT_CORE},
 };
 
 static const std::unordered_map<bzla::option::Option, Option> s_options =

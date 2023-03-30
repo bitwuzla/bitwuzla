@@ -297,7 +297,13 @@ Options::Options()
                       Option::DBG_CHECK_MODEL,
                       true,
                       "check model for each satisfiable query",
-                      "check-model")
+                      "check-model"),
+      dbg_check_unsat_core(
+          this,
+          Option::DBG_CHECK_UNSAT_CORE,
+          true,
+          "check unsat core model for each unsatisfiable query",
+          "check-unsat-core")
 
 {
   assert(d_options.size() == static_cast<size_t>(Option::NUM_OPTIONS));

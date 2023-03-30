@@ -50,9 +50,10 @@ enum class Option
   PP_VARIABLE_SUBST_NORM_EQ,       // bool
   PP_VARIABLE_SUBST_NORM_DISEQ,    // bool
 
-  DBG_RW_NODE_THRESH,  // numeric
-  DBG_PP_NODE_THRESH,  // numeric
-  DBG_CHECK_MODEL,     // bool
+  DBG_RW_NODE_THRESH,    // numeric
+  DBG_PP_NODE_THRESH,    // numeric
+  DBG_CHECK_MODEL,       // bool
+  DBG_CHECK_UNSAT_CORE,  // bool
 
   NUM_OPTIONS,
 };
@@ -444,6 +445,7 @@ class Options
   OptionNumeric dbg_rw_node_inc;
   OptionNumeric dbg_pp_node_inc;
   OptionBool dbg_check_model;
+  OptionBool dbg_check_unsat_core;
 
   /** @return True if the given option is a Boolean option. */
   bool is_bool(Option opt) const;

@@ -2175,15 +2175,20 @@ tests_btor_unsat = [
 
 regress_tests = [
   [tests_smt2],
-  #[tests_btor_sat, '--check-sat'],
-  #[tests_btor_unsat, '--check-unsat'],
+  [tests_smt2, [], ['--produce-unsat-cores', '--check-unsat-core']],
+  #[tests_btor_sat, '--check-sat'],     # TODO: BTOR parser disabled
+  #[tests_btor_unsat, '--check-unsat'], # TODO: BTOR parser disabled
 ]
 
 foreach t : regress_tests
   tests = t[0]
   run_regress_script_options = []
+  global_args = []
   if t.length() == 2
     run_regress_script_options += t[1]
+  endif
+  if t.length() == 3
+    global_args += t[2]
   endif
 
   foreach test_args : tests
@@ -2193,6 +2198,7 @@ foreach t : regress_tests
     if test_args.length() == 2
       test_case += test_args[1]
     endif
+    test_case += global_args
     args = [run_regress_script.full_path()]
     args += bitwuzla_bin.full_path()
     args += ' '.join(test_case)

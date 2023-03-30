@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "check/check_model.h"
+#include "check/check_unsat_core.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_set.h"
 
@@ -39,6 +40,11 @@ SolvingContext::solve()
   {
     check::CheckModel cm(*this);
     assert(cm.check());
+  }
+  else if (d_sat_state == Result::UNSAT && options().dbg_check_unsat_core())
+  {
+    check::CheckUnsatCore cuc(*this);
+    assert(cuc.check());
   }
 #endif
   return d_sat_state;

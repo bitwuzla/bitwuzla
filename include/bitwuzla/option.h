@@ -354,6 +354,16 @@ enum ENUM(Option)
    *  @warning This is an expert debug option.
    */
   EVALUE(DBG_PP_NODE_THRESH),
+  /*! **Debug: Check models for each satisfiable query. **
+   *
+   *  @warning This is an expert debug option.
+   */
+  EVALUE(DBG_CHECK_MODEL),
+  /*! **Debug: Check unsat core for each unsatisfiable query. **
+   *
+   *  @warning This is an expert debug option.
+   */
+  EVALUE(DBG_CHECK_UNSAT_CORE),
 
 #ifndef DOXYGEN_SKIP
   EVALUE(NUM_OPTS),

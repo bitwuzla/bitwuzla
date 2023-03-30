@@ -54,6 +54,7 @@ sources = files([
   'backtrack/backtrackable.cpp',
   'bzlaparse.cpp',
   'check/check_model.cpp',
+  'check/check_unsat_core.cpp',
   'env.cpp',
   'node/kind_info.cpp',
   'node/node.cpp',
