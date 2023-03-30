@@ -6,7 +6,7 @@ namespace bzla::util {
 
 /* --- TimerStatistic public ------------------------------------------------ */
 
-TimerStatistic::TimerStatistic() : d_running(false) {}
+TimerStatistic::TimerStatistic() : d_elapsed(0), d_running(false) {}
 
 uint64_t
 TimerStatistic::elapsed() const
