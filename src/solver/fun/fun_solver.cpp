@@ -72,6 +72,12 @@ Node
 FunSolver::value(const Node& term)
 {
   assert(term.type().is_fun());
+
+  if (term.kind() == Kind::LAMBDA)
+  {
+    return term;
+  }
+
   auto it = d_fun_models.find(term);
   if (it != d_fun_models.end())
   {
