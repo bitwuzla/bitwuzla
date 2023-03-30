@@ -94,8 +94,23 @@ class Parser
   bool parse_command_set_logic();
   bool parse_command_set_option();
 
-  bool parse_lpars(uint64_t nlpars);
-  bool parse_rpars(uint64_t nrpars);
+  bool parse_lpar()
+  {
+    if (next_token() != Token::LPAR)
+    {
+      return error("missing '('");
+    }
+    return true;
+  }
+
+  bool parse_rpar()
+  {
+    if (next_token() != Token::RPAR)
+    {
+      return error("missing ')'");
+    }
+    return true;
+  }
 
   bool parse_uint64(uint64_t& uint);
 

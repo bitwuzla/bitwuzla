@@ -200,7 +200,7 @@ Parser::parse_command_assert()
     return error_arg("asserted term is not a formula");
   }
   bitwuzla::Term term = pop_term_arg();
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -222,7 +222,7 @@ Parser::parse_command_check_sat(bool with_assumptions)
   }
   if (with_assumptions)
   {
-    if (!parse_lpars(1))
+    if (!parse_lpar())
     {
       return false;
     }
@@ -242,7 +242,7 @@ Parser::parse_command_check_sat(bool with_assumptions)
       }
       assumptions[idx] = pop_term_arg();
     }
-    if (!parse_rpars(1))
+    if (!parse_rpar())
     {
       return false;
     }
@@ -250,7 +250,7 @@ Parser::parse_command_check_sat(bool with_assumptions)
   }
   else
   {
-    if (!parse_rpars(1))
+    if (!parse_rpar())
     {
       return false;
     }
@@ -304,7 +304,7 @@ Parser::parse_command_declare_fun(bool is_const)
   std::vector<bitwuzla::Sort> domain;
   if (!is_const)
   {
-    if (!parse_lpars(1))
+    if (!parse_lpar())
     {
       return false;
     }
@@ -338,7 +338,7 @@ Parser::parse_command_declare_fun(bool is_const)
   {
     symbol->d_term = bitwuzla::mk_const(sort, symbol->d_symbol);
   }
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -373,7 +373,7 @@ Parser::parse_command_declare_sort()
     return error("'declare-sort' of arity > 0 not supported");
   }
   symbol->d_sort = bitwuzla::mk_uninterpreted_sort(symbol->d_symbol);
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -399,7 +399,7 @@ Parser::parse_command_define_fun()
   }
   SymbolTable::Node* symbol = pop_node_arg(true);
 
-  if (!parse_lpars(1))
+  if (!parse_lpar())
   {
     return false;
   }
@@ -427,7 +427,7 @@ Parser::parse_command_define_fun()
     {
       return false;
     }
-    parse_rpars(1);
+    parse_rpar();
     symbol->d_term = bitwuzla::mk_var(sort, symbol->d_symbol);
     args.emplace_back(symbol->d_term);
   }
@@ -464,7 +464,7 @@ Parser::parse_command_define_fun()
     d_table.remove(pop_node_arg());
   }
 
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -490,7 +490,7 @@ Parser::parse_command_define_sort()
   }
   SymbolTable::Node* symbol = pop_node_arg(true);
 
-  if (!parse_lpars(1))
+  if (!parse_lpar())
   {
     return false;
   }
@@ -509,7 +509,7 @@ Parser::parse_command_define_sort()
     return false;
   }
 
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -533,7 +533,7 @@ Parser::parse_command_echo()
   assert(d_lexer->has_token());
   std::string echo = d_lexer->token();
 
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -547,7 +547,7 @@ Parser::parse_command_echo()
 bool
 Parser::parse_command_exit()
 {
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -656,7 +656,7 @@ Parser::parse_command_get_value()
   {
     return true;
   }
-  if (!parse_lpars(1))
+  if (!parse_lpar())
   {
     return false;
   }
@@ -665,7 +665,7 @@ Parser::parse_command_get_value()
   {
     return false;
   }
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -716,7 +716,7 @@ Parser::parse_command_pop()
   {
     return false;
   }
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -752,7 +752,7 @@ Parser::parse_command_push()
   {
     return false;
   }
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -833,7 +833,7 @@ Parser::parse_command_set_logic()
     return error("unsupported logic '" + d_logic + "'");
   }
   Msg(1) << "logic " << d_logic;
-  if (parse_rpars(1))
+  if (parse_rpar())
   {
     if (d_statistics.num_set_logic++)
     {
@@ -947,7 +947,7 @@ Parser::parse_command_set_option()
       return error(e.msg());
     }
   }
-  if (parse_rpars(1))
+  if (parse_rpar())
   {
     print_success();
     return true;
@@ -956,44 +956,6 @@ Parser::parse_command_set_option()
 }
 
 /* -------------------------------------------------------------------------- */
-
-bool
-Parser::parse_lpars(uint64_t nlpars)
-{
-  while (nlpars > 0)
-  {
-    Token token = next_token();
-    if (token != Token::LPAR)
-    {
-      return error("missing '('");
-    }
-    nlpars -= 1;
-  }
-  return true;
-}
-
-bool
-Parser::parse_rpars(uint64_t nrpars)
-{
-  while (nrpars > 0)
-  {
-    Token token = next_token();
-    if (token == Token::ENDOFFILE)
-    {
-      if (nrpars > 0)
-      {
-        return error("missing ')' at end of file");
-      }
-      return true;
-    }
-    if (token != Token::RPAR)
-    {
-      return error("missing ')'");
-    }
-    nrpars -= 1;
-  }
-  return true;
-}
 
 bool
 Parser::parse_uint64(uint64_t& uint)
@@ -1258,7 +1220,7 @@ Parser::parse_open_term_as()
     {
       return error("expected array sort");
     }
-    if (!parse_rpars(1))
+    if (!parse_rpar())
     {
       return false;
     }
@@ -1384,7 +1346,7 @@ Parser::parse_open_term_indexed()
     item.d_uints_coo.emplace_back(d_lexer->coo());
   }
 
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -1460,7 +1422,7 @@ Parser::parse_open_term_indexed()
 bool
 Parser::parse_open_term_quant()
 {
-  if (!parse_lpars(1))
+  if (!parse_lpar())
   {
     return false;
   }
@@ -1492,7 +1454,7 @@ Parser::parse_open_term_symbol()
   {
     if (token == Token::LET)
     {
-      if (!parse_lpars(1))
+      if (!parse_lpar())
       {
         return false;
       }
@@ -2353,7 +2315,7 @@ Parser::parse_sort_array(bitwuzla::Sort& sort)
   {
     return false;
   }
-  if (!parse_rpars(1))
+  if (!parse_rpar())
   {
     return false;
   }
@@ -2381,7 +2343,7 @@ Parser::parse_sort_bv_fp(bitwuzla::Sort& sort)
     {
       return error("invalid bit-vector size '0'");
     }
-    if (!parse_rpars(1))
+    if (!parse_rpar())
     {
       return false;
     }
@@ -2410,7 +2372,7 @@ Parser::parse_sort_bv_fp(bitwuzla::Sort& sort)
       return error("invalid significand size '" + std::to_string(ssize)
                    + "', must be > 1");
     }
-    if (!parse_rpars(1))
+    if (!parse_rpar())
     {
       return false;
     }
