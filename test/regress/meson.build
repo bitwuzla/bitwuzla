@@ -1121,6 +1121,7 @@ tests_smt2 = [
   #['parser/arrayeqerr0.btor'],
   #['parser/arrayeqerr1.btor'],
   #['parser/arrayeqerr2.btor'],
+  ['parser/let.smt2'],
   ['parser/regmismatch.smt2'],
   #['preprocess/bv/normalize_add_incomplete.btor', ['-db']],
   #['preprocess/bv/normalize_and_incomplete.btor', ['-db']],

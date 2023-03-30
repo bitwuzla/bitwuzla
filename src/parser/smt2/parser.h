@@ -192,10 +192,22 @@ class Parser
 
   size_t idx_open() const { return d_work_control.back(); }
 
+  size_t idx_prev() const
+  {
+    assert(d_work_control.size() > 1);
+    return d_work_control[d_work_control.size() - 2];
+  }
+
   ParsedItem& item_open()
   {
     assert(idx_open() < d_work.size());
     return d_work[idx_open()];
+  }
+
+  ParsedItem& item_prev()
+  {
+    assert(idx_prev() < d_work.size());
+    return d_work[idx_prev()];
   }
 
   const Lexer::Coordinate& arg_coo(size_t idx) const;

@@ -1567,8 +1567,7 @@ Parser::parse_open_term_symbol()
   else if (d_fp_enabled)
   {
     if (token == Token::REAL_DIV
-        && !peek_item_is_token(Token::FP_TO_FP,
-                               d_work_control[d_work_control.size() - 2]))
+        && !peek_item_is_token(Token::FP_TO_FP, idx_prev()))
     {
       return error("invalid term, '" + std::to_string(token)
                    + "' only allowed to represent rational values under '"
@@ -1785,6 +1784,30 @@ Parser::close_term()
       // (forall (<sorted_var> <sorted_var>) <body>) ->
       // (forall <sorted_var> <sorted_var> <body>)
       d_work.erase(d_work.begin() + idx_open() - 1);
+      d_work_control.pop_back();
+    }
+    else if (token == Token::LETBIND)
+    {
+      // this needs special handling since we have to keep the symbols
+      // bound by the let on the stack in order to be able to remove
+      // them from the symbol table when closing the let
+      assert(peek_is_node_arg());
+      SymbolTable::Node* symbol = pop_node_arg();
+      assert(peek_item_is_token(Token::LETBIND));
+      d_work.pop_back();
+      d_work_control.pop_back();
+      assert(peek_item_is_token(Token::LPAR));
+      set_item(d_work.back(), Token::SYMBOL, symbol);
+    }
+    else if (token == Token::PARLETBIND)
+    {
+      // this needs special handling since we have to keep the symbols
+      // bound by the let on the stack in order to be able to remove
+      // them from the symbol table when closing the let
+      size_t idx = idx_open();
+      assert(peek_item_is_token(Token::PARLETBIND, idx));
+      assert(peek_item_is_token(Token::LPAR, idx - 1));
+      d_work.erase(d_work.begin() + idx - 1, d_work.begin() + idx + 1);
       d_work_control.pop_back();
     }
     else if (token == Token::REAL_DIV)
@@ -2044,10 +2067,10 @@ Parser::close_term_fp(ParsedItem& item)
                        + "', got " + std::to_string(nargs()),
                    item.d_coo);
     }
-    ParsedItem& item_prev = d_work[d_work_control[d_work_control.size() - 2]];
-    item_prev.d_strs.insert(
-        item_prev.d_strs.end(), item.d_strs.begin(), item.d_strs.end());
-    item_prev.d_from_rational = true;
+    ParsedItem& prev = item_prev();
+    prev.d_strs.insert(
+        prev.d_strs.end(), item.d_strs.begin(), item.d_strs.end());
+    prev.d_from_rational = true;
     assert(d_work.back().d_token == Token::REAL_DIV);
     d_work.pop_back();
     return true;
@@ -2123,15 +2146,18 @@ Parser::close_term_let(ParsedItem& item)
                      + std::to_string(item.d_token) + "'");
   }
   set_item(item, Token::TERM, pop_term_arg());
-  for (size_t i = 0, n = nargs(); i < n; ++i)
+  size_t idx = idx_open();
+  size_t n   = nargs();
+  for (size_t i = 0; i < n; ++i)
   {
-    SymbolTable::Node* symbol = pop_node_arg();
+    SymbolTable::Node* symbol = peek_node_arg(idx + 1 + i);
     assert(symbol);
     assert(symbol->d_token == Token::SYMBOL);
     assert(symbol->d_coo.line);
     assert(!symbol->d_term.is_null());
     d_table.remove(symbol);
   }
+  d_work.resize(d_work.size() - n);
   return true;
 }
 
@@ -2149,14 +2175,12 @@ Parser::close_term_letbind(ParsedItem& item)
     return error_arg("expected term");
   }
   bitwuzla::Term term       = pop_term_arg();
-  SymbolTable::Node* symbol = pop_node_arg();
+  SymbolTable::Node* symbol = peek_node_arg();
   assert(symbol->d_term.is_null());
   assert(!symbol->d_is_bound);
   symbol->d_term     = term;
   symbol->d_is_bound = true;
   d_is_var_binding   = true;
-  assert(peek_item_is_token(Token::LETBIND));
-  d_work.pop_back();
   return true;
 }
 
@@ -2168,8 +2192,6 @@ Parser::close_term_parletbind(ParsedItem& item)
   d_is_var_binding = false;
   assert(!d_expect_body);
   d_expect_body = true;
-  assert(peek_item_is_token(Token::PARLETBIND));
-  d_work.pop_back();
   return true;
 }
 
