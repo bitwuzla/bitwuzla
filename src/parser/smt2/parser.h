@@ -42,15 +42,12 @@ class Parser
 
     Token d_token;
     Lexer::Coordinate d_coo;
-    std::variant<SymbolTable::Node*,
-                 bitwuzla::Sort,
-                 bitwuzla::Term,
-                 uint64_t,
-                 std::string,
-                 std::array<std::string, 2>>
-        d_item;
+    std::variant<SymbolTable::Node*, bitwuzla::Sort, bitwuzla::Term> d_item;
     std::vector<uint64_t> d_uints;
     std::vector<Lexer::Coordinate> d_uints_coo;
+    std::vector<std::string> d_strs;
+    std::vector<Lexer::Coordinate> d_strs_coo;
+    bool d_from_rational = false;
   };
 
   void init_logic()
@@ -258,7 +255,6 @@ class Parser
   }
 
   bitwuzla::Term pop_term_arg();
-  std::string pop_str_arg();
   SymbolTable::Node* pop_node_arg(bool set_coo = false);
 
   const bitwuzla::Term& peek_term_arg() const
@@ -276,11 +272,6 @@ class Parser
   {
     assert(peek_is_term_arg(idx));
     return std::get<bitwuzla::Term>(d_work[idx].d_item);
-  }
-  const std::string& peek_str_arg(size_t idx) const
-  {
-    assert(peek_is_str_arg(idx));
-    return std::get<std::string>(d_work[idx].d_item);
   }
   SymbolTable::Node* peek_node_arg(size_t idx) const
   {
@@ -302,19 +293,6 @@ class Parser
            || std::holds_alternative<bitwuzla::Term>(d_work[idx].d_item));
     return idx < d_work.size() && d_work[idx].d_token == Token::TERM;
   }
-  bool peek_is_str_arg() const
-  {
-    assert(d_work.size()
-           && (d_work.back().d_token != Token::STRING
-               || std::holds_alternative<std::string>(d_work.back().d_item)));
-    return d_work.back().d_token == Token::STRING;
-  }
-  bool peek_is_str_arg(size_t idx) const
-  {
-    assert(idx > d_work.size() || d_work[idx].d_token != Token::STRING
-           || std::holds_alternative<std::string>(d_work[idx].d_item));
-    return idx < d_work.size() && d_work[idx].d_token == Token::STRING;
-  }
   bool peek_is_node_arg() const
   {
     assert(d_work.size()
@@ -330,9 +308,7 @@ class Parser
     return idx < d_work.size() && d_work[idx].d_token == Token::SYMBOL;
   }
 
-  bool pop_args(const ParsedItem& item_open,
-                std::vector<bitwuzla::Term>& args,
-                std::vector<std::string>* strs = nullptr);
+  bool pop_args(const ParsedItem& item_open, std::vector<bitwuzla::Term>& args);
 
 #ifndef NDEBUG
   void print_work_stack();

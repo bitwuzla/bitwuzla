@@ -36,8 +36,6 @@ enum class Token
   ATTRIBUTE,
   OPEN,     // place holder for open item
   TERM,     // term argument
-  STRING,   // string argument
-  STRINGS,  // strings argument
   FUN_APP,
   /* <var_binding> */
   LETBIND,
