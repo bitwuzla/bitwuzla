@@ -43,7 +43,7 @@ Lexer::next_token_aux()
   {
     do
     {
-      d_coo = d_next_coo;
+      d_coo = d_cur_coo;
       if ((ch = next_char()) == EOF)
       {
         d_token.push_back(0);
@@ -338,7 +338,7 @@ Lexer::error(int32_t ch, const std::string& error_msg)
   {
     save_char(ch);
   }
-  d_coo   = d_next_coo;
+  d_coo   = d_cur_coo;
   d_error = error_msg;
   return Token::INVALID;
 }
@@ -379,6 +379,5 @@ Lexer::init_char_classes()
     d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::KEYWORD);
   }
 }
-
 }  // namespace parser::smt2
 }  // namespace bzla
