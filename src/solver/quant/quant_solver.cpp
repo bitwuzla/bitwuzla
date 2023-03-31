@@ -357,6 +357,7 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
   util::Timer timer(d_stats.time_mbqi);
   NodeManager& nm = NodeManager::get();
   option::Options options;
+  options.dbg_check_model.set(false);
   d_mbqi_solver.reset(new SolvingContext(options));
   // std::cout << "mbqi check" << std::endl;
   // std::cout << "## new solver" << std::endl;
@@ -436,6 +437,7 @@ QuantSolver::mbqi_lemma(const Node& q)
   {
     const Node& ic = inst_const(cur);
     Node value     = d_mbqi_solver->get_value(ic);
+    assert(!value.is_null());
     for (const Node& t : d_ground_terms)
     {
       if (t.type() == ic.type())
