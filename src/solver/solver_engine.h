@@ -90,6 +90,7 @@ class SolverEngine
   std::vector<Node> d_lemmas;
   /** Indicates whether new terms were registered while solving. */
   bool d_new_terms_registered = false;
+  bool d_new_quantifiers_registered = false;
   /** Lemma cache. */
   backtrack::unordered_set<Node> d_lemma_cache;
 

@@ -106,9 +106,11 @@ Preprocessor::process(const Node& term)
 {
   util::Timer timer(d_stats.time_process);
   // TODO: add more passes
-  Node processed = d_pass_elim_lambda.process(term);
+  Node processed = d_pass_rewrite.process(term);
   processed      = d_pass_variable_substitution.process(processed);
-  return d_pass_rewrite.process(processed);
+  processed      = d_pass_elim_lambda.process(processed);
+  processed      = d_pass_rewrite.process(processed);
+  return processed;
 }
 
 std::vector<Node>

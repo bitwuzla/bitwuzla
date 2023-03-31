@@ -34,6 +34,12 @@ CheckModel::check()
   for (const Node& input : d_consts)
   {
     Node value = d_ctx.get_value(input);
+    // We may get a null node in case of querying values for quantifiers that
+    // were not checked.
+    if (value.is_null())
+    {
+      continue;
+    }
     // Special handling until equality over constant arrays supported
     if (input.type().is_array())
     {

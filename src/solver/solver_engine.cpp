@@ -44,6 +44,7 @@ SolverEngine::solve()
   {
     // Reset term registration flag
     d_new_terms_registered = false;
+    d_new_quantifiers_registered = false;
 
     // Process lemmas generated in previous iteration.
     process_lemmas();
@@ -86,10 +87,16 @@ Node
 SolverEngine::value(const Node& term)
 {
   assert(d_sat_state == Result::SAT);
+  Log(2) << "get value for (in_solving: " << d_in_solving_mode << "): " << term;
 
-  if (d_in_solving_mode)
+  process_term(term);
+
+  // If we registered new quantifiers when not currently solving, we have to
+  // check the new quantifiers to make sure that the value is correct.
+  if (!d_in_solving_mode && d_new_quantifiers_registered)
   {
-    process_term(term);
+    Log(1) << "value() discovered new terms, requires additional checking";
+    return Node();
   }
 
   const Type& type = term.type();
@@ -191,6 +198,7 @@ SolverEngine::process_assertion(const Node& assertion, bool top_level)
   auto [it, inserted] = d_register_assertion_cache.insert(assertion);
   if (inserted)
   {
+    Log(2) << "register assertion (top: " << top_level << "): " << assertion;
     d_bv_solver.register_assertion(assertion, top_level);
     d_quant_solver.register_assertion(assertion);
   }
@@ -212,23 +220,28 @@ SolverEngine::process_term(const Node& term)
     {
       if (array::ArraySolver::is_theory_leaf(cur))
       {
+        Log(2) << "register array term: " << cur;
         d_array_solver.register_term(cur);
         d_new_terms_registered = true;
       }
       else if (fun::FunSolver::is_theory_leaf(cur))
       {
+        Log(2) << "register function term: " << cur;
         d_fun_solver.register_term(cur);
         d_new_terms_registered = true;
       }
       else if (quant::QuantSolver::is_theory_leaf(cur))
       {
+        Log(2) << "register quantifier term: " << cur;
         d_quant_solver.register_term(cur);
         d_new_terms_registered = true;
+        d_new_quantifiers_registered = true;
       }
       else
       {
         if (fp::FpSolver::is_theory_leaf(cur))
         {
+          Log(2) << "register floating-point term: " << cur;
           d_fp_solver.register_term(cur);
           d_new_terms_registered = true;
         }
