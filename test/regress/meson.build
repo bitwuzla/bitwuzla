@@ -1350,6 +1350,7 @@ tests_smt2 = [
   ['parser/smt2perr192.smt2'],
   ['parser/smt2perr193.smt2'],
   ['parser/smt2perr194.smt2'],
+  ['parser/smt2perr195.smt2'],
 
   ['solver/fp/fp_regr1.smt2'],
   ['solver/fp/fp_regr10.smt2'],

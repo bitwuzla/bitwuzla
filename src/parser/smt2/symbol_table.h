@@ -74,12 +74,19 @@ class SymbolTable
                uint64_t assertion_level = 0);
   /**
    * Remove a symbol node from the symbol table.
-   * If the symbol is shadowed, only removes the most recent declaration of the
-   * symbol.
+   * If the symbol is shadowed, this only removes the most recent declaration
+   * of the symbol.
    * Asserts that the symbol node exists.
    * @param node The symbol node.
    */
   void remove(Node* node);
+  /**
+   * Remove the current declaration of the given  symbol from the symbol table.
+   * If the symbol is shadowed, this only removes the most recent declaration
+   * of the symbol.
+   * @param symbol The symbol.
+   */
+  void remove(const std::string& symbol);
   /**
    * Remove all nodes from all levels down to (and including) the given
    * assertion level.

@@ -1111,6 +1111,7 @@ Parser::parse_open_term(Token token)
       {
         return false;
       }
+      peek_node_arg()->d_coo = d_lexer->coo();
       bitwuzla::Sort sort;
       if (!parse_sort(sort))
       {
@@ -3143,6 +3144,8 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
                              + "'",
                          arg_coo(j));
           }
+          // remove sorted variables from symbol table
+          d_table.remove(args[i].str());
         }
         else
         {

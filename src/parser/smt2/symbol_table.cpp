@@ -47,7 +47,12 @@ SymbolTable::insert(Token token,
 void
 SymbolTable::remove(Node* node)
 {
-  const std::string& symbol = node->d_symbol;
+  remove(node->d_symbol);
+}
+
+void
+SymbolTable::remove(const std::string& symbol)
+{
   auto it                   = d_table.find(symbol);
   assert(it != d_table.end());
   Node* n = it->second;
