@@ -1,0 +1,6 @@
+(set-logic QF_FP)
+(declare-fun a () (_ FloatingPoint 3 5))
+(declare-fun b () (_ FloatingPoint 3 5))
+(assert (= a (fp.add RNA b (fp #b0 #b000 #b0001))))
+(set-info :status sat)
+(check-sat)

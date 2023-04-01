@@ -43,6 +43,9 @@ class Preprocessor
   std::vector<Node> original_assertions(
       const std::vector<Node>& assertions) const;
 
+  /** Get current map of active substitutions. */
+  const std::unordered_map<Node, Node>& substitutions() const;
+
  private:
   /** Apply all preprocessing passes to assertions until fixed-point. */
   void apply(AssertionVector& assertions);

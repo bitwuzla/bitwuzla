@@ -120,6 +120,12 @@ Preprocessor::original_assertions(const std::vector<Node>& assertions) const
   return d_assertion_tracker->parents(assertions);
 }
 
+const std::unordered_map<Node, Node>&
+Preprocessor::substitutions() const
+{
+  return d_pass_variable_substitution.substitutions();
+}
+
 /* --- Preprocessor private ------------------------------------------------- */
 
 void

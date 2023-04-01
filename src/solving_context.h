@@ -67,6 +67,9 @@ class SolvingContext
   Env& env();
 
  private:
+  /** Build a model for current solve() call. */
+  void build_model();
+
   /** Solving context environment. */
   Env d_env;
 
@@ -87,6 +90,8 @@ class SolvingContext
 
   /** Result of last solve() call. */
   Result d_sat_state = Result::UNKNOWN;
+
+  bool d_built_model = false;
 };
 
 }  // namespace bzla

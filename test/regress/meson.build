@@ -2,6 +2,9 @@ python = import('python').find_installation()
 run_regress_script = find_program('run-test-case.py')
 
 tests_smt2 = [
+  ['check/regr_cm1.smt2'],
+  ['check/regr_cm2.smt2'],
+  ['check/regr_cm3.smt2'],
   ['preprocess/array/regrembeddedconstraint10.btor.smt2', ['-rwl=0']],
   ['preprocess/array/regrembeddedconstraint10.btor.smt2', ['-rwl=1']],
   ['preprocess/array/regrembeddedconstraint10.btor.smt2'],

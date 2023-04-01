@@ -45,6 +45,8 @@ SolverEngine::solve()
     // Reset term registration flag
     d_new_terms_registered = false;
     d_new_quantifiers_registered = false;
+    d_new_array_terms_registered = false;
+    d_new_fun_terms_registered   = false;
 
     // Process lemmas generated in previous iteration.
     process_lemmas();
@@ -91,10 +93,19 @@ SolverEngine::value(const Node& term)
 
   process_term(term);
 
-  // If we registered new quantifiers when not currently solving, we have to
-  // check the new quantifiers to make sure that the value is correct.
-  if (!d_in_solving_mode && d_new_quantifiers_registered)
+  if (!d_in_solving_mode
+      && (d_new_quantifiers_registered || d_new_array_terms_registered
+          || d_new_fun_terms_registered))
   {
+    // The value of `term` depends on a newly registered term. The registered
+    // term does not appear in the bit-vector abstraction and was not checked
+    // by the corresponding theory solver.
+    // In this case, we return a null node as value and require a new
+    // SolverEngine::solve() call to make sure that the newly registered term
+    // is checked and the values are consistent.
+    //
+    // Note: This only happens during SolvingContext::build_model() since terms
+    //       that get registered during solving will be checked.
     Log(1) << "value() discovered new terms, requires additional checking";
     return Node();
   }
@@ -223,12 +234,14 @@ SolverEngine::process_term(const Node& term)
         Log(2) << "register array term: " << cur;
         d_array_solver.register_term(cur);
         d_new_terms_registered = true;
+        d_new_array_terms_registered = true;
       }
       else if (fun::FunSolver::is_theory_leaf(cur))
       {
         Log(2) << "register function term: " << cur;
         d_fun_solver.register_term(cur);
         d_new_terms_registered = true;
+        d_new_fun_terms_registered = true;
       }
       else if (quant::QuantSolver::is_theory_leaf(cur))
       {

@@ -24,6 +24,8 @@ class PassVariableSubstitution : public PreprocessingPass
   /** Process term and apply currently cached substitutions. */
   Node process(const Node& term) override;
 
+  const std::unordered_map<Node, Node>& substitutions() const;
+
  private:
   void remove_indirect_cycles(std::unordered_map<Node, Node>& substs) const;
 
@@ -72,6 +74,8 @@ class PassVariableSubstitution : public PreprocessingPass
 
     /** @return Current substitution map. */
     std::unordered_map<Node, Node>& substitutions();
+
+    const std::unordered_map<Node, Node>& substitutions() const;
 
     /** @return Current substitution cache. */
     std::unordered_map<Node, Node>& cache();

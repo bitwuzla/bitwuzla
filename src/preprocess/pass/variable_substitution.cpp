@@ -522,6 +522,12 @@ PassVariableSubstitution::process(const Node& term)
       term, null, d_cache.substitutions(), d_cache.cache(), parents));
 }
 
+const std::unordered_map<Node, Node>&
+PassVariableSubstitution::substitutions() const
+{
+  return d_cache.substitutions();
+}
+
 /* --- PassVariableSubstitution private ------------------------------------- */
 
 void
@@ -801,6 +807,12 @@ PassVariableSubstitution::Cache::pop()
 
 std::unordered_map<Node, Node>&
 PassVariableSubstitution::Cache::substitutions()
+{
+  return d_map.back();
+}
+
+const std::unordered_map<Node, Node>&
+PassVariableSubstitution::Cache::substitutions() const
 {
   return d_map.back();
 }
