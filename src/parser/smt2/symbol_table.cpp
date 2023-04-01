@@ -7,10 +7,10 @@ namespace parser::smt2 {
 
 SymbolTable::Node::Node(Token token,
                         const std::string& symbol,
-                        uint64_t scope_level)
+                        uint64_t assertion_level)
     : d_token(token),
       d_symbol(symbol),
-      d_scope_level(scope_level),
+      d_assertion_level(assertion_level),
       d_coo({0, 0})
 {
 }
@@ -32,9 +32,9 @@ SymbolTable::Node::has_symbol() const
 SymbolTable::Node*
 SymbolTable::insert(Token token,
                     const std::string& symbol,
-                    uint64_t scope_level)
+                    uint64_t assertion_level)
 {
-  Node* node = new Node(token, symbol, scope_level);
+  Node* node          = new Node(token, symbol, assertion_level);
   auto [it, inserted] = d_table.emplace(symbol, node);
   if (!inserted)
   {
@@ -61,14 +61,14 @@ SymbolTable::remove(Node* node)
 }
 
 void
-SymbolTable::pop_scope(uint64_t scope_level)
+SymbolTable::pop_level(uint64_t assertion_level)
 {
   // TODO use indices
   std::vector<std::string> erase;
   for (auto& p : d_table)
   {
     assert(p.second);
-    while (p.second && p.second->d_scope_level >= scope_level)
+    while (p.second && p.second->d_assertion_level >= assertion_level)
     {
       Node* n  = p.second;
       p.second = n->d_next;
@@ -381,7 +381,7 @@ SymbolTable::print() const
     std::cout << "'" << p.first << "': ";
     for (Node* n = p.second; n; n = n->d_next)
     {
-      std::cout << " (" << n->d_symbol << ", " << n->d_scope_level << ")";
+      std::cout << " (" << n->d_symbol << ", " << n->d_assertion_level << ")";
     }
     std::cout << std::endl;
   }

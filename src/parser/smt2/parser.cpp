@@ -106,7 +106,7 @@ Parser::next_token()
     SymbolTable::Node* node = d_table.find(symbol);
     if (!node)
     {
-      node = d_table.insert(token, symbol, d_scope_level);
+      node = d_table.insert(token, symbol, d_assertion_level);
     }
     d_last_node = node;
     token       = d_last_node->d_token;
@@ -720,7 +720,7 @@ Parser::parse_command_pop()
   {
     return false;
   }
-  if (nlevels > d_scope_level)
+  if (nlevels > d_assertion_level)
   {
     return error_arg("attempting to pop '" + std::to_string(nlevels)
                      + "' but only '" + std::to_string(nlevels)
@@ -732,8 +732,8 @@ Parser::parse_command_pop()
     // remove symbols from current scope
     for (size_t i = 0; i < nlevels; ++i)
     {
-      d_table.pop_scope(d_scope_level);
-      d_scope_level -= 1;
+      d_table.pop_level(d_assertion_level);
+      d_assertion_level -= 1;
     }
   }
   d_bitwuzla->pop(nlevels);
@@ -756,7 +756,7 @@ Parser::parse_command_push()
   {
     return false;
   }
-  d_scope_level += nlevels;
+  d_assertion_level += nlevels;
   d_bitwuzla->push(nlevels);
   print_success();
   return true;
@@ -1001,7 +1001,7 @@ Parser::parse_symbol(const std::string& error_msg,
   // shadow previously defined symbols
   if (shadow && d_last_node->d_coo.line)
   {
-    d_last_node        = d_table.insert(token, d_lexer->token(), d_scope_level);
+    d_last_node = d_table.insert(token, d_lexer->token(), d_assertion_level);
     assert(d_last_node->has_symbol());
     d_last_node->d_coo = d_lexer->coo();
   }
