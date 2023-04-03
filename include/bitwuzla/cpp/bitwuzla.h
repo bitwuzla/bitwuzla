@@ -1193,7 +1193,7 @@ class Bitwuzla
    *               `"aiger_binary"` for the binary AIGER format, `"btor"` for
    *               the BTOR format, and `"smt2"` for the SMT-LIB v2 format.
    */
-  void dump_formula(std::ostream &out, const std::string &format);
+  void print_formula(std::ostream &out, const std::string &format);
 
  private:
   /** Helper called when solver state changes. */

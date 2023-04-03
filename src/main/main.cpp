@@ -132,6 +132,10 @@ print_help(const bitwuzla::Options& options)
                     format_longb("copyright"),
                     "",
                     "print copyright and exit");
+  opts.emplace_back(format_shortb("p"),
+                    format_longb("print-formula"),
+                    "",
+                    "print formula in smt2 format");
 
   // Format library options
   for (size_t i = 0, size = static_cast<size_t>(bitwuzla::Option::NUM_OPTS);
@@ -238,6 +242,7 @@ int32_t
 main(int32_t argc, char* argv[])
 {
   bitwuzla::Options options;
+  bool print = false;
 
   std::vector<std::string> args;
   std::string infile_name;
@@ -258,6 +263,10 @@ main(int32_t argc, char* argv[])
     {
       print_version();
       std::exit(EXIT_SUCCESS);
+    }
+    else if (arg == "-p" || arg == "--print-formula")
+    {
+      print = true;
     }
     // Check if argument is the intput file.
     // Note: For now only supports .smt2 and .btor suffices
@@ -294,12 +303,17 @@ main(int32_t argc, char* argv[])
   } while (token != bzla::parser::smt2::Token::ENDOFFILE);
 #else
   bzla::parser::smt2::Parser parser(options, infile_name);
-  std::string err_msg = parser.parse();
-  if (err_msg.empty())
+  std::string err_msg = parser.parse(print);
+  if (!err_msg.empty())
   {
-    std::exit(EXIT_SUCCESS);
+    std::cerr << "[error] " << err_msg << std::endl;
+    std::exit(EXIT_FAILURE);
   }
-  std::cerr << "[error] " << err_msg << std::endl;
-  std::exit(EXIT_FAILURE);
+  if (print)
+  {
+    parser.bitwuzla()->simplify();
+    parser.bitwuzla()->print_formula(std::cout, "smt2");
+  }
+  std::exit(EXIT_SUCCESS);
 #endif
 }

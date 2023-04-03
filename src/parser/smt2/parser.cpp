@@ -34,7 +34,7 @@ Parser::Parser(bitwuzla::Options& options, const std::string& infile_name)
 }
 
 std::string
-Parser::parse()
+Parser::parse(bool parse_only)
 {
   util::Timer timer(d_statistics.time_parse);
 
@@ -43,7 +43,7 @@ Parser::parse()
     return d_error;
   }
 
-  while (parse_command() && !d_done && !terminate())
+  while (parse_command(parse_only) && !d_done && !terminate())
     ;
 
   if (d_error.empty())
@@ -115,7 +115,7 @@ Parser::next_token()
 }
 
 bool
-Parser::parse_command()
+Parser::parse_command(bool parse_only)
 {
   Token token = next_token();
 
@@ -154,8 +154,10 @@ Parser::parse_command()
   switch (token)
   {
     case Token::ASSERT: res = parse_command_assert(); break;
-    case Token::CHECK_SAT: res = parse_command_check_sat(); break;
-    case Token::CHECK_SAT_ASSUMING: res = parse_command_check_sat(true); break;
+    case Token::CHECK_SAT: res = parse_command_check_sat(parse_only); break;
+    case Token::CHECK_SAT_ASSUMING:
+      res = parse_command_check_sat(parse_only, true);
+      break;
     case Token::DECLARE_CONST: res = parse_command_declare_fun(true); break;
     case Token::DECLARE_SORT: res = parse_command_declare_sort(); break;
     case Token::DECLARE_FUN: res = parse_command_declare_fun(); break;
@@ -211,7 +213,7 @@ Parser::parse_command_assert()
 }
 
 bool
-Parser::parse_command_check_sat(bool with_assumptions)
+Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
 {
   init_logic();
   init_bitwuzla();
@@ -246,7 +248,10 @@ Parser::parse_command_check_sat(bool with_assumptions)
     {
       return false;
     }
-    d_result = d_bitwuzla->check_sat(assumptions);
+    if (!parse_only)
+    {
+      d_result = d_bitwuzla->check_sat(assumptions);
+    }
   }
   else
   {
@@ -254,7 +259,10 @@ Parser::parse_command_check_sat(bool with_assumptions)
     {
       return false;
     }
-    d_result = d_bitwuzla->check_sat();
+    if (!parse_only)
+    {
+      d_result = d_bitwuzla->check_sat();
+    }
   }
   d_statistics.num_check_sat += 1;
   if (d_result == bitwuzla::Result::SAT)
@@ -273,7 +281,7 @@ Parser::parse_command_check_sat(bool with_assumptions)
       return error("'unsat' but status is 'sat'");
     }
   }
-  else
+  else if (!parse_only)
   {
     // TODO: do not print unknown when printing DIMACS
     (*d_out) << "unknown" << std::endl;

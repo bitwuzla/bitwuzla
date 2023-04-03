@@ -1740,13 +1740,13 @@ TEST_F(TestApi, get_rm_value)
   }
 }
 
-TEST_F(TestApi, dump_formula1)
+TEST_F(TestApi, print_formula1)
 {
   bitwuzla::Options options;
   bitwuzla::Bitwuzla bitwuzla(options);
 
-  ASSERT_THROW(bitwuzla.dump_formula(std::cout, ""), bitwuzla::Exception);
-  ASSERT_THROW(bitwuzla.dump_formula(std::cout, "asdf"), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla.print_formula(std::cout, ""), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla.print_formula(std::cout, "asdf"), bitwuzla::Exception);
 
   GTEST_SKIP();  // TODO enable when implemented
   bitwuzla.assert_formula(d_bool_const);
@@ -1755,12 +1755,12 @@ TEST_F(TestApi, dump_formula1)
       {bitwuzla::mk_term(bitwuzla::Kind::APPLY, {d_lambda, d_bv_const8}),
        d_bv_zero8}));
 
-  ASSERT_NO_THROW(bitwuzla.dump_formula(std::cout, "btor"));
-  ASSERT_NO_THROW(bitwuzla.dump_formula(std::cout, "smt2"));
+  ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "btor"));
+  ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "smt2"));
 
   bitwuzla.assert_formula(d_exists);
-  ASSERT_NO_THROW(bitwuzla.dump_formula(std::cout, "btor"));
-  ASSERT_NO_THROW(bitwuzla.dump_formula(std::cout, "smt2"));
+  ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "btor"));
+  ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "smt2"));
   // TODO test incremental
 }
 

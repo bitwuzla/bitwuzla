@@ -5,10 +5,12 @@
 #include <unordered_map>
 #include <vector>
 
+#include "backtrack/assertion_stack.h"
 #include "bv/bitvector.h"
 #include "node/kind_info.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
+#include "node/unordered_node_ref_set.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
@@ -84,6 +86,129 @@ Printer::print(std::ostream& os, const Type& type)
   {
     assert(false);
   }
+}
+
+void
+Printer::print_formula(std::ostream& os,
+                       const backtrack::AssertionView& assertions)
+{
+  bool has_arrays = false, has_bv = false, has_fp = false, has_funs = false;
+  bool has_quants = false;
+  node_ref_vector visit;
+  node_ref_vector decls;
+  unordered_node_ref_set cache;
+
+  for (size_t i = 0, n = assertions.size(); i < n; ++i)
+  {
+    visit.emplace_back(assertions[i]);
+  }
+
+  do
+  {
+    const Node& cur = visit.back();
+    visit.pop_back();
+    Kind kind           = cur.kind();
+    auto [it, inserted] = cache.insert(cur);
+    if (!has_quants && (kind == Kind::EXISTS || kind == Kind::FORALL))
+    {
+      has_quants = true;
+    }
+    else if (!has_bv
+             && (kind == Kind::FP_TO_SBV || kind == Kind::FP_TO_FP_FROM_UBV))
+    {
+      has_bv = true;
+    }
+    else if (!has_fp
+             && (kind == Kind::FP_TO_FP_FROM_BV
+                 || kind == Kind::FP_TO_FP_FROM_FP
+                 || kind == Kind::FP_TO_FP_FROM_SBV
+                 || kind == Kind::FP_TO_FP_FROM_UBV))
+    {
+      has_fp = true;
+    }
+    if (inserted)
+    {
+      if (cur.is_const())
+      {
+        if (!has_arrays && cur.type().is_array())
+        {
+          has_arrays = true;
+        }
+        else if (!has_bv && cur.type().is_bv())
+        {
+          has_bv = true;
+        }
+        else if (!has_fp && (cur.type().is_fp() || cur.type().is_rm()))
+        {
+          has_fp = true;
+        }
+        else if (!has_funs && (cur.type().is_fun()))
+        {
+          has_funs = true;
+        }
+        decls.emplace_back(cur);
+      }
+      else
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+    }
+  } while (!visit.empty());
+  // print logic
+  os << "(set-logic ";
+  if (!has_quants)
+  {
+    os << "QF_";
+  }
+  if (has_arrays)
+  {
+    os << "A";
+  }
+  if (has_funs)
+  {
+    os << "UF";
+  }
+  if (has_bv)
+  {
+    os << "BV";
+  }
+  if (has_fp)
+  {
+    os << "FP";
+  }
+  os << ")" << std::endl;
+  // print declarations
+  std::sort(decls.begin(), decls.end());
+  for (const Node& n : decls)
+  {
+    const Type& type = n.type();
+    if (type.is_fun() && type.fun_arity())
+    {
+      os << "(declare-fun " << n << "(";
+      const auto& types = type.fun_types();
+      size_t n          = types.size();
+      for (size_t i = 0; i < n - 1; ++i)
+      {
+        os << (i > 0 ? " " : "") << types[i];
+      }
+      os << ") " << types[n - 1] << ")";
+    }
+    else
+    {
+      os << "(declare-const " << n << " " << n.type() << ")" << std::endl;
+    }
+  }
+  // print assertions
+  for (size_t i = 0, n = assertions.size(); i < n; ++i)
+  {
+    if (!assertions[i].is_value())
+    {
+      os << "(assert " << assertions[i] << ")" << std::endl;
+    }
+  }
+
+  os << "(check-sat)" << std::endl;
+  os << "(exit)" << std::endl;
 }
 
 /* --- Printer private ------------------------------------------------------ */

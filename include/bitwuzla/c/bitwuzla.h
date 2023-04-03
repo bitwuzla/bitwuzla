@@ -1339,7 +1339,7 @@ void bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file);
  *               `"smt2"` for the SMT-LIB v2 format.
  * @param file The file to print the formula to.
  */
-void bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
+void bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
 
 /* -------------------------------------------------------------------------- */
 /* Parsing                                                                    */
@@ -1590,10 +1590,10 @@ bool bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort);
  *               the BTOR format, or `"smt2"` for the SMT-LIB v2 format. Note
  *               for the `"btor"` this function won't do anything since BTOR
  *               sorts are printed when printing the term via
- *               bitwuzla_term_dump.
+ *               bitwuzla_print_term.
  * @param file The file to print the term to.
  */
-void bitwuzla_sort_dump(BitwuzlaSort sort, const char *format, FILE *file);
+void bitwuzla_print_sort(BitwuzlaSort sort, const char *format, FILE *file);
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTerm                                                               */
@@ -2065,7 +2065,7 @@ bool bitwuzla_term_is_const_array(BitwuzlaTerm term);
  * the BTOR format, or `"smt2"` for the SMT-LIB v2 format.
  * @param file The file to print the term to.
  */
-void bitwuzla_term_dump(BitwuzlaTerm term, const char *format, FILE *file);
+void bitwuzla_print_term(BitwuzlaTerm term, const char *format, FILE *file);
 
 /* smt2 parser only --------------------------------------------------------- */
 

@@ -17,6 +17,7 @@
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_set.h"
 #include "option/option.h"
+#include "printer/printer.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "solver/result.h"
@@ -1324,7 +1325,7 @@ Bitwuzla::simplify()
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   solver_state_change();
-  // TODO (not implemented yet)
+  d_ctx->preprocess();
   return Result::UNKNOWN;
 }
 
@@ -1460,13 +1461,11 @@ Bitwuzla::print_model(std::ostream &out, const std::string &format)
 #endif
 
 void
-Bitwuzla::dump_formula(std::ostream &out, const std::string &format)
+Bitwuzla::print_formula(std::ostream &out, const std::string &format)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(format);
   BITWUZLA_CHECK_FORMAT(format);
-  // TODO
-  (void) out;
-  assert(false);
+  bzla::Printer::print_formula(out, d_ctx->assertions());
 }
 
 /* Bitwuzla private ----------------------------------------------------------

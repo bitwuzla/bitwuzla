@@ -6114,7 +6114,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
         }
         else
         {
-          bitwuzla_term_dump(failed_assumptions[i], "smt2", parser->outfile);
+          bitwuzla_print_term(failed_assumptions[i], "smt2", parser->outfile);
         }
       }
       failed_assumptions = 0;

@@ -9,6 +9,10 @@
 
 namespace bzla {
 
+namespace backtrack {
+class AssertionView;
+}
+
 class Printer
 {
  public:
@@ -17,6 +21,9 @@ class Printer
 
   static void print(std::ostream& os, const Node& node);
   static void print(std::ostream& os, const Type& type);
+
+  static void print_formula(std::ostream& os,
+                            const backtrack::AssertionView& assertions);
 
  private:
   static void print(std::ostream& os,

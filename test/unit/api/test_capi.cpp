@@ -2654,9 +2654,9 @@ TEST_F(TestCApi, get_array_value)
   {
     ASSERT_TRUE(indices[ii] == i || indices[ii] == j || indices[ii] == k);
     ASSERT_TRUE(values[ii] == u || values[ii] == v || values[ii] == w);
-    bitwuzla_term_dump(indices[ii], "smt2", stdout);
+    bitwuzla_print_term(indices[ii], "smt2", stdout);
     std::cout << " -> ";
-    bitwuzla_term_dump(values[ii], "smt2", stdout);
+    bitwuzla_print_term(values[ii], "smt2", stdout);
     std::cout << std::endl;
   }
 
@@ -2703,11 +2703,11 @@ TEST_F(TestCApi, get_fun_value)
   {
     for (size_t j = 0; j < arity; ++j)
     {
-      bitwuzla_term_dump(args[i][j], "smt2", stdout);
+      bitwuzla_print_term(args[i][j], "smt2", stdout);
       std::cout << " ";
     }
     std::cout << "-> ";
-    bitwuzla_term_dump(values[i], "smt2", stdout);
+    bitwuzla_print_term(values[i], "smt2", stdout);
     std::cout << std::endl;
   }
 }
@@ -2778,18 +2778,19 @@ TEST_F(TestCApi, print_model)
 }
 #endif
 
-TEST_F(TestCApi, dump_formula1)
+TEST_F(TestCApi, print_formula1)
 {
   GTEST_SKIP();  // TODO enable when implemented
-  ASSERT_DEATH(bitwuzla_dump_formula(nullptr, "btor", stdout),
+  ASSERT_DEATH(bitwuzla_print_formula(nullptr, "btor", stdout),
                d_error_not_null);
   BitwuzlaOptions *options = bitwuzla_options_new();
   Bitwuzla *bitwuzla       = bitwuzla_new(options);
-  ASSERT_DEATH(bitwuzla_dump_formula(bitwuzla, nullptr, stdout),
+  ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, nullptr, stdout),
                d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_dump_formula(bitwuzla, "smt2", nullptr),
+  ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "smt2", nullptr),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_dump_formula(bitwuzla, "asdf", stdout), d_error_format);
+  ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "asdf", stdout),
+               d_error_format);
 
   // TODO should this still throw?
   // ASSERT_DEATH(bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_RW_LEVEL, 0),
@@ -2803,11 +2804,11 @@ TEST_F(TestCApi, dump_formula1)
           bitwuzla_mk_term2(BITWUZLA_KIND_APPLY, d_lambda, d_bv_const8),
           d_bv_zero8));
 
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(bitwuzla, "btor", stdout));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(bitwuzla, "smt2", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_formula(bitwuzla, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_formula(bitwuzla, "smt2", stdout));
   bitwuzla_assert(bitwuzla, d_exists);
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(bitwuzla, "btor", stdout));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(bitwuzla, "smt2", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_formula(bitwuzla, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_formula(bitwuzla, "smt2", stdout));
   // TODO test incremental
   bitwuzla_delete(bitwuzla);
   bitwuzla_options_delete(options);
@@ -3014,19 +3015,19 @@ TEST_F(TestCApi, sort_is_uninterpreted)
   ASSERT_TRUE(bitwuzla_sort_is_uninterpreted(d_un_sort));
 }
 
-TEST_F(TestCApi, sort_dump)
+TEST_F(TestCApi, print_sort)
 {
   GTEST_SKIP();  // TODO enable when implemented
-  ASSERT_DEATH(bitwuzla_sort_dump(0, "btor", stdout), d_error_inv_sort);
-  ASSERT_DEATH(bitwuzla_sort_dump(d_bv_sort1, nullptr, stdout),
+  ASSERT_DEATH(bitwuzla_print_sort(0, "btor", stdout), d_error_inv_sort);
+  ASSERT_DEATH(bitwuzla_print_sort(d_bv_sort1, nullptr, stdout),
                d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_sort_dump(d_bv_sort1, "smt2", nullptr),
+  ASSERT_DEATH(bitwuzla_print_sort(d_bv_sort1, "smt2", nullptr),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_sort_dump(d_bv_sort1, "asdf", stdout), d_error_format);
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_bv_sort1, "btor", stdout));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_bv_sort8, "smt2", stdout));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_rm_sort, "smt2", stdout));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_fp_sort32, "smt2", stdout));
+  ASSERT_DEATH(bitwuzla_print_sort(d_bv_sort1, "asdf", stdout), d_error_format);
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_sort(d_bv_sort1, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_sort(d_bv_sort8, "smt2", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_sort(d_rm_sort, "smt2", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_sort(d_fp_sort32, "smt2", stdout));
   std::cout << std::endl;
 }
 
@@ -3451,43 +3452,43 @@ TEST_F(TestCApi, term_is_const_array)
   ASSERT_FALSE(bitwuzla_term_is_const_array(d_array_fpbv));
 }
 
-TEST_F(TestCApi, term_dump)
+TEST_F(TestCApi, print_term)
 {
   GTEST_SKIP();  // TODO enable when implemented
-  ASSERT_DEATH(bitwuzla_term_dump(0, "btor", stdout), d_error_inv_term);
-  ASSERT_DEATH(bitwuzla_term_dump(d_and_bv_const1, nullptr, stdout),
+  ASSERT_DEATH(bitwuzla_print_term(0, "btor", stdout), d_error_inv_term);
+  ASSERT_DEATH(bitwuzla_print_term(d_and_bv_const1, nullptr, stdout),
                d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_term_dump(d_and_bv_const1, "smt2", nullptr),
+  ASSERT_DEATH(bitwuzla_print_term(d_and_bv_const1, "smt2", nullptr),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_term_dump(d_and_bv_const1, "asdf", stdout),
+  ASSERT_DEATH(bitwuzla_print_term(d_and_bv_const1, "asdf", stdout),
                d_error_format);
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_and_bv_const1, "btor", stdout));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_and_bv_const1, "smt2", stdout));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_exists, "btor", stdout));
-  ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_exists, "smt2", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_term(d_and_bv_const1, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_term(d_and_bv_const1, "smt2", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_term(d_exists, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_print_term(d_exists, "smt2", stdout));
   std::cout << std::endl;
 }
 
-TEST_F(TestCApi, term_dump_regr0)
+TEST_F(TestCApi, term_print_regr0)
 {
   GTEST_SKIP();  // TODO enable when implemented
   testing::internal::CaptureStdout();
 
-  bitwuzla_term_dump(d_rm_rne, "smt2", stdout);
+  bitwuzla_print_term(d_rm_rne, "smt2", stdout);
   printf("\n");
-  bitwuzla_term_dump(d_rm_rna, "smt2", stdout);
+  bitwuzla_print_term(d_rm_rna, "smt2", stdout);
   printf("\n");
-  bitwuzla_term_dump(d_rm_rtn, "smt2", stdout);
+  bitwuzla_print_term(d_rm_rtn, "smt2", stdout);
   printf("\n");
-  bitwuzla_term_dump(d_rm_rtp, "smt2", stdout);
+  bitwuzla_print_term(d_rm_rtp, "smt2", stdout);
   printf("\n");
-  bitwuzla_term_dump(d_rm_rtz, "smt2", stdout);
+  bitwuzla_print_term(d_rm_rtz, "smt2", stdout);
 
   std::string output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "RNE\nRNA\nRTN\nRTP\nRTZ");
 }
 
-TEST_F(TestCApi, term_dump_regr1)
+TEST_F(TestCApi, print_term_regr1)
 {
   GTEST_SKIP();  // TODO enable when implemented
   BitwuzlaSort bv_sort5  = bitwuzla_mk_bv_sort(5);
@@ -3501,7 +3502,7 @@ TEST_F(TestCApi, term_dump_regr1)
                                   bitwuzla_mk_bv_zero(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_dump(fp_const, "smt2", stdout);
+  bitwuzla_print_term(fp_const, "smt2", stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000000)");
 
@@ -3510,7 +3511,7 @@ TEST_F(TestCApi, term_dump_regr1)
                                   bitwuzla_mk_bv_zero(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_dump(fp_const, "smt2", stdout);
+  bitwuzla_print_term(fp_const, "smt2", stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000000)");
 
@@ -3519,7 +3520,7 @@ TEST_F(TestCApi, term_dump_regr1)
                                   bitwuzla_mk_bv_one(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_dump(fp_const, "smt2", stdout);
+  bitwuzla_print_term(fp_const, "smt2", stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000001)");
 
@@ -3528,7 +3529,7 @@ TEST_F(TestCApi, term_dump_regr1)
                                   bitwuzla_mk_bv_one(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_dump(fp_const, "smt2", stdout);
+  bitwuzla_print_term(fp_const, "smt2", stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000001)");
 }
@@ -4083,7 +4084,7 @@ TEST_F(TestCApi, term_print3)
   ASSERT_EQ(std::string(bitwuzla_term_to_string(t)), "a");
 }
 
-TEST_F(TestCApi, dump_formula2)
+TEST_F(TestCApi, print_formula2)
 {
   GTEST_SKIP();  // TODO enable when implemented
   std::string filename = "formula_dump2.out";
@@ -4101,7 +4102,7 @@ TEST_F(TestCApi, dump_formula2)
   BitwuzlaTerm c     = bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, a, b);
   bitwuzla_assert(bitwuzla, e);
   bitwuzla_assert(bitwuzla, c);
-  bitwuzla_dump_formula(bitwuzla, "smt2", tmpfile);
+  bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
   fclose(tmpfile);
 
   std::ifstream ifs(filename);

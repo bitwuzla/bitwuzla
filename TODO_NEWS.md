@@ -26,11 +26,17 @@ API:
   + `BITWUZLA_KIND_VAR`   -> `BITWUZLA_KIND_VARIABLE`
   + `BITWUZLA_KIND_FP_EQ` -> `BITWUZLA_KIND_FP_EQUAL`
 
-- `BitwuzlaTerm` is now a `uint64_t` instead of a struct `BitwuzlaSort` is now a `uint64_t` instead of a struct All functions that took `const BitwuzlaTerm*` and `const BitwuzlaSort*`
-  now take `BitwuzlaTerm` and `BitwuzlaSort` as arguments.
+- `BitwuzlaTerm` is now a `uint64_t` instead of a struct `BitwuzlaSort` is now
+   a `uint64_t` instead of a struct. All functions that took
+   `const BitwuzlaTerm*` and `const BitwuzlaSort*` now take `BitwuzlaTerm` and
+   `BitwuzlaSort` as arguments.
 
 - `bitwuzla_mk_fp_value_from_real` -> `bitwuzla_mk_fp_from_real`
 - `bitwuzla_mk_fp_value_from_rational` -> `bitwuzla_mk_fp_from_rational`
+
+- `bitwuzla_dump_formula` -> `bitwuzla_print_formula`
+- `bitwuzla_sort_dump` -> `bitwuzla_print_sort`
+- `bitwuzla_term_dump` -> `bitwulza_print_term`
 
 - Functions to set and get options (option info) changed their signature and/or name.
   In particular, they now take a `BitwuzlaOptions*` instead of `Bitwuzla*` argument:

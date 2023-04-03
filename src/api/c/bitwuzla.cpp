@@ -1232,7 +1232,7 @@ bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file)
 #endif
 
 void
-bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
+bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
@@ -1497,7 +1497,7 @@ bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort)
 }
 
 void
-bitwuzla_sort_dump(BitwuzlaSort sort, const char *format, FILE *file)
+bitwuzla_print_sort(BitwuzlaSort sort, const char *format, FILE *file)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   // TODO
@@ -1969,7 +1969,7 @@ bitwuzla_term_is_const_array(BitwuzlaTerm term)
 }
 
 void
-bitwuzla_term_dump(BitwuzlaTerm term, const char *format, FILE *file)
+bitwuzla_print_term(BitwuzlaTerm term, const char *format, FILE *file)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   // TODO

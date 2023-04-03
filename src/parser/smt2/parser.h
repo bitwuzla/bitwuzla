@@ -20,9 +20,11 @@ class Parser
  public:
   Parser(bitwuzla::Options& options, const std::string& infile_name);
 
-  std::string parse();
+  std::string parse(bool parse_only);
 
   void configure_terminator(bitwuzla::Terminator* terminator);
+
+  bitwuzla::Bitwuzla* bitwuzla() { return d_bitwuzla.get(); }
 
  private:
   struct ParsedItem
@@ -72,9 +74,9 @@ class Parser
 
   Token next_token();
 
-  bool parse_command();
+  bool parse_command(bool parse_only);
   bool parse_command_assert();
-  bool parse_command_check_sat(bool with_assumptions = false);
+  bool parse_command_check_sat(bool parse_only, bool with_assumptions = false);
   bool parse_command_declare_sort();
   bool parse_command_declare_fun(bool is_const = false);
   bool parse_command_define_fun();
