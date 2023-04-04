@@ -1308,8 +1308,14 @@ Bitwuzla::get_unsat_core()
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_UNSAT("produce unsat core");
-  // TODO (not implemented yet)
-  return {};
+  BITWUZLA_CHECK_LAST_CALL_UNSAT("get unsat core");
+  return Term::node_vector_to_terms(d_ctx->get_unsat_core());
+  std::vector<Term> res;
+  for (const auto &node : d_ctx->get_unsat_core())
+  {
+    res.push_back(node);
+  }
+  return res;
 }
 
 #if 0
@@ -2221,7 +2227,18 @@ Term::term_vector_to_nodes(const std::vector<Term> &terms)
   std::vector<bzla::Node> res;
   for (const auto &term : terms)
   {
-    res.push_back(*term.d_node);
+    res.emplace_back(*term.d_node);
+  }
+  return res;
+}
+
+std::vector<bitwuzla::Term>
+Term::node_vector_to_terms(const std::vector<bzla::Node> &nodes)
+{
+  std::vector<bitwuzla::Term> res;
+  for (const auto &node : nodes)
+  {
+    res.push_back(node);
   }
   return res;
 }

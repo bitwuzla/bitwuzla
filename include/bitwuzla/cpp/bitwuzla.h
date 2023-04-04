@@ -571,6 +571,9 @@ class Term
   /** Convert vector of terms to internal nodes. */
   static std::vector<bzla::Node> term_vector_to_nodes(
       const std::vector<Term> &terms);
+  /** Convert vector of internal nodes to terms. */
+  static std::vector<bitwuzla::Term> node_vector_to_terms(
+      const std::vector<bzla::Node> &nodes);
   /** Constructor from internal node. */
   Term(const bzla::Node &node);
   /** The internal node wrapped by this term. */

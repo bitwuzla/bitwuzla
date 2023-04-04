@@ -82,7 +82,9 @@ class TestCApi : public ::testing::Test
     d_bound_var = bitwuzla_mk_var(d_bv_sort8, "z");
     d_bool_var  = bitwuzla_mk_var(bitwuzla_mk_bool_sort(), "p");
 
-    d_not_bv_const1 =
+    d_bv_const1_true =
+        bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, d_bv_one1, d_bv_const1);
+    d_bv_const1_false =
         bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL,
                           d_bv_one1,
                           bitwuzla_mk_term1(BITWUZLA_KIND_BV_NOT, d_bv_const1));
@@ -170,7 +172,8 @@ class TestCApi : public ::testing::Test
   BitwuzlaTerm d_bound_var;
   BitwuzlaTerm d_bool_var;
 
-  BitwuzlaTerm d_not_bv_const1;
+  BitwuzlaTerm d_bv_const1_true;
+  BitwuzlaTerm d_bv_const1_false;
   BitwuzlaTerm d_and_bv_const1;
   BitwuzlaTerm d_eq_bv_const8;
   BitwuzlaTerm d_lambda;
@@ -2307,11 +2310,11 @@ TEST_F(TestCApi, get_unsat_assumptions)
                  d_error_unsat);
 
     assumptions = {
-        d_bool_const, d_not_bv_const1, d_and_bv_const1, d_eq_bv_const8};
+        d_bv_const1_true, d_bv_const1_false, d_and_bv_const1, d_eq_bv_const8};
     bitwuzla_check_sat_assuming(
         bitwuzla, assumptions.size(), assumptions.data());
-    ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1));
-    ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_not_bv_const1));
+    ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1_true));
+    ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1_false));
     ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_and_bv_const1));
     ASSERT_FALSE(bitwuzla_is_unsat_assumption(bitwuzla, d_eq_bv_const8));
     BitwuzlaTerm *unsat_ass = bitwuzla_get_unsat_assumptions(bitwuzla, &size);
@@ -2333,7 +2336,6 @@ TEST_F(TestCApi, get_unsat_assumptions)
 
 TEST_F(TestCApi, get_unsat_core)
 {
-  GTEST_SKIP();  // TODO enable when implemented
   size_t size;
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
@@ -2353,84 +2355,46 @@ TEST_F(TestCApi, get_unsat_core)
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_CORES, 1);
+    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
 
     ASSERT_DEATH(bitwuzla_get_unsat_core(nullptr, &size), d_error_not_null);
     ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, nullptr), d_error_not_null);
 
     bitwuzla_assert(bitwuzla, d_true);
-    std::vector<BitwuzlaTerm> assumptions{d_bv_const1};
+    std::vector<BitwuzlaTerm> assumptions{d_bv_const1_true};
     bitwuzla_check_sat_assuming(
         bitwuzla, assumptions.size(), assumptions.data());
     ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, &size), d_error_unsat);
 
-    bitwuzla_assert(bitwuzla, d_not_bv_const1);
-    assumptions.push_back(d_and_bv_const1);
+    bitwuzla_assert(bitwuzla, d_bv_const1_true);
     bitwuzla_assert(bitwuzla, d_eq_bv_const8);
+    assumptions[0] = d_bv_const1_false;
+    assumptions.push_back(d_and_bv_const1);
     bitwuzla_check_sat_assuming(
         bitwuzla, assumptions.size(), assumptions.data());
-    ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1));
-    ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_and_bv_const1));
+    // TODO enable when implemented
+    // ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1_false));
+    // ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_and_bv_const1));
     BitwuzlaTerm *unsat_core = bitwuzla_get_unsat_core(bitwuzla, &size);
-    ASSERT_TRUE(unsat_core[0] == d_not_bv_const1);
-    ASSERT_TRUE(size == 1);
-
-    BitwuzlaTerm *unsat_ass = bitwuzla_get_unsat_assumptions(bitwuzla, &size);
-    ASSERT_TRUE(unsat_ass[0] == d_bv_const1);
-    ASSERT_TRUE(unsat_ass[1] == d_and_bv_const1);
     ASSERT_TRUE(size == 2);
-    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);
-    bitwuzla_assert(bitwuzla, unsat_ass[0]);
-    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    ASSERT_TRUE(unsat_core[0] == d_bv_const1_false
+                || unsat_core[0] == d_and_bv_const1);
+    ASSERT_TRUE(unsat_core[1] == d_bv_const1_false
+                || unsat_core[1] == d_and_bv_const1);
+
+    // TODO enable when implemented
+    // BitwuzlaTerm *unsat_ass = bitwuzla_get_unsat_assumptions(bitwuzla,
+    // &size); ASSERT_TRUE(unsat_ass[0] == d_bv_const1);
+    // ASSERT_TRUE(unsat_ass[1] == d_and_bv_const1);
+    // ASSERT_TRUE(size == 2);
+    // ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);
+    // bitwuzla_assert(bitwuzla, unsat_ass[0]);
+    // ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
 }
-
-#if 0
-TEST_F(TestCApi, fixate_assumptions)
-{
-  ASSERT_DEATH(bitwuzla_fixate_assumptions(d_bzla), d_error_incremental);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-
-  ASSERT_DEATH(bitwuzla_fixate_assumptions(nullptr), d_error_not_null);
-
-  bitwuzla_assume(d_bzla, d_bv_const1);
-  bitwuzla_assert(d_bzla, d_not_bv_const1);
-  bitwuzla_assume(d_bzla, d_and_bv_const1);
-  bitwuzla_assert(d_bzla, d_eq_bv_const8);
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
-  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
-  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_and_bv_const1));
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
-  bitwuzla_assume(d_bzla, d_bv_const1);
-  bitwuzla_assume(d_bzla, d_and_bv_const1);
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
-  bitwuzla_fixate_assumptions(d_bzla);
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
-}
-
-TEST_F(TestCApi, reset_assumptions)
-{
-  ASSERT_DEATH(bitwuzla_reset_assumptions(d_bzla), d_error_incremental);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-
-  ASSERT_DEATH(bitwuzla_reset_assumptions(nullptr), d_error_not_null);
-
-  bitwuzla_assume(d_bzla, d_bv_const1);
-  bitwuzla_assert(d_bzla, d_not_bv_const1);
-  bitwuzla_assume(d_bzla, d_and_bv_const1);
-  bitwuzla_assert(d_bzla, d_eq_bv_const8);
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
-  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
-  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_and_bv_const1));
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
-  bitwuzla_assume(d_bzla, d_bv_const1);
-  bitwuzla_assume(d_bzla, d_and_bv_const1);
-  bitwuzla_reset_assumptions(d_bzla);
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
-}
-#endif
 
 TEST_F(TestCApi, simplify)
 {
@@ -2487,14 +2451,14 @@ TEST_F(TestCApi, get_value)
     ASSERT_DEATH(bitwuzla_get_value(nullptr, d_bv_const8), d_error_not_null);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, 0), d_error_inv_term);
     bitwuzla_assert(bitwuzla, d_bool_const);
-    std::vector<BitwuzlaTerm> assumptions{d_not_bv_const1};
+    std::vector<BitwuzlaTerm> assumptions{d_bv_const1_false};
     ASSERT_EQ(bitwuzla_check_sat_assuming(
                   bitwuzla, assumptions.size(), assumptions.data()),
               BITWUZLA_UNSAT);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const1), d_error_sat);
     bitwuzla_check_sat(bitwuzla);
     bitwuzla_get_value(bitwuzla, d_bv_const1);
-    bitwuzla_get_value(bitwuzla, d_not_bv_const1);
+    bitwuzla_get_value(bitwuzla, d_bv_const1_false);
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
@@ -2755,8 +2719,8 @@ TEST_F(TestCApi, print_model)
   ASSERT_DEATH(bitwuzla_print_model(d_bzla, "asdf", stdout),
                "invalid model output format");
 
-  bitwuzla_assert(d_bzla, d_bv_const1);
-  bitwuzla_assume(d_bzla, d_not_bv_const1);
+  bitwuzla_assert(d_bzla, d_bv_const1_true);
+  bitwuzla_assume(d_bzla, d_bv_const1_false);
   ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
   ASSERT_DEATH(bitwuzla_print_model(d_bzla, "btor", stdout), d_error_sat);
   bitwuzla_check_sat(d_bzla);
