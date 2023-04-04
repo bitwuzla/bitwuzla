@@ -8,6 +8,7 @@
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
+#include "util/logger.h"
 
 namespace bzla::preprocess::pass {
 
@@ -856,6 +857,7 @@ void
 PassNormalize::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats.time_apply);
+  Log(1) << "Apply normalization";
 
   d_cache.clear();
   assert(d_parents.empty());
@@ -870,8 +872,13 @@ PassNormalize::apply(AssertionVector& assertions)
     if (!processed(assertion))
     {
       const Node& processed = process(assertion);
-      assertions.replace(i, processed);
-      cache_assertion(processed);
+      if (assertions[i] != processed)
+      {
+        assertions.replace(i, processed);
+        cache_assertion(processed);
+        Log(2) << "Found normalization: " << assertions[i] << " -> "
+               << processed;
+      }
     }
   }
   d_parents.clear();
