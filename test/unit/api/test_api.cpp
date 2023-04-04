@@ -45,12 +45,12 @@ class TestApi : public ::testing::Test
   bitwuzla::Term d_fp_ninf32  = bitwuzla::mk_fp_neg_inf(d_fp_sort32);
   bitwuzla::Term d_fp_nan32   = bitwuzla::mk_fp_nan(d_fp_sort32);
 
-  bitwuzla::Term d_bool_const = bitwuzla::mk_const(d_bool_sort);
-  bitwuzla::Term d_bv_const1  = bitwuzla::mk_const(d_bv_sort1);
-  bitwuzla::Term d_bv_const8  = bitwuzla::mk_const(d_bv_sort8);
-  bitwuzla::Term d_fp_const16 = bitwuzla::mk_const(d_fp_sort16);
-  bitwuzla::Term d_rm_const   = bitwuzla::mk_const(d_rm_sort);
-  bitwuzla::Term d_un_const   = bitwuzla::mk_const(d_un_sort);
+  bitwuzla::Term d_bool_const = bitwuzla::mk_const(d_bool_sort, "b");
+  bitwuzla::Term d_bv_const1  = bitwuzla::mk_const(d_bv_sort1, "bv1");
+  bitwuzla::Term d_bv_const8  = bitwuzla::mk_const(d_bv_sort8, "bv8");
+  bitwuzla::Term d_fp_const16 = bitwuzla::mk_const(d_fp_sort16, "fp16");
+  bitwuzla::Term d_rm_const   = bitwuzla::mk_const(d_rm_sort, "rm");
+  bitwuzla::Term d_un_const   = bitwuzla::mk_const(d_un_sort, "u");
 
   bitwuzla::Term d_rm_rna = bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RNA);
   bitwuzla::Term d_rm_rne = bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RNE);
@@ -58,18 +58,18 @@ class TestApi : public ::testing::Test
   bitwuzla::Term d_rm_rtp = bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTP);
   bitwuzla::Term d_rm_rtz = bitwuzla::mk_rm_value(bitwuzla::RoundingMode::RTZ);
 
-  bitwuzla::Term d_fun        = bitwuzla::mk_const(d_fun_sort);
-  bitwuzla::Term d_fun_fp     = bitwuzla::mk_const(d_fun_sort_fp);
+  bitwuzla::Term d_fun        = bitwuzla::mk_const(d_fun_sort, "fun");
+  bitwuzla::Term d_fun_fp     = bitwuzla::mk_const(d_fun_sort_fp, "fun_fp");
   bitwuzla::Term d_array_fpbv = bitwuzla::mk_const(d_arr_sort_fpbv);
   bitwuzla::Term d_array      = bitwuzla::mk_const(d_arr_sort_bv);
   bitwuzla::Term d_store =
       bitwuzla::mk_term(bitwuzla::Kind::ARRAY_STORE,
                         {d_array, bitwuzla::mk_const(d_bv_sort32), d_bv_zero8});
 
-  bitwuzla::Term d_var1      = bitwuzla::mk_var(d_bv_sort8);
-  bitwuzla::Term d_var2      = bitwuzla::mk_var(d_bv_sort8);
-  bitwuzla::Term d_bound_var = bitwuzla::mk_var(d_bv_sort8);
-  bitwuzla::Term d_bool_var  = bitwuzla::mk_var(d_bool_sort);
+  bitwuzla::Term d_var1      = bitwuzla::mk_var(d_bv_sort8, "x");
+  bitwuzla::Term d_var2      = bitwuzla::mk_var(d_bv_sort8, "y");
+  bitwuzla::Term d_bound_var = bitwuzla::mk_var(d_bv_sort8, "z");
+  bitwuzla::Term d_bool_var  = bitwuzla::mk_var(d_bool_sort, "p");
 
   bitwuzla::Term d_not_bv_const1 = bitwuzla::mk_term(
       bitwuzla::Kind::EQUAL,
@@ -92,7 +92,7 @@ class TestApi : public ::testing::Test
   bitwuzla::Term d_bool_apply =
       bitwuzla::mk_term(bitwuzla::Kind::APPLY, {d_bool_lambda, d_true});
 
-  bitwuzla::Term d_exists_var = bitwuzla::mk_var(d_bv_sort8);
+  bitwuzla::Term d_exists_var = bitwuzla::mk_var(d_bv_sort8, "q");
   bitwuzla::Term d_exists     = bitwuzla::mk_term(
       bitwuzla::Kind::EXISTS,
       {d_exists_var,
@@ -1740,7 +1740,7 @@ TEST_F(TestApi, get_rm_value)
   }
 }
 
-TEST_F(TestApi, print_formula1)
+TEST_F(TestApi, print_formula)
 {
   bitwuzla::Options options;
   bitwuzla::Bitwuzla bitwuzla(options);
@@ -1748,19 +1748,87 @@ TEST_F(TestApi, print_formula1)
   ASSERT_THROW(bitwuzla.print_formula(std::cout, ""), bitwuzla::Exception);
   ASSERT_THROW(bitwuzla.print_formula(std::cout, "asdf"), bitwuzla::Exception);
 
-  GTEST_SKIP();  // TODO enable when implemented
   bitwuzla.assert_formula(d_bool_const);
   bitwuzla.assert_formula(bitwuzla::mk_term(
       bitwuzla::Kind::EQUAL,
       {bitwuzla::mk_term(bitwuzla::Kind::APPLY, {d_lambda, d_bv_const8}),
        d_bv_zero8}));
 
-  ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "btor"));
-  ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "smt2"));
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic QF_BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#b00000000))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    bitwuzla.print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
+  // ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "btor"));
 
   bitwuzla.assert_formula(d_exists);
-  ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "btor"));
-  ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "smt2"));
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#b00000000))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q))))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    bitwuzla.print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
+  // ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "btor"));
+
+  bitwuzla.assert_formula(bitwuzla::mk_term(
+      bitwuzla::Kind::FP_LEQ,
+      {bitwuzla::mk_term(
+           bitwuzla::Kind::APPLY,
+           {d_fun_fp,
+            d_bv_const8,
+            d_fp_const16,
+            bitwuzla::mk_term(
+                bitwuzla::Kind::BV_ZERO_EXTEND, {d_bv_ones23}, {9})}),
+       d_fp_const16}));
+
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic UFBVFP)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(declare-const fp16 (_ FloatingPoint 5 11))" << std::endl
+        << "(declare-fun fun_fp ((_ BitVec 8) (_ FloatingPoint 5 11) (_ BitVec "
+           "32)) (_ FloatingPoint 5 11))"
+        << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#b00000000))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q))))"
+        << std::endl
+        << "(assert (fp.leq (fun_fp bv8 fp16 ((_ zero_extend 9) "
+           "#b11111111111111111111111)) fp16))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    bitwuzla.print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
   // TODO test incremental
 }
 

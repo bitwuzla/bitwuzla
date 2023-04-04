@@ -184,14 +184,14 @@ Printer::print_formula(std::ostream& os,
     const Type& type = n.type();
     if (type.is_fun() && type.fun_arity())
     {
-      os << "(declare-fun " << n << "(";
+      os << "(declare-fun " << n << " (";
       const auto& types = type.fun_types();
       size_t n          = types.size();
       for (size_t i = 0; i < n - 1; ++i)
       {
         os << (i > 0 ? " " : "") << types[i];
       }
-      os << ") " << types[n - 1] << ")";
+      os << ") " << types[n - 1] << ")" << std::endl;
     }
     else
     {
