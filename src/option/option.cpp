@@ -202,7 +202,7 @@ Options::Options()
                 "prop-sext"),
       prop_normalize(this,
                      Option::PROP_NORMALIZE,
-                     true,
+                     false,
                      "enable normalization for local search",
                      "prop-normalize"),
 
