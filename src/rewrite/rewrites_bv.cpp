@@ -2819,6 +2819,67 @@ RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::_apply(Rewriter& rewriter,
       node[0].value<BitVector>().bvxor(node[1].value<BitVector>()));
 }
 
+/**
+ * match:  (bvxor a a)
+ * result: (_ bv0 N)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_XOR_SAME>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0] == node[1])
+  {
+    return NodeManager::get().mk_value(
+        BitVector::mk_zero(node.type().bv_size()));
+  }
+  return node;
+}
+
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvxor (bvnot (_ bv0 N)) a)
+ * result: (bvnot a)
+ */
+namespace {
+Node
+_rw_bv_xor_special_const(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].is_value() && !node[idx1].is_value())
+  {
+    if (node[idx0].value<BitVector>().is_zero())
+    {
+      return node[idx1];
+    }
+    if (node[idx0].value<BitVector>().is_ones())
+    {
+      return rewriter.invert_node(node[idx1]);
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_XOR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                           const Node& node)
+{
+  Node res = _rw_bv_xor_special_const(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_xor_special_const(rewriter, node, 1);
+  }
+  return res;
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>

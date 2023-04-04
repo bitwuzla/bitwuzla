@@ -2744,6 +2744,34 @@ TEST_F(TestRewriterBv, bv_xor_eval)
       Kind::BV_XOR, {d_bv4_a, d_nm.mk_value(BitVector(4, "1110"))}));
 }
 
+TEST_F(TestRewriterBv, bv_xor_same)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_XOR_SAME;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_XOR, {d_bv1_a, d_bv1_a}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, d_bv4_a}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, d_bv4_b}));
+}
+
+TEST_F(TestRewriterBv, bv_xor_special_const)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_XOR_SPECIAL_CONST;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_XOR, {d_bv4_zero, d_bv4_a}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, d_bv4_zero}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_XOR, {d_bv4_ones, d_bv4_a}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, d_bv4_ones}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, d_bv4_a}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_XOR, {d_nm.mk_value(BitVector(4, "1110")), d_bv4_a}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_XOR, {d_bv4_a, d_nm.mk_value(BitVector(4, "1110"))}));
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 // not supported by parser

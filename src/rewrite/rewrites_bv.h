@@ -419,6 +419,12 @@ Node RewriteRule<RewriteRuleKind::BV_UREM_SAME>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::_apply(Rewriter& rewriter,
                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_XOR_SAME>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_XOR_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 
 /* --- Elimination Rules ---------------------------------------------------- */
 

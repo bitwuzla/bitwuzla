@@ -476,6 +476,8 @@ enum class RewriteRuleKind
   //// bvxor
   // Level 1+
   BV_XOR_EVAL,
+  BV_XOR_SAME,
+  BV_XOR_SPECIAL_CONST,
 
   //// Elimination rules
   // Level 1+

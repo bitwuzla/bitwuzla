@@ -951,6 +951,8 @@ Rewriter::rewrite_bv_xor(const Node& node)
   if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_XOR_EVAL);
+    BZLA_APPLY_RW_RULE(BV_XOR_SAME);
+    BZLA_APPLY_RW_RULE(BV_XOR_SPECIAL_CONST);
   }
 
 DONE:
@@ -1658,6 +1660,10 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_UREM_SAME: out << "BV_UREM_SAME"; break;
 
     case RewriteRuleKind::BV_XOR_EVAL: out << "BV_XOR_EVAL"; break;
+    case RewriteRuleKind::BV_XOR_SAME: out << "BV_XOR_SAME"; break;
+    case RewriteRuleKind::BV_XOR_SPECIAL_CONST:
+      out << "BV_XOR_SPECIAL_CONST";
+      break;
 
     case RewriteRuleKind::BV_DEC_ELIM: out << "BV_DEC_ELIM"; break;
     case RewriteRuleKind::BV_INC_ELIM: out << "BV_INC_ELIM"; break;
