@@ -55,12 +55,12 @@ class TestCApi : public ::testing::Test
     d_fp_ninf32  = bitwuzla_mk_fp_neg_inf(d_fp_sort32);
     d_fp_nan32   = bitwuzla_mk_fp_nan(d_fp_sort32);
 
-    d_bool_const = bitwuzla_mk_const(bitwuzla_mk_bool_sort(), "bool_const");
-    d_bv_const1  = bitwuzla_mk_const(d_bv_sort1, "bv_const1");
-    d_bv_const8  = bitwuzla_mk_const(d_bv_sort8, "bv_const8");
-    d_fp_const16 = bitwuzla_mk_const(d_fp_sort16, "fp_const16");
-    d_rm_const   = bitwuzla_mk_const(d_rm_sort, "rm_const");
-    d_un_const   = bitwuzla_mk_const(d_un_sort, "un_const");
+    d_bool_const = bitwuzla_mk_const(bitwuzla_mk_bool_sort(), "b");
+    d_bv_const1  = bitwuzla_mk_const(d_bv_sort1, "bv1");
+    d_bv_const8  = bitwuzla_mk_const(d_bv_sort8, "bv8");
+    d_fp_const16 = bitwuzla_mk_const(d_fp_sort16, "fp16");
+    d_rm_const   = bitwuzla_mk_const(d_rm_sort, "rm");
+    d_un_const   = bitwuzla_mk_const(d_un_sort, "u");
 
     d_rm_rna = bitwuzla_mk_rm_value(BITWUZLA_RM_RNA);
     d_rm_rne = bitwuzla_mk_rm_value(BITWUZLA_RM_RNE);
@@ -77,10 +77,10 @@ class TestCApi : public ::testing::Test
                                 bitwuzla_mk_const(d_bv_sort32, "store"),
                                 d_bv_zero8);
 
-    d_var1      = bitwuzla_mk_var(d_bv_sort8, "var1");
-    d_var2      = bitwuzla_mk_var(d_bv_sort8, "var2");
-    d_bound_var = bitwuzla_mk_var(d_bv_sort8, "bound_var");
-    d_bool_var  = bitwuzla_mk_var(bitwuzla_mk_bool_sort(), "bool_var");
+    d_var1      = bitwuzla_mk_var(d_bv_sort8, "x");
+    d_var2      = bitwuzla_mk_var(d_bv_sort8, "y");
+    d_bound_var = bitwuzla_mk_var(d_bv_sort8, "z");
+    d_bool_var  = bitwuzla_mk_var(bitwuzla_mk_bool_sort(), "p");
 
     d_not_bv_const1 =
         bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL,
@@ -104,7 +104,7 @@ class TestCApi : public ::testing::Test
     d_bool_apply =
         bitwuzla_mk_term2(BITWUZLA_KIND_APPLY, d_bool_lambda, d_true);
 
-    d_exists_var = bitwuzla_mk_var(d_bv_sort8, nullptr);
+    d_exists_var = bitwuzla_mk_var(d_bv_sort8, "q");
     d_exists     = bitwuzla_mk_term2(
         BITWUZLA_KIND_EXISTS,
         d_exists_var,
@@ -213,7 +213,7 @@ class TestCApi : public ::testing::Test
   const char *d_error_unsat            = "if input formula is not unsat";
   const char *d_error_unsat_cores      = "unsat core production not enabled";
   const char *d_error_sat              = "if input formula is not sat";
-  const char *d_error_format           = "unknown format";
+  const char *d_error_format           = "invalid file format";
   const char *d_error_inc_quant =
       "incremental solving is currently not supported with quantifiers";
   const char *d_error_model_quant =
@@ -2773,25 +2773,24 @@ TEST_F(TestCApi, print_model)
 }
 #endif
 
-TEST_F(TestCApi, print_formula1)
+TEST_F(TestCApi, print_formula)
 {
-  GTEST_SKIP();  // TODO enable when implemented
-  ASSERT_DEATH(bitwuzla_print_formula(nullptr, "btor", stdout),
+  ASSERT_DEATH(bitwuzla_print_formula(nullptr, "smt2", stdout),
                d_error_not_null);
+
   BitwuzlaOptions *options = bitwuzla_options_new();
   Bitwuzla *bitwuzla       = bitwuzla_new(options);
+
   ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, nullptr, stdout),
-               d_error_exp_str);
+               d_error_not_null);
   ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "smt2", nullptr),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "asdf", stdout),
                d_error_format);
 
-  // TODO should this still throw?
-  // ASSERT_DEATH(bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_RW_LEVEL, 0),
-  //             "before creating expressions");
+  std::string filename = "formula_dump2.out";
 
-  bitwuzla_assert(bitwuzla, d_bv_const1);
+  bitwuzla_assert(bitwuzla, d_bool_const);
   bitwuzla_assert(
       bitwuzla,
       bitwuzla_mk_term2(
@@ -2799,12 +2798,138 @@ TEST_F(TestCApi, print_formula1)
           bitwuzla_mk_term2(BITWUZLA_KIND_APPLY, d_lambda, d_bv_const8),
           d_bv_zero8));
 
-  bitwuzla_print_formula(bitwuzla, "btor", stdout);
-  bitwuzla_print_formula(bitwuzla, "smt2", stdout);
+  {
+    FILE *tmpfile = fopen(filename.c_str(), "w");
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
+    fclose(tmpfile);
+    std::ifstream ifs(filename);
+    std::string res((std::istreambuf_iterator<char>(ifs)),
+                    (std::istreambuf_iterator<char>()));
+    unlink(filename.c_str());
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic QF_BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#b00000000))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    ASSERT_EQ(res, expected_smt2.str());
+  }
+  // bitwuzla_print_formula(bitwuzla, "btor", stdout);
+
   bitwuzla_assert(bitwuzla, d_exists);
-  bitwuzla_print_formula(bitwuzla, "btor", stdout);
-  bitwuzla_print_formula(bitwuzla, "smt2", stdout);
+  {
+    FILE *tmpfile = fopen(filename.c_str(), "w");
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
+    fclose(tmpfile);
+    std::ifstream ifs(filename);
+    std::string res((std::istreambuf_iterator<char>(ifs)),
+                    (std::istreambuf_iterator<char>()));
+    unlink(filename.c_str());
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#b00000000))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q))))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    ASSERT_EQ(res, expected_smt2.str());
+  }
+  // bitwuzla_print_formula(bitwuzla, "btor", stdout);
+
+  std::vector<BitwuzlaTerm> apply_args = {
+      d_fun_fp,
+      d_bv_const8,
+      d_fp_const16,
+      bitwuzla_mk_term1_indexed1(BITWUZLA_KIND_BV_ZERO_EXTEND, d_bv_ones23, 9)};
+  bitwuzla_assert(bitwuzla,
+                  bitwuzla_mk_term2(BITWUZLA_KIND_FP_LEQ,
+                                    bitwuzla_mk_term(BITWUZLA_KIND_APPLY,
+                                                     apply_args.size(),
+                                                     apply_args.data()),
+                                    d_fp_const16));
+  {
+    FILE *tmpfile = fopen(filename.c_str(), "w");
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
+    fclose(tmpfile);
+    std::ifstream ifs(filename);
+    std::string res((std::istreambuf_iterator<char>(ifs)),
+                    (std::istreambuf_iterator<char>()));
+    unlink(filename.c_str());
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic UFBVFP)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(declare-const fp16 (_ FloatingPoint 5 11))" << std::endl
+        << "(declare-fun fun_fp ((_ BitVec 8) (_ FloatingPoint 5 11) (_ BitVec "
+           "32)) (_ FloatingPoint 5 11))"
+        << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#b00000000))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q))))"
+        << std::endl
+        << "(assert (fp.leq (fun_fp bv8 fp16 ((_ zero_extend 9) "
+           "#b11111111111111111111111)) fp16))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    ASSERT_EQ(res, expected_smt2.str());
+  }
+  // bitwuzla_print_formula(bitwuzla, "btor", stdout);
+
   // TODO test incremental
+  bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
+}
+
+TEST_F(TestCApi, print_formula2)
+{
+  std::string filename = "formula_dump2.out";
+  FILE *tmpfile        = fopen(filename.c_str(), "w");
+
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  Bitwuzla *bitwuzla       = bitwuzla_new(options);
+  BitwuzlaSort bv1         = bitwuzla_mk_bv_sort(1);
+  BitwuzlaSort ar1_1       = bitwuzla_mk_array_sort(bv1, bv1);
+  BitwuzlaTerm a           = bitwuzla_mk_const(ar1_1, "a");
+  BitwuzlaTerm b           = bitwuzla_mk_const(ar1_1, "b");
+  BitwuzlaTerm z           = bitwuzla_mk_bv_one(bv1);
+  BitwuzlaTerm e = bitwuzla_mk_term2(BITWUZLA_KIND_ARRAY_SELECT, a, z);
+  BitwuzlaTerm c = bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, a, b);
+  bitwuzla_assert(bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, e, z));
+  bitwuzla_assert(bitwuzla, c);
+  bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
+  fclose(tmpfile);
+
+  std::ifstream ifs(filename);
+  std::string res((std::istreambuf_iterator<char>(ifs)),
+                  (std::istreambuf_iterator<char>()));
+  unlink(filename.c_str());
+
+  std::stringstream expected_smt2;
+  expected_smt2 << "(set-logic QF_ABV)" << std::endl
+                << "(declare-const a (Array (_ BitVec 1) (_ BitVec 1)))"
+                << std::endl
+                << "(declare-const b (Array (_ BitVec 1) (_ BitVec 1)))"
+                << std::endl
+                << "(assert (= (select a #b1) #b1))" << std::endl
+                << "(assert (= a b))" << std::endl
+                << "(check-sat)" << std::endl
+                << "(exit)" << std::endl;
+  ASSERT_EQ(res, expected_smt2.str());
   bitwuzla_delete(bitwuzla);
   bitwuzla_options_delete(options);
 }
@@ -4077,45 +4202,6 @@ TEST_F(TestCApi, term_print3)
   BitwuzlaSort ar1_1 = bitwuzla_mk_array_sort(d_bv_sort1, d_bv_sort1);
   BitwuzlaTerm t     = bitwuzla_mk_const(ar1_1, "a");
   ASSERT_EQ(std::string(bitwuzla_term_to_string(t)), "a");
-}
-
-TEST_F(TestCApi, print_formula2)
-{
-  GTEST_SKIP();  // TODO enable when implemented
-  std::string filename = "formula_dump2.out";
-  FILE *tmpfile        = fopen(filename.c_str(), "w");
-
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  // bitwuzla_set_option(options, BITWUZLA_OPT_PRETTY_PRINT, 0);
-  Bitwuzla *bitwuzla = bitwuzla_new(options);
-  BitwuzlaSort bv1   = bitwuzla_mk_bv_sort(1);
-  BitwuzlaSort ar1_1 = bitwuzla_mk_array_sort(bv1, bv1);
-  BitwuzlaTerm a     = bitwuzla_mk_const(ar1_1, "a");
-  BitwuzlaTerm b     = bitwuzla_mk_const(ar1_1, "b");
-  BitwuzlaTerm z     = bitwuzla_mk_false();
-  BitwuzlaTerm e     = bitwuzla_mk_term2(BITWUZLA_KIND_ARRAY_SELECT, a, z);
-  BitwuzlaTerm c     = bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, a, b);
-  bitwuzla_assert(bitwuzla, e);
-  bitwuzla_assert(bitwuzla, c);
-  bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
-  fclose(tmpfile);
-
-  std::ifstream ifs(filename);
-  std::string content((std::istreambuf_iterator<char>(ifs)),
-                      (std::istreambuf_iterator<char>()));
-  unlink(filename.c_str());
-
-  ASSERT_EQ(
-      "(set-logic QF_ABV)\n"
-      "(declare-const a (Array (_ BitVec 1) (_ BitVec 1)))\n"
-      "(declare-const b (Array (_ BitVec 1) (_ BitVec 1)))\n"
-      "(assert (= (select a #b0) #b1))\n"
-      "(assert (= a b))\n"
-      "(check-sat)\n"
-      "(exit)\n",
-      content);
-  bitwuzla_delete(bitwuzla);
-  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, arrayfun)

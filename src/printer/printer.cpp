@@ -128,7 +128,7 @@ Printer::print_formula(std::ostream& os,
     }
     if (inserted)
     {
-      if (cur.is_const())
+      if (cur.is_const() || cur.is_value())
       {
         if (!has_arrays && cur.type().is_array())
         {
@@ -146,7 +146,10 @@ Printer::print_formula(std::ostream& os,
         {
           has_funs = true;
         }
-        decls.emplace_back(cur);
+        if (!cur.is_value())
+        {
+          decls.emplace_back(cur);
+        }
       }
       else
       {

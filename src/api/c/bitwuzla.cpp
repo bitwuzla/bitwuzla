@@ -1238,7 +1238,9 @@ bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_NOT_NULL(format);
   BITWUZLA_CHECK_NOT_NULL(file);
-  // TODO
+  std::stringstream ss;
+  bitwuzla->d_bitwuzla->print_formula(ss, format);
+  fprintf(file, "%s", ss.str().c_str());
   BITWUZLA_TRY_CATCH_END;
 }
 
