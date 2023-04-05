@@ -88,6 +88,9 @@ class BitwuzlaExceptionStream
   BITWUZLA_CHECK(d_last_check_sat == Result::UNSAT) \
       << "cannot " << what << " if input formula is not unsat";
 
+#define BITWUZLA_CHECK_TERM_NOT_NULL(arg) \
+  BITWUZLA_CHECK((arg).d_node != nullptr) << "expected non-null term";
+
 #define BITWUZLA_CHECK_TERM_IS_ARRAY(arg)                         \
   BITWUZLA_CHECK((arg).d_node && (arg).d_node->type().is_array()) \
       << "expected array term";
@@ -152,6 +155,9 @@ class BitwuzlaExceptionStream
   BITWUZLA_CHECK((args)[i].d_node && !(args)[i].d_node->is_null() \
                  && !(args)[i].d_node->type().is_fun())           \
       << "expected non-function term at index " << i;
+
+#define BITWUZLA_CHECK_SORT_NOT_NULL(arg) \
+  BITWUZLA_CHECK((arg).d_type != nullptr) << "expected non-null sort";
 
 #define BITWUZLA_CHECK_SORT_IS_ARRAY(arg)                  \
   BITWUZLA_CHECK((arg).d_type && (arg).d_type->is_array()) \
