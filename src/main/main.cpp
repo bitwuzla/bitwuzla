@@ -136,6 +136,10 @@ print_help(const bitwuzla::Options& options)
                     format_longb("print-formula"),
                     "",
                     "print formula in smt2 format");
+  opts.emplace_back(format_shortb("P"),
+                    format_longb("parse-only"),
+                    "",
+                    "only parse input without calling check-sat");
 
   // Format library options
   for (size_t i = 0, size = static_cast<size_t>(bitwuzla::Option::NUM_OPTS);
@@ -243,6 +247,7 @@ main(int32_t argc, char* argv[])
 {
   bitwuzla::Options options;
   bool print = false;
+  bool parse_only = false;
 
   std::vector<std::string> args;
   std::string infile_name;
@@ -267,6 +272,11 @@ main(int32_t argc, char* argv[])
     else if (arg == "-p" || arg == "--print-formula")
     {
       print = true;
+      parse_only = true;
+    }
+    else if (arg == "-P" || arg == "--parse-only")
+    {
+      parse_only = true;
     }
     // Check if argument is the intput file.
     // Note: For now only supports .smt2 and .btor suffices
@@ -303,7 +313,7 @@ main(int32_t argc, char* argv[])
   } while (token != bzla::parser::smt2::Token::ENDOFFILE);
 #else
   bzla::parser::smt2::Parser parser(options, infile_name);
-  std::string err_msg = parser.parse(print);
+  std::string err_msg = parser.parse(parse_only);
   if (!err_msg.empty())
   {
     std::cerr << "[error] " << err_msg << std::endl;
