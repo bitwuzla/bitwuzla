@@ -17,8 +17,6 @@ class FpSolver : public Solver
    * @param term The term to query.
    */
   static bool is_theory_leaf(const Node& term);
-  /** Construct default value for given floating-point type. */
-  static Node default_value(const Type& type);
 
   FpSolver(Env& env, SolverState& state);
   ~FpSolver();
@@ -30,6 +28,9 @@ class FpSolver : public Solver
   void register_term(const Node& term) override;
 
  private:
+  /** Compute assignment for given leaf term. */
+  Node assignment(const Node& term);
+
   /** The word blaster. */
   WordBlaster d_word_blaster;
   /** The current queue of nodes to word-blast on the next check() call. */

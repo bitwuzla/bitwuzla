@@ -122,10 +122,9 @@ BvSolver::value(const Node& term)
       continue;
     }
 
-    auto it = cache.find(cur);
-    if (it == cache.end())
+    auto [it, inserted] = cache.emplace(cur, false);
+    if (inserted)
     {
-      cache.emplace(cur, false);
       if (!is_leaf(cur))
       {
         visit.insert(visit.end(), cur.begin(), cur.end());

@@ -30,18 +30,6 @@ FpSolver::is_theory_leaf(const Node& term)
              && (term[0].type().is_fp() || term[0].type().is_rm()));
 }
 
-Node
-FpSolver::default_value(const Type& type)
-{
-  NodeManager& nm = NodeManager::get();
-  if (type.is_fp())
-  {
-    return nm.mk_value(FloatingPoint::fpzero(type, false));
-  }
-  assert(type.is_rm());
-  return nm.mk_value(RoundingMode::RNE);
-}
-
 FpSolver::FpSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_word_blaster(state),
@@ -102,8 +90,7 @@ is_leaf(const Node& node)
     return true;
   }
   Kind k = node.kind();
-  return k == Kind::FP_TO_FP_FROM_BV || k == Kind::FP_TO_FP_FROM_SBV
-         || k == Kind::FP_TO_FP_FROM_UBV;
+  return k == Kind::CONSTANT;
 }
 }  // namespace
 
@@ -114,8 +101,9 @@ FpSolver::value(const Node& term)
 
   NodeManager& nm = NodeManager::get();
   node_ref_vector visit{term};
-  unordered_node_ref_map<bool> visited;
+  unordered_node_ref_map<bool> cache;
 
+  Rewriter& rw = d_env.rewriter();
   do
   {
     const Node& cur = visit.back();
@@ -127,18 +115,18 @@ FpSolver::value(const Node& term)
       continue;
     }
 
-    auto it = visited.find(cur);
-    if (it == visited.end())
+    auto [it, inserted] = cache.emplace(cur, false);
+    if (inserted)
     {
-      visited.emplace(cur, false);
       if (!is_leaf(cur))
       {
-        if (cur.kind() == Kind::ITE && !is_theory_leaf(cur[0]))
+        Kind k = cur.kind();
+        if (k == Kind::FP_TO_FP_FROM_SBV || k == Kind::FP_TO_FP_FROM_UBV)
         {
-          visit.push_back(d_solver_state.value(cur[0]).value<bool>() ? cur[1]
-                                                                     : cur[2]);
+          visit.push_back(cur[0]);  // compute value for rounding mode only
         }
-        else
+        // Skip bit-vector children
+        else if (k != Kind::FP_TO_FP_FROM_BV)
         {
           visit.insert(visit.end(), cur.begin(), cur.end());
         }
@@ -148,38 +136,75 @@ FpSolver::value(const Node& term)
     else if (!it->second)
     {
       it->second = true;
-      Node value;
 
-      if (cur.kind() == Kind::ITE)
+      Node value;
+      switch (cur.kind())
       {
-        bool cond = is_theory_leaf(cur[0])
-                        ? get_cached_value(cur[0]).value<bool>()
-                        : d_solver_state.value(cur[0]).value<bool>();
-        assert(!cond || !get_cached_value(cur[1]).is_null());
-        assert(cond || !get_cached_value(cur[2]).is_null());
-        value = cond ? get_cached_value(cur[1]) : get_cached_value(cur[2]);
-      }
-      else
-      {
-        Node wb = d_env.rewriter().rewrite(d_word_blaster.word_blast(cur));
-        value   = d_solver_state.value(wb);
-        assert(value.type().is_bv());
-        const BitVector& bv = value.value<BitVector>();
-        if (cur.type().is_rm())
-        {
-          uint64_t rm = bv.to_uint64();
-          value       = nm.mk_value(static_cast<RoundingMode>(rm));
+        case Kind::VALUE: value = cur; break;
+
+        case Kind::SELECT:
+        case Kind::APPLY:
+        case Kind::CONSTANT:
+          assert(is_leaf(cur));
+          value = assignment(cur);
+          break;
+
+        case Kind::FP_IS_INF:
+        case Kind::FP_IS_NAN:
+        case Kind::FP_IS_NEG:
+        case Kind::FP_IS_NORMAL:
+        case Kind::FP_IS_POS:
+        case Kind::FP_IS_SUBNORMAL:
+        case Kind::FP_IS_ZERO:
+        case Kind::FP_EQUAL:
+        case Kind::FP_LEQ:
+        case Kind::FP_LT:
+        case Kind::FP_TO_SBV:
+        case Kind::FP_TO_UBV:
+        case Kind::FP_TO_FP_FROM_FP:
+        case Kind::FP_ABS:
+        case Kind::FP_ADD:
+        case Kind::FP_DIV:
+        case Kind::FP_FMA:
+        case Kind::FP_FP:
+        case Kind::FP_GEQ:
+        case Kind::FP_GT:
+        case Kind::FP_MAX:
+        case Kind::FP_MIN:
+        case Kind::FP_MUL:
+        case Kind::FP_NEG:
+        case Kind::FP_REM:
+        case Kind::FP_RTI:
+        case Kind::FP_SQRT:
+        case Kind::FP_SUB: {
+          std::vector<Node> values;
+          for (const Node& arg : cur)
+          {
+            values.push_back(get_cached_value(arg));
+            assert(!values.back().is_null());
+          }
+          value = rw.rewrite(nm.mk_node(cur.kind(), values, cur.indices()));
         }
-        else if (cur.type().is_fp())
-        {
-          value = nm.mk_value(FloatingPoint(cur.type(), bv));
+        break;
+
+        // bit-vector as argument
+        case Kind::FP_TO_FP_FROM_BV:
+          assert(cur.num_children() == 1);
+          value = rw.rewrite(nm.mk_node(
+              cur.kind(), {d_solver_state.value(cur[0])}, cur.indices()));
+          break;
+
+        // rounding mode and bit-vector as argument
+        case Kind::FP_TO_FP_FROM_SBV:
+        case Kind::FP_TO_FP_FROM_UBV: {
+          std::vector<Node> values;
+          values.push_back(get_cached_value(cur[0]));      // rounding mode
+          values.push_back(d_solver_state.value(cur[1]));  // bit-vector
+          value = rw.rewrite(nm.mk_node(cur.kind(), values, cur.indices()));
         }
-        else if (cur.type().is_bool())
-        {
-          assert(is_theory_leaf(cur));
-          assert(value.type().bv_size() == 1);
-          value = nm.mk_value(value.value<BitVector>().is_true());
-        }
+        break;
+
+        default: assert(false); break;
       }
       cache_value(cur, value);
     }
@@ -193,6 +218,31 @@ void
 FpSolver::register_term(const Node& term)
 {
   d_word_blast_queue.push_back(term);
+}
+
+/* --- FpSolver private ----------------------------------------------------- */
+
+Node
+FpSolver::assignment(const Node& term)
+{
+  assert(is_leaf(term));
+  assert(term.type().is_fp() || term.type().is_rm());
+  if (d_word_blaster.is_word_blasted(term))
+  {
+    NodeManager& nm = NodeManager::get();
+    Node wb         = d_env.rewriter().rewrite(d_word_blaster.word_blast(term));
+    Node value      = d_solver_state.value(wb);
+    assert(value.type().is_bv());
+    const BitVector& bv = value.value<BitVector>();
+    if (term.type().is_rm())
+    {
+      uint64_t rm = bv.to_uint64();
+      return nm.mk_value(static_cast<RoundingMode>(rm));
+    }
+    assert(term.type().is_fp());
+    return nm.mk_value(FloatingPoint(term.type(), bv));
+  }
+  return node::utils::mk_default_value(term.type());
 }
 
 }  // namespace bzla::fp

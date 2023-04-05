@@ -40,6 +40,11 @@ class WordBlaster
    */
   Node word_blast(const Node& node);
 
+  /**
+   * Determine whether word_blast() was already called on given node.
+   */
+  bool is_word_blasted(const Node& node) const;
+
  private:
   using SymUnpackedFloat = ::symfpu::unpackedFloat<SymFpuSymTraits>;
   using UnpackedFloatMap = std::unordered_map<Node, SymUnpackedFloat>;

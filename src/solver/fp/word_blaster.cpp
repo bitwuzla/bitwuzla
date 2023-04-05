@@ -109,6 +109,42 @@ WordBlaster::word_blast(const Node& node)
   return _word_blast(node);
 }
 
+bool
+WordBlaster::is_word_blasted(const Node& node) const
+{
+  {
+    auto it = d_internal->d_packed_float_map.find(node);
+    if (it != d_internal->d_packed_float_map.end())
+    {
+      return true;
+    }
+  }
+  if (node.type().is_bool())
+  {
+    auto it = d_internal->d_prop_map.find(node);
+    if (it != d_internal->d_prop_map.end())
+    {
+      return true;
+    }
+  }
+  if (node.type().is_rm())
+  {
+    auto it = d_internal->d_rm_map.find(node);
+    if (it != d_internal->d_rm_map.end())
+    {
+      return true;
+    }
+  }
+  {
+    auto it = d_internal->d_unpacked_float_map.find(node);
+    if (it != d_internal->d_unpacked_float_map.end())
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 /* --- WordBlaster private -------------------------------------------------- */
 
 Node
