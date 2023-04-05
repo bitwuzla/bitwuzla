@@ -1625,7 +1625,7 @@ TEST_F(TestApi, get_unsat_core)
 
 TEST_F(TestApi, simplify)
 {
-  GTEST_SKIP();  // TODO enable when implemented
+  GTEST_SKIP();  // currently always returns unknown
   bitwuzla::Options options;
   bitwuzla::Bitwuzla bitwuzla(options);
   bitwuzla.assert_formula(d_bool_const);
@@ -1658,7 +1658,6 @@ TEST_F(TestApi, get_value)
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::Exception);
   }
-  GTEST_SKIP();  // TODO enable when implemented
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::INCREMENTAL, true);
@@ -1675,11 +1674,14 @@ TEST_F(TestApi, get_value)
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_MODELS, true);
+    options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
     bitwuzla.assert_formula(d_exists);
     ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::Exception);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::SAT);
-    ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::Exception);
+    bitwuzla.assert_formula(bitwuzla::mk_term(
+        bitwuzla::Kind::EQUAL, {d_bv_const8, bitwuzla.get_value(d_bv_const8)}));
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::SAT);
   }
 }
 

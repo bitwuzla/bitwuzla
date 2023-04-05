@@ -48,6 +48,7 @@ class TestCApi : public ::testing::Test
     d_bv_ones23  = bitwuzla_mk_bv_ones(d_bv_sort23);
     d_bv_mins8   = bitwuzla_mk_bv_min_signed(d_bv_sort8);
     d_bv_maxs8   = bitwuzla_mk_bv_max_signed(d_bv_sort8);
+    d_bv_zero1   = bitwuzla_mk_bv_zero(d_bv_sort1);
     d_bv_zero8   = bitwuzla_mk_bv_zero(d_bv_sort8);
     d_fp_pzero32 = bitwuzla_mk_fp_pos_zero(d_fp_sort32);
     d_fp_nzero32 = bitwuzla_mk_fp_neg_zero(d_fp_sort32);
@@ -139,6 +140,7 @@ class TestCApi : public ::testing::Test
   BitwuzlaTerm d_true;
   BitwuzlaTerm d_bv_one1;
   BitwuzlaTerm d_bv_ones23;
+  BitwuzlaTerm d_bv_zero1;
   BitwuzlaTerm d_bv_zero8;
   BitwuzlaTerm d_bv_mins8;
   BitwuzlaTerm d_bv_maxs8;
@@ -2398,7 +2400,7 @@ TEST_F(TestCApi, get_unsat_core)
 
 TEST_F(TestCApi, simplify)
 {
-  GTEST_SKIP();  // TODO enable when implemented
+  GTEST_SKIP();  // TODO currently always returns unknown
   ASSERT_DEATH(bitwuzla_simplify(nullptr), d_error_not_null);
   BitwuzlaOptions *options = bitwuzla_options_new();
   Bitwuzla *bitwuzla       = bitwuzla_new(options);
@@ -2442,7 +2444,6 @@ TEST_F(TestCApi, get_value)
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
-  GTEST_SKIP();  // TODO enable when implemented
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
@@ -2450,27 +2451,33 @@ TEST_F(TestCApi, get_value)
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     ASSERT_DEATH(bitwuzla_get_value(nullptr, d_bv_const8), d_error_not_null);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, 0), d_error_inv_term);
-    bitwuzla_assert(bitwuzla, d_bool_const);
+    bitwuzla_assert(bitwuzla, d_bv_const1_true);
     std::vector<BitwuzlaTerm> assumptions{d_bv_const1_false};
     ASSERT_EQ(bitwuzla_check_sat_assuming(
                   bitwuzla, assumptions.size(), assumptions.data()),
               BITWUZLA_UNSAT);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const1), d_error_sat);
     bitwuzla_check_sat(bitwuzla);
-    bitwuzla_get_value(bitwuzla, d_bv_const1);
-    bitwuzla_get_value(bitwuzla, d_bv_const1_false);
+    ASSERT_EQ(d_bv_one1, bitwuzla_get_value(bitwuzla, d_bv_const1));
+    ASSERT_EQ(bitwuzla_mk_false(),
+              bitwuzla_get_value(bitwuzla, d_bv_const1_false));
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     bitwuzla_assert(bitwuzla, d_exists);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const8), d_error_sat);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);
-    ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const8),
-                 "'get-value' is currently not supported with quantifiers");
+    bitwuzla_assert(
+        bitwuzla,
+        bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL,
+                          d_bv_const8,
+                          bitwuzla_get_value(bitwuzla, d_bv_const8)));
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
