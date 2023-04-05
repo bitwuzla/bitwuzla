@@ -68,7 +68,6 @@ SymbolTable::remove(const std::string& symbol)
 void
 SymbolTable::pop_level(uint64_t assertion_level)
 {
-  // TODO use indices
   std::vector<std::string> erase;
   for (auto& p : d_table)
   {

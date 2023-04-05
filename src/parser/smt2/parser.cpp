@@ -2422,18 +2422,18 @@ Parser::open_term_scope()
 }
 
 void
-Parser::close_term_scope(const bitwuzla::Term& term)
+Parser::close_term_scope(const std::optional<bitwuzla::Term>& term)
 {
   assert(d_work.size());
   assert(d_work.back().d_token == Token::LPAR);
-  if (term.is_null())
+  if (term)
   {
-    d_work.pop_back();
+    ParsedItem& cur = d_work.back();
+    set_item(cur, Token::TERM, *term);
   }
   else
   {
-    ParsedItem& cur = d_work.back();
-    set_item(cur, Token::TERM, term);
+    d_work.pop_back();
   }
   d_work_control.pop_back();
 }
@@ -2469,12 +2469,13 @@ Parser::skip_sexprs(uint64_t nopen)
 /* -------------------------------------------------------------------------- */
 
 bool
-Parser::error(const std::string& error_msg, const Lexer::Coordinate& coo)
+Parser::error(const std::string& error_msg,
+              const std::optional<Lexer::Coordinate>& coo)
 {
   assert(d_lexer);
-  const Lexer::Coordinate* c = !coo.line ? &d_lexer->coo() : &coo;
-  d_error = d_infile_name + ":" + std::to_string(c->line) + ":"
-            + std::to_string(c->col) + ": " + error_msg;
+  const Lexer::Coordinate& c = coo ? *coo : d_lexer->coo();
+  d_error = d_infile_name + ":" + std::to_string(c.line) + ":"
+            + std::to_string(c.col) + ": " + error_msg;
   //#ifndef NDEBUG
   //  std::cout << "[error] " << d_error << std::endl;
   //  assert(false);

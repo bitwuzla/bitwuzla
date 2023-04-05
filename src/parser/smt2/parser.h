@@ -419,7 +419,8 @@ class Parser
    * of the opening '(') on the work stack.
    * @param term Saved as argument on the work stack, if given.
    */
-  void close_term_scope(const bitwuzla::Term& term = bitwuzla::Term());
+  void close_term_scope(
+      const std::optional<bitwuzla::Term>& term = std::nullopt);
 
   /**
    * Skip the given number of s-expressions.
@@ -437,7 +438,7 @@ class Parser
    *         call to indicate a parse error.
    */
   bool error(const std::string& error_msg,
-             const Lexer::Coordinate& coo = {0, 0});
+             const std::optional<Lexer::Coordinate>& coo = std::nullopt);
   /**
    * Helper to set error message with the coordinate of the current item
    * on the work stack as error coordinate. Used for errors concerning
@@ -581,7 +582,7 @@ class Parser
   {
     if (peek_item_is_token(Token::OPEN))
     {
-      set_item(d_work.back(), token, item, &coo);
+      set_item(d_work.back(), token, item, coo);
     }
     else
     {
@@ -626,7 +627,7 @@ class Parser
   void set_item(ParsedItem& item,
                 Token token,
                 T t,
-                const Lexer::Coordinate* coo = nullptr)
+                const std::optional<Lexer::Coordinate>& coo = std::nullopt)
   {
     item.d_token = token;
     item.d_item  = t;
