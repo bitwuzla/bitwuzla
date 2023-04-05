@@ -1,0 +1,5 @@
+(declare-fun v () (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32))))
+(declare-fun v_ () (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32))))
+(assert (= v_ (store v (_ bv0 32) (select v (_ bv0 32)))))
+(set-info :status sat)
+(check-sat)

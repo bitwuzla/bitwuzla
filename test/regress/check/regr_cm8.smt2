@@ -1,0 +1,5 @@
+(declare-fun v_ () Float64)
+(declare-fun v () (_ BitVec 32))
+(assert (= v ((_ fp.to_sbv 32) RTZ (fp.mul RNE v_ v_))))
+(set-info :status sat)
+(check-sat)

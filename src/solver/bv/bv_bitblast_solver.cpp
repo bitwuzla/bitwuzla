@@ -280,72 +280,8 @@ BvBitblastSolver::bitblast(const Node& t)
               d_bitblaster.bv_ite(bits(cur[0])[0], bits(cur[1]), bits(cur[2]));
           break;
 
-        // We should never reach these kinds.
-        case Kind::NUM_KINDS:
-        case Kind::NULL_NODE:
-        case Kind::VARIABLE:
-        case Kind::IMPLIES:
-        case Kind::DISTINCT:
-        case Kind::XOR:
-        case Kind::EXISTS:
-
-        case Kind::BV_DEC:
-        case Kind::BV_INC:
-        case Kind::BV_NAND:
-        case Kind::BV_NEG:
-        case Kind::BV_NOR:
-        case Kind::BV_OR:
-        case Kind::BV_REDAND:
-        case Kind::BV_REDOR:
-        case Kind::BV_REDXOR:
-        case Kind::BV_REPEAT:
-        case Kind::BV_ROL:
-        case Kind::BV_ROLI:
-        case Kind::BV_ROR:
-        case Kind::BV_RORI:
-        case Kind::BV_SADDO:
-        case Kind::BV_SDIV:
-        case Kind::BV_SDIVO:
-        case Kind::BV_SGE:
-        case Kind::BV_SGT:
-        case Kind::BV_SIGN_EXTEND:
-        case Kind::BV_SLE:
-        case Kind::BV_SMOD:
-        case Kind::BV_SMULO:
-        case Kind::BV_SREM:
-        case Kind::BV_SSUBO:
-        case Kind::BV_SUB:
-        case Kind::BV_UADDO:
-        case Kind::BV_UGE:
-        case Kind::BV_UGT:
-        case Kind::BV_ULE:
-        case Kind::BV_UMULO:
-        case Kind::BV_USUBO:
-        case Kind::BV_XNOR:
-        case Kind::BV_ZERO_EXTEND:
-
-        case Kind::FP_ABS:
-        case Kind::FP_ADD:
-        case Kind::FP_DIV:
-        case Kind::FP_FMA:
-        case Kind::FP_FP:
-        case Kind::FP_GEQ:
-        case Kind::FP_GT:
-        case Kind::FP_MAX:
-        case Kind::FP_MIN:
-        case Kind::FP_MUL:
-        case Kind::FP_NEG:
-        case Kind::FP_REM:
-        case Kind::FP_RTI:
-        case Kind::FP_SQRT:
-        case Kind::FP_SUB:
-        case Kind::FP_TO_FP_FROM_BV:
-        case Kind::FP_TO_FP_FROM_FP:
-        case Kind::FP_TO_FP_FROM_SBV:
-        case Kind::FP_TO_FP_FROM_UBV:
-        case Kind::LAMBDA:
-        case Kind::STORE:
-        case Kind::CONST_ARRAY: assert(false); break;
+        // We should never reach other kinds.
+        default: assert(false); break;
       }
     }
     visit.pop_back();

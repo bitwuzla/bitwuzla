@@ -2,6 +2,7 @@
 
 #include "node/node_manager.h"
 #include "node/node_utils.h"
+#include "util/logger.h"
 
 namespace bzla::fun {
 
@@ -41,6 +42,8 @@ FunSolver::~FunSolver() {}
 bool
 FunSolver::check()
 {
+  Log(1) << "\n*** check functions";
+
   d_fun_models.clear();
   if (!d_equalities.empty())
   {
@@ -71,11 +74,26 @@ FunSolver::check()
 Node
 FunSolver::value(const Node& term)
 {
-  assert(term.type().is_fun());
+  assert(term.type().is_fun() || term.kind() == Kind::APPLY);
 
   if (term.kind() == Kind::LAMBDA)
   {
     return term;
+  }
+  else if (term.kind() == Kind::APPLY)
+  {
+    auto it = d_fun_models.find(term[0]);
+    if (it != d_fun_models.end())
+    {
+      const auto& fun_model = it->second;
+      Apply app(term, d_solver_state, false);
+      auto itv = fun_model.find(app);
+      if (itv != fun_model.end())
+      {
+        return itv->value();
+      }
+    }
+    return node::utils::mk_default_value(term.type());
   }
 
   auto it = d_fun_models.find(term);
@@ -149,7 +167,9 @@ FunSolver::add_function_congruence_lemma(const Node& a, const Node& b)
 
 /* --- Apply public --------------------------------------------------------- */
 
-FunSolver::Apply::Apply(const Node& apply, SolverState& state)
+FunSolver::Apply::Apply(const Node& apply,
+                        SolverState& state,
+                        bool cache_apply_value)
     : d_apply(apply), d_hash(0)
 {
   // Compute hash value of function applications based on the current function
@@ -163,8 +183,11 @@ FunSolver::Apply::Apply(const Node& apply, SolverState& state)
     d_values.emplace_back(state.value(apply[i]));
     d_hash += std::hash<Node>{}(d_values.back());
   }
-  // Cache value of function application
-  d_value = state.value(apply);
+  if (cache_apply_value)
+  {
+    // Cache value of function application
+    d_value = state.value(apply);
+  }
 }
 
 const Node&

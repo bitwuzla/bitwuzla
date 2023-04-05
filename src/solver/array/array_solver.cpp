@@ -85,20 +85,65 @@ ArraySolver::check()
 Node
 ArraySolver::value(const Node& term)
 {
-  assert(term.type().is_array());
+  assert(term.type().is_array() || is_theory_leaf(term));
 
   std::map<Node, Node> map;
-  if (term.kind() == Kind::SELECT)
+  Kind k = term.kind();
+  if (k == Kind::SELECT)
   {
     // Select array model from given index
     Node index_val = d_solver_state.value(term[1]);
-    get_index_value_pairs(term[0], map);
+    Node default_value = get_index_value_pairs(term[0], map);
+    assert(default_value.kind() == Kind::CONST_ARRAY);
     auto it = map.find(index_val);
     if (it != map.end())
     {
       return it->second;
     }
-    return utils::mk_default_value(term.type());
+    return d_solver_state.value(default_value[0]);
+  }
+  else if (k == Kind::EQUAL)
+  {
+    // Only not registered equalities should be queried, for all others we can
+    // use the value in the bit-vector abstraction. This should only happen
+    // when values are queried for equalities that are not part of the
+    // bit-vector abstraction.
+    assert(std::find(d_equalities.begin(), d_equalities.end(), term)
+           == std::end(d_equalities));
+    std::map<Node, Node> m1, m2;
+    Node ca1 = get_index_value_pairs(term[0], m1);
+    Node ca2 = get_index_value_pairs(term[1], m2);
+    assert(ca1.kind() == Kind::CONST_ARRAY);
+    assert(ca2.kind() == Kind::CONST_ARRAY);
+
+    Node ca1v = d_solver_state.value(ca1[0]);
+    Node ca2v = d_solver_state.value(ca2[0]);
+    for (auto it1 = m1.begin(), end = m1.end(); it1 != end; ++it1)
+    {
+      auto it2 = m2.find(it1->first);
+      if ((it2 == m2.end() && it1->second != ca2v)
+          || (it2 != m2.end() && it2->second != it1->second))
+      {
+        return NodeManager::get().mk_value(false);
+      }
+    }
+    for (auto it2 = m2.begin(), end = m2.end(); it2 != end; ++it2)
+    {
+      auto it1 = m1.find(it2->first);
+      if ((it1 == m1.end() && it2->second != ca1v)
+          || (it1 != m1.end() && it1->second != it2->second))
+      {
+        return NodeManager::get().mk_value(false);
+      }
+    }
+    // TODO: This is not entirely correct since we have to check whether all
+    // indices have been overwritten. Refine this condition with a cardinality
+    // check of the index type.
+    if (ca1v != ca2v)
+    {
+      return NodeManager::get().mk_value(false);
+    }
+    return NodeManager::get().mk_value(true);
   }
   // Construct normalized array value, i.e., ordered by index
   Node res        = get_index_value_pairs(term, map);

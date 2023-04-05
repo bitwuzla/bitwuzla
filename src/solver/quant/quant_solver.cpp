@@ -87,6 +87,7 @@ QuantSolver::check()
 Node
 QuantSolver::value(const Node& term)
 {
+  (void) term;
   assert(false);
   return Node();
 }

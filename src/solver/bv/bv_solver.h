@@ -36,9 +36,6 @@ class BvSolver : public Solver, public BvSolverInterface
   void unsat_core(std::vector<Node>& core) const;
 
  private:
-  /** Query leaf assignment from subsolver. */
-  Node assignment(const Node& term);
-
   /** Result of the last check() call. */
   Result d_sat_state = Result::UNKNOWN;
 

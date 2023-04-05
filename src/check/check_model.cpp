@@ -21,6 +21,8 @@ CheckModel::check()
     return true;
   }
 
+  Log(1) << "\n*** check model\n";
+
   option::Options opts;
   opts.dbg_check_model.set(false);
   SolvingContext check_ctx(opts);
@@ -48,7 +50,7 @@ CheckModel::check()
     {
       check_ctx.assert_formula(nm.mk_node(Kind::EQUAL, {input, value}));
     }
-    Log(1) << "check: " << input << " = " << value;
+    Log(2) << "check: " << input << " = " << value;
   }
 
   return check_ctx.solve() == Result::SAT;

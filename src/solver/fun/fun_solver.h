@@ -48,7 +48,7 @@ class FunSolver : public Solver
   class Apply
   {
    public:
-    Apply(const Node& apply, SolverState& state);
+    Apply(const Node& apply, SolverState& state, bool cache_apply_value = true);
 
     /** @return Associated function application. */
     const Node& get() const;

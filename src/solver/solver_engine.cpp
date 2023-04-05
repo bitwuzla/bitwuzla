@@ -42,11 +42,11 @@ SolverEngine::solve()
   d_in_solving_mode = true;
   do
   {
+    // Reset model cache
+    d_value_cache.clear();
     // Reset term registration flag
     d_new_terms_registered = false;
     d_new_quantifiers_registered = false;
-    d_new_array_terms_registered = false;
-    d_new_fun_terms_registered   = false;
 
     // Process lemmas generated in previous iteration.
     process_lemmas();
@@ -82,6 +82,7 @@ SolverEngine::solve()
   } while (!d_lemmas.empty() || d_new_terms_registered);
   d_in_solving_mode = false;
 
+  Log(1) << "Solver engine determined: " << d_sat_state;
   return d_sat_state;
 }
 
@@ -91,44 +92,21 @@ SolverEngine::value(const Node& term)
   assert(d_sat_state == Result::SAT);
   Log(2) << "get value for (in_solving: " << d_in_solving_mode << "): " << term;
 
-  process_term(term);
-
-  if (!d_in_solving_mode
-      && (d_new_quantifiers_registered || d_new_array_terms_registered
-          || d_new_fun_terms_registered))
+  if (d_in_solving_mode)
   {
-    // The value of `term` depends on a newly registered term. The registered
-    // term does not appear in the bit-vector abstraction and was not checked
-    // by the corresponding theory solver.
-    // In this case, we return a null node as value and require a new
-    // SolverEngine::solve() call to make sure that the newly registered term
-    // is checked and the values are consistent.
-    //
-    // Note: This only happens during SolvingContext::build_model() since terms
-    //       that get registered during solving will be checked.
-    Log(1) << "value() discovered new terms, requires additional checking";
-    return Node();
+    process_term(term);
   }
 
-  const Type& type = term.type();
-  if (type.is_bool() || type.is_bv())
+  auto value = _value(term);
+  // This only happens if we encounter a quanfitier that was not registered and
+  // therefore cannot deterine its value. We instead returnt he original term.
+  if (value.is_null())
   {
-    return d_bv_solver.value(term);
+    Log(2) << "encountered unregistered quantifier, returning original term";
+    assert(!d_in_solving_mode);
+    return term;
   }
-  else if (type.is_fp() || type.is_rm())
-  {
-    return d_fp_solver.value(term);
-  }
-  else if (type.is_array())
-  {
-    return d_array_solver.value(term);
-  }
-  else if (type.is_fun())
-  {
-    return d_fun_solver.value(term);
-  }
-  assert(false);
-  return Node();
+  return value;
 }
 
 void
@@ -234,14 +212,12 @@ SolverEngine::process_term(const Node& term)
         Log(2) << "register array term: " << cur;
         d_array_solver.register_term(cur);
         d_new_terms_registered = true;
-        d_new_array_terms_registered = true;
       }
       else if (fun::FunSolver::is_theory_leaf(cur))
       {
         Log(2) << "register function term: " << cur;
         d_fun_solver.register_term(cur);
         d_new_terms_registered = true;
-        d_new_fun_terms_registered = true;
       }
       else if (quant::QuantSolver::is_theory_leaf(cur))
       {
@@ -264,15 +240,389 @@ SolverEngine::process_term(const Node& term)
   } while (!visit.empty());
 }
 
+bool
+SolverEngine::registered(const Node& term) const
+{
+  auto it = d_register_term_cache.find(term);
+  return it != d_register_term_cache.end();
+}
+
 void
 SolverEngine::process_lemmas()
 {
   for (const Node& lemma : d_lemmas)
   {
-    // TODO: check if we always want to add lemmas at the top level
     process_assertion(lemma, true);
   }
   d_lemmas.clear();
+}
+
+Node
+SolverEngine::_value(const Node& term)
+{
+  NodeManager& nm = NodeManager::get();
+  node_ref_vector visit{term};
+
+  do
+  {
+    const Node& cur = visit.back();
+
+    auto [it, inserted] = d_value_cache.emplace(cur, Node());
+    if (inserted)
+    {
+      // During solving we query bit-vector solver for all Bool/bit-vector
+      // assignments.
+      if (d_in_solving_mode)
+      {
+        if (bv::BvSolver::is_leaf(cur))
+        {
+          continue;
+        }
+      }
+      else
+      {
+        Kind k = cur.kind();
+        if (k == Kind::APPLY || k == Kind::SELECT || k == Kind::FORALL
+            || k == Kind::LAMBDA)
+        {
+          continue;
+        }
+      }
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      Node value;
+      Kind k = cur.kind();
+
+      // If we encounter an unregistered node after solving, for some node
+      // kinds we have to compute the values differently than during solving.
+      // In these cases we ask the corresponding theory solver to generate a
+      // model value instead of using the value in the bit-vector abstraction.
+      // The unregistered node does not occur in the bit-vector abstraction and
+      // therefore would only be assigned a default value.
+      if (!d_in_solving_mode && !registered(cur))
+      {
+        // If an unregistered quantifier is encountered, we cannot compute a
+        // value without another solve() call. Hence, we return a null node
+        // and handle this case in value().
+        if (k == Kind::FORALL)
+        {
+          return Node();
+        }
+        // Compute value of select based on current array model.
+        else if (k == Kind::SELECT)
+        {
+          value = d_array_solver.value(cur);
+          goto CACHE_VALUE;
+        }
+        // Compute value of function application based on current function
+        // model.
+        else if (k == Kind::APPLY)
+        {
+          value = d_fun_solver.value(cur);
+          goto CACHE_VALUE;
+        }
+        // Compute value of equality based on the corresponding theory solver's
+        // model.
+        else if (k == Kind::EQUAL)
+        {
+          const Type& type0 = cur[0].type();
+          if (type0.is_fp() || type0.is_rm())
+          {
+            goto COMPUTE_FP_VALUE;
+          }
+          else if (type0.is_array())
+          {
+            value = d_array_solver.value(cur);
+            goto CACHE_VALUE;
+          }
+          else if (type0.is_fun())
+          {
+            value = d_fun_solver.value(cur);
+            goto CACHE_VALUE;
+          }
+        }
+        // Partial FP functions: no constant folding available, ask
+        // floating-point solver for a value.
+        else if (k == Kind::FP_TO_SBV || k == Kind::FP_TO_UBV
+                 || k == Kind::FP_MIN || k == Kind::FP_MAX)
+        {
+          std::vector<Node> values;
+          for (const Node& arg : cur)
+          {
+            values.push_back(cached_value(arg));
+            assert(!values.back().is_null());
+          }
+          value =
+              d_fp_solver.value(nm.mk_node(cur.kind(), values, cur.indices()));
+          goto CACHE_VALUE;
+        }
+      }
+
+      switch (k)
+      {
+        case Kind::VALUE: value = cur; break;
+
+        case Kind::APPLY:
+        case Kind::SELECT:
+        case Kind::FORALL:
+          // Just use value from bit-vector abstrction.
+          assert(d_in_solving_mode);
+          [[fallthrough]];
+
+        case Kind::CONSTANT: {
+          const Type& type = cur.type();
+          if (type.is_bool() || type.is_bv())
+          {
+            value = d_bv_solver.value(cur);
+          }
+          else if (type.is_rm() || type.is_fp())
+          {
+            value = d_fp_solver.value(cur);
+          }
+          else if (type.is_fun())
+          {
+            value = d_fun_solver.value(cur);
+          }
+          else
+          {
+            assert(type.is_array());
+            value = d_array_solver.value(cur);
+          }
+        }
+        break;
+
+        case Kind::EQUAL: {
+          const Type& type0 = cur[0].type();
+          if (type0.is_bool())
+          {
+            value = nm.mk_value(cached_value(cur[0]).value<bool>()
+                                == cached_value(cur[1]).value<bool>());
+          }
+          else if (type0.is_bv())
+          {
+            value = nm.mk_value(cached_value(cur[0]).value<BitVector>()
+                                == cached_value(cur[1]).value<BitVector>());
+          }
+          else
+          {
+            // For all other equalities use the current value in the bit-vector
+            // abstraction.
+            value = d_bv_solver.value(cur);
+          }
+        }
+        break;
+
+        case Kind::ITE:
+          value = cached_value(cur[0]).value<bool>() ? cached_value(cur[1])
+                                                     : cached_value(cur[2]);
+          break;
+
+        // Boolean kinds
+        case Kind::NOT:
+          value = nm.mk_value(!cached_value(cur[0]).value<bool>());
+          break;
+
+        case Kind::AND:
+          value = nm.mk_value(cached_value(cur[0]).value<bool>()
+                              && cached_value(cur[1]).value<bool>());
+          break;
+
+        case Kind::OR:
+          value = nm.mk_value(cached_value(cur[0]).value<bool>()
+                              || cached_value(cur[1]).value<bool>());
+          break;
+
+        // Bit-vector kinds
+        case Kind::BV_NOT:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvnot());
+          break;
+
+        case Kind::BV_DEC:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvdec());
+          break;
+
+        case Kind::BV_INC:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvinc());
+          break;
+
+        case Kind::BV_AND:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvand(
+              cached_value(cur[1]).value<BitVector>()));
+          break;
+
+        case Kind::BV_XOR:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvxor(
+              cached_value(cur[1]).value<BitVector>()));
+          break;
+
+        case Kind::BV_EXTRACT:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvextract(
+              cur.index(0), cur.index(1)));
+          break;
+
+        case Kind::BV_COMP: {
+          bool equal = cached_value(cur[0]).value<BitVector>()
+                       == cached_value(cur[1]).value<BitVector>();
+          value = nm.mk_value(BitVector::from_ui(1, equal ? 1 : 0));
+        }
+        break;
+
+        case Kind::BV_ADD:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvadd(
+              cached_value(cur[1]).value<BitVector>()));
+          break;
+
+        case Kind::BV_MUL:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvmul(
+              cached_value(cur[1]).value<BitVector>()));
+          break;
+
+        case Kind::BV_ULT:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().compare(
+                                  cached_value(cur[1]).value<BitVector>())
+                              < 0);
+          break;
+
+        case Kind::BV_SHL:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvshl(
+              cached_value(cur[1]).value<BitVector>()));
+          break;
+
+        case Kind::BV_SLT:
+          value = nm.mk_value(
+              cached_value(cur[0]).value<BitVector>().signed_compare(
+                  cached_value(cur[1]).value<BitVector>())
+              < 0);
+          break;
+
+        case Kind::BV_SHR:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvshr(
+              cached_value(cur[1]).value<BitVector>()));
+          break;
+
+        case Kind::BV_ASHR:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvashr(
+              cached_value(cur[1]).value<BitVector>()));
+          break;
+
+        case Kind::BV_UDIV:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvudiv(
+              cached_value(cur[1]).value<BitVector>()));
+          break;
+
+        case Kind::BV_UREM:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvurem(
+              cached_value(cur[1]).value<BitVector>()));
+          break;
+
+        case Kind::BV_CONCAT:
+          value = nm.mk_value(cached_value(cur[0]).value<BitVector>().bvconcat(
+              cached_value(cur[1]).value<BitVector>()));
+          break;
+
+        // Floating-point kinds
+
+        // Partial floating-point operators should always have a consistent
+        // value in the bit-vector abstraction. Unregistered case is handled
+        // further above.
+        case Kind::FP_TO_SBV:
+        case Kind::FP_TO_UBV:
+        case Kind::FP_MAX:
+        case Kind::FP_MIN:
+          assert(registered(cur));
+          value = d_bv_solver.value(cur);
+          break;
+
+        // These FP kinds that are part of the bit-vector abstraction. Values
+        // are computed differently depending on solving mode.
+        case Kind::FP_IS_INF:
+        case Kind::FP_IS_NAN:
+        case Kind::FP_IS_NEG:
+        case Kind::FP_IS_NORMAL:
+        case Kind::FP_IS_POS:
+        case Kind::FP_IS_SUBNORMAL:
+        case Kind::FP_IS_ZERO:
+        case Kind::FP_EQUAL:
+        case Kind::FP_LEQ:
+        case Kind::FP_LT:
+          // During solving we use the current value in the bit-vector
+          // abstraction.
+          if (d_in_solving_mode)
+          {
+            value = d_bv_solver.value(cur);
+            break;
+          }
+          [[fallthrough]];
+
+        case Kind::FP_TO_FP_FROM_FP:
+        case Kind::FP_ABS:
+        case Kind::FP_ADD:
+        case Kind::FP_DIV:
+        case Kind::FP_FMA:
+        case Kind::FP_FP:
+        case Kind::FP_GEQ:
+        case Kind::FP_GT:
+        case Kind::FP_MUL:
+        case Kind::FP_NEG:
+        case Kind::FP_REM:
+        case Kind::FP_RTI:
+        case Kind::FP_SQRT:
+        case Kind::FP_TO_FP_FROM_BV:
+        case Kind::FP_TO_FP_FROM_SBV:
+        case Kind::FP_TO_FP_FROM_UBV:
+        case Kind::FP_SUB: {
+        COMPUTE_FP_VALUE:
+          std::vector<Node> values;
+          for (const Node& arg : cur)
+          {
+            values.push_back(cached_value(arg));
+            assert(!values.back().is_null());
+          }
+          value = d_env.rewriter().rewrite(
+              nm.mk_node(cur.kind(), values, cur.indices()));
+        }
+        break;
+
+        // Array kinds
+        case Kind::CONST_ARRAY:
+        case Kind::STORE: value = d_array_solver.value(cur); break;
+
+        // Function kinds
+        case Kind::LAMBDA: value = d_fun_solver.value(cur); break;
+
+        // We should never reach other kinds.
+        default: assert(false); break;
+      }
+    CACHE_VALUE:
+      assert(value.is_value() || cur.type().is_array() || cur.type().is_fun());
+      cache_value(cur, value);
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+
+  return cached_value(term);
+}
+
+void
+SolverEngine::cache_value(const Node& term, const Node& value)
+{
+  auto it = d_value_cache.find(term);
+  assert(it != d_value_cache.end());
+  assert(it->second.is_null());
+  assert(!value.is_null());
+  it->second = value;
+}
+
+const Node&
+SolverEngine::cached_value(const Node& term) const
+{
+  auto it = d_value_cache.find(term);
+  assert(it != d_value_cache.end());
+  assert(!it->second.is_null());
+  return it->second;
 }
 
 SolverEngine::Statistics::Statistics(util::Statistics& stats)

@@ -1,0 +1,5 @@
+(declare-fun c () Float64)
+(assert (= c ((_ to_fp 11 53) RNE ((_ fp.to_sbv 32) RTZ (fp (_ bv0 1) (_ bv0 11) (_ bv0 52))))))
+(assert (not (= c (fp (_ bv1 1) (_ bv0 11) (_ bv0 52)))))
+(set-info :status sat)
+(check-sat)

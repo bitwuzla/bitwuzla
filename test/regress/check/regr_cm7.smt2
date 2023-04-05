@@ -1,0 +1,5 @@
+(declare-fun v_ () Float64)
+(declare-fun v () (Array (_ BitVec 32) Float64))
+(assert (= v_ (select v (bvadd (_ bv1 32) ((_ fp.to_sbv 32) RTZ (fp (_ bv0 1) (_ bv0 11) (_ bv0 52)))))))
+(set-info :status sat)
+(check-sat)

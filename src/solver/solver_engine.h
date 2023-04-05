@@ -69,8 +69,23 @@ class SolverEngine
   /** Traverse term and register terms to corresponding solvers. */
   void process_term(const Node& term);
 
+  /** Returns true if term was registered to the corresponding theory solver. */
+  bool registered(const Node& term) const;
+
   /** Process lemmas added via lemma(). */
   void process_lemmas();
+
+  /** Compute value for given term. */
+  Node _value(const Node& term);
+
+  /** Cache value for given term. */
+  void cache_value(const Node& term, const Node& value);
+
+  /** Get cached model value for given term. */
+  const Node& cached_value(const Node& term) const;
+
+  /** Model value cache for _value(). */
+  std::unordered_map<Node, Node> d_value_cache;
 
   /** Associated solving context. */
   SolvingContext& d_context;
@@ -91,8 +106,6 @@ class SolverEngine
   /** Indicates whether new terms were registered while solving. */
   bool d_new_terms_registered = false;
   bool d_new_quantifiers_registered = false;
-  bool d_new_array_terms_registered = false;
-  bool d_new_fun_terms_registered   = false;
   /** Lemma cache. */
   backtrack::unordered_set<Node> d_lemma_cache;
 

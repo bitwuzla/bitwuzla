@@ -67,9 +67,6 @@ class SolvingContext
   Env& env();
 
  private:
-  /** Build a model for current solve() call. */
-  void build_model();
-
   /** Solving context environment. */
   Env d_env;
 

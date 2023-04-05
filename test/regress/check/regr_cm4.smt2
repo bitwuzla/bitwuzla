@@ -1,0 +1,5 @@
+(declare-fun c () RoundingMode)
+(declare-fun a () Float64)
+(assert (= a ((_ to_fp 11 53) c (/ 1.0 125000000000000000.0))))
+(set-info :status sat)
+(check-sat)

@@ -28,9 +28,6 @@ class FpSolver : public Solver
   void register_term(const Node& term) override;
 
  private:
-  /** Compute assignment for given leaf term. */
-  Node assignment(const Node& term);
-
   /** The word blaster. */
   WordBlaster d_word_blaster;
   /** The current queue of nodes to word-blast on the next check() call. */

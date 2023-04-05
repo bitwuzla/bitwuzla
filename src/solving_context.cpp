@@ -65,10 +65,6 @@ Node
 SolvingContext::get_value(const Node& term)
 {
   assert(d_sat_state == Result::SAT);
-  if (!d_built_model)
-  {
-    build_model();
-  }
   return d_solver_engine.value(d_preprocessor.process(term));
 }
 
@@ -141,32 +137,6 @@ Env&
 SolvingContext::env()
 {
   return d_env;
-}
-
-/* --- SolvingContext private ----------------------------------------------- */
-
-void
-SolvingContext::build_model()
-{
-  bool need_check = false;
-
-  // Make sure we have values for all substituted constants.
-  for (const auto& [var, term] : d_preprocessor.substitutions())
-  {
-    Node value = d_solver_engine.value(d_preprocessor.process(var));
-    if (value.is_null())
-    {
-      need_check = true;
-    }
-  }
-
-  if (need_check)
-  {
-    auto res = d_solver_engine.solve();
-    assert(res == Result::SAT);
-  }
-
-  d_built_model = true;
 }
 
 }  // namespace bzla
