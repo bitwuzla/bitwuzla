@@ -3535,7 +3535,6 @@ TEST_F(TestCApi, term_is_rm_value_rtz)
 
 TEST_F(TestCApi, term_is_const_array)
 {
-  GTEST_SKIP();  // TODO enable when implemented
   ASSERT_DEATH(bitwuzla_term_is_const_array(0), d_error_inv_term);
   ASSERT_TRUE(bitwuzla_term_is_const_array(
       bitwuzla_mk_const_array(d_arr_sort_bv, d_bv_zero8)));

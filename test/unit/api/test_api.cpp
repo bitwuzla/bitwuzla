@@ -1408,7 +1408,6 @@ TEST_F(TestApi, mk_const)
 
 TEST_F(TestApi, mk_const_array)
 {
-  GTEST_SKIP();  // TODO enable when implemented
   ASSERT_THROW(bitwuzla::mk_const_array(bitwuzla::Sort(), d_bv_one1),
                bitwuzla::Exception);
   ASSERT_THROW(bitwuzla::mk_const_array(d_arr_sort_bv, bitwuzla::Term()),
@@ -1854,6 +1853,38 @@ TEST_F(TestApi, print_formula)
   // TODO test incremental
 }
 
+TEST_F(TestApi, print_formula2)
+{
+  bitwuzla::Options options;
+  bitwuzla::Sort bv1   = bitwuzla::mk_bv_sort(1);
+  bitwuzla::Sort ar1_1 = bitwuzla::mk_array_sort(bv1, bv1);
+  bitwuzla::Term a     = bitwuzla::mk_const(ar1_1, "a");
+  bitwuzla::Term b     = bitwuzla::mk_const(ar1_1, "b");
+  bitwuzla::Term z     = bitwuzla::mk_bv_zero(bv1);
+  bitwuzla::Term e = bitwuzla::mk_term(bitwuzla::Kind::ARRAY_SELECT, {a, z});
+  bitwuzla::Term c = bitwuzla::mk_term(bitwuzla::Kind::EQUAL, {a, b});
+  bitwuzla::Bitwuzla bitwuzla(options);
+  bitwuzla.assert_formula(bitwuzla::mk_term(bitwuzla::Kind::EQUAL, {e, z}));
+  bitwuzla.assert_formula(c);
+  bitwuzla.assert_formula(d_exists);
+
+  std::stringstream expected_smt2;
+  expected_smt2
+      << "(set-logic ABV)" << std::endl
+      << "(declare-const bv8 (_ BitVec 8))" << std::endl
+      << "(declare-const a (Array (_ BitVec 1) (_ BitVec 1)))" << std::endl
+      << "(declare-const b (Array (_ BitVec 1) (_ BitVec 1)))" << std::endl
+      << "(assert (= (select a #b0) #b0))" << std::endl
+      << "(assert (= a b))" << std::endl
+      << "(assert (exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q))))"
+      << std::endl
+      << "(check-sat)" << std::endl
+      << "(exit)" << std::endl;
+  std::stringstream ss;
+  bitwuzla.print_formula(ss, "smt2");
+  ASSERT_EQ(ss.str(), expected_smt2.str());
+}
+
 /* -------------------------------------------------------------------------- */
 /* Sort                                                                       */
 /* -------------------------------------------------------------------------- */
@@ -2271,7 +2302,6 @@ TEST_F(TestApi, term_is_rm_value_rtz)
 
 TEST_F(TestApi, term_is_const_array)
 {
-  GTEST_SKIP();  // TODO enable when implemented
   ASSERT_FALSE(bitwuzla::Term().is_const_array());
   ASSERT_TRUE(
       bitwuzla::mk_const_array(d_arr_sort_bv, d_bv_zero8).is_const_array());
@@ -2859,43 +2889,6 @@ TEST_F(TestApi, term_print3)
   std::stringstream ss;
   ss << t;
   ASSERT_EQ(ss.str(), "a");
-}
-
-TEST_F(TestApi, dump_formula2)
-{
-  GTEST_SKIP();  // TODO enable when implemented
-  std::string filename = "formula_dump2.out";
-  FILE *tmpfile        = fopen(filename.c_str(), "w");
-
-  bitwuzla::Options options;
-  // options.set(bitwuzla::Option::PRETTY_PRINT, false);
-  bitwuzla::Sort bv1   = bitwuzla::mk_bv_sort(1);
-  bitwuzla::Sort ar1_1 = bitwuzla::mk_array_sort(bv1, bv1);
-  bitwuzla::Term a     = bitwuzla::mk_const(ar1_1, "a");
-  bitwuzla::Term b     = bitwuzla::mk_const(ar1_1, "b");
-  bitwuzla::Term z     = bitwuzla::mk_false();
-  bitwuzla::Term e = bitwuzla::mk_term(bitwuzla::Kind::ARRAY_SELECT, {a, z});
-  bitwuzla::Term c = bitwuzla::mk_term(bitwuzla::Kind::EQUAL, {a, b});
-  bitwuzla::Bitwuzla bitwuzla(options);
-  bitwuzla.assert_formula(e);
-  bitwuzla.assert_formula(c);
-  // bitwuzla_dump_formula(d_bzla, "smt2", tmpfile);
-  fclose(tmpfile);
-
-  std::ifstream ifs(filename);
-  std::string content((std::istreambuf_iterator<char>(ifs)),
-                      (std::istreambuf_iterator<char>()));
-  unlink(filename.c_str());
-
-  ASSERT_EQ(
-      "(set-logic QF_ABV)\n"
-      "(declare-const a (Array (_ BitVec 1) (_ BitVec 1)))\n"
-      "(declare-const b (Array (_ BitVec 1) (_ BitVec 1)))\n"
-      "(assert (= (select a #b0) #b1))\n"
-      "(assert (= a b))\n"
-      "(check-sat)\n"
-      "(exit)\n",
-      content);
 }
 
 TEST_F(TestApi, arrayfun)
