@@ -800,9 +800,7 @@ class Parser
   /** True if SMT-LIB option print-success is enabled. */
   bool d_print_success = false;
   /** True if SMT-LIB option global-declarations is enabled. */
-  bool d_global_decl   = false;
-  /** True if SMT-LIB option produce-unsat-cores is enabled. */
-  bool d_prod_uc = false;
+  bool d_global_decl = false;
   /** True if input file contains arrays. */
   bool d_arrays_enabled = false;
   /** True if input file contains bit-vectors. */

@@ -444,6 +444,7 @@ Parser::parse_command_define_fun()
   {
     symbol->d_term = body;
   }
+  d_named_terms.emplace(symbol->d_term, symbol);
 
   for (size_t i = 0, n = nargs(); i < n; ++i)
   {
@@ -601,30 +602,26 @@ Parser::parse_command_get_unsat_assumptions()
 {
   init_logic();
   init_bitwuzla();
-  //    case BZLA_GET_UNSAT_ASSUMPTIONS_TAG_SMT2: {
-  //      if (!read_rpar_smt2(parser, " after 'get-unsat-assumptions'")) return
-  //      0; if (parser->res->result != BITWUZLA_UNSAT) break; fputc('(',
-  //      parser->outfile); size_t size; failed_assumptions =
-  //          bitwuzla_get_unsat_assumptions(get_bitwuzla(parser), &size);
-  //      for (i = 0; i < size; ++i)
-  //      {
-  //        if (i > 0) fputc(' ', parser->outfile);
-  //        const char *symbol =
-  //        bitwuzla_term_get_symbol(failed_assumptions[i]); if (symbol)
-  //        {
-  //          fprintf(parser->outfile, "%s", symbol);
-  //        }
-  //        else
-  //        {
-  //          bitwuzla_term_dump(failed_assumptions[i], "smt2",
-  //          parser->outfile);
-  //        }
-  //      }
-  //      failed_assumptions = 0;
-  //      fputs(")\n", parser->outfile);
-  //      fflush(parser->outfile);
-  //      break;
-  //    }
+  if (!parse_rpar())
+  {
+    return false;
+  }
+  if (d_result != bitwuzla::Result::UNSAT)
+  {
+    return true;
+  }
+  (*d_out) << "(";
+  auto unsat_ass = d_bitwuzla->get_unsat_assumptions();
+  for (size_t i = 0, n = unsat_ass.size(); i < n; ++i)
+  {
+    auto it = d_named_terms.find(unsat_ass[i]);
+    (*d_out) << (i > 0 ? " " : "")
+             << (it == d_named_terms.end() ? unsat_ass[i].str()
+                                           : it->second->d_symbol);
+  }
+  (*d_out) << ")" << std::endl;
+  d_out->flush();
+  return true;
 }
 
 bool
@@ -936,10 +933,6 @@ Parser::parse_command_set_option()
     if (!check_token(token))
     {
       return false;
-    }
-    if (token == Token::PRODUCE_UNSAT_CORES)
-    {
-      d_prod_uc = true;
     }
     assert(d_lexer->has_token());
     assert(d_lexer->token()[0] == ':');
@@ -1889,10 +1882,7 @@ Parser::close_term_bang(ParsedItem& item)
   }
   symbol->d_term = pop_term_arg();
   set_item(item, Token::TERM, symbol->d_term);
-  if (d_prod_uc)
-  {
-    d_named_terms.emplace(symbol->d_term, symbol);
-  }
+  d_named_terms.emplace(symbol->d_term, symbol);
   return true;
 }
 
