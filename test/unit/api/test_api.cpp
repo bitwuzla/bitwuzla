@@ -2699,6 +2699,7 @@ TEST_F(TestApi, terms)
     ASSERT_GT(size, 0);
     for (size_t i = 0; i < size; ++i)
     {
+      ASSERT_EQ(term[i], children[i]);
       ASSERT_FALSE(children[i].is_null());
     }
 

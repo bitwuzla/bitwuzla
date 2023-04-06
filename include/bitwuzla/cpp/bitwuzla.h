@@ -416,6 +416,16 @@ class Term
   std::vector<Term> children() const;
 
   /**
+   * Return child at position `index`.
+   *
+   * @note Only valid to call if num_children() > 0.
+   *
+   * @param index The position of the child.
+   * @return The child node at position `index`.
+   */
+  Term operator[](size_t index) const;
+
+  /**
    * Get the number of indices of this term.
    * @return The number of indices of this term.
    */
