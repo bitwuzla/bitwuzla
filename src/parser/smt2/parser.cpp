@@ -94,26 +94,6 @@ Parser::configure_terminator(bitwuzla::Terminator* terminator)
 
 /* Parser private ----------------------------------------------------------- */
 
-Token
-Parser::next_token()
-{
-  assert(d_lexer);
-  Token token = d_lexer->next_token();
-  if (token == Token::SYMBOL || token == Token::ATTRIBUTE)
-  {
-    assert(d_lexer->has_token());
-    std::string symbol      = d_lexer->token();
-    SymbolTable::Node* node = d_table.find(symbol);
-    if (!node)
-    {
-      node = d_table.insert(token, symbol, d_assertion_level);
-    }
-    d_last_node = node;
-    token       = d_last_node->d_token;
-  }
-  return token;
-}
-
 bool
 Parser::parse_command(bool parse_only)
 {
@@ -1085,7 +1065,9 @@ Parser::parse_term_list(std::vector<bitwuzla::Term>& terms,
   terms.clear();
   for (;;)
   {
-    d_lexer->save_chars(repr != nullptr);
+    d_save_repr = true;
+    d_repr.clear();
+
     Token la = next_token();
     if (!check_token(la))
     {
@@ -1093,25 +1075,17 @@ Parser::parse_term_list(std::vector<bitwuzla::Term>& terms,
     }
     if (la == Token::RPAR)
     {
-      d_lexer->save_chars(false);
+      d_save_repr = false;
       break;
     }
     if (!parse_term(true, la))
     {
       return false;
     }
-    d_lexer->save_chars(false);
+    d_save_repr = false;
     if (repr)
     {
-      std::string r = d_lexer->repr();
-      // for plain, non-piped symbols, the lexer also stores the terminating
-      // non-symbol character, which we have to remove
-      if (r[0] != '(' && r[0] != '|'
-          && !d_lexer->is_symbol_char(r[r.size() - 1]))
-      {
-        r = r.substr(0, r.size() - 1);
-      }
-      repr->emplace_back(r);
+      repr->emplace_back(d_repr);
     }
     terms.emplace_back(pop_term_arg());
   }

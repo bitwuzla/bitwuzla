@@ -53,21 +53,6 @@ class Lexer
    */
   const Coordinate& last_coo() const { return d_last_coo; }
 
-  /**
-   * @return The string representation of parsed input while d_save_chars was
-   *         true.
-   * @note This is only needed for preserving the string representation of the
-   *       parsed term list of get-value.
-   */
-  const char* repr() const { return d_repr.data(); }
-  /**
-   * Enable/disable saving parsed characters into d_repr.
-   * @param enable True to enable, false to disable.
-   */
-  void save_chars(bool enable);
-  /** @return True if given character is of character class SYMBOL. */
-  bool is_symbol_char(char ch) const;
-
  private:
   /** The set of legal printable characters. */
   inline static const std::string s_printable_ascii_chars =
@@ -139,10 +124,6 @@ class Lexer
     else
     {
       res = std::getc(d_infile);
-      if (d_save_chars)
-      {
-        d_repr.push_back(static_cast<char>(res));
-      }
     }
     if (res == '\n')
     {
@@ -174,7 +155,7 @@ class Lexer
    * Store given character as a look ahead.
    * @note implemented here for inlining
    */
-  void save_char(int32_t ch, bool pop_last_char = false)
+  void save_char(int32_t ch)
   {
     assert(!d_saved);
     d_saved      = true;
@@ -238,14 +219,6 @@ class Lexer
   /** The saved character. */
   int32_t d_saved_char = 0;
 
-  /** True to store parsed characters into d_repr. */
-  bool d_save_chars = false;
-  /**
-   * The string representation of parsed input while d_save_chars was true.
-   * @note This is only needed for preserving the string representation of the
-   *       parsed term list of get-value.
-   */
-  std::vector<char> d_repr;
   /** The error message. */
   std::string d_error;
 };

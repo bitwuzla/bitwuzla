@@ -117,7 +117,31 @@ class Parser
    * Caches parsed symbols (new and existing) in d_last_node.
    * @return The next token.
    */
-  Token next_token();
+  Token next_token()
+  {
+    assert(d_lexer);
+    Token token = d_lexer->next_token();
+    if (token == Token::SYMBOL || token == Token::ATTRIBUTE)
+    {
+      assert(d_lexer->has_token());
+      std::string symbol      = d_lexer->token();
+      SymbolTable::Node* node = d_table.find(symbol);
+      if (!node)
+      {
+        node = d_table.insert(token, symbol, d_assertion_level);
+      }
+      d_last_node = node;
+      token       = d_last_node->d_token;
+    }
+    if (d_save_repr)
+    {
+      d_repr +=
+          (d_repr.size() && d_repr.back() != '(' && token != Token::RPAR ? " "
+                                                                         : "")
+          + std::string(d_lexer->token());
+    }
+    return token;
+  }
 
   /**
    * Parse command.
@@ -827,6 +851,11 @@ class Parser
 
   /** The most recently parsed symbol node. */
   SymbolTable::Node* d_last_node = nullptr;
+
+  /** True to record the string representation of parsed input into d_repr. */
+  bool d_save_repr = false;
+  /** The string representation of input parsed while d_save_repr was true. */
+  std::string d_repr;
 
   /** Parse statistics. */
   struct Statistics
