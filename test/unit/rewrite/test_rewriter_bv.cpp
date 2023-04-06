@@ -2048,6 +2048,29 @@ TEST_F(TestRewriterBv, bv_not_bv_not)
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_NOT, {d_bv4_a}));
 }
 
+TEST_F(TestRewriterBv, bv_not_bv_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_NOT_BV_NEG;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_NEG, {d_bv4_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_NOT, {d_bv4_a}));
+}
+
+TEST_F(TestRewriterBv, bv_not_bv_concat)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_NOT_BV_CONCAT;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_NOT, {d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_a, d_bv4_zero})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_NOT, {d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_ones, d_bv4_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_NOT, {d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_a, d_bv4_b})}));
+}
+
 /* bvshl -------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_shl_eval)

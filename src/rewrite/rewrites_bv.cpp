@@ -1695,7 +1695,7 @@ RewriteRule<RewriteRuleKind::BV_MUL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match:  (bvadd a b) with a and b of bit-width 1
+ * match:  (bvmul a b) with a and b of bit-width 1
  * result: (bvand a b)
  */
 template <>
@@ -1980,6 +1980,12 @@ RewriteRule<RewriteRuleKind::BV_NOT_BV_NEG>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/**
+ * match:  (bvnot (concat a (_ bvX N)))
+ * result: (concat (bvnot a) (bvnot (_ bvX N)))
+ * match:  (bvnot (concat (_ bvX N) a))
+ * result: (concat (bvnot (_ bvX N)) (bvnot a))
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_NOT_BV_CONCAT>::_apply(Rewriter& rewriter,
