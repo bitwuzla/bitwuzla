@@ -8,6 +8,8 @@
 namespace bzla {
 namespace parser::smt2 {
 
+/* Lexer public ------------------------------------------------------------- */
+
 Lexer::Lexer(FILE* infile) : d_infile(infile)
 {
   assert(infile);
@@ -33,12 +35,35 @@ Lexer::error_msg() const
   return d_error;
 }
 
+void
+Lexer::save_chars(bool enable)
+{
+  d_save_chars = enable;
+  if (enable)
+  {
+    d_repr.clear();
+  }
+  else
+  {
+    d_repr.push_back(0);
+  }
+}
+
+bool
+Lexer::is_symbol_char(char ch) const
+{
+  return is_char_class(ch, CharacterClass::SYMBOL);
+}
+
+/* Lexer private ------------------------------------------------------------ */
+
 Token
 Lexer::next_token_aux()
 {
   int32_t ch;
   d_token.clear();
 
+  // skip whitespace and comments
   for (;;)
   {
     do
@@ -305,7 +330,7 @@ Lexer::next_token_aux()
       }
       push_char(ch);
     }
-    save_char(ch);
+    save_char(ch, true);
     d_token.push_back(0);
     if (d_token[0] == '_' && d_token[1] == 0)
     {

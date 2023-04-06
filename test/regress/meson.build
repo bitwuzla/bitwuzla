@@ -1136,20 +1136,28 @@ tests_smt2 = [
   ['solver/bv/getvalue3.smt2'],
   ['solver/bv/prop/prop_not_sat.smt2', ['--bv-solver=prop --prop-nprops=10000 --prop-nupdates=2000000']],
   #['solver/bv/regnegadd1.btor', ['-db']],
-  #['solver/bv/regr-5smod3.btor', ['-m -d']],
-  #['solver/bv/regr-5srem3.btor', ['-m -d']],
-  #['solver/bv/regr-6smod3.btor', ['-m -d']],
-  #['solver/bv/regr-6srem3.btor', ['-m -d']],
-  #['solver/bv/regr5smod-3.btor', ['-m -d']],
-  #['solver/bv/regr5srem-3.btor', ['-m -d']],
-  #['solver/bv/regr6smod-3.btor', ['-m -d']],
-  #['solver/bv/regr6srem-3.btor', ['-m -d']],
-  #['solver/bv/smtandvar.smt2', ['-m']],# TODO disabled because of models
-  #['solver/bv/smtiff.smt2', ['-m']],# TODO disabled because of models
-  #['solver/bv/smtnotvar.smt2', ['-m']],# TODO disabled because of models
-  #['solver/bv/smtor.smt2', ['-m']],# TODO disabled because of models
-  #['solver/bv/smtvar.smt2', ['-m']],# TODO disabled because of models
-  #['solver/bv/smtxor.smt2', ['-m']],# TODO disabled because of models
+  #['solver/bv/regr-5smod3.btor', ['-m -d']], # TODO disabled because of -d
+  #['solver/bv/regr-5srem3.btor', ['-m -d']], # TODO disabled because of -d
+  #['solver/bv/regr-6smod3.btor', ['-m -d']], # TODO disabled because of -d
+  #['solver/bv/regr-6srem3.btor', ['-m -d']], # TODO disabled because of -d
+  #['solver/bv/regr5smod-3.btor', ['-m -d']], # TODO disabled because of -d
+  #['solver/bv/regr5srem-3.btor', ['-m -d']], # TODO disabled because of -d
+  #['solver/bv/regr6smod-3.btor', ['-m -d']], # TODO disabled because of -d
+  #['solver/bv/regr6srem-3.btor', ['-m -d']], # TODO disabled because of -d
+  ['solver/bv/regr-5smod3.btor.smt2'],
+  ['solver/bv/regr-5srem3.btor.smt2'],
+  ['solver/bv/regr-6smod3.btor.smt2'],
+  ['solver/bv/regr-6srem3.btor.smt2'],
+  ['solver/bv/regr5smod-3.btor.smt2'],
+  ['solver/bv/regr5srem-3.btor.smt2'],
+  ['solver/bv/regr6smod-3.btor.smt2'],
+  ['solver/bv/regr6srem-3.btor.smt2'],
+  ['solver/bv/smtandvar.smt2'],
+  ['solver/bv/smtiff.smt2'],
+  ['solver/bv/smtnotvar.smt2'],
+  ['solver/bv/smtor.smt2'],
+  ['solver/bv/smtvar.smt2'],
+  ['solver/bv/smtxor.smt2'],
 
   # parse error tests
   #['parser/btorperr000.btor'],
@@ -1388,10 +1396,9 @@ tests_smt2 = [
   ## incremental
   ['solver/fp/fp_regr5.smt2', ['-i']],
 
-  # TODO: disable due to missing support for models
-  # ['solver/fp/fp_rational.smt2'],
-  # ['solver/fp/fp_real.smt2'],
-  # ['solver/fp/fp_regr9.smt2'],
+  ['solver/fp/fp_rational.smt2'],
+  ['solver/fp/fp_real.smt2'],
+  ['solver/fp/fp_regr9.smt2'],
   # TODO: disabled because const arrays not yet supported
   #['solver/array/getvalue.smt2'],
 ]

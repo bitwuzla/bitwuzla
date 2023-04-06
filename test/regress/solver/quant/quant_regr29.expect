@@ -1,0 +1,9 @@
+sat
+(
+  (x2 true)
+  ((distinct x2 (exists ((x6 Bool)) (x true (forall ((_x Bool)) (ite x6 _x (x false false)))))) false)
+)
+(
+  (define-fun x ((@bzla.var_566 Bool) (@bzla.var_567 Bool)) (ite (and (= @bzla.var_566 true) (= @bzla.var_567 true)) false (ite (and (= @bzla.var_566 false) (= @bzla.var_567 false)) true false)))
+  (define-fun x2 () Bool true)
+)

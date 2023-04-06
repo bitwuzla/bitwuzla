@@ -269,14 +269,13 @@ class Parser
   bool parse_term(bool look_ahead = false, Token la_char = Token::INVALID);
   /**
    * Parse list of terms.
-   * @param repr The resulting string representations of the term list.
+   * @param repr The resulting list of terms.
    * @return False on error.
    */
-  bool parse_term_list(std::vector<std::string>* repr = nullptr);
+  bool parse_term_list(std::vector<bitwuzla::Term>& terms,
+                       std::vector<std::string>* repr = nullptr);
   /**
    * Helper for parse_term, parse currently open term.
-   * @param token The token of the currently open term.
-   * @return False on error.
    */
   bool parse_open_term(Token token);
   /**
@@ -793,6 +792,9 @@ class Parser
   bitwuzla::Result d_result = bitwuzla::Result::UNKNOWN;
   /** The current assertion level. */
   uint64_t d_assertion_level = 0;
+
+  /** Cache declared symbols for get-model. */
+  std::vector<SymbolTable::Node*> d_decls;
 
   /** The work stack. */
   std::vector<ParsedItem> d_work;

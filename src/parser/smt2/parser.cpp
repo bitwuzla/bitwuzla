@@ -228,21 +228,18 @@ Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
     {
       return false;
     }
-    if (!parse_term_list())
+    std::vector<bitwuzla::Term> assumptions;
+    if (!parse_term_list(assumptions))
     {
       return false;
     }
-    std::vector<bitwuzla::Term> assumptions;
-    assumptions.resize(nargs());
-    for (size_t i = 0, n = nargs(); i < n; ++i)
+    for (size_t i = 0, n = assumptions.size(); i < n; ++i)
     {
-      size_t idx = n - i - 1;
-      if (!peek_term_arg().sort().is_bool())
+      if (!assumptions[i].sort().is_bool())
       {
-        return error_arg("assumption at index " + std::to_string(idx)
+        return error_arg("assumption at index " + std::to_string(i)
                          + " is not a formula");
       }
-      assumptions[idx] = pop_term_arg();
     }
     if (!parse_rpar())
     {
@@ -350,6 +347,7 @@ Parser::parse_command_declare_fun(bool is_const)
   {
     return false;
   }
+  d_decls.push_back(symbol);
   print_success();
   return true;
 }
@@ -571,24 +569,51 @@ Parser::parse_command_get_model()
 {
   init_logic();
   init_bitwuzla();
-  //    case BZLA_GET_MODEL_TAG_SMT2:
-  //      if (!read_rpar_smt2(parser, " after 'get-model'")) return 0;
-  //      if (!bitwuzla_get_option(parser->options,
-  //      BITWUZLA_OPT_PRODUCE_MODELS))
-  //        return !perr_smt2(parser, "model generation is not enabled");
-  //      if (parser->res->result != BITWUZLA_SAT) break;
-  //      // if (bitwuzla_get_option(parser->options,
-  //      BITWUZLA_OPT_OUTPUT_FORMAT)
-  //      //     == BZLA_OUTPUT_FORMAT_BTOR)
-  //      //{
-  //      //   // bitwuzla_print_model(bitwuzla, "btor", parser->outfile);
-  //      // }
-  //      // else
-  //      //{
-  //      //   // bitwuzla_print_model(bitwuzla, "smt2", parser->outfile);
-  //      // }
-  //      fflush(parser->outfile);
-  //      break;
+  if (!parse_rpar())
+  {
+    return false;
+  }
+  if (!d_options.get(bitwuzla::Option::PRODUCE_MODELS))
+  {
+    return error("model generation is not enabled");
+  }
+  if (d_result != bitwuzla::Result::SAT)
+  {
+    return true;
+  }
+  (*d_out) << "(" << std::endl;
+  for (const auto& node : d_decls)
+  {
+    (*d_out) << "  (define-fun " << node->d_symbol << " (";
+    const bitwuzla::Term& term = node->d_term;
+    const bitwuzla::Sort& sort = term.sort();
+    if (sort.is_fun())
+    {
+      bitwuzla::Term value = d_bitwuzla->get_value(term);
+      assert(value.kind() == bitwuzla::Kind::LAMBDA);
+      assert(value.num_children() == 2);
+      size_t i = 0;
+      while (value[1].kind() == bitwuzla::Kind::LAMBDA)
+      {
+        assert(value[0].is_variable());
+        (*d_out) << (i > 0 ? " " : "") << "(" << value[0] << " "
+                 << value[0].sort() << ") ";
+        value = value[1];
+      }
+      assert(value[0].is_variable());
+      (*d_out) << (i > 0 ? " " : "") << "(" << value[0] << " "
+               << value[0].sort() << ")) ";
+      (*d_out) << value[1] << ")" << std::endl;
+    }
+    else
+    {
+      (*d_out) << ") " << sort << " " << d_bitwuzla->get_value(node->d_term)
+               << ")" << std::endl;
+    }
+  }
+  (*d_out) << ")" << std::endl;
+  d_out->flush();
+  return true;
 }
 
 bool
@@ -668,38 +693,29 @@ Parser::parse_command_get_value()
   {
     return false;
   }
+  std::vector<bitwuzla::Term> args;
   std::vector<std::string> repr;
-  if (!parse_term_list(&repr))
+  if (!parse_term_list(args, &repr))
   {
     return false;
   }
+  assert(args.size() == repr.size());
   if (!parse_rpar())
   {
     return false;
   }
-  size_t size_args = nargs();
-  std::vector<bitwuzla::Term> args(size_args);
-  for (size_t i = 0; i < size_args; ++i)
-  {
-    size_t idx = size_args - i - 1;
-    args[idx]  = pop_term_arg();
-  }
   (*d_out) << "(";
+  size_t size_args = args.size();
   std::stringstream ss;
   if (size_args > 1)
   {
-    (*d_out) << std::endl;
-    ss << std::endl;
+    ss << std::endl << "  ";
   }
-  ss << " ";
   const std::string& pref = ss.str();
   for (size_t i = 0; i < size_args; ++i)
   {
+    (*d_out) << pref;
     (*d_out) << "(";
-    if (i > 0)
-    {
-      (*d_out) << pref;
-    }
     (*d_out) << repr[i] << " " << d_bitwuzla->get_value(args[i]);
     (*d_out) << ")";
   }
@@ -708,7 +724,6 @@ Parser::parse_command_get_value()
     (*d_out) << std::endl;
   }
   (*d_out) << ")" << std::endl;
-  ;
   d_out->flush();
   return true;
 }
@@ -1064,10 +1079,13 @@ Parser::parse_term(bool look_ahead, Token la)
 }
 
 bool
-Parser::parse_term_list(std::vector<std::string>* repr)
+Parser::parse_term_list(std::vector<bitwuzla::Term>& terms,
+                        std::vector<std::string>* repr)
 {
+  terms.clear();
   for (;;)
   {
+    d_lexer->save_chars(repr != nullptr);
     Token la = next_token();
     if (!check_token(la))
     {
@@ -1075,17 +1093,27 @@ Parser::parse_term_list(std::vector<std::string>* repr)
     }
     if (la == Token::RPAR)
     {
+      d_lexer->save_chars(false);
       break;
-    }
-    if (repr && la == Token::SYMBOL)
-    {
-      assert(d_last_node->has_symbol());
-      repr->emplace_back(d_last_node->d_symbol);
     }
     if (!parse_term(true, la))
     {
       return false;
     }
+    d_lexer->save_chars(false);
+    if (repr)
+    {
+      std::string r = d_lexer->repr();
+      // for plain, non-piped symbols, the lexer also stores the terminating
+      // non-symbol character, which we have to remove
+      if (r[0] != '(' && r[0] != '|'
+          && !d_lexer->is_symbol_char(r[r.size() - 1]))
+      {
+        r = r.substr(0, r.size() - 1);
+      }
+      repr->emplace_back(r);
+    }
+    terms.emplace_back(pop_term_arg());
   }
   return true;
 }
