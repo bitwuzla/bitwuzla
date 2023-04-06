@@ -801,6 +801,8 @@ class Parser
   bool d_print_success = false;
   /** True if SMT-LIB option global-declarations is enabled. */
   bool d_global_decl   = false;
+  /** True if SMT-LIB option produce-unsat-cores is enabled. */
+  bool d_prod_uc = false;
   /** True if input file contains arrays. */
   bool d_arrays_enabled = false;
   /** True if input file contains bit-vectors. */
@@ -856,6 +858,8 @@ class Parser
   bool d_save_repr = false;
   /** The string representation of input parsed while d_save_repr was true. */
   std::string d_repr;
+
+  std::unordered_map<bitwuzla::Term, SymbolTable::Node*> d_named_terms;
 
   /** Parse statistics. */
   struct Statistics

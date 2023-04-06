@@ -632,28 +632,29 @@ Parser::parse_command_get_unsat_core()
 {
   init_logic();
   init_bitwuzla();
-  //    case BZLA_GET_UNSAT_CORE_TAG_SMT2: {
-  //      if (!read_rpar_smt2(parser, " after 'get-unsat-assumptions'")) return
-  //      0; if (parser->res->result != BITWUZLA_UNSAT) break; fputc('(',
-  //      parser->outfile); size_t size; unsat_core =
-  //      bitwuzla_get_unsat_core(get_bitwuzla(parser), &size); const char *sym;
-  //      bool printed_first = false;
-  //      for (i = 0; i < size; ++i)
-  //      {
-  //        sym = bitwuzla_term_get_symbol(unsat_core[i]);
-  //        if (!sym) continue;
-  //        if (printed_first)
-  //        {
-  //          fputc(' ', parser->outfile);
-  //        }
-  //        fprintf(parser->outfile, "%s", sym);
-  //        printed_first = true;
-  //      }
-  //      unsat_core = 0;
-  //      fputs(")\n", parser->outfile);
-  //      fflush(parser->outfile);
-  //      break;
-  //    }
+  if (!parse_rpar())
+  {
+    return false;
+  }
+  if (!d_options.get(bitwuzla::Option::PRODUCE_UNSAT_CORES))
+  {
+    return error("unsat core production is not enabled");
+  }
+  if (d_result != bitwuzla::Result::UNSAT)
+  {
+    return true;
+  }
+  (*d_out) << "(";
+  auto unsat_core = d_bitwuzla->get_unsat_core();
+  for (size_t i = 0, n = unsat_core.size(); i < n; ++i)
+  {
+    auto it = d_named_terms.find(unsat_core[i]);
+    assert(it != d_named_terms.end());
+    (*d_out) << (i > 0 ? " " : "") << it->second->d_symbol;
+  }
+  (*d_out) << ")" << std::endl;
+  d_out->flush();
+  return true;
 }
 
 bool
@@ -936,6 +937,10 @@ Parser::parse_command_set_option()
     {
       return false;
     }
+    if (token == Token::PRODUCE_UNSAT_CORES)
+    {
+      d_prod_uc = true;
+    }
     assert(d_lexer->has_token());
     assert(d_lexer->token()[0] == ':');
     std::string opt = d_lexer->token() + 1;
@@ -1141,22 +1146,6 @@ Parser::parse_open_term(Token token)
   {
     return error("expected sorted variable");
   }
-  else if (is_symbol(token))
-  {
-    if (token == Token::SYMBOL)
-    {
-      assert(d_last_node);
-      push_item(token, d_last_node, d_lexer->coo());
-    }
-    else
-    {
-      push_item(token, d_lexer->coo());
-    }
-    if (!parse_open_term_symbol())
-    {
-      return false;
-    }
-  }
   else if (token == Token::NAMED)
   {
     push_item(Token::SYMBOL, d_last_node, d_lexer->coo());
@@ -1173,6 +1162,22 @@ Parser::parse_open_term(Token token)
                    + std::to_string(symbol->d_coo.col));
     }
     symbol->d_coo = d_lexer->coo();
+  }
+  else if (is_symbol(token))
+  {
+    if (token == Token::SYMBOL)
+    {
+      assert(d_last_node);
+      push_item(token, d_last_node, d_lexer->coo());
+    }
+    else
+    {
+      push_item(token, d_lexer->coo());
+    }
+    if (!parse_open_term_symbol())
+    {
+      return false;
+    }
   }
   else if (token == Token::BINARY_VALUE)
   {
@@ -1504,11 +1509,10 @@ Parser::parse_open_term_symbol()
     }
     else if (token == Token::BANG)
     {
-      if (d_work.back().d_token != Token::LPAR)
+      if (d_work[d_work.size() - 2].d_token != Token::LPAR)
       {
         return error("missing '(' before '" + std::to_string(token) + "'");
       }
-      push_item(token, d_lexer->coo());
     }
     else
     {
@@ -1885,6 +1889,10 @@ Parser::close_term_bang(ParsedItem& item)
   }
   symbol->d_term = pop_term_arg();
   set_item(item, Token::TERM, symbol->d_term);
+  if (d_prod_uc)
+  {
+    d_named_terms.emplace(symbol->d_term, symbol);
+  }
   return true;
 }
 
