@@ -47,16 +47,15 @@ class PassNormalize : public PreprocessingPass
    * @param kind The operator kind.
    * @param lhs The coefficients of the left hand side.
    * @param rhs The coefficients of the right hand side.
-   * @param common The resulting, factored out common subterms. Occurrences of
-   *               common subterms are removed from `lhs` and `rhs`, e.g., if
-   *               `a` appears twice in lhs and once in rhs, then `common`
-   *               will contain `a`, lhs will contain `a: 1` and rhs `a: 0`
-   *               after calling this function.
+   * @return A node representing the combination of common subterms, maximizing
+   *         sharing of subterms. Occurrences of common subterms are removed
+   *         from `lhs` and `rhs`, e.g., if `a` appears twice in lhs and once
+   *         in rhs, lhs will contain `a: 1` and rhs `a: 0` after calling this
+   *         function.
    */
-  void compute_common_coefficients(node::Kind kind,
+  Node compute_common_coefficients(node::Kind kind,
                                    CoefficientsMap& lhs,
-                                   CoefficientsMap& rhs,
-                                   std::vector<Node>& common);
+                                   CoefficientsMap& rhs);
 
   /**
    * Normalize factors for bit-vector add.

@@ -70,6 +70,16 @@ push_factorized(Kind kind,
   }
 }
 
+#ifndef NDEBUG
+void
+print_coefficients(PassNormalize::CoefficientsMap& coeff)
+{
+  for (const auto& c : coeff)
+  {
+    std::cout << c.first << ": " << c.second << std::endl;
+  }
+}
+#endif
 }  // namespace
 
 /* === PassNormalize public ================================================= */
@@ -181,35 +191,36 @@ PassNormalize::compute_coefficients(const Node& node,
   }
 }
 
-void
+Node
 PassNormalize::compute_common_coefficients(Kind kind,
                                            PassNormalize::CoefficientsMap& lhs,
-                                           PassNormalize::CoefficientsMap& rhs,
-                                           std::vector<Node>& common)
+                                           PassNormalize::CoefficientsMap& rhs)
 {
-  // TODO: Ideally, we would factor out common combinations of common leafs,
-  //       when possible. For example, (a * b) and (a * b, b * a) currently
-  //       results in
+  assert(kind == Kind::BV_ADD || kind == Kind::BV_MUL);
+
+  // We factor out common combinations of common leafs to maximize sharing.
+  // For example,
+  //         lhs = {a: 1, b: 1}
+  //         rhs = {a: 2, b: 2}
+  // results in
   //         lhs = {a: 0, b: 0}
-  //         rhs = {a: 1, b: 1} and
-  //         common = {a, b},
-  //       but could be
-  //         lhs = {a: 0, b: 0}
-  //         rhs = {a: 0, b: 0, a * b: 1} and
-  //         common = {a * b}.
-  //       Related problem: ((a * b) * ((c * d) * (e * (a * b)))) and
-  //                        (a * (b * (c * (d * e))))
-  //       results in
-  //         left = (a * (b * (a * (b * (c * (d * e))))))
-  //         right = (a * (b * (c * (d * e))))
-  //       but multiplier (a * b) could be shared:
-  //         left = (a * b) * (a * b) * (c * (d * e))
+  //         rhs = {a: 1, b: 1}
+  //         common = (a * b).
+  // A more complex example,
+  //         lhs = {a: 6, b: 3, c: 2, d: 1}
+  //         rhs = {a: 7, b: 5, c: 3}
+  // results in
+  //         lhs = {a: 0, b: 0, c: 0, d: 1}
+  //         rhs = {a: 1, b: 2, c: 1}
+  //         common = (aaabc * (aaabc * ab))
+
+  std::vector<std::pair<Node, BitVector>> common_coeff;
   for (auto it0 = lhs.begin(), end = lhs.end(); it0 != end; ++it0)
   {
     auto it1 = rhs.find(it0->first);
     if (it1 != rhs.end())
     {
-      auto occs =
+      BitVector occs =
           it0->second.compare(it1->second) <= 0 ? it0->second : it1->second;
       if (occs.is_zero())
       {
@@ -217,9 +228,63 @@ PassNormalize::compute_common_coefficients(Kind kind,
       }
       it0->second.ibvsub(occs);
       it1->second.ibvsub(occs);
-      push_factorized(kind, it0->first, occs, common);
+      common_coeff.emplace_back(it0->first, occs);
     }
   }
+
+  Node res;
+  if (common_coeff.size())
+  {
+    NodeManager& nm = NodeManager::get();
+    // combine common subterms
+    if (kind == Kind::BV_ADD)
+    {
+      assert(!common_coeff[0].second.is_zero());
+      res = common_coeff[0].second.is_one()
+                ? common_coeff[0].first
+                : nm.mk_node(Kind::BV_MUL,
+                             {nm.mk_value(common_coeff[0].second),
+                              common_coeff[0].first});
+      for (size_t i = 1, n = common_coeff.size(); i < n; ++i)
+      {
+        res = common_coeff[i].second.is_one()
+                  ? common_coeff[i].first
+                  : nm.mk_node(Kind::BV_ADD,
+                               {res,
+                                nm.mk_node(Kind::BV_MUL,
+                                           {nm.mk_value(common_coeff[i].second),
+                                            common_coeff[i].first})});
+      }
+    }
+    else
+    {
+      assert(kind == Kind::BV_MUL);
+      while (common_coeff.size() > 1)
+      {
+        std::sort(common_coeff.begin(),
+                  common_coeff.end(),
+                  [](const auto& a, const auto& b) {
+                    return a.second.compare(b.second) > 0;
+                  });
+        while (common_coeff.back().second.is_zero())
+        {
+          common_coeff.pop_back();
+        }
+        for (size_t i = 1, n = common_coeff.size(); i < n; ++i)
+        {
+          assert(common_coeff[i - 1].second.compare(common_coeff[i].second)
+                 >= 0);
+          const BitVector& occs = common_coeff[i].second;
+          common_coeff[i].first = nm.mk_node(
+              kind, {common_coeff[i - 1].first, common_coeff[i].first});
+          common_coeff[i - 1].second.ibvsub(occs);
+        }
+      }
+      assert(common_coeff.back().second.is_one());
+      res = common_coeff.back().first;
+    }
+  }
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -428,6 +493,7 @@ PassNormalize::normalize_coefficients_eq(
     PassNormalize::CoefficientsMap& coeffs1)
 {
   assert(node0.kind() == node1.kind());
+  assert(node0.kind() == Kind::BV_ADD || node0.kind() == Kind::BV_MUL);
 
   Kind kind = node0.kind();
 
@@ -498,32 +564,22 @@ PassNormalize::normalize_coefficients_eq(
     }
   }
 
-  std::vector<Node> common;
-  compute_common_coefficients(kind, coeffs0, coeffs1, common);
-
-  if (kind == Kind::BV_MUL && !common.empty())
+  Node common = compute_common_coefficients(kind, coeffs0, coeffs1);
+  if (kind == Kind::BV_MUL && !common.is_null())
   {
-    NodeManager& nm = NodeManager::get();
     BitVector bvone = BitVector::mk_one(node0.type().bv_size());
-    std::sort(common.begin(), common.end());
-    size_t n = common.size();
-    Node com = common[n - 1];
-    for (size_t i = 1; i < n; ++i)
     {
-      com = nm.mk_node(Kind::BV_MUL, {common[n - i - 1], com});
-    }
-    {
-      auto [it, inserted] = coeffs0.emplace(com, bvone);
+      auto [it, inserted] = coeffs0.emplace(common, bvone);
       if (!inserted)
       {
-        coeffs0[com].ibvinc();
+        coeffs0[common].ibvinc();
       }
     }
     {
-      auto [it, inserted] = coeffs1.emplace(com, bvone);
+      auto [it, inserted] = coeffs1.emplace(common, bvone);
       if (!inserted)
       {
-        coeffs1[com].ibvinc();
+        coeffs1[common].ibvinc();
       }
     }
   }
@@ -714,13 +770,13 @@ PassNormalize::normalize_common(Kind kind,
                                 PassNormalize::CoefficientsMap& lhs,
                                 PassNormalize::CoefficientsMap& rhs)
 {
-  std::vector<Node> lhs_norm, rhs_norm, common;
+  std::vector<Node> lhs_norm, rhs_norm;
   assert(!lhs.empty());
   assert(!rhs.empty());
 
   BitVector one = BitVector::mk_one(lhs.begin()->first.type().bv_size());
 
-  compute_common_coefficients(kind, lhs, rhs, common);
+  Node common = compute_common_coefficients(kind, lhs, rhs);
 
   for (const auto& [n, occs] : lhs)
   {
@@ -731,12 +787,10 @@ PassNormalize::normalize_common(Kind kind,
     push_factorized(kind, n, occs, rhs_norm);
   }
 
-  if (!common.empty())
+  if (!common.is_null())
   {
-    std::sort(common.begin(), common.end());
-    Node com = utils::mk_nary(kind, common);
-    lhs_norm.push_back(com);
-    rhs_norm.push_back(com);
+    lhs_norm.push_back(common);
+    rhs_norm.push_back(common);
   }
 
   assert(!lhs_norm.empty());

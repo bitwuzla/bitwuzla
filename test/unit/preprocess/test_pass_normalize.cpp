@@ -452,6 +452,172 @@ TEST_F(TestPassNormalize, compute_coefficients_neg3)
 
 /* -------------------------------------------------------------------------- */
 
+TEST_F(TestPassNormalize, compute_common_coefficients_mul1)
+{
+  PassNormalize::CoefficientsMap lhs{{d_c, BitVector::from_ui(8, 1)},
+                                     {d_b, BitVector::from_ui(8, 3)},
+                                     {d_a, BitVector::from_ui(8, 2)},
+                                     {d_d, BitVector::from_ui(8, 1)}};
+  PassNormalize::CoefficientsMap rhs{{d_a, BitVector::from_ui(8, 6)},
+                                     {d_b, BitVector::from_ui(8, 7)}};
+
+  PassNormalize::CoefficientsMap lhs_exp{{d_c, BitVector::from_ui(8, 1)},
+                                         {d_b, BitVector::from_ui(8, 0)},
+                                         {d_a, BitVector::from_ui(8, 0)},
+                                         {d_d, BitVector::from_ui(8, 1)}};
+  PassNormalize::CoefficientsMap rhs_exp{{d_a, BitVector::from_ui(8, 4)},
+                                         {d_b, BitVector::from_ui(8, 4)}};
+
+  Node ba = mul(d_b, d_a);
+
+  Node exp = mul(ba, mul(ba, d_b));
+  Node res = d_pass->compute_common_coefficients(Kind::BV_MUL, lhs, rhs);
+
+  ASSERT_EQ(res, exp);
+  ASSERT_EQ(lhs, lhs_exp);
+  ASSERT_EQ(rhs, rhs_exp);
+}
+
+TEST_F(TestPassNormalize, compute_common_coefficients_mul2)
+{
+  PassNormalize::CoefficientsMap lhs{{d_c, BitVector::from_ui(8, 2)},
+                                     {d_b, BitVector::from_ui(8, 3)},
+                                     {d_a, BitVector::from_ui(8, 4)}};
+  PassNormalize::CoefficientsMap rhs{{d_a, BitVector::from_ui(8, 6)},
+                                     {d_b, BitVector::from_ui(8, 5)},
+                                     {d_c, BitVector::from_ui(8, 3)}};
+
+  PassNormalize::CoefficientsMap lhs_exp{{d_c, BitVector::from_ui(8, 0)},
+                                         {d_b, BitVector::from_ui(8, 0)},
+                                         {d_a, BitVector::from_ui(8, 0)}};
+  PassNormalize::CoefficientsMap rhs_exp{{d_a, BitVector::from_ui(8, 2)},
+                                         {d_b, BitVector::from_ui(8, 2)},
+                                         {d_c, BitVector::from_ui(8, 1)}};
+
+  Node ab   = mul(d_a, d_b);
+  Node ab_c = mul(ab, d_c);
+
+  Node exp = mul(ab_c, mul(mul(ab_c, d_a), ab));
+  Node res = d_pass->compute_common_coefficients(Kind::BV_MUL, lhs, rhs);
+
+  ASSERT_EQ(res, exp);
+  ASSERT_EQ(lhs, lhs_exp);
+  ASSERT_EQ(rhs, rhs_exp);
+}
+
+TEST_F(TestPassNormalize, compute_common_coefficients_mul3)
+{
+  PassNormalize::CoefficientsMap lhs{{d_c, BitVector::from_ui(8, 2)},
+                                     {d_b, BitVector::from_ui(8, 3)},
+                                     {d_a, BitVector::from_ui(8, 6)}};
+  PassNormalize::CoefficientsMap rhs{{d_a, BitVector::from_ui(8, 7)},
+                                     {d_b, BitVector::from_ui(8, 5)},
+                                     {d_c, BitVector::from_ui(8, 3)}};
+
+  PassNormalize::CoefficientsMap lhs_exp{{d_c, BitVector::from_ui(8, 0)},
+                                         {d_b, BitVector::from_ui(8, 0)},
+                                         {d_a, BitVector::from_ui(8, 0)}};
+  PassNormalize::CoefficientsMap rhs_exp{{d_a, BitVector::from_ui(8, 1)},
+                                         {d_b, BitVector::from_ui(8, 2)},
+                                         {d_c, BitVector::from_ui(8, 1)}};
+
+  Node ab     = mul(d_a, d_b);
+  Node ab_c   = mul(ab, d_c);
+  Node a_ab_c = mul(d_a, ab_c);
+
+  Node exp = mul(mul(d_a, a_ab_c), mul(a_ab_c, ab));
+  Node res = d_pass->compute_common_coefficients(Kind::BV_MUL, lhs, rhs);
+
+  ASSERT_EQ(res, exp);
+  ASSERT_EQ(lhs, lhs_exp);
+  ASSERT_EQ(rhs, rhs_exp);
+}
+
+TEST_F(TestPassNormalize, compute_common_coefficients_add1)
+{
+  PassNormalize::CoefficientsMap lhs{{d_c, BitVector::from_ui(8, 1)},
+                                     {d_b, BitVector::from_ui(8, 3)},
+                                     {d_a, BitVector::from_ui(8, 2)},
+                                     {d_d, BitVector::from_ui(8, 1)}};
+  PassNormalize::CoefficientsMap rhs{{d_a, BitVector::from_ui(8, 6)},
+                                     {d_b, BitVector::from_ui(8, 7)}};
+
+  PassNormalize::CoefficientsMap lhs_exp{{d_c, BitVector::from_ui(8, 1)},
+                                         {d_b, BitVector::from_ui(8, 0)},
+                                         {d_a, BitVector::from_ui(8, 0)},
+                                         {d_d, BitVector::from_ui(8, 1)}};
+  PassNormalize::CoefficientsMap rhs_exp{{d_a, BitVector::from_ui(8, 4)},
+                                         {d_b, BitVector::from_ui(8, 4)}};
+
+  Node b3 = mul(d_nm.mk_value(BitVector::from_ui(8, 3)), d_b);
+  Node a2 = mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_a);
+
+  Node exp = add(a2, b3);
+  Node res = d_pass->compute_common_coefficients(Kind::BV_ADD, lhs, rhs);
+
+  ASSERT_EQ(res, exp);
+  ASSERT_EQ(lhs, lhs_exp);
+  ASSERT_EQ(rhs, rhs_exp);
+}
+
+TEST_F(TestPassNormalize, compute_common_coefficients_add2)
+{
+  PassNormalize::CoefficientsMap lhs{{d_c, BitVector::from_ui(8, 2)},
+                                     {d_b, BitVector::from_ui(8, 3)},
+                                     {d_a, BitVector::from_ui(8, 4)}};
+  PassNormalize::CoefficientsMap rhs{{d_a, BitVector::from_ui(8, 6)},
+                                     {d_b, BitVector::from_ui(8, 5)},
+                                     {d_c, BitVector::from_ui(8, 3)}};
+
+  PassNormalize::CoefficientsMap lhs_exp{{d_c, BitVector::from_ui(8, 0)},
+                                         {d_b, BitVector::from_ui(8, 0)},
+                                         {d_a, BitVector::from_ui(8, 0)}};
+  PassNormalize::CoefficientsMap rhs_exp{{d_a, BitVector::from_ui(8, 2)},
+                                         {d_b, BitVector::from_ui(8, 2)},
+                                         {d_c, BitVector::from_ui(8, 1)}};
+
+  Node a4 = mul(d_nm.mk_value(BitVector::from_ui(8, 4)), d_a);
+  Node b3 = mul(d_nm.mk_value(BitVector::from_ui(8, 3)), d_b);
+  Node c2 = mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_c);
+
+  Node exp = add(add(a4, b3), c2);
+  Node res = d_pass->compute_common_coefficients(Kind::BV_ADD, lhs, rhs);
+
+  ASSERT_EQ(res, exp);
+  ASSERT_EQ(lhs, lhs_exp);
+  ASSERT_EQ(rhs, rhs_exp);
+}
+
+TEST_F(TestPassNormalize, compute_common_coefficients_add3)
+{
+  PassNormalize::CoefficientsMap lhs{{d_c, BitVector::from_ui(8, 2)},
+                                     {d_b, BitVector::from_ui(8, 3)},
+                                     {d_a, BitVector::from_ui(8, 6)}};
+  PassNormalize::CoefficientsMap rhs{{d_a, BitVector::from_ui(8, 6)},
+                                     {d_b, BitVector::from_ui(8, 5)},
+                                     {d_c, BitVector::from_ui(8, 3)}};
+
+  PassNormalize::CoefficientsMap lhs_exp{{d_c, BitVector::from_ui(8, 0)},
+                                         {d_b, BitVector::from_ui(8, 0)},
+                                         {d_a, BitVector::from_ui(8, 0)}};
+  PassNormalize::CoefficientsMap rhs_exp{{d_a, BitVector::from_ui(8, 0)},
+                                         {d_b, BitVector::from_ui(8, 2)},
+                                         {d_c, BitVector::from_ui(8, 1)}};
+
+  Node a6 = mul(d_nm.mk_value(BitVector::from_ui(8, 6)), d_a);
+  Node b3 = mul(d_nm.mk_value(BitVector::from_ui(8, 3)), d_b);
+  Node c2 = mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_c);
+
+  Node exp = add(add(a6, b3), c2);
+  Node res = d_pass->compute_common_coefficients(Kind::BV_ADD, lhs, rhs);
+
+  ASSERT_EQ(res, exp);
+  ASSERT_EQ(lhs, lhs_exp);
+  ASSERT_EQ(rhs, rhs_exp);
+}
+
+/* -------------------------------------------------------------------------- */
+
 TEST_F(TestPassNormalize, mul_normalize00)
 {
   // (a * b) = (b * a)
@@ -496,7 +662,7 @@ TEST_F(TestPassNormalize, mul_normalize1)
   Node mul_bcde = mul(d_b, mul_cde);
   Node mul1     = mul(d_a, mul_bcde);
 
-  Node common = mul(d_a, mul(d_b, mul(d_d, d_e)));
+  Node common = mul(mul(mul_ab, d_d), d_e);
   test_assertion(equal(mul0, mul1),
                  equal(mul(d_a, common), mul(d_c, common)),
                  equal(mul(d_a, common), mul(d_c, common)));
@@ -515,7 +681,7 @@ TEST_F(TestPassNormalize, mul_normalize2)
   Node mul_bcae = mul(d_b, mul_cae);
   Node mul1     = mul(d_a, mul_bcae);
 
-  Node common = mul(d_a, mul(d_b, mul(d_c, d_e)));
+  Node common = mul(mul(mul_ab, d_c), d_e);
 
   test_assertion(equal(mul0, mul1),
                  equal(mul(d_d, common), mul(d_a, common)),
@@ -536,7 +702,7 @@ TEST_F(TestPassNormalize, mul_normalize3)
   Node mul_bcde = mul(d_b, mul_cde);
   Node mul1     = mul(d_a, mul_bcde);
 
-  Node common = mul(d_a, mul(d_b, mul(d_c, mul(d_d, d_e))));
+  Node common = mul(mul(mul(mul_ab, d_c), d_d), d_e);
   test_assertion(equal(mul0, mul1),
                  equal(mul(d_a, mul(d_b, common)), common),
                  equal(mul(d_a, mul(d_b, common)), common));
@@ -555,7 +721,7 @@ TEST_F(TestPassNormalize, mul_normalize4)
   Node mul_cd_a_cd = mul(mul_cd, mul_a_cd);
   Node mul1        = mul(mul_ab, mul_cd_a_cd);
 
-  Node common = mul(d_a, mul(d_a, mul(d_b, mul(d_c, d_d))));
+  Node common = mul(d_a, mul(mul(mul_ab, d_c), d_d));
   test_assertion(equal(mul0, mul1),
                  equal(mul(d_b, mul(d_e, common)), mul(d_c, mul(d_d, common))),
                  equal(mul(d_b, mul(d_e, common)), mul(d_c, mul(d_d, common))));
@@ -575,7 +741,7 @@ TEST_F(TestPassNormalize, mul_normalize5)
   Node mul_cd_a_cd = mul(mul_cd, mul_a_cd);
   Node mul1        = mul(mul_ab, mul_cd_a_cd);
 
-  Node common = mul(d_a, mul(d_a, mul(d_b, d_d)));
+  Node common = mul(d_a, mul(mul_ab, d_d));
   test_assertion(equal(mul0, mul1),
                  equal(mul(d_a, mul(d_b, mul(d_e, common))),
                        mul(d_c, mul(d_c, mul(d_d, common)))),
@@ -597,7 +763,7 @@ TEST_F(TestPassNormalize, mul_normalize6)
   Node mul_ab_ab_ab_ab = mul(mul_ab_ab, mul_ab_ab);
   Node mul1            = mul(mul_a_ab_ab, mul_ab_ab_ab_ab);
 
-  Node common = mul(d_a, mul(d_a, mul(d_a, mul(d_b, d_b))));
+  Node common = mul(mul_ab, mul(mul_ab, d_a));
 
   test_assertion(
       equal(mul0, mul1),
@@ -748,7 +914,7 @@ TEST_F(TestPassNormalize, mul_normalize10)
   Node mul1         = mul(mul_ab, mul_6cd_a_cd);
 
   Node thirty = d_nm.mk_value(BitVector::from_ui(8, 30));
-  Node common = mul(d_a, mul(d_a, mul(d_b, d_d)));
+  Node common = mul(d_a, mul(mul_ab, d_d));
   test_assertion(equal(mul0, mul1),
                  equal(mul(d_a, mul(d_b, mul(d_e, mul(thirty, common)))),
                        mul(d_c, mul(d_c, mul(d_d, mul(d_six, common))))),
