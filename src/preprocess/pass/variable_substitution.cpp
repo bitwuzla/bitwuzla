@@ -683,11 +683,17 @@ PassVariableSubstitution::substitute(
     const Node& term,
     const Node& excl_var,
     const std::unordered_map<Node, Node>& substitutions,
-    std::unordered_map<Node, Node>& cache,
+    std::unordered_map<Node, Node>& subst_cache,
     std::vector<Node>& substituted) const
 {
   bool track_assertions = d_env.options().produce_unsat_cores();
+
   node::node_ref_vector visit{term};
+  std::unordered_map<Node, Node> local_cache;
+  // Use local cache if excl_var should not be substituted, but was already
+  // substituted in a previous substitute call. This makes sure that excl_var
+  // will not be substituted.
+  auto& cache = excl_var.is_null() ? subst_cache : local_cache;
   do
   {
     const Node& cur = visit.back();
@@ -729,16 +735,7 @@ PassVariableSubstitution::substitute(
     visit.pop_back();
   } while (!visit.empty());
 
-  Node res = cache.at(term);
-
-  // Do not cache result if excl_var was not substituted. Ideally, we'd remove
-  // all nodes that depend on excl_var, but for now we keep it simple.
-  if (!excl_var.is_null())
-  {
-    cache.erase(excl_var);
-  }
-
-  return res;
+  return cache.at(term);
 }
 
 Node

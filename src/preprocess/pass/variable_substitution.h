@@ -44,7 +44,7 @@ class PassVariableSubstitution : public PreprocessingPass
   Node substitute(const Node& term,
                   const Node& excl_var,
                   const std::unordered_map<Node, Node>& substitutions,
-                  std::unordered_map<Node, Node>& cache,
+                  std::unordered_map<Node, Node>& subst_cache,
                   std::vector<Node>& substituted) const;
 
   Node process(const Node& term, std::vector<Node>& substituted);
