@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "backtrack/unordered_set.h"
+#include "backtrack/unordered_map.h"
 #include "backtrack/vector.h"
 #include "solver/solver.h"
 #include "util/statistics.h"
@@ -73,12 +74,12 @@ class QuantSolver : public Solver
   std::unordered_map<Node, Node> d_instantiation_consts;
   std::unordered_map<Node, Node> d_skolem_consts;
 
-  std::unordered_map<Node, Node> d_skolemization_lemmas;
+  backtrack::unordered_map<Node, Node> d_skolemization_lemmas;
   std::unordered_map<Node, Node> d_ce_lemmas;
 
   std::unique_ptr<SolvingContext> d_mbqi_solver;
   std::unordered_map<Node, Node> d_mbqi_inst;
-  std::unordered_set<Node> d_lemma_cache;
+  backtrack::unordered_set<Node> d_lemma_cache;
 
   bool d_added_lemma;
 

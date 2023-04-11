@@ -38,6 +38,8 @@ QuantSolver::QuantSolver(Env& env, SolverState& state)
       d_process_cache(state.backtrack_mgr()),
       d_consts(state.backtrack_mgr()),
       d_ground_terms(state.backtrack_mgr()),
+      d_skolemization_lemmas(state.backtrack_mgr()),
+      d_lemma_cache(state.backtrack_mgr()),
       d_stats(env.statistics())
 {
 }
