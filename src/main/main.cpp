@@ -272,7 +272,6 @@ main(int32_t argc, char* argv[])
     else if (arg == "-p" || arg == "--print-formula")
     {
       print = true;
-      parse_only = true;
     }
     else if (arg == "-P" || arg == "--parse-only")
     {
@@ -313,7 +312,7 @@ main(int32_t argc, char* argv[])
   } while (token != bzla::parser::smt2::Token::ENDOFFILE);
 #else
   bzla::parser::smt2::Parser parser(options, infile_name);
-  std::string err_msg = parser.parse(parse_only);
+  std::string err_msg = parser.parse(print || parse_only);
   if (!err_msg.empty())
   {
     std::cerr << "[error] " << err_msg << std::endl;
@@ -321,7 +320,10 @@ main(int32_t argc, char* argv[])
   }
   if (print)
   {
-    parser.bitwuzla()->simplify();
+    if (!parse_only)
+    {
+      parser.bitwuzla()->simplify();
+    }
     parser.bitwuzla()->print_formula(std::cout, "smt2");
   }
   std::exit(EXIT_SUCCESS);
