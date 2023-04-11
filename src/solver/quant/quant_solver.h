@@ -55,7 +55,6 @@ class QuantSolver : public Solver
   Node skolemize(const Node& q);
 
   const Node& skolemization_lemma(const Node& q);
-  const Node& ce_lemma(const Node& q);
   const Node& value_inst_lemma(const Node& q);
 
   void process(const Node& q);
@@ -75,7 +74,6 @@ class QuantSolver : public Solver
   std::unordered_map<Node, Node> d_skolem_consts;
 
   backtrack::unordered_map<Node, Node> d_skolemization_lemmas;
-  std::unordered_map<Node, Node> d_ce_lemmas;
 
   std::unique_ptr<SolvingContext> d_mbqi_solver;
   std::unordered_map<Node, Node> d_mbqi_inst;

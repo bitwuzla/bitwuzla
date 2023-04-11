@@ -299,35 +299,6 @@ QuantSolver::skolemization_lemma(const Node& q)
   return iit->second;
 }
 
-const Node&
-QuantSolver::ce_lemma(const Node& q)
-{
-  assert(q.kind() == Kind::FORALL);
-
-  auto it = d_ce_lemmas.find(q);
-  if (it != d_ce_lemmas.end())
-  {
-    return it->second;
-  }
-  Log(2) << "CE lemma: " << q;
-
-  std::unordered_map<Node, Node> map;
-  Node cur = q;
-  while (cur.kind() == Kind::FORALL)
-  {
-    const Node& ic = inst_const(cur);
-    map.emplace(cur[0], ic);
-    cur = cur[1];
-  }
-
-  NodeManager& nm = NodeManager::get();
-  Node inst       = instantiate(q, map);
-  Node lemma =
-      nm.mk_node(Kind::IMPLIES, {ce_const(q), nm.mk_node(Kind::NOT, {inst})});
-  auto [iit, inserted] = d_ce_lemmas.emplace(q, lemma);
-  return iit->second;
-}
-
 void
 QuantSolver::process(const Node& q)
 {
