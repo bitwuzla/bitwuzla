@@ -583,7 +583,7 @@ Parser::parse_command_get_model()
       }
       assert(value[0].is_variable());
       (*d_out) << (i > 0 ? " " : "") << "(" << value[0] << " "
-               << value[0].sort() << ")) ";
+               << value[0].sort() << ")) " << sort.fun_codomain() << " ";
       (*d_out) << value[1] << ")" << std::endl;
     }
     else
