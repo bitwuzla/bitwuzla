@@ -64,7 +64,7 @@ class SolverEngine
    * Processes given assertion and distributes reachable theory leafs to
    * solvers.
    */
-  void process_assertion(const Node& assertion, bool top_level);
+  void process_assertion(const Node& assertion, bool top_level, bool is_lemma);
 
   /** Traverse term and register terms to corresponding solvers. */
   void process_term(const Node& term);
@@ -105,7 +105,6 @@ class SolverEngine
   std::vector<Node> d_lemmas;
   /** Indicates whether new terms were registered while solving. */
   bool d_new_terms_registered = false;
-  bool d_new_quantifiers_registered = false;
   /** Lemma cache. */
   backtrack::unordered_set<Node> d_lemma_cache;
 

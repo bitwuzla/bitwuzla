@@ -69,10 +69,12 @@ BvBitblastSolver::solve()
 }
 
 void
-BvBitblastSolver::register_assertion(const Node& assertion, bool top_level)
+BvBitblastSolver::register_assertion(const Node& assertion,
+                                     bool top_level,
+                                     bool is_lemma)
 {
-  // All assertions are assumptions.
-  if (d_env.options().produce_unsat_cores())
+  // If unsat cores are enabled, all assertions are assumptions except lemmas.
+  if (d_env.options().produce_unsat_cores() && !is_lemma)
   {
     top_level = false;
   }

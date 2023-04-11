@@ -46,7 +46,6 @@ SolverEngine::solve()
     d_value_cache.clear();
     // Reset term registration flag
     d_new_terms_registered = false;
-    d_new_quantifiers_registered = false;
 
     // Process lemmas generated in previous iteration.
     process_lemmas();
@@ -157,7 +156,8 @@ SolverEngine::process_assertions()
 {
   while (!d_assertions.empty())
   {
-    size_t level = d_assertions.level(d_assertions.begin());
+    size_t level   = d_assertions.level(d_assertions.begin());
+    bool top_level = level == 0;
 
     // Sync backtrack manager to level. This is required if there are levels
     // that do not contain any assertions.
@@ -167,7 +167,7 @@ SolverEngine::process_assertions()
     preprocess::AssertionVector assertions(d_assertions);
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
-      process_assertion(assertions[i], level == 0);
+      process_assertion(assertions[i], top_level, false);
     }
 
     // Advance assertions to next level
@@ -181,14 +181,16 @@ SolverEngine::process_assertions()
 }
 
 void
-SolverEngine::process_assertion(const Node& assertion, bool top_level)
+SolverEngine::process_assertion(const Node& assertion,
+                                bool top_level,
+                                bool is_lemma)
 {
   // Send assertion to bit-vector solver.
   auto [it, inserted] = d_register_assertion_cache.insert(assertion);
   if (inserted)
   {
     Log(2) << "register assertion (top: " << top_level << "): " << assertion;
-    d_bv_solver.register_assertion(assertion, top_level);
+    d_bv_solver.register_assertion(assertion, top_level, is_lemma);
     d_quant_solver.register_assertion(assertion);
   }
   process_term(assertion);
@@ -224,7 +226,6 @@ SolverEngine::process_term(const Node& term)
         Log(2) << "register quantifier term: " << cur;
         d_quant_solver.register_term(cur);
         d_new_terms_registered = true;
-        d_new_quantifiers_registered = true;
       }
       else
       {
@@ -252,7 +253,7 @@ SolverEngine::process_lemmas()
 {
   for (const Node& lemma : d_lemmas)
   {
-    process_assertion(lemma, true);
+    process_assertion(lemma, true, true);
   }
   d_lemmas.clear();
 }

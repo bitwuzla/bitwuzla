@@ -52,18 +52,20 @@ BvSolver::BvSolver(Env& env, SolverState& state)
 BvSolver::~BvSolver() {}
 
 void
-BvSolver::register_assertion(const Node& assertion, bool top_level)
+BvSolver::register_assertion(const Node& assertion,
+                             bool top_level,
+                             bool is_lemma)
 {
   ++d_stats.num_assertions;
   if (d_cur_solver == option::BvSolver::BITBLAST
       || d_cur_solver == option::BvSolver::PREPROP)
   {
-    d_bitblast_solver.register_assertion(assertion, top_level);
+    d_bitblast_solver.register_assertion(assertion, top_level, is_lemma);
   }
   if (d_cur_solver == option::BvSolver::PROP
       || d_cur_solver == option::BvSolver::PREPROP)
   {
-    d_prop_solver.register_assertion(assertion, top_level);
+    d_prop_solver.register_assertion(assertion, top_level, is_lemma);
   }
 }
 

@@ -22,7 +22,9 @@ class BvPropSolver : public Solver, public BvSolverInterface
 
   Result solve() override;
 
-  void register_assertion(const Node& assertion, bool top_level) override;
+  void register_assertion(const Node& assertion,
+                          bool top_level,
+                          bool is_lemma) override;
 
   Node value(const Node& term) override;
 
