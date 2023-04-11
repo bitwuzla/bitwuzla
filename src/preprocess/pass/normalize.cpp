@@ -247,11 +247,11 @@ PassNormalize::compute_common_coefficients(Kind kind,
                               common_coeff[0].first});
       for (size_t i = 1, n = common_coeff.size(); i < n; ++i)
       {
-        res = common_coeff[i].second.is_one()
-                  ? common_coeff[i].first
-                  : nm.mk_node(Kind::BV_ADD,
-                               {res,
-                                nm.mk_node(Kind::BV_MUL,
+        res = nm.mk_node(Kind::BV_ADD,
+                         {res,
+                          common_coeff[i].second.is_one()
+                              ? common_coeff[i].first
+                              : nm.mk_node(Kind::BV_MUL,
                                            {nm.mk_value(common_coeff[i].second),
                                             common_coeff[i].first})});
       }

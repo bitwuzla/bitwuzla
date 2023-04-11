@@ -616,6 +616,31 @@ TEST_F(TestPassNormalize, compute_common_coefficients_add3)
   ASSERT_EQ(rhs, rhs_exp);
 }
 
+TEST_F(TestPassNormalize, compute_common_coefficients_add4)
+{
+  PassNormalize::CoefficientsMap lhs{{d_a, BitVector::from_ui(8, 1)},
+                                     {d_b, BitVector::from_ui(8, 1)},
+                                     {d_c, BitVector::from_ui(8, 1)}};
+  PassNormalize::CoefficientsMap rhs{{d_a, BitVector::from_ui(8, 1)},
+                                     {d_b, BitVector::from_ui(8, 1)}};
+
+  PassNormalize::CoefficientsMap lhs_exp{{d_a, BitVector::from_ui(8, 0)},
+                                         {d_b, BitVector::from_ui(8, 0)},
+                                         {d_c, BitVector::from_ui(8, 1)}};
+  PassNormalize::CoefficientsMap rhs_exp{{d_a, BitVector::from_ui(8, 0)},
+                                         {d_b, BitVector::from_ui(8, 0)}};
+
+  Node a6 = mul(d_nm.mk_value(BitVector::from_ui(8, 6)), d_a);
+  Node b3 = mul(d_nm.mk_value(BitVector::from_ui(8, 3)), d_b);
+  Node c2 = mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_c);
+
+  Node res = d_pass->compute_common_coefficients(Kind::BV_ADD, lhs, rhs);
+
+  ASSERT_EQ(res, add(d_b, d_a));
+  ASSERT_EQ(lhs, lhs_exp);
+  ASSERT_EQ(rhs, rhs_exp);
+}
+
 /* -------------------------------------------------------------------------- */
 
 TEST_F(TestPassNormalize, mul_normalize00)
