@@ -22,6 +22,13 @@ void
 PassEmbeddedConstraints::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats.time_apply);
+
+  // Disabled if unsat cores enabled.
+  if (d_env.options().produce_unsat_cores())
+  {
+    return;
+  }
+
   Log(1) << "Apply embedded constraints preprocessing pass";
 
   NodeManager& nm = NodeManager::get();
