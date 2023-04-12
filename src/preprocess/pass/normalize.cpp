@@ -280,8 +280,11 @@ PassNormalize::compute_common_coefficients(Kind kind,
           common_coeff[i - 1].second.ibvsub(occs);
         }
       }
-      assert(common_coeff.back().second.is_one());
       res = common_coeff.back().first;
+      for (size_t i = 1, n = common_coeff.back().second.to_uint64(); i < n; ++i)
+      {
+        res = nm.mk_node(kind, {res, common_coeff.back().first});
+      }
     }
   }
   return res;
