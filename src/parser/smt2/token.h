@@ -34,8 +34,8 @@ enum class Token
   RPAR,
   SYMBOL,
   ATTRIBUTE,
-  OPEN,     // place holder for open item
-  TERM,     // term argument
+  OPEN,  // place holder for open item
+  TERM,  // term argument
   FUN_APP,
   /* <var_binding> */
   LETBIND,
@@ -254,7 +254,7 @@ enum class Token
   FP_MAX,
   FP_MIN,
   FP_MUL,
-  FP_NAN,
+  FP_NOTANUMBER,
   FP_NEG,
   FP_NEG_INF,
   FP_NEG_ZERO,

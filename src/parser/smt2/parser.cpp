@@ -1296,7 +1296,7 @@ Parser::parse_open_term_indexed()
       // only used to mark as non-value, ignored
       kind = bitwuzla::Kind::FP_TO_FP_FROM_UBV;
       [[fallthrough]];
-    case Token::FP_NAN:
+    case Token::FP_NOTANUMBER:
     case Token::FP_NEG_INF:
     case Token::FP_NEG_ZERO:
     case Token::FP_POS_INF:
@@ -1367,7 +1367,7 @@ Parser::parse_open_term_indexed()
     bitwuzla::Term term;
     switch (token_kind)
     {
-      case Token::FP_NAN:
+      case Token::FP_NOTANUMBER:
       case Token::FP_NEG_INF:
       case Token::FP_NEG_ZERO:
       case Token::FP_POS_INF:
@@ -1375,7 +1375,7 @@ Parser::parse_open_term_indexed()
         assert(item.d_uints.size() == 2);
         bitwuzla::Sort sort =
             bitwuzla::mk_fp_sort(item.d_uints[0], item.d_uints[1]);
-        if (token_kind == Token::FP_NAN)
+        if (token_kind == Token::FP_NOTANUMBER)
         {
           term = bitwuzla::mk_fp_nan(sort);
         }
@@ -1742,7 +1742,7 @@ Parser::close_term()
     case Token::FP_MAX:
     case Token::FP_MIN:
     case Token::FP_MUL:
-    case Token::FP_NAN:
+    case Token::FP_NOTANUMBER:
     case Token::FP_NEG:
     case Token::FP_NEG_INF:
     case Token::FP_NEG_ZERO:
@@ -2697,7 +2697,7 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
     case Token::BV_USUBO:
     case Token::FP_MAX:
     case Token::FP_MIN:
-    case Token::FP_NAN:
+    case Token::FP_NOTANUMBER:
     case Token::FP_REM:
     case Token::FP_RTI:
     case Token::FP_SQRT: n_args = 2; break;
@@ -3023,7 +3023,7 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
     case Token::FP_LT:
     case Token::FP_MAX:
     case Token::FP_MIN:
-    case Token::FP_NAN:
+    case Token::FP_NOTANUMBER:
     case Token::FP_NEG:
     case Token::FP_NEG_INF:
     case Token::FP_NEG_ZERO:

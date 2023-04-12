@@ -232,7 +232,7 @@ to_string(bzla::parser::smt2::Token token)
     case Token::FP_MAX: return "fp.max";
     case Token::FP_MIN: return "fp.min";
     case Token::FP_MUL: return "fp.mul";
-    case Token::FP_NAN: return "NaN";
+    case Token::FP_NOTANUMBER: return "NaN";
     case Token::FP_NEG: return "fp.neg";
     case Token::FP_NEG_INF: return "-oo";
     case Token::FP_NEG_ZERO: return "-zero";

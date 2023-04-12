@@ -357,7 +357,7 @@ SymbolTable::init_fp_symbols()
   insert(Token::FP_MAX);
   insert(Token::FP_MIN);
   insert(Token::FP_MUL);
-  insert(Token::FP_NAN);
+  insert(Token::FP_NOTANUMBER);
   insert(Token::FP_NEG);
   insert(Token::FP_NEG_INF);
   insert(Token::FP_NEG_ZERO);
