@@ -1,6 +1,5 @@
 #include "parser/smt2/parser.h"
 
-#include <algorithm>
 #include <iostream>
 
 #include "bitwuzla/cpp/bitwuzla.h"
