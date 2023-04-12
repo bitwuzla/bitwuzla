@@ -24,7 +24,11 @@ class PassVariableSubstitution : public PreprocessingPass
   /** Process term and apply currently cached substitutions. */
   Node process(const Node& term) override;
 
+  /** Get current set of substitutions. */
   const std::unordered_map<Node, Node>& substitutions() const;
+
+  /** Get substitution assertion for substituted variable. */
+  const Node& substitution_assertion(const Node& var) const;
 
  private:
   void remove_indirect_cycles(std::unordered_map<Node, Node>& substs) const;
@@ -44,14 +48,9 @@ class PassVariableSubstitution : public PreprocessingPass
   Node substitute(const Node& term,
                   const Node& excl_var,
                   const std::unordered_map<Node, Node>& substitutions,
-                  std::unordered_map<Node, Node>& subst_cache,
-                  std::vector<Node>& substituted) const;
+                  std::unordered_map<Node, Node>& subst_cache) const;
 
-  Node process(const Node& term, std::vector<Node>& substituted);
-
-  Node process(const Node& term,
-               const Node& excl_var,
-               std::vector<Node>& substituted);
+  Node process(const Node& term, const Node& excl_var);
 
   /** Current set of variable substitutions. */
   backtrack::unordered_map<Node, std::pair<Node, Node>> d_substitutions;

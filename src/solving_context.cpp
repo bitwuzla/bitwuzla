@@ -81,7 +81,7 @@ SolvingContext::get_unsat_core()
   d_solver_engine.unsat_core(core);
 
   // Get unsat core in terms of original input assertions.
-  res = d_preprocessor.original_assertions(core);
+  res = d_preprocessor.post_process_unsat_core(core);
 
 #ifndef NDEBUG
   std::unordered_set<Node> orig(d_original_assertions.begin(),

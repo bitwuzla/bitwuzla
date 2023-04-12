@@ -40,7 +40,11 @@ class Preprocessor
   /** Preprocess given term based on last preprocess() call. */
   Node process(const Node& term);
 
-  std::vector<Node> original_assertions(
+  /**
+   * Post-process unsat core with preprocessed assertions to get unsat core in
+   * terms of original assertions.
+   */
+  std::vector<Node> post_process_unsat_core(
       const std::vector<Node>& assertions) const;
 
   /** Get current map of active substitutions. */

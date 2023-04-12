@@ -500,15 +500,13 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       if (it != d_substitution_assertions.end())
       {
         const auto& [var, term] = it->second;
-        std::vector<Node> parents;
-        Node replacement = process(assertion, var, parents);
-        assertions.replace(i, replacement, parents);
+        Node replacement        = process(assertion, var);
+        assertions.replace(i, replacement);
         continue;
       }
     }
-    std::vector<Node> parents;
-    Node replacement = process(assertion, parents);
-    assertions.replace(i, replacement, parents);
+    Node replacement = process(assertion);
+    assertions.replace(i, replacement);
   }
   d_cache.cache().clear();
 }
@@ -517,15 +515,22 @@ Node
 PassVariableSubstitution::process(const Node& term)
 {
   Node null;
-  std::vector<Node> parents;
-  return d_env.rewriter().rewrite(substitute(
-      term, null, d_cache.substitutions(), d_cache.cache(), parents));
+  return d_env.rewriter().rewrite(
+      substitute(term, null, d_cache.substitutions(), d_cache.cache()));
 }
 
 const std::unordered_map<Node, Node>&
 PassVariableSubstitution::substitutions() const
 {
   return d_cache.substitutions();
+}
+
+const Node&
+PassVariableSubstitution::substitution_assertion(const Node& var) const
+{
+  auto it = d_substitutions.find(var);
+  assert(it != d_substitutions.end());
+  return it->second.second;
 }
 
 /* --- PassVariableSubstitution private ------------------------------------- */
@@ -683,11 +688,8 @@ PassVariableSubstitution::substitute(
     const Node& term,
     const Node& excl_var,
     const std::unordered_map<Node, Node>& substitutions,
-    std::unordered_map<Node, Node>& subst_cache,
-    std::vector<Node>& substituted) const
+    std::unordered_map<Node, Node>& subst_cache) const
 {
-  bool track_assertions = d_env.options().produce_unsat_cores();
-
   node::node_ref_vector visit{term};
   std::unordered_map<Node, Node> local_cache;
   // Use local cache if excl_var should not be substituted, but was already
@@ -720,12 +722,6 @@ PassVariableSubstitution::substitute(
         auto iit = cache.find(its->second);
         assert(iit != cache.end());
         it->second = iit->second;
-        if (track_assertions)
-        {
-          assert(d_substitutions.find(cur) != d_substitutions.end());
-          // Track assertion
-          substituted.push_back(d_substitutions.find(cur)->second.second);
-        }
       }
       else
       {
@@ -739,20 +735,10 @@ PassVariableSubstitution::substitute(
 }
 
 Node
-PassVariableSubstitution::process(const Node& term, std::vector<Node>& parents)
+PassVariableSubstitution::process(const Node& term, const Node& excl_var)
 {
-  Node null;
-  return d_env.rewriter().rewrite(substitute(
-      term, null, d_cache.substitutions(), d_cache.cache(), parents));
-}
-
-Node
-PassVariableSubstitution::process(const Node& term,
-                                  const Node& excl_var,
-                                  std::vector<Node>& parents)
-{
-  return d_env.rewriter().rewrite(substitute(
-      term, excl_var, d_cache.substitutions(), d_cache.cache(), parents));
+  return d_env.rewriter().rewrite(
+      substitute(term, excl_var, d_cache.substitutions(), d_cache.cache()));
 }
 
 PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)

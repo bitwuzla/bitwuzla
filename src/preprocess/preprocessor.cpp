@@ -114,10 +114,48 @@ Preprocessor::process(const Node& term)
 }
 
 std::vector<Node>
-Preprocessor::original_assertions(const std::vector<Node>& assertions) const
+Preprocessor::post_process_unsat_core(const std::vector<Node>& assertions) const
 {
   assert(d_assertion_tracker != nullptr);
-  return d_assertion_tracker->parents(assertions);
+  std::vector<Node> unsat_core;
+  auto original_assertions = d_assertion_tracker->parents(assertions);
+
+  // Find involved substitution assertions.
+  // TODO: add support for more preprocessing passes (right now disabled)
+  node::unordered_node_ref_set cache;
+  node::node_ref_vector visit;
+  const auto& substs = substitutions();
+  for (size_t i = 0; i < original_assertions.size(); ++i)
+  {
+    const Node& assertion = original_assertions[i];
+    visit.push_back(assertion);
+    if (cache.find(assertion) == cache.end())
+    {
+      unsat_core.push_back(assertion);
+    }
+    do
+    {
+      const Node& cur = visit.back();
+      visit.pop_back();
+      auto [it, inserted] = cache.insert(cur);
+      if (inserted)
+      {
+        if (substs.find(cur) != substs.end())
+        {
+          const Node& substitution_assertion =
+              d_pass_variable_substitution.substitution_assertion(cur);
+          std::vector<Node> orig_asserts =
+              d_assertion_tracker->parents({substitution_assertion});
+          original_assertions.insert(original_assertions.end(),
+                                     orig_asserts.begin(),
+                                     orig_asserts.end());
+        }
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+    } while (!visit.empty());
+  }
+
+  return unsat_core;
 }
 
 const std::unordered_map<Node, Node>&
