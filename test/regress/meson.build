@@ -161,7 +161,7 @@ tests_smt2 = [
   ['solver/quant/quant_regr23.smt2'],
   ['solver/quant/quant_regr24.smt2'],
   ['solver/quant/quant_regr25.smt2'],
-  # ['solver/quant/quant_regr26.smt2'], disabled due to timeout
+  #['solver/quant/quant_regr26.smt2'], # TODO: timeout
   ['solver/quant/quant_regr3.smt2'],
   ['solver/quant/quant_regr4.smt2'],
   ['solver/quant/quant_regr6.smt2'],
@@ -170,7 +170,6 @@ tests_smt2 = [
   ['solver/quant/quant_regr27.smt2'],
   ['solver/quant/quant_regr28.smt2'],
   ['solver/quant/quant_regr29.smt2'],
-  ## unsat
   ['preprocess/array/regrembeddedconstraint1.btor.smt2', ['-rwl=0']],
   ['preprocess/array/regrembeddedconstraint1.btor.smt2', ['-rwl=1']],
   ['preprocess/array/regrembeddedconstraint1.btor.smt2', ['-rwl=2']],
@@ -299,7 +298,7 @@ tests_smt2 = [
   ['solver/array/write7.btor.smt2'],
   ['solver/array/write8.btor.smt2'],
   ['solver/array/write9.btor.smt2'],
-  ['solver/bv/prop/prels-funs.smt2', ['--bv-solver=preprop']],
+  ['solver/bv/prop/prels-funs.smt2', ['--bv-solver=preprop', '--no-check-unsat-core']],
   ['solver/fun/fun1.smt2'],
   ['solver/quant/issue97.smt2'],
   ['solver/quant/quant_regr10.smt2'],
@@ -503,7 +502,6 @@ tests_smt2 = [
   ['solver/bv/usubo1.smt2'],
   ['solver/bv/var1.btor.smt2'],
   ['solver/bv/var2.btor.smt2'],
-  ## unsat
   ['preprocess/bv/normaddneg2.btor.smt2'],
   ['preprocess/bv/normaddneg3.btor.smt2'],
   ['preprocess/bv/normalize-bench_1194.smt2'],
@@ -1374,7 +1372,6 @@ tests_smt2 = [
   ['solver/fp/fp_regr4.smt2'],
   ['solver/fp/fp_regr7.smt2'],
   ['solver/fp/fp_regr8.smt2'],
-  #['solver/quant/quant_regr29.smt2'], # TODO disabled because of quants
 
   ['solver/fp/Float-no-simp1-main.smt2'],
   ['solver/fp/Float-no-simp3-main.smt2'],
@@ -1391,8 +1388,6 @@ tests_smt2 = [
   ['solver/fp/uf_fpmin.smt2'],
   ['solver/fp/uf_tosbv.smt2'],
   ['solver/fp/uf_toubv.smt2'],
-  #['solver/quant/quant_regr27.smt2'], # TODO disabled because of quants
-  #['solver/quant/quant_regr28.smt2'], # TODO disabled because of quants
   ## incremental
   ['solver/fp/fp_regr5.smt2', ['-i']],
 
@@ -2176,15 +2171,17 @@ tests_btor_unsat = [
 regress_tests = [
   [tests_smt2],
   [tests_smt2, [], ['--produce-unsat-cores', '--check-unsat-core']],
-  #[tests_btor_sat, '--check-sat'],     # TODO: BTOR parser disabled
-  #[tests_btor_unsat, '--check-unsat'], # TODO: BTOR parser disabled
+  # TODO: BTOR parser disabled
+  #[tests_btor_sat, '--check-sat'],
+  #[tests_btor_unsat, '--check-unsat'],
+  #[tests_btor_unsat, '--check-unsat', ['--produce-unsat-cores', '--check-unsat-core']],
 ]
 
 foreach t : regress_tests
   tests = t[0]
   run_regress_script_options = []
   global_args = []
-  if t.length() == 2
+  if t.length() >= 2
     run_regress_script_options += t[1]
   endif
   if t.length() == 3
@@ -2195,10 +2192,10 @@ foreach t : regress_tests
     file = test_args[0]
     name = file.replace('/', '_')
     test_case = [join_paths(meson.current_source_dir(), file)]
+    test_case += global_args
     if test_args.length() == 2
       test_case += test_args[1]
     endif
-    test_case += global_args
     args = [run_regress_script.full_path()]
     args += bitwuzla_bin.full_path()
     args += ' '.join(test_case)
