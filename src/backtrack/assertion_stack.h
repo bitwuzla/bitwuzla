@@ -43,7 +43,7 @@ class AssertionView
   size_t size() const;
 
   /**
-   * @return Assertion and its level at given index relative to d_start_index.
+   * @return Assertion at given index relative to d_start_index.
    */
   const Node& operator[](size_t index) const;
 

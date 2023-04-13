@@ -97,6 +97,7 @@ Printer::print_formula(std::ostream& os,
   node_ref_vector visit;
   node_ref_vector decls;
   unordered_node_ref_set cache;
+  size_t level = 0;
 
   for (size_t i = 0, n = assertions.size(); i < n; ++i)
   {
@@ -206,6 +207,12 @@ Printer::print_formula(std::ostream& os,
   {
     if (!assertions[i].is_value())
     {
+      size_t l = assertions.level(i);
+      if (l > level)
+      {
+        os << "(push " << (l - level) << ")" << std::endl;
+        level = l;
+      }
       os << "(assert " << assertions[i] << ")" << std::endl;
     }
   }
