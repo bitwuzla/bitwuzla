@@ -59,6 +59,7 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
 
   bool test_both_const_leafs = true;
   bool test_both_const_ops   = true;
+  std::vector<uint64_t> ess_inputs;
 
   for (const std::string& s0_value : s0values)
   {
@@ -104,12 +105,12 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
         {
           if (test_both_const_leafs)
           {
-            ASSERT_DEATH(lop.select_path(t), "!all_value");
+            ASSERT_DEATH(lop.select_path(t, ess_inputs), "!all_value");
             test_both_const_leafs = false;
           }
           continue;
         }
-        pos_x = lop.select_path(t);
+        pos_x = lop.select_path(t, ess_inputs).first;
         ASSERT_TRUE(!is_val0 || pos_x == 1);
         ASSERT_TRUE(!is_val1 || pos_x == 0);
         ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential0
@@ -136,12 +137,12 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
         {
           if (test_both_const_ops)
           {
-            ASSERT_DEATH(oop.select_path(t), "!all_value");
+            ASSERT_DEATH(oop.select_path(t, ess_inputs), "!all_value");
             test_both_const_ops = false;
           }
           continue;
         }
-        pos_x = oop.select_path(t);
+        pos_x = oop.select_path(t, ess_inputs).first;
         assert(!(pos_x == 0 ? is_val0 : is_val1));
         ASSERT_FALSE(pos_x == 0 ? is_val0 : is_val1);
         ASSERT_TRUE(!is_val0 || pos_x == 1);
@@ -168,6 +169,7 @@ TestBvNodeSelPath::test_ite()
 
   bool test_all_value_leafs = true;
   bool test_all_value_ops   = true;
+  std::vector<uint64_t> ess_inputs;
 
   for (const std::string& s0_value : s0values)
   {
@@ -228,12 +230,12 @@ TestBvNodeSelPath::test_ite()
           {
             if (test_all_value_leafs)
             {
-              ASSERT_DEATH(lop.select_path(t), "!all_value");
+              ASSERT_DEATH(lop.select_path(t, ess_inputs), "!all_value");
               test_all_value_leafs = false;
             }
             continue;
           }
-          pos_x = lop.select_path(t);
+          pos_x = lop.select_path(t, ess_inputs).first;
           ASSERT_FALSE(pos_x == 0 ? is_val0 : (pos_x == 1 ? is_val1 : is_val2));
           ASSERT_TRUE(!is_val1 || !is_val2 || pos_x == 0);
           ASSERT_TRUE(!is_val0 || !is_val2 || pos_x == 1);
@@ -269,12 +271,12 @@ TestBvNodeSelPath::test_ite()
           {
             if (test_all_value_ops)
             {
-              ASSERT_DEATH(oop.select_path(t), "!all_value");
+              ASSERT_DEATH(oop.select_path(t, ess_inputs), "!all_value");
               test_all_value_ops = false;
             }
             continue;
           }
-          pos_x = oop.select_path(t);
+          pos_x = oop.select_path(t, ess_inputs).first;
           ASSERT_TRUE(!is_val1 || !is_val2 || pos_x == 0);
           ASSERT_TRUE(!is_val0 || !is_val2 || pos_x == 1);
           ASSERT_TRUE(!is_val0 || !is_val1 || pos_x == 2);
@@ -297,6 +299,7 @@ TestBvNodeSelPath::test_not()
 
   bool test_const_leaf = true;
   bool test_const_op   = true;
+  std::vector<uint64_t> ess_inputs;
 
   for (const std::string& s0_value : d_xvalues)
   {
@@ -329,12 +332,12 @@ TestBvNodeSelPath::test_not()
       {
         if (test_const_leaf)
         {
-          ASSERT_DEATH(lop.select_path(t), "!all_value");
+          ASSERT_DEATH(lop.select_path(t, ess_inputs), "!all_value");
           test_const_leaf = false;
         }
         continue;
       }
-      pos_x = lop.select_path(t);
+      pos_x = lop.select_path(t, ess_inputs).first;
       ASSERT_TRUE(is_val || pos_x == 0);
       ASSERT_TRUE(is_essential || pos_x == 0);
 
@@ -351,12 +354,12 @@ TestBvNodeSelPath::test_not()
       {
         if (test_const_op)
         {
-          ASSERT_DEATH(oop.select_path(t), "!all_value");
+          ASSERT_DEATH(oop.select_path(t, ess_inputs), "!all_value");
           test_const_op = false;
         }
         continue;
       }
-      pos_x = oop.select_path(t);
+      pos_x = oop.select_path(t, ess_inputs).first;
       ASSERT_TRUE(!is_val || pos_x == 0);
       ASSERT_TRUE(is_essential || is_val || pos_x == 0);
     }
@@ -370,6 +373,7 @@ TestBvNodeSelPath::test_extract()
 
   bool test_const_leaf = true;
   bool test_const_op   = true;
+  std::vector<uint64_t> ess_inputs;
 
   for (const std::string& s0_value : d_xvalues)
   {
@@ -408,12 +412,12 @@ TestBvNodeSelPath::test_extract()
           {
             if (test_const_leaf)
             {
-              ASSERT_DEATH(lop.select_path(t), "!all_value");
+              ASSERT_DEATH(lop.select_path(t, ess_inputs), "!all_value");
               test_const_leaf = false;
             }
             continue;
           }
-          pos_x = lop.select_path(t);
+          pos_x = lop.select_path(t, ess_inputs).first;
           ASSERT_TRUE(is_val || pos_x == 0);
           ASSERT_TRUE(is_essential || pos_x == 0);
 
@@ -430,12 +434,12 @@ TestBvNodeSelPath::test_extract()
           {
             if (test_const_op)
             {
-              ASSERT_DEATH(oop.select_path(t), "!all_value");
+              ASSERT_DEATH(oop.select_path(t, ess_inputs), "!all_value");
               test_const_op = false;
             }
             continue;
           }
-          pos_x = oop.select_path(t);
+          pos_x = oop.select_path(t, ess_inputs).first;
           ASSERT_TRUE(!is_val || pos_x == 0);
           ASSERT_TRUE(is_essential || is_val || pos_x == 0);
         }
@@ -451,6 +455,7 @@ TestBvNodeSelPath::test_sext()
 
   bool test_const_leaf = true;
   bool test_const_op   = true;
+  std::vector<uint64_t> ess_inputs;
 
   for (const std::string& s0_value : d_xvalues)
   {
@@ -486,12 +491,12 @@ TestBvNodeSelPath::test_sext()
         {
           if (test_const_leaf)
           {
-            ASSERT_DEATH(lop.select_path(t), "!all_value");
+            ASSERT_DEATH(lop.select_path(t, ess_inputs), "!all_value");
             test_const_leaf = false;
           }
           continue;
         }
-        pos_x = lop.select_path(t);
+        pos_x = lop.select_path(t, ess_inputs).first;
         ASSERT_TRUE(is_val || pos_x == 0);
         ASSERT_TRUE(is_essential || pos_x == 0);
 
@@ -508,12 +513,12 @@ TestBvNodeSelPath::test_sext()
         {
           if (test_const_op)
           {
-            ASSERT_DEATH(oop.select_path(t), "!all_value");
+            ASSERT_DEATH(oop.select_path(t, ess_inputs), "!all_value");
             test_const_op = false;
           }
           continue;
         }
-        pos_x = oop.select_path(t);
+        pos_x = oop.select_path(t, ess_inputs).first;
         ASSERT_TRUE(!is_val || pos_x == 0);
         ASSERT_TRUE(is_essential || is_val || pos_x == 0);
       }

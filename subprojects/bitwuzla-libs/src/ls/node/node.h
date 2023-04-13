@@ -129,10 +129,19 @@ class Node
   /**
    * Select the next step in the propagation path based on target value `t` and
    * the current assignment of this node's children.
-   * @param t The target value of this node.
-   * @return The index of child to propagate the target value down to.
+   * @param t          The target value of this node.
+   * @param ess_inputs The (resulting) set of inputs that was determined to be
+   *                   essential during path selection. Empty if no input is
+   *                   essential, or if no information about essential inputs
+   *                   is available, i.e., if path was selected randomly or if
+   *                   all but one input are const.
+   * @return A pair of uint64_t and bool: the index of the child to propagate
+   *         the target value down to (i.e., the selected path), and a flag to
+   *         indicate if inputs have been checked for being essential. False if
+   *         path was selected randomly, or if all inputs but one are const.
    */
-  virtual uint64_t select_path(const VALUE& t);
+  virtual std::pair<uint64_t, bool> select_path(
+      const VALUE& t, std::vector<uint64_t>& ess_inputs);
 
   /**
    * Get child at given index.

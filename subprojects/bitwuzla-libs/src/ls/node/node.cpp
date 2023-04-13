@@ -117,11 +117,12 @@ Node<VALUE>::consistent_value(const VALUE& t, uint64_t pos_x)
 }
 
 template <class VALUE>
-uint64_t
-Node<VALUE>::select_path(const VALUE& t)
+std::pair<uint64_t, bool>
+Node<VALUE>::select_path(const VALUE& t, std::vector<uint64_t>& ess_inputs)
 {
   assert(!all_value());
 
+  bool check_essential = false;
   std::vector<uint64_t> inputs;
 
   /* select non-const operand if only one is non-const */
@@ -133,7 +134,8 @@ Node<VALUE>::select_path(const VALUE& t)
       && d_rng->pick_with_prob(s_prob_pick_ess_input))
   {
     /* determine essential inputs */
-    std::vector<uint64_t> ess_inputs;
+    check_essential = true;
+    ess_inputs.clear();
     for (uint64_t i : inputs)
     {
       assert(!d_children[i]->is_value());
@@ -156,7 +158,7 @@ Node<VALUE>::select_path(const VALUE& t)
   }
 
   assert(pos_x != static_cast<uint64_t>(-1));
-  return pos_x;
+  return {pos_x, check_essential};
 }
 
 template <class VALUE>

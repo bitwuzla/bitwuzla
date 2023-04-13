@@ -1584,7 +1584,8 @@ class BitVectorIte : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  uint64_t select_path(const BitVector& t) override;
+  std::pair<uint64_t, bool> select_path(
+      const BitVector& t, std::vector<uint64_t>& ess_inputs) override;
 
  private:
   uint64_t select_path_non_const(std::vector<uint64_t>& inputs) const override;

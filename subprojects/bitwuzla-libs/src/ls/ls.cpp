@@ -178,7 +178,8 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
 
   uint64_t nprops = 0, nupdates = 0;
   Node<VALUE>* cur = root;
-  VALUE t   = t_root;
+  VALUE t          = t_root;
+  std::vector<uint64_t> ess_inputs;
 
   for (;;)
   {
@@ -219,7 +220,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       BZLALSLOG(1) << "    target value: " << t << std::endl;
 
       /* Select path */
-      uint64_t pos_x = cur->select_path(t);
+      auto [pos_x, check_essential] = cur->select_path(t, ess_inputs);
       assert(pos_x < arity);
 
       BZLALSLOG(1) << "      select path: node[" << pos_x << "]" << std::endl;
@@ -227,9 +228,19 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       {
         for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
         {
-          BZLALSLOG(1) << "        |- is_essential[" << i
-                       << "]: " << (cur->is_essential(t, i) ? "true" : "false")
-                       << std::endl;
+          BZLALSLOG(1) << "        |- is_essential[" << i << "]: ";
+          if (check_essential)
+          {
+            std::cout << (std::find(ess_inputs.begin(), ess_inputs.end(), i)
+                                  == ess_inputs.end()
+                              ? "false"
+                              : "true");
+          }
+          else
+          {
+            std::cout << "-";
+          }
+          std::cout << std::endl;
         }
       }
 
