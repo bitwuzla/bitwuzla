@@ -240,6 +240,13 @@ print_version()
   std::cout << bitwuzla::version() << std::endl;
 }
 
+bool
+is_input_file(const std::string& arg, const char* suffix)
+{
+  size_t pos = arg.find(suffix);
+  return pos != arg.npos && pos == arg.size() - strlen(suffix);
+}
+
 }  // namespace
 
 int32_t
@@ -279,8 +286,7 @@ main(int32_t argc, char* argv[])
     }
     // Check if argument is the intput file.
     // Note: For now only supports .smt2 and .btor suffices
-    else if (arg.find(".smt2") == arg.size() - 5
-             || arg.find(".btor") == arg.size() - 5)
+    else if (is_input_file(arg, ".smt2") || is_input_file(arg, ".btor"))
     {
       infile_name = arg;
     }
