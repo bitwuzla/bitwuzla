@@ -192,7 +192,7 @@ BvPropSolver::register_assertion(const Node& assertion,
   } while (!visit.empty());
 
   uint64_t id = d_node_map.at(assertion);
-  d_ls->register_root(id);
+  d_ls->register_root(id, top_level);
   // Reverse map assertions for unsat cores.
   d_root_id_node_map[id] = assertion;
 }

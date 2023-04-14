@@ -300,7 +300,6 @@ tests_smt2 = [
   ['solver/array/write7.btor.smt2'],
   ['solver/array/write8.btor.smt2'],
   ['solver/array/write9.btor.smt2'],
-  ['solver/bv/prop/prels-funs.smt2', ['--bv-solver=preprop']],
   ['solver/fun/fun1.smt2'],
   ['solver/quant/issue97.smt2'],
   ['solver/quant/quant_regr10.smt2'],
@@ -448,7 +447,10 @@ tests_smt2 = [
   ['preprocess/bv/normalize-predicate_961.smt2'],
   ['solver/bv/prop/prop_bvurem.smt2', ['--bv-solver=preprop']],
   ['solver/bv/prop/prop_essential_checks_cycle.smt2', ['--bv-solver=prop --prop-sext --prop-ineq-bounds']], # --prop-use-inv-lt-concat" # TODO option currently disabled
+  ['solver/bv/prop/prop_fp.smt2', ['--bv-solver=prop']],
+  ['solver/bv/prop/prop_fp_inc.smt2', ['--bv-solver=prop -i']],
   ['solver/bv/prop/prop_ineq_bounds_cycle.smt2', ['--bv-solver=prop --prop-sext --prop-ineq-bounds']], # --prop-use-inv-lt-concat" # TODO option currently disabled
+  ['solver/bv/prop/prels-funs.smt2', ['--bv-solver=preprop']],
   ['solver/bv/prop/prop_top_level_const_bits.smt2', ['-S lingeling --bv-solver=preprop']],
   ['solver/bv/proxybug.btor.smt2'],
   ['solver/bv/redand3twice.btor.smt2'],

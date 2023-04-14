@@ -235,9 +235,10 @@ class LocalSearch
    *       roots (cached in `d_roots_unsat`) and must therefore be called after
    *       initial assignment has been computed.
    *
-   * @param root The id of the node to register as root.
+   * @param root  The id of the node to register as root.
+   * @param fixed True if this root is a top-level (assertion level 0) root.
    */
-  void register_root(uint64_t root);
+  void register_root(uint64_t root, bool fixed = false);
   /**
    * Get the number of unsat roots.
    * @return The number of unsat roots.

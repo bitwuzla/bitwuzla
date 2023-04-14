@@ -89,6 +89,7 @@ template <class VALUE>
 void
 LocalSearch<VALUE>::push()
 {
+  BZLALSLOG(1) << " push" << std::endl;
   d_roots_control.push_back(d_roots.size());
 }
 
@@ -96,6 +97,7 @@ template <class VALUE>
 void
 LocalSearch<VALUE>::pop()
 {
+  BZLALSLOG(1) << " pop" << std::endl;
   if (d_roots_control.size())
   {
     size_t nroots = d_roots.size() - d_roots_control.back();
@@ -140,17 +142,34 @@ LocalSearch<VALUE>::set_assignment(uint64_t id, const VALUE& assignment)
 
 template <class VALUE>
 void
-LocalSearch<VALUE>::register_root(uint64_t id)
+LocalSearch<VALUE>::register_root(uint64_t id, bool fixed)
 {
   assert(id < d_nodes.size());  // API check
-  d_roots.push_back(id);
+
+  // register root
+  if (fixed && d_roots_control.size())
+  {
+    d_roots.insert(d_roots.begin(), id);  // insert at level 0
+    // update assertion level indices (shift by 1)
+    for (size_t i = 0, n = d_roots_control.size(); i < n; ++i)
+    {
+      d_roots_control[i] += 1;
+    }
+  }
+  else
+  {
+    d_roots.push_back(id);
+  }
+  // mark node as root node
   Node<VALUE>* root = get_node(id);
   root->set_is_root(true);
+  // update root cnt (to safe guard against duplicates)
   auto [it, inserted] = d_roots_cnt.emplace(id, 1);
   if (!inserted)
   {
     it->second += 1;
   }
+  // register inequality root
   if (root->is_inequality())
   {
     d_roots_ineq.insert({root, true});
@@ -159,6 +178,7 @@ LocalSearch<VALUE>::register_root(uint64_t id)
   {
     d_roots_ineq.insert({(*root)[0], false});
   }
+  // update set of unsat roots
   update_unsat_roots(root);
 }
 
@@ -266,16 +286,16 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
           BZLALSLOG(1) << "        |- is_essential[" << i << "]: ";
           if (check_essential)
           {
-            std::cout << (std::find(ess_inputs.begin(), ess_inputs.end(), i)
-                                  == ess_inputs.end()
-                              ? "false"
-                              : "true");
+            BZLALSLOG(1) << (std::find(ess_inputs.begin(), ess_inputs.end(), i)
+                                     == ess_inputs.end()
+                                 ? "false"
+                                 : "true");
           }
           else
           {
-            std::cout << "-";
+            BZLALSLOG(1) << "-";
           }
-          std::cout << std::endl;
+          BZLALSLOG(1) << std::endl;
         }
       }
 
@@ -493,6 +513,7 @@ LocalSearch<VALUE>::move()
     {
       BZLALSLOG(1) << "    - " << *get_node(id) << std::endl;
     }
+    BZLALSLOG(1) << std::endl;
     BZLALSLOG(1) << "  satisfied roots:" << std::endl;
     for (uint64_t id : d_roots)
     {
