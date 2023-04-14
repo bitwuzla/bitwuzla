@@ -38,6 +38,11 @@ class BvPropSolver : public Solver, public BvSolverInterface
   uint64_t mk_node(const Node& node);
 
   /**
+   * Print current progress of LocalSearchBV.
+   */
+  void print_progress() const;
+
+  /**
    * The associated bit-blasting solver, for bit-blasting to determine
    * constant bits information. We utilize the bit-blaster of the BB solver
    * to avoid redundant bit-blasting work.

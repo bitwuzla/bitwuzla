@@ -97,7 +97,7 @@ BvPropSolver::solve()
 
     if (verbosity > 0 && j % progress_steps == 0)
     {
-      // print_progress();
+      print_progress();
       if (j <= 1000000 && j >= progress_steps_inc)
       {
         progress_steps = progress_steps_inc;
@@ -136,7 +136,7 @@ DONE:
   d_stats.num_props_conflicts_per_kind.import_map(d_ls->d_statistics.d_nconf);
 #endif
 
-  // print_progress();
+  print_progress();
 
   return sat_result;
 }
@@ -389,6 +389,22 @@ BvPropSolver::mk_node(const Node& node)
   }
 
   return res;
+}
+
+void
+BvPropSolver::print_progress() const
+{
+  if (d_logger.is_msg_enabled(1))
+  {
+    size_t nroots_sat   = d_ls->get_num_roots_sat();
+    size_t nroots_total = d_ls->get_num_roots();
+    double perc_sat     = static_cast<double>(nroots_sat) / nroots_total * 100;
+    Msg(1) << nroots_sat << "/" << nroots_total << " roots satisfied ("
+           << std::setprecision(3) << perc_sat
+           << "%), moves: " << d_ls->d_statistics.d_nmoves
+           << ", propagation steps: " << d_ls->d_statistics.d_nprops
+           << ", updates: " << d_ls->d_statistics.d_nupdates;
+  }
 }
 
 BvPropSolver::Statistics::Statistics(util::Statistics& stats)
