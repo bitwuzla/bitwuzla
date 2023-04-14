@@ -66,7 +66,9 @@ jobs:
         with:
           path: |
             subprojects
-            build/subprojects
+            build/subprojects/
+            !subprojects/bitwuzla-libs
+            !build/subprojects/bitwuzla-libs
           key: ${{ runner.os }}-${{ matrix.name }}-${{ hashFiles('subprojects/*.wrap', 'subprojects/packagefiles/**') }}-${{ hashFiles('.github/workflows/ci.yml') }}
 
       - name: Wrap
