@@ -1,0 +1,5 @@
+(declare-const g (_ BitVec 1))
+(assert (= (_ bv0 32) (ite (fp.gt ((_ to_fp 8 24) ((_ zero_extend 31) g)) ((_ to_fp 8 24) (_ bv0 32))) (_ bv1 32) (_ bv0 32))))
+(assert (fp.gt ((_ to_fp 8 24) ((_ zero_extend 31) g)) ((_ to_fp 8 24) (_ bv0 32))))
+(set-info :status unsat)
+(check-sat)

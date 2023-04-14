@@ -13,6 +13,7 @@ tests_smt2 = [
   ['check/regr_cm9.smt2'],
   ['check/regr_cm10.smt2', ['-i']],
   ['check/regr_cm11.smt2', ['-i']],
+  ['check/regr_uc1.smt2'],
   ['preprocess/array/regrembeddedconstraint10.btor.smt2', ['-rwl=0']],
   ['preprocess/array/regrembeddedconstraint10.btor.smt2', ['-rwl=1']],
   ['preprocess/array/regrembeddedconstraint10.btor.smt2'],
