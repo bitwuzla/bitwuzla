@@ -20,7 +20,10 @@ using namespace bzla::node;
 BvPropSolver::BvPropSolver(Env& env,
                            SolverState& state,
                            BvBitblastSolver& bb_solver)
-    : Solver(env, state), d_bb_solver(bb_solver), d_stats(env.statistics())
+    : Solver(env, state),
+      d_bb_solver(bb_solver),
+      d_ls_backtrack(state.backtrack_mgr(), nullptr),
+      d_stats(env.statistics())
 {
   const option::Options& options = d_env.options();
 
@@ -38,6 +41,8 @@ BvPropSolver::BvPropSolver(Env& env,
 
   d_ls->set_log_level(options.log_level());
   d_ls->init();
+
+  d_ls_backtrack.d_ls = d_ls.get();
 
   d_use_sext       = options.prop_sext();
   d_use_const_bits = options.prop_const_bits();

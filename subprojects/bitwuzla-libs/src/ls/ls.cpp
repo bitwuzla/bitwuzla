@@ -86,6 +86,43 @@ LocalSearch<VALUE>::init()
 }
 
 template <class VALUE>
+void
+LocalSearch<VALUE>::push()
+{
+  d_roots_control.push_back(d_roots.size());
+}
+
+template <class VALUE>
+void
+LocalSearch<VALUE>::pop()
+{
+  if (d_roots_control.size())
+  {
+    size_t nroots = d_roots.size() - d_roots_control.back();
+    d_roots_control.pop_back();
+    for (size_t i = 0; i < nroots; ++i)
+    {
+      uint64_t id       = d_roots.back();
+      Node<VALUE>* root = get_node(id);
+      d_roots.pop_back();
+      auto it = d_roots_cnt.find(id);
+      assert(it != d_roots_cnt.end());
+      if (it->second == 1)
+      {
+        d_roots_unsat.erase(id);
+        d_roots_ineq.erase(root);
+        root->set_is_root(false);
+        d_roots_cnt.erase(it);
+      }
+      else
+      {
+        it->second -= 1;
+      }
+    }
+  }
+}
+
+template <class VALUE>
 const VALUE&
 LocalSearch<VALUE>::get_assignment(uint64_t id) const
 {
@@ -106,8 +143,14 @@ void
 LocalSearch<VALUE>::register_root(uint64_t id)
 {
   assert(id < d_nodes.size());  // API check
+  d_roots.push_back(id);
   Node<VALUE>* root = get_node(id);
-  d_roots.insert(root->id());
+  root->set_is_root(true);
+  auto [it, inserted] = d_roots_cnt.emplace(id, 1);
+  if (!inserted)
+  {
+    it->second += 1;
+  }
   if (root->is_inequality())
   {
     d_roots_ineq.insert({root, true});
@@ -157,14 +200,6 @@ LocalSearch<VALUE>::is_leaf_node(const Node<VALUE>* node) const
 
 template <class VALUE>
 bool
-LocalSearch<VALUE>::is_root_node(const Node<VALUE>* node) const
-{
-  assert(node);
-  return d_roots.find(node->id()) != d_roots.end();
-}
-
-template <class VALUE>
-bool
 LocalSearch<VALUE>::is_ineq_root(const Node<VALUE>* node) const
 {
   return d_roots_ineq.find(node) != d_roots_ineq.end();
@@ -187,7 +222,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
 
     BZLALSLOG(1) << std::endl;
     BZLALSLOG(1) << "  propagate:" << std::endl;
-    BZLALSLOG(1) << "    node: " << *cur << (is_root_node(cur) ? " (root)" : "")
+    BZLALSLOG(1) << "    node: " << *cur << (cur->is_root() ? " (root)" : "")
                  << std::endl;
 
     if (arity == 0)
@@ -300,7 +335,7 @@ template <class VALUE>
 void
 LocalSearch<VALUE>::update_unsat_roots(Node<VALUE>* root)
 {
-  assert(is_root_node(root));
+  assert(root->is_root());
 
   uint64_t id = root->id();
   auto it     = d_roots_unsat.find(id);
@@ -407,7 +442,7 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
   }
 
   /* update assignments of cone */
-  if (is_root_node(node))
+  if (node->is_root())
   {
     update_unsat_roots(node);
   }
@@ -432,7 +467,7 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
       BZLALSLOG(2) << std::endl;
     }
 
-    if (is_root_node(cur))
+    if (cur->is_root())
     {
       update_unsat_roots(cur);
     }

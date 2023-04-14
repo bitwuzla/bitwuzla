@@ -146,6 +146,7 @@ tests_smt2 = [
   ['solver/array/write20.btor.smt2'],
   ['solver/array/write5.btor.smt2'],
   ['solver/array/computeparents.smt2', ['-i']],
+  ['solver/array/computeparents.smt2', ['-i --bv-solver=prop']],
   ['solver/fun/nestedfun1.smt2', ['-rwl=2']],
   ['solver/fun/regrencparamapps.smt2'],
   ['solver/quant/issue96.smt2'],
@@ -336,6 +337,7 @@ tests_smt2 = [
   #['solver/array/issue32.smt2', ['-i']], # TODO disabled because of const arrays
   ['solver/bv/painc.smt2', ['-i']],
   ['solver/bv/smt2pushpop0.smt2', ['-i']],
+  ['solver/bv/smt2pushpop0.smt2', ['-i --bv-solver=prop']],
 
   ['backtrack/assertion_stack1.smt2', ['-i']],
   ['backtrack/assertion_stack2.smt2', ['-i']],
@@ -1391,6 +1393,7 @@ tests_smt2 = [
   ['solver/fp/uf_toubv.smt2'],
   ## incremental
   ['solver/fp/fp_regr5.smt2', ['-i']],
+  ['solver/fp/fp_regr5.smt2', ['-i --bv-solver=prop']],
 
   ['solver/fp/fp_rational.smt2'],
   ['solver/fp/fp_real.smt2'],

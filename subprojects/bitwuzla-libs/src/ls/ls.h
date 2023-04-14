@@ -194,6 +194,11 @@ class LocalSearch
    */
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }
 
+  /** Push assertion level. */
+  void push();
+  /** Pop assertion level. */
+  void pop();
+
   virtual uint64_t mk_node(uint64_t size)                                = 0;
   virtual uint64_t mk_node(NodeKind kind,
                            uint64_t size,
@@ -258,9 +263,7 @@ class LocalSearch
    * Get the root responsible for returning unsat.
    */
   uint64_t get_false_root() const { return d_false_root; }
-  // TODO: incremental case:
-  //       - we need to be able to unregister roots (assumptions)
-  //       - we might want to exclude nodes that are not in the formula from
+  // TODO: - we might want to exclude nodes that are not in the formula from
   //         cone updates
 
   Result move();
@@ -284,12 +287,6 @@ class LocalSearch
    * @return True if `node` is a leaf.
    */
   bool is_leaf_node(const Node<VALUE>* node) const;
-  /**
-   * Determine if given node is a root node.
-   * @param node The node to query.
-   * @return True if `node` is a root.
-   */
-  bool is_root_node(const Node<VALUE>* node) const;
   /**
    * Get the arity of the node given by id.
    * @param id The id of the node to query.
@@ -372,8 +369,25 @@ class LocalSearch
 
   /** Map from node id to nodes. */
   NodesIdTable d_nodes;
-  /** The set of roots. */
-  std::unordered_set<uint64_t> d_roots;
+  /**
+   * The set of currently active roots, organized into assertion levels.
+   *
+   * This, together with d_roots_control, maintains currently active
+   * roots organized into assertion-levels. Assertion levels are pushed via
+   * push() and popped via pop() when solving incrementally.
+   */
+  std::vector<uint64_t> d_roots;
+  /**
+   * The control stack for d_roots, maintaining the start indices of assertion
+   * levels in d_roots.
+   */
+  std::vector<size_t> d_roots_control;
+  /**
+   * Map root to its number of occurences in d_roots.
+   * This is to safe guard against non-unique registration of roots.
+   */
+  std::unordered_map<uint64_t, uint64_t> d_roots_cnt;
+
   /** The set of unsatisfied roots. */
   std::unordered_set<uint64_t> d_roots_unsat;
   /** Root responsible for unsat result. */
@@ -388,6 +402,7 @@ class LocalSearch
    *       are not roots but whose parents are a top-level NOT.
    */
   std::unordered_map<const Node<VALUE>*, bool> d_roots_ineq;
+
   /** Map nodes to their parent nodes. */
   ParentsMap d_parents;
 

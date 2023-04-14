@@ -2,6 +2,7 @@
 #define BZLA_SOLVER_BV_BV_PROP_SOLVER_H_INCLUDED
 
 #include "backtrack/assertion_stack.h"
+#include "backtrack/backtrackable.h"
 #include "ls/ls_bv.h"
 #include "node/node_ref_vector.h"
 #include "solver/bv/bv_bitblast_solver.h"
@@ -32,6 +33,19 @@ class BvPropSolver : public Solver, public BvSolverInterface
   void unsat_core(std::vector<Node>& core) const override;
 
  private:
+  /** Backtrack manager to sync push/pop with local search engine. */
+  class LsBacktrack : public backtrack::Backtrackable
+  {
+   public:
+    LsBacktrack(backtrack::BacktrackManager* mgr, bzla::ls::LocalSearchBV* ls)
+        : Backtrackable(mgr), d_ls(ls)
+    {
+    }
+    void push() override { d_ls->push(); }
+    void pop() override { d_ls->pop(); }
+    bzla::ls::LocalSearchBV* d_ls = nullptr;
+  };
+
   /**
    * Helper to create LocalSearchBV bit-vector node representation of given
    * node. Maps `node` to resulting LS bit-vector node id in `d_node_map`.
@@ -53,6 +67,8 @@ class BvPropSolver : public Solver, public BvSolverInterface
   BvBitblastSolver& d_bb_solver;
   /** The local search engine. */
   std::unique_ptr<bzla::ls::LocalSearchBV> d_ls;
+  /** The backtrack manager for the local search engine. */
+  LsBacktrack d_ls_backtrack;
   /** Map Bitwuzla node to LocalSearchBV bit-vector node id. */
   std::unordered_map<Node, uint64_t> d_node_map;
   /** Map LocalSearchBV root id to Bitwuzla node for unsat cores. */

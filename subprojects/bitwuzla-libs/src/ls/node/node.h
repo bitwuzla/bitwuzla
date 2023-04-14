@@ -52,6 +52,17 @@ class Node
   virtual void evaluate(){};
 
   /**
+   * Determine if this node is a root node.
+   * @return True if this node is a root node.
+   */
+  bool is_root() const { return d_is_root; }
+  /**
+   * Mark this node as (non-)root.
+   * @param value True to mark node as root, false to reset to non-root.
+   */
+  void set_is_root(bool value) { d_is_root = value; }
+
+  /**
    * Determine if this node is a value.
    * @note For bit-vector nodes, this checks if the underlying domain is fixed.
    * @return True if this node is a value.
@@ -250,16 +261,19 @@ class Node
   VALUE d_assignment;
 
   /** The arity of this node. */
-  uint32_t d_arity;
+  uint32_t d_arity = 0;
+
+  /** True if this node is a root node. */
+  bool d_is_root = false;
 
   /**
    * True if this node is a value.
    * @note For bit-vector nodes, this indicates that the underlying domain
    *       is fixed.
    */
-  bool d_is_value;
+  bool d_is_value = false;
   /** True if all children of this node are values. */
-  bool d_all_value;
+  bool d_all_value = false;
 
   /** Cached inverse value result. */
   std::unique_ptr<VALUE> d_inverse;
