@@ -122,14 +122,15 @@ Preprocessor::post_process_unsat_core(const std::vector<Node>& assertions) const
 
   // Find involved substitution assertions.
   // TODO: add support for more preprocessing passes (right now disabled)
-  node::unordered_node_ref_set cache;
+  node::unordered_node_ref_set cache, core_cache;
   node::node_ref_vector visit;
   const auto& substs = substitutions();
   for (size_t i = 0; i < original_assertions.size(); ++i)
   {
     const Node& assertion = original_assertions[i];
     visit.push_back(assertion);
-    if (cache.find(assertion) == cache.end())
+    auto [it, inserted] = core_cache.insert(assertion);
+    if (inserted)
     {
       unsat_core.push_back(assertion);
     }
