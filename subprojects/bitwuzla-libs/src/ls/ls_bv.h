@@ -26,29 +26,44 @@ class LocalSearchBV : public LocalSearch<BitVector>
   LocalSearchBV(uint64_t max_nprops,
                 uint64_t max_nupdates,
                 uint32_t seed = 1234);
-
-  void compute_bounds(Node<BitVector>* node) override;
-
-  uint64_t mk_node(uint64_t size) override;
+  /**
+   * Create node.
+   * @param kind     The node kind.
+   * @param size     The bit-vector size of the node.
+   * @param children The children, empty for NodeKind::CONST.
+   * @param indices  The set of indices, empty for non-indexed nodes.
+   * @return The index of the created node.
+   */
   uint64_t mk_node(NodeKind kind,
                    uint64_t size,
-                   const std::vector<uint64_t>& children) override;
-  uint64_t mk_indexed_node(NodeKind kind,
-                           uint64_t size,
-                           uint64_t child0,
-                           const std::vector<uint64_t>& indices) override;
-  uint64_t mk_node(const BitVector& assignment, const BitVectorDomain& domain);
+                   const std::vector<uint64_t>& children = {},
+                   const std::vector<uint64_t>& indices  = {});
+  /**
+   * Create node.
+   * @param kind     The node kind.
+   * @param domain   The associated bit-vector domain.
+   * @param children The children, empty for NodeKind::CONST.
+   * @param indices  The set of indices, empty for non-indexed nodes.
+   * @return The index of the created node.
+   */
   uint64_t mk_node(NodeKind kind,
                    const BitVectorDomain& domain,
-                   const std::vector<uint64_t>& children);
-  uint64_t mk_indexed_node(NodeKind kind,
-                           const BitVectorDomain& domain,
-                           uint64_t child0,
-                           const std::vector<uint64_t>& indices);
+                   const std::vector<uint64_t>& children = {},
+                   const std::vector<uint64_t>& indices  = {});
+  /**
+   * Create const node.
+   * @param assignment The current assignment of the node.
+   * @param domain     The associated bit-vector domain.
+   * @return The index of the created node.
+   */
+  uint64_t mk_node(const BitVector& assignment, const BitVectorDomain& domain);
 
-  uint64_t invert_node(uint64_t id) override;
-
-  void normalize() override;
+  /**
+   * Invert node given by id.
+   * @param id The id of the node to invert.
+   * @return The inverted node.
+   */
+  uint64_t invert_node(uint64_t id);
 
   /**
    * Get the domain of the node given by id.
@@ -60,23 +75,41 @@ class LocalSearchBV : public LocalSearch<BitVector>
   /** Fix domain bit of given node at index 'idx' to 'value'. */
   void fix_bit(uint64_t id, uint32_t idx, bool value);
 
+  void compute_bounds(Node<BitVector>* node) override;
+
+  void normalize() override;
+
  private:
   /**
-   * Auxiliary function for creating indexed nodes.
-   * @param kind    The kind of the node to create.
-   * @param domain  The associated bit-vector domain.
-   * @param child0  The child; all indexed bit-vector operations are unary.
-   * @param indices The set of indices.
-   * @param normalize
-   *                True if this operation is to be registered for
-   *                normalization; always true for nodes created via the API.
+   * Helper for creating a node.
+   * @param kind     The node kind.
+   * @param size     The bit-vector size of the node.
+   * @param children The children, empty for NodeKind::CONST.
+   * @param indices  The set of indices, empty for non-indexed nodes.
+   * @param normalize True if this operation is to be registered for
+   *                  normalization; always true for nodes created via the API.
    * @return The index of the created node.
    */
-  uint64_t _mk_indexed_node(NodeKind kind,
-                            const BitVectorDomain& domain,
-                            uint64_t child0,
-                            const std::vector<uint64_t>& indices,
-                            bool normalize);
+  uint64_t _mk_node(NodeKind kind,
+                    uint64_t size,
+                    const std::vector<uint64_t>& children = {},
+                    const std::vector<uint64_t>& indices  = {},
+                    bool normalize                        = true);
+  /**
+   * Helper for creating a node.
+   * @param kind     The node kind.
+   * @param domain   The associated bit-vector domain.
+   * @param children The children, empty for NodeKind::CONST.
+   * @param indices  The set of indices, empty for non-indexed nodes.
+   * @param normalize True if this operation is to be registered for
+   *                  normalization; always true for nodes created via the API.
+   * @return The index of the created node.
+   */
+  uint64_t _mk_node(NodeKind kind,
+                    const BitVectorDomain& domain,
+                    const std::vector<uint64_t>& children = {},
+                    const std::vector<uint64_t>& indices  = {},
+                    bool normalize                        = true);
   /**
    * Get node by id.
    * @param id The node id.

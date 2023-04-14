@@ -12,7 +12,7 @@ class TestLsBvNormalize : public ::testing::Test
   void SetUp() override
   {
     d_ls.reset(new LocalSearchBV(100, 100));
-    d_id   = d_ls->mk_node(8);
+    d_id   = d_ls->mk_node(NodeKind::CONST, 8);
     d_node = d_ls->get_node(d_id);
   }
 
@@ -23,10 +23,10 @@ class TestLsBvNormalize : public ::testing::Test
     std::vector<BitVectorExtract*> registered;
     for (auto ex : extracts)
     {
-      uint64_t id = d_ls->mk_indexed_node(NodeKind::BV_EXTRACT,
-                                          ex.first - ex.second + 1,
-                                          d_id,
-                                          {ex.first, ex.second});
+      uint64_t id = d_ls->mk_node(NodeKind::BV_EXTRACT,
+                                  ex.first - ex.second + 1,
+                                  {d_id},
+                                  {ex.first, ex.second});
       registered.push_back(static_cast<BitVectorExtract*>(d_ls->get_node(id)));
     }
     ASSERT_EQ(d_node->d_extracts, registered);
@@ -45,10 +45,10 @@ class TestLsBvNormalize : public ::testing::Test
     for (auto ex : extracts)
     {
       BitVectorExtract* e = static_cast<BitVectorExtract*>(
-          d_ls->get_node(d_ls->mk_indexed_node(NodeKind::BV_EXTRACT,
-                                               ex.first - ex.second + 1,
-                                               d_id,
-                                               {ex.first, ex.second})));
+          d_ls->get_node(d_ls->mk_node(NodeKind::BV_EXTRACT,
+                                       ex.first - ex.second + 1,
+                                       {d_id},
+                                       {ex.first, ex.second})));
       registered.push_back(e);
       child0s.push_back(e->child(0));
     }

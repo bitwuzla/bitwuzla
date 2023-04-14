@@ -53,9 +53,9 @@ class TestLsBv : public TestBvNodeCommon
     d_one1  = BitVector::mk_one(1);
 
     d_c1 = d_ls->mk_node(d_ten4, BitVectorDomain(d_ten4));
-    d_v1 = d_ls->mk_node(TEST_BW);
-    d_v2 = d_ls->mk_node(TEST_BW);
-    d_v3 = d_ls->mk_node(TEST_BW);
+    d_v1 = d_ls->mk_node(NodeKind::CONST, TEST_BW);
+    d_v2 = d_ls->mk_node(NodeKind::CONST, TEST_BW);
+    d_v3 = d_ls->mk_node(NodeKind::CONST, TEST_BW);
 
     d_ls->set_assignment(d_v2, d_ones4);
     d_ls->set_assignment(d_v3, d_six4);
@@ -70,14 +70,13 @@ class TestLsBv : public TestBvNodeCommon
     d_v1pv2av2 = d_ls->mk_node(NodeKind::BV_AND, TEST_BW, {d_v1pv2, d_v2});
 
     // v1[0:0]
-    d_v1e = d_ls->mk_indexed_node(NodeKind::BV_EXTRACT, 1, d_v1, {0, 0});
+    d_v1e = d_ls->mk_node(NodeKind::BV_EXTRACT, 1, {d_v1}, {0, 0});
     // v3[0:0]
-    d_v3e = d_ls->mk_indexed_node(NodeKind::BV_EXTRACT, 1, d_v3, {0, 0});
+    d_v3e = d_ls->mk_node(NodeKind::BV_EXTRACT, 1, {d_v3}, {0, 0});
     // v1[0:0] / v3[0:0]
     d_v1edv3e = d_ls->mk_node(NodeKind::BV_UDIV, 1, {d_v1e, d_v3e});
     // sext(v1[0:0] / v3[0:0], 3)
-    d_v1edv3e_ext =
-        d_ls->mk_indexed_node(NodeKind::BV_SEXT, TEST_BW, d_v1edv3e, {3});
+    d_v1edv3e_ext = d_ls->mk_node(NodeKind::BV_SEXT, TEST_BW, {d_v1edv3e}, {3});
 
     // v3 << c1
     d_v3sc1 = d_ls->mk_node(NodeKind::BV_SHL, TEST_BW, {d_v3, d_c1});
@@ -506,8 +505,8 @@ TestLsBv::test_move_extract()
 
             LocalSearchBV ls(100, 100);
             uint64_t op_x = ls.mk_node(rx_val, x);
-            uint64_t op   = ls.mk_indexed_node(
-                NodeKind::BV_EXTRACT, BitVectorDomain(bw_t), op_x, {hi, lo});
+            uint64_t op   = ls.mk_node(
+                NodeKind::BV_EXTRACT, BitVectorDomain(bw_t), {op_x}, {hi, lo});
             uint64_t t  = ls.mk_node(t_val, BitVectorDomain(t_val));
             uint64_t root =
                 ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
@@ -558,8 +557,8 @@ TestLsBv::test_move_sext()
 
         LocalSearchBV ls(100, 100);
         uint64_t op_x = ls.mk_node(rx_val, x);
-        uint64_t op   = ls.mk_indexed_node(
-            NodeKind::BV_SEXT, BitVectorDomain(bw_t), op_x, {n});
+        uint64_t op =
+            ls.mk_node(NodeKind::BV_SEXT, BitVectorDomain(bw_t), {op_x}, {n});
         uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
         uint64_t root = ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
         ls.register_root(root);
