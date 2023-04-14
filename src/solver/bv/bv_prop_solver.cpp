@@ -186,7 +186,10 @@ BvPropSolver::register_assertion(const Node& assertion,
     }
   } while (!visit.empty());
 
-  d_ls->register_root(d_node_map.at(assertion));
+  uint64_t id = d_node_map.at(assertion);
+  d_ls->register_root(id);
+  // Reverse map assertions for unsat cores.
+  d_root_id_node_map[id] = assertion;
 }
 
 Node
@@ -204,6 +207,16 @@ BvPropSolver::value(const Node& term)
     return NodeManager::get().mk_value(value.is_true());
   }
   return NodeManager::get().mk_value(value);
+}
+
+void
+BvPropSolver::unsat_core(std::vector<Node>& core) const
+{
+  // The LocalSearchBV library can only determine unsat if a single root is
+  // false. Hence, the unsat core always consists of one root.
+  auto it = d_root_id_node_map.find(d_ls->get_false_root());
+  assert(it != d_root_id_node_map.end());
+  core.push_back(it->second);
 }
 
 uint64_t

@@ -38,7 +38,7 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   const bb::AigBitblaster::Bits& bits(const Node& term) const;
 
   /** Get unsat core of last solve() call. */
-  void unsat_core(std::vector<Node>& core) const;
+  void unsat_core(std::vector<Node>& core) const override;
 
  private:
   /** Update AIG and CNF statistics. */

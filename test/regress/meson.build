@@ -298,7 +298,7 @@ tests_smt2 = [
   ['solver/array/write7.btor.smt2'],
   ['solver/array/write8.btor.smt2'],
   ['solver/array/write9.btor.smt2'],
-  ['solver/bv/prop/prels-funs.smt2', ['--bv-solver=preprop', '--no-check-unsat-core']],
+  ['solver/bv/prop/prels-funs.smt2', ['--bv-solver=preprop']],
   ['solver/fun/fun1.smt2'],
   ['solver/quant/issue97.smt2'],
   ['solver/quant/quant_regr10.smt2'],

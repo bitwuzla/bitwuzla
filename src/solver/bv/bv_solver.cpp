@@ -96,6 +96,7 @@ BvSolver::solve()
       d_sat_state  = d_prop_solver.solve();
       if (d_sat_state == Result::UNKNOWN)
       {
+        d_cur_solver = option::BvSolver::BITBLAST;
         d_sat_state = d_bitblast_solver.solve();
       }
       break;
@@ -119,7 +120,12 @@ BvSolver::value(const Node& term)
 void
 BvSolver::unsat_core(std::vector<Node>& core) const
 {
-  d_bitblast_solver.unsat_core(core);
+  if (d_cur_solver == option::BvSolver::BITBLAST)
+  {
+    return d_bitblast_solver.unsat_core(core);
+  }
+  assert(d_cur_solver == option::BvSolver::PROP);
+  return d_prop_solver.unsat_core(core);
 }
 
 /* --- BvBitblastSolver private --------------------------------------------- */

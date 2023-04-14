@@ -28,6 +28,9 @@ class BvPropSolver : public Solver, public BvSolverInterface
 
   Node value(const Node& term) override;
 
+  /** Get unsat core of last solve() call. */
+  void unsat_core(std::vector<Node>& core) const override;
+
  private:
   /**
    * Helper to create LocalSearchBV bit-vector node representation of given
@@ -52,6 +55,8 @@ class BvPropSolver : public Solver, public BvSolverInterface
   std::unique_ptr<bzla::ls::LocalSearchBV> d_ls;
   /** Map Bitwuzla node to LocalSearchBV bit-vector node id. */
   std::unordered_map<Node, uint64_t> d_node_map;
+  /** Map LocalSearchBV root id to Bitwuzla node for unsat cores. */
+  std::unordered_map<uint64_t, Node> d_root_id_node_map;
   /** True to enable constant bits propagation. */
   bool d_use_const_bits = false;
   /** True to use sign_extend nodes for concats that represent sign_extends. */

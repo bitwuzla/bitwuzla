@@ -35,7 +35,7 @@ class BvSolver : public Solver, public BvSolverInterface
   Result solve() override;
 
   /** Get unsat core of last solve() call. */
-  void unsat_core(std::vector<Node>& core) const;
+  void unsat_core(std::vector<Node>& core) const override;
 
  private:
   /** Result of the last check() call. */
