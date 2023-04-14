@@ -281,7 +281,9 @@ PassNormalize::compute_common_coefficients(Kind kind,
         }
       }
       res = common_coeff.back().first;
-      for (size_t i = 1, n = common_coeff.back().second.to_uint64(); i < n; ++i)
+      const auto& cf = common_coeff.back().second;
+      assert(cf.size() - cf.count_leading_zeros() <= 64);
+      for (size_t i = 1, n = cf.to_uint64(true); i < n; ++i)
       {
         res = nm.mk_node(kind, {res, common_coeff.back().first});
       }
