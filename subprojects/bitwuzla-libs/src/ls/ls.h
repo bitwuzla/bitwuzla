@@ -238,6 +238,21 @@ class LocalSearch
    * @return The number of unsat roots.
    */
   uint64_t get_num_roots_unsat() const { return d_roots_unsat.size(); }
+
+  /**
+   * Get the number of sat roots.
+   * @return The number of sat roots.
+   */
+  uint64_t get_num_roots_sat() const
+  {
+    return d_roots.size() - d_roots_unsat.size();
+  }
+
+  /**
+   * Get the number of total roots.
+   * @return The number of total roots.
+   */
+  uint64_t get_num_roots() const { return d_roots.size(); }
   // TODO: incremental case:
   //       - we need to be able to unregister roots (assumptions)
   //       - we might want to exclude nodes that are not in the formula from
