@@ -482,6 +482,8 @@ LocalSearch<VALUE>::move()
 
     if (root->is_value_false())
     {
+      // Store root responsible for unsat result.
+      d_false_root = root->id();
       return Result::UNSAT;
     }
 

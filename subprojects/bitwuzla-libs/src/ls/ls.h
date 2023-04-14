@@ -253,6 +253,11 @@ class LocalSearch
    * @return The number of total roots.
    */
   uint64_t get_num_roots() const { return d_roots.size(); }
+
+  /**
+   * Get the root responsible for returning unsat.
+   */
+  uint64_t get_false_root() const { return d_false_root; }
   // TODO: incremental case:
   //       - we need to be able to unregister roots (assumptions)
   //       - we might want to exclude nodes that are not in the formula from
@@ -371,6 +376,9 @@ class LocalSearch
   std::unordered_set<uint64_t> d_roots;
   /** The set of unsatisfied roots. */
   std::unordered_set<uint64_t> d_roots_unsat;
+  /** Root responsible for unsat result. */
+  uint64_t d_false_root;
+
   /**
    * The set of (to be considered) top-level inequalities. Maps inequality
    * roots to their sat assignment (true for top-level inequalities, false for
