@@ -124,6 +124,7 @@ Node<VALUE>::select_path(const VALUE& t, std::vector<uint64_t>& ess_inputs)
 
   bool check_essential = false;
   std::vector<uint64_t> inputs;
+  ess_inputs.clear();
 
   /* select non-const operand if only one is non-const */
   uint64_t pos_x = select_path_non_const(inputs);
@@ -135,7 +136,6 @@ Node<VALUE>::select_path(const VALUE& t, std::vector<uint64_t>& ess_inputs)
   {
     /* determine essential inputs */
     check_essential = true;
-    ess_inputs.clear();
     for (uint64_t i : inputs)
     {
       assert(!d_children[i]->is_value());

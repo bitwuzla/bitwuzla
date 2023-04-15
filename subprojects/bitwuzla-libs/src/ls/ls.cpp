@@ -298,6 +298,27 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       BZLALSLOG(1) << "      select path: node[" << pos_x << "]" << std::endl;
       if (BZLALSLOG_ENABLED(1))
       {
+        // check if check_essential is false due to all but one input
+        // being values (then we don't want to print '-', but identify
+        // the input that is not a value as essential)
+        if (!check_essential)
+        {
+          uint32_t not_value = 0;
+          for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+          {
+            if (!(*cur)[i]->is_value())
+            {
+              not_value += 1;
+            }
+          }
+          if (not_value == 1)
+          {
+            check_essential = true;
+            assert(ess_inputs.empty());
+            ess_inputs.push_back(pos_x);
+          }
+        }
+
         for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
         {
           BZLALSLOG(1) << "        |- is_essential[" << i << "]: "
