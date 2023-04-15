@@ -26,23 +26,26 @@ uint64_t
 LocalSearchBV::mk_node(NodeKind kind,
                        uint64_t size,
                        const std::vector<uint64_t>& children,
-                       const std::vector<uint64_t>& indices)
+                       const std::vector<uint64_t>& indices,
+                       const std::optional<std::string>& symbol)
 {
-  return _mk_node(kind, size, children, indices, true);
+  return _mk_node(kind, size, children, indices, true, symbol);
 }
 
 uint64_t
 LocalSearchBV::mk_node(NodeKind kind,
                        const BitVectorDomain& domain,
                        const std::vector<uint64_t>& children,
-                       const std::vector<uint64_t>& indices)
+                       const std::vector<uint64_t>& indices,
+                       const std::optional<std::string>& symbol)
 {
-  return _mk_node(kind, domain, children, indices, true);
+  return _mk_node(kind, domain, children, indices, true, symbol);
 }
 
 uint64_t
 LocalSearchBV::mk_node(const BitVector& assignment,
-                       const BitVectorDomain& domain)
+                       const BitVectorDomain& domain,
+                       const std::optional<std::string>& symbol)
 {
   assert(assignment.size() == domain.size());  // API check
   uint64_t id = d_nodes.size();
@@ -53,6 +56,10 @@ LocalSearchBV::mk_node(const BitVector& assignment,
   assert(get_node(id) == d_nodes.back().get());
   assert(d_parents.find(id) == d_parents.end());
   d_parents[id] = {};
+  if (symbol)
+  {
+    d_symbol_table[id] = *symbol;
+  }
   return id;
 }
 
@@ -86,9 +93,11 @@ LocalSearchBV::_mk_node(NodeKind kind,
                         uint64_t size,
                         const std::vector<uint64_t>& children,
                         const std::vector<uint64_t>& indices,
-                        bool normalize)
+                        bool normalize,
+                        const std::optional<std::string>& symbol)
 {
-  return _mk_node(kind, BitVectorDomain(size), children, indices, normalize);
+  return _mk_node(
+      kind, BitVectorDomain(size), children, indices, normalize, symbol);
 }
 
 uint64_t
@@ -96,7 +105,8 @@ LocalSearchBV::_mk_node(NodeKind kind,
                         const BitVectorDomain& domain,
                         const std::vector<uint64_t>& children,
                         const std::vector<uint64_t>& indices,
-                        bool normalize)
+                        bool normalize,
+                        const std::optional<std::string>& symbol)
 {
   uint64_t id = d_nodes.size();
   for (uint64_t c : children)
@@ -247,6 +257,11 @@ LocalSearchBV::_mk_node(NodeKind kind,
   assert(get_node(id) == d_nodes.back().get());
   assert(d_parents.find(id) == d_parents.end());
   d_parents[id] = {};
+
+  if (symbol)
+  {
+    d_symbol_table[id] = *symbol;
+  }
 
   return id;
 }

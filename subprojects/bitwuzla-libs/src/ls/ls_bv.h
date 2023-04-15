@@ -1,6 +1,9 @@
 #ifndef BZLA__LS_LS_BV_H
 #define BZLA__LS_LS_BV_H
 
+#include <optional>
+#include <string>
+
 #include "ls/ls.h"
 
 namespace bzla {
@@ -32,31 +35,41 @@ class LocalSearchBV : public LocalSearch<BitVector>
    * @param size     The bit-vector size of the node.
    * @param children The children, empty for NodeKind::CONST.
    * @param indices  The set of indices, empty for non-indexed nodes.
+   * @param symbol   Optionally, a symbol string identifying the node, only
+   *                 used for logging.
    * @return The index of the created node.
    */
   uint64_t mk_node(NodeKind kind,
                    uint64_t size,
-                   const std::vector<uint64_t>& children = {},
-                   const std::vector<uint64_t>& indices  = {});
+                   const std::vector<uint64_t>& children    = {},
+                   const std::vector<uint64_t>& indices     = {},
+                   const std::optional<std::string>& symbol = std::nullopt);
   /**
    * Create node.
    * @param kind     The node kind.
    * @param domain   The associated bit-vector domain.
    * @param children The children, empty for NodeKind::CONST.
    * @param indices  The set of indices, empty for non-indexed nodes.
+   * @param symbol   Optionally, a symbol string identifying the node, only
+   *                 used for logging.
    * @return The index of the created node.
    */
   uint64_t mk_node(NodeKind kind,
                    const BitVectorDomain& domain,
-                   const std::vector<uint64_t>& children = {},
-                   const std::vector<uint64_t>& indices  = {});
+                   const std::vector<uint64_t>& children    = {},
+                   const std::vector<uint64_t>& indices     = {},
+                   const std::optional<std::string>& symbol = std::nullopt);
   /**
    * Create const node.
    * @param assignment The current assignment of the node.
    * @param domain     The associated bit-vector domain.
+   * @param symbol     Optionally, a symbol string identifying the node, only
+   *                   used for logging.
    * @return The index of the created node.
    */
-  uint64_t mk_node(const BitVector& assignment, const BitVectorDomain& domain);
+  uint64_t mk_node(const BitVector& assignment,
+                   const BitVectorDomain& domain,
+                   const std::optional<std::string>& symbol = std::nullopt);
 
   /**
    * Invert node given by id.
@@ -88,13 +101,16 @@ class LocalSearchBV : public LocalSearch<BitVector>
    * @param indices  The set of indices, empty for non-indexed nodes.
    * @param normalize True if this operation is to be registered for
    *                  normalization; always true for nodes created via the API.
+   * @param symbol   Optionally, a symbol string identifying the node, only
+   *                 used for logging.
    * @return The index of the created node.
    */
   uint64_t _mk_node(NodeKind kind,
                     uint64_t size,
-                    const std::vector<uint64_t>& children = {},
-                    const std::vector<uint64_t>& indices  = {},
-                    bool normalize                        = true);
+                    const std::vector<uint64_t>& children    = {},
+                    const std::vector<uint64_t>& indices     = {},
+                    bool normalize                           = true,
+                    const std::optional<std::string>& symbol = std::nullopt);
   /**
    * Helper for creating a node.
    * @param kind     The node kind.
@@ -103,13 +119,16 @@ class LocalSearchBV : public LocalSearch<BitVector>
    * @param indices  The set of indices, empty for non-indexed nodes.
    * @param normalize True if this operation is to be registered for
    *                  normalization; always true for nodes created via the API.
+   * @param symbol   Optionally, a symbol string identifying the node, only
+   *                 used for logging.
    * @return The index of the created node.
    */
   uint64_t _mk_node(NodeKind kind,
                     const BitVectorDomain& domain,
-                    const std::vector<uint64_t>& children = {},
-                    const std::vector<uint64_t>& indices  = {},
-                    bool normalize                        = true);
+                    const std::vector<uint64_t>& children    = {},
+                    const std::vector<uint64_t>& indices     = {},
+                    bool normalize                           = true,
+                    const std::optional<std::string>& symbol = std::nullopt);
   /**
    * Get node by id.
    * @param id The node id.

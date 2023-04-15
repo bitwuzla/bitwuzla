@@ -269,25 +269,34 @@ BvPropSolver::mk_node(const Node& node)
     d_stats.num_bits_total += size;
   }
 
+  std::string symbol =
+      node.symbol() ? *node.symbol() : "@t" + std::to_string(node.id());
+
   switch (node.kind())
   {
     case Kind::BV_ADD:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_ADD,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_AND:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_AND,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_ASHR:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_ASHR,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_CONCAT:
       assert(node.num_children() == 2);
@@ -298,13 +307,16 @@ BvPropSolver::mk_node(const Node& node)
           res = d_ls->mk_node(bzla::ls::NodeKind::BV_SEXT,
                               domain,
                               {d_node_map.at(child)},
-                              {node[0].type().bv_size()});
+                              {node[0].type().bv_size()},
+                              symbol);
         }
         else
         {
           res = d_ls->mk_node(bzla::ls::NodeKind::BV_CONCAT,
                               domain,
-                              {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                              {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                              {},
+                              symbol);
         }
       }
       break;
@@ -313,79 +325,103 @@ BvPropSolver::mk_node(const Node& node)
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_EXTRACT,
                           domain,
                           {d_node_map.at(node[0])},
-                          {node.index(0), node.index(1)});
+                          {node.index(0), node.index(1)},
+                          symbol);
       break;
     case Kind::BV_MUL:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_MUL,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_NOT:
       assert(node.num_children() == 1);
-      res = d_ls->mk_node(
-          bzla::ls::NodeKind::BV_NOT, domain, {d_node_map.at(node[0])});
+      res = d_ls->mk_node(bzla::ls::NodeKind::BV_NOT,
+                          domain,
+                          {d_node_map.at(node[0])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_ULT:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_ULT,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_SHL:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_SHL,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_SLT:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_SLT,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_SHR:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_SHR,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_UDIV:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_UDIV,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_UREM:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_UREM,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_XOR:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::BV_XOR,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::AND:
       assert(node.num_children() == 2);
       res = d_ls->mk_node(bzla::ls::NodeKind::AND,
                           domain,
-                          {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                          {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                          {},
+                          symbol);
       break;
     case Kind::BV_COMP:
     case Kind::EQUAL:
       assert(node.num_children() == 2);
       if (BvSolver::is_leaf(node))
       {
-        res = d_ls->mk_node(domain.lo(), domain);
+        res = d_ls->mk_node(domain.lo(), domain, symbol);
       }
       else
       {
         res = d_ls->mk_node(bzla::ls::NodeKind::EQ,
                             domain,
-                            {d_node_map.at(node[0]), d_node_map.at(node[1])});
+                            {d_node_map.at(node[0]), d_node_map.at(node[1])},
+                            {},
+                            symbol);
       }
       break;
     case Kind::ITE:
@@ -394,16 +430,21 @@ BvPropSolver::mk_node(const Node& node)
                           domain,
                           {d_node_map.at(node[0]),
                            d_node_map.at(node[1]),
-                           d_node_map.at(node[2])});
+                           d_node_map.at(node[2])},
+                          {},
+                          symbol);
       break;
     case Kind::NOT:
       assert(node.num_children() == 1);
-      res = d_ls->mk_node(
-          bzla::ls::NodeKind::NOT, domain, {d_node_map.at(node[0])});
+      res = d_ls->mk_node(bzla::ls::NodeKind::NOT,
+                          domain,
+                          {d_node_map.at(node[0])},
+                          {},
+                          symbol);
       break;
     default:
       assert(BvSolver::is_leaf(node));
-      res = d_ls->mk_node(domain.lo(), domain);
+      res = d_ls->mk_node(domain.lo(), domain, symbol);
   }
 
   return res;

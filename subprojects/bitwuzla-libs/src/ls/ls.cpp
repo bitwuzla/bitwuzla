@@ -211,6 +211,23 @@ LocalSearch<VALUE>::get_node(uint64_t id) const
 }
 
 template <class VALUE>
+std::string
+LocalSearch<VALUE>::get_symbol(uint64_t id) const
+{
+  assert(id < d_nodes.size());
+  auto it = d_symbol_table.find(id);
+  return it == d_symbol_table.end() ? "" : it->second;
+}
+
+template <class VALUE>
+std::string
+LocalSearch<VALUE>::get_log_info(const Node<VALUE>* node) const
+{
+  std::string symbol = get_symbol(node->id());
+  return symbol + (symbol.empty() ? "" : " ") + node->str();
+}
+
+template <class VALUE>
 bool
 LocalSearch<VALUE>::is_leaf_node(const Node<VALUE>* node) const
 {
@@ -242,8 +259,8 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
 
     BZLALSLOG(1) << std::endl;
     BZLALSLOG(1) << "  propagate:" << std::endl;
-    BZLALSLOG(1) << "    node: " << *cur << (cur->is_root() ? " (root)" : "")
-                 << std::endl;
+    BZLALSLOG(1) << "    node: " << get_log_info(cur)
+                 << (cur->is_root() ? " (root)" : "") << std::endl;
 
     if (arity == 0)
     {
@@ -283,19 +300,15 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       {
         for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
         {
-          BZLALSLOG(1) << "        |- is_essential[" << i << "]: ";
-          if (check_essential)
-          {
-            BZLALSLOG(1) << (std::find(ess_inputs.begin(), ess_inputs.end(), i)
-                                     == ess_inputs.end()
-                                 ? "false"
-                                 : "true");
-          }
-          else
-          {
-            BZLALSLOG(1) << "-";
-          }
-          BZLALSLOG(1) << std::endl;
+          BZLALSLOG(1) << "        |- is_essential[" << i << "]: "
+                       << (check_essential
+                               ? (std::find(
+                                      ess_inputs.begin(), ess_inputs.end(), i)
+                                          == ess_inputs.end()
+                                      ? "false"
+                                      : "true")
+                               : "-")
+                       << std::endl;
         }
       }
 
@@ -474,17 +487,16 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
 
   for (Node<VALUE>* cur : cone)
   {
-    BZLALSLOG(2) << "  node: " << *cur << " -> ";
+    BZLALSLOG(2) << "  node: " << get_log_info(cur) << " -> ";
     cur->evaluate();
     nupdates += 1;
-    BZLALSLOGSTREAM(2) << cur->assignment() << std::endl;
+    BZLALSLOG(2) << cur->assignment() << std::endl;
     if (BZLALSLOG_ENABLED(2))
     {
-      for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+      for (const auto& s : cur->log())
       {
-        BZLALSLOG(2) << "    |- node[" << i << "]: " << *(*cur)[i] << std::endl;
+        BZLALSLOG(2) << s << std::endl;
       }
-      BZLALSLOG(2) << std::endl;
     }
 
     if (cur->is_root())
@@ -511,14 +523,14 @@ LocalSearch<VALUE>::move()
     BZLALSLOG(1) << "  unsatisfied roots:" << std::endl;
     for (uint64_t id : d_roots_unsat)
     {
-      BZLALSLOG(1) << "    - " << *get_node(id) << std::endl;
+      BZLALSLOG(1) << "    - " << get_log_info(get_node(id)) << std::endl;
     }
     BZLALSLOG(1) << std::endl;
     BZLALSLOG(1) << "  satisfied roots:" << std::endl;
     for (uint64_t id : d_roots)
     {
       if (d_roots_unsat.find(id) != d_roots_unsat.end()) continue;
-      BZLALSLOG(1) << "    - " << *get_node(id) << std::endl;
+      BZLALSLOG(1) << "    - " << get_log_info(get_node(id)) << std::endl;
     }
   }
 
@@ -555,7 +567,7 @@ LocalSearch<VALUE>::move()
 
   BZLALSLOG(1) << std::endl;
   BZLALSLOG(1) << "  move" << std::endl;
-  BZLALSLOG(1) << "  input: " << *m.d_input << std::endl;
+  BZLALSLOG(1) << "  input: " << get_log_info(m.d_input) << std::endl;
   BZLALSLOG(1) << "  prev. assignment: " << m.d_input->assignment()
                << std::endl;
   BZLALSLOG(1) << "  new   assignment: " << m.d_assignment << std::endl;

@@ -272,6 +272,20 @@ class LocalSearch
    */
   Node<VALUE>* get_node(uint64_t id) const;
   /**
+   * Get symbol associated with node of given id.
+   * @param id The node id.
+   * @return The symbol.
+   */
+  std::string get_symbol(uint64_t id) const;
+  /**
+   * Get a string representation of the basis information of the given node
+   * for logging.
+   * @param node The node to log.
+   * @return A string, consisting of the symbol, id, normalized id, node kind,
+   *         current assignment and domain of the given node.
+   */
+  std::string get_log_info(const Node<VALUE>* node) const;
+  /**
    * Determine if given node is a leaf node (its arity = 0).
    * @param node The node to query.
    * @return True if `node` is a leaf.
@@ -359,6 +373,9 @@ class LocalSearch
 
   /** Map from node id to nodes. */
   NodesIdTable d_nodes;
+  /** Symbol table, maps node id to symbol string. */
+  std::unordered_map<uint64_t, std::string> d_symbol_table;
+
   /**
    * The set of currently active roots, organized into assertion levels.
    *
