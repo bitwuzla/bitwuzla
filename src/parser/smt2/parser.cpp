@@ -2,19 +2,13 @@
 
 #include <iostream>
 
-#include "bitwuzla/cpp/bitwuzla.h"
-
 namespace bzla {
 namespace parser::smt2 {
 
 /* Parser public ------------------------------------------------------------ */
 
 Parser::Parser(bitwuzla::Options& options, const std::string& infile_name)
-    : d_options(options),
-      d_infile_name(infile_name),
-      d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
-      d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
-      d_logger(d_log_level, d_verbosity)
+    : bzla::parser::Parser(options, infile_name)
 {
   FILE* infile = std::fopen(infile_name.c_str(), "r");
   if (!infile)
@@ -79,16 +73,6 @@ Parser::parse(bool parse_only)
   Msg(1) << "parsed " << d_statistics.num_commands << " commands in "
          << ((double) d_statistics.time_parse.elapsed() / 1000) << " seconds";
   return d_error;
-}
-
-void
-Parser::configure_terminator(bitwuzla::Terminator* terminator)
-{
-  if (d_bitwuzla)
-  {
-    d_bitwuzla->configure_terminator(terminator);
-  }
-  d_terminator = terminator;
 }
 
 /* Parser private ----------------------------------------------------------- */

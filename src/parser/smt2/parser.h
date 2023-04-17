@@ -1,21 +1,14 @@
 #ifndef BZLA_PARSER_SMT2_PARSER_H_INCLUDED
 #define BZLA_PARSER_SMT2_PARSER_H_INCLUDED
 
-#include <fstream>
-
+#include "parser/parser.h"
 #include "parser/smt2/lexer.h"
 #include "parser/smt2/symbol_table.h"
-#include "util/logger.h"
-#include "util/statistics.h"
-
-namespace bitwuzla {
-class Bitwuzla;
-}
 
 namespace bzla {
 namespace parser::smt2 {
 
-class Parser
+class Parser : public bzla::parser::Parser
 {
  public:
   /**
@@ -29,14 +22,7 @@ class Parser
    * Parse input file.
    * @param parse_only True to only parse without executing check-sat calls.
    */
-  std::string parse(bool parse_only);
-  /**
-   * Configure Bitwuzla terminator.
-   * @param terminator The terminator to configure as terminator for Bitwuzla.
-   */
-  void configure_terminator(bitwuzla::Terminator* terminator);
-  /** @return The Bitwuzla instance. */
-  bitwuzla::Bitwuzla* bitwuzla() { return d_bitwuzla.get(); }
+  std::string parse(bool parse_only) override;
 
  private:
   /** A parsed item. */
@@ -94,24 +80,7 @@ class Parser
       enable_theory("ALL");
     }
   }
-  /** Initialize Bitwuzla instance. */
-  void init_bitwuzla()
-  {
-    if (!d_bitwuzla)
-    {
-      d_bitwuzla.reset(new bitwuzla::Bitwuzla(d_options));
-    }
-  }
 
-  /**
-   * Determine if the parser is required (by the Bitwuzla terminator) to
-   * terminate.
-   * @return True if parser is required to terminate.
-   */
-  bool terminate()
-  {
-    return d_terminator != nullptr && d_terminator->terminate();
-  }
   /**
    * Get next token from the lexer and insert new symbols into symbol table.
    * Caches parsed symbols (new and existing) in d_last_node.
@@ -770,32 +739,10 @@ class Parser
   void print_work_control_stack();
 #endif
 
-  /** The Bitwuzla configuration options. */
-  bitwuzla::Options& d_options;
-  /** The Bitwuzla instance. */
-  std::unique_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
-  /** The Bitwuzla terminator. */
-  bitwuzla::Terminator* d_terminator = nullptr;
-
-  /** The name of the input file. */
-  const std::string& d_infile_name;
-
   /** The associated SMT-LIB2 lexer. */
   std::unique_ptr<Lexer> d_lexer;
   /** The associated symbol table. */
   SymbolTable d_table;
-
-  /** The log level. */
-  uint64_t d_log_level;
-  /** The verbosity level. */
-  uint64_t d_verbosity;
-  /** The associated logger class. */
-  util::Logger d_logger;
-
-  /** The output file stream if print to a file. */
-  std::ofstream d_outfile;
-  /** The output stream, either prints to d_outfile or std::cout. */
-  std::ostream* d_out = &std::cout;
 
   /** True if SMT-LIB option print-success is enabled. */
   bool d_print_success = false;
@@ -810,10 +757,6 @@ class Parser
   /** The enabled logic. */
   std::string d_logic;
 
-  /** The status of the input file set via set-info. */
-  bitwuzla::Result d_status = bitwuzla::Result::UNKNOWN;
-  /** The result of the last check-sat call. */
-  bitwuzla::Result d_result = bitwuzla::Result::UNKNOWN;
   /** The current assertion level. */
   uint64_t d_assertion_level = 0;
 
@@ -841,11 +784,6 @@ class Parser
   /** True if currently open term is a variable binding. */
   bool d_is_var_binding = false;
 
-  /** True if parser is done parsing. */
-  bool d_done = false;
-
-  /** The error message in case of a parse error. */
-  std::string d_error;
   /** The coordinate in the input file where the error occurred. */
   Lexer::Coordinate* d_err_coo = nullptr;
 
