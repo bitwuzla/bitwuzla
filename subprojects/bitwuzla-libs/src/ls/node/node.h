@@ -1,6 +1,8 @@
 #ifndef BZLA__LS_NODE_H
 #define BZLA__LS_NODE_H
 
+#include <optional>
+#include <string>
 #include <vector>
 
 #include "ls/ls.h"
@@ -30,6 +32,17 @@ class Node
 
   /** Destructor. */
   virtual ~Node();
+
+  /**
+   * Get symbol associated with this node.
+   * @return The symbol;
+   */
+  const std::optional<std::string>& symbol();
+  /**
+   * Set symbol associated with this node.
+   * @param symbol The symbol;
+   */
+  void set_symbol(const std::optional<std::string>& symbol = std::nullopt);
 
   /**
    * Get the kind of the node.
@@ -209,19 +222,28 @@ class Node
   virtual std::vector<std::string> log() const;
 
  protected:
-  Node(RNG* rng, const VALUE& assignment, bool is_value);
-  Node(RNG* rng, const VALUE& assignment, Node<VALUE>* child0, bool is_value);
+  Node(RNG* rng,
+       const VALUE& assignment,
+       bool is_value,
+       const std::optional<std::string>& symbol = std::nullopt);
+  Node(RNG* rng,
+       const VALUE& assignment,
+       Node<VALUE>* child0,
+       bool is_value,
+       const std::optional<std::string>& symbol = std::nullopt);
   Node(RNG* rng,
        const VALUE& assignment,
        Node<VALUE>* child0,
        Node<VALUE>* child1,
-       bool is_value);
+       bool is_value,
+       const std::optional<std::string>& symbol = std::nullopt);
   Node(RNG* rng,
        const VALUE& assignment,
        Node<VALUE>* child0,
        Node<VALUE>* child1,
        Node<VALUE>* child2,
-       bool is_value);
+       bool is_value,
+       const std::optional<std::string>& symbol = std::nullopt);
 
   /**
    * Helper to select a non-const operand. Additional collects the indices
@@ -279,6 +301,9 @@ class Node
   std::unique_ptr<VALUE> d_inverse;
   /** Cached consistent value result. */
   std::unique_ptr<VALUE> d_consistent;
+
+  /** The symbol associated with this node. */
+  std::optional<std::string> d_symbol;
 };
 
 std::ostream& operator<<(std::ostream& out, const Node<BitVector>& node);

@@ -122,8 +122,8 @@ BitVectorNode::set_assignment(const BitVector& assignment)
 std::string
 BitVectorNode::str() const
 {
-  return "[" + std::to_string(d_id) + "] " + "("
-         + std::to_string(d_normalized_id) + ") " + std::to_string(kind())
+  return (d_symbol ? *d_symbol + " " : "") + "[" + std::to_string(d_id) + "] "
+         + "(" + std::to_string(d_normalized_id) + ") " + std::to_string(kind())
          + ": " + d_domain.str() + " (" + d_assignment.str() + ")";
 }
 
@@ -4609,6 +4609,7 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
   //        pos_x = 1: t = 0 || s != max_signed_value
   BitVector min_lo, max_lo, min_hi, max_hi;
   compute_normalized_bounds(s, t, pos_x, min_lo, max_lo, min_hi, max_hi);
+
   if (min_lo.is_null() && min_hi.is_null())
   {
     return false;

@@ -52,14 +52,11 @@ LocalSearchBV::mk_node(const BitVector& assignment,
   std::unique_ptr<BitVectorNode> res(
       new BitVectorNode(d_rng.get(), assignment, domain));
   res->set_id(id);
+  res->set_symbol(symbol);
   d_nodes.push_back(std::move(res));
   assert(get_node(id) == d_nodes.back().get());
   assert(d_parents.find(id) == d_parents.end());
   d_parents[id] = {};
-  if (symbol)
-  {
-    d_symbol_table[id] = *symbol;
-  }
   return id;
 }
 
@@ -253,15 +250,11 @@ LocalSearchBV::_mk_node(NodeKind kind,
     default: assert(0);  // API check
   }
   res->set_id(id);
+  res->set_symbol(symbol);
   d_nodes.push_back(std::move(res));
   assert(get_node(id) == d_nodes.back().get());
   assert(d_parents.find(id) == d_parents.end());
   d_parents[id] = {};
-
-  if (symbol)
-  {
-    d_symbol_table[id] = *symbol;
-  }
 
   return id;
 }

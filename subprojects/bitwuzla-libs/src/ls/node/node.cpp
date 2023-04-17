@@ -10,12 +10,16 @@
 namespace bzla::ls {
 
 template <class VALUE>
-Node<VALUE>::Node(RNG* rng, const VALUE& assignment, bool is_value)
+Node<VALUE>::Node(RNG* rng,
+                  const VALUE& assignment,
+                  bool is_value,
+                  const std::optional<std::string>& symbol)
     : d_rng(rng),
       d_assignment(assignment),
       d_arity(0),
       d_is_value(is_value),
-      d_all_value(d_is_value)
+      d_all_value(d_is_value),
+      d_symbol(symbol)
 {
 }
 
@@ -23,13 +27,15 @@ template <class VALUE>
 Node<VALUE>::Node(RNG* rng,
                   const VALUE& assignment,
                   Node<VALUE>* child0,
-                  bool is_value)
+                  bool is_value,
+                  const std::optional<std::string>& symbol)
     : d_children({child0}),
       d_rng(rng),
       d_assignment(assignment),
       d_arity(1),
       d_is_value(is_value),
-      d_all_value(child0->is_value())
+      d_all_value(child0->is_value()),
+      d_symbol(symbol)
 {
 }
 
@@ -38,13 +44,15 @@ Node<VALUE>::Node(RNG* rng,
                   const VALUE& assignment,
                   Node<VALUE>* child0,
                   Node<VALUE>* child1,
-                  bool is_value)
+                  bool is_value,
+                  const std::optional<std::string>& symbol)
     : d_children({child0, child1}),
       d_rng(rng),
       d_assignment(assignment),
       d_arity(2),
       d_is_value(is_value),
-      d_all_value(child0->is_value() && child1->is_value())
+      d_all_value(child0->is_value() && child1->is_value()),
+      d_symbol(symbol)
 {
 }
 
@@ -54,20 +62,36 @@ Node<VALUE>::Node(RNG* rng,
                   Node<VALUE>* child0,
                   Node<VALUE>* child1,
                   Node<VALUE>* child2,
-                  bool is_value)
+                  bool is_value,
+                  const std::optional<std::string>& symbol)
     : d_children({child0, child1, child2}),
       d_rng(rng),
       d_assignment(assignment),
       d_arity(3),
       d_is_value(is_value),
       d_all_value(child0->is_value() && child1->is_value()
-                  && child2->is_value())
+                  && child2->is_value()),
+      d_symbol(symbol)
 {
 }
 
 template <class VALUE>
 Node<VALUE>::~Node()
 {
+}
+
+template <class VALUE>
+const std::optional<std::string>&
+Node<VALUE>::symbol()
+{
+  return d_symbol;
+}
+
+template <class VALUE>
+void
+Node<VALUE>::set_symbol(const std::optional<std::string>& symbol)
+{
+  d_symbol = symbol;
 }
 
 template <class VALUE>

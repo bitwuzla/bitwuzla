@@ -211,23 +211,6 @@ LocalSearch<VALUE>::get_node(uint64_t id) const
 }
 
 template <class VALUE>
-std::string
-LocalSearch<VALUE>::get_symbol(uint64_t id) const
-{
-  assert(id < d_nodes.size());
-  auto it = d_symbol_table.find(id);
-  return it == d_symbol_table.end() ? "" : it->second;
-}
-
-template <class VALUE>
-std::string
-LocalSearch<VALUE>::get_log_info(const Node<VALUE>* node) const
-{
-  std::string symbol = get_symbol(node->id());
-  return symbol + (symbol.empty() ? "" : " ") + node->str();
-}
-
-template <class VALUE>
 bool
 LocalSearch<VALUE>::is_leaf_node(const Node<VALUE>* node) const
 {
@@ -259,8 +242,8 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
 
     BZLALSLOG(1) << std::endl;
     BZLALSLOG(1) << "  propagate:" << std::endl;
-    BZLALSLOG(1) << "    node: " << get_log_info(cur)
-                 << (cur->is_root() ? " (root)" : "") << std::endl;
+    BZLALSLOG(1) << "    node: " << *cur << (cur->is_root() ? " (root)" : "")
+                 << std::endl;
 
     if (arity == 0)
     {
@@ -289,13 +272,13 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
           BZLALSLOG(1) << s;
         }
       }
-      BZLALSLOG(1) << "    target value: " << t << std::endl;
+      BZLALSLOG(1) << "    -> target value: " << t << std::endl;
 
       /* Select path */
       auto [pos_x, check_essential] = cur->select_path(t, ess_inputs);
       assert(pos_x < arity);
 
-      BZLALSLOG(1) << "      select path: node[" << pos_x << "]" << std::endl;
+      BZLALSLOG(1) << "    -> select path: node[" << pos_x << "]" << std::endl;
       if (BZLALSLOG_ENABLED(1))
       {
         // check if check_essential is false due to all but one input
@@ -347,7 +330,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
           && cur->is_invertible(t, pos_x))
       {
         t = cur->inverse_value(t, pos_x);
-        BZLALSLOG(1) << "      inverse value: " << t << std::endl;
+        BZLALSLOG(1) << "    -> inverse value: " << t << std::endl;
         d_statistics.d_nprops_inv += 1;
 #ifndef NDEBUG
         d_statistics.d_ninv[cur->kind()] += 1;
@@ -356,7 +339,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       else if (cur->is_consistent(t, pos_x))
       {
         t = cur->consistent_value(t, pos_x);
-        BZLALSLOG(1) << "      consistent value: " << t << std::endl;
+        BZLALSLOG(1) << "    -> consistent value: " << t << std::endl;
         d_statistics.d_nprops_cons += 1;
 #ifndef NDEBUG
         d_statistics.d_ncons[cur->kind()] += 1;
@@ -508,7 +491,7 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
 
   for (Node<VALUE>* cur : cone)
   {
-    BZLALSLOG(2) << "  node: " << get_log_info(cur) << " -> ";
+    BZLALSLOG(2) << "  node: " << *cur << " -> ";
     cur->evaluate();
     nupdates += 1;
     BZLALSLOG(2) << cur->assignment() << std::endl;
@@ -544,14 +527,14 @@ LocalSearch<VALUE>::move()
     BZLALSLOG(1) << "  unsatisfied roots:" << std::endl;
     for (uint64_t id : d_roots_unsat)
     {
-      BZLALSLOG(1) << "    - " << get_log_info(get_node(id)) << std::endl;
+      BZLALSLOG(1) << "    - " << *get_node(id) << std::endl;
     }
     BZLALSLOG(1) << std::endl;
     BZLALSLOG(1) << "  satisfied roots:" << std::endl;
     for (uint64_t id : d_roots)
     {
       if (d_roots_unsat.find(id) != d_roots_unsat.end()) continue;
-      BZLALSLOG(1) << "    - " << get_log_info(get_node(id)) << std::endl;
+      BZLALSLOG(1) << "    - " << *get_node(id) << std::endl;
     }
   }
 
@@ -588,7 +571,7 @@ LocalSearch<VALUE>::move()
 
   BZLALSLOG(1) << std::endl;
   BZLALSLOG(1) << "  move" << std::endl;
-  BZLALSLOG(1) << "  input: " << get_log_info(m.d_input) << std::endl;
+  BZLALSLOG(1) << "  input: " << *m.d_input << std::endl;
   BZLALSLOG(1) << "  prev. assignment: " << m.d_input->assignment()
                << std::endl;
   BZLALSLOG(1) << "  new   assignment: " << m.d_assignment << std::endl;
@@ -603,7 +586,6 @@ LocalSearch<VALUE>::move()
   BZLALSLOG(1) << "*** number of updates: " << d_statistics.d_nupdates
                << std::endl;
   BZLALSLOG(1) << std::endl;
-
   if (d_roots_unsat.empty())
   {
     BZLALSLOG(1) << " all roots satisfied" << std::endl;
