@@ -87,8 +87,6 @@ class SolvingContext
 
   /** Result of last solve() call. */
   Result d_sat_state = Result::UNKNOWN;
-
-  bool d_built_model = false;
 };
 
 }  // namespace bzla

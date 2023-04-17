@@ -26,8 +26,6 @@ SolvingContext::SolvingContext(const option::Options& options)
 Result
 SolvingContext::solve()
 {
-  d_built_model = false;
-
   preprocess();
   d_sat_state = d_solver_engine.solve();
   if (d_env.options().verbosity() > 0)
@@ -60,7 +58,6 @@ void
 SolvingContext::assert_formula(const Node& formula)
 {
   assert(formula.type().is_bool());
-  d_built_model = false;
   if (d_assertions.push_back(formula))
   {
     d_original_assertions.push_back(formula);
