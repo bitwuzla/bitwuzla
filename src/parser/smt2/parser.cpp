@@ -2971,11 +2971,12 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
                 + std::to_string(token) + "'",
             arg_coo(idx));
       }
-      if (!args[1].sort().is_bv())
+      if (!args[1].sort().is_bv() || args[1].sort().bv_size() <= 1)
       {
-        return error("expected bit-vector term at index 1 as argument to '"
-                         + std::to_string(token) + "'",
-                     arg_coo(idx + 1));
+        return error(
+            "expected bit-vector term of size > 1 at index 1 as argument to '"
+                + std::to_string(token) + "'",
+            arg_coo(idx + 1));
       }
       if (!args[2].sort().is_bv())
       {

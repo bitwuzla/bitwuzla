@@ -1736,7 +1736,9 @@ mk_fp_value(const Term &bv_sign,
   BITWUZLA_CHECK_TERM_IS_BV_VALUE(bv_exponent);
   BITWUZLA_CHECK_TERM_IS_BV_VALUE(bv_significand);
   BITWUZLA_CHECK(bv_sign.d_node->type().bv_size() == 1)
-      << "invalid bit-vector size for argument 'bv_sign', expected size one";
+      << "invalid bit-vector size for argument 'bv_sign', expected size 1";
+  BITWUZLA_CHECK(bv_exponent.d_node->type().bv_size() > 1)
+      << "invalid bit-vector size for argument 'bv_sign', expected size > 1";
   return bzla::NodeManager::get().mk_value(bzla::FloatingPoint(
       bzla::NodeManager::get().mk_fp_type(
           bv_exponent.d_node->type().bv_size(),

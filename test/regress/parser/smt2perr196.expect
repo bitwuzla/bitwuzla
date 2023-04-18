@@ -1,0 +1,1 @@
+regress/parser/smt2perr196.smt2:2:26: expected bit-vector term of size > 1 at index 1 as argument to 'fp'

@@ -758,7 +758,7 @@ TEST_F(TestCApi, mk_fp_value)
 
   ASSERT_DEATH(
       bitwuzla_mk_fp_value(d_bv_zero8, d_bv_zero8, d_bv_zero8),
-      "invalid bit-vector size for argument 'bv_sign', expected size one");
+      "invalid bit-vector size for argument 'bv_sign', expected size 1");
   ASSERT_DEATH(bitwuzla_mk_fp_value(d_fp_const16, d_bv_zero8, d_bv_zero8),
                d_error_exp_bv_value);
   ASSERT_DEATH(bitwuzla_mk_fp_value(d_bv_one1, d_fp_const16, d_bv_zero8),

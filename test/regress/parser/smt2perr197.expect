@@ -1,0 +1,1 @@
+regress/parser/smt2perr197.smt2:2:10: expected 3 arguments to 'fp', got 0
