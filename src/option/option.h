@@ -48,6 +48,8 @@ enum class Option
   PROP_SEXT,                    // bool
   PROP_NORMALIZE,               // bool
 
+  BV_ABSTRACTION, // bool
+
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,                // bool
   PP_CONTRADICTING_ANDS,     // bool
@@ -472,6 +474,8 @@ class Options
   OptionBool prop_opt_lt_concat_sext;
   OptionBool prop_sext;
   OptionBool prop_normalize;
+
+  OptionBool bv_abstraction;
 
   // Preprocessing
   OptionBool preprocess;

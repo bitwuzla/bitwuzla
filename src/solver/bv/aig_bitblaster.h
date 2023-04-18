@@ -19,6 +19,8 @@
 
 namespace bzla::bv {
 
+class AbstractionModule;
+
 class AigBitblaster
 {
  public:
@@ -27,7 +29,7 @@ class AigBitblaster
                          std::hash<bitblast::AigNode>>;
 
   /** Recursively bit-blast `term`. */
-  void bitblast(const Node& term);
+  void bitblast(const Node& term, AbstractionModule* am = nullptr);
 
   /** Return encoded bits associated with bit-blasted term. */
   const bitblast::AigBitblaster::Bits& bits(const Node& term) const;

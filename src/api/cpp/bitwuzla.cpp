@@ -84,6 +84,7 @@ static const std::unordered_map<Option, bzla::option::Option>
          bzla::option::Option::PROP_PROB_PICK_INV_VALUE},
         {Option::PROP_SEXT, bzla::option::Option::PROP_SEXT},
         {Option::PROP_NORMALIZE, bzla::option::Option::PROP_NORMALIZE},
+        {Option::BV_ABSTRACTION, bzla::option::Option::BV_ABSTRACTION},
         {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
 
         {Option::PREPROCESS, bzla::option::Option::PREPROCESS},

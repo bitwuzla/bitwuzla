@@ -58,6 +58,9 @@ class BvSolver : public Solver, public BvSolverInterface
 
   option::BvSolver cur_solver() const { return d_cur_solver; }
 
+  /** Return whether node is a bit-vector abstraction. */
+  bool is_abstraction(const Node& node) const;
+
  private:
   /** Result of the last check() call. */
   Result d_sat_state = Result::UNKNOWN;

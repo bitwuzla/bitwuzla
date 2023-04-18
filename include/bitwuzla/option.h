@@ -270,6 +270,16 @@ enum ENUM(Option)
    */
   EVALUE(PROP_NORMALIZE),
 
+  /*! **Bit-vector bitblasting solver: Abstraction module. **
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(BV_ABSTRACTION),
+
   /*! **Preprocessing**
    *
    * When enabled, applies all enabled preprocessing passes.

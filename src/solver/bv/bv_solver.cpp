@@ -118,7 +118,7 @@ BvSolver::solve()
 Node
 BvSolver::value(const Node& term)
 {
-  assert(is_leaf(term));
+  assert(is_leaf(term) || is_abstraction(term));
   assert(term.type().is_bool() || term.type().is_bv());
   if (d_cur_solver == option::BvSolver::BITBLAST)
   {
@@ -137,6 +137,12 @@ BvSolver::unsat_core(std::vector<Node>& core) const
   }
   assert(d_cur_solver == option::BvSolver::PROP);
   return d_prop_solver.unsat_core(core);
+}
+
+bool
+BvSolver::is_abstraction(const Node& node) const
+{
+  return d_bitblast_solver.is_abstraction(node);
 }
 
 /* --- BvBitblastSolver private --------------------------------------------- */

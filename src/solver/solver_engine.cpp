@@ -78,6 +78,10 @@ SolverEngine::solve()
     {
       break;
     }
+    if (!d_lemmas.empty())
+    {
+      continue;
+    }
     d_fp_solver.check();
     if (!d_lemmas.empty())
     {
@@ -121,7 +125,7 @@ SolverEngine::solve()
 Node
 SolverEngine::value(const Node& term)
 {
-  assert(d_sat_state == Result::SAT);
+  assert(d_in_solving_mode || d_sat_state == Result::SAT);
   Log(2) << "get value for (in_solving: " << d_in_solving_mode << "): " << term;
 
   if (d_in_solving_mode)
@@ -216,6 +220,7 @@ SolverEngine::sync_scope(size_t level)
 void
 SolverEngine::process_assertions()
 {
+  Log(1) << "Processing " << d_assertions.size() << " assertions";
   while (!d_assertions.empty())
   {
     size_t level   = d_assertions.level(d_assertions.begin());
@@ -313,6 +318,7 @@ SolverEngine::registered(const Node& term) const
 void
 SolverEngine::process_lemmas()
 {
+  Log(1) << "Processing " << d_lemmas.size() << " lemmas";
   for (const Node& lemma : d_lemmas)
   {
     process_assertion(lemma, true, true);
@@ -337,7 +343,7 @@ SolverEngine::_value(const Node& term)
       // assignments.
       if (d_in_solving_mode)
       {
-        if (bv::BvSolver::is_leaf(cur))
+        if (bv::BvSolver::is_leaf(cur) || d_bv_solver.is_abstraction(cur))
         {
           continue;
         }
@@ -431,6 +437,12 @@ SolverEngine::_value(const Node& term)
         }
       }
 
+      // Treat bit-vector abstractions as bit-vector constants.
+      if (d_in_solving_mode && d_bv_solver.is_abstraction(cur))
+      {
+        goto VALUE_CONSTANT;
+      }
+
       switch (k)
       {
         case Kind::VALUE: value = cur; break;
@@ -442,6 +454,7 @@ SolverEngine::_value(const Node& term)
           [[fallthrough]];
 
         case Kind::CONSTANT: {
+        VALUE_CONSTANT:
           const Type& type = cur.type();
           if (type.is_bool() || type.is_bv())
           {
