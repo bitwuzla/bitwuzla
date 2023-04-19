@@ -15,7 +15,8 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_solver_state(state),
       d_rewriter(env.rewriter()),
       d_abstractions(state.backtrack_mgr()),
-      d_active_abstractions(state.backtrack_mgr())
+      d_active_abstractions(state.backtrack_mgr()),
+      d_stats(env.statistics())
 {
   auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
   mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ZERO>());
@@ -48,7 +49,7 @@ AbstractionModule::~AbstractionModule() {}
 bool
 AbstractionModule::abstract(const Node& node) const
 {
-  return node.kind() == Kind::BV_MUL && node.type().bv_size() >= 16;
+  return node.kind() == Kind::BV_MUL && node.type().bv_size() >= 4;
 }
 
 void
@@ -62,6 +63,7 @@ AbstractionModule::register_abstraction(const Node& node)
     it->second      = nm.mk_node(Kind::APPLY, {func, node[0], node[1]});
     d_solver_state.lemma(nm.mk_node(Kind::EQUAL, {node, it->second}));
     d_active_abstractions.push_back(node);
+    ++d_stats.num_abstractions;
     Log(1) << "Register abstraction: " << node;
   }
 }
@@ -69,6 +71,8 @@ AbstractionModule::register_abstraction(const Node& node)
 void
 AbstractionModule::check()
 {
+  util::Timer timer(d_stats.time_check);
+  ++d_stats.num_checks;
   for (const Node& abstr : d_active_abstractions)
   {
     check_abstraction(abstr);
@@ -105,7 +109,7 @@ AbstractionModule::mul_uf(const Node& node)
 void
 AbstractionModule::check_abstraction(const Node& node)
 {
-  Log(2) << "Check abstraction: " << node << std::endl;
+  Log(2) << "Check abstraction: " << node;
   auto it = d_abstr_lemmas.find(node.kind());
   assert(it != d_abstr_lemmas.end());
   const auto& to_check = it->second;
@@ -138,6 +142,7 @@ AbstractionModule::check_abstraction(const Node& node)
         Node lemma = lem->instance(node[0], node[1], get_abstraction(node));
         d_solver_state.lemma(lemma);
         added_lemma = true;
+        d_stats.lemmas << lem->kind();
         break;
       }
       inst = d_rewriter.rewrite(lem->instance(val_s, val_x, val_t));
@@ -148,6 +153,7 @@ AbstractionModule::check_abstraction(const Node& node)
         Node lemma = lem->instance(node[1], node[0], get_abstraction(node));
         d_solver_state.lemma(lemma);
         added_lemma = true;
+        d_stats.lemmas << lem->kind();
         break;
       }
     }
@@ -165,8 +171,20 @@ AbstractionModule::check_abstraction(const Node& node)
                       }),
            nm.mk_node(Kind::EQUAL, {get_abstraction(node), val_expected})});
       d_solver_state.lemma(lemma);
+      d_stats.lemmas << LemmaKind::MUL_VALUE;
     }
   }
+}
+
+AbstractionModule::Statistics::Statistics(util::Statistics& stats)
+    : num_abstractions(
+        stats.new_stat<uint64_t>("bv::abstraction::num_abstractions")),
+      num_checks(stats.new_stat<uint64_t>("bv::abstraction::num_checks")),
+      lemmas(
+          stats.new_stat<util::HistogramStatistic>("bv::abstraction::lemmas")),
+      time_check(
+          stats.new_stat<util::TimerStatistic>("bv::abstraction::time_check"))
+{
 }
 
 }  // namespace bzla::bv::abstraction

@@ -43,6 +43,15 @@ class AbstractionModule
   std::unordered_map<Type, Node> d_mul_ufs;
   std::unordered_map<node::Kind, std::vector<std::unique_ptr<AbstractionLemma>>>
       d_abstr_lemmas;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    uint64_t& num_abstractions;
+    uint64_t& num_checks;
+    util::HistogramStatistic& lemmas;
+    util::TimerStatistic& time_check;
+  } d_stats;
 };
 
 }  // namespace bzla::bv::abstraction
