@@ -15,6 +15,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_ONE: os << "MUL_ONE"; break;
     case LemmaKind::MUL_IC: os << "MUL_IC"; break;
     case LemmaKind::MUL_NEG: os << "MUL_NEG"; break;
+    case LemmaKind::MUL_ODD: os << "MUL_ODD"; break;
     case LemmaKind::MUL_VALUE: os << "MUL_VALUE"; break;
   }
   return os;
@@ -133,6 +134,36 @@ LemmaMulNeg::instance(const Node& x, const Node& s, const Node& t) const
       Kind::IMPLIES,
       {nm.mk_node(Kind::EQUAL, {s, ones}),
        nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_NEG, {x})})});
+}
+
+LemmaMulOdd::LemmaMulOdd(SolverState& state)
+    : AbstractionLemma(state, LemmaKind::MUL_ODD)
+{
+}
+
+bool
+LemmaMulOdd::check(const Node& x, const Node& s, const Node& t) const
+{
+  assert(x.is_value());
+  assert(s.is_value());
+  assert(t.is_value());
+  const BitVector& bv_x = x.value<BitVector>();
+  const BitVector& bv_s = s.value<BitVector>();
+  const BitVector& bv_t = t.value<BitVector>();
+  return (bv_x.bit(0) && bv_s.bit(0)) != bv_t.bit(0);
+}
+
+Node
+LemmaMulOdd::instance(const Node& x, const Node& s, const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(Kind::EQUAL,
+                    {nm.mk_node(Kind::BV_EXTRACT, {t}, {0, 0}),
+                     nm.mk_node(Kind::BV_AND,
+                                {
+                                    nm.mk_node(Kind::BV_EXTRACT, {x}, {0, 0}),
+                                    nm.mk_node(Kind::BV_EXTRACT, {s}, {0, 0}),
+                                })});
 }
 
 LemmaMulValue::LemmaMulValue(SolverState& state)

@@ -9,16 +9,16 @@ namespace bzla::bv {
 
 enum class LemmaKind
 {
-  MUL_ZERO,   // (=> (= s 0) (= t 0))
-  MUL_ONE,    // (=> (= s 1) (= t x))
+  MUL_ZERO,   // (=> (= s #b0000) (= t #b0000))
+  MUL_ONE,    // (=> (= s #b0001) (= t x))
   MUL_IC,     // (= (bvand (bvor (bvneg s) s) t) t),
-  MUL_NEG,    // (=> (= s (bvnot 0)) (= t (bvneg x)))
+  MUL_NEG,    // (=> (= s (bvnot #b0000)) (= t (bvneg x)))
+  MUL_ODD,    // (= t (bvor t (bvand x (bvand s #b0001))))
   MUL_VALUE,  // value instantiation lemma
 
   // Abstraction lemmas to add:
   //
   // MUL_IC (commutativity): (= t (bvand t (bvor x (bvneg x)))),
-  // (not (distinct t (bvor t (bvand x (bvand s #b0001))))),
   // (not (= s (bvnot (bvor t (bvand #b0001 (bvor x s)))))),
   // (not (= x (bvnot (bvor t (bvand #b0001 (bvor x s)))))),
   // (not (bvult s (bvand t (bvneg (bvor t (bvnot x)))))),
@@ -52,6 +52,8 @@ class AbstractionLemma
 
   /** Return lemma kind. */
   LemmaKind kind() const { return d_kind; }
+
+  virtual bool commutative() const { return true; };
 
   /** Check if abstraction lemma is violated. */
   virtual bool check(const Node& x, const Node& s, const Node& t) const = 0;
@@ -96,10 +98,20 @@ class LemmaMulNeg : public AbstractionLemma
   Node instance(const Node& x, const Node& s, const Node& t) const override;
 };
 
+class LemmaMulOdd : public AbstractionLemma
+{
+ public:
+  LemmaMulOdd(SolverState& state);
+  bool commutative() const override { return false; }
+  bool check(const Node& x, const Node& s, const Node& t) const override;
+  Node instance(const Node& x, const Node& s, const Node& t) const override;
+};
+
 class LemmaMulValue : public AbstractionLemma
 {
  public:
   LemmaMulValue(SolverState& state);
+  bool commutative() const override { return false; }
   bool check(const Node& x, const Node& s, const Node& t) const override;
   Node instance(const Node& x, const Node& s, const Node& t) const override;
 };

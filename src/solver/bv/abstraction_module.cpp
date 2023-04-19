@@ -20,6 +20,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulOne(state));
   d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulIc(state));
   d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulNeg(state));
+  d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulOdd(state));
   d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulValue(state));
 }
 
@@ -94,23 +95,25 @@ AbstractionModule::check_abstraction(const Node& node)
     Node val_x = d_solver_state.value(node[0]);
     Node val_s = d_solver_state.value(node[1]);
     Node val_t = d_solver_state.value(node);
-    Log(2) << "x: " << val_x;
-    Log(2) << "s: " << val_s;
-    Log(2) << "t: " << val_t;
+    Log(2) << "x: " << node[0];
+    Log(2) << "s: " << node[1];
+    Log(2) << "t: " << node;
+    Log(2) << "val_x: " << val_x;
+    Log(2) << "val_s: " << val_s;
+    Log(2) << "val_t: " << val_t;
     for (const auto& lem : to_check)
     {
-      LemmaKind k = lem->kind();
       if (lem->check(val_x, val_s, val_t))
       {
-        Log(2) << k << " violated";
-        Node lemma = lem->instance(node[0], node[1], node);
+        Log(2) << lem->kind() << " violated";
+        Node lemma = lem->instance(node[0], node[1], get_abstraction(node));
         d_solver_state.lemma(lemma);
         break;
       }
-      if (lem->check(val_s, val_x, val_t))
+      if (lem->commutative() && lem->check(val_s, val_x, val_t))
       {
-        Log(2) << k << " violated";
-        Node lemma = lem->instance(node[1], node[0], node);
+        Log(2) << lem->kind() << " (comm.) violated";
+        Node lemma = lem->instance(node[1], node[0], get_abstraction(node));
         d_solver_state.lemma(lemma);
         break;
       }
