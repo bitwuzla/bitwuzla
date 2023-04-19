@@ -8,9 +8,9 @@
 (declare-fun _substvar_266_ () (_ BitVec 1))
 (declare-fun _substvar_271_ () (_ BitVec 4))
 (declare-fun _substvar_273_ () (_ BitVec 1))
-(declare-fun _substvar_277_ () (_ BitVec 1))
+(declare-fun _substvar_277_ () Bool)
 (declare-fun _substvar_295_ () (_ BitVec 4))
-(declare-fun _substvar_296_ () (_ BitVec 1))
+(declare-fun _substvar_296_ () Bool)
 (declare-fun _substvar_494_ () Bool)
 (declare-fun _substvar_654_ () (_ BitVec 4))
 (declare-fun _substvar_989_ () (_ BitVec 4))
@@ -20,8 +20,8 @@
 (assert (= (select |UNROLL#2334| (ite (= _substvar_251_ #b1) (_ bv0 4) _substvar_256_)) _substvar_4_))
 (assert (= (ite _substvar_494_ #b0 _substvar_253_) _substvar_251_))
 (assert (= (ite (= _substvar_251_ #b1) (_ bv0 4) _substvar_256_) _substvar_254_))
-(assert (= (ite (not (= (bvand _substvar_254_ #b0011) #b0001)) #b0 (= _substvar_271_ (_ bv0 4))) _substvar_277_))
-(assert (= (ite (= _substvar_277_ #b1) (_ bv0 4) _substvar_654_) _substvar_801_))
+(assert (= (ite (not (= (bvand _substvar_254_ #b0011) #b0001)) false (= _substvar_271_ (_ bv0 4))) _substvar_277_))
+(assert (= (ite (= _substvar_277_ true) (_ bv0 4) _substvar_654_) _substvar_801_))
 (assert (= (ite _substvar_494_ #b0000 _substvar_6_) _substvar_989_))
 
 (assert (= _substvar_251_ _substvar_266_))
@@ -34,7 +34,7 @@
 
 (push 1)
 
-(assert (= _substvar_296_ #b0))
+(assert (= _substvar_296_ false))
 (set-info :status sat)
 (check-sat)
 (exit)

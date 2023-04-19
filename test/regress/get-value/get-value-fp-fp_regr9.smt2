@@ -1,0 +1,8 @@
+(set-logic QF_FP)
+(set-info :status sat)
+(set-option :produce-models true)
+(declare-const s RoundingMode)
+(declare-const s5 RoundingMode)
+(declare-const s7 Bool)
+(check-sat)
+(get-value ((fp.mul (ite s7 s5 s) (_ -zero 5 11) (_ -zero 5 11))))

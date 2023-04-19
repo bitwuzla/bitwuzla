@@ -1,6 +1,0 @@
-(set-logic QF_BV)
-(set-info :status unsat)
-(declare-const v0 (_ BitVec 1))
-(declare-const v1 (_ BitVec 1))
-(assert (= #b1 (bvand v1 (bvurem v0 v1))))
-(check-sat)

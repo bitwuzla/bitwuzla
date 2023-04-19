@@ -7,7 +7,7 @@
 (declare-fun _substvar_508_ () (_ BitVec 32))
 (declare-fun _substvar_535_ () (_ BitVec 32))
 (declare-fun _substvar_538_ () (_ BitVec 1))
-(declare-fun _substvar_541_ () (_ BitVec 1))
+(declare-fun _substvar_541_ () Bool)
 (declare-fun _substvar_545_ () (_ BitVec 2))
 (declare-fun _substvar_548_ () (_ BitVec 32))
 (declare-fun _substvar_552_ () (_ BitVec 1))
