@@ -1,6 +1,5 @@
 (set-logic QF_FP)
 (set-info :status unsat)
-(set-option :produce-models true)
 (define-fun x () Float64 (_ +zero 11 53))
 (define-fun y () Float64 (_ -zero 11 53))
 (assert (distinct x y))
@@ -15,4 +14,3 @@
 (assert (= a x));
 (assert (= b y));
 (check-sat)
-;(get-model)

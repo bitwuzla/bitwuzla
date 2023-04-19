@@ -1,5 +1,4 @@
 (set-logic ALL)
-(set-option :produce-models true)
 (set-info :status sat)
 (declare-const _s0 (Array (_ FloatingPoint 15 113) (_ FloatingPoint 15 113)))
 (declare-fun _s1 ((_ BitVec 117) (_ FloatingPoint 15 113) (_ FloatingPoint 15 113) (_ BitVec 117) (_ FloatingPoint 15 113) (_ FloatingPoint 15 113) (_ FloatingPoint 15 113) (_ BitVec 117) (_ BitVec 117) (_ BitVec 117) (_ BitVec 117)) (_ FloatingPoint 15 113))

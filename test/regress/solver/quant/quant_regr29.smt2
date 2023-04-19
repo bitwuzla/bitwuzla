@@ -1,5 +1,4 @@
 (set-option :incremental true)
-(set-option :produce-models true)
 (declare-fun x (Bool Bool) Bool)
 (declare-const x2 Bool)
 (set-info :status sat)

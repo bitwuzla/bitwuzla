@@ -1,4 +1,3 @@
-(set-option :produce-models true)
 (set-logic QF_ABV)
 (push 1)
 (define-fun m@0 () (Array (_ BitVec 2) (_ BitVec 8)) ((as const (Array (_ BitVec 2) (_ BitVec 8))) (_ bv0 8)))
@@ -40,4 +39,3 @@
 (assert assert@1)
 (set-info :status sat)
 (check-sat)
-(get-value (m@0))

@@ -1,4 +1,3 @@
-(set-option :produce-models true)
 (set-info :status sat)
 (set-logic QF_ABV)
 

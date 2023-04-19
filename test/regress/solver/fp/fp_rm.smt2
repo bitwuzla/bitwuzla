@@ -1,6 +1,5 @@
 (set-logic QF_FP)
 (set-info :status unsat)
-(set-option :produce-models true)
 (define-fun rne ()  RoundingMode roundNearestTiesToEven)
 (define-fun rna () RoundingMode roundNearestTiesToAway)
 (define-fun rtp () RoundingMode roundTowardPositive)
