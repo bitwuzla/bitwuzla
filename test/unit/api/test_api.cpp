@@ -1,4 +1,5 @@
 #include <bitwuzla/cpp/bitwuzla.h>
+#include <bitwuzla/cpp/parser.h>
 
 #include <fstream>
 
@@ -2911,7 +2912,7 @@ TEST_F(TestApi, arrayfun)
 /* Parsing                                                                    */
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestApi, parse)
+TEST_F(TestApi, parser)
 {
   const char* filename = "parse.smt2";
   std::ofstream smt2(filename);
@@ -2920,8 +2921,9 @@ TEST_F(TestApi, parse)
   smt2 << "(exit)\n" << std::flush;
   bitwuzla::Options options;
 
-  ASSERT_THROW(bitwuzla::parse(options, ""), bitwuzla::Exception);
-  ASSERT_THROW(bitwuzla::parse(options, "parsex.smt2"), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::parser::Parser(options, ""), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::parser::Parser(options, "parsex.smt2"),
+               bitwuzla::Exception);
 
   // TODO should this throw? (parsing after having created expressions)
   // ASSERT_THROW(
@@ -2929,7 +2931,8 @@ TEST_F(TestApi, parse)
   //        ifile, infile_name, std::cout, error_msg, status, is_smt2),
   //    bitwuzla::Exception);
 
-  std::string err = bitwuzla::parse(options, filename);
+  bitwuzla::parser::Parser parser(options, filename);
+  std::string err = parser.parse(true);
   ASSERT_TRUE(err.empty());
   std::remove(filename);
 }

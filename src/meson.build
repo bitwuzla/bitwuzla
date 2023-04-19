@@ -48,8 +48,10 @@ config_h = configure_file(input: 'config.h.in',
 
 sources = files([
   'api/c/bitwuzla.cpp',
+  'api/c/parser.cpp',
   'api/checks.cpp',
   'api/cpp/bitwuzla.cpp',
+  'api/cpp/parser.cpp',
   'backtrack/assertion_stack.cpp',
   'backtrack/backtrackable.cpp',
   'bzlaparse.cpp',

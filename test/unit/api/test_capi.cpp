@@ -8,7 +8,10 @@
  * See COPYING for more information on using this software.
  */
 
+extern "C" {
 #include <bitwuzla/c/bitwuzla.h>
+#include <bitwuzla/c/parser.h>
+}
 
 #include <fstream>
 
@@ -2905,23 +2908,34 @@ TEST_F(TestCApi, print_formula2)
   bitwuzla_options_delete(options);
 }
 
-TEST_F(TestCApi, parse)
+TEST_F(TestCApi, parser)
 {
   const char *filename = "parse.smt2";
   std::ofstream smt2(filename);
   smt2 << "(set-logic QF_BV)\n";
   smt2 << "(check-sat)\n";
   smt2 << "(exit)\n" << std::flush;
+  smt2.close();
 
+  FILE *infile             = fopen(filename, "r");
   BitwuzlaOptions *options = bitwuzla_options_new();
-  ASSERT_DEATH(bitwuzla_parse(nullptr, filename), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parse(options, nullptr), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parse(options, "parsex.smt2"),
-               "failed to open input file");
-  const char *err = bitwuzla_parse(options, filename);
+  ASSERT_DEATH(bitwuzla_parser_new(nullptr, filename, infile, "smt2"),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parser_new(options, nullptr, infile, "smt2"),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parser_new(options, filename, nullptr, "smt2"),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parser_new(options, filename, infile, nullptr),
+               d_error_not_null);
+  BitwuzlaParser *parser =
+      bitwuzla_parser_new(options, filename, infile, "smt2");
+  ASSERT_DEATH(bitwuzla_parser_parse(nullptr, true), d_error_not_null);
+  const char *err = bitwuzla_parser_parse(parser, true);
   ASSERT_EQ(err, nullptr);
   bitwuzla_options_delete(options);
+  fclose(infile);
   std::remove(filename);
+  ASSERT_DEATH(bitwuzla_parser_get_bitwuzla(nullptr), d_error_not_null);
 }
 
 /* -------------------------------------------------------------------------- */

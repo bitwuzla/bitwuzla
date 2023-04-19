@@ -1,16 +1,10 @@
 #include <bitwuzla/cpp/bitwuzla.h>
 
-#include "bzlaparse.h"
-#include "config.h"
-
-// TODO this will not be needed after parser refactor
-#include <stdio.h>
-
 #include <array>
 
-#include "api/c/bitwuzla_options.h"
 #include "api/checks.h"
 #include "bv/bitvector.h"
+#include "config.h"
 #include "node/node.h"
 #include "node/node_kind.h"
 #include "node/node_manager.h"
@@ -1497,28 +1491,6 @@ Bitwuzla::solver_state_change()
     d_ctx->pop();
     d_pending_pop = false;
   }
-}
-
-/* -------------------------------------------------------------------------- */
-
-std::string
-parse(Options &options, const std::string &infile_name)
-{
-  BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
-  BitwuzlaOptions coptions(options);
-  FILE *infile = fopen(infile_name.c_str(), "r");
-  BITWUZLA_CHECK(infile != nullptr)
-      << "failed to open input file '" << infile_name << "'";
-  char *error_msg = nullptr;
-  (void) bzla_parse(&coptions, infile, infile_name.c_str(), stdout, &error_msg);
-  fclose(infile);
-  if (error_msg)
-  {
-    std::string emsg(error_msg);
-    free(error_msg);
-    return emsg;
-  }
-  return "";
 }
 
 /* -------------------------------------------------------------------------- */

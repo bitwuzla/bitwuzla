@@ -10,14 +10,25 @@ namespace parser::smt2 {
 Parser::Parser(bitwuzla::Options& options, const std::string& infile_name)
     : bzla::parser::Parser(options, infile_name)
 {
-  FILE* infile = std::fopen(infile_name.c_str(), "r");
-  if (!infile)
+  if (d_error.empty())
   {
-    d_error = "failed to open '" + infile_name + "'";
+    d_lexer.reset(new Lexer(d_infile));
   }
-  else
+  d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
+                       | static_cast<uint32_t>(TokenClass::CORE)
+                       | static_cast<uint32_t>(TokenClass::KEYWORD)
+                       | static_cast<uint32_t>(TokenClass::RESERVED);
+  d_work_control.push_back(0);
+}
+
+Parser::Parser(bitwuzla::Options& options,
+               const std::string& infile_name,
+               FILE* infile)
+    : bzla::parser::Parser(options, infile_name, infile)
+{
+  if (d_error.empty())
   {
-    d_lexer.reset(new Lexer(infile));
+    d_lexer.reset(new Lexer(d_infile));
   }
   d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
                        | static_cast<uint32_t>(TokenClass::CORE)

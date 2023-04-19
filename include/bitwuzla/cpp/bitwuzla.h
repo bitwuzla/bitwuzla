@@ -1227,18 +1227,6 @@ class Bitwuzla
 };
 
 /* -------------------------------------------------------------------------- */
-
-/**
- * Parse input file in SMT2 format.
- *
- * @param options The configuration options for the Bitwuzla instance
- *                (created by the parser).
- * @param infile_name The name of the input file.
- * @return The error message in case of an error, empty if no error.
- */
-std::string parse(Options &options, const std::string &infile_name);
-
-/* -------------------------------------------------------------------------- */
 /* Sort creation                                                              */
 /* -------------------------------------------------------------------------- */
 

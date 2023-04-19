@@ -5,6 +5,7 @@
 
 #include <fstream>
 
+#include "api/checks.h"
 #include "util/logger.h"
 #include "util/statistics.h"
 
@@ -16,8 +17,8 @@ class Parser
  public:
   /**
    * Constructor.
-   * @param options The associated Bitwuzla options. Parser creates Bitwuzla
-   *                instance from these options.
+   * @param options     The associated Bitwuzla options. Parser creates
+   *                    Bitwuzla instance from these options.
    * @param infile_name The name of the input file.
    */
   Parser(bitwuzla::Options& options, const std::string& infile_name)
@@ -27,14 +28,47 @@ class Parser
         d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
         d_logger(d_log_level, d_verbosity)
   {
+    d_infile = std::fopen(infile_name.c_str(), "r");
+    if (!d_infile)
+    {
+      d_error = "failed to open '" + d_infile_name + "'";
+    }
+    d_infile_needs_close = true;
   }
+  /**
+   * Constructor.
+   * @param options     The associated Bitwuzla options. Parser creates
+   *                    Bitwuzla instance from these options.
+   * @param infile_name The name of the input file.
+   * @param infile      The input file.
+   */
+  Parser(bitwuzla::Options& options,
+         const std::string& infile_name,
+         FILE* infile)
+      : d_options(options),
+        d_infile_name(infile_name),
+        d_infile(infile),
+        d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
+        d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
+        d_logger(d_log_level, d_verbosity)
+  {
+    BITWUZLA_CHECK(infile != nullptr) << "expected non-null input file";
+  }
+  /** Destructor. */
+  virtual ~Parser()
+  {
+    if (d_infile_needs_close && d_infile)
+    {
+      fclose(d_infile);
+    }
+  }
+
   /**
    * Parse input file.
    * @param parse_only True to only parse without executing check-sat calls.
    */
   virtual std::string parse(bool parse_only) = 0;
-  /**
-   * Configure Bitwuzla terminator.
+  /** Configure Bitwuzla terminator.
    * @param terminator The terminator to configure as terminator for Bitwuzla.
    */
   void configure_terminator(bitwuzla::Terminator* terminator)
@@ -48,6 +82,9 @@ class Parser
 
   /** @return The Bitwuzla instance. */
   bitwuzla::Bitwuzla* bitwuzla() { return d_bitwuzla.get(); }
+
+  /** @return The error message. */
+  const std::string& error_msg() { return d_error; }
 
  protected:
   /** Initialize Bitwuzla instance. */
@@ -77,6 +114,10 @@ class Parser
 
   /** The name of the input file. */
   const std::string& d_infile_name;
+  /** The input file. */
+  FILE* d_infile = nullptr;
+  /** True if we need the input file on destruction. */
+  bool d_infile_needs_close = false;
 
   /** The log level. */
   uint64_t d_log_level;

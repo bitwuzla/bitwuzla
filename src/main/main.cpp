@@ -1,4 +1,5 @@
 #include <bitwuzla/cpp/bitwuzla.h>
+#include <bitwuzla/cpp/parser.h>
 
 #include <cassert>
 #include <cstdlib>
@@ -317,7 +318,7 @@ main(int32_t argc, char* argv[])
     token = lexer.next_token();
   } while (token != bzla::parser::smt2::Token::ENDOFFILE);
 #else
-  bzla::parser::smt2::Parser parser(options, infile_name);
+  bitwuzla::parser::Parser parser(options, infile_name, "smt2");
   std::string err_msg = parser.parse(print || parse_only);
   if (!err_msg.empty())
   {
@@ -326,11 +327,12 @@ main(int32_t argc, char* argv[])
   }
   if (print)
   {
+    bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla();
     if (!parse_only)
     {
-      parser.bitwuzla()->simplify();
+      bitwuzla->simplify();
     }
-    parser.bitwuzla()->print_formula(std::cout, "smt2");
+    bitwuzla->print_formula(std::cout, "smt2");
   }
   std::exit(EXIT_SUCCESS);
 #endif

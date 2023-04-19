@@ -1342,21 +1342,6 @@ void bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file);
 void bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
 
 /* -------------------------------------------------------------------------- */
-/* Parsing                                                                    */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Parse input file in smt2 format.
- *
- *
- * @param options The configuration options for the Bitwuzla instance
- *                (created by the parser).
- * @param infile_name The name of the input file.
- * @return The error message in case of an error, else NULL.
- */
-const char *bitwuzla_parse(BitwuzlaOptions *options, const char *infile_name);
-
-/* -------------------------------------------------------------------------- */
 /* Term substitution                                                          */
 /* -------------------------------------------------------------------------- */
 

@@ -19,6 +19,16 @@ class Parser : public bzla::parser::Parser
    */
   Parser(bitwuzla::Options& options, const std::string& infile_name);
   /**
+   * Constructor.
+   * @param options     The associated Bitwuzla options. Parser creates
+   *                    Bitwuzla instance from these options.
+   * @param infile_name The name of the input file.
+   * @param infile      The input file.
+   */
+  Parser(bitwuzla::Options& options,
+         const std::string& infile_name,
+         FILE* infile);
+  /**
    * Parse input file.
    * @param parse_only True to only parse without executing check-sat calls.
    */

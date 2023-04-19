@@ -1,3 +1,6 @@
+#ifndef BITWUZLA_API_CHECKS_H_INCLUDED
+#define BITWUZLA_API_CHECKS_H_INCLUDED
+
 #include <iostream>
 #include <sstream>
 
@@ -231,3 +234,5 @@ class BitwuzlaExceptionStream
   } while (0)
 
 }  // namespace bitwuzla
+
+#endif

@@ -12,170 +12,19 @@ extern "C" {
 #include <bitwuzla/c/bitwuzla.h>
 }
 
-#include "bzlaparse.h"
-
-// TODO this will not be needed after parser refactor
-#include <bitwuzla/cpp/bitwuzla.h>
-
 #include <cassert>
 #include <cstring>
 #include <unordered_map>
 
-#include "api/c/bitwuzla_options.h"
+#include "api/c/bitwuzla_structs.h"
+#include "api/c/checks.h"
 #include "api/checks.h"
 #include "terminator.h"
 
 /* -------------------------------------------------------------------------- */
 
-class AbortStream
-{
- public:
-  AbortStream(const std::string &msg_prefix) { stream() << msg_prefix << " "; }
-  [[noreturn]] ~AbortStream()
-  {
-    flush();
-    std::abort();
-  }
-  AbortStream(const AbortStream &astream) = default;
-
-  std::ostream &stream() { return std::cerr; }
-
- private:
-  void flush()
-  {
-    stream() << std::endl;
-    stream().flush();
-  }
-};
-
-#define BITWUZLA_ABORT \
-  bzla::util::OstreamVoider() & AbortStream("bitwuzla: error: ").stream()
-
-#define BITWUZLA_TRY_CATCH_BEGIN \
-  try                            \
-  {
-#define BITWUZLA_TRY_CATCH_END \
-  }                            \
-  catch (bitwuzla::Exception & e) { BITWUZLA_ABORT << e.msg(); }
-
-/* -------------------------------------------------------------------------- */
-
-#define BITWUZLA_CHECK_SORT_ID(sort_id)             \
-  BITWUZLA_CHECK(Bitwuzla::sort_map().find(sort_id) \
-                 != Bitwuzla::sort_map().end())     \
-      << "invalid sort id";
-
-#define BITWUZLA_CHECK_SORT_ID_AT_IDX(sorts, i)        \
-  BITWUZLA_CHECK(Bitwuzla::sort_map().find((sorts)[i]) \
-                 != Bitwuzla::sort_map().end())        \
-      << "invalid sort id at index " << i;
-
-#define BITWUZLA_CHECK_TERM_ID(term_id)             \
-  BITWUZLA_CHECK(Bitwuzla::term_map().find(term_id) \
-                 != Bitwuzla::term_map().end())     \
-      << "invalid term id";
-
-#define BITWUZLA_CHECK_TERM_ID_AT_IDX(terms, i)        \
-  BITWUZLA_CHECK(Bitwuzla::term_map().find((terms)[i]) \
-                 != Bitwuzla::term_map().end())        \
-      << "invalid term id at index " << i;
-
-#define BITWUZLA_CHECK_RM(rm) \
-  BITWUZLA_CHECK((rm) < BITWUZLA_RM_MAX) << "invalid rounding mode";
-
-#define BITWUZLA_CHECK_KIND(kind) \
-  BITWUZLA_CHECK((kind) < BITWUZLA_KIND_NUM_KINDS) << "invalid term kind";
-
-#define BITWUZLA_CHECK_OPTION(opt) \
-  BITWUZLA_CHECK((opt) < BITWUZLA_OPT_NUM_OPTS) << "invalid option";
-
-#define BITWUZLA_CHECK_RESULT(result)                                   \
-  BITWUZLA_CHECK((result) == BITWUZLA_SAT || (result) == BITWUZLA_UNSAT \
-                 || (result) == BITWUZLA_UNKNOWN)                       \
-      << "invalid result";
-
-/* -------------------------------------------------------------------------- */
-
-class CTerminator : public bitwuzla::Terminator
-{
- public:
-  /**
-   * Constructor.
-   * @param fun The associated termination function.
-   * @param state The associated state.
-   */
-  CTerminator(int32_t (*fun)(void *), void *state) : f_fun(fun), d_state(state)
-  {
-  }
-
-  bool terminate() override
-  {
-    if (f_fun == nullptr)
-    {
-      return false;
-    }
-    return f_fun(d_state);
-  }
-
-  void *get_state() { return d_state; }
-
- private:
-  /** The associated termination function. */
-  int32_t (*f_fun)(void *);
-  /** The associated state. */
-  void *d_state;
-};
-
-/* -------------------------------------------------------------------------- */
-
-// TODO: move definition of struct BitwuzlaOptions back here from
-//       api/c/bitwuzla_options.h after the parser is rewritten and uses
-//       the C++ API
-
-/* -------------------------------------------------------------------------- */
-
-struct Bitwuzla
-{
-  /** Map C++ API term to term id and external reference count. */
-  using TermMap =
-      std::unordered_map<BitwuzlaTerm,
-                         std::pair<std::unique_ptr<bitwuzla::Term>, uint64_t>>;
-  /** Map C++ API term to sort id and external reference count. */
-  using SortMap =
-      std::unordered_map<BitwuzlaSort,
-                         std::pair<std::unique_ptr<bitwuzla::Sort>, uint64_t>>;
-
-  Bitwuzla(const BitwuzlaOptions *options)
-  {
-    d_bitwuzla.reset(new bitwuzla::Bitwuzla(options->d_options));
-  }
-
-  ~Bitwuzla() {}
-
-  /** Get the map from C++ API term id to term object. */
-  static TermMap &term_map()
-  {
-    thread_local static TermMap map;
-    return map;
-  }
-
-  /** Get the map from C++ API sort id to sort object. */
-  static SortMap &sort_map()
-  {
-    thread_local static SortMap map;
-    return map;
-  }
-
-  void reset()
-  {
-    // TODO: reset solving context and options?
-  }
-
-  /** The associated bitwuzla instance. */
-  std::unique_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
-  /** The currently configured terminator. */
-  std::unique_ptr<CTerminator> d_terminator;
-};
+// Note: Definition of class CTerminator and structs BitwuzlaOptions and
+//       Bitwuzla is in api/c/bitwuzla_structs.h
 
 /* -------------------------------------------------------------------------- */
 
@@ -1241,23 +1090,6 @@ bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
   std::stringstream ss;
   bitwuzla->d_bitwuzla->print_formula(ss, format);
   fprintf(file, "%s", ss.str().c_str());
-  BITWUZLA_TRY_CATCH_END;
-}
-
-const char *
-bitwuzla_parse(BitwuzlaOptions *options, const char *infile_name)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(options);
-  BITWUZLA_CHECK_NOT_NULL(infile_name);
-
-  FILE *infile = fopen(infile_name, "r");
-  BITWUZLA_CHECK(infile != nullptr) << "failed to open input file";
-
-  char *error_msg = nullptr;
-  (void) bzla_parse(options, infile, infile_name, stdout, &error_msg);
-  fclose(infile);
-  return error_msg;
   BITWUZLA_TRY_CATCH_END;
 }
 
