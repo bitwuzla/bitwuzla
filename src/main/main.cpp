@@ -300,15 +300,6 @@ main(int32_t argc, char* argv[])
   try
   {
     options.set(args);
-  }
-  catch (const bitwuzla::Exception& e)
-  {
-    // Remove the "invalid call to '...', prefix
-    const std::string& msg = e.msg();
-    size_t pos = msg.find("', ");
-    std::cerr << "[error] " << msg.substr(pos + 3) << std::endl;
-    std::exit(EXIT_FAILURE);
-  }
 
 #if 0
   FILE* infile = fopen(infile_name.c_str(), "r");
@@ -333,6 +324,15 @@ main(int32_t argc, char* argv[])
       bitwuzla->simplify();
     }
     bitwuzla->print_formula(std::cout, "smt2");
+  }
+  }
+  catch (const bitwuzla::Exception& e)
+  {
+  // Remove the "invalid call to '...', prefix
+  const std::string& msg = e.msg();
+  size_t pos = msg.find("', ");
+  std::cerr << "[error] " << msg.substr(pos + 3) << std::endl;
+  std::exit(EXIT_FAILURE);
   }
   std::exit(EXIT_SUCCESS);
 #endif
