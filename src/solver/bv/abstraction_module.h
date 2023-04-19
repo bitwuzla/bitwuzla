@@ -44,6 +44,8 @@ class AbstractionModule
   std::unordered_map<node::Kind, std::vector<std::unique_ptr<AbstractionLemma>>>
       d_abstr_lemmas;
 
+  uint64_t d_minimum_size;
+
   struct Statistics
   {
     Statistics(util::Statistics& stats);

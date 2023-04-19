@@ -257,11 +257,14 @@ Options::Options()
                      false,
                      "enable normalization for local search",
                      "prop-normalize"),
-      bv_abstraction(this,
-                     Option::BV_ABSTRACTION,
-                     false,
-                     "enable bit-vector abstraction module",
-                     "bv-abstraction"),
+      bv_abstraction(
+          this,
+          Option::BV_ABSTRACTION,
+          0,
+          0,
+          UINT64_MAX,
+          "enable bit-vector abstraction module for given minimum size",
+          "bv-abstraction"),
 
       // Preprocessing
       preprocess(

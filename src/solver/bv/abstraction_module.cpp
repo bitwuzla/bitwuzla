@@ -16,6 +16,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_rewriter(env.rewriter()),
       d_abstractions(state.backtrack_mgr()),
       d_active_abstractions(state.backtrack_mgr()),
+      d_minimum_size(env.options().bv_abstraction()),
       d_stats(env.statistics())
 {
   auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
@@ -49,7 +50,7 @@ AbstractionModule::~AbstractionModule() {}
 bool
 AbstractionModule::abstract(const Node& node) const
 {
-  return node.kind() == Kind::BV_MUL && node.type().bv_size() >= 4;
+  return node.kind() == Kind::BV_MUL && node.type().bv_size() >= d_minimum_size;
 }
 
 void
