@@ -25,7 +25,9 @@
 namespace bzla::bv {
 
 class BvSolver;
+namespace abstraction {
 class AbstractionModule;
+}
 
 class BvBitblastSolver : public Solver, public BvSolverInterface
 {
@@ -78,7 +80,7 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   /** Result of last solve() call. */
   Result d_last_result;
   /** Bit-vector abstraction module. */
-  std::unique_ptr<AbstractionModule> d_am;
+  std::unique_ptr<abstraction::AbstractionModule> d_am;
 
   struct Statistics
   {

@@ -4,7 +4,7 @@
 #include "node/node_manager.h"
 #include "solver/bv/abstraction_lemmas.h"
 
-namespace bzla::bv {
+namespace bzla::bv::abstraction {
 
 using namespace node;
 
@@ -13,15 +13,34 @@ using namespace node;
 AbstractionModule::AbstractionModule(Env& env, SolverState& state)
     : d_logger(env.logger()),
       d_solver_state(state),
+      d_rewriter(env.rewriter()),
       d_abstractions(state.backtrack_mgr()),
       d_active_abstractions(state.backtrack_mgr())
 {
-  d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulZero(state));
-  d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulOne(state));
-  d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulIc(state));
-  d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulNeg(state));
-  d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulOdd(state));
-  d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulValue(state));
+  auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ZERO>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ONE>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_IC>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NEG>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ODD>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF1>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF2>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF3>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF4>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF5>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF6>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF7>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF8>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF9>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF10>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF11>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF12>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF13>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF14>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF15>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF16>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF17>());
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF18>());
 }
 
 AbstractionModule::~AbstractionModule() {}
@@ -29,7 +48,7 @@ AbstractionModule::~AbstractionModule() {}
 bool
 AbstractionModule::abstract(const Node& node) const
 {
-  return node.kind() == Kind::BV_MUL && node.type().bv_size() >= 32;
+  return node.kind() == Kind::BV_MUL && node.type().bv_size() >= 16;
 }
 
 void
@@ -87,38 +106,67 @@ void
 AbstractionModule::check_abstraction(const Node& node)
 {
   Log(2) << "Check abstraction: " << node << std::endl;
-  auto it = d_lemmas_to_check.find(node.kind());
-  assert(it != d_lemmas_to_check.end());
+  auto it = d_abstr_lemmas.find(node.kind());
+  assert(it != d_abstr_lemmas.end());
   const auto& to_check = it->second;
+  NodeManager& nm      = NodeManager::get();
   if (node.kind() == Kind::BV_MUL)
   {
     Node val_x = d_solver_state.value(node[0]);
     Node val_s = d_solver_state.value(node[1]);
     Node val_t = d_solver_state.value(node);
+    Node val_expected =
+        nm.mk_value(val_x.value<BitVector>().bvmul(val_s.value<BitVector>()));
+    if (val_t == val_expected)
+    {
+      return;
+    }
     Log(2) << "x: " << node[0];
     Log(2) << "s: " << node[1];
     Log(2) << "t: " << node;
     Log(2) << "val_x: " << val_x;
     Log(2) << "val_s: " << val_s;
     Log(2) << "val_t: " << val_t;
+    bool added_lemma = false;
     for (const auto& lem : to_check)
     {
-      if (lem->check(val_x, val_s, val_t))
+      Node inst = d_rewriter.rewrite(lem->instance(val_x, val_s, val_t));
+      assert(inst.is_value());
+      if (!inst.value<bool>())
       {
-        Log(2) << lem->kind() << " violated";
+        Log(2) << lem->kind() << " inconsistent";
         Node lemma = lem->instance(node[0], node[1], get_abstraction(node));
         d_solver_state.lemma(lemma);
+        added_lemma = true;
         break;
       }
-      if (lem->commutative() && lem->check(val_s, val_x, val_t))
+      inst = d_rewriter.rewrite(lem->instance(val_s, val_x, val_t));
+      assert(inst.is_value());
+      if (!inst.value<bool>())
       {
-        Log(2) << lem->kind() << " (comm.) violated";
+        Log(2) << lem->kind() << " (comm.) inconsistent";
         Node lemma = lem->instance(node[1], node[0], get_abstraction(node));
         d_solver_state.lemma(lemma);
+        added_lemma = true;
         break;
       }
+    }
+
+    // Inconsistent value, but no abstraction violated, add value-based lemma.
+    if (!added_lemma)
+    {
+      Log(2) << LemmaKind::MUL_VALUE << " inconsistent";
+      Node lemma = nm.mk_node(
+          Kind::IMPLIES,
+          {nm.mk_node(Kind::AND,
+                      {
+                          nm.mk_node(Kind::EQUAL, {node[0], val_x}),
+                          nm.mk_node(Kind::EQUAL, {node[1], val_s}),
+                      }),
+           nm.mk_node(Kind::EQUAL, {get_abstraction(node), val_expected})});
+      d_solver_state.lemma(lemma);
     }
   }
 }
 
-}  // namespace bzla::bv
+}  // namespace bzla::bv::abstraction

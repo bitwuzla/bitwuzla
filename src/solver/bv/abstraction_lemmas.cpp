@@ -2,7 +2,7 @@
 
 #include "node/node_manager.h"
 
-namespace bzla::bv {
+namespace bzla::bv::abstraction {
 
 using namespace node;
 
@@ -16,6 +16,24 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_IC: os << "MUL_IC"; break;
     case LemmaKind::MUL_NEG: os << "MUL_NEG"; break;
     case LemmaKind::MUL_ODD: os << "MUL_ODD"; break;
+    case LemmaKind::MUL_REF1: os << "MUL_REF1"; break;
+    case LemmaKind::MUL_REF2: os << "MUL_REF2"; break;
+    case LemmaKind::MUL_REF3: os << "MUL_REF3"; break;
+    case LemmaKind::MUL_REF4: os << "MUL_REF4"; break;
+    case LemmaKind::MUL_REF5: os << "MUL_REF5"; break;
+    case LemmaKind::MUL_REF6: os << "MUL_REF6"; break;
+    case LemmaKind::MUL_REF7: os << "MUL_REF7"; break;
+    case LemmaKind::MUL_REF8: os << "MUL_REF8"; break;
+    case LemmaKind::MUL_REF9: os << "MUL_REF9"; break;
+    case LemmaKind::MUL_REF10: os << "MUL_REF10"; break;
+    case LemmaKind::MUL_REF11: os << "MUL_REF11"; break;
+    case LemmaKind::MUL_REF12: os << "MUL_REF12"; break;
+    case LemmaKind::MUL_REF13: os << "MUL_REF13"; break;
+    case LemmaKind::MUL_REF14: os << "MUL_REF14"; break;
+    case LemmaKind::MUL_REF15: os << "MUL_REF15"; break;
+    case LemmaKind::MUL_REF16: os << "MUL_REF16"; break;
+    case LemmaKind::MUL_REF17: os << "MUL_REF17"; break;
+    case LemmaKind::MUL_REF18: os << "MUL_REF18"; break;
     case LemmaKind::MUL_VALUE: os << "MUL_VALUE"; break;
   }
   return os;
@@ -23,28 +41,11 @@ operator<<(std::ostream& os, LemmaKind kind)
 
 /* --- Abstraction Lemmas --------------------------------------------------- */
 
-AbstractionLemma::AbstractionLemma(SolverState& state, LemmaKind kind)
-    : d_solver_state(state), d_kind(kind)
-{
-}
-
-LemmaMulZero::LemmaMulZero(SolverState& state)
-    : AbstractionLemma(state, LemmaKind::MUL_ZERO)
-{
-}
-
-bool
-LemmaMulZero::check(const Node& x, const Node& s, const Node& t) const
-{
-  assert(x.is_value());
-  assert(s.is_value());
-  assert(t.is_value());
-  (void) x;
-  return s.value<BitVector>().is_zero() && s != t;
-}
-
+template <>
 Node
-LemmaMulZero::instance(const Node& x, const Node& s, const Node& t) const
+Lemma<LemmaKind::MUL_ZERO>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
 {
   NodeManager& nm = NodeManager::get();
   size_t size     = x.type().bv_size();
@@ -54,22 +55,11 @@ LemmaMulZero::instance(const Node& x, const Node& s, const Node& t) const
       {nm.mk_node(Kind::EQUAL, {s, zero}), nm.mk_node(Kind::EQUAL, {t, zero})});
 }
 
-LemmaMulOne::LemmaMulOne(SolverState& state)
-    : AbstractionLemma(state, LemmaKind::MUL_ONE)
-{
-}
-
-bool
-LemmaMulOne::check(const Node& x, const Node& s, const Node& t) const
-{
-  assert(x.is_value());
-  assert(s.is_value());
-  assert(t.is_value());
-  return s.value<BitVector>().is_one() && t != x;
-}
-
+template <>
 Node
-LemmaMulOne::instance(const Node& x, const Node& s, const Node& t) const
+Lemma<LemmaKind::MUL_ONE>::instance(const Node& x,
+                                    const Node& s,
+                                    const Node& t) const
 {
   NodeManager& nm = NodeManager::get();
   size_t size     = x.type().bv_size();
@@ -79,26 +69,11 @@ LemmaMulOne::instance(const Node& x, const Node& s, const Node& t) const
       {nm.mk_node(Kind::EQUAL, {s, one}), nm.mk_node(Kind::EQUAL, {t, x})});
 }
 
-LemmaMulIc::LemmaMulIc(SolverState& state)
-    : AbstractionLemma(state, LemmaKind::MUL_IC)
-{
-}
-
-bool
-LemmaMulIc::check(const Node& x, const Node& s, const Node& t) const
-{
-  assert(x.is_value());
-  assert(s.is_value());
-  assert(t.is_value());
-  (void) x;
-  const BitVector& bv_s = s.value<BitVector>();
-  const BitVector& bv_t = t.value<BitVector>();
-  BitVector lhs         = bv_s.bvneg().ibvor(bv_s).ibvand(bv_t);
-  return lhs != bv_t;
-}
-
+template <>
 Node
-LemmaMulIc::instance(const Node& x, const Node& s, const Node& t) const
+Lemma<LemmaKind::MUL_IC>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   (void) x;
   NodeManager& nm = NodeManager::get();
@@ -108,25 +83,11 @@ LemmaMulIc::instance(const Node& x, const Node& s, const Node& t) const
   return nm.mk_node(Kind::EQUAL, {lhs, t});
 }
 
-LemmaMulNeg::LemmaMulNeg(SolverState& state)
-    : AbstractionLemma(state, LemmaKind::MUL_NEG)
-{
-}
-
-bool
-LemmaMulNeg::check(const Node& x, const Node& s, const Node& t) const
-{
-  assert(x.is_value());
-  assert(s.is_value());
-  assert(t.is_value());
-  const BitVector& bv_x = x.value<BitVector>();
-  const BitVector& bv_s = s.value<BitVector>();
-  const BitVector& bv_t = t.value<BitVector>();
-  return bv_s.is_ones() && bv_t.bvneg() != bv_x;
-}
-
+template <>
 Node
-LemmaMulNeg::instance(const Node& x, const Node& s, const Node& t) const
+Lemma<LemmaKind::MUL_NEG>::instance(const Node& x,
+                                    const Node& s,
+                                    const Node& t) const
 {
   NodeManager& nm = NodeManager::get();
   Node ones       = nm.mk_value(BitVector::mk_ones(x.type().bv_size()));
@@ -136,25 +97,11 @@ LemmaMulNeg::instance(const Node& x, const Node& s, const Node& t) const
        nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_NEG, {x})})});
 }
 
-LemmaMulOdd::LemmaMulOdd(SolverState& state)
-    : AbstractionLemma(state, LemmaKind::MUL_ODD)
-{
-}
-
-bool
-LemmaMulOdd::check(const Node& x, const Node& s, const Node& t) const
-{
-  assert(x.is_value());
-  assert(s.is_value());
-  assert(t.is_value());
-  const BitVector& bv_x = x.value<BitVector>();
-  const BitVector& bv_s = s.value<BitVector>();
-  const BitVector& bv_t = t.value<BitVector>();
-  return (bv_x.bit(0) && bv_s.bit(0)) != bv_t.bit(0);
-}
-
+template <>
 Node
-LemmaMulOdd::instance(const Node& x, const Node& s, const Node& t) const
+Lemma<LemmaKind::MUL_ODD>::instance(const Node& x,
+                                    const Node& s,
+                                    const Node& t) const
 {
   NodeManager& nm = NodeManager::get();
   return nm.mk_node(Kind::EQUAL,
@@ -166,38 +113,296 @@ LemmaMulOdd::instance(const Node& x, const Node& s, const Node& t) const
                                 })});
 }
 
-LemmaMulValue::LemmaMulValue(SolverState& state)
-    : AbstractionLemma(state, LemmaKind::MUL_VALUE)
-{
-}
-
-bool
-LemmaMulValue::check(const Node& x, const Node& s, const Node& t) const
-{
-  assert(x.is_value());
-  assert(s.is_value());
-  assert(t.is_value());
-  const BitVector& val_x = x.value<BitVector>();
-  const BitVector& val_s = s.value<BitVector>();
-  const BitVector& val_t = t.value<BitVector>();
-  return val_x.bvmul(val_s) != val_t;
-}
-
+template <>
 Node
-LemmaMulValue::instance(const Node& x, const Node& s, const Node& t) const
+Lemma<LemmaKind::MUL_REF1>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
 {
   NodeManager& nm = NodeManager::get();
-  Node val_x      = d_solver_state.value(x);
-  Node val_s      = d_solver_state.value(s);
-  Node val_t =
-      nm.mk_value(val_x.value<BitVector>().bvmul(val_s.value<BitVector>()));
-  return nm.mk_node(Kind::IMPLIES,
-                    {nm.mk_node(Kind::AND,
-                                {
-                                    nm.mk_node(Kind::EQUAL, {x, val_x}),
-                                    nm.mk_node(Kind::EQUAL, {s, val_s}),
-                                }),
-                     nm.mk_node(Kind::EQUAL, {t, val_t})});
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::NOT,
+      {nm.mk_node(
+          Kind::EQUAL,
+          {s,
+           nm.mk_node(
+               Kind::BV_NOT,
+               {nm.mk_node(
+                   Kind::BV_OR,
+                   {t,
+                    nm.mk_node(Kind::BV_AND,
+                               {one, nm.mk_node(Kind::BV_OR, {x, s})})})})})});
 }
 
-}  // namespace bzla::bv
+template <>
+Node
+Lemma<LemmaKind::MUL_REF2>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::BV_UGE,
+      {s,
+       nm.mk_node(
+           Kind::BV_AND,
+           {t,
+            nm.mk_node(Kind::BV_NEG,
+                       {nm.mk_node(Kind::BV_OR,
+                                   {t, nm.mk_node(Kind::BV_NOT, {x})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF3>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {nm.mk_node(Kind::BV_AND, {x, t}),
+       nm.mk_node(Kind::BV_OR, {s, nm.mk_node(Kind::BV_NOT, {t})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF4>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {one,
+       nm.mk_node(
+           Kind::BV_NOT,
+           {nm.mk_node(Kind::BV_AND, {x, nm.mk_node(Kind::BV_AND, {s, t})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF5>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {t,
+       nm.mk_node(
+           Kind::BV_NOT,
+           {nm.mk_node(
+               Kind::BV_OR,
+               {t,
+                nm.mk_node(Kind::BV_OR,
+                           {one, nm.mk_node(Kind::BV_AND, {x, s})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF6>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::BV_UGE,
+      {s, nm.mk_node(Kind::BV_SHL, {nm.mk_node(Kind::BV_SHR, {t, x}), one})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF7>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::EQUAL,
+      {x,
+       nm.mk_node(Kind::BV_SHL,
+                  {x,
+                   nm.mk_node(Kind::BV_AND,
+                              {s, nm.mk_node(Kind::BV_SHR, {one, t})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF8>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(Kind::BV_UGE,
+                    {x,
+                     nm.mk_node(Kind::BV_SHR,
+                                {nm.mk_node(Kind::BV_NEG, {t}),
+                                 nm.mk_node(Kind::BV_NOT, {s})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF9>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::BV_UGE,
+      {x,
+       nm.mk_node(
+           Kind::BV_SHL,
+           {x, nm.mk_node(Kind::BV_NOT, {nm.mk_node(Kind::BV_SHR, {s, t})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF10>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::BV_UGE,
+      {x,
+       nm.mk_node(
+           Kind::BV_SHR,
+           {t, nm.mk_node(Kind::BV_NOT, {nm.mk_node(Kind::BV_NEG, {s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF11>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {x,
+       nm.mk_node(
+           Kind::BV_SHL,
+           {one,
+            nm.mk_node(Kind::BV_SHL, {x, nm.mk_node(Kind::BV_SHR, {s, t})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF12>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {x,
+       nm.mk_node(
+           Kind::BV_NOT,
+           {nm.mk_node(Kind::BV_SHL, {x, nm.mk_node(Kind::BV_ADD, {s, t})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF13>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {t, nm.mk_node(Kind::BV_OR, {one, nm.mk_node(Kind::BV_ADD, {x, s})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF14>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {t,
+       nm.mk_node(
+           Kind::BV_OR,
+           {one,
+            nm.mk_node(Kind::BV_NOT, {nm.mk_node(Kind::BV_XOR, {x, s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF15>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(Kind::DISTINCT,
+                    {t,
+                     nm.mk_node(Kind::BV_OR,
+                                {nm.mk_node(Kind::BV_NOT, {one}),
+                                 nm.mk_node(Kind::BV_XOR, {x, s})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF16>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {x,
+       nm.mk_node(
+           Kind::BV_ADD,
+           {one,
+            nm.mk_node(Kind::BV_SHL, {x, nm.mk_node(Kind::BV_SUB, {t, s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF17>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {x,
+       nm.mk_node(
+           Kind::BV_ADD,
+           {one,
+            nm.mk_node(Kind::BV_SHL, {x, nm.mk_node(Kind::BV_SUB, {s, t})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_REF18>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {x,
+       nm.mk_node(
+           Kind::BV_SUB,
+           {one,
+            nm.mk_node(Kind::BV_SHL, {x, nm.mk_node(Kind::BV_SUB, {s, t})})})});
+}
+
+}  // namespace bzla::bv::abstraction

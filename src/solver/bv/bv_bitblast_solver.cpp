@@ -57,9 +57,10 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
       d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
       d_last_result(Result::UNKNOWN),
-      d_stats(env.statistics(), "solver::bv::bitblast::"),
-      d_am(env.options().bv_abstraction() ? new AbstractionModule(env, state)
-                                          : nullptr)
+      d_am(env.options().bv_abstraction()
+               ? new abstraction::AbstractionModule(env, state)
+               : nullptr),
+      d_stats(env.statistics(), "solver::bv::bitblast::")
 {
   d_sat_solver.reset(sat::new_sat_solver(env.options().sat_solver()));
   d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));

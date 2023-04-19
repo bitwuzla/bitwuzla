@@ -9,7 +9,7 @@
 #include "solver/solver_state.h"
 #include "util/logger.h"
 
-namespace bzla::bv {
+namespace bzla::bv::abstraction {
 
 class AbstractionLemma;
 enum class LemmaKind;
@@ -35,15 +35,16 @@ class AbstractionModule
 
   util::Logger& d_logger;
   SolverState& d_solver_state;
+  Rewriter& d_rewriter;
 
   backtrack::unordered_map<Node, Node> d_abstractions;
   backtrack::vector<Node> d_active_abstractions;
 
   std::unordered_map<Type, Node> d_mul_ufs;
   std::unordered_map<node::Kind, std::vector<std::unique_ptr<AbstractionLemma>>>
-      d_lemmas_to_check;
+      d_abstr_lemmas;
 };
 
-}  // namespace bzla::bv
+}  // namespace bzla::bv::abstraction
 
 #endif
