@@ -12,12 +12,12 @@ enum class LemmaKind
   MUL_ZERO,   // (=> (= s 0) (= t 0))
   MUL_ONE,    // (=> (= s 1) (= t x))
   MUL_IC,     // (= (bvand (bvor (bvneg s) s) t) t),
+  MUL_NEG,    // (=> (= s (bvnot 0)) (= t (bvneg x)))
   MUL_VALUE,  // value instantiation lemma
 
   // Abstraction lemmas to add:
   //
-  // (=> (= s (bvnot #b0000)) (= t (bvneg x))),
-  // (not (distinct t (bvand t (bvor x (bvneg x))))),
+  // MUL_IC (commutativity): (= t (bvand t (bvor x (bvneg x)))),
   // (not (distinct t (bvor t (bvand x (bvand s #b0001))))),
   // (not (= s (bvnot (bvor t (bvand #b0001 (bvor x s)))))),
   // (not (= x (bvnot (bvor t (bvand #b0001 (bvor x s)))))),
@@ -84,6 +84,14 @@ class LemmaMulIc : public AbstractionLemma
 {
  public:
   LemmaMulIc(SolverState& state);
+  bool check(const Node& x, const Node& s, const Node& t) const override;
+  Node instance(const Node& x, const Node& s, const Node& t) const override;
+};
+
+class LemmaMulNeg : public AbstractionLemma
+{
+ public:
+  LemmaMulNeg(SolverState& state);
   bool check(const Node& x, const Node& s, const Node& t) const override;
   Node instance(const Node& x, const Node& s, const Node& t) const override;
 };

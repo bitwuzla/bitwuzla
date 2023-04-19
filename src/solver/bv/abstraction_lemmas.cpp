@@ -14,6 +14,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_ZERO: os << "MUL_ZERO"; break;
     case LemmaKind::MUL_ONE: os << "MUL_ONE"; break;
     case LemmaKind::MUL_IC: os << "MUL_IC"; break;
+    case LemmaKind::MUL_NEG: os << "MUL_NEG"; break;
     case LemmaKind::MUL_VALUE: os << "MUL_VALUE"; break;
   }
   return os;
@@ -104,6 +105,34 @@ LemmaMulIc::instance(const Node& x, const Node& s, const Node& t) const
       Kind::BV_AND,
       {nm.mk_node(Kind::BV_OR, {nm.mk_node(Kind::BV_NEG, {s}), s}), t});
   return nm.mk_node(Kind::EQUAL, {lhs, t});
+}
+
+LemmaMulNeg::LemmaMulNeg(SolverState& state)
+    : AbstractionLemma(state, LemmaKind::MUL_NEG)
+{
+}
+
+bool
+LemmaMulNeg::check(const Node& x, const Node& s, const Node& t) const
+{
+  assert(x.is_value());
+  assert(s.is_value());
+  assert(t.is_value());
+  const BitVector& bv_x = x.value<BitVector>();
+  const BitVector& bv_s = s.value<BitVector>();
+  const BitVector& bv_t = t.value<BitVector>();
+  return bv_s.is_ones() && bv_t.bvneg() != bv_x;
+}
+
+Node
+LemmaMulNeg::instance(const Node& x, const Node& s, const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  Node ones       = nm.mk_value(BitVector::mk_ones(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::EQUAL, {s, ones}),
+       nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_NEG, {x})})});
 }
 
 LemmaMulValue::LemmaMulValue(SolverState& state)

@@ -19,6 +19,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulZero(state));
   d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulOne(state));
   d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulIc(state));
+  d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulNeg(state));
   d_lemmas_to_check[Kind::BV_MUL].emplace_back(new LemmaMulValue(state));
 }
 
