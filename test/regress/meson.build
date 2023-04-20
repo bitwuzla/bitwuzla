@@ -1389,6 +1389,10 @@ tests_smt2 = [
   ['solver/quant/regsmtparselet.smt2'],
 ]
 
+tests_btor2_sat = [
+  ['solver/array/random1.btor2'],
+  ]
+
 tests_btor_sat = [
   #['preprocess/bv/normalize_add_incomplete.btor', ['-db']],
   #['preprocess/bv/normalize_and_incomplete.btor', ['-db']],
@@ -1403,7 +1407,6 @@ tests_btor_sat = [
   #['parser/btorperr002.btor'],
   #['parser/btorperr003.btor'],
   #['rewrite/array/rwr1.btor', ['-br all']], # TODO disaled because of -br
-  #['solver/array/random1.btor2'],
   #['solver/array/regrbetacache1.btor', ['-br all']], # TODO disabled because of -br
   #['solver/array/regrbetacache2.btor', ['-br all']], # currently broken since we don't allow to mix lambdas with arrays # TODO disabled because of -br
   #['solver/bv/concatslice1.btor', ['-rwl=1 -db']],
@@ -2185,6 +2188,7 @@ tests_btor_unsat = [
 regress_tests = [
   [tests_smt2],
   [tests_smt2, [], ['--produce-unsat-cores', '--check-unsat-core']],
+  [tests_btor2_sat, '--check-sat'],
   # TODO: BTOR parser disabled
   #[tests_btor_sat, '--check-sat'],
   #[tests_btor_unsat, '--check-unsat'],

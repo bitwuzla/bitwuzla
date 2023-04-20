@@ -21,8 +21,6 @@
 
 namespace bitwuzla {
 
-// TODO: assert that no node that reaches the API is a null node
-
 /* -------------------------------------------------------------------------- */
 
 namespace {

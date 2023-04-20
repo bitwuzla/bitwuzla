@@ -159,28 +159,29 @@ Printer::print_formula(std::ostream& os,
     }
   } while (!visit.empty());
   // print logic
+  std::string logic;
   os << "(set-logic ";
   if (!has_quants)
   {
-    os << "QF_";
+    logic += "QF_";
   }
   if (has_arrays)
   {
-    os << "A";
+    logic += "A";
   }
   if (has_funs)
   {
-    os << "UF";
+    logic += "UF";
   }
   if (has_bv)
   {
-    os << "BV";
+    logic += "BV";
   }
   if (has_fp)
   {
-    os << "FP";
+    logic += "FP";
   }
-  os << ")" << std::endl;
+  os << (logic == "QF_" ? "ALL" : logic) << ")" << std::endl;
   // print declarations
   std::sort(decls.begin(), decls.end());
   for (const Node& n : decls)

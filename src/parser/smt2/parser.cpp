@@ -42,6 +42,8 @@ Parser::parse(bool parse_only)
 {
   util::Timer timer(d_statistics.time_parse);
 
+  Log(2) << "parse " << d_infile_name;
+
   if (!d_error.empty())
   {
     return d_error;
@@ -3307,5 +3309,6 @@ Parser::Statistics::Statistics()
 {
 }
 
+/* -------------------------------------------------------------------------- */
 }  // namespace parser::smt2
 }  // namespace bzla

@@ -259,6 +259,8 @@ main(int32_t argc, char* argv[])
 
   std::vector<std::string> args;
   std::string infile_name;
+  std::string language = "smt2";
+
   for (int32_t i = 1; i < argc; ++i)
   {
     std::string arg(argv[i]);
@@ -286,10 +288,17 @@ main(int32_t argc, char* argv[])
       parse_only = true;
     }
     // Check if argument is the intput file.
-    // Note: For now only supports .smt2 and .btor suffices
-    else if (is_input_file(arg, ".smt2") || is_input_file(arg, ".btor"))
+    else if (is_input_file(arg, ".smt2") || is_input_file(arg, ".btor2"))
     {
       infile_name = arg;
+      if (is_input_file(arg, ".btor2"))
+      {
+        language = "btor2";
+      }
+      else
+      {
+        language = "smt2";
+      }
     }
     else
     {
@@ -301,39 +310,46 @@ main(int32_t argc, char* argv[])
   {
     options.set(args);
 
-#if 0
-  FILE* infile = fopen(infile_name.c_str(), "r");
-  bzla::parser::smt2::Lexer lexer(infile);
-  bzla::parser::smt2::Token token;
-  do {
-    token = lexer.next_token();
-  } while (token != bzla::parser::smt2::Token::ENDOFFILE);
-#else
-  bitwuzla::parser::Parser parser(options, infile_name, "smt2");
-  std::string err_msg = parser.parse(print || parse_only);
-  if (!err_msg.empty())
-  {
-    std::cerr << "[error] " << err_msg << std::endl;
-    std::exit(EXIT_FAILURE);
-  }
-  if (print)
-  {
-    bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla();
-    if (!parse_only)
+    bitwuzla::parser::Parser parser(options, infile_name, language);
+    std::string err_msg = parser.parse(print || parse_only);
+    if (!err_msg.empty())
     {
-      bitwuzla->simplify();
+      std::cerr << "[error] " << err_msg << std::endl;
+      std::exit(EXIT_FAILURE);
     }
-    bitwuzla->print_formula(std::cout, "smt2");
-  }
+    if (print)
+    {
+      bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla();
+      if (!parse_only)
+      {
+        bitwuzla->simplify();
+      }
+      bitwuzla->print_formula(std::cout, language);
+    }
+    else if (language == "btor2")
+    {
+      bitwuzla::Result res = parser.bitwuzla()->check_sat();
+      if (res == bitwuzla::Result::SAT)
+      {
+        std::cout << "sat" << std::endl;
+      }
+      else if (res == bitwuzla::Result::UNSAT)
+      {
+        std::cout << "unsat" << std::endl;
+      }
+      else
+      {
+        std::cout << "unknown" << std::endl;
+      }
+    }
   }
   catch (const bitwuzla::Exception& e)
   {
-  // Remove the "invalid call to '...', prefix
-  const std::string& msg = e.msg();
-  size_t pos = msg.find("', ");
-  std::cerr << "[error] " << msg.substr(pos + 3) << std::endl;
-  std::exit(EXIT_FAILURE);
+    // Remove the "invalid call to '...', prefix
+    const std::string& msg = e.msg();
+    size_t pos             = msg.find("', ");
+    std::cerr << "[error] " << msg.substr(pos + 3) << std::endl;
+    std::exit(EXIT_FAILURE);
   }
   std::exit(EXIT_SUCCESS);
-#endif
 }
