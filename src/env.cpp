@@ -9,6 +9,7 @@ Env::Env(const option::Options& options)
       d_rewriter(*this, options.get<uint64_t>(option::Option::REWRITE_LEVEL)),
       d_logger(options.log_level(), options.verbosity())
 {
+  d_options.finalize();
 }
 
 const option::Options&

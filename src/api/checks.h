@@ -76,6 +76,10 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_CHECK_OPT_INCREMENTAL(opts) \
   BITWUZLA_CHECK((opts).incremental()) << "incremental usage not enabled";
 
+#define BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_ASSUMPTIONS(opts) \
+  BITWUZLA_CHECK((opts).produce_unsat_assumptions())       \
+      << "unsat assumptions production not enabled";
+
 #define BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(opts) \
   BITWUZLA_CHECK((opts).produce_unsat_cores())       \
       << "unsat core production not enabled";

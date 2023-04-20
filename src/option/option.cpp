@@ -82,6 +82,11 @@ Options::Options()
                      "model production",
                      "produce-models",
                      "m"),
+      produce_unsat_assumptions(this,
+                                Option::PRODUCE_UNSAT_ASSUMPTIONS,
+                                false,
+                                "unsat assumptions production",
+                                "produce-unsat-assumptions"),
       produce_unsat_cores(this,
                           Option::PRODUCE_UNSAT_CORES,
                           false,
@@ -498,6 +503,15 @@ Options::max(Option opt) const
 {
   assert(d_options.at(opt)->is_numeric());
   return reinterpret_cast<OptionNumeric*>(d_options.at(opt))->max();
+}
+
+void
+Options::finalize()
+{
+  if (produce_unsat_assumptions())
+  {
+    produce_unsat_cores.set(true);
+  }
 }
 
 /* --- Options private ------------------------------------------------------ */

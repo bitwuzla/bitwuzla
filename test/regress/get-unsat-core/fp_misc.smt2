@@ -1,0 +1,23 @@
+(set-logic QF_FP)
+(set-info :status unsat)
+(set-option :produce-unsat-cores true)
+(declare-const a Float16);
+(declare-const b Float16);
+(declare-const rm RoundingMode);
+(assert (! (= (fp.abs a) b) :named a0))
+(assert (! (= (fp.abs a) (fp.abs (fp.neg a))) :named a1))
+(assert (! (not (and (fp.isNormal (fp.neg a)) (not (fp.isNormal a)))) :named a2))
+(assert (! (not (and (fp.isSubnormal (fp.neg a)) (not (fp.isSubnormal a)))) :named a3))
+(assert (! (and (fp.isZero (fp.neg a)) (not (fp.isNormal a))) :named a4))
+(assert (! (not (fp.isInfinite b)) :named a5))
+(assert (! (not (fp.isNaN b)) :named a6))
+(assert (! (not (fp.isNegative b)) :named a7))
+(assert (! (fp.isPositive b) :named a8))
+(assert (! (and (fp.leq a a) (not (fp.lt a a))) :named a9))
+(assert (! (and (fp.geq (fp.sqrt RNE a) (fp.roundToIntegral RNE b)) (not (fp.gt (fp.add RNA a a) b))) :named a10))
+(assert (! (fp.geq (fp.add RTN a b) (fp.sub RTN a b)) :named a11))
+(assert (! (fp.leq (fp.mul RTP a (_ +zero 5 11)) (_ -zero 5 11)) :named a12))
+(assert (! (fp.isNaN (fp.div RTP a (_ +zero 5 11))) :named a13))
+(assert (! (fp.eq (fp.add rm (fp.mul RTZ a b) a) (fp.fma RTZ a b (fp.rem a b))) :named a14))
+(check-sat)
+(get-unsat-core)

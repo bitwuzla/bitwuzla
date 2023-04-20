@@ -50,7 +50,7 @@ class Env
 
  private:
   /** The configured options. */
-  const option::Options d_options;
+  option::Options d_options;
   /** The statistics. */
   util::Statistics d_statistics;
   /** The associated rewriter instance. */

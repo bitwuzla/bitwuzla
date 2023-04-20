@@ -65,6 +65,13 @@ enum ENUM(Option)
    *       `::EVALUE(PP_UNCONSTRAINED_OPTIMIZATION`.
    */
   EVALUE(PRODUCE_MODELS),
+  /*! **Unsat assumptions generation.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  EVALUE(PRODUCE_UNSAT_ASSUMPTIONS),
   /*! **Unsat core generation.**
    *
    * Values:

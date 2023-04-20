@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -25,6 +26,39 @@ namespace option {
 class Options;
 }
 }  // namespace bzla
+
+namespace bitwuzla {
+class Term;
+class Sort;
+}  // namespace bitwuzla
+
+/* -------------------------------------------------------------------------- */
+
+namespace std {
+
+template <>
+struct hash<bitwuzla::Sort>
+{
+  /**
+   * Hash function for Sort.
+   * @param sort The sort.
+   * @return The hash value of the sort.
+   */
+  size_t operator()(const bitwuzla::Sort &sort) const;
+};
+
+template <>
+struct hash<bitwuzla::Term>
+{
+  /**
+   * Hash function for Term.
+   * @param term The term.
+   * @return The hash value of the term.
+   */
+  size_t operator()(const bitwuzla::Term &term) const;
+};
+
+}  // namespace std
 
 /* -------------------------------------------------------------------------- */
 
@@ -935,27 +969,6 @@ class Bitwuzla
    * @param term The formula to assert.
    */
   void assert_formula(const Term &term);
-#if 0
-  /**
-   * Assume formula.
-   *
-   * Requires that incremental solving has been enabled via
-   * `Options::set()`.
-   *
-   * @note Assumptions added via this function are not affected by context
-   *       level changes and are only valid until the next `check_sat()`
-   *       call, no matter at which level they were assumed.
-   *
-   * @param term The formula to assume.
-   *
-   * @see
-   *   * `Options::set`
-   *   * `is_unsat_assumption`
-   *   * `get_unsat_assumptions`
-   *   * `Option::INCREMENTAL`
-   */
-  void assume_formula(const Term &term);
-#endif
 
   /**
    * Determine if an assumption is an unsat assumption.
@@ -1016,15 +1029,6 @@ class Bitwuzla
    *   * `check_sat`
    */
   std::vector<Term> get_unsat_core();
-#if 0
-  /**
-   * Reset all added assumptions.
-   *
-   * @see
-   *   * `assume_formula`
-   */
-  void reset_assumptions();
-#endif
 
   /**
    * Simplify the current input formula.
@@ -1128,59 +1132,6 @@ class Bitwuzla
 
 #if 0
   /**
-   * Get the current model value of given array term.
-   *
-   * The string representation of `indices` and `values` can be queried via
-   * `get_bv_value()`, `get_fp_value()`, and `get_rm_value()`.
-   *
-   * @param term The term to query a model value for.
-   * @param indices Output parameter, stores list of indices. 1:1 mapping to
-   *                `values`, i.e., `index[i] -> value[i]`.
-   * @param values Output parameter, stores List of values of size `size`.
-   * @param default_value Output parameter, the value of all other indices
-   *                      not in `indices` and is set when base array is a
-   *                      constant array.
-   */
-  void get_array_value(const Term &term,
-                       std::vector<Term> &indices,
-                       std::vector<Term> &values,
-                       Term &default_value);
-
-  /**
-   * Get the current model value of given function term.
-   *
-   * The string representation of `args` and `values` can be queried via
-   * `get_bv_value()`, `get_fp_value()`, and
-   * `get_rm_value()`.
-   *
-   * @param term   The term to query a model value for.
-   * @param args   Output parameter, stores list of argument lists (nested
-   * lists);
-   * @param values Output parameter, stores list of values.
-   *
-   * **Usage**
-   * ```
-   * std::vector<std::vector<Term>> args;
-   * std::vector<Term> values;
-   * bitwuzla.get_fun_value(f, args, values);
-   *
-   * for (size_t i = 0; i < size; ++i)
-   * {
-   *   // args[i] are argument lists of size arity = args[i].size()
-   *   for (size_t j = 0; j < arity; ++j)
-   *   {
-   *     // args[i][j] corresponds to value of jth argument of function f
-   *   }
-   *   // values[i] corresponds to the value of
-   *   // (f args[i][0] ... args[i][arity - 1])
-   * }
-   * ```
-   */
-  void get_fun_value(const Term &term,
-                     std::vector<std::vector<Term>> args,
-                     std::vector<Term> values);
-
-  /**
    * Print a model for the current input formula to the given output stream.
    *
    * Requires that the last `check_sat()` query returned `Result::SAT`.
@@ -1222,6 +1173,12 @@ class Bitwuzla
   Terminator *d_terminator = nullptr;
   /** The internal terminator. */
   std::unique_ptr<bzla::Terminator> d_terminator_internal;
+  /** Cache holding the current unsat core. */
+  std::vector<Term> d_unsat_core;
+  /** Cache the current set of assumptions. */
+  std::unordered_set<Term> d_assumptions;
+  /** True if d_unsat_core holds the current unsat core. */
+  bool d_uc_is_valid = false;
   /** Indicates a pending pop from check-sat with assumptions. */
   bool d_pending_pop = false;
 };
@@ -1678,28 +1635,6 @@ std::string to_string(bitwuzla::RoundingMode rm);
  * @return The string representation.
  */
 std::string to_string(bitwuzla::Result result);
-
-template <>
-struct hash<bitwuzla::Sort>
-{
-  /**
-   * Hash function for Sort.
-   * @param sort The sort.
-   * @return The hash value of the sort.
-   */
-  size_t operator()(const bitwuzla::Sort &sort) const;
-};
-
-template <>
-struct hash<bitwuzla::Term>
-{
-  /**
-   * Hash function for Term.
-   * @param term The term.
-   * @return The hash value of the term.
-   */
-  size_t operator()(const bitwuzla::Term &term) const;
-};
 
 }  // namespace std
 

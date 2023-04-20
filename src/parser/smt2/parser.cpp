@@ -640,8 +640,15 @@ Parser::parse_command_get_unsat_core()
   for (size_t i = 0, n = unsat_core.size(); i < n; ++i)
   {
     auto it = d_named_terms.find(unsat_core[i]);
-    assert(it != d_named_terms.end());
-    (*d_out) << (i > 0 ? " " : "") << it->second->d_symbol;
+    (*d_out) << (i > 0 ? " " : "");
+    if (it == d_named_terms.end())
+    {
+      (*d_out) << unsat_core[i];
+    }
+    else
+    {
+      (*d_out) << it->second->d_symbol;
+    }
   }
   (*d_out) << ")" << std::endl;
   d_out->flush();
@@ -917,10 +924,6 @@ Parser::parse_command_set_option()
                    + std::string(d_lexer->token()) + "'");
     }
   }
-  else if (token == Token::PRODUCE_UNSAT_ASSUMPTIONS)
-  {
-    // nothing to do, always true
-  }
   // Bitwuzla options
   else
   {
@@ -1136,7 +1139,7 @@ Parser::parse_open_term(Token token)
   else if (token == Token::NAMED)
   {
     push_item(Token::SYMBOL, d_last_node, d_lexer->coo());
-    if (!parse_symbol("in sorted var", true))
+    if (!parse_symbol("in sorted var", false))
     {
       return false;
     }

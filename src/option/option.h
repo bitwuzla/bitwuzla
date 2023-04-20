@@ -14,13 +14,14 @@ namespace bzla::option {
 
 enum class Option
 {
-  INCREMENTAL,          // bool
-  LOG_LEVEL,            // numeric
-  PRODUCE_MODELS,       // bool
-  PRODUCE_UNSAT_CORES,  // bool
-  SAT_SOLVER,           // enum
-  SEED,                 // numeric
-  VERBOSITY,            // numeric
+  INCREMENTAL,                // bool
+  LOG_LEVEL,                  // numeric
+  PRODUCE_MODELS,             // bool
+  PRODUCE_UNSAT_ASSUMPTIONS,  // bool
+  PRODUCE_UNSAT_CORES,        // bool
+  SAT_SOLVER,                 // enum
+  SEED,                       // numeric
+  VERBOSITY,                  // numeric
 
   BV_SOLVER,      // enum
   REWRITE_LEVEL,  // numeric
@@ -405,6 +406,7 @@ class Options
   OptionBool incremental;
   OptionNumeric log_level;
   OptionBool produce_models;
+  OptionBool produce_unsat_assumptions;
   OptionBool produce_unsat_cores;
   OptionNumeric seed;
   OptionNumeric verbosity;
@@ -538,6 +540,12 @@ class Options
    */
   template <typename T>
   const T& dflt(Option opt) const;
+
+  /**
+   * Finalize options, this enables/disables options depending on the currently
+   * configured options.
+   */
+  void finalize();
 
  private:
   /**

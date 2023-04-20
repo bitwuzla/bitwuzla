@@ -51,6 +51,8 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::INCREMENTAL, bzla::option::Option::INCREMENTAL},
         {Option::LOGLEVEL, bzla::option::Option::LOG_LEVEL},
         {Option::PRODUCE_MODELS, bzla::option::Option::PRODUCE_MODELS},
+        {Option::PRODUCE_UNSAT_ASSUMPTIONS,
+         bzla::option::Option::PRODUCE_UNSAT_ASSUMPTIONS},
         {Option::PRODUCE_UNSAT_CORES,
          bzla::option::Option::PRODUCE_UNSAT_CORES},
         {Option::SAT_SOLVER, bzla::option::Option::SAT_SOLVER},
@@ -1278,25 +1280,27 @@ Bitwuzla::assert_formula(const Term &term)
   d_ctx->assert_formula(*term.d_node);
 }
 
-#if 0
-void
-Bitwuzla::assume_formula(const Term &term)
-{
-  // TODO
-}
-#endif
-
 bool
 Bitwuzla::is_unsat_assumption(const Term &term)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_ASSUMPTIONS(d_ctx->options());
   BITWUZLA_CHECK_OPT_INCREMENTAL(d_ctx->options());
+  BITWUZLA_CHECK_LAST_CALL_UNSAT("is unsat assumption");
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   BITWUZLA_CHECK_TERM_IS_BOOL(term);
-  // TODO check that given term is an assumption
-  // TODO (not implemented yet)
-  (void) term;
-  return false;
+  if (d_assumptions.find(term) == d_assumptions.end())
+  {
+    return false;
+  }
+  if (!d_uc_is_valid)
+  {
+    assert(d_unsat_core.empty());
+    d_unsat_core  = Term::node_vector_to_terms(d_ctx->get_unsat_core());
+    d_uc_is_valid = true;
+  }
+  return std::find(d_unsat_core.begin(), d_unsat_core.end(), term)
+         != d_unsat_core.end();
 }
 
 std::vector<Term>
@@ -1304,8 +1308,23 @@ Bitwuzla::get_unsat_assumptions()
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_INCREMENTAL(d_ctx->options());
-  // TODO (not implemented yet)
-  return {};
+  BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_ASSUMPTIONS(d_ctx->options());
+  BITWUZLA_CHECK_LAST_CALL_UNSAT("get unsat assumptions");
+  if (!d_uc_is_valid)
+  {
+    assert(d_unsat_core.empty());
+    d_unsat_core  = Term::node_vector_to_terms(d_ctx->get_unsat_core());
+    d_uc_is_valid = true;
+  }
+  std::vector<Term> res;
+  for (const auto &t : d_unsat_core)
+  {
+    if (d_assumptions.find(t) != d_assumptions.end())
+    {
+      res.push_back(t);
+    }
+  }
+  return res;
 }
 
 std::vector<Term>
@@ -1313,24 +1332,15 @@ Bitwuzla::get_unsat_core()
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(d_ctx->options());
-  BITWUZLA_CHECK_LAST_CALL_UNSAT("produce unsat core");
   BITWUZLA_CHECK_LAST_CALL_UNSAT("get unsat core");
-  return Term::node_vector_to_terms(d_ctx->get_unsat_core());
-  std::vector<Term> res;
-  for (const auto &node : d_ctx->get_unsat_core())
+  if (!d_uc_is_valid)
   {
-    res.push_back(node);
+    assert(d_unsat_core.empty());
+    d_unsat_core  = Term::node_vector_to_terms(d_ctx->get_unsat_core());
+    d_uc_is_valid = true;
   }
-  return res;
+  return d_unsat_core;
 }
-
-#if 0
-void
-Bitwuzla::reset_assumptions()
-{
-  // TODO
-}
-#endif
 
 Result
 Bitwuzla::simplify()
@@ -1349,12 +1359,16 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
       << "multiple check-sat calls require that incremental solving is enabled";
   solver_state_change();
   d_n_sat_calls += 1;
+  d_assumptions.clear();
+  d_unsat_core.clear();
+  d_uc_is_valid = false;
   if (!assumptions.empty())
   {
     d_ctx->push();
     for (const Term &term : assumptions)
     {
       d_ctx->assert_formula(*term.d_node);
+      d_assumptions.insert(term);
     }
     d_last_check_sat = s_results.at(d_ctx->solve());
     // Delay pop until other methods are called that change solver state. This
@@ -1449,23 +1463,6 @@ Bitwuzla::get_rm_value(const Term &term)
 
 #if 0
 void
-Bitwuzla::get_array_value(const Term &term,
-                          std::vector<Term> &indices,
-                          std::vector<Term> &values,
-                          Term &default_value)
-{
-  // TODO
-}
-
-void
-Bitwuzla::get_fun_value(const Term &term,
-                        std::vector<std::vector<Term>> args,
-                        std::vector<Term> values)
-{
-  // TODO
-}
-
-void
 Bitwuzla::print_model(std::ostream &out, const std::string &format)
 {
   // TODO
@@ -1480,8 +1477,7 @@ Bitwuzla::print_formula(std::ostream &out, const std::string &format)
   bzla::Printer::print_formula(out, d_ctx->assertions());
 }
 
-/* Bitwuzla private ----------------------------------------------------------
- */
+/* Bitwuzla private --------------------------------------------------------- */
 
 void
 Bitwuzla::solver_state_change()
