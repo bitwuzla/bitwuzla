@@ -2,3 +2,8 @@
 url = https://github.com/boolector/btor2tools.git
 revision = b8456dda4780789e882f5791eb486f295ade4da4
 depth = 1
+
+patch_directory = btor2tools
+
+[provide]
+btor2parser = btor2parser_dep

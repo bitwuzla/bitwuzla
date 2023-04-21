@@ -130,13 +130,7 @@ gmp_dep = dependency('gmp',
 cadical_dep = dependency('cadical', required: true)
 symfpu_dep = dependency('symfpu', required: true)
 bitwuzla_libs_dep = dependency('bitwuzla_libs', required: true)
-
-cmake = import('cmake')
-btor2tools_opts = cmake.subproject_options()
-btor2tools_opts.add_cmake_defines(
-  {'BUILD_SHARED_LIBS': false}, {'CMAKE_POSITION_INDEPENDENT_CODE': true})
-btor2tools_cmake = cmake.subproject('btor2tools', options: btor2tools_opts)
-btor2parser_dep = btor2tools_cmake.dependency('btor2parser')
+btor2parser_dep = dependency('btor2parser', required: true)
 
 dependencies = [symfpu_dep, cadical_dep, gmp_dep, bitwuzla_libs_dep, btor2parser_dep]
 
