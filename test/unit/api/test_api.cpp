@@ -1519,18 +1519,16 @@ TEST_F(TestApi, is_unsat_assumption)
                  bitwuzla::Exception);
 
     bitwuzla.check_sat(
-        {d_bool_const,
-         bitwuzla::mk_term(bitwuzla::Kind::BV_NOT, {d_bool_const})});
+        {d_bool_const, bitwuzla::mk_term(bitwuzla::Kind::NOT, {d_bool_const})});
 
     ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bv_const8),
                  bitwuzla::Exception);
-    ASSERT_THROW(bitwuzla.is_unsat_assumption(d_true), bitwuzla::Exception);
+    ASSERT_FALSE(bitwuzla.is_unsat_assumption(d_true));
 
-    ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_var), bitwuzla::Exception);
+    ASSERT_FALSE(bitwuzla.is_unsat_assumption(d_bool_var));
     ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_lambda),
                  bitwuzla::Exception);
-    ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_lambda_body),
-                 bitwuzla::Exception);
+    ASSERT_FALSE(bitwuzla.is_unsat_assumption(d_bool_lambda_body));
 
     ASSERT_NO_THROW(bitwuzla.is_unsat_assumption(d_bool_const));
   }
