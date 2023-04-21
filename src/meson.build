@@ -85,6 +85,7 @@ sources = files([
   'preprocess/preprocessing_pass.cpp',
   'preprocess/preprocessor.cpp',
   'printer/printer.cpp',
+  'rewrite/evaluator.cpp',
   'rewrite/rewrite_utils.cpp',
   'rewrite/rewriter.cpp',
   'rewrite/rewrites_array.cpp',

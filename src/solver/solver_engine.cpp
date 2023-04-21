@@ -1,8 +1,9 @@
 #include "solver/solver_engine.h"
 
 #include "env.h"
-#include "solving_context.h"
 #include "printer/printer.h"
+#include "rewrite/evaluator.h"
+#include "solving_context.h"
 
 namespace bzla {
 
@@ -582,8 +583,7 @@ SolverEngine::_value(const Node& term)
             values.push_back(cached_value(arg));
             assert(!values.back().is_null());
           }
-          value = d_env.rewriter().rewrite(
-              nm.mk_node(cur.kind(), values, cur.indices()));
+          value = Evaluator::evaluate(cur.kind(), values, cur.indices());
         }
         break;
 
