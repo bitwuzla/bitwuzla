@@ -67,6 +67,8 @@ class SolvingContext
   Env& env();
 
  private:
+  void check_no_free_variables() const;
+
   /** Solving context environment. */
   Env d_env;
 
