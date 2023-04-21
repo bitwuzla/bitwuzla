@@ -154,4 +154,8 @@ bitwuzla_dep = declare_dependency(include_directories: bitwuzla_inc,
                                   dependencies: bitwuzla_libs_dep,
                                   link_with: bitwuzla_lib)
 
+# Generate pkgconfig file.
+pkg = import('pkgconfig')
+pkg.generate(bitwuzla_lib)
+
 subdir('main')
