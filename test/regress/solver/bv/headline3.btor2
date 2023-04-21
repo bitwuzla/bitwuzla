@@ -1,0 +1,19 @@
+1 sort bitvec 8
+2 input 1 @inp2
+3 sort bitvec 3
+4 input 3 @inp4
+5 sort bitvec 1
+6 zero 5
+7 input 5 @inp7
+8 one 5
+9 sort bitvec 2
+10 input 9 @inp10
+11 sort bitvec 4
+12 concat 11 4 6
+13 sort bitvec 5
+14 concat 13 12 7
+15 sort bitvec 6
+16 concat 15 14 8
+17 concat 1 16 10
+18 ult 5 17 2
+19 constraint 18

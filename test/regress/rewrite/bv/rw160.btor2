@@ -1,0 +1,10 @@
+1 sort bitvec 32
+2 input 1 @inp2
+3 input 1 @inp3
+4 ones 1
+5 xnor 1 2 3
+6 sort bitvec 1
+7 eq 6 4 5
+8 neq 6 2 3
+9 and 6 7 8
+10 constraint 9

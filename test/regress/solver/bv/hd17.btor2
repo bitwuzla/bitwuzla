@@ -1,0 +1,27 @@
+1 sort bitvec 8
+2 input 1 x
+3 input 1 y
+4 sort bitvec 1
+5 ult 4 2 3
+6 and 1 -2 3
+7 xnor 1 2 3
+8 sub 1 2 3
+9 and 1 7 8
+10 or 1 6 9
+11 slice 4 10 7 7
+12 eq 4 5 11
+13 or 1 -2 3
+14 and 1 13 8
+15 or 1 6 14
+16 slice 4 15 7 7
+17 eq 4 5 16
+18 ulte 4 2 3
+19 xor 1 2 3
+20 sub 1 3 2
+21 or 1 19 -20
+22 and 1 13 21
+23 slice 4 22 7 7
+24 eq 4 18 23
+25 or 4 -12 -17
+26 or 4 25 -24
+27 constraint 26

@@ -109,10 +109,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_ADD;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -121,10 +118,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_AND;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -133,10 +127,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_CONCAT;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -198,10 +189,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_DEC;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -210,10 +198,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::EQUAL;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bv1_term_to_bool(arg);
-          }
+          arg = bv1_term_to_bool(arg);
         }
         break;
 
@@ -222,10 +207,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::IFF;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bv1_term_to_bool(arg);
-          }
+          arg = bv1_term_to_bool(arg);
         }
         break;
 
@@ -234,22 +216,16 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::IMPLIES;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bv1_term_to_bool(arg);
-          }
+          arg = bv1_term_to_bool(arg);
         }
         break;
 
       case BTOR2_TAG_inc:
-        assert(args.size() == 2);
+        assert(args.size() == 1);
         kind = bitwuzla::Kind::BV_INC;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -261,10 +237,7 @@ Parser::parse(bool parse_only)
       case BTOR2_TAG_ite:
         assert(args.size() == 3);
         kind = bitwuzla::Kind::ITE;
-        if (!args[0].sort().is_bool())
-        {
-          args[0] = bv1_term_to_bool(args[0]);
-        }
+        args[0] = bv1_term_to_bool(args[0]);
         break;
 
       case BTOR2_TAG_mul:
@@ -272,10 +245,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_MUL;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -284,10 +254,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_NAND;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -296,10 +263,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::DISTINCT;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bv1_term_to_bool(arg);
-          }
+          arg = bv1_term_to_bool(arg);
         }
         break;
 
@@ -308,10 +272,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_NEG;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -320,10 +281,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_NOR;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -332,10 +290,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_NOT;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -354,10 +309,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_OR;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -369,10 +321,7 @@ Parser::parse(bool parse_only)
       case BTOR2_TAG_read:
         assert(args.size() == 2);
         kind = bitwuzla::Kind::ARRAY_SELECT;
-        if (args[1].sort().is_bool())
-        {
-          args[1] = bool_term_to_bv1(args[1]);
-        }
+        args[1] = bool_term_to_bv1(args[1]);
         break;
 
       case BTOR2_TAG_redand:
@@ -380,10 +329,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_REDAND;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -392,10 +338,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_REDOR;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -404,22 +347,16 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_REDXOR;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
       case BTOR2_TAG_rol:
-        assert(args.size() == 1);
+        assert(args.size() == 2);
         kind = bitwuzla::Kind::BV_ROL;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -428,10 +365,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_ROR;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -440,10 +374,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SADD_OVERFLOW;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -452,10 +383,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SDIV;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -464,22 +392,17 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SDIV_OVERFLOW;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
       case BTOR2_TAG_sext:
         assert(args.size() == 1);
         kind = bitwuzla::Kind::BV_SIGN_EXTEND;
+        idxs = {static_cast<uint64_t>(line->args[1])};
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -488,10 +411,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SGT;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -500,10 +420,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SGE;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -514,10 +431,7 @@ Parser::parse(bool parse_only)
                 static_cast<uint64_t>(line->args[2])};
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -526,10 +440,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SHL;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -538,10 +449,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SLT;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -550,10 +458,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SLE;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -603,10 +508,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SMOD;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -615,10 +517,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SMUL_OVERFLOW;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -627,10 +526,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_ASHR;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -639,10 +535,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SREM;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -651,10 +544,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SHR;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -663,10 +553,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SSUB_OVERFLOW;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -675,10 +562,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_SUB;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -687,10 +571,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_UADD_OVERFLOW;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -699,10 +580,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_UDIV;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -712,22 +590,16 @@ Parser::parse(bool parse_only)
         idxs = {static_cast<uint64_t>(line->args[1])};
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
       case BTOR2_TAG_ugt:
-        assert(args.size() == 1);
+        assert(args.size() == 2);
         kind = bitwuzla::Kind::BV_UGT;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -736,10 +608,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_UGE;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -748,10 +617,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_ULT;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -760,10 +626,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_ULE;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -772,10 +635,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_UMUL_OVERFLOW;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -784,10 +644,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_UREM;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -796,24 +653,15 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_USUB_OVERFLOW;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
       case BTOR2_TAG_write:
         assert(args.size() == 3);
         kind = bitwuzla::Kind::ARRAY_STORE;
-        if (args[1].sort().is_bool())
-        {
-          args[1] = bool_term_to_bv1(args[1]);
-        }
-        if (args[2].sort().is_bool())
-        {
-          args[2] = bool_term_to_bv1(args[2]);
-        }
+        args[1] = bool_term_to_bv1(args[1]);
+        args[2] = bool_term_to_bv1(args[2]);
         break;
 
       case BTOR2_TAG_xnor:
@@ -821,10 +669,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_XNOR;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 
@@ -833,10 +678,7 @@ Parser::parse(bool parse_only)
         kind = bitwuzla::Kind::BV_XOR;
         for (auto& arg : args)
         {
-          if (arg.sort().is_bool())
-          {
-            arg = bool_term_to_bv1(arg);
-          }
+          arg = bool_term_to_bv1(arg);
         }
         break;
 

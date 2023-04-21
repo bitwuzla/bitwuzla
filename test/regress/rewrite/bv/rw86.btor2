@@ -1,0 +1,16 @@
+1 sort bitvec 1
+2 input 1 @inp2
+3 sort bitvec 32
+4 input 3 @inp4
+5 one 3
+6 add 3 4 5
+7 ite 3 2 4 6
+8 uext 3 -2 31
+9 add 3 4 8
+10 eq 1 7 9
+11 ite 3 2 6 4
+12 uext 3 2 31
+13 add 3 4 12
+14 eq 1 11 13
+15 or 1 -10 -14
+16 constraint 15

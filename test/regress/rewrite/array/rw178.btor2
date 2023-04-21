@@ -1,0 +1,40 @@
+1 sort bitvec 1
+2 zero 1
+3 sort bitvec 3
+4 zero 3
+5 sort array 3 3
+6 input 5 @arr6
+7 sort bitvec 2
+8 zero 7
+9 input 3 @inp9
+10 slice 1 9 1 1
+11 concat 3 8 10
+12 write 5 6 4 11
+13 read 3 12 4
+14 eq 1 4 13
+15 sort bitvec 4
+16 zero 15
+17 sort array 7 15
+18 input 17 @arr18
+19 eq 1 4 9
+20 concat 7 2 19
+21 write 17 18 20 16
+22 slice 1 9 2 2
+23 concat 15 4 22
+24 write 17 21 8 23
+25 input 7 @inp25
+26 input 1 @inp26
+27 concat 7 2 26
+28 eq 1 25 27
+29 eq 1 -2 28
+30 concat 15 4 19
+31 ite 15 29 16 30
+32 slice 1 31 0 0
+33 concat 7 2 32
+34 write 17 24 33 16
+35 read 15 34 8
+36 eq 1 16 35
+37 eq 1 2 36
+38 and 1 14 37
+39 eq 1 2 38
+40 constraint 39

@@ -1,7 +1,0 @@
-1 var 2 counter
-2 var 1 enable
-3 inc 2 1
-4 cond 2 2 3 1
-5 next 2 1 4
-6 redand 1 1
-7 root 1 6

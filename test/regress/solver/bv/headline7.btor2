@@ -1,0 +1,19 @@
+1 sort bitvec 512
+2 input 1 @inp2
+3 input 1 @inp3
+4 input 1 @inp4
+5 input 1 @inp5
+6 mul 1 2 3
+7 mul 1 4 5
+8 sort bitvec 1024
+9 concat 8 6 7
+10 input 8 @inp10
+11 input 8 @inp11
+12 input 8 @inp12
+13 mul 8 10 11
+14 mul 8 10 12
+15 mul 8 11 12
+16 mul 8 13 14
+17 mul 8 15 16
+18 sort bitvec 1
+19 neq 18 9 17

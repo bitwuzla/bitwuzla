@@ -1,0 +1,49 @@
+1 sort bitvec 32
+2 const 1 00000000000000000000000000000000
+3 sort bitvec 1
+4 input 3 400
+5 input 3 403
+6 input 3 406
+7 input 3 409
+8 input 3 412
+9 input 3 415
+10 input 3 418
+11 input 3 421
+12 sort array 1 1
+13 input 12 @arr13
+14 write 12 13 2 2
+15 ite 12 11 14 13
+16 write 12 15 2 2
+17 ite 12 11 16 13
+18 write 12 17 2 2
+19 ite 12 10 18 17
+20 write 12 19 2 2
+21 ite 12 10 20 17
+22 write 12 21 2 2
+23 ite 12 9 22 21
+24 write 12 23 2 2
+25 ite 12 9 24 21
+26 write 12 25 2 2
+27 ite 12 8 26 25
+28 write 12 27 2 2
+29 ite 12 8 28 25
+30 write 12 29 2 2
+31 ite 12 7 30 29
+32 write 12 31 2 2
+33 ite 12 7 32 29
+34 write 12 33 2 2
+35 ite 12 6 34 33
+36 write 12 35 2 2
+37 ite 12 6 36 33
+38 write 12 37 2 2
+39 ite 12 5 38 37
+40 write 12 39 2 2
+41 ite 12 5 40 37
+42 read 1 41 2
+43 write 12 41 2 42
+44 ite 12 4 43 41
+45 write 12 44 2 2
+46 ite 12 4 45 41
+47 read 1 46 2
+48 eq 3 2 47
+49 constraint -48

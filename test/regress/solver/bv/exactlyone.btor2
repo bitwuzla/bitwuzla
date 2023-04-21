@@ -1,0 +1,15 @@
+1 sort bitvec 32
+2 input 1 x
+3 sort bitvec 5
+4 input 3 s
+5 one 1
+6 uext 1 4 27
+7 sll 1 5 6
+8 sort bitvec 1
+9 eq 8 2 7
+10 constraint 9
+11 sub 1 2 5
+12 and 1 2 11
+13 zero 1
+14 eq 8 12 13
+15 constraint -14

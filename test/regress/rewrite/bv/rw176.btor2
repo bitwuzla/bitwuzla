@@ -1,0 +1,23 @@
+1 sort bitvec 8
+2 input 1 @inp2
+3 input 1 @inp3
+4 const 1 00011111
+5 or 1 2 3
+6 sort bitvec 1
+7 eq 6 5 4
+8 sort bitvec 3
+9 slice 8 2 7 5
+10 slice 8 3 7 5
+11 zero 8
+12 eq 6 9 11
+13 eq 6 10 11
+14 sort bitvec 5
+15 slice 14 2 4 0
+16 slice 14 3 4 0
+17 ones 14
+18 or 14 15 16
+19 eq 6 17 18
+20 and 6 19 13
+21 and 6 12 20
+22 neq 6 21 7
+23 constraint 22

@@ -1,0 +1,9 @@
+1 sort bitvec 9
+2 input 1 @inp2
+3 sort bitvec 18
+4 uext 3 2 9
+5 mul 3 4 4
+6 constd 3 65537
+7 sort bitvec 1
+8 eq 7 5 6
+9 constraint 8

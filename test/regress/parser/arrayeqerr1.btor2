@@ -1,0 +1,6 @@
+1 sort bitvec 1
+2 input 1 1
+3 sort array 1 1
+4 input 3 @arr4
+5 eq 1 2 4
+6 constraint 5

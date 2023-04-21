@@ -1,0 +1,52 @@
+1 sort bitvec 1
+2 sort bitvec 2
+3 sort array 2 1
+4 input 3 @arr4
+5 input 3 @arr5
+6 input 2 i1
+7 input 2 i2
+8 input 2 i3
+9 input 2 i4
+10 input 2 i
+11 input 2 j
+12 input 2 k
+13 input 1 e1
+14 input 1 e2
+15 write 3 4 10 13
+16 write 3 5 11 14
+17 eq 1 6 7
+18 eq 1 6 8
+19 eq 1 6 9
+20 eq 1 7 8
+21 eq 1 7 9
+22 eq 1 8 9
+23 and 1 -17 -18
+24 and 1 -19 -20
+25 and 1 -21 -22
+26 and 1 23 24
+27 and 1 25 26
+28 eq 1 10 12
+29 eq 1 11 12
+30 and 1 -28 -29
+31 and 1 27 30
+32 read 1 4 12
+33 read 1 5 12
+34 eq 1 32 33
+35 and 1 31 -34
+36 read 1 15 6
+37 read 1 16 6
+38 eq 1 36 37
+39 and 1 35 38
+40 read 1 15 7
+41 read 1 16 7
+42 eq 1 40 41
+43 and 1 39 42
+44 read 1 15 8
+45 read 1 16 8
+46 eq 1 44 45
+47 and 1 43 46
+48 read 1 15 9
+49 read 1 16 9
+50 eq 1 48 49
+51 and 1 47 50
+52 constraint 51

@@ -1,0 +1,23 @@
+1 sort bitvec 8
+2 input 1 x
+3 input 1 y
+4 one 1
+5 xnor 1 2 3
+6 and 1 2 3
+7 or 1 2 3
+8 sub 1 6 7
+9 sub 1 8 4
+10 sort bitvec 1
+11 neq 10 5 9
+12 add 1 6 -7
+13 neq 10 5 12
+14 and 1 2 -3
+15 add 1 14 3
+16 neq 10 7 15
+17 or 1 -2 3
+18 sub 1 17 -2
+19 neq 10 6 18
+20 or 10 11 13
+21 or 10 16 19
+22 or 10 20 21
+23 constraint 22

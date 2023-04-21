@@ -1,0 +1,29 @@
+1 sort bitvec 8
+2 sort bitvec 3
+3 sort array 2 1
+4 input 3 @arr4
+5 sort bitvec 1
+6 const 5 0
+7 const 5 1
+8 input 5 @inp8
+9 input 5 @inp9
+10 sort bitvec 2
+11 input 10 @inp11
+12 input 10 @inp12
+13 concat 10 8 6
+14 concat 2 13 9
+15 concat 2 7 11
+16 concat 2 12 7
+17 read 1 4 -14
+18 read 1 4 -15
+19 read 1 4 -16
+20 eq 5 14 15
+21 eq 5 15 16
+22 and 5 20 21
+23 eq 5 17 18
+24 eq 5 17 19
+25 eq 5 18 19
+26 or 5 -23 -24
+27 or 5 26 -25
+28 and 5 22 27
+29 constraint 28

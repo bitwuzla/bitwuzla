@@ -1,0 +1,12 @@
+1 sort bitvec 8
+2 input 1 @inp2
+3 sort bitvec 5
+4 input 3 @inp4
+5 sort bitvec 1
+6 zero 5
+7 sort bitvec 2
+8 input 7 @inp8
+9 sort bitvec 6
+10 concat 9 4 6
+11 concat 1 10 8
+12 ult 5 11 2

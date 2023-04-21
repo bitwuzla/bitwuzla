@@ -1,0 +1,16 @@
+1 sort bitvec 30
+2 input 1 @inp2
+3 sort bitvec 2
+4 ones 3
+5 sort bitvec 32
+6 concat 5 2 4
+7 sort bitvec 4
+8 zero 7
+9 sort bitvec 1
+10 input 9 @inp10
+11 sort bitvec 5
+12 concat 11 8 10
+13 uext 5 12 27
+14 sll 5 6 13
+15 slice 9 14 1 1
+16 constraint -15

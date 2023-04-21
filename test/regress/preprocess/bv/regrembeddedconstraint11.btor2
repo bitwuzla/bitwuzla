@@ -1,0 +1,10 @@
+1 sort bitvec 3
+2 input 1 @inp2
+3 sort bitvec 1
+4 slice 3 2 0 0
+5 input 3 @inp5
+6 input 3 @inp6
+7 eq 3 4 6
+8 and 3 5 7
+9 and 3 4 8
+10 constraint 9

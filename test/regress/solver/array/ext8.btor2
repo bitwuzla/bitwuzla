@@ -1,0 +1,12 @@
+1 sort bitvec 8
+2 sort array 1 1
+3 input 2 @arr3
+4 input 2 @arr4
+5 input 2 @arr5
+6 sort bitvec 1
+7 neq 6 3 4
+8 neq 6 4 5
+9 neq 6 3 5
+10 and 6 7 8
+11 implies 6 10 9
+12 constraint -11

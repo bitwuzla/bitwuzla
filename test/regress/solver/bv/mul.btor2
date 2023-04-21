@@ -1,0 +1,5 @@
+1 sort bitvec 32
+2 input 1 @inp2
+3 input 1 @inp3
+4 mul 1 2 3
+5 constraint 4

@@ -1,0 +1,19 @@
+1 sort bitvec 32
+2 sort array 1 1
+3 input 2 @arr3
+4 input 1 @inp4
+5 input 1 @inp5
+6 input 1 @inp6
+7 input 1 @inp7
+8 input 1 @inp8
+9 input 1 @inp9
+10 input 1 @inp10
+11 write 2 3 4 5
+12 write 2 11 6 7
+13 write 2 12 8 9
+14 write 2 13 6 10
+15 write 2 11 8 9
+16 write 2 15 6 10
+17 sort bitvec 1
+18 eq 17 14 16
+19 constraint -18

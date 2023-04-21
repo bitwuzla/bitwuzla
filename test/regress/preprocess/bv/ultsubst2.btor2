@@ -1,0 +1,10 @@
+1 sort bitvec 8
+2 input 1 @inp2
+3 sort bitvec 3
+4 one 3
+5 uext 1 4 5
+6 srl 1 2 5
+7 input 1 @inp7
+8 sort bitvec 1
+9 ult 8 7 -6
+10 constraint -9

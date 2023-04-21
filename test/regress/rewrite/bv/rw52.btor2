@@ -1,0 +1,10 @@
+1 sort bitvec 1
+2 input 1 a
+3 input 1 b
+4 input 1 c
+5 ite 1 2 3 4
+6 implies 1 2 3
+7 implies 1 -2 4
+8 and 1 6 7
+9 eq 1 5 8
+10 constraint -9

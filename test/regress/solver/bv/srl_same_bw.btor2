@@ -1,0 +1,32 @@
+1 sort bitvec 109
+2 input 1 mbtvar37
+3 sort bitvec 1
+4 slice 3 2 108 108
+5 sort bitvec 108
+6 slice 5 2 107 0
+7 sort bitvec 107
+8 zero 7
+9 zero 3
+10 sort bitvec 32
+11 constd 10 14776
+12 sort bitvec 27
+13 zero 12
+14 sort bitvec 75
+15 input 14 mbtvar3
+16 sort bitvec 5
+17 slice 16 15 72 68
+18 concat 10 13 17
+19 uext 10 18 0
+20 srl 10 11 19
+21 sort bitvec 33
+22 concat 21 9 20
+23 sort bitvec 68
+24 input 23 mbtvar14
+25 slice 10 24 60 29
+26 concat 21 9 25
+27 add 21 22 26
+28 slice 3 27 32 32
+29 concat 5 8 28
+30 ult 3 6 29
+31 and 3 -4 -30
+32 constraint 31

@@ -1,0 +1,12 @@
+1 sort bitvec 32
+2 input 1 @inp2
+3 input 1 @inp3
+4 zero 1
+5 and 1 -2 -3
+6 and 1 2 3
+7 and 1 -5 -6
+8 sort bitvec 1
+9 eq 8 4 -7
+10 neq 8 2 3
+11 and 8 9 10
+12 constraint 11

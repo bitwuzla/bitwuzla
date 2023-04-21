@@ -1,0 +1,13 @@
+1 sort bitvec 8
+2 input 1 @inp2
+3 input 1 @inp3
+4 urem 1 2 3
+5 zero 1
+6 sort bitvec 1
+7 neq 6 3 5
+8 ulte 6 4 2
+9 implies 6 7 8
+10 ulte 6 4 3
+11 implies 6 7 10
+12 and 6 9 11
+13 constraint -12

@@ -1,0 +1,17 @@
+1 sort bitvec 32
+2 sort bitvec 16
+3 sort array 2 1
+4 input 3 @arr4
+5 input 1 @inp5
+6 input 1 @inp6
+7 input 1 @inp7
+8 mul 1 5 6
+9 mul 1 5 7
+10 mul 1 6 7
+11 mul 1 8 9
+12 mul 1 10 11
+13 input 2 @inp13
+14 read 1 4 13
+15 sort bitvec 1
+16 neq 15 14 12
+17 constraint 16

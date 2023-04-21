@@ -1,0 +1,20 @@
+1 sort bitvec 1
+2 input 1 @inp2
+3 sort bitvec 2
+4 const 3 00
+5 input 1 @inp5
+6 eq 1 2 5
+7 sort bitvec 3
+8 concat 7 4 6
+9 const 7 000
+10 eq 1 8 -9
+11 and 1 -2 10
+12 sort bitvec 4
+13 sort array 1 12
+14 input 13 @arr14
+15 const 12 0000
+16 write 13 14 10 15
+17 read 12 16 2
+18 eq 1 -15 17
+19 and 1 11 18
+20 constraint 19

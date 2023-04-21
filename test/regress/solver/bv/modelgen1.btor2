@@ -1,0 +1,12 @@
+1 sort bitvec 8
+2 input 1 @inp2
+3 input 1 @inp3
+4 udiv 1 2 3
+5 sort bitvec 2
+6 slice 5 4 7 6
+7 slice 5 2 7 6
+8 slice 5 3 7 6
+9 udiv 5 7 8
+10 sort bitvec 1
+11 ulte 10 6 9
+12 constraint 11

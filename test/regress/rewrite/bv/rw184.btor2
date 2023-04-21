@@ -1,0 +1,10 @@
+1 sort bitvec 8
+2 input 1 a
+3 input 1 b
+4 and 1 -2 3
+5 and 1 2 -3
+6 sort bitvec 1
+7 eq 6 4 5
+8 eq 6 2 3
+9 neq 6 7 8
+10 constraint 9

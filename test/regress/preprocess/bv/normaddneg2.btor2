@@ -1,0 +1,8 @@
+1 sort bitvec 32
+2 input 1 x
+3 input 1 y
+4 sub 1 2 3
+5 sub 1 2 4
+6 sort bitvec 1
+7 ult 6 5 3
+8 constraint 7

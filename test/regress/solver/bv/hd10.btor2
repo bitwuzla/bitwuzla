@@ -1,0 +1,16 @@
+1 sort bitvec 16
+2 input 1 x
+3 sort bitvec 4
+4 constd 3 14
+5 one 1
+6 zero 1
+7 sort bitvec 1
+8 slt 7 2 6
+9 neg 1 2
+10 ite 1 8 9 2
+11 uext 1 4 12
+12 sra 1 2 11
+13 or 1 12 5
+14 mul 1 13 2
+15 eq 7 10 14
+16 constraint -15

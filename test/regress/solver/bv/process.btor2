@@ -1,0 +1,59 @@
+1 sort bitvec 8
+2 input 1 @inp2
+3 constraint 2
+4 input 1 @inp4
+5 constraint 4
+6 input 1 @inp6
+7 constraint 6
+8 input 1 @inp8
+9 constraint 8
+10 input 1 @inp10
+11 constraint 10
+12 input 1 @inp12
+13 constraint 12
+14 input 1 @inp14
+15 constraint 14
+16 input 1 @inp16
+17 constraint 16
+18 input 1 @inp18
+19 constraint 18
+20 input 1 @inp20
+21 constraint 20
+22 input 1 @inp22
+23 constraint 22
+24 input 1 @inp24
+25 constraint 24
+26 input 1 @inp26
+27 constraint 26
+28 input 1 @inp28
+29 constraint 28
+30 input 1 @inp30
+31 constraint 30
+32 input 1 @inp32
+33 constraint 32
+34 input 1 @inp34
+35 constraint 34
+36 input 1 @inp36
+37 constraint 36
+38 input 1 @inp38
+39 constraint 38
+40 input 1 @inp40
+41 constraint 40
+42 input 1 @inp42
+43 constraint 42
+44 input 1 @inp44
+45 constraint 44
+46 input 1 @inp46
+47 constraint 46
+48 input 1 @inp48
+49 constraint 48
+50 input 1 @inp50
+51 constraint 50
+52 input 1 @inp52
+53 constraint 52
+54 input 1 @inp54
+55 constraint 54
+56 input 1 @inp56
+57 constraint 56
+58 input 1 @inp58
+59 constraint 58

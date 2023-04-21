@@ -1,0 +1,14 @@
+1 sort bitvec 8
+2 input 1 a
+3 input 1 b
+4 sort bitvec 9
+5 uext 4 2 1
+6 uext 4 -3 1
+7 add 4 5 6
+8 consth 4 1
+9 add 4 7 8
+10 sort bitvec 1
+11 slice 10 9 8 8
+12 ugte 10 2 3
+13 iff 10 12 11
+14 constraint -13

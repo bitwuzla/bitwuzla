@@ -1,0 +1,13 @@
+1 sort bitvec 1
+2 sort array 1 1
+3 input 2 @arr3
+4 input 1 @inp4
+5 input 1 @inp5
+6 and 1 4 5
+7 eq 1 4 5
+8 or 1 4 5
+9 read 1 3 6
+10 read 1 3 8
+11 eq 1 9 10
+12 implies 1 7 11
+13 constraint -12

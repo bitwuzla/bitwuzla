@@ -1,0 +1,7 @@
+1 sort bitvec 32
+2 input 1 x
+3 input 1 x
+4 sort bitvec 1
+5 eq 4 2 3
+6 ite 1 5 3 2
+7 constraint 6

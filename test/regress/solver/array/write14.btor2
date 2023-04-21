@@ -1,0 +1,11 @@
+1 sort bitvec 1
+2 sort array 1 1
+3 input 2 @arr3
+4 const 1 0
+5 write 2 3 4 4
+6 sort bitvec 2
+7 const 6 00
+8 add 6 -7 -7
+9 slice 1 8 1 1
+10 read 1 5 -9
+11 constraint 10

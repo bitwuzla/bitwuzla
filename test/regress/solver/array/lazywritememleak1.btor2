@@ -1,0 +1,152 @@
+1 sort bitvec 24
+2 input 1 @inp2
+3 sort bitvec 8
+4 sort bitvec 32
+5 sort array 4 3
+6 input 5 @arr6
+7 input 4 @inp7
+8 const 3 00000000
+9 write 5 6 7 8
+10 input 4 @inp10
+11 write 5 9 10 8
+12 input 4 @inp12
+13 write 5 11 12 8
+14 input 4 @inp14
+15 write 5 13 14 8
+16 input 4 @inp16
+17 write 5 15 16 -8
+18 input 4 @inp18
+19 write 5 17 18 8
+20 input 4 @inp20
+21 write 5 19 20 8
+22 input 4 @inp22
+23 write 5 21 22 8
+24 input 4 @inp24
+25 write 5 23 24 8
+26 input 4 @inp26
+27 input 3 @inp27
+28 write 5 25 26 27
+29 input 4 @inp29
+30 write 5 28 29 -8
+31 input 4 @inp31
+32 write 5 30 31 8
+33 input 4 @inp33
+34 input 3 @inp34
+35 write 5 32 33 34
+36 input 4 @inp36
+37 write 5 35 36 27
+38 input 4 @inp38
+39 write 5 37 38 27
+40 input 4 @inp40
+41 write 5 39 40 27
+42 input 4 @inp42
+43 write 5 41 42 27
+44 const 4 00000000000000000000000000000000
+45 write 5 43 -44 8
+46 write 5 45 -44 27
+47 write 5 46 -44 27
+48 write 5 47 -44 27
+49 input 3 @inp49
+50 write 5 48 -44 49
+51 write 5 50 -44 27
+52 write 5 51 -44 27
+53 write 5 52 -44 27
+54 input 4 @inp54
+55 write 5 53 54 8
+56 input 4 @inp56
+57 write 5 55 56 8
+58 input 4 @inp58
+59 write 5 57 58 8
+60 input 4 @inp60
+61 write 5 59 60 8
+62 input 4 @inp62
+63 write 5 61 62 8
+64 input 4 @inp64
+65 write 5 63 64 8
+66 input 4 @inp66
+67 write 5 65 66 8
+68 input 4 @inp68
+69 write 5 67 68 8
+70 input 4 @inp70
+71 write 5 69 70 8
+72 input 4 @inp72
+73 write 5 71 72 8
+74 input 4 @inp74
+75 write 5 73 74 8
+76 input 4 @inp76
+77 write 5 75 76 8
+78 input 4 @inp78
+79 write 5 77 78 8
+80 input 4 @inp80
+81 write 5 79 80 8
+82 input 4 @inp82
+83 write 5 81 82 8
+84 input 4 @inp84
+85 write 5 83 84 8
+86 input 4 @inp86
+87 write 5 85 86 8
+88 input 4 @inp88
+89 write 5 87 88 8
+90 input 4 @inp90
+91 write 5 89 90 8
+92 input 4 @inp92
+93 write 5 91 92 8
+94 input 4 @inp94
+95 write 5 93 94 8
+96 input 4 @inp96
+97 write 5 95 96 27
+98 input 4 @inp98
+99 write 5 97 98 27
+100 input 4 @inp100
+101 write 5 99 100 27
+102 input 4 @inp102
+103 write 5 101 102 8
+104 input 4 @inp104
+105 write 5 103 104 8
+106 input 4 @inp106
+107 write 5 105 106 8
+108 input 4 @inp108
+109 write 5 107 108 8
+110 input 4 @inp110
+111 write 5 109 110 8
+112 input 4 @inp112
+113 write 5 111 112 27
+114 input 4 @inp114
+115 write 5 113 114 27
+116 input 4 @inp116
+117 write 5 115 116 27
+118 input 4 @inp118
+119 write 5 117 118 8
+120 input 4 @inp120
+121 write 5 119 120 8
+122 input 4 @inp122
+123 write 5 121 122 8
+124 input 4 @inp124
+125 write 5 123 124 8
+126 write 5 125 -44 8
+127 write 5 126 -44 8
+128 write 5 127 -44 8
+129 write 5 128 -44 8
+130 write 5 129 -44 8
+131 write 5 130 -44 8
+132 write 5 131 -44 8
+133 write 5 132 -44 8
+134 write 5 133 -44 8
+135 write 5 134 -44 8
+136 write 5 135 -44 8
+137 write 5 136 -44 8
+138 write 5 137 -44 8
+139 write 5 138 -44 8
+140 write 5 139 -44 8
+141 write 5 140 -44 8
+142 write 5 141 -44 8
+143 const 1 000000000000000000000000
+144 read 3 139 110
+145 concat 4 143 144
+146 slice 3 -145 31 24
+147 write 5 142 -44 146
+148 read 3 147 7
+149 concat 4 2 148
+150 sort bitvec 1
+151 eq 150 44 149
+152 constraint 151

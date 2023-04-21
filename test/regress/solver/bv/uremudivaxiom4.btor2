@@ -1,0 +1,22 @@
+1 sort bitvec 4
+2 input 1 a
+3 input 1 b
+4 input 1 q
+5 input 1 r
+6 udiv 1 2 3
+7 urem 1 2 3
+8 mul 1 3 4
+9 add 1 5 8
+10 sort bitvec 1
+11 eq 10 4 6
+12 eq 10 5 7
+13 eq 10 2 9
+14 ult 10 5 3
+15 and 10 11 12
+16 and 10 13 14
+17 and 10 16 16
+18 implies 10 15 17
+19 zero 1
+20 eq 10 3 19
+21 implies 10 -20 18
+22 constraint -21

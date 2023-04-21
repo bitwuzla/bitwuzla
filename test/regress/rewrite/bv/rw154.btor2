@@ -1,0 +1,8 @@
+1 sort bitvec 64
+2 input 1 @inp2
+3 zero 1
+4 sort bitvec 1
+5 ult 4 3 2
+6 neq 4 2 3
+7 eq 4 5 6
+8 constraint -7

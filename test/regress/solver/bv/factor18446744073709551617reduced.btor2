@@ -1,0 +1,12 @@
+1 sort bitvec 65
+2 constd 1 18446744073709551617
+3 sort bitvec 19
+4 input 3 @inp4
+5 uext 1 4 46
+6 sort bitvec 46
+7 input 6 @inp7
+8 uext 1 7 19
+9 mul 1 5 8
+10 sort bitvec 1
+11 eq 10 2 9
+12 constraint 11

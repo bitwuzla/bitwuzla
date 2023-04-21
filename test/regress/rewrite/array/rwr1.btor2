@@ -1,0 +1,52 @@
+1 sort bitvec 7
+2 const 1 0000001
+3 const 1 0000010
+4 sort bitvec 1
+5 const 4 1
+6 const 4 0
+7 sort bitvec 32
+8 input 7 search_val
+9 input 1 search_index
+10 sort array 1 7
+11 input 10 @arr11
+12 write 10 11 9 8
+13 const 1 0000000
+14 const 1 0000000
+15 input 1 @inp15
+16 read 7 12 14
+17 ult 4 16 8
+18 ite 4 17 5 6
+19 eq 4 5 18
+20 and 4 5 19
+21 ite 1 20 15 13
+22 add 1 2 -21
+23 const 1 0000000
+24 add 1 23 22
+25 udiv 1 24 3
+26 add 1 21 25
+27 const 1 0000000
+28 read 7 12 26
+29 ult 4 28 8
+30 ite 4 29 5 6
+31 eq 4 5 30
+32 and 4 5 31
+33 ite 1 32 27 21
+34 const 1 0000000
+35 const 4 0
+36 ite 1 35 34 33
+37 add 1 2 -36
+38 const 1 0000000
+39 add 1 38 37
+40 udiv 1 39 3
+41 add 1 36 40
+42 read 7 12 41
+43 eq 4 8 42
+44 and 4 5 43
+45 ite 4 44 5 6
+46 const 4 1
+47 and 4 46 -45
+48 const 4 1
+49 and 4 48 47
+50 eq 4 49 6
+51 and 4 5 50
+52 constraint -51

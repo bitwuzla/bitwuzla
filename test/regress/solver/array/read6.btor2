@@ -1,0 +1,19 @@
+1 sort bitvec 8
+2 sort bitvec 3
+3 sort array 2 1
+4 input 3 @arr4
+5 sort bitvec 1
+6 input 5 @inp6
+7 input 5 @inp7
+8 input 5 @inp8
+9 sort bitvec 2
+10 concat 9 6 7
+11 concat 2 10 8
+12 concat 9 8 7
+13 concat 2 12 6
+14 eq 5 6 8
+15 read 1 4 11
+16 read 1 4 13
+17 eq 5 15 16
+18 and 5 14 -17
+19 constraint 18

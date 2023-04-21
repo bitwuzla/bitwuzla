@@ -1,0 +1,20 @@
+1 sort bitvec 1
+2 input 1 @inp2
+3 sort bitvec 4
+4 input 3 @inp4
+5 input 3 @inp5
+6 input 3 @inp6
+7 urem 3 4 5
+8 urem 3 5 6
+9 ite 3 2 7 8
+10 ite 3 2 4 6
+11 urem 3 10 5
+12 eq 1 9 11
+13 urem 3 5 6
+14 urem 3 4 5
+15 ite 3 2 13 14
+16 ite 3 2 6 4
+17 urem 3 16 5
+18 eq 1 15 17
+19 or 1 -12 -18
+20 constraint 19

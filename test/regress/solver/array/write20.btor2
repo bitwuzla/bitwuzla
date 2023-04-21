@@ -1,0 +1,19 @@
+1 sort bitvec 8
+2 input 1 @inp2
+3 input 1 @inp3
+4 input 1 @inp4
+5 input 1 @inp5
+6 sort array 1 1
+7 input 6 @arr7
+8 input 6 @arr8
+9 write 6 7 2 3
+10 write 6 8 4 5
+11 sort bitvec 1
+12 eq 11 9 10
+13 eq 11 3 5
+14 eq 11 7 8
+15 eq 11 2 4
+16 and 11 13 14
+17 eq 11 12 16
+18 implies 11 15 17
+19 constraint -18

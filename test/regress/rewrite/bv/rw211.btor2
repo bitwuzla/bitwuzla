@@ -1,0 +1,11 @@
+1 sort bitvec 1
+2 input 1 @inp2
+3 sort bitvec 8
+4 input 3 @inp4
+5 input 3 @inp5
+6 input 3 @inp6
+7 ite 3 2 -4 -5
+8 ite 3 -2 6 -7
+9 ite 3 -2 6 4
+10 neq 1 8 9
+11 constraint 10

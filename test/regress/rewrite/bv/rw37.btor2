@@ -1,0 +1,32 @@
+1 sort bitvec 8
+2 input 1 @inp2
+3 input 1 @inp3
+4 input 1 @inp4
+5 input 1 @inp5
+6 input 1 @inp6
+7 input 1 @inp7
+8 input 1 @inp8
+9 input 1 @inp9
+10 sort bitvec 16
+11 concat 10 2 3
+12 concat 10 4 5
+13 concat 10 6 7
+14 concat 10 8 9
+15 sort bitvec 32
+16 concat 15 11 12
+17 concat 15 13 14
+18 sort bitvec 64
+19 concat 18 16 17
+20 sort bitvec 24
+21 concat 20 11 4
+22 concat 15 21 5
+23 sort bitvec 40
+24 concat 23 22 6
+25 sort bitvec 48
+26 concat 25 24 7
+27 sort bitvec 56
+28 concat 27 26 8
+29 concat 18 28 9
+30 sort bitvec 1
+31 neq 30 19 29
+32 constraint 31

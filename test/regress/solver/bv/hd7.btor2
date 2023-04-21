@@ -1,0 +1,14 @@
+1 sort bitvec 8
+2 input 1 x
+3 input 1 y
+4 or 1 2 3
+5 sort bitvec 1
+6 ugt 5 2 3
+7 ite 1 6 2 3
+8 ugte 5 4 7
+9 and 1 2 3
+10 ult 5 2 3
+11 ite 1 10 2 3
+12 ulte 5 9 7
+13 or 5 -8 -12
+14 constraint 13

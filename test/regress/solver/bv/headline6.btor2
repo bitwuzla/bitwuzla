@@ -1,0 +1,17 @@
+1 sort bitvec 1024
+2 input 1 @inp2
+3 input 1 @inp3
+4 input 1 @inp4
+5 mul 1 2 3
+6 mul 1 2 4
+7 mul 1 3 4
+8 mul 1 5 6
+9 mul 1 7 8
+10 input 1 @inp10
+11 input 1 @inp11
+12 input 1 @inp12
+13 mul 1 10 11
+14 mul 1 12 13
+15 sort bitvec 1
+16 neq 15 9 14
+17 constraint 16

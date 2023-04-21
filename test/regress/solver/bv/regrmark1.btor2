@@ -1,0 +1,15 @@
+1 sort bitvec 2
+2 input 1 @inp2
+3 sort bitvec 1
+4 input 3 @inp4
+5 input 3 @inp5
+6 and 3 4 5
+7 sort bitvec 3
+8 concat 7 2 6
+9 zero 7
+10 eq 3 8 9
+11 eq 3 5 10
+12 input 3 @inp12
+13 and 3 11 12
+14 and 3 10 13
+15 constraint 14
