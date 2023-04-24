@@ -1,6 +1,0 @@
-1 var 16
-2 var 16
-3 concat 32 1 2
-4 slice 16 3 31 16
-5 eq 1 1 4
-6 root 1 -5

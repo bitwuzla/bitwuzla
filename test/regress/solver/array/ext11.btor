@@ -1,7 +1,0 @@
-1 array 1 1
-2 const 1 0
-3 write 1 1 1 2 2
-4 eq 1 1 3
-5 write 1 1 1 4 2
-6 read 1 5 2
-7 root 1 6

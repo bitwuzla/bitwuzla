@@ -1,7 +1,0 @@
-1 constd 4 5
-2 constd 4 3
-3 neg 4 2
-4 var 4 res
-5 srem 4 1 3
-6 eq 1 4 5
-7 root 1 6

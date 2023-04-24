@@ -1,5 +1,0 @@
-1 var 8
-2 slice 1 -1 0 0
-3 slice 1 1 0 0
-4 eq 1 2 -3
-5 root 1 -4

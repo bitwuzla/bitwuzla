@@ -1,8 +1,0 @@
-1 var 8 
-2 var 8 
-3 zero 8
-4 add 8 1 2
-5 eq 1 2 3
-6 eq 1 1 4
-7 implies 1 -5 -6
-8 root 1 -7
