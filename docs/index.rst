@@ -21,6 +21,8 @@ Table of Contents
 .. toctree::
   :maxdepth: 2
 
+  install
+
   cpp/api
   c/api
   python/api
