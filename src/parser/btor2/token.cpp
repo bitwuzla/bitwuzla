@@ -21,6 +21,9 @@ to_string(bzla::parser::btor2::Token token)
   switch (token)
   {
     case Token::INVALID: return "<invalid token>";
+    case Token::ENDOFFILE: return "<eof token>";
+    case Token::NUMBER: return "<number token>";
+    case Token::SYMBOL: return "<symbol token>";
     case Token::ADD: return "add";
     case Token::AND: return "and";
     case Token::ARRAY: return "array";

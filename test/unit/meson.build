@@ -33,6 +33,7 @@ unit_tests = [
 
   ['parser',
     [
+      'btor2_lexer',
       'smt2_lexer',
       'smt2_symbol_table',
     ]

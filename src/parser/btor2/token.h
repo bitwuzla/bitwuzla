@@ -7,8 +7,13 @@
 namespace bzla {
 namespace parser::btor2 {
 
-enum class Token {
+enum class Token
+{
   INVALID,
+  ENDOFFILE,
+  NUMBER,
+  SYMBOL,
+  // BTOR2 keywords
   ADD,
   AND,
   ARRAY,

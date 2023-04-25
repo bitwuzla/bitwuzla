@@ -321,7 +321,7 @@ Lexer::next_token_aux()
   d_token.push_back(0);
   if (is_printable(ch))
   {
-    return error(ch, "illegal" + err_char(ch));
+    return error(ch, "illegal " + err_char(ch));
   }
   return error(
       ch,
