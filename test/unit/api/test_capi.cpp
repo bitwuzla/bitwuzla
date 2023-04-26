@@ -2485,95 +2485,92 @@ TEST_F(TestCApi, get_value)
   }
 }
 
-TEST_F(TestCApi, get_bv_value)
+TEST_F(TestCApi, value_get_bool)
 {
-  {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla       = bitwuzla_new(options);
-    ASSERT_DEATH(bitwuzla_get_bv_value(bitwuzla, d_bv_one1, 2),
-                 d_error_produce_models);
-    bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
-  }
-  {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-    Bitwuzla *bitwuzla = bitwuzla_new(options);
-    ASSERT_DEATH(bitwuzla_get_bv_value(nullptr, d_bv_one1, 2),
-                 d_error_not_null);
-    ASSERT_DEATH(bitwuzla_get_bv_value(bitwuzla, 0, 2), d_error_inv_term);
-    bitwuzla_check_sat(bitwuzla);
-    ASSERT_DEATH(bitwuzla_get_bv_value(bitwuzla, d_fp_nan32, 2),
-                 "expected bit-vector term");
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(bitwuzla, d_bv_one1, 2)),
-              std::string("1"));
-    BitwuzlaTerm bv_maxs32 = bitwuzla_mk_bv_max_signed(d_bv_sort32);
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(bitwuzla, bv_maxs32, 2)),
-              std::string("01111111111111111111111111111111"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(bitwuzla, bv_maxs32, 10)),
-              std::string("2147483647"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(bitwuzla, bv_maxs32, 16)),
-              std::string("7fffffff"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(
-                  bitwuzla, bitwuzla_mk_bv_value(d_bv_sort8, "-1", 10), 2)),
-              std::string("11111111"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(
-                  bitwuzla, bitwuzla_mk_bv_value(d_bv_sort8, "-1", 10), 10)),
-              std::string("255"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(
-                  bitwuzla, bitwuzla_mk_bv_value(d_bv_sort8, "-1", 10), 16)),
-              std::string("ff"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(
-                  bitwuzla, bitwuzla_mk_bv_value(d_bv_sort8, "-123", 10), 2)),
-              std::string("10000101"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(
-                  bitwuzla, bitwuzla_mk_bv_value(d_bv_sort8, "-123", 10), 10)),
-              std::string("133"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(
-                  bitwuzla, bitwuzla_mk_bv_value(d_bv_sort8, "-123", 10), 16)),
-              std::string("85"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(
-                  bitwuzla, bitwuzla_mk_bv_value(d_bv_sort8, "-128", 10), 2)),
-              std::string("10000000"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(
-                  bitwuzla, bitwuzla_mk_bv_value(d_bv_sort8, "-128", 10), 10)),
-              std::string("128"));
-    ASSERT_EQ(std::string(bitwuzla_get_bv_value(
-                  bitwuzla, bitwuzla_mk_bv_value(d_bv_sort8, "-128", 10), 16)),
-              std::string("80"));
-    bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
-  }
+  ASSERT_EQ(true, bitwuzla_term_value_get_bool(d_true));
+  ASSERT_EQ(false, bitwuzla_term_value_get_bool(bitwuzla_mk_false()));
+  ASSERT_EQ("true", std::string(bitwuzla_term_value_get_str(d_true, 2)));
+  ASSERT_EQ("false",
+            std::string(bitwuzla_term_value_get_str(bitwuzla_mk_false(), 2)));
+}
+
+TEST_F(TestCApi, value_get_bv)
+{
+  ASSERT_DEATH(bitwuzla_term_value_get_str(0, 2), d_error_inv_term);
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(d_bv_one1, 2)),
+            std::string("1"));
+  BitwuzlaTerm bv_maxs32 = bitwuzla_mk_bv_max_signed(d_bv_sort32);
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(bv_maxs32, 2)),
+            std::string("01111111111111111111111111111111"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(bv_maxs32, 10)),
+            std::string("2147483647"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(bv_maxs32, 16)),
+            std::string("7fffffff"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(
+                bitwuzla_mk_bv_value(d_bv_sort8, "-1", 10), 2)),
+            std::string("11111111"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(
+                bitwuzla_mk_bv_value(d_bv_sort8, "-1", 10), 10)),
+            std::string("255"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(
+                bitwuzla_mk_bv_value(d_bv_sort8, "-1", 10), 16)),
+            std::string("ff"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(
+                bitwuzla_mk_bv_value(d_bv_sort8, "-123", 10), 2)),
+            std::string("10000101"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(
+                bitwuzla_mk_bv_value(d_bv_sort8, "-123", 10), 10)),
+            std::string("133"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(
+                bitwuzla_mk_bv_value(d_bv_sort8, "-123", 10), 16)),
+            std::string("85"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(
+                bitwuzla_mk_bv_value(d_bv_sort8, "-128", 10), 2)),
+            std::string("10000000"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(
+                bitwuzla_mk_bv_value(d_bv_sort8, "-128", 10), 10)),
+            std::string("128"));
+  ASSERT_EQ(std::string(bitwuzla_term_value_get_str(
+                bitwuzla_mk_bv_value(d_bv_sort8, "-128", 10), 16)),
+            std::string("80"));
+}
+
+TEST_F(TestCApi, value_get_fp)
+{
+  ASSERT_EQ("(fp #b0 #b11111111 #b10000000000000000000000)",
+            std::string(bitwuzla_term_value_get_str(d_fp_nan32, 2)));
+  ASSERT_EQ("(fp #b1 #b00000000 #b00000000000000000000000)",
+            std::string(bitwuzla_term_value_get_str(d_fp_nzero32, 2)));
+}
+
+TEST_F(TestCApi, value_fp_ieee)
+{
+  const char *sign, *exp, *sig;
+  bitwuzla_term_value_get_fp_ieee(d_fp_nan32, &sign, &exp, &sig, 2);
+  ASSERT_EQ("#b0", std::string(sign));
+  ASSERT_EQ("#b11111111", std::string(exp));
+  ASSERT_EQ("#b10000000000000000000000", std::string(sig));
+  bitwuzla_term_value_get_fp_ieee(d_fp_nzero32, &sign, &exp, &sig, 2);
+  ASSERT_EQ("#b1", std::string(sign));
+  ASSERT_EQ("#b00000000", std::string(exp));
+  ASSERT_EQ("#b00000000000000000000000", std::string(sig));
 }
 
 TEST_F(TestCApi, get_rm_value)
 {
-  {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla       = bitwuzla_new(options);
-    ASSERT_DEATH(bitwuzla_get_rm_value(bitwuzla, d_rm_const),
-                 d_error_produce_models);
-    bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
-  }
-  {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-    Bitwuzla *bitwuzla = bitwuzla_new(options);
-    ASSERT_DEATH(bitwuzla_get_rm_value(nullptr, d_bv_one1), d_error_not_null);
-    ASSERT_DEATH(bitwuzla_get_rm_value(bitwuzla, 0), d_error_inv_term);
-
-    bitwuzla_check_sat(bitwuzla);
-    ASSERT_DEATH(bitwuzla_get_rm_value(bitwuzla, d_fp_nan32),
-                 "expected rounding-mode term");
-    ASSERT_EQ(BITWUZLA_RM_RNA, bitwuzla_get_rm_value(bitwuzla, d_rm_rna));
-    ASSERT_EQ(BITWUZLA_RM_RNE, bitwuzla_get_rm_value(bitwuzla, d_rm_rne));
-    ASSERT_EQ(BITWUZLA_RM_RTN, bitwuzla_get_rm_value(bitwuzla, d_rm_rtn));
-    ASSERT_EQ(BITWUZLA_RM_RTP, bitwuzla_get_rm_value(bitwuzla, d_rm_rtp));
-    ASSERT_EQ(BITWUZLA_RM_RTZ, bitwuzla_get_rm_value(bitwuzla, d_rm_rtz));
-    bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
-  }
+  ASSERT_DEATH(bitwuzla_term_value_get_rm(0), d_error_inv_term);
+  ASSERT_DEATH(bitwuzla_term_value_get_rm(d_fp_nan32),
+               "expected rounding-mode value");
+  ASSERT_EQ(BITWUZLA_RM_RNA, bitwuzla_term_value_get_rm(d_rm_rna));
+  ASSERT_EQ(BITWUZLA_RM_RNE, bitwuzla_term_value_get_rm(d_rm_rne));
+  ASSERT_EQ(BITWUZLA_RM_RTN, bitwuzla_term_value_get_rm(d_rm_rtn));
+  ASSERT_EQ(BITWUZLA_RM_RTP, bitwuzla_term_value_get_rm(d_rm_rtp));
+  ASSERT_EQ(BITWUZLA_RM_RTZ, bitwuzla_term_value_get_rm(d_rm_rtz));
+  ASSERT_EQ("RNA", std::string(bitwuzla_term_value_get_str(d_rm_rna, 2)));
+  ASSERT_EQ("RNE", std::string(bitwuzla_term_value_get_str(d_rm_rne, 2)));
+  ASSERT_EQ("RTN", std::string(bitwuzla_term_value_get_str(d_rm_rtn, 2)));
+  ASSERT_EQ("RTP", std::string(bitwuzla_term_value_get_str(d_rm_rtp, 2)));
+  ASSERT_EQ("RTZ", std::string(bitwuzla_term_value_get_str(d_rm_rtz, 2)));
 }
 
 TEST_F(TestCApi, print_formula)

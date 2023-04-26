@@ -110,6 +110,11 @@ class BitwuzlaExceptionStream
   BITWUZLA_CHECK((arg).d_node && (arg).d_node->type().is_bv()) \
       << "expected bit-vector term";
 
+#define BITWUZLA_CHECK_TERM_IS_BOOL_VALUE(arg)            \
+  BITWUZLA_CHECK((arg).d_node && (arg).d_node->is_value() \
+                 && (arg).d_node->type().is_bool())       \
+      << "expected boolean value";
+
 #define BITWUZLA_CHECK_TERM_IS_BV_VALUE(arg)              \
   BITWUZLA_CHECK((arg).d_node && (arg).d_node->is_value() \
                  && (arg).d_node->type().is_bv())         \

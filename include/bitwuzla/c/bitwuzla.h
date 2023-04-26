@@ -1153,60 +1153,6 @@ BitwuzlaResult bitwuzla_check_sat_assuming(Bitwuzla *bitwuzla,
 BitwuzlaTerm bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term);
 
 /**
- * Get string representation of the current model value of given bit-vector
- * term.
- *
- * @param bitwuzla The Bitwuzla instance.
- * @param term The term to query a model value for.
- * @param base        The base in which the output strings are given; 2 for
- *                    binary, 10 for decimal, and 16 for hexadecimal.
- *
- * @return Binary string representation of current model value of term \p term.
- *         Return value is valid until next `bitwuzla_get_bv_value` call.
- */
-const char *bitwuzla_get_bv_value(Bitwuzla *bitwuzla,
-                                  BitwuzlaTerm term,
-                                  uint8_t base);
-
-/**
- * Get string of IEEE 754 standard representation of the current model value of
- * given floating-point term.
- *
- * @param bitwuzla    The Bitwuzla instance.
- * @param term        The term to query a model value for.
- * @param sign        Output parameter. Binary string representation of the
- *                    sign bit. Only valid until next call to
- *                    `bitwuzla_get_fp_value`.
- * @param exponent    Output parameter. Binary string representation of the
- *                    exponent bit-vector value. Only valid until next call to
- *                    `bitwuzla_get_fp_value`.
- * @param significand Output parameter. Binary string representation of the
- *                    significand bit-vector value. Only valid until next call
- *                    to `bitwuzla_get_fp_value`.
- * @param base        The base in which the output strings are given; 2 for
- *                    binary, 10 for decimal, and 16 for hexadecimal.
- */
-void bitwuzla_get_fp_value(Bitwuzla *bitwuzla,
-                           BitwuzlaTerm term,
-                           const char **sign,
-                           const char **exponent,
-                           const char **significand,
-                           uint8_t base);
-
-/**
- * Get string representation of the current model value of given rounding mode
- * term.
- *
- * @param bitwuzla The Bitwuzla instance.
- * @param term The rounding mode term to query a model value for.
- *
- * @return The BitwuzlaRoundingMode representation of the given rounding mode
- *         value.
- */
-BitwuzlaRoundingMode bitwuzla_get_rm_value(Bitwuzla *bitwuzla,
-                                           BitwuzlaTerm term);
-
-/**
  * Print the current input formula.
  *
  * @param bitwuzla The Bitwuzla instance.
@@ -1899,6 +1845,75 @@ bool bitwuzla_term_is_rm_value_rtp(BitwuzlaTerm term);
  * @return True if `term` is a rounding mode RTZ value.
  */
 bool bitwuzla_term_is_rm_value_rtz(BitwuzlaTerm term);
+
+/**
+ * Get Boolean representation of given Boolean value term.
+ *
+ * @param term The Boolean value term.
+ * @return Boolean representation of value term.
+ */
+bool bitwuzla_term_value_get_bool(BitwuzlaTerm term);
+
+/**
+ * Get string representation of given Boolean, bit-vector, floating-point, or
+ * rounding mode value term.
+ *
+ * @param term The value term.
+ * @param base The base in which the output strings are given; 2 for
+ *             binary, 10 for decimal, and 16 for hexadecimal.
+ *
+ * @return String representation of the value term.
+ *
+ * @note: Return value is valid until next `bitwuzla_term_value_get_bv` call.
+ * @note: base is ignored for Boolean and rounding mode values.
+ */
+const char *bitwuzla_term_value_get_str(BitwuzlaTerm term, uint8_t base);
+
+/**
+ * Get string representation of given floating-point value term.
+ *
+ * @param term The floating-point value term.
+ * @param base The base in which the output strings are given; 2 for
+ *             binary, 10 for decimal, and 16 for hexadecimal.
+ *
+ * @return String representation of floating-point value term.
+ *
+ * @note: Return value is valid until next `bitwuzla_term_value_get_fp` call.
+ */
+const char *bitwuzla_term_value_get_fp(BitwuzlaTerm term, uint8_t base);
+
+/**
+ * Get string of IEEE 754 standard representation of given floating-point value
+ * term.
+ *
+ * @param term        The floating-point value term.
+ * @param sign        Output parameter. String representation of the
+ *                    sign bit.
+ * @param exponent    Output parameter. String representation of the exponent
+ *                    bit-vector value.
+ * @param significand Output parameter. String representation of the
+ *                    significand bit-vector value.
+ * @param base        The base in which the output strings are given; 2 for
+ *                    binary, 10 for decimal, and 16 for hexadecimal.
+ *
+ * @note: Return values sign, exponent and significand are valid until next
+ *        `bitwuzla_term_value_get_fp_ieee` call.
+ */
+void bitwuzla_term_value_get_fp_ieee(BitwuzlaTerm term,
+                                     const char **sign,
+                                     const char **exponent,
+                                     const char **significand,
+                                     uint8_t base);
+
+/**
+ * Get representation of given rounding mode value term.
+ *
+ * @param term The rounding mode value term.
+ *
+ * @return The BitwuzlaRoundingMode representation of the given rounding mode
+ *         value.
+ */
+BitwuzlaRoundingMode bitwuzla_term_value_get_rm(BitwuzlaTerm term);
 
 /**
  * Print term .

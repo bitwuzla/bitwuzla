@@ -984,53 +984,12 @@ bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term)
   BITWUZLA_TRY_CATCH_END;
 }
 
-const char *
-bitwuzla_get_bv_value(Bitwuzla *bitwuzla, BitwuzlaTerm term, uint8_t base)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  BITWUZLA_CHECK_TERM_ID(term);
-  static thread_local std::string str;
-  str = bitwuzla->d_bitwuzla->get_bv_value(import_term(term), base);
-  return str.c_str();
-  BITWUZLA_TRY_CATCH_END;
-}
-
+#if 0
 void
-bitwuzla_get_fp_value(Bitwuzla *bitwuzla,
-                      BitwuzlaTerm term,
-                      const char **sign,
-                      const char **exponent,
-                      const char **significand,
-                      uint8_t base)
+bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file)
 {
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  BITWUZLA_CHECK_TERM_ID(term);
-  BITWUZLA_CHECK_NOT_NULL(sign);
-  BITWUZLA_CHECK_NOT_NULL(exponent);
-  BITWUZLA_CHECK_NOT_NULL(significand);
-  static thread_local std::string _sign;
-  static thread_local std::string _exp;
-  static thread_local std::string _sig;
-  bitwuzla->d_bitwuzla->get_fp_value(
-      import_term(term), _sign, _exp, _sig, base);
-  *sign        = _sign.c_str();
-  *exponent    = _exp.c_str();
-  *significand = _sig.c_str();
-  BITWUZLA_TRY_CATCH_END;
 }
-
-BitwuzlaRoundingMode
-bitwuzla_get_rm_value(Bitwuzla *bitwuzla, BitwuzlaTerm term)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  BITWUZLA_CHECK_TERM_ID(term);
-  return static_cast<BitwuzlaRoundingMode>(
-      bitwuzla->d_bitwuzla->get_rm_value(import_term(term)));
-  BITWUZLA_TRY_CATCH_END;
-}
+#endif
 
 void
 bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
@@ -1734,6 +1693,55 @@ bitwuzla_term_is_rm_value_rtz(BitwuzlaTerm term)
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   return import_term(term).is_rm_value_rtz();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+bool
+bitwuzla_term_value_get_bool(BitwuzlaTerm term)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM_ID(term);
+  return import_term(term).value<bool>();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+const char *
+bitwuzla_term_value_get_str(BitwuzlaTerm term, uint8_t base)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM_ID(term);
+  static thread_local std::string str;
+  str = import_term(term).value<std::string>(base);
+  return str.c_str();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+void
+bitwuzla_term_value_get_fp_ieee(BitwuzlaTerm term,
+                                const char **sign,
+                                const char **exponent,
+                                const char **significand,
+                                uint8_t base)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM_ID(term);
+  static thread_local std::string _sign, _exp, _sig;
+  std::tie(_sign, _exp, _sig) =
+      import_term(term)
+          .value<std::tuple<std::string, std::string, std::string>>(base);
+  *sign        = _sign.c_str();
+  *exponent    = _exp.c_str();
+  *significand = _sig.c_str();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+BitwuzlaRoundingMode
+bitwuzla_term_value_get_rm(BitwuzlaTerm term)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM_ID(term);
+  return static_cast<BitwuzlaRoundingMode>(
+      import_term(term).value<bitwuzla::RoundingMode>());
   BITWUZLA_TRY_CATCH_END;
 }
 

@@ -927,6 +927,83 @@ Term::str() const
   return d_node->str();
 }
 
+template <>
+bool
+Term::value(uint8_t base) const
+{
+  (void) base;
+  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_TERM_IS_BOOL_VALUE(*this);
+  return d_node->value<bool>();
+}
+
+template <>
+RoundingMode
+Term::value(uint8_t base) const
+{
+  (void) base;
+  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_TERM_IS_RM_VALUE(*this);
+  return s_rms.at(d_node->value<bzla::RoundingMode>());
+}
+
+// TODO support base -10 for signed decimal values
+template <>
+std::string
+Term::value(uint8_t base) const
+{
+  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK(d_node->is_value()) << "expected value term";
+  const auto &type = d_node->type();
+  if (type.is_bool())
+  {
+    return d_node->value<bool>() ? "true" : "false";
+  }
+  else if (type.is_bv())
+  {
+    BITWUZLA_CHECK_VALUE_BASE(base);
+    return d_node->value<bzla::BitVector>().str(base);
+  }
+  else if (type.is_fp())
+  {
+    BITWUZLA_CHECK_VALUE_BASE(base);
+    const bzla::FloatingPoint &fp_value = d_node->value<bzla::FloatingPoint>();
+    bzla::BitVector sign, exp, sig;
+    bzla::FloatingPoint::ieee_bv_as_bvs(
+        d_node->type(), fp_value.as_bv(), sign, exp, sig);
+    std::string prefix = base == 2 ? "#b" : (base == 16 ? "#x" : "");
+    return "(fp " + prefix + sign.str(base) + " " + prefix + exp.str(base) + " "
+           + prefix + sig.str(base) + ")";
+  }
+  else if (type.is_rm())
+  {
+    std::stringstream ss;
+    ss << s_rms.at(d_node->value<bzla::RoundingMode>());
+    return ss.str();
+  }
+  else
+  {
+    BITWUZLA_CHECK(false) << "unsupported type encountered";
+  }
+  return std::string();
+}
+
+template <>
+std::tuple<std::string, std::string, std::string>
+Term::value(uint8_t base) const
+{
+  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_TERM_IS_FP(*this);
+  BITWUZLA_CHECK_VALUE_BASE(base);
+  const bzla::FloatingPoint &fp_value = d_node->value<bzla::FloatingPoint>();
+  bzla::BitVector sign, exp, sig;
+  bzla::FloatingPoint::ieee_bv_as_bvs(
+      d_node->type(), fp_value.as_bv(), sign, exp, sig);
+  std::string prefix = base == 2 ? "#b" : (base == 16 ? "#x" : "");
+  return std::make_tuple(
+      prefix + sign.str(base), prefix + exp.str(base), prefix + sig.str(base));
+}
+
 bool
 operator==(const Term &a, const Term &b)
 {
@@ -1376,73 +1453,13 @@ Bitwuzla::get_value(const Term &term)
   return d_ctx->get_value(*term.d_node);
 }
 
-// TODO support base -10 for signed decimal values
-std::string
-Bitwuzla::get_bv_value(const Term &term, uint8_t base)
-{
-  BITWUZLA_CHECK_NOT_NULL(d_ctx);
-  BITWUZLA_CHECK_TERM_NOT_NULL(term);
-  BITWUZLA_CHECK_TERM_IS_BV(term);
-  BITWUZLA_CHECK_VALUE_BASE(base);
-  BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
-  BITWUZLA_CHECK_LAST_CALL_SAT("get value");
-  bzla::Node value = d_ctx->get_value(*term.d_node);
-  assert(value.is_value());
-  return value.value<bzla::BitVector>().str(base);
-}
-
-std::string
-Bitwuzla::get_fp_value(const Term &term, uint8_t base)
-{
-  BITWUZLA_CHECK_NOT_NULL(d_ctx);
-  BITWUZLA_CHECK_TERM_NOT_NULL(term);
-  BITWUZLA_CHECK_TERM_IS_FP(term);
-  BITWUZLA_CHECK_VALUE_BASE(base);
-  BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
-  BITWUZLA_CHECK_LAST_CALL_SAT("get value");
-  const bzla::FloatingPoint &fp_value =
-      d_ctx->get_value(*term.d_node).value<bzla::FloatingPoint>();
-  bzla::BitVector sign, exp, sig;
-  bzla::FloatingPoint::ieee_bv_as_bvs(
-      term.d_node->type(), fp_value.as_bv(), sign, exp, sig);
-  std::string prefix = base == 2 ? "#b" : (base == 16 ? "#x" : "");
-  return "(fp " + prefix + sign.str(base) + " " + prefix + exp.str(base) + " "
-         + prefix + sig.str(base);
-}
-
+#if 0
 void
-Bitwuzla::get_fp_value(const Term &term,
-                       std::string &sign,
-                       std::string &exponent,
-                       std::string &significand,
-                       uint8_t base)
+Bitwuzla::print_model(std::ostream &out, const std::string &format)
 {
-  BITWUZLA_CHECK_NOT_NULL(d_ctx);
-  BITWUZLA_CHECK_TERM_NOT_NULL(term);
-  BITWUZLA_CHECK_TERM_IS_FP(term);
-  BITWUZLA_CHECK_VALUE_BASE(base);
-  BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
-  BITWUZLA_CHECK_LAST_CALL_SAT("get value");
-  const bzla::FloatingPoint &fp_value =
-      d_ctx->get_value(*term.d_node).value<bzla::FloatingPoint>();
-  bzla::BitVector bv_sign, bv_exp, bv_sig;
-  bzla::FloatingPoint::ieee_bv_as_bvs(
-      term.d_node->type(), fp_value.as_bv(), bv_sign, bv_exp, bv_sig);
-  sign        = bv_sign.str(base);
-  exponent    = bv_exp.str(base);
-  significand = bv_sig.str(base);
+  // TODO
 }
-
-RoundingMode
-Bitwuzla::get_rm_value(const Term &term)
-{
-  BITWUZLA_CHECK_NOT_NULL(d_ctx);
-  BITWUZLA_CHECK_TERM_NOT_NULL(term);
-  BITWUZLA_CHECK_TERM_IS_RM(term);
-  BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
-  BITWUZLA_CHECK_LAST_CALL_SAT("get value");
-  return s_rms.at(d_ctx->get_value(*term.d_node).value<bzla::RoundingMode>());
-}
+#endif
 
 void
 Bitwuzla::print_formula(std::ostream &out, const std::string &format)
