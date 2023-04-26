@@ -916,12 +916,6 @@ Term::is_rm_value_rtz() const
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RTZ;
 }
 
-bool
-Term::is_const_array() const
-{
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::CONST_ARRAY;
-}
-
 std::string
 Term::str() const
 {

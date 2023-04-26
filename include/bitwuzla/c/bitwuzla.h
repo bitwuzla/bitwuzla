@@ -1901,15 +1901,6 @@ bool bitwuzla_term_is_rm_value_rtp(BitwuzlaTerm term);
 bool bitwuzla_term_is_rm_value_rtz(BitwuzlaTerm term);
 
 /**
- * Determine if a term is a constant array.
- *
- * @param term The term.
- *
- * @return True if `term` is a constant array.
- */
-bool bitwuzla_term_is_const_array(BitwuzlaTerm term);
-
-/**
  * Print term .
  *
  * @param term The term.

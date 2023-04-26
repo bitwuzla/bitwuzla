@@ -2314,15 +2314,6 @@ TEST_F(TestApi, term_is_rm_value_rtz)
   ASSERT_FALSE(d_rm_rtp.is_rm_value_rtz());
 }
 
-TEST_F(TestApi, term_is_const_array)
-{
-  ASSERT_FALSE(bitwuzla::Term().is_const_array());
-  ASSERT_TRUE(
-      bitwuzla::mk_const_array(d_arr_sort_bv, d_bv_zero8).is_const_array());
-  ASSERT_FALSE(d_array.is_const_array());
-  ASSERT_FALSE(d_array_fpbv.is_const_array());
-}
-
 TEST_F(TestApi, term_print)
 {
   GTEST_SKIP();  // TODO enable when implemented
@@ -2718,7 +2709,7 @@ TEST_F(TestApi, terms)
     }
 
     bitwuzla::Term tterm;
-    if (term.is_const_array())
+    if (term.kind() == bitwuzla::Kind::CONST_ARRAY)
     {
       ASSERT_EQ(size, 1);
       tterm = bitwuzla::mk_const_array(term.sort(), children[0]);
@@ -2872,7 +2863,7 @@ TEST_F(TestApi, substitute)
 
     bitwuzla::Term expected = bitwuzla::mk_const_array(array_sort, bv_value);
     ASSERT_EQ(result, expected);
-    ASSERT_TRUE(term.is_const_array());
+    ASSERT_EQ(term.kind(), bitwuzla::Kind::CONST_ARRAY);
   }
 }
 

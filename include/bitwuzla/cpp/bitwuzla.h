@@ -600,12 +600,6 @@ class Term
   bool is_rm_value_rtz() const;
 
   /**
-   * Determine if this term is a constant array.
-   * @return True if this term is a constant array.
-   */
-  bool is_const_array() const;
-
-  /**
    * Get the string representation of this term.
    * @return A string representation of this term.
    */

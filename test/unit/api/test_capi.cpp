@@ -3358,15 +3358,6 @@ TEST_F(TestCApi, term_is_rm_value_rtz)
   ASSERT_FALSE(bitwuzla_term_is_rm_value_rtz(d_rm_rtp));
 }
 
-TEST_F(TestCApi, term_is_const_array)
-{
-  ASSERT_DEATH(bitwuzla_term_is_const_array(0), d_error_inv_term);
-  ASSERT_TRUE(bitwuzla_term_is_const_array(
-      bitwuzla_mk_const_array(d_arr_sort_bv, d_bv_zero8)));
-  ASSERT_FALSE(bitwuzla_term_is_const_array(d_array));
-  ASSERT_FALSE(bitwuzla_term_is_const_array(d_array_fpbv));
-}
-
 TEST_F(TestCApi, print_term)
 {
   GTEST_SKIP();  // TODO enable when implemented
@@ -3789,7 +3780,7 @@ TEST_F(TestCApi, terms)
     }
 
     BitwuzlaTerm tterm;
-    if (bitwuzla_term_is_const_array(term))
+    if (bitwuzla_term_get_kind(term) == BITWUZLA_KIND_CONST_ARRAY)
     {
       ASSERT_EQ(size, 1);
       tterm =
@@ -3971,7 +3962,7 @@ TEST_F(TestCApi, substitute)
 
     BitwuzlaTerm expected = bitwuzla_mk_const_array(array_sort, bv_value);
     ASSERT_EQ(result, expected);
-    ASSERT_TRUE(bitwuzla_term_is_const_array(result));
+    ASSERT_EQ(bitwuzla_term_get_kind(result), BITWUZLA_KIND_CONST_ARRAY);
   }
   bitwuzla_delete(bitwuzla);
   bitwuzla_options_delete(options);

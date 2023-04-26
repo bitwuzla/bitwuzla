@@ -1737,15 +1737,6 @@ bitwuzla_term_is_rm_value_rtz(BitwuzlaTerm term)
   BITWUZLA_TRY_CATCH_END;
 }
 
-bool
-bitwuzla_term_is_const_array(BitwuzlaTerm term)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_TERM_ID(term);
-  return import_term(term).is_const_array();
-  BITWUZLA_TRY_CATCH_END;
-}
-
 void
 bitwuzla_print_term(BitwuzlaTerm term, const char *format, FILE *file)
 {
