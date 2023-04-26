@@ -763,15 +763,6 @@ Term::symbol() const
   return d_node->symbol();
 }
 
-#if 0
-void
-Term::set_symbol(
-    std::optional<std::reference_wrapper<const std::string>> symbol)
-{
-  // TODO
-}
-#endif
-
 bool
 Term::is_const() const
 {
@@ -1458,14 +1449,6 @@ Bitwuzla::get_rm_value(const Term &term)
   BITWUZLA_CHECK_LAST_CALL_SAT("get value");
   return s_rms.at(d_ctx->get_value(*term.d_node).value<bzla::RoundingMode>());
 }
-
-#if 0
-void
-Bitwuzla::print_model(std::ostream &out, const std::string &format)
-{
-  // TODO
-}
-#endif
 
 void
 Bitwuzla::print_formula(std::ostream &out, const std::string &format)

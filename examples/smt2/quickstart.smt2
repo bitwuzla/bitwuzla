@@ -1,12 +1,16 @@
-(set-logic QF_BV)
+(set-logic QF_ABV)
 (set-option :produce-models true)
 (declare-const x (_ BitVec 8))
 (declare-const y (_ BitVec 8))
+(declare-fun f ((_ BitVec 8) (_ BitVec 4)) (_ BitVec 8))
+(declare-const a (Array (_ BitVec 8) (_ BitVec 8)))
 (assert
     (distinct
         ((_ extract 3 0) (bvsdiv x (_ bv2 8)))
         ((_ extract 3 0) (bvashr y (_ bv1 8)))))
+(assert (= (f x ((_ extract 6 3) x)) y))
+(assert (= (select a x) y))
 (check-sat)
 (get-model)
-(get-value (x y (bvmul x x)))
+(get-value (x y f a (bvmul x x)))
 (exit)

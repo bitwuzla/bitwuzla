@@ -42,7 +42,7 @@ Python Bindings
   pip install .
 
 
-For how to use the Python bindings please refer to the :ref:`python-api`.
+For how to use the Python bindings, please refer to the :ref:`python-api`.
 
 *Additional Required Dependencies*
   * `cython <https://pypi.org/project/Cython>`_

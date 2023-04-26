@@ -1,52 +1,77 @@
-#include <bitwuzla/bitwuzla.h>
+#include <assert.h>
+#include <bitwuzla/c/bitwuzla.h>
 #include <stdio.h>
 
 int
 main()
 {
-  // First, create a Bitwuzla instance.
-  Bitwuzla *bzla = bitwuzla_new();
+  // First, create a Bitwuzla options instance.
+  BitwuzlaOptions *options = bitwuzla_options_new();
   // Then, enable model generation.
-  bitwuzla_set_option(bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  // Now, we enable CryptoMiniSat as SAT solver.
-  // Note: This will silently fall back to one of the compiled in SAT solvers
-  //       if the selected solver is not compiled in.
-  bitwuzla_set_option_str(bzla, BITWUZLA_OPT_SAT_ENGINE, "cms");
+  bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+  // Then, create a Bitwuzla instance.
+  Bitwuzla *bitwuzla = bitwuzla_new(options);
 
-  // Create a bit-vector sort of size 8.
-  BitwuzlaSort *sortbv8 = bitwuzla_mk_bv_sort(bzla, 8);
+  // Create bit-vector sorts of size 4 and 8.
+  BitwuzlaSort sortbv4 = bitwuzla_mk_bv_sort(4);
+  BitwuzlaSort sortbv8 = bitwuzla_mk_bv_sort(8);
+  // Create function sort.
+  BitwuzlaSort domain[2] = {sortbv8, sortbv4};
+  BitwuzlaSort sortfun   = bitwuzla_mk_fun_sort(2, domain, sortbv8);
+  // Create array sort.
+  BitwuzlaSort sortarr = bitwuzla_mk_array_sort(sortbv8, sortbv8);
 
-  // Create two bit-vector variables of that sort.
-  BitwuzlaTerm *x = bitwuzla_mk_const(bzla, sortbv8, "x");
-  BitwuzlaTerm *y = bitwuzla_mk_const(bzla, sortbv8, "y");
+  // Create two bit-vector constants of that sort.
+  BitwuzlaTerm x = bitwuzla_mk_const(sortbv8, "x");
+  BitwuzlaTerm y = bitwuzla_mk_const(sortbv8, "y");
+  // Create fun const.
+  BitwuzlaTerm f = bitwuzla_mk_const(sortfun, "f");
+  // Create array const.
+  BitwuzlaTerm a = bitwuzla_mk_const(sortarr, "a");
   // Create bit-vector values one and two of the same sort.
-  BitwuzlaTerm *one = bitwuzla_mk_bv_one(bzla, sortbv8);
+  BitwuzlaTerm one = bitwuzla_mk_bv_one(sortbv8);
   // alternatively, you can create bit-vector value one with:
   // BitwuzlaTerm *one =
-  //     bitwuzla_mk_bv_value(bzla, sortbv8, "1", BITWUZLA_BV_BASE_BIN);
-  // BitwuzlaTerm *one = bitwuzla_mk_bv_value_uint64(bzla, sortbv8, 1);
-  BitwuzlaTerm *two = bitwuzla_mk_bv_value_uint64(bzla, sortbv8, 2);
+  //     bitwuzla_mk_bv_value(bitwuzla, sortbv8, "1", BITWUZLA_BV_BASE_BIN);
+  // BitwuzlaTerm *one = bitwuzla_mk_bv_value_uint64(bitwuzla, sortbv8, 1);
+  BitwuzlaTerm two = bitwuzla_mk_bv_value_uint64(sortbv8, 2);
 
-  // (bvsdiv x (_ sortbv2 8))
-  BitwuzlaTerm *sdiv = bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_SDIV, x, two);
-  // (bvashr y (_ sortbv1 8))
-  BitwuzlaTerm *ashr = bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_ASHR, y, one);
-  // ((_ extract 3 0) (bvsdiv x (_ sortbv2 8)))
-  BitwuzlaTerm *sdive =
-      bitwuzla_mk_term1_indexed2(bzla, BITWUZLA_KIND_BV_EXTRACT, sdiv, 3, 0);
-  // ((_ extract 3 0) (bvashr x (_ sortbv1 8)))
-  BitwuzlaTerm *ashre =
-      bitwuzla_mk_term1_indexed2(bzla, BITWUZLA_KIND_BV_EXTRACT, ashr, 3, 0);
+  // (bvsdiv x (_ bv2 8))
+  BitwuzlaTerm sdiv = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SDIV, x, two);
+  // (bvashr y (_ bv1 8))
+  BitwuzlaTerm ashr = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ASHR, y, one);
+  // ((_ extract 3 0) (bvsdiv x (_ bv2 8)))
+  BitwuzlaTerm sdive =
+      bitwuzla_mk_term1_indexed2(BITWUZLA_KIND_BV_EXTRACT, sdiv, 3, 0);
+  // ((_ extract 3 0) (bvashr x (_ bv1 8)))
+  BitwuzlaTerm ashre =
+      bitwuzla_mk_term1_indexed2(BITWUZLA_KIND_BV_EXTRACT, ashr, 3, 0);
 
   // (assert
   //     (distinct
-  //         ((_ extract 3 0) (bvsdiv x (_ sortbv2 8)))
-  //         ((_ extract 3 0) (bvashr y (_ sortbv1 8)))
+  //         ((_ extract 3 0) (bvsdiv x (_ bv2 8)))
+  //         ((_ extract 3 0) (bvashr y (_ bv1 8)))))
+  bitwuzla_assert(bitwuzla,
+                  bitwuzla_mk_term2(BITWUZLA_KIND_DISTINCT, sdive, ashre));
+  // (assert (= (f x ((_ extract 6 3) x)) y))
+  bitwuzla_assert(bitwuzla,
+                  bitwuzla_mk_term2(
+                      BITWUZLA_KIND_EQUAL,
+                      bitwuzla_mk_term3(BITWUZLA_KIND_APPLY,
+                                        f,
+                                        x,
+                                        bitwuzla_mk_term1_indexed2(
+                                            BITWUZLA_KIND_BV_EXTRACT, x, 6, 3)),
+                      y));
+  // (assert (= (select a x) y))
   bitwuzla_assert(
-      bzla, bitwuzla_mk_term2(bzla, BITWUZLA_KIND_DISTINCT, sdive, ashre));
+      bitwuzla,
+      bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL,
+                        bitwuzla_mk_term2(BITWUZLA_KIND_ARRAY_SELECT, a, x),
+                        y));
 
   // (check-sat)
-  BitwuzlaResult result = bitwuzla_check_sat(bzla);
+  BitwuzlaResult result = bitwuzla_check_sat(bitwuzla);
 
   printf("Expect: sat\n");
   printf("Bitwuzla: %s\n\n",
@@ -56,34 +81,87 @@ main()
 
   printf("Model:\n");
   // Print model in SMT-LIBv2 format.
-  bitwuzla_print_model(bzla, "smt2", stdout);
-  printf("\n");
+  BitwuzlaTerm decls[4] = {x, y, f, a};
+  printf("(\n");
+  for (uint32_t i = 0; i < 4; ++i)
+  {
+    BitwuzlaSort sort = bitwuzla_term_get_sort(decls[i]);
+    printf("  (define-fun %s (", bitwuzla_term_get_symbol(decls[i]));
+    if (bitwuzla_sort_is_fun(sort))
+    {
+      BitwuzlaTerm value = bitwuzla_get_value(bitwuzla, decls[i]);
+      size_t size;
+      BitwuzlaTerm *children = bitwuzla_term_get_children(value, &size);
+      assert(size == 2);
+      size_t j = 0;
+      while (bitwuzla_term_get_kind(children[1]) == BITWUZLA_KIND_LAMBDA)
+      {
+        assert(bitwuzla_term_is_var(children[0]));
+        printf("%s(%s %s) ",
+               j > 0 ? " " : "",
+               bitwuzla_term_to_string(children[0]),
+               bitwuzla_sort_to_string(bitwuzla_term_get_sort(children[0])));
+        value    = children[1];
+        children = bitwuzla_term_get_children(value, &size);
+        j += 1;
+      }
+      assert(bitwuzla_term_is_var(children[0]));
+      // Note: The returned string of bitwuzla_term_to_string and
+      //       bitwuzla_sort_to_string does not have to be freed, but is only
+      //       valid until the next call to the respective function. Thus we
+      //       split printing into separate printf calls so that none of these
+      //       functions is called more than once in one printf call.
+      //       Alternatively, we could also first get and copy the strings, use
+      //       a single printf call, and then free the copied strings.
+      printf("%s(%s %s)) ",
+             j > 0 ? " " : "",
+             bitwuzla_term_to_string(children[0]),
+             bitwuzla_sort_to_string(bitwuzla_term_get_sort(children[0])));
+      printf(" %s",
+             bitwuzla_sort_to_string(bitwuzla_sort_fun_get_codomain(sort)));
+      printf(" %s)\n", bitwuzla_term_to_string(children[1]));
+    }
+    else
+    {
+      printf(") %s %s)\n",
+             bitwuzla_sort_to_string(sort),
+             bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, decls[i])));
+    }
+  }
+  printf(")\n");
 
-  // Get assignment strings for x and y
-  // Note: The returned string is only valid until the next call to
-  //       bitwuzla_get_bv_value
-  const char *xstr = bitwuzla_get_bv_value(bzla, x);  // returns "11111111"
+  // Print value for x and y.
+  // Note: The returned string of bitwuzla_get_bv_value is only valid until the
+  //       next call to bitwuzla_get_bv_value
+  const char *xstr =
+      bitwuzla_get_bv_value(bitwuzla, x, 2);  // returns "10011111"
   printf("assignment of x: %s\n", xstr);
-  const char *ystr = bitwuzla_get_bv_value(bzla, y);  // returns "00011110"
+  const char *ystr =
+      bitwuzla_get_bv_value(bitwuzla, y, 2);  // returns "11111111"
   printf("assignment of y: %s\n", ystr);
   printf("\n");
 
-  // Alternatively, get values for x and y as terms
-  BitwuzlaTerm *x_value = bitwuzla_get_value(bzla, x);
-  BitwuzlaTerm *y_value = bitwuzla_get_value(bzla, y);
-  const char *xvaluestr =
-      bitwuzla_get_bv_value(bzla, x_value);  // returns "11111111"
-  printf("assignment of x (via bitwuzla_get_value): %s\n", xvaluestr);
-  const char *yvaluestr =
-      bitwuzla_get_bv_value(bzla, y_value);  // returns "00011110"
-  printf("assignment of y (via bitwuzla_get_value): %s\n", yvaluestr);
+  // Alternatively, get values for x,y as terms
+  BitwuzlaTerm x_value = bitwuzla_get_value(bitwuzla, x);
+  BitwuzlaTerm y_value = bitwuzla_get_value(bitwuzla, y);
+  BitwuzlaTerm f_value = bitwuzla_get_value(bitwuzla, f);
+  BitwuzlaTerm a_value = bitwuzla_get_value(bitwuzla, a);
+  printf("assignment of x (via bitwuzla_get_value): %s\n",
+         bitwuzla_term_to_string(x_value));
+  printf("assignment of y (via bitwuzla_get_value): %s\n",
+         bitwuzla_term_to_string(y_value));
+  printf("assignment of f (via bitwuzla_get_value): %s\n",
+         bitwuzla_term_to_string(f_value));
+  printf("assignment of a (via bitwuzla_get_value): %s\n",
+         bitwuzla_term_to_string(a_value));
   printf("\n");
 
   // Query value of expression that does not occur in the input formula
-  BitwuzlaTerm *v = bitwuzla_get_value(
-      bzla, bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_MUL, x, x));
-  printf("assignment of v = x * x: %s\n", bitwuzla_get_bv_value(bzla, v));
+  BitwuzlaTerm v = bitwuzla_get_value(
+      bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, x, x));
+  printf("assignment of v = x * x: %s\n",
+         bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, v)));
 
   // Finally, delete the Bitwuzla instance.
-  bitwuzla_delete(bzla);
+  bitwuzla_delete(bitwuzla);
 }

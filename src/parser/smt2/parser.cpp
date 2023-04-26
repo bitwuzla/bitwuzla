@@ -576,6 +576,7 @@ Parser::parse_command_get_model()
         (*d_out) << (i > 0 ? " " : "") << "(" << value[0] << " "
                  << value[0].sort() << ") ";
         value = value[1];
+        i += 1;
       }
       assert(value[0].is_variable());
       (*d_out) << (i > 0 ? " " : "") << "(" << value[0] << " "

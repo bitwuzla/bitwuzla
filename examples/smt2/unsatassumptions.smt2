@@ -9,8 +9,11 @@
 (define-fun f0 ((a Float16)) Bool (fp.gt a (_ +zero 5 11)))
 (define-fun f1 ((a Float16)) (_ BitVec 4) (ite (f0 a) x0 #b0000))
 (define-fun f2 ((a Float16)) (_ BitVec 2) ((_ extract 1 0) (f1 a)))
-(define-fun assumption0 () Bool (bvult x2 (f2 (_ +zero 5 11))))
-(define-fun assumption1 () Bool (= x1 x2 x3))
-(define-fun assumption2 () Bool (= x4 ((_ to_fp_unsigned 5 11) RNE x3)))
-(check-sat-assuming (assumption0 assumption1 assumption2))
+(check-sat-assuming
+  (
+   (! (bvult x2 (f2 (_ +zero 5 11))) :named a0)
+   (! (= x1 x2 x3) :named a1)
+   (! (= x4 ((_ to_fp_unsigned 5 11) RNE x3)) :named a2)
+  )
+)
 (get-unsat-assumptions)

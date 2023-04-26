@@ -892,13 +892,6 @@ bitwuzla_assert(Bitwuzla *bitwuzla, BitwuzlaTerm term)
   BITWUZLA_TRY_CATCH_END;
 }
 
-#if 0
-void
-bitwuzla_assume(Bitwuzla *bitwuzla, BitwuzlaTerm term)
-{
-}
-#endif
-
 bool
 bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm term)
 {
@@ -944,18 +937,6 @@ bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size)
   return *size > 0 ? res.data() : nullptr;
   BITWUZLA_TRY_CATCH_END;
 }
-
-#if 0
-void
-bitwuzla_fixate_assumptions(Bitwuzla *bitwuzla)
-{
-}
-
-void
-bitwuzla_reset_assumptions(Bitwuzla *bitwuzla)
-{
-}
-#endif
 
 BitwuzlaResult
 bitwuzla_simplify(Bitwuzla *bitwuzla)
@@ -1050,35 +1031,6 @@ bitwuzla_get_rm_value(Bitwuzla *bitwuzla, BitwuzlaTerm term)
       bitwuzla->d_bitwuzla->get_rm_value(import_term(term)));
   BITWUZLA_TRY_CATCH_END;
 }
-
-#if 0
-void
-bitwuzla_get_array_value(Bitwuzla *bitwuzla,
-                         BitwuzlaTerm term,
-                         BitwuzlaTerm **indices,
-                         BitwuzlaTerm **values,
-                         size_t *size,
-                         BitwuzlaTerm *default_value)
-{
-}
-
-void
-bitwuzla_get_fun_value(Bitwuzla *bitwuzla,
-                       BitwuzlaTerm term,
-                       BitwuzlaTerm ***args,
-                       size_t *arity,
-                       BitwuzlaTerm **values,
-                       size_t *size)
-{
-}
-#endif
-
-#if 0
-void
-bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file)
-{
-}
-#endif
 
 void
 bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
@@ -1509,14 +1461,6 @@ bitwuzla_term_get_symbol(BitwuzlaTerm term)
   BITWUZLA_TRY_CATCH_END;
 }
 
-#if 0
-void
-bitwuzla_term_set_symbol(BitwuzlaTerm term, const char *symbol)
-{
-  // TODO: do we still want to support this?
-}
-#endif
-
 bool
 bitwuzla_term_is_equal_sort(BitwuzlaTerm term0, BitwuzlaTerm term1)
 {
@@ -1813,8 +1757,6 @@ bitwuzla_print_term(BitwuzlaTerm term, const char *format, FILE *file)
   BITWUZLA_TRY_CATCH_END;
 }
 
-extern "C" {
-
 /* smt2 parser only --------------------------------------------------------- */
 
 void
@@ -1840,50 +1782,4 @@ bitwuzla_get_option_from_string(BitwuzlaOptions *options, const char *str)
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_NOT_NULL(str);
   return export_option(options->d_options.option(str));
-}
-
-/* btor parser only --------------------------------------------------------- */
-
-void
-bitwuzla_set_bzla_id(BitwuzlaTerm term, int32_t id)
-{
-  // should not be needed
-#if 0
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  BZLA_CHECK_ARG_NOT_NULL(term);
-
-  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
-  assert(bzla_node_get_ext_refs(bzla_term));
-  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
-
-  BZLA_ABORT(
-      !bzla_node_is_bv_var(bzla_term) && !bzla_node_is_uf_array(bzla_term),
-      "expected bit-vector/array variable or UF");
-  bzla_node_set_bzla_id(bzla, bzla_term, id);
-#endif
-  (void) term;
-  (void) id;
-}
-
-/* btor2 parser only -------------------------------------------------------- */
-
-void
-bitwuzla_add_output(Bitwuzla *bitwuzla, BitwuzlaTerm term)
-{
-  // TODO:
-#if 0
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  BZLA_CHECK_ARG_NOT_NULL(term);
-
-  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
-  assert(bzla_node_get_ext_refs(bzla_term));
-  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
-
-  BZLA_PUSH_STACK(bzla->outputs, bzla_node_copy(bzla, bzla_term));
-#endif
-  (void) bitwuzla;
-  (void) term;
-}
 }

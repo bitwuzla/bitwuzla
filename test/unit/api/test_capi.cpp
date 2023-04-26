@@ -2215,27 +2215,6 @@ TEST_F(TestCApi, assert)
   bitwuzla_options_delete(options);
 }
 
-#if 0
-TEST_F(TestCApi, assume)
-{
-  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bv_const1), d_error_incremental);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-
-  ASSERT_DEATH(bitwuzla_assume(nullptr, d_true), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_assume(d_bzla, nullptr), d_error_not_null);
-  //  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_other_true), d_error_solver);
-  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bv_const8), d_error_exp_bool_term);
-
-  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bool_var), d_error_unexp_param_term);
-  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bool_lambda), d_error_exp_bool_term);
-  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bool_lambda_body),
-               d_error_unexp_param_term);
-
-  bitwuzla_assume(d_bzla, d_bool_apply);
-  bitwuzla_assume(d_bzla, d_bv_one1);
-}
-#endif
-
 TEST_F(TestCApi, is_unsat_assumption)
 {
   {
@@ -2596,176 +2575,6 @@ TEST_F(TestCApi, get_rm_value)
     bitwuzla_options_delete(options);
   }
 }
-
-#if 0
-TEST_F(TestCApi, get_array_value)
-{
-  GTEST_SKIP();  // Currently not working with Node migration in API
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  const BitwuzlaTerm *a = bitwuzla_mk_const(d_bzla, d_arr_sort_bvfp, nullptr);
-
-  const BitwuzlaTerm *i =
-      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "1", BITWUZLA_BV_BASE_DEC);
-  const BitwuzlaTerm *j =
-      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "10", BITWUZLA_BV_BASE_DEC);
-  const BitwuzlaTerm *k =
-      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "100", BITWUZLA_BV_BASE_DEC);
-
-  const BitwuzlaTerm *rm = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNE);
-  const BitwuzlaTerm *u =
-      bitwuzla_mk_fp_from_real(d_bzla, d_fp_sort16, rm, "1.3");
-  const BitwuzlaTerm *v =
-      bitwuzla_mk_fp_from_real(d_bzla, d_fp_sort16, rm, "15.123");
-  const BitwuzlaTerm *w =
-      bitwuzla_mk_fp_from_real(d_bzla, d_fp_sort16, rm, "1333.18");
-
-  const BitwuzlaTerm *stores = bitwuzla_mk_term3(
-      d_bzla,
-      BITWUZLA_KIND_ARRAY_STORE,
-      bitwuzla_mk_term3(
-          d_bzla,
-          BITWUZLA_KIND_ARRAY_STORE,
-          bitwuzla_mk_term3(d_bzla, BITWUZLA_KIND_ARRAY_STORE, a, i, u),
-          j,
-          v),
-      k,
-      w);
-  bitwuzla_check_sat(d_bzla);
-
-  size_t size;
-  const BitwuzlaTerm **indices, **values;
-  const BitwuzlaTerm *default_value;
-  bitwuzla_get_array_value(
-      d_bzla, stores, &indices, &values, &size, &default_value);
-
-  ASSERT_EQ(size, 3);
-  for (size_t ii = 0; ii < size; ++ii)
-  {
-    ASSERT_TRUE(indices[ii] == i || indices[ii] == j || indices[ii] == k);
-    ASSERT_TRUE(values[ii] == u || values[ii] == v || values[ii] == w);
-    bitwuzla_print_term(indices[ii], "smt2", stdout);
-    std::cout << " -> ";
-    bitwuzla_print_term(values[ii], "smt2", stdout);
-    std::cout << std::endl;
-  }
-
-  const BitwuzlaTerm *b = bitwuzla_mk_const_array(d_bzla, d_arr_sort_bvfp, w);
-  bitwuzla_get_array_value(d_bzla, b, &indices, &values, &size, &default_value);
-  ASSERT_EQ(size, 0);
-  ASSERT_EQ(indices, nullptr);
-  ASSERT_EQ(values, nullptr);
-  ASSERT_EQ(default_value, w);
-}
-
-TEST_F(TestCApi, get_fun_value)
-{
-  GTEST_SKIP();  // Currently not working with Node migration in API
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  const BitwuzlaTerm *f = bitwuzla_mk_const(d_bzla, d_fun_sort, nullptr);
-
-  const BitwuzlaTerm *arg0 =
-      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "42", BITWUZLA_BV_BASE_DEC);
-  const BitwuzlaTerm *arg1 = bitwuzla_mk_fp_from_real(
-      d_bzla,
-      d_fp_sort16,
-      bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTP),
-      "0.4324");
-  const BitwuzlaTerm *arg2 =
-      bitwuzla_mk_bv_value(d_bzla, d_bv_sort32, "381012", BITWUZLA_BV_BASE_DEC);
-
-  std::vector<const BitwuzlaTerm *> _args = {f, arg0, arg1, arg2};
-  const BitwuzlaTerm *app0 =
-      bitwuzla_mk_term(d_bzla, BITWUZLA_KIND_APPLY, _args.size(), _args.data());
-
-  bitwuzla_assert(d_bzla,
-                  bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, app0, arg0));
-  bitwuzla_check_sat(d_bzla);
-
-  size_t size, arity;
-  const BitwuzlaTerm ***args, **values;
-  bitwuzla_get_fun_value(d_bzla, f, &args, &arity, &values, &size);
-
-  ASSERT_EQ(size, 1);
-  ASSERT_EQ(arity, 3);
-
-  for (size_t i = 0; i < size; ++i)
-  {
-    for (size_t j = 0; j < arity; ++j)
-    {
-      bitwuzla_print_term(args[i][j], "smt2", stdout);
-      std::cout << " ";
-    }
-    std::cout << "-> ";
-    bitwuzla_print_term(values[i], "smt2", stdout);
-    std::cout << std::endl;
-  }
-}
-
-TEST_F(TestCApi, get_fun_value2)
-{
-  GTEST_SKIP();  // Currently not working with Node migration in API
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  const BitwuzlaSort *bv1       = bitwuzla_mk_bv_sort(d_bzla, 1);
-  const BitwuzlaSort *args1_1[] = {bv1, bv1};
-  const BitwuzlaSort *fn1_1_1   = bitwuzla_mk_fun_sort(d_bzla, 2, args1_1, bv1);
-  const BitwuzlaTerm *a         = bitwuzla_mk_const(d_bzla, fn1_1_1, "a");
-  const BitwuzlaTerm *t         = bitwuzla_mk_true(d_bzla);
-  const BitwuzlaTerm *f         = bitwuzla_mk_false(d_bzla);
-  const BitwuzlaTerm *a0_0 =
-      bitwuzla_mk_term3(d_bzla, BITWUZLA_KIND_APPLY, a, f, f);
-  const BitwuzlaTerm *a0_1 =
-      bitwuzla_mk_term3(d_bzla, BITWUZLA_KIND_APPLY, a, f, t);
-  const BitwuzlaTerm *c0 =
-      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, a0_0, t);
-  const BitwuzlaTerm *c1 =
-      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, a0_1, f);
-  bitwuzla_assert(d_bzla, c0);
-  bitwuzla_assert(d_bzla, c1);
-  bitwuzla_check_sat(d_bzla);
-
-  const BitwuzlaTerm ***args, **values;
-  size_t arity, size;
-  bitwuzla_get_fun_value(d_bzla, a, &args, &arity, &values, &size);
-  for (size_t i = 0; i < size; i += 1)
-  {
-    std::cout << "(" << bitwuzla_get_bv_value(d_bzla, args[i][0]);
-    for (size_t j = 1; j < arity; j += 1)
-    {
-      std::cout << ", " << bitwuzla_get_bv_value(d_bzla, args[i][j]);
-    }
-    std::cout << "): " << bitwuzla_get_bv_value(d_bzla, values[i]) << std::endl;
-  }
-}
-
-TEST_F(TestCApi, print_model)
-{
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-  ASSERT_DEATH(bitwuzla_print_model(d_bzla, "btor", stdout),
-               d_error_produce_models);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  ASSERT_DEATH(bitwuzla_print_model(nullptr, "btor", stdout), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_print_model(d_bzla, nullptr, stdout), d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_print_model(d_bzla, "smt2", nullptr), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_print_model(d_bzla, "asdf", stdout),
-               "invalid model output format");
-
-  bitwuzla_assert(d_bzla, d_bv_const1_true);
-  bitwuzla_assume(d_bzla, d_bv_const1_false);
-  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
-  ASSERT_DEATH(bitwuzla_print_model(d_bzla, "btor", stdout), d_error_sat);
-  bitwuzla_check_sat(d_bzla);
-  bitwuzla_print_model(d_bzla, "btor", stdout);
-  bitwuzla_print_model(d_bzla, "smt2", stdout);
-
-  bitwuzla_set_option(d_other_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  bitwuzla_assert(d_other_bzla, d_other_exists);
-  ASSERT_EQ(bitwuzla_check_sat(d_other_bzla), BITWUZLA_SAT);
-  ASSERT_DEATH(bitwuzla_print_model(d_other_bzla, "btor", stdout),
-               d_error_model_quant);
-  ASSERT_DEATH(bitwuzla_print_model(d_other_bzla, "smt2", stdout),
-               d_error_model_quant);
-}
-#endif
 
 TEST_F(TestCApi, print_formula)
 {
@@ -3193,13 +3002,6 @@ TEST_F(TestCApi, term_hash)
   ASSERT_DEATH(bitwuzla_term_hash(0), d_error_inv_term);
 }
 
-#if 0
-TEST_F(TestCApi, term_get_bitwuzla)
-{
-  ASSERT_DEATH(bitwuzla_term_get_bitwuzla(nullptr), d_error_not_null);
-}
-#endif
-
 TEST_F(TestCApi, term_get_sort)
 {
   ASSERT_DEATH(bitwuzla_term_get_sort(0), d_error_inv_term);
@@ -3285,17 +3087,6 @@ TEST_F(TestCApi, term_get_symbol)
   ASSERT_DEATH(bitwuzla_term_get_symbol(0), d_error_inv_term);
   ASSERT_EQ(std::string(bitwuzla_term_get_symbol(d_fun)), std::string("fun"));
 }
-
-#if 0
-TEST_F(TestCApi, term_set_symbol)
-{
-  ASSERT_DEATH(bitwuzla_term_set_symbol(nullptr, "fun"), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_term_set_symbol(d_fun, nullptr), d_error_exp_str);
-  bitwuzla_term_set_symbol(d_fun, "funfun");
-  ASSERT_EQ(std::string(bitwuzla_term_get_symbol(d_fun)),
-            std::string("funfun"));
-}
-#endif
 
 TEST_F(TestCApi, term_is_equal_sort)
 {

@@ -990,25 +990,6 @@ void bitwuzla_pop(Bitwuzla *bitwuzla, uint64_t nlevels);
  */
 void bitwuzla_assert(Bitwuzla *bitwuzla, BitwuzlaTerm term);
 
-#if 0
-/**
- * Assume formula.
- *
- * Requires that incremental solving has been enabled via
- * `bitwuzla_set_option()`.
- *
- * @param bitwuzla The Bitwuzla instance.
- * @param term The formula to assume.
- *
- * @see
- *   * `bitwuzla_set_option`
- *   * `bitwuzla_is_unsat_assumption`
- *   * `bitwuzla_get_unsat_assumptions`
- *   * `::BITWUZLA_OPT_INCREMENTAL`
- */
-void bitwuzla_assume(Bitwuzla *bitwuzla, BitwuzlaTerm term);
-#endif
-
 /**
  * Determine if an assumption is an unsat assumption.
  *
@@ -1080,28 +1061,6 @@ BitwuzlaTerm *bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
  *   * `bitwuzla_check_sat`
  */
 BitwuzlaTerm *bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
-
-#if 0
-/**
- * Assert all added assumptions.
- *
- * @param bitwuzla The Bitwuzla instance.
- *
- * @see
- *   * `bitwuzla_assume`
- */
-void bitwuzla_fixate_assumptions(Bitwuzla *bitwuzla);
-
-/**
- * Reset all added assumptions.
- *
- * @param bitwuzla The Bitwuzla instance.
- *
- * @see
- *   * `bitwuzla_assume`
- */
-void bitwuzla_reset_assumptions(Bitwuzla *bitwuzla);
-#endif
 
 /**
  * Simplify the current input formula.
@@ -1246,88 +1205,6 @@ void bitwuzla_get_fp_value(Bitwuzla *bitwuzla,
  */
 BitwuzlaRoundingMode bitwuzla_get_rm_value(Bitwuzla *bitwuzla,
                                            BitwuzlaTerm term);
-
-#if 0
-/**
- * Get the current model value of given array term.
- *
- * The string representation of `indices` and `values` can be queried via
- * `bitwuzla_get_bv_value()`, `bitwuzla_get_fp_value()`, and
- * `bitwuzla_get_rm_value()`.
- *
- * @param bitwuzla The Bitwuzla instance.
- * @param term The term to query a model value for.
- * @param indices List of indices of size `size`. 1:1 mapping to `values`,
- *                i.e., `index[i] -> value[i]`.
- * @param values List of values of size `size`.
- * @param size Size of `indices` and `values` list.
- * @param default_value The value of all other indices not in `indices` and
- *                      is set when base array is a constant array.
- */
-void bitwuzla_get_array_value(Bitwuzla *bitwuzla,
-                              BitwuzlaTerm term,
-                              BitwuzlaTerm **indices,
-                              BitwuzlaTerm **values,
-                              size_t *size,
-                              BitwuzlaTerm *default_value);
-
-/**
- * Get the current model value of given function term.
- *
- * The string representation of `args` and `values` can be queried via
- * `bitwuzla_get_bv_value()`, `bitwuzla_get_fp_value()`, and
- * `bitwuzla_get_rm_value()`.
- *
- * @param bitwuzla The Bitwuzla instance.
- * @param term The term to query a model value for.
- * @param args List of argument lists (nested lists) of size `size`. Each
- *             argument list is of size `arity`.
- * @param arity Size of each argument list in `args`.
- * @param values List of values of size `size`.
- * @param size Size of `indices` and `values` list.
- *
- * **Usage**
- * ```
- * size_t arity, size;
- * BitwuzlaTerm ***args, **values;
- * bitwuzla_get_fun_value(bzla, f, &args, &arity, &values, &size);
- *
- * for (size_t i = 0; i < size; ++i)
- * {
- *   // args[i] are argument lists of size arity
- *   for (size_t j = 0; j < arity; ++j)
- *   {
- *     // args[i][j] corresponds to value of jth argument of function f
- *   }
- *   // values[i] corresponds to the value of
- *   // (f args[i][0] ... args[i][arity - 1])
- * }
- * ```
- *
- */
-void bitwuzla_get_fun_value(Bitwuzla *bitwuzla,
-                            BitwuzlaTerm term,
-                            BitwuzlaTerm ***args,
-                            size_t *arity,
-                            BitwuzlaTerm **values,
-                            size_t *size);
-
-/**
- * Print a model for the current input formula.
- *
- * Requires that the last `bitwuzla_check_sat()` query returned
- * `::BITWUZLA_SAT`.
- *
- * @param bitwuzla The Bitwuzla instance.
- * @param format The output format for printing the model. Either `"btor"` for
- *               the BTOR format, or `"smt2"` for the SMT-LIB v2 format.
- * @param file The file to print the model to.
- *
- * @see
- *   * `bitwuzla_check_sat`
- */
-void bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file);
-#endif
 
 /**
  * Print the current input formula.
@@ -1747,16 +1624,6 @@ uint64_t bitwuzla_term_fun_get_arity(BitwuzlaTerm term);
  * @return The symbol of `term`. \c NULL if no symbol is defined.
  */
 const char *bitwuzla_term_get_symbol(BitwuzlaTerm term);
-
-#if 0
-/**
- * Set the symbol of a term.
- *
- * @param term The term.
- * @param symbol The symbol.
- */
-void bitwuzla_term_set_symbol(BitwuzlaTerm term, const char *symbol);
-#endif
 
 /**
  * Determine if the sorts of two terms are equal.
