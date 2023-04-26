@@ -1387,6 +1387,22 @@ tests_smt2 = [
   ['solver/quant/regsmtparselet.smt2'],
 ]
 
+tests_btor2_parser = [
+  ['parser/btor2perr000.btor2'],
+  ['parser/btor2perr001.btor2'],
+  ['parser/btor2perr002.btor2'],
+  ['parser/btor2perr003.btor2'],
+  ['parser/btor2perr004.btor2'],
+  ['parser/btor2perr005.btor2'],
+  ['parser/btor2perr006.btor2'],
+  ['parser/btor2perr007.btor2'],
+  ['parser/btor2perr008.btor2'],
+  ['parser/btor2perr009.btor2'],
+  ['parser/btor2perr010.btor2'],
+  ['parser/btor2perr011.btor2'],
+  ['parser/btor2perr012.btor2'],
+]
+
 tests_btor2_sat = [
   #['preprocess/bv/normalize_add_incomplete.btor', ['-db']],
   #['preprocess/bv/normalize_and_incomplete.btor', ['-db']],
@@ -1970,6 +1986,7 @@ tests_btor2_unsat = [
 regress_tests = [
   [tests_smt2],
   [tests_smt2, [], ['--produce-unsat-cores', '--check-unsat-core']],
+  [tests_btor2_parser],
   [tests_btor2_sat, '--check-sat'],
   [tests_btor2_unsat, '--check-unsat'],
   [tests_btor2_unsat, '--check-unsat', ['--produce-unsat-cores', '--check-unsat-core']],

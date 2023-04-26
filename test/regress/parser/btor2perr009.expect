@@ -1,0 +1,1 @@
+regress/parser/btor2perr009.btor2:3:11: invalid term id '3', already defined

@@ -1,0 +1,1 @@
+regress/parser/btor2perr008.btor2:2:15: invalid sort id '1', already defined

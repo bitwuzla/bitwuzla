@@ -1,0 +1,4 @@
+14 sort bitvec 75
+15 input 14 mbtvar3
+16 sort bitvec 6
+17 slice 16 15 72 66

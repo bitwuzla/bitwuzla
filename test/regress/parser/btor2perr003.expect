@@ -1,0 +1,1 @@
+regress/parser/btor2perr003.btor2:5:9: expected bit-vector term, got term '4'

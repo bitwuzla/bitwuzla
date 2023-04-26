@@ -1,0 +1,1 @@
+regress/parser/btor2perr011.btor2:8:13: index term does not match index sort of array

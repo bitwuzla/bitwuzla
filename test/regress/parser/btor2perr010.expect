@@ -1,0 +1,1 @@
+regress/parser/btor2perr010.btor2:8:11: expected array term of sort '4'

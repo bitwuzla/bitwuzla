@@ -1,0 +1,1 @@
+regress/parser/btor2perr007.btor2:4:12: expected bit-vector term of size 8, got a bit-vector term of size 12

@@ -102,6 +102,11 @@ Lexer::next_token_aux()
     }
     save_char(ch);
     d_token.push_back(0);
+    auto it = d_str2token.find(d_token.data());
+    if (it != d_str2token.end())
+    {
+      return it->second;
+    }
     return Token::SYMBOL;
   }
   d_token.push_back(0);

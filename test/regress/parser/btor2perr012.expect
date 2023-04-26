@@ -1,0 +1,1 @@
+regress/parser/btor2perr012.btor2:8:15: element term does not match element sort of array

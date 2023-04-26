@@ -4,6 +4,7 @@
 #include <array>
 #include <cassert>
 #include <cstring>
+#include <unordered_map>
 #include <vector>
 
 #include "parser/btor2/token.h"
@@ -53,6 +54,20 @@ class Lexer
    */
   const Coordinate& last_coo() const { return d_last_coo; }
 
+  /**
+   * Get the next character that will be parsed by the lexer.
+   * This call is internally handled as a look-ahead and mainly needed because
+   * the parser needs to determine if a line has ended or if there is still
+   * an (optional) symbol to parse.
+   * @return The look-ahead character.
+   */
+  int32_t look_ahead()
+  {
+    int32_t ch = next_char();
+    save_char(ch);
+    return ch;
+  }
+
  private:
   /** The set of legal printable characters. */
   inline static const std::string s_printable_ascii_chars =
@@ -73,6 +88,44 @@ class Lexer
   /** The set of non-letter/non-digit characters that may occur in symbols. */
   inline static const std::string s_extra_symbol_chars =
       "!\"#'()+-/*:<=>%?!.$_~&^<>@[\\]^_`{|}~";
+
+  inline static std::unordered_map<std::string, Token> d_str2token = {
+      {"add", Token::ADD},         {"and", Token::AND},
+      {"array", Token::ARRAY},     {"bad", Token::BAD},
+      {"bitvec", Token::BITVEC},   {"concat", Token::CONCAT},
+      {"const", Token::CONST},     {"constraint", Token::CONSTRAINT},
+      {"constd", Token::CONSTD},   {"consth", Token::CONSTH},
+      {"dec", Token::DEC},         {"eq", Token::EQ},
+      {"fair", Token::FAIR},       {"iff", Token::IFF},
+      {"implies", Token::IMPLIES}, {"inc", Token::INC},
+      {"init", Token::INIT},       {"input", Token::INPUT},
+      {"ite", Token::ITE},         {"justice", Token::JUSTICE},
+      {"mul", Token::MUL},         {"nand", Token::NAND},
+      {"neq", Token::NEQ},         {"neg", Token::NEG},
+      {"next", Token::NEXT},       {"nor", Token::NOR},
+      {"not", Token::NOT},         {"one", Token::ONE},
+      {"ones", Token::ONES},       {"or", Token::OR},
+      {"outpu", Token::OUTPUT},    {"read", Token::READ},
+      {"redand", Token::REDAND},   {"redor", Token::REDOR},
+      {"redxor", Token::REDXOR},   {"rol", Token::ROL},
+      {"ror", Token::ROR},         {"saddo", Token::SADDO},
+      {"sdiv", Token::SDIV},       {"sdivo", Token::SDIVO},
+      {"sext", Token::SEXT},       {"sgt", Token::SGT},
+      {"sgte", Token::SGTE},       {"slice", Token::SLICE},
+      {"sll", Token::SLL},         {"slt", Token::SLT},
+      {"slte", Token::SLTE},       {"sort", Token::SORT},
+      {"smod", Token::SMOD},       {"smulo", Token::SMULO},
+      {"sra", Token::SRA},         {"srem", Token::SREM},
+      {"srl", Token::SRL},         {"ssubo", Token::SSUBO},
+      {"state", Token::STATE},     {"sub", Token::SUB},
+      {"uaddo", Token::UADDO},     {"udiv", Token::UDIV},
+      {"uext", Token::UEXT},       {"ugt", Token::UGT},
+      {"ugte", Token::UGTE},       {"ult", Token::ULT},
+      {"ulte", Token::ULTE},       {"umulo", Token::UMULO},
+      {"urem", Token::UREM},       {"usubo", Token::USUBO},
+      {"write", Token::WRITE},     {"xnor", Token::XNOR},
+      {"xor", Token::XOR},         {"zero", Token::ZERO},
+  };
 
   /** The classification of a character according to where it may appear. */
   enum class CharacterClass

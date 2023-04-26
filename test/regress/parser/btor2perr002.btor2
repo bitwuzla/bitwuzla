@@ -1,0 +1,4 @@
+1 sort bitvec 109
+2 input 1 mbtvar37
+3 sort bitvec 1
+4 ult 3 2

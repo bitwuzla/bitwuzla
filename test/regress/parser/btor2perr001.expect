@@ -1,0 +1,1 @@
+regress/parser/btor2perr001.btor2:4:19: invalid indices for 'slice', expected first index to be >= second index

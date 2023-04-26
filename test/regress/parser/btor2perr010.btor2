@@ -1,0 +1,8 @@
+1 sort bitvec 1
+2 sort bitvec 5
+3 sort array 1 2
+4 sort array 2 1
+5 input 3
+6 input 1
+7 input 2
+6 write 4 5 6 7

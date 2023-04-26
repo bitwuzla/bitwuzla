@@ -132,9 +132,8 @@ gmp_dep = dependency('gmp',
 cadical_dep = dependency('cadical', required: true)
 symfpu_dep = dependency('symfpu', required: true)
 bitwuzla_libs_dep = dependency('bitwuzla_libs', required: true)
-btor2parser_dep = dependency('btor2parser', required: true)
 
-dependencies = [symfpu_dep, cadical_dep, gmp_dep, bitwuzla_libs_dep, btor2parser_dep]
+dependencies = [symfpu_dep, cadical_dep, gmp_dep, bitwuzla_libs_dep]
 
 # Public header include directory
 bitwuzla_inc = include_directories('../include')

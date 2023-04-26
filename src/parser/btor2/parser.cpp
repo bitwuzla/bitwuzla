@@ -21,13 +21,7 @@ Parser::Parser(bitwuzla::Options& options,
   init();
 }
 
-Parser::~Parser()
-{
-  if (d_btor2_parser)
-  {
-    btor2parser_delete(d_btor2_parser);
-  }
-}
+Parser::~Parser() {}
 
 std::string
 Parser::parse(bool parse_only)
@@ -43,673 +37,11 @@ Parser::parse(bool parse_only)
     return d_error;
   }
 
-  std::unordered_map<uint64_t, bitwuzla::Sort> sort_map;
-  std::unordered_map<uint64_t, bitwuzla::Term> term_map;
-
-  if (!btor2parser_read_lines(d_btor2_parser, d_infile))
-  {
-    d_error = btor2parser_error(d_btor2_parser);
-    d_done  = true;
-    return d_error;
-  }
-
-  std::vector<bitwuzla::Term> args;
-  std::vector<uint64_t> idxs;
-  Btor2LineIterator lit = btor2parser_iter_init(d_btor2_parser);
-  Btor2Line* line;
-  while ((line = btor2parser_iter_next(&lit)))
-  {
-    bitwuzla::Term term;
-    bitwuzla::Sort sort;
-
-    if (line->id > INT32_MAX)
-    {
-      error("given id '" + std::to_string(line->id) + "' exceeds INT32_MAX",
-            line->id);
-      d_done = true;
-      return d_error;
-    }
-
-    if (line->tag != BTOR2_TAG_sort && line->sort.id)
-    {
-      if (line->sort.id > INT32_MAX)
-      {
-        error("given id '" + std::to_string(line->sort.id)
-                  + "' exceeds INT32_MAX",
-              line->id);
-        d_done = true;
-        return d_error;
-      }
-      auto it = sort_map.find(line->sort.id);
-      assert(it != sort_map.end());
-      sort = it->second;
-      assert(!sort.is_null());
-    }
-
-    args.clear();
-    idxs.clear();
-    for (uint32_t i = 0; i < line->nargs; ++i)
-    {
-      int64_t signed_arg   = line->args[i];
-      int64_t unsigned_arg = signed_arg < 0 ? -signed_arg : signed_arg;
-      auto it              = term_map.find(unsigned_arg);
-      assert(it != term_map.end());
-      args.push_back(signed_arg < 0 ? bitwuzla::mk_term(
-                         it->second.sort().is_bool() ? bitwuzla::Kind::NOT
-                                                     : bitwuzla::Kind::BV_NOT,
-                         {it->second})
-                                    : it->second);
-    }
-
-    bitwuzla::Kind kind = bitwuzla::Kind::CONSTANT;
-    switch (line->tag)
-    {
-      case BTOR2_TAG_add:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_ADD;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_and:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_AND;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_concat:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_CONCAT;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_const:
-        assert(args.size() == 0);
-        assert(line->constant);
-        if (!BitVector::fits_in_size(
-                line->sort.bitvec.width, line->constant, 2))
-        {
-          error("'const' " + std::string(line->constant)
-                    + "does not fit into bit-vector of size "
-                    + std::to_string(line->sort.bitvec.width),
-                line->id);
-          d_done = true;
-          return d_error;
-        }
-        term = bitwuzla::mk_bv_value(sort, line->constant, 2);
-        break;
-
-      case BTOR2_TAG_constd:
-        assert(args.size() == 0);
-        assert(line->constant);
-        if (!BitVector::fits_in_size(
-                line->sort.bitvec.width, line->constant, 10))
-        {
-          error("'constd' " + std::string(line->constant)
-                    + "does not fit into bit-vector of size "
-                    + std::to_string(line->sort.bitvec.width),
-                line->id);
-          d_done = true;
-          return d_error;
-        }
-        term = bitwuzla::mk_bv_value(sort, line->constant, 10);
-        break;
-
-      case BTOR2_TAG_consth:
-        assert(args.size() == 0);
-        assert(line->constant);
-        if (!BitVector::fits_in_size(
-                line->sort.bitvec.width, line->constant, 16))
-        {
-          error("'consth' " + std::string(line->constant)
-                    + "does not fit into bit-vector of size "
-                    + std::to_string(line->sort.bitvec.width),
-                line->id);
-          d_done = true;
-          return d_error;
-        }
-        term = bitwuzla::mk_bv_value(sort, line->constant, 16);
-        break;
-
-      case BTOR2_TAG_constraint:
-        assert(args.size() == 1);
-        d_bitwuzla->assert_formula(bv1_term_to_bool(args[0]));
-        break;
-
-      case BTOR2_TAG_dec:
-        assert(args.size() == 1);
-        kind = bitwuzla::Kind::BV_DEC;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_eq:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::EQUAL;
-        for (auto& arg : args)
-        {
-          arg = bv1_term_to_bool(arg);
-        }
-        break;
-
-      case BTOR2_TAG_iff:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::IFF;
-        for (auto& arg : args)
-        {
-          arg = bv1_term_to_bool(arg);
-        }
-        break;
-
-      case BTOR2_TAG_implies:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::IMPLIES;
-        for (auto& arg : args)
-        {
-          arg = bv1_term_to_bool(arg);
-        }
-        break;
-
-      case BTOR2_TAG_inc:
-        assert(args.size() == 1);
-        kind = bitwuzla::Kind::BV_INC;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_input:
-        assert(args.size() == 0);
-        term = bitwuzla::mk_const(sort, line->symbol ? line->symbol : "");
-        break;
-
-      case BTOR2_TAG_ite:
-        assert(args.size() == 3);
-        kind = bitwuzla::Kind::ITE;
-        args[0] = bv1_term_to_bool(args[0]);
-        break;
-
-      case BTOR2_TAG_mul:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_MUL;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_nand:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_NAND;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_neq:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::DISTINCT;
-        for (auto& arg : args)
-        {
-          arg = bv1_term_to_bool(arg);
-        }
-        break;
-
-      case BTOR2_TAG_neg:
-        assert(args.size() == 1);
-        kind = bitwuzla::Kind::BV_NEG;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_nor:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_NOR;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_not:
-        assert(args.size() == 1);
-        kind = bitwuzla::Kind::BV_NOT;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_one:
-        assert(args.size() == 0);
-        term = bitwuzla::mk_bv_one(sort);
-        break;
-
-      case BTOR2_TAG_ones:
-        assert(args.size() == 0);
-        term = bitwuzla::mk_bv_ones(sort);
-        break;
-
-      case BTOR2_TAG_or:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_OR;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_output:
-        error("unsupported keyword 'output'", line->id);
-        d_done = true;
-        return d_error;
-
-      case BTOR2_TAG_read:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::ARRAY_SELECT;
-        args[1] = bool_term_to_bv1(args[1]);
-        break;
-
-      case BTOR2_TAG_redand:
-        assert(args.size() == 1);
-        kind = bitwuzla::Kind::BV_REDAND;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_redor:
-        assert(args.size() == 1);
-        kind = bitwuzla::Kind::BV_REDOR;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_redxor:
-        assert(args.size() == 1);
-        kind = bitwuzla::Kind::BV_REDXOR;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_rol:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_ROL;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_ror:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_ROR;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_saddo:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SADD_OVERFLOW;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_sdiv:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SDIV;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_sdivo:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SDIV_OVERFLOW;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_sext:
-        assert(args.size() == 1);
-        kind = bitwuzla::Kind::BV_SIGN_EXTEND;
-        idxs = {static_cast<uint64_t>(line->args[1])};
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_sgt:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SGT;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_sgte:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SGE;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_slice:
-        assert(args.size() == 1);
-        kind = bitwuzla::Kind::BV_EXTRACT;
-        idxs = {static_cast<uint64_t>(line->args[1]),
-                static_cast<uint64_t>(line->args[2])};
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_sll:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SHL;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_slt:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SLT;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_slte:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SLE;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_sort:
-        if (line->sort.tag == BTOR2_TAG_SORT_bitvec)
-        {
-          assert(line->sort.bitvec.width);
-          sort = bitwuzla::mk_bv_sort(line->sort.bitvec.width);
-        }
-        else
-        {
-          assert(line->sort.tag == BTOR2_TAG_SORT_array);
-          assert(line->sort.array.index);
-          if (line->sort.array.index > INT32_MAX)
-          {
-            error("given id '" + std::to_string(line->sort.array.index)
-                      + "' exceeds INT32_MAX",
-                  line->id);
-            d_done = true;
-            return d_error;
-          }
-          auto it = sort_map.find(line->sort.array.index);
-          assert(it != sort_map.end());
-          bitwuzla::Sort sort_index = it->second;
-          assert(line->sort.array.element);
-          if (line->sort.array.element > INT32_MAX)
-          {
-            error("given id '" + std::to_string(line->sort.array.element)
-                      + "' exceeds INT32_MAX",
-                  line->id);
-            d_done = true;
-            return d_error;
-          }
-          it = sort_map.find(line->sort.array.element);
-          assert(it != sort_map.end());
-          bitwuzla::Sort sort_element = it->second;
-          sort = bitwuzla::mk_array_sort(sort_index, sort_element);
-        }
-        {
-          auto [it, inserted] = sort_map.emplace(line->id, sort);
-          assert(inserted);
-        }
-        break;
-
-      case BTOR2_TAG_smod:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SMOD;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_smulo:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SMUL_OVERFLOW;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_sra:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_ASHR;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_srem:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SREM;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_srl:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SHR;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_ssubo:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SSUB_OVERFLOW;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_sub:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_SUB;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_uaddo:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_UADD_OVERFLOW;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_udiv:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_UDIV;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_uext:
-        assert(args.size() == 1);
-        kind = bitwuzla::Kind::BV_ZERO_EXTEND;
-        idxs = {static_cast<uint64_t>(line->args[1])};
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_ugt:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_UGT;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_ugte:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_UGE;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_ult:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_ULT;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_ulte:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_ULE;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_umulo:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_UMUL_OVERFLOW;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_urem:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_UREM;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_usubo:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_USUB_OVERFLOW;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_write:
-        assert(args.size() == 3);
-        kind = bitwuzla::Kind::ARRAY_STORE;
-        args[1] = bool_term_to_bv1(args[1]);
-        args[2] = bool_term_to_bv1(args[2]);
-        break;
-
-      case BTOR2_TAG_xnor:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_XNOR;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_xor:
-        assert(args.size() == 2);
-        kind = bitwuzla::Kind::BV_XOR;
-        for (auto& arg : args)
-        {
-          arg = bool_term_to_bv1(arg);
-        }
-        break;
-
-      case BTOR2_TAG_zero:
-        assert(args.size() == 0);
-        term = bitwuzla::mk_bv_zero(sort);
-        break;
-
-      default:
-        assert(line->tag == BTOR2_TAG_bad || line->tag == BTOR2_TAG_fair
-               || line->tag == BTOR2_TAG_init || line->tag == BTOR2_TAG_justice
-               || line->tag == BTOR2_TAG_next || line->tag == BTOR2_TAG_state);
-        error("model checking extensions not supported", line->id);
-        d_done = true;
-        return d_error;
-    }
-
-    if (kind != bitwuzla::Kind::CONSTANT)
-    {
-      term = bitwuzla::mk_term(kind, args, idxs);
-    }
-    assert(sort.is_null() || term.is_null() || term.sort() == sort
-           || (sort.is_bv() && sort.bv_size() == 1 && term.sort().is_bool())
-           || (sort.is_bool() && term.sort().is_bv()
-               && term.sort().bv_size() == 1));
-    if (!term.is_null())
-    {
-      auto [it, inserted] = term_map.emplace(line->id, term);
-      assert(inserted);
-    }
-  }
+  while (parse_line() && !d_done && !terminate())
+    ;
+
+  Msg(1) << "parsed " << d_statistics.num_lines << " lines in "
+         << ((double) d_statistics.time_parse.elapsed() / 1000) << " seconds";
   return d_error;
 }
 
@@ -718,8 +50,10 @@ Parser::parse(bool parse_only)
 void
 Parser::init()
 {
-  assert(!d_btor2_parser);
-  d_btor2_parser = btor2parser_new();
+  if (d_error.empty())
+  {
+    d_lexer.reset(new Lexer(d_infile));
+  }
   init_bitwuzla();
   bitwuzla::Sort bv1 = bitwuzla::mk_bv_sort(1);
   d_bv1_one          = bitwuzla::mk_bv_one(bv1);
@@ -742,17 +76,693 @@ Parser::bv1_term_to_bool(const bitwuzla::Term& term) const
   }
   return bitwuzla::mk_term(bitwuzla::Kind::EQUAL, {term, d_bv1_one});
 }
-void
-Parser::error(const std::string& error_msg, int64_t line_id)
+
+bool
+Parser::parse_line()
 {
-  d_error = d_infile_name + ":" + std::to_string(line_id) + ":0:" + error_msg;
+  Token token = d_lexer->next_token();
+
+  if (token == Token::ENDOFFILE)
+  {
+    d_done = true;
+    return true;
+  }
+
+  if (token == Token::INVALID)
+  {
+    return error_invalid();
+  }
+
+  int64_t line_id = 0;
+  if (!parse_number(false, line_id, true, token))
+  {
+    return false;
+  }
+  if (line_id > INT32_MAX)
+  {
+    return error("line id '" + std::to_string(line_id) + "' exceeds INT32_MAX");
+  }
+
+  Token op = d_lexer->next_token();
+  if (!check_token(op))
+  {
+    return false;
+  }
+
+  if (op == Token::SORT)
+  {
+    return parse_sort(line_id);
+  }
+
+  bitwuzla::Term term;
+  std::vector<bitwuzla::Term> args;
+  std::vector<uint64_t> idxs;
+  bitwuzla::Kind kind = bitwuzla::Kind::CONSTANT;
+
+  switch (op)
+  {
+    case Token::CONST:
+    case Token::CONSTH:
+    case Token::CONSTD:
+    case Token::ONE:
+    case Token::ONES:
+    case Token::ZERO:
+    case Token::INPUT: break;
+
+    case Token::CONSTRAINT:
+      if (!parse_term(term))
+      {
+        return false;
+      }
+      d_bitwuzla->assert_formula(bv1_term_to_bool(term));
+      if (d_lexer->look_ahead() != '\n')
+      {
+        d_lexer->next_token();
+      }
+      return true;
+
+    case Token::EQ:
+    case Token::IFF: kind = bitwuzla::Kind::EQUAL; break;
+
+    case Token::ADD: kind = bitwuzla::Kind::BV_ADD; break;
+    case Token::AND: kind = bitwuzla::Kind::BV_AND; break;
+    case Token::CONCAT: kind = bitwuzla::Kind::BV_CONCAT; break;
+    case Token::DEC: kind = bitwuzla::Kind::BV_DEC; break;
+    case Token::IMPLIES: kind = bitwuzla::Kind::IMPLIES; break;
+    case Token::INC: kind = bitwuzla::Kind::BV_INC; break;
+    case Token::ITE: kind = bitwuzla::Kind::ITE; break;
+    case Token::MUL: kind = bitwuzla::Kind::BV_MUL; break;
+    case Token::NAND: kind = bitwuzla::Kind::BV_NAND; break;
+    case Token::NEQ: kind = bitwuzla::Kind::DISTINCT; break;
+    case Token::NEG: kind = bitwuzla::Kind::BV_NEG; break;
+    case Token::NOR: kind = bitwuzla::Kind::BV_NOR; break;
+    case Token::NOT: kind = bitwuzla::Kind::BV_NOT; break;
+    case Token::OR: kind = bitwuzla::Kind::BV_OR; break;
+    case Token::READ: kind = bitwuzla::Kind::ARRAY_SELECT; break;
+    case Token::REDAND: kind = bitwuzla::Kind::BV_REDAND; break;
+    case Token::REDOR: kind = bitwuzla::Kind::BV_REDOR; break;
+    case Token::REDXOR: kind = bitwuzla::Kind::BV_REDXOR; break;
+    case Token::ROL: kind = bitwuzla::Kind::BV_ROL; break;
+    case Token::ROR: kind = bitwuzla::Kind::BV_ROR; break;
+    case Token::SADDO: kind = bitwuzla::Kind::BV_SADD_OVERFLOW; break;
+    case Token::SDIV: kind = bitwuzla::Kind::BV_SDIV; break;
+    case Token::SDIVO: kind = bitwuzla::Kind::BV_SDIV_OVERFLOW; break;
+    case Token::SEXT: kind = bitwuzla::Kind::BV_SIGN_EXTEND; break;
+    case Token::SGT: kind = bitwuzla::Kind::BV_SGT; break;
+    case Token::SGTE: kind = bitwuzla::Kind::BV_SGE; break;
+    case Token::SLICE: kind = bitwuzla::Kind::BV_EXTRACT; break;
+    case Token::SLL: kind = bitwuzla::Kind::BV_SHL; break;
+    case Token::SLT: kind = bitwuzla::Kind::BV_SLT; break;
+    case Token::SLTE: kind = bitwuzla::Kind::BV_SLE; break;
+    case Token::SMOD: kind = bitwuzla::Kind::BV_SMOD; break;
+    case Token::SMULO: kind = bitwuzla::Kind::BV_SMUL_OVERFLOW; break;
+    case Token::SRA: kind = bitwuzla::Kind::BV_ASHR; break;
+    case Token::SREM: kind = bitwuzla::Kind::BV_SREM; break;
+    case Token::SRL: kind = bitwuzla::Kind::BV_SHR; break;
+    case Token::SSUBO: kind = bitwuzla::Kind::BV_SSUB_OVERFLOW; break;
+    case Token::SUB: kind = bitwuzla::Kind::BV_SUB; break;
+    case Token::UADDO: kind = bitwuzla::Kind::BV_UADD_OVERFLOW; break;
+    case Token::UDIV: kind = bitwuzla::Kind::BV_UDIV; break;
+    case Token::UEXT: kind = bitwuzla::Kind::BV_ZERO_EXTEND; break;
+    case Token::UGT: kind = bitwuzla::Kind::BV_UGT; break;
+    case Token::UGTE: kind = bitwuzla::Kind::BV_UGE; break;
+    case Token::ULT: kind = bitwuzla::Kind::BV_ULT; break;
+    case Token::ULTE: kind = bitwuzla::Kind::BV_ULE; break;
+    case Token::UMULO: kind = bitwuzla::Kind::BV_UMUL_OVERFLOW; break;
+    case Token::UREM: kind = bitwuzla::Kind::BV_UREM; break;
+    case Token::USUBO: kind = bitwuzla::Kind::BV_USUB_OVERFLOW; break;
+    case Token::WRITE: kind = bitwuzla::Kind::ARRAY_STORE; break;
+    case Token::XNOR: kind = bitwuzla::Kind::BV_XNOR; break;
+    case Token::XOR: kind = bitwuzla::Kind::BV_XOR; break;
+
+    case Token::BAD:
+    case Token::FAIR:
+    case Token::INIT:
+    case Token::JUSTICE:
+    case Token::NEXT:
+    case Token::OUTPUT:
+    case Token::STATE:
+      return error("unsupported operator '" + std::to_string(op)
+                   + "', model checkin extensions not supported");
+
+    default:
+      return error("expected operator, got '" + std::string(d_lexer->token())
+                   + "'");
+  }
+
+  int64_t sort_id = 0;
+  if (!parse_number(false, sort_id))
+  {
+    return false;
+  }
+  auto it = d_sort_map.find(sort_id);
+  if (it == d_sort_map.end())
+  {
+    return error("invalid sort id '" + std::to_string(sort_id) + "'");
+  }
+  bitwuzla::Sort sort = it->second;
+  assert(!sort.is_null());
+  Lexer::Coordinate sort_coo = d_lexer->coo();
+
+  switch (op)
+  {
+    case Token::CONST:
+    case Token::CONSTD:
+    case Token::CONSTH: {
+      token = d_lexer->next_token();
+      if (!check_token(op))
+      {
+        return false;
+      }
+      if (token != Token::NUMBER)
+      {
+        return error("expected value, got '" + std::string(d_lexer->token())
+                     + "'");
+      }
+      std::string val = d_lexer->token();
+      uint8_t base    = 2;
+      if (op == Token::CONSTD)
+      {
+        base = 10;
+      }
+      else if (op == Token::CONSTH)
+      {
+        base = 16;
+      }
+      if (!sort.is_bv())
+      {
+        return error("expected bit-vector sort", sort_coo);
+      }
+      if (!BitVector::fits_in_size(sort.bv_size(), val, base))
+      {
+        return error("'" + val + "' of base "
+                     + std::to_string(static_cast<uint32_t>(base))
+                     + "does not fit into bit-vector of size "
+                     + std::to_string(sort.bv_size()));
+      }
+      term = bitwuzla::mk_bv_value(sort, val, base);
+      break;
+    }
+
+    case Token::INPUT:
+      if (d_lexer->look_ahead() != '\n')
+      {
+        d_lexer->next_token();
+        term = bitwuzla::mk_const(sort, d_lexer->token());
+      }
+      else
+      {
+        term = bitwuzla::mk_const(sort);
+      }
+      break;
+
+    case Token::ONE:
+      if (!sort.is_bv())
+      {
+        return error("expected bit-vector sort", sort_coo);
+      }
+      term = bitwuzla::mk_bv_one(sort);
+      break;
+
+    case Token::ONES:
+      if (!sort.is_bv())
+      {
+        return error("expected bit-vector sort", sort_coo);
+      }
+      term = bitwuzla::mk_bv_ones(sort);
+      break;
+
+    case Token::ZERO:
+      if (!sort.is_bv())
+      {
+        return error("expected bit-vector sort", sort_coo);
+      }
+      term = bitwuzla::mk_bv_zero(sort);
+      break;
+
+    case Token::ADD:
+    case Token::AND:
+    case Token::CONCAT:
+    case Token::MUL:
+    case Token::NAND:
+    case Token::NOR:
+    case Token::OR:
+    case Token::ROL:
+    case Token::ROR:
+    case Token::SADDO:
+    case Token::SDIV:
+    case Token::SDIVO:
+    case Token::SGT:
+    case Token::SGTE:
+    case Token::SLL:
+    case Token::SLT:
+    case Token::SLTE:
+    case Token::SMOD:
+    case Token::SMULO:
+    case Token::SRA:
+    case Token::SREM:
+    case Token::SRL:
+    case Token::SSUBO:
+    case Token::SUB:
+    case Token::UADDO:
+    case Token::UDIV:
+    case Token::UGT:
+    case Token::UGTE:
+    case Token::ULT:
+    case Token::ULTE:
+    case Token::UMULO:
+    case Token::UREM:
+    case Token::USUBO:
+    case Token::XNOR:
+    case Token::XOR:
+      for (size_t i = 0; i < 2; ++i)
+      {
+        if (!parse_term(term))
+        {
+          return false;
+        }
+        term = bool_term_to_bv1(term);
+        if (!term.sort().is_bv())
+        {
+          return error("expected bit-vector term, got term '"
+                       + std::string(d_lexer->token()) + "'");
+        }
+        if (i > 0 && op != Token::CONCAT && args[i - 1].sort() != term.sort())
+        {
+          return error("terms with mismatching sort");
+        }
+        args.push_back(term);
+      }
+      break;
+
+    case Token::DEC:
+    case Token::INC:
+    case Token::NEG:
+    case Token::NOT:
+    case Token::REDAND:
+    case Token::REDOR:
+    case Token::REDXOR:
+      if (!parse_term(term))
+      {
+        return false;
+      }
+      term = bool_term_to_bv1(term);
+      if (!term.sort().is_bv())
+      {
+        return error("expected bit-vector term, got term '"
+                     + std::string(d_lexer->token()) + "'");
+      }
+      args.push_back(term);
+      break;
+
+    case Token::SEXT:
+    case Token::SLICE:
+    case Token::UEXT: {
+      if (!parse_term(term))
+      {
+        return false;
+      }
+      term = bool_term_to_bv1(term);
+      if (!term.sort().is_bv())
+      {
+        return error("expected bit-vector term, got term '"
+                     + std::string(d_lexer->token()) + "'");
+      }
+      args.push_back(term);
+      int64_t uint = 0;
+      if (!parse_number(false, uint))
+      {
+        return false;
+      }
+      idxs.push_back(uint);
+      if (op == Token::SEXT || op == Token::UEXT)
+      {
+        if (term.sort().bv_size() + idxs[0] != sort.bv_size())
+        {
+          return error("expected bit-vector term of size "
+                       + std::to_string(sort.bv_size())
+                       + ", got a bit-vector term of size "
+                       + std::to_string(term.sort().bv_size() + idxs[0]));
+        }
+      }
+      else if (op == Token::SLICE)
+      {
+        if (!parse_number(false, uint))
+        {
+          return false;
+        }
+        idxs.push_back(uint);
+        if (idxs[0] < idxs[1])
+        {
+          return error("invalid indices for '" + std::to_string(op)
+                       + "', expected first index to be >= second index");
+        }
+        if (idxs[0] - idxs[1] + 1 != sort.bv_size())
+        {
+          return error("term with id " + std::to_string(line_id)
+                       + " has bit-vector size "
+                       + std::to_string(idxs[0] - idxs[1] + 1)
+                       + " but expected sort '" + std::to_string(sort_id)
+                       + "' of size " + std::to_string(sort.bv_size()));
+        }
+      }
+      break;
+    }
+
+    case Token::EQ:
+    case Token::NEQ:
+      for (size_t i = 0; i < 2; ++i)
+      {
+        if (!parse_term(term))
+        {
+          return false;
+        }
+        term = bv1_term_to_bool(term);
+        if (i > 0 && args[i - 1].sort() != term.sort())
+        {
+          return error("terms with mismatching sort");
+        }
+        args.push_back(term);
+      }
+      break;
+
+    case Token::IFF:
+    case Token::IMPLIES:
+      for (size_t i = 0; i < 2; ++i)
+      {
+        if (!parse_term(term))
+        {
+          return false;
+        }
+        term = bv1_term_to_bool(term);
+        if (!term.sort().is_bool())
+        {
+          return error("expected bit-vector term of size 1, got term '"
+                       + std::string(d_lexer->token()) + "'");
+        }
+        if (i > 0 && args[i - 1].sort() != term.sort())
+        {
+          return error("terms with mismatching sort");
+        }
+        args.push_back(term);
+      }
+      break;
+
+    case Token::ITE:
+      for (size_t i = 0; i < 3; ++i)
+      {
+        if (!parse_term(term))
+        {
+          return false;
+        }
+        term = bv1_term_to_bool(term);
+        if (i == 0)
+        {
+          if (!term.sort().is_bool())
+          {
+            return error("expected bit-vector term of size 1, got term '"
+                         + std::string(d_lexer->token()) + "'");
+          }
+        }
+        else if (i > 1 && args[i - 1].sort() != term.sort())
+        {
+          return error("terms with mismatching sort");
+        }
+        args.push_back(term);
+      }
+      break;
+
+      break;
+    case Token::READ:
+      if (!parse_term(term))
+      {
+        return false;
+      }
+      if (!term.sort().is_array())
+      {
+        return error("expected array term, got term '"
+                     + std::string(d_lexer->token()) + "'");
+      }
+      args.push_back(term);
+      if (!parse_term(term))
+      {
+        return false;
+      }
+      term = bool_term_to_bv1(term);
+      if (!term.sort().is_bv())
+      {
+        return error("expected bit-vector term, got term '"
+                     + std::string(d_lexer->token()) + "'");
+      }
+      args.push_back(term);
+      break;
+
+    case Token::WRITE:
+      if (!parse_term(term))
+      {
+        return false;
+      }
+      if (!term.sort().is_array())
+      {
+        return error("expected array term, got term '"
+                     + std::string(d_lexer->token()) + "'");
+      }
+      if (term.sort() != sort)
+      {
+        return error("expected array term of sort '" + std::to_string(sort_id)
+                     + "'");
+      }
+      args.push_back(term);
+      for (size_t i = 0; i < 2; ++i)
+      {
+        if (!parse_term(term))
+        {
+          return false;
+        }
+        term = bool_term_to_bv1(term);
+        if (!term.sort().is_bv())
+        {
+          return error("expected bit-vector term, got term '"
+                       + std::string(d_lexer->token()) + "'");
+        }
+        if (i == 0)
+        {
+          if (term.sort() != sort.array_index())
+          {
+            return error("index term does not match index sort of array");
+          }
+        }
+        else
+        {
+          if (term.sort() != sort.array_element())
+          {
+            return error("element term does not match element sort of array");
+          }
+        }
+        args.push_back(term);
+      }
+      break;
+    default: assert(false);
+  }
+
+  if (kind != bitwuzla::Kind::CONSTANT)
+  {
+    term = bitwuzla::mk_term(kind, args, idxs);
+  }
+  assert(
+      sort.is_null() || term.is_null() || term.sort() == sort
+      || (sort.is_bv() && sort.bv_size() == 1 && term.sort().is_bool())
+      || (sort.is_bool() && term.sort().is_bv() && term.sort().bv_size() == 1));
+  if (!term.is_null())
+  {
+    auto [it, inserted] = d_term_map.emplace(line_id, term);
+    if (!inserted)
+    {
+      return error("invalid term id '" + std::to_string(line_id)
+                   + "', already defined");
+    }
+  }
+  if (op != Token::INPUT && d_lexer->look_ahead() != '\n')
+  {
+    d_lexer->next_token();
+  }
+  return true;
+}
+
+bool
+Parser::parse_number(bool sign, int64_t& res, bool look_ahead, Token la)
+{
+  Token token;
+  if (look_ahead)
+  {
+    token = la;
+  }
+  else
+  {
+    token = d_lexer->next_token();
+    if (!check_token(token))
+    {
+      return false;
+    }
+  }
+  if (token != Token::NUMBER)
+  {
+    return error("expected integer, got '" + std::string(d_lexer->token())
+                 + "'");
+  }
+  assert(d_lexer->has_token());
+  try
+  {
+    res = std::stoll(d_lexer->token());
+    if (!sign && res < 0)
+    {
+      return error("expected non-negative integer, got '"
+                   + std::string(d_lexer->token()) + "'");
+    }
+    return true;
+  }
+  catch (...)
+  {
+    return error("invalid 64 bit integer '" + std::string(d_lexer->token())
+                 + "'");
+  }
+  return error("expected 64 bit integer");
+}
+
+bool
+Parser::parse_sort(int64_t line_id)
+{
+  Token token = d_lexer->next_token();
+  if (!check_token(token))
+  {
+    return false;
+  }
+
+  if (token != Token::BITVEC && token != Token::ARRAY)
+  {
+    assert(d_lexer->has_token());
+    return error("unexpected token '" + std::string(d_lexer->token()) + "'");
+  }
+
+  bitwuzla::Sort sort;
+  if (token == Token::BITVEC)
+  {
+    int64_t bw = 0;
+    if (!parse_number(false, bw))
+    {
+      return false;
+    }
+    sort = bitwuzla::mk_bv_sort(bw);
+  }
+  else
+  {
+    int64_t sindex = 0;
+    if (!parse_number(false, sindex))
+    {
+      return false;
+    }
+    auto it = d_sort_map.find(sindex);
+    if (it == d_sort_map.end())
+    {
+      return error("invalid sort id '" + std::to_string(sindex) + "'");
+    }
+    bitwuzla::Sort sort_index = it->second;
+
+    int64_t selem = 0;
+    if (!parse_number(false, selem))
+    {
+      return false;
+    }
+    it = d_sort_map.find(selem);
+    if (it == d_sort_map.end())
+    {
+      return error("invalid sort id '" + std::to_string(selem) + "'");
+    }
+    bitwuzla::Sort sort_elem = it->second;
+    sort                     = bitwuzla::mk_array_sort(sort_index, sort_elem);
+  }
+  auto [it, inserted] = d_sort_map.emplace(line_id, sort);
+  if (!inserted)
+  {
+    return error("invalid sort id '" + std::to_string(line_id)
+                 + "', already defined");
+  }
+  return true;
+}
+
+bool
+Parser::parse_term(bitwuzla::Term& res)
+{
+  int64_t term_id = 0;
+  if (!parse_number(true, term_id))
+  {
+    return false;
+  }
+  bool inv = term_id < 0;
+  term_id  = inv ? -term_id : term_id;
+  auto it  = d_term_map.find(term_id);
+  if (it == d_term_map.end())
+  {
+    return error("invalid term id '" + std::to_string(term_id) + "'");
+  }
+  if (inv)
+  {
+    if (it->second.sort().is_bool())
+    {
+      res = bitwuzla::mk_term(bitwuzla::Kind::NOT, {it->second});
+    }
+    else if (it->second.sort().is_bv())
+    {
+      res = bitwuzla::mk_term(bitwuzla::Kind::BV_NOT, {it->second});
+    }
+    else
+    {
+      return error("invalid negative id '-" + std::to_string(term_id)
+                   + "' for term that is neither bit-vector nor boolean");
+    }
+  }
+  else
+  {
+    res = it->second;
+  }
+  return true;
+}
+
+bool
+Parser::error(const std::string& error_msg,
+              const std::optional<Lexer::Coordinate>& coo)
+{
+  assert(d_lexer);
+  const Lexer::Coordinate& c = coo ? *coo : d_lexer->coo();
+  d_error = d_infile_name + ":" + std::to_string(c.line) + ":"
+            + std::to_string(c.col) + ": " + error_msg;
+  //#ifndef NDEBUG
+  //  std::cout << "[error] " << d_error << std::endl;
+  //  assert(false);
+  //#endif
+  return false;
+}
+
+bool
+Parser::error_invalid()
+{
+  assert(d_lexer);
+  assert(d_lexer->error());
+  return error(d_lexer->error_msg());
+}
+
+bool
+Parser::error_eof()
+{
+  return error("unexpected end of file", d_lexer->coo());
 }
 
 /* Parser::Statistics ------------------------------------------------------- */
 
 Parser::Statistics::Statistics()
-    : time_parse(
-        d_stats.new_stat<util::TimerStatistic>("parser::smt2::time_parse"))
+    : num_lines(d_stats.new_stat<uint64_t>("parser::btor2:num_lines")),
+      time_parse(
+          d_stats.new_stat<util::TimerStatistic>("parser::btor2::time_parse"))
 {
 }
 
