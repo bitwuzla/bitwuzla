@@ -1867,23 +1867,10 @@ bool bitwuzla_term_value_get_bool(BitwuzlaTerm term);
  *
  * @return String representation of the value term.
  *
- * @note: Return value is valid until next `bitwuzla_term_value_get_bv` call.
- * @note: base is ignored for Boolean and rounding mode values.
+ * @note Return value is valid until next `bitwuzla_term_value_get_bv` call.
+ * @note base is ignored for Boolean and rounding mode values.
  */
 const char *bitwuzla_term_value_get_str(BitwuzlaTerm term, uint8_t base);
-
-/**
- * Get string representation of given floating-point value term.
- *
- * @param term The floating-point value term.
- * @param base The base in which the output strings are given; 2 for
- *             binary, 10 for decimal, and 16 for hexadecimal.
- *
- * @return String representation of floating-point value term.
- *
- * @note: Return value is valid until next `bitwuzla_term_value_get_fp` call.
- */
-const char *bitwuzla_term_value_get_fp(BitwuzlaTerm term, uint8_t base);
 
 /**
  * Get string of IEEE 754 standard representation of given floating-point value
@@ -1899,8 +1886,8 @@ const char *bitwuzla_term_value_get_fp(BitwuzlaTerm term, uint8_t base);
  * @param base        The base in which the output strings are given; 2 for
  *                    binary, 10 for decimal, and 16 for hexadecimal.
  *
- * @note: Return values sign, exponent and significand are valid until next
- *        `bitwuzla_term_value_get_fp_ieee` call.
+ * @note Return values sign, exponent and significand are valid until next
+ *       `bitwuzla_term_value_get_fp_ieee` call.
  */
 void bitwuzla_term_value_get_fp_ieee(BitwuzlaTerm term,
                                      const char **sign,

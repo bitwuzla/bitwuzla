@@ -69,22 +69,20 @@ API:
 - Remove support for `bitwuzla_fixate_assumptions` and `bitwuzla_reset_assumptions`
 - Remove support for `bitwuzla_term_set_symbol`
 
-- `bitwuzla_get_fp_value` now additionally takes the numeric base in which the
-   output value string is given as an argument:
-   `bitwuzla_get_bv_value(Bitwuzla*, const BitwuzlaTerm*)` ->
-   `bitwuzla_get_bv_value(Bitwuzla*, BitwuzlaTerm, uint8_t)`
+- Remove support for `bitwuzla_get_bv_value`
+  -> use `bitwuzla_get_value` + `bitwuzla_term_value_get_str` instead
 
-- `bitwuzla_get_fp_value` now also takes the numeric base in which the output
-  value string is given as an argument:
-  `bitwuzla_get_fp_value(Bitwuzla*, const BitwuzlaTerm*, const char**, const char**, const char**)` ->
-  `bitwuzla_get_fp_value(Bitwuzla*, BitwuzlaTerm, const char**, const char**, const char**, uint8_t)`
+- Remove support for `bitwuzla_get_fp_value`
+  -> use `bitwuzla_get_value` + `bitwuzla_term_value_get_str` or
+     `bitwuzla_term_value_get_fp_ieee` instead
 
 - `bitwuzla_get_rm_value` now returns a BitwuzlaRoundingMode instead of a string
 
 - Remove support for `bitwuzla_get_array_value`
-  -> use `bitwuzla_get_value` in combination with `bitwuzla_term_to_string` instead
+  -> use `bitwuzla_get_value` + `bitwuzla_term_value_get_*` instead
 - Remove support for `bitwuzla_get_fun_value`
-  -> use `bitwuzla_get_value` in combination with `bitwuzla_term_to_string` instead
+  -> use `bitwuzla_get_value` + `bitwuzla_term_value_get_*` instead
+
 - Remove support for `bitwuzla_print_model`
   -> see `examples/c/quickstart.c` for an example of how to print the model
 

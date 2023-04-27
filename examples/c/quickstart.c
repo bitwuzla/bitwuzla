@@ -137,11 +137,11 @@ main()
   // Print value for x and y.
   // Note: The returned string of bitwuzla_get_bv_value is only valid until the
   //       next call to bitwuzla_get_bv_value
-  const char *xstr =
-      bitwuzla_get_bv_value(bitwuzla, x, 2);  // returns "10011111"
+  const char *xstr = bitwuzla_term_value_get_str(
+      bitwuzla_get_value(bitwuzla, x), 2);  // returns "10011111"
   printf("assignment of x: %s\n", xstr);
-  const char *ystr =
-      bitwuzla_get_bv_value(bitwuzla, y, 2);  // returns "11111111"
+  const char *ystr = bitwuzla_term_value_get_str(
+      bitwuzla_get_value(bitwuzla, y), 2);  // returns "10011111"
   printf("assignment of y: %s\n", ystr);
   printf("\n");
 

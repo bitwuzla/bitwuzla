@@ -658,56 +658,6 @@ template <>
 std::tuple<std::string, std::string, std::string> Term::value(
     uint8_t base) const;
 
-#if 0
-  /**
-   * Get string representation of the current model value of given bit-vector
-   * term.
-   * @param term The term to query a model value for.
-   * @param base The base in which the resulting string is to be given. 2 for
-   *             binary, 10 for decimal, and 16 for hexadecimal.
-   * @return String representation of current model value of term \p term.
-   */
-  std::string bv_value(const Term &term, uint8_t base = 2);
-  /**
-   * Get string of IEEE 754 standard representation of the current model
-   * value of given floating-point term.
-   *
-   * @param term The term to query a model value for.
-   * @param base The base in which the resulting string is to be given. 2 for
-   *             binary, 10 for decimal, and 16 for hexadecimal.
-   * @return String representation of current model value of term \p term.
-   */
-  std::string get_fp_value(const Term &term, uint8_t base = 2);
-  /**
-   * Get sign, exponent and significand string of IEEE 754 standard
-   * representation of the current model value of given floating-point term.
-   *
-   * @param term The term to query a model value for.
-   * @param sign        Output parameter. The string representation of the sign
-   *                    bit.
-   * @param exponent    Output parameter. The string representation of the
-   *                    exponent.
-   * @param significand Output parameter. The string representation of the
-   *                    exponent.
-   * @param base The base in which the resulting string is to be given. 2 for
-   *             binary, 10 for decimal, and 16 for hexadecimal.
-   */
-  void get_fp_value(const Term &term,
-                    std::string &sign,
-                    std::string &exponent,
-                    std::string &significand,
-                    uint8_t base = 2);
-
-  /**
-   * Get string representation of the current model value of given rounding
-   * mode term.
-   *
-   * @param term The rounding mode term to query a model value for.
-   * @return The rounding mode enum value.
-   */
-  RoundingMode get_rm_value(const Term &term);
-#endif
-
 /**
  * Syntactical equality operator.
  *
@@ -1166,24 +1116,6 @@ class Bitwuzla
    * @see `check_sat`
    */
   Term get_value(const Term &term);
-
-#if 0
-  /**
-   * Print a model for the current input formula to the given output stream.
-   *
-   * Requires that the last `check_sat()` query returned `Result::SAT`.
-   *
-   * @param out    The output stream.
-   * @param format The output format for printing the model.
-   *               Either `"btor"` for the BTOR format, or `"smt2"` for the
-   *               SMT-LIB v2 format.
-   *
-   * @see
-   *   * `check_sat`
-   *   * `Result`
-   */
-  void print_model(std::ostream &out, const std::string &format);
-#endif
 
   /**
    * Print the current input formula to the given output stream.
