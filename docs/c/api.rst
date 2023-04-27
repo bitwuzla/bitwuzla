@@ -14,29 +14,36 @@ C API Documentation
 Quickstart
 ----------
 
-First, create a :c:struct:`Bitwuzla` instance:
+First, create a :cpp:struct:`BitwuzlaOptions` instance:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 8
+     :lines: 9
 
-This instance can be configured via :c:func:`bitwuzla_set_option()`.  
+This instance can be configured via :cpp:func:`bitwuzla_set_option()`.  
 For example, to enable model generation
 (SMT-LIB: :code:`(set-option :produce-models true)`):
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 10
+     :lines: 11
 
-Some options expect string values rather than integer values, for example,
-to enable CryptoMiniSat as back end SAT solver instead of the default
-SAT solver CaDiCaL:
+Some options have modes, which can be configured via the string representation
+of their modes. For example, to enable CaDiCaL as back end SAT solver (this
+is for illustration purposes only, CaDiCaL is configured by default):
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 12-14
+     :lines: 16
 
 For more details on available options, see :ref:`c/options:options`.
+
+Then, create a :cpp:struct:`Bitwuzla` instance (configuration options are
+now frozen and cannot be changed for this instance):
+
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 18
 
 Next, you will want to create some expressions and assert formulas.
 For example, consider the following SMT-LIB input:
@@ -48,70 +55,64 @@ This input is created and asserted as follows:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 7-46
+     :lines: 8-75
 
-.. note::
-  Bitwuzla does not distinguish between sort Boolean and a bit-vector sort of
-  size 1. Internally, a Boolean sort is represented as a bit-vector sort of
-  size 1.
+Alternatively, you can parse an input file in BTOR2 format :cite:`btor2` or
+SMT-LIB v2 format :cite:`smtlib2` by creating a parser via
+:cpp:func:`bitwuzla_parser_new()` and then parsing the input file via
+:cpp:func:`bitwuzla_parser_parse()`.
+Note that the input parser creates a Bitwuzla instance, which can be
+configured via the :cpp:struct:`BitwuzlaOptions` instances passed into the
+parser. This Bitwuzla instance can be retrieved via
+:cpp:func:`bitwuzla_parser_get_bitwuzla()`.
 
-Alternatively, you can parse an input file in BTOR format :cite:`btor`,
-BTOR2 format :cite:`btor2` or SMT-LIB v2 format :cite:`smtlib2` via
-:c:func:`bitwuzla_parse()` (if the format can be auto-detected) or
-:c:func:`bitwuzla_parse_format()` (which requires to specify the input format).
-For example, to parse an input file `example.smt2` in SMT-LIB format:
+For example, to parse an example file `examples/smt2/quickstart.smt2` in SMT-LIB format:
 
-.. code-block:: c
-
-  char* error_msg;
-  BitwuzlaResult status;
-  BitwuzlaResult result;
-
-  FILE *fd = fopen("example.smt2", "r");
-  result = bitwuzla_parse_format(
-    bzla, "smt2", fs, "example.smt2", stdout, &error_msg, &status);
+.. literalinclude:: ../../examples/c/parse.c
+     :language: c
+     :lines: 9-26
 
 .. note::
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
-  or :code:`get-value` will be executed while parsing.
+  or :code:`get-value` will be executed while parsing if argument `parse_only`
+  is passed into :cpp:func:`bitwuzla_parser_parse()` as true.
+
+After parsing an input file and asserting formulas,
+satisfiability can be determined via :cpp:func:`bitwuzla_check_sat()`.
+
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 77-78
 
 If incremental usage is enabled (option
-:c:enum:`BitwuzlaOption.BITWUZLA_OPT_INCREMENTAL`),
-formulas can also be assumed via :c:func:`bitwuzla_assume()`.
-After parsing an input file and/or asserting and assuming formulas,
-satisfiability can be determined via :c:func:`bitwuzla_check_sat()`.
-
-.. literalinclude:: ../../examples/c/quickstart.c
-     :language: c
-     :lines: 48-49
-
-
-.. note::
-  To simulate SMT-LIB's :code:`check-sat-assuming`, first add assumptions
-  via :c:func:`bitwuzla_assume()`, and then call :c:func:`bitwuzla_check_sat()`.
-  Assumptions are cleared after a call to :c:func:`bitwuzla_check_sat()`.
+:cpp:enum:`BitwuzlaOption.BITWUZLA_OPT_INCREMENTAL <BitwuzlaOption::BITWUZLA_OPT_INCREMENTAL>`),
+formulas can also be assumed via :cpp:func:`bitwuzla_check_sat_assuming()`.
 
 If the formula is satisfiable and model generation has been enabled, the
-resulting model can be printed via :c:func:`bitwuzla_print_model()`.
+resulting model can be printed via :cpp:func:`bitwuzla_get_value()` and
+:cpp:func:`bitwuzla_term_to_string()`. An example implementation to print
+the model of declared symbols, in this case `x`, `y`, `f` and `a`, is below:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 58-59
+     :lines: 86-135
 
-This will output a possible model (default: in SMT-LIB format, configurable
-via option :c:enum:`BitwuzlaOption.BITWUZLA_OPT_OUTPUT_FORMAT`) as follows:
+This will output a possible model, in this case:
 
 .. code-block:: smtlib
 
   (
-    (define-fun x () (_ BitVec 8) #b11111111)
-    (define-fun y () (_ BitVec 8) #b00011110)
+    (define-fun x () (_ BitVec 8) #b10011111)
+    (define-fun y () (_ BitVec 8) #b11111111)
+    (define-fun f ((@bzla.var_74 (_ BitVec 8))  (@bzla.var_75 (_ BitVec 4)))  (_ BitVec 8) (ite (and (= @bzla.var_74 #b10011111) (= @bzla.var_75 #b0011)) #b11111111 #b00000000))
+    (define-fun a () (Array (_ BitVec 8) (_ BitVec 8)) (store ((as const (Array (_ BitVec 8) (_ BitVec 8))) #b00000000) #b10011111 #b11111111))
   )
 
 
+
 Alternatively, it is possible to query the value of expressions as assignment
-string via :c:func:`bitwuzla_get_bv_value()`, or as a term via
-:c:func:`bitwuzla_get_value()`.
+string via :cpp:func:`bitwuzla_get_bv_value()`, or as a term via
+:cpp:func:`bitwuzla_get_value()`.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
@@ -183,7 +184,7 @@ Incremental Example with check-sat-assuming
 
 This example shows how to implement the example above with
 :code:`check-sat-assuming` instead of :code:`push` and :code:`pop`.
-Note that Bitwuzla requires to first assume formulas (the assumptions in the :code:`check-sat-assuming` list) with :c:func:`bitwuzla_assume()` before calling :c:func:`bitwuzla_check_sat()`.
+Note that Bitwuzla requires to first assume formulas (the assumptions in the :code:`check-sat-assuming` list) with :cpp:func:`bitwuzla_assume()` before calling :cpp:func:`bitwuzla_check_sat()`.
 All active assumptions are inactivated after the check sat call.
 
 | The SMT-LIB input for this example can be found at `examples/smt2/checksatassuming.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/checksatassuming.smt2>`_.

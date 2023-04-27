@@ -169,10 +169,7 @@ class Options
    * Set Boolean or numeric option.
    *
    * @param option The option.
-   * @param val The option value.
-   *
-   * @see
-   *   * `Option`
+   * @param value The option value.
    */
   void set(Option option, uint64_t value);
   /**
@@ -180,9 +177,6 @@ class Options
    *
    * @param option The option.
    * @param mode The option mode.
-   *
-   * @see
-   *   * `Option`
    */
   void set(Option option, const std::string &mode);
   /**
@@ -190,9 +184,6 @@ class Options
    *
    * @param option The option.
    * @param mode The option mode.
-   *
-   * @see
-   *   * `Option`
    */
   void set(Option option, const char *mode);
   /**
@@ -226,9 +217,6 @@ class Options
    *
    * @param option The option.
    * @return The option value.
-   *
-   * @see
-   *   * `Option`
    */
   uint64_t get(Option option) const;
   /**
@@ -236,9 +224,6 @@ class Options
    *
    * @param option The option.
    * @return The option value.
-   *
-   * @see
-   *   * `Option`
    */
   const std::string &get_mode(Option option) const;
 
@@ -295,9 +280,6 @@ struct OptionInfo
    * Constructor.
    * @param options The option configuration to query for the given option.
    * @param option The option to query.
-   *
-   * @see
-   *  `Options`
    */
   OptionInfo(const Options &options, Option option);
   /** Default constructor. */
@@ -427,7 +409,6 @@ class Term
   /**
    * Get the kind of this term.
    * @return The kind.
-   * @see Kind
    */
   Kind kind() const;
 

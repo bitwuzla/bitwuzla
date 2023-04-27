@@ -12,18 +12,28 @@ Types
 -----
 
 Bitwuzla
-^^^^^^^^^^^^^^^
+^^^^^^^^
 .. doxygentypedef:: Bitwuzla
     :project: Bitwuzla_c
 
-BitwuzlaSort
+BitwuzlaOptions
 ^^^^^^^^^^^^^^^
+.. doxygentypedef:: BitwuzlaOptions
+    :project: Bitwuzla_c
+
+BitwuzlaSort
+^^^^^^^^^^^^
 .. doxygentypedef:: BitwuzlaSort
     :project: Bitwuzla_c
 
 BitwuzlaTerm
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
 .. doxygentypedef:: BitwuzlaTerm
+    :project: Bitwuzla_c
+
+BitwuzlaParser
+^^^^^^^^^^^^^^
+.. doxygentypedef:: BitwuzlaParser
     :project: Bitwuzla_c
 
 
@@ -61,5 +71,9 @@ Functions
 ---------
 
 .. doxygenfile:: bitwuzla.h
+    :project: Bitwuzla_c
+    :sections: func
+
+.. doxygenfile:: parser.h
     :project: Bitwuzla_c
     :sections: func

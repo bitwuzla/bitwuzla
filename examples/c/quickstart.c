@@ -9,6 +9,11 @@ main()
   BitwuzlaOptions *options = bitwuzla_options_new();
   // Then, enable model generation.
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+  // Now, for illustration purposes, we enable CaDiCaL as SAT solver
+  // (CaDiCaL is already configured by default).
+  // Note: This will silently fall back to one of the compiled in SAT solvers
+  //       if the selected solver is not compiled in.
+  bitwuzla_set_option_mode(options, BITWUZLA_OPT_SAT_SOLVER, "cadical");
   // Then, create a Bitwuzla instance.
   Bitwuzla *bitwuzla = bitwuzla_new(options);
 
@@ -30,10 +35,9 @@ main()
   BitwuzlaTerm a = bitwuzla_mk_const(sortarr, "a");
   // Create bit-vector values one and two of the same sort.
   BitwuzlaTerm one = bitwuzla_mk_bv_one(sortbv8);
-  // alternatively, you can create bit-vector value one with:
-  // BitwuzlaTerm *one =
-  //     bitwuzla_mk_bv_value(bitwuzla, sortbv8, "1", BITWUZLA_BV_BASE_BIN);
-  // BitwuzlaTerm *one = bitwuzla_mk_bv_value_uint64(bitwuzla, sortbv8, 1);
+  // Alternatively, you can create bit-vector value one with:
+  // BitwuzlaTerm one = bitwuzla_mk_bv_value(sortbv8, "1", 2);
+  // BitwuzlaTerm one = bitwuzla_mk_bv_value_uint64(sortbv8, 1);
   BitwuzlaTerm two = bitwuzla_mk_bv_value_uint64(sortbv8, 2);
 
   // (bvsdiv x (_ bv2 8))
@@ -79,8 +83,8 @@ main()
              ? "sat"
              : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
 
-  printf("Model:\n");
   // Print model in SMT-LIBv2 format.
+  printf("Model:\n");
   BitwuzlaTerm decls[4] = {x, y, f, a};
   printf("(\n");
   for (uint32_t i = 0; i < 4; ++i)
@@ -164,4 +168,6 @@ main()
 
   // Finally, delete the Bitwuzla instance.
   bitwuzla_delete(bitwuzla);
+
+  return 0;
 }

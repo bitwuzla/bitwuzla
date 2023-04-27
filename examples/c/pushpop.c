@@ -101,4 +101,6 @@ main()
 
   // Finally, delete the Bitwuzla instance.
   bitwuzla_delete(bitwuzla);
+
+  return 0;
 }

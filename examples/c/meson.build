@@ -5,6 +5,7 @@ examples = [
   'quickstart',
   'unsatassumptions',
   'unsatcore',
+  'parse',
 ]
 
 bitwuzla_dep = dependency('bitwuzla')

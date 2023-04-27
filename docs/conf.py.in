@@ -88,6 +88,7 @@ class SmtLibLexer(RegexLexer):
     tokens = {
         'root': [
             (r'QF_BV', token.Text),
+            (r'QF_ABV', token.Text),
             (r'set-logic', token.Keyword),
             (r'set-option', token.Keyword),
             (r'declare-const', token.Keyword),
@@ -135,6 +136,7 @@ class SmtLibLexer(RegexLexer):
             (r'\(_', token.Text),
             (r'\(', token.Text),
             (r'\)', token.Text),
+            (r'@bzla.var_', token.Text),
             (r';.*$', token.Comment)
         ]
     }

@@ -28,6 +28,7 @@ extern "C" {
 
 /* -------------------------------------------------------------------------- */
 
+/** The Bitwuzla configuration options. */
 typedef struct BitwuzlaOptions BitwuzlaOptions;
 
 /**
@@ -175,7 +176,7 @@ BitwuzlaOptions *bitwuzla_options_new();
  *
  * The given instance must have been created via `bitwuzla_options_new()`.
  *
- * @param bitwuzla The BitwuzlaOptions instance to delete.
+ * @param options The BitwuzlaOptions instance to delete.
  *
  * @see
  *   * `bitwuzla_options_new`
@@ -1120,6 +1121,8 @@ BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
  *       `bitwuzla_set_option()`.
  *
  * @param bitwuzla The Bitwuzla instance.
+ * @param argc     The number of assumptions in `args`.
+ * @param args     The assumptions.
  *
  * @return `::BITWUZLA_SAT` if the input formula is satisfiable and
  *         `::BITWUZLA_UNSAT` if it is unsatisfiable, and `::BITWUZLA_UNKNOWN`

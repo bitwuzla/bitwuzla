@@ -3,7 +3,7 @@
 
 #include <bitwuzla/c/bitwuzla.h>
 
-/** The Bitwuzla parser. */
+/** A Bitwuzla parser. */
 typedef struct BitwuzlaParser BitwuzlaParser;
 
 /**

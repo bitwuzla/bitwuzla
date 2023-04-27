@@ -3,6 +3,7 @@ conf_data = configuration_data()
 include_path = join_paths(meson.project_source_root(), 'include', 'bitwuzla')
 header_files = [
   join_paths(include_path, 'c', 'bitwuzla.h'),
+  join_paths(include_path, 'c', 'parser.h'),
   join_paths(include_path, 'enums.h'),
   join_paths(include_path, 'option.h'),
 ]
