@@ -23,12 +23,13 @@ main()
   bitwuzla_set_option(options, BITWUZLA_OPT_VERBOSITY, 2);
 
   // Now, create a Bitwuzla instance.
-  Bitwuzla* bzla = bitwuzla_new(options);
+  Bitwuzla* bitwuzla = bitwuzla_new(options);
   // Check sat (nothing to solve, input formula is empty).
-  bitwuzla_check_sat(bzla);
+  bitwuzla_check_sat(bitwuzla);
 
-  // Finally, delete the Bitwuzla instance.
-  bitwuzla_delete(bzla);
+  // Finally, delete the Bitwuzla and Bitwuzla options instance.
+  bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
 
   return 0;
 }

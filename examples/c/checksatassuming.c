@@ -94,8 +94,9 @@ main()
              ? "sat"
              : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
 
-  // Finally, delete the Bitwuzla instance.
+  // Finally, delete the Bitwuzla and Bitwuzla options instance.
   bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
 
   return 0;
 }

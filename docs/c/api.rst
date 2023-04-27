@@ -109,44 +109,89 @@ This will output a possible model, in this case:
   )
 
 
-
-Alternatively, it is possible to query the value of expressions as assignment
-string via :cpp:func:`bitwuzla_get_bv_value()`, or as a term via
+Alternatively, it is possible to query the value of terms as assignment
+string via :cpp:func:`bitwuzla_term_value_get_str()`, or as a term via
 :cpp:func:`bitwuzla_get_value()`.
+Additionally, for floating-point values,
+:cpp:func:`bitwuzla_term_value_get_fp_ieee` allows to retrieve the assignment
+split into assignment strings for the sign bit, the exponent and the
+significand.
+For Boolean and RoundingMode values, :cpp:func:`bitwuzla_term_value_get_bool()`
+and :cpp:func:`bitwuzla_term_value_get_rm()` allow the values as `bool` and
+:cpp:enum:`BitwuzlaRoundingMode`, respectively.
+
+In our case, we can query the assignments of `x` and `y`, both bit-vector terms,
+as binary strings as follows.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 62-80
+     :lines: 141-146
 
 This will print:
 
 .. code-block::
 
-  assignment of x: 11111111
-  assignment of y: 00011110
+  value of x: 10011111
+  value of y: 11111111
 
-  assignment of x (via bitwuzla_get_value): 11111111
-  assignment of y (via bitwuzla_get_value): 00011110
+The value of `f` (a function term) and `a` (an array term), on the other hand,
+cannot be represented with a simple type. Thus, function values are given as
+:cpp:enum:`BitwuzlaKind.LAMBDA <BitwuzlaKind::LAMBDA>`, and array values are
+given as :cpp:enum:`BitwuzlaKind.ARRAY_STORE <BitwuzlaKind::ARRAY_STORE>`.
+We can retrieve a string representation of the values via
+:cpp:func:`bitwuzla_term_to_string()`:
+
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 148-157
+
+This will print:
+
+.. code-block::
+
+   to_string representation of value of f:
+   (lambda ((@bzla.var_74 (_ BitVec 8))) (lambda ((@bzla.var_75 (_ BitVec 4))) (ite (and (= @bzla.var_74 #b10011111) (= @bzla.var_75 #b0011)) #b11111111 #b00000000)))
+
+   to_string representation of value of a:
+   (store ((as const (Array (_ BitVec 8) (_ BitVec 8))) #b00000000) #b10011111 #b11111111)
+
+Note that the string representation of values representable as simple type
+(bit-vectors, boolean, floating-point, rounding mode) are given as pure
+value string (in the given number format) via
+:cpp:func:`bitwuzla_term_value_get_str()`.
+Their string representation retrieved via :cpp:func:`bitwuzla_term_to_string()`,
+however, is given in SMT-LIB2 format. For example,
+
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 163-166
+
+This will print:
+
+.. code-block::
+
+   to_string representation of value of x: #b10011111
+   to_string representation of value of y: #b11111111
 
 
 It is also possible to query the model value of expressions that do not
-occur in the input formula.
+occur in the input formula:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 83-85
+     :lines: 170-173
 
 This will print:
 
 .. code-block::
 
-  assignment of v = x * x: 00000001
+  value of v = x * x: 11000001
 
-Finally, we delete the Bitwuzla instance.
+Finally, we delete the Bitwuzla and Bitwuzla options instance.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 88
+     :lines: 176-177
 
 
 Examples

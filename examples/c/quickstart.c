@@ -133,41 +133,48 @@ main()
     }
   }
   printf(")\n");
-
-  // Print value for x and y.
-  // Note: The returned string of bitwuzla_get_bv_value is only valid until the
-  //       next call to bitwuzla_get_bv_value
-  const char *xstr = bitwuzla_term_value_get_str(
-      bitwuzla_get_value(bitwuzla, x), 2);  // returns "10011111"
-  printf("assignment of x: %s\n", xstr);
-  const char *ystr = bitwuzla_term_value_get_str(
-      bitwuzla_get_value(bitwuzla, y), 2);  // returns "10011111"
-  printf("assignment of y: %s\n", ystr);
   printf("\n");
 
-  // Alternatively, get values for x,y as terms
-  BitwuzlaTerm x_value = bitwuzla_get_value(bitwuzla, x);
-  BitwuzlaTerm y_value = bitwuzla_get_value(bitwuzla, y);
-  BitwuzlaTerm f_value = bitwuzla_get_value(bitwuzla, f);
-  BitwuzlaTerm a_value = bitwuzla_get_value(bitwuzla, a);
-  printf("assignment of x (via bitwuzla_get_value): %s\n",
-         bitwuzla_term_to_string(x_value));
-  printf("assignment of y (via bitwuzla_get_value): %s\n",
-         bitwuzla_term_to_string(y_value));
-  printf("assignment of f (via bitwuzla_get_value): %s\n",
-         bitwuzla_term_to_string(f_value));
-  printf("assignment of a (via bitwuzla_get_value): %s\n",
-         bitwuzla_term_to_string(a_value));
+  // Print value for x, y, f and a.
+  // Note: The returned string of bitwuzla_term_value_get_str is only valid
+  //       until the next call to bitwuzla_term_value_get_str
+  // Both x and y are bit-vector terms and their value is a bit-vector
+  // value that can be printed via bitwuzla_term_value_get_str().
+  printf("value of x: %s\n",
+         bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, x), 2));
+  printf("value of y: %s\n",
+         bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, y), 2));
+  printf("\n");
+  // f and a, on the other hand, are a function and array term, respectively.
+  // The value of these terms is not a value term: for f, it is a lambda term,
+  // and the value of a is represented as a store term. Thus we cannot use
+  // bitwuzla_term_value_get_str(), but we can print the value of the terms
+  // via bitwuzla_term_to_string().
+  printf("to_string representation of value of f:\n%s\n",
+         bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, f)));
+  printf("\n");
+  printf("to_string representation of value of a:\n%s\n",
+         bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, a)));
+  printf("\n");
+  // Note that the assignment string of bit-vector terms is given as the
+  // pure assignment string, either in binary, hexadecimal or decimal format,
+  // whereas bitwuzla_term_to_string() prints the value in SMT-LIB2 format
+  // (in binary number format).
+  printf("to_string representation of value of x: %s\n",
+         bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, x)));
+  printf("to_string representation of value of y: %s\n",
+         bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, y)));
   printf("\n");
 
-  // Query value of expression that does not occur in the input formula
+  // Query value of bit-vector term that does not occur in the input formula
   BitwuzlaTerm v = bitwuzla_get_value(
       bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, x, x));
-  printf("assignment of v = x * x: %s\n",
-         bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, v)));
+  printf("value of v = x * x: %s\n",
+         bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, v), 2));
 
-  // Finally, delete the Bitwuzla instance.
+  // Finally, delete the Bitwuzla and the Bitwuzla options instance.
   bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
 
   return 0;
 }

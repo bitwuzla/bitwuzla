@@ -33,8 +33,9 @@ main()
   }
   printf("}\n");
 
-  // Finally, delete parser instance.
+  // Finally, delete Bitwuzla parser and options instance.
   bitwuzla_parser_delete(parser);
+  bitwuzla_options_delete(options);
 
   return 0;
 }

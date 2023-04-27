@@ -99,8 +99,9 @@ main()
              : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
   bitwuzla_pop(bitwuzla, 1);
 
-  // Finally, delete the Bitwuzla instance.
+  // Finally, delete the Bitwuzla and Bitwuzla optons instance.
   bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
 
   return 0;
 }
