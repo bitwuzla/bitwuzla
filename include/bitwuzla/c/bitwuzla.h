@@ -1406,12 +1406,7 @@ bool bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort);
  * Print sort.
  *
  * @param sort The sort.
- * @param format The output format for printing the term. Either `"btor"` for
- *               the BTOR format, or `"smt2"` for the SMT-LIB v2 format. Note
- *               for the `"btor"` this function won't do anything since BTOR
- *               sorts are printed when printing the term via
- *               bitwuzla_print_term.
- * @param file The file to print the term to.
+ * @param file The file to print the sort to.
  */
 void bitwuzla_print_sort(BitwuzlaSort sort, const char *format, FILE *file);
 
@@ -1628,17 +1623,6 @@ bool bitwuzla_term_is_fun(BitwuzlaTerm term);
  * @return True if `term` is a variable.
  */
 bool bitwuzla_term_is_var(BitwuzlaTerm term);
-
-#if 0
-/**
- * Determine if a term is a bound variable.
- *
- * @param term The term.
- *
- * @return True if `term` is a variable and bound.
- */
-bool bitwuzla_term_is_bound_var(BitwuzlaTerm term);
-#endif
 
 /**
  * Determine if a term is a value.
@@ -1918,20 +1902,9 @@ BitwuzlaRoundingMode bitwuzla_term_value_get_rm(BitwuzlaTerm term);
  * Print term .
  *
  * @param term The term.
- * @param format The output format for printing the term. Either `"btor"` for
- * the BTOR format, or `"smt2"` for the SMT-LIB v2 format.
  * @param file The file to print the term to.
  */
-void bitwuzla_print_term(BitwuzlaTerm term, const char *format, FILE *file);
-
-/* smt2 parser only --------------------------------------------------------- */
-
-BitwuzlaOption bitwuzla_get_option_from_string(BitwuzlaOptions *options,
-                                               const char *str);
-
-void bitwuzla_term_print_value_smt2(Bitwuzla *, BitwuzlaTerm, char *, FILE *);
-
-/* -------------------------------------------------------------------------- */
+void bitwuzla_print_term(BitwuzlaTerm term, FILE *file);
 
 #if __cplusplus
 }

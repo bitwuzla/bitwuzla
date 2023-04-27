@@ -98,12 +98,6 @@ import_kind(BitwuzlaKind kind)
   return static_cast<bitwuzla::Kind>(kind);
 }
 
-BitwuzlaOption
-export_option(bitwuzla::Option option)
-{
-  return static_cast<BitwuzlaOption>(option);
-}
-
 bitwuzla::Option
 import_option(BitwuzlaOption option)
 {
@@ -1001,13 +995,6 @@ bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term)
   BITWUZLA_TRY_CATCH_END;
 }
 
-#if 0
-void
-bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file)
-{
-}
-#endif
-
 void
 bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
 {
@@ -1259,13 +1246,14 @@ bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort)
 }
 
 void
-bitwuzla_print_sort(BitwuzlaSort sort, const char *format, FILE *file)
+bitwuzla_print_sort(BitwuzlaSort sort, FILE *file)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
-  // TODO
-  (void) sort;
-  (void) format;
-  (void) file;
+  BITWUZLA_CHECK_SORT_ID(sort);
+  BITWUZLA_CHECK_NOT_NULL(file);
+  std::stringstream ss;
+  ss << import_sort(sort);
+  fprintf(file, "%s", ss.str().c_str());
   BITWUZLA_TRY_CATCH_END;
 }
 
@@ -1482,17 +1470,6 @@ bitwuzla_term_is_var(BitwuzlaTerm term)
   return import_term(term).is_variable();
   BITWUZLA_TRY_CATCH_END;
 }
-
-#if 0
-bool
-bitwuzla_term_is_bound_var(BitwuzlaTerm term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(term);
-
-  // TODO
-  return true;
-}
-#endif
 
 bool
 bitwuzla_term_is_value(BitwuzlaTerm term)
@@ -1763,39 +1740,15 @@ bitwuzla_term_value_get_rm(BitwuzlaTerm term)
 }
 
 void
-bitwuzla_print_term(BitwuzlaTerm term, const char *format, FILE *file)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  // TODO
-  (void) term;
-  (void) format;
-  (void) file;
-  BITWUZLA_TRY_CATCH_END;
-}
-
-/* smt2 parser only --------------------------------------------------------- */
-
-void
-bitwuzla_term_print_value_smt2(Bitwuzla *bitwuzla,
-                               BitwuzlaTerm term,
-                               char *symbol,
-                               FILE *file)
+bitwuzla_print_term(BitwuzlaTerm term, FILE *file)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
-  BITWUZLA_CHECK_NOT_NULL(symbol);
   BITWUZLA_CHECK_NOT_NULL(file);
-  fprintf(file,
-          "(%s %s)",
-          symbol,
-          bitwuzla->d_bitwuzla->get_value(import_term(term)).str().c_str());
+  std::stringstream ss;
+  ss << import_term(term);
+  fprintf(file, "%s", ss.str().c_str());
   BITWUZLA_TRY_CATCH_END;
 }
 
-BitwuzlaOption
-bitwuzla_get_option_from_string(BitwuzlaOptions *options, const char *str)
-{
-  BITWUZLA_CHECK_NOT_NULL(options);
-  BITWUZLA_CHECK_NOT_NULL(str);
-  return export_option(options->d_options.option(str));
-}
+/* -------------------------------------------------------------------------- */

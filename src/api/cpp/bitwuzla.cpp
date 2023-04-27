@@ -1466,14 +1466,6 @@ Bitwuzla::get_value(const Term &term)
   return d_ctx->get_value(*term.d_node);
 }
 
-#if 0
-void
-Bitwuzla::print_model(std::ostream &out, const std::string &format)
-{
-  // TODO
-}
-#endif
-
 void
 Bitwuzla::print_formula(std::ostream &out, const std::string &format)
 {

@@ -3357,35 +3357,26 @@ TEST_F(TestCApi, term_is_rm_value_rtz)
 
 TEST_F(TestCApi, print_term)
 {
-  GTEST_SKIP();  // TODO enable when implemented
-  ASSERT_DEATH(bitwuzla_print_term(0, "btor", stdout), d_error_inv_term);
-  ASSERT_DEATH(bitwuzla_print_term(d_and_bv_const1, nullptr, stdout),
-               d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_print_term(d_and_bv_const1, "smt2", nullptr),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_print_term(d_and_bv_const1, "asdf", stdout),
-               d_error_format);
-  bitwuzla_print_term(d_and_bv_const1, "btor", stdout);
-  bitwuzla_print_term(d_and_bv_const1, "smt2", stdout);
-  bitwuzla_print_term(d_exists, "btor", stdout);
-  bitwuzla_print_term(d_exists, "smt2", stdout);
+  ASSERT_DEATH(bitwuzla_print_term(0, stdout), d_error_inv_term);
+  ASSERT_DEATH(bitwuzla_print_term(d_and_bv_const1, nullptr), d_error_not_null);
+  bitwuzla_print_term(d_and_bv_const1, stdout);
+  bitwuzla_print_term(d_exists, stdout);
   std::cout << std::endl;
 }
 
-TEST_F(TestCApi, term_print_regr0)
+TEST_F(TestCApi, print_term_regr0)
 {
-  GTEST_SKIP();  // TODO enable when implemented
   testing::internal::CaptureStdout();
 
-  bitwuzla_print_term(d_rm_rne, "smt2", stdout);
+  bitwuzla_print_term(d_rm_rne, stdout);
   printf("\n");
-  bitwuzla_print_term(d_rm_rna, "smt2", stdout);
+  bitwuzla_print_term(d_rm_rna, stdout);
   printf("\n");
-  bitwuzla_print_term(d_rm_rtn, "smt2", stdout);
+  bitwuzla_print_term(d_rm_rtn, stdout);
   printf("\n");
-  bitwuzla_print_term(d_rm_rtp, "smt2", stdout);
+  bitwuzla_print_term(d_rm_rtp, stdout);
   printf("\n");
-  bitwuzla_print_term(d_rm_rtz, "smt2", stdout);
+  bitwuzla_print_term(d_rm_rtz, stdout);
 
   std::string output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "RNE\nRNA\nRTN\nRTP\nRTZ");
@@ -3393,7 +3384,6 @@ TEST_F(TestCApi, term_print_regr0)
 
 TEST_F(TestCApi, print_term_regr1)
 {
-  GTEST_SKIP();  // TODO enable when implemented
   BitwuzlaSort bv_sort5  = bitwuzla_mk_bv_sort(5);
   BitwuzlaSort bv_sort10 = bitwuzla_mk_bv_sort(10);
 
@@ -3405,7 +3395,7 @@ TEST_F(TestCApi, print_term_regr1)
                                   bitwuzla_mk_bv_zero(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_print_term(fp_const, "smt2", stdout);
+  bitwuzla_print_term(fp_const, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000000)");
 
@@ -3414,7 +3404,7 @@ TEST_F(TestCApi, print_term_regr1)
                                   bitwuzla_mk_bv_zero(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_print_term(fp_const, "smt2", stdout);
+  bitwuzla_print_term(fp_const, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000000)");
 
@@ -3423,7 +3413,7 @@ TEST_F(TestCApi, print_term_regr1)
                                   bitwuzla_mk_bv_one(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_print_term(fp_const, "smt2", stdout);
+  bitwuzla_print_term(fp_const, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000001)");
 
@@ -3432,29 +3422,9 @@ TEST_F(TestCApi, print_term_regr1)
                                   bitwuzla_mk_bv_one(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_print_term(fp_const, "smt2", stdout);
+  bitwuzla_print_term(fp_const, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000001)");
-}
-
-TEST_F(TestCApi, reset)
-{
-  GTEST_SKIP();  // TODO enable when implemented
-  BitwuzlaOptions *options       = bitwuzla_options_new();
-  Bitwuzla *bitwuzla             = bitwuzla_new(options);
-  BitwuzlaSort s                 = bitwuzla_mk_bv_sort(8);
-  BitwuzlaTerm x                 = bitwuzla_mk_const(s, "x");
-  std::vector<BitwuzlaTerm> args = {x, x};
-  bitwuzla_assert(
-      bitwuzla,
-      bitwuzla_mk_term(BITWUZLA_KIND_DISTINCT, args.size(), args.data()));
-  ASSERT_EQ(BITWUZLA_UNSAT, bitwuzla_check_sat(bitwuzla));
-  bitwuzla_reset(bitwuzla);
-  s = bitwuzla_mk_bv_sort(8);
-  x = bitwuzla_mk_const(s, "x");
-  ASSERT_EQ(BITWUZLA_SAT, bitwuzla_check_sat(bitwuzla));
-  bitwuzla_delete(bitwuzla);
-  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, indexed)

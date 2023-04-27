@@ -86,6 +86,11 @@ API:
 - Remove support for `bitwuzla_print_model`
   -> see `examples/c/quickstart.c` for an example of how to print the model
 
+- Remove support for `bitwuzla_reset`
+  -> discard current Bitwuzla instance and create new instance instead
+     (created terms and sorts are not associated with an instance and will
+      not be released when current instance is released)
+
 New API functions:
 
 - `bitwuzla_option_is_numeric(BitwuzlaOptions*, BitwuzlaOption)`
