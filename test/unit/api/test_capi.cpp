@@ -2132,15 +2132,16 @@ TEST_F(TestCApi, mk_const)
 
 TEST_F(TestCApi, mk_const_array)
 {
-  GTEST_SKIP();  // TODO enable when options are finalized
   ASSERT_DEATH(bitwuzla_mk_const_array(0, d_bv_one1), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_mk_const_array(d_arr_sort_bv, 0), d_error_inv_term);
   ASSERT_DEATH(bitwuzla_mk_const_array(d_bv_sort8, d_bv_one1),
-               d_error_exp_arr_sort);
-  ASSERT_DEATH(bitwuzla_mk_const_array(d_arr_sort_bv, d_array),
-               d_error_unexp_arr_term);
-  ASSERT_DEATH(bitwuzla_mk_const_array(d_arr_sort_bvfp, d_fp_pzero32),
-               "sort of 'value' does not match array element sort");
+               "sort of constant array is not an array sort");
+  ASSERT_DEATH(
+      bitwuzla_mk_const_array(d_arr_sort_bv, d_array),
+      "sort of constant array element does not match given array sort");
+  ASSERT_DEATH(
+      bitwuzla_mk_const_array(d_arr_sort_bvfp, d_fp_pzero32),
+      "sort of constant array element does not match given array sort");
   bitwuzla_mk_const_array(d_arr_sort_bvfp, d_fp_const16);
 }
 

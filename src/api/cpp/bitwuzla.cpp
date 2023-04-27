@@ -1829,9 +1829,9 @@ mk_const_array(const Sort &sort, const Term &term)
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   BITWUZLA_CHECK(sort.d_type->is_array())
-      << "sort for constant array is not an array sort";
+      << "sort of constant array is not an array sort";
   BITWUZLA_CHECK(sort.d_type->array_element() == term.d_node->type())
-      << "sort for constant array element does not match given array sort";
+      << "sort of constant array element does not match given array sort";
   return bzla::NodeManager::get().mk_const_array(*sort.d_type, *term.d_node);
 }
 
