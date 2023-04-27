@@ -50,16 +50,15 @@ def extract_enums(header):
     value_prefix = None
     for line in line_iter:
 
-        prefix = re.match(r'#define EVALUE\(name\) (\w+)_##name', line)
-        if prefix:
-            assert value_prefix is None
-            value_prefix = prefix.group(1)
-
+#        prefix = re.match(r'#define EVALUE\(name\) (\w+)_##name', line)
+#        if prefix:
+#            assert value_prefix is None
+#            value_prefix = prefix.group(1)
+#
         # Do we see the _start_ of an enum?
         # Find start of enum defined as `ENUM(<enum_name>)`
         enum = re.match(r'enum ENUM\((\w+)\)', line)
         if enum:
-            assert value_prefix
             enum_name = enum.group(1)
 
             # Get the next line
@@ -78,22 +77,21 @@ def extract_enums(header):
                 # Find enum value in line defined as `EVALUE(<value>)`.
                 evalue = re.match(r'EVALUE\((\w+)\)', line)
                 if evalue:
-                    enum_vals.append(f'{value_prefix}_{evalue.group(1)}')
+                    enum_vals.append(f'{evalue.group(1)}')
 
                 # Consume the next line
                 line = next(line_iter)
 
             # Store this enum with its associated set of values
             bzla_enums[enum_name] = enum_vals
-            value_prefix = None
 
     # Return our dictionary of enums
     return bzla_enums
 
 
 # Template for one enum
-C_ENUM_TEMPLATE = """
-    cdef enum Bitwuzla{bzla_enum:s}:
+CPP_ENUM_TEMPLATE = """
+    cdef enum class Cpp{bzla_enum:s} "bitwuzla::{bzla_enum:s}":
         {values:s}
 """
 
@@ -107,7 +105,7 @@ class {bzla_enum:s}(Enum):
 # Template for the whole file
 FILE_TEMPLATE = """from enum import Enum
 
-cdef extern from \"bitwuzla/c/bitwuzla.h\":
+cdef extern from \"bitwuzla/cpp/bitwuzla.h\" namespace \"bitwuzla\":
 {cenums:s}
 
 {pyenums:s}"""
@@ -115,11 +113,11 @@ cdef extern from \"bitwuzla/c/bitwuzla.h\":
 ENUM_DOCSTRINGS = {
     "Option":
 """Configuration options supported by Bitwuzla. For more information on
-   options see :ref:`c_options`.
+   options see :ref:`cpp_options`.
 """,
 
     "Kind":
-"""BitwuzlaTerm kinds. For more information on term kinds see :ref:`c_kinds`.
+"""BitwuzlaTerm kinds. For more information on term kinds see :ref:`cpp_kinds`.
 """,
 
     "Result":
@@ -134,7 +132,7 @@ ENUM_DOCSTRINGS = {
 
 def generate_output(bzla_enums, output_file):
     """
-    Given a dictionary of enums, formats each enum into `C_ENUM_TEMPLATE` and
+    Given a dictionary of enums, formats each enum into `CPP_ENUM_TEMPLATE` and
     then all the enums into `FILE_TEMPLATE` and writes into "output_file"
     """
 
@@ -149,28 +147,20 @@ def generate_output(bzla_enums, output_file):
         formatted_c_values = ",\n        ".join(values)
 
         # Construct the C enum string
-        s = C_ENUM_TEMPLATE.format(
+        s = CPP_ENUM_TEMPLATE.format(
             bzla_enum=bzla_enum, values=formatted_c_values
         )
         all_c_enums.append(s)
 
 
         #  Construct the Python enum string
-
-        # We do not need to export BitwuzlaBVBase enums
-        if bzla_enum == 'BitwuzlaBVBase':
-            continue
         py_enum_name = bzla_enum.replace('Bitwuzla', '')
         py_values = []
         for e in values:
-            py_e = e.replace('BITWUZLA_', '')
-            for prefix in ('BV_BASE_', 'OPT_', 'KIND_', 'RM_'):
-                if py_e.startswith(prefix):
-                    py_e = py_e.replace(prefix, '', 1)
-                    break
-            if e not in ('BITWUZLA_RM_MAX', 'BITWUZLA_NUM_KINDS',
-                         'BITWUZLA_OPT_NUM_OPTS'):
-                py_values.append('{} = {}'.format(py_e, e))
+            py_e = e
+            if e not in ('MAX', 'NUM_KINDS',
+                         'NUM_OPTS'):
+                py_values.append('{} = Cpp{}.{}'.format(py_e, py_enum_name, e))
 
         formatted_py_values = "\n    ".join(py_values)
         if py_enum_name not in ENUM_DOCSTRINGS:

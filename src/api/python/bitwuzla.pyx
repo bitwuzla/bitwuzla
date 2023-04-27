@@ -13,10 +13,12 @@ The Python API of the SMT solver Bitwuzla.
 """
 
 cimport bitwuzla_api
-from libc.stdlib cimport malloc, free
-from libc.stdio cimport stdout, FILE, fopen, fclose
 from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t
 from libcpp cimport bool as cbool
+from libcpp.vector cimport vector
+from libcpp.optional cimport optional, nullopt, make_optional
+from libcpp.string cimport string
+from libcpp.memory cimport unique_ptr
 from cpython.ref cimport PyObject
 from cpython cimport array
 from collections import defaultdict
@@ -45,412 +47,53 @@ cdef str _to_str(const char *string):
     cdef bytes py_str = string
     return str(py_str.decode())
 
-cdef char * _to_cstr(s):
-    if s is None:
-        return NULL
-    cdef bytes py_str = s.encode()
-    cdef char * c_str = py_str
-    return c_str
-
-cdef _to_result(BitwuzlaResult result):
-    if result == BITWUZLA_SAT:
-        return Result.SAT
-    elif result == BITWUZLA_UNSAT:
-        return Result.UNSAT
-    return Result.UNKNOWN
-
-cdef bitwuzla_api.BitwuzlaTerm* _alloc_terms(size):
-    cdef bitwuzla_api.BitwuzlaTerm *terms = \
-        <bitwuzla_api.BitwuzlaTerm *> \
-            malloc(size * sizeof(bitwuzla_api.BitwuzlaTerm))
-    if not terms:
-        raise MemoryError()
-    return terms
-
-cdef bitwuzla_api.BitwuzlaSort* _alloc_sorts(size):
-    cdef bitwuzla_api.BitwuzlaSort *sorts = \
-        <bitwuzla_api.BitwuzlaSort *> \
-            malloc(size * sizeof(bitwuzla_api.BitwuzlaSort))
-    if not sorts:
-        raise MemoryError()
-    return sorts
-
-cdef _to_term(Bitwuzla bitwuzla, bitwuzla_api.BitwuzlaTerm term):
-    t = BitwuzlaTerm(bitwuzla)
-    t.set(term)
+cdef Term _term(term: bitwuzla_api.Term):
+    t = Term()
+    t.c_term = term
     return t
 
-cdef _to_terms(Bitwuzla bitwuzla, size,
-               bitwuzla_api.BitwuzlaTerm *c_terms):
-    return [_to_term(bitwuzla, c_terms[i]) for i in range(size)]
+cdef bitwuzla_api.Term _cterm(term: Term):
+    return term.c_term
 
-cdef _to_sort(Bitwuzla bitwuzla, bitwuzla_api.BitwuzlaSort sort):
-    s = BitwuzlaSort(bitwuzla)
-    s.set(sort)
+cdef list[Term] _terms(vector[bitwuzla_api.Term]& c_terms):
+    terms = []
+    for t in c_terms:
+        terms.append(_term(t))
+    return terms
+
+cdef Sort _sort(sort: bitwuzla_api.Sort):
+    s = Sort()
+    s.c_sort = sort
     return s
 
-# --------------------------------------------------------------------------- #
-# Sort wrapper classes
-# --------------------------------------------------------------------------- #
-
-cdef class BitwuzlaSort:
-    """Class representing a Bitwuzla sort."""
-    cdef Bitwuzla bitwuzla
-    cdef bitwuzla_api.BitwuzlaSort _c_sort
-
-    cdef set(self, bitwuzla_api.BitwuzlaSort sort):
-        self._c_sort = <bitwuzla_api.BitwuzlaSort> sort
-
-    cdef bitwuzla_api.BitwuzlaSort ptr(self):
-        return self._c_sort
-
-    def __init__(self, Bitwuzla bitwuzla):
-        self.bitwuzla = bitwuzla
-
-    def bv_get_size(self):
-        """Get size of bit-vector sort.
-
-           :return: Size of bit-vector sort.
-           :rtype: int
-        """
-        return bitwuzla_api.bitwuzla_sort_bv_get_size(self.ptr())
-
-    def fp_get_exp_size(self):
-        """Get size of exponent of floating-point sort.
-
-           :return: Size of exponent.
-           :rtype: int
-        """
-        return bitwuzla_api.bitwuzla_sort_fp_get_exp_size(self.ptr())
-
-    def fp_get_sig_size(self):
-        """Get size of significand of floating-point sort.
-
-           :return: Size of significand.
-           :rtype: int
-        """
-        return bitwuzla_api.bitwuzla_sort_fp_get_sig_size(self.ptr())
-
-    def array_get_index(self):
-        """Get index sort of array sort.
-
-           :return: Index sort.
-           :rtype: BitwuzlaSort
-        """
-        return _to_sort(self.bitwuzla,
-                        bitwuzla_api.bitwuzla_sort_array_get_index(self.ptr()))
-
-    def array_get_element(self):
-        """Get element sort of array sort.
-
-           :return: Element sort.
-           :rtype: BitwuzlaSort
-        """
-        return _to_sort(
-                    self.bitwuzla,
-                    bitwuzla_api.bitwuzla_sort_array_get_element(self.ptr()))
-
-    def fun_get_domain_sorts(self):
-        """Get domain sorts of function sort.
-
-           :return: Domain sorts.
-           :rtype: list(BitwuzlaSort)
-        """
-        cdef size_t size
-        cdef bitwuzla_api.BitwuzlaSort* sorts = \
-                bitwuzla_api.bitwuzla_sort_fun_get_domain_sorts(self.ptr(),
-                                                                &size)
-        return [_to_sort(self.bitwuzla, sorts[i]) for i in range(size)]
-
-    def fun_get_codomain(self):
-        """ Get codomain sort of function sort.
-
-            :return: Codomain sort.
-            :rtype: BitwuzlaSort
-        """
-        return _to_sort(self.bitwuzla,
-                        bitwuzla_api.bitwuzla_sort_fun_get_codomain(self.ptr()))
-
-    def fun_get_arity(self):
-        """Get arity of function sort.
-
-           :return: Function arity.
-           :rtype: int
-        """
-        return bitwuzla_api.bitwuzla_sort_fun_get_arity(self.ptr())
-
-    def __eq__(self, BitwuzlaSort other):
-        return bitwuzla_api.bitwuzla_sort_is_equal(self.ptr(), other.ptr())
-
-    def is_array(self):
-        """:return: True if sort is an array sort, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_sort_is_array(self.ptr())
-
-    def is_bv(self):
-        """:return: True if sort is a bit-vector sort, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_sort_is_bv(self.ptr())
-
-    def is_fp(self):
-        """:return: True if sort is a floating-point sort, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_sort_is_fp(self.ptr())
-
-    def is_fun(self):
-        """:return: True if sort is a function sort, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_sort_is_fun(self.ptr())
-
-    def is_rm(self):
-        """:return: True if sort is a rounding mode sort, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_sort_is_rm(self.ptr())
-
-
-# --------------------------------------------------------------------------- #
-# Wrapper classes for BitwuzlaTerm
-# --------------------------------------------------------------------------- #
-
-cdef class BitwuzlaTerm:
-    """Class representing a Bitwuzla term."""
-    cdef Bitwuzla bitwuzla
-    cdef bitwuzla_api.BitwuzlaTerm _c_term
-
-    cdef set(self, bitwuzla_api.BitwuzlaTerm term):
-        self._c_term = <bitwuzla_api.BitwuzlaTerm> term
-
-    cdef bitwuzla_api.BitwuzlaTerm ptr(self):
-        return self._c_term
-
-    def __init__(self, Bitwuzla bitwuzla):
-        self.bitwuzla = bitwuzla
-
-    def __hash__(self):
-        return bitwuzla_api.bitwuzla_term_hash(self.ptr())
-
-    def __eq__(self, BitwuzlaTerm other):
-        return self.ptr() == other.ptr()
-
-    def dump(self, fmt='smt2'):
-        """dump(fmt = "smt2")
-
-           Get string representation of term in format ``fmt``.
-
-           :param fmt: Output format. Available formats: "btor", "smt2"
-           :type: str
-
-           :return: String representation of the term in format ``fmt``.
-           :rtype: str
-        """
-        cdef FILE * out
-        with tempfile.NamedTemporaryFile('r') as f:
-            out = fopen(_to_cstr(f.name), 'w')
-            bitwuzla_api.bitwuzla_term_dump(self.ptr(), _to_cstr(fmt), out)
-            fclose(out)
-            return f.read().strip()
-
-    def get_children(self):
-        """:return: The children of the term.
-           :rtype: list(BitwuzlaTerm)
-        """
-        cdef bitwuzla_api.BitwuzlaTerm* children
-        cdef size_t size
-        children = bitwuzla_api.bitwuzla_term_get_children(self.ptr(), &size)
-        return _to_terms(self.bitwuzla, size, children)
-
-    def get_indices(self):
-        """:return: Indices of indexed operator.
-           :rtype: list(int)
-        """
-        cdef uint64_t* indices
-        cdef size_t size
-        indices = bitwuzla_api.bitwuzla_term_get_indices(self.ptr(), &size)
-        return [indices[i] for i in range(size)]
-
-    def get_kind(self):
-        """:return: Operator kind of term.
-           :rtype: Kind
-        """
-        cdef bitwuzla_api.BitwuzlaKind kind
-        kind = bitwuzla_api.bitwuzla_term_get_kind(self.ptr())
-        return Kind(kind)
-
-    def get_sort(self):
-        """:return: The sort of the term.
-           :rtype: BitwuzlaSort
-        """
-        return _to_sort(self.bitwuzla,
-                        bitwuzla_api.bitwuzla_term_get_sort(self.ptr()))
-
-    def get_symbol(self):
-        """:return: The symbol of the term.
-           :rtype: str
-
-           .. seealso::
-               :func:`~bitwuzla.BitwuzlaTerm.set_symbol`
-        """
-        return _to_str(bitwuzla_api.bitwuzla_term_get_symbol(self.ptr()))
-
-    #def set_symbol(self, str symbol):
-    #    """set_symbol(symbol)
-
-    #       Set the symbol of the term.
-
-    #       :param symbol: Symbol of the term.
-    #       :type symbol: str
-    #    """
-    #    bitwuzla_api.bitwuzla_term_set_symbol(self.ptr(), _to_cstr(symbol))
-
-    def is_array(self):
-        """:return: True if term is an array, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_array(self.ptr())
-
-    def is_const(self):
-        """:return: True if term is a constant, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_const(self.ptr())
-
-    def is_const_array(self):
-        """:return: True if term is a constant array, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_const_array(self.ptr())
-
-    def is_fun(self):
-        """:return: True if term is a function, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_fun(self.ptr())
-
-    def is_var(self):
-        """:return: True if term is a variable, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_var(self.ptr())
-
-    #def is_bound_var(self):
-    #    """:return: True if term is a bound variable, False otherwise.
-    #       :rtype: bool
-    #    """
-    #    return bitwuzla_api.bitwuzla_term_is_bound_var(self.ptr())
-
-    def is_bv_value(self):
-        """:return: True if term is a bit-vector value, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_bv_value(self.ptr())
-
-    def is_fp_value(self):
-        """:return: True if term is a floating-point value, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_fp_value(self.ptr())
-
-    def is_rm_value(self):
-        """:return: True if term is a rounding mode value, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_rm_value(self.ptr())
-
-    def is_bv(self):
-        """:return: True if term is a bit-vector, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_bv(self.ptr())
-
-    def is_fp(self):
-        """:return: True if term is a floating-point, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_fp(self.ptr())
-
-    def is_rm(self):
-        """:return: True if term is a rounding mode, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_rm(self.ptr())
-
-    def is_bv_value_zero(self):
-        """:return: True if term is a bit-vector value zero, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_bv_value_zero(self.ptr())
-
-    def is_bv_value_one(self):
-        """:return: True if term is a bit-vector value one, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_bv_value_one(self.ptr())
-
-    def is_bv_value_ones(self):
-        """:return: True if term is a bit-vector value ones, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_bv_value_ones(self.ptr())
-
-    def is_bv_value_min_signed(self):
-        """:return: True if term is a bit-vector minimum signed value,
-                    False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_bv_value_min_signed(self.ptr())
-
-    def is_bv_value_max_signed(self):
-        """:return: True if term is a bit-vector maximum signed value,
-                    False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_bv_value_max_signed(self.ptr())
-
-    def is_fp_value_pos_zero(self):
-        """:return: True if term is a floating-point positive zero value,
-                    False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_fp_value_pos_zero(self.ptr())
-
-    def is_fp_value_neg_zero(self):
-        """:return: True if term is a floating-point negative zero value,
-                    False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_fp_value_neg_zero(self.ptr())
-
-    def is_fp_value_pos_inf(self):
-        """:return: True if term is a floating-point positive infinity value,
-                    False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_fp_value_pos_inf(self.ptr())
-
-    def is_fp_value_neg_inf(self):
-        """:return: True if term is a floating-point negative infinity value,
-                    False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_fp_value_neg_inf(self.ptr())
-
-    def is_fp_value_nan(self):
-        """:return: True if term is a floating-point NaN value,
-                    False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_fp_value_nan(self.ptr())
-
-    def is_indexed(self):
-        """:return: True if term is indexed, False otherwise.
-           :rtype: bool
-        """
-        return bitwuzla_api.bitwuzla_term_is_indexed(self.ptr())
+cdef bitwuzla_api.Sort _csort(sort: Sort):
+    return sort.c_sort
+
+cdef vector[bitwuzla_api.Sort] _sort_vec(list sorts):
+    cdef vector[bitwuzla_api.Sort] vec
+    for s in sorts:
+        vec.push_back(_csort(s))
+    return vec
+
+cdef vector[bitwuzla_api.Term] _term_vec(terms):
+    cdef vector[bitwuzla_api.Term] vec
+    for t in terms:
+        vec.push_back(_cterm(t))
+    return vec
+
+cdef list[Term] _term_list(vector[bitwuzla_api.Term] terms):
+    return [_term(t) for t in terms]
+
+cdef vector[string] _to_str_vec(strs):
+    cdef vector[string] vec
+    for s in strs:
+        vec.push_back(str(s).encode())
+    return vec
+
+def _check_arg(arg, _type):
+    if not isinstance(arg, _type):
+        raise ValueError(
+                f'Expected type {str(_type)} for argument, but got {type(arg)}')
 
 # -------------------------------------------------------------------------- #
 
@@ -458,271 +101,361 @@ cdef class BitwuzlaTerm:
 # Library info                                                               #
 # -------------------------------------------------------------------------- #
 
-def copyright():
+def copyright() -> str:
     """:return: The copyright information.
        :rtype: str
     """
-    cdef const char * c_str
-    c_str = bitwuzla_api.bitwuzla_copyright()
-    return _to_str(c_str)
+    return bitwuzla_api.copyright().decode()
 
-def version():
+def version() -> str:
     """:return: The version number.
        :rtype: str
     """
-    cdef const char * c_str
-    c_str = bitwuzla_api.bitwuzla_version()
-    return _to_str(c_str)
+    return bitwuzla_api.version().decode()
 
-def git_id():
+def git_id() -> str:
     """:return: The git commit sha.
        :rtype: str
     """
-    cdef const char * c_str
-    c_str = bitwuzla_api.bitwuzla_git_id()
-    return _to_str(c_str)
+    return bitwuzla_api.git_id().decode()
+
+# --------------------------------------------------------------------------- #
+# Sort wrapper
+# --------------------------------------------------------------------------- #
+
+cdef class Sort:
+    cdef bitwuzla_api.Sort c_sort
+
+    def is_null(self) -> bool:
+        return self.c_sort.is_null()
+
+    def id(self) -> int:
+        return self.c_sort.id()
+
+    def bv_size(self) -> int:
+        return self.c_sort.bv_size()
+
+    def fp_exp_size(self) -> int:
+        return self.c_sort.fp_exp_size()
+
+    def fp_sig_size(self) -> int:
+        return self.c_sort.fp_sig_size()
+
+    def array_index(self) -> Sort:
+        return _sort(self.c_sort.array_index())
+
+    def array_element(self) -> Sort:
+        return _sort(self.c_sort.array_element())
+
+    def fun_domain(self) -> list[Sort]:
+        return [_sort(s) for s in self.c_sort.fun_domain()]
+
+    def fun_codomain(self) -> Sort:
+        return _sort(self.c_sort.fun_codomain())
+
+    def fun_arity(self) -> int:
+        return self.c_sort.fun_arity()
+
+    def uninterpreted_symbol(self) -> str:
+        symbol = self.c_sort.uninterpreted_symbol()
+        return symbol.value().decode() if symbol.has_value() else None
+
+    def is_array(self) -> bool:
+        return self.c_sort.is_array()
+
+    def is_bool(self) -> bool:
+        return self.c_sort.is_bool()
+
+    def is_bv(self) -> bool:
+        return self.c_sort.is_bv()
+
+    def is_fp(self) -> bool:
+        return self.c_sort.is_fp()
+
+    def is_fun(self) -> bool:
+        return self.c_sort.is_fun()
+
+    def is_rm(self) -> bool:
+        return self.c_sort.is_rm()
+
+    def is_uninterpreted(self) -> bool:
+        return self.c_sort.is_uninterpreted()
+
+    def __str__(self) -> str:
+        return self.c_sort.str().decode()
+
+    def __eq__(self, Sort other) -> bool:
+        return self.c_sort == other.c_sort
 
 
 # --------------------------------------------------------------------------- #
-# Wrapper class for BitwuzlaOptions
+# Term wrapper
+# --------------------------------------------------------------------------- #
+
+cdef class Term:
+    cdef bitwuzla_api.Term c_term
+
+    def is_null(self) -> bool:
+        return self.c_term.is_null()
+
+    def id(self) -> int:
+        return self.c_term.id()
+
+    def kind(self) -> Kind:
+        return self.c_term.kind()
+
+    def sort(self) -> Sort:
+        return _sort(self.c_term.sort())
+
+    def num_children(self) -> int:
+        return self.c_term.num_children()
+
+    def children(self) -> list[Term]:
+        return _terms(self.c_term.children())
+
+    def __getitem__(self, uint64_t index) -> Term:
+        return _term(self.c_term[index])
+
+    def num_indices(self) -> int:
+        return self.c_term.num_indices()
+
+    def indices(self) -> list[int]:
+        return [i for i in self.c_term.indices()]
+
+    def symbol(self) -> str:
+        opt = self.c_term.symbol()
+        if opt.has_value():
+            return (<string?> opt.value()).decode()
+        return None
+
+    def is_const(self) -> bool:
+        return self.c_term.is_const()
+
+    def is_variable(self) -> bool:
+        return self.c_term.is_variable()
+
+    def is_value(self) -> bool:
+        return self.c_term.is_value()
+
+    def is_bv_value_zero(self) -> bool:
+        return self.c_term.is_bv_value_zero()
+
+    def is_bv_value_one(self) -> bool:
+        return self.c_term.is_bv_value_one()
+
+    def is_bv_value_ones(self) -> bool:
+        return self.c_term.is_bv_value_ones()
+
+    def is_bv_value_min_signed(self) -> bool:
+        return self.c_term.is_bv_value_min_signed()
+
+    def is_bv_value_max_signed(self) -> bool:
+        return self.c_term.is_bv_value_max_signed()
+
+    def is_fp_value_pos_zero(self) -> bool:
+        return self.c_term.is_fp_value_pos_zero()
+
+    def is_fp_value_neg_zero(self) -> bool:
+        return self.c_term.is_fp_value_neg_zero()
+
+    def is_fp_value_pos_inf(self) -> bool:
+        return self.c_term.is_fp_value_pos_inf()
+
+    def is_fp_value_neg_inf(self) -> bool:
+        return self.c_term.is_fp_value_neg_inf()
+
+    def is_fp_value_nan(self) -> bool:
+        return self.c_term.is_fp_value_nan()
+
+    def is_rm_value_rna(self) -> bool:
+        return self.c_term.is_rm_value_rna()
+
+    def is_rm_value_rne(self) -> bool:
+        return self.c_term.is_rm_value_rne()
+
+    def is_rm_value_rtn(self) -> bool:
+        return self.c_term.is_rm_value_rtn()
+
+    def is_rm_value_rtp(self) -> bool:
+        return self.c_term.is_rm_value_rtp()
+
+    def is_rm_value_rtz(self) -> bool:
+        return self.c_term.is_rm_value_rtz()
+
+    def __str__(self) -> str:
+        return self.c_term.str().decode()
+
+    def value(self, uint8_t base = 2):
+        sort = self.sort()
+        if sort.is_bool():
+            return self.c_term.value[cbool]()
+        elif sort.is_rm():
+            return RoundingMode(self.c_term.value[bitwuzla_api.RoundingMode]())
+        return self.c_term.value[string](base).decode()
+
+
+# --------------------------------------------------------------------------- #
+# Options wrapper
 # --------------------------------------------------------------------------- #
 
 cdef class Options:
-    cdef bitwuzla_api.BitwuzlaOptions *_c_options
+    cdef bitwuzla_api.Options c_options
 
-    def __init__(self):
-        self._c_options = bitwuzla_api.bitwuzla_options_new()
-        if self._c_options is NULL:
-            raise MemoryError()
+    def shrt(self, option: Option) -> str:
+        return self.c_options.shrt(option.value).decode()
 
-    def __dealloc__(self):
-        if self._c_options is not NULL:
-            bitwuzla_api.bitwuzla_options_delete(self._c_options)
+    def lng(self, option: Option) -> str:
+        return self.c_options.lng(option.value).decode()
 
-    cdef bitwuzla_api.BitwuzlaOptions* ptr(self):
-        return self._c_options
+    def description(self, option: Option) -> str:
+        return self.c_options.description(option.value).decode()
 
-    def set_option(self, opt, value):
-        """set_option(opt, value)
+    def modes(self, option: Option) -> list[str]:
+        return [m.decode() for m in self.c_options.modes(option.value)]
 
-           Set option ``opt`` to ``value``.
-
-           :param opt:   Option.
-           :type opt:    BitwuzlaOption
-           :param value: Option value.
-
-           .. seealso::
-                For a list of available options see :class:`~bitwuzla.Option`
-        """
-        if not isinstance(opt, Option):
-            raise ValueError("Given 'opt' is not an option object")
+    def set(self, option: Option, value):
+        cdef bitwuzla_api.Option opt = option.value
         if isinstance(value, str):
-            bitwuzla_api.bitwuzla_set_option_mode(
-                    self.ptr(), opt.value, _to_cstr(value))
+            self.c_options.set(opt, <const string&> value.encode())
+        elif isinstance(value, bool) or isinstance(value, int):
+            self.c_options.set(opt, <uint64_t?> value)
         else:
-            bitwuzla_api.bitwuzla_set_option(self.ptr(), opt.value, value)
+            raise ValueError(f'Invalid value type for option {option.value}.')
 
-    def get_option(self, opt):
-        """get_option(opt)
+    def set_args(self, *args: str):
+        self.c_options.set(_to_str_vec(args))
 
-           Get the current value of option ``opt``.
+    def option(self, name: str) -> Option:
+        return Option(self.c_options.option(name))
 
-           :param opt: Option.
-           :type opt: BitwuzlaOption
-           :return: Option value.
-
-           .. seealso::
-                For a list of available options see :class:`~bitwuzla.Option`
-        """
-        if not isinstance(opt, Option):
-            raise ValueError("Given 'opt' is not an option object")
-        cdef bitwuzla_api.BitwuzlaOptionInfo info
-        bitwuzla_api.bitwuzla_get_option_info(self.ptr(), opt.value, &info)
-        if info.is_numeric:
-            return info.numeric.cur
-        return _to_str(info.mode.cur)
-
+    def get(self, option: Option):
+        if self.c_options.is_mode(option.value):
+            return self.c_options.get_mode(option.value).decode()
+        elif self.c_options.is_numeric(option.value):
+            return self.c_options.get(option.value)
+        elif self.c_options.is_bool(option.value):
+            return self.c_options.get(option.value) != 0
 
 # --------------------------------------------------------------------------- #
-# Wrapper class for Bitwuzla solver
+# OptionInfo wrapper
+# --------------------------------------------------------------------------- #
+
+# TODO
+
+# --------------------------------------------------------------------------- #
+# Bitwuzla wrapper
 # --------------------------------------------------------------------------- #
 
 cdef class Bitwuzla:
-    """Class representing a Bitwuzla solver instance."""
-    cdef bitwuzla_api.Bitwuzla *_c_bitwuzla
+    cdef unique_ptr[bitwuzla_api.Bitwuzla] c_bitwuzla
+    cdef unique_ptr[bitwuzla_api.PyTerminator] c_terminator
 
-    def __init__(self, Options options):
-        self._c_bitwuzla = bitwuzla_api.bitwuzla_new(options.ptr())
-        if self._c_bitwuzla is NULL:
-            raise MemoryError()
-        bitwuzla_api.bitwuzla_set_abort_callback(
-            bitwuzla_api.py_bitwuzla_abort_fun)
+    def __init__(self, options: Options):
+        self.c_bitwuzla.reset(new bitwuzla_api.Bitwuzla(options.c_options))
 
-    def __dealloc__(self):
-        if self._c_bitwuzla is not NULL:
-            bitwuzla_api.bitwuzla_delete(self._c_bitwuzla)
-
-    cdef bitwuzla_api.Bitwuzla* ptr(self):
-        return self._c_bitwuzla
-
-    # ------------------------------------------------------------------------
-    # Termination callback
-    # ------------------------------------------------------------------------
-
-    def set_term(self, fun, args):
-        """set_term(fun, args)
-
-           Set a termination callback function.
+    def configure_terminator(self, callback: callable):
+        """Set a termination callback.
 
            Use this function to force Bitwuzla to prematurely terminate if
-           callback function ``fun`` returns True. Arguments ``args`` to
-           ``fun`` may be passed as a single Python object (in case that
-           ``fun`` takes only one argument), a tuple, or a list of arguments.
+           callback returns True. The callback object needs to be a callable,
+           i.e., it is a function or class that implements the builtin method
+           __call__().
 
-           E.g., ::
+           For example: ::
 
              import time
+             class TimeLimitTerminator:
+                def __init__(self, time_limit):
+                    self.start_time = time.time()
+                    self.time_limit = time_limit
 
-             def fun1 (arg):
-                 # timeout after 1 sec.
-                 return time.time() - arg > 1.0
-
-             def fun2 (arg0, arg1):
-                 # do something and return True/False
-                 ...
+                def __call__(self)
+                    # Terminate after self.time_limit seconds passed
+                    return time.time() - self.start_time > self.time_limit
 
              bitwuzla = Bitwuzla()
+             bitwuzla.set_term(lambda: True)            # immediately terminate
+             bitwuzla.set_term(TimeLimitTerminator(1))  # terminate after 1s
+             bitwuzla.set_term(TimeLimitTerminator(10)) # terminate after 10s
 
-             bitwuzla.set_term(fun1, time.time())
-             bitwuzla.set_term(fun1, (time.time(),))
-             bitwuzla.set_term(fun1, [time.time()])
-
-             bitwuzla.set_term(fun2, (arg0, arg1))
-             bitwuzla.set_term(run2, [arg0, arg1])
-
-           :param fun: A python function.
-           :param args: A function argument or a list or tuple of function
-                        arguments.
+           :param callback: A callable Python object.
         """
-        cdef PyObject* funptr = <PyObject*>fun
-        cdef PyObject* argsptr = <PyObject*>args
-        bitwuzla_api.py_bitwuzla_set_term(self.ptr(), funptr, argsptr)
+        self.c_terminator.reset(
+            new bitwuzla_api.PyTerminator(<PyObject*> callback))
+        self.c_bitwuzla.get().configure_terminator(
+            <bitwuzla_api.Terminator*> self.c_terminator.get())
 
-    def terminate(self):
-        """Call terminate callback that was set via
-           :func:`~bitwuzla.Bitwuzla.set_term`.
+    def push(self, nlevels: uint32_t = 1):
+        """Push new assertion levels.
 
-           :return: True if termination condition is fulfilled, else False.
-           :rtype: bool
-
-           .. seealso::
-                :func:`~bitwuzla.Bitwuzla.set_term`.
-        """
-        cdef int32_t res
-        res = bitwuzla_api.bitwuzla_terminate(self.ptr())
-        return res > 0
-
-    # ------------------------------------------------------------------------
-    # Bitwuzla API functions (general)
-    # ------------------------------------------------------------------------
-
-    def push(self, uint32_t levels = 1):
-        """push(levels = 1)
-
-           Push new context levels.
-
-           :param levels: Number of context levels to create.
+           :param levels: Number of assertion levels to create.
            :type levels: int
-
-           .. note::
-             Assumptions added via :func:`~bitwuzla.Bitwuzla.assume_formula`
-             are not affected by context level changes and are only valid
-             until the next :func:`~bitwuzla.Bitwuzla.check_sat` call no matter
-             at what level they were assumed.
-
-           .. seealso::
-               :func:`~bitwuzla.Bitwuzla.assume_formula`
         """
-        bitwuzla_api.bitwuzla_push(self.ptr(), levels)
+        self.c_bitwuzla.get().push(nlevels)
 
-    def pop(self, uint32_t levels = 1):
-        """pop(levels = 1)
+    def pop(self, nlevels: uint32_t = 1):
+        """Pop assertion levels.
 
-           Pop context levels.
-
-           :param levels: Number of levels to pop.
+           :param levels: Number of assertion levels to pop.
            :type levels: int
-
-           .. note::
-             Assumptions added via :func:`~bitwuzla.Bitwuzla.assume_formula`
-             are not affected by context level changes and are only valid
-             until the next :func:`~bitwuzla.Bitwuzla.check_sat` call no matter
-             at what level they were assumed.
-
-           .. seealso::
-               :func:`~bitwuzla.Bitwuzla.assume_formula`
         """
-        bitwuzla_api.bitwuzla_pop(self.ptr(), levels)
+        self.c_bitwuzla.get().pop(nlevels)
 
-    def assert_formula(self, *formulas):
-        """assert_formula(formula,...)
+    def assert_formula(self, *formulas: Term):
+        """Assert one or more formulas.
 
-           Assert one or more formulas.
-
-           :param formula: Boolean term.
-           :type formula: BitwuzlaTerm
+           :param formulas: One or more Boolean terms.
         """
-        for i in range(len(formulas)):
-            f = formulas[i]
-            if not isinstance(f, BitwuzlaTerm):
-              raise BitwuzlaException("Argument at position {0:d} is not "\
-                                       "a BitwuzlaTerm".format(i))
-            n = <BitwuzlaTerm> f
-            bitwuzla_api.bitwuzla_assert(self.ptr(), n._c_term)
+        for f in formulas:
+            self.c_bitwuzla.get().assert_formula(_cterm(f))
 
-    def check_sat(self):
-        """Check satisfiability of asserted and assumed input formulas.
-
-           Input formulas can either be asserted via
-           :func:`~bitwuzla.Bitwuzla.assert_formula` or
-           assumed via :func:`~bitwuzla.Bitwuzla.assume_formula`.
+    def check_sat(self, *assumptions: Term) -> Result:
+        """Check satisfiability of asserted formulas under possibly given
+           assumptions.
 
            If this function is called multiple times it is required to
-           enable incremental usage via :func:`~bitwuzla.Bitwuzla.set_opt`.
+           enable incremental usage via :func:`~bitwuzla.Options.set`.
+
+           :param assumptions: Zero or more Boolean terms.
 
            :return: - :class:`~bitwuzla.Result.SAT` if the input formula is
                       satisfiable (under possibly given assumptions)
                     - :class:`~bitwuzla.Result.UNSAT` if it is unsatisfiable
                     - :class:`~bitwuzla.Result.UNKNOWN` otherwise
-           :rtype: Result
-
-           .. note::
-               Assertions and assumptions are combined via Boolean *and*.
 
            .. seealso::
+               :func:`~bitwuzla.Bitwuzla.assert_formula`,
                :func:`~bitwuzla.Bitwuzla.get_value`,
-               :func:`~bitwuzla.Bitwuzla.get_value_str`
+               :func:`~bitwuzla.Bitwuzla.get_unsat_core`,
+               :func:`~bitwuzla.Bitwuzla.get_unsat_assumptions`,
         """
-        return _to_result(bitwuzla_api.bitwuzla_check_sat(self.ptr()))
+        return Result(self.c_bitwuzla.get().check_sat(_term_vec(assumptions)))
 
+    def is_unsat_assumption(self, Term term) -> bool:
+        """Determine if given assumption is unsat.
 
-    def simplify(self):
-        """Simplify current input formula.
+           Unsat assumptions are those assumptions that force an
+           input formula to become unsatisfiable.
 
-           :return: - :class:`~bitwuzla.Result.SAT` if the input formula is
-                      satisfiable (under possibly given assumptions)
-                    - :class:`~bitwuzla.Result.UNSAT` if it is unsatisfiable
-                    - :class:`~bitwuzla.Result.UNKNOWN` otherwise
-           :rtype: Result
+           See :func:`~bitwuzla.Bitwuzla.check_sat`.
 
-           .. note::
-               Each call to :func:`~bitwuzla.Bitwuzla.check_sat`
-               simplifies the input formula as a preprocessing step.
+           :param term: Boolean term.
+           :return:  True if assumption is unsat, False otherwise.
         """
-        return _to_result(bitwuzla_api.bitwuzla_simplify(self.ptr()))
+        return self.c_bitwuzla.get().is_unsat_assumption(_cterm(term))
 
+    def get_unsat_assumptions(self) -> list[Term]:
+        """Return list of unsatisfiable assumptions previously added via
+           :func:`~bitwuzla.Bitwuzla.check_sat`.
 
-    def get_unsat_core(self):
+           Requires that the last :func:`~bitwuzla.Bitwuzla.check_sat` call
+           returned `~bitwuzla.Result.UNSAT`.
+
+           :return:  List of unsatisfiable assumptions
+        """
+        return _term_list(self.c_bitwuzla.get().get_unsat_assumptions())
+
+    def get_unsat_core(self) -> list[Term]:
         """Return list of unsatisfiable assertions previously added via
            :func:`~bitwuzla.Bitwuzla.assert_formula`.
 
@@ -730,763 +463,364 @@ cdef class Bitwuzla:
            returned :class:`~bitwuzla.Result.UNSAT`.
 
            :return:  list of unsatisfiable assertions
-           :rtype:   list(BitwuzlaTerm)
         """
+        return _term_list(self.c_bitwuzla.get().get_unsat_core())
 
-        cdef bitwuzla_api.BitwuzlaTerm* core
-        cdef size_t size
-        core = bitwuzla_api.bitwuzla_get_unsat_core(self.ptr(), &size)
-        return _to_terms(self, size, core)
+    def simplify(self) -> Result:
+        """Simplify current set of input assertions.
 
-    def get_value(self, BitwuzlaTerm term):
-        """get_value(term)
+           :return: - :class:`~bitwuzla.Result.SAT` if the input formula is
+                      satisfiable (under possibly given assumptions)
+                    - :class:`~bitwuzla.Result.UNSAT` if it is unsatisfiable
+                    - :class:`~bitwuzla.Result.UNKNOWN` otherwise
 
-           Get model value of term.
+           .. note::
+               Each call to :func:`~bitwuzla.Bitwuzla.check_sat`
+               simplifies the input formula as a preprocessing step.
+        """
+        return Result(self.c_bitwuzla.get().simplify())
+
+    def get_value(self, term: Term) -> Term:
+        """Get model value of term.
 
            Requires that the last :func:`~bitwuzla.Bitwuzla.check_sat` call
            returned `~bitwuzla.Result.SAT`.
 
            :return: Term representing the model value of `term`.
-           :rtype: BitwuzlaTerm
         """
-        return _to_term(self, bitwuzla_api.bitwuzla_get_value(self.ptr(),
-                                                              term.ptr()))
-
-    def get_value_str(self, BitwuzlaTerm term, uint8_t base = 2):
-        """get_value_str(term)
-
-           Get string representation of model value of a `term`.
-
-           Requires that the last :func:`~bitwuzla.Bitwuzla.check_sat` call
-           returned :class:`~bitwuzla.Result.SAT`.
-
-           :return:
-               - arrays: dictionary mapping indices to values
-               - bit-vectors: bit string
-               - floating-points: 3-tuple of bit strings
-                 (sign, exponent, significand)
-               - functions: dictionary mapping tuples of arguments to values
-               - rounding mode: string representation of rounding mode value
-        """
-        cdef const char* sign
-        cdef const char* exponent
-        cdef const char* significand
-        cdef bitwuzla_api.BitwuzlaTerm* array_indices
-        cdef bitwuzla_api.BitwuzlaTerm* array_values
-        cdef bitwuzla_api.BitwuzlaTerm array_default_value
-        cdef size_t array_size
-        cdef bitwuzla_api.BitwuzlaTerm** fun_args
-        cdef bitwuzla_api.BitwuzlaTerm* fun_values
-        cdef size_t fun_arity, fun_size
-
-        if term.is_array():
-            raise BitwuzlaException("unimplemented")
-            #bitwuzla_api.bitwuzla_get_array_value(self.ptr(),
-            #                                      term.ptr(),
-            #                                      &array_indices,
-            #                                      &array_values,
-            #                                      &array_size,
-            #                                      &array_default_value)
-
-            #if array_default_value is not NULL:
-            #    val = defaultdict(lambda: self.get_value_str(
-            #                        _to_term(self, array_default_value)))
-            #else:
-            #    val = dict()
-
-            #for i in range(array_size):
-            #    vi = self.get_value_str(_to_term(self, array_indices[i]))
-            #    ve = self.get_value_str(_to_term(self, array_values[i]))
-            #    val[vi] = ve
-
-            #return val
-        elif term.is_bv():
-            return _to_str(bitwuzla_api.bitwuzla_get_bv_value(self.ptr(),
-                                                              term.ptr(),
-                                                              base))
-        elif term.is_fp():
-            bitwuzla_api.bitwuzla_get_fp_value(self.ptr(),
-                                               term.ptr(),
-                                               &sign,
-                                               &exponent,
-                                               &significand,
-                                               base)
-            return (_to_str(sign), _to_str(exponent), _to_str(significand))
-        elif term.is_fun():
-            raise BitwuzlaException("unimplemented")
-            #bitwuzla_api.bitwuzla_get_fun_value(self.ptr(),
-            #                                    term.ptr(),
-            #                                    &fun_args,
-            #                                    &fun_arity,
-            #                                    &fun_values,
-            #                                    &fun_size)
-
-            #val = dict()
-            #for i in range(fun_size):
-            #    args = [self.get_value_str(_to_term(self, fun_args[i][j])) \
-            #                for j in range(fun_arity)]
-            #    val[tuple(args)] = self.get_value_str(_to_term(self,
-            #                                                   fun_values[i]))
-            #return val
-        else:
-            assert term.is_rm()
-            return RoundingMode(bitwuzla_api.bitwuzla_get_rm_value(self.ptr(),
-                                                                   term.ptr()))
-
-    #def get_model(self, fmt='smt2'):
-    #    """get_model(fmt = "smt2")
-
-    #       Get the model as a string in format ``fmt``.
-
-    #       :param fmt: Model format. Available formats: "btor", "smt2"
-    #       :type: str
-
-    #       :return: String representation of model in format ``fmt``.
-    #       :rtype: str
-    #    """
-    #    cdef FILE * out
-    #    with tempfile.NamedTemporaryFile('r') as f:
-    #        out = fopen(_to_cstr(f.name), 'w')
-    #        bitwuzla_api.bitwuzla_print_model(self.ptr(), _to_cstr(fmt), out)
-    #        fclose(out)
-    #        return f.read().strip()
-
-
-    #def dump_formula(self, fmt='smt2'):
-    #    """dump_formula(fmt = "smt2")
-
-    #       Dump the current formula as a string in format ``fmt``.
-
-    #       :param fmt: Model format. Available formats: "btor", "smt2"
-    #       :type: str
-
-    #       :return: String representation of formula in format ``fmt``.
-    #       :rtype: str
-    #    """
-    #    cdef FILE * out
-    #    with tempfile.NamedTemporaryFile('r') as f:
-    #        out = fopen(_to_cstr(f.name), 'w')
-    #        bitwuzla_api.bitwuzla_dump_formula(self.ptr(), _to_cstr(fmt), out)
-    #        fclose(out)
-    #        return f.read().strip()
-
-    # ------------------------------------------------------------------------
-    # Assumption handling
-
-#    def assume_formula(self, *formulas):
-#        """assume_formula(formula,...)
-#
-#           Assume one or more formulas.
-#
-#           You must enable incremental usage via
-#           :func:`~bitwuzla.Bitwuzla.set_option` before you can add
-#           assumptions.
-#           In contrast to assertions added via
-#           :func:`~bitwuzla.Bitwuzla.assert_formula`, assumptions
-#           are discarded after each call to
-#           :func:`~bitwuzla.Bitwuzla.check_sat`.
-#           Assumptions and assertions are logically combined via Boolean
-#           *and*.
-#           Assumption handling in Bitwuzla is analogous to assumptions
-#           in MiniSAT.
-#
-#           :param formula: Boolean term.
-#           :type formula: BitwuzlaTerm
-#        """
-#        for i in range(len(formulas)):
-#            f = formulas[i]
-#            if not isinstance(f, BitwuzlaTerm):
-#              raise BitwuzlaException("Argument at position {0:d} is not "\
-#                                       "a BitwuzlaTerm".format(i))
-#            n = <BitwuzlaTerm> f
-#            bitwuzla_api.bitwuzla_assume(self.ptr(), n.ptr())
-
-    def is_unsat_assumption(self, *assumptions):
-        """is_unsat_assumption(assumption,...)
-
-           Determine if any of the given assumptions are false assumptions.
-
-           Unsat assumptions are those assumptions that force an
-           input formula to become unsatisfiable.
-           Unsat assumptions handling in Bitwuzla is analogous to
-           unsatisfiable assumptions in MiniSAT.
-
-           See :func:`~bitwuzla.Bitwuzla.assume_formula`.
-
-           :param assumption: Boolean terms.
-           :type assumption:  BitwuzlaTerm
-           :return:  List of Boolean values, where True indicates that the
-                     assumption at given index is true or false.
-           :rtype:   list(bool)
-        """
-        res = []
-        for i in range(len(assumptions)):
-            a = assumptions[i]
-            if not isinstance(a, BitwuzlaTerm):
-              raise BitwuzlaException("Argument at position {0:d} is not "\
-                                       "a BitwuzlaTerm".format(i))
-            n = <BitwuzlaTerm> a
-            res.append(
-                bitwuzla_api.bitwuzla_is_unsat_assumption(
-                    self.ptr(), n.ptr()) == 1)
-        return res
-
-#    def fixate_assumptions(self):
-#        """Assert all assumptions added since the last
-#           :func:`~bitwuzla.Bitwuzla.check_sat` call as assertions.
-#
-#           .. seealso::
-#                :func:`~bitwuzla.Bitwuzla.assume_formula`.
-#        """
-#        bitwuzla_api.bitwuzla_fixate_assumptions(self.ptr())
-#
-#    def reset_assumptions(self):
-#        """Remove all assumptions added since the last
-#           :func:`~bitwuzla.Bitwuzla.check_sat` call.
-#
-#           .. seealso::
-#                :func:`~bitwuzla.Bitwuzla.assume_formula`.
-#        """
-#        bitwuzla_api.bitwuzla_reset_assumptions(self.ptr())
-#
-    def get_unsat_assumptions(self):
-        """Return list of unsatisfiable assumptions previously added via
-           :func:`~bitwuzla.Bitwuzla.assume_formula`.
-
-           Requires that the last :func:`~bitwuzla.Bitwuzla.check_sat` call
-           returned `~bitwuzla.Result.UNSAT`.
-
-           :return:  List of unsatisfiable assumptions
-           :rtype:   list(BitwuzlaTerm)
-        """
-        cdef bitwuzla_api.BitwuzlaTerm* assumptions
-        cdef size_t size
-        assumptions = \
-            bitwuzla_api.bitwuzla_get_unsat_assumptions(self.ptr(), &size)
-
-        return _to_terms(self, size, assumptions)
-
-
-    # ------------------------------------------------------------------------
-    # Sort methods
-
-    def mk_bool_sort(self):
-        """Create a Boolean sort.
-
-           :return: Sort of type Boolean.
-           :rtype: BitwuzlaSort
-        """
-        return _to_sort(self, bitwuzla_api.bitwuzla_mk_bool_sort())
-
-    def mk_bv_sort(self, uint32_t width):
-        """mk_bv_sort(width)
-
-           Create bit-vector sort of size ``width``.
-
-           :param width: Bit width.
-           :type width: uint32_t
-
-           :return:  Bit-vector sort of bit width ``width``.
-           :rtype: bitwuzla.BitwuzlaSort
-        """
-        return _to_sort(self, bitwuzla_api.bitwuzla_mk_bv_sort(width))
-
-    def mk_array_sort(self, BitwuzlaSort index, BitwuzlaSort elem):
-        """mk_array_sort(index, elem)
-
-           Create array sort with given index and element sorts.
-
-           :param index: The sort of the array index.
-           :type index: BitwuzlaSort
-           :param elem: The sort of the array elements.
-           :type elem: BitwuzlaSort
-
-           :return:  Array sort.
-           :rtype: BitwuzlaSort
-          """
-        return _to_sort(self,
-                        bitwuzla_api.bitwuzla_mk_array_sort(index.ptr(),
-                                                            elem.ptr()))
-
-    def mk_fun_sort(self, list domain, BitwuzlaSort codomain):
-        """mk_fun_sort(domain, codomain)
-
-           Create function sort with given domain and codomain.
-
-           :param domain: A list of all the function arguments' sorts.
-           :type domain: list
-           :param codomain: The sort of the function's return value.
-           :type codomain: BitwuzlaSort
-
-           :return:  Function sort, which maps ``domain`` to ``codomain``.
-           :rtype: BitwuzlaSort
-          """
-        cdef uint32_t arity = len(domain)
-        cdef bitwuzla_api.BitwuzlaSort *c_domain = _alloc_sorts(arity)
-        for i in range(arity):
-            if not isinstance(domain[i], BitwuzlaSort):
-                raise ValueError('Argument at position {} ' \
-                                 'is not of type BitwuzlaSort'.format(i))
-            c_domain[i] = (<BitwuzlaSort> domain[i]).ptr()
-
-        sort = _to_sort(self,
-                        bitwuzla_api.bitwuzla_mk_fun_sort(arity,
-                                                          c_domain,
-                                                          codomain.ptr()))
-        free(c_domain)
-        return sort
-
-    def mk_fp_sort(self, uint32_t exp_size, uint32_t sig_size):
-        """mk_fp_sort(exp_size, sig_size)
-
-           Create a floating-point sort with given exponent size ``exp_size``
-           and significand size ``sig_size``.
-
-           :param exp_size: Exponent size.
-           :type exp_size: uint32_t
-           :param sig_size: Significand size.
-           :type sig_size: uint32_t
-
-           :return: Floating-point sort.
-           :rtype: BitwuzlaSort
-        """
-        return _to_sort(self,
-                        bitwuzla_api.bitwuzla_mk_fp_sort(exp_size, sig_size))
-
-    def mk_rm_sort(self):
-        """mk_rm_sort()
-
-           Create a rounding mode sort.
-
-           :return: Rounding mode sort.
-           :rtype: BitwuzlaSort
-        """
-        return _to_sort(self, bitwuzla_api.bitwuzla_mk_rm_sort())
-
-    # ------------------------------------------------------------------------
-    # Value methods
-
-    # Bit-vector values
-
-    def mk_bv_value(self, BitwuzlaSort sort, value):
-        """mk_bv_value(sort, value)
-
-           Create bit-vector ``value`` with given ``sort``.
-
-           :param sort: Bit-vector sort.
-           :type sort: BitwuzlaSort
-           :param value: Hexadecimal, binary or decimal value.
-
-                         - hexadecimal prefix: ``0x`` or ``#x``
-                         - binary prefix: ``0b`` or ``#b``
-           :type value: str or int
-
-           :return: A term representing the bit-vector value.
-           :rtype: BitwuzlaTerm
-        """
-        term = BitwuzlaTerm(self)
-        is_str = isinstance(value, str)
-        if is_str and (value.startswith('0x') or value.startswith('#x')):
-            term.set(bitwuzla_api.bitwuzla_mk_bv_value(
-                                sort.ptr(),
-                                _to_cstr(value[2:]),
-                                16))
-        elif is_str and (value.startswith('0b') or value.startswith('#b')):
-            term.set(bitwuzla_api.bitwuzla_mk_bv_value(
-                                sort.ptr(),
-                                _to_cstr(value[2:]),
-                                2))
-        elif (is_str and value.lstrip('-').isnumeric()) \
-             or isinstance(value, int):
-            term.set(bitwuzla_api.bitwuzla_mk_bv_value(
-                                sort.ptr(),
-                                _to_cstr(str(value)),
-                                10))
-        else:
-            raise ValueError("Cannot convert '{}' to " \
-                             "bit-vector value.".format(value))
-        return term
-
-    def mk_bv_ones(self, BitwuzlaSort sort):
-        """mk_bv_ones(sort)
-
-           Create a bit-vector value with ``sort`` where all bits are set to 1.
-
-           :param sort: Bit-vector sort.
-           :type sort: BitwuzlaSort
-
-           :return: A term representing the bit-vector value of given sort
-                    where all bits are set to 1.
-           :rtype: BitwuzlaTerm
-        """
-        return _to_term(self, bitwuzla_api.bitwuzla_mk_bv_ones(sort.ptr()))
-
-    def mk_bv_min_signed(self, BitwuzlaSort sort):
-        """mk_bv_min_signed(sort)
-
-           Create a bit-vector minimum signed value.
-
-           :param sort: Bit-vector sort.
-           :type sort: BitwuzlaSort
-
-           :return: A term representing the bit-vector value of given sort
-                    where the MSB is set to 1 and all remaining bits are set to
-                    0.
-           :rtype: BitwuzlaTerm
-
-        """
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_bv_min_signed(sort.ptr()))
-
-    def mk_bv_max_signed(self, BitwuzlaSort sort):
-        """mk_bv_max_signed(sort)
-
-           Create a bit-vector maximum signed value.
-
-           :param sort: Bit-vector sort.
-           :type sort: BitwuzlaSort
-
-           :return: A term representing the bit-vector value of given sort
-                    where the MSB is set to 0 and all remaining bits are set to
-                    1.
-           :rtype: BitwuzlaTerm
-        """
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_bv_max_signed(sort.ptr()))
-
-    # Floating-point values
-
-    def mk_fp_value(self, BitwuzlaSort sort, sign, exponent, significand):
-        """mk_fp_value(sort, sign, exponent, significand)
-
-           Create a floating-point value from its IEEE 754 standard
-           representation given as three bit-vector values representing the
-           sign bit, the exponent and the significand.
-
-           :param sort: Floating-point sort.
-           :type sort: BitwuzlaSort
-           :param sign: The sign bit.
-           :type sign: str or int
-           :param exponent: The exponent bit-vector value.
-           :type exponent: str or int
-           :param significand: The significand bit-vector value.
-           :type significand: str or int
-
-           :return: A term representing the floating-point value.
-           :rtype: BitwuzlaTerm
-
-           .. seealso::
-             :func:`~bitwuzla.Bitwuzla.mk_bv_value` for the supported value
-             format for ``sign``, ``exponent``, and ``significand``.
-        """
-        _exp_size = bitwuzla_api.bitwuzla_sort_fp_get_exp_size(sort.ptr())
-        _sig_size = bitwuzla_api.bitwuzla_sort_fp_get_sig_size(sort.ptr())
-
-        sort_sign = self.mk_bool_sort()
-        sort_exp = self.mk_bv_sort(_exp_size)
-        sort_significand = self.mk_bv_sort(_sig_size - 1)
-
-        cdef BitwuzlaTerm val_sign = self.mk_bv_value(sort_sign, sign)
-        cdef BitwuzlaTerm val_exp = self.mk_bv_value(sort_exp, exponent)
-        cdef BitwuzlaTerm val_significand = \
-                self.mk_bv_value(sort_significand, significand)
-
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_fp_value(
-                            val_sign.ptr(),
-                            val_exp.ptr(),
-                            val_significand.ptr()))
-
-    def mk_fp_value_from(self, BitwuzlaSort sort, BitwuzlaTerm rm, value):
-        """mk_fp_value_from(sort, rm, value)
-
-           Create a floating-point value from its real or rational
-           representation, given as a string, with respect to given
-           rounding mode.
-
-           :param sort: Floating-point sort.
-           :type sort: BitwuzlaSort
-           :param rm: Rounding mode.
-           :type rm: BitwuzlaTerm
-           :param value: String representation of real or rational value to
-                         create. The expected format for rational values is
-                         <numerator>/<denominator>.
-           :type value: str
-
-           :return: A term representing the real or rational value as floating
-                    point value with given sort.
-           :rtype: BitwuzlaTerm
-        """
-        term = BitwuzlaTerm(self)
-        if isinstance(value, str) and '/' in value:
-            num, den = value.split('/')
-            return _to_term(self,
-                            bitwuzla_api.bitwuzla_mk_fp_from_rational(
-                                sort.ptr(),
-                                rm.ptr(),
-                                _to_cstr(num),
-                                _to_cstr(den)))
-
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_fp_from_real(
-                            sort.ptr(),
-                            rm.ptr(),
-                            _to_cstr(str(value))))
-
-
-    def mk_fp_pos_zero(self, BitwuzlaSort sort):
-        """mk_fp_pos_zero(sort)
-
-           Create a floating-point positive zero value (SMT-LIB: `+zero`).
-
-           :param sort: Floating-point sort.
-           :type sort: BitwuzlaSort
-
-           :return: A term representing the floating-point positive zero value
-                    of given floating-point sort.
-           :rtype: BitwuzlaTerm
-        """
-        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_pos_zero(sort.ptr()))
-
-    def mk_fp_neg_zero(self, BitwuzlaSort sort):
-        """mk_fp_neg_zero(sort)
-
-           Create a floating-point negative zero value (SMT-LIB: `-zero`).
-
-           :param sort: Floating-point sort.
-           :type sort: BitwuzlaSort
-
-           :return: A term representing the floating-point negative zero value
-                    of given floating-point sort.
-           :rtype: BitwuzlaTerm
-        """
-        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_neg_zero(sort.ptr()))
-
-    def mk_fp_pos_inf(self, BitwuzlaSort sort):
-        """mk_fp_pos_inf(sort)
-
-           Create a floating-point positive infinity value (SMT-LIB: `+oo`).
-
-           :param sort: Floating-point sort.
-           :type sort: BitwuzlaSort
-
-           :return: A term representing the floating-point positive infinity
-                    value of given floating-point sort.
-           :rtype: BitwuzlaTerm
-        """
-        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_pos_inf(sort.ptr()))
-
-    def mk_fp_neg_inf(self, BitwuzlaSort sort):
-        """mk_fp_neg_inf(sort)
-
-           Create a floating-point negative infinity value (SMT-LIB: `-oo`).
-
-           :param sort: Floating-point sort.
-           :type sort: BitwuzlaSort
-
-           :return: A term representing the floating-point negative infinity
-                    value of given floating-point sort.
-           :rtype: BitwuzlaTerm
-        """
-        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_neg_inf(sort.ptr()))
-
-    def mk_fp_nan(self, BitwuzlaSort sort):
-        """mk_fp_nan(sort)
-
-           Create a floating-point NaN value.
-
-           :param sort: Floating-point sort.
-           :type sort: BitwuzlaSort
-
-           :return: A term representing the floating-point NaN value of given
-                    floating-point sort.
-           :rtype: BitwuzlaTerm
-        """
-        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_nan(sort.ptr()))
-
-    def mk_rm_value(self, rm):
-        """mk_rm_value(rm)
-
-           Create a rounding mode value.
-
-           :param rm: Rounding mode.
-           :type rm: RoundingMode
-
-           :return: A term representing the rounding mode value.
-           :rtype: BitwuzlaTerm
-        """
-        if not isinstance(rm, RoundingMode):
-            raise ValueError("Given 'rm' is not a RoundingMode value")
-        return _to_term(self, bitwuzla_api.bitwuzla_mk_rm_value(rm.value))
-
-
-    # ------------------------------------------------------------------------
-    # Term methods
-
-    def mk_const(self, BitwuzlaSort sort, str symbol = None):
-        """mk_const(sort, symbol = None)
-
-           Create a (first-order) constant of given ``sort`` with ``symbol``.
-
-           :param sort: The sort of the constant.
-           :type sort: BitwuzlaSort
-           :param symbol: The symbol of the constant.
-           :type symbol: str
-
-           :return: A term representing the constant.
-           :rtype: BitwuzlaTerm
-        """
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_const(sort.ptr(),
-                                                       _to_cstr(symbol)))
-
-    def mk_const_array(self, BitwuzlaSort sort, BitwuzlaTerm value):
-        """mk_const_array(sort, value)
-
-           Create a one-dimensional constant array of given sort, initialized
-           with given value.
-
-           :param sort: The sort of the array.
-           :type sort: BitwuzlaSort
-           :param value: The term to initialize the elements of the array with.
-           :type value: BitwuzlaTerm
-
-           :return: A term representing a constant array of given sort.
-           :rtype: BitwuzlaTerm
-        """
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_const_array(sort.ptr(),
-                                                             value.ptr()))
-
-    def mk_var(self, BitwuzlaSort sort, str symbol = None):
-        """mk_var(sort, symbol = None)
-
-           Create a variable of given ``sort`` with ``symbol``.
-
-           :param sort: The sort of the variable.
-           :type sort: BitwuzlaSort
-           :param symbol: The symbol of the variable.
-           :type symbol: str
-
-           :return: A term representing the variable.
-           :rtype: BitwuzlaTerm
-
-           .. note::
-                This creates a variable to be bound by terms of kind
-                :class:`~bitwuzla.Kind.LAMBDA`.
-        """
-        return _to_term(self,
-                        bitwuzla_api.bitwuzla_mk_var(sort.ptr(),
-                                                     _to_cstr(symbol)))
-
-    def mk_term(self, kind, terms, indices = None):
-        """mk_term(kind, terms, indices = None)
-
-           Create a term of given kind with the given argument terms.
-
-           :param kind: The operator kind.
-           :type kind: Kind
-           :param terms: The number of argument terms.
-           :type terms: list(BitwuzlaTerm)
-           :param indices: The argument terms.
-           :type indices: list(int)
-
-           :return: A term representing an operation of given kind.
-           :rtype: BitwuzlaTerm
-        """
-        if not isinstance(kind, Kind):
-            raise ValueError('Given kind is not a Kind object.')
-        if not isinstance(terms, list) and not isinstance(terms, tuple):
-            raise ValueError('Expected list or tuple for terms')
-        if indices is not None \
-            and not isinstance(indices, list) \
-            and not isinstance(indices, tuple):
-            raise ValueError('Expected list or tuple for indices')
-
-        num_terms = len(terms)
-        cdef bitwuzla_api.BitwuzlaTerm *c_terms =\
-                _alloc_terms(num_terms)
-
-        for i in range(num_terms):
-            if not isinstance(terms[i], BitwuzlaTerm):
-                raise ValueError('Argument at position {} is ' \
-                                 'not of type BitwuzlaTerm'.format(i))
-            c_terms[i] = (<BitwuzlaTerm> terms[i]).ptr()
-
-        term = BitwuzlaTerm(self)
-
-        cdef array.array c_indices
-        if indices:
-            c_indices = array.array('I', indices)
-            term.set(bitwuzla_api.bitwuzla_mk_term_indexed(
-                            kind.value,
-                            num_terms,
-                            c_terms,
-                            len(indices),
-                            <uint64_t*> c_indices.data.as_ulonglongs))
-        else:
-            term.set(bitwuzla_api.bitwuzla_mk_term(
-                        kind.value, num_terms, c_terms))
-        free(c_terms)
-        return term
-
-
-#    def substitute(self, terms, dict subst_map):
-#        """substitute(terms, subst_map)
-#
-#           Substitute constants or variables in ``terms`` by applying
-#           substitutions in ``subst_map``.
-#
-#           :param terms: List of terms to apply substitutions.
-#           :type terms: list(BitwuzlaTerm)
-#           :param subst_map: The substitution map mapping constants or
-#                             variables to terms.
-#           :type subst_map: dict(BitwuzlaTerm,BitwuzlaTerm)
-#
-#           :return: List of terms with substitutions applied.
-#           :rtype: list(BitwuzlaTerm)
-#        """
-#        if not isinstance(terms, BitwuzlaTerm) and not isinstance(terms, list):
-#            raise ValueError('Expected BitwuzlaTerm or list of ' \
-#                             'BitwuzlaTerm but got {}'.format(type(terms)))
-#        got_term = False
-#        if isinstance(terms, BitwuzlaTerm):
-#            got_term = True
-#            terms = [terms]
-#
-#        num_terms = len(terms)
-#        size_map = len(subst_map)
-#        cdef bitwuzla_api.BitwuzlaTerm *c_terms = _alloc_terms(num_terms)
-#        cdef bitwuzla_api.BitwuzlaTerm *c_keys = \
-#                _alloc_terms(size_map)
-#        cdef bitwuzla_api.BitwuzlaTerm *c_values = \
-#                _alloc_terms(size_map)
-#
-#        for i in range(num_terms):
-#            if not isinstance(terms[i], BitwuzlaTerm):
-#                raise ValueError('Expected BitwuzlaTerm but got {}'.format(
-#                                    type(terms[i])))
-#            c_terms[i] = (<BitwuzlaTerm> terms[i]).ptr()
-#
-#        i = 0
-#        for k, v in subst_map.items():
-#            if not isinstance(k, BitwuzlaTerm):
-#                raise ValueError('Expected BitwuzlaTerm as key ' \
-#                                 'but got {}'.format(type(terms[i])))
-#            if not isinstance(v, BitwuzlaTerm):
-#                raise ValueError('Expected BitwuzlaTerm as value ' \
-#                                 'but got {}'.format(type(terms[i])))
-#            c_keys[i] = (<BitwuzlaTerm> k).ptr()
-#            c_values[i] = (<BitwuzlaTerm> v).ptr()
-#            i += 1
-#
-#        bitwuzla_api.bitwuzla_substitute_terms(self.ptr(),
-#                                                num_terms,
-#                                                c_terms,
-#                                                size_map,
-#                                                c_keys,
-#                                                c_values)
-#
-#        if got_term:
-#            return _to_term(self, c_terms[0])
-#        return _to_terms(self, num_terms, c_terms)
+        return _term(self.c_bitwuzla.get().get_value(_cterm(term)))
+
+# --------------------------------------------------------------------------- #
+# Sort functions
+# --------------------------------------------------------------------------- #
+
+def mk_bool_sort() -> Sort:
+    """Create a Boolean sort.
+
+       :return: Sort of type Boolean.
+    """
+    return _sort(bitwuzla_api.mk_bool_sort())
+
+def mk_bv_sort(size: uint64_t) -> Sort:
+    """Create bit-vector sort of size ``size``.
+
+       :param size: Bit width.
+       :return:  Bit-vector sort of size ``size``.
+    """
+    return _sort(bitwuzla_api.mk_bv_sort(size))
+
+def mk_array_sort(index: Sort, elem: Sort) -> Sort:
+    """Create array sort with given index and element sorts.
+
+       :param index: The sort of the array index.
+       :param elem: The sort of the array elements.
+       :return:  Array sort.
+      """
+    return _sort(bitwuzla_api.mk_array_sort(index.c_sort, elem.c_sort))
+
+def mk_fun_sort(domain: list[Sort], codomain: Sort) -> Sort:
+    """Create function sort with given domain and codomain.
+
+       :param domain: A list of all the function arguments' sorts.
+       :param codomain: The sort of the function's return value.
+       :return:  Function sort, which maps ``domain`` to ``codomain``.
+      """
+    return _sort(bitwuzla_api.mk_fun_sort(_sort_vec(domain), _csort(codomain)))
+
+def mk_fp_sort(exp_size: uint64_t, sig_size: uint64_t) -> Sort:
+    """Create a floating-point sort with given exponent size ``exp_size``
+       and significand size ``sig_size``.
+
+       :param exp_size: Exponent size.
+       :param sig_size: Significand size.
+       :return: Floating-point sort.
+    """
+    return _sort(bitwuzla_api.mk_fp_sort(exp_size, sig_size))
+
+def mk_rm_sort() -> Sort:
+    """Create a rounding mode sort.
+
+       :return: Rounding mode sort.
+    """
+    return _sort(bitwuzla_api.mk_rm_sort())
+
+def mk_uninterpreted_sort(symbol: str = None) -> Sort:
+    """Create an uninterpreted sort.
+
+       :param symbol: The symbol of the sort.
+       :return: Uninterpreted Sort.
+
+       .. note::
+            Only 0-arity uninterpreted sorts are supported.
+    """
+    cdef optional[string] opt = nullopt
+    if symbol:
+        opt = <string?> symbol.encode()
+    return _sort(bitwuzla_api.mk_uninterpreted_sort(<optional[const string]?> opt))
+
+
+# --------------------------------------------------------------------------- #
+# Value functions
+# --------------------------------------------------------------------------- #
+
+def mk_true() -> Term:
+    """mk_true()
+
+    Create true value.
+
+    :return: A term representing true.
+    :rtype: BitwuzlaTerm
+    """
+    return _term(bitwuzla_api.mk_true())
+
+def mk_false() -> Term:
+    """mk_false()
+
+    Create false value.
+
+    :return: A term representing false.
+    :rtype: BitwuzlaTerm
+    """
+    return _term(bitwuzla_api.mk_false())
+
+def mk_bv_value(sort: Sort, value) -> Term:
+    """mk_bv_value(sort, value)
+
+       Create bit-vector ``value`` with given ``sort``.
+
+       :param sort: Bit-vector sort.
+       :type sort: BitwuzlaSort
+       :param value: Hexadecimal, binary or decimal value.
+
+                     - hexadecimal prefix: ``0x`` or ``#x``
+                     - binary prefix: ``0b`` or ``#b``
+       :type value: str or int
+
+       :return: A term representing the bit-vector value.
+       :rtype: BitwuzlaTerm
+    """
+    base = None
+    is_str = isinstance(value, str)
+    if is_str and (value.startswith('0x') or value.startswith('#x')):
+        base = 16
+    elif is_str and (value.startswith('0b') or value.startswith('#b')):
+        base = 2
+    elif (is_str and value.lstrip('-').isnumeric()) or isinstance(value, int):
+        base = 10
+        value = str(value)
+
+    if base is None:
+        raise ValueError("Cannot convert '{}' to " \
+                         "bit-vector value.".format(value))
+
+    return _term(bitwuzla_api.mk_bv_value(sort.c_sort, value.encode(), base))
+
+def mk_bv_ones(sort: Sort) -> Term:
+    """mk_bv_ones(sort)
+
+       Create a bit-vector value with ``sort`` where all bits are set to 1.
+
+       :param sort: Bit-vector sort.
+       :type sort: BitwuzlaSort
+
+       :return: A term representing the bit-vector value of given sort
+                where all bits are set to 1.
+       :rtype: BitwuzlaTerm
+    """
+    return _term(bitwuzla_api.mk_bv_ones(sort.c_sort))
+
+def mk_bv_min_signed(sort: Sort) -> Term:
+    """mk_bv_min_signed(sort)
+
+       Create a bit-vector minimum signed value.
+
+       :param sort: Bit-vector sort.
+       :type sort: BitwuzlaSort
+
+       :return: A term representing the bit-vector value of given sort
+                where the MSB is set to 1 and all remaining bits are set to
+                0.
+       :rtype: BitwuzlaTerm
+
+    """
+    return _term(bitwuzla_api.mk_bv_min_signed(sort.c_sort))
+
+def mk_bv_max_signed(sort: Sort) -> Term:
+    """mk_bv_max_signed(sort)
+
+       Create a bit-vector maximum signed value.
+
+       :param sort: Bit-vector sort.
+       :type sort: BitwuzlaSort
+
+       :return: A term representing the bit-vector value of given sort
+                where the MSB is set to 0 and all remaining bits are set to
+                1.
+       :rtype: BitwuzlaTerm
+    """
+    return _term(bitwuzla_api.mk_bv_max_signed(sort.c_sort))
+
+def mk_fp_value(*args) -> Term:
+    """mk_fp_value(sign: Term, exponent: Term, significand: Term) -> Term
+       mk_fp_value(sort: Sort, rm: Term, real: str) -> Term
+       mk_fp_value(sort: Sort, rm: Term, num: str, den: str) -> Term
+
+       Create a floating-point value from its IEEE 754 standard
+       representation given as three bit-vector values representing the
+       sign bit, the exponent and the significand.
+
+       :param sign: Bit-vector value term representing the sign bit.
+       :param exponent: Bit-vector value term representing the exponent.
+       :param significand: Bit-vector value term representing the significand.
+
+       Create a floating-point value from its real representation, given as a
+       decimal string, with respect to given rounding mode.
+
+       :param sort: Floating-point sort.
+       :param rm: Rounding mode term.
+       :param real: The decimal string representing a real value
+
+       Create a floating-point value from its rational representation, given as
+       a two decimal strings representing the numerator and denominator, with
+       respect to given rounding mode.
+
+       :param sort: Floating-point sort.
+       :param rm: Rounding mode term.
+       :param num: The decimal string representing the numerator.
+       :param den: The decimal string representing the denominator.
+
+       :return: A term representing the floating-point value.
+
+       .. seealso::
+         :func:`~bitwuzla.Bitwuzla.mk_bv_value` for the supported value
+         format for ``sign``, ``exponent``, and ``significand``.
+    """
+    if isinstance(args[0], Sort):
+        _check_arg(args[1], Term)
+        _check_arg(args[2], str)
+        if len(args) == 4:
+            _check_arg(args[3], str)
+            return _term(bitwuzla_api.mk_fp_value(
+                            _csort(args[0]),
+                            _cterm(args[1]),
+                            args[2].encode(),
+                            args[3].encode()))
+        elif len(args) != 3:
+            raise ValueError('Invalid number of arguments')
+        return _term(bitwuzla_api.mk_fp_value(
+                        _csort(args[0]),
+                        _cterm(args[1]),
+                        <const string&> args[2].encode()))
+    elif isinstance(args[0], Term):
+        _check_arg(args[1], Term)
+        _check_arg(args[2], Term)
+        return _term(bitwuzla_api.mk_fp_value(
+                        _cterm(args[0]), _cterm(args[1]), _cterm(args[2])))
+    else:
+        raise ValueError('Invalid arguments')
+
+def mk_fp_pos_zero(sort: Sort) -> Term:
+    """Create a floating-point positive zero value (SMT-LIB: `+zero`).
+
+       :param sort: Floating-point sort.
+       :return: A term representing the floating-point positive zero value
+                of given floating-point sort.
+    """
+    return _term(bitwuzla_api.mk_fp_pos_zero(_csort(sort)))
+
+def mk_fp_neg_zero(sort: Sort) -> Term:
+    """Create a floating-point negative zero value (SMT-LIB: `-zero`).
+
+       :param sort: Floating-point sort.
+       :return: A term representing the floating-point negative zero value
+                of given floating-point sort.
+    """
+    return _term(bitwuzla_api.mk_fp_neg_zero(_csort(sort)))
+
+def mk_fp_pos_inf(sort: Sort) -> Term:
+    """Create a floating-point positive infinity value (SMT-LIB: `+oo`).
+
+       :param sort: Floating-point sort.
+       :return: A term representing the floating-point positive infinity
+                value of given floating-point sort.
+    """
+    return _term(bitwuzla_api.mk_fp_pos_inf(_csort(sort)))
+
+def mk_fp_neg_inf(sort: Sort) -> Term:
+    """Create a floating-point negative infinity value (SMT-LIB: `-oo`).
+
+       :param sort: Floating-point sort.
+       :return: A term representing the floating-point negative infinity
+                value of given floating-point sort.
+    """
+    return _term(bitwuzla_api.mk_fp_neg_inf(_csort(sort)))
+
+def mk_fp_nan(sort: Sort) -> Term:
+    """Create a floating-point NaN value.
+
+       :param sort: Floating-point sort.
+       :return: A term representing the floating-point NaN value of given
+                floating-point sort.
+    """
+    return _term(bitwuzla_api.mk_fp_nan(_csort(sort)))
+
+def mk_rm_value(rm: RoundingMode) -> Term:
+    """Create a rounding mode value.
+
+       :param rm: Rounding mode.
+       :return: A term representing the rounding mode value.
+    """
+    return _term(bitwuzla_api.mk_rm_value(rm.value))
+
+
+# --------------------------------------------------------------------------- #
+# Term functions
+# --------------------------------------------------------------------------- #
+
+def mk_const(sort: Sort, symbol: str = None) -> Term:
+    """Create a (first-order) constant of given sort with given symbol.
+
+       :param sort: The sort of the constant.
+       :param symbol: The symbol of the constant.
+       :return: A term of kind :class:`~bitwuzla.Kind.CONSTANT`,
+                representing the constant.
+    """
+    cdef optional[string] opt = nullopt
+    if symbol:
+        opt = <string?> symbol.encode()
+    return _term(bitwuzla_api.mk_const(_csort(sort), <optional[const string]?> opt))
+
+def mk_const_array(sort: Sort, term: Term) -> Term:
+    """Create a one-dimensional constant array of given sort, initialized with
+       given value.
+
+       :param sort: The sort of the array.
+       :param term: The term to initialize the elements of the array with.
+       :return: A term of kind :class:`~bitwuzla.Kind.CONST_ARRAY`,
+                representing a constant array of given sort.
+    """
+    return _term(bitwuzla_api.mk_const_array(_csort(sort), _cterm(term)))
+
+def mk_var(sort: Sort, symbol: str = None) -> Term:
+    """Create a (first-order) variable of given sort with given symbol.
+
+       :param sort: The sort of the variable.
+       :param symbol: The symbol of the variable.
+       :return: A term of kind :class:`~bitwuzla.Kind.VARIABLE`,
+                representing the variable.
+    """
+    cdef optional[string] opt = nullopt
+    if symbol:
+        opt = <string?> symbol.encode()
+    return _term(bitwuzla_api.mk_var(_csort(sort), <optional[const string]?> opt))
+
+def mk_term(kind: Kind, terms: list[Term], indices: list[int] = []) -> Term:
+    """Create a term of given kind with the given argument terms.
+
+       :param kind: The operator kind.
+       :param terms: The argument terms.
+       :param indices: The indices of this term, empty if not indexed.
+       :return: A term representing an operation of given kind.
+    """
+    return _term(bitwuzla_api.mk_term(kind.value, _term_vec(terms), indices))
+
