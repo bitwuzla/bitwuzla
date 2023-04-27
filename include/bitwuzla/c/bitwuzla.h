@@ -992,6 +992,14 @@ void bitwuzla_pop(Bitwuzla *bitwuzla, uint64_t nlevels);
 void bitwuzla_assert(Bitwuzla *bitwuzla, BitwuzlaTerm term);
 
 /**
+ * Get the set of currently asserted formulas.
+ * @return The asserted formulas.
+ * @return An array with the set of asserted formulas of size `size`. Only
+ *         valid until the next `bitwuzla_get_assertions` call.
+ */
+BitwuzlaTerm *bitwuzla_get_assertions(Bitwuzla *bitwuzla, size_t *size);
+
+/**
  * Determine if an assumption is an unsat assumption.
  *
  * Unsat assumptions are assumptions that force an input formula to become
@@ -1034,7 +1042,7 @@ bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  * @param size Output parameter, stores the size of the returned array.
  *
  * @return An array with unsat assumptions of size `size`. Only valid until
- *         the next bitwuzla_get_unsat_assumptions` call.
+ *         the next `bitwuzla_get_unsat_assumptions` call.
  *
  * @see
  *   * `bitwuzla_set_option`
@@ -1055,7 +1063,8 @@ BitwuzlaTerm *bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
  * @param bitwuzla The Bitwuzla instance.
  * @param size Output parameter, stores the size of the returned array.
  *
- * @return An array with unsat assertions of size `size`.
+ * @return An array with unsat assertions of size `size`. Only valid until
+ *         the next `bitwuzla_get_unsat_core` call.
  *
  * @see
  *   * `bitwuzla_assert`

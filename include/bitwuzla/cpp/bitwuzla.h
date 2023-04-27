@@ -1005,6 +1005,12 @@ class Bitwuzla
   void assert_formula(const Term &term);
 
   /**
+   * Get the set of currently asserted formulas.
+   * @return The assertion formulas.
+   */
+  std::vector<Term> get_assertions();
+
+  /**
    * Determine if an assumption is an unsat assumption.
    *
    * Unsat assumptions are assumptions that force an input formula to become

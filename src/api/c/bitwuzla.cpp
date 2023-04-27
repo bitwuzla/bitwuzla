@@ -892,6 +892,23 @@ bitwuzla_assert(Bitwuzla *bitwuzla, BitwuzlaTerm term)
   BITWUZLA_TRY_CATCH_END;
 }
 
+BitwuzlaTerm *
+bitwuzla_get_assertions(Bitwuzla *bitwuzla, size_t *size)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  static thread_local std::vector<BitwuzlaTerm> res;
+  res.clear();
+  auto assertions = bitwuzla->d_bitwuzla->get_assertions();
+  for (auto &term : assertions)
+  {
+    res.push_back(export_term(term));
+  }
+  *size = res.size();
+  return *size > 0 ? res.data() : nullptr;
+  BITWUZLA_TRY_CATCH_END;
+}
+
 bool
 bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm term)
 {

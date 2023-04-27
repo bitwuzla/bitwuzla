@@ -1340,6 +1340,19 @@ Bitwuzla::assert_formula(const Term &term)
   d_ctx->assert_formula(*term.d_node);
 }
 
+std::vector<Term>
+Bitwuzla::get_assertions()
+{
+  BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  std::vector<Term> res;
+  const bzla::backtrack::AssertionView &assertions = d_ctx->assertions();
+  for (size_t i = 0, n = assertions.size(); i < n; ++i)
+  {
+    res.push_back(assertions[i]);
+  }
+  return res;
+}
+
 bool
 Bitwuzla::is_unsat_assumption(const Term &term)
 {
