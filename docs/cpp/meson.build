@@ -20,8 +20,20 @@ depend_files = [
   doxyfile,
   'api.rst',
   'interface.rst',
-  'kinds.rst',
-  'options.rst'
+  'options.rst',
+  'sort_creation.rst',
+  'term_creation.rst',
+  'term_substitution.rst',
+  'classes/bitwuzla.rst',
+  'classes/options.rst',
+  'classes/optioninfo.rst',
+  'classes/parser.rst',
+  'classes/sort.rst',
+  'classes/term.rst',
+  'enums/kind.rst',
+  'enums/option.rst',
+  'enums/result.rst',
+  'enums/roundingmode.rst',
 ]
 depend_files += header_files
 docs_doxygen_cpp = custom_target('docs-doxygen-cpp',

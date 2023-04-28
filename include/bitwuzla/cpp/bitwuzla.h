@@ -975,7 +975,7 @@ class Bitwuzla
    * @param nlevels The number of context levels to push.
    *
    * @see
-   *   * `Options::set`
+   *   * `Options::set()`
    *   * `Option::INCREMENTAL`
    */
   void push(uint32_t nlevels);
@@ -992,7 +992,7 @@ class Bitwuzla
    * @param nlevels The number of context levels to pop.
    *
    * @see
-   *   * `Options::set`
+   *   * `Options::set()`
    *   * `Option::INCREMENTAL`
    */
   void pop(uint32_t nlevels);
@@ -1027,9 +1027,8 @@ class Bitwuzla
    * @return True if given assumption is an unsat assumption.
    *
    * @see
-   *   * `Options::set`
-   *   * `assume_formula`
-   *   * `check_sat`
+   *   * `Options::set()`
+   *   * `check_sat()`
    *   * `Option::INCREMENTAL`
    */
   bool is_unsat_assumption(const Term &term);
@@ -1048,9 +1047,8 @@ class Bitwuzla
    * @return A vctor with unsat assumptions.
    *
    * @see
-   *   * `Options::set`
-   *   * `assume_formula`
-   *   * `check_sat`
+   *   * `Options::set()`
+   *   * `check_sat()`
    *   * `Option::INCREMENTAL`
    */
   std::vector<Term> get_unsat_assumptions();
@@ -1065,8 +1063,8 @@ class Bitwuzla
    * @return A vector with unsat assertions.
    *
    * @see
-   *   * `assert`
-   *   * `check_sat`
+   *   * `assert()`
+   *   * `check_sat()`
    */
   std::vector<Term> get_unsat_core();
 
@@ -1080,7 +1078,7 @@ class Bitwuzla
    *         `Result::UNKNOWN` otherwise.
    *
    * @see
-   *   * `assert_formula`
+   *   * `assert_formula()`
    *   * `Result`
    */
   Result simplify();
@@ -1090,7 +1088,7 @@ class Bitwuzla
    *
    * An input formula consists of assertions added via `assert_formula()`.
    * The search for a solution can by guided by making assumptions via
-   * `assume_formula()`.
+   * passing a vector of assumptions to `check_sat()`.
    *
    * @note Assertions and assumptions are combined via Boolean and.  Multiple
    *       calls to this function require enabling incremental solving via
@@ -1103,9 +1101,8 @@ class Bitwuzla
    *         termination callback.
    *
    * @see
-   *   * `assert_formula`
-   *   * `assume_formula`
-   *   * `Options::set`
+   *   * `assert_formula()`
+   *   * `Options::set()`
    *   * `Option::INCREMENTAL`
    *   * `Result`
    */
@@ -1119,7 +1116,7 @@ class Bitwuzla
    *
    * @param term The term to query a model value for.
    * @return A term representing the model value of term `term`.
-   * @see `check_sat`
+   * @see `check_sat()`
    */
   Term get_value(const Term &term);
 
@@ -1162,6 +1159,10 @@ class Bitwuzla
 /* Sort creation                                                              */
 /* -------------------------------------------------------------------------- */
 
+/** \addtogroup cpp_sort_creation
+ *  @{
+ */
+
 /**
  * Create an array sort.
  * @param index The index sort of the array sort.
@@ -1169,9 +1170,9 @@ class Bitwuzla
  * @return An array sort which maps sort `index` to sort `element`.
  *
  * @see
- *   * `Sort::is_array`
- *   * `Sort::array_get_index`
- *   * `Sort::array_get_element`
+ *   * `Sort::is_array()`
+ *   * `Sort::array_get_index()`
+ *   * `Sort::array_get_element()`
  */
 Sort mk_array_sort(const Sort &index, const Sort &element);
 
@@ -1187,8 +1188,8 @@ Sort mk_bool_sort();
  * @return A bit-vector sort of given size.
  *
  * @see
- *   * `Sort::is_bv`
- *   * `Sort::bv_size`
+ *   * `Sort::is_bv()`
+ *   * `Sort::bv_size()`
  */
 Sort mk_bv_sort(uint64_t size);
 
@@ -1199,9 +1200,9 @@ Sort mk_bv_sort(uint64_t size);
  * @return A floating-point sort of given format.
  *
  * @see
- *   * `Sort::is_fp`
- *   * `Sort::fp_exp_size`
- *   * `Sort::fp_sig_size`
+ *   * `Sort::is_fp()`
+ *   * `Sort::fp_exp_size()`
+ *   * `Sort::fp_sig_size()`
  */
 Sort mk_fp_sort(uint64_t exp_size, uint64_t sig_size);
 
@@ -1213,10 +1214,10 @@ Sort mk_fp_sort(uint64_t exp_size, uint64_t sig_size);
  * @return A function sort of given domain and codomain sorts.
  *
  * @see
- *   * `Sort::is_fun`
- *   * `Sort::fun_arity`
- *   * `Sort::fun_domain_sorts`
- *   * `Sort::fun_codomain`
+ *   * `Sort::is_fun()`
+ *   * `Sort::fun_arity()`
+ *   * `Sort::fun_domain_sorts()`
+ *   * `Sort::fun_codomain()`
  */
 Sort mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain);
 
@@ -1224,7 +1225,7 @@ Sort mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain);
  * Create a Roundingmode sort.
  * @return A Roundingmode sort.
  * @see
- *   * `Sort::is_rm`
+ *   * `Sort::is_rm()`
  */
 Sort mk_rm_sort();
 
@@ -1237,14 +1238,20 @@ Sort mk_rm_sort();
  * @return An uninterpreted sort.
  *
  * @see
- *   * `Sort::is_uninterpreted`
+ *   * `Sort::is_uninterpreted()`
  */
 Sort mk_uninterpreted_sort(
     std::optional<const std::string> symbol = std::nullopt);
 
+/** @} */
+
 /* -------------------------------------------------------------------------- */
 /* Term creation                                                              */
 /* -------------------------------------------------------------------------- */
+
+/** \addtogroup cpp_term_creation
+ *  @{
+ */
 
 /**
  * Create a true value.
@@ -1264,7 +1271,7 @@ Term mk_false();
  * @return A term representing the bit-vector value 0 of given sort.
  *
  * @see
- *   * `mk_bv_sort`
+ *   * `mk_bv_sort()`
  */
 Term mk_bv_zero(const Sort &sort);
 
@@ -1274,7 +1281,7 @@ Term mk_bv_zero(const Sort &sort);
  * @return A term representing the bit-vector value 1 of given sort.
  *
  * @see
- *   * `mk_bv_sort`
+ *   * `mk_bv_sort()`
  */
 Term mk_bv_one(const Sort &sort);
 
@@ -1284,7 +1291,7 @@ Term mk_bv_one(const Sort &sort);
  * @return A term representing the bit-vector value of given sort
  *         where all bits are set to 1.
  * @see
- *   * `mk_bv_sort`
+ *   * `mk_bv_sort()`
  */
 Term mk_bv_ones(const Sort &sort);
 
@@ -1294,7 +1301,7 @@ Term mk_bv_ones(const Sort &sort);
  * @return A term representing the bit-vector value of given sort where the MSB
  *         is set to 1 and all remaining bits are set to 0.
  * @see
- *   * `mk_bv_sort`
+ *   * `mk_bv_sort()`
  */
 Term mk_bv_min_signed(const Sort &sort);
 
@@ -1304,7 +1311,7 @@ Term mk_bv_min_signed(const Sort &sort);
  * @return A term representing the bit-vector value of given sort where the MSB
  *         is set to 0 and all remaining bits are set to 1.
  * @see
- *   * `mk_bv_sort`
+ *   * `mk_bv_sort()`
  */
 Term mk_bv_max_signed(const Sort &sort);
 
@@ -1323,7 +1330,7 @@ Term mk_bv_max_signed(const Sort &sort);
  * @return A term of kind Kind::VALUE, representing the bit-vector value
  *         of given sort.
  * @see
- *   * `mk_bv_sort`
+ *   * `mk_bv_sort()`
  */
 Term mk_bv_value(const Sort &sort, const std::string &value, uint8_t base = 2);
 
@@ -1339,7 +1346,7 @@ Term mk_bv_value(const Sort &sort, const std::string &value, uint8_t base = 2);
  *         of given sort.
  *
  * @see
- *   * `mk_bv_sort`
+ *   * `mk_bv_sort()`
  */
 Term mk_bv_value_uint64(const Sort &sort, uint64_t value);
 
@@ -1355,7 +1362,7 @@ Term mk_bv_value_uint64(const Sort &sort, uint64_t value);
  *         of given sort.
  *
  * @see
- *   * `mk_bv_sort`
+ *   * `mk_bv_sort()`
  */
 Term mk_bv_value_int64(const Sort &sort, int64_t value);
 
@@ -1365,7 +1372,7 @@ Term mk_bv_value_int64(const Sort &sort, int64_t value);
  * @return A term representing the floating-point positive zero value of given
  *         floating-point sort.
  * @see
- *  * `mk_fp_sort`
+ *  * `mk_fp_sort()`
  */
 Term mk_fp_pos_zero(const Sort &sort);
 
@@ -1375,7 +1382,7 @@ Term mk_fp_pos_zero(const Sort &sort);
  * @return A term representing the floating-point negative zero value of given
  *         floating-point sort.
  * @see
- *   * `mk_fp_sort`
+ *   * `mk_fp_sort()`
  */
 Term mk_fp_neg_zero(const Sort &sort);
 
@@ -1385,7 +1392,7 @@ Term mk_fp_neg_zero(const Sort &sort);
  * @return A term representing the floating-point positive infinity value of
  *         given floating-point sort.
  * @see
- *   * `mk_fp_sort`
+ *   * `mk_fp_sort()`
  */
 Term mk_fp_pos_inf(const Sort &sort);
 
@@ -1395,7 +1402,7 @@ Term mk_fp_pos_inf(const Sort &sort);
  * @return A term representing the floating-point negative infinity value of
  *         given floating-point sort.
  * @see
- *   * `mk_fp_sort`
+ *   * `mk_fp_sort()`
  */
 Term mk_fp_neg_inf(const Sort &sort);
 
@@ -1405,7 +1412,7 @@ Term mk_fp_neg_inf(const Sort &sort);
  * @return A term representing the floating-point NaN value of given
  *         floating-point sort.
  * @see
- *   * `mk_fp_sort`
+ *   * `mk_fp_sort()`
  */
 Term mk_fp_nan(const Sort &sort);
 
@@ -1441,7 +1448,7 @@ Term mk_fp_value(const Term &bv_sign,
  *         Kind::VALUE, else it will be a non-value term.
  *
  * @see
- *   * `mk_fp_sort`
+ *   * `mk_fp_sort()`
  */
 Term mk_fp_value(const Sort &sort, const Term &rm, const std::string &real);
 
@@ -1464,7 +1471,7 @@ Term mk_fp_value(const Sort &sort, const Term &rm, const std::string &real);
  *         Kind::VALUE, else it will be a non-value term.
  *
  * @see
- *   * `mk_fp_sort`
+ *   * `mk_fp_sort()`
  */
 Term mk_fp_value(const Sort &sort,
                  const Term &rm,
@@ -1482,7 +1489,7 @@ Term mk_fp_value(const Sort &sort,
  *         array of given sort.
  *
  * @see
- *   * `mk_array_sort`
+ *   * `mk_array_sort()`
  */
 Term mk_const_array(const Sort &sort, const Term &term);
 
@@ -1521,12 +1528,12 @@ Term mk_term(Kind kind,
  * @return A term of Kind::CONSTANT, representing the constant.
  *
  * @see
- *   * `mk_array_sort`
- *   * `mk_bool_sort`
- *   * `mk_bv_sort`
- *   * `mk_fp_sort`
- *   * `mk_fun_sort`
- *   * `mk_rm_sort`
+ *   * `mk_array_sort()`
+ *   * `mk_bool_sort()`
+ *   * `mk_bv_sort()`
+ *   * `mk_fp_sort()`
+ *   * `mk_fun_sort()`
+ *   * `mk_rm_sort()`
  */
 Term mk_const(const Sort &sort,
               std::optional<const std::string> symbol = std::nullopt);
@@ -1542,18 +1549,24 @@ Term mk_const(const Sort &sort,
  * @return A term of Kind::VARIABLE, representing the variable.
  *
  * @see
- *   * `mk_bool_sort`
- *   * `mk_bv_sort`
- *   * `mk_fp_sort`
- *   * `mk_fun_sort`
- *   * `mk_rm_sort`
+ *   * `mk_bool_sort()`
+ *   * `mk_bv_sort()`
+ *   * `mk_fp_sort()`
+ *   * `mk_fun_sort()`
+ *   * `mk_rm_sort()`
  */
 Term mk_var(const Sort &sort,
             std::optional<const std::string> symbol = std::nullopt);
 
+/** @} */
+
 /* -------------------------------------------------------------------------- */
 /* Term substitution                                                          */
 /* -------------------------------------------------------------------------- */
+
+/** \addtogroup cpp_term_substitution
+ *  @{
+ */
 
 /**
  * Substitute a set of keys with their corresponding values in the given
@@ -1581,6 +1594,8 @@ Term substitute_term(const Term &term,
  */
 void substitute_terms(std::vector<Term> &terms,
                       const std::unordered_map<Term, Term> map);
+
+/** @} */
 
 /* -------------------------------------------------------------------------- */
 

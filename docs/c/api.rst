@@ -8,7 +8,6 @@ C API Documentation
   :maxdepth: 2
 
   options
-  kinds
   interface
 
 Quickstart
