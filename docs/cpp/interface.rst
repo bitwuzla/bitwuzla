@@ -41,6 +41,11 @@ Term
     :project: Bitwuzla_cpp
     :members:
 
+Parser
+^^^^^^
+.. doxygenclass:: bitwuzla::parser::Parser
+    :project: Bitwuzla_cpp
+    :members:
 
 Enums
 ------

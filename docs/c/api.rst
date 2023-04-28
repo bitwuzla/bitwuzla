@@ -61,10 +61,13 @@ Alternatively, you can parse an input file in BTOR2 format :cite:`btor2` or
 SMT-LIB v2 format :cite:`smtlib2` by creating a parser via
 :cpp:func:`bitwuzla_parser_new()` and then parsing the input file via
 :cpp:func:`bitwuzla_parser_parse()`.
-Note that the input parser creates a Bitwuzla instance, which can be
-configured via the :cpp:struct:`BitwuzlaOptions` instances passed into the
-parser. This Bitwuzla instance can be retrieved via
-:cpp:func:`bitwuzla_parser_get_bitwuzla()`.
+
+.. note::
+
+  The input parser creates a :cpp:struct:`Bitwuzla` instance, which can be
+  configured via the :cpp:struct:`BitwuzlaOptions` instance passed into the
+  parser. This Bitwuzla instance can be retrieved via
+  :cpp:func:`bitwuzla_parser_get_bitwuzla()`.
 
 For example, to parse an example file `examples/smt2/quickstart.smt2` in SMT-LIB format:
 
@@ -75,7 +78,7 @@ For example, to parse an example file `examples/smt2/quickstart.smt2` in SMT-LIB
 .. note::
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
   or :code:`get-value` will be executed while parsing if argument `parse_only`
-  is passed into :cpp:func:`bitwuzla_parser_parse()` as true.
+  is passed into :cpp:func:`bitwuzla_parser_parse()` as :code:`true`.
 
 After parsing an input file and asserting formulas,
 satisfiability can be determined via :cpp:func:`bitwuzla_check_sat()`.
@@ -90,8 +93,9 @@ formulas can also be assumed via :cpp:func:`bitwuzla_check_sat_assuming()`.
 
 If the formula is satisfiable and model generation has been enabled, the
 resulting model can be printed via :cpp:func:`bitwuzla_get_value()` and
-:cpp:func:`bitwuzla_term_to_string()`. An example implementation to print
-the model of declared symbols, in this case `x`, `y`, `f` and `a`, is below:
+:cpp:func:`bitwuzla_term_to_string()`. An example implementation illustrating
+how to print the current model via declared symbols (in this case :code:`x`,
+:code:`y`, :code:`f` and :code:`a`) is below:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
@@ -104,7 +108,7 @@ This will output a possible model, in this case:
   (
     (define-fun x () (_ BitVec 8) #b10011111)
     (define-fun y () (_ BitVec 8) #b11111111)
-    (define-fun f ((@bzla.var_74 (_ BitVec 8))  (@bzla.var_75 (_ BitVec 4)))  (_ BitVec 8) (ite (and (= @bzla.var_74 #b10011111) (= @bzla.var_75 #b0011)) #b11111111 #b00000000))
+    (define-fun f ((@bzla.var_74 (_ BitVec 8)) (@bzla.var_75 (_ BitVec 4))) (_ BitVec 8) (ite (and (= @bzla.var_74 #b10011111) (= @bzla.var_75 #b0011)) #b11111111 #b00000000))
     (define-fun a () (Array (_ BitVec 8) (_ BitVec 8)) (store ((as const (Array (_ BitVec 8) (_ BitVec 8))) #b00000000) #b10011111 #b11111111))
   )
 
@@ -112,16 +116,18 @@ This will output a possible model, in this case:
 Alternatively, it is possible to query the value of terms as assignment
 string via :cpp:func:`bitwuzla_term_value_get_str()`, or as a term via
 :cpp:func:`bitwuzla_get_value()`.
+
 Additionally, for floating-point values,
 :cpp:func:`bitwuzla_term_value_get_fp_ieee` allows to retrieve the assignment
 split into assignment strings for the sign bit, the exponent and the
 significand.
-For Boolean and RoundingMode values, :cpp:func:`bitwuzla_term_value_get_bool()`
-and :cpp:func:`bitwuzla_term_value_get_rm()` allow the values as `bool` and
+For Boolean and :code:`RoundingMode` values,
+:cpp:func:`bitwuzla_term_value_get_bool()` and
+:cpp:func:`bitwuzla_term_value_get_rm()` allow the values as :code:`bool` and
 :cpp:enum:`BitwuzlaRoundingMode`, respectively.
 
-In our case, we can query the assignments of `x` and `y`, both bit-vector terms,
-as binary strings as follows.
+In our case, we can query the assignments of :code:`x` and :code:`y`, both
+bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
@@ -134,16 +140,17 @@ This will print:
   value of x: 10011111
   value of y: 11111111
 
-The value of `f` (a function term) and `a` (an array term), on the other hand,
-cannot be represented with a simple type. Thus, function values are given as
-:cpp:enum:`BitwuzlaKind.LAMBDA <BitwuzlaKind::LAMBDA>`, and array values are
-given as :cpp:enum:`BitwuzlaKind.ARRAY_STORE <BitwuzlaKind::ARRAY_STORE>`.
-We can retrieve a string representation of the values via
+The value of :code:`f` (a function term) and :code:`a` (an array term), on the
+other hand, cannot be represented with a simple type. Thus, function values are
+given as :cpp:enum:`BitwuzlaKind.LAMBDA <BitwuzlaKind::LAMBDA>`, and array
+values are given as
+:cpp:enum:`BitwuzlaKind.ARRAY_STORE <BitwuzlaKind::ARRAY_STORE>`.
+We can retrieve an SMT-LIB2 string representation of the values via
 :cpp:func:`bitwuzla_term_to_string()`:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 148-157
+     :lines: 148-156
 
 This will print:
 
@@ -164,7 +171,7 @@ however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 163-166
+     :lines: 162-165
 
 This will print:
 
@@ -179,7 +186,7 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 170-173
+     :lines: 169-172
 
 This will print:
 
@@ -191,7 +198,7 @@ Finally, we delete the Bitwuzla and Bitwuzla options instance.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 176-177
+     :lines: 175-176
 
 
 Examples

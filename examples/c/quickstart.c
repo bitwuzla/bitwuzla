@@ -150,9 +150,8 @@ main()
   // and the value of a is represented as a store term. Thus we cannot use
   // bitwuzla_term_value_get_str(), but we can print the value of the terms
   // via bitwuzla_term_to_string().
-  printf("to_string representation of value of f:\n%s\n",
+  printf("to_string representation of value of f:\n%s\n\n",
          bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, f)));
-  printf("\n");
   printf("to_string representation of value of a:\n%s\n",
          bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, a)));
   printf("\n");
