@@ -33,6 +33,7 @@ docs = custom_target('docs',
             # Tell breathe where to find the Doxygen output
             '-Dbreathe_projects.Bitwuzla_c=' + docs_doxygen_c.full_path(),
             '-Dbreathe_projects.Bitwuzla_cpp=' + docs_doxygen_cpp.full_path(),
+            '-Dbreathe_projects.std=' + docs_doxygen_cpp.full_path(),
             # Tell sphinx where to find conf.py
             '-c', meson.current_build_dir(),
             meson.current_source_dir(), meson.current_build_dir()

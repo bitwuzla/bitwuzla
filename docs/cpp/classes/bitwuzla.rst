@@ -1,6 +1,10 @@
 Bitwuzla
 --------
 
+- class :cpp:class:`bitwuzla::Bitwuzla`
+
+----
+
 :code:`namespace bitwuzla {`
 
 .. doxygenclass:: bitwuzla::Bitwuzla

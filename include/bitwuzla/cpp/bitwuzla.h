@@ -68,6 +68,10 @@ namespace bitwuzla {
 /* Library info                                                               */
 /* -------------------------------------------------------------------------- */
 
+/** \addtogroup cpp_libinfo
+ *  @{
+ */
+
 /**
  * Get copyright information.
  * @return A string with the copyright information.
@@ -83,6 +87,8 @@ std::string version();
  * @return A string with the git information.
  */
 std::string git_id();
+
+/** @} */
 
 /* -------------------------------------------------------------------------- */
 /* Exception                                                                  */

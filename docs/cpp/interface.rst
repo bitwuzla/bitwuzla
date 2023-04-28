@@ -12,6 +12,8 @@ Classes
 - class :ref:`cpp/classes/sort:sort`
 - class :ref:`cpp/classes/term:term`
 - class :ref:`cpp/classes/parser:parser`
+- class :ref:`cpp/classes/exception:exception`
+- class :ref:`cpp/classes/terminator:terminator`
 
 Enums
 -----
@@ -24,6 +26,7 @@ Enums
 Functions
 ---------
 
+- :ref:`cpp/Library_info:library info`
 - :ref:`cpp/sort_creation:sort creation`
 - :ref:`cpp/term_creation:term creation`
 - :ref:`cpp/term_substitution:term substitution`

@@ -1,6 +1,10 @@
 OptionInfo
 -----------
 
+- class :cpp:class:`bitwuzla::OptionInfo`
+
+----
+
 :code:`namespace bitwuzla {`
 
 .. doxygenstruct:: bitwuzla::OptionInfo

@@ -1,6 +1,10 @@
 Options
 --------
 
+- class :cpp:class:`bitwuzla::Options`
+
+----
+
 :code:`namespace bitwuzla {`
 
 .. doxygenclass:: bitwuzla::Options
