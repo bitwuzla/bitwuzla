@@ -8,3 +8,4 @@ project('bitwuzla-examples',
 )
 
 subdir('c')
+subdir('cpp')

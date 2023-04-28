@@ -11,8 +11,7 @@ examples = [
 bitwuzla_dep = dependency('bitwuzla')
 foreach e : examples
   exe = executable(
-    e, ''.join(e, '.c'),
-    link_args: ['-lstdc++', '-lm'],
+    e, ''.join(e, '.cpp'),
     dependencies: [bitwuzla_dep])
     test(e, exe)
 endforeach

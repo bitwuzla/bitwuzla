@@ -4,8 +4,6 @@
 int
 main()
 {
-  BitwuzlaResult result;
-
   // First, create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
   // Then, enable incremental solving.
@@ -47,7 +45,7 @@ main()
   // Push, assert, check sat and pop.
   bitwuzla_push(bitwuzla, 1);
   bitwuzla_assert(bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, s0, goal));
-  result = bitwuzla_check_sat(bitwuzla);
+  BitwuzlaResult result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: unsat\n");
   printf("Bitwuzla: %s\n",
          result == BITWUZLA_SAT

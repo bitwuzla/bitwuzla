@@ -98,12 +98,12 @@ main()
   size_t unsat_core_size;
   BitwuzlaTerm *unsat_core =
       bitwuzla_get_unsat_core(bitwuzla, &unsat_core_size);
-  printf("Unsat Core:\n {\n");
+  printf("Unsat Core:\n{\n");
   for (uint32_t i = 0; i < unsat_core_size; ++i)
   {
     printf(" %s\n", bitwuzla_term_to_string(unsat_core[i]));
   }
-  printf(" }\n");
+  printf("}\n");
 
   // Finally, delete the Bitwuzla and Bitwuzla options instance.
   bitwuzla_delete(bitwuzla);
