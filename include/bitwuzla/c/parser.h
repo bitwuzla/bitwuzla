@@ -6,6 +6,10 @@
 /** A Bitwuzla parser. */
 typedef struct BitwuzlaParser BitwuzlaParser;
 
+/** \addtogroup c_bitwuzlaparser
+ *  @{
+ */
+
 /**
  * Create a new Bitwuzla parser instance.
  *
@@ -52,5 +56,7 @@ const char* bitwuzla_parser_parse(BitwuzlaParser* parser, bool parse_only);
  * @return The Bitwuzla instance.
  */
 Bitwuzla* bitwuzla_parser_get_bitwuzla(BitwuzlaParser* parser);
+
+/** @} */
 
 #endif

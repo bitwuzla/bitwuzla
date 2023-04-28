@@ -11,69 +11,30 @@ C Interface
 Types
 -----
 
-Bitwuzla
-^^^^^^^^
-.. doxygentypedef:: Bitwuzla
-    :project: Bitwuzla_c
+- typedef struct :ref:`c/types/bitwuzlaoptions:bitwuzlaoptions`
+- typedef struct :ref:`c/types/bitwuzla:bitwuzla`
+- typedef struct :ref:`c/types/bitwuzlasort:bitwuzlasort`
+- typedef struct :ref:`c/types/bitwuzlaterm:bitwuzlaterm`
+- typedef struct :ref:`c/types/bitwuzlaparser:bitwuzlaparser`
 
-BitwuzlaOptions
-^^^^^^^^^^^^^^^
-.. doxygentypedef:: BitwuzlaOptions
-    :project: Bitwuzla_c
+Structs
+-------
 
-BitwuzlaSort
-^^^^^^^^^^^^
-.. doxygentypedef:: BitwuzlaSort
-    :project: Bitwuzla_c
-
-BitwuzlaTerm
-^^^^^^^^^^^^
-.. doxygentypedef:: BitwuzlaTerm
-    :project: Bitwuzla_c
-
-BitwuzlaParser
-^^^^^^^^^^^^^^
-.. doxygentypedef:: BitwuzlaParser
-    :project: Bitwuzla_c
-
+- struct :ref:`c/structs/bitwuzlaoptioninfo:bitwuzlaoptioninfo`
 
 Enums
 ------
 
-BitwuzlaKind
-^^^^^^^^^^^^
-See :ref:`c/kinds:kinds` for more details and examples on how to create terms
-of a given kind.
-
-BitwuzlaOption
-^^^^^^^^^^^^^^
-See :ref:`c/options:options` for more details and examples on how to set and
-get options.
-
-BitwuzlaOptionInfo
-^^^^^^^^^^^^^^^^^^
-.. doxygenstruct:: BitwuzlaOptionInfo
-    :project: Bitwuzla_c
-    :members:
-
-BitwuzlaResult
-^^^^^^^^^^^^^^^
-.. doxygenenum:: BitwuzlaResult
-    :project: Bitwuzla_c
-
-BitwuzlaRoundingMode
-^^^^^^^^^^^^^^^^^^^^^
-.. doxygenenum:: BitwuzlaRoundingMode
-    :project: Bitwuzla_c
+- enum :ref:`c/enums/bitwuzlakind:bitwuzlakind`
+- enum :ref:`c/enums/bitwuzlaoption:bitwuzlaoption`
+- enum :ref:`c/enums/bitwuzlaresult:bitwuzlaresult`
+- enum :ref:`c/enums/bitwuzlaroundingmode:bitwuzlaroundingmode`
 
 
 Functions
 ---------
 
-.. doxygenfile:: bitwuzla.h
-    :project: Bitwuzla_c
-    :sections: func
-
-.. doxygenfile:: parser.h
-    :project: Bitwuzla_c
-    :sections: func
+- :ref:`c/library_info:library info`
+- :ref:`c/sort_creation:sort creation`
+- :ref:`c/term_creation:term creation`
+- :ref:`c/term_substitution:term substitution`

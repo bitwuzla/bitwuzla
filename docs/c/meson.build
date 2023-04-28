@@ -20,8 +20,21 @@ depend_files = [
   doxyfile,
   'api.rst',
   'interface.rst',
-  'kinds.rst',
-  'options.rst'
+  'library_info.rst',
+  'options.rst',
+  'sort_creation.rst',
+  'term_creation.rst',
+  'term_substitution.rst',
+  'enums/bitwuzlakind.rst',
+  'enums/bitwuzlaoption.rst',
+  'enums/bitwuzlaresult.rst',
+  'enums/bitwuzlaroundingmode.rst',
+  'structs/bitwuzlaoptioninfo.rst',
+  'types/bitwuzla.rst',
+  'types/bitwuzlaoptions.rst',
+  'types/bitwuzlaparser.rst',
+  'types/bitwuzlasort.rst',
+  'types/bitwuzlaterm.rst',
 ]
 depend_files += header_files
 docs_doxygen_c = custom_target('docs-doxygen-c',

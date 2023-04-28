@@ -1,7 +1,7 @@
 Parser
 ------
 
-:code:`namespace bitwuzla {`
+:code:`namespace bitwuzla::parser {`
 
 .. doxygenclass:: bitwuzla::parser::Parser
     :project: Bitwuzla_cpp

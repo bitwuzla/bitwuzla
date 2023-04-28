@@ -377,15 +377,6 @@ bitwuzla_delete(Bitwuzla *bitwuzla)
   BITWUZLA_TRY_CATCH_END;
 }
 
-void
-bitwuzla_reset(Bitwuzla *bitwuzla)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  bitwuzla->reset();
-  BITWUZLA_TRY_CATCH_END;
-}
-
 bool
 bitwuzla_terminate(Bitwuzla *bitwuzla)
 {
