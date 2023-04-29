@@ -52,13 +52,6 @@ const char *bitwuzla_git_id();
 /** @} */
 
 /* -------------------------------------------------------------------------- */
-/* BitwuzlaOptions                                                            */
-/* -------------------------------------------------------------------------- */
-
-/** The Bitwuzla configuration options. */
-typedef struct BitwuzlaOptions BitwuzlaOptions;
-
-/* -------------------------------------------------------------------------- */
 /* BitwuzlaOptionInfo                                                         */
 /* -------------------------------------------------------------------------- */
 
@@ -113,6 +106,128 @@ struct BitwuzlaOptionInfo
 #ifndef DOXYGEN_SKIP
 typedef struct BitwuzlaOptionInfo BitwuzlaOptionInfo;
 #endif
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaOptions                                                            */
+/* -------------------------------------------------------------------------- */
+
+/** The Bitwuzla configuration options. */
+typedef struct BitwuzlaOptions BitwuzlaOptions;
+
+/** \addtogroup c_bitwuzlaoptions
+ *  @{
+ */
+
+/**
+ * Create a new BitwuzlaOptions instance.
+ *
+ * The returned instance must be deleted via `bitwuzla_options_delete()`.
+ *
+ * @return A pointer to the created BitwuzlaOptions instance.
+ *
+ * @see
+ *   * `bitwuzla_options_delete`
+ */
+BitwuzlaOptions *bitwuzla_options_new();
+
+/**
+ * Delete a BitwuzlaOptions instance.
+ *
+ * The given instance must have been created via `bitwuzla_options_new()`.
+ *
+ * @param options The BitwuzlaOptions instance to delete.
+ *
+ * @see
+ *   * `bitwuzla_options_new`
+ */
+void bitwuzla_options_delete(BitwuzlaOptions *options);
+
+/**
+ * Determine if a given option is a numeric (or Boolean) option.
+ * @return True if the given option is a numeric or Boolean option.
+ */
+bool bitwuzla_option_is_numeric(BitwuzlaOptions *options,
+                                BitwuzlaOption option);
+/**
+ * Determine if a given option is an option with a mode
+ * @return True if the given option is an option with a mode.
+ */
+bool bitwuzla_option_is_mode(BitwuzlaOptions *options, BitwuzlaOption option);
+
+/**
+ * Set option.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
+ * @param val The option value.
+ *
+ * @see
+ *   * `BitwuzlaOption`
+ *   * `bitwuzla_get_option`
+ */
+void bitwuzla_set_option(BitwuzlaOptions *options,
+                         BitwuzlaOption option,
+                         uint64_t val);
+
+/**
+ * Set option mode for options with modes.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
+ * @param val The option string value.
+ *
+ * @see
+ *   * `BitwuzlaOption`
+ *   * `bitwuzla_get_option_mode`
+ */
+void bitwuzla_set_option_mode(BitwuzlaOptions *options,
+                              BitwuzlaOption option,
+                              const char *val);
+
+/**
+ * Get the current value of an option.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
+ *
+ * @return The option value.
+ *
+ * @see
+ *   * `BitwuzlaOption`
+ */
+uint64_t bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option);
+
+/**
+ * Get the current mode of an option as a string if option has modes.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
+ *
+ * @return The option value.
+ *
+ * @see
+ *   * `BitwuzlaOption`
+ *   * `bitwuzla_set_option_mode`
+ */
+const char *bitwuzla_get_option_mode(BitwuzlaOptions *options,
+                                     BitwuzlaOption option);
+
+/**
+ * Get the details of an option.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
+ * @param info The option info to populate, will be valid until the next
+ *             `bitwuzla_get_option_info` call.
+ *
+ * @see
+ *   * `BitwuzlaOptionInfo`
+ */
+void bitwuzla_get_option_info(BitwuzlaOptions *options,
+                              BitwuzlaOption option,
+                              BitwuzlaOptionInfo *info);
+
+/** @} */
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaResult (Satisfiability Result)                                     */
@@ -362,125 +477,6 @@ const char *bitwuzla_sort_to_string(BitwuzlaSort sort);
  * @param file The file to print the sort to.
  */
 void bitwuzla_print_sort(BitwuzlaSort sort, const char *format, FILE *file);
-
-/** @} */
-
-/* -------------------------------------------------------------------------- */
-/* BitwuzlaOptions                                                            */
-/* -------------------------------------------------------------------------- */
-
-/** \addtogroup c_bitwuzlaoptions
- *  @{
- */
-
-/**
- * Create a new BitwuzlaOptions instance.
- *
- * The returned instance must be deleted via `bitwuzla_options_delete()`.
- *
- * @return A pointer to the created BitwuzlaOptions instance.
- *
- * @see
- *   * `bitwuzla_options_delete`
- */
-BitwuzlaOptions *bitwuzla_options_new();
-
-/**
- * Delete a BitwuzlaOptions instance.
- *
- * The given instance must have been created via `bitwuzla_options_new()`.
- *
- * @param options The BitwuzlaOptions instance to delete.
- *
- * @see
- *   * `bitwuzla_options_new`
- */
-void bitwuzla_options_delete(BitwuzlaOptions *options);
-
-/**
- * Determine if a given option is a numeric (or Boolean) option.
- * @return True if the given option is a numeric or Boolean option.
- */
-bool bitwuzla_option_is_numeric(BitwuzlaOptions *options,
-                                BitwuzlaOption option);
-/**
- * Determine if a given option is an option with a mode
- * @return True if the given option is an option with a mode.
- */
-bool bitwuzla_option_is_mode(BitwuzlaOptions *options, BitwuzlaOption option);
-
-/**
- * Set option.
- *
- * @param options The Bitwuzla options instance.
- * @param option The option.
- * @param val The option value.
- *
- * @see
- *   * `BitwuzlaOption`
- *   * `bitwuzla_get_option`
- */
-void bitwuzla_set_option(BitwuzlaOptions *options,
-                         BitwuzlaOption option,
-                         uint64_t val);
-
-/**
- * Set option mode for options with modes.
- *
- * @param options The Bitwuzla options instance.
- * @param option The option.
- * @param val The option string value.
- *
- * @see
- *   * `BitwuzlaOption`
- *   * `bitwuzla_get_option_mode`
- */
-void bitwuzla_set_option_mode(BitwuzlaOptions *options,
-                              BitwuzlaOption option,
-                              const char *val);
-
-/**
- * Get the current value of an option.
- *
- * @param options The Bitwuzla options instance.
- * @param option The option.
- *
- * @return The option value.
- *
- * @see
- *   * `BitwuzlaOption`
- */
-uint64_t bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option);
-
-/**
- * Get the current mode of an option as a string if option has modes.
- *
- * @param options The Bitwuzla options instance.
- * @param option The option.
- *
- * @return The option value.
- *
- * @see
- *   * `BitwuzlaOption`
- *   * `bitwuzla_set_option_mode`
- */
-const char *bitwuzla_get_option_mode(BitwuzlaOptions *options,
-                                     BitwuzlaOption option);
-
-/**
- * Get the details of an option.
- *
- * @param options The Bitwuzla options instance.
- * @param option The option.
- * @param info The option info to populate, will be valid until the next
- *             `bitwuzla_get_option_info` call.
- *
- * @see
- *   * `BitwuzlaOptionInfo`
- */
-void bitwuzla_get_option_info(BitwuzlaOptions *options,
-                              BitwuzlaOption option,
-                              BitwuzlaOptionInfo *info);
 
 /** @} */
 

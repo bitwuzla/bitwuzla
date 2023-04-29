@@ -1,38 +1,32 @@
 .. _c_options:
 
 Options
-=======
+========
 
-.. todo::
-   - Update options documentation for new architecture
-   - Add OptionInfo documentation
+A :cpp:struct:`Bitwuzla` instance is created from a configuration
+options :cpp:struct:`BitwuzlaOptions` instance. This options instance must
+be configured before creating the Bitwuzla instance: **after** the Bitwuzla
+instance is created, configuration options are fixed and **cannot** be changed.
 
-**Bitwuzla** supports two kinds of options: options that expect an unsigned
-integer as option value and are configured via :c:func:`bitwuzla_set_option()`,
-and options that are configured via a value string with
-:c:func:`bitwuzla_set_option_str()`.
-For example, the following will enable the propagation-based local search
-solver engine, enable model generation and set the verbosity level to 2.
+Via the C API, **Bitwuzla** distinguishes two kinds of options: Numeric options
+(including Boolean options) and options with option modes.
+The kind of an option can be queried via
+:cpp:func:`bitwuzla_option_is_numeric()`, and
+:cpp:func:`bitwuzla_option_is_mode()`.
 
-.. literalinclude:: ../../examples/c/options.c
-     :language: c
-     :lines: 17,25,27
+Boolean and numeric options are configured via
+:cpp:func:`bitwuzla_set_option()`, and
+options with option modes are configured via
+:cpp:func:`bitwuzla_set_option_mode()`.
 
-The current configuration value of an option can be queried via
-:c:func:`bitwuzla_get_option()` (for integer configuration values, supported
-for all options) and :c:func:`bitwuzla_get_option_str()` (for string
-configuration values, only supported for options that support string
-configuration values).
+The configured value of Boolean and numeric options can be queried via
+:cpp:func:`bitwuzla_get_option()`,
+and the value of an option with modes can be queried via
+:cpp:func:`bitwuzla_get_option_mode()`.
 
-.. literalinclude:: ../../examples/c/options.c
-     :language: c
-     :lines: 11-14
-
-This will print:
-
-.. code-block::
-
-  Default engine: fun (enum value: 1)
+The option kind is defined via :cpp:enum:`BitwuzlaKind`.
+A **comprehensive list** of all configurable options is available
+:ref:`here <c/enums/bitwuzlaoption:bitwuzlaoption>`.
 
 Example
 -------
@@ -42,15 +36,13 @@ The source code for this example can be found at `examples/c/options.c <https://
 .. literalinclude:: ../../examples/c/options.c
      :language: c
 
-A Comprehensive List of All Configurable Options
-------------------------------------------------
+OptionInfo
+----------
 
-The kind of an option is defined via enum :c:enum:`BitwuzlaOption`.
-
-.. note::
-
-  Some options are labeled as "expert" options. Use with caution.
-
-.. doxygenenum:: BitwuzlaOption
-    :project: Bitwuzla_c
-
+Bitwuzla offers a compact way to retrieve all information about a configuration
+option as a :cpp:struct:`BitwuzlaOptionInfo` object via
+:cpp:func:`bitwuzla_get_option_info()`.
+This object is created per option and can be queried for any available
+information, e.g., long and short option names, description, (current, default,
+minimum and maximum) values for numeric options, and (current, default and
+available) modes for configuration options with modes.
