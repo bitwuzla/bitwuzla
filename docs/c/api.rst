@@ -273,3 +273,14 @@ This example shows how to implement the example above with
 .. tabbed-examples::
    ../../examples/smt2/unsatassumptions.smt2
    ../../examples/c/unsatassumptions.c
+
+Parsing Example
+^^^^^^^^^^^^^^^
+
+This example shows how to parse an input file via the API.
+
+| The source code for this example can be found at `examples/c/parse.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/parse.c>`_.
+
+
+.. tabbed-examples::
+   ../../examples/c/parse.c
