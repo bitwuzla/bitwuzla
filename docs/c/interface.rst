@@ -2,6 +2,7 @@ C Interface
 ===========
 
 * :ref:`c/interface:types`
+* :ref:`c/interface:structs`
 * :ref:`c/interface:enums`
 * :ref:`c/interface:functions`
 

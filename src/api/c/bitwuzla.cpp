@@ -1731,7 +1731,7 @@ bitwuzla_term_value_get_rm(BitwuzlaTerm term)
 }
 
 void
-bitwuzla_print_term(BitwuzlaTerm term, FILE *file)
+bitwuzla_term_print(BitwuzlaTerm term, FILE *file)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);

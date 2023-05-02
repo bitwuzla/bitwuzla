@@ -989,7 +989,7 @@ const char *bitwuzla_term_to_string(BitwuzlaTerm term);
  * @param term The term.
  * @param file The file to print the term to.
  */
-void bitwuzla_print_term(BitwuzlaTerm term, FILE *file);
+void bitwuzla_term_print(BitwuzlaTerm term, FILE *file);
 
 /** @} */
 

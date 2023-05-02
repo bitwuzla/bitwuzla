@@ -44,7 +44,7 @@ and, if given option is an option with modes, its modes can be queried via
 
 The option kind is defined via :cpp:enum:`bitwuzla::Option`.
 A **comprehensive list** of all configurable options is available
-:ref:`here <cpp/enums/option:option>`.
+:doc:`here <enums/option>`.
 
 Example
 -------

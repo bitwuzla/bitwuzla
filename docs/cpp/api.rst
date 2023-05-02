@@ -1,15 +1,16 @@
 C++ API Documentation
 ======================
 
-* :ref:`cpp/api:quickstart`
-* :ref:`cpp/api:examples`
 
 .. toctree::
-  :maxdepth: 2
+   :maxdepth: 1
 
-  options
-  kinds
-  interface
+   interface
+   options
+   Term Kinds <enums/kind>
+
+.. contents::
+   :local:
 
 Quickstart
 ----------
@@ -36,7 +37,7 @@ is for illustration purposes only, CaDiCaL is configured by default):
      :language: cpp
      :lines: 19
 
-For more details on available options, see :ref:`cpp/options:options`.
+For more details on available options, see :doc:`options`.
 
 Then, create a :cpp:struct:`Bitwuzla` instance (configuration options are
 now frozen and cannot be changed for this instance):

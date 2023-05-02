@@ -26,7 +26,7 @@ and the value of an option with modes can be queried via
 
 The option kind is defined via :cpp:enum:`BitwuzlaKind`.
 A **comprehensive list** of all configurable options is available
-:ref:`here <c/enums/bitwuzlaoption:bitwuzlaoption>`.
+:doc:`here <enums/bitwuzlaoption>`.
 
 Example
 -------
