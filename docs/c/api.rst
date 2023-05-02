@@ -7,6 +7,8 @@ C API Documentation
    interface
    options
    Term Kinds <enums/bitwuzlakind>
+   sort_creation
+   term_creation
 
 .. contents::
    :local:

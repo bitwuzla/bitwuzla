@@ -8,6 +8,8 @@ C++ API Documentation
    interface
    options
    Term Kinds <enums/kind>
+   sort_creation
+   term_creation
 
 .. contents::
    :local:
