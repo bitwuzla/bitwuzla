@@ -415,8 +415,6 @@ TEST_F(TestApi, option_set_args)
   ASSERT_EQ(options.get(bitwuzla::Option::INCREMENTAL), true);
   options.set({"-S=cadical"});
   ASSERT_EQ(options.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
-  options.set({"-S", "lingeling"});
-  ASSERT_EQ(options.get_mode(bitwuzla::Option::SAT_SOLVER), "lingeling");
   ASSERT_THROW(options.set({"--no-verbose"}), bitwuzla::Exception);
 }
 
