@@ -42,6 +42,7 @@ extensions = [
         'sphinx.ext.todo',
         'breathe',
         'examples',
+        'literalincludegen'
 ]
 
 todo_include_todos = True
@@ -76,6 +77,10 @@ html_show_sourcelink = False
 
 # -- Breathe configuration ---------------------------------------------------
 breathe_domain_by_extension = {"h" : "cpp"}
+
+# -- Literal include extension for generated files ---------------------------
+lig_source_dir = '@current_source_dir@'
+lig_build_dir = '@current_build_dir@'
 
 # -- SMT-LIB syntax highlighting ---------------------------------------------
 from pygments.lexer import RegexLexer

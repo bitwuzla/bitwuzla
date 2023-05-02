@@ -16,6 +16,7 @@ subdir('cpp')
 conf_data = configuration_data()
 conf_data.set('bitwuzla_python_dir', join_paths(meson.project_build_root(), 'src', 'api', 'python'))
 conf_data.set('current_source_dir', meson.current_source_dir())
+conf_data.set('current_build_dir', meson.current_build_dir())
 conf_py = configure_file(input: 'conf.py.in',
                output: 'conf.py',
                configuration: conf_data)
@@ -41,4 +42,13 @@ docs = custom_target('docs',
   output: '.',
   depends: depends,
   depend_files: depend_files
+)
+
+docs_usage = custom_target('cli-usage',
+  build_by_default: true,
+  build_always_stale: true,
+  capture: true,
+  output: 'cli_usage.txt',
+  command: [bitwuzla_bin, '-h'],
+  depends: bitwuzla_bin,
 )
