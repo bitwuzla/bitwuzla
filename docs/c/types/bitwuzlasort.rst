@@ -1,6 +1,20 @@
 BitwuzlaSort
 ------------
 
+Bitwuzla supports array (SMT-LIB: :code:`Array`), Boolean (SMT-LIB:
+:code:`Bool`), bit-vector (SMT-LIB: :code:`(_ BitVec n)`), floating-point
+(SMT-LIB: :code:`(_ FloatingPoint e s)`), rounding mode (SMT-LIB:
+:code:`RoundingMode`), and uninterpreted sorts (SMT-LIB: :code:`declare-sort`).
+As for array sorts, this includes nested arrays, i.e., array sorts where the
+element sort is an array sort.
+
+.. note::
+
+   Sorts are not tied to a specific Bitwuzla instance and can be shared across
+   instances.
+
+----
+
 - typedef struct :cpp:struct:`BitwuzlaSort`
 - :cpp:func:`bitwuzla_sort_hash()`
 - :cpp:func:`bitwuzla_sort_bv_get_size()`
@@ -21,7 +35,7 @@ BitwuzlaSort
 - :cpp:func:`bitwuzla_sort_is_rm()`
 - :cpp:func:`bitwuzla_sort_is_uninterpreted()`
 - :cpp:func:`bitwuzla_sort_to_string()`
-- :cpp:func:`bitwuzla_print_sort()`
+- :cpp:func:`bitwuzla_sort_print()`
 
 ----
 

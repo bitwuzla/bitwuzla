@@ -377,16 +377,6 @@ bitwuzla_delete(Bitwuzla *bitwuzla)
   BITWUZLA_TRY_CATCH_END;
 }
 
-bool
-bitwuzla_terminate(Bitwuzla *bitwuzla)
-{
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  bitwuzla->d_terminator->terminate();
-  return false;
-  BITWUZLA_TRY_CATCH_END;
-}
-
 void
 bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
                                   int32_t (*fun)(void *),
@@ -1237,7 +1227,7 @@ bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort)
 }
 
 void
-bitwuzla_print_sort(BitwuzlaSort sort, FILE *file)
+bitwuzla_sort_print(BitwuzlaSort sort, FILE *file)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);

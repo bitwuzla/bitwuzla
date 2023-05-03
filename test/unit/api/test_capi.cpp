@@ -2950,16 +2950,16 @@ TEST_F(TestCApi, sort_is_uninterpreted)
 TEST_F(TestCApi, print_sort)
 {
   GTEST_SKIP();  // TODO enable when implemented
-  ASSERT_DEATH(bitwuzla_print_sort(0, "btor", stdout), d_error_inv_sort);
-  ASSERT_DEATH(bitwuzla_print_sort(d_bv_sort1, nullptr, stdout),
+  ASSERT_DEATH(bitwuzla_sort_print(0, "btor", stdout), d_error_inv_sort);
+  ASSERT_DEATH(bitwuzla_sort_print(d_bv_sort1, nullptr, stdout),
                d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_print_sort(d_bv_sort1, "smt2", nullptr),
+  ASSERT_DEATH(bitwuzla_sort_print(d_bv_sort1, "smt2", nullptr),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_print_sort(d_bv_sort1, "asdf", stdout), d_error_format);
-  bitwuzla_print_sort(d_bv_sort1, "btor", stdout);
-  bitwuzla_print_sort(d_bv_sort8, "smt2", stdout);
-  bitwuzla_print_sort(d_rm_sort, "smt2", stdout);
-  bitwuzla_print_sort(d_fp_sort32, "smt2", stdout);
+  ASSERT_DEATH(bitwuzla_sort_print(d_bv_sort1, "asdf", stdout), d_error_format);
+  bitwuzla_sort_print(d_bv_sort1, "btor", stdout);
+  bitwuzla_sort_print(d_bv_sort8, "smt2", stdout);
+  bitwuzla_sort_print(d_rm_sort, "smt2", stdout);
+  bitwuzla_sort_print(d_fp_sort32, "smt2", stdout);
   std::cout << std::endl;
 }
 

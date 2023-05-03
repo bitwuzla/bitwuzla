@@ -476,7 +476,7 @@ const char *bitwuzla_sort_to_string(BitwuzlaSort sort);
  * @param sort The sort.
  * @param file The file to print the sort to.
  */
-void bitwuzla_print_sort(BitwuzlaSort sort, const char *format, FILE *file);
+void bitwuzla_sort_print(BitwuzlaSort sort, const char *format, FILE *file);
 
 /** @} */
 
@@ -1030,28 +1030,14 @@ Bitwuzla *bitwuzla_new(const BitwuzlaOptions *options);
 void bitwuzla_delete(Bitwuzla *bitwuzla);
 
 /**
- * If termination callback function has been configured via
- * `bitwuzla_set_termination_callback()`, call this termination function.
- *
- * @param bitwuzla The Bitwuzla instance.
- *
- * @return True if `bitwuzla` has been terminated.
- *
- * @see
- *   * `bitwuzla_set_termination_callback`
- *   * `bitwuzla_get_termination_callback_state`
- */
-bool bitwuzla_terminate(Bitwuzla *bitwuzla);
-
-/**
  * Configure a termination callback function.
  *
  * The `state` of the callback can be retrieved via
  * `bitwuzla_get_termination_callback_state()`.
  *
  * @param bitwuzla The Bitwuzla instance.
- * @param fun The callback function, returns a value != 0 if `bitwuzla` has
- *            been terminated.
+ * @param fun The callback function, returns a value != 0 if `bitwuzla` should
+ *            be terminated.
  * @param state The argument to the callback function.
  *
  * @see

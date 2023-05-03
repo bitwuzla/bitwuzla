@@ -921,9 +921,9 @@ class Terminator
   virtual ~Terminator();
   /**
    * Termination function.
-   * If terminator has been connected, call to terminate connected
-   * Bitwuzla instance.
-   * @return True if the associated instance of Bitwuzla has been terminated.
+   * If terminator has been connected, Bitwuzla calls this function periodically
+   * to determine if the connected instance should be terminated.
+   * @return True if the associated instance of Bitwuzla should be terminated.
    */
   virtual bool terminate() = 0;
 };
