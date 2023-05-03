@@ -1,7 +1,7 @@
 project('bitwuzla',
   ['c', 'cpp'],
   meson_version: '>= 0.64',
-  version: '1.0-dev',
+  version: '0.1-dev',
   license: 'mit',
   default_options: [
     'c_std=c17',
