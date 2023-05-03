@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-info :source "We write an arbitrary value into an array, assume that the array is sorted,
 and finally verify that the binary search algorithm always finds this value.
 Bit-width of elements: 32

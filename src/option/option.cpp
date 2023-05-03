@@ -68,12 +68,6 @@ Options::Options()
     : d_options(),
       d_name2option(),
       // general
-      incremental(this,
-                  Option::INCREMENTAL,
-                  false,
-                  "incremental usage",
-                  "incremental",
-                  "i"),
       log_level(
           this, Option::LOG_LEVEL, 0, 0, 3, "log level", "log-level", "l"),
       produce_models(this,

@@ -8,9 +8,6 @@ main()
 
   // First, create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
-  // Then, enable incremental solving.
-  // Note: Incremental solving is disabled by default.
-  bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
   // Then, create a Bitwuzla instance.
   Bitwuzla* bitwuzla = bitwuzla_new(options);
 

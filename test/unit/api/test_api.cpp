@@ -273,26 +273,6 @@ TEST_F(TestApi, set_option)
 {
   {
     bitwuzla::Options opts;
-    opts.set(bitwuzla::Option::INCREMENTAL, true);
-    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
-    opts.set("incremental", "false");
-    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), false);
-    opts.set("incremental", "true");
-    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
-    opts.set("incremental", "fAlse");
-    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), false);
-    opts.set("incremental", "True");
-    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
-    opts.set("incremental", "  faLsE  ");
-    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), false);
-    opts.set("incremental", "  tRUe   ");
-    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
-    opts.set("incremental", "0");
-    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), false);
-    opts.set("incremental", "1");
-    ASSERT_EQ(opts.get(bitwuzla::Option::INCREMENTAL), true);
-    ASSERT_THROW(opts.set("incremental", "asdf"), bitwuzla::Exception);
-    ASSERT_THROW(opts.set("incremental", "2"), bitwuzla::Exception);
     ASSERT_THROW(opts.set("incrremental", "true"), bitwuzla::Exception);
     ASSERT_THROW(opts.set(bitwuzla::Option::VERBOSITY, 5), bitwuzla::Exception);
     ASSERT_THROW(opts.set("VERBOSITY", "5"), bitwuzla::Exception);
@@ -331,8 +311,6 @@ TEST_F(TestApi, set_option)
   //{
   //  bitwuzla::Options opts;
   //  opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true);
-  //  ASSERT_THROW(opts.set(bitwuzla::Option::INCREMENTAL, true),
-  //  Exception);
   //  ASSERT_THROW(opts.set(bitwuzla::Option::PRODUCE_MODELS, true),
   //  Exception);
   //}
@@ -360,8 +338,6 @@ TEST_F(TestApi, set_option)
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "kissat");
     ASSERT_THROW(opts.set("sat--solver", "kissat"), bitwuzla::Exception);
     ASSERT_THROW(opts.set(bitwuzla::Option::BV_SOLVER, "asdf"),
-                 bitwuzla::Exception);
-    ASSERT_THROW(opts.set(bitwuzla::Option::INCREMENTAL, "true"),
                  bitwuzla::Exception);
   }
 }
@@ -409,10 +385,6 @@ TEST_F(TestApi, option_set_args)
   options.set({"-v=4"});
   ASSERT_EQ(options.get(bitwuzla::Option::VERBOSITY), 4);
   ASSERT_THROW(options.set({"-v=100"}), bitwuzla::Exception);
-  options.set({"--no-incremental"});
-  ASSERT_EQ(options.get(bitwuzla::Option::INCREMENTAL), false);
-  options.set({"--incremental"});
-  ASSERT_EQ(options.get(bitwuzla::Option::INCREMENTAL), true);
   options.set({"-S=cadical"});
   ASSERT_EQ(options.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
   ASSERT_THROW(options.set({"--no-verbose"}), bitwuzla::Exception);
@@ -1433,13 +1405,6 @@ TEST_F(TestApi, push)
 {
   {
     bitwuzla::Options options;
-    options.set(bitwuzla::Option::INCREMENTAL, false);
-    bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.push(2), bitwuzla::Exception);
-  }
-  {
-    bitwuzla::Options options;
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_NO_THROW(bitwuzla.push(0));
     ASSERT_NO_THROW(bitwuzla.push(2));
@@ -1450,13 +1415,6 @@ TEST_F(TestApi, pop)
 {
   {
     bitwuzla::Options options;
-    options.set(bitwuzla::Option::INCREMENTAL, false);
-    bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.pop(0), bitwuzla::Exception);
-  }
-  {
-    bitwuzla::Options options;
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_THROW(bitwuzla.pop(2), bitwuzla::Exception);
     ASSERT_NO_THROW(bitwuzla.pop(0));
@@ -1489,7 +1447,6 @@ TEST_F(TestApi, is_unsat_assumption)
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_UNSAT_ASSUMPTIONS, false);
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_const),
                  bitwuzla::Exception);
@@ -1497,15 +1454,6 @@ TEST_F(TestApi, is_unsat_assumption)
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_UNSAT_ASSUMPTIONS, true);
-    options.set(bitwuzla::Option::INCREMENTAL, false);
-    bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.is_unsat_assumption(d_bool_const),
-                 bitwuzla::Exception);
-  }
-  {
-    bitwuzla::Options options;
-    options.set(bitwuzla::Option::PRODUCE_UNSAT_ASSUMPTIONS, true);
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
 
     ASSERT_THROW(bitwuzla.is_unsat_assumption(bitwuzla::Term()),
@@ -1537,21 +1485,12 @@ TEST_F(TestApi, get_unsat_assumptions)
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_UNSAT_ASSUMPTIONS, false);
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_THROW(bitwuzla.get_unsat_assumptions(), bitwuzla::Exception);
   }
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_UNSAT_ASSUMPTIONS, true);
-    options.set(bitwuzla::Option::INCREMENTAL, false);
-    bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_unsat_assumptions(), bitwuzla::Exception);
-  }
-  {
-    bitwuzla::Options options;
-    options.set(bitwuzla::Option::PRODUCE_UNSAT_ASSUMPTIONS, true);
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
 
     bitwuzla.assert_formula(d_true);
@@ -1583,13 +1522,11 @@ TEST_F(TestApi, get_unsat_core)
   }
   {
     bitwuzla::Options options;
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_THROW(bitwuzla.get_unsat_core(), bitwuzla::Exception);
   }
   {
     bitwuzla::Options options;
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     options.set(bitwuzla::Option::PRODUCE_UNSAT_CORES, true);
     options.set(bitwuzla::Option::PRODUCE_UNSAT_ASSUMPTIONS, true);
     bitwuzla::Bitwuzla bitwuzla(options);
@@ -1648,14 +1585,12 @@ TEST_F(TestApi, check_sat)
 {
   {
     bitwuzla::Options options;
-    options.set(bitwuzla::Option::INCREMENTAL, false);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_NO_THROW(bitwuzla.check_sat());
-    ASSERT_THROW(bitwuzla.check_sat(), bitwuzla::Exception);
+    ASSERT_NO_THROW(bitwuzla.check_sat());
   }
   {
     bitwuzla::Options options;
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_NO_THROW(bitwuzla.check_sat());
     ASSERT_NO_THROW(bitwuzla.check_sat());
@@ -1671,7 +1606,6 @@ TEST_F(TestApi, get_value)
   }
   {
     bitwuzla::Options options;
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     options.set(bitwuzla::Option::PRODUCE_MODELS, true);
     bitwuzla::Bitwuzla bitwuzla(options);
     ASSERT_THROW(bitwuzla.get_value(bitwuzla::Term()), bitwuzla::Exception);
@@ -1685,7 +1619,6 @@ TEST_F(TestApi, get_value)
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_MODELS, true);
-    options.set(bitwuzla::Option::INCREMENTAL, true);
     bitwuzla::Bitwuzla bitwuzla(options);
     bitwuzla.assert_formula(d_exists);
     ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::Exception);

@@ -1,5 +1,4 @@
 (set-logic ALL)
-(set-option :incremental true)
 (set-option :produce-unsat-assumptions true)
 (declare-const x0 (_ BitVec 4))
 (declare-const x1 (_ BitVec 2))

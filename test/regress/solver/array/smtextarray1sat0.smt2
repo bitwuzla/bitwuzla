@@ -1,6 +1,5 @@
 (set-logic QF_AUFBV)
 (set-info :status sat)
-(set-option :incremental false)
 (declare-fun a () (Array (_ BitVec 1) (_ BitVec 1)))
 (declare-fun b () (Array (_ BitVec 1) (_ BitVec 1)))
 (assert (= (select a (_ bv1 1)) (select b (_ bv1 1))))

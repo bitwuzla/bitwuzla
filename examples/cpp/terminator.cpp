@@ -34,7 +34,6 @@ main()
 {
   // First, create a Bitwuzla options instance.
   Options options;
-  options.set(Option::INCREMENTAL, true);
   // Then, create a Bitwuzla instance.
   Bitwuzla bitwuzla(options);
 

@@ -13,13 +13,13 @@ class TestOptions : public ::testing::Test
 
 TEST_F(TestOptions, opt_bool)
 {
-  ASSERT_EQ(d_opts.incremental(), false);
-  ASSERT_EQ(d_opts.get<bool>(Option::INCREMENTAL), false);
-  d_opts.set<bool>(Option::INCREMENTAL, true);
-  ASSERT_EQ(d_opts.incremental(), true);
-  ASSERT_EQ(d_opts.get<bool>(Option::INCREMENTAL), true);
-  ASSERT_DEATH(d_opts.get<uint64_t>(Option::INCREMENTAL), "is_numeric");
-  ASSERT_DEATH(d_opts.get<std::string>(Option::INCREMENTAL), "is_mode");
+  ASSERT_EQ(d_opts.produce_models(), false);
+  ASSERT_EQ(d_opts.get<bool>(Option::PRODUCE_MODELS), false);
+  d_opts.set<bool>(Option::PRODUCE_MODELS, true);
+  ASSERT_EQ(d_opts.produce_models(), true);
+  ASSERT_EQ(d_opts.get<bool>(Option::PRODUCE_MODELS), true);
+  ASSERT_DEATH(d_opts.get<uint64_t>(Option::PRODUCE_MODELS), "is_numeric");
+  ASSERT_DEATH(d_opts.get<std::string>(Option::PRODUCE_MODELS), "is_mode");
 }
 
 TEST_F(TestOptions, opt_num)

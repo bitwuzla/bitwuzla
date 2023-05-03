@@ -216,14 +216,11 @@ class TestCApi : public ::testing::Test
   const char *d_error_unexp_arr_term = "unexpected array term";
   const char *d_error_unexp_fun_term = "expected non-function term";
   const char *d_error_unexp_param_term = "term must not be parameterized";
-  const char *d_error_incremental      = "incremental usage not enabled";
   const char *d_error_produce_models   = "model production not enabled";
   const char *d_error_unsat            = "if input formula is not unsat";
   const char *d_error_unsat_cores      = "unsat core production not enabled";
   const char *d_error_sat              = "if input formula is not sat";
   const char *d_error_format           = "invalid file format";
-  const char *d_error_inc_quant =
-      "incremental solving is currently not supported with quantifiers";
   const char *d_error_model_quant =
       "model printing is currently not supported with quantifiers";
 };
@@ -478,8 +475,6 @@ TEST_F(TestCApi, set_option)
 {
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
-    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_INCREMENTAL), true);
     ASSERT_DEATH(bitwuzla_set_option(options, BITWUZLA_OPT_VERBOSITY, 5),
                  "expected value <=");
     //  ASSERT_DEATH(bitwuzla_set_option(
@@ -565,9 +560,6 @@ TEST_F(TestCApi, set_option)
     ASSERT_DEATH(
         bitwuzla_set_option_mode(options, BITWUZLA_OPT_BV_SOLVER, "asdf"),
         "invalid mode for option");
-    ASSERT_DEATH(
-        bitwuzla_set_option_mode(options, BITWUZLA_OPT_INCREMENTAL, "true"),
-        "expected option with option modes");
     bitwuzla_options_delete(options);
   }
 }
@@ -2156,14 +2148,6 @@ TEST_F(TestCApi, push)
 {
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla       = bitwuzla_new(options);
-    ASSERT_DEATH(bitwuzla_push(bitwuzla, 2), d_error_incremental);
-    bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
-  }
-  {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     ASSERT_DEATH(bitwuzla_push(nullptr, 2), d_error_not_null);
 
@@ -2177,14 +2161,6 @@ TEST_F(TestCApi, pop)
 {
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla       = bitwuzla_new(options);
-    ASSERT_DEATH(bitwuzla_pop(bitwuzla, 2), d_error_incremental);
-    bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
-  }
-  {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     ASSERT_DEATH(bitwuzla_pop(nullptr, 2), d_error_not_null);
 
@@ -2220,18 +2196,7 @@ TEST_F(TestCApi, is_unsat_assumption)
 {
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 1);
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 0);
-    Bitwuzla *bitwuzla       = bitwuzla_new(options);
-    ASSERT_DEATH(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1),
-                 d_error_incremental);
-    bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
-  }
-  {
-    BitwuzlaOptions *options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 0);
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     ASSERT_DEATH(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1),
                  "unsat assumptions production not enabled");
@@ -2241,7 +2206,6 @@ TEST_F(TestCApi, is_unsat_assumption)
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 1);
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
 
     ASSERT_DEATH(bitwuzla_is_unsat_assumption(nullptr, d_true),
@@ -2280,18 +2244,7 @@ TEST_F(TestCApi, get_unsat_assumptions)
   size_t size;
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 1);
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 0);
-    Bitwuzla *bitwuzla       = bitwuzla_new(options);
-    ASSERT_DEATH(bitwuzla_get_unsat_assumptions(bitwuzla, &size),
-                 d_error_incremental);
-    bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
-  }
-  {
-    BitwuzlaOptions *options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 0);
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     ASSERT_DEATH(bitwuzla_get_unsat_assumptions(bitwuzla, &size),
                  "unsat assumptions production not enabled");
@@ -2301,7 +2254,6 @@ TEST_F(TestCApi, get_unsat_assumptions)
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 1);
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
 
     ASSERT_DEATH(bitwuzla_get_unsat_assumptions(nullptr, &size),
@@ -2352,7 +2304,6 @@ TEST_F(TestCApi, get_unsat_core)
   }
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, &size), d_error_unsat_cores);
     bitwuzla_delete(bitwuzla);
@@ -2362,7 +2313,6 @@ TEST_F(TestCApi, get_unsat_core)
     BitwuzlaOptions *options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_CORES, 1);
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 1);
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
 
     ASSERT_DEATH(bitwuzla_get_unsat_core(nullptr, &size), d_error_not_null);
@@ -2421,14 +2371,12 @@ TEST_F(TestCApi, check_sat)
     BitwuzlaOptions *options = bitwuzla_options_new();
     Bitwuzla *bitwuzla       = bitwuzla_new(options);
     bitwuzla_check_sat(bitwuzla);
-    ASSERT_DEATH(bitwuzla_check_sat(bitwuzla),
-                 "require that incremental solving is enabled");
+    bitwuzla_check_sat(bitwuzla);
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     bitwuzla_check_sat(bitwuzla);
     bitwuzla_delete(bitwuzla);
@@ -2440,7 +2388,6 @@ TEST_F(TestCApi, get_value)
 {
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const8),
                  d_error_produce_models);
@@ -2449,7 +2396,6 @@ TEST_F(TestCApi, get_value)
   }
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     ASSERT_DEATH(bitwuzla_get_value(nullptr, d_bv_const8), d_error_not_null);
@@ -2469,7 +2415,6 @@ TEST_F(TestCApi, get_value)
   }
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
-    bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
     Bitwuzla *bitwuzla = bitwuzla_new(options);
     bitwuzla_assert(bitwuzla, d_exists);

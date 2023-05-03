@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-info :source "This benchmark comes from bounded model checking of two fifo implementations.
 The fifos are resetted once at the beginning. We show that the
 implementations are behaviorally equivalent up to a bound of 5 clock cycles.

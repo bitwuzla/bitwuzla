@@ -14,7 +14,6 @@ class TestIncremental : public TestCommon
     assert(size > 0);
 
     option::Options options;
-    options.set<bool>(option::Option::INCREMENTAL, true);
     SolvingContext ctx = SolvingContext(options);
 
     NodeManager& nm = NodeManager::get();
@@ -68,7 +67,6 @@ class TestIncremental : public TestCommon
     assert(size > 0);
 
     option::Options options;
-    options.set<bool>(option::Option::INCREMENTAL, true);
     SolvingContext ctx = SolvingContext(options);
 
     NodeManager& nm = NodeManager::get();
@@ -162,7 +160,6 @@ TEST_F(TestIncremental, lt8) { test_incremental_lt(8); }
 TEST_F(TestIncremental, assume_assert1)
 {
   option::Options options;
-  options.set<bool>(option::Option::INCREMENTAL, true);
   options.set<uint64_t>(option::Option::REWRITE_LEVEL, 0);
   SolvingContext ctx = SolvingContext(options);
 
@@ -192,7 +189,6 @@ TEST_F(TestIncremental, assume_assert1)
 TEST_F(TestIncremental, lemmas_on_demand1)
 {
   option::Options options;
-  options.set<bool>(option::Option::INCREMENTAL, true);
   options.set<uint64_t>(option::Option::REWRITE_LEVEL, 0);
   SolvingContext ctx = SolvingContext(options);
 

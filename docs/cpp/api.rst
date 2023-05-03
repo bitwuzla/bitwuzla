@@ -89,9 +89,7 @@ determined via :cpp:func:`bitwuzla::Bitwuzla::check_sat()`.
      :language: cpp
      :lines: 68-69
 
-If incremental usage is enabled (option
-:cpp:enum:`bitwuzla::Option::INCREMENTAL`), formulas can also be assumed via
-passing a vector of assumptions into
+Formulas can also be assumed via passing a vector of assumptions into
 :cpp:func:`bitwuzla::Bitwuzla::check_sat()`.
 
 If the formula is satisfiable and model generation has been enabled, the

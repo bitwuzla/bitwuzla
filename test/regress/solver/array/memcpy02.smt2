@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-info :source "We verify the correctness of the memcpy algorithm.
 We represent main memory as byte array of size 2 ^ 32,
 and model the memcpy algorithm with pointer arithmetic.

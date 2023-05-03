@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-info :source "This benchmark generates write chain permutations and tries to show
 via extensionality that they are equal.
 

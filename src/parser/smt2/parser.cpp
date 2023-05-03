@@ -193,11 +193,6 @@ Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
 {
   init_logic();
   init_bitwuzla();
-  if (d_statistics.num_check_sat
-      && !d_options.get(bitwuzla::Option::INCREMENTAL))
-  {
-    return error("incremental solving not enabled");
-  }
   if (with_assumptions)
   {
     if (!parse_lpar())

@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-logic QF_BV)
 (declare-fun a11 () (_ BitVec 5))
 (declare-fun a12 () (_ BitVec 5))

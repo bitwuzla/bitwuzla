@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-info :source "We swap two byte sequences of length 2 twice in memory.
 The sequences can not overlap, hence it is always the case
 that swapping them twice yields the initial memory.

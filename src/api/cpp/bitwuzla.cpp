@@ -46,7 +46,6 @@ _init_reverse(const std::unordered_map<K, V> &map)
 static const std::unordered_map<Option, bzla::option::Option>
     s_internal_options = {
         {Option::BV_SOLVER, bzla::option::Option::BV_SOLVER},
-        {Option::INCREMENTAL, bzla::option::Option::INCREMENTAL},
         {Option::LOGLEVEL, bzla::option::Option::LOG_LEVEL},
         {Option::PRODUCE_MODELS, bzla::option::Option::PRODUCE_MODELS},
         {Option::PRODUCE_UNSAT_ASSUMPTIONS,
@@ -1304,7 +1303,6 @@ void
 Bitwuzla::push(uint32_t nlevels)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
-  BITWUZLA_CHECK_OPT_INCREMENTAL(d_ctx->options());
   solver_state_change();
   for (uint32_t i = 0; i < nlevels; ++i)
   {
@@ -1316,7 +1314,6 @@ void
 Bitwuzla::pop(uint32_t nlevels)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
-  BITWUZLA_CHECK_OPT_INCREMENTAL(d_ctx->options());
   BITWUZLA_CHECK(nlevels <= d_ctx->backtrack_mgr()->num_levels())
       << "number of context levels to pop (" << nlevels
       << ") greater than number of pushed context levels ("
@@ -1358,7 +1355,6 @@ Bitwuzla::is_unsat_assumption(const Term &term)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_ASSUMPTIONS(d_ctx->options());
-  BITWUZLA_CHECK_OPT_INCREMENTAL(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_UNSAT("is unsat assumption");
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   BITWUZLA_CHECK_TERM_IS_BOOL(term);
@@ -1380,7 +1376,6 @@ std::vector<Term>
 Bitwuzla::get_unsat_assumptions()
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
-  BITWUZLA_CHECK_OPT_INCREMENTAL(d_ctx->options());
   BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_ASSUMPTIONS(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_UNSAT("get unsat assumptions");
   if (!d_uc_is_valid)
@@ -1428,8 +1423,6 @@ Result
 Bitwuzla::check_sat(const std::vector<Term> &assumptions)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
-  BITWUZLA_CHECK(d_n_sat_calls == 0 || d_ctx->options().incremental())
-      << "multiple check-sat calls require that incremental solving is enabled";
   solver_state_change();
   d_n_sat_calls += 1;
   d_assumptions.clear();

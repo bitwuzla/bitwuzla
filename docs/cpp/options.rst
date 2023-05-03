@@ -21,7 +21,7 @@ options with option modes are configured via
 :cpp:func:`void bitwuzla::Options::set(Option option, const std::string& value)`.
 Any option can also be configured via
 :cpp:func:`void bitwuzla::Options::set(const std::string &lng, const std::string &value)`,
-where :code:`lng` is the long name of the option (e.g., :code:`"incremental"`).
+where :code:`lng` is the long name of the option (e.g., :code:`"produce-models"`).
 
 Additionally, it is also possible to confgure options in batch via
 :cpp:func:`void bitwuzla::Options::set(const std::vector<std::string> &args)`,

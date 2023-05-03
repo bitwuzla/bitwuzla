@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-info :status unsat)
 (set-logic QF_BV)
 (declare-fun a () (_ BitVec 6))

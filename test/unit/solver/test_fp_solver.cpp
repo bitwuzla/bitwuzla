@@ -45,7 +45,6 @@ class TestFpSolver : public TestCommon
 
 TEST_F(TestFpSolver, fp_abs)
 {
-  d_options.set<bool>(Option::INCREMENTAL, true);
   SolvingContext ctx = SolvingContext(d_options);
 
   ctx.assert_formula(d_nm.mk_node(

@@ -1,4 +1,3 @@
-(set-option :incremental true)
 (declare-fun x (Bool Bool) Bool)
 (declare-const x2 Bool)
 (set-info :status sat)

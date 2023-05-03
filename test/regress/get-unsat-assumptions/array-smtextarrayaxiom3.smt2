@@ -1,5 +1,4 @@
 (set-info :status unsat)
-(set-option :incremental true)
 (set-option :produce-unsat-cores true)
 (set-option :produce-unsat-assumptions true)
 (set-logic QF_AUFBV)

@@ -89,9 +89,7 @@ satisfiability can be determined via :cpp:func:`bitwuzla_check_sat()`.
      :language: c
      :lines: 77-78
 
-If incremental usage is enabled (option
-:cpp:enum:`BitwuzlaOption.BITWUZLA_OPT_INCREMENTAL <BitwuzlaOption::BITWUZLA_OPT_INCREMENTAL>`),
-formulas can also be assumed via :cpp:func:`bitwuzla_check_sat_assuming()`.
+Formulas can also be assumed via :cpp:func:`bitwuzla_check_sat_assuming()`.
 
 If the formula is satisfiable and model generation has been enabled, the
 resulting model can be printed via :cpp:func:`bitwuzla_get_value()` and

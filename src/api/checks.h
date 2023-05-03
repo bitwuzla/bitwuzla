@@ -73,9 +73,6 @@ class BitwuzlaExceptionStream
   BITWUZLA_CHECK(str == "smt2" || str == "btor" || str == "btor2") \
       << "invalid file format, expected 'smt2', 'btor' or 'btor2'";
 
-#define BITWUZLA_CHECK_OPT_INCREMENTAL(opts) \
-  BITWUZLA_CHECK((opts).incremental()) << "incremental usage not enabled";
-
 #define BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_ASSUMPTIONS(opts) \
   BITWUZLA_CHECK((opts).produce_unsat_assumptions())       \
       << "unsat assumptions production not enabled";

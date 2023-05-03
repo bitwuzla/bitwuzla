@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-logic QF_BV)
 (declare-fun s () (_ BitVec 4))
 (assert (bvslt s (_ bv0 4)))

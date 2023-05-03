@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-info :source "We verify that selection sort sorts an array
 of length 2 in memory. Additionally, we read an element
 at an arbitrary index of the initial array and show that this

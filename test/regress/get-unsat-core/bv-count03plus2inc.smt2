@@ -1,5 +1,4 @@
 (set-info :status unsat)
-(set-option :incremental false)
 (set-option :produce-unsat-cores true)
 (set-logic QF_AUFBV)
 (declare-fun a () (Array (_ BitVec 4) (_ BitVec 4)))

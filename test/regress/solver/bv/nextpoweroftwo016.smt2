@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-info :source "We verify the correctness of the ""next power of 2 algorithm""
 from the book ""hacker's delight"" (Warren Jr., Henry).
 

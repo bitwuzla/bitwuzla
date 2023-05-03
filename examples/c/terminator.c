@@ -29,7 +29,6 @@ main()
 {
   // First, create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
-  bitwuzla_set_option(options, BITWUZLA_OPT_INCREMENTAL, 1);
   // Then, create a Bitwuzla instance.
   Bitwuzla* bitwuzla = bitwuzla_new(options);
 

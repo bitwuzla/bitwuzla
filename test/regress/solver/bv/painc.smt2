@@ -1,5 +1,4 @@
 (set-logic QF_BV)
-(set-option :incremental true)
 (declare-fun x () (_ BitVec 32))
 (declare-fun next_x () (_ BitVec 32))
 (declare-fun n () (_ BitVec 32))

@@ -11,9 +11,6 @@ main()
 
   // First, create a Bitwuzla options instance.
   Options options;
-  // Then, enable incremental solving.
-  // Note: Incremental solving is disabled by default.
-  options.set(Option::INCREMENTAL, true);
   // Then, create a Bitwuzla instance.
   Bitwuzla bitwuzla(options);
 

@@ -34,20 +34,6 @@ namespace bitwuzla {
 enum ENUM(Option)
 {
   /* ----------------- General Options -------------------------------------- */
-  /*! **Incremental solving.**
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   *
-   * @note
-   * * Enabling this option turns off some optimization techniques.
-   * * Enabling/disabling incremental solving after bitwuzla_check_sat()
-   *   has been called is not supported.
-   * * This option cannot be enabled in combination with option
-   *   `::EVALUE(PP_UNCONSTRAINED_OPTIMIZATION`.
-   */
-  EVALUE(INCREMENTAL),
   /*! **Log level.**
    *
    * Values:

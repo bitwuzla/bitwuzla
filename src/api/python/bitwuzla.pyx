@@ -413,9 +413,6 @@ cdef class Bitwuzla:
         """Check satisfiability of asserted formulas under possibly given
            assumptions.
 
-           If this function is called multiple times it is required to
-           enable incremental usage via :func:`~bitwuzla.Options.set`.
-
            :param assumptions: Zero or more Boolean terms.
 
            :return: - :class:`~bitwuzla.Result.SAT` if the input formula is

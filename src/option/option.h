@@ -14,7 +14,6 @@ namespace bzla::option {
 
 enum class Option
 {
-  INCREMENTAL,                // bool
   LOG_LEVEL,                  // numeric
   PRODUCE_MODELS,             // bool
   PRODUCE_UNSAT_ASSUMPTIONS,  // bool
@@ -403,7 +402,6 @@ class Options
   Options();
 
   // general options
-  OptionBool incremental;
   OptionNumeric log_level;
   OptionBool produce_models;
   OptionBool produce_unsat_assumptions;

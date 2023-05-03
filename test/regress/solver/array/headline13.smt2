@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-logic QF_AUFBV)
 (declare-fun a1 () (Array (_ BitVec 3) (_ BitVec 1)))
 (declare-fun v2 () (_ BitVec 3))

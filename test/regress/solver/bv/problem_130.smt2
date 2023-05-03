@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-info :source "Minkeyrink Solver")
 (set-info :difficulty "1")
 (set-info :category "industrial")

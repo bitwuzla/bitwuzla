@@ -109,7 +109,6 @@ class SmtLibLexer(RegexLexer):
             (r'get-value', token.Keyword),
             (r'push', token.Keyword),
             (r'pop', token.Keyword),
-            (r':incremental', token.Name.Attribute),
             (r':named', token.Name.Attribute),
             (r':produce-models', token.Name.Attribute),
             (r':produce-unsat-cores', token.Name.Attribute),

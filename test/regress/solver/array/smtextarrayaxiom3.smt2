@@ -1,5 +1,4 @@
 (set-info :status unsat)
-(set-option :incremental false)
 (set-logic QF_AUFBV)
 (declare-fun a () (Array (_ BitVec 3) (_ BitVec 3)))
 (declare-fun b () (Array (_ BitVec 3) (_ BitVec 3)))

@@ -9,9 +9,6 @@ main()
 {
   // First, create a Bitwuzla options instance.
   Options options;
-  // Then, enable incremental solving and unsat assumptions extraction.
-  // Note: Incremental solving is disabled by default.
-  options.set(Option::INCREMENTAL, true);
   options.set(Option::PRODUCE_UNSAT_ASSUMPTIONS, true);
   // Then, create a Bitwuzla instance.
   Bitwuzla bitwuzla(options);

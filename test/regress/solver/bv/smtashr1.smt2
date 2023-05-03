@@ -1,5 +1,4 @@
 (set-logic QF_BV)
-(set-option :incremental false)
 (set-info :status sat)
 (assert (= (bvashr (_ bv0 1) (_ bv0 1)) (_ bv0 1)))
 (assert (= (bvashr (_ bv0 1) (_ bv1 1)) (_ bv0 1)))

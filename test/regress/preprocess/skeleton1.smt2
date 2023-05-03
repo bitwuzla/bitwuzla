@@ -1,6 +1,5 @@
 (set-logic ALL)
 (set-option :rewrite-level 0)
-(set-option :incremental true)
 (declare-const _x0 Bool)
 (set-info :status sat)
 (check-sat-assuming ( (let ((_let0 (exists ((_x1 Bool)) (ite (= (distinct (ite false _x1 _x0) _x1 _x0) _x0) (= (distinct (ite false _x1 _x0) _x1 _x0) _x0) (distinct (ite false _x1 _x0) _x1 _x0)))))(ite _let0 _let0 _x0))))

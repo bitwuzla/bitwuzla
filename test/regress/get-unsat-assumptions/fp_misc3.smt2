@@ -1,6 +1,5 @@
 (set-logic QF_FP)
 (set-info :status unsat)
-(set-option :incremental true)
 (set-option :produce-unsat-assumptions true)
 (declare-const a Float16);
 (declare-const b Float16);

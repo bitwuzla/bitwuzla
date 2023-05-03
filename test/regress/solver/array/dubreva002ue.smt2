@@ -1,4 +1,3 @@
-(set-option :incremental false)
 (set-info :source "We reverse an array of length 2 twice in memory at 2 positions.
 We show via extensionality that memory has to be equal.
 
