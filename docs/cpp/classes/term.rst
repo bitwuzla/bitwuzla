@@ -13,6 +13,7 @@ Bitwuzla provides additional functions, see below.
    instances.
 
 ----
+
 - class :cpp:class:`bitwuzla::Term`
 - struct :cpp:struct:`std::hash\<bitwuzla::Term>`
 - :cpp:func:`bool bitwuzla::operator==(const Term& a, const Term& b)`

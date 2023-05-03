@@ -1,11 +1,6 @@
 BitwuzlaKind
 ------------
 
-- enum :cpp:enum:`BitwuzlaKind`
-- :cpp:func:`bitwuzla_kind_to_string()`
-
-----
-
 The kind of a :cpp:struct:`BitwuzlaTerm`.
 
 Terms of a given kind are created via :cpp:func:`bitwuzla_mk_term()`,
@@ -19,6 +14,11 @@ The kind of a term can be queried via :cpp:func:`bitwuzla_term_get_kind()`.
 The string representation of a term kind can be queried via
 :cpp:func:`bitwuzla_term_to_string()`, and printed to a given file
 via :cpp:func:`bitwuzla_term_print()`.
+
+----
+
+- enum :cpp:enum:`BitwuzlaKind`
+- :cpp:func:`bitwuzla_kind_to_string()`
 
 ----
 
