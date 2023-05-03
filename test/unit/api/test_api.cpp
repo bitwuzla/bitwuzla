@@ -1723,7 +1723,6 @@ TEST_F(TestApi, print_formula)
       bitwuzla::Kind::EQUAL,
       {bitwuzla::mk_term(bitwuzla::Kind::APPLY, {d_lambda, d_bv_const8}),
        d_bv_zero8}));
-
   {
     std::stringstream expected_smt2;
     expected_smt2
@@ -1740,7 +1739,6 @@ TEST_F(TestApi, print_formula)
     bitwuzla.print_formula(ss, "smt2");
     ASSERT_EQ(ss.str(), expected_smt2.str());
   }
-  // ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "btor"));
 
   bitwuzla.assert_formula(d_exists);
   {
@@ -1761,7 +1759,6 @@ TEST_F(TestApi, print_formula)
     bitwuzla.print_formula(ss, "smt2");
     ASSERT_EQ(ss.str(), expected_smt2.str());
   }
-  // ASSERT_NO_THROW(bitwuzla.print_formula(std::cout, "btor"));
 
   bitwuzla.assert_formula(bitwuzla::mk_term(
       bitwuzla::Kind::FP_LEQ,
@@ -1799,7 +1796,6 @@ TEST_F(TestApi, print_formula)
     bitwuzla.print_formula(ss, "smt2");
     ASSERT_EQ(ss.str(), expected_smt2.str());
   }
-  // TODO test incremental
 }
 
 TEST_F(TestApi, print_formula2)
@@ -1826,6 +1822,57 @@ TEST_F(TestApi, print_formula2)
       << "(assert (= (select a #b0) #b0))" << std::endl
       << "(assert (= a b))" << std::endl
       << "(assert (exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q))))"
+      << std::endl
+      << "(check-sat)" << std::endl
+      << "(exit)" << std::endl;
+  std::stringstream ss;
+  bitwuzla.print_formula(ss, "smt2");
+  ASSERT_EQ(ss.str(), expected_smt2.str());
+}
+
+TEST_F(TestApi, print_formula3)
+{
+  bitwuzla::Options options;
+  bitwuzla::Sort bv32 = bitwuzla::mk_bv_sort(32);
+  bitwuzla::Term n    = bitwuzla::mk_const(bv32, "n");
+  bitwuzla::Term sim  = bitwuzla::mk_const(bv32, "~");
+  bitwuzla::Term zero = bitwuzla::mk_bv_zero(bv32);
+  bitwuzla::Term two  = bitwuzla::mk_bv_value_uint64(bv32, 2);
+  bitwuzla::Bitwuzla bitwuzla(options);
+  bitwuzla.assert_formula(bitwuzla::mk_term(
+      bitwuzla::Kind::DISTINCT,
+      {zero, bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, {n, sim})}));
+  bitwuzla.push(1);
+  bitwuzla.assert_formula(bitwuzla::mk_term(
+      bitwuzla::Kind::EQUAL,
+      {bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, {n, two}),
+       bitwuzla::mk_term(
+           bitwuzla::Kind::BV_NEG,
+           {bitwuzla::mk_term(
+               bitwuzla::Kind::BV_ADD,
+               {sim, bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, {n, two})})})}));
+  bitwuzla.push(1);
+  bitwuzla.assert_formula(
+      bitwuzla::mk_term(bitwuzla::Kind::EQUAL,
+                        {zero,
+                         bitwuzla::mk_term(bitwuzla::Kind::BV_ADD,
+                                           {n, bitwuzla::mk_bv_one(bv32)})}));
+
+  std::stringstream expected_smt2;
+  expected_smt2
+      << "(set-logic QF_BV)" << std::endl
+      << "(declare-const n (_ BitVec 32))" << std::endl
+      << "(declare-const ~ (_ BitVec 32))" << std::endl
+      << "(assert (distinct #b00000000000000000000000000000000 (bvadd n ~)))"
+      << std::endl
+      << "(push 1)" << std::endl
+      << "(assert (= (bvadd n #b00000000000000000000000000000010) (bvneg "
+         "(bvadd ~ (bvmul n "
+         "#b00000000000000000000000000000010)))))"
+      << std::endl
+      << "(push 1)" << std::endl
+      << "(assert (= #b00000000000000000000000000000000 (bvadd n "
+         "#b00000000000000000000000000000001)))"
       << std::endl
       << "(check-sat)" << std::endl
       << "(exit)" << std::endl;
