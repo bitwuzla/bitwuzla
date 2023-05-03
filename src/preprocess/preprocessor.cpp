@@ -192,7 +192,7 @@ Preprocessor::apply(AssertionVector& assertions)
   // Only apply skeleton preprocessing once to the initial assertions since it
   // is not incremental yet.
   bool skel_done          = !assertions.initial_assertions();
-  bool uninterpreted_done = false;
+  bool uninterpreted_done = !assertions.initial_assertions();
   // fixed-point passes
   do
   {
@@ -253,7 +253,7 @@ Preprocessor::apply(AssertionVector& assertions)
     Msg(2) << assertions.num_modified() - cnt << " after lambda elimination";
 
     // This pass is not supported if incremental is enabled.
-    if (!options.incremental() && !uninterpreted_done)
+    if (!uninterpreted_done)
     {
       cnt = assertions.num_modified();
       d_pass_elim_uninterpreted.apply(assertions);
