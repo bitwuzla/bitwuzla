@@ -1293,10 +1293,8 @@ BitwuzlaTerm bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  * Print the current input formula.
  *
  * @param bitwuzla The Bitwuzla instance.
- * @param format The output format for printing the formula. Either
- *               `"aiger_ascii"` for the AIGER ascii format, `"aiger_binary"`
- *               for the binary AIGER format, `"btor"` for the BTOR format, or
- *               `"smt2"` for the SMT-LIB v2 format.
+ * @param format The output format for printing the formula. Currently, only
+ *               `"smt2"` for the SMT-LIB v2 format is supported.
  * @param file The file to print the formula to.
  */
 void bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);

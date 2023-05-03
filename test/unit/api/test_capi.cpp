@@ -220,7 +220,6 @@ class TestCApi : public ::testing::Test
   const char *d_error_unsat            = "if input formula is not unsat";
   const char *d_error_unsat_cores      = "unsat core production not enabled";
   const char *d_error_sat              = "if input formula is not sat";
-  const char *d_error_format           = "invalid file format";
   const char *d_error_model_quant =
       "model printing is currently not supported with quantifiers";
 };
@@ -2532,7 +2531,7 @@ TEST_F(TestCApi, print_formula)
   ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "smt2", nullptr),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "asdf", stdout),
-               d_error_format);
+               "invalid format, expected 'smt2'");
 
   std::string filename = "print_formula.out";
 
@@ -2964,7 +2963,7 @@ TEST_F(TestCApi, print_sort)
                d_error_exp_str);
   ASSERT_DEATH(bitwuzla_sort_print(d_bv_sort1, "smt2", nullptr),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_sort_print(d_bv_sort1, "asdf", stdout), d_error_format);
+  ASSERT_DEATH(bitwuzla_sort_print(d_bv_sort1, "asdf", stdout), "asdf");
   bitwuzla_sort_print(d_bv_sort1, "btor", stdout);
   bitwuzla_sort_print(d_bv_sort8, "smt2", stdout);
   bitwuzla_sort_print(d_rm_sort, "smt2", stdout);

@@ -69,8 +69,8 @@ class BitwuzlaExceptionStream
          "or 16 for hexadecimal), is '"                                      \
       << arg << "'";
 
-#define BITWUZLA_CHECK_FORMAT(str)                                 \
-  BITWUZLA_CHECK(str == "smt2" || str == "btor" || str == "btor2") \
+#define BITWUZLA_CHECK_FORMAT(str) \
+  BITWUZLA_CHECK(str == "smt2")    \
       << "invalid file format, expected 'smt2', 'btor' or 'btor2'";
 
 #define BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_ASSUMPTIONS(opts) \

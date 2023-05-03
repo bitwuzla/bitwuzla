@@ -1130,12 +1130,10 @@ class Bitwuzla
    * Print the current input formula to the given output stream.
    *
    * @param out    The output stream.
-   * @param format The output format for printing the formula.
-   *               Either `"aiger_ascii"` for the AIGER ascii format,
-   *               `"aiger_binary"` for the binary AIGER format, `"btor"` for
-   *               the BTOR format, and `"smt2"` for the SMT-LIB v2 format.
+   * @param format The output format for printing the formula. Currently, only
+   *               `"smt2"` for the SMT-LIB v2 format is supported.
    */
-  void print_formula(std::ostream &out, const std::string &format);
+  void print_formula(std::ostream &out, const std::string &format = "smt2");
 
  private:
   /** Helper called when solver state changes. */
