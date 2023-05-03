@@ -24,7 +24,7 @@ class CryptoMiniSat : public SatSolver
   bool failed(int32_t lit) override;
   int32_t fixed(int32_t lit) override;
   Result solve() override;
-  void set_terminate(Terminator *terminator) override;
+  void configure_terminator(Terminator *terminator) override;
   const char *get_name() const override { return "CryptoMiniSat"; }
   const char *get_version() const override;
 

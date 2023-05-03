@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "sat/sat_solver.h"
+#include "terminator.h"
 
 namespace bzla::sat {
 
@@ -30,7 +31,7 @@ class Cadical : public SatSolver
   bool failed(int32_t lit) override;
   int32_t fixed(int32_t lit) override;
   Result solve() override;
-  void set_terminate(Terminator* terminator) override;
+  void configure_terminator(Terminator* terminator) override;
   const char *get_name() const override { return "CaDiCaL"; }
   const char *get_version() const override;
 

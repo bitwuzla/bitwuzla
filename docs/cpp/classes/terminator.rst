@@ -18,6 +18,7 @@ can be connected to a Bitwuzla instance at a time.
 ----
 
 - class :cpp:class:`bitwuzla::Terminator`
+- :ref:`cpp/classes/terminator:example`
 
 ----
 
@@ -29,3 +30,12 @@ can be connected to a Bitwuzla instance at a time.
 
 :code:`}`
 
+----
+
+Example
+^^^^^^^
+
+The source code for this example can be found at `examples/c/terminator.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/terminator.cpp>`_.
+
+.. literalinclude:: ../../../examples/cpp/terminator.cpp
+     :language: cpp

@@ -73,7 +73,7 @@ Kissat::solve()
 }
 
 void
-Kissat::set_terminate(Terminator* terminator)
+Kissat::configure_terminator(Terminator* terminator)
 {
   if (terminator)
   {

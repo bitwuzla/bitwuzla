@@ -48,6 +48,9 @@ class Env
    */
   bool terminate() const;
 
+  /** @return The currently connected terminator instance. */
+  Terminator* terminator() const { return d_terminator; }
+
  private:
   /** The configured options. */
   option::Options d_options;

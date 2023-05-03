@@ -206,8 +206,7 @@ Examples
 Quickstart Example
 ^^^^^^^^^^^^^^^^^^^
 
-The example used in the :ref:`cpp/api:quickstart` guide.
-
+| The example used in the :ref:`cpp/api:quickstart` guide.
 | The SMT-LIB input for this example can be found at `examples/smt2/quickstart.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/quickstart.smt2>`_.
 | The source code for this example can be found at `examples/cpp/quickstart.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/quickstart.cpp>`_.
 
@@ -218,8 +217,7 @@ The example used in the :ref:`cpp/api:quickstart` guide.
 Incremental Example with push and pop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An incremental example with :code:`push` and :code:`pop`.
-
+| An incremental example with :code:`push` and :code:`pop`.
 | The SMT-LIB input for this example can be found at `examples/smt2/pushpop.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/pushpop.smt2>`_.
 | The source code for this example can be found at `examples/cpp/pushpop.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/pushpop.cpp>`_.
 
@@ -230,11 +228,7 @@ An incremental example with :code:`push` and :code:`pop`.
 Incremental Example with check-sat-assuming
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example shows how to implement the example above with
-:code:`check-sat-assuming` instead of :code:`push` and :code:`pop`.
-Note that Bitwuzla requires to first assume formulas (the assumptions in the :code:`check-sat-assuming` list) with :cpp:func:`bitwuzla_assume()` before calling :cpp:func:`bitwuzla_check_sat()`.
-All active assumptions are inactivated after the check sat call.
-
+| This example shows how to implement the example above with :code:`check-sat-assuming`.
 | The SMT-LIB input for this example can be found at `examples/smt2/checksatassuming.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/checksatassuming.smt2>`_.
 | The source code for this example can be found at `examples/cpp/checksatassuming.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/checksatassuming.cpp>`_.
 
@@ -260,9 +254,7 @@ create lambda terms (:code:`define-fun`).
 Unsat Assumptions Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example shows how to implement the example above with
-:code:`get-unsat-assumptions`.
-
+| This example shows how to implement the example above with :code:`get-unsat-assumptions`.
 | The SMT-LIB input for this example can be found at `examples/smt2/unsatassumptions.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/unsatassumptions.smt2>`_.
 | The source code for this example can be found at `examples/cpp/unsatassumptions.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/unsatassumptions.cpp>`_.
 
@@ -274,10 +266,19 @@ This example shows how to implement the example above with
 Parsing Example
 ^^^^^^^^^^^^^^^
 
-This example shows how to parse an input file via the API.
-
+| This example shows how to parse an input file via the API.
 | The source code for this example can be found at `examples/cpp/parse.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/parse.cpp>`_.
 
 
 .. tabbed-examples::
    ../../examples/cpp/parse.cpp
+
+Termination Callback Example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+| This example shows how to configure a termination callback.
+| The source code for this example can be found at `examples/cpp/terminator.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/terminator.cpp>`_.
+
+
+.. tabbed-examples::
+   ../../examples/cpp/terminator.cpp

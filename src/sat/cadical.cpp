@@ -2,10 +2,21 @@
 
 namespace bzla::sat {
 
+/* CadicalTerminator public ------------------------------------------------- */
+
 CadicalTerminator::CadicalTerminator(bzla::Terminator* terminator)
     : CaDiCaL::Terminator(), d_terminator(terminator)
 {
 }
+
+bool
+CadicalTerminator::terminate()
+{
+  if (!d_terminator) return false;
+  return d_terminator->terminate();
+}
+
+/* Cadical public ----------------------------------------------------------- */
 
 Cadical::Cadical()
 {
@@ -57,10 +68,9 @@ Cadical::solve()
 }
 
 void
-Cadical::set_terminate(Terminator* terminator)
+Cadical::configure_terminator(Terminator* terminator)
 {
-  CadicalTerminator* term = new CadicalTerminator(terminator);
-  d_term.reset(term);
+  d_term.reset(new CadicalTerminator(terminator));
   if (terminator)
   {
     d_solver->connect_terminator(d_term.get());
@@ -77,11 +87,6 @@ Cadical::get_version() const
   return d_solver->version();
 }
 
-bool
-CadicalTerminator::terminate()
-{
-  if (!d_terminator) return false;
-  return d_terminator->terminate();
-}
+/* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::sat

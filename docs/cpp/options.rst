@@ -49,10 +49,10 @@ A **comprehensive list** of all configurable options is available
 Example
 -------
 
-The source code for this example can be found at `examples/c/options.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/options.c>`_.
+The source code for this example can be found at `examples/c/options.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/options.cpp>`_.
 
-.. literalinclude:: ../../examples/c/options.c
-     :language: c
+.. literalinclude:: ../../examples/cpp/options.cpp
+     :language: cpp
 
 OptionInfo
 ----------

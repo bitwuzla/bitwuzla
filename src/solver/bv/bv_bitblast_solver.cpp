@@ -57,6 +57,8 @@ BvBitblastSolver::~BvBitblastSolver() {}
 Result
 BvBitblastSolver::solve()
 {
+  d_sat_solver->configure_terminator(d_env.terminator());
+
   for (const Node& assumption : d_assumptions)
   {
     d_sat_solver->assume(bits(assumption)[0].get_id());

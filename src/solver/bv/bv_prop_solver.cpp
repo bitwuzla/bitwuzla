@@ -55,11 +55,6 @@ BvPropSolver::solve()
 {
   util::Timer timer(d_stats.time_check);
 
-  if (d_env.terminate())
-  {
-    return Result::UNKNOWN;
-  }
-
   ++d_stats.num_checks;
 
   Result sat_result = Result::UNKNOWN;

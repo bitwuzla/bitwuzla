@@ -4,6 +4,7 @@ examples = [
   'parse',
   'pushpop',
   'quickstart',
+  'terminator',
   'unsatassumptions',
   'unsatcore',
 ]

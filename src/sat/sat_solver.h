@@ -56,7 +56,7 @@ class SatSolver
    * Configure a termination callback function via a terminator.
    * @param terminator The terminator.
    */
-  virtual void set_terminate(Terminator *terminator) = 0;
+  virtual void configure_terminator(Terminator *terminator) = 0;
 
   // virtual int32_t repr(int32_t) = 0;
 

@@ -70,7 +70,7 @@ CryptoMiniSat::solve()
 }
 
 void
-CryptoMiniSat::set_terminate(Terminator *terminator)
+CryptoMiniSat::configure_terminator(Terminator *terminator)
 {
   (void) terminator;
 }
