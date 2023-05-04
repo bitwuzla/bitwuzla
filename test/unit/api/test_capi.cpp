@@ -2564,7 +2564,6 @@ TEST_F(TestCApi, print_formula)
         << "(exit)" << std::endl;
     ASSERT_EQ(res, expected_smt2.str());
   }
-  // bitwuzla_print_formula(bitwuzla, "btor", stdout);
 
   bitwuzla_assert(bitwuzla, d_exists);
   {
@@ -2955,20 +2954,21 @@ TEST_F(TestCApi, sort_is_uninterpreted)
   ASSERT_TRUE(bitwuzla_sort_is_uninterpreted(d_un_sort));
 }
 
-TEST_F(TestCApi, print_sort)
+TEST_F(TestCApi, sort_print)
 {
-  GTEST_SKIP();  // TODO enable when implemented
-  ASSERT_DEATH(bitwuzla_sort_print(0, "btor", stdout), d_error_inv_sort);
-  ASSERT_DEATH(bitwuzla_sort_print(d_bv_sort1, nullptr, stdout),
-               d_error_exp_str);
-  ASSERT_DEATH(bitwuzla_sort_print(d_bv_sort1, "smt2", nullptr),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_sort_print(d_bv_sort1, "asdf", stdout), "asdf");
-  bitwuzla_sort_print(d_bv_sort1, "btor", stdout);
-  bitwuzla_sort_print(d_bv_sort8, "smt2", stdout);
-  bitwuzla_sort_print(d_rm_sort, "smt2", stdout);
-  bitwuzla_sort_print(d_fp_sort32, "smt2", stdout);
-  std::cout << std::endl;
+  ASSERT_DEATH(bitwuzla_sort_print(0, stdout), d_error_inv_sort);
+  ASSERT_DEATH(bitwuzla_sort_print(d_bv_sort1, nullptr), d_error_not_null);
+
+  testing::internal::CaptureStdout();
+
+  bitwuzla_sort_print(d_bv_sort1, stdout);
+  bitwuzla_sort_print(d_bv_sort8, stdout);
+  bitwuzla_sort_print(d_rm_sort, stdout);
+  bitwuzla_sort_print(d_fp_sort32, stdout);
+
+  std::string output = testing::internal::GetCapturedStdout();
+  ASSERT_EQ(output,
+            "(_ BitVec 1)(_ BitVec 8)RoundingMode(_ FloatingPoint 8 24)");
 }
 
 TEST_F(TestCApi, regr1)
@@ -3364,16 +3364,23 @@ TEST_F(TestCApi, term_is_rm_value_rtz)
   ASSERT_FALSE(bitwuzla_term_is_rm_value_rtz(d_rm_rtp));
 }
 
-TEST_F(TestCApi, print_term)
+TEST_F(TestCApi, term_print)
 {
   ASSERT_DEATH(bitwuzla_term_print(0, stdout), d_error_inv_term);
   ASSERT_DEATH(bitwuzla_term_print(d_and_bv_const1, nullptr), d_error_not_null);
+
+  testing::internal::CaptureStdout();
+
   bitwuzla_term_print(d_and_bv_const1, stdout);
   bitwuzla_term_print(d_exists, stdout);
-  std::cout << std::endl;
+
+  std::string output = testing::internal::GetCapturedStdout();
+  ASSERT_EQ(output,
+            "(= #b1 (bvand #b1 bv1))(exists ((q (_ BitVec 8))) (= #b00000000 "
+            "(bvmul bv8 q)))");
 }
 
-TEST_F(TestCApi, print_term_regr0)
+TEST_F(TestCApi, term_print_regr0)
 {
   testing::internal::CaptureStdout();
 
@@ -3391,7 +3398,7 @@ TEST_F(TestCApi, print_term_regr0)
   ASSERT_EQ(output, "RNE\nRNA\nRTN\nRTP\nRTZ");
 }
 
-TEST_F(TestCApi, print_term_regr1)
+TEST_F(TestCApi, term_print_regr1)
 {
   BitwuzlaSort bv_sort5  = bitwuzla_mk_bv_sort(5);
   BitwuzlaSort bv_sort10 = bitwuzla_mk_bv_sort(10);

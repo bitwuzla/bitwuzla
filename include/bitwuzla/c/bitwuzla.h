@@ -463,7 +463,7 @@ bool bitwuzla_sort_is_rm(BitwuzlaSort sort);
 bool bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort);
 
 /**
- * Get the string representation of a sort.
+ * Get the SMT-LIBV v2 string representation of a sort.
  * @return A string representation of the given sort.
  * @note The returned char* pointer is only valid until the next
  *       `bitwuzla_sort_to_string` call.
@@ -471,12 +471,12 @@ bool bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort);
 const char *bitwuzla_sort_to_string(BitwuzlaSort sort);
 
 /**
- * Print sort.
+ * Print sort to given file in SMT-LIB v2 format.
  *
  * @param sort The sort.
  * @param file The file to print the sort to.
  */
-void bitwuzla_sort_print(BitwuzlaSort sort, const char *format, FILE *file);
+void bitwuzla_sort_print(BitwuzlaSort sort, FILE *file);
 
 /** @} */
 
@@ -967,16 +967,14 @@ void bitwuzla_term_value_get_fp_ieee(BitwuzlaTerm term,
 
 /**
  * Get representation of given rounding mode value term.
- *
  * @param term The rounding mode value term.
- *
  * @return The BitwuzlaRoundingMode representation of the given rounding mode
  *         value.
  */
 BitwuzlaRoundingMode bitwuzla_term_value_get_rm(BitwuzlaTerm term);
 
 /**
- * Get the string representation of a term.
+ * Get the SMT-LIB v2 string representation of a term.
  * @return A string representation of the given term.
  * @note The returned char* pointer is only valid until the next
  *       `bitwuzla_term_to_string` call.
@@ -984,8 +982,7 @@ BitwuzlaRoundingMode bitwuzla_term_value_get_rm(BitwuzlaTerm term);
 const char *bitwuzla_term_to_string(BitwuzlaTerm term);
 
 /**
- * Print term .
- *
+ * Print term in SMT-LIB v2 format.
  * @param term The term.
  * @param file The file to print the term to.
  */

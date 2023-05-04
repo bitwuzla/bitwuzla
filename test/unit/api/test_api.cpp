@@ -2047,19 +2047,10 @@ TEST_F(TestApi, sort_is_uninterpreted)
 
 TEST_F(TestApi, sort_print)
 {
-  // TODO
-  // ASSERT_THROW(bitwuzla_sort_dump(nullptr, "btor", stdout),
-  // d_error_not_null); ASSERT_THROW(bitwuzla_sort_dump(d_bv_sort1, nullptr,
-  // stdout),
-  //             d_error_exp_str);
-  // ASSERT_THROW(bitwuzla_sort_dump(d_bv_sort1, "smt2", nullptr),
-  //             d_error_not_null);
-  // ASSERT_THROW(bitwuzla_sort_dump(d_bv_sort1, "asdf", stdout),
-  // d_error_format); ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_bv_sort1,
-  // "btor", stdout)); ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_bv_sort8,
-  // "smt2", stdout)); ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_rm_sort,
-  // "smt2", stdout)); ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_fp_sort32,
-  // "smt2", stdout)); std::cout << std::endl;
+  std::stringstream ss;
+  ss << d_bv_sort1 << d_bv_sort8 << d_rm_sort << d_fp_sort32;
+  ASSERT_EQ(ss.str(),
+            "(_ BitVec 1)(_ BitVec 8)RoundingMode(_ FloatingPoint 8 24)");
 }
 
 TEST_F(TestApi, regr1)
@@ -2298,45 +2289,26 @@ TEST_F(TestApi, term_is_rm_value_rtz)
 
 TEST_F(TestApi, term_print)
 {
-  GTEST_SKIP();  // TODO enable when implemented
-  // ASSERT_THROW(bitwuzla_term_dump(nullptr, "btor", stdout),
-  // d_error_not_null); ASSERT_THROW(bitwuzla_term_dump(d_and_bv_const1,
-  // nullptr, stdout),
-  //              d_error_exp_str);
-  // ASSERT_THROW(bitwuzla_term_dump(d_and_bv_const1, "smt2", nullptr),
-  //              d_error_not_null);
-  // ASSERT_THROW(bitwuzla_term_dump(d_and_bv_const1, "asdf", stdout),
-  //              d_error_format);
-  // ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_and_bv_const1, "btor",
-  // stdout)); ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_and_bv_const1,
-  // "smt2", stdout));
-  // ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_other_exists, "btor",
-  // stdout)); ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_other_exists,
-  // "smt2", stdout)); std::cout << std::endl;
+  std::stringstream ss;
+  ss << d_and_bv_const1 << d_exists;
+  ASSERT_EQ(ss.str(),
+            "(= #b1 (bvand #b1 bv1))(exists ((q (_ BitVec 8))) (= #b00000000 "
+            "(bvmul bv8 q)))");
 }
 
 TEST_F(TestApi, term_print_regr0)
 {
-  GTEST_SKIP();  // TODO enable when implemented
-  // testing::internal::CaptureStdout();
-
-  // bitwuzla_term_dump(d_rm_rne, "smt2", stdout);
-  // printf("\n");
-  // bitwuzla_term_dump(d_rm_rna, "smt2", stdout);
-  // printf("\n");
-  // bitwuzla_term_dump(d_rm_rtn, "smt2", stdout);
-  // printf("\n");
-  // bitwuzla_term_dump(d_rm_rtp, "smt2", stdout);
-  // printf("\n");
-  // bitwuzla_term_dump(d_rm_rtz, "smt2", stdout);
-
-  // std::string output = testing::internal::GetCapturedStdout();
-  // ASSERT_EQ(output, "RNE\nRNA\nRTN\nRTP\nRTZ");
+  std::stringstream ss;
+  ss << d_rm_rne << std::endl
+     << d_rm_rna << std::endl
+     << d_rm_rtn << std::endl
+     << d_rm_rtp << std::endl
+     << d_rm_rtz;
+  ASSERT_EQ(ss.str(), "RNE\nRNA\nRTN\nRTP\nRTZ");
 }
 
 TEST_F(TestApi, term_print_regr1)
 {
-  GTEST_SKIP();  // TODO enable when implemented
   bitwuzla::Sort bv_sort5  = bitwuzla::mk_bv_sort(5);
   bitwuzla::Sort bv_sort10 = bitwuzla::mk_bv_sort(10);
   bitwuzla::Term fp_const;
@@ -2346,37 +2318,41 @@ TEST_F(TestApi, term_print_regr1)
                                    bitwuzla::mk_bv_zero(bv_sort5),
                                    bitwuzla::mk_bv_zero(bv_sort10));
 
-  testing::internal::CaptureStdout();
-  // bitwuzla_term_dump(fp_const, "smt2", stdout);
-  // output = testing::internal::GetCapturedStdout();
-  // ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000000)");
+  {
+    std::stringstream ss;
+    ss << fp_const;
+    ASSERT_EQ(ss.str(), "(fp #b0 #b00000 #b0000000000)");
+  }
 
   fp_const = bitwuzla::mk_fp_value(bitwuzla::mk_bv_one(d_bv_sort1),
                                    bitwuzla::mk_bv_zero(bv_sort5),
                                    bitwuzla::mk_bv_zero(bv_sort10));
 
-  // testing::internal::CaptureStdout();
-  // bitwuzla_term_dump(fp_const, "smt2", stdout);
-  // output = testing::internal::GetCapturedStdout();
-  // ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000000)");
+  {
+    std::stringstream ss;
+    ss << fp_const;
+    ASSERT_EQ(ss.str(), "(fp #b1 #b00000 #b0000000000)");
+  }
 
   fp_const = bitwuzla::mk_fp_value(bitwuzla::mk_bv_zero(d_bv_sort1),
                                    bitwuzla::mk_bv_zero(bv_sort5),
                                    bitwuzla::mk_bv_one(bv_sort10));
 
-  // testing::internal::CaptureStdout();
-  // bitwuzla_term_dump(fp_const, "smt2", stdout);
-  // output = testing::internal::GetCapturedStdout();
-  // ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000001)");
+  {
+    std::stringstream ss;
+    ss << fp_const;
+    ASSERT_EQ(ss.str(), "(fp #b0 #b00000 #b0000000001)");
+  }
 
   fp_const = bitwuzla::mk_fp_value(bitwuzla::mk_bv_one(d_bv_sort1),
                                    bitwuzla::mk_bv_zero(bv_sort5),
                                    bitwuzla::mk_bv_one(bv_sort10));
 
-  // testing::internal::CaptureStdout();
-  // bitwuzla_term_dump(fp_const, "smt2", stdout);
-  // output = testing::internal::GetCapturedStdout();
-  // ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000001)");
+  {
+    std::stringstream ss;
+    ss << fp_const;
+    ASSERT_EQ(ss.str(), "(fp #b1 #b00000 #b0000000001)");
+  }
 }
 
 TEST_F(TestApi, terms_indexed)
