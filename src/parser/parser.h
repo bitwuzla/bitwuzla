@@ -19,7 +19,8 @@ class Parser
    * Constructor.
    * @param options     The associated Bitwuzla options. Parser creates
    *                    Bitwuzla instance from these options.
-   * @param infile_name The name of the input file.
+   * @param infile_name The name of the input file. If name is <stdin> the
+   *                    parser reads from stdin.
    */
   Parser(bitwuzla::Options& options, const std::string& infile_name)
       : d_options(options),
@@ -28,12 +29,19 @@ class Parser
         d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
         d_logger(d_log_level, d_verbosity)
   {
-    d_infile = std::fopen(infile_name.c_str(), "r");
+    if (infile_name == "<stdin>")
+    {
+      d_infile = stdin;
+    }
+    else
+    {
+      d_infile             = std::fopen(infile_name.c_str(), "r");
+      d_infile_needs_close = true;
+    }
     if (!d_infile)
     {
       d_error = "failed to open '" + d_infile_name + "'";
     }
-    d_infile_needs_close = true;
   }
   /**
    * Constructor.

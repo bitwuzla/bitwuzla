@@ -258,7 +258,7 @@ main(int32_t argc, char* argv[])
   bool parse_only = false;
 
   std::vector<std::string> args;
-  std::string infile_name;
+  std::string infile_name = "<stdin>";
   std::string language = "smt2";
 
   for (int32_t i = 1; i < argc; ++i)
