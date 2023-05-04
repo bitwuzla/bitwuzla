@@ -2176,19 +2176,101 @@ mk_var(const Sort &sort, std::optional<const std::string> symbol)
 Term
 substitute_term(const Term &term, const std::unordered_map<Term, Term> map)
 {
-  // TODO
-  (void) term;
-  (void) map;
-  return Term();
+  BITWUZLA_CHECK_TERM_NOT_NULL(term);
+  std::vector<Term> terms = {term};
+  substitute_terms(terms, map);
+  return terms[0];
 }
+
+namespace {
+Term
+rebuild_term(const Term &term, const std::vector<Term> &children)
+{
+  if (children.size()) assert(term.num_children() == children.size());
+  if (term.num_children() == 0)
+  {
+    assert(children.empty());
+    return term;
+  }
+  else if ((term.kind() == Kind::FORALL || term.kind() == Kind::EXISTS)
+           && !children[0].is_variable())
+  {
+    // if the variable of a quantifier is substituted by a non-variable,
+    // we substitute it with its body
+    return children[1];
+  }
+  else if (term.kind() == Kind::CONST_ARRAY)
+  {
+    assert(children.size() == 1);
+    return bitwuzla::mk_const_array(term.sort(), children[0]);
+  }
+  else
+  {
+    return bitwuzla::mk_term(term.kind(), children, term.indices());
+  }
+}
+}  // namespace
 
 void
 substitute_terms(std::vector<Term> &terms,
                  const std::unordered_map<Term, Term> map)
 {
-  // TODO
-  (void) terms;
-  (void) map;
+  if (terms.empty() || map.empty())
+  {
+    return;
+  }
+
+  std::vector<Term> visit;
+  std::unordered_map<Term, Term> cache;
+
+  for (size_t i = 0, n = terms.size(); i < n; ++i)
+  {
+    BITWUZLA_CHECK_TERM_NOT_NULL_AT_IDX(terms, i);
+    visit.push_back(terms[i]);
+  }
+
+  while (!visit.empty())
+  {
+    Term cur            = visit.back();
+    auto [it, inserted] = cache.emplace(cur, Term());
+    if (inserted)
+    {
+      for (size_t i = 0, n = cur.num_children(); i < n; ++i)
+      {
+        visit.push_back(cur[i]);
+      }
+      continue;
+    }
+    if (it->second.is_null())
+    {
+      Term result;
+      auto iit = map.find(cur);
+      if (iit != map.end())
+      {
+        result = iit->second;
+      }
+      else
+      {
+        std::vector<Term> children;
+        for (size_t i = 0, n = cur.num_children(); i < n; ++i)
+        {
+          auto cit = cache.find(cur[i]);
+          assert(cit != map.end());
+          children.push_back(cit->second);
+        }
+        result = rebuild_term(cur, children);
+      }
+      it->second = result;
+    }
+    visit.pop_back();
+  }
+
+  for (size_t i = 0, n = terms.size(); i < n; ++i)
+  {
+    auto it = cache.find(terms[i]);
+    assert(it != cache.end());
+    terms[i] = it->second;
+  }
 }
 
 /* Term private ------------------------------------------------------------- */

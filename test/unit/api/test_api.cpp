@@ -2753,7 +2753,6 @@ TEST_F(TestApi, terms)
 
 TEST_F(TestApi, substitute)
 {
-  GTEST_SKIP();  // TODO enable when implemented
   std::vector<bitwuzla::Sort> domain = {d_bv_sort16, d_bv_sort16, d_bv_sort16};
   bitwuzla::Sort fun_sort   = bitwuzla::mk_fun_sort(domain, d_bool_sort);
   bitwuzla::Sort array_sort = bitwuzla::mk_array_sort(d_bv_sort16, d_bv_sort16);
@@ -2788,23 +2787,20 @@ TEST_F(TestApi, substitute)
                                         bitwuzla::mk_var(d_bv_sort16, "x"),
                                         bitwuzla::mk_var(d_bv_sort16, "y"),
                                         bitwuzla::mk_var(d_bv_sort16, "z")};
-    args.push_back(bitwuzla::mk_term(bitwuzla::Kind::APPLY,
-                                     {args.begin() + 1, args.end()}));
-    bitwuzla::Term q = bitwuzla::mk_term(bitwuzla::Kind::FORALL, args);
+    args.push_back(bitwuzla::mk_term(bitwuzla::Kind::APPLY, args));
+    bitwuzla::Term q = bitwuzla::mk_term(bitwuzla::Kind::FORALL,
+                                         {args.begin() + 1, args.end()});
 
     std::unordered_map<bitwuzla::Term, bitwuzla::Term> map{
-        {args[1], bitwuzla::mk_const(d_bv_sort16)},
-        {args[2], bitwuzla::mk_const(d_bv_sort16)}};
+        {args[1], bitwuzla::mk_const(d_bv_sort16, "cx")},
+        {args[2], bitwuzla::mk_const(d_bv_sort16, "cy")}};
 
     // Build expected
-    std::vector<bitwuzla::Term> args_expected = {args[0],
-                                                 map.at(args[1]),
-                                                 map.at(args[2]),
-                                                 bitwuzla::mk_var(d_bv_sort16)};
-    args_expected.push_back(
-        bitwuzla::mk_term(bitwuzla::Kind::APPLY, args_expected));
+    bitwuzla::Term apply =
+        bitwuzla::mk_term(bitwuzla::Kind::APPLY,
+                          {args[0], map.at(args[1]), map.at(args[2]), args[3]});
     bitwuzla::Term expected =
-        bitwuzla::mk_term(bitwuzla::Kind::FORALL, {args_expected[3]});
+        bitwuzla::mk_term(bitwuzla::Kind::FORALL, {args[3], apply});
 
     bitwuzla::Term result = bitwuzla::substitute_term(q, map);
     ASSERT_EQ(result, expected);
@@ -2821,7 +2817,7 @@ TEST_F(TestApi, substitute)
 
     bitwuzla::Term expected = bitwuzla::mk_const_array(array_sort, bv_value);
     ASSERT_EQ(result, expected);
-    ASSERT_EQ(term.kind(), bitwuzla::Kind::CONST_ARRAY);
+    ASSERT_EQ(result.kind(), bitwuzla::Kind::CONST_ARRAY);
   }
 }
 

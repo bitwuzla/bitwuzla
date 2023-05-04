@@ -95,6 +95,10 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_CHECK_TERM_NOT_NULL(arg) \
   BITWUZLA_CHECK((arg).d_node != nullptr) << "expected non-null term";
 
+#define BITWUZLA_CHECK_TERM_NOT_NULL_AT_IDX(args, i) \
+  BITWUZLA_CHECK((args)[i].d_node != nullptr)        \
+      << "expected non-null term at index " << i;
+
 #define BITWUZLA_CHECK_TERM_IS_ARRAY(arg)                         \
   BITWUZLA_CHECK((arg).d_node && (arg).d_node->type().is_array()) \
       << "expected array term";

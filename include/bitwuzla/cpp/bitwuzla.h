@@ -393,6 +393,8 @@ class Term
   friend Term mk_var(const Sort &, std::optional<const std::string>);
   friend Term substitute_term(const Term &,
                               const std::unordered_map<Term, Term>);
+  friend void substitute_terms(std::vector<Term> &terms,
+                               const std::unordered_map<Term, Term> map);
 
  public:
   /** Default constructor, creates null term. */

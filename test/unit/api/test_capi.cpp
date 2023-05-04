@@ -3867,7 +3867,6 @@ TEST_F(TestCApi, terms)
 
 TEST_F(TestCApi, substitute)
 {
-  GTEST_SKIP();  // TODO enable when implemented
   BitwuzlaOptions *options         = bitwuzla_options_new();
   Bitwuzla *bitwuzla               = bitwuzla_new(options);
   std::vector<BitwuzlaSort> domain = {d_bv_sort16, d_bv_sort16, d_bv_sort16};
@@ -3920,12 +3919,13 @@ TEST_F(TestCApi, substitute)
                                         bitwuzla_mk_const(d_bv_sort16, 0)};
 
     // Build expected
-    std::vector<BitwuzlaTerm> args_expected = {
-        args[0], values[0], values[1], bitwuzla_mk_var(d_bv_sort16, 0)};
-    args_expected.push_back(bitwuzla_mk_term(
-        BITWUZLA_KIND_APPLY, args_expected.size(), args_expected.data()));
+    std::vector<BitwuzlaTerm> args_apply = {
+        args[0], values[0], values[1], args[3]};
+    BitwuzlaTerm apply = bitwuzla_mk_term(
+        BITWUZLA_KIND_APPLY, args_apply.size(), args_apply.data());
+    std::vector<BitwuzlaTerm> args_expected = {args[3], apply};
     BitwuzlaTerm expected =
-        bitwuzla_mk_term(BITWUZLA_KIND_FORALL, 2, &args_expected[3]);
+        bitwuzla_mk_term(BITWUZLA_KIND_FORALL, 2, args_expected.data());
 
     BitwuzlaTerm result = bitwuzla_substitute_term(
         bitwuzla, q, keys.size(), keys.data(), values.data());
