@@ -140,15 +140,15 @@ class Options
   /** Destructor. */
   ~Options();
   /**
-   * Determine if given option is a numeric option.
-   * @param option The option to query.
-   * @return True if `option` is a numeric option.
-   */
-  bool is_bool(Option option) const;
-  /**
    * Determine if given option is a Boolean option.
    * @param option The option to query.
    * @return True if `option` is a Boolean option.
+   */
+  bool is_bool(Option option) const;
+  /**
+   * Determine if given option is a numeric option.
+   * @param option The option to query.
+   * @return True if `option` is a numeric option.
    */
   bool is_numeric(Option option) const;
   /**
