@@ -40,7 +40,8 @@ Evaluator::evaluate(Kind kind,
           values[1].value<FloatingPoint>()));
     case Kind::FP_TO_FP_FROM_FP:
       return nm.mk_value(FloatingPoint(nm.mk_fp_type(indices[0], indices[1]),
-                                       values[0].value<BitVector>()));
+                                       values[0].value<RoundingMode>(),
+                                       values[1].value<FloatingPoint>()));
     case Kind::FP_ABS:
       return nm.mk_value(values[0].value<FloatingPoint>().fpabs());
     case Kind::FP_ADD:
