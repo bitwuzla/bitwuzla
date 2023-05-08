@@ -532,10 +532,14 @@ SolverEngine::_value(const Node& term)
         // further above.
         case Kind::FP_TO_SBV:
         case Kind::FP_TO_UBV:
+          assert(registered(cur));
+          value = d_bv_solver.value(cur);
+          break;
+
         case Kind::FP_MAX:
         case Kind::FP_MIN:
           assert(registered(cur));
-          value = d_bv_solver.value(cur);
+          value = d_fp_solver.value(cur);
           break;
 
         // These FP kinds that are part of the bit-vector abstraction. Values

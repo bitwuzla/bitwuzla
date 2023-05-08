@@ -1329,6 +1329,7 @@ tests_smt2 = [
   ['solver/fp/fp_regr10.smt2'],
   ['solver/fp/fp_regr11.smt2'],
   ['solver/fp/fp_regr12.smt2'],
+  ['solver/fp/fp_regr13.smt2'],
   ['solver/fp/fp_regr2.smt2'],
   ['solver/fp/fp_regr3.smt2'],
   ['solver/fp/fp_regr4.smt2'],

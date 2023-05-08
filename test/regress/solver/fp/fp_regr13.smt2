@@ -1,0 +1,8 @@
+(set-info :status sat)
+(define-sort x2 () Float64)
+(declare-fun x () x2)
+(declare-fun x4 () x2)
+(declare-fun x1 () x2)
+(assert (= x (fp.max x4 x1)))
+(assert (= x (fp (_ bv0 1) (_ bv0 11) (_ bv0 52))))
+(check-sat)
