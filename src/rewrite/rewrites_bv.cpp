@@ -145,7 +145,7 @@ RewriteRule<RewriteRuleKind::BV_ADD_BV1>::_apply(Rewriter& rewriter,
 
 /**
  * match:  (bvadd a a)
- * result: (bvshl a (_ bv1 N))
+ * result: (bvmul a (_ bv2 N))
  */
 template <>
 Node
@@ -155,10 +155,10 @@ RewriteRule<RewriteRuleKind::BV_ADD_SAME>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 2);
   if (node[0] == node[1])
   {
-    return rewriter.mk_node(Kind::BV_SHL,
+    return rewriter.mk_node(Kind::BV_MUL,
                             {node[0],
-                             NodeManager::get().mk_value(
-                                 BitVector::mk_one(node[0].type().bv_size()))});
+                             NodeManager::get().mk_value(BitVector::from_ui(
+                                 node[0].type().bv_size(), 2))});
   }
   return node;
 }
