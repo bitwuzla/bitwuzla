@@ -872,6 +872,7 @@ tests_smt2 = [
   ['solver/array/regprim11simp.btor.smt2'],
   ['solver/array/regrarray1.smt2'],
   ['solver/array/regrarray10.smt2'],
+  ['solver/array/regrarray11.smt2'],
   ['solver/array/regrarray2.smt2'],
   ['solver/array/regrarray3.smt2'],
   ['solver/array/regrarray4.smt2'],

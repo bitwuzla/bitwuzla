@@ -100,6 +100,19 @@ ArraySolver::value(const Node& term)
     {
       return it->second;
     }
+    // If we don't have a model for given index, build a model from
+    // index/values pairs that accessed this array term.
+    if (term.type().is_array())
+    {
+      map.clear();
+      Node res        = get_index_value_pairs(term, map);
+      NodeManager& nm = NodeManager::get();
+      for (const auto& [index, value] : map)
+      {
+        res = nm.mk_node(Kind::STORE, {res, index, value});
+      }
+      return res;
+    }
     return d_solver_state.value(default_value[0]);
   }
   else if (k == Kind::EQUAL)
