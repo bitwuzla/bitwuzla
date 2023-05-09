@@ -175,7 +175,8 @@ Lexer::next_token_aux()
         d_token.push_back(0);
         return error(ch,
                      "illegal (non-printable) character (code "
-                         + std::to_string(ch) + ") in string");
+                         + std::to_string(static_cast<unsigned char>(ch))
+                         + ") in string");
       }
       push_char(ch);
     }
@@ -323,9 +324,9 @@ Lexer::next_token_aux()
   {
     return error(ch, "illegal " + err_char(ch));
   }
-  return error(
-      ch,
-      "illegal (non-printable) character (code " + std::to_string(ch) + ")");
+  return error(ch,
+               "illegal (non-printable) character (code "
+                   + std::to_string(static_cast<unsigned char>(ch)) + ")");
 }
 
 std::string

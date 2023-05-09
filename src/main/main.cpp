@@ -310,6 +310,14 @@ main(int32_t argc, char* argv[])
   {
     options.set(args);
 
+#if 0
+    FILE* infile = fopen(infile_name.c_str(), "r");
+    bzla::parser::smt2::Lexer lexer(infile);
+    bzla::parser::smt2::Token token;
+    do {
+    token = lexer.next_token();
+    } while (token != bzla::parser::smt2::Token::ENDOFFILE);
+#else
     bitwuzla::parser::Parser parser(options, infile_name, language);
     std::string err_msg = parser.parse(print || parse_only);
     if (!err_msg.empty())
@@ -342,6 +350,7 @@ main(int32_t argc, char* argv[])
         std::cout << "unknown" << std::endl;
       }
     }
+#endif
   }
   catch (const bitwuzla::Exception& e)
   {
