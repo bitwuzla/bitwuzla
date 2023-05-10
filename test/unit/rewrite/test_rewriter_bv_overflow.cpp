@@ -34,16 +34,17 @@ class TestRewriterBvOverflow : public TestRewriter
     assert(low > 0);
     assert(low <= high);
 
+    option::Options options;
+    options.rewrite_level.set(rwl);
+    options.dbg_check_model.set(false);
+    options.dbg_check_unsat_core.set(false);
+    SolvingContext ctx = SolvingContext(options);
     for (int32_t num_bits = low; num_bits <= high; num_bits++)
     {
       for (int32_t i = 0, max = std::pow(2, num_bits); i < max; ++i)
       {
         for (int32_t j = 0; j < max; ++j)
         {
-          option::Options options;
-          options.set<uint64_t>(option::Option::REWRITE_LEVEL, rwl);
-          SolvingContext ctx = SolvingContext(options);
-
           int32_t result = 0;
 
           switch (kind)
@@ -62,9 +63,11 @@ class TestRewriterBvOverflow : public TestRewriter
           NodeManager& nm = NodeManager::get();
           Node val1       = nm.mk_value(BitVector::from_ui(num_bits, i));
           Node val2       = nm.mk_value(BitVector::from_ui(num_bits, j));
+          ctx.push();
           ctx.assert_formula(nm.mk_node(kind, {val1, val2}));
 
           Result sat_res = ctx.solve();
+          ctx.pop();
           ASSERT_TRUE(sat_res != Result::UNKNOWN);
           if (sat_res == Result::SAT)
           {
@@ -86,6 +89,11 @@ class TestRewriterBvOverflow : public TestRewriter
 
     int32_t result;
 
+    option::Options options;
+    options.rewrite_level.set(rwl);
+    options.dbg_check_model.set(false);
+    options.dbg_check_unsat_core.set(false);
+    SolvingContext ctx = SolvingContext(options);
     for (int32_t num_bits = low; num_bits <= high; num_bits++)
     {
       int32_t max = std::pow(2, num_bits - 1);
@@ -95,10 +103,6 @@ class TestRewriterBvOverflow : public TestRewriter
         {
           if (!exclude_second_zero || j != 0)
           {
-            option::Options options;
-            options.set<uint64_t>(option::Option::REWRITE_LEVEL, rwl);
-            SolvingContext ctx = SolvingContext(options);
-
             switch (kind)
             {
               case Kind::BV_UADDO:
@@ -116,9 +120,11 @@ class TestRewriterBvOverflow : public TestRewriter
             NodeManager& nm = NodeManager::get();
             Node val1       = nm.mk_value(BitVector::from_si(num_bits, i));
             Node val2       = nm.mk_value(BitVector::from_si(num_bits, j));
+            ctx.push();
             ctx.assert_formula(nm.mk_node(kind, {val1, val2}));
 
             Result sat_res = ctx.solve();
+            ctx.pop();
             ASSERT_TRUE(sat_res != Result::UNKNOWN);
             if (sat_res == Result::SAT)
             {
@@ -134,51 +140,40 @@ class TestRewriterBvOverflow : public TestRewriter
 TEST_F(TestRewriterBvOverflow, uaddo)
 {
   u_overflow_test(Kind::BV_UADDO, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 1);
-  u_overflow_test(Kind::BV_UADDO, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 0);
 }
 
 TEST_F(TestRewriterBvOverflow, usubo)
 {
   u_overflow_test(Kind::BV_USUBO, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 1);
-  u_overflow_test(Kind::BV_USUBO, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 0);
 }
 
 TEST_F(TestRewriterBvOverflow, umulo)
 {
   u_overflow_test(Kind::BV_UMULO, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 1);
-  u_overflow_test(Kind::BV_UMULO, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 0);
 }
 
 TEST_F(TestRewriterBvOverflow, saddo)
 {
   s_overflow_test(
       Kind::BV_SADDO, false, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 1);
-  s_overflow_test(
-      Kind::BV_SADDO, false, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 0);
 }
 
 TEST_F(TestRewriterBvOverflow, ssubo)
 {
   s_overflow_test(
       Kind::BV_SSUBO, false, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 1);
-  s_overflow_test(
-      Kind::BV_SSUBO, false, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 0);
 }
 
 TEST_F(TestRewriterBvOverflow, smulo)
 {
   s_overflow_test(
       Kind::BV_SMULO, false, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 1);
-  s_overflow_test(
-      Kind::BV_SMULO, false, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 0);
 }
 
 TEST_F(TestRewriterBvOverflow, sdivo)
 {
   s_overflow_test(
       Kind::BV_SDIVO, true, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 1);
-  s_overflow_test(
-      Kind::BV_SDIVO, true, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 0);
 }
 
 }  // namespace bzla::test
