@@ -34,13 +34,23 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
     return;
   }
 
-  d_sat_solver.reset(new sat::Cadical());
-  d_encode_cache.clear();
-
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    d_assertions.push_back(assertions[i]);
+    const Node& assertion = assertions[i];
+    if (assertion.is_value())
+    {
+      continue;
+    }
+    d_assertions.push_back(assertion);
   }
+
+  if (d_assertions.empty())
+  {
+    return;
+  }
+
+  d_sat_solver.reset(new sat::Cadical());
+  d_encode_cache.clear();
 
   std::unordered_set<int64_t> assertion_lits;
   for (const Node& assertion : d_assertions)
