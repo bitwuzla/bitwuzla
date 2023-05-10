@@ -562,15 +562,17 @@ Printer::letify(std::ostream& os,
   std::sort(lets.begin(), lets.end(), [](const Node& a, const Node& b) {
     return a.id() < b.id();
   });
-  if (lets.size() > 0)
+
+  size_t nlets = lets.size();
+  if (nlets > 0)
   {
-    os << "(let (";
-    for (size_t i = 0; i < lets.size(); ++i)
+    for (size_t i = 0; i < nlets; ++i)
     {
       if (i > 0)
       {
         os << " ";
       }
+      os << "(let (";
 
       // Construct symbol of let
       std::stringstream ss;
@@ -578,16 +580,16 @@ Printer::letify(std::ostream& os,
 
       os << "(" << ss.str() << " ";
       print(os, lets[i], let_map, max_depth);
-      os << ")";
+      os << "))";
 
       let_map[lets[i]] = ss.str();
     }
-    os << ") ";
+    os << " ";
   }
 
   print(os, node, let_map, max_depth);
 
-  if (lets.size() > 0)
+  for (size_t i = 0; i < nlets; ++i)
   {
     os << ")";
   }
