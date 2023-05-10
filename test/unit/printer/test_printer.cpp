@@ -301,9 +301,9 @@ TEST_F(TestPrinter, print_let2)
 
   std::stringstream ss;
   Printer::print(ss, and_or_and);
-  ASSERT_EQ(
-      ss.str(),
-      "(let ((_let0 (and x y)) (_let1 (or _let0 _let0))) (and _let1 _let1))");
+  ASSERT_EQ(ss.str(),
+            "(let ((_let0 (and x y))) (let ((_let1 (or _let0 _let0))) (and "
+            "_let1 _let1)))");
 }
 
 TEST_F(TestPrinter, print_let3)
@@ -334,8 +334,8 @@ TEST_F(TestPrinter, print_let4)
   std::stringstream ss;
   Printer::print(ss, forall);
   ASSERT_EQ(ss.str(),
-            "(forall ((x Bool)) (forall ((y Bool)) (let ((_let0 (and x y)) "
-            "(_let1 (or _let0 _let0))) (and _let1 _let1))))");
+            "(forall ((x Bool)) (forall ((y Bool)) (let ((_let0 (and x y))) "
+            "(let ((_let1 (or _let0 _let0))) (and _let1 _let1)))))");
 }
 
 TEST_F(TestPrinter, print_nested)
