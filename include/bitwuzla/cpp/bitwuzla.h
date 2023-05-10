@@ -597,12 +597,24 @@ class Term
   /**
    * Get value from value term.
    *
-   * @see:
-   *   template<> bool value(uint8_t base) const;
-   *   template<> std::string value(uint8_t base) const;
-   *   template<> std::tuple<std::string, std::string, std::string>
-   * value(uint8_t base) const; template<> RoundingMode value(uint8_t base)
-   * const;
+   * This function is instantiated for types
+   * - `bool` for Boolean values
+   * - `RoundingMode` for rounding mode values
+   * - `std::string` for any value
+   *   (Boolean, RoundingMode, bit-vector and floating-point)
+   * - `std::tuple<std::string, std::string, std::string>`
+   *   for floating-point values
+   *
+   * @tparam T   The type of the value representation. `bool` for Boolean
+   *             values; `RoundingMode` for rounding mode values;
+   *             `std::tuple<std::string, std::string, std::string>` for
+   *             floating-point values (IEEE-754 representation as strings
+   *             for sign bit, exponent and significand); and, generally,
+   *             `std::string` for any value type.
+   * @param base The numeric base for bit-vector values; `2` for binary, `10`
+   *             for decimal, and `16` for hexadecimal.
+   *
+   * @note Parameter `base` is ignored for Boolean and rounding mode values.
    */
   template <class T>
   T value(uint8_t base = 2) const;
@@ -620,11 +632,10 @@ class Term
   std::shared_ptr<bzla::Node> d_node;
 };
 
+#ifndef DOXYGEN_SKIP
 /**
  * Get Boolean representation of Boolean value term.
- *
  * @param base Ingored for this template instantiation.
- *
  * @return Boolean representation of value term.
  */
 template <>
@@ -632,9 +643,7 @@ bool Term::value(uint8_t base) const;
 
 /**
  * Get representation of rounding mode value term.
- *
  * @param base Ingored for this template instantiation.
- *
  * @return The RoundingMode representation of the given rounding mode value.
  */
 template <>
@@ -649,7 +658,7 @@ RoundingMode Term::value(uint8_t base) const;
  *
  * @return String representation of the value term.
  *
- * @note: base is ignored for Boolean and rounding mode values.
+ * @note Parameter `base` is ignored for Boolean and rounding mode values.
  */
 template <>
 std::string Term::value(uint8_t base) const;
@@ -665,6 +674,7 @@ std::string Term::value(uint8_t base) const;
 template <>
 std::tuple<std::string, std::string, std::string> Term::value(
     uint8_t base) const;
+#endif
 
 /**
  * Syntactical equality operator.
@@ -1330,8 +1340,8 @@ Term mk_bv_max_signed(const Sort &sort);
  *
  * @param sort The sort of the value.
  * @param value A string representing the value.
- * @param base The base in which the string is given; 2 for binary, 10 for
- *             decimal, and 16 for hexadecimal.
+ * @param base The base in which the string is given; `2` for binary, `10` for
+ *             decimal, and `16` for hexadecimal.
  *
  * @return A term of kind Kind::VALUE, representing the bit-vector value
  *         of given sort.
