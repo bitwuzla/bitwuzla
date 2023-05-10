@@ -6045,8 +6045,9 @@ BitVectorIte::select_path(const BitVector& t, std::vector<uint64_t>& ess_inputs)
 {
   assert(!all_value());
 
-  bool check_essential = false;
+  bool checked_essential = false;
   std::vector<uint64_t> inputs;
+  ess_inputs.clear();
 
   /* select non-const operand if only one is non-const */
   uint64_t pos_x = select_path_non_const(inputs);
@@ -6057,8 +6058,7 @@ BitVectorIte::select_path(const BitVector& t, std::vector<uint64_t>& ess_inputs)
       && d_rng->pick_with_prob(s_prob_pick_ess_input))
   {
     /* determine essential inputs, disabled branches are excluded */
-    check_essential = true;
-    ess_inputs.clear();
+    checked_essential = true;
     for (uint64_t i : inputs)
     {
       if (is_essential(t, i)) ess_inputs.push_back(i);
@@ -6092,7 +6092,7 @@ BitVectorIte::select_path(const BitVector& t, std::vector<uint64_t>& ess_inputs)
   }
 
   assert(pos_x != static_cast<uint64_t>(-1));
-  return {pos_x, check_essential};
+  return {pos_x, checked_essential};
 }
 
 /* -------------------------------------------------------------------------- */

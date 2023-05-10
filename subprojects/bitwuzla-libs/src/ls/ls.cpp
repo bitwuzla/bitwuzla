@@ -275,16 +275,20 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       BZLALSLOG(1) << "    -> target value: " << t << std::endl;
 
       /* Select path */
-      auto [pos_x, check_essential] = cur->select_path(t, ess_inputs);
+      auto [pos_x, checked_essential] = cur->select_path(t, ess_inputs);
       assert(pos_x < arity);
 
       BZLALSLOG(1) << "    -> select path: node[" << pos_x << "]" << std::endl;
       if (BZLALSLOG_ENABLED(1))
       {
-        // check if check_essential is false due to all but one input
-        // being values (then we don't want to print '-', but identify
-        // the input that is not a value as essential)
-        if (!check_essential)
+        // check if checked_essential is false due to a) all but one input
+        // being values or b) random path selection. In case of a), we don't
+        // want to print '-', but identify the input that is not a value as
+        // essential. In case of b), we print '-' to indicate that we didn't
+        // check if the inputs are essential (and do not call is_essential()
+        // for logging purpose in order to guarantee that a run behaves the
+        // same with and without logging).
+        if (!checked_essential)
         {
           uint32_t not_value = 0;
           for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
@@ -296,7 +300,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
           }
           if (not_value == 1)
           {
-            check_essential = true;
+            checked_essential = true;
             assert(ess_inputs.empty());
             ess_inputs.push_back(pos_x);
           }
@@ -305,7 +309,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
         for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
         {
           BZLALSLOG(1) << "        |- is_essential[" << i << "]: "
-                       << (check_essential
+                       << (checked_essential
                                ? (std::find(
                                       ess_inputs.begin(), ess_inputs.end(), i)
                                           == ess_inputs.end()
@@ -494,14 +498,15 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
     BZLALSLOG(2) << "  node: " << *cur << " -> ";
     cur->evaluate();
     nupdates += 1;
-    BZLALSLOG(2) << cur->assignment() << std::endl;
+    BZLALSLOGSTREAM(2) << cur->assignment() << std::endl;
     if (BZLALSLOG_ENABLED(2))
     {
       for (const auto& s : cur->log())
       {
-        BZLALSLOG(2) << s << std::endl;
+        BZLALSLOG(2) << s;
       }
     }
+    BZLALSLOG(2) << std::endl;
 
     if (cur->is_root())
     {
