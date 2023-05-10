@@ -311,6 +311,17 @@ SolverEngine::_value(const Node& term)
         // and handle this case in value().
         if (k == Kind::FORALL)
         {
+          // Remove unprocessed nodes from value cache. Unprocessed nodes
+          // are in the COI of the current unregistered quantifier, and thus
+          // we cannot compute a value for these terms.
+          for (const auto& n : visit)
+          {
+            auto nit = d_value_cache.find(n);
+            if (nit != d_value_cache.end() && nit->second.is_null())
+            {
+              d_value_cache.erase(nit);
+            }
+          }
           return Node();
         }
         // Compute value of select based on current array model.
@@ -370,7 +381,7 @@ SolverEngine::_value(const Node& term)
         case Kind::APPLY:
         case Kind::SELECT:
         case Kind::FORALL:
-          // Just use value from bit-vector abstrction.
+          // Just use value from bit-vector abstraction.
           assert(d_in_solving_mode);
           [[fallthrough]];
 
