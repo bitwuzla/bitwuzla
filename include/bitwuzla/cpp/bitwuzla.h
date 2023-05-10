@@ -589,7 +589,7 @@ class Term
   bool is_rm_value_rtz() const;
 
   /**
-   * Get the string representation of this term.
+   * Get the SMT-LIB v2 string representation of this term.
    * @return A string representation of this term.
    */
   std::string str() const;
@@ -605,6 +605,21 @@ class Term
    * - `std::tuple<std::string, std::string, std::string>`
    *   for floating-point values
    *
+   * In case of string representations of values (the `std::string` and
+   * `std::tuple<std::string, std::string, std::string>` instantions of
+   * this function), this returns the raw value string (as opposed to
+   * str(), which returns the SMT-LIB v2 representation of a term).
+   * For example, this function returns "010" for a bit-vector value 2 of size
+   * 3, while str() returns "#b010".
+   *
+   * @note For the general `std::string` instantiation case, the returned
+   *       string for floating-point values is always the binary IEEE-754
+   *       representation of the value (parameter `base` is ignored).
+   *       Parameter `base` always configures the numeric base for bit-vector
+   *       values, and for floating-point values in case of the tuple of
+   *       strings instantiation. It is always ignored for Boolean and
+   *       RoundingMode values.
+   *
    * @tparam T   The type of the value representation. `bool` for Boolean
    *             values; `RoundingMode` for rounding mode values;
    *             `std::tuple<std::string, std::string, std::string>` for
@@ -613,8 +628,6 @@ class Term
    *             `std::string` for any value type.
    * @param base The numeric base for bit-vector values; `2` for binary, `10`
    *             for decimal, and `16` for hexadecimal.
-   *
-   * @note Parameter `base` is ignored for Boolean and rounding mode values.
    */
   template <class T>
   T value(uint8_t base = 2) const;

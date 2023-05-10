@@ -65,7 +65,7 @@ Bitwuzla provides additional functions, see below.
 - :cpp:func:`bitwuzla_term_value_get_fp_ieee()`
 - :cpp:func:`bitwuzla_term_value_get_rm()`
 - :cpp:func:`bitwuzla_term_to_string()`
-- :cpp:func:`bitwuzla_print_term()`
+- :cpp:func:`bitwuzla_term_print()`
 
 ----
 

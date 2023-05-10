@@ -928,8 +928,13 @@ bool bitwuzla_term_is_rm_value_rtz(BitwuzlaTerm term);
 bool bitwuzla_term_value_get_bool(BitwuzlaTerm term);
 
 /**
- * Get string representation of given Boolean, bit-vector, floating-point, or
+ * Get string representation of Boolean, bit-vector, floating-point, or
  * rounding mode value term.
+ *
+ * This returns the raw value string (as opposed to bitwuzla_term_to_string(),
+ * which returns the SMT-LIB v2 representation of a term).
+ * For example, this function returns "010" for a bit-vector value 2 of size
+ * 3, while bitwuzla_term_to_string() returns "#b010".
  *
  * @param term The value term.
  * @param base The base in which the output strings are given; 2 for
@@ -937,8 +942,14 @@ bool bitwuzla_term_value_get_bool(BitwuzlaTerm term);
  *
  * @return String representation of the value term.
  *
+ * @note The returned string for floating-point values is always the binary
+ *       IEEE-754 representation of the value (parameter `base` is ignored).
+ *       Parameter `base` always configures the numeric base for bit-vector
+ *       values, and for floating-point values in case of the tuple of strings
+ *       instantiation. It is always ignored for Boolean and RoundingMode
+ *       values.
+ *
  * @note Return value is valid until next `bitwuzla_term_value_get_bv` call.
- * @note base is ignored for Boolean and rounding mode values.
  */
 const char *bitwuzla_term_value_get_str(BitwuzlaTerm term, uint8_t base);
 

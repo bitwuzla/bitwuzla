@@ -1672,9 +1672,9 @@ TEST_F(TestApi, get_bv_value)
 
 TEST_F(TestApi, get_fp_value)
 {
-  ASSERT_EQ("(fp #b0 #b11111111 #b10000000000000000000000)",
+  ASSERT_EQ("01111111110000000000000000000000",
             d_fp_nan32.value<std::string>());
-  ASSERT_EQ("(fp #b1 #b00000000 #b00000000000000000000000)",
+  ASSERT_EQ("10000000000000000000000000000000",
             d_fp_nzero32.value<std::string>());
 }
 
@@ -1682,11 +1682,9 @@ TEST_F(TestApi, get_fp_value_ieee)
 {
   auto res =
       d_fp_nan32.value<std::tuple<std::string, std::string, std::string>>();
-  ASSERT_EQ(std::make_tuple("#b0", "#b11111111", "#b10000000000000000000000"),
-            res);
+  ASSERT_EQ(std::make_tuple("0", "11111111", "10000000000000000000000"), res);
   res = d_fp_nzero32.value<std::tuple<std::string, std::string, std::string>>();
-  ASSERT_EQ(std::make_tuple("#b1", "#b00000000", "#b00000000000000000000000"),
-            res);
+  ASSERT_EQ(std::make_tuple("1", "00000000", "00000000000000000000000"), res);
 }
 
 TEST_F(TestApi, get_rm_value)

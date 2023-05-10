@@ -965,14 +965,8 @@ Term::value(uint8_t base) const
   }
   else if (type.is_fp())
   {
-    BITWUZLA_CHECK_VALUE_BASE(base);
     const bzla::FloatingPoint &fp_value = d_node->value<bzla::FloatingPoint>();
-    bzla::BitVector sign, exp, sig;
-    bzla::FloatingPoint::ieee_bv_as_bvs(
-        d_node->type(), fp_value.as_bv(), sign, exp, sig);
-    std::string prefix = base == 2 ? "#b" : (base == 16 ? "#x" : "");
-    return "(fp " + prefix + sign.str(base) + " " + prefix + exp.str(base) + " "
-           + prefix + sig.str(base) + ")";
+    return fp_value.as_bv().str(2);
   }
   else if (type.is_rm())
   {
@@ -998,9 +992,7 @@ Term::value(uint8_t base) const
   bzla::BitVector sign, exp, sig;
   bzla::FloatingPoint::ieee_bv_as_bvs(
       d_node->type(), fp_value.as_bv(), sign, exp, sig);
-  std::string prefix = base == 2 ? "#b" : (base == 16 ? "#x" : "");
-  return std::make_tuple(
-      prefix + sign.str(base), prefix + exp.str(base), prefix + sig.str(base));
+  return std::make_tuple(sign.str(base), exp.str(base), sig.str(base));
 }
 
 bool

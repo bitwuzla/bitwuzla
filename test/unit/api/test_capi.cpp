@@ -2482,9 +2482,9 @@ TEST_F(TestCApi, value_get_bv)
 
 TEST_F(TestCApi, value_get_fp)
 {
-  ASSERT_EQ("(fp #b0 #b11111111 #b10000000000000000000000)",
+  ASSERT_EQ("01111111110000000000000000000000",
             std::string(bitwuzla_term_value_get_str(d_fp_nan32, 2)));
-  ASSERT_EQ("(fp #b1 #b00000000 #b00000000000000000000000)",
+  ASSERT_EQ("10000000000000000000000000000000",
             std::string(bitwuzla_term_value_get_str(d_fp_nzero32, 2)));
 }
 
@@ -2492,13 +2492,13 @@ TEST_F(TestCApi, value_fp_ieee)
 {
   const char *sign, *exp, *sig;
   bitwuzla_term_value_get_fp_ieee(d_fp_nan32, &sign, &exp, &sig, 2);
-  ASSERT_EQ("#b0", std::string(sign));
-  ASSERT_EQ("#b11111111", std::string(exp));
-  ASSERT_EQ("#b10000000000000000000000", std::string(sig));
+  ASSERT_EQ("0", std::string(sign));
+  ASSERT_EQ("11111111", std::string(exp));
+  ASSERT_EQ("10000000000000000000000", std::string(sig));
   bitwuzla_term_value_get_fp_ieee(d_fp_nzero32, &sign, &exp, &sig, 2);
-  ASSERT_EQ("#b1", std::string(sign));
-  ASSERT_EQ("#b00000000", std::string(exp));
-  ASSERT_EQ("#b00000000000000000000000", std::string(sig));
+  ASSERT_EQ("1", std::string(sign));
+  ASSERT_EQ("00000000", std::string(exp));
+  ASSERT_EQ("00000000000000000000000", std::string(sig));
 }
 
 TEST_F(TestCApi, get_rm_value)
