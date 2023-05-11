@@ -17,7 +17,8 @@ class Env
    * Constructor.
    * @param options The associated configuration options.
    */
-  Env(const option::Options& options = option::Options());
+  Env(const option::Options& options = option::Options(),
+      const std::string& name        = "");
 
   /** @return The associated options instance. */
   const option::Options& options() const;

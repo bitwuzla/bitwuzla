@@ -38,8 +38,10 @@ Logger::Line::stream()
   return std::cout;
 };
 
-Logger::Logger(uint64_t log_level, uint64_t verbosity)
-    : d_log_level(log_level), d_verbosity_level(verbosity)
+Logger::Logger(uint64_t log_level,
+               uint64_t verbosity,
+               const std::string& prefix)
+    : d_log_level(log_level), d_verbosity_level(verbosity), d_prefix(prefix)
 {
 }
 
@@ -58,7 +60,7 @@ Logger::is_log_enabled(uint64_t level)
 Logger::Line
 Logger::log(uint64_t level)
 {
-  return Line(level);
+  return Line(level, d_prefix.empty() ? nullptr : d_prefix.c_str());
 }
 
 Logger::Line

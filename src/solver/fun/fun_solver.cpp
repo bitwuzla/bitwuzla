@@ -42,7 +42,8 @@ FunSolver::~FunSolver() {}
 bool
 FunSolver::check()
 {
-  Log(1) << "\n*** check functions";
+  Log(1);
+  Log(1) << "*** check functions";
 
   d_fun_models.clear();
   if (!d_equalities.empty())

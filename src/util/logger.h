@@ -36,7 +36,9 @@ class Logger
     std::ios_base::fmtflags d_flags;
   };
 
-  Logger(uint64_t log_level, uint64_t verbosity);
+  Logger(uint64_t log_level,
+         uint64_t verbosity,
+         const std::string& prefix = "");
 
   bool is_msg_enabled(uint64_t level);
 
@@ -51,6 +53,7 @@ class Logger
  private:
   uint64_t d_log_level;
   uint64_t d_verbosity_level;
+  std::string d_prefix;
 };
 
 }  // namespace bzla::util

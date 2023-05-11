@@ -37,7 +37,8 @@ ArraySolver::~ArraySolver() {}
 bool
 ArraySolver::check()
 {
-  Log(1) << "\n*** check arrays";
+  Log(1);
+  Log(1) << "*** check arrays";
 
   d_array_models.clear();
 
@@ -208,7 +209,8 @@ ArraySolver::check_access(const Node& access)
     abort();
   }
 
-  Log(1) << "\ncheck: " << access;
+  Log(2);
+  Log(1) << "check: " << access;
   Access acc(access, d_solver_state);
   Log(2) << "index:   " << acc.index_value();
   Log(2) << "element: " << acc.element_value();

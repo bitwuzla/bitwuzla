@@ -17,7 +17,7 @@ namespace bzla {
 class SolvingContext
 {
  public:
-  SolvingContext(const option::Options& options);
+  SolvingContext(const option::Options& options, const std::string& name = "");
 
   /** Solve the current set of assertions in the context. */
   Result solve();

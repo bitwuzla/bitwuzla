@@ -21,11 +21,13 @@ CheckModel::check()
     return true;
   }
 
-  Log(1) << "\n*** check model\n";
+  Log(1);
+  Log(1) << "*** check model";
+  Log(1);
 
   option::Options opts;
   opts.dbg_check_model.set(false);
-  SolvingContext check_ctx(opts);
+  SolvingContext check_ctx(opts, "chkmodel");
   for (const Node& assertion : d_ctx.original_assertions())
   {
     check_ctx.assert_formula(assertion);

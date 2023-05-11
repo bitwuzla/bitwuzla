@@ -82,6 +82,7 @@ SolverEngine::solve()
   } while (!d_lemmas.empty() || d_new_terms_registered);
   d_in_solving_mode = false;
 
+  Log(1);
   Log(1) << "Solver engine determined: " << d_sat_state;
   return d_sat_state;
 }

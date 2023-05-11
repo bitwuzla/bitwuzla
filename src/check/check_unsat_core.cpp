@@ -22,10 +22,14 @@ CheckUnsatCore::check()
     return true;
   }
 
+  Log(1);
+  Log(1) << "*** check unsat core";
+  Log(1);
+
   option::Options opts;
   opts.dbg_check_model.set(false);
   opts.dbg_check_unsat_core.set(false);
-  SolvingContext check_ctx(opts);
+  SolvingContext check_ctx(opts, "chkuc");
   for (const Node& assertion : d_ctx.get_unsat_core())
   {
     check_ctx.assert_formula(assertion);

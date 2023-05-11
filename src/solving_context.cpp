@@ -14,8 +14,9 @@ using namespace node;
 
 /* --- SolvingContext public ----------------------------------------------- */
 
-SolvingContext::SolvingContext(const option::Options& options)
-    : d_env(options),
+SolvingContext::SolvingContext(const option::Options& options,
+                               const std::string& name)
+    : d_env(options, name),
       d_assertions(&d_backtrack_mgr),
       d_original_assertions(&d_backtrack_mgr),
       d_preprocessor(*this),

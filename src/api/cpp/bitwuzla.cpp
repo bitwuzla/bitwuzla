@@ -1256,7 +1256,7 @@ class TerminatorInternal : public bzla::Terminator
 /* Bitwuzla public ---------------------------------------------------------- */
 
 Bitwuzla::Bitwuzla(const Options &options)
-    : d_ctx(new bzla::SolvingContext(*options.d_options)),
+    : d_ctx(new bzla::SolvingContext(*options.d_options, "main")),
       d_last_check_sat(Result::UNKNOWN),
       d_n_sat_calls(0)
 {

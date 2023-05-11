@@ -43,7 +43,8 @@ FpSolver::~FpSolver() {}
 bool
 FpSolver::check()
 {
-  Log(1) << "\n*** check fp";
+  Log(1);
+  Log(1) << "*** check fp";
 
   reset_cached_values();
   NodeManager& nm = NodeManager::get();

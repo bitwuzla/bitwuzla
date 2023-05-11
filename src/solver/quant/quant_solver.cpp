@@ -49,7 +49,8 @@ QuantSolver::~QuantSolver() {}
 bool
 QuantSolver::check()
 {
-  Log(1) << "\n*** check quantifiers";
+  Log(1);
+  Log(1) << "*** check quantifiers";
 
   if (d_quantifiers.empty())
   {
@@ -331,7 +332,7 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
   util::Timer timer(d_stats.time_mbqi);
   NodeManager& nm = NodeManager::get();
   option::Options options;
-  d_mbqi_solver.reset(new SolvingContext(options));
+  d_mbqi_solver.reset(new SolvingContext(options, "mbqi"));
   // std::cout << "mbqi check" << std::endl;
   // std::cout << "## new solver" << std::endl;
 
