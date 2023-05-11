@@ -634,7 +634,6 @@ Rewriter::rewrite_ite(const Node& node)
   {
     BZLA_APPLY_RW_RULE(ITE_BV_CONCAT);
     BZLA_APPLY_RW_RULE(ITE_BV_OP);
-    // TODO
   }
 
 DONE:
@@ -712,7 +711,6 @@ Rewriter::rewrite_bv_ashr(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_ASHR_EVAL);
     BZLA_APPLY_RW_RULE(BV_ASHR_SPECIAL_CONST);
-    // TODO
   }
 
 DONE:
@@ -807,7 +805,6 @@ Rewriter::rewrite_bv_not(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_NOT_EVAL);
     BZLA_APPLY_RW_RULE(BV_NOT_BV_NOT);
-    // TODO
   }
   if (d_level >= 2)
   {

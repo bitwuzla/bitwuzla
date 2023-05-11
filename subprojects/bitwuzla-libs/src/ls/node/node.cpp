@@ -141,22 +141,25 @@ Node<VALUE>::consistent_value(const VALUE& t, uint64_t pos_x)
 }
 
 template <class VALUE>
-std::pair<uint64_t, bool>
+std::tuple<uint64_t, bool, bool>
 Node<VALUE>::select_path(const VALUE& t, std::vector<uint64_t>& ess_inputs)
 {
   assert(!all_value());
 
-  bool checked_essential = false;
   std::vector<uint64_t> inputs;
   ess_inputs.clear();
 
   /* select non-const operand if only one is non-const */
   uint64_t pos_x = select_path_non_const(inputs);
+  if (pos_x != static_cast<uint64_t>(-1))
+  {
+    return {pos_x, true, false};
+  }
 
+  bool checked_essential = false;
   /* select essential input if any and path selection based on essential
    * inputs is enabled. */
-  if (pos_x == static_cast<uint64_t>(-1) && s_path_sel_essential
-      && d_rng->pick_with_prob(s_prob_pick_ess_input))
+  if (s_path_sel_essential && d_rng->pick_with_prob(s_prob_pick_ess_input))
   {
     /* determine essential inputs */
     checked_essential = true;
@@ -182,7 +185,7 @@ Node<VALUE>::select_path(const VALUE& t, std::vector<uint64_t>& ess_inputs)
   }
 
   assert(pos_x != static_cast<uint64_t>(-1));
-  return {pos_x, checked_essential};
+  return {pos_x, false, checked_essential};
 }
 
 template <class VALUE>

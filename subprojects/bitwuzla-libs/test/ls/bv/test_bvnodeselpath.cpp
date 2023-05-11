@@ -110,7 +110,7 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
           }
           continue;
         }
-        pos_x = lop.select_path(t, ess_inputs).first;
+        pos_x = std::get<0>(lop.select_path(t, ess_inputs));
         ASSERT_TRUE(!is_val0 || pos_x == 1);
         ASSERT_TRUE(!is_val1 || pos_x == 0);
         ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential0
@@ -142,7 +142,7 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
           }
           continue;
         }
-        pos_x = oop.select_path(t, ess_inputs).first;
+        pos_x = std::get<0>(oop.select_path(t, ess_inputs));
         assert(!(pos_x == 0 ? is_val0 : is_val1));
         ASSERT_FALSE(pos_x == 0 ? is_val0 : is_val1);
         ASSERT_TRUE(!is_val0 || pos_x == 1);
@@ -235,7 +235,7 @@ TestBvNodeSelPath::test_ite()
             }
             continue;
           }
-          pos_x = lop.select_path(t, ess_inputs).first;
+          pos_x = std::get<0>(lop.select_path(t, ess_inputs));
           ASSERT_FALSE(pos_x == 0 ? is_val0 : (pos_x == 1 ? is_val1 : is_val2));
           ASSERT_TRUE(!is_val1 || !is_val2 || pos_x == 0);
           ASSERT_TRUE(!is_val0 || !is_val2 || pos_x == 1);
@@ -276,7 +276,7 @@ TestBvNodeSelPath::test_ite()
             }
             continue;
           }
-          pos_x = oop.select_path(t, ess_inputs).first;
+          pos_x = std::get<0>(oop.select_path(t, ess_inputs));
           ASSERT_TRUE(!is_val1 || !is_val2 || pos_x == 0);
           ASSERT_TRUE(!is_val0 || !is_val2 || pos_x == 1);
           ASSERT_TRUE(!is_val0 || !is_val1 || pos_x == 2);
@@ -337,7 +337,7 @@ TestBvNodeSelPath::test_not()
         }
         continue;
       }
-      pos_x = lop.select_path(t, ess_inputs).first;
+      pos_x = std::get<0>(lop.select_path(t, ess_inputs));
       ASSERT_TRUE(is_val || pos_x == 0);
       ASSERT_TRUE(is_essential || pos_x == 0);
 
@@ -359,7 +359,7 @@ TestBvNodeSelPath::test_not()
         }
         continue;
       }
-      pos_x = oop.select_path(t, ess_inputs).first;
+      pos_x = std::get<0>(oop.select_path(t, ess_inputs));
       ASSERT_TRUE(!is_val || pos_x == 0);
       ASSERT_TRUE(is_essential || is_val || pos_x == 0);
     }
@@ -417,7 +417,7 @@ TestBvNodeSelPath::test_extract()
             }
             continue;
           }
-          pos_x = lop.select_path(t, ess_inputs).first;
+          pos_x = std::get<0>(lop.select_path(t, ess_inputs));
           ASSERT_TRUE(is_val || pos_x == 0);
           ASSERT_TRUE(is_essential || pos_x == 0);
 
@@ -439,7 +439,7 @@ TestBvNodeSelPath::test_extract()
             }
             continue;
           }
-          pos_x = oop.select_path(t, ess_inputs).first;
+          pos_x = std::get<0>(oop.select_path(t, ess_inputs));
           ASSERT_TRUE(!is_val || pos_x == 0);
           ASSERT_TRUE(is_essential || is_val || pos_x == 0);
         }
@@ -496,7 +496,7 @@ TestBvNodeSelPath::test_sext()
           }
           continue;
         }
-        pos_x = lop.select_path(t, ess_inputs).first;
+        pos_x = std::get<0>(lop.select_path(t, ess_inputs));
         ASSERT_TRUE(is_val || pos_x == 0);
         ASSERT_TRUE(is_essential || pos_x == 0);
 
@@ -518,7 +518,7 @@ TestBvNodeSelPath::test_sext()
           }
           continue;
         }
-        pos_x = oop.select_path(t, ess_inputs).first;
+        pos_x = std::get<0>(oop.select_path(t, ess_inputs));
         ASSERT_TRUE(!is_val || pos_x == 0);
         ASSERT_TRUE(is_essential || is_val || pos_x == 0);
       }

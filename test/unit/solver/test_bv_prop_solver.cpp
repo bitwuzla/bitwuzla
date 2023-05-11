@@ -18,25 +18,25 @@ using namespace option;
 class TestBvPropSolver : public ::testing::Test
 {
  protected:
-  static constexpr bool TEST_SLOW         = false;
+  static constexpr bool TEST_SLOW = false;
 #if __APPLE__
-  static constexpr uint32_t TEST_NPROPS   = TEST_SLOW ? 120 : 90;
-  static constexpr uint32_t TEST_NUPDATES = TEST_SLOW ? 120 : 90;
+  static constexpr uint32_t TEST_NPROPS   = TEST_SLOW ? 200 : 100;
+  static constexpr uint32_t TEST_NUPDATES = TEST_SLOW ? 200 : 100;
 #else
-  static constexpr uint32_t TEST_NPROPS   = TEST_SLOW ? 120 : 55;
-  static constexpr uint32_t TEST_NUPDATES = TEST_SLOW ? 120 : 55;
+  static constexpr uint32_t TEST_NPROPS   = TEST_SLOW ? 200 : 100;
+  static constexpr uint32_t TEST_NUPDATES = TEST_SLOW ? 200 : 100;
 #endif
 
 
   void SetUp() override
   {
     d_size = TEST_SLOW ? 4 : 3;
-    d_options.set<std::string>(Option::BV_SOLVER, "prop");
-    d_options.set<uint64_t>(Option::PROP_NPROPS, TEST_NPROPS);
-    d_options.set<uint64_t>(Option::PROP_NUPDATES, TEST_NUPDATES);
-    d_options.set<bool>(Option::PROP_CONST_BITS, true);
-    d_options.set<uint64_t>(Option::SEED, 1234);
-    d_options.set<uint64_t>(Option::REWRITE_LEVEL, 0);
+    d_options.bv_solver.set_str("prop");
+    d_options.prop_nprops.set(TEST_NPROPS);
+    d_options.prop_nupdates.set(TEST_NUPDATES);
+    d_options.prop_const_bits.set(true);
+    d_options.seed.set(1234);
+    d_options.rewrite_level.set(0);
     d_options.pp_contr_ands.set(false);
     d_options.pp_embedded_constr.set(false);
     d_options.pp_flatten_and.set(false);

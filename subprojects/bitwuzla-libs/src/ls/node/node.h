@@ -159,12 +159,15 @@ class Node
    *                   essential, or if no information about essential inputs
    *                   is available, i.e., if path was selected randomly or if
    *                   all but one input are const.
-   * @return A pair of uint64_t and bool: the index of the child to propagate
-   *         the target value down to (i.e., the selected path), and a flag to
-   *         indicate if inputs have been checked for being essential. False if
-   *         path was selected randomly, or if all inputs but one are const.
+   * @return A tuple of uint64_t, bool and bool:
+   *         - the index of the child to propagate the target value down to
+   *           (i.e., the selected path)
+   *         - a flag to indicate if all inputs but one are const
+   *         - a flag to indicate if inputs have been checked for being
+   *           essential, false if path was selected randomly, or if all inputs
+   *           but one are const
    */
-  virtual std::pair<uint64_t, bool> select_path(
+  virtual std::tuple<uint64_t, bool, bool> select_path(
       const VALUE& t, std::vector<uint64_t>& ess_inputs);
 
   /**

@@ -275,7 +275,8 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       BZLALSLOG(1) << "    -> target value: " << t << std::endl;
 
       /* Select path */
-      auto [pos_x, checked_essential] = cur->select_path(t, ess_inputs);
+      auto [pos_x, all_but_one_const, checked_essential] =
+          cur->select_path(t, ess_inputs);
       assert(pos_x < arity);
 
       BZLALSLOG(1) << "    -> select path: node[" << pos_x << "]" << std::endl;
@@ -322,7 +323,9 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
 
       /** Select value
        *
-       * 1) randomly choose to compute inverse over consistent value
+       * 0) if all but one input are const and there exists an inverse value,
+       *    pick inverse value
+       * 1) else randomly choose to compute inverse over consistent value
        *    with probability BZLALS_PROB_USE_INV_VALUE
        * 2) if inverse value selected and no inverse value exists,
        *    fall back to consistent value
@@ -330,7 +333,8 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
        *    conflict
        */
 
-      if (d_rng->pick_with_prob(d_options.prob_pick_inv_value)
+      if ((all_but_one_const
+           || d_rng->pick_with_prob(d_options.prob_pick_inv_value))
           && cur->is_invertible(t, pos_x))
       {
         t = cur->inverse_value(t, pos_x);
