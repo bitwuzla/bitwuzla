@@ -235,7 +235,7 @@ class ArraySolver : public Solver
     util::TimerStatistic& time_check;
   } d_stats;
 
-  util::Logger d_logger;
+  util::Logger& d_logger;
 };
 
 }  // namespace bzla::array
