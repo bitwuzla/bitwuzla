@@ -101,6 +101,7 @@ New API functions:
 - `bitwuzla_sort_is_uninterpreted()`
 - `bitwuzla_term_is_uninterpreted()`
 - `bitwuzla_sort_get_uninterpreted_symbol(BitwuzlaSort sort)`
+- `bitwuzla_get_statistics()`
 
 Python API:
 - Module renamed to `bitwuzla` from `pybitwuzla`

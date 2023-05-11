@@ -31,10 +31,6 @@ SolvingContext::solve()
 #endif
   preprocess();
   d_sat_state = d_solver_engine.solve();
-  if (d_env.options().verbosity() > 0)
-  {
-    d_env.statistics().print();
-  }
 
 #ifndef NDEBUG
   if (d_sat_state == Result::SAT && options().dbg_check_model())

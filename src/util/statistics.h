@@ -115,6 +115,8 @@ class Statistics
 
   /** Print statistics to std::cout. */
   void print() const;
+  /** @return Map of strings of statistics entries. */
+  std::map<std::string, std::string> get() const;
 
  private:
   using stat_value = std::variant<uint64_t, TimerStatistic, HistogramStatistic>;

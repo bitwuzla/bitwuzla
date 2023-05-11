@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <optional>
 #include <unordered_map>
@@ -1158,7 +1159,15 @@ class Bitwuzla
    * @param format The output format for printing the formula. Currently, only
    *               `"smt2"` for the SMT-LIB v2 format is supported.
    */
-  void print_formula(std::ostream &out, const std::string &format = "smt2");
+  void print_formula(std::ostream &out,
+                     const std::string &format = "smt2") const;
+
+  /**
+   * Get current statistics.
+   * @return A map of strings of statistics entries, maps statistic name
+   *         to value.
+   */
+  std::map<std::string, std::string> statistics() const;
 
  private:
   /** Helper called when solver state changes. */

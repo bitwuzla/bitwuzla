@@ -1307,6 +1307,25 @@ BitwuzlaTerm bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  */
 void bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
 
+/**
+ * Get current statistics.
+ *
+ * The statistics are retrieved as a mapping from statistic name (`keys`)
+ * to statistic value (`values`).
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param keys     The resulting set of statistic names.
+ * @param values   The resulting set of statistic values.
+ * @param size     The resulting size of `keys` and `values`.
+ *
+ * @note Output parameters `keys` and `values` are only valid until the
+ *       next call to `bitwuzla_get_statistics()`.
+ */
+void bitwuzla_get_statistics(Bitwuzla *bitwuzla,
+                             const char ***keys,
+                             const char ***values,
+                             size_t *size);
+
 /** @} */
 
 /* -------------------------------------------------------------------------- */

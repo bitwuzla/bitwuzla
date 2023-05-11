@@ -989,6 +989,35 @@ bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
   BITWUZLA_TRY_CATCH_END;
 }
 
+void
+bitwuzla_get_statistics(Bitwuzla *bitwuzla,
+                        const char ***keys,
+                        const char ***values,
+                        size_t *size)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  BITWUZLA_CHECK_NOT_NULL(keys);
+  BITWUZLA_CHECK_NOT_NULL(values);
+  BITWUZLA_CHECK_NOT_NULL(size);
+  static thread_local std::vector<const char *> rkeys;
+  static thread_local std::vector<const char *> rvalues;
+  static thread_local std::map<std::string, std::string> stats;
+  rkeys.clear();
+  rvalues.clear();
+  stats.clear();
+  stats = bitwuzla->d_bitwuzla->statistics();
+  for (auto &[key, value] : stats)
+  {
+    rkeys.push_back(key.c_str());
+    rvalues.push_back(value.c_str());
+  }
+  *keys   = rkeys.data();
+  *values = rvalues.data();
+  *size   = rkeys.size();
+  BITWUZLA_TRY_CATCH_END;
+}
+
 BitwuzlaTerm
 bitwuzla_substitute_term(Bitwuzla *bitwuzla,
                          BitwuzlaTerm term,

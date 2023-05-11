@@ -1452,11 +1452,17 @@ Bitwuzla::get_value(const Term &term)
 }
 
 void
-Bitwuzla::print_formula(std::ostream &out, const std::string &format)
+Bitwuzla::print_formula(std::ostream &out, const std::string &format) const
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(format);
   BITWUZLA_CHECK(format == "smt2") << "invalid format, expected 'smt2'";
   bzla::Printer::print_formula(out, d_ctx->assertions());
+}
+
+std::map<std::string, std::string>
+Bitwuzla::statistics() const
+{
+  return d_ctx->env().statistics().get();
 }
 
 /* Bitwuzla private --------------------------------------------------------- */

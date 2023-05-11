@@ -325,9 +325,9 @@ main(int32_t argc, char* argv[])
       std::cerr << "[error] " << err_msg << std::endl;
       std::exit(EXIT_FAILURE);
     }
+    bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla();
     if (print)
     {
-      bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla();
       if (!parse_only)
       {
         bitwuzla->simplify();
@@ -336,7 +336,7 @@ main(int32_t argc, char* argv[])
     }
     else if (language == "btor2")
     {
-      bitwuzla::Result res = parser.bitwuzla()->check_sat();
+      bitwuzla::Result res = bitwuzla->check_sat();
       if (res == bitwuzla::Result::SAT)
       {
         std::cout << "sat" << std::endl;
@@ -348,6 +348,14 @@ main(int32_t argc, char* argv[])
       else
       {
         std::cout << "unknown" << std::endl;
+      }
+    }
+    if (options.get(bitwuzla::Option::VERBOSITY))
+    {
+      auto stats = bitwuzla->statistics();
+      for (auto& [name, val] : stats)
+      {
+        std::cout << name << ": " << val << std::endl;
       }
     }
 #endif

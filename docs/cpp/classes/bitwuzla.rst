@@ -20,6 +20,8 @@ the unsat core via :cpp:func:`bitwuzla::Bitwuzla::get_unsat_core()`,
 and unsat assumptions via :cpp:func:`bitwuzla::Bitwuzla::get_unsat_assumptions`;
 and printing the currently asserted formula via
 :cpp:func:`bitwuzla::Bitwuzla::print_formula()`.
+The current statistics can be retrieved as a mapping from statistic names
+to values via :cpp:func:`bitwuzla::Bitwuzla::statistics()`.
 
 Bitwuzla further supports configuring a **termination callback** via
 :cpp:class:`bitwuzla::Terminator`, which implements a callback function

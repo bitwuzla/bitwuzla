@@ -2742,6 +2742,20 @@ TEST_F(TestCApi, print_formula3)
   ASSERT_EQ(res, expected_smt2.str());
 }
 
+TEST_F(TestCApi, statistics)
+{
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  Bitwuzla *bitwuzla       = bitwuzla_new(options);
+  bitwuzla_assert(bitwuzla, d_bool_const);
+  const char **keys, **values;
+  size_t size;
+  bitwuzla_get_statistics(bitwuzla, &keys, &values, &size);
+  for (size_t i = 0; i < size; ++i)
+  {
+    std::cout << keys[i] << ": " << values[i] << std::endl;
+  }
+}
+
 TEST_F(TestCApi, parser)
 {
   const char *filename = "parse.smt2";

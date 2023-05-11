@@ -1879,6 +1879,18 @@ TEST_F(TestApi, print_formula3)
   ASSERT_EQ(ss.str(), expected_smt2.str());
 }
 
+TEST_F(TestApi, statistics)
+{
+  bitwuzla::Options options;
+  bitwuzla::Bitwuzla bitwuzla(options);
+  bitwuzla.assert_formula(d_bool_const);
+  auto stats = bitwuzla.statistics();
+  for (auto [name, val] : stats)
+  {
+    std::cout << name << ": " << val << std::endl;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Sort                                                                       */
 /* -------------------------------------------------------------------------- */

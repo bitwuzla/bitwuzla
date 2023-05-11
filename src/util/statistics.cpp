@@ -92,4 +92,36 @@ Statistics::print() const
   }
 }
 
+std::map<std::string, std::string>
+Statistics::get() const
+{
+  std::map<std::string, std::string> res;
+  for (auto& [name, val] : d_stats)
+  {
+    if (std::holds_alternative<uint64_t>(val))
+    {
+      res.emplace(name, std::to_string(std::get<uint64_t>(val)));
+    }
+    else if (std::holds_alternative<TimerStatistic>(val))
+    {
+      res.emplace(
+          name, std::to_string(std::get<TimerStatistic>(val).elapsed()) + "ms");
+    }
+    else
+    {
+      assert(std::holds_alternative<HistogramStatistic>(val));
+      auto& histo = std::get<HistogramStatistic>(val);
+      for (size_t i = 0, size = histo.values().size(); i < size; ++i)
+      {
+        if (histo.values()[i] > 0)
+        {
+          res.emplace(name + "::" + histo.names()[i],
+                      std::to_string(histo.values()[i]));
+        }
+      }
+    }
+  }
+  return res;
+}
+
 }  // namespace bzla::util
