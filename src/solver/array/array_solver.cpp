@@ -39,6 +39,8 @@ ArraySolver::check()
 {
   Log(1) << "\n*** check arrays";
 
+  d_array_models.clear();
+
   // Nothing to check
   if (d_equalities.empty() && d_selects.empty())
   {
@@ -46,7 +48,6 @@ ArraySolver::check()
   }
 
   util::Timer timer(d_stats.time_check);
-  d_array_models.clear();
   d_check_access_cache.clear();
   d_lemma_cache.clear();
   ++d_stats.num_checks;
