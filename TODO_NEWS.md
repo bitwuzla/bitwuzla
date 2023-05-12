@@ -3,6 +3,12 @@ API:
   + `SAT_ENGINE` -> `SAT_SOLVER`
   + `RW_LEVEL` -> `REWRITE_LEVEL`
 
+- Incremental solving is now always enabled and thus option `INCREMENTAL`
+  is removed.
+
+- SMT-LIB option `:produce-unsat-assumptions` was previously always enabled,
+  but must now be explicitly enabled via option `PRODUCE_UNSAT_ASSUMPTIONS`.
+
 - enum `BitwuzlaBVBase` -> `uint8_t` in { 2, 10, 16 }
   + `bitwuzla_mk_bv_value(Bitwuzl*, const BitwuzlaSort*, const char*, BitwuzlaBVBase)` ->
     `bitwuzla_mk_bv_value(BitwuzlaSort, const char*, uint8_t)`

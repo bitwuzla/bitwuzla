@@ -981,51 +981,21 @@ class Bitwuzla
   void configure_terminator(Terminator *terminator);
 
   /**
-   * Configure an abort callback function, which is called instead of exit
-   * on abort conditions.
-   *
-   * TODO should be per instance
-   * @note This function is not thread safe (the function pointer is maintained
-   *       as a global variable). It you use threading, make sure to set the
-   *       abort callback prior to creating threads.
-   *
-   * @param fun The callback function. The argument string explains the reason
-   *            for the abort.
-   */
-  void set_abort_callback(std::function<void(const std::string &)> fun);
-
-  /**
    * Push context levels.
-   *
-   * Requires that incremental solving has been enabled via
-   * `Options::set()`.
-   *
-   * @note Assumptions added via `assume()` are not affected by context level
-   *       changes and are only valid until the next `check_sat()` call, no
-   *       matter at which level they were assumed.
    *
    * @param nlevels The number of context levels to push.
    *
    * @see
    *   * `Options::set()`
-   *   * `Option::INCREMENTAL`
    */
   void push(uint32_t nlevels);
   /**
    * Pop context levels.
    *
-   * Requires that incremental solving has been enabled via
-   * `Options::set()`.
-   *
-   * @note Assumptions added via `assume()` are not affected by context level
-   *       changes and are only valid until the next `check_sat()` call, no
-   *       matter at which level they were assumed.
-   *
    * @param nlevels The number of context levels to pop.
    *
    * @see
    *   * `Options::set()`
-   *   * `Option::INCREMENTAL`
    */
   void pop(uint32_t nlevels);
 
@@ -1049,9 +1019,6 @@ class Bitwuzla
    * unsatisfiable. Unsat assumptions handling in Bitwuzla is analogous to
    * failed assumptions in MiniSAT.
    *
-   * Requires that incremental solving has been enabled via
-   * `Options::set()`.
-   *
    * Requires that the last `check_sat()` query returned `Result::UNSAT`.
    *
    * @param term The assumption to check for.
@@ -1061,7 +1028,6 @@ class Bitwuzla
    * @see
    *   * `Options::set()`
    *   * `check_sat()`
-   *   * `Option::INCREMENTAL`
    */
   bool is_unsat_assumption(const Term &term);
   /**
@@ -1071,9 +1037,6 @@ class Bitwuzla
    * unsatisfiable. Unsat assumptions handling in Bitwuzla is analogous to
    * failed assumptions in MiniSAT.
    *
-   * Requires that incremental solving has been enabled via
-   * `Options::set()`.
-   *
    * Requires that the last `check_sat()` query returned `Result::UNSAT`.
    *
    * @return A vctor with unsat assumptions.
@@ -1081,7 +1044,6 @@ class Bitwuzla
    * @see
    *   * `Options::set()`
    *   * `check_sat()`
-   *   * `Option::INCREMENTAL`
    */
   std::vector<Term> get_unsat_assumptions();
   /**
@@ -1122,9 +1084,7 @@ class Bitwuzla
    * The search for a solution can by guided by making assumptions via
    * passing a vector of assumptions to `check_sat()`.
    *
-   * @note Assertions and assumptions are combined via Boolean and.  Multiple
-   *       calls to this function require enabling incremental solving via
-   *       `Options::set()`.
+   * @note Assertions and assumptions are combined via Boolean and.
    *
    * @return `Result::SAT` if the input formula is satisfiable and
    *         `Result::UNSAT` if it is unsatisfiable, and `Result::UNKNOWN`
@@ -1135,7 +1095,6 @@ class Bitwuzla
    * @see
    *   * `assert_formula()`
    *   * `Options::set()`
-   *   * `Option::INCREMENTAL`
    *   * `Result`
    */
   Result check_sat(const std::vector<Term> &assumptions = {});

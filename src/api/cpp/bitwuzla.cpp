@@ -1284,14 +1284,6 @@ Bitwuzla::configure_terminator(Terminator *terminator)
 }
 
 void
-Bitwuzla::set_abort_callback(std::function<void(const std::string &)> fun)
-{
-  BITWUZLA_CHECK_NOT_NULL(d_ctx);
-  // TODO
-  (void) fun;
-}
-
-void
 Bitwuzla::push(uint32_t nlevels)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);

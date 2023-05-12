@@ -1089,30 +1089,22 @@ void bitwuzla_set_abort_callback(void (*fun)(const char *msg));
 /**
  * Push context levels.
  *
- * Requires that incremental solving has been enabled via
- * `bitwuzla_set_option()`.
- *
  * @param bitwuzla The Bitwuzla instance.
  * @param nlevels The number of context levels to push.
  *
  * @see
  *   * `bitwuzla_set_option`
- *   * `::BITWUZLA_OPT_INCREMENTAL`
  */
 void bitwuzla_push(Bitwuzla *bitwuzla, uint64_t nlevels);
 
 /**
  * Pop context levels.
  *
- * Requires that incremental solving has been enabled via
- * `bitwuzla_set_option()`.
- *
  * @param bitwuzla The Bitwuzla instance.
  * @param nlevels The number of context levels to pop.
  *
  * @see
  *   * `bitwuzla_set_option`
- *   * `::BITWUZLA_OPT_INCREMENTAL`
  */
 void bitwuzla_pop(Bitwuzla *bitwuzla, uint64_t nlevels);
 
@@ -1139,9 +1131,6 @@ BitwuzlaTerm *bitwuzla_get_assertions(Bitwuzla *bitwuzla, size_t *size);
  * unsatisfiable. Unsat assumptions handling in Bitwuzla is analogous to
  * failed assumptions in MiniSAT.
  *
- * Requires that incremental solving has been enabled via
- * `bitwuzla_set_option()`.
- *
  * Requires that the last `bitwuzla_check_sat()` query returned
  * `::BITWUZLA_UNSAT`.
  *
@@ -1152,9 +1141,7 @@ BitwuzlaTerm *bitwuzla_get_assertions(Bitwuzla *bitwuzla, size_t *size);
  *
  * @see
  *   * `bitwuzla_set_option`
- *   * `bitwuzla_assume`
  *   * `bitwuzla_check_sat`
- *   * `::BITWUZLA_OPT_INCREMENTAL`
  */
 bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm term);
 
@@ -1164,9 +1151,6 @@ bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  * Unsat assumptions are assumptions that force an input formula to become
  * unsatisfiable. Unsat assumptions handling in Bitwuzla is analogous to
  * failed assumptions in MiniSAT.
- *
- * Requires that incremental solving has been enabled via
- * `bitwuzla_set_option()`.
  *
  * Requires that the last `bitwuzla_check_sat()` query returned
  * `::BITWUZLA_UNSAT`.
@@ -1180,7 +1164,6 @@ bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  * @see
  *   * `bitwuzla_set_option`
  *   * `bitwuzla_check_sat`
- *   * `::BITWUZLA_OPT_INCREMENTAL`
  */
 BitwuzlaTerm *bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
 
@@ -1229,9 +1212,7 @@ BitwuzlaResult bitwuzla_simplify(Bitwuzla *bitwuzla);
  * The search for a solution can by guided by additionally making assumptions
  * (see `bitwuzla_check_sat_assuming`).
  *
- * @note Assertions and assumptions are combined via Boolean and.  Multiple
- *       calls to this function require enabling incremental solving via
- *       `bitwuzla_set_option()`.
+ * @note Assertions and assumptions are combined via Boolean and.
  *
  * @param bitwuzla The Bitwuzla instance.
  *
@@ -1243,9 +1224,7 @@ BitwuzlaResult bitwuzla_simplify(Bitwuzla *bitwuzla);
  *
  * @see
  *   * `bitwuzla_assert`
- *   * `bitwuzla_assume`
  *   * `bitwuzla_set_option`
- *   * `::BITWUZLA_OPT_INCREMENTAL`
  *   * `BitwuzlaResult`
  */
 BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
@@ -1258,9 +1237,7 @@ BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
  * The search for a solution can by guided by additionally making assumptions
  * (the given set of assumptions `args`).
  *
- * @note Assertions and assumptions are combined via Boolean and. Calls to this
- *       function require enabling incremental solving via
- *       `bitwuzla_set_option()`.
+ * @note Assertions and assumptions are combined via Boolean and.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param argc     The number of assumptions in `args`.
@@ -1275,7 +1252,6 @@ BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
  * @see
  *   * `bitwuzla_assert`
  *   * `bitwuzla_set_option`
- *   * `::BITWUZLA_OPT_INCREMENTAL`
  *   * `BitwuzlaResult`
  */
 BitwuzlaResult bitwuzla_check_sat_assuming(Bitwuzla *bitwuzla,
