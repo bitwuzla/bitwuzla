@@ -6339,6 +6339,7 @@ BitVectorExtract::is_invertible(const BitVector& t,
       const BitVector& x_val = child(pos_x)->assignment();
       uint64_t size          = x.size();
       bool keep              = d_rng->pick_with_prob(s_prob_keep);
+      bool random            = !keep && d_rng->flip_coin();
       BitVector left, propagated, right;
 
       if (d_hi < size - 1)
@@ -6363,14 +6364,44 @@ BitVectorExtract::is_invertible(const BitVector& t,
             }
             else
             {
-              BitVectorDomainGenerator gen(*d_x_slice_left, d_rng);
-              assert(gen.has_random());
-              left = gen.random();
+              bool iszero = !random && d_x_slice_left->lo().is_zero();
+              bool isones = !random && d_x_slice_left->lo().is_ones();
+              if (!random && (iszero || isones))
+              {
+                if (iszero && isones)
+                {
+                  left = d_rng->flip_coin() ? d_x_slice_left->lo()
+                                            : d_x_slice_left->hi();
+                }
+                else if (iszero)
+                {
+                  left = d_x_slice_left->lo();
+                }
+                else
+                {
+                  left = d_x_slice_left->hi();
+                }
+              }
+              else
+              {
+                BitVectorDomainGenerator gen(*d_x_slice_left, d_rng);
+                assert(gen.has_random());
+                left = gen.random();
+              }
             }
           }
           else
           {
-            left = BitVector(size - 1 - d_hi, *d_rng);
+            uint64_t lsize = size - 1 - d_hi;
+            if (random)
+            {
+              left = BitVector(lsize, *d_rng);
+            }
+            else
+            {
+              left = d_rng->flip_coin() ? BitVector::mk_zero(lsize)
+                                        : BitVector::mk_ones(lsize);
+            }
           }
         }
       }
@@ -6396,14 +6427,43 @@ BitVectorExtract::is_invertible(const BitVector& t,
             }
             else
             {
-              BitVectorDomainGenerator gen(*d_x_slice_right, d_rng);
-              assert(gen.has_random());
-              right = gen.random();
+              bool iszero = !random && d_x_slice_right->lo().is_zero();
+              bool isones = !random && d_x_slice_right->lo().is_ones();
+              if (!random && (iszero || isones))
+              {
+                if (iszero && isones)
+                {
+                  right = d_rng->flip_coin() ? d_x_slice_right->lo()
+                                             : d_x_slice_right->hi();
+                }
+                else if (iszero)
+                {
+                  right = d_x_slice_right->lo();
+                }
+                else
+                {
+                  right = d_x_slice_right->hi();
+                }
+              }
+              else
+              {
+                BitVectorDomainGenerator gen(*d_x_slice_right, d_rng);
+                assert(gen.has_random());
+                right = gen.random();
+              }
             }
           }
           else
           {
-            right = BitVector(d_lo, *d_rng);
+            if (random)
+            {
+              right = BitVector(d_lo, *d_rng);
+            }
+            else
+            {
+              right = d_rng->flip_coin() ? BitVector::mk_zero(d_lo)
+                                         : BitVector::mk_ones(d_lo);
+            }
           }
         }
       }
