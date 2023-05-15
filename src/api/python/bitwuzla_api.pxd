@@ -124,7 +124,6 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
     cdef cppclass Bitwuzla:
         Bitwuzla(const Options &options);
         void configure_terminator(Terminator *terminator) except +
-        #void set_abort_callback(std::function<void(const std::string &)> fun) except +
         void push(uint32_t nlevels) except +
         void pop(uint32_t nlevels) except +
         void assert_formula(const Term &term) except +
@@ -137,13 +136,13 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         #void print_formula(ostream &out, const string &format) except +
 
 
-    Sort mk_array_sort(const Sort &index, const Sort &element)
-    Sort mk_bool_sort()
-    Sort mk_bv_sort(uint64_t size)
-    Sort mk_fp_sort(uint64_t exp_size, uint64_t sig_size)
-    Sort mk_fun_sort(const vector[Sort] &domain, const Sort &codomain)
-    Sort mk_rm_sort()
-    Sort mk_uninterpreted_sort(optional[const string] symbol)
+    Sort mk_array_sort(const Sort &index, const Sort &element) except +
+    Sort mk_bool_sort() except +
+    Sort mk_bv_sort(uint64_t size) except +
+    Sort mk_fp_sort(uint64_t exp_size, uint64_t sig_size) except +
+    Sort mk_fun_sort(const vector[Sort] &domain, const Sort &codomain) except +
+    Sort mk_rm_sort() except +
+    Sort mk_uninterpreted_sort(optional[const string] symbol) except +
 
 
     Term mk_true() except +

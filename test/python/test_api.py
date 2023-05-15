@@ -65,3 +65,59 @@ def test_options_set_args():
     assert options.get(Option.SAT_SOLVER), "cadical"
     with pytest.raises(RuntimeError):
         options.set_args("--no-verbose")
+
+
+def test_mk_bool_sort():
+    sort = mk_bool_sort()
+    assert sort.is_bool()
+
+
+def test_mk_array_sort():
+    bsort = mk_bool_sort()
+    sort = mk_array_sort(bsort, bsort)
+    assert sort.is_array()
+    mk_array_sort(bsort, sort)
+
+    with pytest.raises(RuntimeError):
+        mk_array_sort(Sort(), bsort)
+    with pytest.raises(RuntimeError):
+        mk_array_sort(bsort, Sort())
+
+
+def test_mk_bv_sort():
+    sort = mk_bv_sort(8)
+    assert sort.is_bv()
+    assert sort.bv_size() == 8
+    with pytest.raises(RuntimeError):
+        mk_bv_sort(0)
+
+def test_mk_fp_sort():
+    sort = mk_fp_sort(5, 11)
+    assert sort.is_fp()
+    assert sort.fp_exp_size() == 5
+    assert sort.fp_sig_size() == 11
+    with pytest.raises(RuntimeError):
+        mk_fp_sort(0, 11)
+    with pytest.raises(RuntimeError):
+        mk_fp_sort(5, 0)
+
+
+def test_mk_fun_sort():
+    with pytest.raises(RuntimeError):
+        mk_fun_sort([], mk_bool_sort())
+    with pytest.raises(RuntimeError):
+        mk_fun_sort([mk_bool_sort(), mk_bool_sort()], Sort())
+
+
+def test_mk_uninterpreted_sort():
+    s1 = mk_uninterpreted_sort()
+    s2 = mk_uninterpreted_sort("foo")
+    s3 = mk_uninterpreted_sort("foo")
+    assert s1.is_uninterpreted()
+    assert s2.is_uninterpreted()
+    assert s3.is_uninterpreted()
+    assert s1 != s2
+    assert s1 != s3
+    assert s2 != s3
+    assert str(s2) == "foo"
+    assert str(s3) == "foo"
