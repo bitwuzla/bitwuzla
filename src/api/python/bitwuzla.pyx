@@ -84,12 +84,6 @@ cdef vector[bitwuzla_api.Term] _term_vec(terms):
 cdef list[Term] _term_list(vector[bitwuzla_api.Term] terms):
     return [_term(t) for t in terms]
 
-cdef vector[string] _to_str_vec(strs):
-    cdef vector[string] vec
-    for s in strs:
-        vec.push_back(str(s).encode())
-    return vec
-
 def _check_arg(arg, _type):
     if not isinstance(arg, _type):
         raise ValueError(
@@ -313,8 +307,15 @@ cdef class Options:
     def modes(self, option: Option) -> list[str]:
         return [m.decode() for m in self.c_options.modes(option.value)]
 
-    def set(self, option: Option, value):
-        cdef bitwuzla_api.Option opt = option.value
+    def set(self, option, value):
+        cdef bitwuzla_api.Option opt
+        if isinstance(option, Option):
+            opt = option.value
+        elif isinstance(option, str):
+            opt = self.option(option).value
+        else:
+            raise ValueError(f'Invalid option {option}.')
+
         if isinstance(value, str):
             self.c_options.set(opt, <const string&> value.encode())
         elif isinstance(value, bool) or isinstance(value, int):
@@ -322,11 +323,14 @@ cdef class Options:
         else:
             raise ValueError(f'Invalid value type for option {option.value}.')
 
-    def set_args(self, *args: str):
-        self.c_options.set(_to_str_vec(args))
+    def set_args(self, *args):
+        cdef vector[string] opts
+        for a in args:
+            opts.push_back(str(a).encode())
+        self.c_options.set(opts)
 
     def option(self, name: str) -> Option:
-        return Option(self.c_options.option(name))
+        return Option(self.c_options.option(name.encode()))
 
     def get(self, option: Option):
         if self.c_options.is_mode(option.value):
