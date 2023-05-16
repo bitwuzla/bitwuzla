@@ -117,6 +117,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         bool value[bool](uint8_t base) except +
         RoundingMode value[RoundingMode](uint8_t base) except +
         string value[string](uint8_t base) except +
+        bool operator==(const Term&) except +
 
     cdef cppclass Terminator:
         pass
@@ -153,8 +154,6 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
     Term mk_bv_min_signed(const Sort &sort) except +
     Term mk_bv_max_signed(const Sort &sort) except +
     Term mk_bv_value(const Sort &sort, const string &value, uint8_t base) except +
-    Term mk_bv_value_uint64(const Sort &sort, uint64_t value) except +
-    Term mk_bv_value_int64(const Sort &sort, int64_t value) except +
     Term mk_fp_pos_zero(const Sort &sort) except +
     Term mk_fp_neg_zero(const Sort &sort) except +
     Term mk_fp_pos_inf(const Sort &sort) except +

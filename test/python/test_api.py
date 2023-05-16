@@ -121,3 +121,142 @@ def test_mk_uninterpreted_sort():
     assert s2 != s3
     assert str(s2) == "foo"
     assert str(s3) == "foo"
+
+
+def test_mk_bv_zero():
+    val = mk_bv_zero(mk_bv_sort(8))
+    assert val.is_bv_value_zero()
+    with pytest.raises(RuntimeError):
+        mk_bv_zero(Sort())
+    with pytest.raises(RuntimeError):
+        mk_bv_zero(mk_fp_sort(5, 11))
+
+
+def test_mk_bv_one():
+    val = mk_bv_one(mk_bv_sort(8))
+    assert val.is_bv_value_one()
+    with pytest.raises(RuntimeError):
+        mk_bv_one(Sort())
+    with pytest.raises(RuntimeError):
+        mk_bv_one(mk_fp_sort(5, 11))
+
+
+def test_mk_bv_ones():
+    val = mk_bv_ones(mk_bv_sort(8))
+    assert val.is_bv_value_ones()
+    with pytest.raises(RuntimeError):
+        mk_bv_ones(Sort())
+    with pytest.raises(RuntimeError):
+        mk_bv_ones(mk_fp_sort(5, 11))
+
+
+def test_mk_bv_min_signed():
+    val = mk_bv_min_signed(mk_bv_sort(8))
+    assert val.is_bv_value_min_signed()
+    with pytest.raises(RuntimeError):
+        mk_bv_min_signed(Sort())
+    with pytest.raises(RuntimeError):
+        mk_bv_min_signed(mk_fp_sort(5, 11))
+
+
+def test_mk_bv_max_signed():
+    val = mk_bv_max_signed(mk_bv_sort(8))
+    assert val.is_bv_value_max_signed()
+    with pytest.raises(RuntimeError):
+        mk_bv_max_signed(Sort())
+    with pytest.raises(RuntimeError):
+        mk_bv_max_signed(mk_fp_sort(5, 11))
+
+def test_mk_fp_pos_zero():
+    val = mk_fp_pos_zero(mk_fp_sort(5, 11))
+    assert val.is_fp_value_pos_zero()
+    with pytest.raises(RuntimeError):
+        mk_fp_pos_zero(Sort())
+    with pytest.raises(RuntimeError):
+        mk_fp_pos_zero(mk_bv_sort(8))
+
+def test_mk_fp_neg_zero():
+    val = mk_fp_neg_zero(mk_fp_sort(5, 11))
+    assert val.is_fp_value_neg_zero()
+    with pytest.raises(RuntimeError):
+        mk_fp_neg_zero(Sort())
+    with pytest.raises(RuntimeError):
+        mk_fp_neg_zero(mk_bv_sort(8))
+
+def test_mk_fp_pos_inf():
+    val = mk_fp_pos_inf(mk_fp_sort(5, 11))
+    assert val.is_fp_value_pos_inf()
+    with pytest.raises(RuntimeError):
+        mk_fp_pos_inf(Sort())
+    with pytest.raises(RuntimeError):
+        mk_fp_pos_inf(mk_bv_sort(8))
+
+def test_mk_fp_neg_inf():
+    val = mk_fp_neg_inf(mk_fp_sort(5, 11))
+    assert val.is_fp_value_neg_inf()
+    with pytest.raises(RuntimeError):
+        mk_fp_neg_inf(Sort())
+    with pytest.raises(RuntimeError):
+        mk_fp_neg_inf(mk_bv_sort(8))
+
+def test_mk_fp_nan():
+    val = mk_fp_nan(mk_fp_sort(5, 11))
+    assert val.is_fp_value_nan()
+    with pytest.raises(RuntimeError):
+        mk_fp_nan(Sort())
+    with pytest.raises(RuntimeError):
+        mk_fp_nan(mk_bv_sort(8))
+
+def test_mk_bv_value():
+    val = mk_bv_value(mk_bv_sort(4), "1101")
+    assert val.value() == "1101"
+    assert val.value(10) == "13"
+    assert val.value(16) == "d"
+    mk_bv_value(mk_bv_sort(8), "127", 10)
+    mk_bv_value(mk_bv_sort(8), 127, 10)
+    mk_bv_value(mk_bv_sort(8), "-128", 10)
+    mk_bv_value(mk_bv_sort(8), -128, 10)
+    with pytest.raises(RuntimeError):
+        mk_bv_value(mk_bv_sort(8), "256", 10)
+    with pytest.raises(RuntimeError):
+        mk_bv_value(mk_bv_sort(8), "-129", 10)
+        mk_bv_value(Sort(), "010", 2)
+    with pytest.raises(RuntimeError):
+      mk_bv_value(mk_bv_sort(8), "", 2)
+
+def test_mk_fp_value():
+    val = mk_fp_value(mk_bv_value(mk_bv_sort(1), 1),
+                      mk_bv_value(mk_bv_sort(5), 0),
+                      mk_bv_value(mk_bv_sort(10), 0))
+    assert val.is_fp_value_neg_zero()
+
+    with pytest.raises(RuntimeError):
+        mk_fp_value(Term(),
+                    mk_bv_value(mk_bv_sort(5), 0),
+                    mk_bv_value(mk_bv_sort(10), 0))
+    with pytest.raises(RuntimeError):
+        mk_fp_value(mk_bv_value(mk_bv_sort(1), 1),
+                    Term(),
+                    mk_bv_value(mk_bv_sort(10), 0))
+    with pytest.raises(RuntimeError):
+        mk_fp_value(mk_bv_value(mk_bv_sort(1), 1),
+                    mk_bv_value(mk_bv_sort(5), 0),
+                    Term())
+
+    val1 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), "1.2")
+    val2 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), 1.2)
+    assert val1 == val2
+
+    val2 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), "6", "5")
+    assert val1 == val2
+
+    val1 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), "1", "3")
+    val2 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), "1", 3)
+    assert val1 == val2
+    val2 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), 1, 3)
+    assert val1 == val2
+
+    with pytest.raises(ValueError):
+        mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), 1.2, 3)
+    with pytest.raises(ValueError):
+        mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), 1, 3.3)

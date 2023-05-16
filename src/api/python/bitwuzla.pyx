@@ -85,7 +85,10 @@ cdef list[Term] _term_list(vector[bitwuzla_api.Term] terms):
     return [_term(t) for t in terms]
 
 def _check_arg(arg, _type):
-    if not isinstance(arg, _type):
+    if not isinstance(_type, list):
+        _type = [_type]
+
+    if not any([isinstance(arg, _t) for _t in _type]):
         raise ValueError(
                 f'Expected type {str(_type)} for argument, but got {type(arg)}')
 
@@ -180,6 +183,9 @@ cdef class Sort:
 
     def __eq__(self, Sort other) -> bool:
         return self.c_sort == other.c_sort
+
+    def __hash__(self):
+        return self.id()
 
 
 # --------------------------------------------------------------------------- #
@@ -276,9 +282,6 @@ cdef class Term:
     def is_rm_value_rtz(self) -> bool:
         return self.c_term.is_rm_value_rtz()
 
-    def __str__(self) -> str:
-        return self.c_term.str().decode()
-
     def value(self, uint8_t base = 2):
         sort = self.sort()
         if sort.is_bool():
@@ -286,6 +289,15 @@ cdef class Term:
         elif sort.is_rm():
             return RoundingMode(self.c_term.value[bitwuzla_api.RoundingMode]())
         return self.c_term.value[string](base).decode()
+
+    def __str__(self) -> str:
+        return self.c_term.str().decode()
+
+    def __eq__(self, other: Term) -> bool:
+        return self.c_term == other.c_term
+
+    def __hash__(self):
+        return self.id()
 
 
 # --------------------------------------------------------------------------- #
@@ -584,37 +596,44 @@ def mk_false() -> Term:
     """
     return _term(bitwuzla_api.mk_false())
 
-def mk_bv_value(sort: Sort, value) -> Term:
-    """mk_bv_value(sort, value)
-
-       Create bit-vector ``value`` with given ``sort``.
+def mk_bv_value(sort: Sort, value, uint8_t base = 2) -> Term:
+    """Create bit-vector ``value`` with given ``sort`` and ``base``.
 
        :param sort: Bit-vector sort.
        :type sort: BitwuzlaSort
-       :param value: Hexadecimal, binary or decimal value.
-
-                     - hexadecimal prefix: ``0x`` or ``#x``
-                     - binary prefix: ``0b`` or ``#b``
+       :param value: A string or integer representing of the value
        :type value: str or int
 
        :return: A term representing the bit-vector value.
        :rtype: BitwuzlaTerm
     """
-    base = None
-    is_str = isinstance(value, str)
-    if is_str and (value.startswith('0x') or value.startswith('#x')):
-        base = 16
-    elif is_str and (value.startswith('0b') or value.startswith('#b')):
-        base = 2
-    elif (is_str and value.lstrip('-').isnumeric()) or isinstance(value, int):
-        base = 10
-        value = str(value)
+    return _term(bitwuzla_api.mk_bv_value(sort.c_sort, str(value).encode(), base))
 
-    if base is None:
-        raise ValueError("Cannot convert '{}' to " \
-                         "bit-vector value.".format(value))
+def mk_bv_zero(sort: Sort) -> Term:
+    """mk_bv_zero(sort)
 
-    return _term(bitwuzla_api.mk_bv_value(sort.c_sort, value.encode(), base))
+       Create a bit-vector value zero with ``sort``.
+
+       :param sort: Bit-vector sort.
+       :type sort: BitwuzlaSort
+
+       :return: A term representing the bit-vector value zero of given sort.
+       :rtype: BitwuzlaTerm
+    """
+    return _term(bitwuzla_api.mk_bv_zero(sort.c_sort))
+
+def mk_bv_one(sort: Sort) -> Term:
+    """mk_bv_one(sort)
+
+       Create a bit-vector value one with ``sort``.
+
+       :param sort: Bit-vector sort.
+       :type sort: BitwuzlaSort
+
+       :return: A term representing the bit-vector value one of given sort.
+       :rtype: BitwuzlaTerm
+    """
+    return _term(bitwuzla_api.mk_bv_one(sort.c_sort))
 
 def mk_bv_ones(sort: Sort) -> Term:
     """mk_bv_ones(sort)
@@ -698,20 +717,21 @@ def mk_fp_value(*args) -> Term:
     """
     if isinstance(args[0], Sort):
         _check_arg(args[1], Term)
-        _check_arg(args[2], str)
         if len(args) == 4:
-            _check_arg(args[3], str)
+            _check_arg(args[2], [str, int])
+            _check_arg(args[3], [str, int])
             return _term(bitwuzla_api.mk_fp_value(
                             _csort(args[0]),
                             _cterm(args[1]),
-                            args[2].encode(),
-                            args[3].encode()))
+                            str(args[2]).encode(),
+                            str(args[3]).encode()))
         elif len(args) != 3:
             raise ValueError('Invalid number of arguments')
+        _check_arg(args[2], [str, int, float])
         return _term(bitwuzla_api.mk_fp_value(
                         _csort(args[0]),
                         _cterm(args[1]),
-                        <const string&> args[2].encode()))
+                        <const string&> str(args[2]).encode()))
     elif isinstance(args[0], Term):
         _check_arg(args[1], Term)
         _check_arg(args[2], Term)
