@@ -2146,33 +2146,28 @@ TEST_F(TestCApi, mk_var)
 TEST_F(TestCApi, push)
 {
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
     ASSERT_DEATH(bitwuzla_push(nullptr, 2), d_error_not_null);
 
     bitwuzla_push(bitwuzla, 0);
     bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
   }
 }
 
 TEST_F(TestCApi, pop)
 {
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
     ASSERT_DEATH(bitwuzla_pop(nullptr, 2), d_error_not_null);
 
     bitwuzla_pop(bitwuzla, 0);
     bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
   }
 }
 
 TEST_F(TestCApi, assert)
 {
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  Bitwuzla *bitwuzla       = bitwuzla_new(options);
+  Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
   ASSERT_DEATH(bitwuzla_assert(nullptr, d_true), d_error_not_null);
   ASSERT_DEATH(bitwuzla_assert(bitwuzla, 0), d_error_inv_term);
   ASSERT_DEATH(bitwuzla_assert(bitwuzla, d_bv_const8), d_error_exp_bool_term);
@@ -2188,7 +2183,6 @@ TEST_F(TestCApi, assert)
 
   bitwuzla_assert(bitwuzla, d_bool_const);
   bitwuzla_delete(bitwuzla);
-  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, is_unsat_assumption)
@@ -2295,18 +2289,14 @@ TEST_F(TestCApi, get_unsat_core)
 {
   size_t size;
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla       = bitwuzla_new(options);
+    Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
     ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, &size), d_error_unsat_cores);
     bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
   }
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
     ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, &size), d_error_unsat_cores);
     bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
   }
   {
     BitwuzlaOptions *options = bitwuzla_options_new();
@@ -2354,44 +2344,36 @@ TEST_F(TestCApi, simplify)
 {
   GTEST_SKIP();  // TODO currently always returns unknown
   ASSERT_DEATH(bitwuzla_simplify(nullptr), d_error_not_null);
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  Bitwuzla *bitwuzla       = bitwuzla_new(options);
+  Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
   bitwuzla_assert(bitwuzla, d_bv_const1);
   bitwuzla_assert(bitwuzla, d_and_bv_const1);
   ASSERT_TRUE(bitwuzla_simplify(bitwuzla) == BITWUZLA_SAT);
   bitwuzla_delete(bitwuzla);
-  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, check_sat)
 {
   ASSERT_DEATH(bitwuzla_check_sat(nullptr), d_error_not_null);
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla       = bitwuzla_new(options);
+    Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
     bitwuzla_check_sat(bitwuzla);
     bitwuzla_check_sat(bitwuzla);
     bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
   }
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
     bitwuzla_check_sat(bitwuzla);
     bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
   }
 }
 
 TEST_F(TestCApi, get_value)
 {
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
-    Bitwuzla *bitwuzla = bitwuzla_new(options);
+    Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const8),
                  d_error_produce_models);
     bitwuzla_delete(bitwuzla);
-    bitwuzla_options_delete(options);
   }
   {
     BitwuzlaOptions *options = bitwuzla_options_new();

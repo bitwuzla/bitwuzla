@@ -1017,7 +1017,7 @@ typedef struct Bitwuzla Bitwuzla;
  *
  * The returned instance must be deleted via `bitwuzla_delete()`.
  *
- * @param options The associated options.
+ * @param options The associated options (optional).
  * @return A pointer to the created Bitwuzla instance.
  *
  * @see

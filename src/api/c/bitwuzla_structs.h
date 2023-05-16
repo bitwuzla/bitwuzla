@@ -58,7 +58,14 @@ struct Bitwuzla
 
   Bitwuzla(const BitwuzlaOptions *options)
   {
-    d_bitwuzla              = new bitwuzla::Bitwuzla(options->d_options);
+    if (options)
+    {
+      d_bitwuzla = new bitwuzla::Bitwuzla(options->d_options);
+    }
+    else
+    {
+      d_bitwuzla = new bitwuzla::Bitwuzla();
+    }
     d_bitwuzla_needs_delete = true;
   }
 

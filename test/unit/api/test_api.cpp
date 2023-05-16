@@ -1404,8 +1404,7 @@ TEST_F(TestApi, mk_var)
 TEST_F(TestApi, push)
 {
   {
-    bitwuzla::Options options;
-    bitwuzla::Bitwuzla bitwuzla(options);
+    bitwuzla::Bitwuzla bitwuzla;
     ASSERT_NO_THROW(bitwuzla.push(0));
     ASSERT_NO_THROW(bitwuzla.push(2));
   }
@@ -1414,8 +1413,7 @@ TEST_F(TestApi, push)
 TEST_F(TestApi, pop)
 {
   {
-    bitwuzla::Options options;
-    bitwuzla::Bitwuzla bitwuzla(options);
+    bitwuzla::Bitwuzla bitwuzla;
     ASSERT_THROW(bitwuzla.pop(2), bitwuzla::Exception);
     ASSERT_NO_THROW(bitwuzla.pop(0));
     bitwuzla.push(2);
@@ -1425,8 +1423,7 @@ TEST_F(TestApi, pop)
 
 TEST_F(TestApi, assert_formula)
 {
-  bitwuzla::Options options;
-  bitwuzla::Bitwuzla bitwuzla(options);
+  bitwuzla::Bitwuzla bitwuzla;
   ASSERT_THROW(bitwuzla.assert_formula(bitwuzla::Term()), bitwuzla::Exception);
   ASSERT_THROW(bitwuzla.assert_formula(d_bv_const8), bitwuzla::Exception);
 
@@ -1516,13 +1513,7 @@ TEST_F(TestApi, get_unsat_assumptions)
 TEST_F(TestApi, get_unsat_core)
 {
   {
-    bitwuzla::Options options;
-    bitwuzla::Bitwuzla bitwuzla(options);
-    ASSERT_THROW(bitwuzla.get_unsat_core(), bitwuzla::Exception);
-  }
-  {
-    bitwuzla::Options options;
-    bitwuzla::Bitwuzla bitwuzla(options);
+    bitwuzla::Bitwuzla bitwuzla;
     ASSERT_THROW(bitwuzla.get_unsat_core(), bitwuzla::Exception);
   }
   {
@@ -1574,8 +1565,7 @@ TEST_F(TestApi, get_unsat_core)
 TEST_F(TestApi, simplify)
 {
   GTEST_SKIP();  // currently always returns unknown
-  bitwuzla::Options options;
-  bitwuzla::Bitwuzla bitwuzla(options);
+  bitwuzla::Bitwuzla bitwuzla;
   bitwuzla.assert_formula(d_bool_const);
   bitwuzla.assert_formula(d_and_bv_const1);
   ASSERT_EQ(bitwuzla.simplify(), bitwuzla::Result::SAT);
@@ -1584,14 +1574,12 @@ TEST_F(TestApi, simplify)
 TEST_F(TestApi, check_sat)
 {
   {
-    bitwuzla::Options options;
-    bitwuzla::Bitwuzla bitwuzla(options);
+    bitwuzla::Bitwuzla bitwuzla;
     ASSERT_NO_THROW(bitwuzla.check_sat());
     ASSERT_NO_THROW(bitwuzla.check_sat());
   }
   {
-    bitwuzla::Options options;
-    bitwuzla::Bitwuzla bitwuzla(options);
+    bitwuzla::Bitwuzla bitwuzla;
     ASSERT_NO_THROW(bitwuzla.check_sat());
     ASSERT_NO_THROW(bitwuzla.check_sat());
   }
@@ -1600,8 +1588,7 @@ TEST_F(TestApi, check_sat)
 TEST_F(TestApi, get_value)
 {
   {
-    bitwuzla::Options options;
-    bitwuzla::Bitwuzla bitwuzla(options);
+    bitwuzla::Bitwuzla bitwuzla;
     ASSERT_THROW(bitwuzla.get_value(d_bv_const8), bitwuzla::Exception);
   }
   {

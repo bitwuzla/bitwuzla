@@ -366,7 +366,7 @@ cdef class Bitwuzla:
     cdef unique_ptr[bitwuzla_api.Bitwuzla] c_bitwuzla
     cdef unique_ptr[bitwuzla_api.PyTerminator] c_terminator
 
-    def __init__(self, options: Options):
+    def __init__(self, options: Options = Options()):
         self.c_bitwuzla.reset(new bitwuzla_api.Bitwuzla(options.c_options))
 
     def configure_terminator(self, callback: callable):

@@ -971,7 +971,7 @@ class Bitwuzla
    * @param options The associated options instance. Options must be configured
    *                at this point.
    */
-  Bitwuzla(const Options &options);
+  Bitwuzla(const Options &options = Options());
   /** Destructor. */
   ~Bitwuzla();
 
