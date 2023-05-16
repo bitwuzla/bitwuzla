@@ -793,6 +793,20 @@ Term::is_value() const
 }
 
 bool
+Term::is_true() const
+{
+  return d_node != nullptr && d_node->is_value() && d_node->type().is_bool()
+         && d_node->value<bool>();
+}
+
+bool
+Term::is_false() const
+{
+  return d_node != nullptr && d_node->is_value() && d_node->type().is_bool()
+         && !d_node->value<bool>();
+}
+
+bool
 Term::is_bv_value_zero() const
 {
   return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE

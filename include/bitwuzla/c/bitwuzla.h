@@ -783,6 +783,24 @@ bool bitwuzla_term_is_rm(BitwuzlaTerm term);
 bool bitwuzla_term_is_uninterpreted(BitwuzlaTerm term);
 
 /**
+ * Determine if a term is Boolean value true.
+ *
+ * @param term The term.
+ *
+ * @return True if `term` is a Boolean value true.
+ */
+bool bitwuzla_term_is_true(BitwuzlaTerm term);
+
+/**
+ * Determine if a term is Boolean value false.
+ *
+ * @param term The term.
+ *
+ * @return false if `term` is a Boolean value false.
+ */
+bool bitwuzla_term_is_false(BitwuzlaTerm term);
+
+/**
  * Determine if a term is a bit-vector value representing zero.
  *
  * @param term The term.

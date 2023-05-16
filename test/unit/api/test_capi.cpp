@@ -3180,6 +3180,18 @@ TEST_F(TestCApi, term_is_uninterpreted)
   ASSERT_FALSE(bitwuzla_term_is_uninterpreted(d_bv_zero8));
 }
 
+TEST_F(TestCApi, term_is_true)
+{
+  ASSERT_TRUE(bitwuzla_term_is_true(bitwuzla_mk_true()));
+  ASSERT_FALSE(bitwuzla_term_is_true(bitwuzla_mk_false()));
+}
+
+TEST_F(TestCApi, term_is_false)
+{
+  ASSERT_TRUE(bitwuzla_term_is_false(bitwuzla_mk_false()));
+  ASSERT_FALSE(bitwuzla_term_is_false(bitwuzla_mk_true()));
+}
+
 TEST_F(TestCApi, term_is_bv_value)
 {
   ASSERT_DEATH(bitwuzla_term_is_bv_value(0), d_error_inv_term);

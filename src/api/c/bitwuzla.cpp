@@ -1566,6 +1566,24 @@ bitwuzla_term_is_uninterpreted(BitwuzlaTerm term)
 }
 
 bool
+bitwuzla_term_is_true(BitwuzlaTerm term)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM_ID(term);
+  return import_term(term).is_true();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+bool
+bitwuzla_term_is_false(BitwuzlaTerm term)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM_ID(term);
+  return import_term(term).is_false();
+  BITWUZLA_TRY_CATCH_END;
+}
+
+bool
 bitwuzla_term_is_bv_value_zero(BitwuzlaTerm term)
 {
   BITWUZLA_TRY_CATCH_BEGIN;

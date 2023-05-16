@@ -502,6 +502,18 @@ class Term
   bool is_value() const;
 
   /**
+   * Determine if this term is Boolean value true.
+   * @return True if this term is Boolean value true.
+   */
+  bool is_true() const;
+
+  /**
+   * Determine if this term is Boolean value false.
+   * @return True if this term is Boolean value false.
+   */
+  bool is_false() const;
+
+  /**
    * Determine if this term is a bit-vector value representing zero.
    * @return True if this term is a bit-vector zero value.
    */

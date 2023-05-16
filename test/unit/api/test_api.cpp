@@ -2129,6 +2129,20 @@ TEST_F(TestApi, term_is_value)
   ASSERT_FALSE(d_exists.is_value());
 }
 
+TEST_F(TestApi, term_is_true)
+{
+  ASSERT_FALSE(bitwuzla::Term().is_true());
+  ASSERT_TRUE(bitwuzla::mk_true().is_true());
+  ASSERT_FALSE(bitwuzla::mk_false().is_true());
+}
+
+TEST_F(TestApi, term_is_false)
+{
+  ASSERT_FALSE(bitwuzla::Term().is_false());
+  ASSERT_TRUE(bitwuzla::mk_false().is_false());
+  ASSERT_FALSE(bitwuzla::mk_true().is_false());
+}
+
 TEST_F(TestApi, term_is_bv_value_zero)
 {
   ASSERT_FALSE(bitwuzla::Term().is_bv_value_zero());
