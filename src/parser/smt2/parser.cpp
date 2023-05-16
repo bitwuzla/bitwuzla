@@ -149,6 +149,8 @@ Parser::parse_command(bool parse_only)
     case Token::GET_VALUE: res = parse_command_get_value(); break;
     case Token::POP: res = parse_command_pop(); break;
     case Token::PUSH: res = parse_command_push(); break;
+    case Token::RESET: res = parse_command_reset(); break;
+    case Token::RESET_ASSERTIONS: res = parse_command_reset_assertions(); break;
     case Token::SET_INFO: res = parse_command_set_info(); break;
     case Token::SET_LOGIC: res = parse_command_set_logic(); break;
     case Token::SET_OPTION: res = parse_command_set_option(); break;
@@ -760,6 +762,40 @@ Parser::parse_command_push()
   }
   d_assertion_level += nlevels;
   d_bitwuzla->push(nlevels);
+  print_success();
+  return true;
+}
+
+bool
+Parser::parse_command_reset()
+{
+  init_logic();
+
+  if (!parse_rpar())
+  {
+    return false;
+  }
+  d_bitwuzla.reset(nullptr);
+  d_table   = SymbolTable();
+  d_options = d_options_orig;
+  print_success();
+  return true;
+}
+
+bool
+Parser::parse_command_reset_assertions()
+{
+  init_logic();
+
+  if (!parse_rpar())
+  {
+    return false;
+  }
+  d_bitwuzla.reset(nullptr);
+  if (!d_global_decl)
+  {
+    d_table = SymbolTable();
+  }
   print_success();
   return true;
 }

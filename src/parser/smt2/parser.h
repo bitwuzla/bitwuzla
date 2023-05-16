@@ -202,6 +202,16 @@ class Parser : public bzla::parser::Parser
    */
   bool parse_command_push();
   /**
+   * Parse reset command.
+   * @return True if command was parsed without an error.
+   */
+  bool parse_command_reset();
+  /**
+   * Parse reset-assertions command.
+   * @return True if command was parsed without an error.
+   */
+  bool parse_command_reset_assertions();
+  /**
    * Parse set-info command.
    * @return True if command was parsed without an error.
    */

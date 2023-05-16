@@ -261,6 +261,30 @@ Unsat Assumptions Example
    ../../examples/smt2/unsatassumptions.smt2
    ../../examples/cpp/unsatassumptions.cpp
 
+Reset Example
+^^^^^^^^^^^^^
+
+| This example shows how to reset the solver instance (SMT-LIB command :code:`reset`).
+| The SMT-LIB input for this example can be found at `examples/smt2/reset.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/reset.smt2>`_.
+| The source code for this example can be found at `examples/cpp/reset.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/reset.cpp>`_.
+
+
+.. tabbed-examples::
+   ../../examples/smt2/reset.smt2
+   ../../examples/cpp/reset.cpp
+
+Reset Assertions Example
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+| This example shows how to reset the currently asserted formulas of a solver instance (SMT-LIB command :code:`reset-assertions`).
+| The SMT-LIB input for this example can be found at `examples/smt2/reset_assertions.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/reset_assertions.smt2>`_.
+| The source code for this example can be found at `examples/cpp/reset_assertions.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/reset_assertions.cpp>`_.
+
+
+.. tabbed-examples::
+   ../../examples/smt2/reset_assertions.smt2
+   ../../examples/cpp/reset_assertions.cpp
+
 Parsing Example
 ^^^^^^^^^^^^^^^
 
