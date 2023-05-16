@@ -23,7 +23,8 @@ class Parser
    *                    parser reads from stdin.
    */
   Parser(bitwuzla::Options& options, const std::string& infile_name)
-      : d_options(options),
+      : d_options_orig(options),
+        d_options(options),
         d_infile_name(infile_name),
         d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
         d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
@@ -53,7 +54,8 @@ class Parser
   Parser(bitwuzla::Options& options,
          const std::string& infile_name,
          FILE* infile)
-      : d_options(options),
+      : d_options_orig(options),
+        d_options(options),
         d_infile_name(infile_name),
         d_infile(infile),
         d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
@@ -113,8 +115,10 @@ class Parser
     return d_terminator != nullptr && d_terminator->terminate();
   }
 
+  /** The original Bitwuzla configuration options. */
+  bitwuzla::Options& d_options_orig;
   /** The Bitwuzla configuration options. */
-  bitwuzla::Options& d_options;
+  bitwuzla::Options d_options;
   /** The Bitwuzla instance. */
   std::unique_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
   /** The Bitwuzla terminator. */

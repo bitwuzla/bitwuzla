@@ -110,13 +110,13 @@ class OptionBase
   virtual ~OptionBase();
 
   /** @return True if this option is a Boolean option. */
-  virtual bool is_bool() const { return false; }
+  virtual bool is_bool() { return false; }
   /** @return True if this option is a numeric option. */
-  virtual bool is_numeric() const { return false; }
+  virtual bool is_numeric() { return false; }
   /**
    * @return True if this option is an option that takes a mode (an enum value).
    */
-  virtual bool is_mode() const { return false; }
+  virtual bool is_mode() { return false; }
 
   /** @return The description of this option. */
   const char* description() const { return d_description; }
@@ -168,7 +168,7 @@ class OptionBool : public OptionBase
   }
   OptionBool() = delete;
 
-  bool is_bool() const override { return true; }
+  bool is_bool() override { return true; }
 
   /**
    * Set the current value of a Boolean option.
@@ -230,7 +230,7 @@ class OptionNumeric : public OptionBase
   }
   OptionNumeric() = delete;
 
-  bool is_numeric() const override { return true; }
+  bool is_numeric() override { return true; }
 
   /**
    * Set the current value of a numeric option.
@@ -281,7 +281,7 @@ class OptionMode : public OptionBase
 
   OptionMode() = delete;
 
-  bool is_mode() const override { return true; }
+  bool is_mode() override { return true; }
 
   /**
    * Set current mode.
@@ -381,14 +381,12 @@ class OptionModeT : public OptionMode
 
 class Options
 {
-  /* Note: d_options and d_lng2option must be initialized first since
-   *       initialization of public option members depends on it */
+  // Note: d_name2option must be initialized first since initialization of
+  //       public option members depends on it
 
   friend OptionBase;
 
  private:
-  /** The registered options. */
-  std::unordered_map<Option, OptionBase*> d_options;
   /** Map short and long option name to option. */
   std::unordered_map<std::string, Option> d_name2option;
 
@@ -442,17 +440,17 @@ class Options
   OptionBool pp_variable_subst_norm_bv_ineq;
 
   // Debug options
-  OptionNumeric dbg_rw_node_inc;
-  OptionNumeric dbg_pp_node_inc;
+  OptionNumeric dbg_rw_node_thresh;
+  OptionNumeric dbg_pp_node_thresh;
   OptionBool dbg_check_model;
   OptionBool dbg_check_unsat_core;
 
   /** @return True if the given option is a Boolean option. */
-  bool is_bool(Option opt) const;
+  bool is_bool(Option opt);
   /** @return True if the given option is a numeric option. */
-  bool is_numeric(Option opt) const;
+  bool is_numeric(Option opt);
   /** @return True if the given option is an option with modes. */
-  bool is_mode(Option opt) const;
+  bool is_mode(Option opt);
 
   /** @return True if given string is a valid short or long option name. */
   bool is_valid(const std::string& name) const;
@@ -460,20 +458,20 @@ class Options
   /**
    * @return True if the given value is a valid mode for an option with modes.
    */
-  bool is_valid_mode(Option opt, const std::string& value) const;
+  bool is_valid_mode(Option opt, const std::string& value);
 
   /** @return The description of the given option. */
-  const char* description(Option opt) const;
+  const char* description(Option opt);
   /** @return The long name of the given option. */
-  const char* lng(Option opt) const;
+  const char* lng(Option opt);
   /** @return The short name of the given option. */
-  const char* shrt(Option opt) const;
+  const char* shrt(Option opt);
 
   /**
    * @return The string representations of all valid modes for an option with
    *         modes.
    */
-  std::vector<std::string> modes(Option opt) const;
+  std::vector<std::string> modes(Option opt);
 
   /** @return Option associated with the given long option name. */
   Option option(const std::string& name) const;
@@ -507,7 +505,7 @@ class Options
    * @return The current value.
    */
   template <typename T>
-  const T& get(Option opt) const;
+  const T& get(Option opt);
 
   /**
    * Get the minimum value of option.
@@ -517,7 +515,7 @@ class Options
    * @return The minimum value.
    */
   template <typename T>
-  const T& min(Option opt) const;
+  const T& min(Option opt);
 
   /**
    * Get the maximum value of option.
@@ -527,7 +525,7 @@ class Options
    * @return The maximum value.
    */
   template <typename T>
-  const T& max(Option opt) const;
+  const T& max(Option opt);
 
   /**
    * Get the maximum value of option.
@@ -537,7 +535,7 @@ class Options
    * @return The maximum value.
    */
   template <typename T>
-  const T& dflt(Option opt) const;
+  const T& dflt(Option opt);
 
   /**
    * Finalize options, this enables/disables options depending on the currently
@@ -547,13 +545,13 @@ class Options
 
  private:
   /**
-   * Register option.
+   * Get pointer to option data.
    * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
    * @param opt  The option.
-   * @param option The associated option data.
+   * @return The associated option data.
    */
-  void register_option(Option opt, OptionBase* option);
+  OptionBase* data(Option opt);
 };
 
 // explicit instantiations
@@ -565,23 +563,23 @@ template <>
 void Options::set(Option opt, const std::string& value);
 
 template <>
-const bool& Options::get(Option opt) const;
+const bool& Options::get(Option opt);
 template <>
-const uint64_t& Options::get(Option opt) const;
+const uint64_t& Options::get(Option opt);
 template <>
-const std::string& Options::get(Option opt) const;
+const std::string& Options::get(Option opt);
 
 template <>
-const bool& Options::dflt(Option opt) const;
+const bool& Options::dflt(Option opt);
 template <>
-const uint64_t& Options::dflt(Option opt) const;
+const uint64_t& Options::dflt(Option opt);
 template <>
-const std::string& Options::dflt(Option opt) const;
+const std::string& Options::dflt(Option opt);
 
 template <>
-const uint64_t& Options::min(Option opt) const;
+const uint64_t& Options::min(Option opt);
 template <>
-const uint64_t& Options::max(Option opt) const;
+const uint64_t& Options::max(Option opt);
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla::option

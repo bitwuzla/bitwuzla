@@ -361,6 +361,18 @@ Options::Options() : d_options(new bzla::option::Options()) {}
 
 Options::~Options() {}
 
+Options::Options(const Options &options)
+    : d_options(new bzla::option::Options(*options.d_options))
+{
+}
+
+Options &
+Options::operator=(const Options &options)
+{
+  d_options.reset(new bzla::option::Options(*options.d_options));
+  return *this;
+}
+
 bool
 Options::is_bool(Option option) const
 {

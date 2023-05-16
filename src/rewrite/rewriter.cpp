@@ -117,7 +117,7 @@ Rewriter::rewrite(const Node& node)
 #endif
         it->second = _rewrite(node::utils::rebuild_node(cur, d_cache));
 #ifndef NDEBUG
-        uint64_t thresh = d_env.options().dbg_rw_node_inc();
+        uint64_t thresh = d_env.options().dbg_rw_node_thresh();
         if (thresh > 0 && d_num_nodes > 0)
         {
           auto [new_nodes, depth] = diff(max_id, it->second);

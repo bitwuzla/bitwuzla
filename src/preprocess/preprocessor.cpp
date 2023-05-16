@@ -178,7 +178,7 @@ Preprocessor::apply(AssertionVector& assertions)
 
 #ifndef NDEBUG
   std::unordered_set<Node> cache_pre;
-  if (d_env.options().dbg_pp_node_inc())
+  if (d_env.options().dbg_pp_node_thresh())
   {
     for (size_t i = 0; i < assertions.size(); ++i)
     {
@@ -279,9 +279,9 @@ Preprocessor::apply(AssertionVector& assertions)
   } while (assertions.modified());
 
 #ifndef NDEBUG
-  if (d_env.options().dbg_pp_node_inc())
+  if (d_env.options().dbg_pp_node_thresh())
   {
-    double thresh = 1 + d_env.options().dbg_pp_node_inc() / 100.0;
+    double thresh = 1 + d_env.options().dbg_pp_node_thresh() / 100.0;
     std::unordered_set<Node> cache_post;
     for (size_t i = 0; i < assertions.size(); ++i)
     {

@@ -15,7 +15,13 @@ OptionBase::OptionBase(Options* options,
                        bool is_expert)
     : d_description(desc), d_long(lng), d_short(shrt), d_is_expert(is_expert)
 {
-  options->register_option(opt, this);
+  assert(options->d_name2option.find(lng) == options->d_name2option.end());
+  options->d_name2option.emplace(lng, opt);
+  if (shrt)
+  {
+    assert(options->d_name2option.find(shrt) == options->d_name2option.end());
+    options->d_name2option.emplace(shrt, opt);
+  }
 }
 
 OptionBase::~OptionBase() {}
@@ -65,8 +71,7 @@ OptionModeT<T>::is_valid(const std::string& value) const
 /* --- Options public ------------------------------------------------------- */
 
 Options::Options()
-    : d_options(),
-      d_name2option(),
+    : d_name2option(),
       // general
       log_level(
           this, Option::LOG_LEVEL, 0, 0, 3, "log level", "log-level", "l"),
@@ -271,7 +276,7 @@ Options::Options()
           "pp-variable-subst-norm-bv-ineq"),
 
       // Debugging
-      dbg_rw_node_inc(
+      dbg_rw_node_thresh(
           this,
           Option::DBG_RW_NODE_THRESH,
           0,
@@ -281,16 +286,16 @@ Options::Options()
           "dbg-rw-node-thresh",
           nullptr,
           true),
-      dbg_pp_node_inc(this,
-                      Option::DBG_PP_NODE_THRESH,
-                      0,
-                      0,
-                      100,
-                      "warn threshold [%] for new nodes created through "
-                      "preprocessing in total",
-                      "dbg-pp-node-thresh",
-                      nullptr,
-                      true),
+      dbg_pp_node_thresh(this,
+                         Option::DBG_PP_NODE_THRESH,
+                         0,
+                         0,
+                         100,
+                         "warn threshold [%] for new nodes created through "
+                         "preprocessing in total",
+                         "dbg-pp-node-thresh",
+                         nullptr,
+                         true),
       dbg_check_model(this,
                       Option::DBG_CHECK_MODEL,
                       true,
@@ -304,27 +309,26 @@ Options::Options()
           "check-unsat-core")
 
 {
-  assert(d_options.size() == static_cast<size_t>(Option::NUM_OPTIONS));
 }
 
 /* -------------------------------------------------------------------------- */
 
 bool
-Options::is_bool(Option opt) const
+Options::is_bool(Option opt)
 {
-  return d_options.at(opt)->is_bool();
+  return data(opt)->is_bool();
 }
 
 bool
-Options::is_numeric(Option opt) const
+Options::is_numeric(Option opt)
 {
-  return d_options.at(opt)->is_numeric();
+  return data(opt)->is_numeric();
 }
 
 bool
-Options::is_mode(Option opt) const
+Options::is_mode(Option opt)
 {
-  return d_options.at(opt)->is_mode();
+  return data(opt)->is_mode();
 }
 
 bool
@@ -334,17 +338,17 @@ Options::is_valid(const std::string& name) const
 }
 
 bool
-Options::is_valid_mode(Option opt, const std::string& value) const
+Options::is_valid_mode(Option opt, const std::string& value)
 {
-  assert(d_options.at(opt)->is_mode());
-  return reinterpret_cast<OptionMode*>(d_options.at(opt))->is_valid(value);
+  assert(data(opt)->is_mode());
+  return reinterpret_cast<OptionMode*>(data(opt))->is_valid(value);
 }
 
 std::vector<std::string>
-Options::modes(Option opt) const
+Options::modes(Option opt)
 {
-  assert(d_options.at(opt)->is_mode());
-  return reinterpret_cast<OptionMode*>(d_options.at(opt))->modes();
+  assert(data(opt)->is_mode());
+  return reinterpret_cast<OptionMode*>(data(opt))->modes();
 }
 
 Option
@@ -362,45 +366,45 @@ Options::option(const char* name) const
 }
 
 const char*
-Options::description(Option opt) const
+Options::description(Option opt)
 {
-  return d_options.at(opt)->description();
+  return data(opt)->description();
 }
 
 const char*
-Options::lng(Option opt) const
+Options::lng(Option opt)
 {
-  return d_options.at(opt)->lng();
+  return data(opt)->lng();
 }
 
 const char*
-Options::shrt(Option opt) const
+Options::shrt(Option opt)
 {
-  return d_options.at(opt)->shrt();
+  return data(opt)->shrt();
 }
 
 template <>
 void
 Options::set(Option opt, const bool& value)
 {
-  assert(d_options.at(opt)->is_bool());
-  reinterpret_cast<OptionBool*>(d_options.at(opt))->set(value);
+  assert(data(opt)->is_bool());
+  reinterpret_cast<OptionBool*>(data(opt))->set(value);
 }
 
 template <>
 void
 Options::set(Option opt, const uint64_t& value)
 {
-  assert(d_options.at(opt)->is_numeric());
-  reinterpret_cast<OptionNumeric*>(d_options.at(opt))->set(value);
+  assert(data(opt)->is_numeric());
+  reinterpret_cast<OptionNumeric*>(data(opt))->set(value);
 }
 
 template <>
 void
 Options::set(Option opt, const std::string& value)
 {
-  assert(d_options.at(opt)->is_mode());
-  reinterpret_cast<OptionMode*>(d_options.at(opt))->set_str(value);
+  assert(data(opt)->is_mode());
+  reinterpret_cast<OptionMode*>(data(opt))->set_str(value);
 }
 
 void
@@ -436,66 +440,66 @@ Options::set(const std::string& name, const std::string& value)
 
 template <>
 const bool&
-Options::get(Option opt) const
+Options::get(Option opt)
 {
-  assert(d_options.at(opt)->is_bool());
-  return (*reinterpret_cast<OptionBool*>(d_options.at(opt)))();
+  assert(data(opt)->is_bool());
+  return (*reinterpret_cast<OptionBool*>(data(opt)))();
 }
 
 template <>
 const uint64_t&
-Options::get(Option opt) const
+Options::get(Option opt)
 {
-  assert(d_options.at(opt)->is_numeric());
-  return (*reinterpret_cast<OptionNumeric*>(d_options.at(opt)))();
+  assert(data(opt)->is_numeric());
+  return (*reinterpret_cast<OptionNumeric*>(data(opt)))();
 }
 
 template <>
 const std::string&
-Options::get(Option opt) const
+Options::get(Option opt)
 {
-  assert(d_options.at(opt)->is_mode());
-  return reinterpret_cast<OptionMode*>(d_options.at(opt))->get_str();
+  assert(data(opt)->is_mode());
+  return reinterpret_cast<OptionMode*>(data(opt))->get_str();
 }
 
 template <>
 const bool&
-Options::dflt(Option opt) const
+Options::dflt(Option opt)
 {
-  assert(d_options.at(opt)->is_bool());
-  return reinterpret_cast<OptionBool*>(d_options.at(opt))->dflt();
+  assert(data(opt)->is_bool());
+  return reinterpret_cast<OptionBool*>(data(opt))->dflt();
 }
 
 template <>
 const uint64_t&
-Options::dflt(Option opt) const
+Options::dflt(Option opt)
 {
-  assert(d_options.at(opt)->is_numeric());
-  return reinterpret_cast<OptionNumeric*>(d_options.at(opt))->dflt();
+  assert(data(opt)->is_numeric());
+  return reinterpret_cast<OptionNumeric*>(data(opt))->dflt();
 }
 
 template <>
 const std::string&
-Options::dflt(Option opt) const
+Options::dflt(Option opt)
 {
-  assert(d_options.at(opt)->is_mode());
-  return reinterpret_cast<OptionMode*>(d_options.at(opt))->dflt_str();
+  assert(data(opt)->is_mode());
+  return reinterpret_cast<OptionMode*>(data(opt))->dflt_str();
 }
 
 template <>
 const uint64_t&
-Options::min(Option opt) const
+Options::min(Option opt)
 {
-  assert(d_options.at(opt)->is_numeric());
-  return reinterpret_cast<OptionNumeric*>(d_options.at(opt))->min();
+  assert(data(opt)->is_numeric());
+  return reinterpret_cast<OptionNumeric*>(data(opt))->min();
 }
 
 template <>
 const uint64_t&
-Options::max(Option opt) const
+Options::max(Option opt)
 {
-  assert(d_options.at(opt)->is_numeric());
-  return reinterpret_cast<OptionNumeric*>(d_options.at(opt))->max();
+  assert(data(opt)->is_numeric());
+  return reinterpret_cast<OptionNumeric*>(data(opt))->max();
 }
 
 void
@@ -509,17 +513,58 @@ Options::finalize()
 
 /* --- Options private ------------------------------------------------------ */
 
-void
-Options::register_option(Option opt, OptionBase* option)
+OptionBase*
+Options::data(Option opt)
 {
-  d_options[opt] = option;
-  assert(d_name2option.find(option->d_long) == d_name2option.end());
-  d_name2option.emplace(option->d_long, opt);
-  if (option->d_short)
+  switch (opt)
   {
-    assert(d_name2option.find(option->d_short) == d_name2option.end());
-    d_name2option.emplace(option->d_short, opt);
+    case Option::LOG_LEVEL: return &log_level;
+    case Option::PRODUCE_MODELS: return &produce_models;
+    case Option::PRODUCE_UNSAT_ASSUMPTIONS: return &produce_unsat_assumptions;
+    case Option::PRODUCE_UNSAT_CORES: return &produce_unsat_cores;
+    case Option::SAT_SOLVER: return &sat_solver;
+    case Option::SEED: return &seed;
+    case Option::VERBOSITY: return &verbosity;
+
+    case Option::BV_SOLVER: return &bv_solver;
+    case Option::REWRITE_LEVEL: return &rewrite_level;
+    case Option::SMT_COMP_MODE: return &smt_comp_mode;
+
+    case Option::PROP_NPROPS: return &prop_nprops;
+    case Option::PROP_NUPDATES: return &prop_nupdates;
+    case Option::PROP_PATH_SEL: return &prop_path_sel;
+    case Option::PROP_PROB_PICK_INV_VALUE: return &prop_prob_pick_inv_value;
+    case Option::PROP_PROB_PICK_RANDOM_INPUT:
+      return &prop_prob_pick_random_input;
+    case Option::PROP_CONST_BITS: return &prop_const_bits;
+    case Option::PROP_INEQ_BOUNDS: return &prop_ineq_bounds;
+    case Option::PROP_OPT_LT_CONCAT_SEXT: return &prop_opt_lt_concat_sext;
+    case Option::PROP_SEXT: return &prop_sext;
+    case Option::PROP_NORMALIZE: return &prop_normalize;
+
+    case Option::PREPROCESS: return &preprocess;
+    case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;
+    case Option::PP_ELIM_BV_EXTRACTS: return &pp_elim_bv_extracts;
+    case Option::PP_EMBEDDED_CONSTR: return &pp_embedded_constr;
+    case Option::PP_FLATTEN_AND: return &pp_flatten_and;
+    case Option::PP_NORMALIZE: return &pp_normalize;
+    case Option::PP_NORMALIZE_SHARE_AWARE: return &pp_normalize_share_aware;
+    case Option::PP_SKELETON_PREPROC: return &pp_skeleton_preproc;
+    case Option::PP_VARIABLE_SUBST: return &pp_variable_subst;
+    case Option::PP_VARIABLE_SUBST_NORM_BV_INEQ:
+      return &pp_variable_subst_norm_bv_ineq;
+    case Option::PP_VARIABLE_SUBST_NORM_EQ: return &pp_variable_subst_norm_eq;
+    case Option::PP_VARIABLE_SUBST_NORM_DISEQ:
+      return &pp_variable_subst_norm_diseq;
+
+    case Option::DBG_RW_NODE_THRESH: return &dbg_rw_node_thresh;
+    case Option::DBG_PP_NODE_THRESH: return &dbg_pp_node_thresh;
+    case Option::DBG_CHECK_MODEL: return &dbg_check_model;
+    case Option::DBG_CHECK_UNSAT_CORE: return &dbg_check_unsat_core;
+
+    case Option::NUM_OPTIONS: assert(false);
   }
+  return nullptr;
 }
 
 /* -------------------------------------------------------------------------- */

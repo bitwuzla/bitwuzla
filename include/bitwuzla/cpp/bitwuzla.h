@@ -140,6 +140,10 @@ class Options
   Options();
   /** Destructor. */
   ~Options();
+  /** Copy constructor. */
+  Options(const Options &options);
+  /** Copy assignment. */
+  Options &operator=(const Options &options);
   /**
    * Determine if given option is a Boolean option.
    * @param option The option to query.
@@ -236,7 +240,7 @@ class Options
 
  private:
   /** The wrapped internal options. */
-  std::shared_ptr<bzla::option::Options> d_options;
+  std::unique_ptr<bzla::option::Options> d_options;
 };
 
 /**
@@ -971,6 +975,11 @@ class Bitwuzla
   /** Destructor. */
   ~Bitwuzla();
 
+  /** Disallow copy construction. */
+  Bitwuzla(const Bitwuzla &bitwuzla) = delete;
+  /** Disallow copy assignment. */
+  Bitwuzla &operator=(const Bitwuzla &bitwuzla) = delete;
+
   /**
    * Connect or disconnect associated termination configuration instance.
    * @note Only one terminator can be connected at a time. This will disconnect
@@ -1133,7 +1142,7 @@ class Bitwuzla
   void solver_state_change();
 
   /** The associated solving context. */
-  std::shared_ptr<bzla::SolvingContext> d_ctx;
+  std::unique_ptr<bzla::SolvingContext> d_ctx;
   /** The result of the last check_sat() call. */
   Result d_last_check_sat = Result::UNKNOWN;
   /** The number of issued check-sat queries. */
