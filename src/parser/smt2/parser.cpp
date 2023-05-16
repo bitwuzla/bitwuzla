@@ -553,10 +553,11 @@ Parser::parse_command_get_model()
   {
     return true;
   }
-  (*d_out) << "(" << std::endl;
+  std::stringstream ss;
+  ss << "(" << std::endl;
   for (const auto& node : d_decls)
   {
-    (*d_out) << "  (define-fun " << node->d_symbol << " (";
+    ss << "  (define-fun " << node->d_symbol << " (";
     const bitwuzla::Term& term = node->d_term;
     const bitwuzla::Sort& sort = term.sort();
     if (sort.is_fun())
@@ -568,23 +569,24 @@ Parser::parse_command_get_model()
       while (value[1].kind() == bitwuzla::Kind::LAMBDA)
       {
         assert(value[0].is_variable());
-        (*d_out) << (i > 0 ? " " : "") << "(" << value[0] << " "
-                 << value[0].sort() << ") ";
+        ss << (i > 0 ? " " : "") << "(" << value[0] << " " << value[0].sort()
+           << ") ";
         value = value[1];
         i += 1;
       }
       assert(value[0].is_variable());
-      (*d_out) << (i > 0 ? " " : "") << "(" << value[0] << " "
-               << value[0].sort() << ")) " << sort.fun_codomain() << " ";
-      (*d_out) << value[1] << ")" << std::endl;
+      ss << (i > 0 ? " " : "") << "(" << value[0] << " " << value[0].sort()
+         << ")) " << sort.fun_codomain() << " ";
+      ss << value[1] << ")" << std::endl;
     }
     else
     {
-      (*d_out) << ") " << sort << " " << d_bitwuzla->get_value(node->d_term)
-               << ")" << std::endl;
+      ss << ") " << sort << " " << d_bitwuzla->get_value(node->d_term) << ")"
+         << std::endl;
     }
   }
-  (*d_out) << ")" << std::endl;
+  ss << ")" << std::endl;
+  (*d_out) << ss.str();
   d_out->flush();
   return true;
 }
