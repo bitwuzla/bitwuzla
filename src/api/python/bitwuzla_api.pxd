@@ -98,6 +98,8 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         bool is_const() except +
         bool is_variable() except +
         bool is_value() except +
+        bool is_true() except +
+        bool is_false() except +
         bool is_bv_value_zero() except +
         bool is_bv_value_one() except +
         bool is_bv_value_ones() except +
@@ -128,6 +130,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         void push(uint32_t nlevels) except +
         void pop(uint32_t nlevels) except +
         void assert_formula(const Term &term) except +
+        vector[Term] get_assertions() except +;
         bool is_unsat_assumption(const Term &term) except +
         vector[Term] get_unsat_assumptions() except +
         vector[Term] get_unsat_core() except +

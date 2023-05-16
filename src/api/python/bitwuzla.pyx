@@ -237,6 +237,12 @@ cdef class Term:
     def is_value(self) -> bool:
         return self.c_term.is_value()
 
+    def is_true(self) -> bool:
+        return self.c_term.is_true()
+
+    def is_false(self) -> bool:
+        return self.c_term.is_false()
+
     def is_bv_value_zero(self) -> bool:
         return self.c_term.is_bv_value_zero()
 
@@ -424,6 +430,13 @@ cdef class Bitwuzla:
         """
         for f in formulas:
             self.c_bitwuzla.get().assert_formula(_cterm(f))
+
+
+    def get_assertions(self) -> list[Term]:
+        """Get currently asserted formulas.
+           :return: List of current assertions.
+        """
+        return _term_list(self.c_bitwuzla.get().get_assertions())
 
     def check_sat(self, *assumptions: Term) -> Result:
         """Check satisfiability of asserted formulas under possibly given
