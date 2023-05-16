@@ -260,3 +260,21 @@ def test_mk_fp_value():
         mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), 1.2, 3)
     with pytest.raises(ValueError):
         mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), 1, 3.3)
+
+
+def test_mk_const():
+    a = mk_const(mk_bv_sort(8), "a")
+    assert a.symbol() == "a"
+    assert mk_const(mk_bool_sort()).symbol() == None
+
+
+def test_mk_const_array():
+    a = mk_const_array(mk_array_sort(mk_bool_sort(), mk_bool_sort()), mk_true())
+    assert a[0].is_value()
+    assert a[0].value() == True
+
+
+def test_mk_var():
+    x = mk_var(mk_bv_sort(8), "x")
+    assert x.symbol() == "x"
+    assert mk_var(mk_bool_sort()).symbol() == None
