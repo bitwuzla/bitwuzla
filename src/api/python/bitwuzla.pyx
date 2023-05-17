@@ -14,17 +14,12 @@ The Python API of the SMT solver Bitwuzla.
 
 cimport bitwuzla_api
 from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t
-from libcpp cimport bool as cbool
+from libcpp cimport bool as c_bool
 from libcpp.vector cimport vector
 from libcpp.optional cimport optional, nullopt, make_optional
 from libcpp.string cimport string
 from libcpp.memory cimport unique_ptr
 from cpython.ref cimport PyObject
-from cpython cimport array
-from collections import defaultdict
-import array
-import math, os, sys
-import tempfile
 
 include "enums.pxd"
 include "options.pxd"
@@ -35,7 +30,7 @@ class BitwuzlaException(Exception):
         self.msg = msg
 
     def __str__(self):
-        return "[bitwuzla] {}".format(self.msg)
+        return self.msg
 
 # --------------------------------------------------------------------------- #
 # Utility functions
@@ -291,7 +286,7 @@ cdef class Term:
     def value(self, uint8_t base = 2):
         sort = self.sort()
         if sort.is_bool():
-            return self.c_term.value[cbool]()
+            return self.c_term.value[c_bool]()
         elif sort.is_rm():
             return RoundingMode(self.c_term.value[bitwuzla_api.RoundingMode]())
         return self.c_term.value[string](base).decode()
@@ -582,7 +577,8 @@ def mk_uninterpreted_sort(symbol: str = None) -> Sort:
     cdef optional[string] opt = nullopt
     if symbol:
         opt = <string?> symbol.encode()
-    return _sort(bitwuzla_api.mk_uninterpreted_sort(<optional[const string]?> opt))
+    return _sort(
+            bitwuzla_api.mk_uninterpreted_sort(<optional[const string]?> opt))
 
 
 # --------------------------------------------------------------------------- #

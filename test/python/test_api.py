@@ -14,11 +14,11 @@ from bitwuzla import *
 
 def test_options_set():
     options = Options()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         options.set("incremental", True)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         options.set(Option.VERBOSITY, 5)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         options.set("VERBOSITY", 5)
 
     options.set(Option.PRODUCE_MODELS, True)
@@ -32,7 +32,7 @@ def test_options_set():
     assert options.get(Option.VERBOSITY) == 2
     options.set("verbose", 3)
     assert options.get(Option.VERBOSITY) == 3
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         options.set("verbositi", "3")
 
     assert options.get(Option.BV_SOLVER) == "bitblast"
@@ -45,9 +45,9 @@ def test_options_set():
     options.set("sat-solver", "kissat")
     assert options.get(Option.SAT_SOLVER) == "kissat"
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         options.set("sat--solver", "kissat")
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         options.set(Option.BV_SOLVER, "asdf")
 
 
@@ -59,11 +59,11 @@ def test_options_set_args():
     assert options.get(Option.VERBOSITY) == 3
     options.set_args("-v=4")
     assert options.get(Option.VERBOSITY) == 4
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         options.set_args("-v=100")
     options.set_args("-S=cadical")
     assert options.get(Option.SAT_SOLVER), "cadical"
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         options.set_args("--no-verbose")
 
 
@@ -78,9 +78,9 @@ def test_mk_array_sort():
     assert sort.is_array()
     mk_array_sort(bsort, sort)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_array_sort(Sort(), bsort)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_array_sort(bsort, Sort())
 
 
@@ -88,7 +88,7 @@ def test_mk_bv_sort():
     sort = mk_bv_sort(8)
     assert sort.is_bv()
     assert sort.bv_size() == 8
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_sort(0)
 
 def test_mk_fp_sort():
@@ -96,16 +96,16 @@ def test_mk_fp_sort():
     assert sort.is_fp()
     assert sort.fp_exp_size() == 5
     assert sort.fp_sig_size() == 11
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_sort(0, 11)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_sort(5, 0)
 
 
 def test_mk_fun_sort():
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fun_sort([], mk_bool_sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fun_sort([mk_bool_sort(), mk_bool_sort()], Sort())
 
 
@@ -141,9 +141,9 @@ def test_mk_bv_zero():
     assert val.value() == "00000000"
     assert val.value(10) == "0"
     assert val.value(16) == "0"
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_zero(Sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_zero(mk_fp_sort(5, 11))
 
 
@@ -153,9 +153,9 @@ def test_mk_bv_one():
     assert val.value() == "00000001"
     assert val.value(10) == "1"
     assert val.value(16) == "1"
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_one(Sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_one(mk_fp_sort(5, 11))
 
 
@@ -165,9 +165,9 @@ def test_mk_bv_ones():
     assert val.value() == "11111111"
     assert val.value(10) == "255"
     assert val.value(16) == "ff"
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_ones(Sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_ones(mk_fp_sort(5, 11))
 
 
@@ -177,9 +177,9 @@ def test_mk_bv_min_signed():
     assert val.value() == "10000000"
     assert val.value(10) == "128"
     assert val.value(16) == "80"
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_min_signed(Sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_min_signed(mk_fp_sort(5, 11))
 
 
@@ -189,51 +189,51 @@ def test_mk_bv_max_signed():
     assert val.value() == "01111111"
     assert val.value(10) == "127"
     assert val.value(16) == "7f"
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_max_signed(Sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_max_signed(mk_fp_sort(5, 11))
 
 def test_mk_fp_pos_zero():
     val = mk_fp_pos_zero(mk_fp_sort(5, 11))
     assert val.is_fp_value_pos_zero()
     assert val.value() == "0000000000000000"
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_pos_zero(Sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_pos_zero(mk_bv_sort(8))
 
 def test_mk_fp_neg_zero():
     val = mk_fp_neg_zero(mk_fp_sort(5, 11))
     assert val.is_fp_value_neg_zero()
     assert val.value() == "1000000000000000"
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_neg_zero(Sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_neg_zero(mk_bv_sort(8))
 
 def test_mk_fp_pos_inf():
     val = mk_fp_pos_inf(mk_fp_sort(5, 11))
     assert val.is_fp_value_pos_inf()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_pos_inf(Sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_pos_inf(mk_bv_sort(8))
 
 def test_mk_fp_neg_inf():
     val = mk_fp_neg_inf(mk_fp_sort(5, 11))
     assert val.is_fp_value_neg_inf()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_neg_inf(Sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_neg_inf(mk_bv_sort(8))
 
 def test_mk_fp_nan():
     val = mk_fp_nan(mk_fp_sort(5, 11))
     assert val.is_fp_value_nan()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_nan(Sort())
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_nan(mk_bv_sort(8))
 
 def test_mk_bv_value():
@@ -245,12 +245,12 @@ def test_mk_bv_value():
     mk_bv_value(mk_bv_sort(8), 127, 10)
     mk_bv_value(mk_bv_sort(8), "-128", 10)
     mk_bv_value(mk_bv_sort(8), -128, 10)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_value(mk_bv_sort(8), "256", 10)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_bv_value(mk_bv_sort(8), "-129", 10)
         mk_bv_value(Sort(), "010", 2)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
       mk_bv_value(mk_bv_sort(8), "", 2)
 
 def test_mk_fp_value():
@@ -259,15 +259,15 @@ def test_mk_fp_value():
                       mk_bv_value(mk_bv_sort(10), 0))
     assert val.is_fp_value_neg_zero()
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_value(Term(),
                     mk_bv_value(mk_bv_sort(5), 0),
                     mk_bv_value(mk_bv_sort(10), 0))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_value(mk_bv_value(mk_bv_sort(1), 1),
                     Term(),
                     mk_bv_value(mk_bv_sort(10), 0))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         mk_fp_value(mk_bv_value(mk_bv_sort(1), 1),
                     mk_bv_value(mk_bv_sort(5), 0),
                     Term())
@@ -331,7 +331,7 @@ def test_push():
 def test_pop():
     bitwuzla = Bitwuzla()
     bitwuzla.pop(0)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         bitwuzla.pop(2)
     bitwuzla.push(2)
     bitwuzla.pop(2)
@@ -339,7 +339,7 @@ def test_pop():
 
 def test_assert_formula():
   bitwuzla = Bitwuzla()
-  with pytest.raises(RuntimeError):
+  with pytest.raises(BitwuzlaException):
       bitwuzla.assert_formula(Term())
   bitwuzla.assert_formula(mk_true())
   bitwuzla.assert_formula(mk_false())
@@ -356,7 +356,7 @@ def test_is_unsat_assumption():
     options = Options()
     options.set(Option.PRODUCE_UNSAT_ASSUMPTIONS, True)
     bitwuzla = Bitwuzla(options)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         bitwuzla.is_unsat_assumption(mk_false())
 
     a = mk_const(mk_bool_sort(), "a")
@@ -372,7 +372,7 @@ def test_get_unsat_assumption():
     options = Options()
     options.set(Option.PRODUCE_UNSAT_ASSUMPTIONS, True)
     bitwuzla = Bitwuzla(options)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         bitwuzla.get_unsat_assumptions()
 
     a = mk_const(mk_bool_sort(), "a")
@@ -386,7 +386,7 @@ def test_get_unsat_core():
     options = Options()
     options.set(Option.PRODUCE_UNSAT_CORES, True)
     bitwuzla = Bitwuzla(options)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BitwuzlaException):
         bitwuzla.get_unsat_core()
 
     a = mk_const(mk_bool_sort(), "a")

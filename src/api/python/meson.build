@@ -27,7 +27,7 @@ options_pxd = custom_target('options.pxd',
 python_dep = python.dependency()
 bitwuzla_py_ext = python.extension_module(
   'bitwuzla',
-  ['bitwuzla.pyx', enums_pxd, options_pxd, 'utils.c', 'abort.cpp', 'terminator.cpp'],
+  ['bitwuzla.pyx', enums_pxd, options_pxd, 'terminator.cpp'],
   dependencies: [python_dep, bitwuzla_dep],
   # Note: include_directories not passed to cython compiler
   cython_args: ['-I', meson.current_build_dir()],
