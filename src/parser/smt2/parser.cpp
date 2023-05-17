@@ -52,6 +52,9 @@ Parser::parse(bool parse_only)
   while (parse_command(parse_only) && !d_done && !terminate())
     ;
 
+  // init in case that we didn't parse any commands that triggered init
+  init_bitwuzla();
+
   if (d_error.empty())
   {
     if (!terminate() && d_verbosity)
