@@ -2044,9 +2044,9 @@ BitVectorShl::is_invertible(const BitVector& t,
           }
           return true;
         }
+        BitVector min = BitVector::from_ui(size, ctz_t - ctz_s);
         if (x_has_fixed_bits)
         {
-          BitVector min = BitVector::from_ui(size, ctz_t - ctz_s);
           if (x.hi().compare(min) >= 0)
           {
             BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
@@ -2056,6 +2056,12 @@ BitVectorShl::is_invertible(const BitVector& t,
             return true;
           }
           return false;
+        }
+        else
+        {
+          BV_NODE_CACHE_INVERSE(
+              BitVector(size, *d_rng, min, BitVector::mk_ones(size)));
+          return true;
         }
       }
       ic = !x_has_fixed_bits
@@ -2674,15 +2680,23 @@ BitVectorShr::inverse_value(RNG* rng,
           inverse.reset(new BitVector(size, *rng));
         }
       }
-      else if (t_is_zero && x.has_fixed_bits())
+      else if (t_is_zero)
       {
         uint64_t clz_t = t.count_leading_zeros();
         uint64_t clz_s = s.count_leading_zeros();
         BitVector min  = BitVector::from_ui(size, clz_t - clz_s);
         assert(x.hi().compare(min) >= 0);
-        BitVectorDomainGenerator gen(x, rng, min, x.hi());
-        assert(gen.has_random());
-        inverse.reset(new BitVector(gen.random()));
+        if (x.has_fixed_bits())
+        {
+          BitVectorDomainGenerator gen(x, rng, min, x.hi());
+          assert(gen.has_random());
+          inverse.reset(new BitVector(gen.random()));
+        }
+        else
+        {
+          inverse.reset(
+              new BitVector(size, *rng, min, BitVector::mk_ones(size)));
+        }
       }
       else
       {
