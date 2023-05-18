@@ -10,7 +10,7 @@ namespace parser::smt2 {
 
 /* Lexer public ------------------------------------------------------------- */
 
-Lexer::Lexer(FILE* infile) : d_infile(infile)
+Lexer::Lexer(FILE* infile) : d_infile(infile), d_buffer(d_buf_size, 0)
 {
   assert(infile);
   init_char_classes();

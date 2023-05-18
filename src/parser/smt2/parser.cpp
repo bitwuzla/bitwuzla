@@ -14,6 +14,11 @@ Parser::Parser(bitwuzla::Options& options, const std::string& infile_name)
   {
     d_lexer.reset(new Lexer(d_infile));
   }
+  if (infile_name == "<stdin>")
+  {
+    d_lexer->d_buf_size = 1;
+    d_lexer->d_buf_idx  = 1;
+  }
   d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
                        | static_cast<uint32_t>(TokenClass::CORE)
                        | static_cast<uint32_t>(TokenClass::KEYWORD)
@@ -29,6 +34,11 @@ Parser::Parser(bitwuzla::Options& options,
   if (d_error.empty())
   {
     d_lexer.reset(new Lexer(d_infile));
+  }
+  if (infile_name == "<stdin>")
+  {
+    d_lexer->d_buf_size = 1;
+    d_lexer->d_buf_idx  = 1;
   }
   d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
                        | static_cast<uint32_t>(TokenClass::CORE)

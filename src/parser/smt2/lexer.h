@@ -54,10 +54,12 @@ class Lexer
    */
   const Coordinate& last_coo() const { return d_last_coo; }
 
- private:
   /** The size of the chunks to be read into the input file buffer d_buffer. */
-  inline static constexpr size_t s_buf_size = 1024;
+  size_t d_buf_size = 1024;
+  /** The index of the next character to be read from the buffer. */
+  size_t d_buf_idx = d_buf_size;
 
+ private:
   /** The set of legal printable characters. */
   inline static const std::string s_printable_ascii_chars =
       "!\"#$%&'()*+,-./"
@@ -119,11 +121,11 @@ class Lexer
    */
   int32_t next_char()
   {
-    if (d_buf_idx == s_buf_size)
+    if (d_buf_idx == d_buf_size)
     {
       assert(!d_saved);
       size_t cnt =
-          std::fread(d_buffer.data(), sizeof(char), s_buf_size, d_infile);
+          std::fread(d_buffer.data(), sizeof(char), d_buf_size, d_infile);
       if (std::feof(d_infile))
       {
         d_buffer[cnt] = EOF;
@@ -227,12 +229,10 @@ class Lexer
 
   /**
    * The read buffer.
-   * Characters are read from the input file into the buffer in s_buf_size
+   * Characters are read from the input file into the buffer in d_buf_size
    * chunks, and next_char() then reads character by character from the buffer.
    */
-  std::array<char, s_buf_size> d_buffer{};  // value-initialized to 0
-  /** The index of the next character to be read from the buffer. */
-  size_t d_buf_idx = s_buf_size;
+  std::vector<char> d_buffer;  // value-initialized to 0
   /** True if we saved a character that has not been consumed yet. */
   bool d_saved = false;
 
