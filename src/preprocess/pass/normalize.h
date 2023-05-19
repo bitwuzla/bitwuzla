@@ -38,6 +38,7 @@ class PassNormalize : public PreprocessingPass
    * @param coeffs The resulting map from node to its occurrence count.
    */
   void compute_coefficients(const Node& node,
+                            node::Kind kind,
                             const std::unordered_map<Node, uint64_t>& parents,
                             CoefficientsMap& coeffs);
 
@@ -53,9 +54,10 @@ class PassNormalize : public PreprocessingPass
    *         in rhs, lhs will contain `a: 1` and rhs `a: 0` after calling this
    *         function.
    */
-  Node compute_common_coefficients(node::Kind kind,
-                                   CoefficientsMap& lhs,
-                                   CoefficientsMap& rhs);
+  CoefficientsMap compute_common_coefficients(CoefficientsMap& lhs,
+                                              CoefficientsMap& rhs);
+
+  Node mk_node(node::Kind kind, const CoefficientsMap& coeffs);
 
   /**
    * Normalize factors for bit-vector add.
@@ -70,7 +72,8 @@ class PassNormalize : public PreprocessingPass
    */
   BitVector normalize_add(const Node& node,
                           CoefficientsMap& coeffs,
-                          ParentsMap& parents);
+                          ParentsMap& parents,
+                          bool keep_value = false);
   /**
    * Normalize factors for bit-vector and.
    * @param node The adder node.
@@ -92,7 +95,9 @@ class PassNormalize : public PreprocessingPass
    *         can be asserted that no values with a coefficient > 0 occur
    *         in the coefficents map.
    */
-  BitVector normalize_mul(const Node& node, CoefficientsMap& coeffs);
+  BitVector normalize_mul(const Node& node,
+                          CoefficientsMap& coeffs,
+                          bool keep_value = false);
   /**
    * Helper to determine the normalized set of 'coefficients' (occurrences) for
    * an equality over the given two nodes of the same kind.
@@ -187,6 +192,8 @@ class PassNormalize : public PreprocessingPass
    */
   Node rebuild_top(const Node& node, const Node& top, const Node& normalized);
 
+  void collect_adders(const Node& assertion);
+
   /**
    * True to detect occurrences > 1, i.e., nodes of given kind that have
    * multiple parents. If true, we do not normalize such nodes to avoid
@@ -207,6 +214,10 @@ class PassNormalize : public PreprocessingPass
   std::unordered_map<Node, uint64_t> d_parents;
 
   std::unordered_set<Node> d_parents_cache;
+
+  std::vector<Node> d_adder_chains;
+  std::unordered_map<Node, uint64_t> d_adder_chains_length;
+  std::unordered_set<Node> d_adder_chains_cache;
 
   struct Statistics
   {

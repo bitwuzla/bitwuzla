@@ -57,6 +57,11 @@ class TestPassNormalize : public TestPreprocessingPass
     return d_nm.mk_node(Kind::EQUAL, {a, b});
   }
 
+  Node ult(const Node& a, const Node& b) const
+  {
+    return d_nm.mk_node(Kind::BV_ULT, {a, b});
+  }
+
   void test_compute_coefficients(
       const Node& node,
       const std::unordered_map<Node, int64_t>& expected,
@@ -64,7 +69,7 @@ class TestPassNormalize : public TestPreprocessingPass
   {
     PassNormalize::CoefficientsMap coeffs;
     PassNormalize::ParentsMap parents;
-    d_pass->compute_coefficients(node, parents, coeffs);
+    d_pass->compute_coefficients(node, node.kind(), parents, coeffs);
 
     if (consider_neg)
     {
@@ -143,8 +148,8 @@ class TestPassNormalize : public TestPreprocessingPass
       bool consider_neg)
   {
     PassNormalize::CoefficientsMap coeffs0, coeffs1;
-    d_pass->compute_coefficients(node[0], {}, coeffs0);
-    d_pass->compute_coefficients(node[1], {}, coeffs1);
+    d_pass->compute_coefficients(node[0], node[0].kind(), {}, coeffs0);
+    d_pass->compute_coefficients(node[1], node[1].kind(), {}, coeffs1);
 
     test_compute_coefficients(node[0], expected0, consider_neg);
     test_compute_coefficients(node[1], expected1, consider_neg);
@@ -471,7 +476,8 @@ TEST_F(TestPassNormalize, compute_common_coefficients_mul1)
   Node ba = mul(d_b, d_a);
 
   Node exp = mul(ba, mul(ba, d_b));
-  Node res = d_pass->compute_common_coefficients(Kind::BV_MUL, lhs, rhs);
+  auto coeffs = d_pass->compute_common_coefficients(lhs, rhs);
+  Node res    = d_pass->mk_node(Kind::BV_MUL, coeffs);
 
   ASSERT_EQ(res, exp);
   ASSERT_EQ(lhs, lhs_exp);
@@ -498,7 +504,8 @@ TEST_F(TestPassNormalize, compute_common_coefficients_mul2)
   Node ab_c = mul(ab, d_c);
 
   Node exp = mul(ab_c, mul(mul(ab_c, d_a), ab));
-  Node res = d_pass->compute_common_coefficients(Kind::BV_MUL, lhs, rhs);
+  auto coeffs = d_pass->compute_common_coefficients(lhs, rhs);
+  Node res    = d_pass->mk_node(Kind::BV_MUL, coeffs);
 
   ASSERT_EQ(res, exp);
   ASSERT_EQ(lhs, lhs_exp);
@@ -526,7 +533,8 @@ TEST_F(TestPassNormalize, compute_common_coefficients_mul3)
   Node a_ab_c = mul(d_a, ab_c);
 
   Node exp = mul(mul(d_a, a_ab_c), mul(a_ab_c, ab));
-  Node res = d_pass->compute_common_coefficients(Kind::BV_MUL, lhs, rhs);
+  auto coeffs = d_pass->compute_common_coefficients(lhs, rhs);
+  Node res    = d_pass->mk_node(Kind::BV_MUL, coeffs);
 
   ASSERT_EQ(res, exp);
   ASSERT_EQ(lhs, lhs_exp);
@@ -553,7 +561,8 @@ TEST_F(TestPassNormalize, compute_common_coefficients_add1)
   Node a2 = mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_a);
 
   Node exp = add(a2, b3);
-  Node res = d_pass->compute_common_coefficients(Kind::BV_ADD, lhs, rhs);
+  auto coeffs = d_pass->compute_common_coefficients(lhs, rhs);
+  Node res    = d_pass->mk_node(Kind::BV_ADD, coeffs);
 
   ASSERT_EQ(res, exp);
   ASSERT_EQ(lhs, lhs_exp);
@@ -581,7 +590,8 @@ TEST_F(TestPassNormalize, compute_common_coefficients_add2)
   Node c2 = mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_c);
 
   Node exp = add(add(a4, b3), c2);
-  Node res = d_pass->compute_common_coefficients(Kind::BV_ADD, lhs, rhs);
+  auto coeffs = d_pass->compute_common_coefficients(lhs, rhs);
+  Node res    = d_pass->mk_node(Kind::BV_ADD, coeffs);
 
   ASSERT_EQ(res, exp);
   ASSERT_EQ(lhs, lhs_exp);
@@ -609,7 +619,8 @@ TEST_F(TestPassNormalize, compute_common_coefficients_add3)
   Node c2 = mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_c);
 
   Node exp = add(add(a6, b3), c2);
-  Node res = d_pass->compute_common_coefficients(Kind::BV_ADD, lhs, rhs);
+  auto coeffs = d_pass->compute_common_coefficients(lhs, rhs);
+  Node res    = d_pass->mk_node(Kind::BV_ADD, coeffs);
 
   ASSERT_EQ(res, exp);
   ASSERT_EQ(lhs, lhs_exp);
@@ -634,9 +645,10 @@ TEST_F(TestPassNormalize, compute_common_coefficients_add4)
   Node b3 = mul(d_nm.mk_value(BitVector::from_ui(8, 3)), d_b);
   Node c2 = mul(d_nm.mk_value(BitVector::from_ui(8, 2)), d_c);
 
-  Node res = d_pass->compute_common_coefficients(Kind::BV_ADD, lhs, rhs);
+  auto coeffs = d_pass->compute_common_coefficients(lhs, rhs);
+  Node res    = d_pass->mk_node(Kind::BV_ADD, coeffs);
 
-  ASSERT_EQ(res, add(d_b, d_a));
+  ASSERT_EQ(res, add(d_a, d_b));
   ASSERT_EQ(lhs, lhs_exp);
   ASSERT_EQ(rhs, rhs_exp);
 }
@@ -1373,6 +1385,47 @@ TEST_F(TestPassNormalize, add_normalize_neg5)
                  equal(add(d_c, d_two), add(m3a, m2b)));
 }
 //(not (= s (bvadd (bvadd (bvadd s t) (bvmul s t)) (bvmul t (bvnot s)))))
+
+TEST_F(TestPassNormalize, add_normalize_ult1)
+{
+  // (a + b) + (c + d)
+  Node ab   = add(d_a, d_b);
+  Node cd   = add(d_c, d_d);
+  Node add0 = add(ab, cd);
+  // (d + (a + (c  + b)))
+  Node cb   = add(d_c, d_b);
+  Node acb  = add(d_a, cb);
+  Node add1 = add(d_d, acb);
+
+  Node exp = add(add(add(d_a, d_b), d_c), d_d);
+  test_assertion(ult(add0, add1), ult(exp, exp), ult(exp, exp));
+}
+
+TEST_F(TestPassNormalize, add_normalize_ult2)
+{
+  // (a + b) + (c + e)
+  Node ab   = add(d_a, d_b);
+  Node ce   = add(d_c, d_e);
+  Node add0 = add(ab, ce);
+  // (d + (a + (c  + b)))
+  Node cb   = add(d_c, d_b);
+  Node acb  = add(d_a, cb);
+  Node add1 = add(d_d, acb);
+
+  // (e + (a + b +c )) < (d + (a + b + c))
+  Node lhs = add(d_e, add(add(d_a, d_b), d_c));
+  Node rhs = add(d_d, add(add(d_a, d_b), d_c));
+
+  test_assertion(ult(add0, add1), ult(lhs, rhs), ult(lhs, rhs));
+}
+
+TEST_F(TestPassNormalize, add_normalize_ult3)
+{
+  // (a + 1)
+  Node a1 = add(d_a, d_one);
+
+  test_assertion(ult(a1, d_one), ult(a1, d_one), ult(a1, d_one));
+}
 
 /* -------------------------------------------------------------------------- */
 

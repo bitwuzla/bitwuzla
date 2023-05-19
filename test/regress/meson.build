@@ -368,6 +368,8 @@ tests_smt2 = [
   ['preprocess/fun/lambda_elim2.smt2'],
   ['preprocess/normalize1.smt2'],
   ['preprocess/normalize2.smt2'],
+  ['preprocess/normalize3.smt2'],
+  ['preprocess/normalize4.smt2'],
   ['preprocess/regrinc1.smt2'],
   ['preprocess/rewrite1.smt2'],
   ['preprocess/rewrite2.smt2'],

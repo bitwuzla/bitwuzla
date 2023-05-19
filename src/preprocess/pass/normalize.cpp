@@ -47,29 +47,6 @@ _count_parents(const node_ref_vector& nodes,
   }
 }
 
-void
-push_factorized(Kind kind,
-                const Node& node,
-                const BitVector& occs,
-                std::vector<Node>& nodes)
-{
-  if (kind == Kind::BV_ADD)
-  {
-    if (!occs.is_zero())
-    {
-      NodeManager& nm = NodeManager::get();
-      nodes.push_back(nm.mk_node(Kind::BV_MUL, {nm.mk_value(occs), node}));
-    }
-  }
-  else
-  {
-    assert(kind == Kind::BV_MUL || kind == Kind::BV_XOR
-           || kind == Kind::BV_AND);
-    assert(BitVector::fits_in_size(64, occs.str(), 2));
-    nodes.insert(nodes.end(), occs.to_uint64(true), node);
-  }
-}
-
 #ifndef NDEBUG
 void
 print_coefficients(PassNormalize::CoefficientsMap& coeff)
@@ -115,10 +92,10 @@ is_leaf(Kind kind,
 
 void
 PassNormalize::compute_coefficients(const Node& node,
+                                    node::Kind kind,
                                     const ParentsMap& parents,
                                     CoefficientsMap& coeffs)
 {
-  Kind kind        = node.kind();
   BitVector zero   = BitVector::mk_zero(node.type().bv_size());
 
   node_ref_vector nodes;
@@ -191,13 +168,10 @@ PassNormalize::compute_coefficients(const Node& node,
   }
 }
 
-Node
-PassNormalize::compute_common_coefficients(Kind kind,
-                                           PassNormalize::CoefficientsMap& lhs,
+PassNormalize::CoefficientsMap
+PassNormalize::compute_common_coefficients(PassNormalize::CoefficientsMap& lhs,
                                            PassNormalize::CoefficientsMap& rhs)
 {
-  assert(kind == Kind::BV_ADD || kind == Kind::BV_MUL);
-
   // We factor out common combinations of common leafs to maximize sharing.
   // For example,
   //         lhs = {a: 1, b: 1}
@@ -214,7 +188,7 @@ PassNormalize::compute_common_coefficients(Kind kind,
   //         rhs = {a: 1, b: 2, c: 1}
   //         common = (aaabc * (aaabc * ab))
 
-  std::vector<std::pair<Node, BitVector>> common_coeff;
+  CoefficientsMap common_coeff;
   for (auto it0 = lhs.begin(), end = lhs.end(); it0 != end; ++it0)
   {
     auto it1 = rhs.find(it0->first);
@@ -228,65 +202,79 @@ PassNormalize::compute_common_coefficients(Kind kind,
       }
       it0->second.ibvsub(occs);
       it1->second.ibvsub(occs);
-      common_coeff.emplace_back(it0->first, occs);
+      common_coeff.emplace(it0->first, occs);
     }
   }
+  return common_coeff;
+}
+
+Node
+PassNormalize::mk_node(Kind kind, const CoefficientsMap& coeffs)
+{
+  assert(kind == Kind::BV_ADD || kind == Kind::BV_MUL);
 
   Node res;
-  if (common_coeff.size())
+  if (coeffs.empty())
   {
-    NodeManager& nm = NodeManager::get();
-    // combine common subterms
-    if (kind == Kind::BV_ADD)
+    return res;
+  }
+
+  std::vector<std::pair<Node, BitVector>> coeffs_vec(coeffs.begin(),
+                                                     coeffs.end());
+  std::sort(
+      coeffs_vec.begin(), coeffs_vec.end(), [](const auto& a, const auto& b) {
+        return a.first.id() < b.first.id();
+      });
+
+  NodeManager& nm = NodeManager::get();
+  // combine common subterms
+  if (kind == Kind::BV_ADD)
+  {
+    const auto& [node, coeff] = coeffs_vec[0];
+    assert(!coeff.is_zero());
+    res = coeff.is_one() ? node
+                         : nm.mk_node(Kind::BV_MUL, {nm.mk_value(coeff), node});
+    for (size_t i = 1, n = coeffs_vec.size(); i < n; ++i)
     {
-      assert(!common_coeff[0].second.is_zero());
-      res = common_coeff[0].second.is_one()
-                ? common_coeff[0].first
-                : nm.mk_node(Kind::BV_MUL,
-                             {nm.mk_value(common_coeff[0].second),
-                              common_coeff[0].first});
-      for (size_t i = 1, n = common_coeff.size(); i < n; ++i)
+      const auto& [node, coeff] = coeffs_vec[i];
+
+      res = nm.mk_node(
+          Kind::BV_ADD,
+          {res,
+           coeff.is_one()
+               ? node
+               : nm.mk_node(Kind::BV_MUL, {nm.mk_value(coeff), node})});
+    }
+  }
+  else
+  {
+    assert(kind == Kind::BV_MUL);
+    while (coeffs_vec.size() > 1)
+    {
+      std::sort(coeffs_vec.begin(),
+                coeffs_vec.end(),
+                [](const auto& a, const auto& b) {
+                  return a.second.compare(b.second) > 0;
+                });
+      while (coeffs_vec.back().second.is_zero())
       {
-        res = nm.mk_node(Kind::BV_ADD,
-                         {res,
-                          common_coeff[i].second.is_one()
-                              ? common_coeff[i].first
-                              : nm.mk_node(Kind::BV_MUL,
-                                           {nm.mk_value(common_coeff[i].second),
-                                            common_coeff[i].first})});
+        coeffs_vec.pop_back();
+      }
+      for (size_t i = 1, n = coeffs_vec.size(); i < n; ++i)
+      {
+        assert(coeffs_vec[i - 1].second.compare(coeffs_vec[i].second) >= 0);
+        const BitVector& occs = coeffs_vec[i].second;
+        coeffs_vec[i].first =
+            nm.mk_node(kind, {coeffs_vec[i - 1].first, coeffs_vec[i].first});
+        coeffs_vec[i - 1].second.ibvsub(occs);
       }
     }
-    else
+    res            = coeffs_vec.back().first;
+    const auto& cf = coeffs_vec.back().second;
+    assert(cf.size() - cf.count_leading_zeros() <= 64);
+    for (size_t i = 1, n = cf.to_uint64(true); i < n; ++i)
     {
-      assert(kind == Kind::BV_MUL);
-      while (common_coeff.size() > 1)
-      {
-        std::sort(common_coeff.begin(),
-                  common_coeff.end(),
-                  [](const auto& a, const auto& b) {
-                    return a.second.compare(b.second) > 0;
-                  });
-        while (common_coeff.back().second.is_zero())
-        {
-          common_coeff.pop_back();
-        }
-        for (size_t i = 1, n = common_coeff.size(); i < n; ++i)
-        {
-          assert(common_coeff[i - 1].second.compare(common_coeff[i].second)
-                 >= 0);
-          const BitVector& occs = common_coeff[i].second;
-          common_coeff[i].first = nm.mk_node(
-              kind, {common_coeff[i - 1].first, common_coeff[i].first});
-          common_coeff[i - 1].second.ibvsub(occs);
-        }
-      }
-      res = common_coeff.back().first;
-      const auto& cf = common_coeff.back().second;
-      assert(cf.size() - cf.count_leading_zeros() <= 64);
-      for (size_t i = 1, n = cf.to_uint64(true); i < n; ++i)
-      {
-        res = nm.mk_node(kind, {res, common_coeff.back().first});
-      }
+      res = nm.mk_node(kind, {res, coeffs_vec.back().first});
     }
   }
   return res;
@@ -297,7 +285,8 @@ PassNormalize::compute_common_coefficients(Kind kind,
 BitVector
 PassNormalize::normalize_add(const Node& node,
                              CoefficientsMap& coeffs,
-                             ParentsMap& parents)
+                             ParentsMap& parents,
+                             bool keep_value)
 {
   assert(node.kind() == Kind::BV_ADD);
 
@@ -306,12 +295,16 @@ PassNormalize::normalize_add(const Node& node,
   BitVector value  = bvzero;
 
   bool progress;
-  node_ref_vector visit;
   do
   {
     progress = false;
     for (auto& [cur, cur_coeff] : coeffs)
     {
+      if (cur_coeff.is_zero())
+      {
+        continue;
+      }
+
       // summarize values
       if (cur.is_value())
       {
@@ -320,14 +313,13 @@ PassNormalize::normalize_add(const Node& node,
       }
       // normalize inverted adders
       // ~x = ~(x + 1) + 1 = - x - 1
-      else if (cur.is_inverted() && cur[0].kind() == Kind::BV_ADD
-               && cur_coeff != bvzero)
+      else if (cur.is_inverted() && cur[0].kind() == Kind::BV_ADD)
       {
         progress = true;
         CoefficientsMap cfs;
         BitVector coeff = coeffs.at(cur).bvneg();
         cur_coeff       = bvzero;
-        compute_coefficients(cur[0], parents, cfs);
+        compute_coefficients(cur[0], cur[0].kind(), parents, cfs);
         for (auto& [c, cf] : cfs)
         {
           cf.ibvmul(coeff);
@@ -347,8 +339,33 @@ PassNormalize::normalize_add(const Node& node,
         value.ibvadd(coeff);
         break;
       }
+      else if (false && cur.is_inverted())
+      {
+        auto it = coeffs.find(cur[0]);
+        if (it != coeffs.end())
+        {
+          value.ibvadd(cur_coeff.bvneg());
+          it->second.ibvsub(cur_coeff);
+          cur_coeff = bvzero;
+        }
+      }
     }
   } while (progress);
+
+  if (keep_value && !value.is_zero())
+  {
+    Node val = NodeManager::get().mk_value(value);
+    auto it  = coeffs.find(val);
+    if (it == coeffs.end())
+    {
+      coeffs.emplace(val, BitVector::mk_one(value.size()));
+    }
+    else
+    {
+      it->second.ibvinc();
+    }
+    return value;
+  }
 
   return value;
 }
@@ -385,7 +402,8 @@ PassNormalize::normalize_and(const Node& node,
 
 BitVector
 PassNormalize::normalize_mul(const Node& node,
-                             PassNormalize::CoefficientsMap& coeffs)
+                             PassNormalize::CoefficientsMap& coeffs,
+                             bool keep_value)
 {
   assert(node.kind() == Kind::BV_MUL);
 
@@ -400,10 +418,30 @@ PassNormalize::normalize_mul(const Node& node,
     // constant fold values
     if (cur.is_value())
     {
-      value.ibvmul(cur.value<BitVector>().bvmul(f.second));
+      assert(BitVector::fits_in_size(64, f.second.str(), 2));
+      for (size_t i = 0, n = f.second.to_uint64(true); i < n; ++i)
+      {
+        value.ibvmul(cur.value<BitVector>());
+      }
       f.second = bvzero;
     }
   }
+
+  if (keep_value && !value.is_one())
+  {
+    Node val = NodeManager::get().mk_value(value);
+    auto it  = coeffs.find(val);
+    if (it == coeffs.end())
+    {
+      coeffs.emplace(val, BitVector::mk_one(value.size()));
+    }
+    else
+    {
+      it->second.ibvinc();
+    }
+    return value;
+  }
+
   return value;
 }
 
@@ -508,8 +546,8 @@ PassNormalize::normalize_coefficients_eq(
     _count_parents({node0, node1}, kind, parents);
   }
 
-  compute_coefficients(node0, parents, coeffs0);
-  compute_coefficients(node1, parents, coeffs1);
+  compute_coefficients(node0, node0.kind(), parents, coeffs0);
+  compute_coefficients(node1, node1.kind(), parents, coeffs1);
 
   if (kind == Kind::BV_ADD)
   {
@@ -569,7 +607,8 @@ PassNormalize::normalize_coefficients_eq(
     }
   }
 
-  Node common = compute_common_coefficients(kind, coeffs0, coeffs1);
+  auto common_coeffs = compute_common_coefficients(coeffs0, coeffs1);
+  Node common        = mk_node(kind, common_coeffs);
   if (kind == Kind::BV_MUL && !common.is_null())
   {
     BitVector bvone = BitVector::mk_one(node0.type().bv_size());
@@ -779,34 +818,67 @@ PassNormalize::normalize_common(Kind kind,
   assert(!lhs.empty());
   assert(!rhs.empty());
 
-  BitVector one = BitVector::mk_one(lhs.begin()->first.type().bv_size());
-
-  Node common = compute_common_coefficients(kind, lhs, rhs);
-
-  for (const auto& [n, occs] : lhs)
-  {
-    push_factorized(kind, n, occs, lhs_norm);
-  }
-  for (const auto& [n, occs] : rhs)
-  {
-    push_factorized(kind, n, occs, rhs_norm);
-  }
+  size_t bv_size     = lhs.begin()->first.type().bv_size();
+  auto common_coeffs = compute_common_coefficients(lhs, rhs);
+  Node common        = mk_node(kind, common_coeffs);
 
   if (!common.is_null())
   {
-    lhs_norm.push_back(common);
-    rhs_norm.push_back(common);
+    auto [it, inserted] = lhs.emplace(common, BitVector::mk_one(bv_size));
+    if (!inserted)
+    {
+      it->second.ibvinc();
+    }
+    std::tie(it, inserted) = rhs.emplace(common, BitVector::mk_one(bv_size));
+    if (!inserted)
+    {
+      it->second.ibvinc();
+    }
   }
 
-  assert(!lhs_norm.empty());
-  assert(!rhs_norm.empty());
+  // Remove zero coefficients
+  auto it = lhs.begin();
+  while (it != lhs.end())
+  {
+    if (it->second.is_zero())
+    {
+      it = lhs.erase(it);
+    }
+    else
+    {
+      ++it;
+    }
+  }
+  it = rhs.begin();
+  while (it != rhs.end())
+  {
+    if (it->second.is_zero())
+    {
+      it = rhs.erase(it);
+    }
+    else
+    {
+      ++it;
+    }
+  }
 
-  std::sort(lhs_norm.begin(), lhs_norm.end());
-  std::sort(rhs_norm.begin(), rhs_norm.end());
-
-  Node left  = utils::mk_nary(kind, lhs_norm);
-  Node right = utils::mk_nary(kind, rhs_norm);
-
+  Node left, right;
+  if (!lhs.empty())
+  {
+    left = mk_node(kind, lhs);
+  }
+  else
+  {
+    left = NodeManager::get().mk_value(BitVector::mk_zero(bv_size));
+  }
+  if (!rhs.empty())
+  {
+    right = mk_node(kind, rhs);
+  }
+  else
+  {
+    right = NodeManager::get().mk_value(BitVector::mk_zero(bv_size));
+  }
   return {left, right};
 }
 
@@ -821,11 +893,14 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
   Node top_rhs = get_top(node1);
 
   Kind kind = top_lhs.kind();
-  if (kind != top_rhs.kind()
-      || (kind != Kind::BV_ADD && kind != Kind::BV_MUL))
-    // && kind != Kind::BV_AND && kind != Kind::BV_XOR))
+  if (kind != Kind::BV_ADD && kind != Kind::BV_MUL)
+  // && kind != Kind::BV_AND && kind != Kind::BV_XOR))
   {
-    return {nm.mk_node(parent_kind, {node0, node1}), false};
+    kind = top_rhs.kind();
+    if (kind != Kind::BV_ADD && kind != Kind::BV_MUL)
+    {
+      return {nm.mk_node(parent_kind, {node0, node1}), false};
+    }
   }
 
   // Note: parents could also be computed based on node0 and node1, but
@@ -837,12 +912,30 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
   }
 
   CoefficientsMap lhs, rhs;
-  compute_coefficients(top_lhs, parents, lhs);
-  compute_coefficients(top_rhs, parents, rhs);
+  compute_coefficients(top_lhs, kind, parents, lhs);
+  compute_coefficients(top_rhs, kind, parents, rhs);
+  if (top_lhs.kind() == Kind::BV_ADD)
+  {
+    normalize_add(top_lhs, lhs, parents, true);
+  }
+  else if (top_lhs.kind() == Kind::BV_MUL)
+  {
+    normalize_mul(top_lhs, lhs, true);
+  }
+  if (top_rhs.kind() == Kind::BV_ADD)
+  {
+    normalize_add(top_rhs, rhs, parents, true);
+  }
+  else if (top_rhs.kind() == Kind::BV_MUL)
+  {
+    normalize_mul(top_rhs, rhs, true);
+  }
   auto [left, right] = normalize_common(kind, lhs, rhs);
   auto rebuilt_left  = rebuild_top(node0, top_lhs, left);
   auto rebuilt_right = rebuild_top(node1, top_rhs, right);
-  return {nm.mk_node(parent_kind, {rebuilt_left, rebuilt_right}), false};
+
+  return {nm.mk_node(parent_kind, {rebuilt_left, rebuilt_right}),
+          rebuilt_left != node0 || rebuilt_right != node1};
 }
 
 Node
@@ -912,6 +1005,80 @@ PassNormalize::rebuild_top(const Node& node,
   return cache.at(node);
 }
 
+namespace {
+#if 0
+void
+_count_kinds(const Node& node,
+             std::unordered_set<Node>& cache,
+             std::unordered_map<Kind, uint64_t>& kinds)
+{
+  std::vector<Node> visit{node};
+  do
+  {
+    Node cur = visit.back();
+    visit.pop_back();
+    auto [it, inserted] = cache.insert(cur);
+    if (inserted)
+    {
+      kinds[cur.kind()] += 1;
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  } while (!visit.empty());
+}
+
+std::unordered_map<Kind, uint64_t>
+_count_kinds(AssertionVector& assertions)
+{
+  std::unordered_map<Kind, uint64_t> kinds;
+  std::unordered_set<Node> cache;
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  {
+    const Node& assertion = assertions[i];
+    _count_kinds(assertion, cache, kinds);
+  }
+  return kinds;
+}
+
+void
+print_diff(const std::unordered_map<Kind, uint64_t>& before,
+           const std::unordered_map<Kind, uint64_t>& after)
+{
+  std::unordered_set<Kind> kinds;
+  std::cout << "*** before:" << std::endl;
+  std::vector<std::pair<int64_t, Kind>> pairs;
+  for (auto [k, v] : before)
+  {
+    std::cout << v << ": " << k << std::endl;
+    auto it = after.find(k);
+    if (it != after.end())
+    {
+      pairs.emplace_back(it->second - v, k);
+    }
+  }
+  for (auto [k, v] : after)
+  {
+    auto it = before.find(k);
+    if (it == before.end())
+    {
+      pairs.emplace_back(v, k);
+    }
+  }
+
+  std::cout << "*** diff:" << std::endl;
+  std::sort(pairs.begin(), pairs.end());
+  for (auto [v, k] : pairs)
+  {
+    if (v != 0)
+    {
+      std::cout << std::showpos << v << std::noshowpos << ": " << k
+                << std::endl;
+    }
+  }
+}
+#endif
+
+}  // namespace
+
 void
 PassNormalize::apply(AssertionVector& assertions)
 {
@@ -920,9 +1087,12 @@ PassNormalize::apply(AssertionVector& assertions)
 
   d_cache.clear();
   assert(d_parents.empty());
-  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  if (d_share_aware)
   {
-    count_parents(assertions[i], d_parents, d_parents_cache);
+    for (size_t i = 0, size = assertions.size(); i < size; ++i)
+    {
+      count_parents(assertions[i], d_parents, d_parents_cache);
+    }
   }
 
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
@@ -940,6 +1110,7 @@ PassNormalize::apply(AssertionVector& assertions)
       }
     }
   }
+
   d_parents.clear();
   d_parents_cache.clear();
   d_cache.clear();
@@ -948,6 +1119,7 @@ PassNormalize::apply(AssertionVector& assertions)
 Node
 PassNormalize::process(const Node& node)
 {
+  NodeManager& nm = NodeManager::get();
   node_ref_vector visit{node};
   do
   {
@@ -985,23 +1157,25 @@ PassNormalize::process(const Node& node)
         it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }
-#if 0
-      else if ((k == Kind::BV_AND || k == Kind::BV_ADD || k == Kind::BV_MUL)
-               && (cur[0].kind() == cur[1].kind() && cur[0].kind() != k))
+      else if (k == Kind::BV_NOT && children[0].kind() == Kind::BV_CONCAT
+               && children[0][0].kind() == Kind::BV_NOT
+               && children[0][1].kind() == Kind::BV_NOT
+               && (!d_share_aware || d_parents[children[0]] == 1))
       {
-        auto [res, normalized] =
-            normalize_comm_assoc(k, children[0], children[1]);
-        it->second = res;
-        if (normalized) d_stats.num_normalizations += 1;
+        it->second =
+            nm.mk_node(Kind::BV_CONCAT, {children[0][0][0], children[0][1][0]});
       }
-#endif
       else
       {
         it->second = node::utils::rebuild_node(cur, children);
       }
 
-      // Count parents for newly constructed nodes
-      count_parents(it->second, d_parents, d_parents_cache);
+      if (d_share_aware)
+      {
+        // Update parent count for new node
+        d_parents[it->second] = d_parents[cur];
+        d_parents_cache.insert(it->second);
+      }
     }
     visit.pop_back();
   } while (!visit.empty());
