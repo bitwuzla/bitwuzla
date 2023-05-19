@@ -321,6 +321,13 @@ enum ENUM(Option)
    *  * **0**: disable
    */
   EVALUE(PP_VARIABLE_SUBST_NORM_EQ),
+  /*! **Preprocessing: Variable substitution: Disequality Normalization**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  EVALUE(PP_VARIABLE_SUBST_NORM_DISEQ),
   /*! **Preprocessing: Variable substitution: Bit-Vector Inequality
    * Normalization**
    *

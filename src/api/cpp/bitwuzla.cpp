@@ -86,6 +86,8 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::PP_VARIABLE_SUBST, bzla::option::Option::PP_VARIABLE_SUBST},
         {Option::PP_VARIABLE_SUBST_NORM_EQ,
          bzla::option::Option::PP_VARIABLE_SUBST_NORM_EQ},
+        {Option::PP_VARIABLE_SUBST_NORM_DISEQ,
+         bzla::option::Option::PP_VARIABLE_SUBST_NORM_DISEQ},
         {Option::PP_VARIABLE_SUBST_NORM_BV_INEQ,
          bzla::option::Option::PP_VARIABLE_SUBST_NORM_BV_INEQ},
 
