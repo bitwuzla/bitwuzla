@@ -22,6 +22,7 @@ class PassFlattenAnd : public PreprocessingPass
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_apply;
     uint64_t& num_flattened;
+    uint64_t& num_assertions;
   } d_stats;
 };
 
