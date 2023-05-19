@@ -31,6 +31,7 @@ PassFlattenAnd::apply(AssertionVector& assertions)
     {
       visit.insert(visit.end(), assertion.rbegin(), assertion.rend());
       assertions.replace(i, nm.mk_value(true));
+      ++d_stats.num_flattened;
     }
     while (!visit.empty())
     {
