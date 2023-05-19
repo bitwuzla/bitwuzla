@@ -20,7 +20,8 @@ SolvingContext::SolvingContext(const option::Options& options,
       d_assertions(&d_backtrack_mgr),
       d_original_assertions(&d_backtrack_mgr),
       d_preprocessor(*this),
-      d_solver_engine(*this)
+      d_solver_engine(*this),
+      d_statistics(d_env.statistics())
 {
 }
 
@@ -51,7 +52,16 @@ SolvingContext::solve()
 Result
 SolvingContext::preprocess()
 {
-  return d_preprocessor.preprocess();
+  if (d_env.options().verbosity() > 0)
+  {
+    compute_formula_statistics(d_statistics.d_formula_kinds_pre);
+  }
+  auto res = d_preprocessor.preprocess();
+  if (d_env.options().verbosity() > 0)
+  {
+    compute_formula_statistics(d_statistics.d_formula_kinds_post);
+  }
+  return res;
 }
 
 void
@@ -199,6 +209,39 @@ SolvingContext::check_no_free_variables() const
       abort();
     }
   }
+}
+
+/* --- SolvingContext private ----------------------------------------------- */
+
+void
+SolvingContext::compute_formula_statistics(util::HistogramStatistic& stat)
+{
+  std::vector<Node> visit;
+  for (size_t i = 0, size = d_assertions.size(); i < size; ++i)
+  {
+    visit.push_back(d_assertions[i]);
+  }
+
+  std::unordered_set<Node> cache;
+  while (!visit.empty())
+  {
+    Node cur = visit.back();
+    visit.pop_back();
+    auto [it, inserted] = cache.insert(cur);
+    if (inserted)
+    {
+      stat << cur.kind();
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  }
+}
+
+SolvingContext::Statistics::Statistics(util::Statistics& stats)
+    : d_formula_kinds_pre(
+        stats.new_stat<util::HistogramStatistic>("formula::pre::node")),
+      d_formula_kinds_post(
+          stats.new_stat<util::HistogramStatistic>("formula::post::node"))
+{
 }
 
 }  // namespace bzla

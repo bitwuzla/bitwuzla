@@ -69,6 +69,8 @@ class SolvingContext
  private:
   void check_no_free_variables() const;
 
+  void compute_formula_statistics(util::HistogramStatistic& stat);
+
   /** Solving context environment. */
   Env d_env;
 
@@ -89,6 +91,13 @@ class SolvingContext
 
   /** Result of last solve() call. */
   Result d_sat_state = Result::UNKNOWN;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    util::HistogramStatistic& d_formula_kinds_pre;
+    util::HistogramStatistic& d_formula_kinds_post;
+  } d_statistics;
 };
 
 }  // namespace bzla
