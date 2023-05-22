@@ -5,7 +5,7 @@
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
-#include "sat/cadical.h"
+#include "sat/sat_solver_factory.h"
 #include "solver/bv/bv_solver.h"
 #include "solving_context.h"
 
@@ -47,7 +47,7 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
       d_last_result(Result::UNKNOWN),
       d_stats(env.statistics())
 {
-  d_sat_solver.reset(new sat::Cadical());
+  d_sat_solver.reset(sat::new_sat_solver(env.options().sat_solver()));
   d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
   d_cnf_encoder.reset(new bb::AigCnfEncoder(*d_bitblast_sat_solver));
 }

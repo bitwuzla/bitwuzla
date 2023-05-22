@@ -1,0 +1,5 @@
+#define VERSION "@version@"
+#define COMPILER "@compiler@"
+#define ID "unknown"
+#define BUILD ""
+#define DIR ""

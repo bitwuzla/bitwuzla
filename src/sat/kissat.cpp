@@ -23,7 +23,11 @@ kissat_terminate_wrapper(void* state)
 
 /*------------------------------------------------------------------------*/
 
-Kissat::Kissat() { d_solver = kissat_init(); }
+Kissat::Kissat()
+{
+  d_solver = kissat_init();
+  kissat_set_option(d_solver, "quiet", 1);
+}
 
 Kissat::~Kissat() { kissat_release(d_solver); }
 
@@ -54,6 +58,7 @@ Kissat::failed(int32_t lit)
 {
   (void) lit;
   assert(false);
+  return false;
 }
 
 int32_t
@@ -61,6 +66,7 @@ Kissat::fixed(int32_t lit)
 {
   (void) lit;
   assert(false);
+  return false;
 }
 
 Result

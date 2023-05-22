@@ -99,6 +99,7 @@ sources = files([
   'sat/cadical.cpp',
   'sat/cryptominisat.cpp',
   'sat/kissat.cpp',
+  'sat/sat_solver_factory.cpp',
   'solver/array/array_solver.cpp',
   'solver/bv/bv_bitblast_solver.cpp',
   'solver/bv/bv_prop_solver.cpp',
@@ -130,10 +131,16 @@ gmp_dep = dependency('gmp',
 
 # Subproject dependencies
 cadical_dep = dependency('cadical', required: true)
+kissat_dep = dependency('kissat', required: get_option('kissat'))
 symfpu_dep = dependency('symfpu', required: true)
 bitwuzla_libs_dep = dependency('bitwuzla_libs', required: true)
 
-dependencies = [symfpu_dep, cadical_dep, gmp_dep, bitwuzla_libs_dep]
+dependencies = [symfpu_dep, cadical_dep, kissat_dep, gmp_dep, bitwuzla_libs_dep]
+
+cpp_args = []
+if kissat_dep.found()
+  cpp_args += ['-DBZLA_USE_KISSAT']
+endif
 
 # Public header include directory
 bitwuzla_inc = include_directories('../include')
@@ -143,7 +150,8 @@ bitwuzla_lib = library('bitwuzla',
                       include_directories: bitwuzla_inc,
                       dependencies: dependencies,
                       soversion: bitwuzla_lib_soversion,
-                      install: true)
+                      install: true,
+                      cpp_args: cpp_args)
 
 # Create library dependency
 bitwuzla_dep = declare_dependency(include_directories: bitwuzla_inc,
