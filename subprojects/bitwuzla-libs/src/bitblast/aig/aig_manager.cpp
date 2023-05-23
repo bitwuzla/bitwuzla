@@ -3,6 +3,12 @@
 namespace bzla::bb {
 
 bool
+operator==(const AigNode& a, const AigNode& b)
+{
+  return a.get_id() == b.get_id();
+}
+
+bool
 operator<(const AigNode& a, const AigNode& b)
 {
   return a.get_id() < b.get_id();
@@ -249,12 +255,6 @@ bool
 AigNode::is_negated() const
 {
   return d_negated;
-}
-
-bool
-AigNode::operator==(const AigNode& other) const
-{
-  return get_id() == other.get_id();
 }
 
 const AigNode&

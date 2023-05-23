@@ -43,8 +43,6 @@ class AigNode
 
   bool is_negated() const;
 
-  bool operator==(const AigNode& other) const;
-
   const AigNode& operator[](int index) const;
 
   int64_t get_id() const;
@@ -62,6 +60,8 @@ class AigNode
   // TODO: optimization hide flag in d_data pointer
   bool d_negated = false;
 };
+
+bool operator==(const AigNode& a, const AigNode& b);
 
 bool operator<(const AigNode& a, const AigNode& b);
 
