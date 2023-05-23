@@ -61,7 +61,9 @@ BvBitblastSolver::solve()
 
   for (const Node& assumption : d_assumptions)
   {
-    d_sat_solver->assume(bits(assumption)[0].get_id());
+    const auto& bits = d_bitblaster.bits(assumption);
+    assert(!bits.empty());
+    d_sat_solver->assume(bits[0].get_id());
   }
 
   update_statistics();
@@ -86,8 +88,10 @@ BvBitblastSolver::register_assertion(const Node& assertion,
     d_assumptions.push_back(assertion);
   }
 
-  bitblast(assertion);
-  d_cnf_encoder->encode(bits(assertion)[0], top_level);
+  d_bitblaster.bitblast(assertion);
+  const auto& bits = d_bitblaster.bits(assertion);
+  assert(!bits.empty());
+  d_cnf_encoder->encode(bits[0], top_level);
 }
 
 Node
@@ -96,17 +100,16 @@ BvBitblastSolver::value(const Node& term)
   assert(BvSolver::is_leaf(term));
   assert(term.type().is_bool() || term.type().is_bv());
 
-  const auto& it   = d_bitblaster_cache.find(term);
+  const auto& bits = d_bitblaster.bits(term);
   const Type& type = term.type();
   NodeManager& nm  = NodeManager::get();
 
   // Return default value if not bit-blasted
-  if (it == d_bitblaster_cache.end())
+  if (bits.empty())
   {
     return utils::mk_default_value(type);
   }
 
-  const auto& bits = it->second;
   if (type.is_bool())
   {
     return nm.mk_value(d_cnf_encoder->value(bits[0]) == 1);
@@ -121,185 +124,6 @@ BvBitblastSolver::value(const Node& term)
 }
 
 void
-BvBitblastSolver::bitblast(const Node& t)
-{
-  using namespace node;
-
-  node_ref_vector visit{t};
-  do
-  {
-    const Node& cur = visit.back();
-    assert(cur.type().is_bool() || cur.type().is_bv());
-
-    auto it = d_bitblaster_cache.find(cur);
-    if (it == d_bitblaster_cache.end())
-    {
-      d_bitblaster_cache.emplace(cur, bb::AigBitblaster::Bits());
-      if (!BvSolver::is_leaf(cur))
-      {
-        visit.insert(visit.end(), cur.begin(), cur.end());
-      }
-      continue;
-    }
-    else if (it->second.empty())
-    {
-      const Type& type = cur.type();
-      assert(type.is_bool() || type.is_bv());
-
-      switch (cur.kind())
-      {
-        case Kind::VALUE:
-          it->second = type.is_bool()
-                           ? d_bitblaster.bv_value(
-                               BitVector::from_ui(1, cur.value<bool>() ? 1 : 0))
-                           : d_bitblaster.bv_value(cur.value<BitVector>());
-          break;
-
-        // Boolean abstractions
-        case Kind::FP_IS_INF:
-        case Kind::FP_IS_NAN:
-        case Kind::FP_IS_NEG:
-        case Kind::FP_IS_NORMAL:
-        case Kind::FP_IS_POS:
-        case Kind::FP_IS_SUBNORMAL:
-        case Kind::FP_IS_ZERO:
-        case Kind::FP_EQUAL:
-        case Kind::FP_LEQ:
-        case Kind::FP_LT:
-        case Kind::FORALL:
-        // Bit-vector abstractions
-        case Kind::FP_TO_SBV:
-        case Kind::FP_TO_UBV:
-        // Both
-        case Kind::SELECT:
-        case Kind::APPLY:
-        case Kind::CONSTANT:
-          assert(BvSolver::is_leaf(cur));
-          it->second = type.is_bool()
-                           ? d_bitblaster.bv_constant(1)
-                           : d_bitblaster.bv_constant(type.bv_size());
-          break;
-
-        case Kind::NOT:
-        case Kind::BV_NOT:
-          assert(cur.kind() != Kind::NOT || type.is_bool());
-          assert(cur.kind() != Kind::BV_NOT || type.is_bv());
-          it->second = d_bitblaster.bv_not(bits(cur[0]));
-          break;
-
-        case Kind::AND:
-        case Kind::BV_AND:
-          assert(cur.kind() != Kind::NOT || type.is_bool());
-          assert(cur.kind() != Kind::BV_NOT || type.is_bv());
-          it->second = d_bitblaster.bv_and(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::OR:
-          assert(type.is_bool());
-          it->second = d_bitblaster.bv_or(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_XOR:
-          it->second = d_bitblaster.bv_xor(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_EXTRACT:
-          assert(type.is_bv());
-          it->second =
-              d_bitblaster.bv_extract(bits(cur[0]), cur.index(0), cur.index(1));
-          break;
-
-        case Kind::EQUAL: {
-          const Type& type0 = cur[0].type();
-          if (type0.is_bool() || type0.is_bv())
-          {
-            it->second = d_bitblaster.bv_eq(bits(cur[0]), bits(cur[1]));
-          }
-          else
-          {
-            // For all other cases we abstract equality as a Boolean constant.
-            it->second = d_bitblaster.bv_constant(1);
-          }
-        }
-        break;
-
-        case Kind::BV_COMP:
-          assert(type.is_bv());
-          it->second = d_bitblaster.bv_eq(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_ADD:
-          assert(type.is_bv());
-          it->second = d_bitblaster.bv_add(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_MUL:
-          assert(type.is_bv());
-          it->second = d_bitblaster.bv_mul(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_ULT:
-          assert(type.is_bool());
-          it->second = d_bitblaster.bv_ult(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_SHL:
-          assert(type.is_bv());
-          it->second = d_bitblaster.bv_shl(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_SLT:
-          assert(type.is_bool());
-          it->second = d_bitblaster.bv_slt(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_SHR:
-          assert(type.is_bv());
-          it->second = d_bitblaster.bv_shr(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_ASHR:
-          assert(type.is_bv());
-          it->second = d_bitblaster.bv_ashr(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_UDIV:
-          assert(type.is_bv());
-          it->second = d_bitblaster.bv_udiv(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_UREM:
-          assert(type.is_bv());
-          it->second = d_bitblaster.bv_urem(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::BV_CONCAT:
-          assert(type.is_bv());
-          it->second = d_bitblaster.bv_concat(bits(cur[0]), bits(cur[1]));
-          break;
-
-        case Kind::ITE:
-          assert(cur[0].type().is_bool());
-          it->second =
-              d_bitblaster.bv_ite(bits(cur[0])[0], bits(cur[1]), bits(cur[2]));
-          break;
-
-        // We should never reach other kinds.
-        default: assert(false); break;
-      }
-    }
-    visit.pop_back();
-  } while (!visit.empty());
-}
-
-const bb::AigBitblaster::Bits&
-BvBitblastSolver::bits(const Node& term) const
-{
-  assert(d_bitblaster_cache.find(term) != d_bitblaster_cache.end());
-  return d_bitblaster_cache.at(term);
-}
-
-void
 BvBitblastSolver::unsat_core(std::vector<Node>& core) const
 {
   assert(d_last_result == Result::UNSAT);
@@ -307,7 +131,9 @@ BvBitblastSolver::unsat_core(std::vector<Node>& core) const
 
   for (const Node& assumption : d_assumptions)
   {
-    if (d_sat_solver->failed(bits(assumption)[0].get_id()))
+    const auto& bits = d_bitblaster.bits(assumption);
+    assert(bits.size() == 1);
+    if (d_sat_solver->failed(bits[0].get_id()))
     {
       core.push_back(assumption);
     }

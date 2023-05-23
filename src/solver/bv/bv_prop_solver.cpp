@@ -156,7 +156,7 @@ BvPropSolver::register_assertion(const Node& assertion,
 
   if (d_use_const_bits)
   {
-    d_bb_solver.bitblast(assertion);
+    d_bb_solver.bitblaster().bitblast(assertion);
   }
 
   do
@@ -244,7 +244,7 @@ BvPropSolver::mk_node(const Node& node)
   }
   else if (d_use_const_bits)
   {
-    const auto& bits = d_bb_solver.bits(node);
+    const auto& bits = d_bb_solver.bitblaster().bits(node);
     assert(bits.size() == size);
 
     for (uint64_t i = 0; i < size; ++i)

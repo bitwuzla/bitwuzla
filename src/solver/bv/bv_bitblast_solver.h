@@ -6,8 +6,8 @@
 #include "backtrack/assertion_stack.h"
 #include "backtrack/vector.h"
 #include "bitblast/aig/aig_cnf.h"
-#include "bitblast/aig_bitblaster.h"
 #include "sat/sat_solver.h"
+#include "solver/bv/aig_bitblaster.h"
 #include "solver/bv/bv_solver_interface.h"
 #include "solver/solver.h"
 #include "util/statistics.h"
@@ -31,14 +31,11 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   /** Query value of leaf node. */
   Node value(const Node& term) override;
 
-  /** Recursively bit-blast `term`. */
-  void bitblast(const Node& term);
-
-  /** Return encoded bits associated with bit-blasted term. */
-  const bb::AigBitblaster::Bits& bits(const Node& term) const;
-
   /** Get unsat core of last solve() call. */
   void unsat_core(std::vector<Node>& core) const override;
+
+  /** Get AIG bit-blaster instance. */
+  AigBitblaster& bitblaster() { return d_bitblaster; }
 
  private:
   /** Update AIG and CNF statistics. */
@@ -50,10 +47,9 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   /** The current set of assertions. */
   backtrack::vector<Node> d_assumptions;
 
-  /** AIG Bit-blaster. */
-  bb::AigBitblaster d_bitblaster;
-  /** Cached to store bit-blasted terms and their encoded bits. */
-  std::unordered_map<Node, bb::AigBitblaster::Bits> d_bitblaster_cache;
+  /** AIG bit-blaster. */
+  AigBitblaster d_bitblaster;
+
   /** CNF encoder for AIGs. */
   std::unique_ptr<bb::AigCnfEncoder> d_cnf_encoder;
   /** SAT solver used for solving bit-blasted formula. */
