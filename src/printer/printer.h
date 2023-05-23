@@ -28,11 +28,13 @@ class Printer
  private:
   static void print(std::ostream& os,
                     const Node& node,
+                    node::unordered_node_ref_map<std::string>& def_map,
                     node::unordered_node_ref_map<std::string>& let_map,
                     size_t max_depth);
 
   static void letify(std::ostream& os,
                      const Node& node,
+                     node::unordered_node_ref_map<std::string>& def_map,
                      node::unordered_node_ref_map<std::string>& let_map,
                      size_t max_depth);
 
