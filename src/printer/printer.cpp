@@ -260,7 +260,7 @@ Printer::print_formula(std::ostream& os,
   // print assertions
   for (size_t i = 0, n = assertions.size(); i < n; ++i)
   {
-    if (!assertions[i].is_value())
+    if (!assertions[i].is_value() || !assertions[i].value<bool>())
     {
       size_t l = assertions.level(i);
       if (l > level)
