@@ -363,8 +363,7 @@ enum class RewriteRuleKind
   // Level 2+
   BV_ADD_ITE1,
   BV_ADD_ITE2,
-  BV_ADD_MUL1,
-  BV_ADD_MUL2,
+  BV_ADD_MUL,
   BV_ADD_SHL,
   // normalization
   BV_ADD_NORM_MUL_CONST,
@@ -426,7 +425,6 @@ enum class RewriteRuleKind
   BV_MUL_ITE,
   BV_MUL_NEG,
   BV_MUL_ONES,
-  BV_MUL_SHL,
 
   //// bvnot
   // Level 1+
@@ -435,12 +433,15 @@ enum class RewriteRuleKind
   // Level 2+
   BV_NOT_BV_NEG,
   BV_NOT_BV_CONCAT,
+  BV_NOT_OR_SHL,
 
   //// bvshl
   // Level 1+
   BV_SHL_EVAL,
   BV_SHL_SPECIAL_CONST,
   BV_SHL_CONST,
+  // Level 2+
+  BV_SHL_BV_NEG,
 
   //// bvlshr
   // Level 1+

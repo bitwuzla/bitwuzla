@@ -64,14 +64,9 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_ITE2>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_SHL>::_apply(Rewriter& rewriter,
                                                       const Node& node);
-// mul_add
 template <>
-Node RewriteRule<RewriteRuleKind::BV_ADD_MUL1>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
-// add_mul_distrib
-template <>
-Node RewriteRule<RewriteRuleKind::BV_ADD_MUL2>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
+Node RewriteRule<RewriteRuleKind::BV_ADD_MUL>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 
 /* bvand -------------------------------------------------------------------- */
 
@@ -247,10 +242,6 @@ Node RewriteRule<RewriteRuleKind::BV_MUL_CONST_ADD>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_MUL_ITE>::_apply(Rewriter& rewriter,
                                                       const Node& node);
-// sll_mul
-template <>
-Node RewriteRule<RewriteRuleKind::BV_MUL_SHL>::_apply(Rewriter& rewriter,
-                                                      const Node& node);
 // neg_mul
 template <>
 Node RewriteRule<RewriteRuleKind::BV_MUL_NEG>::_apply(Rewriter& rewriter,
@@ -276,6 +267,10 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_NOT_BV_CONCAT>::_apply(Rewriter& rewriter,
                                                             const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NOT_OR_SHL>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
 /* bvshl -------------------------------------------------------------------- */
 
 // const_binary_bv_exp
@@ -291,6 +286,10 @@ Node RewriteRule<RewriteRuleKind::BV_SHL_SPECIAL_CONST>::_apply(
 template <>
 Node RewriteRule<RewriteRuleKind::BV_SHL_CONST>::_apply(Rewriter& rewriter,
                                                         const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHL_BV_NEG>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
 
 /* bvshr -------------------------------------------------------------------- */
 
