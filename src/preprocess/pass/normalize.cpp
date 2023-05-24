@@ -59,7 +59,7 @@ _count_parents(const node_ref_vector& nodes,
 
 #if 0
 void
-print_coefficients(PassNormalize::CoefficientsMap& coeff)
+print_coefficients(const PassNormalize::CoefficientsMap& coeff)
 {
   for (const auto& c : coeff)
   {
@@ -127,9 +127,10 @@ PassNormalize::compute_coefficients(const Node& node,
       {
         if (d_share_aware)
         {
-          // treat as leaf if node of given kind has parent references
-          // from outside the current 'kind' chain
-          assert(d_parents.find(cur) != d_parents.end());
+          // Treat as leaf if node of given kind has parent references from
+          // outside the current 'kind' chain.
+          // Note: it may happen that cur is not in d_parents (intermediate
+          //       nodes created during normalization)
           assert(parents.find(cur) != parents.end());
           if (is_leaf(kind, cur, d_parents, parents))
           {
@@ -1131,72 +1132,136 @@ PassNormalize::apply(AssertionVector& assertions)
   d_cache.clear();
 }
 
+namespace {
+/**
+ * Distributive multiplication (recursive up to a given depth).
+ *
+ * - (bvmul (bvshl x s) r) -> (bvshl (bvmul x r) s)
+ * - (bvmul l (bvshl x s)) -> (bvshl (bvmul x l) s)
+ * - (bvmul (bvadd x s) r) -> (bvadd (bvmul x r) (bvmul (s r)))
+ * - (bvmul l (bvadd x s)) -> (bvadd (bvmul x l) (bvmul (s l)))
+ *
+ * @param left  The left operand of the multiplication.
+ * @param right The right operand of the multiplication.
+ * @param depth The recursion depth.
+ * @return The resulting node.
+ */
+Node
+distrib_mul(NodeManager& nm, const Node& left, const Node& right, uint8_t depth)
+{
+  if (depth && left.kind() == Kind::BV_SHL)
+  {
+    return nm.mk_node(Kind::BV_SHL,
+                      {distrib_mul(nm, left[0], right, depth - 1), left[1]});
+  }
+  if (depth && right.kind() == Kind::BV_SHL)
+  {
+    return nm.mk_node(Kind::BV_SHL,
+                      {distrib_mul(nm, right[0], left, depth - 1), right[1]});
+  }
+  if (depth && left.kind() == Kind::BV_ADD)
+  {
+    return nm.mk_node(Kind::BV_ADD,
+                      {distrib_mul(nm, left[0], right, depth - 1),
+                       distrib_mul(nm, left[1], right, depth - 1)});
+  }
+  if (depth && right.kind() == Kind::BV_ADD)
+  {
+    return nm.mk_node(Kind::BV_ADD,
+                      {distrib_mul(nm, right[0], left, depth - 1),
+                       distrib_mul(nm, right[1], left, depth - 1)});
+  }
+  return nm.mk_node(Kind::BV_MUL, {left, right});
+}
+}  // namespace
+
 Node
 PassNormalize::process(const Node& node)
 {
   NodeManager& nm = d_env.nm();
-  node_ref_vector visit{node};
+  Node _node      = node;
+  bool normalized = false;
   do
   {
-    const Node& cur     = visit.back();
-    auto [it, inserted] = d_cache.emplace(cur, Node());
-    if (inserted)
-    {
-      visit.insert(visit.end(), cur.begin(), cur.end());
-      continue;
-    }
-    else if (it->second.is_null())
-    {
-      std::vector<Node> children;
-      for (const Node& child : cur)
-      {
-        auto itc = d_cache.find(child);
-        assert(itc != d_cache.end());
-        assert(!itc->second.is_null());
-        children.push_back(itc->second);
-      }
+    normalized = false;
+    node_ref_vector visit{_node};
 
-      Kind k = cur.kind();
-      if (k == Kind::EQUAL && children[0].kind() == children[1].kind()
-          && (children[0].kind() == Kind::BV_ADD
-              || children[0].kind() == Kind::BV_MUL))
+    do
+    {
+      const Node& cur     = visit.back();
+      auto [it, inserted] = d_cache.emplace(cur, Node());
+      if (inserted)
       {
-        auto [res, normalized] = normalize_eq_add_mul(children[0], children[1]);
-        it->second = res;
-        if (normalized) d_stats.num_normalizations += 1;
+        visit.insert(visit.end(), cur.begin(), cur.end());
+        continue;
       }
-#if 0  // Disable code until new normalization code is merged back.
-      else if (k == Kind::EQUAL || k == Kind::BV_ULT || k == Kind::BV_SLT)
+      else if (it->second.is_null())
       {
-        auto [res, normalized] =
-            normalize_comm_assoc(k, children[0], children[1]);
-        it->second = res;
-        if (normalized) d_stats.num_normalizations += 1;
-      }
-      else if (k == Kind::BV_NOT && children[0].kind() == Kind::BV_CONCAT
-               && children[0][0].kind() == Kind::BV_NOT
-               && children[0][1].kind() == Kind::BV_NOT
-               && (!d_share_aware || d_parents[children[0]] == 1))
-      {
-        it->second =
-            nm.mk_node(Kind::BV_CONCAT, {children[0][0][0], children[0][1][0]});
-      }
-#endif
-      else
-      {
-        it->second = node::utils::rebuild_node(nm, cur, children);
-      }
+        std::vector<Node> children;
+        for (const Node& child : cur)
+        {
+          auto itc = d_cache.find(child);
+          assert(itc != d_cache.end());
+          assert(!itc->second.is_null());
+          children.push_back(itc->second);
+        }
 
-      if (d_share_aware)
-      {
-        // Update parent count for new node
-        d_parents[it->second] = d_parents[cur];
-        d_parents_cache.insert(it->second);
+        Kind k = cur.kind();
+        if (k == Kind::EQUAL && children[0].kind() == children[1].kind()
+            && (children[0].kind() == Kind::BV_ADD
+                || children[0].kind() == Kind::BV_MUL))
+        {
+          auto [res, norm] = normalize_eq_add_mul(children[0], children[1]);
+          if (norm)
+          {
+            d_stats.num_normalizations += 1;
+            normalized = true;
+          }
+          it->second = res;
+        }
+        else if (k == Kind::EQUAL || k == Kind::BV_ULT || k == Kind::BV_SLT)
+        {
+          auto [res, norm] = normalize_comm_assoc(k, children[0], children[1]);
+          it->second       = res;
+          if (norm)
+          {
+            d_stats.num_normalizations += 1;
+            normalized = true;
+          }
+        }
+        else if (k == Kind::BV_NOT && children[0].kind() == Kind::BV_CONCAT
+                 && children[0][0].kind() == Kind::BV_NOT
+                 && children[0][1].kind() == Kind::BV_NOT
+                 && (!d_share_aware || d_parents[children[0]] == 1))
+        {
+          it->second = nm.mk_node(Kind::BV_CONCAT,
+                                  {children[0][0][0], children[0][1][0]});
+        }
+        else if (k == Kind::BV_MUL)
+        {
+          it->second = d_env.rewriter().rewrite(
+              distrib_mul(nm, children[0], children[1], 5));
+        }
+        else
+        {
+          it->second = node::utils::rebuild_node(nm, cur, children);
+        }
+
+        if (d_share_aware)
+        {
+          // Update parent count for new node
+          d_parents[it->second] = d_parents[cur];
+          d_parents_cache.insert(it->second);
+        }
       }
+      visit.pop_back();
+    } while (!visit.empty());
+    if (normalized)
+    {
+      _node = d_cache.at(_node);
     }
-    visit.pop_back();
-  } while (!visit.empty());
-  auto it = d_cache.find(node);
+  } while (normalized);
+  auto it = d_cache.find(_node);
   assert(it != d_cache.end());
   return d_env.rewriter().rewrite(it->second);
 }

@@ -185,6 +185,7 @@ class TestRewriter : public ::testing::Test
     {
       std::cout << "node: " << node << std::endl;
     }
+    assert(node != res);
     ASSERT_NE(node, res);
     ss << "(assert (distinct " << node << " " << res << "))\n";
     ASSERT_EQ(check_sat(ss), "unsat");

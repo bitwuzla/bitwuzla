@@ -681,9 +681,8 @@ Rewriter::rewrite_bv_add(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_ADD_ITE1);
     BZLA_APPLY_RW_RULE(BV_ADD_ITE2);
-    BZLA_APPLY_RW_RULE(BV_ADD_MUL1);
-    BZLA_APPLY_RW_RULE(BV_ADD_MUL2);
-    BZLA_APPLY_RW_RULE(BV_ADD_SHL);
+    BZLA_APPLY_RW_RULE(BV_ADD_MUL);
+    // BZLA_APPLY_RW_RULE(BV_ADD_SHL);
   }
 
 DONE:
@@ -806,7 +805,6 @@ Rewriter::rewrite_bv_mul(const Node& node)
     BZLA_APPLY_RW_RULE(BV_MUL_NEG);
     // rewrites for Noetzli benchmarks
     BZLA_APPLY_RW_RULE(BV_MUL_ITE);
-    BZLA_APPLY_RW_RULE(BV_MUL_SHL);
   }
 
 DONE:
@@ -828,6 +826,7 @@ Rewriter::rewrite_bv_not(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_NOT_BV_NEG);
     BZLA_APPLY_RW_RULE(BV_NOT_BV_CONCAT);
+    BZLA_APPLY_RW_RULE(BV_NOT_OR_SHL);
   }
 
 DONE:
@@ -845,6 +844,10 @@ Rewriter::rewrite_bv_shl(const Node& node)
     BZLA_APPLY_RW_RULE(BV_SHL_EVAL);
     BZLA_APPLY_RW_RULE(BV_SHL_SPECIAL_CONST);
     BZLA_APPLY_RW_RULE(BV_SHL_CONST);
+  }
+  if (d_level >= 1)
+  {
+    BZLA_APPLY_RW_RULE(BV_SHL_BV_NEG);
   }
 
 DONE:
@@ -1557,8 +1560,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_ADD_UREM: out << "BV_ADD_UREM"; break;
     case RewriteRuleKind::BV_ADD_ITE1: out << "BV_ADD_ITE1"; break;
     case RewriteRuleKind::BV_ADD_ITE2: out << "BV_ADD_ITE2"; break;
-    case RewriteRuleKind::BV_ADD_MUL1: out << "BV_ADD_MUL1"; break;
-    case RewriteRuleKind::BV_ADD_MUL2: out << "BV_ADD_MUL2"; break;
+    case RewriteRuleKind::BV_ADD_MUL: out << "BV_ADD_MUL"; break;
     case RewriteRuleKind::BV_ADD_SHL: out << "BV_ADD_SHL"; break;
     case RewriteRuleKind::BV_ADD_NORM_MUL_CONST:
       out << "BV_ADD_NORM_MUL_CONST";
@@ -1623,18 +1625,19 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_MUL_ITE: out << "BV_MUL_ITE"; break;
     case RewriteRuleKind::BV_MUL_NEG: out << "BV_MUL_NEG"; break;
     case RewriteRuleKind::BV_MUL_ONES: out << "BV_MUL_ONES"; break;
-    case RewriteRuleKind::BV_MUL_SHL: out << "BV_MUL_SHL"; break;
 
     case RewriteRuleKind::BV_NOT_EVAL: out << "BV_NOT_EVAL"; break;
     case RewriteRuleKind::BV_NOT_BV_NOT: out << "BV_NOT_BV_NOT"; break;
     case RewriteRuleKind::BV_NOT_BV_NEG: out << "BV_NOT_BV_NEG"; break;
     case RewriteRuleKind::BV_NOT_BV_CONCAT: out << "BV_NOT_BV_CONCAT"; break;
+    case RewriteRuleKind::BV_NOT_OR_SHL: out << "BV_NOT_OR_SHL"; break;
 
     case RewriteRuleKind::BV_SHL_EVAL: out << "BV_SHL_EVAL"; break;
     case RewriteRuleKind::BV_SHL_SPECIAL_CONST:
       out << "BV_SHL_SPECIAL_CONST";
       break;
     case RewriteRuleKind::BV_SHL_CONST: out << "BV_SHL_CONST"; break;
+    case RewriteRuleKind::BV_SHL_BV_NEG: out << "BV_SHL_BV_NEG"; break;
 
     case RewriteRuleKind::BV_SHR_EVAL: out << "BV_SHR_EVAL"; break;
     case RewriteRuleKind::BV_SHR_SPECIAL_CONST:
