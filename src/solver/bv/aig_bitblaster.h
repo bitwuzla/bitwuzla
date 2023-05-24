@@ -27,7 +27,7 @@ class AigBitblaster
   uint64_t num_aig_shared() const { return d_bitblaster.num_aig_shared(); }
 
  private:
-  const bb::AigBitblaster::Bits d_empty;
+  bb::AigBitblaster::Bits d_empty;
 
   /** AIG bit-blaster. */
   bb::AigBitblaster d_bitblaster;
