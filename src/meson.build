@@ -81,7 +81,6 @@ sources = files([
   'preprocess/pass/flatten_and.cpp',
   'preprocess/pass/normalize.cpp',
   'preprocess/pass/rewrite.cpp',
-  'preprocess/pass/rewrite.cpp',
   'preprocess/pass/skeleton_preproc.cpp',
   'preprocess/pass/variable_substitution.cpp',
   'preprocess/preprocessing_pass.cpp',
