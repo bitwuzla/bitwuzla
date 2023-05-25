@@ -33,6 +33,7 @@ class FunSolver : public Solver
   /** Registered function applications. */
   backtrack::vector<Node> d_applies;
   /** Registered equalities. */
+  backtrack::vector<Node> d_fun_equalities;
   backtrack::vector<Node> d_equalities;
 
   /**

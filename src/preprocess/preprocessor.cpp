@@ -253,7 +253,7 @@ Preprocessor::apply(AssertionVector& assertions)
     Msg(2) << assertions.num_modified() - cnt << " after lambda elimination";
 
     // This pass is not supported if incremental is enabled.
-    if (!uninterpreted_done)
+    if (false && !uninterpreted_done)
     {
       cnt = assertions.num_modified();
       d_pass_elim_uninterpreted.apply(assertions);

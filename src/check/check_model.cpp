@@ -97,7 +97,8 @@ CheckModel::collect_consts()
           d_fun_apps[cur[0]].push_back(cur);
         }
         // Do not collect applications below quantifiers.
-        else if (cur.kind() == Kind::FORALL || cur.kind() == Kind::EXISTS)
+        else if (cur.kind() == Kind::FORALL || cur.kind() == Kind::EXISTS
+                 || cur.kind() == Kind::LAMBDA)
         {
           continue;
         }

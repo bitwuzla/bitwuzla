@@ -352,7 +352,7 @@ SolverEngine::_value(const Node& term)
             value = d_array_solver.value(cur);
             goto CACHE_VALUE;
           }
-          else if (type0.is_fun())
+          else if (type0.is_fun() || type0.is_uninterpreted())
           {
             value = d_fun_solver.value(cur);
             goto CACHE_VALUE;
@@ -396,7 +396,7 @@ SolverEngine::_value(const Node& term)
           {
             value = d_fp_solver.value(cur);
           }
-          else if (type.is_fun())
+          else if (type.is_fun() || type.is_uninterpreted())
           {
             value = d_fun_solver.value(cur);
           }
@@ -614,7 +614,8 @@ SolverEngine::_value(const Node& term)
         default: assert(false); break;
       }
     CACHE_VALUE:
-      assert(value.is_value() || cur.type().is_array() || cur.type().is_fun());
+      assert(value.is_value() || cur.type().is_array() || cur.type().is_fun()
+             || cur.type().is_uninterpreted());
       cache_value(cur, value);
     }
     visit.pop_back();

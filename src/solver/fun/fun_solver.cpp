@@ -33,6 +33,7 @@ FunSolver::is_theory_leaf(const Node& term)
 FunSolver::FunSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_applies(state.backtrack_mgr()),
+      d_fun_equalities(state.backtrack_mgr()),
       d_equalities(state.backtrack_mgr())
 {
 }
@@ -46,9 +47,18 @@ FunSolver::check()
   Log(1) << "*** check functions";
 
   d_fun_models.clear();
-  if (!d_equalities.empty())
+  if (!d_fun_equalities.empty())
   {
     unsupported("Equalities over functions not yet supported.");
+  }
+
+  for (size_t i = 0; i < d_equalities.size(); ++i)
+  {
+    if (d_solver_state.value(d_equalities[i]).value<bool>())
+    {
+      unsupported(
+          "Positive equalities over uninterpreted sorts not yet supported.");
+    }
   }
 
   // Do not cache size here since d_applies may grow while iterating.
@@ -75,9 +85,14 @@ FunSolver::check()
 Node
 FunSolver::value(const Node& term)
 {
-  assert(term.type().is_fun() || term.kind() == Kind::APPLY);
+  assert(term.type().is_fun() || term.type().is_uninterpreted()
+         || term.kind() == Kind::APPLY);
 
   if (term.kind() == Kind::LAMBDA)
+  {
+    return term;
+  }
+  else if (term.kind() == Kind::CONSTANT && term.type().is_uninterpreted())
   {
     return term;
   }
@@ -93,6 +108,10 @@ FunSolver::value(const Node& term)
       {
         return itv->value();
       }
+    }
+    if (term.type().is_uninterpreted())
+    {
+      return term;
     }
     return node::utils::mk_default_value(term.type());
   }
@@ -140,7 +159,15 @@ FunSolver::register_term(const Node& term)
   }
   else
   {
-    d_equalities.push_back(term);
+    assert(term.kind() == Kind::EQUAL);
+    if (term[0].type().is_fun())
+    {
+      d_fun_equalities.push_back(term);
+    }
+    else
+    {
+      d_equalities.push_back(term);
+    }
   }
 }
 
@@ -177,10 +204,6 @@ FunSolver::Apply::Apply(const Node& apply,
   // argument model values.
   for (size_t i = 1, size = apply.num_children(); i < size; ++i)
   {
-    if (apply[i].type().is_uninterpreted())
-    {
-      unsupported("Uninterpreted sorts not yet supported");
-    }
     d_values.emplace_back(state.value(apply[i]));
     d_hash += std::hash<Node>{}(d_values.back());
   }
