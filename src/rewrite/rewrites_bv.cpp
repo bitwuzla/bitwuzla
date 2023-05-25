@@ -438,6 +438,49 @@ RewriteRule<RewriteRuleKind::BV_ADD_SHL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  (bvneg (bvadd a (bvmul a b))
+ * result: (bvmul a (bvnot b))
+ */
+namespace {
+Node
+_rw_bv_add_neg_mul(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  Node neg0;
+  if (rewriter.is_bv_neg(node, neg0) && neg0.kind() == Kind::BV_ADD
+      && neg0[idx1].kind() == Kind::BV_MUL)
+  {
+    if (neg0[idx1][0] == neg0[idx0])
+    {
+      return rewriter.mk_node(
+          Kind::BV_MUL, {neg0[idx0], rewriter.invert_node(neg0[idx1][1])});
+    }
+    if (neg0[idx1][1] == neg0[idx0])
+    {
+      return rewriter.mk_node(
+          Kind::BV_MUL, {neg0[idx0], rewriter.invert_node(neg0[idx1][0])});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_NEG_MUL>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  Node res = _rw_bv_add_neg_mul(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_add_neg_mul(rewriter, node, 1);
+  }
+  return res;
+}
+
 /* bvand -------------------------------------------------------------------- */
 
 /**

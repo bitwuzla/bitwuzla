@@ -690,6 +690,7 @@ Rewriter::rewrite_bv_add(const Node& node)
     BZLA_APPLY_RW_RULE(BV_ADD_ITE1);
     BZLA_APPLY_RW_RULE(BV_ADD_ITE2);
     // BZLA_APPLY_RW_RULE(BV_ADD_SHL);
+    BZLA_APPLY_RW_RULE(BV_ADD_NEG_MUL);
   }
   if (d_level == LEVEL_SPECULATIVE)
   {
@@ -1574,6 +1575,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_ADD_ITE1: out << "BV_ADD_ITE1"; break;
     case RewriteRuleKind::BV_ADD_ITE2: out << "BV_ADD_ITE2"; break;
     case RewriteRuleKind::BV_ADD_SHL: out << "BV_ADD_SHL"; break;
+    case RewriteRuleKind::BV_ADD_NEG_MUL: out << "BV_ADD_NEG_MUL"; break;
     case RewriteRuleKind::NORM_BV_ADD_MUL: out << "NORM_BV_ADD_MUL"; break;
 
     case RewriteRuleKind::BV_AND_EVAL: out << "BV_AND_EVAL"; break;
