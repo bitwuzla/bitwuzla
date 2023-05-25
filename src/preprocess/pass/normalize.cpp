@@ -75,6 +75,7 @@ PassNormalize::PassNormalize(Env& env,
                              backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr, "no", "normalize"),
       d_share_aware(d_env.options().pp_normalize_share_aware()),
+      d_rewriter(env, Rewriter::LEVEL_SPECULATIVE, "normalize"),
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
@@ -1179,7 +1180,7 @@ Node
 PassNormalize::process(const Node& node)
 {
   NodeManager& nm = d_env.nm();
-  Node _node      = node;
+  Node _node      = d_rewriter.rewrite(node);
   bool normalized = false;
   do
   {
@@ -1239,8 +1240,8 @@ PassNormalize::process(const Node& node)
         }
         else if (k == Kind::BV_MUL)
         {
-          it->second = d_env.rewriter().rewrite(
-              distrib_mul(nm, children[0], children[1], 5));
+          it->second =
+              d_rewriter.rewrite(distrib_mul(nm, children[0], children[1], 5));
         }
         else
         {
@@ -1263,7 +1264,7 @@ PassNormalize::process(const Node& node)
   } while (normalized);
   auto it = d_cache.find(_node);
   assert(it != d_cache.end());
-  return d_env.rewriter().rewrite(it->second);
+  return d_rewriter.rewrite(it->second);
 }
 
 /* --- PassNormalize private ------------------------------------------------ */

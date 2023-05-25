@@ -15,6 +15,7 @@
 
 #include "backtrack/unordered_map.h"
 #include "preprocess/preprocessing_pass.h"
+#include "rewrite/rewriter.h"
 #include "util/statistics.h"
 
 namespace bzla::preprocess::pass {
@@ -228,6 +229,9 @@ class PassNormalize : public PreprocessingPass
   std::vector<Node> d_adder_chains;
   std::unordered_map<Node, uint64_t> d_adder_chains_length;
   std::unordered_set<Node> d_adder_chains_cache;
+
+  /** A rewriter configured specifically for normalization rewrites. */
+  Rewriter d_rewriter;
 
   struct Statistics
   {
