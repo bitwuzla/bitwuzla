@@ -359,6 +359,13 @@ Rewriter::nm()
   return d_env.nm();
 }
 
+void
+Rewriter::configure_parents_count(
+    std::unordered_map<Node, uint64_t>* parents_map)
+{
+  d_parents_map = parents_map;
+}
+
 /* === Rewriter private ===================================================== */
 
 const Node&

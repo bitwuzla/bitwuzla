@@ -142,6 +142,13 @@ class Rewriter
 
   NodeManager& nm();
 
+  /**
+   * Configure map with parents counts.
+   * @param parents_map Maps nodes to their parents count. Only needed for
+   *                    the normalization rewriter.
+   */
+  void configure_parents_count(std::unordered_map<Node, uint64_t>* parents_map);
+
  private:
   /** The limit for recursive calls to _rewrite(). */
   static constexpr uint64_t RECURSION_LIMIT = 4096;
@@ -279,6 +286,9 @@ class Rewriter
   uint64_t d_num_rec_calls = 0;
   /** Indicates whether rewrite recursion limit was reached. */
   bool d_recursion_limit_reached = false;
+  /** Maps nodes to their parents counts. Only needed for normalization. */
+  std::unordered_map<Node, uint64_t>* d_parents_map = nullptr;
+
   util::HistogramStatistic& d_stats_rewrites;
 };
 
