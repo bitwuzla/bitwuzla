@@ -30,6 +30,7 @@ class TestPassVariableSubstitution : public TestPreprocessingPass
     d_options.pp_embedded_constr.set(false);
     d_options.pp_flatten_and.set(false);
     d_options.pp_skeleton_preproc.set(false);
+    d_options.pp_normalize.set(false);
   };
 
  protected:
