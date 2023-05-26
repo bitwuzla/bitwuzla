@@ -95,9 +95,10 @@ class SolvingContext
   struct Statistics
   {
     Statistics(util::Statistics& stats);
-    util::HistogramStatistic& d_formula_kinds_pre;
-    util::HistogramStatistic& d_formula_kinds_post;
-  } d_statistics;
+    util::TimerStatistic& time_solve;
+    util::HistogramStatistic& formula_kinds_pre;
+    util::HistogramStatistic& formula_kinds_post;
+  } d_stats;
 };
 
 }  // namespace bzla

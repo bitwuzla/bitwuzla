@@ -21,13 +21,14 @@ SolvingContext::SolvingContext(const option::Options& options,
       d_original_assertions(&d_backtrack_mgr),
       d_preprocessor(*this),
       d_solver_engine(*this),
-      d_statistics(d_env.statistics())
+      d_stats(d_env.statistics())
 {
 }
 
 Result
 SolvingContext::solve()
 {
+  util::Timer timer(d_stats.time_solve);
 #ifndef NDEBUG
   check_no_free_variables();
 #endif
@@ -54,12 +55,12 @@ SolvingContext::preprocess()
 {
   if (d_env.options().verbosity() > 0)
   {
-    compute_formula_statistics(d_statistics.d_formula_kinds_pre);
+    compute_formula_statistics(d_stats.formula_kinds_pre);
   }
   auto res = d_preprocessor.preprocess();
   if (d_env.options().verbosity() > 0)
   {
-    compute_formula_statistics(d_statistics.d_formula_kinds_post);
+    compute_formula_statistics(d_stats.formula_kinds_post);
   }
   return res;
 }
@@ -242,9 +243,11 @@ SolvingContext::compute_formula_statistics(util::HistogramStatistic& stat)
 }
 
 SolvingContext::Statistics::Statistics(util::Statistics& stats)
-    : d_formula_kinds_pre(
-        stats.new_stat<util::HistogramStatistic>("formula::pre::node")),
-      d_formula_kinds_post(
+    : time_solve(stats.new_stat<util::TimerStatistic>(
+        "preprocess::slvcontext::time_solve")),
+      formula_kinds_pre(
+          stats.new_stat<util::HistogramStatistic>("formula::pre::node")),
+      formula_kinds_post(
           stats.new_stat<util::HistogramStatistic>("formula::post::node"))
 {
 }
