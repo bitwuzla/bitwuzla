@@ -38,7 +38,7 @@ class PassVariableSubstitution : public PreprocessingPass
   /**
    * Extract variable substitution, if possible.
    * @param assertion The assertion to extract a variable substitution from.
-   * @return A pair that maps variable to substiution, if successful, and
+   * @return A pair that maps variable to substitution, if successful, and
    *         a pair of null nodes, otherwise.
    */
   std::pair<Node, Node> find_substitution(const Node& assertion);
@@ -48,9 +48,17 @@ class PassVariableSubstitution : public PreprocessingPass
   Node substitute(const Node& term,
                   const Node& excl_var,
                   const std::unordered_map<Node, Node>& substitutions,
-                  std::unordered_map<Node, Node>& subst_cache) const;
+                  std::unordered_map<Node, Node>& subst_cache);
 
   Node process(const Node& term, const Node& excl_var);
+
+  /**
+   * Determines whether we can fully substitute given variable, or if we have
+   * to keep the substitution assertion.
+   */
+  bool is_safe_to_substitute(const Node& var, size_t assertion_start_index);
+  /** Maps variables found in assertion to index. */
+  void find_vars(const Node& assertion, size_t index);
 
   /** Current set of variable substitutions. */
   backtrack::unordered_map<Node, std::pair<Node, Node>> d_substitutions;
@@ -60,6 +68,13 @@ class PassVariableSubstitution : public PreprocessingPass
    */
   backtrack::unordered_map<size_t, std::pair<Node, Node>>
       d_substitution_assertions;
+
+  /**
+   * Maps first occurrence of variable to assertion index where it was found.
+   */
+  backtrack::unordered_map<Node, size_t> d_first_seen;
+  /** Cache for find_vars. */
+  backtrack::unordered_set<Node> d_first_seen_cache;
 
   /** Backtrackable cache. */
   class Cache : public backtrack::Backtrackable
@@ -96,6 +111,9 @@ class PassVariableSubstitution : public PreprocessingPass
     util::TimerStatistic& time_register;
     util::TimerStatistic& time_direct_cycle_check;
     util::TimerStatistic& time_remove_cycles;
+    util::TimerStatistic& time_substitute;
+    util::TimerStatistic& time_find_vars;
+    util::TimerStatistic& time_find_substitution;
     uint64_t& num_substs;
     uint64_t& num_linear_eq;
     uint64_t& num_gauss_elim;

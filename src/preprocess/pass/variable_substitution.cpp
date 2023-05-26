@@ -308,6 +308,7 @@ PassVariableSubstitution::normalize_substitution_bv_ineq(const Node& node)
 std::pair<Node, Node>
 PassVariableSubstitution::find_substitution(const Node& assertion)
 {
+  util::Timer timer(d_stats.time_find_substitution);
   NodeManager& nm = NodeManager::get();
 
   if (assertion.kind() == Kind::EQUAL)
@@ -374,6 +375,8 @@ PassVariableSubstitution::PassVariableSubstitution(
     : PreprocessingPass(env, backtrack_mgr),
       d_substitutions(backtrack_mgr),
       d_substitution_assertions(backtrack_mgr),
+      d_first_seen(backtrack_mgr),
+      d_first_seen_cache(backtrack_mgr),
       d_cache(backtrack_mgr),
       d_stats(env.statistics())
 {
@@ -400,6 +403,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       {
         continue;
       }
+      find_vars(assertion, assertions.start_index() + i);
       auto [var, term]       = find_substitution(assertion);
       // No variable substitution
       if (var.is_null())
@@ -458,7 +462,10 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
   }
 
   // Reset substitution cache since we have new substitutions
-  d_cache.cache().clear();
+  if (!new_substs.empty())
+  {
+    d_cache.cache().clear();
+  }
 
   // Apply substitutions.
   //
@@ -500,15 +507,19 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       if (it != d_substitution_assertions.end())
       {
         const auto& [var, term] = it->second;
-        Node replacement        = process(assertion, var);
-        assertions.replace(i, replacement);
-        continue;
+        // Variable occurs in previous assertions, don't perform full
+        // substitution.
+        if (!is_safe_to_substitute(var, start_index))
+        {
+          Node replacement = process(assertion, var);
+          assertions.replace(i, replacement);
+          continue;
+        }
       }
     }
     Node replacement = process(assertion);
     assertions.replace(i, replacement);
   }
-  d_cache.cache().clear();
 }
 
 Node
@@ -517,6 +528,36 @@ PassVariableSubstitution::process(const Node& term)
   Node null;
   return d_env.rewriter().rewrite(
       substitute(term, null, d_cache.substitutions(), d_cache.cache()));
+}
+
+bool
+PassVariableSubstitution::is_safe_to_substitute(const Node& var,
+                                                size_t assertion_start_index)
+{
+  auto it = d_first_seen.find(var);
+  assert(it != d_first_seen.end());
+  return it->second >= assertion_start_index;
+}
+
+void
+PassVariableSubstitution::find_vars(const Node& assertion, size_t index)
+{
+  util::Timer timer(d_stats.time_find_vars);
+  node_ref_vector visit{assertion};
+  do
+  {
+    const Node& cur = visit.back();
+    visit.pop_back();
+
+    if (d_first_seen_cache.insert(cur).second)
+    {
+      if (cur.is_const())
+      {
+        d_first_seen.emplace(cur, index);
+      }
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  } while (!visit.empty());
 }
 
 const std::unordered_map<Node, Node>&
@@ -688,8 +729,9 @@ PassVariableSubstitution::substitute(
     const Node& term,
     const Node& excl_var,
     const std::unordered_map<Node, Node>& substitutions,
-    std::unordered_map<Node, Node>& subst_cache) const
+    std::unordered_map<Node, Node>& subst_cache)
 {
+  util::Timer timer(d_stats.time_substitute);
   node::node_ref_vector visit{term};
   std::unordered_map<Node, Node> local_cache;
   // Use local cache if excl_var should not be substituted, but was already
@@ -750,6 +792,12 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
           "preprocess::varsubst::time_direct_cycle_check")),
       time_remove_cycles(stats.new_stat<util::TimerStatistic>(
           "preprocess::varsubst::time_remove_cycles")),
+      time_substitute(stats.new_stat<util::TimerStatistic>(
+          "preprocess::varsubst::time_substitute")),
+      time_find_vars(stats.new_stat<util::TimerStatistic>(
+          "preprocess::varsubst::time_find_vars")),
+      time_find_substitution(stats.new_stat<util::TimerStatistic>(
+          "preprocess::varsubst::time_find_substitution")),
       num_substs(stats.new_stat<uint64_t>("preprocess::varsubst::num_substs")),
       num_linear_eq(stats.new_stat<uint64_t>(
           "preprocess::varsubst::normalize_eq::num_linear_eq")),
