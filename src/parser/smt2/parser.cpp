@@ -183,6 +183,7 @@ Parser::parse_command_assert()
 {
   init_logic();
   init_bitwuzla();
+  d_record_named_assertions = true;
   Token la = next_token();
   if (!parse_term(true, la))
   {
@@ -200,6 +201,7 @@ Parser::parse_command_assert()
   d_bitwuzla->assert_formula(term);
   print_success();
   d_statistics.num_assertions += 1;
+  d_record_named_assertions = false;
   return true;
 }
 
@@ -208,6 +210,7 @@ Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
 {
   init_logic();
   init_bitwuzla();
+  d_assumptions.clear();
   if (with_assumptions)
   {
     if (!parse_lpar())
@@ -215,10 +218,12 @@ Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
       return false;
     }
     std::vector<bitwuzla::Term> assumptions;
-    if (!parse_term_list(assumptions))
+    std::vector<std::string> assumptions_strs;
+    if (!parse_term_list(assumptions, &assumptions_strs))
     {
       return false;
     }
+    assert(assumptions.size() == assumptions_strs.size());
     for (size_t i = 0, n = assumptions.size(); i < n; ++i)
     {
       if (!assumptions[i].sort().is_bool())
@@ -226,6 +231,7 @@ Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
         return error_arg("assumption at index " + std::to_string(i)
                          + " is not a formula");
       }
+      d_assumptions.emplace(assumptions[i], assumptions_strs[i]);
     }
     if (!parse_rpar())
     {
@@ -450,7 +456,6 @@ Parser::parse_command_define_fun()
   {
     symbol->d_term = body;
   }
-  d_named_terms.emplace(symbol->d_term, symbol);
 
   for (size_t i = 0, n = nargs(); i < n; ++i)
   {
@@ -623,10 +628,8 @@ Parser::parse_command_get_unsat_assumptions()
   auto unsat_ass = d_bitwuzla->get_unsat_assumptions();
   for (size_t i = 0, n = unsat_ass.size(); i < n; ++i)
   {
-    auto it = d_named_terms.find(unsat_ass[i]);
-    (*d_out) << (i > 0 ? " " : "")
-             << (it == d_named_terms.end() ? unsat_ass[i].str()
-                                           : it->second->d_symbol);
+    auto it = d_assumptions.find(unsat_ass[i]);
+    (*d_out) << (i > 0 ? " " : "") << it->second;
   }
   (*d_out) << ")" << std::endl;
   d_out->flush();
@@ -654,15 +657,10 @@ Parser::parse_command_get_unsat_core()
   auto unsat_core = d_bitwuzla->get_unsat_core();
   for (size_t i = 0, n = unsat_core.size(); i < n; ++i)
   {
-    auto it = d_named_terms.find(unsat_core[i]);
-    (*d_out) << (i > 0 ? " " : "");
-    if (it == d_named_terms.end())
+    auto it = d_named_assertions.find(unsat_core[i]);
+    if (it != d_named_assertions.end())
     {
-      (*d_out) << unsat_core[i];
-    }
-    else
-    {
-      (*d_out) << it->second->d_symbol;
+      (*d_out) << (i > 0 ? " " : "") << it->second->d_symbol;
     }
   }
   (*d_out) << ")" << std::endl;
@@ -1928,7 +1926,10 @@ Parser::close_term_bang(ParsedItem& item)
   }
   symbol->d_term = pop_term_arg();
   set_item(item, Token::TERM, symbol->d_term);
-  d_named_terms.emplace(symbol->d_term, symbol);
+  if (d_record_named_assertions)
+  {
+    d_named_assertions[symbol->d_term] = symbol;
+  }
   return true;
 }
 

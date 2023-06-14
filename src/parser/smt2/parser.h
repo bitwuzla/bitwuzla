@@ -815,7 +815,16 @@ class Parser : public bzla::parser::Parser
   /** The string representation of input parsed while d_save_repr was true. */
   std::string d_repr;
 
-  std::unordered_map<bitwuzla::Term, SymbolTable::Node*> d_named_terms;
+  /**
+   * Flag indicating if on parsing (! ... :named ...), the named term should
+   * be recorded in d_named_assertions.
+   */
+  bool d_record_named_assertions = false;
+  /** A map from annotated (:named) assertions to their named symbol. */
+  std::unordered_map<bitwuzla::Term, SymbolTable::Node*> d_named_assertions;
+
+  /** The set of currently active assumptions. */
+  std::unordered_map<bitwuzla::Term, std::string> d_assumptions;
 
   /** Parse statistics. */
   struct Statistics
