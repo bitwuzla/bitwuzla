@@ -45,5 +45,5 @@ Python Bindings
 For how to use the Python bindings, please refer to the :ref:`python-api`.
 
 *Additional Required Dependencies*
-  * `cython <https://pypi.org/project/Cython>`_
+  * `cython >= 3.0.0 <https://pypi.org/project/Cython>`_
   * `meson-python <https://pypi.org/project/meson-python>`_

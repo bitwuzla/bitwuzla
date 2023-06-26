@@ -37,7 +37,7 @@ enum ENUM(Option)
   /*! **Log level.**
    *
    * Values:
-   *  * An unsigned integer value (**default**: 0).
+   *  * An unsigned integer value. [**default**: 0]
    */
   EVALUE(LOGLEVEL),
   /*! **Model generation.**
@@ -68,13 +68,13 @@ enum ENUM(Option)
   /*! **Seed for random number generator.**
    *
    * Values:
-   *  * An unsigned integer value (**default**: 0).
+   *  * An unsigned integer value. [**default**: 0]
    */
   EVALUE(SEED),
   /*! **Verbosity level.**
    *
    * Values:
-   *  * An unsigned integer value <= 4 (**default**: 0).
+   *  * An unsigned integer value <= 4. [**default**: 0]
    */
   EVALUE(VERBOSITY),
 
@@ -83,7 +83,7 @@ enum ENUM(Option)
   /*! **Configure the bit-vector solver engine.**
    *
    * Values:
-   *  * **bitblast** [**default**]: The classical bit-blasting approach.
+   *  * **bitblast**: The classical bit-blasting approach. [**default**]
    *  * **prop**: Propagation-based local search (sat only).
    *  * **preprop**: Sequential portfolio combination of bit-blasting and
    *                 propagation-based local search.
@@ -106,8 +106,8 @@ enum ENUM(Option)
   /*! **Configure the SAT solver engine.**
    *
    * Values:
-   *  * **cadical** [**default**]:
-   *    [CaDiCaL](https://github.com/arminbiere/cadical)
+   *  * **cadical**:
+   *    [CaDiCaL](https://github.com/arminbiere/cadical) [**default**]
    *  * **cms**:
    *    [CryptoMiniSat](https://github.com/msoos/cryptominisat)
    *  * **gimsatul**:
@@ -164,7 +164,7 @@ enum ENUM(Option)
    * propagation-based local search solver engine. No limit if 0.
    *
    * Values:
-   *  * An unsigned integer value (**default**: 0).
+   *  * An unsigned integer value. [**default**: 0]
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
@@ -176,7 +176,7 @@ enum ENUM(Option)
    * propagation-based local search solver engine. No limit if 0.
    *
    * Values:
-   *  * An unsigned integer value (**default**: 0).
+   *  * An unsigned integer value. [**default**: 0]
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
@@ -187,8 +187,8 @@ enum ENUM(Option)
    * Configure mode for path selection.
    *
    * Values:
-   *  * **essential** [default]:
-   *    Select path based on essential inputs.
+   *  * **essential**:
+   *    Select path based on essential inputs. [default]
    *  * **random**:
    *    Select path randomly.
    *
@@ -202,7 +202,7 @@ enum ENUM(Option)
    * an essential input when selecting the path.
    *
    * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
+   *  * An unsigned integer value <= 1000 (= 100%). [**default**: 0]
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
@@ -214,7 +214,7 @@ enum ENUM(Option)
    * consistent value when aninverse value exists.
    *
    * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 990).
+   *  * An unsigned integer value <= 1000 (= 100%). [**default**: 990]
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
