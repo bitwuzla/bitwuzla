@@ -80,7 +80,14 @@ enum ENUM(Option)
 
   /* ---------------- Bitwuzla-specific Options ----------------------------- */
 
-  // TODO: doc
+  /*! **Configure the bit-vector solver engine.**
+   *
+   * Values:
+   *  * **bitblast** [**default**]: The classical bit-blasting approach.
+   *  * **prop**: Propagation-based local search (sat only).
+   *  * **preprop**: Sequential portfolio combination of bit-blasting and
+   *                 propagation-based local search.
+   */
   EVALUE(BV_SOLVER),
   /*! **Rewrite level.**
    *
