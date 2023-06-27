@@ -59,8 +59,10 @@ def main():
                     help='shared library')
     ap.add_argument('--static', action='store_true',
                     help='static library')
-    ap.add_argument('--assertions', action=argparse.BooleanOptionalAction,
-                    help='enable/disable assertions')
+    ap.add_argument('--assertions', action='store_true', default=None,
+                    help='enable assertions')
+    ap.add_argument('--no-assertions', action='store_false',
+                    help='disable assertions')
     ap.add_argument('--asan', action='store_true',
                     help='enable address sanitizer')
     ap.add_argument('--ubsan', action='store_true',
@@ -69,10 +71,15 @@ def main():
                     help='enable code coverage')
     ap.add_argument('--python', action='store_true',
                     help='build python bindings')
-    ap.add_argument('--testing', action=argparse.BooleanOptionalAction,
-                    help='regression and unit testing')
-    ap.add_argument('--unit-testing', action=argparse.BooleanOptionalAction,
-                    help='unit testing')
+    ap.add_argument('--testing', action='store_true', default=None,
+                    help='enable regression and unit testing')
+    ap.add_argument('--no-testing', action='store_false',
+                    help='disable regression and unit testing')
+    ap.add_argument('--unit-testing', action='store_true', default=None,
+                    help='enable unit testing')
+    ap.add_argument('--no-unit-testing', action='store_false',
+                    dest='unit_testing',
+                    help='disable unit testing')
     ap.add_argument('--docs', action='store_true',
                     help='build documentation')
     ap.add_argument('--wipe', action='store_true',
