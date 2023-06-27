@@ -72,7 +72,6 @@ enum class SatSolver
   CADICAL,
   CRYPTOMINISAT,
   KISSAT,
-  LINGELING,
 };
 
 enum class PropPathSelection

@@ -241,51 +241,22 @@ static const std::unordered_map<bzla::node::Kind, Kind> s_kinds =
 
 /* -------------------------------------------------------------------------- */
 
-std::string
+const char*
 copyright()
 {
-  return BZLA_LICENSE  // TODO refactor
-      "\n\n"
-      "This version of Bitwuzla is linked against the following\n"
-      "third party libraries. For copyright information of each\n"
-      "library see the corresponding url.\n"
-      "\n"
-      "  Btor2Tools - tools for the BTOR2 format\n"
-      "  https://https://github.com/Boolector/btor2tools\n"
-      "\n"
-      "  GMP - GNU Multiple Precision Arithmetic Library\n"
-      "  https://gmplib.org \n"
-#ifdef BZLA_USE_LINGELING
-      "\n"
-      "  Lingeling\n"
-      "  https://github.com/arminbiere/lingeling\n"
-#endif
-#ifdef BZLA_USE_CADICAL
-      "\n"
-      "  CaDiCaL\n"
-      "  https://github.com/arminbiere/cadical\n"
-#endif
-#ifdef BZLA_USE_CMS
-      "\n"
-      "  CryptoMiniSat\n"
-      "  https://github.com/msoos/cryptominisat\n"
-#endif
-      "\n"
-      "  SymFPU\n"
-      "  https://github.com/martin-cs/symfpu \n"
-      "";
+  return bzla::config::license;
 }
 
-std::string
+const char*
 version()
 {
-  return BZLA_VERSION;  // TODO refactor
+  return bzla::config::version;
 }
 
-std::string
+const char*
 git_id()
 {
-  return BZLA_GIT_ID;  // TODO refactor
+  return bzla::config::git_id;
 }
 
 /* -------------------------------------------------------------------------- */

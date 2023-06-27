@@ -1,4 +1,25 @@
 # ---
+# Bitwuzla library dependencies
+# ---
+
+gmp_dep = dependency('gmp',
+                     version: '>=6.1',
+                     required: true,
+                     static: build_static)
+
+# Subproject dependencies
+cadical_dep = dependency('cadical', required: true)
+kissat_dep = dependency('kissat', required: get_option('kissat'))
+symfpu_dep = dependency('symfpu', required: true)
+
+dependencies = [symfpu_dep, cadical_dep, kissat_dep, gmp_dep]
+
+cpp_args = []
+if kissat_dep.found()
+  cpp_args += ['-DBZLA_USE_KISSAT']
+endif
+
+# ---
 # Generate config.h
 # ---
 
@@ -22,11 +43,22 @@ if git.found()
   endif
 endif
 
-# Get license text
+# Generate license text
 fs = import('fs')
 license_text = fs.read(join_paths(meson.project_source_root(),
                                   'COPYING')).strip()
-license_text = license_text.replace('\n', '\\\n').replace('"', '\\"')
+license_text += '''\n\n
+This version of Bitwuzla is linked against the following
+third party libraries. For copyright information of each
+library see the corresponding url.'''
+license_text += '\n\n  CaDiCaL\n  https://github.com/arminbiere/cadical'
+license_text += \
+  '\n\n  GMP - GNU Multiple Precision Arithmetic Library\n  https://gmplib.org'
+if kissat_dep.found()
+  license_text += '\n\n  Kissat\n  https://github.com/arminbiere/kissat'
+endif
+license_text += '\n\n  SymFPU\n  https://github.com/martin-cs/symfpu'
+license_text = license_text.replace('\n', '\\n').replace('"', '\\"')
 
 # Generate header
 c_compiler = meson.get_compiler('c')
@@ -130,24 +162,6 @@ sources = files([
   'util/logger.cpp',
   'util/statistics.cpp',
 ])
-
-# bitwuzla_lib dependencies
-gmp_dep = dependency('gmp',
-                     version: '>=6.1',
-                     required: true,
-                     static: build_static)
-
-# Subproject dependencies
-cadical_dep = dependency('cadical', required: true)
-kissat_dep = dependency('kissat', required: get_option('kissat'))
-symfpu_dep = dependency('symfpu', required: true)
-
-dependencies = [symfpu_dep, cadical_dep, kissat_dep, gmp_dep]
-
-cpp_args = []
-if kissat_dep.found()
-  cpp_args += ['-DBZLA_USE_KISSAT']
-endif
 
 # Public header include directory
 bitwuzla_inc = include_directories('../include', 'lib')

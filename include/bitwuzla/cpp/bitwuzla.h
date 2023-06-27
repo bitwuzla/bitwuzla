@@ -77,17 +77,17 @@ namespace bitwuzla {
  * Get copyright information.
  * @return A string with the copyright information.
  */
-std::string copyright();
+const char* copyright();
 /**
  * Get version information.
  * @return A string with the version information.
  */
-std::string version();
+const char* version();
 /**
  * Get git information.
  * @return A string with the git information.
  */
-std::string git_id();
+const char* git_id();
 
 /** @} */
 
