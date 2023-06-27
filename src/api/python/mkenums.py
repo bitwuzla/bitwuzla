@@ -1,12 +1,13 @@
 ###
 # Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
 #
-# This file is part of Bitwuzla.
+# Copyright (C) 2020 by the authors listed in the AUTHORS file at
+# https://github.com/bitwuzla/bitwuzla/blob/main/AUTHORS
 #
-# Copyright (C) 2007-2022 by the authors listed in the AUTHORS file.
-#
-# See COPYING for more information on using this software.
+# This file is part of Bitwuzla under the MIT license. See COPYING for more
+# information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
 ##
+
 #
 # Generate enums.pxd and option.pxd includes from enums.h and option.h.
 #

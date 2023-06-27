@@ -2,11 +2,11 @@
 ###
 # Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
 #
-# This file is part of Bitwuzla.
+# Copyright (C) 2021 by the authors listed in the AUTHORS file at
+# https://github.com/bitwuzla/bitwuzla/blob/main/AUTHORS
 #
-# Copyright (C) 2007-2022 by the authors listed in the AUTHORS file.
-#
-# See COPYING for more information on using this software.
+# This file is part of Bitwuzla under the MIT license. See COPYING for more
+# information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
 ##
 
 import argparse
@@ -18,51 +18,52 @@ ap.add_argument('files', nargs='*')
 args = ap.parse_args()
 
 EXCLUDE_FILES = [
-    'cmake/targetLinkLibrariesWithDynamicLookup.cmake',
-    'cmake/UseCython.cmake',
-    'cmake/FindPythonExtensions.cmake',
-    'cmake/FindCython.cmake',
-    'cmake/CodeCoverage.cmake',
-    'contrib/windows_patches/',
-    'contrib/smtcomp/',
     'docs/conf.py.in'
 ]
 
 C_HEADER_TEMPLATE="""/***
  * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
- * This file is part of Bitwuzla.
+ * Copyright (C) {year} by the authors listed in the AUTHORS file at
+ * https://github.com/bitwuzla/bitwuzla/blob/main/AUTHORS
  *
- * Copyright (C) 2007-2022 by the authors listed in the AUTHORS file.
- *
- * See COPYING for more information on using this software.
+ * This file is part of Bitwuzla under the MIT license. See COPYING for more
+ * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 """
 
-PY_HEADER_TEMPLATE="""###
+PY_HEADER_TEMPLATE ="""###
 # Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
 #
-# This file is part of Bitwuzla.
+# Copyright (C) {year} by the authors listed in the AUTHORS file at
+# https://github.com/bitwuzla/bitwuzla/blob/main/AUTHORS
 #
-# Copyright (C) 2007-2022 by the authors listed in the AUTHORS file.
-#
-# See COPYING for more information on using this software.
+# This file is part of Bitwuzla under the MIT license. See COPYING for more
+# information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
 ##
 """
 
+def get_year(filename):
+    cmd = ['git', 'log', '--follow', '--format=%ad', '--date=format:%Y',
+           filename]
+    proc = subprocess.run(cmd, capture_output=True, check=True)
+    assert proc.stdout
+    return proc.stdout.split()[-1].decode()
 
 def update_header(filename):
 
+    year = get_year(filename)
     if requires_c_header(filename):
-        HEADER_TEMPLATE = C_HEADER_TEMPLATE
+        HEADER_TEMPLATE = C_HEADER_TEMPLATE.format(year=year)
     else:
-        HEADER_TEMPLATE = PY_HEADER_TEMPLATE
+        HEADER_TEMPLATE = PY_HEADER_TEMPLATE.format(year=year)
 
     HEADER_START = HEADER_TEMPLATE.splitlines(keepends=True)[0]
     HEADER_END = HEADER_TEMPLATE.splitlines(keepends=True)[-1]
 
     status = 'updating'
     new_lines = []
+    end_of_header = None
     with open(filename, 'r') as infile:
         lines = infile.readlines()
 
@@ -77,6 +78,7 @@ def update_header(filename):
             idx += 1
 
         new_lines.extend(HEADER_TEMPLATE.splitlines(keepends=True))
+        end_of_header = len(new_lines)
 
         if lines[idx] != HEADER_START:
             status = 'adding'
@@ -87,6 +89,10 @@ def update_header(filename):
                 print(f'Header not found for {filename}')
                 sys.exit(1)
             new_lines.extend(lines[header_end+1:])
+
+    # Only add newline after header if there is none
+    if new_lines[end_of_header] != '\n':
+        new_lines.insert(end_of_header, '\n')
 
     if lines != new_lines:
         print(f'{status:9} ... {filename}')
@@ -103,8 +109,8 @@ def requires_c_header(filename):
 
 
 def supported_suffix(filename):
-    suffixes = ('.c', '.h', '.cpp', 'CMakeLists.txt', '.py', '.py.in', '.h.in',
-                '.pyx', '.pxd', '.cmake', '.sh')
+    suffixes = ('.c', '.h', '.cpp', '.py', '.py.in', '.h.in',
+                '.pyx', '.pxd', '.sh')
     for suffix in suffixes:
         if filename.endswith(suffix):
             return True
