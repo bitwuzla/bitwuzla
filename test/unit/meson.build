@@ -84,18 +84,47 @@ unit_tests = [
       'type_manager'
     ]
   ],
+
+  ['lib/bitblast',
+    [
+      'aig_bitblaster',
+      'aig_manager',
+      'aig_cnf'
+    ]
+  ],
+
+  ['lib/bitvector',
+    ['bv']
+  ],
+
+  ['lib/ls/bv',
+    [
+      'bvdomain',
+      'bvdomaingen',
+      'bvnode',
+      'bvnodecons',
+      'bvnodeinv',
+      'bvnodeiscons',
+      'bvnodeisess',
+      'bvnodeisinv',
+      'bvnodeselpath',
+      'local_search_bv',
+      'normalize'
+      ]
+  ]
 ]
 
 gtest_dep = dependency('gtest_main', required: true)
-test_inc = [include_directories('../../src', '../..')]
+test_inc = [include_directories('../../src', '../..', 'lib')]
 test_deps = [gtest_dep, bitwuzla_dep]
 
 # Add unit tests
 foreach p : unit_tests
-  suite = p[0]
+  test_subdir = p[0]
+  suite = test_subdir.replace('/', '_')
   foreach name : p[1]
     basename = ''.join('test_', name, '.cpp')
-    src = join_paths(suite, basename)
+    src = join_paths(test_subdir, basename)
     name = '_'.join(suite, name)
     exename = ''.join('test_', name)
 

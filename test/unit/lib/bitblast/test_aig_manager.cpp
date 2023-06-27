@@ -1,5 +1,5 @@
 #include "bitblast/aig/aig_manager.h"
-#include "test.h"
+#include "test_lib.h"
 
 namespace bzla::test {
 

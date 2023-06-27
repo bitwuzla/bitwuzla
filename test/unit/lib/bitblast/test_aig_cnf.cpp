@@ -2,7 +2,7 @@
 
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig_bitblaster.h"
-#include "test.h"
+#include "test_lib.h"
 
 namespace bzla::test {
 

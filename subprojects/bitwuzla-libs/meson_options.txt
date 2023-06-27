@@ -1,1 +1,0 @@
-option('unit_testing', type: 'feature', value: 'auto', yield: true)

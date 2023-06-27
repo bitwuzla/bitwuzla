@@ -4,7 +4,7 @@
 
 #include "bitblast/aig/aig_printer.h"
 #include "bitblast/aig_bitblaster.h"
-#include "test.h"
+#include "test_lib.h"
 
 static const char* s_solver_binary = std::getenv("SOLVER_BINARY");
 

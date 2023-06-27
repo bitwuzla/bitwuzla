@@ -1,7 +1,7 @@
 #include <bitset>
 
 #include "ls/bv/bitvector_domain.h"
-#include "test.h"
+#include "test_lib.h"
 
 namespace bzla::ls::test {
 

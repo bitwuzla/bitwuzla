@@ -43,6 +43,13 @@ config_h = configure_file(input: 'config.h.in',
                configuration: conf_data)
 
 # ---
+# Add Bitwuzla support libraries
+# ---
+
+subdir('lib')
+support_libs = [bitblast_lib, bitvector_lib, local_search_lib]
+
+# ---
 # Build Bitwuzla library
 # ---
 
@@ -133,9 +140,8 @@ gmp_dep = dependency('gmp',
 cadical_dep = dependency('cadical', required: true)
 kissat_dep = dependency('kissat', required: get_option('kissat'))
 symfpu_dep = dependency('symfpu', required: true)
-bitwuzla_libs_dep = dependency('bitwuzla_libs', required: true)
 
-dependencies = [symfpu_dep, cadical_dep, kissat_dep, gmp_dep, bitwuzla_libs_dep]
+dependencies = [symfpu_dep, cadical_dep, kissat_dep, gmp_dep]
 
 cpp_args = []
 if kissat_dep.found()
@@ -143,11 +149,12 @@ if kissat_dep.found()
 endif
 
 # Public header include directory
-bitwuzla_inc = include_directories('../include')
+bitwuzla_inc = include_directories('../include', 'lib')
 
 bitwuzla_lib = library('bitwuzla',
                       sources,
                       include_directories: bitwuzla_inc,
+                      link_with: support_libs,
                       dependencies: dependencies,
                       soversion: bitwuzla_lib_soversion,
                       install: true,
@@ -155,7 +162,6 @@ bitwuzla_lib = library('bitwuzla',
 
 # Create library dependency
 bitwuzla_dep = declare_dependency(include_directories: bitwuzla_inc,
-                                  dependencies: bitwuzla_libs_dep,
                                   link_with: bitwuzla_lib)
 
 # Generate pkgconfig file.

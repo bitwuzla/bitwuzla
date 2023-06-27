@@ -4,7 +4,7 @@
 #include "bv/bitvector.h"
 #include "ls/bv/bitvector_domain.h"
 #include "ls/bv/bitvector_node.h"
-#include "test.h"
+#include "test_lib.h"
 
 namespace bzla::ls::test {
 

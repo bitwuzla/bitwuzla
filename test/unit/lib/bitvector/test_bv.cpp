@@ -1,7 +1,7 @@
 #include <bitset>
 #include <iostream>
 
-#include "test.h"
+#include "test_lib.h"
 
 namespace bzla::test {
 

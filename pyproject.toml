@@ -1,10 +1,10 @@
 [build-system]
 build-backend = 'mesonpy'
-requires = ['meson-python', 'cython']
+requires = ['meson-python', 'cython>=3.0.0b3']
 
 [project]
 name = 'bitwuzla'
-version = '1.0.0-dev'
+version = '0.1-dev'
 description = 'Bitwuzla Satisfiability Modulo Theories Solver'
 requires-python = '>= 3.7'
 license = {file = 'COPYING'}
