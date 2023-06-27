@@ -31,13 +31,15 @@ bitwuzla_parser_new(BitwuzlaOptions* options,
                     FILE* infile,
                     const char* language)
 {
+  BitwuzlaParser* res;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_NOT_NULL(infile_name);
   BITWUZLA_CHECK_NOT_NULL(infile);
   BITWUZLA_CHECK_NOT_NULL(language);
-  return new BitwuzlaParser(options, infile_name, infile, language);
+  res = new BitwuzlaParser(options, infile_name, infile, language);
   BITWUZLA_TRY_CATCH_END;
+  return res;
 }
 
 void
@@ -52,26 +54,29 @@ bitwuzla_parser_delete(BitwuzlaParser* parser)
 const char*
 bitwuzla_parser_parse(BitwuzlaParser* parser, bool parse_only)
 {
+  const char* res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   parser->d_error_msg = parser->d_parser->parse(parse_only);
-  if (parser->d_error_msg.empty())
+  if (!parser->d_error_msg.empty())
   {
-    return nullptr;
+    res = parser->d_error_msg.c_str();
   }
-  return parser->d_error_msg.c_str();
   BITWUZLA_TRY_CATCH_END;
+  return res;
 }
 
 Bitwuzla*
 bitwuzla_parser_get_bitwuzla(BitwuzlaParser* parser)
 {
+  Bitwuzla* res;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   if (!parser->d_bitwuzla)
   {
     parser->d_bitwuzla.reset(new Bitwuzla(parser->d_parser->bitwuzla()));
   }
-  return parser->d_bitwuzla.get();
+  res = parser->d_bitwuzla.get();
   BITWUZLA_TRY_CATCH_END;
+  return res;
 }
