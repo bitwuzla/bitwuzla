@@ -8,4 +8,8 @@
 #define BZLA_OS "@os@"
 #define BZLA_VERSION "@version@"
 
+namespace bzla::config {
+static constexpr bool is_debug_build = @is_debug_build@;
+}
+
 #endif

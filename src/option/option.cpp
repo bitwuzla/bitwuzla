@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cassert>
 
+#include "config.h"
+
 namespace bzla::option {
 
 /* --- OptionBase public ---------------------------------------------------- */
@@ -298,13 +300,13 @@ Options::Options()
                          true),
       dbg_check_model(this,
                       Option::DBG_CHECK_MODEL,
-                      true,
+                      config::is_debug_build,
                       "check model for each satisfiable query",
                       "check-model"),
       dbg_check_unsat_core(
           this,
           Option::DBG_CHECK_UNSAT_CORE,
-          true,
+          config::is_debug_build,
           "check unsat core model for each unsatisfiable query",
           "check-unsat-core")
 

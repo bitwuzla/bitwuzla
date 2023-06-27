@@ -38,6 +38,7 @@ conf_data.set('git_id', git_id)
 conf_data.set('license', license_text)
 conf_data.set('os', build_machine.system())
 conf_data.set('version', meson.project_version())
+conf_data.set('is_debug_build', (get_option('buildtype') == 'debug').to_string())
 config_h = configure_file(input: 'config.h.in',
                output: 'config.h',
                configuration: conf_data)

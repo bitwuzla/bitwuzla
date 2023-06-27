@@ -35,7 +35,6 @@ SolvingContext::solve()
   preprocess();
   d_sat_state = d_solver_engine.solve();
 
-#ifndef NDEBUG
   if (d_sat_state == Result::SAT && options().dbg_check_model())
   {
     check::CheckModel cm(*this);
@@ -46,7 +45,6 @@ SolvingContext::solve()
     check::CheckUnsatCore cuc(*this);
     assert(cuc.check());
   }
-#endif
   return d_sat_state;
 }
 
