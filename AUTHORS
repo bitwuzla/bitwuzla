@@ -6,15 +6,3 @@ The main authors and developers of Bitwuzla are:
 Bitwuzlas's copyright is held by these individuals and the affiliated
 institutions at the time of their contributions.  See the file COPYING for
 details on the copyright and licensing of Bitwuzla.
-
-This version of Bitwuzla is forked from Boolector commit 95859db.
-
-The main authors and developers of Boolector are:
-
-  Armin Biere, Johannes Kepler University Linz.
-  Robert Brummayer, Johannes Kepler University Linz.
-  Aina Niemetz, Johannes Kepler University Linz, Stanford University.
-  Mathias Preiner, Johannes Kepler University Linz, Stanford University.
-
-Boolector's copyright is held by these individuals and the affiliated
-institutions at the time of their contributions.
