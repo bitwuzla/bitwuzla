@@ -1095,12 +1095,11 @@ void *bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla);
  * Configure an abort callback function, which is called instead of exit
  * on abort conditions.
  *
- * @note This function is not thread safe (the function pointer is maintained
- *       as a global variable). It you use threading, make sure to set the
- *       abort callback prior to creating threads.
+ * @note If the abort callback function throws a C++ exception, this must be
+ *       thrown via std::rethrow_if_nested.
  *
- * @param fun The callback function, the argument `msg` explains the reason
- *            for the abort.
+ * @param fun The callback function. Argument `msg` explains the reason for the
+ *            abort.
  */
 void bitwuzla_set_abort_callback(void (*fun)(const char *msg));
 

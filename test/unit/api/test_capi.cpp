@@ -4127,5 +4127,37 @@ TEST_F(TestCApi, terminate_sat)
 }
 
 /* -------------------------------------------------------------------------- */
+/* Abort callback function                                                    */
+/* -------------------------------------------------------------------------- */
+
+namespace {
+class TestException : public std::exception
+{
+  TestException(const std::string &msg) : d_msg(msg) {}
+  std::string d_msg;
+};
+
+void
+test_abort(const char *msg)
+{
+  std::rethrow_if_nested(TestException(std::string(msg)));
+}
+}  // namespace
+
+TEST_F(TestCApi, abort_callback)
+{
+  bitwuzla_set_abort_callback(nullptr);
+  bitwuzla_set_abort_callback(test_abort);
+  try
+  {
+    bitwuzla_kind_to_string(BITWUZLA_KIND_NUM_KINDS);
+  }
+  catch (TestException &e)
+  {
+    ASSERT_NE(e.d_msg.find("invalid term kind"), std::string::npos);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test

@@ -3,18 +3,46 @@
 
 /* -------------------------------------------------------------------------- */
 
-class AbortStream
+#include <cstdlib>
+#include <iostream>
+#include <sstream>
+
+struct BitwuzlaAbortCallback
+{
+  void (*abort_fun)(const char *msg);
+  void *cb_fun; /* abort callback function */
+};
+
+/* Callback function to be executed on abort. Primarily intended to be used for
+ * plugging in custom exception handling. */
+static thread_local void (*bitwuzla_abort_callback)(const char *msg) = nullptr;
+
+static void
+bitwuzla_abort(const char *msg)
+{
+  if (!bitwuzla_abort_callback)
+  {
+    std::cerr << msg << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  bitwuzla_abort_callback(msg);
+}
+
+/* -------------------------------------------------------------------------- */
+
+class BitwuzlaAbortStream
 {
  public:
-  AbortStream(const std::string &msg_prefix) { stream() << msg_prefix << " "; }
-  [[noreturn]] ~AbortStream()
+  BitwuzlaAbortStream(const std::string &msg_prefix)
+  {
+    stream() << msg_prefix << " ";
+  }
+  ~BitwuzlaAbortStream()
   {
     flush();
-    std::abort();
+    bitwuzla_abort(d_stream.str().c_str());
   }
-  AbortStream(const AbortStream &astream) = default;
-
-  std::ostream &stream() { return std::cerr; }
+  std::ostream &stream() { return d_stream; }
 
  private:
   void flush()
@@ -22,10 +50,12 @@ class AbortStream
     stream() << std::endl;
     stream().flush();
   }
+  std::stringstream d_stream;
 };
 
-#define BITWUZLA_ABORT \
-  bzla::util::OstreamVoider() & AbortStream("bitwuzla: error: ").stream()
+#define BITWUZLA_ABORT        \
+  bzla::util::OstreamVoider() \
+      & BitwuzlaAbortStream("bitwuzla: error: ").stream()
 
 #define BITWUZLA_TRY_CATCH_BEGIN \
   try                            \

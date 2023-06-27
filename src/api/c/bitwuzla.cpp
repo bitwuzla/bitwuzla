@@ -403,8 +403,7 @@ void
 bitwuzla_set_abort_callback(void (*fun)(const char *msg))
 {
   BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(fun);
-  // TODO
+  bitwuzla_abort_callback = fun;
   BITWUZLA_TRY_CATCH_END;
 }
 
