@@ -1,5 +1,5 @@
-Installation
-============
+Installation and Build Instructions
+===================================
 
 Building Bitwuzla
 -----------------
@@ -107,4 +107,18 @@ The documentation can be found in ``build/docs/``.
 .. note::
    Configure with ``--python`` to include the documentation for the Python
    bindings.
+
+Code Coverage Reports
+---------------------
+
+.. code:: bash
+
+   # Generate code coverage reports for debug build
+   ./configure.py debug --coverage
+
+   cd build && meson test && ninja coverage
+
+
+.. note::
+   The code coverage reports can be found in ``build/meson-logs/``.
 
