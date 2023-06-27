@@ -347,14 +347,12 @@ TEST_F(TestApi, option_info)
   for (int32_t i = 0; i < static_cast<int32_t>(bitwuzla::Option::NUM_OPTS); ++i)
   {
     bitwuzla::Option opt = static_cast<bitwuzla::Option>(i);
-    try  // TODO: temporary, until set of options is finalized
+    bitwuzla::Options options;
+    bitwuzla::OptionInfo info(options, opt);
+    if (info.kind == bitwuzla::OptionInfo::Kind::BOOL)
     {
-      bitwuzla::Options options;
-      bitwuzla::OptionInfo info(options, opt);
-      if (info.kind == bitwuzla::OptionInfo::Kind::BOOL)
-      {
-        ASSERT_EQ(options.get(opt),
-                  std::get<bitwuzla::OptionInfo::Bool>(info.values).cur);
+      ASSERT_EQ(options.get(opt),
+                std::get<bitwuzla::OptionInfo::Bool>(info.values).cur);
       }
       else if (info.kind == bitwuzla::OptionInfo::Kind::NUMERIC)
       {
@@ -366,10 +364,6 @@ TEST_F(TestApi, option_info)
         ASSERT_EQ(options.get_mode(opt),
                   std::get<bitwuzla::OptionInfo::Mode>(info.values).cur);
       }
-    }
-    catch (...)
-    {
-    }
   }
 }
 

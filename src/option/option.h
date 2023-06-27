@@ -346,6 +346,7 @@ class OptionModeT : public OptionMode
               bool is_expert   = false)
       : OptionMode(options, opt, desc, lng, shrt, is_expert),
         d_value(value),
+        d_default(value),
         d_mode2string(mode2string)
   {
     for (const auto& p : mode2string)

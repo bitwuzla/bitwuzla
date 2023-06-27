@@ -565,9 +565,7 @@ TEST_F(TestCApi, set_option)
 
 TEST_F(TestCApi, get_option_info)
 {
-  GTEST_SKIP();  // TODO enable when options are finalized
   BitwuzlaOptions *options = bitwuzla_options_new();
-  Bitwuzla *bzla           = bitwuzla_new(options);
   BitwuzlaOptionInfo info;
 
   for (int32_t i = 0; i < BITWUZLA_OPT_NUM_OPTS; ++i)
@@ -584,7 +582,6 @@ TEST_F(TestCApi, get_option_info)
                 std::string(info.mode.cur));
     }
   }
-  bitwuzla_delete(bzla);
   bitwuzla_options_delete(options);
 }
 
