@@ -17,4 +17,4 @@ authors = [
 dist = []
 setup = ['-Dpython=true']
 compile = ['python-bindings']
-install = []
+install = ['--tags=python-bindings']

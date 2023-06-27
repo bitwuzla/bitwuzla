@@ -32,7 +32,8 @@ bitwuzla_py_ext = python.extension_module(
   # Note: include_directories not passed to cython compiler
   cython_args: ['-I', meson.current_build_dir()],
   override_options: ['cython_language=cpp'],
-  install: true
+  install: true,
+  install_tag: 'python-bindings'
 )
 
 # Add alias for python module target
