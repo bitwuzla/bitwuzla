@@ -4,9 +4,9 @@ This file collects a summary of important and/or user-visible changes.
 
 ## News since commit 1230d80
 
-Bitwuzla release 0.1 is a complete from-scratch rewrite. A comprehensive
-system description will be presented at CAV 2023:
+Bitwuzla release 0.1 is a complete from-scratch rewrite.
 
+A comprehensive system description will be presented at CAV 2023:  
 Aina Niemetz and Mathias Preiner. Bitwuzla. CAV 2023, Springer, 2023.
 
 Bitwuzla now provides a C++ API as its main API, with a Python and C API
@@ -47,6 +47,17 @@ The most notable user-visible changes are listed below.
 - Bitwuzla solver instances are created from an options instance, and this
   options instance must be configured prior to creating the solver instance.
   After creating the solver instance, configuration options are frozen.
+
+### Preprocessing
+
+- Preprocessing API calls do not return a result anymore (`bitwuzla_simplify`
+  in the C API, `Bitwuzla::simplify` in the  C++ API, `Bitwuzla.simplify`
+  in the Python API).
+
+- Preprocessin is now *fully incremental*. All preprocessing passes are applied
+  to the current set of assertions, from all assertion levels (including
+  assumptions), and simplifications derived from lower levels are applied to
+  all assertions of higher levels.
 
 ### C API
 
@@ -136,6 +147,7 @@ The most notable user-visible changes are listed below.
     `const BitwuzlaTerm**`
   + `bitwuzla_sort_get_fun_get_domain_sorts` now returns a `BitwuzlaTerm*`
     instead of `const BitwuzlaTerm**`
+  + `BitwuzlaResult simplify(Bitwuzla*)` changed to `void simplify(Bitwuzla*)`
 
 - Removed support for `bitwuzla_assume`, solving under assumptions is now
   available via new API function

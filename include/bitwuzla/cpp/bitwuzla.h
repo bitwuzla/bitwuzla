@@ -1086,17 +1086,14 @@ class Bitwuzla
   /**
    * Simplify the current input formula.
    *
-   * @note Assumptions are not considered for simplification.
-   *
-   * @return `Result::SAT` if the input formula was simplified to true,
-   *         `Result::UNSAT` if it was simplified to false, and
-   *         `Result::UNKNOWN` otherwise.
+   * @note Each call to `Bitwuzla::check_sat()` simplifies the input formula as
+   *       a preprocessing step. It is not necessary to call this function
+   *       explicitly in the general case.
    *
    * @see
    *   * `assert_formula()`
-   *   * `Result`
    */
-  Result simplify();
+  void simplify();
 
   /**
    * Check satisfiability of current input formula.

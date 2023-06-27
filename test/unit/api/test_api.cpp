@@ -1564,11 +1564,10 @@ TEST_F(TestApi, get_unsat_core)
 
 TEST_F(TestApi, simplify)
 {
-  GTEST_SKIP();  // currently always returns unknown
   bitwuzla::Bitwuzla bitwuzla;
   bitwuzla.assert_formula(d_bool_const);
   bitwuzla.assert_formula(d_and_bv_const1);
-  ASSERT_EQ(bitwuzla.simplify(), bitwuzla::Result::SAT);
+  bitwuzla.simplify();
 }
 
 TEST_F(TestApi, check_sat)

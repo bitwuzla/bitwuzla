@@ -161,7 +161,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         bool is_unsat_assumption(const Term &term) except +raise_error
         vector[Term] get_unsat_assumptions() except +raise_error
         vector[Term] get_unsat_core() except +raise_error
-        Result simplify() except +raise_error
+        void simplify() except +raise_error
         Result check_sat(const vector[Term] &assumptions) except +raise_error
         Term get_value(const Term &term) except +raise_error
 

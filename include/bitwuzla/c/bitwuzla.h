@@ -1209,19 +1209,16 @@ BitwuzlaTerm *bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
 /**
  * Simplify the current input formula.
  *
- * @note Assumptions are not considered for simplification.
- *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return `::BITWUZLA_SAT` if the input formula was simplified to true,
- *         `::BITWUZLA_UNSAT` if it was simplified to false, and
- *         `::BITWUZLA_UNKNOWN` otherwise.
+ * @note Each call to `bitwuzla_check_sat()` and `bitwuzla_check_sat_assuming()`
+ *       simplifies the input formula as a preprocessing step. It is not
+ *       necessary to call this function explicitly in the general case.
  *
  * @see
  *   * `bitwuzla_assert`
- *   * `BitwuzlaResult`
  */
-BitwuzlaResult bitwuzla_simplify(Bitwuzla *bitwuzla);
+void bitwuzla_simplify(Bitwuzla *bitwuzla);
 
 /**
  * Check satisfiability of current input formula.

@@ -487,19 +487,16 @@ cdef class Bitwuzla:
         """
         return _term_list(self.c_bitwuzla.get().get_unsat_core())
 
-    def simplify(self) -> Result:
+    def simplify(self):
         """Simplify current set of input assertions.
-
-           :return: - :class:`~bitwuzla.Result.SAT` if the input formula is
-                      satisfiable (under possibly given assumptions)
-                    - :class:`~bitwuzla.Result.UNSAT` if it is unsatisfiable
-                    - :class:`~bitwuzla.Result.UNKNOWN` otherwise
 
            .. note::
                Each call to :func:`~bitwuzla.Bitwuzla.check_sat`
                simplifies the input formula as a preprocessing step.
+               It is not necessary to call this function explicitly in the
+               general case.
         """
-        return Result(self.c_bitwuzla.get().simplify())
+        self.c_bitwuzla.get().simplify()
 
     def get_value(self, term: Term) -> Term:
         """Get model value of term.

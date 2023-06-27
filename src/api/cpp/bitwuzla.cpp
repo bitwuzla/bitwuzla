@@ -1422,13 +1422,12 @@ Bitwuzla::get_unsat_core()
   return d_unsat_core;
 }
 
-Result
+void
 Bitwuzla::simplify()
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   solver_state_change();
   d_ctx->preprocess();
-  return Result::UNKNOWN;
 }
 
 Result

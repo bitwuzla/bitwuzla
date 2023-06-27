@@ -930,12 +930,12 @@ bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size)
   BITWUZLA_TRY_CATCH_END;
 }
 
-BitwuzlaResult
+void
 bitwuzla_simplify(Bitwuzla *bitwuzla)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  return static_cast<BitwuzlaResult>(bitwuzla->d_bitwuzla->simplify());
+  bitwuzla->d_bitwuzla->simplify();
   BITWUZLA_TRY_CATCH_END;
 }
 

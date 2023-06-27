@@ -2342,13 +2342,14 @@ TEST_F(TestCApi, get_unsat_core)
 
 TEST_F(TestCApi, simplify)
 {
-  GTEST_SKIP();  // TODO currently always returns unknown
   ASSERT_DEATH(bitwuzla_simplify(nullptr), d_error_not_null);
-  Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
-  bitwuzla_assert(bitwuzla, d_bv_const1);
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  Bitwuzla *bitwuzla       = bitwuzla_new(options);
+  bitwuzla_assert(bitwuzla, d_bv_const1_false);
   bitwuzla_assert(bitwuzla, d_and_bv_const1);
-  ASSERT_TRUE(bitwuzla_simplify(bitwuzla) == BITWUZLA_SAT);
+  bitwuzla_simplify(bitwuzla);
   bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, check_sat)
