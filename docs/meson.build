@@ -17,6 +17,7 @@ conf_data = configuration_data()
 conf_data.set('bitwuzla_python_dir', join_paths(meson.project_build_root(), 'src', 'api', 'python'))
 conf_data.set('current_source_dir', meson.current_source_dir())
 conf_data.set('current_build_dir', meson.current_build_dir())
+conf_data.set('version', meson.project_version())
 conf_py = configure_file(input: 'conf.py.in',
                output: 'conf.py',
                configuration: conf_data)

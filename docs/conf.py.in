@@ -27,6 +27,7 @@ sys.path.insert(0, '@current_source_dir@/extensions/')
 project = 'Bitwuzla'
 copyright = '2023, the authors of Bitwuzla'
 author = 'The authors of Bitwuzla'
+version = '@version@'
 
 
 # -- General configuration ---------------------------------------------------
