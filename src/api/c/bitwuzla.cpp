@@ -342,25 +342,31 @@ bitwuzla_get_option_info(BitwuzlaOptions *options,
 const char *
 bitwuzla_copyright()
 {
+  const char *res;
   BITWUZLA_TRY_CATCH_BEGIN;
-  return bitwuzla::copyright();
+  res = bitwuzla::copyright();
   BITWUZLA_TRY_CATCH_END;
+  return res;
 }
 
 const char *
 bitwuzla_version()
 {
+  const char *res;
   BITWUZLA_TRY_CATCH_BEGIN;
-  return bitwuzla::version();
+  res = bitwuzla::version();
   BITWUZLA_TRY_CATCH_END;
+  return res;
 }
 
 const char *
 bitwuzla_git_id()
 {
+  const char *res;
   BITWUZLA_TRY_CATCH_BEGIN;
-  return bitwuzla::git_id();
+  res = bitwuzla::git_id();
   BITWUZLA_TRY_CATCH_END;
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
