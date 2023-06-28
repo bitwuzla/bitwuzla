@@ -377,6 +377,7 @@ tests_smt2 = [
   ['preprocess/varsubst1.smt2'],
   ['preprocess/varsubst2.smt2'],
   ['preprocess/varsubst3.smt2'],
+  ['preprocess/varsubst4.smt2'],
   ['preprocess/varsubst5.smt2'],
   ['rewrite/array/hang_min_32.smt2'],
   ['rewrite/array/regr3vl4.btor.smt2'],

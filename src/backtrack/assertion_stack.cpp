@@ -16,65 +16,28 @@ namespace bzla::backtrack {
 
 /* --- AssertionStack public ------------------------------------------------ */
 
-AssertionStack::AssertionStack() : d_true(NodeManager::get().mk_value(true)) {}
-AssertionStack::AssertionStack(BacktrackManager* mgr)
-    : Backtrackable(mgr), d_true(NodeManager::get().mk_value(true))
-{
-}
+AssertionStack::AssertionStack(BacktrackManager* mgr) : Backtrackable(mgr) {}
 
 bool
 AssertionStack::push_back(const Node& assertion)
 {
   assert(assertion.type().is_bool());
-  auto [it, inserted] = d_cache.emplace(assertion, d_control.size());
-  if (inserted)
-  {
-    d_assertions.emplace_back(assertion, d_control.size());
-  }
-  return inserted;
+  d_assertions.emplace_back(assertion, d_control.size());
+  return true;
 }
 
 bool
 AssertionStack::replace(size_t index, const Node& replacement)
 {
   const auto& [assertion, level] = d_assertions[index];
-  assert(d_cache.find(assertion) != d_cache.end());
   // If assertion is already a value, we do not need to perform the replacement.
-  if (assertion.is_value())
+  assert(!assertion.is_value() || assertion == replacement);
+  if (assertion == replacement)
   {
-    assert(assertion == replacement);
     return false;
   }
-  d_cache.erase(assertion);
 
-  auto [it, inserted] = d_cache.emplace(replacement, level);
-  if (inserted)
-  {
-    d_assertions[index].first = replacement;
-  }
-  else  // Replacement assertion already on stack
-  {
-    if (level < it->second)
-    {
-      // Replacement assertion will be added to lower level, remove assertion
-      // at higher level and update cache accordingly.
-      remove(it->second, replacement);
-      d_assertions[index].first = replacement;
-      it->second                = level;
-    }
-    else
-    {
-      // Do not add replacement to stack, since assertion already exists in
-      // previous level. Add true/false instead and update level accordingly.
-      d_assertions[index].first = replacement.is_value() ? replacement : d_true;
-      std::tie(it, inserted) =
-          d_cache.emplace(d_assertions[index].first, level);
-      if (!inserted && it->second > level)
-      {
-        it->second = level;
-      }
-    }
-  }
+  d_assertions[index].first = replacement;
   return true;
 }
 
@@ -87,20 +50,6 @@ AssertionStack::insert_at_level(size_t level, const Node& assertion)
     return push_back(assertion);
   }
   assert(level < d_control.size());
-
-  auto [it, inserted] = d_cache.emplace(assertion, level);
-  if (!inserted)
-  {
-    // Assertion already added in a previous level.
-    if (it->second <= level)
-    {
-      return false;
-    }
-    // Remove assertion at higher level.
-    remove(it->second, assertion);
-    // Assertion added to lower level, update index.
-    it->second = level;
-  }
 
   // Add assertion to given level and update control stack.
   size_t index = d_control[level];
@@ -175,25 +124,8 @@ AssertionStack::pop()
   // Pop back assertions
   while (d_assertions.size() > pop_to)
   {
-    const auto& [assertion, level] = d_assertions.back();
-    auto it                        = d_cache.find(assertion);
-    assert(it != d_cache.end() || assertion.is_value());
-    if (it != d_cache.end() && it->second == level)
-    {
-      d_cache.erase(it);
-    }
     d_assertions.pop_back();
   }
-
-#ifndef NDEBUG
-  for (const auto& [assertion, level] : d_assertions)
-  {
-    assert(level <= d_control.size());
-    auto it = d_cache.find(assertion);
-    assert(it != d_cache.end());
-    assert(it->second == level || assertion.is_value());
-  }
-#endif
 
   // Update views
   size_t size = d_assertions.size();
@@ -204,39 +136,6 @@ AssertionStack::pop()
       view->set_index(size);
     }
   }
-}
-
-/* --- AssertionStack private ----------------------------------------------- */
-
-void
-AssertionStack::remove(size_t level, const Node& assertion)
-{
-  if (assertion.is_value())
-  {
-    // No need to replace true/false
-    return;
-  }
-
-#ifndef NDEBUG
-  bool removed = false;
-#endif
-  for (size_t i = begin(level), size = end(level); i < size; ++i)
-  {
-    if (d_assertions[i].first == assertion)
-    {
-      d_assertions[i].first = d_true;
-      auto [it, inserted]   = d_cache.emplace(d_true, level);
-      if (!inserted && it->second > level)
-      {
-        it->second = level;
-      }
-#ifndef NDEBUG
-      removed = true;
-#endif
-      break;
-    }
-  }
-  assert(removed);
 }
 
 /* --- AssertionView public ------------------------------------------------- */

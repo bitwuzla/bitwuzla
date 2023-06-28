@@ -93,57 +93,64 @@ TEST_F(TestAssertionStack, insert_at_level)
   ASSERT_EQ(as[0], a1);
   ASSERT_EQ(as[1], a2);
   ASSERT_EQ(as[2], a3);
-  ASSERT_EQ(as[3], nm.mk_value(true));
+  ASSERT_EQ(as[3], a3);
   ASSERT_EQ(as.level(0), 0);
   ASSERT_EQ(as.level(1), 0);
   ASSERT_EQ(as.level(2), 0);
   ASSERT_EQ(as.level(3), 1);
 
   as.insert_at_level(0, a3);
-  ASSERT_EQ(as.size(), 4);
+  ASSERT_EQ(as.size(), 5);
   as.insert_at_level(1, a3);
-  ASSERT_EQ(as.size(), 4);
+  ASSERT_EQ(as.size(), 6);
   ASSERT_EQ(as[0], a1);
   ASSERT_EQ(as[1], a2);
   ASSERT_EQ(as[2], a3);
-  ASSERT_EQ(as[3], nm.mk_value(true));
+  ASSERT_EQ(as[3], a3);
+  ASSERT_EQ(as[4], a3);
 
   as.insert_at_level(1, a4);
   ASSERT_EQ(as[0], a1);
   ASSERT_EQ(as[1], a2);
   ASSERT_EQ(as[2], a3);
-  ASSERT_EQ(as[3], nm.mk_value(true));
-  ASSERT_EQ(as[4], a4);
+  ASSERT_EQ(as[3], a3);
+  ASSERT_EQ(as[4], a3);
+  ASSERT_EQ(as[5], a3);
+  ASSERT_EQ(as[6], a4);
   ASSERT_EQ(as.level(0), 0);
   ASSERT_EQ(as.level(1), 0);
   ASSERT_EQ(as.level(2), 0);
-  ASSERT_EQ(as.level(3), 1);
+  ASSERT_EQ(as.level(3), 0);
   ASSERT_EQ(as.level(4), 1);
+  ASSERT_EQ(as.level(5), 1);
+  ASSERT_EQ(as.level(6), 1);
 
   as.pop();
-  ASSERT_EQ(as.size(), 3);
+  ASSERT_EQ(as.size(), 4);
   ASSERT_EQ(as[0], a1);
   ASSERT_EQ(as[1], a2);
   ASSERT_EQ(as[2], a3);
+  ASSERT_EQ(as[3], a3);
   ASSERT_EQ(as.level(0), 0);
   ASSERT_EQ(as.level(1), 0);
   ASSERT_EQ(as.level(2), 0);
+  ASSERT_EQ(as.level(3), 0);
 
   as.push();
   as.insert_at_level(1, a4);
-  ASSERT_EQ(as.size(), 4);
+  ASSERT_EQ(as.size(), 5);
   as.push_back(a4);
-  ASSERT_EQ(as.size(), 4);
+  ASSERT_EQ(as.size(), 6);
 
   as.push();
   as.push_back(a5);
-  ASSERT_EQ(as.size(), 5);
+  ASSERT_EQ(as.size(), 7);
   as.insert_at_level(2, a5);
-  ASSERT_EQ(as.size(), 5);
+  ASSERT_EQ(as.size(), 8);
 
   as.pop();
   as.insert_at_level(1, a5);
-  ASSERT_EQ(as.size(), 5);
+  ASSERT_EQ(as.size(), 7);
 }
 
 TEST_F(TestAssertionStack, view)
