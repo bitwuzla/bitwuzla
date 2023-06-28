@@ -229,7 +229,7 @@ PassVariableSubstitution::normalize_substitution_bv_ineq(const Node& node)
 
   NodeManager& nm = NodeManager::get();
 
-  // ((bvnot a) <ineq_kind> b) is equal to (<inv_ineq_kind> (a bvnot b))
+  // (<ineq_kind> (bvnot a) b) is equal to (<inv_ineq_kind> (a bvnot b))
   if (var.is_inverted())
   {
     var   = var[0];
@@ -338,23 +338,37 @@ PassVariableSubstitution::find_substitution(const Node& assertion)
       return normalize_substitution_eq(assertion);
     }
   }
-  else if (d_env.options().pp_variable_subst_norm_diseq()
-           && assertion.is_inverted() && assertion[0].kind() == Kind::EQUAL
-           && (assertion[0][0].type().is_bool()
-               || (assertion[0][0].type().is_bv()
-                   && assertion[0][0].type().bv_size() == 1)))
+  else if (assertion.is_const())
+  {
+    return std::make_pair(assertion, nm.mk_value(true));
+  }
+  else if (assertion.is_inverted() && assertion[0].is_const())
+  {
+    return std::make_pair(assertion[0], nm.mk_value(false));
+  }
+  return std::make_pair(Node(), Node());
+}
+
+Node
+PassVariableSubstitution::normalize_for_substitution(const Node& assertion)
+{
+  NodeManager& nm = NodeManager::get();
+  if (d_env.options().pp_variable_subst_norm_diseq() && assertion.is_inverted()
+      && assertion[0].kind() == Kind::EQUAL
+      && (assertion[0][0].type().is_bool()
+          || (assertion[0][0].type().is_bv()
+              && assertion[0][0].type().bv_size() == 1)))
   {
     // This is worse on FP, and overall does not yield an improvement.
     // a != b is the same as a == ~b
-    NodeManager& nm = NodeManager::get();
     const Node& eq  = assertion[0];
     if (eq[0].is_const())
     {
-      return {eq[0], nm.invert_node(eq[1])};
+      return nm.mk_node(Kind::EQUAL, {eq[0], nm.invert_node(eq[1])});
     }
     if (eq[1].is_const())
     {
-      return {eq[1], nm.invert_node(eq[0])};
+      return nm.mk_node(Kind::EQUAL, {eq[1], nm.invert_node(eq[0])});
     }
   }
   else if (d_env.options().pp_variable_subst_norm_bv_ineq()
@@ -364,18 +378,14 @@ PassVariableSubstitution::find_substitution(const Node& assertion)
                    && (assertion[0].kind() == Kind::BV_ULT
                        || assertion[0].kind() == Kind::BV_SLT))))
   {
-    return normalize_substitution_bv_ineq(assertion);
-  }
-  else if (assertion.is_const())
-  {
-    return std::make_pair(assertion, nm.mk_value(true));
-  }
-  else if (assertion.is_inverted() && assertion[0].is_const())
-  {
-    return std::make_pair(assertion[0], nm.mk_value(false));
+    auto [var, term] = normalize_substitution_bv_ineq(assertion);
+    if (!var.is_null())
+    {
+      return nm.mk_node(Kind::EQUAL, {var, term});
+    }
   }
   // TODO: more substitution normalizations
-  return std::make_pair(Node(), Node());
+  return Node();
 }
 
 /* --- PassVariableSubstitution public -------------------------------------- */
@@ -413,7 +423,15 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       {
         continue;
       }
-      find_vars(assertion, assertions.start_index() + i);
+      find_vars(assertion, start_index + i);
+      // Try to normalize assertion for term substitution.
+      Node normalized = normalize_for_substitution(assertion);
+      if (!normalized.is_null())
+      {
+        // Explicitly add normalized assertion that was derived from assertion.
+        assertions.push_back(normalized, assertion);
+        continue;
+      }
       auto [var, term]       = find_substitution(assertion);
       // No variable substitution
       if (var.is_null())

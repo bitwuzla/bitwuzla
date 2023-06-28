@@ -1,0 +1,5 @@
+(set-info :status sat)
+(set-option :pp-variable-subst-norm-bv-ineq true)
+(declare-const x (_ BitVec 2))
+(assert (bvult (_ bv2 2) x))
+(check-sat)
