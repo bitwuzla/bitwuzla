@@ -132,6 +132,6 @@ foreach p : unit_tests
                dependencies: test_deps,
                include_directories: test_inc,
                cpp_args: ['-fno-access-control'])
-    test(name, exe, suite: suite, timeout: 0)
+    test(name, exe, suite: ['unit', suite], timeout: 0)
   endforeach
 endforeach
