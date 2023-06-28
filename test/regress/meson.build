@@ -10,6 +10,7 @@ tests_smt2 = [
   ['check/regr_cm10.smt2'],
   ['check/regr_cm11.smt2'],
   ['check/regr_cm12.smt2'],
+  ['check/regr_cm13.smt2'],
   ['check/regr_cm2.smt2'],
   ['check/regr_cm3.smt2'],
   ['check/regr_cm4.smt2'],

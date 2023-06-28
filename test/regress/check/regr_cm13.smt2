@@ -1,0 +1,6 @@
+(set-info :status sat)
+(declare-const A (Array Bool Bool))
+(declare-fun f (Bool) Bool)
+(define-fun t () Bool (forall ((x Bool)) (exists ((y Bool)) x)))
+(assert (select (store A (f t) t) t))
+(check-sat)

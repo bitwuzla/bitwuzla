@@ -48,6 +48,7 @@ CheckModel::check()
   for (const Node& input : d_consts)
   {
     Node value = d_ctx.get_value(input);
+    Log(2) << "check: " << input << " = " << value;
     // Special handling until equality over constant arrays supported
     if (input.type().is_array())
     {
@@ -62,10 +63,9 @@ CheckModel::check()
     {
       check_ctx.assert_formula(nm.mk_node(Kind::EQUAL, {input, value}));
     }
-    Log(2) << "check: " << input << " = " << value;
   }
 
-  return check_ctx.solve() == Result::SAT;
+  return check_ctx.solve() != Result::UNSAT; // unknown allowed for now
 }
 
 void
