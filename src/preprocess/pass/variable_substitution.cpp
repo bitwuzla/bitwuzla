@@ -254,13 +254,13 @@ PassVariableSubstitution::normalize_substitution_bv_ineq(const Node& node)
   if (kind == Kind::BV_ULT || kind == Kind::BV_ULE)
   {
     uint64_t clz = value.count_leading_zeros();
-    if (clz > 0)
+    uint64_t size = var.type().bv_size();
+    if (clz != size && clz > 0)
     {
       d_stats.num_norm_bv_ult += 1;
-      Node subst =
-          nm.mk_node(Kind::BV_CONCAT,
-                     {nm.mk_value(BitVector::mk_zero(clz)),
-                      nm.mk_const(nm.mk_bv_type(var.type().bv_size() - clz))});
+      Node subst = nm.mk_node(Kind::BV_CONCAT,
+                              {nm.mk_value(BitVector::mk_zero(clz)),
+                               nm.mk_const(nm.mk_bv_type(size - clz))});
       return {var, subst};
     }
   }
@@ -384,7 +384,6 @@ PassVariableSubstitution::normalize_for_substitution(const Node& assertion)
       return nm.mk_node(Kind::EQUAL, {var, term});
     }
   }
-  // TODO: more substitution normalizations
   return Node();
 }
 
