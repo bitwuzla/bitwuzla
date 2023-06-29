@@ -75,10 +75,9 @@ class PassVariableSubstitution : public PreprocessingPass
   backtrack::unordered_map<Node, std::pair<Node, Node>> d_substitutions;
   /**
    * Current set of variable substitution assertions, maps assertion index to
-   * [var, term] pair.
+   * substituted var.
    */
-  backtrack::unordered_map<size_t, std::pair<Node, Node>>
-      d_substitution_assertions;
+  backtrack::unordered_map<size_t, Node> d_substitution_assertions;
 
   /**
    * Maps first occurrence of variable to assertion index where it was found.

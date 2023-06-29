@@ -413,6 +413,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
 
   // Check current set of assertions for variable substitutions
   std::unordered_map<Node, Node> new_substs;
+  std::unordered_map<Node, size_t> subst_index;
   {
     util::Timer timer(d_stats.time_register);
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
@@ -441,10 +442,12 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
         continue;
       }
       // If var already substituted, check if term is also a variable.
-      else if (d_substitutions.find(var) != d_substitutions.end())
+      else if (d_substitutions.find(var) != d_substitutions.end()
+               || new_substs.find(var) != new_substs.end())
       {
         if (term.is_const()
-            && d_substitutions.find(term) == d_substitutions.end())
+            && (d_substitutions.find(term) == d_substitutions.end()
+                && new_substs.find(term) == new_substs.end()))
         {
           std::swap(var, term);
         }
@@ -463,11 +466,8 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       // Do not add direct substitution cycles
       if (!is_direct_cycle(var, term_processed))
       {
-        d_substitutions.emplace(var, std::make_pair(term_processed, assertion));
-        // Cache by real assertion index.
-        d_substitution_assertions.emplace(start_index + i,
-                                          std::make_pair(var, term));
         new_substs.emplace(var, term_processed);
+        subst_index.emplace(var, i);
         Log(2) << "Add substitution: " << var << " -> " << term_processed;
       }
     }
@@ -484,6 +484,18 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
   // Add new substitutions to substitution map
   substitution_map.insert(new_substs.begin(), new_substs.end());
   d_stats.num_substs = substitution_map.size();
+
+  // Cache assertion indices of non-cyclic substitutions.
+  for (const auto& [var, term] : new_substs)
+  {
+    auto it = subst_index.find(var);
+    assert(it != subst_index.end());
+    size_t real_index = it->second + start_index;
+    assert(d_substitution_assertions.find(real_index)
+           == d_substitution_assertions.end());
+    d_substitution_assertions.emplace(real_index, var);
+    d_substitutions.emplace(var, std::make_pair(term, assertions[it->second]));
+  }
 
   // No substitutions
   if (substitution_map.empty())
@@ -536,7 +548,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       auto it = d_substitution_assertions.find(start_index + i);
       if (it != d_substitution_assertions.end())
       {
-        const auto& [var, term] = it->second;
+        const auto& var = it->second;
         // Variable occurs in previous assertions, don't perform full
         // substitution.
         if (!is_safe_to_substitute(var, start_index))
