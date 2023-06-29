@@ -1,0 +1,7 @@
+(set-info :status unsat)
+(set-option :global-declarations true)
+(set-option :prop-nupdates 1)
+(set-option :bv-solver preprop)
+(declare-const _x2 RoundingMode)
+(assert (fp.isZero ((_ to_fp 8 24) _x2 (_ bv207 8))))
+(check-sat)

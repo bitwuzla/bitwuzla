@@ -55,6 +55,7 @@ BvSolver::BvSolver(Env& env, SolverState& state)
       d_bitblast_solver(env, state),
       d_prop_solver(env, state, d_bitblast_solver),
       d_cur_solver(env.options().bv_solver()),
+      d_solver_mode(env.options().bv_solver()),
       d_stats(env.statistics())
 {
 }
@@ -67,13 +68,13 @@ BvSolver::register_assertion(const Node& assertion,
                              bool is_lemma)
 {
   ++d_stats.num_assertions;
-  if (d_cur_solver == option::BvSolver::BITBLAST
-      || d_cur_solver == option::BvSolver::PREPROP)
+  if (d_solver_mode == option::BvSolver::BITBLAST
+      || d_solver_mode == option::BvSolver::PREPROP)
   {
     d_bitblast_solver.register_assertion(assertion, top_level, is_lemma);
   }
-  if (d_cur_solver == option::BvSolver::PROP
-      || d_cur_solver == option::BvSolver::PREPROP)
+  if (d_solver_mode == option::BvSolver::PROP
+      || d_solver_mode == option::BvSolver::PREPROP)
   {
     d_prop_solver.register_assertion(assertion, top_level, is_lemma);
   }

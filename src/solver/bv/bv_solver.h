@@ -56,8 +56,16 @@ class BvSolver : public Solver, public BvSolverInterface
   /** Propagation-based local search subsolver. */
   BvPropSolver d_prop_solver;
 
-  /** The currently enabled subsolver. */
+  /**
+   * The currently enabled subsolver. Used to determine which solver to ask
+   * for model values and unsat cores.
+   */
   option::BvSolver d_cur_solver;
+  /**
+   * The subsolver configured via options. Used to determine to which
+   * solver to send registered terms.
+   */
+  const option::BvSolver d_solver_mode;
 
   struct Statistics
   {

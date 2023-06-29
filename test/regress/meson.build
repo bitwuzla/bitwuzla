@@ -1037,6 +1037,7 @@ tests_smt2 = [
   ['solver/bv/mulassoc6.smt2'],
   ['solver/bv/nextpoweroftwo016.smt2'],
   ['solver/bv/painc.smt2'],
+  ['solver/bv/preprop1.smt2'],
   ['solver/bv/prim8bugreduced.btor.smt2'],
   ['solver/bv/problem_130.smt2'],
   ['solver/bv/prop/prels-funs.smt2', ['--bv-solver=preprop']],
