@@ -316,6 +316,8 @@ SymbolTable::init_bv_symbols()
   insert(Token::BV_XNOR);
   insert(Token::BV_XOR);
   insert(Token::BV_ZERO_EXTEND);
+  insert(Token::BV_DEC);
+  insert(Token::BV_INC);
   insert(Token::BV_REDOR);
   insert(Token::BV_REDAND);
   insert(Token::BV_REDXOR);

@@ -215,6 +215,8 @@ enum class Token
   BV_XOR,
   BV_ZERO_EXTEND,
   // Bitwuzla extensions
+  BV_DEC,
+  BV_INC,
   BV_REDOR,
   BV_REDAND,
   BV_REDXOR,

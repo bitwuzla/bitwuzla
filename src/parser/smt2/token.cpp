@@ -195,6 +195,8 @@ to_string(bzla::parser::smt2::Token token)
     case Token::BV_XOR: return "bvxor";
     case Token::BV_ZERO_EXTEND: return "zero_extend";
     // Bitwuzla extensions
+    case Token::BV_DEC: return "bvdec";
+    case Token::BV_INC: return "bvinc";
     case Token::BV_REDOR: return "bvredor";
     case Token::BV_REDAND: return "bvredand";
     case Token::BV_REDXOR: return "bvredxor";

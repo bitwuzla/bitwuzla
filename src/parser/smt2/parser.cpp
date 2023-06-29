@@ -1767,6 +1767,8 @@ Parser::close_term()
     case Token::BV_XOR:
     case Token::BV_ZERO_EXTEND:
     case Token::BV_REDOR:
+    case Token::BV_DEC:
+    case Token::BV_INC:
     case Token::BV_REDAND:
     case Token::BV_REDXOR:
     case Token::BV_SADDO:
@@ -2044,6 +2046,8 @@ Parser::close_term_bv(ParsedItem& item)
     case Token::BV_XOR: kind = bitwuzla::Kind::BV_XOR; break;
     case Token::BV_ZERO_EXTEND: kind = bitwuzla::Kind::BV_ZERO_EXTEND; break;
     case Token::BV_REDOR: kind = bitwuzla::Kind::BV_REDOR; break;
+    case Token::BV_DEC: kind = bitwuzla::Kind::BV_DEC; break;
+    case Token::BV_INC: kind = bitwuzla::Kind::BV_INC; break;
     case Token::BV_REDAND: kind = bitwuzla::Kind::BV_REDAND; break;
     case Token::BV_REDXOR: kind = bitwuzla::Kind::BV_REDXOR; break;
     case Token::BV_SADDO: kind = bitwuzla::Kind::BV_SADD_OVERFLOW; break;
@@ -2712,6 +2716,8 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
     case Token::NOT:
     case Token::BV_NEG:
     case Token::BV_NOT:
+    case Token::BV_DEC:
+    case Token::BV_INC:
     case Token::BV_REDOR:
     case Token::BV_REDAND:
     case Token::BV_REDXOR:
@@ -3001,6 +3007,8 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
     case Token::BV_XNOR:
     case Token::BV_XOR:
     case Token::BV_ZERO_EXTEND:
+    case Token::BV_DEC:
+    case Token::BV_INC:
     case Token::BV_REDOR:
     case Token::BV_REDAND:
     case Token::BV_REDXOR:
