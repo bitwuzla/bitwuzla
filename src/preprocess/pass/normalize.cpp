@@ -828,18 +828,19 @@ PassNormalize::normalize_common(Kind kind,
   assert(!lhs.empty());
   assert(!rhs.empty());
 
-  size_t bv_size     = lhs.begin()->first.type().bv_size();
+  size_t lhs_size    = lhs.begin()->first.type().bv_size();
+  size_t rhs_size    = rhs.begin()->first.type().bv_size();
   auto common_coeffs = compute_common_coefficients(lhs, rhs);
   Node common        = mk_node(kind, common_coeffs);
 
   if (!common.is_null())
   {
-    auto [it, inserted] = lhs.emplace(common, BitVector::mk_one(bv_size));
+    auto [it, inserted] = lhs.emplace(common, BitVector::mk_one(lhs_size));
     if (!inserted)
     {
       it->second.ibvinc();
     }
-    std::tie(it, inserted) = rhs.emplace(common, BitVector::mk_one(bv_size));
+    std::tie(it, inserted) = rhs.emplace(common, BitVector::mk_one(rhs_size));
     if (!inserted)
     {
       it->second.ibvinc();
@@ -879,7 +880,7 @@ PassNormalize::normalize_common(Kind kind,
   }
   else
   {
-    left = NodeManager::get().mk_value(BitVector::mk_zero(bv_size));
+    left = NodeManager::get().mk_value(BitVector::mk_zero(lhs_size));
   }
   if (!rhs.empty())
   {
@@ -887,7 +888,7 @@ PassNormalize::normalize_common(Kind kind,
   }
   else
   {
-    right = NodeManager::get().mk_value(BitVector::mk_zero(bv_size));
+    right = NodeManager::get().mk_value(BitVector::mk_zero(rhs_size));
   }
   return {left, right};
 }
@@ -976,6 +977,8 @@ PassNormalize::rebuild_top(const Node& node,
 {
   (void) top;
 
+  assert(top.type() == normalized.type());
+
   node_ref_vector visit{node};
   std::unordered_map<Node, Node> cache;
 
@@ -1004,11 +1007,13 @@ PassNormalize::rebuild_top(const Node& node,
       {
         assert(cur == top);
         it->second = normalized;
+        assert(it->second.type() == cur.type());
       }
     }
     else if (it->second.is_null())
     {
       it->second = utils::rebuild_node(cur, cache);
+      assert(it->second.type() == cur.type());
     }
     visit.pop_back();
   } while (!visit.empty());
