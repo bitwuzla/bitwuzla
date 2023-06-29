@@ -428,10 +428,13 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       if (!normalized.is_null())
       {
         // Explicitly add normalized assertion that was derived from assertion.
-        assertions.push_back(normalized, assertion);
+        // Note: Do not use assertion here since this reference may become
+        //       invalid when resizing the assertions vector.
+        Node parent = assertion;
+        assertions.push_back(normalized, parent);
         continue;
       }
-      auto [var, term]       = find_substitution(assertion);
+      auto [var, term] = find_substitution(assertion);
       // No variable substitution
       if (var.is_null())
       {
