@@ -36,35 +36,38 @@ AssertionTracker::track(const Node& assertion,
   }
 }
 
-std::vector<Node>
-AssertionTracker::parents(const std::vector<Node>& assertions) const
+void
+AssertionTracker::find_original(
+    const std::vector<Node>& assertions,
+    const std::unordered_set<Node>& original_assertions,
+    std::vector<Node>& res) const
 {
   // Trace back to original assertion
   std::unordered_set<Node> cache;
-  std::vector<Node> res;
   std::vector<Node> visit = assertions;
   for (size_t i = 0; i < visit.size(); ++i)
   {
-    Node n  = visit[i];
-    auto it = d_tracked_assertions.find(n);
-
+    Node n = visit[i];
     if (!cache.insert(n).second)
     {
       continue;
     }
 
     // Found original assertion
-    if (it == d_tracked_assertions.end())
+    if (original_assertions.find(n) != original_assertions.end())
     {
       res.push_back(n);
       continue;
     }
 
-    visit.insert(visit.end(), it->second.begin(), it->second.end());
+    // Trace parents
+    auto it = d_tracked_assertions.find(n);
+    if (it != d_tracked_assertions.end())
+    {
+      visit.insert(visit.end(), it->second.begin(), it->second.end());
+    }
   }
-
   assert(!res.empty());
-  return res;
 }
 
 }  // namespace bzla::preprocess

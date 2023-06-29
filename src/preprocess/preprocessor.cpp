@@ -124,20 +124,23 @@ Preprocessor::process(const Node& term)
 }
 
 std::vector<Node>
-Preprocessor::post_process_unsat_core(const std::vector<Node>& assertions) const
+Preprocessor::post_process_unsat_core(
+    const std::vector<Node>& assertions,
+    const std::unordered_set<Node>& original_assertions) const
 {
   assert(d_assertion_tracker != nullptr);
-  std::vector<Node> unsat_core;
-  auto original_assertions = d_assertion_tracker->parents(assertions);
+  std::vector<Node> unsat_core, traced_back;
+  d_assertion_tracker->find_original(
+      assertions, original_assertions, traced_back);
 
   // Find involved substitution assertions.
   // TODO: add support for more preprocessing passes (right now disabled)
   std::unordered_set<Node> cache, core_cache;
   std::vector<Node> visit;
   const auto& substs = substitutions();
-  for (size_t i = 0; i < original_assertions.size(); ++i)
+  for (size_t i = 0; i < traced_back.size(); ++i)
   {
-    const Node& assertion = original_assertions[i];
+    const Node& assertion = traced_back[i];
     visit.push_back(assertion);
     auto [it, inserted] = core_cache.insert(assertion);
     if (inserted)
@@ -155,16 +158,22 @@ Preprocessor::post_process_unsat_core(const std::vector<Node>& assertions) const
         {
           const Node& substitution_assertion =
               d_pass_variable_substitution.substitution_assertion(cur);
-          std::vector<Node> orig_asserts =
-              d_assertion_tracker->parents({substitution_assertion});
-          original_assertions.insert(original_assertions.end(),
-                                     orig_asserts.begin(),
-                                     orig_asserts.end());
+          d_assertion_tracker->find_original(
+              {substitution_assertion}, original_assertions, traced_back);
         }
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
     } while (!visit.empty());
   }
+
+#ifndef NDEBUG
+  for (const Node& a : unsat_core)
+  {
+    // We should always be able to trace back to the original assertion, if
+    // not, some information is not properly tracked in the preprocessor.
+    assert(original_assertions.find(a) != original_assertions.end());
+  }
+#endif
 
   return unsat_core;
 }

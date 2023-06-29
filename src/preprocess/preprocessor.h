@@ -55,7 +55,8 @@ class Preprocessor
    * terms of original assertions.
    */
   std::vector<Node> post_process_unsat_core(
-      const std::vector<Node>& assertions) const;
+      const std::vector<Node>& assertions,
+      const std::unordered_set<Node>& original_assertions) const;
 
   /** Get current map of active substitutions. */
   const std::unordered_map<Node, Node>& substitutions() const;

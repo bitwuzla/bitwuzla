@@ -11,7 +11,6 @@
 #include "solving_context.h"
 
 #include <cassert>
-#include <iostream>
 
 #include "check/check_model.h"
 #include "check/check_unsat_core.h"
@@ -97,18 +96,9 @@ SolvingContext::get_unsat_core()
   d_solver_engine.unsat_core(core);
 
   // Get unsat core in terms of original input assertions.
-  res = d_preprocessor.post_process_unsat_core(core);
-
-#ifndef NDEBUG
   std::unordered_set<Node> orig(d_original_assertions.begin(),
                                 d_original_assertions.end());
-  for (const Node& a : res)
-  {
-    // We should always be able to trace back to the original assertion, if
-    // not, some information is not properly tracked in the preprocessor.
-    assert(orig.find(a) != orig.end());
-  }
-#endif
+  res = d_preprocessor.post_process_unsat_core(core, orig);
 
   return res;
 }

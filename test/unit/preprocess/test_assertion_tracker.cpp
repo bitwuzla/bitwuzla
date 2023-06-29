@@ -43,19 +43,22 @@ TEST_F(TestAssertionTracker, track1)
   tracker.track(e, d);
 
   {
-    auto parents = tracker.parents({e});
+    std::vector<Node> parents;
+    tracker.find_original({e}, {a}, parents);
     ASSERT_EQ(parents.size(), 1);
     ASSERT_EQ(a, parents[0]);
   }
 
   {
-    auto parents = tracker.parents({e, b});
+    std::vector<Node> parents;
+    tracker.find_original({e, b}, {a}, parents);
     ASSERT_EQ(parents.size(), 1);
     ASSERT_EQ(a, parents[0]);
   }
 
   {
-    auto parents = tracker.parents({e, b, a});
+    std::vector<Node> parents;
+    tracker.find_original({e, b, a}, {a}, parents);
     ASSERT_EQ(parents.size(), 1);
     ASSERT_EQ(a, parents[0]);
   }
@@ -77,7 +80,8 @@ TEST_F(TestAssertionTracker, track2)
   tracker.track(e, d, {c});
 
   {
-    auto parents = tracker.parents({e});
+    std::vector<Node> parents;
+    tracker.find_original({e}, {d, a}, parents);
     ASSERT_EQ(parents.size(), 2);
     ASSERT_EQ(d, parents[0]);
     ASSERT_EQ(a, parents[1]);
@@ -101,7 +105,8 @@ TEST_F(TestAssertionTracker, inc1)
   {
     mgr.push();
     tracker.track(e, d, {c});
-    auto parents = tracker.parents({e});
+    std::vector<Node> parents;
+    tracker.find_original({e}, {a, d}, parents);
     ASSERT_EQ(parents.size(), 2);
     ASSERT_EQ(d, parents[0]);
     ASSERT_EQ(a, parents[1]);
@@ -109,11 +114,11 @@ TEST_F(TestAssertionTracker, inc1)
   }
 
   {
-    auto parents = tracker.parents({e});
+    std::vector<Node> parents;
+    tracker.find_original({e}, {e}, parents);
     ASSERT_EQ(parents.size(), 1);
     ASSERT_EQ(e, parents[0]);
   }
 }
 
 }  // namespace bzla::test
-

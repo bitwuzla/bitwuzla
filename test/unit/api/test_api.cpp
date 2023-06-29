@@ -1500,8 +1500,9 @@ TEST_F(TestApi, get_unsat_assumptions)
 
     bitwuzla.check_sat(
         {d_bv_const1_true, d_bv_const1_false, d_and_bv_const1, d_eq_bv_const8});
+    ASSERT_TRUE(bitwuzla.is_unsat_assumption(d_bv_const1_true));
     ASSERT_TRUE(bitwuzla.is_unsat_assumption(d_bv_const1_false));
-    ASSERT_TRUE(bitwuzla.is_unsat_assumption(d_and_bv_const1));
+    ASSERT_FALSE(bitwuzla.is_unsat_assumption(d_and_bv_const1));
     ASSERT_FALSE(bitwuzla.is_unsat_assumption(d_eq_bv_const8));
     auto unsat_ass = bitwuzla.get_unsat_assumptions();
     ASSERT_EQ(unsat_ass.size(), 2);
@@ -1546,20 +1547,19 @@ TEST_F(TestApi, get_unsat_core)
     bitwuzla.check_sat({d_bv_const1_false, d_and_bv_const1, d_eq_bv_const8});
 
     ASSERT_TRUE(bitwuzla.is_unsat_assumption(d_bv_const1_false));
-    ASSERT_TRUE(bitwuzla.is_unsat_assumption(d_and_bv_const1));
+    ASSERT_FALSE(bitwuzla.is_unsat_assumption(d_and_bv_const1));
     ASSERT_FALSE(bitwuzla.is_unsat_assumption(d_eq_bv_const8));
     unsat_core = bitwuzla.get_unsat_core();
     ASSERT_EQ(unsat_core.size(), 2);
+    ASSERT_NE(std::find(unsat_core.begin(), unsat_core.end(), d_bv_const1_true),
+              unsat_core.end());
     ASSERT_NE(
         std::find(unsat_core.begin(), unsat_core.end(), d_bv_const1_false),
         unsat_core.end());
-    ASSERT_NE(std::find(unsat_core.begin(), unsat_core.end(), d_and_bv_const1),
-              unsat_core.end());
 
     auto unsat_ass = bitwuzla.get_unsat_assumptions();
-    ASSERT_EQ(unsat_ass.size(), 2);
+    ASSERT_EQ(unsat_ass.size(), 1);
     ASSERT_EQ(unsat_ass[0], d_bv_const1_false);
-    ASSERT_EQ(unsat_ass[1], d_and_bv_const1);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::SAT);
     bitwuzla.assert_formula(unsat_ass[0]);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);

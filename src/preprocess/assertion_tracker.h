@@ -27,7 +27,9 @@ class AssertionTracker
   void track(const Node& assertion,
              const Node& parent,
              const std::vector<Node>& parents = {});
-  std::vector<Node> parents(const std::vector<Node>& assertions) const;
+  void find_original(const std::vector<Node>& assertions,
+                     const std::unordered_set<Node>& original_assertions,
+                     std::vector<Node>& res) const;
 
  private:
   backtrack::unordered_map<Node, std::vector<Node>> d_tracked_assertions;
