@@ -1396,6 +1396,7 @@ TEST_F(TestPassNormalize, add_normalize_neg5)
 }
 //(not (= s (bvadd (bvadd (bvadd s t) (bvmul s t)) (bvmul t (bvnot s)))))
 
+#if 0 // Disable code until new normalization code is merged back.
 TEST_F(TestPassNormalize, add_normalize_ult1)
 {
   // (a + b) + (c + d)
@@ -1436,6 +1437,7 @@ TEST_F(TestPassNormalize, add_normalize_ult3)
 
   test_assertion(ult(a1, d_one), ult(a1, d_one), ult(a1, d_one));
 }
+#endif
 
 /* -------------------------------------------------------------------------- */
 

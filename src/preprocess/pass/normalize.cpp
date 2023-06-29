@@ -1165,6 +1165,7 @@ PassNormalize::process(const Node& node)
         it->second = res;
         if (normalized) d_stats.num_normalizations += 1;
       }
+#if 0  // Disable code until new normalization code is merged back.
       else if (k == Kind::EQUAL || k == Kind::BV_ULT || k == Kind::BV_SLT)
       {
         auto [res, normalized] =
@@ -1180,6 +1181,7 @@ PassNormalize::process(const Node& node)
         it->second =
             nm.mk_node(Kind::BV_CONCAT, {children[0][0][0], children[0][1][0]});
       }
+#endif
       else
       {
         it->second = node::utils::rebuild_node(cur, children);
