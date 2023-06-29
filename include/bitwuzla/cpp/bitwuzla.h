@@ -173,9 +173,9 @@ class Options
    */
   bool is_mode(Option option) const;
 
-  /** @return The long name of this option. */
-  const char *shrt(Option option) const;
   /** @return The short name of this option. */
+  const char *shrt(Option option) const;
+  /** @return The long name of this option. */
   const char *lng(Option option) const;
   /** @return The description of this option. */
   const char *description(Option option) const;
@@ -419,7 +419,7 @@ class Term
 
   /**
    * Determine if this term is a null term.
-   * @return If this term is a null term.
+   * @return True if this term is a null term.
    */
   bool is_null() const;
 
@@ -454,7 +454,7 @@ class Term
   std::vector<Term> children() const;
 
   /**
-   * Return child at position `index`.
+   * Get child at position `index`.
    *
    * @note Only valid to call if num_children() > 0.
    *
@@ -480,7 +480,7 @@ class Term
 
   /**
    * Get the symbol of this term.
-   * @return The symbol of this term. Empty if no symbol is defined.
+   * @return The symbol of this term.
    */
   std::optional<std::reference_wrapper<const std::string>> symbol() const;
 
@@ -556,19 +556,19 @@ class Term
   bool is_bv_value_max_signed() const;
 
   /**
-   * Determine if this term is a floating-point positive zero (+zero) value.
+   * Determine if this term is a floating-point positive zero (`+zero`) value.
    * @return True if this term is a floating-point +zero value.
    */
   bool is_fp_value_pos_zero() const;
 
   /**
-   * Determine if this term is a floating-point value negative zero (-zero).
+   * Determine if this term is a floating-point value negative zero (`-zero`).
    * @return True if this term is a floating-point value negative zero.
    */
   bool is_fp_value_neg_zero() const;
 
   /**
-   * Determine if this term is a floating-point positive infinity (+oo) value.
+   * Determine if this term is a floating-point positive infinity (`+oo`) value.
    * @return True if this term is a floating-point +oo value.
    */
   bool is_fp_value_pos_inf() const;
@@ -794,7 +794,7 @@ class Sort
 
   /**
    * Determine if this sort is a null sort.
-   * @return If this sort is a null sort.
+   * @return True if this sort is a null sort.
    */
   bool is_null() const;
 
@@ -849,7 +849,6 @@ class Sort
   /**
    * Get the domain sorts of a function sort.
    *
-   * The domain sorts are returned as an array of sorts of size `size`.
    * Requires that given sort is a function sort.
    *
    * @return The domain sorts of the function sort.

@@ -119,67 +119,168 @@ cdef class Sort:
     cdef bitwuzla_api.Sort c_sort
 
     def is_null(self) -> bool:
+        """Determine if this sort is a null sort.
+
+           :return: True if this sort is a null sort.
+        """
         return self.c_sort.is_null()
 
     def id(self) -> int:
+        """Get the id of this sort.
+
+           :return: The sort id.
+        """
         return self.c_sort.id()
 
     def bv_size(self) -> int:
+        """Get the size of a bit-vector sort.
+
+           Requires that given sort is a bit-vector sort.
+
+           :return: The size of the bit-vector sort.
+        """
         return self.c_sort.bv_size()
 
     def fp_exp_size(self) -> int:
+        """Get the exponent size of a floating-point sort.
+
+           Requires that given sort is a floating-point sort.
+
+           :return: The exponent size of the floating-point sort.
+        """
         return self.c_sort.fp_exp_size()
 
     def fp_sig_size(self) -> int:
+        """ Get the significand size of a floating-point sort.
+
+            Requires that given sort is a floating-point sort.
+
+            :return: The significand size of the floating-point sort.
+        """
         return self.c_sort.fp_sig_size()
 
     def array_index(self) -> Sort:
+        """Get the index sort of an array sort.
+
+           Requires that given sort is an array sort.
+
+           :return: The index sort of the array sort.
+        """
         return _sort(self.c_sort.array_index())
 
     def array_element(self) -> Sort:
+        """Get the element sort of an array sort.
+
+           Requires that given sort is an array sort.
+
+           :return: The element sort of the array sort.
+        """
         return _sort(self.c_sort.array_element())
 
     def fun_domain(self) -> list[Sort]:
+        """Get the domain sorts of a function sort.
+
+           Requires that given sort is a function sort.
+
+           :return: The domain sorts of the function sort.
+        """
         return [_sort(s) for s in self.c_sort.fun_domain()]
 
     def fun_codomain(self) -> Sort:
+        """Get the codomain sort of a function sort.
+
+           Requires that given sort is a function sort.
+
+           :return: The codomain sort of the function sort.
+        """
         return _sort(self.c_sort.fun_codomain())
 
     def fun_arity(self) -> int:
+        """Get the arity of a function sort.
+
+           :return: The number of arguments of the function sort.
+        """
         return self.c_sort.fun_arity()
 
     def uninterpreted_symbol(self) -> str:
+        """Get the symbol of an uninterpreted sort.
+
+           :return: The symbol.
+        """
         symbol = self.c_sort.uninterpreted_symbol()
         return symbol.value().decode() if symbol.has_value() else None
 
     def is_array(self) -> bool:
+        """Determine if this sort is an array sort.
+
+           :return: True if this sort is an array sort.
+        """
         return self.c_sort.is_array()
 
     def is_bool(self) -> bool:
+        """Determine if this sort is a Boolean sort.
+
+           :return: True if this sort is a Boolean sort.
+        """
         return self.c_sort.is_bool()
 
     def is_bv(self) -> bool:
+        """Determine if this sort is a bit-vector sort.
+
+           :return: True if `sort` is a bit-vector sort.
+        """
         return self.c_sort.is_bv()
 
     def is_fp(self) -> bool:
+        """Determine if this sort is a floating-point sort.
+
+           :return: True if this sort is a floating-point sort.
+        """
         return self.c_sort.is_fp()
 
     def is_fun(self) -> bool:
+        """Determine if this sort is a function sort.
+
+           :return: True if this sort is a function sort.
+        """
         return self.c_sort.is_fun()
 
     def is_rm(self) -> bool:
+        """Determine if this sort is a Roundingmode sort.
+
+           :return: True if this sort is a Roundingmode sort.
+        """
         return self.c_sort.is_rm()
 
     def is_uninterpreted(self) -> bool:
+        """Determine if this sort is an uninterpreted sort.
+
+           :return: True if this sort is an uninterpreted sort.
+        """
         return self.c_sort.is_uninterpreted()
 
     def __str__(self) -> str:
+        """Get string representation of this sort.
+
+           :return: String representation of this sort.
+        """
         return self.c_sort.str().decode()
 
     def __eq__(self, Sort other) -> bool:
+        """Syntactical equality operator.
+
+           :param a: The first sort.
+           :param b: The second sort.
+           :return: True if the given sorts are equal.
+        """
         return self.c_sort == other.c_sort
 
     def __hash__(self):
+        """Hash function for Sort.
+
+           :param sort: The sort.
+           :return: The hash value of the sort.
+        """
         return self.id()
 
 
@@ -191,99 +292,254 @@ cdef class Term:
     cdef bitwuzla_api.Term c_term
 
     def is_null(self) -> bool:
+        """Determine if this term is a null term.
+
+           :return: True if this term is a null term.
+        """
         return self.c_term.is_null()
 
     def id(self) -> int:
+        """Get the id of this term.
+
+           :return: The term id.
+        """
         return self.c_term.id()
 
     def kind(self) -> Kind:
+        """Get the kind of this term.
+
+           :return: The kind.
+        """
         return self.c_term.kind()
 
     def sort(self) -> Sort:
+        """Get the sort of this term.
+
+           :return: The sort of the term.
+        """
         return _sort(self.c_term.sort())
 
     def num_children(self) -> int:
+        """Get the number of child terms of this term.
+
+           :return: The number of children of this term.
+        """
         return self.c_term.num_children()
 
     def children(self) -> list[Term]:
+        """Get the child terms of this term.
+
+           :return: The children of this term as a vector of terms.
+        """
         return _terms(self.c_term.children())
 
     def __getitem__(self, uint64_t index) -> Term:
+        """Get child at position `index`.
+
+           :note: Only valid to call if num_children() > 0.
+
+           :param index: The position of the child.
+           :return: The child node at position `index`.
+        """
         return _term(self.c_term[index])
 
     def num_indices(self) -> int:
+        """Get the number of indices of this term.
+
+           :return: The number of indices of this term.
+        """
         return self.c_term.num_indices()
 
     def indices(self) -> list[int]:
+        """Get the indices of an indexed term.
+
+           Requires that given term is an indexed term.
+
+           :return: The indices of this term as a vector of indices.
+        """
         return [i for i in self.c_term.indices()]
 
     def symbol(self) -> str:
+        """Get the symbol of this term.
+
+           :return: The symbol of this term. `None` if no symbol is defined.
+        """
         opt = self.c_term.symbol()
         if opt.has_value():
             return (<string?> opt.value()).decode()
         return None
 
     def is_const(self) -> bool:
+        """Determine if this term is a constant.
+
+           :return: True if this term is a constant.
+        """
         return self.c_term.is_const()
 
     def is_variable(self) -> bool:
+        """Determine if this term is a variable.
+
+           :return: True if this term is a variable.
+        """
         return self.c_term.is_variable()
 
     def is_value(self) -> bool:
+        """Determine if this term is a value.
+
+           :return: True if this term is a value.
+        """
         return self.c_term.is_value()
 
     def is_true(self) -> bool:
+        """Determine if this term is Boolean value true.
+
+           :return: True if this term is Boolean value true.
+        """
         return self.c_term.is_true()
 
     def is_false(self) -> bool:
+        """Determine if this term is Boolean value false.
+
+           :return: True if this term is Boolean value false.
+        """
         return self.c_term.is_false()
 
     def is_bv_value_zero(self) -> bool:
+        """Determine if this term is a bit-vector value representing zero.
+
+           :return: True if this term is a bit-vector zero value.
+        """
         return self.c_term.is_bv_value_zero()
 
     def is_bv_value_one(self) -> bool:
+        """Determine if this term is a bit-vector value representing one.
+
+           :return: True if this term is a bit-vector one value.
+        """
         return self.c_term.is_bv_value_one()
 
     def is_bv_value_ones(self) -> bool:
+        """Determine if this term is a bit-vector value with all bits set to one.
+
+           :return: True if this term is a bit-vector value with all bits set to one.
+        """
         return self.c_term.is_bv_value_ones()
 
     def is_bv_value_min_signed(self) -> bool:
+        """Determine if this term is a bit-vector minimum signed value.
+
+           :return: True if this term is a bit-vector value with the most
+                    significant bit set to 1 and all other bits set to 0.
+        """
         return self.c_term.is_bv_value_min_signed()
 
     def is_bv_value_max_signed(self) -> bool:
+        """Determine if this term is a bit-vector maximum signed value.
+
+           :return: True if this term is a bit-vector value with the most
+                    significant bit set to 0 and all other bits set to 1.
+        """
         return self.c_term.is_bv_value_max_signed()
 
     def is_fp_value_pos_zero(self) -> bool:
+        """Determine if this term is a floating-point positive zero (``+zero``)
+           value.
+
+           :return: True if this term is a floating-point ``+zero`` value.
+        """
         return self.c_term.is_fp_value_pos_zero()
 
     def is_fp_value_neg_zero(self) -> bool:
+        """Determine if this term is a floating-point value negative zero
+           (``-zero``).
+
+           :return: True if this term is a floating-point ``-zero``.
+        """
         return self.c_term.is_fp_value_neg_zero()
 
     def is_fp_value_pos_inf(self) -> bool:
+        """Determine if this term is a floating-point positive infinity
+           (``+oo``) value.
+
+           :return: True if this term is a floating-point ``+oo`` value.
+        """
         return self.c_term.is_fp_value_pos_inf()
 
     def is_fp_value_neg_inf(self) -> bool:
+        """Determine if this term is a floating-point negative infinity
+           (``-oo``) value.
+
+           :return: True if this term is a floating-point ``-oo`` value.
+        """
         return self.c_term.is_fp_value_neg_inf()
 
     def is_fp_value_nan(self) -> bool:
+        """Determine if this term is a floating-point NaN value.
+
+           :return: True if this term is a floating-point NaN value.
+        """
         return self.c_term.is_fp_value_nan()
 
     def is_rm_value_rna(self) -> bool:
+        """Determine if this term is a rounding mode ``RNA`` value.
+
+           :return: True if this term is a roundindg mode ``RNA`` value.
+        """
         return self.c_term.is_rm_value_rna()
 
     def is_rm_value_rne(self) -> bool:
+        """Determine if this term is a rounding mode ``RNE`` value.
+
+           :return: True if this term is a rounding mode ``RNE`` value.
+        """
         return self.c_term.is_rm_value_rne()
 
     def is_rm_value_rtn(self) -> bool:
+        """Determine if this term is a rounding mode ``RTN`` value.
+
+           :return: True if this term is a rounding mode RTN value.
+        """
         return self.c_term.is_rm_value_rtn()
 
     def is_rm_value_rtp(self) -> bool:
+        """Determine if this term is a rounding mode ``RTP`` value.
+
+           :return: True if this term is a rounding mode ``RTP`` value.
+        """
         return self.c_term.is_rm_value_rtp()
 
     def is_rm_value_rtz(self) -> bool:
+        """Determine if this term is a rounding mode ``RTZ`` value.
+
+           :return: True if this term is a rounding mode ``RTZ`` value.
+        """
         return self.c_term.is_rm_value_rtz()
 
     def value(self, uint8_t base = 2):
+        """Get value from value term.
+
+           This function is instantiated for types
+           - ``bool`` for Boolean values
+           - ``RoundingMode`` for rounding mode values
+           - ``string`` for bit-vector and floating-point values
+
+           In case of string representations of values this returns the raw
+           value string (as opposed to str(), which returns the SMT-LIB v2
+           representation of a term). For example, this function returns
+           ``"010"`` for a bit-vector value 2 of size 3, while str() returns
+           ``"#b010"``.
+
+           :note: For floating-point values, the returned string is always the
+                  binary IEEE-754 representation of the value (parameter
+                  ``base`` is ignored). Parameter ``base`` always configures
+                  the numeric base for bit-vector values, and for
+                  floating-point values in case of the tuple of strings
+                  instantiation. It is always ignored for Boolean and
+                  RoundingMode values.
+
+           :param base: The numeric base for bit-vector values; ``2`` for
+                        binary, ``10`` for decimal, and ``16`` for hexadecimal.
+        """
         sort = self.sort()
         if sort.is_bool():
             return self.c_term.value[c_bool]()
@@ -292,9 +548,19 @@ cdef class Term:
         return self.c_term.value[string](base).decode()
 
     def __str__(self) -> str:
+        """Get the SMT-LIB v2 string representation of this term.
+
+           :return: A string representation of this term.
+        """
         return self.c_term.str().decode()
 
     def __eq__(self, other: Term) -> bool:
+        """Syntactical equality operator.
+
+           :param a: The first term.
+           :param b: The second term.
+           :return: True if the given terms are equal.
+        """
         return self.c_term == other.c_term
 
     def __hash__(self):
@@ -309,18 +575,39 @@ cdef class Options:
     cdef bitwuzla_api.Options c_options
 
     def shrt(self, option: Option) -> str:
+        """Get the short name of this option.
+
+           :return: The short name of this option.
+        """
         return self.c_options.shrt(option.value).decode()
 
     def lng(self, option: Option) -> str:
+        """Get the long name of this option.
+
+           :return: The long name of this option.
+        """
         return self.c_options.lng(option.value).decode()
 
     def description(self, option: Option) -> str:
+        """Get the description of this option.
+
+           :return: The description of this option.
+        """
         return self.c_options.description(option.value).decode()
 
     def modes(self, option: Option) -> list[str]:
+        """Get the modes of this option.
+
+           :return: The modes of this option.
+        """
         return [m.decode() for m in self.c_options.modes(option.value)]
 
     def set(self, option, value):
+        """ Set option.
+
+            :param option: The option or the long or short name of an option.
+            :param value:  The option value.
+        """
         cdef bitwuzla_api.Option opt
         if isinstance(option, Option):
             opt = option.value
@@ -337,15 +624,42 @@ cdef class Options:
             raise ValueError(f'Invalid value type for option {option.value}.')
 
     def set_args(self, *args):
+        """ Set option via command-line.
+
+            Supports the following command line option format:
+
+            Short option names: ::
+
+              -short      ... {"-short"}
+              -short=val  ... {"-short=val"}
+              -short val  ... {"-short", "val"}
+
+            Long option names: ::
+
+              --long      ... {"--long"}
+              --long=val  ... {"--long=val"}
+              --long val  ... {"--long", "val"}
+
+            :param args: List of command line options.
+        """
         cdef vector[string] opts
         for a in args:
             opts.push_back(str(a).encode())
         self.c_options.set(opts)
 
     def option(self, name: str) -> Option:
+        """ Get the option associated to the given short or long option name.
+
+            :return: The option associated to the given short or long option name.
+        """
         return Option(self.c_options.option(name.encode()))
 
     def get(self, option: Option):
+        """ Get the current value of the given option.
+
+            :param option: The option.
+            :return: The current value of the given option.
+        """
         if self.c_options.is_mode(option.value):
             return self.c_options.get_mode(option.value).decode()
         elif self.c_options.is_numeric(option.value):
