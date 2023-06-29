@@ -24,15 +24,13 @@ class AssertionTracker
   AssertionTracker() = delete;
   AssertionTracker(backtrack::BacktrackManager* mgr);
 
-  void track(const Node& assertion,
-             const Node& parent,
-             const std::vector<Node>& parents = {});
+  void track(const Node& assertion, const Node& parent);
   void find_original(const std::vector<Node>& assertions,
                      const std::unordered_set<Node>& original_assertions,
                      std::vector<Node>& res) const;
 
  private:
-  backtrack::unordered_map<Node, std::vector<Node>> d_tracked_assertions;
+  backtrack::unordered_map<Node, Node> d_tracked_assertions;
 };
 
 }  // namespace bzla::preprocess

@@ -20,20 +20,11 @@ AssertionTracker::AssertionTracker(backtrack::BacktrackManager* mgr)
 }
 
 void
-AssertionTracker::track(const Node& assertion,
-                        const Node& parent,
-                        const std::vector<Node>& parents)
+AssertionTracker::track(const Node& assertion, const Node& parent)
 {
   assert(!parent.is_null());
-  assert(std::find(parents.begin(), parents.end(), assertion)
-         == std::end(parents));
-
   // Only track first occurence of assertion
-  auto [it, inserted] = d_tracked_assertions.emplace(assertion, parents);
-  if (inserted)
-  {
-    it->second.insert(it->second.begin(), parent);
-  }
+  d_tracked_assertions.emplace(assertion, parent);
 }
 
 void
@@ -64,7 +55,7 @@ AssertionTracker::find_original(
     auto it = d_tracked_assertions.find(n);
     if (it != d_tracked_assertions.end())
     {
-      visit.insert(visit.end(), it->second.begin(), it->second.end());
+      visit.push_back(it->second);
     }
   }
   assert(!res.empty());

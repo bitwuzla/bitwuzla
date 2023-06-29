@@ -54,9 +54,7 @@ class AssertionVector
    * @param i The index of the assertion to replace.
    * @param assertion The new assertion.
    */
-  void replace(size_t index,
-               const Node& assertion,
-               const std::vector<Node>& parents = {});
+  void replace(size_t index, const Node& assertion);
 
   /**
    * Determines whether the assertions in the vector are the intial assertions

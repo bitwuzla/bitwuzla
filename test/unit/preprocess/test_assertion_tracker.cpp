@@ -64,30 +64,6 @@ TEST_F(TestAssertionTracker, track1)
   }
 }
 
-TEST_F(TestAssertionTracker, track2)
-{
-  backtrack::BacktrackManager mgr;
-  AssertionTracker tracker(&mgr);
-
-  auto a = d_nm.mk_const(d_nm.mk_bool_type());
-  auto b = d_nm.mk_const(d_nm.mk_bool_type());
-  auto c = d_nm.mk_const(d_nm.mk_bool_type());
-  auto d = d_nm.mk_const(d_nm.mk_bool_type());
-  auto e = d_nm.mk_const(d_nm.mk_bool_type());
-
-  tracker.track(b, a);
-  tracker.track(c, b);
-  tracker.track(e, d, {c});
-
-  {
-    std::vector<Node> parents;
-    tracker.find_original({e}, {d, a}, parents);
-    ASSERT_EQ(parents.size(), 2);
-    ASSERT_EQ(d, parents[0]);
-    ASSERT_EQ(a, parents[1]);
-  }
-}
-
 TEST_F(TestAssertionTracker, inc1)
 {
   backtrack::BacktrackManager mgr;
@@ -104,12 +80,11 @@ TEST_F(TestAssertionTracker, inc1)
 
   {
     mgr.push();
-    tracker.track(e, d, {c});
+    tracker.track(e, d);
     std::vector<Node> parents;
     tracker.find_original({e}, {a, d}, parents);
-    ASSERT_EQ(parents.size(), 2);
+    ASSERT_EQ(parents.size(), 1);
     ASSERT_EQ(d, parents[0]);
-    ASSERT_EQ(a, parents[1]);
     mgr.pop();
   }
 

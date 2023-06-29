@@ -62,9 +62,7 @@ AssertionVector::operator[](std::size_t index) const
 }
 
 void
-AssertionVector::replace(size_t index,
-                         const Node& replacement,
-                         const std::vector<Node>& parents)
+AssertionVector::replace(size_t index, const Node& replacement)
 {
   assert(index < size());
   size_t real_index = d_begin + index;
@@ -76,7 +74,7 @@ AssertionVector::replace(size_t index,
       ++d_modified;
       if (d_tracker)
       {
-        d_tracker->track(replacement, assertion, parents);
+        d_tracker->track(replacement, assertion);
       }
     }
   }
