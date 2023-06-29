@@ -81,6 +81,8 @@ class SolvingContext
 
   void compute_formula_statistics(util::HistogramStatistic& stat);
 
+  void ensure_model();
+
   /** Solving context environment. */
   Env d_env;
 

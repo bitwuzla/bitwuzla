@@ -44,6 +44,12 @@ SolvingContext::solve()
   preprocess();
   d_sat_state = d_solver_engine.solve();
 
+  if (d_sat_state == Result::SAT
+      && (options().produce_models() || options().dbg_check_model()))
+  {
+    ensure_model();
+  }
+
   if (d_sat_state == Result::SAT && options().dbg_check_model())
   {
     check::CheckModel cm(*this);
@@ -54,6 +60,7 @@ SolvingContext::solve()
     check::CheckUnsatCore cuc(*this);
     assert(cuc.check());
   }
+
   return d_sat_state;
 }
 
@@ -151,6 +158,8 @@ SolvingContext::env()
   return d_env;
 }
 
+/* --- SolvingContext private ----------------------------------------------- */
+
 void
 SolvingContext::check_no_free_variables() const
 {
@@ -215,8 +224,6 @@ SolvingContext::check_no_free_variables() const
   }
 }
 
-/* --- SolvingContext private ----------------------------------------------- */
-
 void
 SolvingContext::compute_formula_statistics(util::HistogramStatistic& stat)
 {
@@ -237,6 +244,44 @@ SolvingContext::compute_formula_statistics(util::HistogramStatistic& stat)
       stat << cur.kind();
       visit.insert(visit.end(), cur.begin(), cur.end());
     }
+  }
+}
+
+void
+SolvingContext::ensure_model()
+{
+  std::unordered_set<Node> cache;
+  std::vector<Node> visit, terms;
+  bool need_check = false;
+  for (const Node& assertion : original_assertions())
+  {
+    visit.push_back(assertion);
+    do
+    {
+      Node cur = visit.back();
+      visit.pop_back();
+      if (cache.insert(cur).second)
+      {
+        if (cur.is_const())
+        {
+          terms.push_back(d_preprocessor.process(cur));
+        }
+        else if (cur.kind() == Kind::FORALL || cur.kind() == Kind::EXISTS)
+        {
+          need_check = true;
+        }
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+    } while (!visit.empty());
+  }
+
+  // We only need an additional check if quantifiers are involved. It can
+  // happen that, due to preprocessing, not all quantified formulas required to
+  // build a model were checked by the quantifier solver (e.g. if substituted
+  // away by substitution preprocessing pass).
+  if (need_check)
+  {
+    d_solver_engine.ensure_model(terms);
   }
 }
 

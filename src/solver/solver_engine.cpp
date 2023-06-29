@@ -146,6 +146,40 @@ SolverEngine::lemma(const Node& lemma)
   }
 }
 
+void
+SolverEngine::ensure_model(const std::vector<Node>& terms)
+{
+  Log(1) << "*** ensure model";
+
+  std::vector<Node> unregistered;
+  for (const Node& t : terms)
+  {
+    Node val = _value(t);
+    // This can only happen if unregistered qunantifiers are required to build
+    // the model value.
+    if (val.is_null())
+    {
+      unregistered.push_back(t);
+    }
+  }
+
+  // Process unregistered quantifiers and call solve() to check these
+  // quantifiers.
+  if (!unregistered.empty())
+  {
+    d_in_solving_mode = true;  // Registers new terms in value()
+    for (const Node& t : unregistered)
+    {
+      value(t);
+    }
+    d_in_solving_mode = false;
+    // New quantifiers were registered, check them now.
+    assert(d_new_terms_registered);
+    auto res = solve();
+    assert(res == Result::SAT);
+  }
+}
+
 backtrack::BacktrackManager*
 SolverEngine::backtrack_mgr()
 {

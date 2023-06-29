@@ -61,6 +61,9 @@ class SolverEngine
   /** @return Solver engine backtrack manager. */
   backtrack::BacktrackManager* backtrack_mgr();
 
+  /** Ensure that we have model values for given terms. */
+  void ensure_model(const std::vector<Node>& terms);
+
  private:
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);
@@ -123,6 +126,11 @@ class SolverEngine
 
   /** Indicates whether solver engine is currently in solving loop. */
   bool d_in_solving_mode;
+  /**
+   * Indicates whether solver engine requires additional checks for model
+   * construction.
+   */
+  bool d_need_check = false;
 
   struct Statistics
   {
