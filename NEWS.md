@@ -2,9 +2,9 @@
 
 This file collects a summary of important and/or user-visible changes.
 
-## News since commit 1230d80
+## News for version 0.1.0 since commit 1230d80
 
-Bitwuzla release 0.1 is a complete from-scratch rewrite.
+Bitwuzla release 0.1.0 is a complete from-scratch rewrite in C++.
 
 A comprehensive system description will be presented at CAV 2023:  
 Aina Niemetz and Mathias Preiner. Bitwuzla. CAV 2023, Springer, 2023.
@@ -212,12 +212,12 @@ The most notable user-visible changes are listed below.
   + `bitwuzla_sort_get_uninterpreted_symbol(BitwuzlaSort)`
   + `bitwuzla_get_statistics()`
 
-## Python API
+### Python API
 
 - Module renamed to `bitwuzla` from `pybitwuzla`
 - Functions and classes now reflect the functionality of the new C++ API
 
-## Parser API
+### Parser API
 
 Bitwuzla now provides a clean C and C++ API for parsing input files. This API
 will be extended with support for parsing terms and sorts from strings in the
