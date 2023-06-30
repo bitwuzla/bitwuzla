@@ -413,7 +413,6 @@ SolverEngine::_value(const Node& term)
         case Kind::SELECT:
         case Kind::FORALL:
           // Just use value from bit-vector abstraction.
-          assert(d_in_solving_mode);
           [[fallthrough]];
 
         case Kind::CONSTANT: {
