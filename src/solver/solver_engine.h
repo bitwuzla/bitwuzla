@@ -31,6 +31,17 @@ namespace bzla {
 class SolvingContext;
 class Env;
 
+class ComputeValueException : std::exception
+{
+ public:
+  ComputeValueException(const Node& node) : d_node(node) {}
+
+  const Node& node() const { return d_node; }
+
+ private:
+  Node d_node;
+};
+
 class SolverEngine
 {
   friend SolvingContext;

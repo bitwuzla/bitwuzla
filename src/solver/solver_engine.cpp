@@ -108,16 +108,7 @@ SolverEngine::value(const Node& term)
     process_term(term);
   }
 
-  auto value = _value(term);
-  // This only happens if we encounter a quanfitier that was not registered and
-  // therefore cannot deterine its value. We instead returnt he original term.
-  if (value.is_null())
-  {
-    Log(2) << "encountered unregistered quantifier, returning original term";
-    assert(!d_in_solving_mode);
-    return term;
-  }
-  return value;
+  return _value(term);
 }
 
 void
@@ -154,11 +145,14 @@ SolverEngine::ensure_model(const std::vector<Node>& terms)
   std::vector<Node> unregistered;
   for (const Node& t : terms)
   {
-    Node val = _value(t);
-    // This can only happen if unregistered qunantifiers are required to build
-    // the model value.
-    if (val.is_null())
+    try
     {
+      Node val = _value(t);
+    }
+    catch (const ComputeValueException& e)
+    {
+      // This can only happen if unregistered quantifiers are required to
+      // compute the model value.
       unregistered.push_back(t);
     }
   }
@@ -356,18 +350,10 @@ SolverEngine::_value(const Node& term)
         // and handle this case in value().
         if (k == Kind::FORALL)
         {
-          // Remove unprocessed nodes from value cache. Unprocessed nodes
-          // are in the COI of the current unregistered quantifier, and thus
-          // we cannot compute a value for these terms.
-          for (const auto& n : visit)
-          {
-            auto nit = d_value_cache.find(n);
-            if (nit != d_value_cache.end() && nit->second.is_null())
-            {
-              d_value_cache.erase(nit);
-            }
-          }
-          return Node();
+          // Invalidate model cache as it may contain intermediate cache values
+          // (value not fully computed).
+          d_value_cache.clear();
+          throw ComputeValueException(cur);
         }
         // Compute value of select based on current array model.
         else if (k == Kind::SELECT)

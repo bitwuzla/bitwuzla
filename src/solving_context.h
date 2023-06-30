@@ -85,6 +85,8 @@ class SolvingContext
 
   /** Solving context environment. */
   Env d_env;
+  /** Logger instance. */
+  util::Logger& d_logger;
 
   /** Manages push()/pop() requests. */
   backtrack::BacktrackManager d_backtrack_mgr;
