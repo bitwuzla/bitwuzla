@@ -267,13 +267,13 @@ PassVariableSubstitution::normalize_substitution_bv_ineq(const Node& node)
   else if (kind == Kind::BV_UGT || kind == Kind::BV_UGE)
   {
     uint64_t clo = value.count_leading_ones();
-    if (clo > 0)
+    uint64_t size = var.type().bv_size();
+    if (clo != size && clo > 0)
     {
       d_stats.num_norm_bv_ult += 1;
-      Node subst =
-          nm.mk_node(Kind::BV_CONCAT,
-                     {nm.mk_value(BitVector::mk_ones(clo)),
-                      nm.mk_const(nm.mk_bv_type(var.type().bv_size() - clo))});
+      Node subst = nm.mk_node(Kind::BV_CONCAT,
+                              {nm.mk_value(BitVector::mk_ones(clo)),
+                               nm.mk_const(nm.mk_bv_type(size - clo))});
       return {var, subst};
     }
   }
@@ -283,15 +283,18 @@ PassVariableSubstitution::normalize_substitution_bv_ineq(const Node& node)
     {
       d_stats.num_norm_bv_slt += 1;
       uint64_t clz = 0;
-      if (value.size() > 1)
+      uint64_t size = var.type().bv_size();
+      if (size > 1)
       {
-        clz = value.bvextract(value.size() - 2, 0).count_leading_zeros();
+        clz = value.bvextract(size - 2, 0).count_leading_zeros();
       }
-      Node subst = nm.mk_node(
-          Kind::BV_CONCAT,
-          {nm.mk_value(BitVector::mk_min_signed(clz + 1)),
-           nm.mk_const(nm.mk_bv_type(var.type().bv_size() - clz - 1))});
-      return {var, subst};
+      if (clz < size - 1)
+      {
+        Node subst = nm.mk_node(Kind::BV_CONCAT,
+                                {nm.mk_value(BitVector::mk_min_signed(clz + 1)),
+                                 nm.mk_const(nm.mk_bv_type(size - clz - 1))});
+        return {var, subst};
+      }
     }
   }
   else
@@ -301,15 +304,18 @@ PassVariableSubstitution::normalize_substitution_bv_ineq(const Node& node)
     {
       d_stats.num_norm_bv_slt += 1;
       uint64_t clo = 0;
-      if (value.size() > 1)
+      uint64_t size = var.type().bv_size();
+      if (size > 1)
       {
-        clo = value.bvextract(value.size() - 2, 0).count_leading_ones();
+        clo = value.bvextract(size - 2, 0).count_leading_ones();
       }
-      Node subst = nm.mk_node(
-          Kind::BV_CONCAT,
-          {nm.mk_value(BitVector::mk_max_signed(clo + 1)),
-           nm.mk_const(nm.mk_bv_type(var.type().bv_size() - clo - 1))});
-      return {var, subst};
+      if (clo < size - 1)
+      {
+        Node subst = nm.mk_node(Kind::BV_CONCAT,
+                                {nm.mk_value(BitVector::mk_max_signed(clo + 1)),
+                                 nm.mk_const(nm.mk_bv_type(size - clo - 1))});
+        return {var, subst};
+      }
     }
   }
   return {};
