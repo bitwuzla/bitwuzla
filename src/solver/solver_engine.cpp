@@ -358,6 +358,7 @@ SolverEngine::_value(const Node& term)
         // Compute value of select based on current array model.
         else if (k == Kind::SELECT)
         {
+          Log(3) << "unregistered select encountered: " << cur;
           value = d_array_solver.value(cur);
           goto CACHE_VALUE;
         }
@@ -365,6 +366,7 @@ SolverEngine::_value(const Node& term)
         // model.
         else if (k == Kind::APPLY)
         {
+          Log(3) << "unregistered apply encountered: " << cur;
           value = d_fun_solver.value(cur);
           goto CACHE_VALUE;
         }
@@ -379,11 +381,13 @@ SolverEngine::_value(const Node& term)
           }
           else if (type0.is_array())
           {
+            Log(3) << "unregistered array equality encountered: " << cur;
             value = d_array_solver.value(cur);
             goto CACHE_VALUE;
           }
           else if (type0.is_fun() || type0.is_uninterpreted())
           {
+            Log(3) << "unregistered function equality encountered: " << cur;
             value = d_fun_solver.value(cur);
             goto CACHE_VALUE;
           }

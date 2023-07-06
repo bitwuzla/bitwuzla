@@ -119,6 +119,7 @@ Preprocessor::process(const Node& term)
   Node processed = d_pass_rewrite.process(term);
   processed      = d_pass_variable_substitution.process(processed);
   processed      = d_pass_elim_lambda.process(processed);
+  processed      = d_pass_embedded_constraints.process(processed);
   processed      = d_pass_rewrite.process(processed);
   return processed;
 }
