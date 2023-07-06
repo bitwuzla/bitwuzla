@@ -691,7 +691,7 @@ _rw_eq_ite_lift_bv1(Rewriter& rewriter, const Node& node, size_t idx0)
       return node[idx1][0];
     }
     // result: !c
-    else if (node[idx0] == node[idx1][0])
+    else if (node[idx0] == node[idx1][2])
     {
       return rewriter.mk_node(Kind::NOT, {node[idx1][0]});
     }
