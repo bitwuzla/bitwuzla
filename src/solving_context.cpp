@@ -54,12 +54,16 @@ SolvingContext::solve()
   if (d_sat_state == Result::SAT && options().dbg_check_model())
   {
     check::CheckModel cm(*this);
-    assert(cm.check());
+    auto res = cm.check();
+    assert(res);
+    Warn(!res) << "model check failed";
   }
   else if (d_sat_state == Result::UNSAT && options().dbg_check_unsat_core())
   {
     check::CheckUnsatCore cuc(*this);
-    assert(cuc.check());
+    auto res = cuc.check();
+    assert(res);
+    Warn(!res) << "unsat core check failed";
   }
 
   return d_sat_state;
