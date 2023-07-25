@@ -42,6 +42,10 @@ a:hover, a:focus {
   background-color: #afd700;
 }
 
+.wy-side-nav-search>div.version {
+  color: #343131;
+}
+
 .wy-side-nav-search > a {
     color: #343131;
 }
@@ -74,4 +78,3 @@ a:hover, a:focus {
 .wy-nav-top a {
     color: #343131;
 }
-
