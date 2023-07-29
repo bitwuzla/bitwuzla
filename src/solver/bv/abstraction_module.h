@@ -33,6 +33,8 @@ class AbstractionModule
 
   void check_abstraction(const Node& node);
 
+  void score_lemmas(node::Kind k) const;
+
   util::Logger& d_logger;
   SolverState& d_solver_state;
   Rewriter& d_rewriter;
