@@ -639,6 +639,7 @@ Options::data(Option opt)
     case Option::PROP_OPT_LT_CONCAT_SEXT: return &prop_opt_lt_concat_sext;
     case Option::PROP_SEXT: return &prop_sext;
     case Option::PROP_NORMALIZE: return &prop_normalize;
+    case Option::BV_ABSTRACTION: return &bv_abstraction;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

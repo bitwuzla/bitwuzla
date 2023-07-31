@@ -17,7 +17,7 @@
 namespace bzla::bv {
 
 void
-AigBitblaster::bitblast(const Node& t, AbstractionModule* am)
+AigBitblaster::bitblast(const Node& t, abstraction::AbstractionModule* am)
 {
   using namespace node;
 

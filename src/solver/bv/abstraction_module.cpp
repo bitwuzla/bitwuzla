@@ -43,9 +43,9 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_stats(env.statistics())
 {
   auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
+  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_IC>());
   mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ZERO>());
   mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ONE>());
-  mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_IC>());
   mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NEG>());
   mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ODD>());
   mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF1>());
