@@ -30,9 +30,9 @@ main()
   Sort sortbv2 = mk_bv_sort(2);
 
   // Create bit-vector variables.
-  // (declare-const o0 (_ BitVec 2))
+  // (declare-const o0 (_ BitVec 1))
   Term o0 = mk_const(sortbv1, "o0");
-  // (declare-const o1 (_ BitVec 2))
+  // (declare-const o1 (_ BitVec 1))
   Term o1 = mk_const(sortbv1, "o1");
   // (declare-const s0 (_ BitVec 2))
   Term s0 = mk_const(sortbv2, "s0");

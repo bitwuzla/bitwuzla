@@ -20,7 +20,7 @@ First, create a :cpp:struct:`BitwuzlaOptions` instance:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 9
+     :lines: 19
 
 This instance can be configured via :cpp:func:`bitwuzla_set_option()`.  
 For example, to enable model generation
@@ -28,7 +28,7 @@ For example, to enable model generation
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 11
+     :lines: 21
 
 Some options have modes, which can be configured via the string representation
 of their modes. For example, to enable CaDiCaL as back end SAT solver (this
@@ -36,7 +36,7 @@ is for illustration purposes only, CaDiCaL is configured by default):
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 16
+     :lines: 26
 
 For more details on available options, see :doc:`c/options`.
 
@@ -45,7 +45,7 @@ now frozen and cannot be changed for this instance):
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 18
+     :lines: 28
 
 Next, you will want to create some expressions and assert formulas.
 For example, consider the following SMT-LIB input:
@@ -57,7 +57,7 @@ This input is created and asserted as follows:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 8-75
+     :lines: 18-85
 
 Alternatively, you can parse an input file in BTOR2 format :cite:`btor2` or
 SMT-LIB v2 format :cite:`smtlib2` by creating a parser via
@@ -75,7 +75,7 @@ For example, to parse an example file `examples/smt2/quickstart.smt2` in SMT-LIB
 
 .. literalinclude:: ../../examples/c/parse.c
      :language: c
-     :lines: 9-26
+     :lines: 19-44
 
 .. note::
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
@@ -87,7 +87,7 @@ satisfiability can be determined via :cpp:func:`bitwuzla_check_sat()`.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 77-78
+     :lines: 87-88
 
 Formulas can also be assumed via :cpp:func:`bitwuzla_check_sat_assuming()`.
 
@@ -99,7 +99,7 @@ how to print the current model via declared symbols (in this case :code:`x`,
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 86-135
+     :lines: 96-145
 
 This will output a possible model, in this case:
 
@@ -131,7 +131,7 @@ bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 141-146
+     :lines: 151-156
 
 This will print:
 
@@ -150,7 +150,7 @@ We can retrieve an SMT-LIB2 string representation of the values via
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 148-156
+     :lines: 158-166
 
 This will print:
 
@@ -171,7 +171,7 @@ however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 162-165
+     :lines: 172-175
 
 This will print:
 
@@ -186,7 +186,7 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 169-172
+     :lines: 179-182
 
 This will print:
 
@@ -198,7 +198,7 @@ Finally, we delete the Bitwuzla and Bitwuzla options instance.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 175-176
+     :lines: 185-186
 
 
 Examples
