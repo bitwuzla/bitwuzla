@@ -10,6 +10,7 @@
 
 import argparse
 import os
+import shutil
 
 ap = argparse.ArgumentParser()
 ap.add_argument('output')
@@ -22,6 +23,8 @@ if not os.path.isdir(args.output):
 src = os.path.join(args.output, '_static')
 dst = os.path.join(args.output, 'static')
 if os.path.exists(src):
+    if os.path.exists(dst):
+        shutil.rmtree(dst)
     os.rename(src, dst)
 
 if not os.path.exists(dst):
