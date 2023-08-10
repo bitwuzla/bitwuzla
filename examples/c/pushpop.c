@@ -25,9 +25,9 @@ main()
   BitwuzlaSort sortbv2 = bitwuzla_mk_bv_sort(2);
 
   // Create bit-vector variables.
-  // (declare-const o0 (_ BitVec 2))
+  // (declare-const o0 (_ BitVec 1))
   BitwuzlaTerm o0 = bitwuzla_mk_const(sortbv1, "o0");
-  // (declare-const o1 (_ BitVec 2))
+  // (declare-const o1 (_ BitVec 1))
   BitwuzlaTerm o1 = bitwuzla_mk_const(sortbv1, "o1");
   // (declare-const s0 (_ BitVec 2))
   BitwuzlaTerm s0 = bitwuzla_mk_const(sortbv2, "s0");

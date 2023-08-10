@@ -21,7 +21,7 @@ First, create a :cpp:class:`bitwuzla::Options` instance:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 12
+     :lines: 22
 
 This instance can be configured via :cpp:func:`bitwuzla::Options::set()`.  
 For example, to enable model generation
@@ -29,7 +29,7 @@ For example, to enable model generation
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 14
+     :lines: 24
 
 Some options have modes, which can be configured via the string representation
 of their modes. For example, to enable CaDiCaL as back end SAT solver (this
@@ -37,7 +37,7 @@ is for illustration purposes only, CaDiCaL is configured by default):
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 19
+     :lines: 29
 
 For more details on available options, see :doc:`options`.
 
@@ -46,7 +46,7 @@ now frozen and cannot be changed for this instance):
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 21
+     :lines: 31
 
 Next, you will want to create some expressions and assert formulas.
 For example, consider the following SMT-LIB input:
@@ -58,7 +58,7 @@ This input is created and asserted as follows:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 11-66
+     :lines: 21-76
 
 Alternatively, you can parse an input file in BTOR2 format :cite:`btor2` or
 SMT-LIB v2 format :cite:`smtlib2` by creating a parser
@@ -75,7 +75,7 @@ For example, to parse an example file `examples/smt2/quickstart.smt2` in SMT-LIB
 
 .. literalinclude:: ../../examples/cpp/parse.cpp
      :language: cpp
-     :lines: 12-31
+     :lines: 22-41
 
 .. note::
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
@@ -87,7 +87,7 @@ determined via :cpp:func:`bitwuzla::Bitwuzla::check_sat()`.
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 68-69
+     :lines: 78-79
 
 Formulas can also be assumed via passing a vector of assumptions into
 :cpp:func:`bitwuzla::Bitwuzla::check_sat()`.
@@ -101,7 +101,7 @@ the current model via declared symbols (in this case :code:`x`, :code:`y`,
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 79-113
+     :lines: 89-123
 
 This will output a possible model, in this case:
 
@@ -132,7 +132,7 @@ bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 118-123
+     :lines: 128-133
 
 This will print:
 
@@ -150,35 +150,35 @@ We can retrieve an SMT-LIB2 string representation of the values via
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 125-135
+     :lines: 135-145
 
 This will print:
 
 .. code-block::
 
-   to_string representation of value of f:
+   str() representation of value of f:
    (lambda ((@bzla.var_74 (_ BitVec 8))) (lambda ((@bzla.var_75 (_ BitVec 4))) (ite (and (= @bzla.var_74 #b10011111) (= @bzla.var_75 #b0011)) #b11111111 #b00000000)))
 
-   to_string representation of value of a:
+   str() representation of value of a:
    (store ((as const (Array (_ BitVec 8) (_ BitVec 8))) #b00000000) #b10011111 #b11111111)
 
 Note that the string representation of values representable as simple type
 (bit-vectors, boolean, floating-point, rounding mode) are given as pure
 value string (in the given number format) via
-:cpp:func:`bitwuzla_term_value_get_str()`.
-Their string representation retrieved via :cpp:func:`bitwuzla_term_to_string()`,
+:cpp:func:`bitwuzla::Term::value()`.
+Their string representation retrieved via :cpp:func:`bitwuzla::Term::str()`,
 however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 141-144
+     :lines: 151-154
 
 This will print:
 
 .. code-block::
 
-   to_string representation of value of x: #b10011111
-   to_string representation of value of y: #b11111111
+   str() representation of value of x: #b10011111
+   str() representation of value of y: #b11111111
 
 
 It is also possible to query the model value of expressions that do not
@@ -186,7 +186,7 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 148-149
+     :lines: 158-159
 
 This will print:
 
