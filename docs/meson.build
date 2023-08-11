@@ -28,8 +28,19 @@ if get_option('python')
   depends += [bitwuzla_py_ext]
   depend_files += ['python/api.rst', 'python/interface.rst']
 endif
-docs = custom_target('docs',
+
+docs_usage = custom_target('cli-usage',
   build_by_default: true,
+  build_always_stale: true,
+  capture: true,
+  output: 'cli_usage.txt',
+  command: [bitwuzla_bin, '-h'],
+  depends: bitwuzla_bin,
+)
+depends += [docs_usage]
+
+docs_html = custom_target('docs-html',
+  #  build_by_default: true,
   build_always_stale: true,
   command: [sphinx_build, '-b', 'html',
             # Tell breathe where to find the Doxygen output
@@ -45,11 +56,11 @@ docs = custom_target('docs',
   depend_files: depend_files
 )
 
-docs_usage = custom_target('cli-usage',
+jekyll_fix = files('jekyll_fix.py')
+docs = custom_target('docs',
   build_by_default: true,
   build_always_stale: true,
-  capture: true,
-  output: 'cli_usage.txt',
-  command: [bitwuzla_bin, '-h'],
-  depends: bitwuzla_bin,
+  command: [python, jekyll_fix, meson.current_build_dir()],
+  depends: docs_html,
+  output: 'jekyll-fix-fake-output'
 )

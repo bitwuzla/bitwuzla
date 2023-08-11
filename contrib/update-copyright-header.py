@@ -10,8 +10,9 @@
 ##
 
 import argparse
-import sys
+import datetime
 import subprocess
+import sys
 
 ap = argparse.ArgumentParser()
 ap.add_argument('files', nargs='*')
@@ -47,7 +48,8 @@ def get_year(filename):
     cmd = ['git', 'log', '--follow', '--format=%ad', '--date=format:%Y',
            filename]
     proc = subprocess.run(cmd, capture_output=True, check=True)
-    assert proc.stdout
+    if not proc.stdout:
+        return datetime.date.today().year
     return proc.stdout.split()[-1].decode()
 
 def update_header(filename):
