@@ -155,6 +155,12 @@ class Options
   /** Copy assignment. */
   Options &operator=(const Options &options);
   /**
+   * Determine if given string is a valid short or long option name.
+   * @param name The name.
+   * @return True if given string is a option name.
+   */
+  bool is_valid(const std::string &name) const;
+  /**
    * Determine if given option is a Boolean option.
    * @param option The option to query.
    * @return True if `option` is a Boolean option.

@@ -2,6 +2,12 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News since version 0.1.1
+
+- The SMT2 parser is now less restrictive with respect to setting *unsupported
+  options* and using *unsupported annotation attributes*. This is now ignored
+  (with a warning at verbosity level > 0) rather than rejected with an error.
+
 ## News for version 0.1.0 since commit 1230d80
 
 Bitwuzla release 0.1.0 is a complete from-scratch rewrite in C++.

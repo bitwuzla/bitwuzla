@@ -356,6 +356,12 @@ Options::operator=(const Options &options)
 }
 
 bool
+Options::is_valid(const std::string &name) const
+{
+  return d_options->is_valid(name);
+}
+
+bool
 Options::is_bool(Option option) const
 {
   return d_options->is_bool(s_internal_options.at(option));

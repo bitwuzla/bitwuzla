@@ -206,6 +206,17 @@ bitwuzla_options_delete(BitwuzlaOptions *options)
 }
 
 bool
+bitwuzla_option_is_valid(BitwuzlaOptions *options, const char *name)
+{
+  bool res = false;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  res = options->d_options.is_valid(name);
+  BITWUZLA_TRY_CATCH_END;
+  return res;
+}
+
+bool
 bitwuzla_option_is_numeric(BitwuzlaOptions *options, BitwuzlaOption option)
 {
   bool res = false;

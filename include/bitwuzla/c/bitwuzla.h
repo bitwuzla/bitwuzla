@@ -143,6 +143,13 @@ BitwuzlaOptions *bitwuzla_options_new();
 void bitwuzla_options_delete(BitwuzlaOptions *options);
 
 /**
+ * Determine if given string is a valid short or long option name.
+ * @param name The name.
+ * @return True if given string is a option name.
+ */
+bool bitwuzla_option_is_valid(BitwuzlaOptions *options, const char *name);
+
+/**
  * Determine if a given option is a numeric (or Boolean) option.
  * @return True if the given option is a numeric or Boolean option.
  */

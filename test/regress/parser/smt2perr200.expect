@@ -1,0 +1,1 @@
+regress/parser/smt2perr200.smt2:2:12: invalid annotation syntax, expected term as first argument

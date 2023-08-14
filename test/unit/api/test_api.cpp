@@ -394,6 +394,13 @@ TEST_F(TestApi, option_set_args)
   ASSERT_THROW(options.set({"--no-verbose"}), bitwuzla::Exception);
 }
 
+TEST_F(TestApi, option_is_valid)
+{
+  bitwuzla::Options options;
+  ASSERT_FALSE(options.is_valid("incremental"));
+  ASSERT_TRUE(options.is_valid("produce-models"));
+}
+
 TEST_F(TestApi, mk_array_sort)
 {
   ASSERT_THROW(bitwuzla::mk_array_sort(bitwuzla::Sort(), d_bv_sort8),

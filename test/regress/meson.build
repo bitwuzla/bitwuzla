@@ -56,6 +56,7 @@ tests_smt2 = [
   ['parser/echo.smt2'],
   ['parser/let.smt2'],
   ['parser/regmismatch.smt2'],
+  ['parser/unsupported_opt_attr.smt2'],
   ['parser/smt2perr000.smt2'],
   ['parser/smt2perr001.smt2'],
   ['parser/smt2perr002.smt2'],
@@ -253,6 +254,9 @@ tests_smt2 = [
   ['parser/smt2perr195.smt2'],
   ['parser/smt2perr196.smt2'],
   ['parser/smt2perr197.smt2'],
+  ['parser/smt2perr198.smt2'],
+  ['parser/smt2perr199.smt2'],
+  ['parser/smt2perr200.smt2'],
   #['preprocess/array/nondestr_subst1.smt2'], # TODO slow
   ['preprocess/array/nondestr_subst10.smt2'],
   ['preprocess/array/nondestr_subst11.smt2'],

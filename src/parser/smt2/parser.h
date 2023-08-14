@@ -548,7 +548,7 @@ class Parser : public bzla::parser::Parser
   size_t nopen() const { return d_work_control.size() - 1; }
   /** @return The index of the currently open item. */
   size_t idx_open() const { return d_work_control.back(); }
-  /** @return The index of the open term enclosin the currently open item. */
+  /** @return The index of the open term enclosing the currently open item. */
   size_t idx_prev() const
   {
     assert(d_work_control.size() > 1);

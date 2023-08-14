@@ -585,6 +585,13 @@ TEST_F(TestCApi, get_option_info)
   bitwuzla_options_delete(options);
 }
 
+TEST_F(TestCApi, option_is_valid)
+{
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  ASSERT_FALSE(bitwuzla_option_is_valid(options, "incremental"));
+  ASSERT_TRUE(bitwuzla_option_is_valid(options, "produce-models"));
+}
+
 TEST_F(TestCApi, mk_array_sort)
 {
   ASSERT_DEATH(bitwuzla_mk_array_sort(0, d_bv_sort8), d_error_inv_sort);

@@ -993,13 +993,20 @@ Parser::parse_command_set_option()
     std::string opt = d_lexer->token() + 1;
     (void) next_token();
     assert(d_lexer->has_token());
-    try
+    if (!d_options.is_valid(opt))
     {
-      d_options.set(opt, d_lexer->token());
+      Msg(1) << "warning: unsupported option '" << opt << "'";
     }
-    catch (bitwuzla::Exception& e)
+    else
     {
-      return error(e.msg());
+      try
+      {
+        d_options.set(opt, d_lexer->token());
+      }
+      catch (bitwuzla::Exception& e)
+      {
+        return error(e.msg());
+      }
     }
   }
   if (parse_rpar())
@@ -1197,6 +1204,26 @@ Parser::parse_open_term(Token token)
   {
     push_item(Token::SYMBOL, d_last_node, d_lexer->coo());
     if (!parse_symbol("in sorted var", false))
+    {
+      return false;
+    }
+    SymbolTable::Node* symbol = peek_node_arg();
+    assert(symbol->has_symbol());
+    if (symbol->d_coo.line)
+    {
+      return error("symbol '" + symbol->d_symbol + "' already defined at line "
+                   + std::to_string(symbol->d_coo.line) + " column "
+                   + std::to_string(symbol->d_coo.col));
+    }
+    symbol->d_coo = d_lexer->coo();
+  }
+  else if (token == Token::ATTRIBUTE && item_open().d_token == Token::BANG)
+  {
+    // catch-all for all unsupported annotation attributes, we parse and push
+    // them on the work stack and let close_term_bang() handle it
+    push_item(Token::SYMBOL, d_last_node, d_lexer->coo());
+    if (!parse_symbol("after attribute '" + std::string(d_lexer->token()) + "'",
+                      false))
     {
       return false;
     }
@@ -1919,28 +1946,27 @@ Parser::close_term_bang(ParsedItem& item)
     return error(
         "invalid annotation syntax, expected symbol as third argument");
   }
-  if (!peek_is_node_arg())
-  {
-    return error_arg(
-        "invalid annotation syntax, expected ':named' as second argument");
-  }
   SymbolTable::Node* symbol = pop_node_arg();
-  if (peek_node_arg()->d_token != Token::NAMED)
-  {
-    return error_arg(
-        "invalid annotation syntax, expected ':named' as second argument");
-  }
-  d_work.pop_back();
+  SymbolTable::Node* attribute = pop_node_arg();
   if (!peek_is_term_arg())
   {
     return error_arg(
         "invalid annotation syntax, expected term as first argument");
   }
-  symbol->d_term = pop_term_arg();
-  set_item(item, Token::TERM, symbol->d_term);
-  if (d_record_named_assertions)
+  if (attribute->d_token == Token::NAMED)
   {
-    d_named_assertions[symbol->d_term] = symbol;
+    symbol->d_term = pop_term_arg();
+    set_item(item, Token::TERM, symbol->d_term);
+    if (d_record_named_assertions)
+    {
+      d_named_assertions[symbol->d_term] = symbol;
+    }
+  }
+  else
+  {
+    set_item(item, Token::TERM, pop_term_arg());
+    Msg(1) << "warning: unsupported annotation attribute '"
+           << attribute->d_symbol << "'";
   }
   return true;
 }
