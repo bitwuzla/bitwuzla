@@ -22,14 +22,14 @@ jobs:
 
         include:
           - name: production
-            config: -Dtesting=enabled -Dunit_testing=disabled
+            config: -Dtesting=enabled -Dunit_testing=disabled -Dpython=true
 
           - name: production-clang
             config: -Dtesting=enabled -Dunit_testing=disabled
             env: CC=clang CXX=clang++
 
           - name: debug
-            config: --buildtype=debug
+            config: --buildtype=debug -Dpython=true
 
           - name: debug-clang
             config: --buildtype=debug
@@ -44,14 +44,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgmp-dev ninja-build
-          python3 -m pip install meson pytest
+          python3 -m pip install meson pytest cython>=3.*
           echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
 
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
         run: |
           brew install gmp pkgconfig ninja
-          python3 -m pip install meson pytest
+          python3 -m pip install meson pytest cython>=3.*
           echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
 
       - name: Checkout

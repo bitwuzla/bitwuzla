@@ -16,8 +16,12 @@ project('bitwuzla',
 bitwuzla_lib_soversion = 0
 
 # Build parameters
-build_static = get_option('default_library') == 'static' and get_option('b_sanitize') == 'none'
 enable_python = get_option('python')
+
+# Whether external and system libraries should be statically linked
+build_static = get_option('default_library') == 'static' \
+               and get_option('b_sanitize') == 'none' \
+               and not enable_python
 
 # Configure testing
 if get_option('testing').auto()

@@ -26,11 +26,6 @@ rng_sources = [
   'rng/rng.cpp'
 ]
 
-gmp_dep = dependency('gmp',
-                     version: '>=6.1',
-                     required: true,
-                     static: build_static)
-
 # RNG support library
 rng_lib = static_library('bzlarng',
                   sources: rng_sources,
