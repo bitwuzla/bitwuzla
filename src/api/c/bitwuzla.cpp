@@ -189,7 +189,7 @@ bitwuzla_sort_to_string(BitwuzlaSort sort)
 BitwuzlaOptions *
 bitwuzla_options_new()
 {
-  BitwuzlaOptions *res;
+  BitwuzlaOptions *res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = new BitwuzlaOptions();
   BITWUZLA_TRY_CATCH_END;
@@ -208,7 +208,7 @@ bitwuzla_options_delete(BitwuzlaOptions *options)
 bool
 bitwuzla_option_is_numeric(BitwuzlaOptions *options, BitwuzlaOption option)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
   res = options->d_options.is_numeric(static_cast<bitwuzla::Option>(option));
@@ -219,7 +219,7 @@ bitwuzla_option_is_numeric(BitwuzlaOptions *options, BitwuzlaOption option)
 bool
 bitwuzla_option_is_mode(BitwuzlaOptions *options, BitwuzlaOption option)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
   res = options->d_options.is_mode(static_cast<bitwuzla::Option>(option));
@@ -255,7 +255,7 @@ bitwuzla_set_option_mode(BitwuzlaOptions *options,
 uint64_t
 bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option)
 {
-  uint64_t res;
+  uint64_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_OPTION(option);
@@ -267,7 +267,7 @@ bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option)
 const char *
 bitwuzla_get_option_mode(BitwuzlaOptions *options, BitwuzlaOption option)
 {
-  const char *res;
+  const char *res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_OPTION(option);
@@ -342,7 +342,7 @@ bitwuzla_get_option_info(BitwuzlaOptions *options,
 const char *
 bitwuzla_copyright()
 {
-  const char *res;
+  const char *res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = bitwuzla::copyright();
   BITWUZLA_TRY_CATCH_END;
@@ -352,7 +352,7 @@ bitwuzla_copyright()
 const char *
 bitwuzla_version()
 {
-  const char *res;
+  const char *res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = bitwuzla::version();
   BITWUZLA_TRY_CATCH_END;
@@ -362,7 +362,7 @@ bitwuzla_version()
 const char *
 bitwuzla_git_id()
 {
-  const char *res;
+  const char *res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = bitwuzla::git_id();
   BITWUZLA_TRY_CATCH_END;
@@ -376,7 +376,7 @@ bitwuzla_git_id()
 Bitwuzla *
 bitwuzla_new(const BitwuzlaOptions *options)
 {
-  Bitwuzla *res;
+  Bitwuzla *res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = new Bitwuzla(options);
   BITWUZLA_TRY_CATCH_END;
@@ -408,7 +408,7 @@ bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
 void *
 bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla)
 {
-  void *res;
+  void *res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   res = bitwuzla->d_terminator ? bitwuzla->d_terminator->get_state() : nullptr;
@@ -427,7 +427,7 @@ bitwuzla_set_abort_callback(void (*fun)(const char *msg))
 BitwuzlaSort
 bitwuzla_mk_array_sort(BitwuzlaSort index, BitwuzlaSort element)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(index);
   BITWUZLA_CHECK_SORT_ID(element);
@@ -440,7 +440,7 @@ bitwuzla_mk_array_sort(BitwuzlaSort index, BitwuzlaSort element)
 BitwuzlaSort
 bitwuzla_mk_bool_sort()
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = export_sort(bitwuzla::mk_bool_sort());
   BITWUZLA_TRY_CATCH_END;
@@ -450,7 +450,7 @@ bitwuzla_mk_bool_sort()
 BitwuzlaSort
 bitwuzla_mk_bv_sort(uint64_t size)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = export_sort(bitwuzla::mk_bv_sort(size));
   BITWUZLA_TRY_CATCH_END;
@@ -460,7 +460,7 @@ bitwuzla_mk_bv_sort(uint64_t size)
 BitwuzlaSort
 bitwuzla_mk_fp_sort(uint64_t exp_size, uint64_t sig_size)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = export_sort(bitwuzla::mk_fp_sort(exp_size, sig_size));
   BITWUZLA_TRY_CATCH_END;
@@ -472,7 +472,7 @@ bitwuzla_mk_fun_sort(uint64_t arity,
                      BitwuzlaSort domain[],
                      BitwuzlaSort codomain)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(domain);
   std::vector<bitwuzla::Sort> dom;
@@ -490,7 +490,7 @@ bitwuzla_mk_fun_sort(uint64_t arity,
 BitwuzlaSort
 bitwuzla_mk_rm_sort()
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = export_sort(bitwuzla::mk_rm_sort());
   BITWUZLA_TRY_CATCH_END;
@@ -500,7 +500,7 @@ bitwuzla_mk_rm_sort()
 BitwuzlaSort
 bitwuzla_mk_uninterpreted_sort(const char *symbol)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   if (symbol)
   {
@@ -517,7 +517,7 @@ bitwuzla_mk_uninterpreted_sort(const char *symbol)
 BitwuzlaTerm
 bitwuzla_mk_true()
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = export_term(bitwuzla::mk_true());
   BITWUZLA_TRY_CATCH_END;
@@ -527,7 +527,7 @@ bitwuzla_mk_true()
 BitwuzlaTerm
 bitwuzla_mk_false()
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = export_term(bitwuzla::mk_false());
   BITWUZLA_TRY_CATCH_END;
@@ -537,7 +537,7 @@ bitwuzla_mk_false()
 BitwuzlaTerm
 bitwuzla_mk_bv_zero(BitwuzlaSort sort)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_bv_zero(import_sort(sort)));
@@ -548,7 +548,7 @@ bitwuzla_mk_bv_zero(BitwuzlaSort sort)
 BitwuzlaTerm
 bitwuzla_mk_bv_one(BitwuzlaSort sort)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_bv_one(import_sort(sort)));
@@ -559,7 +559,7 @@ bitwuzla_mk_bv_one(BitwuzlaSort sort)
 BitwuzlaTerm
 bitwuzla_mk_bv_ones(BitwuzlaSort sort)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_bv_ones(import_sort(sort)));
@@ -570,7 +570,7 @@ bitwuzla_mk_bv_ones(BitwuzlaSort sort)
 BitwuzlaTerm
 bitwuzla_mk_bv_min_signed(BitwuzlaSort sort)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_bv_min_signed(import_sort(sort)));
@@ -581,7 +581,7 @@ bitwuzla_mk_bv_min_signed(BitwuzlaSort sort)
 BitwuzlaTerm
 bitwuzla_mk_bv_max_signed(BitwuzlaSort sort)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_bv_max_signed(import_sort(sort)));
@@ -592,7 +592,7 @@ bitwuzla_mk_bv_max_signed(BitwuzlaSort sort)
 BitwuzlaTerm
 bitwuzla_mk_fp_pos_zero(BitwuzlaSort sort)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_fp_pos_zero(import_sort(sort)));
@@ -603,7 +603,7 @@ bitwuzla_mk_fp_pos_zero(BitwuzlaSort sort)
 BitwuzlaTerm
 bitwuzla_mk_fp_neg_zero(BitwuzlaSort sort)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_fp_neg_zero(import_sort(sort)));
@@ -614,7 +614,7 @@ bitwuzla_mk_fp_neg_zero(BitwuzlaSort sort)
 BitwuzlaTerm
 bitwuzla_mk_fp_pos_inf(BitwuzlaSort sort)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_fp_pos_inf(import_sort(sort)));
@@ -625,7 +625,7 @@ bitwuzla_mk_fp_pos_inf(BitwuzlaSort sort)
 BitwuzlaTerm
 bitwuzla_mk_fp_neg_inf(BitwuzlaSort sort)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_fp_neg_inf(import_sort(sort)));
@@ -636,7 +636,7 @@ bitwuzla_mk_fp_neg_inf(BitwuzlaSort sort)
 BitwuzlaTerm
 bitwuzla_mk_fp_nan(BitwuzlaSort sort)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_fp_nan(import_sort(sort)));
@@ -647,7 +647,7 @@ bitwuzla_mk_fp_nan(BitwuzlaSort sort)
 BitwuzlaTerm
 bitwuzla_mk_bv_value(BitwuzlaSort sort, const char *value, uint8_t base)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   BITWUZLA_CHECK_NOT_NULL(value);
@@ -659,7 +659,7 @@ bitwuzla_mk_bv_value(BitwuzlaSort sort, const char *value, uint8_t base)
 BitwuzlaTerm
 bitwuzla_mk_bv_value_uint64(BitwuzlaSort sort, uint64_t value)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_bv_value_uint64(import_sort(sort), value));
@@ -670,7 +670,7 @@ bitwuzla_mk_bv_value_uint64(BitwuzlaSort sort, uint64_t value)
 BitwuzlaTerm
 bitwuzla_mk_bv_value_int64(BitwuzlaSort sort, int64_t value)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_term(bitwuzla::mk_bv_value_int64(import_sort(sort), value));
@@ -683,7 +683,7 @@ bitwuzla_mk_fp_value(BitwuzlaTerm bv_sign,
                      BitwuzlaTerm bv_exponent,
                      BitwuzlaTerm bv_significand)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(bv_sign);
   BITWUZLA_CHECK_TERM_ID(bv_exponent);
@@ -698,7 +698,7 @@ bitwuzla_mk_fp_value(BitwuzlaTerm bv_sign,
 BitwuzlaTerm
 bitwuzla_mk_fp_from_real(BitwuzlaSort sort, BitwuzlaTerm rm, const char *real)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   BITWUZLA_CHECK_TERM_ID(rm);
@@ -715,7 +715,7 @@ bitwuzla_mk_fp_from_rational(BitwuzlaSort sort,
                              const char *num,
                              const char *den)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   BITWUZLA_CHECK_TERM_ID(rm);
@@ -730,7 +730,7 @@ bitwuzla_mk_fp_from_rational(BitwuzlaSort sort,
 BitwuzlaTerm
 bitwuzla_mk_rm_value(BitwuzlaRoundingMode rm)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_RM(rm);
   res = export_term(
@@ -742,7 +742,7 @@ bitwuzla_mk_rm_value(BitwuzlaRoundingMode rm)
 BitwuzlaTerm
 bitwuzla_mk_term1(BitwuzlaKind kind, BitwuzlaTerm arg)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_KIND(kind);
   BITWUZLA_CHECK_TERM_ID(arg);
@@ -754,7 +754,7 @@ bitwuzla_mk_term1(BitwuzlaKind kind, BitwuzlaTerm arg)
 BitwuzlaTerm
 bitwuzla_mk_term2(BitwuzlaKind kind, BitwuzlaTerm arg0, BitwuzlaTerm arg1)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_KIND(kind);
   BITWUZLA_CHECK_TERM_ID(arg0);
@@ -771,7 +771,7 @@ bitwuzla_mk_term3(BitwuzlaKind kind,
                   BitwuzlaTerm arg1,
                   BitwuzlaTerm arg2)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_KIND(kind);
   BITWUZLA_CHECK_TERM_ID(arg0);
@@ -787,7 +787,7 @@ bitwuzla_mk_term3(BitwuzlaKind kind,
 BitwuzlaTerm
 bitwuzla_mk_term(BitwuzlaKind kind, uint32_t argc, BitwuzlaTerm args[])
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_KIND(kind);
   std::vector<bitwuzla::Term> terms;
@@ -804,7 +804,7 @@ bitwuzla_mk_term(BitwuzlaKind kind, uint32_t argc, BitwuzlaTerm args[])
 BitwuzlaTerm
 bitwuzla_mk_term1_indexed1(BitwuzlaKind kind, BitwuzlaTerm arg, uint64_t idx)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_KIND(kind);
   BITWUZLA_CHECK_TERM_ID(arg);
@@ -820,7 +820,7 @@ bitwuzla_mk_term1_indexed2(BitwuzlaKind kind,
                            uint64_t idx0,
                            uint64_t idx1)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_KIND(kind);
   BITWUZLA_CHECK_TERM_ID(arg);
@@ -836,7 +836,7 @@ bitwuzla_mk_term2_indexed1(BitwuzlaKind kind,
                            BitwuzlaTerm arg1,
                            uint64_t idx)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_KIND(kind);
   BITWUZLA_CHECK_TERM_ID(arg0);
@@ -854,7 +854,7 @@ bitwuzla_mk_term2_indexed2(BitwuzlaKind kind,
                            uint64_t idx0,
                            uint64_t idx1)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_KIND(kind);
   BITWUZLA_CHECK_TERM_ID(arg0);
@@ -872,7 +872,7 @@ bitwuzla_mk_term_indexed(BitwuzlaKind kind,
                          uint32_t idxc,
                          const uint64_t idxs[])
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_KIND(kind);
   std::vector<bitwuzla::Term> terms;
@@ -894,7 +894,7 @@ bitwuzla_mk_term_indexed(BitwuzlaKind kind,
 BitwuzlaTerm
 bitwuzla_mk_const(BitwuzlaSort sort, const char *symbol)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   if (symbol)
@@ -912,7 +912,7 @@ bitwuzla_mk_const(BitwuzlaSort sort, const char *symbol)
 BitwuzlaTerm
 bitwuzla_mk_const_array(BitwuzlaSort sort, BitwuzlaTerm value)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   BITWUZLA_CHECK_TERM_ID(value);
@@ -925,7 +925,7 @@ bitwuzla_mk_const_array(BitwuzlaSort sort, BitwuzlaTerm value)
 BitwuzlaTerm
 bitwuzla_mk_var(BitwuzlaSort sort, const char *symbol)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   if (symbol)
@@ -988,7 +988,7 @@ bitwuzla_get_assertions(Bitwuzla *bitwuzla, size_t *size)
 bool
 bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_TERM_ID(term);
@@ -1045,7 +1045,7 @@ bitwuzla_simplify(Bitwuzla *bitwuzla)
 BitwuzlaResult
 bitwuzla_check_sat(Bitwuzla *bitwuzla)
 {
-  BitwuzlaResult res;
+  BitwuzlaResult res = BITWUZLA_UNKNOWN;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   res = static_cast<BitwuzlaResult>(bitwuzla->d_bitwuzla->check_sat());
@@ -1058,7 +1058,7 @@ bitwuzla_check_sat_assuming(Bitwuzla *bitwuzla,
                             uint32_t argc,
                             BitwuzlaTerm args[])
 {
-  BitwuzlaResult res;
+  BitwuzlaResult res = BITWUZLA_UNKNOWN;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_NOT_NULL(args);
@@ -1076,7 +1076,7 @@ bitwuzla_check_sat_assuming(Bitwuzla *bitwuzla,
 BitwuzlaTerm
 bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term)
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = BITWUZLA_UNKNOWN;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_TERM_ID(term);
@@ -1134,7 +1134,7 @@ bitwuzla_substitute_term(Bitwuzla *bitwuzla,
                          BitwuzlaTerm map_keys[],
                          BitwuzlaTerm map_values[])
 {
-  BitwuzlaTerm res;
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_TERM_ID(term);
@@ -1192,7 +1192,7 @@ bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
 size_t
 bitwuzla_sort_hash(BitwuzlaSort sort)
 {
-  size_t res;
+  size_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = std::hash<bitwuzla::Sort>{}(import_sort(sort));
@@ -1203,7 +1203,7 @@ bitwuzla_sort_hash(BitwuzlaSort sort)
 uint64_t
 bitwuzla_sort_bv_get_size(BitwuzlaSort sort)
 {
-  uint64_t res;
+  uint64_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).bv_size();
@@ -1214,7 +1214,7 @@ bitwuzla_sort_bv_get_size(BitwuzlaSort sort)
 uint64_t
 bitwuzla_sort_fp_get_exp_size(BitwuzlaSort sort)
 {
-  uint64_t res;
+  uint64_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).fp_exp_size();
@@ -1225,7 +1225,7 @@ bitwuzla_sort_fp_get_exp_size(BitwuzlaSort sort)
 uint64_t
 bitwuzla_sort_fp_get_sig_size(BitwuzlaSort sort)
 {
-  uint64_t res;
+  uint64_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).fp_sig_size();
@@ -1236,7 +1236,7 @@ bitwuzla_sort_fp_get_sig_size(BitwuzlaSort sort)
 BitwuzlaSort
 bitwuzla_sort_array_get_index(BitwuzlaSort sort)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_sort(import_sort(sort).array_index());
@@ -1247,7 +1247,7 @@ bitwuzla_sort_array_get_index(BitwuzlaSort sort)
 BitwuzlaSort
 bitwuzla_sort_array_get_element(BitwuzlaSort sort)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_sort(import_sort(sort).array_element());
@@ -1278,7 +1278,7 @@ bitwuzla_sort_fun_get_domain_sorts(BitwuzlaSort sort, size_t *size)
 BitwuzlaSort
 bitwuzla_sort_fun_get_codomain(BitwuzlaSort sort)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = export_sort(import_sort(sort).fun_codomain());
@@ -1289,7 +1289,7 @@ bitwuzla_sort_fun_get_codomain(BitwuzlaSort sort)
 uint64_t
 bitwuzla_sort_fun_get_arity(BitwuzlaSort sort)
 {
-  uint64_t res;
+  uint64_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).fun_arity();
@@ -1317,7 +1317,7 @@ bitwuzla_sort_get_uninterpreted_symbol(BitwuzlaSort sort)
 bool
 bitwuzla_sort_is_equal(BitwuzlaSort sort0, BitwuzlaSort sort1)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort0);
   BITWUZLA_CHECK_SORT_ID(sort1);
@@ -1329,7 +1329,7 @@ bitwuzla_sort_is_equal(BitwuzlaSort sort0, BitwuzlaSort sort1)
 bool
 bitwuzla_sort_is_array(BitwuzlaSort sort)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).is_array();
@@ -1340,7 +1340,7 @@ bitwuzla_sort_is_array(BitwuzlaSort sort)
 bool
 bitwuzla_sort_is_bool(BitwuzlaSort sort)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).is_bool();
@@ -1351,7 +1351,7 @@ bitwuzla_sort_is_bool(BitwuzlaSort sort)
 bool
 bitwuzla_sort_is_bv(BitwuzlaSort sort)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).is_bv();
@@ -1362,7 +1362,7 @@ bitwuzla_sort_is_bv(BitwuzlaSort sort)
 bool
 bitwuzla_sort_is_fp(BitwuzlaSort sort)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).is_fp();
@@ -1373,7 +1373,7 @@ bitwuzla_sort_is_fp(BitwuzlaSort sort)
 bool
 bitwuzla_sort_is_fun(BitwuzlaSort sort)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).is_fun();
@@ -1384,7 +1384,7 @@ bitwuzla_sort_is_fun(BitwuzlaSort sort)
 bool
 bitwuzla_sort_is_rm(BitwuzlaSort sort)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).is_rm();
@@ -1395,7 +1395,7 @@ bitwuzla_sort_is_rm(BitwuzlaSort sort)
 bool
 bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_SORT_ID(sort);
   res = import_sort(sort).is_uninterpreted();
@@ -1422,7 +1422,7 @@ bitwuzla_sort_print(BitwuzlaSort sort, FILE *file)
 size_t
 bitwuzla_term_hash(BitwuzlaTerm term)
 {
-  size_t res;
+  size_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = std::hash<bitwuzla::Term>{}(import_term(term));
@@ -1433,7 +1433,7 @@ bitwuzla_term_hash(BitwuzlaTerm term)
 BitwuzlaKind
 bitwuzla_term_get_kind(BitwuzlaTerm term)
 {
-  BitwuzlaKind res;
+  BitwuzlaKind res = BITWUZLA_KIND_NUM_KINDS;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = export_kind(import_term(term).kind());
@@ -1475,7 +1475,7 @@ bitwuzla_term_get_indices(BitwuzlaTerm term, size_t *size)
 bool
 bitwuzla_term_is_indexed(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).num_indices() > 0;
@@ -1486,7 +1486,7 @@ bitwuzla_term_is_indexed(BitwuzlaTerm term)
 BitwuzlaSort
 bitwuzla_term_get_sort(BitwuzlaTerm term)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = export_sort(import_term(term).sort());
@@ -1497,7 +1497,7 @@ bitwuzla_term_get_sort(BitwuzlaTerm term)
 BitwuzlaSort
 bitwuzla_term_array_get_index_sort(BitwuzlaTerm term)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = export_sort(import_term(term).sort().array_index());
@@ -1508,7 +1508,7 @@ bitwuzla_term_array_get_index_sort(BitwuzlaTerm term)
 BitwuzlaSort
 bitwuzla_term_array_get_element_sort(BitwuzlaTerm term)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = export_sort(import_term(term).sort().array_element());
@@ -1537,7 +1537,7 @@ bitwuzla_term_fun_get_domain_sorts(BitwuzlaTerm term, size_t *size)
 BitwuzlaSort
 bitwuzla_term_fun_get_codomain_sort(BitwuzlaTerm term)
 {
-  BitwuzlaSort res;
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = export_sort(import_term(term).sort().fun_codomain());
@@ -1548,7 +1548,7 @@ bitwuzla_term_fun_get_codomain_sort(BitwuzlaTerm term)
 uint64_t
 bitwuzla_term_bv_get_size(BitwuzlaTerm term)
 {
-  uint64_t res;
+  uint64_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().bv_size();
@@ -1559,7 +1559,7 @@ bitwuzla_term_bv_get_size(BitwuzlaTerm term)
 uint64_t
 bitwuzla_term_fp_get_exp_size(BitwuzlaTerm term)
 {
-  uint64_t res;
+  uint64_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().fp_exp_size();
@@ -1570,7 +1570,7 @@ bitwuzla_term_fp_get_exp_size(BitwuzlaTerm term)
 uint64_t
 bitwuzla_term_fp_get_sig_size(BitwuzlaTerm term)
 {
-  uint64_t res;
+  uint64_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().fp_sig_size();
@@ -1581,7 +1581,7 @@ bitwuzla_term_fp_get_sig_size(BitwuzlaTerm term)
 uint64_t
 bitwuzla_term_fun_get_arity(BitwuzlaTerm term)
 {
-  uint64_t res;
+  uint64_t res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().fun_arity();
@@ -1609,7 +1609,7 @@ bitwuzla_term_get_symbol(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_equal_sort(BitwuzlaTerm term0, BitwuzlaTerm term1)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term0);
   BITWUZLA_CHECK_TERM_ID(term1);
@@ -1621,7 +1621,7 @@ bitwuzla_term_is_equal_sort(BitwuzlaTerm term0, BitwuzlaTerm term1)
 bool
 bitwuzla_term_is_array(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().is_array();
@@ -1632,7 +1632,7 @@ bitwuzla_term_is_array(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_const(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_const();
@@ -1643,7 +1643,7 @@ bitwuzla_term_is_const(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_fun(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().is_fun();
@@ -1654,7 +1654,7 @@ bitwuzla_term_is_fun(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_var(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_variable();
@@ -1665,7 +1665,7 @@ bitwuzla_term_is_var(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_value(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_value();
@@ -1676,7 +1676,7 @@ bitwuzla_term_is_value(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_bv_value(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   const bitwuzla::Term &t = import_term(term);
@@ -1688,7 +1688,7 @@ bitwuzla_term_is_bv_value(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_fp_value(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   const bitwuzla::Term &t = import_term(term);
@@ -1700,7 +1700,7 @@ bitwuzla_term_is_fp_value(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_rm_value(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   const bitwuzla::Term &t = import_term(term);
@@ -1712,7 +1712,7 @@ bitwuzla_term_is_rm_value(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_bool(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().is_bool();
@@ -1723,7 +1723,7 @@ bitwuzla_term_is_bool(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_bv(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().is_bv();
@@ -1734,7 +1734,7 @@ bitwuzla_term_is_bv(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_fp(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().is_fp();
@@ -1745,7 +1745,7 @@ bitwuzla_term_is_fp(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_rm(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().is_rm();
@@ -1756,7 +1756,7 @@ bitwuzla_term_is_rm(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_uninterpreted(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).sort().is_uninterpreted();
@@ -1767,7 +1767,7 @@ bitwuzla_term_is_uninterpreted(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_true(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_true();
@@ -1778,7 +1778,7 @@ bitwuzla_term_is_true(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_false(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_false();
@@ -1789,7 +1789,7 @@ bitwuzla_term_is_false(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_bv_value_zero(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_bv_value_zero();
@@ -1800,7 +1800,7 @@ bitwuzla_term_is_bv_value_zero(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_bv_value_one(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_bv_value_one();
@@ -1811,7 +1811,7 @@ bitwuzla_term_is_bv_value_one(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_bv_value_ones(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_bv_value_ones();
@@ -1822,7 +1822,7 @@ bitwuzla_term_is_bv_value_ones(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_bv_value_min_signed(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_bv_value_min_signed();
@@ -1833,7 +1833,7 @@ bitwuzla_term_is_bv_value_min_signed(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_bv_value_max_signed(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_bv_value_max_signed();
@@ -1844,7 +1844,7 @@ bitwuzla_term_is_bv_value_max_signed(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_fp_value_pos_zero(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_fp_value_pos_zero();
@@ -1855,7 +1855,7 @@ bitwuzla_term_is_fp_value_pos_zero(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_fp_value_neg_zero(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_fp_value_neg_zero();
@@ -1866,7 +1866,7 @@ bitwuzla_term_is_fp_value_neg_zero(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_fp_value_pos_inf(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_fp_value_pos_inf();
@@ -1877,7 +1877,7 @@ bitwuzla_term_is_fp_value_pos_inf(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_fp_value_neg_inf(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_fp_value_neg_inf();
@@ -1888,7 +1888,7 @@ bitwuzla_term_is_fp_value_neg_inf(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_fp_value_nan(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_fp_value_nan();
@@ -1899,7 +1899,7 @@ bitwuzla_term_is_fp_value_nan(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_rm_value_rna(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_rm_value_rna();
@@ -1910,7 +1910,7 @@ bitwuzla_term_is_rm_value_rna(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_rm_value_rne(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_rm_value_rne();
@@ -1921,7 +1921,7 @@ bitwuzla_term_is_rm_value_rne(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_rm_value_rtn(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_rm_value_rtn();
@@ -1932,7 +1932,7 @@ bitwuzla_term_is_rm_value_rtn(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_rm_value_rtp(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_rm_value_rtp();
@@ -1943,7 +1943,7 @@ bitwuzla_term_is_rm_value_rtp(BitwuzlaTerm term)
 bool
 bitwuzla_term_is_rm_value_rtz(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).is_rm_value_rtz();
@@ -1954,7 +1954,7 @@ bitwuzla_term_is_rm_value_rtz(BitwuzlaTerm term)
 bool
 bitwuzla_term_value_get_bool(BitwuzlaTerm term)
 {
-  bool res;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = import_term(term).value<bool>();
@@ -1995,7 +1995,7 @@ bitwuzla_term_value_get_fp_ieee(BitwuzlaTerm term,
 BitwuzlaRoundingMode
 bitwuzla_term_value_get_rm(BitwuzlaTerm term)
 {
-  BitwuzlaRoundingMode res;
+  BitwuzlaRoundingMode res = BITWUZLA_RM_RNA;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   res = static_cast<BitwuzlaRoundingMode>(
