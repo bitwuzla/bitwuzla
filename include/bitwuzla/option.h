@@ -120,8 +120,6 @@ enum ENUM(Option)
    *    [CaDiCaL](https://github.com/arminbiere/cadical) [**default**]
    *  * **cms**:
    *    [CryptoMiniSat](https://github.com/msoos/cryptominisat)
-   *  * **gimsatul**:
-   *    [Gimsatul](https://github.com/arminbiere/gimsatul)
    *  * **kissat**:
    *    [Kissat](https://github.com/arminbiere/kissat)
    *  * **lingeling**:
