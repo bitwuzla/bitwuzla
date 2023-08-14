@@ -279,8 +279,8 @@ enum ENUM(Option)
    * When enabled, eliminates bit-vector extracts on constants.
    *
    * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
    */
   EVALUE(PP_ELIM_BV_EXTRACTS),
   /*! **Preprocessing: Embedded constraint substitution**
