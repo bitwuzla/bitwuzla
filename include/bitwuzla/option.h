@@ -126,17 +126,6 @@ enum ENUM(Option)
    *    [Lingeling](https://github.com/arminbiere/lingeling)
    */
   EVALUE(SAT_SOLVER),
-  /*! **Enable SMT-COMP mode.**
-   *
-   * Parser only option. Only effective when an SMT2 input file is parsed.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   *
-   *  @warning This is an expert option.
-   */
-  EVALUE(SMT_COMP_MODE),
 
   /* ---------------- BV: Prop Engine Options (Expert) ---------------------- */
 

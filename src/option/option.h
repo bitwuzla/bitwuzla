@@ -34,7 +34,6 @@ enum class Option
 
   BV_SOLVER,      // enum
   REWRITE_LEVEL,  // numeric
-  SMT_COMP_MODE,  // bool
 
   PROP_NPROPS,                  // numeric
   PROP_NUPDATES,                // numeric
@@ -421,7 +420,6 @@ class Options
   OptionModeT<BvSolver> bv_solver;
   OptionModeT<SatSolver> sat_solver;
   OptionNumeric rewrite_level;
-  OptionBool smt_comp_mode;
 
   // BV: propagation-based local search engine
   OptionNumeric prop_nprops;

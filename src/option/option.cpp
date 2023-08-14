@@ -145,8 +145,6 @@ Options::Options()
                     "rewrite level",
                     "rewrite-level",
                     "rwl"),
-      smt_comp_mode(
-          this, Option::SMT_COMP_MODE, false, "SMT-COMP mode", "smt-comp-mode"),
       // BV: propagation-based local search engine
       prop_nprops(this,
                   Option::PROP_NPROPS,
@@ -540,7 +538,6 @@ Options::data(Option opt)
 
     case Option::BV_SOLVER: return &bv_solver;
     case Option::REWRITE_LEVEL: return &rewrite_level;
-    case Option::SMT_COMP_MODE: return &smt_comp_mode;
 
     case Option::PROP_NPROPS: return &prop_nprops;
     case Option::PROP_NUPDATES: return &prop_nupdates;
