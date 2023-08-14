@@ -1,15 +1,37 @@
+c_compiler = meson.get_compiler('c')
+cpp_compiler = meson.get_compiler('cpp')
+
 # ---
 # Bitwuzla library dependencies
 # ---
 
+# External dependencies
 gmp_dep = dependency('gmp',
                      version: '>=6.1',
                      required: true,
                      static: build_static)
 
+
 # Subproject dependencies
-cadical_dep = dependency('cadical', required: true)
-kissat_dep = dependency('kissat', required: get_option('kissat'))
+
+# CaDiCaL does not provide pkg-config to find dependency
+cadical_dep = cpp_compiler.find_library('cadical',
+                                        has_headers: 'cadical.hpp',
+                                        static: build_static,
+                                        required: false)
+if not cadical_dep.found()
+  cadical_dep = dependency('cadical', required: true)
+endif
+
+# Kissat does not provide pkg-config to find dependency
+kissat_dep = cpp_compiler.find_library('kissat',
+                                        has_headers: 'kissat.h',
+                                        static: build_static,
+                                        required: false)
+if not kissat_dep.found()
+  kissat_dep = dependency('kissat', required: get_option('kissat'))
+endif
+
 symfpu_dep = dependency('symfpu', required: true)
 
 dependencies = [symfpu_dep, cadical_dep, kissat_dep, gmp_dep]
@@ -61,8 +83,6 @@ license_text += '\n\n  SymFPU\n  https://github.com/martin-cs/symfpu'
 license_text = license_text.replace('\n', '\\n').replace('"', '\\"')
 
 # Generate header
-c_compiler = meson.get_compiler('c')
-cpp_compiler = meson.get_compiler('cpp')
 conf_data = configuration_data()
 conf_data.set('cc', c_compiler.get_id() + ' ' + c_compiler.version())
 conf_data.set('cxx', cpp_compiler.get_id() + ' ' + cpp_compiler.version())
