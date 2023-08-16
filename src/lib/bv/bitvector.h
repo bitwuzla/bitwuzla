@@ -371,6 +371,8 @@ class BitVector
 
   /** @return The number of trailing zeros (counted from lsb). */
   uint64_t count_trailing_zeros() const;
+  /** @return The number of trailing ones (counted from lsb). */
+  uint64_t count_trailing_ones() const;
   /** @return The number of leading zeros (counted from msb). */
   uint64_t count_leading_zeros() const;
   /** @return The number of leading ones (counted from msb). */
