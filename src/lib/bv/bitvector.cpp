@@ -1054,6 +1054,27 @@ BitVector::count_trailing_zeros() const
 }
 
 uint64_t
+BitVector::count_trailing_ones() const
+{
+  assert(!is_null());
+  uint64_t res = 0;
+  if (is_gmp())
+  {
+    res = mpz_scan0(d_val_gmp, 0);
+    if (res > d_size) res = d_size;
+  }
+  else
+  {
+    for (uint64_t i = 0; i < d_size; ++i)
+    {
+      if (!bit(i)) break;
+      res += 1;
+    }
+  }
+  return res;
+}
+
+uint64_t
 BitVector::count_leading_zeros() const
 {
   assert(!is_null());
