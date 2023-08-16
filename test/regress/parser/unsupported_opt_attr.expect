@@ -1,6 +1,14 @@
+unsat
 sat
 (
   (a #b1111)
   (x #b1111)
   (b true)
+  (c false)
+  (y true)
+  (d true)
+  (z true)
+  (gz true)
+  (zz true)
+  (by true)
 )

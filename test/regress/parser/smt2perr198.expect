@@ -1,1 +1,1 @@
-regress/parser/smt2perr198.smt2:2:10: invalid annotation syntax, expected 3 arguments, got 1
+regress/parser/smt2perr198.smt2:2:10: invalid annotation syntax, expected at least 3 arguments, got 1

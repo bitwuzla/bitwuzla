@@ -687,10 +687,6 @@ Parser::parse_command_get_value()
   {
     return error("model generation is not enabled");
   }
-  if (d_result != bitwuzla::Result::SAT)
-  {
-    return true;
-  }
   if (!parse_lpar())
   {
     return false;
@@ -705,6 +701,10 @@ Parser::parse_command_get_value()
   if (!parse_rpar())
   {
     return false;
+  }
+  if (d_result != bitwuzla::Result::SAT)
+  {
+    return true;
   }
   (*d_out) << "(";
   size_t size_args = args.size();
@@ -1202,8 +1202,9 @@ Parser::parse_open_term(Token token)
   }
   else if (token == Token::NAMED)
   {
+    d_skip_attribute_value = false;
     push_item(Token::SYMBOL, d_last_node, d_lexer->coo());
-    if (!parse_symbol("in sorted var", false))
+    if (!parse_symbol("as attribute value to :named", false))
     {
       return false;
     }
@@ -1934,44 +1935,70 @@ bool
 Parser::close_term_bang(ParsedItem& item)
 {
   size_t n = nargs();
-  if (n != 3)
+  if (n < 3)
   {
-    return error("invalid annotation syntax, expected 3 arguments, got "
-                     + std::to_string(n),
-                 item.d_coo);
+    return error(
+        "invalid annotation syntax, expected at least 3 arguments, got "
+            + std::to_string(n),
+        item.d_coo);
   }
-  SymbolTable::Node* attribute = peek_node_arg(d_work.size() - n + 1);
-  if (!peek_is_term_arg(d_work.size() - n))
+
+  size_t size = d_work.size();
+
+  // term
+  size_t term_idx = size - n;
+  if (!peek_is_term_arg(term_idx))
   {
     return error("invalid annotation syntax, expected term",
-                 d_work[d_work.size() - n].d_coo);
+                 d_work[term_idx].d_coo);
   }
-  if (attribute->d_token == Token::NAMED)
+  bitwuzla::Term term = peek_term_arg(term_idx);
+
+  // attributes
+  size_t idx = size - n + 1;
+  while (idx < size)
   {
-    assert(!d_skip_attribute_value);
-    if (!peek_is_node_arg())
+    if (!peek_is_node_arg(idx))
     {
-      return error_arg("invalid annotation syntax, expected symbol");
+      return error("invalid annotation syntax, expected attribute",
+                   d_work[idx].d_coo);
     }
-    SymbolTable::Node* symbol = pop_node_arg();
-    pop_node_arg();  // pop attribute
-    symbol->d_term = pop_term_arg();
-    set_item(item, Token::TERM, symbol->d_term);
-    if (d_record_named_assertions)
+    SymbolTable::Node* attribute = peek_node_arg(idx);
+    if (attribute->d_token != Token::NAMED
+        && attribute->d_token != Token::ATTRIBUTE)
     {
-      d_named_assertions[symbol->d_term] = symbol;
+      return error("invalid annotation syntax, expected attribute",
+                   d_work[idx].d_coo);
+    }
+    idx += 1;
+
+    // we only support :named at the moment
+    if (attribute->d_token == Token::NAMED)
+    {
+      if (!peek_is_node_arg(idx))
+      {
+        return error("invalid annotation syntax, expected symbol",
+                     d_work[idx].d_coo);
+      }
+      SymbolTable::Node* symbol = peek_node_arg(idx++);
+      symbol->d_term            = term;
+      set_item(item, Token::TERM, symbol->d_term);
+      if (d_record_named_assertions)
+      {
+        d_named_assertions[symbol->d_term] = symbol;
+      }
+    }
+    // all other attributes are ignored
+    else
+    {
+      idx += 1;  // ignore attribute value
+      set_item(item, Token::TERM, term);
+      Msg(1) << "warning: unsupported annotation attribute '"
+             << attribute->d_symbol << "'";
     }
   }
-  else
-  {
-    assert(d_skip_attribute_value);
-    d_skip_attribute_value = false;
-    d_work.pop_back();  // pop attribute value
-    pop_node_arg();     // pop attribute
-    set_item(item, Token::TERM, pop_term_arg());
-    Msg(1) << "warning: unsupported annotation attribute '"
-           << attribute->d_symbol << "'";
-  }
+  d_skip_attribute_value = false;
+  d_work.resize(size - n);
   return true;
 }
 
