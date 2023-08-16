@@ -814,6 +814,12 @@ class Parser : public bzla::parser::Parser
   /** True if currently open term is a variable binding. */
   bool d_is_var_binding = false;
 
+  /**
+   * True to ignore any undefined symbols when parsing unsupported attribute
+   * values of unsupported annotation attributes.
+   */
+  bool d_skip_attribute_value = false;
+
   /** The coordinate in the input file where the error occurred. */
   Lexer::Coordinate* d_err_coo = nullptr;
 

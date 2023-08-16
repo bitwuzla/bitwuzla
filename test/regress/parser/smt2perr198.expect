@@ -1,1 +1,1 @@
-regress/parser/smt2perr198.smt2:2:43: expected symbol after attribute ':interpolation-group'
+regress/parser/smt2perr198.smt2:2:10: invalid annotation syntax, expected 3 arguments, got 1

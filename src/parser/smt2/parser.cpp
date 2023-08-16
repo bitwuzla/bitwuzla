@@ -1219,23 +1219,14 @@ Parser::parse_open_term(Token token)
   }
   else if (token == Token::ATTRIBUTE && item_open().d_token == Token::BANG)
   {
-    // catch-all for all unsupported annotation attributes, we parse and push
-    // them on the work stack and let close_term_bang() handle it
+    // Catch-all for all unsupported annotation attributes, we ignore the
+    // value of unsupported annotation attributes. For this, we have to ignore
+    // undefined symbols that occur as value in '<attribute> <value>' in
+    // parse_open_term_symbol(). If the attribute value is not a symbol but a
+    // parentheses-enclosed term (e.g., (bvadd x y)), however, we require that
+    // any symbols that occur in that term are defined.
     push_item(Token::SYMBOL, d_last_node, d_lexer->coo());
-    if (!parse_symbol("after attribute '" + std::string(d_lexer->token()) + "'",
-                      false))
-    {
-      return false;
-    }
-    SymbolTable::Node* symbol = peek_node_arg();
-    assert(symbol->has_symbol());
-    if (symbol->d_coo.line)
-    {
-      return error("symbol '" + symbol->d_symbol + "' already defined at line "
-                   + std::to_string(symbol->d_coo.line) + " column "
-                   + std::to_string(symbol->d_coo.col));
-    }
-    symbol->d_coo = d_lexer->coo();
+    d_skip_attribute_value = true;
   }
   else if (is_symbol(token))
   {
@@ -1597,26 +1588,33 @@ Parser::parse_open_term_symbol()
   {
     SymbolTable::Node* node = std::get<SymbolTable::Node*>(cur.d_item);
     assert(node);
-    if (node->d_term.is_null())
-    {
-      assert(node->has_symbol());
-      return error("undefined symbol '" + node->d_symbol + "'");
-    }
     d_work.pop_back();
-    assert(!node->d_term.is_null());
-    if (!node->d_term.sort().is_fun())
+    if (d_skip_attribute_value && item_open().d_token == Token::BANG)
     {
-      if (d_work.size() && d_work.back().d_token == Token::LPAR)
-      {
-        return error("unexpected function application, '" + node->d_symbol
-                     + "' is not a function");
-      }
+      push_item(Token::SYMBOL, node, d_lexer->coo());
     }
     else
     {
-      push_item(Token::FUN_APP, d_lexer->coo());
+      if (node->d_term.is_null())
+      {
+        assert(node->has_symbol());
+        return error("undefined symbol '" + node->d_symbol + "'");
+      }
+      assert(!node->d_term.is_null());
+      if (!node->d_term.sort().is_fun())
+      {
+        if (d_work.size() && d_work.back().d_token == Token::LPAR)
+        {
+          return error("unexpected function application, '" + node->d_symbol
+                       + "' is not a function");
+        }
+      }
+      else
+      {
+        push_item(Token::FUN_APP, d_lexer->coo());
+      }
+      push_item(Token::TERM, node->d_term, d_lexer->coo());
     }
-    push_item(Token::TERM, node->d_term, d_lexer->coo());
   }
   else if (token == Token::TRUE)
   {
@@ -1935,26 +1933,28 @@ Parser::close_term_as(ParsedItem& item)
 bool
 Parser::close_term_bang(ParsedItem& item)
 {
-  if (nargs() != 3)
+  size_t n = nargs();
+  if (n != 3)
   {
     return error("invalid annotation syntax, expected 3 arguments, got "
-                     + std::to_string(nargs()),
+                     + std::to_string(n),
                  item.d_coo);
   }
-  if (!peek_is_node_arg())
+  SymbolTable::Node* attribute = peek_node_arg(d_work.size() - n + 1);
+  if (!peek_is_term_arg(d_work.size() - n))
   {
-    return error(
-        "invalid annotation syntax, expected symbol as third argument");
-  }
-  SymbolTable::Node* symbol = pop_node_arg();
-  SymbolTable::Node* attribute = pop_node_arg();
-  if (!peek_is_term_arg())
-  {
-    return error_arg(
-        "invalid annotation syntax, expected term as first argument");
+    return error("invalid annotation syntax, expected term",
+                 d_work[d_work.size() - n].d_coo);
   }
   if (attribute->d_token == Token::NAMED)
   {
+    assert(!d_skip_attribute_value);
+    if (!peek_is_node_arg())
+    {
+      return error_arg("invalid annotation syntax, expected symbol");
+    }
+    SymbolTable::Node* symbol = pop_node_arg();
+    pop_node_arg();  // pop attribute
     symbol->d_term = pop_term_arg();
     set_item(item, Token::TERM, symbol->d_term);
     if (d_record_named_assertions)
@@ -1964,6 +1964,10 @@ Parser::close_term_bang(ParsedItem& item)
   }
   else
   {
+    assert(d_skip_attribute_value);
+    d_skip_attribute_value = false;
+    d_work.pop_back();  // pop attribute value
+    pop_node_arg();     // pop attribute
     set_item(item, Token::TERM, pop_term_arg());
     Msg(1) << "warning: unsupported annotation attribute '"
            << attribute->d_symbol << "'";

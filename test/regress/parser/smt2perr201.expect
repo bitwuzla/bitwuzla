@@ -1,0 +1,1 @@
+regress/parser/smt2perr201.smt2:2:26: undefined symbol 'x'
