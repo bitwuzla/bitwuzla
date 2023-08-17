@@ -28,12 +28,12 @@ enum class Option
   PRODUCE_MODELS,             // bool
   PRODUCE_UNSAT_ASSUMPTIONS,  // bool
   PRODUCE_UNSAT_CORES,        // bool
-  SAT_SOLVER,                 // enum
   SEED,                       // numeric
   VERBOSITY,                  // numeric
 
   BV_SOLVER,      // enum
   REWRITE_LEVEL,  // numeric
+  SAT_SOLVER,     // enum
 
   PROP_NPROPS,                  // numeric
   PROP_NUPDATES,                // numeric
@@ -68,6 +68,13 @@ enum class Option
 };
 
 /* -------------------------------------------------------------------------- */
+
+enum class BvNumberFormat
+{
+  BIN,
+  DEC,
+  HEX,
+};
 
 enum class BvSolver
 {

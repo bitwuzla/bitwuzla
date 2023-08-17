@@ -27,9 +27,11 @@ typedef struct BitwuzlaParser BitwuzlaParser;
  *
  * @note The parser creates and owns the associated Bitwuzla instance.
  * @param options The associated options.
- * @param infile_name The name of the input file.
- * @param infile      The input file.
- * @param format      The format of the input file.
+ * @param infile_name  The name of the input file.
+ * @param infile       The input file.
+ * @param format       The format of the input file.
+ * @param outfile_name The output file name. If name is '<stdout>', the parser
+ *                     writes to stdout.
  * @return A pointer to the created Bitwuzla parser instance.
  *
  * @see
@@ -38,7 +40,8 @@ typedef struct BitwuzlaParser BitwuzlaParser;
 BitwuzlaParser* bitwuzla_parser_new(BitwuzlaOptions* options,
                                     const char* infile_name,
                                     FILE* infile,
-                                    const char* language);
+                                    const char* language,
+                                    const char* outfile_name);
 
 /**
  * Delete a Bitwuzla parser instance.

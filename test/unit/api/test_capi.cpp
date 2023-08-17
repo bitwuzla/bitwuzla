@@ -2753,16 +2753,20 @@ TEST_F(TestCApi, parser)
 
   FILE *infile             = fopen(filename, "r");
   BitwuzlaOptions *options = bitwuzla_options_new();
-  ASSERT_DEATH(bitwuzla_parser_new(nullptr, filename, infile, "smt2"),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parser_new(options, nullptr, infile, "smt2"),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parser_new(options, filename, nullptr, "smt2"),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parser_new(options, filename, infile, nullptr),
-               d_error_not_null);
+  ASSERT_DEATH(
+      bitwuzla_parser_new(nullptr, filename, infile, "smt2", "<stdout>"),
+      d_error_not_null);
+  ASSERT_DEATH(
+      bitwuzla_parser_new(options, nullptr, infile, "smt2", "<stdout>"),
+      d_error_not_null);
+  ASSERT_DEATH(
+      bitwuzla_parser_new(options, filename, nullptr, "smt2", "<stdout>"),
+      d_error_not_null);
+  ASSERT_DEATH(
+      bitwuzla_parser_new(options, filename, infile, nullptr, "<stdout>"),
+      d_error_not_null);
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(options, filename, infile, "smt2");
+      bitwuzla_parser_new(options, filename, infile, "smt2", "<stdout>");
   ASSERT_DEATH(bitwuzla_parser_parse(nullptr, true), d_error_not_null);
   const char *err = bitwuzla_parser_parse(parser, true);
   ASSERT_EQ(err, nullptr);

@@ -34,10 +34,12 @@ class Parser
    *                    (created by the parser).
    * @param infile_name The name of the input file.
    * @param language    The format of the input file.
+   * @param out         The output stream.
    */
   Parser(Options &options,
          const std::string &infile_name,
-         const std::string &language = "smt2");
+         const std::string &language = "smt2",
+         std::ostream              * = &std::cout);
   /**
    * Constructor.
    * @note The parser creates and owns the associated Bitwuzla instance.
@@ -46,11 +48,13 @@ class Parser
    * @param infile_name The name of the input file.
    * @param infile      The input file.
    * @param language    The format of the input file.
+   * @param out         The output stream.
    */
   Parser(Options &options,
          const std::string &infile_name,
          FILE *infile,
-         const std::string &language = "smt2");
+         const std::string &language = "smt2",
+         std::ostream              * = &std::cout);
   /** Destructor. */
   ~Parser();
   /**

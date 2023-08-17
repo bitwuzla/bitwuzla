@@ -1705,6 +1705,12 @@ TEST_F(TestApi, get_rm_value)
   ASSERT_EQ("RTZ", d_rm_rtz.value<std::string>());
 }
 
+TEST_F(TestApi, print_set_bv_format)
+{
+  std::stringstream ss;
+  ASSERT_THROW(ss << bitwuzla::set_bv_format(23), bitwuzla::Exception);
+}
+
 TEST_F(TestApi, print_formula)
 {
   bitwuzla::Options options;
@@ -1734,6 +1740,40 @@ TEST_F(TestApi, print_formula)
     bitwuzla.print_formula(ss, "smt2");
     ASSERT_EQ(ss.str(), expected_smt2.str());
   }
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic QF_BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "(_ bv0 8)))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    ss << bitwuzla::set_bv_format(10);
+    bitwuzla.print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic QF_BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#x0))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    ss << bitwuzla::set_bv_format(16);
+    bitwuzla.print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
 
   bitwuzla.assert_formula(d_exists);
   {
@@ -1751,6 +1791,44 @@ TEST_F(TestApi, print_formula)
         << "(check-sat)" << std::endl
         << "(exit)" << std::endl;
     std::stringstream ss;
+    bitwuzla.print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "(_ bv0 8)))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= (_ bv0 8) (bvmul bv8 q))))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    ss << bitwuzla::set_bv_format(10);
+    bitwuzla.print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#x0))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= #x0 (bvmul bv8 q))))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    ss << bitwuzla::set_bv_format(16);
     bitwuzla.print_formula(ss, "smt2");
     ASSERT_EQ(ss.str(), expected_smt2.str());
   }
@@ -1788,6 +1866,58 @@ TEST_F(TestApi, print_formula)
         << "(check-sat)" << std::endl
         << "(exit)" << std::endl;
     std::stringstream ss;
+    bitwuzla.print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic UFBVFP)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(declare-const fp16 (_ FloatingPoint 5 11))" << std::endl
+        << "(declare-fun fun_fp ((_ BitVec 8) (_ FloatingPoint 5 11) (_ BitVec "
+           "32)) (_ FloatingPoint 5 11))"
+        << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "(_ bv0 8)))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= (_ bv0 8) (bvmul bv8 q))))"
+        << std::endl
+        << "(assert (fp.leq (fun_fp bv8 fp16 ((_ zero_extend 9) "
+           "(_ bv8388607 23))) fp16))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    ss << bitwuzla::set_bv_format(10);
+    bitwuzla.print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic UFBVFP)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(declare-const fp16 (_ FloatingPoint 5 11))" << std::endl
+        << "(declare-fun fun_fp ((_ BitVec 8) (_ FloatingPoint 5 11) (_ BitVec "
+           "32)) (_ FloatingPoint 5 11))"
+        << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#x0))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= #x0 (bvmul bv8 q))))"
+        << std::endl
+        << "(assert (fp.leq (fun_fp bv8 fp16 ((_ zero_extend 9) "
+           "#x7fffff)) fp16))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    ss << bitwuzla::set_bv_format(16);
     bitwuzla.print_formula(ss, "smt2");
     ASSERT_EQ(ss.str(), expected_smt2.str());
   }

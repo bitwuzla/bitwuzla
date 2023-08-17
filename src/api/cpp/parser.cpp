@@ -21,18 +21,20 @@ namespace bitwuzla::parser {
 
 Parser::Parser(Options &options,
                const std::string &infile_name,
-               const std::string &language)
+               const std::string &language,
+               std::ostream *out)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
   BITWUZLA_CHECK(language == "smt2" || language == "btor2")
       << "invalid input language, expected 'smt2' or 'btor2'";
+  BITWUZLA_CHECK_NOT_NULL(out);
   if (language == "smt2")
   {
-    d_parser.reset(new bzla::parser::smt2::Parser(options, infile_name));
+    d_parser.reset(new bzla::parser::smt2::Parser(options, infile_name, out));
   }
   else
   {
-    d_parser.reset(new bzla::parser::btor2::Parser(options, infile_name));
+    d_parser.reset(new bzla::parser::btor2::Parser(options, infile_name, out));
   }
   BITWUZLA_CHECK(d_parser->error_msg().empty()) << d_parser->error_msg();
 }
@@ -40,20 +42,22 @@ Parser::Parser(Options &options,
 Parser::Parser(Options &options,
                const std::string &infile_name,
                FILE *infile,
-               const std::string &language)
+               const std::string &language,
+               std::ostream *out)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
   BITWUZLA_CHECK(language == "smt2" || language == "btor2")
       << "invalid input language, expected 'smt2' or 'btor2'";
+  BITWUZLA_CHECK_NOT_NULL(out);
   if (language == "smt2")
   {
     d_parser.reset(
-        new bzla::parser::smt2::Parser(options, infile_name, infile));
+        new bzla::parser::smt2::Parser(options, infile_name, infile, out));
   }
   else
   {
     d_parser.reset(
-        new bzla::parser::btor2::Parser(options, infile_name, infile));
+        new bzla::parser::btor2::Parser(options, infile_name, infile, out));
   }
   BITWUZLA_CHECK(d_parser->error_msg().empty()) << d_parser->error_msg();
 }

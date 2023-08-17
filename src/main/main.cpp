@@ -151,6 +151,10 @@ print_help(const bitwuzla::Options& options)
                     format_longb("parse-only"),
                     "",
                     "only parse input without calling check-sat");
+  opts.emplace_back("",
+                    format_longb("bv-output-format <M>"),
+                    "[2]",
+                    "output number format for bit-vector values {2, 10, 16}");
 
   // Format library options
   for (size_t i = 0, size = static_cast<size_t>(bitwuzla::Option::NUM_OPTS);
@@ -266,6 +270,7 @@ main(int32_t argc, char* argv[])
   bitwuzla::Options options;
   bool print = false;
   bool parse_only = false;
+  uint8_t bv_format = 2;
 
   std::vector<std::string> args;
   std::string infile_name = "<stdin>";
@@ -296,6 +301,45 @@ main(int32_t argc, char* argv[])
     else if (arg == "-P" || arg == "--parse-only")
     {
       parse_only = true;
+    }
+    else if (arg == "--bv-output-format"
+             || arg.find("--bv-output-format=") != std::string::npos)
+    {
+      std::string f;
+      if (arg.size() > 18)
+      {
+        f = arg.substr(19);
+      }
+      else
+      {
+        i += 1;
+        if (i >= argc)
+        {
+          std::cerr << "[error] missing bit-vector output number format, "
+                       "expected '2', '10', or '16'"
+                    << std::endl;
+          std::exit(EXIT_FAILURE);
+        }
+        f = argv[i];
+      }
+      try
+      {
+        bv_format = std::stoul(f);
+        if (bv_format != 2 && bv_format != 10 && bv_format != 16)
+        {
+          std::cerr << "[error] invalid bit-vector output number format, "
+                       "expected '2', '10', or '16'"
+                    << std::endl;
+          std::exit(EXIT_FAILURE);
+        }
+      }
+      catch (...)
+      {
+        std::cerr << "[error] invalid bit-vector output number format, "
+                     "expected '2', '10', or '16'"
+                  << std::endl;
+        std::exit(EXIT_FAILURE);
+      }
     }
     // Check if argument is the intput file.
     else if (is_input_file(arg, ".smt2") || is_input_file(arg, ".btor2"))
@@ -328,7 +372,8 @@ main(int32_t argc, char* argv[])
     token = lexer.next_token();
     } while (token != bzla::parser::smt2::Token::ENDOFFILE);
 #else
-    bitwuzla::parser::Parser parser(options, infile_name, language);
+    std::cout << bitwuzla::set_bv_format(bv_format);
+    bitwuzla::parser::Parser parser(options, infile_name, language, &std::cout);
     std::string err_msg = parser.parse(print || parse_only);
     if (!err_msg.empty())
     {

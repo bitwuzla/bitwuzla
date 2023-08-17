@@ -4,6 +4,12 @@ This file collects a summary of important and/or user-visible changes.
 
 ## News since version 0.1.1
 
+- Bitwuzla now supports configuring the output number format for bit-vector
+  values. This is configured via the CLI option `--bv-output-format`, or
+  via the output stream modifier `bitwuzla::set_bv_format` when printing
+  bit-vector values via the API. Note that `Term::str()` will print the
+  default representation (binary) and is not configurable.
+
 - The SMT2 parser is now less restrictive with respect to setting *unsupported
   options* and using *unsupported annotation attributes*. This is now ignored
   (with a warning at verbosity level > 0) rather than rejected with an error.

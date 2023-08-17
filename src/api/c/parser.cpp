@@ -13,6 +13,9 @@ extern "C" {
 }
 #include <bitwuzla/cpp/parser.h>
 
+#include <fstream>
+#include <iostream>
+
 #include "api/c/bitwuzla_structs.h"
 #include "api/c/checks.h"
 #include "api/checks.h"
@@ -22,10 +25,17 @@ struct BitwuzlaParser
   BitwuzlaParser(BitwuzlaOptions* options,
                  const char* infile_name,
                  FILE* infile,
-                 const char* language)
+                 const char* language,
+                 const char* outfile_name)
   {
+    std::ofstream outfile;
+    std::ostream* out = &std::cout;
+    if (std::string(outfile_name) != "<stdout>")
+    {
+      outfile.open(outfile_name, std::ofstream::out);
+    }
     d_parser.reset(new bitwuzla::parser::Parser(
-        options->d_options, infile_name, infile, language));
+        options->d_options, infile_name, infile, language, out));
   }
   /** The associated bitwuzla instance. */
   std::unique_ptr<bitwuzla::parser::Parser> d_parser;
@@ -39,7 +49,8 @@ BitwuzlaParser*
 bitwuzla_parser_new(BitwuzlaOptions* options,
                     const char* infile_name,
                     FILE* infile,
-                    const char* language)
+                    const char* language,
+                    const char* outfile_name)
 {
   BitwuzlaParser* res;
   BITWUZLA_TRY_CATCH_BEGIN;
@@ -47,7 +58,9 @@ bitwuzla_parser_new(BitwuzlaOptions* options,
   BITWUZLA_CHECK_NOT_NULL(infile_name);
   BITWUZLA_CHECK_NOT_NULL(infile);
   BITWUZLA_CHECK_NOT_NULL(language);
-  res = new BitwuzlaParser(options, infile_name, infile, language);
+  BITWUZLA_CHECK_NOT_NULL(outfile_name);
+  res =
+      new BitwuzlaParser(options, infile_name, infile, language, outfile_name);
   BITWUZLA_TRY_CATCH_END;
   return res;
 }

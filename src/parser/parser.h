@@ -29,16 +29,20 @@ class Parser
    * Constructor.
    * @param options     The associated Bitwuzla options. Parser creates
    *                    Bitwuzla instance from these options.
-   * @param infile_name The name of the input file. If name is <stdin> the
+   * @param infile_name The name of the input file. If name is <stdin>, the
    *                    parser reads from stdin.
+   * @param out         The output stream.
    */
-  Parser(bitwuzla::Options& options, const std::string& infile_name)
+  Parser(bitwuzla::Options& options,
+         const std::string& infile_name,
+         std::ostream* out = &std::cout)
       : d_options_orig(options),
         d_options(options),
         d_infile_name(infile_name),
         d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
         d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
-        d_logger(d_log_level, d_verbosity)
+        d_logger(d_log_level, d_verbosity),
+        d_out(out)
   {
     if (infile_name == "<stdin>")
     {
@@ -60,17 +64,20 @@ class Parser
    *                    Bitwuzla instance from these options.
    * @param infile_name The name of the input file.
    * @param infile      The input file.
+   * @param out         The output stream.
    */
   Parser(bitwuzla::Options& options,
          const std::string& infile_name,
-         FILE* infile)
+         FILE* infile,
+         std::ostream* out = &std::cout)
       : d_options_orig(options),
         d_options(options),
         d_infile_name(infile_name),
         d_infile(infile),
         d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
         d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
-        d_logger(d_log_level, d_verbosity)
+        d_logger(d_log_level, d_verbosity),
+        d_out(out)
   {
     BITWUZLA_CHECK(infile != nullptr) << "expected non-null input file";
   }
@@ -151,7 +158,7 @@ class Parser
   /** The output file stream if print to a file. */
   std::ofstream d_outfile;
   /** The output stream, either prints to d_outfile or std::cout. */
-  std::ostream* d_out = &std::cout;
+  std::ostream* d_out;
 
   /** The status of the input file set via set-info. */
   bitwuzla::Result d_status = bitwuzla::Result::UNKNOWN;

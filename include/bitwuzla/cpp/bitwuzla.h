@@ -132,6 +132,35 @@ class Exception : public std::exception
 };
 
 /* -------------------------------------------------------------------------- */
+/* Output stream configuration.                                               */
+/* -------------------------------------------------------------------------- */
+
+/** Struct to configure bit-vector number format via stream manipulator. */
+struct set_bv_format
+{
+  /**
+   * Constructor.
+   * @param format The number format: `2` for binary, `10` for decimal and
+   *               `16` for hexadecimal.
+   */
+  set_bv_format(uint8_t format);
+  /** @return The configured format. */
+  uint8_t format() const { return d_format; }
+
+ private:
+  /** The configured number format. */
+  uint8_t d_format;
+};
+
+/**
+ * Configure output stream with bit-vector number format.
+ * @param out The output stream.
+ * @param f   The bit-vector format.
+ * @return The output stream.
+ */
+std::ostream &operator<<(std::ostream &ostream, const set_bv_format &f);
+
+/* -------------------------------------------------------------------------- */
 /* Options                                                                    */
 /* -------------------------------------------------------------------------- */
 

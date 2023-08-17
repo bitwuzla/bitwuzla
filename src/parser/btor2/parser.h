@@ -14,10 +14,6 @@
 #include "parser/btor2/lexer.h"
 #include "parser/parser.h"
 
-// extern "C" {
-//#include "btor2parser/btor2parser.h"
-// }
-
 namespace bzla {
 namespace parser::btor2 {
 
@@ -26,21 +22,26 @@ class Parser : public bzla::parser::Parser
  public:
   /**
    * Constructor.
-   * @param options The associated Bitwuzla options. Parser creates Bitwuzla
-   *                instance from these options.
+   * @param options     The associated Bitwuzla options. Parser creates
+   *                    Bitwuzla instance from these options.
    * @param infile_name The name of the input file.
-   */
-  Parser(bitwuzla::Options& options, const std::string& infile_name);
-  /**
-   * Constructor.
-   * @param options The associated Bitwuzla options. Parser creates Bitwuzla
-   *                instance from these options.
-   * @param infile_name The name of the input file.
-   * @param infile      The input file.
+   * @param out         The output stream.
    */
   Parser(bitwuzla::Options& options,
          const std::string& infile_name,
-         FILE* infile);
+         std::ostream* out = &std::cout);
+  /**
+   * Constructor.
+   * @param options     The associated Bitwuzla options. Parser creates Bitwuzla
+   *                    instance from these options.
+   * @param infile_name The name of the input file.
+   * @param infile      The input file.
+   * @param out         The output stream.
+   */
+  Parser(bitwuzla::Options& options,
+         const std::string& infile_name,
+         FILE* infile,
+         std::ostream* out = &std::cout);
   /** Destructor. */
   ~Parser();
   /**

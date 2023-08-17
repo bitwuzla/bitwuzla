@@ -337,6 +337,21 @@ Exception::what() const noexcept
   return d_msg.c_str();
 }
 
+/* set_bv_format public ----------------------------------------------------- */
+
+set_bv_format::set_bv_format(uint8_t format) : d_format(format)
+{
+  BITWUZLA_CHECK(format == 2 || format == 10 || format == 16)
+      << "invalid bit-vector output number format, expecte '2', '10' or '16'";
+}
+
+std::ostream &
+operator<<(std::ostream &ostream, const set_bv_format &f)
+{
+  ostream.iword(bzla::Printer::s_stream_index_bv_format) = f.format();
+  return ostream;
+}
+
 /* Options public ----------------------------------------------------------- */
 
 Options::Options() : d_options(new bzla::option::Options()) {}
@@ -1041,7 +1056,14 @@ operator!=(const Term &a, const Term &b)
 std::ostream &
 operator<<(std::ostream &out, const Term &term)
 {
-  out << (term.d_node ? term.d_node->str() : "(nil)");
+  if (term.d_node)
+  {
+    out << *term.d_node;
+  }
+  else
+  {
+    out << "(nil)";
+  }
   return out;
 }
 
@@ -1231,7 +1253,14 @@ operator!=(const Sort &a, const Sort &b)
 std::ostream &
 operator<<(std::ostream &out, const Sort &sort)
 {
-  out << (sort.d_type ? sort.d_type->str() : "(nil)");
+  if (sort.d_type)
+  {
+    out << *sort.d_type;
+  }
+  else
+  {
+    out << "(nil)";
+  }
   return out;
 }
 

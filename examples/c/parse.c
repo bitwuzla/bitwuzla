@@ -23,8 +23,8 @@ main()
   // Create parser instance.
   FILE* infile = fopen("../smt2/quickstart.smt2", "r");
   assert(infile);
-  BitwuzlaParser* parser =
-      bitwuzla_parser_new(options, "../smt2/quickstart.smt2", infile, "smt2");
+  BitwuzlaParser* parser = bitwuzla_parser_new(
+      options, "../smt2/quickstart.smt2", infile, "smt2", "<stdout>");
 
   // Now parse the input file.
   const char* err_msg = bitwuzla_parser_parse(parser, false);

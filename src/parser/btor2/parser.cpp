@@ -17,16 +17,19 @@ namespace parser::btor2 {
 
 /* Parser public ------------------------------------------------------------ */
 
-Parser::Parser(bitwuzla::Options& options, const std::string& infile_name)
-    : bzla::parser::Parser(options, infile_name)
+Parser::Parser(bitwuzla::Options& options,
+               const std::string& infile_name,
+               std::ostream* out)
+    : bzla::parser::Parser(options, infile_name, out)
 {
   init();
 }
 
 Parser::Parser(bitwuzla::Options& options,
                const std::string& infile_name,
-               FILE* infile)
-    : bzla::parser::Parser(options, infile_name, infile)
+               FILE* infile,
+               std::ostream* out)
+    : bzla::parser::Parser(options, infile_name, infile, out)
 {
   init();
 }

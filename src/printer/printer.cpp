@@ -31,6 +31,7 @@ using namespace node;
 /* --- Printer public ------------------------------------------------------- */
 
 int32_t Printer::s_stream_index_maximum_depth = std::ios_base::xalloc();
+int32_t Printer::s_stream_index_bv_format     = std::ios_base::xalloc();
 
 void
 Printer::print(std::ostream& os, const Node& node)
@@ -298,6 +299,10 @@ Printer::print(std::ostream& os,
                node::unordered_node_ref_map<std::string>& let_map,
                size_t max_depth)
 {
+  // configure bit-vector output number format
+  uint8_t bv_format = os.iword(Printer::s_stream_index_bv_format);
+  if (!bv_format) bv_format = 2;
+
   std::vector<std::pair<ConstNodeRef, size_t>> visit;
   visit.emplace_back(node, 0);
   node::unordered_node_ref_map<bool> cache;
@@ -507,7 +512,16 @@ Printer::print(std::ostream& os,
         }
         else if (type.is_bv())
         {
-          os << "#b" << cur.value<BitVector>();
+          if (bv_format == 10)
+          {
+            os << "(_ bv" << cur.value<BitVector>().str(bv_format) << " "
+               << type.bv_size() << ")";
+          }
+          else
+          {
+            os << (bv_format == 2 ? "#b" : "#x")
+               << cur.value<BitVector>().str(bv_format);
+          }
         }
         else if (type.is_fp())
         {
@@ -691,6 +705,13 @@ std::ostream&
 operator<<(std::ostream& ostream, const set_depth& d)
 {
   ostream.iword(Printer::s_stream_index_maximum_depth) = d.depth();
+  return ostream;
+}
+
+std::ostream&
+operator<<(std::ostream& ostream, const set_bv_format& f)
+{
+  ostream.iword(Printer::s_stream_index_bv_format) = f.format();
   return ostream;
 }
 
