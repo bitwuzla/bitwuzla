@@ -20,10 +20,10 @@ meson test -v            # run all examples (stdout output printed)
 ```
 
 **Note:** If you installed Bitwuzla in a non-standard location, you have to
-additionally specify the path to the `pkgconfig` directory before issuing 
-`cd <build_dir>` as follows:
+additionally specify the path to the `pkgconfig` directory before when calling
+`meson setup` as follows:
 ```
-meson configure --pkg-config-path=<your-install-prefix>/lib/pkgconfig
+meson setup <build_dir> --pkg-config-path=<your-install-prefix>/lib/pkgconfig
 ```
 
 The examples binaries are built into `<build_dir>/<path>`, where `<path>`
