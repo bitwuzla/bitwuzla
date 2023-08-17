@@ -295,6 +295,16 @@ Parsing Example
 .. tabbed-examples::
    ../../examples/cpp/parse.cpp
 
+Printing Example
+^^^^^^^^^^^^^^^^
+
+| This example shows how to print sorts, terms and formulas via the API.
+| The source code for this example can be found at `examples/cpp/print.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/print.cpp>`_.
+
+
+.. tabbed-examples::
+   ../../examples/cpp/print.cpp
+
 Termination Callback Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

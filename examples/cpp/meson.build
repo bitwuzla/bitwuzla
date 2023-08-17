@@ -2,6 +2,7 @@ examples = [
   'checksatassuming',
   'options',
   'parse',
+  'print',
   'pushpop',
   'quickstart',
   'reset',
