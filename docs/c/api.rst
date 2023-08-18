@@ -301,6 +301,16 @@ Parsing Example
 .. tabbed-examples::
    ../../examples/c/parse.c
 
+Printing Example
+^^^^^^^^^^^^^^^^
+
+| This example shows how to print sorts, terms and formulas via the API.
+| The source code for this example can be found at `examples/c/print.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/print.c>`_.
+
+
+.. tabbed-examples::
+   ../../examples/c/print.c
+
 Termination Callback Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

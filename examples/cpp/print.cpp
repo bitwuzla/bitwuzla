@@ -65,19 +65,18 @@ main()
   std::cout << "-----------------------------------------------" << std::endl;
   std::cout << "operator<<: " << fpleq << std::endl;
   std::cout << "str():      " << fpleq.str() << std::endl << std::endl;
-  ;
+
   std::cout << "Print term [hexadecimal bv output format]:" << std::endl;
   std::cout << "------------------------------------------" << std::endl;
   std::cout << set_bv_format(16);
   std::cout << "operator<<: " << fpleq << std::endl;
   std::cout << "str():      " << fpleq.str() << std::endl << std::endl;
-  ;
+
   std::cout << "Print term [decimal bv output format]:" << std::endl;
   std::cout << "--------------------------------------" << std::endl;
   std::cout << set_bv_format(10);
   std::cout << "operator<<: " << fpleq << std::endl;
   std::cout << "str():      " << fpleq.str() << std::endl << std::endl;
-  ;
 
   // Print asserted formulas.
   // Note: This uses the default bit-vector output format (binary).

@@ -2506,18 +2506,20 @@ TEST_F(TestCApi, get_rm_value)
 
 TEST_F(TestCApi, print_formula)
 {
-  ASSERT_DEATH(bitwuzla_print_formula(nullptr, "smt2", stdout),
+  ASSERT_DEATH(bitwuzla_print_formula(nullptr, "smt2", stdout, 2),
                d_error_not_null);
 
   BitwuzlaOptions *options = bitwuzla_options_new();
   Bitwuzla *bitwuzla       = bitwuzla_new(options);
 
-  ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, nullptr, stdout),
+  ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, nullptr, stdout, 2),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "smt2", nullptr),
+  ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "smt2", nullptr, 2),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "asdf", stdout),
+  ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "asdf", stdout, 2),
                "invalid format, expected 'smt2'");
+  ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, "smt2", stdout, 23),
+               "invalid bit-vector output number format");
 
   std::string filename = "print_formula.out";
 
@@ -2531,7 +2533,7 @@ TEST_F(TestCApi, print_formula)
 
   {
     FILE *tmpfile = fopen(filename.c_str(), "w");
-    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 2);
     fclose(tmpfile);
     std::ifstream ifs(filename);
     std::string res((std::istreambuf_iterator<char>(ifs)),
@@ -2550,11 +2552,53 @@ TEST_F(TestCApi, print_formula)
         << "(exit)" << std::endl;
     ASSERT_EQ(res, expected_smt2.str());
   }
+  {
+    FILE *tmpfile = fopen(filename.c_str(), "w");
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 10);
+    fclose(tmpfile);
+    std::ifstream ifs(filename);
+    std::string res((std::istreambuf_iterator<char>(ifs)),
+                    (std::istreambuf_iterator<char>()));
+    unlink(filename.c_str());
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic QF_BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "(_ bv0 8)))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    ASSERT_EQ(res, expected_smt2.str());
+  }
+  {
+    FILE *tmpfile = fopen(filename.c_str(), "w");
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 16);
+    fclose(tmpfile);
+    std::ifstream ifs(filename);
+    std::string res((std::istreambuf_iterator<char>(ifs)),
+                    (std::istreambuf_iterator<char>()));
+    unlink(filename.c_str());
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic QF_BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#x0))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    ASSERT_EQ(res, expected_smt2.str());
+  }
 
   bitwuzla_assert(bitwuzla, d_exists);
   {
     FILE *tmpfile = fopen(filename.c_str(), "w");
-    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 2);
     fclose(tmpfile);
     std::ifstream ifs(filename);
     std::string res((std::istreambuf_iterator<char>(ifs)),
@@ -2575,6 +2619,52 @@ TEST_F(TestCApi, print_formula)
         << "(exit)" << std::endl;
     ASSERT_EQ(res, expected_smt2.str());
   }
+  {
+    FILE *tmpfile = fopen(filename.c_str(), "w");
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 10);
+    fclose(tmpfile);
+    std::ifstream ifs(filename);
+    std::string res((std::istreambuf_iterator<char>(ifs)),
+                    (std::istreambuf_iterator<char>()));
+    unlink(filename.c_str());
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "(_ bv0 8)))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= (_ bv0 8) (bvmul bv8 q))))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    ASSERT_EQ(res, expected_smt2.str());
+  }
+  {
+    FILE *tmpfile = fopen(filename.c_str(), "w");
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 16);
+    fclose(tmpfile);
+    std::ifstream ifs(filename);
+    std::string res((std::istreambuf_iterator<char>(ifs)),
+                    (std::istreambuf_iterator<char>()));
+    unlink(filename.c_str());
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic BV)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#x0))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= #x0 (bvmul bv8 q))))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    ASSERT_EQ(res, expected_smt2.str());
+  }
 
   std::vector<BitwuzlaTerm> apply_args = {
       d_fun_fp,
@@ -2589,7 +2679,7 @@ TEST_F(TestCApi, print_formula)
                                     d_fp_const16));
   {
     FILE *tmpfile = fopen(filename.c_str(), "w");
-    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 2);
     fclose(tmpfile);
     std::ifstream ifs(filename);
     std::string res((std::istreambuf_iterator<char>(ifs)),
@@ -2617,6 +2707,66 @@ TEST_F(TestCApi, print_formula)
         << "(exit)" << std::endl;
     ASSERT_EQ(res, expected_smt2.str());
   }
+  {
+    FILE *tmpfile = fopen(filename.c_str(), "w");
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 10);
+    fclose(tmpfile);
+    std::ifstream ifs(filename);
+    std::string res((std::istreambuf_iterator<char>(ifs)),
+                    (std::istreambuf_iterator<char>()));
+    unlink(filename.c_str());
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic UFBVFP)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(declare-const fp16 (_ FloatingPoint 5 11))" << std::endl
+        << "(declare-fun fun_fp ((_ BitVec 8) (_ FloatingPoint 5 11) (_ BitVec "
+           "32)) (_ FloatingPoint 5 11))"
+        << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "(_ bv0 8)))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= (_ bv0 8) (bvmul bv8 q))))"
+        << std::endl
+        << "(assert (fp.leq (fun_fp bv8 fp16 ((_ zero_extend 9) "
+           "(_ bv8388607 23))) fp16))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    ASSERT_EQ(res, expected_smt2.str());
+  }
+  {
+    FILE *tmpfile = fopen(filename.c_str(), "w");
+    bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 16);
+    fclose(tmpfile);
+    std::ifstream ifs(filename);
+    std::string res((std::istreambuf_iterator<char>(ifs)),
+                    (std::istreambuf_iterator<char>()));
+    unlink(filename.c_str());
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic UFBVFP)" << std::endl
+        << "(declare-const b Bool)" << std::endl
+        << "(declare-const bv8 (_ BitVec 8))" << std::endl
+        << "(declare-const fp16 (_ FloatingPoint 5 11))" << std::endl
+        << "(declare-fun fun_fp ((_ BitVec 8) (_ FloatingPoint 5 11) (_ BitVec "
+           "32)) (_ FloatingPoint 5 11))"
+        << std::endl
+        << "(assert b)" << std::endl
+        << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
+           "#x0))"
+        << std::endl
+        << "(assert (exists ((q (_ BitVec 8))) (= #x0 (bvmul bv8 q))))"
+        << std::endl
+        << "(assert (fp.leq (fun_fp bv8 fp16 ((_ zero_extend 9) "
+           "#x7fffff)) fp16))"
+        << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    ASSERT_EQ(res, expected_smt2.str());
+  }
 
   bitwuzla_delete(bitwuzla);
   bitwuzla_options_delete(options);
@@ -2638,7 +2788,7 @@ TEST_F(TestCApi, print_formula2)
   BitwuzlaTerm c = bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, a, b);
   bitwuzla_assert(bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, e, z));
   bitwuzla_assert(bitwuzla, c);
-  bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
+  bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 2);
   fclose(tmpfile);
 
   std::ifstream ifs(filename);
@@ -2698,7 +2848,7 @@ TEST_F(TestCApi, print_formula3)
                       bitwuzla_mk_term2(
                           BITWUZLA_KIND_BV_ADD, n, bitwuzla_mk_bv_one(bv32))));
 
-  bitwuzla_print_formula(bitwuzla, "smt2", tmpfile);
+  bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 2);
   fclose(tmpfile);
 
   std::ifstream ifs(filename);
@@ -3382,33 +3532,81 @@ TEST_F(TestCApi, term_is_rm_value_rtz)
 
 TEST_F(TestCApi, term_print)
 {
-  ASSERT_DEATH(bitwuzla_term_print(0, stdout), d_error_inv_term);
-  ASSERT_DEATH(bitwuzla_term_print(d_and_bv_const1, nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_print(0, stdout, 2), d_error_inv_term);
+  ASSERT_DEATH(bitwuzla_term_print(d_and_bv_const1, nullptr, 2),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_print(d_and_bv_const1, stdout, 23),
+               "invalid bit-vector output number format");
 
-  testing::internal::CaptureStdout();
+  {
+    testing::internal::CaptureStdout();
 
-  bitwuzla_term_print(d_and_bv_const1, stdout);
-  bitwuzla_term_print(d_exists, stdout);
+    bitwuzla_term_print(d_and_bv_const1, stdout, 2);
+    bitwuzla_term_print(d_exists, stdout, 2);
+    bitwuzla_term_print(d_and_bv_const1, stdout, 10);
+    bitwuzla_term_print(d_exists, stdout, 10);
+    bitwuzla_term_print(d_and_bv_const1, stdout, 16);
+    bitwuzla_term_print(d_exists, stdout, 16);
 
-  std::string output = testing::internal::GetCapturedStdout();
-  ASSERT_EQ(output,
-            "(= #b1 (bvand #b1 bv1))(exists ((q (_ BitVec 8))) (= #b00000000 "
-            "(bvmul bv8 q)))");
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output,
+              "(= #b1 (bvand #b1 bv1))"
+              "(exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q)))"
+              "(= (_ bv1 1) (bvand (_ bv1 1) bv1))"
+              "(exists ((q (_ BitVec 8))) (= (_ bv0 8) (bvmul bv8 q)))"
+              "(= #x1 (bvand #x1 bv1))"
+              "(exists ((q (_ BitVec 8))) (= #x0 (bvmul bv8 q)))");
+  }
+
+  BitwuzlaSort bv1  = bitwuzla_mk_bv_sort(1);
+  BitwuzlaSort bv5  = bitwuzla_mk_bv_sort(5);
+  BitwuzlaSort bv10 = bitwuzla_mk_bv_sort(10);
+  BitwuzlaSort bv4  = bitwuzla_mk_bv_sort(4);
+  BitwuzlaSort bv8  = bitwuzla_mk_bv_sort(8);
+
+  {
+    BitwuzlaTerm t =
+        bitwuzla_mk_fp_value(bitwuzla_mk_bv_one(bv1),
+                             bitwuzla_mk_bv_value_uint64(bv5, 3),
+                             bitwuzla_mk_bv_value_uint64(bv10, 23));
+
+    testing::internal::CaptureStdout();
+    bitwuzla_term_print(t, stdout, 2);
+    bitwuzla_term_print(t, stdout, 10);
+    bitwuzla_term_print(t, stdout, 16);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output,
+              "(fp #b1 #b00011 #b0000010111)(fp #b1 #b00011 #b0000010111)(fp "
+              "#b1 #b00011 #b0000010111)");
+  }
+  {
+    BitwuzlaTerm t = bitwuzla_mk_fp_value(bitwuzla_mk_bv_one(bv1),
+                                          bitwuzla_mk_bv_value_uint64(bv4, 3),
+                                          bitwuzla_mk_bv_value_uint64(bv8, 23));
+    testing::internal::CaptureStdout();
+    bitwuzla_term_print(t, stdout, 2);
+    bitwuzla_term_print(t, stdout, 10);
+    bitwuzla_term_print(t, stdout, 16);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output,
+              "(fp #b1 #b0011 #b00010111)(fp #b1 #b0011 #b00010111)(fp "
+              "#b1 #b0011 #b00010111)");
+  }
 }
 
 TEST_F(TestCApi, term_print_regr0)
 {
   testing::internal::CaptureStdout();
 
-  bitwuzla_term_print(d_rm_rne, stdout);
+  bitwuzla_term_print(d_rm_rne, stdout, 2);
   printf("\n");
-  bitwuzla_term_print(d_rm_rna, stdout);
+  bitwuzla_term_print(d_rm_rna, stdout, 2);
   printf("\n");
-  bitwuzla_term_print(d_rm_rtn, stdout);
+  bitwuzla_term_print(d_rm_rtn, stdout, 2);
   printf("\n");
-  bitwuzla_term_print(d_rm_rtp, stdout);
+  bitwuzla_term_print(d_rm_rtp, stdout, 2);
   printf("\n");
-  bitwuzla_term_print(d_rm_rtz, stdout);
+  bitwuzla_term_print(d_rm_rtz, stdout, 2);
 
   std::string output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "RNE\nRNA\nRTN\nRTP\nRTZ");
@@ -3427,7 +3625,7 @@ TEST_F(TestCApi, term_print_regr1)
                                   bitwuzla_mk_bv_zero(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout);
+  bitwuzla_term_print(fp_const, stdout, 2);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000000)");
 
@@ -3436,7 +3634,7 @@ TEST_F(TestCApi, term_print_regr1)
                                   bitwuzla_mk_bv_zero(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout);
+  bitwuzla_term_print(fp_const, stdout, 2);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000000)");
 
@@ -3445,7 +3643,7 @@ TEST_F(TestCApi, term_print_regr1)
                                   bitwuzla_mk_bv_one(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout);
+  bitwuzla_term_print(fp_const, stdout, 2);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000001)");
 
@@ -3454,7 +3652,7 @@ TEST_F(TestCApi, term_print_regr1)
                                   bitwuzla_mk_bv_one(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout);
+  bitwuzla_term_print(fp_const, stdout, 2);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000001)");
 }

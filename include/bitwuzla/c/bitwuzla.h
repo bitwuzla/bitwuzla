@@ -1021,8 +1021,12 @@ const char *bitwuzla_term_to_string(BitwuzlaTerm term);
  * Print term in SMT-LIB v2 format.
  * @param term The term.
  * @param file The file to print the term to.
+ * @param bv_output_format The output format for bit-vector values: `2` for
+ *                         binary, `10` for decimal, and `16` for hexadecimal.
  */
-void bitwuzla_term_print(BitwuzlaTerm term, FILE *file);
+void bitwuzla_term_print(BitwuzlaTerm term,
+                         FILE *file,
+                         uint8_t bv_output_format);
 
 /** @} */
 
@@ -1298,11 +1302,17 @@ BitwuzlaTerm bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  * Print the current input formula.
  *
  * @param bitwuzla The Bitwuzla instance.
- * @param format The output format for printing the formula. Currently, only
- *               `"smt2"` for the SMT-LIB v2 format is supported.
- * @param file The file to print the formula to.
+ * @param format           The output format for printing the formula.
+ *                         Currently, only `"smt2"` for the SMT-LIB v2 format
+ *                         is supported.
+ * @param file             The file to print the formula to.
+ * @param bv_output_format The output format for bit-vector values: `2` for
+ *                         binary, `10` for decimal, and `16` for hexadecimal.
  */
-void bitwuzla_print_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
+void bitwuzla_print_formula(Bitwuzla *bitwuzla,
+                            const char *format,
+                            FILE *file,
+                            uint8_t bv_output_format);
 
 /**
  * Get current statistics.

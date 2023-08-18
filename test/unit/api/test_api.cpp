@@ -2440,11 +2440,59 @@ TEST_F(TestApi, term_is_rm_value_rtz)
 
 TEST_F(TestApi, term_print)
 {
-  std::stringstream ss;
-  ss << d_and_bv_const1 << d_exists;
-  ASSERT_EQ(ss.str(),
-            "(= #b1 (bvand #b1 bv1))(exists ((q (_ BitVec 8))) (= #b00000000 "
-            "(bvmul bv8 q)))");
+  {
+    std::stringstream ss;
+    ss << d_and_bv_const1 << d_exists;
+    ss << bitwuzla::set_bv_format(10);
+    ss << d_and_bv_const1 << d_exists;
+    ss << bitwuzla::set_bv_format(16);
+    ss << d_and_bv_const1 << d_exists;
+    ASSERT_EQ(ss.str(),
+              "(= #b1 (bvand #b1 bv1))"
+              "(exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q)))"
+              "(= (_ bv1 1) (bvand (_ bv1 1) bv1))"
+              "(exists ((q (_ BitVec 8))) (= (_ bv0 8) (bvmul bv8 q)))"
+              "(= #x1 (bvand #x1 bv1))"
+              "(exists ((q (_ BitVec 8))) (= #x0 (bvmul bv8 q)))");
+  }
+
+  bitwuzla::Sort bv1  = bitwuzla::mk_bv_sort(1);
+  bitwuzla::Sort bv5  = bitwuzla::mk_bv_sort(5);
+  bitwuzla::Sort bv10 = bitwuzla::mk_bv_sort(10);
+  bitwuzla::Sort bv4  = bitwuzla::mk_bv_sort(4);
+  bitwuzla::Sort bv8  = bitwuzla::mk_bv_sort(8);
+
+  {
+    bitwuzla::Term t =
+        bitwuzla::mk_fp_value(bitwuzla::mk_bv_one(bv1),
+                              bitwuzla::mk_bv_value_uint64(bv5, 3),
+                              bitwuzla::mk_bv_value_uint64(bv10, 23));
+    std::stringstream ss;
+    ss << t;
+    ss << bitwuzla::set_bv_format(10);
+    ss << t;
+    ss << bitwuzla::set_bv_format(16);
+    ss << t;
+
+    ASSERT_EQ(ss.str(),
+              "(fp #b1 #b00011 #b0000010111)(fp #b1 #b00011 #b0000010111)(fp "
+              "#b1 #b00011 #b0000010111)");
+  }
+  {
+    bitwuzla::Term t =
+        bitwuzla::mk_fp_value(bitwuzla::mk_bv_one(bv1),
+                              bitwuzla::mk_bv_value_uint64(bv4, 3),
+                              bitwuzla::mk_bv_value_uint64(bv8, 23));
+    std::stringstream ss;
+    ss << t;
+    ss << bitwuzla::set_bv_format(10);
+    ss << t;
+    ss << bitwuzla::set_bv_format(16);
+    ss << t;
+    ASSERT_EQ(ss.str(),
+              "(fp #b1 #b0011 #b00010111)(fp #b1 #b0011 #b00010111)(fp "
+              "#b1 #b0011 #b00010111)");
+  }
 }
 
 TEST_F(TestApi, term_print_regr0)
