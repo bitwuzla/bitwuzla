@@ -124,12 +124,12 @@ main()
         << std::endl
         << "(assert b)" << std::endl
         << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv)) bv) "
-           "#x0))"
+           "#x00))"
         << std::endl
-        << "(assert (exists ((q (_ BitVec 8))) (= #x0 (bvmul bv q))))"
+        << "(assert (exists ((q (_ BitVec 8))) (= #x00 (bvmul bv q))))"
         << std::endl
         << "(assert (fp.leq (fun bv fp ((_ zero_extend 9) "
-           "#x7fffff)) fp))"
+           "#b11111111111111111111111)) fp))"
         << std::endl
         << "(check-sat)" << std::endl
         << "(exit)" << std::endl;

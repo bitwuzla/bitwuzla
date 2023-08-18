@@ -519,8 +519,26 @@ Printer::print(std::ostream& os,
           }
           else
           {
-            os << (bv_format == 2 ? "#b" : "#x")
-               << cur.value<BitVector>().str(bv_format);
+            // If format is hex but bv size is not divisible by 4, we default
+            // back to binary.
+            uint64_t size = type.bv_size();
+            if (bv_format == 16 && size % 4 == 0)
+            {
+              os << "#x";
+              const BitVector& val = cur.value<BitVector>();
+              if (val.is_zero())
+              {
+                os << std::string(size / 4, '0');
+              }
+              else
+              {
+                os << val.str(16);
+              }
+            }
+            else
+            {
+              os << "#b" << cur.value<BitVector>().str(2);
+            }
           }
         }
         else if (type.is_fp())

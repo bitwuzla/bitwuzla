@@ -1765,7 +1765,7 @@ TEST_F(TestApi, print_formula)
         << "(declare-const bv8 (_ BitVec 8))" << std::endl
         << "(assert b)" << std::endl
         << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
-           "#x0))"
+           "#x00))"
         << std::endl
         << "(check-sat)" << std::endl
         << "(exit)" << std::endl;
@@ -1821,9 +1821,9 @@ TEST_F(TestApi, print_formula)
         << "(declare-const bv8 (_ BitVec 8))" << std::endl
         << "(assert b)" << std::endl
         << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
-           "#x0))"
+           "#x00))"
         << std::endl
-        << "(assert (exists ((q (_ BitVec 8))) (= #x0 (bvmul bv8 q))))"
+        << "(assert (exists ((q (_ BitVec 8))) (= #x00 (bvmul bv8 q))))"
         << std::endl
         << "(check-sat)" << std::endl
         << "(exit)" << std::endl;
@@ -1907,12 +1907,12 @@ TEST_F(TestApi, print_formula)
         << std::endl
         << "(assert b)" << std::endl
         << "(assert (= ((lambda ((z (_ BitVec 8))) (bvadd z bv8)) bv8) "
-           "#x0))"
+           "#x00))"
         << std::endl
-        << "(assert (exists ((q (_ BitVec 8))) (= #x0 (bvmul bv8 q))))"
+        << "(assert (exists ((q (_ BitVec 8))) (= #x00 (bvmul bv8 q))))"
         << std::endl
         << "(assert (fp.leq (fun_fp bv8 fp16 ((_ zero_extend 9) "
-           "#x7fffff)) fp16))"
+           "#b11111111111111111111111)) fp16))"
         << std::endl
         << "(check-sat)" << std::endl
         << "(exit)" << std::endl;
@@ -2452,8 +2452,8 @@ TEST_F(TestApi, term_print)
               "(exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q)))"
               "(= (_ bv1 1) (bvand (_ bv1 1) bv1))"
               "(exists ((q (_ BitVec 8))) (= (_ bv0 8) (bvmul bv8 q)))"
-              "(= #x1 (bvand #x1 bv1))"
-              "(exists ((q (_ BitVec 8))) (= #x0 (bvmul bv8 q)))");
+              "(= #b1 (bvand #b1 bv1))"
+              "(exists ((q (_ BitVec 8))) (= #x00 (bvmul bv8 q)))");
   }
 
   bitwuzla::Sort bv1  = bitwuzla::mk_bv_sort(1);
