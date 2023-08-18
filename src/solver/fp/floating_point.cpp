@@ -213,6 +213,27 @@ FloatingPoint::hash() const
   return hash;
 }
 
+std::string
+FloatingPoint::str(uint8_t bv_format) const
+{
+  assert(bv_format == 2 || bv_format == 10);
+  std::stringstream ss;
+  BitVector sign, exp, sig;
+  FloatingPoint::ieee_bv_as_bvs(d_size->get_type(), as_bv(), sign, exp, sig);
+  ss << "(fp ";
+  if (bv_format == 2)
+  {
+    ss << "#b" << sign.str(2) << " #b" << exp.str(2) << " #b" << sig.str(2);
+  }
+  else
+  {
+    ss << "(_ bv" << sign.str(10) << " 1) (_ bv" << exp.str(10) << " "
+       << exp.size() << ") (_ bv" << sig.str(10) << " " << sig.size() << ")";
+  }
+  ss << ")";
+  return ss.str();
+}
+
 int32_t
 FloatingPoint::compare(const FloatingPoint &fp) const
 {
@@ -761,10 +782,7 @@ FloatingPointTypeInfo::get_type(void) const
 std::ostream &
 operator<<(std::ostream &out, const FloatingPoint &fp)
 {
-  BitVector sign, exp, sig;
-  FloatingPoint::ieee_bv_as_bvs(
-      fp.size()->get_type(), fp.as_bv(), sign, exp, sig);
-  out << "(fp #b" << sign << " #b" << exp << " #b" << sig << ")";
+  out << fp.str();
   return out;
 }
 

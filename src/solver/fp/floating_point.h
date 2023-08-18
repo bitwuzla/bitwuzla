@@ -198,6 +198,17 @@ class FloatingPoint
   size_t hash() const;
 
   /**
+   * Get a string representation of this floating-point value.
+   * @param bv_format The output format for bit-vector values: `2` for binary,
+   *                  and `10` for decimal.
+   * @note Hexadecimal bv format is not supported, as it requires mixing binary
+   *       and hex format (hex values are only printed in hex if their size
+   *       is divisible by 4).
+   * @return The string representation.
+   */
+  std::string str(uint8_t bv_format = 2) const;
+
+  /**
    * Compare this floating-point with given floating-point.
    *
    * @param fp The floating-point to compare this floating-point with.

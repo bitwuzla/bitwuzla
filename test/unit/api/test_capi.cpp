@@ -3576,8 +3576,9 @@ TEST_F(TestCApi, term_print)
     bitwuzla_term_print(t, stdout, 16);
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output,
-              "(fp #b1 #b00011 #b0000010111)(fp #b1 #b00011 #b0000010111)(fp "
-              "#b1 #b00011 #b0000010111)");
+              "(fp #b1 #b00011 #b0000010111)"
+              "(fp (_ bv1 1) (_ bv3 5) (_ bv23 10))"
+              "(fp #b1 #b00011 #b0000010111)");
   }
   {
     BitwuzlaTerm t = bitwuzla_mk_fp_value(bitwuzla_mk_bv_one(bv1),
@@ -3589,8 +3590,9 @@ TEST_F(TestCApi, term_print)
     bitwuzla_term_print(t, stdout, 16);
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output,
-              "(fp #b1 #b0011 #b00010111)(fp #b1 #b0011 #b00010111)(fp "
-              "#b1 #b0011 #b00010111)");
+              "(fp #b1 #b0011 #b00010111)"
+              "(fp (_ bv1 1) (_ bv3 4) (_ bv23 8))"
+              "(fp #b1 #b0011 #b00010111)");
   }
 }
 

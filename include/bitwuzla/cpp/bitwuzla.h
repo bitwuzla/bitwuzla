@@ -154,6 +154,12 @@ struct set_bv_format
 
 /**
  * Configure output stream with bit-vector number format.
+ * @note When printing floating-point values, configuring the bit-vector
+ *       output format to hexadecimal number format will be ignored and
+ *       defaulted to binary. Floating-point values are printed via operator
+ *       `fp` and hexadecimal format would require mixing binary and hexadecimal
+ *       format as hexadecimal format requires that the size of the bit-vector
+ *       is divisible by 4.
  * @param out The output stream.
  * @param f   The bit-vector format.
  * @return The output stream.

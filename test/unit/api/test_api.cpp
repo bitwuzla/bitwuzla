@@ -2475,8 +2475,9 @@ TEST_F(TestApi, term_print)
     ss << t;
 
     ASSERT_EQ(ss.str(),
-              "(fp #b1 #b00011 #b0000010111)(fp #b1 #b00011 #b0000010111)(fp "
-              "#b1 #b00011 #b0000010111)");
+              "(fp #b1 #b00011 #b0000010111)"
+              "(fp (_ bv1 1) (_ bv3 5) (_ bv23 10))"
+              "(fp #b1 #b00011 #b0000010111)");
   }
   {
     bitwuzla::Term t =
@@ -2490,8 +2491,9 @@ TEST_F(TestApi, term_print)
     ss << bitwuzla::set_bv_format(16);
     ss << t;
     ASSERT_EQ(ss.str(),
-              "(fp #b1 #b0011 #b00010111)(fp #b1 #b0011 #b00010111)(fp "
-              "#b1 #b0011 #b00010111)");
+              "(fp #b1 #b0011 #b00010111)"
+              "(fp (_ bv1 1) (_ bv3 4) (_ bv23 8))"
+              "(fp #b1 #b0011 #b00010111)");
   }
 }
 

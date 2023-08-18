@@ -302,6 +302,7 @@ Printer::print(std::ostream& os,
   // configure bit-vector output number format
   uint8_t bv_format = os.iword(Printer::s_stream_index_bv_format);
   if (!bv_format) bv_format = 2;
+  assert(bv_format == 2 || bv_format == 10 || bv_format == 16);
 
   std::vector<std::pair<ConstNodeRef, size_t>> visit;
   visit.emplace_back(node, 0);
@@ -543,7 +544,8 @@ Printer::print(std::ostream& os,
         }
         else if (type.is_fp())
         {
-          os << cur.value<FloatingPoint>();
+          os << cur.value<FloatingPoint>().str(
+              bv_format == 2 || bv_format == 16 ? 2 : 10);
         }
         else if (type.is_rm())
         {
