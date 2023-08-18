@@ -1047,10 +1047,11 @@ Parser::parse_uint64(uint64_t& uint)
 bool
 Parser::parse_symbol(const std::string& error_msg,
                      bool shadow,
+                     bool insert,
                      bool look_ahead,
                      Token la)
 {
-  Token token = look_ahead ? la : next_token();
+  Token token = look_ahead ? la : next_token(insert);
   if (!check_token(token))
   {
     return false;
@@ -1063,7 +1064,15 @@ Parser::parse_symbol(const std::string& error_msg,
   // shadow previously defined symbols
   if (shadow && d_last_node->d_coo.line)
   {
-    d_last_node = d_table.insert(token, d_lexer->token(), d_assertion_level);
+    if (insert)
+    {
+      d_last_node = d_table.insert(token, d_lexer->token(), d_assertion_level);
+    }
+    else
+    {
+      d_last_node =
+          new SymbolTable::Node(token, d_lexer->token(), d_assertion_level);
+    }
     assert(d_last_node->has_symbol());
     d_last_node->d_coo = d_lexer->coo();
   }
@@ -1164,7 +1173,7 @@ Parser::parse_open_term(Token token)
     {
       push_item(Token::LETBIND, d_lexer->coo());
       d_is_var_binding          = false;
-      if (!parse_symbol("", true))
+      if (!parse_symbol("", true, false))
       {
         return false;
       }
@@ -1897,6 +1906,13 @@ Parser::close_term()
       size_t idx = idx_open();
       assert(peek_item_is_token(Token::PARLETBIND, idx));
       assert(peek_item_is_token(Token::LPAR, idx - 1));
+      // the var bindings of the current PARLETBIND are not yet inserted in the
+      // symbol table since they may only be used (and thus inserted) after
+      // binding all of them in parallel, we have to insert them now
+      for (size_t i = idx + 1; i < d_work.size(); ++i)
+      {
+        d_table.insert(peek_node_arg(i));
+      }
       d_work.erase(d_work.begin() + idx - 1, d_work.begin() + idx + 1);
       d_work_control.pop_back();
     }

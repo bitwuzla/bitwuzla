@@ -83,6 +83,14 @@ class SymbolTable
                const std::string& symbol,
                uint64_t assertion_level = 0);
   /**
+   * Insert a symbol table node that was not created via the above insert().
+   * The symbol table takes ownership of the node, thus the node must be
+   * created via operator `new`.
+   * If the symbol already exists, it will shadow a previous declaration.
+   * @param node The node.
+   */
+  void insert(Node* node);
+  /**
    * Remove a symbol node from the symbol table.
    * If the symbol is shadowed, this only removes the most recent declaration
    * of the symbol.

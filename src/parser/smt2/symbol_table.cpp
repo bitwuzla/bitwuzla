@@ -45,13 +45,19 @@ SymbolTable::insert(Token token,
                     uint64_t assertion_level)
 {
   Node* node          = new Node(token, symbol, assertion_level);
-  auto [it, inserted] = d_table.emplace(symbol, node);
+  insert(node);
+  return node;
+}
+
+void
+SymbolTable::insert(Node* node)
+{
+  auto [it, inserted] = d_table.emplace(node->d_symbol, node);
   if (!inserted)
   {
     node->d_next = it->second;
     it->second   = node;
   }
-  return node;
 }
 
 void

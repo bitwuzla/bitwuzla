@@ -54,6 +54,8 @@ tests_smt2 = [
   ['get-value/fp_real.smt2'],
   ['get-value/fp_regr9.smt2'],
   ['parser/echo.smt2'],
+  ['parser/issue59-1.smt2'],
+  ['parser/issue59-2.smt2'],
   ['parser/let.smt2'],
   ['parser/regmismatch.smt2'],
   ['parser/unsupported_opt_attr.smt2'],
@@ -261,6 +263,7 @@ tests_smt2 = [
   ['parser/smt2perr202.smt2'],
   ['parser/smt2perr203.smt2'],
   ['parser/smt2perr204.smt2'],
+  ['parser/smt2perr205.smt2'],
   #['preprocess/array/nondestr_subst1.smt2'], # TODO slow
   ['preprocess/array/nondestr_subst10.smt2'],
   ['preprocess/array/nondestr_subst11.smt2'],

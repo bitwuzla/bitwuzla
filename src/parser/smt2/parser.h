@@ -104,9 +104,12 @@ class Parser : public bzla::parser::Parser
   /**
    * Get next token from the lexer and insert new symbols into symbol table.
    * Caches parsed symbols (new and existing) in d_last_node.
+   * @param insert     True if parsed symbol is to be inserted in the symbol
+   *                   table. This will always be the case except when parsing
+   *                   sorted vars of a let binding.
    * @return The next token.
    */
-  Token next_token()
+  Token next_token(bool insert = true)
   {
     assert(d_lexer);
     Token token = d_lexer->next_token();
@@ -117,7 +120,14 @@ class Parser : public bzla::parser::Parser
       SymbolTable::Node* node = d_table.find(symbol);
       if (!node)
       {
-        node = d_table.insert(token, symbol, d_assertion_level);
+        if (insert)
+        {
+          node = d_table.insert(token, symbol, d_assertion_level);
+        }
+        else
+        {
+          node = new SymbolTable::Node(token, symbol, d_assertion_level);
+        }
       }
       d_last_node = node;
       token       = d_last_node->d_token;
@@ -274,12 +284,16 @@ class Parser : public bzla::parser::Parser
    * @param error_msg  A message indicating where the symbol was expected,
    *                   e.g., "after declare-const".
    * @param shadow     True if parsed symbol may shadow an existing symbol.
+   * @param insert     True if parsed symbol is to be inserted in the symbol
+   *                   table. This will always be the case except when parsing
+   *                   sorted vars of a let binding.
    * @param look_ahead True if we have a look ahead token.
    * @param la         The look ahead token.
    * @return False on error.
    */
   bool parse_symbol(const std::string& error_msg,
                     bool shadow     = false,
+                    bool insert     = true,
                     bool look_ahead = false,
                     Token la        = Token::INVALID);
 
