@@ -44,7 +44,7 @@ def _feat(val):
     return 'disabled'
 
 def _bool(val):
-    assert val is bool
+    assert isinstance(val, bool)
     if val:
         return 'true'
     return 'false'
@@ -71,7 +71,7 @@ def main():
     ap.add_argument('--assertions', action='store_true', default=None,
                     help='enable assertions')
     ap.add_argument('--no-assertions', action='store_false',
-                    help='disable assertions')
+                    dest='assertions', help='disable assertions')
     ap.add_argument('--asan', action='store_true',
                     help='enable address sanitizer')
     ap.add_argument('--ubsan', action='store_true',
@@ -82,13 +82,12 @@ def main():
                     help='build python bindings')
     ap.add_argument('--testing', action='store_true', default=None,
                     help='enable regression and unit testing')
-    ap.add_argument('--no-testing', action='store_false',
+    ap.add_argument('--no-testing', action='store_false', dest='testing',
                     help='disable regression and unit testing')
     ap.add_argument('--unit-testing', action='store_true', default=None,
                     help='enable unit testing')
     ap.add_argument('--no-unit-testing', action='store_false',
-                    dest='unit_testing',
-                    help='disable unit testing')
+                    dest='unit_testing', help='disable unit testing')
     ap.add_argument('--docs', action='store_true',
                     help='build documentation')
     ap.add_argument('--wipe', action='store_true',
@@ -112,7 +111,7 @@ def main():
     if args.ubsan:
         sanitize.append('undefined')
     if args.assertions is not None:
-        build_opts.append(f'-Db_ndebug={_bool(args.assertions)}')
+        build_opts.append(f'-Db_ndebug={_bool(not args.assertions)}')
     if args.testing is not None:
         build_opts.append(f'-Dtesting={_feat(args.testing)}')
     if args.unit_testing is not None:
