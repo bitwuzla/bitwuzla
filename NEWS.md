@@ -17,6 +17,9 @@ This file collects a summary of important and/or user-visible changes.
       case. New API function
       `bitwuzla_term_value_get_str_fmt(BitwuzlaTerm, uint8_t)`
       now offers the previous behavior of this function.
+    - New API function `bitwuzla_term_to_string_fmt(BitwuzlaTerm, uint8_t)`
+      allows to configure the bv output number format when getting the
+      string representation of a term.
     - New API function `bitwuzla_term_print_fmt(BitwuzlaTerm, FILE*, uint8_t)`  
       allows to configure the bv output number format when printing terms.
       Function `bitwuzla_term_print(BitwuzlaTerm)` remains unchanged and, as
@@ -37,6 +40,9 @@ This file collects a summary of important and/or user-visible changes.
   * C++ API changes:
     - New stream modifier `set_bv_format(uint8_t)` allows to configure the
       output number format of bit-vector values of any output stream.
+    - `Term::str()` now takes an optional parameter `uint8_t base` (default:
+       binary) to configure the bv output number format in the string
+       representation of the term.
     - `bitwuzla::Parser` can now be configured with an output stream.
 
 - The SMT2 parser is now less restrictive with respect to setting *unsupported
