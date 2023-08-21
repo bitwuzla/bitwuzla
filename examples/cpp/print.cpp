@@ -11,6 +11,7 @@
 #include <bitwuzla/cpp/bitwuzla.h>
 
 #include <cassert>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 
@@ -21,6 +22,7 @@ main()
 {
   // First, create a Bitwuzla options instance.
   Options options;
+  options.set(Option::PRODUCE_MODELS, true);
   // Then, create a Bitwuzla instance.
   Bitwuzla bitwuzla(options);
   // Create some sorts.
@@ -174,5 +176,81 @@ main()
     std::cout << "---------------------------------------------" << std::endl;
     std::cout << ss.str() << std::endl;
   }
+
+  bitwuzla.check_sat();
+
+  // Print values.
+  std::cout << "Print value of Boolean predicate:" << std::endl
+            << "---------------------------------" << std::endl;
+  bool fpleq_val            = bitwuzla.get_value(fpleq).value<bool>();
+  std::string fpleq_val_str = bitwuzla.get_value(fpleq).value<std::string>();
+  std::cout << fpleq << ": " << std::setw(4) << fpleq_val << " [bool]"
+            << std::endl
+            << fpleq << ": " << std::setw(4) << fpleq_val_str
+            << " [std::string]" << std::endl
+            << std::endl;
+
+  std::cout << "Print value of bv const:" << std::endl
+            << "------------------------" << std::endl;
+  std::cout << bv << ": " << std::setw(8)
+            << bitwuzla.get_value(bv).value<std::string>()
+            << " [std::string] (bin)" << std::endl;
+  std::cout << bv << ": " << std::setw(8)
+            << bitwuzla.get_value(bv).value<std::string>(10)
+            << " [std::string] (dec)" << std::endl;
+  std::cout << bv << ": " << std::setw(8)
+            << bitwuzla.get_value(bv).value<std::string>(16)
+            << " [std::string] (dec)" << std::endl
+            << std::endl;
+
+  std::cout << "Print value of RoundingMode const:" << std::endl
+            << "----------------------------------" << std::endl;
+  bitwuzla::Term rm      = bitwuzla::mk_const(bitwuzla::mk_rm_sort(), "rm");
+  RoundingMode rm_val    = bitwuzla.get_value(rm).value<RoundingMode>();
+  std::string rm_val_str = bitwuzla.get_value(rm).value<std::string>();
+  std::cout << rm << ": " << rm_val << " [RoundingMode]" << std::endl
+            << rm << ": " << rm_val_str << " [std::string]" << std::endl
+            << std::endl;
+
+  bitwuzla::Term fp_val = bitwuzla.get_value(fp);
+
+  std::cout << "Print value of fp const as std::string (base ignored):"
+            << std::endl
+            << "------------------------------------------------------"
+            << std::endl;
+  assert(fp_val.value<std::string>() == fp_val.value<std::string>(10));
+  assert(fp_val.value<std::string>() == fp_val.value<std::string>(16));
+  std::cout << fp << ": " << std::setw(16) << fp_val.value<std::string>()
+            << " [std::string] (bin)" << std::endl;
+  std::cout << fp << ": " << std::setw(16) << fp_val.value<std::string>(10)
+            << " [std::string] (dec [ignored])" << std::endl;
+  std::cout << fp << ": " << std::setw(16) << fp_val.value<std::string>(16)
+            << " [std::string] (hex [ignored])" << std::endl
+            << std::endl;
+
+  std::cout << "Print value of fp const as tuple of std::string:" << std::endl
+            << "------------------------------------------------" << std::endl;
+  auto fp_val_tup =
+      fp_val.value<std::tuple<std::string, std::string, std::string>>();
+  std::cout << fp << ": (" << std::get<0>(fp_val_tup) << ", " << std::setw(5)
+            << std::get<1>(fp_val_tup) << ", " << std::setw(11)
+            << std::get<2>(fp_val_tup) << ")"
+            << " [std::tuple<std::string, std::string, std::string>] (bin)"
+            << std::endl;
+  fp_val_tup =
+      fp_val.value<std::tuple<std::string, std::string, std::string>>(10);
+  std::cout << fp << ": (" << std::get<0>(fp_val_tup) << ", " << std::setw(5)
+            << std::get<1>(fp_val_tup) << ", " << std::setw(11)
+            << std::get<2>(fp_val_tup) << ")"
+            << " [std::tuple<std::string, std::string, std::string>] (dec)"
+            << std::endl;
+  fp_val_tup =
+      fp_val.value<std::tuple<std::string, std::string, std::string>>(16);
+  std::cout << fp << ": (" << std::get<0>(fp_val_tup) << ", " << std::setw(5)
+            << std::get<1>(fp_val_tup) << ", " << std::setw(11)
+            << std::get<2>(fp_val_tup) << ")"
+            << " [std::tuple<std::string, std::string, std::string>] (hex)"
+            << std::endl;
+
   return 0;
 }

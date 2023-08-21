@@ -961,10 +961,29 @@ bool bitwuzla_term_value_get_bool(BitwuzlaTerm term);
  * For example, this function returns "010" for a bit-vector value 2 of size
  * 3, while bitwuzla_term_to_string() returns "#b010".
  *
- * @param term The value term.
- * @param base The base in which the output strings are given; 2 for
- *             binary, 10 for decimal, and 16 for hexadecimal.
+ * @note This uses default binary format for bit-vector value strings.
  *
+ * @param term The value term.
+ * @return The string representation of the value term.
+ *
+ * @note Return value is valid until next `bitwuzla_term_value_get_str` call.
+ */
+const char *bitwuzla_term_value_get_str(BitwuzlaTerm term);
+
+/**
+ * Get string representation of Boolean, bit-vector, floating-point, or
+ * rounding mode value term. String representations of bit-vector values are
+ * printed in the given base.
+ *
+ * This returns the raw value string (as opposed to bitwuzla_term_to_string(),
+ * which returns the SMT-LIB v2 representation of a term).
+ * For example, this function returns "010" for a bit-vector value 2 of size
+ * 3, while bitwuzla_term_to_string() returns "#b010".
+ *
+ * @param term The value term.
+ * @param base The base of the string representation of bit-vector values; `2`
+ *             for binary, `10` for decimal, and `16` for hexadecimal. Always
+ *             ignored for Boolean and RoundingMode values.
  * @return String representation of the value term.
  *
  * @note The returned string for floating-point values is always the binary
@@ -974,13 +993,14 @@ bool bitwuzla_term_value_get_bool(BitwuzlaTerm term);
  *       instantiation. It is always ignored for Boolean and RoundingMode
  *       values.
  *
- * @note Return value is valid until next `bitwuzla_term_value_get_bv` call.
+ * @note Return value is valid until next `bitwuzla_term_value_get_str_fmt`
+ * call.
  */
-const char *bitwuzla_term_value_get_str(BitwuzlaTerm term, uint8_t base);
+const char *bitwuzla_term_value_get_str_fmt(BitwuzlaTerm term, uint8_t base);
 
 /**
- * Get string of IEEE 754 standard representation of given floating-point value
- * term.
+ * Get (the raw) string representation of a given floating-point value
+ * term in IEEE 754 standard representation.
  *
  * @param term        The floating-point value term.
  * @param sign        Output parameter. String representation of the
@@ -989,8 +1009,9 @@ const char *bitwuzla_term_value_get_str(BitwuzlaTerm term, uint8_t base);
  *                    bit-vector value.
  * @param significand Output parameter. String representation of the
  *                    significand bit-vector value.
- * @param base        The base in which the output strings are given; 2 for
- *                    binary, 10 for decimal, and 16 for hexadecimal.
+ * @param base        The base in which the component bit-vector strings are
+ *                    given; `2` for binary, `10` for decimal, and `16` for
+ *                    hexadecimal.
  *
  * @note Return values sign, exponent and significand are valid until next
  *       `bitwuzla_term_value_get_fp_ieee` call.
@@ -1019,12 +1040,17 @@ const char *bitwuzla_term_to_string(BitwuzlaTerm term);
 
 /**
  * Print term in SMT-LIB v2 format.
- * @param term      The term.
- * @param file      The file to print the term to.
- * @param bv_format The output format for bit-vector values: `2` for binary,
- *                  `10` for decimal, and `16` for hexadecimal.
+ * @param term  The term.
+ * @param file  The file to print the term to.
+ * @param base The base of the string representation of bit-vector values; `2`
+ *             for binary, `10` for decimal, and `16` for hexadecimal.
+ *
+ * @note Floating-point values are printed in terms of operator `fp`. Their
+ *       component bit-vector values can only be printed in binary or decimal
+ *       format. If base `16` is configured, the format for floating-point
+ *       component bit-vector values defaults to binary format.
  */
-void bitwuzla_term_print(BitwuzlaTerm term, FILE *file, uint8_t bv_format);
+void bitwuzla_term_print(BitwuzlaTerm term, FILE *file, uint8_t base);
 
 /** @} */
 
@@ -1300,16 +1326,21 @@ BitwuzlaTerm bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  * Print the current input formula.
  *
  * @param bitwuzla The Bitwuzla instance.
- * @param format    The output format for printing the formula. Currently, only
- *                  `"smt2"` for the SMT-LIB v2 format is supported.
- * @param file      The file to print the formula to.
- * @param bv_format The output format for bit-vector values: `2` for binary,
- *                  `10` for decimal, and `16` for hexadecimal.
+ * @param format The output format for printing the formula. Currently, only
+ *               `"smt2"` for the SMT-LIB v2 format is supported.
+ * @param file   The file to print the formula to.
+ * @param base   The base of the string representation of bit-vector values;
+ *               `2` for binary, `10` for decimal, and `16` for hexadecimal.
+ *
+ * @note Floating-point values are printed in terms of operator `fp`. Their
+ *       component bit-vector values can only be printed in binary or decimal
+ *       format. If base `16` is configured, the format for floating-point
+ *       component bit-vector values defaults to binary format.
  */
 void bitwuzla_print_formula(Bitwuzla *bitwuzla,
                             const char *format,
                             FILE *file,
-                            uint8_t bv_format);
+                            uint8_t base);
 
 /**
  * Get current statistics.
@@ -1576,8 +1607,8 @@ BitwuzlaTerm bitwuzla_mk_fp_nan(BitwuzlaSort sort);
  *
  * @param sort The sort of the value.
  * @param value A string representing the value.
- * @param base The base in which the string is given; 2 for binary, 10 for
- *             decimal, and 16 for hexadecimal.
+ * @param base The base in which the string is given; `2` for binary, `10` for
+ *             decimal, and `16` for hexadecimal.
  *
  * @return A term of kind BITWUZLA_KIND_VAL, representing the bit-vector value
  *         of given sort.

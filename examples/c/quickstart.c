@@ -151,9 +151,9 @@ main()
   // Both x and y are bit-vector terms and their value is a bit-vector
   // value that can be printed via bitwuzla_term_value_get_str().
   printf("value of x: %s\n",
-         bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, x), 2));
+         bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, x)));
   printf("value of y: %s\n",
-         bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, y), 2));
+         bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, y)));
   printf("\n");
   // f and a, on the other hand, are a function and array term, respectively.
   // The value of these terms is not a value term: for f, it is a lambda term,
@@ -179,7 +179,7 @@ main()
   BitwuzlaTerm v = bitwuzla_get_value(
       bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, x, x));
   printf("value of v = x * x: %s\n",
-         bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, v), 2));
+         bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, v)));
 
   // Finally, delete the Bitwuzla and the Bitwuzla options instance.
   bitwuzla_delete(bitwuzla);

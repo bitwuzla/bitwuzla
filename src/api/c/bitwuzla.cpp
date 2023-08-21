@@ -1100,14 +1100,14 @@ void
 bitwuzla_print_formula(Bitwuzla *bitwuzla,
                        const char *format,
                        FILE *file,
-                       uint8_t bv_format)
+                       uint8_t base)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_NOT_NULL(format);
   BITWUZLA_CHECK_NOT_NULL(file);
   std::stringstream ss;
-  ss << bitwuzla::set_bv_format(bv_format);
+  ss << bitwuzla::set_bv_format(base);
   bitwuzla->d_bitwuzla->print_formula(ss, format);
   fprintf(file, "%s", ss.str().c_str());
   BITWUZLA_TRY_CATCH_END;
@@ -1978,7 +1978,18 @@ bitwuzla_term_value_get_bool(BitwuzlaTerm term)
 }
 
 const char *
-bitwuzla_term_value_get_str(BitwuzlaTerm term, uint8_t base)
+bitwuzla_term_value_get_str(BitwuzlaTerm term)
+{
+  static thread_local std::string str;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM_ID(term);
+  str = import_term(term).value<std::string>();
+  BITWUZLA_TRY_CATCH_END;
+  return str.c_str();
+}
+
+const char *
+bitwuzla_term_value_get_str_fmt(BitwuzlaTerm term, uint8_t base)
 {
   static thread_local std::string str;
   BITWUZLA_TRY_CATCH_BEGIN;
@@ -2020,13 +2031,13 @@ bitwuzla_term_value_get_rm(BitwuzlaTerm term)
 }
 
 void
-bitwuzla_term_print(BitwuzlaTerm term, FILE *file, uint8_t bv_format)
+bitwuzla_term_print(BitwuzlaTerm term, FILE *file, uint8_t base)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM_ID(term);
   BITWUZLA_CHECK_NOT_NULL(file);
   std::stringstream ss;
-  ss << bitwuzla::set_bv_format(bv_format);
+  ss << bitwuzla::set_bv_format(base);
   ss << import_term(term);
   fprintf(file, "%s", ss.str().c_str());
   BITWUZLA_TRY_CATCH_END;

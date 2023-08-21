@@ -17,6 +17,7 @@ main()
 {
   // First, create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
+  bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
   // Then, create a Bitwuzla instance.
   Bitwuzla* bitwuzla = bitwuzla_new(options);
   // Create some sorts.
@@ -112,6 +113,95 @@ main()
     printf("Print formula [decimal bv output format]:\n");
     printf("----------------------------------------\n");
     bitwuzla_print_formula(bitwuzla, "smt2", stdout, 10);
+    printf("\n");
   }
+
+  bitwuzla_check_sat(bitwuzla);
+
+  // Print values.
+  printf("Print value of Boolean predicate:\n");
+  printf("---------------------------------\n");
+  BitwuzlaTerm fpleq_val    = bitwuzla_get_value(bitwuzla, fpleq);
+  bool fpleq_val_bool       = bitwuzla_term_value_get_bool(fpleq_val);
+  const char* fpleq_val_str = bitwuzla_term_value_get_str(fpleq_val);
+  printf("%s: %*u [bool]\n", bitwuzla_term_to_string(fpleq), 4, fpleq_val_bool);
+  printf("%s: %*s [const char*]\n\n",
+         bitwuzla_term_to_string(fpleq),
+         4,
+         fpleq_val_str);
+
+  printf("Print value of bv const:\n");
+  printf("------------------------\n");
+  BitwuzlaTerm bv_val = bitwuzla_get_value(bitwuzla, bv);
+  printf("%s: %*s [const char*] (bin)\n",
+         bitwuzla_term_to_string(bv),
+         8,
+         bitwuzla_term_value_get_str(bv_val));
+  printf("%s: %*s [const char*] (dec)\n",
+         bitwuzla_term_to_string(bv),
+         8,
+         bitwuzla_term_value_get_str_fmt(bv_val, 10));
+  printf("%s: %*s [const char*] (hex)\n\n",
+         bitwuzla_term_to_string(bv),
+         8,
+         bitwuzla_term_value_get_str_fmt(bv_val, 16));
+
+  printf("Print value of RoundingMode const:\n");
+  printf("----------------------------------\n");
+  BitwuzlaTerm rm     = bitwuzla_mk_const(bitwuzla_mk_rm_sort(), "rm");
+  BitwuzlaTerm rm_val = bitwuzla_get_value(bitwuzla, rm);
+  BitwuzlaRoundingMode rm_val_rm = bitwuzla_term_value_get_rm(rm_val);
+  const char* rm_val_str         = bitwuzla_term_value_get_str(rm_val);
+  printf("%s: %s [BitwuzlaRoundingMode]\n",
+         bitwuzla_term_to_string(rm),
+         bitwuzla_rm_to_string(rm_val_rm));
+  printf("%s: %s [const char*]\n\n", bitwuzla_term_to_string(rm), rm_val_str);
+
+  BitwuzlaTerm fp_val = bitwuzla_get_value(bitwuzla, fp);
+
+  printf("Print value of fp const via bitwuzla_term_value_get_str(_fmt):\n");
+  printf("--------------------------------------------------------------\n");
+  printf("%s: %*s [const char*] (bin) \n",
+         bitwuzla_term_to_string(fp),
+         16,
+         bitwuzla_term_value_get_str(fp_val));
+  printf("%s: %*s [const char*] (dec [ignored]) \n",
+         bitwuzla_term_to_string(fp),
+         16,
+         bitwuzla_term_value_get_str_fmt(fp_val, 10));
+  printf("%s: %*s [const char*] (hex [ignored]) \n\n",
+         bitwuzla_term_to_string(fp),
+         16,
+         bitwuzla_term_value_get_str_fmt(fp_val, 16));
+
+  printf("Print value of fp const via bitwuzla_term_value_get_fp_ieee():\n");
+  printf("--------------------------------------------------------------\n");
+  const char* sign;
+  const char* exponent;
+  const char* significand;
+  bitwuzla_term_value_get_fp_ieee(fp_val, &sign, &exponent, &significand, 2);
+  printf("%s: (%s %*s %*s) (bin)\n",
+         bitwuzla_term_to_string(fp),
+         sign,
+         5,
+         exponent,
+         11,
+         significand);
+  bitwuzla_term_value_get_fp_ieee(fp_val, &sign, &exponent, &significand, 10);
+  printf("%s: (%s %*s %*s) (dec)\n",
+         bitwuzla_term_to_string(fp),
+         sign,
+         5,
+         exponent,
+         11,
+         significand);
+  bitwuzla_term_value_get_fp_ieee(fp_val, &sign, &exponent, &significand, 16);
+  printf("%s: (%s %*s %*s) (hex)\n",
+         bitwuzla_term_to_string(fp),
+         sign,
+         5,
+         exponent,
+         11,
+         significand);
   return 0;
 }

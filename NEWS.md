@@ -9,6 +9,27 @@ This file collects a summary of important and/or user-visible changes.
   via the output stream modifier `bitwuzla::set_bv_format` when printing
   bit-vector values via the API. Note that `Term::str()` will print the
   default representation (binary) and is not configurable.
+  * C API changes:
+    - `bitwuzla_term_value_get_str(BitwuzlaTerm, uint8_t)` changed to  
+      `bitwuzla_term_value_get_str(BitwuzlaTerm)`:  
+      The parameter to configure the bv output number format when getting the
+      string representation of a term is now dropped to simplify the default
+      case. New API function
+      `bitwuzla_term_value_get_str_fmt(BitwuzlaTerm, uint8_t)`
+      now offers the previous behavior of this function.
+    - `bitwuzla_term_print(BitwuzlaTerm, FILE*)` changed to  
+      `bitwuzla_term_print(BitwuzlaTerm, FILE*, uint8_t)`:  
+      The bv output number format when printing terms can now be configured via
+      via (new, required) parameter `uint8_t base`.
+    - `bitwuzla_term_print_formula(Bitwuzla*, const char*, FILE*)` changed to  
+      `bitwuzla_term_print_formula(Bitwuzla*, const char*, FILE*, uint8_t)`:  
+      The bv output number format when printing the currently asserted input
+      formula can now be configured via (new, required)
+      parameter `uint8_t base`.
+  * C++ API changes:
+    - New stream modifier `set_bv_format(uint8_t)` allows to configure the
+      output number format of bit-vector values of any output stream.
+    - `bitwuzla::Parser` can now be configured with an output stream.
 
 - The SMT2 parser is now less restrictive with respect to setting *unsupported
   options* and using *unsupported annotation attributes*. This is now ignored
@@ -106,16 +127,16 @@ The most notable user-visible changes are listed below.
   `BitwuzlaOptions*` instead of `Bitwuzla*` as argument:
   + Create options instance with `bitwuzla_options_new()`
   + Delete options instance with `bitwuzla_options_delete(BitwuzlaOptions*)`
-  + `uint32_t bitwuzla_get_option(Bitwuzla*, BitwuzlaOption)` changed to
+  + `uint32_t bitwuzla_get_option(Bitwuzla*, BitwuzlaOption)` changed to  
     `uint64_t bitwuzla_get_oiption(BitwuzlaOptions, BitwuzlaOption)`
-  + `const char* bitwuzla_get_option_str(Bitwuzla*, BitwuzlaOption)` changed to
+  + `const char* bitwuzla_get_option_str(Bitwuzla*, BitwuzlaOption)` changed to  
     `const char* bitwuzla_get_oiption(BitwuzlaOptions, BitwuzlaOption)`
-  + `bitwuzla_set_option(Bitwuzla*, BitwuzlaOption, uint32_t)` changed to
+  + `bitwuzla_set_option(Bitwuzla*, BitwuzlaOption, uint32_t)` changed to  
     `bitwuzla_set_option(BitwuzlaOptions*, BitwuzlaOption, uint64_t)`
-  + `bitwuzla_set_option_str(Bitwuzla*, BitwuzlaOption, const char*)` changed to
+  + `bitwuzla_set_option_str(Bitwuzla*, BitwuzlaOption, const char*)` changed to  
     `bitwuzla_set_option_mode(BitwuzlaOptions, BitwuzlaOption, const char*)`
   + `bitwuzla_get_option_info(Bitwuzla*, BitwuzlaOption, BitwuzlaOptionInfo*)`
-     changed to
+     changed to  
     `bitwuzla_get_option_info(BitwuzlaOptions*, BitwuzlaOption, BitwuzlaOptionInfo*)`
 
 - The following kinds (enum `BitwuzlaKind`) have been renamed:

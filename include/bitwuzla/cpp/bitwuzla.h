@@ -695,7 +695,8 @@ class Term
    *             for sign bit, exponent and significand); and, generally,
    *             `std::string` for any value type.
    * @param base The numeric base for bit-vector values; `2` for binary, `10`
-   *             for decimal, and `16` for hexadecimal.
+   *             for decimal, and `16` for hexadecimal. Always ignored for
+   *             Boolean and RoundingMode values.
    */
   template <class T>
   T value(uint8_t base = 2) const;
@@ -734,12 +735,12 @@ RoundingMode Term::value(uint8_t base) const;
  * Get string representation of Boolean, bit-vector, floating-point, or
  * rounding mode value term.
  *
- * @param base The base in which the output strings are given; 2 for
- *             binary, 10 for decimal, and 16 for hexadecimal.
+ * @param base The base of the string representation of bit-vector values; `2`
+ *             for binary, `10` for decimal, and `16` for hexadecimal.
  *
  * @return String representation of the value term.
  *
- * @note Parameter `base` is ignored for Boolean and rounding mode values.
+ * @note Parameter `base` is ignored for Boolean and RoundingMode values.
  */
 template <>
 std::string Term::value(uint8_t base) const;
