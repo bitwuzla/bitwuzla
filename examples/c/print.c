@@ -74,47 +74,47 @@ main()
   //       divisible by 4.
   printf("Print term:\n");
   printf("-----------\n");
-  printf("bitwuzla_term_print():                        ");
+  printf("bitwuzla_term_print():                         ");
   bitwuzla_term_print(rm, stdout);
   printf("\n");
-  printf("bitwuzla_term_print_fmt() [10 (ignored)]:     ");
+  printf("bitwuzla_term_print_fmt()     [dec (ignored)]: ");
   bitwuzla_term_print_fmt(rm, stdout, 10);
   printf("\n");
-  printf("bitwuzla_term_to_string():                    %s\n",
+  printf("bitwuzla_term_to_string():                     %s\n",
          bitwuzla_term_to_string(rm));
-  printf("bitwuzla_term_to_string_fmt() [16 (ignored)]: %s\n",
+  printf("bitwuzla_term_to_string_fmt() [hex (ignored)]: %s\n",
          bitwuzla_term_to_string_fmt(rm, 10));
   printf("\n");
-  printf("bitwuzla_term_print() [2]:          ");
+  printf("bitwuzla_term_print()         [bin]: ");
   bitwuzla_term_print(zero, stdout);
   printf("\n");
-  printf("bitwuzla_term_print_fmt() [10]:     ");
+  printf("bitwuzla_term_print_fmt()     [dec]: ");
   bitwuzla_term_print_fmt(zero, stdout, 10);
   printf("\n");
-  printf("bitwuzla_term_print_fmt() [16]:     ");
+  printf("bitwuzla_term_print_fmt()     [hex]: ");
   bitwuzla_term_print_fmt(zero, stdout, 16);
   printf("\n");
-  printf("bitwuzla_term_to_string() [ 2]:     %s\n",
+  printf("bitwuzla_term_to_string()     [bin]: %s\n",
          bitwuzla_term_to_string(zero));
-  printf("bitwuzla_term_to_string_fmt() [10]: %s\n",
+  printf("bitwuzla_term_to_string_fmt() [dec]: %s\n",
          bitwuzla_term_to_string_fmt(zero, 10));
-  printf("bitwuzla_term_to_string_fmt() [16]: %s\n",
+  printf("bitwuzla_term_to_string_fmt() [hex]: %s\n",
          bitwuzla_term_to_string_fmt(zero, 16));
   printf("\n");
-  printf("bitwuzla_term_print_fmt()     [ 2]:           ");
+  printf("bitwuzla_term_print_fmt()     [bin]:           ");
   bitwuzla_term_print_fmt(fpleq, stdout, 2);
   printf("\n");
-  printf("bitwuzla_term_print_fmt()     [10]:           ");
+  printf("bitwuzla_term_print_fmt()     [dec]:           ");
   bitwuzla_term_print_fmt(fpleq, stdout, 10);
   printf("\n");
-  printf("bitwuzla_term_print_fmt()     [16 (ignored)]: ");
+  printf("bitwuzla_term_print_fmt()     [hex (ignored)]: ");
   bitwuzla_term_print_fmt(fpleq, stdout, 16);
   printf("\n");
-  printf("bitwuzla_term_to_string_fmt() [ 2]:           %s\n",
+  printf("bitwuzla_term_to_string_fmt() [bin]:           %s\n",
          bitwuzla_term_to_string_fmt(fpleq, 2));
-  printf("bitwuzla_term_to_string_fmt() [10]:           %s\n",
+  printf("bitwuzla_term_to_string_fmt() [dec]:           %s\n",
          bitwuzla_term_to_string_fmt(fpleq, 10));
-  printf("bitwuzla_term_to_string_fmt() [16 (ignored)]: %s\n",
+  printf("bitwuzla_term_to_string_fmt() [hex (ignored)]: %s\n",
          bitwuzla_term_to_string_fmt(fpleq, 16));
   printf("\n");
 

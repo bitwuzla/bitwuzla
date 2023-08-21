@@ -70,24 +70,24 @@ main()
   std::cout << "operator<<:                 " << rm << std::endl;
   std::cout << "operator<< [dec (ignored)]: " << set_bv_format(10) << rm
             << std::endl;
-  std::cout << "str():                      " << rm.str() << std::endl;
-  std::cout << "str(16) (ignored):          " << rm.str(16) << std::endl
+  std::cout << "str()      [bin]:           " << rm.str() << std::endl;
+  std::cout << "str(16)    [hex (ignored)]: " << rm.str(16) << std::endl
             << std::endl;
   std::cout << "operator<< [bin]: " << set_bv_format(2) << zero << std::endl;
   std::cout << "operator<< [dec]: " << set_bv_format(10) << zero << std::endl;
   std::cout << "operator<< [hex]: " << set_bv_format(16) << zero << std::endl;
-  std::cout << "str():            " << zero.str() << std::endl;
-  std::cout << "str(10):          " << zero.str(10) << std::endl;
-  std::cout << "str(16):          " << zero.str(16) << std::endl << std::endl;
+  std::cout << "str()      [bin]: " << zero.str() << std::endl;
+  std::cout << "str(10)    [dec]: " << zero.str(10) << std::endl;
+  std::cout << "str(16)    [hex]: " << zero.str(16) << std::endl << std::endl;
   std::cout << "operator<< [bin]:           " << set_bv_format(2) << fpleq
             << std::endl;
   std::cout << "operator<< [dec]:           " << set_bv_format(10) << fpleq
             << std::endl;
   std::cout << "operator<< [hex (ignored)]: " << set_bv_format(16) << fpleq
             << std::endl;
-  std::cout << "str():                      " << fpleq.str() << std::endl;
-  std::cout << "str(10):                    " << fpleq.str(10) << std::endl;
-  std::cout << "str(16) (ignored):          " << fpleq.str(16) << std::endl
+  std::cout << "str()      [bin]:           " << fpleq.str() << std::endl;
+  std::cout << "str(10)    [dec]:           " << fpleq.str(10) << std::endl;
+  std::cout << "str(16)    [hex (ignored)]: " << fpleq.str(16) << std::endl
             << std::endl;
 
   // Print asserted formulas.
