@@ -2905,19 +2905,22 @@ TEST_F(TestCApi, parser)
   FILE *infile             = fopen(filename, "r");
   BitwuzlaOptions *options = bitwuzla_options_new();
   ASSERT_DEATH(
-      bitwuzla_parser_new(nullptr, filename, infile, "smt2", "<stdout>"),
+      bitwuzla_parser_new(nullptr, filename, infile, "smt2", 2, "<stdout>"),
       d_error_not_null);
   ASSERT_DEATH(
-      bitwuzla_parser_new(options, nullptr, infile, "smt2", "<stdout>"),
+      bitwuzla_parser_new(options, nullptr, infile, "smt2", 2, "<stdout>"),
       d_error_not_null);
   ASSERT_DEATH(
-      bitwuzla_parser_new(options, filename, nullptr, "smt2", "<stdout>"),
+      bitwuzla_parser_new(options, filename, nullptr, "smt2", 2, "<stdout>"),
       d_error_not_null);
   ASSERT_DEATH(
-      bitwuzla_parser_new(options, filename, infile, nullptr, "<stdout>"),
+      bitwuzla_parser_new(options, filename, infile, nullptr, 2, "<stdout>"),
       d_error_not_null);
+  ASSERT_DEATH(
+      bitwuzla_parser_new(options, filename, infile, "smt2", 12, "<stdout>"),
+      "invalid bit-vector output number format");
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(options, filename, infile, "smt2", "<stdout>");
+      bitwuzla_parser_new(options, filename, infile, "smt2", 2, "<stdout>");
   ASSERT_DEATH(bitwuzla_parser_parse(nullptr, true), d_error_not_null);
   const char *err = bitwuzla_parser_parse(parser, true);
   ASSERT_EQ(err, nullptr);

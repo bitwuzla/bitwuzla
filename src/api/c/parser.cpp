@@ -26,6 +26,7 @@ struct BitwuzlaParser
                  const char* infile_name,
                  FILE* infile,
                  const char* language,
+                 uint8_t base,
                  const char* outfile_name)
   {
     std::ofstream outfile;
@@ -33,7 +34,9 @@ struct BitwuzlaParser
     if (std::string(outfile_name) != "<stdout>")
     {
       outfile.open(outfile_name, std::ofstream::out);
+      out = &outfile;
     }
+    (*out) << bitwuzla::set_bv_format(base);
     d_parser.reset(new bitwuzla::parser::Parser(
         options->d_options, infile_name, infile, language, out));
   }
@@ -50,6 +53,7 @@ bitwuzla_parser_new(BitwuzlaOptions* options,
                     const char* infile_name,
                     FILE* infile,
                     const char* language,
+                    uint8_t base,
                     const char* outfile_name)
 {
   BitwuzlaParser* res;
@@ -59,8 +63,8 @@ bitwuzla_parser_new(BitwuzlaOptions* options,
   BITWUZLA_CHECK_NOT_NULL(infile);
   BITWUZLA_CHECK_NOT_NULL(language);
   BITWUZLA_CHECK_NOT_NULL(outfile_name);
-  res =
-      new BitwuzlaParser(options, infile_name, infile, language, outfile_name);
+  res = new BitwuzlaParser(
+      options, infile_name, infile, language, base, outfile_name);
   BITWUZLA_TRY_CATCH_END;
   return res;
 }

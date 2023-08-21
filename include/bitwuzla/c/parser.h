@@ -29,7 +29,11 @@ typedef struct BitwuzlaParser BitwuzlaParser;
  * @param options The associated options.
  * @param infile_name  The name of the input file.
  * @param infile       The input file.
- * @param format       The format of the input file.
+ * @param language     The format of the input file.
+ * @param base         The base of the string representation of bit-vector
+ *                     values; `2` for binary, `10` for decimal, and `16` for
+ *                     hexadecimal. Always ignored for Boolean and RoundingMode
+ *                     values.
  * @param outfile_name The output file name. If name is '<stdout>', the parser
  *                     writes to stdout.
  * @return A pointer to the created Bitwuzla parser instance.
@@ -41,6 +45,7 @@ BitwuzlaParser* bitwuzla_parser_new(BitwuzlaOptions* options,
                                     const char* infile_name,
                                     FILE* infile,
                                     const char* language,
+                                    uint8_t base,
                                     const char* outfile_name);
 
 /**
