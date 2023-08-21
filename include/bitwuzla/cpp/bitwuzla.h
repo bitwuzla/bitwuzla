@@ -658,9 +658,15 @@ class Term
 
   /**
    * Get the SMT-LIB v2 string representation of this term.
+   * @note Floating-point values are represented in terms of operator `fp`.
+   *       Their component bit-vector values can only be printed in binary or
+   *       decimal format. If base `16` is configured, the format for
+   *       floating-point component bit-vector values defaults to binary format.
+   * @param base The base of the string representation of bit-vector values;
+   *             `2` for binary, `10` for decimal, and `16` for hexadecimal.
    * @return A string representation of this term.
    */
-  std::string str() const;
+  std::string str(uint8_t base = 2) const;
 
   /**
    * Get value from value term.

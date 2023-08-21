@@ -994,7 +994,7 @@ const char *bitwuzla_term_value_get_str(BitwuzlaTerm term);
  *       values.
  *
  * @note Return value is valid until next `bitwuzla_term_value_get_str_fmt`
- * call.
+ *       call.
  */
 const char *bitwuzla_term_value_get_str_fmt(BitwuzlaTerm term, uint8_t base);
 
@@ -1032,11 +1032,33 @@ BitwuzlaRoundingMode bitwuzla_term_value_get_rm(BitwuzlaTerm term);
 
 /**
  * Get the SMT-LIB v2 string representation of a term.
+ * @note This uses default binary format for bit-vector value strings.
  * @return A string representation of the given term.
  * @note The returned char* pointer is only valid until the next
  *       `bitwuzla_term_to_string` call.
  */
 const char *bitwuzla_term_to_string(BitwuzlaTerm term);
+
+/**
+ * Get the SMT-LIB v2 string representation of a term. String representations
+ * of bit-vector values are printed in the given base.
+ * @param base The base of the string representation of bit-vector values; `2`
+ *             for binary, `10` for decimal, and `16` for hexadecimal. Always
+ *             ignored for Boolean and RoundingMode values.
+ * @return     A string representation of the given term.
+ *
+ * @note The returned char* pointer is only valid until the next
+ *       `bitwuzla_term_to_string` call.
+ */
+const char *bitwuzla_term_to_string_fmt(BitwuzlaTerm term, uint8_t base);
+
+/**
+ * Print term in SMT-LIB v2 format.
+ * @note This uses default binary format for bit-vector value strings.
+ * @param term  The term.
+ * @param file  The file to print the term to.
+ */
+void bitwuzla_term_print(BitwuzlaTerm term, FILE *file);
 
 /**
  * Print term in SMT-LIB v2 format.
@@ -1050,7 +1072,7 @@ const char *bitwuzla_term_to_string(BitwuzlaTerm term);
  *       format. If base `16` is configured, the format for floating-point
  *       component bit-vector values defaults to binary format.
  */
-void bitwuzla_term_print(BitwuzlaTerm term, FILE *file, uint8_t base);
+void bitwuzla_term_print_fmt(BitwuzlaTerm term, FILE *file, uint8_t base);
 
 /** @} */
 

@@ -17,10 +17,10 @@ This file collects a summary of important and/or user-visible changes.
       case. New API function
       `bitwuzla_term_value_get_str_fmt(BitwuzlaTerm, uint8_t)`
       now offers the previous behavior of this function.
-    - `bitwuzla_term_print(BitwuzlaTerm, FILE*)` changed to  
-      `bitwuzla_term_print(BitwuzlaTerm, FILE*, uint8_t)`:  
-      The bv output number format when printing terms can now be configured via
-      via (new, required) parameter `uint8_t base`.
+    - New API function `bitwuzla_term_print_fmt(BitwuzlaTerm, FILE*, uint8_t)`  
+      allows to configure the bv output number format when printing terms.
+      Function `bitwuzla_term_print(BitwuzlaTerm)` remains unchanged and, as
+      previously, defaults to binary bit-vector output format.
     - `bitwuzla_term_print_formula(Bitwuzla*, const char*, FILE*)` changed to  
       `bitwuzla_term_print_formula(Bitwuzla*, const char*, FILE*, uint8_t)`:  
       The bv output number format when printing the currently asserted input

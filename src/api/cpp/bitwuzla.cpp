@@ -945,14 +945,14 @@ Term::is_rm_value_rtz() const
 }
 
 std::string
-Term::str() const
+Term::str(uint8_t base) const
 {
   BITWUZLA_CHECK_NOT_NULL(d_node);
   if (!d_node)
   {
     return "(nil)";
   }
-  return d_node->str();
+  return d_node->str(base);
 }
 
 template <>

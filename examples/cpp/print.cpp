@@ -33,6 +33,7 @@ main()
   Term b      = mk_const(mk_bool_sort(), "b");
   Term bv     = mk_const(bv8, "bv");
   Term fp     = mk_const(fp16, "fp");
+  Term rm     = mk_const(mk_rm_sort(), "rm");
   Term fun    = mk_const(mk_fun_sort({bv8, fp16, bv32}, fp16), "fun");
   Term zero   = mk_bv_zero(bv8);
   Term ones   = mk_bv_ones(mk_bv_sort(23));
@@ -62,23 +63,32 @@ main()
   ;
 
   // Print terms.
-  // Note: Term::str() uses the binary bv output format (not configurable).
-  std::cout << "Print term [default (binary) bv output format]:" << std::endl;
-  std::cout << "-----------------------------------------------" << std::endl;
-  std::cout << "operator<<: " << fpleq << std::endl;
-  std::cout << "str():      " << fpleq.str() << std::endl << std::endl;
-
-  std::cout << "Print term [hexadecimal bv output format]:" << std::endl;
-  std::cout << "------------------------------------------" << std::endl;
-  std::cout << set_bv_format(16);
-  std::cout << "operator<<: " << fpleq << std::endl;
-  std::cout << "str():      " << fpleq.str() << std::endl << std::endl;
-
-  std::cout << "Print term [decimal bv output format]:" << std::endl;
-  std::cout << "--------------------------------------" << std::endl;
-  std::cout << set_bv_format(10);
-  std::cout << "operator<<: " << fpleq << std::endl;
-  std::cout << "str():      " << fpleq.str() << std::endl << std::endl;
+  // Note: Hexadecimal bv ouput format is ignored if the value is not of size
+  //       divisible by 4.
+  std::cout << "Print term:" << std::endl;
+  std::cout << "-----------" << std::endl;
+  std::cout << "operator<<:                 " << rm << std::endl;
+  std::cout << "operator<< [dec (ignored)]: " << set_bv_format(10) << rm
+            << std::endl;
+  std::cout << "str():                      " << rm.str() << std::endl;
+  std::cout << "str(16) (ignored):          " << rm.str(16) << std::endl
+            << std::endl;
+  std::cout << "operator<< [bin]: " << set_bv_format(2) << zero << std::endl;
+  std::cout << "operator<< [dec]: " << set_bv_format(10) << zero << std::endl;
+  std::cout << "operator<< [hex]: " << set_bv_format(16) << zero << std::endl;
+  std::cout << "str():            " << zero.str() << std::endl;
+  std::cout << "str(10):          " << zero.str(10) << std::endl;
+  std::cout << "str(16):          " << zero.str(16) << std::endl << std::endl;
+  std::cout << "operator<< [bin]:           " << set_bv_format(2) << fpleq
+            << std::endl;
+  std::cout << "operator<< [dec]:           " << set_bv_format(10) << fpleq
+            << std::endl;
+  std::cout << "operator<< [hex (ignored)]: " << set_bv_format(16) << fpleq
+            << std::endl;
+  std::cout << "str():                      " << fpleq.str() << std::endl;
+  std::cout << "str(10):                    " << fpleq.str(10) << std::endl;
+  std::cout << "str(16) (ignored):          " << fpleq.str(16) << std::endl
+            << std::endl;
 
   // Print asserted formulas.
   // Note: This uses the default bit-vector output format (binary).
@@ -205,14 +215,13 @@ main()
 
   std::cout << "Print value of RoundingMode const:" << std::endl
             << "----------------------------------" << std::endl;
-  bitwuzla::Term rm      = bitwuzla::mk_const(bitwuzla::mk_rm_sort(), "rm");
   RoundingMode rm_val    = bitwuzla.get_value(rm).value<RoundingMode>();
   std::string rm_val_str = bitwuzla.get_value(rm).value<std::string>();
   std::cout << rm << ": " << rm_val << " [RoundingMode]" << std::endl
             << rm << ": " << rm_val_str << " [std::string]" << std::endl
             << std::endl;
 
-  bitwuzla::Term fp_val = bitwuzla.get_value(fp);
+  Term fp_val = bitwuzla.get_value(fp);
 
   std::cout << "Print value of fp const as std::string (base ignored):"
             << std::endl

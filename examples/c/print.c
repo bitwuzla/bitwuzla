@@ -30,6 +30,7 @@ main()
   BitwuzlaTerm b      = bitwuzla_mk_const(bitwuzla_mk_bool_sort(), "b");
   BitwuzlaTerm bv     = bitwuzla_mk_const(bv8, "bv");
   BitwuzlaTerm fp     = bitwuzla_mk_const(fp16, "fp");
+  BitwuzlaTerm rm     = bitwuzla_mk_const(bitwuzla_mk_rm_sort(), "rm");
   BitwuzlaTerm fun    = bitwuzla_mk_const(fun_sort, "fun");
   BitwuzlaTerm zero   = bitwuzla_mk_bv_zero(bv8);
   BitwuzlaTerm ones   = bitwuzla_mk_bv_ones(bitwuzla_mk_bv_sort(23));
@@ -69,28 +70,53 @@ main()
   printf("bitwuzla_sort_to_string(): %s\n\n", bitwuzla_sort_to_string(bv32));
 
   // Print terms.
-  // Note: bitwuzla_term_to_string() uses the binary bv output format (not
-  //       configurable).
-  printf("Print term [binary bv output format]:\n");
-  printf("-------------------------------------\n");
-  printf("bitwuzla_term_print():     ");
-  bitwuzla_term_print(fpleq, stdout, 2);
+  // Note: Hexadecimal bv ouput format is ignored if the value is not of size
+  //       divisible by 4.
+  printf("Print term:\n");
+  printf("-----------\n");
+  printf("bitwuzla_term_print():                        ");
+  bitwuzla_term_print(rm, stdout);
   printf("\n");
-  printf("bitwuzla_term_to_string(): %s\n\n", bitwuzla_term_to_string(fpleq));
-
-  printf("Print term [hexadecimal bv output format]:\n");
-  printf("------------------------------------------\n");
-  printf("bitwuzla_term_print():     ");
-  bitwuzla_term_print(fpleq, stdout, 16);
+  printf("bitwuzla_term_print_fmt() [10 (ignored)]:     ");
+  bitwuzla_term_print_fmt(rm, stdout, 10);
   printf("\n");
-  printf("bitwuzla_term_to_string(): %s\n\n", bitwuzla_term_to_string(fpleq));
-
-  printf("Print term [decimal bv output format]:\n");
-  printf("--------------------------------------\n");
-  printf("bitwuzla_term_print():     ");
-  bitwuzla_term_print(fpleq, stdout, 10);
+  printf("bitwuzla_term_to_string():                    %s\n",
+         bitwuzla_term_to_string(rm));
+  printf("bitwuzla_term_to_string_fmt() [16 (ignored)]: %s\n",
+         bitwuzla_term_to_string_fmt(rm, 10));
   printf("\n");
-  printf("bitwuzla_term_to_string(): %s\n\n", bitwuzla_term_to_string(fpleq));
+  printf("bitwuzla_term_print() [2]:          ");
+  bitwuzla_term_print(zero, stdout);
+  printf("\n");
+  printf("bitwuzla_term_print_fmt() [10]:     ");
+  bitwuzla_term_print_fmt(zero, stdout, 10);
+  printf("\n");
+  printf("bitwuzla_term_print_fmt() [16]:     ");
+  bitwuzla_term_print_fmt(zero, stdout, 16);
+  printf("\n");
+  printf("bitwuzla_term_to_string() [ 2]:     %s\n",
+         bitwuzla_term_to_string(zero));
+  printf("bitwuzla_term_to_string_fmt() [10]: %s\n",
+         bitwuzla_term_to_string_fmt(zero, 10));
+  printf("bitwuzla_term_to_string_fmt() [16]: %s\n",
+         bitwuzla_term_to_string_fmt(zero, 16));
+  printf("\n");
+  printf("bitwuzla_term_print_fmt()     [ 2]:           ");
+  bitwuzla_term_print_fmt(fpleq, stdout, 2);
+  printf("\n");
+  printf("bitwuzla_term_print_fmt()     [10]:           ");
+  bitwuzla_term_print_fmt(fpleq, stdout, 10);
+  printf("\n");
+  printf("bitwuzla_term_print_fmt()     [16 (ignored)]: ");
+  bitwuzla_term_print_fmt(fpleq, stdout, 16);
+  printf("\n");
+  printf("bitwuzla_term_to_string_fmt() [ 2]:           %s\n",
+         bitwuzla_term_to_string_fmt(fpleq, 2));
+  printf("bitwuzla_term_to_string_fmt() [10]:           %s\n",
+         bitwuzla_term_to_string_fmt(fpleq, 10));
+  printf("bitwuzla_term_to_string_fmt() [16 (ignored)]: %s\n",
+         bitwuzla_term_to_string_fmt(fpleq, 16));
+  printf("\n");
 
   // Print asserted formulas using binary bit-vector output format.
   {
@@ -148,7 +174,6 @@ main()
 
   printf("Print value of RoundingMode const:\n");
   printf("----------------------------------\n");
-  BitwuzlaTerm rm     = bitwuzla_mk_const(bitwuzla_mk_rm_sort(), "rm");
   BitwuzlaTerm rm_val = bitwuzla_get_value(bitwuzla, rm);
   BitwuzlaRoundingMode rm_val_rm = bitwuzla_term_value_get_rm(rm_val);
   const char* rm_val_str         = bitwuzla_term_value_get_str(rm_val);

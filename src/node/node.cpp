@@ -256,10 +256,10 @@ Node::rend() const
 }
 
 std::string
-Node::str() const
+Node::str(uint8_t base) const
 {
   std::stringstream ss;
-  ss << *this;
+  ss << printer::set_bv_format(base) << *this;
   return ss.str();
 }
 

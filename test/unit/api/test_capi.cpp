@@ -3536,21 +3536,65 @@ TEST_F(TestCApi, term_is_rm_value_rtz)
 
 TEST_F(TestCApi, term_print)
 {
-  ASSERT_DEATH(bitwuzla_term_print(0, stdout, 2), d_error_inv_term);
-  ASSERT_DEATH(bitwuzla_term_print(d_and_bv_const1, nullptr, 2),
+  ASSERT_DEATH(bitwuzla_term_print(0, stdout), d_error_inv_term);
+  ASSERT_DEATH(bitwuzla_term_print(d_and_bv_const1, nullptr), d_error_not_null);
+  {
+    testing::internal::CaptureStdout();
+
+    bitwuzla_term_print(d_and_bv_const1, stdout);
+    bitwuzla_term_print(d_exists, stdout);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output,
+              "(= #b1 (bvand #b1 bv1))"
+              "(exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q)))");
+  }
+
+  BitwuzlaSort bv1  = bitwuzla_mk_bv_sort(1);
+  BitwuzlaSort bv5  = bitwuzla_mk_bv_sort(5);
+  BitwuzlaSort bv10 = bitwuzla_mk_bv_sort(10);
+  BitwuzlaSort bv4  = bitwuzla_mk_bv_sort(4);
+  BitwuzlaSort bv8  = bitwuzla_mk_bv_sort(8);
+
+  {
+    BitwuzlaTerm t =
+        bitwuzla_mk_fp_value(bitwuzla_mk_bv_one(bv1),
+                             bitwuzla_mk_bv_value_uint64(bv5, 3),
+                             bitwuzla_mk_bv_value_uint64(bv10, 23));
+
+    testing::internal::CaptureStdout();
+    bitwuzla_term_print(t, stdout);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, "(fp #b1 #b00011 #b0000010111)");
+  }
+  {
+    BitwuzlaTerm t = bitwuzla_mk_fp_value(bitwuzla_mk_bv_one(bv1),
+                                          bitwuzla_mk_bv_value_uint64(bv4, 3),
+                                          bitwuzla_mk_bv_value_uint64(bv8, 23));
+    testing::internal::CaptureStdout();
+    bitwuzla_term_print(t, stdout);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, "(fp #b1 #b0011 #b00010111)");
+  }
+}
+
+TEST_F(TestCApi, term_print_fmt)
+{
+  ASSERT_DEATH(bitwuzla_term_print_fmt(0, stdout, 2), d_error_inv_term);
+  ASSERT_DEATH(bitwuzla_term_print_fmt(d_and_bv_const1, nullptr, 2),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_term_print(d_and_bv_const1, stdout, 23),
+  ASSERT_DEATH(bitwuzla_term_print_fmt(d_and_bv_const1, stdout, 23),
                "invalid bit-vector output number format");
 
   {
     testing::internal::CaptureStdout();
 
-    bitwuzla_term_print(d_and_bv_const1, stdout, 2);
-    bitwuzla_term_print(d_exists, stdout, 2);
-    bitwuzla_term_print(d_and_bv_const1, stdout, 10);
-    bitwuzla_term_print(d_exists, stdout, 10);
-    bitwuzla_term_print(d_and_bv_const1, stdout, 16);
-    bitwuzla_term_print(d_exists, stdout, 16);
+    bitwuzla_term_print_fmt(d_and_bv_const1, stdout, 2);
+    bitwuzla_term_print_fmt(d_exists, stdout, 2);
+    bitwuzla_term_print_fmt(d_and_bv_const1, stdout, 10);
+    bitwuzla_term_print_fmt(d_exists, stdout, 10);
+    bitwuzla_term_print_fmt(d_and_bv_const1, stdout, 16);
+    bitwuzla_term_print_fmt(d_exists, stdout, 16);
 
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output,
@@ -3575,9 +3619,9 @@ TEST_F(TestCApi, term_print)
                              bitwuzla_mk_bv_value_uint64(bv10, 23));
 
     testing::internal::CaptureStdout();
-    bitwuzla_term_print(t, stdout, 2);
-    bitwuzla_term_print(t, stdout, 10);
-    bitwuzla_term_print(t, stdout, 16);
+    bitwuzla_term_print_fmt(t, stdout, 2);
+    bitwuzla_term_print_fmt(t, stdout, 10);
+    bitwuzla_term_print_fmt(t, stdout, 16);
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output,
               "(fp #b1 #b00011 #b0000010111)"
@@ -3589,9 +3633,9 @@ TEST_F(TestCApi, term_print)
                                           bitwuzla_mk_bv_value_uint64(bv4, 3),
                                           bitwuzla_mk_bv_value_uint64(bv8, 23));
     testing::internal::CaptureStdout();
-    bitwuzla_term_print(t, stdout, 2);
-    bitwuzla_term_print(t, stdout, 10);
-    bitwuzla_term_print(t, stdout, 16);
+    bitwuzla_term_print_fmt(t, stdout, 2);
+    bitwuzla_term_print_fmt(t, stdout, 10);
+    bitwuzla_term_print_fmt(t, stdout, 16);
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output,
               "(fp #b1 #b0011 #b00010111)"
@@ -3604,15 +3648,15 @@ TEST_F(TestCApi, term_print_regr0)
 {
   testing::internal::CaptureStdout();
 
-  bitwuzla_term_print(d_rm_rne, stdout, 2);
+  bitwuzla_term_print(d_rm_rne, stdout);
   printf("\n");
-  bitwuzla_term_print(d_rm_rna, stdout, 2);
+  bitwuzla_term_print(d_rm_rna, stdout);
   printf("\n");
-  bitwuzla_term_print(d_rm_rtn, stdout, 2);
+  bitwuzla_term_print(d_rm_rtn, stdout);
   printf("\n");
-  bitwuzla_term_print(d_rm_rtp, stdout, 2);
+  bitwuzla_term_print(d_rm_rtp, stdout);
   printf("\n");
-  bitwuzla_term_print(d_rm_rtz, stdout, 2);
+  bitwuzla_term_print(d_rm_rtz, stdout);
 
   std::string output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "RNE\nRNA\nRTN\nRTP\nRTZ");
@@ -3631,7 +3675,7 @@ TEST_F(TestCApi, term_print_regr1)
                                   bitwuzla_mk_bv_zero(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout, 2);
+  bitwuzla_term_print(fp_const, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000000)");
 
@@ -3640,7 +3684,7 @@ TEST_F(TestCApi, term_print_regr1)
                                   bitwuzla_mk_bv_zero(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout, 2);
+  bitwuzla_term_print(fp_const, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000000)");
 
@@ -3649,7 +3693,7 @@ TEST_F(TestCApi, term_print_regr1)
                                   bitwuzla_mk_bv_one(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout, 2);
+  bitwuzla_term_print(fp_const, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000001)");
 
@@ -3658,7 +3702,7 @@ TEST_F(TestCApi, term_print_regr1)
                                   bitwuzla_mk_bv_one(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout, 2);
+  bitwuzla_term_print(fp_const, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000001)");
 }
