@@ -84,6 +84,19 @@ Node rebuild_node(NodeManager& nm,
 Node rebuild_node(NodeManager& nm,
                   const Node& node,
                   const std::unordered_map<Node, Node>& cache);
+
+/**
+ * Apply substitutions to node.
+ *
+ * @param node The node process.
+ * @param substitutions The substitution map to apply.
+ * @param cache The substitution cache.
+ * @return The node with substituions applied.
+ */
+Node substitute(NodeManager& nm,
+                const Node& node,
+                const std::unordered_map<Node, Node>& substitutions,
+                std::unordered_map<Node, Node>& cache);
 }
 
 #endif
