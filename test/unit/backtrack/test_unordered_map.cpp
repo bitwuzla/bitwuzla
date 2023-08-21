@@ -10,6 +10,7 @@
 
 #include "backtrack/unordered_map.h"
 #include "gtest/gtest.h"
+#include "test.h"
 
 namespace bzla::test {
 
@@ -44,7 +45,7 @@ TEST_F(TestUnorderedMap, push_pop)
   ASSERT_NE(map.find(0), map.end());
   ASSERT_NE(map.find(1), map.end());
   ASSERT_NE(map.find(2), map.end());
-  ASSERT_DEATH(mgr.pop(), "d_scope_levels > 0");
+  ASSERT_DEATH_DEBUG(mgr.pop(), "d_scope_levels > 0");
 }
 
 TEST_F(TestUnorderedMap, push_pop_mgr)
@@ -69,7 +70,7 @@ TEST_F(TestUnorderedMap, push_pop_mgr)
   ASSERT_NE(map.find(0), map.end());
   ASSERT_NE(map.find(1), map.end());
   ASSERT_NE(map.find(2), map.end());
-  ASSERT_DEATH(mgr.pop(), "d_scope_levels > 0");
+  ASSERT_DEATH_DEBUG(mgr.pop(), "d_scope_levels > 0");
 }
 
 TEST_F(TestUnorderedMap, stress)

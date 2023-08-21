@@ -115,7 +115,7 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
         {
           if (test_both_const_leafs)
           {
-            ASSERT_DEATH(lop.select_path(t, ess_inputs), "!all_value");
+            ASSERT_DEATH_DEBUG(lop.select_path(t, ess_inputs), "!all_value");
             test_both_const_leafs = false;
           }
           continue;
@@ -147,7 +147,7 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
         {
           if (test_both_const_ops)
           {
-            ASSERT_DEATH(oop.select_path(t, ess_inputs), "!all_value");
+            ASSERT_DEATH_DEBUG(oop.select_path(t, ess_inputs), "!all_value");
             test_both_const_ops = false;
           }
           continue;
@@ -240,7 +240,7 @@ TestBvNodeSelPath::test_ite()
           {
             if (test_all_value_leafs)
             {
-              ASSERT_DEATH(lop.select_path(t, ess_inputs), "!all_value");
+              ASSERT_DEATH_DEBUG(lop.select_path(t, ess_inputs), "!all_value");
               test_all_value_leafs = false;
             }
             continue;
@@ -281,7 +281,7 @@ TestBvNodeSelPath::test_ite()
           {
             if (test_all_value_ops)
             {
-              ASSERT_DEATH(oop.select_path(t, ess_inputs), "!all_value");
+              ASSERT_DEATH_DEBUG(oop.select_path(t, ess_inputs), "!all_value");
               test_all_value_ops = false;
             }
             continue;
@@ -342,7 +342,7 @@ TestBvNodeSelPath::test_not()
       {
         if (test_const_leaf)
         {
-          ASSERT_DEATH(lop.select_path(t, ess_inputs), "!all_value");
+          ASSERT_DEATH_DEBUG(lop.select_path(t, ess_inputs), "!all_value");
           test_const_leaf = false;
         }
         continue;
@@ -364,7 +364,7 @@ TestBvNodeSelPath::test_not()
       {
         if (test_const_op)
         {
-          ASSERT_DEATH(oop.select_path(t, ess_inputs), "!all_value");
+          ASSERT_DEATH_DEBUG(oop.select_path(t, ess_inputs), "!all_value");
           test_const_op = false;
         }
         continue;
@@ -422,7 +422,7 @@ TestBvNodeSelPath::test_extract()
           {
             if (test_const_leaf)
             {
-              ASSERT_DEATH(lop.select_path(t, ess_inputs), "!all_value");
+              ASSERT_DEATH_DEBUG(lop.select_path(t, ess_inputs), "!all_value");
               test_const_leaf = false;
             }
             continue;
@@ -444,7 +444,7 @@ TestBvNodeSelPath::test_extract()
           {
             if (test_const_op)
             {
-              ASSERT_DEATH(oop.select_path(t, ess_inputs), "!all_value");
+              ASSERT_DEATH_DEBUG(oop.select_path(t, ess_inputs), "!all_value");
               test_const_op = false;
             }
             continue;
@@ -501,7 +501,7 @@ TestBvNodeSelPath::test_sext()
         {
           if (test_const_leaf)
           {
-            ASSERT_DEATH(lop.select_path(t, ess_inputs), "!all_value");
+            ASSERT_DEATH_DEBUG(lop.select_path(t, ess_inputs), "!all_value");
             test_const_leaf = false;
           }
           continue;
@@ -523,7 +523,7 @@ TestBvNodeSelPath::test_sext()
         {
           if (test_const_op)
           {
-            ASSERT_DEATH(oop.select_path(t, ess_inputs), "!all_value");
+            ASSERT_DEATH_DEBUG(oop.select_path(t, ess_inputs), "!all_value");
             test_const_op = false;
           }
           continue;

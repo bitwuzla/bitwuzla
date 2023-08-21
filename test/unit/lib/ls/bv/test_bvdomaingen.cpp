@@ -371,15 +371,15 @@ TEST_F(TestBvDomainGen, has_random)
 TEST_F(TestBvDomainGen, next)
 {
   test_next(false, false);
-  ASSERT_DEATH(BitVectorDomainGenerator(BitVector::mk_ones(4)).next(),
-               "has_next");
+  ASSERT_DEATH_DEBUG(BitVectorDomainGenerator(BitVector::mk_ones(4)).next(),
+                     "has_next");
 }
 
 TEST_F(TestBvDomainGen, random)
 {
   test_next(true, false);
-  ASSERT_DEATH(BitVectorDomainGenerator(BitVector::mk_ones(4)).random(),
-               "has_random");
+  ASSERT_DEATH_DEBUG(BitVectorDomainGenerator(BitVector::mk_ones(4)).random(),
+                     "has_random");
 }
 
 TEST_F(TestBvDomainGen, ctor_dtor_signed)
@@ -444,15 +444,16 @@ TEST_F(TestBvDomainGen, has_random_signed)
 TEST_F(TestBvDomainGen, next_signed)
 {
   test_next(true, true);
-  ASSERT_DEATH(BitVectorDomainSignedGenerator(BitVector::mk_ones(4)).next(),
-               "has_next");
+  ASSERT_DEATH_DEBUG(
+      BitVectorDomainSignedGenerator(BitVector::mk_ones(4)).next(), "has_next");
 }
 
 TEST_F(TestBvDomainGen, random_signed)
 {
   test_next(true, true);
-  ASSERT_DEATH(BitVectorDomainSignedGenerator(BitVector::mk_ones(4)).random(),
-               "has_random");
+  ASSERT_DEATH_DEBUG(
+      BitVectorDomainSignedGenerator(BitVector::mk_ones(4)).random(),
+      "has_random");
 }
 
 }  // namespace bzla::ls::test

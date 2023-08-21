@@ -63,12 +63,12 @@ TEST_F(TestBitVectorDomain, ctor_dtor)
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain(4, 0));
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain(8, 5));
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain(BitVectorDomain(8, 5)));
-  ASSERT_DEATH(BitVectorDomain(0), "size > 0");
-  ASSERT_DEATH(
+  ASSERT_DEATH_DEBUG(BitVectorDomain(0), "size > 0");
+  ASSERT_DEATH_DEBUG(
       BitVectorDomain(BitVector::from_ui(10, 4), BitVector::from_ui(11, 5)),
       "lo.size\\(\\) == hi.size\\(\\)");
-  ASSERT_DEATH(BitVectorDomain(""), "size > 0");
-  ASSERT_DEATH(BitVectorDomain("12345"), "is_valid_bin_str");
+  ASSERT_DEATH_DEBUG(BitVectorDomain(""), "size > 0");
+  ASSERT_DEATH_DEBUG(BitVectorDomain("12345"), "is_valid_bin_str");
 }
 
 TEST_F(TestBitVectorDomain, size)
@@ -162,18 +162,18 @@ TEST_F(TestBitVectorDomain, has_fixed_bits)
   ASSERT_TRUE(BitVectorDomain(4, 0).has_fixed_bits());
   ASSERT_TRUE(BitVectorDomain(8, 5).has_fixed_bits());
   ASSERT_TRUE(BitVectorDomain(BitVectorDomain(8, 5)).has_fixed_bits());
-  ASSERT_DEATH(BitVectorDomain(BitVector(4, "1000"), BitVector(4, "0111"))
-                   .has_fixed_bits(),
-               "is_valid");
-  ASSERT_DEATH(BitVectorDomain(BitVector(4, "0100"), BitVector(4, "1011"))
-                   .has_fixed_bits(),
-               "is_valid");
-  ASSERT_DEATH(BitVectorDomain(BitVector(4, "0110"), BitVector(4, "1001"))
-                   .has_fixed_bits(),
-               "is_valid");
-  ASSERT_DEATH(BitVectorDomain(BitVector(4, "1001"), BitVector(4, "0110"))
-                   .has_fixed_bits(),
-               "is_valid");
+  ASSERT_DEATH_DEBUG(BitVectorDomain(BitVector(4, "1000"), BitVector(4, "0111"))
+                         .has_fixed_bits(),
+                     "is_valid");
+  ASSERT_DEATH_DEBUG(BitVectorDomain(BitVector(4, "0100"), BitVector(4, "1011"))
+                         .has_fixed_bits(),
+                     "is_valid");
+  ASSERT_DEATH_DEBUG(BitVectorDomain(BitVector(4, "0110"), BitVector(4, "1001"))
+                         .has_fixed_bits(),
+                     "is_valid");
+  ASSERT_DEATH_DEBUG(BitVectorDomain(BitVector(4, "1001"), BitVector(4, "0110"))
+                         .has_fixed_bits(),
+                     "is_valid");
 }
 
 TEST_F(TestBitVectorDomain, is_fixed_bit)
@@ -184,7 +184,7 @@ TEST_F(TestBitVectorDomain, is_fixed_bit)
   {
     ASSERT_FALSE(d.is_fixed_bit(i));
   }
-  ASSERT_DEATH(d.is_fixed_bit(5), "< size");
+  ASSERT_DEATH_DEBUG(d.is_fixed_bit(5), "< size");
 }
 
 TEST_F(TestBitVectorDomain, is_fixed_bit_true)
@@ -195,7 +195,7 @@ TEST_F(TestBitVectorDomain, is_fixed_bit_true)
   {
     ASSERT_FALSE(d.is_fixed_bit_true(i));
   }
-  ASSERT_DEATH(d.is_fixed_bit(5), "< size");
+  ASSERT_DEATH_DEBUG(d.is_fixed_bit(5), "< size");
 }
 
 TEST_F(TestBitVectorDomain, is_fixed_bit_false)
@@ -206,7 +206,7 @@ TEST_F(TestBitVectorDomain, is_fixed_bit_false)
   {
     ASSERT_FALSE(d.is_fixed_bit_false(i));
   }
-  ASSERT_DEATH(d.is_fixed_bit(5), "< size");
+  ASSERT_DEATH_DEBUG(d.is_fixed_bit(5), "< size");
 }
 
 TEST_F(TestBitVectorDomain, fix_bit)
@@ -228,7 +228,7 @@ TEST_F(TestBitVectorDomain, fix_bit)
   ASSERT_EQ(d, BitVectorDomain("1000"));
   ASSERT_NO_FATAL_FAILURE(d.fix_bit(3, false));
   ASSERT_EQ(d, BitVectorDomain("0000"));
-  ASSERT_DEATH(d.fix_bit(5, true), "< size");
+  ASSERT_DEATH_DEBUG(d.fix_bit(5, true), "< size");
 }
 
 TEST_F(TestBitVectorDomain, match_fixed_bits)
@@ -340,8 +340,8 @@ TEST_F(TestBitVectorDomain, shl)
       }
     }
   }
-  ASSERT_DEATH(BitVectorDomain(3).bvshl(BitVector(4)),
-               "size\\(\\) == size\\(\\)");
+  ASSERT_DEATH_DEBUG(BitVectorDomain(3).bvshl(BitVector(4)),
+                     "size\\(\\) == size\\(\\)");
 }
 
 TEST_F(TestBitVectorDomain, shr)
@@ -387,8 +387,8 @@ TEST_F(TestBitVectorDomain, shr)
       }
     }
   }
-  ASSERT_DEATH(BitVectorDomain(3).bvshr(BitVector(4)),
-               "size\\(\\) == size\\(\\)");
+  ASSERT_DEATH_DEBUG(BitVectorDomain(3).bvshr(BitVector(4)),
+                     "size\\(\\) == size\\(\\)");
 }
 
 TEST_F(TestBitVectorDomain, ashr)
@@ -445,8 +445,8 @@ TEST_F(TestBitVectorDomain, ashr)
       }
     }
   }
-  ASSERT_DEATH(BitVectorDomain(3).bvashr(BitVector(4)),
-               "size\\(\\) == size\\(\\)");
+  ASSERT_DEATH_DEBUG(BitVectorDomain(3).bvashr(BitVector(4)),
+                     "size\\(\\) == size\\(\\)");
 }
 
 TEST_F(TestBitVectorDomain, concat)

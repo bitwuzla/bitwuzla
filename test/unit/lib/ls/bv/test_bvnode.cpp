@@ -33,7 +33,7 @@ TestBvNode::test_normalize_bounds(const BitVector& min_u,
     assert(!max_u.is_null());
     if (min_u.compare(max_u) > 0)
     {
-      ASSERT_DEATH(
+      ASSERT_DEATH_DEBUG(
           node.update_bounds(min_u, max_u, min_u_is_excl, max_u_is_excl, false),
           "compare");
     }
@@ -47,7 +47,7 @@ TestBvNode::test_normalize_bounds(const BitVector& min_u,
     assert(!max_s.is_null());
     if (min_s.signed_compare(max_s) > 0)
     {
-      ASSERT_DEATH(
+      ASSERT_DEATH_DEBUG(
           node.update_bounds(min_s, max_s, min_s_is_excl, max_s_is_excl, true),
           "signed_compare");
     }

@@ -10,6 +10,7 @@
 
 #include "gtest/gtest.h"
 #include "option/option.h"
+#include "test.h"
 
 namespace bzla::test {
 
@@ -28,8 +29,10 @@ TEST_F(TestOptions, opt_bool)
   d_opts.set<bool>(Option::PRODUCE_MODELS, true);
   ASSERT_EQ(d_opts.produce_models(), true);
   ASSERT_EQ(d_opts.get<bool>(Option::PRODUCE_MODELS), true);
-  ASSERT_DEATH(d_opts.get<uint64_t>(Option::PRODUCE_MODELS), "is_numeric");
-  ASSERT_DEATH(d_opts.get<std::string>(Option::PRODUCE_MODELS), "is_mode");
+  ASSERT_DEATH_DEBUG(d_opts.get<uint64_t>(Option::PRODUCE_MODELS),
+                     "is_numeric");
+  ASSERT_DEATH_DEBUG(d_opts.get<std::string>(Option::PRODUCE_MODELS),
+                     "is_mode");
 }
 
 TEST_F(TestOptions, opt_num)
@@ -42,8 +45,8 @@ TEST_F(TestOptions, opt_num)
   d_opts.set<uint64_t>(Option::LOG_LEVEL, 1);
   ASSERT_EQ(d_opts.log_level(), 1);
   ASSERT_EQ(d_opts.get<uint64_t>(Option::LOG_LEVEL), 1);
-  ASSERT_DEATH(d_opts.get<bool>(Option::LOG_LEVEL), "is_bool");
-  ASSERT_DEATH(d_opts.get<std::string>(Option::LOG_LEVEL), "is_mode");
+  ASSERT_DEATH_DEBUG(d_opts.get<bool>(Option::LOG_LEVEL), "is_bool");
+  ASSERT_DEATH_DEBUG(d_opts.get<std::string>(Option::LOG_LEVEL), "is_mode");
 }
 
 TEST_F(TestOptions, opt_enum)
@@ -60,7 +63,7 @@ TEST_F(TestOptions, opt_enum)
   ASSERT_EQ(d_opts.sat_solver(), SatSolver::KISSAT);
   ASSERT_EQ(d_opts.get<std::string>(Option::SAT_SOLVER), "kissat");
 #endif
-  ASSERT_DEATH(d_opts.get<bool>(Option::SAT_SOLVER), "is_bool");
-  ASSERT_DEATH(d_opts.get<uint64_t>(Option::SAT_SOLVER), "is_numeric");
+  ASSERT_DEATH_DEBUG(d_opts.get<bool>(Option::SAT_SOLVER), "is_bool");
+  ASSERT_DEATH_DEBUG(d_opts.get<uint64_t>(Option::SAT_SOLVER), "is_numeric");
 }
 };  // namespace bzla::test

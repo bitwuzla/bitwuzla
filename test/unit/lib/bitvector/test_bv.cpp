@@ -727,8 +727,8 @@ TestBitVector::test_is_uadd_overflow_aux(uint64_t size,
   BitVector bv1(size, s1, 10);
   BitVector bv2(size, s2, 10);
   ASSERT_EQ(bv1.is_uadd_overflow(bv2), expected);
-  ASSERT_DEATH(bv1.is_uadd_overflow(BitVector(size + 1, *d_rng)),
-               "d_size == bv.d_size");
+  ASSERT_DEATH_DEBUG(bv1.is_uadd_overflow(BitVector(size + 1, *d_rng)),
+                     "d_size == bv.d_size");
 }
 
 void
@@ -776,8 +776,8 @@ TestBitVector::test_is_umul_overflow_aux(uint64_t size,
   BitVector bv1(size, s1, 10);
   BitVector bv2(size, s2, 10);
   ASSERT_EQ(bv1.is_umul_overflow(bv2), expected);
-  ASSERT_DEATH(bv1.is_umul_overflow(BitVector(size + 1, *d_rng)),
-               "d_size == bv.d_size");
+  ASSERT_DEATH_DEBUG(bv1.is_umul_overflow(BitVector(size + 1, *d_rng)),
+                     "d_size == bv.d_size");
 }
 
 void
@@ -916,16 +916,16 @@ TestBitVector::test_ite(BvFunKind fun_kind)
   BitVector b16(16, *d_rng);
   if (fun_kind == INPLACE_THIS_ALL)
   {
-    ASSERT_DEATH(b8.ibvite(b8, b8, b8), "c.d_size == 1");
-    ASSERT_DEATH(b8.ibvite(b1, b8, b16), "e.d_size == t.d_size");
-    ASSERT_DEATH(b8.ibvite(b1, b16, b8), "e.d_size == t.d_size");
+    ASSERT_DEATH_DEBUG(b8.ibvite(b8, b8, b8), "c.d_size == 1");
+    ASSERT_DEATH_DEBUG(b8.ibvite(b1, b8, b16), "e.d_size == t.d_size");
+    ASSERT_DEATH_DEBUG(b8.ibvite(b1, b16, b8), "e.d_size == t.d_size");
   }
   else
   {
     assert(fun_kind == DEFAULT);
-    ASSERT_DEATH(BitVector::bvite(b8, b8, b8), "c.d_size == 1");
-    ASSERT_DEATH(BitVector::bvite(b1, b8, b16), "t.d_size == e.d_size");
-    ASSERT_DEATH(BitVector::bvite(b1, b16, b8), "t.d_size == e.d_size");
+    ASSERT_DEATH_DEBUG(BitVector::bvite(b8, b8, b8), "c.d_size == 1");
+    ASSERT_DEATH_DEBUG(BitVector::bvite(b1, b8, b16), "t.d_size == e.d_size");
+    ASSERT_DEATH_DEBUG(BitVector::bvite(b1, b16, b8), "t.d_size == e.d_size");
   }
 }
 
@@ -1891,336 +1891,336 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
     case ADD:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvadd(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvadd(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvadd(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvadd(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvadd(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvadd(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvadd(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvadd(b2), "d_size == .*d_size");
       }
       break;
 
     case AND:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvand(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvand(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvand(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvand(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvand(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvand(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvand(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvand(b2), "d_size == .*d_size");
       }
       break;
 
     case ASHR:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvashr(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvashr(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvashr(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvashr(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvashr(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvashr(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvashr(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvashr(b2), "d_size == .*d_size");
       }
       break;
 
     case EQ:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibveq(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibveq(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibveq(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibveq(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibveq(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibveq(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bveq(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bveq(b2), "d_size == .*d_size");
       }
       break;
 
     case IMPLIES:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(BitVector(1).ibvimplies(b2), "b1.d_size == 1");
+        ASSERT_DEATH_DEBUG(BitVector(1).ibvimplies(b2), "b1.d_size == 1");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvimplies(b1, b2), "b1.d_size == 1");
-        ASSERT_DEATH(b1.ibvimplies(b2, b1), "bv0.d_size == 1");
+        ASSERT_DEATH_DEBUG(b1.ibvimplies(b1, b2), "b1.d_size == 1");
+        ASSERT_DEATH_DEBUG(b1.ibvimplies(b2, b1), "bv0.d_size == 1");
       }
       else
       {
-        ASSERT_DEATH(b1.bvimplies(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvimplies(b2), "d_size == .*d_size");
       }
       break;
 
     case MUL:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvmul(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvmul(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvmul(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvmul(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvmul(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvmul(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvmul(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvmul(b2), "d_size == .*d_size");
       }
       break;
 
     case NAND:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvnand(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvnand(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvnand(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvnand(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvnand(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvnand(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvnand(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvnand(b2), "d_size == .*d_size");
       }
       break;
 
     case NE:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvne(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvne(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvne(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvne(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvne(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvne(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvne(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvne(b2), "d_size == .*d_size");
       }
       break;
 
     case NOR:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvnor(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvnor(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvnor(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvnor(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvnor(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvnor(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvnor(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvnor(b2), "d_size == .*d_size");
       }
       break;
 
     case OR:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvor(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvor(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvor(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvor(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvor(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvor(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvor(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvor(b2), "d_size == .*d_size");
       }
       break;
 
     case SHL:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvshl(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvshl(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvshl(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvshl(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvshl(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvshl(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvshl(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvshl(b2), "d_size == .*d_size");
       }
       break;
 
     case SHR:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvshr(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvshr(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvshr(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvshr(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvshr(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvshr(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvshr(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvshr(b2), "d_size == .*d_size");
       }
       break;
 
     case SUB:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvsub(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsub(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvsub(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvsub(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsub(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsub(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvsub(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvsub(b2), "d_size == .*d_size");
       }
       break;
 
     case UDIV:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvudiv(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvudiv(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvudiv(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvudiv(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvudiv(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvudiv(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvudiv(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvudiv(b2), "d_size == .*d_size");
       }
       break;
 
     case ULT:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvult(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvult(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvult(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvult(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvult(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvult(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvult(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvult(b2), "d_size == .*d_size");
       }
       break;
 
     case ULE:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvule(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvule(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvule(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvule(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvule(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvule(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvule(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvule(b2), "d_size == .*d_size");
       }
       break;
 
     case UGT:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvugt(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvugt(b1, b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvugt(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvugt(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvugt(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvugt(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvugt(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvugt(b2), "d_size == .*d_size");
       }
       break;
 
     case UGE:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvuge(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvuge(b1, b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvuge(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvuge(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvuge(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvuge(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvuge(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvuge(b2), "d_size == .*d_size");
       }
       break;
 
     case UREM:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvurem(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvurem(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvurem(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvurem(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvurem(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvurem(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvurem(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvurem(b2), "d_size == .*d_size");
       }
       break;
 
     case XOR:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvxor(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvxor(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvxor(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvxor(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvxor(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvxor(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvxor(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvxor(b2), "d_size == .*d_size");
       }
       break;
 
     case XNOR:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvxnor(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvxnor(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvxnor(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvxnor(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvxnor(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvxnor(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvxnor(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvxnor(b2), "d_size == .*d_size");
       }
       break;
 
@@ -2462,96 +2462,96 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
     case SDIV:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvsdiv(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsdiv(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvsdiv(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvsdiv(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsdiv(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsdiv(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvsdiv(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvsdiv(b2), "d_size == .*d_size");
       }
       break;
 
     case SLT:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvslt(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvslt(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvslt(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvslt(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvslt(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvslt(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvslt(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvslt(b2), "d_size == .*d_size");
       }
       break;
 
     case SLE:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvsle(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsle(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvsle(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvsle(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsle(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsle(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvsle(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvsle(b2), "d_size == .*d_size");
       }
       break;
 
     case SGT:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvsgt(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsgt(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvsgt(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvsgt(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsgt(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsgt(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvsgt(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvsgt(b2), "d_size == .*d_size");
       }
       break;
 
     case SGE:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvsge(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsge(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvsge(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvsge(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsge(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsge(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvsge(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvsge(b2), "d_size == .*d_size");
       }
       break;
 
     case SREM:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(b1.ibvsrem(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsrem(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_THIS_ALL)
       {
-        ASSERT_DEATH(b1.ibvsrem(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(b1.ibvsrem(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsrem(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsrem(b2, b1), "d_size == .*d_size");
       }
       else
       {
-        ASSERT_DEATH(b1.bvsrem(b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.bvsrem(b2), "d_size == .*d_size");
       }
       break;
 
@@ -2716,7 +2716,8 @@ TestBitVector::test_extract(BvFunKind fun_kind)
     test_extract_aux(fun_kind, BitVector::from_ui(32, i));
     test_extract_aux(fun_kind, BitVector::from_ui(35, i));
   }
-  ASSERT_DEATH(BitVector(33, *d_rng).bvextract(31, 32), "idx_hi >= idx_lo");
+  ASSERT_DEATH_DEBUG(BitVector(33, *d_rng).bvextract(31, 32),
+                     "idx_hi >= idx_lo");
 }
 
 void
@@ -3234,22 +3235,22 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_EQ(BitVector::from_ui(6, 141, true).str(), "001101");
   ASSERT_EQ(BitVector::from_si(6, -129, true).str(), "111111");
 
-  ASSERT_DEATH(BitVector(0), "> 0");
-  ASSERT_DEATH(BitVector(2, "101010"), "fits_in_size");
-  ASSERT_DEATH(BitVector(6, "a01010"), "is_valid_bin_str");
-  ASSERT_DEATH(BitVector(6, "123412"), "is_valid_bin_str");
-  ASSERT_DEATH(BitVector(6, "1234", 10), "fits_in_size");
-  ASSERT_DEATH(BitVector(6, "1f", 10), "is_valid_dec_str");
-  ASSERT_DEATH(BitVector(8, "-129", 10), "fits_in_size");
-  ASSERT_DEATH(BitVector(6, "1234", 16), "fits_in_size");
-  ASSERT_DEATH(BitVector(6, "1z", 16), "is_valid_hex_str");
-  ASSERT_DEATH(BitVector(8, "-12", 16), "is_valid_hex_str");
-  ASSERT_DEATH(BitVector(2, ""), "empty");
-  ASSERT_DEATH(BitVector::from_ui(0, 1234), "> 0");
-  ASSERT_DEATH(BitVector::from_si(8, -129), "fits_in_size");
-  ASSERT_DEATH(BitVector::from_ui(10, 1234), "fits_in_size");
-  ASSERT_DEATH(BitVector::from_ui(16, 123412341234), "fits_in_size");
-  ASSERT_DEATH(BitVector::from_ui(16, 65536), "fits_in_size");
+  ASSERT_DEATH_DEBUG(BitVector(0), "> 0");
+  ASSERT_DEATH_DEBUG(BitVector(2, "101010"), "fits_in_size");
+  ASSERT_DEATH_DEBUG(BitVector(6, "a01010"), "is_valid_bin_str");
+  ASSERT_DEATH_DEBUG(BitVector(6, "123412"), "is_valid_bin_str");
+  ASSERT_DEATH_DEBUG(BitVector(6, "1234", 10), "fits_in_size");
+  ASSERT_DEATH_DEBUG(BitVector(6, "1f", 10), "is_valid_dec_str");
+  ASSERT_DEATH_DEBUG(BitVector(8, "-129", 10), "fits_in_size");
+  ASSERT_DEATH_DEBUG(BitVector(6, "1234", 16), "fits_in_size");
+  ASSERT_DEATH_DEBUG(BitVector(6, "1z", 16), "is_valid_hex_str");
+  ASSERT_DEATH_DEBUG(BitVector(8, "-12", 16), "is_valid_hex_str");
+  ASSERT_DEATH_DEBUG(BitVector(2, ""), "empty");
+  ASSERT_DEATH_DEBUG(BitVector::from_ui(0, 1234), "> 0");
+  ASSERT_DEATH_DEBUG(BitVector::from_si(8, -129), "fits_in_size");
+  ASSERT_DEATH_DEBUG(BitVector::from_ui(10, 1234), "fits_in_size");
+  ASSERT_DEATH_DEBUG(BitVector::from_ui(16, 123412341234), "fits_in_size");
+  ASSERT_DEATH_DEBUG(BitVector::from_ui(16, 65536), "fits_in_size");
 }
 
 TEST_F(TestBitVector, ctor_rand)
@@ -3397,7 +3398,7 @@ TEST_F(TestBitVector, to_uint64)
   }
   ASSERT_NO_FATAL_FAILURE(BitVector(28).to_uint64());
   ASSERT_EQ(BitVector(128, std::string(65, '1')).to_uint64(true), UINT64_MAX);
-  ASSERT_DEATH(BitVector(128).to_uint64(), "d_size <= 64");
+  ASSERT_DEATH_DEBUG(BitVector(128).to_uint64(), "d_size <= 64");
 }
 
 TEST_F(TestBitVector, compare)
@@ -3633,7 +3634,7 @@ TEST_F(TestBitVector, set_get_flip_bit)
     bv.flip_bit(n);
     ASSERT_EQ(bv.bit(n), (((~vv) << 31) >> 31));
   }
-  ASSERT_DEATH(BitVector(5).bit(5), "< size");
+  ASSERT_DEATH_DEBUG(BitVector(5).bit(5), "< size");
 }
 
 TEST_F(TestBitVector, is_zero)

@@ -226,8 +226,8 @@ TEST_F(TestNodeManager, mk_apply)
     ASSERT_EQ(apply[i], bool_const);
   }
   ASSERT_EQ(apply.type(), bv_type);
-  ASSERT_DEATH(nm.mk_node(Kind::APPLY, {fun}), "");
-  ASSERT_DEATH(nm.mk_node(Kind::APPLY, {fun, bool_const}), "");
+  ASSERT_DEATH_DEBUG(nm.mk_node(Kind::APPLY, {fun}), "");
+  ASSERT_DEATH_DEBUG(nm.mk_node(Kind::APPLY, {fun, bool_const}), "");
 }
 
 TEST_F(TestNodeManager, check_type)

@@ -10,6 +10,7 @@
 
 #include "backtrack/vector.h"
 #include "gtest/gtest.h"
+#include "test.h"
 
 namespace bzla::test {
 
@@ -40,7 +41,7 @@ TEST_F(TestVector, push_pop)
   ASSERT_EQ(vec[0], 0);
   ASSERT_EQ(vec[1], 1);
   ASSERT_EQ(vec[2], 2);
-  ASSERT_DEATH(vec.pop(), "d_control.empty");
+  ASSERT_DEATH_DEBUG(vec.pop(), "d_control.empty");
 }
 
 TEST_F(TestVector, mgr_multi)
@@ -74,7 +75,7 @@ TEST_F(TestVector, push_pop_mgr)
   ASSERT_EQ(vec1[0], 0);
   ASSERT_EQ(vec1[1], 1);
   ASSERT_EQ(vec1[2], 2);
-  ASSERT_DEATH(mgr.pop(), "d_scope_levels > 0");
+  ASSERT_DEATH_DEBUG(mgr.pop(), "d_scope_levels > 0");
 }
 
 TEST_F(TestVector, insert_at_level)

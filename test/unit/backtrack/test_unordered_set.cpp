@@ -10,6 +10,7 @@
 
 #include "backtrack/unordered_set.h"
 #include "gtest/gtest.h"
+#include "test.h"
 
 namespace bzla::test {
 
@@ -44,7 +45,7 @@ TEST_F(TestUnorderedSet, push_pop)
   ASSERT_NE(set.find(0), set.end());
   ASSERT_NE(set.find(1), set.end());
   ASSERT_NE(set.find(2), set.end());
-  ASSERT_DEATH(mgr.pop(), "d_scope_levels > 0");
+  ASSERT_DEATH_DEBUG(mgr.pop(), "d_scope_levels > 0");
 }
 
 TEST_F(TestUnorderedSet, push_pop_mgr)
@@ -68,7 +69,7 @@ TEST_F(TestUnorderedSet, push_pop_mgr)
   ASSERT_NE(set.find(0), set.end());
   ASSERT_NE(set.find(1), set.end());
   ASSERT_NE(set.find(2), set.end());
-  ASSERT_DEATH(mgr.pop(), "d_scope_levels > 0");
+  ASSERT_DEATH_DEBUG(mgr.pop(), "d_scope_levels > 0");
 }
 
 TEST_F(TestUnorderedSet, stress)
