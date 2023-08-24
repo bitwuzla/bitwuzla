@@ -8,7 +8,7 @@ if build_static and host_machine.system() != 'darwin'
   link_args += ['-static']
 endif
 
-sources = ['main.cpp', 'options.cpp']
+sources = ['main.cpp', 'options.cpp', 'time_limit.cpp']
 
 bitwuzla_bin = executable('bitwuzla', sources,
                           include_directories: include_directories('..'),

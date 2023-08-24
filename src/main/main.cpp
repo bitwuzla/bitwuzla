@@ -14,6 +14,7 @@
 #include <iostream>
 
 #include "main/options.h"
+#include "main/time_limit.h"
 
 using namespace bzla::main;
 
@@ -28,6 +29,7 @@ main(int32_t argc, char* argv[])
 
   try
   {
+    set_time_limit(main_options.time_limit);
     options.set(args);
 
     std::cout << bitwuzla::set_bv_format(main_options.bv_format);
@@ -35,6 +37,7 @@ main(int32_t argc, char* argv[])
         options, main_options.infile_name, main_options.language, &std::cout);
     std::string err_msg =
         parser.parse(main_options.print || main_options.parse_only);
+    reset_time_limit();
     if (!err_msg.empty())
     {
       std::cerr << "[error] " << err_msg << std::endl;

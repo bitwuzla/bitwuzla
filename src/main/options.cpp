@@ -143,6 +143,10 @@ print_help()
                     format_longb("bv-output-format"),
                     format_dflt("2"),
                     "output number format for bit-vector values {2, 10, 16}");
+  opts.emplace_back(format_shortn("t"),
+                    format_longn("time-limit"),
+                    format_dflt("0"),
+                    "time limit in milliseconds");
 
   // Format library options
   bitwuzla::Options options;
@@ -253,6 +257,64 @@ is_input_file(const std::string& arg, const std::string& suffix)
   return pos != arg.npos && pos == arg.size() - suffix.size();
 }
 
+bool
+startswith(const std::string& str, const std::string& prefix)
+{
+  return str.rfind(prefix, 0) == 0;
+}
+
+std::string
+parse_arg_val(int32_t argc, int32_t& i, char* argv[])
+{
+  std::string arg(argv[i]);
+
+  std::string value;
+  auto pos = arg.rfind("=");
+  // -o=v, --option=value
+  if (pos != std::string::npos)
+  {
+    value = arg.substr(pos + 1);
+  }
+  // -o v, --option value
+  else if (i + 1 < argc && argv[i + 1][0] != '-')
+  {
+    value = argv[i + 1];
+    ++i;
+  }
+  else
+  {
+    std::cerr << "[error] expected value for option `" << arg << "`"
+              << std::endl;
+    std::exit(EXIT_SUCCESS);
+  }
+
+  return value;
+}
+
+uint64_t
+parse_arg_uint64_t(int32_t argc, int32_t& i, char* argv[])
+{
+  try
+  {
+    return std::stoull(parse_arg_val(argc, i, argv));
+  }
+  catch (std::invalid_argument& e)
+  {
+    std::cerr << "[error] expected numeric value for option `" << argv[i] << "`"
+              << std::endl;
+    std::exit(EXIT_SUCCESS);
+  }
+}
+
+bool
+check_opt_value(const std::string& arg,
+                const std::string& short_opt,
+                const std::string& long_opt)
+{
+  return arg == short_opt || arg == long_opt || startswith(arg, short_opt + "=")
+         || startswith(arg, long_opt + "=");
+}
+
 }  // namespace
 
 Options
@@ -323,6 +385,10 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
                   << std::endl;
         std::exit(EXIT_FAILURE);
       }
+    }
+    else if (check_opt_value(arg, "-t", "--time-limit"))
+    {
+      opts.time_limit = parse_arg_uint64_t(argc, i, argv);
     }
     // Check if argument is the intput file.
     else if (is_input_file(arg, ".smt2") || is_input_file(arg, ".btor2"))
