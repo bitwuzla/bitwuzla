@@ -7,8 +7,7 @@ This file collects a summary of important and/or user-visible changes.
 - Bitwuzla now supports configuring the output number format for bit-vector
   values. This is configured via the CLI option `--bv-output-format`, or
   via the output stream modifier `bitwuzla::set_bv_format` when printing
-  bit-vector values via the API. Note that `Term::str()` will print the
-  default representation (binary) and is not configurable.
+  bit-vector values via the API.
   * C API changes:
     - `bitwuzla_term_value_get_str(BitwuzlaTerm, uint8_t)` changed to  
       `bitwuzla_term_value_get_str(BitwuzlaTerm)`:  

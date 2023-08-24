@@ -152,8 +152,8 @@ print_help(const bitwuzla::Options& options)
                     "",
                     "only parse input without calling check-sat");
   opts.emplace_back("",
-                    format_longb("bv-output-format <M>"),
-                    "[2]",
+                    format_longb("bv-output-format"),
+                    format_dflt("2"),
                     "output number format for bit-vector values {2, 10, 16}");
 
   // Format library options
