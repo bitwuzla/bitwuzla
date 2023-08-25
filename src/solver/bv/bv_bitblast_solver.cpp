@@ -76,7 +76,10 @@ BvBitblastSolver::solve()
     d_sat_solver->assume(bits[0].get_id());
   }
 
-  update_statistics();
+  Msg(1) << d_stats.num_aig_consts << " AIG consts, " << d_stats.num_aig_ands
+         << " AIG ands, " << d_stats.num_cnf_vars << " CNF vars, "
+         << d_stats.num_cnf_clauses << " CNF clauses";
+
   util::Timer timer(d_stats.time_sat);
   d_last_result = d_sat_solver->solve();
   return d_last_result;
@@ -98,10 +101,18 @@ BvBitblastSolver::register_assertion(const Node& assertion,
     d_assumptions.push_back(assertion);
   }
 
-  d_bitblaster.bitblast(assertion);
+  {
+    util::Timer timer(d_stats.time_bitblast);
+    d_bitblaster.bitblast(assertion);
+  }
   const auto& bits = d_bitblaster.bits(assertion);
   assert(!bits.empty());
-  d_cnf_encoder->encode(bits[0], top_level);
+
+  {
+    util::Timer timer(d_stats.time_encode);
+    d_cnf_encoder->encode(bits[0], top_level);
+  }
+  update_statistics();
 }
 
 Node
@@ -162,14 +173,15 @@ BvBitblastSolver::update_statistics()
   d_stats.num_cnf_vars = cnf_stats.num_vars;
   d_stats.num_cnf_clauses = cnf_stats.num_clauses;
   d_stats.num_cnf_literals = cnf_stats.num_literals;
-  Msg(1) << d_stats.num_aig_consts << " AIG consts, " << d_stats.num_aig_ands
-         << " AIG ands, " << d_stats.num_cnf_vars << " CNF vars, "
-         << d_stats.num_cnf_clauses << " CNF clauses";
 }
 
 BvBitblastSolver::Statistics::Statistics(util::Statistics& stats)
     : time_sat(
         stats.new_stat<util::TimerStatistic>("bv::bitblast::sat::time_solve")),
+      time_bitblast(stats.new_stat<util::TimerStatistic>(
+          "bv::bitblast::aig::time_bitblast")),
+      time_encode(stats.new_stat<util::TimerStatistic>(
+          "bv::bitblast::cnf::time_encode")),
       num_aig_ands(stats.new_stat<uint64_t>("bv::bitblast::aig::num_ands")),
       num_aig_consts(stats.new_stat<uint64_t>("bv::bitblast::aig::num_consts")),
       num_aig_shared(stats.new_stat<uint64_t>("bv::bitblast::aig::num_shared")),

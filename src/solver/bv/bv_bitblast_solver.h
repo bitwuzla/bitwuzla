@@ -73,6 +73,8 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   {
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_sat;
+    util::TimerStatistic& time_bitblast;
+    util::TimerStatistic& time_encode;
     uint64_t& num_aig_ands;
     uint64_t& num_aig_consts;
     uint64_t& num_aig_shared;
