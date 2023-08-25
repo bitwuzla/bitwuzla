@@ -16,6 +16,7 @@
 #include "check/check_unsat_core.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_set.h"
+#include "timeout_terminator.h"
 
 namespace bzla {
 
@@ -35,10 +36,13 @@ SolvingContext::SolvingContext(const option::Options& options,
 {
 }
 
+SolvingContext::~SolvingContext() {}
+
 Result
 SolvingContext::solve()
 {
   util::Timer timer(d_stats.time_solve);
+  set_time_limit_per();
 #ifndef NDEBUG
   check_no_free_variables();
 #endif
@@ -302,9 +306,34 @@ SolvingContext::ensure_model()
   }
 }
 
+void
+SolvingContext::set_time_limit_per()
+{
+  auto time_limit = d_env.options().time_limit_per();
+  if (time_limit > 0)
+  {
+    // Initialize timeout terminator
+    if (d_timeout_terminator == nullptr)
+    {
+      d_timeout_terminator.reset(new TimeoutTerminator());
+    }
+
+    // Do not overwrite existing user-defined terminator, wrap it with timeout
+    // terminator.
+    auto terminator = d_env.terminator();
+    if (terminator != d_timeout_terminator.get())
+    {
+      d_timeout_terminator->set_terminator(terminator);
+      d_env.configure_terminator(d_timeout_terminator.get());
+    }
+    // Set timeout.
+    d_timeout_terminator->set(time_limit);
+  }
+}
+
 SolvingContext::Statistics::Statistics(util::Statistics& stats)
-    : time_solve(stats.new_stat<util::TimerStatistic>(
-        "preprocess::slvcontext::time_solve")),
+    : time_solve(
+        stats.new_stat<util::TimerStatistic>("solving_context::time_solve")),
       formula_kinds_pre(
           stats.new_stat<util::HistogramStatistic>("formula::pre::node")),
       formula_kinds_post(

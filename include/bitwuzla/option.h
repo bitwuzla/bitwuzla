@@ -88,6 +88,13 @@ enum ENUM(Option)
    */
   EVALUE(VERBOSITY),
 
+  /*! **Time limit in milliseconds per satisfiability check.**
+   *
+   * Values:
+   *  * An unsigned integer for the time limit in milliseconds. [**default**: 0]
+   */
+  EVALUE(TIME_LIMIT_PER),
+
   /* ---------------- Bitwuzla-specific Options ----------------------------- */
 
   /*! **Configure the bit-vector solver engine.**

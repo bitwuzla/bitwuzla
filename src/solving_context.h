@@ -24,10 +24,13 @@
 
 namespace bzla {
 
+class TimeoutTerminator;
+
 class SolvingContext
 {
  public:
   SolvingContext(const option::Options& options, const std::string& name = "");
+  ~SolvingContext();
 
   /** Solve the current set of assertions in the context. */
   Result solve();
@@ -83,6 +86,9 @@ class SolvingContext
 
   void ensure_model();
 
+  /** Set timeout terminator. */
+  void set_time_limit_per();
+
   /** Solving context environment. */
   Env d_env;
   /** Logger instance. */
@@ -105,6 +111,9 @@ class SolvingContext
 
   /** Result of last solve() call. */
   Result d_sat_state = Result::UNKNOWN;
+
+  /** Terminator used for timeout per solve() call. */
+  std::unique_ptr<TimeoutTerminator> d_timeout_terminator;
 
   struct Statistics
   {

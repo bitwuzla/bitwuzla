@@ -3216,6 +3216,67 @@ TEST_F(TestApi, terminate_sat)
   }
 }
 
+TEST_F(TestApi, terminate_timeout_wrap)
+{
+  class TestTerminator : public bitwuzla::Terminator
+  {
+   public:
+    bool terminate() override
+    {
+      throw std::runtime_error("user-defined terminate triggered");
+      return true;
+    }
+  };
+
+  bitwuzla::Sort bv_sort32 = bitwuzla::mk_bv_sort(32);
+  bitwuzla::Term x         = bitwuzla::mk_const(bv_sort32);
+  bitwuzla::Term s         = bitwuzla::mk_const(bv_sort32);
+  bitwuzla::Term t         = bitwuzla::mk_const(bv_sort32);
+  bitwuzla::Term b         = bitwuzla::mk_term(
+      bitwuzla::Kind::DISTINCT,
+      {bitwuzla::mk_term(
+           bitwuzla::Kind::BV_MUL,
+           {s, bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, {x, t})}),
+               bitwuzla::mk_term(
+           bitwuzla::Kind::BV_MUL,
+           {bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, {s, x}), t})});
+  // not solved by bit-blasting, should be terminated in the SAT solver when
+  // configured
+  {
+    TestTerminator tt;
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::TIME_LIMIT_PER, 100);
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
+    opts.set(bitwuzla::Option::PREPROCESS, false);
+    bitwuzla::Bitwuzla bitwuzla(opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_THROW(bitwuzla.check_sat(), std::runtime_error);
+
+    bitwuzla.configure_terminator(nullptr);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+
+  class TestTerminator2 : public bitwuzla::Terminator
+  {
+   public:
+    bool terminate() override { return false; }
+  };
+  {
+    TestTerminator2 tt;
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::TIME_LIMIT_PER, 100);
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
+    opts.set(bitwuzla::Option::PREPROCESS, false);
+    bitwuzla::Bitwuzla bitwuzla(opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test

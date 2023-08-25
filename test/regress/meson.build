@@ -1380,6 +1380,8 @@ tests_smt2 = [
   ['solver/fun/regrencparamapps.smt2'],
   ['solver/process_term1.smt2'],
   ['solver/process_term2.smt2'],
+  ['solver/time_limit_per1.smt2'],
+  ['solver/time_limit_per2.smt2'],
   ['solver/quant/duplicatelemma1.smt2'],
   ['solver/quant/issue96.smt2'],
   ['solver/quant/issue97.smt2'],

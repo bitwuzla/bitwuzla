@@ -296,7 +296,7 @@ Preprocessor::apply(AssertionVector& assertions)
       Msg(2) << assertions.num_modified() - cnt << " after extract elimination";
     }
 
-  } while (assertions.modified());
+  } while (assertions.modified() && !d_env.terminate());
 
 #ifndef NDEBUG
   if (d_env.options().dbg_pp_node_thresh())

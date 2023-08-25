@@ -119,6 +119,15 @@ Options::Options()
                 "verbosity level",
                 "verbose",
                 "v"),
+      time_limit_per(this,
+                     Option::TIME_LIMIT_PER,
+                     0,
+                     0,
+                     UINT64_MAX,
+                     "time limit in milliseconds per satisfiability check",
+                     "time-limit-per",
+                     "T"),
+
       // Bitwuzla-specific
       bv_solver(this,
                 Option::BV_SOLVER,
@@ -535,6 +544,7 @@ Options::data(Option opt)
     case Option::SAT_SOLVER: return &sat_solver;
     case Option::SEED: return &seed;
     case Option::VERBOSITY: return &verbosity;
+    case Option::TIME_LIMIT_PER: return &time_limit_per;
 
     case Option::BV_SOLVER: return &bv_solver;
     case Option::REWRITE_LEVEL: return &rewrite_level;

@@ -30,6 +30,7 @@ enum class Option
   PRODUCE_UNSAT_CORES,        // bool
   SEED,                       // numeric
   VERBOSITY,                  // numeric
+  TIME_LIMIT_PER,             // numeric
 
   BV_SOLVER,      // enum
   REWRITE_LEVEL,  // numeric
@@ -422,6 +423,7 @@ class Options
   OptionBool produce_unsat_cores;
   OptionNumeric seed;
   OptionNumeric verbosity;
+  OptionNumeric time_limit_per;
 
   // Bitwuzla-specific options
   OptionModeT<BvSolver> bv_solver;

@@ -65,6 +65,7 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::SAT_SOLVER, bzla::option::Option::SAT_SOLVER},
         {Option::SEED, bzla::option::Option::SEED},
         {Option::VERBOSITY, bzla::option::Option::VERBOSITY},
+        {Option::TIME_LIMIT_PER, bzla::option::Option::TIME_LIMIT_PER},
         {Option::REWRITE_LEVEL, bzla::option::Option::REWRITE_LEVEL},
         {Option::PROP_CONST_BITS, bzla::option::Option::PROP_CONST_BITS},
         {Option::PROP_INFER_INEQ_BOUNDS,
@@ -1321,8 +1322,8 @@ Bitwuzla::configure_terminator(Terminator *terminator)
   else
   {
     d_terminator_internal.reset(new TerminatorInternal(terminator));
-    d_ctx->env().configure_terminator(d_terminator_internal.get());
   }
+  d_ctx->env().configure_terminator(d_terminator_internal.get());
   d_terminator = terminator;
 }
 
