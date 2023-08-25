@@ -13,6 +13,7 @@
 
 #include <iostream>
 
+#include "main/error.h"
 #include "main/options.h"
 #include "main/time_limit.h"
 
@@ -40,8 +41,7 @@ main(int32_t argc, char* argv[])
     reset_time_limit();
     if (!err_msg.empty())
     {
-      std::cerr << "[error] " << err_msg << std::endl;
-      std::exit(EXIT_FAILURE);
+      Error() << err_msg;
     }
     bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla();
     if (main_options.print)
@@ -71,8 +71,7 @@ main(int32_t argc, char* argv[])
     // Remove the "invalid call to '...', prefix
     const std::string& msg = e.msg();
     size_t pos             = msg.find("', ");
-    std::cerr << "[error] " << msg.substr(pos + 3) << std::endl;
-    std::exit(EXIT_FAILURE);
+    Error() << msg.substr(pos + 3);
   }
   std::exit(EXIT_SUCCESS);
 }

@@ -7,6 +7,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "main/error.h"
+
 namespace bzla::main {
 
 namespace {
@@ -263,46 +265,47 @@ startswith(const std::string& str, const std::string& prefix)
   return str.rfind(prefix, 0) == 0;
 }
 
-std::string
+std::pair<std::string, std::string>
 parse_arg_val(int32_t argc, int32_t& i, char* argv[])
 {
   std::string arg(argv[i]);
 
-  std::string value;
+  std::string opt, value;
   auto pos = arg.rfind("=");
   // -o=v, --option=value
   if (pos != std::string::npos)
   {
+    opt   = arg.substr(0, pos);
     value = arg.substr(pos + 1);
   }
   // -o v, --option value
   else if (i + 1 < argc && argv[i + 1][0] != '-')
   {
+    opt   = argv[i];
     value = argv[i + 1];
     ++i;
   }
-  else
+
+  if (value.empty())
   {
-    std::cerr << "[error] expected value for option `" << arg << "`"
-              << std::endl;
-    std::exit(EXIT_SUCCESS);
+    Error() << "expected value for option `" << opt << "`";
   }
 
-  return value;
+  return std::make_pair(opt, value);
 }
 
 uint64_t
 parse_arg_uint64_t(int32_t argc, int32_t& i, char* argv[])
 {
+  auto [opt, value] = parse_arg_val(argc, i, argv);
   try
   {
-    return std::stoull(parse_arg_val(argc, i, argv));
+    return std::stoull(value);
   }
   catch (std::invalid_argument& e)
   {
-    std::cerr << "[error] expected numeric value for option `" << argv[i] << "`"
-              << std::endl;
-    std::exit(EXIT_SUCCESS);
+    Error() << "expected numeric value for option `" << opt << "` but got `"
+            << value << "`";
   }
 }
 
@@ -347,43 +350,13 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
     {
       opts.parse_only = true;
     }
-    else if (arg == "--bv-output-format"
-             || arg.find("--bv-output-format=") != std::string::npos)
+    else if (check_opt_value(arg, "", "--bv-output-format"))
     {
-      std::string f;
-      if (arg.size() > 18)
+      opts.bv_format = parse_arg_uint64_t(argc, i, argv);
+      if (opts.bv_format != 2 && opts.bv_format != 10 && opts.bv_format != 16)
       {
-        f = arg.substr(19);
-      }
-      else
-      {
-        i += 1;
-        if (i >= argc)
-        {
-          std::cerr << "[error] missing bit-vector output number format, "
-                       "expected '2', '10', or '16'"
-                    << std::endl;
-          std::exit(EXIT_FAILURE);
-        }
-        f = argv[i];
-      }
-      try
-      {
-        opts.bv_format = std::stoul(f);
-        if (opts.bv_format != 2 && opts.bv_format != 10 && opts.bv_format != 16)
-        {
-          std::cerr << "[error] invalid bit-vector output number format, "
-                       "expected '2', '10', or '16'"
-                    << std::endl;
-          std::exit(EXIT_FAILURE);
-        }
-      }
-      catch (...)
-      {
-        std::cerr << "[error] invalid bit-vector output number format, "
-                     "expected '2', '10', or '16'"
-                  << std::endl;
-        std::exit(EXIT_FAILURE);
+        Error() << "invalid bit-vector output number format, "
+                   "expected '2', '10', or '16'";
       }
     }
     else if (check_opt_value(arg, "-t", "--time-limit"))
