@@ -209,8 +209,9 @@ Quickstart Example
 | The source code for this example can be found at `examples/cpp/quickstart.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/quickstart.cpp>`_.
 
 .. tabbed-examples::
-  ../../examples/smt2/quickstart.smt2
   ../../examples/cpp/quickstart.cpp
+  ../../examples/c/quickstart.c
+  ../../examples/smt2/quickstart.smt2
 
 Incremental Example with push and pop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -220,8 +221,9 @@ Incremental Example with push and pop
 | The source code for this example can be found at `examples/cpp/pushpop.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/pushpop.cpp>`_.
 
 .. tabbed-examples::
-  ../../examples/smt2/pushpop.smt2
   ../../examples/cpp/pushpop.cpp
+  ../../examples/c/pushpop.c
+  ../../examples/smt2/pushpop.smt2
 
 Incremental Example with check-sat-assuming
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -231,8 +233,9 @@ Incremental Example with check-sat-assuming
 | The source code for this example can be found at `examples/cpp/checksatassuming.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/checksatassuming.cpp>`_.
 
 .. tabbed-examples::
-  ../../examples/smt2/checksatassuming.smt2
   ../../examples/cpp/checksatassuming.cpp
+  ../../examples/c/checksatassuming.c
+  ../../examples/smt2/checksatassuming.smt2
 
 Unsat Core Example
 ^^^^^^^^^^^^^^^^^^
@@ -246,8 +249,9 @@ create lambda terms (:code:`define-fun`).
 
 
 .. tabbed-examples::
-  ../../examples/smt2/unsatcore.smt2
   ../../examples/cpp/unsatcore.cpp
+  ../../examples/c/unsatcore.c
+  ../../examples/smt2/unsatcore.smt2
 
 Unsat Assumptions Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -258,8 +262,9 @@ Unsat Assumptions Example
 
 
 .. tabbed-examples::
-   ../../examples/smt2/unsatassumptions.smt2
    ../../examples/cpp/unsatassumptions.cpp
+   ../../examples/c/unsatassumptions.c
+   ../../examples/smt2/unsatassumptions.smt2
 
 Reset Example
 ^^^^^^^^^^^^^
@@ -270,8 +275,9 @@ Reset Example
 
 
 .. tabbed-examples::
-   ../../examples/smt2/reset.smt2
    ../../examples/cpp/reset.cpp
+   ../../examples/c/reset.c
+   ../../examples/smt2/reset.smt2
 
 Reset Assertions Example
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -282,8 +288,9 @@ Reset Assertions Example
 
 
 .. tabbed-examples::
-   ../../examples/smt2/reset_assertions.smt2
    ../../examples/cpp/reset_assertions.cpp
+   ../../examples/c/reset_assertions.c
+   ../../examples/smt2/reset_assertions.smt2
 
 Parsing Example
 ^^^^^^^^^^^^^^^
@@ -294,6 +301,7 @@ Parsing Example
 
 .. tabbed-examples::
    ../../examples/cpp/parse.cpp
+   ../../examples/c/parse.c
 
 Printing Example
 ^^^^^^^^^^^^^^^^
@@ -304,6 +312,8 @@ Printing Example
 
 .. tabbed-examples::
    ../../examples/cpp/print.cpp
+   ../../examples/c/print.c
+   ../../examples/python/print.py
 
 Termination Callback Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -314,3 +324,4 @@ Termination Callback Example
 
 .. tabbed-examples::
    ../../examples/cpp/terminator.cpp
+   ../../examples/c/terminator.c

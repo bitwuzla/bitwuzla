@@ -15,14 +15,17 @@ The Python API of the SMT solver Bitwuzla.
 cimport bitwuzla_api
 from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t
 from libcpp cimport bool as c_bool
-from libcpp.vector cimport vector
 from libcpp.optional cimport optional, nullopt, make_optional
 from libcpp.string cimport string
+from libcpp.vector cimport vector
 from libcpp.memory cimport unique_ptr
 from cpython.ref cimport PyObject
+from cython.operator import dereference
 
 include "enums.pxd"
 include "options.pxd"
+
+# -------------------------------------------------------------------------- #
 
 class BitwuzlaException(Exception):
     """Bitwuzla exception class."""
@@ -41,6 +44,13 @@ cdef str _to_str(const char *string):
         return None
     cdef bytes py_str = string
     return str(py_str.decode())
+
+cdef char * _to_cstr(s):
+    if s is None:
+        return NULL
+    cdef bytes py_str = s.encode()
+    cdef char * c_str = py_str
+    return c_str
 
 cdef Term _term(term: bitwuzla_api.Term):
     t = Term()
@@ -86,8 +96,6 @@ def _check_arg(arg, _type):
     if not any([isinstance(arg, _t) for _t in _type]):
         raise ValueError(
                 f'Expected type {str(_type)} for argument, but got {type(arg)}')
-
-# -------------------------------------------------------------------------- #
 
 # -------------------------------------------------------------------------- #
 # Library info                                                               #
@@ -529,13 +537,12 @@ cdef class Term:
            ``"010"`` for a bit-vector value 2 of size 3, while str() returns
            ``"#b010"``.
 
-           :note: For floating-point values, the returned string is always the
-                  binary IEEE-754 representation of the value (parameter
-                  ``base`` is ignored). Parameter ``base`` always configures
-                  the numeric base for bit-vector values, and for
-                  floating-point values in case of the tuple of strings
-                  instantiation. It is always ignored for Boolean and
-                  RoundingMode values.
+           :note: The returned string for floating-point values is always the
+                  binary IEEE-754 representation of the value (parameter `base`
+                  is ignored). Parameter `base` always configures the numeric
+                  base for bit-vector values, and for floating-point values in
+                  case of the tuple of strings instantiation. It is always
+                  ignored for Boolean and RoundingMode values.
 
            :param base: The numeric base for bit-vector values; ``2`` for
                         binary, ``10`` for decimal, and ``16`` for hexadecimal.
@@ -547,12 +554,25 @@ cdef class Term:
             return RoundingMode(self.c_term.value[bitwuzla_api.RoundingMode]())
         return self.c_term.value[string](base).decode()
 
+    def str(self, uint8_t base = 2) -> str:
+        """Get the SMT-LIB v2 string representation of this term.
+
+           :param: base: The base of the string representation of bit-vector
+                         values; ``2`` for binary, ``10`` for decimal, and
+                         ``16`` for hexadecimal. Always ignored for Boolean and
+                         RoundingMode values.
+           :return: A string representation of this term.
+        """
+        return self.c_term.str(base).decode()
+
     def __str__(self) -> str:
         """Get the SMT-LIB v2 string representation of this term.
 
+           :note: This uses the default (binary) output number format for
+                  bit-vector values.
            :return: A string representation of this term.
         """
-        return self.c_term.str().decode()
+        return self.c_term.str(2).decode()
 
     def __eq__(self, other: Term) -> bool:
         """Syntactical equality operator.
@@ -821,6 +841,26 @@ cdef class Bitwuzla:
            :return: Term representing the model value of `term`.
         """
         return _term(self.c_bitwuzla.get().get_value(_cterm(term)))
+
+    def print_formula(self, fmt: str = 'smt2', uint8_t base = 2) -> str:
+        """Get the current input formula as a string.
+
+           :param: fmt: The output format for printing the formula. Currently,
+                        only `"smt2"` for the SMT-LIB v2 format is supported.
+           :param: base: The base of the string representation of bit-vector
+                        values; ``2`` for binary, ``10`` for decimal, and
+                        ``16`` for hexadecimal. Always ignored for Boolean and
+                        RoundingMode values.
+           :return: The current input formula as a string in the given format.
+        """
+        cdef bitwuzla_api.stringstream c_ss
+        cdef unique_ptr[bitwuzla_api.set_bv_format] c_bv_fmt
+
+        c_bv_fmt.reset(new bitwuzla_api.set_bv_format(base))
+
+        c_ss << dereference(c_bv_fmt.get())
+        self.c_bitwuzla.get().print_formula(c_ss, <const string&> fmt.encode())
+        return c_ss.to_string().decode()
 
 # --------------------------------------------------------------------------- #
 # Sort functions

@@ -43,6 +43,17 @@ This file collects a summary of important and/or user-visible changes.
        binary) to configure the bv output number format in the string
        representation of the term.
     - `bitwuzla::Parser` can now be configured with an output stream.
+  * Python API changes:
+    - New function `Term.str()`, which takes an optional parameter `base`
+      (default: binary) to configure the bv output number format in the string
+      representation of the term. Function `Term.__str__()` uses default binary
+      bv output number format.
+
+- Python API changes:
+    * New function `Bitwuzla.print_formula()` returns the current input formula
+      as a string in the given format (currently, as in the C++/C APIs, only
+      SMT-LIB2 is supported). This function can optionally be configered with
+      a bv output number format.
 
 - The SMT2 parser is now less restrictive with respect to setting *unsupported
   options* and using *unsupported annotation attributes*. This is now ignored

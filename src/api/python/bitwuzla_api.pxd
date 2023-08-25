@@ -20,6 +20,16 @@ cdef extern from "<functional>" namespace "std" nogil:
     cdef cppclass reference_wrapper[T]:
         pass
 
+cdef extern from "<iostream>" namespace "std":
+    cdef cppclass ostream:
+        pass
+
+cdef extern from "<sstream>" namespace "std":
+    cdef cppclass stringstream(ostream):
+        string to_string "str" () const
+        stringstream &operator << (set_bv_format)
+
+
 # Extract C++ exception message.
 cdef extern from *:
     """
@@ -68,6 +78,10 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         pass
 
     cdef enum class Option:
+        pass
+
+    cdef cppclass set_bv_format:
+        set_bv_format(uint8_t base) except +raise_error
         pass
 
     cdef cppclass Options:
@@ -142,7 +156,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         bool is_rm_value_rtn() except +raise_error
         bool is_rm_value_rtp() except +raise_error
         bool is_rm_value_rtz() except +raise_error
-        string str() except +raise_error
+        string str(uint8_t base) except +raise_error
         bool value[bool](uint8_t base) except +raise_error
         RoundingMode value[RoundingMode](uint8_t base) except +raise_error
         string value[string](uint8_t base) except +raise_error
@@ -164,6 +178,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         void simplify() except +raise_error
         Result check_sat(const vector[Term] &assumptions) except +raise_error
         Term get_value(const Term &term) except +raise_error
+        void print_formula(ostream& outfile, string& fmt) except +raise_error
 
 
     Sort mk_array_sort(const Sort &index, const Sort &element) except +raise_error
