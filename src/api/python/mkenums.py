@@ -103,8 +103,31 @@ class {bzla_enum:s}(Enum):
     {values:s}
 """
 
+PY_ENUM_TEMPLATE_STR = """
+class {bzla_enum:s}(Enum):
+    \"\"\"{docstring:s}
+    \"\"\"
+    {values:s}
+
+    def __str__(self):
+        cdef stringstream c_ss
+        c_ss << <Cpp{bzla_enum}> self.value
+        return c_ss.to_string().decode()
+"""
+
 # Template for the whole file
 FILE_TEMPLATE = """from enum import Enum
+
+cdef extern from "<iostream>" namespace "std":
+    cdef cppclass ostream:
+        pass
+
+cdef extern from "<sstream>" namespace "std":
+    cdef cppclass stringstream(ostream):
+        string to_string "str" () const
+        stringstream &operator << (CppKind)
+        stringstream &operator << (CppResult)
+        stringstream &operator << (CppRoundingMode)
 
 cdef extern from \"bitwuzla/cpp/bitwuzla.h\" namespace \"bitwuzla\":
 {cenums:s}
@@ -168,7 +191,8 @@ def generate_output(bzla_enums, output_file):
             raise BitwuzlaEnumParseError(
                     f'Missing docstring for enum {py_enum_name}')
         docstring = ENUM_DOCSTRINGS[py_enum_name]
-        s = PY_ENUM_TEMPLATE.format(
+        tpl = PY_ENUM_TEMPLATE if py_enum_name == 'Option' else PY_ENUM_TEMPLATE_STR
+        s = tpl.format(
             bzla_enum=py_enum_name,
             docstring=docstring,
             values=formatted_py_values

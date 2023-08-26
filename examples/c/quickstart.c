@@ -107,17 +107,14 @@ main()
       size_t size;
       BitwuzlaTerm *children = bitwuzla_term_get_children(value, &size);
       assert(size == 2);
-      size_t j = 0;
       while (bitwuzla_term_get_kind(children[1]) == BITWUZLA_KIND_LAMBDA)
       {
         assert(bitwuzla_term_is_var(children[0]));
-        printf("%s(%s %s) ",
-               j > 0 ? " " : "",
+        printf("(%s %s) ",
                bitwuzla_term_to_string(children[0]),
                bitwuzla_sort_to_string(bitwuzla_term_get_sort(children[0])));
         value    = children[1];
         children = bitwuzla_term_get_children(value, &size);
-        j += 1;
       }
       assert(bitwuzla_term_is_var(children[0]));
       // Note: The returned string of bitwuzla_term_to_string and
@@ -127,8 +124,7 @@ main()
       //       functions is called more than once in one printf call.
       //       Alternatively, we could also first get and copy the strings, use
       //       a single printf call, and then free the copied strings.
-      printf("%s(%s %s)) ",
-             j > 0 ? " " : "",
+      printf("(%s %s))",
              bitwuzla_term_to_string(children[0]),
              bitwuzla_sort_to_string(bitwuzla_term_get_sort(children[0])));
       printf(" %s",

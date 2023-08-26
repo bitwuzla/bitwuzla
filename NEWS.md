@@ -54,6 +54,8 @@ This file collects a summary of important and/or user-visible changes.
       as a string in the given format (currently, as in the C++/C APIs, only
       SMT-LIB2 is supported). This function can optionally be configered with
       a bv output number format.
+    * Enum values for Kind, Result and RoundingMode can now be converted to
+      their string representation via str().
 
 - The SMT2 parser is now less restrictive with respect to setting *unsupported
   options* and using *unsupported annotation attributes*. This is now ignored

@@ -100,18 +100,15 @@ main()
       bitwuzla::Term value = bitwuzla.get_value(term);
       assert(value.kind() == bitwuzla::Kind::LAMBDA);
       assert(value.num_children() == 2);
-      size_t i = 0;
       while (value[1].kind() == bitwuzla::Kind::LAMBDA)
       {
         assert(value[0].is_variable());
-        std::cout << (i > 0 ? " " : "") << "(" << value[0] << " "
-                  << value[0].sort() << ") ";
+        std::cout << "(" << value[0] << " " << value[0].sort() << ") ";
         value = value[1];
-        i += 1;
       }
       assert(value[0].is_variable());
-      std::cout << (i > 0 ? " " : "") << "(" << value[0] << " "
-                << value[0].sort() << ")) " << sort.fun_codomain() << " ";
+      std::cout << "(" << value[0] << " " << value[0].sort() << ")) "
+                << sort.fun_codomain() << " ";
       std::cout << value[1] << ")" << std::endl;
     }
     else
@@ -147,7 +144,7 @@ main()
   // Note that the assignment string of bit-vector terms is given as the
   // pure assignment string, either in binary, hexadecimal or decimal format,
   // whereas Term::str() and operator<< print the value in SMT-LIB2 format
-  // (in binary number format).
+  // ((in the configured bit-vector output number format, binary by default).
   std::cout << "str() representation of value of x: " << bitwuzla.get_value(x)
             << std::endl;
   std::cout << "str() representation of value of y: " << bitwuzla.get_value(y)

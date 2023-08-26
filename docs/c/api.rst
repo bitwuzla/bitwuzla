@@ -99,7 +99,7 @@ how to print the current model via declared symbols (in this case :code:`x`,
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 96-145
+     :lines: 96-142
 
 This will output a possible model, in this case:
 
@@ -131,7 +131,7 @@ bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 151-156
+     :lines: 147-152
 
 This will print:
 
@@ -150,7 +150,7 @@ We can retrieve an SMT-LIB2 string representation of the values via
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 158-166
+     :lines: 154-162
 
 This will print:
 
@@ -171,7 +171,7 @@ however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 172-175
+     :lines: 168-171
 
 This will print:
 
@@ -186,7 +186,7 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 179-182
+     :lines: 175-178
 
 This will print:
 
@@ -198,7 +198,7 @@ Finally, we delete the Bitwuzla and Bitwuzla options instance.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 185-186
+     :lines: 181-182
 
 
 Examples
@@ -217,6 +217,7 @@ Quickstart Example
 .. tabbed-examples::
   ../../examples/c/quickstart.c
   ../../examples/cpp/quickstart.cpp
+  ../../examples/python/quickstart.py
   ../../examples/smt2/quickstart.smt2
 
 Incremental Example with push and pop
@@ -229,6 +230,7 @@ Incremental Example with push and pop
 .. tabbed-examples::
   ../../examples/c/pushpop.c
   ../../examples/cpp/pushpop.cpp
+  ../../examples/python/pushpop.py
   ../../examples/smt2/pushpop.smt2
 
 Incremental Example with check-sat-assuming
@@ -241,6 +243,7 @@ Incremental Example with check-sat-assuming
 .. tabbed-examples::
   ../../examples/c/checksatassuming.c
   ../../examples/cpp/checksatassuming.cpp
+  ../../examples/python/checksatassuming.py
   ../../examples/smt2/checksatassuming.smt2
 
 Unsat Core Example

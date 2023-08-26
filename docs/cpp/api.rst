@@ -101,7 +101,7 @@ the current model via declared symbols (in this case :code:`x`, :code:`y`,
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 89-123
+     :lines: 89-121
 
 This will output a possible model, in this case:
 
@@ -132,7 +132,7 @@ bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 128-133
+     :lines: 125-130
 
 This will print:
 
@@ -150,7 +150,7 @@ We can retrieve an SMT-LIB2 string representation of the values via
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 135-145
+     :lines: 132-143
 
 This will print:
 
@@ -171,7 +171,7 @@ however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 151-154
+     :lines: 148-151
 
 This will print:
 
@@ -186,7 +186,7 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 158-159
+     :lines: 155-157
 
 This will print:
 
@@ -211,6 +211,7 @@ Quickstart Example
 .. tabbed-examples::
   ../../examples/cpp/quickstart.cpp
   ../../examples/c/quickstart.c
+  ../../examples/python/quickstart.py
   ../../examples/smt2/quickstart.smt2
 
 Incremental Example with push and pop
@@ -223,6 +224,7 @@ Incremental Example with push and pop
 .. tabbed-examples::
   ../../examples/cpp/pushpop.cpp
   ../../examples/c/pushpop.c
+  ../../examples/python/pushpop.py
   ../../examples/smt2/pushpop.smt2
 
 Incremental Example with check-sat-assuming
@@ -235,6 +237,7 @@ Incremental Example with check-sat-assuming
 .. tabbed-examples::
   ../../examples/cpp/checksatassuming.cpp
   ../../examples/c/checksatassuming.c
+  ../../examples/python/checksatassuming.py
   ../../examples/smt2/checksatassuming.smt2
 
 Unsat Core Example

@@ -28,6 +28,7 @@ cdef extern from "<sstream>" namespace "std":
     cdef cppclass stringstream(ostream):
         string to_string "str" () const
         stringstream &operator << (set_bv_format)
+        stringstream &operator << (Result)
 
 
 # Extract C++ exception message.

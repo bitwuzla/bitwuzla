@@ -54,10 +54,7 @@ main()
   bitwuzla_assert(bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, s0, goal));
   BitwuzlaResult result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: unsat\n");
-  printf("Bitwuzla: %s\n",
-         result == BITWUZLA_SAT
-             ? "sat"
-             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
   bitwuzla_pop(bitwuzla, 1);
 
   // (assert (= s1 (ite (= o0 (_ sortbv1 1)) (bvadd s0 one) s0)))
@@ -76,10 +73,7 @@ main()
   bitwuzla_assert(bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, s1, goal));
   result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: unsat\n");
-  printf("Bitwuzla: %s\n",
-         result == BITWUZLA_SAT
-             ? "sat"
-             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
   bitwuzla_pop(bitwuzla, 1);
 
   // (assert (= s2 (ite (= o1 (_ sortbv1 1)) (bvadd s1 one) s1)))
@@ -98,10 +92,7 @@ main()
   bitwuzla_assert(bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, s2, goal));
   result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: unsat\n");
-  printf("Bitwuzla: %s\n",
-         result == BITWUZLA_SAT
-             ? "sat"
-             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
   bitwuzla_pop(bitwuzla, 1);
 
   // Finally, delete the Bitwuzla and Bitwuzla optons instance.

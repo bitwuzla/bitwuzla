@@ -56,11 +56,7 @@ main()
   bitwuzla.assert_formula(mk_term(Kind::EQUAL, {s0, goal}));
   Result result = bitwuzla.check_sat();
   std::cout << "Expect: unsat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
   bitwuzla.pop(1);
 
   // (assert (= s1 (ite (= o0 (_ sortbv1 1)) (bvadd s0 one) s0)))
@@ -76,11 +72,7 @@ main()
   bitwuzla.assert_formula(mk_term(Kind::EQUAL, {s1, goal}));
   result = bitwuzla.check_sat();
   std::cout << "Expect: unsat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
   bitwuzla.pop(1);
 
   // (assert (= s2 (ite (= o1 (_ sortbv1 1)) (bvadd s1 one) s1)))
@@ -96,11 +88,7 @@ main()
   bitwuzla.assert_formula(mk_term(Kind::EQUAL, {s2, goal}));
   result = bitwuzla.check_sat();
   std::cout << "Expect: unsat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
   bitwuzla.pop(1);
 
   return 0;
