@@ -351,3 +351,4 @@ Termination Callback Example
 .. tabbed-examples::
    ../../examples/c/terminator.c
    ../../examples/cpp/terminator.cpp
+   ../../examples/python/terminator.py

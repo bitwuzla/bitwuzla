@@ -720,14 +720,14 @@ cdef class Bitwuzla:
                     self.start_time = time.time()
                     self.time_limit = time_limit
 
-                def __call__(self)
+                def __call__(self):
                     # Terminate after self.time_limit seconds passed
                     return time.time() - self.start_time > self.time_limit
 
              bitwuzla = Bitwuzla()
-             bitwuzla.set_term(lambda: True)            # immediately terminate
-             bitwuzla.set_term(TimeLimitTerminator(1))  # terminate after 1s
-             bitwuzla.set_term(TimeLimitTerminator(10)) # terminate after 10s
+             bitwuzla.configure_terminator(lambda: True)            # immediately terminate
+             bitwuzla.configure_terminator(TimeLimitTerminator(1))  # terminate after 1s
+             bitwuzla.configure_terminator(TimeLimitTerminator(10)) # terminate after 10s
 
            :param callback: A callable Python object.
         """

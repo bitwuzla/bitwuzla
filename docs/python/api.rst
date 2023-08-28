@@ -102,7 +102,6 @@ Unsat Assumptions Example
    ../../examples/python/unsatassumptions.py
    ../../examples/cpp/unsatassumptions.cpp
    ../../examples/c/unsatassumptions.c
-   ../../examples/python/unsatassumptions.py
    ../../examples/smt2/unsatassumptions.smt2
 
 Reset Example
@@ -117,7 +116,6 @@ Reset Example
    ../../examples/python/reset.py
    ../../examples/cpp/reset.cpp
    ../../examples/c/reset.c
-   ../../examples/python/reset.py
    ../../examples/smt2/reset.smt2
 
 Reset Assertions Example
@@ -132,7 +130,6 @@ Reset Assertions Example
    ../../examples/python/reset_assertions.py
    ../../examples/cpp/reset_assertions.cpp
    ../../examples/c/reset_assertions.c
-   ../../examples/python/reset_assertions.py
    ../../examples/smt2/reset_assertions.smt2
 
 Printing Example
@@ -144,6 +141,17 @@ Printing Example
 
 .. tabbed-examples::
    ../../examples/python/print.py
-   ../../examples/c/print.c
    ../../examples/cpp/print.cpp
+   ../../examples/c/print.c
 
+Termination Callback Example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+| This example shows how to configure a termination callback.
+| The source code for this example can be found at `examples/python/terminator.py <https://github.com/bitwuzla/bitwuzla/tree/main/examples/python/terminator.py>`_.
+
+
+.. tabbed-examples::
+   ../../examples/python/terminator.py
+   ../../examples/cpp/terminator.cpp
+   ../../examples/c/terminator.c
