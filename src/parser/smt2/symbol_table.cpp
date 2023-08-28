@@ -33,6 +33,15 @@ SymbolTable::SymbolTable()
   init_core_symbols();
 }
 
+SymbolTable::~SymbolTable()
+{
+  for (auto& p : d_table)
+  {
+    assert(p.second);
+    delete p.second;
+  }
+}
+
 bool
 SymbolTable::Node::has_symbol() const
 {

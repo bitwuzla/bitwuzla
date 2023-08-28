@@ -63,6 +63,8 @@ class SymbolTable
 
   /** Constructor. */
   SymbolTable();
+  /** Destructor. */
+  ~SymbolTable();
 
   /**
    * Find a given symbol in the symbol table.
