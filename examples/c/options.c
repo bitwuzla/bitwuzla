@@ -17,24 +17,24 @@ main()
   // First, create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
 
-  // Then, query which bit-vector solver engine is set.
-  printf("Default bv solver: %s\n",
-         bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER));
-
-  // Now, select the propagation-based local search engine as solver engine.
-  bitwuzla_set_option_mode(options, BITWUZLA_OPT_BV_SOLVER, "prop");
-  printf("Current engine: %s\n",
-         bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER));
-
-  // Then, configure some options that expect an integer configuration value.
-  // First, enable model generation.
+  // Enable model generation, which expects a boolean configuration value.
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-  // Then, increase the verbosity level.
+
+  // Increase the verbosity level, which expects an integer value.
   printf("Previous verbosity level: %lu\n",
          bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY));
   bitwuzla_set_option(options, BITWUZLA_OPT_VERBOSITY, 2);
   printf("Current verbosity level: %lu\n",
          bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY));
+
+  // Now configure an option that has modes (a choice of configuration values).
+  // First, query which bit-vector solver engine is set.
+  printf("Default bv solver: %s\n",
+         bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER));
+  // Then, select the propagation-based local search engine as solver engine.
+  bitwuzla_set_option_mode(options, BITWUZLA_OPT_BV_SOLVER, "prop");
+  printf("Current engine: %s\n",
+         bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER));
 
   // Now, create a Bitwuzla instance.
   Bitwuzla* bitwuzla = bitwuzla_new(options);

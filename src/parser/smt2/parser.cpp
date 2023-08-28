@@ -1003,7 +1003,20 @@ Parser::parse_command_set_option()
     {
       try
       {
-        d_options.set(opt, d_lexer->token());
+        const char* value = d_lexer->token();
+        if (d_options.is_mode(d_options.option(opt.c_str())))
+        {
+          size_t len = strlen(value);
+          if (value[0] != '"' || value[len - 1] != '"')
+          {
+            return error("expected string argument to option '" + opt + "'");
+          }
+          d_options.set(opt, std::string(value + 1, len - 2));
+        }
+        else
+        {
+          d_options.set(opt, value);
+        }
       }
       catch (bitwuzla::Exception& e)
       {

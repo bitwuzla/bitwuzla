@@ -17,21 +17,20 @@ if __name__ == '__main__':
     # First, create a Bitwuzla options instance.
     options = Options()
 
-    # Then, query which bit-vector solver engine is set.
-    print(f'Default bv solver: {options.get(Option.BV_SOLVER)}')
-
-    # Now, select the propagation-based local search engine as solver engine.
-    options.set(Option.BV_SOLVER, 'prop')
-    print(f'Current engine: {options.get(Option.BV_SOLVER)}')
-
-    # Then, configure some options that expect an integer configuration value.
-    # First, enable model generation.
+    # Enable model generation, which expects a boolean configuration value.
     options.set(Option.PRODUCE_MODELS, True)
 
-    # Then, increase the verbosity level.
+    # Increase the verbosity level, which expects an integer value.
     print(f'Previous verbosity level: {options.get(Option.VERBOSITY)}')
     options.set(Option.VERBOSITY, 2)
     print(f'Current verbosity level: {options.get(Option.VERBOSITY)}')
+
+    # Now configure an option that has modes (a choice of configuration values).
+    # First, query which bit-vector solver engine is set.
+    print(f'Default bv solver: {options.get(Option.BV_SOLVER)}')
+    # Then, select the propagation-based local search engine as solver engine.
+    options.set(Option.BV_SOLVER, 'prop')
+    print(f'Current engine: {options.get(Option.BV_SOLVER)}')
 
     # Now, create a Bitwuzla instance.
     bitwuzla = Bitwuzla(options)

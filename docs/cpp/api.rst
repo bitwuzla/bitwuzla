@@ -218,12 +218,14 @@ Options Example
 ^^^^^^^^^^^^^^^
 
 | An example for how to set and get options.
+| The SMT-LIB input for this example can be found at `examples/smt2/options.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/options.smt2>`_.
 | The source code for this example can be found at `examples/cpp/options.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/options.cpp>`_.
 
 .. tabbed-examples::
   ../../examples/cpp/options.cpp
   ../../examples/c/options.c
   ../../examples/python/options.py
+  ../../examples/smt2/options.smt2
 
 Incremental Example with push and pop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

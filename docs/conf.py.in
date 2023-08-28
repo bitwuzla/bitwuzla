@@ -116,10 +116,13 @@ class SmtLibLexer(RegexLexer):
             (r':produce-models', token.Name.Attribute),
             (r':produce-unsat-cores', token.Name.Attribute),
             (r':produce-unsat-assumptions', token.Name.Attribute),
+            (r':verbosity', token.Name.Attribute),
+            (r':bv-solver', token.Name.Attribute),
             (r'!', token.Name.Attribute),
             (r'BitVec', token.Name.Attribute),
             (r'RNE', token.Name.Attribute),
             (r'true', token.String),
+            (r'false', token.String),
             (r'distinct', token.Operator),
             (r'=', token.Operator),
             (r'and', token.Operator),
@@ -135,8 +138,8 @@ class SmtLibLexer(RegexLexer):
             (r'ite', token.Operator),
             (r'to_fp_unsigned', token.Operator),
             (r'\+zero', token.Operator),
-            (r'#b[0-1]+', token.Text),
-            (r'bv[0-9]+', token.Text),
+            (r'#b[0-1]+', token.String),
+            (r'bv[0-9]+', token.String),
             (r'[a-zA-Z][a-zA-Z0-9]*', token.Name),
             (r'[0-9]+', token.Number),
             (r'\s', token.Text),
@@ -144,7 +147,8 @@ class SmtLibLexer(RegexLexer):
             (r'\(', token.Text),
             (r'\)', token.Text),
             (r'@bzla.var_', token.Text),
-            (r';.*$', token.Comment)
+            (r';.*$', token.Comment),
+            (r'".*"', token.String)
         ]
     }
 

@@ -20,23 +20,23 @@ main()
   // First, create a Bitwuzla options instance.
   Options options;
 
-  // Then, query which bit-vector solver engine is set.
-  std::cout << "Default bv solver: " << options.get_mode(Option::BV_SOLVER)
-            << std::endl;
-
-  // Now, select the propagation-based local search engine as solver engine.
-  options.set(Option::BV_SOLVER, "prop");
-  std::cout << "Current engine: " << options.get_mode(Option::BV_SOLVER)
-            << std::endl;
-
-  // Then, configure some options that expect an integer configuration value.
-  // First, enable model generation.
+  // Enable model generation, which expects a boolean configuration value.
   options.set(Option::PRODUCE_MODELS, true);
-  // Then, increase the verbosity level.
+
+  // Increase the verbosity level, which expects an integer value.
   std::cout << "Previous verbosity level: " << options.get(Option::VERBOSITY)
             << std::endl;
   options.set(Option::VERBOSITY, 2);
   std::cout << "Current verbosity level: " << options.get(Option::VERBOSITY)
+            << std::endl;
+
+  // Now configure an option that has modes (a choice of configuration values).
+  // First, query which bit-vector solver engine is set.
+  std::cout << "Default bv solver: " << options.get_mode(Option::BV_SOLVER)
+            << std::endl;
+  // Then, select the propagation-based local search engine as solver engine.
+  options.set(Option::BV_SOLVER, "prop");
+  std::cout << "Current engine: " << options.get_mode(Option::BV_SOLVER)
             << std::endl;
 
   // Now, create a Bitwuzla instance.

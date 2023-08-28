@@ -1,0 +1,1 @@
+regress/parser/smt2perr207.smt2:2:1: expected string argument to option 'bv-solver'

@@ -1,4 +1,4 @@
-(set-option :bv-solver prop)
+(set-option :bv-solver "prop")
 (set-info :status sat)
 (declare-const _x0 RoundingMode)
 (declare-const _x1 (_ BitVec 16))

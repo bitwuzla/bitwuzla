@@ -1,0 +1,5 @@
+(set-option :verbosity 2)
+(set-option :bv-solver "prop")
+(set-option :produce-models true)
+(set-logic ALL)
+(check-sat)
