@@ -30,7 +30,7 @@ def test_options_set():
     assert options.get(Option.VERBOSITY) == 0
     options.set(Option.VERBOSITY, 2)
     assert options.get(Option.VERBOSITY) == 2
-    options.set("verbose", 3)
+    options.set("verbosity", 3)
     assert options.get(Option.VERBOSITY) == 3
     with pytest.raises(BitwuzlaException):
         options.set("verbositi", "3")
@@ -64,7 +64,7 @@ def test_options_set_args():
     options.set_args("-S=cadical")
     assert options.get(Option.SAT_SOLVER), "cadical"
     with pytest.raises(BitwuzlaException):
-        options.set_args("--no-verbose")
+        options.set_args("--no-verbosity")
 
 
 def test_mk_bool_sort():

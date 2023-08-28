@@ -67,6 +67,9 @@ This file collects a summary of important and/or user-visible changes.
 - Added library option -T/--time-limit-per for specifying a time limit per
   satisfiability check.
 
+- Command line option --verbose renamed to --verbosity for consistency with
+  option kind.
+
 ## News for version 0.1.0 since commit 1230d80
 
 Bitwuzla release 0.1.0 is a complete from-scratch rewrite in C++.

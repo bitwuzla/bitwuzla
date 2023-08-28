@@ -84,4 +84,11 @@ Logger::warn()
 {
   return Line(1, "[bzla] warning:");
 }
+
+void
+Logger::set_verbosity_level(uint64_t level)
+{
+  d_verbosity_level = level;
+}
+
 }  // namespace bzla::util

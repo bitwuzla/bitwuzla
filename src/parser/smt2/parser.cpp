@@ -949,7 +949,6 @@ Parser::parse_command_set_option()
     if (token == Token::TRUE)
     {
       d_print_success = true;
-      // configure_smt_comp_mode();
     }
     else if (token == Token::FALSE)
     {
@@ -1009,6 +1008,12 @@ Parser::parse_command_set_option()
       catch (bitwuzla::Exception& e)
       {
         return error(e.msg());
+      }
+      if (opt == d_options.lng(bitwuzla::Option::VERBOSITY))
+      {
+        uint64_t level = d_options.get(bitwuzla::Option::VERBOSITY);
+        d_verbosity    = level;
+        d_logger.set_verbosity_level(level);
       }
     }
   }

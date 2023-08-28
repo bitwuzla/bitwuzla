@@ -117,7 +117,7 @@ Options::Options()
                 0,
                 VERBOSITY_MAX,
                 "verbosity level",
-                "verbose",
+                "verbosity",
                 "v"),
       time_limit_per(this,
                      Option::TIME_LIMIT_PER,

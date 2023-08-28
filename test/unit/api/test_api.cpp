@@ -333,7 +333,7 @@ TEST_F(TestApi, set_option)
     ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 0);
     opts.set(bitwuzla::Option::VERBOSITY, 2);
     ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 2);
-    opts.set("verbose", "3");
+    opts.set("verbosity", "3");
     ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 3);
     ASSERT_THROW(opts.set("verbositi", "3"), bitwuzla::Exception);
 
@@ -391,7 +391,7 @@ TEST_F(TestApi, option_set_args)
   ASSERT_THROW(options.set({"-v=100"}), bitwuzla::Exception);
   options.set({"-S=cadical"});
   ASSERT_EQ(options.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
-  ASSERT_THROW(options.set({"--no-verbose"}), bitwuzla::Exception);
+  ASSERT_THROW(options.set({"--no-verbosity"}), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, option_is_valid)

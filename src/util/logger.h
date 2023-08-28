@@ -47,23 +47,54 @@ class Logger
     std::ios_base::fmtflags d_flags;
   };
 
+  /**
+   * Constructor.
+   * @param log_level The log level.
+   * @param verbosity The verbosity level.
+   * @param prefix    The prefix for log/verbose messages.
+   */
   Logger(uint64_t log_level,
          uint64_t verbosity,
          const std::string& prefix = "");
 
+  /** @return True if verbose messaging is enabled for the given level. */
   bool is_msg_enabled(uint64_t level);
 
+  /** @return True if logging is enabled for the given level. */
   bool is_log_enabled(uint64_t level);
 
+  /**
+   * Start new log line for given level.
+   * @param level The level.
+   * @return The line.
+   */
   Line log(uint64_t level);
 
+  /**
+   * Start new verbose message line for given level.
+   * @param level The level.
+   * @return The line.
+   */
   Line msg(uint64_t level);
 
+  /**
+   * Start new warning message.
+   * @note Warnings are automatically configured to be enabled at level 1.
+   */
   Line warn();
 
+  /**
+   * Set the verbosity level.
+   * @param level The verbosity level.
+   */
+  void set_verbosity_level(uint64_t level);
+
  private:
+  /** The log level. */
   uint64_t d_log_level;
+  /** The verbosity level. */
   uint64_t d_verbosity_level;
+  /** The message prefix for verbose and logging messages. */
   std::string d_prefix;
 };
 
