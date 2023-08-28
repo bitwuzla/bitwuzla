@@ -38,10 +38,7 @@ main()
   // (check-sat)
   result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: sat\n");
-  printf("Bitwuzla: %s\n",
-         result == BITWUZLA_SAT
-             ? "sat"
-             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
 
   bitwuzla_delete(bitwuzla);
 
@@ -76,10 +73,7 @@ main()
   // (check-sat)
   result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: sat\n");
-  printf("Bitwuzla: %s\n",
-         (result == BITWUZLA_SAT
-              ? "sat"
-              : (result == BITWUZLA_UNSAT ? "unsat" : "unknown")));
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
   // (get-model)
   printf("(\n");
   printf("  (define-fun %s () ", bitwuzla_term_get_symbol(x));

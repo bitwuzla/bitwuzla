@@ -33,12 +33,18 @@ main()
   // First, enable model generation.
   options.set(Option::PRODUCE_MODELS, true);
   // Then, increase the verbosity level.
+  std::cout << "Previous verbosity level: " << options.get(Option::VERBOSITY)
+            << std::endl;
   options.set(Option::VERBOSITY, 2);
+  std::cout << "Current verbosity level: " << options.get(Option::VERBOSITY)
+            << std::endl;
 
   // Now, create a Bitwuzla instance.
   Bitwuzla bitwuzla(options);
   // Check sat (nothing to solve, input formula is empty).
-  bitwuzla.check_sat();
+  Result result = bitwuzla.check_sat();
+  std::cout << "Expect: sat" << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
 
   return 0;
 }

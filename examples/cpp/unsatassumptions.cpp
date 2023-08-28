@@ -19,6 +19,7 @@ main()
 {
   // First, create a Bitwuzla options instance.
   Options options;
+  // (set-option :produce-unsat-assumptions true)
   options.set(Option::PRODUCE_UNSAT_ASSUMPTIONS, true);
   // Then, create a Bitwuzla instance.
   Bitwuzla bitwuzla(options);
@@ -87,11 +88,7 @@ main()
   // (check-sat-assuming (assumption0 assumption1 assumption2))
   Result result = bitwuzla.check_sat({a0, a1, a2});
   std::cout << "Expect: unsat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
 
   // (get-unsat-assumptions)
   auto unsat_assumptions = bitwuzla.get_unsat_assumptions();

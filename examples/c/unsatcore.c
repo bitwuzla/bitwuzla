@@ -99,10 +99,7 @@ main()
   // (check-sat)
   BitwuzlaResult result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: unsat\n");
-  printf("Bitwuzla: %s\n",
-         result == BITWUZLA_SAT
-             ? "sat"
-             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
 
   // (get-unsat-core)
   size_t unsat_core_size;

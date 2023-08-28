@@ -220,6 +220,17 @@ Quickstart Example
   ../../examples/python/quickstart.py
   ../../examples/smt2/quickstart.smt2
 
+Options Example
+^^^^^^^^^^^^^^^
+
+| An example for how to set and get options.
+| The source code for this example can be found at `examples/c/options.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/options.c>`_.
+
+.. tabbed-examples::
+  ../../examples/c/options.c
+  ../../examples/cpp/options.cpp
+  ../../examples/python/options.py
+
 Incremental Example with push and pop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -260,6 +271,7 @@ create lambda terms (:code:`define-fun`).
 .. tabbed-examples::
   ../../examples/c/unsatcore.c
   ../../examples/cpp/unsatcore.cpp
+  ../../examples/python/unsatcore.py
   ../../examples/smt2/unsatcore.smt2
 
 Unsat Assumptions Example
@@ -273,6 +285,7 @@ Unsat Assumptions Example
 .. tabbed-examples::
    ../../examples/c/unsatassumptions.c
    ../../examples/cpp/unsatassumptions.cpp
+   ../../examples/python/unsatassumptions.py
    ../../examples/smt2/unsatassumptions.smt2
 
 Reset Example
@@ -286,6 +299,7 @@ Reset Example
 .. tabbed-examples::
    ../../examples/c/reset.c
    ../../examples/cpp/reset.cpp
+   ../../examples/python/reset.py
    ../../examples/smt2/reset.smt2
 
 Reset Assertions Example
@@ -293,12 +307,13 @@ Reset Assertions Example
 
 | This example shows how to reset the currently asserted formulas of a solver instance (SMT-LIB command :code:`reset-assertions`).
 | The SMT-LIB input for this example can be found at `examples/smt2/reset_assertions.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/reset_assertions.smt2>`_.
-| The source code for this example can be found at `examples/cpp/reset_assertions.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/reset_assertions.cpp>`_.
+| The source code for this example can be found at `examples/c/reset_assertions.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/reset_assertions.c>`_.
 
 
 .. tabbed-examples::
    ../../examples/c/reset_assertions.c
    ../../examples/cpp/reset_assertions.cpp
+   ../../examples/python/reset_assertions.py
    ../../examples/smt2/reset_assertions.smt2
 
 Parsing Example

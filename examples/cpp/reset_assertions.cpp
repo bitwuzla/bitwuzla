@@ -51,11 +51,7 @@ main()
   // (check-sat)
   result = bitwuzla->check_sat();
   std::cout << "Expect: unsat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
 
   // (reset-assertions)
   // Note: Bitwuzla does not provide an explicit API function for
@@ -69,11 +65,7 @@ main()
   // (check-sat)
   result = bitwuzla->check_sat();
   std::cout << "Expect: sat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
 
   // (get-model)
   std::cout << "(" << std::endl

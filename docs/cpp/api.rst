@@ -214,6 +214,17 @@ Quickstart Example
   ../../examples/python/quickstart.py
   ../../examples/smt2/quickstart.smt2
 
+Options Example
+^^^^^^^^^^^^^^^
+
+| An example for how to set and get options.
+| The source code for this example can be found at `examples/cpp/options.cpp <https://github.com/bitwuzla/bitwuzla/tree/main/examples/cpp/options.cpp>`_.
+
+.. tabbed-examples::
+  ../../examples/cpp/options.cpp
+  ../../examples/c/options.c
+  ../../examples/python/options.py
+
 Incremental Example with push and pop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -254,6 +265,7 @@ create lambda terms (:code:`define-fun`).
 .. tabbed-examples::
   ../../examples/cpp/unsatcore.cpp
   ../../examples/c/unsatcore.c
+  ../../examples/python/unsatcore.py
   ../../examples/smt2/unsatcore.smt2
 
 Unsat Assumptions Example
@@ -267,6 +279,7 @@ Unsat Assumptions Example
 .. tabbed-examples::
    ../../examples/cpp/unsatassumptions.cpp
    ../../examples/c/unsatassumptions.c
+   ../../examples/python/unsatassumptions.py
    ../../examples/smt2/unsatassumptions.smt2
 
 Reset Example
@@ -280,6 +293,7 @@ Reset Example
 .. tabbed-examples::
    ../../examples/cpp/reset.cpp
    ../../examples/c/reset.c
+   ../../examples/python/reset.py
    ../../examples/smt2/reset.smt2
 
 Reset Assertions Example
@@ -293,6 +307,7 @@ Reset Assertions Example
 .. tabbed-examples::
    ../../examples/cpp/reset_assertions.cpp
    ../../examples/c/reset_assertions.c
+   ../../examples/python/reset_assertions.py
    ../../examples/smt2/reset_assertions.smt2
 
 Parsing Example

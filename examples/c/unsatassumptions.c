@@ -16,6 +16,7 @@ main()
 {
   // First, create a Bitwuzla options instance.
   BitwuzlaOptions *options = bitwuzla_options_new();
+  // (set-option :produce-unsat-assumptions true)
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 1);
   // Then, create a Bitwuzla instance.
   Bitwuzla *bitwuzla = bitwuzla_new(options);
@@ -103,10 +104,7 @@ main()
   // (check-sat-assuming (assumption0 assumption1 assumption2))
   BitwuzlaResult result = bitwuzla_check_sat_assuming(bitwuzla, 3, assumptions);
   printf("Expect: unsat\n");
-  printf("Bitwuzla: %s\n",
-         result == BITWUZLA_SAT
-             ? "sat"
-             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
 
   // (get-unsat-assumptions)
   size_t unsat_assumptions_size;

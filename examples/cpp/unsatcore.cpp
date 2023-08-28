@@ -84,11 +84,7 @@ main()
   // (check-sat)
   Result result = bitwuzla.check_sat();
   std::cout << "Expect: unsat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
 
   // (get-unsat-core)
   auto unsat_core = bitwuzla.get_unsat_core();

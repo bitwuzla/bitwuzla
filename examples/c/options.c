@@ -30,12 +30,18 @@ main()
   // First, enable model generation.
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
   // Then, increase the verbosity level.
+  printf("Previous verbosity level: %lu\n",
+         bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY));
   bitwuzla_set_option(options, BITWUZLA_OPT_VERBOSITY, 2);
+  printf("Current verbosity level: %lu\n",
+         bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY));
 
   // Now, create a Bitwuzla instance.
   Bitwuzla* bitwuzla = bitwuzla_new(options);
   // Check sat (nothing to solve, input formula is empty).
-  bitwuzla_check_sat(bitwuzla);
+  BitwuzlaResult result = bitwuzla_check_sat(bitwuzla);
+  printf("Expect: sat\n");
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
 
   // Finally, delete the Bitwuzla and Bitwuzla options instance.
   bitwuzla_delete(bitwuzla);

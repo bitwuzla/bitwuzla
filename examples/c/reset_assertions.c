@@ -38,10 +38,7 @@ main()
   // (check-sat)
   result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: sat\n");
-  printf("Bitwuzla: %s\n",
-         result == BITWUZLA_SAT
-             ? "sat"
-             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
   // (assert (= x #b001))
   bitwuzla_assert(
       bitwuzla,
@@ -50,10 +47,7 @@ main()
   // (check-sat)
   result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: unsat\n");
-  printf("Bitwuzla: %s\n",
-         result == BITWUZLA_SAT
-             ? "sat"
-             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
 
   // (reset-assertions)
   // Note: Bitwuzla does not provide an explicit API function for
@@ -70,10 +64,7 @@ main()
   // (check-sat)
   result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: sat\n");
-  printf("Bitwuzla: %s\n",
-         (result == BITWUZLA_SAT
-              ? "sat"
-              : (result == BITWUZLA_UNSAT ? "unsat" : "unknown")));
+  printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
   // (get-model)
   printf("(\n");
   printf("  (define-fun %s", bitwuzla_term_get_symbol(x));

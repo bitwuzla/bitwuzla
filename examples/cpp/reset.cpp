@@ -39,11 +39,7 @@ main()
   // (check-sat)
   result = bitwuzla->check_sat();
   std::cout << "Expect: sat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
 
   // (set-option :produce-models true)
   options.set(Option::PRODUCE_MODELS, true);
@@ -68,11 +64,7 @@ main()
   // (check-sat)
   result = bitwuzla->check_sat();
   std::cout << "Expect: sat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
   // (get-model)
   std::cout << "(" << std::endl
             << "  (define-fun " << x.symbol()->get() << " () " << x.sort()
