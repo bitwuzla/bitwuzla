@@ -36,17 +36,20 @@ bitvector_lib = library('bitwuzlabv',
                         sources: bv_sources,
                         link_whole: rng_lib,
                         dependencies: gmp_dep,
+                        install_rpath: install_rpath,
                         install: true)
 bitblast_lib = library('bitwuzlabb',
                        sources: bb_sources,
                        link_with: bitvector_lib,
                        dependencies: gmp_dep,
+                       install_rpath: install_rpath,
                        install: true)
 local_search_lib = library('bitwuzlals',
                            sources: ls_sources,
                            link_with: [bitvector_lib],
                            link_whole: rng_lib,
                            dependencies: gmp_dep,
+                           install_rpath: install_rpath,
                            install: true)
 
 # Exported dependencies

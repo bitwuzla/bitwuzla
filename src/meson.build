@@ -193,6 +193,7 @@ bitwuzla_lib = library('bitwuzla',
                       link_with: support_libs,
                       dependencies: dependencies,
                       soversion: bitwuzla_lib_soversion,
+                      install_rpath: install_rpath,
                       install: true,
                       cpp_args: cpp_args)
 

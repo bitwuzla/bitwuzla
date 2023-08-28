@@ -15,6 +15,8 @@ project('bitwuzla',
 )
 bitwuzla_lib_soversion = 0
 
+install_rpath = join_paths(get_option('prefix'), get_option('libdir'))
+
 # Build parameters
 enable_python = get_option('python')
 
