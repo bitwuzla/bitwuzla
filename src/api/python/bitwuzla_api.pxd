@@ -12,6 +12,7 @@ from bitwuzla import BitwuzlaException
 from cpython.ref cimport PyObject
 from libc.stdint cimport uint8_t, uint32_t, uint64_t, int64_t
 from libcpp cimport bool
+from libcpp.memory cimport shared_ptr
 from libcpp.optional cimport optional
 from libcpp.string cimport string
 from libcpp.vector cimport vector
@@ -21,13 +22,13 @@ cdef extern from "<functional>" namespace "std" nogil:
         pass
 
 cdef extern from "<iostream>" namespace "std":
+    ostream cout
     cdef cppclass ostream:
-        pass
+        ostream &operator << (set_bv_format)
 
 cdef extern from "<sstream>" namespace "std":
     cdef cppclass stringstream(ostream):
         string to_string "str" () const
-        stringstream &operator << (set_bv_format)
         stringstream &operator << (Result)
 
 
@@ -222,5 +223,16 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
                   optional[const string] symbol) except +raise_error
     Term mk_var(const Sort &sort,
                 optional[const string] symbol) except +raise_error
+
+
+cdef extern from "bitwuzla/cpp/parser.h" namespace "bitwuzla::parser":
+
+    cdef cppclass Parser:
+        Parser(Options& options,
+               const string& infile_name,
+               const string& language,
+               ostream* out) except +raise_error
+        string parse(bool parse_only) except +raise_error
+        shared_ptr[Bitwuzla] bitwuzla() except +raise_error
 
 # -------------------------------------------------------------------------- #

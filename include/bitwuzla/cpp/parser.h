@@ -39,7 +39,7 @@ class Parser
   Parser(Options &options,
          const std::string &infile_name,
          const std::string &language = "smt2",
-         std::ostream              * = &std::cout);
+         std::ostream *out           = &std::cout);
   /**
    * Constructor.
    * @note The parser creates and owns the associated Bitwuzla instance.
@@ -54,7 +54,7 @@ class Parser
          const std::string &infile_name,
          FILE *infile,
          const std::string &language = "smt2",
-         std::ostream              * = &std::cout);
+         std::ostream *out           = &std::cout);
   /** Destructor. */
   ~Parser();
   /**
@@ -68,7 +68,7 @@ class Parser
    * Get the associated Bitwuzla instance.
    * @return The Bitwuzla instance.
    */
-  bitwuzla::Bitwuzla *bitwuzla();
+  std::shared_ptr<bitwuzla::Bitwuzla> bitwuzla();
 
  private:
   std::unique_ptr<bzla::parser::Parser> d_parser;

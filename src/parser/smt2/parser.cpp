@@ -799,7 +799,7 @@ Parser::parse_command_reset()
   {
     return false;
   }
-  d_bitwuzla.reset(nullptr);
+  d_bitwuzla.reset();
   d_table   = SymbolTable();
   d_options = d_options_orig;
   print_success();
@@ -815,7 +815,7 @@ Parser::parse_command_reset_assertions()
   {
     return false;
   }
-  d_bitwuzla.reset(nullptr);
+  d_bitwuzla.reset();
   if (!d_global_decl)
   {
     d_table = SymbolTable();

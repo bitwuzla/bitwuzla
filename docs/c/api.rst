@@ -328,6 +328,7 @@ Parsing Example
 .. tabbed-examples::
    ../../examples/c/parse.c
    ../../examples/cpp/parse.cpp
+   ../../examples/python/parse.py
 
 Printing Example
 ^^^^^^^^^^^^^^^^

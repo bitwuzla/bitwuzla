@@ -93,8 +93,10 @@ class Parser
   /**
    * Parse input file.
    * @param parse_only True to only parse without executing check-sat calls.
+   * @return The error message, empty if no error.
    */
   virtual std::string parse(bool parse_only) = 0;
+
   /** Configure Bitwuzla terminator.
    * @param terminator The terminator to configure as terminator for Bitwuzla.
    */
@@ -108,7 +110,7 @@ class Parser
   }
 
   /** @return The Bitwuzla instance. */
-  bitwuzla::Bitwuzla* bitwuzla() { return d_bitwuzla.get(); }
+  std::shared_ptr<bitwuzla::Bitwuzla> bitwuzla() { return d_bitwuzla; }
 
   /** @return The error message. */
   const std::string& error_msg() { return d_error; }
@@ -137,7 +139,7 @@ class Parser
   /** The Bitwuzla configuration options. */
   bitwuzla::Options d_options;
   /** The Bitwuzla instance. */
-  std::unique_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
+  std::shared_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
   /** The Bitwuzla terminator. */
   bitwuzla::Terminator* d_terminator = nullptr;
 

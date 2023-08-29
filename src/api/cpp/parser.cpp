@@ -69,7 +69,7 @@ Parser::parse(bool parse_only)
   return d_parser->parse(parse_only);
 }
 
-bitwuzla::Bitwuzla *
+std::shared_ptr<bitwuzla::Bitwuzla>
 Parser::bitwuzla()
 {
   return d_parser->bitwuzla();

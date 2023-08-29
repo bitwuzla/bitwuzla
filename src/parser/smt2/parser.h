@@ -43,10 +43,7 @@ class Parser : public bzla::parser::Parser
          const std::string& infile_name,
          FILE* infile,
          std::ostream* out = &std::cout);
-  /**
-   * Parse input file.
-   * @param parse_only True to only parse without executing check-sat calls.
-   */
+
   std::string parse(bool parse_only) override;
 
  private:

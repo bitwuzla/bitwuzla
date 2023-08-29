@@ -132,6 +132,18 @@ Reset Assertions Example
    ../../examples/c/reset_assertions.c
    ../../examples/smt2/reset_assertions.smt2
 
+Parsing Example
+^^^^^^^^^^^^^^^
+
+| This example shows how to parse an input file via the API.
+| The source code for this example can be found at `examples/python/parse.py <https://github.com/bitwuzla/bitwuzla/tree/main/examples/python/parse.py>`_.
+
+
+.. tabbed-examples::
+   ../../examples/python/parse.py
+   ../../examples/cpp/parse.cpp
+   ../../examples/c/parse.c
+
 Printing Example
 ^^^^^^^^^^^^^^^^
 

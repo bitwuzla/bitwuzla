@@ -56,6 +56,7 @@ This file collects a summary of important and/or user-visible changes.
       a bv output number format.
     * Enum values for Kind, Result and RoundingMode can now be converted to
       their string representation via str().
+    * Added support for input file parsing.
 
 - The SMT2 parser is now less restrictive with respect to setting *unsupported
   options* and using *unsupported annotation attributes*. This is now ignored

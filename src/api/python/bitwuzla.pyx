@@ -18,7 +18,7 @@ from libcpp cimport bool as c_bool
 from libcpp.optional cimport optional, nullopt, make_optional
 from libcpp.string cimport string
 from libcpp.vector cimport vector
-from libcpp.memory cimport unique_ptr
+from libcpp.memory cimport unique_ptr, shared_ptr
 from cpython.ref cimport PyObject
 from cython.operator import dereference
 
@@ -698,7 +698,7 @@ cdef class Options:
 # --------------------------------------------------------------------------- #
 
 cdef class Bitwuzla:
-    cdef unique_ptr[bitwuzla_api.Bitwuzla] c_bitwuzla
+    cdef shared_ptr[bitwuzla_api.Bitwuzla] c_bitwuzla
     cdef unique_ptr[bitwuzla_api.PyTerminator] c_terminator
 
     def __init__(self, options: Options = Options()):
@@ -1205,3 +1205,36 @@ def mk_term(kind: Kind, terms: list[Term], indices: list[int] = []) -> Term:
     """
     return _term(bitwuzla_api.mk_term(kind.value, _term_vec(terms), indices))
 
+# --------------------------------------------------------------------------- #
+# Parser
+# --------------------------------------------------------------------------- #
+
+cdef class Parser:
+    cdef unique_ptr[bitwuzla_api.Parser] c_parser
+    cdef Options options
+
+    def __init__(self,
+                 options: Options,
+                 infile_name,
+                 language = "smt2",
+                 uint8_t base = 2):
+        cdef unique_ptr[bitwuzla_api.set_bv_format] c_bv_fmt
+        self.options = options
+        c_bv_fmt.reset(new bitwuzla_api.set_bv_format(base))
+        bitwuzla_api.cout << dereference(c_bv_fmt.get())
+        self.c_parser.reset(
+                new bitwuzla_api.Parser(
+                    options.c_options,
+                    <const string&> str(infile_name).encode(),
+                    <const string&> str(language).encode(),
+                    &bitwuzla_api.cout))
+
+    def parse(self, parse_only: bool = False) -> str:
+        res = self.c_parser.get().parse(parse_only)
+        if res.decode() == '': return None
+        return res.decode()
+
+    def bitwuzla(self) -> Bitwuzla:
+        b = Bitwuzla(self.options)
+        b.c_bitwuzla = self.c_parser.get().bitwuzla()
+        return b

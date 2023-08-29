@@ -43,7 +43,7 @@ main(int32_t argc, char* argv[])
     {
       Error() << err_msg;
     }
-    bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla();
+    bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla().get();
     if (main_options.print)
     {
       if (!main_options.parse_only)
