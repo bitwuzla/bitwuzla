@@ -318,7 +318,7 @@ cdef class Term:
 
            :return: The kind.
         """
-        return self.c_term.kind()
+        return Kind(self.c_term.kind())
 
     def sort(self) -> Sort:
         """Get the sort of this term.
