@@ -218,6 +218,17 @@ Options Example
   ../../examples/c/options.c
   ../../examples/smt2/options.smt2
 
+Option Info Example
+^^^^^^^^^^^^^^^^^^^
+
+| An example for how to get information about options via :cpp:struct:`BitwuzlaOptionInfo`.
+| The source code for this example can be found at `examples/python/option_info.py <https://github.com/bitwuzla/bitwuzla/tree/main/examples/python/option_info.py>`_.
+
+.. tabbed-examples::
+  ../../examples/python/option_info.py
+  ../../examples/cpp/option_info.cpp
+  ../../examples/c/option_info.c
+
 Incremental Example with push and pop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

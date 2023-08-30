@@ -716,7 +716,78 @@ cdef class Options:
 # OptionInfo wrapper
 # --------------------------------------------------------------------------- #
 
-# TODO
+class OptionInfoKind(Enum):
+    """The kind of an OptionInfo.
+
+    """
+    BOOL = bitwuzla_api.CppOptionInfoKind.BOOL
+    NUMERIC = bitwuzla_api.CppOptionInfoKind.NUMERIC
+    MODE = bitwuzla_api.CppOptionInfoKind.MODE
+
+cdef class OptionInfo:
+    """ The class holding all information about an option.
+    """
+    cdef unique_ptr[bitwuzla_api.OptionInfo] c_info
+
+    def __init__(self, options: Options, option: Option):
+        self.c_info.reset(
+                new bitwuzla_api.OptionInfo(options.c_options, option.value))
+
+    def shrt(self):
+        """Get the short name of an option.
+           :return: The short name, if any, else None.
+        """
+        return _to_str(self.c_info.get().shrt)
+
+    def lng(self):
+        """Get the long name of an option.
+           :return: The long name of an option.
+        """
+        return _to_str(self.c_info.get().lng)
+
+    def kind(self) -> OptionInfoKind:
+        """Get the kind of this OptionInfo.
+           :return: The kind.
+        """
+        return OptionInfoKind(self.c_info.get().kind)
+
+    def dflt(self):
+        if self.kind() == OptionInfoKind.BOOL:
+            return self.c_info.get().value[bitwuzla_api.OptionInfoBool]().dflt
+        if self.kind() == OptionInfoKind.MODE:
+            return self.c_info.get().value[
+                    bitwuzla_api.OptionInfoMode]().dflt.decode()
+        return self.c_info.get().value[bitwuzla_api.OptionInfoNumeric]().dflt
+
+    def cur(self):
+        if self.kind() == OptionInfoKind.BOOL:
+            return self.c_info.get().value[bitwuzla_api.OptionInfoBool]().cur
+        if self.kind() == OptionInfoKind.MODE:
+            return self.c_info.get().value[
+                    bitwuzla_api.OptionInfoMode]().cur.decode()
+        return self.c_info.get().value[bitwuzla_api.OptionInfoNumeric]().cur
+
+    def min(self):
+        if self.kind() == OptionInfoKind.NUMERIC:
+            return self.c_info.get().value[bitwuzla_api.OptionInfoNumeric]().min
+        return None
+
+    def max(self):
+        if self.kind() == OptionInfoKind.NUMERIC:
+            return self.c_info.get().value[bitwuzla_api.OptionInfoNumeric]().max
+        return None
+
+    def modes(self):
+        if self.kind() == OptionInfoKind.MODE:
+            return [
+                    _to_str(m) for m in
+                    self.c_info.get().value[bitwuzla_api.OptionInfoMode]().modes
+                   ]
+        return None
+
+    def description(self):
+        return _to_str(self.c_info.get().description)
+
 
 # --------------------------------------------------------------------------- #
 # Bitwuzla wrapper

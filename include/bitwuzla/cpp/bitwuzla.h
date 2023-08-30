@@ -362,7 +362,36 @@ struct OptionInfo
 
   /** The values. */
   std::variant<Bool, Numeric, Mode> values;
+
+  /**
+   * Additionall getter for values.
+   * @note This is mainly needed for Cython.
+   * @return The value wrapper of this option info.
+   */
+  template <class T>
+  T value() const;
 };
+
+/**
+ * Get Bool option info wrapper.
+ * @return The option info wrapper.
+ */
+template <>
+OptionInfo::Bool OptionInfo::value() const;
+
+/**
+ * Get Numeric option info wrapper.
+ * @return The option info wrapper.
+ */
+template <>
+OptionInfo::Numeric OptionInfo::value() const;
+
+/**
+ * Get Mode option info wrapper.
+ * @return The option info wrapper.
+ */
+template <>
+OptionInfo::Mode OptionInfo::value() const;
 
 /* -------------------------------------------------------------------------- */
 /* Result                                                                     */

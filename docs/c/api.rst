@@ -242,6 +242,7 @@ Option Info Example
 .. tabbed-examples::
   ../../examples/c/option_info.c
   ../../examples/cpp/option_info.cpp
+  ../../examples/python/option_info.py
 
 Incremental Example with push and pop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -696,6 +696,30 @@ OptionInfo::OptionInfo(const Options &options, Option option) : opt(option)
   }
 }
 
+template <>
+OptionInfo::Bool
+OptionInfo::value() const
+{
+  BITWUZLA_CHECK(kind == Kind::BOOL) << "expected Boolean option";
+  return std::get<OptionInfo::Bool>(values);
+}
+
+template <>
+OptionInfo::Numeric
+OptionInfo::value() const
+{
+  BITWUZLA_CHECK(kind == Kind::NUMERIC) << "expected numeric option";
+  return std::get<OptionInfo::Numeric>(values);
+}
+
+template <>
+OptionInfo::Mode
+OptionInfo::value() const
+{
+  BITWUZLA_CHECK(kind == Kind::MODE) << "expected option with modes";
+  return std::get<OptionInfo::Mode>(values);
+}
+
 /* Term public -------------------------------------------------------------- */
 
 Term::Term() : d_node(nullptr) {}

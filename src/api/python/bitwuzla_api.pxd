@@ -31,7 +31,6 @@ cdef extern from "<sstream>" namespace "std":
         string to_string "str" () const
         stringstream &operator << (Result)
 
-
 # Extract C++ exception message.
 cdef extern from *:
     """
@@ -102,6 +101,37 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         void set(const vector[string] &args) except +raise_error
         uint64_t get(Option option) except +raise_error
         const string &get_mode(Option option) except +raise_error
+
+    cdef enum class CppOptionInfoKind "bitwuzla::OptionInfo::Kind":
+        BOOL,
+        NUMERIC,
+        MODE
+
+    cdef cppclass OptionInfoBool "bitwuzla::OptionInfo::Bool":
+        bool cur
+        bool dflt
+
+    cdef cppclass OptionInfoNumeric "bitwuzla::OptionInfo::Numeric":
+        uint64_t cur
+        uint64_t dflt
+        uint64_t min
+        uint64_t max
+
+    cdef cppclass OptionInfoMode "bitwuzla::OptionInfo::Mode":
+        string cur
+        string dflt
+        vector[string] modes
+
+    cdef cppclass OptionInfo:
+        OptionInfo()
+        OptionInfo(Options options, Option option) except +raise_error
+        CppOptionInfoKind kind
+        const char* lng
+        const char* shrt
+        const char* description
+        OptionInfoBool value[OptionInfoBool]() except +raise_error
+        OptionInfoNumeric value[OptionInfoNumeric]() except +raise_error
+        OptionInfoMode value[OptionInfoMode]() except +raise_error
 
     cdef cppclass Sort:
         Sort() except +raise_error
