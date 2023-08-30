@@ -36,6 +36,8 @@ This file collects a summary of important and/or user-visible changes.
       (when printing model values) via (new, required) parameter `uint8_t base`,
       and the name of the output file (`<stdout>` to use `stdout`) via (new,
       required) parameter `const char* outfile_name`.
+    - Renamed `BitwuzlaOptionInfo.desc` to `description` for consistency
+      between C and C++ API.
   * C++ API changes:
     - New stream modifier `set_bv_format(uint8_t)` allows to configure the
       output number format of bit-vector values of any output stream.

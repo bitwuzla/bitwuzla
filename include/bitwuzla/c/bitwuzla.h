@@ -71,7 +71,7 @@ struct BitwuzlaOptionInfo
   /** Long option name. */
   const char *lng;
   /** Option description. */
-  const char *desc;
+  const char *description;
   /** Indicates whether values are numeric or strings. */
   bool is_numeric;
 
@@ -98,7 +98,7 @@ struct BitwuzlaOptionInfo
       /** Number of available modes. */
       size_t num_modes;
       /** List of available modes. */
-      char **modes;
+      const char **modes;
     } mode;
   };
 };

@@ -312,10 +312,10 @@ bitwuzla_get_option_info(BitwuzlaOptions *options,
   cpp_info = bitwuzla::OptionInfo(options->d_options, import_option(option));
 
   std::memset(info, 0, sizeof(*info));
-  info->opt        = option;
-  info->shrt       = cpp_info.shrt;
-  info->lng        = cpp_info.lng;
-  info->desc       = cpp_info.description;
+  info->opt         = option;
+  info->shrt        = cpp_info.shrt;
+  info->lng         = cpp_info.lng;
+  info->description = cpp_info.description;
   info->is_numeric = cpp_info.kind != bitwuzla::OptionInfo::Kind::MODE;
 
   if (info->is_numeric)
@@ -345,6 +345,8 @@ bitwuzla_get_option_info(BitwuzlaOptions *options,
   {
     info->mode.cur =
         std::get<bitwuzla::OptionInfo::Mode>(cpp_info.values).cur.c_str();
+    info->mode.dflt =
+        std::get<bitwuzla::OptionInfo::Mode>(cpp_info.values).dflt.c_str();
     info->mode.num_modes =
         std::get<bitwuzla::OptionInfo::Mode>(cpp_info.values).modes.size();
     static thread_local std::vector<const char *> c_modes;
@@ -353,6 +355,7 @@ bitwuzla_get_option_info(BitwuzlaOptions *options,
     {
       c_modes.push_back(m.c_str());
     }
+    info->mode.modes = c_modes.data();
   }
   BITWUZLA_TRY_CATCH_END;
 }

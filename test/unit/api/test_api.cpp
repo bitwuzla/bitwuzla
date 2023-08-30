@@ -363,17 +363,17 @@ TEST_F(TestApi, option_info)
     {
       ASSERT_EQ(options.get(opt),
                 std::get<bitwuzla::OptionInfo::Bool>(info.values).cur);
-      }
-      else if (info.kind == bitwuzla::OptionInfo::Kind::NUMERIC)
-      {
-        ASSERT_EQ(options.get(opt),
-                  std::get<bitwuzla::OptionInfo::Numeric>(info.values).cur);
-      }
-      else
-      {
-        ASSERT_EQ(options.get_mode(opt),
-                  std::get<bitwuzla::OptionInfo::Mode>(info.values).cur);
-      }
+    }
+    else if (info.kind == bitwuzla::OptionInfo::Kind::NUMERIC)
+    {
+      ASSERT_EQ(options.get(opt),
+                std::get<bitwuzla::OptionInfo::Numeric>(info.values).cur);
+    }
+    else
+    {
+      ASSERT_EQ(options.get_mode(opt),
+                std::get<bitwuzla::OptionInfo::Mode>(info.values).cur);
+    }
   }
 }
 
