@@ -51,6 +51,12 @@ Term
    :members:
    :undoc-members:
 
+Parser
+^^^^^^
+.. autoclass:: bitwuzla.Parser
+   :members:
+   :undoc-members:
+
 Functions
 ---------
 

@@ -650,15 +650,15 @@ cdef class Options:
 
             Short option names: ::
 
-              -short      ... {"-short"}
-              -short=val  ... {"-short=val"}
-              -short val  ... {"-short", "val"}
+              -short      ... ["-short"]
+              -short=val  ... ["-short=val"]
+              -short val  ... ["-short", "val"]
 
             Long option names: ::
 
-              --long      ... {"--long"}
-              --long=val  ... {"--long=val"}
-              --long val  ... {"--long", "val"}
+              --long      ... ["--long"]
+              --long=val  ... ["--long=val"]
+              --long val  ... ["--long", "val"]
 
             :param args: List of command line options.
         """
@@ -686,6 +686,31 @@ cdef class Options:
             return self.c_options.get(option.value)
         elif self.c_options.is_bool(option.value):
             return self.c_options.get(option.value) != 0
+
+    def is_bool(self, option: Option):
+        """ Determine if given option is a Boolean option.
+
+            :param: option: The option to query.
+            :return: True if `option` is a Boolean option.
+        """
+        return self.c_options.is_bool(option.value)
+
+    def is_numeric(self, option: Option):
+        """ Determine if given option is a numeric option.
+
+            :param: option: The option to query.
+            :return: True if `option` is a numeric option.
+        """
+        return self.c_options.is_numeric(option.value)
+
+
+    def is_mode(self, option: Option):
+        """ Determine if given option is an option with a mode.
+
+            :param: option: The option to query.
+            :return: True if `option` is an option with a mode.
+        """
+        return self.c_options.is_mode(option.value)
 
 # --------------------------------------------------------------------------- #
 # OptionInfo wrapper

@@ -120,7 +120,7 @@ string via :cpp:func:`bitwuzla::Term::value()`, or as a term via
 :cpp:func:`bitwuzla::Bitwuzla::get_value()`.
 
 Additionally, for floating-point values,
-:cpp:func:`bitwuzla_term_value_get_fp_ieee` allows to retrieve the assignment
+:cpp:func:`bitwuzla::Term::value()` allows to retrieve the assignment
 split into assignment strings for the sign bit, the exponent and the
 significand;
 for Boolean values as :code:`bool`;
@@ -146,7 +146,7 @@ other hand, cannot be represented with a simple type. Thus, function values are
 given as :cpp:enum:`bitwuzla::Kind::LAMBDA`, and array values are given as
 :cpp:enum:`bitwuzla::Kind::ARRAY_STORE`.
 We can retrieve an SMT-LIB2 string representation of the values via
-:cpp:func:`bitwuzla::Term::str()` (and :cpp:func:`bitwuzla::operator<<()`:
+:cpp:func:`bitwuzla::Term::str()` (and :cpp:func:`bitwuzla::operator<<()`):
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp

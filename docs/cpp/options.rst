@@ -23,7 +23,7 @@ Any option can also be configured via
 :cpp:func:`void bitwuzla::Options::set(const std::string &lng, const std::string &value)`,
 where :code:`lng` is the long name of the option (e.g., :code:`"produce-models"`).
 
-Additionally, it is also possible to confgure options in batch via
+Additionally, it is also possible to configure options in batch via
 :cpp:func:`void bitwuzla::Options::set(const std::vector<std::string> &args)`,
 where :code:`args` is a vector of command line option configuration strings,
 e.g., :code:`{"-i", "--produce-models=true", "--produce-unsat-cores true"}`.
