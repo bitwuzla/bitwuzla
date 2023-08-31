@@ -2,7 +2,22 @@
 
 This file collects a summary of important and/or user-visible changes.
 
-## News since version 0.1.1
+## News for version 0.2.0
+
+- Python API changes:
+    * New function `Bitwuzla.print_formula()` returns the current input formula
+      as a string in the given format (currently, as in the C++/C APIs, only
+      SMT-LIB2 is supported). This function can optionally be configured with
+      a bv output number format.
+    * Enum values for Kind, Result and RoundingMode can now be converted to
+      their string representation via str().
+    * Added support for input file parsing.
+    * New function `Options.is_valid()` allows to query if a given options
+      name is valid.
+    * `Term.value()` now allows to retrieve FP values as a list of sign,
+      exponent and significand bit-vector strings.
+    * New function `Bitwuzla::statistics()` allows to retrieve the current
+      statistics as a dictionary that maps statistic name to value (strings).
 
 - Bitwuzla now supports configuring the output number format for bit-vector
   values. This is configured via the CLI option `--bv-output-format`, or
@@ -51,21 +66,6 @@ This file collects a summary of important and/or user-visible changes.
       representation of the term. Function `Term.__str__()` uses default binary
       bv output number format.
 
-- Python API changes:
-    * New function `Bitwuzla.print_formula()` returns the current input formula
-      as a string in the given format (currently, as in the C++/C APIs, only
-      SMT-LIB2 is supported). This function can optionally be configered with
-      a bv output number format.
-    * Enum values for Kind, Result and RoundingMode can now be converted to
-      their string representation via str().
-    * Added support for input file parsing.
-    * New function `Options.is_valid()` allows to query if a given options
-      name is valid.
-    * `Term.value()` now allows to retrieve FP values as a list of sign,
-      exponent and significand bit-vector strings.
-    * New function `Bitwuzla::statistics()` allows to retrieve the current
-      statistics as a dictionary that maps statistic name to value (strings).
-
 - The SMT2 parser is now less restrictive with respect to setting *unsupported
   options* and using *unsupported annotation attributes*. This is now ignored
   (with a warning at verbosity level > 0) rather than rejected with an error.
@@ -78,6 +78,10 @@ This file collects a summary of important and/or user-visible changes.
 
 - Command line option --verbose renamed to --verbosity for consistency with
   option kind.
+
+## News for version 0.1.1.
+
+Various fixes.
 
 ## News for version 0.1.0 since commit 1230d80
 
