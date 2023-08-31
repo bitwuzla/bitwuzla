@@ -1580,7 +1580,7 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_ADD_MUL>::_apply(Rewriter& rewriter,
       {
         if (k == Kind::BV_MUL || k == Kind::BV_ADD || k == Kind::BV_NOT)
         {
-          it->second = node::utils::rebuild_node(cur, cache);
+          it->second = node::utils::rebuild_node(rewriter.nm(), cur, cache);
         }
         else
         {

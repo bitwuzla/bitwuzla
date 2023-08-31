@@ -24,7 +24,7 @@ class PassNormalize : public PreprocessingPass
 {
  public:
   using ParentsMap      = std::unordered_map<Node, uint64_t>;
-  using CoefficientsMap = std::unordered_map<Node, BitVector>;
+  using CoefficientsMap = std::map<Node, BitVector>;
 
   PassNormalize(Env& env, backtrack::BacktrackManager* backtrack_mgr);
 
@@ -84,7 +84,8 @@ class PassNormalize : public PreprocessingPass
   BitVector normalize_add(const Node& node,
                           CoefficientsMap& coeffs,
                           ParentsMap& parents,
-                          bool keep_value = false);
+                          bool keep_value = false,
+                          bool push_neg   = true);
   /**
    * Normalize factors for bit-vector and.
    * @param node The adder node.
@@ -176,6 +177,9 @@ class PassNormalize : public PreprocessingPass
                                              const Node& node0,
                                              const Node& node1);
 
+  void remove_zero_coeffs(CoefficientsMap& coeffs);
+  std::pair<Node, bool> normalize_comm_assoc(const Node& node);
+
   /**
    * Helper to normalize common parts of lhs and rhs.
    *
@@ -203,7 +207,10 @@ class PassNormalize : public PreprocessingPass
    */
   Node rebuild_top(const Node& node, const Node& top, const Node& normalized);
 
-  void collect_adders(const Node& assertion);
+  void normalize_adders(const std::vector<Node>& assertions,
+                        std::vector<Node>& norm_assertions);
+  void collect_adders(const std::vector<Node>& assertions,
+                      std::unordered_map<Node, CoefficientsMap>& adders);
 
   /**
    * True to detect occurrences > 1, i.e., nodes of given kind that have
@@ -236,6 +243,11 @@ class PassNormalize : public PreprocessingPass
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
+    Statistics(util::Statistics& stats);
+    util::TimerStatistic& time_apply;
+    util::TimerStatistic& time_normalize_add;
+    util::TimerStatistic& time_compute_coefficients;
+    util::TimerStatistic& time_adder_chains;
     uint64_t& num_normalizations;
   } d_stats;
 };

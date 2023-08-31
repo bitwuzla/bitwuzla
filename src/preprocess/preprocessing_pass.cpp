@@ -116,6 +116,7 @@ PreprocessingPass::substitute(
     const std::unordered_map<Node, Node>& substitutions,
     std::unordered_map<Node, Node>& cache) const
 {
+  NodeManager& nm = d_env.nm();
   node::node_ref_vector visit{node};
 
   do
@@ -154,7 +155,7 @@ PreprocessingPass::substitute(
           assert(!itc->second.is_null());
           children.push_back(itc->second);
         }
-        it->second = node::utils::rebuild_node(cur, children);
+        it->second = node::utils::rebuild_node(nm, cur, children);
       }
     }
     visit.pop_back();

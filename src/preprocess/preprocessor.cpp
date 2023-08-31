@@ -65,6 +65,7 @@ Result
 Preprocessor::preprocess()
 {
   util::Timer timer(d_stats.time_preprocess);
+  ++d_num_preprocess;
 
   // Set of already preprocessed assertions is inconsistent
   if (d_assertions.is_inconsistent())
@@ -236,6 +237,8 @@ Preprocessor::apply(AssertionVector& assertions)
   // limit the overhead.
   bool skel_done          = !assertions.initial_assertions();
   bool uninterpreted_done = !assertions.initial_assertions();
+  // Only apply on first call for now (for incremental it may be too expensive).
+  bool apply_normalization = d_num_preprocess == 1;
   // fixed-point passes
   do
   {
@@ -355,7 +358,8 @@ Preprocessor::apply(AssertionVector& assertions)
       uninterpreted_done = true;
     }
 
-    if (options.rewrite_level() >= 2 && options.pp_normalize())
+    if (apply_normalization && options.rewrite_level() >= 2
+        && options.pp_normalize())
     {
       cnt = assertions.num_modified();
       d_pass_normalize.apply(assertions);
