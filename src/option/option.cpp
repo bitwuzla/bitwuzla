@@ -382,7 +382,7 @@ Options::Options()
                    "pp-normalize"),
       pp_normalize_share_aware(this,
                                Option::PP_NORMALIZE_SHARE_AWARE,
-                               true,
+                               false,
                                "disable normalizations in normalization pass "
                                "that may yield blow-up on the bit-level",
                                "pp-normalize-share-aware"),

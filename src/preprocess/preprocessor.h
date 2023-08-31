@@ -77,6 +77,7 @@ class Preprocessor
 
   Env& d_env;
   util::Logger& d_logger;
+  uint64_t d_num_preprocess = 0;
 
   /** Current set of assertions. */
   backtrack::AssertionView& d_assertions;
