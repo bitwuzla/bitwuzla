@@ -59,6 +59,8 @@ This file collects a summary of important and/or user-visible changes.
     * Enum values for Kind, Result and RoundingMode can now be converted to
       their string representation via str().
     * Added support for input file parsing.
+    * New function `Options.is_valid()` allows to query if a given options
+      name is valid.
 
 - The SMT2 parser is now less restrictive with respect to setting *unsupported
   options* and using *unsupported annotation attributes*. This is now ignored

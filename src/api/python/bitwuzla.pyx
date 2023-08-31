@@ -594,6 +594,13 @@ cdef class Term:
 cdef class Options:
     cdef bitwuzla_api.Options c_options
 
+    def is_valid(self, name: str):
+        """Determine if given string is a valid short or long option name.
+           :param: name: The name.
+           :return: True if given string is a option name.
+        """
+        return self.c_options.is_valid(<const string&> name.encode())
+
     def shrt(self, option: Option) -> str:
         """Get the short name of this option.
 

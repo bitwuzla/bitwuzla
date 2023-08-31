@@ -265,7 +265,7 @@ TEST_F(TestApi, rm_to_string)
 }
 
 /* -------------------------------------------------------------------------- */
-/* BitwuzlaResult                                                             */
+/* Result                                                                     */
 /* -------------------------------------------------------------------------- */
 
 TEST_F(TestApi, result_to_string)
@@ -276,10 +276,10 @@ TEST_F(TestApi, result_to_string)
 }
 
 /* -------------------------------------------------------------------------- */
-/* Bitwuzla                                                                   */
+/* Options                                                                    */
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestApi, set_option)
+TEST_F(TestApi, options_set)
 {
   {
     bitwuzla::Options opts;
@@ -352,31 +352,6 @@ TEST_F(TestApi, set_option)
   }
 }
 
-TEST_F(TestApi, option_info)
-{
-  for (int32_t i = 0; i < static_cast<int32_t>(bitwuzla::Option::NUM_OPTS); ++i)
-  {
-    bitwuzla::Option opt = static_cast<bitwuzla::Option>(i);
-    bitwuzla::Options options;
-    bitwuzla::OptionInfo info(options, opt);
-    if (info.kind == bitwuzla::OptionInfo::Kind::BOOL)
-    {
-      ASSERT_EQ(options.get(opt),
-                std::get<bitwuzla::OptionInfo::Bool>(info.values).cur);
-    }
-    else if (info.kind == bitwuzla::OptionInfo::Kind::NUMERIC)
-    {
-      ASSERT_EQ(options.get(opt),
-                std::get<bitwuzla::OptionInfo::Numeric>(info.values).cur);
-    }
-    else
-    {
-      ASSERT_EQ(options.get_mode(opt),
-                std::get<bitwuzla::OptionInfo::Mode>(info.values).cur);
-    }
-  }
-}
-
 TEST_F(TestApi, option_set_args)
 {
   bitwuzla::Options options;
@@ -394,12 +369,57 @@ TEST_F(TestApi, option_set_args)
   ASSERT_THROW(options.set({"--no-verbosity"}), bitwuzla::Exception);
 }
 
+TEST_F(TestApi, option_info)
+{
+  for (int32_t i = 0; i < static_cast<int32_t>(bitwuzla::Option::NUM_OPTS); ++i)
+  {
+    bitwuzla::Option opt = static_cast<bitwuzla::Option>(i);
+    bitwuzla::Options options;
+    bitwuzla::OptionInfo info(options, opt);
+    if (info.kind == bitwuzla::OptionInfo::Kind::BOOL)
+    {
+      ASSERT_EQ(options.get(opt),
+                std::get<bitwuzla::OptionInfo::Bool>(info.values).cur);
+    }
+    else if (info.kind == bitwuzla::OptionInfo::Kind::NUMERIC)
+    {
+      uint64_t cur = std::get<bitwuzla::OptionInfo::Numeric>(info.values).cur;
+      ASSERT_EQ(cur, options.get(opt));
+      ASSERT_GE(cur, std::get<bitwuzla::OptionInfo::Numeric>(info.values).min);
+      ASSERT_LE(cur, std::get<bitwuzla::OptionInfo::Numeric>(info.values).max);
+    }
+    else
+    {
+      const auto& values = std::get<bitwuzla::OptionInfo::Mode>(info.values);
+      std::string cur    = values.cur;
+      ASSERT_EQ(options.get_mode(opt), cur);
+      const auto& modes =
+          std::get<bitwuzla::OptionInfo::Mode>(info.values).modes;
+      bool in_modes = false;
+      for (const auto& m : modes)
+      {
+        if (m == cur)
+        {
+          in_modes = true;
+          break;
+        }
+      }
+      ASSERT_TRUE(in_modes);
+    }
+    ASSERT_TRUE(info.description && !std::string(info.description).empty());
+  }
+}
+
 TEST_F(TestApi, option_is_valid)
 {
   bitwuzla::Options options;
   ASSERT_FALSE(options.is_valid("incremental"));
   ASSERT_TRUE(options.is_valid("produce-models"));
 }
+
+/* -------------------------------------------------------------------------- */
+/* Create Sorts                                                               */
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestApi, mk_array_sort)
 {
@@ -447,6 +467,10 @@ TEST_F(TestApi, mk_uninterpreted_sort)
   ASSERT_NE(s1, s3);
   ASSERT_NE(s2, s3);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Create Terms                                                               */
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestApi, mk_bv_zero)
 {
@@ -1412,6 +1436,10 @@ TEST_F(TestApi, mk_var)
   ASSERT_THROW(bitwuzla::mk_var(bitwuzla::Sort(), "asdf"), bitwuzla::Exception);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla                                                                   */
+/* -------------------------------------------------------------------------- */
+
 TEST_F(TestApi, push)
 {
   {
@@ -1448,6 +1476,16 @@ TEST_F(TestApi, assert_formula)
 
   ASSERT_NO_THROW(bitwuzla.assert_formula(d_bool_apply));
   ASSERT_NO_THROW(bitwuzla.assert_formula(d_bool_const));
+}
+
+TEST_F(TestApi, get_assertions)
+{
+  bitwuzla::Bitwuzla bitwuzla;
+  bitwuzla.assert_formula(bitwuzla::mk_true());
+  bitwuzla.assert_formula(bitwuzla::mk_false());
+  std::vector<bitwuzla::Term> expected = {bitwuzla::mk_true(),
+                                          bitwuzla::mk_false()};
+  ASSERT_EQ(bitwuzla.get_assertions(), expected);
 }
 
 TEST_F(TestApi, is_unsat_assumption)
@@ -1583,16 +1621,9 @@ TEST_F(TestApi, simplify)
 
 TEST_F(TestApi, check_sat)
 {
-  {
-    bitwuzla::Bitwuzla bitwuzla;
-    ASSERT_NO_THROW(bitwuzla.check_sat());
-    ASSERT_NO_THROW(bitwuzla.check_sat());
-  }
-  {
-    bitwuzla::Bitwuzla bitwuzla;
-    ASSERT_NO_THROW(bitwuzla.check_sat());
-    ASSERT_NO_THROW(bitwuzla.check_sat());
-  }
+  bitwuzla::Bitwuzla bitwuzla;
+  ASSERT_NO_THROW(bitwuzla.check_sat());
+  ASSERT_NO_THROW(bitwuzla.check_sat());
 }
 
 TEST_F(TestApi, get_value)
@@ -1704,6 +1735,10 @@ TEST_F(TestApi, get_rm_value)
   ASSERT_EQ("RTP", d_rm_rtp.value<std::string>());
   ASSERT_EQ("RTZ", d_rm_rtz.value<std::string>());
 }
+
+/* -------------------------------------------------------------------------- */
+/* Printing                                                                   */
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestApi, print_set_bv_format)
 {
@@ -2005,6 +2040,10 @@ TEST_F(TestApi, print_formula3)
   bitwuzla.print_formula(ss, "smt2");
   ASSERT_EQ(ss.str(), expected_smt2.str());
 }
+
+/* -------------------------------------------------------------------------- */
+/* Stastics                                                                   */
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestApi, statistics)
 {

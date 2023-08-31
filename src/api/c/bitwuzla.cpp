@@ -350,6 +350,7 @@ bitwuzla_get_option_info(BitwuzlaOptions *options,
     info->mode.num_modes =
         std::get<bitwuzla::OptionInfo::Mode>(cpp_info.values).modes.size();
     static thread_local std::vector<const char *> c_modes;
+    c_modes.clear();
     for (const auto &m :
          std::get<bitwuzla::OptionInfo::Mode>(cpp_info.values).modes)
     {

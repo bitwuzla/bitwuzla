@@ -467,7 +467,7 @@ TEST_F(TestCApi, result_to_string)
 }
 
 /* -------------------------------------------------------------------------- */
-/* Bitwuzla                                                                   */
+/* BitwuzlaOptions                                                            */
 /* -------------------------------------------------------------------------- */
 
 TEST_F(TestCApi, set_option)
@@ -563,7 +563,7 @@ TEST_F(TestCApi, set_option)
   }
 }
 
-TEST_F(TestCApi, get_option_info)
+TEST_F(TestCApi, option_info)
 {
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaOptionInfo info;
@@ -574,13 +574,28 @@ TEST_F(TestCApi, get_option_info)
     bitwuzla_get_option_info(options, opt, &info);
     if (info.is_numeric)
     {
-      ASSERT_EQ(bitwuzla_get_option(options, opt), info.numeric.cur);
+      ASSERT_EQ(info.numeric.cur, bitwuzla_get_option(options, opt));
+      ASSERT_GE(info.numeric.cur, info.numeric.min);
+      ASSERT_LE(info.numeric.cur, info.numeric.max);
     }
     else
     {
       ASSERT_EQ(std::string(bitwuzla_get_option_mode(options, opt)),
                 std::string(info.mode.cur));
+      size_t nmodes      = info.mode.num_modes;
+      const char **modes = info.mode.modes;
+      bool in_modes      = false;
+      for (size_t i = 0; i < nmodes; ++i)
+      {
+        if (std::string(modes[i]) == std::string(info.mode.cur))
+        {
+          in_modes = true;
+          break;
+        }
+      }
+      ASSERT_TRUE(in_modes);
     }
+    ASSERT_TRUE(info.description && !std::string(info.description).empty());
   }
   bitwuzla_options_delete(options);
 }
@@ -591,6 +606,10 @@ TEST_F(TestCApi, option_is_valid)
   ASSERT_FALSE(bitwuzla_option_is_valid(options, "incremental"));
   ASSERT_TRUE(bitwuzla_option_is_valid(options, "produce-models"));
 }
+
+/* -------------------------------------------------------------------------- */
+/* Create Sorts                                                               */
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestCApi, mk_array_sort)
 {
@@ -642,6 +661,10 @@ TEST_F(TestCApi, mk_uninterpreted_sort)
   ASSERT_FALSE(bitwuzla_sort_is_equal(s1, s3));
   ASSERT_FALSE(bitwuzla_sort_is_equal(s2, s3));
 }
+
+/* -------------------------------------------------------------------------- */
+/* Create Terms                                                               */
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestCApi, mk_true) { bitwuzla_mk_true(); }
 
@@ -2147,6 +2170,10 @@ TEST_F(TestCApi, mk_var)
   bitwuzla_mk_var(d_bv_sort8, "");
 }
 
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla                                                                   */
+/* -------------------------------------------------------------------------- */
+
 TEST_F(TestCApi, push)
 {
   {
@@ -2364,11 +2391,6 @@ TEST_F(TestCApi, check_sat)
     bitwuzla_check_sat(bitwuzla);
     bitwuzla_delete(bitwuzla);
   }
-  {
-    Bitwuzla *bitwuzla = bitwuzla_new(nullptr);
-    bitwuzla_check_sat(bitwuzla);
-    bitwuzla_delete(bitwuzla);
-  }
 }
 
 TEST_F(TestCApi, get_value)
@@ -2504,6 +2526,10 @@ TEST_F(TestCApi, get_rm_value)
   ASSERT_EQ("RTP", std::string(bitwuzla_term_value_get_str_fmt(d_rm_rtp, 2)));
   ASSERT_EQ("RTZ", std::string(bitwuzla_term_value_get_str_fmt(d_rm_rtz, 10)));
 }
+
+/* -------------------------------------------------------------------------- */
+/* Printing                                                                   */
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestCApi, print_formula)
 {
@@ -2878,6 +2904,10 @@ TEST_F(TestCApi, print_formula3)
 
   ASSERT_EQ(res, expected_smt2.str());
 }
+
+/* -------------------------------------------------------------------------- */
+/* Statistics                                                                 */
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestCApi, statistics)
 {

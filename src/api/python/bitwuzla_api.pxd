@@ -87,6 +87,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
 
     cdef cppclass Options:
         Options() except +raise_error
+        bool is_valid(const string& name) except +raise_error
         bool is_bool(Option option) except +raise_error
         bool is_numeric(Option option) except +raise_error
         bool is_mode(Option option) except +raise_error
