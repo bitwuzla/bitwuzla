@@ -926,3 +926,240 @@ def test_statistics():
     stats = bitwuzla.statistics()
     for name, val in stats.items():
         print(f'{name}: {val}')
+
+# ----------------------------------------------------------------------------
+# Sort
+# ----------------------------------------------------------------------------
+
+def test_sort_hash():
+    hash(mk_bv_sort(8))
+
+
+def test_sort_bv_size():
+    with pytest.raises(BitwuzlaException):
+        mk_fp_sort(5, 11).bv_size()
+    assert mk_bv_sort(8).bv_size() == 8
+
+
+def test_sort_fp_exp_size():
+    with pytest.raises(BitwuzlaException):
+        mk_bv_sort(8).fp_exp_size()
+    assert mk_fp_sort(5, 11).fp_exp_size() == 5
+
+
+def test_sort_fp_sig_size():
+    with pytest.raises(BitwuzlaException):
+        mk_bv_sort(8).fp_sig_size()
+    assert mk_fp_sort(5, 11).fp_sig_size() == 11
+
+
+def test_sort_array_index():
+    with pytest.raises(BitwuzlaException):
+        mk_bv_sort(23).array_index()
+    assert mk_array_sort(mk_bv_sort(8), mk_fp_sort(5, 11)).array_index().\
+            is_bv()
+
+
+def test_sort_array_element():
+    with pytest.raises(BitwuzlaException):
+        mk_bv_sort(23).array_element()
+    assert mk_array_sort(mk_bv_sort(8), mk_fp_sort(5, 11)).array_element().\
+            is_fp()
+
+
+def test_sort_fun_domain_sorts():
+    with pytest.raises(BitwuzlaException):
+        mk_bv_sort(8).fun_domain()
+    fun_sort = mk_fun_sort(
+            [mk_bv_sort(8), mk_fp_sort(5, 11), mk_bv_sort(32)], mk_bv_sort(8))
+    domain = fun_sort.fun_domain()
+    assert len(domain) == 3
+    assert domain[0] == mk_bv_sort(8)
+    assert domain[1] == mk_fp_sort(5, 11)
+    assert domain[2] == mk_bv_sort(32)
+
+
+def test_sort_fun_codomain():
+    with pytest.raises(BitwuzlaException):
+        mk_bv_sort(8).fun_codomain()
+    fun_sort = mk_fun_sort(
+            [mk_bv_sort(8), mk_fp_sort(5, 11), mk_bv_sort(32)], mk_bv_sort(8))
+    assert fun_sort.fun_codomain() == mk_bv_sort(8)
+
+
+def test_sort_fun_arity():
+    with pytest.raises(BitwuzlaException):
+        mk_bv_sort(8).fun_arity()
+    fun_sort = mk_fun_sort(
+            [mk_bv_sort(8), mk_fp_sort(5, 11), mk_bv_sort(32)], mk_bv_sort(8))
+    assert fun_sort.fun_arity() == 3
+
+
+def test_sort_uninterpreted_symbol():
+    with pytest.raises(BitwuzlaException):
+        mk_bv_sort(8).uninterpreted_symbol()
+        s1 = mk_uninterpreted_sort()
+        s2 = mk_uninterpreted_sort('foo')
+        s3 = mk_uninterpreted_sort('foo')
+        s4 = mk_uninterpreted_sort('bar')
+        assert not s1.uninterpreted_symbol()
+        assert s2.uninterpreted_symbol() == 'foo'
+        assert s3.uninterpreted_symbol() == 'foo'
+        assert s4.uninterpreted_symbol() == 'bar'
+
+
+def test_sort_is_equal():
+    bv8 = mk_bv_sort(8)
+    assert mk_bv_sort(8) == bv8
+    assert mk_bv_sort(9) != bv8
+
+
+def test_sort_is_array():
+    bv_sort8 = mk_bv_sort(8)
+    bv_sort32 = mk_bv_sort(32)
+    fp_sort16 = mk_fp_sort(5, 11)
+    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    fun_sort_fp = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
+    un_sort = mk_uninterpreted_sort()
+    assert arr_sort_bv.is_array()
+    assert arr_sort_bvfp.is_array()
+    assert arr_sort_fpbv.is_array()
+    assert not fun_sort.is_array()
+    assert not fun_sort_fp.is_array()
+    assert not bv_sort8.is_array()
+    assert not fp_sort16.is_array()
+    assert not un_sort.is_array()
+
+
+def test_sort_is_bv():
+    bv_sort8 = mk_bv_sort(8)
+    bv_sort32 = mk_bv_sort(32)
+    fp_sort16 = mk_fp_sort(5, 11)
+    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    un_sort = mk_uninterpreted_sort()
+    assert mk_bv_sort(1).is_bv()
+    assert mk_bv_sort(8).is_bv()
+    assert mk_bv_sort(23).is_bv()
+    assert mk_bv_sort(32).is_bv()
+    assert not mk_fp_sort(5, 11).is_bv()
+    assert not arr_sort_bv.is_bv()
+    assert not arr_sort_bvfp.is_bv()
+    assert not arr_sort_fpbv.is_bv()
+    assert not fun_sort.is_bv()
+    assert not un_sort.is_bv()
+
+
+def test_sort_is_fp():
+    bv_sort8 = mk_bv_sort(8)
+    bv_sort32 = mk_bv_sort(32)
+    fp_sort16 = mk_fp_sort(5, 11)
+    fp_sort32 = mk_fp_sort(8, 24)
+    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    un_sort = mk_uninterpreted_sort()
+    assert fp_sort16.is_fp()
+    assert fp_sort32.is_fp()
+    assert not bv_sort8.is_fp()
+    assert not arr_sort_bv.is_fp()
+    assert not arr_sort_bvfp.is_fp()
+    assert not arr_sort_fpbv.is_fp()
+    assert not fun_sort.is_fp()
+    assert not un_sort.is_fp()
+
+
+def test_sort_is_fun():
+    bv_sort8 = mk_bv_sort(8)
+    bv_sort32 = mk_bv_sort(32)
+    fp_sort16 = mk_fp_sort(5, 11)
+    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    fun_sort_fp = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
+    un_sort = mk_uninterpreted_sort()
+    assert fun_sort.is_fun()
+    assert fun_sort_fp.is_fun()
+    assert not arr_sort_bv.is_fun()
+    assert not arr_sort_bvfp.is_fun()
+    assert not arr_sort_fpbv.is_fun()
+    assert not bv_sort8.is_fun()
+    assert not fp_sort16.is_fun()
+    assert not un_sort.is_fun()
+
+
+def test_sort_is_rm():
+    bv_sort8 = mk_bv_sort(8)
+    bv_sort32 = mk_bv_sort(32)
+    fp_sort16 = mk_fp_sort(5, 11)
+    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    fun_sort_fp = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
+    un_sort = mk_uninterpreted_sort()
+    assert mk_rm_sort().is_rm()
+    assert not fun_sort.is_rm()
+    assert not fun_sort_fp.is_rm()
+    assert not arr_sort_bv.is_rm()
+    assert not arr_sort_bvfp.is_rm()
+    assert not arr_sort_fpbv.is_rm()
+    assert not bv_sort8.is_rm()
+    assert not fp_sort16.is_rm()
+    assert not un_sort.is_rm()
+
+
+def test_sort_is_uninterpreted():
+    bv_sort8 = mk_bv_sort(8)
+    bv_sort32 = mk_bv_sort(32)
+    fp_sort16 = mk_fp_sort(5, 11)
+    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    fun_sort_fp = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
+    un_sort = mk_uninterpreted_sort()
+    assert un_sort.is_uninterpreted()
+    assert not mk_rm_sort().is_uninterpreted()
+    assert not fun_sort.is_uninterpreted()
+    assert not fun_sort_fp.is_uninterpreted()
+    assert not arr_sort_bv.is_uninterpreted()
+    assert not arr_sort_bvfp.is_uninterpreted()
+    assert not arr_sort_fpbv.is_uninterpreted()
+    assert not bv_sort8.is_uninterpreted()
+    assert not fp_sort16.is_uninterpreted()
+
+
+def test_sort_str():
+    assert f'{mk_bv_sort(1)}{mk_bv_sort(8)}{mk_rm_sort()}{mk_fp_sort(8, 24)}' \
+            == '(_ BitVec 1)(_ BitVec 8)RoundingMode(_ FloatingPoint 8 24)'
+
+
+def test_regr1():
+    bv_sort8 = mk_bv_sort(8)
+    fun_sort = mk_fun_sort([bv_sort8], bv_sort8)
+    arr_sort = mk_array_sort(bv_sort8, bv_sort8)
+    args = [mk_const(bv_sort8, 'x'), mk_const(fun_sort, 'f')]
+    with pytest.raises(BitwuzlaException):
+        mk_term(Kind.APPLY, args)
+
+
+def test_regr2():
+    bv_sort8 = mk_bv_sort(8)
+    fun_sort = mk_fun_sort([bv_sort8], bv_sort8)
+    arr_sort = mk_array_sort(bv_sort8, bv_sort8)
+    assert fun_sort != arr_sort
+    fun = mk_const(fun_sort)
+    array = mk_const(arr_sort)
+    assert arr_sort == array.sort()
+    assert fun_sort == fun.sort()
+    assert fun.sort() != array.sort()
+    assert fun.sort().is_fun()
+    assert array.sort().is_array()
