@@ -715,6 +715,36 @@ RewriteRule<RewriteRuleKind::EQUAL_ITE_LIFT_COND>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match: (= 0 (bvudiv ~0 t))
+ * result: false
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_BV_UDIV1>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  (void) rewriter;
+  if (!node[0].type().is_bv())
+  {
+    return node;
+  }
+
+  if (node[0].is_value() && node[0].value<BitVector>().is_zero()
+      && node[1].kind() == Kind::BV_UDIV && node[1][0].is_value()
+      && node[1][0].value<BitVector>().is_ones())
+  {
+    return NodeManager::get().mk_value(false);
+  }
+  else if (node[1].is_value() && node[1].value<BitVector>().is_zero()
+           && node[0].kind() == Kind::BV_UDIV && node[0][0].is_value()
+           && node[0][0].value<BitVector>().is_ones())
+  {
+    return NodeManager::get().mk_value(false);
+  }
+  return node;
+}
+
+/**
  * match:  (= (bvadd a (_ bvX N)) (_ bvY N))
  * result: (= a (bvsub (_ bvY N) (_ bvX N)))
  *

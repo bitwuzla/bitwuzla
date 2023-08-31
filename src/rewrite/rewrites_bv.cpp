@@ -12,6 +12,7 @@
 
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "rewrite/rewrite_utils.h"
 
@@ -1552,21 +1553,43 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_ADD_MUL>::_apply(Rewriter& rewriter,
 {
   assert(node.num_children() == 1);
   assert(node.num_indices() == 2);
-  bool inverted     = node[0].is_inverted();
-  const Node& node0 = inverted ? node[0][0] : node[0];
+  const Node& node0 = node[0].is_inverted() ? node[0][0] : node[0];
 
-  if (node0.kind() == Kind::BV_MUL || node0.kind() == Kind::BV_ADD)
+  if (node.index(1) == 0
+      && (node0.kind() == Kind::BV_MUL || node0.kind() == Kind::BV_ADD))
   {
+    // Make sure to include BV_NOT here.
+    node::node_ref_vector visit{node[0]};
+    std::unordered_map<Node, Node> cache;
     uint64_t u = node.index(0);
     uint64_t l = node.index(1);
-    if (l == 0 && u < node0.type().bv_size() / 2)
+    do
     {
-      Node res = rewriter.mk_node(
-          node0.kind(),
-          {rewriter.mk_node(Kind::BV_EXTRACT, {node0[0]}, {u, l}),
-           rewriter.mk_node(Kind::BV_EXTRACT, {node0[1]}, {u, l})});
-      return rewriter.invert_node_if(inverted, res);
-    }
+      const Node& cur     = visit.back();
+      auto [it, inserted] = cache.emplace(cur, Node());
+      Kind k              = cur.kind();
+      if (inserted)
+      {
+        if (k == Kind::BV_MUL || k == Kind::BV_ADD || k == Kind::BV_NOT)
+        {
+          visit.insert(visit.end(), cur.begin(), cur.end());
+        }
+        continue;
+      }
+      else if (it->second.is_null())
+      {
+        if (k == Kind::BV_MUL || k == Kind::BV_ADD || k == Kind::BV_NOT)
+        {
+          it->second = node::utils::rebuild_node(cur, cache);
+        }
+        else
+        {
+          it->second = rewriter.mk_node(Kind::BV_EXTRACT, {cur}, {u, l});
+        }
+      }
+      visit.pop_back();
+    } while (!visit.empty());
+    return cache.at(node[0]);
   }
   return node;
 }
@@ -2275,6 +2298,30 @@ RewriteRule<RewriteRuleKind::BV_SLT_ITE>::_apply(Rewriter& rewriter,
          rewriter.mk_node(Kind::BV_SLT,
                           {rewriter.invert_node_if(inverted, node0[2]),
                            rewriter.invert_node_if(inverted, node1[2])})});
+  }
+  return node;
+}
+
+/**
+ * match: (bvslt 0 (bvudiv c t))
+ *        where msb(c) = 0
+ * result: (and (bvule t c) (bvult 0 t))
+ */
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SLT_BV_UDIV1>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && node[0].value<BitVector>().is_zero()
+      && node[1].kind() == Kind::BV_UDIV && node[1][0].is_value()
+      && !node[1][0].value<BitVector>().msb())
+  {
+    return rewriter.mk_node(
+        Kind::AND,
+        {rewriter.mk_node(Kind::BV_ULE, {node[1][1], node[1][0]}),
+         rewriter.mk_node(Kind::BV_ULT, {node[0], node[1][1]})});
   }
   return node;
 }

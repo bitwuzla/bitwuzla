@@ -632,6 +632,7 @@ Rewriter::rewrite_eq(const Node& node)
     BZLA_APPLY_RW_RULE(EQUAL_ITE_INVERTED);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_DIS_BV1);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_LIFT_COND);
+    BZLA_APPLY_RW_RULE(EQUAL_BV_UDIV1);
   }
 
 DONE:
@@ -695,6 +696,7 @@ Rewriter::rewrite_bv_add(const Node& node)
   if (d_level == LEVEL_SPECULATIVE)
   {
     BZLA_APPLY_RW_RULE(NORM_BV_ADD_MUL);
+    BZLA_APPLY_RW_RULE(NORM_BV_ADD_CONCAT);
   }
 
 DONE:
@@ -790,6 +792,10 @@ Rewriter::rewrite_bv_extract(const Node& node)
     BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_AND);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_ITE);
+  }
+
+  if (d_level == LEVEL_SPECULATIVE)
+  {
     BZLA_APPLY_RW_RULE(BV_EXTRACT_ADD_MUL);
   }
 
@@ -904,6 +910,7 @@ Rewriter::rewrite_bv_slt(const Node& node)
   if (d_level >= 2)
   {
     BZLA_APPLY_RW_RULE(BV_SLT_CONCAT);
+    BZLA_APPLY_RW_RULE(BV_SLT_BV_UDIV1);
   }
 
 DONE:
@@ -1535,6 +1542,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::EQUAL_ITE_LIFT_COND:
       out << "EQUAL_ITE_LIFT_COND";
       break;
+    case RewriteRuleKind::EQUAL_BV_UDIV1: out << "EQUAL_BV_UDIV1"; break;
 
     case RewriteRuleKind::ITE_EVAL: out << "ITE_EVAL"; break;
     case RewriteRuleKind::ITE_SAME: out << "ITE_SAME"; break;
@@ -1577,6 +1585,9 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_ADD_SHL: out << "BV_ADD_SHL"; break;
     case RewriteRuleKind::BV_ADD_NEG_MUL: out << "BV_ADD_NEG_MUL"; break;
     case RewriteRuleKind::NORM_BV_ADD_MUL: out << "NORM_BV_ADD_MUL"; break;
+    case RewriteRuleKind::NORM_BV_ADD_CONCAT:
+      out << "NORM_BV_ADD_CONCAT";
+      break;
 
     case RewriteRuleKind::BV_AND_EVAL: out << "BV_AND_EVAL"; break;
     case RewriteRuleKind::BV_AND_SPECIAL_CONST:
@@ -1669,6 +1680,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_SLT_BV1: out << "BV_SLT_BV1"; break;
     case RewriteRuleKind::BV_SLT_ITE: out << "BV_SLT_ITE"; break;
     case RewriteRuleKind::BV_SLT_CONCAT: out << "BV_SLT_CONCAT"; break;
+    case RewriteRuleKind::BV_SLT_BV_UDIV1: out << "BV_SLT_BV_UDIV1"; break;
 
     case RewriteRuleKind::BV_UDIV_EVAL: out << "BV_UDIV_EVAL"; break;
     case RewriteRuleKind::BV_UDIV_SPECIAL_CONST:

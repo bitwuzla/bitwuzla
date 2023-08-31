@@ -328,6 +328,9 @@ Node RewriteRule<RewriteRuleKind::BV_SLT_BV1>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_SLT_CONCAT>::_apply(Rewriter& rewriter,
                                                          const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SLT_BV_UDIV1>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
 // bcond_slt
 template <>
 Node RewriteRule<RewriteRuleKind::BV_SLT_ITE>::_apply(Rewriter& rewriter,
