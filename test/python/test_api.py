@@ -353,7 +353,7 @@ def test_mk_bv_max_signed():
 def test_mk_fp_pos_zero():
     val = mk_fp_pos_zero(mk_fp_sort(5, 11))
     assert val.is_fp_value_pos_zero()
-    assert val.value() == "0000000000000000"
+    assert val.value(2, False) == "0000000000000000"
     with pytest.raises(BitwuzlaException):
         mk_fp_pos_zero(Sort())
     with pytest.raises(BitwuzlaException):
@@ -362,7 +362,7 @@ def test_mk_fp_pos_zero():
 def test_mk_fp_neg_zero():
     val = mk_fp_neg_zero(mk_fp_sort(5, 11))
     assert val.is_fp_value_neg_zero()
-    assert val.value() == "1000000000000000"
+    assert val.value(2, False) == "1000000000000000"
     with pytest.raises(BitwuzlaException):
         mk_fp_neg_zero(Sort())
     with pytest.raises(BitwuzlaException):
@@ -661,9 +661,15 @@ def test_get_bv_value():
 
 
 def test_get_fp_value():
+    # single bit-vector string
     fp32 = mk_fp_sort(8, 24)
-    assert mk_fp_nan(fp32).value() == '01111111110000000000000000000000'
-    assert mk_fp_neg_zero(fp32).value() == '10000000000000000000000000000000'
+    fpnan32 = mk_fp_nan(fp32)
+    fpnzero32 = mk_fp_neg_zero(fp32)
+    assert fpnan32.value(2, False) == '01111111110000000000000000000000'
+    assert fpnzero32.value(2, False) == '10000000000000000000000000000000'
+    # component bit-vector strings
+    assert fpnan32.value() == ['0', '11111111', '10000000000000000000000']
+    assert fpnzero32.value() == ['1', '00000000', '00000000000000000000000']
 
 
 def test_get_rm_value():

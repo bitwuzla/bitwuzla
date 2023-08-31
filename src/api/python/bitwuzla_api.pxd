@@ -54,6 +54,20 @@ cdef extern from *:
 cdef inline int raise_error() except *:
     raise BitwuzlaException(get_err_msg().decode().split("', ")[1])
 
+# Extract FP value as tuple of strings
+cdef extern from *:
+    """
+    #include <bitwuzla/cpp/bitwuzla.h>
+
+    std::vector<std::string>
+    get_fp_value_ieee(const bitwuzla::Term& term, uint8_t base)
+    {
+      auto val =
+        term.value<std::tuple<std::string, std::string, std::string>>(base);
+      return {std::get<0>(val), std::get<1>(val), std::get<2>(val)};
+    }
+    """
+    cdef vector[string] get_fp_value_ieee(const Term& term, uint8_t base)
 
 # Terminator wrapper
 cdef extern from "terminator.h":

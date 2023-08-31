@@ -120,6 +120,11 @@ of bit-vector and floating-point values, the
 :class:`bitwuzla.RoundingMode` value for RoundingMode values, and a :code:`bool`
 value for Boolean values.
 
+Additionally, for floating-point values,
+:obj:`bitwuzla.Term.value()` allows to retrieve the assignment
+split into assignment strings for the sign bit, the exponent and the
+significand.
+
 In our case, we can query the assignments of :code:`x` and :code:`y`, both
 bit-vector terms, as binary strings:
 

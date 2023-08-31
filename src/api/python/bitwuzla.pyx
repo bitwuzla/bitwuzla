@@ -523,7 +523,7 @@ cdef class Term:
         """
         return self.c_term.is_rm_value_rtz()
 
-    def value(self, uint8_t base = 2):
+    def value(self, uint8_t base = 2, fp_as_tuple = True):
         """Get value from value term.
 
            This function is instantiated for types
@@ -544,14 +544,22 @@ cdef class Term:
                   case of the tuple of strings instantiation. It is always
                   ignored for Boolean and RoundingMode values.
 
-           :param base: The numeric base for bit-vector values; ``2`` for
-                        binary, ``10`` for decimal, and ``16`` for hexadecimal.
+           :param: base: The numeric base for bit-vector values; ``2`` for
+                         binary, ``10`` for decimal, and ``16`` for hexadecimal.
+           :param: fp_as_tuple: True if a floating-point value is to be
+                                represented as a tuple of raw string
+                                representations of the sign, exponent and
+                                significand bit-vectors. False to represent as
+                                the binary IEEE-754 string representation of a
+                                single bit-vector.
         """
         sort = self.sort()
         if sort.is_bool():
             return self.c_term.value[c_bool]()
-        elif sort.is_rm():
+        if sort.is_rm():
             return RoundingMode(self.c_term.value[bitwuzla_api.RoundingMode]())
+        if sort.is_fp() and fp_as_tuple:
+            return [ s.decode() for s in bitwuzla_api.get_fp_value_ieee(self.c_term, base) ]
         return self.c_term.value[string](base).decode()
 
     def str(self, uint8_t base = 2) -> str:

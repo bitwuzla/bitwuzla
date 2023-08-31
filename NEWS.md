@@ -61,6 +61,8 @@ This file collects a summary of important and/or user-visible changes.
     * Added support for input file parsing.
     * New function `Options.is_valid()` allows to query if a given options
       name is valid.
+    * `Term.value()` now allows to retrieve FP values as a list of sign,
+      exponent and significand bit-vector strings.
 
 - The SMT2 parser is now less restrictive with respect to setting *unsupported
   options* and using *unsupported annotation attributes*. This is now ignored

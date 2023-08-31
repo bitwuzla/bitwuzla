@@ -1700,14 +1700,12 @@ TEST_F(TestApi, get_bv_value)
 
 TEST_F(TestApi, get_fp_value)
 {
+  // single bit-vector string
   ASSERT_EQ("01111111110000000000000000000000",
             d_fp_nan32.value<std::string>());
   ASSERT_EQ("10000000000000000000000000000000",
             d_fp_nzero32.value<std::string>());
-}
-
-TEST_F(TestApi, get_fp_value_ieee)
-{
+  // component bit-vector strings
   auto res =
       d_fp_nan32.value<std::tuple<std::string, std::string, std::string>>();
   ASSERT_EQ(std::make_tuple("0", "11111111", "10000000000000000000000"), res);
