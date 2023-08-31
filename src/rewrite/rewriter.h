@@ -337,6 +337,7 @@ enum class RewriteRuleKind
   EQUAL_ITE_INVERTED,
   EQUAL_ITE_DIS_BV1,
   EQUAL_ITE_LIFT_COND,
+  EQUAL_BV_UDIV1,
 
   // Level 1+
   ITE_EVAL,
@@ -391,6 +392,7 @@ enum class RewriteRuleKind
   BV_ADD_NEG_MUL,
   // normalization
   NORM_BV_ADD_MUL,
+  NORM_BV_ADD_CONCAT,
 
   //// bvand
   // Level 1+
@@ -485,6 +487,7 @@ enum class RewriteRuleKind
   BV_SLT_ITE,
   // Level 2+
   BV_SLT_CONCAT,
+  BV_SLT_BV_UDIV1,
 
   //// bvudiv
   // Level 1+

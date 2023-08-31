@@ -10,6 +10,8 @@
 
 #include "rewrite/rewrites_bv_norm.h"
 
+#include "bv/bitvector.h"
+
 namespace bzla {
 
 using namespace node;
@@ -48,6 +50,55 @@ RewriteRule<RewriteRuleKind::NORM_BV_ADD_MUL>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_norm_bv_add_mul(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (bvadd (bvnot (bvmul a (bvnot b))) (_ bv1 N))
+ *         (is the rewritten form of (bvneg (bvmul a (bvnot b))))
+ * result: (bvadd a (bvmul a b))
+ */
+namespace {
+Node
+_rw_norm_bv_add_concat(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_CONCAT
+      && node[idx1].kind() == Kind::BV_CONCAT)
+  {
+    // (concat 0 a) + (concat b 0) ==> (concat a b)
+    if (node[idx0][0].is_value() && node[idx0][0].value<BitVector>().is_zero()
+        && node[idx1][1].is_value()
+        && node[idx1][1].value<BitVector>().is_zero()
+        && node[idx0][0].type() == node[idx1][0].type())
+    {
+      return rewriter.mk_node(Kind::BV_CONCAT, {node[idx1][0], node[idx0][1]});
+    }
+    // (concat a 0) + (concat 0 b) ==> (concat a b)
+    if (node[idx0][1].is_value() && node[idx0][1].value<BitVector>().is_zero()
+        && node[idx1][0].is_value()
+        && node[idx1][0].value<BitVector>().is_zero()
+        && node[idx0][1].type() == node[idx1][1].type())
+    {
+      return rewriter.mk_node(Kind::BV_CONCAT, {node[idx0][0], node[idx1][1]});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORM_BV_ADD_CONCAT>::_apply(Rewriter& rewriter,
+                                                         const Node& node)
+{
+  Node res = _rw_norm_bv_add_concat(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_norm_bv_add_concat(rewriter, node, 1);
   }
   return res;
 }
