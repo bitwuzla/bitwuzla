@@ -973,6 +973,15 @@ cdef class Bitwuzla:
         self.c_bitwuzla.get().print_formula(c_ss, <const string&> fmt.encode())
         return c_ss.to_string().decode()
 
+    def statistics(self) -> dict[str, str]:
+        """Get current statistics.
+
+           :return: A map of strings of statistics entries, maps statistic name
+                    to value.
+        """
+        return {_to_str(k): _to_str(v)
+                for [k, v] in self.c_bitwuzla.get().statistics()}
+
 # --------------------------------------------------------------------------- #
 # Sort functions
 # --------------------------------------------------------------------------- #

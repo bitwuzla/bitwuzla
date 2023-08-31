@@ -12,6 +12,7 @@ from bitwuzla import BitwuzlaException
 from cpython.ref cimport PyObject
 from libc.stdint cimport uint8_t, uint32_t, uint64_t, int64_t
 from libcpp cimport bool
+from libcpp.map cimport map
 from libcpp.memory cimport shared_ptr
 from libcpp.optional cimport optional
 from libcpp.string cimport string
@@ -226,6 +227,8 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         Result check_sat(const vector[Term] &assumptions) except +raise_error
         Term get_value(const Term &term) except +raise_error
         void print_formula(ostream& outfile, string& fmt) except +raise_error
+        map[string, string] statistics() except +raise_error
+
 
 
     Sort mk_array_sort(const Sort &index, const Sort &element) except +raise_error

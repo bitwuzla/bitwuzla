@@ -63,6 +63,8 @@ This file collects a summary of important and/or user-visible changes.
       name is valid.
     * `Term.value()` now allows to retrieve FP values as a list of sign,
       exponent and significand bit-vector strings.
+    * New function `Bitwuzla::statistics()` allows to retrieve the current
+      statistics as a dictionary that maps statistic name to value (strings).
 
 - The SMT2 parser is now less restrictive with respect to setting *unsupported
   options* and using *unsupported annotation attributes*. This is now ignored

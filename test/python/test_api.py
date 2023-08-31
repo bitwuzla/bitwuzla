@@ -915,3 +915,14 @@ def test_print_formula3():
         + '(check-sat)\n' \
         + '(exit)\n'
     assert expected_smt2 == bitwuzla.print_formula()
+
+# ----------------------------------------------------------------------------
+# Statistics
+# ----------------------------------------------------------------------------
+
+def test_statistics():
+    bitwuzla = Bitwuzla()
+    bitwuzla.assert_formula(mk_const(mk_bool_sort()))
+    stats = bitwuzla.statistics()
+    for name, val in stats.items():
+        print(f'{name}: {val}')
