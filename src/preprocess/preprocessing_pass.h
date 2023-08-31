@@ -96,6 +96,10 @@ class PreprocessingPass
       const SubstitutionMap& substitutions,
       std::unordered_map<Node, Node>& cache) const;
 
+  Node substitute(const Node& node,
+                  const std::unordered_map<Node, Node>& substitutions,
+                  std::unordered_map<Node, Node>& cache) const;
+
   /**
    * Mark assertion as processed.
    *

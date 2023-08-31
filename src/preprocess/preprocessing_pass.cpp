@@ -110,6 +110,60 @@ PreprocessingPass::substitute(const Node& node,
   return std::make_pair(it->second, num_substs);
 }
 
+Node
+PreprocessingPass::substitute(
+    const Node& node,
+    const std::unordered_map<Node, Node>& substitutions,
+    std::unordered_map<Node, Node>& cache) const
+{
+  node::node_ref_vector visit{node};
+
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, Node());
+    if (inserted)
+    {
+      auto its = substitutions.find(cur);
+      if (its != substitutions.end() && its->second != cur)
+      {
+        visit.push_back(its->second);
+      }
+      else
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      auto its = substitutions.find(cur);
+      if (its != substitutions.end() && its->second != cur)
+      {
+        auto iit = cache.find(its->second);
+        assert(iit != cache.end());
+        it->second = iit->second;
+      }
+      else
+      {
+        std::vector<Node> children;
+        for (const Node& child : cur)
+        {
+          auto itc = cache.find(child);
+          assert(itc != cache.end());
+          assert(!itc->second.is_null());
+          children.push_back(itc->second);
+        }
+        it->second = node::utils::rebuild_node(cur, children);
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+  auto it = cache.find(node);
+  assert(it != cache.end());
+  return it->second;
+}
+
 bool
 PreprocessingPass::cache_assertion(const Node& assertion)
 {
