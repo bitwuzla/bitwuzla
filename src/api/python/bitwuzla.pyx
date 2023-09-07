@@ -544,9 +544,9 @@ cdef class Term:
                   case of the tuple of strings instantiation. It is always
                   ignored for Boolean and RoundingMode values.
 
-           :param: base: The numeric base for bit-vector values; ``2`` for
+           :param base: The numeric base for bit-vector values; ``2`` for
                          binary, ``10`` for decimal, and ``16`` for hexadecimal.
-           :param: fp_as_tuple: True if a floating-point value is to be
+           :param fp_as_tuple: True if a floating-point value is to be
                                 represented as a tuple of raw string
                                 representations of the sign, exponent and
                                 significand bit-vectors. False to represent as
@@ -565,7 +565,7 @@ cdef class Term:
     def str(self, uint8_t base = 2) -> str:
         """Get the SMT-LIB v2 string representation of this term.
 
-           :param: base: The base of the string representation of bit-vector
+           :param base: The base of the string representation of bit-vector
                          values; ``2`` for binary, ``10`` for decimal, and
                          ``16`` for hexadecimal. Always ignored for Boolean and
                          RoundingMode values.
@@ -604,7 +604,7 @@ cdef class Options:
 
     def is_valid(self, name: str):
         """Determine if given string is a valid short or long option name.
-           :param: name: The name.
+           :param name: The name.
            :return: True if given string is a option name.
         """
         return self.c_options.is_valid(<const string&> name.encode())
@@ -705,7 +705,7 @@ cdef class Options:
     def is_bool(self, option: Option):
         """ Determine if given option is a Boolean option.
 
-            :param: option: The option to query.
+            :param option: The option to query.
             :return: True if `option` is a Boolean option.
         """
         return self.c_options.is_bool(option.value)
@@ -713,7 +713,7 @@ cdef class Options:
     def is_numeric(self, option: Option):
         """ Determine if given option is a numeric option.
 
-            :param: option: The option to query.
+            :param option: The option to query.
             :return: True if `option` is a numeric option.
         """
         return self.c_options.is_numeric(option.value)
@@ -722,7 +722,7 @@ cdef class Options:
     def is_mode(self, option: Option):
         """ Determine if given option is an option with a mode.
 
-            :param: option: The option to query.
+            :param option: The option to query.
             :return: True if `option` is an option with a mode.
         """
         return self.c_options.is_mode(option.value)
@@ -956,9 +956,9 @@ cdef class Bitwuzla:
     def print_formula(self, fmt: str = 'smt2', uint8_t base = 2) -> str:
         """Get the current input formula as a string.
 
-           :param: fmt: The output format for printing the formula. Currently,
+           :param fmt: The output format for printing the formula. Currently,
                         only `"smt2"` for the SMT-LIB v2 format is supported.
-           :param: base: The base of the string representation of bit-vector
+           :param base: The base of the string representation of bit-vector
                         values; ``2`` for binary, ``10`` for decimal, and
                         ``16`` for hexadecimal. Always ignored for Boolean and
                         RoundingMode values.
