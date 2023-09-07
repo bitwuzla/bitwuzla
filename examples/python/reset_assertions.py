@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     # (assert (= x #b010))
     bitwuzla.assert_formula(
-        mk_term(Kind.EQUAL, [x, mk_bv_value(sortbv3, 2, 10)]))
+        mk_term(Kind.EQUAL, [x, mk_bv_value(sortbv3, 2)]))
     # (check-sat)
     result = bitwuzla.check_sat()
     print('Expect: sat')
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     # (assert (= x #b001))
     bitwuzla.assert_formula(
-        mk_term(Kind.EQUAL, [x, mk_bv_value(sortbv3, 1, 10)]))
+        mk_term(Kind.EQUAL, [x, mk_bv_value(sortbv3, 1)]))
     # (check-sat)
     result = bitwuzla.check_sat()
     print('Expect: unsat')
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     # (assert (= x #b011))
     bitwuzla.assert_formula(
-        mk_term(Kind.EQUAL, [x, mk_bv_value(sortbv3, 3, 10)]))
+        mk_term(Kind.EQUAL, [x, mk_bv_value(sortbv3, 3)]))
     # (check-sat)
     result = bitwuzla.check_sat()
     print('Expect: sat')

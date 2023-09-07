@@ -393,14 +393,14 @@ def test_mk_fp_nan():
         mk_fp_nan(mk_bv_sort(8))
 
 def test_mk_bv_value():
-    val = mk_bv_value(mk_bv_sort(4), "1101")
+    val = mk_bv_value(mk_bv_sort(4), "1101", 2)
     assert val.value() == "1101"
     assert val.value(10) == "13"
     assert val.value(16) == "d"
     mk_bv_value(mk_bv_sort(8), "127", 10)
-    mk_bv_value(mk_bv_sort(8), 127, 10)
+    mk_bv_value(mk_bv_sort(8), 127)
     mk_bv_value(mk_bv_sort(8), "-128", 10)
-    mk_bv_value(mk_bv_sort(8), -128, 10)
+    mk_bv_value(mk_bv_sort(8), -128)
     with pytest.raises(BitwuzlaException):
         mk_bv_value(mk_bv_sort(8), "256", 10)
     with pytest.raises(BitwuzlaException):
@@ -888,7 +888,7 @@ def test_print_formula3():
     n    = mk_const(bv32, 'n')
     sim  = mk_const(bv32, '~')
     zero = mk_bv_zero(bv32)
-    two  = mk_bv_value(bv32, 2, 10)
+    two  = mk_bv_value(bv32, 2)
     bitwuzla.assert_formula(mk_term(Kind.DISTINCT, [
          zero, mk_term(Kind.BV_ADD, [n, sim])]))
     bitwuzla.push(1)
@@ -1388,8 +1388,8 @@ def test_term_print():
     bv8  = mk_bv_sort(8)
 
     t = mk_fp_value(mk_bv_one(bv1),
-                    mk_bv_value(bv5, 3, 10),
-                    mk_bv_value(bv10, 23, 10))
+                    mk_bv_value(bv5, 3),
+                    mk_bv_value(bv10, 23))
 
     expected = '(fp #b1 #b00011 #b0000010111)' \
                + '(fp (_ bv1 1) (_ bv3 5) (_ bv23 10))' \
@@ -1398,8 +1398,8 @@ def test_term_print():
     assert res == expected
 
     t = mk_fp_value(mk_bv_one(bv1),
-                    mk_bv_value(bv4, 3, 10),
-                    mk_bv_value(bv8, 23, 10))
+                    mk_bv_value(bv4, 3),
+                    mk_bv_value(bv8, 23))
 
     expected = '(fp #b1 #b0011 #b00010111)' \
                + '(fp (_ bv1 1) (_ bv3 4) (_ bv23 8))' \

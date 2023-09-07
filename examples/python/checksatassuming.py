@@ -40,7 +40,7 @@ if __name__ == "__main__":
     zero  = mk_bv_zero(sortbv2)
     one1  = mk_bv_one(sortbv1)
     one2  = mk_bv_one(sortbv2)
-    three = mk_bv_value(sortbv2, 3, 10)
+    three = mk_bv_value(sortbv2, 3)
 
     # Add some assertions.
     bitwuzla.assert_formula(mk_term(Kind.EQUAL, [s0, zero]))

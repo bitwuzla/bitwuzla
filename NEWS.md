@@ -2,6 +2,14 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News since version 0.2.0
+
+- Python API changes:
+    * Simplified Function `mk_bv_value(sort: Sort, value, uint8_t base = 2)`,
+      changed to `mk_bv_value(sort: Sort, value, *args)` to allow, e.g.,
+      `mk_bv_value(s, 2)` to create a bit-vector value representation `2`
+      of sort `s` instead of `mk_bv_value(s, 2, 10)`.
+
 ## News for version 0.2.0
 
 - Python API changes:

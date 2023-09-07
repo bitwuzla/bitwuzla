@@ -1076,18 +1076,40 @@ def mk_false() -> Term:
     """
     return _term(bitwuzla_api.mk_false())
 
-def mk_bv_value(sort: Sort, value, uint8_t base = 2) -> Term:
-    """Create bit-vector ``value`` with given ``sort`` and ``base``.
+def mk_bv_value(sort: Sort, value, *args) -> Term:
+    """mk_bv_value(sort: Sort, value: int) -> Term
+       mk_bv_value(sort: Sort, value: str, base: int) -> Term
+
+       Create bit-vector representing ``value`` of given ``sort``.
 
        :param sort: Bit-vector sort.
        :type sort: BitwuzlaSort
-       :param value: A string or integer representing of the value
-       :type value: str or int
+       :param value: An integer representing the value.
+       :type value: int
+
+       Create bit-vector representing ``value`` of given ``sort`` and ``base``.
+
+       :param sort: Bit-vector sort.
+       :type sort: BitwuzlaSort
+       :param value: A string representing the value.
+       :type value: str
+       :param base: The numerical base of the string representation (``2`` for
+                    binary, ``10`` for decimal, ``16`` for hexadecimal).
+       :type base: int
 
        :return: A term representing the bit-vector value.
        :rtype: BitwuzlaTerm
     """
-    return _term(bitwuzla_api.mk_bv_value(sort.c_sort, str(value).encode(), base))
+    if isinstance(value, str):
+        if not args:
+            raise ValueError('expected base')
+        return _term(
+                bitwuzla_api.mk_bv_value(
+                    sort.c_sort, value.encode(), <uint8_t> int(args[0])))
+    if args:
+        raise ValueError('unexpected base')
+    return _term(
+            bitwuzla_api.mk_bv_value(sort.c_sort, str(value).encode(), 10))
 
 def mk_bv_zero(sort: Sort) -> Term:
     """mk_bv_zero(sort)

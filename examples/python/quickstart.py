@@ -45,8 +45,8 @@ if __name__ == "__main__":
     one = mk_bv_one(sortbv8)
     # Alternatively, you can create bit-vector value one with:
     # one = mk_bv_value(sortbv8, "1", 2)
-    # one = mk_bv_value(sortbv8, 1, 10)
-    two = mk_bv_value(sortbv8, 2, 10)
+    # one = mk_bv_value(sortbv8, 1)
+    two = mk_bv_value(sortbv8, 2)
 
     # (bvsdiv x (_ bv2 8))
     sdiv = mk_term(Kind.BV_SDIV, [x, two])
