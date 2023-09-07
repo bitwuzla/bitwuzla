@@ -2274,7 +2274,9 @@ TEST_F(TestApi, term_symbol)
 {
   ASSERT_THROW(bitwuzla::Term().symbol(), bitwuzla::Exception);
   bitwuzla::Term x = bitwuzla::mk_const(d_bv_sort8, "x");
-  ASSERT_TRUE(!x.symbol() || x.symbol()->get() == "x");
+  ASSERT_TRUE(x.symbol() && x.symbol()->get() == "x");
+  x = bitwuzla::mk_const(d_bv_sort8);
+  ASSERT_FALSE(x.symbol());
 }
 
 TEST_F(TestApi, term_is_const)
@@ -2311,6 +2313,7 @@ TEST_F(TestApi, term_is_true)
   ASSERT_FALSE(bitwuzla::Term().is_true());
   ASSERT_TRUE(bitwuzla::mk_true().is_true());
   ASSERT_FALSE(bitwuzla::mk_false().is_true());
+  ASSERT_FALSE(bitwuzla::mk_bv_one(d_bv_sort1).is_true());
 }
 
 TEST_F(TestApi, term_is_false)
@@ -2318,6 +2321,7 @@ TEST_F(TestApi, term_is_false)
   ASSERT_FALSE(bitwuzla::Term().is_false());
   ASSERT_TRUE(bitwuzla::mk_false().is_false());
   ASSERT_FALSE(bitwuzla::mk_true().is_false());
+  ASSERT_FALSE(bitwuzla::mk_bv_zero(d_bv_sort1).is_false());
 }
 
 TEST_F(TestApi, term_is_bv_value_zero)
@@ -2549,46 +2553,46 @@ TEST_F(TestApi, term_print_regr1)
 {
   bitwuzla::Sort bv_sort5  = bitwuzla::mk_bv_sort(5);
   bitwuzla::Sort bv_sort10 = bitwuzla::mk_bv_sort(10);
-  bitwuzla::Term fp_const;
+  bitwuzla::Term fp_val;
   std::string output;
 
-  fp_const = bitwuzla::mk_fp_value(bitwuzla::mk_bv_zero(d_bv_sort1),
+  fp_val = bitwuzla::mk_fp_value(bitwuzla::mk_bv_zero(d_bv_sort1),
                                    bitwuzla::mk_bv_zero(bv_sort5),
                                    bitwuzla::mk_bv_zero(bv_sort10));
 
   {
     std::stringstream ss;
-    ss << fp_const;
+    ss << fp_val;
     ASSERT_EQ(ss.str(), "(fp #b0 #b00000 #b0000000000)");
   }
 
-  fp_const = bitwuzla::mk_fp_value(bitwuzla::mk_bv_one(d_bv_sort1),
+  fp_val = bitwuzla::mk_fp_value(bitwuzla::mk_bv_one(d_bv_sort1),
                                    bitwuzla::mk_bv_zero(bv_sort5),
                                    bitwuzla::mk_bv_zero(bv_sort10));
 
   {
     std::stringstream ss;
-    ss << fp_const;
+    ss << fp_val;
     ASSERT_EQ(ss.str(), "(fp #b1 #b00000 #b0000000000)");
   }
 
-  fp_const = bitwuzla::mk_fp_value(bitwuzla::mk_bv_zero(d_bv_sort1),
+  fp_val = bitwuzla::mk_fp_value(bitwuzla::mk_bv_zero(d_bv_sort1),
                                    bitwuzla::mk_bv_zero(bv_sort5),
                                    bitwuzla::mk_bv_one(bv_sort10));
 
   {
     std::stringstream ss;
-    ss << fp_const;
+    ss << fp_val;
     ASSERT_EQ(ss.str(), "(fp #b0 #b00000 #b0000000001)");
   }
 
-  fp_const = bitwuzla::mk_fp_value(bitwuzla::mk_bv_one(d_bv_sort1),
+  fp_val = bitwuzla::mk_fp_value(bitwuzla::mk_bv_one(d_bv_sort1),
                                    bitwuzla::mk_bv_zero(bv_sort5),
                                    bitwuzla::mk_bv_one(bv_sort10));
 
   {
     std::stringstream ss;
-    ss << fp_const;
+    ss << fp_val;
     ASSERT_EQ(ss.str(), "(fp #b1 #b00000 #b0000000001)");
   }
 }
@@ -2885,7 +2889,7 @@ TEST_F(TestApi, terms)
 
       default: break;
     }
-    // Unhandled BitwuzlaKind
+    // No unhandled Kind
     ASSERT_FALSE(term.is_null());
 
     auto children = term.children();

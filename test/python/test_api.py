@@ -1163,3 +1163,659 @@ def test_regr2():
     assert fun.sort() != array.sort()
     assert fun.sort().is_fun()
     assert array.sort().is_array()
+
+
+# ----------------------------------------------------------------------------
+# Term
+# ----------------------------------------------------------------------------
+
+def test_term_hash():
+    hash(mk_const(mk_bv_sort(8)))
+
+
+def test_term_sort():
+    assert mk_const(mk_bv_sort(8)).sort() == mk_bv_sort(8)
+
+
+def test_term_symbol():
+    x = mk_const(mk_bv_sort(8), 'x')
+    assert x.symbol() and x.symbol() == 'x'
+    x = mk_const(mk_bv_sort(8))
+    assert not x.symbol()
+
+
+def test_term_is_const():
+    bv_sort8 = mk_bv_sort(8)
+    bv_sort32 = mk_bv_sort(32)
+    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
+    fp_sort16 = mk_fp_sort(5, 11)
+    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    assert mk_const(arr_sort_bv).is_const()
+    assert mk_const(fun_sort).is_const()
+    assert mk_const(mk_bv_sort(1)).is_const()
+    assert mk_const(fp_sort16).is_const()
+    assert mk_const(mk_rm_sort()).is_const()
+    assert not mk_bv_one(mk_bv_sort(1)).is_const()
+    assert not mk_term(
+            Kind.ARRAY_STORE,
+            [
+                mk_const(arr_sort_bv),
+                mk_const(bv_sort32), mk_bv_zero(bv_sort8)
+            ]).is_const()
+
+
+def test_term_is_var():
+    assert mk_var(mk_bv_sort(1)).is_variable()
+    assert mk_var(mk_bv_sort(8)).is_variable()
+    assert not mk_fp_pos_zero(mk_fp_sort(8, 24)).is_variable()
+
+
+def test_term_is_value():
+    assert mk_bv_one(mk_bv_sort(1)).is_value()
+    assert mk_fp_nan(mk_fp_sort(8, 24)).is_value()
+    assert not mk_const(mk_fp_sort(5, 11)).is_value()
+    var = mk_var(mk_bv_sort(8))
+    exists = mk_term(Kind.EXISTS, [
+        var,
+        mk_term(Kind.EQUAL, [
+            mk_bv_zero(mk_bv_sort(8)),
+            mk_term(Kind.BV_MUL, [mk_const(mk_bv_sort(8)), var])])])
+    assert not exists.is_value()
+
+
+def test_term_is_true():
+    assert mk_true().is_true()
+    assert not mk_false().is_true()
+    assert not mk_bv_one(mk_bv_sort(1)).is_true()
+
+
+def test_term_is_false():
+    assert mk_false().is_false()
+    assert not mk_true().is_false()
+    assert not mk_bv_zero(mk_bv_sort(1)).is_false()
+
+
+def test_term_is_bv_value_zero():
+    assert mk_bv_zero(mk_bv_sort(8)).is_bv_value_zero()
+    assert not mk_bv_one(mk_bv_sort(1)).is_bv_value_zero()
+    assert not mk_bv_ones(mk_bv_sort(23)).is_bv_value_zero()
+    assert not mk_bv_min_signed(mk_bv_sort(8)).is_bv_value_zero()
+    assert not mk_bv_max_signed(mk_bv_sort(8)).is_bv_value_zero()
+
+
+def test_term_is_bv_value_one():
+    assert mk_bv_one(mk_bv_sort(1)).is_bv_value_one()
+    assert not mk_bv_zero(mk_bv_sort(8)).is_bv_value_one()
+    assert not mk_bv_ones(mk_bv_sort(23)).is_bv_value_one()
+    assert not mk_bv_min_signed(mk_bv_sort(8)).is_bv_value_one()
+    assert not mk_bv_max_signed(mk_bv_sort(8)).is_bv_value_one()
+
+
+def test_term_is_bv_value_ones():
+    assert mk_bv_ones(mk_bv_sort(23)).is_bv_value_ones()
+    assert not mk_bv_zero(mk_bv_sort(8)).is_bv_value_ones()
+    assert mk_bv_one(mk_bv_sort(1)).is_bv_value_ones()
+    assert not mk_bv_min_signed(mk_bv_sort(8)).is_bv_value_ones()
+    assert not mk_bv_max_signed(mk_bv_sort(8)).is_bv_value_ones()
+
+
+def test_term_is_bv_value_min_signed():
+    assert mk_bv_min_signed(mk_bv_sort(8)).is_bv_value_min_signed()
+    assert not mk_bv_zero(mk_bv_sort(8)).is_bv_value_min_signed()
+    assert mk_bv_one(mk_bv_sort(1)).is_bv_value_min_signed()
+    assert not mk_bv_ones(mk_bv_sort(23)).is_bv_value_min_signed()
+    assert not mk_bv_max_signed(mk_bv_sort(8)).is_bv_value_min_signed()
+
+
+def test_term_is_bv_value_max_signed():
+    assert mk_bv_max_signed(mk_bv_sort(8)).is_bv_value_max_signed()
+    assert not mk_bv_zero(mk_bv_sort(8)).is_bv_value_max_signed()
+    assert not mk_bv_one(mk_bv_sort(1)).is_bv_value_max_signed()
+    assert not mk_bv_ones(mk_bv_sort(23)).is_bv_value_max_signed()
+    assert not mk_bv_min_signed(mk_bv_sort(8)).is_bv_value_max_signed()
+
+
+def test_term_is_fp_value_pos_zero():
+    assert mk_fp_pos_zero(mk_fp_sort(8, 24)).is_fp_value_pos_zero()
+    assert not mk_fp_neg_zero(mk_fp_sort(8, 24)).is_fp_value_pos_zero()
+    assert not mk_fp_pos_inf(mk_fp_sort(8, 24)).is_fp_value_pos_zero()
+    assert not mk_fp_neg_inf(mk_fp_sort(8, 24)).is_fp_value_pos_zero()
+    assert not mk_fp_nan(mk_fp_sort(8, 24)).is_fp_value_pos_zero()
+
+
+def test_term_is_fp_value_neg_zero():
+    assert mk_fp_neg_zero(mk_fp_sort(8, 24)).is_fp_value_neg_zero()
+    assert not mk_fp_pos_zero(mk_fp_sort(8, 24)).is_fp_value_neg_zero()
+    assert not mk_fp_pos_inf(mk_fp_sort(8, 24)).is_fp_value_neg_zero()
+    assert not mk_fp_neg_inf(mk_fp_sort(8, 24)).is_fp_value_neg_zero()
+    assert not mk_fp_nan(mk_fp_sort(8, 24)).is_fp_value_neg_zero()
+
+
+def test_term_is_fp_value_pos_inf():
+    assert mk_fp_pos_inf(mk_fp_sort(8, 24)).is_fp_value_pos_inf()
+    assert not mk_fp_pos_zero(mk_fp_sort(8, 24)).is_fp_value_pos_inf()
+    assert not mk_fp_neg_zero(mk_fp_sort(8, 24)).is_fp_value_pos_inf()
+    assert not mk_fp_neg_inf(mk_fp_sort(8, 24)).is_fp_value_pos_inf()
+    assert not mk_fp_nan(mk_fp_sort(8, 24)).is_fp_value_pos_inf()
+
+
+def test_term_is_fp_value_neg_inf():
+    assert mk_fp_neg_inf(mk_fp_sort(8, 24)).is_fp_value_neg_inf()
+    assert not mk_fp_pos_zero(mk_fp_sort(8, 24)).is_fp_value_neg_inf()
+    assert not mk_fp_neg_zero(mk_fp_sort(8, 24)).is_fp_value_neg_inf()
+    assert not mk_fp_pos_inf(mk_fp_sort(8, 24)).is_fp_value_neg_inf()
+    assert not mk_fp_nan(mk_fp_sort(8, 24)).is_fp_value_neg_inf()
+
+
+def test_term_is_fp_value_nan():
+    assert mk_fp_nan(mk_fp_sort(8, 24)).is_fp_value_nan()
+    assert not mk_fp_pos_zero(mk_fp_sort(8, 24)).is_fp_value_nan()
+    assert not mk_fp_neg_zero(mk_fp_sort(8, 24)).is_fp_value_nan()
+    assert not mk_fp_pos_inf(mk_fp_sort(8, 24)).is_fp_value_nan()
+    assert not mk_fp_neg_inf(mk_fp_sort(8, 24)).is_fp_value_nan()
+
+
+def test_term_is_rm_value_rna():
+    assert mk_rm_value(RoundingMode.RNA).is_rm_value_rna()
+    assert not mk_rm_value(RoundingMode.RNE).is_rm_value_rna()
+    assert not mk_rm_value(RoundingMode.RTN).is_rm_value_rna()
+    assert not mk_rm_value(RoundingMode.RTP).is_rm_value_rna()
+    assert not mk_rm_value(RoundingMode.RTZ).is_rm_value_rna()
+
+
+def test_term_is_rm_value_rne():
+    assert not mk_rm_value(RoundingMode.RNA).is_rm_value_rne()
+    assert mk_rm_value(RoundingMode.RNE).is_rm_value_rne()
+    assert not mk_rm_value(RoundingMode.RTN).is_rm_value_rne()
+    assert not mk_rm_value(RoundingMode.RTP).is_rm_value_rne()
+    assert not mk_rm_value(RoundingMode.RTZ).is_rm_value_rne()
+
+
+def test_term_is_rm_value_rtn():
+    assert not mk_rm_value(RoundingMode.RNA).is_rm_value_rtn()
+    assert not mk_rm_value(RoundingMode.RNE).is_rm_value_rtn()
+    assert mk_rm_value(RoundingMode.RTN).is_rm_value_rtn()
+    assert not mk_rm_value(RoundingMode.RTP).is_rm_value_rtn()
+    assert not mk_rm_value(RoundingMode.RTZ).is_rm_value_rtn()
+
+
+def test_term_is_rm_value_rtp():
+    assert not mk_rm_value(RoundingMode.RNA).is_rm_value_rtp()
+    assert not mk_rm_value(RoundingMode.RNE).is_rm_value_rtp()
+    assert not mk_rm_value(RoundingMode.RTN).is_rm_value_rtp()
+    assert mk_rm_value(RoundingMode.RTP).is_rm_value_rtp()
+    assert not mk_rm_value(RoundingMode.RTZ).is_rm_value_rtp()
+
+
+def test_term_is_rm_value_rtz():
+    assert not mk_rm_value(RoundingMode.RNA).is_rm_value_rtz()
+    assert not mk_rm_value(RoundingMode.RNE).is_rm_value_rtz()
+    assert not mk_rm_value(RoundingMode.RTN).is_rm_value_rtz()
+    assert not mk_rm_value(RoundingMode.RTP).is_rm_value_rtz()
+    assert mk_rm_value(RoundingMode.RTZ).is_rm_value_rtz()
+
+
+def test_term_print():
+    bv1  = mk_bv_sort(1)
+    and_bv_const1 = mk_term(
+            Kind.EQUAL,
+            [
+                mk_bv_one(bv1),
+                mk_term(
+                    Kind.BV_AND,
+                    [mk_bv_one(bv1), mk_const(bv1, 'bv1')])
+            ])
+    var = mk_var(mk_bv_sort(8), 'q')
+    exists = mk_term(Kind.EXISTS, [
+        var,
+        mk_term(Kind.EQUAL, [
+            mk_bv_zero(mk_bv_sort(8)),
+            mk_term(Kind.BV_MUL, [mk_const(mk_bv_sort(8), 'bv8'), var])])])
+    expected = '(= #b1 (bvand #b1 bv1))' \
+               + '(exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q)))' \
+               + '(= (_ bv1 1) (bvand (_ bv1 1) bv1))' \
+               + '(exists ((q (_ BitVec 8))) (= (_ bv0 8) (bvmul bv8 q)))' \
+               + '(= #b1 (bvand #b1 bv1))' \
+               + '(exists ((q (_ BitVec 8))) (= #x00 (bvmul bv8 q)))'
+    res = and_bv_const1.str() + exists.str() \
+          + and_bv_const1.str(10) + exists.str(10) \
+          + and_bv_const1.str(16) +  exists.str(16)
+    assert res == expected
+
+    bv5  = mk_bv_sort(5)
+    bv10 = mk_bv_sort(10)
+    bv4  = mk_bv_sort(4)
+    bv8  = mk_bv_sort(8)
+
+    t = mk_fp_value(mk_bv_one(bv1),
+                    mk_bv_value(bv5, 3, 10),
+                    mk_bv_value(bv10, 23, 10))
+
+    expected = '(fp #b1 #b00011 #b0000010111)' \
+               + '(fp (_ bv1 1) (_ bv3 5) (_ bv23 10))' \
+               + '(fp #b1 #b00011 #b0000010111)'
+    res = t.str() + t.str(10) + t.str(16)
+    assert res == expected
+
+    t = mk_fp_value(mk_bv_one(bv1),
+                    mk_bv_value(bv4, 3, 10),
+                    mk_bv_value(bv8, 23, 10))
+
+    expected = '(fp #b1 #b0011 #b00010111)' \
+               + '(fp (_ bv1 1) (_ bv3 4) (_ bv23 8))' \
+               + '(fp #b1 #b0011 #b00010111)'
+    res = t.str() + t.str(10) + t.str(16)
+    assert res == expected
+
+
+def test_term_print_regr0():
+    res = mk_rm_value(RoundingMode.RNA).str() + '\n' \
+          + mk_rm_value(RoundingMode.RNE).str() + '\n' \
+          + mk_rm_value(RoundingMode.RTN).str() + '\n' \
+          + mk_rm_value(RoundingMode.RTP).str() + '\n' \
+          + mk_rm_value(RoundingMode.RTZ).str()
+    assert res == "RNA\nRNE\nRTN\nRTP\nRTZ"
+
+
+def test_term_print_regr1():
+    bv_sort1  = mk_bv_sort(1)
+    bv_sort5  = mk_bv_sort(5)
+    bv_sort10 = mk_bv_sort(10)
+
+    fp_val = mk_fp_value(mk_bv_zero(bv_sort1),
+                         mk_bv_zero(bv_sort5),
+                         mk_bv_zero(bv_sort10))
+    assert fp_val.str() == '(fp #b0 #b00000 #b0000000000)'
+
+    fp_val = mk_fp_value(mk_bv_one(bv_sort1),
+                         mk_bv_zero(bv_sort5),
+                         mk_bv_zero(bv_sort10))
+    assert fp_val.str() == '(fp #b1 #b00000 #b0000000000)'
+
+    fp_val = mk_fp_value(mk_bv_zero(bv_sort1),
+                         mk_bv_zero(bv_sort5),
+                         mk_bv_one(bv_sort10))
+    assert fp_val.str() == '(fp #b0 #b00000 #b0000000001)'
+
+    fp_val = mk_fp_value(mk_bv_one(bv_sort1),
+                         mk_bv_zero(bv_sort5),
+                         mk_bv_one(bv_sort10))
+    assert fp_val.str() == '(fp #b1 #b00000 #b0000000001)'
+
+
+def test_terms_indexed():
+    fp_term = mk_const(mk_fp_sort(5, 11))
+    bv_term = mk_const(mk_bv_sort(8))
+    rm      = mk_rm_value(RoundingMode.RNE)
+
+    idx = mk_term(Kind.FP_TO_SBV, [rm, fp_term], [8])
+    assert idx.num_indices() == 1
+    indices = idx.indices()
+    assert len(indices) == 1
+    assert indices[0] == 8
+
+    idx = mk_term(Kind.FP_TO_UBV, [rm, fp_term], [9])
+    assert idx.num_indices() == 1
+    indices = idx.indices()
+    assert len(indices) == 1
+    assert indices[0] == 9
+
+    idx = mk_term(Kind.FP_TO_FP_FROM_BV, [bv_term], [3, 5])
+    assert idx.num_indices() == 2
+    indices = idx.indices()
+    assert len(indices) == 2
+    assert indices[0] == 3
+    assert indices[1] == 5
+
+    idx = mk_term(Kind.FP_TO_FP_FROM_FP, [rm, fp_term], [7, 18])
+    assert idx.num_indices() == 2
+    indices = idx.indices()
+    assert len(indices) == 2
+    assert indices[0] == 7
+    assert indices[1] == 18
+
+    idx = mk_term(Kind.FP_TO_FP_FROM_SBV, [rm, bv_term], [8, 24])
+    assert idx.num_indices() == 2
+    indices = idx.indices()
+    assert len(indices) == 2
+    assert indices[0] == 8
+    assert indices[1] == 24
+
+    idx = mk_term(Kind.FP_TO_FP_FROM_UBV, [rm, bv_term], [5, 11])
+    assert idx.num_indices() == 2
+    indices = idx.indices()
+    assert len(indices) == 2
+    assert indices[0] == 5
+    assert indices[1] == 11
+
+    idx = mk_term(Kind.BV_EXTRACT, [bv_term], [6, 0])
+    assert idx.num_indices() == 2
+    indices = idx.indices()
+    assert len(indices) == 2
+    assert indices[0] == 6
+    assert indices[1] == 0
+
+
+def test_terms():
+    bv16 = mk_bv_sort(16)
+    fp16 = mk_fp_sort(5, 11)
+    array_sort = mk_array_sort(bv16, bv16)
+    domain = [bv16, bv16, bv16]
+    fun_sort = mk_fun_sort(domain, bv16)
+
+    fp_args = [
+            mk_rm_value(RoundingMode.RNA),
+            mk_const(fp16),
+            mk_const(fp16),
+            mk_const(fp16)
+        ]
+
+    bv_args = [
+            mk_const(bv16),
+            mk_const(bv16),
+            mk_const(bv16),
+            mk_const(bv16)
+        ]
+
+    bool_args = [mk_const(mk_bool_sort()), mk_const(mk_bool_sort())]
+
+    for kind in Kind:
+        if kind == Kind.CONSTANT \
+           or kind == Kind.CONST_ARRAY \
+           or kind == Kind.VALUE \
+           or kind == Kind.VARIABLE:
+               continue
+
+        term = None
+
+        # Boolean
+        if kind == Kind.NOT:
+               term = mk_term(kind, [bool_args[0]])
+               break
+
+        if kind == Kind.AND \
+           or kind == Kind.IFF \
+           or kind == Kind.IMPLIES \
+           or kind == Kind.OR \
+           or kind == Kind.XOR:
+               term = mk_term(kind, bool_args)
+               break
+
+        # BV Unary
+        if kind == Kind.BV_DEC \
+           or kind == Kind.BV_INC \
+           or kind == Kind.BV_NEG \
+           or kind == Kind.BV_NOT \
+           or kind == Kind.BV_REDAND \
+           or kind == Kind.BV_REDOR \
+           or kind == Kind.BV_REDXOR:
+               term = mk_term(kind, [bv_args[0]])
+               break
+
+        # BV Binary
+        if  kind == Kind.BV_ASHR \
+            or kind == Kind.BV_COMP \
+            or kind == Kind.BV_NAND \
+            or kind == Kind.BV_NOR \
+            or kind == Kind.BV_ROL \
+            or kind == Kind.BV_ROR \
+            or kind == Kind.BV_SADD_OVERFLOW \
+            or kind == Kind.BV_SDIV_OVERFLOW \
+            or kind == Kind.BV_SDIV \
+            or kind == Kind.BV_SGE \
+            or kind == Kind.BV_SGT \
+            or kind == Kind.BV_SHL \
+            or kind == Kind.BV_SHR \
+            or kind == Kind.BV_SLE \
+            or kind == Kind.BV_SLT \
+            or kind == Kind.BV_SMOD \
+            or kind == Kind.BV_SMUL_OVERFLOW \
+            or kind == Kind.BV_SREM \
+            or kind == Kind.BV_SSUB_OVERFLOW \
+            or kind == Kind.BV_SUB \
+            or kind == Kind.BV_UADD_OVERFLOW \
+            or kind == Kind.BV_UDIV \
+            or kind == Kind.BV_UGE \
+            or kind == Kind.BV_UGT \
+            or kind == Kind.BV_ULE \
+            or kind == Kind.BV_ULT \
+            or kind == Kind.BV_UMUL_OVERFLOW \
+            or kind == Kind.BV_UREM \
+            or kind == Kind.BV_USUB_OVERFLOW \
+            or kind == Kind.BV_XNOR:
+                term = mk_term(kind, [bv_args[0], bv_args[1]])
+                break
+
+        # BV Binary+
+        if kind == Kind.BV_ADD \
+           or kind == Kind.BV_AND \
+           or kind == Kind.BV_CONCAT \
+           or kind == Kind.BV_MUL \
+           or kind == Kind.BV_OR \
+           or kind == Kind.BV_XOR:
+               term = mk_term(kind, bv_args)
+               break
+
+        if kind == Kind.DISTINCT or kind == Kind.EQUAL:
+            term = mk_term(kind, bv_args)
+            break
+
+        # BV indexed
+        if kind == Kind.BV_EXTRACT:
+            term = mk_term(kind, [bv_args[0]], [3, 2])
+            break
+
+        if kind == Kind.BV_REPEAT \
+           or kind == Kind.BV_ROLI \
+           or kind == Kind.BV_RORI \
+           or kind == Kind.BV_SIGN_EXTEND \
+           or kind == Kind.BV_ZERO_EXTEND:
+               term = mk_term(kind, [bv_args[0]], [5])
+               break
+
+        # Arrays
+        if kind == Kind.ARRAY_SELECT:
+            term = mk_term(kind, [mk_const(array_sort), bv_args[0]])
+            break
+
+        if kind == Kind.ARRAY_STORE:
+            term = mk_term(kind, [mk_const(array_sort), bv_args[0], bv_args[1]])
+            break
+
+        if kind == Kind.APPLY:
+            term = mk_term(
+                    kind, [mk_const(fun_sort), bv_args[0], bv_args[1], bv_args[2]])
+            break
+
+        # Binder
+        if kind == Kind.EXISTS \
+           or kind == Kind.FORALL \
+           or kind == Kind.LAMBDA:
+               bvars = [mk_var(d_bv_sort16), mk_var(d_bv_sort16)]
+               # body
+               term = mk_term(
+                       kind, [bvars[0], bvars[1], mk_term(Kind.BV_SLT, bvars)])
+               break;
+
+        # FP Unary
+        if kind == Kind.FP_ABS \
+           or kind == Kind.FP_IS_INF \
+           or kind == Kind.FP_IS_NAN \
+           or kind == Kind.FP_IS_NEG \
+           or kind == Kind.FP_IS_NORMAL \
+           or kind == Kind.FP_IS_POS \
+           or kind == Kind.FP_IS_SUBNORMAL \
+           or kind == Kind.FP_IS_ZERO \
+           or kind == Kind.FP_NEG:
+               term = mk_term(kind, [fp_args[1]])
+               break
+
+        # FP Binary
+        if kind == Kind.FP_EQUAL \
+           or kind == Kind.FP_GEQ \
+           or kind == Kind.FP_GT \
+           or kind == Kind.FP_LEQ \
+           or kind == Kind.FP_LT \
+           or kind == Kind.FP_MAX \
+           or kind == Kind.FP_MIN \
+           or kind == Kind.FP_REM:
+               term = mk_term(kind, [fp_args[1], fp_args[2]])
+               break
+
+        if kind == Kind.FP_SQRT or kind == Kind.FP_RTI:
+            term = mk_term(kind, [fp_args[0], fp_args[1]])
+            break
+
+        # FP Ternary
+        if  kind == Kind.FP_ADD \
+            or kind == Kind.FP_DIV \
+            or kind == Kind.FP_MUL \
+            or kind == Kind.FP_SUB:
+                term = mk_term(kind, [fp_args.begin(), fp_args.end() - 1])
+                break
+
+        if kind == Kind.FP_FP:
+            term = mk_term(
+                    kind, [mk_const(mk_bv_sort(1)), bv_args[0], bv_args[1]])
+            break
+
+        # FP Quaternery
+        if kind == Kind.FP_FMA:
+            term = mk_term(kind, fp_args)
+            break
+
+        # FP indexed
+        if kind == Kind.FP_TO_FP_FROM_BV:
+            term = mk_term(kind, [bv_args[0]], [5, 11])
+            break
+
+        if kind == Kind.FP_TO_FP_FROM_SBV or kind == Kind.FP_TO_FP_FROM_UBV:
+            term = mk_term(kind, [fp_args[0], bv_args[0]], [5, 11])
+            break
+
+        if kind == Kind.FP_TO_FP_FROM_FP:
+            term = mk_term(kind, [fp_args[0], fp_args[1]], [5, 11])
+            break
+
+        if kind == Kind.FP_TO_SBV or kind == Kind.FP_TO_UBV:
+            term = mk_term(kind, [fp_args[0], fp_args[1]], [16])
+            break
+
+        # Others
+        if kind == Kind.ITE:
+            term = mk_term(kind, [bool_args[0], bv_args[0], bv_args[1]])
+            break
+
+        # no unhandled kind
+        assert term
+
+        children = term.children()
+        size     = len(children)
+
+        if term.is_const() or term.is_variable() or term.is_value():
+            assert size == 0
+            continue
+
+        assert size > 0
+        for i in range(0, size):
+            assert term[i] == children[i]
+            assert children[i]
+
+        tterm = None
+        if term.kind() == Kind.CONST_ARRAY:
+            assert size == 1
+            term = mk_const_array(term.sort(), children[0])
+        else:
+          kind = term.kind()
+          if term.num_indices() > 0:
+            tterm = mk_term(kind, children, term.indices())
+          elif kind == Kind.LAMBDA \
+               or kind == Kind.FORALL \
+               or kind == Kind.EXISTS:
+               tterm = term
+          else:
+              assert kind != Kind.BV_NOT or size == 1
+              tterm = mk_term(kind, children)
+        assert tterm == term
+
+    assert mk_const(mk_bv_sort(8)).kind() == Kind.CONSTANT
+    assert len(mk_const(mk_bv_sort(8)).children()) == 0
+
+    assert mk_const(mk_rm_sort()).kind() == Kind.CONSTANT
+    assert len(mk_const(mk_rm_sort()).children()) == 0
+
+    assert mk_const(mk_uninterpreted_sort()).kind() == Kind.CONSTANT
+    assert len(mk_const(mk_uninterpreted_sort()).children()) == 0
+
+    bv_var = mk_var(bv16)
+    assert bv_var.kind() == Kind.VARIABLE
+    assert len(bv_var.children()) == 0
+
+    rm_val = mk_rm_value(RoundingMode.RNA)
+    assert rm_val.kind() == Kind.VALUE
+    assert len(rm_val.children()) == 0
+
+    fp_from_real_val = mk_fp_value(fp16, rm_val, '1.1')
+    assert fp_from_real_val.kind() == Kind.VALUE
+    assert len(fp_from_real_val.children()) == 0
+
+    fp_from_real = mk_fp_value(fp16, mk_const(mk_rm_sort()), '1.1')
+    assert fp_from_real.kind() == Kind.ITE
+    assert len(fp_from_real.children()) > 0
+
+    fp_from_rat_val = mk_fp_value(fp16, rm_val, '1', '2')
+    assert fp_from_rat_val.kind() == Kind.VALUE
+    assert len(fp_from_rat_val.children()) == 0
+
+    fp_from_rat = mk_fp_value(fp16, mk_const(mk_rm_sort()), '1', '2')
+    assert fp_from_rat.kind() == Kind.ITE
+    assert len(fp_from_rat.children()) > 0
+
+    fp_nan = mk_fp_nan(fp16)
+    assert fp_nan.kind() == Kind.VALUE
+    assert len(fp_nan.children()) == 0
+
+    bv_one = mk_bv_one(bv16)
+    assert bv_one.kind() == Kind.VALUE
+    assert len(bv_one.children()) == 0
+
+    bv_val = mk_bv_value(bv16, '43', 10)
+    assert bv_val.kind() == Kind.VALUE
+    assert len(bv_val.children()) == 0
+
+    # TODO enable when implemented
+    # const_array = mk_const_array(array_sort, bv_val)
+    # assert const_array.kind() == Kind.VALUE
+    # assert len(const_array.children()) == 0
+
+
+def test_term_print1():
+    a = mk_const(mk_bv_sort(1), 'a')
+    t = mk_term(Kind.BV_NOT, [a])
+    assert t.str() == '(bvnot a)'
+
+
+def test_term_print2():
+    fn1_1 = mk_fun_sort([mk_bv_sort(1)], mk_bv_sort(1))
+    t     = mk_const(fn1_1, 'f')
+    assert t.str() == 'f'
+
+
+def test_term_print3():
+    ar1_1 = mk_array_sort(mk_bv_sort(1), mk_bv_sort(1))
+    t     = mk_const(ar1_1, 'a')
+    assert t.str() == 'a'
+
+
+def test_arrayfun():
+    bvsort = mk_bv_sort(4)
+    domain = [bvsort]
+    funsort = mk_fun_sort(domain, bvsort)
+    arrsort = mk_array_sort(bvsort, bvsort)
+    f       = mk_const(funsort, 'f')
+    a       = mk_const(arrsort, 'a')
+    assert f.sort() != a.sort()
+    assert f.sort().is_fun()
+    assert not a.sort().is_fun()
+    assert not f.sort().is_array()
+    assert a.sort().is_array()

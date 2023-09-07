@@ -3376,12 +3376,14 @@ TEST_F(TestCApi, term_is_true)
 {
   ASSERT_TRUE(bitwuzla_term_is_true(bitwuzla_mk_true()));
   ASSERT_FALSE(bitwuzla_term_is_true(bitwuzla_mk_false()));
+  ASSERT_FALSE(bitwuzla_term_is_true(bitwuzla_mk_bv_one(d_bv_sort1)));
 }
 
 TEST_F(TestCApi, term_is_false)
 {
   ASSERT_TRUE(bitwuzla_term_is_false(bitwuzla_mk_false()));
   ASSERT_FALSE(bitwuzla_term_is_false(bitwuzla_mk_true()));
+  ASSERT_FALSE(bitwuzla_term_is_false(bitwuzla_mk_bv_zero(d_bv_sort1)));
 }
 
 TEST_F(TestCApi, term_is_bv_value)
@@ -3697,42 +3699,42 @@ TEST_F(TestCApi, term_print_regr1)
   BitwuzlaSort bv_sort5  = bitwuzla_mk_bv_sort(5);
   BitwuzlaSort bv_sort10 = bitwuzla_mk_bv_sort(10);
 
-  BitwuzlaTerm fp_const;
+  BitwuzlaTerm fp_val;
   std::string output;
 
-  fp_const = bitwuzla_mk_fp_value(bitwuzla_mk_bv_zero(d_bv_sort1),
+  fp_val = bitwuzla_mk_fp_value(bitwuzla_mk_bv_zero(d_bv_sort1),
                                   bitwuzla_mk_bv_zero(bv_sort5),
                                   bitwuzla_mk_bv_zero(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout);
+  bitwuzla_term_print(fp_val, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000000)");
 
-  fp_const = bitwuzla_mk_fp_value(bitwuzla_mk_bv_one(d_bv_sort1),
+  fp_val = bitwuzla_mk_fp_value(bitwuzla_mk_bv_one(d_bv_sort1),
                                   bitwuzla_mk_bv_zero(bv_sort5),
                                   bitwuzla_mk_bv_zero(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout);
+  bitwuzla_term_print(fp_val, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000000)");
 
-  fp_const = bitwuzla_mk_fp_value(bitwuzla_mk_bv_zero(d_bv_sort1),
+  fp_val = bitwuzla_mk_fp_value(bitwuzla_mk_bv_zero(d_bv_sort1),
                                   bitwuzla_mk_bv_zero(bv_sort5),
                                   bitwuzla_mk_bv_one(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout);
+  bitwuzla_term_print(fp_val, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000001)");
 
-  fp_const = bitwuzla_mk_fp_value(bitwuzla_mk_bv_one(d_bv_sort1),
+  fp_val = bitwuzla_mk_fp_value(bitwuzla_mk_bv_one(d_bv_sort1),
                                   bitwuzla_mk_bv_zero(bv_sort5),
                                   bitwuzla_mk_bv_one(bv_sort10));
 
   testing::internal::CaptureStdout();
-  bitwuzla_term_print(fp_const, stdout);
+  bitwuzla_term_print(fp_val, stdout);
   output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000001)");
 }
@@ -4034,7 +4036,7 @@ TEST_F(TestCApi, terms)
 
       default: break;
     }
-    // Unhandled BitwuzlaKind
+    // No unhandled BitwuzlaKind
     ASSERT_NE(term, 0);
 
     size_t size;
