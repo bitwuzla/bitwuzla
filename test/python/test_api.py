@@ -1789,6 +1789,102 @@ def test_terms():
     # assert len(const_array.children()) == 0
 
 
+def test_substitute1():
+    bv16 = mk_bv_sort(16)
+    bv_const = mk_const(bv16)
+    bv_value = mk_bv_value(bv16, '143', 10)
+
+    # simple substitution const -> value
+    substs = {bv_const: bv_value}
+    result = substitute_term(bv_const, substs)
+    assert result == bv_value
+
+
+def test_substitute2():
+    bv16 = mk_bv_sort(16)
+    bv_const = mk_const(bv16)
+    bv_value = mk_bv_value(bv16, '143', 10)
+    # (sdiv x y) -> (sdiv value y)
+    x = mk_const(bv16)
+    y = mk_const(bv16)
+
+    substs = {x: bv_value}
+
+    result = substitute_term(mk_term(Kind.BV_SDIV, [x, y]), substs)
+    assert result == mk_term(Kind.BV_SDIV, [bv_value, y])
+
+
+def test_substitute3():
+    bv16 = mk_bv_sort(16)
+    domain = [bv16, bv16, bv16]
+    fun_sort   = mk_fun_sort(domain, mk_bool_sort())
+    bv_const = mk_const(bv16)
+    bv_value = mk_bv_value(bv16, '143', 10)
+    # partial substitution of variables in quantified formula
+    args = [mk_const(fun_sort),
+            mk_var(bv16, 'x'),
+            mk_var(bv16, 'y'),
+            mk_var(bv16, 'z')]
+    args.append(mk_term(Kind.APPLY, args))
+    q = mk_term(Kind.FORALL, args[1:])
+
+    substs = {args[1]: mk_const(bv16, 'cx'), args[2]: mk_const(bv16, 'cy')}
+
+    apply = mk_term(
+            Kind.APPLY, [args[0], substs[args[1]], substs[args[2]], args[3]])
+    expected = mk_term(Kind.FORALL, [args[3], apply])
+
+    result = substitute_term(q, substs)
+    assert result == expected
+
+def test_substitute4():
+    bv16 = mk_bv_sort(16)
+    domain = [bv16, bv16, bv16]
+    fun_sort   = mk_fun_sort(domain, mk_bool_sort())
+    array_sort = mk_array_sort(bv16, bv16)
+    bv_const = mk_const(bv16)
+    bv_value = mk_bv_value(bv16, '143', 10)
+    # substitute term in constant array
+    term = mk_const(bv16)
+    const_array = mk_const_array(array_sort, term)
+
+    substs = {term: bv_value}
+
+    result = substitute_term(const_array, substs)
+    expected = mk_const_array(array_sort, bv_value)
+    assert result == expected
+    assert result.kind() == Kind.CONST_ARRAY
+
+
+def test_substitute4():
+    bv8   = mk_bv_sort(8)
+    x     = mk_const(bv8, 'x')
+    one   = mk_bv_one(bv8)
+    btrue = mk_true()
+    addxx = mk_term(Kind.BV_ADD, [x, x])
+    addoo = mk_term(Kind.BV_ADD, [one, one])
+
+    with pytest.raises(BitwuzlaException):
+        substitute_term(addxx, {one: btrue})
+
+    assert substitute_term(addxx, {x: one}) == addoo
+    assert substitute_term(addxx, {one: x}) == addxx
+
+    # simultaneous substitution
+    y     = mk_const(bv8, 'y')
+    addxy = mk_term(Kind.BV_ADD, [x, y])
+    addyo = mk_term(Kind.BV_ADD, [y, one])
+
+    with pytest.raises(BitwuzlaException):
+        substitute_term(addxy, {x: y, y: btrue})
+
+    assert substitute_term(addxy, {x: y, y: one}) == addyo
+
+    terms = [addxx, addxy]
+    expected = [mk_term(Kind.BV_ADD, [y, y]), mk_term(Kind.BV_ADD, [y, x])]
+    assert substitute_terms(terms, {x: y, y: x}) == expected
+
+
 def test_term_print1():
     a = mk_const(mk_bv_sort(1), 'a')
     t = mk_term(Kind.BV_NOT, [a])

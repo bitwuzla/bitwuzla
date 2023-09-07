@@ -17,6 +17,7 @@ from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t
 from libcpp cimport bool as c_bool
 from libcpp.optional cimport optional, nullopt, make_optional
 from libcpp.string cimport string
+from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
 from libcpp.memory cimport unique_ptr, shared_ptr
 from cpython.ref cimport PyObject
@@ -1346,6 +1347,42 @@ def mk_term(kind: Kind, terms: list[Term], indices: list[int] = []) -> Term:
        :return: A term representing an operation of given kind.
     """
     return _term(bitwuzla_api.mk_term(kind.value, _term_vec(terms), indices))
+
+# --------------------------------------------------------------------------- #
+# Term substitution
+# --------------------------------------------------------------------------- #
+
+def substitute_term(term: Term, substs: dict[Term, Term]) -> Term:
+    """Substitute a set terms in a given term. The substitutions to perfom are
+       represented as map from keys to be substituted with their corresponding
+       values in the given term.
+
+       :param term: The term in which the terms are to be substituted.
+       :param substs: The substitution map.
+       :return: The resulting term from this substitution.
+    """
+    cdef unordered_map[bitwuzla_api.Term, bitwuzla_api.Term] c_substs
+    for k,v in substs.items(): c_substs[_cterm(k)] = _cterm(v)
+    return _term(bitwuzla_api.substitute_term(term.c_term, c_substs))
+
+def substitute_terms(terms: list[Term], substs: dict[Term, Term]) -> list[Term]:
+    """Substitute a set of terms in a set of given terms. The substitutions to
+       perfom are represented as map from keys to be substituted with their
+       corresponding values in the given terms.
+
+       The terms in `terms` are replaced with the terms resulting from these
+       substitutions.
+
+       :param terms: The terms in which the terms are to be substituted.
+       :param substs: The substitution map.
+    """
+    cdef unordered_map[bitwuzla_api.Term, bitwuzla_api.Term] c_substs
+    cdef vector[bitwuzla_api.Term] c_terms = _term_vec(terms)
+    for k,v in substs.items(): c_substs[_cterm(k)] = _cterm(v)
+    bitwuzla_api.substitute_terms(c_terms, c_substs)
+    return _terms(c_terms)
+
+
 
 # --------------------------------------------------------------------------- #
 # Parser

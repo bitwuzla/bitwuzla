@@ -477,9 +477,9 @@ class Term
   friend Term mk_const(const Sort &, std::optional<const std::string>);
   friend Term mk_var(const Sort &, std::optional<const std::string>);
   friend Term substitute_term(const Term &,
-                              const std::unordered_map<Term, Term>);
+                              const std::unordered_map<Term, Term> &);
   friend void substitute_terms(std::vector<Term> &terms,
-                               const std::unordered_map<Term, Term> map);
+                               const std::unordered_map<Term, Term> &);
 
  public:
   /** Default constructor, creates null term. */
@@ -1670,31 +1670,30 @@ Term mk_var(const Sort &sort,
  */
 
 /**
- * Substitute a set of keys with their corresponding values in the given
- * term.
+ * Substitute a set terms in a given term. The substitutions to perfom are
+ * represented as map from keys to be substituted with their corresponding
+ * values in the given term.
  *
- * @param term The term in which the keys are to be substituted.
+ * @param term The term in which the terms are to be substituted.
  * @param map  The substitution map.
  * @return The resulting term from this substitution.
  */
 Term substitute_term(const Term &term,
-                     const std::unordered_map<Term, Term> map);
+                     const std::unordered_map<Term, Term> &map);
 
 /**
- * Substitute a set of keys with their corresponding values in the set of
- * given terms.
+ * Substitute a set of terms in a set of given terms. The substitutions to
+ * perfom are represented as map from keys to be substituted with their
+ * corresponding values in the given terms.
  *
- * The terms in `terms` are replaced with the terms resulting from this
+ * The terms in `terms` are replaced with the terms resulting from these
  * substitutions.
  *
- * @param terms_size The size of the set of terms.
- * @param terms The terms in which the keys are to be substituted.
- * @param map_size The size of the substitution map.
- * @param map_keys The keys.
- * @param map_values The mapped values.
+ * @param terms The terms in which the terms are to be substituted.
+ * @param map  The substitution map.
  */
 void substitute_terms(std::vector<Term> &terms,
-                      const std::unordered_map<Term, Term> map);
+                      const std::unordered_map<Term, Term> &map);
 
 /** @} */
 

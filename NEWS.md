@@ -9,6 +9,19 @@ This file collects a summary of important and/or user-visible changes.
       changed to `mk_bv_value(sort: Sort, value, *args)` to allow, e.g.,
       `mk_bv_value(s, 2)` to create a bit-vector value representation `2`
       of sort `s` instead of `mk_bv_value(s, 2, 10)`.
+    * Added support for term substitution via functions `substitute_term()` and
+      `substitute_terms()`.
+
+- C API changes:
+    * Functions `bitwuzla_substitute_term()` and `bitwuzla_substitute_terms()`
+      do not require the (previously already unused) `Bitwuzla*` argument
+      anymore.
+      - `bitwuzla_substitute_term(Bitwuzla*, BitwuzlaTerm, size_t, BitwuzlaTerm[], BitwuzlaTerm[])`
+        changed to
+        `bitwuzla_substitute_term(BitwuzlaTerm, size_t, BitwuzlaTerm[], BitwuzlaTerm[])`
+      - `bitwuzla_substitute_terms(Bitwuzla*, BitwuzlaTerm[], size_t, BitwuzlaTerm[], BitwuzlaTerm[])`
+        changed to
+        `bitwuzla_substitute_term(BitwuzlaTerm[], size_t, BitwuzlaTerm[], BitwuzlaTerm[])`
 
 ## News for version 0.2.0
 

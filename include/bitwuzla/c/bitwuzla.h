@@ -1971,7 +1971,6 @@ BitwuzlaTerm bitwuzla_mk_var(BitwuzlaSort sort, const char *symbol);
 /**
  * Substitute a set of keys with their corresponding values in the given term.
  *
- * @param bitwuzla The Bitwuzla instance.
  * @param term The term in which the keys are to be substituted.
  * @param map_size The size of the substitution map.
  * @param map_keys The keys.
@@ -1979,8 +1978,7 @@ BitwuzlaTerm bitwuzla_mk_var(BitwuzlaSort sort, const char *symbol);
  *
  * @return The resulting term from this substitution.
  */
-BitwuzlaTerm bitwuzla_substitute_term(Bitwuzla *bitwuzla,
-                                      BitwuzlaTerm term,
+BitwuzlaTerm bitwuzla_substitute_term(BitwuzlaTerm term,
                                       size_t map_size,
                                       BitwuzlaTerm map_keys[],
                                       BitwuzlaTerm map_values[]);
@@ -1989,18 +1987,16 @@ BitwuzlaTerm bitwuzla_substitute_term(Bitwuzla *bitwuzla,
  * Substitute a set of keys with their corresponding values in the set of given
  * terms.
  *
- * The terms in `terms` are replaced with the terms resulting from this
+ * The terms in `terms` are replaced with the terms resulting from these
  * substitutions.
  *
- * @param bitwuzla The Bitwuzla instance.
  * @param terms_size The size of the set of terms.
  * @param terms The terms in which the keys are to be substituted.
  * @param map_size The size of the substitution map.
  * @param map_keys The keys.
  * @param map_values The mapped values.
  */
-void bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
-                               size_t terms_size,
+void bitwuzla_substitute_terms(size_t terms_size,
                                BitwuzlaTerm terms[],
                                size_t map_size,
                                BitwuzlaTerm map_keys[],

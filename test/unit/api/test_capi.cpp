@@ -4163,8 +4163,6 @@ TEST_F(TestCApi, terms)
 
 TEST_F(TestCApi, substitute)
 {
-  BitwuzlaOptions *options         = bitwuzla_options_new();
-  Bitwuzla *bitwuzla               = bitwuzla_new(options);
   std::vector<BitwuzlaSort> domain = {d_bv_sort16, d_bv_sort16, d_bv_sort16};
   BitwuzlaSort fun_sort =
       bitwuzla_mk_fun_sort(domain.size(), domain.data(), d_bool_sort);
@@ -4178,7 +4176,7 @@ TEST_F(TestCApi, substitute)
     std::vector<BitwuzlaTerm> keys   = {bv_const};
     std::vector<BitwuzlaTerm> values = {bv_value};
     BitwuzlaTerm result              = bitwuzla_substitute_term(
-        bitwuzla, bv_const, keys.size(), keys.data(), values.data());
+        bv_const, keys.size(), keys.data(), values.data());
     ASSERT_EQ(result, bv_value);
   }
 
@@ -4191,8 +4189,7 @@ TEST_F(TestCApi, substitute)
     std::vector<BitwuzlaTerm> values = {bv_value};
 
     BitwuzlaTerm result =
-        bitwuzla_substitute_term(bitwuzla,
-                                 bitwuzla_mk_term2(BITWUZLA_KIND_BV_SDIV, x, y),
+        bitwuzla_substitute_term(bitwuzla_mk_term2(BITWUZLA_KIND_BV_SDIV, x, y),
                                  keys.size(),
                                  keys.data(),
                                  values.data());
@@ -4214,7 +4211,6 @@ TEST_F(TestCApi, substitute)
     std::vector<BitwuzlaTerm> values = {bitwuzla_mk_const(d_bv_sort16, 0),
                                         bitwuzla_mk_const(d_bv_sort16, 0)};
 
-    // Build expected
     std::vector<BitwuzlaTerm> args_apply = {
         args[0], values[0], values[1], args[3]};
     BitwuzlaTerm apply = bitwuzla_mk_term(
@@ -4223,8 +4219,8 @@ TEST_F(TestCApi, substitute)
     BitwuzlaTerm expected =
         bitwuzla_mk_term(BITWUZLA_KIND_FORALL, 2, args_expected.data());
 
-    BitwuzlaTerm result = bitwuzla_substitute_term(
-        bitwuzla, q, keys.size(), keys.data(), values.data());
+    BitwuzlaTerm result =
+        bitwuzla_substitute_term(q, keys.size(), keys.data(), values.data());
     ASSERT_EQ(result, expected);
   }
 
@@ -4237,14 +4233,73 @@ TEST_F(TestCApi, substitute)
     std::vector<BitwuzlaTerm> values = {bv_value};
 
     BitwuzlaTerm result = bitwuzla_substitute_term(
-        bitwuzla, const_array, keys.size(), keys.data(), values.data());
+        const_array, keys.size(), keys.data(), values.data());
 
     BitwuzlaTerm expected = bitwuzla_mk_const_array(array_sort, bv_value);
     ASSERT_EQ(result, expected);
     ASSERT_EQ(bitwuzla_term_get_kind(result), BITWUZLA_KIND_CONST_ARRAY);
   }
-  bitwuzla_delete(bitwuzla);
-  bitwuzla_options_delete(options);
+}
+
+TEST_F(TestCApi, substitute2)
+{
+  BitwuzlaSort bv8   = bitwuzla_mk_bv_sort(8);
+  BitwuzlaTerm x     = bitwuzla_mk_const(bv8, "x");
+  BitwuzlaTerm one   = bitwuzla_mk_bv_one(bv8);
+  BitwuzlaTerm btrue = bitwuzla_mk_true();
+  BitwuzlaTerm addxx = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, x, x);
+  BitwuzlaTerm addoo = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, one, one);
+
+  std::vector<BitwuzlaTerm> keys;
+  std::vector<BitwuzlaTerm> values;
+
+  keys = {x}, values = {one};
+  ASSERT_DEATH(
+      bitwuzla_substitute_term(0, keys.size(), keys.data(), values.data()),
+      "invalid term id");
+  keys = {0};
+  ASSERT_DEATH(
+      bitwuzla_substitute_term(addxx, keys.size(), keys.data(), values.data()),
+      "invalid term id");
+  keys = {x}, values = {0};
+  ASSERT_DEATH(
+      bitwuzla_substitute_term(addxx, keys.size(), keys.data(), values.data()),
+      "invalid term id");
+  keys = {one}, values = {btrue};
+  ASSERT_DEATH(
+      bitwuzla_substitute_term(addxx, keys.size(), keys.data(), values.data()),
+      "invalid term substitution");
+
+  keys = {x}, values = {one};
+  ASSERT_EQ(
+      bitwuzla_substitute_term(addxx, keys.size(), keys.data(), values.data()),
+      addoo);
+  keys = {one}, values = {x};
+  ASSERT_EQ(
+      bitwuzla_substitute_term(addxx, keys.size(), keys.data(), values.data()),
+      addxx);
+
+  // simultaneous substitution
+  BitwuzlaTerm y     = bitwuzla_mk_const(bv8, "y");
+  BitwuzlaTerm addxy = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, x, y);
+  BitwuzlaTerm addyo = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, y, one);
+  keys = {x, y}, values = {y, btrue};
+  ASSERT_DEATH(
+      bitwuzla_substitute_term(addxy, keys.size(), keys.data(), values.data()),
+      "invalid term substitution");
+  values = {y, one};
+  ASSERT_EQ(
+      bitwuzla_substitute_term(addxy, keys.size(), keys.data(), values.data()),
+      addyo);
+
+  std::vector<BitwuzlaTerm> terms    = {addxx, addxy};
+  std::vector<BitwuzlaTerm> expected = {
+      bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, y, y),
+      bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, y, x)};
+  keys = {x, y}, values = {y, x};
+  bitwuzla_substitute_terms(
+      terms.size(), terms.data(), keys.size(), keys.data(), values.data());
+  ASSERT_EQ(terms, expected);
 }
 
 TEST_F(TestCApi, term_print1)

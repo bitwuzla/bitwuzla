@@ -1158,15 +1158,13 @@ bitwuzla_get_statistics(Bitwuzla *bitwuzla,
 }
 
 BitwuzlaTerm
-bitwuzla_substitute_term(Bitwuzla *bitwuzla,
-                         BitwuzlaTerm term,
+bitwuzla_substitute_term(BitwuzlaTerm term,
                          size_t map_size,
                          BitwuzlaTerm map_keys[],
                          BitwuzlaTerm map_values[])
 {
   BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_TERM_ID(term);
   BITWUZLA_CHECK_NOT_ZERO(map_size);
   BITWUZLA_CHECK_NOT_NULL(map_keys);
@@ -1174,6 +1172,8 @@ bitwuzla_substitute_term(Bitwuzla *bitwuzla,
   std::unordered_map<bitwuzla::Term, bitwuzla::Term> map;
   for (size_t i = 0; i < map_size; ++i)
   {
+    BITWUZLA_CHECK_TERM_ID_AT_IDX(map_keys, i);
+    BITWUZLA_CHECK_TERM_ID_AT_IDX(map_values, i);
     map.emplace(import_term(map_keys[i]), import_term(map_values[i]));
   }
   res = export_term(bitwuzla::substitute_term(import_term(term), map));
@@ -1182,15 +1182,13 @@ bitwuzla_substitute_term(Bitwuzla *bitwuzla,
 }
 
 void
-bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
-                          size_t terms_size,
+bitwuzla_substitute_terms(size_t terms_size,
                           BitwuzlaTerm terms[],
                           size_t map_size,
                           BitwuzlaTerm map_keys[],
                           BitwuzlaTerm map_values[])
 {
   BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_NOT_ZERO(terms_size);
   BITWUZLA_CHECK_NOT_NULL(terms);
   BITWUZLA_CHECK_NOT_ZERO(map_size);

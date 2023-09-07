@@ -13,6 +13,7 @@ from cpython.ref cimport PyObject
 from libc.stdint cimport uint8_t, uint32_t, uint64_t, int64_t
 from libcpp cimport bool
 from libcpp.map cimport map
+from libcpp.unordered_map cimport unordered_map
 from libcpp.memory cimport shared_ptr
 from libcpp.optional cimport optional
 from libcpp.string cimport string
@@ -272,6 +273,8 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
     Term mk_var(const Sort &sort,
                 optional[const string] symbol) except +raise_error
 
+    Term substitute_term(const Term &term, const unordered_map[Term, Term]& map) except +raise_error
+    void substitute_terms(vector[Term] &terms, const unordered_map[Term, Term]&) except +raise_error
 
 cdef extern from "bitwuzla/cpp/parser.h" namespace "bitwuzla::parser":
 

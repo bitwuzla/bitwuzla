@@ -2231,7 +2231,7 @@ mk_var(const Sort &sort, std::optional<const std::string> symbol)
 }
 
 Term
-substitute_term(const Term &term, const std::unordered_map<Term, Term> map)
+substitute_term(const Term &term, const std::unordered_map<Term, Term> &map)
 {
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   std::vector<Term> terms = {term};
@@ -2270,11 +2270,19 @@ rebuild_term(const Term &term, const std::vector<Term> &children)
 
 void
 substitute_terms(std::vector<Term> &terms,
-                 const std::unordered_map<Term, Term> map)
+                 const std::unordered_map<Term, Term> &map)
 {
   if (terms.empty() || map.empty())
   {
     return;
+  }
+
+  for (const auto &[k, v] : map)
+  {
+    BITWUZLA_CHECK_TERM_NOT_NULL(k);
+    BITWUZLA_CHECK_TERM_NOT_NULL(v);
+    BITWUZLA_CHECK(k.sort() == v.sort())
+        << "invalid term substitution, mismatching sorts: " << k << " -> " << v;
   }
 
   std::vector<Term> visit;

@@ -3037,7 +3037,6 @@ TEST_F(TestApi, substitute)
         {args[1], bitwuzla::mk_const(d_bv_sort16, "cx")},
         {args[2], bitwuzla::mk_const(d_bv_sort16, "cy")}};
 
-    // Build expected
     bitwuzla::Term apply =
         bitwuzla::mk_term(bitwuzla::Kind::APPLY,
                           {args[0], map.at(args[1]), map.at(args[2]), args[3]});
@@ -3061,6 +3060,43 @@ TEST_F(TestApi, substitute)
     ASSERT_EQ(result, expected);
     ASSERT_EQ(result.kind(), bitwuzla::Kind::CONST_ARRAY);
   }
+}
+
+TEST_F(TestApi, substitute2)
+{
+  bitwuzla::Sort bv8   = bitwuzla::mk_bv_sort(8);
+  bitwuzla::Term x     = bitwuzla::mk_const(bv8, "x");
+  bitwuzla::Term one   = bitwuzla::mk_bv_one(bv8);
+  bitwuzla::Term btrue = bitwuzla::mk_true();
+  bitwuzla::Term addxx = bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, {x, x});
+  bitwuzla::Term addoo = bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, {one, one});
+
+  ASSERT_THROW(bitwuzla::substitute_term(bitwuzla::Term(), {{x, one}}),
+               bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::substitute_term(addxx, {{bitwuzla::Term(), one}}),
+               bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::substitute_term(addxx, {{x, bitwuzla::Term()}}),
+               bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::substitute_term(addxx, {{one, btrue}}),
+               bitwuzla::Exception);
+
+  ASSERT_EQ(bitwuzla::substitute_term(addxx, {{x, one}}), addoo);
+  ASSERT_EQ(bitwuzla::substitute_term(addxx, {{one, x}}), addxx);
+
+  // simultaneous substitution
+  bitwuzla::Term y     = bitwuzla::mk_const(bv8, "y");
+  bitwuzla::Term addxy = bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, {x, y});
+  bitwuzla::Term addyo = bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, {y, one});
+  ASSERT_THROW(bitwuzla::substitute_term(addxy, {{x, y}, {y, btrue}}),
+               bitwuzla::Exception);
+  ASSERT_EQ(bitwuzla::substitute_term(addxy, {{x, y}, {y, one}}), addyo);
+
+  std::vector<bitwuzla::Term> terms    = {addxx, addxy};
+  std::vector<bitwuzla::Term> expected = {
+      bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, {y, y}),
+      bitwuzla::mk_term(bitwuzla::Kind::BV_ADD, {y, x})};
+  bitwuzla::substitute_terms(terms, {{x, y}, {y, x}});
+  ASSERT_EQ(terms, expected);
 }
 
 TEST_F(TestApi, term_print1)
