@@ -9,6 +9,7 @@
 ##
 
 import pytest
+import os
 
 from bitwuzla import *
 
@@ -1915,3 +1916,24 @@ def test_arrayfun():
     assert not a.sort().is_fun()
     assert not f.sort().is_array()
     assert a.sort().is_array()
+
+# ----------------------------------------------------------------------------
+# Parsing
+# ----------------------------------------------------------------------------
+
+def test_parser():
+    filename = "parse.smt2";
+    with open(filename, 'w') as smt2:
+        smt2.write('(set-logic QF_BV)\n(check-sat)\n(exit)\n')
+        smt2.close()
+
+    options = Options()
+    with pytest.raises(BitwuzlaException):
+        Parser(options, '')
+    with pytest.raises(BitwuzlaException):
+        Parser(options, 'parsex.smt2')
+
+    parser = Parser(options, filename)
+    err = parser.parse(True)
+    assert not err
+    os.remove(filename)

@@ -3161,12 +3161,6 @@ TEST_F(TestApi, parser)
   ASSERT_THROW(bitwuzla::parser::Parser(options, "parsex.smt2"),
                bitwuzla::Exception);
 
-  // TODO should this throw? (parsing after having created expressions)
-  // ASSERT_THROW(
-  //    bitwuzla::parse(
-  //        ifile, infile_name, std::cout, error_msg, status, is_smt2),
-  //    bitwuzla::Exception);
-
   bitwuzla::parser::Parser parser(options, filename);
   std::string err = parser.parse(true);
   ASSERT_TRUE(err.empty());
