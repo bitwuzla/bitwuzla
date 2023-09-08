@@ -11,6 +11,7 @@
 extern "C" {
 #include <bitwuzla/c/bitwuzla.h>
 #include <bitwuzla/c/parser.h>
+#include <sys/time.h>
 }
 
 #include <fstream>
@@ -4351,12 +4352,25 @@ test_terminate1(void *state)
   (void) state;
   return true;
 }
-int32_t
+struct terminator_state
+{
+  struct timeval start;
+  uint32_t time_limit_ms;
+};
+
+static int32_t
 test_terminate2(void *state)
 {
-  (void) state;
-  sleep(1);
-  return true;
+  struct terminator_state *tstate = (struct terminator_state *) state;
+  struct timeval now;
+  gettimeofday(&now, NULL);
+  if (((now.tv_sec - tstate->start.tv_sec) * 1000
+       + (now.tv_usec - tstate->start.tv_usec) / 1000)
+      >= tstate->time_limit_ms)
+  {
+    return 1;
+  }
+  return 0;
 }
 }  // namespace
 
@@ -4447,13 +4461,17 @@ TEST_F(TestCApi, terminate_sat)
       bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL,
                         bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, s, x),
                         t));
-  // not solved by bit-blasting, should be terminated in the SAT solver when
-  // configured
+  // not solved by bit-blasting without preprocessing, should be terminated in
+  // the SAT solver when configured
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
+    bitwuzla_set_option(opts, BITWUZLA_OPT_PREPROCESS, 0);
     Bitwuzla *bitwuzla = bitwuzla_new(opts);
-    bitwuzla_set_termination_callback(bitwuzla, test_terminate2, nullptr);
+    struct terminator_state state;
+    gettimeofday(&state.start, NULL);
+    state.time_limit_ms = 1000;
+    bitwuzla_set_termination_callback(bitwuzla, test_terminate2, &state);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
     bitwuzla_options_delete(opts);
@@ -4462,8 +4480,12 @@ TEST_F(TestCApi, terminate_sat)
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
+    bitwuzla_set_option(opts, BITWUZLA_OPT_PREPROCESS, 0);
     Bitwuzla *bitwuzla = bitwuzla_new(opts);
-    bitwuzla_set_termination_callback(bitwuzla, test_terminate2, nullptr);
+    struct terminator_state state;
+    gettimeofday(&state.start, NULL);
+    state.time_limit_ms = 1000;
+    bitwuzla_set_termination_callback(bitwuzla, test_terminate2, &state);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
     bitwuzla_options_delete(opts);

@@ -47,6 +47,7 @@ SolvingContext::solve()
   check_no_free_variables();
 #endif
   preprocess();
+
   d_sat_state = d_solver_engine.solve();
 
   if (d_sat_state == Result::SAT

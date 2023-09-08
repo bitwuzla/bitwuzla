@@ -10,6 +10,7 @@
 
 import pytest
 import os
+import time
 
 from bitwuzla import *
 
@@ -1937,3 +1938,150 @@ def test_parser():
     err = parser.parse(True)
     assert not err
     os.remove(filename)
+
+# ----------------------------------------------------------------------------
+# Termination function
+# ----------------------------------------------------------------------------
+
+def test_terminate():
+
+    class TestTerminator:
+        def __call__(self):
+            return True
+
+    bv4 = mk_bv_sort(4)
+    x = mk_const(bv4)
+    s = mk_const(bv4)
+    t = mk_const(bv4)
+    a = mk_term(Kind.AND,
+                [
+                    mk_term(
+                        Kind.EQUAL,
+                        [mk_term(Kind.BV_ADD, [x, x]), mk_bv_value(bv4, 3)]),
+                    mk_term(
+                        Kind.NOT,
+                        [mk_term(Kind.BV_UADD_OVERFLOW, [x, x])])
+                ])
+    b = mk_term(Kind.DISTINCT,
+                [
+                    mk_term(
+                        Kind.BV_MUL,
+                        [s, mk_term(Kind.BV_MUL, [x, t])]),
+                    mk_term(
+                        Kind.BV_MUL,
+                        [mk_term(Kind.BV_MUL, [s, x]), t])
+                ])
+    # solved by rewriting
+    options = Options()
+    options.set(Option.BV_SOLVER, 'bitblast')
+    bitwuzla = Bitwuzla(options)
+    bitwuzla.assert_formula(a)
+    assert bitwuzla.check_sat() == Result.UNSAT
+
+    options.set(Option.BV_SOLVER, 'prop')
+    bitwuzla = Bitwuzla(options)
+    bitwuzla.assert_formula(a)
+    assert bitwuzla.check_sat() == Result.UNSAT
+
+    # not solved by rewriting, should be terminated when configured
+    tt = TestTerminator()
+    options.set(Option.BV_SOLVER, 'bitblast')
+    bitwuzla = Bitwuzla(options)
+    bitwuzla.assert_formula(b)
+    assert bitwuzla.check_sat() == Result.UNSAT
+    bitwuzla.configure_terminator(tt)
+    assert bitwuzla.check_sat() == Result.UNKNOWN
+
+    options.set(Option.BV_SOLVER, 'prop')
+    bitwuzla = Bitwuzla(options)
+    bitwuzla.configure_terminator(tt)
+    bitwuzla.assert_formula(b)
+    assert bitwuzla.check_sat() == Result.UNKNOWN
+
+
+def test_terminate_sat():
+    class TestTerminator:
+        def __init__(self, time_limit):
+            self.start_time = time.time()
+            self.time_limit = time_limit
+
+        def __call__(self):
+            # Terminate after self.time_limit ms passed
+            return (time.time() - self.start_time) * 1000 > self.time_limit
+
+    bv32 = mk_bv_sort(32)
+    x = mk_const(bv32)
+    s = mk_const(bv32)
+    t = mk_const(bv32)
+    b = mk_term(Kind.DISTINCT,
+                [
+                    mk_term(Kind.BV_MUL, [s, mk_term(Kind.BV_MUL, [x, t])]),
+                    mk_term(Kind.BV_MUL, [mk_term(Kind.BV_MUL, [s, x]), t])
+                ])
+    # not solved by bit-blasting without preprocessing, should be terminated in
+    # the SAT solver when configured
+    tt = TestTerminator(1)
+    options = Options()
+    options.set(Option.BV_SOLVER, 'bitblast')
+    options.set(Option.PREPROCESS, False)
+    bitwuzla = Bitwuzla(options)
+    bitwuzla.configure_terminator(tt)
+    bitwuzla.assert_formula(b)
+    assert bitwuzla.check_sat() == Result.UNKNOWN
+
+    options.set(Option.BV_SOLVER, 'bitblast')
+    options.set(Option.SAT_SOLVER, 'kissat')
+    options.set(Option.PREPROCESS, False)
+    bitwuzla = Bitwuzla(options)
+    bitwuzla.configure_terminator(tt)
+    bitwuzla.assert_formula(b)
+    assert bitwuzla.check_sat() == Result.UNKNOWN
+
+
+def test_terminate_timeout_wrap():
+    class TestTerminator:
+        def __init__(self):
+            self.terminated = False
+        def __call__(self):
+            self.terminated = True
+            return True
+
+    bv32 = mk_bv_sort(32)
+    x = mk_const(bv32)
+    s = mk_const(bv32)
+    t = mk_const(bv32)
+    b = mk_term(Kind.DISTINCT,
+                [
+                    mk_term(Kind.BV_MUL, [s, mk_term(Kind.BV_MUL, [x, t])]),
+                    mk_term(Kind.BV_MUL, [mk_term(Kind.BV_MUL, [s, x]), t])
+                ])
+    # not solved by bit-blasting, should be terminated in the SAT solver when
+    # configured
+    tt = TestTerminator()
+    options = Options()
+    options.set(Option.TIME_LIMIT_PER, 100)
+    options.set(Option.BV_SOLVER, 'bitblast')
+    options.set(Option.REWRITE_LEVEL, 0)
+    options.set(Option.PREPROCESS, False)
+    bitwuzla = Bitwuzla(options)
+    bitwuzla.configure_terminator(tt)
+    bitwuzla.assert_formula(b)
+    bitwuzla.check_sat()
+    assert tt.terminated
+
+    bitwuzla.configure_terminator(None)
+    assert bitwuzla.check_sat() == Result.UNKNOWN
+
+    class TestTerminator2:
+        def __call__(self):
+            return False
+    tt = TestTerminator2()
+    opitons = Options()
+    options.set(Option.TIME_LIMIT_PER, 100)
+    options.set(Option.BV_SOLVER, 'bitblast')
+    options.set(Option.REWRITE_LEVEL, 0)
+    options.set(Option.PREPROCESS, False)
+    bitwuzla = Bitwuzla(options)
+    bitwuzla.configure_terminator(tt)
+    bitwuzla.assert_formula(b)
+    assert bitwuzla.check_sat() == Result.UNKNOWN

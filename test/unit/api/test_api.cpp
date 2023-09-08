@@ -11,6 +11,7 @@
 #include <bitwuzla/cpp/bitwuzla.h>
 #include <bitwuzla/cpp/parser.h>
 
+#include <chrono>
 #include <fstream>
 
 #include "test/unit/test.h"
@@ -3246,11 +3247,25 @@ TEST_F(TestApi, terminate_sat)
   class TestTerminator : public bitwuzla::Terminator
   {
    public:
+    TestTerminator(uint32_t time_limit_ms)
+        : Terminator(),
+          time_limit_ms(time_limit_ms),
+          start(std::chrono::high_resolution_clock::now())
+    {
+    }
     bool terminate() override
     {
-      sleep(1);
-      return true;
+      if (std::chrono::duration_cast<std::chrono::milliseconds>(
+              std::chrono::high_resolution_clock::now() - start)
+              .count()
+          >= time_limit_ms)
+      {
+        return true;
+      }
+      return false;
     }
+    uint32_t time_limit_ms = 0;
+    std::chrono::high_resolution_clock::time_point start;
   };
 
   bitwuzla::Sort bv_sort32 = bitwuzla::mk_bv_sort(32);
@@ -3265,12 +3280,13 @@ TEST_F(TestApi, terminate_sat)
                bitwuzla::mk_term(
            bitwuzla::Kind::BV_MUL,
            {bitwuzla::mk_term(bitwuzla::Kind::BV_MUL, {s, x}), t})});
-  // not solved by bit-blasting, should be terminated in the SAT solver when
-  // configured
-  TestTerminator tt;
+  // not solved by bit-blasting without preprocessing, should be terminated in
+  // the SAT solver when configured
+  TestTerminator tt(1000);
   {
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::PREPROCESS, false);
     bitwuzla::Bitwuzla bitwuzla(opts);
     bitwuzla.configure_terminator(&tt);
     bitwuzla.assert_formula(b);
@@ -3279,6 +3295,7 @@ TEST_F(TestApi, terminate_sat)
   {
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::PREPROCESS, false);
     opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
     bitwuzla::Bitwuzla bitwuzla(opts);
     bitwuzla.configure_terminator(&tt);
