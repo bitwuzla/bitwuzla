@@ -606,6 +606,7 @@ TEST_F(TestCApi, option_is_valid)
   BitwuzlaOptions *options = bitwuzla_options_new();
   ASSERT_FALSE(bitwuzla_option_is_valid(options, "incremental"));
   ASSERT_TRUE(bitwuzla_option_is_valid(options, "produce-models"));
+  bitwuzla_options_delete(options);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2904,6 +2905,8 @@ TEST_F(TestCApi, print_formula3)
       << "(exit)" << std::endl;
 
   ASSERT_EQ(res, expected_smt2.str());
+  bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2922,6 +2925,8 @@ TEST_F(TestCApi, statistics)
   {
     std::cout << keys[i] << ": " << values[i] << std::endl;
   }
+  bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, parser)
@@ -2956,6 +2961,7 @@ TEST_F(TestCApi, parser)
   const char *err = bitwuzla_parser_parse(parser, true);
   ASSERT_EQ(err, nullptr);
   bitwuzla_options_delete(options);
+  bitwuzla_parser_delete(parser);
   fclose(infile);
   std::remove(filename);
   ASSERT_DEATH(bitwuzla_parser_get_bitwuzla(nullptr), d_error_not_null);
