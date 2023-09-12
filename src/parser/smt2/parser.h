@@ -11,6 +11,7 @@
 #ifndef BZLA_PARSER_SMT2_PARSER_H_INCLUDED
 #define BZLA_PARSER_SMT2_PARSER_H_INCLUDED
 
+#include "backtrack/vector.h"
 #include "parser/parser.h"
 #include "parser/smt2/lexer.h"
 #include "parser/smt2/symbol_table.h"
@@ -807,7 +808,7 @@ class Parser : public bzla::parser::Parser
   uint64_t d_assertion_level = 0;
 
   /** Cache declared symbols for get-model. */
-  std::vector<SymbolTable::Node*> d_decls;
+  backtrack::vector<SymbolTable::Node*> d_decls;
 
   /** The work stack. */
   std::vector<ParsedItem> d_work;

@@ -20,7 +20,7 @@ namespace parser::smt2 {
 Parser::Parser(bitwuzla::Options& options,
                const std::string& infile_name,
                std::ostream* out)
-    : bzla::parser::Parser(options, infile_name, out)
+    : bzla::parser::Parser(options, infile_name, out), d_decls(nullptr)
 {
   if (d_error.empty())
   {
@@ -42,7 +42,7 @@ Parser::Parser(bitwuzla::Options& options,
                const std::string& infile_name,
                FILE* infile,
                std::ostream* out)
-    : bzla::parser::Parser(options, infile_name, infile, out)
+    : bzla::parser::Parser(options, infile_name, infile, out), d_decls(nullptr)
 {
   if (d_error.empty())
   {
@@ -762,6 +762,7 @@ Parser::parse_command_pop()
     {
       d_table.pop_level(d_assertion_level);
       d_assertion_level -= 1;
+      d_decls.pop();
     }
   }
   d_bitwuzla->pop(nlevels);
@@ -786,6 +787,13 @@ Parser::parse_command_push()
   }
   d_assertion_level += nlevels;
   d_bitwuzla->push(nlevels);
+  if (!d_global_decl)
+  {
+    for (uint64_t i = 0; i < nlevels; ++i)
+    {
+      d_decls.push();
+    }
+  }
   print_success();
   return true;
 }
