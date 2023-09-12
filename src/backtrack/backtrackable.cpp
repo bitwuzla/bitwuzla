@@ -18,7 +18,10 @@ namespace bzla::backtrack {
 
 Backtrackable::Backtrackable(BacktrackManager* mgr) : d_mgr(mgr)
 {
-  d_mgr->register_backtrackable(this);
+  if (d_mgr)
+  {
+    d_mgr->register_backtrackable(this);
+  }
 }
 
 Backtrackable::~Backtrackable()
