@@ -101,8 +101,8 @@ struct BitwuzlaOptionInfo
 
   union
   {
-    NumericValue numeric;
-    ModeValue mode;
+    struct NumericValue numeric;
+    struct ModeValue mode;
   };
 };
 
