@@ -154,9 +154,13 @@ FloatingPoint::FloatingPoint(const Type &type,
        * not allow conversions from signed bit-vectors of size one.  */
       if (bv.is_one())
       {
-        uf = symfpu::negate<fp::SymFpuTraits>(*d_size, uf);
+        d_uf.reset(
+            new UnpackedFloat(symfpu::negate<fp::SymFpuTraits>(*d_size, uf)));
       }
-      d_uf.reset(new UnpackedFloat(uf));
+      else
+      {
+        d_uf.reset(new UnpackedFloat(uf));
+      }
     }
     else
     {

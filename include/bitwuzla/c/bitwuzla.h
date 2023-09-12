@@ -75,31 +75,34 @@ struct BitwuzlaOptionInfo
   /** Indicates whether values are numeric or strings. */
   bool is_numeric;
 
+  struct NumericValue
+  {
+    /** Current numeric option value. */
+    uint64_t cur;
+    /** Default numeric option value. */
+    uint64_t dflt;
+    /** Minimum numeric option value. */
+    uint64_t min;
+    /** Maximum numeric option value. */
+    uint64_t max;
+  };
+
+  struct ModeValue
+  {
+    /** Current mode option value. */
+    const char *cur;
+    /** Default mode option value. */
+    const char *dflt;
+    /** Number of available modes. */
+    size_t num_modes;
+    /** List of available modes. */
+    const char **modes;
+  };
+
   union
   {
-    struct
-    {
-      /** Current numeric option value. */
-      uint64_t cur;
-      /** Default numeric option value. */
-      uint64_t dflt;
-      /** Minimum numeric option value. */
-      uint64_t min;
-      /** Maximum numeric option value. */
-      uint64_t max;
-    } numeric;
-
-    struct
-    {
-      /** Current mode option value. */
-      const char *cur;
-      /** Default mode option value. */
-      const char *dflt;
-      /** Number of available modes. */
-      size_t num_modes;
-      /** List of available modes. */
-      const char **modes;
-    } mode;
+    NumericValue numeric;
+    ModeValue mode;
   };
 };
 

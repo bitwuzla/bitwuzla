@@ -32,7 +32,9 @@ if not kissat_dep.found()
   kissat_dep = dependency('kissat', required: get_option('kissat'))
 endif
 
-symfpu_dep = dependency('symfpu', required: true)
+# Using system include type suppresses compile warnings originating from the
+# symfpu headers
+symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
 dependencies = [symfpu_dep, cadical_dep, kissat_dep, gmp_dep]
 

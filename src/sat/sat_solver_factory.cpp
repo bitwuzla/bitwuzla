@@ -18,6 +18,7 @@ namespace bzla::sat {
 SatSolver*
 new_sat_solver(option::SatSolver kind)
 {
+  (void) kind;
 #ifdef BZLA_USE_KISSAT
   if (kind == option::SatSolver::KISSAT)
   {

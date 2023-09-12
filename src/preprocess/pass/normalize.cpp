@@ -57,7 +57,7 @@ _count_parents(const node_ref_vector& nodes,
   }
 }
 
-#ifndef NDEBUG
+#if 0
 void
 print_coefficients(PassNormalize::CoefficientsMap& coeff)
 {
@@ -1134,7 +1134,7 @@ PassNormalize::apply(AssertionVector& assertions)
 Node
 PassNormalize::process(const Node& node)
 {
-  NodeManager& nm = NodeManager::get();
+  // NodeManager& nm = NodeManager::get();
   node_ref_vector visit{node};
   do
   {

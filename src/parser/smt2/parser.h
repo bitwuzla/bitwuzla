@@ -837,9 +837,6 @@ class Parser : public bzla::parser::Parser
    */
   bool d_skip_attribute_value = false;
 
-  /** The coordinate in the input file where the error occurred. */
-  Lexer::Coordinate* d_err_coo = nullptr;
-
   /** The most recently parsed symbol node. */
   SymbolTable::Node* d_last_node = nullptr;
 

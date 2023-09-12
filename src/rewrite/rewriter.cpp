@@ -100,6 +100,7 @@ Rewriter::Rewriter(Env& env, uint8_t level)
           "rewriter::rewrite"))
 {
   assert(d_level <= option::Options::REWRITE_LEVEL_MAX);
+  (void) d_env;  // only used in debug mode
 }
 
 const Node&

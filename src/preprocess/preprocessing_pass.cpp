@@ -24,6 +24,7 @@ PreprocessingPass::PreprocessingPass(Env& env,
                                      backtrack::BacktrackManager* backtrack_mgr)
     : d_env(env), d_logger(env.logger())
 {
+  (void) backtrack_mgr;  // suppress warning, may be needed in the future
 }
 
 void

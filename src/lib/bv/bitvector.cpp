@@ -304,6 +304,7 @@ BitVector::BitVector(uint64_t size, const std::string& value, uint32_t base)
 BitVector
 BitVector::from_ui(uint64_t size, uint64_t value, bool truncate)
 {
+  (void) truncate;
   assert(size > 0);
   assert(truncate || fits_in_size(size, value));
 
@@ -323,6 +324,7 @@ BitVector::from_ui(uint64_t size, uint64_t value, bool truncate)
 BitVector
 BitVector::from_si(uint64_t size, int64_t value, bool truncate)
 {
+  (void) truncate;
   assert(size > 0);
   assert(truncate || fits_in_size(size, static_cast<uint64_t>(value), true));
 
@@ -637,6 +639,7 @@ BitVector::str(uint32_t base) const
 uint64_t
 BitVector::to_uint64(bool truncate) const
 {
+  (void) truncate;
   assert(!is_null());
   assert(truncate || d_size <= 64);
   if (is_gmp())

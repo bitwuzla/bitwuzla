@@ -171,6 +171,7 @@ SolverEngine::ensure_model(const std::vector<Node>& terms)
     assert(d_new_terms_registered);
     auto res = solve();
     assert(res == Result::SAT);
+    (void) res;
   }
 }
 
