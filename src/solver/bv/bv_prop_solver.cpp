@@ -275,7 +275,7 @@ BvPropSolver::mk_node(const Node& node)
   }
 
   std::string symbol =
-      node.symbol() ? *node.symbol() : "@t" + std::to_string(node.id());
+      node.symbol() ? node.symbol()->get() : "@t" + std::to_string(node.id());
 
   switch (node.kind())
   {
