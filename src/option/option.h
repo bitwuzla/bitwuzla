@@ -54,6 +54,7 @@ enum class Option
   PREPROCESS,                // bool
   PP_CONTRADICTING_ANDS,     // bool
   PP_ELIM_BV_EXTRACTS,       // bool
+  PP_ELIM_BV_UDIV,           // bool
   PP_EMBEDDED_CONSTR,        // bool
   PP_FLATTEN_AND,            // bool
   PP_NORMALIZE,              // bool
@@ -481,6 +482,7 @@ class Options
   OptionBool preprocess;
   OptionBool pp_contr_ands;
   OptionBool pp_elim_bv_extracts;
+  OptionBool pp_elim_bv_udiv;
   OptionBool pp_embedded_constr;
   OptionBool pp_flatten_and;
   OptionBool pp_normalize;

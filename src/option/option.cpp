@@ -279,6 +279,11 @@ Options::Options()
                           false,
                           "eliminate extract on BV constants",
                           "pp-elim-extracts"),
+      pp_elim_bv_udiv(this,
+                      Option::PP_ELIM_BV_UDIV,
+                      false,
+                      "eliminate bvudiv and bvurem",
+                      "pp-elim-bvudiv"),
       pp_embedded_constr(this,
                          Option::PP_EMBEDDED_CONSTR,
                          true,
@@ -644,6 +649,7 @@ Options::data(Option opt)
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;
     case Option::PP_ELIM_BV_EXTRACTS: return &pp_elim_bv_extracts;
+    case Option::PP_ELIM_BV_UDIV: return &pp_elim_bv_udiv;
     case Option::PP_EMBEDDED_CONSTR: return &pp_embedded_constr;
     case Option::PP_FLATTEN_AND: return &pp_flatten_and;
     case Option::PP_NORMALIZE: return &pp_normalize;

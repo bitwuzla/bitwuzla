@@ -307,6 +307,16 @@ enum ENUM(Option)
    *  * **0**: disable [**default**]
    */
   EVALUE(PP_ELIM_BV_EXTRACTS),
+  /*! **Preprocessing: Eliminate bit-vector operators bvudiv and bvurem**
+   *
+   * When enabled, eliminates bit-vector unsigned division and remainder
+   * operation in terms of multiplication.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  EVALUE(PP_ELIM_BV_UDIV),
   /*! **Preprocessing: Embedded constraint substitution**
    *
    * When enabled, substitutes assertions that occur as sub-expression in the

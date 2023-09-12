@@ -92,6 +92,7 @@ static const std::unordered_map<Option, bzla::option::Option>
          bzla::option::Option::PP_CONTRADICTING_ANDS},
         {Option::PP_ELIM_BV_EXTRACTS,
          bzla::option::Option::PP_ELIM_BV_EXTRACTS},
+        {Option::PP_ELIM_BV_UDIV, bzla::option::Option::PP_ELIM_BV_UDIV},
         {Option::PP_EMBEDDED_CONSTR, bzla::option::Option::PP_EMBEDDED_CONSTR},
         {Option::PP_FLATTEN_AND, bzla::option::Option::PP_FLATTEN_AND},
         {Option::PP_NORMALIZE, bzla::option::Option::PP_NORMALIZE},

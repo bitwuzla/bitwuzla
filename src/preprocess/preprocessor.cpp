@@ -49,6 +49,7 @@ Preprocessor::Preprocessor(SolvingContext& context)
       d_pass_rewrite(d_env, &d_backtrack_mgr),
       d_pass_contr_ands(d_env, &d_backtrack_mgr),
       d_pass_elim_lambda(d_env, &d_backtrack_mgr),
+      d_pass_elim_bvudiv(d_env, &d_backtrack_mgr),
       d_pass_elim_uninterpreted(d_env, &d_backtrack_mgr),
       d_pass_embedded_constraints(d_env, &d_backtrack_mgr),
       d_pass_variable_substitution(d_env, &d_backtrack_mgr),
@@ -112,6 +113,7 @@ Preprocessor::preprocess()
   d_pass_rewrite.clear_cache();
   d_pass_contr_ands.clear_cache();
   d_pass_elim_lambda.clear_cache();
+  d_pass_elim_bvudiv.clear_cache();
   d_pass_elim_uninterpreted.clear_cache();
   d_pass_embedded_constraints.clear_cache();
   d_pass_variable_substitution.clear_cache();
@@ -325,6 +327,14 @@ Preprocessor::apply(AssertionVector& assertions)
     if (d_logger.is_msg_enabled(1))
     {
       print_statistics(d_pass_elim_lambda, assertions);
+    }
+
+    if (options.pp_elim_bv_udiv())
+    {
+      cnt = assertions.num_modified();
+      d_pass_elim_bvudiv.apply(assertions);
+      Msg(2) << assertions.num_modified() - cnt
+             << " after bvudiv/bvurem elimination";
     }
 
     // This pass is not supported if incremental is enabled.
