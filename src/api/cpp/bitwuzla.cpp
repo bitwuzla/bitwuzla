@@ -70,6 +70,7 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::PROP_CONST_BITS, bzla::option::Option::PROP_CONST_BITS},
         {Option::PROP_INFER_INEQ_BOUNDS,
          bzla::option::Option::PROP_INEQ_BOUNDS},
+        {Option::PROP_OPT_LT_CONCAT_SEXT, bzla::option::Option::PROP_OPT_LT_CONCAT_SEXT},
         {Option::PROP_NPROPS, bzla::option::Option::PROP_NPROPS},
         {Option::PROP_NUPDATES, bzla::option::Option::PROP_NUPDATES},
         {Option::PROP_PATH_SEL, bzla::option::Option::PROP_PATH_SEL},

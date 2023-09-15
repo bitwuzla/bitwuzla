@@ -186,6 +186,20 @@ enum ENUM(Option)
    */
   EVALUE(PROP_NUPDATES),
   /*! **Propagation-based local search solver engine:
+   *    Optimization for inverse value computation of inequalities over
+   *    concat and sign extension operands.**
+   *
+   * When enabled, use optimized inverse value value computation for
+   * inequalities over concats.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(PROP_OPT_LT_CONCAT_SEXT),
+  /*! **Propagation-based local search solver engine:
    *    Path selection.**
    *
    * Configure mode for path selection.
