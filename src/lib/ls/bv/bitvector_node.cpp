@@ -842,10 +842,10 @@ BitVectorAnd::is_invertible(const BitVector& t,
    * IC_wo: (t & s) = t
    * IC:    IC_wo && ((s & hi_x) & m) = (t & m)
    *        with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits
-   * TODO: + bounds
+   * TODO: document +bounds
    *
    * Inverse value: (t & s) | (~s & rand)
-   * TODO: + bounds
+   * TODO: document +bounds
    */
 
   uint64_t pos_s           = 1 - pos_x;
@@ -1467,7 +1467,7 @@ BitVectorMul::is_invertible(const BitVector& t,
    *        (s = 0 || ((odd(s) => mcb(x, t * s^-1)) &&
    *                  (!odd(s) => mcb (x << c, y << c))))
    *        with c = ctz(s) and y = (t >> c) * (s >> c)^-1
-   * TODO: + bounds
+   * TODO: document +bounds
    *
    * Inverse value:
    *   s = 0 (=> t = 0): random bit-vector
@@ -1475,7 +1475,7 @@ BitVectorMul::is_invertible(const BitVector& t,
    *   s even          : random value in domain
    *                     x[size - 1:size - ctz] o y[size - ctz(s) - 1:0]
    *                     with y = (t >> ctz(s)) * (s >> ctz(s))^-1
-   * TODO: + bounds
+   * TODO: document +bounds
    */
   uint64_t pos_s           = 1 - pos_x;
   const BitVector& s       = child(pos_s)->assignment();
@@ -3904,11 +3904,11 @@ BitVectorUlt::is_invertible(const BitVector& t,
   /**
    * IC_wo: pos_x = 0: t = 0 || s != 0
    *        pos_x = 1: t = 0 || s != ones
-   * TODO: +bounds
+   * TODO: document +bounds
    *
    * IC:    pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
    *        pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
-   * TODO: +bounds
+   * TODO: document +bounds
    */
 
   if (opt_sext)
@@ -4524,7 +4524,7 @@ BitVectorSlt::is_invertible(const BitVector& t,
   /**
    * IC_wo: pos_x = 0: t = 0 || s != min_signed_value
    *        pos_x = 1: t = 0 || s != max_signed_value
-   * TODO: +bounds
+   * TODO: document +bounds
    *
    * IC: pos_x = 0: t = 1 => (s != min_signed_value &&
    *                 ((MSB(x) = 0 && lo_x < s) ||
@@ -4536,7 +4536,7 @@ BitVectorSlt::is_invertible(const BitVector& t,
    *                           (MSB(x) != 1 && s < 0 o hi_x[size-2:0])))
    *                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
    *                          (MSB(x) != 0 && s >= 1 o lo_x[size-2:0])))
-   * TODO: +bounds
+   * TODO: document +bounds
    */
 
   if (opt_sext)
@@ -4651,7 +4651,7 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
   //                           (MSB(x) != 1 && s < 0 o hi_x[size-2:0])))
   //                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
   //                          (MSB(x) != 0 && s >= 1 o lo_x[size-2:0])))
-  // TODO: +bounds
+  // TODO: document +bounds
   if (d->is_fixed())
   {
     const BitVector& xval = d->lo();
