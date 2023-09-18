@@ -20,20 +20,27 @@ jobs:
           - name: debug-clang
             os: macos-latest
 
+          - name: production-win64
+            os: macos-latest
+
         include:
           - name: production
-            config: -Dtesting=enabled -Dunit_testing=disabled -Dpython=true
+            config: --testing --no-unit-testing --python
 
           - name: production-clang
-            config: -Dtesting=enabled -Dunit_testing=disabled
+            config: --testing --no-unit-testing
             env: CC=clang CXX=clang++
 
           - name: debug
-            config: --buildtype=debug -Dpython=true
+            config: debug --python
 
           - name: debug-clang
-            config: --buildtype=debug
+            config: debug
             env: CC=clang CXX=clang++
+
+          - name: production-win64
+            os: ubuntu-latest
+            config: --win64
 
     name: ${{ matrix.os }}:${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -44,6 +51,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgmp-dev ninja-build
+          [[ "${{matrix.name}}" == "production-win64" ]] && \
+            sudo apt-get install -y mingw-w64
           python3 -m pip install meson pytest cython>=3.*
           echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
 
@@ -74,7 +83,7 @@ jobs:
         run: meson wrap install gtest
 
       - name: Configure
-        run: ${{ matrix.env }} meson setup build/ -Dprefix=${{ github.workspace }}/build/install ${{ matrix.config }}
+        run: ${{ matrix.env }} ./configure.py --prefix=${{ github.workspace }}/build/install ${{ matrix.config }}
 
       - name: Build
         run: ninja install
@@ -90,10 +99,12 @@ jobs:
           key: ${{ steps.subprojects-restore.outputs.cache-primary-key }}
 
       - name: Test
+        if: matrix.name != 'production-win64'
         run: meson test --print-errorlogs
         working-directory: build
 
       - name: Examples
+        if: matrix.name != 'production-win64'
         working-directory: examples
         run: |
           pkgconfigdir=$(find ${{ github.workspace }}/build/install/lib -name pkgconfig)
