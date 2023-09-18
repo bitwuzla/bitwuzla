@@ -66,4 +66,71 @@ TEST_F(TestOptions, opt_enum)
   ASSERT_DEATH_DEBUG(d_opts.get<bool>(Option::SAT_SOLVER), "is_bool");
   ASSERT_DEATH_DEBUG(d_opts.get<uint64_t>(Option::SAT_SOLVER), "is_numeric");
 }
+
+TEST_F(TestOptions, opt_defaults)
+{
+  {
+    Options opts;
+    opts.set<std::string>(Option::BV_SOLVER, "preprop");
+    ASSERT_EQ(opts.bv_solver(), BvSolver::PREPROP);
+    opts.finalize();
+    ASSERT_EQ(opts.prop_nprops(), 10000);
+    ASSERT_EQ(opts.prop_nupdates(), 2000000);
+  }
+  {
+    Options opts;
+    opts.set<std::string>(Option::BV_SOLVER, "preprop");
+    opts.set<uint64_t>(Option::PROP_NPROPS, 5);
+    opts.finalize();
+    ASSERT_EQ(opts.bv_solver(), BvSolver::PREPROP);
+    ASSERT_EQ(opts.prop_nprops(), 10000);
+    ASSERT_EQ(opts.prop_nupdates(), 2000000);
+    opts.set<uint64_t>(Option::PROP_NPROPS, 10);
+    ASSERT_EQ(opts.prop_nprops(), 10);
+  }
+  {
+    Options opts;
+    opts.set<uint64_t>(Option::PROP_NPROPS, 5);
+    opts.set<std::string>(Option::BV_SOLVER, "preprop");
+    opts.finalize();
+    ASSERT_EQ(opts.bv_solver(), BvSolver::PREPROP);
+    ASSERT_EQ(opts.prop_nprops(), 10000);
+    ASSERT_EQ(opts.prop_nupdates(), 2000000);
+    opts.set<uint64_t>(Option::PROP_NPROPS, 0);
+    ASSERT_EQ(opts.prop_nprops(), 0);
+  }
+  {
+    Options opts;
+    opts.set<uint64_t>(Option::PROP_NPROPS, 5, true);
+    opts.set<std::string>(Option::BV_SOLVER, "preprop");
+    opts.finalize();
+    ASSERT_EQ(opts.bv_solver(), BvSolver::PREPROP);
+    ASSERT_EQ(opts.prop_nprops(), 5);
+    ASSERT_EQ(opts.prop_nupdates(), 2000000);
+#ifndef NDEBUG
+    ASSERT_DEATH(opts.set<uint64_t>(Option::PROP_NPROPS, 0), "is_user_set");
+#endif
+    opts.set<uint64_t>(Option::PROP_NPROPS, 0, true);
+    ASSERT_EQ(opts.prop_nprops(), 0);
+  }
+  {
+    Options opts;
+    opts.set<std::string>(Option::BV_SOLVER, "preprop");
+    opts.finalize();
+    opts.set<uint64_t>(Option::PROP_NUPDATES, 5);
+    ASSERT_EQ(opts.bv_solver(), BvSolver::PREPROP);
+    ASSERT_EQ(opts.prop_nprops(), 10000);
+    ASSERT_EQ(opts.prop_nupdates(), 5);
+  }
+  {
+    Options opts;
+    opts.set<uint64_t>(Option::PROP_NUPDATES, 5, true);
+    opts.set<std::string>(Option::BV_SOLVER, "preprop");
+    opts.finalize();
+    ASSERT_EQ(opts.bv_solver(), BvSolver::PREPROP);
+    ASSERT_EQ(opts.prop_nprops(), 10000);
+    ASSERT_EQ(opts.prop_nupdates(), 5);
+  }
+}
+
 };  // namespace bzla::test

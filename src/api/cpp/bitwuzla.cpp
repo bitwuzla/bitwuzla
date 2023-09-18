@@ -435,7 +435,7 @@ Options::set(Option option, uint64_t value)
   bzla::option::Option opt = s_internal_options.at(option);
   if (d_options->is_bool(opt))
   {
-    d_options->set<bool>(opt, value != 0);
+    d_options->set<bool>(opt, value != 0, true);
   }
   else
   {
@@ -447,7 +447,7 @@ Options::set(Option option, uint64_t value)
     BITWUZLA_CHECK(value <= d_options->max<uint64_t>(opt))
         << "invalid option value, expected value <= "
         << d_options->max<uint64_t>(opt);
-    d_options->set<uint64_t>(opt, value);
+    d_options->set<uint64_t>(opt, value, true);
   }
 }
 
@@ -460,7 +460,7 @@ Options::set(Option option, const std::string &mode)
       << "expected option with option modes";
   BITWUZLA_CHECK(d_options->is_valid_mode(opt, mode))
       << "invalid mode for option";
-  d_options->set<std::string>(s_internal_options.at(option), mode);
+  d_options->set<std::string>(s_internal_options.at(option), mode, true);
 }
 
 void
@@ -472,7 +472,7 @@ Options::set(Option option, const char *mode)
       << "expected option with option modes";
   BITWUZLA_CHECK(d_options->is_valid_mode(opt, mode))
       << "invalid mode for option";
-  d_options->set<std::string>(s_internal_options.at(option), mode);
+  d_options->set<std::string>(s_internal_options.at(option), mode, true);
 }
 
 void
@@ -496,7 +496,7 @@ Options::set(const std::string &lng, const std::string &value)
   BITWUZLA_CHECK(!d_options->is_mode(opt)
                  || d_options->is_valid_mode(opt, value))
       << "invalid option value for option with modes";
-  d_options->set(lng, value);
+  d_options->set(lng, value, true);
 }
 
 void
