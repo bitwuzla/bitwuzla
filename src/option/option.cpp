@@ -25,7 +25,11 @@ OptionBase::OptionBase(Options* options,
                        const char* lng,
                        const char* shrt,
                        bool is_expert)
-    : d_description(desc), d_long(lng), d_short(shrt), d_is_expert(is_expert)
+    : d_description(desc),
+      d_long(lng),
+      d_short(shrt),
+      d_is_expert(is_expert),
+      d_is_user_set(false)
 {
   assert(options->d_name2option.find(lng) == options->d_name2option.end());
   options->d_name2option.emplace(lng, opt);
@@ -61,9 +65,10 @@ OptionModeT<T>::get_str() const
 
 template <typename T>
 void
-OptionModeT<T>::set_str(const std::string& value)
+OptionModeT<T>::set_str(const std::string& value, bool is_user_set)
 {
   d_value = d_string2mode.at(value);
+  d_is_user_set = is_user_set;
 }
 
 template <typename T>
@@ -404,30 +409,35 @@ Options::shrt(Option opt)
 
 template <>
 void
-Options::set(Option opt, const bool& value)
+Options::set(Option opt, const bool& value, bool is_user_set)
 {
   assert(data(opt)->is_bool());
-  reinterpret_cast<OptionBool*>(data(opt))->set(value);
+  assert(is_user_set || !data(opt)->d_is_user_set);
+  reinterpret_cast<OptionBool*>(data(opt))->set(value, is_user_set);
 }
 
 template <>
 void
-Options::set(Option opt, const uint64_t& value)
+Options::set(Option opt, const uint64_t& value, bool is_user_set)
 {
   assert(data(opt)->is_numeric());
-  reinterpret_cast<OptionNumeric*>(data(opt))->set(value);
+  assert(is_user_set || !data(opt)->d_is_user_set);
+  reinterpret_cast<OptionNumeric*>(data(opt))->set(value, is_user_set);
 }
 
 template <>
 void
-Options::set(Option opt, const std::string& value)
+Options::set(Option opt, const std::string& value, bool is_user_set)
 {
   assert(data(opt)->is_mode());
-  reinterpret_cast<OptionMode*>(data(opt))->set_str(value);
+  assert(is_user_set || !data(opt)->d_is_user_set);
+  reinterpret_cast<OptionMode*>(data(opt))->set_str(value, is_user_set);
 }
 
 void
-Options::set(const std::string& name, const std::string& value)
+Options::set(const std::string& name,
+             const std::string& value,
+             bool is_user_set)
 {
   auto it = d_name2option.find(name);
   assert(it != d_name2option.end());
@@ -438,22 +448,22 @@ Options::set(const std::string& name, const std::string& value)
     std::transform(v.begin(), v.end(), v.begin(), ::tolower);
     if (v == "0" || v == "false")
     {
-      set<bool>(it->second, false);
+      set<bool>(it->second, false, is_user_set);
     }
     else
     {
       assert(v == "1" || v == "true");
-      set<bool>(it->second, true);
+      set<bool>(it->second, true, is_user_set);
     }
   }
   else if (is_numeric(it->second))
   {
-    set<uint64_t>(it->second, std::stoll(value));
+    set<uint64_t>(it->second, std::stoll(value), is_user_set);
   }
   else
   {
     assert(is_mode(it->second));
-    set<std::string>(it->second, value);
+    set<std::string>(it->second, value, is_user_set);
   }
 }
 
@@ -526,7 +536,22 @@ Options::finalize()
 {
   if (produce_unsat_assumptions())
   {
+    // we overrule the user here in case they disabled unsat cores, we must
+    // enable unsat cores when enabling unsat assumptions
     produce_unsat_cores.set(true);
+  }
+  // configure default values for number of propagations and updates in case
+  // of sequential portfolio bv solver configuration PREPROP
+  if (bv_solver() == BvSolver::PREPROP)
+  {
+    if (!prop_nprops.d_is_user_set)
+    {
+      prop_nprops.set(10000);
+    }
+    if (!prop_nupdates.d_is_user_set)
+    {
+      prop_nupdates.set(2000000);
+    }
   }
 }
 

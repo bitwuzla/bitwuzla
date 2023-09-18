@@ -23,6 +23,11 @@ This file collects a summary of important and/or user-visible changes.
         changed to
         `bitwuzla_substitute_term(BitwuzlaTerm[], size_t, BitwuzlaTerm[], BitwuzlaTerm[])`
 
+- Internally, options now have a notion of "user configured". If an option was
+  configured by the user, it will not be reconfigured internally. Previously,
+  we did not reconfigure any options, but now we set defaults in case the BV
+  solver is configured in "preprop" mode.
+
 ## News for version 0.2.0
 
 - Python API changes:

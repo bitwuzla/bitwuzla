@@ -150,6 +150,8 @@ class OptionBase
   const char* d_short;
   /** True if this is an expert option. */
   bool d_is_expert;
+  /** True if this option was configured from outside. */
+  bool d_is_user_set;
 };
 
 /** Option info data for Boolean options. */
@@ -188,9 +190,14 @@ class OptionBool : public OptionBase
 
   /**
    * Set the current value of a Boolean option.
-   * @param value The current value.
+   * @param value       The current value.
+   * @param is_user_set True if this option was configured from outside.
    */
-  void set(bool value) { d_value = value; }
+  void set(bool value, bool is_user_set = false)
+  {
+    d_value       = value;
+    d_is_user_set = is_user_set;
+  }
 
   /**
    * Get the current value of a Boolean option.
@@ -250,9 +257,14 @@ class OptionNumeric : public OptionBase
 
   /**
    * Set the current value of a numeric option.
-   * @param value The current value.
+   * @param value       The current value.
+   * @param is_user_set True if this option was configured from outside.
    */
-  void set(uint64_t value) { d_value = value; }
+  void set(uint64_t value, bool is_user_set = false)
+  {
+    d_value       = value;
+    d_is_user_set = is_user_set;
+  }
 
   /**
    * Get the current value of a numeric option.
@@ -302,8 +314,9 @@ class OptionMode : public OptionBase
   /**
    * Set current mode.
    * @param value The string representation of the mode value.
+   * @param is_user_set True if this option was configured from outside.
    */
-  virtual void set_str(const std::string& value) = 0;
+  virtual void set_str(const std::string& value, bool is_user_set = false) = 0;
   /**
    * Get the string representation of the current value of a option with modes.
    * @note This is mainly necessary to have access to options via their mode
@@ -380,7 +393,7 @@ class OptionModeT : public OptionMode
  private:
   std::vector<std::string> modes() const override;
   const std::string& get_str() const override;
-  void set_str(const std::string& value) override;
+  void set_str(const std::string& value, bool is_user_set = false) override;
   const std::string& dflt_str() const override;
   bool is_valid(const std::string& value) const override;
 
@@ -498,25 +511,29 @@ class Options
    * Set current value of option.
    * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
-   * @param opt The option to set.
-   * @param value The value to set.
+   * @param opt         The option to set.
+   * @param value       The value to set.
+   * @param is_user_set True if this option was configured from outside.
    */
   template <typename T>
-  void set(Option opt, const T& value);
+  void set(Option opt, const T& value, bool is_user_set = false);
 
   /**
    * Set current value of option, configured via the long option name and
    * its value in string representation.
    * @note This is mainly necessary for easy configuration of options via
    *       the command line in main.
-   * @param lng The long name of the option to set.
-   * @param value The string representation of the value to set.
+   * @param lng         The long name of the option to set.
+   * @param value       The string representation of the value to set.
+   * @param is_user_set True if this option was configured from outside.
    */
-  void set(const std::string& lng, const std::string& value);
+  void set(const std::string& lng,
+           const std::string& value,
+           bool is_user_set = false);
 
   /**
    * Get the current value of option.
-   * @param opt The option to set.
+   * @param opt The option to query.
    * @note This is mainly necessary to have access to options via their mod
    *       identifier from external (the API).
    * @return The current value.
@@ -526,7 +543,7 @@ class Options
 
   /**
    * Get the minimum value of option.
-   * @param opt The option to set.
+   * @param opt The option to query.
    * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
    * @return The minimum value.
@@ -536,7 +553,7 @@ class Options
 
   /**
    * Get the maximum value of option.
-   * @param opt The option to set.
+   * @param opt The option to query.
    * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
    * @return The maximum value.
@@ -546,7 +563,7 @@ class Options
 
   /**
    * Get the maximum value of option.
-   * @param opt The option to set.
+   * @param opt The option to query.
    * @note This is mainly necessary to have access to options via their mode
    *       identifier from external (the API).
    * @return The maximum value.
@@ -573,11 +590,11 @@ class Options
 
 // explicit instantiations
 template <>
-void Options::set(Option opt, const bool& value);
+void Options::set(Option opt, const bool& value, bool is_user_set);
 template <>
-void Options::set(Option opt, const uint64_t& value);
+void Options::set(Option opt, const uint64_t& value, bool is_user_set);
 template <>
-void Options::set(Option opt, const std::string& value);
+void Options::set(Option opt, const std::string& value, bool is_user_set);
 
 template <>
 const bool& Options::get(Option opt);
