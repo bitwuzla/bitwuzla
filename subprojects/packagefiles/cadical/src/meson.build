@@ -36,8 +36,10 @@ sources = [
   'ema.cpp',
   'extend.cpp',
   'external.cpp',
+  'external_propagate.cpp',
   'file.cpp',
   'flags.cpp',
+  'flip.cpp',
   'format.cpp',
   'gates.cpp',
   'instantiate.cpp',
@@ -46,6 +48,8 @@ sources = [
   'limit.cpp',
   'logging.cpp',
   'lookahead.cpp',
+  'lratbuilder.cpp',
+  'lratchecker.cpp',
   'lucky.cpp',
   'message.cpp',
   'minimize.cpp',
@@ -85,7 +89,12 @@ sources = [
   'watch.cpp'
 ]
 
-cadical_lib = library('cadical', sources: sources)
+cpp_args = []
+if not compiler.has_function('getc_unlocked', prefix: '#include <cstdio>')
+  cpp_args += ['-DNUNLOCKED']
+endif
+
+cadical_lib = library('cadical', sources: sources, cpp_args: cpp_args)
 cadical_dep = declare_dependency(
                   include_directories: include_directories('.'),
                   link_with: cadical_lib)

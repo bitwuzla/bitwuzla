@@ -1,9 +1,9 @@
 [wrap-file]
-directory = cadical-rel-1.5.2
+directory = cadical-rel-1.7.4
 
-source_url = https://github.com/arminbiere/cadical/archive/rel-1.5.2.tar.gz
-source_filename = cadical-1.5.2.tar.gz
-source_hash = 4a4251bf0191677ca8cda275cb7bf5e0cf074ae0056819642d5a7e5c1a952e6e
+source_url = https://github.com/arminbiere/cadical/archive/rel-1.7.4.tar.gz
+source_filename = cadical-1.7.4.tar.gz
+source_hash = 866c8a1332ff1ad5dc7ad403bdef3164420f3f947816b5c9509aad1d18ada7a1
 
 patch_directory = cadical
 
