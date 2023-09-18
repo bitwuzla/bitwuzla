@@ -78,6 +78,8 @@ def main():
                     help='enable undefined behavior sanitizer')
     ap.add_argument('--coverage', action='store_true',
                     help='enable code coverage')
+    ap.add_argument('--win64', action='store_true',
+                    help='enable cross compilation for 64-bit Windows')
     ap.add_argument('--python', action='store_true',
                     help='build python bindings')
     ap.add_argument('--testing', action='store_true', default=None,
@@ -118,6 +120,8 @@ def main():
         build_opts.append(f'-Dunit_testing={_feat(args.unit_testing)}')
     if args.coverage:
         build_opts.append('-Db_coverage=true')
+    if args.win64:
+        build_opts.append('--cross-file=x86_64-w64-mingw32.txt')
     if args.python:
         build_opts.append('-Dpython=true')
     if args.docs:

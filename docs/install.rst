@@ -80,6 +80,29 @@ Building without pip
    The Python module can be found in ``build/src/api/python/``.
 
 
+Cross Compiling for Windows
+---------------------------
+
+Cross compiling Bitwuzla with Mingw-w64 can be done as follows:
+
+.. code:: bash
+
+  # Clone Bitwuzla repository
+  git clone https://github.com/bitwuzla/bitwuzla
+  cd bitwuzla
+
+  # Configure Bitwuzla release build
+  ./configure.py --win64
+
+  # Build and install
+  cd build && ninja
+
+
+* **Required Dependencies**
+
+  * `mingw-w64 <https://www.mingw-w64.org/>`_
+
+
 API Documentation
 -----------------
 

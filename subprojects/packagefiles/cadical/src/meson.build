@@ -89,6 +89,12 @@ sources = [
   'watch.cpp'
 ]
 
+dependencies = []
+if host_machine.system() == 'windows'
+  cc = meson.get_compiler('cpp')
+  dependencies += [cc.find_library('psapi')]
+endif
+
 cpp_args = []
 if not compiler.has_function('getc_unlocked', prefix: '#include <cstdio>')
   cpp_args += ['-DNUNLOCKED']
@@ -97,5 +103,6 @@ endif
 cadical_lib = library('cadical', sources: sources, cpp_args: cpp_args)
 cadical_dep = declare_dependency(
                   include_directories: include_directories('.'),
-                  link_with: cadical_lib)
+                  link_with: cadical_lib,
+                  dependencies: dependencies)
 
