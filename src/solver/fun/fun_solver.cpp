@@ -62,13 +62,9 @@ FunSolver::check()
     unsupported("Equalities over functions not yet supported.");
   }
 
-  for (size_t i = 0; i < d_equalities.size(); ++i)
+  if (!d_equalities.empty())
   {
-    if (d_solver_state.value(d_equalities[i]).value<bool>())
-    {
-      unsupported(
-          "Positive equalities over uninterpreted sorts not yet supported.");
-    }
+    unsupported("Equalities over uninterpreted sorts not yet supported.");
   }
 
   // Do not cache size here since d_applies may grow while iterating.
