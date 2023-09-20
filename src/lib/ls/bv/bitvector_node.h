@@ -34,6 +34,37 @@ class BitVectorNode : public Node<BitVector>
 {
  public:
   /**
+   * Tighten signed and/or unsigned bounds of this node wrt. to the given
+   * signed and unsigned bounds. If the given signed and unsigned ranges don't
+   * have any intersection with the bounds of this node, all return parameters
+   * will be null nodes
+   * @param cur_min_u The current lower unsigned bound (to be tightened).
+   * @param cur_max_u The current upper unsigned bound (to be tightened).
+   * @param cur_min_s The current lower signed bound (to be tightened).
+   * @param cur_max_s The current upper signed bound (to be tightened).
+   * @param min_u     The lower unsigned bound to tighten the current
+   *                  lower unsigned bound with.
+   * @param max_u     The upper unsigned bound to tighten the current upper
+   *                  unsigned bound with.
+   * @param min_s     The lower signed bound to tighten the current lower
+   *                  signed bound with.
+   * @param max_s     The upper signed bound to tighten the current upper
+   *                  signed bound with.
+   *
+   * @return A tuple [min_u, max_u, min_s, max_s] of resulting lower and upper
+   *         (un)signed bounds.
+   */
+  static std::tuple<BitVector, BitVector, BitVector, BitVector> tighten_bounds(
+      BitVector* cur_min_u,
+      BitVector* cur_max_u,
+      BitVector* cur_min_s,
+      BitVector* cur_max_s,
+      BitVector* min_u,
+      BitVector* max_u,
+      BitVector* min_s,
+      BitVector* max_s);
+
+  /**
    * Constructor.
    * @param rng  The associated random number generator.
    * @param size The bit-vector size.
@@ -93,23 +124,17 @@ class BitVectorNode : public Node<BitVector>
    * signed and unsigned bounds. If the given signed and unsigned ranges don't
    * have any intersection with the bounds of this node, all return parameters
    * will be null nodes
-   * @param min_u     The lower unsigned bound.
-   * @param max_u     The upper unsigned bound.
-   * @param min_s     The lower signed bound.
-   * @param max_s     The upper signed bound.
-   * @param res_min_u The resulting lower unsigned bound.
-   * @param res_max_u The resulting upper unsigned bound.
-   * @param res_min_s The resulting lower signed bound.
-   * @param res_max_s The resulting upper signed bound.
+   * @param min_u The lower unsigned bound to tighten this node's lower
+   *              unsigned bound with.
+   * @param max_u The upper unsigned bound to tighten this node's upper
+   *              unsigned bound with.
+   * @param min_s The lower signed bound to tighten this nodes' lower
+   *              signed bound with.
+   * @param max_s The upper signed bound to tighten this node's upper
+   *              signed bound with.
    */
-  void tighten_bounds(BitVector* min_u,
-                      BitVector* max_u,
-                      BitVector* min_s,
-                      BitVector* max_s,
-                      BitVector& res_min_u,
-                      BitVector& res_max_u,
-                      BitVector& res_min_s,
-                      BitVector& res_max_s);
+  std::tuple<BitVector, BitVector, BitVector, BitVector> tighten_bounds(
+      BitVector* min_u, BitVector* max_u, BitVector* min_s, BitVector* max_s);
 
   /**
    * Normalize given signed and unsigned bounds into a lower (from min_signed
