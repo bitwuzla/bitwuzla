@@ -77,7 +77,7 @@ memory_usage(bool max)
 
 namespace {
 
-size_t
+uint64_t
 memory_usage(bool max)
 {
   if (max)
@@ -96,11 +96,11 @@ memory_usage(bool max)
     std::ifstream statm("/proc/self/statm");
     if (statm.is_open())
     {
-      uint32_t ignore, resident = 0;
+      uint64_t ignore, resident = 0;
       statm >> ignore >> resident;
       statm.close();
 
-      uint32_t page_size = sysconf(_SC_PAGE_SIZE);
+      uint64_t page_size = sysconf(_SC_PAGE_SIZE);
       return resident * page_size;
     }
   }
