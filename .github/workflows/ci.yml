@@ -51,8 +51,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgmp-dev ninja-build
-          [[ "${{matrix.name}}" == "production-win64" ]] && \
+          if [[ "${{matrix.name}}" == "production-win64" ]]; then
             sudo apt-get install -y mingw-w64
+            sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+            sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+          fi
           python3 -m pip install meson pytest cython>=3.*
           echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
 
