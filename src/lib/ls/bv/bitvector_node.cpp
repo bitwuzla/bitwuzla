@@ -901,12 +901,8 @@ BitVectorAnd::is_invertible(const BitVector& t,
         return true;
       }
       BitVectorDomain tmp(x.lo().bvor(t), x.hi().bvand(s.bvxnor(t)));
-      BitVectorDomainDualGenerator gen(tmp,
-                                       d_rng,
-                                       min_lo.is_null() ? nullptr : &min_lo,
-                                       max_lo.is_null() ? nullptr : &max_lo,
-                                       min_hi.is_null() ? nullptr : &min_hi,
-                                       max_hi.is_null() ? nullptr : &max_hi);
+      BitVectorDomainDualGenerator gen(
+          tmp, min_lo, max_lo, min_hi, max_hi, d_rng);
       if (!gen.has_random())
       {
         return false;
@@ -1563,12 +1559,7 @@ BitVectorMul::is_invertible(const BitVector& t,
             return false;
           }
           BitVectorDomainDualGenerator gen(
-              d,
-              d_rng,
-              min_lo.is_null() ? nullptr : &min_lo,
-              max_lo.is_null() ? nullptr : &max_lo,
-              min_hi.is_null() ? nullptr : &min_hi,
-              max_hi.is_null() ? nullptr : &max_hi);
+              d, min_lo, max_lo, min_hi, max_hi, d_rng);
           if (gen.has_random())
           {
             BV_NODE_CACHE_INVERSE_IF(gen.random());
@@ -1579,12 +1570,8 @@ BitVectorMul::is_invertible(const BitVector& t,
         return false;
       }
       // IC: IC_wo && s = 0
-      BitVectorDomainDualGenerator gen(x,
-                                       d_rng,
-                                       min_lo.is_null() ? nullptr : &min_lo,
-                                       max_lo.is_null() ? nullptr : &max_lo,
-                                       min_hi.is_null() ? nullptr : &min_hi,
-                                       max_hi.is_null() ? nullptr : &max_hi);
+      BitVectorDomainDualGenerator gen(
+          x, min_lo, max_lo, min_hi, max_hi, d_rng);
       if (gen.has_random())
       {
         // Inverse value: s = 0: random value
@@ -1638,12 +1625,8 @@ BitVectorMul::is_invertible(const BitVector& t,
                     .ibvextract(size - n - 1, 0);
       }
       BitVectorDomain d = BitVectorDomain(size - right.size()).bvconcat(right);
-      BitVectorDomainDualGenerator gen(d,
-                                       d_rng,
-                                       min_lo.is_null() ? nullptr : &min_lo,
-                                       max_lo.is_null() ? nullptr : &max_lo,
-                                       min_hi.is_null() ? nullptr : &min_hi,
-                                       max_hi.is_null() ? nullptr : &max_hi);
+      BitVectorDomainDualGenerator gen(
+          d, min_lo, max_lo, min_hi, max_hi, d_rng);
       if (gen.has_random())
       {
         // Inverse value: random value in domain
@@ -4022,12 +4005,7 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
   //    pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
   if (d->has_fixed_bits())
   {
-    BitVectorDomainDualGenerator gen(*d,
-                                     d_rng,
-                                     min_lo.is_null() ? nullptr : &min_lo,
-                                     max_lo.is_null() ? nullptr : &max_lo,
-                                     min_hi.is_null() ? nullptr : &min_hi,
-                                     max_hi.is_null() ? nullptr : &max_hi);
+    BitVectorDomainDualGenerator gen(*d, min_lo, max_lo, min_hi, max_hi, d_rng);
     if (gen.has_random())
     {
       BV_NODE_CACHE_INVERSE_IF(gen.random());
@@ -4656,12 +4634,7 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
   }
   if (d->has_fixed_bits())
   {
-    BitVectorDomainDualGenerator gen(*d,
-                                     d_rng,
-                                     min_lo.is_null() ? nullptr : &min_lo,
-                                     max_lo.is_null() ? nullptr : &max_lo,
-                                     min_hi.is_null() ? nullptr : &min_hi,
-                                     max_hi.is_null() ? nullptr : &max_hi);
+    BitVectorDomainDualGenerator gen(*d, min_lo, max_lo, min_hi, max_hi, d_rng);
 
     if (gen.has_random())
     {

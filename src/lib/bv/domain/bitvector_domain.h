@@ -360,32 +360,15 @@ class BitVectorDomainDualGenerator
    *               min_signed and ones).
    * @param max_hi The maximum value of the upper range (between min_signed
    *               and ones).
+   * @param rng    The associated random number generator. Nullptr if no
+   *               random generation required.
    */
   BitVectorDomainDualGenerator(const BitVectorDomain &domain,
-                               const BitVector *min_lo,
-                               const BitVector *max_lo,
-                               const BitVector *min_hi,
-                               const BitVector *max_hi);
-  /**
-   * Construct generator for values within given ranges (inclusive),
-   * interpreted as unsigned.
-   * @param domain The domain to enumerate values for.
-   * @param rng    The associated random number generator.
-   * @param min_lo The minimum value to of the lower range (between zero and
-   *               the max_signed value).
-   * @param max_lo The maximum value of the lower range (between zero and
-   *               the max_signed value).
-   * @param min_hi The minimum value to of the upper range (between
-   *               min_signed and ones).
-   * @param max_hi The maximum value of the upper range (between min_signed
-   *               and ones).
-   */
-  BitVectorDomainDualGenerator(const BitVectorDomain &domain,
-                               RNG *rng,
-                               const BitVector *min_lo,
-                               const BitVector *max_lo,
-                               const BitVector *min_hi,
-                               const BitVector *max_hi);
+                               const BitVector &min_lo,
+                               const BitVector &max_lo,
+                               const BitVector &min_hi,
+                               const BitVector &max_hi,
+                               RNG *rng = nullptr);
   /** Destructor. */
   ~BitVectorDomainDualGenerator();
 
