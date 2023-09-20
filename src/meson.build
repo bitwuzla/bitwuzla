@@ -184,7 +184,13 @@ sources = files([
   'type/type_manager.cpp',
   'util/logger.cpp',
   'util/statistics.cpp',
+  'util/resources.cpp',
 ])
+
+compiler = meson.get_compiler('cpp')
+if compiler.has_function('getrusage', prefix: '#include <sys/resource.h>')
+  cpp_args += ['-DHAVE_RUSAGE']
+endif
 
 # Public header include directory
 bitwuzla_inc = include_directories('../include', 'lib')
