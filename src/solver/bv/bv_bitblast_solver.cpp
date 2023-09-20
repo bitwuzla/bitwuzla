@@ -76,10 +76,6 @@ BvBitblastSolver::solve()
     d_sat_solver->assume(bits[0].get_id());
   }
 
-  Msg(1) << d_stats.num_aig_consts << " AIG consts, " << d_stats.num_aig_ands
-         << " AIG ands, " << d_stats.num_cnf_vars << " CNF vars, "
-         << d_stats.num_cnf_clauses << " CNF clauses";
-
   util::Timer timer(d_stats.time_sat);
   d_last_result = d_sat_solver->solve();
   return d_last_result;
@@ -166,12 +162,12 @@ BvBitblastSolver::unsat_core(std::vector<Node>& core) const
 void
 BvBitblastSolver::update_statistics()
 {
-  d_stats.num_aig_ands = d_bitblaster.num_aig_ands();
-  d_stats.num_aig_consts = d_bitblaster.num_aig_consts();
+  d_stats.num_aig_ands     = d_bitblaster.num_aig_ands();
+  d_stats.num_aig_consts   = d_bitblaster.num_aig_consts();
   d_stats.num_aig_shared   = d_bitblaster.num_aig_shared();
-  auto& cnf_stats = d_cnf_encoder->statistics();
-  d_stats.num_cnf_vars = cnf_stats.num_vars;
-  d_stats.num_cnf_clauses = cnf_stats.num_clauses;
+  auto& cnf_stats          = d_cnf_encoder->statistics();
+  d_stats.num_cnf_vars     = cnf_stats.num_vars;
+  d_stats.num_cnf_clauses  = cnf_stats.num_clauses;
   d_stats.num_cnf_literals = cnf_stats.num_literals;
 }
 

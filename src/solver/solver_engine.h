@@ -108,6 +108,12 @@ class SolverEngine
   /** Get cached model value for given term. */
   const Node& cached_value(const Node& term) const;
 
+  /** Print statistics line. */
+  void print_statistics();
+
+  /** Counter for how often a statistics line was printed. */
+  uint64_t d_num_printed_stats = 0;
+
   /** Model value cache for _value(). */
   std::unordered_map<Node, Node> d_value_cache;
 
@@ -147,6 +153,10 @@ class SolverEngine
   {
     Statistics(util::Statistics& stats);
     uint64_t& num_lemmas;
+    uint64_t& num_lemmas_array;
+    uint64_t& num_lemmas_fp;
+    uint64_t& num_lemmas_fun;
+    uint64_t& num_lemmas_quant;
     util::TimerStatistic& time_register_term;
     util::TimerStatistic& time_solve;
   } d_stats;

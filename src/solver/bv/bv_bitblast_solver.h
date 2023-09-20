@@ -47,6 +47,9 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   /** Get AIG bit-blaster instance. */
   AigBitblaster& bitblaster() { return d_bitblaster; }
 
+  /** Get statistics. */
+  const auto& statistics() const { return d_stats; }
+
  private:
   /** Update AIG and CNF statistics. */
   void update_statistics();

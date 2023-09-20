@@ -14,6 +14,7 @@
 #include "printer/printer.h"
 #include "rewrite/evaluator.h"
 #include "solving_context.h"
+#include "util/resources.h"
 
 namespace bzla {
 
@@ -47,6 +48,11 @@ SolverEngine::solve()
 {
   util::Timer timer(d_stats.time_solve);
 
+  if (d_logger.is_msg_enabled(1))
+  {
+    print_statistics();
+  }
+
   // Process unprocessed assertions.
   process_assertions();
 
@@ -61,6 +67,11 @@ SolverEngine::solve()
     // Process lemmas generated in previous iteration.
     process_lemmas();
 
+    if (d_logger.is_msg_enabled(1))
+    {
+      print_statistics();
+    }
+
     d_sat_state = d_bv_solver.solve();
     if (d_sat_state != Result::SAT)
     {
@@ -69,16 +80,19 @@ SolverEngine::solve()
     d_fp_solver.check();
     if (!d_lemmas.empty())
     {
+      d_stats.num_lemmas_fp += d_lemmas.size();
       continue;
     }
     d_array_solver.check();
     if (!d_lemmas.empty())
     {
+      d_stats.num_lemmas_array += d_lemmas.size();
       continue;
     }
     d_fun_solver.check();
     if (!d_lemmas.empty())
     {
+      d_stats.num_lemmas_fun += d_lemmas.size();
       continue;
     }
     bool quant_done = d_quant_solver.check();
@@ -86,6 +100,7 @@ SolverEngine::solve()
     {
       d_sat_state = Result::UNKNOWN;
     }
+    d_stats.num_lemmas_quant += d_lemmas.size();
 
     // If new terms were registered during the check phase, we have to make sure
     // that all theory solvers are able to check newly registered terms.
@@ -677,8 +692,62 @@ SolverEngine::cached_value(const Node& term) const
   return it->second;
 }
 
+void
+SolverEngine::print_statistics()
+{
+  if (d_num_printed_stats % 20 == 0)
+  {
+    // clang-format off
+    Msg(1);
+    Msg(1) << std::setw(8) << ""
+           << std::setw(8) << ""
+           << std::setw(27) << "lemmas" << std::setw(13) << " "
+           << std::setw(10) << "aig"
+           << std::setw(10) << "aig"
+           << std::setw(10) << "cnf"
+           << std::setw(10) << "cnf";
+    Msg(1) << std::setw(8) << "seconds"
+           << std::setw(8) << "MB"
+           << std::setw(8) << "t"
+           << std::setw(8) << "a"
+           << std::setw(8) << "fp"
+           << std::setw(8) << "fn"
+           << std::setw(8) << "q"
+           << std::setw(10) << "consts"
+           << std::setw(10) << "ands"
+           << std::setw(10) << "vars"
+           << std::setw(10) << "clauses";
+    Msg(1);
+    // clang-format on
+  }
+
+  ++d_num_printed_stats;
+  const auto& bb_stats = d_bv_solver.statistics_bitblast();
+  // clang-format off
+  Msg(1) << std::setw(8)
+         << std::setprecision(1)
+         << std::fixed
+         << d_stats.time_solve.elapsed() / 1000.0
+         << std::setw(8)
+         << util::current_memory_usage() / static_cast<double>(1 << 20)
+         << std::setw(8) << d_stats.num_lemmas
+         << std::setw(8) << d_stats.num_lemmas_array
+         << std::setw(8) << d_stats.num_lemmas_fp
+         << std::setw(8) << d_stats.num_lemmas_fun
+         << std::setw(8) << d_stats.num_lemmas_quant
+         << std::setw(10) << bb_stats.num_aig_consts
+         << std::setw(10) << bb_stats.num_aig_ands
+         << std::setw(10) << bb_stats.num_cnf_vars
+         << std::setw(10) << bb_stats.num_cnf_clauses;
+  // clang-format on
+}
+
 SolverEngine::Statistics::Statistics(util::Statistics& stats)
     : num_lemmas(stats.new_stat<uint64_t>("solver::lemmas")),
+      num_lemmas_array(stats.new_stat<uint64_t>("solver::lemmas_array")),
+      num_lemmas_fp(stats.new_stat<uint64_t>("solver::lemmas_fp")),
+      num_lemmas_fun(stats.new_stat<uint64_t>("solver::lemmas_fun")),
+      num_lemmas_quant(stats.new_stat<uint64_t>("solver::lemmas_quant")),
       time_register_term(
           stats.new_stat<util::TimerStatistic>("solver::time_register_term")),
       time_solve(stats.new_stat<util::TimerStatistic>("solver::time_solve"))

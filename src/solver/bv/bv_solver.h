@@ -47,6 +47,15 @@ class BvSolver : public Solver, public BvSolverInterface
   /** Get unsat core of last solve() call. */
   void unsat_core(std::vector<Node>& core) const override;
 
+  /** Get overall BV solver statistics. */
+  const auto& statistics() const { return d_stats; }
+
+  /** Get bitblast solver statistics. */
+  const auto& statistics_bitblast() const
+  {
+    return d_bitblast_solver.statistics();
+  }
+
  private:
   /** Result of the last check() call. */
   Result d_sat_state = Result::UNKNOWN;
