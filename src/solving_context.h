@@ -119,6 +119,7 @@ class SolvingContext
   {
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_solve;
+    uint64_t& max_memory;
     util::HistogramStatistic& formula_kinds_pre;
     util::HistogramStatistic& formula_kinds_post;
   } d_stats;

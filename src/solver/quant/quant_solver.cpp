@@ -50,7 +50,7 @@ QuantSolver::QuantSolver(Env& env, SolverState& state)
       d_ground_terms(state.backtrack_mgr()),
       d_skolemization_lemmas(state.backtrack_mgr()),
       d_lemma_cache(state.backtrack_mgr()),
-      d_stats(env.statistics())
+      d_stats(env.statistics(), "solver::quant::")
 {
 }
 
@@ -445,13 +445,15 @@ QuantSolver::mbqi_lemma(const Node& q)
   return nm.mk_node(Kind::IMPLIES, {q, inst});
 }
 
-QuantSolver::Statistics::Statistics(util::Statistics& stats)
-    : mbqi_checks(stats.new_stat<uint64_t>("quant::mbqi_checks")),
-      num_lemmas(stats.new_stat<uint64_t>("quant::num_lemmas")),
-      lemmas(stats.new_stat<util::HistogramStatistic>("quant::lemmas")),
-      time_check(stats.new_stat<util::TimerStatistic>("quant::time_check")),
-      time_process(stats.new_stat<util::TimerStatistic>("quant::time_process")),
-      time_mbqi(stats.new_stat<util::TimerStatistic>("quant::time_mbqi"))
+QuantSolver::Statistics::Statistics(util::Statistics& stats,
+                                    const std::string& prefix)
+    : mbqi_checks(stats.new_stat<uint64_t>(prefix + "mbqi_checks")),
+      num_lemmas(stats.new_stat<uint64_t>(prefix + "num_lemmas")),
+      lemmas(stats.new_stat<util::HistogramStatistic>(prefix + "lemmas")),
+      time_check(stats.new_stat<util::TimerStatistic>(prefix + "time_check")),
+      time_process(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_process")),
+      time_mbqi(stats.new_stat<util::TimerStatistic>(prefix + "time_mbqi"))
 
 {
 }

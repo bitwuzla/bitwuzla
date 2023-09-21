@@ -37,7 +37,7 @@ ArraySolver::ArraySolver(Env& env, SolverState& state)
       d_selects(state.backtrack_mgr()),
       d_equalities(state.backtrack_mgr()),
       d_active_parents(state.backtrack_mgr()),
-      d_stats(env.statistics()),
+      d_stats(env.statistics(), "solver::array::"),
       d_logger(env.logger())
 {
 }
@@ -839,15 +839,16 @@ ArraySolver::KeyEqualPair::operator()(const std::pair<Node, Node>& p1,
          || (p1.first == p2.second && p1.second == p2.first);
 }
 
-ArraySolver::Statistics::Statistics(util::Statistics& stats)
-    : num_checks(stats.new_stat<uint64_t>("array::num_checks")),
-      num_propagations(stats.new_stat<uint64_t>("array::propagations")),
-      num_propagations_up(stats.new_stat<uint64_t>("array::propagations_up")),
+ArraySolver::Statistics::Statistics(util::Statistics& stats,
+                                    const std::string& prefix)
+    : num_checks(stats.new_stat<uint64_t>(prefix + "num_checks")),
+      num_propagations(stats.new_stat<uint64_t>(prefix + "propagations")),
+      num_propagations_up(stats.new_stat<uint64_t>(prefix + "propagations_up")),
       num_propagations_down(
-          stats.new_stat<uint64_t>("array::propagations_down")),
+          stats.new_stat<uint64_t>(prefix + "propagations_down")),
       num_lemma_size(
-          stats.new_stat<util::HistogramStatistic>("array::lemma_size")),
-      time_check(stats.new_stat<util::TimerStatistic>("array::time_check"))
+          stats.new_stat<util::HistogramStatistic>(prefix + "lemma_size")),
+      time_check(stats.new_stat<util::TimerStatistic>(prefix + "time_check"))
 {
 }
 

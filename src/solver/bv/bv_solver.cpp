@@ -142,9 +142,9 @@ BvSolver::unsat_core(std::vector<Node>& core) const
 /* --- BvBitblastSolver private --------------------------------------------- */
 
 BvSolver::Statistics::Statistics(util::Statistics& stats)
-    : num_checks(stats.new_stat<uint64_t>("bv::num_checks")),
-      num_assertions(stats.new_stat<uint64_t>("bv::num_assertions")),
-      time_check(stats.new_stat<util::TimerStatistic>("bv::time_check"))
+    : num_checks(stats.new_stat<uint64_t>("solver::bv::num_checks")),
+      num_assertions(stats.new_stat<uint64_t>("solver::bv::num_assertions")),
+      time_check(stats.new_stat<util::TimerStatistic>("solver::bv::time_check"))
 {
 }
 

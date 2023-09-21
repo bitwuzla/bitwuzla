@@ -17,6 +17,7 @@
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_set.h"
 #include "timeout_terminator.h"
+#include "util/resources.h"
 
 namespace bzla {
 
@@ -71,6 +72,7 @@ SolvingContext::solve()
     Warn(!res) << "unsat core check failed";
   }
 
+  d_stats.max_memory = util::maximum_memory_usage();
   return d_sat_state;
 }
 
@@ -335,6 +337,7 @@ SolvingContext::set_time_limit_per()
 SolvingContext::Statistics::Statistics(util::Statistics& stats)
     : time_solve(
         stats.new_stat<util::TimerStatistic>("solving_context::time_solve")),
+      max_memory(stats.new_stat<uint64_t>("solving_context::max_memory")),
       formula_kinds_pre(
           stats.new_stat<util::HistogramStatistic>("formula::pre::node")),
       formula_kinds_post(

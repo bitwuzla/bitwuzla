@@ -93,7 +93,7 @@ class QuantSolver : public Solver
 
   struct Statistics
   {
-    Statistics(util::Statistics& stats);
+    Statistics(util::Statistics& stats, const std::string& prefix);
 
     uint64_t& mbqi_checks;
     uint64_t& num_lemmas;

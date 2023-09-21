@@ -236,7 +236,7 @@ class ArraySolver : public Solver
 
   struct Statistics
   {
-    Statistics(util::Statistics& stats);
+    Statistics(util::Statistics& stats, const std::string& prefix);
     uint64_t& num_checks;
     uint64_t& num_propagations;
     uint64_t& num_propagations_up;

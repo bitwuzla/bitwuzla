@@ -56,6 +56,8 @@ class BvSolver : public Solver, public BvSolverInterface
     return d_bitblast_solver.statistics();
   }
 
+  option::BvSolver cur_solver() const { return d_cur_solver; }
+
  private:
   /** Result of the last check() call. */
   Result d_sat_state = Result::UNKNOWN;

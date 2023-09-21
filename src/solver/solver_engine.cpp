@@ -31,7 +31,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_lemma_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
       d_in_solving_mode(false),
-      d_stats(context.env().statistics()),
+      d_stats(context.env().statistics(), "solver::engine::"),
       d_env(context.env()),
       d_logger(d_env.logger()),
       d_solver_state(*this),
@@ -50,6 +50,7 @@ SolverEngine::solve()
 
   if (d_logger.is_msg_enabled(1))
   {
+    d_num_printed_stats = 0;
     print_statistics();
   }
 
@@ -106,6 +107,11 @@ SolverEngine::solve()
     // that all theory solvers are able to check newly registered terms.
   } while (!d_lemmas.empty() || d_new_terms_registered);
   d_in_solving_mode = false;
+
+  if (d_logger.is_msg_enabled(1))
+  {
+    print_statistics();
+  }
 
   Log(1);
   Log(1) << "Solver engine determined: " << d_sat_state;
@@ -699,14 +705,16 @@ SolverEngine::print_statistics()
   {
     // clang-format off
     Msg(1);
-    Msg(1) << std::setw(8) << ""
+    Msg(1) << std::setw(2) << ""
+           << std::setw(8) << ""
            << std::setw(8) << ""
            << std::setw(27) << "lemmas" << std::setw(13) << " "
            << std::setw(10) << "aig"
            << std::setw(10) << "aig"
            << std::setw(10) << "cnf"
            << std::setw(10) << "cnf";
-    Msg(1) << std::setw(8) << "seconds"
+    Msg(1) << std::setw(2) << "bv"
+           << std::setw(8) << "seconds"
            << std::setw(8) << "MB"
            << std::setw(8) << "t"
            << std::setw(8) << "a"
@@ -723,8 +731,11 @@ SolverEngine::print_statistics()
 
   ++d_num_printed_stats;
   const auto& bb_stats = d_bv_solver.statistics_bitblast();
+  const char* cur_bv_solver =
+      d_bv_solver.cur_solver() == option::BvSolver::BITBLAST ? "s" : "p";
   // clang-format off
-  Msg(1) << std::setw(8)
+  Msg(1) << std::setw(2) << cur_bv_solver
+         << std::setw(8)
          << std::setprecision(1)
          << std::fixed
          << d_stats.time_solve.elapsed() / 1000.0
@@ -742,15 +753,16 @@ SolverEngine::print_statistics()
   // clang-format on
 }
 
-SolverEngine::Statistics::Statistics(util::Statistics& stats)
-    : num_lemmas(stats.new_stat<uint64_t>("solver::lemmas")),
-      num_lemmas_array(stats.new_stat<uint64_t>("solver::lemmas_array")),
-      num_lemmas_fp(stats.new_stat<uint64_t>("solver::lemmas_fp")),
-      num_lemmas_fun(stats.new_stat<uint64_t>("solver::lemmas_fun")),
-      num_lemmas_quant(stats.new_stat<uint64_t>("solver::lemmas_quant")),
+SolverEngine::Statistics::Statistics(util::Statistics& stats,
+                                     const std::string& prefix)
+    : num_lemmas(stats.new_stat<uint64_t>(prefix + "lemmas")),
+      num_lemmas_array(stats.new_stat<uint64_t>(prefix + "lemmas_array")),
+      num_lemmas_fp(stats.new_stat<uint64_t>(prefix + "lemmas_fp")),
+      num_lemmas_fun(stats.new_stat<uint64_t>(prefix + "lemmas_fun")),
+      num_lemmas_quant(stats.new_stat<uint64_t>(prefix + "lemmas_quant")),
       time_register_term(
-          stats.new_stat<util::TimerStatistic>("solver::time_register_term")),
-      time_solve(stats.new_stat<util::TimerStatistic>("solver::time_solve"))
+          stats.new_stat<util::TimerStatistic>(prefix + "time_register_term")),
+      time_solve(stats.new_stat<util::TimerStatistic>(prefix + "time_solve"))
 {
 }
 

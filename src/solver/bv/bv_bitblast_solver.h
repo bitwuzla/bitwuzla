@@ -74,7 +74,7 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
 
   struct Statistics
   {
-    Statistics(util::Statistics& stats);
+    Statistics(util::Statistics& stats, const std::string& prefix);
     util::TimerStatistic& time_sat;
     util::TimerStatistic& time_bitblast;
     util::TimerStatistic& time_encode;

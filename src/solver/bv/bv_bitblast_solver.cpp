@@ -55,7 +55,7 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_assumptions(state.backtrack_mgr()),
       d_last_result(Result::UNKNOWN),
-      d_stats(env.statistics())
+      d_stats(env.statistics(), "solver::bv::bitblast::")
 {
   d_sat_solver.reset(sat::new_sat_solver(env.options().sat_solver()));
   d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
@@ -171,21 +171,20 @@ BvBitblastSolver::update_statistics()
   d_stats.num_cnf_literals = cnf_stats.num_literals;
 }
 
-BvBitblastSolver::Statistics::Statistics(util::Statistics& stats)
+BvBitblastSolver::Statistics::Statistics(util::Statistics& stats,
+                                         const std::string& prefix)
     : time_sat(
-        stats.new_stat<util::TimerStatistic>("bv::bitblast::sat::time_solve")),
-      time_bitblast(stats.new_stat<util::TimerStatistic>(
-          "bv::bitblast::aig::time_bitblast")),
-      time_encode(stats.new_stat<util::TimerStatistic>(
-          "bv::bitblast::cnf::time_encode")),
-      num_aig_ands(stats.new_stat<uint64_t>("bv::bitblast::aig::num_ands")),
-      num_aig_consts(stats.new_stat<uint64_t>("bv::bitblast::aig::num_consts")),
-      num_aig_shared(stats.new_stat<uint64_t>("bv::bitblast::aig::num_shared")),
-      num_cnf_vars(stats.new_stat<uint64_t>("bv::bitblast::cnf::num_vars")),
-      num_cnf_clauses(
-          stats.new_stat<uint64_t>("bv::bitblast::cnf::num_clauses")),
-      num_cnf_literals(
-          stats.new_stat<uint64_t>("bv::bitblast::cnf::num_literals"))
+        stats.new_stat<util::TimerStatistic>(prefix + "sat::time_solve")),
+      time_bitblast(
+          stats.new_stat<util::TimerStatistic>(prefix + "aig::time_bitblast")),
+      time_encode(
+          stats.new_stat<util::TimerStatistic>(prefix + "cnf::time_encode")),
+      num_aig_ands(stats.new_stat<uint64_t>(prefix + "aig::num_ands")),
+      num_aig_consts(stats.new_stat<uint64_t>(prefix + "aig::num_consts")),
+      num_aig_shared(stats.new_stat<uint64_t>(prefix + "aig::num_shared")),
+      num_cnf_vars(stats.new_stat<uint64_t>(prefix + "cnf::num_vars")),
+      num_cnf_clauses(stats.new_stat<uint64_t>(prefix + "cnf::num_clauses")),
+      num_cnf_literals(stats.new_stat<uint64_t>(prefix + "cnf::num_literals"))
 {
 }
 

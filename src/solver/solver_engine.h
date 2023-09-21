@@ -151,7 +151,7 @@ class SolverEngine
 
   struct Statistics
   {
-    Statistics(util::Statistics& stats);
+    Statistics(util::Statistics& stats, const std::string& prefix);
     uint64_t& num_lemmas;
     uint64_t& num_lemmas_array;
     uint64_t& num_lemmas_fp;
