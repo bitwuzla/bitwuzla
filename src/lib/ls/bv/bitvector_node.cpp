@@ -359,25 +359,16 @@ BitVectorNode::tighten_bounds(BitVector* min_u,
                         max_s);
 }
 
-void
+std::tuple<BitVector, BitVector, BitVector, BitVector>
 BitVectorNode::normalize_bounds(BitVector* min_u,
                                 BitVector* max_u,
                                 BitVector* min_s,
-                                BitVector* max_s,
-                                BitVector& res_min_lo,
-                                BitVector& res_max_lo,
-                                BitVector& res_min_hi,
-                                BitVector& res_max_hi)
+                                BitVector* max_s)
 {
   assert(!min_u || min_u->size() == size());
   assert(!max_u || max_u->size() == size());
   assert(!min_s || min_s->size() == size());
   assert(!max_s || max_s->size() == size());
-
-  assert(res_min_lo.is_null());
-  assert(res_max_lo.is_null());
-  assert(res_min_hi.is_null());
-  assert(res_max_hi.is_null());
 
   uint64_t size        = this->size();
   BitVector zero       = BitVector::mk_zero(size);
@@ -527,70 +518,45 @@ BitVectorNode::normalize_bounds(BitVector* min_u,
     max_hi = nullptr;
   }
 
-  if (min_lo) res_min_lo = *min_lo;
-  if (max_lo) res_max_lo = *max_lo;
-  if (min_hi) res_min_hi = *min_hi;
-  if (max_hi) res_max_hi = *max_hi;
-
-  assert(res_min_lo.is_null() || !res_max_lo.is_null());
-  assert(res_min_hi.is_null() || !res_max_hi.is_null());
+  assert(!min_lo || max_lo);
+  assert(!min_hi || max_hi);
+  return {min_lo ? *min_lo : BitVector(),
+          max_lo ? *max_lo : BitVector(),
+          min_hi ? *min_hi : BitVector(),
+          max_hi ? *max_hi : BitVector()};
 }
 
-void
+std::tuple<BitVector, BitVector, BitVector, BitVector>
 BitVectorNode::compute_normalized_bounds(const BitVector& s,
                                          const BitVector& t,
-                                         uint64_t pos_x,
-                                         BitVector& res_min_lo,
-                                         BitVector& res_max_lo,
-                                         BitVector& res_min_hi,
-                                         BitVector& res_max_hi)
+                                         uint64_t pos_x)
 {
-  // the current unsigned bounds on x wrt. s, t and the current bounds on x
-  BitVector min_u, max_u;
-  // the current signed bounds on x wrt. s, t and the current bounds on x
-  BitVector min_s, max_s;
-
-  res_min_lo = BitVector();
-  res_max_lo = BitVector();
-  res_min_hi = BitVector();
-  res_max_hi = BitVector();
-
-  compute_min_max_bounds(s, t, pos_x, min_u, max_u, min_s, max_s);
+  // the current (un)signed bounds on x wrt. s, t and the current bounds on x
+  auto [min_u, max_u, min_s, max_s] = compute_min_max_bounds(s, t, pos_x);
   assert(min_u.is_null() == max_u.is_null());
   assert(min_s.is_null() == max_s.is_null());
-  if (min_u.is_null() && min_s.is_null())
+  if (!min_u.is_null() || !min_s.is_null())
   {
-    return;  // conflict
+    BitVectorNode* op_x = child(pos_x);
+    return op_x->normalize_bounds(min_u.is_null() ? op_x->min_u() : &min_u,
+                                  max_u.is_null() ? op_x->max_u() : &max_u,
+                                  min_s.is_null() ? op_x->min_s() : &min_s,
+                                  max_s.is_null() ? op_x->max_s() : &max_s);
   }
-
-  BitVectorNode* op_x = child(pos_x);
-  op_x->normalize_bounds(min_u.is_null() ? op_x->min_u() : &min_u,
-                         max_u.is_null() ? op_x->max_u() : &max_u,
-                         min_s.is_null() ? op_x->min_s() : &min_s,
-                         max_s.is_null() ? op_x->max_s() : &max_s,
-                         res_min_lo,
-                         res_max_lo,
-                         res_min_hi,
-                         res_max_hi);
+  // else conflict, return tuple of null BitVectors
+  return {};
 }
 
-void
+std::tuple<BitVector, BitVector, BitVector, BitVector>
 BitVectorNode::compute_min_max_bounds(const BitVector& s,
                                       const BitVector& t,
-                                      uint64_t pos_x,
-                                      BitVector& res_min_u,
-                                      BitVector& res_max_u,
-                                      BitVector& res_min_s,
-                                      BitVector& res_max_s)
+                                      uint64_t pos_x)
 {
   (void) s;
   (void) t;
   (void) pos_x;
-  (void) res_min_u;
-  (void) res_max_u;
-  (void) res_min_s;
-  (void) res_max_s;
   assert(false);
+  return {};
 }
 
 bool
@@ -817,27 +783,16 @@ BitVectorAnd::evaluate()
   _evaluate();
 }
 
-void
+std::tuple<BitVector, BitVector, BitVector, BitVector>
 BitVectorAnd::compute_min_max_bounds(const BitVector& s,
                                      const BitVector& t,
-                                     uint64_t pos_x,
-                                     BitVector& res_min_u,
-                                     BitVector& res_max_u,
-                                     BitVector& res_min_s,
-                                     BitVector& res_max_s)
+                                     uint64_t pos_x)
 {
-  assert(res_min_u.is_null());
-  assert(res_max_u.is_null());
-  assert(res_min_s.is_null());
-  assert(res_max_s.is_null());
   BitVectorNode* op_x      = child(pos_x);
   const BitVectorDomain& x = op_x->domain();
   d_lo                     = x.lo().bvor(t);
   d_hi                     = x.hi().bvand(s.bvxnor(t));
-  res_min_u                = d_lo;
-  res_max_u                = d_hi;
-  std::tie(res_min_u, res_max_u, res_min_s, res_max_s) =
-      op_x->tighten_bounds(&res_min_u, &res_max_u, nullptr, nullptr);
+  return op_x->tighten_bounds(&d_lo, &d_hi, nullptr, nullptr);
 }
 
 bool
@@ -887,8 +842,8 @@ BitVectorAnd::is_invertible(const BitVector& t,
   {
     if (min_u || max_u || min_s || max_s)
     {
-      BitVector min_lo, max_lo, min_hi, max_hi;
-      compute_normalized_bounds(s, t, pos_x, min_lo, max_lo, min_hi, max_hi);
+      auto [min_lo, max_lo, min_hi, max_hi] =
+          compute_normalized_bounds(s, t, pos_x);
       if (min_hi.is_null() && max_hi.is_null() && min_lo.is_null()
           && max_lo.is_null())
       {
@@ -1428,29 +1383,21 @@ BitVectorMul::evaluate()
   _evaluate();
 }
 
-void
+// TODO maybe use this as default implementation when bounds support is
+//      implemented for all operators
+std::tuple<BitVector, BitVector, BitVector, BitVector>
 BitVectorMul::compute_min_max_bounds(const BitVector& s,
                                      const BitVector& t,
-                                     uint64_t pos_x,
-                                     BitVector& res_min_u,
-                                     BitVector& res_max_u,
-                                     BitVector& res_min_s,
-                                     BitVector& res_max_s)
+                                     uint64_t pos_x)
 {
   (void) t;
 
-  assert(res_min_u.is_null());
-  assert(res_max_u.is_null());
-  assert(res_min_s.is_null());
-  assert(res_max_s.is_null());
-
   uint64_t size = s.size();
-  res_min_u     = BitVector::mk_zero(size);
-  res_max_u     = BitVector::mk_ones(size);
+  BitVector zero = BitVector::mk_zero(size);
+  BitVector ones = BitVector::mk_ones(size);
 
   // tighten unsigned bounds wrt. to current unsigned bounds of x
-  std::tie(res_min_u, res_max_u, res_min_s, res_max_s) =
-      child(pos_x)->tighten_bounds(&res_min_u, &res_max_u, nullptr, nullptr);
+  return child(pos_x)->tighten_bounds(&zero, &ones, nullptr, nullptr);
 }
 
 bool
@@ -1486,8 +1433,8 @@ BitVectorMul::is_invertible(const BitVector& t,
 
   if (ic_wo)
   {
-    BitVector min_lo, max_lo, min_hi, max_hi;
-    compute_normalized_bounds(s, t, pos_x, min_lo, max_lo, min_hi, max_hi);
+    auto [min_lo, max_lo, min_hi, max_hi] =
+        compute_normalized_bounds(s, t, pos_x);
     if (min_lo.is_null() && min_hi.is_null())
     {
       return false;
@@ -3805,20 +3752,12 @@ BitVectorUlt::evaluate()
   _evaluate();
 }
 
-void
+std::tuple<BitVector, BitVector, BitVector, BitVector>
 BitVectorUlt::compute_min_max_bounds(const BitVector& s,
                                      const BitVector& t,
-                                     uint64_t pos_x,
-                                     BitVector& res_min_u,
-                                     BitVector& res_max_u,
-                                     BitVector& res_min_s,
-                                     BitVector& res_max_s)
+                                     uint64_t pos_x)
 {
-  assert(res_min_u.is_null());
-  assert(res_max_u.is_null());
-  assert(res_min_s.is_null());
-  assert(res_max_s.is_null());
-
+  BitVector min_u, max_u;
   uint64_t size = s.size();
 
   // compute unsigned min/max bounds wrt. s and t
@@ -3828,15 +3767,15 @@ BitVectorUlt::compute_min_max_bounds(const BitVector& s,
     {
       if (s.is_zero())  // conflict
       {
-        return;
+        return {};
       }
-      res_min_u = BitVector::mk_zero(size);
-      res_max_u = s.bvdec();
+      min_u = BitVector::mk_zero(size);
+      max_u = s.bvdec();
     }
     else
     {
-      res_min_u = s;
-      res_max_u = BitVector::mk_ones(size);
+      min_u = s;
+      max_u = BitVector::mk_ones(size);
     }
   }
   else
@@ -3845,21 +3784,20 @@ BitVectorUlt::compute_min_max_bounds(const BitVector& s,
     {
       if (s.is_ones())  // conflict
       {
-        return;
+        return {};
       }
-      res_min_u = s.bvinc();
-      res_max_u = BitVector::mk_ones(size);
+      min_u = s.bvinc();
+      max_u = BitVector::mk_ones(size);
     }
     else
     {
-      res_min_u = BitVector::mk_zero(size);
-      res_max_u = s;
+      min_u = BitVector::mk_zero(size);
+      max_u = s;
     }
   }
 
   // tighten unsigned bounds wrt. to current unsigned bounds of x
-  std::tie(res_min_u, res_max_u, res_min_s, res_max_s) =
-      child(pos_x)->tighten_bounds(&res_min_u, &res_max_u, nullptr, nullptr);
+  return child(pos_x)->tighten_bounds(&min_u, &max_u, nullptr, nullptr);
 }
 
 bool
@@ -3990,8 +3928,8 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
 {
   // IC_wo: pos_x = 0: t = 0 || s != 0
   //        pos_x = 1: t = 0 || s != ones
-  BitVector min_lo, max_lo, min_hi, max_hi;
-  compute_normalized_bounds(s, t, pos_x, min_lo, max_lo, min_hi, max_hi);
+  auto [min_lo, max_lo, min_hi, max_hi] =
+      compute_normalized_bounds(s, t, pos_x);
   if (min_lo.is_null() && min_hi.is_null())
   {
     return false;
@@ -4452,20 +4390,12 @@ BitVectorSlt::evaluate()
   _evaluate();
 }
 
-void
+std::tuple<BitVector, BitVector, BitVector, BitVector>
 BitVectorSlt::compute_min_max_bounds(const BitVector& s,
                                      const BitVector& t,
-                                     uint64_t pos_x,
-                                     BitVector& res_min_u,
-                                     BitVector& res_max_u,
-                                     BitVector& res_min_s,
-                                     BitVector& res_max_s)
+                                     uint64_t pos_x)
 {
-  assert(res_min_u.is_null());
-  assert(res_max_u.is_null());
-  assert(res_min_s.is_null());
-  assert(res_max_s.is_null());
-
+  BitVector min_s, max_s;
   uint64_t size = s.size();
 
   // compute signed min/max bounds wrt. s and t
@@ -4475,15 +4405,15 @@ BitVectorSlt::compute_min_max_bounds(const BitVector& s,
     {
       if (s.is_min_signed())  // conflict
       {
-        return;
+        return {};
       }
-      res_min_s = BitVector::mk_min_signed(size);
-      res_max_s = s.bvdec();
+      min_s = BitVector::mk_min_signed(size);
+      max_s = s.bvdec();
     }
     else
     {
-      res_min_s = s;
-      res_max_s = BitVector::mk_max_signed(size);
+      min_s = s;
+      max_s = BitVector::mk_max_signed(size);
     }
   }
   else
@@ -4492,21 +4422,20 @@ BitVectorSlt::compute_min_max_bounds(const BitVector& s,
     {
       if (s.is_max_signed())  // conflict
       {
-        return;
+        return {};
       }
-      res_min_s = s.bvinc();
-      res_max_s = BitVector::mk_max_signed(size);
+      min_s = s.bvinc();
+      max_s = BitVector::mk_max_signed(size);
     }
     else
     {
-      res_min_s = BitVector::mk_min_signed(size);
-      res_max_s = s;
+      min_s = BitVector::mk_min_signed(size);
+      max_s = s;
     }
   }
 
   // tighten signed bounds wrt. to current signed bounds of x
-  std::tie(res_min_u, res_max_u, res_min_s, res_max_s) =
-      child(pos_x)->tighten_bounds(nullptr, nullptr, &res_min_s, &res_max_s);
+  return child(pos_x)->tighten_bounds(nullptr, nullptr, &min_s, &max_s);
 }
 
 bool
@@ -4639,8 +4568,8 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
 {
   // IC_wo: pos_x = 0: t = 0 || s != min_signed_value
   //        pos_x = 1: t = 0 || s != max_signed_value
-  BitVector min_lo, max_lo, min_hi, max_hi;
-  compute_normalized_bounds(s, t, pos_x, min_lo, max_lo, min_hi, max_hi);
+  auto [min_lo, max_lo, min_hi, max_hi] =
+      compute_normalized_bounds(s, t, pos_x);
 
   if (min_lo.is_null() && min_hi.is_null())
   {
@@ -6606,40 +6535,25 @@ BitVectorSignExtend::evaluate()
   _evaluate();
 }
 
-void
+std::tuple<BitVector, BitVector, BitVector, BitVector>
 BitVectorSignExtend::normalize_bounds(BitVector* min_u,
                                       BitVector* max_u,
                                       BitVector* min_s,
-                                      BitVector* max_s,
-                                      BitVector& res_min_lo,
-                                      BitVector& res_max_lo,
-                                      BitVector& res_min_hi,
-                                      BitVector& res_max_hi)
+                                      BitVector* max_s)
 {
   // Sign extension is a bit of a special case in that its bounds are either
   // from 0::x->domain().lo()[msb-1:0] to 0::x->domain().hi()[msb-1:0] or
   // from 1::x->domain().lo()[msb-1:0] to 1::x->domain().hi()[msb-1:0].
   // These two bounds are disjunct.
 
-  res_min_lo = BitVector();
-  res_max_lo = BitVector();
-  res_min_hi = BitVector();
-  res_max_hi = BitVector();
-
   // First, compute the normalized bounds of the current signed and unsigned
   // bounds on x.
-  BitVectorNode::normalize_bounds(min_u,
-                                  max_u,
-                                  min_s,
-                                  max_s,
-                                  res_min_lo,
-                                  res_max_lo,
-                                  res_min_hi,
-                                  res_max_hi);
+  auto res = BitVectorNode::normalize_bounds(min_u, max_u, min_s, max_s);
+  auto& [min_lo, max_lo, min_hi, max_hi] = res;
 
-  if (res_min_lo.is_null() && res_min_hi.is_null())
+  if (min_lo.is_null() && min_hi.is_null())
   {
-    return;  // conflict
+    return {};  // conflict
   }
 
   if (d_n > 0)
@@ -6671,67 +6585,68 @@ BitVectorSignExtend::normalize_bounds(BitVector* min_u,
         max_1.ibvconcat(d_domain.hi().bvextract(dx_size - 2, 0));
       }
     }
-    if (!res_min_lo.is_null())
+    if (!min_lo.is_null())
     {
-      assert(!res_max_lo.is_null());
+      assert(!max_lo.is_null());
       // Identify conflicts.
-      if (!max_0.is_null() && max_0.compare(res_min_lo) < 0)
+      if (!max_0.is_null() && max_0.compare(min_lo) < 0)
       {
-        res_min_lo = BitVector();
-        res_max_lo = BitVector();
+        min_lo = BitVector();
+        max_lo = BitVector();
       }
-      else if (!min_0.is_null() && min_0.compare(res_max_lo) > 0)
+      else if (!min_0.is_null() && min_0.compare(max_lo) > 0)
       {
-        res_min_lo = BitVector();
-        res_max_lo = BitVector();
+        min_lo = BitVector();
+        max_lo = BitVector();
       }
       // Tighten bounds.
-      if (!res_min_lo.is_null())
+      if (!min_lo.is_null())
       {
-        if (!min_0.is_null() && min_0.compare(res_min_lo) > 0)
+        if (!min_0.is_null() && min_0.compare(min_lo) > 0)
         {
-          res_min_lo = min_0;
+          min_lo = min_0;
         }
-        if (!max_0.is_null() && max_0.compare(res_max_lo) < 0)
+        if (!max_0.is_null() && max_0.compare(max_lo) < 0)
         {
-          res_max_lo = max_0;
+          max_lo = max_0;
         }
       }
     }
-    if (!res_min_hi.is_null())
+    if (!min_hi.is_null())
     {
-      assert(!res_max_hi.is_null());
+      assert(!max_hi.is_null());
       // Identify conflicts.
-      if (!max_1.is_null() && max_1.compare(res_min_hi) < 0)
+      if (!max_1.is_null() && max_1.compare(min_hi) < 0)
       {
-        res_min_hi = BitVector();
-        res_max_hi = BitVector();
+        min_hi = BitVector();
+        max_hi = BitVector();
       }
-      else if (!min_1.is_null() && min_1.compare(res_max_hi) > 0)
+      else if (!min_1.is_null() && min_1.compare(max_hi) > 0)
       {
-        res_min_hi = BitVector();
-        res_max_hi = BitVector();
+        min_hi = BitVector();
+        max_hi = BitVector();
       }
-      if (res_min_lo.is_null() && res_min_hi.is_null())
+      if (min_lo.is_null() && min_hi.is_null())
       {
-        assert(res_max_lo.is_null());
-        assert(res_max_hi.is_null());
-        return;  // conflict
+        assert(max_lo.is_null());
+        assert(max_hi.is_null());
+        return {};  // conflict
       }
       // Tighten bounds.
-      if (!res_min_hi.is_null())
+      if (!min_hi.is_null())
       {
-        if (!min_1.is_null() && min_1.compare(res_min_hi) > 0)
+        if (!min_1.is_null() && min_1.compare(min_hi) > 0)
         {
-          res_min_hi = min_1;
+          min_hi = min_1;
         }
-        if (!max_1.is_null() && max_1.compare(res_max_hi) < 0)
+        if (!max_1.is_null() && max_1.compare(max_hi) < 0)
         {
-          res_max_hi = max_1;
+          max_hi = max_1;
         }
       }
     }
   }
+  return res;
 }
 
 bool

@@ -34,37 +34,6 @@ class BitVectorNode : public Node<BitVector>
 {
  public:
   /**
-   * Tighten signed and/or unsigned bounds of this node wrt. to the given
-   * signed and unsigned bounds. If the given signed and unsigned ranges don't
-   * have any intersection with the bounds of this node, all return parameters
-   * will be null nodes
-   * @param cur_min_u The current lower unsigned bound (to be tightened).
-   * @param cur_max_u The current upper unsigned bound (to be tightened).
-   * @param cur_min_s The current lower signed bound (to be tightened).
-   * @param cur_max_s The current upper signed bound (to be tightened).
-   * @param min_u     The lower unsigned bound to tighten the current
-   *                  lower unsigned bound with.
-   * @param max_u     The upper unsigned bound to tighten the current upper
-   *                  unsigned bound with.
-   * @param min_s     The lower signed bound to tighten the current lower
-   *                  signed bound with.
-   * @param max_s     The upper signed bound to tighten the current upper
-   *                  signed bound with.
-   *
-   * @return A tuple [min_u, max_u, min_s, max_s] of resulting lower and upper
-   *         (un)signed bounds.
-   */
-  static std::tuple<BitVector, BitVector, BitVector, BitVector> tighten_bounds(
-      BitVector* cur_min_u,
-      BitVector* cur_max_u,
-      BitVector* cur_min_s,
-      BitVector* cur_max_s,
-      BitVector* min_u,
-      BitVector* max_u,
-      BitVector* min_s,
-      BitVector* max_s);
-
-  /**
    * Constructor.
    * @param rng  The associated random number generator.
    * @param size The bit-vector size.
@@ -132,6 +101,8 @@ class BitVectorNode : public Node<BitVector>
    *              signed bound with.
    * @param max_s The upper signed bound to tighten this node's upper
    *              signed bound with.
+   * @return A tuple [min_u, max_u, min_s, max_s] of resulting lower and upper
+   *         (un)signed bounds.
    */
   std::tuple<BitVector, BitVector, BitVector, BitVector> tighten_bounds(
       BitVector* min_u, BitVector* max_u, BitVector* min_s, BitVector* max_s);
@@ -147,23 +118,15 @@ class BitVectorNode : public Node<BitVector>
    * @param min_s      The lower signed bound.
    * @param max_s      The upper signed bound.
    *
-   * @param res_min_lo The minimum value of the resulting lower range, null if
-   *                   no values in the lower range are covered.
-   * @param res_max_lo The maximum value of the resulting lower range, null if
-   *                   no values in the lower range are covered.
-   * @param res_min_hi The minimum value of the resulting upper range, null if
-   *                   no values in the upper range are covered.
-   * @param res_max_hi The maximum value of the resulting upper range, null if
-   *                   no values in the upper range are covered.
+   * @return A tuple [min_lo, max_lo, min_hi, max_hi] of resulting lower and
+   *         upper range bounds, null BitVectors for both min/max in the lo
+   *         and/or hi range if no values in that range are covered.
    */
-  virtual void normalize_bounds(BitVector* min_u,
-                                BitVector* max_u,
-                                BitVector* min_s,
-                                BitVector* max_s,
-                                BitVector& res_min_lo,
-                                BitVector& res_max_lo,
-                                BitVector& res_min_hi,
-                                BitVector& res_max_hi);
+  virtual std::tuple<BitVector, BitVector, BitVector, BitVector>
+  normalize_bounds(BitVector* min_u,
+                   BitVector* max_u,
+                   BitVector* min_s,
+                   BitVector* max_s);
   /**
    * Get the unsigned upper bound (incl) for inverse value computation.
    * @return The upper unsigned bound.
@@ -214,6 +177,37 @@ class BitVectorNode : public Node<BitVector>
 
  protected:
   /**
+   * Tighten signed and/or unsigned bounds of this node wrt. to the given
+   * signed and unsigned bounds. If the given signed and unsigned ranges don't
+   * have any intersection with the bounds of this node, all return parameters
+   * will be null nodes
+   * @param cur_min_u The current lower unsigned bound (to be tightened).
+   * @param cur_max_u The current upper unsigned bound (to be tightened).
+   * @param cur_min_s The current lower signed bound (to be tightened).
+   * @param cur_max_s The current upper signed bound (to be tightened).
+   * @param min_u     The lower unsigned bound to tighten the current
+   *                  lower unsigned bound with.
+   * @param max_u     The upper unsigned bound to tighten the current upper
+   *                  unsigned bound with.
+   * @param min_s     The lower signed bound to tighten the current lower
+   *                  signed bound with.
+   * @param max_s     The upper signed bound to tighten the current upper
+   *                  signed bound with.
+   *
+   * @return A tuple [min_u, max_u, min_s, max_s] of resulting lower and upper
+   *         (un)signed bounds.
+   */
+  static std::tuple<BitVector, BitVector, BitVector, BitVector> tighten_bounds(
+      BitVector* cur_min_u,
+      BitVector* cur_max_u,
+      BitVector* cur_min_s,
+      BitVector* cur_max_s,
+      BitVector* min_u,
+      BitVector* max_u,
+      BitVector* min_s,
+      BitVector* max_s);
+
+  /**
    * Determine if given BitVector is within either one of the given bounds.
    * @param bv     The bit-vector.
    * @param min_lo The minimum value of the lower range, ignored if null.
@@ -259,22 +253,14 @@ class BitVectorNode : public Node<BitVector>
    * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`.
-   * @param res_min_lo The minimum value of the resulting lower range, null if
-   *                   no values in the lower range are covered.
-   * @param res_max_lo The maximum value of the resulting lower range, null if
-   *                   no values in the lower range are covered.
-   * @param res_min_hi The minimum value of the resulting upper range, null if
-   *                   no values in the upper range are covered.
-   * @param res_max_hi The maximum value of the resulting upper range, null if
-   *                   no values in the upper range are covered.
+   * @return A tuple [min_lo, max_lo, min_hi, max_hi] of resulting lower and
+   *         upper range bounds, null BitVectors for both min/max in the lo
+   *         and/or hi range if no values in that range are covered.
    */
-  void compute_normalized_bounds(const BitVector& s,
-                                 const BitVector& t,
-                                 uint64_t pos_x,
-                                 BitVector& res_min_lo,
-                                 BitVector& res_max_lo,
-                                 BitVector& res_min_hi,
-                                 BitVector& res_max_hi);
+  std::tuple<BitVector, BitVector, BitVector, BitVector>
+  compute_normalized_bounds(const BitVector& s,
+                            const BitVector& t,
+                            uint64_t pos_x);
 
   /**
    * Helper to compute the signed or unsigned min and max bounds for `x` with
@@ -289,22 +275,13 @@ class BitVectorNode : public Node<BitVector>
    * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`.
-   * @param res_min_u The minimum value of the resulting unsigned range, null
-   *                  for signed operators.
-   * @param res_max_u The maximum value of the resulting unsigned range, null
-   *                  for signed operators.
-   * @param res_min_s The minimum value of the resulting signed range, null
-   *                  for unsigned operators.
-   * @param res_max_s The maximum value of the resulting signed range, null
-   *                  for unsigned operators.
+   * @return A tuple [min_u, max_u, min_s, max_s] of resulting lower and upper
+   *         (un)signed bounds.
    */
-  virtual void compute_min_max_bounds(const BitVector& s,
-                                      const BitVector& t,
-                                      uint64_t pos_x,
-                                      BitVector& res_min_u,
-                                      BitVector& res_max_u,
-                                      BitVector& res_min_s,
-                                      BitVector& res_max_s);
+  virtual std::tuple<BitVector, BitVector, BitVector, BitVector>
+  compute_min_max_bounds(const BitVector& s,
+                         const BitVector& t,
+                         uint64_t pos_x);
 
   /** The underlying bit-vector domain representing constant bits. */
   BitVectorDomain d_domain;
@@ -413,13 +390,9 @@ class BitVectorAnd : public BitVectorNode
 
   void evaluate() override;
 
-  void compute_min_max_bounds(const BitVector& s,
-                              const BitVector& t,
-                              uint64_t pos_x,
-                              BitVector& res_min_u,
-                              BitVector& res_max_u,
-                              BitVector& res_min_s,
-                              BitVector& res_max_s) override;
+  std::tuple<BitVector, BitVector, BitVector, BitVector> compute_min_max_bounds(
+      const BitVector& s, const BitVector& t, uint64_t pos_x) override;
+
   /**
    * IC:
    *   w/o const bits (IC_wo): (t & s) = t
@@ -680,13 +653,8 @@ class BitVectorMul : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  void compute_min_max_bounds(const BitVector& s,
-                              const BitVector& t,
-                              uint64_t pos_x,
-                              BitVector& res_min_u,
-                              BitVector& res_max_u,
-                              BitVector& res_min_s,
-                              BitVector& res_max_s) override;
+  std::tuple<BitVector, BitVector, BitVector, BitVector> compute_min_max_bounds(
+      const BitVector& s, const BitVector& t, uint64_t pos_x) override;
 
  private:
   /**
@@ -1159,13 +1127,8 @@ class BitVectorUlt : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  void compute_min_max_bounds(const BitVector& s,
-                              const BitVector& t,
-                              uint64_t pos_x,
-                              BitVector& res_min_u,
-                              BitVector& res_max_u,
-                              BitVector& res_min_s,
-                              BitVector& res_max_s) override;
+  std::tuple<BitVector, BitVector, BitVector, BitVector> compute_min_max_bounds(
+      const BitVector& s, const BitVector& t, uint64_t pos_x) override;
 
  private:
   /**
@@ -1303,13 +1266,8 @@ class BitVectorSlt : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint64_t pos_x) override;
 
-  void compute_min_max_bounds(const BitVector& s,
-                              const BitVector& t,
-                              uint64_t pos_x,
-                              BitVector& res_min_u,
-                              BitVector& res_max_u,
-                              BitVector& res_min_s,
-                              BitVector& res_max_s) override;
+  std::tuple<BitVector, BitVector, BitVector, BitVector> compute_min_max_bounds(
+      const BitVector& s, const BitVector& t, uint64_t pos_x) override;
 
  private:
   /**
@@ -1903,14 +1861,11 @@ class BitVectorSignExtend : public BitVectorNode
 
   void evaluate() override;
 
-  virtual void normalize_bounds(BitVector* min_u,
-                                BitVector* max_u,
-                                BitVector* min_s,
-                                BitVector* max_s,
-                                BitVector& res_min_lo,
-                                BitVector& res_max_lo,
-                                BitVector& res_min_hi,
-                                BitVector& res_max_hi) override;
+  virtual std::tuple<BitVector, BitVector, BitVector, BitVector>
+  normalize_bounds(BitVector* min_u,
+                   BitVector* max_u,
+                   BitVector* min_s,
+                   BitVector* max_s) override;
 
   bool is_essential(const BitVector& t, uint64_t pos_x) override;
 

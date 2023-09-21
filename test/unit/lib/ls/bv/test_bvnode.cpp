@@ -26,7 +26,6 @@ TestBvNode::test_normalize_bounds(const BitVector& min_u,
                                   const BitVector& max_lo_exp,
                                   const BitVector& max_hi_exp)
 {
-  BitVector min_lo, min_hi, max_lo, max_hi;
   BitVectorNode node(d_rng.get(), 4);
   if (!min_u.is_null())
   {
@@ -56,14 +55,8 @@ TestBvNode::test_normalize_bounds(const BitVector& min_u,
       node.update_bounds(min_s, max_s, min_s_is_excl, max_s_is_excl, true);
     }
   }
-  node.normalize_bounds(node.min_u(),
-                        node.max_u(),
-                        node.min_s(),
-                        node.max_s(),
-                        min_lo,
-                        min_hi,
-                        max_lo,
-                        max_hi);
+  auto [min_lo, min_hi, max_lo, max_hi] = node.normalize_bounds(
+      node.min_u(), node.max_u(), node.min_s(), node.max_s());
   ASSERT_EQ(min_lo.is_null(), min_lo_exp.is_null());
   ASSERT_EQ(min_hi.is_null(), min_hi_exp.is_null());
   ASSERT_EQ(max_lo.is_null(), max_lo_exp.is_null());
