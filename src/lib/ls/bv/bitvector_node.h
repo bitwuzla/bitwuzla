@@ -108,26 +108,6 @@ class BitVectorNode : public Node<BitVector>
       BitVector* min_u, BitVector* max_u, BitVector* min_s, BitVector* max_s);
 
   /**
-   * Normalize given signed and unsigned bounds into a lower (from min_signed
-   * to ones) and upper (from zero to max_signed) ranges. If the given signed
-   * and unsigned ranges don't have any intersection, all return parameters
-   * will be null nodes.
-   *
-   * @param min_u      The lower unsigned bound.
-   * @param max_u      The upper unsigned bound.
-   * @param min_s      The lower signed bound.
-   * @param max_s      The upper signed bound.
-   *
-   * @return A tuple [min_lo, max_lo, min_hi, max_hi] of resulting lower and
-   *         upper range bounds, null BitVectors for both min/max in the lo
-   *         and/or hi range if no values in that range are covered.
-   */
-  virtual std::tuple<BitVector, BitVector, BitVector, BitVector>
-  normalize_bounds(BitVector* min_u,
-                   BitVector* max_u,
-                   BitVector* min_s,
-                   BitVector* max_s);
-  /**
    * Get the unsigned upper bound (incl) for inverse value computation.
    * @return The upper unsigned bound.
    */
@@ -242,6 +222,26 @@ class BitVectorNode : public Node<BitVector>
                 BitVectorNode* child0,
                 BitVectorNode* child1,
                 BitVectorNode* child2);
+  /**
+   * Normalize given signed and unsigned bounds into a lower (from min_signed
+   * to ones) and upper (from zero to max_signed) ranges. If the given signed
+   * and unsigned ranges don't have any intersection, all return parameters
+   * will be null nodes.
+   *
+   * @param min_u      The lower unsigned bound.
+   * @param max_u      The upper unsigned bound.
+   * @param min_s      The lower signed bound.
+   * @param max_s      The upper signed bound.
+   *
+   * @return A tuple [min_lo, max_lo, min_hi, max_hi] of resulting lower and
+   *         upper range bounds, null BitVectors for both min/max in the lo
+   *         and/or hi range if no values in that range are covered.
+   */
+  virtual std::tuple<BitVector, BitVector, BitVector, BitVector>
+  normalize_bounds(BitVector* min_u,
+                   BitVector* max_u,
+                   BitVector* min_s,
+                   BitVector* max_s);
   /**
    * Helper to compute the normalized min and max bounds for `x` with respect
    * to `s` and `t` and the current signed and unsigned min/max bounds of `x`,
