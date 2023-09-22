@@ -119,6 +119,8 @@ print_help()
   std::vector<std::tuple<std::string, std::string, std::string, std::string>>
       opts;
 
+  Options dflt_opts;
+
   // Main options
   opts.emplace_back("", "<input>", format_dflt("<stdin>"), "input file");
   opts.emplace_back(format_shortb("h"),
@@ -139,16 +141,20 @@ print_help()
                     "print formula in smt2 format");
   opts.emplace_back(format_shortb("P"),
                     format_longb("parse-only"),
-                    "",
+                    format_dflt(std::to_string(dflt_opts.parse_only), true),
                     "only parse input without calling check-sat");
   opts.emplace_back("",
                     format_longb("bv-output-format"),
-                    format_dflt("2"),
+                    format_dflt(std::to_string(dflt_opts.bv_format)),
                     "output number format for bit-vector values {2, 10, 16}");
   opts.emplace_back(format_shortn("t"),
                     format_longn("time-limit"),
-                    format_dflt("0"),
+                    format_dflt(std::to_string(dflt_opts.time_limit)),
                     "time limit in milliseconds");
+  opts.emplace_back("",
+                    format_longm("lang"),
+                    format_dflt(dflt_opts.language),
+                    "input language {smt2, btor2}");
 
   // Format library options
   bitwuzla::Options options;
@@ -324,6 +330,7 @@ Options
 parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
 {
   Options opts;
+  bool lang_forced = false;
   for (int32_t i = 1; i < argc; ++i)
   {
     std::string arg(argv[i]);
@@ -363,22 +370,38 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
     {
       opts.time_limit = parse_arg_uint64_t(argc, i, argv);
     }
+    else if (check_opt_value(arg, "", "--lang"))
+    {
+      auto [opt, val] = parse_arg_val(argc, i, argv);
+      if (val != "smt2" && val != "btor2")
+      {
+        Error() << "invalid input language given `" << val << "`, expected "
+                << "'smt2' or 'btor2'";
+      }
+      opts.language = val;
+      lang_forced   = true;
+    }
     // Check if argument is the intput file.
-    else if (is_input_file(arg, ".smt2") || is_input_file(arg, ".btor2"))
+    else if (arg[0] != '-')
     {
       opts.infile_name = arg;
-      if (is_input_file(arg, ".btor2"))
-      {
-        opts.language = "btor2";
-      }
-      else
-      {
-        opts.language = "smt2";
-      }
     }
     else
     {
       args.push_back(arg);
+    }
+  }
+
+  // If user did not force an input language, set it according to file suffix.
+  if (!lang_forced)
+  {
+    if (is_input_file(opts.infile_name, ".btor2"))
+    {
+      opts.language = "btor2";
+    }
+    else
+    {
+      opts.language = "smt2";
     }
   }
   return opts;
