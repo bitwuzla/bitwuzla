@@ -98,6 +98,30 @@ class BitVector
   static BitVector from_si(uint64_t size, int64_t value, bool truncate = false);
 
   /**
+   * Determine if given BitVector is within either one of the given bounds,
+   * given as two (optional) ranges in the lower and upper value range.
+   *
+   * Lower range is given as `[min_lo, max_lo]` and is a range within
+   * [0, max_signed]. Upper range is given as `[max_lo, max_hi]` and is a
+   * range within [min_signed, ones]. Ranges must be valid, i.e., `min_lo <=
+   * max_lo` and `min_hi <= max_hi`. Null bit-vectors for both values in a
+   * range indicate an empty range, i.e., no values in that range are possible.
+   * Either of the two ranges must be non-null.
+   *
+   * @param bv     The bit-vector.
+   * @param min_lo The minimum value of the lower range, ignored if null.
+   * @param max_lo The maximum value of the lower range, ignored if null.
+   * @param min_hi The minimum value of the upper range, ignored if null.
+   * @param max_hi The maximum value of the upper range, ignored if null.
+   * @return True if given bit-vector is within one of the given ranges.
+   */
+  static bool is_in_bounds(const BitVector& bv,
+                           const BitVector& min_lo,
+                           const BitVector& max_lo,
+                           const BitVector& min_hi,
+                           const BitVector& max_hi);
+
+  /**
    * Create a true bit-vector (value 1 of size 1).
    * @return A bit-vector representing True.
    */

@@ -559,22 +559,6 @@ BitVectorNode::compute_min_max_bounds(const BitVector& s,
   return {};
 }
 
-bool
-BitVectorNode::is_in_bounds(const BitVector& bv,
-                            const BitVector& min_lo,
-                            const BitVector& max_lo,
-                            const BitVector& min_hi,
-                            const BitVector& max_hi)
-{
-  assert(!min_lo.is_null() || !min_hi.is_null());
-  assert(min_lo.is_null() == max_lo.is_null());
-  assert(min_hi.is_null() == max_hi.is_null());
-  return (!min_lo.is_null() && bv.compare(min_lo) >= 0
-          && bv.compare(max_lo) <= 0)
-         || (!min_hi.is_null() && bv.compare(min_hi) >= 0
-             && bv.compare(max_hi) <= 0);
-}
-
 std::ostream&
 operator<<(std::ostream& out, const BitVectorNode& node)
 {
@@ -1447,7 +1431,7 @@ BitVectorMul::is_invertible(const BitVector& t,
       {
         const BitVector& xval = x.lo();
         if (xval.bvmul(s).compare(t) == 0
-            && is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
+            && BitVector::is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
         {
           BV_NODE_CACHE_INVERSE_IF(xval);
           return true;
@@ -1467,7 +1451,7 @@ BitVectorMul::is_invertible(const BitVector& t,
           // IC: odd: mcb(x, t * s^-1)
           BitVector inv = s.bvmodinv().ibvmul(t);  // s^-1
           if (x.match_fixed_bits(inv)
-              && is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
+              && BitVector::is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
           {
             // Inverse value: s^-1
             BV_NODE_CACHE_INVERSE_IF(std::move(inv));
@@ -1495,7 +1479,7 @@ BitVectorMul::is_invertible(const BitVector& t,
           BitVectorDomain d(x.bvextract(size - 1, size - ctz).bvconcat(y_ext));
           if (d.is_fixed())
           {
-            if (is_in_bounds(d.lo(), min_lo, max_lo, min_hi, max_hi))
+            if (BitVector::is_in_bounds(d.lo(), min_lo, max_lo, min_hi, max_hi))
             {
               // Inverse value: random value in domain
               //                x[size - 1:size - ctz] o y[size - ctz(s) - 1:0]
@@ -1539,7 +1523,7 @@ BitVectorMul::is_invertible(const BitVector& t,
     if (s.lsb())
     {
       BitVector inv = t.bvmul(s.bvmodinv());
-      if (is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
+      if (BitVector::is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
       {
         // Inverse value: s odd : s^-1 (unique solution)
         BV_NODE_CACHE_INVERSE_IF(std::move(inv));
@@ -3938,7 +3922,7 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
   if (d->is_fixed())
   {
     const BitVector& xval = d->lo();
-    if (is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
+    if (BitVector::is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
     {
       BV_NODE_CACHE_INVERSE_IF(xval);
       return true;
@@ -3949,7 +3933,8 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
   if (opt_concat)
   {
     BitVector inv = inverse_value_concat(t.is_true(), pos_x);
-    if (!inv.is_null() && is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
+    if (!inv.is_null()
+        && BitVector::is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
     {
       BV_NODE_CACHE_INVERSE_IF(inv);
       return true;
@@ -4592,7 +4577,7 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
   if (d->is_fixed())
   {
     const BitVector& xval = d->lo();
-    if (is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
+    if (BitVector::is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
     {
       BV_NODE_CACHE_INVERSE_IF(d->lo());
       return true;
