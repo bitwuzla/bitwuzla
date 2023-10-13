@@ -70,7 +70,7 @@ main()
   printf("bitwuzla_sort_to_string(): %s\n\n", bitwuzla_sort_to_string(bv32));
 
   // Print terms.
-  // Note: Hexadecimal bv ouput format is ignored if the value is not of size
+  // Note: Hexadecimal bv output format is ignored if the value is not of size
   //       divisible by 4.
   printf("Print term:\n");
   printf("-----------\n");

@@ -95,7 +95,7 @@ main()
   printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
   bitwuzla_pop(bitwuzla, 1);
 
-  // Finally, delete the Bitwuzla and Bitwuzla optons instance.
+  // Finally, delete the Bitwuzla and Bitwuzla options instance.
   bitwuzla_delete(bitwuzla);
   bitwuzla_options_delete(options);
 
