@@ -381,7 +381,7 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
       opts.language = val;
       lang_forced   = true;
     }
-    // Check if argument is the intput file.
+    // Check if argument is the input file.
     else if (arg[0] != '-')
     {
       opts.infile_name = arg;

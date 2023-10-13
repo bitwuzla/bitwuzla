@@ -18,7 +18,7 @@
 namespace bzla::preprocess::pass {
 
 /**
- * Preprocessing pass to substitue embedded constraints with true.
+ * Preprocessing pass to substitute embedded constraints with true.
  */
 class PassEmbeddedConstraints : public PreprocessingPass
 {

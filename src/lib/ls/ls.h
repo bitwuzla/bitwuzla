@@ -384,7 +384,7 @@ class LocalSearch
    */
   std::vector<size_t> d_roots_control;
   /**
-   * Map root to its number of occurences in d_roots.
+   * Map root to its number of occurrences in d_roots.
    * This is to safe guard against non-unique registration of roots.
    */
   std::unordered_map<uint64_t, uint64_t> d_roots_cnt;

@@ -192,7 +192,7 @@ class NodeManager
   /**
    * Constructor, copy constructor, copy assignment and destructor are private
    * since node manager is a thread-local singleton that should always be
-   * aquired via NodeManager::get().
+   * acquired via NodeManager::get().
    */
   NodeManager()                              = default;
   ~NodeManager();
@@ -259,7 +259,7 @@ class NodeManager
   /** Indicates whether node manager is in garbage collection mode. */
   bool d_in_gc_mode = false;
 
-  /** Stores all node data objects, accessiable via the node id. */
+  /** Stores all node data objects, accessible via the node id. */
   std::vector<std::unique_ptr<node::NodeData>> d_node_data;
 
   /** Lookup data structure for hash consing of node data. */

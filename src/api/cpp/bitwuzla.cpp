@@ -344,7 +344,7 @@ Exception::what() const noexcept
 set_bv_format::set_bv_format(uint8_t format) : d_format(format)
 {
   BITWUZLA_CHECK(format == 2 || format == 10 || format == 16)
-      << "invalid bit-vector output number format, expecte '2', '10' or '16'";
+      << "invalid bit-vector output number format, expected '2', '10' or '16'";
 }
 
 std::ostream &

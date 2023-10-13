@@ -659,7 +659,7 @@ class BitVector
 
   /**
    * Calculate modular inverse for this bit-vector by means of the Extended
-   * Euclidian Algorithm.
+   * Euclidean Algorithm.
    *
    * @note Bit-vector must be odd. The greatest common divisor gcd (c, 2^bw)
    *       must be (and is, in this case) always 1.
@@ -1247,7 +1247,7 @@ class BitVector
 
   /**
    * Logical left shift (in-place) of the given bit-vector by the given
-   * unsigend integer value.
+   * unsigned integer value.
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
@@ -1605,13 +1605,13 @@ class BitVector
    * @param c A bit-vector representing the condition of the ite.
    * @param t A bit-vector representing the then branch of the ite.
    * @param e A bit-vector representing the else branch of the ite.
-   * @return A reference to this bit-vector, overwriten with the ite.
+   * @return A reference to this bit-vector, overwritten with the ite.
    */
   BitVector& ibvite(const BitVector& c, const BitVector& t, const BitVector& e);
 
   /**
    * Calculate modular inverse of the given bit-vector by means of the Extended
-   * Euclidian Algorithm (in-place).
+   * Euclidean Algorithm (in-place).
    *
    * @note Bit-vector `bv` must be odd. The greatest common divisor
    *       gcd (c, 2^bw) must be (and is, in this case) always 1.
@@ -1625,7 +1625,7 @@ class BitVector
   BitVector& ibvmodinv(const BitVector& bv);
   /**
    * Calculate modular inverse of this bit-vector by means of the Extended
-   * Euclidian Algorithm (in-place).
+   * Euclidean Algorithm (in-place).
    *
    * @note This bit-vector must be odd. The greatest common divisor
    *       gcd (c, 2^bw) must be (and is, in this case) always 1.

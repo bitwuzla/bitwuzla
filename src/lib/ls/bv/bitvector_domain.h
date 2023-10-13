@@ -173,7 +173,7 @@ class BitVectorDomain
    */
   BitVectorDomain bvnot() const;
   /**
-   * Create a bit-vector domain that represents a logial left shift of this
+   * Create a bit-vector domain that represents a logical left shift of this
    * domain by the shift value represented as bit-vector `bv`.
    * @param bv A bit-vector representing the shift value.
    * @return A domain representing the logical left shift by `bv` of this
@@ -181,7 +181,7 @@ class BitVectorDomain
    */
   BitVectorDomain bvshl(const BitVector &shift) const;
   /**
-   * Create a bit-vector domain that represents a logial right shift of this
+   * Create a bit-vector domain that represents a logical right shift of this
    * domain by the shift value represented as bit-vector `bv`.
    * @param bv A bit-vector representing the shift value.
    * @return A domain representing the logical right shift by `bv` of this

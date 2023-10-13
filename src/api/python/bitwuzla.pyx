@@ -1353,7 +1353,7 @@ def mk_term(kind: Kind, terms: list[Term], indices: list[int] = []) -> Term:
 # --------------------------------------------------------------------------- #
 
 def substitute_term(term: Term, substs: dict[Term, Term]) -> Term:
-    """Substitute a set terms in a given term. The substitutions to perfom are
+    """Substitute a set terms in a given term. The substitutions to perform are
        represented as map from keys to be substituted with their corresponding
        values in the given term.
 
@@ -1367,7 +1367,7 @@ def substitute_term(term: Term, substs: dict[Term, Term]) -> Term:
 
 def substitute_terms(terms: list[Term], substs: dict[Term, Term]) -> list[Term]:
     """Substitute a set of terms in a set of given terms. The substitutions to
-       perfom are represented as map from keys to be substituted with their
+       perform are represented as map from keys to be substituted with their
        corresponding values in the given terms.
 
        The terms in `terms` are replaced with the terms resulting from these
