@@ -1451,7 +1451,7 @@ tests_btor2_sat = [
   #['parser/btorperr001.btor'],
   #['parser/btorperr002.btor'],
   #['parser/btorperr003.btor'],
-  #['rewrite/array/rwr1.btor', ['-br all']], # TODO disaled because of -br
+  #['rewrite/array/rwr1.btor', ['-br all']], # TODO disabled because of -br
   #['solver/array/regrbetacache1.btor', ['-br all']], # TODO disabled because of -br
   #['solver/array/regrbetacache2.btor', ['-br all']], # currently broken since we don't allow to mix lambdas with arrays # TODO disabled because of -br
   #['solver/bv/concatslice1.btor', ['-rwl=1 -db']],
