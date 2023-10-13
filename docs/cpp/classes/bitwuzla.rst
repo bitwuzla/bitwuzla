@@ -7,7 +7,7 @@ configured before creating the Bitwuzla instance: **after** the Bitwuzla
 instance is created, configuration options are fixed and **cannot** be changed.
 :cpp:class:`bitwuzla::Sorts <bitwuzla::Sort>` and
 :cpp:class:`bitwuzla::Terms <bitwuzla::Term>` are **independent** of a
-:cpp:class:`bitwuzla::Bitwuzla` instance and can be shared accross Bitwuzla
+:cpp:class:`bitwuzla::Bitwuzla` instance and can be shared across Bitwuzla
 instances.
 
 Bitwuzla supports **incremental solving** via

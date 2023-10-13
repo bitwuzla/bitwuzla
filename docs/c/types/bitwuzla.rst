@@ -7,7 +7,7 @@ configured before creating the Bitwuzla instance: **after** the Bitwuzla
 instance is created, configuration options are fixed and **cannot** be changed.
 :cpp:struct:`BitwuzlaSorts <BitwuzlaSort>` and
 :cpp:struct:`BitwuzlaTerms <BitwuzlaTerm>` are **independent** of a
-:cpp:struct:`Bitwuzla` instance and can be shared accross Bitwuzla
+:cpp:struct:`Bitwuzla` instance and can be shared across Bitwuzla
 instances.
 
 A Bitwuzla instance is created via :cpp:func:`bitwuzla_new()` and must be
