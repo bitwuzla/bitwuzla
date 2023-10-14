@@ -56,7 +56,7 @@ bitwuzla_parser_new(BitwuzlaOptions* options,
                     uint8_t base,
                     const char* outfile_name)
 {
-  BitwuzlaParser* res;
+  BitwuzlaParser* res = NULL;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_NOT_NULL(infile_name);
@@ -96,7 +96,7 @@ bitwuzla_parser_parse(BitwuzlaParser* parser, bool parse_only)
 Bitwuzla*
 bitwuzla_parser_get_bitwuzla(BitwuzlaParser* parser)
 {
-  Bitwuzla* res;
+  Bitwuzla* res = NULL;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   if (!parser->d_bitwuzla)
