@@ -6,9 +6,18 @@ project('gmp',
 
 mod = import('unstable-external_project')
 
-cc = meson.get_compiler('c')
-host = run_command(cc, '-dumpmachine',
+host_compiler = meson.get_compiler('c', native: false)
+build_compiler = meson.get_compiler('c', native: true)
+
+host = run_command(host_compiler, '-dumpmachine',
                    capture: true, check: true).stdout().strip()
+build = run_command(build_compiler, '-dumpmachine',
+                   capture: true, check: true).stdout().strip()
+
+env = environment()
+if meson.is_cross_build()
+  env.set('CC_FOR_BUILD', build_compiler.get_id())
+endif
 
 p = mod.add_project('configure',
   configure_options: [
@@ -19,8 +28,10 @@ p = mod.add_project('configure',
         '--enable-cxx'
   ],
   cross_configure_options: [
-    '--host=' + host
-  ]
+    '--host=' + host,
+    '--build=' + build
+  ],
+  env: env
 )
 
 gmp_dep = p.dependency('gmp')
