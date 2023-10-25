@@ -118,6 +118,12 @@ gtest_dep = dependency('gtest_main', required: true)
 test_inc = [include_directories('../../src', '../..', 'lib')]
 test_deps = [gtest_dep, bitwuzla_dep, gmp_dep]
 
+# Disable wine debug output if we run the cross-compiled binary
+env = []
+if meson.is_cross_build()
+  env += ['WINEDEBUG=fixme-all']
+endif
+
 # Add unit tests
 foreach p : unit_tests
   test_subdir = p[0]
@@ -132,6 +138,6 @@ foreach p : unit_tests
                dependencies: test_deps,
                include_directories: test_inc,
                cpp_args: ['-fno-access-control'])
-    test(name, exe, suite: ['unit', suite], timeout: 0)
+    test(name, exe, suite: ['unit', suite], timeout: 0, env: env)
   endforeach
 endforeach
