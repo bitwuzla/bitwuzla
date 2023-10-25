@@ -359,7 +359,7 @@ BitVectorNode::tighten_bounds(BitVector* min_u,
                         max_s);
 }
 
-std::tuple<BitVector, BitVector, BitVector, BitVector>
+BitVectorBounds
 BitVectorNode::normalize_bounds(BitVector* min_u,
                                 BitVector* max_u,
                                 BitVector* min_s,
@@ -520,13 +520,22 @@ BitVectorNode::normalize_bounds(BitVector* min_u,
 
   assert(!min_lo || max_lo);
   assert(!min_hi || max_hi);
-  return {min_lo ? *min_lo : BitVector(),
-          max_lo ? *max_lo : BitVector(),
-          min_hi ? *min_hi : BitVector(),
-          max_hi ? *max_hi : BitVector()};
+  if (!min_lo)
+  {
+    if (!min_hi)
+    {
+      return BitVectorBounds();
+    }
+    return BitVectorBounds({}, {*min_hi, *max_hi});
+  }
+  if (!min_hi)
+  {
+    return BitVectorBounds({*min_lo, *max_lo}, {});
+  }
+  return BitVectorBounds({*min_lo, *max_lo}, {*min_hi, *max_hi});
 }
 
-std::tuple<BitVector, BitVector, BitVector, BitVector>
+BitVectorBounds
 BitVectorNode::compute_normalized_bounds(const BitVector& s,
                                          const BitVector& t,
                                          uint64_t pos_x)
@@ -544,7 +553,7 @@ BitVectorNode::compute_normalized_bounds(const BitVector& s,
                                   max_s.is_null() ? op_x->max_s() : &max_s);
   }
   // else conflict, return tuple of null BitVectors
-  return {};
+  return BitVectorBounds();
 }
 
 std::tuple<BitVector, BitVector, BitVector, BitVector>
@@ -826,22 +835,18 @@ BitVectorAnd::is_invertible(const BitVector& t,
   {
     if (min_u || max_u || min_s || max_s)
     {
-      auto [min_lo, max_lo, min_hi, max_hi] =
-          compute_normalized_bounds(s, t, pos_x);
-      if (min_hi.is_null() && max_hi.is_null() && min_lo.is_null()
-          && max_lo.is_null())
+      BitVectorBounds bounds = compute_normalized_bounds(s, t, pos_x);
+      if (bounds.empty())
       {
         return false;
       }
-      assert(!d_lo.is_null() && !d_hi.is_null());
       if (d_lo.compare(d_hi) == 0)
       {
         BV_NODE_CACHE_INVERSE_IF(d_lo);
         return true;
       }
       BitVectorDomain tmp(x.lo().bvor(t), x.hi().bvand(s.bvxnor(t)));
-      BitVectorDomainDualGenerator gen(
-          tmp, min_lo, max_lo, min_hi, max_hi, d_rng);
+      BitVectorDomainDualGenerator gen(tmp, bounds, d_rng);
       if (!gen.has_random())
       {
         return false;
@@ -1417,9 +1422,8 @@ BitVectorMul::is_invertible(const BitVector& t,
 
   if (ic_wo)
   {
-    auto [min_lo, max_lo, min_hi, max_hi] =
-        compute_normalized_bounds(s, t, pos_x);
-    if (min_lo.is_null() && min_hi.is_null())
+    BitVectorBounds bounds = compute_normalized_bounds(s, t, pos_x);
+    if (bounds.empty())
     {
       return false;
     }
@@ -1431,7 +1435,7 @@ BitVectorMul::is_invertible(const BitVector& t,
       {
         const BitVector& xval = x.lo();
         if (xval.bvmul(s).compare(t) == 0
-            && BitVector::is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
+            && BitVector::is_in_bounds(xval, bounds))
         {
           BV_NODE_CACHE_INVERSE_IF(xval);
           return true;
@@ -1450,8 +1454,7 @@ BitVectorMul::is_invertible(const BitVector& t,
         {
           // IC: odd: mcb(x, t * s^-1)
           BitVector inv = s.bvmodinv().ibvmul(t);  // s^-1
-          if (x.match_fixed_bits(inv)
-              && BitVector::is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
+          if (x.match_fixed_bits(inv) && BitVector::is_in_bounds(inv, bounds))
           {
             // Inverse value: s^-1
             BV_NODE_CACHE_INVERSE_IF(std::move(inv));
@@ -1479,7 +1482,7 @@ BitVectorMul::is_invertible(const BitVector& t,
           BitVectorDomain d(x.bvextract(size - 1, size - ctz).bvconcat(y_ext));
           if (d.is_fixed())
           {
-            if (BitVector::is_in_bounds(d.lo(), min_lo, max_lo, min_hi, max_hi))
+            if (BitVector::is_in_bounds(d.lo(), bounds))
             {
               // Inverse value: random value in domain
               //                x[size - 1:size - ctz] o y[size - ctz(s) - 1:0]
@@ -1489,8 +1492,7 @@ BitVectorMul::is_invertible(const BitVector& t,
             }
             return false;
           }
-          BitVectorDomainDualGenerator gen(
-              d, min_lo, max_lo, min_hi, max_hi, d_rng);
+          BitVectorDomainDualGenerator gen(d, bounds, d_rng);
           if (gen.has_random())
           {
             BV_NODE_CACHE_INVERSE_IF(gen.random());
@@ -1501,8 +1503,7 @@ BitVectorMul::is_invertible(const BitVector& t,
         return false;
       }
       // IC: IC_wo && s = 0
-      BitVectorDomainDualGenerator gen(
-          x, min_lo, max_lo, min_hi, max_hi, d_rng);
+      BitVectorDomainDualGenerator gen(x, bounds, d_rng);
       if (gen.has_random())
       {
         // Inverse value: s = 0: random value
@@ -1516,14 +1517,18 @@ BitVectorMul::is_invertible(const BitVector& t,
     if (s.is_zero())
     {
       // Inverse value: s = 0 (=> t = 0): random value
-      BV_NODE_CACHE_INVERSE_IF(
-          BitVector(x.size(), *d_rng, min_lo, max_lo, min_hi, max_hi));
+      BV_NODE_CACHE_INVERSE_IF(BitVector(x.size(),
+                                         *d_rng,
+                                         bounds.d_lo.d_min,
+                                         bounds.d_lo.d_max,
+                                         bounds.d_hi.d_min,
+                                         bounds.d_hi.d_max));
       return true;
     }
     if (s.lsb())
     {
       BitVector inv = t.bvmul(s.bvmodinv());
-      if (BitVector::is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
+      if (BitVector::is_in_bounds(inv, bounds))
       {
         // Inverse value: s odd : s^-1 (unique solution)
         BV_NODE_CACHE_INVERSE_IF(std::move(inv));
@@ -1556,8 +1561,7 @@ BitVectorMul::is_invertible(const BitVector& t,
                     .ibvextract(size - n - 1, 0);
       }
       BitVectorDomain d = BitVectorDomain(size - right.size()).bvconcat(right);
-      BitVectorDomainDualGenerator gen(
-          d, min_lo, max_lo, min_hi, max_hi, d_rng);
+      BitVectorDomainDualGenerator gen(d, bounds, d_rng);
       if (gen.has_random())
       {
         // Inverse value: random value in domain
@@ -3912,9 +3916,8 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
 {
   // IC_wo: pos_x = 0: t = 0 || s != 0
   //        pos_x = 1: t = 0 || s != ones
-  auto [min_lo, max_lo, min_hi, max_hi] =
-      compute_normalized_bounds(s, t, pos_x);
-  if (min_lo.is_null() && min_hi.is_null())
+  BitVectorBounds bounds = compute_normalized_bounds(s, t, pos_x);
+  if (bounds.empty())
   {
     return false;
   }
@@ -3922,7 +3925,7 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
   if (d->is_fixed())
   {
     const BitVector& xval = d->lo();
-    if (BitVector::is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
+    if (BitVector::is_in_bounds(xval, bounds))
     {
       BV_NODE_CACHE_INVERSE_IF(xval);
       return true;
@@ -3933,8 +3936,7 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
   if (opt_concat)
   {
     BitVector inv = inverse_value_concat(t.is_true(), pos_x);
-    if (!inv.is_null()
-        && BitVector::is_in_bounds(inv, min_lo, max_lo, min_hi, max_hi))
+    if (!inv.is_null() && BitVector::is_in_bounds(inv, bounds))
     {
       BV_NODE_CACHE_INVERSE_IF(inv);
       return true;
@@ -3945,7 +3947,7 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
   //    pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
   if (d->has_fixed_bits())
   {
-    BitVectorDomainDualGenerator gen(*d, min_lo, max_lo, min_hi, max_hi, d_rng);
+    BitVectorDomainDualGenerator gen(*d, bounds, d_rng);
     if (gen.has_random())
     {
       BV_NODE_CACHE_INVERSE_IF(gen.random());
@@ -3953,28 +3955,26 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
     }
     return false;
   }
-  assert(!min_lo.is_null() || !min_hi.is_null());
+  assert(!bounds.empty());
   if (!is_essential_check)
   {
-    if (!min_lo.is_null())
+    if (bounds.has_lo())
     {
-      assert(!max_lo.is_null());
-      if (!min_hi.is_null() && d_rng->flip_coin())
+      if (bounds.has_hi() && d_rng->flip_coin())
       {
-        assert(!max_hi.is_null());
-        BV_NODE_CACHE_INVERSE(
-            BitVector(d->size(), *d_rng, min_hi, max_hi, false));
+        BV_NODE_CACHE_INVERSE(BitVector(
+            d->size(), *d_rng, bounds.d_hi.d_min, bounds.d_hi.d_max, false));
       }
       else
       {
-        BV_NODE_CACHE_INVERSE(
-            BitVector(d->size(), *d_rng, min_lo, max_lo, false));
+        BV_NODE_CACHE_INVERSE(BitVector(
+            d->size(), *d_rng, bounds.d_lo.d_min, bounds.d_lo.d_max, false));
       }
     }
     else
     {
-      BV_NODE_CACHE_INVERSE(
-          BitVector(d->size(), *d_rng, min_hi, max_hi, false));
+      BV_NODE_CACHE_INVERSE(BitVector(
+          d->size(), *d_rng, bounds.d_hi.d_min, bounds.d_hi.d_max, false));
     }
   }
   return true;
@@ -4553,10 +4553,9 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
 {
   // IC_wo: pos_x = 0: t = 0 || s != min_signed_value
   //        pos_x = 1: t = 0 || s != max_signed_value
-  auto [min_lo, max_lo, min_hi, max_hi] =
-      compute_normalized_bounds(s, t, pos_x);
+  BitVectorBounds bounds = compute_normalized_bounds(s, t, pos_x);
 
-  if (min_lo.is_null() && min_hi.is_null())
+  if (bounds.empty())
   {
     return false;
   }
@@ -4577,7 +4576,7 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
   if (d->is_fixed())
   {
     const BitVector& xval = d->lo();
-    if (BitVector::is_in_bounds(xval, min_lo, max_lo, min_hi, max_hi))
+    if (BitVector::is_in_bounds(xval, bounds))
     {
       BV_NODE_CACHE_INVERSE_IF(d->lo());
       return true;
@@ -4586,7 +4585,7 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
   }
   if (d->has_fixed_bits())
   {
-    BitVectorDomainDualGenerator gen(*d, min_lo, max_lo, min_hi, max_hi, d_rng);
+    BitVectorDomainDualGenerator gen(*d, bounds, d_rng);
 
     if (gen.has_random())
     {
@@ -4595,27 +4594,26 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
     }
     return false;
   }
-  assert(!min_lo.is_null() || !min_hi.is_null());
+  assert(!bounds.empty());
   if (!is_essential_check)
   {
-    if (!min_lo.is_null())
+    if (bounds.has_lo())
     {
-      assert(!max_lo.is_null());
-      if (!min_hi.is_null() && d_rng->flip_coin())
+      if (bounds.has_hi() && d_rng->flip_coin())
       {
-        assert(!max_hi.is_null());
-        BV_NODE_CACHE_INVERSE(
-            BitVector(d->size(), *d_rng, min_hi, max_hi, true));
+        BV_NODE_CACHE_INVERSE(BitVector(
+            d->size(), *d_rng, bounds.d_hi.d_min, bounds.d_hi.d_max, true));
       }
       else
       {
-        BV_NODE_CACHE_INVERSE(
-            BitVector(d->size(), *d_rng, min_lo, max_lo, true));
+        BV_NODE_CACHE_INVERSE(BitVector(
+            d->size(), *d_rng, bounds.d_lo.d_min, bounds.d_lo.d_max, true));
       }
     }
     else
     {
-      BV_NODE_CACHE_INVERSE(BitVector(d->size(), *d_rng, min_hi, max_hi, true));
+      BV_NODE_CACHE_INVERSE(BitVector(
+          d->size(), *d_rng, bounds.d_hi.d_min, bounds.d_hi.d_max, true));
     }
   }
   return true;
@@ -5064,7 +5062,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
       return false;
     }
 
-    if (pos_x == 0 && (x_has_fixed_bits || !is_essential_check))
+    if (pos_x == 0)
     {
       if (s.is_zero() || t.is_ones())
       {
@@ -5139,7 +5137,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
       return res;
     }
 
-    if (pos_x == 1 && (x_has_fixed_bits || !is_essential_check))
+    if (pos_x == 1)
     {
       // IC: pos_x = 1: t = ones: mcb(x, 0)
       uint64_t size = x.size();
@@ -5224,7 +5222,11 @@ BitVectorUrem::is_invertible(const BitVector& t,
           // s - t does not match const bits of x and one is not a possible
           // solution. Find factor n of (s - t) s.t. n > t and n matches the
           // const bits of x. Pick x = n.
-          BitVector bv = x.get_factor(d_rng, n, t, 10000);
+          assert(!t.is_ones());
+          BitVector ones = BitVector::mk_ones(size);
+          BitVector inc  = t.bvinc();
+          BitVector bv   = x.get_factor(
+              d_rng, n, normalize_bounds(&inc, &ones, nullptr, nullptr), 10000);
           assert(bv.is_null() || x.match_fixed_bits(bv));
           if (bv.is_null())
           {
@@ -5260,7 +5262,14 @@ BitVectorUrem::is_invertible(const BitVector& t,
           }
           else
           {
-            BitVector bv = x.get_factor(d_rng, sub, t, 10000);
+            assert(!t.is_ones());
+            BitVector ones = BitVector::mk_ones(size);
+            BitVector inc  = t.bvinc();
+            BitVector bv =
+                x.get_factor(d_rng,
+                             sub,
+                             normalize_bounds(&inc, &ones, nullptr, nullptr),
+                             10000);
             assert(bv.is_null() || x.match_fixed_bits(bv));
             if (!bv.is_null())
             {
@@ -6520,7 +6529,7 @@ BitVectorSignExtend::evaluate()
   _evaluate();
 }
 
-std::tuple<BitVector, BitVector, BitVector, BitVector>
+BitVectorBounds
 BitVectorSignExtend::normalize_bounds(BitVector* min_u,
                                       BitVector* max_u,
                                       BitVector* min_s,
@@ -6533,12 +6542,11 @@ BitVectorSignExtend::normalize_bounds(BitVector* min_u,
 
   // First, compute the normalized bounds of the current signed and unsigned
   // bounds on x.
-  auto res = BitVectorNode::normalize_bounds(min_u, max_u, min_s, max_s);
-  auto& [min_lo, max_lo, min_hi, max_hi] = res;
+  auto bounds = BitVectorNode::normalize_bounds(min_u, max_u, min_s, max_s);
 
-  if (min_lo.is_null() && min_hi.is_null())
+  if (bounds.empty())
   {
-    return {};  // conflict
+    return bounds;  // conflict
   }
 
   if (d_n > 0)
@@ -6570,68 +6578,60 @@ BitVectorSignExtend::normalize_bounds(BitVector* min_u,
         max_1.ibvconcat(d_domain.hi().bvextract(dx_size - 2, 0));
       }
     }
-    if (!min_lo.is_null())
+    if (bounds.has_lo())
     {
-      assert(!max_lo.is_null());
       // Identify conflicts.
-      if (!max_0.is_null() && max_0.compare(min_lo) < 0)
+      if (!max_0.is_null() && max_0.compare(bounds.d_lo.d_min) < 0)
       {
-        min_lo = BitVector();
-        max_lo = BitVector();
+        bounds.set_lo_empty();
       }
-      else if (!min_0.is_null() && min_0.compare(max_lo) > 0)
+      else if (!min_0.is_null() && min_0.compare(bounds.d_lo.d_max) > 0)
       {
-        min_lo = BitVector();
-        max_lo = BitVector();
+        bounds.set_lo_empty();
       }
       // Tighten bounds.
-      if (!min_lo.is_null())
+      if (bounds.has_lo())
       {
-        if (!min_0.is_null() && min_0.compare(min_lo) > 0)
+        if (!min_0.is_null() && min_0.compare(bounds.d_lo.d_min) > 0)
         {
-          min_lo = min_0;
+          bounds.d_lo.d_min = min_0;
         }
-        if (!max_0.is_null() && max_0.compare(max_lo) < 0)
+        if (!max_0.is_null() && max_0.compare(bounds.d_lo.d_max) < 0)
         {
-          max_lo = max_0;
+          bounds.d_lo.d_max = max_0;
         }
       }
     }
-    if (!min_hi.is_null())
+    if (bounds.has_hi())
     {
-      assert(!max_hi.is_null());
       // Identify conflicts.
-      if (!max_1.is_null() && max_1.compare(min_hi) < 0)
+      if (!max_1.is_null() && max_1.compare(bounds.d_hi.d_min) < 0)
       {
-        min_hi = BitVector();
-        max_hi = BitVector();
+        bounds.set_hi_empty();
       }
-      else if (!min_1.is_null() && min_1.compare(max_hi) > 0)
+      else if (!min_1.is_null() && min_1.compare(bounds.d_hi.d_max) > 0)
       {
-        min_hi = BitVector();
-        max_hi = BitVector();
+        bounds.set_hi_empty();
       }
-      if (min_lo.is_null() && min_hi.is_null())
+      if (bounds.empty())
       {
-        assert(max_lo.is_null());
-        assert(max_hi.is_null());
-        return {};  // conflict
+        return bounds;  // conflict
       }
       // Tighten bounds.
-      if (!min_hi.is_null())
+      if (bounds.has_hi())
       {
-        if (!min_1.is_null() && min_1.compare(min_hi) > 0)
+        if (!min_1.is_null() && min_1.compare(bounds.d_hi.d_min) > 0)
         {
-          min_hi = min_1;
+          bounds.d_hi.d_min = min_1;
         }
-        if (!max_1.is_null() && max_1.compare(max_hi) < 0)
+        if (!max_1.is_null() && max_1.compare(bounds.d_hi.d_max) < 0)
         {
-          max_hi = max_1;
+          bounds.d_hi.d_max = max_1;
         }
       }
     }
   }
-  return res;
+  return bounds;
 }
 
 bool

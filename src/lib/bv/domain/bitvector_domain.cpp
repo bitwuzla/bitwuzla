@@ -14,6 +14,7 @@
 #include <cassert>
 #include <iostream>
 
+#include "bv/bounds/bitvector_bounds.h"
 #include "rng/rng.h"
 #include "util/wheel_factorizer.h"
 
@@ -269,7 +270,7 @@ BitVectorDomain::bvextract(uint64_t idx_hi, uint64_t idx_lo) const
 BitVector
 BitVectorDomain::get_factor(RNG *rng,
                             const BitVector &num,
-                            const BitVector &excl_min,
+                            const BitVectorBounds &bounds,
                             uint64_t limit) const
 {
   WheelFactorizer wf(num, limit);
@@ -322,7 +323,7 @@ BitVectorDomain::get_factor(RNG *rng,
           }
         }
         assert(!mul.is_null());
-        if (mul.compare(excl_min) > 0 && match_fixed_bits(mul))
+        if (match_fixed_bits(mul) && BitVector::is_in_bounds(mul, bounds))
         {
           return mul;
         }
@@ -331,7 +332,11 @@ BitVectorDomain::get_factor(RNG *rng,
     else
     {
       assert(n_factors == 1);
-      return factors[0];
+      if (match_fixed_bits(factors[0])
+          && BitVector::is_in_bounds(factors[0], bounds))
+      {
+        return factors[0];
+      }
     }
   }
   return BitVector();
@@ -573,42 +578,24 @@ BitVectorDomainGenerator::generate_next(bool random)
 }
 
 BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
-    const BitVectorDomain &domain,
-    const BitVector &min_lo,
-    const BitVector &max_lo,
-    const BitVector &min_hi,
-    const BitVector &max_hi,
-    RNG *rng)
+    const BitVectorDomain &domain, const BitVectorBounds &bounds, RNG *rng)
     : d_rng(rng)
 {
-  assert(max_lo.is_null() || min_lo.is_null() || max_lo.compare(min_lo) >= 0);
-  assert(max_hi.is_null() || min_hi.is_null() || max_hi.compare(min_hi) >= 0);
-
-  uint64_t size = domain.size();
-  assert(max_lo.is_null()
-         || max_lo.compare(BitVector::mk_max_signed(size)) <= 0);
-  assert(min_hi.is_null()
-         || min_hi.compare(BitVector::mk_min_signed(size)) >= 0);
+  assert(bounds.valid());
 
   d_gen_lo.reset(nullptr);
   d_gen_hi.reset(nullptr);
 
-  if (!min_lo.is_null() || !max_lo.is_null())
+  if (bounds.has_lo())
   {
     d_gen_lo.reset(new BitVectorDomainGenerator(
-        domain,
-        rng,
-        min_lo.is_null() ? BitVector::mk_zero(size) : min_lo,
-        max_lo.is_null() ? BitVector::mk_max_signed(size) : max_lo));
+        domain, rng, bounds.d_lo.d_min, bounds.d_lo.d_max));
     d_gen_cur = d_gen_lo.get();
   }
-  if (!min_hi.is_null() || !max_hi.is_null())
+  if (bounds.has_hi())
   {
     d_gen_hi.reset(new BitVectorDomainGenerator(
-        domain,
-        rng,
-        min_hi.is_null() ? BitVector::mk_min_signed(size) : min_hi,
-        max_hi.is_null() ? BitVector::mk_ones(size) : max_hi));
+        domain, rng, bounds.d_hi.d_min, bounds.d_hi.d_max));
     if (d_gen_cur == nullptr) d_gen_cur = d_gen_hi.get();
   }
 }

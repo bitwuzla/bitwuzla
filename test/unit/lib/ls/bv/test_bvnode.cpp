@@ -22,8 +22,8 @@ TestBvNode::test_normalize_bounds(const BitVector& min_u,
                                   const BitVector& max_s,
                                   bool max_s_is_excl,
                                   const BitVector& min_lo_exp,
-                                  const BitVector& min_hi_exp,
                                   const BitVector& max_lo_exp,
+                                  const BitVector& min_hi_exp,
                                   const BitVector& max_hi_exp)
 {
   BitVectorNode node(d_rng.get(), 4);
@@ -55,20 +55,28 @@ TestBvNode::test_normalize_bounds(const BitVector& min_u,
       node.update_bounds(min_s, max_s, min_s_is_excl, max_s_is_excl, true);
     }
   }
-  auto [min_lo, min_hi, max_lo, max_hi] = node.normalize_bounds(
+  BitVectorBounds bounds = node.normalize_bounds(
       node.min_u(), node.max_u(), node.min_s(), node.max_s());
-  ASSERT_EQ(min_lo.is_null(), min_lo_exp.is_null());
-  ASSERT_EQ(min_hi.is_null(), min_hi_exp.is_null());
-  ASSERT_EQ(max_lo.is_null(), max_lo_exp.is_null());
-  ASSERT_EQ(max_hi.is_null(), max_hi_exp.is_null());
-  assert(min_lo.is_null() || min_lo.compare(min_lo_exp) == 0);
-  assert(min_hi.is_null() || min_hi.compare(min_hi_exp) == 0);
-  assert(max_lo.is_null() || max_lo.compare(max_lo_exp) == 0);
-  assert(max_hi.is_null() || max_hi.compare(max_hi_exp) == 0);
-  ASSERT_TRUE(min_lo.is_null() || min_lo.compare(min_lo_exp) == 0);
-  ASSERT_TRUE(min_hi.is_null() || min_hi.compare(min_hi_exp) == 0);
-  ASSERT_TRUE(max_lo.is_null() || max_lo.compare(max_lo_exp) == 0);
-  ASSERT_TRUE(max_hi.is_null() || max_hi.compare(max_hi_exp) == 0);
+  ASSERT_EQ(bounds.d_lo.d_min.is_null(), min_lo_exp.is_null());
+  ASSERT_EQ(bounds.d_lo.d_max.is_null(), max_lo_exp.is_null());
+  ASSERT_EQ(bounds.d_hi.d_min.is_null(), min_hi_exp.is_null());
+  ASSERT_EQ(bounds.d_hi.d_max.is_null(), max_hi_exp.is_null());
+  assert(bounds.d_lo.d_min.is_null()
+         || bounds.d_lo.d_min.compare(min_lo_exp) == 0);
+  assert(bounds.d_lo.d_max.is_null()
+         || bounds.d_lo.d_max.compare(max_lo_exp) == 0);
+  assert(bounds.d_hi.d_min.is_null()
+         || bounds.d_hi.d_min.compare(min_hi_exp) == 0);
+  assert(bounds.d_hi.d_max.is_null()
+         || bounds.d_hi.d_max.compare(max_hi_exp) == 0);
+  ASSERT_TRUE(bounds.d_lo.d_min.is_null()
+              || bounds.d_lo.d_min.compare(min_lo_exp) == 0);
+  ASSERT_TRUE(bounds.d_lo.d_max.is_null()
+              || bounds.d_lo.d_max.compare(max_lo_exp) == 0);
+  ASSERT_TRUE(bounds.d_hi.d_min.is_null()
+              || bounds.d_hi.d_min.compare(min_hi_exp) == 0);
+  ASSERT_TRUE(bounds.d_hi.d_max.is_null()
+              || bounds.d_hi.d_max.compare(max_hi_exp) == 0);
 }
 
 void

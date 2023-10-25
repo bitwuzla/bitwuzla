@@ -17,6 +17,7 @@
 #include <unordered_set>
 #include <utility>
 
+#include "bv/bounds/bitvector_bounds.h"
 #include "rng/rng.h"
 
 namespace bzla {
@@ -440,19 +441,13 @@ BitVector::from_si(uint64_t size, int64_t value, bool truncate)
 }
 
 bool
-BitVector::is_in_bounds(const BitVector& bv,
-                        const BitVector& min_lo,
-                        const BitVector& max_lo,
-                        const BitVector& min_hi,
-                        const BitVector& max_hi)
+BitVector::is_in_bounds(const BitVector& bv, const BitVectorBounds& bounds)
 {
-  assert(!min_lo.is_null() || !min_hi.is_null());
-  assert(min_lo.is_null() == max_lo.is_null());
-  assert(min_hi.is_null() == max_hi.is_null());
-  return (!min_lo.is_null() && bv.compare(min_lo) >= 0
-          && bv.compare(max_lo) <= 0)
-         || (!min_hi.is_null() && bv.compare(min_hi) >= 0
-             && bv.compare(max_hi) <= 0);
+  assert(bounds.valid());
+  return (bounds.has_lo() && bv.compare(bounds.d_lo.d_min) >= 0
+          && bv.compare(bounds.d_lo.d_max) <= 0)
+         || (bounds.has_hi() && bv.compare(bounds.d_hi.d_min) >= 0
+             && bv.compare(bounds.d_hi.d_max) <= 0);
 }
 
 BitVector::BitVector(const BitVector& other)
@@ -3400,6 +3395,8 @@ operator<<(std::ostream& out, const BitVector& bv)
   out << bv.str();
   return out;
 }
+
+/* -------------------------------------------------------------------------- */
 
 }  // namespace bzla
 

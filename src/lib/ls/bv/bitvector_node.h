@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "bv/bitvector.h"
+#include "bv/bounds/bitvector_bounds.h"
 #include "bv/domain/bitvector_domain.h"
 #include "ls/ls.h"
 #include "ls/node/node.h"
@@ -27,6 +28,8 @@ namespace ls {
 /* -------------------------------------------------------------------------- */
 
 class BitVectorExtract;
+
+/* -------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------- */
 
@@ -218,15 +221,14 @@ class BitVectorNode : public Node<BitVector>
    * @param min_s      The lower signed bound.
    * @param max_s      The upper signed bound.
    *
-   * @return A tuple [min_lo, max_lo, min_hi, max_hi] of resulting lower and
-   *         upper range bounds, null BitVectors for both min/max in the lo
-   *         and/or hi range if no values in that range are covered.
+   * @return The resulting lower and upper range bounds, null BitVectors for
+   *         both min/max in the lo and/or hi range if no values in that range
+   *         are covered.
    */
-  virtual std::tuple<BitVector, BitVector, BitVector, BitVector>
-  normalize_bounds(BitVector* min_u,
-                   BitVector* max_u,
-                   BitVector* min_s,
-                   BitVector* max_s);
+  virtual BitVectorBounds normalize_bounds(BitVector* min_u,
+                                           BitVector* max_u,
+                                           BitVector* min_s,
+                                           BitVector* max_s);
   /**
    * Helper to compute the normalized min and max bounds for `x` with respect
    * to `s` and `t` and the current signed and unsigned min/max bounds of `x`,
@@ -238,14 +240,13 @@ class BitVectorNode : public Node<BitVector>
    * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`.
-   * @return A tuple [min_lo, max_lo, min_hi, max_hi] of resulting lower and
-   *         upper range bounds, null BitVectors for both min/max in the lo
-   *         and/or hi range if no values in that range are covered.
+   * @return The resulting lower and upper range bounds, null BitVectors for
+   *         both min/max in the lo and/or hi range if no values in that range
+   *         are covered.
    */
-  std::tuple<BitVector, BitVector, BitVector, BitVector>
-  compute_normalized_bounds(const BitVector& s,
-                            const BitVector& t,
-                            uint64_t pos_x);
+  BitVectorBounds compute_normalized_bounds(const BitVector& s,
+                                            const BitVector& t,
+                                            uint64_t pos_x);
 
   /**
    * Helper to compute the signed or unsigned min and max bounds for `x` with
@@ -1846,11 +1847,10 @@ class BitVectorSignExtend : public BitVectorNode
 
   void evaluate() override;
 
-  virtual std::tuple<BitVector, BitVector, BitVector, BitVector>
-  normalize_bounds(BitVector* min_u,
-                   BitVector* max_u,
-                   BitVector* min_s,
-                   BitVector* max_s) override;
+  BitVectorBounds normalize_bounds(BitVector* min_u,
+                                   BitVector* max_u,
+                                   BitVector* min_s,
+                                   BitVector* max_s) override;
 
   bool is_essential(const BitVector& t, uint64_t pos_x) override;
 

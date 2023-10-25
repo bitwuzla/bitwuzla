@@ -15,6 +15,7 @@
 
 namespace bzla {
 
+struct BitVectorBounds;
 class BitVectorDomainGenerator;
 
 /*----------------------------------------------------------------------------*/
@@ -222,14 +223,14 @@ class BitVectorDomain
    * Determine a random factor of `num > t`.
    * @param rng      The associated random number generator.
    * @param num      The value to factorize.
-   * @param excl_min The exclusive minimum value of the factor.
+   * @param bounds   The inclusive value bounds for the factor.
    * @param limit    The maximum numbers of iterations in the wheel factorizer.
    * @return A null bit-vector if no such factor exists, or if computation
    *         exceeds `limit` iterations in the wheel factorizer.
    */
   BitVector get_factor(RNG *rng,
                        const BitVector &num,
-                       const BitVector &excl_min,
+                       const BitVectorBounds &bounds,
                        uint64_t limit) const;
 
   /**
@@ -352,22 +353,12 @@ class BitVectorDomainDualGenerator
    * Construct generator for values within given ranges (non-overlapping,
    * bounds are inclusive), interpreted as unsigned.
    * @param domain The domain to enumerate values for.
-   * @param min_lo The minimum value to of the lower range (between zero and
-   *               the max_signed value).
-   * @param max_lo The maximum value of the lower range (between zero and
-   *               the max_signed value).
-   * @param min_hi The minimum value to of the upper range (between
-   *               min_signed and ones).
-   * @param max_hi The maximum value of the upper range (between min_signed
-   *               and ones).
+   * @param bounds The lower and upper range bounds.
    * @param rng    The associated random number generator. Nullptr if no
    *               random generation required.
    */
   BitVectorDomainDualGenerator(const BitVectorDomain &domain,
-                               const BitVector &min_lo,
-                               const BitVector &max_lo,
-                               const BitVector &min_hi,
-                               const BitVector &max_hi,
+                               const BitVectorBounds &bounds,
                                RNG *rng = nullptr);
   /** Destructor. */
   ~BitVectorDomainDualGenerator();

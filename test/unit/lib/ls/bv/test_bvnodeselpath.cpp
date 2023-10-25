@@ -123,10 +123,10 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
         pos_x = std::get<0>(lop.select_path(t, ess_inputs));
         ASSERT_TRUE(!is_val0 || pos_x == 1);
         ASSERT_TRUE(!is_val1 || pos_x == 0);
-        ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential0
-                    || pos_x == 0);
-        ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential1
-                    || pos_x == 1);
+        assert((is_essential0 && is_essential1) || !is_essential0
+               || pos_x == 0);
+        assert((is_essential0 && is_essential1) || !is_essential1
+               || pos_x == 1);
 
         /* Both operands ops. */
         std::unique_ptr<BitVectorNode> child0(
