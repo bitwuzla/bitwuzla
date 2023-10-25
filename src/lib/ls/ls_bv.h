@@ -201,18 +201,4 @@ class LocalSearchBV : public LocalSearch<BitVector>
 
 }  // namespace ls
 }  // namespace bzla
-
-namespace std {
-template <>
-struct hash<std::pair<uint64_t, uint64_t>>
-{
-  /**
-   * Hash function for pair of uint64_t.
-   * @param p The pair.
-   * @return The hash value.
-   */
-  size_t operator()(const std::pair<uint64_t, uint64_t>& p) const;
-};
-}  // namespace std
-
 #endif
