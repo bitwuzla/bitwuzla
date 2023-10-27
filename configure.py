@@ -57,7 +57,9 @@ def main():
     if shutil.which('meson') is None:
         die('meson not found on system, please install via pip.')
 
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     ap.add_argument('buildtype', nargs='?',
                     choices=['release', 'debug', 'debugoptimized'])
     ap.add_argument('--build-dir', default='build', metavar='DIR',
