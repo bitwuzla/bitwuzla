@@ -24,6 +24,10 @@ def check(testfile, expected, out, err, output_dir):
         except ValueError:
             pass
 
+    # Remove \r from output of cross-compiled Windows binaries
+    if out:
+        out = out.replace('\r', '')
+
     cmp = '{}{}'.format(out, err)
     if not expected:
         n_check_sat = 0
