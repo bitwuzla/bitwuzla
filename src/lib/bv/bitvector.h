@@ -30,6 +30,15 @@ class BitVector
   /** Number of prime numbers used for hashing. */
   static constexpr uint32_t s_n_primes =
       ((uint32_t) (sizeof s_hash_primes / sizeof *s_hash_primes));
+  // mpz_*_ui functions have unsigned long (or mp_bitcnt_t) arguments, which is
+  // represented as 64 bit on Linux and macOS 64-bit systems. On 64-bit Windows
+  // unsigned long has a size of 32 bit, which affects the values stored in
+  // d_val_uint64 if being passed to a mpz_*_ui function.
+  // In order to avoid values being truncated, for Windows we store all values
+  // that require more than 32 bit as GMP integer. Else, we store values up to
+  // 64-bit in d_val_uint64.
+  static constexpr size_t s_native_size = sizeof(unsigned long) * 8;
+  static_assert(s_native_size == sizeof(mp_bitcnt_t) * 8, "");
 
   /**
    * Determine if given string representation of a value in the given numeric
@@ -1686,8 +1695,15 @@ class BitVector
    */
   uint64_t get_limb(void* limb, uint64_t nbits_rem, bool zeros) const;
 
-  /** @return True if bit-vector is of size > 64 and thus wraps a GMPMpz. */
-  bool is_gmp() const { return d_size > 64; }
+  /**
+   * Determine whether value is stored as GMP value or uint64_t. This check
+   * depends on s_native_size, i.e., for 64-bit Windows values exceeding 32
+   * bit are stored as GMP value, for 64-bit Linux and macOS values exceeding
+   * 64 bit are stored as GMP value.
+   *
+   * @return True if bit-vector wraps a GMPMpz.
+   */
+  bool is_gmp() const { return d_size > s_native_size; }
 
   /** The size of this bit-vector. */
   uint64_t d_size = 0;
