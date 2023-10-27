@@ -58,10 +58,14 @@ BitVectorDomain::BitVectorDomain(uint64_t size, uint64_t value)
 }
 
 BitVectorDomain::BitVectorDomain(const BitVectorDomain &other)
-    : d_lo(other.d_lo), d_hi(other.d_hi)
 {
-  d_has_fixed_bits = other.d_has_fixed_bits;
-  assert(d_has_fixed_bits == (!d_lo.is_zero() || !d_hi.is_ones()));
+  if (!other.is_null())
+  {
+    d_lo             = other.d_lo;
+    d_hi             = other.d_hi;
+    d_has_fixed_bits = other.d_has_fixed_bits;
+    assert(d_has_fixed_bits == (!d_lo.is_zero() || !d_hi.is_ones()));
+  }
 }
 
 BitVectorDomain::~BitVectorDomain() {}
@@ -208,8 +212,10 @@ BitVectorDomain::operator=(const BitVectorDomain &other)
 bool
 BitVectorDomain::operator==(const BitVectorDomain &other) const
 {
-  assert(!is_null());
-  assert(!other.is_null());
+  if (is_null())
+  {
+    return other.is_null();
+  }
   return d_lo.compare(other.d_lo) == 0 && d_hi.compare(other.d_hi) == 0;
 }
 
@@ -323,7 +329,7 @@ BitVectorDomain::get_factor(RNG *rng,
           }
         }
         assert(!mul.is_null());
-        if (match_fixed_bits(mul) && BitVector::is_in_bounds(mul, bounds))
+        if (match_fixed_bits(mul) && bounds.contains(mul))
         {
           return mul;
         }
@@ -332,8 +338,7 @@ BitVectorDomain::get_factor(RNG *rng,
     else
     {
       assert(n_factors == 1);
-      if (match_fixed_bits(factors[0])
-          && BitVector::is_in_bounds(factors[0], bounds))
+      if (match_fixed_bits(factors[0]) && bounds.contains(factors[0]))
       {
         return factors[0];
       }
@@ -345,7 +350,10 @@ BitVectorDomain::get_factor(RNG *rng,
 std::string
 BitVectorDomain::str() const
 {
-  assert(!is_null());
+  if (is_null())
+  {
+    return "(nil)";
+  }
   std::string res(d_lo.str());
   std::string hi(d_hi.str());
   for (size_t i = 0, n = size(); i < n; ++i)

@@ -12,6 +12,7 @@
 #define BZLALS__TEST__TEST_BVNODE_H
 
 #include "bv/bitvector.h"
+#include "bv/bounds/bitvector_bounds.h"
 #include "bv/domain/bitvector_domain.h"
 #include "ls/bv/bitvector_node.h"
 #include "test_lib.h"
@@ -39,6 +40,7 @@ class TestBvNodeCommon : public ::bzla::test::TestCommon
   std::vector<std::string> d_xvalues;
   std::unique_ptr<RNG> d_rng;
   BitVector d_nullbv;
+  BitVectorRange d_nullr;
 };
 
 BitVector
@@ -195,10 +197,8 @@ class TestBvNode : public TestBvNodeCommon
                              bool min_s_is_excl,
                              const BitVector& max_s,
                              bool max_s_is_excl,
-                             const BitVector& min_lo_exp,
-                             const BitVector& min_hi_exp,
-                             const BitVector& max_lo_exp,
-                             const BitVector& max_hi_exp);
+                             const BitVectorRange& lo_exp,
+                             const BitVectorRange& hi_exp);
 };
 
 bool
@@ -210,13 +210,8 @@ TestBvNode::check_sat_binary(Kind kind,
                              uint32_t pos_x,
                              OptimizationKind opt_kind) const
 {
-  BitVector* min_u = op_x->min_u();
-  BitVector* max_u = op_x->max_u();
-  BitVector* min_s = op_x->min_s();
-  BitVector* max_s = op_x->max_s();
-
-  assert(!min_u || max_u);
-  assert(!min_s || max_s);
+  const BitVectorRange& bounds_u = op_x->bounds_u();
+  const BitVectorRange& bounds_s = op_x->bounds_s();
 
   const BitVectorDomain& x = op_x->domain();
 
@@ -227,7 +222,7 @@ TestBvNode::check_sat_binary(Kind kind,
     BitVector x_val = gen.has_next() ? gen.next() : x.lo();
     if (kind == IS_CONS)
     {
-      assert(!min_u && !max_u && !min_s && !max_s);
+      assert(bounds_u.empty() && bounds_s.empty());
       BitVectorDomainGenerator gens(s_val.size());
       while (gens.has_next())
       {
@@ -257,26 +252,28 @@ TestBvNode::check_sat_binary(Kind kind,
       res = eval_op_binary(op_kind, x_val, s_val, pos_x);
       if (t.compare(res) == 0)
       {
-        if (min_u && max_u && min_s && max_s)
+        if (!bounds_u.empty() && !bounds_s.empty())
         {
-          if (x_val.compare(*min_u) >= 0 && x_val.signed_compare(*min_s) >= 0
-              && x_val.compare(*max_u) <= 0
-              && x_val.signed_compare(*max_s) <= 0)
+          if (x_val.compare(bounds_u.d_min) >= 0
+              && x_val.signed_compare(bounds_s.d_min) >= 0
+              && x_val.compare(bounds_u.d_max) <= 0
+              && x_val.signed_compare(bounds_s.d_max) <= 0)
           {
             return true;
           }
         }
-        else if (min_u && max_u)
+        else if (!bounds_u.empty())
         {
-          if (x_val.compare(*min_u) >= 0 && x_val.compare(*max_u) <= 0)
+          if (x_val.compare(bounds_u.d_min) >= 0
+              && x_val.compare(bounds_u.d_max) <= 0)
           {
             return true;
           }
         }
-        else if (min_s && max_s)
+        else if (!bounds_s.empty())
         {
-          if (x_val.signed_compare(*min_s) >= 0
-              && x_val.signed_compare(*max_s) <= 0)
+          if (x_val.signed_compare(bounds_s.d_min) >= 0
+              && x_val.signed_compare(bounds_s.d_max) <= 0)
           {
             return true;
           }
@@ -777,17 +774,13 @@ TestBvNode::test_binary(Kind kind,
                       << static_cast<BitVectorSignExtend*>(op_x.get())->get_n()
                       << std::endl;
                 }
-                std::cout << "min_u: "
-                          << (op_x->min_u() ? op_x->min_u()->str() : "(nil)")
+                std::cout << "bounds_u: "
+                          << (op_x->bounds_u().empty() ? "(nil)"
+                                                       : op_x->bounds_u().str())
                           << std::endl;
-                std::cout << "max_u: "
-                          << (op_x->max_u() ? op_x->max_u()->str() : "(nil)")
-                          << std::endl;
-                std::cout << "min_s: "
-                          << (op_x->min_s() ? op_x->min_s()->str() : "(nil)")
-                          << std::endl;
-                std::cout << "max_s: "
-                          << (op_x->max_s() ? op_x->max_s()->str() : "(nil)")
+                std::cout << "bounds_s: "
+                          << (op_x->bounds_s().empty() ? "(nil)"
+                                                       : op_x->bounds_s().str())
                           << std::endl;
               }
               assert(res == status);

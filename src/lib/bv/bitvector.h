@@ -21,7 +21,6 @@ namespace bzla {
 
 /* -------------------------------------------------------------------------- */
 
-struct BitVectorBounds;
 struct GMPMpz;
 class RNG;
 
@@ -101,16 +100,6 @@ class BitVector
    *                 representable with `size` bits.
    */
   static BitVector from_si(uint64_t size, int64_t value, bool truncate = false);
-
-  /**
-   * Determine if given BitVector is within either one of the given bounds,
-   * given as two (optional) ranges in the lower and upper value range.
-   *
-   * @param bv     The bit-vector.
-   * @param bounds The lower and upper range bounds.
-   * @return True if given bit-vector is within one of the given ranges.
-   */
-  static bool is_in_bounds(const BitVector& bv, const BitVectorBounds& bounds);
 
   /**
    * Create a true bit-vector (value 1 of size 1).

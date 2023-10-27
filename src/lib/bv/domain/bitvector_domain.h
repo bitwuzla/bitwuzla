@@ -27,8 +27,7 @@ class BitVectorDomain
  public:
   /**
    * Default constructor.
-   * @note Creates null (uninitialized) domain. Only to be used for
-   * pre-declaration.
+   * @note Creates null (uninitialized) domain.
    */
   BitVectorDomain() {}
   /** Construct a bit-vector domain of given size. */

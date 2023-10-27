@@ -440,16 +440,6 @@ BitVector::from_si(uint64_t size, int64_t value, bool truncate)
   return res;
 }
 
-bool
-BitVector::is_in_bounds(const BitVector& bv, const BitVectorBounds& bounds)
-{
-  assert(bounds.valid());
-  return (bounds.has_lo() && bv.compare(bounds.d_lo.d_min) >= 0
-          && bv.compare(bounds.d_lo.d_max) <= 0)
-         || (bounds.has_hi() && bv.compare(bounds.d_hi.d_min) >= 0
-             && bv.compare(bounds.d_hi.d_max) <= 0);
-}
-
 BitVector::BitVector(const BitVector& other)
 {
   if (other.is_null())
@@ -698,13 +688,15 @@ BitVector::iset(RNG& rng,
 bool
 BitVector::operator==(const BitVector& bv) const
 {
-  return compare(bv) == 0;
+  if (is_null()) return bv.is_null();
+  return !bv.is_null() && compare(bv) == 0;
 }
 
 bool
 BitVector::operator!=(const BitVector& bv) const
 {
-  return compare(bv) != 0;
+  if (is_null()) return !bv.is_null();
+  return bv.is_null() || compare(bv) != 0;
 }
 
 std::string
