@@ -188,6 +188,8 @@ class NodeData
   Type d_type;
   /** Number of references. */
   uint32_t d_refs = 0;
+  /** Associated node manager. */
+  NodeManager* d_nm = nullptr;
 };
 
 /**

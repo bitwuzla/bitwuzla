@@ -129,7 +129,7 @@ NodeData::get_index(size_t index) const
 std::optional<std::reference_wrapper<const std::string>>
 NodeData::get_symbol() const
 {
-  return NodeManager::get().get_symbol(this);
+  return d_nm->get_symbol(this);
 }
 
 NodeData::iterator
@@ -169,7 +169,7 @@ NodeData::end() const
 void
 NodeData::gc()
 {
-  NodeManager::get().garbage_collect(this);
+  d_nm->garbage_collect(this);
 }
 
 /* --- NodeDataChildren public --------------------------------------------- */

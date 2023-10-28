@@ -834,6 +834,7 @@ NodeManager::init_id(NodeData* data)
   d_node_data.emplace_back(data);
   assert(d_node_data.size() == static_cast<size_t>(d_node_id_counter));
   data->d_id = d_node_id_counter++;
+  data->d_nm = this;
 }
 
 NodeData*
