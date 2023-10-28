@@ -37,7 +37,7 @@ CheckModel::check()
 
   option::Options opts;
   opts.dbg_check_model.set(false);
-  SolvingContext check_ctx(opts, "chkmodel");
+  SolvingContext check_ctx(d_ctx.env().nm(), opts, "chkmodel");
   for (const Node& assertion : d_ctx.original_assertions())
   {
     check_ctx.assert_formula(assertion);

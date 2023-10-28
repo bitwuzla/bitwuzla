@@ -344,7 +344,7 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
 
   // Initialize MBQI solver
   option::Options options;
-  d_mbqi_solver.reset(new SolvingContext(options, "mbqi"));
+  d_mbqi_solver.reset(new SolvingContext(d_env.nm(), options, "mbqi"));
 
   // Assert formula
   for (const Node& c : d_consts)

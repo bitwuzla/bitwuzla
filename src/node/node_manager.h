@@ -35,6 +35,11 @@ class NodeManager
   friend node::NodeData;
 
  public:
+  NodeManager() = default;
+  ~NodeManager();
+  NodeManager(const NodeManager&)            = delete;
+  NodeManager& operator=(const NodeManager&) = delete;
+
   /* --- Node interface ---------------------------------------------------- */
 
   /**
@@ -189,16 +194,6 @@ class NodeManager
 #endif
 
  private:
-  /**
-   * Constructor, copy constructor, copy assignment and destructor are private
-   * since node manager is a thread-local singleton that should always be
-   * acquired via NodeManager::get().
-   */
-  NodeManager()                              = default;
-  ~NodeManager();
-  NodeManager(const NodeManager&)            = delete;
-  NodeManager& operator=(const NodeManager&) = delete;
-
   /**
    * Initialize node data.
    *

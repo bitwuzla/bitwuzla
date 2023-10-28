@@ -30,6 +30,9 @@ class SolvingContext
 {
  public:
   SolvingContext(const option::Options& options, const std::string& name = "");
+  SolvingContext(NodeManager& nm,
+                 const option::Options& options,
+                 const std::string& name = "");
   ~SolvingContext();
 
   /** Solve the current set of assertions in the context. */

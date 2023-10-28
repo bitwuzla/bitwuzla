@@ -37,6 +37,19 @@ SolvingContext::SolvingContext(const option::Options& options,
 {
 }
 
+SolvingContext::SolvingContext(NodeManager& nm,
+                               const option::Options& options,
+                               const std::string& name)
+    : d_env(nm, options, name),
+      d_logger(d_env.logger()),
+      d_assertions(&d_backtrack_mgr),
+      d_original_assertions(&d_backtrack_mgr),
+      d_preprocessor(*this),
+      d_solver_engine(*this),
+      d_stats(d_env.statistics())
+{
+}
+
 SolvingContext::~SolvingContext() {}
 
 Result

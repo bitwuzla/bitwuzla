@@ -11,6 +11,7 @@
 #ifndef BZLA_ENV_H_INCLUDED
 #define BZLA_ENV_H_INCLUDED
 
+#include "node/node_manager.h"
 #include "option/option.h"
 #include "rewrite/rewriter.h"
 #include "util/logger.h"
@@ -29,6 +30,9 @@ class Env
    */
   Env(const option::Options& options = option::Options(),
       const std::string& name        = "");
+  Env(NodeManager& nm,
+      const option::Options& options = option::Options(),
+      const std::string& name        = "");
 
   /** @return The associated options instance. */
   const option::Options& options() const;
@@ -41,6 +45,9 @@ class Env
 
   /** @return The associated logger instance. */
   util::Logger& logger();
+
+  /** @return The associated node manager instance. */
+  NodeManager& nm();
 
   /**
    * Configure associated termination configuration instance.
@@ -63,6 +70,8 @@ class Env
   Terminator* terminator() const { return d_terminator; }
 
  private:
+  /** The associated node manager. */
+  NodeManager& d_nm;
   /** The configured options. */
   option::Options d_options;
   /** The statistics. */
