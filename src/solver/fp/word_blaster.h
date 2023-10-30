@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "env.h"
 #include "node/node.h"
 #include "node/node_ref_vector.h"
 #include "solver/fp/floating_point.h"
@@ -36,7 +37,7 @@ class SymFpuSymProp;
 class WordBlaster
 {
  public:
-  WordBlaster(SolverState& state);
+  WordBlaster(Env& env, SolverState& state);
   ~WordBlaster();
 
   /**
@@ -113,6 +114,8 @@ class WordBlaster
 
   std::vector<Node> d_additional_assertions;
 
+  /** The associated environment. */
+  Env& d_env;
   /** The associated solver state. */
   SolverState& d_solver_state;
 };

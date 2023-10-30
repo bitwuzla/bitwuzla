@@ -42,7 +42,7 @@ FpSolver::is_theory_leaf(const Node& term)
 
 FpSolver::FpSolver(Env& env, SolverState& state)
     : Solver(env, state),
-      d_word_blaster(state),
+      d_word_blaster(env, state),
       d_word_blast_queue(state.backtrack_mgr()),
       d_word_blast_index(state.backtrack_mgr())
 {
@@ -57,7 +57,7 @@ FpSolver::check()
   Log(1) << "*** check fp";
 
   reset_cached_values();
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   for (size_t i = d_word_blast_index.get(), size = d_word_blast_queue.size();
        i < size;
        ++i)
@@ -71,7 +71,7 @@ FpSolver::check()
     {
       assert(wb.type().is_bv() && wb.type().bv_size() == 1);
       d_solver_state.lemma(
-          nm.mk_node(Kind::EQUAL, {node, node::utils::bv1_to_bool(wb)}));
+          nm.mk_node(Kind::EQUAL, {node, node::utils::bv1_to_bool(nm, wb)}));
     }
     else
     {
@@ -91,6 +91,7 @@ FpSolver::value(const Node& term)
          || term.kind() == Kind::FP_TO_UBV || term.kind() == Kind::FP_MIN
          || term.kind() == Kind::FP_MAX);
 
+  NodeManager& nm = d_env.nm();
   // We only have to word-blast partial operators to compute a value. If a
   // constant, select or function application was already word-blasted, we
   // compute the value based on the word-blasted bit-vector structure.
@@ -99,7 +100,6 @@ FpSolver::value(const Node& term)
       || term.kind() == node::Kind::FP_TO_UBV
       || term.kind() == node::Kind::FP_MIN || term.kind() == node::Kind::FP_MAX)
   {
-    NodeManager& nm = NodeManager::get();
     Node wb         = d_env.rewriter().rewrite(d_word_blaster.word_blast(term));
     Node value      = d_solver_state.value(wb);
     assert(value.type().is_bv());
@@ -116,7 +116,7 @@ FpSolver::value(const Node& term)
     assert(term.type().is_fp());
     return nm.mk_value(FloatingPoint(term.type(), bv));
   }
-  return node::utils::mk_default_value(term.type());
+  return node::utils::mk_default_value(nm, term.type());
 }
 
 void

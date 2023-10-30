@@ -37,6 +37,12 @@ class TestFpSolver : public TestCommon
     d_rm       = d_nm.mk_const(d_nm.mk_rm_type());
   }
 
+  /** The node manager. */
+  NodeManager d_nm;
+
+  /** The solver options. */
+  Options d_options;
+
   Type d_fp16;
   Node d_fp_a;
   Node d_fp_b;
@@ -46,16 +52,11 @@ class TestFpSolver : public TestCommon
   Node d_fp_ninf;
   Node d_fp_nan;
   Node d_rm;
-
-  /** The node manager. */
-  NodeManager& d_nm = NodeManager::get();
-  /** The solver options. */
-  Options d_options;
 };
 
 TEST_F(TestFpSolver, fp_abs)
 {
-  SolvingContext ctx = SolvingContext(d_options);
+  SolvingContext ctx = SolvingContext(d_nm, d_options);
 
   ctx.assert_formula(d_nm.mk_node(
       Kind::EQUAL,
@@ -81,7 +82,7 @@ TEST_F(TestFpSolver, fp_abs)
 
 TEST_F(TestFpSolver, fp_add)
 {
-  SolvingContext ctx = SolvingContext(d_options);
+  SolvingContext ctx = SolvingContext(d_nm, d_options);
   ctx.assert_formula(
       d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NAN, {d_fp_a})}));
   ctx.assert_formula(
@@ -109,7 +110,7 @@ TEST_F(TestFpSolver, fp_add)
 
 TEST_F(TestFpSolver, fp_fma)
 {
-  SolvingContext ctx = SolvingContext(d_options);
+  SolvingContext ctx = SolvingContext(d_nm, d_options);
   ctx.assert_formula(
       d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NAN, {d_fp_a})}));
   ctx.assert_formula(

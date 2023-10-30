@@ -26,6 +26,7 @@ class unpackedFloat;
 namespace bzla {
 
 class FloatingPointTypeInfo;
+class NodeManager;
 
 namespace fp {
 class SymFpuTraits;
@@ -66,7 +67,8 @@ class FloatingPoint
    * @param real A string representing the real to convert from.
    * @return A floating-point of given type converted from the given real.
    */
-  static FloatingPoint from_real(const Type &type,
+  static FloatingPoint from_real(NodeManager &nm,
+                                 const Type &type,
                                  const RoundingMode rm,
                                  const std::string &real);
   /**
@@ -79,7 +81,8 @@ class FloatingPoint
    * @param den A string representing the denominator of the rational.
    * @return A floating-point of given type converted from the given rational.
    */
-  static FloatingPoint from_rational(const Type &type,
+  static FloatingPoint from_rational(NodeManager &nm,
+                                     const Type &type,
                                      const RoundingMode rm,
                                      const std::string &num,
                                      const std::string &den);
@@ -116,7 +119,8 @@ class FloatingPoint
    * @return The floating-point corresponding to the given IEEE-754 bit-vector
    *         representation.
    */
-  static FloatingPoint fpfp(const BitVector &sign,
+  static FloatingPoint fpfp(NodeManager &nm,
+                            const BitVector &sign,
                             const BitVector &exp,
                             const BitVector &sig);
   /**
@@ -365,7 +369,8 @@ class FloatingPoint
    * @return The floating-point corresponding to the given unpacked bit-vector
    *         representation.
    */
-  static FloatingPoint from_unpacked(const BitVector &sign,
+  static FloatingPoint from_unpacked(NodeManager &nm,
+                                     const BitVector &sign,
                                      const BitVector &exp,
                                      const BitVector &sig);
   /**
@@ -376,7 +381,8 @@ class FloatingPoint
    * @param den  The string denoting the denominator, nullptr for from real.
    * @return The constructed floating-point.
    */
-  static FloatingPoint convert_from_rational_aux(const Type &type,
+  static FloatingPoint convert_from_rational_aux(NodeManager &nm,
+                                                 const Type &type,
                                                  const RoundingMode rm,
                                                  const char *num,
                                                  const char *den);

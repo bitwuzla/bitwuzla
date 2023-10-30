@@ -33,7 +33,7 @@ PassFlattenAnd::apply(AssertionVector& assertions)
   std::vector<Node> visit;
   std::unordered_set<Node> cache;
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     Node assertion = assertions[i];

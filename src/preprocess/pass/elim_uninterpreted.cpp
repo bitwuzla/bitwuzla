@@ -107,7 +107,7 @@ PassElimUninterpreted::apply(AssertionVector& assertions)
     }
   } while (!visit.empty());
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   for (auto& un : uns)
   {
     const Node& u = un.get();

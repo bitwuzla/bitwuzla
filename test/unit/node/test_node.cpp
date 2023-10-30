@@ -34,7 +34,7 @@ TEST_F(TestNode, node_ctor_dtor)
 
 TEST_F(TestNode, node_is_value)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
   Type bool_type  = nm.mk_bool_type();
   Type bv_type    = nm.mk_bv_type(32);
   Type fp_type    = nm.mk_fp_type(5, 11);
@@ -68,7 +68,7 @@ TEST_F(TestNode, node_is_value)
 
 TEST_F(TestNode, rbegin_rend)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
   Type bool_type  = nm.mk_bool_type();
   Node a          = nm.mk_const(bool_type, "a");
   Node b          = nm.mk_const(bool_type, "b");
@@ -100,7 +100,7 @@ TEST_F(TestNode, rbegin_rend)
 
 TEST_F(TestNode, operator_out)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
   Type bool_type  = nm.mk_bool_type();
   Type bv_type    = nm.mk_bv_type(32);
   Type fp_type    = nm.mk_fp_type(5, 11);

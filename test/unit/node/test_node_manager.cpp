@@ -26,7 +26,7 @@ class TestNodeManager : public TestCommon
 
 TEST_F(TestNodeManager, mk_const)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
 
   Type bool_type  = nm.mk_bool_type();
   Type bv_type    = nm.mk_bv_type(32);
@@ -76,7 +76,7 @@ TEST_F(TestNodeManager, mk_const)
 
 TEST_F(TestNodeManager, mk_const_array)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
 
   Type bv32  = nm.mk_bv_type(32);
   Node value = nm.mk_const(bv32);
@@ -93,7 +93,7 @@ TEST_F(TestNodeManager, mk_const_array)
 
 TEST_F(TestNodeManager, mk_value_bool)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
 
   Node val_true  = nm.mk_value(true);
   Node val_false = nm.mk_value(false);
@@ -110,7 +110,7 @@ TEST_F(TestNodeManager, mk_value_bool)
 
 TEST_F(TestNodeManager, mk_value_bv)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
   BitVector bv    = BitVector::from_ui(32, 1);
 
   Node val = nm.mk_value(bv);
@@ -124,7 +124,7 @@ TEST_F(TestNodeManager, mk_value_bv)
 
 TEST_F(TestNodeManager, mk_value_rm)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
 
   Node val_rna = nm.mk_value(RoundingMode::RNA);
   Node val_rne = nm.mk_value(RoundingMode::RNE);
@@ -164,7 +164,7 @@ TEST_F(TestNodeManager, mk_value_fp)
 
 TEST_F(TestNodeManager, mk_node)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
 
   Type bool_type = nm.mk_bool_type();
 
@@ -197,7 +197,7 @@ TEST_F(TestNodeManager, mk_node)
 
 TEST_F(TestNodeManager, mk_apply)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
 
   Type bool_type  = nm.mk_bool_type();
   Type bv_type    = nm.mk_bv_type(32);
@@ -232,7 +232,7 @@ TEST_F(TestNodeManager, mk_apply)
 
 TEST_F(TestNodeManager, check_type)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager nm;
 
   // Test boolean operators
   Type bool_type   = nm.mk_bool_type();

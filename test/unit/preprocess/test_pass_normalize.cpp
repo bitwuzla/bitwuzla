@@ -27,47 +27,47 @@ class TestPassNormalize : public TestPreprocessingPass
   {
     d_options.rewrite_level.set(0);
     d_options.pp_normalize_share_aware.set(false);
-    d_env.reset(new Env(d_options));
+    d_env.reset(new Env(d_nm, d_options));
     d_pass.reset(new PassNormalize(*d_env, &d_bm));
   };
 
-  Node neg(const Node& a) const
+  Node neg(const Node& a)
   {
     return RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(
                d_env->rewriter(), d_nm.mk_node(Kind::BV_NEG, {a}))
         .first;
   }
 
-  Node inv(const Node& a) const { return d_nm.mk_node(Kind::BV_NOT, {a}); }
+  Node inv(const Node& a) { return d_nm.mk_node(Kind::BV_NOT, {a}); }
 
-  Node add(const Node& a, const Node& b) const
+  Node add(const Node& a, const Node& b)
   {
     return d_nm.mk_node(Kind::BV_ADD, {a, b});
   }
 
-  Node mul(const Node& a, const Node& b) const
+  Node mul(const Node& a, const Node& b)
   {
     return d_nm.mk_node(Kind::BV_MUL, {a, b});
   }
 
-  Node aand(const Node& a, const Node& b) const
+  Node aand(const Node& a, const Node& b)
   {
     return d_nm.mk_node(Kind::BV_AND, {a, b});
   }
 
-  Node oor(const Node& a, const Node& b) const
+  Node oor(const Node& a, const Node& b)
   {
     return RewriteRule<RewriteRuleKind::BV_OR_ELIM>::apply(
                d_env->rewriter(), d_nm.mk_node(Kind::BV_OR, {a, b}))
         .first;
   }
 
-  Node equal(const Node& a, const Node& b) const
+  Node equal(const Node& a, const Node& b)
   {
     return d_nm.mk_node(Kind::EQUAL, {a, b});
   }
 
-  Node ult(const Node& a, const Node& b) const
+  Node ult(const Node& a, const Node& b)
   {
     return d_nm.mk_node(Kind::BV_ULT, {a, b});
   }
@@ -182,7 +182,7 @@ class TestPassNormalize : public TestPreprocessingPass
     if (!expected_shares.is_null())
     {
       d_options.pp_normalize_share_aware.set(true);
-      d_env.reset(new Env(d_options));
+      d_env.reset(new Env(d_nm, d_options));
       d_pass.reset(new PassNormalize(*d_env, &d_bm));
       AssertionStack as;
       as.push_back(node);

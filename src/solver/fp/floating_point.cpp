@@ -51,20 +51,22 @@ FloatingPoint::ieee_bv_as_bvs(const Type &type,
 }
 
 FloatingPoint
-FloatingPoint::from_real(const Type &type,
+FloatingPoint::from_real(NodeManager &nm,
+                         const Type &type,
                          const RoundingMode rm,
                          const std::string &real)
 {
-  return convert_from_rational_aux(type, rm, real.c_str(), nullptr);
+  return convert_from_rational_aux(nm, type, rm, real.c_str(), nullptr);
 }
 
 FloatingPoint
-FloatingPoint::from_rational(const Type &type,
+FloatingPoint::from_rational(NodeManager &nm,
+                             const Type &type,
                              const RoundingMode rm,
                              const std::string &num,
                              const std::string &den)
 {
-  return convert_from_rational_aux(type, rm, num.c_str(), den.c_str());
+  return convert_from_rational_aux(nm, type, rm, num.c_str(), den.c_str());
 }
 
 FloatingPoint
@@ -92,11 +94,11 @@ FloatingPoint::fpnan(const Type &type)
 }
 
 FloatingPoint
-FloatingPoint::fpfp(const BitVector &sign,
+FloatingPoint::fpfp(NodeManager &nm,
+                    const BitVector &sign,
                     const BitVector &exp,
                     const BitVector &sig)
 {
-  NodeManager &nm = NodeManager::get();
   FloatingPoint res(nm.mk_fp_type(exp.size(), sig.size() + 1),
                     sign.bvconcat(exp).ibvconcat(sig));
   return res;
@@ -455,11 +457,11 @@ FloatingPoint::as_bv() const
 /* --- Floating private ----------------------------------------------------- */
 
 FloatingPoint
-FloatingPoint::from_unpacked(const BitVector &sign,
+FloatingPoint::from_unpacked(NodeManager &nm,
+                             const BitVector &sign,
                              const BitVector &exp,
                              const BitVector &sig)
 {
-  NodeManager &nm = NodeManager::get();
   FloatingPoint res(nm.mk_fp_type(exp.size(), sig.size() + 1),
                     UnpackedFloat(sign.is_one(), exp, sig));
   return res;
@@ -570,7 +572,8 @@ make_mpq_from_ui(mpq_t &res, uint32_t n, uint32_t d)
 }  // namespace
 
 FloatingPoint
-FloatingPoint::convert_from_rational_aux(const Type &type,
+FloatingPoint::convert_from_rational_aux(NodeManager &nm,
+                                         const Type &type,
                                          const RoundingMode rm,
                                          const char *num,
                                          const char *den)
@@ -733,7 +736,7 @@ FloatingPoint::convert_from_rational_aux(const Type &type,
     exp.ibvsext(extension);
   }
 
-  FloatingPoint exact_float = from_unpacked(sign, exp, sig);
+  FloatingPoint exact_float = from_unpacked(nm, sign, exp, sig);
 
   FloatingPoint res(type);
   res.d_uf.reset(
@@ -762,7 +765,7 @@ FloatingPointTypeInfo::FloatingPointTypeInfo(const Type &type)
 FloatingPointTypeInfo::FloatingPointTypeInfo(uint32_t esize, uint32_t ssize)
     : d_esize(esize), d_ssize(ssize)
 {
-  NodeManager &nm = NodeManager::get();
+  NodeManager &nm = fp::SymFpuNM::get();
   d_type          = nm.mk_fp_type(esize, ssize);
 }
 

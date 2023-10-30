@@ -118,7 +118,7 @@ ArraySolver::value(const Node& term)
     {
       map.clear();
       Node res        = get_index_value_pairs(term, map);
-      NodeManager& nm = NodeManager::get();
+      NodeManager& nm = d_env.nm();
       for (const auto& [index, value] : map)
       {
         res = nm.mk_node(Kind::STORE, {res, index, value});
@@ -149,7 +149,7 @@ ArraySolver::value(const Node& term)
       if ((it2 == m2.end() && it1->second != ca2v)
           || (it2 != m2.end() && it2->second != it1->second))
       {
-        return NodeManager::get().mk_value(false);
+        return d_env.nm().mk_value(false);
       }
     }
     for (auto it2 = m2.begin(), end = m2.end(); it2 != end; ++it2)
@@ -158,7 +158,7 @@ ArraySolver::value(const Node& term)
       if ((it1 == m1.end() && it2->second != ca1v)
           || (it1 != m1.end() && it1->second != it2->second))
       {
-        return NodeManager::get().mk_value(false);
+        return d_env.nm().mk_value(false);
       }
     }
     // TODO: This is not entirely correct since we have to check whether all
@@ -166,13 +166,13 @@ ArraySolver::value(const Node& term)
     // check of the index type.
     if (ca1v != ca2v)
     {
-      return NodeManager::get().mk_value(false);
+      return d_env.nm().mk_value(false);
     }
-    return NodeManager::get().mk_value(true);
+    return d_env.nm().mk_value(true);
   }
   // Construct normalized array value, i.e., ordered by index
   Node res        = get_index_value_pairs(term, map);
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   for (const auto& [index, value] : map)
   {
     res = nm.mk_node(Kind::STORE, {res, index, value});
@@ -434,14 +434,15 @@ ArraySolver::add_access_store_lemma(const Access& acc, const Node& store)
 {
   assert(store.kind() == Kind::STORE);
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   Node conclusion = nm.mk_node(Kind::EQUAL, {acc.element(), store[2]});
   std::vector<Node> conjuncts;
   collect_path_conditions(acc, store, conjuncts);
   conjuncts.push_back(nm.mk_node(Kind::EQUAL, {acc.index(), store[1]}));
   d_stats.num_lemma_size << conjuncts.size();
-  Node lem = nm.mk_node(
-      Kind::IMPLIES, {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
+  Node lem =
+      nm.mk_node(Kind::IMPLIES,
+                 {node::utils::mk_nary(nm, Kind::AND, conjuncts), conclusion});
   lemma(lem);
 }
 
@@ -450,7 +451,7 @@ ArraySolver::add_access_const_array_lemma(const Access& acc, const Node& array)
 {
   assert(array.kind() == Kind::CONST_ARRAY);
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   Node conclusion = nm.mk_node(Kind::EQUAL, {acc.element(), array[0]});
   std::vector<Node> conjuncts;
   collect_path_conditions(acc, array, conjuncts);
@@ -464,8 +465,9 @@ ArraySolver::add_access_const_array_lemma(const Access& acc, const Node& array)
   }
   else
   {
-    lem = nm.mk_node(Kind::IMPLIES,
-                     {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
+    lem = nm.mk_node(
+        Kind::IMPLIES,
+        {node::utils::mk_nary(nm, Kind::AND, conjuncts), conclusion});
   }
   lemma(lem);
 }
@@ -477,15 +479,16 @@ ArraySolver::add_congruence_lemma(const Node& array,
 {
   assert(acc1.get() != acc2.get());
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   Node conclusion = nm.mk_node(Kind::EQUAL, {acc1.element(), acc2.element()});
   std::vector<Node> conjuncts;
   collect_path_conditions(acc1, array, conjuncts);
   collect_path_conditions(acc2, array, conjuncts);
   conjuncts.push_back(nm.mk_node(Kind::EQUAL, {acc1.index(), acc2.index()}));
   d_stats.num_lemma_size << conjuncts.size();
-  Node lem = nm.mk_node(
-      Kind::IMPLIES, {node::utils::mk_nary(Kind::AND, conjuncts), conclusion});
+  Node lem =
+      nm.mk_node(Kind::IMPLIES,
+                 {node::utils::mk_nary(nm, Kind::AND, conjuncts), conclusion});
   lemma(lem);
 }
 
@@ -653,7 +656,7 @@ ArraySolver::add_path_condition(const Access& access,
                                 std::unordered_set<Node>& cache)
 {
   Log(3) << "path: " << array;
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   Node cond;
   if (array.kind() == Kind::STORE)
   {
@@ -709,7 +712,7 @@ ArraySolver::add_disequality_lemma(const Node& eq)
     return it->second;
   }
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   std::stringstream ss;
   ss << "@diseq_wit_" << eq.id();
   const Node& a   = eq[0];
@@ -819,7 +822,7 @@ ArraySolver::get_index_value_pairs(const Node& array, std::map<Node, Node>& map)
     }
     return get_index_value_pairs(base, map);
   }
-  return utils::mk_default_value(array.type());
+  return utils::mk_default_value(d_env.nm(), array.type());
 }
 
 bool

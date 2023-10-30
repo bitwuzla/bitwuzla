@@ -10,6 +10,7 @@
 
 #include "solver/fun/fun_solver.h"
 
+#include "env.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
 #include "util/logger.h"
@@ -94,6 +95,7 @@ FunSolver::value(const Node& term)
   assert(term.type().is_fun() || term.type().is_uninterpreted()
          || term.kind() == Kind::APPLY);
 
+  NodeManager& nm = d_env.nm();
   if (term.kind() == Kind::LAMBDA)
   {
     return term;
@@ -119,13 +121,12 @@ FunSolver::value(const Node& term)
     {
       return term;
     }
-    return node::utils::mk_default_value(term.type());
+    return node::utils::mk_default_value(nm, term.type());
   }
 
   auto it = d_fun_models.find(term);
   if (it != d_fun_models.end())
   {
-    NodeManager& nm                = NodeManager::get();
     const std::vector<Type>& types = term.type().fun_types();
     std::vector<Node> vars;
     for (size_t i = 0, size = types.size() - 1; i < size; ++i)
@@ -133,7 +134,7 @@ FunSolver::value(const Node& term)
       vars.push_back(nm.mk_var(types[i]));
     }
 
-    Node res              = utils::mk_default_value(types.back());
+    Node res              = utils::mk_default_value(nm, types.back());
     const auto& fun_model = it->second;
 
     // Construct nested ITEs for function model
@@ -146,13 +147,13 @@ FunSolver::value(const Node& term)
       {
         eqs.push_back(nm.mk_node(Kind::EQUAL, {vars[i], values[i]}));
       }
-      Node cond = utils::mk_nary(Kind::AND, eqs);
+      Node cond = utils::mk_nary(nm, Kind::AND, eqs);
       res       = nm.mk_node(Kind::ITE, {cond, apply.value(), res});
     }
     vars.push_back(res);
-    return utils::mk_binder(Kind::LAMBDA, vars);
+    return utils::mk_binder(nm, Kind::LAMBDA, vars);
   }
-  return utils::mk_default_value(term.type());
+  return utils::mk_default_value(nm, term.type());
 }
 
 void
@@ -187,7 +188,7 @@ FunSolver::add_function_congruence_lemma(const Node& a, const Node& b)
   assert(b.kind() == Kind::APPLY);
   assert(a != b);
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   std::vector<Node> premise;
   for (size_t i = 1, size = a.num_children(); i < size; ++i)
   {
@@ -195,7 +196,7 @@ FunSolver::add_function_congruence_lemma(const Node& a, const Node& b)
   }
   Node conclusion = nm.mk_node(Kind::EQUAL, {a, b});
   Node lemma      = nm.mk_node(Kind::IMPLIES,
-                          {utils::mk_nary(Kind::AND, premise), conclusion});
+                               {utils::mk_nary(nm, Kind::AND, premise), conclusion});
   d_solver_state.lemma(lemma);
 }
 

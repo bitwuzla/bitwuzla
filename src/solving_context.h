@@ -29,7 +29,6 @@ class ResourceTerminator;
 class SolvingContext
 {
  public:
-  SolvingContext(const option::Options& options, const std::string& name = "");
   SolvingContext(NodeManager& nm,
                  const option::Options& options,
                  const std::string& name = "");

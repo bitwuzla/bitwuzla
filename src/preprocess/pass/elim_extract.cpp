@@ -56,7 +56,7 @@ PassElimExtract::apply(AssertionVector& assertions)
     }
   }
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   for (const auto& [c, extracts] : extract_map)
   {
     if (processed(c))
@@ -94,7 +94,7 @@ PassElimExtract::apply(AssertionVector& assertions)
       cache_assertion(consts.back());
     }
 
-    Node concat = utils::mk_nary(Kind::BV_CONCAT, consts);
+    Node concat = utils::mk_nary(nm, Kind::BV_CONCAT, consts);
     Node null;
     assertions.push_back(nm.mk_node(Kind::EQUAL, {c, concat}), null);
     cache_assertion(c);

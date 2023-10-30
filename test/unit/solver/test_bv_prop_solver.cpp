@@ -146,7 +146,7 @@ class TestBvPropSolver : public ::testing::Test
   /** The bit-vector size for tests. */
   uint64_t d_size;
   /** The node manager. */
-  NodeManager& d_nm = NodeManager::get();
+  NodeManager d_nm;
   /** The configured options. */
   Options d_options;
 };
@@ -250,7 +250,7 @@ TestBvPropSolver::_test_prop_aux(Kind kind,
   Node const1 = s1 ? fix_bits(d_nm.mk_const(type), *d1) : Node();
   Node const2 = s2 ? fix_bits(d_nm.mk_const(type), *d2) : Node();
 
-  SolvingContext ctx = SolvingContext(d_options);
+  SolvingContext ctx = SolvingContext(d_nm, d_options);
 
   if (s2)
   {

@@ -23,13 +23,6 @@ using namespace node;
 
 /* --- NodeManager public -------------------------------------------------- */
 
-NodeManager&
-NodeManager::get()
-{
-  thread_local static NodeManager mgr;
-  return mgr;
-}
-
 NodeManager::~NodeManager()
 {
   // Cleanup remaining nodes without triggering garbage_collect().

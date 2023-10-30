@@ -77,7 +77,7 @@ class TestPrinter : public TestCommon
     ASSERT_EQ(ss.str(), es.str());
   }
 
-  NodeManager& d_nm = NodeManager::get();
+  NodeManager d_nm;
   Type d_type_bool  = d_nm.mk_bool_type();
   Type d_type_bv    = d_nm.mk_bv_type(8);
   Type d_type_fp    = d_nm.mk_fp_type(5, 11);

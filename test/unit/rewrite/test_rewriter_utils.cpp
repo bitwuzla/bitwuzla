@@ -31,9 +31,9 @@ class TestRewriterUtils : public ::testing::Test
   }
 
  protected:
-  TestRewriterUtils() : d_rewriter(d_env.rewriter()) {}
+  TestRewriterUtils() : d_env(d_nm), d_rewriter(d_env.rewriter()) {}
 
-  NodeManager& d_nm = NodeManager::get();
+  NodeManager d_nm;
   Env d_env;
   Rewriter& d_rewriter;
   Type d_bv4_type;

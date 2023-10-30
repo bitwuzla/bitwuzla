@@ -22,10 +22,10 @@ using namespace node;
 class TestPreprocessingPass : public ::testing::Test
 {
  public:
-  TestPreprocessingPass() : d_nm(NodeManager::get()) {}
+  TestPreprocessingPass() {}
 
  protected:
-  NodeManager& d_nm;
+  NodeManager d_nm;
   option::Options d_options;
   backtrack::BacktrackManager d_bm;
   AssertionStack d_as;

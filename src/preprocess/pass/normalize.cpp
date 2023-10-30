@@ -236,7 +236,7 @@ PassNormalize::mk_node(Kind kind, const CoefficientsMap& coeffs)
         return a.first.id() < b.first.id();
       });
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   // combine common subterms
   if (kind == Kind::BV_ADD)
   {
@@ -364,7 +364,7 @@ PassNormalize::normalize_add(const Node& node,
 
   if (keep_value && !value.is_zero())
   {
-    Node val = NodeManager::get().mk_value(value);
+    Node val = d_env.nm().mk_value(value);
     auto it  = coeffs.find(val);
     if (it == coeffs.end())
     {
@@ -439,7 +439,7 @@ PassNormalize::normalize_mul(const Node& node,
 
   if (keep_value && !value.is_one())
   {
-    Node val = NodeManager::get().mk_value(value);
+    Node val = d_env.nm().mk_value(value);
     auto it  = coeffs.find(val);
     if (it == coeffs.end())
     {
@@ -477,7 +477,7 @@ PassNormalize::normalize_coefficients_eq_add(
   // -x = ~x + 1
 
   uint64_t bv_size = value.size();
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm  = d_env.nm();
   Node one        = nm.mk_value(BitVector::mk_one(bv_size));
   BitVector bvzero = BitVector::mk_zero(bv_size);
 
@@ -569,7 +569,7 @@ PassNormalize::normalize_coefficients_eq(
     // add normalized value to lhs coefficients map
     if (!value0.is_zero())
     {
-      Node val = NodeManager::get().mk_value(value0);
+      Node val = d_env.nm().mk_value(value0);
       auto it  = coeffs0.find(val);
       if (it == coeffs0.end())
       {
@@ -589,7 +589,7 @@ PassNormalize::normalize_coefficients_eq(
     auto value1 = normalize_mul(node1, coeffs1);
     if (!value0.is_one())
     {
-      Node val = NodeManager::get().mk_value(value0);
+      Node val = d_env.nm().mk_value(value0);
       auto it  = coeffs0.find(val);
       if (it == coeffs0.end())
       {
@@ -603,7 +603,7 @@ PassNormalize::normalize_coefficients_eq(
     }
     if (!value1.is_one())
     {
-      Node val = NodeManager::get().mk_value(value1);
+      Node val = d_env.nm().mk_value(value1);
       auto it  = coeffs1.find(val);
       if (it == coeffs1.end())
       {
@@ -646,7 +646,7 @@ PassNormalize::_normalize_eq_mul(const CoefficientsMap& coeffs0,
   assert(!coeffs0.empty());
   assert(!coeffs1.empty());
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   std::vector<Node> lhs, rhs;
   for (const auto& f : coeffs0)
   {
@@ -699,10 +699,9 @@ PassNormalize::_normalize_eq_mul(const CoefficientsMap& coeffs0,
 
 namespace {
 Node
-get_factorized_add(const Node& node, const BitVector& coeff)
+get_factorized_add(NodeManager& nm, const Node& node, const BitVector& coeff)
 {
   assert(!node.is_null());
-  NodeManager& nm = NodeManager::get();
   assert(!coeff.is_zero());
   if (coeff.is_one())
   {
@@ -721,7 +720,7 @@ PassNormalize::_normalize_eq_add(PassNormalize::CoefficientsMap& coeffs0,
                                  PassNormalize::CoefficientsMap& coeffs1,
                                  uint64_t bv_size)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
 
   BitVector lvalue = BitVector::mk_zero(bv_size);
   BitVector rvalue = BitVector::mk_zero(bv_size);
@@ -743,7 +742,7 @@ PassNormalize::_normalize_eq_add(PassNormalize::CoefficientsMap& coeffs0,
     }
     else
     {
-      lhs.push_back(get_factorized_add(cur, coeff));
+      lhs.push_back(get_factorized_add(nm, cur, coeff));
     }
   }
   for (const auto& f : coeffs1)
@@ -755,7 +754,7 @@ PassNormalize::_normalize_eq_add(PassNormalize::CoefficientsMap& coeffs0,
       continue;
     }
     assert(!cur.is_value());
-    rhs.push_back(get_factorized_add(cur, coeff));
+    rhs.push_back(get_factorized_add(nm, cur, coeff));
   }
 
   // normalize values, e.g., (a + 2 = b + 3) -> (a - 1 = b)
@@ -776,9 +775,9 @@ PassNormalize::_normalize_eq_add(PassNormalize::CoefficientsMap& coeffs0,
   std::sort(rhs.begin(), rhs.end());
 
   Node left  = lhs.empty() ? nm.mk_value(BitVector::mk_zero(bv_size))
-                           : node::utils::mk_nary(Kind::BV_ADD, lhs);
+                           : node::utils::mk_nary(nm, Kind::BV_ADD, lhs);
   Node right = rhs.empty() ? nm.mk_value(BitVector::mk_zero(bv_size))
-                           : node::utils::mk_nary(Kind::BV_ADD, rhs);
+                           : node::utils::mk_nary(nm, Kind::BV_ADD, rhs);
   return {left, right};
 }
 
@@ -788,7 +787,7 @@ PassNormalize::normalize_eq_add_mul(const Node& node0, const Node& node1)
   assert(node0.kind() == node1.kind());
   assert(node0.kind() == Kind::BV_MUL || node0.kind() == Kind::BV_ADD);
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
 
   CoefficientsMap coeffs0, coeffs1;
   normalize_coefficients_eq(node0, node1, coeffs0, coeffs1);
@@ -880,7 +879,7 @@ PassNormalize::normalize_common(Kind kind,
   }
   else
   {
-    left = NodeManager::get().mk_value(BitVector::mk_zero(lhs_size));
+    left = d_env.nm().mk_value(BitVector::mk_zero(lhs_size));
   }
   if (!rhs.empty())
   {
@@ -888,7 +887,7 @@ PassNormalize::normalize_common(Kind kind,
   }
   else
   {
-    right = NodeManager::get().mk_value(BitVector::mk_zero(rhs_size));
+    right = d_env.nm().mk_value(BitVector::mk_zero(rhs_size));
   }
   return {left, right};
 }
@@ -898,7 +897,7 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
                                     const Node& node0,
                                     const Node& node1)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
 
   Node top_lhs = get_top(node0);
   Node top_rhs = get_top(node1);
@@ -982,6 +981,7 @@ PassNormalize::rebuild_top(const Node& node,
   node_ref_vector visit{node};
   std::unordered_map<Node, Node> cache;
 
+  NodeManager& nm = d_env.nm();
   Kind k;
   do
   {
@@ -1012,7 +1012,7 @@ PassNormalize::rebuild_top(const Node& node,
     }
     else if (it->second.is_null())
     {
-      it->second = utils::rebuild_node(cur, cache);
+      it->second = utils::rebuild_node(nm, cur, cache);
       assert(it->second.type() == cur.type());
     }
     visit.pop_back();
@@ -1134,7 +1134,7 @@ PassNormalize::apply(AssertionVector& assertions)
 Node
 PassNormalize::process(const Node& node)
 {
-  // NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   node_ref_vector visit{node};
   do
   {
@@ -1184,7 +1184,7 @@ PassNormalize::process(const Node& node)
 #endif
       else
       {
-        it->second = node::utils::rebuild_node(cur, children);
+        it->second = node::utils::rebuild_node(nm, cur, children);
       }
 
       if (d_share_aware)

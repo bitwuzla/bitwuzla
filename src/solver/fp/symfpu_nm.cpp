@@ -8,17 +8,10 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "node/node.h"
+#include "solver/fp/symfpu_nm.h"
 
-namespace bzla {
+namespace bzla::fp {
 
-class Evaluator
-{
- public:
-  static Node evaluate(NodeManager& nm,
-                       node::Kind kind,
-                       const std::vector<Node>& values,
-                       const std::vector<uint64_t>& indices = {});
-};
+thread_local NodeManager *SymFpuNM::s_nm = nullptr;
 
-}  // namespace bzla
+}

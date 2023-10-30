@@ -40,7 +40,7 @@ RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = rewriter.nm();
   if (node[0].type().is_bool())
   {
     return nm.mk_value(node[0].value<bool>() == node[1].value<bool>());
@@ -100,8 +100,7 @@ _rw_eq_special_push_ones(Rewriter& rewriter, const Node& node)
   assert(!is_or || node[0].kind() == Kind::BV_AND);
   assert(is_or || node.kind() == Kind::BV_AND);
 
-  Node ones =
-      NodeManager::get().mk_value(BitVector::mk_ones(node.type().bv_size()));
+  Node ones = rewriter.nm().mk_value(BitVector::mk_ones(node.type().bv_size()));
 
   std::vector<Node> eqs;
   node::node_ref_vector visit;
@@ -242,7 +241,7 @@ _rw_eq_const(Rewriter& rewriter, const Node& node, size_t idx)
 
     if (!val.is_zero() && !val.is_ones())
     {
-      NodeManager& nm = NodeManager::get();
+      NodeManager& nm = rewriter.nm();
       std::vector<Node> args;
       Node node10, node11;
 
@@ -376,7 +375,7 @@ _rw_eq_eq_const_bv1(Rewriter& rewriter, const Node& node, size_t idx)
     {
       return node;
     }
-    NodeManager& nm = NodeManager::get();
+    NodeManager& nm = rewriter.nm();
     BitVector e_value =
         t_value.is_one() ? BitVector::mk_false() : BitVector::mk_true();
     return rewriter.mk_node(
@@ -415,7 +414,7 @@ RewriteRule<RewriteRuleKind::EQUAL_TRUE>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 2);
   if (node[0] == node[1])
   {
-    return NodeManager::get().mk_value(true);
+    return rewriter.nm().mk_value(true);
   }
   return node;
 }
@@ -432,9 +431,9 @@ RewriteRule<RewriteRuleKind::EQUAL_FALSE>::_apply(Rewriter& rewriter,
 {
   (void) rewriter;
   assert(node.num_children() == 2);
-  if (rewrite::utils::is_always_disequal(node[0], node[1]))
+  if (rewrite::utils::is_always_disequal(rewriter.nm(), node[0], node[1]))
   {
-    return NodeManager::get().mk_value(false);
+    return rewriter.nm().mk_value(false);
   }
   return node;
 }
@@ -637,14 +636,16 @@ _rw_eq_ite_dis_bv1(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx1 = 1 - idx;
   if (node[idx0].kind() == Kind::ITE && node[idx0].type().is_bool())
   {
-    if (rewrite::utils::is_always_disequal(node[idx0][1], node[idx1]))
+    if (rewrite::utils::is_always_disequal(
+            rewriter.nm(), node[idx0][1], node[idx1]))
     {
       return rewriter.mk_node(
           Kind::AND,
           {rewriter.invert_node(node[idx0][0]),
            rewriter.mk_node(Kind::EQUAL, {node[idx0][2], node[idx1]})});
     }
-    if (rewrite::utils::is_always_disequal(node[idx0][2], node[idx1]))
+    if (rewrite::utils::is_always_disequal(
+            rewriter.nm(), node[idx0][2], node[idx1]))
     {
       return rewriter.mk_node(
           Kind::AND,
@@ -734,7 +735,7 @@ _rw_eq_const_bv_add(Rewriter& rewriter, const Node& node, size_t idx)
       return rewriter.mk_node(
           Kind::EQUAL,
           {node[idx0][1],
-           NodeManager::get().mk_value(node[idx1].value<BitVector>().bvsub(
+           rewriter.nm().mk_value(node[idx1].value<BitVector>().bvsub(
                node[idx0][0].value<BitVector>()))});
     }
     if (node[idx0][1].is_value())
@@ -742,7 +743,7 @@ _rw_eq_const_bv_add(Rewriter& rewriter, const Node& node, size_t idx)
       return rewriter.mk_node(
           Kind::EQUAL,
           {node[idx0][0],
-           NodeManager::get().mk_value(node[idx1].value<BitVector>().bvsub(
+           rewriter.nm().mk_value(node[idx1].value<BitVector>().bvsub(
                node[idx0][1].value<BitVector>()))});
     }
   }
@@ -787,7 +788,7 @@ _rw_eq_const_bv_mul(Rewriter& rewriter, const Node& node, size_t idx)
         return rewriter.mk_node(
             Kind::EQUAL,
             {node[idx0][1],
-             NodeManager::get().mk_value(
+             rewriter.nm().mk_value(
                  node[idx1].value<BitVector>().bvmul(val.bvmodinv()))});
       }
     }
@@ -799,7 +800,7 @@ _rw_eq_const_bv_mul(Rewriter& rewriter, const Node& node, size_t idx)
         return rewriter.mk_node(
             Kind::EQUAL,
             {node[idx0][0],
-             NodeManager::get().mk_value(
+             rewriter.nm().mk_value(
                  node[idx1].value<BitVector>().bvmul(val.bvmodinv()))});
       }
     }
@@ -873,14 +874,14 @@ _rw_eq_bv_add(Rewriter& rewriter, const Node& node, size_t idx)
     {
       return rewriter.mk_node(Kind::EQUAL,
                               {node[idx0][1],
-                               NodeManager::get().mk_value(BitVector::mk_zero(
+                               rewriter.nm().mk_value(BitVector::mk_zero(
                                    node[idx0].type().bv_size()))});
     }
     if (node[idx0][1] == node[idx1])
     {
       return rewriter.mk_node(Kind::EQUAL,
                               {node[idx0][0],
-                               NodeManager::get().mk_value(BitVector::mk_zero(
+                               rewriter.nm().mk_value(BitVector::mk_zero(
                                    node[idx0].type().bv_size()))});
     }
   }
@@ -1062,7 +1063,7 @@ RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
             && std::log2(num_children)
                    > (type.fp_exp_size() + type.fp_sig_size())))
     {
-      return NodeManager::get().mk_value(false);
+      return rewriter.nm().mk_value(false);
     }
   }
   return node;
@@ -1534,7 +1535,7 @@ RewriteRule<RewriteRuleKind::NORMALIZE_COMM>::_apply(Rewriter& rewriter,
     {
       if (node[0].id() > node[1].id())
       {
-        return NodeManager::get().mk_node(k, {node[1], node[0]});
+        return rewriter.nm().mk_node(k, {node[1], node[0]});
       }
     }
   }
@@ -1542,15 +1543,15 @@ RewriteRule<RewriteRuleKind::NORMALIZE_COMM>::_apply(Rewriter& rewriter,
   {
     if (node[1].id() > node[2].id())
     {
-      return NodeManager::get().mk_node(k, {node[0], node[2], node[1]});
+      return rewriter.nm().mk_node(k, {node[0], node[2], node[1]});
     }
   }
   else if (k == Kind::FP_FMA)
   {
     if (node[1].id() > node[2].id())
     {
-      return NodeManager::get().mk_node(node.kind(),
-                                        {node[0], node[2], node[1], node[3]});
+      return rewriter.nm().mk_node(node.kind(),
+                                   {node[0], node[2], node[1], node[3]});
     }
   }
   return node;

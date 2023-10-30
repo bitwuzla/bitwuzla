@@ -182,6 +182,7 @@ sources = files([
   'solver/fp/floating_point.cpp',
   'solver/fp/fp_solver.cpp',
   'solver/fp/rounding_mode.cpp',
+  'solver/fp/symfpu_nm.cpp',
   'solver/fp/symfpu_wrapper.cpp',
   'solver/fp/word_blaster.cpp',
   'solver/fun/fun_solver.cpp',

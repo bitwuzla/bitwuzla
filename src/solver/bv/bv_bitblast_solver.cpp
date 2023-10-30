@@ -119,12 +119,12 @@ BvBitblastSolver::value(const Node& term)
 
   const auto& bits = d_bitblaster.bits(term);
   const Type& type = term.type();
-  NodeManager& nm  = NodeManager::get();
+  NodeManager& nm  = d_env.nm();
 
   // Return default value if not bit-blasted
   if (bits.empty())
   {
-    return utils::mk_default_value(type);
+    return utils::mk_default_value(nm, type);
   }
 
   if (type.is_bool())

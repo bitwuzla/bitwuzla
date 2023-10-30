@@ -200,7 +200,7 @@ QuantSolver::substitute(const Node& n,
         }
         else
         {
-          it->second = utils::rebuild_node(cur, children);
+          it->second = utils::rebuild_node(d_env.nm(), cur, children);
         }
       }
     }
@@ -223,7 +223,7 @@ QuantSolver::inst_const(const Node& q)
   std::stringstream ss;
   ss << "ic(" << q.id() << ")";
 
-  Node ic              = NodeManager::get().mk_const(q[0].type(), ss.str());
+  Node ic              = d_env.nm().mk_const(q[0].type(), ss.str());
   auto [iit, inserted] = d_instantiation_consts.emplace(q, ic);
   Log(2) << "Inst constant " << ic << " for " << q;
   return iit->second;
@@ -238,7 +238,7 @@ QuantSolver::skolem_const(const Node& q)
     return it->second;
   }
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   std::stringstream ss;
   ss << "sk(" << q.id() << ")";
 
@@ -257,7 +257,7 @@ QuantSolver::ce_const(const Node& q)
     return it->second;
   }
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   std::stringstream ss;
   ss << "ce(" << q.id() << ")";
 
@@ -299,7 +299,7 @@ QuantSolver::skolemization_lemma(const Node& q)
   }
   Log(2) << "Skolemization lemma: " << q;
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   Rewriter& rw    = d_env.rewriter();
   Node inst       = skolemize(q);
   Node lemma      = rw.rewrite(
@@ -340,9 +340,9 @@ bool
 QuantSolver::mbqi_check(const std::vector<Node>& to_check)
 {
   util::Timer timer(d_stats.time_mbqi);
-  NodeManager& nm = NodeManager::get();
 
   // Initialize MBQI solver
+  NodeManager& nm = d_env.nm();
   option::Options options;
   d_mbqi_solver.reset(new SolvingContext(d_env.nm(), options, "mbqi"));
 
@@ -406,7 +406,7 @@ QuantSolver::mbqi_inst(const Node& q)
 
   Node inst = substitute(cur, map);
   auto [iit, inserted] =
-      d_mbqi_inst.emplace(q, NodeManager::get().mk_node(Kind::NOT, {inst}));
+      d_mbqi_inst.emplace(q, d_env.nm().mk_node(Kind::NOT, {inst}));
   return iit->second;
 }
 
@@ -440,7 +440,7 @@ QuantSolver::mbqi_lemma(const Node& q)
     cur = cur[1];
   }
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   Node inst       = substitute(cur, map);
   return nm.mk_node(Kind::IMPLIES, {q, inst});
 }

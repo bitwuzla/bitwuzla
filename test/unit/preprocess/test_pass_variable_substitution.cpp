@@ -24,7 +24,7 @@ using namespace node;
 class TestPassVariableSubstitution : public TestPreprocessingPass
 {
  public:
-  TestPassVariableSubstitution() : d_pass(d_env, &d_bm)
+  TestPassVariableSubstitution() : d_env(d_nm), d_pass(d_env, &d_bm)
   {
     d_options.rewrite_level.set(0);
     d_options.pp_embedded_constr.set(false);
@@ -176,7 +176,7 @@ TEST_F(TestPassVariableSubstitution, cycle5)
 
 TEST_F(TestPassVariableSubstitution, inc1)
 {
-  SolvingContext ctx(d_options);
+  SolvingContext ctx(d_nm, d_options);
   Preprocessor& pp = ctx.preprocessor();
 
   Node x  = d_nm.mk_const(d_nm.mk_bool_type(), "x");
@@ -231,7 +231,7 @@ TEST_F(TestPassVariableSubstitution, inc1)
 
 TEST_F(TestPassVariableSubstitution, inc2)
 {
-  SolvingContext ctx(d_options);
+  SolvingContext ctx(d_nm, d_options);
   Preprocessor& pp = ctx.preprocessor();
 
   Node x       = d_nm.mk_const(d_nm.mk_bool_type(), "x");
@@ -281,7 +281,7 @@ TEST_F(TestPassVariableSubstitution, inc2)
 
 TEST_F(TestPassVariableSubstitution, inc3)
 {
-  SolvingContext ctx(d_options);
+  SolvingContext ctx(d_nm, d_options);
   Preprocessor& pp = ctx.preprocessor();
 
   Node x       = d_nm.mk_const(d_nm.mk_bool_type(), "x");

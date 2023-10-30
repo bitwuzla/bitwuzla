@@ -33,13 +33,13 @@ class TestRewriterBvRotate : public TestRewriter
       kindi = Kind::BV_RORI;
     }
 
-    NodeManager& nm = NodeManager::get();
+    NodeManager nm;
     Node const0     = nm.mk_const(nm.mk_bv_type(size));
     Node roti       = nm.mk_node(kindi, {const0}, {nbits});
     Node rot0       = nm.mk_node(
         kind, {const0, nm.mk_value(BitVector::from_ui(size, nbits))});
     option::Options d_options;
-    SolvingContext ctx = SolvingContext(d_options);
+    SolvingContext ctx = SolvingContext(nm, d_options);
     ctx.assert_formula(nm.mk_node(Kind::DISTINCT, {rot0, roti}));
     ASSERT_EQ(ctx.solve(), Result::UNSAT);
   }

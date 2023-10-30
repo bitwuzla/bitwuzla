@@ -501,7 +501,7 @@ SymFpuSymProp::SymFpuSymProp(const Node &node)
 {
   if (node.type().is_bool())
   {
-    NodeManager &nm = NodeManager::get();
+    NodeManager &nm = SymFpuNM::get();
     d_node          = nm.mk_node(Kind::ITE,
                         {node,
                                   nm.mk_value(BitVector::mk_true()),
@@ -515,8 +515,8 @@ SymFpuSymProp::SymFpuSymProp(const Node &node)
 }
 
 SymFpuSymProp::SymFpuSymProp(bool v)
-    : d_node(NodeManager::get().mk_value(v ? BitVector::mk_true()
-                                           : BitVector::mk_false()))
+    : d_node(SymFpuNM::get().mk_value(v ? BitVector::mk_true()
+                                        : BitVector::mk_false()))
 {
 }
 
@@ -539,35 +539,35 @@ SymFpuSymProp::operator=(const SymFpuSymProp &other)
 SymFpuSymProp
 SymFpuSymProp::operator!(void) const
 {
-  return NodeManager::get().mk_node(Kind::BV_NOT, {d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_NOT, {d_node});
 }
 
 SymFpuSymProp
 SymFpuSymProp::operator&&(const SymFpuSymProp &op) const
 {
   assert(check_node(op.d_node));
-  return NodeManager::get().mk_node(Kind::BV_AND, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_AND, {d_node, op.d_node});
 }
 
 SymFpuSymProp
 SymFpuSymProp::operator||(const SymFpuSymProp &op) const
 {
   assert(check_node(op.d_node));
-  return NodeManager::get().mk_node(Kind::BV_OR, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_OR, {d_node, op.d_node});
 }
 
 SymFpuSymProp
 SymFpuSymProp::operator==(const SymFpuSymProp &op) const
 {
   assert(check_node(op.d_node));
-  return NodeManager::get().mk_node(Kind::BV_COMP, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_COMP, {d_node, op.d_node});
 }
 
 SymFpuSymProp
 SymFpuSymProp::operator^(const SymFpuSymProp &op) const
 {
   assert(check_node(op.d_node));
-  return NodeManager::get().mk_node(Kind::BV_XOR, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_XOR, {d_node, op.d_node});
 }
 
 bool
@@ -587,15 +587,15 @@ SymFpuSymBV<is_signed>::SymFpuSymBV(const Node &node) : d_node(node)
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>::SymFpuSymBV(bool v)
-    : d_node(NodeManager::get().mk_value(v ? BitVector::mk_true()
-                                           : BitVector::mk_false()))
+    : d_node(SymFpuNM::get().mk_value(v ? BitVector::mk_true()
+                                        : BitVector::mk_false()))
 {
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>::SymFpuSymBV(const uint32_t w, const uint32_t val)
-    : d_node(NodeManager::get().mk_value(
-        is_signed ? BitVector::from_si(w, val) : BitVector::from_ui(w, val)))
+    : d_node(SymFpuNM::get().mk_value(is_signed ? BitVector::from_si(w, val)
+                                                : BitVector::from_ui(w, val)))
 {
 }
 
@@ -622,13 +622,13 @@ SymFpuSymBV<is_signed>::SymFpuSymBV(const SymFpuSymBV<!is_signed> &other)
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>::SymFpuSymBV(const BitVector &bv)
-    : d_node(NodeManager::get().mk_value(bv))
+    : d_node(SymFpuNM::get().mk_value(bv))
 {
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>::SymFpuSymBV(const SymFpuBV<is_signed> &bv)
-    : d_node(NodeManager::get().mk_value(*bv.d_bv))
+    : d_node(SymFpuNM::get().mk_value(*bv.d_bv))
 {
   assert(bv.d_bv);
 }
@@ -659,21 +659,21 @@ template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::one(const uint32_t &w)
 {
-  return NodeManager::get().mk_value(BitVector::mk_one(w));
+  return SymFpuNM::get().mk_value(BitVector::mk_one(w));
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::zero(const uint32_t &w)
 {
-  return NodeManager::get().mk_value(BitVector::mk_zero(w));
+  return SymFpuNM::get().mk_value(BitVector::mk_zero(w));
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::allOnes(const uint32_t &w)
 {
-  return NodeManager::get().mk_value(BitVector::mk_ones(w));
+  return SymFpuNM::get().mk_value(BitVector::mk_ones(w));
 }
 
 template <bool is_signed>
@@ -694,65 +694,64 @@ template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::maxValue(const uint32_t &w)
 {
-  return NodeManager::get().mk_value(BitVector::mk_max_signed(w));
+  return SymFpuNM::get().mk_value(BitVector::mk_max_signed(w));
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::minValue(const uint32_t &w)
 {
-  return NodeManager::get().mk_value(BitVector::mk_min_signed(w));
+  return SymFpuNM::get().mk_value(BitVector::mk_min_signed(w));
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator<<(const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_SHL, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_SHL, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator>>(const SymFpuSymBV<is_signed> &op) const
 {
-  return is_signed
-             ? NodeManager::get().mk_node(Kind::BV_ASHR, {d_node, op.d_node})
-             : NodeManager::get().mk_node(Kind::BV_SHR, {d_node, op.d_node});
+  return is_signed ? SymFpuNM::get().mk_node(Kind::BV_ASHR, {d_node, op.d_node})
+                   : SymFpuNM::get().mk_node(Kind::BV_SHR, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator|(const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_OR, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_OR, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator&(const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_AND, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_AND, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator+(const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_ADD, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_ADD, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator-(const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_SUB, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_SUB, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator*(const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_MUL, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_MUL, {d_node, op.d_node});
 }
 
 template <bool is_signed>
@@ -760,8 +759,8 @@ SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator/(const SymFpuSymBV<is_signed> &op) const
 {
   return is_signed
-             ? NodeManager::get().mk_node(Kind::BV_SDIV, {d_node, op.d_node})
-             : NodeManager::get().mk_node(Kind::BV_UDIV, {d_node, op.d_node});
+             ? SymFpuNM::get().mk_node(Kind::BV_SDIV, {d_node, op.d_node})
+             : SymFpuNM::get().mk_node(Kind::BV_UDIV, {d_node, op.d_node});
 }
 
 template <bool is_signed>
@@ -769,29 +768,29 @@ SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator%(const SymFpuSymBV<is_signed> &op) const
 {
   return is_signed
-             ? NodeManager::get().mk_node(Kind::BV_SREM, {d_node, op.d_node})
-             : NodeManager::get().mk_node(Kind::BV_UREM, {d_node, op.d_node});
+             ? SymFpuNM::get().mk_node(Kind::BV_SREM, {d_node, op.d_node})
+             : SymFpuNM::get().mk_node(Kind::BV_UREM, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator-(void) const
 {
-  return NodeManager::get().mk_node(Kind::BV_NEG, {d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_NEG, {d_node});
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::operator~(void) const
 {
-  return NodeManager::get().mk_node(Kind::BV_NOT, {d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_NOT, {d_node});
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::increment() const
 {
-  NodeManager &nm = NodeManager::get();
+  NodeManager &nm = SymFpuNM::get();
   return nm.mk_node(
       Kind::BV_ADD,
       {d_node, nm.mk_value(BitVector::mk_one(d_node.type().bv_size()))});
@@ -801,7 +800,7 @@ template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::decrement() const
 {
-  NodeManager &nm = NodeManager::get();
+  NodeManager &nm = SymFpuNM::get();
   return nm.mk_node(
       Kind::BV_SUB,
       {d_node, nm.mk_value(BitVector::mk_one(d_node.type().bv_size()))});
@@ -812,7 +811,7 @@ SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::signExtendRightShift(
     const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_ASHR, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_ASHR, {d_node, op.d_node});
 }
 
 template <bool is_signed>
@@ -862,36 +861,37 @@ template <bool is_signed>
 SymFpuSymProp
 SymFpuSymBV<is_signed>::operator!(void) const
 {
-  return NodeManager::get().mk_node(Kind::BV_NOT, {d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_NOT, {d_node});
 }
 
 template <bool is_signed>
 SymFpuSymProp
 SymFpuSymBV<is_signed>::operator||(const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_OR, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_OR, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymProp
 SymFpuSymBV<is_signed>::operator^(const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_XOR, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_XOR, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymProp
 SymFpuSymBV<is_signed>::operator==(const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_COMP, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_COMP, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymProp
 SymFpuSymBV<is_signed>::operator<=(const SymFpuSymBV<is_signed> &op) const
 {
-  NodeManager &nm = NodeManager::get();
+  NodeManager &nm = SymFpuNM::get();
   return node::utils::bool_to_bv1(
+      nm,
       is_signed ? nm.mk_node(Kind::BV_SLE, {d_node, op.d_node})
                 : nm.mk_node(Kind::BV_ULE, {d_node, op.d_node}));
 }
@@ -900,8 +900,9 @@ template <bool is_signed>
 SymFpuSymProp
 SymFpuSymBV<is_signed>::operator>=(const SymFpuSymBV<is_signed> &op) const
 {
-  NodeManager &nm = NodeManager::get();
+  NodeManager &nm = SymFpuNM::get();
   return node::utils::bool_to_bv1(
+      nm,
       is_signed ? nm.mk_node(Kind::BV_SGE, {d_node, op.d_node})
                 : nm.mk_node(Kind::BV_UGE, {d_node, op.d_node}));
 }
@@ -910,8 +911,9 @@ template <bool is_signed>
 SymFpuSymProp
 SymFpuSymBV<is_signed>::operator<(const SymFpuSymBV<is_signed> &op) const
 {
-  NodeManager &nm = NodeManager::get();
+  NodeManager &nm = SymFpuNM::get();
   return node::utils::bool_to_bv1(
+      nm,
       is_signed ? nm.mk_node(Kind::BV_SLT, {d_node, op.d_node})
                 : nm.mk_node(Kind::BV_ULT, {d_node, op.d_node}));
 }
@@ -920,8 +922,9 @@ template <bool is_signed>
 SymFpuSymProp
 SymFpuSymBV<is_signed>::operator>(const SymFpuSymBV<is_signed> &op) const
 {
-  NodeManager &nm = NodeManager::get();
+  NodeManager &nm = SymFpuNM::get();
   return node::utils::bool_to_bv1(
+      nm,
       is_signed ? nm.mk_node(Kind::BV_SGT, {d_node, op.d_node})
                 : nm.mk_node(Kind::BV_UGT, {d_node, op.d_node}));
 }
@@ -944,9 +947,9 @@ template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::extend(uint32_t extension) const
 {
-  return is_signed ? NodeManager::get().mk_node(
+  return is_signed ? SymFpuNM::get().mk_node(
              Kind::BV_SIGN_EXTEND, {d_node}, {extension})
-                   : NodeManager::get().mk_node(
+                   : SymFpuNM::get().mk_node(
                        Kind::BV_ZERO_EXTEND, {d_node}, {extension});
 }
 
@@ -954,7 +957,7 @@ template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::contract(uint32_t reduction) const
 {
-  return NodeManager::get().mk_node(
+  return SymFpuNM::get().mk_node(
       Kind::BV_EXTRACT, {d_node}, {getWidth() - 1 - reduction, 0});
 }
 
@@ -980,14 +983,14 @@ template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::append(const SymFpuSymBV<is_signed> &op) const
 {
-  return NodeManager::get().mk_node(Kind::BV_CONCAT, {d_node, op.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_CONCAT, {d_node, op.d_node});
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::extract(uint32_t upper, uint32_t lower) const
 {
-  return NodeManager::get().mk_node(Kind::BV_EXTRACT, {d_node}, {upper, lower});
+  return SymFpuNM::get().mk_node(Kind::BV_EXTRACT, {d_node}, {upper, lower});
 }
 
 template <bool is_signed>
@@ -1014,7 +1017,7 @@ Node
 SymFpuSymRM::mk_value(const RoundingMode rm)
 {
   assert(rm != RoundingMode::NUM_RM);
-  return NodeManager::get().mk_value(
+  return SymFpuNM::get().mk_value(
       BitVector::from_ui(BZLA_RM_BV_SIZE, static_cast<uint64_t>(rm)));
 }
 
@@ -1035,7 +1038,7 @@ SymFpuSymRM::SymFpuSymRM(const Node &node)
     }
     else
     {
-      NodeManager &nm = NodeManager::get();
+      NodeManager &nm = SymFpuNM::get();
       d_node          = nm.mk_const(nm.mk_bv_type(BZLA_RM_BV_SIZE),
                            "_rm_var_" + std::to_string(node.id()) + "_");
     }
@@ -1058,11 +1061,14 @@ SymFpuSymProp
 SymFpuSymRM::valid(void) const
 {
   assert(!d_node.is_null());
-  NodeManager &nm = NodeManager::get();
+  NodeManager &nm = SymFpuNM::get();
   uint64_t size   = d_node.type().bv_size();
   return node::utils::bool_to_bv1(
+      nm,
       nm.mk_node(Kind::BV_ULT,
-                 {d_node, nm.mk_value(BitVector::from_ui(size, static_cast<uint64_t>(RoundingMode::NUM_RM)))}));
+                 {d_node,
+                  nm.mk_value(BitVector::from_ui(
+                      size, static_cast<uint64_t>(RoundingMode::NUM_RM)))}));
 }
 
 SymFpuSymProp
@@ -1070,7 +1076,7 @@ SymFpuSymRM::operator==(const SymFpuSymRM &other) const
 {
   assert(!d_node.is_null());
   assert(!other.d_node.is_null());
-  return NodeManager::get().mk_node(Kind::BV_COMP, {d_node, other.d_node});
+  return SymFpuNM::get().mk_node(Kind::BV_COMP, {d_node, other.d_node});
 }
 
 bool

@@ -21,6 +21,7 @@
 #include "node/node_manager.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
+#include "solver/fp/symfpu_nm.h"
 
 namespace bzla {
 namespace fp {
@@ -439,7 +440,7 @@ BZLA_FP_ITE(bzla::fp::SymFpuTraits::ubv);
       assert(!_c.getNode().is_null());                                   \
       assert(!_t.getNode().is_null());                                   \
       assert(!_e.getNode().is_null());                                   \
-      bzla::NodeManager &nm = bzla::NodeManager::get();                  \
+      bzla::NodeManager &nm = bzla::fp::SymFpuNM::get();                 \
       return nm.mk_node(                                                 \
           bzla::node::Kind::ITE,                                         \
           {nm.mk_node(                                                   \

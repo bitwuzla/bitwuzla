@@ -10,6 +10,7 @@
 
 #include "gtest/gtest.h"
 #include "printer/printer.h"
+#include "solver/fp/symfpu_nm.h"
 #include "test/unit/rewrite/test_rewriter.h"
 
 namespace bzla::test {
@@ -18,6 +19,9 @@ using namespace bzla::node;
 
 class TestRewriterFp : public TestRewriter
 {
+  TestRewriterFp() : snm(d_nm) {}
+
+  fp::SymFpuNM snm;
 };
 
 /* fpabs -------------------------------------------------------------------- */

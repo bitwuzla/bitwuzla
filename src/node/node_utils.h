@@ -30,13 +30,13 @@ bool is_bv_sext(const Node& node, Node& child);
  * @param kind The node kind.
  * @param terms The children of the node.
  */
-Node mk_nary(Kind kind, const std::vector<Node>& terms);
+Node mk_nary(NodeManager& nm, Kind kind, const std::vector<Node>& terms);
 
 /**
  * @return Default value for given type.
  * @param type Type of default value.
  */
-Node mk_default_value(const Type& type);
+Node mk_default_value(NodeManager& nm, const Type& type);
 
 /**
  * @return Binder node of given kind.
@@ -45,7 +45,7 @@ Node mk_default_value(const Type& type);
  *              is the body of the binder and terms[0]...terms[size - 2]
  *              are variables.
  */
-Node mk_binder(Kind kind, const std::vector<Node>& terms);
+Node mk_binder(NodeManager& nm, Kind kind, const std::vector<Node>& terms);
 
 /**
  * Create a node that represents the conversion from a bit-vector node
@@ -53,7 +53,7 @@ Node mk_binder(Kind kind, const std::vector<Node>& terms);
  * @param node The node to convert.
  * @return The conversion node.
  */
-Node bv1_to_bool(const Node& node);
+Node bv1_to_bool(NodeManager& nm, const Node& node);
 
 /**
  * Create a node that represents the conversion from a Boolean node to a
@@ -61,7 +61,7 @@ Node bv1_to_bool(const Node& node);
  * @param node The node to convert.
  * @return The conversion node.
  */
-Node bool_to_bv1(const Node& node);
+Node bool_to_bv1(NodeManager& nm, const Node& node);
 
 /**
  * Rebuild node with same kind and indices but new vector of children.
@@ -70,7 +70,9 @@ Node bool_to_bv1(const Node& node);
  * @param children The new children of the node.
  * @return Rebuilt node.
  */
-Node rebuild_node(const Node& node, const std::vector<Node>& children);
+Node rebuild_node(NodeManager& nm,
+                  const Node& node,
+                  const std::vector<Node>& children);
 
 /**
  * Rebuild node with same kind and indices but new children taken from cache.
@@ -79,7 +81,8 @@ Node rebuild_node(const Node& node, const std::vector<Node>& children);
  * @param cache The node cache for children.
  * @return Rebuilt node.
  */
-Node rebuild_node(const Node& node,
+Node rebuild_node(NodeManager& nm,
+                  const Node& node,
                   const std::unordered_map<Node, Node>& cache);
 }
 

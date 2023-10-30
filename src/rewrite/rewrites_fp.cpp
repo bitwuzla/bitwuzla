@@ -31,8 +31,7 @@ RewriteRule<RewriteRuleKind::FP_ABS_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 1);
   assert(node[0].type().is_fp());
   if (!node[0].is_value()) return node;
-  Node res =
-      NodeManager::get().mk_value(node[0].value<FloatingPoint>().fpabs());
+  Node res = rewriter.nm().mk_value(node[0].value<FloatingPoint>().fpabs());
   return res;
 }
 
@@ -74,7 +73,7 @@ RewriteRule<RewriteRuleKind::FP_ADD_EVAL>::_apply(Rewriter& rewriter,
   {
     if (!c.is_value()) return node;
   }
-  Node res = NodeManager::get().mk_value(node[1].value<FloatingPoint>().fpadd(
+  Node res = rewriter.nm().mk_value(node[1].value<FloatingPoint>().fpadd(
       node[0].value<RoundingMode>(), node[2].value<FloatingPoint>()));
   return res;
 }
@@ -98,7 +97,7 @@ RewriteRule<RewriteRuleKind::FP_DIV_EVAL>::_apply(Rewriter& rewriter,
   {
     if (!c.is_value()) return node;
   }
-  Node res = NodeManager::get().mk_value(node[1].value<FloatingPoint>().fpdiv(
+  Node res = rewriter.nm().mk_value(node[1].value<FloatingPoint>().fpdiv(
       node[0].value<RoundingMode>(), node[2].value<FloatingPoint>()));
   return res;
 }
@@ -123,7 +122,7 @@ RewriteRule<RewriteRuleKind::FP_FMA_EVAL>::_apply(Rewriter& rewriter,
   {
     if (!c.is_value()) return node;
   }
-  Node res = NodeManager::get().mk_value(
+  Node res = rewriter.nm().mk_value(
       node[1].value<FloatingPoint>().fpfma(node[0].value<RoundingMode>(),
                                            node[2].value<FloatingPoint>(),
                                            node[3].value<FloatingPoint>()));
@@ -144,8 +143,7 @@ RewriteRule<RewriteRuleKind::FP_IS_INF_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 1);
   assert(node[0].type().is_fp());
   if (!node[0].is_value()) return node;
-  Node res =
-      NodeManager::get().mk_value(node[0].value<FloatingPoint>().fpisinf());
+  Node res = rewriter.nm().mk_value(node[0].value<FloatingPoint>().fpisinf());
   return res;
 }
 
@@ -182,8 +180,7 @@ RewriteRule<RewriteRuleKind::FP_IS_NAN_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 1);
   assert(node[0].type().is_fp());
   if (!node[0].is_value()) return node;
-  Node res =
-      NodeManager::get().mk_value(node[0].value<FloatingPoint>().fpisnan());
+  Node res = rewriter.nm().mk_value(node[0].value<FloatingPoint>().fpisnan());
   return res;
 }
 
@@ -220,8 +217,7 @@ RewriteRule<RewriteRuleKind::FP_IS_NEG_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 1);
   assert(node[0].type().is_fp());
   if (!node[0].is_value()) return node;
-  Node res =
-      NodeManager::get().mk_value(node[0].value<FloatingPoint>().fpisneg());
+  Node res = rewriter.nm().mk_value(node[0].value<FloatingPoint>().fpisneg());
   return res;
 }
 
@@ -240,7 +236,7 @@ RewriteRule<RewriteRuleKind::FP_IS_NORM_EVAL>::_apply(Rewriter& rewriter,
   assert(node[0].type().is_fp());
   if (!node[0].is_value()) return node;
   Node res =
-      NodeManager::get().mk_value(node[0].value<FloatingPoint>().fpisnormal());
+      rewriter.nm().mk_value(node[0].value<FloatingPoint>().fpisnormal());
   return res;
 }
 
@@ -277,8 +273,7 @@ RewriteRule<RewriteRuleKind::FP_IS_POS_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 1);
   assert(node[0].type().is_fp());
   if (!node[0].is_value()) return node;
-  Node res =
-      NodeManager::get().mk_value(node[0].value<FloatingPoint>().fpispos());
+  Node res = rewriter.nm().mk_value(node[0].value<FloatingPoint>().fpispos());
   return res;
 }
 
@@ -296,8 +291,8 @@ RewriteRule<RewriteRuleKind::FP_IS_SUBNORM_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 1);
   assert(node[0].type().is_fp());
   if (!node[0].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
-      node[0].value<FloatingPoint>().fpissubnormal());
+  Node res =
+      rewriter.nm().mk_value(node[0].value<FloatingPoint>().fpissubnormal());
   return res;
 }
 
@@ -334,8 +329,7 @@ RewriteRule<RewriteRuleKind::FP_IS_ZERO_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 1);
   assert(node[0].type().is_fp());
   if (!node[0].is_value()) return node;
-  Node res =
-      NodeManager::get().mk_value(node[0].value<FloatingPoint>().fpiszero());
+  Node res = rewriter.nm().mk_value(node[0].value<FloatingPoint>().fpiszero());
   return res;
 }
 
@@ -373,7 +367,7 @@ RewriteRule<RewriteRuleKind::FP_LEQ_EVAL>::_apply(Rewriter& rewriter,
   assert(node[0].type().is_fp());
   assert(node[1].type().is_fp());
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  Node res = rewriter.nm().mk_value(
       node[0].value<FloatingPoint>().fple(node[1].value<FloatingPoint>()));
   return res;
 }
@@ -407,7 +401,7 @@ RewriteRule<RewriteRuleKind::FP_LT_EVAL>::_apply(Rewriter& rewriter,
   assert(node[0].type().is_fp());
   assert(node[1].type().is_fp());
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  Node res = rewriter.nm().mk_value(
       node[0].value<FloatingPoint>().fplt(node[1].value<FloatingPoint>()));
   return res;
 }
@@ -424,7 +418,7 @@ RewriteRule<RewriteRuleKind::FP_LT_EQ>::_apply(Rewriter& rewriter,
   (void) rewriter;
   assert(node.num_children() == 2);
   if (node[0] != node[1]) return node;
-  return NodeManager::get().mk_value(false);
+  return rewriter.nm().mk_value(false);
 }
 
 /* fpmin -------------------------------------------------------------------- */
@@ -480,7 +474,7 @@ RewriteRule<RewriteRuleKind::FP_MUL_EVAL>::_apply(Rewriter& rewriter,
   {
     if (!c.is_value()) return node;
   }
-  Node res = NodeManager::get().mk_value(node[1].value<FloatingPoint>().fpmul(
+  Node res = rewriter.nm().mk_value(node[1].value<FloatingPoint>().fpmul(
       node[0].value<RoundingMode>(), node[2].value<FloatingPoint>()));
   return res;
 }
@@ -499,8 +493,7 @@ RewriteRule<RewriteRuleKind::FP_NEG_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_children() == 1);
   assert(node[0].type().is_fp());
   if (!node[0].is_value()) return node;
-  Node res =
-      NodeManager::get().mk_value(node[0].value<FloatingPoint>().fpneg());
+  Node res = rewriter.nm().mk_value(node[0].value<FloatingPoint>().fpneg());
   return res;
 }
 
@@ -534,7 +527,7 @@ RewriteRule<RewriteRuleKind::FP_REM_EVAL>::_apply(Rewriter& rewriter,
   assert(node[0].type().is_fp());
   assert(node[1].type().is_fp());
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  Node res = rewriter.nm().mk_value(
       node[0].value<FloatingPoint>().fprem(node[1].value<FloatingPoint>()));
   return res;
 }
@@ -601,7 +594,7 @@ RewriteRule<RewriteRuleKind::FP_RTI_EVAL>::_apply(Rewriter& rewriter,
   assert(node[0].type().is_rm());
   assert(node[1].type().is_fp());
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  Node res = rewriter.nm().mk_value(
       node[1].value<FloatingPoint>().fprti(node[0].value<RoundingMode>()));
   return res;
 }
@@ -621,7 +614,7 @@ RewriteRule<RewriteRuleKind::FP_SQRT_EVAL>::_apply(Rewriter& rewriter,
   assert(node[0].type().is_rm());
   assert(node[1].type().is_fp());
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  Node res = NodeManager::get().mk_value(
+  Node res = rewriter.nm().mk_value(
       node[1].value<FloatingPoint>().fpsqrt(node[0].value<RoundingMode>()));
   return res;
 }
@@ -641,7 +634,7 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_BV_EVAL>::_apply(Rewriter& rewriter,
   assert(node[0].type().is_bv());
   assert(node.num_indices() == 2);
   if (!node[0].is_value()) return node;
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = rewriter.nm();
   Node res        = nm.mk_value(FloatingPoint(
       nm.mk_fp_type(node.index(0), node.index(1)), node[0].value<BitVector>()));
   return res;
@@ -663,7 +656,7 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_FP_EVAL>::_apply(Rewriter& rewriter,
   assert(node[1].type().is_fp());
   assert(node.num_indices() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = rewriter.nm();
   Node res =
       nm.mk_value(FloatingPoint(nm.mk_fp_type(node.index(0), node.index(1)),
                                 node[0].value<RoundingMode>(),
@@ -687,7 +680,7 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL>::_apply(Rewriter& rewriter,
   assert(node[1].type().is_bv());
   assert(node.num_indices() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = rewriter.nm();
   Node res =
       nm.mk_value(FloatingPoint(nm.mk_fp_type(node.index(0), node.index(1)),
                                 node[0].value<RoundingMode>(),
@@ -726,7 +719,7 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_SBV_BV1_ELIM>::_apply(
         Kind::ITE,
         {rewriter.mk_node(
              Kind::EQUAL,
-             {node[1], NodeManager::get().mk_value(BitVector::mk_one(1))}),
+             {node[1], rewriter.nm().mk_value(BitVector::mk_one(1))}),
          rewriter.mk_node(Kind::FP_NEG, {to_ubv}),
          to_ubv});
   }
@@ -749,7 +742,7 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL>::_apply(Rewriter& rewriter,
   assert(node[1].type().is_bv());
   assert(node.num_indices() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = rewriter.nm();
   Node res =
       nm.mk_value(FloatingPoint(nm.mk_fp_type(node.index(0), node.index(1)),
                                 node[0].value<RoundingMode>(),

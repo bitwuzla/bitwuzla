@@ -21,11 +21,10 @@ using namespace node;
 class TestPassFlattenAnd : public TestPreprocessingPass
 {
  public:
-  TestPassFlattenAnd() : d_pass(d_env, &d_bm){};
+  TestPassFlattenAnd() : d_env(d_nm), d_pass(d_env, &d_bm){};
 
  protected:
   Env d_env;
-  backtrack::BacktrackManager d_bm;
   preprocess::pass::PassFlattenAnd d_pass;
 };
 

@@ -22,7 +22,7 @@ static const char* s_solver_binary = std::getenv("SOLVER_BINARY");
 class TestRewriter : public ::testing::Test
 {
  protected:
-  TestRewriter() : d_rewriter(d_env.rewriter()) {}
+  TestRewriter() : d_env(d_nm), d_rewriter(d_env.rewriter()) {}
 
   void SetUp() override
   {
@@ -112,41 +112,41 @@ class TestRewriter : public ::testing::Test
     size_t num_indices  = node::KindInfo::num_indices(kind);
     ASSERT_EQ(indices.size(), num_indices);
 
-    NodeManager& nm = NodeManager::get();
     std::vector<Node> children;
     if (kind == node::Kind::FP_SUB)
     {
-      children.push_back(nm.mk_const(nm.mk_rm_type()));
-      children.push_back(nm.mk_const(type, "a"));
-      children.push_back(nm.mk_const(type, "b"));
+      children.push_back(d_nm.mk_const(d_nm.mk_rm_type()));
+      children.push_back(d_nm.mk_const(type, "a"));
+      children.push_back(d_nm.mk_const(type, "b"));
     }
     else if (kind == node::Kind::FP_FP)
     {
-      children.push_back(nm.mk_const(nm.mk_bv_type(1), "sign"));
-      children.push_back(nm.mk_const(nm.mk_bv_type(type.fp_exp_size()), "exp"));
+      children.push_back(d_nm.mk_const(d_nm.mk_bv_type(1), "sign"));
       children.push_back(
-          nm.mk_const(nm.mk_bv_type(type.fp_sig_size() - 1), "sig"));
+          d_nm.mk_const(d_nm.mk_bv_type(type.fp_exp_size()), "exp"));
+      children.push_back(
+          d_nm.mk_const(d_nm.mk_bv_type(type.fp_sig_size() - 1), "sig"));
     }
     else
     {
       if (num_children >= 1)
       {
-        children.push_back(nm.mk_const(type, "a"));
+        children.push_back(d_nm.mk_const(type, "a"));
       }
       if (num_children >= 2)
       {
-        children.push_back(nm.mk_const(type, "b"));
+        children.push_back(d_nm.mk_const(type, "b"));
       }
     }
 
-    Node node = nm.mk_node(kind, children, indices);
+    Node node = d_nm.mk_node(kind, children, indices);
 
     std::stringstream ss;
     for (const Node& child : children)
     {
       ss << "(declare-const " << child << " " << child.type() << ")\n";
     }
-    Env env;
+    Env env(d_nm);
     ss << "(assert (distinct " << node << " " << env.rewriter().rewrite(node)
        << "))\n";
     ASSERT_EQ(check_sat(ss), "unsat");
@@ -159,7 +159,7 @@ class TestRewriter : public ::testing::Test
     {
       GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
     }
-    Env env;
+    Env env(d_nm);
     Rewriter& rewriter = env.rewriter();
     std::stringstream ss;
     std::vector<std::reference_wrapper<const Node>> visit{node};
@@ -198,15 +198,14 @@ class TestRewriter : public ::testing::Test
 
   void test_rewrite(const Node& node, const Node& expected)
   {
-    Env env;
+    Env env(d_nm);
     ASSERT_EQ(expected, d_rewriter.rewrite(node));
     ASSERT_EQ(expected, env.rewriter().rewrite(node));
   }
 
+  NodeManager d_nm;
   Env d_env;
   Rewriter& d_rewriter;
-
-  NodeManager& d_nm = NodeManager::get();
 
   Type d_bool_type;
   Type d_bv4_type;

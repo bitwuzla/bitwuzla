@@ -43,6 +43,6 @@ bool is_inverted_of(const Node& a, const Node& b);
  * @param b The second node.
  * @return True if the two nodes can be determined to be always disequal.
  */
-bool is_always_disequal(const Node& a, const Node& b);
+bool is_always_disequal(NodeManager& nm, const Node& a, const Node& b);
 }  // namespace bzla::rewrite::utils
 #endif

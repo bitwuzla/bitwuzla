@@ -17,6 +17,7 @@
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_set.h"
 #include "resource_terminator.h"
+#include "solver/fp/symfpu_nm.h"  // Temporary for setting SymFpuNM
 #include "util/resources.h"
 
 namespace bzla {
@@ -24,18 +25,6 @@ namespace bzla {
 using namespace node;
 
 /* --- SolvingContext public ----------------------------------------------- */
-
-SolvingContext::SolvingContext(const option::Options& options,
-                               const std::string& name)
-    : d_env(options, name),
-      d_logger(d_env.logger()),
-      d_assertions(&d_backtrack_mgr),
-      d_original_assertions(&d_backtrack_mgr),
-      d_preprocessor(*this),
-      d_solver_engine(*this),
-      d_stats(d_env.statistics())
-{
-}
 
 SolvingContext::SolvingContext(NodeManager& nm,
                                const option::Options& options,
@@ -56,6 +45,7 @@ Result
 SolvingContext::solve()
 {
   util::Timer timer(d_stats.time_solve);
+  fp::SymFpuNM snm(d_env.nm());
   set_resource_limits();
 #ifndef NDEBUG
   check_no_free_variables();
@@ -95,6 +85,7 @@ SolvingContext::solve()
 Result
 SolvingContext::preprocess()
 {
+  fp::SymFpuNM snm(d_env.nm());
   if (d_env.options().verbosity() > 0)
   {
     compute_formula_statistics(d_stats.formula_kinds_pre);
@@ -121,6 +112,7 @@ Node
 SolvingContext::get_value(const Node& term)
 {
   assert(d_sat_state == Result::SAT);
+  fp::SymFpuNM snm(d_env.nm());
   try
   {
     return d_solver_engine.value(d_preprocessor.process(term));
@@ -139,10 +131,11 @@ SolvingContext::get_value(const Node& term)
 std::vector<Node>
 SolvingContext::get_unsat_core()
 {
+  fp::SymFpuNM snm(d_env.nm());
   std::vector<Node> res, core;
   if (d_assertions.is_inconsistent())
   {
-    core.push_back(NodeManager::get().mk_value(false));
+    core.push_back(d_env.nm().mk_value(false));
   }
   else
   {

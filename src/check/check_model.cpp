@@ -37,14 +37,14 @@ CheckModel::check()
 
   option::Options opts;
   opts.dbg_check_model.set(false);
-  SolvingContext check_ctx(d_ctx.env().nm(), opts, "chkmodel");
+  NodeManager& nm = d_ctx.env().nm();
+  SolvingContext check_ctx(nm, opts, "chkmodel");
   for (const Node& assertion : d_ctx.original_assertions())
   {
     check_ctx.assert_formula(assertion);
   }
 
   collect_consts();
-  NodeManager& nm = NodeManager::get();
   for (const Node& input : d_consts)
   {
     Node value = d_ctx.get_value(input);
@@ -123,7 +123,7 @@ CheckModel::assert_array_model(SolvingContext& ctx,
                                const Node& input,
                                const Node& value) const
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = ctx.env().nm();
   Node cur        = value;
   while (cur.kind() == Kind::STORE)
   {
@@ -147,7 +147,7 @@ CheckModel::assert_fun_model(SolvingContext& ctx,
   {
     return;
   }
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = ctx.env().nm();
   for (const Node& app : it->second)
   {
     std::vector<Node> args;

@@ -22,6 +22,7 @@
 
 #include <sstream>
 
+#include "env.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
@@ -72,7 +73,8 @@ struct WordBlaster::Internal
 
 /* --- WordBlaster public --------------------------------------------------- */
 
-WordBlaster::WordBlaster(SolverState& state) : d_solver_state(state)
+WordBlaster::WordBlaster(Env& env, SolverState& state)
+    : d_env(env), d_solver_state(state)
 {
   d_internal.reset(new Internal());
 }
@@ -168,7 +170,7 @@ WordBlaster::_word_blast(const Node& node)
   Node res;
   node::node_ref_vector visit{node};
   node::unordered_node_ref_map<bool> visited;
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
 
   do
   {
@@ -252,7 +254,8 @@ WordBlaster::_word_blast(const Node& node)
       {
         SymFpuSymRM rmvar(cur);
         d_internal->d_rm_map.emplace(cur, rmvar);
-        d_solver_state.lemma(node::utils::bv1_to_bool(rmvar.valid().getNode()));
+        d_solver_state.lemma(
+            node::utils::bv1_to_bool(nm, rmvar.valid().getNode()));
       }
       else if (type.is_fp() && cur.is_value())
       {
@@ -279,7 +282,7 @@ WordBlaster::_word_blast(const Node& node)
         SymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
         d_internal->d_unpacked_float_map.emplace(cur, uf);
         d_solver_state.lemma(
-            node::utils::bv1_to_bool(uf.valid(type).getNode()));
+            node::utils::bv1_to_bool(nm, uf.valid(type).getNode()));
       }
       else if (kind == node::Kind::EQUAL && cur[0].type().is_fp())
       {
@@ -676,7 +679,7 @@ WordBlaster::min_max_uf(const Node& node)
     return it->second;
   }
 
-  NodeManager& nm  = NodeManager::get();
+  NodeManager& nm  = d_env.nm();
   size_t nchildren = node.num_children();
   uint64_t size    = type.fp_ieee_bv_size();
 
@@ -699,7 +702,7 @@ WordBlaster::sbv_ubv_uf(const Node& node)
   assert(node[0].type().is_rm());
   assert(node[1].type().is_fp());
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   Type type_bv    = node.type();
   Type type_fp    = node[1].type();
   Type type_fun   = nm.mk_fun_type({node[0].type(), type_fp, type_bv});

@@ -41,7 +41,7 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
 
   Log(1) << "Apply embedded constraints preprocessing pass";
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm   = d_env.nm();
   uint64_t n_substs = 0;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {

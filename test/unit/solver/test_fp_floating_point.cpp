@@ -12,6 +12,7 @@
 
 #include "node/node_manager.h"
 #include "solver/fp/floating_point.h"
+#include "solver/fp/symfpu_nm.h"
 #include "test/unit/test.h"
 
 namespace bzla::test {
@@ -20,6 +21,8 @@ using namespace node;
 
 class TestFp : public TestCommon
 {
+  TestFp() : snm(d_nm) {}
+
  protected:
   enum RationalMode
   {
@@ -55,7 +58,8 @@ class TestFp : public TestCommon
     Node node_sig  = d_nm.mk_value(bv_sig);
 
     Type type_fp = d_nm.mk_fp_type(exp.size(), sig.size() + 1);
-    Node node_fp = d_nm.mk_value(FloatingPoint::fpfp(bv_sign, bv_exp, bv_sig));
+    Node node_fp =
+        d_nm.mk_value(FloatingPoint::fpfp(d_nm, bv_sign, bv_exp, bv_sig));
 
     FloatingPoint fp = node_fp.value<FloatingPoint>();
 
@@ -83,7 +87,7 @@ class TestFp : public TestCommon
     for (size_t i = 0, n = d_constants_dec.size(); i < n; ++i)
     {
       FloatingPoint fp =
-          FloatingPoint::from_real(d_fp16, rm, d_constants_dec[i]);
+          FloatingPoint::from_real(d_nm, d_fp16, rm, d_constants_dec[i]);
       BitVector sign, exp, sig;
       FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
       ASSERT_EQ(sign.str(), expected[i][0]);
@@ -117,7 +121,7 @@ class TestFp : public TestCommon
     for (size_t i = 0, n = constants.size(); i < n; ++i)
     {
       FloatingPoint fp = FloatingPoint::from_rational(
-          d_fp16, rm, constants[i].first, constants[i].second);
+          d_nm, d_fp16, rm, constants[i].first, constants[i].second);
       BitVector sign, exp, sig;
       FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
       ASSERT_EQ(sign.str(), expected[i][0]);
@@ -125,6 +129,10 @@ class TestFp : public TestCommon
       ASSERT_EQ(sig.str(), expected[i][2]);
     }
   }
+
+  /** The node manager. */
+  NodeManager d_nm;
+  fp::SymFpuNM snm;
 
   std::vector<const char *> d_constants_dec = {
       "00",
@@ -1351,9 +1359,6 @@ class TestFp : public TestCommon
   Type d_fp32;
   Type d_fp64;
   Type d_fp128;
-
-  /** The node manager. */
-  NodeManager &d_nm = NodeManager::get();
 };
 
 TEST_F(TestFp, fp_as_bv)

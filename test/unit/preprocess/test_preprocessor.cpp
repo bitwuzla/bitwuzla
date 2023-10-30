@@ -24,23 +24,20 @@ using namespace node;
 class TestPreprocessor : public ::testing::Test
 {
  public:
-  TestPreprocessor() : d_nm(NodeManager::get()), d_rw(d_env.rewriter()){};
+  TestPreprocessor() : d_env(d_nm), d_rw(d_env.rewriter()){};
 
  protected:
-  NodeManager& d_nm;
+  NodeManager d_nm;
   Env d_env;
   Rewriter& d_rw;
   option::Options d_options;
 };
 
-TEST_F(TestPreprocessor, ctor_dtor)
-{
-  SolvingContext ctx(d_options);
-}
+TEST_F(TestPreprocessor, ctor_dtor) { SolvingContext ctx(d_nm, d_options); }
 
 TEST_F(TestPreprocessor, inc1)
 {
-  SolvingContext ctx(d_options);
+  SolvingContext ctx(d_nm, d_options);
 
   ctx.push();
   ctx.pop();
@@ -48,7 +45,7 @@ TEST_F(TestPreprocessor, inc1)
 
 TEST_F(TestPreprocessor, inc2)
 {
-  SolvingContext ctx(d_options);
+  SolvingContext ctx(d_nm, d_options);
 
   ctx.push();
   ctx.pop();

@@ -89,7 +89,7 @@ PassContradictingAnds::apply(AssertionVector& assertions)
     return;
   }
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   do
   {
     const Node& cur       = visit.back();

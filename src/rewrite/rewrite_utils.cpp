@@ -23,7 +23,7 @@ is_inverted_of(const Node& a, const Node& b)
 }
 
 bool
-is_always_disequal(const Node& a, const Node& b)
+is_always_disequal(NodeManager& nm, const Node& a, const Node& b)
 {
   // rewrite EQUAL_EVAL is expected to be enabled
   assert(!a.is_value() || !b.is_value());
@@ -34,7 +34,6 @@ is_always_disequal(const Node& a, const Node& b)
     return false;
   }
 
-  NodeManager& nm = NodeManager::get();
   uint64_t idx0, idx1;
   Node nodes[2] = {a, b};
   for (const auto& p :

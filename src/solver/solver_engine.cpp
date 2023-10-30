@@ -323,7 +323,7 @@ SolverEngine::process_lemmas()
 Node
 SolverEngine::_value(const Node& term)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   node_ref_vector visit{term};
 
   do
@@ -654,7 +654,8 @@ SolverEngine::_value(const Node& term)
             values.push_back(cached_value(arg));
             assert(!values.back().is_null());
           }
-          value = Evaluator::evaluate(cur.kind(), values, cur.indices());
+          value = Evaluator::evaluate(
+              d_env.nm(), cur.kind(), values, cur.indices());
         }
         break;
 

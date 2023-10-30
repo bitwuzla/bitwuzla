@@ -43,11 +43,6 @@ class NodeManager
   /* --- Node interface ---------------------------------------------------- */
 
   /**
-   * Get thread-local node manager singleton.
-   */
-  static NodeManager& get();
-
-  /**
    * Create constant.
    *
    * @param t The type of the constant.

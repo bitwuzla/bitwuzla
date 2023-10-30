@@ -23,10 +23,10 @@ class TestIncremental : public TestCommon
   {
     assert(size > 0);
 
+    NodeManager nm;
     option::Options options;
-    SolvingContext ctx = SolvingContext(options);
+    SolvingContext ctx = SolvingContext(nm, options);
 
-    NodeManager& nm = NodeManager::get();
     Node one        = nm.mk_value(BitVector::mk_true());
     Node cur        = nm.mk_value(BitVector::mk_zero(size));
 
@@ -76,10 +76,10 @@ class TestIncremental : public TestCommon
   {
     assert(size > 0);
 
+    NodeManager nm;
     option::Options options;
-    SolvingContext ctx = SolvingContext(options);
+    SolvingContext ctx = SolvingContext(nm, options);
 
-    NodeManager& nm = NodeManager::get();
     Node prev;
     uint32_t i = 0;
 
@@ -169,11 +169,11 @@ TEST_F(TestIncremental, lt8) { test_incremental_lt(8); }
 
 TEST_F(TestIncremental, assume_assert1)
 {
+  NodeManager nm;
   option::Options options;
   options.set<uint64_t>(option::Option::REWRITE_LEVEL, 0);
-  SolvingContext ctx = SolvingContext(options);
+  SolvingContext ctx = SolvingContext(nm, options);
 
-  NodeManager& nm = NodeManager::get();
   Type type       = nm.mk_bool_type();
   Type atype      = nm.mk_array_type(type, type);
   Node array      = nm.mk_const(atype, "array1");
@@ -198,11 +198,11 @@ TEST_F(TestIncremental, assume_assert1)
 
 TEST_F(TestIncremental, lemmas_on_demand1)
 {
+  NodeManager nm;
   option::Options options;
   options.set<uint64_t>(option::Option::REWRITE_LEVEL, 0);
-  SolvingContext ctx = SolvingContext(options);
+  SolvingContext ctx = SolvingContext(nm, options);
 
-  NodeManager& nm = NodeManager::get();
   Type type       = nm.mk_bool_type();
   Type atype      = nm.mk_array_type(type, type);
   Node array      = nm.mk_const(atype, "array1");

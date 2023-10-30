@@ -93,7 +93,7 @@ PreprocessingPass::substitute(const Node& node,
           assert(!itc->second.is_null());
           children.push_back(itc->second);
         }
-        it->second = node::utils::rebuild_node(cur, children);
+        it->second = node::utils::rebuild_node(d_env.nm(), cur, children);
       }
     }
     visit.pop_back();

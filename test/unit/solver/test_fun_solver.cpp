@@ -24,9 +24,9 @@ class TestFunSolver : public TestCommon
 
 TEST_F(TestFunSolver, fc1)
 {
+  NodeManager nm;
   option::Options options;
-  SolvingContext ctx(options);
-  NodeManager& nm = NodeManager::get();
+  SolvingContext ctx(nm, options);
 
   Type bv_type = nm.mk_bv_type(16);
   Type bool_type = nm.mk_bool_type();
@@ -55,9 +55,9 @@ TEST_F(TestFunSolver, fc1)
 
 TEST_F(TestFunSolver, fc2)
 {
+  NodeManager nm;
   option::Options options;
-  SolvingContext ctx(options);
-  NodeManager& nm = NodeManager::get();
+  SolvingContext ctx(nm, options);
 
   Type bv_type = nm.mk_bv_type(16);
   Type bool_type = nm.mk_bool_type();

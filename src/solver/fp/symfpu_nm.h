@@ -8,17 +8,36 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "node/node.h"
+#include <cassert>
 
 namespace bzla {
 
-class Evaluator
+class NodeManager;
+
+namespace fp {
+
+class SymFpuNM
 {
  public:
-  static Node evaluate(NodeManager& nm,
-                       node::Kind kind,
-                       const std::vector<Node>& values,
-                       const std::vector<uint64_t>& indices = {});
+  static thread_local NodeManager *s_nm;
+
+  SymFpuNM(NodeManager &nm)
+  {
+    d_prev_nm = s_nm;
+    s_nm      = &nm;
+  }
+
+  ~SymFpuNM() { s_nm = d_prev_nm; }
+
+  static NodeManager &get()
+  {
+    assert(s_nm != nullptr);
+    return *s_nm;
+  }
+
+ private:
+  NodeManager *d_prev_nm = nullptr;
 };
 
+}  // namespace fp
 }  // namespace bzla

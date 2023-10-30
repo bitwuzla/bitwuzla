@@ -72,7 +72,7 @@ is_bv_sext(const Node& node, Node& child)
 }
 
 Node
-mk_nary(Kind kind, const std::vector<Node>& terms)
+mk_nary(NodeManager& nm, Kind kind, const std::vector<Node>& terms)
 {
   assert(!terms.empty());
   if (terms.size() == 1)
@@ -80,7 +80,6 @@ mk_nary(Kind kind, const std::vector<Node>& terms)
     return terms[0];
   }
 
-  NodeManager& nm = NodeManager::get();
   size_t size     = terms.size();
 
   if (KindInfo::is_left_associative(kind))
@@ -136,9 +135,8 @@ mk_nary(Kind kind, const std::vector<Node>& terms)
 }
 
 Node
-mk_default_value(const Type& type)
+mk_default_value(NodeManager& nm, const Type& type)
 {
-  NodeManager& nm = NodeManager::get();
   if (type.is_bool())
   {
     return nm.mk_value(false);
@@ -159,22 +157,21 @@ mk_default_value(const Type& type)
     {
       children.push_back(nm.mk_var(types[i]));
     }
-    children.push_back(mk_default_value(types.back()));
-    return mk_nary(Kind::LAMBDA, children);
+    children.push_back(mk_default_value(nm, types.back()));
+    return mk_nary(nm, Kind::LAMBDA, children);
   }
   else if (type.is_array())
   {
-    return nm.mk_const_array(type, mk_default_value(type.array_element()));
+    return nm.mk_const_array(type, mk_default_value(nm, type.array_element()));
   }
   assert(type.is_rm());
   return nm.mk_value(RoundingMode::RNA);
 }
 
 Node
-mk_binder(Kind kind, const std::vector<Node>& terms)
+mk_binder(NodeManager& nm, Kind kind, const std::vector<Node>& terms)
 {
   assert(terms.size() >= 2);
-  NodeManager& nm = NodeManager::get();
   Node res        = terms.back();
   for (size_t i = 1, size = terms.size(); i < size; ++i)
   {
@@ -186,19 +183,17 @@ mk_binder(Kind kind, const std::vector<Node>& terms)
 }
 
 Node
-bv1_to_bool(const Node& node)
+bv1_to_bool(NodeManager& nm, const Node& node)
 {
   assert(node.type().is_bv() && node.type().bv_size() == 1);
-  NodeManager& nm = NodeManager::get();
   return nm.mk_node(node::Kind::EQUAL,
                     {node, nm.mk_value(BitVector::mk_true())});
 }
 
 Node
-bool_to_bv1(const Node& node)
+bool_to_bv1(NodeManager& nm, const Node& node)
 {
   assert(node.type().is_bool());
-  NodeManager& nm = NodeManager::get();
   return nm.mk_node(Kind::ITE,
                     {nm.mk_node(Kind::EQUAL, {node, nm.mk_value(true)}),
                      nm.mk_value(BitVector::mk_true()),
@@ -206,7 +201,9 @@ bool_to_bv1(const Node& node)
 }
 
 Node
-rebuild_node(const Node& node, const std::vector<Node>& children)
+rebuild_node(NodeManager& nm,
+             const Node& node,
+             const std::vector<Node>& children)
 {
   assert(node.num_children() == children.size());
   if (node.num_children() == 0)
@@ -217,11 +214,10 @@ rebuild_node(const Node& node, const std::vector<Node>& children)
   else if (node.kind() == Kind::CONST_ARRAY)
   {
     assert(children.size() == 1);
-    return NodeManager::get().mk_const_array(node.type(), children[0]);
+    return nm.mk_const_array(node.type(), children[0]);
   }
   else
   {
-    NodeManager& nm = NodeManager::get();
     if (node.num_indices() > 0)
     {
       return nm.mk_node(node.kind(), children, node.indices());
@@ -231,7 +227,9 @@ rebuild_node(const Node& node, const std::vector<Node>& children)
 }
 
 Node
-rebuild_node(const Node& node, const std::unordered_map<Node, Node>& cache)
+rebuild_node(NodeManager& nm,
+             const Node& node,
+             const std::unordered_map<Node, Node>& cache)
 {
   std::vector<Node> children;
 
@@ -252,11 +250,10 @@ rebuild_node(const Node& node, const std::unordered_map<Node, Node>& cache)
   else if (node.kind() == Kind::CONST_ARRAY)
   {
     assert(children.size() == 1);
-    return NodeManager::get().mk_const_array(node.type(), children[0]);
+    return nm.mk_const_array(node.type(), children[0]);
   }
   else
   {
-    NodeManager& nm = NodeManager::get();
     if (node.num_indices() > 0)
     {
       return nm.mk_node(node.kind(), children, node.indices());

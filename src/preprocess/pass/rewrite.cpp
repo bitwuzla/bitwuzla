@@ -36,7 +36,7 @@ PassRewrite::apply(AssertionVector& assertions)
   }
 
 #ifndef NDEBUG
-  Env env(d_env.options());
+  Env env(d_env.nm(), d_env.options());
   auto& rww = env.rewriter();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {

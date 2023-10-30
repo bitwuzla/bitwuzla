@@ -28,8 +28,6 @@ class Env
    * Constructor.
    * @param options The associated configuration options.
    */
-  Env(const option::Options& options = option::Options(),
-      const std::string& name        = "");
   Env(NodeManager& nm,
       const option::Options& options = option::Options(),
       const std::string& name        = "");

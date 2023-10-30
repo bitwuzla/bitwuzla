@@ -24,8 +24,8 @@ TEST_F(TestAssertionStack, ctor_dtor) { AssertionStack as; }
 
 TEST_F(TestAssertionStack, push_back)
 {
+  NodeManager nm;
   AssertionStack as;
-  NodeManager& nm = NodeManager::get();
 
   Node f1 = nm.mk_const(nm.mk_bool_type());
   Node f2 = nm.mk_const(nm.mk_bool_type());
@@ -39,8 +39,8 @@ TEST_F(TestAssertionStack, push_back)
 
 TEST_F(TestAssertionStack, push_pop)
 {
+  NodeManager nm;
   AssertionStack as;
-  NodeManager& nm = NodeManager::get();
 
   Node f1 = nm.mk_const(nm.mk_bool_type());
   Node f2 = nm.mk_const(nm.mk_bool_type());
@@ -65,8 +65,8 @@ TEST_F(TestAssertionStack, push_pop)
 
 TEST_F(TestAssertionStack, insert_at_level)
 {
+  NodeManager nm;
   AssertionStack as;
-  NodeManager& nm = NodeManager::get();
 
   Node a1 = nm.mk_const(nm.mk_bool_type(), "a1");
   Node a2 = nm.mk_const(nm.mk_bool_type(), "a2");
@@ -155,8 +155,8 @@ TEST_F(TestAssertionStack, insert_at_level)
 
 TEST_F(TestAssertionStack, view)
 {
+  NodeManager nm;
   AssertionStack as;
-  NodeManager& nm = NodeManager::get();
 
   Node f1 = nm.mk_const(nm.mk_bool_type());
   Node f2 = nm.mk_const(nm.mk_bool_type());

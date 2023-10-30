@@ -206,17 +206,18 @@ Node
 BvPropSolver::value(const Node& term)
 {
   assert(BvSolver::is_leaf(term));
+  NodeManager& nm = d_env.nm();
   auto it = d_node_map.find(term);
   if (it == d_node_map.end())
   {
-    return utils::mk_default_value(term.type());
+    return utils::mk_default_value(nm, term.type());
   }
   const BitVector& value = d_ls->get_assignment(it->second);
   if (term.type().is_bool())
   {
-    return NodeManager::get().mk_value(value.is_true());
+    return nm.mk_value(value.is_true());
   }
-  return NodeManager::get().mk_value(value);
+  return nm.mk_value(value);
 }
 
 void

@@ -46,12 +46,12 @@ class TestRewriterBvOverflow : public TestRewriter
     assert(low > 0);
     assert(low <= high);
 
+    NodeManager nm;
     option::Options options;
     options.rewrite_level.set(rwl);
     options.dbg_check_model.set(false);
     options.dbg_check_unsat_core.set(false);
-    SolvingContext ctx = SolvingContext(options);
-    NodeManager& nm    = NodeManager::get();
+    SolvingContext ctx = SolvingContext(nm, options);
     for (int32_t num_bits = low; num_bits <= high; num_bits++)
     {
       for (int32_t i = 0, max = std::pow(2, num_bits); i < max; ++i)
@@ -119,11 +119,12 @@ class TestRewriterBvOverflow : public TestRewriter
 
     int32_t result;
 
+    NodeManager nm;
     option::Options options;
     options.rewrite_level.set(rwl);
     options.dbg_check_model.set(false);
     options.dbg_check_unsat_core.set(false);
-    SolvingContext ctx = SolvingContext(options);
+    SolvingContext ctx = SolvingContext(nm, options);
     for (int32_t num_bits = low; num_bits <= high; num_bits++)
     {
       int32_t max = std::pow(2, num_bits - 1);
@@ -147,7 +148,6 @@ class TestRewriterBvOverflow : public TestRewriter
               default: assert(kind == Kind::BV_SDIVO); result = div(i, j);
             }
 
-            NodeManager& nm = NodeManager::get();
             Node val1       = nm.mk_value(BitVector::from_si(num_bits, i));
             Node val2       = nm.mk_value(BitVector::from_si(num_bits, j));
             ctx.push();

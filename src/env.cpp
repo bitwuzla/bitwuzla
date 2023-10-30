@@ -15,17 +15,6 @@
 
 namespace bzla {
 
-Env::Env(const option::Options& options, const std::string& name)
-    : d_nm(NodeManager::get()),
-      d_options(options),
-      d_rewriter(*this, options.rewrite_level()),
-      d_logger(options.log_level(),
-               options.verbosity(),
-               name.empty() ? "" : "(" + name + ")")
-{
-  d_options.finalize();
-}
-
 Env::Env(NodeManager& nm,
          const option::Options& options,
          const std::string& name)

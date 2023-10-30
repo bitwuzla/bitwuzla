@@ -124,9 +124,9 @@ Rewriter::rewrite(const Node& node)
         // Reset nodes counter
         d_num_nodes = 0;
         // Save current maximum node id
-        int64_t max_id = NodeManager::get().max_node_id();
+        int64_t max_id = d_env.nm().max_node_id();
 #endif
-        it->second = _rewrite(node::utils::rebuild_node(cur, d_cache));
+        it->second = _rewrite(node::utils::rebuild_node(nm(), cur, d_cache));
 #ifndef NDEBUG
         uint64_t thresh = d_env.options().dbg_rw_node_thresh();
         if (thresh > 0 && d_num_nodes > 0)
@@ -154,9 +154,9 @@ Rewriter::mk_node(node::Kind kind,
                   const std::vector<uint64_t>& indices)
 {
 #ifndef NDEBUG
-  uint64_t max_id = NodeManager::get().max_node_id();
+  uint64_t max_id = d_env.nm().max_node_id();
 #endif
-  Node node = NodeManager::get().mk_node(kind, children, indices);
+  Node node = d_env.nm().mk_node(kind, children, indices);
   ++d_num_rec_calls;
 #ifndef NDEBUG
   auto [it, inserted] = d_rec_cache.insert(node);
@@ -260,8 +260,7 @@ Rewriter::is_xnor(const Node& node, Node& child0, Node& child1)
 bool
 Rewriter::is_bv_neg(const Node& node, Node& child)
 {
-  Node one =
-      NodeManager::get().mk_value(BitVector::mk_one(node.type().bv_size()));
+  Node one = d_env.nm().mk_value(BitVector::mk_one(node.type().bv_size()));
   if (node.kind() == Kind::BV_NEG)
   {
     child = node[0];
@@ -351,6 +350,12 @@ void
 Rewriter::clear_cache()
 {
   d_cache.clear();
+}
+
+NodeManager&
+Rewriter::nm()
+{
+  return d_env.nm();
 }
 
 /* === Rewriter private ===================================================== */

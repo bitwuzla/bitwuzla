@@ -25,7 +25,7 @@ class TestPassContradictingAnds : public TestPreprocessingPass
   TestPassContradictingAnds()
   {
     d_options.rewrite_level.set(0);
-    d_env.reset(new Env(d_options));
+    d_env.reset(new Env(d_nm, d_options));
     d_pass.reset(new preprocess::pass::PassContradictingAnds(*d_env, &d_bm));
   }
 

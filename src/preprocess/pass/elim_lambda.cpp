@@ -79,7 +79,7 @@ PassElimLambda::process(const Node& term)
       }
       else
       {
-        it->second = utils::rebuild_node(cur, children);
+        it->second = utils::rebuild_node(d_env.nm(), cur, children);
       }
     }
 
@@ -142,7 +142,7 @@ PassElimLambda::reduce(const Node& node) const
       }
       else
       {
-        it->second = utils::rebuild_node(cur, cache);
+        it->second = utils::rebuild_node(d_env.nm(), cur, cache);
       }
     }
     visit.pop_back();

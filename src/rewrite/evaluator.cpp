@@ -18,11 +18,11 @@ namespace bzla {
 using namespace node;
 
 Node
-Evaluator::evaluate(Kind kind,
+Evaluator::evaluate(NodeManager& nm,
+                    Kind kind,
                     const std::vector<Node>& values,
                     const std::vector<uint64_t>& indices)
 {
-  NodeManager& nm = NodeManager::get();
   switch (kind)
   {
     // TODO: bool

@@ -31,8 +31,12 @@ namespace {
  * recursive calls.
  */
 bool
-get_linear_bv_term_aux(
-    const Node& node, BitVector& factor, Node& lhs, Node& rhs, uint32_t& bound)
+get_linear_bv_term_aux(NodeManager& nm,
+                       const Node& node,
+                       BitVector& factor,
+                       Node& lhs,
+                       Node& rhs,
+                       uint32_t& bound)
 {
   assert(node.type().is_bv());
 
@@ -43,7 +47,6 @@ get_linear_bv_term_aux(
 
   bound -= 1;
 
-  NodeManager& nm = NodeManager::get();
   if (node.is_inverted())
   {
     // node = ~subterm
@@ -54,7 +57,7 @@ get_linear_bv_term_aux(
 
     BitVector tmp_factor;
     if (!get_linear_bv_term_aux(
-            nm.invert_node(node), tmp_factor, lhs, rhs, bound))
+            nm, nm.invert_node(node), tmp_factor, lhs, rhs, bound))
     {
       return false;
     }
@@ -65,14 +68,14 @@ get_linear_bv_term_aux(
   else if (node.kind() == Kind::BV_ADD)
   {
     Node tmp, other;
-    if (get_linear_bv_term_aux(node[0], factor, lhs, tmp, bound))
+    if (get_linear_bv_term_aux(nm, node[0], factor, lhs, tmp, bound))
     {
       // node = node[0] + node[1]
       //      = (factor * lhs + rhs) + node[1]
       //      = factor * lhs + (node[1] + rhs)
       other = node[1];
     }
-    else if (get_linear_bv_term_aux(node[1], factor, lhs, tmp, bound))
+    else if (get_linear_bv_term_aux(nm, node[1], factor, lhs, tmp, bound))
     {
       // node = node[0] + node[1]
       //      = node[0] + (factor * lhs + rhs)
@@ -90,7 +93,7 @@ get_linear_bv_term_aux(
     Node tmp, other;
     if (node[0].is_value() && node[0].value<BitVector>().lsb())
     {
-      if (!get_linear_bv_term_aux(node[1], factor, lhs, tmp, bound))
+      if (!get_linear_bv_term_aux(nm, node[1], factor, lhs, tmp, bound))
       {
         return false;
       }
@@ -102,7 +105,7 @@ get_linear_bv_term_aux(
     }
     else if (node[1].is_value() && node[1].value<BitVector>().lsb())
     {
-      if (!get_linear_bv_term_aux(node[0], factor, lhs, tmp, bound))
+      if (!get_linear_bv_term_aux(nm, node[0], factor, lhs, tmp, bound))
       {
         return false;
       }
@@ -138,10 +141,11 @@ get_linear_bv_term_aux(
 }
 
 bool
-get_linear_bv_term(const Node& node, BitVector& factor, Node& lhs, Node& rhs)
+get_linear_bv_term(
+    NodeManager& nm, const Node& node, BitVector& factor, Node& lhs, Node& rhs)
 {
   uint32_t bound = 100;
-  bool res       = get_linear_bv_term_aux(node, factor, lhs, rhs, bound);
+  bool res       = get_linear_bv_term_aux(nm, node, factor, lhs, rhs, bound);
   return res;
 }
 
@@ -157,17 +161,17 @@ PassVariableSubstitution::normalize_substitution_eq(const Node& node)
     return {};
   }
 
-  NodeManager& nm   = NodeManager::get();
+  NodeManager& nm   = d_env.nm();
   const Node& left  = node[0];
   const Node& right = node[1];
   Node var, subst, tmp;
   BitVector factor;
-  if (get_linear_bv_term(left, factor, var, tmp))
+  if (get_linear_bv_term(nm, left, factor, var, tmp))
   {
     subst = nm.mk_node(Kind::BV_SUB, {right, tmp});
     d_stats.num_linear_eq += 1;
   }
-  else if (get_linear_bv_term(right, factor, var, tmp))
+  else if (get_linear_bv_term(nm, right, factor, var, tmp))
   {
     subst = nm.mk_node(Kind::BV_SUB, {left, tmp});
     d_stats.num_linear_eq += 1;
@@ -232,7 +236,7 @@ PassVariableSubstitution::normalize_substitution_bv_ineq(const Node& node)
     return {};
   }
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
 
   // (<ineq_kind> (bvnot a) b) is equal to (<inv_ineq_kind> (a bvnot b))
   if (var.is_inverted())
@@ -330,7 +334,7 @@ std::pair<Node, Node>
 PassVariableSubstitution::find_substitution(const Node& assertion)
 {
   util::Timer timer(d_stats.time_find_substitution);
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
 
   if (assertion.kind() == Kind::EQUAL)
   {
@@ -363,7 +367,7 @@ PassVariableSubstitution::find_substitution(const Node& assertion)
 Node
 PassVariableSubstitution::normalize_for_substitution(const Node& assertion)
 {
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   if (d_env.options().pp_variable_subst_norm_diseq() && assertion.is_inverted()
       && assertion[0].kind() == Kind::EQUAL
       && (assertion[0][0].type().is_bool()
@@ -820,7 +824,7 @@ PassVariableSubstitution::substitute(
       }
       else
       {
-        it->second = utils::rebuild_node(cur, cache);
+        it->second = utils::rebuild_node(d_env.nm(), cur, cache);
       }
     }
     visit.pop_back();

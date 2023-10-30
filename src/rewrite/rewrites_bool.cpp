@@ -30,8 +30,7 @@ RewriteRule<RewriteRuleKind::AND_EVAL>::_apply(Rewriter& rewriter,
 {
   (void) rewriter;
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  return NodeManager::get().mk_value(node[0].value<bool>()
-                                     && node[1].value<bool>());
+  return rewriter.nm().mk_value(node[0].value<bool>() && node[1].value<bool>());
 }
 
 /**
@@ -57,7 +56,7 @@ _rw_and_special_const(Rewriter& rewriter, const Node& node, size_t idx)
     {
       return node[idx1];
     }
-    return NodeManager::get().mk_value(false);
+    return rewriter.nm().mk_value(false);
   }
   return node;
 }
@@ -95,13 +94,13 @@ _rw_and_const(Rewriter& rewriter, const Node& node, size_t idx)
     {
       bool z = node[idx0].value<bool>() && node[idx1][0].value<bool>();
       return rewriter.mk_node(Kind::AND,
-                              {NodeManager::get().mk_value(z), node[idx1][1]});
+                              {rewriter.nm().mk_value(z), node[idx1][1]});
     }
     if (node[idx1][1].is_value())
     {
       bool z = node[idx0].value<bool>() && node[idx1][1].value<bool>();
       return rewriter.mk_node(Kind::AND,
-                              {NodeManager::get().mk_value(z), node[idx1][0]});
+                              {rewriter.nm().mk_value(z), node[idx1][0]});
     }
   }
   return node;
@@ -226,7 +225,7 @@ _rw_and_contra1(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx1 = 1 - idx;
   if (rewrite::utils::is_inverted_of(node[idx0], node[idx1]))
   {
-    return NodeManager::get().mk_value(false);
+    return rewriter.nm().mk_value(false);
   }
   return node;
 }
@@ -264,7 +263,7 @@ _rw_and_contra2(Rewriter& rewriter, const Node& node, size_t idx)
         || rewrite::utils::is_inverted_of(node[idx0][1], node[idx1][0])
         || rewrite::utils::is_inverted_of(node[idx0][1], node[idx1][1]))
     {
-      return NodeManager::get().mk_value(false);
+      return rewriter.nm().mk_value(false);
     }
   }
   return node;
@@ -301,7 +300,7 @@ _rw_and_contra3(Rewriter& rewriter, const Node& node, size_t idx)
     if (rewrite::utils::is_inverted_of(node[idx0][0], node[idx1])
         || rewrite::utils::is_inverted_of(node[idx0][1], node[idx1]))
     {
-      return NodeManager::get().mk_value(false);
+      return rewriter.nm().mk_value(false);
     }
   }
   return node;
@@ -545,7 +544,7 @@ RewriteRule<RewriteRuleKind::AND_BV_LT_FALSE>::_apply(Rewriter& rewriter,
        || (node[0].kind() == Kind::BV_SLT && node[1].kind() == Kind::BV_SLT))
       && node[0][0] == node[1][1] && node[0][1] == node[1][0])
   {
-    return NodeManager::get().mk_value(false);
+    return rewriter.nm().mk_value(false);
   }
   return node;
 }
@@ -585,7 +584,7 @@ RewriteRule<RewriteRuleKind::NOT_EVAL>::_apply(Rewriter& rewriter,
 {
   (void) rewriter;
   if (!node[0].is_value()) return node;
-  return NodeManager::get().mk_value(!node[0].value<bool>());
+  return rewriter.nm().mk_value(!node[0].value<bool>());
 }
 
 /**

@@ -126,6 +126,8 @@ class Rewriter
   /** Clear rewrite cache. */
   void clear_cache();
 
+  NodeManager& nm();
+
  private:
   /** The limit for recursive calls to _rewrite(). */
   static constexpr uint64_t RECURSION_LIMIT = 4096;

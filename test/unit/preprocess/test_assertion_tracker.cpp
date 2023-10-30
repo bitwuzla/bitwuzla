@@ -20,10 +20,10 @@ using namespace node;
 class TestAssertionTracker : public ::testing::Test
 {
  public:
-  TestAssertionTracker() : d_nm(NodeManager::get()) {};
+  TestAssertionTracker(){};
 
  protected:
-  NodeManager& d_nm;
+  NodeManager d_nm;
 };
 
 TEST_F(TestAssertionTracker, track1)
