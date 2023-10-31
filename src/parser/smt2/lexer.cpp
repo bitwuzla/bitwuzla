@@ -20,10 +20,63 @@ namespace parser::smt2 {
 
 /* Lexer public ------------------------------------------------------------- */
 
+constexpr CharacterClasses::CharacterClasses() { init(); }
+
+constexpr void
+CharacterClasses::init()
+{
+  for (size_t i = 0; s_printable_ascii_chars[i] != 0; ++i)
+  {
+    uint8_t c         = s_printable_ascii_chars[i];
+    d_char_classes[c] = static_cast<uint32_t>(CharacterClass::STRING);
+    if (c != '\\' && c != '|')
+    {
+      d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::QUOTED_SYMBOL);
+    }
+  }
+  for (size_t i = 0; s_decimal_digit_chars[i] != 0; ++i)
+  {
+    uint8_t c = s_decimal_digit_chars[i];
+    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::DECIMAL_DIGIT);
+    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::SYMBOL);
+    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::KEYWORD);
+  }
+  for (size_t i = 0; s_hexadecimal_digit_chars[i] != 0; ++i)
+  {
+    uint8_t c = s_hexadecimal_digit_chars[i];
+    d_char_classes[c] |=
+        static_cast<uint32_t>(CharacterClass::HEXADECIMAL_DIGIT);
+  }
+  for (size_t i = 0; s_letter_chars[i] != 0; ++i)
+  {
+    uint8_t c = s_letter_chars[i];
+    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::SYMBOL);
+    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::KEYWORD);
+  }
+  for (size_t i = 0; s_extra_symbol_chars[i] != 0; ++i)
+  {
+    uint8_t c = s_extra_symbol_chars[i];
+    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::SYMBOL);
+  }
+  for (size_t i = 0; s_extra_keyword_chars[i] != 0; ++i)
+  {
+    uint8_t c = s_extra_keyword_chars[i];
+    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::KEYWORD);
+  }
+}
+
+const CharacterClasses&
+CharacterClasses::get()
+{
+  static const constexpr CharacterClasses classes;
+  return classes;
+}
+
+/* Lexer public ------------------------------------------------------------- */
+
 Lexer::Lexer(FILE* infile) : d_infile(infile), d_buffer(d_buf_size, 0)
 {
   assert(infile);
-  init_char_classes();
 }
 
 Token
@@ -64,7 +117,7 @@ Lexer::next_token_aux()
         d_token.push_back(0);
         return Token::ENDOFFILE;
       }
-    } while (is_printable(ch) && std::isspace(ch));
+    } while (CharacterClasses::is_printable(ch) && std::isspace(ch));
 
     if (ch != ';')
     {
@@ -132,7 +185,8 @@ Lexer::next_token_aux()
         d_token.push_back(0);
         return error(ch, "unexpected end of file after '#x'");
       }
-      if (!is_char_class(ch, CharacterClass::HEXADECIMAL_DIGIT))
+      if (!CharacterClasses::is_in_class(
+              ch, CharacterClasses::CharacterClass::HEXADECIMAL_DIGIT))
       {
         d_token.push_back(0);
         return error(ch, "expected hexa-decimal digit after '#x'");
@@ -141,7 +195,8 @@ Lexer::next_token_aux()
       for (;;)
       {
         ch = next_char();
-        if (!is_char_class(ch, CharacterClass::HEXADECIMAL_DIGIT))
+        if (!CharacterClasses::is_in_class(
+                ch, CharacterClasses::CharacterClass::HEXADECIMAL_DIGIT))
         {
           break;
         }
@@ -175,9 +230,10 @@ Lexer::next_token_aux()
           return Token::STRING_VALUE;
         }
       }
-      if (!is_char_class(ch, CharacterClass::STRING))
+      if (!CharacterClasses::is_in_class(
+              ch, CharacterClasses::CharacterClass::STRING))
       {
-        if (is_printable(ch))
+        if (CharacterClasses::is_printable(ch))
         {
           d_token.push_back(0);
           return error(ch, "illegal " + err_char(ch) + " in string");
@@ -217,7 +273,8 @@ Lexer::next_token_aux()
       d_token.push_back(0);
       return error(ch, "unexpected end of file after ':'");
     }
-    if (!is_char_class(ch, CharacterClass::KEYWORD))
+    if (!CharacterClasses::is_in_class(
+            ch, CharacterClasses::CharacterClass::KEYWORD))
     {
       d_token.push_back(0);
       return error(ch, "unexpected " + err_char(ch) + " after ':'");
@@ -226,7 +283,8 @@ Lexer::next_token_aux()
     for (;;)
     {
       ch = next_char();
-      if (!is_char_class(ch, CharacterClass::KEYWORD))
+      if (!CharacterClasses::is_in_class(
+              ch, CharacterClasses::CharacterClass::KEYWORD))
       {
         break;
       }
@@ -251,7 +309,8 @@ Lexer::next_token_aux()
         d_token.push_back(0);
         return error(ch, "unexpected end of file after '0.'");
       }
-      if (!is_char_class(ch, CharacterClass::DECIMAL_DIGIT))
+      if (!CharacterClasses::is_in_class(
+              ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
       {
         d_token.push_back(0);
         return error(ch, "expected decimal digit after '0.'");
@@ -260,7 +319,8 @@ Lexer::next_token_aux()
       for (;;)
       {
         ch = next_char();
-        if (!is_char_class(ch, CharacterClass::DECIMAL_DIGIT))
+        if (!CharacterClasses::is_in_class(
+                ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
         {
           break;
         }
@@ -271,14 +331,16 @@ Lexer::next_token_aux()
     d_token.push_back(0);
     return res;
   }
-  else if (is_char_class(ch, CharacterClass::DECIMAL_DIGIT))
+  else if (CharacterClasses::is_in_class(
+               ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
   {
     Token res = Token::DECIMAL_VALUE;
     push_char(ch);
     for (;;)
     {
       ch = next_char();
-      if (!is_char_class(ch, CharacterClass::DECIMAL_DIGIT))
+      if (!CharacterClasses::is_in_class(
+              ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
       {
         break;
       }
@@ -298,7 +360,8 @@ Lexer::next_token_aux()
       for (;;)
       {
         ch = next_char();
-        if (!is_char_class(ch, CharacterClass::DECIMAL_DIGIT))
+        if (!CharacterClasses::is_in_class(
+                ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
         {
           break;
         }
@@ -309,13 +372,15 @@ Lexer::next_token_aux()
     d_token.push_back(0);
     return res;
   }
-  else if (is_char_class(ch, CharacterClass::SYMBOL))
+  else if (CharacterClasses::is_in_class(
+               ch, CharacterClasses::CharacterClass::SYMBOL))
   {
     push_char(ch);
     for (;;)
     {
       ch = next_char();
-      if (!is_char_class(ch, CharacterClass::SYMBOL))
+      if (!CharacterClasses::is_in_class(
+              ch, CharacterClasses::CharacterClass::SYMBOL))
       {
         break;
       }
@@ -330,7 +395,7 @@ Lexer::next_token_aux()
     return Token::SYMBOL;
   }
   d_token.push_back(0);
-  if (is_printable(ch))
+  if (CharacterClasses::is_printable(ch))
   {
     return error(ch, "illegal " + err_char(ch));
   }
@@ -359,41 +424,5 @@ Lexer::error(int32_t ch, const std::string& error_msg)
   return Token::INVALID;
 }
 
-void
-Lexer::init_char_classes()
-{
-  for (auto c : s_printable_ascii_chars)
-  {
-    d_char_classes[c] = static_cast<uint32_t>(CharacterClass::STRING);
-    if (c != '\\' && c != '|')
-    {
-      d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::QUOTED_SYMBOL);
-    }
-  }
-  for (auto c : s_decimal_digit_chars)
-  {
-    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::DECIMAL_DIGIT);
-    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::SYMBOL);
-    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::KEYWORD);
-  }
-  for (auto c : s_hexadecimal_digit_chars)
-  {
-    d_char_classes[c] |=
-        static_cast<uint32_t>(CharacterClass::HEXADECIMAL_DIGIT);
-  }
-  for (auto c : s_letter_chars)
-  {
-    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::SYMBOL);
-    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::KEYWORD);
-  }
-  for (auto c : s_extra_symbol_chars)
-  {
-    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::SYMBOL);
-  }
-  for (auto c : s_extra_keyword_chars)
-  {
-    d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::KEYWORD);
-  }
-}
 }  // namespace parser::smt2
 }  // namespace bzla
