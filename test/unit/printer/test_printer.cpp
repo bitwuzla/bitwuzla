@@ -180,7 +180,7 @@ TEST_F(TestPrinter, print_const)
   {
     std::stringstream ss;
     Printer::print(ss, d_nm.mk_const(d_type_bool, ""));
-    ASSERT_EQ(ss.str(), "");
+    ASSERT_EQ(ss.str(), "||");
   }
 
   {
@@ -203,7 +203,7 @@ TEST_F(TestPrinter, print_var)
   {
     std::stringstream ss;
     Printer::print(ss, d_nm.mk_var(d_type_bool, ""));
-    ASSERT_EQ(ss.str(), "");
+    ASSERT_EQ(ss.str(), "||");
   }
 
   {

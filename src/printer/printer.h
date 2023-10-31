@@ -60,6 +60,31 @@ class Printer
 
 namespace printer {
 
+/**
+ * The exception thrown when the printer encounters an unrecoverable error,
+ * e.g., when symbols do not comply with a language standard.
+ */
+class Exception : public std::exception
+{
+ public:
+  /**
+   * Constructor.
+   * @param msg The exception message.
+   */
+  Exception(const std::string& msg) : d_msg(msg) {}
+  /**
+   * Get the exception message.
+   * @return The exception message.
+   */
+  const std::string& msg() const { return d_msg; }
+
+  const char* what() const noexcept override { return d_msg.c_str(); }
+
+ private:
+  /** The exception message. */
+  std::string d_msg;
+};
+
 /** Struct to set maximum printing depth of nodes via stream manipulator. */
 struct set_depth
 {

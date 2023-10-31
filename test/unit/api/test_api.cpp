@@ -2040,6 +2040,51 @@ TEST_F(TestApi, print_formula3)
   ASSERT_EQ(ss.str(), expected_smt2.str());
 }
 
+TEST_F(TestApi, print_formula4)
+{
+  bitwuzla::Options options;
+  bitwuzla::Bitwuzla bitwuzla(options);
+  bitwuzla::Term main_a =
+      bitwuzla::mk_const(bitwuzla::mk_bool_sort(), "main a");
+  bitwuzla::Term pain_b =
+      bitwuzla::mk_const(bitwuzla::mk_bool_sort(), "|pain b|");
+  bitwuzla::Term b = bitwuzla::mk_const(bitwuzla::mk_bool_sort(), "b");
+  bitwuzla::Term e = bitwuzla::mk_const(bitwuzla::mk_bool_sort(), "");
+  bitwuzla.assert_formula(
+      bitwuzla::mk_term(bitwuzla::Kind::XOR, {main_a, pain_b, b, e}));
+  std::stringstream expected_smt2;
+  expected_smt2 << "(set-logic ALL)" << std::endl
+                << "(declare-const |main a| Bool)" << std::endl
+                << "(declare-const |pain b| Bool)" << std::endl
+                << "(declare-const b Bool)" << std::endl
+                << "(declare-const || Bool)" << std::endl
+                << "(assert (xor (xor (xor |main a| |pain b|) b) ||))"
+                << std::endl
+                << "(check-sat)" << std::endl
+                << "(exit)" << std::endl;
+  std::stringstream ss;
+  bitwuzla.print_formula(ss, "smt2");
+  ASSERT_EQ(ss.str(), expected_smt2.str());
+  {
+    bitwuzla::Term i = bitwuzla::mk_const(bitwuzla::mk_bool_sort(), "|c");
+    bitwuzla::Bitwuzla bitwuzla(options);
+    bitwuzla.assert_formula(i);
+    ASSERT_THROW(bitwuzla.print_formula(ss, "smt2"), bitwuzla::Exception);
+  }
+  {
+    bitwuzla::Term i = bitwuzla::mk_const(bitwuzla::mk_bool_sort(), "|c\\|");
+    bitwuzla::Bitwuzla bitwuzla(options);
+    bitwuzla.assert_formula(i);
+    ASSERT_THROW(bitwuzla.print_formula(ss, "smt2"), bitwuzla::Exception);
+  }
+  {
+    bitwuzla::Term i = bitwuzla::mk_const(bitwuzla::mk_bool_sort(), "|c||");
+    bitwuzla::Bitwuzla bitwuzla(options);
+    bitwuzla.assert_formula(i);
+    ASSERT_THROW(bitwuzla.print_formula(ss, "smt2"), bitwuzla::Exception);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Stastics                                                                   */
 /* -------------------------------------------------------------------------- */

@@ -10,6 +10,7 @@
 
 #include "parser/smt2/lexer.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <sstream>
@@ -96,6 +97,36 @@ const std::string&
 Lexer::error_msg() const
 {
   return d_error;
+}
+
+bool
+Lexer::is_valid_symbol(const std::string& s)
+{
+  return std::none_of(s.begin(), s.end(), [](char ch) {
+    return !CharacterClasses::is_in_class(
+        ch, CharacterClasses::CharacterClass::SYMBOL);
+  });
+}
+
+bool
+Lexer::is_valid_quoted_symbol(const std::string& s)
+{
+  if (s.size() < 2)
+  {
+    return false;
+  }
+  if (s[0] != '|' || s[s.size() - 1] != '|')
+  {
+    return false;
+  }
+  for (size_t i = 1, n = s.size() - 1; i < n; ++i)
+  {
+    if (s[i] == '\\' || s[i] == '|' || !CharacterClasses::is_printable(s[i]))
+    {
+      return false;
+    }
+  }
+  return true;
 }
 
 /* Lexer private ------------------------------------------------------------ */

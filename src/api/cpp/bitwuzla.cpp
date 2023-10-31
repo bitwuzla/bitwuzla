@@ -1516,7 +1516,14 @@ Bitwuzla::print_formula(std::ostream &out, const std::string &format) const
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(format);
   BITWUZLA_CHECK(format == "smt2") << "invalid format, expected 'smt2'";
-  bzla::Printer::print_formula(out, d_ctx->assertions());
+  try
+  {
+    bzla::Printer::print_formula(out, d_ctx->assertions());
+  }
+  catch (bzla::printer::Exception &e)
+  {
+    throw Exception(e.msg());
+  }
 }
 
 std::map<std::string, std::string>

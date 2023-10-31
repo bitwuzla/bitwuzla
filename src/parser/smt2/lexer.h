@@ -115,6 +115,26 @@ class CharacterClasses
 class Lexer
 {
  public:
+  /**
+   * Helper to determine if a given string is a valid symbol, i.e., contains
+   * only characters allowed to occur in simple (non-quoted) symbols.
+   * @note This is not needed for the lexer itself, but to determine, e.g., in
+   *       the printer, if symbols created via the API conform to the SMT-LIB
+   *       standard.
+   * @return True if the given string is a valid symbol.
+   */
+  static bool is_valid_symbol(const std::string& s);
+  /**
+   * Helper to determine if a given string is a valid quoted symbol, i.e., a
+   * sequence of whitespace and printable characters that starts and ends with
+   * '|' and does not otherwise contain '\' and '|'.
+   * @note This is not needed for the lexer itself, but to determine, e.g., in
+   *       the printer, if symbols created via the API conform to the SMT-LIB
+   *       standard.
+   * @return True if the given string is a valid quoted symbol.
+   */
+  static bool is_valid_quoted_symbol(const std::string& s);
+
   /** A coordinate in the input file. */
   struct Coordinate
   {
