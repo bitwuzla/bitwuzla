@@ -144,7 +144,7 @@ class Parser
   bitwuzla::Terminator* d_terminator = nullptr;
 
   /** The name of the input file. */
-  const std::string& d_infile_name;
+  std::string d_infile_name;
   /** The input file. */
   FILE* d_infile = nullptr;
   /** True if we need the input file on destruction. */

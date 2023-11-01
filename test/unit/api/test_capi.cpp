@@ -2929,6 +2929,10 @@ TEST_F(TestCApi, statistics)
   bitwuzla_options_delete(options);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Parsing                                                                    */
+/* -------------------------------------------------------------------------- */
+
 TEST_F(TestCApi, parser)
 {
   const char *filename = "parse.smt2";
@@ -2965,6 +2969,22 @@ TEST_F(TestCApi, parser)
   fclose(infile);
   std::remove(filename);
   ASSERT_DEATH(bitwuzla_parser_get_bitwuzla(nullptr), d_error_not_null);
+}
+
+TEST_F(TestCApi, parser2)
+{
+  const char *filename = "parse.smt2";
+  std::ofstream smt2(filename);
+  smt2 << "(assert x)" << std::flush;
+  smt2.close();
+
+  FILE *infile             = fopen(filename, "r");
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  BitwuzlaParser *parser =
+      bitwuzla_parser_new(options, filename, infile, "smt2", 10, "<stdout>");
+  const char *err_msg = bitwuzla_parser_parse(parser, true);
+  ASSERT_NE(std::string(err_msg).find("undefined symbol 'x'"),
+            std::string::npos);
 }
 
 /* -------------------------------------------------------------------------- */
