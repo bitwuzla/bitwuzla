@@ -173,6 +173,9 @@ class NodeData
    */
   iterator end() const;
 
+  /** @return Associated node manager instance. */
+  NodeManager* nm() { return d_nm; }
+
  protected:
   NodeData(Kind kind);
 

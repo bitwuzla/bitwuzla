@@ -40,6 +40,8 @@ class NodeManager
   NodeManager(const NodeManager&)            = delete;
   NodeManager& operator=(const NodeManager&) = delete;
 
+  type::TypeManager* tm();
+
   /* --- Node interface ---------------------------------------------------- */
 
   /**

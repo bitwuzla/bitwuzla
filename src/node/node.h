@@ -177,6 +177,10 @@ class Node
    */
   std::string str(uint8_t base = 2) const;
 
+  /** @return Associated node manager instance. */
+  NodeManager* nm();
+  const NodeManager* nm() const;
+
  private:
   Node(node::NodeData* data);
 

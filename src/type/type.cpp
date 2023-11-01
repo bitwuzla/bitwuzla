@@ -195,6 +195,26 @@ Type::str() const
   return ss.str();
 }
 
+type::TypeManager*
+Type::tm()
+{
+  if (!is_null())
+  {
+    return d_data->tm();
+  }
+  return nullptr;
+}
+
+const type::TypeManager*
+Type::tm() const
+{
+  if (!is_null())
+  {
+    return d_data->tm();
+  }
+  return nullptr;
+}
+
 /* --- Type private -------------------------------------------------------- */
 
 Type::Type(type::TypeData* data) : d_data(data)

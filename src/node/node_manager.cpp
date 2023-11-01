@@ -43,10 +43,17 @@ NodeManager::~NodeManager()
   }
 }
 
+type::TypeManager*
+NodeManager::tm()
+{
+  return &d_tm;
+}
+
 Node
 NodeManager::mk_const(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
+  assert(t.tm() == &d_tm);
   NodeData* data = new NodeData(Kind::CONSTANT);
   data->d_type   = t;
   init_id(data);
@@ -64,6 +71,8 @@ NodeManager::mk_const_array(const Type& t, const Node& term)
   assert(!term.is_null());
   assert(t.is_array());
   assert(t.array_element() == term.type());
+  assert(t.tm() == &d_tm);
+  assert(term.nm() == this);
 
   NodeData* data  = new_data(Kind::CONST_ARRAY, {term}, {});
   data->d_type    = t;
@@ -80,6 +89,7 @@ Node
 NodeManager::mk_var(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
+  assert(t.tm() == &d_tm);
   NodeData* data = new NodeData(Kind::VARIABLE);
   data->d_type   = t;
   init_id(data);
@@ -156,6 +166,9 @@ NodeManager::mk_node(Kind kind,
   assert(kind != Kind::CONST_ARRAY);
   assert(kind != Kind::VALUE);
   assert(kind != Kind::VARIABLE);
+  assert(std::all_of(children.begin(), children.end(), [this](auto& c) {
+    return c.nm() == this;
+  }));
   NodeData* data  = new_data(kind, children, indices);
   auto found_data = find_or_insert_node(data);
   if (found_data)
@@ -175,6 +188,7 @@ Node
 NodeManager::invert_node(const Node& node)
 {
   assert(node.type().is_bool() || node.type().is_bv());
+  assert(node.nm() == this);
   if (node.type().is_bool())
   {
     return mk_node(node::Kind::NOT, {node});

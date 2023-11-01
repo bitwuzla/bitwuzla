@@ -3728,6 +3728,30 @@ TEST_F(TestApi, terminate_timeout_wrap)
   }
 }
 
+TEST_F(TestApi, term_manager)
+{
+  bitwuzla::TermManager tm1;
+  bitwuzla::TermManager tm2;
+
+  auto t1 = tm1.mk_true();
+  auto t2 = tm2.mk_true();
+  ASSERT_NE(t1, t2);
+
+  auto s11 = tm1.mk_bool_sort();
+  auto s12 = tm1.mk_bv_sort(8);
+
+  ASSERT_NO_THROW(tm1.mk_array_sort(s11, s12));
+  ASSERT_THROW(tm2.mk_array_sort(s11, s12), bitwuzla::Exception);
+
+  bitwuzla::Bitwuzla bzla1(tm1);
+  ASSERT_NO_THROW(bzla1.assert_formula(t1));
+  ASSERT_THROW(bzla1.assert_formula(t2), bitwuzla::Exception);
+
+  bitwuzla::Bitwuzla bzla2(tm2);
+  ASSERT_NO_THROW(bzla2.assert_formula(t2));
+  ASSERT_THROW(bzla2.assert_formula(t1), bitwuzla::Exception);
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test

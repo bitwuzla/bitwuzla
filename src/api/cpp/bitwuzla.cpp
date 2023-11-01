@@ -36,9 +36,6 @@ namespace bitwuzla {
 
 namespace {
 
-// Global thread-local node manager for mk_* functions.
-static thread_local bzla::NodeManager s_nm;
-
 // Helper to initialize reversed map.
 template <typename K, typename V>
 constexpr std::unordered_map<V, K>
@@ -1331,10 +1328,13 @@ class TerminatorInternal : public bzla::Terminator
 
 /* Bitwuzla public ---------------------------------------------------------- */
 
+Bitwuzla::Bitwuzla(TermManager &tm, const Options &options)
+    : d_ctx(new bzla::SolvingContext(*tm.d_nm, *options.d_options, "main"))
+{
+}
+
 Bitwuzla::Bitwuzla(const Options &options)
-    : d_ctx(new bzla::SolvingContext(s_nm, *options.d_options, "main")),
-      d_last_check_sat(Result::UNKNOWN),
-      d_n_sat_calls(0)
+    : d_ctx(new bzla::SolvingContext(*s_tm.d_nm, *options.d_options, "main"))
 {
 }
 
@@ -1393,6 +1393,7 @@ Bitwuzla::assert_formula(const Term &term)
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   BITWUZLA_CHECK_TERM_IS_BOOL(term);
   BITWUZLA_CHECK_TERM_IS_NOT_VAR(term);
+  BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(term, "asserted formula");
   solver_state_change();
   d_ctx->assert_formula(*term.d_node);
 }
@@ -1418,6 +1419,7 @@ Bitwuzla::is_unsat_assumption(const Term &term)
   BITWUZLA_CHECK_LAST_CALL_UNSAT("is unsat assumption");
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   BITWUZLA_CHECK_TERM_IS_BOOL(term);
+  BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(term, "assumption");
   if (d_assumptions.find(term) == d_assumptions.end())
   {
     return false;
@@ -1490,8 +1492,11 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
   if (!assumptions.empty())
   {
     d_ctx->push();
-    for (const Term &term : assumptions)
+    for (size_t i = 0, size = assumptions.size(); i < size; ++i)
     {
+      const Term &term = assumptions[i];
+      BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
+          term, "assumption at position " + std::to_string(i));
       d_ctx->assert_formula(*term.d_node);
       d_assumptions.insert(term);
     }
@@ -1515,6 +1520,7 @@ Bitwuzla::get_value(const Term &term)
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_SAT("get value");
+  BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(term, "term");
   return d_ctx->get_value(*term.d_node);
 }
 
@@ -1551,116 +1557,131 @@ Bitwuzla::solver_state_change()
   }
 }
 
-/* -------------------------------------------------------------------------- */
+/* TermManager public ------------------------------------------------------- */
+
+TermManager::TermManager() : d_nm(new bzla::NodeManager()) {}
+
+TermManager::~TermManager() {}
 
 Sort
-mk_array_sort(const Sort &index, const Sort &element)
+TermManager::mk_array_sort(const Sort &index, const Sort &element)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(index);
   BITWUZLA_CHECK_SORT_NOT_NULL(element);
   BITWUZLA_CHECK(!index.is_array())
       << "array sorts not supported as index sort of array";
-  return s_nm.mk_array_type(*index.d_type, *element.d_type);
+  BITWUZLA_CHECK_SORT_TERM_MGR(index, "index sort");
+  BITWUZLA_CHECK_SORT_TERM_MGR(element, "element sort");
+  return d_nm->mk_array_type(*index.d_type, *element.d_type);
 }
 
 Sort
-mk_bool_sort()
+TermManager::mk_bool_sort()
 {
-  return s_nm.mk_bool_type();
+  return d_nm->mk_bool_type();
 }
 
 Sort
-mk_bv_sort(uint64_t size)
+TermManager::mk_bv_sort(uint64_t size)
 {
   BITWUZLA_CHECK_NOT_ZERO(size);
-  return s_nm.mk_bv_type(size);
+  return d_nm->mk_bv_type(size);
 }
 
 Sort
-mk_fp_sort(uint64_t exp_size, uint64_t sig_size)
+TermManager::mk_fp_sort(uint64_t exp_size, uint64_t sig_size)
 {
   BITWUZLA_CHECK_GREATER_ONE(exp_size);
   BITWUZLA_CHECK_GREATER_ONE(sig_size);
-  return s_nm.mk_fp_type(exp_size, sig_size);
+  return d_nm->mk_fp_type(exp_size, sig_size);
 }
 
 Sort
-mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain)
+TermManager::mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain)
 {
   BITWUZLA_CHECK(domain.size() > 0) << "function arity must be > 0";
   BITWUZLA_CHECK_SORT_NOT_NULL(codomain);
   // domain sorts are checked to be not null in sort_vector_to_types()
   std::vector<bzla::Type> types = Sort::sort_vector_to_types(domain);
+  BITWUZLA_CHECK_SORTS_TERM_MGR(domain, "domain sort");
+  BITWUZLA_CHECK_SORT_TERM_MGR(codomain, "codomain sort");
   types.push_back(*codomain.d_type);
-  return s_nm.mk_fun_type(types);
+  return d_nm->mk_fun_type(types);
 }
 
 Sort
-mk_rm_sort()
+TermManager::mk_rm_sort()
 {
-  return s_nm.mk_rm_type();
+  return d_nm->mk_rm_type();
 }
 
 Sort
-mk_uninterpreted_sort(std::optional<const std::string> symbol)
+TermManager::mk_uninterpreted_sort(std::optional<const std::string> symbol)
 {
-  return s_nm.mk_uninterpreted_type(symbol);
+  return d_nm->mk_uninterpreted_type(symbol);
 }
 
 Term
-mk_true()
+TermManager::mk_true()
 {
-  return s_nm.mk_value(true);
+  return d_nm->mk_value(true);
 }
 
 Term
-mk_false()
+TermManager::mk_false()
 {
-  return s_nm.mk_value(false);
+  return d_nm->mk_value(false);
 }
 
 Term
-mk_bv_zero(const Sort &sort)
-{
-  BITWUZLA_CHECK_SORT_NOT_NULL(sort);
-  BITWUZLA_CHECK_SORT_IS_BV(sort);
-  return s_nm.mk_value(bzla::BitVector::mk_zero(sort.d_type->bv_size()));
-}
-
-Term
-mk_bv_one(const Sort &sort)
+TermManager::mk_bv_zero(const Sort &sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
-  return s_nm.mk_value(bzla::BitVector::mk_one(sort.d_type->bv_size()));
+  BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
+  return d_nm->mk_value(bzla::BitVector::mk_zero(sort.d_type->bv_size()));
 }
 
 Term
-mk_bv_ones(const Sort &sort)
+TermManager::mk_bv_one(const Sort &sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
-  return s_nm.mk_value(bzla::BitVector::mk_ones(sort.d_type->bv_size()));
+  BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
+  return d_nm->mk_value(bzla::BitVector::mk_one(sort.d_type->bv_size()));
 }
 
 Term
-mk_bv_min_signed(const Sort &sort)
+TermManager::mk_bv_ones(const Sort &sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
-  return s_nm.mk_value(bzla::BitVector::mk_min_signed(sort.d_type->bv_size()));
+  BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
+  return d_nm->mk_value(bzla::BitVector::mk_ones(sort.d_type->bv_size()));
 }
 
 Term
-mk_bv_max_signed(const Sort &sort)
+TermManager::mk_bv_min_signed(const Sort &sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
-  return s_nm.mk_value(bzla::BitVector::mk_max_signed(sort.d_type->bv_size()));
+  BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
+  return d_nm->mk_value(bzla::BitVector::mk_min_signed(sort.d_type->bv_size()));
 }
 
 Term
-mk_bv_value(const Sort &sort, const std::string &value, uint8_t base)
+TermManager::mk_bv_max_signed(const Sort &sort)
+{
+  BITWUZLA_CHECK_SORT_NOT_NULL(sort);
+  BITWUZLA_CHECK_SORT_IS_BV(sort);
+  BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
+  return d_nm->mk_value(bzla::BitVector::mk_max_signed(sort.d_type->bv_size()));
+}
+
+Term
+TermManager::mk_bv_value(const Sort &sort,
+                         const std::string &value,
+                         uint8_t base)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
@@ -1674,11 +1695,12 @@ mk_bv_value(const Sort &sort, const std::string &value, uint8_t base)
       bzla::BitVector::fits_in_size(sort.d_type->bv_size(), value, base))
       << "value '" << value << "' does not fit into a bit-vector of size '"
       << sort.d_type->bv_size() << "'";
-  return s_nm.mk_value(bzla::BitVector(sort.d_type->bv_size(), value, base));
+  BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
+  return d_nm->mk_value(bzla::BitVector(sort.d_type->bv_size(), value, base));
 }
 
 Term
-mk_bv_value_uint64(const Sort &sort, uint64_t value)
+TermManager::mk_bv_value_uint64(const Sort &sort, uint64_t value)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
@@ -1686,11 +1708,13 @@ mk_bv_value_uint64(const Sort &sort, uint64_t value)
       bzla::BitVector::fits_in_size(sort.d_type->bv_size(), value, false))
       << "value '" << value << "' does not fit into a bit-vector of size '"
       << sort.d_type->bv_size() << "'";
-  return s_nm.mk_value(bzla::BitVector::from_ui(sort.d_type->bv_size(), value));
+  BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
+  return d_nm->mk_value(
+      bzla::BitVector::from_ui(sort.d_type->bv_size(), value));
 }
 
 Term
-mk_bv_value_int64(const Sort &sort, int64_t value)
+TermManager::mk_bv_value_int64(const Sort &sort, int64_t value)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
@@ -1698,58 +1722,65 @@ mk_bv_value_int64(const Sort &sort, int64_t value)
       bzla::BitVector::fits_in_size(sort.d_type->bv_size(), value, true))
       << "value '" << value << "' does not fit into a bit-vector of size '"
       << sort.d_type->bv_size() << "'";
-  return s_nm.mk_value(bzla::BitVector::from_si(sort.d_type->bv_size(), value));
+  BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
+  return d_nm->mk_value(
+      bzla::BitVector::from_si(sort.d_type->bv_size(), value));
 }
 
 Term
-mk_fp_pos_zero(const Sort &sort)
+TermManager::mk_fp_pos_zero(const Sort &sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
-  bzla::fp::SymFpuNM snm(s_nm);
-  return s_nm.mk_value(bzla::FloatingPoint::fpzero(*sort.d_type, false));
+  BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
+  bzla::fp::SymFpuNM snm(*d_nm);
+  return d_nm->mk_value(bzla::FloatingPoint::fpzero(*sort.d_type, false));
 }
 
 Term
-mk_fp_neg_zero(const Sort &sort)
+TermManager::mk_fp_neg_zero(const Sort &sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
-  bzla::fp::SymFpuNM snm(s_nm);
-  return s_nm.mk_value(bzla::FloatingPoint::fpzero(*sort.d_type, true));
+  BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
+  bzla::fp::SymFpuNM snm(*d_nm);
+  return d_nm->mk_value(bzla::FloatingPoint::fpzero(*sort.d_type, true));
 }
 
 Term
-mk_fp_pos_inf(const Sort &sort)
+TermManager::mk_fp_pos_inf(const Sort &sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
-  bzla::fp::SymFpuNM snm(s_nm);
-  return s_nm.mk_value(bzla::FloatingPoint::fpinf(*sort.d_type, false));
+  BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
+  bzla::fp::SymFpuNM snm(*d_nm);
+  return d_nm->mk_value(bzla::FloatingPoint::fpinf(*sort.d_type, false));
 }
 
 Term
-mk_fp_neg_inf(const Sort &sort)
+TermManager::mk_fp_neg_inf(const Sort &sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
-  bzla::fp::SymFpuNM snm(s_nm);
-  return s_nm.mk_value(bzla::FloatingPoint::fpinf(*sort.d_type, true));
+  BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
+  bzla::fp::SymFpuNM snm(*d_nm);
+  return d_nm->mk_value(bzla::FloatingPoint::fpinf(*sort.d_type, true));
 }
 
 Term
-mk_fp_nan(const Sort &sort)
+TermManager::mk_fp_nan(const Sort &sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
-  bzla::fp::SymFpuNM snm(s_nm);
-  return s_nm.mk_value(bzla::FloatingPoint::fpnan(*sort.d_type));
+  BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
+  bzla::fp::SymFpuNM snm(*d_nm);
+  return d_nm->mk_value(bzla::FloatingPoint::fpnan(*sort.d_type));
 }
 
 Term
-mk_fp_value(const Term &bv_sign,
-            const Term &bv_exponent,
-            const Term &bv_significand)
+TermManager::mk_fp_value(const Term &bv_sign,
+                         const Term &bv_exponent,
+                         const Term &bv_significand)
 {
   BITWUZLA_CHECK_TERM_NOT_NULL(bv_sign);
   BITWUZLA_CHECK_TERM_NOT_NULL(bv_exponent);
@@ -1761,70 +1792,75 @@ mk_fp_value(const Term &bv_sign,
       << "invalid bit-vector size for argument 'bv_sign', expected size 1";
   BITWUZLA_CHECK(bv_exponent.d_node->type().bv_size() > 1)
       << "invalid bit-vector size for argument 'bv_sign', expected size > 1";
-  bzla::fp::SymFpuNM snm(s_nm);
-  return s_nm.mk_value(bzla::FloatingPoint(
-      s_nm.mk_fp_type(bv_exponent.d_node->type().bv_size(),
-                      bv_significand.d_node->type().bv_size() + 1),
+  BITWUZLA_CHECK_TERM_TERM_MGR(bv_sign, "bv_sign");
+  BITWUZLA_CHECK_TERM_TERM_MGR(bv_exponent, "bv_exponent");
+  BITWUZLA_CHECK_TERM_TERM_MGR(bv_significand, "bv_significand");
+  bzla::fp::SymFpuNM snm(*d_nm);
+  return d_nm->mk_value(bzla::FloatingPoint(
+      d_nm->mk_fp_type(bv_exponent.d_node->type().bv_size(),
+                       bv_significand.d_node->type().bv_size() + 1),
       bv_sign.d_node->value<bzla::BitVector>()
           .bvconcat(bv_exponent.d_node->value<bzla::BitVector>())
           .ibvconcat(bv_significand.d_node->value<bzla::BitVector>())));
 }
 
 Term
-mk_fp_value(const Sort &sort, const Term &rm, const std::string &real)
+TermManager::mk_fp_value(const Sort &sort,
+                         const Term &rm,
+                         const std::string &real)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_TERM_NOT_NULL(rm);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
   BITWUZLA_CHECK_TERM_IS_RM(rm);
   BITWUZLA_CHECK(bzla::util::is_valid_real_str(real)) << "invalid real string";
+  BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
+  BITWUZLA_CHECK_TERM_TERM_MGR(rm, "rounding mode");
 
-  bzla::fp::SymFpuNM snm(s_nm);
+  bzla::fp::SymFpuNM snm(*d_nm);
   if (rm.d_node->is_value())
   {
-    return s_nm.mk_value(bzla::FloatingPoint::from_real(
-        s_nm, *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), real));
+    return d_nm->mk_value(bzla::FloatingPoint::from_real(
+        *d_nm, *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), real));
   }
 
-  bzla::NodeManager &nm = s_nm;
+  bzla::Node rna = d_nm->mk_value(bzla::RoundingMode::RNA);
+  bzla::Node rne = d_nm->mk_value(bzla::RoundingMode::RNE);
+  bzla::Node rtn = d_nm->mk_value(bzla::RoundingMode::RTN);
+  bzla::Node rtp = d_nm->mk_value(bzla::RoundingMode::RTP);
+  bzla::Node rtz = d_nm->mk_value(bzla::RoundingMode::RTZ);
 
-  bzla::Node rna = nm.mk_value(bzla::RoundingMode::RNA);
-  bzla::Node rne = nm.mk_value(bzla::RoundingMode::RNE);
-  bzla::Node rtn = nm.mk_value(bzla::RoundingMode::RTN);
-  bzla::Node rtp = nm.mk_value(bzla::RoundingMode::RTP);
-  bzla::Node rtz = nm.mk_value(bzla::RoundingMode::RTZ);
+  bzla::Node fp_rna = d_nm->mk_value(bzla::FloatingPoint::from_real(
+      *d_nm, *sort.d_type, rna.value<bzla::RoundingMode>(), real));
+  bzla::Node fp_rne = d_nm->mk_value(bzla::FloatingPoint::from_real(
+      *d_nm, *sort.d_type, rne.value<bzla::RoundingMode>(), real));
+  bzla::Node fp_rtn = d_nm->mk_value(bzla::FloatingPoint::from_real(
+      *d_nm, *sort.d_type, rtn.value<bzla::RoundingMode>(), real));
+  bzla::Node fp_rtp = d_nm->mk_value(bzla::FloatingPoint::from_real(
+      *d_nm, *sort.d_type, rtp.value<bzla::RoundingMode>(), real));
+  bzla::Node fp_rtz = d_nm->mk_value(bzla::FloatingPoint::from_real(
+      *d_nm, *sort.d_type, rtz.value<bzla::RoundingMode>(), real));
 
-  bzla::Node fp_rna = nm.mk_value(bzla::FloatingPoint::from_real(
-      s_nm, *sort.d_type, rna.value<bzla::RoundingMode>(), real));
-  bzla::Node fp_rne = nm.mk_value(bzla::FloatingPoint::from_real(
-      s_nm, *sort.d_type, rne.value<bzla::RoundingMode>(), real));
-  bzla::Node fp_rtn = nm.mk_value(bzla::FloatingPoint::from_real(
-      s_nm, *sort.d_type, rtn.value<bzla::RoundingMode>(), real));
-  bzla::Node fp_rtp = nm.mk_value(bzla::FloatingPoint::from_real(
-      s_nm, *sort.d_type, rtp.value<bzla::RoundingMode>(), real));
-  bzla::Node fp_rtz = nm.mk_value(bzla::FloatingPoint::from_real(
-      s_nm, *sort.d_type, rtz.value<bzla::RoundingMode>(), real));
+  bzla::Node cond = d_nm->mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtp});
+  bzla::Node ite = d_nm->mk_node(bzla::node::Kind::ITE, {cond, fp_rtp, fp_rtz});
 
-  bzla::Node cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtp});
-  bzla::Node ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rtp, fp_rtz});
+  cond = d_nm->mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtn});
+  ite  = d_nm->mk_node(bzla::node::Kind::ITE, {cond, fp_rtn, ite});
 
-  cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtn});
-  ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rtn, ite});
+  cond = d_nm->mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rne});
+  ite  = d_nm->mk_node(bzla::node::Kind::ITE, {cond, fp_rne, ite});
 
-  cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rne});
-  ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rne, ite});
-
-  cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rna});
-  ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rna, ite});
+  cond = d_nm->mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rna});
+  ite  = d_nm->mk_node(bzla::node::Kind::ITE, {cond, fp_rna, ite});
 
   return ite;
 }
 
 Term
-mk_fp_value(const Sort &sort,
-            const Term &rm,
-            const std::string &num,
-            const std::string &den)
+TermManager::mk_fp_value(const Sort &sort,
+                         const Term &rm,
+                         const std::string &num,
+                         const std::string &den)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_TERM_NOT_NULL(rm);
@@ -1834,15 +1870,17 @@ mk_fp_value(const Sort &sort,
       << "invalid real string for argument 'num'";
   BITWUZLA_CHECK(bzla::util::is_valid_real_str(den))
       << "invalid real string for argument 'den'";
+  BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
+  BITWUZLA_CHECK_TERM_TERM_MGR(rm, "rounding mode");
 
-  bzla::fp::SymFpuNM snm(s_nm);
+  bzla::fp::SymFpuNM snm(*d_nm);
   if (rm.d_node->is_value())
   {
-    return s_nm.mk_value(bzla::FloatingPoint::from_rational(
-        s_nm, *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), num, den));
+    return d_nm->mk_value(bzla::FloatingPoint::from_rational(
+        *d_nm, *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), num, den));
   }
 
-  bzla::NodeManager &nm = s_nm;
+  bzla::NodeManager &nm = *d_nm;
 
   bzla::Node rna = nm.mk_value(bzla::RoundingMode::RNA);
   bzla::Node rne = nm.mk_value(bzla::RoundingMode::RNE);
@@ -1851,15 +1889,15 @@ mk_fp_value(const Sort &sort,
   bzla::Node rtz = nm.mk_value(bzla::RoundingMode::RTZ);
 
   bzla::Node fp_rna = nm.mk_value(bzla::FloatingPoint::from_rational(
-      s_nm, *sort.d_type, rna.value<bzla::RoundingMode>(), num, den));
+      *d_nm, *sort.d_type, rna.value<bzla::RoundingMode>(), num, den));
   bzla::Node fp_rne = nm.mk_value(bzla::FloatingPoint::from_rational(
-      s_nm, *sort.d_type, rne.value<bzla::RoundingMode>(), num, den));
+      *d_nm, *sort.d_type, rne.value<bzla::RoundingMode>(), num, den));
   bzla::Node fp_rtn = nm.mk_value(bzla::FloatingPoint::from_rational(
-      s_nm, *sort.d_type, rtn.value<bzla::RoundingMode>(), num, den));
+      *d_nm, *sort.d_type, rtn.value<bzla::RoundingMode>(), num, den));
   bzla::Node fp_rtp = nm.mk_value(bzla::FloatingPoint::from_rational(
-      s_nm, *sort.d_type, rtp.value<bzla::RoundingMode>(), num, den));
+      *d_nm, *sort.d_type, rtp.value<bzla::RoundingMode>(), num, den));
   bzla::Node fp_rtz = nm.mk_value(bzla::FloatingPoint::from_rational(
-      s_nm, *sort.d_type, rtz.value<bzla::RoundingMode>(), num, den));
+      *d_nm, *sort.d_type, rtz.value<bzla::RoundingMode>(), num, den));
 
   bzla::Node cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtp});
   bzla::Node ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rtp, fp_rtz});
@@ -1877,13 +1915,13 @@ mk_fp_value(const Sort &sort,
 }
 
 Term
-mk_rm_value(RoundingMode rm)
+TermManager::mk_rm_value(RoundingMode rm)
 {
-  return s_nm.mk_value(s_internal_rms.at(rm));
+  return d_nm->mk_value(s_internal_rms.at(rm));
 }
 
 Term
-mk_const_array(const Sort &sort, const Term &term)
+TermManager::mk_const_array(const Sort &sort, const Term &term)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
@@ -1891,13 +1929,15 @@ mk_const_array(const Sort &sort, const Term &term)
       << "sort of constant array is not an array sort";
   BITWUZLA_CHECK(sort.d_type->array_element() == term.d_node->type())
       << "sort of constant array element does not match given array sort";
-  return s_nm.mk_const_array(*sort.d_type, *term.d_node);
+  BITWUZLA_CHECK_SORT_TERM_MGR(sort, "array sort");
+  BITWUZLA_CHECK_TERM_TERM_MGR(term, "constant array element");
+  return d_nm->mk_const_array(*sort.d_type, *term.d_node);
 }
 
 Term
-mk_term(Kind kind,
-        const std::vector<Term> &args,
-        const std::vector<uint64_t> &indices)
+TermManager::mk_term(Kind kind,
+                     const std::vector<Term> &args,
+                     const std::vector<uint64_t> &indices)
 {
   switch (kind)
   {
@@ -1974,10 +2014,10 @@ mk_term(Kind kind,
       if (kind == Kind::IFF)
       {
         return bzla::node::utils::mk_nary(
-            s_nm, bzla::node::Kind::EQUAL, Term::term_vector_to_nodes(args));
+            *d_nm, bzla::node::Kind::EQUAL, Term::term_vector_to_nodes(args));
       }
       return bzla::node::utils::mk_nary(
-          s_nm, s_internal_kinds.at(kind), Term::term_vector_to_nodes(args));
+          *d_nm, s_internal_kinds.at(kind), Term::term_vector_to_nodes(args));
     // unary
     case Kind::NOT:
     case Kind::BV_DEC:
@@ -2228,23 +2268,214 @@ mk_term(Kind kind,
       BITWUZLA_CHECK(false) << "unexpected operator kind '" << kind << "'";
   }
 
-  return s_nm.mk_node(
+  return d_nm->mk_node(
       s_internal_kinds.at(kind), Term::term_vector_to_nodes(args), indices);
+}
+
+Term
+TermManager::mk_const(const Sort &sort, std::optional<const std::string> symbol)
+{
+  BITWUZLA_CHECK_SORT_NOT_NULL(sort);
+  BITWUZLA_CHECK_SORT_TERM_MGR(sort, "sort");
+  return d_nm->mk_const(*sort.d_type, symbol);
+}
+
+Term
+TermManager::mk_var(const Sort &sort, std::optional<const std::string> symbol)
+{
+  BITWUZLA_CHECK_SORT_NOT_NULL(sort);
+  BITWUZLA_CHECK_SORT_NOT_IS_FUN(sort);
+  BITWUZLA_CHECK_SORT_TERM_MGR(sort, "sort");
+  return d_nm->mk_var(*sort.d_type, symbol);
+}
+
+/* -------------------------------------------------------------------------- */
+
+Sort
+mk_array_sort(const Sort &index, const Sort &element)
+{
+  return s_tm.mk_array_sort(index, element);
+}
+
+Sort
+mk_bool_sort()
+{
+  return s_tm.mk_bool_sort();
+}
+
+Sort
+mk_bv_sort(uint64_t size)
+{
+  return s_tm.mk_bv_sort(size);
+}
+
+Sort
+mk_fp_sort(uint64_t exp_size, uint64_t sig_size)
+{
+  return s_tm.mk_fp_sort(exp_size, sig_size);
+}
+
+Sort
+mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain)
+{
+  return s_tm.mk_fun_sort(domain, codomain);
+}
+
+Sort
+mk_rm_sort()
+{
+  return s_tm.mk_rm_sort();
+}
+
+Sort
+mk_uninterpreted_sort(std::optional<const std::string> symbol)
+{
+  return s_tm.mk_uninterpreted_sort(symbol);
+}
+
+Term
+mk_true()
+{
+  return s_tm.mk_true();
+}
+
+Term
+mk_false()
+{
+  return s_tm.mk_false();
+}
+
+Term
+mk_bv_zero(const Sort &sort)
+{
+  return s_tm.mk_bv_zero(sort);
+}
+
+Term
+mk_bv_one(const Sort &sort)
+{
+  return s_tm.mk_bv_one(sort);
+}
+
+Term
+mk_bv_ones(const Sort &sort)
+{
+  return s_tm.mk_bv_ones(sort);
+}
+
+Term
+mk_bv_min_signed(const Sort &sort)
+{
+  return s_tm.mk_bv_min_signed(sort);
+}
+
+Term
+mk_bv_max_signed(const Sort &sort)
+{
+  return s_tm.mk_bv_max_signed(sort);
+}
+
+Term
+mk_bv_value(const Sort &sort, const std::string &value, uint8_t base)
+{
+  return s_tm.mk_bv_value(sort, value, base);
+}
+
+Term
+mk_bv_value_uint64(const Sort &sort, uint64_t value)
+{
+  return s_tm.mk_bv_value_uint64(sort, value);
+}
+
+Term
+mk_bv_value_int64(const Sort &sort, int64_t value)
+{
+  return s_tm.mk_bv_value_int64(sort, value);
+}
+
+Term
+mk_fp_pos_zero(const Sort &sort)
+{
+  return s_tm.mk_fp_pos_zero(sort);
+}
+
+Term
+mk_fp_neg_zero(const Sort &sort)
+{
+  return s_tm.mk_fp_neg_zero(sort);
+}
+
+Term
+mk_fp_pos_inf(const Sort &sort)
+{
+  return s_tm.mk_fp_pos_inf(sort);
+}
+
+Term
+mk_fp_neg_inf(const Sort &sort)
+{
+  return s_tm.mk_fp_neg_inf(sort);
+}
+
+Term
+mk_fp_nan(const Sort &sort)
+{
+  return s_tm.mk_fp_nan(sort);
+}
+
+Term
+mk_fp_value(const Term &bv_sign,
+            const Term &bv_exponent,
+            const Term &bv_significand)
+{
+  return s_tm.mk_fp_value(bv_sign, bv_exponent, bv_significand);
+}
+
+Term
+mk_fp_value(const Sort &sort, const Term &rm, const std::string &real)
+{
+  return s_tm.mk_fp_value(sort, rm, real);
+}
+
+Term
+mk_fp_value(const Sort &sort,
+            const Term &rm,
+            const std::string &num,
+            const std::string &den)
+{
+  return s_tm.mk_fp_value(sort, rm, num, den);
+}
+
+Term
+mk_rm_value(RoundingMode rm)
+{
+  return s_tm.mk_rm_value(rm);
+}
+
+Term
+mk_const_array(const Sort &sort, const Term &term)
+{
+  return s_tm.mk_const_array(sort, term);
+}
+
+Term
+mk_term(Kind kind,
+        const std::vector<Term> &args,
+        const std::vector<uint64_t> &indices)
+{
+  return s_tm.mk_term(kind, args, indices);
 }
 
 Term
 mk_const(const Sort &sort, std::optional<const std::string> symbol)
 {
-  BITWUZLA_CHECK_SORT_NOT_NULL(sort);
-  return s_nm.mk_const(*sort.d_type, symbol);
+  return s_tm.mk_const(sort, symbol);
 }
 
 Term
 mk_var(const Sort &sort, std::optional<const std::string> symbol)
 {
-  BITWUZLA_CHECK_SORT_NOT_NULL(sort);
-  BITWUZLA_CHECK_SORT_NOT_IS_FUN(sort);
-  return s_nm.mk_var(*sort.d_type, symbol);
+  return s_tm.mk_var(sort, symbol);
 }
 
 Term

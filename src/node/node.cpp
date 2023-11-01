@@ -257,6 +257,26 @@ Node::str(uint8_t base) const
   return ss.str();
 }
 
+NodeManager*
+Node::nm()
+{
+  if (!is_null())
+  {
+    return d_data->nm();
+  }
+  return nullptr;
+}
+
+const NodeManager*
+Node::nm() const
+{
+  if (!is_null())
+  {
+    return d_data->nm();
+  }
+  return nullptr;
+}
+
 /* --- Node private -------------------------------------------------------- */
 
 Node::Node(node::NodeData* data) : d_data(data)

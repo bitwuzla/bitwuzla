@@ -10,6 +10,7 @@
 
 #include "type/type_manager.h"
 
+#include <algorithm>
 #include <cassert>
 #include <utility>
 
@@ -71,12 +72,16 @@ TypeManager::mk_rm_type()
 Type
 TypeManager::mk_array_type(const Type& index, const Type& elem)
 {
+  assert(index.tm() == this);
+  assert(elem.tm() == this);
   return Type(find_or_create_type(TypeData::Kind::ARRAY, {index, elem}));
 }
 
 Type
 TypeManager::mk_fun_type(const std::vector<Type>& types)
 {
+  assert(std::all_of(
+      types.begin(), types.end(), [this](auto& c) { return c.tm() == this; }));
   return Type(find_or_create_type(TypeData::Kind::FUN, types));
 }
 

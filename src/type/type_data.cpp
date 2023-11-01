@@ -176,4 +176,10 @@ TypeData::dec_ref()
   }
 }
 
+TypeManager*
+TypeData::tm()
+{
+  return d_mgr;
+}
+
 }  // namespace bzla::type

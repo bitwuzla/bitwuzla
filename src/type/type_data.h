@@ -96,6 +96,9 @@ class TypeData
    */
   void dec_ref();
 
+  /** @return Associated type manager instance. */
+  TypeManager* tm();
+
  private:
   /** Constructor. */
   TypeData(TypeManager* mgr, Kind kind, const std::vector<Type>& types = {});

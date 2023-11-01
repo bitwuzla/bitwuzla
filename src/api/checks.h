@@ -72,6 +72,43 @@ class BitwuzlaExceptionStream
   BITWUZLA_CHECK(!(arg).empty())          \
       << "argument '" << #arg << "' must not be an empty string";
 
+#define BITWUZLA_CHECK_SORT_TERM_MGR(sort, what)    \
+  do                                                \
+  {                                                 \
+    BITWUZLA_CHECK(d_nm->tm() == sort.d_type->tm()) \
+        << "mismatching term manager for " << what; \
+  } while (0)
+
+#define BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort) \
+  BITWUZLA_CHECK_SORT_TERM_MGR(sort, "bit-vector sort")
+
+#define BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort) \
+  BITWUZLA_CHECK_SORT_TERM_MGR(sort, "floating-point sort")
+
+#define BITWUZLA_CHECK_SORTS_TERM_MGR(sorts, what)                         \
+  do                                                                       \
+  {                                                                        \
+    for (size_t i = 0, size = sorts.size(); i < size; ++i)                 \
+    {                                                                      \
+      BITWUZLA_CHECK(d_nm->tm() == sorts[i].d_type->tm())                  \
+          << "mismatching term manager for " << what << " at index " << i; \
+    }                                                                      \
+  } while (0)
+
+#define BITWUZLA_CHECK_TERM_TERM_MGR(term, what)    \
+  do                                                \
+  {                                                 \
+    BITWUZLA_CHECK(d_nm.get() == term.d_node->nm()) \
+        << "mismatching term manager for " << what; \
+  } while (0)
+
+#define BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(term, what)   \
+  do                                                        \
+  {                                                         \
+    BITWUZLA_CHECK(&d_ctx->env().nm() == term.d_node->nm()) \
+        << "mismatching term manager for " << what;         \
+  } while (0)
+
 #define BITWUZLA_CHECK_VALUE_BASE(arg)                                       \
   BITWUZLA_CHECK(arg == 2 || arg == 10 || arg == 16)                         \
       << "invalid base for string representations of values (must be 2 for " \
@@ -224,6 +261,8 @@ class BitwuzlaExceptionStream
     for (size_t i = 0, argc = args.size(); i < argc; ++i)                      \
     {                                                                          \
       BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i].d_node, i);                       \
+      BITWUZLA_CHECK(d_nm.get() == args[i].d_node->nm())                       \
+          << "mismatching term manager for term at index " << i;               \
       if (i == start || i > start)                                             \
       {                                                                        \
         BITWUZLA_CHECK(args[i].d_node->type().is_sort_fun())                   \

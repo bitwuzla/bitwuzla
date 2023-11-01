@@ -29,6 +29,7 @@
 /* -------------------------------------------------------------------------- */
 
 namespace bzla {
+class NodeManager;
 class Node;
 class Type;
 class SolvingContext;
@@ -173,6 +174,7 @@ std::ostream &operator<<(std::ostream &ostream, const set_bv_format &f);
 // Note: enum class Option is declared in api/option.h
 
 class Bitwuzla;
+class TermManager;
 struct OptionInfo;
 
 class Options
@@ -447,38 +449,11 @@ class Sort;
 class Term
 {
   friend Bitwuzla;
+  friend TermManager;
   friend bool operator==(const Term &, const Term &);
   friend bool operator!=(const Term &, const Term &);
   friend std::ostream &operator<<(std::ostream &, const Term &);
   friend std::hash<bitwuzla::Term>;
-  friend Term mk_true();
-  friend Term mk_false();
-  friend Term mk_bv_zero(const Sort &);
-  friend Term mk_bv_one(const Sort &);
-  friend Term mk_bv_ones(const Sort &);
-  friend Term mk_bv_min_signed(const Sort &);
-  friend Term mk_bv_max_signed(const Sort &);
-  friend Term mk_bv_value(const Sort &, const std::string &, uint8_t);
-  friend Term mk_bv_value_uint64(const Sort &, uint64_t);
-  friend Term mk_bv_value_int64(const Sort &, int64_t);
-  friend Term mk_fp_pos_zero(const Sort &);
-  friend Term mk_fp_neg_zero(const Sort &);
-  friend Term mk_fp_pos_inf(const Sort &);
-  friend Term mk_fp_neg_inf(const Sort &);
-  friend Term mk_fp_nan(const Sort &);
-  friend Term mk_fp_value(const Term &, const Term &, const Term &);
-  friend Term mk_fp_value(const Sort &, const Term &, const std::string &);
-  friend Term mk_fp_value(const Sort &,
-                          const Term &,
-                          const std::string &,
-                          const std::string &);
-  friend Term mk_rm_value(RoundingMode);
-  friend Term mk_const_array(const Sort &, const Term &);
-  friend Term mk_term(Kind,
-                      const std::vector<Term> &,
-                      const std::vector<uint64_t> &);
-  friend Term mk_const(const Sort &, std::optional<const std::string>);
-  friend Term mk_var(const Sort &, std::optional<const std::string>);
   friend Term substitute_term(const Term &,
                               const std::unordered_map<Term, Term> &);
   friend void substitute_terms(std::vector<Term> &terms,
@@ -829,42 +804,12 @@ std::ostream &operator<<(std::ostream &out, const Term &term);
 class Sort
 {
   friend Bitwuzla;
+  friend TermManager;
   friend Term;
   friend bool operator==(const Sort &a, const Sort &b);
   friend bool operator!=(const Sort &a, const Sort &b);
   friend std::ostream &operator<<(std::ostream &out, const Sort &sort);
   friend std::hash<bitwuzla::Sort>;
-  friend Sort mk_array_sort(const Sort &, const Sort &);
-  friend Sort mk_bool_sort();
-  friend Sort mk_bv_sort(uint64_t);
-  friend Sort mk_fp_sort(uint64_t, uint64_t);
-  friend Sort mk_fun_sort(const std::vector<Sort> &, const Sort &);
-  friend Sort mk_uninterpreted_sort(std::optional<const std::string>);
-  friend Sort mk_rm_sort();
-  friend Term mk_bv_zero(const Sort &);
-  friend Term mk_bv_one(const Sort &);
-  friend Term mk_bv_ones(const Sort &);
-  friend Term mk_bv_min_signed(const Sort &);
-  friend Term mk_bv_max_signed(const Sort &);
-  friend Term mk_bv_value(const Sort &, const std::string &, uint8_t);
-  friend Term mk_bv_value_uint64(const Sort &, uint64_t);
-  friend Term mk_bv_value_int64(const Sort &, int64_t);
-  friend Term mk_fp_pos_zero(const Sort &);
-  friend Term mk_fp_neg_zero(const Sort &);
-  friend Term mk_fp_pos_inf(const Sort &);
-  friend Term mk_fp_neg_inf(const Sort &);
-  friend Term mk_fp_nan(const Sort &);
-  friend Term mk_fp_value(const Sort &, const Term &, const std::string &);
-  friend Term mk_fp_value(const Sort &,
-                          const Term &,
-                          const std::string &,
-                          const std::string &);
-  friend Term mk_const_array(const Sort &, const Term &);
-  friend Term mk_term(Kind,
-                      const std::vector<Term> &,
-                      const std::vector<uint64_t> &);
-  friend Term mk_const(const Sort &, std::optional<const std::string>);
-  friend Term mk_var(const Sort &, std::optional<const std::string>);
 
  public:
   /** Default constructor, creates null sort. */
@@ -1060,6 +1005,434 @@ class Terminator
 };
 
 /* -------------------------------------------------------------------------- */
+/* Term Manager                                                               */
+/* -------------------------------------------------------------------------- */
+
+class TermManager
+{
+ public:
+  friend Bitwuzla;
+
+  TermManager();
+  ~TermManager();
+
+  /** Disallow copy construction. */
+  TermManager(const TermManager &tm) = delete;
+  /** Disallow copy assignment. */
+  TermManager &operator=(const TermManager &tm) = delete;
+
+  /* ------------------------------------------------------------------------ */
+  /* Sort creation                                                            */
+  /* ------------------------------------------------------------------------ */
+
+  /** \addtogroup cpp_sort_creation
+   *  @{
+   */
+
+  /**
+   * Create an array sort.
+   * @param index The index sort of the array sort.
+   * @param element The element sort of the array sort.
+   * @return An array sort which maps sort `index` to sort `element`.
+   *
+   * @see
+   *   * `Sort::is_array()`
+   *   * `Sort::array_get_index()`
+   *   * `Sort::array_get_element()`
+   */
+  Sort mk_array_sort(const Sort &index, const Sort &element);
+
+  /**
+   * Create a Boolean sort.
+   * @return A Boolean sort.
+   */
+  Sort mk_bool_sort();
+
+  /**
+   * Create a bit-vector sort of given size.
+   * @param size The size of the bit-vector sort.
+   * @return A bit-vector sort of given size.
+   *
+   * @see
+   *   * `Sort::is_bv()`
+   *   * `Sort::bv_size()`
+   */
+  Sort mk_bv_sort(uint64_t size);
+
+  /**
+   * Create a floating-point sort of given exponent and significand size.
+   * @param exp_size The size of the exponent.
+   * @param sig_size The size of the significand (including sign bit).
+   * @return A floating-point sort of given format.
+   *
+   * @see
+   *   * `Sort::is_fp()`
+   *   * `Sort::fp_exp_size()`
+   *   * `Sort::fp_sig_size()`
+   */
+  Sort mk_fp_sort(uint64_t exp_size, uint64_t sig_size);
+
+  /**
+   * Create a function sort.
+   * @param domain   The domain sorts (the sorts of the arguments). The number
+   * of sorts in this vector must match `arity`.
+   * @param codomain The codomain sort (the sort of the return value).
+   * @return A function sort of given domain and codomain sorts.
+   *
+   * @see
+   *   * `Sort::is_fun()`
+   *   * `Sort::fun_arity()`
+   *   * `Sort::fun_domain_sorts()`
+   *   * `Sort::fun_codomain()`
+   */
+  Sort mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain);
+
+  /**
+   * Create a Roundingmode sort.
+   * @return A Roundingmode sort.
+   * @see
+   *   * `Sort::is_rm()`
+   */
+  Sort mk_rm_sort();
+
+  /**
+   * Create an uninterpreted sort.
+   *
+   * @note Only 0-arity uninterpreted sorts are supported.
+   *
+   * @param symbol The symbol of the sort.
+   * @return An uninterpreted sort.
+   *
+   * @see
+   *   * `Sort::is_uninterpreted()`
+   */
+  Sort mk_uninterpreted_sort(
+      std::optional<const std::string> symbol = std::nullopt);
+
+  /** @} */
+
+  /* ------------------------------------------------------------------------ */
+  /* Term creation                                                            */
+  /* ------------------------------------------------------------------------ */
+
+  /** \addtogroup cpp_term_creation
+   *  @{
+   */
+
+  /**
+   * Create a true value.
+   * @return A term representing true.
+   */
+  Term mk_true();
+
+  /**
+   * Create a false value.
+   * @return A term representing false.
+   */
+  Term mk_false();
+
+  /**
+   * Create a bit-vector value zero.
+   * @param sort The sort of the value.
+   * @return A term representing the bit-vector value 0 of given sort.
+   *
+   * @see
+   *   * `TermManager::mk_bv_sort()`
+   */
+  Term mk_bv_zero(const Sort &sort);
+
+  /**
+   * Create a bit-vector value one.
+   * @param sort The sort of the value.
+   * @return A term representing the bit-vector value 1 of given sort.
+   *
+   * @see
+   *   * `TermManager::mk_bv_sort()`
+   */
+  Term mk_bv_one(const Sort &sort);
+
+  /**
+   * Create a bit-vector value where all bits are set to 1.
+   * @param sort The sort of the value.
+   * @return A term representing the bit-vector value of given sort
+   *         where all bits are set to 1.
+   * @see
+   *   * `TermManager::mk_bv_sort()`
+   */
+  Term mk_bv_ones(const Sort &sort);
+
+  /**
+   * Create a bit-vector minimum signed value.
+   * @param sort The sort of the value.
+   * @return A term representing the bit-vector value of given sort where the
+   * MSB is set to 1 and all remaining bits are set to 0.
+   * @see
+   *   * `TermManager::mk_bv_sort()`
+   */
+  Term mk_bv_min_signed(const Sort &sort);
+
+  /**
+   * Create a bit-vector maximum signed value.
+   * @param sort The sort of the value.
+   * @return A term representing the bit-vector value of given sort where the
+   * MSB is set to 0 and all remaining bits are set to 1.
+   * @see
+   *   * `TermManager::mk_bv_sort()`
+   */
+  Term mk_bv_max_signed(const Sort &sort);
+
+  /**
+   * Create a bit-vector value from its string representation.
+   *
+   * Parameter `base` determines the base of the string representation.
+   *
+   * @note Given value must fit into a bit-vector of given size (sort).
+   *
+   * @param sort The sort of the value.
+   * @param value A string representing the value.
+   * @param base The base in which the string is given; `2` for binary, `10` for
+   *             decimal, and `16` for hexadecimal.
+   *
+   * @return A term of kind Kind::VALUE, representing the bit-vector value
+   *         of given sort.
+   * @see
+   *   * `TermManager::mk_bv_sort()`
+   */
+  Term mk_bv_value(const Sort &sort,
+                   const std::string &value,
+                   uint8_t base = 2);
+
+  /**
+   * Create a bit-vector value from its unsigned integer representation.
+   *
+   * @note Given value must fit into a bit-vector of given size (sort).
+   *
+   * @param sort The sort of the value.
+   * @param value The unsigned integer representation of the bit-vector value.
+   *
+   * @return A term of kind Kind::VALUE, representing the bit-vector value
+   *         of given sort.
+   *
+   * @see
+   *   * `TermManager::mk_bv_sort()`
+   */
+  Term mk_bv_value_uint64(const Sort &sort, uint64_t value);
+
+  /**
+   * Create a bit-vector value from its signed integer representation.
+   *
+   * @note Given value must fit into a bit-vector of given size (sort).
+   *
+   * @param sort The sort of the value.
+   * @param value The unsigned integer representation of the bit-vector value.
+   *
+   * @return A term of kind Kind::VALUE, representing the bit-vector value
+   *         of given sort.
+   *
+   * @see
+   *   * `TermManager::mk_bv_sort()`
+   */
+  Term mk_bv_value_int64(const Sort &sort, int64_t value);
+
+  /**
+   * Create a floating-point positive zero value (SMT-LIB: `+zero`).
+   * @param sort The sort of the value.
+   * @return A term representing the floating-point positive zero value of given
+   *         floating-point sort.
+   * @see
+   *  * `TermManager::mk_fp_sort()`
+   */
+  Term mk_fp_pos_zero(const Sort &sort);
+
+  /**
+   * Create a floating-point negative zero value (SMT-LIB: `-zero`).
+   * @param sort The sort of the value.
+   * @return A term representing the floating-point negative zero value of given
+   *         floating-point sort.
+   * @see
+   *   * `TermManager::mk_fp_sort()`
+   */
+  Term mk_fp_neg_zero(const Sort &sort);
+
+  /**
+   * Create a floating-point positive infinity value (SMT-LIB: `+oo`).
+   * @param sort The sort of the value.
+   * @return A term representing the floating-point positive infinity value of
+   *         given floating-point sort.
+   * @see
+   *   * `TermManager::mk_fp_sort()`
+   */
+  Term mk_fp_pos_inf(const Sort &sort);
+
+  /**
+   * Create a floating-point negative infinity value (SMT-LIB: `-oo`).
+   * @param sort The sort of the value.
+   * @return A term representing the floating-point negative infinity value of
+   *         given floating-point sort.
+   * @see
+   *   * `TermManager::mk_fp_sort()`
+   */
+  Term mk_fp_neg_inf(const Sort &sort);
+
+  /**
+   * Create a floating-point NaN value.
+   * @param sort The sort of the value.
+   * @return A term representing the floating-point NaN value of given
+   *         floating-point sort.
+   * @see
+   *   * `TermManager::mk_fp_sort()`
+   */
+  Term mk_fp_nan(const Sort &sort);
+
+  /**
+   * Create a floating-point value from its IEEE 754 standard representation
+   * given as three bit-vector values representing the sign bit, the exponent
+   * and the significand.
+   *
+   * @param bv_sign The sign bit.
+   * @param bv_exponent The exponent bit-vector value.
+   * @param bv_significand The significand bit-vector value.
+   *
+   * @return A term of kind Kind::VALUE, representing the floating-point value.
+   */
+  Term mk_fp_value(const Term &bv_sign,
+                   const Term &bv_exponent,
+                   const Term &bv_significand);
+
+  /**
+   * Create a floating-point value from its real representation, given as a
+   * decimal string, with respect to given rounding mode.
+   *
+   * @note Given rounding mode may be an arbitrary, non-value rounding mode
+   * term. If it is a value, the returned term will be a floating-point value,
+   *       else a non-value floating-point term.
+   *
+   * @param sort The sort of the value.
+   * @param rm The rounding mode.
+   * @param real The decimal string representing a real value.
+   *
+   * @return A floating-point representation of the given real string. If `rm`
+   *         is of kind Kind::VALUE the floating-point will be of kind
+   *         Kind::VALUE, else it will be a non-value term.
+   *
+   * @see
+   *   * `TermManager::mk_fp_sort()`
+   */
+  Term mk_fp_value(const Sort &sort, const Term &rm, const std::string &real);
+
+  /**
+   * Create a floating-point value from its rational representation, given as a
+   * two decimal strings representing the numerator and denominator, with
+   * respect to given rounding mode.
+   *
+   * @note Given rounding mode may be an arbitrary, non-value rounding mode
+   * term. If it is a value, the returned term will be a floating-point value,
+   *       else a non-value floating-point term.
+   *
+   * @param sort The sort of the value.
+   * @param rm The rounding mode.
+   * @param num The decimal string representing the numerator.
+   * @param den The decimal string representing the denominator.
+   *
+   * @return A floating-point representation of the given rational string. If
+   *         `rm` is of kind Kind::VALUE the floating-point will be of kind
+   *         Kind::VALUE, else it will be a non-value term.
+   *
+   * @see
+   *   * `TermManager::mk_fp_sort()`
+   */
+  Term mk_fp_value(const Sort &sort,
+                   const Term &rm,
+                   const std::string &num,
+                   const std::string &den);
+
+  /**
+   * Create a one-dimensional constant array of given sort, initialized with
+   * given value.
+   *
+   * @param sort The sort of the array.
+   * @param value The term to initialize the elements of the array with.
+   *
+   * @return A term of kind Kind::CONST_ARRAY, representing a constant
+   *         array of given sort.
+   *
+   * @see
+   *   * `TermManager::mk_array_sort()`
+   */
+  Term mk_const_array(const Sort &sort, const Term &term);
+
+  /**
+   * Create a rounding mode value.
+   * @param rm The rounding mode value.
+   * @return A term of kind Kind::VALUE, representing the rounding mode value.
+   *
+   * @see
+   *   * `RoundingMode`
+   */
+  Term mk_rm_value(RoundingMode rm);
+
+  /**
+   * Create a term of given kind with the given argument terms.
+   *
+   * @param kind The operator kind.
+   * @param args The argument terms.
+   * @param indices The indices of this term, empty if not indexed.
+   *
+   * @return A term representing an operation of given kind.
+   *
+   * @see
+   *   * `Kind`
+   */
+  Term mk_term(Kind kind,
+               const std::vector<Term> &args,
+               const std::vector<uint64_t> &indices = {});
+
+  /**
+   * Create a (first-order) constant of given sort with given symbol.
+   *
+   * @param sort The sort of the constant.
+   * @param symbol The symbol of the constant.
+   *
+   * @return A term of Kind::CONSTANT, representing the constant.
+   *
+   * @see
+   *   * `TermManager::mk_array_sort()`
+   *   * `TermManager::mk_bool_sort()`
+   *   * `TermManager::mk_bv_sort()`
+   *   * `TermManager::mk_fp_sort()`
+   *   * `TermManager::mk_fun_sort()`
+   *   * `TermManager::mk_rm_sort()`
+   */
+  Term mk_const(const Sort &sort,
+                std::optional<const std::string> symbol = std::nullopt);
+
+  /**
+   * Create a variable of given sort with given symbol.
+   *
+   * @note This creates a variable to be bound by quantifiers or lambdas.
+   *
+   * @param sort The sort of the variable.
+   * @param symbol The symbol of the variable.
+   *
+   * @return A term of Kind::VARIABLE, representing the variable.
+   *
+   * @see
+   *   * `TermManager::mk_bool_sort()`
+   *   * `TermManager::mk_bv_sort()`
+   *   * `TermManager::mk_fp_sort()`
+   *   * `TermManager::mk_fun_sort()`
+   *   * `TermManager::mk_rm_sort()`
+   */
+  Term mk_var(const Sort &sort,
+              std::optional<const std::string> symbol = std::nullopt);
+
+  /** @} */
+
+ private:
+  std::unique_ptr<bzla::NodeManager> d_nm;
+};
+
+/* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -1069,8 +1442,17 @@ class Bitwuzla
  public:
   /**
    * Constructor.
+   * @param tm The associated term manager instance.
    * @param options The associated options instance. Options must be configured
    *                at this point.
+   */
+  Bitwuzla(TermManager &tm, const Options &options = Options());
+  /**
+   * Constructor.
+   * @param options The associated options instance. Options must be configured
+   *                at this point.
+   *
+   * @note: (deprecated) Uses the global thread-local term manager.
    */
   Bitwuzla(const Options &options = Options());
   /** Destructor. */
@@ -1277,12 +1659,17 @@ class Bitwuzla
  *   * `Sort::is_array()`
  *   * `Sort::array_get_index()`
  *   * `Sort::array_get_element()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Sort mk_array_sort(const Sort &index, const Sort &element);
 
 /**
  * Create a Boolean sort.
+ *
  * @return A Boolean sort.
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Sort mk_bool_sort();
 
@@ -1294,6 +1681,8 @@ Sort mk_bool_sort();
  * @see
  *   * `Sort::is_bv()`
  *   * `Sort::bv_size()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Sort mk_bv_sort(uint64_t size);
 
@@ -1307,6 +1696,8 @@ Sort mk_bv_sort(uint64_t size);
  *   * `Sort::is_fp()`
  *   * `Sort::fp_exp_size()`
  *   * `Sort::fp_sig_size()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Sort mk_fp_sort(uint64_t exp_size, uint64_t sig_size);
 
@@ -1322,14 +1713,19 @@ Sort mk_fp_sort(uint64_t exp_size, uint64_t sig_size);
  *   * `Sort::fun_arity()`
  *   * `Sort::fun_domain_sorts()`
  *   * `Sort::fun_codomain()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Sort mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain);
 
 /**
  * Create a Roundingmode sort.
  * @return A Roundingmode sort.
+ *
  * @see
  *   * `Sort::is_rm()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Sort mk_rm_sort();
 
@@ -1343,6 +1739,8 @@ Sort mk_rm_sort();
  *
  * @see
  *   * `Sort::is_uninterpreted()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Sort mk_uninterpreted_sort(
     std::optional<const std::string> symbol = std::nullopt);
@@ -1353,6 +1751,8 @@ Sort mk_uninterpreted_sort(
 /* Term creation                                                              */
 /* -------------------------------------------------------------------------- */
 
+static thread_local TermManager s_tm;
+
 /** \addtogroup cpp_term_creation
  *  @{
  */
@@ -1360,12 +1760,16 @@ Sort mk_uninterpreted_sort(
 /**
  * Create a true value.
  * @return A term representing true.
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_true();
 
 /**
  * Create a false value.
  * @return A term representing false.
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_false();
 
@@ -1376,6 +1780,8 @@ Term mk_false();
  *
  * @see
  *   * `mk_bv_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_bv_zero(const Sort &sort);
 
@@ -1386,6 +1792,8 @@ Term mk_bv_zero(const Sort &sort);
  *
  * @see
  *   * `mk_bv_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_bv_one(const Sort &sort);
 
@@ -1396,6 +1804,8 @@ Term mk_bv_one(const Sort &sort);
  *         where all bits are set to 1.
  * @see
  *   * `mk_bv_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_bv_ones(const Sort &sort);
 
@@ -1406,6 +1816,8 @@ Term mk_bv_ones(const Sort &sort);
  *         is set to 1 and all remaining bits are set to 0.
  * @see
  *   * `mk_bv_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_bv_min_signed(const Sort &sort);
 
@@ -1416,6 +1828,8 @@ Term mk_bv_min_signed(const Sort &sort);
  *         is set to 0 and all remaining bits are set to 1.
  * @see
  *   * `mk_bv_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_bv_max_signed(const Sort &sort);
 
@@ -1435,6 +1849,8 @@ Term mk_bv_max_signed(const Sort &sort);
  *         of given sort.
  * @see
  *   * `mk_bv_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_bv_value(const Sort &sort, const std::string &value, uint8_t base = 2);
 
@@ -1451,6 +1867,8 @@ Term mk_bv_value(const Sort &sort, const std::string &value, uint8_t base = 2);
  *
  * @see
  *   * `mk_bv_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_bv_value_uint64(const Sort &sort, uint64_t value);
 
@@ -1467,6 +1885,8 @@ Term mk_bv_value_uint64(const Sort &sort, uint64_t value);
  *
  * @see
  *   * `mk_bv_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_bv_value_int64(const Sort &sort, int64_t value);
 
@@ -1477,6 +1897,8 @@ Term mk_bv_value_int64(const Sort &sort, int64_t value);
  *         floating-point sort.
  * @see
  *  * `mk_fp_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_fp_pos_zero(const Sort &sort);
 
@@ -1487,6 +1909,8 @@ Term mk_fp_pos_zero(const Sort &sort);
  *         floating-point sort.
  * @see
  *   * `mk_fp_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_fp_neg_zero(const Sort &sort);
 
@@ -1497,6 +1921,8 @@ Term mk_fp_neg_zero(const Sort &sort);
  *         given floating-point sort.
  * @see
  *   * `mk_fp_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_fp_pos_inf(const Sort &sort);
 
@@ -1507,6 +1933,8 @@ Term mk_fp_pos_inf(const Sort &sort);
  *         given floating-point sort.
  * @see
  *   * `mk_fp_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_fp_neg_inf(const Sort &sort);
 
@@ -1517,6 +1945,8 @@ Term mk_fp_neg_inf(const Sort &sort);
  *         floating-point sort.
  * @see
  *   * `mk_fp_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_fp_nan(const Sort &sort);
 
@@ -1530,6 +1960,8 @@ Term mk_fp_nan(const Sort &sort);
  * @param bv_significand The significand bit-vector value.
  *
  * @return A term of kind Kind::VALUE, representing the floating-point value.
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_fp_value(const Term &bv_sign,
                  const Term &bv_exponent,
@@ -1553,6 +1985,8 @@ Term mk_fp_value(const Term &bv_sign,
  *
  * @see
  *   * `mk_fp_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_fp_value(const Sort &sort, const Term &rm, const std::string &real);
 
@@ -1576,6 +2010,8 @@ Term mk_fp_value(const Sort &sort, const Term &rm, const std::string &real);
  *
  * @see
  *   * `mk_fp_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_fp_value(const Sort &sort,
                  const Term &rm,
@@ -1594,6 +2030,8 @@ Term mk_fp_value(const Sort &sort,
  *
  * @see
  *   * `mk_array_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_const_array(const Sort &sort, const Term &term);
 
@@ -1604,6 +2042,8 @@ Term mk_const_array(const Sort &sort, const Term &term);
  *
  * @see
  *   * `RoundingMode`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_rm_value(RoundingMode rm);
 
@@ -1618,6 +2058,8 @@ Term mk_rm_value(RoundingMode rm);
  *
  * @see
  *   * `Kind`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_term(Kind kind,
              const std::vector<Term> &args,
@@ -1638,6 +2080,8 @@ Term mk_term(Kind kind,
  *   * `mk_fp_sort()`
  *   * `mk_fun_sort()`
  *   * `mk_rm_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_const(const Sort &sort,
               std::optional<const std::string> symbol = std::nullopt);
@@ -1658,6 +2102,8 @@ Term mk_const(const Sort &sort,
  *   * `mk_fp_sort()`
  *   * `mk_fun_sort()`
  *   * `mk_rm_sort()`
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_var(const Sort &sort,
             std::optional<const std::string> symbol = std::nullopt);

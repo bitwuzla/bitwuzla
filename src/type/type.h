@@ -133,6 +133,10 @@ class Type
    */
   std::string str() const;
 
+  /** @return Associated type manager instance. */
+  type::TypeManager* tm();
+  const type::TypeManager* tm() const;
+
  private:
   Type(type::TypeData* d);
 
