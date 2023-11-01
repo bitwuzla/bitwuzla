@@ -1579,7 +1579,8 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
       else
       {
         // Consistent value: t = odd: random odd value
-        BitVectorDomainGenerator gen(x, d_rng, BitVector::mk_one(size), x.hi());
+        BitVectorDomainGenerator gen(
+            x, d_rng, {BitVector::mk_one(size), x.hi()});
         BV_NODE_CACHE_CONSISTENT(gen.random());
         if (!d_consistent->lsb())
         {
@@ -1595,8 +1596,8 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
     BitVectorDomainGenerator gen(
         x,
         d_rng,
-        t.is_zero() ? BitVector::mk_zero(size) : BitVector::mk_one(size),
-        x.hi());
+        {t.is_zero() ? BitVector::mk_zero(size) : BitVector::mk_one(size),
+         x.hi()});
     assert(gen.has_random() || x.is_fixed());
     BitVector tmp = gen.has_random() ? gen.random() : x.lo();
 
@@ -1917,7 +1918,7 @@ BitVectorShl::is_invertible(const BitVector& t,
             // Inverse value: s = 0: random value
             if (x_has_fixed_bits)
             {
-              BitVectorDomainGenerator gen(x, d_rng, x.lo(), x.hi());
+              BitVectorDomainGenerator gen(x, d_rng, {x.lo(), x.hi()});
               assert(gen.has_random());
               BV_NODE_CACHE_INVERSE(gen.random());
             }
@@ -1933,7 +1934,7 @@ BitVectorShl::is_invertible(const BitVector& t,
         {
           if (x.hi().compare(min) >= 0)
           {
-            BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
+            BitVectorDomainGenerator gen(x, d_rng, {min, x.hi()});
             assert(gen.has_random());
             // Inverse value: t = 0: ctz(t) - ctz(s) <= res < size
             BV_NODE_CACHE_INVERSE(gen.random());
@@ -2088,7 +2089,7 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
       }
 
       BitVectorDomainGenerator gen(
-          x, d_rng, x.lo(), BitVector::from_ui(size, max));
+          x, d_rng, {x.lo(), BitVector::from_ui(size, max)});
       if (gen.has_random())
       {
         BV_NODE_CACHE_CONSISTENT(gen.random());
@@ -2423,7 +2424,7 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
       }
 
       BitVectorDomainGenerator gen(
-          x, d_rng, x.lo(), BitVector::from_ui(size, max));
+          x, d_rng, {x.lo(), BitVector::from_ui(size, max)});
       if (gen.has_random())
       {
         BV_NODE_CACHE_CONSISTENT(gen.random());
@@ -2555,7 +2556,7 @@ BitVectorShr::inverse_value(RNG* rng,
         // random value
         if (x.has_fixed_bits())
         {
-          BitVectorDomainGenerator gen(x, rng, x.lo(), x.hi());
+          BitVectorDomainGenerator gen(x, rng, {x.lo(), x.hi()});
           assert(gen.has_random());
           inverse.reset(new BitVector(gen.random()));
         }
@@ -2572,7 +2573,7 @@ BitVectorShr::inverse_value(RNG* rng,
         assert(x.hi().compare(min) >= 0);
         if (x.has_fixed_bits())
         {
-          BitVectorDomainGenerator gen(x, rng, min, x.hi());
+          BitVectorDomainGenerator gen(x, rng, {min, x.hi()});
           assert(gen.has_random());
           inverse.reset(new BitVector(gen.random()));
         }
@@ -2908,7 +2909,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
   if (x.has_fixed_bits())
   {
     BitVectorDomainGenerator gen(
-        x, d_rng, BitVector::mk_zero(size), BitVector::from_ui(size, max));
+        x, d_rng, {BitVector::mk_zero(size), BitVector::from_ui(size, max)});
     if (gen.has_random())
     {
       BV_NODE_CACHE_CONSISTENT(gen.random());
@@ -3111,7 +3112,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
             max.ibvdec();
           }
 
-          BitVectorDomainGenerator gen(x, d_rng, min, max);
+          BitVectorDomainGenerator gen(x, d_rng, {min, max});
           if (gen.has_next())
           {
             BV_NODE_CACHE_INVERSE_IF(gen.random());
@@ -3176,7 +3177,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
             }
             if (x_has_fixed_bits)
             {
-              BitVectorDomainGenerator gen(x, d_rng, s_mul_t, max);
+              BitVectorDomainGenerator gen(x, d_rng, {s_mul_t, max});
               assert(gen.has_random());
               BV_NODE_CACHE_INVERSE(gen.random());
             }
@@ -3225,7 +3226,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
       }
       if (x_has_fixed_bits)
       {
-        BitVectorDomainGenerator gen(x, d_rng, min, max);
+        BitVectorDomainGenerator gen(x, d_rng, {min, max});
         if (gen.has_random())
         {
           BV_NODE_CACHE_INVERSE_IF(gen.random());
@@ -3267,7 +3268,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
         BitVector max = BitVector::mk_ones(size);
         if (x.has_fixed_bits())
         {
-          BitVectorDomainGenerator gen(x, d_rng, min, max);
+          BitVectorDomainGenerator gen(x, d_rng, {min, max});
           assert(gen.has_random());
           BV_NODE_CACHE_INVERSE(gen.random());
         }
@@ -3338,10 +3339,10 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
         else
         {
           // Consistent value: pos_x = 0: t = 0 : random value < ones
-          BitVectorDomainGenerator gen(x,
-                                       d_rng,
-                                       BitVector::mk_zero(size),
-                                       BitVector::mk_ones(size).ibvdec());
+          BitVectorDomainGenerator gen(
+              x,
+              d_rng,
+              {BitVector::mk_zero(size), BitVector::mk_ones(size).ibvdec()});
           assert(gen.has_random());
           BV_NODE_CACHE_CONSISTENT(gen.random());
         }
@@ -3397,7 +3398,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
         else
         {
           BitVectorDomainGenerator gen(
-              x, d_rng, BitVector::mk_one(size), x.hi());
+              x, d_rng, {BitVector::mk_one(size), x.hi()});
           assert(gen.has_random());
           BV_NODE_CACHE_CONSISTENT(gen.random());
         }
@@ -3505,13 +3506,13 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint64_t pos_x)
       }
 
       bool res = true;
-      BitVectorDomainGenerator gen(x, d_rng, one, x.hi());
+      BitVectorDomainGenerator gen(x, d_rng, {one, x.hi()});
       assert(gen.has_random());
       BitVector bvres = gen.random();
       while (bvres.is_umul_overflow(t))
       {
         bvres.ibvdec();
-        BitVectorDomainGenerator ggen(x, d_rng, one, bvres);
+        BitVectorDomainGenerator ggen(x, d_rng, {one, bvres});
         if (!ggen.has_random())
         {
           res = false;
@@ -3627,7 +3628,7 @@ BitVectorUdiv::consistent_value_pos0_aux(const BitVector& t)
       res = x.lo();
       break;
     }
-    BitVectorDomainGenerator gen(x, d_rng, min, max);
+    BitVectorDomainGenerator gen(x, d_rng, {min, max});
     if (gen.has_random())
     {
       res = gen.random();
@@ -3972,10 +3973,10 @@ BitVectorUlt::is_consistent(const BitVector& t, uint64_t pos_x)
         }
         else
         {
-          BitVectorDomainGenerator gen(x,
-                                       d_rng,
-                                       BitVector::mk_zero(size),
-                                       BitVector::mk_ones(size).ibvdec());
+          BitVectorDomainGenerator gen(
+              x,
+              d_rng,
+              {BitVector::mk_zero(size), BitVector::mk_ones(size).ibvdec()});
           assert(gen.has_random());
           BV_NODE_CACHE_CONSISTENT(gen.random());
         }
@@ -4012,7 +4013,7 @@ BitVectorUlt::is_consistent(const BitVector& t, uint64_t pos_x)
         else
         {
           BitVectorDomainGenerator gen(
-              x, d_rng, BitVector::mk_one(size), BitVector::mk_ones(size));
+              x, d_rng, {BitVector::mk_one(size), BitVector::mk_ones(size)});
           assert(gen.has_random());
           BV_NODE_CACHE_CONSISTENT(gen.random());
         }
@@ -4078,7 +4079,7 @@ BitVectorUlt::inverse_value_concat_new_random(const BitVectorDomain& d,
 
   if (d.has_fixed_bits())
   {
-    BitVectorDomainGenerator gen(d, d_rng, min, max);
+    BitVectorDomainGenerator gen(d, d_rng, {min, max});
     if (gen.has_random())
     {
       return gen.random();
@@ -5072,7 +5073,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
       // hi = s * n_hi + t (upper bound for x)
       BitVector hi = mul.bvadd(t);
       // x->lo <= x <= hi
-      BitVectorDomainGenerator gen(x, d_rng, x.lo(), hi);
+      BitVectorDomainGenerator gen(x, d_rng, {x.lo(), hi});
       bool res = false;
       if (gen.has_random())
       {
@@ -5129,7 +5130,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
               else
               {
                 BitVectorDomainGenerator gen(
-                    x, d_rng, t.bvinc(), BitVector::mk_ones(size));
+                    x, d_rng, {t.bvinc(), BitVector::mk_ones(size)});
                 if (!gen.has_random())
                 {
                   assert(x.match_fixed_bits(zero));
@@ -5375,7 +5376,7 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
         BV_NODE_CACHE_CONSISTENT(x.lo());
         return true;
       }
-      BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
+      BitVectorDomainGenerator gen(x, d_rng, {min, x.hi()});
       if (gen.has_random())
       {
         BV_NODE_CACHE_CONSISTENT(gen.random());
@@ -5485,7 +5486,7 @@ BitVectorUrem::consistent_value_pos0_aux(const BitVector& t)
     {
       return x.lo();
     }
-    BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
+    BitVectorDomainGenerator gen(x, d_rng, {min, x.hi()});
     if (gen.has_random())
     {
       return gen.random();

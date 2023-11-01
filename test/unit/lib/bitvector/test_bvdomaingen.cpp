@@ -12,6 +12,7 @@
 #include <string>
 #include <unordered_set>
 
+#include "bv/bounds/bitvector_bounds.h"
 #include "bv/domain/bitvector_domain.h"
 #include "test_lib.h"
 
@@ -148,7 +149,7 @@ TestBvDomainGen::test_next_aux(const std::string& str_d,
     BitVector min(str_min.size(), str_min);
     BitVector max(str_max.size(), str_max);
     gen.reset(new BitVectorDomainGenerator(
-        d, random ? d_rng.get() : nullptr, min, max));
+        d, random ? d_rng.get() : nullptr, BitVectorRange(min, max)));
   }
 
   if (random)
@@ -317,10 +318,10 @@ TEST_F(TestBvDomainGen, ctor_dtor)
         BitVectorDomainGenerator(BitVectorDomain(size), d_rng.get()));
     BitVector from(size, *d_rng);
     BitVector to(size, *d_rng, from, BitVector::mk_ones(size));
-    ASSERT_NO_FATAL_FAILURE(
-        BitVectorDomainGenerator(BitVectorDomain(size), from, to));
-    ASSERT_NO_FATAL_FAILURE(
-        BitVectorDomainGenerator(BitVectorDomain(size), d_rng.get(), from, to));
+    ASSERT_NO_FATAL_FAILURE(BitVectorDomainGenerator(BitVectorDomain(size),
+                                                     BitVectorRange(from, to)));
+    ASSERT_NO_FATAL_FAILURE(BitVectorDomainGenerator(
+        BitVectorDomain(size), d_rng.get(), BitVectorRange(from, to)));
   }
 }
 

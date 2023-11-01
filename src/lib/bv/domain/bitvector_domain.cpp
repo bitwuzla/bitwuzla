@@ -378,35 +378,32 @@ BitVectorDomain::str() const
 
 BitVectorDomainGenerator::BitVectorDomainGenerator(
     const BitVectorDomain &domain)
-    : BitVectorDomainGenerator(domain, nullptr, domain.d_lo, domain.d_hi)
+    : BitVectorDomainGenerator(domain, nullptr, BitVectorRange(domain))
 {
 }
 
 BitVectorDomainGenerator::BitVectorDomainGenerator(
-    const BitVectorDomain &domain, const BitVector &min, const BitVector &max)
-    : BitVectorDomainGenerator(domain, nullptr, min, max)
+    const BitVectorDomain &domain, const BitVectorRange &range)
+    : BitVectorDomainGenerator(domain, nullptr, range)
 {
 }
 
 BitVectorDomainGenerator::BitVectorDomainGenerator(
     const BitVectorDomain &domain, RNG *rng)
-    : BitVectorDomainGenerator(domain, rng, domain.d_lo, domain.d_hi)
+    : BitVectorDomainGenerator(domain, rng, BitVectorRange(domain))
 {
 }
 
 BitVectorDomainGenerator::BitVectorDomainGenerator(
-    const BitVectorDomain &domain,
-    RNG *rng,
-    const BitVector &min,
-    const BitVector &max)
+    const BitVectorDomain &domain, RNG *rng, const BitVectorRange &range)
     : d_domain(domain), d_rng(rng)
 {
   uint64_t cnt          = 0;
   uint64_t size         = domain.size();
   const BitVector &hi   = d_domain.d_hi;
   const BitVector &lo   = d_domain.d_lo;
-  const BitVector &mmin = lo.compare(min) <= 0 ? min : lo;
-  const BitVector &mmax = hi.compare(max) >= 0 ? max : hi;
+  const BitVector &mmin = lo.compare(range.d_min) <= 0 ? range.d_min : lo;
+  const BitVector &mmax = hi.compare(range.d_max) >= 0 ? range.d_max : hi;
 
   d_bits.reset(nullptr);
   d_bits_min.reset(nullptr);
@@ -596,14 +593,12 @@ BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
 
   if (bounds.has_lo())
   {
-    d_gen_lo.reset(new BitVectorDomainGenerator(
-        domain, rng, bounds.d_lo.d_min, bounds.d_lo.d_max));
+    d_gen_lo.reset(new BitVectorDomainGenerator(domain, rng, bounds.d_lo));
     d_gen_cur = d_gen_lo.get();
   }
   if (bounds.has_hi())
   {
-    d_gen_hi.reset(new BitVectorDomainGenerator(
-        domain, rng, bounds.d_hi.d_min, bounds.d_hi.d_max));
+    d_gen_hi.reset(new BitVectorDomainGenerator(domain, rng, bounds.d_hi));
     if (d_gen_cur == nullptr) d_gen_cur = d_gen_hi.get();
   }
 }
@@ -709,13 +704,13 @@ BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
   if (min_scomp_zero < 0)
   {
     d_gen_lo.reset(new BitVectorDomainGenerator(
-        domain, rng, min, max_scomp_zero < 0 ? max : ones));
+        domain, rng, BitVectorRange(min, max_scomp_zero < 0 ? max : ones)));
     d_gen_cur = d_gen_lo.get();
   }
   if (max_scomp_zero >= 0)
   {
     d_gen_hi.reset(new BitVectorDomainGenerator(
-        domain, rng, min_scomp_zero >= 0 ? min : zero, max));
+        domain, rng, BitVectorRange(min_scomp_zero >= 0 ? min : zero, max)));
     if (d_gen_cur == nullptr) d_gen_cur = d_gen_hi.get();
   }
 }

@@ -15,6 +15,7 @@
 
 namespace bzla {
 
+struct BitVectorRange;
 struct BitVectorBounds;
 class BitVectorDomainGenerator;
 
@@ -273,12 +274,10 @@ class BitVectorDomainGenerator
    * Construct generator for values within given range (inclusive),
    * interpreted as unsigned.
    * @param domain The domain to enumerate values for.
-   * @param min    The minimum value to start enumeration with.
-   * @param max    The maximum value to enumerate until.
+   * @param range  The inclusive value range for generated values.
    */
   BitVectorDomainGenerator(const BitVectorDomain &domain,
-                           const BitVector &min,
-                           const BitVector &max);
+                           const BitVectorRange &range);
   /**
    * Construct generator for values within the range defined by the given
    * bit-vector domain, interpreted as unsigned.
@@ -291,13 +290,11 @@ class BitVectorDomainGenerator
    * interpreted as unsigned.
    * @param domain The domain to enumerate values for.
    * @param rng    The associated random number generator.
-   * @param min    The minimum value to start enumeration with.
-   * @param max    The maximum value to enumerate until.
+   * @param range  The inclusive value range for generated values.
    */
   BitVectorDomainGenerator(const BitVectorDomain &domain,
                            RNG *rng,
-                           const BitVector &min,
-                           const BitVector &max);
+                           const BitVectorRange &range);
   /** Destructor. */
   ~BitVectorDomainGenerator();
 
