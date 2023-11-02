@@ -499,12 +499,10 @@ BitVectorNode::normalize_bounds(const BitVectorRange& bounds_u,
 }
 
 BitVectorBounds
-BitVectorNode::compute_normalized_bounds(const BitVector& s,
-                                         const BitVector& t,
-                                         uint64_t pos_x)
+BitVectorNode::compute_normalized_bounds(const BitVector& t, uint64_t pos_x)
 {
   // the current (un)signed bounds on x wrt. s, t and the current bounds on x
-  auto [bounds_u, bounds_s] = compute_min_max_bounds(s, t, pos_x);
+  auto [bounds_u, bounds_s] = compute_min_max_bounds(t, pos_x);
   if (!bounds_u.empty() || !bounds_s.empty())
   {
     BitVectorNode* op_x = child(pos_x);
@@ -517,11 +515,8 @@ BitVectorNode::compute_normalized_bounds(const BitVector& s,
 }
 
 std::tuple<BitVectorRange, BitVectorRange>
-BitVectorNode::compute_min_max_bounds(const BitVector& s,
-                                      const BitVector& t,
-                                      uint64_t pos_x)
+BitVectorNode::compute_min_max_bounds(const BitVector& t, uint64_t pos_x)
 {
-  (void) s;
   (void) t;
   (void) pos_x;
   assert(false);
@@ -737,10 +732,10 @@ BitVectorAnd::evaluate()
 }
 
 std::tuple<BitVectorRange, BitVectorRange>
-BitVectorAnd::compute_min_max_bounds(const BitVector& s,
-                                     const BitVector& t,
-                                     uint64_t pos_x)
+BitVectorAnd::compute_min_max_bounds(const BitVector& t, uint64_t pos_x)
 {
+  uint64_t pos_s           = 1 - pos_x;
+  const BitVector& s       = child(pos_s)->assignment();
   BitVectorNode* op_x      = child(pos_x);
   const BitVectorDomain& x = op_x->domain();
   d_bounds = BitVectorRange(x.lo().bvor(t), x.hi().bvand(s.bvxnor(t)));
@@ -790,7 +785,7 @@ BitVectorAnd::is_invertible(const BitVector& t,
   {
     if (!op_x->bounds_u().empty() || !op_x->bounds_s().empty())
     {
-      BitVectorBounds bounds = compute_normalized_bounds(s, t, pos_x);
+      BitVectorBounds bounds = compute_normalized_bounds(t, pos_x);
       if (bounds.empty())
       {
         return false;
@@ -1330,12 +1325,9 @@ BitVectorMul::evaluate()
 // TODO maybe use this as default implementation when bounds support is
 //      implemented for all operators
 std::tuple<BitVectorRange, BitVectorRange>
-BitVectorMul::compute_min_max_bounds(const BitVector& s,
-                                     const BitVector& t,
-                                     uint64_t pos_x)
+BitVectorMul::compute_min_max_bounds(const BitVector& t, uint64_t pos_x)
 {
-  (void) t;
-  uint64_t size = s.size();
+  uint64_t size = t.size();
   // tighten unsigned bounds wrt. to current unsigned bounds of x
   return child(pos_x)->tighten_bounds(
       BitVectorRange(BitVector::mk_zero(size), BitVector::mk_ones(size)),
@@ -1375,7 +1367,7 @@ BitVectorMul::is_invertible(const BitVector& t,
 
   if (ic_wo)
   {
-    BitVectorBounds bounds = compute_normalized_bounds(s, t, pos_x);
+    BitVectorBounds bounds = compute_normalized_bounds(t, pos_x);
     if (bounds.empty())
     {
       return false;
@@ -3694,12 +3686,12 @@ BitVectorUlt::evaluate()
 }
 
 std::tuple<BitVectorRange, BitVectorRange>
-BitVectorUlt::compute_min_max_bounds(const BitVector& s,
-                                     const BitVector& t,
-                                     uint64_t pos_x)
+BitVectorUlt::compute_min_max_bounds(const BitVector& t, uint64_t pos_x)
 {
   BitVector min, max;
-  uint64_t size = s.size();
+  uint64_t pos_s     = 1 - pos_x;
+  const BitVector& s = child(pos_s)->assignment();
+  uint64_t size      = s.size();
 
   // compute unsigned min/max bounds wrt. s and t
   if (pos_x == 0)
@@ -3827,7 +3819,7 @@ BitVectorUlt::is_invertible(const BitVector& t,
           ddx = dxn.bvconcat(dxx);
           ddx.fix_bit(bw_xx - 1, true);
           dx  = &ddx;
-          res = _is_invertible(dx, s, t, pos_x, is_essential_check, false);
+          res = _is_invertible(dx, t, pos_x, is_essential_check, false);
           if (!res || d_rng->flip_coin())
           {
             dxn.fix(BitVector::mk_zero(dxn.size()));
@@ -3837,8 +3829,7 @@ BitVectorUlt::is_invertible(const BitVector& t,
             // Note: _is_invertible does not reset d_inverse, thus this second
             //       call is unproblematic, even in the case were the first
             //       check was true, but this second check is false.
-            bool _res =
-                _is_invertible(dx, s, t, pos_x, is_essential_check, false);
+            bool _res = _is_invertible(dx, t, pos_x, is_essential_check, false);
             if (!res) res = _res;
           }
           return res;
@@ -3851,7 +3842,6 @@ BitVectorUlt::is_invertible(const BitVector& t,
   {
     res = _is_invertible(
         dx,
-        s,
         t,
         pos_x,
         is_essential_check,
@@ -3862,7 +3852,6 @@ BitVectorUlt::is_invertible(const BitVector& t,
 
 bool
 BitVectorUlt::_is_invertible(const BitVectorDomain* d,
-                             const BitVector& s,
                              const BitVector& t,
                              uint64_t pos_x,
                              bool is_essential_check,
@@ -3870,7 +3859,7 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
 {
   // IC_wo: pos_x = 0: t = 0 || s != 0
   //        pos_x = 1: t = 0 || s != ones
-  BitVectorBounds bounds = compute_normalized_bounds(s, t, pos_x);
+  BitVectorBounds bounds = compute_normalized_bounds(t, pos_x);
   if (bounds.empty())
   {
     return false;
@@ -4330,12 +4319,12 @@ BitVectorSlt::evaluate()
 }
 
 std::tuple<BitVectorRange, BitVectorRange>
-BitVectorSlt::compute_min_max_bounds(const BitVector& s,
-                                     const BitVector& t,
-                                     uint64_t pos_x)
+BitVectorSlt::compute_min_max_bounds(const BitVector& t, uint64_t pos_x)
 {
   BitVector min_s, max_s;
-  uint64_t size = s.size();
+  uint64_t pos_s     = 1 - pos_x;
+  const BitVector& s = child(pos_s)->assignment();
+  uint64_t size      = s.size();
 
   // compute signed min/max bounds wrt. s and t
   if (pos_x == 0)
@@ -4474,7 +4463,7 @@ BitVectorSlt::is_invertible(const BitVector& t,
           ddx = dxn.bvconcat(dxx);
           ddx.fix_bit(bw_xx - 1, true);
           dx  = &ddx;
-          res = _is_invertible(dx, s, t, pos_x, is_essential_check);
+          res = _is_invertible(dx, t, pos_x, is_essential_check);
           if (!res || d_rng->flip_coin())
           {
             dxn.fix(BitVector::mk_zero(dxn.size()));
@@ -4484,7 +4473,7 @@ BitVectorSlt::is_invertible(const BitVector& t,
             // Note: _is_invertible does not reset d_inverse, thus this second
             //       call is unproblematic, even in the case were the first
             //       check was true, but this second check is false.
-            bool _res = _is_invertible(dx, s, t, pos_x, is_essential_check);
+            bool _res = _is_invertible(dx, t, pos_x, is_essential_check);
             return !res ? _res : res;
           }
         }
@@ -4494,21 +4483,20 @@ BitVectorSlt::is_invertible(const BitVector& t,
 
   if (res)
   {
-    res = _is_invertible(dx, s, t, pos_x, is_essential_check);
+    res = _is_invertible(dx, t, pos_x, is_essential_check);
   }
   return res;
 }
 
 bool
 BitVectorSlt::_is_invertible(const BitVectorDomain* d,
-                             const BitVector& s,
                              const BitVector& t,
                              uint64_t pos_x,
                              bool is_essential_check)
 {
   // IC_wo: pos_x = 0: t = 0 || s != min_signed_value
   //        pos_x = 1: t = 0 || s != max_signed_value
-  BitVectorBounds bounds = compute_normalized_bounds(s, t, pos_x);
+  BitVectorBounds bounds = compute_normalized_bounds(t, pos_x);
 
   if (bounds.empty())
   {

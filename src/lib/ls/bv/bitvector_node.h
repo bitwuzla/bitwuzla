@@ -201,41 +201,37 @@ class BitVectorNode : public Node<BitVector>
                                            const BitVectorRange& bounds_s);
   /**
    * Helper to compute the normalized min and max bounds for `x` with respect
-   * to `s` and `t` and the current signed and unsigned min/max bounds of `x`,
-   * if any. The resulting bounds are split into a lower (from min_signed to
+   * to the current signed and unsigned min/max bounds of `x` and a target
+   * value. The resulting bounds are split into a lower (from min_signed to
    * ones) and upper (from zero to max_signed) ranges. If the resulting ranges
-   * are empty (no inverse value exists with respect to `s` and `t` and the
-   * current bounds on `x`), all return parameters will be null nodes.
+   * are empty (no inverse value exists with respect to `t`, the assignment
+   * of the other operands and the current bounds on `x`), the returned bounds
+   * will be empty.
    *
-   * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`.
-   * @return The resulting lower and upper range bounds, null BitVectors for
-   *         both min/max in the lo and/or hi range if no values in that range
-   *         are covered.
+   * @return The resulting lower and upper range bounds, empty if no values in
+   *         that range are covered.
    */
-  BitVectorBounds compute_normalized_bounds(const BitVector& s,
-                                            const BitVector& t,
-                                            uint64_t pos_x);
+  BitVectorBounds compute_normalized_bounds(const BitVector& t, uint64_t pos_x);
 
   /**
    * Helper to compute the signed or unsigned min and max bounds for `x` with
-   * respect to the semantics of the operator, `s`, `t`, and the current signed
-   * or unsigned min/max bounds of `x`, if any. If the resulting ranges are
-   * empty, all return parameters will be null nodes.
+   * respect to the semantics of the operator, the current signed or unsigned
+   * min/max bounds of `x`, and the current target value. If the resulting
+   * ranges are empty, the returned ranges will be empty.
    *
    * @note Computes signed bounds for signed operators, and unsigned bounds
    *       for unsigned operators. Thus, either of the resulting bounds will
-   *       be null nodes, depending on the signedness of the operator.
+   *       be empty, depending on the signedness of the operator.
    *
-   * @param s The value of the other operand.
-   * @param t The target value of this node.
+   * @param t     The target value.
    * @param pos_x The index of operand `x`.
    * @return A tuple [bounds_u, bounds_s] of resulting unsigned and signed
    *         bounds.
    */
   virtual std::tuple<BitVectorRange, BitVectorRange> compute_min_max_bounds(
-      const BitVector& s, const BitVector& t, uint64_t pos_x);
+      const BitVector& t, uint64_t pos_x);
 
   /** The underlying bit-vector domain representing constant bits. */
   BitVectorDomain d_domain;
@@ -341,7 +337,7 @@ class BitVectorAnd : public BitVectorNode
   void evaluate() override;
 
   std::tuple<BitVectorRange, BitVectorRange> compute_min_max_bounds(
-      const BitVector& s, const BitVector& t, uint64_t pos_x) override;
+      const BitVector& t, uint64_t pos_x) override;
 
   /**
    * IC:
@@ -602,7 +598,7 @@ class BitVectorMul : public BitVectorNode
                                     uint64_t pos_x) override;
 
   std::tuple<BitVectorRange, BitVectorRange> compute_min_max_bounds(
-      const BitVector& s, const BitVector& t, uint64_t pos_x) override;
+      const BitVector& t, uint64_t pos_x) override;
 
  private:
   /**
@@ -1076,7 +1072,7 @@ class BitVectorUlt : public BitVectorNode
                                     uint64_t pos_x) override;
 
   std::tuple<BitVectorRange, BitVectorRange> compute_min_max_bounds(
-      const BitVector& s, const BitVector& t, uint64_t pos_x) override;
+      const BitVector& t, uint64_t pos_x) override;
 
  private:
   /**
@@ -1113,7 +1109,6 @@ class BitVectorUlt : public BitVectorNode
    * @note Does not and (must not) reset cached inverse.
    *
    * @param d The domain representing operand 'x'.
-   * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`.
    * @param is_essential_check True if called to determine is_essential(). For
@@ -1124,7 +1119,6 @@ class BitVectorUlt : public BitVectorNode
    *                           computation of concat operand.
    */
   bool _is_invertible(const BitVectorDomain* d,
-                      const BitVector& s,
                       const BitVector& t,
                       uint64_t pos_x,
                       bool is_essential_check,
@@ -1215,7 +1209,7 @@ class BitVectorSlt : public BitVectorNode
                                     uint64_t pos_x) override;
 
   std::tuple<BitVectorRange, BitVectorRange> compute_min_max_bounds(
-      const BitVector& s, const BitVector& t, uint64_t pos_x) override;
+      const BitVector& t, uint64_t pos_x) override;
 
  private:
   /**
@@ -1252,7 +1246,6 @@ class BitVectorSlt : public BitVectorNode
    * @note Does not and (must not) reset cached inverse.
    *
    * @param d The domain representing operand 'x'.
-   * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`.
    * @param is_essential_check True if called to determine is_essential(). For
@@ -1261,7 +1254,6 @@ class BitVectorSlt : public BitVectorNode
    *                           may trap us in a cycle (see is_essential()).
    */
   bool _is_invertible(const BitVectorDomain* d,
-                      const BitVector& s,
                       const BitVector& t,
                       uint64_t pos_x,
                       bool is_essential_check);
