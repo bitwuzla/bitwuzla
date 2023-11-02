@@ -215,6 +215,55 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
     cdef cppclass Terminator:
         pass
 
+    cdef cppclass TermManager:
+        Sort mk_array_sort(const Sort &index,
+                           const Sort &element) except +raise_error
+        Sort mk_bool_sort() except +raise_error
+        Sort mk_bv_sort(uint64_t size) except +raise_error
+        Sort mk_fp_sort(uint64_t exp_size,
+                        uint64_t sig_size) except +raise_error
+        Sort mk_fun_sort(const vector[Sort] &domain,
+                         const Sort &codomain) except +raise_error
+        Sort mk_rm_sort() except +raise_error
+        Sort mk_uninterpreted_sort(
+                optional[const string] symbol) except +raise_error
+
+        Term mk_true() except +raise_error
+        Term mk_false() except +raise_error
+        Term mk_bv_zero(const Sort &sort) except +raise_error
+        Term mk_bv_one(const Sort &sort) except +raise_error
+        Term mk_bv_ones(const Sort &sort) except +raise_error
+        Term mk_bv_min_signed(const Sort &sort) except +raise_error
+        Term mk_bv_max_signed(const Sort &sort) except +raise_error
+        Term mk_bv_value(const Sort &sort,
+                         const string &value, uint8_t base) except +raise_error
+        Term mk_fp_pos_zero(const Sort &sort) except +raise_error
+        Term mk_fp_neg_zero(const Sort &sort) except +raise_error
+        Term mk_fp_pos_inf(const Sort &sort) except +raise_error
+        Term mk_fp_neg_inf(const Sort &sort) except +raise_error
+        Term mk_fp_nan(const Sort &sort) except +raise_error
+        Term mk_fp_value(const Term &bv_sign,
+                         const Term &bv_exponent,
+                         const Term &bv_significand) except +raise_error
+
+        Term mk_fp_value(const Sort &sort,
+                         const Term &rm,
+                         const string &real) except +raise_error
+        Term mk_fp_value(const Sort &sort,
+                         const Term &rm,
+                         const string &num,
+                         const string &den) except +raise_error
+        Term mk_const_array(const Sort &sort,
+                            const Term &term) except +raise_error
+        Term mk_rm_value(RoundingMode rm) except +raise_error
+        Term mk_term(Kind kind,
+                     const vector[Term] &args,
+                     const vector[uint64_t] &indices) except +raise_error
+        Term mk_const(const Sort &sort,
+                      optional[const string] symbol) except +raise_error
+        Term mk_var(const Sort &sort,
+                    optional[const string] symbol) except +raise_error
+
     cdef cppclass Bitwuzla:
         Bitwuzla(const Options &options);
         void configure_terminator(Terminator *terminator) except +raise_error
@@ -233,13 +282,16 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
 
 
 
-    Sort mk_array_sort(const Sort &index, const Sort &element) except +raise_error
+    Sort mk_array_sort(const Sort &index,
+                       const Sort &element) except +raise_error
     Sort mk_bool_sort() except +raise_error
     Sort mk_bv_sort(uint64_t size) except +raise_error
     Sort mk_fp_sort(uint64_t exp_size, uint64_t sig_size) except +raise_error
-    Sort mk_fun_sort(const vector[Sort] &domain, const Sort &codomain) except +raise_error
+    Sort mk_fun_sort(const vector[Sort] &domain,
+                     const Sort &codomain) except +raise_error
     Sort mk_rm_sort() except +raise_error
-    Sort mk_uninterpreted_sort(optional[const string] symbol) except +raise_error
+    Sort mk_uninterpreted_sort(
+            optional[const string] symbol) except +raise_error
 
 
     Term mk_true() except +raise_error
@@ -249,7 +301,9 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
     Term mk_bv_ones(const Sort &sort) except +raise_error
     Term mk_bv_min_signed(const Sort &sort) except +raise_error
     Term mk_bv_max_signed(const Sort &sort) except +raise_error
-    Term mk_bv_value(const Sort &sort, const string &value, uint8_t base) except +raise_error
+    Term mk_bv_value(const Sort &sort,
+                     const string &value,
+                     uint8_t base) except +raise_error
     Term mk_fp_pos_zero(const Sort &sort) except +raise_error
     Term mk_fp_neg_zero(const Sort &sort) except +raise_error
     Term mk_fp_pos_inf(const Sort &sort) except +raise_error
@@ -259,12 +313,15 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
                      const Term &bv_exponent,
                      const Term &bv_significand) except +raise_error
 
-    Term mk_fp_value(const Sort &sort, const Term &rm, const string &real) except +raise_error
+    Term mk_fp_value(const Sort &sort,
+                     const Term &rm,
+                     const string &real) except +raise_error
     Term mk_fp_value(const Sort &sort,
                      const Term &rm,
                      const string &num,
                      const string &den) except +raise_error
-    Term mk_const_array(const Sort &sort, const Term &term) except +raise_error
+    Term mk_const_array(const Sort &sort,
+                        const Term &term) except +raise_error
     Term mk_rm_value(RoundingMode rm) except +raise_error
     Term mk_term(Kind kind,
                  const vector[Term] &args,
@@ -274,8 +331,11 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
     Term mk_var(const Sort &sort,
                 optional[const string] symbol) except +raise_error
 
-    Term substitute_term(const Term &term, const unordered_map[Term, Term]& map) except +raise_error
-    void substitute_terms(vector[Term] &terms, const unordered_map[Term, Term]&) except +raise_error
+    Term substitute_term(
+            const Term &term,
+            const unordered_map[Term, Term]& map) except +raise_error
+    void substitute_terms(vector[Term] &terms,
+                          const unordered_map[Term, Term]&) except +raise_error
 
 cdef extern from "bitwuzla/cpp/parser.h" namespace "bitwuzla::parser":
 

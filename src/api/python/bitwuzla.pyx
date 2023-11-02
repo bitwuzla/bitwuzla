@@ -825,6 +825,393 @@ cdef class OptionInfo:
         """
         return _to_str(self.c_info.get().description)
 
+# --------------------------------------------------------------------------- #
+# TermManager wrapper
+# --------------------------------------------------------------------------- #
+
+cdef class TermManager:
+    cdef shared_ptr[bitwuzla_api.TermManager] c_tm
+
+    def __init__(self):
+        self.c_tm.reset(new bitwuzla_api.TermManager())
+
+    # ----------------------------------------------------------------------- #
+    # Sort functions
+    # ----------------------------------------------------------------------- #
+
+    def mk_bool_sort(self) -> Sort:
+        """Create a Boolean sort.
+
+           :return: Sort of type Boolean.
+        """
+        return _sort(self.c_tm.get().mk_bool_sort())
+
+    def mk_bv_sort(self, size: uint64_t) -> Sort:
+        """Create bit-vector sort of size ``size``.
+
+           :param size: Bit width.
+           :return:  Bit-vector sort of size ``size``.
+        """
+        return _sort(self.c_tm.get().mk_bv_sort(size))
+
+    def mk_array_sort(self, index: Sort, elem: Sort) -> Sort:
+        """Create array sort with given index and element sorts.
+
+           :param index: The sort of the array index.
+           :param elem: The sort of the array elements.
+           :return:  Array sort.
+          """
+        return _sort(self.c_tm.get().mk_array_sort(index.c_sort, elem.c_sort))
+
+    def mk_fun_sort(self, domain: list[Sort], codomain: Sort) -> Sort:
+        """Create function sort with given domain and codomain.
+
+           :param domain: A list of all the function arguments' sorts.
+           :param codomain: The sort of the function's return value.
+           :return:  Function sort, which maps ``domain`` to ``codomain``.
+          """
+        return _sort(self.c_tm.get().mk_fun_sort(_sort_vec(domain),
+                                                 _csort(codomain)))
+
+    def mk_fp_sort(self, exp_size: uint64_t, sig_size: uint64_t) -> Sort:
+        """Create a floating-point sort with given exponent size ``exp_size``
+           and significand size ``sig_size``.
+
+           :param exp_size: Exponent size.
+           :param sig_size: Significand size.
+           :return: Floating-point sort.
+        """
+        return _sort(self.c_tm.get().mk_fp_sort(exp_size, sig_size))
+
+    def mk_rm_sort(self, ) -> Sort:
+        """Create a rounding mode sort.
+
+           :return: Rounding mode sort.
+        """
+        return _sort(self.c_tm.get().mk_rm_sort())
+
+    def mk_uninterpreted_sort(self, symbol: str = None) -> Sort:
+        """Create an uninterpreted sort.
+
+           :param symbol: The symbol of the sort.
+           :return: Uninterpreted Sort.
+
+           .. note::
+                Only 0-arity uninterpreted sorts are supported.
+        """
+        cdef optional[string] opt = nullopt
+        if symbol:
+            opt = <string?> symbol.encode()
+        return _sort(
+                self.c_tm.get().mk_uninterpreted_sort(
+                    <optional[const string]?> opt))
+
+
+    # ----------------------------------------------------------------------- #
+    # Value functions
+    # ----------------------------------------------------------------------- #
+
+    def mk_true(self, ) -> Term:
+        """mk_true()
+
+        Create true value.
+
+        :return: A term representing true.
+        :rtype: BitwuzlaTerm
+        """
+        return _term(self.c_tm.get().mk_true())
+
+    def mk_false(self, ) -> Term:
+        """mk_false()
+
+        Create false value.
+
+        :return: A term representing false.
+        :rtype: BitwuzlaTerm
+        """
+        return _term(self.c_tm.get().mk_false())
+
+    def mk_bv_value(self, sort: Sort, value, *args) -> Term:
+        """mk_bv_value(sort: Sort, value: int) -> Term
+           mk_bv_value(sort: Sort, value: str, base: int) -> Term
+
+           Create bit-vector representing ``value`` of given ``sort``.
+
+           :param sort: Bit-vector sort.
+           :type sort: BitwuzlaSort
+           :param value: An integer representing the value.
+           :type value: int
+
+           Create bit-vector representing ``value`` of given ``sort`` and
+           ``base``.
+
+           :param sort: Bit-vector sort.
+           :type sort: BitwuzlaSort
+           :param value: A string representing the value.
+           :type value: str
+           :param base: The numerical base of the string representation (``2``
+                        for binary, ``10`` for decimal, ``16`` for hexadecimal).
+           :type base: int
+
+           :return: A term representing the bit-vector value.
+           :rtype: BitwuzlaTerm
+        """
+        if isinstance(value, str):
+            if not args:
+                raise ValueError('expected base')
+            return _term(
+                    self.c_tm.get().mk_bv_value(
+                        sort.c_sort, value.encode(), <uint8_t> int(args[0])))
+        if args:
+            raise ValueError('unexpected base')
+        return _term(
+                self.c_tm.get().mk_bv_value(sort.c_sort,
+                                            str(value).encode(),
+                                            10))
+
+    def mk_bv_zero(self, sort: Sort) -> Term:
+        """mk_bv_zero(sort)
+
+           Create a bit-vector value zero with ``sort``.
+
+           :param sort: Bit-vector sort.
+           :type sort: BitwuzlaSort
+
+           :return: A term representing the bit-vector value zero of given sort.
+           :rtype: BitwuzlaTerm
+        """
+        return _term(self.c_tm.get().mk_bv_zero(sort.c_sort))
+
+    def mk_bv_one(self, sort: Sort) -> Term:
+        """mk_bv_one(sort)
+
+           Create a bit-vector value one with ``sort``.
+
+           :param sort: Bit-vector sort.
+           :type sort: BitwuzlaSort
+
+           :return: A term representing the bit-vector value one of given sort.
+           :rtype: BitwuzlaTerm
+        """
+        return _term(self.c_tm.get().mk_bv_one(sort.c_sort))
+
+    def mk_bv_ones(self, sort: Sort) -> Term:
+        """mk_bv_ones(sort)
+
+           Create a bit-vector value with ``sort`` where all bits are set to 1.
+
+           :param sort: Bit-vector sort.
+           :type sort: BitwuzlaSort
+
+           :return: A term representing the bit-vector value of given sort
+                    where all bits are set to 1.
+           :rtype: BitwuzlaTerm
+        """
+        return _term(self.c_tm.get().mk_bv_ones(sort.c_sort))
+
+    def mk_bv_min_signed(self, sort: Sort) -> Term:
+        """mk_bv_min_signed(sort)
+
+           Create a bit-vector minimum signed value.
+
+           :param sort: Bit-vector sort.
+           :type sort: BitwuzlaSort
+
+           :return: A term representing the bit-vector value of given sort
+                    where the MSB is set to 1 and all remaining bits are set to
+                    0.
+           :rtype: BitwuzlaTerm
+
+        """
+        return _term(self.c_tm.get().mk_bv_min_signed(sort.c_sort))
+
+    def mk_bv_max_signed(self, sort: Sort) -> Term:
+        """mk_bv_max_signed(sort)
+
+           Create a bit-vector maximum signed value.
+
+           :param sort: Bit-vector sort.
+           :type sort: BitwuzlaSort
+
+           :return: A term representing the bit-vector value of given sort
+                    where the MSB is set to 0 and all remaining bits are set to
+                    1.
+           :rtype: BitwuzlaTerm
+        """
+        return _term(self.c_tm.get().mk_bv_max_signed(sort.c_sort))
+
+    def mk_fp_value(self, *args) -> Term:
+        """mk_fp_value(sign: Term, exponent: Term, significand: Term) -> Term
+           mk_fp_value(sort: Sort, rm: Term, real: str) -> Term
+           mk_fp_value(sort: Sort, rm: Term, num: str, den: str) -> Term
+
+           Create a floating-point value from its IEEE 754 standard
+           representation given as three bit-vector values representing the
+           sign bit, the exponent and the significand.
+
+           :param sign: Bit-vector value term representing the sign bit.
+           :param exponent: Bit-vector value term representing the exponent.
+           :param significand: Bit-vector value term representing the
+                               significand.
+
+           Create a floating-point value from its real representation, given as
+           a decimal string, with respect to given rounding mode.
+
+           :param sort: Floating-point sort.
+           :param rm: Rounding mode term.
+           :param real: The decimal string representing a real value
+
+           Create a floating-point value from its rational representation,
+           given as a two decimal strings representing the numerator and
+           denominator, with respect to given rounding mode.
+
+           :param sort: Floating-point sort.
+           :param rm: Rounding mode term.
+           :param num: The decimal string representing the numerator.
+           :param den: The decimal string representing the denominator.
+
+           :return: A term representing the floating-point value.
+
+           .. seealso::
+             :func:`~bitwuzla.TermManager.mk_bv_value` for the supported value
+             format for ``sign``, ``exponent``, and ``significand``.
+        """
+        if isinstance(args[0], Sort):
+            _check_arg(args[1], Term)
+            if len(args) == 4:
+                _check_arg(args[2], [str, int])
+                _check_arg(args[3], [str, int])
+                return _term(self.c_tm.get().mk_fp_value(
+                                _csort(args[0]),
+                                _cterm(args[1]),
+                                str(args[2]).encode(),
+                                str(args[3]).encode()))
+            elif len(args) != 3:
+                raise ValueError('Invalid number of arguments')
+            _check_arg(args[2], [str, int, float])
+            return _term(self.c_tm.get().mk_fp_value(
+                            _csort(args[0]),
+                            _cterm(args[1]),
+                            <const string&> str(args[2]).encode()))
+        elif isinstance(args[0], Term):
+            _check_arg(args[1], Term)
+            _check_arg(args[2], Term)
+            return _term(self.c_tm.get().mk_fp_value(
+                            _cterm(args[0]), _cterm(args[1]), _cterm(args[2])))
+        else:
+            raise ValueError('Invalid arguments')
+
+    def mk_fp_pos_zero(self, sort: Sort) -> Term:
+        """Create a floating-point positive zero value (SMT-LIB: `+zero`).
+
+           :param sort: Floating-point sort.
+           :return: A term representing the floating-point positive zero value
+                    of given floating-point sort.
+        """
+        return _term(self.c_tm.get().mk_fp_pos_zero(_csort(sort)))
+
+    def mk_fp_neg_zero(self, sort: Sort) -> Term:
+        """Create a floating-point negative zero value (SMT-LIB: `-zero`).
+
+           :param sort: Floating-point sort.
+           :return: A term representing the floating-point negative zero value
+                    of given floating-point sort.
+        """
+        return _term(self.c_tm.get().mk_fp_neg_zero(_csort(sort)))
+
+    def mk_fp_pos_inf(self, sort: Sort) -> Term:
+        """Create a floating-point positive infinity value (SMT-LIB: `+oo`).
+
+           :param sort: Floating-point sort.
+           :return: A term representing the floating-point positive infinity
+                    value of given floating-point sort.
+        """
+        return _term(self.c_tm.get().mk_fp_pos_inf(_csort(sort)))
+
+    def mk_fp_neg_inf(self, sort: Sort) -> Term:
+        """Create a floating-point negative infinity value (SMT-LIB: `-oo`).
+
+           :param sort: Floating-point sort.
+           :return: A term representing the floating-point negative infinity
+                    value of given floating-point sort.
+        """
+        return _term(self.c_tm.get().mk_fp_neg_inf(_csort(sort)))
+
+    def mk_fp_nan(self, sort: Sort) -> Term:
+        """Create a floating-point NaN value.
+
+           :param sort: Floating-point sort.
+           :return: A term representing the floating-point NaN value of given
+                    floating-point sort.
+        """
+        return _term(self.c_tm.get().mk_fp_nan(_csort(sort)))
+
+    def mk_rm_value(self, rm: RoundingMode) -> Term:
+        """Create a rounding mode value.
+
+           :param rm: Rounding mode.
+           :return: A term representing the rounding mode value.
+        """
+        return _term(self.c_tm.get().mk_rm_value(rm.value))
+
+
+    # ----------------------------------------------------------------------- #
+    # Term functions
+    # ----------------------------------------------------------------------- #
+
+    def mk_const(self, sort: Sort, symbol: str = None) -> Term:
+        """Create a (first-order) constant of given sort with given symbol.
+
+           :param sort: The sort of the constant.
+           :param symbol: The symbol of the constant.
+           :return: A term of kind :class:`~bitwuzla.Kind.CONSTANT`,
+                    representing the constant.
+        """
+        cdef optional[string] opt = nullopt
+        if symbol:
+            opt = <string?> symbol.encode()
+        return _term(self.c_tm.get().mk_const(
+                        _csort(sort), <optional[const string]?> opt))
+
+    def mk_const_array(self, sort: Sort, term: Term) -> Term:
+        """Create a one-dimensional constant array of given sort, initialized
+           with given value.
+
+           :param sort: The sort of the array.
+           :param term: The term to initialize the elements of the array with.
+           :return: A term of kind :class:`~bitwuzla.Kind.CONST_ARRAY`,
+                    representing a constant array of given sort.
+        """
+        return _term(self.c_tm.get().mk_const_array(_csort(sort), _cterm(term)))
+
+    def mk_var(self, sort: Sort, symbol: str = None) -> Term:
+        """Create a (first-order) variable of given sort with given symbol.
+
+           :param sort: The sort of the variable.
+           :param symbol: The symbol of the variable.
+           :return: A term of kind :class:`~bitwuzla.Kind.VARIABLE`,
+                    representing the variable.
+        """
+        cdef optional[string] opt = nullopt
+        if symbol:
+            opt = <string?> symbol.encode()
+        return _term(self.c_tm.get().mk_var(
+                        _csort(sort), <optional[const string]?> opt))
+
+    def mk_term(self, kind: Kind,
+                terms: list[Term],
+                indices: list[int] = []) -> Term:
+        """Create a term of given kind with the given argument terms.
+
+           :param kind: The operator kind.
+           :param terms: The argument terms.
+           :param indices: The indices of this term, empty if not indexed.
+           :return: A term representing an operation of given kind.
+        """
+        return _term(self.c_tm.get().mk_term(kind.value,
+                                             _term_vec(terms),
+                                             indices))
+
 
 # --------------------------------------------------------------------------- #
 # Bitwuzla wrapper
