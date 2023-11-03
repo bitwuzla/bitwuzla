@@ -14,90 +14,101 @@
 int
 main()
 {
-  // First, create a Bitwuzla options instance.
+  // First, create a term manager instance.
+  BitwuzlaTermManager* tm = bitwuzla_term_manager_new();
+  // Create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
   // Then, create a Bitwuzla instance.
-  Bitwuzla* bitwuzla = bitwuzla_new(options);
+  Bitwuzla* bitwuzla = bitwuzla_new(tm, options);
 
   // Create a bit-vector sort of size 1.
-  BitwuzlaSort sortbv1 = bitwuzla_mk_bv_sort(1);
+  BitwuzlaSort sortbv1 = bitwuzla_mk_bv_sort(tm, 1);
   // Create a bit-vector sort of size 2.
-  BitwuzlaSort sortbv2 = bitwuzla_mk_bv_sort(2);
+  BitwuzlaSort sortbv2 = bitwuzla_mk_bv_sort(tm, 2);
 
   // Create bit-vector variables.
   // (declare-const o0 (_ BitVec 1))
-  BitwuzlaTerm o0 = bitwuzla_mk_const(sortbv1, "o0");
+  BitwuzlaTerm o0 = bitwuzla_mk_const(tm, sortbv1, "o0");
   // (declare-const o1 (_ BitVec 1))
-  BitwuzlaTerm o1 = bitwuzla_mk_const(sortbv1, "o1");
+  BitwuzlaTerm o1 = bitwuzla_mk_const(tm, sortbv1, "o1");
   // (declare-const s0 (_ BitVec 2))
-  BitwuzlaTerm s0 = bitwuzla_mk_const(sortbv2, "s0");
+  BitwuzlaTerm s0 = bitwuzla_mk_const(tm, sortbv2, "s0");
   // (declare-const s1 (_ BitVec 2))
-  BitwuzlaTerm s1 = bitwuzla_mk_const(sortbv2, "s1");
+  BitwuzlaTerm s1 = bitwuzla_mk_const(tm, sortbv2, "s1");
   // (declare-const s2 (_ BitVec 2))
-  BitwuzlaTerm s2 = bitwuzla_mk_const(sortbv2, "s2");
+  BitwuzlaTerm s2 = bitwuzla_mk_const(tm, sortbv2, "s2");
   // (declare-const goal (_ BitVec 2))
-  BitwuzlaTerm goal = bitwuzla_mk_const(sortbv2, "goal");
+  BitwuzlaTerm goal = bitwuzla_mk_const(tm, sortbv2, "goal");
 
   // Create bit-vector values zero, one, three.
-  BitwuzlaTerm zero  = bitwuzla_mk_bv_zero(sortbv2);
-  BitwuzlaTerm one1  = bitwuzla_mk_bv_one(sortbv1);
-  BitwuzlaTerm one2  = bitwuzla_mk_bv_one(sortbv2);
-  BitwuzlaTerm three = bitwuzla_mk_bv_value_uint64(sortbv2, 3);
+  BitwuzlaTerm zero  = bitwuzla_mk_bv_zero(tm, sortbv2);
+  BitwuzlaTerm one1  = bitwuzla_mk_bv_one(tm, sortbv1);
+  BitwuzlaTerm one2  = bitwuzla_mk_bv_one(tm, sortbv2);
+  BitwuzlaTerm three = bitwuzla_mk_bv_value_uint64(tm, sortbv2, 3);
 
   // Add some assertions.
-  bitwuzla_assert(bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, s0, zero));
   bitwuzla_assert(bitwuzla,
-                  bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, goal, three));
+                  bitwuzla_mk_term2(tm, BITWUZLA_KIND_EQUAL, s0, zero));
+  bitwuzla_assert(bitwuzla,
+                  bitwuzla_mk_term2(tm, BITWUZLA_KIND_EQUAL, goal, three));
 
   // Push, assert, check sat and pop.
   bitwuzla_push(bitwuzla, 1);
-  bitwuzla_assert(bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, s0, goal));
+  bitwuzla_assert(bitwuzla,
+                  bitwuzla_mk_term2(tm, BITWUZLA_KIND_EQUAL, s0, goal));
   BitwuzlaResult result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: unsat\n");
   printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
   bitwuzla_pop(bitwuzla, 1);
 
   // (assert (= s1 (ite (= o0 (_ sortbv1 1)) (bvadd s0 one) s0)))
-  bitwuzla_assert(
-      bitwuzla,
-      bitwuzla_mk_term2(
-          BITWUZLA_KIND_EQUAL,
-          s1,
-          bitwuzla_mk_term3(BITWUZLA_KIND_ITE,
-                            bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, o0, one1),
-                            bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, s0, one2),
-                            s0)));
+  bitwuzla_assert(bitwuzla,
+                  bitwuzla_mk_term2(
+                      tm,
+                      BITWUZLA_KIND_EQUAL,
+                      s1,
+                      bitwuzla_mk_term3(
+                          tm,
+                          BITWUZLA_KIND_ITE,
+                          bitwuzla_mk_term2(tm, BITWUZLA_KIND_EQUAL, o0, one1),
+                          bitwuzla_mk_term2(tm, BITWUZLA_KIND_BV_ADD, s0, one2),
+                          s0)));
 
   // Push, assert, check sat and pop.
   bitwuzla_push(bitwuzla, 1);
-  bitwuzla_assert(bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, s1, goal));
+  bitwuzla_assert(bitwuzla,
+                  bitwuzla_mk_term2(tm, BITWUZLA_KIND_EQUAL, s1, goal));
   result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: unsat\n");
   printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
   bitwuzla_pop(bitwuzla, 1);
 
   // (assert (= s2 (ite (= o1 (_ sortbv1 1)) (bvadd s1 one) s1)))
-  bitwuzla_assert(
-      bitwuzla,
-      bitwuzla_mk_term2(
-          BITWUZLA_KIND_EQUAL,
-          s2,
-          bitwuzla_mk_term3(BITWUZLA_KIND_ITE,
-                            bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, o1, one1),
-                            bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, s1, one2),
-                            s1)));
+  bitwuzla_assert(bitwuzla,
+                  bitwuzla_mk_term2(
+                      tm,
+                      BITWUZLA_KIND_EQUAL,
+                      s2,
+                      bitwuzla_mk_term3(
+                          tm,
+                          BITWUZLA_KIND_ITE,
+                          bitwuzla_mk_term2(tm, BITWUZLA_KIND_EQUAL, o1, one1),
+                          bitwuzla_mk_term2(tm, BITWUZLA_KIND_BV_ADD, s1, one2),
+                          s1)));
 
   // Push, assert, check sat and pop.
   bitwuzla_push(bitwuzla, 1);
-  bitwuzla_assert(bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL, s2, goal));
+  bitwuzla_assert(bitwuzla,
+                  bitwuzla_mk_term2(tm, BITWUZLA_KIND_EQUAL, s2, goal));
   result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: unsat\n");
   printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
   bitwuzla_pop(bitwuzla, 1);
 
-  // Finally, delete the Bitwuzla and Bitwuzla options instance.
+  // Finally, delete the Bitwuzla solver, options, and term manager instances.
   bitwuzla_delete(bitwuzla);
   bitwuzla_options_delete(options);
+  bitwuzla_term_manager_delete(tm);
 
   return 0;
 }

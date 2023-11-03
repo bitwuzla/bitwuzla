@@ -15,7 +15,9 @@
 int
 main()
 {
-  // First, create a Bitwuzla options instance.
+  // First, create a term manager instance.
+  BitwuzlaTermManager *tm = bitwuzla_term_manager_new();
+  // Create a Bitwuzla options instance.
   BitwuzlaOptions *options = bitwuzla_options_new();
   // Then, enable model generation.
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
@@ -25,63 +27,67 @@ main()
   //       if the selected solver is not compiled in.
   bitwuzla_set_option_mode(options, BITWUZLA_OPT_SAT_SOLVER, "cadical");
   // Then, create a Bitwuzla instance.
-  Bitwuzla *bitwuzla = bitwuzla_new(options);
+  Bitwuzla *bitwuzla = bitwuzla_new(tm, options);
 
   // Create bit-vector sorts of size 4 and 8.
-  BitwuzlaSort sortbv4 = bitwuzla_mk_bv_sort(4);
-  BitwuzlaSort sortbv8 = bitwuzla_mk_bv_sort(8);
+  BitwuzlaSort sortbv4 = bitwuzla_mk_bv_sort(tm, 4);
+  BitwuzlaSort sortbv8 = bitwuzla_mk_bv_sort(tm, 8);
   // Create function sort.
   BitwuzlaSort domain[2] = {sortbv8, sortbv4};
-  BitwuzlaSort sortfun   = bitwuzla_mk_fun_sort(2, domain, sortbv8);
+  BitwuzlaSort sortfun   = bitwuzla_mk_fun_sort(tm, 2, domain, sortbv8);
   // Create array sort.
-  BitwuzlaSort sortarr = bitwuzla_mk_array_sort(sortbv8, sortbv8);
+  BitwuzlaSort sortarr = bitwuzla_mk_array_sort(tm, sortbv8, sortbv8);
 
   // Create two bit-vector constants of that sort.
-  BitwuzlaTerm x = bitwuzla_mk_const(sortbv8, "x");
-  BitwuzlaTerm y = bitwuzla_mk_const(sortbv8, "y");
+  BitwuzlaTerm x = bitwuzla_mk_const(tm, sortbv8, "x");
+  BitwuzlaTerm y = bitwuzla_mk_const(tm, sortbv8, "y");
   // Create fun const.
-  BitwuzlaTerm f = bitwuzla_mk_const(sortfun, "f");
+  BitwuzlaTerm f = bitwuzla_mk_const(tm, sortfun, "f");
   // Create array const.
-  BitwuzlaTerm a = bitwuzla_mk_const(sortarr, "a");
+  BitwuzlaTerm a = bitwuzla_mk_const(tm, sortarr, "a");
   // Create bit-vector values one and two of the same sort.
-  BitwuzlaTerm one = bitwuzla_mk_bv_one(sortbv8);
+  BitwuzlaTerm one = bitwuzla_mk_bv_one(tm, sortbv8);
   // Alternatively, you can create bit-vector value one with:
-  // BitwuzlaTerm one = bitwuzla_mk_bv_value(sortbv8, "1", 2);
-  // BitwuzlaTerm one = bitwuzla_mk_bv_value_uint64(sortbv8, 1);
-  BitwuzlaTerm two = bitwuzla_mk_bv_value_uint64(sortbv8, 2);
+  // BitwuzlaTerm one = bitwuzla_mk_bv_value(tm, sortbv8, "1", 2);
+  // BitwuzlaTerm one = bitwuzla_mk_bv_value_uint64(tm, sortbv8, 1);
+  BitwuzlaTerm two = bitwuzla_mk_bv_value_uint64(tm, sortbv8, 2);
 
   // (bvsdiv x (_ bv2 8))
-  BitwuzlaTerm sdiv = bitwuzla_mk_term2(BITWUZLA_KIND_BV_SDIV, x, two);
+  BitwuzlaTerm sdiv = bitwuzla_mk_term2(tm, BITWUZLA_KIND_BV_SDIV, x, two);
   // (bvashr y (_ bv1 8))
-  BitwuzlaTerm ashr = bitwuzla_mk_term2(BITWUZLA_KIND_BV_ASHR, y, one);
+  BitwuzlaTerm ashr = bitwuzla_mk_term2(tm, BITWUZLA_KIND_BV_ASHR, y, one);
   // ((_ extract 3 0) (bvsdiv x (_ bv2 8)))
   BitwuzlaTerm sdive =
-      bitwuzla_mk_term1_indexed2(BITWUZLA_KIND_BV_EXTRACT, sdiv, 3, 0);
+      bitwuzla_mk_term1_indexed2(tm, BITWUZLA_KIND_BV_EXTRACT, sdiv, 3, 0);
   // ((_ extract 3 0) (bvashr x (_ bv1 8)))
   BitwuzlaTerm ashre =
-      bitwuzla_mk_term1_indexed2(BITWUZLA_KIND_BV_EXTRACT, ashr, 3, 0);
+      bitwuzla_mk_term1_indexed2(tm, BITWUZLA_KIND_BV_EXTRACT, ashr, 3, 0);
 
   // (assert
   //     (distinct
   //         ((_ extract 3 0) (bvsdiv x (_ bv2 8)))
   //         ((_ extract 3 0) (bvashr y (_ bv1 8)))))
   bitwuzla_assert(bitwuzla,
-                  bitwuzla_mk_term2(BITWUZLA_KIND_DISTINCT, sdive, ashre));
+                  bitwuzla_mk_term2(tm, BITWUZLA_KIND_DISTINCT, sdive, ashre));
   // (assert (= (f x ((_ extract 6 3) x)) y))
-  bitwuzla_assert(bitwuzla,
-                  bitwuzla_mk_term2(
-                      BITWUZLA_KIND_EQUAL,
-                      bitwuzla_mk_term3(BITWUZLA_KIND_APPLY,
-                                        f,
-                                        x,
-                                        bitwuzla_mk_term1_indexed2(
-                                            BITWUZLA_KIND_BV_EXTRACT, x, 6, 3)),
-                      y));
+  bitwuzla_assert(
+      bitwuzla,
+      bitwuzla_mk_term2(
+          tm,
+          BITWUZLA_KIND_EQUAL,
+          bitwuzla_mk_term3(tm,
+                            BITWUZLA_KIND_APPLY,
+                            f,
+                            x,
+                            bitwuzla_mk_term1_indexed2(
+                                tm, BITWUZLA_KIND_BV_EXTRACT, x, 6, 3)),
+          y));
   // (assert (= (select a x) y))
   bitwuzla_assert(
       bitwuzla,
-      bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL,
-                        bitwuzla_mk_term2(BITWUZLA_KIND_ARRAY_SELECT, a, x),
+      bitwuzla_mk_term2(tm,
+                        BITWUZLA_KIND_EQUAL,
+                        bitwuzla_mk_term2(tm, BITWUZLA_KIND_ARRAY_SELECT, a, x),
                         y));
 
   // (check-sat)
@@ -170,13 +176,14 @@ main()
 
   // Query value of bit-vector term that does not occur in the input formula
   BitwuzlaTerm v = bitwuzla_get_value(
-      bitwuzla, bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, x, x));
+      bitwuzla, bitwuzla_mk_term2(tm, BITWUZLA_KIND_BV_MUL, x, x));
   printf("value of v = x * x: %s\n",
          bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, v)));
 
-  // Finally, delete the Bitwuzla and the Bitwuzla options instance.
+  // Finally, delete the Bitwuzla solver, options, and term manager instances.
   bitwuzla_delete(bitwuzla);
   bitwuzla_options_delete(options);
+  bitwuzla_term_manager_delete(tm);
 
   return 0;
 }

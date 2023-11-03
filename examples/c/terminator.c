@@ -37,24 +37,29 @@ test_terminate(void* state)
 int
 main()
 {
-  // First, create a Bitwuzla options instance.
+  // First, create a term manager instance.
+  BitwuzlaTermManager* tm = bitwuzla_term_manager_new();
+  // Create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
   // Then, create a Bitwuzla instance.
-  Bitwuzla* bitwuzla = bitwuzla_new(options);
+  Bitwuzla* bitwuzla = bitwuzla_new(tm, options);
 
-  BitwuzlaSort bv = bitwuzla_mk_bv_sort(32);
+  BitwuzlaSort bv = bitwuzla_mk_bv_sort(tm, 32);
 
-  BitwuzlaTerm x = bitwuzla_mk_const(bv, "x");
-  BitwuzlaTerm s = bitwuzla_mk_const(bv, "s");
-  BitwuzlaTerm t = bitwuzla_mk_const(bv, "t");
+  BitwuzlaTerm x = bitwuzla_mk_const(tm, bv, "x");
+  BitwuzlaTerm s = bitwuzla_mk_const(tm, bv, "s");
+  BitwuzlaTerm t = bitwuzla_mk_const(tm, bv, "t");
 
   BitwuzlaTerm a = bitwuzla_mk_term2(
+      tm,
       BITWUZLA_KIND_DISTINCT,
-      bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL,
+      bitwuzla_mk_term2(tm,
+                        BITWUZLA_KIND_BV_MUL,
                         s,
-                        bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, x, t)),
-      bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL,
-                        bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, s, x),
+                        bitwuzla_mk_term2(tm, BITWUZLA_KIND_BV_MUL, x, t)),
+      bitwuzla_mk_term2(tm,
+                        BITWUZLA_KIND_BV_MUL,
+                        bitwuzla_mk_term2(tm, BITWUZLA_KIND_BV_MUL, s, x),
                         t));
 
   // Now, we check that the following formula is unsat.
@@ -71,7 +76,7 @@ main()
   // that terminates after a certain time limit.
   bitwuzla_set_option(options, BITWUZLA_OPT_PREPROCESS, 0);
   // Create new Bitwuzla instance with reconfigured options.
-  Bitwuzla* bitwuzla2 = bitwuzla_new(options);
+  Bitwuzla* bitwuzla2 = bitwuzla_new(tm, options);
   // Configure termination callback.
   struct terminator_state state;
   gettimeofday(&state.start, NULL);
@@ -85,9 +90,11 @@ main()
          bitwuzla_result_to_string(
              bitwuzla_check_sat_assuming(bitwuzla2, 1, assumptions)));
 
-  // Finally, delete the Bitwuzla and Bitwuzla options instance.
+  // Finally, delete the Bitwuzla solver, options, and term manager instances.
   bitwuzla_delete(bitwuzla);
+  bitwuzla_delete(bitwuzla2);
   bitwuzla_options_delete(options);
+  bitwuzla_term_manager_delete(tm);
 
   return 0;
 }

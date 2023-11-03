@@ -15,48 +15,59 @@
 int
 main()
 {
-  // First, create a Bitwuzla options instance.
+  // First, create a term manager instance.
+  BitwuzlaTermManager* tm = bitwuzla_term_manager_new();
+  // Create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
   // Then, create a Bitwuzla instance.
-  Bitwuzla* bitwuzla = bitwuzla_new(options);
+  Bitwuzla* bitwuzla = bitwuzla_new(tm, options);
   // Create some sorts.
-  BitwuzlaSort bv8           = bitwuzla_mk_bv_sort(8);
-  BitwuzlaSort bv32          = bitwuzla_mk_bv_sort(32);
-  BitwuzlaSort fp16          = bitwuzla_mk_fp_sort(5, 11);
+  BitwuzlaSort bv8           = bitwuzla_mk_bv_sort(tm, 8);
+  BitwuzlaSort bv32          = bitwuzla_mk_bv_sort(tm, 32);
+  BitwuzlaSort fp16          = bitwuzla_mk_fp_sort(tm, 5, 11);
   BitwuzlaSort fun_domain[3] = {bv8, fp16, bv32};
-  BitwuzlaSort fun_sort      = bitwuzla_mk_fun_sort(3, fun_domain, fp16);
+  BitwuzlaSort fun_sort      = bitwuzla_mk_fun_sort(tm, 3, fun_domain, fp16);
   // Create terms.
-  BitwuzlaTerm b      = bitwuzla_mk_const(bitwuzla_mk_bool_sort(), "b");
-  BitwuzlaTerm bv     = bitwuzla_mk_const(bv8, "bv");
-  BitwuzlaTerm fp     = bitwuzla_mk_const(fp16, "fp");
-  BitwuzlaTerm rm     = bitwuzla_mk_const(bitwuzla_mk_rm_sort(), "rm");
-  BitwuzlaTerm fun    = bitwuzla_mk_const(fun_sort, "fun");
-  BitwuzlaTerm zero   = bitwuzla_mk_bv_zero(bv8);
-  BitwuzlaTerm ones   = bitwuzla_mk_bv_ones(bitwuzla_mk_bv_sort(23));
-  BitwuzlaTerm z      = bitwuzla_mk_var(bv8, "z");
-  BitwuzlaTerm q      = bitwuzla_mk_var(bv8, "q");
-  BitwuzlaTerm lambda = bitwuzla_mk_term2(
-      BITWUZLA_KIND_LAMBDA, z, bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD, z, bv));
+  BitwuzlaTerm b    = bitwuzla_mk_const(tm, bitwuzla_mk_bool_sort(tm), "b");
+  BitwuzlaTerm bv   = bitwuzla_mk_const(tm, bv8, "bv");
+  BitwuzlaTerm fp   = bitwuzla_mk_const(tm, fp16, "fp");
+  BitwuzlaTerm rm   = bitwuzla_mk_const(tm, bitwuzla_mk_rm_sort(tm), "rm");
+  BitwuzlaTerm fun  = bitwuzla_mk_const(tm, fun_sort, "fun");
+  BitwuzlaTerm zero = bitwuzla_mk_bv_zero(tm, bv8);
+  BitwuzlaTerm ones = bitwuzla_mk_bv_ones(tm, bitwuzla_mk_bv_sort(tm, 23));
+  BitwuzlaTerm z    = bitwuzla_mk_var(tm, bv8, "z");
+  BitwuzlaTerm q    = bitwuzla_mk_var(tm, bv8, "q");
+  BitwuzlaTerm lambda =
+      bitwuzla_mk_term2(tm,
+                        BITWUZLA_KIND_LAMBDA,
+                        z,
+                        bitwuzla_mk_term2(tm, BITWUZLA_KIND_BV_ADD, z, bv));
   BitwuzlaTerm args[4] = {
       fun,
       bv,
       fp,
-      bitwuzla_mk_term1_indexed1(BITWUZLA_KIND_BV_ZERO_EXTEND, ones, 9)};
-  BitwuzlaTerm fpleq = bitwuzla_mk_term2(
-      BITWUZLA_KIND_FP_LEQ, bitwuzla_mk_term(BITWUZLA_KIND_APPLY, 4, args), fp);
+      bitwuzla_mk_term1_indexed1(tm, BITWUZLA_KIND_BV_ZERO_EXTEND, ones, 9)};
+  BitwuzlaTerm fpleq =
+      bitwuzla_mk_term2(tm,
+                        BITWUZLA_KIND_FP_LEQ,
+                        bitwuzla_mk_term(tm, BITWUZLA_KIND_APPLY, 4, args),
+                        fp);
   BitwuzlaTerm exists = bitwuzla_mk_term2(
+      tm,
       BITWUZLA_KIND_EXISTS,
       q,
-      bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL,
+      bitwuzla_mk_term2(tm,
+                        BITWUZLA_KIND_EQUAL,
                         zero,
-                        bitwuzla_mk_term2(BITWUZLA_KIND_BV_MUL, bv, q)));
+                        bitwuzla_mk_term2(tm, BITWUZLA_KIND_BV_MUL, bv, q)));
   // Assert formulas.
   bitwuzla_assert(bitwuzla, b);
   bitwuzla_assert(
       bitwuzla,
-      bitwuzla_mk_term2(BITWUZLA_KIND_EQUAL,
-                        bitwuzla_mk_term2(BITWUZLA_KIND_APPLY, lambda, bv),
+      bitwuzla_mk_term2(tm,
+                        BITWUZLA_KIND_EQUAL,
+                        bitwuzla_mk_term2(tm, BITWUZLA_KIND_APPLY, lambda, bv),
                         zero));
   bitwuzla_assert(bitwuzla, exists);
   bitwuzla_assert(bitwuzla, fpleq);
@@ -228,5 +239,10 @@ main()
          exponent,
          11,
          significand);
+
+  // Finally, delete the Bitwuzla solver, options, and term manager instances.
+  bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
+  bitwuzla_term_manager_delete(tm);
   return 0;
 }

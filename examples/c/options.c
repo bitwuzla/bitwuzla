@@ -15,7 +15,9 @@
 int
 main()
 {
-  // First, create a Bitwuzla options instance.
+  // First, create a term manager instance.
+  BitwuzlaTermManager* tm = bitwuzla_term_manager_new();
+  // Create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
 
   // Enable model generation, which expects a boolean configuration value.
@@ -38,15 +40,16 @@ main()
          bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER));
 
   // Now, create a Bitwuzla instance.
-  Bitwuzla* bitwuzla = bitwuzla_new(options);
+  Bitwuzla* bitwuzla = bitwuzla_new(tm, options);
   // Check sat (nothing to solve, input formula is empty).
   BitwuzlaResult result = bitwuzla_check_sat(bitwuzla);
   printf("Expect: sat\n");
   printf("Bitwuzla: %s\n", bitwuzla_result_to_string(result));
 
-  // Finally, delete the Bitwuzla and Bitwuzla options instance.
+  // Finally, delete the Bitwuzla solver, options, and term manager instances.
   bitwuzla_delete(bitwuzla);
   bitwuzla_options_delete(options);
+  bitwuzla_term_manager_delete(tm);
 
   return 0;
 }
