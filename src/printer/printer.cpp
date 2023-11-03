@@ -21,6 +21,7 @@
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
+#include "parser/smt2/lexer.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
@@ -589,7 +590,24 @@ Printer::print_symbol(std::ostream& os, const Node& node)
   const auto symbol = node.symbol();
   if (symbol)
   {
-    os << symbol->get();
+    if (symbol->get().empty())
+    {
+      os << "||";
+    }
+    else if (parser::smt2::Lexer::is_valid_symbol(symbol->get())
+             || parser::smt2::Lexer::is_valid_quoted_symbol(symbol->get()))
+    {
+      os << symbol->get();
+    }
+    else
+    {
+      if (symbol->get().find('|') != std::string::npos)
+      {
+        throw printer::Exception("invalid symbol '" + symbol->get()
+                                 + "', symbol is not SMT-LIB compliant");
+      }
+      os << "|" << symbol->get() << "|";
+    }
   }
   // Default symbol
   else

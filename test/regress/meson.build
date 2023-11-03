@@ -2027,6 +2027,12 @@ regress_tests = [
   [tests_btor2_unsat, '--check-unsat', ['--produce-unsat-cores', '--check-unsat-core']],
 ]
 
+# Disable wine debug output if we run the cross-compiled binary
+env = []
+if meson.is_cross_build()
+  env += ['WINEDEBUG=fixme-all']
+endif
+
 foreach t : regress_tests
   tests = t[0]
   run_regress_script_options = []
@@ -2052,6 +2058,6 @@ foreach t : regress_tests
     args += meson.current_build_dir()
     args += run_regress_script_options
     test(name, python, args: args, suite: 'regress', depends: bitwuzla_bin,
-         timeout: 120)
+         timeout: 120, env: env)
   endforeach
 endforeach

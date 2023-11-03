@@ -107,25 +107,26 @@ class TestAigCnf : public TestCommon
     {
       output << buf;
     }
-    // remove(filename);
-    // fclose(file);
-
-    // std::cout << output.str() << std::endl;
-
-    // std::cout << cnf << std::endl;
-
-    // std::string result = output.str();
-    // size_t newline_pos = result.find_last_of('\n');
-    // return result.substr(0, newline_pos);
-    auto status = pclose(fp);
+    pclose(fp);
     remove(filename);
     fclose(file);
-    switch (WEXITSTATUS(status))
+
+    std::string line;
+    while(std::getline(output, line))
     {
-      case 10: return "sat";
-      case 20: return "unsat";
-      default: return "unknown";
+      if (!line.empty() && line[0] == 's')
+      {
+        if (line == "s SATISFIABLE")
+        {
+          return "sat";
+        }
+        else if (line == "s UNSATISFIABLE")
+        {
+          return "unsat";
+        }
+      }
     }
+    return "unknown";
   }
 
   // a * -1 != ~a + 1

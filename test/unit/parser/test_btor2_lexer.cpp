@@ -41,7 +41,7 @@ class TestBtor2Lexer : public ::testing::Test
 
   FILE* open_file(const std::stringstream& input)
   {
-    std::string infile_name = s_out_prefix + std::string("lexer.smt2");
+    std::string infile_name = s_out_prefix + std::string("lexer.btor2");
     std::ofstream ofile(infile_name);
     ofile << input.str();
     ofile.close();

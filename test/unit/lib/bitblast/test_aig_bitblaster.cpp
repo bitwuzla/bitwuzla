@@ -51,6 +51,7 @@ class TestAigBitblaster : public TestCommon
     {
       output << buf;
     }
+    pclose(fp);
     remove(filename);
     fclose(file);
 

@@ -19,12 +19,122 @@
 
 #include "parser/smt2/token.h"
 
+/* -------------------------------------------------------------------------- */
+
 namespace bzla {
 namespace parser::smt2 {
+
+/* -------------------------------------------------------------------------- */
+
+class CharacterClasses
+{
+ public:
+  /** The classification of a character according to where it may appear. */
+  enum class CharacterClass
+  {
+    DECIMAL_DIGIT     = (1 << 0),
+    HEXADECIMAL_DIGIT = (1 << 1),
+    STRING            = (1 << 2),
+    SYMBOL            = (1 << 3),
+    QUOTED_SYMBOL     = (1 << 4),
+    KEYWORD           = (1 << 5),
+  };
+
+  /**
+   * @return True if given character belongs to the given character class.
+   * @note implemented here for inlining
+   */
+  static bool is_in_class(int32_t ch, CharacterClass cclass)
+  {
+    if (ch < 0 || ch >= 256)
+    {
+      return false;
+    }
+    return get().d_char_classes[static_cast<uint8_t>(ch)]
+           & static_cast<uint8_t>(cclass);
+  }
+
+  /**
+   * @return True if given character is a printable character.
+   * @note implemented here for inlining
+   */
+  static bool is_printable(int32_t ch)
+  {
+    for (size_t i = 0; s_printable_ascii_chars[i] != 0; ++i)
+    {
+      if (s_printable_ascii_chars[i] == ch)
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
+ private:
+  /** The set of legal printable characters. */
+  inline static constexpr const char* s_printable_ascii_chars =
+      "!\"#$%&'()*+,-./"
+      "0123456789"
+      ":;<=>?@"
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      "[\\]^_`"
+      "abcdefghijklmnopqrstuvwxyz"
+      "{|}~"
+      " \t\r\n";
+  /** The set of characters that are letters. */
+  inline static constexpr const char* s_letter_chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      "abcdefghijklmnopqrstuvwxyz";
+  /** The set of decimal digits. */
+  inline static constexpr const char* s_decimal_digit_chars = "0123456789";
+  /** The set of hexadecimal digits. */
+  inline static constexpr const char* s_hexadecimal_digit_chars =
+      "0123456789abcdefABCDEF";
+  /** The set of non-letter/non-digit characters that may occur in symbols. */
+  inline static constexpr const char* s_extra_symbol_chars =
+      "+-/*=%?!.$_~&^<>@";
+  /** The set of non-letter/non-digit characters that may occur in keywords. */
+  inline static constexpr const char* s_extra_keyword_chars =
+      "+-/*=%?!.$_~&^<>@";
+
+  /** Constructor. */
+  constexpr CharacterClasses();
+  /** Initialize the character classes. */
+  constexpr void init();
+  /** @return True if all character classes are initialized. */
+  constexpr bool complete() const;
+  /** Get CharacterClasses singleton. */
+  static const CharacterClasses& get();
+
+  /** The character classes. */
+  std::array<uint8_t, 256> d_char_classes{};  // value-initialized to 0
+};
+
+/* -------------------------------------------------------------------------- */
 
 class Lexer
 {
  public:
+  /**
+   * Helper to determine if a given string is a valid symbol, i.e., contains
+   * only characters allowed to occur in simple (non-quoted) symbols.
+   * @note This is not needed for the lexer itself, but to determine, e.g., in
+   *       the printer, if symbols created via the API conform to the SMT-LIB
+   *       standard.
+   * @return True if the given string is a valid symbol.
+   */
+  static bool is_valid_symbol(const std::string& s);
+  /**
+   * Helper to determine if a given string is a valid quoted symbol, i.e., a
+   * sequence of whitespace and printable characters that starts and ends with
+   * '|' and does not otherwise contain '\' and '|'.
+   * @note This is not needed for the lexer itself, but to determine, e.g., in
+   *       the printer, if symbols created via the API conform to the SMT-LIB
+   *       standard.
+   * @return True if the given string is a valid quoted symbol.
+   */
+  static bool is_valid_quoted_symbol(const std::string& s);
+
   /** A coordinate in the input file. */
   struct Coordinate
   {
@@ -70,58 +180,6 @@ class Lexer
   size_t d_buf_idx = d_buf_size;
 
  private:
-  /** The set of legal printable characters. */
-  inline static const std::string s_printable_ascii_chars =
-      "!\"#$%&'()*+,-./"
-      "0123456789"
-      ":;<=>?@"
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      "[\\]^_`"
-      "abcdefghijklmnopqrstuvwxyz"
-      "{|}~"
-      " \t\r\n";
-  /** The set of characters that are letters. */
-  inline static const std::string s_letter_chars =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      "abcdefghijklmnopqrstuvwxyz";
-  /** The set of decimal digits. */
-  inline static const std::string s_decimal_digit_chars = "0123456789";
-  /** The set of hexadecimal digits. */
-  inline static const std::string s_hexadecimal_digit_chars =
-      "0123456789abcdefABCDEF";
-  /** The set of non-letter/non-digit characters that may occur in symbols. */
-  inline static const std::string s_extra_symbol_chars  = "+-/*=%?!.$_~&^<>@";
-  /** The set of non-letter/non-digit characters that may occur in keywords. */
-  inline static const std::string s_extra_keyword_chars = "+-/*=%?!.$_~&^<>@";
-
-  /** The classification of a character according to where it may appear. */
-  enum class CharacterClass
-  {
-    DECIMAL_DIGIT     = (1 << 0),
-    HEXADECIMAL_DIGIT = (1 << 1),
-    STRING            = (1 << 2),
-    SYMBOL            = (1 << 3),
-    QUOTED_SYMBOL     = (1 << 4),
-    KEYWORD           = (1 << 5),
-  };
-
-  /** Initialize the character classes. */
-  void init_char_classes();
-
-  /**
-   * @return True if given character belongs to the given character class.
-   * @note implemented here for inlining
-   */
-  bool is_char_class(int32_t ch, CharacterClass cclass) const
-  {
-    if (ch < 0 || ch >= 256)
-    {
-      return false;
-    }
-    return d_char_classes[static_cast<uint8_t>(ch)]
-           & static_cast<uint8_t>(cclass);
-  }
-
   /** Helper for next_token(). */
   Token next_token_aux();
 
@@ -195,15 +253,6 @@ class Lexer
   }
 
   /**
-   * @return True if given character is a printable character.
-   * @note implemented here for inlining
-   */
-  bool is_printable(int32_t ch) const
-  {
-    return s_printable_ascii_chars.find(ch) != std::string::npos;
-  }
-
-  /**
    * Helper for error().
    * @return String "character '<ch>'".
    */
@@ -220,8 +269,6 @@ class Lexer
 
   /** The input file. */
   FILE* d_infile = nullptr;
-  /** The character classes. */
-  std::array<uint8_t, 256> d_char_classes{};  // value-initialized to 0
   /** The coordinate of the current token. */
   Coordinate d_coo{1, 1};
   /** The current coordinate in the input file. */
@@ -249,6 +296,8 @@ class Lexer
   /** The error message. */
   std::string d_error;
 };
+
+/* -------------------------------------------------------------------------- */
 
 }  // namespace parser::smt2
 }  // namespace bzla

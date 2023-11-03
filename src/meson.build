@@ -182,9 +182,10 @@ sources = files([
   'type/type.cpp',
   'type/type_data.cpp',
   'type/type_manager.cpp',
+  'util/hash_pair.cpp',
   'util/logger.cpp',
-  'util/statistics.cpp',
   'util/resources.cpp',
+  'util/statistics.cpp',
 ])
 
 compiler = meson.get_compiler('cpp')
