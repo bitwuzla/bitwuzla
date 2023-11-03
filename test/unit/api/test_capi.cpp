@@ -203,7 +203,7 @@ class TestCApi : public ::testing::Test
   /* error messages */
   const char *d_error_not_null = "expected non-null object";
   const char *d_error_solver   = "is not associated with given solver instance";
-  const char *d_error_inv_sort = "invalid sort id";
+  const char *d_error_inv_sort = "invalid sort";
   const char *d_error_exp_arr_sort   = "expected array sort";
   const char *d_error_exp_bv_sort    = "expected bit-vector sort";
   const char *d_error_exp_fp_sort    = "expected floating-point sort";
@@ -213,7 +213,7 @@ class TestCApi : public ::testing::Test
   const char *d_error_unexp_fun_sort = "unexpected function sort";
   const char *d_error_zero           = "must be > 0";
   const char *d_error_bv_fit         = "does not fit into a bit-vector of size";
-  const char *d_error_inv_term       = "invalid term id";
+  const char *d_error_inv_term       = "invalid term";
   const char *d_error_exp_bool_term  = "expected Boolean term";
   const char *d_error_exp_bv_term    = "expected bit-vector term";
   const char *d_error_exp_bv_value   = "expected bit-vector value";
@@ -2627,13 +2627,13 @@ TEST_F(TestCApi, get_unsat_core)
     ASSERT_FALSE(bitwuzla_is_unsat_assumption(bitwuzla, d_and_bv_const1));
     BitwuzlaTerm *unsat_core = bitwuzla_get_unsat_core(bitwuzla, &size);
     ASSERT_TRUE(size == 2);
-    ASSERT_TRUE(unsat_core[0] == d_bv_const1_false
-                || unsat_core[0] == d_bv_const1_true);
-    ASSERT_TRUE(unsat_core[1] == d_bv_const1_false
-                || unsat_core[1] == d_bv_const1_true);
+    ASSERT_TRUE(bitwuzla_term_is_equal(unsat_core[0], d_bv_const1_false)
+                || bitwuzla_term_is_equal(unsat_core[0], d_bv_const1_true));
+    ASSERT_TRUE(bitwuzla_term_is_equal(unsat_core[1], d_bv_const1_false)
+                || bitwuzla_term_is_equal(unsat_core[1], d_bv_const1_true));
 
     BitwuzlaTerm *unsat_ass = bitwuzla_get_unsat_assumptions(bitwuzla, &size);
-    ASSERT_TRUE(unsat_ass[0] == d_bv_const1_false);
+    ASSERT_TRUE(bitwuzla_term_is_equal(unsat_ass[0], d_bv_const1_false));
     ASSERT_TRUE(size == 1);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);
     bitwuzla_assert(bitwuzla, unsat_ass[0]);
@@ -2687,9 +2687,11 @@ TEST_F(TestCApi, get_value)
               BITWUZLA_UNSAT);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const1), d_error_sat);
     bitwuzla_check_sat(bitwuzla);
-    ASSERT_EQ(d_bv_one1, bitwuzla_get_value(bitwuzla, d_bv_const1));
-    ASSERT_EQ(bitwuzla_mk_false(d_tm),
-              bitwuzla_get_value(bitwuzla, d_bv_const1_false));
+    ASSERT_TRUE(bitwuzla_term_is_equal(
+        d_bv_one1, bitwuzla_get_value(bitwuzla, d_bv_const1)));
+    ASSERT_TRUE(bitwuzla_term_is_equal(
+        bitwuzla_mk_false(d_tm),
+        bitwuzla_get_value(bitwuzla, d_bv_const1_false)));
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
@@ -3226,13 +3228,14 @@ TEST_F(TestCApi, parser_smt2)
 
   const char *error_msg;
   BitwuzlaOptions *options = bitwuzla_options_new();
-  ASSERT_DEATH(bitwuzla_parser_new(nullptr, "smt2", 2, "<stdout>"),
+  ASSERT_DEATH(bitwuzla_parser_new(d_tm, nullptr, "smt2", 2, "<stdout>"),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parser_new(options, nullptr, 2, "<stdout>"),
+  ASSERT_DEATH(bitwuzla_parser_new(d_tm, options, nullptr, 2, "<stdout>"),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parser_new(options, "smt2", 12, "<stdout>"),
+  ASSERT_DEATH(bitwuzla_parser_new(d_tm, options, "smt2", 12, "<stdout>"),
                "invalid bit-vector output number format");
-  BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 2, "<stdout>");
+  BitwuzlaParser *parser =
+      bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
   ASSERT_DEATH(bitwuzla_parser_get_bitwuzla(parser), "not yet initialized");
   ASSERT_DEATH(bitwuzla_parser_parse(nullptr, filename, true, true, &error_msg),
                d_error_not_null);
@@ -3257,7 +3260,8 @@ TEST_F(TestCApi, parser2_smt2)
 
   const char *error_msg;
   BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
+  BitwuzlaParser *parser =
+      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
   bitwuzla_parser_parse(parser, filename, true, true, &error_msg);
   ASSERT_NE(error_msg, nullptr);
   ASSERT_EQ(std::string(error_msg),
@@ -3279,7 +3283,7 @@ TEST_F(TestCApi, parser_string1_smt2)
   BitwuzlaOptions *options = bitwuzla_options_new();
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, smt2.str().c_str(), true, true, &error_msg);
     ASSERT_NE(error_msg, nullptr);
     ASSERT_NE(std::string(error_msg).find("failed to open"), std::string::npos);
@@ -3287,7 +3291,7 @@ TEST_F(TestCApi, parser_string1_smt2)
   }
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, smt2.str().c_str(), true, false, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
     bitwuzla_parser_delete(parser);
@@ -3302,7 +3306,8 @@ TEST_F(TestCApi, parser_string2_smt2)
   std::string str_false    = "(assert (= a false))";
   const char *error_msg;
   BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
+  BitwuzlaParser *parser =
+      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
   bitwuzla_parser_parse(parser, str_decl.c_str(), true, false, &error_msg);
   ASSERT_EQ(error_msg, nullptr);
   bitwuzla_parser_parse(parser, str_true.c_str(), true, false, &error_msg);
@@ -3318,7 +3323,8 @@ TEST_F(TestCApi, parser_string2_smt2)
 TEST_F(TestCApi, parser_smt2_string_term)
 {
   BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
+  BitwuzlaParser *parser =
+      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
   const char *error_msg;
 
   ASSERT_DEATH(bitwuzla_parser_parse_term(nullptr, "true", &error_msg),
@@ -3364,7 +3370,8 @@ TEST_F(TestCApi, parser_smt2_string_term)
 TEST_F(TestCApi, parser_smt2_string_sort)
 {
   BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
+  BitwuzlaParser *parser =
+      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
   const char *error_msg;
 
   ASSERT_DEATH(bitwuzla_parser_parse_sort(nullptr, "Bool", &error_msg),
@@ -3418,17 +3425,17 @@ TEST_F(TestCApi, parser_btor2)
 
   BitwuzlaOptions *options = bitwuzla_options_new();
 
-  ASSERT_DEATH(bitwuzla_parser_new(options, "btor2", 10, nullptr),
+  ASSERT_DEATH(bitwuzla_parser_new(d_tm, options, "btor2", 10, nullptr),
                d_error_not_null);
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_get_bitwuzla(parser);
     bitwuzla_parser_delete(parser);
   }
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, "parsex.btor2", true, true, &error_msg);
     ASSERT_NE(std::string(error_msg).find("failed to open 'parsex.btor2'"),
               std::string::npos);
@@ -3440,7 +3447,7 @@ TEST_F(TestCApi, parser_btor2)
   }
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, input, true, true, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla_parser_get_bitwuzla(parser)),
@@ -3468,7 +3475,7 @@ TEST_F(TestCApi, parser_btor2_string1)
   BitwuzlaOptions *options = bitwuzla_options_new();
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, btor2.str().c_str(), true, true, &error_msg);
     ASSERT_NE(error_msg, nullptr);
     ASSERT_NE(std::string(error_msg).find("failed to open"), std::string::npos);
@@ -3476,7 +3483,7 @@ TEST_F(TestCApi, parser_btor2_string1)
   }
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, btor2.str().c_str(), true, false, &error_msg);
     bitwuzla_parser_delete(parser);
   }
@@ -3538,7 +3545,7 @@ TEST_F(TestCApi, parser_btor2_string2)
   BitwuzlaOptions *options = bitwuzla_options_new();
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, decl_sorts.c_str(), true, false, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
     bitwuzla_parser_parse(parser, decl_inputs.c_str(), true, false, &error_msg);
@@ -3561,7 +3568,7 @@ TEST_F(TestCApi, parser_btor2_string2)
   }
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, decl_sorts.c_str(), true, false, &error_msg);
     bitwuzla_parser_parse(parser, "3 input 2 @arr3", true, false, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
@@ -3576,7 +3583,7 @@ TEST_F(TestCApi, parser_btor2_string_term)
 {
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+      bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
 
   const char *error_msg;
   bitwuzla_parser_parse(parser, "1 sort bitvec 1", true, false, &error_msg);
@@ -3614,7 +3621,7 @@ TEST_F(TestCApi, parser_btor2_string_sort)
 {
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+      bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
   const char *error_msg;
   BitwuzlaSort bv1 =
       bitwuzla_parser_parse_sort(parser, "1 sort bitvec 1", &error_msg);
@@ -3698,7 +3705,8 @@ TEST_F(TestCApi, sort_fun_get_codomain)
   ASSERT_DEATH(bitwuzla_sort_fun_get_codomain(0), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_sort_fun_get_codomain(d_bv_sort32),
                d_error_exp_fun_sort);
-  ASSERT_EQ(bitwuzla_sort_fun_get_codomain(d_fun_sort), d_bv_sort8);
+  ASSERT_TRUE(bitwuzla_sort_is_equal(bitwuzla_sort_fun_get_codomain(d_fun_sort),
+                                     d_bv_sort8));
 }
 
 TEST_F(TestCApi, sort_fun_get_arity)
@@ -3850,9 +3858,11 @@ TEST_F(TestCApi, regr2)
   ASSERT_NE(fun_sort, array_sort);
   BitwuzlaTerm fun   = bitwuzla_mk_const(d_tm, fun_sort, 0);
   BitwuzlaTerm array = bitwuzla_mk_const(d_tm, array_sort, 0);
-  ASSERT_EQ(array_sort, bitwuzla_term_get_sort(array));
-  ASSERT_EQ(fun_sort, bitwuzla_term_get_sort(fun));
-  ASSERT_NE(bitwuzla_term_get_sort(fun), bitwuzla_term_get_sort(array));
+  ASSERT_TRUE(
+      bitwuzla_sort_is_equal(array_sort, bitwuzla_term_get_sort(array)));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(fun_sort, bitwuzla_term_get_sort(fun)));
+  ASSERT_FALSE(bitwuzla_sort_is_equal(bitwuzla_term_get_sort(fun),
+                                      bitwuzla_term_get_sort(array)));
   ASSERT_TRUE(bitwuzla_term_is_fun(fun));
   ASSERT_TRUE(bitwuzla_term_is_array(array));
 }
@@ -3869,7 +3879,8 @@ TEST_F(TestCApi, term_hash)
 TEST_F(TestCApi, term_get_sort)
 {
   ASSERT_DEATH(bitwuzla_term_get_sort(0), d_error_inv_term);
-  ASSERT_EQ(bitwuzla_term_get_sort(d_bv_const8), d_bv_sort8);
+  ASSERT_TRUE(
+      bitwuzla_sort_is_equal(bitwuzla_term_get_sort(d_bv_const8), d_bv_sort8));
 }
 
 TEST_F(TestCApi, term_array_get_index_sort)
@@ -3879,7 +3890,8 @@ TEST_F(TestCApi, term_array_get_index_sort)
                d_error_exp_arr_sort);
   ASSERT_TRUE(
       bitwuzla_sort_is_fp(bitwuzla_term_array_get_index_sort(d_array_fpbv)));
-  ASSERT_EQ(bitwuzla_term_array_get_index_sort(d_array_fpbv), d_fp_sort16);
+  ASSERT_TRUE(bitwuzla_sort_is_equal(
+      bitwuzla_term_array_get_index_sort(d_array_fpbv), d_fp_sort16));
 }
 
 TEST_F(TestCApi, term_array_get_element_sort)
@@ -3889,7 +3901,8 @@ TEST_F(TestCApi, term_array_get_element_sort)
                d_error_exp_arr_sort);
   ASSERT_TRUE(
       bitwuzla_sort_is_bv(bitwuzla_term_array_get_element_sort(d_array_fpbv)));
-  ASSERT_EQ(bitwuzla_term_array_get_element_sort(d_array_fpbv), d_bv_sort8);
+  ASSERT_TRUE(bitwuzla_sort_is_equal(
+      bitwuzla_term_array_get_element_sort(d_array_fpbv), d_bv_sort8));
 }
 
 TEST_F(TestCApi, term_fun_get_domain_sorts)
@@ -3915,7 +3928,8 @@ TEST_F(TestCApi, term_fun_get_codomain_sort)
   ASSERT_DEATH(bitwuzla_term_fun_get_codomain_sort(0), d_error_inv_term);
   ASSERT_DEATH(bitwuzla_term_fun_get_codomain_sort(d_bv_zero8),
                d_error_exp_fun_sort);
-  ASSERT_EQ(bitwuzla_term_fun_get_codomain_sort(d_fun_fp), d_fp_sort16);
+  ASSERT_TRUE(bitwuzla_sort_is_equal(
+      bitwuzla_term_fun_get_codomain_sort(d_fun_fp), d_fp_sort16));
 }
 
 TEST_F(TestCApi, term_bv_get_size)
@@ -4511,7 +4525,7 @@ TEST_F(TestCApi, terms)
   for (size_t i = 0; i < BITWUZLA_KIND_NUM_KINDS; ++i)
   {
     BitwuzlaKind kind = static_cast<BitwuzlaKind>(i);
-    BitwuzlaTerm term = 0;
+    BitwuzlaTerm term = nullptr;
 
     switch (kind)
     {
@@ -4729,7 +4743,7 @@ TEST_F(TestCApi, terms)
       default: break;
     }
     // No unhandled BitwuzlaKind
-    ASSERT_NE(term, 0);
+    ASSERT_NE(term, nullptr);
 
     size_t size;
     BitwuzlaTerm *children = bitwuzla_term_get_children(term, &size);
@@ -4746,8 +4760,8 @@ TEST_F(TestCApi, terms)
     ASSERT_NE(children, nullptr);
     for (size_t i = 0; i < size; ++i)
     {
-      assert(children[i] != 0);
-      ASSERT_NE(children[i], 0);
+      assert(children[i] != nullptr);
+      ASSERT_NE(children[i], nullptr);
     }
 
     BitwuzlaTerm tterm;
@@ -4780,7 +4794,7 @@ TEST_F(TestCApi, terms)
         tterm = bitwuzla_mk_term(d_tm, kind, size, children);
       }
     }
-    ASSERT_EQ(tterm, term);
+    ASSERT_TRUE(bitwuzla_term_is_equal(tterm, term));
   }
 
   size_t size;
@@ -4846,12 +4860,10 @@ TEST_F(TestCApi, terms)
   ASSERT_EQ(bitwuzla_term_get_children(bv_val, &size), nullptr);
   ASSERT_EQ(size, 0);
 
-  // TODO enable when implemented
-  // BitwuzlaTerm const_array = bitwuzla_mk_const_array(d_tm, array_sort,
-  // bv_val); ASSERT_EQ(bitwuzla_term_get_kind(const_array),
-  // BITWUZLA_KIND_CONST_ARRAY);
-  // ASSERT_NE(bitwuzla_term_get_children(const_array, &size), nullptr);
-  // ASSERT_EQ(size, 1);
+  BitwuzlaTerm const_array = bitwuzla_mk_const_array(d_tm, array_sort, bv_val);
+  ASSERT_EQ(bitwuzla_term_get_kind(const_array), BITWUZLA_KIND_CONST_ARRAY);
+  ASSERT_NE(bitwuzla_term_get_children(const_array, &size), nullptr);
+  ASSERT_EQ(size, 1);
 }
 
 TEST_F(TestCApi, substitute)
@@ -4871,7 +4883,7 @@ TEST_F(TestCApi, substitute)
     std::vector<BitwuzlaTerm> values = {bv_value};
     BitwuzlaTerm result              = bitwuzla_substitute_term(
         bv_const, keys.size(), keys.data(), values.data());
-    ASSERT_EQ(result, bv_value);
+    ASSERT_TRUE(bitwuzla_term_is_equal(result, bv_value));
   }
 
   // (sdiv x y) -> (sdiv value y)
@@ -4887,8 +4899,8 @@ TEST_F(TestCApi, substitute)
         keys.size(),
         keys.data(),
         values.data());
-    ASSERT_EQ(result,
-              bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_SDIV, bv_value, y));
+    ASSERT_TRUE(bitwuzla_term_is_equal(
+        result, bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_SDIV, bv_value, y)));
   }
 
   // partial substitution of variables in quantified formula
@@ -4917,7 +4929,7 @@ TEST_F(TestCApi, substitute)
 
     BitwuzlaTerm result =
         bitwuzla_substitute_term(q, keys.size(), keys.data(), values.data());
-    ASSERT_EQ(result, expected);
+    ASSERT_TRUE(bitwuzla_term_is_equal(result, expected));
   }
 
   // substitute term in constant array
@@ -4932,7 +4944,7 @@ TEST_F(TestCApi, substitute)
         const_array, keys.size(), keys.data(), values.data());
 
     BitwuzlaTerm expected = bitwuzla_mk_const_array(d_tm, array_sort, bv_value);
-    ASSERT_EQ(result, expected);
+    ASSERT_TRUE(bitwuzla_term_is_equal(result, expected));
     ASSERT_EQ(bitwuzla_term_get_kind(result), BITWUZLA_KIND_CONST_ARRAY);
   }
 }
@@ -4952,28 +4964,28 @@ TEST_F(TestCApi, substitute2)
   keys = {x}, values = {one};
   ASSERT_DEATH(
       bitwuzla_substitute_term(0, keys.size(), keys.data(), values.data()),
-      "invalid term id");
+      d_error_inv_term);
   keys = {0};
   ASSERT_DEATH(
       bitwuzla_substitute_term(addxx, keys.size(), keys.data(), values.data()),
-      "invalid term id");
+      d_error_inv_term);
   keys = {x}, values = {0};
   ASSERT_DEATH(
       bitwuzla_substitute_term(addxx, keys.size(), keys.data(), values.data()),
-      "invalid term id");
+      d_error_inv_term);
   keys = {one}, values = {btrue};
   ASSERT_DEATH(
       bitwuzla_substitute_term(addxx, keys.size(), keys.data(), values.data()),
       "invalid term substitution");
 
   keys = {x}, values = {one};
-  ASSERT_EQ(
+  ASSERT_TRUE(bitwuzla_term_is_equal(
       bitwuzla_substitute_term(addxx, keys.size(), keys.data(), values.data()),
-      addoo);
+      addoo));
   keys = {one}, values = {x};
-  ASSERT_EQ(
+  ASSERT_TRUE(bitwuzla_term_is_equal(
       bitwuzla_substitute_term(addxx, keys.size(), keys.data(), values.data()),
-      addxx);
+      addxx));
 
   // simultaneous substitution
   BitwuzlaTerm y     = bitwuzla_mk_const(d_tm, bv8, "y");
@@ -4984,9 +4996,9 @@ TEST_F(TestCApi, substitute2)
       bitwuzla_substitute_term(addxy, keys.size(), keys.data(), values.data()),
       "invalid term substitution");
   values = {y, one};
-  ASSERT_EQ(
+  ASSERT_TRUE(bitwuzla_term_is_equal(
       bitwuzla_substitute_term(addxy, keys.size(), keys.data(), values.data()),
-      addyo);
+      addyo));
 
   std::vector<BitwuzlaTerm> terms    = {addxx, addxy};
   std::vector<BitwuzlaTerm> expected = {
@@ -4995,7 +5007,10 @@ TEST_F(TestCApi, substitute2)
   keys = {x, y}, values = {y, x};
   bitwuzla_substitute_terms(
       terms.size(), terms.data(), keys.size(), keys.data(), values.data());
-  ASSERT_EQ(terms, expected);
+  for (size_t i = 0; i < expected.size(); ++i)
+  {
+    ASSERT_TRUE(bitwuzla_term_is_equal(terms[i], expected[i]));
+  }
 }
 
 TEST_F(TestCApi, term_print1)

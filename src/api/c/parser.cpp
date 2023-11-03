@@ -22,10 +22,12 @@ extern "C" {
 
 struct BitwuzlaParser
 {
-  BitwuzlaParser(BitwuzlaOptions* options,
+  BitwuzlaParser(BitwuzlaTermManager* tm,
+                 BitwuzlaOptions* options,
                  const char* language,
                  uint8_t base,
                  const char* outfile_name)
+      : d_tm(tm)
   {
     std::ofstream outfile;
     std::ostream* out = &std::cout;
@@ -44,10 +46,12 @@ struct BitwuzlaParser
   std::string d_error_msg;
   /** The wrapped Bitwuzla instance associated with the parser. */
   std::unique_ptr<Bitwuzla> d_bitwuzla = nullptr;
+  BitwuzlaTermManager* d_tm            = nullptr;
 };
 
 BitwuzlaParser*
-bitwuzla_parser_new(BitwuzlaOptions* options,
+bitwuzla_parser_new(BitwuzlaTermManager* tm,
+                    BitwuzlaOptions* options,
                     const char* language,
                     uint8_t base,
                     const char* outfile_name)
@@ -57,7 +61,7 @@ bitwuzla_parser_new(BitwuzlaOptions* options,
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_NOT_NULL(language);
   BITWUZLA_CHECK_NOT_NULL(outfile_name);
-  res = new BitwuzlaParser(options, language, base, outfile_name);
+  res = new BitwuzlaParser(tm, options, language, base, outfile_name);
   BITWUZLA_TRY_CATCH_END;
   return res;
 }
@@ -108,7 +112,7 @@ bitwuzla_parser_parse_term(BitwuzlaParser* parser,
   BITWUZLA_CHECK_NOT_NULL(error_msg);
   try
   {
-    res        = Bitwuzla::export_term(parser->d_parser->parse_term(input));
+    res        = parser->d_tm->export_term(parser->d_parser->parse_term(input));
     *error_msg = nullptr;
   }
   catch (bitwuzla::Exception& e)
@@ -133,7 +137,7 @@ bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
   BITWUZLA_CHECK_NOT_NULL(error_msg);
   try
   {
-    res        = Bitwuzla::export_sort(parser->d_parser->parse_sort(input));
+    res        = parser->d_tm->export_sort(parser->d_parser->parse_sort(input));
     *error_msg = nullptr;
   }
   catch (bitwuzla::parser::Exception& e)

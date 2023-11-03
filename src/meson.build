@@ -122,6 +122,7 @@ support_libs = [bitblast_lib, bitvector_lib, local_search_lib]
 
 sources = files([
   'api/c/bitwuzla.cpp',
+  'api/c/bitwuzla_structs.cpp',
   'api/c/parser.cpp',
   'api/checks.cpp',
   'api/cpp/bitwuzla.cpp',

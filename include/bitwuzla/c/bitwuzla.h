@@ -280,7 +280,7 @@ const char *bitwuzla_kind_to_string(BitwuzlaKind kind);
 /* -------------------------------------------------------------------------- */
 
 /** A Bitwuzla sort. */
-typedef uint64_t BitwuzlaSort;
+typedef struct bitwuzla_sort_t *BitwuzlaSort;
 
 /** \addtogroup c_bitwuzlasort
  *  @{
@@ -489,7 +489,7 @@ void bitwuzla_sort_print(BitwuzlaSort sort, FILE *file);
 /* -------------------------------------------------------------------------- */
 
 /** A Bitwuzla term. */
-typedef uint64_t BitwuzlaTerm;
+typedef struct bitwuzla_term_t *BitwuzlaTerm;
 
 /** \addtogroup c_bitwuzlaterm
  *  @{
@@ -658,6 +658,16 @@ uint64_t bitwuzla_term_fun_get_arity(BitwuzlaTerm term);
  * @return The symbol of `term`. \c NULL if no symbol is defined.
  */
 const char *bitwuzla_term_get_symbol(BitwuzlaTerm term);
+
+/**
+ * Determine if two terms are equal.
+ *
+ * @param term0 The first term.
+ * @param term1 The second term.
+ *
+ * @return True if the terms are equal.
+ */
+bool bitwuzla_term_is_equal(BitwuzlaTerm term0, BitwuzlaTerm term1);
 
 /**
  * Determine if the sorts of two terms are equal.

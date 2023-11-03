@@ -39,7 +39,8 @@ typedef struct BitwuzlaParser BitwuzlaParser;
  * @see
  *   * `bitwuzla_parser_delete`
  */
-BitwuzlaParser* bitwuzla_parser_new(BitwuzlaOptions* options,
+BitwuzlaParser* bitwuzla_parser_new(BitwuzlaTermManager* tm,
+                                    BitwuzlaOptions* options,
                                     const char* language,
                                     uint8_t base,
                                     const char* outfile_name);

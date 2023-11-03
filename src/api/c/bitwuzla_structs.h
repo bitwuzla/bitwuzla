@@ -57,27 +57,39 @@ struct BitwuzlaOptions
   bitwuzla::Options d_options;
 };
 
+struct bitwuzla_term_t
+{
+  std::unique_ptr<bitwuzla::Term> d_term;
+  BitwuzlaTermManager *d_tm = nullptr;
+};
+
+struct bitwuzla_sort_t
+{
+  std::unique_ptr<bitwuzla::Sort> d_sort;
+  BitwuzlaTermManager *d_tm = nullptr;
+};
+
 struct BitwuzlaTermManager
 {
-  BitwuzlaTermManager() { d_tm = new bitwuzla::TermManager(); }
+  static const bitwuzla::Sort &import_sort(BitwuzlaSort sort);
+  static const bitwuzla::Term &import_term(BitwuzlaTerm term);
 
-  ~BitwuzlaTermManager() { delete d_tm; }
+  BitwuzlaTermManager();
+  ~BitwuzlaTermManager();
+
+  BitwuzlaSort export_sort(const bitwuzla::Sort &sort);
+  BitwuzlaTerm export_term(const bitwuzla::Term &term);
 
   /** The associated term manager instance. */
-  bitwuzla::TermManager *d_tm = nullptr;
+  std::unique_ptr<bitwuzla::TermManager> d_tm;
+
+ private:
+  std::vector<std::unique_ptr<bitwuzla_sort_t>> d_alloc_sorts;
+  std::vector<std::unique_ptr<bitwuzla_term_t>> d_alloc_terms;
 };
 
 struct Bitwuzla
 {
-  /** Map C++ API term to term id and external reference count. */
-  using TermMap =
-      std::unordered_map<BitwuzlaTerm,
-                         std::pair<std::unique_ptr<bitwuzla::Term>, uint64_t>>;
-  /** Map C++ API term to sort id and external reference count. */
-  using SortMap =
-      std::unordered_map<BitwuzlaSort,
-                         std::pair<std::unique_ptr<bitwuzla::Sort>, uint64_t>>;
-
   Bitwuzla(BitwuzlaTermManager *tm, const BitwuzlaOptions *options)
   {
     if (options)
@@ -88,9 +100,11 @@ struct Bitwuzla
     {
       d_bitwuzla = new bitwuzla::Bitwuzla(*tm->d_tm);
     }
+    d_tm                    = tm;
     d_bitwuzla_needs_delete = true;
   }
 
+  // TODO: check if needed
   Bitwuzla(bitwuzla::Bitwuzla *bitwuzla) { d_bitwuzla = bitwuzla; }
 
   ~Bitwuzla()
@@ -99,58 +113,6 @@ struct Bitwuzla
     {
       delete d_bitwuzla;
     }
-  }
-
-  /** Get the map from C++ API term id to term object. */
-  static TermMap &term_map()
-  {
-    thread_local static TermMap map;
-    return map;
-  }
-
-  /** Get the map from C++ API sort id to sort object. */
-  static SortMap &sort_map()
-  {
-    thread_local static SortMap map;
-    return map;
-  }
-
-  static BitwuzlaSort export_sort(const bitwuzla::Sort &sort)
-  {
-    assert(!sort.is_null());
-
-    BitwuzlaSort sort_id        = sort.id();
-    Bitwuzla::SortMap &sort_map = Bitwuzla::sort_map();
-    const auto it               = sort_map.find(sort_id);
-    if (it == sort_map.end())
-    {
-      sort_map.emplace(
-          sort_id, std::make_pair(std::make_unique<bitwuzla::Sort>(sort), 1));
-    }
-    else
-    {
-      it->second.second += 1;
-    }
-    return sort_id;
-  }
-
-  static BitwuzlaTerm export_term(const bitwuzla::Term &term)
-  {
-    assert(!term.is_null());
-
-    BitwuzlaTerm term_id        = term.id();
-    Bitwuzla::TermMap &term_map = Bitwuzla::term_map();
-    const auto it               = term_map.find(term_id);
-    if (it == term_map.end())
-    {
-      term_map.emplace(
-          term_id, std::make_pair(std::make_unique<bitwuzla::Term>(term), 1));
-    }
-    else
-    {
-      it->second.second += 1;
-    }
-    return term_id;
   }
 
   void reset()
@@ -164,6 +126,8 @@ struct Bitwuzla
   bool d_bitwuzla_needs_delete = false;
   /** The currently configured terminator. */
   std::unique_ptr<CTerminator> d_terminator;
+  /** The associated term manager. */
+  BitwuzlaTermManager *d_tm = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */
