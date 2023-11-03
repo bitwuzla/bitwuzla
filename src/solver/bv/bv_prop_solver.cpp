@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-#include "ls/bv/bitvector_domain.h"
+#include "bv/domain/bitvector_domain.h"
 #include "ls/ls_bv.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
@@ -238,7 +238,7 @@ BvPropSolver::mk_node(const Node& node)
   uint64_t res  = 0;
   uint64_t size = node.type().is_bool() ? 1 : node.type().bv_size();
 
-  bzla::ls::BitVectorDomain domain(size);
+  BitVectorDomain domain(size);
 
   if (node.is_value())
   {

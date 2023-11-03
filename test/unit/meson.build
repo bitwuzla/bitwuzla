@@ -94,13 +94,15 @@ unit_tests = [
   ],
 
   ['lib/bitvector',
-    ['bv']
+    [
+      'bv',
+      'bvdomain',
+      'bvdomaingen',
+    ]
   ],
 
   ['lib/ls/bv',
     [
-      'bvdomain',
-      'bvdomaingen',
       'bvnode',
       'bvnodecons',
       'bvnodeinv',

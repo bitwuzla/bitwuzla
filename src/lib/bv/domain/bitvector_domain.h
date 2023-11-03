@@ -8,13 +8,12 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA__LS_BITVECTOR_DOMAIN_H
-#define BZLA__LS_BITVECTOR_DOMAIN_H
+#ifndef BZLA__BV_BITVECTOR_DOMAIN_H
+#define BZLA__BV_BITVECTOR_DOMAIN_H
 
 #include "bv/bitvector.h"
 
 namespace bzla {
-namespace ls {
 
 class BitVectorDomainGenerator;
 
@@ -497,7 +496,6 @@ class BitVectorDomainSignedGenerator
 
 /*----------------------------------------------------------------------------*/
 
-}  // namespace ls
 }  // namespace bzla
 
 #endif

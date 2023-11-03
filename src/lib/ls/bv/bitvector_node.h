@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "bv/bitvector.h"
-#include "ls/bv/bitvector_domain.h"
+#include "bv/domain/bitvector_domain.h"
 #include "ls/ls.h"
 #include "ls/node/node.h"
 

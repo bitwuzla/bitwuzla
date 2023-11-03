@@ -12,10 +12,10 @@
 #include <string>
 #include <unordered_set>
 
-#include "ls/bv/bitvector_domain.h"
+#include "bv/domain/bitvector_domain.h"
 #include "test_lib.h"
 
-namespace bzla::ls::test {
+namespace bzla::test {
 
 /* -------------------------------------------------------------------------- */
 
@@ -456,4 +456,4 @@ TEST_F(TestBvDomainGen, random_signed)
       "has_random");
 }
 
-}  // namespace bzla::ls::test
+}  // namespace bzla::test

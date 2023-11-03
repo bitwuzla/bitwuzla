@@ -11,7 +11,6 @@
 #include "wheel_factorizer.h"
 
 namespace bzla {
-namespace ls {
 
 WheelFactorizer::WheelFactorizer(const BitVector& n, uint64_t limit)
     : d_num(n), d_limit(limit)
@@ -98,5 +97,4 @@ WheelFactorizer::next()
   return nullptr;
 }
 
-}  // namespace ls
 }  // namespace bzla

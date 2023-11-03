@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-#include "ls/bv/bitvector_domain.h"
+#include "bv/domain/bitvector_domain.h"
 #include "node/node_manager.h"
 #include "option/option.h"
 #include "printer/printer.h"
@@ -99,7 +99,7 @@ class TestBvPropSolver : public ::testing::Test
    * @param d    The domain with the fixed bits information.
    * @return A node representing `node` with bits fixed according to `d`.
    */
-  Node fix_bits(const Node& node, const ls::BitVectorDomain& d);
+  Node fix_bits(const Node& node, const BitVectorDomain& d);
 
   /**
    * Helper for test_prop().
@@ -119,9 +119,9 @@ class TestBvPropSolver : public ::testing::Test
    * @param idx2  The second index for indexed operators.
    */
   void _test_prop_aux(Kind kind,
-                      const ls::BitVectorDomain* d0,
-                      const ls::BitVectorDomain* d1,
-                      const ls::BitVectorDomain* d2,
+                      const BitVectorDomain* d0,
+                      const BitVectorDomain* d1,
+                      const BitVectorDomain* d2,
                       const BitVector* s0,
                       const BitVector* s1,
                       const BitVector* s2,
@@ -193,7 +193,7 @@ TestBvPropSolver::generate_binary_values(uint32_t size)
 }
 
 Node
-TestBvPropSolver::fix_bits(const Node& node, const ls::BitVectorDomain& d)
+TestBvPropSolver::fix_bits(const Node& node, const BitVectorDomain& d)
 {
   return d_nm.mk_node(
       Kind::BV_OR,
@@ -228,9 +228,9 @@ TestBvPropSolver::eval_binary_op(Kind kind,
 
 void
 TestBvPropSolver::_test_prop_aux(Kind kind,
-                                 const bzla::ls::BitVectorDomain* d0,
-                                 const bzla::ls::BitVectorDomain* d1,
-                                 const bzla::ls::BitVectorDomain* d2,
+                                 const BitVectorDomain* d0,
+                                 const BitVectorDomain* d1,
+                                 const BitVectorDomain* d2,
                                  const BitVector* s0,
                                  const BitVector* s1,
                                  const BitVector* s2,
@@ -325,8 +325,8 @@ TestBvPropSolver::test_prop(Kind kind)
 
   for (const std::string& s0_str : s0_values)
   {
-    ls::BitVectorDomain d0(s0_str);
-    ls::BitVectorDomainGenerator gen_s0(d0);
+    BitVectorDomain d0(s0_str);
+    BitVectorDomainGenerator gen_s0(d0);
     do
     {
       BitVector s0 = gen_s0.has_next() ? gen_s0.next() : d0.lo();
@@ -353,8 +353,8 @@ TestBvPropSolver::test_prop(Kind kind)
       {
         for (const std::string& s1_str : tern_values)
         {
-          ls::BitVectorDomain d1(s1_str);
-          ls::BitVectorDomainGenerator gen_s1(d1);
+          BitVectorDomain d1(s1_str);
+          BitVectorDomainGenerator gen_s1(d1);
           do
           {
             BitVector s1 = gen_s1.has_next() ? gen_s1.next() : d1.lo();
@@ -362,8 +362,8 @@ TestBvPropSolver::test_prop(Kind kind)
             {
               for (const std::string& s2_str : tern_values)
               {
-                ls::BitVectorDomain d2(s2_str);
-                ls::BitVectorDomainGenerator gen_s2(d2);
+                BitVectorDomain d2(s2_str);
+                BitVectorDomainGenerator gen_s2(d2);
                 do
                 {
                   BitVector s2 = gen_s2.has_next() ? gen_s2.next() : d2.lo();

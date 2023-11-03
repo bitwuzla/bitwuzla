@@ -3,7 +3,8 @@
 # ---
 
 bv_sources = [
-  'bv/bitvector.cpp'
+  'bv/bitvector.cpp',
+  'bv/domain/bitvector_domain.cpp',
 ]
 
 bb_sources = [
@@ -16,7 +17,6 @@ bb_sources = [
 ls_sources = [
   'ls/ls.cpp',
   'ls/ls_bv.cpp',
-  'ls/bv/bitvector_domain.cpp',
   'ls/bv/bitvector_node.cpp',
   'ls/node/node.cpp',
   'util/wheel_factorizer.cpp'

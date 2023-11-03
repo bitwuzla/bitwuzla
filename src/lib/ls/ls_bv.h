@@ -19,10 +19,10 @@
 namespace bzla {
 
 class BitVector;
+class BitVectorDomain;
 
 namespace ls {
 
-class BitVectorDomain;
 class BitVectorNode;
 
 class LocalSearchBV : public LocalSearch<BitVector>

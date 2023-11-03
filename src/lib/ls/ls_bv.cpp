@@ -17,7 +17,7 @@
 
 #include "../util/hash_pair.h"
 #include "bv/bitvector.h"
-#include "ls/bv/bitvector_domain.h"
+#include "bv/domain/bitvector_domain.h"
 #include "ls/bv/bitvector_node.h"
 
 namespace bzla::ls {

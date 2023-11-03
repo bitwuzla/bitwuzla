@@ -16,7 +16,6 @@
 #include "bv/bitvector.h"
 
 namespace bzla {
-namespace ls {
 
 /* Wheel factorization for s % x = t with base {2, 3, 5}. */
 class WheelFactorizer
@@ -58,6 +57,6 @@ class WheelFactorizer
   size_t d_pos = 0;
   uint64_t d_limit;
 };
-}  // namespace ls
+
 }  // namespace bzla
 #endif

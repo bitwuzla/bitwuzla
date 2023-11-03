@@ -10,10 +10,10 @@
 
 #include <bitset>
 
-#include "ls/bv/bitvector_domain.h"
+#include "bv/domain/bitvector_domain.h"
 #include "test_lib.h"
 
-namespace bzla::ls::test {
+namespace bzla::test {
 
 /* -------------------------------------------------------------------------- */
 
@@ -551,4 +551,4 @@ TEST_F(TestBitVectorDomain, str)
 
 /* -------------------------------------------------------------------------- */
 
-}  // namespace bzla::ls::test
+}  // namespace bzla::test

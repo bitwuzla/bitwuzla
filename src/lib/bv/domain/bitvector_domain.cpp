@@ -8,7 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "ls/bv/bitvector_domain.h"
+#include "bv/domain/bitvector_domain.h"
 
 #include <algorithm>
 #include <cassert>
@@ -18,7 +18,6 @@
 #include "util/wheel_factorizer.h"
 
 namespace bzla {
-namespace ls {
 
 /*----------------------------------------------------------------------------*/
 
@@ -799,5 +798,4 @@ operator<<(std::ostream &out, const BitVectorDomain &d)
   return out;
 }
 
-}  // namespace ls
 }  // namespace bzla
