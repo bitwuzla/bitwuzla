@@ -75,15 +75,17 @@ struct BitwuzlaTermManager
   static const bitwuzla::Term &import_term(BitwuzlaTerm term);
 
   BitwuzlaTermManager();
+  BitwuzlaTermManager(bitwuzla::TermManager &tm);
   ~BitwuzlaTermManager();
 
   BitwuzlaSort export_sort(const bitwuzla::Sort &sort);
   BitwuzlaTerm export_term(const bitwuzla::Term &term);
 
   /** The associated term manager instance. */
-  std::unique_ptr<bitwuzla::TermManager> d_tm;
+  bitwuzla::TermManager *d_tm;
 
  private:
+  bool d_term_mgr_needs_delete = false;
   std::vector<std::unique_ptr<bitwuzla_sort_t>> d_alloc_sorts;
   std::vector<std::unique_ptr<bitwuzla_term_t>> d_alloc_terms;
 };
@@ -104,8 +106,11 @@ struct Bitwuzla
     d_bitwuzla_needs_delete = true;
   }
 
-  // TODO: check if needed
-  Bitwuzla(bitwuzla::Bitwuzla *bitwuzla) { d_bitwuzla = bitwuzla; }
+  Bitwuzla(bitwuzla::Bitwuzla *bitwuzla)
+  {
+    d_bitwuzla = bitwuzla;
+    d_tm       = new BitwuzlaTermManager(bitwuzla->term_mgr());
+  }
 
   ~Bitwuzla()
   {

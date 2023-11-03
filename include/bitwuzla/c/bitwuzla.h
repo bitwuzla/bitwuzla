@@ -1392,6 +1392,15 @@ void bitwuzla_get_statistics(Bitwuzla *bitwuzla,
                              const char ***values,
                              size_t *size);
 
+/**
+ * Get term manager instance.
+ *
+ * @param bitwuzla The bitwuzla instance.
+ * @return Term manager instance used by given Bitwuzla instance.
+ *
+ */
+BitwuzlaTermManager *bitwuzla_get_term_mgr(Bitwuzla *bitwuzla);
+
 /** @} */
 
 /* -------------------------------------------------------------------------- */

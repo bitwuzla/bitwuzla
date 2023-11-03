@@ -1653,6 +1653,9 @@ class Bitwuzla
    */
   std::map<std::string, std::string> statistics() const;
 
+  /** @return The associated term manager instance. */
+  TermManager &term_mgr();
+
  private:
   /** Helper called when solver state changes. */
   void solver_state_change();
@@ -1675,6 +1678,8 @@ class Bitwuzla
   bool d_uc_is_valid = false;
   /** Indicates a pending pop from check-sat with assumptions. */
   bool d_pending_pop = false;
+  /** The associated term manager instance. */
+  TermManager &d_tm;
 };
 
 /* -------------------------------------------------------------------------- */

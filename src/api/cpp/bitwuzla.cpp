@@ -1329,12 +1329,14 @@ class TerminatorInternal : public bzla::Terminator
 /* Bitwuzla public ---------------------------------------------------------- */
 
 Bitwuzla::Bitwuzla(TermManager &tm, const Options &options)
-    : d_ctx(new bzla::SolvingContext(*tm.d_nm, *options.d_options, "main"))
+    : d_ctx(new bzla::SolvingContext(*tm.d_nm, *options.d_options, "main")),
+      d_tm(tm)
 {
 }
 
 Bitwuzla::Bitwuzla(const Options &options)
-    : d_ctx(new bzla::SolvingContext(*s_tm.d_nm, *options.d_options, "main"))
+    : d_ctx(new bzla::SolvingContext(*s_tm.d_nm, *options.d_options, "main")),
+      d_tm(s_tm)
 {
 }
 
@@ -1543,6 +1545,12 @@ std::map<std::string, std::string>
 Bitwuzla::statistics() const
 {
   return d_ctx->env().statistics().get();
+}
+
+TermManager &
+Bitwuzla::term_mgr()
+{
+  return d_tm;
 }
 
 /* Bitwuzla private --------------------------------------------------------- */

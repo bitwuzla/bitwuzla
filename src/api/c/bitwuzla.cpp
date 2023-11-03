@@ -596,6 +596,12 @@ bitwuzla_get_statistics(Bitwuzla *bitwuzla,
   BITWUZLA_TRY_CATCH_END;
 }
 
+BitwuzlaTermManager *
+bitwuzla_get_term_mgr(Bitwuzla *bitwuzla)
+{
+  return bitwuzla->d_tm;
+}
+
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTermManager                                                        */
 /* -------------------------------------------------------------------------- */
