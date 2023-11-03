@@ -85,7 +85,7 @@ struct BitwuzlaOptionInfo
     uint64_t min;
     /** Maximum numeric option value. */
     uint64_t max;
-  };
+  } numeric;
 
   struct ModeValue
   {
@@ -97,13 +97,7 @@ struct BitwuzlaOptionInfo
     size_t num_modes;
     /** List of available modes. */
     const char **modes;
-  };
-
-  union
-  {
-    struct NumericValue numeric;
-    struct ModeValue mode;
-  };
+  } mode;
 };
 
 #ifndef DOXYGEN_SKIP
