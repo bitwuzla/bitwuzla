@@ -1428,6 +1428,42 @@ class TermManager
 
   /** @} */
 
+  /* ------------------------------------------------------------------------ */
+  /* Term substitution                                                        */
+  /* ------------------------------------------------------------------------ */
+
+  /** \addtogroup cpp_term_substitution
+   *  @{
+   */
+
+  /**
+   * Substitute a set terms in a given term. The substitutions to perform are
+   * represented as map from keys to be substituted with their corresponding
+   * values in the given term.
+   *
+   * @param term The term in which the terms are to be substituted.
+   * @param map  The substitution map.
+   * @return The resulting term from this substitution.
+   */
+  Term substitute_term(const Term &term,
+                       const std::unordered_map<Term, Term> &map);
+
+  /**
+   * Substitute a set of terms in a set of given terms. The substitutions to
+   * perform are represented as map from keys to be substituted with their
+   * corresponding values in the given terms.
+   *
+   * The terms in `terms` are replaced with the terms resulting from these
+   * substitutions.
+   *
+   * @param terms The terms in which the terms are to be substituted.
+   * @param map  The substitution map.
+   */
+  void substitute_terms(std::vector<Term> &terms,
+                        const std::unordered_map<Term, Term> &map);
+
+  /** @} */
+
  private:
   std::unique_ptr<bzla::NodeManager> d_nm;
 };
@@ -2123,6 +2159,8 @@ Term mk_var(const Sort &sort,
  * represented as map from keys to be substituted with their corresponding
  * values in the given term.
  *
+ * @note: (deprecated) Uses the global thread-local term manager.
+ *
  * @param term The term in which the terms are to be substituted.
  * @param map  The substitution map.
  * @return The resulting term from this substitution.
@@ -2137,6 +2175,8 @@ Term substitute_term(const Term &term,
  *
  * The terms in `terms` are replaced with the terms resulting from these
  * substitutions.
+ *
+ * @note: (deprecated) Uses the global thread-local term manager.
  *
  * @param terms The terms in which the terms are to be substituted.
  * @param map  The substitution map.
