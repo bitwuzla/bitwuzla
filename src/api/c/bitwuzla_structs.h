@@ -57,6 +57,16 @@ struct BitwuzlaOptions
   bitwuzla::Options d_options;
 };
 
+struct BitwuzlaTermManager
+{
+  BitwuzlaTermManager() { d_tm = new bitwuzla::TermManager(); }
+
+  ~BitwuzlaTermManager() { delete d_tm; }
+
+  /** The associated term manager instance. */
+  bitwuzla::TermManager *d_tm = nullptr;
+};
+
 struct Bitwuzla
 {
   /** Map C++ API term to term id and external reference count. */
@@ -68,15 +78,15 @@ struct Bitwuzla
       std::unordered_map<BitwuzlaSort,
                          std::pair<std::unique_ptr<bitwuzla::Sort>, uint64_t>>;
 
-  Bitwuzla(const BitwuzlaOptions *options)
+  Bitwuzla(BitwuzlaTermManager *tm, const BitwuzlaOptions *options)
   {
     if (options)
     {
-      d_bitwuzla = new bitwuzla::Bitwuzla(options->d_options);
+      d_bitwuzla = new bitwuzla::Bitwuzla(*tm->d_tm, options->d_options);
     }
     else
     {
-      d_bitwuzla = new bitwuzla::Bitwuzla();
+      d_bitwuzla = new bitwuzla::Bitwuzla(*tm->d_tm);
     }
     d_bitwuzla_needs_delete = true;
   }
