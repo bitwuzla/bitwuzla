@@ -3188,7 +3188,7 @@ RewriteRule<RewriteRuleKind::BV_SDIV_ELIM>::_apply(Rewriter& rewriter,
                         rewriter.mk_node(Kind::BV_NEG, {node[1]}),
                         node[1]});
 
-  // Unsigned divison
+  // Unsigned division
   const Node& udiv = rewriter.mk_node(Kind::BV_UDIV, {abs0, abs1});
 
   // Negate result if necessary
@@ -3465,7 +3465,7 @@ RewriteRule<RewriteRuleKind::BV_SSUBO_ELIM>::_apply(Rewriter& rewriter,
 
   // Overflow occurs if
   //  1) negative - positive = positive
-  //  2) postive - negative = negative
+  //  2) positive - negative = negative
   Node one  = NodeManager::get().mk_value(BitVector::mk_one(1));
   Node zero = NodeManager::get().mk_value(BitVector::mk_zero(1));
   const Node& neg_pos =

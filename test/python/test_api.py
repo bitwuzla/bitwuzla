@@ -2076,7 +2076,7 @@ def test_terminate_timeout_wrap():
         def __call__(self):
             return False
     tt = TestTerminator2()
-    opitons = Options()
+    options = Options()
     options.set(Option.TIME_LIMIT_PER, 100)
     options.set(Option.BV_SOLVER, 'bitblast')
     options.set(Option.REWRITE_LEVEL, 0)

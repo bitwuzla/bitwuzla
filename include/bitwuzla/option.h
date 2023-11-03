@@ -139,7 +139,7 @@ enum ENUM(Option)
   /*! **Propagation-based local search solver engine:
    *    Constant bits.**
    *
-   * Configure constant bit propagation (requries bit-blasting to AIG).
+   * Configure constant bit propagation (requires bit-blasting to AIG).
    *
    * Values:
    *  * **1**: enable [**default**]

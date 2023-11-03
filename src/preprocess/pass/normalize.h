@@ -78,7 +78,7 @@ class PassNormalize : public PreprocessingPass
    * @return A bit-vector value representing the summarized, normalized leaf
    *         values of the given adder. After normalize_add() is called, it
    *         can be asserted that no values with a coefficient > 0 occur
-   *         in the coefficents map.
+   *         in the coefficients map.
    */
   BitVector normalize_add(const Node& node,
                           CoefficientsMap& coeffs,
@@ -92,7 +92,7 @@ class PassNormalize : public PreprocessingPass
    * @return A bit-vector value representing the constant folded, normalized
    *         leaf values of the given and. After normalize_and() is called,
    *         it can be asserted that no values with a coefficient > 0 occur
-   *         in the coefficents map.
+   *         in the coefficients map.
    */
   BitVector normalize_and(const Node& node, CoefficientsMap& coeffs);
   /**
@@ -103,7 +103,7 @@ class PassNormalize : public PreprocessingPass
    * @return A bit-vector value representing the summarized, normalized leaf
    *         values of the given adder. After normalize_add() is called, it
    *         can be asserted that no values with a coefficient > 0 occur
-   *         in the coefficents map.
+   *         in the coefficients map.
    */
   BitVector normalize_mul(const Node& node,
                           CoefficientsMap& coeffs,

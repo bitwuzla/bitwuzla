@@ -369,7 +369,7 @@ Parser::parse_command_declare_sort()
   if (peek_node_arg()->d_coo.line)
   {
     return error_arg("symbol '" + peek_node_arg()->d_symbol
-                     + "' alread defined at line "
+                     + "' already defined at line "
                      + std::to_string(peek_node_arg()->d_coo.line) + " column "
                      + std::to_string(peek_node_arg()->d_coo.col));
   }
@@ -404,7 +404,7 @@ Parser::parse_command_define_fun()
   if (peek_node_arg()->d_coo.line)
   {
     return error_arg("symbol '" + peek_node_arg()->d_symbol
-                     + "' alread defined at line "
+                     + "' already defined at line "
                      + std::to_string(peek_node_arg()->d_coo.line) + " column "
                      + std::to_string(peek_node_arg()->d_coo.col));
   }
@@ -495,7 +495,7 @@ Parser::parse_command_define_sort()
   if (peek_node_arg()->d_coo.line)
   {
     return error_arg("symbol '" + peek_node_arg()->d_symbol
-                     + "' alread defined at line "
+                     + "' already defined at line "
                      + std::to_string(peek_node_arg()->d_coo.line) + " column "
                      + std::to_string(peek_node_arg()->d_coo.col));
   }

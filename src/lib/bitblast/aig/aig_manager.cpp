@@ -438,7 +438,7 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
 
     /** Optimization level 2 */
 
-    // Contradiction rule (assymetric)
+    // Contradiction rule (asymmetric)
     //   shape:     (a /\ b) /\ c
     //   condition: (a = ~c) \/ (b = ~c)
     //   result:    0
@@ -469,7 +469,7 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
       return d_false;
     }
 
-    // Subsumption rule (assymetric)
+    // Subsumption rule (asymmetric)
     //   shape:     ~(a /\ b) /\ c
     //   condition: (a = ~c) \/ (b = ~c)
     //   result:    c

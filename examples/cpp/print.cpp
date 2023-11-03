@@ -63,7 +63,7 @@ main()
   ;
 
   // Print terms.
-  // Note: Hexadecimal bv ouput format is ignored if the value is not of size
+  // Note: Hexadecimal bv output format is ignored if the value is not of size
   //       divisible by 4.
   std::cout << "Print term:" << std::endl;
   std::cout << "-----------" << std::endl;

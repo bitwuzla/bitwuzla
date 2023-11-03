@@ -33,7 +33,7 @@
 ; assume the highest bit of 's' is set
 ;
 (assert ((_ extract 55 55) s))
-; ... or alternatively disallow the followin spurious solutions:
+; ... or alternatively disallow the following spurious solutions:
 ;
 ;(assert (distinct r #b0000000000000000000000000000))
 ;(assert (distinct r #b0000000000000110000000000000))

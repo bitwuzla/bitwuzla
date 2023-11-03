@@ -3161,7 +3161,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
    *                        s != t: 0
    *              t = 0   : 0 < s < ones: random value > s
    *                        s = 0       : random value > 0
-   *              t is a divisior of s: t / s or s with s / x = t (0.5 prob)
+   *              t is a divisor of s: t / s or s with s / x = t (0.5 prob)
    *              else : s with s / x = t
    */
 
@@ -3369,7 +3369,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
       //                      s != t: 0
       //            t = 0   : 0 < s < ones: random value > s
       //            s = 0   : random value > 0
-      //            t is a divisior of s: t / s or s with s / x = t (0.5 prob)
+      //            t is a divisor of s: t / s or s with s / x = t (0.5 prob)
       //            else    : s with s / x = t
       uint64_t size = s.size();
       if (t.is_ones())
@@ -4592,7 +4592,7 @@ BitVectorSlt::is_invertible(const BitVector& t,
         else
         {
           // we have to check for both cases and make sure to randomly choose
-          // frome either (if possible) if is_essential_check is false
+          // from either (if possible) if is_essential_check is false
           dxn.fix(BitVector::mk_ones(dxn.size()));
           ddx = dxn.bvconcat(dxx);
           ddx.fix_bit(bw_xx - 1, true);

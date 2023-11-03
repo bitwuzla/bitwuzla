@@ -56,7 +56,7 @@ if __name__ == "__main__":
     print()
 
     # Print terms.
-    # Note: Hexadecimal bv ouput format is ignored if the value is not of size
+    # Note: Hexadecimal bv output format is ignored if the value is not of size
     #       divisible by 4.
     print('Print term:')
     print('-----------')

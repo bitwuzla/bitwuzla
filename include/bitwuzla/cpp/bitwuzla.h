@@ -752,7 +752,7 @@ class Term
 #ifndef DOXYGEN_SKIP
 /**
  * Get Boolean representation of Boolean value term.
- * @param base Ingored for this template instantiation.
+ * @param base Ignored for this template instantiation.
  * @return Boolean representation of value term.
  */
 template <>
@@ -760,7 +760,7 @@ bool Term::value(uint8_t base) const;
 
 /**
  * Get representation of rounding mode value term.
- * @param base Ingored for this template instantiation.
+ * @param base Ignored for this template instantiation.
  * @return The RoundingMode representation of the given rounding mode value.
  */
 template <>
@@ -1670,7 +1670,7 @@ Term mk_var(const Sort &sort,
  */
 
 /**
- * Substitute a set terms in a given term. The substitutions to perfom are
+ * Substitute a set terms in a given term. The substitutions to perform are
  * represented as map from keys to be substituted with their corresponding
  * values in the given term.
  *
@@ -1683,7 +1683,7 @@ Term substitute_term(const Term &term,
 
 /**
  * Substitute a set of terms in a set of given terms. The substitutions to
- * perfom are represented as map from keys to be substituted with their
+ * perform are represented as map from keys to be substituted with their
  * corresponding values in the given terms.
  *
  * The terms in `terms` are replaced with the terms resulting from these

@@ -249,7 +249,7 @@ Options::Options()
       pp_embedded_constr(this,
                          Option::PP_EMBEDDED_CONSTR,
                          true,
-                         "enable embedded contraint preprocessing pass",
+                         "enable embedded constraint preprocessing pass",
                          "pp-embedded"),
       pp_flatten_and(this,
                      Option::PP_FLATTEN_AND,

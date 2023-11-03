@@ -23,7 +23,7 @@ void
 AssertionTracker::track(const Node& assertion, const Node& parent)
 {
   assert(!parent.is_null());
-  // Only track first occurence of assertion
+  // Only track first occurrence of assertion
   d_tracked_assertions.emplace(assertion, parent);
 }
 

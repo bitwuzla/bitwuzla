@@ -1,5 +1,5 @@
 (set-info :source "This benchmark comes from bounded model checking of two fifo implementations.
-The fifos are resetted once at the beginning.
+The fifos are reset once at the beginning.
 We try to verify behavioral equivalence with k-induction.
 All different constraints are disabled.
 Fifo inputs: 'enqueue', 'dequeue', 'reset' (active low) and 'data_in'.
