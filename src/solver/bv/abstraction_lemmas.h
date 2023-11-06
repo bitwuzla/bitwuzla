@@ -73,6 +73,21 @@ enum class LemmaKind
   UDIV_REF36,  // (not (bvult t (bvlshr x (bvsub s #b0001))))
   UDIV_REF37,  // (not (bvult (bvsub s #b0001) (bvlshr x t)))
   UDIV_REF38,  // (not (= x (bvsub #b0001 (bvshl x (bvsub x t)))))
+
+  UREM_REF1,   // (=> (distinct s #b0000) (bvule t s))
+  UREM_REF2,   // (=> (= x #b0000) (= t #b0000))
+  UREM_REF3,   // (=> (= s #b0000) (= t x))
+  UREM_REF4,   // (=> (= s x) (= t #b0000))
+  UREM_REF5,   // (=> (bvult x s) (= t x))
+  UREM_REF6,   // (bvuge (bvnot (bvneg s)) t)
+  UREM_REF7,   // (not (distinct x (bvand x (bvor s (bvor t (bvneg s))))))
+  UREM_REF8,   // (not (bvult x (bvor t (bvand x s))))
+  UREM_REF9,   // (not (= #b0001 (bvand t (bvnot (bvor x s)))))
+  UREM_REF10,  // (not (= t (bvor (bvnot x) (bvneg s))))
+  UREM_REF11,  // (not (bvult (bvand t (bvor x s)) (bvand t #b0001)))
+  UREM_REF12,  // (not (= x (bvor (bvneg x) (bvneg (bvnot t)))))
+  UREM_REF13,  // (not (bvult (bvadd x (bvneg s)) t))
+  UREM_REF14,  // (not (bvult (bvxor (bvneg s) (bvor x s)) t))
 };
 
 std::ostream& operator<<(std::ostream& os, LemmaKind kind);
@@ -392,6 +407,78 @@ Node Lemma<LemmaKind::UDIV_REF37>::instance(const Node& x,
 
 template <>
 Node Lemma<LemmaKind::UDIV_REF38>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const;
+
+// Unsigned remainder lemmas
+
+template <>
+Node Lemma<LemmaKind::UREM_REF1>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF2>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF3>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF4>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF5>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF6>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF7>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF8>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF9>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF10>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF11>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF12>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF13>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF14>::instance(const Node& x,
                                             const Node& s,
                                             const Node& t) const;
 

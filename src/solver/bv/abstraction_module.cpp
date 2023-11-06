@@ -106,6 +106,22 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF36>());
   udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF37>());
   udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF38>());
+
+  auto& urem_abstr_lemmas = d_abstr_lemmas[Kind::BV_UREM];
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF1>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF2>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF3>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF4>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF5>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF6>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF7>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF8>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF9>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF10>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF11>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF12>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF13>());
+  urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF14>());
 }
 
 AbstractionModule::~AbstractionModule() {}
@@ -135,7 +151,7 @@ AbstractionModule::register_abstraction(const Node& node)
 void
 AbstractionModule::check()
 {
-  score_lemmas(Kind::BV_UDIV);
+  // score_lemmas(Kind::BV_UREM);
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
   for (const Node& abstr : d_active_abstractions)
