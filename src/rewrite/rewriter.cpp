@@ -502,6 +502,8 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::FORALL: res = rewrite_forall(n); break;
     case node::Kind::EXISTS: res = rewrite_exists(n); break;
 
+    case node::Kind::BV_MUL_NO_ABSTR: res = n; break;
+
     default: assert(false);
   }
 

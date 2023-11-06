@@ -73,7 +73,8 @@ AbstractionModule::~AbstractionModule() {}
 bool
 AbstractionModule::abstract(const Node& node) const
 {
-  return node.kind() == Kind::BV_MUL && node.type().bv_size() >= d_minimum_size;
+  return node.kind() == Kind::BV_MUL && node.type().bv_size() >= d_minimum_size
+         && (d_no_abstract.find(node) == d_no_abstract.end());
 }
 
 void
@@ -197,6 +198,15 @@ AbstractionModule::check_abstraction(const Node& node)
            nm.mk_node(Kind::EQUAL, {get_abstraction(node), val_expected})});
       d_solver_state.lemma(lemma);
       d_stats.lemmas << LemmaKind::MUL_VALUE;
+      ++d_value_insts[node];
+
+      if (d_value_insts[node] >= 16)
+      {
+        Node mul = nm.mk_node(Kind::BV_MUL_NO_ABSTR, {node[0], node[1]});
+        lemma    = nm.mk_node(Kind::EQUAL, {get_abstraction(node), mul});
+        d_no_abstract.insert(mul);
+        d_solver_state.lemma(lemma);
+      }
     }
   }
 }

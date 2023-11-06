@@ -51,6 +51,7 @@ enum class Kind : uint8_t
   BV_EXTRACT,
   BV_INC,
   BV_MUL,
+  BV_MUL_NO_ABSTR,
   BV_NAND,
   BV_NEG,
   BV_NEGO,

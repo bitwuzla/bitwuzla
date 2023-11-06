@@ -137,6 +137,7 @@ AigBitblaster::bitblast(const Node& t, abstraction::AbstractionModule* am)
           break;
 
         case Kind::BV_MUL:
+        case Kind::BV_MUL_NO_ABSTR:
           assert(type.is_bv());
           it->second = d_bitblaster.bv_mul(bits(cur[0]), bits(cur[1]));
           break;

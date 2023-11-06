@@ -22,6 +22,8 @@ class AbstractionModule
 
   bool abstract(const Node& node) const;
 
+  const Node& abstraction(const Node& node);
+
   void register_abstraction(const Node& node);
 
   void check();
@@ -45,6 +47,8 @@ class AbstractionModule
   std::unordered_map<Type, Node> d_mul_ufs;
   std::unordered_map<node::Kind, std::vector<std::unique_ptr<AbstractionLemma>>>
       d_abstr_lemmas;
+  std::unordered_map<Node, uint64_t> d_value_insts;
+  std::unordered_set<Node> d_no_abstract;
 
   uint64_t d_minimum_size;
 

@@ -298,6 +298,7 @@ NodeManager::compute_type(Kind kind,
     case Kind::BV_DEC:
     case Kind::BV_INC:
     case Kind::BV_MUL:
+    case Kind::BV_MUL_NO_ABSTR:
     case Kind::BV_NAND:
     case Kind::BV_NEG:
     case Kind::BV_NOR:
@@ -529,6 +530,7 @@ NodeManager::check_type(Kind kind,
     case Kind::BV_ASHR:
     case Kind::BV_COMP:
     case Kind::BV_MUL:
+    case Kind::BV_MUL_NO_ABSTR:
     case Kind::BV_NAND:
     case Kind::BV_NOR:
     case Kind::BV_OR:
