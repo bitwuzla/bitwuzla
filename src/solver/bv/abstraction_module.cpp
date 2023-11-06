@@ -66,6 +66,46 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF16>());
   mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF17>());
   mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF18>());
+
+  auto& udiv_abstr_lemmas = d_abstr_lemmas[Kind::BV_UDIV];
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF1>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF2>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF3>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF4>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF5>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF6>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF7>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF8>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF9>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF10>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF11>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF12>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF13>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF14>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF15>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF16>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF17>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF18>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF19>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF20>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF21>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF22>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF23>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF24>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF25>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF26>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF27>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF28>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF29>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF30>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF31>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF32>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF33>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF34>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF35>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF36>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF37>());
+  udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF38>());
 }
 
 AbstractionModule::~AbstractionModule() {}
@@ -95,7 +135,7 @@ AbstractionModule::register_abstraction(const Node& node)
 void
 AbstractionModule::check()
 {
-  // score_lemmas(Kind::BV_MUL);
+  score_lemmas(Kind::BV_UDIV);
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
   for (const Node& abstr : d_active_abstractions)
@@ -139,11 +179,11 @@ AbstractionModule::check_abstraction(const Node& node)
   assert(it != d_abstr_lemmas.end());
   const auto& to_check = it->second;
   NodeManager& nm      = NodeManager::get();
+  Node val_x           = d_solver_state.value(node[0]);
+  Node val_s           = d_solver_state.value(node[1]);
+  Node val_t           = d_solver_state.value(node);
   if (node.kind() == Kind::BV_MUL)
   {
-    Node val_x = d_solver_state.value(node[0]);
-    Node val_s = d_solver_state.value(node[1]);
-    Node val_t = d_solver_state.value(node);
     Node val_expected =
         nm.mk_value(val_x.value<BitVector>().bvmul(val_s.value<BitVector>()));
     if (val_t == val_expected)
@@ -199,10 +239,14 @@ AbstractionModule::check_abstraction(const Node& node)
       d_stats.lemmas << LemmaKind::MUL_VALUE;
     }
   }
+  else if (node.kind() == Kind::BV_UREM)
+  {
+    // TODO
+  }
 }
 
 void
-AbstractionModule::score_lemmas(Kind k) const
+AbstractionModule::score_lemmas(Kind kind) const
 {
   static bool done = false;
   if (done) return;
@@ -228,7 +272,7 @@ AbstractionModule::score_lemmas(Kind k) const
     {
       auto p = std::make_pair(i, j);
       results.emplace(
-          p, d_rewriter.rewrite(nm.mk_node(k, {values[i], values[j]})));
+          p, d_rewriter.rewrite(nm.mk_node(kind, {values[i], values[j]})));
     }
   }
 
@@ -236,10 +280,10 @@ AbstractionModule::score_lemmas(Kind k) const
   uint64_t final_score = max_score;
   std::cout << "lemma score (worst: " << final_score << ", best: " << max * max
             << ")" << std::endl;
-  for (const auto& lem : d_abstr_lemmas.at(k))
+  for (const auto& lem : d_abstr_lemmas.at(kind))
   {
     uint64_t score            = 0;
-    uint64_t score_mul        = 0;
+    uint64_t score_expected   = 0;
     uint64_t prev_final_score = final_score;
     for (uint64_t i = 0; i < values.size(); ++i)
     {
@@ -253,19 +297,22 @@ AbstractionModule::score_lemmas(Kind k) const
           auto t    = std::make_tuple(i, j, k);
           Node inst = d_rewriter.rewrite(
               lem->instance(values[i], values[j], values[k]));
-          Node instc = d_rewriter.rewrite(
-              lem->instance(values[j], values[i], values[k]));
           assert(inst.is_value());
-          auto res     = inst.value<bool>();
-          auto resc    = instc.value<bool>();
-          res          = res & resc;
+          auto res = inst.value<bool>();
+          if (kind == Kind::BV_MUL)
+          {
+            Node instc = d_rewriter.rewrite(
+                lem->instance(values[j], values[i], values[k]));
+            auto resc = instc.value<bool>();
+            res       = res & resc;
+          }
           auto [it, _] = results_lemmas.emplace(t, true);
           if (res)
           {
             ++score;
             if (values[k] == expected)
             {
-              ++score_mul;
+              ++score_expected;
             }
           }
           else if (it->second)
@@ -276,7 +323,7 @@ AbstractionModule::score_lemmas(Kind k) const
         }
       }
     }
-    assert(score_mul == max * max);
+    assert(score_expected == max * max);
     int64_t diff = final_score - prev_final_score;
     std::cout << lem->kind() << ": " << score << "/" << max_score
               << " (final: " << final_score << ", diff: " << diff << ", "
