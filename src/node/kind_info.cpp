@@ -65,13 +65,6 @@ constexpr KindInfo::KindInfo()
   init(Kind::BV_EXTRACT, 1, 2, "BV_EXTRACT", "extract");
   init(Kind::BV_INC, 1, 0, "BV_INC", "bvinc");
   init(Kind::BV_MUL, 2, 0, "BV_MUL", "bvmul", KindInfo::LEFT_ASSOC, true);
-  init(Kind::BV_MUL_NO_ABSTR,
-       2,
-       0,
-       "BV_MUL_NO_ABSTR",
-       "bvmul",
-       KindInfo::LEFT_ASSOC,
-       true);
   init(Kind::BV_NAND, 2, 0, "BV_NAND", "bvnand", KindInfo::NONE, true);
   init(Kind::BV_NEG, 1, 0, "BV_NEG", "bvneg");
   init(Kind::BV_NEGO, 1, 0, "BV_NEGO", "bvnego");

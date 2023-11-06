@@ -380,7 +380,6 @@ Printer::print(std::ostream& os,
         case Kind::BV_DEC:
         case Kind::BV_INC:
         case Kind::BV_MUL:
-        case Kind::BV_MUL_NO_ABSTR:
         case Kind::BV_NAND:
         case Kind::BV_NEG:
         case Kind::BV_NEGO:
