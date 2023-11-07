@@ -17,7 +17,7 @@
 namespace bzla::bv {
 
 void
-AigBitblaster::bitblast(const Node& t, abstraction::AbstractionModule* am)
+AigBitblaster::bitblast(const Node& t)
 {
   using namespace node;
 
@@ -31,7 +31,7 @@ AigBitblaster::bitblast(const Node& t, abstraction::AbstractionModule* am)
     if (it == d_bitblaster_cache.end())
     {
       d_bitblaster_cache.emplace(cur, bitblast::AigBitblaster::Bits());
-      if (!BvSolver::is_leaf(cur) && (am == nullptr || !am->abstract(cur)))
+      if (!BvSolver::is_leaf(cur))
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
@@ -41,12 +41,6 @@ AigBitblaster::bitblast(const Node& t, abstraction::AbstractionModule* am)
     {
       const Type& type = cur.type();
       assert(type.is_bool() || type.is_bv());
-
-      if (am != nullptr && am->abstract(cur))
-      {
-        am->register_abstraction(cur);
-        goto BITBLAST_CONSTANT;
-      }
 
       switch (cur.kind())
       {
@@ -77,7 +71,6 @@ AigBitblaster::bitblast(const Node& t, abstraction::AbstractionModule* am)
         case Kind::APPLY:
         case Kind::CONSTANT:
           assert(BvSolver::is_leaf(cur));
-        BITBLAST_CONSTANT:
           it->second = type.is_bool()
                            ? d_bitblaster.bv_constant(1)
                            : d_bitblaster.bv_constant(type.bv_size());

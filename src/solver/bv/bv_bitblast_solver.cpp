@@ -16,7 +16,6 @@
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "sat/sat_solver_factory.h"
-#include "solver/bv/abstraction_module.h"
 #include "solver/bv/bv_solver.h"
 #include "solving_context.h"
 
@@ -57,9 +56,6 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
       d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
       d_last_result(Result::UNKNOWN),
-      d_am(env.options().bv_abstraction()
-               ? new abstraction::AbstractionModule(env, state)
-               : nullptr),
       d_stats(env.statistics(), "solver::bv::bitblast::")
 {
   d_sat_solver.reset(sat::new_sat_solver(env.options().sat_solver()));
@@ -101,12 +97,6 @@ BvBitblastSolver::solve()
   util::Timer timer(d_stats.time_sat);
   d_last_result = d_sat_solver->solve();
 
-  // Check bit-vector abstractions
-  if (d_last_result == Result::SAT && d_am != nullptr)
-  {
-    d_am->check();
-  }
-
   return d_last_result;
 }
 
@@ -132,7 +122,7 @@ BvBitblastSolver::register_assertion(const Node& assertion,
 
   {
     util::Timer timer(d_stats.time_bitblast);
-    d_bitblaster.bitblast(assertion, d_am.get());
+    d_bitblaster.bitblast(assertion);
   }
 
   // Update AIG statistics
@@ -142,7 +132,7 @@ BvBitblastSolver::register_assertion(const Node& assertion,
 Node
 BvBitblastSolver::value(const Node& term)
 {
-  assert(BvSolver::is_leaf(term) || is_abstraction(term));
+  assert(BvSolver::is_leaf(term));
   assert(term.type().is_bool() || term.type().is_bv());
 
   const auto& bits = d_bitblaster.bits(term);
@@ -183,16 +173,6 @@ BvBitblastSolver::unsat_core(std::vector<Node>& core) const
       core.push_back(assumption);
     }
   }
-}
-
-bool
-BvBitblastSolver::is_abstraction(const Node& node) const
-{
-  if (d_am == nullptr)
-  {
-    return false;
-  }
-  return d_am->abstract(node);
 }
 
 /* --- BvBitblastSolver private --------------------------------------------- */

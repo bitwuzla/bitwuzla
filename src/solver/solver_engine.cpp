@@ -13,6 +13,7 @@
 #include "env.h"
 #include "printer/printer.h"
 #include "rewrite/evaluator.h"
+#include "solver/bv/abstraction_module.h"
 #include "solving_context.h"
 #include "util/resources.h"
 
@@ -252,15 +253,18 @@ SolverEngine::process_assertion(const Node& assertion,
                                 bool top_level,
                                 bool is_lemma)
 {
+  auto am         = d_bv_solver.abstraction_module();
+  Node _assertion = am == nullptr ? assertion : am->process(assertion);
+
   // Send assertion to bit-vector solver.
-  auto [it, inserted] = d_register_assertion_cache.insert(assertion);
+  auto [it, inserted] = d_register_assertion_cache.insert(_assertion);
   if (inserted)
   {
-    Log(2) << "register assertion (top: " << top_level << "): " << assertion;
-    d_bv_solver.register_assertion(assertion, top_level, is_lemma);
-    d_quant_solver.register_assertion(assertion);
+    Log(2) << "register assertion (top: " << top_level << "): " << _assertion;
+    d_bv_solver.register_assertion(_assertion, top_level, is_lemma);
+    d_quant_solver.register_assertion(_assertion);
   }
-  process_term(assertion);
+  process_term(_assertion);
 }
 
 void
@@ -268,6 +272,7 @@ SolverEngine::process_term(const Node& term)
 {
   util::Timer timer(d_stats.time_register_term);
   node::node_ref_vector visit{term};
+  auto am = d_bv_solver.abstraction_module();
   do
   {
     const Node& cur = visit.back();
@@ -287,6 +292,11 @@ SolverEngine::process_term(const Node& term)
         Log(2) << "register function term: " << cur;
         d_fun_solver.register_term(cur);
         d_new_terms_registered = true;
+        if (am != nullptr && am->is_abstraction(cur))
+        {
+          Log(2) << "register abstraction term: " << cur;
+          am->register_abstraction(cur);
+        }
       }
       else if (quant::QuantSolver::is_theory_leaf(cur))
       {
@@ -343,7 +353,7 @@ SolverEngine::_value(const Node& term)
       // assignments.
       if (d_in_solving_mode)
       {
-        if (bv::BvSolver::is_leaf(cur) || d_bv_solver.is_abstraction(cur))
+        if (bv::BvSolver::is_leaf(cur))
         {
           continue;
         }
@@ -437,12 +447,6 @@ SolverEngine::_value(const Node& term)
         }
       }
 
-      // Treat bit-vector abstractions as bit-vector constants.
-      if (d_in_solving_mode && d_bv_solver.is_abstraction(cur))
-      {
-        goto VALUE_CONSTANT;
-      }
-
       switch (k)
       {
         case Kind::VALUE: value = cur; break;
@@ -454,7 +458,6 @@ SolverEngine::_value(const Node& term)
           [[fallthrough]];
 
         case Kind::CONSTANT: {
-        VALUE_CONSTANT:
           const Type& type = cur.type();
           if (type.is_bool() || type.is_bv())
           {

@@ -25,9 +25,6 @@
 namespace bzla::bv {
 
 class BvSolver;
-namespace abstraction {
-class AbstractionModule;
-}
 
 class BvBitblastSolver : public Solver, public BvSolverInterface
 {
@@ -53,9 +50,6 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   /** Get statistics. */
   const auto& statistics() const { return d_stats; }
 
-  /** Return whether node is a bit-vector abstraction. */
-  bool is_abstraction(const Node& node) const;
-
  private:
   /** Update AIG and CNF statistics. */
   void update_statistics();
@@ -79,8 +73,6 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   std::unique_ptr<BitblastSatSolver> d_bitblast_sat_solver;
   /** Result of last solve() call. */
   Result d_last_result;
-  /** Bit-vector abstraction module. */
-  std::unique_ptr<abstraction::AbstractionModule> d_am;
 
   struct Statistics
   {

@@ -15,6 +15,7 @@
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
+#include "solver/bv/abstraction_module.h"
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solving_context.h"
 
@@ -56,6 +57,9 @@ BvSolver::BvSolver(Env& env, SolverState& state)
       d_prop_solver(env, state, d_bitblast_solver),
       d_cur_solver(env.options().bv_solver()),
       d_solver_mode(env.options().bv_solver()),
+      d_am(env.options().bv_abstraction()
+               ? new abstraction::AbstractionModule(env, state)
+               : nullptr),
       d_stats(env.statistics())
 {
 }
@@ -112,13 +116,20 @@ BvSolver::solve()
       }
       break;
   }
+
+  // Check bit-vector abstractions
+  if (d_sat_state == Result::SAT && d_am != nullptr)
+  {
+    d_am->check();
+  }
+
   return d_sat_state;
 }
 
 Node
 BvSolver::value(const Node& term)
 {
-  assert(is_leaf(term) || is_abstraction(term));
+  assert(is_leaf(term));
   assert(term.type().is_bool() || term.type().is_bv());
   if (d_cur_solver == option::BvSolver::BITBLAST)
   {
@@ -133,16 +144,24 @@ BvSolver::unsat_core(std::vector<Node>& core) const
 {
   if (d_cur_solver == option::BvSolver::BITBLAST)
   {
-    return d_bitblast_solver.unsat_core(core);
+    d_bitblast_solver.unsat_core(core);
   }
-  assert(d_cur_solver == option::BvSolver::PROP);
-  return d_prop_solver.unsat_core(core);
-}
-
-bool
-BvSolver::is_abstraction(const Node& node) const
-{
-  return d_bitblast_solver.is_abstraction(node);
+  else
+  {
+    assert(d_cur_solver == option::BvSolver::PROP);
+    d_prop_solver.unsat_core(core);
+  }
+  // Post-process core to replace abstracted assertions with original ones.
+  if (d_am != nullptr)
+  {
+    for (size_t i = 0, size = core.size(); i < size; ++i)
+    {
+      if (d_am->is_processed(core[i]))
+      {
+        core[i] = d_am->abstracted_term(core[i]);
+      }
+    }
+  }
 }
 
 /* --- BvBitblastSolver private --------------------------------------------- */

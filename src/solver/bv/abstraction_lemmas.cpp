@@ -804,6 +804,7 @@ Lemma<LemmaKind::UDIV_REF22>::instance(const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {
+  (void) s;
   // (not (bvult x (bvshl x (bvlshr t (bvshl t #b0001)))))
   NodeManager& nm = NodeManager::get();
   Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -953,6 +954,7 @@ Lemma<LemmaKind::UDIV_REF31>::instance(const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {
+  (void) s;
   // (not (= x (bvadd t (bvadd #b0001 (bvshl #b0001 x)))))
   NodeManager& nm = NodeManager::get();
   Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -1016,6 +1018,7 @@ Lemma<LemmaKind::UDIV_REF35>::instance(const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {
+  (void) s;
   // (not (= x (bvsub #b0001 (bvshl x (bvadd x t)))))
   NodeManager& nm = NodeManager::get();
   Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -1095,6 +1098,7 @@ Lemma<LemmaKind::UREM_REF2>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
 {
+  (void) s;
   //  UREM_REF2,   // (=> (= x #b0000) (= t #b0000))
   NodeManager& nm = NodeManager::get();
   Node zero       = nm.mk_value(BitVector::mk_zero(x.type().bv_size()));
@@ -1150,6 +1154,7 @@ Lemma<LemmaKind::UREM_REF6>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
 {
+  (void) x;
   //  UREM_REF6,   // (bvuge (bvnot (bvneg s)) t)
   NodeManager& nm = NodeManager::get();
   return nm.mk_node(
@@ -1243,6 +1248,7 @@ Lemma<LemmaKind::UREM_REF12>::instance(const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {
+  (void) s;
   // UREM_REF12,  // (not (= x (bvor (bvneg x) (bvneg (bvnot t)))))
   NodeManager& nm = NodeManager::get();
   return nm.mk_node(
