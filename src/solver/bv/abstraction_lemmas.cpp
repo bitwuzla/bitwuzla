@@ -74,6 +74,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::UDIV_REF36: os << "UDIV_REF36"; break;
     case LemmaKind::UDIV_REF37: os << "UDIV_REF37"; break;
     case LemmaKind::UDIV_REF38: os << "UDIV_REF38"; break;
+    case LemmaKind::UDIV_VALUE: os << "UDIV_VALUE"; break;
 
     case LemmaKind::UREM_REF1: os << "UREM_REF1"; break;
     case LemmaKind::UREM_REF2: os << "UREM_REF2"; break;
@@ -89,6 +90,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::UREM_REF12: os << "UREM_REF12"; break;
     case LemmaKind::UREM_REF13: os << "UREM_REF13"; break;
     case LemmaKind::UREM_REF14: os << "UREM_REF14"; break;
+    case LemmaKind::UREM_VALUE: os << "UREM_VALUE"; break;
   }
   return os;
 }
@@ -505,7 +507,6 @@ Lemma<LemmaKind::UDIV_REF3>::instance(const Node& x,
   Node zero       = nm.mk_value(BitVector::mk_zero(x.type().bv_size()));
   return nm.mk_node(
       Kind::IMPLIES,
-
       {nm.mk_node(Kind::EQUAL, {s, zero}), nm.mk_node(Kind::EQUAL, {t, ones})}
 
   );
@@ -521,7 +522,6 @@ Lemma<LemmaKind::UDIV_REF4>::instance(const Node& x,
   NodeManager& nm = NodeManager::get();
   Node zero       = nm.mk_value(BitVector::mk_zero(x.type().bv_size()));
   return nm.mk_node(Kind::IMPLIES,
-
                     {nm.mk_node(Kind::AND,
                                 {nm.mk_node(Kind::EQUAL, {x, zero}),
                                  nm.mk_node(Kind::DISTINCT, {s, zero})}),
@@ -572,13 +572,13 @@ Lemma<LemmaKind::UDIV_REF7>::instance(const Node& x,
   // (not (bvult x (bvneg (bvand (bvneg s) (bvneg t)))))
   NodeManager& nm = NodeManager::get();
   return nm.mk_node(Kind::BV_UGE,
-                    {nm.mk_node(Kind::BV_NEG,
+                    {x,
+                     nm.mk_node(Kind::BV_NEG,
                                 {nm.mk_node(Kind::BV_AND,
                                             {
                                                 nm.mk_node(Kind::BV_NEG, {s}),
                                                 nm.mk_node(Kind::BV_NEG, {t}),
-                                            })}),
-                     nm.mk_node(Kind::BV_NEG, {t})});
+                                            })})});
 }
 
 template <>

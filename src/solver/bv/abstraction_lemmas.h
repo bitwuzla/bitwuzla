@@ -73,6 +73,7 @@ enum class LemmaKind
   UDIV_REF36,  // (not (bvult t (bvlshr x (bvsub s #b0001))))
   UDIV_REF37,  // (not (bvult (bvsub s #b0001) (bvlshr x t)))
   UDIV_REF38,  // (not (= x (bvsub #b0001 (bvshl x (bvsub x t)))))
+  UDIV_VALUE,
 
   UREM_REF1,   // (=> (distinct s #b0000) (bvule t s))
   UREM_REF2,   // (=> (= x #b0000) (= t #b0000))
@@ -88,6 +89,7 @@ enum class LemmaKind
   UREM_REF12,  // (not (= x (bvor (bvneg x) (bvneg (bvnot t)))))
   UREM_REF13,  // (not (bvult (bvadd x (bvneg s)) t))
   UREM_REF14,  // (not (bvult (bvxor (bvneg s) (bvor x s)) t))
+  UREM_VALUE
 };
 
 std::ostream& operator<<(std::ostream& os, LemmaKind kind);
