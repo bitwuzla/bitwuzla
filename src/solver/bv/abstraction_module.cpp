@@ -239,6 +239,8 @@ AbstractionModule::add_abstraction(const Node& node, const Node& abstr)
   assert(d_abstractions.find(node) == d_abstractions.end());
   d_abstractions.emplace(node, abstr);
   d_abstractions_rev.emplace(abstr, node);
+  ++d_stats.num_terms;
+  d_stats.terms << node.kind();
 }
 
 const Node&
@@ -306,6 +308,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
       d_solver_state.lemma(lemma);
       added_lemma = true;
       d_stats.lemmas << lem->kind();
+      ++d_stats.num_lemmas;
       break;
     }
     if (KindInfo::is_commutative(kind))
@@ -319,6 +322,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
         d_solver_state.lemma(lemma);
         added_lemma = true;
         d_stats.lemmas << lem->kind();
+        ++d_stats.num_lemmas;
         break;
       }
     }
@@ -350,6 +354,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
                              nm.mk_node(Kind::EQUAL, {t, val_expected})});
     d_solver_state.lemma(lemma);
     d_stats.lemmas << lk;
+    ++d_stats.num_lemmas;
   }
 }
 
@@ -456,8 +461,10 @@ AbstractionModule::score_lemmas(Kind kind) const
 
 AbstractionModule::Statistics::Statistics(util::Statistics& stats,
                                           const std::string& prefix)
-    : num_abstractions(stats.new_stat<uint64_t>(prefix + "num_abstractions")),
+    : num_terms(stats.new_stat<uint64_t>(prefix + "terms::total")),
+      num_lemmas(stats.new_stat<uint64_t>(prefix + "lemmas::total")),
       num_checks(stats.new_stat<uint64_t>(prefix + "num_checks")),
+      terms(stats.new_stat<util::HistogramStatistic>(prefix + "terms")),
       lemmas(stats.new_stat<util::HistogramStatistic>(prefix + "lemmas")),
       time_check(stats.new_stat<util::TimerStatistic>(prefix + "time_check"))
 {
