@@ -33,15 +33,6 @@ SymbolTable::SymbolTable()
   init_core_symbols();
 }
 
-SymbolTable::~SymbolTable()
-{
-  for (auto& p : d_table)
-  {
-    assert(p.second);
-    delete p.second;
-  }
-}
-
 bool
 SymbolTable::Node::has_symbol() const
 {
@@ -61,11 +52,12 @@ SymbolTable::insert(Token token,
 void
 SymbolTable::insert(Node* node)
 {
-  auto [it, inserted] = d_table.emplace(node->d_symbol, node);
+  std::shared_ptr<Node> n(node);
+  auto [it, inserted] = d_table.emplace(node->d_symbol, n);
   if (!inserted)
   {
     node->d_next = it->second;
-    it->second   = node;
+    it->second = n;
   }
 }
 
@@ -80,10 +72,9 @@ SymbolTable::remove(const std::string& symbol)
 {
   auto it                   = d_table.find(symbol);
   assert(it != d_table.end());
-  Node* n = it->second;
+  std::shared_ptr<Node> n = it->second;
   assert(n->d_symbol == symbol);
   it->second = n->d_next;
-  delete n;
   if (!it->second)
   {
     d_table.erase(it);
@@ -99,9 +90,8 @@ SymbolTable::pop_level(uint64_t assertion_level)
     assert(p.second);
     while (p.second && p.second->d_assertion_level >= assertion_level)
     {
-      Node* n  = p.second;
+      std::shared_ptr<Node> n = p.second;
       p.second = n->d_next;
-      delete n;
     }
     if (!p.second)
     {
@@ -122,8 +112,8 @@ SymbolTable::find(const std::string& symbol) const
   {
     return nullptr;
   }
-  assert(it->second);
-  return it->second;
+  assert(it->second.get());
+  return it->second.get();
 }
 
 /* SymbolTable private ------------------------------------------------------ */
@@ -410,7 +400,7 @@ SymbolTable::print() const
   {
     assert(!p.first.empty());
     std::cout << "'" << p.first << "': ";
-    for (Node* n = p.second; n; n = n->d_next)
+    for (Node* n = p.second.get(); n; n = n->d_next.get())
     {
       std::cout << " (" << n->d_symbol << ", " << n->d_assertion_level << ")";
     }

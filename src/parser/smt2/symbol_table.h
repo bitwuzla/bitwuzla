@@ -58,13 +58,11 @@ class SymbolTable
      * The next node in the shadow chain. First node is current declaration of
      * symbol, next is the declaration it shadows.
      */
-    Node* d_next    = nullptr;
+    std::shared_ptr<Node> d_next;
   };
 
   /** Constructor. */
   SymbolTable();
-  /** Destructor. */
-  ~SymbolTable();
 
   /**
    * Find a given symbol in the symbol table.
@@ -163,7 +161,7 @@ class SymbolTable
    * where the first node is the currently declared symbol, and a shadowed
    * symbol is linked via Node::d_next.
    */
-  std::unordered_map<std::string, Node*, SymbolHash, SymbolEqual> d_table;
+  std::unordered_map<std::string, std::shared_ptr<Node>, SymbolHash, SymbolEqual> d_table;
 };
 
 }  // namespace parser::smt2
