@@ -59,6 +59,8 @@ tests_smt2 = [
   ['parser/issue66.smt2'],
   ['parser/let.smt2'],
   ['parser/regmismatch.smt2'],
+  ['parser/reset.smt2'],
+  ['parser/reset-assertions.smt2'],
   ['parser/unsupported_opt_attr.smt2'],
   ['parser/smt2perr000.smt2'],
   ['parser/smt2perr001.smt2'],
