@@ -29,21 +29,13 @@ SymbolTable::SymbolTable() { init(); }
 
 SymbolTable::~SymbolTable()
 {
-  for (auto& p : d_table)
-  {
-    assert(p.second);
-    delete p.second;
-  }
+  release();
 }
 
 void
 SymbolTable::reset()
 {
-  for (auto& p : d_table)
-  {
-    assert(p.second);
-    delete p.second;
-  }
+  release();
   d_table.clear();
   init();
 }
@@ -182,6 +174,22 @@ SymbolTable::init()
   init_commands();
   init_keywords();
   init_core_symbols();
+}
+
+void
+SymbolTable::release()
+{
+  for (auto& p : d_table)
+  {
+    assert(p.second);
+    Node* n = p.second;
+    do
+    {
+      Node* d = n;
+      n       = n->d_next;
+      delete d;
+    } while (n);
+  }
 }
 
 void

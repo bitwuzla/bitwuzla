@@ -155,6 +155,8 @@ class SymbolTable
 
   /** Initialize symbol table (insert reserved symbols). */
   void init();
+  /** Release symbol table. */
+  void release();
 
   /** Insert symbol node for given token. */
   void insert(Token token);
