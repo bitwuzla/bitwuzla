@@ -186,7 +186,7 @@ class BitblasterInterface
       size_t shift_bit  = b.size() - 1 - i;
       assert(shift_step < size);
 
-      // Perform left right by `shift_step` bits.
+      // Perform right shift by `shift_step` bits.
       for (size_t j = 0, k = size - 1; j < size - shift_step; ++j, --k)
       {
         shift_result[k] = d_bit_mgr.mk_ite(
@@ -229,7 +229,7 @@ class BitblasterInterface
       size_t shift_bit  = b.size() - 1 - i;
       assert(shift_step < size);
 
-      // Perform left right by `shift_step` bits.
+      // Perform right shift by `shift_step` bits.
       for (size_t j = 0, k = size - 1; j < size - shift_step; ++j, --k)
       {
         shift_result[k] = d_bit_mgr.mk_ite(
