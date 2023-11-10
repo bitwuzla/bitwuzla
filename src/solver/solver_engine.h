@@ -31,6 +31,10 @@ namespace bzla {
 class SolvingContext;
 class Env;
 
+namespace bv::abstraction {
+class AbstractionModule;
+}
+
 class ComputeValueException : std::exception
 {
  public:
@@ -48,6 +52,7 @@ class SolverEngine
 
  public:
   SolverEngine(SolvingContext& context);
+  ~SolverEngine();
 
   /**
    * Solve current set of assertions.
@@ -157,6 +162,7 @@ class SolverEngine
     uint64_t& num_lemmas_fp;
     uint64_t& num_lemmas_fun;
     uint64_t& num_lemmas_quant;
+    uint64_t& num_lemmas_abstr;
     util::TimerStatistic& time_register_term;
     util::TimerStatistic& time_solve;
   } d_stats;
@@ -175,6 +181,9 @@ class SolverEngine
   fun::FunSolver d_fun_solver;
   array::ArraySolver d_array_solver;
   quant::QuantSolver d_quant_solver;
+
+  /** Bit-vector abstraction module. */
+  std::unique_ptr<bv::abstraction::AbstractionModule> d_am;
 };
 
 }  // namespace bzla

@@ -40,9 +40,15 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_fp_solver(context.env(), d_solver_state),
       d_fun_solver(context.env(), d_solver_state),
       d_array_solver(context.env(), d_solver_state),
-      d_quant_solver(context.env(), d_solver_state)
+      d_quant_solver(context.env(), d_solver_state),
+      d_am(context.env().options().bv_abstraction()
+               ? new bv::abstraction::AbstractionModule(context.env(),
+                                                        d_solver_state)
+               : nullptr)
 {
 }
+
+SolverEngine::~SolverEngine() {}
 
 Result
 SolverEngine::solve()
@@ -79,10 +85,6 @@ SolverEngine::solve()
     {
       break;
     }
-    if (!d_lemmas.empty())
-    {
-      continue;
-    }
     d_fp_solver.check();
     if (!d_lemmas.empty())
     {
@@ -95,12 +97,22 @@ SolverEngine::solve()
       d_stats.num_lemmas_array += d_lemmas.size();
       continue;
     }
+    if (d_am != nullptr)
+    {
+      d_am->check();
+    }
+    if (!d_lemmas.empty())
+    {
+      d_stats.num_lemmas_abstr += d_lemmas.size();
+      continue;
+    }
     d_fun_solver.check();
     if (!d_lemmas.empty())
     {
       d_stats.num_lemmas_fun += d_lemmas.size();
       continue;
     }
+
     bool quant_done = d_quant_solver.check();
     if (!quant_done)
     {
@@ -142,6 +154,17 @@ SolverEngine::unsat_core(std::vector<Node>& core) const
 {
   assert(d_sat_state == Result::UNSAT);
   d_bv_solver.unsat_core(core);
+  // Post-process core to replace abstracted assertions with original ones.
+  if (d_am != nullptr)
+  {
+    for (size_t i = 0, size = core.size(); i < size; ++i)
+    {
+      if (d_am->is_processed(core[i]))
+      {
+        core[i] = d_am->abstracted_term(core[i]);
+      }
+    }
+  }
 }
 
 void
@@ -253,8 +276,7 @@ SolverEngine::process_assertion(const Node& assertion,
                                 bool top_level,
                                 bool is_lemma)
 {
-  auto am         = d_bv_solver.abstraction_module();
-  Node _assertion = am == nullptr ? assertion : am->process(assertion);
+  Node _assertion = d_am == nullptr ? assertion : d_am->process(assertion);
 
   // Send assertion to bit-vector solver.
   auto [it, inserted] = d_register_assertion_cache.insert(_assertion);
@@ -272,7 +294,6 @@ SolverEngine::process_term(const Node& term)
 {
   util::Timer timer(d_stats.time_register_term);
   node::node_ref_vector visit{term};
-  auto am = d_bv_solver.abstraction_module();
   do
   {
     const Node& cur = visit.back();
@@ -292,10 +313,10 @@ SolverEngine::process_term(const Node& term)
         Log(2) << "register function term: " << cur;
         d_fun_solver.register_term(cur);
         d_new_terms_registered = true;
-        if (am != nullptr && am->is_abstraction(cur))
+        if (d_am != nullptr && d_am->is_abstraction(cur))
         {
           Log(2) << "register abstraction term: " << cur;
-          am->register_abstraction(cur);
+          d_am->register_abstraction(cur);
         }
       }
       else if (quant::QuantSolver::is_theory_leaf(cur))
@@ -777,6 +798,7 @@ SolverEngine::Statistics::Statistics(util::Statistics& stats,
       num_lemmas_fp(stats.new_stat<uint64_t>(prefix + "lemmas_fp")),
       num_lemmas_fun(stats.new_stat<uint64_t>(prefix + "lemmas_fun")),
       num_lemmas_quant(stats.new_stat<uint64_t>(prefix + "lemmas_quant")),
+      num_lemmas_abstr(stats.new_stat<uint64_t>(prefix + "lemmas_abstr")),
       time_register_term(
           stats.new_stat<util::TimerStatistic>(prefix + "time_register_term")),
       time_solve(stats.new_stat<util::TimerStatistic>(prefix + "time_solve"))

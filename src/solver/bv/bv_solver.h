@@ -20,10 +20,6 @@
 
 namespace bzla::bv {
 
-namespace abstraction {
-class AbstractionModule;
-}
-
 class BvSolver : public Solver, public BvSolverInterface
 {
  public:
@@ -62,8 +58,6 @@ class BvSolver : public Solver, public BvSolverInterface
 
   option::BvSolver cur_solver() const { return d_cur_solver; }
 
-  abstraction::AbstractionModule* abstraction_module() { return d_am.get(); }
-
  private:
   /** Result of the last check() call. */
   Result d_sat_state = Result::UNKNOWN;
@@ -83,9 +77,6 @@ class BvSolver : public Solver, public BvSolverInterface
    * solver to send registered terms.
    */
   const option::BvSolver d_solver_mode;
-
-  /** Bit-vector abstraction module. */
-  std::unique_ptr<abstraction::AbstractionModule> d_am;
 
   struct Statistics
   {
