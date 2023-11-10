@@ -1,14 +1,15 @@
 (set-logic QF_BV)
 (set-option :global-declarations true)
-(set-option :produce-models true)
 (declare-const x (_ BitVec 3))
 (assert (= x #b010))
-(check-sat) ; expect sat
+(set-info :status sat)
+(check-sat)
 (assert (= x #b001))
-(check-sat) ; expect unsat
+(set-info :status unsat)
+(check-sat)
 
 (reset-assertions)
 
 (assert (= x #b011))
-(check-sat) ; expect sat
-(get-model)
+(set-info :status sat)
+(check-sat)

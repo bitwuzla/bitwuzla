@@ -808,7 +808,7 @@ Parser::parse_command_reset()
     return false;
   }
   d_bitwuzla.reset();
-  d_table   = SymbolTable();
+  d_table.reset();
   d_options = d_options_orig;
   print_success();
   return true;
@@ -826,7 +826,7 @@ Parser::parse_command_reset_assertions()
   d_bitwuzla.reset();
   if (!d_global_decl)
   {
-    d_table = SymbolTable();
+    d_table.reset();
   }
   print_success();
   return true;

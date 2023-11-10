@@ -25,13 +25,7 @@ SymbolTable::Node::Node(Token token,
 {
 }
 
-SymbolTable::SymbolTable()
-{
-  init_reserved_words();
-  init_commands();
-  init_keywords();
-  init_core_symbols();
-}
+SymbolTable::SymbolTable() { init(); }
 
 SymbolTable::~SymbolTable()
 {
@@ -40,6 +34,18 @@ SymbolTable::~SymbolTable()
     assert(p.second);
     delete p.second;
   }
+}
+
+void
+SymbolTable::reset()
+{
+  for (auto& p : d_table)
+  {
+    assert(p.second);
+    delete p.second;
+  }
+  d_table.clear();
+  init();
 }
 
 bool
@@ -167,6 +173,15 @@ SymbolTable::SymbolEqual::operator()(const std::string& lhs,
     return rhs.compare(1, rhs_max - 1, lhs) == 0;
   }
   return lhs == rhs;
+}
+
+void
+SymbolTable::init()
+{
+  init_reserved_words();
+  init_commands();
+  init_keywords();
+  init_core_symbols();
 }
 
 void

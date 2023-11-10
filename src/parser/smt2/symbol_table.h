@@ -66,6 +66,13 @@ class SymbolTable
   /** Destructor. */
   ~SymbolTable();
 
+  /** Disallow copy constructor and copy assignment . */
+  SymbolTable(const SymbolTable&)    = delete;
+  void operator=(const SymbolTable&) = delete;
+
+  /** Reset symbol table. */
+  void reset();
+
   /**
    * Find a given symbol in the symbol table.
    * Piped symbols are considered equal to their non-pided version, i.e.,
@@ -145,6 +152,9 @@ class SymbolTable
   {
     bool operator()(const std::string& lhs, const std::string& rhs) const;
   };
+
+  /** Initialize symbol table (insert reserved symbols). */
+  void init();
 
   /** Insert symbol node for given token. */
   void insert(Token token);
