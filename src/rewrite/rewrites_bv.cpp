@@ -3591,15 +3591,7 @@ Node
 RewriteRule<RewriteRuleKind::BV_USUBO_ELIM>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
-  const Node& sub = rewriter.mk_node(
-      Kind::BV_SUB,
-      {rewriter.mk_node(Kind::BV_ZERO_EXTEND, {node[0]}, {1}),
-       rewriter.mk_node(Kind::BV_ZERO_EXTEND, {node[1]}, {1})});
-  uint64_t size = sub.type().bv_size();
-  Node one      = NodeManager::get().mk_value(BitVector::mk_one(1));
-  return rewriter.mk_node(
-      Kind::EQUAL,
-      {rewriter.mk_node(Kind::BV_EXTRACT, {sub}, {size - 1, size - 1}), one});
+  return rewriter.mk_node(Kind::BV_ULT, {node[0], node[1]});
 }
 
 template <>
