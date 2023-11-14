@@ -75,6 +75,8 @@ class AbstractionModule
   /** Minimum size of bit-vector operators to abstract. */
   uint64_t d_minimum_size;
 
+  bool d_opt_eager_refine;
+
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);

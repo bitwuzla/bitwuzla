@@ -43,6 +43,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_rewriter(env.rewriter()),
       d_active_abstractions(state.backtrack_mgr()),
       d_minimum_size(env.options().bv_abstraction()),
+      d_opt_eager_refine(env.options().bv_abstraction_eager_refine()),
       d_stats(env.statistics(), "solver::bv::abstraction::")
 {
   auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
@@ -309,7 +310,10 @@ AbstractionModule::check_abstraction(const Node& abstr)
       added_lemma = true;
       d_stats.lemmas << lem->kind();
       ++d_stats.num_lemmas;
-      break;
+      if (!d_opt_eager_refine)
+      {
+        break;
+      }
     }
     if (KindInfo::is_commutative(kind))
     {
@@ -323,7 +327,10 @@ AbstractionModule::check_abstraction(const Node& abstr)
         added_lemma = true;
         d_stats.lemmas << lem->kind();
         ++d_stats.num_lemmas;
-        break;
+        if (!d_opt_eager_refine)
+        {
+          break;
+        }
       }
     }
   }

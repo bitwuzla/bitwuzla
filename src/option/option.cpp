@@ -265,6 +265,12 @@ Options::Options()
           UINT64_MAX,
           "enable bit-vector abstraction module for given minimum size",
           "bv-abstraction"),
+      bv_abstraction_eager_refine(
+          this,
+          Option::BV_ABSTRACTION_EAGER_REFINE,
+          false,
+          "add all violated bit-vector abstraction lemmas at once",
+          "bv-abstraction-eager"),
 
       // Preprocessing
       preprocess(
@@ -645,6 +651,8 @@ Options::data(Option opt)
     case Option::PROP_SEXT: return &prop_sext;
     case Option::PROP_NORMALIZE: return &prop_normalize;
     case Option::BV_ABSTRACTION: return &bv_abstraction;
+    case Option::BV_ABSTRACTION_EAGER_REFINE:
+      return &bv_abstraction_eager_refine;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

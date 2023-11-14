@@ -280,6 +280,18 @@ enum ENUM(Option)
    */
   EVALUE(BV_ABSTRACTION),
 
+  /*! **Bit-vector bitblasting solver: Abstraction module eager mode. **
+   *
+   * When enabled, eagerly adds violated refinement lemmas.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(BV_ABSTRACTION_EAGER_REFINE),
+
   /*! **Preprocessing**
    *
    * When enabled, applies all enabled preprocessing passes.

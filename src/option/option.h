@@ -48,7 +48,8 @@ enum class Option
   PROP_SEXT,                    // bool
   PROP_NORMALIZE,               // bool
 
-  BV_ABSTRACTION, // numeric
+  BV_ABSTRACTION,               // numeric
+  BV_ABSTRACTION_EAGER_REFINE,  // bool
 
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,                // bool
@@ -477,6 +478,7 @@ class Options
   OptionBool prop_normalize;
 
   OptionNumeric bv_abstraction;
+  OptionBool bv_abstraction_eager_refine;
 
   // Preprocessing
   OptionBool preprocess;

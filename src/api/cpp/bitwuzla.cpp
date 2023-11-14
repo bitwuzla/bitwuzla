@@ -85,6 +85,8 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::PROP_SEXT, bzla::option::Option::PROP_SEXT},
         {Option::PROP_NORMALIZE, bzla::option::Option::PROP_NORMALIZE},
         {Option::BV_ABSTRACTION, bzla::option::Option::BV_ABSTRACTION},
+        {Option::BV_ABSTRACTION_EAGER_REFINE,
+         bzla::option::Option::BV_ABSTRACTION_EAGER_REFINE},
         {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
 
         {Option::PREPROCESS, bzla::option::Option::PREPROCESS},
