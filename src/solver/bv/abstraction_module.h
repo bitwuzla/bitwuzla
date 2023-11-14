@@ -72,10 +72,15 @@ class AbstractionModule
   /** Stores enabled refinement lemmas based on kind. */
   std::unordered_map<node::Kind, std::vector<std::unique_ptr<AbstractionLemma>>>
       d_abstr_lemmas;
-  /** Minimum size of bit-vector operators to abstract. */
-  uint64_t d_minimum_size;
+  /** Maps the number of value instantiations per abstracted term. */
+  std::unordered_map<Node, uint64_t> d_value_insts;
 
+  /** Minimum size of bit-vector operators to abstract. */
+  uint64_t d_opt_minimum_size;
+  /** Eager lemma mode. */
   bool d_opt_eager_refine;
+  /** Value instantiation limit per abstraction. */
+  uint64_t d_opt_value_inst_limit;
 
   struct Statistics
   {

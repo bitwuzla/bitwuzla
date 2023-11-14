@@ -50,6 +50,7 @@ enum class Option
 
   BV_ABSTRACTION,               // numeric
   BV_ABSTRACTION_EAGER_REFINE,  // bool
+  BV_ABSTRACTION_VALUE_LIMIT,   // numeric
 
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,                // bool
@@ -479,6 +480,7 @@ class Options
 
   OptionNumeric bv_abstraction;
   OptionBool bv_abstraction_eager_refine;
+  OptionNumeric bv_abstraction_value_limit;
 
   // Preprocessing
   OptionBool preprocess;

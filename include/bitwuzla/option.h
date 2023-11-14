@@ -272,14 +272,16 @@ enum ENUM(Option)
 
   /*! **Bit-vector bitblasting solver: Abstraction module. **
    *
+   * Specifies at which size supported bit-vector operators should be
+   * abstracted.
+   *
    * Values:
-   *  * **1**: enable
+   *  * **>0**: enable
    *  * **0**: disable [**default**]
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(BV_ABSTRACTION),
-
   /*! **Bit-vector bitblasting solver: Abstraction module eager mode. **
    *
    * When enabled, eagerly adds violated refinement lemmas.
@@ -291,6 +293,19 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(BV_ABSTRACTION_EAGER_REFINE),
+  /*! **Bit-vector bitblasting solver: Abstraction module value instantiation
+   * limit. **
+   *
+   * Specifies the limit on the number of value instantiations per abstaction.
+   * If the limit is hit, we fall back to fully bit-blasting the specific term.
+   *
+   * Values:
+   *  * **>0**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(BV_ABSTRACTION_VALUE_LIMIT),
 
   /*! **Preprocessing**
    *

@@ -271,6 +271,14 @@ Options::Options()
           false,
           "add all violated bit-vector abstraction lemmas at once",
           "bv-abstraction-eager"),
+      bv_abstraction_value_limit(this,
+                                 Option::BV_ABSTRACTION_VALUE_LIMIT,
+                                 0,
+                                 0,
+                                 UINT64_MAX,
+                                 "value instantiation limit until "
+                                 "falling back to bit-blasting",
+                                 "bv-abstraction-value-limit"),
 
       // Preprocessing
       preprocess(
@@ -653,6 +661,7 @@ Options::data(Option opt)
     case Option::BV_ABSTRACTION: return &bv_abstraction;
     case Option::BV_ABSTRACTION_EAGER_REFINE:
       return &bv_abstraction_eager_refine;
+    case Option::BV_ABSTRACTION_VALUE_LIMIT: return &bv_abstraction_value_limit;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

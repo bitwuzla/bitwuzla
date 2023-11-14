@@ -42,8 +42,9 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_solver_state(state),
       d_rewriter(env.rewriter()),
       d_active_abstractions(state.backtrack_mgr()),
-      d_minimum_size(env.options().bv_abstraction()),
+      d_opt_minimum_size(env.options().bv_abstraction()),
       d_opt_eager_refine(env.options().bv_abstraction_eager_refine()),
+      d_opt_value_inst_limit(env.options().bv_abstraction_value_limit()),
       d_stats(env.statistics(), "solver::bv::abstraction::")
 {
   auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
@@ -221,7 +222,7 @@ AbstractionModule::abstract(const Node& node) const
 {
   Kind k = node.kind();
   return d_abstr_lemmas.find(k) != d_abstr_lemmas.end()
-         && node.type().bv_size() >= d_minimum_size;
+         && node.type().bv_size() >= d_opt_minimum_size;
 }
 
 const Node&
@@ -264,7 +265,7 @@ AbstractionModule::abstr_uf(const Node& node)
 void
 AbstractionModule::check_abstraction(const Node& abstr)
 {
-  Log(2) << "Check abstraction: " << abstr;
+  Log(2) << "check abstraction: " << abstr;
 
   auto ita = d_abstractions_rev.find(abstr);
   assert(ita != d_abstractions_rev.end());
@@ -285,6 +286,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
 
   if (val_t == val_expected)
   {
+    Log(2) << "skip: assignment correct";
     return;
   }
 
@@ -338,30 +340,45 @@ AbstractionModule::check_abstraction(const Node& abstr)
   // Inconsistent value, but no abstraction violated, add value-based lemma.
   if (!added_lemma)
   {
-    LemmaKind lk;
-    if (kind == Kind::BV_MUL)
+    auto& value_insts = d_value_insts[node];
+    if (d_opt_value_inst_limit == 0 || value_insts <= d_opt_value_inst_limit)
     {
-      lk = LemmaKind::MUL_VALUE;
-    }
-    else if (kind == Kind::BV_UDIV)
-    {
-      lk = LemmaKind::UDIV_VALUE;
+      LemmaKind lk;
+      if (kind == Kind::BV_MUL)
+      {
+        lk = LemmaKind::MUL_VALUE;
+      }
+      else if (kind == Kind::BV_UDIV)
+      {
+        lk = LemmaKind::UDIV_VALUE;
+      }
+      else
+      {
+        lk = LemmaKind::UREM_VALUE;
+      }
+      Log(2) << lk << " inconsistent";
+      Node lemma =
+          nm.mk_node(Kind::IMPLIES,
+                     {nm.mk_node(Kind::AND,
+                                 {
+                                     nm.mk_node(Kind::EQUAL, {x, val_x}),
+                                     nm.mk_node(Kind::EQUAL, {s, val_s}),
+                                 }),
+                      nm.mk_node(Kind::EQUAL, {t, val_expected})});
+      d_solver_state.lemma(lemma);
+      d_stats.lemmas << lk;
+      ++d_stats.num_lemmas;
+      ++value_insts;
     }
     else
     {
-      lk = LemmaKind::UREM_VALUE;
+      Node term  = nm.mk_node(kind, {x, s});
+      Node lemma = d_rewriter.rewrite(nm.mk_node(Kind::EQUAL, {t, term}));
+      // Make sure that lemma is rewritten before adding to the cache.
+      d_abstraction_cache.emplace(lemma, lemma);
+      d_solver_state.lemma(lemma);
+      d_stats.lemmas << LemmaKind::BITBLAST;
     }
-    Log(2) << lk << " inconsistent";
-    Node lemma = nm.mk_node(Kind::IMPLIES,
-                            {nm.mk_node(Kind::AND,
-                                        {
-                                            nm.mk_node(Kind::EQUAL, {x, val_x}),
-                                            nm.mk_node(Kind::EQUAL, {s, val_s}),
-                                        }),
-                             nm.mk_node(Kind::EQUAL, {t, val_expected})});
-    d_solver_state.lemma(lemma);
-    d_stats.lemmas << lk;
-    ++d_stats.num_lemmas;
   }
 }
 
