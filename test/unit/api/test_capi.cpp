@@ -2985,6 +2985,10 @@ TEST_F(TestCApi, parser2)
   const char *err_msg = bitwuzla_parser_parse(parser, true);
   ASSERT_NE(std::string(err_msg).find("undefined symbol 'x'"),
             std::string::npos);
+  bitwuzla_parser_delete(parser);
+  bitwuzla_options_delete(options);
+  fclose(infile);
+  std::remove(filename);
 }
 
 /* -------------------------------------------------------------------------- */
