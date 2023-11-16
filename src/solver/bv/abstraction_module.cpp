@@ -45,6 +45,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_opt_minimum_size(env.options().bv_abstraction()),
       d_opt_eager_refine(env.options().bv_abstraction_eager_refine()),
       d_opt_value_inst_limit(env.options().bv_abstraction_value_limit()),
+      d_opt_value_inst_only(env.options().bv_abstraction_value_only()),
       d_stats(env.statistics(), "solver::bv::abstraction::")
 {
   auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
@@ -297,34 +298,20 @@ AbstractionModule::check_abstraction(const Node& abstr)
   Log(2) << "val_s: " << val_s;
   Log(2) << "val_t: " << val_t;
   bool added_lemma = false;
-  auto it          = d_abstr_lemmas.find(kind);
-  assert(it != d_abstr_lemmas.end());
-  const auto& to_check = it->second;
-  for (const auto& lem : to_check)
+
+  if (!d_opt_value_inst_only)
   {
-    Node inst = d_rewriter.rewrite(lem->instance(val_x, val_s, val_t));
-    assert(inst.is_value());
-    if (!inst.value<bool>())
+    auto it = d_abstr_lemmas.find(kind);
+    assert(it != d_abstr_lemmas.end());
+    const auto& to_check = it->second;
+    for (const auto& lem : to_check)
     {
-      Log(2) << lem->kind() << " inconsistent";
-      Node lemma = lem->instance(x, s, t);
-      d_solver_state.lemma(lemma);
-      added_lemma = true;
-      d_stats.lemmas << lem->kind();
-      ++d_stats.num_lemmas;
-      if (!d_opt_eager_refine)
-      {
-        break;
-      }
-    }
-    if (KindInfo::is_commutative(kind))
-    {
-      inst = d_rewriter.rewrite(lem->instance(val_s, val_x, val_t));
+      Node inst = d_rewriter.rewrite(lem->instance(val_x, val_s, val_t));
       assert(inst.is_value());
       if (!inst.value<bool>())
       {
-        Log(2) << lem->kind() << " (comm.) inconsistent";
-        Node lemma = lem->instance(s, x, t);
+        Log(2) << lem->kind() << " inconsistent";
+        Node lemma = lem->instance(x, s, t);
         d_solver_state.lemma(lemma);
         added_lemma = true;
         d_stats.lemmas << lem->kind();
@@ -332,6 +319,24 @@ AbstractionModule::check_abstraction(const Node& abstr)
         if (!d_opt_eager_refine)
         {
           break;
+        }
+      }
+      if (KindInfo::is_commutative(kind))
+      {
+        inst = d_rewriter.rewrite(lem->instance(val_s, val_x, val_t));
+        assert(inst.is_value());
+        if (!inst.value<bool>())
+        {
+          Log(2) << lem->kind() << " (comm.) inconsistent";
+          Node lemma = lem->instance(s, x, t);
+          d_solver_state.lemma(lemma);
+          added_lemma = true;
+          d_stats.lemmas << lem->kind();
+          ++d_stats.num_lemmas;
+          if (!d_opt_eager_refine)
+          {
+            break;
+          }
         }
       }
     }

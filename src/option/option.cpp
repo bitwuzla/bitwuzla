@@ -279,6 +279,11 @@ Options::Options()
                                  "value instantiation limit until "
                                  "falling back to bit-blasting",
                                  "bv-abstraction-value-limit"),
+      bv_abstraction_value_only(this,
+                                Option::BV_ABSTRACTION_VALUE_ONLY,
+                                false,
+                                "only add value instantiations",
+                                "bv-abstraction-value-only"),
 
       // Preprocessing
       preprocess(
@@ -662,6 +667,7 @@ Options::data(Option opt)
     case Option::BV_ABSTRACTION_EAGER_REFINE:
       return &bv_abstraction_eager_refine;
     case Option::BV_ABSTRACTION_VALUE_LIMIT: return &bv_abstraction_value_limit;
+    case Option::BV_ABSTRACTION_VALUE_ONLY: return &bv_abstraction_value_only;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

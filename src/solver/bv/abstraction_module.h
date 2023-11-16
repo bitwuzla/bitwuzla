@@ -81,6 +81,8 @@ class AbstractionModule
   bool d_opt_eager_refine;
   /** Value instantiation limit per abstraction. */
   uint64_t d_opt_value_inst_limit;
+  /** Perform value instantiation only. */
+  bool d_opt_value_inst_only;
 
   struct Statistics
   {

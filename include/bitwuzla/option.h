@@ -306,6 +306,18 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(BV_ABSTRACTION_VALUE_LIMIT),
+  /*! **Bit-vector bitblasting solver: Abstraction module value instantiations
+   * only. **
+   *
+   * When enabled, only adds value instantiations.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(BV_ABSTRACTION_VALUE_ONLY),
 
   /*! **Preprocessing**
    *
