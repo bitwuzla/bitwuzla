@@ -14,6 +14,7 @@
 #include "backtrack/vector.h"
 #include "option/option.h"
 #include "solver/solver.h"
+#include "util/statistics.h"
 
 namespace bzla::fun {
 
@@ -95,6 +96,13 @@ class FunSolver : public Solver
 
   /** Function models constructed during check(). */
   std::unordered_map<Node, std::unordered_set<Apply, HashApply>> d_fun_models;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats, const std::string& prefix);
+    uint64_t& num_checks;
+    util::TimerStatistic& time_check;
+  } d_stats;
 };
 
 }  // namespace bzla::fun

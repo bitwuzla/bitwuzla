@@ -45,7 +45,8 @@ FunSolver::FunSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_applies(state.backtrack_mgr()),
       d_fun_equalities(state.backtrack_mgr()),
-      d_equalities(state.backtrack_mgr())
+      d_equalities(state.backtrack_mgr()),
+      d_stats(env.statistics(), "solver::fun::")
 {
 }
 
@@ -67,6 +68,9 @@ FunSolver::check()
   {
     unsupported("Equalities over uninterpreted sorts not yet supported.");
   }
+
+  util::Timer timer(d_stats.time_check);
+  ++d_stats.num_checks;
 
   // Do not cache size here since d_applies may grow while iterating.
   for (size_t i = 0; i < d_applies.size(); ++i)
@@ -198,6 +202,13 @@ FunSolver::add_function_congruence_lemma(const Node& a, const Node& b)
   Node lemma      = nm.mk_node(Kind::IMPLIES,
                                {utils::mk_nary(nm, Kind::AND, premise), conclusion});
   d_solver_state.lemma(lemma);
+}
+
+FunSolver::Statistics::Statistics(util::Statistics& stats,
+                                  const std::string& prefix)
+    : num_checks(stats.new_stat<uint64_t>(prefix + "num_checks")),
+      time_check(stats.new_stat<util::TimerStatistic>(prefix + "time_check"))
+{
 }
 
 /* --- Apply public --------------------------------------------------------- */
