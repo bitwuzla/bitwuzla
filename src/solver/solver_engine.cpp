@@ -793,12 +793,12 @@ SolverEngine::print_statistics()
 
 SolverEngine::Statistics::Statistics(util::Statistics& stats,
                                      const std::string& prefix)
-    : num_lemmas(stats.new_stat<uint64_t>(prefix + "lemmas")),
-      num_lemmas_array(stats.new_stat<uint64_t>(prefix + "lemmas_array")),
-      num_lemmas_fp(stats.new_stat<uint64_t>(prefix + "lemmas_fp")),
-      num_lemmas_fun(stats.new_stat<uint64_t>(prefix + "lemmas_fun")),
-      num_lemmas_quant(stats.new_stat<uint64_t>(prefix + "lemmas_quant")),
-      num_lemmas_abstr(stats.new_stat<uint64_t>(prefix + "lemmas_abstr")),
+    : num_lemmas(stats.new_stat<uint64_t>(prefix + "lemmas::total")),
+      num_lemmas_array(stats.new_stat<uint64_t>(prefix + "lemmas::array")),
+      num_lemmas_fp(stats.new_stat<uint64_t>(prefix + "lemmas::fp")),
+      num_lemmas_fun(stats.new_stat<uint64_t>(prefix + "lemmas::fun")),
+      num_lemmas_quant(stats.new_stat<uint64_t>(prefix + "lemmas::quant")),
+      num_lemmas_abstr(stats.new_stat<uint64_t>(prefix + "lemmas::abstr")),
       time_register_term(
           stats.new_stat<util::TimerStatistic>(prefix + "time_register_term")),
       time_solve(stats.new_stat<util::TimerStatistic>(prefix + "time_solve"))
