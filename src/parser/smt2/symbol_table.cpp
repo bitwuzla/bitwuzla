@@ -27,23 +27,11 @@ SymbolTable::Node::Node(Token token,
 
 SymbolTable::SymbolTable() { init(); }
 
-SymbolTable::~SymbolTable()
-{
-  for (auto& p : d_table)
-  {
-    assert(p.second);
-    delete p.second;
-  }
-}
+SymbolTable::~SymbolTable() {}
 
 void
 SymbolTable::reset()
 {
-  for (auto& p : d_table)
-  {
-    assert(p.second);
-    delete p.second;
-  }
   d_table.clear();
   init();
 }
@@ -59,7 +47,7 @@ SymbolTable::insert(Token token,
                     const std::string& symbol,
                     uint64_t assertion_level)
 {
-  Node* node          = new Node(token, symbol, assertion_level);
+  Node* node = new Node(token, symbol, assertion_level);
   insert(node);
   return node;
 }
@@ -67,11 +55,15 @@ SymbolTable::insert(Token token,
 void
 SymbolTable::insert(Node* node)
 {
-  auto [it, inserted] = d_table.emplace(node->d_symbol, node);
+  auto [it, inserted] = d_table.emplace(node->d_symbol, nullptr);
   if (!inserted)
   {
-    node->d_next = it->second;
-    it->second   = node;
+    node->d_next = std::move(it->second);
+    it->second.reset(node);
+  }
+  else
+  {
+    it->second.reset(node);
   }
 }
 
@@ -86,10 +78,8 @@ SymbolTable::remove(const std::string& symbol)
 {
   auto it                   = d_table.find(symbol);
   assert(it != d_table.end());
-  Node* n = it->second;
-  assert(n->d_symbol == symbol);
-  it->second = n->d_next;
-  delete n;
+  assert(it->second->d_symbol == symbol);
+  it->second = std::move(it->second->d_next);
   if (!it->second)
   {
     d_table.erase(it);
@@ -105,9 +95,7 @@ SymbolTable::pop_level(uint64_t assertion_level)
     assert(p.second);
     while (p.second && p.second->d_assertion_level >= assertion_level)
     {
-      Node* n  = p.second;
-      p.second = n->d_next;
-      delete n;
+      p.second = std::move(p.second->d_next);
     }
     if (!p.second)
     {
@@ -129,7 +117,7 @@ SymbolTable::find(const std::string& symbol) const
     return nullptr;
   }
   assert(it->second);
-  return it->second;
+  return it->second.get();
 }
 
 /* SymbolTable private ------------------------------------------------------ */
@@ -425,7 +413,7 @@ SymbolTable::print() const
   {
     assert(!p.first.empty());
     std::cout << "'" << p.first << "': ";
-    for (Node* n = p.second; n; n = n->d_next)
+    for (Node* n = p.second.get(); n; n = n->d_next.get())
     {
       std::cout << " (" << n->d_symbol << ", " << n->d_assertion_level << ")";
     }
