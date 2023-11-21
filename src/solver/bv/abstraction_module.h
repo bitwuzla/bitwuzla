@@ -52,6 +52,9 @@ class AbstractionModule
   /** Check assignment of abstraction and add lemma if needed. */
   void check_abstraction(const Node& node);
 
+  /** Send lemma but make sure not to abstract terms in it. */
+  void lemma_no_abstract(const Node& lemma, LemmaKind lk);
+
   /** Utility to compute score for lemma schema. */
   void score_lemmas(node::Kind k) const;
 

@@ -128,6 +128,13 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF12>());
   urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF13>());
   urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF14>());
+
+  // Enables incremental bit-blasting of equalities
+  // auto& equal_abstr_lemmas = d_abstr_lemmas[Kind::EQUAL];
+  // FIXME: make sure to not abstract equalities of lemmas
+
+  // Enables lazy bit-blasting
+  // auto& add_abstr_lemmas = d_abstr_lemmas[Kind::BV_ADD];
 }
 
 AbstractionModule::~AbstractionModule() {}
@@ -227,7 +234,8 @@ AbstractionModule::abstract(const Node& node) const
 {
   Kind k = node.kind();
   return d_abstr_lemmas.find(k) != d_abstr_lemmas.end()
-         && node.type().bv_size() >= d_opt_minimum_size;
+         && node[0].type().is_bv()
+         && node[0].type().bv_size() >= d_opt_minimum_size;
 }
 
 const Node&
@@ -253,7 +261,7 @@ AbstractionModule::add_abstraction(const Node& node, const Node& abstr)
 const Node&
 AbstractionModule::abstr_uf(const Node& node)
 {
-  Type bvt            = node.type();
+  Type bvt            = node[0].type();
   auto& map           = d_abstr_ufs[node.kind()];
   auto [it, inserted] = map.emplace(bvt, Node());
   if (inserted)
@@ -261,7 +269,7 @@ AbstractionModule::abstr_uf(const Node& node)
     std::stringstream ss;
     ss << node.kind() << "_" << bvt.bv_size();
     NodeManager& nm = NodeManager::get();
-    Type t          = nm.mk_fun_type({bvt, bvt, bvt});
+    Type t          = nm.mk_fun_type({bvt, bvt, node.type()});
     it->second      = nm.mk_const(t, ss.str());
   }
   return it->second;
@@ -277,8 +285,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
   const Node& node = ita->second;
 
   Kind kind = node.kind();
-  assert(kind == Kind::BV_MUL || kind == Kind::BV_UDIV
-         || kind == Kind::BV_UREM);
+  assert(d_abstr_lemmas.find(kind) != d_abstr_lemmas.end());
 
   NodeManager& nm   = NodeManager::get();
   const Node& x     = abstr[1];
@@ -350,7 +357,9 @@ AbstractionModule::check_abstraction(const Node& abstr)
   if (!added_lemma)
   {
     auto& value_insts = d_value_insts[node];
-    if (d_opt_value_inst_limit == 0 || value_insts <= d_opt_value_inst_limit)
+    if (kind != Kind::EQUAL
+        && (d_opt_value_inst_limit == 0
+            || value_insts <= d_opt_value_inst_limit))
     {
       LemmaKind lk;
       if (kind == Kind::BV_MUL)
@@ -381,14 +390,44 @@ AbstractionModule::check_abstraction(const Node& abstr)
     }
     else
     {
-      Node term  = nm.mk_node(kind, {x, s});
-      Node lemma = d_rewriter.rewrite(nm.mk_node(Kind::EQUAL, {t, term}));
-      // Make sure that lemma is rewritten before adding to the cache.
-      d_abstraction_cache.emplace(lemma, lemma);
-      d_solver_state.lemma(lemma);
-      d_stats.lemmas << LemmaKind::BITBLAST;
+      Node lemma;
+      // Incrementally bit-blast positive equalities.
+      if (kind == Kind::EQUAL && val_t.value<bool>())
+      {
+        const auto& bv_x = val_x.value<BitVector>();
+        const auto& bv_s = val_s.value<BitVector>();
+        auto bv_xor      = bv_x.bvxor(bv_s);
+
+        uint64_t lower = bv_xor.count_trailing_zeros();
+        uint64_t upper = bv_xor.ibvshr(lower).ibvnot().count_trailing_zeros();
+        // Bit-blast at most 32 bit for now.
+        upper = std::min(upper, 32ul) + lower - 1;
+
+        Node extr_x = nm.mk_node(Kind::BV_EXTRACT, {x}, {upper, lower});
+        Node extr_s = nm.mk_node(Kind::BV_EXTRACT, {s}, {upper, lower});
+        Node term   = nm.mk_node(kind, {extr_x, extr_s});
+        lemma       = nm.mk_node(Kind::IMPLIES, {t, term});
+      }
+      // Fully bit-blast abstracted term
+      else
+      {
+        Node term = nm.mk_node(kind, {x, s});
+        lemma     = nm.mk_node(Kind::EQUAL, {t, term});
+      }
+      lemma_no_abstract(lemma, LemmaKind::BITBLAST);
     }
   }
+}
+
+void
+AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
+{
+  // Make sure that lemma is rewritten before adding to the cache.
+  Node lem = d_rewriter.rewrite(lemma);
+  // Cache lemma so that we won't consider it for abstraction.
+  d_abstraction_cache.emplace(lem, lem);
+  d_stats.lemmas << lk;
+  d_solver_state.lemma(lem);
 }
 
 void
