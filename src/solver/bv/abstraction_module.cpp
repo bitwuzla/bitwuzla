@@ -156,7 +156,11 @@ AbstractionModule::check()
   // New abstraction may be added while checking
   for (size_t i = 0; i < d_active_abstractions.size(); ++i)
   {
-    check_abstraction(d_active_abstractions[i]);
+    const Node& abstr_term = d_active_abstractions[i];
+    if (d_solver_state.is_relevant(abstr_term))
+    {
+      check_abstraction(abstr_term);
+    }
   }
 }
 
