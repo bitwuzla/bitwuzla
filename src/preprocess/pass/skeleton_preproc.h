@@ -27,6 +27,23 @@ class SatSolver;
 namespace preprocess::pass {
 
 /**
+ * Utility class to determine whether assertions were popped.
+ */
+class ResetSkel : public backtrack::Backtrackable
+{
+ public:
+  ResetSkel() = delete;
+  ResetSkel(backtrack::BacktrackManager* mgr) : backtrack::Backtrackable(mgr) {}
+  void push() override {}
+  void pop() override { d_flag = true; }
+  bool operator()() const { return d_flag; }
+  void operator=(bool flag) { d_flag = flag; }
+
+ private:
+  bool d_flag = true;
+};
+
+/**
  * Preprocessing pass to perform rewriting on all assertions.
  */
 class PassSkeletonPreproc : public PreprocessingPass
@@ -41,15 +58,22 @@ class PassSkeletonPreproc : public PreprocessingPass
   void encode(const Node& assertion);
 
   std::unique_ptr<sat::SatSolver> d_sat_solver;
-  node::unordered_node_ref_map<bool> d_encode_cache;
+  std::unordered_map<Node, bool> d_encode_cache;
+  backtrack::unordered_set<int64_t> d_assertion_lits;
   backtrack::vector<Node> d_assertions;
+  ResetSkel d_reset;
 
   struct Statistics
   {
-    Statistics(util::Statistics& stats);
+    Statistics(util::Statistics& stats, const std::string& prefix);
     util::TimerStatistic& time_apply;
+    util::TimerStatistic& time_sat;
+    util::TimerStatistic& time_fixed;
+    util::TimerStatistic& time_encode;
     uint64_t& num_new_assertions;
-
+    uint64_t& num_resets;
+    uint64_t& num_cnf_lits;
+    uint64_t& num_cnf_clauses;
   } d_stats;
 };
 

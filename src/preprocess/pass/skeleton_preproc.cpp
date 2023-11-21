@@ -28,8 +28,11 @@ using namespace node;
 PassSkeletonPreproc::PassSkeletonPreproc(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr),
+      d_sat_solver(nullptr),
+      d_assertion_lits(backtrack_mgr),
       d_assertions(backtrack_mgr),
-      d_stats(env.statistics())
+      d_reset(backtrack_mgr),
+      d_stats(env.statistics(), "preprocess::skeleton::")
 {
 }
 
@@ -44,6 +47,7 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
     return;
   }
 
+  std::vector<Node> _assertions;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
@@ -51,44 +55,67 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
     {
       continue;
     }
-    d_assertions.push_back(assertion);
+    if (!processed(assertion))
+    {
+      cache_assertion(assertion);
+      _assertions.push_back(assertion);
+    }
   }
 
-  if (d_assertions.empty())
+  // No new assertions encoded
+  if (_assertions.empty())
   {
     return;
   }
 
-  d_sat_solver.reset(new sat::Cadical());
-  d_encode_cache.clear();
-
-  std::unordered_set<int64_t> assertion_lits;
-  for (const Node& assertion : d_assertions)
+  // Reset SAT solver if assertions were popped
+  if (d_reset())
   {
-    encode(assertion);
-    assertion_lits.insert(lit(assertion));
+    d_sat_solver.reset(new sat::Cadical());
+    d_encode_cache.clear();
+    d_reset = false;
+    ++d_stats.num_resets;
   }
 
-  NodeManager& nm = NodeManager::get();
-  auto res        = d_sat_solver->solve();
+  // Encode Boolean skeleton
+  {
+    util::Timer timer(d_stats.time_encode);
+    for (const Node& assertion : _assertions)
+    {
+      encode(assertion);
+      d_assertion_lits.insert(std::abs(lit(assertion)));
+      d_assertions.push_back(assertion);
+    }
+  }
+
+  Result res;
+  {
+    util::Timer timer(d_stats.time_sat);
+    res = d_sat_solver->solve();
+  }
   if (res == Result::SAT)
   {
+    NodeManager& nm = NodeManager::get();
+    util::Timer timer(d_stats.time_fixed);
     for (const auto& [node, _] : d_encode_cache)
     {
-      auto l = lit(node);
-      if (assertion_lits.find(l) == assertion_lits.end())
+      auto l = std::abs(lit(node));
+      if (d_assertion_lits.find(l) == d_assertion_lits.end())
       {
-        auto val = d_sat_solver->fixed(lit(node));
+        l        = lit(node);
+        auto val = d_sat_solver->fixed(l);
         Node null;
         if (val < 0)
         {
           ++d_stats.num_new_assertions;
           assertions.push_back(nm.mk_node(Kind::NOT, {node}), null);
+          d_assertion_lits.insert(l);
         }
         else if (val > 0)
         {
           ++d_stats.num_new_assertions;
           assertions.push_back(node, null);
+          d_assertion_lits.insert(l);
         }
       }
     }
@@ -101,14 +128,19 @@ int64_t
 PassSkeletonPreproc::lit(const Node& term)
 {
   assert(term.type().is_bool());
-  return (term.kind() == Kind::NOT) ? -term.id() : term.id();
+  return (term.kind() == Kind::NOT) ? -term[0].id() : term.id();
 }
 
 void
 PassSkeletonPreproc::encode(const Node& assertion)
 {
-  node_ref_vector visit{assertion};
+  if (d_encode_cache.find(assertion) != d_encode_cache.end())
+  {
+    // Already encoded
+    return;
+  }
 
+  node_ref_vector visit{assertion};
   do
   {
     const Node& cur = visit.back();
@@ -123,7 +155,8 @@ PassSkeletonPreproc::encode(const Node& assertion)
     if (inserted)
     {
       Kind k = cur.kind();
-      if (k == Kind::AND || k == Kind::ITE || k == Kind::EQUAL)
+      if (k == Kind::NOT || k == Kind::AND || k == Kind::ITE
+          || k == Kind::EQUAL)
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
@@ -152,6 +185,9 @@ PassSkeletonPreproc::encode(const Node& assertion)
           d_sat_solver->add(-a);
           d_sat_solver->add(-b);
           d_sat_solver->add(0);
+
+          d_stats.num_cnf_lits += 7;
+          d_stats.num_cnf_clauses += 3;
         }
         break;
 
@@ -182,6 +218,9 @@ PassSkeletonPreproc::encode(const Node& assertion)
             d_sat_solver->add(-a);
             d_sat_solver->add(-b);
             d_sat_solver->add(0);
+
+            d_stats.num_cnf_lits += 12;
+            d_stats.num_cnf_clauses += 4;
           }
           break;
 
@@ -211,6 +250,9 @@ PassSkeletonPreproc::encode(const Node& assertion)
           d_sat_solver->add(c);
           d_sat_solver->add(-b);
           d_sat_solver->add(0);
+
+          d_stats.num_cnf_lits += 12;
+          d_stats.num_cnf_clauses += 4;
         }
         break;
 
@@ -222,13 +264,20 @@ PassSkeletonPreproc::encode(const Node& assertion)
 
   d_sat_solver->add(lit(assertion));
   d_sat_solver->add(0);
+  d_stats.num_cnf_lits += 1;
+  d_stats.num_cnf_clauses += 1;
 }
 
-PassSkeletonPreproc::Statistics::Statistics(util::Statistics& stats)
-    : time_apply(stats.new_stat<util::TimerStatistic>(
-        "preprocess::skeleton::time_apply")),
-      num_new_assertions(
-          stats.new_stat<uint64_t>("preprocess::skeleton::new_assertions"))
+PassSkeletonPreproc::Statistics::Statistics(util::Statistics& stats,
+                                            const std::string& prefix)
+    : time_apply(stats.new_stat<util::TimerStatistic>(prefix + "time_apply")),
+      time_sat(stats.new_stat<util::TimerStatistic>(prefix + "time_sat")),
+      time_fixed(stats.new_stat<util::TimerStatistic>(prefix + "time_fixed")),
+      time_encode(stats.new_stat<util::TimerStatistic>(prefix + "time_encode")),
+      num_new_assertions(stats.new_stat<uint64_t>(prefix + "new_assertions")),
+      num_resets(stats.new_stat<uint64_t>(prefix + "resets")),
+      num_cnf_lits(stats.new_stat<uint64_t>(prefix + "cnf::lits")),
+      num_cnf_clauses(stats.new_stat<uint64_t>(prefix + "cnf::clauses"))
 {
 }
 
