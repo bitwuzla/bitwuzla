@@ -29,6 +29,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_assertions(context.assertions()),
       d_register_assertion_cache(&d_backtrack_mgr),
       d_register_term_cache(&d_backtrack_mgr),
+      d_assertions_vec(&d_backtrack_mgr),
       d_lemma_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
       d_in_solving_mode(false),
@@ -44,7 +45,8 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_am(context.env().options().bv_abstraction()
                ? new bv::abstraction::AbstractionModule(context.env(),
                                                         d_solver_state)
-               : nullptr)
+               : nullptr),
+      d_opt_relevant_terms(d_env.options().relevant_terms())
 {
 }
 
@@ -85,6 +87,13 @@ SolverEngine::solve()
     {
       break;
     }
+
+    // Determine relevant terms based on current bit-vector model
+    if (d_opt_relevant_terms)
+    {
+      find_relevant();
+    }
+
     d_fp_solver.check();
     if (!d_lemmas.empty())
     {
@@ -143,7 +152,7 @@ SolverEngine::value(const Node& term)
 
   if (d_in_solving_mode)
   {
-    process_term(term);
+    process_term(term, true);
   }
 
   return _value(term);
@@ -285,12 +294,13 @@ SolverEngine::process_assertion(const Node& assertion,
     Log(2) << "register assertion (top: " << top_level << "): " << _assertion;
     d_bv_solver.register_assertion(_assertion, top_level, is_lemma);
     d_quant_solver.register_assertion(_assertion);
+    d_assertions_vec.push_back(_assertion);
   }
   process_term(_assertion);
 }
 
 void
-SolverEngine::process_term(const Node& term)
+SolverEngine::process_term(const Node& term, bool relevant)
 {
   util::Timer timer(d_stats.time_register_term);
   node::node_ref_vector visit{term};
@@ -334,6 +344,10 @@ SolverEngine::process_term(const Node& term)
           d_new_terms_registered = true;
         }
         visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+      if (d_opt_relevant_terms && relevant)
+      {
+        d_relevant_terms.insert(cur);
       }
     }
   } while (!visit.empty());
@@ -737,6 +751,63 @@ SolverEngine::cached_value(const Node& term) const
 }
 
 void
+SolverEngine::find_relevant()
+{
+  util::Timer timer(d_stats.time_relevant);
+  d_relevant_terms.clear();
+  node_ref_vector visit{d_assertions_vec.begin(), d_assertions_vec.end()};
+
+  do
+  {
+    const Node& cur = visit.back();
+    visit.pop_back();
+
+    auto [it, inserted] = d_relevant_terms.insert(cur);
+    if (inserted)
+    {
+      Kind k = cur.kind();
+      if (k == Kind::AND)
+      {
+        Node val = d_solver_state.value(cur[0]);
+        if (!val.value<bool>())
+        {
+          visit.push_back(cur[0]);
+          continue;
+        }
+        val = d_solver_state.value(cur[1]);
+        if (!val.value<bool>())
+        {
+          visit.push_back(cur[1]);
+          continue;
+        }
+      }
+      else if (k == Kind::ITE)
+      {
+        auto val = d_solver_state.value(cur[0]);
+        visit.push_back(cur[0]);
+        visit.push_back(val.value<bool>() ? cur[1] : cur[2]);
+        continue;
+      }
+
+      if (!array::ArraySolver::is_theory_leaf(cur)
+          && !fun::FunSolver::is_theory_leaf(cur)
+          && !quant::QuantSolver::is_theory_leaf(cur)
+          && !fp::FpSolver::is_theory_leaf(cur))
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+    }
+  } while (!visit.empty());
+}
+
+bool
+SolverEngine::is_relevant(const Node& term) const
+{
+  return !d_opt_relevant_terms
+         || d_relevant_terms.find(term) != d_relevant_terms.end();
+}
+
+void
 SolverEngine::print_statistics()
 {
   if (d_num_printed_stats % 20 == 0)
@@ -801,7 +872,9 @@ SolverEngine::Statistics::Statistics(util::Statistics& stats,
       num_lemmas_abstr(stats.new_stat<uint64_t>(prefix + "lemmas::abstr")),
       time_register_term(
           stats.new_stat<util::TimerStatistic>(prefix + "time_register_term")),
-      time_solve(stats.new_stat<util::TimerStatistic>(prefix + "time_solve"))
+      time_solve(stats.new_stat<util::TimerStatistic>(prefix + "time_solve")),
+      time_relevant(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_relevant"))
 {
 }
 

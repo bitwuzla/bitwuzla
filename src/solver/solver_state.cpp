@@ -37,4 +37,10 @@ SolverState::backtrack_mgr()
   return d_solver_engine.backtrack_mgr();
 }
 
+bool
+SolverState::is_relevant(const Node& term) const
+{
+  return d_solver_engine.is_relevant(term);
+}
+
 }  // namespace bzla

@@ -35,6 +35,11 @@ class SolverState
   /** @return Solver engine backtrack manager. */
   backtrack::BacktrackManager* backtrack_mgr();
 
+  /**
+   * Determine whether given term is relevant w.r.t. current bit-vector model.
+   */
+  bool is_relevant(const Node& term) const;
+
  private:
   /** Associated solver engine. */
   SolverEngine& d_solver_engine;

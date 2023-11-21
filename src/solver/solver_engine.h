@@ -80,6 +80,11 @@ class SolverEngine
   /** Ensure that we have model values for given terms. */
   void ensure_model(const std::vector<Node>& terms);
 
+  /**
+   * Determine whether given term is relevant w.r.t. current bit-vector model.
+   */
+  bool is_relevant(const Node& term) const;
+
  private:
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);
@@ -95,8 +100,11 @@ class SolverEngine
    */
   void process_assertion(const Node& assertion, bool top_level, bool is_lemma);
 
-  /** Traverse term and register terms to corresponding solvers. */
-  void process_term(const Node& term);
+  /**
+   * Traverse term and register terms to corresponding solvers, mark terms as
+   * relevant if corresponding flag is set to true.
+   */
+  void process_term(const Node& term, bool relevant = false);
 
   /** Returns true if term was registered to the corresponding theory solver. */
   bool registered(const Node& term) const;
@@ -112,6 +120,12 @@ class SolverEngine
 
   /** Get cached model value for given term. */
   const Node& cached_value(const Node& term) const;
+
+  /**
+   * Collect relevant terms reachable from current set of assertions based on
+   * the current bit-vector model.
+   */
+  void find_relevant();
 
   /** Print statistics line. */
   void print_statistics();
@@ -135,6 +149,8 @@ class SolverEngine
   backtrack::unordered_set<Node> d_register_assertion_cache;
   /** Term cache used by process_term(). */
   backtrack::unordered_set<Node> d_register_term_cache;
+  /** Current vector of assertions, used in find_relevant(). */
+  backtrack::vector<Node> d_assertions_vec;
 
   /** Lemmas added via lemma(). */
   std::vector<Node> d_lemmas;
@@ -165,6 +181,7 @@ class SolverEngine
     uint64_t& num_lemmas_abstr;
     util::TimerStatistic& time_register_term;
     util::TimerStatistic& time_solve;
+    util::TimerStatistic& time_relevant;
   } d_stats;
 
   /** Environment. */
@@ -184,6 +201,14 @@ class SolverEngine
 
   /** Bit-vector abstraction module. */
   std::unique_ptr<bv::abstraction::AbstractionModule> d_am;
+
+  /**
+   * Populated by find_relevant(), contains the relevant terms reachable from
+   * the current set of assertions under the current bit-vector model.
+   */
+  std::unordered_set<Node> d_relevant_terms;
+
+  bool d_opt_relevant_terms;
 };
 
 }  // namespace bzla

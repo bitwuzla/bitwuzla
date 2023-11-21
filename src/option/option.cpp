@@ -157,6 +157,11 @@ Options::Options()
                    "set maximum memory limit in MB",
                    "memory-limit",
                    "M"),
+      relevant_terms(this,
+                     Option::RELEVANT_TERMS,
+                     false,
+                     "consider relevant terms only when checking",
+                     "relevant-terms"),
 
       // Bitwuzla-specific
       bv_solver(this,
@@ -648,6 +653,7 @@ Options::data(Option opt)
     case Option::VERBOSITY: return &verbosity;
     case Option::TIME_LIMIT_PER: return &time_limit_per;
     case Option::MEMORY_LIMIT: return &memory_limit;
+    case Option::RELEVANT_TERMS: return &relevant_terms;
 
     case Option::BV_SOLVER: return &bv_solver;
     case Option::REWRITE_LEVEL: return &rewrite_level;

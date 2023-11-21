@@ -100,6 +100,17 @@ enum ENUM(Option)
    *  * An unsigned integer for the memory limit in MB. [**default**: 0]
    */
   EVALUE(MEMORY_LIMIT),
+  /*! **Check relevant terms only.**
+   *
+   * Theory solvers only perform checks on relevant terms.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disabe [**default**]
+   *
+   *  @warning This is an expert option to configure theory solvers.
+   */
+  EVALUE(RELEVANT_TERMS),
 
   /* ---------------- Bitwuzla-specific Options ----------------------------- */
 
