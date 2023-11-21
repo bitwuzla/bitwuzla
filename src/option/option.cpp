@@ -17,6 +17,13 @@
 
 namespace bzla::option {
 
+Option
+operator++(Option& o)
+{
+  o = static_cast<Option>(static_cast<size_t>(o) + 1);
+  return o;
+}
+
 /* --- OptionBase public ---------------------------------------------------- */
 
 OptionBase::OptionBase(Options* options,
@@ -553,6 +560,20 @@ Options::finalize()
       prop_nupdates.set(2000000);
     }
   }
+  // Disable preprocessing passes if not explicitely enabled by user
+  if (!preprocess())
+  {
+    for (Option o = Option::PREPROCESS; o != Option::PP_OPT_END; ++o)
+    {
+      auto d = data(o);
+      if (!d->d_is_user_set)
+      {
+        assert(d->is_bool());
+        auto opt = static_cast<OptionBool*>(d);
+        opt->set(false);
+      }
+    }
+  }
 }
 
 /* --- Options private ------------------------------------------------------ */
@@ -606,6 +627,7 @@ Options::data(Option opt)
     case Option::DBG_CHECK_MODEL: return &dbg_check_model;
     case Option::DBG_CHECK_UNSAT_CORE: return &dbg_check_unsat_core;
 
+    case Option::PP_OPT_END:
     case Option::NUM_OPTIONS: assert(false);
   }
   return nullptr;

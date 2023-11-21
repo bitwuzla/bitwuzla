@@ -47,15 +47,19 @@ enum class Option
   PROP_SEXT,                    // bool
   PROP_NORMALIZE,               // bool
 
-  PREPROCESS,                      // bool
-  PP_CONTRADICTING_ANDS,           // bool
-  PP_ELIM_BV_EXTRACTS,             // bool
-  PP_EMBEDDED_CONSTR,              // bool
-  PP_FLATTEN_AND,                  // bool
-  PP_NORMALIZE,                    // bool
-  PP_NORMALIZE_SHARE_AWARE,        // bool
-  PP_SKELETON_PREPROC,             // bool
-  PP_VARIABLE_SUBST,               // bool
+  // Preprocessing options for enabling/disabling passes
+  PREPROCESS,                // bool
+  PP_CONTRADICTING_ANDS,     // bool
+  PP_ELIM_BV_EXTRACTS,       // bool
+  PP_EMBEDDED_CONSTR,        // bool
+  PP_FLATTEN_AND,            // bool
+  PP_NORMALIZE,              // bool
+  PP_NORMALIZE_SHARE_AWARE,  // bool
+  PP_SKELETON_PREPROC,       // bool
+  PP_VARIABLE_SUBST,         // bool
+  PP_OPT_END,
+
+  // Preprocessing pass options for configuring passes
   PP_VARIABLE_SUBST_NORM_BV_INEQ,  // bool
   PP_VARIABLE_SUBST_NORM_EQ,       // bool
   PP_VARIABLE_SUBST_NORM_DISEQ,    // bool
@@ -66,7 +70,11 @@ enum class Option
   DBG_CHECK_UNSAT_CORE,  // bool
 
   NUM_OPTIONS,
+
 };
+
+// Overload increment operator for option enums.
+Option operator++(Option& o);
 
 /* -------------------------------------------------------------------------- */
 

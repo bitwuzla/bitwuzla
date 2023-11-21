@@ -208,7 +208,6 @@ Preprocessor::apply(AssertionVector& assertions)
 #endif
 
   auto& options = d_env.options();
-  bool enable   = options.preprocess();
   // Only apply skeleton preprocessing once to the initial assertions to
   // limit the overhead.
   bool skel_done          = !assertions.initial_assertions();
@@ -225,14 +224,14 @@ Preprocessor::apply(AssertionVector& assertions)
     d_pass_rewrite.apply(assertions);
     Msg(2) << assertions.num_modified() - cnt << " after rewriting";
 
-    if (enable && options.pp_flatten_and())
+    if (options.pp_flatten_and())
     {
       cnt = assertions.num_modified();
       d_pass_flatten_and.apply(assertions);
       Msg(2) << assertions.num_modified() - cnt << " after and flattening";
     }
 
-    if (enable && options.pp_variable_subst())
+    if (options.pp_variable_subst())
     {
       do
       {
@@ -244,7 +243,7 @@ Preprocessor::apply(AssertionVector& assertions)
       } while (assertions.modified());
     }
 
-    if (enable && options.pp_skeleton_preproc() && !skel_done)
+    if (options.pp_skeleton_preproc() && !skel_done)
     {
       cnt = assertions.num_modified();
       d_pass_skeleton_preproc.apply(assertions);
@@ -253,7 +252,7 @@ Preprocessor::apply(AssertionVector& assertions)
              << " after skeleton simplification";
     }
 
-    if (enable && options.pp_embedded_constr())
+    if (options.pp_embedded_constr())
     {
       cnt = assertions.num_modified();
       d_pass_embedded_constraints.apply(assertions);
@@ -261,7 +260,7 @@ Preprocessor::apply(AssertionVector& assertions)
              << " after embedded constraints";
     }
 
-    if (enable && options.pp_contr_ands())
+    if (options.pp_contr_ands())
     {
       cnt = assertions.num_modified();
       d_pass_contr_ands.apply(assertions);
@@ -282,14 +281,14 @@ Preprocessor::apply(AssertionVector& assertions)
       uninterpreted_done = true;
     }
 
-    if (enable && options.pp_normalize())
+    if (options.pp_normalize())
     {
       cnt = assertions.num_modified();
       d_pass_normalize.apply(assertions);
       Msg(2) << assertions.num_modified() - cnt << " after normalization";
     }
 
-    if (enable && options.pp_elim_bv_extracts())
+    if (options.pp_elim_bv_extracts())
     {
       cnt = assertions.num_modified();
       d_pass_elim_extract.apply(assertions);
