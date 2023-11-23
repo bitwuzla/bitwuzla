@@ -93,6 +93,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::UREM_VALUE: os << "UREM_VALUE"; break;
 
     case LemmaKind::BITBLAST: os << "BITBLAST"; break;
+    case LemmaKind::ASSERTION: os << "ASSERTION"; break;
   }
   return os;
 }

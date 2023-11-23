@@ -91,7 +91,8 @@ enum class LemmaKind
   UREM_REF14,  // (not (bvult (bvxor (bvneg s) (bvor x s)) t))
   UREM_VALUE,
 
-  BITBLAST
+  BITBLAST,
+  ASSERTION
 };
 
 std::ostream& operator<<(std::ostream& os, LemmaKind kind);

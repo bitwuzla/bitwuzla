@@ -53,6 +53,8 @@ enum class Option
   BV_ABSTRACTION_EAGER_REFINE,  // bool
   BV_ABSTRACTION_VALUE_LIMIT,   // numeric
   BV_ABSTRACTION_VALUE_ONLY,    // bool
+  BV_ABSTRACTION_ASSERT,        // bool
+  BV_ABSTRACTION_ASSERT_REFS,   // bool
 
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,                // bool
@@ -485,6 +487,8 @@ class Options
   OptionBool bv_abstraction_eager_refine;
   OptionNumeric bv_abstraction_value_limit;
   OptionBool bv_abstraction_value_only;
+  OptionBool bv_abstraction_assert;
+  OptionNumeric bv_abstraction_assert_refinements;
 
   // Preprocessing
   OptionBool preprocess;

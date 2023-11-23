@@ -329,6 +329,27 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(BV_ABSTRACTION_VALUE_ONLY),
+  /*! **Abstraction module: Abstract assertions. **
+   *
+   * When enabled, abstracts assertions.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(BV_ABSTRACTION_ASSERT),
+  /*! **Abstraction module: Assertion refinements. **
+   *
+   * Maximum number of assertion refinements added per check.
+   *
+   * Values:
+   *  * An unsigned integer value > 0.
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(BV_ABSTRACTION_ASSERT_REFS),
 
   /*! **Preprocessing**
    *

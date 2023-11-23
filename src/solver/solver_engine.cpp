@@ -285,7 +285,8 @@ SolverEngine::process_assertion(const Node& assertion,
                                 bool top_level,
                                 bool is_lemma)
 {
-  Node _assertion = d_am == nullptr ? assertion : d_am->process(assertion);
+  Node _assertion =
+      d_am == nullptr ? assertion : d_am->process(assertion, is_lemma);
 
   // Send assertion to bit-vector solver.
   auto [it, inserted] = d_register_assertion_cache.insert(_assertion);

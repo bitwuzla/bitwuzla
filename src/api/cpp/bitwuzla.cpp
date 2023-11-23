@@ -92,6 +92,10 @@ static const std::unordered_map<Option, bzla::option::Option>
          bzla::option::Option::BV_ABSTRACTION_VALUE_LIMIT},
         {Option::BV_ABSTRACTION_VALUE_ONLY,
          bzla::option::Option::BV_ABSTRACTION_VALUE_ONLY},
+        {Option::BV_ABSTRACTION_ASSERT,
+         bzla::option::Option::BV_ABSTRACTION_ASSERT},
+        {Option::BV_ABSTRACTION_ASSERT_REFS,
+         bzla::option::Option::BV_ABSTRACTION_ASSERT_REFS},
         {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
 
         {Option::PREPROCESS, bzla::option::Option::PREPROCESS},

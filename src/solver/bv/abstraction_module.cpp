@@ -42,10 +42,15 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_solver_state(state),
       d_rewriter(env.rewriter()),
       d_active_abstractions(state.backtrack_mgr()),
+      d_assertion_abstractions(state.backtrack_mgr()),
+      d_assertion_abstractions_cache(state.backtrack_mgr()),
       d_opt_minimum_size(env.options().bv_abstraction()),
       d_opt_eager_refine(env.options().bv_abstraction_eager_refine()),
       d_opt_value_inst_limit(env.options().bv_abstraction_value_limit()),
       d_opt_value_inst_only(env.options().bv_abstraction_value_only()),
+      d_opt_abstract_assertions(env.options().bv_abstraction_assert()),
+      d_opt_assertion_refinements(
+          env.options().bv_abstraction_assert_refinements()),
       d_stats(env.statistics(), "solver::bv::abstraction::")
 {
   auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
@@ -160,22 +165,34 @@ AbstractionModule::check()
   // score_lemmas(Kind::BV_MUL);
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
+
+  d_added_lemma = false;
+
   // New abstraction may be added while checking
   for (size_t i = 0; i < d_active_abstractions.size(); ++i)
   {
-    const Node& abstr_term = d_active_abstractions[i];
+    // Do not use reference here, since d_active_abstractions may change when
+    // calling check_abstraction().
+    const Node abstr_term = d_active_abstractions[i];
     if (d_solver_state.is_relevant(abstr_term))
     {
       check_abstraction(abstr_term);
     }
   }
+
+  // Check abstracted assertions
+  if (!d_added_lemma && d_opt_abstract_assertions)
+  {
+    check_assertion_abstractions();
+  }
 }
 
 const Node&
-AbstractionModule::process(const Node& assertion)
+AbstractionModule::process(const Node& assertion, bool is_lemma)
 {
-  node_ref_vector visit{assertion};
+  NodeManager& nm = NodeManager::get();
 
+  node_ref_vector visit{assertion};
   do
   {
     const Node& cur     = visit.back();
@@ -197,17 +214,38 @@ AbstractionModule::process(const Node& assertion)
           children.push_back(itt->second);
         }
         Node func       = abstr_uf(cur);
-        NodeManager& nm = NodeManager::get();
-        it->second = nm.mk_node(Kind::APPLY, {func, children[0], children[1]});
+        it->second      = d_rewriter.rewrite(
+            nm.mk_node(Kind::APPLY, {func, children[0], children[1]}));
         add_abstraction(cur, it->second);
       }
       else
       {
-        it->second = utils::rebuild_node(cur, d_abstraction_cache);
+        it->second =
+            d_rewriter.rewrite(utils::rebuild_node(cur, d_abstraction_cache));
       }
     }
     visit.pop_back();
   } while (!visit.empty());
+
+  // Do not abstract assertions that are lemmas
+  if (d_opt_abstract_assertions && !is_lemma)
+  {
+    auto itr = d_abstraction_cache.find(assertion);
+    assert(itr != d_abstraction_cache.end());
+
+    auto [it, inserted] = d_abstr_consts.emplace(itr->second, Node());
+    if (inserted)
+    {
+      it->second = nm.mk_const(nm.mk_bool_type());
+      Log(2) << "abstract assertion: " << itr->second
+             << " (abstr: " << it->second << ", orig: " << assertion << ")";
+      add_abstraction(itr->second, it->second);
+      d_assertion_abstractions.push_back(it->second);
+      d_abstraction_cache.emplace(it->second, it->second);
+    }
+    return it->second;
+  }
+
   return d_abstraction_cache.at(assertion);
 }
 
@@ -249,8 +287,8 @@ AbstractionModule::get_abstraction(const Node& node)
 void
 AbstractionModule::add_abstraction(const Node& node, const Node& abstr)
 {
-  assert(abstr.kind() == Kind::APPLY);
-  assert(d_abstr_lemmas.find(node.kind()) != d_abstr_lemmas.end());
+  // assert(abstr.kind() == Kind::APPLY);
+  // assert(d_abstr_lemmas.find(node.kind()) != d_abstr_lemmas.end());
   assert(d_abstractions.find(node) == d_abstractions.end());
   d_abstractions.emplace(node, abstr);
   d_abstractions_rev.emplace(abstr, node);
@@ -308,7 +346,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
   Log(2) << "val_x: " << val_x;
   Log(2) << "val_s: " << val_s;
   Log(2) << "val_t: " << val_t;
-  bool added_lemma = false;
+  d_added_lemma = false;
 
   if (!d_opt_value_inst_only)
   {
@@ -324,7 +362,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
         Log(2) << lem->kind() << " inconsistent";
         Node lemma = lem->instance(x, s, t);
         d_solver_state.lemma(lemma);
-        added_lemma = true;
+        d_added_lemma = true;
         d_stats.lemmas << lem->kind();
         ++d_stats.num_lemmas;
         if (!d_opt_eager_refine)
@@ -341,7 +379,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
           Log(2) << lem->kind() << " (comm.) inconsistent";
           Node lemma = lem->instance(s, x, t);
           d_solver_state.lemma(lemma);
-          added_lemma = true;
+          d_added_lemma = true;
           d_stats.lemmas << lem->kind();
           ++d_stats.num_lemmas;
           if (!d_opt_eager_refine)
@@ -354,7 +392,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
   }
 
   // Inconsistent value, but no abstraction violated, add value-based lemma.
-  if (!added_lemma)
+  if (!d_added_lemma)
   {
     auto& value_insts = d_value_insts[node];
     if (kind != Kind::EQUAL
@@ -387,6 +425,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
       d_stats.lemmas << lk;
       ++d_stats.num_lemmas;
       ++value_insts;
+      d_added_lemma = true;
     }
     else
     {
@@ -419,6 +458,47 @@ AbstractionModule::check_abstraction(const Node& abstr)
   }
 }
 
+bool
+AbstractionModule::check_assertion_abstractions()
+{
+  uint64_t nadded = 0;
+  NodeManager& nm = NodeManager::get();
+  for (size_t i = 0, size = d_assertion_abstractions.size(); i < size; ++i)
+  {
+    const Node& abstr = d_assertion_abstractions[i];
+    auto it           = d_assertion_abstractions_cache.find(abstr);
+    if (it != d_assertion_abstractions_cache.end())
+    {
+      continue;
+    }
+    auto itr = d_abstractions_rev.find(abstr);
+    assert(itr != d_abstractions_rev.end());
+    const Node& assertion = itr->second;
+    Node val              = d_solver_state.value(assertion);
+    if (!val.value<bool>())
+    {
+      Log(2) << "violated assertion: " << abstr;
+      Log(2) << "abstr assertion:    " << assertion;
+      Node lemma = nm.mk_node(Kind::EQUAL, {assertion, abstr});
+      lemma_no_abstract(lemma, LemmaKind::ASSERTION);
+      d_assertion_abstractions_cache.insert(abstr);
+      ++nadded;
+      // TODO: make limit an option
+      if (nadded >= d_opt_assertion_refinements)
+      {
+        std::cout << "added: " << d_assertion_abstractions_cache.size() << "/"
+                  << d_assertion_abstractions.size() << std::endl;
+        break;
+      }
+    }
+  }
+  if (nadded == 0)
+  {
+    std::cout << "all assertions sat" << std::endl;
+  }
+  return nadded > 0;
+}
+
 void
 AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
 {
@@ -428,6 +508,7 @@ AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
   d_abstraction_cache.emplace(lem, lem);
   d_stats.lemmas << lk;
   d_solver_state.lemma(lem);
+  d_added_lemma = true;
 }
 
 void

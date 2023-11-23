@@ -289,6 +289,19 @@ Options::Options()
                                 false,
                                 "only add value instantiations",
                                 "bv-abstraction-value-only"),
+      bv_abstraction_assert(this,
+                            Option::BV_ABSTRACTION_ASSERT,
+                            false,
+                            "enable assertion abstraction",
+                            "bv-abstraction-assert"),
+      bv_abstraction_assert_refinements(
+          this,
+          Option::BV_ABSTRACTION_ASSERT_REFS,
+          100,
+          1,
+          UINT64_MAX,
+          "number of assertion refinements per check",
+          "abstraction-assert-refs"),
 
       // Preprocessing
       preprocess(
@@ -674,6 +687,9 @@ Options::data(Option opt)
       return &bv_abstraction_eager_refine;
     case Option::BV_ABSTRACTION_VALUE_LIMIT: return &bv_abstraction_value_limit;
     case Option::BV_ABSTRACTION_VALUE_ONLY: return &bv_abstraction_value_only;
+    case Option::BV_ABSTRACTION_ASSERT: return &bv_abstraction_assert;
+    case Option::BV_ABSTRACTION_ASSERT_REFS:
+      return &bv_abstraction_assert_refinements;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

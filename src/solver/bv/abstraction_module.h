@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "backtrack/unordered_map.h"
+#include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "env.h"
 #include "solver/solver_state.h"
@@ -30,7 +31,7 @@ class AbstractionModule
   void check();
 
   /** Process assertion to abstract relevant terms. */
-  const Node& process(const Node& assertion);
+  const Node& process(const Node& assertion, bool is_lemma);
 
   /** @return True if processed assertion contains an abstracted term. */
   bool is_processed(const Node& assertion);
@@ -52,6 +53,8 @@ class AbstractionModule
   /** Check assignment of abstraction and add lemma if needed. */
   void check_abstraction(const Node& node);
 
+  bool check_assertion_abstractions();
+
   /** Send lemma but make sure not to abstract terms in it. */
   void lemma_no_abstract(const Node& lemma, LemmaKind lk);
 
@@ -72,11 +75,20 @@ class AbstractionModule
   std::unordered_map<Node, Node> d_abstraction_cache;
   /** Stores abstraction UFs based on kind and type. */
   std::unordered_map<node::Kind, std::unordered_map<Type, Node>> d_abstr_ufs;
+  /** Stores abstraction consts for assertions. */
+  std::unordered_map<Node, Node> d_abstr_consts;
   /** Stores enabled refinement lemmas based on kind. */
   std::unordered_map<node::Kind, std::vector<std::unique_ptr<AbstractionLemma>>>
       d_abstr_lemmas;
   /** Maps the number of value instantiations per abstracted term. */
   std::unordered_map<Node, uint64_t> d_value_insts;
+  /** Abstracted assertions. */
+  backtrack::vector<Node> d_assertion_abstractions;
+  /** Stores refined assertions. */
+  backtrack::unordered_set<Node> d_assertion_abstractions_cache;
+
+  /** Indicates whether lemma was added during check(). */
+  bool d_added_lemma;
 
   /** Minimum size of bit-vector operators to abstract. */
   uint64_t d_opt_minimum_size;
@@ -86,6 +98,10 @@ class AbstractionModule
   uint64_t d_opt_value_inst_limit;
   /** Perform value instantiation only. */
   bool d_opt_value_inst_only;
+  /** Abstract assertions. */
+  bool d_opt_abstract_assertions;
+  /** Number of assertion refinements per check. */
+  uint64_t d_opt_assertion_refinements;
 
   struct Statistics
   {
