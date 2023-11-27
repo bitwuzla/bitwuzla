@@ -1236,7 +1236,7 @@ Parser::parse_open_term(Token token)
   }
   else if (d_is_var_binding)
   {
-    return error("expected var binding");
+    return error("expected variable binding");
   }
   else if (d_is_sorted_var)
   {
@@ -2376,7 +2376,10 @@ Parser::close_term_quant(ParsedItem& item)
 {
   assert(item.d_token == Token::FORALL || item.d_token == Token::EXISTS);
   std::vector<bitwuzla::Term> args;
-  pop_args(item, args);
+  if (!pop_args(item, args))
+  {
+    return false;
+  }
   set_item(
       item,
       Token::TERM,
@@ -3324,6 +3327,14 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
                              + " as argument to '" + std::to_string(token)
                              + "'",
                          arg_coo(j));
+          }
+          if (args[i].sort().is_array())
+          {
+            return error("variable of array sort not supported", arg_coo(j));
+          }
+          if (args[i].sort().is_fun())
+          {
+            return error("variable of function sort not supported", arg_coo(j));
           }
           // remove sorted variables from symbol table
           d_table.remove(args[i].str());

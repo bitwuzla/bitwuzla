@@ -1,0 +1,1 @@
+regress/parser/smt2perr210.smt2:1:28: expected Boolean term as body to 'forall'

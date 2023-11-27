@@ -1957,6 +1957,12 @@ mk_term(Kind kind,
           for (size_t i = 0, n = args.size() - 1; i < n; ++i)
           {
             BITWUZLA_CHECK_TERM_IS_VAR_AT_IDX(args, i);
+            BITWUZLA_CHECK(kind == Kind::LAMBDA
+                           || !args[i].d_node->type().is_array())
+                << "quantified variable of array sort not supported";
+            BITWUZLA_CHECK(kind == Kind::LAMBDA
+                           || !args[i].d_node->type().is_fun())
+                << "quantified variable of function sort not supported";
             auto [it, inserted] = cache.insert(*args[i].d_node);
             BITWUZLA_CHECK(inserted) << "expected set of distinct variables";
           }

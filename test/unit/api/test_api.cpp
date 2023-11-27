@@ -1435,6 +1435,7 @@ TEST_F(TestApi, mk_var)
   ASSERT_NO_THROW(bitwuzla::mk_var(d_bv_sort8));
   ASSERT_NO_THROW(bitwuzla::mk_var(d_bv_sort8, ""));
   ASSERT_THROW(bitwuzla::mk_var(bitwuzla::Sort(), "asdf"), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::mk_var(d_fun_sort, "asdf"), bitwuzla::Exception);
 }
 
 /* -------------------------------------------------------------------------- */
