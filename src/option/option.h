@@ -49,12 +49,14 @@ enum class Option
   PROP_SEXT,                    // bool
   PROP_NORMALIZE,               // bool
 
-  BV_ABSTRACTION,               // numeric
-  BV_ABSTRACTION_EAGER_REFINE,  // bool
-  BV_ABSTRACTION_VALUE_LIMIT,   // numeric
-  BV_ABSTRACTION_VALUE_ONLY,    // bool
-  BV_ABSTRACTION_ASSERT,        // bool
-  BV_ABSTRACTION_ASSERT_REFS,   // bool
+  // Abstraction module
+  ABSTRACTION,               // bool
+  ABSTRACTION_BV_SIZE,       // numeric
+  ABSTRACTION_EAGER_REFINE,  // bool
+  ABSTRACTION_VALUE_LIMIT,   // numeric
+  ABSTRACTION_VALUE_ONLY,    // bool
+  ABSTRACTION_ASSERT,        // bool
+  ABSTRACTION_ASSERT_REFS,   // bool
 
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,                // bool
@@ -449,8 +451,8 @@ class Options
  public:
   static constexpr uint8_t VERBOSITY_MAX     = 4;
   static constexpr uint8_t REWRITE_LEVEL_MAX = 2;
-  static constexpr uint64_t PROB_100      = 1000;
-  static constexpr uint64_t PROB_50       = 500;
+  static constexpr uint64_t PROB_100         = 1000;
+  static constexpr uint64_t PROB_50          = 500;
 
   /** Constructor. */
   Options();
@@ -483,12 +485,13 @@ class Options
   OptionBool prop_sext;
   OptionBool prop_normalize;
 
-  OptionNumeric bv_abstraction;
-  OptionBool bv_abstraction_eager_refine;
-  OptionNumeric bv_abstraction_value_limit;
-  OptionBool bv_abstraction_value_only;
-  OptionBool bv_abstraction_assert;
-  OptionNumeric bv_abstraction_assert_refinements;
+  OptionBool abstraction;
+  OptionNumeric abstraction_bv_size;
+  OptionBool abstraction_eager_refine;
+  OptionNumeric abstraction_value_limit;
+  OptionBool abstraction_value_only;
+  OptionBool abstraction_assert;
+  OptionNumeric abstraction_assert_refs;
 
   // Preprocessing
   OptionBool preprocess;

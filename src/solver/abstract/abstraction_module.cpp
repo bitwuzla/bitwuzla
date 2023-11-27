@@ -1,11 +1,11 @@
-#include "solver/bv/abstraction_module.h"
+#include "solver/abstract/abstraction_module.h"
 
 #include "bv/bitvector.h"
 #include "node/kind_info.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-#include "solver/bv/abstraction_lemmas.h"
+#include "solver/abstract/abstraction_lemmas.h"
 #include "solver/bv/bv_solver.h"
 
 namespace std {
@@ -31,7 +31,7 @@ struct hash<std::tuple<uint64_t, uint64_t, uint64_t>>
 
 }  // namespace std
 
-namespace bzla::bv::abstraction {
+namespace bzla::abstract {
 
 using namespace node;
 
@@ -44,14 +44,13 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_active_abstractions(state.backtrack_mgr()),
       d_assertion_abstractions(state.backtrack_mgr()),
       d_assertion_abstractions_cache(state.backtrack_mgr()),
-      d_opt_minimum_size(env.options().bv_abstraction()),
-      d_opt_eager_refine(env.options().bv_abstraction_eager_refine()),
-      d_opt_value_inst_limit(env.options().bv_abstraction_value_limit()),
-      d_opt_value_inst_only(env.options().bv_abstraction_value_only()),
-      d_opt_abstract_assertions(env.options().bv_abstraction_assert()),
-      d_opt_assertion_refinements(
-          env.options().bv_abstraction_assert_refinements()),
-      d_stats(env.statistics(), "solver::bv::abstraction::")
+      d_opt_minimum_size(env.options().abstraction_bv_size()),
+      d_opt_eager_refine(env.options().abstraction_eager_refine()),
+      d_opt_value_inst_limit(env.options().abstraction_value_limit()),
+      d_opt_value_inst_only(env.options().abstraction_value_only()),
+      d_opt_abstract_assertions(env.options().abstraction_assert()),
+      d_opt_assertion_refinements(env.options().abstraction_assert_refs()),
+      d_stats(env.statistics(), "solver::abstract::")
 {
   auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
   mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_IC>());
@@ -213,8 +212,8 @@ AbstractionModule::process(const Node& assertion, bool is_lemma)
           assert(itt != d_abstraction_cache.end());
           children.push_back(itt->second);
         }
-        Node func       = abstr_uf(cur);
-        it->second      = d_rewriter.rewrite(
+        Node func  = abstr_uf(cur);
+        it->second = d_rewriter.rewrite(
             nm.mk_node(Kind::APPLY, {func, children[0], children[1]}));
         add_abstraction(cur, it->second);
       }
@@ -272,7 +271,7 @@ AbstractionModule::abstract(const Node& node) const
 {
   Kind k = node.kind();
   return d_abstr_lemmas.find(k) != d_abstr_lemmas.end()
-         && node[0].type().is_bv()
+         && d_opt_minimum_size > 0 && node[0].type().is_bv()
          && node[0].type().bv_size() >= d_opt_minimum_size;
 }
 
@@ -483,18 +482,11 @@ AbstractionModule::check_assertion_abstractions()
       lemma_no_abstract(lemma, LemmaKind::ASSERTION);
       d_assertion_abstractions_cache.insert(abstr);
       ++nadded;
-      // TODO: make limit an option
       if (nadded >= d_opt_assertion_refinements)
       {
-        std::cout << "added: " << d_assertion_abstractions_cache.size() << "/"
-                  << d_assertion_abstractions.size() << std::endl;
         break;
       }
     }
-  }
-  if (nadded == 0)
-  {
-    std::cout << "all assertions sat" << std::endl;
   }
   return nadded > 0;
 }
@@ -623,4 +615,4 @@ AbstractionModule::Statistics::Statistics(util::Statistics& stats,
 {
 }
 
-}  // namespace bzla::bv::abstraction
+}  // namespace bzla::abstract

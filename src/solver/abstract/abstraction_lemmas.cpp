@@ -1,8 +1,8 @@
-#include "solver/bv/abstraction_lemmas.h"
+#include "solver/abstract/abstraction_lemmas.h"
 
 #include "node/node_manager.h"
 
-namespace bzla::bv::abstraction {
+namespace bzla::abstract {
 
 using namespace node;
 
@@ -1291,4 +1291,4 @@ Lemma<LemmaKind::UREM_REF14>::instance(const Node& x,
                      t});
 }
 
-}  // namespace bzla::bv::abstraction
+}  // namespace bzla::abstract

@@ -262,46 +262,49 @@ Options::Options()
                      false,
                      "enable normalization for local search",
                      "prop-normalize"),
-      bv_abstraction(
+      abstraction(this,
+                  Option::ABSTRACTION,
+                  false,
+                  "enable abstraction module",
+                  "abstraction"),
+      abstraction_bv_size(
           this,
-          Option::BV_ABSTRACTION,
-          0,
+          Option::ABSTRACTION_BV_SIZE,
+          32,
           0,
           UINT64_MAX,
-          "enable bit-vector abstraction module for given minimum size",
-          "bv-abstraction"),
-      bv_abstraction_eager_refine(
-          this,
-          Option::BV_ABSTRACTION_EAGER_REFINE,
-          false,
-          "add all violated bit-vector abstraction lemmas at once",
-          "bv-abstraction-eager"),
-      bv_abstraction_value_limit(this,
-                                 Option::BV_ABSTRACTION_VALUE_LIMIT,
-                                 0,
-                                 0,
-                                 UINT64_MAX,
-                                 "value instantiation limit until "
-                                 "falling back to bit-blasting",
-                                 "bv-abstraction-value-limit"),
-      bv_abstraction_value_only(this,
-                                Option::BV_ABSTRACTION_VALUE_ONLY,
-                                false,
-                                "only add value instantiations",
-                                "bv-abstraction-value-only"),
-      bv_abstraction_assert(this,
-                            Option::BV_ABSTRACTION_ASSERT,
-                            false,
-                            "enable assertion abstraction",
-                            "bv-abstraction-assert"),
-      bv_abstraction_assert_refinements(
-          this,
-          Option::BV_ABSTRACTION_ASSERT_REFS,
-          100,
-          1,
-          UINT64_MAX,
-          "number of assertion refinements per check",
-          "abstraction-assert-refs"),
+          "enable abstraction for bit-vector terms of given minimum size",
+          "abstraction-bv-size"),
+      abstraction_eager_refine(this,
+                               Option::ABSTRACTION_EAGER_REFINE,
+                               false,
+                               "add all violated abstraction lemmas at once",
+                               "abstraction-eager-refine"),
+      abstraction_value_limit(this,
+                              Option::ABSTRACTION_VALUE_LIMIT,
+                              32,
+                              0,
+                              UINT64_MAX,
+                              "value instantiation limit until "
+                              "adding original term as refinement",
+                              "abstraction-value-limit"),
+      abstraction_value_only(this,
+                             Option::ABSTRACTION_VALUE_ONLY,
+                             false,
+                             "only add value instantiations",
+                             "abstraction-value-only"),
+      abstraction_assert(this,
+                         Option::ABSTRACTION_ASSERT,
+                         false,
+                         "enable assertion abstraction",
+                         "abstraction-assert"),
+      abstraction_assert_refs(this,
+                              Option::ABSTRACTION_ASSERT_REFS,
+                              100,
+                              1,
+                              UINT64_MAX,
+                              "number of assertion refinements per check",
+                              "abstraction-assert-refs"),
 
       // Preprocessing
       preprocess(
@@ -682,14 +685,13 @@ Options::data(Option opt)
     case Option::PROP_OPT_LT_CONCAT_SEXT: return &prop_opt_lt_concat_sext;
     case Option::PROP_SEXT: return &prop_sext;
     case Option::PROP_NORMALIZE: return &prop_normalize;
-    case Option::BV_ABSTRACTION: return &bv_abstraction;
-    case Option::BV_ABSTRACTION_EAGER_REFINE:
-      return &bv_abstraction_eager_refine;
-    case Option::BV_ABSTRACTION_VALUE_LIMIT: return &bv_abstraction_value_limit;
-    case Option::BV_ABSTRACTION_VALUE_ONLY: return &bv_abstraction_value_only;
-    case Option::BV_ABSTRACTION_ASSERT: return &bv_abstraction_assert;
-    case Option::BV_ABSTRACTION_ASSERT_REFS:
-      return &bv_abstraction_assert_refinements;
+    case Option::ABSTRACTION: return &abstraction;
+    case Option::ABSTRACTION_BV_SIZE: return &abstraction_bv_size;
+    case Option::ABSTRACTION_EAGER_REFINE: return &abstraction_eager_refine;
+    case Option::ABSTRACTION_VALUE_LIMIT: return &abstraction_value_limit;
+    case Option::ABSTRACTION_VALUE_ONLY: return &abstraction_value_only;
+    case Option::ABSTRACTION_ASSERT: return &abstraction_assert;
+    case Option::ABSTRACTION_ASSERT_REFS: return &abstraction_assert_refs;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

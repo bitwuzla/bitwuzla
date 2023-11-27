@@ -11,7 +11,6 @@
 #include "solver/bv/aig_bitblaster.h"
 
 #include "node/node_ref_vector.h"
-#include "solver/bv/abstraction_module.h"
 #include "solver/bv/bv_solver.h"
 
 namespace bzla::bv {

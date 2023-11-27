@@ -31,7 +31,7 @@ namespace bzla {
 class SolvingContext;
 class Env;
 
-namespace bv::abstraction {
+namespace abstract {
 class AbstractionModule;
 }
 
@@ -199,8 +199,8 @@ class SolverEngine
   array::ArraySolver d_array_solver;
   quant::QuantSolver d_quant_solver;
 
-  /** Bit-vector abstraction module. */
-  std::unique_ptr<bv::abstraction::AbstractionModule> d_am;
+  /** Abstraction module. */
+  std::unique_ptr<abstract::AbstractionModule> d_am;
 
   /**
    * Populated by find_relevant(), contains the relevant terms reachable from

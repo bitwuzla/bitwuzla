@@ -10,7 +10,7 @@
 #include "solver/solver_state.h"
 #include "util/logger.h"
 
-namespace bzla::bv::abstraction {
+namespace bzla::abstract {
 
 class AbstractionLemma;
 enum class LemmaKind;
@@ -115,6 +115,6 @@ class AbstractionModule
   } d_stats;
 };
 
-}  // namespace bzla::bv::abstraction
+}  // namespace bzla::abstract
 
 #endif

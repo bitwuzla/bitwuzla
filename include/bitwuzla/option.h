@@ -281,7 +281,16 @@ enum ENUM(Option)
    */
   EVALUE(PROP_NORMALIZE),
 
-  /*! **Bit-vector bitblasting solver: Abstraction module. **
+  /*! **Abstraction module**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(ABSTRACTION),
+  /*! **Abstraction module: Minimum bit-vector term size. **
    *
    * Specifies at which size supported bit-vector operators should be
    * abstracted.
@@ -292,7 +301,7 @@ enum ENUM(Option)
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  EVALUE(BV_ABSTRACTION),
+  EVALUE(ABSTRACTION_BV_SIZE),
   /*! **Bit-vector bitblasting solver: Abstraction module eager mode. **
    *
    * When enabled, eagerly adds violated refinement lemmas.
@@ -303,7 +312,7 @@ enum ENUM(Option)
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  EVALUE(BV_ABSTRACTION_EAGER_REFINE),
+  EVALUE(ABSTRACTION_EAGER_REFINE),
   /*! **Bit-vector bitblasting solver: Abstraction module value instantiation
    * limit. **
    *
@@ -316,7 +325,7 @@ enum ENUM(Option)
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  EVALUE(BV_ABSTRACTION_VALUE_LIMIT),
+  EVALUE(ABSTRACTION_VALUE_LIMIT),
   /*! **Bit-vector bitblasting solver: Abstraction module value instantiations
    * only. **
    *
@@ -328,7 +337,7 @@ enum ENUM(Option)
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  EVALUE(BV_ABSTRACTION_VALUE_ONLY),
+  EVALUE(ABSTRACTION_VALUE_ONLY),
   /*! **Abstraction module: Abstract assertions. **
    *
    * When enabled, abstracts assertions.
@@ -339,7 +348,7 @@ enum ENUM(Option)
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  EVALUE(BV_ABSTRACTION_ASSERT),
+  EVALUE(ABSTRACTION_ASSERT),
   /*! **Abstraction module: Assertion refinements. **
    *
    * Maximum number of assertion refinements added per check.
@@ -349,7 +358,7 @@ enum ENUM(Option)
    *
    *  @warning This is an expert option to configure the prop solver engine.
    */
-  EVALUE(BV_ABSTRACTION_ASSERT_REFS),
+  EVALUE(ABSTRACTION_ASSERT_REFS),
 
   /*! **Preprocessing**
    *

@@ -5,7 +5,7 @@
 
 #include "solver/solver_state.h"
 
-namespace bzla::bv::abstraction {
+namespace bzla::abstract {
 
 enum class LemmaKind
 {
@@ -487,6 +487,6 @@ Node Lemma<LemmaKind::UREM_REF14>::instance(const Node& x,
                                             const Node& s,
                                             const Node& t) const;
 
-}  // namespace bzla::bv::abstraction
+}  // namespace bzla::abstract
 
 #endif

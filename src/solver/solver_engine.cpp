@@ -13,7 +13,7 @@
 #include "env.h"
 #include "printer/printer.h"
 #include "rewrite/evaluator.h"
-#include "solver/bv/abstraction_module.h"
+#include "solver/abstract/abstraction_module.h"
 #include "solving_context.h"
 #include "util/resources.h"
 
@@ -42,9 +42,8 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_fun_solver(context.env(), d_solver_state),
       d_array_solver(context.env(), d_solver_state),
       d_quant_solver(context.env(), d_solver_state),
-      d_am(context.env().options().bv_abstraction()
-               ? new bv::abstraction::AbstractionModule(context.env(),
-                                                        d_solver_state)
+      d_am(context.env().options().abstraction()
+               ? new abstract::AbstractionModule(context.env(), d_solver_state)
                : nullptr),
       d_opt_relevant_terms(d_env.options().relevant_terms())
 {
