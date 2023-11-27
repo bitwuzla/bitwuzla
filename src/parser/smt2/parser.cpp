@@ -202,6 +202,10 @@ Parser::parse_command_assert()
   {
     return false;
   }
+  if (!peek_is_term_arg())
+  {
+    return error("expected term");
+  }
   if (!peek_term_arg().sort().is_bool())
   {
     return error_arg("asserted term is not a formula");
