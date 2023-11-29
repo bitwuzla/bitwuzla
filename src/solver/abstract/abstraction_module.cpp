@@ -138,7 +138,13 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   // FIXME: make sure to not abstract equalities of lemmas
 
   // Enables lazy bit-blasting
-  // auto& add_abstr_lemmas = d_abstr_lemmas[Kind::BV_ADD];
+  auto& add_abstr_lemmas = d_abstr_lemmas[Kind::BV_ADD];
+  add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_ZERO>());
+  add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_SAME>());
+  add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_INV>());
+  add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_OVFL>());
+  add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_NOOFVL>());
+  add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_OR>());
 }
 
 AbstractionModule::~AbstractionModule() {}
@@ -161,7 +167,7 @@ AbstractionModule::check()
 {
   Log(1);
   Log(1) << "*** check abstractions";
-  // score_lemmas(Kind::BV_MUL);
+  // score_lemmas(Kind::BV_ADD);
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
 
@@ -407,9 +413,13 @@ AbstractionModule::check_abstraction(const Node& abstr)
       {
         lk = LemmaKind::UDIV_VALUE;
       }
-      else
+      else if (kind == Kind::BV_UREM)
       {
         lk = LemmaKind::UREM_VALUE;
+      }
+      else if (kind == Kind::BV_ADD)
+      {
+        lk = LemmaKind::ADD_VALUE;
       }
       Log(2) << lk << " inconsistent";
       Node lemma =

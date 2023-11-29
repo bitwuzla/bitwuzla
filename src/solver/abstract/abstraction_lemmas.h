@@ -9,11 +9,12 @@ namespace bzla::abstract {
 
 enum class LemmaKind
 {
-  MUL_ZERO,   // (=> (= s #b0000) (= t #b0000))
-  MUL_ONE,    // (=> (= s #b0001) (= t x))
-  MUL_IC,     // (= (bvand (bvor (bvneg s) s) t) t),
-  MUL_NEG,    // (=> (= s (bvnot #b0000)) (= t (bvneg x)))
-  MUL_ODD,    // (= t (bvor t (bvand x (bvand s #b0001))))
+  MUL_ZERO,  // (=> (= s #b0000) (= t #b0000))
+  MUL_ONE,   // (=> (= s #b0001) (= t x))
+  MUL_IC,    // (= (bvand (bvor (bvneg s) s) t) t),
+  MUL_NEG,   // (=> (= s (bvnot #b0000)) (= t (bvneg x)))
+  MUL_ODD,   // (= t (bvor t (bvand x (bvand s #b0001))))
+
   MUL_REF1,   // (not (= s (bvnot (bvor t (bvand #b0001 (bvor x s))))))
   MUL_REF2,   // (bvuge s (bvand t (bvneg (bvor t (bvnot x)))))
   MUL_REF3,   // (not (= (bvand x t) (bvor s (bvnot t))))
@@ -34,13 +35,14 @@ enum class LemmaKind
   MUL_REF18,  // (not (= x (bvsub #b0001 (bvshl x (bvsub s t)))))
   MUL_VALUE,  // value instantiation lemma
 
-  UDIV_REF1,   // (=> (= s #b0001) (= t x))
-  UDIV_REF2,   // (=> (and (= s x) (distinct s #b0000)) (= t #b0001))
-  UDIV_REF3,   // (=> (= s #b0000) (= t (bvnot #b0000)))
-  UDIV_REF4,   // (=> (and (= x #b0000) (distinct s #b0000)) (= t #b0000))
-  UDIV_REF5,   // (=> (distinct s #b0000) (bvule t x))
-  UDIV_REF6,   // (let ((_let_1 (bvnot #b0000)))
-               //  (=> (and (= s _let_1) (distinct x _let_1)) (= t #b0000)))
+  UDIV_REF1,  // (=> (= s #b0001) (= t x))
+  UDIV_REF2,  // (=> (and (= s x) (distinct s #b0000)) (= t #b0001))
+  UDIV_REF3,  // (=> (= s #b0000) (= t (bvnot #b0000)))
+  UDIV_REF4,  // (=> (and (= x #b0000) (distinct s #b0000)) (= t #b0000))
+  UDIV_REF5,  // (=> (distinct s #b0000) (bvule t x))
+  UDIV_REF6,  // (let ((_let_1 (bvnot #b0000)))
+              //  (=> (and (= s _let_1) (distinct x _let_1)) (= t #b0000)))
+
   UDIV_REF7,   // (not (bvult x (bvneg (bvand (bvneg s) (bvneg t)))))
   UDIV_REF8,   // (not (bvult (bvneg (bvor s #b0001)) t))
   UDIV_REF9,   // (not (= t (bvneg (bvand s (bvnot x)))))
@@ -75,12 +77,13 @@ enum class LemmaKind
   UDIV_REF38,  // (not (= x (bvsub #b0001 (bvshl x (bvsub x t)))))
   UDIV_VALUE,
 
-  UREM_REF1,   // (=> (distinct s #b0000) (bvule t s))
-  UREM_REF2,   // (=> (= x #b0000) (= t #b0000))
-  UREM_REF3,   // (=> (= s #b0000) (= t x))
-  UREM_REF4,   // (=> (= s x) (= t #b0000))
-  UREM_REF5,   // (=> (bvult x s) (= t x))
-  UREM_REF6,   // (bvuge (bvnot (bvneg s)) t)
+  UREM_REF1,  // (=> (distinct s #b0000) (bvule t s))
+  UREM_REF2,  // (=> (= x #b0000) (= t #b0000))
+  UREM_REF3,  // (=> (= s #b0000) (= t x))
+  UREM_REF4,  // (=> (= s x) (= t #b0000))
+  UREM_REF5,  // (=> (bvult x s) (= t x))
+  UREM_REF6,  // (bvuge (bvnot (bvneg s)) t)
+
   UREM_REF7,   // (not (distinct x (bvand x (bvor s (bvor t (bvneg s))))))
   UREM_REF8,   // (not (bvult x (bvor t (bvand x s))))
   UREM_REF9,   // (not (= #b0001 (bvand t (bvnot (bvor x s)))))
@@ -90,6 +93,15 @@ enum class LemmaKind
   UREM_REF13,  // (not (bvult (bvadd x (bvneg s)) t))
   UREM_REF14,  // (not (bvult (bvxor (bvneg s) (bvor x s)) t))
   UREM_VALUE,
+
+  ADD_ZERO,  // (=> (= s #b000) (= t x))
+  ADD_SAME,  // (=> (= x s) (= t[0] #b0))
+  ADD_INV,   // (=> (= s (bvnot x)) (= t #b1111))
+  ADD_OVFL,  // (=> (and (= (msb x) #b1) (= (msb s) #b1)) (bvult t (bvand x s)))
+  ADD_NOOFVL,  // (=> (and (= (msb x) #b0) (= (msb s) #b0)) (bvuge t (bvor x
+               // s)))
+  ADD_OR,      // (=> (= (bvand x s) #b000) (= t (bvor x s)))
+  ADD_VALUE,
 
   BITBLAST,
   ASSERTION
@@ -486,6 +498,41 @@ template <>
 Node Lemma<LemmaKind::UREM_REF14>::instance(const Node& x,
                                             const Node& s,
                                             const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::UREM_REF11>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_ZERO>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_SAME>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_INV>::instance(const Node& x,
+                                         const Node& s,
+                                         const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_OVFL>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_NOOFVL>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_OR>::instance(const Node& x,
+                                        const Node& s,
+                                        const Node& t) const;
 
 }  // namespace bzla::abstract
 
