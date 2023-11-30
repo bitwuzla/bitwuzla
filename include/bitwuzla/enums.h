@@ -572,6 +572,24 @@ enum ENUM(Kind)
    *   * `bitwuzla::mk_term()`
    */
   EVALUE(BV_NEG),
+  /*! Bit-vector negation overflow test.
+   *
+   * Predicate indicating if bit-vector negation produces an overflow.
+   *
+   * **SMT-LIB:** \c bvnego
+   *
+   * **Number of Arguments:** 1
+   *
+   * **Arguments:** \f$BV_n \rightarrow Bool\f$
+   *
+   * **Create with:**
+   * - **C**
+   *   * `bitwuzla_mk_term1()`
+   *   * `bitwuzla_mk_term()`
+   * - **C++**
+   *   * `bitwuzla::mk_term()`
+   */
+  EVALUE(BV_NEG_OVERFLOW),
   /*! Bit-vector nor.
    *
    * **SMT-LIB:** \c bvnor
@@ -1252,7 +1270,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 3
    *
-   * **Arguments:** \f$RM \times \mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$RM \times \mathit{FP}_{es} \times \mathit{FP}_{es}
+   * \rightarrow \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1268,7 +1287,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 3
    *
-   * **Arguments:** \f$RM \times \mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$RM \times \mathit{FP}_{es} \times \mathit{FP}_{es}
+   * \rightarrow \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1284,7 +1304,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** \c >= 2
    *
-   * **Arguments:** \f$\mathit{FP}_{es} \times ... \times \mathit{FP}_{es} \rightarrow Bool\f$
+   * **Arguments:** \f$\mathit{FP}_{es} \times ... \times \mathit{FP}_{es}
+   * \rightarrow Bool\f$
    *
    * **Create with:**
    * - **C**
@@ -1300,7 +1321,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 4
    *
-   * **Arguments:** \f$RM \times \mathit{FP}_{es} \times \mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$RM \times \mathit{FP}_{es} \times \mathit{FP}_{es} \times
+   * \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1315,7 +1337,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 3
    *
-   * **Arguments:** \f$BV_1 \times BV_e \times BV_{s-1} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$BV_1 \times BV_e \times BV_{s-1} \rightarrow
+   * \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1331,7 +1354,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 2
    *
-   * **Arguments:** \f$\mathit{FP}_{es} \times ... \times \mathit{FP}_{es} \rightarrow Bool\f$
+   * **Arguments:** \f$\mathit{FP}_{es} \times ... \times \mathit{FP}_{es}
+   * \rightarrow Bool\f$
    *
    * **Create with:**
    * - **C**
@@ -1347,7 +1371,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 2
    *
-   * **Arguments:** \f$\mathit{FP}_{es} \times ... \times \mathit{FP}_{es} \rightarrow Bool\f$
+   * **Arguments:** \f$\mathit{FP}_{es} \times ... \times \mathit{FP}_{es}
+   * \rightarrow Bool\f$
    *
    * **Create with:**
    * - **C**
@@ -1475,7 +1500,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** \c >= 2
    *
-   * **Arguments:** \f$\mathit{FP}_{es} \times ... \times \mathit{FP}_{es} \rightarrow Bool\f$
+   * **Arguments:** \f$\mathit{FP}_{es} \times ... \times \mathit{FP}_{es}
+   * \rightarrow Bool\f$
    *
    * **Create with:**
    * - **C**
@@ -1509,7 +1535,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 2
    *
-   * **Arguments:** \f$\mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$\mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow
+   * \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1525,7 +1552,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 2
    *
-   * **Arguments:** \f$\mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$\mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow
+   * \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1541,7 +1569,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 3
    *
-   * **Arguments:** \f$RM \times \mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$RM \times \mathit{FP}_{es} \times \mathit{FP}_{es}
+   * \rightarrow \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1573,7 +1602,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 2
    *
-   * **Arguments:** \f$\mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$\mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow
+   * \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1589,7 +1619,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 2
    *
-   * **Arguments:** \f$RM \times \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$RM \times \mathit{FP}_{es} \rightarrow
+   * \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1605,7 +1636,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 2
    *
-   * **Arguments:** \f$RM \times \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$RM \times \mathit{FP}_{es} \rightarrow
+   * \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1621,7 +1653,8 @@ enum ENUM(Kind)
    *
    * **Number of Arguments:** 3
    *
-   * **Arguments:** \f$RM \times \mathit{FP}_{es} \times \mathit{FP}_{es} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$RM \times \mathit{FP}_{es} \times \mathit{FP}_{es}
+   * \rightarrow \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**
@@ -1657,7 +1690,8 @@ enum ENUM(Kind)
    *
    * **Number of Indices:** 2 (\f$e\f$, \f$s\f$)
    *
-   * **Arguments:** \f$RM \times \mathit{FP}_{e's'} \rightarrow \mathit{FP}_{es}\f$
+   * **Arguments:** \f$RM \times \mathit{FP}_{e's'} \rightarrow
+   * \mathit{FP}_{es}\f$
    *
    * **Create with:**
    * - **C**

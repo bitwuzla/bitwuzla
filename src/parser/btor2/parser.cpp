@@ -168,6 +168,7 @@ Parser::parse_line()
     case Token::NAND: kind = bitwuzla::Kind::BV_NAND; break;
     case Token::NEQ: kind = bitwuzla::Kind::DISTINCT; break;
     case Token::NEG: kind = bitwuzla::Kind::BV_NEG; break;
+    case Token::NEGO: kind = bitwuzla::Kind::BV_NEG_OVERFLOW; break;
     case Token::NOR: kind = bitwuzla::Kind::BV_NOR; break;
     case Token::NOT: kind = bitwuzla::Kind::BV_NOT; break;
     case Token::OR: kind = bitwuzla::Kind::BV_OR; break;
@@ -371,6 +372,7 @@ Parser::parse_line()
     case Token::DEC:
     case Token::INC:
     case Token::NEG:
+    case Token::NEGO:
     case Token::NOT:
     case Token::REDAND:
     case Token::REDOR:

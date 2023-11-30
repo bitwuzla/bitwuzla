@@ -27,6 +27,8 @@ class TestRewriterBvOverflow : public TestRewriter
   static constexpr uint32_t TEST_OVERFLOW_LOW  = 1;
   static constexpr uint32_t TEST_OVERFLOW_HIGH = 4;
 
+  int32_t neg(int32_t x) { return -x; }
+
   int32_t add(int32_t x, int32_t y) { return x + y; }
 
   int32_t sub(int32_t x, int32_t y) { return x - y; }
@@ -49,39 +51,57 @@ class TestRewriterBvOverflow : public TestRewriter
     options.dbg_check_model.set(false);
     options.dbg_check_unsat_core.set(false);
     SolvingContext ctx = SolvingContext(options);
+    NodeManager& nm    = NodeManager::get();
     for (int32_t num_bits = low; num_bits <= high; num_bits++)
     {
       for (int32_t i = 0, max = std::pow(2, num_bits); i < max; ++i)
       {
-        for (int32_t j = 0; j < max; ++j)
+        if (kind == Kind::BV_NEGO)
         {
-          int32_t result = 0;
-
-          switch (kind)
-          {
-            case Kind::BV_UADDO:
-            case Kind::BV_SADDO: result = add(i, j); break;
-
-            case Kind::BV_USUBO:
-            case Kind::BV_SSUBO: result = sub(i, j); break;
-
-            case Kind::BV_UMULO:
-            case Kind::BV_SMULO: result = mul(i, j); break;
-            default: assert(kind == Kind::BV_SDIVO); result = div(i, j);
-          }
-
-          NodeManager& nm = NodeManager::get();
-          Node val1       = nm.mk_value(BitVector::from_ui(num_bits, i));
-          Node val2       = nm.mk_value(BitVector::from_ui(num_bits, j));
+          int32_t result = neg(i);
+          Node val       = nm.mk_value(BitVector::from_ui(num_bits, i));
           ctx.push();
-          ctx.assert_formula(nm.mk_node(kind, {val1, val2}));
-
+          ctx.assert_formula(nm.mk_node(kind, {val}));
           Result sat_res = ctx.solve();
           ctx.pop();
           ASSERT_TRUE(sat_res != Result::UNKNOWN);
           if (sat_res == Result::SAT)
           {
-            ASSERT_TRUE(result < 0 || result >= max);
+            ASSERT_EQ(BitVector::from_si(num_bits, result),
+                      BitVector::from_si(num_bits, i));
+          }
+        }
+        else
+        {
+          for (int32_t j = 0; j < max; ++j)
+          {
+            int32_t result = 0;
+
+            switch (kind)
+            {
+              case Kind::BV_UADDO:
+              case Kind::BV_SADDO: result = add(i, j); break;
+
+              case Kind::BV_USUBO:
+              case Kind::BV_SSUBO: result = sub(i, j); break;
+
+              case Kind::BV_UMULO:
+              case Kind::BV_SMULO: result = mul(i, j); break;
+              default: assert(kind == Kind::BV_SDIVO); result = div(i, j);
+            }
+
+            Node val1 = nm.mk_value(BitVector::from_ui(num_bits, i));
+            Node val2 = nm.mk_value(BitVector::from_ui(num_bits, j));
+            ctx.push();
+            ctx.assert_formula(nm.mk_node(kind, {val1, val2}));
+
+            Result sat_res = ctx.solve();
+            ctx.pop();
+            ASSERT_TRUE(sat_res != Result::UNKNOWN);
+            if (sat_res == Result::SAT)
+            {
+              ASSERT_TRUE(result < 0 || result >= max);
+            }
           }
         }
       }
@@ -146,6 +166,11 @@ class TestRewriterBvOverflow : public TestRewriter
     }
   }
 };
+
+TEST_F(TestRewriterBvOverflow, nego)
+{
+  u_overflow_test(Kind::BV_NEGO, TEST_OVERFLOW_LOW, TEST_OVERFLOW_HIGH, 1);
+}
 
 TEST_F(TestRewriterBvOverflow, uaddo)
 {

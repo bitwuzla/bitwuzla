@@ -200,6 +200,7 @@ to_string(bzla::parser::smt2::Token token)
     case Token::BV_REDOR: return "bvredor";
     case Token::BV_REDAND: return "bvredand";
     case Token::BV_REDXOR: return "bvredxor";
+    case Token::BV_NEGO: return "bvnego";
     case Token::BV_SADDO: return "bvsaddo";
     case Token::BV_UADDO: return "bvuaddo";
     case Token::BV_SDIVO: return "bvsdivo";

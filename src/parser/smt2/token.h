@@ -220,6 +220,7 @@ enum class Token
   BV_REDOR,
   BV_REDAND,
   BV_REDXOR,
+  BV_NEGO,
   BV_SADDO,
   BV_UADDO,
   BV_SDIVO,

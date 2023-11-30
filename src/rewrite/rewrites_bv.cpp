@@ -2946,6 +2946,18 @@ RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::_apply(Rewriter& rewriter,
 
 template <>
 Node
+RewriteRule<RewriteRuleKind::BV_NEGO_ELIM>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  assert(node.num_children() == 1);
+  return rewriter.mk_node(Kind::EQUAL,
+                          {node[0],
+                           NodeManager::get().mk_value(BitVector::mk_min_signed(
+                               node[0].type().bv_size()))});
+}
+
+template <>
+Node
 RewriteRule<RewriteRuleKind::BV_NOR_ELIM>::_apply(Rewriter& rewriter,
                                                   const Node& node)
 {

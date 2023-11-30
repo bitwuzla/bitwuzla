@@ -48,6 +48,7 @@ enum class Token
   NAND,
   NEQ,
   NEG,
+  NEGO,
   NEXT,
   NOR,
   NOT,

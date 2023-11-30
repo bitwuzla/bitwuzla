@@ -1809,6 +1809,7 @@ Parser::close_term()
     case Token::BV_MUL:
     case Token::BV_NAND:
     case Token::BV_NEG:
+    case Token::BV_NEGO:
     case Token::BV_NOR:
     case Token::BV_NOT:
     case Token::BV_OR:
@@ -2126,6 +2127,7 @@ Parser::close_term_bv(ParsedItem& item)
     case Token::BV_MUL: kind = bitwuzla::Kind::BV_MUL; break;
     case Token::BV_NAND: kind = bitwuzla::Kind::BV_NAND; break;
     case Token::BV_NEG: kind = bitwuzla::Kind::BV_NEG; break;
+    case Token::BV_NEGO: kind = bitwuzla::Kind::BV_NEG_OVERFLOW; break;
     case Token::BV_NOR: kind = bitwuzla::Kind::BV_NOR; break;
     case Token::BV_NOT: kind = bitwuzla::Kind::BV_NOT; break;
     case Token::BV_OR: kind = bitwuzla::Kind::BV_OR; break;
@@ -2824,6 +2826,7 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
 
     case Token::NOT:
     case Token::BV_NEG:
+    case Token::BV_NEGO:
     case Token::BV_NOT:
     case Token::BV_DEC:
     case Token::BV_INC:
@@ -3091,6 +3094,7 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
     case Token::BV_MUL:
     case Token::BV_NAND:
     case Token::BV_NEG:
+    case Token::BV_NEGO:
     case Token::BV_NOR:
     case Token::BV_NOT:
     case Token::BV_OR:

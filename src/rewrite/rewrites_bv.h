@@ -445,6 +445,10 @@ Node RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 
 template <>
+Node RewriteRule<RewriteRuleKind::BV_NEGO_ELIM>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
+template <>
 Node RewriteRule<RewriteRuleKind::BV_NOR_ELIM>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 

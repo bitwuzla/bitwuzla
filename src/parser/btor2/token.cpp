@@ -58,6 +58,7 @@ to_string(bzla::parser::btor2::Token token)
     case Token::NAND: return "nand";
     case Token::NEQ: return "neq";
     case Token::NEG: return "neg";
+    case Token::NEGO: return "nego";
     case Token::NEXT: return "next";
     case Token::NOR: return "nor";
     case Token::NOT: return "not";

@@ -168,6 +168,7 @@ constexpr KindInfo::KindInfo()
   init(Kind::BV_MUL, 2, 0, "BV_MUL", "bvmul", KindInfo::LEFT_ASSOC, true);
   init(Kind::BV_NAND, 2, 0, "BV_NAND", "bvnand", KindInfo::NONE, true);
   init(Kind::BV_NEG, 1, 0, "BV_NEG", "bvneg");
+  init(Kind::BV_NEGO, 1, 0, "BV_NEGO", "bvnego");
   init(Kind::BV_NOR, 2, 0, "BV_NOR", "bvnor", KindInfo::NONE, true);
   init(Kind::BV_NOT, 1, 0, "BV_NOT", "bvnot");
   init(Kind::BV_OR, 2, 0, "BV_OR", "bvor", KindInfo::LEFT_ASSOC, true);

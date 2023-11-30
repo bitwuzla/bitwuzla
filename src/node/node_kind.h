@@ -53,6 +53,7 @@ enum class Kind
   BV_MUL,
   BV_NAND,
   BV_NEG,
+  BV_NEGO,
   BV_NOR,
   BV_NOT,
   BV_OR,

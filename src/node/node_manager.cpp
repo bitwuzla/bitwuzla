@@ -266,6 +266,7 @@ NodeManager::compute_type(Kind kind,
     case Kind::EQUAL:
     case Kind::BV_ULT:
     case Kind::BV_UGE:
+    case Kind::BV_NEGO:
     case Kind::BV_SADDO:
     case Kind::BV_UADDO:
     case Kind::BV_SDIVO:
@@ -538,6 +539,7 @@ NodeManager::check_type(Kind kind,
     case Kind::BV_REDOR:
     case Kind::BV_REDXOR:
     case Kind::BV_NEG:
+    case Kind::BV_NEGO:
     case Kind::BV_NOT:
       if (!children[0].type().is_bv())
       {

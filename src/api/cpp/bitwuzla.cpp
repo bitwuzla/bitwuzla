@@ -173,6 +173,7 @@ static const std::unordered_map<Kind, bzla::node::Kind> s_internal_kinds = {
     {Kind::BV_MUL, bzla::node::Kind::BV_MUL},
     {Kind::BV_NAND, bzla::node::Kind::BV_NAND},
     {Kind::BV_NEG, bzla::node::Kind::BV_NEG},
+    {Kind::BV_NEG_OVERFLOW, bzla::node::Kind::BV_NEGO},
     {Kind::BV_NOR, bzla::node::Kind::BV_NOR},
     {Kind::BV_NOT, bzla::node::Kind::BV_NOT},
     {Kind::BV_OR, bzla::node::Kind::BV_OR},
@@ -1982,6 +1983,7 @@ mk_term(Kind kind,
     case Kind::BV_DEC:
     case Kind::BV_INC:
     case Kind::BV_NEG:
+    case Kind::BV_NEG_OVERFLOW:
     case Kind::BV_NOT:
     case Kind::BV_REDAND:
     case Kind::BV_REDOR:
@@ -2005,6 +2007,7 @@ mk_term(Kind kind,
         case Kind::BV_DEC:
         case Kind::BV_INC:
         case Kind::BV_NEG:
+        case Kind::BV_NEG_OVERFLOW:
         case Kind::BV_NOT:
         case Kind::BV_REDAND:
         case Kind::BV_REDOR:

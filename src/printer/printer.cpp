@@ -384,6 +384,7 @@ Printer::print(std::ostream& os,
         case Kind::BV_MUL:
         case Kind::BV_NAND:
         case Kind::BV_NEG:
+        case Kind::BV_NEGO:
         case Kind::BV_NOR:
         case Kind::BV_NOT:
         case Kind::BV_OR:

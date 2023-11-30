@@ -1100,6 +1100,8 @@ tests_smt2 = [
   ['solver/bv/regrw8simp.btor.smt2'],
   ['solver/bv/regsmod1.smt2'],
   ['solver/bv/regsubslapd149921red.btor.smt2'],
+  ['solver/bv/nego1.smt2'],
+  ['solver/bv/nego2.smt2'],
   ['solver/bv/saddo1.smt2'],
   ['solver/bv/saddo2.smt2'],
   ['solver/bv/sc12fuzzcheck2.smt2'],

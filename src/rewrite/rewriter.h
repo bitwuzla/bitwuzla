@@ -166,6 +166,7 @@ class Rewriter
   /* Eliminated operators */
   Node rewrite_bv_nand(const Node& node);
   Node rewrite_bv_neg(const Node& node);
+  Node rewrite_bv_nego(const Node& node);
   Node rewrite_bv_nor(const Node& node);
   Node rewrite_bv_or(const Node& node);
   Node rewrite_bv_redand(const Node& node);
@@ -505,6 +506,7 @@ enum class RewriteRuleKind
   BV_ROLI_ELIM,
   BV_ROR_ELIM,
   BV_RORI_ELIM,
+  BV_NEGO_ELIM,
   BV_SADDO_ELIM,
   BV_SDIV_ELIM,
   BV_SDIVO_ELIM,

@@ -411,6 +411,7 @@ Rewriter::_rewrite(const Node& node)
     /* Eliminated bit-vector operators */
     case node::Kind::BV_NAND: res = rewrite_bv_nand(n); break;
     case node::Kind::BV_NEG: res = rewrite_bv_neg(n); break;
+    case node::Kind::BV_NEGO: res = rewrite_bv_nego(n); break;
     case node::Kind::BV_NOR: res = rewrite_bv_nor(n); break;
     case node::Kind::BV_OR: res = rewrite_bv_or(n); break;
     case node::Kind::BV_REDAND: res = rewrite_bv_redand(n); break;
@@ -973,6 +974,7 @@ BZLA_ELIM_KIND_IMPL(bv_dec, BV_DEC_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_inc, BV_INC_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_nand, BV_NAND_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_neg, BV_NEG_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_nego, BV_NEGO_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_nor, BV_NOR_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_or, BV_OR_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_redand, BV_REDAND_ELIM)
@@ -1677,6 +1679,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_INC_ELIM: out << "BV_INC_ELIM"; break;
     case RewriteRuleKind::BV_NAND_ELIM: out << "BV_NAND_ELIM"; break;
     case RewriteRuleKind::BV_NEG_ELIM: out << "BV_NEG_ELIM"; break;
+    case RewriteRuleKind::BV_NEGO_ELIM: out << "BV_NEGO_ELIM"; break;
     case RewriteRuleKind::BV_NOR_ELIM: out << "BV_NOR_ELIM"; break;
     case RewriteRuleKind::BV_OR_ELIM: out << "BV_OR_ELIM"; break;
     case RewriteRuleKind::BV_REDAND_ELIM: out << "BV_REDAND_ELIM"; break;
