@@ -2751,6 +2751,7 @@ TEST_F(TestApi, terms)
       case bitwuzla::Kind::BV_DEC:
       case bitwuzla::Kind::BV_INC:
       case bitwuzla::Kind::BV_NEG:
+      case bitwuzla::Kind::BV_NEG_OVERFLOW:
       case bitwuzla::Kind::BV_NOT:
       case bitwuzla::Kind::BV_REDAND:
       case bitwuzla::Kind::BV_REDOR:
