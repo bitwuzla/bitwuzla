@@ -1450,7 +1450,9 @@ Parser::parse_open_term_indexed()
     }
     break;
 
-    default: assert(false);
+    default:
+      return error("expected identifier, got '" + std::string(d_lexer->token())
+                   + "'");
   }
 
   for (uint64_t i = 0; i < nidxs; ++i)

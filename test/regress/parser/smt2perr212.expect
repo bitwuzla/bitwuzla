@@ -1,0 +1,1 @@
+regress/parser/smt2perr212.smt2:1:13: expected identifier, got ')'
