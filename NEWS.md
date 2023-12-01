@@ -4,6 +4,8 @@ This file collects a summary of important and/or user-visible changes.
 
 ## News since version 0.2.0
 
+- Added support for bit-vector overflow operator `bvnego`.
+
 - Python API changes:
     * Simplified Function `mk_bv_value(sort: Sort, value, uint8_t base = 2)`,
       changed to `mk_bv_value(sort: Sort, value, *args)` to allow, e.g.,
