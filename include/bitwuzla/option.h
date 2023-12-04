@@ -359,6 +359,53 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(ABSTRACTION_ASSERT_REFS),
+  /*! **Abstraction module: Use initial lemmas only. **
+   *
+   * Initial lemmas are those lemmas not generated through abduction.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(ABSTRACTION_INITIAL_LEMMAS),
+  /*! **Abstraction module: Abstract bit-vector addition terms. **
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(ABSTRACTION_BV_ADD),
+  /*! **Abstraction module: Abstract bit-vector multiplication terms. **
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(ABSTRACTION_BV_MUL),
+  /*! **Abstraction module: Abstract bit-vector unsigned division terms. **
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(ABSTRACTION_BV_UDIV),
+  /*! **Abstraction module: Abstract bit-vector unsigned remainder terms. **
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(ABSTRACTION_BV_UREM),
 
   /*! **Preprocessing**
    *

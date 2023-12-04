@@ -305,6 +305,31 @@ Options::Options()
                               UINT64_MAX,
                               "number of assertion refinements per check",
                               "abstraction-assert-refs"),
+      abstraction_initial_lemmas(this,
+                                 Option::ABSTRACTION_INITIAL_LEMMAS,
+                                 false,
+                                 "use initial lemma refinements only",
+                                 "abstraction-initial-lemmas"),
+      abstraction_bv_add(this,
+                         Option::ABSTRACTION_BV_ADD,
+                         false,
+                         "enable term abstration for bvadd",
+                         "abstraction-bvadd"),
+      abstraction_bv_mul(this,
+                         Option::ABSTRACTION_BV_MUL,
+                         true,
+                         "enable term abstration for bvmul",
+                         "abstraction-bvmul"),
+      abstraction_bv_udiv(this,
+                          Option::ABSTRACTION_BV_UDIV,
+                          true,
+                          "enable term abstration for bvudiv",
+                          "abstraction-bvudiv"),
+      abstraction_bv_urem(this,
+                          Option::ABSTRACTION_BV_UREM,
+                          true,
+                          "enable term abstration for bvurem",
+                          "abstraction-bvurem"),
 
       // Preprocessing
       preprocess(
@@ -692,6 +717,11 @@ Options::data(Option opt)
     case Option::ABSTRACTION_VALUE_ONLY: return &abstraction_value_only;
     case Option::ABSTRACTION_ASSERT: return &abstraction_assert;
     case Option::ABSTRACTION_ASSERT_REFS: return &abstraction_assert_refs;
+    case Option::ABSTRACTION_INITIAL_LEMMAS: return &abstraction_initial_lemmas;
+    case Option::ABSTRACTION_BV_ADD: return &abstraction_bv_add;
+    case Option::ABSTRACTION_BV_MUL: return &abstraction_bv_mul;
+    case Option::ABSTRACTION_BV_UDIV: return &abstraction_bv_udiv;
+    case Option::ABSTRACTION_BV_UREM: return &abstraction_bv_urem;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

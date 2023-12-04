@@ -50,13 +50,18 @@ enum class Option
   PROP_NORMALIZE,               // bool
 
   // Abstraction module
-  ABSTRACTION,               // bool
-  ABSTRACTION_BV_SIZE,       // numeric
-  ABSTRACTION_EAGER_REFINE,  // bool
-  ABSTRACTION_VALUE_LIMIT,   // numeric
-  ABSTRACTION_VALUE_ONLY,    // bool
-  ABSTRACTION_ASSERT,        // bool
-  ABSTRACTION_ASSERT_REFS,   // bool
+  ABSTRACTION,                 // bool
+  ABSTRACTION_BV_SIZE,         // numeric
+  ABSTRACTION_EAGER_REFINE,    // bool
+  ABSTRACTION_VALUE_LIMIT,     // numeric
+  ABSTRACTION_VALUE_ONLY,      // bool
+  ABSTRACTION_ASSERT,          // bool
+  ABSTRACTION_ASSERT_REFS,     // bool
+  ABSTRACTION_INITIAL_LEMMAS,  // bool
+  ABSTRACTION_BV_ADD,          // bool
+  ABSTRACTION_BV_MUL,          // bool
+  ABSTRACTION_BV_UDIV,         // bool
+  ABSTRACTION_BV_UREM,         // bool
 
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,                // bool
@@ -492,6 +497,11 @@ class Options
   OptionBool abstraction_value_only;
   OptionBool abstraction_assert;
   OptionNumeric abstraction_assert_refs;
+  OptionBool abstraction_initial_lemmas;
+  OptionBool abstraction_bv_add;
+  OptionBool abstraction_bv_mul;
+  OptionBool abstraction_bv_udiv;
+  OptionBool abstraction_bv_urem;
 
   // Preprocessing
   OptionBool preprocess;
