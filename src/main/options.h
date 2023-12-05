@@ -20,6 +20,7 @@ namespace bzla::main {
 struct Options
 {
   bool print              = false;
+  bool print_unsat_core   = false;
   bool parse_only         = false;
   uint8_t bv_format       = 2;
   uint64_t time_limit     = 0;

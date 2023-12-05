@@ -1452,6 +1452,27 @@ cdef class Bitwuzla:
         self.c_bitwuzla.get().print_formula(c_ss, <const string&> fmt.encode())
         return c_ss.to_string().decode()
 
+    def print_unsat_core(self, fmt: str = 'smt2', uint8_t base = 2) -> str:
+        """Get the current unsat core as benchmark as a string.
+
+           :param fmt: The output format for printing the formula. Currently,
+                        only `"smt2"` for the SMT-LIB v2 format is supported.
+           :param base: The base of the string representation of bit-vector
+                        values; ``2`` for binary, ``10`` for decimal, and
+                        ``16`` for hexadecimal. Always ignored for Boolean and
+                        RoundingMode values.
+           :return: The current input formula as a string in the given format.
+        """
+        cdef bitwuzla_api.stringstream c_ss
+        cdef unique_ptr[bitwuzla_api.set_bv_format] c_bv_fmt
+
+        c_bv_fmt.reset(new bitwuzla_api.set_bv_format(base))
+
+        c_ss << dereference(c_bv_fmt.get())
+        self.c_bitwuzla.get().print_unsat_core(c_ss,
+                                               <const string&> fmt.encode())
+        return c_ss.to_string().decode()
+
     def statistics(self) -> dict[str, str]:
         """Get current statistics.
 

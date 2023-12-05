@@ -1633,6 +1633,19 @@ class Bitwuzla
                      const std::string &format = "smt2") const;
 
   /**
+   * Print the current unsat core as benchmark to the given output stream.
+   *
+   * Requires that the last `check_sat()` query returned `Result::UNSAT` and
+   * unsat cores are enabled.
+   *
+   * @param out    The output stream.
+   * @param format The output format for printing the formula. Currently, only
+   *               `"smt2"` for the SMT-LIB v2 format is supported.
+   */
+  void print_unsat_core(std::ostream &out,
+                        const std::string &format = "smt2") const;
+
+  /**
    * Get current statistics.
    * @return A map of strings of statistics entries, maps statistic name
    *         to value.

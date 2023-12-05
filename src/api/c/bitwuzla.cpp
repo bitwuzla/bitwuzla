@@ -568,6 +568,23 @@ bitwuzla_print_formula(Bitwuzla *bitwuzla,
 }
 
 void
+bitwuzla_print_unsat_core(Bitwuzla *bitwuzla,
+                          const char *format,
+                          FILE *file,
+                          uint8_t base)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  BITWUZLA_CHECK_NOT_NULL(format);
+  BITWUZLA_CHECK_NOT_NULL(file);
+  std::stringstream ss;
+  ss << bitwuzla::set_bv_format(base);
+  bitwuzla->d_bitwuzla->print_unsat_core(ss, format);
+  fprintf(file, "%s", ss.str().c_str());
+  BITWUZLA_TRY_CATCH_END;
+}
+
+void
 bitwuzla_get_statistics(Bitwuzla *bitwuzla,
                         const char ***keys,
                         const char ***values,

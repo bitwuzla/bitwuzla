@@ -1439,6 +1439,26 @@ void bitwuzla_print_formula(Bitwuzla *bitwuzla,
                             uint8_t base);
 
 /**
+ * Print the current unsat core as benchmark.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param format The output format for printing the formula. Currently, only
+ *               `"smt2"` for the SMT-LIB v2 format is supported.
+ * @param file   The file to print the formula to.
+ * @param base   The base of the string representation of bit-vector values;
+ *               `2` for binary, `10` for decimal, and `16` for hexadecimal.
+ *
+ * @note Floating-point values are printed in terms of operator `fp`. Their
+ *       component bit-vector values can only be printed in binary or decimal
+ *       format. If base `16` is configured, the format for floating-point
+ *       component bit-vector values defaults to binary format.
+ */
+void bitwuzla_print_unsat_core(Bitwuzla *bitwuzla,
+                               const char *format,
+                               FILE *file,
+                               uint8_t base);
+
+/**
  * Get current statistics.
  *
  * The statistics are retrieved as a mapping from statistic name (`keys`)

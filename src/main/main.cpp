@@ -34,6 +34,11 @@ main(int32_t argc, char* argv[])
     set_time_limit(main_options.time_limit);
     options.set(args);
 
+    if (main_options.print_unsat_core)
+    {
+      options.set(bitwuzla::Option::PRODUCE_UNSAT_CORES, 1);
+    }
+
     std::cout << bitwuzla::set_bv_format(main_options.bv_format);
     bitwuzla::parser::Parser parser(
         tm, options, main_options.language, &std::cout);
@@ -59,6 +64,12 @@ main(int32_t argc, char* argv[])
         parser.print_model();
       }
     }
+
+    if (main_options.print_unsat_core)
+    {
+      bitwuzla->print_unsat_core(std::cout);
+    }
+
     if (options.get(bitwuzla::Option::VERBOSITY))
     {
       auto stats = bitwuzla->statistics();

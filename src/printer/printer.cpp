@@ -289,6 +289,17 @@ Printer::print_formula(std::ostream& os,
   os << "(exit)" << std::endl;
 }
 
+void
+Printer::print_formula(std::ostream& os, const std::vector<Node>& assertions)
+{
+  backtrack::AssertionStack stack;
+  for (const Node& assertion : assertions)
+  {
+    stack.push_back(assertion);
+  }
+  print_formula(os, stack.view());
+}
+
 /* --- Printer private ------------------------------------------------------ */
 
 void

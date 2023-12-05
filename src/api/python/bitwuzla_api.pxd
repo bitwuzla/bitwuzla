@@ -285,6 +285,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         Result check_sat(const vector[Term] &assumptions) except +raise_error
         Term get_value(const Term &term) except +raise_error
         void print_formula(ostream& outfile, string& fmt) except +raise_error
+        void print_unsat_core(ostream& outfile, string& fmt) except +raise_error
         map[string, string] statistics() except +raise_error
         TermManager& term_mgr() except +raise_error
 

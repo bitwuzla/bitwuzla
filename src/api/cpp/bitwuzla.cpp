@@ -1558,6 +1558,18 @@ Bitwuzla::print_formula(std::ostream &out, const std::string &format) const
   }
 }
 
+void
+Bitwuzla::print_unsat_core(std::ostream &out, const std::string &format) const
+{
+  BITWUZLA_CHECK_STR_NOT_EMPTY(format);
+  BITWUZLA_CHECK(format == "smt2") << "invalid format, expected 'smt2'";
+  BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(d_ctx->options());
+  if (d_last_check_sat == Result::UNSAT)
+  {
+    bzla::Printer::print_formula(out, d_ctx->get_unsat_core());
+  }
+}
+
 std::map<std::string, std::string>
 Bitwuzla::statistics() const
 {
@@ -1580,6 +1592,7 @@ Bitwuzla::solver_state_change()
     d_ctx->pop();
     d_pending_pop = false;
   }
+  d_last_check_sat = Result::UNKNOWN;
 }
 
 /* TermManager public ------------------------------------------------------- */

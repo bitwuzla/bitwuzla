@@ -36,6 +36,8 @@ class Printer
    */
   static void print_formula(std::ostream& os,
                             const backtrack::AssertionView& assertions);
+  static void print_formula(std::ostream& os,
+                            const std::vector<Node>& assertions);
 
  private:
   static void print(std::ostream& os,
