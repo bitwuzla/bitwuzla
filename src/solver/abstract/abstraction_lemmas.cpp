@@ -1179,7 +1179,7 @@ Lemma<LemmaKind::UREM_REF7>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
 {
-  // (not (distinct x (bvand x (bvor s (bvor t (bvneg s))))))
+  // (= x (bvand x (bvor s (bvor t (bvneg s)))))
   NodeManager& nm = NodeManager::get();
   return nm.mk_node(
       Kind::EQUAL,
@@ -1390,7 +1390,7 @@ Lemma<LemmaKind::ADD_OR>::instance(const Node& x,
                                    const Node& s,
                                    const Node& t) const
 {
-  // ADD_OR,     // (=> (= (bvand x s) #b000) (= t (bvor x s)))
+  // (=> (= (bvand x s) #b000) (= t (bvor x s)))
   NodeManager& nm = NodeManager::get();
   Node zero       = nm.mk_value(BitVector::mk_zero(x.type().bv_size()));
   return nm.mk_node(

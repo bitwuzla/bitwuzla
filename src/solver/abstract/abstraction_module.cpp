@@ -8,6 +8,10 @@
 #include "solver/abstract/abstraction_lemmas.h"
 #include "solver/bv/bv_solver.h"
 
+#ifndef NDEBUG
+#include "solving_context.h"
+#endif
+
 namespace std {
 
 template <>
@@ -111,7 +115,8 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF19>());
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF20>());
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF21>());
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF22>());
+      // not correct for size 10
+      // udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF22>());
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF23>());
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF24>());
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF25>());
@@ -124,7 +129,8 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF32>());
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF33>());
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF34>());
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF35>());
+      // not correct from size 10
+      // udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF35>());
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF36>());
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF37>());
       udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF38>());
@@ -192,6 +198,10 @@ AbstractionModule::check()
   // score_lemmas(Kind::BV_ADD);
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
+
+#ifndef NDEBUG
+  // verify_lemmas();
+#endif
 
   d_added_lemma = false;
 
@@ -635,6 +645,55 @@ AbstractionModule::score_lemmas(Kind kind) const
             << static_cast<double>(max * max) / max_score * 100 << std::endl;
   done = true;
 }
+
+#ifndef NDEBUG
+void
+AbstractionModule::verify_lemmas() const
+{
+  option::Options opts;
+  SolvingContext ctx(opts);
+  NodeManager& nm = NodeManager::get();
+
+  for (uint64_t size = 4; size < 32; ++size)
+  {
+    std::cout << std::endl;
+    std::cout << "check size=" << size << std::endl;
+    Node x = nm.mk_const(nm.mk_bv_type(size), "x");
+    Node s = nm.mk_const(nm.mk_bv_type(size), "s");
+    Node t = nm.mk_const(nm.mk_bv_type(size), "t");
+    for (const auto& [k, lemmas] : d_abstr_lemmas)
+    {
+      Node term = nm.mk_node(k, {x, s});
+      ctx.push();
+      std::cout << "check: " << k << std::endl;
+      Node eq = nm.mk_node(Kind::EQUAL, {term, t});
+      ctx.assert_formula(eq);
+      size_t i = 0;
+      for (const auto& lemma : lemmas)
+      {
+        std::cout << "\r" << ++i << "/" << lemmas.size() << std::flush;
+        ctx.push();
+        Node inst = nm.mk_node(Kind::NOT, {lemma->instance(x, s, t)});
+        ctx.assert_formula(inst);
+        Result res = ctx.solve();
+        if (res != Result::UNSAT)
+        {
+          std::cout << std::endl;
+          std::cout << lemma->kind() << " failed" << std::endl;
+          std::cout << "(assert " << eq << ")" << std::endl;
+          std::cout << "(assert " << inst << ")" << std::endl;
+          std::cout << "x: " << ctx.get_value(x) << std::endl;
+          std::cout << "s: " << ctx.get_value(s) << std::endl;
+          std::cout << "t: " << ctx.get_value(t) << std::endl;
+        }
+        ctx.pop();
+      }
+      std::cout << std::endl;
+      ctx.pop();
+    }
+  }
+}
+#endif
 
 AbstractionModule::Statistics::Statistics(util::Statistics& stats,
                                           const std::string& prefix)

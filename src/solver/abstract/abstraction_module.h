@@ -61,6 +61,10 @@ class AbstractionModule
   /** Utility to compute score for lemma schema. */
   void score_lemmas(node::Kind k) const;
 
+#ifndef NDEBUG
+  void verify_lemmas() const;
+#endif
+
   util::Logger& d_logger;
   SolverState& d_solver_state;
   Rewriter& d_rewriter;

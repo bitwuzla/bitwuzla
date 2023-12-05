@@ -95,7 +95,7 @@ enum class LemmaKind
   UREM_VALUE,
 
   ADD_ZERO,  // (=> (= s #b000) (= t x))
-  ADD_SAME,  // (=> (= x s) (= t[0] #b0))
+  ADD_SAME,  // (=> (= s x) (= ((_ extract 0 0) t) #b0))
   ADD_INV,   // (=> (= s (bvnot x)) (= t #b1111))
   ADD_OVFL,  // (=> (and (= (msb x) #b1) (= (msb s) #b1)) (bvult t (bvand x s)))
   ADD_NOOFVL,  // (=> (and (= (msb x) #b0) (= (msb s) #b0)) (bvuge t (bvor x
