@@ -7,7 +7,7 @@
 
 namespace bzla::abstract {
 
-enum class LemmaKind
+enum class LemmaKind : uint32_t
 {
   MUL_ZERO,  // (=> (= s #b0000) (= t #b0000))
   MUL_ONE,   // (=> (= s #b0001) (= t x))
@@ -33,7 +33,7 @@ enum class LemmaKind
   MUL_REF16,  // (not (= x (bvadd #b0001 (bvshl x (bvsub t s)))))
   MUL_REF17,  // (not (= x (bvadd #b0001 (bvshl x (bvsub s t)))))
   MUL_REF18,  // (not (= x (bvsub #b0001 (bvshl x (bvsub s t)))))
-  MUL_VALUE,  // value instantiation lemma
+  MUL_VALUE,
 
   UDIV_REF1,  // (=> (= s #b0001) (= t x))
   UDIV_REF2,  // (=> (and (= s x) (distinct s #b0000)) (= t #b0001))
@@ -104,8 +104,11 @@ enum class LemmaKind
   ADD_VALUE,
 
   BITBLAST,
-  ASSERTION
+  ASSERTION,
 };
+
+LemmaKind lemma_kind_value(node::Kind k);
+bool is_lemma_kind_value(LemmaKind k);
 
 std::ostream& operator<<(std::ostream& os, LemmaKind kind);
 

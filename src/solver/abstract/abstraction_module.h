@@ -13,7 +13,7 @@
 namespace bzla::abstract {
 
 class AbstractionLemma;
-enum class LemmaKind;
+enum class LemmaKind : uint32_t;
 
 class AbstractionModule
 {
@@ -90,6 +90,8 @@ class AbstractionModule
   backtrack::vector<Node> d_assertion_abstractions;
   /** Stores refined assertions. */
   backtrack::unordered_set<Node> d_assertion_abstractions_cache;
+  /** Buffer used for delaying sending lemmas. */
+  std::vector<std::tuple<Node, Node, LemmaKind>> d_lemma_buffer;
 
   /** Indicates whether lemma was added during check(). */
   bool d_added_lemma;

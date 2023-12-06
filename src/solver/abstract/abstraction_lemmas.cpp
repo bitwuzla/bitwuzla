@@ -6,6 +6,35 @@ namespace bzla::abstract {
 
 using namespace node;
 
+LemmaKind
+lemma_kind_value(node::Kind k)
+{
+  if (k == Kind::BV_ADD)
+  {
+    return LemmaKind::ADD_VALUE;
+  }
+  else if (k == Kind::BV_MUL)
+  {
+    return LemmaKind::MUL_VALUE;
+  }
+  else if (k == Kind::BV_UDIV)
+  {
+    return LemmaKind::UDIV_VALUE;
+  }
+  else
+  {
+    assert(k == Kind::BV_UREM);
+    return LemmaKind::UREM_VALUE;
+  }
+}
+
+bool
+is_lemma_kind_value(LemmaKind k)
+{
+  return k == LemmaKind::ADD_VALUE || k == LemmaKind::MUL_VALUE
+         || k == LemmaKind::UDIV_VALUE || k == LemmaKind::UREM_VALUE;
+}
+
 std::ostream&
 operator<<(std::ostream& os, LemmaKind kind)
 {

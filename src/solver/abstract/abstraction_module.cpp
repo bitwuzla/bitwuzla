@@ -222,6 +222,25 @@ AbstractionModule::check()
   {
     check_assertion_abstractions();
   }
+
+  // Abstraction refinements that are added as "last resort" are only added if
+  // we expaned all violated assertions.
+  // This includes:
+  //   - value instantiation lemmas
+  //   - bit-blasting lemmas
+  if (!d_added_lemma)
+  {
+    for (const auto& [node, lemma, lk] : d_lemma_buffer)
+    {
+      lemma_no_abstract(lemma, lk);
+      // Increment counter for value instantiations
+      if (is_lemma_kind_value(lk))
+      {
+        ++d_value_insts[node];
+      }
+    }
+  }
+  d_lemma_buffer.clear();
 }
 
 const Node&
@@ -431,28 +450,12 @@ AbstractionModule::check_abstraction(const Node& abstr)
   // Inconsistent value, but no abstraction violated, add value-based lemma.
   if (!d_added_lemma)
   {
-    auto& value_insts = d_value_insts[node];
+    const auto value_insts = d_value_insts[node];
     if (kind != Kind::EQUAL
         && (d_opt_value_inst_limit == 0
             || value_insts <= d_opt_value_inst_limit))
     {
-      LemmaKind lk;
-      if (kind == Kind::BV_MUL)
-      {
-        lk = LemmaKind::MUL_VALUE;
-      }
-      else if (kind == Kind::BV_UDIV)
-      {
-        lk = LemmaKind::UDIV_VALUE;
-      }
-      else if (kind == Kind::BV_UREM)
-      {
-        lk = LemmaKind::UREM_VALUE;
-      }
-      else if (kind == Kind::BV_ADD)
-      {
-        lk = LemmaKind::ADD_VALUE;
-      }
+      LemmaKind lk = lemma_kind_value(kind);
       Log(2) << lk << " inconsistent";
       Node lemma =
           nm.mk_node(Kind::IMPLIES,
@@ -462,11 +465,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
                                      nm.mk_node(Kind::EQUAL, {s, val_s}),
                                  }),
                       nm.mk_node(Kind::EQUAL, {t, val_expected})});
-      d_solver_state.lemma(lemma);
-      d_stats.lemmas << lk;
-      ++d_stats.num_lemmas;
-      ++value_insts;
-      d_added_lemma = true;
+      d_lemma_buffer.emplace_back(node, lemma, lk);
     }
     else
     {
@@ -494,7 +493,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
         Node term = nm.mk_node(kind, {x, s});
         lemma     = nm.mk_node(Kind::EQUAL, {t, term});
       }
-      lemma_no_abstract(lemma, LemmaKind::BITBLAST);
+      d_lemma_buffer.emplace_back(node, lemma, LemmaKind::BITBLAST);
     }
   }
 }
