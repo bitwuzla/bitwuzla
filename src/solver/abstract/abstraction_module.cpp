@@ -1,5 +1,7 @@
 #include "solver/abstract/abstraction_module.h"
 
+#include <algorithm>
+
 #include "bv/bitvector.h"
 #include "node/kind_info.h"
 #include "node/node_manager.h"
