@@ -174,6 +174,21 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
     add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_OVFL>());
     add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_NOOFVL>());
     add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_OR>());
+    if (!opt_initial_lemmas)
+    {
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF1>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF2>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF3>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF4>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF5>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF6>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF7>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF8>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF9>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF10>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF11>());
+      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF12>());
+    }
   }
 }
 

@@ -127,6 +127,18 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::ADD_OVFL: os << "ADD_OVFL1"; break;
     case LemmaKind::ADD_NOOFVL: os << "ADD_OVFL2"; break;
     case LemmaKind::ADD_OR: os << "ADD_OR"; break;
+    case LemmaKind::ADD_REF1: os << "ADD_REF1"; break;
+    case LemmaKind::ADD_REF2: os << "ADD_REF2"; break;
+    case LemmaKind::ADD_REF3: os << "ADD_REF3"; break;
+    case LemmaKind::ADD_REF4: os << "ADD_REF4"; break;
+    case LemmaKind::ADD_REF5: os << "ADD_REF5"; break;
+    case LemmaKind::ADD_REF6: os << "ADD_REF6"; break;
+    case LemmaKind::ADD_REF7: os << "ADD_REF7"; break;
+    case LemmaKind::ADD_REF8: os << "ADD_REF8"; break;
+    case LemmaKind::ADD_REF9: os << "ADD_REF9"; break;
+    case LemmaKind::ADD_REF10: os << "ADD_REF10"; break;
+    case LemmaKind::ADD_REF11: os << "ADD_REF11"; break;
+    case LemmaKind::ADD_REF12: os << "ADD_REF12"; break;
     case LemmaKind::ADD_VALUE: os << "ADD_VALUE"; break;
 
     case LemmaKind::BITBLAST: os << "BITBLAST"; break;
@@ -1428,4 +1440,212 @@ Lemma<LemmaKind::ADD_OR>::instance(const Node& x,
        nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_OR, {x, s})})});
 }
 
+template <>
+Node
+Lemma<LemmaKind::ADD_REF1>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  // (=> (= s x) (= ((_ extract 0 0) t) #b0))
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(Kind::IMPLIES,
+                    {nm.mk_node(Kind::EQUAL, {s, x}),
+                     nm.mk_node(Kind::EQUAL,
+                                {nm.mk_node(Kind::BV_EXTRACT, {t}, {0, 0}),
+                                 nm.mk_value(BitVector::mk_zero(1))})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF2>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  // (=> (= s (bvnot x)) (= t (bvnot #b0000)))
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::EQUAL, {s, nm.mk_node(Kind::BV_NOT, {x})}),
+       nm.mk_node(Kind::EQUAL,
+                  {t, nm.mk_value(BitVector::mk_ones(x.type().bv_size()))})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF3>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  // (=> (= (bvand x s) #b0000) (= t (bvor x s)))
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::EQUAL,
+                  {nm.mk_node(Kind::BV_AND, {x, s}),
+                   nm.mk_value(BitVector::mk_zero(x.type().bv_size()))}),
+       nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_OR, {x, s})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF4>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  // (=>
+  //   (and
+  //     (= ((_ extract msb msb) x) #b0) (= ((_ extract msb msb) s) #b0))
+  //     (bvuge t (bvor x s)))
+  NodeManager& nm = NodeManager::get();
+  uint64_t msb    = x.type().bv_size() - 1;
+  Node bvfalse    = nm.mk_value(BitVector::mk_false());
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::EQUAL,
+                              {nm.mk_node(Kind::BV_EXTRACT, {x}, {msb, msb}),
+                               bvfalse}),
+                   nm.mk_node(Kind::EQUAL,
+                              {nm.mk_node(Kind::BV_EXTRACT, {s}, {msb, msb}),
+                               bvfalse})}),
+       nm.mk_node(Kind::BV_UGE, {t, nm.mk_node(Kind::BV_OR, {x, s})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF5>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  // (=>
+  //   (and (= ((_ extract msb msb) x) #b1) (= ((_ extract msb msb) s) #b1))
+  //   (bvult t (bvand x s)))
+  NodeManager& nm = NodeManager::get();
+  uint64_t msb    = x.type().bv_size() - 1;
+  Node bvtrue     = nm.mk_value(BitVector::mk_true());
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(
+           Kind::AND,
+           {nm.mk_node(Kind::EQUAL,
+                       {nm.mk_node(Kind::BV_EXTRACT, {x}, {msb, msb}), bvtrue}),
+            nm.mk_node(
+                Kind::EQUAL,
+                {nm.mk_node(Kind::BV_EXTRACT, {s}, {msb, msb}), bvtrue})}),
+       nm.mk_node(Kind::BV_ULT, {t, nm.mk_node(Kind::BV_AND, {x, s})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF6>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  // (= #b0000 (bvand x (bvand s (bvand t #b0001))))
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::EQUAL,
+      {nm.mk_value(BitVector::mk_zero(x.type().bv_size())),
+       nm.mk_node(Kind::BV_AND,
+                  {x,
+                   nm.mk_node(Kind::BV_AND,
+                              {s,
+                               nm.mk_node(Kind::BV_AND,
+                                          {t,
+                                           nm.mk_value(BitVector::mk_one(
+                                               x.type().bv_size()))})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF7>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  // (bvuge (bvand #b0001 (bvor s t)) (bvand x #b0001))
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::BV_UGE,
+      {nm.mk_node(Kind::BV_AND, {one, nm.mk_node(Kind::BV_OR, {s, t})}),
+       nm.mk_node(Kind::BV_AND, {x, one})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF8>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  // (bvuge (bvand #b0001 (bvor x t)) (bvand s #b0001))
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::BV_UGE,
+      {nm.mk_node(Kind::BV_AND, {one, nm.mk_node(Kind::BV_OR, {x, t})}),
+       nm.mk_node(Kind::BV_AND, {s, one})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF9>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  // (bvuge (bvand #b0001 (bvor x s)) (bvand t #b0001))
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::BV_UGE,
+      {nm.mk_node(Kind::BV_AND, {one, nm.mk_node(Kind::BV_OR, {x, s})}),
+       nm.mk_node(Kind::BV_AND, {t, one})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF10>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  // (distinct #b0001 (bvor t (bvnot (bvand x s))))
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {nm.mk_value(BitVector::mk_one(x.type().bv_size())),
+       nm.mk_node(
+           Kind::BV_OR,
+           {t, nm.mk_node(Kind::BV_NOT, {nm.mk_node(Kind::BV_AND, {x, s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF11>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  // (distinct t (bvnot (bvor t (bvand x s))))
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {t,
+       nm.mk_node(
+           Kind::BV_NOT,
+           {nm.mk_node(Kind::BV_OR, {t, nm.mk_node(Kind::BV_AND, {x, s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::ADD_REF12>::instance(const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  // (distinct #b0001 (bvor x (bvor s (bvnot t))))
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::DISTINCT,
+      {nm.mk_value(BitVector::mk_one(x.type().bv_size())),
+       nm.mk_node(
+           Kind::BV_OR,
+           {x, nm.mk_node(Kind::BV_OR, {s, nm.mk_node(Kind::BV_NOT, {t})})})});
+}
 }  // namespace bzla::abstract

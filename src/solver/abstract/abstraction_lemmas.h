@@ -94,13 +94,35 @@ enum class LemmaKind : uint32_t
   UREM_REF14,  // (not (bvult (bvxor (bvneg s) (bvor x s)) t))
   UREM_VALUE,
 
-  ADD_ZERO,  // (=> (= s #b000) (= t x))
-  ADD_SAME,  // (=> (= s x) (= ((_ extract 0 0) t) #b0))
-  ADD_INV,   // (=> (= s (bvnot x)) (= t #b1111))
-  ADD_OVFL,  // (=> (and (= (msb x) #b1) (= (msb s) #b1)) (bvult t (bvand x s)))
-  ADD_NOOFVL,  // (=> (and (= (msb x) #b0) (= (msb s) #b0)) (bvuge t (bvor x
-               // s)))
+  ADD_ZERO,    // (=> (= s #b000) (= t x))
+  ADD_SAME,    // (=> (= s x) (= ((_ extract 0 0) t) #b0))
+  ADD_INV,     // (=> (= s (bvnot x)) (= t #b1111))
+  ADD_OVFL,    // (=>
+               //   (and (= (msb x) #b1) (= (msb s) #b1))
+               //   (bvult t (bvand x s)))
+  ADD_NOOFVL,  // (=>
+               //   (and (= (msb x) #b0) (= (msb s) #b0))
+               //   (bvuge t (bvor x s)))
   ADD_OR,      // (=> (= (bvand x s) #b000) (= t (bvor x s)))
+               // (=> (= (bvadd x s) t) (=> (= s #b0000) (= t x)))
+  ADD_REF1,    // (=> (= s x) (= ((_ extract 0 0) t) #b0)))
+  ADD_REF2,    // (=> (= s (bvnot x)) (= t (bvnot #b0000))))
+  ADD_REF3,    // (=> (= (bvand x s) #b0000) (= t (bvor x s))))
+  ADD_REF4,    // (=>
+               //   (and
+               //     (= ((_ extract 3 3) x) #b0)
+               //     (= ((_ extract 3 3) s) #b0)) (bvuge t (bvor x s))))
+  ADD_REF5,    // (=>
+               //   (and
+               //     (= ((_ extract 3 3) x) #b1)
+               //     (= ((_ extract 3 3) s) #b1)) (bvult t (bvand x s))))
+  ADD_REF6,    // (not (distinct #b0000 (bvand x (bvand s (bvand t #b0001))))))
+  ADD_REF7,    // (not (bvult (bvand #b0001 (bvor s t)) (bvand x #b0001))))
+  ADD_REF8,    // (not (bvult (bvand #b0001 (bvor x t)) (bvand s #b0001))))
+  ADD_REF9,    // (not (bvult (bvand #b0001 (bvor x s)) (bvand t #b0001))))
+  ADD_REF10,   // (not (= #b0001 (bvor t (bvnot (bvand x s))))))
+  ADD_REF11,   // (not (= t (bvnot (bvor t (bvand x s))))))
+  ADD_REF12,   // (not (= #b0001 (bvor x (bvor s (bvnot t))))))
   ADD_VALUE,
 
   BITBLAST,
@@ -537,6 +559,65 @@ Node Lemma<LemmaKind::ADD_OR>::instance(const Node& x,
                                         const Node& s,
                                         const Node& t) const;
 
+template <>
+Node Lemma<LemmaKind::ADD_REF1>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF2>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF3>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF4>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF5>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF6>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF7>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF8>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF9>::instance(const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF10>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF11>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::ADD_REF12>::instance(const Node& x,
+                                           const Node& s,
+                                           const Node& t) const;
 }  // namespace bzla::abstract
 
 #endif
