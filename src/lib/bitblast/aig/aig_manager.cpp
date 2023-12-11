@@ -183,7 +183,7 @@ AigNode::AigNode(AigNodeData* data, bool negated)
     : d_data(data), d_negated(negated)
 {
   d_data->inc_refs();
-};
+}
 
 AigNode::~AigNode()
 {

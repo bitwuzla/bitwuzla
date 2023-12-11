@@ -269,7 +269,7 @@ Node::Node(node::NodeData* data) : d_data(data)
 {
   assert(data != nullptr);
   d_data->inc_ref();
-};
+}
 
 /* --- Other --------------------------------------------------------------- */
 

@@ -44,7 +44,7 @@ TEST_F(TestPassFlattenAnd, and1)
   ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_as[1], a1);
   ASSERT_EQ(d_as[2], a2);
-};
+}
 
 TEST_F(TestPassFlattenAnd, and2)
 {
@@ -64,7 +64,7 @@ TEST_F(TestPassFlattenAnd, and2)
   ASSERT_EQ(d_as[1], a1);
   ASSERT_EQ(d_as[2], a2);
   ASSERT_EQ(d_as[3], a3);
-};
+}
 
 TEST_F(TestPassFlattenAnd, and3)
 {
@@ -82,6 +82,6 @@ TEST_F(TestPassFlattenAnd, and3)
   ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_as[1], a2);
   ASSERT_EQ(d_as[2], a1);
-};
+}
 
 }  // namespace bzla::test

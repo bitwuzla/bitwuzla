@@ -133,4 +133,4 @@ TEST_F(TestOptions, opt_defaults)
   }
 }
 
-};  // namespace bzla::test
+}  // namespace bzla::test

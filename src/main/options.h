@@ -39,6 +39,6 @@ Options parse_options(int32_t argc,
                       char* argv[],
                       std::vector<std::string>& args);
 
-};  // namespace bzla::main
+}  // namespace bzla::main
 
 #endif

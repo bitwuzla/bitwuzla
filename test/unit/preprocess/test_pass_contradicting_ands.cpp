@@ -27,7 +27,7 @@ class TestPassContradictingAnds : public TestPreprocessingPass
     d_options.rewrite_level.set(0);
     d_env.reset(new Env(d_options));
     d_pass.reset(new preprocess::pass::PassContradictingAnds(*d_env, &d_bm));
-  };
+  }
 
   void test_and(const Node& node,
                 const unordered_node_ref_set& expected_leafs = {},
@@ -75,12 +75,12 @@ class TestPassContradictingAnds : public TestPreprocessingPass
 TEST_F(TestPassContradictingAnds, bvand_does_not_apply1)
 {
   test_and(d_nm.mk_node(Kind::BV_AND, {d_a, d_b}), {d_a, d_b}, false);
-};
+}
 
 TEST_F(TestPassContradictingAnds, bvand_does_not_apply2)
 {
   test_and(d_nm.mk_node(Kind::BV_AND, {d_a, d_b_inv}), {d_a, d_b_inv}, false);
-};
+}
 
 TEST_F(TestPassContradictingAnds, bvand_does_not_apply3)
 {
@@ -88,32 +88,32 @@ TEST_F(TestPassContradictingAnds, bvand_does_not_apply3)
                         {d_nm.mk_node(Kind::BV_AND, {d_a, d_b_inv}), d_a}),
            {d_a, d_b_inv},
            false);
-};
+}
 
 TEST_F(TestPassContradictingAnds, bvand1)
 {
   test_and(d_nm.mk_node(Kind::BV_AND, {d_a, d_a_inv}));
-};
+}
 
 TEST_F(TestPassContradictingAnds, bvand2)
 {
   test_and(d_nm.mk_node(Kind::BV_AND,
                         {d_nm.mk_node(Kind::BV_AND, {d_a, d_b_inv}), d_b}));
-};
+}
 
 TEST_F(TestPassContradictingAnds, bvand3)
 {
   test_and(d_nm.mk_node(
       Kind::BV_AND,
       {d_nm.mk_node(Kind::BV_AND, {d_a, d_b_inv}), d_nm.invert_node(d_a)}));
-};
+}
 
 TEST_F(TestPassContradictingAnds, bvand4)
 {
   test_and(d_nm.mk_node(Kind::BV_AND,
                         {d_nm.mk_node(Kind::BV_AND, {d_a, d_b_inv}),
                          d_nm.mk_node(Kind::BV_AND, {d_c, d_a_inv})}));
-};
+}
 
 TEST_F(TestPassContradictingAnds, bvand5)
 {
@@ -122,7 +122,7 @@ TEST_F(TestPassContradictingAnds, bvand5)
       {d_nm.mk_node(Kind::BV_AND,
                     {d_a, d_nm.mk_node(Kind::BV_AND, {d_c, d_b_inv})}),
        d_nm.mk_node(Kind::BV_AND, {d_c_inv, d_a})}));
-};
+}
 
 /* -------------------------------------------------------------------------- */
 
@@ -145,7 +145,7 @@ TEST_F(TestPassContradictingAnds, assertion1)
           {d_a,
            d_nm.mk_node(Kind::BV_ADD,
                         {and1, d_nm.mk_node(Kind::BV_MUL, {d_d, d_zero})})}));
-};
+}
 
 TEST_F(TestPassContradictingAnds, assertion2)
 {
@@ -186,7 +186,7 @@ TEST_F(TestPassContradictingAnds, assertion2)
            d_nm.mk_node(Kind::BV_AND,
                         {d_nm.mk_node(Kind::BV_ADD, {d_d, and1_subst}),
                          d_nm.mk_node(Kind::BV_UDIV, {d_zero, d_e})})}));
-};
+}
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla::test

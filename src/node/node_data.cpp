@@ -30,7 +30,7 @@ NodeDataKeyEqual::operator()(const NodeData* d0, const NodeData* d1) const
 
 /* --- NodeData public ----------------------------------------------------- */
 
-NodeData::NodeData(Kind kind) : d_kind(kind){};
+NodeData::NodeData(Kind kind) : d_kind(kind) {}
 
 size_t
 NodeData::hash() const
@@ -205,7 +205,7 @@ NodeDataChildren::NodeDataChildren(Kind kind, const std::vector<Node>& children)
     d_children[i++] = n;
   }
   assert(i == d_num_children);
-};
+}
 
 size_t
 NodeDataChildren::hash() const
@@ -262,7 +262,7 @@ NodeDataIndexed::NodeDataIndexed(Kind kind,
     d_indices[i++] = idx;
   }
   assert(i == d_num_indices);
-};
+}
 
 size_t
 NodeDataIndexed::hash() const
@@ -301,7 +301,7 @@ NodeDataNary::NodeDataNary(Kind kind, const std::vector<Node>& children)
     : NodeData(kind), d_children(children)
 {
   assert(is_nary());
-};
+}
 
 size_t
 NodeDataNary::hash() const

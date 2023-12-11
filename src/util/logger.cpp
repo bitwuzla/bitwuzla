@@ -46,7 +46,7 @@ std::ostream&
 Logger::Line::stream()
 {
   return std::cout;
-};
+}
 
 Logger::Logger(uint64_t log_level,
                uint64_t verbosity,

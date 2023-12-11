@@ -421,7 +421,7 @@ namespace symfpu {
     {                                                               \
       return _c ? _t : _e;                                          \
     }                                                               \
-  };
+  }
 BZLA_FP_ITE(bzla::fp::SymFpuTraits::rm);
 BZLA_FP_ITE(bzla::fp::SymFpuTraits::prop);
 BZLA_FP_ITE(bzla::fp::SymFpuTraits::sbv);
@@ -448,7 +448,7 @@ BZLA_FP_ITE(bzla::fp::SymFpuTraits::ubv);
            _t.getNode(),                                                 \
            _e.getNode()});                                               \
     }                                                                    \
-  };
+  }
 BZLA_FP_SYM_ITE(bzla::fp::SymFpuSymTraits::rm);
 BZLA_FP_SYM_ITE(bzla::fp::SymFpuSymTraits::prop);
 BZLA_FP_SYM_ITE(bzla::fp::SymFpuSymTraits::sbv);

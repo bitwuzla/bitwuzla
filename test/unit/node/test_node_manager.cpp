@@ -72,7 +72,7 @@ TEST_F(TestNodeManager, mk_const)
   ASSERT_EQ(fun_const.kind(), Kind::CONSTANT);
   ASSERT_EQ(fun_const.num_children(), 0);
   ASSERT_TRUE(fun_const.type().is_fun());
-};
+}
 
 TEST_F(TestNodeManager, mk_const_array)
 {
@@ -106,7 +106,7 @@ TEST_F(TestNodeManager, mk_value_bool)
   ASSERT_EQ(val_true.value<bool>(), true);
   ASSERT_EQ(val_false.value<bool>(), false);
   ASSERT_NE(val_true, val_false);
-};
+}
 
 TEST_F(TestNodeManager, mk_value_bv)
 {
@@ -120,7 +120,7 @@ TEST_F(TestNodeManager, mk_value_bv)
   ASSERT_EQ(val.value<BitVector>(), bv);
   ASSERT_EQ(val.value<BitVector>(), BitVector::from_ui(32, 1));
   ASSERT_NE(val, nm.mk_value(BitVector::from_ui(32, 2)));
-};
+}
 
 TEST_F(TestNodeManager, mk_value_rm)
 {
@@ -155,7 +155,7 @@ TEST_F(TestNodeManager, mk_value_rm)
   {
     ASSERT_NE(val_rna, val);
   }
-};
+}
 
 TEST_F(TestNodeManager, mk_value_fp)
 {
@@ -193,7 +193,7 @@ TEST_F(TestNodeManager, mk_node)
 
   ASSERT_EQ(x_and_y, nm.mk_node(Kind::AND, {x, y}));
   ASSERT_EQ(or_z, nm.mk_node(Kind::OR, {nm.mk_node(Kind::AND, {x, y}), z}));
-};
+}
 
 TEST_F(TestNodeManager, mk_apply)
 {
