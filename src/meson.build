@@ -98,6 +98,18 @@ config_h = configure_file(input: 'config.h.in',
                configuration: conf_data)
 
 # ---
+# Util library used by support and bitwuzla library
+# ---
+
+sources_util = files([
+  'util/hash_pair.cpp',
+  'util/logger.cpp',
+  'util/resources.cpp',
+  'util/statistics.cpp',
+])
+util_lib = static_library('bzlautil', sources_util)
+
+# ---
 # Add Bitwuzla support libraries
 # ---
 
@@ -182,10 +194,6 @@ sources = files([
   'type/type.cpp',
   'type/type_data.cpp',
   'type/type_manager.cpp',
-  'util/hash_pair.cpp',
-  'util/logger.cpp',
-  'util/resources.cpp',
-  'util/statistics.cpp',
 ])
 
 compiler = meson.get_compiler('cpp')
@@ -199,7 +207,7 @@ bitwuzla_inc = include_directories('../include', 'lib')
 bitwuzla_lib = library('bitwuzla',
                       sources,
                       include_directories: bitwuzla_inc,
-                      link_with: support_libs,
+                      link_with: [support_libs, util_lib],
                       dependencies: dependencies,
                       soversion: bitwuzla_lib_soversion,
                       install_rpath: install_rpath,

@@ -35,7 +35,7 @@ jobs:
             config: debug --python
 
           - name: debug-clang
-            config: debug
+            config: debug --shared
             env: CC=clang CXX=clang++
 
           - name: production-win64
