@@ -313,14 +313,14 @@ class BitblasterInterface
       return Bits{strict_neg};
     }
 
-    // a[0:msb-1] < b[0:msb-1]
+    // a[msb-1:0] < b[msb-1:0]
     Bits a_rem = bv_extract(a, msb_pos - 1, 0);
     Bits b_rem = bv_extract(b, msb_pos - 1, 0);
     T ult      = ult_helper(a_rem, b_rem);
 
     // a[msb] = 0, b[msb] = 1: false
     T strict_pos = d_bit_mgr.mk_and(d_bit_mgr.mk_not(a_sign), b_sign);
-    // a[msb] = b[msb]: a[0:msb-1] < b[0:msb-1]
+    // a[msb] = b[msb]: a[msb-1:0] < b[msb-1:0]
     T eq_sign = d_bit_mgr.mk_and(d_bit_mgr.mk_not(strict_neg),
                                  d_bit_mgr.mk_not(strict_pos));
 
