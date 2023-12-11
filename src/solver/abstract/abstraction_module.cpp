@@ -497,7 +497,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
         uint64_t lower = bv_xor.count_trailing_zeros();
         uint64_t upper = bv_xor.ibvshr(lower).ibvnot().count_trailing_zeros();
         // Bit-blast at most 32 bit for now.
-        upper = std::min(upper, 32ul) + lower - 1;
+        upper = std::min(upper, static_cast<uint64_t>(32)) + lower - 1;
 
         Node extr_x = nm.mk_node(Kind::BV_EXTRACT, {x}, {upper, lower});
         Node extr_s = nm.mk_node(Kind::BV_EXTRACT, {s}, {upper, lower});

@@ -141,6 +141,7 @@ class AbstractionLemma
  public:
   AbstractionLemma(LemmaKind kind, bool commutative = true)
       : d_kind(kind), d_commutative(commutative){};
+  virtual ~AbstractionLemma() {};
 
   /** Return lemma kind. */
   LemmaKind kind() const { return d_kind; }
@@ -160,6 +161,7 @@ class Lemma : public AbstractionLemma
 {
  public:
   Lemma<K>() : AbstractionLemma(K){};
+  ~Lemma<K>() {};
   Node instance(const Node& x, const Node& s, const Node& t) const override;
 };
 
