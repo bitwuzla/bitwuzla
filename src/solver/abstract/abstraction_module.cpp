@@ -9,21 +9,13 @@
 #include "node/node_utils.h"
 #include "solver/abstract/abstraction_lemmas.h"
 #include "solver/bv/bv_solver.h"
+#include "util/hash_pair.h"
 
 #ifndef NDEBUG
 #include "solving_context.h"
 #endif
 
 namespace std {
-
-template <>
-struct hash<std::pair<uint64_t, uint64_t>>
-{
-  size_t operator()(const std::pair<uint64_t, uint64_t>& p) const
-  {
-    return 547789289u * p.first + 786695309u * p.second;
-  }
-};
 
 template <>
 struct hash<std::tuple<uint64_t, uint64_t, uint64_t>>
