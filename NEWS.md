@@ -6,6 +6,10 @@ This file collects a summary of important and/or user-visible changes.
 
 - Added support for bit-vector overflow operator `bvnego`.
 
+- Added `--lang` option for specifying input language.
+
+- Added Windows cross-compilation support (configure flag: `--win64`).
+
 - Python API changes:
     * Simplified Function `mk_bv_value(sort: Sort, value, uint8_t base = 2)`,
       changed to `mk_bv_value(sort: Sort, value, *args)` to allow, e.g.,
