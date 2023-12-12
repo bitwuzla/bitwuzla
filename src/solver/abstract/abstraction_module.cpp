@@ -426,10 +426,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
       {
         Log(2) << lem->kind() << " inconsistent";
         Node lemma = lem->instance(x, s, t);
-        d_solver_state.lemma(lemma);
-        d_added_lemma = true;
-        d_stats.lemmas << lem->kind();
-        ++d_stats.num_lemmas;
+        lemma_no_abstract(lemma, lem->kind());
         if (!d_opt_eager_refine)
         {
           break;
@@ -443,10 +440,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
         {
           Log(2) << lem->kind() << " (comm.) inconsistent";
           Node lemma = lem->instance(s, x, t);
-          d_solver_state.lemma(lemma);
-          d_added_lemma = true;
-          d_stats.lemmas << lem->kind();
-          ++d_stats.num_lemmas;
+          lemma_no_abstract(lemma, lem->kind());
           if (!d_opt_eager_refine)
           {
             break;
