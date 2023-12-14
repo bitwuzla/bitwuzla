@@ -81,6 +81,8 @@ class AbstractionModule
   std::unordered_map<node::Kind, std::unordered_map<Type, Node>> d_abstr_ufs;
   /** Stores abstraction consts for assertions. */
   std::unordered_map<Node, Node> d_abstr_consts;
+  /** Stores abstraction consts for equalities. */
+  std::unordered_map<Node, std::vector<Node>> d_abstr_equal;
   /** Stores enabled refinement lemmas based on kind. */
   std::unordered_map<node::Kind, std::vector<std::unique_ptr<AbstractionLemma>>>
       d_abstr_lemmas;

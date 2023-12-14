@@ -154,8 +154,10 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   }
 
   // Enables incremental bit-blasting of equalities
-  // auto& equal_abstr_lemmas = d_abstr_lemmas[Kind::EQUAL];
-  // FIXME: make sure to not abstract equalities of lemmas
+  if (env.options().abstraction_eq())
+  {
+    d_abstr_lemmas.try_emplace(Kind::EQUAL);
+  }
 
   if (env.options().abstraction_bv_add())
   {
@@ -470,32 +472,55 @@ AbstractionModule::check_abstraction(const Node& abstr)
                       nm.mk_node(Kind::EQUAL, {t, val_expected})});
       d_lemma_buffer.emplace_back(node, lemma, lk);
     }
+    else if (kind == Kind::EQUAL)
+    {
+      auto [it, inserted] = d_abstr_equal.emplace(node, std::vector<Node>());
+      // Partition equality in partitions of size 16
+      if (inserted)
+      {
+        uint64_t part_size = 16;
+        uint64_t bv_size   = x.type().bv_size();
+        auto& partitions   = it->second;
+        for (uint64_t lo = 0, hi = part_size - 1; lo < bv_size;
+             lo += part_size, hi = std::min(bv_size - 1, hi + part_size))
+        {
+          partitions.push_back(nm.mk_const(nm.mk_bool_type()));
+          Node extr_c0 = nm.mk_node(Kind::BV_EXTRACT, {x}, {hi, lo});
+          Node extr_c1 = nm.mk_node(Kind::BV_EXTRACT, {s}, {hi, lo});
+          Node eq      = nm.mk_node(Kind::EQUAL, {extr_c0, extr_c1});
+          add_abstraction(eq, partitions.back());
+        }
+        Node lemma =
+            nm.mk_node(Kind::EQUAL, {t, utils::mk_nary(Kind::AND, partitions)});
+        lemma_no_abstract(lemma, LemmaKind::BITBLAST);
+      }
+
+      // At this point we add the next violated partition.
+      auto& partitions = it->second;
+      if (!partitions.empty())
+      {
+        bool val_eq = val_t.value<bool>();
+        for (auto itp = partitions.begin(); itp != partitions.end(); ++itp)
+        {
+          const Node& c = *itp;
+          auto ita      = d_abstractions_rev.find(c);
+          assert(ita != d_abstractions_rev.end());
+          const Node& ref = ita->second;
+          if (val_eq != d_solver_state.value(ref).value<bool>())
+          {
+            Node lemma = nm.mk_node(Kind::EQUAL, {c, ref});
+            lemma_no_abstract(lemma, LemmaKind::BITBLAST);
+            it->second.erase(itp);
+            break;
+          }
+        }
+      }
+    }
     else
     {
-      Node lemma;
-      // Incrementally bit-blast positive equalities.
-      if (kind == Kind::EQUAL && val_t.value<bool>())
-      {
-        const auto& bv_x = val_x.value<BitVector>();
-        const auto& bv_s = val_s.value<BitVector>();
-        auto bv_xor      = bv_x.bvxor(bv_s);
-
-        uint64_t lower = bv_xor.count_trailing_zeros();
-        uint64_t upper = bv_xor.ibvshr(lower).ibvnot().count_trailing_zeros();
-        // Bit-blast at most 32 bit for now.
-        upper = std::min(upper, static_cast<uint64_t>(32)) + lower - 1;
-
-        Node extr_x = nm.mk_node(Kind::BV_EXTRACT, {x}, {upper, lower});
-        Node extr_s = nm.mk_node(Kind::BV_EXTRACT, {s}, {upper, lower});
-        Node term   = nm.mk_node(kind, {extr_x, extr_s});
-        lemma       = nm.mk_node(Kind::IMPLIES, {t, term});
-      }
       // Fully bit-blast abstracted term
-      else
-      {
-        Node term = nm.mk_node(kind, {x, s});
-        lemma     = nm.mk_node(Kind::EQUAL, {t, term});
-      }
+      Node term  = nm.mk_node(kind, {x, s});
+      Node lemma = nm.mk_node(Kind::EQUAL, {t, term});
       d_lemma_buffer.emplace_back(node, lemma, LemmaKind::BITBLAST);
     }
   }

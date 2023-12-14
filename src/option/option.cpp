@@ -313,23 +313,28 @@ Options::Options()
       abstraction_bv_add(this,
                          Option::ABSTRACTION_BV_ADD,
                          false,
-                         "enable term abstration for bvadd",
+                         "enable term abstraction for bvadd",
                          "abstraction-bvadd"),
       abstraction_bv_mul(this,
                          Option::ABSTRACTION_BV_MUL,
                          true,
-                         "enable term abstration for bvmul",
+                         "enable term abstraction for bvmul",
                          "abstraction-bvmul"),
       abstraction_bv_udiv(this,
                           Option::ABSTRACTION_BV_UDIV,
                           true,
-                          "enable term abstration for bvudiv",
+                          "enable term abstraction for bvudiv",
                           "abstraction-bvudiv"),
       abstraction_bv_urem(this,
                           Option::ABSTRACTION_BV_UREM,
                           true,
-                          "enable term abstration for bvurem",
+                          "enable term abstraction for bvurem",
                           "abstraction-bvurem"),
+      abstraction_eq(this,
+                     Option::ABSTRACTION_EQUAL,
+                     false,
+                     "enable term abstraction for equalities",
+                     "abstraction-eq"),
 
       // Preprocessing
       preprocess(
@@ -722,6 +727,7 @@ Options::data(Option opt)
     case Option::ABSTRACTION_BV_MUL: return &abstraction_bv_mul;
     case Option::ABSTRACTION_BV_UDIV: return &abstraction_bv_udiv;
     case Option::ABSTRACTION_BV_UREM: return &abstraction_bv_urem;
+    case Option::ABSTRACTION_EQUAL: return &abstraction_eq;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

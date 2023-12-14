@@ -406,6 +406,15 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(ABSTRACTION_BV_UREM),
+  /*! **Abstraction module: Abstract equality terms. **
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(ABSTRACTION_EQUAL),
 
   /*! **Preprocessing**
    *
