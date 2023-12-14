@@ -320,14 +320,17 @@ SolverEngine::process_term(const Node& term, bool relevant)
       }
       else if (fun::FunSolver::is_theory_leaf(cur))
       {
-        Log(2) << "register function term: " << cur;
-        d_fun_solver.register_term(cur);
-        d_new_terms_registered = true;
         if (d_am != nullptr && d_am->is_abstraction(cur))
         {
           Log(2) << "register abstraction term: " << cur;
           d_am->register_abstraction(cur);
         }
+        else
+        {
+          Log(2) << "register function term: " << cur;
+          d_fun_solver.register_term(cur);
+        }
+        d_new_terms_registered = true;
       }
       else if (quant::QuantSolver::is_theory_leaf(cur))
       {
