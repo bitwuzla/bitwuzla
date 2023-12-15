@@ -139,6 +139,14 @@ Options::Options()
                      "time limit in milliseconds per satisfiability check",
                      "time-limit-per",
                      "T"),
+      memory_limit(this,
+                   Option::MEMORY_LIMIT,
+                   0,
+                   0,
+                   UINT64_MAX,
+                   "set maximum memory limit in MB",
+                   "memory-limit",
+                   "M"),
 
       // Bitwuzla-specific
       bv_solver(this,
@@ -591,6 +599,7 @@ Options::data(Option opt)
     case Option::SEED: return &seed;
     case Option::VERBOSITY: return &verbosity;
     case Option::TIME_LIMIT_PER: return &time_limit_per;
+    case Option::MEMORY_LIMIT: return &memory_limit;
 
     case Option::BV_SOLVER: return &bv_solver;
     case Option::REWRITE_LEVEL: return &rewrite_level;

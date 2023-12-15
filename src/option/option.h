@@ -31,6 +31,7 @@ enum class Option
   SEED,                       // numeric
   VERBOSITY,                  // numeric
   TIME_LIMIT_PER,             // numeric
+  MEMORY_LIMIT,               // numeric
 
   BV_SOLVER,      // enum
   REWRITE_LEVEL,  // numeric
@@ -445,6 +446,7 @@ class Options
   OptionNumeric seed;
   OptionNumeric verbosity;
   OptionNumeric time_limit_per;
+  OptionNumeric memory_limit;
 
   // Bitwuzla-specific options
   OptionModeT<BvSolver> bv_solver;

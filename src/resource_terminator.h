@@ -24,17 +24,20 @@ namespace bzla {
  * If a non-timeout terminator was already configured, the existing terminator
  * is wrapped and not overwritten, i.e., both terminators are active.
  */
-class TimeoutTerminator : public Terminator
+class ResourceTerminator : public Terminator
 {
  public:
-  ~TimeoutTerminator() override{};
+  ~ResourceTerminator() override{};
   bool terminate() override;
 
   void set_terminator(Terminator* terminator);
-  void set(uint64_t time_limit);
+  void set_time_limit(uint64_t time_limit);
+  void set_memory_limit(uint64_t memory_limit);
 
  private:
   std::chrono::system_clock::time_point d_deadline;
+  uint64_t d_time_limit    = 0;
+  uint64_t d_memory_limit  = 0;
   Terminator* d_terminator = nullptr;  // Wraps already configured terminator.
 };
 

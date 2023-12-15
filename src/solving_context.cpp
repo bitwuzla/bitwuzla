@@ -16,7 +16,7 @@
 #include "check/check_unsat_core.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_set.h"
-#include "timeout_terminator.h"
+#include "resource_terminator.h"
 #include "util/resources.h"
 
 namespace bzla {
@@ -43,7 +43,7 @@ Result
 SolvingContext::solve()
 {
   util::Timer timer(d_stats.time_solve);
-  set_time_limit_per();
+  set_resource_limits();
 #ifndef NDEBUG
   check_no_free_variables();
 #endif
@@ -310,27 +310,29 @@ SolvingContext::ensure_model()
 }
 
 void
-SolvingContext::set_time_limit_per()
+SolvingContext::set_resource_limits()
 {
   auto time_limit = d_env.options().time_limit_per();
-  if (time_limit > 0)
+  auto memory_limit = d_env.options().memory_limit();
+  if (time_limit > 0 || memory_limit > 0)
   {
-    // Initialize timeout terminator
-    if (d_timeout_terminator == nullptr)
+    // Initialize resource terminator
+    if (d_resource_terminator == nullptr)
     {
-      d_timeout_terminator.reset(new TimeoutTerminator());
+      d_resource_terminator.reset(new ResourceTerminator());
     }
 
-    // Do not overwrite existing user-defined terminator, wrap it with timeout
+    // Do not overwrite existing user-defined terminator, wrap it with resource
     // terminator.
     auto terminator = d_env.terminator();
-    if (terminator != d_timeout_terminator.get())
+    if (terminator != d_resource_terminator.get())
     {
-      d_timeout_terminator->set_terminator(terminator);
-      d_env.configure_terminator(d_timeout_terminator.get());
+      d_resource_terminator->set_terminator(terminator);
+      d_env.configure_terminator(d_resource_terminator.get());
     }
-    // Set timeout.
-    d_timeout_terminator->set(time_limit);
+    // Set resource limits.
+    d_resource_terminator->set_time_limit(time_limit);
+    d_resource_terminator->set_memory_limit(memory_limit);
   }
 }
 

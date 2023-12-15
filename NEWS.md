@@ -2,6 +2,10 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News since version 0.3.0
+
+- Added option `-M`/`--memory-limit` to set memory limit.
+
 ## News since version 0.2.0
 
 - Added support for bit-vector overflow operator `bvnego`.

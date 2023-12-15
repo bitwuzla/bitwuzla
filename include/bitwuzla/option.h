@@ -94,6 +94,12 @@ enum ENUM(Option)
    *  * An unsigned integer for the time limit in milliseconds. [**default**: 0]
    */
   EVALUE(TIME_LIMIT_PER),
+  /*! ** Memory limit in MB.**
+   *
+   * Values:
+   *  * An unsigned integer for the memory limit in MB. [**default**: 0]
+   */
+  EVALUE(MEMORY_LIMIT),
 
   /* ---------------- Bitwuzla-specific Options ----------------------------- */
 

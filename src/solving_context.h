@@ -24,7 +24,7 @@
 
 namespace bzla {
 
-class TimeoutTerminator;
+class ResourceTerminator;
 
 class SolvingContext
 {
@@ -86,8 +86,8 @@ class SolvingContext
 
   void ensure_model();
 
-  /** Set timeout terminator. */
-  void set_time_limit_per();
+  /** Set resource terminator. */
+  void set_resource_limits();
 
   /** Solving context environment. */
   Env d_env;
@@ -113,7 +113,7 @@ class SolvingContext
   Result d_sat_state = Result::UNKNOWN;
 
   /** Terminator used for timeout per solve() call. */
-  std::unique_ptr<TimeoutTerminator> d_timeout_terminator;
+  std::unique_ptr<ResourceTerminator> d_resource_terminator;
 
   struct Statistics
   {
