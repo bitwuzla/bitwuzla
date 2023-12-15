@@ -548,6 +548,23 @@ AbstractionModule::check_abstraction(const Node& abstr)
         }
       }
     }
+    // Incrementally bit-blast abstracted term starting from LSB
+    else if (kind == Kind::BV_MUL || kind == Kind::BV_ADD)
+    {
+      const auto& bv_t = val_t.value<BitVector>();
+      const auto& bv_e = val_expected.value<BitVector>();
+      auto bv_xor      = bv_t.bvxor(bv_e);
+      uint64_t upper   = bv_xor.count_trailing_zeros() + 32;
+      assert(upper < bv_x.size());
+      upper = std::min(upper, bv_t.size()) - 1;
+
+      Node extr_x = nm.mk_node(Kind::BV_EXTRACT, {x}, {upper, 0});
+      Node extr_s = nm.mk_node(Kind::BV_EXTRACT, {s}, {upper, 0});
+      Node extr_t = nm.mk_node(Kind::BV_EXTRACT, {t}, {upper, 0});
+      Node term   = nm.mk_node(kind, {extr_x, extr_s});
+      Node lemma  = nm.mk_node(Kind::EQUAL, {extr_t, term});
+      d_lemma_buffer.emplace_back(node, lemma, LemmaKind::BITBLAST);
+    }
     else
     {
       // Fully bit-blast abstracted term
