@@ -117,7 +117,7 @@ Printer::print_formula(std::ostream& os,
   {
     visit.emplace_back(assertions[i]);
   }
-  do
+  while (!visit.empty())
   {
     const Node& cur     = visit.back();
     auto [it, inserted] = cache.insert(cur);
@@ -143,14 +143,14 @@ Printer::print_formula(std::ostream& os,
         }
       }
     }
-  } while (!visit.empty());
+  }
 
   cache.clear();
   for (size_t i = 0, n = assertions.size(); i < n; ++i)
   {
     visit.emplace_back(assertions[i]);
   }
-  do
+  while (!visit.empty())
   {
     const Node& cur = visit.back();
     visit.pop_back();
@@ -203,7 +203,7 @@ Printer::print_formula(std::ostream& os,
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
     }
-  } while (!visit.empty());
+  }
 
   // print logic
   std::string logic;
