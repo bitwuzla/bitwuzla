@@ -335,6 +335,11 @@ Options::Options()
                      false,
                      "enable term abstraction for equalities",
                      "abstraction-eq"),
+      abstraction_ite(this,
+                      Option::ABSTRACTION_ITE,
+                      false,
+                      "enable term abstraction for ite",
+                      "abstraction-ite"),
 
       // Preprocessing
       preprocess(
@@ -728,6 +733,7 @@ Options::data(Option opt)
     case Option::ABSTRACTION_BV_UDIV: return &abstraction_bv_udiv;
     case Option::ABSTRACTION_BV_UREM: return &abstraction_bv_urem;
     case Option::ABSTRACTION_EQUAL: return &abstraction_eq;
+    case Option::ABSTRACTION_ITE: return &abstraction_ite;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

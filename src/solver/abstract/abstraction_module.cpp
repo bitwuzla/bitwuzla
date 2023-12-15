@@ -159,6 +159,11 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
     d_abstr_lemmas.try_emplace(Kind::EQUAL);
   }
 
+  if (env.options().abstraction_ite())
+  {
+    d_abstr_lemmas.try_emplace(Kind::ITE);
+  }
+
   if (env.options().abstraction_bv_add())
   {
     auto& add_abstr_lemmas = d_abstr_lemmas[Kind::BV_ADD];
@@ -263,7 +268,7 @@ AbstractionModule::process(const Node& assertion, bool is_lemma)
   do
   {
     const Node& cur     = visit.back();
-    auto [it, inserted] = d_abstraction_cache.emplace(cur, Node());
+    auto [it, inserted] = d_abstraction_cache.try_emplace(cur);
     if (inserted)
     {
       // No need to go below quantifiers since abstraction will happen when
@@ -282,16 +287,15 @@ AbstractionModule::process(const Node& assertion, bool is_lemma)
     {
       if (abstract(cur))
       {
-        std::vector<Node> children;
+        Node func = abstr_uf(cur);
+        std::vector<Node> children{func};
         for (const Node& c : cur)
         {
           auto itt = d_abstraction_cache.find(c);
           assert(itt != d_abstraction_cache.end());
           children.push_back(itt->second);
         }
-        Node func  = abstr_uf(cur);
-        it->second = d_rewriter.rewrite(
-            nm.mk_node(Kind::APPLY, {func, children[0], children[1]}));
+        it->second = d_rewriter.rewrite(nm.mk_node(Kind::APPLY, children));
         add_abstraction(cur, it->second);
       }
       else
@@ -309,7 +313,7 @@ AbstractionModule::process(const Node& assertion, bool is_lemma)
     auto itr = d_abstraction_cache.find(assertion);
     assert(itr != d_abstraction_cache.end());
 
-    auto [it, inserted] = d_abstr_consts.emplace(itr->second, Node());
+    auto [it, inserted] = d_abstr_consts.try_emplace(itr->second);
     if (inserted)
     {
       it->second = nm.mk_const(nm.mk_bool_type());
@@ -347,9 +351,11 @@ bool
 AbstractionModule::abstract(const Node& node) const
 {
   Kind k = node.kind();
+  assert(d_abstr_lemmas.find(k) == d_abstr_lemmas.end()
+         || KindInfo::num_children(k) > 1);
   return d_abstr_lemmas.find(k) != d_abstr_lemmas.end()
-         && d_opt_minimum_size > 0 && node[0].type().is_bv()
-         && node[0].type().bv_size() >= d_opt_minimum_size;
+         && d_opt_minimum_size > 0 && node[1].type().is_bv()
+         && node[1].type().bv_size() >= d_opt_minimum_size;
 }
 
 const Node&
@@ -375,16 +381,25 @@ AbstractionModule::add_abstraction(const Node& node, const Node& abstr)
 const Node&
 AbstractionModule::abstr_uf(const Node& node)
 {
-  Type bvt            = node[0].type();
+  assert(node.num_children() > 1);
+  Type bvt            = node[1].type();
   auto& map           = d_abstr_ufs[node.kind()];
-  auto [it, inserted] = map.emplace(bvt, Node());
+  auto [it, inserted] = map.try_emplace(bvt);
   if (inserted)
   {
     std::stringstream ss;
     ss << node.kind() << "_" << bvt.bv_size();
     NodeManager& nm = NodeManager::get();
-    Type t          = nm.mk_fun_type({bvt, bvt, node.type()});
-    it->second      = nm.mk_const(t, ss.str());
+    Type t;
+    if (node.kind() == Kind::ITE)
+    {
+      t = nm.mk_fun_type({nm.mk_bool_type(), bvt, bvt, node.type()});
+    }
+    else
+    {
+      t = nm.mk_fun_type({bvt, bvt, node.type()});
+    }
+    it->second = nm.mk_const(t, ss.str());
   }
   return it->second;
 }
@@ -400,6 +415,12 @@ AbstractionModule::check_abstraction(const Node& abstr)
 
   Kind kind = node.kind();
   assert(d_abstr_lemmas.find(kind) != d_abstr_lemmas.end());
+
+  if (kind == Kind::ITE)
+  {
+    check_abstraction_ite(abstr, node);
+    return;
+  }
 
   NodeManager& nm   = NodeManager::get();
   const Node& x     = abstr[1];
@@ -485,7 +506,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
     }
     else if (kind == Kind::EQUAL)
     {
-      auto [it, inserted] = d_abstr_equal.emplace(node, std::vector<Node>());
+      auto [it, inserted] = d_abstr_equal.try_emplace(node);
       // Partition equality in partitions of size 16
       if (inserted)
       {
@@ -534,6 +555,69 @@ AbstractionModule::check_abstraction(const Node& abstr)
       Node lemma = nm.mk_node(Kind::EQUAL, {t, term});
       d_lemma_buffer.emplace_back(node, lemma, LemmaKind::BITBLAST);
     }
+  }
+}
+
+void
+AbstractionModule::check_abstraction_ite(const Node& abstr, const Node& node)
+{
+  const Node& c  = abstr[1];
+  const Node& bt = abstr[2];
+  const Node& bf = abstr[3];
+  const Node& t  = abstr;
+  Node val_c     = d_solver_state.value(c);
+  Node val_t     = d_solver_state.value(t);
+
+  bool cond = val_c.value<bool>();
+  if (cond)
+  {
+    Node val_bt = d_solver_state.value(bt);
+    if (val_t == val_bt)
+    {
+      Log(2) << "skip: assignment correct";
+      return;
+    }
+  }
+  else
+  {
+    Node val_bf = d_solver_state.value(bf);
+    if (val_t == val_bf)
+    {
+      Log(2) << "skip: assignment correct";
+      return;
+    }
+  }
+
+  NodeManager& nm     = NodeManager::get();
+  auto [it, inserted] = d_abstr_equal.try_emplace(node);
+  // Expand branch depending on value of condition.
+  if (inserted)
+  {
+    auto& consts = it->second;
+    consts.push_back(nm.mk_const(node.type()));
+
+    Node expand;
+    const Node& _c = consts.back();
+    if (cond)
+    {
+      expand = nm.mk_node(Kind::ITE, {c, bt, _c});
+    }
+    else
+    {
+      expand = nm.mk_node(Kind::ITE, {c, _c, bf});
+    }
+    lemma_no_abstract(nm.mk_node(Kind::EQUAL, {t, expand}),
+                      LemmaKind::ITE_EXPAND);
+  }
+  else
+  {
+    // Expand remaining branch since value of condition changed.
+    assert(!it->second.empty());
+    const Node& _c = it->second.back();
+    const Node& b  = cond ? bt : bf;
+    Node lemma     = nm.mk_node(Kind::EQUAL, {_c, b});
+    lemma_no_abstract(lemma, LemmaKind::ITE_REFINE);
+    it->second.clear();
   }
 }
 

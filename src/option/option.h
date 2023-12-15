@@ -63,6 +63,7 @@ enum class Option
   ABSTRACTION_BV_UDIV,         // bool
   ABSTRACTION_BV_UREM,         // bool
   ABSTRACTION_EQUAL,           // bool
+  ABSTRACTION_ITE,             // bool
 
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,                // bool
@@ -504,6 +505,7 @@ class Options
   OptionBool abstraction_bv_udiv;
   OptionBool abstraction_bv_urem;
   OptionBool abstraction_eq;
+  OptionBool abstraction_ite;
 
   // Preprocessing
   OptionBool preprocess;

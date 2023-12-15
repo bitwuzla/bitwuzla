@@ -51,8 +51,10 @@ class AbstractionModule
   const Node& abstr_uf(const Node& node);
 
   /** Check assignment of abstraction and add lemma if needed. */
-  void check_abstraction(const Node& node);
-
+  void check_abstraction(const Node& abstr);
+  /** Check assignment of ITE abstraction and lazily expand if needed. */
+  void check_abstraction_ite(const Node& abstr, const Node& node);
+  /** Check assertion abstractions, and add refinement if needed. */
   bool check_assertion_abstractions();
 
   /** Send lemma but make sure not to abstract terms in it. */

@@ -126,6 +126,8 @@ enum class LemmaKind : uint32_t
   ADD_VALUE,
 
   BITBLAST,
+  ITE_EXPAND,
+  ITE_REFINE,
   ASSERTION,
 };
 

@@ -142,6 +142,8 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::ADD_VALUE: os << "ADD_VALUE"; break;
 
     case LemmaKind::BITBLAST: os << "BITBLAST"; break;
+    case LemmaKind::ITE_EXPAND: os << "ITE_EXPAND"; break;
+    case LemmaKind::ITE_REFINE: os << "ITE_REFINE"; break;
     case LemmaKind::ASSERTION: os << "ASSERTION"; break;
   }
   return os;

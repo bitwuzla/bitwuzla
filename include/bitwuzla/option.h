@@ -415,6 +415,15 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(ABSTRACTION_EQUAL),
+  /*! **Abstraction module: Abstract ITE terms. **
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(ABSTRACTION_ITE),
 
   /*! **Preprocessing**
    *
