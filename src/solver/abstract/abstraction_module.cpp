@@ -266,7 +266,16 @@ AbstractionModule::process(const Node& assertion, bool is_lemma)
     auto [it, inserted] = d_abstraction_cache.emplace(cur, Node());
     if (inserted)
     {
-      visit.insert(visit.end(), cur.begin(), cur.end());
+      // No need to go below quantifiers since abstraction will happen when
+      // quantifier instantiation is added.
+      if (cur.kind() == Kind::FORALL)
+      {
+        it->second = cur;
+      }
+      else
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
       continue;
     }
     else if (it->second.is_null())
