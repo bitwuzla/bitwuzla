@@ -413,8 +413,8 @@ AbstractionModule::check_abstraction(const Node& abstr)
   Log(2) << "val_x: " << val_x;
   Log(2) << "val_s: " << val_s;
   Log(2) << "val_t: " << val_t;
-  d_added_lemma = false;
 
+  bool added_lemma = false;
   if (!d_opt_value_inst_only)
   {
     auto it = d_abstr_lemmas.find(kind);
@@ -429,6 +429,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
         Log(2) << lem->kind() << " inconsistent";
         Node lemma = lem->instance(x, s, t);
         lemma_no_abstract(lemma, lem->kind());
+        added_lemma = true;
         if (!d_opt_eager_refine)
         {
           break;
@@ -443,6 +444,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
           Log(2) << lem->kind() << " (comm.) inconsistent";
           Node lemma = lem->instance(s, x, t);
           lemma_no_abstract(lemma, lem->kind());
+          added_lemma = true;
           if (!d_opt_eager_refine)
           {
             break;
@@ -453,7 +455,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
   }
 
   // Inconsistent value, but no abstraction violated, add value-based lemma.
-  if (!d_added_lemma)
+  if (!added_lemma)
   {
     const auto value_insts = d_value_insts[node];
     if (kind != Kind::EQUAL
