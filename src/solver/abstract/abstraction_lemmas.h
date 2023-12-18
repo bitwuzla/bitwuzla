@@ -125,7 +125,8 @@ enum class LemmaKind : uint32_t
   ADD_REF12,   // (not (= #b0001 (bvor x (bvor s (bvnot t))))))
   ADD_VALUE,
 
-  BITBLAST,
+  BITBLAST_FULL,
+  BITBLAST_INC,
   ITE_EXPAND,
   ITE_REFINE,
   ASSERTION,

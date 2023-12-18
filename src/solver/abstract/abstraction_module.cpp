@@ -524,7 +524,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
         }
         Node lemma =
             nm.mk_node(Kind::EQUAL, {t, utils::mk_nary(Kind::AND, partitions)});
-        lemma_no_abstract(lemma, LemmaKind::BITBLAST);
+        lemma_no_abstract(lemma, LemmaKind::BITBLAST_FULL);
       }
 
       // At this point we add the next violated partition.
@@ -541,7 +541,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
           if (val_eq != d_solver_state.value(ref).value<bool>())
           {
             Node lemma = nm.mk_node(Kind::EQUAL, {c, ref});
-            lemma_no_abstract(lemma, LemmaKind::BITBLAST);
+            lemma_no_abstract(lemma, LemmaKind::BITBLAST_FULL);
             it->second.erase(itp);
             break;
           }
@@ -555,22 +555,26 @@ AbstractionModule::check_abstraction(const Node& abstr)
       const auto& bv_e = val_expected.value<BitVector>();
       auto bv_xor      = bv_t.bvxor(bv_e);
       uint64_t upper   = bv_xor.count_trailing_zeros() + 32;
-      assert(upper < bv_x.size());
-      upper = std::min(upper, bv_t.size()) - 1;
+      uint64_t size    = bv_t.size();
+      assert(upper < size);
+      upper = std::min(upper, size) - 1;
 
       Node extr_x = nm.mk_node(Kind::BV_EXTRACT, {x}, {upper, 0});
       Node extr_s = nm.mk_node(Kind::BV_EXTRACT, {s}, {upper, 0});
       Node extr_t = nm.mk_node(Kind::BV_EXTRACT, {t}, {upper, 0});
       Node term   = nm.mk_node(kind, {extr_x, extr_s});
       Node lemma  = nm.mk_node(Kind::EQUAL, {extr_t, term});
-      d_lemma_buffer.emplace_back(node, lemma, LemmaKind::BITBLAST);
+      d_lemma_buffer.emplace_back(node,
+                                  lemma,
+                                  upper + 1 == size ? LemmaKind::BITBLAST_FULL
+                                                    : LemmaKind::BITBLAST_INC);
     }
     else
     {
       // Fully bit-blast abstracted term
       Node term  = nm.mk_node(kind, {x, s});
       Node lemma = nm.mk_node(Kind::EQUAL, {t, term});
-      d_lemma_buffer.emplace_back(node, lemma, LemmaKind::BITBLAST);
+      d_lemma_buffer.emplace_back(node, lemma, LemmaKind::BITBLAST_FULL);
     }
   }
 }
