@@ -58,6 +58,7 @@ enum class Option
   ABSTRACTION_ASSERT,          // bool
   ABSTRACTION_ASSERT_REFS,     // bool
   ABSTRACTION_INITIAL_LEMMAS,  // bool
+  ABSTRACTION_INC_BITBLAST,    // bool
   ABSTRACTION_BV_ADD,          // bool
   ABSTRACTION_BV_MUL,          // bool
   ABSTRACTION_BV_UDIV,         // bool
@@ -500,6 +501,7 @@ class Options
   OptionBool abstraction_assert;
   OptionNumeric abstraction_assert_refs;
   OptionBool abstraction_initial_lemmas;
+  OptionBool abstraction_inc_bitblast;
   OptionBool abstraction_bv_add;
   OptionBool abstraction_bv_mul;
   OptionBool abstraction_bv_udiv;

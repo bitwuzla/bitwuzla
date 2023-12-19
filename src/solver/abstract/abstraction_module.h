@@ -112,6 +112,8 @@ class AbstractionModule
   bool d_opt_abstract_assertions;
   /** Number of assertion refinements per check. */
   uint64_t d_opt_assertion_refinements;
+  /** Incrementally bit-blast bvmul and bvadd starting from LSB. */
+  bool d_opt_inc_bitblast;
 
   struct Statistics
   {

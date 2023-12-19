@@ -370,6 +370,15 @@ enum ENUM(Option)
    *  @warning This is an expert option to configure the prop solver engine.
    */
   EVALUE(ABSTRACTION_INITIAL_LEMMAS),
+  /*! **Abstraction module: Incrementally bit-blast bvmul and bvadd terms. **
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   *  @warning This is an expert option to configure the prop solver engine.
+   */
+  EVALUE(ABSTRACTION_INC_BITBLAST),
   /*! **Abstraction module: Abstract bit-vector addition terms. **
    *
    * Values:

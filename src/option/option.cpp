@@ -310,6 +310,11 @@ Options::Options()
                                  false,
                                  "use initial lemma refinements only",
                                  "abstraction-initial-lemmas"),
+      abstraction_inc_bitblast(this,
+                               Option::ABSTRACTION_INC_BITBLAST,
+                               false,
+                               "incrementally bit-blast bvmul and bvadd",
+                               "abstraction-inc-bitblast"),
       abstraction_bv_add(this,
                          Option::ABSTRACTION_BV_ADD,
                          false,
@@ -728,6 +733,7 @@ Options::data(Option opt)
     case Option::ABSTRACTION_ASSERT: return &abstraction_assert;
     case Option::ABSTRACTION_ASSERT_REFS: return &abstraction_assert_refs;
     case Option::ABSTRACTION_INITIAL_LEMMAS: return &abstraction_initial_lemmas;
+    case Option::ABSTRACTION_INC_BITBLAST: return &abstraction_inc_bitblast;
     case Option::ABSTRACTION_BV_ADD: return &abstraction_bv_add;
     case Option::ABSTRACTION_BV_MUL: return &abstraction_bv_mul;
     case Option::ABSTRACTION_BV_UDIV: return &abstraction_bv_udiv;

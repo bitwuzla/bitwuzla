@@ -48,6 +48,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_opt_value_inst_only(env.options().abstraction_value_only()),
       d_opt_abstract_assertions(env.options().abstraction_assert()),
       d_opt_assertion_refinements(env.options().abstraction_assert_refs()),
+      d_opt_inc_bitblast(env.options().abstraction_inc_bitblast()),
       d_stats(env.statistics(), "solver::abstract::")
 {
   bool opt_initial_lemmas = env.options().abstraction_initial_lemmas();
@@ -549,7 +550,8 @@ AbstractionModule::check_abstraction(const Node& abstr)
       }
     }
     // Incrementally bit-blast abstracted term starting from LSB
-    else if (kind == Kind::BV_MUL || kind == Kind::BV_ADD)
+    else if (d_opt_inc_bitblast
+             && (kind == Kind::BV_MUL || kind == Kind::BV_ADD))
     {
       const auto& bv_t = val_t.value<BitVector>();
       const auto& bv_e = val_expected.value<BitVector>();

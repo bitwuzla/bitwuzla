@@ -99,6 +99,8 @@ static const std::unordered_map<Option, bzla::option::Option>
          bzla::option::Option::ABSTRACTION_ASSERT_REFS},
         {Option::ABSTRACTION_INITIAL_LEMMAS,
          bzla::option::Option::ABSTRACTION_INITIAL_LEMMAS},
+        {Option::ABSTRACTION_INC_BITBLAST,
+         bzla::option::Option::ABSTRACTION_INC_BITBLAST},
         {Option::ABSTRACTION_BV_ADD, bzla::option::Option::ABSTRACTION_BV_ADD},
         {Option::ABSTRACTION_BV_MUL, bzla::option::Option::ABSTRACTION_BV_MUL},
         {Option::ABSTRACTION_BV_UDIV,
