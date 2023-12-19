@@ -32,15 +32,24 @@ if not kissat_dep.found()
   kissat_dep = dependency('kissat', required: get_option('kissat'))
 endif
 
+# cms does not provide pkg-config to find dependency
+cms_dep = cpp_compiler.find_library('cryptominisat5',
+                                    has_headers: 'cryptominisat5/cryptominisat.h',
+                                    static: build_static,
+                                    required: false)
+
 # Using system include type suppresses compile warnings originating from the
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
-dependencies = [symfpu_dep, cadical_dep, kissat_dep, gmp_dep]
+dependencies = [symfpu_dep, cadical_dep, kissat_dep, cms_dep, gmp_dep]
 
 cpp_args = []
 if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
+endif
+if cms_dep.found()
+  cpp_args += ['-DBZLA_USE_CMS']
 endif
 
 # ---
@@ -80,6 +89,9 @@ license_text += \
   '\n\n  GMP - GNU Multiple Precision Arithmetic Library\n  https://gmplib.org'
 if kissat_dep.found()
   license_text += '\n\n  Kissat\n  https://github.com/arminbiere/kissat'
+endif
+if cms_dep.found()
+  license_text += '\n\n  CryptoMiniSat\n  https://github.com/msoos/cryptominisat'
 endif
 license_text += '\n\n  SymFPU\n  https://github.com/martin-cs/symfpu'
 license_text = license_text.replace('\n', '\\n').replace('"', '\\"')
