@@ -99,12 +99,6 @@ SolverEngine::solve()
       d_stats.num_lemmas_fp += d_lemmas.size();
       continue;
     }
-    d_array_solver.check();
-    if (!d_lemmas.empty())
-    {
-      d_stats.num_lemmas_array += d_lemmas.size();
-      continue;
-    }
     if (d_am != nullptr)
     {
       d_am->check();
@@ -112,6 +106,12 @@ SolverEngine::solve()
     if (!d_lemmas.empty())
     {
       d_stats.num_lemmas_abstr += d_lemmas.size();
+      continue;
+    }
+    d_array_solver.check();
+    if (!d_lemmas.empty())
+    {
+      d_stats.num_lemmas_array += d_lemmas.size();
       continue;
     }
     d_fun_solver.check();
