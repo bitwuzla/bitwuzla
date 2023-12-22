@@ -520,10 +520,10 @@ AbstractionModule::check_abstraction(const Node& abstr)
   // Inconsistent value, but no abstraction violated, add value-based lemma.
   if (!added_lemma)
   {
-    const auto value_insts = d_value_insts[node];
-    if (kind != Kind::EQUAL
-        && (d_opt_value_inst_limit == 0
-            || value_insts <= d_opt_value_inst_limit))
+    uint64_t limit = d_opt_value_inst_limit > 0
+                         ? val_x.type().bv_size() / d_opt_value_inst_limit
+                         : 0;
+    if (kind != Kind::EQUAL && d_value_insts[node] < limit)
     {
       LemmaKind lk = lemma_kind_value(kind);
       Log(2) << lk << " inconsistent";
