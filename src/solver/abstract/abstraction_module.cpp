@@ -448,6 +448,38 @@ AbstractionModule::check_abstraction(const Node& abstr)
   bool added_lemma = false;
   if (!d_opt_value_inst_only)
   {
+    if (kind == Kind::BV_MUL)
+    {
+      if (val_x.value<BitVector>().is_power_of_two())
+      {
+        const auto& val = val_x.value<BitVector>();
+        Node shift_by   = nm.mk_value(
+            BitVector::from_ui(val.size(), val.count_trailing_zeros()));
+        Node eq    = nm.mk_node(Kind::EQUAL, {x, val_x});
+        Node lemma = nm.mk_node(
+            Kind::IMPLIES,
+            {eq,
+             nm.mk_node(Kind::EQUAL,
+                        {t, nm.mk_node(Kind::BV_SHL, {s, shift_by})})});
+        lemma_no_abstract(lemma, LemmaKind::MUL_POW2);
+        return;
+      }
+      else if (val_s.value<BitVector>().is_power_of_two())
+      {
+        const auto& val = val_s.value<BitVector>();
+        Node shift_by   = nm.mk_value(
+            BitVector::from_ui(val.size(), val.count_trailing_zeros()));
+        Node eq    = nm.mk_node(Kind::EQUAL, {s, val_s});
+        Node lemma = nm.mk_node(
+            Kind::IMPLIES,
+            {eq,
+             nm.mk_node(Kind::EQUAL,
+                        {t, nm.mk_node(Kind::BV_SHL, {x, shift_by})})});
+        lemma_no_abstract(lemma, LemmaKind::MUL_POW2);
+        return;
+      }
+    }
+
     auto it = d_abstr_lemmas.find(kind);
     assert(it != d_abstr_lemmas.end());
     const auto& to_check = it->second;
