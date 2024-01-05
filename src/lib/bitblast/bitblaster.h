@@ -363,6 +363,43 @@ class BitblasterInterface
   }
 
   /**
+   * Bit-blast special-purpose circuit for square `a*a` (special case of
+   * bit-vector multiplication that allows for a simpler circuit).
+   */
+  virtual Bits bv_mul_square(const Bits& a)
+  {
+    Bits res;
+    size_t size = a.size();
+    size_t lsb  = size - 1;
+    res.reserve(size);
+
+    for (size_t i = 2, ia = 1; i < size; ++i, ++ia)
+    {
+      res.push_back(d_bit_mgr.mk_and(a[ia], a[lsb]));
+    }
+    if (size > 1)
+    {
+      res.push_back(d_bit_mgr.mk_false());
+    }
+    res.push_back(a[size - 1]);
+
+    for (size_t i = 1, ib = lsb - 1, n = (size + 1) / 2; i < n; ++i, --ib)
+    {
+      T cout;
+      T b_bit                 = a[ib];
+      size_t ir               = lsb - 2 * i;
+      std::tie(res[ir], cout) = half_adder(res[ir], b_bit);
+      ir -= 1;
+      for (size_t j = lsb - ir, ia = ib; j < size; ++j, --ia, --ir)
+      {
+        T p = ia == ib ? d_bit_mgr.mk_false() : d_bit_mgr.mk_and(a[ia], b_bit);
+        std::tie(res[ir], cout) = full_adder(res[ir], p, cout);
+      }
+    }
+    return res;
+  }
+
+  /**
    * Bit-blast if-then-else over bit-vectors `a` and `b` of size k, and a
    * condition `cond` of size 1.
    */
