@@ -45,6 +45,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_IC: os << "MUL_IC"; break;
     case LemmaKind::MUL_NEG: os << "MUL_NEG"; break;
     case LemmaKind::MUL_ODD: os << "MUL_ODD"; break;
+    case LemmaKind::MUL_SQUARE: os << "MUL_SQUARE"; break;
     case LemmaKind::MUL_REF1: os << "MUL_REF1"; break;
     case LemmaKind::MUL_REF2: os << "MUL_REF2"; break;
     case LemmaKind::MUL_REF3: os << "MUL_REF3"; break;
@@ -223,6 +224,19 @@ Lemma<LemmaKind::MUL_ODD>::instance(const Node& x,
                                     nm.mk_node(Kind::BV_EXTRACT, {x}, {0, 0}),
                                     nm.mk_node(Kind::BV_EXTRACT, {s}, {0, 0}),
                                 })});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_SQUARE>::instance(const Node& x,
+                                       const Node& s,
+                                       const Node& t) const
+{
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::EQUAL, {x, s}),
+       nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_MUL, {x, x})})});
 }
 
 template <>

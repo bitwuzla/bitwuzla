@@ -130,7 +130,15 @@ AigBitblaster::bitblast(const Node& t)
 
         case Kind::BV_MUL:
           assert(type.is_bv());
-          it->second = d_bitblaster.bv_mul(bits(cur[0]), bits(cur[1]));
+          // Use more succinct encoding for squares
+          if (cur[0] == cur[1])
+          {
+            it->second = d_bitblaster.bv_mul_square(bits(cur[0]));
+          }
+          else
+          {
+            it->second = d_bitblaster.bv_mul(bits(cur[0]), bits(cur[1]));
+          }
           break;
 
         case Kind::BV_ULT:

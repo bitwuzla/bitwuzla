@@ -9,11 +9,12 @@ namespace bzla::abstract {
 
 enum class LemmaKind : uint32_t
 {
-  MUL_ZERO,  // (=> (= s #b0000) (= t #b0000))
-  MUL_ONE,   // (=> (= s #b0001) (= t x))
-  MUL_IC,    // (= (bvand (bvor (bvneg s) s) t) t),
-  MUL_NEG,   // (=> (= s (bvnot #b0000)) (= t (bvneg x)))
-  MUL_ODD,   // (= t (bvor t (bvand x (bvand s #b0001))))
+  MUL_ZERO,    // (=> (= s #b0000) (= t #b0000))
+  MUL_ONE,     // (=> (= s #b0001) (= t x))
+  MUL_IC,      // (= (bvand (bvor (bvneg s) s) t) t),
+  MUL_NEG,     // (=> (= s (bvnot #b0000)) (= t (bvneg x)))
+  MUL_ODD,     // (= t (bvor t (bvand x (bvand s #b0001))))
+  MUL_SQUARE,  // (=> (= x s) (= t (bvmul x x))), uses special encoding
 
   MUL_REF1,   // (not (= s (bvnot (bvor t (bvand #b0001 (bvor x s))))))
   MUL_REF2,   // (bvuge s (bvand t (bvneg (bvor t (bvnot x)))))
@@ -193,6 +194,10 @@ template <>
 Node Lemma<LemmaKind::MUL_ODD>::instance(const Node& x,
                                          const Node& s,
                                          const Node& t) const;
+template <>
+Node Lemma<LemmaKind::MUL_SQUARE>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const;
 template <>
 Node Lemma<LemmaKind::MUL_REF1>::instance(const Node& x,
                                           const Node& s,

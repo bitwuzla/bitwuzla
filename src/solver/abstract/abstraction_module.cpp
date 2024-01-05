@@ -448,6 +448,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
   bool added_lemma = false;
   if (!d_opt_value_inst_only)
   {
+    // Special encodings for bvmul
     if (kind == Kind::BV_MUL)
     {
       if (val_x.value<BitVector>().is_power_of_two())
@@ -476,6 +477,12 @@ AbstractionModule::check_abstraction(const Node& abstr)
              nm.mk_node(Kind::EQUAL,
                         {t, nm.mk_node(Kind::BV_SHL, {x, shift_by})})});
         lemma_no_abstract(lemma, LemmaKind::MUL_POW2);
+        return;
+      }
+      else if (x == s)
+      {
+        Lemma<LemmaKind::MUL_SQUARE> l;
+        lemma_no_abstract(l.instance(x, s, t), l.kind());
         return;
       }
     }
@@ -602,6 +609,11 @@ AbstractionModule::check_abstraction(const Node& abstr)
                                   lemma,
                                   upper + 1 == size ? LemmaKind::BITBLAST_FULL
                                                     : LemmaKind::BITBLAST_INC);
+    }
+    else if (kind == Kind::BV_MUL && val_x == val_s)
+    {
+      Lemma<LemmaKind::MUL_SQUARE> l;
+      d_lemma_buffer.emplace_back(node, l.instance(x, s, t), l.kind());
     }
     else
     {
