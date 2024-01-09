@@ -64,6 +64,35 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_REF16: os << "MUL_REF16"; break;
     case LemmaKind::MUL_REF17: os << "MUL_REF17"; break;
     case LemmaKind::MUL_REF18: os << "MUL_REF18"; break;
+    case LemmaKind::MUL_NOOVFL_REF1: os << "MUL_NOOVFL_REF1"; break;
+    case LemmaKind::MUL_NOOVFL_REF2: os << "MUL_NOOVFL_REF2"; break;
+    case LemmaKind::MUL_NOOVFL_REF3: os << "MUL_NOOVFL_REF3"; break;
+    case LemmaKind::MUL_NOOVFL_REF4: os << "MUL_NOOVFL_REF4"; break;
+    case LemmaKind::MUL_NOOVFL_REF5: os << "MUL_NOOVFL_REF5"; break;
+    case LemmaKind::MUL_NOOVFL_REF6: os << "MUL_NOOVFL_REF6"; break;
+    case LemmaKind::MUL_NOOVFL_REF7: os << "MUL_NOOVFL_REF7"; break;
+    case LemmaKind::MUL_NOOVFL_REF8: os << "MUL_NOOVFL_REF8"; break;
+    case LemmaKind::MUL_NOOVFL_REF9: os << "MUL_NOOVFL_REF9"; break;
+    case LemmaKind::MUL_NOOVFL_REF10: os << "MUL_NOOVFL_REF10"; break;
+    case LemmaKind::MUL_NOOVFL_REF11: os << "MUL_NOOVFL_REF11"; break;
+    case LemmaKind::MUL_NOOVFL_REF12: os << "MUL_NOOVFL_REF12"; break;
+    case LemmaKind::MUL_NOOVFL_REF13: os << "MUL_NOOVFL_REF13"; break;
+    case LemmaKind::MUL_NOOVFL_REF14: os << "MUL_NOOVFL_REF14"; break;
+    case LemmaKind::MUL_NOOVFL_REF15: os << "MUL_NOOVFL_REF15"; break;
+    case LemmaKind::MUL_NOOVFL_REF16: os << "MUL_NOOVFL_REF16"; break;
+    case LemmaKind::MUL_NOOVFL_REF17: os << "MUL_NOOVFL_REF17"; break;
+    case LemmaKind::MUL_NOOVFL_REF18: os << "MUL_NOOVFL_REF18"; break;
+    case LemmaKind::MUL_NOOVFL_REF19: os << "MUL_NOOVFL_REF19"; break;
+    case LemmaKind::MUL_NOOVFL_REF20: os << "MUL_NOOVFL_REF20"; break;
+    case LemmaKind::MUL_NOOVFL_REF21: os << "MUL_NOOVFL_REF21"; break;
+    case LemmaKind::MUL_NOOVFL_REF22: os << "MUL_NOOVFL_REF22"; break;
+    case LemmaKind::MUL_NOOVFL_REF23: os << "MUL_NOOVFL_REF23"; break;
+    case LemmaKind::MUL_NOOVFL_REF24: os << "MUL_NOOVFL_REF24"; break;
+    case LemmaKind::MUL_NOOVFL_REF25: os << "MUL_NOOVFL_REF25"; break;
+    case LemmaKind::MUL_NOOVFL_REF26: os << "MUL_NOOVFL_REF26"; break;
+    case LemmaKind::MUL_NOOVFL_REF27: os << "MUL_NOOVFL_REF27"; break;
+    case LemmaKind::MUL_NOOVFL_REF28: os << "MUL_NOOVFL_REF28"; break;
+    case LemmaKind::MUL_NOOVFL_REF29: os << "MUL_NOOVFL_REF29"; break;
     case LemmaKind::MUL_POW2: os << "MUL_POW2"; break;
     case LemmaKind::MUL_NEG_POW2: os << "MUL_NEG_POW2"; break;
     case LemmaKind::MUL_VALUE: os << "MUL_VALUE"; break;
@@ -530,6 +559,844 @@ Lemma<LemmaKind::MUL_REF18>::instance(const Node& x,
            Kind::BV_SUB,
            {one,
             nm.mk_node(Kind::BV_SHL, {x, nm.mk_node(Kind::BV_SUB, {s, t})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF1>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const
+{
+  // (=>
+  //   (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //   (not (bvult (bvneg x) (bvor (bvneg t) (bvand x s))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(Kind::BV_UGE,
+                  {nm.mk_node(Kind::BV_NEG, {x}),
+                   nm.mk_node(Kind::BV_OR,
+                              {nm.mk_node(Kind::BV_NEG, {t}),
+                               nm.mk_node(Kind::BV_AND, {x, s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF2>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge t (bvneg (bvand (bvneg x) (bvneg s)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::BV_UGE,
+           {t,
+            nm.mk_node(Kind::BV_NEG,
+                       {nm.mk_node(Kind::BV_AND,
+                                   {nm.mk_node(Kind::BV_NEG, {x}),
+                                    nm.mk_node(Kind::BV_NEG, {s})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF3>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (= t (bvand t (bvor x (bvneg x)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::EQUAL,
+           {t,
+            nm.mk_node(Kind::BV_AND,
+                       {t,
+                        nm.mk_node(Kind::BV_OR,
+                                   {x, nm.mk_node(Kind::BV_NEG, {x})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF4>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (= t (bvor t (bvand x (bvand s #b0001)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::EQUAL,
+           {t,
+            nm.mk_node(
+                Kind::BV_OR,
+                {t,
+                 nm.mk_node(Kind::BV_AND,
+                            {x, nm.mk_node(Kind::BV_AND, {s, one})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF5>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge (bvneg s) (bvor (bvneg t) (bvand x s))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(Kind::BV_UGE,
+                  {nm.mk_node(Kind::BV_NEG, {s}),
+                   nm.mk_node(Kind::BV_OR,
+                              {nm.mk_node(Kind::BV_NEG, {t}),
+                               nm.mk_node(Kind::BV_AND, {x, s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF6>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge (bvneg s) (bvneg (bvand t (bvnot s)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::BV_UGE,
+           {nm.mk_node(Kind::BV_NEG, {s}),
+            nm.mk_node(Kind::BV_NEG,
+                       {nm.mk_node(Kind::BV_AND,
+                                   {t, nm.mk_node(Kind::BV_NOT, {s})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF7>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge (bvneg x) (bvneg (bvand t (bvnot x)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::BV_UGE,
+           {nm.mk_node(Kind::BV_NEG, {x}),
+            nm.mk_node(Kind::BV_NEG,
+                       {nm.mk_node(Kind::BV_AND,
+                                   {t, nm.mk_node(Kind::BV_NOT, {x})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF8>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge #b0001 (bvand x (bvand t (bvneg (bvor x s))))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::BV_UGE,
+           {one,
+            nm.mk_node(Kind::BV_AND,
+                       {x,
+                        nm.mk_node(Kind::BV_AND,
+                                   {t,
+                                    nm.mk_node(Kind::BV_NEG,
+                                               {nm.mk_node(Kind::BV_OR,
+                                                           {x, s})})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF9>::instance(const Node& x,
+                                            const Node& s,
+                                            const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct s (bvor x (bvnot (bvor t (bvand s #b0001))))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {s,
+            nm.mk_node(Kind::BV_OR,
+                       {x,
+                        nm.mk_node(Kind::BV_NOT,
+                                   {nm.mk_node(Kind::BV_OR,
+                                               {t,
+                                                nm.mk_node(Kind::BV_AND,
+                                                           {s, one})})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF10>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge (bvand t (bvneg x)) (bvand x s)))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(Kind::BV_UGE,
+                  {nm.mk_node(Kind::BV_AND, {t, nm.mk_node(Kind::BV_NEG, {x})}),
+                   nm.mk_node(Kind::BV_AND, {x, s})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF11>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct s (bvnot (bvor t (bvand #b0001 (bvor x s))))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {s,
+            nm.mk_node(
+                Kind::BV_NOT,
+                {nm.mk_node(
+                    Kind::BV_OR,
+                    {t,
+                     nm.mk_node(Kind::BV_AND,
+                                {one, nm.mk_node(Kind::BV_OR, {x, s})})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF12>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct t (bvor #b0001 (bvneg (bvnot (bvor x s))))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {t,
+            nm.mk_node(Kind::BV_OR,
+                       {one,
+                        nm.mk_node(Kind::BV_NEG,
+                                   {nm.mk_node(Kind::BV_NOT,
+                                               {nm.mk_node(Kind::BV_OR,
+                                                           {x, s})})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF13>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge (bvneg s) (bvand x t)))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(Kind::IMPLIES,
+                    {nm.mk_node(Kind::AND,
+                                {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                                 nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+                     nm.mk_node(Kind::BV_UGE,
+                                {nm.mk_node(Kind::BV_NEG, {s}),
+                                 nm.mk_node(Kind::BV_AND, {x, t})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF14>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge (bvand t (bvneg x)) (bvand s t)))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(Kind::BV_UGE,
+                  {nm.mk_node(Kind::BV_AND, {t, nm.mk_node(Kind::BV_NEG, {x})}),
+                   nm.mk_node(Kind::BV_AND, {s, t})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF15>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct x (bvnot (bvor t (bvand #b0001 (bvor x s))))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {x,
+            nm.mk_node(
+                Kind::BV_NOT,
+                {nm.mk_node(
+                    Kind::BV_OR,
+                    {t,
+                     nm.mk_node(Kind::BV_AND,
+                                {one, nm.mk_node(Kind::BV_OR, {x, s})})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF16>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct x (bvor s (bvnot (bvor x (bvor t #b0001))))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {x,
+            nm.mk_node(
+                Kind::BV_OR,
+                {s,
+                 nm.mk_node(Kind::BV_NOT,
+                            {nm.mk_node(
+                                Kind::BV_OR,
+                                {x, nm.mk_node(Kind::BV_OR, {t, one})})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF17>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct x (bvor s (bvnot (bvor t (bvand x #b0001))))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {x,
+            nm.mk_node(Kind::BV_OR,
+                       {s,
+                        nm.mk_node(Kind::BV_NOT,
+                                   {nm.mk_node(Kind::BV_OR,
+                                               {t,
+                                                nm.mk_node(Kind::BV_AND,
+                                                           {x, one})})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF18>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct #b0001 (bvnot (bvand (bvneg x) (bvor x s)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {one,
+            nm.mk_node(Kind::BV_NOT,
+                       {nm.mk_node(Kind::BV_AND,
+                                   {nm.mk_node(Kind::BV_NEG, {x}),
+                                    nm.mk_node(Kind::BV_OR, {x, s})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF19>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct #b0001 (bvor x (bvnot (bvand t (bvneg s))))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {one,
+            nm.mk_node(
+                Kind::BV_OR,
+                {x,
+                 nm.mk_node(
+                     Kind::BV_NOT,
+                     {nm.mk_node(Kind::BV_AND,
+                                 {t, nm.mk_node(Kind::BV_NEG, {s})})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF20>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct #b0001 (bvnot (bvand (bvneg s) (bvor x s)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {one,
+            nm.mk_node(Kind::BV_NOT,
+                       {nm.mk_node(Kind::BV_AND,
+                                   {nm.mk_node(Kind::BV_NEG, {s}),
+                                    nm.mk_node(Kind::BV_OR, {x, s})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF21>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge s (bvlshr t (bvnot (bvneg x)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::BV_UGE,
+           {s,
+            nm.mk_node(Kind::BV_SHR,
+                       {t,
+                        nm.mk_node(Kind::BV_NOT,
+                                   {nm.mk_node(Kind::BV_NEG, {x})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF22>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge x (bvlshr t (bvnot (bvneg s))))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::BV_UGE,
+           {x,
+            nm.mk_node(Kind::BV_SHR,
+                       {t,
+                        nm.mk_node(Kind::BV_NOT,
+                                   {nm.mk_node(Kind::BV_NEG, {s})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF23>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct x (bvshl (bvnot #b0001) (bvlshr x s))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(Kind::DISTINCT,
+                  {x,
+                   nm.mk_node(Kind::BV_SHL,
+                              {nm.mk_node(Kind::BV_NOT, {one}),
+                               nm.mk_node(Kind::BV_SHR, {x, s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF24>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct x (bvadd t (bvnot (bvshl x t)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {x,
+            nm.mk_node(Kind::BV_ADD,
+                       {t,
+                        nm.mk_node(Kind::BV_NOT,
+                                   {nm.mk_node(Kind::BV_SHL, {x, t})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF25>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct x (bvnot (bvshl x (bvadd s t)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {x,
+            nm.mk_node(Kind::BV_NOT,
+                       {nm.mk_node(Kind::BV_SHL,
+                                   {x, nm.mk_node(Kind::BV_ADD, {s, t})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF26>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (bvuge x (bvlshr t (bvadd t (bvnot s)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::BV_UGE,
+           {x,
+            nm.mk_node(Kind::BV_SHR,
+                       {t,
+                        nm.mk_node(Kind::BV_ADD,
+                                   {t, nm.mk_node(Kind::BV_NOT, {s})})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF27>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct t (bvor #b0001 (bvadd x s))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(Kind::DISTINCT,
+                  {t,
+                   nm.mk_node(Kind::BV_OR,
+                              {one, nm.mk_node(Kind::BV_ADD, {x, s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF28>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  //  (distinct #b0001 (bvor (bvnot t) (bvxor x s)))))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(Kind::DISTINCT,
+                  {one,
+                   nm.mk_node(Kind::BV_OR,
+                              {nm.mk_node(Kind::BV_NOT, {t}),
+                               nm.mk_node(Kind::BV_XOR, {x, s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL_REF29>::instance(const Node& x,
+                                             const Node& s,
+                                             const Node& t) const
+{
+  // (=>
+  //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+  // (distinct x (bvlshr (bvsub (bvlshr x s) #b0001) #b0001)))
+  uint64_t size   = x.type().bv_size();
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(size));
+  Node shift      = nm.mk_value(BitVector::from_ui(size, size / 2));
+  Node pow2       = nm.mk_node(Kind::BV_SHL, {one, shift});
+
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {nm.mk_node(Kind::AND,
+                  {nm.mk_node(Kind::BV_ULT, {x, pow2}),
+                   nm.mk_node(Kind::BV_ULT, {s, pow2})}),
+       nm.mk_node(
+           Kind::DISTINCT,
+           {x,
+            nm.mk_node(Kind::BV_SHR,
+                       {nm.mk_node(Kind::BV_SUB,
+                                   {nm.mk_node(Kind::BV_SHR, {x, s}), one}),
+                        one})})});
 }
 
 // Unsigned division lemmas

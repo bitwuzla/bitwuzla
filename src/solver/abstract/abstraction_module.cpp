@@ -81,6 +81,51 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF16>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF17>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF18>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF1>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF2>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF3>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF4>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF5>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF6>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF7>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF8>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF9>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF10>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF11>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF12>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF13>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF14>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF15>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF16>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF17>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF18>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF19>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF20>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF21>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF22>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF23>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF24>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF25>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF26>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF27>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF28>());
+      // mul_abstr_lemmas.emplace_back(new
+      // Lemma<LemmaKind::MUL_NOOVFL_REF29>());
     }
   }
 
@@ -212,7 +257,7 @@ AbstractionModule::check()
 {
   Log(1);
   Log(1) << "*** check abstractions";
-  // score_lemmas(Kind::BV_ADD);
+  // score_lemmas(Kind::BV_MUL);
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
 

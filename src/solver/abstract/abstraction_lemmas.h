@@ -38,6 +38,98 @@ enum class LemmaKind : uint32_t
   MUL_NEG_POW2,
   MUL_VALUE,
 
+  MUL_NOOVFL_REF1,   // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (not (bvult (bvneg x) (bvor (bvneg t) (bvand x s))))
+  MUL_NOOVFL_REF2,   // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge t (bvneg (bvand (bvneg x) (bvneg s)))))
+  MUL_NOOVFL_REF3,   // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (= t (bvand t (bvor x (bvneg x)))))
+  MUL_NOOVFL_REF4,   // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (= t (bvor t (bvand x (bvand s #b0001)))))
+  MUL_NOOVFL_REF5,   // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge (bvneg s) (bvor (bvneg t) (bvand x s))))
+  MUL_NOOVFL_REF6,   // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge (bvneg s) (bvneg (bvand t (bvnot s)))))
+  MUL_NOOVFL_REF7,   // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge (bvneg x) (bvneg (bvand t (bvnot x)))))
+  MUL_NOOVFL_REF8,   // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge #b0001 (bvand x (bvand t (bvneg (bvor x s))))))
+  MUL_NOOVFL_REF9,   // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct (bvor x (bvnot (bvor t (bvand s #b0001))))))
+  MUL_NOOVFL_REF10,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge (bvand t (bvneg x)) (bvand x s)))
+  MUL_NOOVFL_REF11,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct s (bvnot (bvor t (bvand #b0001 (bvor x
+                     //  s))))))
+  MUL_NOOVFL_REF12,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct t (bvor #b0001 (bvneg (bvnot (bvor x s))))))
+  MUL_NOOVFL_REF13,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge (bvneg s) (bvand x t)))
+  MUL_NOOVFL_REF14,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge (bvand t (bvneg x)) (bvand s t)))
+  MUL_NOOVFL_REF15,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct x (bvnot (bvor t (bvand #b0001 (bvor x
+                     //  s))))))
+  MUL_NOOVFL_REF16,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct x (bvor s (bvnot (bvor x (bvor t #b0001))))))
+  MUL_NOOVFL_REF17,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct x (bvor s (bvnot (bvor t (bvand x
+                     //  #b0001))))))
+  MUL_NOOVFL_REF18,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct #b0001 (bvnot (bvand (bvneg x) (bvor x s)))))
+  MUL_NOOVFL_REF19,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct #b0001 (bvor x (bvnot (bvand t (bvneg s))))))
+  MUL_NOOVFL_REF20,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct #b0001 (bvnot (bvand (bvneg s) (bvor x s)))))
+  MUL_NOOVFL_REF21,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge s (bvlshr t (bvnot (bvneg x)))))
+  MUL_NOOVFL_REF22,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge x (bvlshr t (bvnot (bvneg s)))))
+  MUL_NOOVFL_REF23,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct x (bvshl (bvnot #b0001) (bvlshr x s))))
+  MUL_NOOVFL_REF24,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct x (bvadd t (bvnot (bvshl x t)))))
+  MUL_NOOVFL_REF25,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct x (bvnot (bvshl x (bvadd s t)))))
+  MUL_NOOVFL_REF26,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (bvuge x (bvlshr t (bvadd t (bvnot s)))))
+  MUL_NOOVFL_REF27,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct t (bvor #b0001 (bvadd x s))))
+  MUL_NOOVFL_REF28,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     //  (distinct #b0001 (bvor (bvnot t) (bvxor x s))))
+  MUL_NOOVFL_REF29,  // (=>
+                     //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
+                     // (distinct x (bvlshr (bvsub (bvlshr x s) #b0001)
+                     // #b0001)))
+
   UDIV_REF1,  // (=> (= s #b0001) (= t x))
   UDIV_REF2,  // (=> (and (= s x) (distinct s #b0000)) (= t #b0001))
   UDIV_REF3,  // (=> (= s #b0000) (= t (bvnot #b0000)))
