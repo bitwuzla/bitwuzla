@@ -35,6 +35,7 @@ enum class LemmaKind : uint32_t
   MUL_REF17,  // (not (= x (bvadd #b0001 (bvshl x (bvsub s t)))))
   MUL_REF18,  // (not (= x (bvsub #b0001 (bvshl x (bvsub s t)))))
   MUL_POW2,
+  MUL_NEG_POW2,
   MUL_VALUE,
 
   UDIV_REF1,  // (=> (= s #b0001) (= t x))

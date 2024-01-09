@@ -65,6 +65,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_REF17: os << "MUL_REF17"; break;
     case LemmaKind::MUL_REF18: os << "MUL_REF18"; break;
     case LemmaKind::MUL_POW2: os << "MUL_POW2"; break;
+    case LemmaKind::MUL_NEG_POW2: os << "MUL_NEG_POW2"; break;
     case LemmaKind::MUL_VALUE: os << "MUL_VALUE"; break;
 
     case LemmaKind::UDIV_REF1: os << "UDIV_REF1"; break;
