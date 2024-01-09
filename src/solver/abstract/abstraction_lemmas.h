@@ -237,21 +237,36 @@ std::ostream& operator<<(std::ostream& os, LemmaKind kind);
 class AbstractionLemma
 {
  public:
-  AbstractionLemma(LemmaKind kind, bool commutative = true)
-      : d_kind(kind), d_commutative(commutative){};
+  AbstractionLemma(LemmaKind kind) : d_kind(kind){};
   virtual ~AbstractionLemma() {};
 
   /** Return lemma kind. */
   LemmaKind kind() const { return d_kind; }
 
-  bool commutative() const { return d_commutative; };
-
   /** Get instance of abstraction lemma. */
-  virtual Node instance(const Node& x, const Node& s, const Node& t) const = 0;
+  virtual Node instance(const Node& x, const Node& s, const Node& t) const
+  {
+    (void) x;
+    (void) s;
+    (void) t;
+    return Node();
+  };
+
+  virtual std::pair<bool, Node> instance(const Node& val_x,
+                                         const Node& val_s,
+                                         const Node& val_t,
+                                         const Node& x,
+                                         const Node& s,
+                                         const Node& t) const
+  {
+    (void) x;
+    (void) s;
+    (void) t;
+    return {false, Node()};
+  };
 
  protected:
   LemmaKind d_kind;
-  bool d_commutative;
 };
 
 template <enum LemmaKind K>

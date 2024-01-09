@@ -467,6 +467,41 @@ mul_pow2_lemma(NodeManager& nm,
        nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_SHL, {s, shift_by})})});
 }
 
+bool
+AbstractionModule::check_lemma(const AbstractionLemma* lem,
+                               const Node& val_x,
+                               const Node& val_s,
+                               const Node& val_t,
+                               const Node& x,
+                               const Node& s,
+                               const Node& t)
+{
+  Node inst = lem->instance(val_x, val_s, val_t);
+  Node lemma;
+  bool violated = false;
+  if (inst.is_null())
+  {
+    std::tie(violated, lemma) = lem->instance(val_x, val_s, val_t, x, s, t);
+  }
+  else
+  {
+    inst = d_rewriter.rewrite(inst);
+    assert(inst.is_value());
+    violated = !inst.value<bool>();
+    lemma    = lem->instance(x, s, t);
+  }
+
+  if (violated)
+  {
+    assert(!lemma.is_null());
+    Log(2) << lem->kind() << " inconsistent";
+    lemma_no_abstract(lemma, lem->kind());
+    return true;
+  }
+
+  return false;
+}
+
 void
 AbstractionModule::check_abstraction(const Node& abstr)
 {
@@ -555,34 +590,14 @@ AbstractionModule::check_abstraction(const Node& abstr)
     const auto& to_check = it->second;
     for (const auto& lem : to_check)
     {
-      Node inst = d_rewriter.rewrite(lem->instance(val_x, val_s, val_t));
-      assert(inst.is_value());
-      if (!inst.value<bool>())
+      added_lemma = check_lemma(lem.get(), val_x, val_s, val_t, x, s, t);
+      if (!added_lemma && KindInfo::is_commutative(kind))
       {
-        Log(2) << lem->kind() << " inconsistent";
-        Node lemma = lem->instance(x, s, t);
-        lemma_no_abstract(lemma, lem->kind());
-        added_lemma = true;
-        if (!d_opt_eager_refine)
-        {
-          break;
-        }
+        added_lemma = check_lemma(lem.get(), val_s, val_x, val_t, s, x, t);
       }
-      if (KindInfo::is_commutative(kind))
+      if (added_lemma && !d_opt_eager_refine)
       {
-        inst = d_rewriter.rewrite(lem->instance(val_s, val_x, val_t));
-        assert(inst.is_value());
-        if (!inst.value<bool>())
-        {
-          Log(2) << lem->kind() << " (comm.) inconsistent";
-          Node lemma = lem->instance(s, x, t);
-          lemma_no_abstract(lemma, lem->kind());
-          added_lemma = true;
-          if (!d_opt_eager_refine)
-          {
-            break;
-          }
-        }
+        break;
       }
     }
   }

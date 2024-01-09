@@ -57,6 +57,14 @@ class AbstractionModule
   /** Check assertion abstractions, and add refinement if needed. */
   bool check_assertion_abstractions();
 
+  bool check_lemma(const AbstractionLemma* lem,
+                   const Node& val_x,
+                   const Node& val_s,
+                   const Node& val_t,
+                   const Node& x,
+                   const Node& s,
+                   const Node& t);
+
   /** Send lemma but make sure not to abstract terms in it. */
   void lemma_no_abstract(const Node& lemma, LemmaKind lk);
 
