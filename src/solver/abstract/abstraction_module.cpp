@@ -56,6 +56,10 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   if (env.options().abstraction_bv_mul())
   {
     auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
+    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_POW2>());
+    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NEG_POW2>());
+    // TODO: check if this is how we want to deal with square
+    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_SQUARE>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_IC>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ZERO>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ONE>());
@@ -275,7 +279,7 @@ AbstractionModule::check()
     const Node abstr_term = d_active_abstractions[i];
     if (d_solver_state.is_relevant(abstr_term))
     {
-      check_abstraction(abstr_term);
+      check_term_abstraction(abstr_term);
     }
   }
 
@@ -450,23 +454,6 @@ AbstractionModule::abstr_uf(const Node& node)
   return it->second;
 }
 
-Node
-mul_pow2_lemma(NodeManager& nm,
-               const BitVector& val_pow2,
-               const Node& val_x,
-               const Node& x,
-               const Node& s,
-               const Node& t)
-{
-  Node shift_by = nm.mk_value(
-      BitVector::from_ui(val_pow2.size(), val_pow2.count_trailing_zeros()));
-  Node eq = nm.mk_node(Kind::EQUAL, {x, val_x});
-  return nm.mk_node(
-      Kind::IMPLIES,
-      {eq,
-       nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_SHL, {s, shift_by})})});
-}
-
 bool
 AbstractionModule::check_lemma(const AbstractionLemma* lem,
                                const Node& val_x,
@@ -478,22 +465,31 @@ AbstractionModule::check_lemma(const AbstractionLemma* lem,
 {
   Node inst = lem->instance(val_x, val_s, val_t);
   Node lemma;
-  bool violated = false;
-  if (inst.is_null())
-  {
-    std::tie(violated, lemma) = lem->instance(val_x, val_s, val_t, x, s, t);
-  }
-  else
+  if (!inst.is_null())
   {
     inst = d_rewriter.rewrite(inst);
     assert(inst.is_value());
-    violated = !inst.value<bool>();
-    lemma    = lem->instance(x, s, t);
+    if (!inst.value<bool>())
+    {
+      lemma = lem->instance(x, s, t);
+    }
+  }
+  else
+  {
+    inst = lem->instance(val_x, val_s, val_t, val_x, val_s, val_t);
+    if (!inst.is_null())
+    {
+      inst = d_rewriter.rewrite(inst);
+      assert(inst.is_value());
+      if (!inst.value<bool>())
+      {
+        lemma = lem->instance(val_x, val_s, val_t, x, s, t);
+      }
+    }
   }
 
-  if (violated)
+  if (!lemma.is_null())
   {
-    assert(!lemma.is_null());
     Log(2) << lem->kind() << " inconsistent";
     lemma_no_abstract(lemma, lem->kind());
     return true;
@@ -503,7 +499,7 @@ AbstractionModule::check_lemma(const AbstractionLemma* lem,
 }
 
 void
-AbstractionModule::check_abstraction(const Node& abstr)
+AbstractionModule::check_term_abstraction(const Node& abstr)
 {
   Log(2) << "check abstraction: " << abstr;
 
@@ -516,7 +512,7 @@ AbstractionModule::check_abstraction(const Node& abstr)
 
   if (kind == Kind::ITE)
   {
-    check_abstraction_ite(abstr, node);
+    check_term_abstraction_ite(abstr, node);
     return;
   }
 
@@ -545,46 +541,6 @@ AbstractionModule::check_abstraction(const Node& abstr)
   bool added_lemma = false;
   if (!d_opt_value_inst_only)
   {
-    // Special encodings for bvmul
-    if (kind == Kind::BV_MUL)
-    {
-      BitVector val_pow2;
-      if ((val_pow2 = val_x.value<BitVector>()).is_power_of_two())
-      {
-        lemma_no_abstract(mul_pow2_lemma(nm, val_pow2, val_x, x, s, t),
-                          LemmaKind::MUL_POW2);
-        return;
-      }
-      else if ((val_pow2 = val_x.value<BitVector>().bvneg()).is_power_of_two())
-      {
-        lemma_no_abstract(
-            mul_pow2_lemma(
-                nm, val_pow2, val_x, x, nm.mk_node(Kind::BV_NEG, {s}), t),
-            LemmaKind::MUL_NEG_POW2);
-        return;
-      }
-      else if ((val_pow2 = val_s.value<BitVector>()).is_power_of_two())
-      {
-        lemma_no_abstract(mul_pow2_lemma(nm, val_pow2, val_s, s, x, t),
-                          LemmaKind::MUL_POW2);
-        return;
-      }
-      else if ((val_pow2 = val_s.value<BitVector>().bvneg()).is_power_of_two())
-      {
-        lemma_no_abstract(
-            mul_pow2_lemma(
-                nm, val_pow2, val_s, s, nm.mk_node(Kind::BV_NEG, {x}), t),
-            LemmaKind::MUL_NEG_POW2);
-        return;
-      }
-      else if (x == s)
-      {
-        Lemma<LemmaKind::MUL_SQUARE> l;
-        lemma_no_abstract(l.instance(x, s, t), l.kind());
-        return;
-      }
-    }
-
     auto it = d_abstr_lemmas.find(kind);
     assert(it != d_abstr_lemmas.end());
     const auto& to_check = it->second;
@@ -690,8 +646,13 @@ AbstractionModule::check_abstraction(const Node& abstr)
     }
     else if (kind == Kind::BV_MUL && val_x == val_s)
     {
-      Lemma<LemmaKind::MUL_SQUARE> l;
-      d_lemma_buffer.emplace_back(node, l.instance(x, s, t), l.kind());
+      d_lemma_buffer.emplace_back(
+          node,
+          nm.mk_node(
+              Kind::IMPLIES,
+              {nm.mk_node(Kind::EQUAL, {x, s}),
+               nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_MUL, {x, x})})}),
+          LemmaKind::MUL_SQUARE);
     }
     else
     {
@@ -704,7 +665,8 @@ AbstractionModule::check_abstraction(const Node& abstr)
 }
 
 void
-AbstractionModule::check_abstraction_ite(const Node& abstr, const Node& node)
+AbstractionModule::check_term_abstraction_ite(const Node& abstr,
+                                              const Node& node)
 {
   const Node& c  = abstr[1];
   const Node& bt = abstr[2];

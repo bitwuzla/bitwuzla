@@ -15,6 +15,8 @@ enum class LemmaKind : uint32_t
   MUL_NEG,     // (=> (= s (bvnot #b0000)) (= t (bvneg x)))
   MUL_ODD,     // (= t (bvor t (bvand x (bvand s #b0001))))
   MUL_SQUARE,  // (=> (= x s) (= t (bvmul x x))), uses special encoding
+  MUL_POW2,
+  MUL_NEG_POW2,
 
   MUL_REF1,   // (not (= s (bvnot (bvor t (bvand #b0001 (bvor x s))))))
   MUL_REF2,   // (bvuge s (bvand t (bvneg (bvor t (bvnot x)))))
@@ -34,8 +36,6 @@ enum class LemmaKind : uint32_t
   MUL_REF16,  // (not (= x (bvadd #b0001 (bvshl x (bvsub t s)))))
   MUL_REF17,  // (not (= x (bvadd #b0001 (bvshl x (bvsub s t)))))
   MUL_REF18,  // (not (= x (bvsub #b0001 (bvshl x (bvsub s t)))))
-  MUL_POW2,
-  MUL_NEG_POW2,
   MUL_VALUE,
 
   MUL_NOOVFL_REF1,   // (=>
@@ -244,26 +244,14 @@ class AbstractionLemma
   LemmaKind kind() const { return d_kind; }
 
   /** Get instance of abstraction lemma. */
-  virtual Node instance(const Node& x, const Node& s, const Node& t) const
-  {
-    (void) x;
-    (void) s;
-    (void) t;
-    return Node();
-  };
+  virtual Node instance(const Node& x, const Node& s, const Node& t) const = 0;
 
-  virtual std::pair<bool, Node> instance(const Node& val_x,
-                                         const Node& val_s,
-                                         const Node& val_t,
-                                         const Node& x,
-                                         const Node& s,
-                                         const Node& t) const
-  {
-    (void) x;
-    (void) s;
-    (void) t;
-    return {false, Node()};
-  };
+  virtual Node instance(const Node& val_x,
+                        const Node& val_s,
+                        const Node& val_t,
+                        const Node& x,
+                        const Node& s,
+                        const Node& t) const = 0;
 
  protected:
   LemmaKind d_kind;
@@ -275,7 +263,28 @@ class Lemma : public AbstractionLemma
  public:
   Lemma<K>() : AbstractionLemma(K){};
   ~Lemma<K>() {};
-  Node instance(const Node& x, const Node& s, const Node& t) const override;
+  Node instance(const Node& x, const Node& s, const Node& t) const override
+  {
+    (void) x;
+    (void) s;
+    (void) t;
+    return Node();
+  }
+  Node instance(const Node& val_x,
+                const Node& val_s,
+                const Node& val_t,
+                const Node& x,
+                const Node& s,
+                const Node& t) const override
+  {
+    (void) val_x;
+    (void) val_s;
+    (void) val_t;
+    (void) x;
+    (void) s;
+    (void) t;
+    return Node();
+  }
 };
 
 // Multiplication lemmas
@@ -303,9 +312,28 @@ Node Lemma<LemmaKind::MUL_ODD>::instance(const Node& x,
                                          const Node& s,
                                          const Node& t) const;
 template <>
-Node Lemma<LemmaKind::MUL_SQUARE>::instance(const Node& x,
+Node Lemma<LemmaKind::MUL_SQUARE>::instance(const Node& val_x,
+                                            const Node& val_s,
+                                            const Node& val_t,
+                                            const Node& x,
                                             const Node& s,
                                             const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::MUL_POW2>::instance(const Node& val_x,
+                                          const Node& val_s,
+                                          const Node& val_t,
+                                          const Node& x,
+                                          const Node& s,
+                                          const Node& t) const;
+
+template <>
+Node Lemma<LemmaKind::MUL_NEG_POW2>::instance(const Node& val_x,
+                                              const Node& val_s,
+                                              const Node& val_t,
+                                              const Node& x,
+                                              const Node& s,
+                                              const Node& t) const;
 template <>
 Node Lemma<LemmaKind::MUL_REF1>::instance(const Node& x,
                                           const Node& s,

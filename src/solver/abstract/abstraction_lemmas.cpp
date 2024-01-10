@@ -46,6 +46,8 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_NEG: os << "MUL_NEG"; break;
     case LemmaKind::MUL_ODD: os << "MUL_ODD"; break;
     case LemmaKind::MUL_SQUARE: os << "MUL_SQUARE"; break;
+    case LemmaKind::MUL_POW2: os << "MUL_POW2"; break;
+    case LemmaKind::MUL_NEG_POW2: os << "MUL_NEG_POW2"; break;
     case LemmaKind::MUL_REF1: os << "MUL_REF1"; break;
     case LemmaKind::MUL_REF2: os << "MUL_REF2"; break;
     case LemmaKind::MUL_REF3: os << "MUL_REF3"; break;
@@ -93,8 +95,6 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_NOOVFL_REF27: os << "MUL_NOOVFL_REF27"; break;
     case LemmaKind::MUL_NOOVFL_REF28: os << "MUL_NOOVFL_REF28"; break;
     case LemmaKind::MUL_NOOVFL_REF29: os << "MUL_NOOVFL_REF29"; break;
-    case LemmaKind::MUL_POW2: os << "MUL_POW2"; break;
-    case LemmaKind::MUL_NEG_POW2: os << "MUL_NEG_POW2"; break;
     case LemmaKind::MUL_VALUE: os << "MUL_VALUE"; break;
 
     case LemmaKind::UDIV_REF1: os << "UDIV_REF1"; break;
@@ -258,15 +258,81 @@ Lemma<LemmaKind::MUL_ODD>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_SQUARE>::instance(const Node& x,
+Lemma<LemmaKind::MUL_SQUARE>::instance(const Node& val_x,
+                                       const Node& val_s,
+                                       const Node& val_t,
+                                       const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {
+  (void) val_x;
+  (void) val_s;
+  (void) val_t;
   NodeManager& nm = NodeManager::get();
-  return nm.mk_node(
-      Kind::IMPLIES,
-      {nm.mk_node(Kind::EQUAL, {x, s}),
-       nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_MUL, {x, x})})});
+  if (x == s)
+  {
+    return nm.mk_node(
+        Kind::IMPLIES,
+        {nm.mk_node(Kind::EQUAL, {x, s}),
+         nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_MUL, {x, x})})});
+  }
+  return Node();
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_POW2>::instance(const Node& val_x,
+                                     const Node& val_s,
+                                     const Node& val_t,
+                                     const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
+{
+  (void) val_s;
+  (void) val_t;
+  if (val_x.value<BitVector>().is_power_of_two())
+  {
+    NodeManager& nm      = NodeManager::get();
+    const auto& val_pow2 = val_x.value<BitVector>();
+    Node shift_by        = nm.mk_value(
+        BitVector::from_ui(val_pow2.size(), val_pow2.count_trailing_zeros()));
+    Node eq = nm.mk_node(Kind::EQUAL, {x, val_x});
+    return nm.mk_node(
+        Kind::IMPLIES,
+        {eq,
+         nm.mk_node(Kind::EQUAL,
+                    {t, nm.mk_node(Kind::BV_SHL, {s, shift_by})})});
+  }
+  return Node();
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NEG_POW2>::instance(const Node& val_x,
+                                         const Node& val_s,
+                                         const Node& val_t,
+                                         const Node& x,
+                                         const Node& s,
+                                         const Node& t) const
+{
+  (void) val_s;
+  (void) val_t;
+  BitVector val_pow2;
+  if ((val_pow2 = val_x.value<BitVector>().bvneg()).is_power_of_two())
+  {
+    NodeManager& nm = NodeManager::get();
+    Node shift_by   = nm.mk_value(
+        BitVector::from_ui(val_pow2.size(), val_pow2.count_trailing_zeros()));
+    Node eq = nm.mk_node(Kind::EQUAL, {x, val_x});
+    return nm.mk_node(
+        Kind::IMPLIES,
+        {eq,
+         nm.mk_node(Kind::EQUAL,
+                    {t,
+                     nm.mk_node(Kind::BV_SHL,
+                                {nm.mk_node(Kind::BV_NEG, {s}), shift_by})})});
+  }
+  return Node();
 }
 
 template <>
