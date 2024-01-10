@@ -69,7 +69,8 @@ class AbstractionModule
   void lemma_no_abstract(const Node& lemma, LemmaKind lk);
 
   /** Utility to compute score for lemma schema. */
-  void score_lemmas(node::Kind k) const;
+  void score_lemmas(node::Kind k, uint64_t bv_size) const;
+  void rank_lemmas_by_circuit_size();
 
 #ifndef NDEBUG
   void verify_lemmas() const;

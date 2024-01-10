@@ -262,6 +262,7 @@ AbstractionModule::check()
   Log(1);
   Log(1) << "*** check abstractions";
   // score_lemmas(Kind::BV_MUL);
+  // rank_lemmas_by_circuit_size();
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
 
@@ -775,14 +776,11 @@ AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
 }
 
 void
-AbstractionModule::score_lemmas(Kind kind) const
+AbstractionModule::score_lemmas(Kind kind, uint64_t bv_size) const
 {
-  static bool done = false;
-  if (done) return;
   NodeManager& nm = NodeManager::get();
-  uint64_t size   = 7;
   uint64_t max    = 1;
-  for (size_t i = 0; i < size; ++i)
+  for (size_t i = 0; i < bv_size; ++i)
   {
     max *= 2;
   }
@@ -794,7 +792,7 @@ AbstractionModule::score_lemmas(Kind kind) const
   // Create all possible values [0, max[
   for (uint64_t i = 0; i < max; ++i)
   {
-    values.push_back(nm.mk_value(BitVector::from_ui(size, i)));
+    values.push_back(nm.mk_value(BitVector::from_ui(bv_size, i)));
   }
 
   // Compute all results for kind
@@ -808,6 +806,7 @@ AbstractionModule::score_lemmas(Kind kind) const
     }
   }
 
+  std::cout << std::fixed;
   uint64_t max_score   = max * max * max;
   uint64_t final_score = max_score;
   std::cout << "lemma score (worst: " << final_score << ", best: " << max * max
@@ -829,16 +828,41 @@ AbstractionModule::score_lemmas(Kind kind) const
         for (uint64_t k = 0; k < values.size(); ++k)
         {
           auto t    = std::make_tuple(i, j, k);
-          Node inst = d_rewriter.rewrite(
-              lem->instance(values[i], values[j], values[k]));
-          assert(inst.is_value());
-          auto res = inst.value<bool>();
-          if (kind == Kind::BV_MUL)
+          Node inst = lem->instance(values[i], values[j], values[k]);
+          if (inst.is_null())
           {
-            Node instc = d_rewriter.rewrite(
-                lem->instance(values[j], values[i], values[k]));
-            auto resc = instc.value<bool>();
-            res       = res & resc;
+            inst = lem->instance(values[i],
+                                 values[j],
+                                 values[k],
+                                 values[i],
+                                 values[j],
+                                 values[k]);
+          }
+          bool res = true;
+          if (!inst.is_null())
+          {
+            inst = d_rewriter.rewrite(inst);
+            assert(inst.is_value());
+            res = inst.value<bool>();
+            if (kind == Kind::BV_MUL)
+            {
+              Node instc = lem->instance(values[j], values[i], values[k]);
+              if (instc.is_null())
+              {
+                instc = lem->instance(values[j],
+                                      values[i],
+                                      values[k],
+                                      values[j],
+                                      values[i],
+                                      values[k]);
+              }
+              if (!instc.is_null())
+              {
+                instc     = d_rewriter.rewrite(instc);
+                auto resc = instc.value<bool>();
+                res       = res & resc;
+              }
+            }
           }
 
           auto [it, _] = results_lemmas.emplace(t, true);
@@ -872,7 +896,121 @@ AbstractionModule::score_lemmas(Kind kind) const
             << "% (wrong results: " << final_score - (max * max) << std::endl;
   std::cout << "optimal score: " << max * max << " "
             << static_cast<double>(max * max) / max_score * 100 << std::endl;
-  done = true;
+}
+
+void
+AbstractionModule::rank_lemmas_by_circuit_size()
+{
+  Env env;
+  bv::AigBitblaster bb;
+  NodeManager& nm = NodeManager::get();
+  Type bv32       = nm.mk_bv_type(32);
+  std::unordered_map<Kind, std::vector<std::pair<LemmaKind, uint64_t>>>
+      lemma_sizes;
+
+  std::unordered_map<Kind, uint64_t> circuit_size;
+  for (const auto& [kind, lemmas] : d_abstr_lemmas)
+  {
+    if (KindInfo::num_children(kind) == 2)
+    {
+      Node x                       = nm.mk_const(bv32);
+      Node s                       = nm.mk_const(bv32);
+      Node t                       = nm.mk_const(bv32);
+      uint64_t size_overall_before = bb.num_aig_ands();
+      for (const auto& lem : lemmas)
+      {
+        Node inst = lem->instance(x, s, t);
+        if (inst.is_null())
+        {
+          // Conditional on x == s, hence manual computation needed
+          if (lem->kind() == LemmaKind::MUL_SQUARE)
+          {
+            inst =
+                nm.mk_node(Kind::IMPLIES,
+                           {nm.mk_node(Kind::EQUAL, {x, s}),
+                            nm.mk_node(Kind::EQUAL,
+                                       {t, nm.mk_node(Kind::BV_MUL, {x, x})})});
+          }
+          else if (lem->kind() == LemmaKind::MUL_POW2)
+          {
+            Node val_pow2 =
+                nm.mk_value(BitVector::mk_one(bv32.bv_size()).ibvshl(2));
+            inst = lem->instance(val_pow2, s, t, x, s, t);
+          }
+          else if (lem->kind() == LemmaKind::MUL_NEG_POW2)
+          {
+            Node val_pow2 = nm.mk_value(
+                BitVector::mk_one(bv32.bv_size()).ibvshl(2).ibvneg());
+            inst = lem->instance(val_pow2, s, t, x, s, t);
+          }
+          else
+          {
+            inst = lem->instance(x, s, t, x, s, t);
+          }
+        }
+        if (!inst.is_null())
+        {
+          inst                 = env.rewriter().rewrite(inst);
+          uint64_t size_before = bb.num_aig_ands();
+          bb.bitblast(inst);
+          uint64_t circuit_size = bb.num_aig_ands() - size_before;
+          lemma_sizes[kind].emplace_back(lem->kind(), circuit_size);
+        }
+      }
+      std::cout << kind << " total lemma size: "
+                << bb.num_aig_ands() - size_overall_before << std::endl;
+      {
+        Node x               = nm.mk_const(bv32);
+        Node s               = nm.mk_const(bv32);
+        Node t               = nm.mk_node(kind, {x, s});
+        uint64_t size_before = bb.num_aig_ands();
+        bb.bitblast(t);
+        std::cout << kind
+                  << " circuit size: " << bb.num_aig_ands() - size_before
+                  << std::endl;
+        circuit_size[kind] = bb.num_aig_ands() - size_before;
+      }
+    }
+  }
+
+  std::unordered_map<LemmaKind, uint64_t> rank_map;
+  for (auto& [k, lemmas] : lemma_sizes)
+  {
+    std::sort(lemmas.begin(), lemmas.end(), [](const auto& p1, const auto& p2) {
+      return p1.second < p2.second;
+    });
+    uint64_t sum = 0;
+    bool reached = false;
+    for (const auto& [lk, size] : lemmas)
+    {
+      rank_map.emplace(lk, size);
+      sum += size;
+      std::cout << size << " " << lk << " (sum: " << sum << "/"
+                << circuit_size[k] << ")" << std::endl;
+      if (!reached && sum >= circuit_size[k])
+      {
+        std::cout << "--- circuit size reached (" << circuit_size[k] << ") ---"
+                  << std::endl;
+        reached = true;
+      }
+    }
+    std::sort(d_abstr_lemmas.at(k).begin(),
+              d_abstr_lemmas.at(k).end(),
+              [&rank_map](const auto& l1, const auto& l2) {
+                return rank_map[l1->kind()] < rank_map[l2->kind()];
+              });
+    std::cout << "score: " << k << std::endl;
+    score_lemmas(k, 6);
+  }
+
+  std::cout << "final ranking:" << std::endl;
+  std::cout << "std::unordered_map<LemmaKind, uint64_t> rank_map = {";
+  for (const auto& [lk, size] : rank_map)
+  {
+    std::cout << "{LemmaKind::" << lk << "," << size << "}," << std::endl;
+  }
+  std::cout << "};" << std::endl;
+  abort();
 }
 
 #ifndef NDEBUG
