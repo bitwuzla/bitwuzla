@@ -290,7 +290,7 @@ Lemma<LemmaKind::MUL_POW2>::instance(const Node& val_x,
 {
   (void) val_s;
   (void) val_t;
-  if (val_x.value<BitVector>().is_power_of_two())
+  if (val_x.is_value() && val_x.value<BitVector>().is_power_of_two())
   {
     NodeManager& nm      = NodeManager::get();
     const auto& val_pow2 = val_x.value<BitVector>();
@@ -318,7 +318,8 @@ Lemma<LemmaKind::MUL_NEG_POW2>::instance(const Node& val_x,
   (void) val_s;
   (void) val_t;
   BitVector val_pow2;
-  if ((val_pow2 = val_x.value<BitVector>().bvneg()).is_power_of_two())
+  if (val_x.is_value() && !val_x.value<BitVector>().is_min_signed()
+      && (val_pow2 = val_x.value<BitVector>().bvneg()).is_power_of_two())
   {
     NodeManager& nm = NodeManager::get();
     Node shift_by   = nm.mk_value(
