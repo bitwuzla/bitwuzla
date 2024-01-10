@@ -1657,11 +1657,10 @@ Lemma<LemmaKind::UDIV_REF12>::instance(const Node& x,
 {
   // (not (bvult (bvand x (bvneg t)) (bvand s t)))
   NodeManager& nm = NodeManager::get();
-  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
   return nm.mk_node(
-      Kind::DISTINCT,
-      {nm.mk_node(Kind::BV_OR, {s, one}),
-       nm.mk_node(Kind::BV_AND, {x, nm.mk_node(Kind::BV_NOT, {t})})});
+      Kind::BV_UGE,
+      {nm.mk_node(Kind::BV_AND, {x, nm.mk_node(Kind::BV_NEG, {t})}),
+       nm.mk_node(Kind::BV_AND, {s, t})});
 }
 
 template <>
