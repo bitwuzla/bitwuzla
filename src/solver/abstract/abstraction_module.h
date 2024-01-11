@@ -131,7 +131,6 @@ class AbstractionModule
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
     uint64_t& num_terms;
-    uint64_t& num_lemmas;
     uint64_t& num_checks;
     util::HistogramStatistic& terms;
     util::HistogramStatistic& lemmas;

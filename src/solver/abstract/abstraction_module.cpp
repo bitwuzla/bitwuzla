@@ -661,7 +661,15 @@ AbstractionModule::check_term_abstraction(const Node& abstr)
       // Fully bit-blast abstracted term
       Node term  = nm.mk_node(kind, {x, s});
       Node lemma = nm.mk_node(Kind::EQUAL, {t, term});
-      d_lemma_buffer.emplace_back(node, lemma, LemmaKind::BITBLAST_FULL);
+      LemmaKind lk;
+      switch (kind)
+      {
+        case Kind::BV_MUL: lk = LemmaKind::BITBLAST_BV_MUL; break;
+        case Kind::BV_UDIV: lk = LemmaKind::BITBLAST_BV_UDIV; break;
+        case Kind::BV_UREM: lk = LemmaKind::BITBLAST_BV_UREM; break;
+        default: lk = LemmaKind::BITBLAST_FULL;
+      }
+      d_lemma_buffer.emplace_back(node, lemma, lk);
     }
   }
 }
@@ -1088,7 +1096,6 @@ AbstractionModule::verify_lemmas() const
 AbstractionModule::Statistics::Statistics(util::Statistics& stats,
                                           const std::string& prefix)
     : num_terms(stats.new_stat<uint64_t>(prefix + "terms::total")),
-      num_lemmas(stats.new_stat<uint64_t>(prefix + "lemmas::total")),
       num_checks(stats.new_stat<uint64_t>(prefix + "num_checks")),
       terms(stats.new_stat<util::HistogramStatistic>(prefix + "terms")),
       lemmas(stats.new_stat<util::HistogramStatistic>(prefix + "lemmas")),

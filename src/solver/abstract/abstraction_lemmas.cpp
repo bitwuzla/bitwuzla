@@ -175,6 +175,9 @@ operator<<(std::ostream& os, LemmaKind kind)
 
     case LemmaKind::BITBLAST_FULL: os << "BITBLAST_FULL"; break;
     case LemmaKind::BITBLAST_INC: os << "BITBLAST_INC"; break;
+    case LemmaKind::BITBLAST_BV_MUL: os << "BITBLAST_BV_MUL"; break;
+    case LemmaKind::BITBLAST_BV_UDIV: os << "BITBLAST_BV_UDIV"; break;
+    case LemmaKind::BITBLAST_BV_UREM: os << "BITBLAST_BV_UREM"; break;
     case LemmaKind::ITE_EXPAND: os << "ITE_EXPAND"; break;
     case LemmaKind::ITE_REFINE: os << "ITE_REFINE"; break;
     case LemmaKind::ASSERTION: os << "ASSERTION"; break;
