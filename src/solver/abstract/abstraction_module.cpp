@@ -263,6 +263,7 @@ AbstractionModule::check()
   Log(1) << "*** check abstractions";
   // score_lemmas(Kind::BV_MUL);
   // rank_lemmas_by_circuit_size();
+  // rank_lemmas_by_score();
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
 
@@ -776,7 +777,10 @@ AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
 }
 
 void
-AbstractionModule::score_lemmas(Kind kind, uint64_t bv_size) const
+AbstractionModule::score_lemmas(
+    Kind kind,
+    uint64_t bv_size,
+    std::unordered_map<LemmaKind, uint64_t>& rank_map) const
 {
   NodeManager& nm = NodeManager::get();
   uint64_t max    = 1;
@@ -884,6 +888,7 @@ AbstractionModule::score_lemmas(Kind kind, uint64_t bv_size) const
         }
       }
     }
+    rank_map[lem->kind()] = score;
     assert(score_expected == max * max);
     int64_t diff = final_score - prev_final_score;
     std::cout << lem->kind() << ": " << score << "/" << max_score
@@ -1000,7 +1005,8 @@ AbstractionModule::rank_lemmas_by_circuit_size()
                 return rank_map[l1->kind()] < rank_map[l2->kind()];
               });
     std::cout << "score: " << k << std::endl;
-    score_lemmas(k, 6);
+    std::unordered_map<LemmaKind, uint64_t> rm;
+    score_lemmas(k, 6, rm);
   }
 
   std::cout << "final ranking:" << std::endl;
@@ -1008,6 +1014,23 @@ AbstractionModule::rank_lemmas_by_circuit_size()
   for (const auto& [lk, size] : rank_map)
   {
     std::cout << "{LemmaKind::" << lk << "," << size << "}," << std::endl;
+  }
+  std::cout << "};" << std::endl;
+  abort();
+}
+
+void
+AbstractionModule::rank_lemmas_by_score()
+{
+  std::unordered_map<LemmaKind, uint64_t> rank_map;
+  score_lemmas(Kind::BV_MUL, 6, rank_map);
+  score_lemmas(Kind::BV_UDIV, 6, rank_map);
+  score_lemmas(Kind::BV_UREM, 6, rank_map);
+
+  std::cout << "std::unordered_map<LemmaKind, uint64_t> rank_map = {";
+  for (const auto& [lk, score] : rank_map)
+  {
+    std::cout << "{LemmaKind::" << lk << "," << score << "}," << std::endl;
   }
   std::cout << "};" << std::endl;
   abort();
