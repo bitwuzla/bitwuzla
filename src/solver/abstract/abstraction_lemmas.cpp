@@ -159,7 +159,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::ADD_SAME: os << "ADD_SAME"; break;
     case LemmaKind::ADD_INV: os << "ADD_INV"; break;
     case LemmaKind::ADD_OVFL: os << "ADD_OVFL1"; break;
-    case LemmaKind::ADD_NOOFVL: os << "ADD_OVFL2"; break;
+    case LemmaKind::ADD_NOOVFL: os << "ADD_OVFL2"; break;
     case LemmaKind::ADD_OR: os << "ADD_OR"; break;
     case LemmaKind::ADD_REF1: os << "ADD_REF1"; break;
     case LemmaKind::ADD_REF2: os << "ADD_REF2"; break;
@@ -2511,7 +2511,7 @@ Lemma<LemmaKind::ADD_OVFL>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::ADD_NOOFVL>::instance(const Node& x,
+Lemma<LemmaKind::ADD_NOOVFL>::instance(const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {

@@ -169,7 +169,7 @@ enum class LemmaKind : uint32_t
   ADD_OVFL,    // (=>
                //   (and (= (msb x) #b1) (= (msb s) #b1))
                //   (bvult t (bvand x s)))
-  ADD_NOOFVL,  // (=>
+  ADD_NOOVFL,  // (=>
                //   (and (= (msb x) #b0) (= (msb s) #b0))
                //   (bvuge t (bvor x s)))
   ADD_OR,      // (=> (= (bvand x s) #b000) (= t (bvor x s)))
@@ -264,484 +264,162 @@ class Lemma : public AbstractionLemma
   }
 };
 
+#define LEMMA(kind)                      \
+  template <>                            \
+  Node Lemma<LemmaKind::kind>::instance( \
+      const Node& x, const Node& s, const Node& t) const
+
+#define LEMMA_VAL(kind)                                    \
+  template <>                                              \
+  Node Lemma<LemmaKind::kind>::instance(const Node& val_x, \
+                                        const Node& val_s, \
+                                        const Node& val_t, \
+                                        const Node& x,     \
+                                        const Node& s,     \
+                                        const Node& t) const
+
 // Multiplication lemmas
 
-template <>
-Node Lemma<LemmaKind::MUL_ZERO>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::MUL_ONE>::instance(const Node& x,
-                                         const Node& s,
-                                         const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::MUL_IC>::instance(const Node& x,
-                                        const Node& s,
-                                        const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_NEG>::instance(const Node& x,
-                                         const Node& s,
-                                         const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_ODD>::instance(const Node& x,
-                                         const Node& s,
-                                         const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_SQUARE>::instance(const Node& val_x,
-                                            const Node& val_s,
-                                            const Node& val_t,
-                                            const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::MUL_POW2>::instance(const Node& val_x,
-                                          const Node& val_s,
-                                          const Node& val_t,
-                                          const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::MUL_NEG_POW2>::instance(const Node& val_x,
-                                              const Node& val_s,
-                                              const Node& val_t,
-                                              const Node& x,
-                                              const Node& s,
-                                              const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF1>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF2>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF3>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF4>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF5>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF6>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF7>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF8>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF9>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF10>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF11>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF12>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF13>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF14>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF15>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF16>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF17>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-template <>
-Node Lemma<LemmaKind::MUL_REF18>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
+LEMMA(MUL_ZERO);
+LEMMA(MUL_ONE);
+LEMMA(MUL_IC);
+LEMMA(MUL_NEG);
+LEMMA(MUL_ODD);
+LEMMA_VAL(MUL_SQUARE);
+LEMMA_VAL(MUL_POW2);
+LEMMA_VAL(MUL_NEG_POW2);
+LEMMA(MUL_REF1);
+LEMMA(MUL_REF2);
+LEMMA(MUL_REF3);
+LEMMA(MUL_REF4);
+LEMMA(MUL_REF5);
+LEMMA(MUL_REF6);
+LEMMA(MUL_REF7);
+LEMMA(MUL_REF8);
+LEMMA(MUL_REF9);
+LEMMA(MUL_REF10);
+LEMMA(MUL_REF11);
+LEMMA(MUL_REF12);
+LEMMA(MUL_REF13);
+LEMMA(MUL_REF14);
+LEMMA(MUL_REF15);
+LEMMA(MUL_REF16);
+LEMMA(MUL_REF17);
+LEMMA(MUL_REF18);
+LEMMA_VAL(MUL_NOOVFL_REF1);
+LEMMA_VAL(MUL_NOOVFL_REF2);
+LEMMA_VAL(MUL_NOOVFL_REF3);
+LEMMA_VAL(MUL_NOOVFL_REF4);
+LEMMA_VAL(MUL_NOOVFL_REF5);
+LEMMA_VAL(MUL_NOOVFL_REF6);
+LEMMA_VAL(MUL_NOOVFL_REF7);
+LEMMA_VAL(MUL_NOOVFL_REF8);
+LEMMA_VAL(MUL_NOOVFL_REF9);
+LEMMA_VAL(MUL_NOOVFL_REF10);
+LEMMA_VAL(MUL_NOOVFL_REF11);
+LEMMA_VAL(MUL_NOOVFL_REF12);
+LEMMA_VAL(MUL_NOOVFL_REF13);
+LEMMA_VAL(MUL_NOOVFL_REF14);
+LEMMA_VAL(MUL_NOOVFL_REF15);
+LEMMA_VAL(MUL_NOOVFL_REF16);
+LEMMA_VAL(MUL_NOOVFL_REF17);
+LEMMA_VAL(MUL_NOOVFL_REF18);
+LEMMA_VAL(MUL_NOOVFL_REF19);
+LEMMA_VAL(MUL_NOOVFL_REF20);
+LEMMA_VAL(MUL_NOOVFL_REF21);
+LEMMA_VAL(MUL_NOOVFL_REF22);
+LEMMA_VAL(MUL_NOOVFL_REF23);
+LEMMA_VAL(MUL_NOOVFL_REF24);
+LEMMA_VAL(MUL_NOOVFL_REF25);
+LEMMA_VAL(MUL_NOOVFL_REF26);
+LEMMA_VAL(MUL_NOOVFL_REF27);
+LEMMA_VAL(MUL_NOOVFL_REF28);
+LEMMA_VAL(MUL_NOOVFL_REF29);
 
 // Unsigned division lemmas
 
-template <>
-Node Lemma<LemmaKind::UDIV_REF1>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF2>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF3>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF4>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF5>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF6>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF7>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF8>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF9>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF10>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF11>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF12>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF13>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF14>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF15>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF16>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF17>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF18>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF19>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF20>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF21>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF22>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF23>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF24>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF25>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF26>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF27>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF28>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF29>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF30>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF31>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF32>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF33>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF34>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF35>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF36>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF37>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UDIV_REF38>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
+LEMMA_VAL(UDIV_POW2);
+LEMMA(UDIV_REF1);
+LEMMA(UDIV_REF2);
+LEMMA(UDIV_REF3);
+LEMMA(UDIV_REF4);
+LEMMA(UDIV_REF5);
+LEMMA(UDIV_REF6);
+LEMMA(UDIV_REF7);
+LEMMA(UDIV_REF8);
+LEMMA(UDIV_REF9);
+LEMMA(UDIV_REF10);
+LEMMA(UDIV_REF11);
+LEMMA(UDIV_REF12);
+LEMMA(UDIV_REF13);
+LEMMA(UDIV_REF14);
+LEMMA(UDIV_REF15);
+LEMMA(UDIV_REF16);
+LEMMA(UDIV_REF17);
+LEMMA(UDIV_REF18);
+LEMMA(UDIV_REF19);
+LEMMA(UDIV_REF20);
+LEMMA(UDIV_REF21);
+LEMMA(UDIV_REF22);
+LEMMA(UDIV_REF23);
+LEMMA(UDIV_REF24);
+LEMMA(UDIV_REF25);
+LEMMA(UDIV_REF26);
+LEMMA(UDIV_REF27);
+LEMMA(UDIV_REF28);
+LEMMA(UDIV_REF29);
+LEMMA(UDIV_REF30);
+LEMMA(UDIV_REF31);
+LEMMA(UDIV_REF32);
+LEMMA(UDIV_REF33);
+LEMMA(UDIV_REF34);
+LEMMA(UDIV_REF35);
+LEMMA(UDIV_REF36);
+LEMMA(UDIV_REF37);
+LEMMA(UDIV_REF38);
 
 // Unsigned remainder lemmas
 
-template <>
-Node Lemma<LemmaKind::UREM_REF1>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
+LEMMA_VAL(UREM_POW2);
+LEMMA(UREM_REF1);
+LEMMA(UREM_REF2);
+LEMMA(UREM_REF3);
+LEMMA(UREM_REF4);
+LEMMA(UREM_REF5);
+LEMMA(UREM_REF6);
+LEMMA(UREM_REF7);
+LEMMA(UREM_REF8);
+LEMMA(UREM_REF9);
+LEMMA(UREM_REF10);
+LEMMA(UREM_REF11);
+LEMMA(UREM_REF12);
+LEMMA(UREM_REF13);
+LEMMA(UREM_REF14);
 
-template <>
-Node Lemma<LemmaKind::UREM_REF2>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
+// Addition lemmas
 
-template <>
-Node Lemma<LemmaKind::UREM_REF3>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
+LEMMA(ADD_ZERO);
+LEMMA(ADD_SAME);
+LEMMA(ADD_INV);
+LEMMA(ADD_OVFL);
+LEMMA(ADD_NOOVFL);
+LEMMA(ADD_OR);
+LEMMA(ADD_REF1);
+LEMMA(ADD_REF2);
+LEMMA(ADD_REF3);
+LEMMA(ADD_REF4);
+LEMMA(ADD_REF5);
+LEMMA(ADD_REF6);
+LEMMA(ADD_REF7);
+LEMMA(ADD_REF8);
+LEMMA(ADD_REF9);
+LEMMA(ADD_REF10);
+LEMMA(ADD_REF11);
+LEMMA(ADD_REF12);
 
-template <>
-Node Lemma<LemmaKind::UREM_REF4>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
+#undef LEMMA
+#undef LEMMA_VAL
 
-template <>
-Node Lemma<LemmaKind::UREM_REF5>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UREM_REF6>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UREM_REF7>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UREM_REF8>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UREM_REF9>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UREM_REF10>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UREM_REF11>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UREM_REF12>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UREM_REF13>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UREM_REF14>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::UREM_REF11>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_ZERO>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_SAME>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_INV>::instance(const Node& x,
-                                         const Node& s,
-                                         const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_OVFL>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_NOOFVL>::instance(const Node& x,
-                                            const Node& s,
-                                            const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_OR>::instance(const Node& x,
-                                        const Node& s,
-                                        const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF1>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF2>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF3>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF4>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF5>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF6>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF7>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF8>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF9>::instance(const Node& x,
-                                          const Node& s,
-                                          const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF10>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF11>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
-
-template <>
-Node Lemma<LemmaKind::ADD_REF12>::instance(const Node& x,
-                                           const Node& s,
-                                           const Node& t) const;
 }  // namespace bzla::abstract
 
 #endif

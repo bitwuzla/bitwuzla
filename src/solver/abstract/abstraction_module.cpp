@@ -223,7 +223,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
     add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_SAME>());
     add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_INV>());
     add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_OVFL>());
-    add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_NOOFVL>());
+    add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_NOOVFL>());
     add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_OR>());
     if (!opt_initial_lemmas)
     {
