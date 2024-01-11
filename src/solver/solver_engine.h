@@ -72,7 +72,7 @@ class SolverEngine
    *
    * @note: A solver is not allowed to send duplicate lemmas.
    */
-  void lemma(const Node& lemma);
+  bool lemma(const Node& lemma);
 
   /** @return Solver engine backtrack manager. */
   backtrack::BacktrackManager* backtrack_mgr();

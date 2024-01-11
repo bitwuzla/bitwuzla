@@ -30,7 +30,7 @@ class SolverState
   Node value(const Node& term);
 
   /** Add a lemma. */
-  void lemma(const Node& lemma);
+  bool lemma(const Node& lemma);
 
   /** @return Solver engine backtrack manager. */
   backtrack::BacktrackManager* backtrack_mgr();

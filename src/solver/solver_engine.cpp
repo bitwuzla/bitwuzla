@@ -175,7 +175,7 @@ SolverEngine::unsat_core(std::vector<Node>& core) const
   }
 }
 
-void
+bool
 SolverEngine::lemma(const Node& lemma)
 {
   assert(lemma.type().is_bool());
@@ -191,7 +191,9 @@ SolverEngine::lemma(const Node& lemma)
   {
     ++d_stats.num_lemmas;
     d_lemmas.push_back(rewritten);
+    return true;
   }
+  return false;
 }
 
 void

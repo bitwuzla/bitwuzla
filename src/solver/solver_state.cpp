@@ -25,10 +25,10 @@ SolverState::value(const Node& term)
   return d_solver_engine.value(term);
 }
 
-void
+bool
 SolverState::lemma(const Node& lemma)
 {
-  d_solver_engine.lemma(lemma);
+  return d_solver_engine.lemma(lemma);
 }
 
 backtrack::BacktrackManager*
