@@ -167,9 +167,9 @@ SolverEngine::unsat_core(std::vector<Node>& core) const
   {
     for (size_t i = 0, size = core.size(); i < size; ++i)
     {
-      if (d_am->is_processed(core[i]))
+      if (d_am->is_processed_assertion(core[i]))
       {
-        core[i] = d_am->abstracted_term(core[i]);
+        core[i] = d_am->get_original_assertion(core[i]);
       }
     }
   }

@@ -381,22 +381,27 @@ AbstractionModule::process(const Node& assertion, bool is_lemma)
     return it->second;
   }
 
-  return d_abstraction_cache.at(assertion);
+  const auto& processed = d_abstraction_cache.at(assertion);
+  // Map original assertion to processed assertion for unsat cores.
+  if (processed != assertion)
+  {
+    d_abstraction_cache_assertions.emplace(processed, assertion);
+  }
+  return processed;
 }
 
 bool
-AbstractionModule::is_processed(const Node& assertion)
+AbstractionModule::is_processed_assertion(const Node& assertion)
 {
-  auto it = d_abstraction_cache.find(assertion);
-  return it != d_abstraction_cache.end() && it->second != assertion;
+  auto it = d_abstraction_cache_assertions.find(assertion);
+  return it != d_abstraction_cache_assertions.end() && it->second != assertion;
 }
 
 const Node&
-AbstractionModule::abstracted_term(const Node& abstraction)
+AbstractionModule::get_original_assertion(const Node& processed_assertion)
 {
-  assert(is_abstraction(abstraction));
-  auto it = d_abstractions_rev.find(abstraction);
-  assert(it != d_abstractions_rev.end());
+  auto it = d_abstraction_cache_assertions.find(processed_assertion);
+  assert(it != d_abstraction_cache_assertions.end());
   return it->second;
 }
 

@@ -33,10 +33,17 @@ class AbstractionModule
   /** Process assertion to abstract relevant terms. */
   const Node& process(const Node& assertion, bool is_lemma);
 
-  /** @return True if processed assertion contains an abstracted term. */
-  bool is_processed(const Node& assertion);
+  /**
+   * @return True if processed assertion contains an abstracted term. Required
+   * for unsat cores.
+   */
+  bool is_processed_assertion(const Node& assertion);
 
-  const Node& abstracted_term(const Node& abstraction);
+  /**
+   * @return Original assertion without abstracted terms. Required for unsat
+   * cores.
+   */
+  const Node& get_original_assertion(const Node& processed_assertion);
 
  private:
   /** @return Whether this term should be abstracted. */
@@ -91,6 +98,8 @@ class AbstractionModule
   std::unordered_map<Node, Node> d_abstractions_rev;
   /** Cache for process(). */
   std::unordered_map<Node, Node> d_abstraction_cache;
+  /** Assertion cache, used for tracking unsat cores. */
+  std::unordered_map<Node, Node> d_abstraction_cache_assertions;
   /** Stores abstraction UFs based on kind and type. */
   std::unordered_map<node::Kind, std::unordered_map<Type, Node>> d_abstr_ufs;
   /** Stores abstraction consts for assertions. */
