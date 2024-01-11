@@ -97,6 +97,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_NOOVFL_REF29: os << "MUL_NOOVFL_REF29"; break;
     case LemmaKind::MUL_VALUE: os << "MUL_VALUE"; break;
 
+    case LemmaKind::UDIV_POW2: os << "UDIV_POW2"; break;
     case LemmaKind::UDIV_REF1: os << "UDIV_REF1"; break;
     case LemmaKind::UDIV_REF2: os << "UDIV_REF2"; break;
     case LemmaKind::UDIV_REF3: os << "UDIV_REF3"; break;
@@ -137,6 +138,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::UDIV_REF38: os << "UDIV_REF38"; break;
     case LemmaKind::UDIV_VALUE: os << "UDIV_VALUE"; break;
 
+    case LemmaKind::UREM_POW2: os << "UREM_POW2"; break;
     case LemmaKind::UREM_REF1: os << "UREM_REF1"; break;
     case LemmaKind::UREM_REF2: os << "UREM_REF2"; break;
     case LemmaKind::UREM_REF3: os << "UREM_REF3"; break;
@@ -1473,6 +1475,33 @@ Lemma<LemmaKind::MUL_NOOVFL_REF29>::instance(const Node& x,
 
 template <>
 Node
+Lemma<LemmaKind::UDIV_POW2>::instance(const Node& val_x,
+                                      const Node& val_s,
+                                      const Node& val_t,
+                                      const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  (void) val_x;
+  (void) val_t;
+  if (val_s.is_value() && val_s.value<BitVector>().is_power_of_two())
+  {
+    NodeManager& nm      = NodeManager::get();
+    const auto& val_pow2 = val_s.value<BitVector>();
+    Node shift_by        = nm.mk_value(
+        BitVector::from_ui(val_pow2.size(), val_pow2.count_trailing_zeros()));
+    Node eq = nm.mk_node(Kind::EQUAL, {s, val_s});
+    return nm.mk_node(
+        Kind::IMPLIES,
+        {eq,
+         nm.mk_node(Kind::EQUAL,
+                    {t, nm.mk_node(Kind::BV_SHR, {x, shift_by})})});
+  }
+  return Node();
+}
+
+template <>
+Node
 Lemma<LemmaKind::UDIV_REF1>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
@@ -2083,6 +2112,40 @@ Lemma<LemmaKind::UDIV_REF38>::instance(const Node& x,
            Kind::BV_SUB,
            {one,
             nm.mk_node(Kind::BV_SHL, {x, nm.mk_node(Kind::BV_SUB, {x, t})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::UREM_POW2>::instance(const Node& val_x,
+                                      const Node& val_s,
+                                      const Node& val_t,
+                                      const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
+{
+  (void) val_x;
+  (void) val_t;
+  if (val_s.is_value() && val_s.value<BitVector>().is_power_of_two())
+  {
+    NodeManager& nm      = NodeManager::get();
+    const auto& val_pow2 = val_s.value<BitVector>();
+    uint64_t ctz         = val_pow2.count_trailing_zeros();
+    Node shift_by = nm.mk_value(BitVector::from_ui(val_pow2.size(), ctz));
+    Node eq       = nm.mk_node(Kind::EQUAL, {s, val_s});
+    Node rem;
+    if (ctz == 0)
+    {
+      rem = nm.mk_value(BitVector::mk_zero(val_pow2.size()));
+    }
+    else
+    {
+      rem = nm.mk_node(Kind::BV_ZERO_EXTEND,
+                       {nm.mk_node(Kind::BV_EXTRACT, {x}, {ctz - 1, 0})},
+                       {val_pow2.size() - ctz});
+    }
+    return nm.mk_node(Kind::IMPLIES, {eq, nm.mk_node(Kind::EQUAL, {t, rem})});
+  }
+  return Node();
 }
 
 template <>

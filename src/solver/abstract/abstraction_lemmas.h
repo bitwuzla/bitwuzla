@@ -129,6 +129,8 @@ enum class LemmaKind : uint32_t
                      //  (and (bvule x (bvshl 1 bw/2)) (bvule s (bvshl 1 bw/2)))
                      // (distinct x (bvlshr (bvsub (bvlshr x s) #b0001)
                      // #b0001)))
+                     //
+  UDIV_POW2,
 
   UDIV_REF1,  // (=> (= s #b0001) (= t x))
   UDIV_REF2,  // (=> (and (= s x) (distinct s #b0000)) (= t #b0001))
@@ -171,6 +173,8 @@ enum class LemmaKind : uint32_t
   UDIV_REF37,  // (not (bvult (bvsub s #b0001) (bvlshr x t)))
   UDIV_REF38,  // (not (= x (bvsub #b0001 (bvshl x (bvsub x t)))))
   UDIV_VALUE,
+
+  UREM_POW2,
 
   UREM_REF1,  // (=> (distinct s #b0000) (bvule t s))
   UREM_REF2,  // (=> (= x #b0000) (= t #b0000))

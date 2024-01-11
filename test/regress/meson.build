@@ -808,6 +808,8 @@ tests_smt2 = [
   ['rewrite/bv/rw99.btor.smt2', ['-rwl=1']],
   #['solver/declsort0.smt2'], # TODO: disabled due to missing support in fun solver
   #['solver/declsort1.smt2'], # TODO: disabled due to missing support in fun solver
+  ['solver/abstract/bv_udiv_pow2.smt2'],
+  ['solver/abstract/bv_urem_pow2.smt2'],
   ['solver/array/arraycond1.btor.smt2'],
   ['solver/array/arraycond10.btor.smt2'],
   ['solver/array/arraycond11.btor.smt2'],

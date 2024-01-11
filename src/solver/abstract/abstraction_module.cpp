@@ -136,6 +136,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   if (env.options().abstraction_bv_udiv())
   {
     auto& udiv_abstr_lemmas = d_abstr_lemmas[Kind::BV_UDIV];
+    udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_POW2>());
     udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF1>());
     udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF2>());
     udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV_REF3>());
@@ -184,6 +185,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   if (env.options().abstraction_bv_urem())
   {
     auto& urem_abstr_lemmas = d_abstr_lemmas[Kind::BV_UREM];
+    urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_POW2>());
     urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF1>());
     urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF2>());
     urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF3>());
@@ -261,7 +263,8 @@ AbstractionModule::check()
 {
   Log(1);
   Log(1) << "*** check abstractions";
-  // score_lemmas(Kind::BV_MUL);
+  // std::unordered_map<LemmaKind, uint64_t> rm;
+  // score_lemmas(Kind::BV_UREM, 6, rm);
   // rank_lemmas_by_circuit_size();
   // rank_lemmas_by_score();
   util::Timer timer(d_stats.time_check);
