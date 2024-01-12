@@ -56,6 +56,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   if (env.options().abstraction_bv_mul())
   {
     auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
+#if 1
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_POW2>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NEG_POW2>());
     // TODO: check if this is how we want to deal with square
@@ -65,8 +66,10 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ONE>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NEG>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ODD>());
+#endif
     if (!opt_initial_lemmas)
     {
+#if 1
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF1>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF2>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF3>());
@@ -130,6 +133,35 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF28>());
       // mul_abstr_lemmas.emplace_back(new
       // Lemma<LemmaKind::MUL_NOOVFL_REF29>());
+#endif
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF1>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF5>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF6>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF7>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF8>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF9>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF10>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF11>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF12>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF13>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF14>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF15>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF16>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF17>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF18>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF20>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF21>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF22>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF24>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF26>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF28>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF29>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF31>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF34>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF40>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF43>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF47>());
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF49>());
     }
   }
 
@@ -264,9 +296,10 @@ AbstractionModule::check()
   Log(1);
   Log(1) << "*** check abstractions";
   // std::unordered_map<LemmaKind, uint64_t> rm;
-  // score_lemmas(Kind::BV_UREM, 6, rm);
-  // rank_lemmas_by_circuit_size();
-  // rank_lemmas_by_score();
+  // score_lemmas(Kind::BV_MUL, 6, rm);
+  // abort();
+  //  rank_lemmas_by_circuit_size();
+  //  rank_lemmas_by_score();
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
 
