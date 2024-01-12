@@ -699,8 +699,8 @@ mul_noovfl_condition(const Node& val_x,
     Node ub_x       = nm.mk_value(BitVector::mk_one(size).ibvshl(size - clz_x));
     Node ub_s       = nm.mk_value(BitVector::mk_one(size).ibvshl(size - clz_s));
     return nm.mk_node(Kind::AND,
-                      {nm.mk_node(Kind::BV_UGT, {x, ub_x}),
-                       nm.mk_node(Kind::BV_UGT, {s, ub_s})});
+                      {nm.mk_node(Kind::BV_ULT, {x, ub_x}),
+                       nm.mk_node(Kind::BV_ULT, {s, ub_s})});
   }
   return Node();
 }
@@ -718,8 +718,8 @@ mul_ovfl_condition(const Node& val_x,
   if (clz_x + clz_s < size - 1)
   {
     NodeManager& nm = NodeManager::get();
-    Node ub_x       = nm.mk_value(BitVector::mk_one(size).ibvshl(size - clz_x));
-    Node ub_s       = nm.mk_value(BitVector::mk_one(size).ibvshl(size - clz_s));
+    Node ub_x = nm.mk_value(BitVector::mk_one(size).ibvshl(size - clz_x - 1));
+    Node ub_s = nm.mk_value(BitVector::mk_one(size).ibvshl(size - clz_s - 1));
     return nm.mk_node(Kind::AND,
                       {nm.mk_node(Kind::BV_UGT, {x, ub_x}),
                        nm.mk_node(Kind::BV_UGT, {s, ub_s})});

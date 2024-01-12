@@ -56,7 +56,6 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   if (env.options().abstraction_bv_mul())
   {
     auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
-#if 1
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_POW2>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NEG_POW2>());
     // TODO: check if this is how we want to deal with square
@@ -66,10 +65,8 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ONE>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NEG>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ODD>());
-#endif
     if (!opt_initial_lemmas)
     {
-#if 1
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF1>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF2>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF3>());
@@ -92,7 +89,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF2>());
       // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF3>());
       // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF4>());
-      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF5>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF5>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF6>());
       // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF7>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF8>());
@@ -131,9 +128,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       // mul_abstr_lemmas.emplace_back(new
       // Lemma<LemmaKind::MUL_NOOVFL_REF27>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF28>());
-      // mul_abstr_lemmas.emplace_back(new
-      // Lemma<LemmaKind::MUL_NOOVFL_REF29>());
-#endif
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL_REF29>());
       // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF1>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF5>());
       // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF6>());
@@ -160,7 +155,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF34>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF40>());
       // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF43>());
-      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF47>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF47>());
       // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_OVFL_REF49>());
     }
   }
