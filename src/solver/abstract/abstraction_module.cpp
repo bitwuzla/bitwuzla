@@ -323,7 +323,7 @@ AbstractionModule::check()
   }
 
   // Abstraction refinements that are added as "last resort" are only added if
-  // we expaned all violated assertions.
+  // we expanded all violated assertions.
   // This includes:
   //   - value instantiation lemmas
   //   - bit-blasting lemmas
@@ -331,11 +331,13 @@ AbstractionModule::check()
   {
     for (const auto& [node, lemma, lk] : d_lemma_buffer)
     {
-      lemma_no_abstract(lemma, lk);
-      // Increment counter for value instantiations
-      if (is_lemma_kind_value(lk))
+      if (lemma_no_abstract(lemma, lk))
       {
-        ++d_value_insts[node];
+        // Increment counter for value instantiations
+        if (is_lemma_kind_value(lk))
+        {
+          ++d_value_insts[node];
+        }
       }
     }
   }
@@ -529,8 +531,7 @@ AbstractionModule::check_lemma(const AbstractionLemma* lem,
   if (!lemma.is_null())
   {
     Log(2) << lem->kind() << " inconsistent";
-    lemma_no_abstract(lemma, lem->kind());
-    return true;
+    return lemma_no_abstract(lemma, lem->kind());
   }
 
   return false;
@@ -596,7 +597,7 @@ AbstractionModule::check_term_abstraction(const Node& abstr)
     }
   }
 
-  // Inconsistent value, but no abstraction violated, add value-based lemma.
+  // Inconsistent value, but no lemma violated, add value-based lemma.
   if (!added_lemma)
   {
     uint64_t limit = d_opt_value_inst_limit > 0
@@ -808,16 +809,32 @@ AbstractionModule::check_assertion_abstractions()
   return nadded > 0;
 }
 
-void
+bool
 AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
 {
   // Make sure that lemma is rewritten before adding to the cache.
   Node lem = d_rewriter.rewrite(lemma);
   // Cache lemma so that we won't consider it for abstraction.
   d_abstraction_cache.emplace(lem, lem);
-  d_stats.lemmas << lk;
-  d_solver_state.lemma(lem);
-  d_added_lemma = true;
+  if (d_solver_state.lemma(lem))
+  {
+    d_added_lemma = true;
+    d_stats.lemmas << lk;
+    return true;
+  }
+  return false;
+}
+
+bool
+AbstractionModule::lemma_abstract(const Node& lemma, LemmaKind lk)
+{
+  if (d_solver_state.lemma(lemma))
+  {
+    d_added_lemma = true;
+    d_stats.lemmas << lk;
+    return true;
+  }
+  return false;
 }
 
 void
