@@ -1088,6 +1088,83 @@ AbstractionModule::rank_lemmas_by_score()
   abort();
 }
 
+void
+AbstractionModule::print_initial_lemmas() const
+{
+  Node x, s, t;
+
+  NodeManager& nm                = NodeManager::get();
+  Type bv4                       = nm.mk_bv_type(4);
+  x                              = nm.mk_const(bv4, "x");
+  s                              = nm.mk_const(bv4, "s");
+  t                              = nm.mk_const(bv4, "t");
+  std::vector<BitVector> pow2    = {BitVector::from_ui(4, 1),
+                                    BitVector::from_ui(4, 2),
+                                    BitVector::from_ui(4, 4),
+                                    BitVector::from_ui(4, 8)};
+  std::vector<BitVector> negpow2 = {BitVector::from_ui(4, 1).bvneg(),
+                                    BitVector::from_ui(4, 2).bvneg(),
+                                    BitVector::from_ui(4, 4).bvneg()};
+  for (const auto& lemma : d_abstr_lemmas.at(Kind::BV_MUL))
+  {
+    const auto lk = lemma->kind();
+    if (lk == LemmaKind::MUL_REF1)
+    {
+      break;
+    }
+
+    if (lk == LemmaKind::MUL_POW2)
+    {
+      uint64_t i = 1;
+      for (const auto& p2 : pow2)
+      {
+        Node npow2 = nm.mk_value(p2);
+        std::cout
+            << "(define-fun lemma_" << lemma->kind() << "_" << i
+            << " ((x (_ BitVec 4)) (s (_ BitVec 4)) (t (_ BitVec 4))) Bool ";
+        std::cout << lemma->instance(npow2, s, t, x, s, t);
+        std::cout << ")" << std::endl;
+        std::cout
+            << "(define-fun lemma_" << lemma->kind() << "_c" << i++
+            << " ((x (_ BitVec 4)) (s (_ BitVec 4)) (t (_ BitVec 4))) Bool ";
+        std::cout << lemma->instance(npow2, x, t, s, x, t);
+        std::cout << ")" << std::endl;
+      }
+    }
+    else if (lk == LemmaKind::MUL_NEG_POW2)
+    {
+      uint64_t i = 1;
+      for (const auto& p2 : negpow2)
+      {
+        Node npow2 = nm.mk_value(p2);
+        std::cout
+            << "(define-fun lemma_" << lemma->kind() << "_" << i
+            << " ((x (_ BitVec 4)) (s (_ BitVec 4)) (t (_ BitVec 4))) Bool ";
+        std::cout << lemma->instance(npow2, s, t, x, s, t);
+        std::cout << ")" << std::endl;
+        std::cout
+            << "(define-fun lemma_" << lemma->kind() << "_c" << i++
+            << " ((x (_ BitVec 4)) (s (_ BitVec 4)) (t (_ BitVec 4))) Bool ";
+        std::cout << lemma->instance(npow2, x, t, s, x, t);
+        std::cout << ")" << std::endl;
+      }
+    }
+    else
+    {
+      std::cout
+          << "(define-fun lemma_" << lemma->kind()
+          << " ((x (_ BitVec 4)) (s (_ BitVec 4)) (t (_ BitVec 4))) Bool ";
+      std::cout << lemma->instance(x, s, t);
+      std::cout << ")" << std::endl;
+      std::cout
+          << "(define-fun lemma_" << lemma->kind() << "_c"
+          << " ((x (_ BitVec 4)) (s (_ BitVec 4)) (t (_ BitVec 4))) Bool ";
+      std::cout << lemma->instance(s, x, t);
+      std::cout << ")" << std::endl;
+    }
+  }
+}
+
 #ifndef NDEBUG
 void
 AbstractionModule::verify_lemmas() const

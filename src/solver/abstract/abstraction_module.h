@@ -84,6 +84,8 @@ class AbstractionModule
   void rank_lemmas_by_circuit_size();
   void rank_lemmas_by_score();
 
+  void print_initial_lemmas() const;
+
 #ifndef NDEBUG
   void verify_lemmas() const;
 #endif
