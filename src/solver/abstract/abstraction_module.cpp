@@ -15,20 +15,6 @@
 #include "solving_context.h"
 #endif
 
-namespace std {
-
-template <>
-struct hash<std::tuple<uint64_t, uint64_t, uint64_t>>
-{
-  size_t operator()(const std::tuple<uint64_t, uint64_t, uint64_t>& p) const
-  {
-    return 547789289u * std::get<0>(p) + 786695309u * std::get<1>(p)
-           + 7 * std::get<2>(p);
-  }
-};
-
-}  // namespace std
-
 namespace bzla::abstract {
 
 using namespace node;
@@ -850,9 +836,10 @@ AbstractionModule::score_lemmas(
     max *= 2;
   }
   std::vector<Node> values;
-  std::unordered_map<std::pair<uint64_t, uint64_t>, Node> results;
-  std::unordered_map<std::tuple<uint64_t, uint64_t, uint64_t>, bool>
-      results_lemmas;
+  std::vector<std::vector<std::vector<bool>>> results_lemmas(
+      max, std::vector<std::vector<bool>>(max, std::vector<bool>(max, true)));
+  std::vector<std::vector<std::vector<bool>>> results_optimal(
+      max, std::vector<std::vector<bool>>(max, std::vector<bool>(max, false)));
 
   // Create all possible values [0, max[
   for (uint64_t i = 0; i < max; ++i)
@@ -861,13 +848,23 @@ AbstractionModule::score_lemmas(
   }
 
   // Compute all results for kind
+  uint64_t optimal_score = 0;
   for (uint64_t i = 0; i < values.size(); ++i)
   {
     for (uint64_t j = 0; j < values.size(); ++j)
     {
-      auto p = std::make_pair(i, j);
-      results.emplace(
-          p, d_rewriter.rewrite(nm.mk_node(kind, {values[i], values[j]})));
+      for (uint64_t k = 0; k < values.size(); ++k)
+      {
+        Node val = d_rewriter.rewrite(
+            nm.mk_node(Kind::EQUAL,
+                       {values[k], nm.mk_node(kind, {values[i], values[j]})}));
+        assert(val.is_value());
+        results_optimal[i][j][k] = val.value<bool>();
+        if (results_optimal[i][j][k])
+        {
+          ++optimal_score;
+        }
+      }
     }
   }
 
@@ -880,19 +877,15 @@ AbstractionModule::score_lemmas(
   for (const auto& lem : d_abstr_lemmas.at(kind))
   {
     uint64_t score            = 0;
-    uint64_t score_expected   = 0;
     uint64_t prev_final_score = final_score;
     // Compute result for each triplet (x, s, t)
     for (uint64_t i = 0; i < values.size(); ++i)
     {
       for (uint64_t j = 0; j < values.size(); ++j)
       {
-        auto itr = results.find(std::make_pair(i, j));
-        assert(itr != results.end());
-        const Node& expected = itr->second;
+        // const Node& expected = results[i][j];
         for (uint64_t k = 0; k < values.size(); ++k)
         {
-          auto t    = std::make_tuple(i, j, k);
           Node inst = lem->instance(values[i], values[j], values[k]);
           if (inst.is_null())
           {
@@ -909,49 +902,45 @@ AbstractionModule::score_lemmas(
             inst = d_rewriter.rewrite(inst);
             assert(inst.is_value());
             res = inst.value<bool>();
-            if (kind == Kind::BV_MUL)
+          }
+
+          // check commutative case
+          if (kind == Kind::BV_MUL)
+          {
+            Node instc = lem->instance(values[j], values[i], values[k]);
+            if (instc.is_null())
             {
-              Node instc = lem->instance(values[j], values[i], values[k]);
-              if (instc.is_null())
-              {
-                instc = lem->instance(values[j],
-                                      values[i],
-                                      values[k],
-                                      values[j],
-                                      values[i],
-                                      values[k]);
-              }
-              if (!instc.is_null())
-              {
-                instc     = d_rewriter.rewrite(instc);
-                auto resc = instc.value<bool>();
-                res       = res & resc;
-              }
+              instc = lem->instance(values[j],
+                                    values[i],
+                                    values[k],
+                                    values[j],
+                                    values[i],
+                                    values[k]);
+            }
+            if (!instc.is_null())
+            {
+              instc = d_rewriter.rewrite(instc);
+              res   = res & instc.value<bool>();
             }
           }
 
-          auto [it, _] = results_lemmas.emplace(t, true);
+          auto overall_res = results_lemmas[i][j][k];
           // Count cases when lemma is true (including false positives)
           if (res)
           {
             ++score;
-            if (values[k] == expected)
-            {
-              ++score_expected;
-            }
           }
           // Count number of ruled out triplets
-          else if (it->second)
+          else if (overall_res)
           {
             --final_score;
           }
-          it->second &= res;
+          results_lemmas[i][j][k] = overall_res & res;
         }
       }
     }
     rank_map[lem->kind()] = score;
-    assert(score_expected == max * max);
-    int64_t diff = final_score - prev_final_score;
+    int64_t diff          = final_score - prev_final_score;
     std::cout << lem->kind() << ": " << score << "/" << max_score
               << " (final: " << final_score << ", diff: " << diff << ", "
               << static_cast<double>(diff) / max_score * 100 << "%)"
@@ -959,9 +948,11 @@ AbstractionModule::score_lemmas(
   }
   std::cout << "final score:   " << final_score << " "
             << static_cast<double>(final_score) / max_score * 100
-            << "% (wrong results: " << final_score - (max * max) << std::endl;
-  std::cout << "optimal score: " << max * max << " "
-            << static_cast<double>(max * max) / max_score * 100 << std::endl;
+            << "% (wrong results: " << final_score - (max * max) << ")"
+            << std::endl;
+  std::cout << "optimal score: " << optimal_score << " "
+            << static_cast<double>(optimal_score) / max_score * 100 << "%"
+            << std::endl;
 }
 
 void
