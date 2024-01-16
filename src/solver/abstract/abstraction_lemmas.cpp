@@ -65,6 +65,11 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_REF16: os << "MUL_REF16"; break;
     case LemmaKind::MUL_REF17: os << "MUL_REF17"; break;
     case LemmaKind::MUL_REF18: os << "MUL_REF18"; break;
+    case LemmaKind::MUL_NOOVFL1: os << "MUL_NOOVFL1"; break;
+    case LemmaKind::MUL_NOOVFL2: os << "MUL_NOOVFL2"; break;
+    case LemmaKind::MUL_NOOVFL3: os << "MUL_NOOVFL3"; break;
+    case LemmaKind::MUL_NOOVFL4: os << "MUL_NOOVFL4"; break;
+    case LemmaKind::MUL_NOOVFL5: os << "MUL_NOOVFL5"; break;
     case LemmaKind::MUL_NOOVFL_REF1: os << "MUL_NOOVFL_REF1"; break;
     case LemmaKind::MUL_NOOVFL_REF2: os << "MUL_NOOVFL_REF2"; break;
     case LemmaKind::MUL_NOOVFL_REF3: os << "MUL_NOOVFL_REF3"; break;
@@ -95,9 +100,9 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_NOOVFL_REF28: os << "MUL_NOOVFL_REF28"; break;
     case LemmaKind::MUL_NOOVFL_REF29: os << "MUL_NOOVFL_REF29"; break;
     case LemmaKind::MUL_OVFL_REF1: os << "MUL_OVFL_REF1"; break;
-    // case LemmaKind::MUL_OVFL_REF2: os << "MUL_OVFL_REF2"; break;
-    // case LemmaKind::MUL_OVFL_REF3: os << "MUL_OVFL_REF3"; break;
-    // case LemmaKind::MUL_OVFL_REF4: os << "MUL_OVFL_REF4"; break;
+    case LemmaKind::MUL_OVFL_REF2: os << "MUL_OVFL_REF2"; break;
+    case LemmaKind::MUL_OVFL_REF3: os << "MUL_OVFL_REF3"; break;
+    case LemmaKind::MUL_OVFL_REF4: os << "MUL_OVFL_REF4"; break;
     case LemmaKind::MUL_OVFL_REF5: os << "MUL_OVFL_REF5"; break;
     case LemmaKind::MUL_OVFL_REF6: os << "MUL_OVFL_REF6"; break;
     case LemmaKind::MUL_OVFL_REF7: os << "MUL_OVFL_REF7"; break;
@@ -704,6 +709,137 @@ mul_ovfl_condition(const Node& val_x,
   return Node();
 }
 }  // namespace
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL1>::instance(const Node& val_x,
+                                        const Node& val_s,
+                                        const Node& val_t,
+                                        const Node& x,
+                                        const Node& s,
+                                        const Node& t) const
+{
+  (void) val_t;
+  // (=> (noovfl) (bvuge (bvneg x) (bvneg t)))
+  Node noovfl = mul_noovfl_condition(val_x, val_s, x, s);
+  if (noovfl.is_null())
+  {
+    return Node();
+  }
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(Kind::IMPLIES,
+                    {noovfl,
+                     nm.mk_node(Kind::BV_UGE,
+                                {nm.mk_node(Kind::BV_NEG, {x}),
+                                 nm.mk_node(Kind::BV_NEG, {t})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL2>::instance(const Node& val_x,
+                                        const Node& val_s,
+                                        const Node& val_t,
+                                        const Node& x,
+                                        const Node& s,
+                                        const Node& t) const
+{
+  (void) val_t;
+  // (=> (noovfl) (bvuge (bvneg s) (bvand x t)))
+  Node noovfl = mul_noovfl_condition(val_x, val_s, x, s);
+  if (noovfl.is_null())
+  {
+    return Node();
+  }
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(Kind::IMPLIES,
+                    {noovfl,
+                     nm.mk_node(Kind::BV_UGE,
+                                {nm.mk_node(Kind::BV_NEG, {s}),
+                                 nm.mk_node(Kind::BV_AND, {x, t})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL3>::instance(const Node& val_x,
+                                        const Node& val_s,
+                                        const Node& val_t,
+                                        const Node& x,
+                                        const Node& s,
+                                        const Node& t) const
+{
+  (void) val_t;
+  // (=> (noovfl) (bvuge t (bvand x (bvneg s))))
+  Node noovfl = mul_noovfl_condition(val_x, val_s, x, s);
+  if (noovfl.is_null())
+  {
+    return Node();
+  }
+  NodeManager& nm = NodeManager::get();
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {noovfl,
+       nm.mk_node(
+           Kind::BV_UGE,
+           {t, nm.mk_node(Kind::BV_AND, {x, nm.mk_node(Kind::BV_NEG, {s})})})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL4>::instance(const Node& val_x,
+                                        const Node& val_s,
+                                        const Node& val_t,
+                                        const Node& x,
+                                        const Node& s,
+                                        const Node& t) const
+{
+  (void) val_t;
+  (void) t;
+  // (=> (noovfl) (bvuge (bvor #b0001 (bvnot x)) s))
+  Node noovfl = mul_noovfl_condition(val_x, val_s, x, s);
+  if (noovfl.is_null())
+  {
+    return Node();
+  }
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {noovfl,
+       nm.mk_node(
+           Kind::BV_UGE,
+           {nm.mk_node(Kind::BV_OR, {one, nm.mk_node(Kind::BV_NOT, {x})}),
+            s})});
+}
+
+template <>
+Node
+Lemma<LemmaKind::MUL_NOOVFL5>::instance(const Node& val_x,
+                                        const Node& val_s,
+                                        const Node& val_t,
+                                        const Node& x,
+                                        const Node& s,
+                                        const Node& t) const
+{
+  (void) val_t;
+  // (=> (noovfl) (not (= x (bvor s (bvnot (bvor x t))))))
+  Node noovfl = mul_noovfl_condition(val_x, val_s, x, s);
+  if (noovfl.is_null())
+  {
+    return Node();
+  }
+  NodeManager& nm = NodeManager::get();
+  Node one        = nm.mk_value(BitVector::mk_one(x.type().bv_size()));
+  return nm.mk_node(
+      Kind::IMPLIES,
+      {noovfl,
+       nm.mk_node(
+           Kind::DISTINCT,
+           {x,
+            nm.mk_node(Kind::BV_OR,
+                       {s,
+                        nm.mk_node(Kind::BV_NOT,
+                                   {nm.mk_node(Kind::BV_OR, {x, t})})})})});
+}
 
 template <>
 Node

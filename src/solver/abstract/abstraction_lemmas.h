@@ -9,11 +9,11 @@ namespace bzla::abstract {
 
 enum class LemmaKind : uint32_t
 {
-  MUL_ZERO,    // (=> (= s #b0000) (= t #b0000))
-  MUL_ONE,     // (=> (= s #b0001) (= t x))
-  MUL_IC,      // (= (bvand (bvor (bvneg s) s) t) t),
-  MUL_NEG,     // (=> (= s (bvnot #b0000)) (= t (bvneg x)))
-  MUL_ODD,     // (= t (bvor t (bvand x (bvand s #b0001))))
+  MUL_ZERO,  // (=> (= s #b0000) (= t #b0000))
+  MUL_ONE,   // (=> (= s #b0001) (= t x))
+  MUL_IC,    // (= (bvand (bvor (bvneg s) s) t) t),
+  MUL_NEG,   // (=> (= s (bvnot #b0000)) (= t (bvneg x)))
+  MUL_ODD,   // (= t (bvor t (bvand x (bvand s #b0001))))
   MUL_POW2,
   MUL_NEG_POW2,
 
@@ -36,6 +36,15 @@ enum class LemmaKind : uint32_t
   MUL_REF17,  // (not (= x (bvadd #b0001 (bvshl x (bvsub s t)))))
   MUL_REF18,  // (not (= x (bvsub #b0001 (bvshl x (bvsub s t)))))
   MUL_VALUE,
+
+  // commutative: (=> (noovfl) (bvuge (bvneg s) (bvneg t)))
+  // commutative: (=> (noovfl) (bvuge t (bvand s (bvneg x))))
+  // commutative: (=> (noovfl) (bvuge (bvneg x) (bvand s t)))
+  MUL_NOOVFL1,  // (=> (noovfl) (bvuge (bvneg x) (bvneg t)))
+  MUL_NOOVFL2,  // (=> (noovfl) (bvuge (bvneg s) (bvand x t)))
+  MUL_NOOVFL3,  // (=> (noovfl) (bvuge t (bvand x (bvneg s))))
+  MUL_NOOVFL4,  // (=> (noovfl) (bvuge (bvor #b0001 (bvnot x)) s))
+  MUL_NOOVFL5,  // (=> (noovfl) (not (= x (bvor s (bvnot (bvor x t))))))
 
   MUL_NOOVFL_REF1,   // (=> (noovfl_condition)
                      //  (not (bvult (bvneg x) (bvor (bvneg t) (bvand x s))))
@@ -286,7 +295,8 @@ enum class LemmaKind : uint32_t
   BITBLAST_FULL,
   BITBLAST_INC,
   BITBLAST_BV_MUL,
-  BITBLAST_BV_MUL_SQUARE,  // (=> (= x s) (= t (bvmul x x))), uses special encoding
+  BITBLAST_BV_MUL_SQUARE,  // (=> (= x s) (= t (bvmul x x))), uses special
+                           // encoding
   BITBLAST_BV_UDIV,
   BITBLAST_BV_UREM,
   ITE_EXPAND,
@@ -424,7 +434,7 @@ LEMMA_VAL(MUL_NOOVFL_REF26);
 LEMMA_VAL(MUL_NOOVFL_REF27);
 LEMMA_VAL(MUL_NOOVFL_REF28);
 LEMMA_VAL(MUL_NOOVFL_REF29);
-LEMMA(MUL_OVFL_REF1);
+LEMMA_VAL(MUL_OVFL_REF1);
 // LEMMA_VAL(MUL_OVFL_REF2);
 // LEMMA_VAL(MUL_OVFL_REF3);
 // LEMMA_VAL(MUL_OVFL_REF4);
