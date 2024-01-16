@@ -44,12 +44,10 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
     auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_POW2>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NEG_POW2>());
-    // TODO: check if this is how we want to deal with square
-    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_SQUARE>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_IC>());
-    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ZERO>());
-    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ONE>());
-    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NEG>());
+    //mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ZERO>());
+    //mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ONE>());
+    //mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NEG>());
     mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_ODD>());
     if (!opt_initial_lemmas)
     {
@@ -602,6 +600,10 @@ AbstractionModule::check_term_abstraction(const Node& abstr)
                                  }),
                       nm.mk_node(Kind::EQUAL, {t, val_expected})});
       d_lemma_buffer.emplace_back(node, lemma, lk);
+      if (kind == Kind::BV_MUL && val_x == val_s)
+      {
+        ++d_value_insts_square[node];
+      }
     }
     else if (kind == Kind::EQUAL)
     {
@@ -669,7 +671,11 @@ AbstractionModule::check_term_abstraction(const Node& abstr)
                                   upper + 1 == size ? LemmaKind::BITBLAST_FULL
                                                     : LemmaKind::BITBLAST_INC);
     }
-    else if (kind == Kind::BV_MUL && val_x == val_s)
+    // Use special square encoding for BV_MUL if value instantiations were all
+    // square instantiations.
+    else if (kind == Kind::BV_MUL
+             && d_value_insts_square[node] > 0
+             && d_value_insts_square[node] >= d_value_insts[node])
     {
       d_lemma_buffer.emplace_back(
           node,
@@ -677,7 +683,8 @@ AbstractionModule::check_term_abstraction(const Node& abstr)
               Kind::IMPLIES,
               {nm.mk_node(Kind::EQUAL, {x, s}),
                nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_MUL, {x, x})})}),
-          LemmaKind::MUL_SQUARE);
+          LemmaKind::BITBLAST_BV_MUL_SQUARE);
+      d_value_insts_square[node] = 0;  // Reset, next time we fully bit-blast
     }
     else
     {
@@ -980,7 +987,7 @@ AbstractionModule::rank_lemmas_by_circuit_size()
         if (inst.is_null())
         {
           // Conditional on x == s, hence manual computation needed
-          if (lem->kind() == LemmaKind::MUL_SQUARE)
+          if (lem->kind() == LemmaKind::BITBLAST_BV_MUL_SQUARE)
           {
             inst =
                 nm.mk_node(Kind::IMPLIES,

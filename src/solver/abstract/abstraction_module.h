@@ -115,6 +115,8 @@ class AbstractionModule
       d_abstr_lemmas;
   /** Maps the number of value instantiations per abstracted term. */
   std::unordered_map<Node, uint64_t> d_value_insts;
+  /** Number of times a value instantiation was a square multiplication. */
+  std::unordered_map<Node, uint64_t> d_value_insts_square;
   /** Abstracted assertions. */
   backtrack::vector<Node> d_assertion_abstractions;
   /** Stores refined assertions. */

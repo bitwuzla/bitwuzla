@@ -14,7 +14,6 @@ enum class LemmaKind : uint32_t
   MUL_IC,      // (= (bvand (bvor (bvneg s) s) t) t),
   MUL_NEG,     // (=> (= s (bvnot #b0000)) (= t (bvneg x)))
   MUL_ODD,     // (= t (bvor t (bvand x (bvand s #b0001))))
-  MUL_SQUARE,  // (=> (= x s) (= t (bvmul x x))), uses special encoding
   MUL_POW2,
   MUL_NEG_POW2,
 
@@ -287,6 +286,7 @@ enum class LemmaKind : uint32_t
   BITBLAST_FULL,
   BITBLAST_INC,
   BITBLAST_BV_MUL,
+  BITBLAST_BV_MUL_SQUARE,  // (=> (= x s) (= t (bvmul x x))), uses special encoding
   BITBLAST_BV_UDIV,
   BITBLAST_BV_UREM,
   ITE_EXPAND,
@@ -375,7 +375,6 @@ LEMMA(MUL_ONE);
 LEMMA(MUL_IC);
 LEMMA(MUL_NEG);
 LEMMA(MUL_ODD);
-LEMMA_VAL(MUL_SQUARE);
 LEMMA_VAL(MUL_POW2);
 LEMMA_VAL(MUL_NEG_POW2);
 LEMMA(MUL_REF1);

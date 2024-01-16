@@ -45,7 +45,6 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::MUL_IC: os << "MUL_IC"; break;
     case LemmaKind::MUL_NEG: os << "MUL_NEG"; break;
     case LemmaKind::MUL_ODD: os << "MUL_ODD"; break;
-    case LemmaKind::MUL_SQUARE: os << "MUL_SQUARE"; break;
     case LemmaKind::MUL_POW2: os << "MUL_POW2"; break;
     case LemmaKind::MUL_NEG_POW2: os << "MUL_NEG_POW2"; break;
     case LemmaKind::MUL_REF1: os << "MUL_REF1"; break;
@@ -227,6 +226,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::BITBLAST_FULL: os << "BITBLAST_FULL"; break;
     case LemmaKind::BITBLAST_INC: os << "BITBLAST_INC"; break;
     case LemmaKind::BITBLAST_BV_MUL: os << "BITBLAST_BV_MUL"; break;
+    case LemmaKind::BITBLAST_BV_MUL_SQUARE: os << "BITBLAST_BV_MUL_SQUARE"; break;
     case LemmaKind::BITBLAST_BV_UDIV: os << "BITBLAST_BV_UDIV"; break;
     case LemmaKind::BITBLAST_BV_UREM: os << "BITBLAST_BV_UREM"; break;
     case LemmaKind::ITE_EXPAND: os << "ITE_EXPAND"; break;
@@ -308,29 +308,6 @@ Lemma<LemmaKind::MUL_ODD>::instance(const Node& x,
                                     nm.mk_node(Kind::BV_EXTRACT, {x}, {0, 0}),
                                     nm.mk_node(Kind::BV_EXTRACT, {s}, {0, 0}),
                                 })});
-}
-
-template <>
-Node
-Lemma<LemmaKind::MUL_SQUARE>::instance(const Node& val_x,
-                                       const Node& val_s,
-                                       const Node& val_t,
-                                       const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
-{
-  (void) val_x;
-  (void) val_s;
-  (void) val_t;
-  NodeManager& nm = NodeManager::get();
-  if (x == s)
-  {
-    return nm.mk_node(
-        Kind::IMPLIES,
-        {nm.mk_node(Kind::EQUAL, {x, s}),
-         nm.mk_node(Kind::EQUAL, {t, nm.mk_node(Kind::BV_MUL, {x, x})})});
-  }
-  return Node();
 }
 
 template <>
