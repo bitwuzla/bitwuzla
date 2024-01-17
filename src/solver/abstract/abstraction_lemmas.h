@@ -17,9 +17,23 @@ enum class LemmaKind : uint32_t
   MUL_POW2,
   MUL_NEG_POW2,
 
-  MUL_REF1,   // (not (= s (bvnot (bvor t (bvand #b0001 (bvor x s))))))
+  MUL_REF1,    // (not (= s (bvnot (bvor t (bvand #b0001 (bvor x s))))))
+  MUL_REF3,    // (not (= (bvand x t) (bvor s (bvnot t))))
+  MUL_REFN3,   // (not (= t (bvshl (bvor s #b0001) (bvshl t x))))
+  MUL_REFN4,   // (= s (bvshl s (bvand x (bvlshr #b0001 t))))
+  MUL_REFN5,   // (bvuge t (bvand #b0001 (bvlshr (bvand x s) #b0001)))
+  MUL_REFN6,   // (not (= x (bvxor #b0001 (bvshl x (bvxor s t)))))
+  MUL_REF14,   // (not (= t (bvor #b0001 (bvnot (bvxor x s)))))
+  MUL_REF15,   // (not (= t (bvor (bvnot #b0001) (bvxor x s))))
+  MUL_REFN9,   // (not (= x (bvsub (bvshl x (bvadd s t)) #b0001)))
+  MUL_REF18,   // (not (= x (bvsub #b0001 (bvshl x (bvsub s t)))))
+  MUL_REFN11,  // (not (= s (bvadd #b0001 (bvshl s (bvsub t x)))))
+  MUL_REFN12,  // (not (= s (bvsub #b0001 (bvshl s (bvsub t x)))))
+  MUL_REFN13,  // (not (= s (bvadd #b0001 (bvshl s (bvsub x t)))))
+  MUL_REF13,   // (not (= t (bvor #b0001 (bvadd x s))))
+  MUL_REF12,   // (not (= x (bvnot (bvshl x (bvadd s t)))))
+
   MUL_REF2,   // (bvuge s (bvand t (bvneg (bvor t (bvnot x)))))
-  MUL_REF3,   // (not (= (bvand x t) (bvor s (bvnot t))))
   MUL_REF4,   // (not (= #b0001 (bvnot (bvand x (bvand s t)))))
   MUL_REF5,   // (not (= t (bvnot (bvor t (bvor #b0001 (bvand x s))))))
   MUL_REF6,   // (bvuge s (bvshl (bvlshr t x) #b0001))
@@ -28,13 +42,8 @@ enum class LemmaKind : uint32_t
   MUL_REF9,   // (bvuge x (bvshl x (bvnot (bvlshr s t))))
   MUL_REF10,  // (bvuge x (bvlshr t (bvnot (bvneg s))))
   MUL_REF11,  // (not (= x (bvshl #b0001 (bvshl x (bvlshr s t)))))
-  MUL_REF12,  // (not (= x (bvnot (bvshl x (bvadd s t)))))
-  MUL_REF13,  // (not (= t (bvor #b0001 (bvadd x s))))
-  MUL_REF14,  // (not (= t (bvor #b0001 (bvnot (bvxor x s)))))
-  MUL_REF15,  // (not (= t (bvor (bvnot #b0001) (bvxor x s))))
   MUL_REF16,  // (not (= x (bvadd #b0001 (bvshl x (bvsub t s)))))
   MUL_REF17,  // (not (= x (bvadd #b0001 (bvshl x (bvsub s t)))))
-  MUL_REF18,  // (not (= x (bvsub #b0001 (bvshl x (bvsub s t)))))
   MUL_VALUE,
 
   // commutative: (=> (noovfl) (bvuge (bvneg s) (bvneg t)))

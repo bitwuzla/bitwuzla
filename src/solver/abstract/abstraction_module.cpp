@@ -52,6 +52,25 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
     if (!opt_initial_lemmas)
     {
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF1>());
+      // score at 4 bit = 0, >4: >0
+      // mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF2>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF3>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REFN3>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REFN4>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REFN5>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REFN6>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF14>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF15>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REFN9>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF18>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REFN11>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REFN12>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REFN13>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF13>());
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF12>());
+
+#if 0
+      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF1>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF2>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF3>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF4>());
@@ -69,6 +88,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF16>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF17>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_REF18>());
+#endif
 #if 0
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL1>());
       mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL_NOOVFL2>());
@@ -284,10 +304,10 @@ AbstractionModule::check()
   Log(1);
   Log(1) << "*** check abstractions";
   // std::unordered_map<LemmaKind, uint64_t> rm;
-  // score_lemmas(Kind::BV_MUL, 7, rm);
+  // score_lemmas(Kind::BV_MUL, 4, rm);
   // return;
-  // rank_lemmas_by_circuit_size();
-  // rank_lemmas_by_score();
+  //   rank_lemmas_by_circuit_size();
+  //   rank_lemmas_by_score();
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
 
