@@ -360,6 +360,7 @@ ArraySolver::check_equality(const Node& eq)
     // Check store terms under equality
     unordered_node_ref_set cache;
     node_ref_vector visit{eq[0], eq[1]};
+    node_ref_vector const_arrays, base_arrays;
     do
     {
       const Node& cur = visit.back();
@@ -385,10 +386,36 @@ ArraySolver::check_equality(const Node& eq)
         }
         else if (cur.kind() == Kind::CONST_ARRAY)
         {
-          check_access(cur);
+          const_arrays.push_back(cur);
+        }
+        else if (cur.kind() == Kind::CONSTANT)
+        {
+          base_arrays.push_back(cur);
         }
       }
     } while (!visit.empty());
+    // Special case: we can handle positive equality over two constant arrays
+    // that have the same value (no lemma required).
+    if (!const_arrays.empty())
+    {
+      assert(const_arrays.size() <= 2);
+      assert(base_arrays.size() <= 1);
+      if (const_arrays.size() == 2)
+      {
+        assert(base_arrays.empty());
+        const Node& ca0 = const_arrays[0];
+        const Node& ca1 = const_arrays[1];
+        if (d_solver_state.value(ca0[0]) != d_solver_state.value(ca1[0]))
+        {
+          check_access(ca0);
+          check_access(ca1);
+        }
+      }
+      else if (!base_arrays.empty())
+      {
+        check_access(const_arrays[0]);
+      }
+    }
   }
   else
   {
