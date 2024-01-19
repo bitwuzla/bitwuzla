@@ -383,6 +383,7 @@ ArraySolver::check_equality(const Node& eq)
         {
           assert(cur.type().is_array());
           check_access(cur);
+          base_arrays.push_back(cur);
         }
         else if (cur.kind() == Kind::CONST_ARRAY)
         {
