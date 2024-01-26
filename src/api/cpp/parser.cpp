@@ -19,54 +19,37 @@ namespace bitwuzla::parser {
 
 /* -------------------------------------------------------------------------- */
 
-Parser::Parser(Options &options,
-               const std::string &infile_name,
-               const std::string &language,
-               std::ostream *out)
+Parser::Parser(Options &options, const std::string &language, std::ostream *out)
 {
-  BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
   BITWUZLA_CHECK(language == "smt2" || language == "btor2")
       << "invalid input language, expected 'smt2' or 'btor2'";
   BITWUZLA_CHECK_NOT_NULL(out);
   if (language == "smt2")
   {
-    d_parser.reset(new bzla::parser::smt2::Parser(options, infile_name, out));
+    d_parser.reset(new bzla::parser::smt2::Parser(options, out));
   }
   else
   {
-    d_parser.reset(new bzla::parser::btor2::Parser(options, infile_name, out));
-  }
-  BITWUZLA_CHECK(d_parser->error_msg().empty()) << d_parser->error_msg();
-}
-
-Parser::Parser(Options &options,
-               const std::string &infile_name,
-               FILE *infile,
-               const std::string &language,
-               std::ostream *out)
-{
-  BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
-  BITWUZLA_CHECK(language == "smt2" || language == "btor2")
-      << "invalid input language, expected 'smt2' or 'btor2'";
-  BITWUZLA_CHECK_NOT_NULL(out);
-  if (language == "smt2")
-  {
-    d_parser.reset(
-        new bzla::parser::smt2::Parser(options, infile_name, infile, out));
-  }
-  else
-  {
-    d_parser.reset(
-        new bzla::parser::btor2::Parser(options, infile_name, infile, out));
+    d_parser.reset(new bzla::parser::btor2::Parser(options, out));
   }
   BITWUZLA_CHECK(d_parser->error_msg().empty()) << d_parser->error_msg();
 }
 
 std::string
-Parser::parse(bool parse_only)
+Parser::parse(const std::string &infile_name, bool parse_only)
 {
+  BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
   assert(d_parser);
-  return d_parser->parse(parse_only);
+  return d_parser->parse(infile_name, parse_only);
+}
+
+std::string
+Parser::parse(const std::string &infile_name, FILE *infile, bool parse_only)
+{
+  BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
+  BITWUZLA_CHECK_NOT_NULL(infile);
+  assert(d_parser);
+  return d_parser->parse(infile_name, infile, parse_only);
 }
 
 std::shared_ptr<bitwuzla::Bitwuzla>

@@ -59,7 +59,8 @@ TEST_F(TestSmt2Lexer, comments)
         << std::endl
         << "foobar";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::SYMBOL, "foobar");
 }
 
@@ -68,7 +69,8 @@ TEST_F(TestSmt2Lexer, command1)
   std::stringstream input;
   input << "(declare-fun a () (_ BitVec 1))";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "declare-fun");
   next_token(lexer, Token::SYMBOL, "a");
@@ -88,7 +90,8 @@ TEST_F(TestSmt2Lexer, command2)
   std::stringstream input;
   input << "(assert (bvsle a b))";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "assert");
   next_token(lexer, Token::LPAR);
@@ -105,7 +108,8 @@ TEST_F(TestSmt2Lexer, command3)
   std::stringstream input;
   input << "(assert (= e (fp #b0 #b011 #b0000)))";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "assert");
   next_token(lexer, Token::LPAR);
@@ -133,7 +137,8 @@ TEST_F(TestSmt2Lexer, command4)
         << "(foo.bar@gmail.com)." << std::endl
         << "|)";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "set-info");
   next_token(lexer, Token::ATTRIBUTE, ":source");
@@ -150,7 +155,8 @@ TEST_F(TestSmt2Lexer, command5)
   std::stringstream input;
   input << "(get-value (((_ to_fp 5 11) RTP (/ 1.2 5)))";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "get-value");
   next_token(lexer, Token::LPAR);
@@ -186,7 +192,8 @@ TEST_F(TestSmt2Lexer, input1)
         << ")" << std::endl
         << "(check-sat)" << std::endl;
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "set-info");
   next_token(lexer, Token::ATTRIBUTE, ":status");
@@ -248,7 +255,8 @@ TEST_F(TestSmt2Lexer, input2)
   input << "(declare-fun ~ () Float64)" << std::endl
         << "(assert (= x (fp.add c ~ (fp (_ bv0 1) (_ bv0 11) (_ bv0 52)))))";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "declare-fun");
   next_token(lexer, Token::SYMBOL, "~");

@@ -2944,25 +2944,20 @@ TEST_F(TestCApi, parser)
 
   FILE *infile             = fopen(filename, "r");
   BitwuzlaOptions *options = bitwuzla_options_new();
-  ASSERT_DEATH(
-      bitwuzla_parser_new(nullptr, filename, infile, "smt2", 2, "<stdout>"),
-      d_error_not_null);
-  ASSERT_DEATH(
-      bitwuzla_parser_new(options, nullptr, infile, "smt2", 2, "<stdout>"),
-      d_error_not_null);
-  ASSERT_DEATH(
-      bitwuzla_parser_new(options, filename, nullptr, "smt2", 2, "<stdout>"),
-      d_error_not_null);
-  ASSERT_DEATH(
-      bitwuzla_parser_new(options, filename, infile, nullptr, 2, "<stdout>"),
-      d_error_not_null);
-  ASSERT_DEATH(
-      bitwuzla_parser_new(options, filename, infile, "smt2", 12, "<stdout>"),
-      "invalid bit-vector output number format");
-  BitwuzlaParser *parser =
-      bitwuzla_parser_new(options, filename, infile, "smt2", 2, "<stdout>");
-  ASSERT_DEATH(bitwuzla_parser_parse(nullptr, true), d_error_not_null);
-  const char *err = bitwuzla_parser_parse(parser, true);
+  ASSERT_DEATH(bitwuzla_parser_new(nullptr, "smt2", 2, "<stdout>"),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parser_new(options, nullptr, 2, "<stdout>"),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parser_new(options, "smt2", 12, "<stdout>"),
+               "invalid bit-vector output number format");
+  BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 2, "<stdout>");
+  ASSERT_DEATH(bitwuzla_parser_parse(nullptr, filename, infile, true),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parser_parse(parser, nullptr, infile, true),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parser_parse(parser, filename, nullptr, true),
+               d_error_not_null);
+  const char *err = bitwuzla_parser_parse(parser, filename, infile, true);
   ASSERT_EQ(err, nullptr);
   bitwuzla_options_delete(options);
   bitwuzla_parser_delete(parser);
@@ -2980,9 +2975,8 @@ TEST_F(TestCApi, parser2)
 
   FILE *infile             = fopen(filename, "r");
   BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser =
-      bitwuzla_parser_new(options, filename, infile, "smt2", 10, "<stdout>");
-  const char *err_msg = bitwuzla_parser_parse(parser, true);
+  BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
+  const char *err_msg = bitwuzla_parser_parse(parser, filename, infile, true);
   ASSERT_NE(std::string(err_msg).find("undefined symbol 'x'"),
             std::string::npos);
   bitwuzla_parser_delete(parser);

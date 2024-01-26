@@ -140,7 +140,7 @@ class Lexer
    * Constructor.
    * @param infile The input file.
    */
-  Lexer(FILE* infile);
+  Lexer() { d_buffer = std::vector<char>(d_buf_size, 0); }
   /** @return The next token. */
   Token next_token();
   /**
@@ -167,6 +167,18 @@ class Lexer
    *         current one).
    */
   const Coordinate& last_coo() const { return d_last_coo; }
+
+  /**
+   * Initialize lexer to read from given input file.
+   * @param infile The input file.
+   */
+  void init(FILE* infile);
+
+  /**
+   * Configure read buffer.
+   * @param buf_size The size of the buffer.
+   */
+  void configure_buffer(size_t buf_size = 1024);
 
   /** The size of the chunks to be read into the input file buffer d_buffer. */
   size_t d_buf_size = 1024;

@@ -3205,13 +3205,23 @@ TEST_F(TestApi, parser)
   smt2 << "(exit)\n" << std::flush;
   bitwuzla::Options options;
 
-  ASSERT_THROW(bitwuzla::parser::Parser(options, ""), bitwuzla::Exception);
-  ASSERT_THROW(bitwuzla::parser::Parser(options, "parsex.smt2"),
+  ASSERT_THROW(bitwuzla::parser::Parser(options, "foo"), bitwuzla::Exception);
+  ASSERT_THROW(bitwuzla::parser::Parser(options, "smt2", nullptr),
                bitwuzla::Exception);
 
-  bitwuzla::parser::Parser parser(options, filename);
-  std::string err = parser.parse(true);
-  ASSERT_TRUE(err.empty());
+  {
+    bitwuzla::parser::Parser parser(options);
+    ASSERT_THROW(parser.parse("parsex.smt2"), bitwuzla::Exception);
+  }
+  {
+    bitwuzla::parser::Parser parser(options);
+    ASSERT_THROW(parser.parse(filename, nullptr), bitwuzla::Exception);
+  }
+  {
+    bitwuzla::parser::Parser parser(options);
+    std::string err = parser.parse(filename, true);
+    ASSERT_TRUE(err.empty());
+  }
   std::remove(filename);
 }
 

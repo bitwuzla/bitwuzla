@@ -27,8 +27,6 @@ typedef struct BitwuzlaParser BitwuzlaParser;
  *
  * @note The parser creates and owns the associated Bitwuzla instance.
  * @param options The associated options.
- * @param infile_name  The name of the input file.
- * @param infile       The input file.
  * @param language     The format of the input file.
  * @param base         The base of the string representation of bit-vector
  *                     values; `2` for binary, `10` for decimal, and `16` for
@@ -42,8 +40,6 @@ typedef struct BitwuzlaParser BitwuzlaParser;
  *   * `bitwuzla_parser_delete`
  */
 BitwuzlaParser* bitwuzla_parser_new(BitwuzlaOptions* options,
-                                    const char* infile_name,
-                                    FILE* infile,
                                     const char* language,
                                     uint8_t base,
                                     const char* outfile_name);
@@ -64,10 +60,15 @@ void bitwuzla_parser_delete(BitwuzlaParser* parser);
  * Parser input file.
  *
  * @param parser The Bitwuzla parser instance to delete.
+ * @param infile_name  The name of the input file.
+ * @param infile       The input file.
  * @param parse_only True to only parse without executing check-sat calls.
  * @return The error message in case of an error, else NULL.
  */
-const char* bitwuzla_parser_parse(BitwuzlaParser* parser, bool parse_only);
+const char* bitwuzla_parser_parse(BitwuzlaParser* parser,
+                                  const char* infile_name,
+                                  FILE* infile,
+                                  bool parse_only);
 
 /**
  * Get the associated Bitwuzla instance.

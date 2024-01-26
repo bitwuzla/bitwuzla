@@ -29,73 +29,39 @@ class Parser
    * Constructor.
    * @param options     The associated Bitwuzla options. Parser creates
    *                    Bitwuzla instance from these options.
-   * @param infile_name The name of the input file. If name is <stdin>, the
-   *                    parser reads from stdin.
    * @param out         The output stream.
    */
-  Parser(bitwuzla::Options& options,
-         const std::string& infile_name,
-         std::ostream* out = &std::cout)
+  Parser(bitwuzla::Options& options, std::ostream* out = &std::cout)
       : d_options_orig(options),
         d_options(options),
-        d_infile_name(infile_name),
         d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
         d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
         d_logger(d_log_level, d_verbosity),
         d_out(out)
   {
-    if (infile_name == "<stdin>")
-    {
-      d_infile = stdin;
-    }
-    else
-    {
-      d_infile             = std::fopen(infile_name.c_str(), "r");
-      d_infile_needs_close = true;
-    }
-    if (!d_infile)
-    {
-      d_error = "failed to open '" + d_infile_name + "'";
-    }
   }
-  /**
-   * Constructor.
-   * @param options     The associated Bitwuzla options. Parser creates
-   *                    Bitwuzla instance from these options.
-   * @param infile_name The name of the input file.
-   * @param infile      The input file.
-   * @param out         The output stream.
-   */
-  Parser(bitwuzla::Options& options,
-         const std::string& infile_name,
-         FILE* infile,
-         std::ostream* out = &std::cout)
-      : d_options_orig(options),
-        d_options(options),
-        d_infile_name(infile_name),
-        d_infile(infile),
-        d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
-        d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
-        d_logger(d_log_level, d_verbosity),
-        d_out(out)
-  {
-    BITWUZLA_CHECK(infile != nullptr) << "expected non-null input file";
-  }
+
   /** Destructor. */
-  virtual ~Parser()
-  {
-    if (d_infile_needs_close && d_infile)
-    {
-      fclose(d_infile);
-    }
-  }
+  virtual ~Parser() {}
 
   /**
    * Parse input file.
-   * @param parse_only True to only parse without executing check-sat calls.
+   * @param infile_name The name of the input file.
+   * @param parse_only  True to only parse without executing check-sat calls.
    * @return The error message, empty if no error.
    */
-  virtual std::string parse(bool parse_only) = 0;
+  virtual std::string parse(const std::string& infile_name,
+                            bool parse_only) = 0;
+  /**
+   * Parse input file.
+   * @param infile_name The name of the input file.
+   * @param infile      The input file.
+   * @param parse_only  True to only parse without executing check-sat calls.
+   * @return The error message, empty if no error.
+   */
+  virtual std::string parse(const std::string& infile_name,
+                            FILE* infile,
+                            bool parse_only) = 0;
 
   /** Configure Bitwuzla terminator.
    * @param terminator The terminator to configure as terminator for Bitwuzla.
@@ -147,8 +113,6 @@ class Parser
   std::string d_infile_name;
   /** The input file. */
   FILE* d_infile = nullptr;
-  /** True if we need the input file on destruction. */
-  bool d_infile_needs_close = false;
 
   /** The log level. */
   uint64_t d_log_level;

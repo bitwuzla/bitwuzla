@@ -23,8 +23,6 @@ extern "C" {
 struct BitwuzlaParser
 {
   BitwuzlaParser(BitwuzlaOptions* options,
-                 const char* infile_name,
-                 FILE* infile,
                  const char* language,
                  uint8_t base,
                  const char* outfile_name)
@@ -37,8 +35,8 @@ struct BitwuzlaParser
       out = &outfile;
     }
     (*out) << bitwuzla::set_bv_format(base);
-    d_parser.reset(new bitwuzla::parser::Parser(
-        options->d_options, infile_name, infile, language, out));
+    d_parser.reset(
+        new bitwuzla::parser::Parser(options->d_options, language, out));
   }
   /** The associated bitwuzla instance. */
   std::unique_ptr<bitwuzla::parser::Parser> d_parser;
@@ -50,8 +48,6 @@ struct BitwuzlaParser
 
 BitwuzlaParser*
 bitwuzla_parser_new(BitwuzlaOptions* options,
-                    const char* infile_name,
-                    FILE* infile,
                     const char* language,
                     uint8_t base,
                     const char* outfile_name)
@@ -59,12 +55,9 @@ bitwuzla_parser_new(BitwuzlaOptions* options,
   BitwuzlaParser* res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
-  BITWUZLA_CHECK_NOT_NULL(infile_name);
-  BITWUZLA_CHECK_NOT_NULL(infile);
   BITWUZLA_CHECK_NOT_NULL(language);
   BITWUZLA_CHECK_NOT_NULL(outfile_name);
-  res = new BitwuzlaParser(
-      options, infile_name, infile, language, base, outfile_name);
+  res = new BitwuzlaParser(options, language, base, outfile_name);
   BITWUZLA_TRY_CATCH_END;
   return res;
 }
@@ -79,12 +72,18 @@ bitwuzla_parser_delete(BitwuzlaParser* parser)
 }
 
 const char*
-bitwuzla_parser_parse(BitwuzlaParser* parser, bool parse_only)
+bitwuzla_parser_parse(BitwuzlaParser* parser,
+                      const char* infile_name,
+                      FILE* infile,
+                      bool parse_only)
 {
   const char* res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
-  parser->d_error_msg = parser->d_parser->parse(parse_only);
+  BITWUZLA_CHECK_NOT_NULL(infile_name);
+  BITWUZLA_CHECK_NOT_NULL(infile);
+  parser->d_error_msg =
+      parser->d_parser->parse(infile_name, infile, parse_only);
   if (!parser->d_error_msg.empty())
   {
     res = parser->d_error_msg.c_str();

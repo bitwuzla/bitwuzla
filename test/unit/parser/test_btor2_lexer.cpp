@@ -60,7 +60,8 @@ TEST_F(TestBtor2Lexer, comments)
         << std::endl
         << "foobar";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::SYMBOL, "foobar");
 }
 
@@ -69,7 +70,8 @@ TEST_F(TestBtor2Lexer, sort)
   std::stringstream input;
   input << "1 sort bitvec 32";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::NUMBER, "1");
   next_token(lexer, Token::SORT, "sort");
   next_token(lexer, Token::BITVEC, "bitvec");
@@ -82,7 +84,8 @@ TEST_F(TestBtor2Lexer, input)
   std::stringstream input;
   input << "4 input 1 x";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::NUMBER, "4");
   next_token(lexer, Token::INPUT, "input");
   next_token(lexer, Token::NUMBER, "1");
@@ -95,7 +98,8 @@ TEST_F(TestBtor2Lexer, neg)
   std::stringstream input;
   input << "6 add 1 -2 -5";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::NUMBER, "6");
   next_token(lexer, Token::ADD, "add");
   next_token(lexer, Token::NUMBER, "1");
@@ -119,7 +123,8 @@ TEST_F(TestBtor2Lexer, formula)
   input << "9 eq 8 6 7" << std::endl;
   input << "10 constraint -9";
   FILE* infile = open_file(input);
-  Lexer lexer(infile);
+  Lexer lexer;
+  lexer.init(infile);
   next_token(lexer, Token::NUMBER, "1");
   next_token(lexer, Token::SORT, "sort");
   next_token(lexer, Token::BITVEC, "bitvec");

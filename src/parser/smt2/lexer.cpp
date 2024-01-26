@@ -75,9 +75,19 @@ CharacterClasses::get()
 
 /* Lexer public ------------------------------------------------------------- */
 
-Lexer::Lexer(FILE* infile) : d_infile(infile), d_buffer(d_buf_size, 0)
+void
+Lexer::init(FILE* infile)
 {
   assert(infile);
+  d_infile = infile;
+}
+
+void
+Lexer::configure_buffer(size_t buf_size)
+{
+  d_buf_size = buf_size;
+  d_buf_idx  = d_buf_size;
+  d_buffer = std::vector<char>(d_buf_size, 0);
 }
 
 Token

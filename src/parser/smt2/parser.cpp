@@ -17,20 +17,10 @@ namespace parser::smt2 {
 
 /* Parser public ------------------------------------------------------------ */
 
-Parser::Parser(bitwuzla::Options& options,
-               const std::string& infile_name,
-               std::ostream* out)
-    : bzla::parser::Parser(options, infile_name, out), d_decls(nullptr)
+Parser::Parser(bitwuzla::Options& options, std::ostream* out)
+    : bzla::parser::Parser(options, out), d_decls(nullptr)
 {
-  if (d_error.empty())
-  {
-    d_lexer.reset(new Lexer(d_infile));
-  }
-  if (infile_name == "<stdin>")
-  {
-    d_lexer->d_buf_size = 1;
-    d_lexer->d_buf_idx  = 1;
-  }
+  d_lexer.reset(new Lexer());
   d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
                        | static_cast<uint32_t>(TokenClass::CORE)
                        | static_cast<uint32_t>(TokenClass::KEYWORD)
@@ -38,39 +28,64 @@ Parser::Parser(bitwuzla::Options& options,
   d_work_control.push_back(0);
 }
 
-Parser::Parser(bitwuzla::Options& options,
-               const std::string& infile_name,
-               FILE* infile,
-               std::ostream* out)
-    : bzla::parser::Parser(options, infile_name, infile, out), d_decls(nullptr)
+void
+Parser::reset()
 {
-  if (d_error.empty())
-  {
-    d_lexer.reset(new Lexer(d_infile));
-  }
-  if (infile_name == "<stdin>")
-  {
-    d_lexer->d_buf_size = 1;
-    d_lexer->d_buf_idx  = 1;
-  }
-  d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
-                       | static_cast<uint32_t>(TokenClass::CORE)
-                       | static_cast<uint32_t>(TokenClass::KEYWORD)
-                       | static_cast<uint32_t>(TokenClass::RESERVED);
+  d_work.clear();
+  d_work_control.clear();
   d_work_control.push_back(0);
+  d_assertion_level         = 0;
+  d_expect_body             = false;
+  d_is_sorted_var           = false;
+  d_is_var_binding          = false;
+  d_skip_attribute_value    = false;
+  d_last_node               = nullptr;
+  d_save_repr               = false;
+  d_record_named_assertions = false;
 }
 
 std::string
-Parser::parse(bool parse_only)
+Parser::parse(const std::string& infile_name, bool parse_only)
+{
+  FILE* infile = stdin;
+
+  if (infile_name == "<stdin>")
+  {
+    d_lexer->configure_buffer(1);
+  }
+  else
+  {
+    infile = std::fopen(infile_name.c_str(), "r");
+    d_lexer->configure_buffer();
+  }
+  if (!infile)
+  {
+    d_error = "failed to open '" + infile_name + "'";
+  }
+
+  std::string res = parse(infile_name, infile, parse_only);
+  fclose(infile);
+  return res;
+}
+
+std::string
+Parser::parse(const std::string& infile_name, FILE* infile, bool parse_only)
 {
   util::Timer timer(d_statistics.time_parse);
-
   Log(2) << "parse " << d_infile_name;
+
+  BITWUZLA_CHECK(infile != nullptr) << "expected non-null input file";
 
   if (!d_error.empty())
   {
     return d_error;
   }
+
+  reset();
+
+  d_infile_name = infile_name;
+  d_infile      = infile;
+  d_lexer->init(infile);
 
   while (parse_command(parse_only) && !d_done && !terminate())
     ;

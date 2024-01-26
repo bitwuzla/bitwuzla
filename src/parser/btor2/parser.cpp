@@ -17,19 +17,8 @@ namespace parser::btor2 {
 
 /* Parser public ------------------------------------------------------------ */
 
-Parser::Parser(bitwuzla::Options& options,
-               const std::string& infile_name,
-               std::ostream* out)
-    : bzla::parser::Parser(options, infile_name, out)
-{
-  init();
-}
-
-Parser::Parser(bitwuzla::Options& options,
-               const std::string& infile_name,
-               FILE* infile,
-               std::ostream* out)
-    : bzla::parser::Parser(options, infile_name, infile, out)
+Parser::Parser(bitwuzla::Options& options, std::ostream* out)
+    : bzla::parser::Parser(options, out)
 {
   init();
 }
@@ -37,13 +26,34 @@ Parser::Parser(bitwuzla::Options& options,
 Parser::~Parser() {}
 
 std::string
-Parser::parse(bool parse_only)
+Parser::parse(const std::string& infile_name, bool parse_only)
+{
+  FILE* infile = stdin;
+
+  if (infile_name != "<stdin>")
+  {
+    infile = std::fopen(infile_name.c_str(), "r");
+  }
+  if (!infile)
+  {
+    d_error = "failed to open '" + infile_name + "'";
+  }
+  std::string res = parse(infile_name, infile, parse_only);
+  fclose(infile);
+  return res;
+}
+
+std::string
+Parser::parse(const std::string& infile_name, FILE* infile, bool parse_only)
 {
   (void) parse_only;
 
   util::Timer timer(d_statistics.time_parse);
-
   Log(2) << "parse " << d_infile_name;
+
+  d_infile_name = infile_name;
+  d_infile      = infile;
+  d_lexer->init(infile);
 
   if (!d_error.empty())
   {
@@ -65,7 +75,7 @@ Parser::init()
 {
   if (d_error.empty())
   {
-    d_lexer.reset(new Lexer(d_infile));
+    d_lexer.reset(new Lexer());
   }
   init_bitwuzla();
   bitwuzla::Sort bv1 = bitwuzla::mk_bv_sort(1);

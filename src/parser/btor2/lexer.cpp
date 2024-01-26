@@ -17,10 +17,13 @@ namespace parser::btor2 {
 
 /* Lexer public ------------------------------------------------------------- */
 
-Lexer::Lexer(FILE* infile) : d_infile(infile)
+Lexer::Lexer() { init_char_classes(); }
+
+void
+Lexer::init(FILE* infile)
 {
   assert(infile);
-  init_char_classes();
+  d_infile = infile;
 }
 
 Token

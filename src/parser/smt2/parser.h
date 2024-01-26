@@ -26,26 +26,14 @@ class Parser : public bzla::parser::Parser
    * Constructor.
    * @param options     The associated Bitwuzla options. Parser creates
    *                    Bitwuzla instance from these options.
-   * @param infile_name The name of the input file.
    * @param out         The output stream.
    */
-  Parser(bitwuzla::Options& options,
-         const std::string& infile_name,
-         std::ostream* out = &std::cout);
-  /**
-   * Constructor.
-   * @param options     The associated Bitwuzla options. Parser creates
-   *                    Bitwuzla instance from these options.
-   * @param infile_name The name of the input file.
-   * @param infile      The input file.
-   * @param out         The output stream.
-   */
-  Parser(bitwuzla::Options& options,
-         const std::string& infile_name,
-         FILE* infile,
-         std::ostream* out = &std::cout);
+  Parser(bitwuzla::Options& options, std::ostream* out = &std::cout);
 
-  std::string parse(bool parse_only) override;
+  std::string parse(const std::string& infile_name, bool parse_only) override;
+  std::string parse(const std::string& infile_name,
+                    FILE* infile,
+                    bool parse_only) override;
 
  private:
   /** A parsed item. */
@@ -104,6 +92,9 @@ class Parser : public bzla::parser::Parser
       d_logic = "ALL";
     }
   }
+
+  /** Reset parser for new parse call. */
+  void reset();
 
   /**
    * Get next token from the lexer and insert new symbols into symbol table.

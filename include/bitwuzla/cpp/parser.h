@@ -32,37 +32,31 @@ class Parser
    * @note The parser creates and owns the associated Bitwuzla instance.
    * @param options     The configuration options for the Bitwuzla instance
    *                    (created by the parser).
-   * @param infile_name The name of the input file.
    * @param language    The format of the input file.
    * @param out         The output stream.
    */
   Parser(Options &options,
-         const std::string &infile_name,
-         const std::string &language = "smt2",
-         std::ostream *out           = &std::cout);
-  /**
-   * Constructor.
-   * @note The parser creates and owns the associated Bitwuzla instance.
-   * @param options     The configuration options for the Bitwuzla instance
-   *                    (created by the parser).
-   * @param infile_name The name of the input file.
-   * @param infile      The input file.
-   * @param language    The format of the input file.
-   * @param out         The output stream.
-   */
-  Parser(Options &options,
-         const std::string &infile_name,
-         FILE *infile,
          const std::string &language = "smt2",
          std::ostream *out           = &std::cout);
   /** Destructor. */
   ~Parser();
   /**
    * Parse input file.
+   * @param infile_name The name of the input file.
    * @param parse_only  True to only parse without issuing calls to check_sat.
    * @return The error message in case of an error, empty if no error.
    */
-  std::string parse(bool parse_only = false);
+  std::string parse(const std::string &infile_name, bool parse_only = false);
+  /**
+   * Parse input file.
+   * @param infile_name The name of the input file.
+   * @param infile      The input file.
+   * @param parse_only  True to only parse without issuing calls to check_sat.
+   * @return The error message in case of an error, empty if no error.
+   */
+  std::string parse(const std::string &infile_name,
+                    FILE *infile,
+                    bool parse_only = false);
 
   /**
    * Get the associated Bitwuzla instance.

@@ -36,7 +36,12 @@ class Lexer
    * Constructor.
    * @param infile The input file.
    */
-  Lexer(FILE* infile);
+  Lexer();
+  /**
+   * Initialize lexer to read from given input file.
+   * @param infile The input file.
+   */
+  void init(FILE* infile);
   /** @return The next token. */
   Token next_token();
   /**
