@@ -20,10 +20,10 @@ namespace parser::btor2 {
 Lexer::Lexer() { init_char_classes(); }
 
 void
-Lexer::init(FILE* infile)
+Lexer::init(std::istream* input)
 {
-  assert(infile);
-  d_infile = infile;
+  assert(input);
+  d_input = input;
 }
 
 Token

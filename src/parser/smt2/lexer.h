@@ -169,10 +169,10 @@ class Lexer
   const Coordinate& last_coo() const { return d_last_coo; }
 
   /**
-   * Initialize lexer to read from given input file.
-   * @param infile The input file.
+   * Initialize lexer to read from given input stream.
+   * @param input The input stream.
    */
-  void init(FILE* infile);
+  void init(std::istream* input);
 
   /**
    * Configure read buffer.
@@ -198,9 +198,9 @@ class Lexer
     if (d_buf_idx == d_buf_size)
     {
       assert(!d_saved);
-      size_t cnt =
-          std::fread(d_buffer.data(), sizeof(char), d_buf_size, d_infile);
-      if (std::feof(d_infile))
+      d_input->read(d_buffer.data(), d_buf_size);
+      size_t cnt = d_input->gcount();
+      if (d_input->eof())
       {
         d_buffer[cnt] = EOF;
       }
@@ -273,8 +273,8 @@ class Lexer
    */
   Token error(int32_t ch, const std::string& error_msg);
 
-  /** The input file. */
-  FILE* d_infile = nullptr;
+  /** The input stream. */
+  std::istream* d_input = nullptr;
   /** The coordinate of the current token. */
   Coordinate d_coo{1, 1};
   /** The current coordinate in the input file. */

@@ -44,12 +44,14 @@ Parser::parse(const std::string &infile_name, bool parse_only)
 }
 
 std::string
-Parser::parse(const std::string &infile_name, FILE *infile, bool parse_only)
+Parser::parse(const std::string &infile_name,
+              std::istream &input,
+              bool parse_only)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
-  BITWUZLA_CHECK_NOT_NULL(infile);
+  BITWUZLA_CHECK(input.operator bool()) << "invalid input stream";
   assert(d_parser);
-  return d_parser->parse(infile_name, infile, parse_only);
+  return d_parser->parse(infile_name, input, parse_only);
 }
 
 std::shared_ptr<bitwuzla::Bitwuzla>

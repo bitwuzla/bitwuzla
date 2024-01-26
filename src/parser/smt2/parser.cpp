@@ -47,7 +47,8 @@ Parser::reset()
 std::string
 Parser::parse(const std::string& infile_name, bool parse_only)
 {
-  FILE* infile = stdin;
+  std::istream* input = &std::cin;
+  std::ifstream infile;
 
   if (infile_name == "<stdin>")
   {
@@ -55,26 +56,33 @@ Parser::parse(const std::string& infile_name, bool parse_only)
   }
   else
   {
-    infile = std::fopen(infile_name.c_str(), "r");
+    infile.open(infile_name, std::ifstream::in);
+    if (!infile)
+    {
+      d_error = "failed to open '" + infile_name + "'";
+      return d_error;
+    }
+    input = &infile;
     d_lexer->configure_buffer();
   }
-  if (!infile)
-  {
-    d_error = "failed to open '" + infile_name + "'";
-  }
 
-  std::string res = parse(infile_name, infile, parse_only);
-  fclose(infile);
+  std::string res = parse(infile_name, *input, parse_only);
+  if (infile.is_open())
+  {
+    infile.close();
+  }
   return res;
 }
 
 std::string
-Parser::parse(const std::string& infile_name, FILE* infile, bool parse_only)
+Parser::parse(const std::string& infile_name,
+              std::istream& input,
+              bool parse_only)
 {
   util::Timer timer(d_statistics.time_parse);
   Log(2) << "parse " << d_infile_name;
 
-  BITWUZLA_CHECK(infile != nullptr) << "expected non-null input file";
+  BITWUZLA_CHECK(input.operator bool()) << "invalid input stream";
 
   if (!d_error.empty())
   {
@@ -84,8 +92,7 @@ Parser::parse(const std::string& infile_name, FILE* infile, bool parse_only)
   reset();
 
   d_infile_name = infile_name;
-  d_infile      = infile;
-  d_lexer->init(infile);
+  d_lexer->init(&input);
 
   while (parse_command(parse_only) && !d_done && !terminate())
     ;

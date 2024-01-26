@@ -2942,7 +2942,6 @@ TEST_F(TestCApi, parser)
   smt2 << "(exit)\n" << std::flush;
   smt2.close();
 
-  FILE *infile             = fopen(filename, "r");
   BitwuzlaOptions *options = bitwuzla_options_new();
   ASSERT_DEATH(bitwuzla_parser_new(nullptr, "smt2", 2, "<stdout>"),
                d_error_not_null);
@@ -2951,17 +2950,13 @@ TEST_F(TestCApi, parser)
   ASSERT_DEATH(bitwuzla_parser_new(options, "smt2", 12, "<stdout>"),
                "invalid bit-vector output number format");
   BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 2, "<stdout>");
-  ASSERT_DEATH(bitwuzla_parser_parse(nullptr, filename, infile, true),
+  ASSERT_DEATH(bitwuzla_parser_parse(nullptr, filename, true),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parser_parse(parser, nullptr, infile, true),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parser_parse(parser, filename, nullptr, true),
-               d_error_not_null);
-  const char *err = bitwuzla_parser_parse(parser, filename, infile, true);
+  ASSERT_DEATH(bitwuzla_parser_parse(parser, nullptr, true), d_error_not_null);
+  const char *err = bitwuzla_parser_parse(parser, filename, true);
   ASSERT_EQ(err, nullptr);
   bitwuzla_options_delete(options);
   bitwuzla_parser_delete(parser);
-  fclose(infile);
   std::remove(filename);
   ASSERT_DEATH(bitwuzla_parser_get_bitwuzla(nullptr), d_error_not_null);
 }
@@ -2973,15 +2968,13 @@ TEST_F(TestCApi, parser2)
   smt2 << "(assert x)" << std::flush;
   smt2.close();
 
-  FILE *infile             = fopen(filename, "r");
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
-  const char *err_msg = bitwuzla_parser_parse(parser, filename, infile, true);
+  const char *err_msg      = bitwuzla_parser_parse(parser, filename, true);
   ASSERT_NE(std::string(err_msg).find("undefined symbol 'x'"),
             std::string::npos);
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);
-  fclose(infile);
   std::remove(filename);
 }
 

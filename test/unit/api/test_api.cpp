@@ -3211,11 +3211,14 @@ TEST_F(TestApi, parser)
 
   {
     bitwuzla::parser::Parser parser(options);
-    ASSERT_THROW(parser.parse("parsex.smt2"), bitwuzla::Exception);
+    std::string err = parser.parse("parsex.smt2");
+    ASSERT_EQ(err, "failed to open 'parsex.smt2'");
   }
   {
     bitwuzla::parser::Parser parser(options);
-    ASSERT_THROW(parser.parse(filename, nullptr), bitwuzla::Exception);
+    std::ifstream is;
+    is.open("foo.bar");
+    ASSERT_THROW(parser.parse(filename, is), bitwuzla::Exception);
   }
   {
     bitwuzla::parser::Parser parser(options);

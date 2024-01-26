@@ -28,23 +28,31 @@ Parser::~Parser() {}
 std::string
 Parser::parse(const std::string& infile_name, bool parse_only)
 {
-  FILE* infile = stdin;
+  std::istream* input = &std::cin;
+  std::ifstream infile;
 
   if (infile_name != "<stdin>")
   {
-    infile = std::fopen(infile_name.c_str(), "r");
+    infile.open(infile_name, std::ifstream::in);
+    if (!infile)
+    {
+      d_error = "failed to open '" + infile_name + "'";
+      return d_error;
+    }
+    input = &infile;
   }
-  if (!infile)
+  std::string res = parse(infile_name, *input, parse_only);
+  if (infile.is_open())
   {
-    d_error = "failed to open '" + infile_name + "'";
+    infile.close();
   }
-  std::string res = parse(infile_name, infile, parse_only);
-  fclose(infile);
   return res;
 }
 
 std::string
-Parser::parse(const std::string& infile_name, FILE* infile, bool parse_only)
+Parser::parse(const std::string& infile_name,
+              std::istream& input,
+              bool parse_only)
 {
   (void) parse_only;
 
@@ -52,8 +60,7 @@ Parser::parse(const std::string& infile_name, FILE* infile, bool parse_only)
   Log(2) << "parse " << d_infile_name;
 
   d_infile_name = infile_name;
-  d_infile      = infile;
-  d_lexer->init(infile);
+  d_lexer->init(&input);
 
   if (!d_error.empty())
   {

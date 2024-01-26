@@ -74,16 +74,13 @@ bitwuzla_parser_delete(BitwuzlaParser* parser)
 const char*
 bitwuzla_parser_parse(BitwuzlaParser* parser,
                       const char* infile_name,
-                      FILE* infile,
                       bool parse_only)
 {
   const char* res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(infile_name);
-  BITWUZLA_CHECK_NOT_NULL(infile);
-  parser->d_error_msg =
-      parser->d_parser->parse(infile_name, infile, parse_only);
+  parser->d_error_msg = parser->d_parser->parse(infile_name, parse_only);
   if (!parser->d_error_msg.empty())
   {
     res = parser->d_error_msg.c_str();

@@ -32,7 +32,7 @@ class Parser : public bzla::parser::Parser
 
   std::string parse(const std::string& infile_name, bool parse_only) override;
   std::string parse(const std::string& infile_name,
-                    FILE* infile,
+                    std::istream& infile,
                     bool parse_only) override;
 
  private:

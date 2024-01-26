@@ -39,13 +39,13 @@ class TestBtor2Lexer : public ::testing::Test
     }
   }
 
-  FILE* open_file(const std::stringstream& input)
+  void open_file(const std::stringstream& input, std::ifstream& infile)
   {
     std::string infile_name = s_out_prefix + std::string("lexer.btor2");
     std::ofstream ofile(infile_name);
     ofile << input.str();
     ofile.close();
-    return fopen(infile_name.c_str(), "r");
+    infile.open(infile_name, std::ifstream::in);
   }
 };
 
@@ -59,53 +59,61 @@ TEST_F(TestBtor2Lexer, comments)
         << "    " << std::endl
         << std::endl
         << "foobar";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::SYMBOL, "foobar");
+  infile.close();
 }
 
 TEST_F(TestBtor2Lexer, sort)
 {
   std::stringstream input;
   input << "1 sort bitvec 32";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::NUMBER, "1");
   next_token(lexer, Token::SORT, "sort");
   next_token(lexer, Token::BITVEC, "bitvec");
   next_token(lexer, Token::NUMBER, "32");
   next_token(lexer, Token::ENDOFFILE);
+  infile.close();
 }
 
 TEST_F(TestBtor2Lexer, input)
 {
   std::stringstream input;
   input << "4 input 1 x";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::NUMBER, "4");
   next_token(lexer, Token::INPUT, "input");
   next_token(lexer, Token::NUMBER, "1");
   next_token(lexer, Token::SYMBOL, "x");
   next_token(lexer, Token::ENDOFFILE);
+  infile.close();
 }
 
 TEST_F(TestBtor2Lexer, neg)
 {
   std::stringstream input;
   input << "6 add 1 -2 -5";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::NUMBER, "6");
   next_token(lexer, Token::ADD, "add");
   next_token(lexer, Token::NUMBER, "1");
   next_token(lexer, Token::NUMBER, "-2");
   next_token(lexer, Token::NUMBER, "-5");
   next_token(lexer, Token::ENDOFFILE);
+  infile.close();
 }
 
 TEST_F(TestBtor2Lexer, formula)
@@ -122,9 +130,10 @@ TEST_F(TestBtor2Lexer, formula)
   input << "8 sort bitvec 1" << std::endl;
   input << "9 eq 8 6 7" << std::endl;
   input << "10 constraint -9";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::NUMBER, "1");
   next_token(lexer, Token::SORT, "sort");
   next_token(lexer, Token::BITVEC, "bitvec");
@@ -169,5 +178,6 @@ TEST_F(TestBtor2Lexer, formula)
   next_token(lexer, Token::CONSTRAINT, "constraint");
   next_token(lexer, Token::NUMBER, "-9");
   next_token(lexer, Token::ENDOFFILE);
+  infile.close();
 }
 }  // namespace bzla::test

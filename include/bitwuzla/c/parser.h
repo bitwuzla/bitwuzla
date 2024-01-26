@@ -61,13 +61,11 @@ void bitwuzla_parser_delete(BitwuzlaParser* parser);
  *
  * @param parser The Bitwuzla parser instance to delete.
  * @param infile_name  The name of the input file.
- * @param infile       The input file.
  * @param parse_only True to only parse without executing check-sat calls.
  * @return The error message in case of an error, else NULL.
  */
 const char* bitwuzla_parser_parse(BitwuzlaParser* parser,
                                   const char* infile_name,
-                                  FILE* infile,
                                   bool parse_only);
 
 /**

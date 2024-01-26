@@ -38,10 +38,10 @@ class Lexer
    */
   Lexer();
   /**
-   * Initialize lexer to read from given input file.
-   * @param infile The input file.
+   * Initialize lexer to read from given input stream.
+   * @param input The input stream.
    */
-  void init(FILE* infile);
+  void init(std::istream* input);
   /** @return The next token. */
   Token next_token();
   /**
@@ -184,7 +184,7 @@ class Lexer
     }
     else
     {
-      res = std::getc(d_infile);
+      res = d_input->get();
     }
     if (res == '\n')
     {
@@ -258,8 +258,8 @@ class Lexer
    */
   Token error(int32_t ch, const std::string& error_msg);
 
-  /** The input file. */
-  FILE* d_infile = nullptr;
+  /** The input stream. */
+  std::istream* d_input = nullptr;
   /** The character classes. */
   std::array<uint8_t, 256> d_char_classes{};  // value-initialized to 0
   /** The coordinate of the current token. */

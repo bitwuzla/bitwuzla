@@ -38,13 +38,14 @@ class TestSmt2Lexer : public ::testing::Test
     }
   }
 
-  FILE* open_file(const std::stringstream& input)
+  void open_file(const std::stringstream& input, std::ifstream& infile)
   {
     std::string infile_name = s_out_prefix + std::string("lexer.smt2");
     std::ofstream ofile(infile_name);
     ofile << input.str();
     ofile.close();
-    return fopen(infile_name.c_str(), "r");
+    std::ifstream instream;
+    infile.open(infile_name, std::ifstream::in);
   }
 };
 
@@ -58,19 +59,22 @@ TEST_F(TestSmt2Lexer, comments)
         << "    " << std::endl
         << std::endl
         << "foobar";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::SYMBOL, "foobar");
+  infile.close();
 }
 
 TEST_F(TestSmt2Lexer, command1)
 {
   std::stringstream input;
   input << "(declare-fun a () (_ BitVec 1))";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "declare-fun");
   next_token(lexer, Token::SYMBOL, "a");
@@ -83,15 +87,17 @@ TEST_F(TestSmt2Lexer, command1)
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::ENDOFFILE);
+  infile.close();
 }
 
 TEST_F(TestSmt2Lexer, command2)
 {
   std::stringstream input;
   input << "(assert (bvsle a b))";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "assert");
   next_token(lexer, Token::LPAR);
@@ -101,15 +107,17 @@ TEST_F(TestSmt2Lexer, command2)
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::ENDOFFILE);
+  infile.close();
 }
 
 TEST_F(TestSmt2Lexer, command3)
 {
   std::stringstream input;
   input << "(assert (= e (fp #b0 #b011 #b0000)))";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "assert");
   next_token(lexer, Token::LPAR);
@@ -124,6 +132,7 @@ TEST_F(TestSmt2Lexer, command3)
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::ENDOFFILE);
+  infile.close();
 }
 
 TEST_F(TestSmt2Lexer, command4)
@@ -136,9 +145,10 @@ TEST_F(TestSmt2Lexer, command4)
         << std::endl
         << "(foo.bar@gmail.com)." << std::endl
         << "|)";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "set-info");
   next_token(lexer, Token::ATTRIBUTE, ":source");
@@ -148,15 +158,17 @@ TEST_F(TestSmt2Lexer, command4)
              "low)\nBit-width: 32\n\n(foo.bar@gmail.com).\n|");
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::ENDOFFILE);
+  infile.close();
 }
 
 TEST_F(TestSmt2Lexer, command5)
 {
   std::stringstream input;
   input << "(get-value (((_ to_fp 5 11) RTP (/ 1.2 5)))";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "get-value");
   next_token(lexer, Token::LPAR);
@@ -175,6 +187,7 @@ TEST_F(TestSmt2Lexer, command5)
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::RPAR);
+  infile.close();
 }
 
 TEST_F(TestSmt2Lexer, input1)
@@ -191,9 +204,10 @@ TEST_F(TestSmt2Lexer, input1)
         << " )" << std::endl
         << ")" << std::endl
         << "(check-sat)" << std::endl;
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "set-info");
   next_token(lexer, Token::ATTRIBUTE, ":status");
@@ -247,6 +261,7 @@ TEST_F(TestSmt2Lexer, input1)
   next_token(lexer, Token::SYMBOL, "check-sat");
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::ENDOFFILE);
+  infile.close();
 }
 
 TEST_F(TestSmt2Lexer, input2)
@@ -254,9 +269,10 @@ TEST_F(TestSmt2Lexer, input2)
   std::stringstream input;
   input << "(declare-fun ~ () Float64)" << std::endl
         << "(assert (= x (fp.add c ~ (fp (_ bv0 1) (_ bv0 11) (_ bv0 52)))))";
-  FILE* infile = open_file(input);
+  std::ifstream infile;
+  open_file(input, infile);
   Lexer lexer;
-  lexer.init(infile);
+  lexer.init(&infile);
   next_token(lexer, Token::LPAR);
   next_token(lexer, Token::SYMBOL, "declare-fun");
   next_token(lexer, Token::SYMBOL, "~");
@@ -295,6 +311,7 @@ TEST_F(TestSmt2Lexer, input2)
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::ENDOFFILE);
+  infile.close();
 }
 
 }  // namespace bzla::test

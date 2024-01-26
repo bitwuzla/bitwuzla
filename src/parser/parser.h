@@ -55,12 +55,12 @@ class Parser
   /**
    * Parse input file.
    * @param infile_name The name of the input file.
-   * @param infile      The input file.
+   * @param inpur       The input stream.
    * @param parse_only  True to only parse without executing check-sat calls.
    * @return The error message, empty if no error.
    */
   virtual std::string parse(const std::string& infile_name,
-                            FILE* infile,
+                            std::istream& input,
                             bool parse_only) = 0;
 
   /** Configure Bitwuzla terminator.
@@ -109,10 +109,9 @@ class Parser
   /** The Bitwuzla terminator. */
   bitwuzla::Terminator* d_terminator = nullptr;
 
+  std::istream* d_input = nullptr;
   /** The name of the input file. */
   std::string d_infile_name;
-  /** The input file. */
-  FILE* d_infile = nullptr;
 
   /** The log level. */
   uint64_t d_log_level;

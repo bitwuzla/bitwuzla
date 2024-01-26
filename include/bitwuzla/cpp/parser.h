@@ -50,12 +50,12 @@ class Parser
   /**
    * Parse input file.
    * @param infile_name The name of the input file.
-   * @param infile      The input file.
+   * @param input       The input stream.
    * @param parse_only  True to only parse without issuing calls to check_sat.
    * @return The error message in case of an error, empty if no error.
    */
   std::string parse(const std::string &infile_name,
-                    FILE *infile,
+                    std::istream &input,
                     bool parse_only = false);
 
   /**
