@@ -1394,7 +1394,6 @@ cdef class Parser:
 
     def __init__(self,
                  options: Options,
-                 infile_name,
                  language = "smt2",
                  uint8_t base = 2):
         cdef unique_ptr[bitwuzla_api.set_bv_format] c_bv_fmt
@@ -1404,12 +1403,13 @@ cdef class Parser:
         self.c_parser.reset(
                 new bitwuzla_api.Parser(
                     options.c_options,
-                    <const string&> str(infile_name).encode(),
                     <const string&> str(language).encode(),
                     &bitwuzla_api.cout))
 
-    def parse(self, parse_only: bool = False) -> str:
-        res = self.c_parser.get().parse(parse_only)
+    def parse(self, infile_name, parse_only: bool = False) -> str:
+        res = self.c_parser.get().parse(
+                    <const string&> str(infile_name).encode(),
+                    parse_only)
         if res.decode() == '': return None
         return res.decode()
 

@@ -1934,8 +1934,8 @@ def test_parser():
     with pytest.raises(BitwuzlaException):
         Parser(options, 'parsex.smt2')
 
-    parser = Parser(options, filename)
-    err = parser.parse(True)
+    parser = Parser(options)
+    err = parser.parse(filename, True)
     assert not err
     os.remove(filename)
 
