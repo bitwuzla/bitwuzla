@@ -3198,8 +3198,8 @@ TEST_F(TestApi, arrayfun)
 
 TEST_F(TestApi, parser)
 {
-  const char* filename = "parse.smt2";
-  std::ofstream smt2(filename);
+  const char* input = "parse.smt2";
+  std::ofstream smt2(input);
   smt2 << "(set-logic QF_BV)\n";
   smt2 << "(check-sat)\n";
   smt2 << "(exit)\n" << std::flush;
@@ -3211,6 +3211,10 @@ TEST_F(TestApi, parser)
 
   {
     bitwuzla::parser::Parser parser(options);
+    ASSERT_THROW(parser.bitwuzla(), bitwuzla::Exception);
+  }
+  {
+    bitwuzla::parser::Parser parser(options);
     std::string err = parser.parse("parsex.smt2");
     ASSERT_EQ(err, "failed to open 'parsex.smt2'");
   }
@@ -3218,14 +3222,54 @@ TEST_F(TestApi, parser)
     bitwuzla::parser::Parser parser(options);
     std::ifstream is;
     is.open("foo.bar");
-    ASSERT_THROW(parser.parse(filename, is), bitwuzla::Exception);
+    ASSERT_THROW(parser.parse(input, is), bitwuzla::Exception);
   }
   {
     bitwuzla::parser::Parser parser(options);
-    std::string err = parser.parse(filename, true);
+    std::string err = parser.parse(input, true);
     ASSERT_TRUE(err.empty());
   }
-  std::remove(filename);
+  std::remove(input);
+}
+
+TEST_F(TestApi, parser_string1)
+{
+  std::stringstream smt2;
+  smt2 << "(set-logic QF_BV)\n";
+  smt2 << "(check-sat)\n";
+  smt2 << "(exit)\n";
+  bitwuzla::Options options;
+  {
+    bitwuzla::parser::Parser parser(options);
+    ASSERT_FALSE(parser.parse(smt2.str(), true, true).empty());
+  }
+  {
+    bitwuzla::parser::Parser parser(options);
+    std::string err = parser.parse(smt2.str(), true, false);
+    ASSERT_TRUE(err.empty());
+  }
+  {
+    bitwuzla::parser::Parser parser(options);
+    std::string err = parser.parse("<string>", smt2, true);
+    ASSERT_TRUE(err.empty());
+  }
+}
+
+TEST_F(TestApi, parser_string2)
+{
+  std::string str_decl  = "(declare-const a Bool)";
+  std::string str_true  = "(assert (= a true))";
+  std::string str_false = "(assert (= a false))";
+  bitwuzla::Options options;
+  bitwuzla::parser::Parser parser(options);
+  auto err = parser.parse(str_decl, true, false);
+  ASSERT_TRUE(err.empty());
+  err = parser.parse(str_true, true, false);
+  ASSERT_TRUE(err.empty());
+  err = parser.parse(str_false, true, false);
+  ASSERT_TRUE(err.empty());
+  bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla().get();
+  ASSERT_EQ(bitwuzla->check_sat(), bitwuzla::Result::UNSAT);
 }
 
 /* -------------------------------------------------------------------------- */

@@ -26,22 +26,22 @@ Parser::Parser(bitwuzla::Options& options, std::ostream* out)
 Parser::~Parser() {}
 
 std::string
-Parser::parse(const std::string& infile_name, bool parse_only)
+Parser::parse(const std::string& input, bool parse_only, bool parse_file)
 {
-  std::istream* input = &std::cin;
+  std::istream* instream = &std::cin;
   std::ifstream infile;
 
-  if (infile_name != "<stdin>")
+  if (input != "<stdin>")
   {
-    infile.open(infile_name, std::ifstream::in);
+    infile.open(input, std::ifstream::in);
     if (!infile)
     {
-      d_error = "failed to open '" + infile_name + "'";
+      d_error = "failed to open '" + input + "'";
       return d_error;
     }
-    input = &infile;
+    instream = &infile;
   }
-  std::string res = parse(infile_name, *input, parse_only);
+  std::string res = parse(input, *instream, parse_only);
   if (infile.is_open())
   {
     infile.close();

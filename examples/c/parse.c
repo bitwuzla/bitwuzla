@@ -25,7 +25,7 @@ main()
   BitwuzlaParser* parser  = bitwuzla_parser_new(options, "smt2", 2, "<stdout>");
 
   // Now parse the input file.
-  const char* err_msg = bitwuzla_parser_parse(parser, infile_name, false);
+  const char* err_msg = bitwuzla_parser_parse(parser, infile_name, false, true);
   // We expect no error to occur.
   assert(err_msg == NULL);
 

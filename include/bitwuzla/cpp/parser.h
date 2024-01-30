@@ -41,15 +41,23 @@ class Parser
   /** Destructor. */
   ~Parser();
   /**
-   * Parse input file.
-   * @param infile_name The name of the input file.
-   * @param parse_only  True to only parse without issuing calls to check_sat.
+   * Parse input, either from a file or from a string.
+   * @param input      The name of the input file if `parse_file` is true,
+   *                   else a string with the input.
+   * @param parse_only True to only parse without issuing calls to check_sat.
+   * @param parse_file True to parse an input file with the given name `input`,
+   *                   false to parse from `input` as a string input.
    * @return The error message in case of an error, empty if no error.
    */
-  std::string parse(const std::string &infile_name, bool parse_only = false);
+  std::string parse(const std::string &input,
+                    bool parse_only = false,
+                    bool parse_file = true);
   /**
    * Parse input file.
-   * @param infile_name The name of the input file.
+   * @param infile_name The name of the input file. This is required for error
+   *                    message printing only. Use '<stdin>' if the input
+   *                    stream is std::cin, and '<string>' if the input stream
+   *                    was created from a string.
    * @param input       The input stream.
    * @param parse_only  True to only parse without issuing calls to check_sat.
    * @return The error message in case of an error, empty if no error.

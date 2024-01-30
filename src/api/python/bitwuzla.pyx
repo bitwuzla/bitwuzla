@@ -1406,10 +1406,13 @@ cdef class Parser:
                     <const string&> str(language).encode(),
                     &bitwuzla_api.cout))
 
-    def parse(self, infile_name, parse_only: bool = False) -> str:
+    def parse(self,
+              infile_name,
+              parse_only: bool = False,
+              parse_file: bool = True) -> str:
         res = self.c_parser.get().parse(
                     <const string&> str(infile_name).encode(),
-                    parse_only)
+                    parse_only, parse_file)
         if res.decode() == '': return None
         return res.decode()
 

@@ -45,16 +45,23 @@ class Parser
   virtual ~Parser() {}
 
   /**
-   * Parse input file.
-   * @param infile_name The name of the input file.
-   * @param parse_only  True to only parse without executing check-sat calls.
+   * Parse input, either from a file or from a string.
+   * @param input      The name of the input file if `parse_file` is true,
+   *                   else a string with the input.
+   * @param parse_only True to only parse without executing check-sat calls.
+   * @param parse_file True to parse an input file with the given name `input`,
+   *                   false to parse from `input` as a string input.
    * @return The error message, empty if no error.
    */
-  virtual std::string parse(const std::string& infile_name,
-                            bool parse_only) = 0;
+  virtual std::string parse(const std::string& input,
+                            bool parse_only,
+                            bool parse_file) = 0;
   /**
-   * Parse input file.
-   * @param infile_name The name of the input file.
+   * Parse input.
+   * @param infile_name The name of the input file. This is required for error
+   *                    message printing only. Use '<stdin>' if the input
+   *                    stream is std::cin, and '<string>' if the input stream
+   *                    was created from a string.
    * @param inpur       The input stream.
    * @param parse_only  True to only parse without executing check-sat calls.
    * @return The error message, empty if no error.
@@ -105,7 +112,7 @@ class Parser
   /** The Bitwuzla configuration options. */
   bitwuzla::Options d_options;
   /** The Bitwuzla instance. */
-  std::shared_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
+  std::shared_ptr<bitwuzla::Bitwuzla> d_bitwuzla = nullptr;
   /** The Bitwuzla terminator. */
   bitwuzla::Terminator* d_terminator = nullptr;
 

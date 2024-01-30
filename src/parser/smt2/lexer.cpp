@@ -80,6 +80,7 @@ Lexer::init(std::istream* input)
 {
   assert(input);
   d_input = input;
+  d_buf_idx = d_buf_size;
 }
 
 void

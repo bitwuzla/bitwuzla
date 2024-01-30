@@ -2950,10 +2950,12 @@ TEST_F(TestCApi, parser)
   ASSERT_DEATH(bitwuzla_parser_new(options, "smt2", 12, "<stdout>"),
                "invalid bit-vector output number format");
   BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 2, "<stdout>");
-  ASSERT_DEATH(bitwuzla_parser_parse(nullptr, filename, true),
+  ASSERT_DEATH(bitwuzla_parser_get_bitwuzla(parser), "not yet initialized");
+  ASSERT_DEATH(bitwuzla_parser_parse(nullptr, filename, true, true),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parser_parse(parser, nullptr, true), d_error_not_null);
-  const char *err = bitwuzla_parser_parse(parser, filename, true);
+  ASSERT_DEATH(bitwuzla_parser_parse(parser, nullptr, true, true),
+               d_error_not_null);
+  const char *err = bitwuzla_parser_parse(parser, filename, true, true);
   ASSERT_EQ(err, nullptr);
   bitwuzla_options_delete(options);
   bitwuzla_parser_delete(parser);
@@ -2970,12 +2972,58 @@ TEST_F(TestCApi, parser2)
 
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
-  const char *err_msg      = bitwuzla_parser_parse(parser, filename, true);
+  const char *err_msg = bitwuzla_parser_parse(parser, filename, true, true);
   ASSERT_NE(std::string(err_msg).find("undefined symbol 'x'"),
             std::string::npos);
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);
   std::remove(filename);
+}
+
+TEST_F(TestCApi, parser_string1)
+{
+  std::stringstream smt2;
+  smt2 << "(set-logic QF_BV)\n";
+  smt2 << "(check-sat)\n";
+  smt2 << "(exit)\n";
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  {
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
+    const char *err =
+        bitwuzla_parser_parse(parser, smt2.str().c_str(), true, true);
+    ASSERT_NE(err, nullptr);
+    bitwuzla_parser_delete(parser);
+  }
+  {
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
+    const char *err =
+        bitwuzla_parser_parse(parser, smt2.str().c_str(), true, false);
+    ASSERT_EQ(err, nullptr);
+    bitwuzla_parser_delete(parser);
+  }
+  bitwuzla_options_delete(options);
+}
+
+TEST_F(TestCApi, parser_string2)
+{
+  std::string str_decl     = "(declare-const a Bool)";
+  std::string str_true     = "(assert (= a true))";
+  std::string str_false    = "(assert (= a false))";
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
+  const char *err =
+      bitwuzla_parser_parse(parser, str_decl.c_str(), true, false);
+  ASSERT_EQ(err, nullptr);
+  err = bitwuzla_parser_parse(parser, str_true.c_str(), true, false);
+  ASSERT_EQ(err, nullptr);
+  err = bitwuzla_parser_parse(parser, str_false.c_str(), true, false);
+  ASSERT_EQ(err, nullptr);
+  Bitwuzla *bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
+  ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+  bitwuzla_parser_delete(parser);
+  bitwuzla_options_delete(options);
 }
 
 /* -------------------------------------------------------------------------- */

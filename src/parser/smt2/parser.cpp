@@ -34,6 +34,7 @@ Parser::reset()
   d_work.clear();
   d_work_control.clear();
   d_work_control.push_back(0);
+  d_done                    = false;
   d_assertion_level         = 0;
   d_expect_body             = false;
   d_is_sorted_var           = false;
@@ -45,28 +46,39 @@ Parser::reset()
 }
 
 std::string
-Parser::parse(const std::string& infile_name, bool parse_only)
+Parser::parse(const std::string& input, bool parse_only, bool parse_file)
 {
-  std::istream* input = &std::cin;
+  std::istream* instream = &std::cin;
   std::ifstream infile;
+  std::stringstream instring;
 
-  if (infile_name == "<stdin>")
+  if (parse_file)
   {
-    d_lexer->configure_buffer(1);
+    if (input == "<stdin>")
+    {
+      d_lexer->configure_buffer(1);
+    }
+    else
+    {
+      infile.open(input, std::ifstream::in);
+      if (!infile)
+      {
+        d_error = "failed to open '" + input + "'";
+        return d_error;
+      }
+      instream = &infile;
+      d_lexer->configure_buffer();
+    }
   }
   else
   {
-    infile.open(infile_name, std::ifstream::in);
-    if (!infile)
-    {
-      d_error = "failed to open '" + infile_name + "'";
-      return d_error;
-    }
-    input = &infile;
-    d_lexer->configure_buffer();
+    instring << input;
+    instream = &instring;
   }
 
-  std::string res = parse(infile_name, *input, parse_only);
+  std::string res =
+      parse(parse_file ? input : "<string>", *instream, parse_only);
+
   if (infile.is_open())
   {
     infile.close();

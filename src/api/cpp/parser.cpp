@@ -8,12 +8,12 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "parser/smt2/parser.h"
+#include "parser/btor2/parser.h"
 
 #include <bitwuzla/cpp/parser.h>
 
 #include "api/checks.h"
-#include "parser/btor2/parser.h"
+#include "parser/smt2/parser.h"
 
 namespace bitwuzla::parser {
 
@@ -36,11 +36,11 @@ Parser::Parser(Options &options, const std::string &language, std::ostream *out)
 }
 
 std::string
-Parser::parse(const std::string &infile_name, bool parse_only)
+Parser::parse(const std::string &input, bool parse_only, bool parse_file)
 {
-  BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
+  BITWUZLA_CHECK_STR_NOT_EMPTY(input);
   assert(d_parser);
-  return d_parser->parse(infile_name, parse_only);
+  return d_parser->parse(input, parse_only, parse_file);
 }
 
 std::string
@@ -57,6 +57,8 @@ Parser::parse(const std::string &infile_name,
 std::shared_ptr<bitwuzla::Bitwuzla>
 Parser::bitwuzla()
 {
+  BITWUZLA_CHECK(d_parser->bitwuzla() != nullptr)
+      << "Bitwuzla instance not yet initialized";
   return d_parser->bitwuzla();
 }
 

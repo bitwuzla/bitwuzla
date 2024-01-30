@@ -57,16 +57,20 @@ BitwuzlaParser* bitwuzla_parser_new(BitwuzlaOptions* options,
 void bitwuzla_parser_delete(BitwuzlaParser* parser);
 
 /**
- * Parser input file.
+ * Parse input. either from a file or from a string.
  *
- * @param parser The Bitwuzla parser instance to delete.
- * @param infile_name  The name of the input file.
+ * @param parser     The Bitwuzla parser instance.
+ * @param input      The name of the input file if `parse_file` is true,
+ *                   else a string with the input.
  * @param parse_only True to only parse without executing check-sat calls.
+ * @param parse_file True to parse an input file with the given name `input`,
+ *                   false to parse from `input` as a string input.
  * @return The error message in case of an error, else NULL.
  */
 const char* bitwuzla_parser_parse(BitwuzlaParser* parser,
-                                  const char* infile_name,
-                                  bool parse_only);
+                                  const char* input,
+                                  bool parse_only,
+                                  bool parse_file);
 
 /**
  * Get the associated Bitwuzla instance.

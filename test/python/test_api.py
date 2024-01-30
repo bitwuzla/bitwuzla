@@ -1935,9 +1935,38 @@ def test_parser():
         Parser(options, 'parsex.smt2')
 
     parser = Parser(options)
+
+    with pytest.raises(BitwuzlaException):
+        parser.bitwuzla()
+
     err = parser.parse(filename, True)
     assert not err
     os.remove(filename)
+
+def test_parser_string1():
+    smt2 = "(set-logic QF_BV)\n(check-sat)\n(exit)\n";
+    options = Options()
+    parser = Parser(options)
+    err = parser.parse(smt2, True, True)
+    assert err != ''
+    parser = Parser(options)
+    err = parser.parse(smt2, True, False)
+    assert err == None
+
+def test_parser_string2():
+    str_decl  = "(declare-const a Bool)"
+    str_true  = "(assert (= a true))"
+    str_false = "(assert (= a false))"
+    options = Options()
+    parser = Parser(options)
+    err = parser.parse(str_decl, True, False)
+    assert err == None
+    err = parser.parse(str_true, True, False)
+    assert err == None
+    err = parser.parse(str_false, True, False)
+    assert err == None
+    bitwuzla = parser.bitwuzla()
+    assert bitwuzla.check_sat() == Result.UNSAT
 
 # ----------------------------------------------------------------------------
 # Termination function
