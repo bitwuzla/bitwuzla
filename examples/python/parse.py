@@ -19,10 +19,10 @@ if __name__ == '__main__':
 
     # We will parse example file `smt2/quickstart.smt2`.
     # Create parser instance.
-    parser = Parser(options, "../smt2/quickstart.smt2")
+    parser = Parser(options)
 
     # Now parse the input file.
-    err_msg = parser.parse()
+    err_msg = parser.parse("../smt2/quickstart.smt2")
     # We expect no error to occur.
     assert not err_msg
 

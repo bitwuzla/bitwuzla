@@ -24,10 +24,10 @@ main()
 
   // We will parse example file `smt2/quickstart.smt2`.
   // Create parser instance.
-  parser::Parser parser(options, "../smt2/quickstart.smt2");
+  parser::Parser parser(options);
 
   // Now parse the input file.
-  std::string err_msg = parser.parse();
+  std::string err_msg = parser.parse("../smt2/quickstart.smt2");
   // We expect no error to occur.
   assert(err_msg.empty());
 
