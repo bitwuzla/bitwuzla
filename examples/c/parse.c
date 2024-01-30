@@ -41,6 +41,21 @@ main()
   }
   printf("}\n");
 
+  // Now we add an assertion via parsing from string.
+  err_msg = bitwuzla_parser_parse(
+      parser, "(assert (distinct (select a x) y))", true, false);
+  // We expect no error to occur.
+  assert(err_msg == NULL);
+  // Now the formula is unsat.
+  BitwuzlaResult result =
+      bitwuzla_check_sat(bitwuzla_parser_get_bitwuzla(parser));
+
+  printf("Expect: unsat\n");
+  printf("Bitwuzla: %s\n\n",
+         result == BITWUZLA_SAT
+             ? "sat"
+             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+
   // Finally, delete Bitwuzla parser and options instance.
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);

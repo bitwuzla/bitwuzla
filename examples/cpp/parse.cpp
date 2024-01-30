@@ -40,5 +40,19 @@ main()
   }
   std::cout << "}" << std::endl;
 
+  // Now we add an assertion via parsing from string.
+  err_msg = parser.parse("(assert (distinct (select a x) y))", true, false);
+  // We expect no error to occur.
+  assert(err_msg.empty());
+  // Now the formula is unsat.
+  Result result = parser.bitwuzla()->check_sat();
+
+  std::cout << "Expect: unsat" << std::endl;
+  std::cout << "Bitwuzla: "
+            << (result == Result::SAT
+                    ? "sat"
+                    : (result == Result::UNSAT ? "unsat" : "unknown"))
+            << std::endl
+            << std::endl;
   return 0;
 }
