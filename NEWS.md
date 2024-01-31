@@ -2,7 +2,7 @@
 
 This file collects a summary of important and/or user-visible changes.
 
-## News for version 0.3.2023
+## News for version 0.3.2
 
 - Fix special case handling for equality over constant arrays.
 
