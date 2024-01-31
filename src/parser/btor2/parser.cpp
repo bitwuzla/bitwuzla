@@ -20,28 +20,54 @@ namespace parser::btor2 {
 Parser::Parser(bitwuzla::Options& options, std::ostream* out)
     : bzla::parser::Parser(options, out)
 {
-  init();
+  if (d_error.empty())
+  {
+    d_lexer.reset(new Lexer());
+  }
+  init_bitwuzla();
+  bitwuzla::Sort bv1 = bitwuzla::mk_bv_sort(1);
+  d_bv1_one          = bitwuzla::mk_bv_one(bv1);
+  d_bv1_zero         = bitwuzla::mk_bv_zero(bv1);
 }
 
 Parser::~Parser() {}
 
+void
+Parser::reset()
+{
+  d_done = false;
+}
+
 std::string
 Parser::parse(const std::string& input, bool parse_only, bool parse_file)
 {
+  reset();
+
   std::istream* instream = &std::cin;
   std::ifstream infile;
+  std::stringstream instring;
 
-  if (input != "<stdin>")
+  if (parse_file)
   {
-    infile.open(input, std::ifstream::in);
-    if (!infile)
+    if (input != "<stdin>")
     {
-      d_error = "failed to open '" + input + "'";
-      return d_error;
+      infile.open(input, std::ifstream::in);
+      if (!infile)
+      {
+        d_error = "failed to open '" + input + "'";
+        return d_error;
+      }
+      instream = &infile;
     }
-    instream = &infile;
   }
-  std::string res = parse(input, *instream, parse_only);
+  else
+  {
+    instring << input;
+    instream = &instring;
+  }
+
+  std::string res =
+      parse(parse_file ? input : "<string>", *instream, parse_only);
   if (infile.is_open())
   {
     infile.close();
@@ -76,19 +102,6 @@ Parser::parse(const std::string& infile_name,
 }
 
 /* Parser private ----------------------------------------------------------- */
-
-void
-Parser::init()
-{
-  if (d_error.empty())
-  {
-    d_lexer.reset(new Lexer());
-  }
-  init_bitwuzla();
-  bitwuzla::Sort bv1 = bitwuzla::mk_bv_sort(1);
-  d_bv1_one          = bitwuzla::mk_bv_one(bv1);
-  d_bv1_zero         = bitwuzla::mk_bv_zero(bv1);
-}
 
 bitwuzla::Term
 Parser::bool_term_to_bv1(const bitwuzla::Term& term) const

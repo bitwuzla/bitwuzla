@@ -38,16 +38,42 @@ class Parser : public bzla::parser::Parser
                     bool parse_only) override;
 
  private:
-  void init();
+  /** Reset parser for new parse call. */
+  void reset();
+
+  /** Helper to convert boolean term to bit-vector term of size 1. */
   bitwuzla::Term bool_term_to_bv1(const bitwuzla::Term& term) const;
+  /** Helper to convert bit-vector term of size 1 to boolean term. */
   bitwuzla::Term bv1_term_to_bool(const bitwuzla::Term& term) const;
 
+  /**
+   * Parse a line.
+   * @return False on error.
+   */
   bool parse_line();
+  /**
+   * Parse a numeral.
+   * @param sign       True if parsed numeral may be signed.
+   * @param res        Output parameter to store the resulting term id.
+   * @param look_ahead True if we have a look ahead token.
+   * @param la         The look ahead token.
+   * @return False on error.
+   */
   bool parse_number(bool sign,
                     int64_t& res,
                     bool look_ahead = false,
                     Token la        = Token::INVALID);
+  /**
+   * Parse sort.
+   * @param line_id The line id of the sort to parse.
+   * @return False on error.
+   */
   bool parse_sort(int64_t line_id);
+  /**
+   * Parse term.
+   * @param res Output parameter to store the resulting term.
+   * @return False on error.
+   */
   bool parse_term(bitwuzla::Term& res);
 
   /**
@@ -68,15 +94,39 @@ class Parser : public bzla::parser::Parser
     return true;
   }
 
+  /**
+   * Set error message and error coordinate.
+   * @param error_msg The error message.
+   * @param coo       The error coordinate. Set to the current coordinate of
+   *                  the lexer if not given.
+   * @return Always returns false to allow using the result of this function
+   *         call to indicate a parse error.
+   */
   bool error(const std::string& error_msg,
              const std::optional<Lexer::Coordinate>& coo = std::nullopt);
+  /**
+   * Set error message and coordinate for errors where the current token is
+   * invalid.
+   * @return Always returns false to allow using the result of this function
+   *         call to indicate a parse error.
+   */
   bool error_invalid();
+  /**
+   * Set error message and coordinate for errors where the current token is
+   * the end-of-file token.
+   * @return Always returns false to allow using the result of this function
+   *         call to indicate a parse error.
+   */
   bool error_eof();
 
+  /** Map line id to sort. */
   std::unordered_map<int64_t, bitwuzla::Sort> d_sort_map;
+  /** Map line id to term. */
   std::unordered_map<int64_t, bitwuzla::Term> d_term_map;
 
+  /** Term representing bit-vector one of size 1 (true). */
   bitwuzla::Term d_bv1_one;
+  /** Term representing bit-vector one of size 1 (false). */
   bitwuzla::Term d_bv1_zero;
 
   /** The associated BTOR2 lexer. */

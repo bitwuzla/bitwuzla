@@ -2933,7 +2933,7 @@ TEST_F(TestCApi, statistics)
 /* Parsing                                                                    */
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestCApi, parser)
+TEST_F(TestCApi, parser_smt2)
 {
   const char *filename = "parse.smt2";
   std::ofstream smt2(filename);
@@ -2963,7 +2963,7 @@ TEST_F(TestCApi, parser)
   ASSERT_DEATH(bitwuzla_parser_get_bitwuzla(nullptr), d_error_not_null);
 }
 
-TEST_F(TestCApi, parser2)
+TEST_F(TestCApi, parser2_smt2)
 {
   const char *filename = "parse.smt2";
   std::ofstream smt2(filename);
@@ -2980,7 +2980,7 @@ TEST_F(TestCApi, parser2)
   std::remove(filename);
 }
 
-TEST_F(TestCApi, parser_string1)
+TEST_F(TestCApi, parser_string1_smt2)
 {
   std::stringstream smt2;
   smt2 << "(set-logic QF_BV)\n";
@@ -3006,7 +3006,7 @@ TEST_F(TestCApi, parser_string1)
   bitwuzla_options_delete(options);
 }
 
-TEST_F(TestCApi, parser_string2)
+TEST_F(TestCApi, parser_string2_smt2)
 {
   std::string str_decl     = "(declare-const a Bool)";
   std::string str_true     = "(assert (= a true))";
@@ -3022,6 +3022,163 @@ TEST_F(TestCApi, parser_string2)
   ASSERT_EQ(err, nullptr);
   Bitwuzla *bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
   ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+  bitwuzla_parser_delete(parser);
+  bitwuzla_options_delete(options);
+}
+
+TEST_F(TestCApi, parser_btor2)
+{
+  const char *input = "parse.btor2";
+  std::ofstream btor2(input);
+  btor2 << "1 sort bitvec 8" << std::endl;
+  btor2 << "2 input 1 @inp2" << std::endl;
+  btor2 << "3 sort bitvec 3" << std::endl;
+  btor2 << "4 one 3" << std::endl;
+  btor2 << "5 uext 1 4 5" << std::endl;
+  btor2 << "6 srl 1 2 5" << std::endl;
+  btor2 << "7 sort bitvec 1" << std::endl;
+  btor2 << "8 slice 7 6 7 7" << std::endl;
+  btor2 << "9 constraint 8" << std::endl << std::flush;
+
+  BitwuzlaOptions *options = bitwuzla_options_new();
+
+  ASSERT_DEATH(bitwuzla_parser_new(options, "btor2", 10, nullptr),
+               d_error_not_null);
+  {
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+    ASSERT_NO_THROW(bitwuzla_parser_get_bitwuzla(parser));
+    bitwuzla_parser_delete(parser);
+  }
+  {
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+    const char *err = bitwuzla_parser_parse(parser, "parsex.btor2", true, true);
+    ASSERT_EQ(std::string(err), "failed to open 'parsex.btor2'");
+    bitwuzla_parser_delete(parser);
+  }
+  {
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+    const char *err = bitwuzla_parser_parse(parser, input, true, true);
+    ASSERT_EQ(err, nullptr);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla_parser_get_bitwuzla(parser)),
+              BITWUZLA_UNSAT);
+    bitwuzla_parser_delete(parser);
+  }
+  bitwuzla_options_delete(options);
+  std::remove(input);
+}
+
+TEST_F(TestCApi, parser_btor2_string1)
+{
+  std::stringstream btor2;
+  btor2 << "1 sort bitvec 8" << std::endl;
+  btor2 << "2 input 1 @inp2" << std::endl;
+  btor2 << "3 sort bitvec 3" << std::endl;
+  btor2 << "4 one 3" << std::endl;
+  btor2 << "5 uext 1 4 5" << std::endl;
+  btor2 << "6 srl 1 2 5" << std::endl;
+  btor2 << "7 sort bitvec 1" << std::endl;
+  btor2 << "8 slice 7 6 7 7" << std::endl;
+  btor2 << "9 constraint 8" << std::endl;
+
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  {
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+    const char *err =
+        bitwuzla_parser_parse(parser, btor2.str().c_str(), true, true);
+    ASSERT_NE(std::string(err).find("failed to open"), std::string::npos);
+    bitwuzla_parser_delete(parser);
+  }
+  {
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+    const char *err =
+        bitwuzla_parser_parse(parser, btor2.str().c_str(), true, false);
+    ASSERT_EQ(err, nullptr);
+    bitwuzla_parser_delete(parser);
+  }
+  bitwuzla_options_delete(options);
+}
+
+TEST_F(TestCApi, parser_btor2_string2)
+{
+  std::string str_decl  = "(declare-const a Bool)";
+  std::string str_true  = "(assert (= a true))";
+  std::string str_false = "(assert (= a false))";
+
+  std::string decl_sorts;
+  {
+    std::stringstream ss;
+    ss << "1 sort bitvec 8" << std::endl << "2 sort array 1 1" << std::endl;
+    decl_sorts = ss.str();
+  }
+  std::string decl_inputs;
+  {
+    std::stringstream ss;
+    ss << "3 input 2 @arr3" << std::endl
+       << "4 input 2 @arr4" << std::endl
+       << "5 input 2 @arr5" << std::endl;
+    decl_inputs = ss.str();
+  }
+  std::string decl_more_inputs;
+  {
+    std::stringstream ss;
+    ss << "6 sort bitvec 1" << std::endl
+       << "7 input 6 @inp7" << std::endl
+       << "8 input 1 @inp8" << std::endl;
+    decl_more_inputs = ss.str();
+  }
+  std::string ite9;
+  {
+    std::stringstream ss;
+    ss << "9 ite 2 -7 4 5" << std::endl;
+    ite9 = ss.str();
+  }
+  std::string reads;
+  {
+    std::stringstream ss;
+    ss << "10 read 1 4 8" << std::endl
+       << "11 read 1 9 8" << std::endl
+       << "12 neq 6 10 11" << std::endl;
+    reads = ss.str();
+  }
+  std::string and13;
+  {
+    std::stringstream ss;
+    ss << "13 and 6 -7 12";
+    and13 = ss.str();
+  }
+  std::string root;
+  {
+    std::stringstream ss;
+    ss << "14 constraint 13" << std::endl;
+    root = ss.str();
+  }
+
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  BitwuzlaParser *parser =
+      bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
+  const char *err =
+      bitwuzla_parser_parse(parser, decl_sorts.c_str(), true, false);
+  ASSERT_EQ(err, nullptr);
+  err = bitwuzla_parser_parse(parser, decl_inputs.c_str(), true, false);
+  ASSERT_EQ(err, nullptr);
+  err = bitwuzla_parser_parse(parser, decl_more_inputs.c_str(), true, false);
+  ASSERT_EQ(err, nullptr);
+  err = bitwuzla_parser_parse(parser, ite9.c_str(), true, false);
+  ASSERT_EQ(err, nullptr);
+  err = bitwuzla_parser_parse(parser, reads.c_str(), true, false);
+  ASSERT_EQ(err, nullptr);
+  err = bitwuzla_parser_parse(parser, and13.c_str(), true, false);
+  ASSERT_EQ(err, nullptr);
+  err = bitwuzla_parser_parse(parser, root.c_str(), true, false);
+  ASSERT_EQ(err, nullptr);
+  Bitwuzla *bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
+  ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);
 }
