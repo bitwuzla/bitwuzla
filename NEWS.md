@@ -2,11 +2,22 @@
 
 This file collects a summary of important and/or user-visible changes.
 
-## News since version 0.3.0
+## News for version 0.3.2023
+
+- Fix special case handling for equality over constant arrays.
+
+## News for version 0.3.1
 
 - Added option `-M`/`--memory-limit` to set memory limit.
 
-## News since version 0.2.0
+- Printer: Fix printing of empty formulas.
+
+- SMT2 Parser: Fix error handling for indexed bit-vector values.
+
+- Allow special case for equality over constant arrays. This is part of
+  ongoing work towards generally allowing equality over constant arrays.
+
+## News for version 0.3.0
 
 - Added support for bit-vector overflow operator `bvnego`.
 
