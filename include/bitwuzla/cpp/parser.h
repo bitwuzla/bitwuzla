@@ -32,7 +32,7 @@ class Parser
    * @note The parser creates and owns the associated Bitwuzla instance.
    * @param options     The configuration options for the Bitwuzla instance
    *                    (created by the parser).
-   * @param language    The format of the input file.
+   * @param language    The format of the input.
    * @param out         The output stream.
    */
   Parser(Options &options,

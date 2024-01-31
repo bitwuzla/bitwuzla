@@ -7,6 +7,7 @@ Python Interface
   * :ref:`python/interface:bitwuzla`
   * :ref:`python/interface:sort`
   * :ref:`python/interface:term`
+  * :ref:`python/interface:optioninfo`
 
 * :ref:`python/interface:functions`
 
@@ -19,6 +20,7 @@ Python Interface
 * :ref:`python/interface:enums`
 
   * :ref:`python/interface:option`
+  * :ref:`python/interface:optioninfokind`
   * :ref:`python/interface:kind`
   * :ref:`python/interface:result`
   * :ref:`python/interface:roundingmode`
@@ -39,6 +41,8 @@ Bitwuzla
    :members:
    :undoc-members:
 
+   .. automethod:: __init__
+
 Sort
 ^^^^
 .. autoclass:: bitwuzla.Sort
@@ -54,6 +58,14 @@ Term
 Parser
 ^^^^^^
 .. autoclass:: bitwuzla.Parser
+   :members:
+   :undoc-members:
+
+   .. automethod:: __init__
+
+OptionInfo
+^^^^^^^^^^
+.. autoclass:: bitwuzla.OptionInfo
    :members:
    :undoc-members:
 
@@ -103,6 +115,12 @@ Enums
 Option
 ^^^^^^
 .. autoclass:: bitwuzla.Option
+   :members:
+   :undoc-members:
+
+OptionInfoKind
+^^^^^^^^^^^^^^
+.. autoclass:: bitwuzla.OptionInfoKind
    :members:
    :undoc-members:
 

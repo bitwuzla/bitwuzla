@@ -125,6 +125,7 @@ def git_id() -> str:
 # --------------------------------------------------------------------------- #
 
 cdef class Sort:
+    """A Bitwuzla sort."""
     cdef bitwuzla_api.Sort c_sort
 
     def is_null(self) -> bool:
@@ -298,6 +299,7 @@ cdef class Sort:
 # --------------------------------------------------------------------------- #
 
 cdef class Term:
+    """A Bitwuzla term."""
     cdef bitwuzla_api.Term c_term
 
     def is_null(self) -> bool:
@@ -601,6 +603,7 @@ cdef class Term:
 # --------------------------------------------------------------------------- #
 
 cdef class Options:
+    """A Bitwuzla options configuration."""
     cdef bitwuzla_api.Options c_options
 
     def is_valid(self, name: str):
@@ -768,6 +771,9 @@ cdef class OptionInfo:
         return OptionInfoKind(self.c_info.get().kind)
 
     def dflt(self):
+        """Get the default value of an option.
+           :return: The default value.
+        """
         if self.kind() == OptionInfoKind.BOOL:
             return self.c_info.get().value[bitwuzla_api.OptionInfoBool]().dflt
         if self.kind() == OptionInfoKind.MODE:
@@ -776,6 +782,9 @@ cdef class OptionInfo:
         return self.c_info.get().value[bitwuzla_api.OptionInfoNumeric]().dflt
 
     def cur(self):
+        """Get the current value of an option.
+           :return: The current default value.
+        """
         if self.kind() == OptionInfoKind.BOOL:
             return self.c_info.get().value[bitwuzla_api.OptionInfoBool]().cur
         if self.kind() == OptionInfoKind.MODE:
@@ -784,16 +793,25 @@ cdef class OptionInfo:
         return self.c_info.get().value[bitwuzla_api.OptionInfoNumeric]().cur
 
     def min(self):
+        """Get the minimum value of a numeric option.
+           :return: The minimum value.
+        """
         if self.kind() == OptionInfoKind.NUMERIC:
             return self.c_info.get().value[bitwuzla_api.OptionInfoNumeric]().min
         return None
 
     def max(self):
+        """Get the maximum value of a numeric option.
+           :return: The maximum value.
+        """
         if self.kind() == OptionInfoKind.NUMERIC:
             return self.c_info.get().value[bitwuzla_api.OptionInfoNumeric]().max
         return None
 
     def modes(self):
+        """Get the available modes of an option with modes.
+           :return: The modes.
+        """
         if self.kind() == OptionInfoKind.MODE:
             return [
                     _to_str(m) for m in
@@ -802,6 +820,9 @@ cdef class OptionInfo:
         return None
 
     def description(self):
+        """Get the description of an option.
+           :return: The description.
+        """
         return _to_str(self.c_info.get().description)
 
 
@@ -810,10 +831,15 @@ cdef class OptionInfo:
 # --------------------------------------------------------------------------- #
 
 cdef class Bitwuzla:
+    """A Bitwuzla solver instance."""
     cdef shared_ptr[bitwuzla_api.Bitwuzla] c_bitwuzla
     cdef unique_ptr[bitwuzla_api.PyTerminator] c_terminator
 
     def __init__(self, options: Options = Options()):
+        """Constructor.
+
+           :param options: The options configuration of the solver instance.
+        """
         self.c_bitwuzla.reset(new bitwuzla_api.Bitwuzla(options.c_options))
 
     def configure_terminator(self, callback: callable):
@@ -1389,6 +1415,7 @@ def substitute_terms(terms: list[Term], substs: dict[Term, Term]) -> list[Term]:
 # --------------------------------------------------------------------------- #
 
 cdef class Parser:
+    """The Bitwuzla parser."""
     cdef unique_ptr[bitwuzla_api.Parser] c_parser
     cdef Options options
 
@@ -1396,6 +1423,17 @@ cdef class Parser:
                  options: Options,
                  language = "smt2",
                  uint8_t base = 2):
+        """Constructor.
+
+           :note: The parser creates and owns the associated Bitwuzla instance.
+           :param options:  The configuration options for the Bitwuzla instance
+                            (created by the parser).
+           :param language: The format of the input.
+           :param base:     The base of the string representation of bit-vector
+                            values; ``2`` for binary, ``10`` for decimal, and
+                            ``16`` for hexadecimal. Always ignored for Boolean
+                            and RoundingMode values.
+        """
         cdef unique_ptr[bitwuzla_api.set_bv_format] c_bv_fmt
         self.options = options
         c_bv_fmt.reset(new bitwuzla_api.set_bv_format(base))
@@ -1407,16 +1445,34 @@ cdef class Parser:
                     &bitwuzla_api.cout))
 
     def parse(self,
-              infile_name,
+              iinput,
               parse_only: bool = False,
               parse_file: bool = True) -> str:
+        """Parse input, either from a file or from a string.
+
+           :param input:      The name of the input file if ``parse_file`` is
+                              ``True``, else a string with the input.
+           :param parse_only: ``True`` to only parse without issuing calls to
+                              check_sat.
+           :param parse_file: ``True`` to parse an input file with the given
+                              name ``iinput``, ``False`` to parse from
+                              ``iinput`` as a string input.
+           :return: The error message in case of an error, empty if no error.
+           :note: Parameter `parse_only` is redundant for BTOR2 input, its the
+                  only available mode for BTOR2 (due to the language not
+                  supporting "commands" as in SMT2).
+        """
         res = self.c_parser.get().parse(
-                    <const string&> str(infile_name).encode(),
+                    <const string&> str(iinput).encode(),
                     parse_only, parse_file)
         if res.decode() == '': return None
         return res.decode()
 
     def bitwuzla(self) -> Bitwuzla:
+        """Get the associated Bitwuzla instance.
+
+           :return: The Bitwuzla instance.
+        """
         b = Bitwuzla(self.options)
         b.c_bitwuzla = self.c_parser.get().bitwuzla()
         return b

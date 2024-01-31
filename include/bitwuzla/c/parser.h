@@ -27,7 +27,7 @@ typedef struct BitwuzlaParser BitwuzlaParser;
  *
  * @note The parser creates and owns the associated Bitwuzla instance.
  * @param options The associated options.
- * @param language     The format of the input file.
+ * @param language     The format of the input.
  * @param base         The base of the string representation of bit-vector
  *                     values; `2` for binary, `10` for decimal, and `16` for
  *                     hexadecimal. Always ignored for Boolean and RoundingMode

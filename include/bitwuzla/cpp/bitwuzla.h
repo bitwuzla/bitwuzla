@@ -302,8 +302,11 @@ struct OptionInfo
   /** The kind of the associated option. */
   enum class Kind
   {
+    /*! Boolean option (Boolean configuration value). */
     BOOL,
+    /*! Numeric option (uint64_t configuration value). */
     NUMERIC,
+    /*! Option with configuration modes. */
     MODE,
   };
 
