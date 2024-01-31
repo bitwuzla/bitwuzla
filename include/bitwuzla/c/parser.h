@@ -57,7 +57,7 @@ BitwuzlaParser* bitwuzla_parser_new(BitwuzlaOptions* options,
 void bitwuzla_parser_delete(BitwuzlaParser* parser);
 
 /**
- * Parse input. either from a file or from a string.
+ * Parse input, either from a file or from a string.
  *
  * @param parser     The Bitwuzla parser instance.
  * @param input      The name of the input file if `parse_file` is true,
@@ -66,6 +66,9 @@ void bitwuzla_parser_delete(BitwuzlaParser* parser);
  * @param parse_file True to parse an input file with the given name `input`,
  *                   false to parse from `input` as a string input.
  * @return The error message in case of an error, else NULL.
+ * @note Parameter `parse_only` is redundant for BTOR2 input, its the only
+ *       available mode for BTOR2 (due to the language not supporting
+ *       "commands" as in SMT2).
  */
 const char* bitwuzla_parser_parse(BitwuzlaParser* parser,
                                   const char* input,

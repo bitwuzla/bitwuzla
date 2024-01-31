@@ -48,12 +48,15 @@ class Parser
    * @param parse_file True to parse an input file with the given name `input`,
    *                   false to parse from `input` as a string input.
    * @return The error message in case of an error, empty if no error.
+   * @note Parameter `parse_only` is redundant for BTOR2 input, its the only
+   *       available mode for BTOR2 (due to the language not supporting
+   *       "commands" as in SMT2).
    */
   std::string parse(const std::string &input,
                     bool parse_only = false,
                     bool parse_file = true);
   /**
-   * Parse input file.
+   * Parse input from an input stream.
    * @param infile_name The name of the input file. This is required for error
    *                    message printing only. Use '<stdin>' if the input
    *                    stream is std::cin, and '<string>' if the input stream
@@ -61,6 +64,9 @@ class Parser
    * @param input       The input stream.
    * @param parse_only  True to only parse without issuing calls to check_sat.
    * @return The error message in case of an error, empty if no error.
+   * @note Parameter `parse_only` is redundant for BTOR2 input, its the only
+   *       available mode for BTOR2 (due to the language not supporting
+   *       "commands" as in SMT2).
    */
   std::string parse(const std::string &infile_name,
                     std::istream &input,

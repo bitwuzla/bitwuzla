@@ -2,6 +2,32 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News since version 0.3.2
+
+- Refactor parser interface to allow parsing from string inputs.
+  + A parser instance is now not tied to an input file anymore.
+  + Added support for parsing from string inputs.
+  + C++ API:
+    * Constructor `Parser(Options&, const std::string&, const std::string&, std::ostream*)`
+      changed to `Parser(Options&, const std::string&, std::ostream*)`
+    * Function `std::string Parser::parse(bool)` changed to
+      `std::string Parser::parse(const std::string, bool, bool)`
+      and now also supports parsing from string input.
+    * New Function `std::string Parser::parse(const std::string&, std::istream&, bool)`
+      allows parsing from an already open input stream. This is not limited to
+      input files but also supports parsing from `std::cin` and strings.
+  + C API:
+    * Function `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, FILE*, const char*, uint8_t, const char*)`
+      changed to `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, uint8_t, const char*)`.
+    * Function `const char* bitwuzla_parser_parse(BitwulzaParser*, bool)`
+      changed to `const char* bitwuzla_parser_parse(BitwulzaParser*, const char*, bool, bool)`.
+  + Python API:
+    * Class `Parser` is now constructed from options, a language and a base
+      for the string representation of bit-vector values (does not require
+      an input file name anymore).
+    * Function `Parser.parse(self, parse_only: bool)` changed to
+      `Parser.parse(self, infile_name, parse_only: bool, parse_file: bool)`.
+
 ## News for version 0.3.2
 
 - Fix special case handling for equality over constant arrays.
