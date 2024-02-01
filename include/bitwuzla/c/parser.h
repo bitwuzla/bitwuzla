@@ -65,15 +65,23 @@ void bitwuzla_parser_delete(BitwuzlaParser* parser);
  * @param parse_only True to only parse without executing check-sat calls.
  * @param parse_file True to parse an input file with the given name `input`,
  *                   false to parse from `input` as a string input.
- * @return The error message in case of an error, else NULL.
+ * @return False on error. The error message can be queried via
+ *         `bitwuzla_parser_get_error_msg()`.
  * @note Parameter `parse_only` is redundant for BTOR2 input, its the only
  *       available mode for BTOR2 (due to the language not supporting
  *       "commands" as in SMT2).
  */
-const char* bitwuzla_parser_parse(BitwuzlaParser* parser,
-                                  const char* input,
-                                  bool parse_only,
-                                  bool parse_file);
+bool bitwuzla_parser_parse(BitwuzlaParser* parser,
+                           const char* input,
+                           bool parse_only,
+                           bool parse_file);
+
+/**
+ * Get the current error message.
+ * @param parser The Bitwuzla parser instance.
+ * @return The error message.
+ */
+const char* bitwuzla_parser_get_error_msg(BitwuzlaParser* parser);
 
 /**
  * Get the associated Bitwuzla instance.

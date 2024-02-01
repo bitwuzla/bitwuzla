@@ -38,7 +38,7 @@ Parser::reset()
   d_done = false;
 }
 
-std::string
+bool
 Parser::parse(const std::string& input, bool parse_only, bool parse_file)
 {
   reset();
@@ -55,7 +55,7 @@ Parser::parse(const std::string& input, bool parse_only, bool parse_file)
       if (!infile)
       {
         d_error = "failed to open '" + input + "'";
-        return d_error;
+        return false;
       }
       instream = &infile;
     }
@@ -66,8 +66,7 @@ Parser::parse(const std::string& input, bool parse_only, bool parse_file)
     instream = &instring;
   }
 
-  std::string res =
-      parse(parse_file ? input : "<string>", *instream, parse_only);
+  bool res = parse(parse_file ? input : "<string>", *instream, parse_only);
   if (infile.is_open())
   {
     infile.close();
@@ -75,7 +74,7 @@ Parser::parse(const std::string& input, bool parse_only, bool parse_file)
   return res;
 }
 
-std::string
+bool
 Parser::parse(const std::string& infile_name,
               std::istream& input,
               bool parse_only)
@@ -90,7 +89,8 @@ Parser::parse(const std::string& infile_name,
 
   if (!d_error.empty())
   {
-    return d_error;
+    d_error = "parser in unsafe state after parse error";
+    return false;
   }
 
   while (parse_line() && !d_done && !terminate())
@@ -98,7 +98,7 @@ Parser::parse(const std::string& infile_name,
 
   Msg(1) << "parsed " << d_statistics.num_lines << " lines in "
          << ((double) d_statistics.time_parse.elapsed() / 1000) << " seconds";
-  return d_error;
+  return d_error.empty();
 }
 
 /* Parser private ----------------------------------------------------------- */

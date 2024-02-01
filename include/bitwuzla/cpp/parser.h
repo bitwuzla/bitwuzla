@@ -34,6 +34,9 @@ class Parser
    *                    (created by the parser).
    * @param language    The format of the input.
    * @param out         The output stream.
+   * @note It is not safe to reuse a parser instance after a parse error.
+   *       Subsequent parse queries after a parse error will return with
+   *       an error.
    */
   Parser(Options &options,
          const std::string &language = "smt2",
@@ -47,14 +50,14 @@ class Parser
    * @param parse_only True to only parse without issuing calls to check_sat.
    * @param parse_file True to parse an input file with the given name `input`,
    *                   false to parse from `input` as a string input.
-   * @return The error message in case of an error, empty if no error.
+   * @return False on error. The error message can be queried via `error_msg()`.
    * @note Parameter `parse_only` is redundant for BTOR2 input, its the only
    *       available mode for BTOR2 (due to the language not supporting
    *       "commands" as in SMT2).
    */
-  std::string parse(const std::string &input,
-                    bool parse_only = false,
-                    bool parse_file = true);
+  bool parse(const std::string &input,
+             bool parse_only = false,
+             bool parse_file = true);
   /**
    * Parse input from an input stream.
    * @param infile_name The name of the input file. This is required for error
@@ -63,14 +66,20 @@ class Parser
    *                    was created from a string.
    * @param input       The input stream.
    * @param parse_only  True to only parse without issuing calls to check_sat.
-   * @return The error message in case of an error, empty if no error.
+   * @return False on error. The error message can be queried via `error_msg()`.
    * @note Parameter `parse_only` is redundant for BTOR2 input, its the only
    *       available mode for BTOR2 (due to the language not supporting
    *       "commands" as in SMT2).
    */
-  std::string parse(const std::string &infile_name,
-                    std::istream &input,
-                    bool parse_only = false);
+  bool parse(const std::string &infile_name,
+             std::istream &input,
+             bool parse_only = false);
+
+  /**
+   * Get the current error message.
+   * @return The error message.
+   */
+  std::string error_msg() const;
 
   /**
    * Get the associated Bitwuzla instance.

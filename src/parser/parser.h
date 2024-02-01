@@ -30,6 +30,9 @@ class Parser
    * @param options     The associated Bitwuzla options. Parser creates
    *                    Bitwuzla instance from these options.
    * @param out         The output stream.
+   * @note It is not safe to reuse a parser instance after a parse error.
+   *       Subsequent parse queries after a parse error will return with
+   *       an error.
    */
   Parser(bitwuzla::Options& options, std::ostream* out = &std::cout)
       : d_options_orig(options),
@@ -51,11 +54,11 @@ class Parser
    * @param parse_only True to only parse without executing check-sat calls.
    * @param parse_file True to parse an input file with the given name `input`,
    *                   false to parse from `input` as a string input.
-   * @return The error message, empty if no error.
+   * @return False on error. The error message can be queried via `error_msg()`.
    */
-  virtual std::string parse(const std::string& input,
-                            bool parse_only,
-                            bool parse_file) = 0;
+  virtual bool parse(const std::string& input,
+                     bool parse_only,
+                     bool parse_file) = 0;
   /**
    * Parse input.
    * @param infile_name The name of the input file. This is required for error
@@ -64,11 +67,11 @@ class Parser
    *                    was created from a string.
    * @param inpur       The input stream.
    * @param parse_only  True to only parse without executing check-sat calls.
-   * @return The error message, empty if no error.
+   * @return False on error. The error message can be queried via `error_msg()`.
    */
-  virtual std::string parse(const std::string& infile_name,
-                            std::istream& input,
-                            bool parse_only) = 0;
+  virtual bool parse(const std::string& infile_name,
+                     std::istream& input,
+                     bool parse_only) = 0;
 
   /** Configure Bitwuzla terminator.
    * @param terminator The terminator to configure as terminator for Bitwuzla.

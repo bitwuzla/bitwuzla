@@ -35,7 +35,7 @@ Parser::Parser(Options &options, const std::string &language, std::ostream *out)
   BITWUZLA_CHECK(d_parser->error_msg().empty()) << d_parser->error_msg();
 }
 
-std::string
+bool
 Parser::parse(const std::string &input, bool parse_only, bool parse_file)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(input);
@@ -43,7 +43,7 @@ Parser::parse(const std::string &input, bool parse_only, bool parse_file)
   return d_parser->parse(input, parse_only, parse_file);
 }
 
-std::string
+bool
 Parser::parse(const std::string &infile_name,
               std::istream &input,
               bool parse_only)
@@ -52,6 +52,12 @@ Parser::parse(const std::string &infile_name,
   BITWUZLA_CHECK(input.operator bool()) << "invalid input stream";
   assert(d_parser);
   return d_parser->parse(infile_name, input, parse_only);
+}
+
+std::string
+Parser::error_msg() const
+{
+  return d_parser->error_msg();
 }
 
 std::shared_ptr<bitwuzla::Bitwuzla>

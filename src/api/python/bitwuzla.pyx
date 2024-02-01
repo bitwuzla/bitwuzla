@@ -1447,7 +1447,7 @@ cdef class Parser:
     def parse(self,
               iinput,
               parse_only: bool = False,
-              parse_file: bool = True) -> str:
+              parse_file: bool = True) -> bool:
         """Parse input, either from a file or from a string.
 
            :param input:      The name of the input file if ``parse_file`` is
@@ -1457,14 +1457,22 @@ cdef class Parser:
            :param parse_file: ``True`` to parse an input file with the given
                               name ``iinput``, ``False`` to parse from
                               ``iinput`` as a string input.
-           :return: The error message in case of an error, empty if no error.
+           :return: False on error. The error message can be queried via
+                    ``error_msg()``.
            :note: Parameter `parse_only` is redundant for BTOR2 input, its the
                   only available mode for BTOR2 (due to the language not
                   supporting "commands" as in SMT2).
         """
-        res = self.c_parser.get().parse(
+        return self.c_parser.get().parse(
                     <const string&> str(iinput).encode(),
                     parse_only, parse_file)
+
+    def error_msg(self) -> str:
+        """Get the error message.
+
+           :return: The error message. None if no parse error.
+        """
+        res = self.c_parser.get().error_msg();
         if res.decode() == '': return None
         return res.decode()
 

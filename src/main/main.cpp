@@ -35,13 +35,12 @@ main(int32_t argc, char* argv[])
 
     std::cout << bitwuzla::set_bv_format(main_options.bv_format);
     bitwuzla::parser::Parser parser(options, main_options.language, &std::cout);
-    std::string err_msg =
-        parser.parse(main_options.infile_name,
-                     main_options.print || main_options.parse_only);
+    bool res = parser.parse(main_options.infile_name,
+                            main_options.print || main_options.parse_only);
     reset_time_limit();
-    if (!err_msg.empty())
+    if (!res)
     {
-      Error() << err_msg;
+      Error() << parser.error_msg();
     }
     bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla().get();
     if (main_options.print)

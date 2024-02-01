@@ -27,9 +27,9 @@ main()
   parser::Parser parser(options);
 
   // Now parse the input file.
-  std::string err_msg = parser.parse("../smt2/quickstart.smt2");
+  bool res = parser.parse("../smt2/quickstart.smt2");
   // We expect no error to occur.
-  assert(err_msg.empty());
+  assert(res);
 
   // Now we retrieve the set of asserted formulas and print them.
   auto assertions = parser.bitwuzla()->get_assertions();
@@ -41,9 +41,9 @@ main()
   std::cout << "}" << std::endl;
 
   // Now we add an assertion via parsing from string.
-  err_msg = parser.parse("(assert (distinct (select a x) y))", true, false);
+  res = parser.parse("(assert (distinct (select a x) y))", true, false);
   // We expect no error to occur.
-  assert(err_msg.empty());
+  assert(res);
   // Now the formula is unsat.
   Result result = parser.bitwuzla()->check_sat();
 

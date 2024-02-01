@@ -71,21 +71,29 @@ bitwuzla_parser_delete(BitwuzlaParser* parser)
   BITWUZLA_TRY_CATCH_END;
 }
 
-const char*
+bool
 bitwuzla_parser_parse(BitwuzlaParser* parser,
                       const char* input,
                       bool parse_only,
                       bool parse_file)
 {
-  const char* res = nullptr;
+  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(input);
-  parser->d_error_msg = parser->d_parser->parse(input, parse_only, parse_file);
-  if (!parser->d_error_msg.empty())
-  {
-    res = parser->d_error_msg.c_str();
-  }
+  res                 = parser->d_parser->parse(input, parse_only, parse_file);
+  parser->d_error_msg = parser->d_parser->error_msg();
+  BITWUZLA_TRY_CATCH_END;
+  return res;
+}
+
+const char*
+bitwuzla_parser_get_error_msg(BitwuzlaParser* parser)
+{
+  const char* res = nullptr;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(parser);
+  res = parser->d_error_msg.c_str();
   BITWUZLA_TRY_CATCH_END;
   return res;
 }

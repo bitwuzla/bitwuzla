@@ -282,7 +282,8 @@ cdef extern from "bitwuzla/cpp/parser.h" namespace "bitwuzla::parser":
         Parser(Options& options,
                const string& language,
                ostream* out) except +raise_error
-        string parse(const string& infile_name, bool parse_only, bool parse_file) except +raise_error
+        bool parse(const string& infile_name, bool parse_only, bool parse_file) except +raise_error
+        string error_msg() except +raise_error
         shared_ptr[Bitwuzla] bitwuzla() except +raise_error
 
 # -------------------------------------------------------------------------- #

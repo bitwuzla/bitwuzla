@@ -30,12 +30,12 @@ class Parser : public bzla::parser::Parser
   /** Destructor. */
   ~Parser();
 
-  std::string parse(const std::string& input,
-                    bool parse_only,
-                    bool parse_file) override;
-  std::string parse(const std::string& infile_name,
-                    std::istream& input,
-                    bool parse_only) override;
+  bool parse(const std::string& input,
+             bool parse_only,
+             bool parse_file) override;
+  bool parse(const std::string& infile_name,
+             std::istream& input,
+             bool parse_only) override;
 
  private:
   /** Reset parser for new parse call. */

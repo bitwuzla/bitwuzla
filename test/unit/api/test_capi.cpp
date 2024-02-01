@@ -2955,8 +2955,7 @@ TEST_F(TestCApi, parser_smt2)
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_parser_parse(parser, nullptr, true, true),
                d_error_not_null);
-  const char *err = bitwuzla_parser_parse(parser, filename, true, true);
-  ASSERT_EQ(err, nullptr);
+  ASSERT_TRUE(bitwuzla_parser_parse(parser, filename, true, true));
   bitwuzla_options_delete(options);
   bitwuzla_parser_delete(parser);
   std::remove(filename);
@@ -2972,8 +2971,9 @@ TEST_F(TestCApi, parser2_smt2)
 
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
-  const char *err_msg = bitwuzla_parser_parse(parser, filename, true, true);
-  ASSERT_NE(std::string(err_msg).find("undefined symbol 'x'"),
+  ASSERT_FALSE(bitwuzla_parser_parse(parser, filename, true, true));
+  ASSERT_NE(std::string(bitwuzla_parser_get_error_msg(parser))
+                .find("undefined symbol 'x'"),
             std::string::npos);
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);
@@ -2990,17 +2990,16 @@ TEST_F(TestCApi, parser_string1_smt2)
   {
     BitwuzlaParser *parser =
         bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
-    const char *err =
-        bitwuzla_parser_parse(parser, smt2.str().c_str(), true, true);
-    ASSERT_NE(err, nullptr);
+    ASSERT_FALSE(bitwuzla_parser_parse(parser, smt2.str().c_str(), true, true));
+    ASSERT_NE(std::string(bitwuzla_parser_get_error_msg(parser))
+                  .find("failed to open"),
+              std::string::npos);
     bitwuzla_parser_delete(parser);
   }
   {
     BitwuzlaParser *parser =
         bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
-    const char *err =
-        bitwuzla_parser_parse(parser, smt2.str().c_str(), true, false);
-    ASSERT_EQ(err, nullptr);
+    ASSERT_TRUE(bitwuzla_parser_parse(parser, smt2.str().c_str(), true, false));
     bitwuzla_parser_delete(parser);
   }
   bitwuzla_options_delete(options);
@@ -3013,13 +3012,9 @@ TEST_F(TestCApi, parser_string2_smt2)
   std::string str_false    = "(assert (= a false))";
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser = bitwuzla_parser_new(options, "smt2", 10, "<stdout>");
-  const char *err =
-      bitwuzla_parser_parse(parser, str_decl.c_str(), true, false);
-  ASSERT_EQ(err, nullptr);
-  err = bitwuzla_parser_parse(parser, str_true.c_str(), true, false);
-  ASSERT_EQ(err, nullptr);
-  err = bitwuzla_parser_parse(parser, str_false.c_str(), true, false);
-  ASSERT_EQ(err, nullptr);
+  ASSERT_TRUE(bitwuzla_parser_parse(parser, str_decl.c_str(), true, false));
+  ASSERT_TRUE(bitwuzla_parser_parse(parser, str_true.c_str(), true, false));
+  ASSERT_TRUE(bitwuzla_parser_parse(parser, str_false.c_str(), true, false));
   Bitwuzla *bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
   ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
   bitwuzla_parser_delete(parser);
@@ -3053,15 +3048,18 @@ TEST_F(TestCApi, parser_btor2)
   {
     BitwuzlaParser *parser =
         bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
-    const char *err = bitwuzla_parser_parse(parser, "parsex.btor2", true, true);
-    ASSERT_EQ(std::string(err), "failed to open 'parsex.btor2'");
+    ASSERT_FALSE(bitwuzla_parser_parse(parser, "parsex.btor2", true, true));
+    ASSERT_EQ(std::string(bitwuzla_parser_get_error_msg(parser)),
+              "failed to open 'parsex.btor2'");
+    ASSERT_FALSE(bitwuzla_parser_parse(parser, "parse.btor2", true, true));
+    ASSERT_EQ(std::string(bitwuzla_parser_get_error_msg(parser)),
+              "parser in unsafe state after parse error");
     bitwuzla_parser_delete(parser);
   }
   {
     BitwuzlaParser *parser =
         bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
-    const char *err = bitwuzla_parser_parse(parser, input, true, true);
-    ASSERT_EQ(err, nullptr);
+    ASSERT_TRUE(bitwuzla_parser_parse(parser, input, true, true));
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla_parser_get_bitwuzla(parser)),
               BITWUZLA_UNSAT);
     bitwuzla_parser_delete(parser);
@@ -3087,17 +3085,18 @@ TEST_F(TestCApi, parser_btor2_string1)
   {
     BitwuzlaParser *parser =
         bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
-    const char *err =
-        bitwuzla_parser_parse(parser, btor2.str().c_str(), true, true);
-    ASSERT_NE(std::string(err).find("failed to open"), std::string::npos);
+    ASSERT_FALSE(
+        bitwuzla_parser_parse(parser, btor2.str().c_str(), true, true));
+    ASSERT_NE(std::string(bitwuzla_parser_get_error_msg(parser))
+                  .find("failed to open"),
+              std::string::npos);
     bitwuzla_parser_delete(parser);
   }
   {
     BitwuzlaParser *parser =
         bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
-    const char *err =
-        bitwuzla_parser_parse(parser, btor2.str().c_str(), true, false);
-    ASSERT_EQ(err, nullptr);
+    ASSERT_TRUE(
+        bitwuzla_parser_parse(parser, btor2.str().c_str(), true, false));
     bitwuzla_parser_delete(parser);
   }
   bitwuzla_options_delete(options);
@@ -3161,21 +3160,14 @@ TEST_F(TestCApi, parser_btor2_string2)
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser =
       bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
-  const char *err =
-      bitwuzla_parser_parse(parser, decl_sorts.c_str(), true, false);
-  ASSERT_EQ(err, nullptr);
-  err = bitwuzla_parser_parse(parser, decl_inputs.c_str(), true, false);
-  ASSERT_EQ(err, nullptr);
-  err = bitwuzla_parser_parse(parser, decl_more_inputs.c_str(), true, false);
-  ASSERT_EQ(err, nullptr);
-  err = bitwuzla_parser_parse(parser, ite9.c_str(), true, false);
-  ASSERT_EQ(err, nullptr);
-  err = bitwuzla_parser_parse(parser, reads.c_str(), true, false);
-  ASSERT_EQ(err, nullptr);
-  err = bitwuzla_parser_parse(parser, and13.c_str(), true, false);
-  ASSERT_EQ(err, nullptr);
-  err = bitwuzla_parser_parse(parser, root.c_str(), true, false);
-  ASSERT_EQ(err, nullptr);
+  ASSERT_TRUE(bitwuzla_parser_parse(parser, decl_sorts.c_str(), true, false));
+  ASSERT_TRUE(bitwuzla_parser_parse(parser, decl_inputs.c_str(), true, false));
+  ASSERT_TRUE(
+      bitwuzla_parser_parse(parser, decl_more_inputs.c_str(), true, false));
+  ASSERT_TRUE(bitwuzla_parser_parse(parser, ite9.c_str(), true, false));
+  ASSERT_TRUE(bitwuzla_parser_parse(parser, reads.c_str(), true, false));
+  ASSERT_TRUE(bitwuzla_parser_parse(parser, and13.c_str(), true, false));
+  ASSERT_TRUE(bitwuzla_parser_parse(parser, root.c_str(), true, false));
   Bitwuzla *bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
   ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
 

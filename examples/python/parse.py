@@ -22,9 +22,9 @@ if __name__ == '__main__':
     parser = Parser(options)
 
     # Now parse the input file.
-    err_msg = parser.parse("../smt2/quickstart.smt2")
+    res = parser.parse("../smt2/quickstart.smt2")
     # We expect no error to occur.
-    assert not err_msg
+    assert not res
 
     # Now we retrieve the set of asserted formulas and print them.
     assertions = parser.bitwuzla().get_assertions()

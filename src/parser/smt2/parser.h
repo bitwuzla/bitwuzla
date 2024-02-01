@@ -30,12 +30,12 @@ class Parser : public bzla::parser::Parser
    */
   Parser(bitwuzla::Options& options, std::ostream* out = &std::cout);
 
-  std::string parse(const std::string& input,
-                    bool parse_only,
-                    bool parse_file) override;
-  std::string parse(const std::string& infile_name,
-                    std::istream& infile,
-                    bool parse_only) override;
+  bool parse(const std::string& input,
+             bool parse_only,
+             bool parse_file) override;
+  bool parse(const std::string& infile_name,
+             std::istream& infile,
+             bool parse_only) override;
 
  private:
   /** A parsed item. */

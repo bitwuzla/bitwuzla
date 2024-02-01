@@ -1922,7 +1922,7 @@ def test_arrayfun():
 # Parsing
 # ----------------------------------------------------------------------------
 
-def test_parser():
+def test_parser_smt2():
     filename = "parse.smt2";
     with open(filename, 'w') as smt2:
         smt2.write('(set-logic QF_BV)\n(check-sat)\n(exit)\n')
@@ -1932,41 +1932,99 @@ def test_parser():
     with pytest.raises(BitwuzlaException):
         Parser(options, '')
     with pytest.raises(BitwuzlaException):
-        Parser(options, 'parsex.smt2')
+        Parser(options, 'foo')
 
     parser = Parser(options)
 
     with pytest.raises(BitwuzlaException):
         parser.bitwuzla()
+    assert not parser.parse('parsex.smt2')
+    assert not parser.parse(filename, True)
+    assert parser.error_msg() == 'parser in unsafe state after parse error'
 
-    err = parser.parse(filename, True)
-    assert not err
+    parser = Parser(options)
+    assert parser.parse(filename, True)
     os.remove(filename)
 
-def test_parser_string1():
+def test_parser_smt2_string1():
     smt2 = "(set-logic QF_BV)\n(check-sat)\n(exit)\n";
     options = Options()
     parser = Parser(options)
-    err = parser.parse(smt2, True, True)
-    assert err != ''
+    assert not parser.parse(smt2, True, True)
+    assert parser.error_msg() != ''
     parser = Parser(options)
-    err = parser.parse(smt2, True, False)
-    assert err == None
+    assert parser.parse(smt2, True, False)
 
-def test_parser_string2():
+def test_parser_smt2_string2():
     str_decl  = "(declare-const a Bool)"
     str_true  = "(assert (= a true))"
     str_false = "(assert (= a false))"
     options = Options()
     parser = Parser(options)
-    err = parser.parse(str_decl, True, False)
-    assert err == None
-    err = parser.parse(str_true, True, False)
-    assert err == None
-    err = parser.parse(str_false, True, False)
-    assert err == None
+    assert parser.parse(str_decl, True, False)
+    assert parser.parse(str_true, True, False)
+    assert parser.parse(str_false, True, False)
     bitwuzla = parser.bitwuzla()
     assert bitwuzla.check_sat() == Result.UNSAT
+
+def test_parser_btor2():
+    iinput = "parse.btor2";
+    with open(iinput, 'w') as btor2:
+        btor2.write("1 sort bitvec 8\n")
+        btor2.write("2 input 1 @inp2\n")
+        btor2.write("3 sort bitvec 3\n")
+        btor2.write("4 one 3\n")
+        btor2.write("5 uext 1 4 5\n")
+        btor2.write("6 srl 1 2 5\n")
+        btor2.write("7 sort bitvec 1\n")
+        btor2.write("8 slice 7 6 7 7\n")
+        btor2.write("9 constraint 8\n")
+
+    options = Options()
+    parser = Parser(options, 'btor2')
+    bitwuzla = parser.bitwuzla()
+    assert not parser.parse('parsex.btor2')
+    assert parser.error_msg() == "failed to open 'parsex.btor2'"
+
+    parser = Parser(options, 'btor2')
+    assert parser.parse(iinput, True, True)
+    assert parser.bitwuzla().check_sat() == Result.UNSAT
+    os.remove(iinput)
+
+def test_parser_btor2_string1():
+    btor2 = "1 sort bitvec 8\n2 input 1 @inp2\n3 sort bitvec 3\n"\
+            "4 one 3\n5 uext 1 4 5\n6 srl 1 2 5\n7 sort bitvec 1\n"\
+            "8 slice 7 6 7 7\n9 constraint 8\n"
+    options = Options()
+    parser = Parser(options, 'btor2')
+    assert not parser.parse(btor2, True, True)
+
+    parser = Parser(options, 'btor2')
+    assert parser.parse(btor2, True, False)
+
+def test_parser_btor2_string2():
+    str_decl  = "(declare-const a Bool)"
+    str_true  = "(assert (= a True))"
+    str_false = "(assert (= a False))"
+
+    decl_sorts = "1 sort bitvec 8\n2 sort array 1 1\n"
+    decl_inputs = "3 input 2 @arr3\n4 input 2 @arr4\n5 input 2 @arr5\n"
+    decl_more_inputs = "6 sort bitvec 1\n7 input 6 @inp7\n8 input 1 @inp8\n"
+    ite9 = "9 ite 2 -7 4 5\n"
+    reads = "10 read 1 4 8\n11 read 1 9 8\n12 neq 6 10 11\n"
+    and13 = "13 and 6 -7 12\n"
+    root = "14 constraint 13\n"
+
+    options = Options()
+    parser = Parser(options, 'btor2')
+    assert parser.parse(decl_sorts, True, False)
+    assert parser.parse(decl_inputs, True, False)
+    assert parser.parse(decl_more_inputs, True, False)
+    assert parser.parse(ite9, True, False)
+    assert parser.parse(reads, True, False)
+    assert parser.parse(and13, True, False)
+    assert parser.parse(root, True, False)
+    assert parser.bitwuzla().check_sat() == Result.UNSAT
 
 # ----------------------------------------------------------------------------
 # Termination function
