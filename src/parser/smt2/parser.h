@@ -101,6 +101,7 @@ class Parser : public bzla::parser::Parser
     if (d_logic.empty())
     {
       enable_theory("ALL");
+      d_logic = "ALL";
     }
   }
 
