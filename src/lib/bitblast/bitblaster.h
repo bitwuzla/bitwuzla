@@ -402,6 +402,7 @@ class BitblasterInterface
     Bits res;
     size_t size = a.size();
     res.reserve(size);
+    T false_bit = d_bit_mgr.mk_false();
 
     for (size_t i = 0; i < size; ++i)
     {
@@ -413,10 +414,22 @@ class BitblasterInterface
       T cout;
       const T& b_bit = b[ib];
 
+      // Optimization: We can safely skip this iteration since we are adding 0.
+      if (b_bit == false_bit)
+      {
+        continue;
+      }
+
       std::tie(res[ib], cout) =
           half_adder(res[ib], d_bit_mgr.mk_and(a[size - 1], b_bit));
       for (size_t j = 1, ir = ib - 1, ia = size - 2; j <= ib; ++j, --ir, --ia)
       {
+        // Optimization: No need to construct FA since res[ir] will stay the
+        // same. Avoids full_adder() call.
+        if (a[ia] == false_bit && cout == false_bit)
+        {
+          continue;
+        }
         std::tie(res[ir], cout) =
             full_adder(res[ir], d_bit_mgr.mk_and(a[ia], b_bit), cout);
       }
