@@ -51,7 +51,7 @@ class AigNode
 
   bool is_const() const;
 
-  bool is_negated() const;
+  bool is_negated() const { return d_negated; }
 
   const AigNode& operator[](int index) const;
 
@@ -63,7 +63,7 @@ class AigNode
   // Should only be constructed via AigManager
   AigNode(AigNodeData* data, bool negated = false);
 
-  bool is_null() const;
+  bool is_null() const { return d_data == nullptr; }
   uint64_t get_refs() const;
 
   AigNodeData* d_data = nullptr;

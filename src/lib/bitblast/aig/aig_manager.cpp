@@ -261,12 +261,6 @@ AigNode::is_const() const
   return !is_and() && !is_true() && !is_false();
 }
 
-bool
-AigNode::is_negated() const
-{
-  return d_negated;
-}
-
 const AigNode&
 AigNode::operator[](int index) const
 {
@@ -288,12 +282,6 @@ AigNode::get_id() const
     return 0;
   }
   return is_negated() ? -d_data->d_id : d_data->d_id;
-}
-
-bool
-AigNode::is_null() const
-{
-  return d_data == nullptr;
 }
 
 uint64_t
