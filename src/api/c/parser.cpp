@@ -71,51 +71,78 @@ bitwuzla_parser_delete(BitwuzlaParser* parser)
   BITWUZLA_TRY_CATCH_END;
 }
 
-bool
+void
 bitwuzla_parser_parse(BitwuzlaParser* parser,
                       const char* input,
                       bool parse_only,
-                      bool parse_file)
+                      bool parse_file,
+                      const char** error_msg)
 {
-  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(input);
-  res                 = parser->d_parser->parse(input, parse_only, parse_file);
-  parser->d_error_msg = parser->d_parser->error_msg();
+  BITWUZLA_CHECK_NOT_NULL(error_msg);
   BITWUZLA_TRY_CATCH_END;
-  return res;
+  try
+  {
+    parser->d_parser->parse(input, parse_only, parse_file);
+    *error_msg = nullptr;
+  }
+  catch (bitwuzla::Exception& e)
+  {
+    parser->d_error_msg = parser->d_parser->error_msg();
+    *error_msg =
+        parser->d_error_msg.empty() ? NULL : parser->d_error_msg.c_str();
+  }
 }
 
-bool
+BitwuzlaTerm
 bitwuzla_parser_parse_term(BitwuzlaParser* parser,
                            const char* input,
-                           BitwuzlaTerm* term)
+                           const char** error_msg)
 {
-  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(input);
-  bitwuzla::Term t;
-  res   = parser->d_parser->parse_term(input, t);
-  *term = Bitwuzla::export_term(t);
+  BITWUZLA_CHECK_NOT_NULL(error_msg);
   BITWUZLA_TRY_CATCH_END;
+  BitwuzlaTerm res = 0;
+  try
+  {
+    res        = Bitwuzla::export_term(parser->d_parser->parse_term(input));
+    *error_msg = nullptr;
+  }
+  catch (bitwuzla::Exception& e)
+  {
+    parser->d_error_msg = parser->d_parser->error_msg();
+    *error_msg =
+        parser->d_error_msg.empty() ? NULL : parser->d_error_msg.c_str();
+  }
   return res;
 }
 
-bool
+BitwuzlaSort
 bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
                            const char* input,
-                           BitwuzlaSort* sort)
+                           const char** error_msg)
 {
-  bool res = false;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(input);
-  bitwuzla::Sort s;
-  res   = parser->d_parser->parse_sort(input, s);
-  *sort = Bitwuzla::export_sort(s);
+  BITWUZLA_CHECK_NOT_NULL(error_msg);
   BITWUZLA_TRY_CATCH_END;
+  BitwuzlaSort res = 0;
+  try
+  {
+    res        = Bitwuzla::export_sort(parser->d_parser->parse_sort(input));
+    *error_msg = nullptr;
+  }
+  catch (bitwuzla::Exception& e)
+  {
+    parser->d_error_msg = parser->d_parser->error_msg();
+    *error_msg =
+        parser->d_error_msg.empty() ? NULL : parser->d_error_msg.c_str();
+  }
   return res;
 }
 

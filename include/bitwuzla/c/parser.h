@@ -65,37 +65,40 @@ void bitwuzla_parser_delete(BitwuzlaParser* parser);
  * @param parse_only True to only parse without executing check-sat calls.
  * @param parse_file True to parse an input file with the given name `input`,
  *                   false to parse from `input` as a string input.
- * @return False on error. The error message can be queried via
- *         `bitwuzla_parser_get_error_msg()`.
+ * @param error_msg  Output parameter for the error message in case of a
+ *                   parse error, NULL if no error occurred.
  * @note Parameter `parse_only` is redundant for BTOR2 input, its the only
  *       available mode for BTOR2 (due to the language not supporting
  *       "commands" as in SMT2).
  */
-bool bitwuzla_parser_parse(BitwuzlaParser* parser,
+void bitwuzla_parser_parse(BitwuzlaParser* parser,
                            const char* input,
                            bool parse_only,
-                           bool parse_file);
+                           bool parse_file,
+                           const char** error_msg);
 
 /**
  * Parse term from string.
- * @param input The input string.
- * @param term  Output parameter for the resulting term.
- * @return False on error. The error message can be queried via
- *         `bitwuzla_parser_get_error_msg()`.
+ * @param parser     The Bitwuzla parser instance.
+ * @param input      The input string.
+ * @param error_msg  Output parameter for the error message in case of a
+ *                   parse error, NULL if no error occurred.
+ * @return The resulting term.
  */
-bool bitwuzla_parser_parse_term(BitwuzlaParser* parser,
-                                const char* input,
-                                BitwuzlaTerm* term);
+BitwuzlaTerm bitwuzla_parser_parse_term(BitwuzlaParser* parser,
+                                        const char* input,
+                                        const char** error_msg);
 /**
  * Parse sort from string.
+ * @param parser     The Bitwuzla parser instance.
  * @param input The input string.
- * @param sort  Output parameter for the resulting sort.
- * @return False on error. The error message can be queried via
- *         `bitwuzla_parser_get_error_msg()`.
+ * @return The resulting sort.
+ * @param error_msg  Output parameter for the error message in case of a
+ *                   parse error, NULL if no error occurred.
  */
-bool bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
-                                const char* input,
-                                BitwuzlaSort* sort);
+BitwuzlaSort bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
+                                        const char* input,
+                                        const char** error_msg);
 
 /**
  * Get the current error message.

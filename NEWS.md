@@ -13,26 +13,28 @@ This file collects a summary of important and/or user-visible changes.
     * Constructor `Parser(Options&, const std::string&, const std::string&, std::ostream*)`
       changed to `Parser(Options&, const std::string&, std::ostream*)`
     * Function `std::string Parser::parse(bool)` changed to
-      `bool Parser::parse(const std::string, bool, bool)`
-      and now also supports parsing from string input.
-    * New Function `std::string Parser::parse(const std::string&, std::istream&, bool)`
-      allows parsing from an already open input stream. This is not limited to
-      input files but also supports parsing from `std::cin` and strings.
+      `void Parser::parse(const std::string, bool, bool)`
+      and now throws an exception on error. It now also supports parsing from
+      string input.
+    * New Function `void Parser::parse(const std::string&, std::istream&, bool)`
+      allows parsing from an already open input stream and now throws an
+      exception on error. This function is not limited to input files but also
+      supports parsing from `std::cin` and strings.
     * New function `std::string Parser::error_msg()` to query error message.
-    * New function `bool parse_term(const std::string&, bitwuzla::Term&)` to
+    * New function `bitwuzla::Term parse_term(const std::string&)` to
       parse a term from string.
-    * New function `bool parse_sort(const std::string&, bitwuzla::Sort&)` to
+    * New function `bitwuzla::Sort parse_sort(const std::string&)` to
       parse a sort from string.
   + C API:
     * Function `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, FILE*, const char*, uint8_t, const char*)`
       changed to `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, uint8_t, const char*)`.
     * Function `const char* bitwuzla_parser_parse(BitwulzaParser*, bool)`
-      changed to `const char* bitwuzla_parser_parse(BitwulzaParser*, const char*, bool, bool)`.
+      changed to `void bitwuzla_parser_parse(BitwulzaParser*, const char*, bool, bool, const char*)`.
     * New function `const char* bitwuzla_parser_get_error_msg(BitwuzlaParser*)`
       to query error message.
-    * New function `bool bitwuzla_parser_parse_term(BitwuzlaParser*, const char*, BitwuzlaTerm*)`
+    * New function `BitwuzlaTerm bitwuzla_parser_parse_term(BitwuzlaParser*, const char*, const char*)`
       to parse a term from string.
-    * New function `bool bitwuzla_parser_parse_sort(BitwuzlaParser*, const char*, BitwuzlaSort*)`
+    * New function `BitwuzlaSort bitwuzla_parser_parse_sort(BitwuzlaParser*, const char*, const char*)`
       to parse a sort from string.
   + Python API:
     * Class `Parser` is now constructed from options, a language and a base

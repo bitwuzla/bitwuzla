@@ -50,12 +50,12 @@ class Parser
    * @param parse_only True to only parse without issuing calls to check_sat.
    * @param parse_file True to parse an input file with the given name `input`,
    *                   false to parse from `input` as a string input.
-   * @return False on error. The error message can be queried via `error_msg()`.
+   * @throws Exception on error.
    * @note Parameter `parse_only` is redundant for BTOR2 input, its the only
    *       available mode for BTOR2 (due to the language not supporting
    *       "commands" as in SMT2).
    */
-  bool parse(const std::string &input,
+  void parse(const std::string &input,
              bool parse_only = false,
              bool parse_file = true);
   /**
@@ -66,29 +66,29 @@ class Parser
    *                    was created from a string.
    * @param input       The input stream.
    * @param parse_only  True to only parse without issuing calls to check_sat.
-   * @return False on error. The error message can be queried via `error_msg()`.
+   * @throws Exception on parse error.
    * @note Parameter `parse_only` is redundant for BTOR2 input, its the only
    *       available mode for BTOR2 (due to the language not supporting
    *       "commands" as in SMT2).
    */
-  bool parse(const std::string &infile_name,
+  void parse(const std::string &infile_name,
              std::istream &input,
              bool parse_only = false);
 
   /**
    * Parse term from string.
    * @param input The input string.
-   * @param res   Output parameter for the resulting term.
-   * @return False on error. The error message can be queried via `error_msg()`.
+   * @return The parsed term.
+   * @throws Exception on parse error.
    */
-  bool parse_term(const std::string &input, bitwuzla::Term &res);
+  Term parse_term(const std::string &input);
   /**
    * Parse sort from string.
    * @param input The input string.
-   * @param res   Output parameter for the resulting sort.
-   * @return False on error. The error message can be queried via `error_msg()`.
+   * @return The parsed sort.
+   * @throws Exception on parse error.
    */
-  bool parse_sort(const std::string &input, bitwuzla::Sort &res);
+  Sort parse_sort(const std::string &input);
 
   /**
    * Get the current error message.
