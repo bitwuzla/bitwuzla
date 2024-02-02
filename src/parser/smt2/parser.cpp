@@ -148,6 +148,42 @@ Parser::parse(const std::string& infile_name,
   return d_error.empty();
 }
 
+bool
+Parser::parse_term(const std::string& input, bitwuzla::Term& res)
+{
+  init_logic();
+  std::stringstream instring;
+  instring << input;
+  reset();
+  d_infile_name = "<string>";
+  d_lexer->init(&instring);
+  if (!parse_term())
+  {
+    return false;
+  }
+  assert(peek_is_term_arg());
+  res = pop_term_arg();
+  assert(!res.is_null());
+  return true;
+}
+
+bool
+Parser::parse_sort(const std::string& input, bitwuzla::Sort& res)
+{
+  init_logic();
+  std::stringstream instring;
+  instring << input;
+  reset();
+  d_infile_name = "<string>";
+  d_lexer->init(&instring);
+  if (!parse_sort(res))
+  {
+    return false;
+  }
+  assert(!res.is_null());
+  return true;
+}
+
 /* Parser private ----------------------------------------------------------- */
 
 bool

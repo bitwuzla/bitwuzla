@@ -24,6 +24,12 @@ Lexer::init(std::istream* input)
 {
   assert(input);
   d_input = input;
+  d_coo             = {1, 1};
+  d_cur_coo         = {1, 1};
+  d_last_coo        = {1, 1};
+  d_last_coo_nl_col = 1;
+  d_saved           = false;
+  d_saved_char      = 0;
 }
 
 Token

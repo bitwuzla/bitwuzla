@@ -76,6 +76,21 @@ class Parser
              bool parse_only = false);
 
   /**
+   * Parse term from string.
+   * @param input The input string.
+   * @param res Output parameter for the resulting term.
+   * @return False on error. The error message can be queried via `error_msg()`.
+   */
+  bool parse_term(const std::string &input, bitwuzla::Term &res);
+  /**
+   * Parse sort from string.
+   * @param input The input string.
+   * @param res Output parameter for the resulting sort.
+   * @return False on error. The error message can be queried via `error_msg()`.
+   */
+  bool parse_sort(const std::string &input, bitwuzla::Sort &res);
+
+  /**
    * Get the current error message.
    * @return The error message.
    */

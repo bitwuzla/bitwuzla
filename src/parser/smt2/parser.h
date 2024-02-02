@@ -37,6 +37,9 @@ class Parser : public bzla::parser::Parser
              std::istream& infile,
              bool parse_only) override;
 
+  bool parse_term(const std::string& input, bitwuzla::Term& res) override;
+  bool parse_sort(const std::string& input, bitwuzla::Sort& res) override;
+
  private:
   /** A parsed item. */
   struct ParsedItem

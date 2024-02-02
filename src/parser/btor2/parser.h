@@ -37,7 +37,17 @@ class Parser : public bzla::parser::Parser
              std::istream& input,
              bool parse_only) override;
 
+  bool parse_term(const std::string& input, bitwuzla::Term& res) override;
+  bool parse_sort(const std::string& input, bitwuzla::Sort& res) override;
+
  private:
+  enum class ParsedKind
+  {
+    CONSTRAINT,
+    SORT,
+    TERM,
+  };
+
   /** Reset parser for new parse call. */
   void reset();
 
@@ -48,9 +58,15 @@ class Parser : public bzla::parser::Parser
 
   /**
    * Parse a line.
+   * @param pkind Optional output parameter indicating what kind of line
+   *              was parsed. This is mainly used in the public parsing
+   *              functions parse_term() and parse_sort().
+   * @param id    Optional output parameter for the resulting parsed
+   *              line id. This is mainly used in the public parsing
+   *              functions parse_term() and parse_sort().
    * @return False on error.
    */
-  bool parse_line();
+  bool parse_line(ParsedKind* pkind = nullptr, int64_t* line_id = nullptr);
   /**
    * Parse a numeral.
    * @param sign       True if parsed numeral may be signed.

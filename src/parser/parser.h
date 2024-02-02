@@ -73,6 +73,9 @@ class Parser
                      std::istream& input,
                      bool parse_only) = 0;
 
+  virtual bool parse_term(const std::string& input, bitwuzla::Term& res) = 0;
+  virtual bool parse_sort(const std::string& input, bitwuzla::Sort& res) = 0;
+
   /** Configure Bitwuzla terminator.
    * @param terminator The terminator to configure as terminator for Bitwuzla.
    */

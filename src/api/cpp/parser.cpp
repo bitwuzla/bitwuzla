@@ -54,6 +54,22 @@ Parser::parse(const std::string &infile_name,
   return d_parser->parse(infile_name, input, parse_only);
 }
 
+bool
+Parser::parse_term(const std::string &input, bitwuzla::Term &res)
+{
+  BITWUZLA_CHECK_STR_NOT_EMPTY(input);
+  assert(d_parser);
+  return d_parser->parse_term(input, res);
+}
+
+bool
+Parser::parse_sort(const std::string &input, bitwuzla::Sort &res)
+{
+  BITWUZLA_CHECK_STR_NOT_EMPTY(input);
+  assert(d_parser);
+  return d_parser->parse_sort(input, res);
+}
+
 std::string
 Parser::error_msg() const
 {

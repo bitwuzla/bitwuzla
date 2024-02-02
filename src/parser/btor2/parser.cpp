@@ -101,6 +101,57 @@ Parser::parse(const std::string& infile_name,
   return d_error.empty();
 }
 
+bool
+Parser::parse_term(const std::string& input, bitwuzla::Term& res)
+{
+  std::stringstream instring;
+  instring << input;
+  reset();
+  d_infile_name = "<string>";
+  d_lexer->init(&instring);
+  ParsedKind kind;
+  int64_t line_id = 0;
+  if (!parse_line(&kind, &line_id))
+  {
+    return false;
+  }
+  assert(line_id);
+  if (kind != ParsedKind::TERM)
+  {
+    d_error = "expected string that represents term";
+    return false;
+  }
+  res = d_term_map.at(line_id);
+  assert(!res.is_null());
+  return true;
+}
+
+bool
+Parser::parse_sort(const std::string& input, bitwuzla::Sort& res)
+{
+  std::stringstream instring;
+  instring << input;
+  reset();
+  d_infile_name = "<string>";
+  d_lexer->init(&instring);
+
+  ParsedKind kind;
+  int64_t line_id = 0;
+  if (!parse_line(&kind, &line_id))
+  {
+    return false;
+  }
+  assert(line_id);
+  if (kind != ParsedKind::SORT)
+  {
+    d_error = "expected string that represents sort declaration";
+    return false;
+  }
+  res = d_sort_map.at(line_id);
+  assert(!res.is_null());
+  return true;
+}
+
 /* Parser private ----------------------------------------------------------- */
 
 bitwuzla::Term
@@ -121,7 +172,7 @@ Parser::bv1_term_to_bool(const bitwuzla::Term& term) const
 }
 
 bool
-Parser::parse_line()
+Parser::parse_line(ParsedKind* pkind, int64_t* id)
 {
   Token token = d_lexer->next_token();
 
@@ -146,6 +197,12 @@ Parser::parse_line()
     return error("line id '" + std::to_string(line_id) + "' exceeds INT32_MAX");
   }
 
+  assert(line_id);
+  if (id)
+  {
+    *id = line_id;
+  }
+
   Token op = d_lexer->next_token();
   if (!check_token(op))
   {
@@ -154,6 +211,10 @@ Parser::parse_line()
 
   if (op == Token::SORT)
   {
+    if (pkind)
+    {
+      *pkind = ParsedKind::SORT;
+    }
     return parse_sort(line_id);
   }
 
@@ -161,6 +222,11 @@ Parser::parse_line()
   std::vector<bitwuzla::Term> args;
   std::vector<uint64_t> idxs;
   bitwuzla::Kind kind = bitwuzla::Kind::CONSTANT;
+
+  if (pkind)
+  {
+    *pkind = ParsedKind::TERM;
+  }
 
   switch (op)
   {
@@ -181,6 +247,10 @@ Parser::parse_line()
       if (d_lexer->look_ahead() != '\n')
       {
         d_lexer->next_token();
+      }
+      if (pkind)
+      {
+        *pkind = ParsedKind::CONSTRAINT;
       }
       return true;
 

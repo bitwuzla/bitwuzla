@@ -81,6 +81,11 @@ Lexer::init(std::istream* input)
   assert(input);
   d_input = input;
   d_buf_idx = d_buf_size;
+  d_saved           = false;
+  d_coo             = {1, 1};
+  d_cur_coo         = {1, 1};
+  d_last_coo        = {1, 1};
+  d_last_coo_nl_col = 1;
 }
 
 void

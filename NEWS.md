@@ -7,6 +7,7 @@ This file collects a summary of important and/or user-visible changes.
 - Refactor parser interface to allow parsing from string inputs.
   + A parser instance is not tied to an input file anymore.
   + Added support for parsing from string inputs.
+  + Added support for parsing terms and sorts from string inputs.
   + Interface for parsing functions now returns `bool` instead of string.
   + C++ API:
     * Constructor `Parser(Options&, const std::string&, const std::string&, std::ostream*)`
@@ -18,6 +19,10 @@ This file collects a summary of important and/or user-visible changes.
       allows parsing from an already open input stream. This is not limited to
       input files but also supports parsing from `std::cin` and strings.
     * New Function `std::string Parser::error_msg()` to query error message.
+    * New Function `bool parse_term(const std::string&, bitwuzla::Term&)` to
+      parse a term from string.
+    * New Function `bool parse_sort(const std::string&, bitwuzla::Sort&)` to
+      parse a sort from string.
   + C API:
     * Function `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, FILE*, const char*, uint8_t, const char*)`
       changed to `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, uint8_t, const char*)`.
