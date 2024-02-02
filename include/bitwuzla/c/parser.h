@@ -77,6 +77,27 @@ bool bitwuzla_parser_parse(BitwuzlaParser* parser,
                            bool parse_file);
 
 /**
+ * Parse term from string.
+ * @param input The input string.
+ * @param term  Output parameter for the resulting term.
+ * @return False on error. The error message can be queried via
+ *         `bitwuzla_parser_get_error_msg()`.
+ */
+bool bitwuzla_parser_parse_term(BitwuzlaParser* parser,
+                                const char* input,
+                                BitwuzlaTerm* term);
+/**
+ * Parse sort from string.
+ * @param input The input string.
+ * @param sort  Output parameter for the resulting sort.
+ * @return False on error. The error message can be queried via
+ *         `bitwuzla_parser_get_error_msg()`.
+ */
+bool bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
+                                const char* input,
+                                BitwuzlaSort* sort);
+
+/**
  * Get the current error message.
  * @param parser The Bitwuzla parser instance.
  * @return The error message.

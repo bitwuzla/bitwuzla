@@ -87,6 +87,38 @@ bitwuzla_parser_parse(BitwuzlaParser* parser,
   return res;
 }
 
+bool
+bitwuzla_parser_parse_term(BitwuzlaParser* parser,
+                           const char* input,
+                           BitwuzlaTerm* term)
+{
+  bool res = false;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(parser);
+  BITWUZLA_CHECK_NOT_NULL(input);
+  bitwuzla::Term t;
+  res   = parser->d_parser->parse_term(input, t);
+  *term = Bitwuzla::export_term(t);
+  BITWUZLA_TRY_CATCH_END;
+  return res;
+}
+
+bool
+bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
+                           const char* input,
+                           BitwuzlaSort* sort)
+{
+  bool res = false;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(parser);
+  BITWUZLA_CHECK_NOT_NULL(input);
+  bitwuzla::Sort s;
+  res   = parser->d_parser->parse_sort(input, s);
+  *sort = Bitwuzla::export_sort(s);
+  BITWUZLA_TRY_CATCH_END;
+  return res;
+}
+
 const char*
 bitwuzla_parser_get_error_msg(BitwuzlaParser* parser)
 {

@@ -16,6 +16,8 @@ extern "C" {
 }
 #include <bitwuzla/cpp/bitwuzla.h>
 
+#include <cassert>
+
 /* -------------------------------------------------------------------------- */
 
 class CTerminator : public bitwuzla::Terminator
@@ -101,6 +103,44 @@ struct Bitwuzla
   {
     thread_local static SortMap map;
     return map;
+  }
+
+  static BitwuzlaSort export_sort(const bitwuzla::Sort &sort)
+  {
+    assert(!sort.is_null());
+
+    BitwuzlaSort sort_id        = sort.id();
+    Bitwuzla::SortMap &sort_map = Bitwuzla::sort_map();
+    const auto it               = sort_map.find(sort_id);
+    if (it == sort_map.end())
+    {
+      sort_map.emplace(
+          sort_id, std::make_pair(std::make_unique<bitwuzla::Sort>(sort), 1));
+    }
+    else
+    {
+      it->second.second += 1;
+    }
+    return sort_id;
+  }
+
+  static BitwuzlaTerm export_term(const bitwuzla::Term &term)
+  {
+    assert(!term.is_null());
+
+    BitwuzlaTerm term_id        = term.id();
+    Bitwuzla::TermMap &term_map = Bitwuzla::term_map();
+    const auto it               = term_map.find(term_id);
+    if (it == term_map.end())
+    {
+      term_map.emplace(
+          term_id, std::make_pair(std::make_unique<bitwuzla::Term>(term), 1));
+    }
+    else
+    {
+      it->second.second += 1;
+    }
+    return term_id;
   }
 
   void reset()

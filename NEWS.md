@@ -18,18 +18,22 @@ This file collects a summary of important and/or user-visible changes.
     * New Function `std::string Parser::parse(const std::string&, std::istream&, bool)`
       allows parsing from an already open input stream. This is not limited to
       input files but also supports parsing from `std::cin` and strings.
-    * New Function `std::string Parser::error_msg()` to query error message.
-    * New Function `bool parse_term(const std::string&, bitwuzla::Term&)` to
+    * New function `std::string Parser::error_msg()` to query error message.
+    * New function `bool parse_term(const std::string&, bitwuzla::Term&)` to
       parse a term from string.
-    * New Function `bool parse_sort(const std::string&, bitwuzla::Sort&)` to
+    * New function `bool parse_sort(const std::string&, bitwuzla::Sort&)` to
       parse a sort from string.
   + C API:
     * Function `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, FILE*, const char*, uint8_t, const char*)`
       changed to `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, uint8_t, const char*)`.
     * Function `const char* bitwuzla_parser_parse(BitwulzaParser*, bool)`
       changed to `const char* bitwuzla_parser_parse(BitwulzaParser*, const char*, bool, bool)`.
-    * New Function `const char* bitwuzla_parser_get_error_msg(BitwuzlaParser*)`
+    * New function `const char* bitwuzla_parser_get_error_msg(BitwuzlaParser*)`
       to query error message.
+    * New function `bool bitwuzla_parser_parse_term(BitwuzlaParser*, const char*, BitwuzlaTerm*)`
+      to parse a term from string.
+    * New function `bool bitwuzla_parser_parse_sort(BitwuzlaParser*, const char*, BitwuzlaSort*)`
+      to parse a sort from string.
   + Python API:
     * Class `Parser` is now constructed from options, a language and a base
       for the string representation of bit-vector values (does not require
