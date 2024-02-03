@@ -60,14 +60,8 @@ class CharacterClasses
    */
   static bool is_printable(int32_t ch)
   {
-    for (size_t i = 0; s_printable_ascii_chars[i] != 0; ++i)
-    {
-      if (s_printable_ascii_chars[i] == ch)
-      {
-        return true;
-      }
-    }
-    return false;
+    return (ch >= '!' && ch <= '~') || ch == ' ' || ch == '\t' || ch == '\r'
+           || ch == '\n';
   }
 
  private:
