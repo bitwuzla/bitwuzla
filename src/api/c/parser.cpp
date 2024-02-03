@@ -82,7 +82,6 @@ bitwuzla_parser_parse(BitwuzlaParser* parser,
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(input);
   BITWUZLA_CHECK_NOT_NULL(error_msg);
-  BITWUZLA_TRY_CATCH_END;
   try
   {
     parser->d_parser->parse(input, parse_only, parse_file);
@@ -90,10 +89,11 @@ bitwuzla_parser_parse(BitwuzlaParser* parser,
   }
   catch (bitwuzla::Exception& e)
   {
-    parser->d_error_msg = parser->d_parser->error_msg();
+    parser->d_error_msg = e.what();
     *error_msg =
         parser->d_error_msg.empty() ? NULL : parser->d_error_msg.c_str();
   }
+  BITWUZLA_TRY_CATCH_END;
 }
 
 BitwuzlaTerm
@@ -101,12 +101,11 @@ bitwuzla_parser_parse_term(BitwuzlaParser* parser,
                            const char* input,
                            const char** error_msg)
 {
+  BitwuzlaTerm res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(input);
   BITWUZLA_CHECK_NOT_NULL(error_msg);
-  BITWUZLA_TRY_CATCH_END;
-  BitwuzlaTerm res = 0;
   try
   {
     res        = Bitwuzla::export_term(parser->d_parser->parse_term(input));
@@ -114,10 +113,11 @@ bitwuzla_parser_parse_term(BitwuzlaParser* parser,
   }
   catch (bitwuzla::Exception& e)
   {
-    parser->d_error_msg = parser->d_parser->error_msg();
+    parser->d_error_msg = e.what();
     *error_msg =
         parser->d_error_msg.empty() ? NULL : parser->d_error_msg.c_str();
   }
+  BITWUZLA_TRY_CATCH_END;
   return res;
 }
 
@@ -126,23 +126,23 @@ bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
                            const char* input,
                            const char** error_msg)
 {
+  BitwuzlaSort res = 0;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(input);
   BITWUZLA_CHECK_NOT_NULL(error_msg);
-  BITWUZLA_TRY_CATCH_END;
-  BitwuzlaSort res = 0;
   try
   {
     res        = Bitwuzla::export_sort(parser->d_parser->parse_sort(input));
     *error_msg = nullptr;
   }
-  catch (bitwuzla::Exception& e)
+  catch (bitwuzla::parser::Exception& e)
   {
-    parser->d_error_msg = parser->d_parser->error_msg();
+    parser->d_error_msg = e.what();
     *error_msg =
         parser->d_error_msg.empty() ? NULL : parser->d_error_msg.c_str();
   }
+  BITWUZLA_TRY_CATCH_END;
   return res;
 }
 

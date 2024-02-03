@@ -23,6 +23,23 @@ namespace bitwuzla::parser {
 
 /* -------------------------------------------------------------------------- */
 
+class Exception : public bitwuzla::Exception
+{
+ public:
+  /**
+   * Constructor.
+   * @param msg The exception message.
+   */
+  Exception(const std::string &msg);
+  /**
+   * Constructor.
+   * @param stream The exception message given as a std::stringstream.
+   */
+  Exception(const std::stringstream &stream);
+};
+
+/* -------------------------------------------------------------------------- */
+
 /** The Bitwuzla parser. */
 class Parser
 {
@@ -89,12 +106,6 @@ class Parser
    * @throws Exception on parse error.
    */
   Sort parse_sort(const std::string &input);
-
-  /**
-   * Get the current error message.
-   * @return The error message.
-   */
-  std::string error_msg() const;
 
   /**
    * Get the associated Bitwuzla instance.

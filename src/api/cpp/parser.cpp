@@ -17,7 +17,16 @@
 
 namespace bitwuzla::parser {
 
-/* -------------------------------------------------------------------------- */
+/* Exception public --------------------------------------------------------- */
+
+Exception::Exception(const std::string &msg) : bitwuzla::Exception(msg) {}
+
+Exception::Exception(const std::stringstream &stream)
+    : bitwuzla::Exception(stream.str())
+{
+}
+
+/* Parser public ------------------------------------------------------------ */
 
 Parser::Parser(Options &options, const std::string &language, std::ostream *out)
 {
@@ -52,8 +61,10 @@ Parser::parse(const std::string &infile_name,
   BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
   BITWUZLA_CHECK(input.operator bool()) << "invalid input stream";
   assert(d_parser);
-  BITWUZLA_CHECK(d_parser->parse(infile_name, input, parse_only))
-      << d_parser->error_msg();
+  if (!d_parser->parse(infile_name, input, parse_only))
+  {
+    throw new Exception(d_parser->error_msg());
+  }
 }
 
 bitwuzla::Term
@@ -62,7 +73,10 @@ Parser::parse_term(const std::string &input)
   BITWUZLA_CHECK_STR_NOT_EMPTY(input);
   assert(d_parser);
   bitwuzla::Term res;
-  BITWUZLA_CHECK(d_parser->parse_term(input, res)) << d_parser->error_msg();
+  if (!d_parser->parse_term(input, res))
+  {
+    throw new Exception(d_parser->error_msg());
+  }
   return res;
 }
 
@@ -72,14 +86,11 @@ Parser::parse_sort(const std::string &input)
   BITWUZLA_CHECK_STR_NOT_EMPTY(input);
   assert(d_parser);
   bitwuzla::Sort res;
-  BITWUZLA_CHECK(d_parser->parse_sort(input, res)) << d_parser->error_msg();
+  if (!d_parser->parse_sort(input, res))
+  {
+    throw new Exception(d_parser->error_msg());
+  }
   return res;
-}
-
-std::string
-Parser::error_msg() const
-{
-  return d_parser->error_msg();
 }
 
 std::shared_ptr<bitwuzla::Bitwuzla>

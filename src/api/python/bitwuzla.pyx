@@ -1485,15 +1485,6 @@ cdef class Parser:
         return _sort(self.c_parser.get().parse_sort(
                 <const string&> str(iinput).encode()))
 
-    def error_msg(self) -> str:
-        """Get the error message.
-
-           :return: The error message. None if no parse error.
-        """
-        res = self.c_parser.get().error_msg();
-        if res.decode() == '': return None
-        return res.decode()
-
     def bitwuzla(self) -> Bitwuzla:
         """Get the associated Bitwuzla instance.
 

@@ -20,11 +20,12 @@ This file collects a summary of important and/or user-visible changes.
       allows parsing from an already open input stream and now throws an
       exception on error. This function is not limited to input files but also
       supports parsing from `std::cin` and strings.
-    * New function `std::string Parser::error_msg()` to query error message.
     * New function `bitwuzla::Term parse_term(const std::string&)` to
       parse a term from string.
     * New function `bitwuzla::Sort parse_sort(const std::string&)` to
       parse a sort from string.
+    * New `bitwuzla::parser::Exception` (derived from `bitwuzla::Exception`)
+      which is thrown on parse error.
   + C API:
     * Function `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, FILE*, const char*, uint8_t, const char*)`
       changed to `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, uint8_t, const char*)`.
@@ -42,7 +43,8 @@ This file collects a summary of important and/or user-visible changes.
       an input file name anymore).
     * Function `Parser.parse(self, parse_only: bool) -> str` changed to
       `Parser.parse(self, infile_name, parse_only: bool, parse_file: bool) -> bool`.
-    * New Function `Parser.error_msg() -> str` to query error message.
+    * New function `parse_term(self, iinput) -> Term` to parse term from string.
+    * New function `parse_sort(self, iinput) -> Sort` to parse sort form string.
 
 ## News for version 0.3.2
 

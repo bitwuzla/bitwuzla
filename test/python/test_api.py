@@ -1953,7 +1953,6 @@ def test_parser_smt2_string1():
     parser = Parser(options)
     with pytest.raises(BitwuzlaException):
         parser.parse(smt2, True, True)
-    parser.error_msg() != ''
     parser = Parser(options)
     parser.parse(smt2, True, False)
 
@@ -2033,7 +2032,6 @@ def test_parser_btor2():
     bitwuzla = parser.bitwuzla()
     with pytest.raises(BitwuzlaException):
         parser.parse('parsex.btor2')
-    parser.error_msg() == "failed to open 'parsex.btor2'"
 
     parser = Parser(options, 'btor2')
     parser.parse(iinput, True, True)

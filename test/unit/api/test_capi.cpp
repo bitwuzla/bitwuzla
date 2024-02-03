@@ -3148,10 +3148,12 @@ TEST_F(TestCApi, parser_btor2)
     BitwuzlaParser *parser =
         bitwuzla_parser_new(options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, "parsex.btor2", true, true, &error_msg);
-    ASSERT_EQ(std::string(error_msg), "failed to open 'parsex.btor2'");
+    ASSERT_NE(std::string(error_msg).find("failed to open 'parsex.btor2'"),
+              std::string::npos);
     bitwuzla_parser_parse(parser, "parse.btor2", true, true, &error_msg);
-    ASSERT_EQ(std::string(error_msg),
-              "parser in unsafe state after parse error");
+    ASSERT_NE(
+        std::string(error_msg).find("parser in unsafe state after parse error"),
+        std::string::npos);
     bitwuzla_parser_delete(parser);
   }
   {
