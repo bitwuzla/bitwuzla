@@ -26,33 +26,37 @@ main()
   // Create parser instance.
   parser::Parser parser(options);
 
-  // Now parse the input file.
-  bool res = parser.parse("../smt2/quickstart.smt2");
-  // We expect no error to occur.
-  assert(res);
-
-  // Now we retrieve the set of asserted formulas and print them.
-  auto assertions = parser.bitwuzla()->get_assertions();
-  std::cout << "Assertions:" << std::endl << "{" << std::endl;
-  for (const auto& a : assertions)
+  try
   {
-    std::cout << "  " << a << std::endl;
+    // Now parse the input file.
+    parser.parse("../smt2/quickstart.smt2");
+
+    // Now we retrieve the set of asserted formulas and print them.
+    auto assertions = parser.bitwuzla()->get_assertions();
+    std::cout << "Assertions:" << std::endl << "{" << std::endl;
+    for (const auto& a : assertions)
+    {
+      std::cout << "  " << a << std::endl;
+    }
+    std::cout << "}" << std::endl;
+
+    // Now we add an assertion via parsing from string.
+    parser.parse("(assert (distinct (select a x) y))", true, false);
+    // Now the formula is unsat.
+    Result result = parser.bitwuzla()->check_sat();
+
+    std::cout << "Expect: unsat" << std::endl;
+    std::cout << "Bitwuzla: "
+              << (result == Result::SAT
+                      ? "sat"
+                      : (result == Result::UNSAT ? "unsat" : "unknown"))
+              << std::endl
+              << std::endl;
   }
-  std::cout << "}" << std::endl;
-
-  // Now we add an assertion via parsing from string.
-  res = parser.parse("(assert (distinct (select a x) y))", true, false);
-  // We expect no error to occur.
-  assert(res);
-  // Now the formula is unsat.
-  Result result = parser.bitwuzla()->check_sat();
-
-  std::cout << "Expect: unsat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl
-            << std::endl;
+  catch (bitwuzla::parser::Exception& e)
+  {
+    // We expect no error to occur.
+    std::cout << "unexpected parser exception" << std::endl;
+  }
   return 0;
 }

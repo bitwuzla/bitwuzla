@@ -25,9 +25,10 @@ main()
   BitwuzlaParser* parser  = bitwuzla_parser_new(options, "smt2", 2, "<stdout>");
 
   // Now parse the input file.
-  bool res = bitwuzla_parser_parse(parser, infile_name, false, true);
+  const char* error_msg;
+  bitwuzla_parser_parse(parser, infile_name, false, true, &error_msg);
   // We expect no error to occur.
-  assert(res);
+  assert(!error_msg);
 
   // Now we retrieve the set of asserted formulas and print them.
   size_t size;
@@ -42,10 +43,10 @@ main()
   printf("}\n");
 
   // Now we add an assertion via parsing from string.
-  res = bitwuzla_parser_parse(
-      parser, "(assert (distinct (select a x) y))", true, false);
+  bitwuzla_parser_parse(
+      parser, "(assert (distinct (select a x) y))", true, false, &error_msg);
   // We expect no error to occur.
-  assert(res);
+  assert(!error_msg);
   // Now the formula is unsat.
   BitwuzlaResult result =
       bitwuzla_check_sat(bitwuzla_parser_get_bitwuzla(parser));
