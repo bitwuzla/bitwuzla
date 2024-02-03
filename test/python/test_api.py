@@ -1938,22 +1938,24 @@ def test_parser_smt2():
 
     with pytest.raises(BitwuzlaException):
         parser.bitwuzla()
-    assert not parser.parse('parsex.smt2')
-    assert not parser.parse(filename, True)
-    assert parser.error_msg() == 'parser in unsafe state after parse error'
+    with pytest.raises(BitwuzlaException):
+        parser.parse('parsex.smt2')
+    with pytest.raises(BitwuzlaException):
+        parser.parse(filename, True)
 
     parser = Parser(options)
-    assert parser.parse(filename, True)
+    parser.parse(filename, True)
     os.remove(filename)
 
 def test_parser_smt2_string1():
     smt2 = "(set-logic QF_BV)\n(check-sat)\n(exit)\n";
     options = Options()
     parser = Parser(options)
-    assert not parser.parse(smt2, True, True)
-    assert parser.error_msg() != ''
+    with pytest.raises(BitwuzlaException):
+        parser.parse(smt2, True, True)
+    parser.error_msg() != ''
     parser = Parser(options)
-    assert parser.parse(smt2, True, False)
+    parser.parse(smt2, True, False)
 
 def test_parser_smt2_string2():
     str_decl  = "(declare-const a Bool)"
@@ -1961,11 +1963,57 @@ def test_parser_smt2_string2():
     str_false = "(assert (= a false))"
     options = Options()
     parser = Parser(options)
-    assert parser.parse(str_decl, True, False)
-    assert parser.parse(str_true, True, False)
-    assert parser.parse(str_false, True, False)
+    parser.parse(str_decl, True, False)
+    parser.parse(str_true, True, False)
+    parser.parse(str_false, True, False)
     bitwuzla = parser.bitwuzla()
-    assert bitwuzla.check_sat() == Result.UNSAT
+    bitwuzla.check_sat() == Result.UNSAT
+
+def test_parser_smt2_string3():
+    options = Options()
+    parser = Parser(options)
+    parser.parse("(set-logic QF_ABV)", True, False)
+    parser.parse("(set-info :status unsat)", True, False)
+    parser.parse("(declare-const v0 (_ BitVec 8))", True, False)
+    parser.parse("(declare-const v1 (_ BitVec 15))", True, False)
+    parser.parse(
+      "(declare-const a0 (Array (_ BitVec 16) (_ BitVec 1) ))", True, False)
+    parser.parse("(assert (= #b1 (bvnot (ite (= (select (store a0 (concat v0 "
+                + "(_ bv0 8)) (_ bv1 1)) (concat v1 (_ bv1 1))) (select a0 "
+                + "(concat v1 (_ bv1 1)))) #b1 #b0))))",
+                True,
+                False)
+    parser.parse("(check-sat)", True, False)
+
+def test_parser_smt2_string_term():
+    options = Options()
+    parser = Parser(options)
+    assert parser.parse_term("true") == mk_true()
+    assert parser.parse_term("false") == mk_false()
+    parser.parse("(declare-const a Bool)", True, False)
+    t_a = parser.parse_term("a")
+    parser.parse("(declare-const b (_ BitVec 16))", True, False)
+    t_b = parser.parse_term("b")
+    parser.parse("(declare-const c Bool)", True, False)
+    t_c = parser.parse_term("c")
+    assert parser.parse_term("(xor a c)")  == mk_term(Kind.XOR, [t_a, t_c])
+    assert parser.parse_term("(bvadd b #b1011111010001010)") == \
+            mk_term(Kind.BV_ADD,
+                [t_b,
+                 mk_bv_value(
+                     mk_bv_sort(16), "1011111010001010", 2)])
+
+def test_parser_smt2_string_sort():
+    options = Options()
+    parser = Parser(options)
+    assert parser.parse_sort("Bool") == mk_bool_sort()
+    assert parser.parse_sort("(_ BitVec 32)") == mk_bv_sort(32)
+    assert parser.parse_sort("RoundingMode") == mk_rm_sort()
+    parser.parse("(declare-sort m 0)", True, False)
+    assert parser.parse_sort("m")
+    parser.parse("(define-sort FPN () (_ FloatingPoint 11 53))", True, False)
+    assert parser.parse_sort("(_ FloatingPoint 11 53)") == \
+            parser.parse_sort("FPN")
 
 def test_parser_btor2():
     iinput = "parse.btor2";
@@ -1983,12 +2031,13 @@ def test_parser_btor2():
     options = Options()
     parser = Parser(options, 'btor2')
     bitwuzla = parser.bitwuzla()
-    assert not parser.parse('parsex.btor2')
-    assert parser.error_msg() == "failed to open 'parsex.btor2'"
+    with pytest.raises(BitwuzlaException):
+        parser.parse('parsex.btor2')
+    parser.error_msg() == "failed to open 'parsex.btor2'"
 
     parser = Parser(options, 'btor2')
-    assert parser.parse(iinput, True, True)
-    assert parser.bitwuzla().check_sat() == Result.UNSAT
+    parser.parse(iinput, True, True)
+    parser.bitwuzla().check_sat() == Result.UNSAT
     os.remove(iinput)
 
 def test_parser_btor2_string1():
@@ -1997,10 +2046,11 @@ def test_parser_btor2_string1():
             "8 slice 7 6 7 7\n9 constraint 8\n"
     options = Options()
     parser = Parser(options, 'btor2')
-    assert not parser.parse(btor2, True, True)
+    with pytest.raises(BitwuzlaException):
+        parser.parse(btor2, True, True)
 
     parser = Parser(options, 'btor2')
-    assert parser.parse(btor2, True, False)
+    parser.parse(btor2, True, False)
 
 def test_parser_btor2_string2():
     str_decl  = "(declare-const a Bool)"
@@ -2017,14 +2067,41 @@ def test_parser_btor2_string2():
 
     options = Options()
     parser = Parser(options, 'btor2')
-    assert parser.parse(decl_sorts, True, False)
-    assert parser.parse(decl_inputs, True, False)
-    assert parser.parse(decl_more_inputs, True, False)
-    assert parser.parse(ite9, True, False)
-    assert parser.parse(reads, True, False)
-    assert parser.parse(and13, True, False)
-    assert parser.parse(root, True, False)
+    parser.parse(decl_sorts, True, False)
+    parser.parse(decl_inputs, True, False)
+    parser.parse(decl_more_inputs, True, False)
+    parser.parse(ite9, True, False)
+    parser.parse(reads, True, False)
+    parser.parse(and13, True, False)
+    parser.parse(root, True, False)
     assert parser.bitwuzla().check_sat() == Result.UNSAT
+
+def test_parser_btor2_string_term():
+    options = Options()
+    parser = Parser(options, 'btor2')
+    assert parser.parse_sort("1 sort bitvec 1") == mk_bv_sort(1)
+    parser.parse_term("2 constd 1 1")
+    assert parser.parse_term("3 constd 1 0") == mk_bv_value(mk_bv_sort(1), 0)
+    t_a = parser.parse_term("4 input 1 a")
+    parser.parse("5 sort bitvec 16", True, False)
+    with pytest.raises(BitwuzlaException):
+        parser.parse("5 sort bitvec 16", True, False)
+    t_b = parser.parse_term("6 input 5 b")
+    t_c = parser.parse_term("7 input 1 c")
+    assert parser.parse_term("8 xor 1 4 7") == mk_term(Kind.BV_XOR, [t_a, t_c])
+    parser.parse_term("9 const 5 1011111010001010")
+    assert parser.parse_term("10 add 5 6 9") == \
+            mk_term(Kind.BV_ADD,
+                          [t_b,
+                           mk_bv_value(mk_bv_sort(16), "1011111010001010", 2)])
+
+def test_parser_btor2_string_sort():
+    options = Options()
+    parser = Parser(options, 'btor2')
+    bv1 = parser.parse_sort("1 sort bitvec 1")
+    assert bv1 == mk_bv_sort(1)
+    assert parser.parse_sort("2 sort bitvec 32") == mk_bv_sort(32)
+    assert parser.parse_sort("3 sort array 1 1") == mk_array_sort(bv1, bv1)
 
 # ----------------------------------------------------------------------------
 # Termination function

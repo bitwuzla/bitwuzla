@@ -1457,15 +1457,33 @@ cdef class Parser:
            :param parse_file: ``True`` to parse an input file with the given
                               name ``iinput``, ``False`` to parse from
                               ``iinput`` as a string input.
-           :return: False on error. The error message can be queried via
-                    ``error_msg()``.
+           :raise BitwuzlaException: On parse error.
            :note: Parameter `parse_only` is redundant for BTOR2 input, its the
                   only available mode for BTOR2 (due to the language not
                   supporting "commands" as in SMT2).
         """
-        return self.c_parser.get().parse(
-                    <const string&> str(iinput).encode(),
-                    parse_only, parse_file)
+        self.c_parser.get().parse(
+                <const string&> str(iinput).encode(), parse_only, parse_file)
+
+    def parse_term(self, iinput) -> Term:
+        """Parse term from string.
+
+           :param input: The input string.
+           :return:      The parsed term.
+           :raise BitwuzlaException: On parse error.
+        """
+        return _term(self.c_parser.get().parse_term(
+                <const string&> str(iinput).encode()))
+
+    def parse_sort(self, iinput) -> Sort:
+        """Parse sort from string.
+
+           :param input: The input string.
+           :return:      The parsed sort.
+           :raise BitwuzlaException: On parse error.
+        """
+        return _sort(self.c_parser.get().parse_sort(
+                <const string&> str(iinput).encode()))
 
     def error_msg(self) -> str:
         """Get the error message.
