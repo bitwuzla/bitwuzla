@@ -88,10 +88,7 @@ main()
   BitwuzlaResult result = bitwuzla_check_sat(bitwuzla);
 
   printf("Expect: sat\n");
-  printf("Bitwuzla: %s\n\n",
-         result == BITWUZLA_SAT
-             ? "sat"
-             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+  printf("Bitwuzla: %s\n\n", bitwuzla_result_to_string(result));
 
   // Print model in SMT-LIBv2 format.
   printf("Model:\n");

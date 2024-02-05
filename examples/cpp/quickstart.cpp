@@ -79,12 +79,7 @@ main()
   Result result = bitwuzla.check_sat();
 
   std::cout << "Expect: sat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
 
   // Print model in SMT-LIBv2 format.
   std::cout << "Model:" << std::endl << "(" << std::endl;

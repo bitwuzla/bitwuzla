@@ -99,7 +99,7 @@ how to print the current model via declared symbols (in this case :code:`x`,
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 96-142
+     :lines: 93-139
 
 This will output a possible model, in this case:
 
@@ -131,7 +131,7 @@ bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 147-152
+     :lines: 144-150
 
 This will print:
 
@@ -150,7 +150,7 @@ We can retrieve an SMT-LIB2 string representation of the values via
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 154-162
+     :lines: 151-160
 
 This will print:
 
@@ -171,7 +171,7 @@ however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 168-171
+     :lines: 165-169
 
 This will print:
 
@@ -186,7 +186,7 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 175-178
+     :lines: 172-175
 
 This will print:
 
@@ -198,7 +198,7 @@ Finally, we delete the Bitwuzla and Bitwuzla options instance.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 181-182
+     :lines: 178-179
 
 
 Examples

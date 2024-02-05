@@ -101,7 +101,7 @@ the current model via declared symbols (in this case :code:`x`, :code:`y`,
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 89-121
+     :lines: 84-115
 
 This will output a possible model, in this case:
 
@@ -132,7 +132,7 @@ bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 125-130
+     :lines: 120-126
 
 This will print:
 
@@ -150,7 +150,7 @@ We can retrieve an SMT-LIB2 string representation of the values via
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 132-143
+     :lines: 127-138
 
 This will print:
 
@@ -171,7 +171,7 @@ however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 148-151
+     :lines: 143-147
 
 This will print:
 
@@ -186,7 +186,7 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 155-157
+     :lines: 150-151
 
 This will print:
 

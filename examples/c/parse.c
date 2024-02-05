@@ -52,10 +52,7 @@ main()
       bitwuzla_check_sat(bitwuzla_parser_get_bitwuzla(parser));
 
   printf("Expect: unsat\n");
-  printf("Bitwuzla: %s\n\n",
-         result == BITWUZLA_SAT
-             ? "sat"
-             : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+  printf("Bitwuzla: %s\n\n", bitwuzla_result_to_string(result));
 
   // Finally, delete Bitwuzla parser and options instance.
   bitwuzla_parser_delete(parser);

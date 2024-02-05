@@ -39,11 +39,7 @@ main()
   // (check-sat)
   result = bitwuzla->check_sat();
   std::cout << "Expect: sat" << std::endl;
-  std::cout << "Bitwuzla: "
-            << (result == Result::SAT
-                    ? "sat"
-                    : (result == Result::UNSAT ? "unsat" : "unknown"))
-            << std::endl;
+  std::cout << "Bitwuzla: " << result << std::endl;
 
   // (assert (= x #b001))
   bitwuzla->assert_formula(

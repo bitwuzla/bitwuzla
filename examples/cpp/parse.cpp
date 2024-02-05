@@ -46,12 +46,7 @@ main()
     Result result = parser.bitwuzla()->check_sat();
 
     std::cout << "Expect: unsat" << std::endl;
-    std::cout << "Bitwuzla: "
-              << (result == Result::SAT
-                      ? "sat"
-                      : (result == Result::UNSAT ? "unsat" : "unknown"))
-              << std::endl
-              << std::endl;
+    std::cout << "Bitwuzla: " << result << std::endl;
   }
   catch (bitwuzla::parser::Exception& e)
   {
