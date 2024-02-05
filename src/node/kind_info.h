@@ -23,52 +23,105 @@ namespace bzla::node {
 struct KindInfo
 {
   /** @return The number of children for this kind. */
-  static uint32_t num_children(Kind kind);
+  static uint32_t num_children(Kind kind)
+  {
+    return get().d_info[static_cast<size_t>(kind)].d_num_children;
+  }
 
   /** @return The number of indices for this kind. */
-  static uint32_t num_indices(Kind kind);
+  static uint32_t num_indices(Kind kind)
+  {
+    return get().d_info[static_cast<size_t>(kind)].d_num_indices;
+  }
 
   /** @return The string representation for this kind. */
-  static const char* enum_name(Kind kind);
+  static const char* enum_name(Kind kind)
+  {
+    return get().d_info[static_cast<size_t>(kind)].d_enum_name;
+  }
 
   /** @return The SMT-LIBv2 string representation for this kind. */
-  static const char* smt2_name(Kind kind);
+  static const char* smt2_name(Kind kind)
+  {
+    return get().d_info[static_cast<size_t>(kind)].d_smt2_name;
+  }
 
   /** @return Does this kind support an arbitrary number of children? */
-  static bool is_nary(Kind kind);
+  static bool is_nary(Kind kind)
+  {
+    return get().d_info[static_cast<size_t>(kind)].d_num_children
+           == KindInfo::s_nary;
+  }
 
   /** @return Is given kind left associative. */
-  static bool is_left_associative(Kind kind);
+  static bool is_left_associative(Kind kind)
+  {
+    return get().d_info[static_cast<size_t>(kind)].d_attribute
+           == KindAttribute::LEFT_ASSOC;
+  }
 
   /** @return Is given kind right associative. */
-  static bool is_right_associative(Kind kind);
+  static bool is_right_associative(Kind kind)
+  {
+    return get().d_info[static_cast<size_t>(kind)].d_attribute
+           == KindAttribute::RIGHT_ASSOC;
+  }
 
   /** @return Is given kind commutative. */
-  static bool is_commutative(Kind kind);
+  static bool is_commutative(Kind kind)
+  {
+    return get().d_info[static_cast<size_t>(kind)].is_commutative;
+  }
 
   /** @return Is given kind chainable (e.g. EQUAL). */
-  static bool is_chainable(Kind kind);
+  static bool is_chainable(Kind kind)
+  {
+    return get().d_info[static_cast<size_t>(kind)].d_attribute
+           == KindAttribute::CHAINABLE;
+  }
 
   /** @return Is given kind pairwise chainable (e.g. DISTINCT). */
-  static bool is_pairwise(Kind kind);
+  static bool is_pairwise(Kind kind)
+  {
+    return get().d_info[static_cast<size_t>(kind)].d_attribute
+           == KindAttribute::PAIRWISE;
+  }
 
   /** @return Whether given kind is a boolean kind. */
-  static bool is_bool(Kind kind);
+  static bool is_bool(Kind kind)
+  {
+    return Kind::AND <= kind && kind <= Kind::XOR;
+  }
 
   /** @return Whether given kind is a bit-vector kind. */
-  static bool is_bv(Kind kind);
+  static bool is_bv(Kind kind)
+  {
+    return Kind::BV_ADD <= kind && kind <= Kind::BV_ZERO_EXTEND;
+  }
 
   /** @return Whether given kind is a floating-point kind. */
-  static bool is_fp(Kind kind);
+  static bool is_fp(Kind kind)
+  {
+    return Kind::FP_ABS <= kind && kind <= Kind::FP_TO_UBV;
+  }
 
   /** @return Whether given kind is an array kind. */
-  static bool is_array(Kind kind);
+  static bool is_array(Kind kind)
+  {
+    return Kind::CONST_ARRAY <= kind && kind <= Kind::STORE;
+  }
 
   /** @return Whether given kind is a function kind. */
-  static bool is_fun(Kind kind);
+  static bool is_fun(Kind kind)
+  {
+    return kind == Kind::APPLY || kind == Kind::LAMBDA;
+  }
 
   /** @return Whether given kind is a quantifier kind. */
-  static bool is_quant(Kind kind);
+  static bool is_quant(Kind kind)
+  {
+    return kind == Kind::EXISTS || kind == Kind::FORALL;
+  }
 
  private:
   static constexpr uint8_t s_nary = UINT8_MAX;
