@@ -389,8 +389,10 @@ AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
 AigNode
 AigManager::rewrite_and(const AigNode& l, const AigNode& r)
 {
-  AigNode left  = l;
-  AigNode right = r;
+  const auto true_id  = AigNode::s_true_id;
+  const auto false_id = -AigNode::s_true_id;
+  auto left           = l.get_id();
+  auto right          = r.get_id();
   do
   {
     /** Optimization level 1 */
@@ -403,13 +405,13 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
     //   shape:     a /\ b
     //   condition: a = b
     //   result:    a
-    if (left.is_true() || left == right)
+    if (left == true_id || left == right)
     {
-      return right;
+      return get_node(right);
     }
-    if (right.is_true())
+    if (right == true_id)
     {
-      return left;
+      return get_node(left);
     }
     // Boundedness rule
     //   shape:  a /\ 0
@@ -419,10 +421,17 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
     //   shape:     a /\ ~b
     //   condition: a = b
     //   result:    0
-    if (left.is_false() || right.is_false() || left.get_id() == -right.get_id())
+    if (left == false_id || right == false_id || left == -right)
     {
       return d_false;
     }
+
+    const auto [a, b] = get_children(left);
+    const auto [c, d] = get_children(right);
+    bool left_is_and  = a != 0;
+    bool right_is_and = c != 0;
+    bool left_is_neg  = left < 0;
+    bool right_is_neg = right < 0;
 
     /** Optimization level 2 */
 
@@ -430,15 +439,11 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
     //   shape:     (a /\ b) /\ c
     //   condition: (a = ~c) \/ (b = ~c)
     //   result:    0
-    if (left.is_and() && !left.is_negated()
-        && (left[0].get_id() == -right.get_id()
-            || left[1].get_id() == -right.get_id()))
+    if (!left_is_neg && left_is_and && (a == -right || b == -right))
     {
       return d_false;
     }
-    if (right.is_and() && !right.is_negated()
-        && (right[0].get_id() == -left.get_id()
-            || right[1].get_id() == -left.get_id()))
+    if (!right_is_neg && right_is_and && (c == -left || d == -left))
     {
       return d_false;
     }
@@ -447,12 +452,8 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
     //   shape:     (a /\ b) /\ (c /\ d)
     //   condition: (a = ~c) \/ (a = ~d) \/ (b = ~c) \/ (b = ~d)
     //   result:    0
-    if (left.is_and() && !left.is_negated() && right.is_and()
-        && !right.is_negated()
-        && (left[0].get_id() == -right[0].get_id()
-            || left[0].get_id() == -right[1].get_id()
-            || left[1].get_id() == -right[0].get_id()
-            || left[1].get_id() == -right[1].get_id()))
+    if (!left_is_neg && !right_is_neg && left_is_and && right_is_and
+        && (a == -c || a == -d || b == -c || b == -d))
     {
       return d_false;
     }
@@ -461,73 +462,56 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
     //   shape:     ~(a /\ b) /\ c
     //   condition: (a = ~c) \/ (b = ~c)
     //   result:    c
-    if (left.is_and() && left.is_negated()
-        && (left[0].get_id() == -right.get_id()
-            || left[1].get_id() == -right.get_id()))
+    if (left_is_neg && left_is_and && (a == -right || b == -right))
     {
-      return right;
+      return get_node(right);
     }
-    if (right.is_and() && right.is_negated()
-        && (right[0].get_id() == -left.get_id()
-            || right[1].get_id() == -left.get_id()))
+    if (right_is_neg && right_is_and && (c == -left || d == -left))
     {
-      return left;
+      return get_node(left);
     }
 
     // Subsumption rule (symmetric)
     //   shape:     ~(a /\ b) /\ (c /\ d)
     //   condition: (a = ~c) \/ (a = ~d) \/ (b = ~c) \/ (b = ~d)
     //   result:    c /\ d
-    if (left.is_and() && left.is_negated() && right.is_and()
-        && !right.is_negated()
-        && (left[0].get_id() == -right[0].get_id()
-            || left[0].get_id() == -right[1].get_id()
-            || left[1].get_id() == -right[0].get_id()
-            || left[1].get_id() == -right[1].get_id()))
+    if (left_is_neg && !right_is_neg && left_is_and && right_is_and
+        && (a == -c || a == -d || b == -c || b == -d))
     {
-      return right;
+      return get_node(right);
     }
-    if (right.is_and() && right.is_negated() && left.is_and()
-        && !left.is_negated()
-        && (right[0].get_id() == -left[0].get_id()
-            || right[0].get_id() == -left[1].get_id()
-            || right[1].get_id() == -left[0].get_id()
-            || right[1].get_id() == -left[1].get_id()))
+    if (right_is_neg && !left_is_neg && right_is_and && left_is_and
+        && (c == -a || c == -b || d == -a || d == -b))
     {
-      return left;
+      return get_node(left);
     }
 
     // Idempotence rule
     //   shape:     (a /\ b) /\ c
     //   condition: (a = c) \/ (b = c)
     //   result:    (a /\ b)
-    if (left.is_and() && !left.is_negated()
-        && (left[0] == right || left[1] == right))
+    if (!left_is_neg && left_is_and && (a == right || b == right))
     {
-      return left;
+      return get_node(left);
     }
-    if (right.is_and() && !right.is_negated()
-        && (right[0] == left || right[1] == left))
+    if (!right_is_neg && right_is_and && (c == left || d == left))
     {
-      return right;
+      return get_node(right);
     }
 
     // Resolution rule
     //   shape:     ~(a /\ b) /\ ~(c /\ d)
     //   condition: (a = d) /\ (b = ~c)
     //   result:    ~a
-    if (left.is_negated() && left.is_and() && right.is_negated()
-        && right.is_and())
+    if (left_is_neg && right_is_neg && left_is_and && right_is_and)
     {
-      if ((left[0] == right[0] && left[1].get_id() == -right[1].get_id())
-          || (left[0] == right[1] && left[1].get_id() == -right[0].get_id()))
+      if ((a == c && b == -d) || (a == d && b == -c))
       {
-        return mk_not(left[0]);
+        return get_node(-a);
       }
-      if ((right[1] == left[1] && right[0].get_id() == -left[0].get_id())
-          || (right[1] == left[0] && right[0].get_id() == -left[1].get_id()))
+      if ((d == b && c == -a) || (d == a && c == -b))
       {
-        return mk_not(right[1]);
+        return get_node(-d);
       }
     }
 
@@ -537,31 +521,31 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
     //   shape:     ~(a /\ b) /\ c
     //   condition: b = c
     //   result:    ~a /\ c
-    if (left.is_and() && left.is_negated())
+    if (left_is_neg && left_is_and)
     {
       // (a = c) -> ~b /\ c
-      if (left[0] == right)
+      if (a == right)
       {
-        left = mk_not(left[1]);
+        left = -b;
         continue;
       }
       // (b = c) -> ~a /\ c
-      if (left[1] == right)
+      if (b == right)
       {
-        left = mk_not(left[0]);
+        left = -a;
         continue;
       }
     }
-    if (right.is_and() && right.is_negated())
+    if (right_is_neg && right_is_and)
     {
-      if (right[0] == left)
+      if (c == left)
       {
-        right = mk_not(right[1]);
+        right = -d;
         continue;
       }
-      else if (right[1] == left)
+      else if (d == left)
       {
-        right = mk_not(right[0]);
+        right = -c;
         continue;
       }
     }
@@ -570,35 +554,33 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
     //   shape:     ~(a /\ b) /\ (c /\ d)
     //   condition: b = c
     //   result:    ~a /\ (c /\ d)
-    if (left.is_and() && left.is_negated() && right.is_and()
-        && !right.is_negated())
+    if (left_is_neg && !right_is_neg && left_is_and && right_is_and)
     {
       // (a = c) \/ (a = d) -> ~b /\ (c /\ d)
-      if (left[0] == right[0] || left[0] == right[1])
+      if (a == c || a == d)
       {
-        left = mk_not(left[1]);
+        left = -b;
         continue;
       }
       // (b = c) \/ (b = d) -> ~a /\ (c /\ d)
-      if (left[1] == right[0] || left[1] == right[1])
+      if (b == c || b == d)
       {
-        left = mk_not(left[0]);
+        left = -a;
         continue;
       }
     }
-    if (right.is_and() && right.is_negated() && left.is_and()
-        && !left.is_negated())
+    if (right_is_neg && !left_is_neg && right_is_and && left_is_and)
     {
       // (a = c) \/ (a = d) -> ~b /\ (c /\ d)
-      if (right[0] == left[0] || right[0] == left[1])
+      if (c == a || c == b)
       {
-        right = mk_not(right[1]);
+        right = -d;
         continue;
       }
       // (b = c) \/ (b = d) -> ~a /\ (c /\ d)
-      if (right[1] == left[0] || right[1] == left[1])
+      if (d == a || d == b)
       {
-        right = mk_not(right[0]);
+        right = -c;
         continue;
       }
     }
@@ -607,19 +589,18 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
 
     // Idempotence rule
     //   shape: (a /\ b) /\ (c /\ d)
-    if (left.is_and() && !left.is_negated() && right.is_and()
-        && !right.is_negated())
+    if (!left_is_neg && !right_is_neg && left_is_and && right_is_and)
     {
       // (a = c) \/ (b = c)
-      if (left[0] == right[0] || left[1] == right[0])
+      if (a == c || b == c)
       {
-        right = right[1];
+        right = d;
         continue;
       }
       // (a = d) \/ (b = d)
-      if (left[0] == right[1] || left[1] == right[1])
+      if (a == d || b == d)
       {
-        right = right[0];
+        right = c;
         continue;
       }
     }
@@ -628,14 +609,29 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
   } while (true);
 
   // Normalize ANDs
-  if (std::abs(left.get_id()) > std::abs(right.get_id()))
+  if (std::abs(left) > std::abs(right))
   {
     std::swap(left, right);
   }
 
   // create AND with left, right
-  AigNodeData* d = find_or_create_and(left, right);
+  AigNodeData* d = find_or_create_and(get_node(left), get_node(right));
   return AigNode(d);
+}
+
+AigNode
+AigManager::get_node(int64_t id)
+{
+  assert(static_cast<size_t>(std::abs(id)) <= d_node_data.size());
+  return AigNode(d_node_data[std::abs(id) - 1].get(), id < 0);
+}
+
+std::pair<int64_t, int64_t>
+AigManager::get_children(int64_t id) const
+{
+  assert(static_cast<size_t>(std::abs(id)) <= d_node_data.size());
+  const auto& d = d_node_data[std::abs(id) - 1];
+  return {d->d_left.get_id(), d->d_right.get_id()};
 }
 
 AigNodeData*

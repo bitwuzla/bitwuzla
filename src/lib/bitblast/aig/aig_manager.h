@@ -146,6 +146,12 @@ class BitInterface<AigNode>
    */
   AigNode rewrite_and(const AigNode& left, const AigNode& right);
 
+  /** Get AigNode by id. */
+  AigNode get_node(int64_t id);
+
+  /** Get children ids from AND gate. */
+  std::pair<int64_t, int64_t> get_children(int64_t id) const;
+
   /**
    * Construct a new node data.
    */
