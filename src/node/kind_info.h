@@ -123,6 +123,11 @@ struct KindInfo
     return kind == Kind::EXISTS || kind == Kind::FORALL;
   }
 
+  constexpr KindInfo();
+
+  /** Are all kinds initialized? */
+  constexpr bool complete() const;
+
  private:
   static constexpr uint8_t s_nary = UINT8_MAX;
 
@@ -154,13 +159,12 @@ struct KindInfo
                       KindAttribute attribute = NONE,
                       bool is_commutative     = false);
 
-  constexpr KindInfo();
-
-  /** Are all kinds initialized? */
-  constexpr bool complete() const;
-
   /** Get KindInfo singleton. */
-  static const KindInfo& get();
+  static const KindInfo& get()
+  {
+    extern const KindInfo s_info;
+    return s_info;
+  }
 
   /** Number of initialized kind info entries. */
   size_t d_num_inited = 0;

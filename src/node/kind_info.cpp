@@ -160,12 +160,7 @@ KindInfo::complete() const
   return d_num_inited == static_cast<size_t>(Kind::NUM_KINDS);
 }
 
-const KindInfo&
-KindInfo::get()
-{
-  static const constexpr KindInfo info;
-  static_assert(info.complete(), "KindInfo not fully initialized.");
-  return info;
-}
+const constexpr KindInfo s_info;
+static_assert(s_info.complete(), "KindInfo not fully initialized.");
 
 }  // namespace bzla::node
