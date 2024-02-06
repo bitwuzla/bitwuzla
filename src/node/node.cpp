@@ -106,12 +106,6 @@ Node::type() const
 }
 
 bool
-Node::is_null() const
-{
-  return d_data == nullptr;
-}
-
-bool
 Node::is_value() const
 {
   return d_data->get_kind() == node::Kind::VALUE;

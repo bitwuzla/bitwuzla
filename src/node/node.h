@@ -69,7 +69,7 @@ class Node
   /**
    * @return True if this node is null.
    */
-  bool is_null() const;
+  bool is_null() const { return d_data == nullptr; }
 
   /**
    * @return True if this node is a value.

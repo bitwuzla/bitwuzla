@@ -18,6 +18,7 @@
 #include <optional>
 
 #include "bv/bitvector.h"
+#include "node/kind_info.h"
 #include "node/node.h"
 #include "type/type.h"
 
@@ -128,7 +129,7 @@ class NodeData
   /**
    * @return True if node data stores arbitrary number of children.
    */
-  bool is_nary() const;
+  bool is_nary() const { return KindInfo::is_nary(d_kind); }
 
   template <class T>
   const T& get_value() const
@@ -144,7 +145,7 @@ class NodeData
   std::optional<std::reference_wrapper<const std::string>> get_symbol() const;
 
   /** Increase the reference count by one. */
-  void inc_ref();
+  void inc_ref() { ++d_refs; }
 
   /**
    * Decrease the reference count by one.
@@ -152,7 +153,15 @@ class NodeData
    * If reference count becomes zero, this node data object will be
    * automatically garbage collected.
    */
-  void dec_ref();
+  void dec_ref()
+  {
+    assert(d_refs > 0);
+    --d_refs;
+    if (d_refs == 0)
+    {
+      gc();
+    }
+  }
 
   /**
    * @return An iterator to the first child of this node.
@@ -168,6 +177,9 @@ class NodeData
   NodeData(Kind kind);
 
  private:
+  /** Garbage collect this node. */
+  void gc();
+
   /** Node id. */
   uint64_t d_id = 0;
   /** Node kind. */

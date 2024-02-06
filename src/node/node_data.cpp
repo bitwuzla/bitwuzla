@@ -127,33 +127,10 @@ NodeData::get_index(size_t index) const
   return data.d_indices[index];
 }
 
-bool
-NodeData::is_nary() const
-{
-  return KindInfo::is_nary(d_kind);
-}
-
 std::optional<std::reference_wrapper<const std::string>>
 NodeData::get_symbol() const
 {
   return NodeManager::get().get_symbol(this);
-}
-
-void
-NodeData::inc_ref()
-{
-  ++d_refs;
-}
-
-void
-NodeData::dec_ref()
-{
-  assert(d_refs > 0);
-  --d_refs;
-  if (d_refs == 0)
-  {
-    NodeManager::get().garbage_collect(this);
-  }
 }
 
 NodeData::iterator
@@ -188,6 +165,12 @@ NodeData::end() const
     return data.d_children.begin() + data.d_num_children;
   }
   return nullptr;
+}
+
+void
+NodeData::gc()
+{
+  NodeManager::get().garbage_collect(this);
 }
 
 /* --- NodeDataChildren public --------------------------------------------- */
