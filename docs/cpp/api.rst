@@ -31,9 +31,10 @@ For example, to enable model generation
      :language: cpp
      :lines: 24
 
-Some options have modes, which can be configured via the string representation
-of their modes. For example, to enable CaDiCaL as back end SAT solver (this
-is for illustration purposes only, CaDiCaL is configured by default):
+Some options have **modes**, which can be configured via the string
+representation of their modes. For example, to enable CaDiCaL as back end SAT
+solver (this is for illustration purposes only, CaDiCaL is configured by
+default):
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
@@ -41,14 +42,14 @@ is for illustration purposes only, CaDiCaL is configured by default):
 
 For more details on available options, see :doc:`options`.
 
-Then, create a :cpp:struct:`Bitwuzla` instance (configuration options are
-now frozen and cannot be changed for this instance):
+Then, create a :cpp:struct:`Bitwuzla` **solver** instance (configuration
+options are now frozen and cannot be changed for this instance):
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
      :lines: 31
 
-Next, you will want to create some expressions and assert formulas.
+Next, you will want to **create** some **expressions** and **assert formulas**.
 For example, consider the following SMT-LIB input:
 
 .. literalinclude:: ../../examples/smt2/quickstart.smt2
@@ -60,8 +61,8 @@ This input is created and asserted as follows:
      :language: cpp
      :lines: 21-76
 
-Alternatively, you can parse an input file in BTOR2 format :cite:`btor2` or
-SMT-LIB v2 format :cite:`smtlib2` by creating a parser
+Alternatively, you can **parse** an **input file** in BTOR2 format
+:cite:`btor2` or SMT-LIB v2 format :cite:`smtlib2` by creating a parser
 :cpp:class:`bitwuzla::parser::Parser` and then parsing the input file via
 :cpp:func:`bitwuzla::parser::Parser::parse()`.
 
@@ -75,24 +76,84 @@ For example, to parse an example file `examples/smt2/quickstart.smt2` in SMT-LIB
 
 .. literalinclude:: ../../examples/cpp/parse.cpp
      :language: cpp
-     :lines: 22-41
+     :lines: 22-27,29-30,34,84-89
 
 .. note::
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
   or :code:`get-value` will be executed while parsing if argument `parse_only`
   is passed into :cpp:func:`bitwuzla::parser::Parser::parse()` as :code:`true`.
 
-After parsing an input file and asserting formulas, satisfiability can be
+After parsing from an input file, the **parsed assertions** can be retrieved
+via :cpp:func:`bitwuzla::Bitwuzla::get_assertions()`:
+
+.. literalinclude:: ../../examples/cpp/parse.cpp
+     :language: cpp
+     :lines: 36-43
+
+Alternatively, Bitwuzla also supports **parsing from strings** via
+:cpp:func:`bitwuzla::parser::Parser::parse()`. The quickstart input above can
+be parsed as one huge input string, or any its subsets of commands.
+
+Bitwuzla also allows to **add onto** input parsed from a file.
+For example, after parsing in ``examples/smt2/quickstart.smt2``, which is
+satisfiable, we add an assertion (which now makes the input formula
+unsatisfiable) via parsing from string as follows:
+
+.. literalinclude:: ../../examples/cpp/parse.cpp
+     :language: cpp
+     :lines: 46
+
+Bitwuzla also supports **parsing terms and sorts from strings** via
+:cpp:func:`bitwuzla::parser::Parser::parse_term()` and
+:cpp:func:`bitwuzla::parser::Parser::parse_sort()`.
+
+.. note:: Declarations like :code:`declare-const` are commands (not terms) in
+          the SMT-LIB language. Commands must be parsed in via
+          :cpp:func:`bitwuzla::parser::Parser::parse()`.
+          Function :cpp:func:`bitwuzla::parser::Parser::parse_term()` and
+          :cpp:func:`bitwuzla::parser::Parser::parse_sort()` only support
+          parsing SMT-LIB terms and sorts, respectively.
+
+For example, to **parse** a bit-vector **sort** of size 16 from string and show
+that it corresponds to the bit-vector sort of size 16 created via
+:cpp:func:`bitwuzla::mk_bv_sort()`:
+
+.. literalinclude:: ../../examples/cpp/parse.cpp
+     :language: cpp
+     :lines: 56-60
+
+Then, to **declare** Boolean constants :code:`c` and :code:`d` and a bit-vector
+constant :code:`b`:
+
+.. literalinclude:: ../../examples/cpp/parse.cpp
+     :language: cpp
+     :lines: 66,68
+
+These terms can be retrieved via
+:cpp:func:`bitwuzla::parser::Parser::parse_term()`:
+
+.. literalinclude:: ../../examples/cpp/parse.cpp
+     :language: cpp
+     :lines: 69-74
+
+Now, to **parse** in **terms** using these constants via
+:cpp:func:`bitwuzla::parser::Parser::parse_term()`:
+
+.. literalinclude:: ../../examples/cpp/parse.cpp
+     :language: cpp
+     :lines: 75-83
+
+After parsing input and asserting formulas, **satisfiability** can be
 determined via :cpp:func:`bitwuzla::Bitwuzla::check_sat()`.
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
      :lines: 78-79
 
-Formulas can also be assumed via passing a vector of assumptions into
+Formulas can also be **assumed** via passing a vector of assumptions into
 :cpp:func:`bitwuzla::Bitwuzla::check_sat()`.
 
-If the formula is satisfiable and model generation has been enabled, the
+If the formula is satisfiable and **model generation** has been enabled, the
 resulting model can be printed via :cpp:func:`bitwuzla::Bitwuzla::get_value()`
 and :cpp:func:`bitwuzla::Term::str()` (or :cpp:func:`bitwuzla::operator<<`).
 An example implementation illustrating how to print

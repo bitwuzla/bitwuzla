@@ -56,8 +56,8 @@ main()
   printf("Expect: unsat\n");
   printf("Bitwuzla: %s\n\n", bitwuzla_result_to_string(result));
 
-  // For illustration purposes, we now parse in some declarations from string
-  // and parse in terms and sorts from string.
+  // For illustration purposes, we now parse in some declarations and terms 
+  // and sorts from string.
 
   // Declare bit-vector sort of size 16.
   BitwuzlaSort bv16 =
@@ -68,31 +68,29 @@ main()
   // its string representation '(_ BitVec16)'.
   assert(bv16 == bitwuzla_mk_bv_sort(16));
 
-  // Declare Boolean constant 'c'.
+  // Declare Boolean constants 'c' and 'd'.
   // Note: Declarations are commands (not terms) in the SMT-LIB language.
   //       Commands must be parsed in via bitwuzla_parser_parse(),
   //       bitwuzla_parser_parse_term() only supports parsing SMT-LIB terms.
-  bitwuzla_parser_parse(
-      parser, "(declare-const c Bool)", true, false, &error_msg);
-  // We expect no error to occur.
-  assert(!error_msg);
-  // Retrieve term reprsenting 'c'.
-  BitwuzlaTerm c = bitwuzla_parser_parse_term(parser, "c", &error_msg);
-  // We expect no error to occur.
-  assert(!error_msg);
+  bitwuzla_parser_parse(parser,
+                        "(declare-const c Bool)(declare-const d Bool)",
+                        true,
+                        false,
+                        &error_msg);
   // Declare bit-vector constant 'b'.
   bitwuzla_parser_parse(
       parser, "(declare-const b (_ BitVec 16))", true, false, &error_msg);
   // We expect no error to occur.
   assert(!error_msg);
-  // Retrieve term reprsenting 'b'.
+  // Retrieve term representing 'b'.
   BitwuzlaTerm b = bitwuzla_parser_parse_term(parser, "b", &error_msg);
   // We expect no error to occur.
   assert(!error_msg);
-  // Declare Boolean constant 'd'.
-  bitwuzla_parser_parse(
-      parser, "(declare-const d Bool)", true, false, &error_msg);
-  // Retrieve term reprsenting 'd'.
+  // Retrieve term representing 'c'.
+  BitwuzlaTerm c = bitwuzla_parser_parse_term(parser, "c", &error_msg);
+  // We expect no error to occur.
+  assert(!error_msg);
+  // Retrieve term representing 'd'.
   BitwuzlaTerm d = bitwuzla_parser_parse_term(parser, "d", &error_msg);
   // We expect no error to occur.
   assert(!error_msg);

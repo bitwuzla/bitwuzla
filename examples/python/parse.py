@@ -43,8 +43,8 @@ if __name__ == '__main__':
     print('Expect: unsat')
     print(f'Bitwuzla: {parser.bitwuzla().check_sat()}')
 
-    # For illustration purposes, we now parse in some declarations from string
-    # and parse in terms and sorts from string.
+    # For illustration purposes, we now parse in some declarations and terms 
+    # and sorts from string.
 
     # Declare bit-vector sort of size 16.
     bv16 = parser.parse_sort('(_ BitVec 16)')
@@ -52,20 +52,18 @@ if __name__ == '__main__':
     # its string representation '(_ BitVec16)'.
     assert bv16 == mk_bv_sort(16)
 
-    # Declare Boolean constant 'a'.
+    # Declare Boolean constants 'c' and 'd'.
     # Note: Declarations are commands (not terms) in the SMT-LIB language.
-    #       Commands must be parsed in via Parser::parse(),
+    #       Commands must be parsed in via Parser.parse(),
     #       Parser::parse_term() only supports parsing SMT-LIB terms.
-    parser.parse("(declare-const c Bool)", True, False)
-    # Retrieve term reprsenting 'c'.
-    c = parser.parse_term('c')
+    parser.parse("(declare-const c Bool)(declare-const d Bool)", True, False)
     # Declare bit-vector constant 'b'.
     parser.parse('(declare-const b (_ BitVec 16))', True, False)
-    # Retrieve term reprsenting 'b'.
+    # Retrieve term representing 'b'.
     b = parser.parse_term('b')
-    # Declare Boolean constant 'c'.
-    parser.parse('(declare-const d Bool)', True, False)
-    # Retrieve term reprsenting 'd'.
+    # Retrieve term representing 'c'.
+    c = parser.parse_term('c')
+    # Retrieve term representing 'd'.
     d = parser.parse_term('d')
     # Create xor over 'c' and 'd' and show that it corresponds to term
     # parsed in from its string representation '(xor c d)'.
