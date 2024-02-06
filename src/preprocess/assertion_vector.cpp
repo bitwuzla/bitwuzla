@@ -92,6 +92,12 @@ AssertionVector::start_index() const
   return d_begin;
 }
 
+bool
+AssertionVector::is_inconsistent() const
+{
+  return d_view.is_inconsistent();
+}
+
 /* --- AssertionVector private ---------------------------------------------- */
 
 void

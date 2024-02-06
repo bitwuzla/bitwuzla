@@ -66,6 +66,9 @@ class AssertionVector
   /** Return assertion stack index at which the assertion vector starts. */
   size_t start_index() const;
 
+  /** @return Whether current set of assertions is inconsistent. */
+  bool is_inconsistent() const;
+
  private:
   /** Reset d_changed. */
   void reset_modified();

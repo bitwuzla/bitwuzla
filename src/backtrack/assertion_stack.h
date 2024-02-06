@@ -93,6 +93,9 @@ class AssertionView
    */
   bool insert_at_level(size_t level, const Node& assertion);
 
+  /** @return Whether current set of assertions is inconsistent. */
+  bool is_inconsistent() const;
+
  private:
   AssertionView(AssertionStack& assertions);
   /** The underlying assertion stack. */
@@ -104,7 +107,7 @@ class AssertionView
 class AssertionStack : public Backtrackable
 {
  public:
-  AssertionStack() = default;
+  AssertionStack();
   AssertionStack(BacktrackManager* mgr);
 
   /**
@@ -167,6 +170,9 @@ class AssertionStack : public Backtrackable
   /** @return A new view for the assertion stack. */
   AssertionView& view();
 
+  /** @return Whether current set of assertions is inconsistent. */
+  bool is_inconsistent() const { return d_inconsistent.back(); }
+
   /* --- Backtrackable interface -------------------------------------------- */
 
   /** Push new scope. */
@@ -183,6 +189,8 @@ class AssertionStack : public Backtrackable
  private:
   /** Assertion associated with their current scope level. */
   std::vector<std::pair<Node, size_t>> d_assertions;
+  /** Flag to indicate whether assertions at given level are inconsistent. */
+  std::vector<bool> d_inconsistent;
   /** Registered views. */
   std::vector<std::unique_ptr<AssertionView>> d_views;
 };

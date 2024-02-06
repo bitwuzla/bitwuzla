@@ -16,13 +16,22 @@ namespace bzla::backtrack {
 
 /* --- AssertionStack public ------------------------------------------------ */
 
-AssertionStack::AssertionStack(BacktrackManager* mgr) : Backtrackable(mgr) {}
+AssertionStack::AssertionStack() { d_inconsistent.push_back(false); }
+
+AssertionStack::AssertionStack(BacktrackManager* mgr) : Backtrackable(mgr)
+{
+  d_inconsistent.push_back(false);
+}
 
 bool
 AssertionStack::push_back(const Node& assertion)
 {
   assert(assertion.type().is_bool());
   d_assertions.emplace_back(assertion, d_control.size());
+  if (assertion.is_value() && !assertion.value<bool>())
+  {
+    d_inconsistent.back() = true;
+  }
   return true;
 }
 
@@ -35,6 +44,10 @@ AssertionStack::replace(size_t index, const Node& replacement)
   if (assertion == replacement)
   {
     return false;
+  }
+  if (replacement.is_value() && !replacement.value<bool>())
+  {
+    d_inconsistent[level] = true;
   }
 
   d_assertions[index].first = replacement;
@@ -50,6 +63,11 @@ AssertionStack::insert_at_level(size_t level, const Node& assertion)
     return push_back(assertion);
   }
   assert(level < d_control.size());
+
+  if (assertion.is_value() && !assertion.value<bool>())
+  {
+    d_inconsistent[level] = true;
+  }
 
   // Add assertion to given level and update control stack.
   size_t index = d_control[level];
@@ -111,6 +129,7 @@ void
 AssertionStack::push()
 {
   d_control.push_back(d_assertions.size());
+  d_inconsistent.push_back(d_inconsistent.back());
 }
 
 void
@@ -120,6 +139,7 @@ AssertionStack::pop()
   size_t pop_to = d_control.back();
   assert(pop_to <= d_assertions.size());
   d_control.pop_back();
+  d_inconsistent.pop_back();
 
   // Pop back assertions
   while (d_assertions.size() > pop_to)
@@ -217,6 +237,12 @@ bool
 AssertionView::insert_at_level(size_t level, const Node& assertion)
 {
   return d_assertions.insert_at_level(level, assertion);
+}
+
+bool
+AssertionView::is_inconsistent() const
+{
+  return d_assertions.is_inconsistent();
 }
 
 }  // namespace bzla::backtrack

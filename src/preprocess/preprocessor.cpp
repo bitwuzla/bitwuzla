@@ -71,7 +71,7 @@ Preprocessor::preprocess()
   }
 
   // Process assertions by level
-  while (!d_assertions.empty())
+  while (!d_assertions.empty() && !d_assertions.is_inconsistent())
   {
     size_t level = d_assertions.level(d_assertions.begin());
 
@@ -89,7 +89,7 @@ Preprocessor::preprocess()
     // Advance assertions to next level
     d_assertions.set_index(d_assertions.begin() + assertions.size());
   }
-  assert(d_assertions.empty());
+  assert(d_assertions.empty() || d_assertions.is_inconsistent());
 
   // Sync backtrack manager to level. This is required if there are levels
   // that do not contain any assertions.
@@ -108,6 +108,10 @@ Preprocessor::preprocess()
   d_pass_normalize.clear_cache();
   d_pass_elim_extract.clear_cache();
 
+  if (d_assertions.is_inconsistent())
+  {
+    return Result::UNSAT;
+  }
   return Result::UNKNOWN;
 }
 
@@ -223,12 +227,20 @@ Preprocessor::apply(AssertionVector& assertions)
     cnt = assertions.num_modified();
     d_pass_rewrite.apply(assertions);
     Msg(2) << assertions.num_modified() - cnt << " after rewriting";
+    if (assertions.is_inconsistent())
+    {
+      break;
+    }
 
     if (options.pp_flatten_and())
     {
       cnt = assertions.num_modified();
       d_pass_flatten_and.apply(assertions);
       Msg(2) << assertions.num_modified() - cnt << " after and flattening";
+      if (assertions.is_inconsistent())
+      {
+        break;
+      }
     }
 
     if (options.pp_variable_subst())
@@ -240,7 +252,11 @@ Preprocessor::apply(AssertionVector& assertions)
         d_pass_variable_substitution.apply(assertions);
         Msg(2) << assertions.num_modified() - cnt
                << " after variable substitution";
-      } while (assertions.modified());
+      } while (assertions.modified() && !assertions.is_inconsistent());
+      if (assertions.is_inconsistent())
+      {
+        break;
+      }
     }
 
     if (options.pp_skeleton_preproc() && !skel_done)
@@ -250,6 +266,10 @@ Preprocessor::apply(AssertionVector& assertions)
       skel_done = true;
       Msg(2) << assertions.num_modified() - cnt
              << " after skeleton simplification";
+      if (assertions.is_inconsistent())
+      {
+        break;
+      }
     }
 
     if (options.pp_embedded_constr())
@@ -258,6 +278,10 @@ Preprocessor::apply(AssertionVector& assertions)
       d_pass_embedded_constraints.apply(assertions);
       Msg(2) << assertions.num_modified() - cnt
              << " after embedded constraints";
+      if (assertions.is_inconsistent())
+      {
+        break;
+      }
     }
 
     if (options.pp_contr_ands())
@@ -286,6 +310,10 @@ Preprocessor::apply(AssertionVector& assertions)
       cnt = assertions.num_modified();
       d_pass_normalize.apply(assertions);
       Msg(2) << assertions.num_modified() - cnt << " after normalization";
+      if (d_assertions.is_inconsistent())
+      {
+        break;
+      }
     }
 
     if (options.pp_elim_bv_extracts())
@@ -293,9 +321,14 @@ Preprocessor::apply(AssertionVector& assertions)
       cnt = assertions.num_modified();
       d_pass_elim_extract.apply(assertions);
       Msg(2) << assertions.num_modified() - cnt << " after extract elimination";
+      if (d_assertions.is_inconsistent())
+      {
+        break;
+      }
     }
 
-  } while (assertions.modified() && !d_env.terminate());
+  } while (assertions.modified() && !assertions.is_inconsistent()
+           && !d_env.terminate());
 
 #ifndef NDEBUG
   if (d_env.options().dbg_pp_node_thresh())

@@ -4458,6 +4458,7 @@ TEST_F(TestCApi, terminate)
   }
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
     Bitwuzla *bitwuzla = bitwuzla_new(opts);
     bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
@@ -4468,6 +4469,7 @@ TEST_F(TestCApi, terminate)
   }
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
     Bitwuzla *bitwuzla = bitwuzla_new(opts);
     bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);

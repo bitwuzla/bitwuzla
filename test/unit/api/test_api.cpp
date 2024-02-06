@@ -3273,6 +3273,7 @@ TEST_F(TestApi, terminate)
   }
   {
     bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
     bitwuzla::Bitwuzla bitwuzla(opts);
     bitwuzla.configure_terminator(&tt);
@@ -3281,6 +3282,7 @@ TEST_F(TestApi, terminate)
   }
   {
     bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
     opts.set(bitwuzla::Option::BV_SOLVER, "prop");
     bitwuzla::Bitwuzla bitwuzla(opts);
     bitwuzla.configure_terminator(&tt);

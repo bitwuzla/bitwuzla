@@ -47,9 +47,12 @@ SolvingContext::solve()
 #ifndef NDEBUG
   check_no_free_variables();
 #endif
-  preprocess();
+  d_sat_state = preprocess();
 
-  d_sat_state = d_solver_engine.solve();
+  if (d_sat_state == Result::UNKNOWN)
+  {
+    d_sat_state = d_solver_engine.solve();
+  }
 
   if (d_sat_state == Result::SAT
       && (options().produce_models() || options().dbg_check_model()))
@@ -124,7 +127,14 @@ std::vector<Node>
 SolvingContext::get_unsat_core()
 {
   std::vector<Node> res, core;
-  d_solver_engine.unsat_core(core);
+  if (d_assertions.is_inconsistent())
+  {
+    core.push_back(NodeManager::get().mk_value(false));
+  }
+  else
+  {
+    d_solver_engine.unsat_core(core);
+  }
 
   // Get unsat core in terms of original input assertions.
   std::unordered_set<Node> orig(d_original_assertions.begin(),
