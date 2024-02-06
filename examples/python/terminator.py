@@ -8,7 +8,6 @@
 # information at https:#github.com/bitwuzla/bitwuzla/blob/main/COPYING
 ##
 
-import pytest
 import time
 
 from bitwuzla import *

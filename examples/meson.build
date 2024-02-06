@@ -7,5 +7,12 @@ project('bitwuzla-examples',
   ]
 )
 
+# Build parameters
+python_path = get_option('python_path')
+
 subdir('c')
 subdir('cpp')
+
+if python_path != ''
+  subdir('python')
+endif

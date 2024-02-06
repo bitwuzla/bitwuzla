@@ -29,3 +29,13 @@ meson setup <build_dir> --pkg-config-path=<your-install-prefix>/lib/pkgconfig
 The examples binaries are built into `<build_dir>/<path>`, where `<path>`
 mirrors the path to the source files, e.g., `<build_dir>/c/quickstart` for
 example `c/quickstart.c`.
+
+To enable Python examples in the test suite, configure the build directory
+with a path to the Bitwuzla Python module. For the non-standard
+location from above, call `meson setup` as follows:
+```
+meson setup <build_dir> --pkg-config-path=<your-install-prefix>/lib/pkgconfig \
+    -Dpython_path=<your-install-prefix>/lib/python<version>/site-packages/
+```
+Python Examples can also be run manually via
+`python python/<example_name>`, e.g., `python python/quickstart.py`.

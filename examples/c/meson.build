@@ -19,5 +19,5 @@ foreach e : examples
     e, ''.join(e, '.c'),
     link_args: ['-lstdc++', '-lm'],
     dependencies: [bitwuzla_dep])
-    test(e, exe)
+    test(e, exe, suite: 'c')
 endforeach

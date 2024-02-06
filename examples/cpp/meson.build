@@ -18,5 +18,5 @@ foreach e : examples
   exe = executable(
     e, ''.join(e, '.cpp'),
     dependencies: [bitwuzla_dep])
-    test(e, exe)
+    test(e, exe, suite: 'cpp')
 endforeach

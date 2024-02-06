@@ -8,8 +8,6 @@
 # information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
 ##
 
-import pytest
-
 from bitwuzla import *
 
 if __name__ == "__main__":
