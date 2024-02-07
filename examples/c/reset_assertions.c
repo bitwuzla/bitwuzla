@@ -76,7 +76,7 @@ main()
   // (get-model)
   printf("(\n");
   printf("  (define-fun %s", bitwuzla_term_get_symbol(x));
-  printf(" () %s", bitwuzla_sort_to_string(x));
+  printf(" () %s", bitwuzla_sort_to_string(bitwuzla_term_get_sort(x)));
   printf(" %s)\n", bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, x)));
   printf(")\n");
 
