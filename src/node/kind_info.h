@@ -160,17 +160,23 @@ struct KindInfo
                       bool is_commutative     = false);
 
   /** Get KindInfo singleton. */
-  static const KindInfo& get()
-  {
-    extern const KindInfo s_info;
-    return s_info;
-  }
+  static const KindInfo& get();
 
   /** Number of initialized kind info entries. */
   size_t d_num_inited = 0;
   /** The kind info entries. */
   std::array<KindData, static_cast<size_t>(Kind::NUM_KINDS)> d_info;
 };
+
+// Note: mingw has linking errors if s_sinfo is declared in in-class definition
+// of KindInfo::get() above.
+extern const KindInfo s_info;
+
+inline const KindInfo&
+KindInfo::get()
+{
+  return s_info;
+}
 
 }  // namespace bzla::node
 

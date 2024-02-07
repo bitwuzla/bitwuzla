@@ -10,7 +10,6 @@
 
 #include "node/node_data.h"
 
-#include "node/kind_info.h"
 #include "node/node.h"
 #include "node/node_manager.h"
 
