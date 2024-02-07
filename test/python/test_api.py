@@ -1993,6 +1993,7 @@ def test_terminate():
     assert bitwuzla.check_sat() == Result.UNKNOWN
 
     options.set(Option.BV_SOLVER, 'prop')
+    options.set(Option.REWRITE_LEVEL, 0)
     bitwuzla = Bitwuzla(options)
     bitwuzla.configure_terminator(tt)
     bitwuzla.assert_formula(b)
