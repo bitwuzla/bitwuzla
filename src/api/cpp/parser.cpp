@@ -28,18 +28,21 @@ Exception::Exception(const std::stringstream &stream)
 
 /* Parser public ------------------------------------------------------------ */
 
-Parser::Parser(Options &options, const std::string &language, std::ostream *out)
+Parser::Parser(TermManager &tm,
+               Options &options,
+               const std::string &language,
+               std::ostream *out)
 {
   BITWUZLA_CHECK(language == "smt2" || language == "btor2")
       << "invalid input language, expected 'smt2' or 'btor2'";
   BITWUZLA_CHECK_NOT_NULL(out);
   if (language == "smt2")
   {
-    d_parser.reset(new bzla::parser::smt2::Parser(options, out));
+    d_parser.reset(new bzla::parser::smt2::Parser(tm, options, out));
   }
   else
   {
-    d_parser.reset(new bzla::parser::btor2::Parser(options, out));
+    d_parser.reset(new bzla::parser::btor2::Parser(tm, options, out));
   }
   BITWUZLA_CHECK(d_parser->error_msg().empty()) << d_parser->error_msg();
 }

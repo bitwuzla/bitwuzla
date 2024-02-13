@@ -34,9 +34,12 @@ class Parser
    *       Subsequent parse queries after a parse error will return with
    *       an error.
    */
-  Parser(bitwuzla::Options& options, std::ostream* out = &std::cout)
+  Parser(bitwuzla::TermManager& tm,
+         bitwuzla::Options& options,
+         std::ostream* out = &std::cout)
       : d_options_orig(options),
         d_options(options),
+        d_tm(tm),
         d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
         d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
         d_logger(d_log_level, d_verbosity),
@@ -100,7 +103,7 @@ class Parser
   {
     if (!d_bitwuzla)
     {
-      d_bitwuzla.reset(new bitwuzla::Bitwuzla(d_options));
+      d_bitwuzla.reset(new bitwuzla::Bitwuzla(d_tm, d_options));
     }
   }
   /**
@@ -117,6 +120,8 @@ class Parser
   bitwuzla::Options& d_options_orig;
   /** The Bitwuzla configuration options. */
   bitwuzla::Options d_options;
+  /** The associated term manager instance. */
+  bitwuzla::TermManager& d_tm;
   /** The Bitwuzla instance. */
   std::shared_ptr<bitwuzla::Bitwuzla> d_bitwuzla = nullptr;
   /** The Bitwuzla terminator. */

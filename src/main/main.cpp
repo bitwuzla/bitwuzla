@@ -23,6 +23,7 @@ int32_t
 main(int32_t argc, char* argv[])
 {
   bitwuzla::Options options;
+  bitwuzla::TermManager tm;
 
   std::vector<std::string> args;
   bzla::main::Options main_options =
@@ -34,7 +35,8 @@ main(int32_t argc, char* argv[])
     options.set(args);
 
     std::cout << bitwuzla::set_bv_format(main_options.bv_format);
-    bitwuzla::parser::Parser parser(options, main_options.language, &std::cout);
+    bitwuzla::parser::Parser parser(
+        tm, options, main_options.language, &std::cout);
     parser.parse(main_options.infile_name,
                  main_options.print || main_options.parse_only);
     reset_time_limit();

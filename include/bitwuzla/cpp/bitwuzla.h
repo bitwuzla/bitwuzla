@@ -454,10 +454,6 @@ class Term
   friend bool operator!=(const Term &, const Term &);
   friend std::ostream &operator<<(std::ostream &, const Term &);
   friend std::hash<bitwuzla::Term>;
-  friend Term substitute_term(const Term &,
-                              const std::unordered_map<Term, Term> &);
-  friend void substitute_terms(std::vector<Term> &terms,
-                               const std::unordered_map<Term, Term> &);
 
  public:
   /** Default constructor, creates null term. */

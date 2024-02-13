@@ -28,7 +28,9 @@ class Parser : public bzla::parser::Parser
    *                    Bitwuzla instance from these options.
    * @param out         The output stream.
    */
-  Parser(bitwuzla::Options& options, std::ostream* out = &std::cout);
+  Parser(bitwuzla::TermManager& tm,
+         bitwuzla::Options& options,
+         std::ostream* out = &std::cout);
 
   bool parse(const std::string& input,
              bool parse_only,

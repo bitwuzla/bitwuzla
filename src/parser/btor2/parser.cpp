@@ -17,17 +17,19 @@ namespace parser::btor2 {
 
 /* Parser public ------------------------------------------------------------ */
 
-Parser::Parser(bitwuzla::Options& options, std::ostream* out)
-    : bzla::parser::Parser(options, out)
+Parser::Parser(bitwuzla::TermManager& tm,
+               bitwuzla::Options& options,
+               std::ostream* out)
+    : bzla::parser::Parser(tm, options, out)
 {
   if (d_error.empty())
   {
     d_lexer.reset(new Lexer());
   }
   init_bitwuzla();
-  bitwuzla::Sort bv1 = bitwuzla::mk_bv_sort(1);
-  d_bv1_one          = bitwuzla::mk_bv_one(bv1);
-  d_bv1_zero         = bitwuzla::mk_bv_zero(bv1);
+  bitwuzla::Sort bv1 = d_tm.mk_bv_sort(1);
+  d_bv1_one          = d_tm.mk_bv_one(bv1);
+  d_bv1_zero         = d_tm.mk_bv_zero(bv1);
 }
 
 Parser::~Parser() {}
@@ -158,7 +160,7 @@ bitwuzla::Term
 Parser::bool_term_to_bv1(const bitwuzla::Term& term) const
 {
   if (!term.sort().is_bool()) return term;
-  return bitwuzla::mk_term(bitwuzla::Kind::ITE, {term, d_bv1_one, d_bv1_zero});
+  return d_tm.mk_term(bitwuzla::Kind::ITE, {term, d_bv1_one, d_bv1_zero});
 }
 
 bitwuzla::Term
@@ -168,7 +170,7 @@ Parser::bv1_term_to_bool(const bitwuzla::Term& term) const
   {
     return term;
   }
-  return bitwuzla::mk_term(bitwuzla::Kind::EQUAL, {term, d_bv1_one});
+  return d_tm.mk_term(bitwuzla::Kind::EQUAL, {term, d_bv1_one});
 }
 
 bool
@@ -374,7 +376,7 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
                      + "does not fit into bit-vector of size "
                      + std::to_string(sort.bv_size()));
       }
-      term = bitwuzla::mk_bv_value(sort, val, base);
+      term = d_tm.mk_bv_value(sort, val, base);
       break;
     }
 
@@ -382,11 +384,11 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       if (d_lexer->look_ahead() != '\n')
       {
         d_lexer->next_token();
-        term = bitwuzla::mk_const(sort, d_lexer->token());
+        term = d_tm.mk_const(sort, d_lexer->token());
       }
       else
       {
-        term = bitwuzla::mk_const(sort);
+        term = d_tm.mk_const(sort);
       }
       break;
 
@@ -395,7 +397,7 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       {
         return error("expected bit-vector sort", sort_coo);
       }
-      term = bitwuzla::mk_bv_one(sort);
+      term = d_tm.mk_bv_one(sort);
       break;
 
     case Token::ONES:
@@ -403,7 +405,7 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       {
         return error("expected bit-vector sort", sort_coo);
       }
-      term = bitwuzla::mk_bv_ones(sort);
+      term = d_tm.mk_bv_ones(sort);
       break;
 
     case Token::ZERO:
@@ -411,7 +413,7 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       {
         return error("expected bit-vector sort", sort_coo);
       }
-      term = bitwuzla::mk_bv_zero(sort);
+      term = d_tm.mk_bv_zero(sort);
       break;
 
     case Token::ADD:
@@ -682,7 +684,7 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
 
   if (kind != bitwuzla::Kind::CONSTANT)
   {
-    term = bitwuzla::mk_term(kind, args, idxs);
+    term = d_tm.mk_term(kind, args, idxs);
   }
   assert(
       sort.is_null() || term.is_null() || term.sort() == sort
@@ -767,7 +769,7 @@ Parser::parse_sort(int64_t line_id)
     {
       return false;
     }
-    sort = bitwuzla::mk_bv_sort(bw);
+    sort = d_tm.mk_bv_sort(bw);
   }
   else
   {
@@ -794,7 +796,7 @@ Parser::parse_sort(int64_t line_id)
       return error("invalid sort id '" + std::to_string(selem) + "'");
     }
     bitwuzla::Sort sort_elem = it->second;
-    sort                     = bitwuzla::mk_array_sort(sort_index, sort_elem);
+    sort                     = d_tm.mk_array_sort(sort_index, sort_elem);
   }
   auto [it, inserted] = d_sort_map.emplace(line_id, sort);
   if (!inserted)
@@ -824,11 +826,11 @@ Parser::parse_term(bitwuzla::Term& res)
   {
     if (it->second.sort().is_bool())
     {
-      res = bitwuzla::mk_term(bitwuzla::Kind::NOT, {it->second});
+      res = d_tm.mk_term(bitwuzla::Kind::NOT, {it->second});
     }
     else if (it->second.sort().is_bv())
     {
-      res = bitwuzla::mk_term(bitwuzla::Kind::BV_NOT, {it->second});
+      res = d_tm.mk_term(bitwuzla::Kind::BV_NOT, {it->second});
     }
     else
     {

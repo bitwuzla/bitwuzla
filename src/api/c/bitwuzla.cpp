@@ -891,6 +891,7 @@ bitwuzla_mk_bv_value(BitwuzlaTermManager *tm,
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(tm);
   BITWUZLA_CHECK_SORT(sort);
+  BITWUZLA_CHECK_NOT_NULL(value);
   res = tm->export_term(tm->d_tm->mk_bv_value(
       BitwuzlaTermManager::import_sort(sort), value, base));
   BITWUZLA_TRY_CATCH_END;

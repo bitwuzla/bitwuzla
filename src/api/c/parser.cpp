@@ -37,8 +37,8 @@ struct BitwuzlaParser
       out = &outfile;
     }
     (*out) << bitwuzla::set_bv_format(base);
-    d_parser.reset(
-        new bitwuzla::parser::Parser(options->d_options, language, out));
+    d_parser.reset(new bitwuzla::parser::Parser(
+        *tm->d_tm, options->d_options, language, out));
   }
   /** The associated bitwuzla instance. */
   std::unique_ptr<bitwuzla::parser::Parser> d_parser;

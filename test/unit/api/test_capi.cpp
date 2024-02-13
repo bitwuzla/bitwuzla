@@ -761,7 +761,7 @@ TEST_F(TestCApi, mk_bv_value)
   ASSERT_DEATH(bitwuzla_mk_bv_value(d_tm, d_bv_sort8, "-128", 12),
                "invalid base");
 
-  ASSERT_DEATH(bitwuzla_mk_bv_value(d_tm, 0, "010", 2), d_error_inv_sort);
+  ASSERT_DEATH(bitwuzla_mk_bv_value(d_tm, nullptr, "010", 2), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_mk_bv_value(d_tm, d_bv_sort8, nullptr, 2),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_bv_value(d_tm, d_bv_sort8, "", 2), d_error_exp_str);
@@ -3334,11 +3334,13 @@ TEST_F(TestCApi, parser_smt2_string_term)
   ASSERT_DEATH(bitwuzla_parser_parse_term(parser, "true", nullptr),
                d_error_not_null);
 
-  ASSERT_EQ(bitwuzla_parser_parse_term(parser, "true", &error_msg),
-            bitwuzla_mk_true(d_tm));
+  ASSERT_TRUE(bitwuzla_term_is_equal(
+      bitwuzla_parser_parse_term(parser, "true", &error_msg),
+      bitwuzla_mk_true(d_tm)));
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(bitwuzla_parser_parse_term(parser, "false", &error_msg),
-            bitwuzla_mk_false(d_tm));
+  ASSERT_TRUE(bitwuzla_term_is_equal(
+      bitwuzla_parser_parse_term(parser, "false", &error_msg),
+      bitwuzla_mk_false(d_tm)));
   ASSERT_EQ(error_msg, nullptr);
   bitwuzla_parser_parse(
       parser, "(declare-const a Bool)", true, false, &error_msg);
@@ -3355,16 +3357,19 @@ TEST_F(TestCApi, parser_smt2_string_term)
   ASSERT_EQ(error_msg, nullptr);
   BitwuzlaTerm t_c = bitwuzla_parser_parse_term(parser, "c", &error_msg);
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(bitwuzla_parser_parse_term(parser, "(xor a c)", &error_msg),
-            bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_XOR, t_a, t_c));
+  ASSERT_TRUE(bitwuzla_term_is_equal(
+      bitwuzla_parser_parse_term(parser, "(xor a c)", &error_msg),
+      bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_XOR, t_a, t_c)));
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(
+  ASSERT_TRUE(bitwuzla_term_is_equal(
       bitwuzla_parser_parse_term(
           parser, "(bvadd b #b1011111010001010)", &error_msg),
-      bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_ADD,
-                        t_b,
-                        bitwuzla_mk_bv_value(d_tm,
-                            bitwuzla_mk_bv_sort(d_tm, 16), "1011111010001010", 2)));
+      bitwuzla_mk_term2(
+          d_tm,
+          BITWUZLA_KIND_BV_ADD,
+          t_b,
+          bitwuzla_mk_bv_value(
+              d_tm, bitwuzla_mk_bv_sort(d_tm, 16), "1011111010001010", 2))));
 }
 
 TEST_F(TestCApi, parser_smt2_string_sort)
@@ -3381,14 +3386,17 @@ TEST_F(TestCApi, parser_smt2_string_sort)
   ASSERT_DEATH(bitwuzla_parser_parse_sort(parser, "Bool", nullptr),
                d_error_not_null);
 
-  ASSERT_EQ(bitwuzla_parser_parse_sort(parser, "Bool", &error_msg),
-            bitwuzla_mk_bool_sort(d_tm));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(
+      bitwuzla_parser_parse_sort(parser, "Bool", &error_msg),
+      bitwuzla_mk_bool_sort(d_tm)));
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(bitwuzla_parser_parse_sort(parser, "(_ BitVec 32)", &error_msg),
-            bitwuzla_mk_bv_sort(d_tm, 32));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(
+      bitwuzla_parser_parse_sort(parser, "(_ BitVec 32)", &error_msg),
+      bitwuzla_mk_bv_sort(d_tm, 32)));
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(bitwuzla_parser_parse_sort(parser, "RoundingMode", &error_msg),
-            bitwuzla_mk_rm_sort(d_tm));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(
+      bitwuzla_parser_parse_sort(parser, "RoundingMode", &error_msg),
+      bitwuzla_mk_rm_sort(d_tm)));
   ASSERT_EQ(error_msg, nullptr);
   bitwuzla_parser_parse(parser, "(declare-sort m 0)", true, false, &error_msg);
   ASSERT_EQ(error_msg, nullptr);
@@ -3402,9 +3410,10 @@ TEST_F(TestCApi, parser_smt2_string_sort)
   ASSERT_EQ(error_msg, nullptr);
   BitwuzlaSort fpn = bitwuzla_parser_parse_sort(parser, "FPN", &error_msg);
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(fpn,
-            bitwuzla_parser_parse_sort(
-                parser, "(_ FloatingPoint 11 53)", &error_msg));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(
+      fpn,
+      bitwuzla_parser_parse_sort(
+          parser, "(_ FloatingPoint 11 53)", &error_msg)));
   ASSERT_EQ(error_msg, nullptr);
 }
 
@@ -3588,11 +3597,13 @@ TEST_F(TestCApi, parser_btor2_string_term)
   const char *error_msg;
   bitwuzla_parser_parse(parser, "1 sort bitvec 1", true, false, &error_msg);
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(bitwuzla_parser_parse_term(parser, "2 constd 1 1", &error_msg),
-            bitwuzla_mk_bv_value_uint64(d_tm, bitwuzla_mk_bv_sort(d_tm, 1), 1));
+  ASSERT_TRUE(bitwuzla_term_is_equal(
+      bitwuzla_parser_parse_term(parser, "2 constd 1 1", &error_msg),
+      bitwuzla_mk_bv_value_uint64(d_tm, bitwuzla_mk_bv_sort(d_tm, 1), 1)));
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(bitwuzla_parser_parse_term(parser, "3 constd 1 0", &error_msg),
-            bitwuzla_mk_bv_value_uint64(d_tm, bitwuzla_mk_bv_sort(d_tm, 1), 0));
+  ASSERT_TRUE(bitwuzla_term_is_equal(
+      bitwuzla_parser_parse_term(parser, "3 constd 1 0", &error_msg),
+      bitwuzla_mk_bv_value_uint64(d_tm, bitwuzla_mk_bv_sort(d_tm, 1), 0)));
   ASSERT_EQ(error_msg, nullptr);
   BitwuzlaTerm t_a =
       bitwuzla_parser_parse_term(parser, "4 input 1 a", &error_msg);
@@ -3605,16 +3616,19 @@ TEST_F(TestCApi, parser_btor2_string_term)
   BitwuzlaTerm t_c =
       bitwuzla_parser_parse_term(parser, "7 input 1 c", &error_msg);
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(bitwuzla_parser_parse_term(parser, "8 xor 1 4 7", &error_msg),
-            bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_XOR, t_a, t_c));
+  ASSERT_TRUE(bitwuzla_term_is_equal(
+      bitwuzla_parser_parse_term(parser, "8 xor 1 4 7", &error_msg),
+      bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_XOR, t_a, t_c)));
   bitwuzla_parser_parse_term(parser, "9 const 5 1011111010001010", &error_msg);
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(
+  ASSERT_TRUE(bitwuzla_term_is_equal(
       bitwuzla_parser_parse_term(parser, "10 add 5 6 9", &error_msg),
-      bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_ADD,
-                        t_b,
-                        bitwuzla_mk_bv_value(d_tm,
-                            bitwuzla_mk_bv_sort(d_tm, 16), "1011111010001010", 2)));
+      bitwuzla_mk_term2(
+          d_tm,
+          BITWUZLA_KIND_BV_ADD,
+          t_b,
+          bitwuzla_mk_bv_value(
+              d_tm, bitwuzla_mk_bv_sort(d_tm, 16), "1011111010001010", 2))));
 }
 
 TEST_F(TestCApi, parser_btor2_string_sort)
@@ -3626,12 +3640,14 @@ TEST_F(TestCApi, parser_btor2_string_sort)
   BitwuzlaSort bv1 =
       bitwuzla_parser_parse_sort(parser, "1 sort bitvec 1", &error_msg);
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(bv1, bitwuzla_mk_bv_sort(d_tm, 1));
-  ASSERT_EQ(bitwuzla_parser_parse_sort(parser, "2 sort bitvec 32", &error_msg),
-            bitwuzla_mk_bv_sort(d_tm, 32));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(bv1, bitwuzla_mk_bv_sort(d_tm, 1)));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(
+      bitwuzla_parser_parse_sort(parser, "2 sort bitvec 32", &error_msg),
+      bitwuzla_mk_bv_sort(d_tm, 32)));
   ASSERT_EQ(error_msg, nullptr);
-  ASSERT_EQ(bitwuzla_parser_parse_sort(parser, "3 sort array 1 1", &error_msg),
-            bitwuzla_mk_array_sort(d_tm, bv1, bv1));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(
+      bitwuzla_parser_parse_sort(parser, "3 sort array 1 1", &error_msg),
+      bitwuzla_mk_array_sort(d_tm, bv1, bv1)));
   ASSERT_EQ(error_msg, nullptr);
 }
 

@@ -55,7 +55,8 @@ class Parser
    *       Subsequent parse queries after a parse error will return with
    *       an error.
    */
-  Parser(Options &options,
+  Parser(TermManager &tm,
+         Options &options,
          const std::string &language = "smt2",
          std::ostream *out           = &std::cout);
   /** Destructor. */

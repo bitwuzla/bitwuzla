@@ -14,6 +14,10 @@ import time
 
 from bitwuzla import *
 
+@pytest.fixture
+def tm():
+    return TermManager()
+
 # ----------------------------------------------------------------------------
 # Kind
 # ----------------------------------------------------------------------------
@@ -220,53 +224,53 @@ def test_option_is_valid():
 # Create Sorts
 # ----------------------------------------------------------------------------
 
-def test_mk_bool_sort():
-    sort = mk_bool_sort()
+def test_mk_bool_sort(tm):
+    sort = tm.mk_bool_sort()
     assert sort.is_bool()
 
 
-def test_mk_array_sort():
-    bsort = mk_bool_sort()
-    sort = mk_array_sort(bsort, bsort)
+def test_mk_array_sort(tm):
+    bsort = tm.mk_bool_sort()
+    sort = tm.mk_array_sort(bsort, bsort)
     assert sort.is_array()
-    mk_array_sort(bsort, sort)
+    tm.mk_array_sort(bsort, sort)
 
     with pytest.raises(BitwuzlaException):
-        mk_array_sort(Sort(), bsort)
+        tm.mk_array_sort(Sort(), bsort)
     with pytest.raises(BitwuzlaException):
-        mk_array_sort(bsort, Sort())
+        tm.mk_array_sort(bsort, Sort())
 
 
-def test_mk_bv_sort():
-    sort = mk_bv_sort(8)
+def test_mk_bv_sort(tm):
+    sort = tm.mk_bv_sort(8)
     assert sort.is_bv()
     assert sort.bv_size() == 8
     with pytest.raises(BitwuzlaException):
-        mk_bv_sort(0)
+        tm.mk_bv_sort(0)
 
 
-def test_mk_fp_sort():
-    sort = mk_fp_sort(5, 11)
+def test_mk_fp_sort(tm):
+    sort = tm.mk_fp_sort(5, 11)
     assert sort.is_fp()
     assert sort.fp_exp_size() == 5
     assert sort.fp_sig_size() == 11
     with pytest.raises(BitwuzlaException):
-        mk_fp_sort(0, 11)
+        tm.mk_fp_sort(0, 11)
     with pytest.raises(BitwuzlaException):
-        mk_fp_sort(5, 0)
+        tm.mk_fp_sort(5, 0)
 
 
-def test_mk_fun_sort():
+def test_mk_fun_sort(tm):
     with pytest.raises(BitwuzlaException):
-        mk_fun_sort([], mk_bool_sort())
+        tm.mk_fun_sort([], tm.mk_bool_sort())
     with pytest.raises(BitwuzlaException):
-        mk_fun_sort([mk_bool_sort(), mk_bool_sort()], Sort())
+        tm.mk_fun_sort([tm.mk_bool_sort(), tm.mk_bool_sort()], Sort())
 
 
-def test_mk_uninterpreted_sort():
-    s1 = mk_uninterpreted_sort()
-    s2 = mk_uninterpreted_sort("foo")
-    s3 = mk_uninterpreted_sort("foo")
+def test_mk_uninterpreted_sort(tm):
+    s1 = tm.mk_uninterpreted_sort()
+    s2 = tm.mk_uninterpreted_sort("foo")
+    s3 = tm.mk_uninterpreted_sort("foo")
     assert s1.is_uninterpreted()
     assert s2.is_uninterpreted()
     assert s3.is_uninterpreted()
@@ -281,217 +285,226 @@ def test_mk_uninterpreted_sort():
 # Create Terms
 # ----------------------------------------------------------------------------
 
-def test_mk_true():
-    val = mk_true()
+def test_mk_true(tm):
+    val = tm.mk_true()
     assert val.is_true()
     assert val.value() == True
 
 
-def test_mk_true():
-    val = mk_false()
+def test_mk_false(tm):
+    val = tm.mk_false()
     assert val.is_false()
     assert val.value() == False
 
 
-def test_mk_bv_zero():
-    val = mk_bv_zero(mk_bv_sort(8))
+def test_mk_bv_zero(tm):
+    val = tm.mk_bv_zero(tm.mk_bv_sort(8))
     assert val.is_bv_value_zero()
     assert val.value() == "00000000"
     assert val.value(10) == "0"
     assert val.value(16) == "0"
     with pytest.raises(BitwuzlaException):
-        mk_bv_zero(Sort())
+        tm.mk_bv_zero(Sort())
     with pytest.raises(BitwuzlaException):
-        mk_bv_zero(mk_fp_sort(5, 11))
+        tm.mk_bv_zero(tm.mk_fp_sort(5, 11))
 
 
-def test_mk_bv_one():
-    val = mk_bv_one(mk_bv_sort(8))
+def test_mk_bv_one(tm):
+    val = tm.mk_bv_one(tm.mk_bv_sort(8))
     assert val.is_bv_value_one()
     assert val.value() == "00000001"
     assert val.value(10) == "1"
     assert val.value(16) == "1"
     with pytest.raises(BitwuzlaException):
-        mk_bv_one(Sort())
+        tm.mk_bv_one(Sort())
     with pytest.raises(BitwuzlaException):
-        mk_bv_one(mk_fp_sort(5, 11))
+        tm.mk_bv_one(tm.mk_fp_sort(5, 11))
 
 
-def test_mk_bv_ones():
-    val = mk_bv_ones(mk_bv_sort(8))
+def test_mk_bv_ones(tm):
+    val = tm.mk_bv_ones(tm.mk_bv_sort(8))
     assert val.is_bv_value_ones()
     assert val.value() == "11111111"
     assert val.value(10) == "255"
     assert val.value(16) == "ff"
     with pytest.raises(BitwuzlaException):
-        mk_bv_ones(Sort())
+        tm.mk_bv_ones(Sort())
     with pytest.raises(BitwuzlaException):
-        mk_bv_ones(mk_fp_sort(5, 11))
+        tm.mk_bv_ones(tm.mk_fp_sort(5, 11))
 
 
-def test_mk_bv_min_signed():
-    val = mk_bv_min_signed(mk_bv_sort(8))
+def test_mk_bv_min_signed(tm):
+    val = tm.mk_bv_min_signed(tm.mk_bv_sort(8))
     assert val.is_bv_value_min_signed()
     assert val.value() == "10000000"
     assert val.value(10) == "128"
     assert val.value(16) == "80"
     with pytest.raises(BitwuzlaException):
-        mk_bv_min_signed(Sort())
+        tm.mk_bv_min_signed(Sort())
     with pytest.raises(BitwuzlaException):
-        mk_bv_min_signed(mk_fp_sort(5, 11))
+        tm.mk_bv_min_signed(tm.mk_fp_sort(5, 11))
 
 
-def test_mk_bv_max_signed():
-    val = mk_bv_max_signed(mk_bv_sort(8))
+def test_mk_bv_max_signed(tm):
+    val = tm.mk_bv_max_signed(tm.mk_bv_sort(8))
     assert val.is_bv_value_max_signed()
     assert val.value() == "01111111"
     assert val.value(10) == "127"
     assert val.value(16) == "7f"
     with pytest.raises(BitwuzlaException):
-        mk_bv_max_signed(Sort())
+        tm.mk_bv_max_signed(Sort())
     with pytest.raises(BitwuzlaException):
-        mk_bv_max_signed(mk_fp_sort(5, 11))
+        tm.mk_bv_max_signed(tm.mk_fp_sort(5, 11))
 
-def test_mk_fp_pos_zero():
-    val = mk_fp_pos_zero(mk_fp_sort(5, 11))
+def test_mk_fp_pos_zero(tm):
+    val = tm.mk_fp_pos_zero(tm.mk_fp_sort(5, 11))
     assert val.is_fp_value_pos_zero()
     assert val.value(2, False) == "0000000000000000"
     with pytest.raises(BitwuzlaException):
-        mk_fp_pos_zero(Sort())
+        tm.mk_fp_pos_zero(Sort())
     with pytest.raises(BitwuzlaException):
-        mk_fp_pos_zero(mk_bv_sort(8))
+        tm.mk_fp_pos_zero(tm.mk_bv_sort(8))
 
-def test_mk_fp_neg_zero():
-    val = mk_fp_neg_zero(mk_fp_sort(5, 11))
+def test_mk_fp_neg_zero(tm):
+    val = tm.mk_fp_neg_zero(tm.mk_fp_sort(5, 11))
     assert val.is_fp_value_neg_zero()
     assert val.value(2, False) == "1000000000000000"
     with pytest.raises(BitwuzlaException):
-        mk_fp_neg_zero(Sort())
+        tm.mk_fp_neg_zero(Sort())
     with pytest.raises(BitwuzlaException):
-        mk_fp_neg_zero(mk_bv_sort(8))
+        tm.mk_fp_neg_zero(tm.mk_bv_sort(8))
 
-def test_mk_fp_pos_inf():
-    val = mk_fp_pos_inf(mk_fp_sort(5, 11))
+def test_mk_fp_pos_inf(tm):
+    val = tm.mk_fp_pos_inf(tm.mk_fp_sort(5, 11))
     assert val.is_fp_value_pos_inf()
     with pytest.raises(BitwuzlaException):
-        mk_fp_pos_inf(Sort())
+        tm.mk_fp_pos_inf(Sort())
     with pytest.raises(BitwuzlaException):
-        mk_fp_pos_inf(mk_bv_sort(8))
+        tm.mk_fp_pos_inf(tm.mk_bv_sort(8))
 
-def test_mk_fp_neg_inf():
-    val = mk_fp_neg_inf(mk_fp_sort(5, 11))
+def test_mk_fp_neg_inf(tm):
+    val = tm.mk_fp_neg_inf(tm.mk_fp_sort(5, 11))
     assert val.is_fp_value_neg_inf()
     with pytest.raises(BitwuzlaException):
-        mk_fp_neg_inf(Sort())
+        tm.mk_fp_neg_inf(Sort())
     with pytest.raises(BitwuzlaException):
-        mk_fp_neg_inf(mk_bv_sort(8))
+        tm.mk_fp_neg_inf(tm.mk_bv_sort(8))
 
-def test_mk_fp_nan():
-    val = mk_fp_nan(mk_fp_sort(5, 11))
+def test_mk_fp_nan(tm):
+    val = tm.mk_fp_nan(tm.mk_fp_sort(5, 11))
     assert val.is_fp_value_nan()
     with pytest.raises(BitwuzlaException):
-        mk_fp_nan(Sort())
+        tm.mk_fp_nan(Sort())
     with pytest.raises(BitwuzlaException):
-        mk_fp_nan(mk_bv_sort(8))
+        tm.mk_fp_nan(tm.mk_bv_sort(8))
 
-def test_mk_bv_value():
-    val = mk_bv_value(mk_bv_sort(4), "1101", 2)
+def test_mk_bv_value(tm):
+    val = tm.mk_bv_value(tm.mk_bv_sort(4), "1101", 2)
     assert val.value() == "1101"
     assert val.value(10) == "13"
     assert val.value(16) == "d"
-    mk_bv_value(mk_bv_sort(8), "127", 10)
-    mk_bv_value(mk_bv_sort(8), 127)
-    mk_bv_value(mk_bv_sort(8), "-128", 10)
-    mk_bv_value(mk_bv_sort(8), -128)
+    tm.mk_bv_value(tm.mk_bv_sort(8), "127", 10)
+    tm.mk_bv_value(tm.mk_bv_sort(8), 127)
+    tm.mk_bv_value(tm.mk_bv_sort(8), "-128", 10)
+    tm.mk_bv_value(tm.mk_bv_sort(8), -128)
     with pytest.raises(BitwuzlaException):
-        mk_bv_value(mk_bv_sort(8), "256", 10)
+        tm.mk_bv_value(tm.mk_bv_sort(8), "256", 10)
     with pytest.raises(BitwuzlaException):
-        mk_bv_value(mk_bv_sort(8), "-129", 10)
-        mk_bv_value(Sort(), "010", 2)
+        tm.mk_bv_value(tm.mk_bv_sort(8), "-129", 10)
+        tm.mk_bv_value(Sort(), "010", 2)
     with pytest.raises(BitwuzlaException):
-      mk_bv_value(mk_bv_sort(8), "", 2)
+      tm.mk_bv_value(tm.mk_bv_sort(8), "", 2)
 
-def test_mk_fp_value():
-    val = mk_fp_value(mk_bv_value(mk_bv_sort(1), 1),
-                      mk_bv_value(mk_bv_sort(5), 0),
-                      mk_bv_value(mk_bv_sort(10), 0))
+def test_mk_fp_value(tm):
+    val = tm.mk_fp_value(tm.mk_bv_value(tm.mk_bv_sort(1), 1),
+                      tm.mk_bv_value(tm.mk_bv_sort(5), 0),
+                      tm.mk_bv_value(tm.mk_bv_sort(10), 0))
     assert val.is_fp_value_neg_zero()
 
     with pytest.raises(BitwuzlaException):
-        mk_fp_value(Term(),
-                    mk_bv_value(mk_bv_sort(5), 0),
-                    mk_bv_value(mk_bv_sort(10), 0))
+        tm.mk_fp_value(Term(),
+                    tm.mk_bv_value(tm.mk_bv_sort(5), 0),
+                    tm.mk_bv_value(tm.mk_bv_sort(10), 0))
     with pytest.raises(BitwuzlaException):
-        mk_fp_value(mk_bv_value(mk_bv_sort(1), 1),
+        tm.mk_fp_value(tm.mk_bv_value(tm.mk_bv_sort(1), 1),
                     Term(),
-                    mk_bv_value(mk_bv_sort(10), 0))
+                    tm.mk_bv_value(tm.mk_bv_sort(10), 0))
     with pytest.raises(BitwuzlaException):
-        mk_fp_value(mk_bv_value(mk_bv_sort(1), 1),
-                    mk_bv_value(mk_bv_sort(5), 0),
+        tm.mk_fp_value(tm.mk_bv_value(tm.mk_bv_sort(1), 1),
+                    tm.mk_bv_value(tm.mk_bv_sort(5), 0),
                     Term())
 
-    val1 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), "1.2")
-    val2 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), 1.2)
+    val1 = tm.mk_fp_value(tm.mk_fp_sort(5, 11),
+                          tm.mk_rm_value(RoundingMode.RNE), "1.2")
+    val2 = tm.mk_fp_value(tm.mk_fp_sort(5, 11),
+                          tm.mk_rm_value(RoundingMode.RNE), 1.2)
     assert val1 == val2
 
-    val2 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), "6", "5")
+    val2 = tm.mk_fp_value(tm.mk_fp_sort(5, 11),
+                          tm.mk_rm_value(RoundingMode.RNE), "6", "5")
     assert val1 == val2
 
-    val1 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), "1", "3")
-    val2 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), "1", 3)
+    val1 = tm.mk_fp_value(tm.mk_fp_sort(5, 11),
+                          tm.mk_rm_value(RoundingMode.RNE), "1", "3")
+    val2 = tm.mk_fp_value(tm.mk_fp_sort(5, 11),
+                          tm.mk_rm_value(RoundingMode.RNE), "1", 3)
     assert val1 == val2
-    val2 = mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), 1, 3)
+    val2 = tm.mk_fp_value(tm.mk_fp_sort(5, 11),
+                          tm.mk_rm_value(RoundingMode.RNE), 1, 3)
     assert val1 == val2
 
     with pytest.raises(ValueError):
-        mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), 1.2, 3)
+        tm.mk_fp_value(tm.mk_fp_sort(5, 11),
+                       tm.mk_rm_value(RoundingMode.RNE), 1.2, 3)
     with pytest.raises(ValueError):
-        mk_fp_value(mk_fp_sort(5, 11), mk_rm_value(RoundingMode.RNE), 1, 3.3)
+        tm.mk_fp_value(tm.mk_fp_sort(5, 11),
+                       tm.mk_rm_value(RoundingMode.RNE), 1, 3.3)
 
 
-def test_mk_rm_value():
-    rne = mk_rm_value(RoundingMode.RNE)
+def test_mk_rm_value(tm):
+    rne = tm.mk_rm_value(RoundingMode.RNE)
     assert rne.value() == RoundingMode.RNE
-    rna = mk_rm_value(RoundingMode.RNA)
+    rna = tm.mk_rm_value(RoundingMode.RNA)
     assert rna.value() == RoundingMode.RNA
-    rtz = mk_rm_value(RoundingMode.RTZ)
+    rtz = tm.mk_rm_value(RoundingMode.RTZ)
     assert rtz.value() == RoundingMode.RTZ
-    rtp = mk_rm_value(RoundingMode.RTP)
+    rtp = tm.mk_rm_value(RoundingMode.RTP)
     assert rtp.value() == RoundingMode.RTP
-    rtn = mk_rm_value(RoundingMode.RTN)
+    rtn = tm.mk_rm_value(RoundingMode.RTN)
     assert rtn.value() == RoundingMode.RTN
 
 
-def test_mk_const():
-    a = mk_const(mk_bv_sort(8), "a")
+def test_mk_const(tm):
+    a = tm.mk_const(tm.mk_bv_sort(8), "a")
     assert a.symbol() == "a"
-    assert mk_const(mk_bool_sort()).symbol() == None
+    assert tm.mk_const(tm.mk_bool_sort()).symbol() == None
 
 
-def test_mk_const_array():
-    a = mk_const_array(mk_array_sort(mk_bool_sort(), mk_bool_sort()), mk_true())
+def test_mk_const_array(tm):
+    a = tm.mk_const_array(tm.mk_array_sort(tm.mk_bool_sort(),
+                                           tm.mk_bool_sort()), tm.mk_true())
     assert a[0].is_value()
     assert a[0].value() == True
 
 
-def test_mk_var():
-    x = mk_var(mk_bv_sort(8), "x")
+def test_mk_var(tm):
+    x = tm.mk_var(tm.mk_bv_sort(8), "x")
     assert x.symbol() == "x"
-    assert mk_var(mk_bool_sort()).symbol() == None
+    assert tm.mk_var(tm.mk_bool_sort()).symbol() == None
 
 
 # ----------------------------------------------------------------------------
 # Bitwuzla
 # ----------------------------------------------------------------------------
 
-def test_push():
-    bitwuzla = Bitwuzla()
+def test_push(tm):
+    bitwuzla = Bitwuzla(tm)
     bitwuzla.push(0)
     bitwuzla.push(2)
 
 
-def test_pop():
-    bitwuzla = Bitwuzla()
+def test_pop(tm):
+    bitwuzla = Bitwuzla(tm)
     bitwuzla.pop(0)
     with pytest.raises(BitwuzlaException):
         bitwuzla.pop(2)
@@ -499,174 +512,174 @@ def test_pop():
     bitwuzla.pop(2)
 
 
-def test_assert_formula():
-  bitwuzla = Bitwuzla()
+def test_assert_formula(tm):
+  bitwuzla = Bitwuzla(tm)
   with pytest.raises(BitwuzlaException):
       bitwuzla.assert_formula(Term())
-  bitwuzla.assert_formula(mk_true())
-  bitwuzla.assert_formula(mk_false())
+  bitwuzla.assert_formula(tm.mk_true())
+  bitwuzla.assert_formula(tm.mk_false())
 
 
-def test_get_assertions():
-  bitwuzla = Bitwuzla()
-  bitwuzla.assert_formula(mk_true())
-  bitwuzla.assert_formula(mk_false())
-  assert bitwuzla.get_assertions() == [mk_true(), mk_false()]
+def test_get_assertions(tm):
+  bitwuzla = Bitwuzla(tm)
+  bitwuzla.assert_formula(tm.mk_true())
+  bitwuzla.assert_formula(tm.mk_false())
+  assert bitwuzla.get_assertions() == [tm.mk_true(), tm.mk_false()]
 
 
-def test_is_unsat_assumption():
+def test_is_unsat_assumption(tm):
     options = Options()
     options.set(Option.PRODUCE_UNSAT_ASSUMPTIONS, True)
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     with pytest.raises(BitwuzlaException):
-        bitwuzla.is_unsat_assumption(mk_false())
+        bitwuzla.is_unsat_assumption(tm.mk_false())
 
-    a = mk_const(mk_bool_sort(), "a")
-    not_a = mk_term(Kind.NOT, [a])
-    bitwuzla.assert_formula(mk_true())
+    a = tm.mk_const(tm.mk_bool_sort(), "a")
+    not_a = tm.mk_term(Kind.NOT, [a])
+    bitwuzla.assert_formula(tm.mk_true())
     bitwuzla.check_sat(a, not_a)
-    assert not bitwuzla.is_unsat_assumption(mk_true())
+    assert not bitwuzla.is_unsat_assumption(tm.mk_true())
     assert bitwuzla.is_unsat_assumption(a)
     assert bitwuzla.is_unsat_assumption(not_a)
 
 
-def test_get_unsat_assumption():
+def test_get_unsat_assumption(tm):
     options = Options()
     options.set(Option.PRODUCE_UNSAT_ASSUMPTIONS, True)
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     with pytest.raises(BitwuzlaException):
         bitwuzla.get_unsat_assumptions()
 
-    a = mk_const(mk_bool_sort(), "a")
-    not_a = mk_term(Kind.NOT, [a])
-    bitwuzla.assert_formula(mk_true())
+    a = tm.mk_const(tm.mk_bool_sort(), "a")
+    not_a = tm.mk_term(Kind.NOT, [a])
+    bitwuzla.assert_formula(tm.mk_true())
     bitwuzla.check_sat(a, not_a)
     assert set(bitwuzla.get_unsat_assumptions()) == set([a, not_a])
 
 
-def test_get_unsat_core():
+def test_get_unsat_core(tm):
     options = Options()
     options.set(Option.PRODUCE_UNSAT_CORES, True)
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     with pytest.raises(BitwuzlaException):
         bitwuzla.get_unsat_core()
 
-    a = mk_const(mk_bool_sort(), "a")
-    b = mk_const(mk_bool_sort(), "b")
-    not_a = mk_term(Kind.NOT, [a])
-    not_b = mk_term(Kind.NOT, [b])
-    bitwuzla.assert_formula(mk_true())
+    a = tm.mk_const(tm.mk_bool_sort(), "a")
+    b = tm.mk_const(tm.mk_bool_sort(), "b")
+    not_a = tm.mk_term(Kind.NOT, [a])
+    not_b = tm.mk_term(Kind.NOT, [b])
+    bitwuzla.assert_formula(tm.mk_true())
     bitwuzla.assert_formula(a, not_a)
     bitwuzla.assert_formula(b, not_b)
     bitwuzla.check_sat()
     assert set(bitwuzla.get_unsat_core()) == set([a, not_a])
 
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     bitwuzla.assert_formula(a)
     bitwuzla.check_sat(not_a)
     assert set(bitwuzla.get_unsat_core()) == set([a, not_a])
 
 
-def test_simplify():
-    bitwuzla = Bitwuzla()
-    bitwuzla.assert_formula(mk_const(mk_bool_sort(), 'b'));
-    bv_one1 = mk_bv_one(mk_bv_sort(1))
-    bitwuzla.assert_formula(mk_term(Kind.EQUAL, [bv_one1,
-       mk_term(Kind.BV_AND, [bv_one1, mk_const(mk_bv_sort(1), 'bv')])]))
-    bitwuzla.simplify();
+def test_simplify(tm):
+    bitwuzla = Bitwuzla(tm)
+    bitwuzla.assert_formula(tm.mk_const(tm.mk_bool_sort(), 'b'))
+    bv_one1 = tm.mk_bv_one(tm.mk_bv_sort(1))
+    bitwuzla.assert_formula(tm.mk_term(Kind.EQUAL, [bv_one1,
+       tm.mk_term(Kind.BV_AND, [bv_one1, tm.mk_const(tm.mk_bv_sort(1), 'bv')])]))
+    bitwuzla.simplify()
 
 
-def test_check_sat():
-    bitwuzla = Bitwuzla()
+def test_check_sat(tm):
+    bitwuzla = Bitwuzla(tm)
     bitwuzla.check_sat()
     bitwuzla.check_sat()
 
 
-def test_get_value():
-    bv8 = mk_bv_sort(8)
-    bvconst8 = mk_const(bv8)
-    bitwuzla = Bitwuzla()
+def test_get_value(tm):
+    bv8 = tm.mk_bv_sort(8)
+    bvconst8 = tm.mk_const(bv8)
+    bitwuzla = Bitwuzla(tm)
     with pytest.raises(BitwuzlaException):
         bitwuzla.get_value(bvconst8)
 
     options = Options()
     options.set(Option.PRODUCE_MODELS, True)
-    bitwuzla = Bitwuzla(options)
-    bitwuzla.assert_formula(mk_true());
-    assert bitwuzla.check_sat(mk_false()) == Result.UNSAT
-    b = mk_const(mk_bool_sort())
+    bitwuzla = Bitwuzla(tm, options)
+    bitwuzla.assert_formula(tm.mk_true())
+    assert bitwuzla.check_sat(tm.mk_false()) == Result.UNSAT
+    b = tm.mk_const(tm.mk_bool_sort())
     with pytest.raises(BitwuzlaException):
         bitwuzla.get_value(b)
     bitwuzla.check_sat()
     bitwuzla.get_value(b)
-    bitwuzla.get_value(mk_false())
+    bitwuzla.get_value(tm.mk_false())
 
-    bitwuzla = Bitwuzla(options)
-    var = mk_var(bv8, 'q')
-    exists = mk_term(Kind.EXISTS, [
+    bitwuzla = Bitwuzla(tm, options)
+    var = tm.mk_var(bv8, 'q')
+    exists = tm.mk_term(Kind.EXISTS, [
         var,
-        mk_term(Kind.EQUAL, [
-            mk_bv_zero(bv8),
-            mk_term(Kind.BV_MUL, [bvconst8, var])])])
-    bitwuzla.assert_formula(exists);
+        tm.mk_term(Kind.EQUAL, [
+            tm.mk_bv_zero(bv8),
+            tm.mk_term(Kind.BV_MUL, [bvconst8, var])])])
+    bitwuzla.assert_formula(exists)
     with pytest.raises(BitwuzlaException):
         bitwuzla.get_value(bvconst8)
     assert bitwuzla.check_sat() == Result.SAT
     bitwuzla.assert_formula(
-            mk_term(Kind.EQUAL, [bvconst8, bitwuzla.get_value(bvconst8)]))
+            tm.mk_term(Kind.EQUAL, [bvconst8, bitwuzla.get_value(bvconst8)]))
     assert bitwuzla.check_sat() == Result.SAT
 
-    bitwuzla = Bitwuzla(options)
-    a = mk_const(mk_bool_sort())
-    b = mk_const(mk_bool_sort())
+    bitwuzla = Bitwuzla(tm, options)
+    a = tm.mk_const(tm.mk_bool_sort())
+    b = tm.mk_const(tm.mk_bool_sort())
     bitwuzla.assert_formula(a)
-    bitwuzla.assert_formula(mk_term(Kind.NOT, [b]))
+    bitwuzla.assert_formula(tm.mk_term(Kind.NOT, [b]))
     bitwuzla.check_sat()
     assert bitwuzla.get_value(a).value() == True
     assert bitwuzla.get_value(b).value() == False
 
 
-def test_get_bool_value():
-    assert mk_true().value() == True
-    assert mk_false().value() == False
-    assert str(mk_true().value()) == 'True'
-    assert str(mk_false().value()) == 'False'
+def test_get_bool_value(tm):
+    assert tm.mk_true().value() == True
+    assert tm.mk_false().value() == False
+    assert str(tm.mk_true().value()) == 'True'
+    assert str(tm.mk_false().value()) == 'False'
 
 
-def test_get_bv_value():
-    fun_sort = mk_fun_sort(
-            [mk_bv_sort(8), mk_fp_sort(5, 11), mk_bv_sort(32)], mk_bv_sort(8))
-    fun = mk_const(fun_sort)
+def test_get_bv_value(tm):
+    fun_sort = tm.mk_fun_sort(
+            [tm.mk_bv_sort(8), tm.mk_fp_sort(5, 11), tm.mk_bv_sort(32)], tm.mk_bv_sort(8))
+    fun = tm.mk_const(fun_sort)
     with pytest.raises(BitwuzlaException):
         fun.value()
 
-    assert mk_bv_one(mk_bv_sort(1)).value() == '1'
+    assert tm.mk_bv_one(tm.mk_bv_sort(1)).value() == '1'
 
-    bv_maxs32 = mk_bv_max_signed(mk_bv_sort(32))
+    bv_maxs32 = tm.mk_bv_max_signed(tm.mk_bv_sort(32))
     assert bv_maxs32.value() == '01111111111111111111111111111111'
     assert bv_maxs32.value(10) == '2147483647'
     assert bv_maxs32.value(16) == '7fffffff'
 
-    bv8 = mk_bv_sort(8)
-    assert mk_bv_value(bv8, '-1', 10).value() == '11111111'
-    assert mk_bv_value(bv8, '-1', 10).value(10) == '255'
-    assert mk_bv_value(bv8, '-1', 10).value(16) == 'ff'
+    bv8 = tm.mk_bv_sort(8)
+    assert tm.mk_bv_value(bv8, '-1', 10).value() == '11111111'
+    assert tm.mk_bv_value(bv8, '-1', 10).value(10) == '255'
+    assert tm.mk_bv_value(bv8, '-1', 10).value(16) == 'ff'
 
-    assert mk_bv_value(bv8, '-123', 10).value() == '10000101'
-    print(mk_bv_value(bv8, '-123', 10))
-    assert mk_bv_value(bv8, '-123', 10).value(10) == '133'
-    assert mk_bv_value(bv8, '-123', 10).value(16) == '85'
+    assert tm.mk_bv_value(bv8, '-123', 10).value() == '10000101'
+    print(tm.mk_bv_value(bv8, '-123', 10))
+    assert tm.mk_bv_value(bv8, '-123', 10).value(10) == '133'
+    assert tm.mk_bv_value(bv8, '-123', 10).value(16) == '85'
 
-    assert mk_bv_value(bv8, '-128', 10).value() == '10000000'
-    assert mk_bv_value(bv8, '-128', 10).value(10) == '128'
-    assert mk_bv_value(bv8, '-128', 10).value(16) == '80'
+    assert tm.mk_bv_value(bv8, '-128', 10).value() == '10000000'
+    assert tm.mk_bv_value(bv8, '-128', 10).value(10) == '128'
+    assert tm.mk_bv_value(bv8, '-128', 10).value(16) == '80'
 
 
-def test_get_fp_value():
+def test_get_fp_value(tm):
     # single bit-vector string
-    fp32 = mk_fp_sort(8, 24)
-    fpnan32 = mk_fp_nan(fp32)
-    fpnzero32 = mk_fp_neg_zero(fp32)
+    fp32 = tm.mk_fp_sort(8, 24)
+    fpnan32 = tm.mk_fp_nan(fp32)
+    fpnzero32 = tm.mk_fp_neg_zero(fp32)
     assert fpnan32.value(2, False) == '01111111110000000000000000000000'
     assert fpnzero32.value(2, False) == '10000000000000000000000000000000'
     # component bit-vector strings
@@ -674,39 +687,39 @@ def test_get_fp_value():
     assert fpnzero32.value() == ['1', '00000000', '00000000000000000000000']
 
 
-def test_get_rm_value():
-    assert mk_rm_value(RoundingMode.RNA).value() == RoundingMode.RNA
-    assert mk_rm_value(RoundingMode.RNE).value() == RoundingMode.RNE
-    assert mk_rm_value(RoundingMode.RTN).value() == RoundingMode.RTN
-    assert mk_rm_value(RoundingMode.RTP).value() == RoundingMode.RTP
-    assert mk_rm_value(RoundingMode.RTZ).value() == RoundingMode.RTZ
-    assert str(mk_rm_value(RoundingMode.RNA).value()) == 'RNA'
-    assert str(mk_rm_value(RoundingMode.RNE).value()) == 'RNE'
-    assert str(mk_rm_value(RoundingMode.RTN).value()) == 'RTN'
-    assert str(mk_rm_value(RoundingMode.RTP).value()) == 'RTP'
-    assert str(mk_rm_value(RoundingMode.RTZ).value()) == 'RTZ'
+def test_get_rm_value(tm):
+    assert tm.mk_rm_value(RoundingMode.RNA).value() == RoundingMode.RNA
+    assert tm.mk_rm_value(RoundingMode.RNE).value() == RoundingMode.RNE
+    assert tm.mk_rm_value(RoundingMode.RTN).value() == RoundingMode.RTN
+    assert tm.mk_rm_value(RoundingMode.RTP).value() == RoundingMode.RTP
+    assert tm.mk_rm_value(RoundingMode.RTZ).value() == RoundingMode.RTZ
+    assert str(tm.mk_rm_value(RoundingMode.RNA).value()) == 'RNA'
+    assert str(tm.mk_rm_value(RoundingMode.RNE).value()) == 'RNE'
+    assert str(tm.mk_rm_value(RoundingMode.RTN).value()) == 'RTN'
+    assert str(tm.mk_rm_value(RoundingMode.RTP).value()) == 'RTP'
+    assert str(tm.mk_rm_value(RoundingMode.RTZ).value()) == 'RTZ'
 
 
 # ----------------------------------------------------------------------------
 # Printing
 # ----------------------------------------------------------------------------
 
-def test_print_formula():
-    bitwuzla = Bitwuzla()
+def test_print_formula(tm):
+    bitwuzla = Bitwuzla(tm)
     with pytest.raises(BitwuzlaException):
         bitwuzla.print_formula('')
     with pytest.raises(BitwuzlaException):
         bitwuzla.print_formula('asdf')
 
-    b = mk_const(mk_bool_sort(), 'b')
-    bv8 = mk_bv_sort(8)
-    var = mk_var(bv8, 'z')
-    bvconst8 = mk_const(bv8, 'bv8')
-    lambd = mk_term(Kind.LAMBDA, [
-        var, mk_term(Kind.BV_ADD, [var, bvconst8])])
+    b = tm.mk_const(tm.mk_bool_sort(), 'b')
+    bv8 = tm.mk_bv_sort(8)
+    var = tm.mk_var(bv8, 'z')
+    bvconst8 = tm.mk_const(bv8, 'bv8')
+    lambd = tm.mk_term(Kind.LAMBDA, [
+        var, tm.mk_term(Kind.BV_ADD, [var, bvconst8])])
     bitwuzla.assert_formula(b)
-    bitwuzla.assert_formula(mk_term(Kind.EQUAL, [
-        mk_term(Kind.APPLY, [lambd, bvconst8]), mk_bv_zero(bv8)]))
+    bitwuzla.assert_formula(tm.mk_term(Kind.EQUAL, [
+        tm.mk_term(Kind.APPLY, [lambd, bvconst8]), tm.mk_bv_zero(bv8)]))
 
     expected_smt2 = \
         '(set-logic QF_BV)\n' \
@@ -741,13 +754,13 @@ def test_print_formula():
         + '(exit)\n'
     assert expected_smt2 == bitwuzla.print_formula('smt2', 16)
 
-    var = mk_var(bv8, 'q')
-    exists = mk_term(Kind.EXISTS, [
+    var = tm.mk_var(bv8, 'q')
+    exists = tm.mk_term(Kind.EXISTS, [
         var,
-        mk_term(Kind.EQUAL, [
-            mk_bv_zero(bv8),
-            mk_term(Kind.BV_MUL, [bvconst8, var])])])
-    bitwuzla.assert_formula(exists);
+        tm.mk_term(Kind.EQUAL, [
+            tm.mk_bv_zero(bv8),
+            tm.mk_term(Kind.BV_MUL, [bvconst8, var])])])
+    bitwuzla.assert_formula(exists)
 
     expected_smt2 = \
         '(set-logic BV)\n' \
@@ -785,18 +798,19 @@ def test_print_formula():
         + '(exit)\n'
     assert expected_smt2 == bitwuzla.print_formula('smt2', 16)
 
-    fpconst16 = mk_const(mk_fp_sort(5, 11), 'fp16')
-    funfp = mk_const(
-            mk_fun_sort(
-                [mk_bv_sort(8), mk_fp_sort(5, 11), mk_bv_sort(32)],
-                mk_fp_sort(5, 11)),
+    fpconst16 = tm.mk_const(tm.mk_fp_sort(5, 11), 'fp16')
+    funfp = tm.mk_const(
+            tm.mk_fun_sort(
+                [tm.mk_bv_sort(8), tm.mk_fp_sort(5, 11), tm.mk_bv_sort(32)],
+                tm.mk_fp_sort(5, 11)),
             'fun_fp')
-    apply = mk_term(Kind.APPLY, [
+    apply = tm.mk_term(Kind.APPLY, [
             funfp,
             bvconst8,
             fpconst16,
-            mk_term(Kind.BV_ZERO_EXTEND, [mk_bv_ones(mk_bv_sort(23))], [9])])
-    bitwuzla.assert_formula(mk_term(Kind.FP_LEQ, [apply, fpconst16]))
+            tm.mk_term(Kind.BV_ZERO_EXTEND,
+                       [tm.mk_bv_ones(tm.mk_bv_sort(23))], [9])])
+    bitwuzla.assert_formula(tm.mk_term(Kind.FP_LEQ, [apply, fpconst16]))
 
     expected_smt2 = \
         '(set-logic UFBVFP)\n' \
@@ -850,24 +864,24 @@ def test_print_formula():
     assert expected_smt2 == bitwuzla.print_formula('smt2', 16)
 
 
-def test_print_formula2():
-    bitwuzla = Bitwuzla()
-    bv1      = mk_bv_sort(1)
-    bv8      = mk_bv_sort(8)
-    bvconst8 = mk_const(bv8, 'bv8')
-    ar1_1    = mk_array_sort(bv1, bv1)
-    a        = mk_const(ar1_1, "a")
-    b        = mk_const(ar1_1, "b")
-    z        = mk_bv_zero(bv1)
-    e        = mk_term(Kind.ARRAY_SELECT, [a, z])
-    c        = mk_term(Kind.EQUAL, [a, b])
-    var = mk_var(bv8, 'q')
-    exists = mk_term(Kind.EXISTS, [
+def test_print_formula2(tm):
+    bitwuzla = Bitwuzla(tm)
+    bv1      = tm.mk_bv_sort(1)
+    bv8      = tm.mk_bv_sort(8)
+    bvconst8 = tm.mk_const(bv8, 'bv8')
+    ar1_1    = tm.mk_array_sort(bv1, bv1)
+    a        = tm.mk_const(ar1_1, "a")
+    b        = tm.mk_const(ar1_1, "b")
+    z        = tm.mk_bv_zero(bv1)
+    e        = tm.mk_term(Kind.ARRAY_SELECT, [a, z])
+    c        = tm.mk_term(Kind.EQUAL, [a, b])
+    var = tm.mk_var(bv8, 'q')
+    exists = tm.mk_term(Kind.EXISTS, [
         var,
-        mk_term(Kind.EQUAL, [
-            mk_bv_zero(bv8),
-            mk_term(Kind.BV_MUL, [bvconst8, var])])])
-    bitwuzla.assert_formula(mk_term(Kind.EQUAL, [e, z]))
+        tm.mk_term(Kind.EQUAL, [
+            tm.mk_bv_zero(bv8),
+            tm.mk_term(Kind.BV_MUL, [bvconst8, var])])])
+    bitwuzla.assert_formula(tm.mk_term(Kind.EQUAL, [e, z]))
     bitwuzla.assert_formula(c)
     bitwuzla.assert_formula(exists)
 
@@ -884,23 +898,23 @@ def test_print_formula2():
     assert expected_smt2 == bitwuzla.print_formula()
 
 
-def test_print_formula3():
-    bitwuzla = Bitwuzla()
-    bv32 = mk_bv_sort(32)
-    n    = mk_const(bv32, 'n')
-    sim  = mk_const(bv32, '~')
-    zero = mk_bv_zero(bv32)
-    two  = mk_bv_value(bv32, 2)
-    bitwuzla.assert_formula(mk_term(Kind.DISTINCT, [
-         zero, mk_term(Kind.BV_ADD, [n, sim])]))
+def test_print_formula3(tm):
+    bitwuzla = Bitwuzla(tm)
+    bv32 = tm.mk_bv_sort(32)
+    n    = tm.mk_const(bv32, 'n')
+    sim  = tm.mk_const(bv32, '~')
+    zero = tm.mk_bv_zero(bv32)
+    two  = tm.mk_bv_value(bv32, 2)
+    bitwuzla.assert_formula(tm.mk_term(Kind.DISTINCT, [
+         zero, tm.mk_term(Kind.BV_ADD, [n, sim])]))
     bitwuzla.push(1)
-    bitwuzla.assert_formula(mk_term(Kind.EQUAL, [
-        mk_term(Kind.BV_ADD, [n, two]),
-        mk_term(Kind.BV_NEG, [
-            mk_term(Kind.BV_ADD, [sim, mk_term(Kind.BV_MUL, [n, two])])])]))
+    bitwuzla.assert_formula(tm.mk_term(Kind.EQUAL, [
+        tm.mk_term(Kind.BV_ADD, [n, two]),
+        tm.mk_term(Kind.BV_NEG, [
+            tm.mk_term(Kind.BV_ADD, [sim, tm.mk_term(Kind.BV_MUL, [n, two])])])]))
     bitwuzla.push(1)
-    bitwuzla.assert_formula(mk_term(Kind.EQUAL, [
-        zero, mk_term(Kind.BV_ADD, [n, mk_bv_one(bv32)])]))
+    bitwuzla.assert_formula(tm.mk_term(Kind.EQUAL, [
+        zero, tm.mk_term(Kind.BV_ADD, [n, tm.mk_bv_one(bv32)])]))
 
     expected_smt2 = \
         '(set-logic QF_BV)\n' \
@@ -919,113 +933,122 @@ def test_print_formula3():
     assert expected_smt2 == bitwuzla.print_formula()
 
 # ----------------------------------------------------------------------------
-# Statistics
+# Other Bitwuzla methods
 # ----------------------------------------------------------------------------
 
-def test_statistics():
-    bitwuzla = Bitwuzla()
-    bitwuzla.assert_formula(mk_const(mk_bool_sort()))
+def test_statistics(tm):
+    bitwuzla = Bitwuzla(tm)
+    bitwuzla.assert_formula(tm.mk_const(tm.mk_bool_sort()))
     stats = bitwuzla.statistics()
     for name, val in stats.items():
         print(f'{name}: {val}')
+
+def test_term_mgr(tm):
+    bitwuzla = Bitwuzla(tm)
+    assert tm == bitwuzla.term_mgr()
+    tm2 = tm
+    assert tm2 == tm
 
 # ----------------------------------------------------------------------------
 # Sort
 # ----------------------------------------------------------------------------
 
-def test_sort_hash():
-    hash(mk_bv_sort(8))
+def test_sort_hash(tm):
+    hash(tm.mk_bv_sort(8))
 
 
-def test_sort_bv_size():
+def test_sort_bv_size(tm):
     with pytest.raises(BitwuzlaException):
-        mk_fp_sort(5, 11).bv_size()
-    assert mk_bv_sort(8).bv_size() == 8
+        tm.mk_fp_sort(5, 11).bv_size()
+    assert tm.mk_bv_sort(8).bv_size() == 8
 
 
-def test_sort_fp_exp_size():
+def test_sort_fp_exp_size(tm):
     with pytest.raises(BitwuzlaException):
-        mk_bv_sort(8).fp_exp_size()
-    assert mk_fp_sort(5, 11).fp_exp_size() == 5
+        tm.mk_bv_sort(8).fp_exp_size()
+    assert tm.mk_fp_sort(5, 11).fp_exp_size() == 5
 
 
-def test_sort_fp_sig_size():
+def test_sort_fp_sig_size(tm):
     with pytest.raises(BitwuzlaException):
-        mk_bv_sort(8).fp_sig_size()
-    assert mk_fp_sort(5, 11).fp_sig_size() == 11
+        tm.mk_bv_sort(8).fp_sig_size()
+    assert tm.mk_fp_sort(5, 11).fp_sig_size() == 11
 
 
-def test_sort_array_index():
+def test_sort_array_index(tm):
     with pytest.raises(BitwuzlaException):
-        mk_bv_sort(23).array_index()
-    assert mk_array_sort(mk_bv_sort(8), mk_fp_sort(5, 11)).array_index().\
-            is_bv()
+        tm.mk_bv_sort(23).array_index()
+    assert tm.mk_array_sort(tm.mk_bv_sort(8), tm.mk_fp_sort(5, 11)).\
+            array_index().is_bv()
 
 
-def test_sort_array_element():
+def test_sort_array_element(tm):
     with pytest.raises(BitwuzlaException):
-        mk_bv_sort(23).array_element()
-    assert mk_array_sort(mk_bv_sort(8), mk_fp_sort(5, 11)).array_element().\
-            is_fp()
+        tm.mk_bv_sort(23).array_element()
+    assert tm.mk_array_sort(tm.mk_bv_sort(8), tm.mk_fp_sort(5, 11)).\
+            array_element().is_fp()
 
 
-def test_sort_fun_domain_sorts():
+def test_sort_fun_domain_sorts(tm):
     with pytest.raises(BitwuzlaException):
-        mk_bv_sort(8).fun_domain()
-    fun_sort = mk_fun_sort(
-            [mk_bv_sort(8), mk_fp_sort(5, 11), mk_bv_sort(32)], mk_bv_sort(8))
+        tm.mk_bv_sort(8).fun_domain()
+    fun_sort = tm.mk_fun_sort(
+            [tm.mk_bv_sort(8), tm.mk_fp_sort(5, 11), tm.mk_bv_sort(32)],
+            tm.mk_bv_sort(8))
     domain = fun_sort.fun_domain()
     assert len(domain) == 3
-    assert domain[0] == mk_bv_sort(8)
-    assert domain[1] == mk_fp_sort(5, 11)
-    assert domain[2] == mk_bv_sort(32)
+    assert domain[0] == tm.mk_bv_sort(8)
+    assert domain[1] == tm.mk_fp_sort(5, 11)
+    assert domain[2] == tm.mk_bv_sort(32)
 
 
-def test_sort_fun_codomain():
+def test_sort_fun_codomain(tm):
     with pytest.raises(BitwuzlaException):
-        mk_bv_sort(8).fun_codomain()
-    fun_sort = mk_fun_sort(
-            [mk_bv_sort(8), mk_fp_sort(5, 11), mk_bv_sort(32)], mk_bv_sort(8))
-    assert fun_sort.fun_codomain() == mk_bv_sort(8)
+        tm.mk_bv_sort(8).fun_codomain()
+    fun_sort = tm.mk_fun_sort(
+            [tm.mk_bv_sort(8), tm.mk_fp_sort(5, 11), tm.mk_bv_sort(32)],
+            tm.mk_bv_sort(8))
+    assert fun_sort.fun_codomain() == tm.mk_bv_sort(8)
 
 
-def test_sort_fun_arity():
+def test_sort_fun_arity(tm):
     with pytest.raises(BitwuzlaException):
-        mk_bv_sort(8).fun_arity()
-    fun_sort = mk_fun_sort(
-            [mk_bv_sort(8), mk_fp_sort(5, 11), mk_bv_sort(32)], mk_bv_sort(8))
+        tm.mk_bv_sort(8).fun_arity()
+    fun_sort = tm.mk_fun_sort(
+            [tm.mk_bv_sort(8), tm.mk_fp_sort(5, 11), tm.mk_bv_sort(32)],
+            tm.mk_bv_sort(8))
     assert fun_sort.fun_arity() == 3
 
 
-def test_sort_uninterpreted_symbol():
+def test_sort_uninterpreted_symbol(tm):
     with pytest.raises(BitwuzlaException):
-        mk_bv_sort(8).uninterpreted_symbol()
-        s1 = mk_uninterpreted_sort()
-        s2 = mk_uninterpreted_sort('foo')
-        s3 = mk_uninterpreted_sort('foo')
-        s4 = mk_uninterpreted_sort('bar')
+        tm.mk_bv_sort(8).uninterpreted_symbol()
+        s1 = tm.mk_uninterpreted_sort()
+        s2 = tm.mk_uninterpreted_sort('foo')
+        s3 = tm.mk_uninterpreted_sort('foo')
+        s4 = tm.mk_uninterpreted_sort('bar')
         assert not s1.uninterpreted_symbol()
         assert s2.uninterpreted_symbol() == 'foo'
         assert s3.uninterpreted_symbol() == 'foo'
         assert s4.uninterpreted_symbol() == 'bar'
 
 
-def test_sort_is_equal():
-    bv8 = mk_bv_sort(8)
-    assert mk_bv_sort(8) == bv8
-    assert mk_bv_sort(9) != bv8
+def test_sort_is_equal(tm):
+    bv8 = tm.mk_bv_sort(8)
+    assert tm.mk_bv_sort(8) == bv8
+    assert tm.mk_bv_sort(9) != bv8
 
 
-def test_sort_is_array():
-    bv_sort8 = mk_bv_sort(8)
-    bv_sort32 = mk_bv_sort(32)
-    fp_sort16 = mk_fp_sort(5, 11)
-    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
-    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
-    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
-    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
-    fun_sort_fp = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
-    un_sort = mk_uninterpreted_sort()
+def test_sort_is_array(tm):
+    bv_sort8 = tm.mk_bv_sort(8)
+    bv_sort32 = tm.mk_bv_sort(32)
+    fp_sort16 = tm.mk_fp_sort(5, 11)
+    arr_sort_bv = tm.mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = tm.mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = tm.mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    fun_sort_fp = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
+    un_sort = tm.mk_uninterpreted_sort()
     assert arr_sort_bv.is_array()
     assert arr_sort_bvfp.is_array()
     assert arr_sort_fpbv.is_array()
@@ -1036,20 +1059,20 @@ def test_sort_is_array():
     assert not un_sort.is_array()
 
 
-def test_sort_is_bv():
-    bv_sort8 = mk_bv_sort(8)
-    bv_sort32 = mk_bv_sort(32)
-    fp_sort16 = mk_fp_sort(5, 11)
-    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
-    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
-    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
-    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
-    un_sort = mk_uninterpreted_sort()
-    assert mk_bv_sort(1).is_bv()
-    assert mk_bv_sort(8).is_bv()
-    assert mk_bv_sort(23).is_bv()
-    assert mk_bv_sort(32).is_bv()
-    assert not mk_fp_sort(5, 11).is_bv()
+def test_sort_is_bv(tm):
+    bv_sort8 = tm.mk_bv_sort(8)
+    bv_sort32 = tm.mk_bv_sort(32)
+    fp_sort16 = tm.mk_fp_sort(5, 11)
+    arr_sort_bv = tm.mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = tm.mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = tm.mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    un_sort = tm.mk_uninterpreted_sort()
+    assert tm.mk_bv_sort(1).is_bv()
+    assert tm.mk_bv_sort(8).is_bv()
+    assert tm.mk_bv_sort(23).is_bv()
+    assert tm.mk_bv_sort(32).is_bv()
+    assert not tm.mk_fp_sort(5, 11).is_bv()
     assert not arr_sort_bv.is_bv()
     assert not arr_sort_bvfp.is_bv()
     assert not arr_sort_fpbv.is_bv()
@@ -1057,16 +1080,16 @@ def test_sort_is_bv():
     assert not un_sort.is_bv()
 
 
-def test_sort_is_fp():
-    bv_sort8 = mk_bv_sort(8)
-    bv_sort32 = mk_bv_sort(32)
-    fp_sort16 = mk_fp_sort(5, 11)
-    fp_sort32 = mk_fp_sort(8, 24)
-    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
-    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
-    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
-    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
-    un_sort = mk_uninterpreted_sort()
+def test_sort_is_fp(tm):
+    bv_sort8 = tm.mk_bv_sort(8)
+    bv_sort32 = tm.mk_bv_sort(32)
+    fp_sort16 = tm.mk_fp_sort(5, 11)
+    fp_sort32 = tm.mk_fp_sort(8, 24)
+    arr_sort_bv = tm.mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = tm.mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = tm.mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    un_sort = tm.mk_uninterpreted_sort()
     assert fp_sort16.is_fp()
     assert fp_sort32.is_fp()
     assert not bv_sort8.is_fp()
@@ -1077,16 +1100,16 @@ def test_sort_is_fp():
     assert not un_sort.is_fp()
 
 
-def test_sort_is_fun():
-    bv_sort8 = mk_bv_sort(8)
-    bv_sort32 = mk_bv_sort(32)
-    fp_sort16 = mk_fp_sort(5, 11)
-    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
-    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
-    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
-    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
-    fun_sort_fp = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
-    un_sort = mk_uninterpreted_sort()
+def test_sort_is_fun(tm):
+    bv_sort8 = tm.mk_bv_sort(8)
+    bv_sort32 = tm.mk_bv_sort(32)
+    fp_sort16 = tm.mk_fp_sort(5, 11)
+    arr_sort_bv = tm.mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = tm.mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = tm.mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    fun_sort_fp = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
+    un_sort = tm.mk_uninterpreted_sort()
     assert fun_sort.is_fun()
     assert fun_sort_fp.is_fun()
     assert not arr_sort_bv.is_fun()
@@ -1097,17 +1120,17 @@ def test_sort_is_fun():
     assert not un_sort.is_fun()
 
 
-def test_sort_is_rm():
-    bv_sort8 = mk_bv_sort(8)
-    bv_sort32 = mk_bv_sort(32)
-    fp_sort16 = mk_fp_sort(5, 11)
-    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
-    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
-    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
-    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
-    fun_sort_fp = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
-    un_sort = mk_uninterpreted_sort()
-    assert mk_rm_sort().is_rm()
+def test_sort_is_rm(tm):
+    bv_sort8 = tm.mk_bv_sort(8)
+    bv_sort32 = tm.mk_bv_sort(32)
+    fp_sort16 = tm.mk_fp_sort(5, 11)
+    arr_sort_bv = tm.mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = tm.mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = tm.mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    fun_sort_fp = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
+    un_sort = tm.mk_uninterpreted_sort()
+    assert tm.mk_rm_sort().is_rm()
     assert not fun_sort.is_rm()
     assert not fun_sort_fp.is_rm()
     assert not arr_sort_bv.is_rm()
@@ -1118,18 +1141,18 @@ def test_sort_is_rm():
     assert not un_sort.is_rm()
 
 
-def test_sort_is_uninterpreted():
-    bv_sort8 = mk_bv_sort(8)
-    bv_sort32 = mk_bv_sort(32)
-    fp_sort16 = mk_fp_sort(5, 11)
-    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
-    arr_sort_bvfp = mk_array_sort(bv_sort8, fp_sort16)
-    arr_sort_fpbv = mk_array_sort(fp_sort16, bv_sort8)
-    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
-    fun_sort_fp = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
-    un_sort = mk_uninterpreted_sort()
+def test_sort_is_uninterpreted(tm):
+    bv_sort8 = tm.mk_bv_sort(8)
+    bv_sort32 = tm.mk_bv_sort(32)
+    fp_sort16 = tm.mk_fp_sort(5, 11)
+    arr_sort_bv = tm.mk_array_sort(bv_sort32, bv_sort8)
+    arr_sort_bvfp = tm.mk_array_sort(bv_sort8, fp_sort16)
+    arr_sort_fpbv = tm.mk_array_sort(fp_sort16, bv_sort8)
+    fun_sort = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    fun_sort_fp = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], fp_sort16)
+    un_sort = tm.mk_uninterpreted_sort()
     assert un_sort.is_uninterpreted()
-    assert not mk_rm_sort().is_uninterpreted()
+    assert not tm.mk_rm_sort().is_uninterpreted()
     assert not fun_sort.is_uninterpreted()
     assert not fun_sort_fp.is_uninterpreted()
     assert not arr_sort_bv.is_uninterpreted()
@@ -1139,27 +1162,27 @@ def test_sort_is_uninterpreted():
     assert not fp_sort16.is_uninterpreted()
 
 
-def test_sort_str():
-    assert f'{mk_bv_sort(1)}{mk_bv_sort(8)}{mk_rm_sort()}{mk_fp_sort(8, 24)}' \
+def test_sort_str(tm):
+    assert f'{tm.mk_bv_sort(1)}{tm.mk_bv_sort(8)}{tm.mk_rm_sort()}{tm.mk_fp_sort(8, 24)}' \
             == '(_ BitVec 1)(_ BitVec 8)RoundingMode(_ FloatingPoint 8 24)'
 
 
-def test_regr1():
-    bv_sort8 = mk_bv_sort(8)
-    fun_sort = mk_fun_sort([bv_sort8], bv_sort8)
-    arr_sort = mk_array_sort(bv_sort8, bv_sort8)
-    args = [mk_const(bv_sort8, 'x'), mk_const(fun_sort, 'f')]
+def test_regr1(tm):
+    bv_sort8 = tm.mk_bv_sort(8)
+    fun_sort = tm.mk_fun_sort([bv_sort8], bv_sort8)
+    arr_sort = tm.mk_array_sort(bv_sort8, bv_sort8)
+    args = [tm.mk_const(bv_sort8, 'x'), tm.mk_const(fun_sort, 'f')]
     with pytest.raises(BitwuzlaException):
-        mk_term(Kind.APPLY, args)
+        tm.mk_term(Kind.APPLY, args)
 
 
-def test_regr2():
-    bv_sort8 = mk_bv_sort(8)
-    fun_sort = mk_fun_sort([bv_sort8], bv_sort8)
-    arr_sort = mk_array_sort(bv_sort8, bv_sort8)
+def test_regr2(tm):
+    bv_sort8 = tm.mk_bv_sort(8)
+    fun_sort = tm.mk_fun_sort([bv_sort8], bv_sort8)
+    arr_sort = tm.mk_array_sort(bv_sort8, bv_sort8)
     assert fun_sort != arr_sort
-    fun = mk_const(fun_sort)
-    array = mk_const(arr_sort)
+    fun = tm.mk_const(fun_sort)
+    array = tm.mk_const(arr_sort)
     assert arr_sort == array.sort()
     assert fun_sort == fun.sort()
     assert fun.sort() != array.sort()
@@ -1171,208 +1194,209 @@ def test_regr2():
 # Term
 # ----------------------------------------------------------------------------
 
-def test_term_hash():
-    hash(mk_const(mk_bv_sort(8)))
+def test_term_hash(tm):
+    hash(tm.mk_const(tm.mk_bv_sort(8)))
 
 
-def test_term_sort():
-    assert mk_const(mk_bv_sort(8)).sort() == mk_bv_sort(8)
+def test_term_sort(tm):
+    assert tm.mk_const(tm.mk_bv_sort(8)).sort() == tm.mk_bv_sort(8)
 
 
-def test_term_symbol():
-    x = mk_const(mk_bv_sort(8), 'x')
+def test_term_symbol(tm):
+    x = tm.mk_const(tm.mk_bv_sort(8), 'x')
     assert x.symbol() and x.symbol() == 'x'
-    x = mk_const(mk_bv_sort(8))
+    x = tm.mk_const(tm.mk_bv_sort(8))
     assert not x.symbol()
 
 
-def test_term_is_const():
-    bv_sort8 = mk_bv_sort(8)
-    bv_sort32 = mk_bv_sort(32)
-    arr_sort_bv = mk_array_sort(bv_sort32, bv_sort8)
-    fp_sort16 = mk_fp_sort(5, 11)
-    fun_sort = mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
-    assert mk_const(arr_sort_bv).is_const()
-    assert mk_const(fun_sort).is_const()
-    assert mk_const(mk_bv_sort(1)).is_const()
-    assert mk_const(fp_sort16).is_const()
-    assert mk_const(mk_rm_sort()).is_const()
-    assert not mk_bv_one(mk_bv_sort(1)).is_const()
-    assert not mk_term(
+def test_term_is_const(tm):
+    bv_sort8 = tm.mk_bv_sort(8)
+    bv_sort32 = tm.mk_bv_sort(32)
+    arr_sort_bv = tm.mk_array_sort(bv_sort32, bv_sort8)
+    fp_sort16 = tm.mk_fp_sort(5, 11)
+    fun_sort = tm.mk_fun_sort([bv_sort8, fp_sort16, bv_sort32], bv_sort8)
+    assert tm.mk_const(arr_sort_bv).is_const()
+    assert tm.mk_const(fun_sort).is_const()
+    assert tm.mk_const(tm.mk_bv_sort(1)).is_const()
+    assert tm.mk_const(fp_sort16).is_const()
+    assert tm.mk_const(tm.mk_rm_sort()).is_const()
+    assert not tm.mk_bv_one(tm.mk_bv_sort(1)).is_const()
+    assert not tm.mk_term(
             Kind.ARRAY_STORE,
             [
-                mk_const(arr_sort_bv),
-                mk_const(bv_sort32), mk_bv_zero(bv_sort8)
+                tm.mk_const(arr_sort_bv),
+                tm.mk_const(bv_sort32), tm.mk_bv_zero(bv_sort8)
             ]).is_const()
 
 
-def test_term_is_var():
-    assert mk_var(mk_bv_sort(1)).is_variable()
-    assert mk_var(mk_bv_sort(8)).is_variable()
-    assert not mk_fp_pos_zero(mk_fp_sort(8, 24)).is_variable()
+def test_term_is_var(tm):
+    assert tm.mk_var(tm.mk_bv_sort(1)).is_variable()
+    assert tm.mk_var(tm.mk_bv_sort(8)).is_variable()
+    assert not tm.mk_fp_pos_zero(tm.mk_fp_sort(8, 24)).is_variable()
 
 
-def test_term_is_value():
-    assert mk_bv_one(mk_bv_sort(1)).is_value()
-    assert mk_fp_nan(mk_fp_sort(8, 24)).is_value()
-    assert not mk_const(mk_fp_sort(5, 11)).is_value()
-    var = mk_var(mk_bv_sort(8))
-    exists = mk_term(Kind.EXISTS, [
+def test_term_is_value(tm):
+    assert tm.mk_bv_one(tm.mk_bv_sort(1)).is_value()
+    assert tm.mk_fp_nan(tm.mk_fp_sort(8, 24)).is_value()
+    assert not tm.mk_const(tm.mk_fp_sort(5, 11)).is_value()
+    var = tm.mk_var(tm.mk_bv_sort(8))
+    exists = tm.mk_term(Kind.EXISTS, [
         var,
-        mk_term(Kind.EQUAL, [
-            mk_bv_zero(mk_bv_sort(8)),
-            mk_term(Kind.BV_MUL, [mk_const(mk_bv_sort(8)), var])])])
+        tm.mk_term(Kind.EQUAL, [
+            tm.mk_bv_zero(tm.mk_bv_sort(8)),
+            tm.mk_term(Kind.BV_MUL, [tm.mk_const(tm.mk_bv_sort(8)), var])])])
     assert not exists.is_value()
 
 
-def test_term_is_true():
-    assert mk_true().is_true()
-    assert not mk_false().is_true()
-    assert not mk_bv_one(mk_bv_sort(1)).is_true()
+def test_term_is_true(tm):
+    assert tm.mk_true().is_true()
+    assert not tm.mk_false().is_true()
+    assert not tm.mk_bv_one(tm.mk_bv_sort(1)).is_true()
 
 
-def test_term_is_false():
-    assert mk_false().is_false()
-    assert not mk_true().is_false()
-    assert not mk_bv_zero(mk_bv_sort(1)).is_false()
+def test_term_is_false(tm):
+    assert tm.mk_false().is_false()
+    assert not tm.mk_true().is_false()
+    assert not tm.mk_bv_zero(tm.mk_bv_sort(1)).is_false()
 
 
-def test_term_is_bv_value_zero():
-    assert mk_bv_zero(mk_bv_sort(8)).is_bv_value_zero()
-    assert not mk_bv_one(mk_bv_sort(1)).is_bv_value_zero()
-    assert not mk_bv_ones(mk_bv_sort(23)).is_bv_value_zero()
-    assert not mk_bv_min_signed(mk_bv_sort(8)).is_bv_value_zero()
-    assert not mk_bv_max_signed(mk_bv_sort(8)).is_bv_value_zero()
+def test_term_is_bv_value_zero(tm):
+    assert tm.mk_bv_zero(tm.mk_bv_sort(8)).is_bv_value_zero()
+    assert not tm.mk_bv_one(tm.mk_bv_sort(1)).is_bv_value_zero()
+    assert not tm.mk_bv_ones(tm.mk_bv_sort(23)).is_bv_value_zero()
+    assert not tm.mk_bv_min_signed(tm.mk_bv_sort(8)).is_bv_value_zero()
+    assert not tm.mk_bv_max_signed(tm.mk_bv_sort(8)).is_bv_value_zero()
 
 
-def test_term_is_bv_value_one():
-    assert mk_bv_one(mk_bv_sort(1)).is_bv_value_one()
-    assert not mk_bv_zero(mk_bv_sort(8)).is_bv_value_one()
-    assert not mk_bv_ones(mk_bv_sort(23)).is_bv_value_one()
-    assert not mk_bv_min_signed(mk_bv_sort(8)).is_bv_value_one()
-    assert not mk_bv_max_signed(mk_bv_sort(8)).is_bv_value_one()
+def test_term_is_bv_value_one(tm):
+    assert tm.mk_bv_one(tm.mk_bv_sort(1)).is_bv_value_one()
+    assert not tm.mk_bv_zero(tm.mk_bv_sort(8)).is_bv_value_one()
+    assert not tm.mk_bv_ones(tm.mk_bv_sort(23)).is_bv_value_one()
+    assert not tm.mk_bv_min_signed(tm.mk_bv_sort(8)).is_bv_value_one()
+    assert not tm.mk_bv_max_signed(tm.mk_bv_sort(8)).is_bv_value_one()
 
 
-def test_term_is_bv_value_ones():
-    assert mk_bv_ones(mk_bv_sort(23)).is_bv_value_ones()
-    assert not mk_bv_zero(mk_bv_sort(8)).is_bv_value_ones()
-    assert mk_bv_one(mk_bv_sort(1)).is_bv_value_ones()
-    assert not mk_bv_min_signed(mk_bv_sort(8)).is_bv_value_ones()
-    assert not mk_bv_max_signed(mk_bv_sort(8)).is_bv_value_ones()
+def test_term_is_bv_value_ones(tm):
+    assert tm.mk_bv_ones(tm.mk_bv_sort(23)).is_bv_value_ones()
+    assert not tm.mk_bv_zero(tm.mk_bv_sort(8)).is_bv_value_ones()
+    assert tm.mk_bv_one(tm.mk_bv_sort(1)).is_bv_value_ones()
+    assert not tm.mk_bv_min_signed(tm.mk_bv_sort(8)).is_bv_value_ones()
+    assert not tm.mk_bv_max_signed(tm.mk_bv_sort(8)).is_bv_value_ones()
 
 
-def test_term_is_bv_value_min_signed():
-    assert mk_bv_min_signed(mk_bv_sort(8)).is_bv_value_min_signed()
-    assert not mk_bv_zero(mk_bv_sort(8)).is_bv_value_min_signed()
-    assert mk_bv_one(mk_bv_sort(1)).is_bv_value_min_signed()
-    assert not mk_bv_ones(mk_bv_sort(23)).is_bv_value_min_signed()
-    assert not mk_bv_max_signed(mk_bv_sort(8)).is_bv_value_min_signed()
+def test_term_is_bv_value_min_signed(tm):
+    assert tm.mk_bv_min_signed(tm.mk_bv_sort(8)).is_bv_value_min_signed()
+    assert not tm.mk_bv_zero(tm.mk_bv_sort(8)).is_bv_value_min_signed()
+    assert tm.mk_bv_one(tm.mk_bv_sort(1)).is_bv_value_min_signed()
+    assert not tm.mk_bv_ones(tm.mk_bv_sort(23)).is_bv_value_min_signed()
+    assert not tm.mk_bv_max_signed(tm.mk_bv_sort(8)).is_bv_value_min_signed()
 
 
-def test_term_is_bv_value_max_signed():
-    assert mk_bv_max_signed(mk_bv_sort(8)).is_bv_value_max_signed()
-    assert not mk_bv_zero(mk_bv_sort(8)).is_bv_value_max_signed()
-    assert not mk_bv_one(mk_bv_sort(1)).is_bv_value_max_signed()
-    assert not mk_bv_ones(mk_bv_sort(23)).is_bv_value_max_signed()
-    assert not mk_bv_min_signed(mk_bv_sort(8)).is_bv_value_max_signed()
+def test_term_is_bv_value_max_signed(tm):
+    assert tm.mk_bv_max_signed(tm.mk_bv_sort(8)).is_bv_value_max_signed()
+    assert not tm.mk_bv_zero(tm.mk_bv_sort(8)).is_bv_value_max_signed()
+    assert not tm.mk_bv_one(tm.mk_bv_sort(1)).is_bv_value_max_signed()
+    assert not tm.mk_bv_ones(tm.mk_bv_sort(23)).is_bv_value_max_signed()
+    assert not tm.mk_bv_min_signed(tm.mk_bv_sort(8)).is_bv_value_max_signed()
 
 
-def test_term_is_fp_value_pos_zero():
-    assert mk_fp_pos_zero(mk_fp_sort(8, 24)).is_fp_value_pos_zero()
-    assert not mk_fp_neg_zero(mk_fp_sort(8, 24)).is_fp_value_pos_zero()
-    assert not mk_fp_pos_inf(mk_fp_sort(8, 24)).is_fp_value_pos_zero()
-    assert not mk_fp_neg_inf(mk_fp_sort(8, 24)).is_fp_value_pos_zero()
-    assert not mk_fp_nan(mk_fp_sort(8, 24)).is_fp_value_pos_zero()
+def test_term_is_fp_value_pos_zero(tm):
+    assert tm.mk_fp_pos_zero(tm.mk_fp_sort(8, 24)).is_fp_value_pos_zero()
+    assert not tm.mk_fp_neg_zero(tm.mk_fp_sort(8, 24)).is_fp_value_pos_zero()
+    assert not tm.mk_fp_pos_inf(tm.mk_fp_sort(8, 24)).is_fp_value_pos_zero()
+    assert not tm.mk_fp_neg_inf(tm.mk_fp_sort(8, 24)).is_fp_value_pos_zero()
+    assert not tm.mk_fp_nan(tm.mk_fp_sort(8, 24)).is_fp_value_pos_zero()
 
 
-def test_term_is_fp_value_neg_zero():
-    assert mk_fp_neg_zero(mk_fp_sort(8, 24)).is_fp_value_neg_zero()
-    assert not mk_fp_pos_zero(mk_fp_sort(8, 24)).is_fp_value_neg_zero()
-    assert not mk_fp_pos_inf(mk_fp_sort(8, 24)).is_fp_value_neg_zero()
-    assert not mk_fp_neg_inf(mk_fp_sort(8, 24)).is_fp_value_neg_zero()
-    assert not mk_fp_nan(mk_fp_sort(8, 24)).is_fp_value_neg_zero()
+def test_term_is_fp_value_neg_zero(tm):
+    assert tm.mk_fp_neg_zero(tm.mk_fp_sort(8, 24)).is_fp_value_neg_zero()
+    assert not tm.mk_fp_pos_zero(tm.mk_fp_sort(8, 24)).is_fp_value_neg_zero()
+    assert not tm.mk_fp_pos_inf(tm.mk_fp_sort(8, 24)).is_fp_value_neg_zero()
+    assert not tm.mk_fp_neg_inf(tm.mk_fp_sort(8, 24)).is_fp_value_neg_zero()
+    assert not tm.mk_fp_nan(tm.mk_fp_sort(8, 24)).is_fp_value_neg_zero()
 
 
-def test_term_is_fp_value_pos_inf():
-    assert mk_fp_pos_inf(mk_fp_sort(8, 24)).is_fp_value_pos_inf()
-    assert not mk_fp_pos_zero(mk_fp_sort(8, 24)).is_fp_value_pos_inf()
-    assert not mk_fp_neg_zero(mk_fp_sort(8, 24)).is_fp_value_pos_inf()
-    assert not mk_fp_neg_inf(mk_fp_sort(8, 24)).is_fp_value_pos_inf()
-    assert not mk_fp_nan(mk_fp_sort(8, 24)).is_fp_value_pos_inf()
+def test_term_is_fp_value_pos_inf(tm):
+    assert tm.mk_fp_pos_inf(tm.mk_fp_sort(8, 24)).is_fp_value_pos_inf()
+    assert not tm.mk_fp_pos_zero(tm.mk_fp_sort(8, 24)).is_fp_value_pos_inf()
+    assert not tm.mk_fp_neg_zero(tm.mk_fp_sort(8, 24)).is_fp_value_pos_inf()
+    assert not tm.mk_fp_neg_inf(tm.mk_fp_sort(8, 24)).is_fp_value_pos_inf()
+    assert not tm.mk_fp_nan(tm.mk_fp_sort(8, 24)).is_fp_value_pos_inf()
 
 
-def test_term_is_fp_value_neg_inf():
-    assert mk_fp_neg_inf(mk_fp_sort(8, 24)).is_fp_value_neg_inf()
-    assert not mk_fp_pos_zero(mk_fp_sort(8, 24)).is_fp_value_neg_inf()
-    assert not mk_fp_neg_zero(mk_fp_sort(8, 24)).is_fp_value_neg_inf()
-    assert not mk_fp_pos_inf(mk_fp_sort(8, 24)).is_fp_value_neg_inf()
-    assert not mk_fp_nan(mk_fp_sort(8, 24)).is_fp_value_neg_inf()
+def test_term_is_fp_value_neg_inf(tm):
+    assert tm.mk_fp_neg_inf(tm.mk_fp_sort(8, 24)).is_fp_value_neg_inf()
+    assert not tm.mk_fp_pos_zero(tm.mk_fp_sort(8, 24)).is_fp_value_neg_inf()
+    assert not tm.mk_fp_neg_zero(tm.mk_fp_sort(8, 24)).is_fp_value_neg_inf()
+    assert not tm.mk_fp_pos_inf(tm.mk_fp_sort(8, 24)).is_fp_value_neg_inf()
+    assert not tm.mk_fp_nan(tm.mk_fp_sort(8, 24)).is_fp_value_neg_inf()
 
 
-def test_term_is_fp_value_nan():
-    assert mk_fp_nan(mk_fp_sort(8, 24)).is_fp_value_nan()
-    assert not mk_fp_pos_zero(mk_fp_sort(8, 24)).is_fp_value_nan()
-    assert not mk_fp_neg_zero(mk_fp_sort(8, 24)).is_fp_value_nan()
-    assert not mk_fp_pos_inf(mk_fp_sort(8, 24)).is_fp_value_nan()
-    assert not mk_fp_neg_inf(mk_fp_sort(8, 24)).is_fp_value_nan()
+def test_term_is_fp_value_nan(tm):
+    assert tm.mk_fp_nan(tm.mk_fp_sort(8, 24)).is_fp_value_nan()
+    assert not tm.mk_fp_pos_zero(tm.mk_fp_sort(8, 24)).is_fp_value_nan()
+    assert not tm.mk_fp_neg_zero(tm.mk_fp_sort(8, 24)).is_fp_value_nan()
+    assert not tm.mk_fp_pos_inf(tm.mk_fp_sort(8, 24)).is_fp_value_nan()
+    assert not tm.mk_fp_neg_inf(tm.mk_fp_sort(8, 24)).is_fp_value_nan()
 
 
-def test_term_is_rm_value_rna():
-    assert mk_rm_value(RoundingMode.RNA).is_rm_value_rna()
-    assert not mk_rm_value(RoundingMode.RNE).is_rm_value_rna()
-    assert not mk_rm_value(RoundingMode.RTN).is_rm_value_rna()
-    assert not mk_rm_value(RoundingMode.RTP).is_rm_value_rna()
-    assert not mk_rm_value(RoundingMode.RTZ).is_rm_value_rna()
+def test_term_is_rm_value_rna(tm):
+    assert tm.mk_rm_value(RoundingMode.RNA).is_rm_value_rna()
+    assert not tm.mk_rm_value(RoundingMode.RNE).is_rm_value_rna()
+    assert not tm.mk_rm_value(RoundingMode.RTN).is_rm_value_rna()
+    assert not tm.mk_rm_value(RoundingMode.RTP).is_rm_value_rna()
+    assert not tm.mk_rm_value(RoundingMode.RTZ).is_rm_value_rna()
 
 
-def test_term_is_rm_value_rne():
-    assert not mk_rm_value(RoundingMode.RNA).is_rm_value_rne()
-    assert mk_rm_value(RoundingMode.RNE).is_rm_value_rne()
-    assert not mk_rm_value(RoundingMode.RTN).is_rm_value_rne()
-    assert not mk_rm_value(RoundingMode.RTP).is_rm_value_rne()
-    assert not mk_rm_value(RoundingMode.RTZ).is_rm_value_rne()
+def test_term_is_rm_value_rne(tm):
+    assert not tm.mk_rm_value(RoundingMode.RNA).is_rm_value_rne()
+    assert tm.mk_rm_value(RoundingMode.RNE).is_rm_value_rne()
+    assert not tm.mk_rm_value(RoundingMode.RTN).is_rm_value_rne()
+    assert not tm.mk_rm_value(RoundingMode.RTP).is_rm_value_rne()
+    assert not tm.mk_rm_value(RoundingMode.RTZ).is_rm_value_rne()
 
 
-def test_term_is_rm_value_rtn():
-    assert not mk_rm_value(RoundingMode.RNA).is_rm_value_rtn()
-    assert not mk_rm_value(RoundingMode.RNE).is_rm_value_rtn()
-    assert mk_rm_value(RoundingMode.RTN).is_rm_value_rtn()
-    assert not mk_rm_value(RoundingMode.RTP).is_rm_value_rtn()
-    assert not mk_rm_value(RoundingMode.RTZ).is_rm_value_rtn()
+def test_term_is_rm_value_rtn(tm):
+    assert not tm.mk_rm_value(RoundingMode.RNA).is_rm_value_rtn()
+    assert not tm.mk_rm_value(RoundingMode.RNE).is_rm_value_rtn()
+    assert tm.mk_rm_value(RoundingMode.RTN).is_rm_value_rtn()
+    assert not tm.mk_rm_value(RoundingMode.RTP).is_rm_value_rtn()
+    assert not tm.mk_rm_value(RoundingMode.RTZ).is_rm_value_rtn()
 
 
-def test_term_is_rm_value_rtp():
-    assert not mk_rm_value(RoundingMode.RNA).is_rm_value_rtp()
-    assert not mk_rm_value(RoundingMode.RNE).is_rm_value_rtp()
-    assert not mk_rm_value(RoundingMode.RTN).is_rm_value_rtp()
-    assert mk_rm_value(RoundingMode.RTP).is_rm_value_rtp()
-    assert not mk_rm_value(RoundingMode.RTZ).is_rm_value_rtp()
+def test_term_is_rm_value_rtp(tm):
+    assert not tm.mk_rm_value(RoundingMode.RNA).is_rm_value_rtp()
+    assert not tm.mk_rm_value(RoundingMode.RNE).is_rm_value_rtp()
+    assert not tm.mk_rm_value(RoundingMode.RTN).is_rm_value_rtp()
+    assert tm.mk_rm_value(RoundingMode.RTP).is_rm_value_rtp()
+    assert not tm.mk_rm_value(RoundingMode.RTZ).is_rm_value_rtp()
 
 
-def test_term_is_rm_value_rtz():
-    assert not mk_rm_value(RoundingMode.RNA).is_rm_value_rtz()
-    assert not mk_rm_value(RoundingMode.RNE).is_rm_value_rtz()
-    assert not mk_rm_value(RoundingMode.RTN).is_rm_value_rtz()
-    assert not mk_rm_value(RoundingMode.RTP).is_rm_value_rtz()
-    assert mk_rm_value(RoundingMode.RTZ).is_rm_value_rtz()
+def test_term_is_rm_value_rtz(tm):
+    assert not tm.mk_rm_value(RoundingMode.RNA).is_rm_value_rtz()
+    assert not tm.mk_rm_value(RoundingMode.RNE).is_rm_value_rtz()
+    assert not tm.mk_rm_value(RoundingMode.RTN).is_rm_value_rtz()
+    assert not tm.mk_rm_value(RoundingMode.RTP).is_rm_value_rtz()
+    assert tm.mk_rm_value(RoundingMode.RTZ).is_rm_value_rtz()
 
 
-def test_term_print():
-    bv1  = mk_bv_sort(1)
-    and_bv_const1 = mk_term(
+def test_term_print(tm):
+    bv1  = tm.mk_bv_sort(1)
+    and_bv_const1 = tm.mk_term(
             Kind.EQUAL,
             [
-                mk_bv_one(bv1),
-                mk_term(
+                tm.mk_bv_one(bv1),
+                tm.mk_term(
                     Kind.BV_AND,
-                    [mk_bv_one(bv1), mk_const(bv1, 'bv1')])
+                    [tm.mk_bv_one(bv1), tm.mk_const(bv1, 'bv1')])
             ])
-    var = mk_var(mk_bv_sort(8), 'q')
-    exists = mk_term(Kind.EXISTS, [
+    var = tm.mk_var(tm.mk_bv_sort(8), 'q')
+    exists = tm.mk_term(Kind.EXISTS, [
         var,
-        mk_term(Kind.EQUAL, [
-            mk_bv_zero(mk_bv_sort(8)),
-            mk_term(Kind.BV_MUL, [mk_const(mk_bv_sort(8), 'bv8'), var])])])
+        tm.mk_term(Kind.EQUAL, [
+            tm.mk_bv_zero(tm.mk_bv_sort(8)),
+            tm.mk_term(Kind.BV_MUL, [tm.mk_const(tm.mk_bv_sort(8), 'bv8'),
+                                     var])])])
     expected = '(= #b1 (bvand #b1 bv1))' \
                + '(exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q)))' \
                + '(= (_ bv1 1) (bvand (_ bv1 1) bv1))' \
@@ -1384,14 +1408,14 @@ def test_term_print():
           + and_bv_const1.str(16) +  exists.str(16)
     assert res == expected
 
-    bv5  = mk_bv_sort(5)
-    bv10 = mk_bv_sort(10)
-    bv4  = mk_bv_sort(4)
-    bv8  = mk_bv_sort(8)
+    bv5  = tm.mk_bv_sort(5)
+    bv10 = tm.mk_bv_sort(10)
+    bv4  = tm.mk_bv_sort(4)
+    bv8  = tm.mk_bv_sort(8)
 
-    t = mk_fp_value(mk_bv_one(bv1),
-                    mk_bv_value(bv5, 3),
-                    mk_bv_value(bv10, 23))
+    t = tm.mk_fp_value(tm.mk_bv_one(bv1),
+                    tm.mk_bv_value(bv5, 3),
+                    tm.mk_bv_value(bv10, 23))
 
     expected = '(fp #b1 #b00011 #b0000010111)' \
                + '(fp (_ bv1 1) (_ bv3 5) (_ bv23 10))' \
@@ -1399,9 +1423,9 @@ def test_term_print():
     res = t.str() + t.str(10) + t.str(16)
     assert res == expected
 
-    t = mk_fp_value(mk_bv_one(bv1),
-                    mk_bv_value(bv4, 3),
-                    mk_bv_value(bv8, 23))
+    t = tm.mk_fp_value(tm.mk_bv_one(bv1),
+                    tm.mk_bv_value(bv4, 3),
+                    tm.mk_bv_value(bv8, 23))
 
     expected = '(fp #b1 #b0011 #b00010111)' \
                + '(fp (_ bv1 1) (_ bv3 4) (_ bv23 8))' \
@@ -1410,87 +1434,87 @@ def test_term_print():
     assert res == expected
 
 
-def test_term_print_regr0():
-    res = mk_rm_value(RoundingMode.RNA).str() + '\n' \
-          + mk_rm_value(RoundingMode.RNE).str() + '\n' \
-          + mk_rm_value(RoundingMode.RTN).str() + '\n' \
-          + mk_rm_value(RoundingMode.RTP).str() + '\n' \
-          + mk_rm_value(RoundingMode.RTZ).str()
+def test_term_print_regr0(tm):
+    res = tm.mk_rm_value(RoundingMode.RNA).str() + '\n' \
+          + tm.mk_rm_value(RoundingMode.RNE).str() + '\n' \
+          + tm.mk_rm_value(RoundingMode.RTN).str() + '\n' \
+          + tm.mk_rm_value(RoundingMode.RTP).str() + '\n' \
+          + tm.mk_rm_value(RoundingMode.RTZ).str()
     assert res == "RNA\nRNE\nRTN\nRTP\nRTZ"
 
 
-def test_term_print_regr1():
-    bv_sort1  = mk_bv_sort(1)
-    bv_sort5  = mk_bv_sort(5)
-    bv_sort10 = mk_bv_sort(10)
+def test_term_print_regr1(tm):
+    bv_sort1  = tm.mk_bv_sort(1)
+    bv_sort5  = tm.mk_bv_sort(5)
+    bv_sort10 = tm.mk_bv_sort(10)
 
-    fp_val = mk_fp_value(mk_bv_zero(bv_sort1),
-                         mk_bv_zero(bv_sort5),
-                         mk_bv_zero(bv_sort10))
+    fp_val = tm.mk_fp_value(tm.mk_bv_zero(bv_sort1),
+                         tm.mk_bv_zero(bv_sort5),
+                         tm.mk_bv_zero(bv_sort10))
     assert fp_val.str() == '(fp #b0 #b00000 #b0000000000)'
 
-    fp_val = mk_fp_value(mk_bv_one(bv_sort1),
-                         mk_bv_zero(bv_sort5),
-                         mk_bv_zero(bv_sort10))
+    fp_val = tm.mk_fp_value(tm.mk_bv_one(bv_sort1),
+                         tm.mk_bv_zero(bv_sort5),
+                         tm.mk_bv_zero(bv_sort10))
     assert fp_val.str() == '(fp #b1 #b00000 #b0000000000)'
 
-    fp_val = mk_fp_value(mk_bv_zero(bv_sort1),
-                         mk_bv_zero(bv_sort5),
-                         mk_bv_one(bv_sort10))
+    fp_val = tm.mk_fp_value(tm.mk_bv_zero(bv_sort1),
+                         tm.mk_bv_zero(bv_sort5),
+                         tm.mk_bv_one(bv_sort10))
     assert fp_val.str() == '(fp #b0 #b00000 #b0000000001)'
 
-    fp_val = mk_fp_value(mk_bv_one(bv_sort1),
-                         mk_bv_zero(bv_sort5),
-                         mk_bv_one(bv_sort10))
+    fp_val = tm.mk_fp_value(tm.mk_bv_one(bv_sort1),
+                         tm.mk_bv_zero(bv_sort5),
+                         tm.mk_bv_one(bv_sort10))
     assert fp_val.str() == '(fp #b1 #b00000 #b0000000001)'
 
 
-def test_terms_indexed():
-    fp_term = mk_const(mk_fp_sort(5, 11))
-    bv_term = mk_const(mk_bv_sort(8))
-    rm      = mk_rm_value(RoundingMode.RNE)
+def test_terms_indexed(tm):
+    fp_term = tm.mk_const(tm.mk_fp_sort(5, 11))
+    bv_term = tm.mk_const(tm.mk_bv_sort(8))
+    rm      = tm.mk_rm_value(RoundingMode.RNE)
 
-    idx = mk_term(Kind.FP_TO_SBV, [rm, fp_term], [8])
+    idx = tm.mk_term(Kind.FP_TO_SBV, [rm, fp_term], [8])
     assert idx.num_indices() == 1
     indices = idx.indices()
     assert len(indices) == 1
     assert indices[0] == 8
 
-    idx = mk_term(Kind.FP_TO_UBV, [rm, fp_term], [9])
+    idx = tm.mk_term(Kind.FP_TO_UBV, [rm, fp_term], [9])
     assert idx.num_indices() == 1
     indices = idx.indices()
     assert len(indices) == 1
     assert indices[0] == 9
 
-    idx = mk_term(Kind.FP_TO_FP_FROM_BV, [bv_term], [3, 5])
+    idx = tm.mk_term(Kind.FP_TO_FP_FROM_BV, [bv_term], [3, 5])
     assert idx.num_indices() == 2
     indices = idx.indices()
     assert len(indices) == 2
     assert indices[0] == 3
     assert indices[1] == 5
 
-    idx = mk_term(Kind.FP_TO_FP_FROM_FP, [rm, fp_term], [7, 18])
+    idx = tm.mk_term(Kind.FP_TO_FP_FROM_FP, [rm, fp_term], [7, 18])
     assert idx.num_indices() == 2
     indices = idx.indices()
     assert len(indices) == 2
     assert indices[0] == 7
     assert indices[1] == 18
 
-    idx = mk_term(Kind.FP_TO_FP_FROM_SBV, [rm, bv_term], [8, 24])
+    idx = tm.mk_term(Kind.FP_TO_FP_FROM_SBV, [rm, bv_term], [8, 24])
     assert idx.num_indices() == 2
     indices = idx.indices()
     assert len(indices) == 2
     assert indices[0] == 8
     assert indices[1] == 24
 
-    idx = mk_term(Kind.FP_TO_FP_FROM_UBV, [rm, bv_term], [5, 11])
+    idx = tm.mk_term(Kind.FP_TO_FP_FROM_UBV, [rm, bv_term], [5, 11])
     assert idx.num_indices() == 2
     indices = idx.indices()
     assert len(indices) == 2
     assert indices[0] == 5
     assert indices[1] == 11
 
-    idx = mk_term(Kind.BV_EXTRACT, [bv_term], [6, 0])
+    idx = tm.mk_term(Kind.BV_EXTRACT, [bv_term], [6, 0])
     assert idx.num_indices() == 2
     indices = idx.indices()
     assert len(indices) == 2
@@ -1498,28 +1522,28 @@ def test_terms_indexed():
     assert indices[1] == 0
 
 
-def test_terms():
-    bv16 = mk_bv_sort(16)
-    fp16 = mk_fp_sort(5, 11)
-    array_sort = mk_array_sort(bv16, bv16)
+def test_terms(tm):
+    bv16 = tm.mk_bv_sort(16)
+    fp16 = tm.mk_fp_sort(5, 11)
+    array_sort = tm.mk_array_sort(bv16, bv16)
     domain = [bv16, bv16, bv16]
-    fun_sort = mk_fun_sort(domain, bv16)
+    fun_sort = tm.mk_fun_sort(domain, bv16)
 
     fp_args = [
-            mk_rm_value(RoundingMode.RNA),
-            mk_const(fp16),
-            mk_const(fp16),
-            mk_const(fp16)
+            tm.mk_rm_value(RoundingMode.RNA),
+            tm.mk_const(fp16),
+            tm.mk_const(fp16),
+            tm.mk_const(fp16)
         ]
 
     bv_args = [
-            mk_const(bv16),
-            mk_const(bv16),
-            mk_const(bv16),
-            mk_const(bv16)
+            tm.mk_const(bv16),
+            tm.mk_const(bv16),
+            tm.mk_const(bv16),
+            tm.mk_const(bv16)
         ]
 
-    bool_args = [mk_const(mk_bool_sort()), mk_const(mk_bool_sort())]
+    bool_args = [tm.mk_const(tm.mk_bool_sort()), tm.mk_const(tm.mk_bool_sort())]
 
     for kind in Kind:
         if kind == Kind.CONSTANT \
@@ -1532,7 +1556,7 @@ def test_terms():
 
         # Boolean
         if kind == Kind.NOT:
-               term = mk_term(kind, [bool_args[0]])
+               term = tm.mk_term(kind, [bool_args[0]])
                break
 
         if kind == Kind.AND \
@@ -1540,7 +1564,7 @@ def test_terms():
            or kind == Kind.IMPLIES \
            or kind == Kind.OR \
            or kind == Kind.XOR:
-               term = mk_term(kind, bool_args)
+               term = tm.mk_term(kind, bool_args)
                break
 
         # BV Unary
@@ -1551,7 +1575,7 @@ def test_terms():
            or kind == Kind.BV_REDAND \
            or kind == Kind.BV_REDOR \
            or kind == Kind.BV_REDXOR:
-               term = mk_term(kind, [bv_args[0]])
+               term = tm.mk_term(kind, [bv_args[0]])
                break
 
         # BV Binary
@@ -1585,7 +1609,7 @@ def test_terms():
             or kind == Kind.BV_UREM \
             or kind == Kind.BV_USUB_OVERFLOW \
             or kind == Kind.BV_XNOR:
-                term = mk_term(kind, [bv_args[0], bv_args[1]])
+                term = tm.mk_term(kind, [bv_args[0], bv_args[1]])
                 break
 
         # BV Binary+
@@ -1595,16 +1619,16 @@ def test_terms():
            or kind == Kind.BV_MUL \
            or kind == Kind.BV_OR \
            or kind == Kind.BV_XOR:
-               term = mk_term(kind, bv_args)
+               term = tm.mk_term(kind, bv_args)
                break
 
         if kind == Kind.DISTINCT or kind == Kind.EQUAL:
-            term = mk_term(kind, bv_args)
+            term = tm.mk_term(kind, bv_args)
             break
 
         # BV indexed
         if kind == Kind.BV_EXTRACT:
-            term = mk_term(kind, [bv_args[0]], [3, 2])
+            term = tm.mk_term(kind, [bv_args[0]], [3, 2])
             break
 
         if kind == Kind.BV_REPEAT \
@@ -1612,32 +1636,32 @@ def test_terms():
            or kind == Kind.BV_RORI \
            or kind == Kind.BV_SIGN_EXTEND \
            or kind == Kind.BV_ZERO_EXTEND:
-               term = mk_term(kind, [bv_args[0]], [5])
+               term = tm.mk_term(kind, [bv_args[0]], [5])
                break
 
         # Arrays
         if kind == Kind.ARRAY_SELECT:
-            term = mk_term(kind, [mk_const(array_sort), bv_args[0]])
+            term = tm.mk_term(kind, [tm.mk_const(array_sort), bv_args[0]])
             break
 
         if kind == Kind.ARRAY_STORE:
-            term = mk_term(kind, [mk_const(array_sort), bv_args[0], bv_args[1]])
+            term = tm.mk_term(kind, [tm.mk_const(array_sort), bv_args[0], bv_args[1]])
             break
 
         if kind == Kind.APPLY:
-            term = mk_term(
-                    kind, [mk_const(fun_sort), bv_args[0], bv_args[1], bv_args[2]])
+            term = tm.mk_term(
+                    kind, [tm.mk_const(fun_sort), bv_args[0], bv_args[1], bv_args[2]])
             break
 
         # Binder
         if kind == Kind.EXISTS \
            or kind == Kind.FORALL \
            or kind == Kind.LAMBDA:
-               bvars = [mk_var(d_bv_sort16), mk_var(d_bv_sort16)]
+               bvars = [tm.mk_var(d_bv_sort16), tm.mk_var(d_bv_sort16)]
                # body
-               term = mk_term(
-                       kind, [bvars[0], bvars[1], mk_term(Kind.BV_SLT, bvars)])
-               break;
+               term = tm.mk_term(
+                       kind, [bvars[0], bvars[1], tm.mk_term(Kind.BV_SLT, bvars)])
+               break
 
         # FP Unary
         if kind == Kind.FP_ABS \
@@ -1649,7 +1673,7 @@ def test_terms():
            or kind == Kind.FP_IS_SUBNORMAL \
            or kind == Kind.FP_IS_ZERO \
            or kind == Kind.FP_NEG:
-               term = mk_term(kind, [fp_args[1]])
+               term = tm.mk_term(kind, [fp_args[1]])
                break
 
         # FP Binary
@@ -1661,11 +1685,11 @@ def test_terms():
            or kind == Kind.FP_MAX \
            or kind == Kind.FP_MIN \
            or kind == Kind.FP_REM:
-               term = mk_term(kind, [fp_args[1], fp_args[2]])
+               term = tm.mk_term(kind, [fp_args[1], fp_args[2]])
                break
 
         if kind == Kind.FP_SQRT or kind == Kind.FP_RTI:
-            term = mk_term(kind, [fp_args[0], fp_args[1]])
+            term = tm.mk_term(kind, [fp_args[0], fp_args[1]])
             break
 
         # FP Ternary
@@ -1673,39 +1697,39 @@ def test_terms():
             or kind == Kind.FP_DIV \
             or kind == Kind.FP_MUL \
             or kind == Kind.FP_SUB:
-                term = mk_term(kind, [fp_args.begin(), fp_args.end() - 1])
+                term = tm.mk_term(kind, [fp_args.begin(), fp_args.end() - 1])
                 break
 
         if kind == Kind.FP_FP:
-            term = mk_term(
-                    kind, [mk_const(mk_bv_sort(1)), bv_args[0], bv_args[1]])
+            term = tm.mk_term(
+                    kind, [tm.mk_const(tm.mk_bv_sort(1)), bv_args[0], bv_args[1]])
             break
 
         # FP Quaternery
         if kind == Kind.FP_FMA:
-            term = mk_term(kind, fp_args)
+            term = tm.mk_term(kind, fp_args)
             break
 
         # FP indexed
         if kind == Kind.FP_TO_FP_FROM_BV:
-            term = mk_term(kind, [bv_args[0]], [5, 11])
+            term = tm.mk_term(kind, [bv_args[0]], [5, 11])
             break
 
         if kind == Kind.FP_TO_FP_FROM_SBV or kind == Kind.FP_TO_FP_FROM_UBV:
-            term = mk_term(kind, [fp_args[0], bv_args[0]], [5, 11])
+            term = tm.mk_term(kind, [fp_args[0], bv_args[0]], [5, 11])
             break
 
         if kind == Kind.FP_TO_FP_FROM_FP:
-            term = mk_term(kind, [fp_args[0], fp_args[1]], [5, 11])
+            term = tm.mk_term(kind, [fp_args[0], fp_args[1]], [5, 11])
             break
 
         if kind == Kind.FP_TO_SBV or kind == Kind.FP_TO_UBV:
-            term = mk_term(kind, [fp_args[0], fp_args[1]], [16])
+            term = tm.mk_term(kind, [fp_args[0], fp_args[1]], [16])
             break
 
         # Others
         if kind == Kind.ITE:
-            term = mk_term(kind, [bool_args[0], bv_args[0], bv_args[1]])
+            term = tm.mk_term(kind, [bool_args[0], bv_args[0], bv_args[1]])
             break
 
         # no unhandled kind
@@ -1714,7 +1738,7 @@ def test_terms():
         children = term.children()
         size     = len(children)
 
-        if term.is_const() or term.is_variable() or term.is_value():
+        if term.is_const() or term.is_variable() or term.is_value(tm):
             assert size == 0
             continue
 
@@ -1726,192 +1750,192 @@ def test_terms():
         tterm = None
         if term.kind() == Kind.CONST_ARRAY:
             assert size == 1
-            term = mk_const_array(term.sort(), children[0])
+            term = tm.mk_const_array(term.sort(), children[0])
         else:
           kind = term.kind()
           if term.num_indices() > 0:
-            tterm = mk_term(kind, children, term.indices())
+            tterm = tm.mk_term(kind, children, term.indices())
           elif kind == Kind.LAMBDA \
                or kind == Kind.FORALL \
                or kind == Kind.EXISTS:
                tterm = term
           else:
               assert kind != Kind.BV_NOT or size == 1
-              tterm = mk_term(kind, children)
+              tterm = tm.mk_term(kind, children)
         assert tterm == term
 
-    assert mk_const(mk_bv_sort(8)).kind() == Kind.CONSTANT
-    assert len(mk_const(mk_bv_sort(8)).children()) == 0
+    assert tm.mk_const(tm.mk_bv_sort(8)).kind() == Kind.CONSTANT
+    assert len(tm.mk_const(tm.mk_bv_sort(8)).children()) == 0
 
-    assert mk_const(mk_rm_sort()).kind() == Kind.CONSTANT
-    assert len(mk_const(mk_rm_sort()).children()) == 0
+    assert tm.mk_const(tm.mk_rm_sort()).kind() == Kind.CONSTANT
+    assert len(tm.mk_const(tm.mk_rm_sort()).children()) == 0
 
-    assert mk_const(mk_uninterpreted_sort()).kind() == Kind.CONSTANT
-    assert len(mk_const(mk_uninterpreted_sort()).children()) == 0
+    assert tm.mk_const(tm.mk_uninterpreted_sort()).kind() == Kind.CONSTANT
+    assert len(tm.mk_const(tm.mk_uninterpreted_sort()).children()) == 0
 
-    bv_var = mk_var(bv16)
+    bv_var = tm.mk_var(bv16)
     assert bv_var.kind() == Kind.VARIABLE
     assert len(bv_var.children()) == 0
 
-    rm_val = mk_rm_value(RoundingMode.RNA)
+    rm_val = tm.mk_rm_value(RoundingMode.RNA)
     assert rm_val.kind() == Kind.VALUE
     assert len(rm_val.children()) == 0
 
-    fp_from_real_val = mk_fp_value(fp16, rm_val, '1.1')
+    fp_from_real_val = tm.mk_fp_value(fp16, rm_val, '1.1')
     assert fp_from_real_val.kind() == Kind.VALUE
     assert len(fp_from_real_val.children()) == 0
 
-    fp_from_real = mk_fp_value(fp16, mk_const(mk_rm_sort()), '1.1')
+    fp_from_real = tm.mk_fp_value(fp16, tm.mk_const(tm.mk_rm_sort()), '1.1')
     assert fp_from_real.kind() == Kind.ITE
     assert len(fp_from_real.children()) > 0
 
-    fp_from_rat_val = mk_fp_value(fp16, rm_val, '1', '2')
+    fp_from_rat_val = tm.mk_fp_value(fp16, rm_val, '1', '2')
     assert fp_from_rat_val.kind() == Kind.VALUE
     assert len(fp_from_rat_val.children()) == 0
 
-    fp_from_rat = mk_fp_value(fp16, mk_const(mk_rm_sort()), '1', '2')
+    fp_from_rat = tm.mk_fp_value(fp16, tm.mk_const(tm.mk_rm_sort()), '1', '2')
     assert fp_from_rat.kind() == Kind.ITE
     assert len(fp_from_rat.children()) > 0
 
-    fp_nan = mk_fp_nan(fp16)
+    fp_nan = tm.mk_fp_nan(fp16)
     assert fp_nan.kind() == Kind.VALUE
     assert len(fp_nan.children()) == 0
 
-    bv_one = mk_bv_one(bv16)
+    bv_one = tm.mk_bv_one(bv16)
     assert bv_one.kind() == Kind.VALUE
     assert len(bv_one.children()) == 0
 
-    bv_val = mk_bv_value(bv16, '43', 10)
+    bv_val = tm.mk_bv_value(bv16, '43', 10)
     assert bv_val.kind() == Kind.VALUE
     assert len(bv_val.children()) == 0
 
     # TODO enable when implemented
-    # const_array = mk_const_array(array_sort, bv_val)
+    # const_array = tm.mk_const_array(array_sort, bv_val)
     # assert const_array.kind() == Kind.VALUE
     # assert len(const_array.children()) == 0
 
 
-def test_substitute1():
-    bv16 = mk_bv_sort(16)
-    bv_const = mk_const(bv16)
-    bv_value = mk_bv_value(bv16, '143', 10)
+def test_substitute1(tm):
+    bv16 = tm.mk_bv_sort(16)
+    bv_const = tm.mk_const(bv16)
+    bv_value = tm.mk_bv_value(bv16, '143', 10)
 
     # simple substitution const -> value
     substs = {bv_const: bv_value}
-    result = substitute_term(bv_const, substs)
+    result = tm.substitute_term(bv_const, substs)
     assert result == bv_value
 
 
-def test_substitute2():
-    bv16 = mk_bv_sort(16)
-    bv_const = mk_const(bv16)
-    bv_value = mk_bv_value(bv16, '143', 10)
+def test_substitute2(tm):
+    bv16 = tm.mk_bv_sort(16)
+    bv_const = tm.mk_const(bv16)
+    bv_value = tm.mk_bv_value(bv16, '143', 10)
     # (sdiv x y) -> (sdiv value y)
-    x = mk_const(bv16)
-    y = mk_const(bv16)
+    x = tm.mk_const(bv16)
+    y = tm.mk_const(bv16)
 
     substs = {x: bv_value}
 
-    result = substitute_term(mk_term(Kind.BV_SDIV, [x, y]), substs)
-    assert result == mk_term(Kind.BV_SDIV, [bv_value, y])
+    result = tm.substitute_term(tm.mk_term(Kind.BV_SDIV, [x, y]), substs)
+    assert result == tm.mk_term(Kind.BV_SDIV, [bv_value, y])
 
 
-def test_substitute3():
-    bv16 = mk_bv_sort(16)
+def test_substitute3(tm):
+    bv16 = tm.mk_bv_sort(16)
     domain = [bv16, bv16, bv16]
-    fun_sort   = mk_fun_sort(domain, mk_bool_sort())
-    bv_const = mk_const(bv16)
-    bv_value = mk_bv_value(bv16, '143', 10)
+    fun_sort   = tm.mk_fun_sort(domain, tm.mk_bool_sort())
+    bv_const = tm.mk_const(bv16)
+    bv_value = tm.mk_bv_value(bv16, '143', 10)
     # partial substitution of variables in quantified formula
-    args = [mk_const(fun_sort),
-            mk_var(bv16, 'x'),
-            mk_var(bv16, 'y'),
-            mk_var(bv16, 'z')]
-    args.append(mk_term(Kind.APPLY, args))
-    q = mk_term(Kind.FORALL, args[1:])
+    args = [tm.mk_const(fun_sort),
+            tm.mk_var(bv16, 'x'),
+            tm.mk_var(bv16, 'y'),
+            tm.mk_var(bv16, 'z')]
+    args.append(tm.mk_term(Kind.APPLY, args))
+    q = tm.mk_term(Kind.FORALL, args[1:])
 
-    substs = {args[1]: mk_const(bv16, 'cx'), args[2]: mk_const(bv16, 'cy')}
+    substs = {args[1]: tm.mk_const(bv16, 'cx'), args[2]: tm.mk_const(bv16, 'cy')}
 
-    apply = mk_term(
+    apply = tm.mk_term(
             Kind.APPLY, [args[0], substs[args[1]], substs[args[2]], args[3]])
-    expected = mk_term(Kind.FORALL, [args[3], apply])
+    expected = tm.mk_term(Kind.FORALL, [args[3], apply])
 
-    result = substitute_term(q, substs)
+    result = tm.substitute_term(q, substs)
     assert result == expected
 
-def test_substitute4():
-    bv16 = mk_bv_sort(16)
+def test_substitute4(tm):
+    bv16 = tm.mk_bv_sort(16)
     domain = [bv16, bv16, bv16]
-    fun_sort   = mk_fun_sort(domain, mk_bool_sort())
-    array_sort = mk_array_sort(bv16, bv16)
-    bv_const = mk_const(bv16)
-    bv_value = mk_bv_value(bv16, '143', 10)
+    fun_sort   = tm.mk_fun_sort(domain, tm.mk_bool_sort())
+    array_sort = tm.mk_array_sort(bv16, bv16)
+    bv_const = tm.mk_const(bv16)
+    bv_value = tm.mk_bv_value(bv16, '143', 10)
     # substitute term in constant array
-    term = mk_const(bv16)
-    const_array = mk_const_array(array_sort, term)
+    term = tm.mk_const(bv16)
+    const_array = tm.mk_const_array(array_sort, term)
 
     substs = {term: bv_value}
 
-    result = substitute_term(const_array, substs)
-    expected = mk_const_array(array_sort, bv_value)
+    result = tm.substitute_term(const_array, substs)
+    expected = tm.mk_const_array(array_sort, bv_value)
     assert result == expected
     assert result.kind() == Kind.CONST_ARRAY
 
 
-def test_substitute4():
-    bv8   = mk_bv_sort(8)
-    x     = mk_const(bv8, 'x')
-    one   = mk_bv_one(bv8)
-    btrue = mk_true()
-    addxx = mk_term(Kind.BV_ADD, [x, x])
-    addoo = mk_term(Kind.BV_ADD, [one, one])
+def test_substitute4(tm):
+    bv8   = tm.mk_bv_sort(8)
+    x     = tm.mk_const(bv8, 'x')
+    one   = tm.mk_bv_one(bv8)
+    btrue = tm.mk_true()
+    addxx = tm.mk_term(Kind.BV_ADD, [x, x])
+    addoo = tm.mk_term(Kind.BV_ADD, [one, one])
 
     with pytest.raises(BitwuzlaException):
-        substitute_term(addxx, {one: btrue})
+        tm.substitute_term(addxx, {one: btrue})
 
-    assert substitute_term(addxx, {x: one}) == addoo
-    assert substitute_term(addxx, {one: x}) == addxx
+    assert tm.substitute_term(addxx, {x: one}) == addoo
+    assert tm.substitute_term(addxx, {one: x}) == addxx
 
     # simultaneous substitution
-    y     = mk_const(bv8, 'y')
-    addxy = mk_term(Kind.BV_ADD, [x, y])
-    addyo = mk_term(Kind.BV_ADD, [y, one])
+    y     = tm.mk_const(bv8, 'y')
+    addxy = tm.mk_term(Kind.BV_ADD, [x, y])
+    addyo = tm.mk_term(Kind.BV_ADD, [y, one])
 
     with pytest.raises(BitwuzlaException):
-        substitute_term(addxy, {x: y, y: btrue})
+        tm.substitute_term(addxy, {x: y, y: btrue})
 
-    assert substitute_term(addxy, {x: y, y: one}) == addyo
+    assert tm.substitute_term(addxy, {x: y, y: one}) == addyo
 
     terms = [addxx, addxy]
-    expected = [mk_term(Kind.BV_ADD, [y, y]), mk_term(Kind.BV_ADD, [y, x])]
-    assert substitute_terms(terms, {x: y, y: x}) == expected
+    expected = [tm.mk_term(Kind.BV_ADD, [y, y]), tm.mk_term(Kind.BV_ADD, [y, x])]
+    assert tm.substitute_terms(terms, {x: y, y: x}) == expected
 
 
-def test_term_print1():
-    a = mk_const(mk_bv_sort(1), 'a')
-    t = mk_term(Kind.BV_NOT, [a])
+def test_term_print1(tm):
+    a = tm.mk_const(tm.mk_bv_sort(1), 'a')
+    t = tm.mk_term(Kind.BV_NOT, [a])
     assert t.str() == '(bvnot a)'
 
 
-def test_term_print2():
-    fn1_1 = mk_fun_sort([mk_bv_sort(1)], mk_bv_sort(1))
-    t     = mk_const(fn1_1, 'f')
+def test_term_print2(tm):
+    fn1_1 = tm.mk_fun_sort([tm.mk_bv_sort(1)], tm.mk_bv_sort(1))
+    t     = tm.mk_const(fn1_1, 'f')
     assert t.str() == 'f'
 
 
-def test_term_print3():
-    ar1_1 = mk_array_sort(mk_bv_sort(1), mk_bv_sort(1))
-    t     = mk_const(ar1_1, 'a')
+def test_term_print3(tm):
+    ar1_1 = tm.mk_array_sort(tm.mk_bv_sort(1), tm.mk_bv_sort(1))
+    t     = tm.mk_const(ar1_1, 'a')
     assert t.str() == 'a'
 
 
-def test_arrayfun():
-    bvsort = mk_bv_sort(4)
+def test_arrayfun(tm):
+    bvsort = tm.mk_bv_sort(4)
     domain = [bvsort]
-    funsort = mk_fun_sort(domain, bvsort)
-    arrsort = mk_array_sort(bvsort, bvsort)
-    f       = mk_const(funsort, 'f')
-    a       = mk_const(arrsort, 'a')
+    funsort = tm.mk_fun_sort(domain, bvsort)
+    arrsort = tm.mk_array_sort(bvsort, bvsort)
+    f       = tm.mk_const(funsort, 'f')
+    a       = tm.mk_const(arrsort, 'a')
     assert f.sort() != a.sort()
     assert f.sort().is_fun()
     assert not a.sort().is_fun()
@@ -1922,19 +1946,19 @@ def test_arrayfun():
 # Parsing
 # ----------------------------------------------------------------------------
 
-def test_parser_smt2():
-    filename = "parse.smt2";
+def test_parser_smt2(tm):
+    filename = "parse.smt2"
     with open(filename, 'w') as smt2:
         smt2.write('(set-logic QF_BV)\n(check-sat)\n(exit)\n')
         smt2.close()
 
     options = Options()
     with pytest.raises(BitwuzlaException):
-        Parser(options, '')
+        Parser(tm, options, '')
     with pytest.raises(BitwuzlaException):
-        Parser(options, 'foo')
+        Parser(tm, options, 'foo')
 
-    parser = Parser(options)
+    parser = Parser(tm, options)
 
     with pytest.raises(BitwuzlaException):
         parser.bitwuzla()
@@ -1943,34 +1967,34 @@ def test_parser_smt2():
     with pytest.raises(BitwuzlaException):
         parser.parse(filename, True)
 
-    parser = Parser(options)
+    parser = Parser(tm, options)
     parser.parse(filename, True)
     os.remove(filename)
 
-def test_parser_smt2_string1():
-    smt2 = "(set-logic QF_BV)\n(check-sat)\n(exit)\n";
+def test_parser_smt2_string1(tm):
+    smt2 = "(set-logic QF_BV)\n(check-sat)\n(exit)\n"
     options = Options()
-    parser = Parser(options)
+    parser = Parser(tm, options)
     with pytest.raises(BitwuzlaException):
         parser.parse(smt2, True, True)
-    parser = Parser(options)
+    parser = Parser(tm, options)
     parser.parse(smt2, True, False)
 
-def test_parser_smt2_string2():
+def test_parser_smt2_string2(tm):
     str_decl  = "(declare-const a Bool)"
     str_true  = "(assert (= a true))"
     str_false = "(assert (= a false))"
     options = Options()
-    parser = Parser(options)
+    parser = Parser(tm, options)
     parser.parse(str_decl, True, False)
     parser.parse(str_true, True, False)
     parser.parse(str_false, True, False)
     bitwuzla = parser.bitwuzla()
     bitwuzla.check_sat() == Result.UNSAT
 
-def test_parser_smt2_string3():
+def test_parser_smt2_string3(tm):
     options = Options()
-    parser = Parser(options)
+    parser = Parser(tm, options)
     parser.parse("(set-logic QF_ABV)", True, False)
     parser.parse("(set-info :status unsat)", True, False)
     parser.parse("(declare-const v0 (_ BitVec 8))", True, False)
@@ -1984,38 +2008,38 @@ def test_parser_smt2_string3():
                 False)
     parser.parse("(check-sat)", True, False)
 
-def test_parser_smt2_string_term():
+def test_parser_smt2_string_term(tm):
     options = Options()
-    parser = Parser(options)
-    assert parser.parse_term("true") == mk_true()
-    assert parser.parse_term("false") == mk_false()
+    parser = Parser(tm, options)
+    assert parser.parse_term("true") == tm.mk_true()
+    assert parser.parse_term("false") == tm.mk_false()
     parser.parse("(declare-const a Bool)", True, False)
     t_a = parser.parse_term("a")
     parser.parse("(declare-const b (_ BitVec 16))", True, False)
     t_b = parser.parse_term("b")
     parser.parse("(declare-const c Bool)", True, False)
     t_c = parser.parse_term("c")
-    assert parser.parse_term("(xor a c)")  == mk_term(Kind.XOR, [t_a, t_c])
+    assert parser.parse_term("(xor a c)")  == tm.mk_term(Kind.XOR, [t_a, t_c])
     assert parser.parse_term("(bvadd b #b1011111010001010)") == \
-            mk_term(Kind.BV_ADD,
+            tm.mk_term(Kind.BV_ADD,
                 [t_b,
-                 mk_bv_value(
-                     mk_bv_sort(16), "1011111010001010", 2)])
+                 tm.mk_bv_value(
+                     tm.mk_bv_sort(16), "1011111010001010", 2)])
 
-def test_parser_smt2_string_sort():
+def test_parser_smt2_string_sort(tm):
     options = Options()
-    parser = Parser(options)
-    assert parser.parse_sort("Bool") == mk_bool_sort()
-    assert parser.parse_sort("(_ BitVec 32)") == mk_bv_sort(32)
-    assert parser.parse_sort("RoundingMode") == mk_rm_sort()
+    parser = Parser(tm, options)
+    assert parser.parse_sort("Bool") == tm.mk_bool_sort()
+    assert parser.parse_sort("(_ BitVec 32)") == tm.mk_bv_sort(32)
+    assert parser.parse_sort("RoundingMode") == tm.mk_rm_sort()
     parser.parse("(declare-sort m 0)", True, False)
     assert parser.parse_sort("m")
     parser.parse("(define-sort FPN () (_ FloatingPoint 11 53))", True, False)
     assert parser.parse_sort("(_ FloatingPoint 11 53)") == \
             parser.parse_sort("FPN")
 
-def test_parser_btor2():
-    iinput = "parse.btor2";
+def test_parser_btor2(tm):
+    iinput = "parse.btor2"
     with open(iinput, 'w') as btor2:
         btor2.write("1 sort bitvec 8\n")
         btor2.write("2 input 1 @inp2\n")
@@ -2028,29 +2052,29 @@ def test_parser_btor2():
         btor2.write("9 constraint 8\n")
 
     options = Options()
-    parser = Parser(options, 'btor2')
+    parser = Parser(tm, options, 'btor2')
     bitwuzla = parser.bitwuzla()
     with pytest.raises(BitwuzlaException):
         parser.parse('parsex.btor2')
 
-    parser = Parser(options, 'btor2')
+    parser = Parser(tm, options, 'btor2')
     parser.parse(iinput, True, True)
     parser.bitwuzla().check_sat() == Result.UNSAT
     os.remove(iinput)
 
-def test_parser_btor2_string1():
+def test_parser_btor2_string1(tm):
     btor2 = "1 sort bitvec 8\n2 input 1 @inp2\n3 sort bitvec 3\n"\
             "4 one 3\n5 uext 1 4 5\n6 srl 1 2 5\n7 sort bitvec 1\n"\
             "8 slice 7 6 7 7\n9 constraint 8\n"
     options = Options()
-    parser = Parser(options, 'btor2')
+    parser = Parser(tm, options, 'btor2')
     with pytest.raises(BitwuzlaException):
         parser.parse(btor2, True, True)
 
-    parser = Parser(options, 'btor2')
+    parser = Parser(tm, options, 'btor2')
     parser.parse(btor2, True, False)
 
-def test_parser_btor2_string2():
+def test_parser_btor2_string2(tm):
     str_decl  = "(declare-const a Bool)"
     str_true  = "(assert (= a True))"
     str_false = "(assert (= a False))"
@@ -2064,7 +2088,7 @@ def test_parser_btor2_string2():
     root = "14 constraint 13\n"
 
     options = Options()
-    parser = Parser(options, 'btor2')
+    parser = Parser(tm, options, 'btor2')
     parser.parse(decl_sorts, True, False)
     parser.parse(decl_inputs, True, False)
     parser.parse(decl_more_inputs, True, False)
@@ -2074,81 +2098,81 @@ def test_parser_btor2_string2():
     parser.parse(root, True, False)
     assert parser.bitwuzla().check_sat() == Result.UNSAT
 
-def test_parser_btor2_string_term():
+def test_parser_btor2_string_term(tm):
     options = Options()
-    parser = Parser(options, 'btor2')
-    assert parser.parse_sort("1 sort bitvec 1") == mk_bv_sort(1)
+    parser = Parser(tm, options, 'btor2')
+    assert parser.parse_sort("1 sort bitvec 1") == tm.mk_bv_sort(1)
     parser.parse_term("2 constd 1 1")
-    assert parser.parse_term("3 constd 1 0") == mk_bv_value(mk_bv_sort(1), 0)
+    assert parser.parse_term("3 constd 1 0") == tm.mk_bv_value(tm.mk_bv_sort(1), 0)
     t_a = parser.parse_term("4 input 1 a")
     parser.parse("5 sort bitvec 16", True, False)
     with pytest.raises(BitwuzlaException):
         parser.parse("5 sort bitvec 16", True, False)
     t_b = parser.parse_term("6 input 5 b")
     t_c = parser.parse_term("7 input 1 c")
-    assert parser.parse_term("8 xor 1 4 7") == mk_term(Kind.BV_XOR, [t_a, t_c])
+    assert parser.parse_term("8 xor 1 4 7") == tm.mk_term(Kind.BV_XOR, [t_a, t_c])
     parser.parse_term("9 const 5 1011111010001010")
     assert parser.parse_term("10 add 5 6 9") == \
-            mk_term(Kind.BV_ADD,
+            tm.mk_term(Kind.BV_ADD,
                           [t_b,
-                           mk_bv_value(mk_bv_sort(16), "1011111010001010", 2)])
+                           tm.mk_bv_value(tm.mk_bv_sort(16), "1011111010001010", 2)])
 
-def test_parser_btor2_string_sort():
+def test_parser_btor2_string_sort(tm):
     options = Options()
-    parser = Parser(options, 'btor2')
+    parser = Parser(tm, options, 'btor2')
     bv1 = parser.parse_sort("1 sort bitvec 1")
-    assert bv1 == mk_bv_sort(1)
-    assert parser.parse_sort("2 sort bitvec 32") == mk_bv_sort(32)
-    assert parser.parse_sort("3 sort array 1 1") == mk_array_sort(bv1, bv1)
+    assert bv1 == tm.mk_bv_sort(1)
+    assert parser.parse_sort("2 sort bitvec 32") == tm.mk_bv_sort(32)
+    assert parser.parse_sort("3 sort array 1 1") == tm.mk_array_sort(bv1, bv1)
 
 # ----------------------------------------------------------------------------
 # Termination function
 # ----------------------------------------------------------------------------
 
-def test_terminate():
+def test_terminate(tm):
 
     class TestTerminator:
         def __call__(self):
             return True
 
-    bv4 = mk_bv_sort(4)
-    x = mk_const(bv4)
-    s = mk_const(bv4)
-    t = mk_const(bv4)
-    a = mk_term(Kind.AND,
+    bv4 = tm.mk_bv_sort(4)
+    x = tm.mk_const(bv4)
+    s = tm.mk_const(bv4)
+    t = tm.mk_const(bv4)
+    a = tm.mk_term(Kind.AND,
                 [
-                    mk_term(
+                    tm.mk_term(
                         Kind.EQUAL,
-                        [mk_term(Kind.BV_ADD, [x, x]), mk_bv_value(bv4, 3)]),
-                    mk_term(
+                        [tm.mk_term(Kind.BV_ADD, [x, x]), tm.mk_bv_value(bv4, 3)]),
+                    tm.mk_term(
                         Kind.NOT,
-                        [mk_term(Kind.BV_UADD_OVERFLOW, [x, x])])
+                        [tm.mk_term(Kind.BV_UADD_OVERFLOW, [x, x])])
                 ])
-    b = mk_term(Kind.DISTINCT,
+    b = tm.mk_term(Kind.DISTINCT,
                 [
-                    mk_term(
+                    tm.mk_term(
                         Kind.BV_MUL,
-                        [s, mk_term(Kind.BV_MUL, [x, t])]),
-                    mk_term(
+                        [s, tm.mk_term(Kind.BV_MUL, [x, t])]),
+                    tm.mk_term(
                         Kind.BV_MUL,
-                        [mk_term(Kind.BV_MUL, [s, x]), t])
+                        [tm.mk_term(Kind.BV_MUL, [s, x]), t])
                 ])
     # solved by rewriting
     options = Options()
     options.set(Option.BV_SOLVER, 'bitblast')
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     bitwuzla.assert_formula(a)
     assert bitwuzla.check_sat() == Result.UNSAT
 
     options.set(Option.BV_SOLVER, 'prop')
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     bitwuzla.assert_formula(a)
     assert bitwuzla.check_sat() == Result.UNSAT
 
     # not solved by rewriting, should be terminated when configured
     tt = TestTerminator()
     options.set(Option.BV_SOLVER, 'bitblast')
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNSAT
     bitwuzla.configure_terminator(tt)
@@ -2156,13 +2180,13 @@ def test_terminate():
 
     options.set(Option.BV_SOLVER, 'prop')
     options.set(Option.REWRITE_LEVEL, 0)
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     bitwuzla.configure_terminator(tt)
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNKNOWN
 
 
-def test_terminate_sat():
+def test_terminate_sat(tm):
     class TestTerminator:
         def __init__(self, time_limit):
             self.start_time = time.time()
@@ -2172,14 +2196,14 @@ def test_terminate_sat():
             # Terminate after self.time_limit ms passed
             return (time.time() - self.start_time) * 1000 > self.time_limit
 
-    bv32 = mk_bv_sort(32)
-    x = mk_const(bv32)
-    s = mk_const(bv32)
-    t = mk_const(bv32)
-    b = mk_term(Kind.DISTINCT,
+    bv32 = tm.mk_bv_sort(32)
+    x = tm.mk_const(bv32)
+    s = tm.mk_const(bv32)
+    t = tm.mk_const(bv32)
+    b = tm.mk_term(Kind.DISTINCT,
                 [
-                    mk_term(Kind.BV_MUL, [s, mk_term(Kind.BV_MUL, [x, t])]),
-                    mk_term(Kind.BV_MUL, [mk_term(Kind.BV_MUL, [s, x]), t])
+                    tm.mk_term(Kind.BV_MUL, [s, tm.mk_term(Kind.BV_MUL, [x, t])]),
+                    tm.mk_term(Kind.BV_MUL, [tm.mk_term(Kind.BV_MUL, [s, x]), t])
                 ])
     # not solved by bit-blasting without preprocessing, should be terminated in
     # the SAT solver when configured
@@ -2187,7 +2211,7 @@ def test_terminate_sat():
     options = Options()
     options.set(Option.BV_SOLVER, 'bitblast')
     options.set(Option.PREPROCESS, False)
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     bitwuzla.configure_terminator(tt)
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNKNOWN
@@ -2195,13 +2219,13 @@ def test_terminate_sat():
     options.set(Option.BV_SOLVER, 'bitblast')
     options.set(Option.SAT_SOLVER, 'kissat')
     options.set(Option.PREPROCESS, False)
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     bitwuzla.configure_terminator(tt)
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNKNOWN
 
 
-def test_terminate_timeout_wrap():
+def test_terminate_timeout_wrap(tm):
     class TestTerminator:
         def __init__(self):
             self.terminated = False
@@ -2209,14 +2233,14 @@ def test_terminate_timeout_wrap():
             self.terminated = True
             return True
 
-    bv32 = mk_bv_sort(32)
-    x = mk_const(bv32)
-    s = mk_const(bv32)
-    t = mk_const(bv32)
-    b = mk_term(Kind.DISTINCT,
+    bv32 = tm.mk_bv_sort(32)
+    x = tm.mk_const(bv32)
+    s = tm.mk_const(bv32)
+    t = tm.mk_const(bv32)
+    b = tm.mk_term(Kind.DISTINCT,
                 [
-                    mk_term(Kind.BV_MUL, [s, mk_term(Kind.BV_MUL, [x, t])]),
-                    mk_term(Kind.BV_MUL, [mk_term(Kind.BV_MUL, [s, x]), t])
+                    tm.mk_term(Kind.BV_MUL, [s, tm.mk_term(Kind.BV_MUL, [x, t])]),
+                    tm.mk_term(Kind.BV_MUL, [tm.mk_term(Kind.BV_MUL, [s, x]), t])
                 ])
     # not solved by bit-blasting, should be terminated in the SAT solver when
     # configured
@@ -2226,7 +2250,7 @@ def test_terminate_timeout_wrap():
     options.set(Option.BV_SOLVER, 'bitblast')
     options.set(Option.REWRITE_LEVEL, 0)
     options.set(Option.PREPROCESS, False)
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     bitwuzla.configure_terminator(tt)
     bitwuzla.assert_formula(b)
     bitwuzla.check_sat()
@@ -2244,7 +2268,7 @@ def test_terminate_timeout_wrap():
     options.set(Option.BV_SOLVER, 'bitblast')
     options.set(Option.REWRITE_LEVEL, 0)
     options.set(Option.PREPROCESS, False)
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     bitwuzla.configure_terminator(tt)
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNKNOWN
