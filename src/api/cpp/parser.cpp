@@ -49,8 +49,10 @@ Parser::parse(const std::string &input, bool parse_only, bool parse_file)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(input);
   assert(d_parser);
-  BITWUZLA_CHECK(d_parser->parse(input, parse_only, parse_file))
-      << d_parser->error_msg();
+  if (!d_parser->parse(input, parse_only, parse_file))
+  {
+    throw Exception(d_parser->error_msg());
+  }
 }
 
 void
@@ -63,7 +65,7 @@ Parser::parse(const std::string &infile_name,
   assert(d_parser);
   if (!d_parser->parse(infile_name, input, parse_only))
   {
-    throw new Exception(d_parser->error_msg());
+    throw Exception(d_parser->error_msg());
   }
 }
 
@@ -75,7 +77,7 @@ Parser::parse_term(const std::string &input)
   bitwuzla::Term res;
   if (!d_parser->parse_term(input, res))
   {
-    throw new Exception(d_parser->error_msg());
+    throw Exception(d_parser->error_msg());
   }
   return res;
 }
@@ -88,7 +90,7 @@ Parser::parse_sort(const std::string &input)
   bitwuzla::Sort res;
   if (!d_parser->parse_sort(input, res))
   {
-    throw new Exception(d_parser->error_msg());
+    throw Exception(d_parser->error_msg());
   }
   return res;
 }

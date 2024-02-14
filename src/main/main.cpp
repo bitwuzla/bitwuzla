@@ -61,6 +61,10 @@ main(int32_t argc, char* argv[])
       }
     }
   }
+  catch (const bitwuzla::parser::Exception& e)
+  {
+    Error() << e.msg();
+  }
   catch (const bitwuzla::Exception& e)
   {
     // Remove the "invalid call to '...', prefix

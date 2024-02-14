@@ -54,7 +54,8 @@ cdef extern from *:
     cdef const char* get_err_msg()
 
 cdef inline int raise_error() except *:
-    raise BitwuzlaException(get_err_msg().decode().split("', ")[1])
+    msg = get_err_msg().decode().split("', ")
+    raise BitwuzlaException(msg[1] if len(msg) > 1 else msg[0])
 
 # Extract FP value as tuple of strings
 cdef extern from *:
