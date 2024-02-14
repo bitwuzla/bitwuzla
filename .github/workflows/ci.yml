@@ -57,14 +57,14 @@ jobs:
           echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.BZLA_LIBS_KEY }}
           submodules: 'recursive'
 
       - name: Restore Subprojects
         id: subprojects-restore
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: |
             subprojects
@@ -84,7 +84,7 @@ jobs:
 
       - name: Save Subprojects
         id: subprojects-save
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         with:
           path: |
             subprojects
