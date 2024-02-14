@@ -9,6 +9,7 @@
  */
 
 #include <bitwuzla/c/bitwuzla.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 int
@@ -34,10 +35,10 @@ main()
     {
       printf("numeric\n");
       printf("  values:\n");
-      printf("  + current:   %lu\n", info.numeric.cur);
-      printf("  + default:   %lu\n", info.numeric.dflt);
-      printf("  + min:       %lu\n", info.numeric.min);
-      printf("  + max:       %lu\n", info.numeric.max);
+      printf("  + current:   %" PRIu64 "\n", info.numeric.cur);
+      printf("  + default:   %" PRIu64 "\n", info.numeric.dflt);
+      printf("  + min:       %" PRIu64 "\n", info.numeric.min);
+      printf("  + max:       %" PRIu64 "\n", info.numeric.max);
     }
     else
     {

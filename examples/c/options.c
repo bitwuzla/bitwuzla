@@ -9,6 +9,7 @@
  */
 
 #include <bitwuzla/c/bitwuzla.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 int
@@ -21,10 +22,10 @@ main()
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
 
   // Increase the verbosity level, which expects an integer value.
-  printf("Previous verbosity level: %lu\n",
+  printf("Previous verbosity level: %" PRIu64 "\n",
          bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY));
   bitwuzla_set_option(options, BITWUZLA_OPT_VERBOSITY, 2);
-  printf("Current verbosity level: %lu\n",
+  printf("Current verbosity level: %" PRIu64 "\n",
          bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY));
 
   // Now configure an option that has modes (a choice of configuration values).
