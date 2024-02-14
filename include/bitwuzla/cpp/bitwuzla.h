@@ -1103,7 +1103,7 @@ class TermManager
    *   * `Sort::is_uninterpreted()`
    */
   Sort mk_uninterpreted_sort(
-      std::optional<const std::string> symbol = std::nullopt);
+      const std::optional<std::string> &symbol = std::nullopt);
 
   /** @} */
 
@@ -1400,7 +1400,7 @@ class TermManager
    *   * `TermManager::mk_rm_sort()`
    */
   Term mk_const(const Sort &sort,
-                std::optional<const std::string> symbol = std::nullopt);
+                const std::optional<std::string> &symbol = std::nullopt);
 
   /**
    * Create a variable of given sort with given symbol.
@@ -1420,7 +1420,7 @@ class TermManager
    *   * `TermManager::mk_rm_sort()`
    */
   Term mk_var(const Sort &sort,
-              std::optional<const std::string> symbol = std::nullopt);
+              const std::optional<std::string> &symbol = std::nullopt);
 
   /** @} */
 
@@ -1780,7 +1780,7 @@ Sort mk_rm_sort();
  * @note: (deprecated) Uses the global thread-local term manager.
  */
 Sort mk_uninterpreted_sort(
-    std::optional<const std::string> symbol = std::nullopt);
+    const std::optional<std::string> &symbol = std::nullopt);
 
 /** @} */
 
@@ -2121,7 +2121,7 @@ Term mk_term(Kind kind,
  * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_const(const Sort &sort,
-              std::optional<const std::string> symbol = std::nullopt);
+              const std::optional<std::string> &symbol = std::nullopt);
 
 /**
  * Create a variable of given sort with given symbol.
@@ -2143,7 +2143,7 @@ Term mk_const(const Sort &sort,
  * @note: (deprecated) Uses the global thread-local term manager.
  */
 Term mk_var(const Sort &sort,
-            std::optional<const std::string> symbol = std::nullopt);
+            const std::optional<std::string> &symbol = std::nullopt);
 
 /** @} */
 

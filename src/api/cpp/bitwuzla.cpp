@@ -1618,7 +1618,7 @@ TermManager::mk_rm_sort()
 }
 
 Sort
-TermManager::mk_uninterpreted_sort(std::optional<const std::string> symbol)
+TermManager::mk_uninterpreted_sort(const std::optional<std::string> &symbol)
 {
   return d_nm->mk_uninterpreted_type(symbol);
 }
@@ -2275,7 +2275,8 @@ TermManager::mk_term(Kind kind,
 }
 
 Term
-TermManager::mk_const(const Sort &sort, std::optional<const std::string> symbol)
+TermManager::mk_const(const Sort &sort,
+                      const std::optional<std::string> &symbol)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_TERM_MGR(sort, "sort");
@@ -2283,7 +2284,7 @@ TermManager::mk_const(const Sort &sort, std::optional<const std::string> symbol)
 }
 
 Term
-TermManager::mk_var(const Sort &sort, std::optional<const std::string> symbol)
+TermManager::mk_var(const Sort &sort, const std::optional<std::string> &symbol)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_NOT_IS_FUN(sort);
