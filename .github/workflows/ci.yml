@@ -20,12 +20,12 @@ jobs:
 
           - name: production-clang
             os: ubuntu-latest
-            config: --testing --no-unit-testing
+            config: --testing --no-unit-testing --python
             env: CC=clang CXX=clang++
 
           - name: debug-clang
             os: ubuntu-latest
-            config: debug --shared
+            config: debug --shared --python
             env: CC=clang CXX=clang++
 
           - name: production-win64
@@ -101,6 +101,7 @@ jobs:
         working-directory: examples
         run: |
           pkgconfigdir=$(find ${{ github.workspace }}/build/install/lib -name pkgconfig)
-          meson setup build --pkg-config-path=$pkgconfigdir
+          pythonlibdir=$(find ${{ github.workspace }}/build/install/lib -name site-packages)
+          meson setup build --pkg-config-path=$pkgconfigdir -Dpython_path=$pythonlibdir
           cd build
           meson test
