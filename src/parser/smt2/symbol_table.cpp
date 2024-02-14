@@ -137,11 +137,10 @@ SymbolTable::SymbolHash::operator()(const std::string& s) const
     size -= 1;
   }
 
-  for (size_t i = 0; pos < size; ++pos)
+  for (size_t i = 0; pos < size; ++pos, i = (i + 1) % s_primes.size())
   {
     res += s[pos];
     res *= s_primes[i];
-    i = i == s_primes.size() ? 0 : i + 1;
   }
   return res;
 }
