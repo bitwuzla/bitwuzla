@@ -12,23 +12,25 @@ from bitwuzla import *
 
 if __name__ == '__main__':
 
-    # First, create a Bitwuzla options instance.
+    # First, create a term manager instance.
+    tm = TermManager()
+    # Create a Bitwuzla options instance.
     options = Options()
     # (set-option :produce-models true)
     options.set(Option.PRODUCE_MODELS, True)
 
     # Then, create a Bitwuzla instance.
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
 
     # Create a bit-vector sort of size 3.
-    sortbv3 = mk_bv_sort(3)
+    sortbv3 = tm.mk_bv_sort(3)
 
     # (declare-const x (_ BitVec 3))
-    x = mk_const(sortbv3, 'x')
+    x = tm.mk_const(sortbv3, 'x')
 
     # (assert (= x #b010))
     bitwuzla.assert_formula(
-        mk_term(Kind.EQUAL, [x, mk_bv_value(sortbv3, 2)]))
+        tm.mk_term(Kind.EQUAL, [x, tm.mk_bv_value(sortbv3, 2)]))
     # (check-sat)
     result = bitwuzla.check_sat()
     print('Expect: sat')
@@ -36,7 +38,7 @@ if __name__ == '__main__':
 
     # (assert (= x #b001))
     bitwuzla.assert_formula(
-        mk_term(Kind.EQUAL, [x, mk_bv_value(sortbv3, 1)]))
+        tm.mk_term(Kind.EQUAL, [x, tm.mk_bv_value(sortbv3, 1)]))
     # (check-sat)
     result = bitwuzla.check_sat()
     print('Expect: unsat')
@@ -46,11 +48,11 @@ if __name__ == '__main__':
     # Note: Bitwuzla does not provide an explicit API function for
     #       reset-assertions since this is achieved by simply discarding
     #       the current Bitwuzla instance and creating a new one.
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
 
     # (assert (= x #b011))
     bitwuzla.assert_formula(
-        mk_term(Kind.EQUAL, [x, mk_bv_value(sortbv3, 3)]))
+        tm.mk_term(Kind.EQUAL, [x, tm.mk_bv_value(sortbv3, 3)]))
     # (check-sat)
     result = bitwuzla.check_sat()
     print('Expect: sat')

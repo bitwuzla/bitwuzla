@@ -20,38 +20,41 @@ using namespace bitwuzla;
 int
 main()
 {
-  // First, create a Bitwuzla options instance.
+  // First, create a term manager instance.
+  TermManager tm;
+  // Create a Bitwuzla options instance.
   Options options;
   options.set(Option::PRODUCE_MODELS, true);
   // Then, create a Bitwuzla instance.
-  Bitwuzla bitwuzla(options);
+  Bitwuzla bitwuzla(tm, options);
   // Create some sorts.
-  Sort bv8  = mk_bv_sort(8);
-  Sort bv32 = mk_bv_sort(32);
-  Sort fp16 = mk_fp_sort(5, 11);
+  Sort bv8  = tm.mk_bv_sort(8);
+  Sort bv32 = tm.mk_bv_sort(32);
+  Sort fp16 = tm.mk_fp_sort(5, 11);
   // Create terms.
-  Term b      = mk_const(mk_bool_sort(), "b");
-  Term bv     = mk_const(bv8, "bv");
-  Term fp     = mk_const(fp16, "fp");
-  Term rm     = mk_const(mk_rm_sort(), "rm");
-  Term fun    = mk_const(mk_fun_sort({bv8, fp16, bv32}, fp16), "fun");
-  Term zero   = mk_bv_zero(bv8);
-  Term ones   = mk_bv_ones(mk_bv_sort(23));
-  Term z      = mk_var(bv8, "z");
-  Term q      = mk_var(bv8, "q");
-  Term lambda = mk_term(Kind::LAMBDA, {z, mk_term(Kind::BV_ADD, {z, bv})});
-  Term fpleq  = mk_term(
+  Term b    = tm.mk_const(tm.mk_bool_sort(), "b");
+  Term bv   = tm.mk_const(bv8, "bv");
+  Term fp   = tm.mk_const(fp16, "fp");
+  Term rm   = tm.mk_const(tm.mk_rm_sort(), "rm");
+  Term fun  = tm.mk_const(tm.mk_fun_sort({bv8, fp16, bv32}, fp16), "fun");
+  Term zero = tm.mk_bv_zero(bv8);
+  Term ones = tm.mk_bv_ones(tm.mk_bv_sort(23));
+  Term z    = tm.mk_var(bv8, "z");
+  Term q    = tm.mk_var(bv8, "q");
+  Term lambda =
+      tm.mk_term(Kind::LAMBDA, {z, tm.mk_term(Kind::BV_ADD, {z, bv})});
+  Term fpleq = tm.mk_term(
       Kind::FP_LEQ,
-      {mk_term(Kind::APPLY,
-                {fun, bv, fp, mk_term(Kind::BV_ZERO_EXTEND, {ones}, {9})}),
-        fp});
-  Term exists = mk_term(
+      {tm.mk_term(Kind::APPLY,
+                  {fun, bv, fp, tm.mk_term(Kind::BV_ZERO_EXTEND, {ones}, {9})}),
+       fp});
+  Term exists = tm.mk_term(
       Kind::EXISTS,
-      {q, mk_term(Kind::EQUAL, {zero, mk_term(Kind::BV_MUL, {bv, q})})});
+      {q, tm.mk_term(Kind::EQUAL, {zero, tm.mk_term(Kind::BV_MUL, {bv, q})})});
   // Assert formulas.
   bitwuzla.assert_formula(b);
   bitwuzla.assert_formula(
-      mk_term(Kind::EQUAL, {mk_term(Kind::APPLY, {lambda, bv}), zero}));
+      tm.mk_term(Kind::EQUAL, {tm.mk_term(Kind::APPLY, {lambda, bv}), zero}));
   bitwuzla.assert_formula(exists);
   bitwuzla.assert_formula(fpleq);
 
@@ -60,7 +63,6 @@ main()
   std::cout << "---------------------------------" << std::endl;
   std::cout << "operator<<: " << bv32 << std::endl;
   std::cout << "str():      " << bv32.str() << std::endl << std::endl;
-  ;
 
   // Print terms.
   // Note: Hexadecimal bv output format is ignored if the value is not of size

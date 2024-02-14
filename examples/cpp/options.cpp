@@ -39,8 +39,9 @@ main()
   std::cout << "Current engine: " << options.get_mode(Option::BV_SOLVER)
             << std::endl;
 
-  // Now, create a Bitwuzla instance.
-  Bitwuzla bitwuzla(options);
+  // Now, create a Bitwuzla instance with a new term manager.
+  TermManager tm;
+  Bitwuzla bitwuzla(tm, options);
   // Check sat (nothing to solve, input formula is empty).
   Result result = bitwuzla.check_sat();
   std::cout << "Expect: sat" << std::endl;

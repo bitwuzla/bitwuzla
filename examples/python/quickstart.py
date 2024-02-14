@@ -12,7 +12,9 @@ from bitwuzla import *
 
 if __name__ == "__main__":
 
-    # First, create a Bitwuzla options instance.
+    # First, create a term manager instance.
+    tm = TermManager()
+    # Create a Bitwuzla options instance.
     options = Options()
     # Then, enable model generation.
     options.set(Option.PRODUCE_MODELS, True)
@@ -22,52 +24,52 @@ if __name__ == "__main__":
     #       if the selected solver is not compiled in.
     options.set(Option.SAT_SOLVER, 'cadical')
     # Then, create a Bitwuzla instance.
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
 
     # Create bit-vector sorts of size 4 and 8.
-    sortbv4 = mk_bv_sort(4)
-    sortbv8 = mk_bv_sort(8)
+    sortbv4 = tm.mk_bv_sort(4)
+    sortbv8 = tm.mk_bv_sort(8)
     # Create function sort.
-    sortfun = mk_fun_sort([sortbv8, sortbv4], sortbv8)
+    sortfun = tm.mk_fun_sort([sortbv8, sortbv4], sortbv8)
     # Create array sort.
-    sortarr = mk_array_sort(sortbv8, sortbv8)
+    sortarr = tm.mk_array_sort(sortbv8, sortbv8)
 
     # Create two bit-vector constants of that sort.
-    x = mk_const(sortbv8, "x")
-    y = mk_const(sortbv8, "y")
+    x = tm.mk_const(sortbv8, "x")
+    y = tm.mk_const(sortbv8, "y")
     # Create fun const.
-    f = mk_const(sortfun, "f")
+    f = tm.mk_const(sortfun, "f")
     # Create array const.
-    a = mk_const(sortarr, "a")
+    a = tm.mk_const(sortarr, "a")
     # Create bit-vector values one and two of the same sort.
-    one = mk_bv_one(sortbv8)
+    one = tm.mk_bv_one(sortbv8)
     # Alternatively, you can create bit-vector value one with:
-    # one = mk_bv_value(sortbv8, "1", 2)
-    # one = mk_bv_value(sortbv8, 1)
-    two = mk_bv_value(sortbv8, 2)
+    # one = tm.mk_bv_value(sortbv8, "1", 2)
+    # one = tm.mk_bv_value(sortbv8, 1)
+    two = tm.mk_bv_value(sortbv8, 2)
 
     # (bvsdiv x (_ bv2 8))
-    sdiv = mk_term(Kind.BV_SDIV, [x, two])
+    sdiv = tm.mk_term(Kind.BV_SDIV, [x, two])
     # (bvashr y (_ bv1 8))
-    ashr = mk_term(Kind.BV_ASHR, [y, one])
+    ashr = tm.mk_term(Kind.BV_ASHR, [y, one])
     # ((_ extract 3 0) (bvsdiv x (_ bv2 8)))
-    sdive = mk_term(Kind.BV_EXTRACT, [sdiv], [3, 0])
+    sdive = tm.mk_term(Kind.BV_EXTRACT, [sdiv], [3, 0])
     # ((_ extract 3 0) (bvashr x (_ bv1 8)))
-    ashre = mk_term(Kind.BV_EXTRACT, [ashr], [3, 0])
+    ashre = tm.mk_term(Kind.BV_EXTRACT, [ashr], [3, 0])
 
     # (assert
     #     (distinct
     #         ((_ extract 3 0) (bvsdiv x (_ bv2 8)))
     #         ((_ extract 3 0) (bvashr y (_ bv1 8)))))
-    bitwuzla.assert_formula(mk_term(Kind.DISTINCT, [sdive, ashre]))
+    bitwuzla.assert_formula(tm.mk_term(Kind.DISTINCT, [sdive, ashre]))
     # (assert (= (f x ((_ extract 6 3) x)) y))
-    bitwuzla.assert_formula(mk_term(
+    bitwuzla.assert_formula(tm.mk_term(
         Kind.EQUAL,
-        [mk_term(Kind.APPLY, [f, x, mk_term(Kind.BV_EXTRACT, [x], [6, 3])]),
+        [tm.mk_term(Kind.APPLY, [f, x, tm.mk_term(Kind.BV_EXTRACT, [x], [6, 3])]),
          y]))
     # (assert (= (select a x) y))
     bitwuzla.assert_formula(
-        mk_term(Kind.EQUAL, [mk_term(Kind.ARRAY_SELECT, [a, x]), y]))
+        tm.mk_term(Kind.EQUAL, [tm.mk_term(Kind.ARRAY_SELECT, [a, x]), y]))
 
     # (check-sat)
     result = bitwuzla.check_sat()
@@ -123,5 +125,5 @@ if __name__ == "__main__":
     print()
 
     # Query value of bit-vector term that does not occur in the input formula
-    v = bitwuzla.get_value(mk_term(Kind.BV_MUL, [x, x]))
+    v = bitwuzla.get_value(tm.mk_term(Kind.BV_MUL, [x, x]))
     print(f'value of v = x * x: {v.value(2)}')

@@ -12,38 +12,40 @@ from bitwuzla import *
 
 if __name__ == "__main__":
 
-    # First, create a Bitwuzla options instance.
+    # First, create a term manager instance.
+    tm = TermManager()
+    # Create a Bitwuzla options instance.
     options = Options()
     options.set(Option.PRODUCE_MODELS, True)
     # Then, create a Bitwuzla instance.
-    bitwuzla = Bitwuzla(options)
+    bitwuzla = Bitwuzla(tm, options)
     # Create some sorts.
-    bv8  = mk_bv_sort(8)
-    bv32 = mk_bv_sort(32)
-    fp16 = mk_fp_sort(5, 11)
+    bv8  = tm.mk_bv_sort(8)
+    bv32 = tm.mk_bv_sort(32)
+    fp16 = tm.mk_fp_sort(5, 11)
     # Create terms.
-    b     = mk_const(mk_bool_sort(), "b")
-    bv    = mk_const(bv8, "bv")
-    fp    = mk_const(fp16, "fp")
-    rm    = mk_const(mk_rm_sort(), "rm")
-    fun   = mk_const(mk_fun_sort([bv8, fp16, bv32], fp16), "fun")
-    zero  = mk_bv_zero(bv8)
-    ones  = mk_bv_ones(mk_bv_sort(23))
-    z     = mk_var(bv8, "z")
-    q     = mk_var(bv8, "q")
-    lambd = mk_term(Kind.LAMBDA, [z, mk_term(Kind.BV_ADD, [z, bv])])
-    fpleq = mk_term(
+    b     = tm.mk_const(tm.mk_bool_sort(), "b")
+    bv    = tm.mk_const(bv8, "bv")
+    fp    = tm.mk_const(fp16, "fp")
+    rm    = tm.mk_const(tm.mk_rm_sort(), "rm")
+    fun   = tm.mk_const(tm.mk_fun_sort([bv8, fp16, bv32], fp16), "fun")
+    zero  = tm.mk_bv_zero(bv8)
+    ones  = tm.mk_bv_ones(tm.mk_bv_sort(23))
+    z     = tm.mk_var(bv8, "z")
+    q     = tm.mk_var(bv8, "q")
+    lambd = tm.mk_term(Kind.LAMBDA, [z, tm.mk_term(Kind.BV_ADD, [z, bv])])
+    fpleq = tm.mk_term(
         Kind.FP_LEQ,
-        [mk_term(Kind.APPLY,
-                  [fun, bv, fp, mk_term(Kind.BV_ZERO_EXTEND, [ones], [9])]),
+        [tm.mk_term(Kind.APPLY,
+                  [fun, bv, fp, tm.mk_term(Kind.BV_ZERO_EXTEND, [ones], [9])]),
           fp])
-    exists = mk_term(
+    exists = tm.mk_term(
         Kind.EXISTS,
-        [q, mk_term(Kind.EQUAL, [zero, mk_term(Kind.BV_MUL, [bv, q])])])
+        [q, tm.mk_term(Kind.EQUAL, [zero, tm.mk_term(Kind.BV_MUL, [bv, q])])])
     # Assert formulas.
     bitwuzla.assert_formula(b)
     bitwuzla.assert_formula(
-        mk_term(Kind.EQUAL, [mk_term(Kind.APPLY, [lambd, bv]), zero]))
+        tm.mk_term(Kind.EQUAL, [tm.mk_term(Kind.APPLY, [lambd, bv]), zero]))
     bitwuzla.assert_formula(exists)
     bitwuzla.assert_formula(fpleq)
 

@@ -42,20 +42,23 @@ class TestTerminator : public Terminator
 int
 main()
 {
-  // First, create a Bitwuzla options instance.
+  // First, create a term manager instance.
+  TermManager tm;
+  // Create a Bitwuzla options instance.
   Options options;
   // Then, create a Bitwuzla instance.
-  Bitwuzla bitwuzla(options);
+  Bitwuzla bitwuzla(tm, options);
 
-  Sort bv = mk_bv_sort(32);
+  Sort bv = tm.mk_bv_sort(32);
 
-  Term x = mk_const(bv);
-  Term s = mk_const(bv);
-  Term t = mk_const(bv);
+  Term x = tm.mk_const(bv);
+  Term s = tm.mk_const(bv);
+  Term t = tm.mk_const(bv);
 
-  Term a = mk_term(Kind::DISTINCT,
-                   {mk_term(Kind::BV_MUL, {s, mk_term(Kind::BV_MUL, {x, t})}),
-                    mk_term(Kind::BV_MUL, {mk_term(Kind::BV_MUL, {s, x}), t})});
+  Term a = tm.mk_term(
+      Kind::DISTINCT,
+      {tm.mk_term(Kind::BV_MUL, {s, tm.mk_term(Kind::BV_MUL, {x, t})}),
+       tm.mk_term(Kind::BV_MUL, {tm.mk_term(Kind::BV_MUL, {s, x}), t})});
 
   // Now, we check that the following formula is unsat.
   // (assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))
@@ -68,7 +71,7 @@ main()
   // that terminates after a certain time limit.
   options.set(Option::PREPROCESS, false);
   // Create new Bitwuzla instance with reconfigured options.
-  Bitwuzla bitwuzla2(options);
+  Bitwuzla bitwuzla2(tm, options);
   // Configure and connect terminator.
   TestTerminator tt(1000);
   bitwuzla2.configure_terminator(&tt);

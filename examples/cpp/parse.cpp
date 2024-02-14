@@ -19,12 +19,14 @@ using namespace bitwuzla;
 int
 main()
 {
-  // First, create a Bitwuzla options instance.
+  // First, create a term manager instance.
+  TermManager tm;
+  // Create a Bitwuzla options instance.
   Options options;
 
   // We will parse example file `smt2/quickstart.smt2`.
   // Create parser instance.
-  parser::Parser parser(options);
+  parser::Parser parser(tm, options);
 
   try
   {
@@ -57,7 +59,7 @@ main()
     Sort bv16 = parser.parse_sort("(_ BitVec 16)");
     // Create bit-vector sort of size 16 and show that it corresponds to
     // its string representation '(_ BitVec16)'.
-    assert(bv16 == mk_bv_sort(16));
+    assert(bv16 == tm.mk_bv_sort(16));
 
     // Declare Boolean constants 'c' and 'd'.
     // Note: Declarations are commands (not terms) in the SMT-LIB language.
@@ -74,13 +76,13 @@ main()
     Term d = parser.parse_term("d");
     // Create xor over 'c' and 'd' and show that it corresponds to term
     // parsed in from its string representation '(xor c d)'.
-    assert(parser.parse_term("(xor c d)") == mk_term(Kind::XOR, {c, d}));
+    assert(parser.parse_term("(xor c d)") == tm.mk_term(Kind::XOR, {c, d}));
     // Create bit-vector addition over 'b' and bit-vector value
     // '1011111010001010' and show that it corresponds to the term parsed in
     // from its string representation '(bvadd b #b1011111010001010)'.
     assert(parser.parse_term("(bvadd b #b1011111010001010)")
-           == mk_term(Kind::BV_ADD,
-                      {b, mk_bv_value(bv16, "1011111010001010", 2)}));
+           == tm.mk_term(Kind::BV_ADD,
+                         {b, tm.mk_bv_value(bv16, "1011111010001010", 2)}));
   }
   catch (bitwuzla::parser::Exception& e)
   {

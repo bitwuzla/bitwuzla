@@ -23,18 +23,20 @@ class TestTerminator:
 
 if __name__ == '__main__':
 
+    # First, create a term manager instance.
+    tm = TermManager()
     # No options configured, create Bitwuzla instance with default options.
-    bitwuzla = Bitwuzla()
+    bitwuzla = Bitwuzla(tm)
 
-    bv = mk_bv_sort(32)
+    bv = tm.mk_bv_sort(32)
 
-    x = mk_const(bv)
-    s = mk_const(bv)
-    t = mk_const(bv)
+    x = tm.mk_const(bv)
+    s = tm.mk_const(bv)
+    t = tm.mk_const(bv)
 
-    a = mk_term(Kind.DISTINCT,
-                     [mk_term(Kind.BV_MUL, [s, mk_term(Kind.BV_MUL, [x, t])]),
-                      mk_term(Kind.BV_MUL, [mk_term(Kind.BV_MUL, [s, x]), t])])
+    a = tm.mk_term(Kind.DISTINCT,
+                     [tm.mk_term(Kind.BV_MUL, [s, tm.mk_term(Kind.BV_MUL, [x, t])]),
+                      tm.mk_term(Kind.BV_MUL, [tm.mk_term(Kind.BV_MUL, [s, x]), t])])
 
     # Now, we check that the following formula is unsat.
     # (assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))
@@ -48,7 +50,7 @@ if __name__ == '__main__':
     options = Options()
     options.set(Option.PREPROCESS, False)
     # Create new Bitwuzla instance with reconfigured options.
-    bitwuzla2 = Bitwuzla(options)
+    bitwuzla2 = Bitwuzla(tm, options)
     # Configure and connect terminator.
     tt = TestTerminator(1)
     bitwuzla2.configure_terminator(tt)

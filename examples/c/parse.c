@@ -16,13 +16,16 @@
 int
 main()
 {
-  // First, create a Bitwuzla options instance.
+  // First, create a term manager instance.
+  BitwuzlaTermManager* tm = bitwuzla_term_manager_new();
+  // Create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
 
   // We will parse example file `smt2/quickstart.smt2`.
   // Create parser instance.
   const char* infile_name = "../smt2/quickstart.smt2";
-  BitwuzlaParser* parser  = bitwuzla_parser_new(options, "smt2", 2, "<stdout>");
+  BitwuzlaParser* parser =
+      bitwuzla_parser_new(tm, options, "smt2", 2, "<stdout>");
 
   // Now parse the input file.
   const char* error_msg;
@@ -66,7 +69,7 @@ main()
   assert(!error_msg);
   // Create bit-vector sort of size 16 and show that it corresponds to
   // its string representation '(_ BitVec16)'.
-  assert(bv16 == bitwuzla_mk_bv_sort(16));
+  assert(bitwuzla_sort_is_equal(bv16, bitwuzla_mk_bv_sort(tm, 16)));
 
   // Declare Boolean constants 'c' and 'd'.
   // Note: Declarations are commands (not terms) in the SMT-LIB language.
@@ -96,20 +99,24 @@ main()
   assert(!error_msg);
   // Create xor over 'a' and 'c' and show that it corresponds to term
   // parsed in from its string representation '(xor c d)'.
-  assert(bitwuzla_parser_parse_term(parser, "(xor c d)", &error_msg)
-         == bitwuzla_mk_term2(BITWUZLA_KIND_XOR, c, d));
+  assert(bitwuzla_term_is_equal(
+      bitwuzla_parser_parse_term(parser, "(xor c d)", &error_msg),
+      bitwuzla_mk_term2(tm, BITWUZLA_KIND_XOR, c, d)));
   // Create bit-vector addition over 'b' and bit-vector value
   // '1011111010001010' and show that it corresponds to the term parsed in
   // from its string representation '(bvadd b #b1011111010001010)'.
-  assert(
+  assert(bitwuzla_term_is_equal(
       bitwuzla_parser_parse_term(
-          parser, "(bvadd b #b1011111010001010)", &error_msg)
-      == bitwuzla_mk_term2(BITWUZLA_KIND_BV_ADD,
-                           b,
-                           bitwuzla_mk_bv_value(bv16, "1011111010001010", 2)));
-  // Finally, delete Bitwuzla parser and options instance.
+          parser, "(bvadd b #b1011111010001010)", &error_msg),
+      bitwuzla_mk_term2(
+          tm,
+          BITWUZLA_KIND_BV_ADD,
+          b,
+          bitwuzla_mk_bv_value(tm, bv16, "1011111010001010", 2))));
+  // Finally, delete Bitwuzla parser, options, and term manager instance.
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);
+  bitwuzla_term_manager_delete(tm);
 
   return 0;
 }

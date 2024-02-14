@@ -31,7 +31,8 @@ if __name__ == '__main__':
     print(f'Current engine: {options.get(Option.BV_SOLVER)}')
 
     # Now, create a Bitwuzla instance.
-    bitwuzla = Bitwuzla(options)
+    tm = TermManager()
+    bitwuzla = Bitwuzla(tm, options)
     # Check sat (nothing to solve, input formula is empty).
     result = bitwuzla.check_sat()
     print('Expect: sat')
