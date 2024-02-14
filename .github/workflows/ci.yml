@@ -5,36 +5,26 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, macos-14]
         name: [
           production,
-          production-clang,
           debug,
-          debug-clang
         ]
-
-        exclude:
-          - name: production-clang
-            os: macos-latest
-
-          - name: debug-clang
-            os: macos-latest
-
-          - name: production-win64
-            os: macos-latest
 
         include:
           - name: production
             config: --testing --no-unit-testing --python
 
-          - name: production-clang
-            config: --testing --no-unit-testing
-            env: CC=clang CXX=clang++
-
           - name: debug
             config: debug --python
 
+          - name: production-clang
+            os: ubuntu-latest
+            config: --testing --no-unit-testing
+            env: CC=clang CXX=clang++
+
           - name: debug-clang
+            os: ubuntu-latest
             config: debug --shared
             env: CC=clang CXX=clang++
 
