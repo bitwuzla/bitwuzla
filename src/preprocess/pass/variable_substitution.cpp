@@ -25,6 +25,11 @@ namespace bzla::preprocess::pass {
 using namespace node;
 
 namespace {
+/**
+ * Can we rewrite `node` as `factor * lhs + rhs` where `lhs` is a constant
+ * and `factor` is odd? We check whether this is possible with at most `bound`
+ * recursive calls.
+ */
 bool
 get_linear_bv_term_aux(
     const Node& node, BitVector& factor, Node& lhs, Node& rhs, uint32_t& bound)
