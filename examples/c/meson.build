@@ -1,5 +1,6 @@
 examples = [
   'checksatassuming',
+  'manual_reference_counting',
   'option_info',
   'options',
   'parse',
