@@ -394,16 +394,6 @@ uint64_t bitwuzla_sort_fun_get_arity(BitwuzlaSort sort);
 const char *bitwuzla_sort_get_uninterpreted_symbol(BitwuzlaSort sort);
 
 /**
- * Determine if two sorts are equal.
- *
- * @param sort0 The first sort.
- * @param sort1 The second sort.
- *
- * @return True if the given sorts are equal.
- */
-bool bitwuzla_sort_is_equal(BitwuzlaSort sort0, BitwuzlaSort sort1);
-
-/**
  * Determine if a sort is an array sort.
  *
  * @param sort The sort.
@@ -658,16 +648,6 @@ uint64_t bitwuzla_term_fun_get_arity(BitwuzlaTerm term);
  * @return The symbol of `term`. \c NULL if no symbol is defined.
  */
 const char *bitwuzla_term_get_symbol(BitwuzlaTerm term);
-
-/**
- * Determine if two terms are equal.
- *
- * @param term0 The first term.
- * @param term1 The second term.
- *
- * @return True if the terms are equal.
- */
-bool bitwuzla_term_is_equal(BitwuzlaTerm term0, BitwuzlaTerm term1);
 
 /**
  * Determine if the sorts of two terms are equal.

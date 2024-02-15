@@ -69,7 +69,7 @@ main()
   assert(!error_msg);
   // Create bit-vector sort of size 16 and show that it corresponds to
   // its string representation '(_ BitVec16)'.
-  assert(bitwuzla_sort_is_equal(bv16, bitwuzla_mk_bv_sort(tm, 16)));
+  assert(bv16 == bitwuzla_mk_bv_sort(tm, 16));
 
   // Declare Boolean constants 'c' and 'd'.
   // Note: Declarations are commands (not terms) in the SMT-LIB language.
@@ -99,20 +99,18 @@ main()
   assert(!error_msg);
   // Create xor over 'a' and 'c' and show that it corresponds to term
   // parsed in from its string representation '(xor c d)'.
-  assert(bitwuzla_term_is_equal(
-      bitwuzla_parser_parse_term(parser, "(xor c d)", &error_msg),
-      bitwuzla_mk_term2(tm, BITWUZLA_KIND_XOR, c, d)));
+  assert(bitwuzla_parser_parse_term(parser, "(xor c d)", &error_msg)
+         == bitwuzla_mk_term2(tm, BITWUZLA_KIND_XOR, c, d));
   // Create bit-vector addition over 'b' and bit-vector value
   // '1011111010001010' and show that it corresponds to the term parsed in
   // from its string representation '(bvadd b #b1011111010001010)'.
-  assert(bitwuzla_term_is_equal(
-      bitwuzla_parser_parse_term(
-          parser, "(bvadd b #b1011111010001010)", &error_msg),
-      bitwuzla_mk_term2(
-          tm,
-          BITWUZLA_KIND_BV_ADD,
-          b,
-          bitwuzla_mk_bv_value(tm, bv16, "1011111010001010", 2))));
+  assert(bitwuzla_parser_parse_term(
+             parser, "(bvadd b #b1011111010001010)", &error_msg)
+         == bitwuzla_mk_term2(
+             tm,
+             BITWUZLA_KIND_BV_ADD,
+             b,
+             bitwuzla_mk_bv_value(tm, bv16, "1011111010001010", 2)));
   // Finally, delete Bitwuzla parser, options, and term manager instance.
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);

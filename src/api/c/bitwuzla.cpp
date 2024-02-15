@@ -1483,19 +1483,6 @@ bitwuzla_sort_get_uninterpreted_symbol(BitwuzlaSort sort)
 }
 
 bool
-bitwuzla_sort_is_equal(BitwuzlaSort sort0, BitwuzlaSort sort1)
-{
-  bool res = false;
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_SORT(sort0);
-  BITWUZLA_CHECK_SORT(sort1);
-  res = BitwuzlaTermManager::import_sort(sort0)
-        == BitwuzlaTermManager::import_sort(sort1);
-  BITWUZLA_TRY_CATCH_END;
-  return res;
-}
-
-bool
 bitwuzla_sort_is_array(BitwuzlaSort sort)
 {
   bool res = false;
@@ -1776,19 +1763,6 @@ bitwuzla_term_get_symbol(BitwuzlaTerm term)
     str = symbol->get();
     res = str.c_str();
   }
-  BITWUZLA_TRY_CATCH_END;
-  return res;
-}
-
-bool
-bitwuzla_term_is_equal(BitwuzlaTerm term0, BitwuzlaTerm term1)
-{
-  bool res = false;
-  BITWUZLA_TRY_CATCH_BEGIN;
-  BITWUZLA_CHECK_TERM(term0);
-  BITWUZLA_CHECK_TERM(term1);
-  res = BitwuzlaTermManager::import_term(term0)
-        == BitwuzlaTermManager::import_term(term1);
   BITWUZLA_TRY_CATCH_END;
   return res;
 }
