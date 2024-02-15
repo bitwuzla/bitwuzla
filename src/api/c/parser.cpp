@@ -169,7 +169,8 @@ bitwuzla_parser_get_bitwuzla(BitwuzlaParser* parser)
   BITWUZLA_CHECK_NOT_NULL(parser);
   if (!parser->d_bitwuzla)
   {
-    parser->d_bitwuzla.reset(new Bitwuzla(parser->d_parser->bitwuzla().get()));
+    parser->d_bitwuzla.reset(
+        new Bitwuzla(parser->d_tm, parser->d_parser->bitwuzla().get()));
   }
   res = parser->d_bitwuzla.get();
   BITWUZLA_TRY_CATCH_END;

@@ -625,6 +625,15 @@ bitwuzla_term_manager_delete(BitwuzlaTermManager *tm)
   BITWUZLA_TRY_CATCH_END;
 }
 
+void
+bitwuzla_term_manager_release(BitwuzlaTermManager *tm)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(tm);
+  tm->release();
+  BITWUZLA_TRY_CATCH_END;
+}
+
 BitwuzlaSort
 bitwuzla_mk_array_sort(BitwuzlaTermManager *tm,
                        BitwuzlaSort index,
@@ -1313,6 +1322,30 @@ bitwuzla_substitute_terms(size_t terms_size,
     terms[i] = tm->export_term(ts[i]);
   }
   BITWUZLA_TRY_CATCH_END;
+}
+
+BitwuzlaTerm
+bitwuzla_term_copy(BitwuzlaTerm term)
+{
+  return term->d_tm->copy(term);
+}
+
+void
+bitwuzla_term_release(BitwuzlaTerm term)
+{
+  term->d_tm->release(term);
+}
+
+BitwuzlaSort
+bitwuzla_sort_copy(BitwuzlaSort sort)
+{
+  return sort->d_tm->copy(sort);
+}
+
+void
+bitwuzla_sort_release(BitwuzlaSort sort)
+{
+  sort->d_tm->release(sort);
 }
 
 /* -------------------------------------------------------------------------- */

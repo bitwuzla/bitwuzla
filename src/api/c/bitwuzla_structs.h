@@ -59,13 +59,23 @@ struct BitwuzlaOptions
 
 struct bitwuzla_term_t
 {
-  std::unique_ptr<bitwuzla::Term> d_term;
+  bitwuzla_term_t(const bitwuzla::Term &term, BitwuzlaTermManager *tm)
+      : d_term(term), d_tm(tm)
+  {
+  }
+  bitwuzla::Term d_term;
+  uint32_t d_refs           = 1;
   BitwuzlaTermManager *d_tm = nullptr;
 };
 
 struct bitwuzla_sort_t
 {
-  std::unique_ptr<bitwuzla::Sort> d_sort;
+  bitwuzla_sort_t(const bitwuzla::Sort &sort, BitwuzlaTermManager *tm)
+      : d_sort(sort), d_tm(tm)
+  {
+  }
+  bitwuzla::Sort d_sort;
+  uint32_t d_refs           = 1;
   BitwuzlaTermManager *d_tm = nullptr;
 };
 
@@ -75,19 +85,27 @@ struct BitwuzlaTermManager
   static const bitwuzla::Term &import_term(BitwuzlaTerm term);
 
   BitwuzlaTermManager();
-  BitwuzlaTermManager(bitwuzla::TermManager &tm);
   ~BitwuzlaTermManager();
 
   BitwuzlaSort export_sort(const bitwuzla::Sort &sort);
   BitwuzlaTerm export_term(const bitwuzla::Term &term);
+
+  /** Manual memory management for sorts and terms. */
+  void release(bitwuzla_term_t *term);
+  bitwuzla_term_t *copy(bitwuzla_term_t *term);
+  void release(bitwuzla_sort_t *sort);
+  bitwuzla_sort_t *copy(bitwuzla_sort_t *sort);
+
+  /** Release all sorts and terms. */
+  void release();
 
   /** The associated term manager instance. */
   bitwuzla::TermManager *d_tm;
 
  private:
   bool d_term_mgr_needs_delete = false;
-  std::vector<std::unique_ptr<bitwuzla_sort_t>> d_alloc_sorts;
-  std::vector<std::unique_ptr<bitwuzla_term_t>> d_alloc_terms;
+  std::unordered_map<bitwuzla::Sort, bitwuzla_sort_t> d_alloc_sorts;
+  std::unordered_map<bitwuzla::Term, bitwuzla_term_t> d_alloc_terms;
 };
 
 struct Bitwuzla
@@ -106,10 +124,10 @@ struct Bitwuzla
     d_bitwuzla_needs_delete = true;
   }
 
-  Bitwuzla(bitwuzla::Bitwuzla *bitwuzla)
+  Bitwuzla(BitwuzlaTermManager *tm, bitwuzla::Bitwuzla *bitwuzla)
   {
     d_bitwuzla = bitwuzla;
-    d_tm       = new BitwuzlaTermManager(bitwuzla->term_mgr());
+    d_tm       = tm;
   }
 
   ~Bitwuzla()

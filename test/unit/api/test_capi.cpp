@@ -16,6 +16,7 @@ extern "C" {
 
 #include <fstream>
 
+#include "api/c/bitwuzla_structs.h"
 #include "test/unit/test.h"
 
 namespace bzla::test {
@@ -2447,6 +2448,15 @@ TEST_F(TestCApi, mk_var)
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
 
+TEST_F(TestCApi, get_term_mgr)
+{
+  {
+    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, nullptr);
+    ASSERT_EQ(d_tm, bitwuzla_get_term_mgr(bitwuzla));
+    bitwuzla_delete(bitwuzla);
+  }
+}
+
 TEST_F(TestCApi, push)
 {
   {
@@ -3316,6 +3326,7 @@ TEST_F(TestCApi, parser_string2_smt2)
   ASSERT_EQ(error_msg, nullptr);
   Bitwuzla *bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
   ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+  ASSERT_EQ(bitwuzla_get_term_mgr(bitwuzla), d_tm);
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);
 }
@@ -5027,6 +5038,102 @@ TEST_F(TestCApi, substitute2)
   {
     ASSERT_TRUE(bitwuzla_term_is_equal(terms[i], expected[i]));
   }
+}
+
+TEST_F(TestCApi, term_copy_release)
+{
+  BitwuzlaTermManager *tm = bitwuzla_term_manager_new();
+
+  ASSERT_TRUE(tm->d_alloc_terms.empty());
+
+  auto t1 = bitwuzla_mk_true(tm);
+  ASSERT_EQ(t1->d_refs, 1);
+  ASSERT_EQ(tm->d_alloc_terms.size(), 1);
+
+  auto t1c = bitwuzla_term_copy(t1);
+  ASSERT_EQ(t1->d_refs, 2);
+  ASSERT_EQ(tm->d_alloc_terms.size(), 1);
+  ASSERT_EQ(t1, t1c);
+
+  auto t2 = bitwuzla_mk_true(tm);
+  ASSERT_EQ(tm->d_alloc_terms.size(), 1);
+  ASSERT_EQ(t1, t2);
+  ASSERT_EQ(t1->d_refs, 3);
+
+  auto t3 = bitwuzla_mk_false(tm);
+  ASSERT_EQ(tm->d_alloc_terms.size(), 2);
+  ASSERT_EQ(t3->d_refs, 1);
+
+  bitwuzla_term_release(t3);
+  ASSERT_EQ(tm->d_alloc_terms.size(), 1);
+
+  bitwuzla_term_release(t2);
+  ASSERT_EQ(t1->d_refs, 2);
+  bitwuzla_term_release(t1c);
+  ASSERT_EQ(t1->d_refs, 1);
+  bitwuzla_term_release(t1);
+  ASSERT_TRUE(tm->d_alloc_terms.empty());
+
+  bitwuzla_term_manager_delete(tm);
+}
+
+TEST_F(TestCApi, sort_copy_release)
+{
+  BitwuzlaTermManager *tm = bitwuzla_term_manager_new();
+
+  ASSERT_TRUE(tm->d_alloc_sorts.empty());
+
+  auto s1 = bitwuzla_mk_bool_sort(tm);
+  ASSERT_EQ(s1->d_refs, 1);
+  ASSERT_EQ(tm->d_alloc_sorts.size(), 1);
+
+  auto s1c = bitwuzla_sort_copy(s1);
+  ASSERT_EQ(s1->d_refs, 2);
+  ASSERT_EQ(tm->d_alloc_sorts.size(), 1);
+  ASSERT_EQ(s1, s1c);
+
+  auto s2 = bitwuzla_mk_bool_sort(tm);
+  ASSERT_EQ(tm->d_alloc_sorts.size(), 1);
+  ASSERT_EQ(s1, s2);
+  ASSERT_EQ(s1->d_refs, 3);
+
+  auto s3 = bitwuzla_mk_bv_sort(tm, 1);
+  ASSERT_EQ(tm->d_alloc_sorts.size(), 2);
+  ASSERT_EQ(s3->d_refs, 1);
+
+  bitwuzla_sort_release(s3);
+  ASSERT_EQ(tm->d_alloc_sorts.size(), 1);
+
+  bitwuzla_sort_release(s2);
+  ASSERT_EQ(s1->d_refs, 2);
+  bitwuzla_sort_release(s1c);
+  ASSERT_EQ(s1->d_refs, 1);
+  bitwuzla_sort_release(s1);
+  ASSERT_TRUE(tm->d_alloc_sorts.empty());
+
+  bitwuzla_term_manager_delete(tm);
+}
+
+TEST_F(TestCApi, term_mgr_release)
+{
+  BitwuzlaTermManager *tm = bitwuzla_term_manager_new();
+
+  auto t1 = bitwuzla_mk_true(tm);
+  ASSERT_EQ(t1->d_refs, 1);
+  ASSERT_EQ(tm->d_alloc_terms.size(), 1);
+  ASSERT_TRUE(tm->d_alloc_sorts.empty());
+
+  auto s1 = bitwuzla_mk_bool_sort(tm);
+  ASSERT_EQ(tm->d_alloc_sorts.size(), 1);
+  auto s2 = bitwuzla_sort_copy(s1);
+  ASSERT_EQ(tm->d_alloc_sorts.size(), 1);
+  ASSERT_EQ(s2->d_refs, 2);
+
+  bitwuzla_term_manager_release(tm);
+  ASSERT_TRUE(tm->d_alloc_terms.empty());
+  ASSERT_TRUE(tm->d_alloc_sorts.empty());
+
+  bitwuzla_term_manager_delete(tm);
 }
 
 TEST_F(TestCApi, term_print1)

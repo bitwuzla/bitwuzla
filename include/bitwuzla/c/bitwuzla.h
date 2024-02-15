@@ -1407,9 +1407,49 @@ BitwuzlaTermManager *bitwuzla_get_term_mgr(Bitwuzla *bitwuzla);
 /* BitwuzlaTermManager                                                        */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Create a new BitwuzlaTermManager instance.
+ *
+ * The returned instance must be deleted via `bitwuzla_term_manager_delete()`.
+ *
+ * @see
+ *   * `bitwuzla_term_manager_release`
+ *   * `bitwuzla_term_manager_delete`
+ */
 BitwuzlaTermManager *bitwuzla_term_manager_new();
 
+/**
+ * Delete a BitwuzlaTermManager instance.
+ *
+ * The given instance must have been created via `bitwuzla_term_manager_new()`.
+ *
+ * @note This will also invalidate all sorts and terms created by this term
+ *       manager.
+ *
+ * @param tm The BitwuzlaTermManager instance to delete.
+ *
+ * @see
+ *   * `bitwuzla_term_manager_new`
+ */
 void bitwuzla_term_manager_delete(BitwuzlaTermManager *tm);
+
+/**
+ * Release all sort and term references.
+ *
+ * This will free all memory used by sorts and terms allocated by the term
+ * manager.
+ *
+ * @note This will invalidate all sorts and terms created by the term manager.
+ *
+ * @param tm The BitwuzlaTermManager instance.
+ *
+ * @see
+ *   * `bitwuzla_term_release`
+ *   * `bitwuzla_term_copy`
+ *   * `bitwuzla_sort_release`
+ *   * `bitwuzla_sort_copy`
+ */
+void bitwuzla_term_manager_release(BitwuzlaTermManager *tm);
 
 /* -------------------------------------------------------------------------- */
 /* Sort creation                                                              */
@@ -1520,6 +1560,29 @@ BitwuzlaSort bitwuzla_mk_rm_sort(BitwuzlaTermManager *tm);
  */
 BitwuzlaSort bitwuzla_mk_uninterpreted_sort(BitwuzlaTermManager *tm,
                                             const char *symbol);
+
+/**
+ * Make copy of sort.
+ *
+ * Increments reference counter of `sort`.
+ *
+ * @param sort The sort to copy.
+ *
+ * @return The same sort with its reference count increased by one.
+ */
+BitwuzlaSort bitwuzla_sort_copy(BitwuzlaSort sort);
+
+/**
+ * Release copy of sort.
+ *
+ * Decrements reference counter of `sort.
+ *
+ * @note This step is optional and allows users to release resources in a more
+ * fine-grained manner.
+ *
+ * @param sort The sort to release.
+ */
+void bitwuzla_sort_release(BitwuzlaSort sort);
 
 /** @} */
 
@@ -2018,6 +2081,29 @@ BitwuzlaTerm bitwuzla_mk_const_array(BitwuzlaTermManager *tm,
 BitwuzlaTerm bitwuzla_mk_var(BitwuzlaTermManager *tm,
                              BitwuzlaSort sort,
                              const char *symbol);
+
+/**
+ * Make copy of term.
+ *
+ * Increase reference counter of `term`.
+ *
+ * @param term The term to copy.
+ *
+ * @return The same term with its reference count increased by one.
+ */
+BitwuzlaTerm bitwuzla_term_copy(BitwuzlaTerm term);
+
+/**
+ * Release copy of term.
+ *
+ * Decrements reference counter of `term`.
+ *
+ * @note This step is optional and allows users to release resources in a more
+ * fine-grained manner.
+ *
+ * @param term The term to release.
+ */
+void bitwuzla_term_release(BitwuzlaTerm term);
 
 /** @} */
 
