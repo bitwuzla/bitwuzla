@@ -22,8 +22,6 @@ depend_files = [
   'interface.rst',
   'library_info.rst',
   'options.rst',
-  'sort_creation.rst',
-  'term_creation.rst',
   'term_substitution.rst',
   'classes/bitwuzla.rst',
   'classes/exception.rst',

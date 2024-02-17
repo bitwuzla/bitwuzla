@@ -8,6 +8,7 @@ Classes
 
 - class :doc:`classes/options`
 - class :doc:`classes/optioninfo`
+- class :doc:`classes/termmanager`
 - class :doc:`classes/bitwuzla`
 - class :doc:`classes/sort`
 - class :doc:`classes/term`
@@ -27,8 +28,6 @@ Functions
 ---------
 
 - :doc:`library_info`
-- :doc:`sort_creation`
-- :doc:`term_creation`
 - :doc:`term_substitution`
 
 :code:`}`
