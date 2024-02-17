@@ -1,13 +1,13 @@
 Bitwuzla
 --------
 
-A :cpp:struct:`Bitwuzla` instance is created from a configuration
-options :cpp:struct:`BitwuzlaOptions` instance. This options instance must be
+A :cpp:type:`Bitwuzla` instance is created from a configuration
+options :cpp:type:`BitwuzlaOptions` instance. This options instance must be
 configured before creating the Bitwuzla instance: **after** the Bitwuzla
 instance is created, configuration options are fixed and **cannot** be changed.
-:cpp:struct:`BitwuzlaSorts <BitwuzlaSort>` and
-:cpp:struct:`BitwuzlaTerms <BitwuzlaTerm>` are **independent** of a
-:cpp:struct:`Bitwuzla` instance and can be shared across Bitwuzla
+:cpp:type:`BitwuzlaSorts <BitwuzlaSort>` and
+:cpp:type:`BitwuzlaTerms <BitwuzlaTerm>` are **independent** of a
+:cpp:type:`Bitwuzla` instance and can be shared across Bitwuzla
 instances.
 
 A Bitwuzla instance is created via :cpp:func:`bitwuzla_new()` and must be
@@ -34,7 +34,7 @@ opportunity if the callback function returns a value :code:`!= 0`.
 
 ----
 
-- typedef struct :cpp:struct:`Bitwuzla`
+- typedef struct :cpp:type:`Bitwuzla`
 - :cpp:func:`bitwuzla_new()`
 - :cpp:func:`bitwuzla_delete()`
 - :cpp:func:`bitwuzla_terminate()`

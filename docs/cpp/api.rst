@@ -47,7 +47,7 @@ default):
 
 For more details on available options, see :doc:`options`.
 
-Then, create a :cpp:struct:`Bitwuzla` **solver** instance with a term manager
+Then, create a :cpp:type:`Bitwuzla` **solver** instance with a term manager
 and configured options (configuration options are now frozen and cannot be
 changed for this instance):
 
@@ -80,7 +80,7 @@ Alternatively, you can **parse** an **input file** in BTOR2 format
 :cpp:func:`bitwuzla::parser::Parser::parse()`.
 
 .. note::
-  The input parser creates a :cpp:class:`Bitwuzla` instance, which can be
+  The input parser creates a :cpp:type:`Bitwuzla` instance, which can be
   configured via the :cpp:class:`bitwuzla::Options` instance passed into the
   parser. This Bitwuzla instance can be retrieved via
   :cpp:func:`bitwuzla::parser::Parser::bitwuzla()`.
@@ -217,8 +217,8 @@ This will print:
 
 The value of :code:`f` (a function term) and :code:`a` (an array term), on the
 other hand, cannot be represented with a simple type. Thus, function values are
-given as :cpp:enum:`bitwuzla::Kind::LAMBDA`, and array values are given as
-:cpp:enum:`bitwuzla::Kind::ARRAY_STORE`.
+given as :cpp:enumerator:`bitwuzla::Kind::LAMBDA`, and array values are given as
+:cpp:enumerator:`bitwuzla::Kind::ARRAY_STORE`.
 We can retrieve an SMT-LIB2 string representation of the values via
 :cpp:func:`bitwuzla::Term::str()` (and :cpp:func:`bitwuzla::operator<<()`):
 

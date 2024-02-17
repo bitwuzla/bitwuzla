@@ -1,7 +1,7 @@
 BitwuzlaParser
 --------------
 
-- typedef struct :cpp:struct:`BitwuzlaParser`
+- typedef struct :cpp:type:`BitwuzlaParser`
 - :cpp:func:`bitwuzla_parser_new()`
 - :cpp:func:`bitwuzla_parser_delete()`
 - :cpp:func:`bitwuzla_parser_parse()`

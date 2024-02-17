@@ -19,4 +19,5 @@ instance.
 
 .. autoclass:: bitwuzla.Option
    :members:
+   :no-index:
    :undoc-members:

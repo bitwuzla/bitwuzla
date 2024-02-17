@@ -1,7 +1,7 @@
 BitwuzlaKind
 ------------
 
-The kind of a :cpp:struct:`BitwuzlaTerm`.
+The kind of a :cpp:type:`BitwuzlaTerm`.
 
 Terms of a given kind are created via :cpp:func:`bitwuzla_mk_term()`,
 :cpp:func:`bitwuzla_mk_term1()`, :cpp:func:`bitwuzla_mk_term2()`,

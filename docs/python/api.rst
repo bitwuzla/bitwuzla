@@ -167,8 +167,8 @@ Formulas can also be **assumed** via passing a vector of assumptions into
 :obj:`bitwuzla.Bitwuzla.check_sat()`.
 
 If the formula is satisfiable and **model generation** has been enabled, the
-resulting model can be printed via :python:func:`bitwuzla::Bitwuzla::get_value()`
-and :python:func:`bitwuzla::Term::str()` (or :cpp:func:`bitwuzla::operator<<`).
+resulting model can be printed via :obj:`bitwuzla.Bitwuzla.get_value()`
+and :obj:`bitwuzla.Term.str()`.
 An example implementation illustrating how to print
 the current model via declared symbols (in this case :code:`x`, :code:`y`,
 :code:`f` and :code:`a`) is below:

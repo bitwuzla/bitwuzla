@@ -28,6 +28,5 @@ Functions
 ---------
 
 - :doc:`library_info`
-- :doc:`term_substitution`
 
 :code:`}`

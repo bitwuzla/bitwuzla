@@ -141,7 +141,7 @@ ENUM_DOCSTRINGS = {
 """,
 
     "Kind":
-"""BitwuzlaTerm kinds. For more information on term kinds see :ref:`cpp_kinds`.
+"""BitwuzlaTerm kinds. For more information on term kinds see :cpp:enum:`bitwuzla::Kind`.
 """,
 
     "Result":

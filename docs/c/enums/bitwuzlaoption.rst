@@ -3,8 +3,8 @@ BitwuzlaOption
 
 The kind of a Bitwuzla configuration option.
 
-Options are configured via a :cpp:struct:`BitwuzlaOptions` instance,
-which must be configured before creating a :cpp:struct:`Bitwuzla` instance.
+Options are configured via a :cpp:type:`BitwuzlaOptions` instance,
+which must be configured before creating a :cpp:type:`Bitwuzla` instance.
 
 .. note::
 

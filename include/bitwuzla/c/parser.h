@@ -26,13 +26,14 @@ typedef struct BitwuzlaParser BitwuzlaParser;
  * The returned instance must be deleted via `bitwuzla_parser_delete()`.
  *
  * @note The parser creates and owns the associated Bitwuzla instance.
+ * @param tm The associated term manager instance.
  * @param options The associated options.
  * @param language     The format of the input.
  * @param base         The base of the string representation of bit-vector
  *                     values; `2` for binary, `10` for decimal, and `16` for
  *                     hexadecimal. Always ignored for Boolean and RoundingMode
  *                     values.
- * @param outfile_name The output file name. If name is '<stdout>', the parser
+ * @param outfile_name The output file name. If name is '\<stdout\>', the parser
  *                     writes to stdout.
  * @return A pointer to the created Bitwuzla parser instance.
  *

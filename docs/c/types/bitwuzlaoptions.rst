@@ -1,8 +1,8 @@
 BitwuzlaOptions
 ---------------
 
-A :cpp:struct:`Bitwuzla` instance is created from a configuration
-options :cpp:struct:`BitwuzlaOptions` instance via
+A :cpp:type:`Bitwuzla` instance is created from a configuration
+options :cpp:type:`BitwuzlaOptions` instance via
 :cpp:func:`bitwuzla_options_new()`, and must be released via
 :cpp:func:`bitwuzla_options_delete()`.
 
@@ -29,7 +29,7 @@ options is :doc:`here </c/options>`.
 
 ----
 
-- typedef struct :cpp:struct:`BitwuzlaOptions`
+- typedef struct :cpp:type:`BitwuzlaOptions`
 - :cpp:func:`bitwuzla_options_new()`
 - :cpp:func:`bitwuzla_options_delete()`
 - :cpp:func:`bitwuzla_option_is_numeric()`

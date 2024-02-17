@@ -352,10 +352,10 @@ set_bv_format::set_bv_format(uint8_t format) : d_format(format)
 }
 
 std::ostream &
-operator<<(std::ostream &ostream, const set_bv_format &f)
+operator<<(std::ostream &out, const set_bv_format &f)
 {
-  ostream.iword(bzla::Printer::s_stream_index_bv_format) = f.format();
-  return ostream;
+  out.iword(bzla::Printer::s_stream_index_bv_format) = f.format();
+  return out;
 }
 
 /* Options public ----------------------------------------------------------- */

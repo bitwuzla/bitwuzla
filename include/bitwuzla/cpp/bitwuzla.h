@@ -165,7 +165,7 @@ struct set_bv_format
  * @param f   The bit-vector format.
  * @return The output stream.
  */
-std::ostream &operator<<(std::ostream &ostream, const set_bv_format &f);
+std::ostream &operator<<(std::ostream &out, const set_bv_format &f);
 
 /* -------------------------------------------------------------------------- */
 /* Options                                                                    */
@@ -1343,7 +1343,7 @@ class TermManager
    * given value.
    *
    * @param sort The sort of the array.
-   * @param value The term to initialize the elements of the array with.
+   * @param term The term to initialize the elements of the array with.
    *
    * @return A term of kind Kind::CONST_ARRAY, representing a constant
    *         array of given sort.

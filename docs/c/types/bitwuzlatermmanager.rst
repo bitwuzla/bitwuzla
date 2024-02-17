@@ -1,7 +1,7 @@
 BitwuzlaTermManager
 -------------------
 
-- typedef struct :cpp:struct:`BitwuzlaTermManager`
+- typedef struct :cpp:type:`BitwuzlaTermManager`
 - :cpp:func:`bitwuzla_term_manager_new()`
 - :cpp:func:`bitwuzla_term_manager_delete()`
 - :cpp:func:`bitwuzla_term_manager_release()`

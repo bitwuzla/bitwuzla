@@ -25,7 +25,7 @@ to values via :cpp:func:`bitwuzla::Bitwuzla::statistics()`.
 
 Bitwuzla further supports configuring a **termination callback** via
 :cpp:class:`bitwuzla::Terminator`, which implements a callback function
-:cpp:class:`bitwuzla::Terminator::terminate()` to allow terminating
+:cpp:func:`bitwuzla::Terminator::terminate()` to allow terminating
 Bitwuzla prematurely, during solving. This termination callback returns a
 :code:`bool` to indicate if Bitwuzla should be terminated. Bitwuzla
 periodically checks this callback and terminates at the earliest possible

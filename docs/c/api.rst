@@ -14,14 +14,14 @@ C API Documentation
 Quickstart
 ----------
 
-First, create a :cpp:struct:`BitwuzlaTermManager` instance that allows us to
+First, create a :cpp:type:`BitwuzlaTermManager` instance that allows us to
 create sorts and terms later:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
      :lines: 19
 
-Then, create a :cpp:struct:`BitwuzlaOptions` instance:
+Then, create a :cpp:type:`BitwuzlaOptions` instance:
 
 This instance can be configured via :cpp:func:`bitwuzla_set_option()`.  
 For example, to enable model generation
@@ -42,7 +42,7 @@ default):
 
 For more details on available options, see :doc:`c/options`.
 
-Then, create a :cpp:struct:`Bitwuzla` **solver** instance with a term manager
+Then, create a :cpp:type:`Bitwuzla` **solver** instance with a term manager
 and configured options (configuration options are now frozen and cannot be
 changed for this instance):
 
@@ -76,8 +76,8 @@ Alternatively, you can **parse** an **input file** in BTOR2 format
 
 .. note::
 
-  The input parser creates a :cpp:struct:`Bitwuzla` instance, which can be
-  configured via the :cpp:struct:`BitwuzlaOptions` instance passed into the
+  The input parser creates a :cpp:type:`Bitwuzla` instance, which can be
+  configured via the :cpp:type:`BitwuzlaOptions` instance passed into the
   parser. This Bitwuzla instance can be retrieved via
   :cpp:func:`bitwuzla_parser_get_bitwuzla()`.
 
@@ -138,14 +138,14 @@ constant :code:`b`:
      :language: c
      :lines: 78-87
 
-These terms can be retrieved via :cpp:func:`bitwuzla.Parser.parse_term()`:
+These terms can be retrieved via :cpp:func:`bitwuzla_parser_parse_term()`:
 
 .. literalinclude:: ../../examples/c/parse.c
      :language: c
      :lines: 88-99
 
 Now, to **parse** in **terms** using these constants via
-:cpp:func:`bitwuzla.Parser.parse_term()`:
+:cpp:func:`bitwuzla_parser_parse_term()`:
 
 .. literalinclude:: ../../examples/c/parse.c
      :language: c

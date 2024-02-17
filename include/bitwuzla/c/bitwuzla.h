@@ -141,6 +141,7 @@ void bitwuzla_options_delete(BitwuzlaOptions *options);
 
 /**
  * Determine if given string is a valid short or long option name.
+ * @param options The Bitwuzla options instance.
  * @param name The name.
  * @return True if given string is a option name.
  */
@@ -148,12 +149,16 @@ bool bitwuzla_option_is_valid(BitwuzlaOptions *options, const char *name);
 
 /**
  * Determine if a given option is a numeric (or Boolean) option.
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
  * @return True if the given option is a numeric or Boolean option.
  */
 bool bitwuzla_option_is_numeric(BitwuzlaOptions *options,
                                 BitwuzlaOption option);
 /**
  * Determine if a given option is an option with a mode
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
  * @return True if the given option is an option with a mode.
  */
 bool bitwuzla_option_is_mode(BitwuzlaOptions *options, BitwuzlaOption option);
@@ -1099,6 +1104,8 @@ const char *bitwuzla_term_to_string(BitwuzlaTerm term);
 /**
  * Get the SMT-LIB v2 string representation of a term. String representations
  * of bit-vector values are printed in the given base.
+ *
+ * @param term The term.
  * @param base The base of the string representation of bit-vector values; `2`
  *             for binary, `10` for decimal, and `16` for hexadecimal. Always
  *             ignored for Boolean and RoundingMode values.
@@ -1151,6 +1158,7 @@ typedef struct Bitwuzla Bitwuzla;
  *
  * The returned instance must be deleted via `bitwuzla_delete()`.
  *
+ * @param tm The associated term manager instance.
  * @param options The associated options (optional).
  * @return A pointer to the created Bitwuzla instance.
  *
@@ -1518,6 +1526,7 @@ void bitwuzla_term_manager_release(BitwuzlaTermManager *tm);
 /**
  * Create an array sort.
  *
+ * @param tm The term manager instance.
  * @param index The index sort of the array sort.
  * @param element The element sort of the array sort.
  * @return An array sort which maps sort `index` to sort `element`.
@@ -1536,6 +1545,7 @@ BitwuzlaSort bitwuzla_mk_array_sort(BitwuzlaTermManager *tm,
 
 /**
  * Create a Boolean sort.
+ * @param tm The term manager instance.
  * @return A Boolean sort.
  */
 BitwuzlaSort bitwuzla_mk_bool_sort(BitwuzlaTermManager *tm);
@@ -1543,6 +1553,7 @@ BitwuzlaSort bitwuzla_mk_bool_sort(BitwuzlaTermManager *tm);
 /**
  * Create a bit-vector sort of given size.
  *
+ * @param tm The term manager instance.
  * @param size The size of the bit-vector sort.
  * @return A bit-vector sort of given size.
  *
@@ -1557,6 +1568,7 @@ BitwuzlaSort bitwuzla_mk_bv_sort(BitwuzlaTermManager *tm, uint64_t size);
 /**
  * Create a floating-point sort of given exponent and significand size.
  *
+ * @param tm The term manager instance.
  * @param exp_size The size of the exponent.
  * @param sig_size The size of the significand (including sign bit).
  * @return A floating-point sort of given format.
@@ -1576,6 +1588,7 @@ BitwuzlaSort bitwuzla_mk_fp_sort(BitwuzlaTermManager *tm,
 /**
  * Create a function sort.
  *
+ * @param tm The term manager instance.
  * @param arity The number of arguments to the function.
  * @param domain The domain sorts (the sorts of the arguments). The number of
  *               sorts in this vector must match `arity`.
@@ -1599,6 +1612,7 @@ BitwuzlaSort bitwuzla_mk_fun_sort(BitwuzlaTermManager *tm,
 
 /**
  * Create a Roundingmode sort.
+ * @param tm The term manager instance.
  * @return A Roundingmode sort.
  * @see
  *   * `bitwuzla_sort_is_rm`
@@ -1608,6 +1622,7 @@ BitwuzlaSort bitwuzla_mk_rm_sort(BitwuzlaTermManager *tm);
 
 /**
  * Create an uninterpreted sort.
+ * @param tm The term manager instance.
  * @param symbol The symbol of the sort. May be NULL.
  * @return A uninterpreted sort.
  * @see
@@ -1629,12 +1644,14 @@ BitwuzlaSort bitwuzla_mk_uninterpreted_sort(BitwuzlaTermManager *tm,
 
 /**
  * Create a true value.
+ * @param tm The term manager instance.
  * @return A term representing true.
  */
 BitwuzlaTerm bitwuzla_mk_true(BitwuzlaTermManager *tm);
 
 /**
  * Create a false value.
+ * @param tm The term manager instance.
  * @return A term representing false.
  */
 BitwuzlaTerm bitwuzla_mk_false(BitwuzlaTermManager *tm);
@@ -1642,6 +1659,7 @@ BitwuzlaTerm bitwuzla_mk_false(BitwuzlaTermManager *tm);
 /**
  * Create a bit-vector value zero.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @return A term representing the bit-vector value 0 of given sort.
  *
@@ -1653,6 +1671,7 @@ BitwuzlaTerm bitwuzla_mk_bv_zero(BitwuzlaTermManager *tm, BitwuzlaSort sort);
 /**
  * Create a bit-vector value one.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @return A term representing the bit-vector value 1 of given sort.
  *
@@ -1664,6 +1683,7 @@ BitwuzlaTerm bitwuzla_mk_bv_one(BitwuzlaTermManager *tm, BitwuzlaSort sort);
 /**
  * Create a bit-vector value where all bits are set to 1.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @return A term representing the bit-vector value of given sort
  *         where all bits are set to 1.
@@ -1675,6 +1695,7 @@ BitwuzlaTerm bitwuzla_mk_bv_ones(BitwuzlaTermManager *tm, BitwuzlaSort sort);
 /**
  * Create a bit-vector minimum signed value.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @return A term representing the bit-vector value of given sort where the MSB
  *         is set to 1 and all remaining bits are set to 0.
@@ -1686,6 +1707,7 @@ BitwuzlaTerm bitwuzla_mk_bv_min_signed(BitwuzlaTermManager *tm,
 /**
  * Create a bit-vector maximum signed value.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @return A term representing the bit-vector value of given sort where the MSB
  *         is set to 0 and all remaining bits are set to 1.
@@ -1698,6 +1720,7 @@ BitwuzlaTerm bitwuzla_mk_bv_max_signed(BitwuzlaTermManager *tm,
 /**
  * Create a floating-point positive zero value (SMT-LIB: `+zero`).
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @return A term representing the floating-point positive zero value of given
  *         floating-point sort.
@@ -1710,6 +1733,7 @@ BitwuzlaTerm bitwuzla_mk_fp_pos_zero(BitwuzlaTermManager *tm,
 /**
  * Create a floating-point negative zero value (SMT-LIB: `-zero`).
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @return A term representing the floating-point negative zero value of given
  *         floating-point sort.
@@ -1722,6 +1746,7 @@ BitwuzlaTerm bitwuzla_mk_fp_neg_zero(BitwuzlaTermManager *tm,
 /**
  * Create a floating-point positive infinity value (SMT-LIB: `+oo`).
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @return A term representing the floating-point positive infinity value of
  *         given floating-point sort.
@@ -1733,6 +1758,7 @@ BitwuzlaTerm bitwuzla_mk_fp_pos_inf(BitwuzlaTermManager *tm, BitwuzlaSort sort);
 /**
  * Create a floating-point negative infinity value (SMT-LIB: `-oo`).
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @return A term representing the floating-point negative infinity value of
  *         given floating-point sort.
@@ -1744,6 +1770,7 @@ BitwuzlaTerm bitwuzla_mk_fp_neg_inf(BitwuzlaTermManager *tm, BitwuzlaSort sort);
 /**
  * Create a floating-point NaN value.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @return A term representing the floating-point NaN value of given
  *         floating-point sort.
@@ -1759,6 +1786,7 @@ BitwuzlaTerm bitwuzla_mk_fp_nan(BitwuzlaTermManager *tm, BitwuzlaSort sort);
  *
  * @note Given value must fit into a bit-vector of given size (sort).
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @param value A string representing the value.
  * @param base The base in which the string is given; `2` for binary, `10` for
@@ -1780,6 +1808,7 @@ BitwuzlaTerm bitwuzla_mk_bv_value(BitwuzlaTermManager *tm,
  *
  * @note Given value must fit into a bit-vector of given size (sort).
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @param value The unsigned integer representation of the bit-vector value.
  *
@@ -1798,6 +1827,7 @@ BitwuzlaTerm bitwuzla_mk_bv_value_uint64(BitwuzlaTermManager *tm,
  *
  * @note Given value must fit into a bit-vector of given size (sort).
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @param value The unsigned integer representation of the bit-vector value.
  *
@@ -1816,6 +1846,7 @@ BitwuzlaTerm bitwuzla_mk_bv_value_int64(BitwuzlaTermManager *tm,
  * given as three bit-vector values representing the sign bit, the exponent and
  * the significand.
  *
+ * @param tm The term manager instance.
  * @param bv_sign The sign bit.
  * @param bv_exponent The exponent bit-vector value.
  * @param bv_significand The significand bit-vector value.
@@ -1836,6 +1867,7 @@ BitwuzlaTerm bitwuzla_mk_fp_value(BitwuzlaTermManager *tm,
  *       If it is a value, the returned term will be a floating-point value,
  *       else a non-value floating-point term.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @param rm The rounding mode.
  * @param real The decimal string representing a real value.
@@ -1860,6 +1892,7 @@ BitwuzlaTerm bitwuzla_mk_fp_from_real(BitwuzlaTermManager *tm,
  *       If it is a value, the returned term will be a floating-point value,
  *       else a non-value floating-point term.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the value.
  * @param rm The rounding mode.
  * @param num The decimal string representing the numerator.
@@ -1882,6 +1915,7 @@ BitwuzlaTerm bitwuzla_mk_fp_from_rational(BitwuzlaTermManager *tm,
  *
  * @param rm The rounding mode value.
  *
+ * @param tm The term manager instance.
  * @return A term of kind BITWUZLA_KIND_VAL, representing the rounding mode
  *         value.
  *
@@ -1894,6 +1928,7 @@ BitwuzlaTerm bitwuzla_mk_rm_value(BitwuzlaTermManager *tm,
 /**
  * Create a term of given kind with one argument term.
  *
+ * @param tm The term manager instance.
  * @param kind The operator kind.
  * @param arg The argument to the operator.
  *
@@ -1909,6 +1944,7 @@ BitwuzlaTerm bitwuzla_mk_term1(BitwuzlaTermManager *tm,
 /**
  * Create a term of given kind with two argument terms.
  *
+ * @param tm The term manager instance.
  * @param kind The operator kind.
  * @param arg0 The first argument to the operator.
  * @param arg1 The second argument to the operator.
@@ -1926,6 +1962,7 @@ BitwuzlaTerm bitwuzla_mk_term2(BitwuzlaTermManager *tm,
 /**
  * Create a term of given kind with three argument terms.
  *
+ * @param tm The term manager instance.
  * @param kind The operator kind.
  * @param arg0 The first argument to the operator.
  * @param arg1 The second argument to the operator.
@@ -1945,6 +1982,7 @@ BitwuzlaTerm bitwuzla_mk_term3(BitwuzlaTermManager *tm,
 /**
  * Create a term of given kind with the given argument terms.
  *
+ * @param tm The term manager instance.
  * @param kind The operator kind.
  * @param argc The number of argument terms.
  * @param args The argument terms.
@@ -1962,6 +2000,7 @@ BitwuzlaTerm bitwuzla_mk_term(BitwuzlaTermManager *tm,
 /**
  * Create an indexed term of given kind with one argument term and one index.
  *
+ * @param tm The term manager instance.
  * @param kind The operator kind.
  * @param arg The argument term.
  * @param idx The index.
@@ -1979,6 +2018,7 @@ BitwuzlaTerm bitwuzla_mk_term1_indexed1(BitwuzlaTermManager *tm,
 /**
  * Create an indexed term of given kind with one argument term and two indices.
  *
+ * @param tm The term manager instance.
  * @param kind The operator kind.
  * @param arg The argument term.
  * @param idx0 The first index.
@@ -1998,6 +2038,7 @@ BitwuzlaTerm bitwuzla_mk_term1_indexed2(BitwuzlaTermManager *tm,
 /**
  * Create an indexed term of given kind with two argument terms and one index.
  *
+ * @param tm The term manager instance.
  * @param kind The operator kind.
  * @param arg0 The first argument term.
  * @param arg1 The second argument term.
@@ -2017,6 +2058,7 @@ BitwuzlaTerm bitwuzla_mk_term2_indexed1(BitwuzlaTermManager *tm,
 /**
  * Create an indexed term of given kind with two argument terms and two indices.
  *
+ * @param tm The term manager instance.
  * @param kind The operator kind.
  * @param arg0 The first argument term.
  * @param arg1 The second argument term.
@@ -2039,6 +2081,7 @@ BitwuzlaTerm bitwuzla_mk_term2_indexed2(BitwuzlaTermManager *tm,
  * Create an indexed term of given kind with the given argument terms and
  * indices.
  *
+ * @param tm The term manager instance.
  * @param kind The operator kind.
  * @param argc The number of argument terms.
  * @param args The argument terms.
@@ -2060,6 +2103,7 @@ BitwuzlaTerm bitwuzla_mk_term_indexed(BitwuzlaTermManager *tm,
 /**
  * Create a (first-order) constant of given sort with given symbol.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the constant.
  * @param symbol The symbol of the constant.
  *
@@ -2081,6 +2125,7 @@ BitwuzlaTerm bitwuzla_mk_const(BitwuzlaTermManager *tm,
  * Create a one-dimensional constant array of given sort, initialized with
  * given value.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the array.
  * @param value The term to initialize the elements of the array with.
  *
@@ -2099,6 +2144,7 @@ BitwuzlaTerm bitwuzla_mk_const_array(BitwuzlaTermManager *tm,
  *
  * @note This creates a variable to be bound by quantifiers or lambdas.
  *
+ * @param tm The term manager instance.
  * @param sort The sort of the variable.
  * @param symbol The symbol of the variable.
  *

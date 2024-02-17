@@ -47,6 +47,7 @@ class Parser
   /**
    * Constructor.
    * @note The parser creates and owns the associated Bitwuzla instance.
+   * @param tm The associated term manager instance.
    * @param options     The configuration options for the Bitwuzla instance
    *                    (created by the parser).
    * @param language    The format of the input.
@@ -79,8 +80,8 @@ class Parser
   /**
    * Parse input from an input stream.
    * @param infile_name The name of the input file. This is required for error
-   *                    message printing only. Use '<stdin>' if the input
-   *                    stream is std::cin, and '<string>' if the input stream
+   *                    message printing only. Use '\<stdin\>' if the input
+   *                    stream is std::cin, and '\<string\>' if the input stream
    *                    was created from a string.
    * @param input       The input stream.
    * @param parse_only  True to only parse without issuing calls to check_sat.

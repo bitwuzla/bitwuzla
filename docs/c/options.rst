@@ -3,8 +3,8 @@
 Options
 ========
 
-A :cpp:struct:`Bitwuzla` instance is created from a configuration
-options :cpp:struct:`BitwuzlaOptions` instance. This options instance must
+A :cpp:type:`Bitwuzla` instance is created from a configuration
+options :cpp:type:`BitwuzlaOptions` instance. This options instance must
 be configured before creating the Bitwuzla instance: **after** the Bitwuzla
 instance is created, configuration options are fixed and **cannot** be changed.
 

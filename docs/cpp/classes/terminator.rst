@@ -5,7 +5,7 @@ The termination callback configuration of a Bitwuzla instance.
 
 Bitwuzla supports configuring a termination callback via class
 :cpp:class:`bitwuzla::Terminator`, which implements a callback function
-:cpp:class:`bitwuzla::Terminator::terminate()` to allow terminating
+:cpp:func:`bitwuzla::Terminator::terminate()` to allow terminating
 Bitwuzla prematurely, during solving. This termination callback returns a
 :code:`bool` to indicate if Bitwuzla should be terminated. Bitwuzla
 periodically checks this callback and terminates at the earliest possible
