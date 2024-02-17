@@ -296,6 +296,41 @@ typedef struct bitwuzla_sort_t *BitwuzlaSort;
 size_t bitwuzla_sort_hash(BitwuzlaSort sort);
 
 /**
+ * Make copy of sort.
+ *
+ * Increments reference counter of `sort`.
+ *
+ * @note This step is optional and allows users to manage resources in a more
+ * fine-grained manner.
+ *
+ * @param sort The sort to copy.
+ *
+ * @return The same sort with its reference count increased by one.
+ *
+ * @see
+ *   * `bitwuzla_sort_release`
+ */
+BitwuzlaSort bitwuzla_sort_copy(BitwuzlaSort sort);
+
+/**
+ * Release copy of sort.
+ *
+ * Decrements reference counter of `sort.
+ *
+ * @param sort The sort to release.
+ *
+ * @note This step is optional and allows users to release resources in a more
+ * fine-grained manner. Further, any API function that returns a BitwuzlaSort
+ * returns a copy that is owned by the callee of the function and thus, can be
+ * released.
+ *
+ * @see
+ *   * `bitwuzla_sort_copy`
+ *   * `bitwuzla_term_manager_release`
+ */
+void bitwuzla_sort_release(BitwuzlaSort sort);
+
+/**
  * Get the size of a bit-vector sort.
  *
  * Requires that given sort is a bit-vector sort.
@@ -493,6 +528,41 @@ typedef struct bitwuzla_term_t *BitwuzlaTerm;
  * @return The hash value of the term.
  */
 size_t bitwuzla_term_hash(BitwuzlaTerm term);
+
+/**
+ * Make copy of term.
+ *
+ * Increase reference counter of `term`.
+ *
+ * @param term The term to copy.
+ *
+ * @return The same term with its reference count increased by one.
+ *
+ * @note This step is optional and allows users to manage resources in a more
+ * fine-grained manner.
+ *
+ * @see
+ *   * `bitwuzla_term_release`
+ */
+BitwuzlaTerm bitwuzla_term_copy(BitwuzlaTerm term);
+
+/**
+ * Release copy of term.
+ *
+ * Decrements reference counter of `term`.
+ *
+ * @param term The term to release.
+ *
+ * @note This step is optional and allows users to release resources in a more
+ * fine-grained manner. Further, any API function that returns a BitwuzlaTerm
+ * returns a copy that is owned by the callee of the function and thus, can be
+ * released.
+ *
+ * @see
+ *   * `bitwuzla_term_copy`
+ *   * `bitwuzla_term_manager_release`
+ */
+void bitwuzla_term_release(BitwuzlaTerm term);
 
 /**
  * Get the kind of a term.
@@ -1387,6 +1457,10 @@ BitwuzlaTermManager *bitwuzla_get_term_mgr(Bitwuzla *bitwuzla);
 /* BitwuzlaTermManager                                                        */
 /* -------------------------------------------------------------------------- */
 
+/** \addtogroup c_bitwuzlatermmanager
+ *  @{
+ */
+
 /**
  * Create a new BitwuzlaTermManager instance.
  *
@@ -1430,6 +1504,8 @@ void bitwuzla_term_manager_delete(BitwuzlaTermManager *tm);
  *   * `bitwuzla_sort_copy`
  */
 void bitwuzla_term_manager_release(BitwuzlaTermManager *tm);
+
+/** @} */
 
 /* -------------------------------------------------------------------------- */
 /* Sort creation                                                              */
@@ -1540,29 +1616,6 @@ BitwuzlaSort bitwuzla_mk_rm_sort(BitwuzlaTermManager *tm);
  */
 BitwuzlaSort bitwuzla_mk_uninterpreted_sort(BitwuzlaTermManager *tm,
                                             const char *symbol);
-
-/**
- * Make copy of sort.
- *
- * Increments reference counter of `sort`.
- *
- * @param sort The sort to copy.
- *
- * @return The same sort with its reference count increased by one.
- */
-BitwuzlaSort bitwuzla_sort_copy(BitwuzlaSort sort);
-
-/**
- * Release copy of sort.
- *
- * Decrements reference counter of `sort.
- *
- * @note This step is optional and allows users to release resources in a more
- * fine-grained manner.
- *
- * @param sort The sort to release.
- */
-void bitwuzla_sort_release(BitwuzlaSort sort);
 
 /** @} */
 
@@ -2061,29 +2114,6 @@ BitwuzlaTerm bitwuzla_mk_const_array(BitwuzlaTermManager *tm,
 BitwuzlaTerm bitwuzla_mk_var(BitwuzlaTermManager *tm,
                              BitwuzlaSort sort,
                              const char *symbol);
-
-/**
- * Make copy of term.
- *
- * Increase reference counter of `term`.
- *
- * @param term The term to copy.
- *
- * @return The same term with its reference count increased by one.
- */
-BitwuzlaTerm bitwuzla_term_copy(BitwuzlaTerm term);
-
-/**
- * Release copy of term.
- *
- * Decrements reference counter of `term`.
- *
- * @note This step is optional and allows users to release resources in a more
- * fine-grained manner.
- *
- * @param term The term to release.
- */
-void bitwuzla_term_release(BitwuzlaTerm term);
 
 /** @} */
 

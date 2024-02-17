@@ -17,6 +17,8 @@ element sort is an array sort.
 
 - typedef struct :cpp:struct:`BitwuzlaSort`
 - :cpp:func:`bitwuzla_sort_hash()`
+- :cpp:func:`bitwuzla_sort_copy()`
+- :cpp:func:`bitwuzla_sort_release()`
 - :cpp:func:`bitwuzla_sort_bv_get_size()`
 - :cpp:func:`bitwuzla_sort_fp_get_exp_size()`
 - :cpp:func:`bitwuzla_sort_fp_get_sig_size()`
@@ -26,7 +28,6 @@ element sort is an array sort.
 - :cpp:func:`bitwuzla_sort_fun_get_codomain()`
 - :cpp:func:`bitwuzla_sort_fun_get_arity()`
 - :cpp:func:`bitwuzla_sort_get_uninterpreted_symbol()`
-- :cpp:func:`bitwuzla_sort_is_equal()`
 - :cpp:func:`bitwuzla_sort_is_array()`
 - :cpp:func:`bitwuzla_sort_is_bool()`
 - :cpp:func:`bitwuzla_sort_is_bv()`

@@ -12,6 +12,7 @@ C Interface
 Types
 -----
 
+- typedef struct :doc:`types/bitwuzlatermmanager`
 - typedef struct :doc:`types/bitwuzlaoptions`
 - typedef struct :doc:`types/bitwuzla`
 - typedef struct :doc:`types/bitwuzlasort`
@@ -36,6 +37,3 @@ Functions
 ---------
 
 - :doc:`library_info`
-- :doc:`sort_creation`
-- :doc:`term_creation`
-- :doc:`term_substitution`
