@@ -7,8 +7,6 @@ C API Documentation
    interface
    options
    Term Kinds <enums/bitwuzlakind>
-   sort_creation
-   term_creation
 
 .. contents::
    :local:
@@ -16,11 +14,14 @@ C API Documentation
 Quickstart
 ----------
 
-First, create a :cpp:struct:`BitwuzlaOptions` instance:
+First, create a :cpp:struct:`BitwuzlaTermManager` instance that allows us to
+create sorts and terms later:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
      :lines: 19
+
+Then, create a :cpp:struct:`BitwuzlaOptions` instance:
 
 This instance can be configured via :cpp:func:`bitwuzla_set_option()`.  
 For example, to enable model generation
@@ -37,18 +38,26 @@ default):
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 26
+     :lines: 28
 
 For more details on available options, see :doc:`c/options`.
 
-Then, create a :cpp:struct:`Bitwuzla` **solver** instance (configuration
-options are now frozen and cannot be changed for this instance):
+Then, create a :cpp:struct:`Bitwuzla` **solver** instance with a term manager
+and configured options (configuration options are now frozen and cannot be
+changed for this instance):
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 28
+     :lines: 30
 
-Next, you will want to **create** some **expressions** and **assert formulas**.
+Next, you will want to **create** some **expressions** via the term manager
+`tm` and **assert formulas**.
+
+.. note::
+
+  Sorts and terms can be shared between multiple solver instances as long as
+  these solvers use the same term manager.
+
 For example, consider the following SMT-LIB input:
 
 .. literalinclude:: ../../examples/smt2/quickstart.smt2
@@ -58,7 +67,7 @@ This input is created and asserted as follows:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 18-85
+     :lines: 18-91
 
 Alternatively, you can **parse** an **input file** in BTOR2 format
 :cite:`btor2` or SMT-LIB v2 format :cite:`smtlib2` by creating a parser via
@@ -76,7 +85,7 @@ For example, to parse an example file `examples/smt2/quickstart.smt2` in SMT-LIB
 
 .. literalinclude:: ../../examples/c/parse.c
      :language: c
-     :lines: 19-28,31-33
+     :lines: 19-28,31-36
 
 .. note::
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
@@ -88,7 +97,7 @@ via :cpp:func:`bitwuzla_get_assertions()`:
 
 .. literalinclude:: ../../examples/c/parse.c
      :language: c
-     :lines: 35-45
+     :lines: 38-48
 
 Alternatively, Bitwuzla also supports **parsing from strings** via
 :cpp:func:`bitwuzla_parser_parse()`. The quickstart input above can be parsed
@@ -101,7 +110,7 @@ unsatisfiable) via parsing from string as follows:
 
 .. literalinclude:: ../../examples/c/parse.c
      :language: c
-     :lines: 48-51
+     :lines: 51-54
 
 Bitwuzla also supports **parsing terms and sorts from strings** via
 :cpp:func:`bitwuzla_parser_parse_term()` and
@@ -120,34 +129,34 @@ that it corresponds to the bit-vector sort of size 16 created via
 
 .. literalinclude:: ../../examples/c/parse.c
      :language: c
-     :lines: 62-69
+     :lines: 65-72
 
 Then, to **declare** Boolean constants :code:`c` and :code:`d` and a bit-vector
 constant :code:`b`:
 
 .. literalinclude:: ../../examples/c/parse.c
      :language: c
-     :lines: 75-84
+     :lines: 78-87
 
 These terms can be retrieved via :cpp:func:`bitwuzla.Parser.parse_term()`:
 
 .. literalinclude:: ../../examples/c/parse.c
      :language: c
-     :lines: 85-96
+     :lines: 88-99
 
 Now, to **parse** in **terms** using these constants via
 :cpp:func:`bitwuzla.Parser.parse_term()`:
 
 .. literalinclude:: ../../examples/c/parse.c
      :language: c
-     :lines: 97-109
+     :lines: 100-112
 
 After parsing input and asserting formulas, **satisfiability** can be
 determined via :cpp:func:`bitwuzla_check_sat()`.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 87-88
+     :lines: 93-94
 
 Formulas can also be **assumed** via :cpp:func:`bitwuzla_check_sat_assuming()`.
 
@@ -159,7 +168,7 @@ how to print the current model via declared symbols (in this case :code:`x`,
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 93-139
+     :lines: 99-145
 
 This will output a possible model, in this case:
 
@@ -191,7 +200,7 @@ bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 144-150
+     :lines: 150-155
 
 This will print:
 
@@ -210,7 +219,7 @@ We can retrieve an SMT-LIB2 string representation of the values via
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 151-160
+     :lines: 156-165
 
 This will print:
 
@@ -231,7 +240,7 @@ however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 165-169
+     :lines: 171-174
 
 This will print:
 
@@ -246,7 +255,7 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 172-175
+     :lines: 178-181
 
 This will print:
 
@@ -254,11 +263,26 @@ This will print:
 
   value of v = x * x: 11000001
 
-Finally, we delete the Bitwuzla and Bitwuzla options instance.
+Finally, we delete the Bitwuzla, BitwuzlaOptions, and BitwuzlaTermManager
+instances.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 178-179
+     :lines: 184-186
+
+.. note::
+
+  Make sure to delete the term manager last since the solver instance relies on
+  it.
+  Further, when the term manager is deleted, it will automatically release all
+  created sorts and terms. For a more fine-grained control on when sorts and
+  terms are released you can use
+  :cpp:func:`bitwuzla_sort_copy()`,
+  :cpp:func:`bitwuzla_sort_release()`,
+  :cpp:func:`bitwuzla_term_copy()`,
+  :cpp:func:`bitwuzla_term_release()`, and
+  :cpp:func:`bitwuzla_term_manager_release()`.
+
 
 
 Examples
@@ -424,3 +448,14 @@ Termination Callback Example
    ../../examples/c/terminator.c
    ../../examples/cpp/terminator.cpp
    ../../examples/python/terminator.py
+
+Manual Reference Counting of Sort and Terms Example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+| This example shows how to use the manual reference counting functions for
+| sorts and terms.
+| The source code for this example can be found at `examples/c/manual_reference_counting.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/manual_reference_counting.c>`_.
+
+
+.. tabbed-examples::
+   ../../examples/c/manual_reference_counting.c

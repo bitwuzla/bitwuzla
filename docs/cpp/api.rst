@@ -17,11 +17,18 @@ C++ API Documentation
 Quickstart
 ----------
 
-First, create a :cpp:class:`bitwuzla::Options` instance:
+First, create a :cpp:class:`TermManager` instance that allows us to
+create sorts and terms later:
+
+.. literalinclude:: ../../examples/cpp/quickstart.cpp
+     :language: c
+     :lines: 22
+
+Then, create a :cpp:class:`bitwuzla::Options` instance:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 22
+     :lines: 24
 
 This instance can be configured via :cpp:func:`bitwuzla::Options::set()`.  
 For example, to enable model generation
@@ -29,7 +36,7 @@ For example, to enable model generation
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 24
+     :lines: 26
 
 Some options have **modes**, which can be configured via the string
 representation of their modes. For example, to enable CaDiCaL as back end SAT
@@ -38,18 +45,26 @@ default):
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 29
+     :lines: 31
 
 For more details on available options, see :doc:`options`.
 
-Then, create a :cpp:struct:`Bitwuzla` **solver** instance (configuration
-options are now frozen and cannot be changed for this instance):
+Then, create a :cpp:struct:`Bitwuzla` **solver** instance with a term manager
+and configured options (configuration options are now frozen and cannot be
+changed for this instance):
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 31
+     :lines: 33
 
-Next, you will want to **create** some **expressions** and **assert formulas**.
+Next, you will want to **create** some **expressions** via the term manager
+`tm` and **assert formulas**.
+
+.. note::
+
+  Sorts and terms can be shared between multiple solver instances as long as
+  these solvers use the same term manager.
+
 For example, consider the following SMT-LIB input:
 
 .. literalinclude:: ../../examples/smt2/quickstart.smt2
@@ -59,7 +74,7 @@ This input is created and asserted as follows:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 21-76
+     :lines: 21-79
 
 Alternatively, you can **parse** an **input file** in BTOR2 format
 :cite:`btor2` or SMT-LIB v2 format :cite:`smtlib2` by creating a parser
@@ -76,7 +91,7 @@ For example, to parse an example file `examples/smt2/quickstart.smt2` in SMT-LIB
 
 .. literalinclude:: ../../examples/cpp/parse.cpp
      :language: cpp
-     :lines: 22-27,29-30,34,84-89
+     :lines: 22-29,31-32,36,86-91
 
 .. note::
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
@@ -88,7 +103,7 @@ via :cpp:func:`bitwuzla::Bitwuzla::get_assertions()`:
 
 .. literalinclude:: ../../examples/cpp/parse.cpp
      :language: cpp
-     :lines: 36-43
+     :lines: 38-45
 
 Alternatively, Bitwuzla also supports **parsing from strings** via
 :cpp:func:`bitwuzla::parser::Parser::parse()`. The quickstart input above can
@@ -101,7 +116,7 @@ unsatisfiable) via parsing from string as follows:
 
 .. literalinclude:: ../../examples/cpp/parse.cpp
      :language: cpp
-     :lines: 46
+     :lines: 48
 
 Bitwuzla also supports **parsing terms and sorts from strings** via
 :cpp:func:`bitwuzla::parser::Parser::parse_term()` and
@@ -120,35 +135,35 @@ that it corresponds to the bit-vector sort of size 16 created via
 
 .. literalinclude:: ../../examples/cpp/parse.cpp
      :language: cpp
-     :lines: 56-60
+     :lines: 58-62
 
 Then, to **declare** Boolean constants :code:`c` and :code:`d` and a bit-vector
 constant :code:`b`:
 
 .. literalinclude:: ../../examples/cpp/parse.cpp
      :language: cpp
-     :lines: 66,68
+     :lines: 68,70
 
 These terms can be retrieved via
 :cpp:func:`bitwuzla::parser::Parser::parse_term()`:
 
 .. literalinclude:: ../../examples/cpp/parse.cpp
      :language: cpp
-     :lines: 69-74
+     :lines: 71-76
 
 Now, to **parse** in **terms** using these constants via
 :cpp:func:`bitwuzla::parser::Parser::parse_term()`:
 
 .. literalinclude:: ../../examples/cpp/parse.cpp
      :language: cpp
-     :lines: 75-83
+     :lines: 77-85
 
 After parsing input and asserting formulas, **satisfiability** can be
 determined via :cpp:func:`bitwuzla::Bitwuzla::check_sat()`.
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 78-79
+     :lines: 81-82
 
 Formulas can also be **assumed** via passing a vector of assumptions into
 :cpp:func:`bitwuzla::Bitwuzla::check_sat()`.
@@ -162,7 +177,7 @@ the current model via declared symbols (in this case :code:`x`, :code:`y`,
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 84-115
+     :lines: 87-118
 
 This will output a possible model, in this case:
 
@@ -193,7 +208,7 @@ bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 120-126
+     :lines: 123-127
 
 This will print:
 
@@ -211,7 +226,7 @@ We can retrieve an SMT-LIB2 string representation of the values via
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 127-138
+     :lines: 130-140
 
 This will print:
 
@@ -232,7 +247,7 @@ however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 143-147
+     :lines: 146-149
 
 This will print:
 
@@ -247,7 +262,7 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 150-151
+     :lines: 153-154
 
 This will print:
 

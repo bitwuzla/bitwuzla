@@ -50,7 +50,8 @@ main()
   bitwuzla_term_release(a);
   bitwuzla_term_release(b);
 
-  // If all sort and term references should be released we can also use the
+  // At this point all sort and term references have been released. If all sort
+  // and term references should be released at once we can also use the
   // following function.
   bitwuzla_term_manager_release(tm);
 

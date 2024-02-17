@@ -15,11 +15,18 @@ Python API Documentation
 Quickstart
 ----------
 
-First, create a :class:`bitwuzla.Options` instance:
+First, create a :cpp:class:`TermManager` instance that allows us to
+create sorts and terms later:
+
+.. literalinclude:: ../../examples/python/quickstart.py
+     :language: c
+     :lines: 16
+
+Then, create a :class:`bitwuzla.Options` instance:
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 16
+     :lines: 18
 
 This instance can be configured via :obj:`bitwuzla.Options.set()`.  
 For example, to enable model generation
@@ -27,7 +34,7 @@ For example, to enable model generation
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 18
+     :lines: 20
 
 Some options have **modes**, which can be configured via the string
 representation of their modes. For example, to enable CaDiCaL as back end SAT
@@ -36,18 +43,26 @@ default):
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 23
+     :lines: 25
 
 For more details on available options, see :doc:`options`.
 
-Then, create a :class:`bitwuzla.Bitwuzla` **solver** instance (configuration
-options are now frozen and cannot be changed for this instance):
+Then, create a :class:`bitwuzla.Bitwuzla` **solver** instance with a term
+manager and configured options(configuration options are now frozen and cannot
+be changed for this instance):
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 25
+     :lines: 27
 
-Next, you will want to **create** some **expressions** and **assert formulas**.
+Next, you will want to **create** some **expressions** via the term manager
+`tm`  and **assert formulas**.
+
+.. note::
+
+  Sorts and terms can be shared between multiple solver instances as long as
+  these solvers use the same term manager.
+
 For example, consider the following SMT-LIB input:
 
 .. literalinclude:: ../../examples/smt2/quickstart.smt2
@@ -57,7 +72,7 @@ This input is created and asserted as follows:
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 15-70
+     :lines: 15-72
 
 Alternatively, you can **parse** an **input file** in BTOR2 format
 :cite:`btor2` or SMT-LIB v2 format :cite:`smtlib2` by creating a parser
@@ -75,7 +90,7 @@ SMT-LIB format:
 
 .. literalinclude:: ../../examples/python/parse.py
      :language: python
-     :lines: 17-18,20-22,24,28
+     :lines: 18,20,22-24,30,32
 
 .. note::
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
@@ -87,7 +102,7 @@ via :obj:`bitwuzla.Bitwuzla.get_assertions()`:
 
 .. literalinclude:: ../../examples/python/parse.py
      :language: python
-     :lines: 32-38
+     :lines: 34-40
 
 Alternatively, Bitwuzla also supports **parsing from strings** via
 :obj:`bitwuzla.Parser.parse()`. The quickstart input above can be parsed
@@ -100,7 +115,7 @@ unsatisfiable) via parsing from string as follows:
 
 .. literalinclude:: ../../examples/python/parse.py
      :language: python
-     :lines: 41
+     :lines: 43
 
 Bitwuzla also supports **parsing terms and sorts from strings** via
 :obj:`bitwuzla.Parser.parse_term()` and
@@ -119,34 +134,34 @@ that it corresponds to the bit-vector sort of size 16 created via
 
 .. literalinclude:: ../../examples/python/parse.py
      :language: python
-     :lines: 49-53
+     :lines: 51-55
 
 Then, to **declare** Boolean constants :code:`c` and :code:`d` and a bit-vector
 constant :code:`b`:
 
 .. literalinclude:: ../../examples/python/parse.py
      :language: python
-     :lines: 59,61
+     :lines: 61,63
 
 These terms can be retrieved via :obj:`bitwuzla.Parser.parse_term()`:
 
 .. literalinclude:: ../../examples/python/parse.py
      :language: python
-     :lines: 62-67
+     :lines: 64-69
 
 Now, to **parse** in **terms** using these constants via
 :obj:`bitwuzla.Parser.parse_term()`:
 
 .. literalinclude:: ../../examples/python/parse.py
      :language: python
-     :lines: 68-76
+     :lines: 70-78
 
 After parsing input and asserting formulas, **satisfiability** can be
 determined via :obj:`bitwuzla.Bitwuzla.check_sat()`.
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 72-73
+     :lines: 74-75
 
 Formulas can also be **assumed** via passing a vector of assumptions into
 :obj:`bitwuzla.Bitwuzla.check_sat()`.
@@ -160,7 +175,7 @@ the current model via declared symbols (in this case :code:`x`, :code:`y`,
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 77-99
+     :lines: 79-101
 
 This will output a possible model, in this case:
 
@@ -191,7 +206,7 @@ bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 102-105
+     :lines: 104-107
 
 This will print:
 
@@ -209,7 +224,7 @@ We can retrieve an SMT-LIB2 string representation of the values via
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 107-115
+     :lines: 109-117
 
 This will print:
 
@@ -230,7 +245,7 @@ however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 121-122
+     :lines: 123-124
 
 This will print:
 
@@ -245,13 +260,14 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/python/quickstart.py
      :language: python
-     :lines: 127
+     :lines: 129
 
 This will print:
 
 .. code-block::
 
   value of v = x * x: 11000001
+
 Examples
 --------
 
