@@ -4,18 +4,11 @@ Python Interface
 * :ref:`python/interface:classes`
 
   * :ref:`python/interface:options`
+  * :ref:`python/interface:termmanager`
   * :ref:`python/interface:bitwuzla`
   * :ref:`python/interface:sort`
   * :ref:`python/interface:term`
   * :ref:`python/interface:optioninfo`
-
-* :ref:`python/interface:functions`
-
-  * :ref:`python/interface:sort creation`
-  * :ref:`python/interface:term creation`
-
-    * :ref:`python/interface:values`
-    * :ref:`python/interface:special values`
 
 * :ref:`python/interface:enums`
 
@@ -34,6 +27,14 @@ Options
 .. autoclass:: bitwuzla.Options
    :members:
    :undoc-members:
+
+TermManager
+^^^^^^^^^^^
+.. autoclass:: bitwuzla.TermManager
+   :members:
+   :undoc-members:
+
+   .. automethod:: __init__
 
 Bitwuzla
 ^^^^^^^^

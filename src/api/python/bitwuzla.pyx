@@ -837,6 +837,11 @@ cdef class OptionInfo:
 # --------------------------------------------------------------------------- #
 
 cdef class TermManager:
+    """The term manager is responsible for the creation and management of sorts
+       and terms. Sorts and terms are tied to a specific term manager instance
+       and can be shared between multiple solver instances that have the same
+       term manager.
+    """
     cdef shared_ptr[bitwuzla_api.TermManager] c_tm
     cdef bitwuzla_api.TermManager* c_tm_ptr
 
