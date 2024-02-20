@@ -56,6 +56,6 @@ main()
     printf("  description: %s\n\n", info.description);
   }
 
-  // Finally delete options instance.
+  // Finally, delete options instance.
   bitwuzla_options_delete(options);
 }
