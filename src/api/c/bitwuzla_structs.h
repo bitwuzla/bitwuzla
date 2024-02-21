@@ -101,9 +101,6 @@ struct BitwuzlaTermManager
   static const bitwuzla::Sort &import_sort(BitwuzlaSort sort);
   static const bitwuzla::Term &import_term(BitwuzlaTerm term);
 
-  BitwuzlaTermManager();
-  ~BitwuzlaTermManager();
-
   /**
    * Export C++ sort to C API.
    * @param sort The sort to export.
@@ -148,11 +145,9 @@ struct BitwuzlaTermManager
   /* ----------------------------------------------------------------- */
 
   /** The associated term manager instance. */
-  bitwuzla::TermManager *d_tm;
+  bitwuzla::TermManager d_tm;
 
  private:
-  /** True if associated term manager must be deleted on destruction. */
-  bool d_term_mgr_needs_delete = false;
   /** Map exported (and alive) C++ sorts to wrapper sort. */
   std::unordered_map<bitwuzla::Sort, bitwuzla_sort_t> d_alloc_sorts;
   /** Map exported (and alive) C++ terms to wrapper term. */
@@ -165,11 +160,11 @@ struct Bitwuzla
   {
     if (options)
     {
-      d_bitwuzla = new bitwuzla::Bitwuzla(*tm->d_tm, options->d_options);
+      d_bitwuzla = new bitwuzla::Bitwuzla(tm->d_tm, options->d_options);
     }
     else
     {
-      d_bitwuzla = new bitwuzla::Bitwuzla(*tm->d_tm);
+      d_bitwuzla = new bitwuzla::Bitwuzla(tm->d_tm);
     }
     d_tm                    = tm;
     d_bitwuzla_needs_delete = true;

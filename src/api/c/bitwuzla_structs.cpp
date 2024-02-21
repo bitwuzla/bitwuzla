@@ -14,20 +14,6 @@ BitwuzlaTermManager::import_term(BitwuzlaTerm term)
   return term->d_term;
 }
 
-BitwuzlaTermManager::BitwuzlaTermManager() : d_tm(new bitwuzla::TermManager())
-{
-  d_term_mgr_needs_delete = true;
-}
-
-BitwuzlaTermManager::~BitwuzlaTermManager()
-{
-  release();
-  if (d_term_mgr_needs_delete)
-  {
-    delete d_tm;
-  }
-}
-
 BitwuzlaSort
 BitwuzlaTermManager::export_sort(const bitwuzla::Sort& sort)
 {
