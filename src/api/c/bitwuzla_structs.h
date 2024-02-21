@@ -57,25 +57,42 @@ struct BitwuzlaOptions
   bitwuzla::Options d_options;
 };
 
+/** Wrapper for C++ terms. */
 struct bitwuzla_term_t
 {
+  /**
+   * Constructor.
+   * @param term The wrapped C++ term.
+   * @param tm   The associated term manager.
+   */
   bitwuzla_term_t(const bitwuzla::Term &term, BitwuzlaTermManager *tm)
       : d_term(term), d_tm(tm)
   {
   }
+  /** The wrapped C++ term. */
   bitwuzla::Term d_term;
+  /** External refs count. */
   uint32_t d_refs           = 1;
+  /** The associated term manager. */
   BitwuzlaTermManager *d_tm = nullptr;
 };
 
 struct bitwuzla_sort_t
 {
+  /**
+   * Constructor.
+   * @param sort The wrapped C++ sort.
+   * @param tm   The associated term manager.
+   */
   bitwuzla_sort_t(const bitwuzla::Sort &sort, BitwuzlaTermManager *tm)
       : d_sort(sort), d_tm(tm)
   {
   }
+  /** The wrapped C++ sort. */
   bitwuzla::Sort d_sort;
+  /** External refs count. */
   uint32_t d_refs           = 1;
+  /** The associated term manager. */
   BitwuzlaTermManager *d_tm = nullptr;
 };
 
@@ -87,24 +104,58 @@ struct BitwuzlaTermManager
   BitwuzlaTermManager();
   ~BitwuzlaTermManager();
 
+  /**
+   * Export C++ sort to C API.
+   * @param sort The sort to export.
+   */
   BitwuzlaSort export_sort(const bitwuzla::Sort &sort);
+  /**
+   * Export C++ term to C API.
+   * @param term The term to export.
+   */
   BitwuzlaTerm export_term(const bitwuzla::Term &term);
 
-  /** Manual memory management for sorts and terms. */
+  /* Manual memory management for sorts and terms. ------------------- */
+
+  /**
+   * Decrement the external ref count of a term. If the ref count reaches zero,
+   * the term is released (freed).
+   * @param term The term to release.
+   */
   void release(bitwuzla_term_t *term);
+  /**
+   * Increment the external ref count of a term.
+   * @param term The term to copy.
+   * @return The copied term.
+   */
   bitwuzla_term_t *copy(bitwuzla_term_t *term);
+  /**
+   * Decrement the external ref count of a sort. If the ref count reaches zero,
+   * the sort is released (freed).
+   * @param sort The sort to release.
+   */
   void release(bitwuzla_sort_t *sort);
+  /**
+   * Increment the external ref count of a sort.
+   * @param sort The sort to copy.
+   * @return The copied sort.
+   */
   bitwuzla_sort_t *copy(bitwuzla_sort_t *sort);
 
   /** Release all sorts and terms. */
   void release();
 
+  /* ----------------------------------------------------------------- */
+
   /** The associated term manager instance. */
   bitwuzla::TermManager *d_tm;
 
  private:
+  /** True if associated term manager must be deleted on destruction. */
   bool d_term_mgr_needs_delete = false;
+  /** Map exported (and alive) C++ sorts to wrapper sort. */
   std::unordered_map<bitwuzla::Sort, bitwuzla_sort_t> d_alloc_sorts;
+  /** Map exported (and alive) C++ terms to wrapper term. */
   std::unordered_map<bitwuzla::Term, bitwuzla_term_t> d_alloc_terms;
 };
 
