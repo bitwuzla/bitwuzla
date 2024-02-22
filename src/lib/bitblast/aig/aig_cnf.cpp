@@ -85,6 +85,83 @@ AigCnfEncoder::statistics() const
   return d_statistics;
 }
 
+namespace {
+
+/**
+ * Check whether given two-level AIG encodes an ite(c,a,b).
+ *
+ * @param aig The AIG to check.
+ * @param children The children of ite(c,a,b), added as c,~a,~b. Note that a
+ *                 and b have to be negated when encoding the ite to CNF since
+ *                 we do not push new negated nodes onto the vector, but use
+ *                 the existing ones that occur in `aig`.
+ *
+ * @return True if given AIG is a if-then-else.
+ */
+bool
+is_ite(const AigNode& aig, std::vector<const AigNode*>& children)
+{
+  assert(aig.is_and());
+  assert(children.empty());
+
+  const auto& l = aig[0];
+  if (!l.is_negated() || !l.is_and())
+  {
+    return false;
+  }
+
+  const auto& r = aig[1];
+  if (!r.is_negated() || !r.is_and())
+  {
+    return false;
+  }
+
+  // ite(c,a,b) == (c -> a) /\ (~c -> b)
+  // Check all commutative cases of: ~(c /\ ~a) /\ ~(~c /\ ~b)
+  //                                   ll   lr       rl    rr
+  const auto& ll = l[0];
+  const auto& lr = l[1];
+  const auto& rl = r[0];
+  const auto& rr = r[1];
+
+  // ~(~b /\ ~c) /\  ~(c /\ ~a)
+  if (-lr.get_id() == rl.get_id())
+  {
+    children.push_back(&rl);  // c
+    children.push_back(&rr);  // ~a
+    children.push_back(&ll);  // ~b
+    return true;
+  }
+  // ~(~c /\ ~b) /\ ~(c /\ ~a)
+  if (-ll.get_id() == rl.get_id())
+  {
+    children.push_back(&rl);  // c
+    children.push_back(&rr);  // ~a
+    children.push_back(&lr);  // ~b
+    return true;
+  }
+  // ~(~b /\ ~c) /\  ~(~a /\ c)
+  if (-lr.get_id() == rr.get_id())
+  {
+    children.push_back(&rr);  // c
+    children.push_back(&rl);  // ~a
+    children.push_back(&ll);  // ~b
+    return true;
+  }
+  // ~(~c /\ ~b) /\  ~(~a /\ c)
+  if (-ll.get_id() == rr.get_id())
+  {
+    children.push_back(&rr);  // c
+    children.push_back(&rl);  // ~a
+    children.push_back(&lr);  // ~b
+    return true;
+  }
+
+  return false;
+}
+
+}  // namespace
+
 void
 AigCnfEncoder::_encode(const AigNode& aig)
 {
@@ -119,10 +196,20 @@ AigCnfEncoder::_encode(const AigNode& aig)
 
       auto [it, inserted] = cache.insert(cur);
 
+      std::vector<const AigNode*> children;
+      bool ite = is_ite(*cur, children);
+
       if (inserted)
       {
-        visit.push_back(&(*cur)[0]);
-        visit.push_back(&(*cur)[1]);
+        if (ite)
+        {
+          visit.insert(visit.end(), children.begin(), children.end());
+        }
+        else
+        {
+          visit.push_back(&(*cur)[0]);
+          visit.push_back(&(*cur)[1]);
+        }
       }
       else
       {
@@ -131,21 +218,38 @@ AigCnfEncoder::_encode(const AigNode& aig)
 
         // TODO: and optimization: collect all children and encode one big and
         // TODO: xor optimization: use native xor encoding
-        // TODO: ite optimization: use native ite encoding
 
-        // Encode binary AND
-        //
-        // x <-> a /\ b --> (~x \/ a) /\ (~x \/ b) /\ (x \/ ~a \/ ~b)
+        if (ite)
+        {
+          // Encode x <-> ite(c,a,b)
+          auto x = std::abs(cur->get_id());
+          auto c = children[0]->get_id();   // cond
+          auto a = -children[1]->get_id();  // then
+          auto b = -children[2]->get_id();  // else
 
-        auto x = std::abs(cur->get_id());
-        auto a = (*cur)[0].get_id();
-        auto b = (*cur)[1].get_id();
+          d_sat_solver.add_clause({-x, -c, a});
+          d_sat_solver.add_clause({-x, c, b});
+          d_sat_solver.add_clause({x, -c, -a});
+          d_sat_solver.add_clause({x, c, -b});
+          d_statistics.num_clauses += 4;
+          d_statistics.num_literals += 12;
+        }
+        else
+        {
+          // Encode binary AND
+          //
+          // x <-> a /\ b --> (~x \/ a) /\ (~x \/ b) /\ (x \/ ~a \/ ~b)
 
-        d_sat_solver.add_clause({-x, a});
-        d_sat_solver.add_clause({-x, b});
-        d_sat_solver.add_clause({x, -a, -b});
-        d_statistics.num_clauses += 3;
-        d_statistics.num_literals += 7;
+          auto x = std::abs(cur->get_id());
+          auto a = (*cur)[0].get_id();
+          auto b = (*cur)[1].get_id();
+
+          d_sat_solver.add_clause({-x, a});
+          d_sat_solver.add_clause({-x, b});
+          d_sat_solver.add_clause({x, -a, -b});
+          d_statistics.num_clauses += 3;
+          d_statistics.num_literals += 7;
+        }
       }
     }
   } while (!visit.empty());
