@@ -51,10 +51,11 @@ def _bool(val):
 
 # Can be replaced with argparse.BooleanOptionalAction when Python 3.8 is EOL.
 def bool_opt(ap, name, help):
+    dest = name.replace('-', '_')
     ap.add_argument(f'--{name}', action='store_true',
                     help=f'enable {help}', default=None)
-    ap.add_argument(f'--no-{name}', action='store_false', dest=name,
-                    help=f'disable {help}')
+    ap.add_argument(f'--no-{name}', action='store_false', dest=dest,
+                    help=f'disable {help}', default=None)
 
 def main():
     if not os.path.exists('src/main/main.cpp'):
