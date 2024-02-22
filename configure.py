@@ -49,6 +49,12 @@ def _bool(val):
         return 'true'
     return 'false'
 
+# Can be replaced with argparse.BooleanOptionalAction when Python 3.8 is EOL.
+def bool_opt(ap, name, help):
+    ap.add_argument(f'--{name}', action='store_true',
+                    help=f'enable {help}', default=None)
+    ap.add_argument(f'--no-{name}', action='store_false', dest=name,
+                    help=f'disable {help}')
 
 def main():
     if not os.path.exists('src/main/main.cpp'):
@@ -70,38 +76,23 @@ def main():
                     help='shared library')
     ap.add_argument('--static', action='store_true',
                     help='static library')
-    ap.add_argument('--assertions', action='store_true', default=None,
-                    help='enable assertions')
-    ap.add_argument('--no-assertions', action='store_false',
-                    dest='assertions', help='disable assertions')
-    ap.add_argument('--asan', action='store_true',
-                    help='enable address sanitizer')
-    ap.add_argument('--ubsan', action='store_true',
-                    help='enable undefined behavior sanitizer')
-    ap.add_argument('--coverage', action='store_true',
-                    help='enable code coverage')
+    bool_opt(ap, 'assertions', 'assertions')
+    bool_opt(ap, 'asan', 'address sanitizer')
+    bool_opt(ap, 'ubsan', 'undefined behavior sanitizer')
+    bool_opt(ap, 'coverage', 'code coverage')
     ap.add_argument('--win64', action='store_true',
                     help='enable cross compilation for 64-bit Windows')
-    ap.add_argument('--python', action='store_true',
-                    help='build python bindings')
-    ap.add_argument('--testing', action='store_true', default=None,
-                    help='enable regression and unit testing')
-    ap.add_argument('--no-testing', action='store_false', dest='testing',
-                    help='disable regression and unit testing')
-    ap.add_argument('--unit-testing', action='store_true', default=None,
-                    help='enable unit testing')
-    ap.add_argument('--no-unit-testing', action='store_false',
-                    dest='unit_testing', help='disable unit testing')
-    ap.add_argument('--docs', action='store_true',
-                    help='build documentation')
+    bool_opt(ap, 'python', 'python bindings')
+    bool_opt(ap, 'testing', 'regression and unit testing')
+    bool_opt(ap, 'unit-testing', 'unit testing')
+    bool_opt(ap, 'docs', 'documentation')
     ap.add_argument('--wipe', action='store_true',
                     help='delete build directory if it already exists')
-    ap.add_argument('--kissat', action='store_true',
-                    help='compile with Kissat')
+    bool_opt(ap, 'kissat', 'Kissat support')
     args = ap.parse_args()
 
     build_opts = []
-    sanitize = []
+    sanitize = set()
     if args.buildtype:
         build_opts.append(f'-Dbuildtype={args.buildtype}')
     if args.prefix:
@@ -110,30 +101,33 @@ def main():
         build_opts.append(f'-Ddefault_library=shared')
     if args.static:
         build_opts.append(f'-Ddefault_library=static')
-    if args.asan:
-        sanitize.append('address')
-    if args.ubsan:
-        sanitize.append('undefined')
+    if args.asan is not None:
+        sanitize.add('address' if args.asan else 'none')
+    if args.ubsan is not None:
+        if args.ubsan:
+            sanitize.add('undefined')
+        elif 'address' not in sanitize:
+            sanitize.add('none')
     if args.assertions is not None:
         build_opts.append(f'-Db_ndebug={_bool(not args.assertions)}')
     if args.testing is not None:
         build_opts.append(f'-Dtesting={_feat(args.testing)}')
     if args.unit_testing is not None:
         build_opts.append(f'-Dunit_testing={_feat(args.unit_testing)}')
-    if args.coverage:
-        build_opts.append('-Db_coverage=true')
+    if args.coverage is not None:
+        build_opts.append(f'-Db_coverage={_bool(args.coverage)}')
     if args.win64:
         build_opts.append('--cross-file=x86_64-w64-mingw32.txt')
-    if args.python:
-        build_opts.append('-Dpython=true')
-    if args.docs:
-        build_opts.append('-Ddocs=true')
+    if args.python is not None:
+        build_opts.append(f'-Dpython={_bool(args.python)}')
+    if args.docs is not None:
+        build_opts.append(f'-Ddocs={_bool(args.docs)}')
     if sanitize:
         build_opts.append(f'-Db_sanitize={",".join(sanitize)}')
     if args.wipe and os.path.exists(args.build_dir):
         shutil.rmtree(args.build_dir)
-    if args.kissat:
-        build_opts.append('-Dkissat=true')
+    if args.kissat is not None:
+        build_opts.append(f'-Dkissat={_bool(args.kissat)}')
 
     configure_build(args.build_dir, build_opts)
 
