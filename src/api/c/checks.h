@@ -80,13 +80,13 @@ class BitwuzlaAbortStream
   BITWUZLA_CHECK(sort != nullptr) << "invalid sort";
 
 #define BITWUZLA_CHECK_SORT_AT_IDX(sorts, i) \
-  BITWUZLA_CHECK(sorts[i] != nullptr) << "invalid sort id at index " << i;
+  BITWUZLA_CHECK(sorts[i] != nullptr) << "invalid sort at index " << i;
 
 #define BITWUZLA_CHECK_TERM(term) \
   BITWUZLA_CHECK(term != nullptr) << "invalid term";
 
 #define BITWUZLA_CHECK_TERM_AT_IDX(terms, i) \
-  BITWUZLA_CHECK(terms[i] != nullptr) << "invalid term id at index " << i;
+  BITWUZLA_CHECK(terms[i] != nullptr) << "invalid term at index " << i;
 
 #define BITWUZLA_CHECK_RM(rm) \
   BITWUZLA_CHECK((rm) < BITWUZLA_RM_MAX) << "invalid rounding mode";
