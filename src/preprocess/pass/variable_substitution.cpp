@@ -448,10 +448,24 @@ PassVariableSubstitution::normalize_substitution_eq_bv_concat(const Node& node)
               visit.insert(visit.end(), cur.begin(), cur.end());
               continue;
             }
-            if (cur.kind() == Kind::EQUAL
-                && (cur[0].is_const() || cur[1].is_const()))
+            if (cur.kind() == Kind::EQUAL)
             {
-              res.push_back(cur);
+              if (cur[0].is_const() || cur[1].is_const())
+              {
+                res.push_back(cur);
+              }
+              else
+              {
+                rewritten = rw_eq_bv_concat(d_env.rewriter(), cur, 0);
+                if (rewritten == cur)
+                {
+                  rewritten = rw_eq_bv_concat(d_env.rewriter(), cur, 1);
+                }
+                if (rewritten != cur)
+                {
+                  visit.push_back(rewritten);
+                }
+              }
             }
           }
         } while (!visit.empty());
