@@ -364,7 +364,105 @@ PassVariableSubstitution::find_substitution(const Node& assertion)
   return std::make_pair(Node(), Node());
 }
 
+namespace {
+/**
+ * match:  (= (bvconcat a_[n] b) c_[m])
+ * result: (and
+ *           (=
+ *             ((_ extract u l) (bvconcat a b))
+ *             ((_ extract u l) c))
+ *           (=
+ *             ((_ extract (l - 1) 0) (bvconcat a b))
+ *             ((_ extract (l - 1)  0) c))
+ *         with u = m - 1
+ *              l = m - n + 1
+ */
 Node
+rw_eq_bv_concat(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::BV_CONCAT)
+  {
+    uint64_t m = node[idx1].type().bv_size();
+    uint64_t u = m - 1;
+    uint64_t l = m - node[idx0][0].type().bv_size();
+
+    Node ext1_lhs = rewriter.mk_node(Kind::BV_EXTRACT, {node[idx1]}, {u, l});
+    Node ext1_rhs =
+        rewriter.mk_node(Kind::BV_EXTRACT, {node[idx1]}, {l - 1, 0});
+    // Note: Introducing two extracts on node[idx1] is not necessarily
+    //       beneficial. Hence, we only rewrite if an extract on node[idx1]
+    //       is rewritten to a non-extract.
+
+    if (ext1_lhs.kind() != Kind::BV_EXTRACT
+        || ext1_rhs.kind() != Kind::BV_EXTRACT)
+    {
+      Node lhs = rewriter.mk_node(
+          Kind::EQUAL,
+          {rewriter.mk_node(Kind::BV_EXTRACT, {node[idx0]}, {u, l}), ext1_lhs});
+      Node rhs = rewriter.mk_node(
+          Kind::EQUAL,
+          {rewriter.mk_node(Kind::BV_EXTRACT, {node[idx0]}, {l - 1, 0}),
+           ext1_rhs});
+      return rewriter.mk_node(Kind::AND, {lhs, rhs});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+std::vector<Node>
+PassVariableSubstitution::normalize_substitution_eq_bv_concat(const Node& node)
+{
+  if (node.kind() == Kind::EQUAL)
+  {
+    Node rewritten = rw_eq_bv_concat(d_env.rewriter(), node, 0);
+    if (rewritten == node)
+    {
+      rewritten = rw_eq_bv_concat(d_env.rewriter(), node, 1);
+    }
+    if (rewritten != node)
+    {
+      if (rewritten.kind() == Kind::EQUAL
+          && (rewritten[0].is_const() || rewritten[1].is_const()))
+      {
+        return {rewritten};
+      }
+      if (rewritten.kind() == Kind::AND)
+      {
+        std::vector<Node> res;
+        node_ref_vector visit{rewritten[0], rewritten[1]};
+        unordered_node_ref_set visited;
+        do
+        {
+          const Node& cur = visit.back();
+          visit.pop_back();
+
+          auto [it, inserted] = visited.insert(cur);
+          if (inserted)
+          {
+            if (cur.kind() == Kind::AND)
+            {
+              visit.insert(visit.end(), cur.begin(), cur.end());
+              continue;
+            }
+            if (cur.kind() == Kind::EQUAL
+                && (cur[0].is_const() || cur[1].is_const()))
+            {
+              res.push_back(cur);
+            }
+          }
+        } while (!visit.empty());
+        return res;
+      }
+    }
+  }
+  return {};
+}
+
+std::vector<Node>
 PassVariableSubstitution::normalize_for_substitution(const Node& assertion)
 {
   NodeManager& nm = d_env.nm();
@@ -379,11 +477,11 @@ PassVariableSubstitution::normalize_for_substitution(const Node& assertion)
     const Node& eq  = assertion[0];
     if (eq[0].is_const())
     {
-      return nm.mk_node(Kind::EQUAL, {eq[0], nm.invert_node(eq[1])});
+      return {nm.mk_node(Kind::EQUAL, {eq[0], nm.invert_node(eq[1])})};
     }
     if (eq[1].is_const())
     {
-      return nm.mk_node(Kind::EQUAL, {eq[1], nm.invert_node(eq[0])});
+      return {nm.mk_node(Kind::EQUAL, {eq[1], nm.invert_node(eq[0])})};
     }
   }
   else if (d_env.options().pp_variable_subst_norm_bv_ineq()
@@ -396,10 +494,11 @@ PassVariableSubstitution::normalize_for_substitution(const Node& assertion)
     auto [var, term] = normalize_substitution_bv_ineq(assertion);
     if (!var.is_null())
     {
-      return nm.mk_node(Kind::EQUAL, {var, term});
+      return {nm.mk_node(Kind::EQUAL, {var, term})};
     }
   }
-  return Node();
+
+  return normalize_substitution_eq_bv_concat(assertion);
 }
 
 /* --- PassVariableSubstitution public -------------------------------------- */
@@ -440,14 +539,17 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       }
       find_vars(assertion, start_index + i);
       // Try to normalize assertion for term substitution.
-      Node normalized = normalize_for_substitution(assertion);
-      if (!normalized.is_null())
+      auto normalized = normalize_for_substitution(assertion);
+      if (!normalized.empty())
       {
         // Explicitly add normalized assertion that was derived from assertion.
         // Note: Do not use assertion here since this reference may become
         //       invalid when resizing the assertions vector.
         Node parent = assertion;
-        assertions.push_back(normalized, parent);
+        for (const auto& n : normalized)
+        {
+          assertions.push_back(n, parent);
+        }
         continue;
       }
       auto [var, term] = find_substitution(assertion);

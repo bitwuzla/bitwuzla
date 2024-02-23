@@ -52,9 +52,10 @@ class PassVariableSubstitution : public PreprocessingPass
    *         a pair of null nodes, otherwise.
    */
   std::pair<Node, Node> find_substitution(const Node& assertion);
-  Node normalize_for_substitution(const Node& assertion);
+  std::vector<Node> normalize_for_substitution(const Node& assertion);
   std::pair<Node, Node> normalize_substitution_eq(const Node& node);
   std::pair<Node, Node> normalize_substitution_bv_ineq(const Node& node);
+  std::vector<Node> normalize_substitution_eq_bv_concat(const Node& node);
 
   Node substitute(const Node& term,
                   const Node& excl_var,
