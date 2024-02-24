@@ -378,7 +378,7 @@ namespace {
  *              l = m - n + 1
  */
 Node
-rw_eq_bv_concat(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_eq_bv_concat(Rewriter& rewriter, const Node& node, size_t idx)
 {
   assert(node.num_children() == 2);
   size_t idx0 = idx;
@@ -411,6 +411,23 @@ rw_eq_bv_concat(Rewriter& rewriter, const Node& node, size_t idx)
   }
   return node;
 }
+
+Node
+rw_eq_bv_concat(Rewriter& rewriter, const Node& node)
+{
+  Node rewritten = node, prev;
+  do
+  {
+    prev      = rewritten;
+    rewritten = _rw_eq_bv_concat(rewriter, prev, 0);
+    if (rewritten == prev)
+    {
+      rewritten = _rw_eq_bv_concat(rewriter, prev, 1);
+    }
+  } while (rewritten != prev);
+  return rewritten;
+}
+
 }  // namespace
 
 std::vector<Node>
@@ -418,11 +435,7 @@ PassVariableSubstitution::normalize_substitution_eq_bv_concat(const Node& node)
 {
   if (node.kind() == Kind::EQUAL)
   {
-    Node rewritten = rw_eq_bv_concat(d_env.rewriter(), node, 0);
-    if (rewritten == node)
-    {
-      rewritten = rw_eq_bv_concat(d_env.rewriter(), node, 1);
-    }
+    Node rewritten = rw_eq_bv_concat(d_env.rewriter(), node);
     if (rewritten != node)
     {
       if (rewritten.kind() == Kind::EQUAL
@@ -456,11 +469,7 @@ PassVariableSubstitution::normalize_substitution_eq_bv_concat(const Node& node)
               }
               else
               {
-                rewritten = rw_eq_bv_concat(d_env.rewriter(), cur, 0);
-                if (rewritten == cur)
-                {
-                  rewritten = rw_eq_bv_concat(d_env.rewriter(), cur, 1);
-                }
+                rewritten = rw_eq_bv_concat(d_env.rewriter(), cur);
                 if (rewritten != cur)
                 {
                   visit.push_back(rewritten);
