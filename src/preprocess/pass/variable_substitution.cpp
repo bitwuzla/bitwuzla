@@ -418,11 +418,14 @@ rw_eq_bv_concat(Rewriter& rewriter, const Node& node)
   Node rewritten = node, prev;
   do
   {
-    prev      = rewritten;
-    rewritten = _rw_eq_bv_concat(rewriter, prev, 0);
-    if (rewritten == prev)
+    prev = rewritten;
+    if (prev.kind() == Kind::EQUAL)
     {
-      rewritten = _rw_eq_bv_concat(rewriter, prev, 1);
+      rewritten = _rw_eq_bv_concat(rewriter, prev, 0);
+      if (rewritten == prev)
+      {
+        rewritten = _rw_eq_bv_concat(rewriter, prev, 1);
+      }
     }
   } while (rewritten != prev);
   return rewritten;
