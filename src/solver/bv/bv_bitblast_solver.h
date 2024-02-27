@@ -58,6 +58,8 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   class BitblastSatSolver;
 
   /** The current set of assertions. */
+  backtrack::vector<Node> d_assertions;
+  /** The current set of assumptions. */
   backtrack::vector<Node> d_assumptions;
 
   /** AIG bit-blaster. */

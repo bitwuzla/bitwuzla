@@ -53,6 +53,7 @@ class BvBitblastSolver::BitblastSatSolver : public bb::SatInterface
 
 BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
     : Solver(env, state),
+      d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
       d_last_result(Result::UNKNOWN),
       d_stats(env.statistics(), "solver::bv::bitblast::")
@@ -69,12 +70,29 @@ BvBitblastSolver::solve()
 {
   d_sat_solver->configure_terminator(d_env.terminator());
 
+  if (!d_assertions.empty())
+  {
+    util::Timer timer(d_stats.time_encode);
+    for (const Node& assertion : d_assertions)
+    {
+      const auto& bits = d_bitblaster.bits(assertion);
+      assert(!bits.empty());
+      d_cnf_encoder->encode(bits[0], true);
+    }
+    d_assertions.clear();
+  }
+
   for (const Node& assumption : d_assumptions)
   {
     const auto& bits = d_bitblaster.bits(assumption);
     assert(!bits.empty());
+    util::Timer timer(d_stats.time_encode);
+    d_cnf_encoder->encode(bits[0], false);
     d_sat_solver->assume(bits[0].get_id());
   }
+
+  // Update CNF statistics
+  update_statistics();
 
   util::Timer timer(d_stats.time_sat);
   d_last_result = d_sat_solver->solve();
@@ -96,18 +114,17 @@ BvBitblastSolver::register_assertion(const Node& assertion,
   {
     d_assumptions.push_back(assertion);
   }
+  else
+  {
+    d_assertions.push_back(assertion);
+  }
 
   {
     util::Timer timer(d_stats.time_bitblast);
     d_bitblaster.bitblast(assertion);
   }
-  const auto& bits = d_bitblaster.bits(assertion);
-  assert(!bits.empty());
 
-  {
-    util::Timer timer(d_stats.time_encode);
-    d_cnf_encoder->encode(bits[0], top_level);
-  }
+  // Update AIG statistics
   update_statistics();
 }
 
