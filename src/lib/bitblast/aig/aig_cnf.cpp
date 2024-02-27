@@ -110,8 +110,20 @@ is_ite(const AigNode& aig, std::vector<const AigNode*>& children)
     return false;
   }
 
+  // Do not extract ITE if it destroys sharing
+  if (l.parents() > 1)
+  {
+    return false;
+  }
+
   const auto& r = aig[1];
   if (!r.is_negated() || !r.is_and())
+  {
+    return false;
+  }
+
+  // Do not extract ITE if it destroys sharing
+  if (r.parents() > 1)
   {
     return false;
   }
