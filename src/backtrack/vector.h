@@ -47,6 +47,15 @@ class vector : public Backtrackable
 
   auto end() const { return d_data.end(); }
 
+  void clear()
+  {
+    d_data.clear();
+    for (std::size_t i = 0, size = d_control.size(); i < size; ++i)
+    {
+      d_control[i] = 0;
+    }
+  }
+
   /* --- Backtrackable interface -------------------------------------------- */
 
   void push() override { d_control.push_back(d_data.size()); }
