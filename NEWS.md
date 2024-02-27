@@ -4,14 +4,57 @@ This file collects a summary of important and/or user-visible changes.
 
 ## News since version 0.3.2
 
-- Refactor parser interface to allow parsing from string inputs.
+- Introduce **TermManager interface** for creating Term and Sort
+  (**major API change**).
+  + Solver and parser instances now require a term manager for initialization.
+    Terms and sorts can be shared across solver/parser instances if they were
+    initialized with the same term manager. The term manager is responsible for
+    managing Term and Sort objects.
+  + C++ API:
+    * New class `TermManager` for creating Term and Sort objects.
+    * Term and Sort creation function `mk_*` moved to `TermManager` class.
+    * Substitution functions `substitute_term` and `substitute_terms` moved
+      to `TermManager`.
+    * Constructor `Bitwuzla(const Options &options)` changed to
+      `Bitwuzla(TermManager&, const Options &options)`.
+    * New function `Bitwuzla::term_mgr()` to retrieve configured term manager
+      instance.
+  + C API:
+    * New functions `bitwuzla_term_manager_new()`,
+      `bitwuzla_term_manager_delete` for creating and deleting term manager
+      instances.
+    * Function `bitwuzla_new(const BitwuzlaOptions*)` changed to
+      `bitwuzla_new(BitwuzlaTermManager*, const BitwuzlaOptions*)`.
+    * New function `bitwuzla_get_term_mgr(Bitwuzla*)` to retrieve configured term
+      manager instance from Bitwuzla instance.
+    * New reference counting interface for fine-grained resource management:
+      - New function `bitwuzla_term_manager_release(BitwuzlaTermManager*)` to release all created
+        terms and sorts of a term manager instance.
+      - New functions `bitwuzla_term_copy(BitwuzlaTerm)` and
+        `bitwuzla_term_release(BitwuzlaTerm)` for
+        incrementing/decrementing BitwuzlaTerm reference counts.
+      - New functions `bitwuzla_sort_copy(BitwuzlaSort)` and
+        `bitwuzla_sort_release(BitwuzlaSort)` for
+        incrementing/decrementing BitwuzlaSort reference counts.
+  + Python API:
+    * New class `TermManager` for creating Term and Sort objects.
+    * Term and Sort creation function `mk_*` moved to `TermManager` class.
+    * Substitution functions `substitute_term` and `substitute_terms` moved
+      to `TermManager`.
+    * Constructor `Bitwuzla(Options)` changed to
+      `Bitwuzla(TermManager, Options)`.
+    * New function `Bitwuzla::term_mgr()` to retrieve configured term manager
+      instance.
+
+
+- Refactor **parser interface** to allow parsing from string inputs.
   + A parser instance is not tied to an input file anymore.
   + Added support for parsing from string inputs.
   + Added support for parsing terms and sorts from string inputs.
   + Interface for parsing functions now returns `bool` instead of string.
   + C++ API:
     * Constructor `Parser(Options&, const std::string&, const std::string&, std::ostream*)`
-      changed to `Parser(Options&, const std::string&, std::ostream*)`
+      changed to `Parser(TermManager&, Options&, const std::string&, std::ostream*)`
     * Function `std::string Parser::parse(bool)` changed to
       `void Parser::parse(const std::string, bool, bool)`
       and now throws an exception on error. It now also supports parsing from
@@ -28,7 +71,7 @@ This file collects a summary of important and/or user-visible changes.
       which is thrown on parse error.
   + C API:
     * Function `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, FILE*, const char*, uint8_t, const char*)`
-      changed to `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, uint8_t, const char*)`.
+      changed to `BitwulzaParser* bitwuzla_parser_new(BitwuzlaTermManager*, BitwuzlaOptions*, const char*, uint8_t, const char*)`.
     * Function `const char* bitwuzla_parser_parse(BitwulzaParser*, bool)`
       changed to `void bitwuzla_parser_parse(BitwulzaParser*, const char*, bool, bool, const char*)`.
     * New function `const char* bitwuzla_parser_get_error_msg(BitwuzlaParser*)`
