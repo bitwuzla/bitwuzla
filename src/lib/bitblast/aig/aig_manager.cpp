@@ -61,7 +61,9 @@ class AigNodeData
   /** AIG node id. */
   int64_t d_id = 0;
   /** Reference count. */
-  uint64_t d_refs = 0;
+  uint32_t d_refs = 0;
+  /** Number of parents. */
+  uint32_t d_parents = 0;
   /** Left child of AND gate. */
   AigNode d_left;
   /** Right child of AND gate. */
@@ -284,6 +286,13 @@ AigNode::get_id() const
   return is_negated() ? -d_data->d_id : d_data->d_id;
 }
 
+uint32_t
+AigNode::parents() const
+{
+  assert(!is_null());
+  return d_data->d_parents;
+}
+
 uint64_t
 AigNode::get_refs() const
 {
@@ -366,6 +375,11 @@ AigManager::init_id(AigNodeData* d)
   d_node_data.emplace_back(d);
   assert(d_node_data.size() == static_cast<size_t>(d_aig_id_counter));
   d->d_id = d_aig_id_counter++;
+  if (!d->d_left.is_null())
+  {
+    ++d->d_left.d_data->d_parents;
+    ++d->d_right.d_data->d_parents;
+  }
 }
 
 AigNodeData*
@@ -674,6 +688,7 @@ AigManager::garbage_collect(AigNodeData* d)
 
       data = cur->d_left.d_data;
       --data->d_refs;
+      --data->d_parents;
       cur->d_left.d_data = nullptr;
       if (data->d_refs == 0)
       {
@@ -682,6 +697,7 @@ AigManager::garbage_collect(AigNodeData* d)
 
       data = cur->d_right.d_data;
       --data->d_refs;
+      --data->d_parents;
       cur->d_right.d_data = nullptr;
       if (data->d_refs == 0)
       {

@@ -57,6 +57,8 @@ class AigNode
 
   int64_t get_id() const;
 
+  uint32_t parents() const;
+
  private:
   static const int64_t s_true_id = 1;
 
