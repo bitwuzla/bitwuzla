@@ -107,7 +107,13 @@ sources_util = files([
   'util/resources.cpp',
   'util/statistics.cpp',
 ])
-util_lib = static_library('bzlautil', sources_util)
+
+
+if cpp_compiler.has_function('getrusage', prefix: '#include <sys/resource.h>')
+  cpp_args += ['-DHAVE_RUSAGE']
+endif
+
+util_lib = static_library('bzlautil', sources_util, cpp_args: cpp_args)
 
 # ---
 # Add Bitwuzla support libraries
@@ -197,11 +203,6 @@ sources = files([
   'type/type_data.cpp',
   'type/type_manager.cpp',
 ])
-
-compiler = meson.get_compiler('cpp')
-if compiler.has_function('getrusage', prefix: '#include <sys/resource.h>')
-  cpp_args += ['-DHAVE_RUSAGE']
-endif
 
 # Public header include directory
 bitwuzla_inc = include_directories('../include', 'lib')
