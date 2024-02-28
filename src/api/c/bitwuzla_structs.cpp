@@ -46,8 +46,8 @@ BitwuzlaTermManager::release(bitwuzla_term_t* term)
   --term->d_refs;
   if (term->d_refs == 0)
   {
-    size_t removed = d_alloc_terms.erase(term->d_term);
-    assert(removed == 1);
+    assert(d_alloc_terms.find(term->d_term) != d_alloc_terms.end());
+    d_alloc_terms.erase(term->d_term);
   }
 }
 
@@ -64,8 +64,8 @@ BitwuzlaTermManager::release(bitwuzla_sort_t* sort)
   --sort->d_refs;
   if (sort->d_refs == 0)
   {
-    size_t removed = d_alloc_sorts.erase(sort->d_sort);
-    assert(removed == 1);
+    assert(d_alloc_sorts.find(sort->d_sort) != d_alloc_sorts.end());
+    d_alloc_sorts.erase(sort->d_sort);
   }
 }
 
