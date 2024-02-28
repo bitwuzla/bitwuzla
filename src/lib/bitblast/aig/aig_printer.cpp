@@ -11,6 +11,7 @@
 #include "bitblast/aig/aig_printer.h"
 
 #include <sstream>
+#include <unordered_map>
 #include <vector>
 
 #include "bitblast/aig/aig_manager.h"
