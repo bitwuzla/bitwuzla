@@ -14,68 +14,11 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <unordered_map>
-#include <unordered_set>
+#include <memory>
 
-#include "bitblast/bitblaster.h"
+#include "bitblast/aig/aig_node.h"
 
-namespace bzla::bb {
-
-class AigNode;
-using AigManager = BitInterface<AigNode>;
-class AigNodeData;
-class AigNodeUniqueTable;
-
-/**
- * Wrapper around AigNodeData with automatic reference counting on
- * construction/destruction.
- */
-class AigNode
-{
-  friend AigManager;
-  friend class AigNodeData;
-
- public:
-  AigNode() = default;
-  ~AigNode();
-  AigNode(const AigNode& other);
-  AigNode& operator=(const AigNode& other);
-  AigNode(AigNode&& other);
-  AigNode& operator=(AigNode&& other);
-
-  bool is_true() const;
-
-  bool is_false() const;
-
-  bool is_and() const;
-
-  bool is_const() const;
-
-  bool is_negated() const { return d_negated; }
-
-  const AigNode& operator[](int index) const;
-
-  int64_t get_id() const;
-
-  uint32_t parents() const;
-
- private:
-  static const int64_t s_true_id = 1;
-
-  // Should only be constructed via AigManager
-  AigNode(AigNodeData* data, bool negated = false);
-
-  bool is_null() const { return d_data == nullptr; }
-  uint64_t get_refs() const;
-
-  AigNodeData* d_data = nullptr;
-  // TODO: optimization hide flag in d_data pointer
-  bool d_negated = false;
-};
-
-bool operator==(const AigNode& a, const AigNode& b);
-
-bool operator<(const AigNode& a, const AigNode& b);
+namespace bzla::bitblast {
 
 // AigNodeUniqueTable
 class AigNodeUniqueTable
@@ -95,30 +38,38 @@ class AigNodeUniqueTable
   std::vector<AigNodeData*> d_buckets;
 };
 
-template <>
-class BitInterface<AigNode>
+class AigManager
 {
   friend class AigNodeData;
 
  public:
   struct Statistics
   {
-    uint64_t num_ands       = 0;  // Current number of AND gates
-    uint64_t num_consts     = 0;  // Current number of AIG constants
+    uint64_t num_ands   = 0;  // Current number of AND gates
+    uint64_t num_consts = 0;  // Current number of AIG constants
     uint64_t num_shared = 0;  // Number of successful AND gate lookups
   };
 
-  BitInterface<AigNode>();
-  ~BitInterface<AigNode>();
+  AigManager();
+  ~AigManager();
 
-  AigNode mk_false();
-  AigNode mk_true();
-  AigNode mk_bit();
-  AigNode mk_not(const AigNode& a);
-  AigNode mk_and(const AigNode& a, const AigNode& b);
-  AigNode mk_or(const AigNode& a, const AigNode& b);
-  AigNode mk_iff(const AigNode& a, const AigNode& b);
-  AigNode mk_ite(const AigNode& c, const AigNode& a, const AigNode& b);
+  AigNode mk_false() { return d_false; }
+  AigNode mk_true() { return d_true; }
+  AigNode mk_const()
+  {
+    ++d_statistics.num_consts;
+    return AigNode(new_data());
+  }
+
+  AigNode mk_not(const AigNode& a)
+  {
+    return AigNode(a.d_data, !a.is_negated());
+  }
+
+  AigNode mk_and(const AigNode& a, const AigNode& b)
+  {
+    return rewrite_and(a, b);
+  }
 
   /** @return AIG statistics. */
   const Statistics& statistics() const;
@@ -180,19 +131,6 @@ class BitInterface<AigNode>
   Statistics d_statistics;
 };
 
-}  // namespace bzla::bb
-
-namespace std {
-
-template <>
-struct hash<bzla::bb::AigNode>
-{
-  size_t operator()(const bzla::bb::AigNode& aig) const
-  {
-    return static_cast<size_t>(aig.get_id());
-  }
-};
-
-}  // namespace std
+}  // namespace bzla::bitblast
 
 #endif

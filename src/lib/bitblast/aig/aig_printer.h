@@ -15,7 +15,7 @@
 
 #include <vector>
 
-namespace bzla::bb::aig {
+namespace bzla::bitblast::aig {
 
 class Smt2Printer
 {
@@ -24,5 +24,5 @@ class Smt2Printer
   static void print(std::stringstream& ss, const std::vector<AigNode>& bits);
 };
 
-}  // namespace bzla::bb::aig
+}  // namespace bzla::bitblast::aig
 #endif

@@ -21,7 +21,7 @@ static const char* s_binary_kissat  = std::getenv("KISSAT");
 
 using ClauseList = std::vector<std::vector<int64_t>>;
 
-class DummySatSolver : public bb::SatInterface
+class DummySatSolver : public bitblast::SatInterface
 {
  public:
   void add(int64_t lit) override
@@ -132,10 +132,10 @@ class TestAigCnf : public TestCommon
   // a * -1 != ~a + 1
   static std::string perf_test1(size_t bw)
   {
-    bb::AigManager aigmgr;
-    bb::AigBitblaster bb;
+    bitblast::AigManager aigmgr;
+    bitblast::AigBitblaster bb;
     DummySatSolver solver;
-    bb::AigCnfEncoder enc(solver);
+    bitblast::AigCnfEncoder enc(solver);
 
     auto a       = bb.bv_constant(bw);
     auto one     = bb.bv_value(BitVector(bw, "1", 10));
@@ -154,10 +154,10 @@ class TestAigCnf : public TestCommon
   // a + b + c != c + b + a
   static std::string perf_test2(size_t bw)
   {
-    bb::AigManager aigmgr;
-    bb::AigBitblaster bb;
+    bitblast::AigManager aigmgr;
+    bitblast::AigBitblaster bb;
     DummySatSolver solver;
-    bb::AigCnfEncoder enc(solver);
+    bitblast::AigCnfEncoder enc(solver);
 
     auto a = bb.bv_constant(bw);
     auto b = bb.bv_constant(bw);
@@ -178,10 +178,10 @@ class TestAigCnf : public TestCommon
   // x * (a + b) != x * a + x * b
   static std::string perf_test3(size_t bw)
   {
-    bb::AigManager aigmgr;
-    bb::AigBitblaster bb;
+    bitblast::AigManager aigmgr;
+    bitblast::AigBitblaster bb;
     DummySatSolver solver;
-    bb::AigCnfEncoder enc(solver);
+    bitblast::AigCnfEncoder enc(solver);
 
     auto a = bb.bv_constant(bw);
     auto b = bb.bv_constant(bw);
@@ -204,16 +204,16 @@ class TestAigCnf : public TestCommon
 TEST_F(TestAigCnf, ctor_dtor)
 {
   DummySatSolver solver;
-  bb::AigCnfEncoder enc(solver);
+  bitblast::AigCnfEncoder enc(solver);
 }
 
 TEST_F(TestAigCnf, enc_false)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
   DummySatSolver solver;
-  bb::AigCnfEncoder enc(solver);
+  bitblast::AigCnfEncoder enc(solver);
 
-  bb::AigNode false_aig = aigmgr.mk_false();
+  bitblast::AigNode false_aig = aigmgr.mk_false();
   enc.encode(false_aig);
   ASSERT_EQ(solver.get_clauses().size(), 1);
   ASSERT_EQ(solver.get_clauses(), ClauseList({{1}}));
@@ -221,11 +221,11 @@ TEST_F(TestAigCnf, enc_false)
 
 TEST_F(TestAigCnf, enc_true)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
   DummySatSolver solver;
-  bb::AigCnfEncoder enc(solver);
+  bitblast::AigCnfEncoder enc(solver);
 
-  bb::AigNode false_aig = aigmgr.mk_true();
+  bitblast::AigNode false_aig = aigmgr.mk_true();
   enc.encode(false_aig);
   ASSERT_EQ(solver.get_clauses().size(), 1);
   ASSERT_EQ(solver.get_clauses(), ClauseList({{1}}));
@@ -233,24 +233,24 @@ TEST_F(TestAigCnf, enc_true)
 
 TEST_F(TestAigCnf, enc_const)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
   DummySatSolver solver;
-  bb::AigCnfEncoder enc(solver);
+  bitblast::AigCnfEncoder enc(solver);
 
-  bb::AigNode aig = aigmgr.mk_bit();
+  bitblast::AigNode aig = aigmgr.mk_bit();
   enc.encode(aig);
   ASSERT_TRUE(solver.get_clauses().empty());
 }
 
 TEST_F(TestAigCnf, enc_and)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
   DummySatSolver solver;
-  bb::AigCnfEncoder enc(solver);
+  bitblast::AigCnfEncoder enc(solver);
 
-  bb::AigNode a       = aigmgr.mk_bit();
-  bb::AigNode b       = aigmgr.mk_bit();
-  bb::AigNode and_aig = aigmgr.mk_and(a, b);
+  bitblast::AigNode a       = aigmgr.mk_bit();
+  bitblast::AigNode b       = aigmgr.mk_bit();
+  bitblast::AigNode and_aig = aigmgr.mk_and(a, b);
   enc.encode(and_aig);
   ASSERT_EQ(solver.get_clauses(),
             ClauseList({{-and_aig.get_id(), a.get_id()},
@@ -260,30 +260,30 @@ TEST_F(TestAigCnf, enc_and)
 
 TEST_F(TestAigCnf, enc_and_top)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
   DummySatSolver solver;
-  bb::AigCnfEncoder enc(solver);
+  bitblast::AigCnfEncoder enc(solver);
 
-  bb::AigNode a       = aigmgr.mk_bit();
-  bb::AigNode b       = aigmgr.mk_bit();
-  bb::AigNode and_aig = aigmgr.mk_and(a, b);
+  bitblast::AigNode a       = aigmgr.mk_bit();
+  bitblast::AigNode b       = aigmgr.mk_bit();
+  bitblast::AigNode and_aig = aigmgr.mk_and(a, b);
   enc.encode(and_aig, true);
   ASSERT_EQ(solver.get_clauses(), ClauseList({{a.get_id()}, {b.get_id()}}));
 }
 
 TEST_F(TestAigCnf, enc_and_top2)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
   DummySatSolver solver;
-  bb::AigCnfEncoder enc(solver);
+  bitblast::AigCnfEncoder enc(solver);
 
-  bb::AigNode a        = aigmgr.mk_bit();
-  bb::AigNode b        = aigmgr.mk_bit();
-  bb::AigNode c        = aigmgr.mk_bit();
-  bb::AigNode d        = aigmgr.mk_bit();
-  bb::AigNode and_aig1 = aigmgr.mk_and(a, b);
-  bb::AigNode and_aig2 = aigmgr.mk_and(c, d);
-  bb::AigNode and_aig3 = aigmgr.mk_and(and_aig1, and_aig2);
+  bitblast::AigNode a        = aigmgr.mk_bit();
+  bitblast::AigNode b        = aigmgr.mk_bit();
+  bitblast::AigNode c        = aigmgr.mk_bit();
+  bitblast::AigNode d        = aigmgr.mk_bit();
+  bitblast::AigNode and_aig1 = aigmgr.mk_and(a, b);
+  bitblast::AigNode and_aig2 = aigmgr.mk_and(c, d);
+  bitblast::AigNode and_aig3 = aigmgr.mk_and(and_aig1, and_aig2);
   enc.encode(and_aig3, true);
   ASSERT_EQ(
       solver.get_clauses(),
@@ -292,13 +292,13 @@ TEST_F(TestAigCnf, enc_and_top2)
 
 TEST_F(TestAigCnf, enc_or)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
   DummySatSolver solver;
-  bb::AigCnfEncoder enc(solver);
+  bitblast::AigCnfEncoder enc(solver);
 
-  bb::AigNode a      = aigmgr.mk_bit();
-  bb::AigNode b      = aigmgr.mk_bit();
-  bb::AigNode or_aig = aigmgr.mk_or(a, b);
+  bitblast::AigNode a      = aigmgr.mk_bit();
+  bitblast::AigNode b      = aigmgr.mk_bit();
+  bitblast::AigNode or_aig = aigmgr.mk_or(a, b);
   auto or_id         = std::abs(or_aig.get_id());
   enc.encode(or_aig, false);
   ASSERT_EQ(solver.get_clauses(),
@@ -310,30 +310,30 @@ TEST_F(TestAigCnf, enc_or)
 #if 0
 TEST_F(TestAigCnf, enc_or_top)
 {
-  bb::AigManager aigmgr;
+  bitblast::AigManager aigmgr;
   DummySatSolver solver;
-  bb::AigCnfEncoder enc(solver);
+  bitblast::AigCnfEncoder enc(solver);
 
-  bb::AigNode a      = aigmgr.mk_bit();
-  bb::AigNode b      = aigmgr.mk_bit();
-  bb::AigNode or_aig = aigmgr.mk_or(a, b);
+  bitblast::AigNode a      = aigmgr.mk_bit();
+  bitblast::AigNode b      = aigmgr.mk_bit();
+  bitblast::AigNode or_aig = aigmgr.mk_or(a, b);
   enc.encode(or_aig, true);
   ASSERT_EQ(solver.get_clauses(), ClauseList({{a.get_id(), b.get_id()}}));
 }
 
 TEST_F(TestAigCnf, enc_or_top2)
 {
-  bb::AigManager aigmgr;
+  bitblast::AigManager aigmgr;
   DummySatSolver solver;
-  bb::AigCnfEncoder enc(solver);
+  bitblast::AigCnfEncoder enc(solver);
 
-  bb::AigNode a       = aigmgr.mk_bit();
-  bb::AigNode b       = aigmgr.mk_bit();
-  bb::AigNode c       = aigmgr.mk_bit();
-  bb::AigNode d       = aigmgr.mk_bit();
-  bb::AigNode or_aig1 = aigmgr.mk_or(a, b);
-  bb::AigNode or_aig2 = aigmgr.mk_or(c, d);
-  bb::AigNode or_aig3 = aigmgr.mk_or(or_aig1, or_aig2);
+  bitblast::AigNode a       = aigmgr.mk_bit();
+  bitblast::AigNode b       = aigmgr.mk_bit();
+  bitblast::AigNode c       = aigmgr.mk_bit();
+  bitblast::AigNode d       = aigmgr.mk_bit();
+  bitblast::AigNode or_aig1 = aigmgr.mk_or(a, b);
+  bitblast::AigNode or_aig2 = aigmgr.mk_or(c, d);
+  bitblast::AigNode or_aig3 = aigmgr.mk_or(or_aig1, or_aig2);
   enc.encode(or_aig3, true);
   ASSERT_EQ(solver.get_clauses(),
             ClauseList({{a.get_id(), b.get_id(), c.get_id(), d.get_id()}}));

@@ -7,10 +7,10 @@ bv_sources = [
 ]
 
 bb_sources = [
-  'bitblast/aig/aig_manager.cpp',
   'bitblast/aig/aig_cnf.cpp',
+  'bitblast/aig/aig_manager.cpp',
+  'bitblast/aig/aig_node.cpp',
   'bitblast/aig/aig_printer.cpp',
-  'bitblast/aig_bitblaster.cpp'
 ]
 
 ls_sources = [

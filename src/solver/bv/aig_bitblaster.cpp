@@ -29,7 +29,7 @@ AigBitblaster::bitblast(const Node& t)
     auto it = d_bitblaster_cache.find(cur);
     if (it == d_bitblaster_cache.end())
     {
-      d_bitblaster_cache.emplace(cur, bb::AigBitblaster::Bits());
+      d_bitblaster_cache.emplace(cur, bitblast::AigBitblaster::Bits());
       if (!BvSolver::is_leaf(cur))
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
@@ -187,7 +187,7 @@ AigBitblaster::bitblast(const Node& t)
   } while (!visit.empty());
 }
 
-const bb::AigBitblaster::Bits&
+const bitblast::AigBitblaster::Bits&
 AigBitblaster::bits(const Node& term) const
 {
   if (d_bitblaster_cache.find(term) == d_bitblaster_cache.end())
@@ -200,7 +200,7 @@ AigBitblaster::bits(const Node& term) const
 uint64_t
 AigBitblaster::count_aig_ands(const Node& term, AigNodeRefSet& cache)
 {
-  std::vector<std::reference_wrapper<const bb::AigNode>> visit;
+  std::vector<std::reference_wrapper<const bitblast::AigNode>> visit;
   bitblast(term);
   const auto& b = bits(term);
   visit.insert(visit.end(), b.begin(), b.end());
@@ -209,7 +209,7 @@ AigBitblaster::count_aig_ands(const Node& term, AigNodeRefSet& cache)
   uint64_t res = 0;
   do
   {
-    const bb::AigNode& cur = visit.back();
+    const bitblast::AigNode& cur = visit.back();
     visit.pop_back();
 
     if (cache.insert(cur).second)

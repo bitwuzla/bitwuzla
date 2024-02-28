@@ -15,7 +15,7 @@
 
 #include "bitblast/aig/aig_manager.h"
 
-namespace bzla::bb::aig {
+namespace bzla::bitblast::aig {
 
 void
 Smt2Printer::print(std::stringstream& ss, const AigNode& n)
@@ -90,4 +90,4 @@ Smt2Printer::print(std::stringstream& ss, const std::vector<AigNode>& bits)
   } while (!visit.empty());
 }
 
-}  // namespace bzla::bb::aig
+}  // namespace bzla::bitblast::aig

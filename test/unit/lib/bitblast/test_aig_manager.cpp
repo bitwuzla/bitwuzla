@@ -9,6 +9,7 @@
  */
 
 #include "bitblast/aig/aig_manager.h"
+#include "bitblast/aig_bitblaster.h"
 #include "test_lib.h"
 
 namespace bzla::test {
@@ -17,11 +18,11 @@ class TestAigMgr : public TestCommon
 {
 };
 
-TEST_F(TestAigMgr, ctor_dtor) { bb::AigManager aigmgr; }
+TEST_F(TestAigMgr, ctor_dtor) { bitblast::AigManager aigmgr; }
 
 TEST_F(TestAigMgr, false_true_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::AigManager aigmgr;
   auto true_aig  = aigmgr.mk_true();
   auto false_aig = aigmgr.mk_false();
 
@@ -40,9 +41,9 @@ TEST_F(TestAigMgr, false_true_aig)
 
 TEST_F(TestAigMgr, const_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::AigManager aigmgr;
 
-  auto const_aig = aigmgr.mk_bit();
+  auto const_aig = aigmgr.mk_const();
 
   ASSERT_TRUE(const_aig.is_const());
   ASSERT_FALSE(const_aig.is_false());
@@ -53,9 +54,9 @@ TEST_F(TestAigMgr, const_aig)
 
 TEST_F(TestAigMgr, not_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::AigManager aigmgr;
 
-  auto bit     = aigmgr.mk_bit();
+  auto bit     = aigmgr.mk_const();
   auto not_aig = aigmgr.mk_not(bit);
 
   ASSERT_FALSE(not_aig.is_and());
@@ -69,9 +70,9 @@ TEST_F(TestAigMgr, not_aig)
 
 TEST_F(TestAigMgr, and_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::AigManager aigmgr;
 
-  auto and_aig = aigmgr.mk_and(aigmgr.mk_bit(), aigmgr.mk_bit());
+  auto and_aig = aigmgr.mk_and(aigmgr.mk_const(), aigmgr.mk_const());
 
   ASSERT_TRUE(and_aig.is_and());
   ASSERT_FALSE(and_aig.is_false());
@@ -82,10 +83,10 @@ TEST_F(TestAigMgr, and_aig)
 
 TEST_F(TestAigMgr, and_unique_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::AigManager aigmgr;
 
-  auto left    = aigmgr.mk_bit();
-  auto right   = aigmgr.mk_bit();
+  auto left    = aigmgr.mk_const();
+  auto right   = aigmgr.mk_const();
   auto and_aig = aigmgr.mk_and(left, right);
 
   ASSERT_TRUE(and_aig.is_and());
@@ -99,20 +100,22 @@ TEST_F(TestAigMgr, and_unique_aig)
 
 TEST_F(TestAigMgr, or_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
 
-  auto and_aig = aigmgr.mk_or(aigmgr.mk_bit(), aigmgr.mk_bit());
+  auto a      = aigmgr.mk_bit();
+  auto b      = aigmgr.mk_bit();
+  auto or_aig = aigmgr.mk_or(a, b);
 
-  ASSERT_TRUE(and_aig.is_and());
-  ASSERT_FALSE(and_aig.is_false());
-  ASSERT_FALSE(and_aig.is_true());
-  ASSERT_FALSE(and_aig.is_const());
-  ASSERT_TRUE(and_aig.is_negated());
+  ASSERT_TRUE(or_aig.is_and());
+  ASSERT_FALSE(or_aig.is_false());
+  ASSERT_FALSE(or_aig.is_true());
+  ASSERT_FALSE(or_aig.is_const());
+  ASSERT_TRUE(or_aig.is_negated());
 }
 
 TEST_F(TestAigMgr, or_unique_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
 
   auto left   = aigmgr.mk_bit();
   auto right  = aigmgr.mk_bit();
@@ -129,7 +132,7 @@ TEST_F(TestAigMgr, or_unique_aig)
 
 TEST_F(TestAigMgr, iff_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
 
   auto iff_aig = aigmgr.mk_iff(aigmgr.mk_bit(), aigmgr.mk_bit());
 
@@ -141,7 +144,7 @@ TEST_F(TestAigMgr, iff_aig)
 
 TEST_F(TestAigMgr, iff_unique_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
 
   auto left    = aigmgr.mk_bit();
   auto right   = aigmgr.mk_bit();
@@ -157,7 +160,7 @@ TEST_F(TestAigMgr, iff_unique_aig)
 
 TEST_F(TestAigMgr, ite_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
 
   auto ite_aig =
       aigmgr.mk_ite(aigmgr.mk_bit(), aigmgr.mk_bit(), aigmgr.mk_bit());
@@ -170,7 +173,7 @@ TEST_F(TestAigMgr, ite_aig)
 
 TEST_F(TestAigMgr, ite_unique_aig)
 {
-  bb::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
 
   auto cond    = aigmgr.mk_bit();
   auto left    = aigmgr.mk_bit();
@@ -187,9 +190,9 @@ TEST_F(TestAigMgr, ite_unique_aig)
 
 TEST_F(TestAigMgr, neutrality1)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
+  auto a = mgr.mk_const();
   auto T = mgr.mk_true();
 
   ASSERT_EQ(mgr.mk_and(a, T), a);
@@ -198,9 +201,9 @@ TEST_F(TestAigMgr, neutrality1)
 
 TEST_F(TestAigMgr, boundedness1)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
+  auto a = mgr.mk_const();
   auto F = mgr.mk_false();
 
   ASSERT_EQ(mgr.mk_and(a, F), F);
@@ -209,9 +212,9 @@ TEST_F(TestAigMgr, boundedness1)
 
 TEST_F(TestAigMgr, idempotence1)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
+  auto a = mgr.mk_const();
   auto b = a;
 
   ASSERT_EQ(mgr.mk_and(a, b), a);
@@ -220,9 +223,9 @@ TEST_F(TestAigMgr, idempotence1)
 
 TEST_F(TestAigMgr, contradiction1)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
+  auto a = mgr.mk_const();
   auto b = mgr.mk_not(a);
   auto F = mgr.mk_false();
 
@@ -232,10 +235,10 @@ TEST_F(TestAigMgr, contradiction1)
 
 TEST_F(TestAigMgr, contradiction2_1)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
-  auto b = mgr.mk_bit();
+  auto a = mgr.mk_const();
+  auto b = mgr.mk_const();
   auto F = mgr.mk_false();
 
   // case: (a = ~c)
@@ -253,12 +256,12 @@ TEST_F(TestAigMgr, contradiction2_1)
 
 TEST_F(TestAigMgr, contradiction2_2)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
-  auto b = mgr.mk_bit();
-  auto c = mgr.mk_bit();
-  auto d = mgr.mk_bit();
+  auto a = mgr.mk_const();
+  auto b = mgr.mk_const();
+  auto c = mgr.mk_const();
+  auto d = mgr.mk_const();
   auto F = mgr.mk_false();
 
   // case: (a = ~c)
@@ -288,10 +291,10 @@ TEST_F(TestAigMgr, contradiction2_2)
 
 TEST_F(TestAigMgr, subsumption2_1)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
-  auto b = mgr.mk_bit();
+  auto a = mgr.mk_const();
+  auto b = mgr.mk_const();
 
   // case: (a = ~c)
   {
@@ -308,12 +311,12 @@ TEST_F(TestAigMgr, subsumption2_1)
 
 TEST_F(TestAigMgr, subsumption2_2)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
-  auto b = mgr.mk_bit();
-  auto c = mgr.mk_bit();
-  auto d = mgr.mk_bit();
+  auto a = mgr.mk_const();
+  auto b = mgr.mk_const();
+  auto c = mgr.mk_const();
+  auto d = mgr.mk_const();
 
   // case: (a = ~c)
   {
@@ -346,10 +349,10 @@ TEST_F(TestAigMgr, subsumption2_2)
 
 TEST_F(TestAigMgr, idempotence2)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
-  auto b = mgr.mk_bit();
+  auto a = mgr.mk_const();
+  auto b = mgr.mk_const();
 
   // case: (a = c)
   {
@@ -366,10 +369,10 @@ TEST_F(TestAigMgr, idempotence2)
 
 TEST_F(TestAigMgr, resolution2)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
-  auto b = mgr.mk_bit();
+  auto a = mgr.mk_const();
+  auto b = mgr.mk_const();
 
   // (a = c) /\ (b = ~d)
   {
@@ -410,10 +413,10 @@ TEST_F(TestAigMgr, resolution2)
 
 TEST_F(TestAigMgr, substitution3_1)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
-  auto b = mgr.mk_bit();
+  auto a = mgr.mk_const();
+  auto b = mgr.mk_const();
   auto c = b;
 
   ASSERT_EQ(mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), c),
@@ -424,12 +427,12 @@ TEST_F(TestAigMgr, substitution3_1)
 
 TEST_F(TestAigMgr, substitution3_2)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
-  auto b = mgr.mk_bit();
+  auto a = mgr.mk_const();
+  auto b = mgr.mk_const();
   auto c = b;
-  auto d = mgr.mk_bit();
+  auto d = mgr.mk_const();
 
   ASSERT_EQ(mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_and(c, d)),
             mgr.mk_and(mgr.mk_not(a), mgr.mk_and(c, d)));
@@ -439,11 +442,11 @@ TEST_F(TestAigMgr, substitution3_2)
 
 TEST_F(TestAigMgr, idempotence4_1)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
-  auto b = mgr.mk_bit();
-  auto d = mgr.mk_bit();
+  auto a = mgr.mk_const();
+  auto b = mgr.mk_const();
+  auto d = mgr.mk_const();
 
   {
     auto c = a;
@@ -460,12 +463,12 @@ TEST_F(TestAigMgr, idempotence4_1)
 
 TEST_F(TestAigMgr, idempotence4_3)
 {
-  bb::AigManager mgr;
+  bitblast::AigManager mgr;
 
-  auto a = mgr.mk_bit();
-  auto b = mgr.mk_bit();
-  auto c = mgr.mk_bit();
-  auto d = mgr.mk_bit();
+  auto a = mgr.mk_const();
+  auto b = mgr.mk_const();
+  auto c = mgr.mk_const();
+  auto d = mgr.mk_const();
 
   {
     auto d = a;

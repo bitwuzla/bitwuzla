@@ -66,7 +66,7 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   AigBitblaster d_bitblaster;
 
   /** CNF encoder for AIGs. */
-  std::unique_ptr<bb::AigCnfEncoder> d_cnf_encoder;
+  std::unique_ptr<bitblast::AigCnfEncoder> d_cnf_encoder;
   /** SAT solver used for solving bit-blasted formula. */
   std::unique_ptr<sat::SatSolver> d_sat_solver;
   /** SAT solver interface for CNF encoder, which wraps `d_sat_solver`. */

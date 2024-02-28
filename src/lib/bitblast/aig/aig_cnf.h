@@ -12,7 +12,7 @@
 #define BZLA__BITBLAST_AIG_CNF_H
 #include "bitblast/aig/aig_manager.h"
 
-namespace bzla::bb {
+namespace bzla::bitblast {
 
 class SatInterface
 {
@@ -78,5 +78,5 @@ class AigCnfEncoder
   /** CNF statistics. */
   Statistics d_statistics;
 };
-}  // namespace bzla::bb
+}  // namespace bzla::bitblast
 #endif

@@ -24,7 +24,7 @@ namespace bzla::bv {
 using namespace bzla::node;
 
 /** Sat solver wrapper for AIG encoder. */
-class BvBitblastSolver::BitblastSatSolver : public bb::SatInterface
+class BvBitblastSolver::BitblastSatSolver : public bitblast::SatInterface
 {
  public:
   BitblastSatSolver(sat::SatSolver& solver) : d_solver(solver) {}
@@ -60,7 +60,7 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
 {
   d_sat_solver.reset(sat::new_sat_solver(env.options().sat_solver()));
   d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
-  d_cnf_encoder.reset(new bb::AigCnfEncoder(*d_bitblast_sat_solver));
+  d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_bitblast_sat_solver));
 }
 
 BvBitblastSolver::~BvBitblastSolver() {}

@@ -11,8 +11,10 @@
 #include "bitblast/aig/aig_cnf.h"
 
 #include <functional>
+#include <unordered_set>
+#include <vector>
 
-namespace bzla::bb {
+namespace bzla::bitblast {
 
 void
 AigCnfEncoder::encode(const AigNode& node, bool top_level)
@@ -297,4 +299,4 @@ AigCnfEncoder::set_encoded(const AigNode& aig)
   d_aig_encoded[pos] = true;
   ++d_statistics.num_vars;
 }
-}  // namespace bzla::bb
+}  // namespace bzla::bitblast

@@ -18,7 +18,7 @@
 
 #include "bv/bitvector.h"
 
-namespace bzla::bb {
+namespace bzla::bitblast {
 
 /**
  * Interface for providing bit-level operations used by the bit-blaster
@@ -622,5 +622,5 @@ class BitblasterInterface
   }
 };
 
-}  // namespace bzla::bb
+}  // namespace bzla::bitblast
 #endif
