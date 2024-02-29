@@ -12,6 +12,7 @@
 #define BZLA_SOLVER_BV_AIG_BITBLASTER_H_INCLUDED
 
 #include <unordered_set>
+#include <unordered_map>
 
 #include "bitblast/aig_bitblaster.h"
 #include "node/node.h"
