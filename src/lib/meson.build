@@ -4,6 +4,7 @@
 
 bv_sources = [
   'bv/bitvector.cpp',
+  'bv/bounds/bitvector_bounds.cpp',
   'bv/domain/bitvector_domain.cpp',
 ]
 
