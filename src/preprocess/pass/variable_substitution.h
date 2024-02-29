@@ -126,8 +126,9 @@ class PassVariableSubstitution : public PreprocessingPass
     util::TimerStatistic& time_find_vars;
     util::TimerStatistic& time_find_substitution;
     uint64_t& num_substs;
-    uint64_t& num_linear_eq;
-    uint64_t& num_gauss_elim;
+    uint64_t& num_norm_eq_linear_eq;
+    uint64_t& num_norm_eq_gauss_elim;
+    uint64_t& num_norm_eq_bv_concat;
     uint64_t& num_norm_bv_ult;
     uint64_t& num_norm_bv_slt;
   } d_stats;

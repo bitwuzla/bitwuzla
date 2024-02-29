@@ -169,19 +169,19 @@ PassVariableSubstitution::normalize_substitution_eq(const Node& node)
   if (get_linear_bv_term(nm, left, factor, var, tmp))
   {
     subst = nm.mk_node(Kind::BV_SUB, {right, tmp});
-    d_stats.num_linear_eq += 1;
+    d_stats.num_norm_eq_linear_eq += 1;
   }
   else if (get_linear_bv_term(nm, right, factor, var, tmp))
   {
     subst = nm.mk_node(Kind::BV_SUB, {left, tmp});
-    d_stats.num_linear_eq += 1;
+    d_stats.num_norm_eq_linear_eq += 1;
   }
   else
   {
     // no substitution found
     return {};
   }
-  d_stats.num_gauss_elim += 1;
+  d_stats.num_norm_eq_gauss_elim += 1;
   subst = nm.mk_node(Kind::BV_MUL, {subst, nm.mk_value(factor.ibvmodinv())});
   if (var.is_inverted())
   {
@@ -444,6 +444,7 @@ PassVariableSubstitution::normalize_substitution_eq_bv_concat(const Node& node)
       if (rewritten.kind() == Kind::EQUAL
           && (rewritten[0].is_const() || rewritten[1].is_const()))
       {
+        d_stats.num_norm_eq_bv_concat += 1;
         return {rewritten};
       }
       if (rewritten.kind() == Kind::AND)
@@ -481,6 +482,7 @@ PassVariableSubstitution::normalize_substitution_eq_bv_concat(const Node& node)
             }
           }
         } while (!visit.empty());
+        d_stats.num_norm_eq_bv_concat += res.size();
         return res;
       }
     }
@@ -984,14 +986,16 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
       time_find_substitution(stats.new_stat<util::TimerStatistic>(
           "preprocess::varsubst::time_find_substitution")),
       num_substs(stats.new_stat<uint64_t>("preprocess::varsubst::num_substs")),
-      num_linear_eq(stats.new_stat<uint64_t>(
+      num_norm_eq_linear_eq(stats.new_stat<uint64_t>(
           "preprocess::varsubst::normalize_eq::num_linear_eq")),
-      num_gauss_elim(stats.new_stat<uint64_t>(
+      num_norm_eq_gauss_elim(stats.new_stat<uint64_t>(
           "preprocess::varsubst::normalize_eq::num_gauss_elim")),
+      num_norm_eq_bv_concat(stats.new_stat<uint64_t>(
+          "preprocess::varsubst::normalize_eq::num_bv_concat")),
       num_norm_bv_ult(stats.new_stat<uint64_t>(
-          "preprocess::varsubst::normalize_bv_ult::num_norm_bv_ult")),
+          "preprocess::varsubst::normalize_bv_ineq::num_ult")),
       num_norm_bv_slt(stats.new_stat<uint64_t>(
-          "preprocess::varsubst::normalize_bv_slt::num_norm_bv_slt"))
+          "preprocess::varsubst::normalize_bv_ineq::num_slt"))
 
 {
 }
