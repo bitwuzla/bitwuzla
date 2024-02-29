@@ -4,6 +4,7 @@ requires = ['meson-python', 'cython>=3.0.0']
 
 [project]
 name = 'bitwuzla'
+dynamic = ['version']
 description = 'Bitwuzla Satisfiability Modulo Theories Solver'
 requires-python = '>= 3.7'
 license = {file = 'COPYING'}
