@@ -7,18 +7,18 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, macos-14]
         name: [
-          production,
+          release,
           debug,
         ]
 
         include:
-          - name: production
+          - name: release
             config: --testing --no-unit-testing --python
 
           - name: debug
             config: debug --python
 
-          - name: production-clang
+          - name: release-clang
             os: ubuntu-latest
             config: --testing --no-unit-testing --python
             env: CC=clang CXX=clang++
@@ -28,7 +28,7 @@ jobs:
             config: debug --shared --python
             env: CC=clang CXX=clang++
 
-          - name: production-win64
+          - name: release-win64
             os: ubuntu-latest
             config: --win64
 
@@ -41,7 +41,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgmp-dev ninja-build
-          if [[ "${{matrix.name}}" == "production-win64" ]]; then
+          if [[ "${{matrix.name}}" == "release-win64" ]]; then
             sudo apt-get install -y mingw-w64
             sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
             sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
@@ -92,12 +92,12 @@ jobs:
           key: ${{ steps.subprojects-restore.outputs.cache-primary-key }}
 
       - name: Test
-        if: matrix.name != 'production-win64'
+        if: matrix.name != 'release-win64'
         run: meson test --print-errorlogs
         working-directory: build
 
       - name: Examples
-        if: matrix.name != 'production-win64'
+        if: matrix.name != 'release-win64'
         working-directory: examples
         run: |
           pkgconfigdir=$(find ${{ github.workspace }}/build/install/lib -name pkgconfig)
