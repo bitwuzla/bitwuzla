@@ -138,6 +138,8 @@ class OptionBase
   virtual bool is_bool() { return false; }
   /** @return True if this option is a numeric option. */
   virtual bool is_numeric() { return false; }
+  /** @return True if this option is a numeric option that allows increments. */
+  virtual bool is_numeric_inc() { return false; }
   /**
    * @return True if this option is an option that takes a mode (an enum value).
    */
@@ -252,17 +254,21 @@ class OptionNumeric : public OptionBase
                 const char* desc,
                 const char* lng,
                 const char* shrt = nullptr,
-                bool is_expert   = false)
+                bool is_expert   = false,
+                bool allow_inc   = false)
       : OptionBase(options, opt, desc, lng, shrt, is_expert),
         d_value(value),
         d_default(value),
         d_min(min),
-        d_max(max)
+        d_max(max),
+        d_allow_inc(allow_inc)
   {
   }
   OptionNumeric() = delete;
 
   bool is_numeric() override { return true; }
+
+  bool is_numeric_inc() override { return d_allow_inc; }
 
   /**
    * Set the current value of a numeric option.
@@ -297,6 +303,8 @@ class OptionNumeric : public OptionBase
   uint64_t d_min;
   /** The maximum value. */
   uint64_t d_max;
+  /** Allow no value to increment option. */
+  bool d_allow_inc;
 };
 
 /**
@@ -489,6 +497,9 @@ class Options
   bool is_bool(Option opt);
   /** @return True if the given option is a numeric option. */
   bool is_numeric(Option opt);
+  /** @return True if the given option is a numeric option that allows
+   * increments. */
+  bool is_numeric_inc(Option opt);
   /** @return True if the given option is an option with modes. */
   bool is_mode(Option opt);
 

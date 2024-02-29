@@ -599,7 +599,7 @@ Options::set(const std::vector<std::string> &args)
     if (d_options->is_numeric(option))
     {
       uint64_t val = 0;
-      if (value.empty())
+      if (value.empty() && d_options->is_numeric_inc(option))
       {
         // no value given, increment by one
         val = d_options->get<uint64_t>(option) + 1;

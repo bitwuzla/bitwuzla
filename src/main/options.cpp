@@ -329,7 +329,9 @@ check_opt_value(const std::string& arg,
 Options
 parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
 {
+  bitwuzla::Options library_opts;
   Options opts;
+  bool input_file_set = false;
   bool lang_forced = false;
   for (int32_t i = 1; i < argc; ++i)
   {
@@ -381,14 +383,56 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
       opts.language = val;
       lang_forced   = true;
     }
-    // Check if argument is the input file.
-    else if (arg[0] != '-')
-    {
-      opts.infile_name = arg;
-    }
-    else
+    else if (arg[0] == '-')
     {
       args.push_back(arg);
+      // Determine whether library options require arguments. We do not check
+      // whether it is a valid library option.
+      auto pos = arg.rfind("=");
+      if (pos == std::string::npos)
+      {
+        std::string name = arg.substr(1);
+        // Long option
+        if (!name.empty() && name[0] == '-')
+        {
+          name = name.substr(1);
+        }
+        if (library_opts.is_valid(name))
+        {
+          auto option = library_opts.option(name.c_str());
+          if (library_opts.is_mode(option))
+          {
+            if (i + 1 < argc)
+            {
+              args.emplace_back(argv[++i]);
+            }
+          }
+          else if (library_opts.is_numeric(option))
+          {
+            if (i + 1 < argc)
+            {
+              bool allow_inc = option == bitwuzla::Option::VERBOSITY
+                               || option == bitwuzla::Option::LOGLEVEL;
+              auto value = std::string(argv[i + 1]);
+              if (!allow_inc
+                  || std::all_of(value.begin(), value.end(), ::isdigit))
+              {
+                args.emplace_back(argv[++i]);
+              }
+            }
+          }
+        }
+      }
+    }
+    else if (!input_file_set)
+    {
+      opts.infile_name = arg;
+      input_file_set   = true;
+    }
+    else if (arg != opts.infile_name)
+    {
+      Error() << "multiple input files detected: `" << arg << "`, already got `"
+              << opts.infile_name << "`.";
     }
   }
 

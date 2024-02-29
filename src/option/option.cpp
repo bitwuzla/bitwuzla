@@ -97,8 +97,16 @@ OptionModeT<T>::is_valid(const std::string& value) const
 Options::Options()
     : d_name2option(),
       // general
-      log_level(
-          this, Option::LOG_LEVEL, 0, 0, 3, "log level", "log-level", "l"),
+      log_level(this,
+                Option::LOG_LEVEL,
+                0,
+                0,
+                3,
+                "log level",
+                "log-level",
+                "l",
+                false,
+                true),
       produce_models(this,
                      Option::PRODUCE_MODELS,
                      false,
@@ -130,7 +138,9 @@ Options::Options()
                 VERBOSITY_MAX,
                 "verbosity level",
                 "verbosity",
-                "v"),
+                "v",
+                false,
+                true),
       time_limit_per(this,
                      Option::TIME_LIMIT_PER,
                      0,
@@ -362,6 +372,12 @@ bool
 Options::is_numeric(Option opt)
 {
   return data(opt)->is_numeric();
+}
+
+bool
+Options::is_numeric_inc(Option opt)
+{
+  return data(opt)->is_numeric_inc();
 }
 
 bool
