@@ -57,7 +57,7 @@ if git.found()
   if r.returncode() == 0
     git_id += r.stdout().strip()
     git_id += '@'
-    r = run_command(git, '-C', repo, 'rev-parse', 'HEAD', check: false)
+    r = run_command(git, '-C', repo, 'rev-parse', '--short', 'HEAD', check: false)
     git_id += r.stdout().strip()
     r = run_command(git, '-C', repo, 'diff-index', '--quiet', 'HEAD',
                     check: false)
@@ -91,7 +91,12 @@ conf_data.set('cxx', cpp_compiler.get_id() + ' ' + cpp_compiler.version())
 conf_data.set('git_id', git_id)
 conf_data.set('license', license_text)
 conf_data.set('os', build_machine.system())
-conf_data.set('version', meson.project_version())
+versionstr = meson.project_version()
+# For development versions include git information in version string.
+if versionstr.replace('-dev', '') != versionstr
+  versionstr += '-' + git_id
+endif
+conf_data.set('version', versionstr)
 conf_data.set('is_debug_build', (get_option('buildtype') == 'debug').to_string())
 config_h = configure_file(input: 'config.h.in',
                output: 'config.h',
