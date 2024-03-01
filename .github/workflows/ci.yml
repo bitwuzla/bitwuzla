@@ -62,17 +62,7 @@ jobs:
           ssh-key: ${{ secrets.BZLA_LIBS_KEY }}
           submodules: 'recursive'
 
-      - name: Restore Subprojects
-        id: subprojects-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            subprojects
-            build/subprojects/
-          key: ${{ runner.os }}-${{ matrix.name }}-${{ hashFiles('subprojects/*.wrap', 'subprojects/packagefiles/**') }}-${{ hashFiles('.github/workflows/ci.yml') }}
-
       - name: Wrap
-        if: steps.subprojects-restore.outputs.cache-hit != 'true'
         run: meson wrap install gtest
 
       - name: Configure
@@ -81,15 +71,6 @@ jobs:
       - name: Build
         run: ninja install
         working-directory: build
-
-      - name: Save Subprojects
-        id: subprojects-save
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            subprojects
-            build/subprojects
-          key: ${{ steps.subprojects-restore.outputs.cache-primary-key }}
 
       - name: Test
         if: matrix.name != 'release-win64'
