@@ -3,7 +3,7 @@
 
 # Bitwuzla
 
-Bitwuzla is a Satisfiability Modulo Theories (SMT) solvers for the theories
+Bitwuzla is a Satisfiability Modulo Theories (SMT) solver for the theories
 of fixed-size bit-vectors, floating-point arithmetic, arrays, uninterpreted
 functions and their combinations.
 
