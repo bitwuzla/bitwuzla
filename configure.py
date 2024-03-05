@@ -69,7 +69,7 @@ def main():
     )
     ap.add_argument('buildtype', nargs='?',
                     choices=['release', 'debug', 'debugoptimized'])
-    ap.add_argument('--build-dir', default='build', metavar='DIR',
+    ap.add_argument('-b', '--build-dir', default='build', metavar='DIR',
                     help='build directory')
     ap.add_argument('--prefix',
                     help='install prefix')
@@ -83,6 +83,8 @@ def main():
     bool_opt(ap, 'coverage', 'code coverage')
     ap.add_argument('--win64', action='store_true',
                     help='enable cross compilation for 64-bit Windows')
+    ap.add_argument('--arm64', action='store_true',
+                    help='enable cross compilation for 64-bit ARM')
     bool_opt(ap, 'python', 'python bindings')
     bool_opt(ap, 'testing', 'regression and unit testing')
     bool_opt(ap, 'unit-testing', 'unit testing')
@@ -119,6 +121,8 @@ def main():
         build_opts.append(f'-Db_coverage={_bool(args.coverage)}')
     if args.win64:
         build_opts.append('--cross-file=x86_64-w64-mingw32.txt')
+    if args.arm64:
+        build_opts.append('--cross-file=x86_64-linux-aarch64.txt')
     if args.python is not None:
         build_opts.append(f'-Dpython={_bool(args.python)}')
     if args.docs is not None:
