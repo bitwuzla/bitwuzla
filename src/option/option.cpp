@@ -241,7 +241,7 @@ Options::Options()
       prop_opt_lt_concat_sext(
           this,
           Option::PROP_OPT_LT_CONCAT_SEXT,
-          true,
+          false,
           "optimization for inverse value computation of inequalities over "
           "concat and sign extension operands",
           "prop-opt-lt-concat-sext"),
