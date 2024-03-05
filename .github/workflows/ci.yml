@@ -32,6 +32,10 @@ jobs:
             os: ubuntu-latest
             config: --win64
 
+          - name: release-aarch64
+            os: ubuntu-latest
+            config: --arm64
+
     name: ${{ matrix.os }}:${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
@@ -45,6 +49,9 @@ jobs:
             sudo apt-get install -y mingw-w64
             sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
             sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+          fi
+          if [[ "${{matrix.name}}" == "release-aarch64" ]]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
           fi
           python3 -m pip install meson pytest cython>=3.*
           echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
@@ -73,12 +80,12 @@ jobs:
         working-directory: build
 
       - name: Test
-        if: matrix.name != 'release-win64'
+        if: matrix.name != 'release-win64' && matrix.name != 'release-aarch64'
         run: meson test --print-errorlogs
         working-directory: build
 
       - name: Examples
-        if: matrix.name != 'release-win64'
+        if: matrix.name != 'release-win64' && matrix.name != 'release-aarch64'
         working-directory: examples
         run: |
           pkgconfigdir=$(find ${{ github.workspace }}/build/install/lib -name pkgconfig)
