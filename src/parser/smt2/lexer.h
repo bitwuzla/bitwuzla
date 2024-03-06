@@ -140,7 +140,7 @@ class Lexer
    * Constructor.
    * @param infile The input file.
    */
-  Lexer() { d_buffer = std::vector<char>(d_buf_size, 0); }
+  Lexer() { d_buffer = std::vector<signed char>(d_buf_size, 0); }
   /** @return The next token. */
   Token next_token();
   /**
@@ -198,7 +198,7 @@ class Lexer
     if (d_buf_idx == d_buf_size)
     {
       assert(!d_saved);
-      d_input->read(d_buffer.data(), d_buf_size);
+      d_input->read(reinterpret_cast<char*>(d_buffer.data()), d_buf_size);
       size_t cnt = d_input->gcount();
       if (d_input->eof())
       {
@@ -295,7 +295,7 @@ class Lexer
    * Characters are read from the input file into the buffer in d_buf_size
    * chunks, and next_char() then reads character by character from the buffer.
    */
-  std::vector<char> d_buffer;  // value-initialized to 0
+  std::vector<signed char> d_buffer;  // value-initialized to 0
   /** True if we saved a character that has not been consumed yet. */
   bool d_saved = false;
 

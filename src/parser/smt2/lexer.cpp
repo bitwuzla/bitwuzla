@@ -93,7 +93,7 @@ Lexer::configure_buffer(size_t buf_size)
 {
   d_buf_size = buf_size;
   d_buf_idx  = d_buf_size;
-  d_buffer = std::vector<char>(d_buf_size, 0);
+  d_buffer   = std::vector<signed char>(d_buf_size, 0);
 }
 
 Token
