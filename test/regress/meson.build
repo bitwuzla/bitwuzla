@@ -2044,7 +2044,7 @@ regress_tests = [
 
 # Disable wine debug output if we run the cross-compiled binary
 env = []
-if meson.is_cross_build()
+if meson.is_cross_build() and host_machine.system() == 'windows'
   env += ['WINEDEBUG=fixme-all']
 endif
 
