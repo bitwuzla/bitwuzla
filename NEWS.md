@@ -2,7 +2,9 @@
 
 This file collects a summary of important and/or user-visible changes.
 
-## News since version 0.3.2
+## News for version 0.4.0
+
+- Added Linux aarch64 cross-compilation support (configure flag: `--arm64`).
 
 - Introduce **TermManager interface** for creating Term and Sort
   (**major API change**).
