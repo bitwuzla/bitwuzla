@@ -5156,7 +5156,7 @@ test_terminate1(void *state)
 struct terminator_state
 {
   struct timeval start;
-  uint32_t time_limit_ms;
+  int32_t time_limit_ms;
 };
 
 static int32_t
