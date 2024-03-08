@@ -72,6 +72,10 @@ AssertionVector::replace(size_t index, const Node& replacement)
     if (d_view.replace(real_index, replacement))
     {
       ++d_modified;
+      if (replacement.is_value() && replacement.value<bool>())
+      {
+        ++d_simplified;
+      }
       if (d_tracker)
       {
         d_tracker->track(replacement, assertion);
@@ -104,12 +108,19 @@ void
 AssertionVector::reset_modified()
 {
   d_modified = 0;
+  d_simplified = 0;
 }
 
 size_t
 AssertionVector::num_modified() const
 {
   return d_modified;
+}
+
+size_t
+AssertionVector::num_simplified() const
+{
+  return d_simplified;
 }
 
 bool

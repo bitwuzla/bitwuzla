@@ -76,6 +76,8 @@ class AssertionVector
   /** @return The number of changed/added assertions since the last reset. */
   size_t num_modified() const;
 
+  size_t num_simplified() const;
+
   /** Determines if vector was modified since the last reset. */
   bool modified() const;
 
@@ -87,6 +89,8 @@ class AssertionVector
   size_t d_begin;
   /** Number of modified (changed, added) assertions since last reset. */
   size_t d_modified;
+  /** Number of assertions simplified to true since last reset. */
+  size_t d_simplified;
 
   AssertionTracker* d_tracker;
 };
