@@ -73,9 +73,9 @@ print_coefficients(PassNormalize::CoefficientsMap& coeff)
 
 PassNormalize::PassNormalize(Env& env,
                              backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr),
+    : PreprocessingPass(env, backtrack_mgr, "no", "normalize"),
       d_share_aware(d_env.options().pp_normalize_share_aware()),
-      d_stats(env.statistics())
+      d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
 
@@ -1097,7 +1097,7 @@ print_diff(const std::unordered_map<Kind, uint64_t>& before,
 void
 PassNormalize::apply(AssertionVector& assertions)
 {
-  util::Timer timer(d_stats.time_apply);
+  util::Timer timer(d_stats_pass.time_apply);
   Log(1) << "Apply normalization";
 
   d_cache.clear();
@@ -1203,11 +1203,10 @@ PassNormalize::process(const Node& node)
 
 /* --- PassNormalize private ------------------------------------------------ */
 
-PassNormalize::Statistics::Statistics(util::Statistics& stats)
-    : time_apply(stats.new_stat<util::TimerStatistic>(
-        "preprocess::normalize::time_apply")),
-      num_normalizations(
-          stats.new_stat<uint64_t>("preprocess::normalize::num_normalizations"))
+PassNormalize::Statistics::Statistics(util::Statistics& stats,
+                                      const std::string& prefix)
+    : num_normalizations(
+        stats.new_stat<uint64_t>(prefix + "num_normalizations"))
 {
 }
 

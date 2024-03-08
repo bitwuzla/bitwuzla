@@ -21,8 +21,15 @@ namespace bzla::preprocess {
 /* --- PreprocessingPass public --------------------------------------------- */
 
 PreprocessingPass::PreprocessingPass(Env& env,
-                                     backtrack::BacktrackManager* backtrack_mgr)
-    : d_env(env), d_logger(env.logger())
+                                     backtrack::BacktrackManager* backtrack_mgr,
+                                     const std::string& id,
+                                     const std::string& name)
+    : d_env(env),
+      d_logger(env.logger()),
+      d_stats_pass(d_env.statistics(), "preprocess::" + name + "::"),
+      d_id(id),
+      d_name(name)
+
 {
   (void) backtrack_mgr;  // suppress warning, may be needed in the future
 }
@@ -113,6 +120,12 @@ bool
 PreprocessingPass::processed(const Node& assertion)
 {
   return d_processed_assertions.find(assertion) != d_processed_assertions.end();
+}
+
+PreprocessingPass::Statistics::Statistics(util::Statistics& stats,
+                                          const std::string& prefix)
+    : time_apply(stats.new_stat<util::TimerStatistic>(prefix + "time_apply"))
+{
 }
 
 }  // namespace bzla::preprocess

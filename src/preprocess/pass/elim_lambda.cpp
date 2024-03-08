@@ -24,14 +24,15 @@ using namespace node;
 
 PassElimLambda::PassElimLambda(Env& env,
                                backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr), d_stats(env.statistics())
+    : PreprocessingPass(env, backtrack_mgr, "el", "elim_lambda"),
+      d_stats(env.statistics())
 {
 }
 
 void
 PassElimLambda::apply(AssertionVector& assertions)
 {
-  util::Timer timer(d_stats.time_apply);
+  util::Timer timer(d_stats_pass.time_apply);
   d_cache.clear();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
@@ -152,9 +153,7 @@ PassElimLambda::reduce(const Node& node) const
 }
 
 PassElimLambda::Statistics::Statistics(util::Statistics& stats)
-    : time_apply(
-        stats.new_stat<util::TimerStatistic>("preprocess::lambda::time_apply")),
-      num_elim(stats.new_stat<uint64_t>("preprocess::lambda::num_elim"))
+    : num_elim(stats.new_stat<uint64_t>("preprocess::lambda::num_elim"))
 {
 }
 

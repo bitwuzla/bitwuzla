@@ -68,6 +68,12 @@ class Preprocessor
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);
 
+  /** Helper function to print verbose message statistics. */
+  void print_statistics_header() const;
+  void print_statistics(const std::string& pass);
+  void print_statistics(const PreprocessingPass& pass,
+                        const AssertionVector& assertions);
+
   Env& d_env;
   util::Logger& d_logger;
 
@@ -97,6 +103,9 @@ class Preprocessor
   pass::PassSkeletonPreproc d_pass_skeleton_preproc;
   pass::PassNormalize d_pass_normalize;
   pass::PassElimExtract d_pass_elim_extract;
+
+  /** Counter for how often a statistics line was printed. */
+  uint64_t d_num_printed_stats = 0;
 
   struct Statistics
   {

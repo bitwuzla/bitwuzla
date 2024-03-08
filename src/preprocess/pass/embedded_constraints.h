@@ -36,8 +36,7 @@ class PassEmbeddedConstraints : public PreprocessingPass
 
   struct Statistics
   {
-    Statistics(util::Statistics& stats);
-    util::TimerStatistic& time_apply;
+    Statistics(util::Statistics& stats, const std::string& prefix);
     uint64_t& num_substs;
   } d_stats;
 };

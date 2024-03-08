@@ -117,8 +117,7 @@ class PassVariableSubstitution : public PreprocessingPass
 
   struct Statistics
   {
-    Statistics(util::Statistics& stats);
-    util::TimerStatistic& time_apply;
+    Statistics(util::Statistics& stats, const std::string& prefix);
     util::TimerStatistic& time_register;
     util::TimerStatistic& time_direct_cycle_check;
     util::TimerStatistic& time_remove_cycles;

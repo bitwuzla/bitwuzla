@@ -533,20 +533,20 @@ PassVariableSubstitution::normalize_for_substitution(const Node& assertion)
 
 PassVariableSubstitution::PassVariableSubstitution(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr),
+    : PreprocessingPass(env, backtrack_mgr, "vs", "varsubst"),
       d_substitutions(backtrack_mgr),
       d_substitution_assertions(backtrack_mgr),
       d_first_seen(backtrack_mgr),
       d_first_seen_cache(backtrack_mgr),
       d_cache(backtrack_mgr),
-      d_stats(env.statistics())
+      d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
 
 void
 PassVariableSubstitution::apply(AssertionVector& assertions)
 {
-  util::Timer timer(d_stats.time_apply);
+  util::Timer timer(d_stats_pass.time_apply);
   Log(1) << "Apply variable substitution";
 
   auto& substitution_map = d_cache.substitutions();
@@ -970,32 +970,31 @@ PassVariableSubstitution::process(const Node& term, const Node& excl_var)
       substitute(term, excl_var, d_cache.substitutions(), d_cache.cache()));
 }
 
-PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats)
-    : time_apply(stats.new_stat<util::TimerStatistic>(
-        "preprocess::varsubst::time_apply")),
-      time_register(stats.new_stat<util::TimerStatistic>(
-          "preprocess::varsubst::time_register")),
+PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats,
+                                                 const std::string& prefix)
+    : time_register(
+        stats.new_stat<util::TimerStatistic>(prefix + "time_register")),
       time_direct_cycle_check(stats.new_stat<util::TimerStatistic>(
-          "preprocess::varsubst::time_direct_cycle_check")),
-      time_remove_cycles(stats.new_stat<util::TimerStatistic>(
-          "preprocess::varsubst::time_remove_cycles")),
-      time_substitute(stats.new_stat<util::TimerStatistic>(
-          "preprocess::varsubst::time_substitute")),
-      time_find_vars(stats.new_stat<util::TimerStatistic>(
-          "preprocess::varsubst::time_find_vars")),
+          prefix + "time_direct_cycle_check")),
+      time_remove_cycles(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_remove_cycles")),
+      time_substitute(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_substitute")),
+      time_find_vars(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_find_vars")),
       time_find_substitution(stats.new_stat<util::TimerStatistic>(
-          "preprocess::varsubst::time_find_substitution")),
-      num_substs(stats.new_stat<uint64_t>("preprocess::varsubst::num_substs")),
-      num_norm_eq_linear_eq(stats.new_stat<uint64_t>(
-          "preprocess::varsubst::normalize_eq::num_linear_eq")),
-      num_norm_eq_gauss_elim(stats.new_stat<uint64_t>(
-          "preprocess::varsubst::normalize_eq::num_gauss_elim")),
-      num_norm_eq_bv_concat(stats.new_stat<uint64_t>(
-          "preprocess::varsubst::normalize_eq::num_bv_concat")),
-      num_norm_bv_ult(stats.new_stat<uint64_t>(
-          "preprocess::varsubst::normalize_bv_ineq::num_ult")),
-      num_norm_bv_slt(stats.new_stat<uint64_t>(
-          "preprocess::varsubst::normalize_bv_ineq::num_slt"))
+          prefix + "time_find_substitution")),
+      num_substs(stats.new_stat<uint64_t>(prefix + "num_substs")),
+      num_norm_eq_linear_eq(
+          stats.new_stat<uint64_t>(prefix + "normalize_eq::num_linear_eq")),
+      num_norm_eq_gauss_elim(
+          stats.new_stat<uint64_t>(prefix + "normalize_eq::num_gauss_elim")),
+      num_norm_eq_bv_concat(
+          stats.new_stat<uint64_t>(prefix + "normalize_eq::num_bv_concat")),
+      num_norm_bv_ult(
+          stats.new_stat<uint64_t>(prefix + "normalize_bv_ineq::num_ult")),
+      num_norm_bv_slt(
+          stats.new_stat<uint64_t>(prefix + "normalize_bv_ineq::num_slt"))
 
 {
 }

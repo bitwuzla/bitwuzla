@@ -22,14 +22,15 @@ using namespace node;
 
 PassFlattenAnd::PassFlattenAnd(Env& env,
                                backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr), d_stats(env.statistics())
+    : PreprocessingPass(env, backtrack_mgr, "fa", "flatten_and"),
+      d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
 
 void
 PassFlattenAnd::apply(AssertionVector& assertions)
 {
-  util::Timer timer(d_stats.time_apply);
+  util::Timer timer(d_stats_pass.time_apply);
   std::vector<Node> visit;
   std::unordered_set<Node> cache;
 
@@ -65,13 +66,10 @@ PassFlattenAnd::apply(AssertionVector& assertions)
   }
 }
 
-PassFlattenAnd::Statistics::Statistics(util::Statistics& stats)
-    : time_apply(stats.new_stat<util::TimerStatistic>(
-        "preprocess::flatten_and::time_apply")),
-      num_flattened(
-          stats.new_stat<uint64_t>("preprocess::flatten_and::num_flattened")),
-      num_assertions(
-          stats.new_stat<uint64_t>("preprocess::flatten_and::num_assertions"))
+PassFlattenAnd::Statistics::Statistics(util::Statistics& stats,
+                                       const std::string& prefix)
+    : num_flattened(stats.new_stat<uint64_t>(prefix + "num_flattened")),
+      num_assertions(stats.new_stat<uint64_t>(prefix + "num_assertions"))
 {
 }
 

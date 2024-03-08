@@ -17,6 +17,7 @@
 #include "backtrack/unordered_set.h"
 #include "node/node.h"
 #include "preprocess/assertion_vector.h"
+#include "util/statistics.h"
 
 namespace bzla {
 
@@ -39,8 +40,13 @@ class PreprocessingPass
   /**
    * Constructor.
    * @param env The associated environment.
+   * @param backtrack_mgr The associated backtrack manager.
+   * @param stats_prefix Prefix for statistics.
    */
-  PreprocessingPass(Env& env, backtrack::BacktrackManager* backtrack_mgr);
+  PreprocessingPass(Env& env,
+                    backtrack::BacktrackManager* backtrack_mgr,
+                    const std::string& pid,
+                    const std::string& stats_prefix);
   virtual ~PreprocessingPass() {};
 
   /**
@@ -56,6 +62,12 @@ class PreprocessingPass
   virtual Node process(const Node& term) { return term; }
 
   void clear_cache();
+
+  const auto& statistics() const { return d_stats_pass; }
+
+  const std::string& name() const { return d_name; }
+
+  const std::string& id() const { return d_id; }
 
  protected:
   /**
@@ -100,7 +112,19 @@ class PreprocessingPass
   /** The associated logger. */
   util::Logger& d_logger;
 
+  struct Statistics
+  {
+    Statistics() = delete;
+    Statistics(util::Statistics& stats, const std::string& prefix);
+
+    util::TimerStatistic& time_apply;
+  } d_stats_pass;
+
  private:
+  /** Short name used for printing verbose messages. */
+  const std::string d_id;
+  /** Pass name used for printing statistics. */
+  const std::string d_name;
   std::unordered_set<Node> d_processed_assertions;
 };
 

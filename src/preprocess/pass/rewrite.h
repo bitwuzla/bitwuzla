@@ -27,13 +27,6 @@ class PassRewrite : public PreprocessingPass
   void apply(AssertionVector& assertions) override;
 
   Node process(const Node& term) override;
-
- private:
-  struct Statistics
-  {
-    Statistics(util::Statistics& stats);
-    util::TimerStatistic& time_apply;
-  } d_stats;
 };
 
 }  // namespace bzla::preprocess::pass

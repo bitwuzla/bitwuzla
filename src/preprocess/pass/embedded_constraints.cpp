@@ -22,16 +22,16 @@ using namespace bzla::node;
 
 PassEmbeddedConstraints::PassEmbeddedConstraints(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr),
+    : PreprocessingPass(env, backtrack_mgr, "ec", "embedded_constraints"),
       d_substitutions(backtrack_mgr),
-      d_stats(env.statistics())
+      d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
 
 void
 PassEmbeddedConstraints::apply(AssertionVector& assertions)
 {
-  util::Timer timer(d_stats.time_apply);
+  util::Timer timer(d_stats_pass.time_apply);
 
   // Disabled if unsat cores enabled.
   if (d_env.options().produce_unsat_cores())
@@ -103,10 +103,9 @@ PassEmbeddedConstraints::process(const Node& node)
 
 /* --- PassEmbeddedConstraints private -------------------------------------- */
 
-PassEmbeddedConstraints::Statistics::Statistics(util::Statistics& stats)
-    : time_apply(stats.new_stat<util::TimerStatistic>(
-        "preprocess::embedded::time_apply")),
-      num_substs(stats.new_stat<uint64_t>("preprocess::embedded::num_substs"))
+PassEmbeddedConstraints::Statistics::Statistics(util::Statistics& stats,
+                                                const std::string& prefix)
+    : num_substs(stats.new_stat<uint64_t>(prefix + "num_substs"))
 {
 }
 

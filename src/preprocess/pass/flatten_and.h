@@ -29,8 +29,7 @@ class PassFlattenAnd : public PreprocessingPass
  private:
   struct Statistics
   {
-    Statistics(util::Statistics& stats);
-    util::TimerStatistic& time_apply;
+    Statistics(util::Statistics& stats, const std::string& prefix);
     uint64_t& num_flattened;
     uint64_t& num_assertions;
   } d_stats;

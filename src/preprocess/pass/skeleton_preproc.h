@@ -66,7 +66,6 @@ class PassSkeletonPreproc : public PreprocessingPass
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
-    util::TimerStatistic& time_apply;
     util::TimerStatistic& time_sat;
     util::TimerStatistic& time_fixed;
     util::TimerStatistic& time_encode;

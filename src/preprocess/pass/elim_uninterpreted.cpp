@@ -36,7 +36,7 @@ bv_size_from_value(uint64_t value)
 
 PassElimUninterpreted::PassElimUninterpreted(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr),
+    : PreprocessingPass(env, backtrack_mgr, "un", "uninterpreted"),
       d_substitutions(backtrack_mgr),
       d_stats(env.statistics())
 {
@@ -45,7 +45,7 @@ PassElimUninterpreted::PassElimUninterpreted(
 void
 PassElimUninterpreted::apply(AssertionVector& assertions)
 {
-  util::Timer timer(d_stats.time_apply);
+  util::Timer timer(d_stats_pass.time_apply);
 
   node_ref_vector visit;
   unordered_node_ref_set visited;
@@ -202,10 +202,8 @@ PassElimUninterpreted::process(const Node& node)
 /* --- PassEmbeddedConstraints private -------------------------------------- */
 
 PassElimUninterpreted::Statistics::Statistics(util::Statistics& stats)
-    : time_apply(stats.new_stat<util::TimerStatistic>(
-        "preprocess::uninterpreted::time_apply")),
-      num_substs(
-          stats.new_stat<uint64_t>("preprocess::uninterpreted::num_substs"))
+    : num_substs(
+        stats.new_stat<uint64_t>("preprocess::uninterpreted::num_substs"))
 {
 }
 

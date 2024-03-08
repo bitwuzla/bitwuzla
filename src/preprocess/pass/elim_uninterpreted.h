@@ -37,7 +37,6 @@ class PassElimUninterpreted : public PreprocessingPass
   struct Statistics
   {
     Statistics(util::Statistics& stats);
-    util::TimerStatistic& time_apply;
     uint64_t& num_substs;
   } d_stats;
 };

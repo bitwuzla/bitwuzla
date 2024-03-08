@@ -13,6 +13,7 @@
 #include "env.h"
 #include "solving_context.h"
 #include "util/logger.h"
+#include "util/resources.h"
 
 namespace bzla::preprocess {
 
@@ -70,6 +71,12 @@ Preprocessor::preprocess()
     return Result::UNKNOWN;
   }
 
+  if (d_logger.is_msg_enabled(1))
+  {
+    d_num_printed_stats = 0;
+    print_statistics("--");
+  }
+
   // Process assertions by level
   while (!d_assertions.empty() && !d_assertions.is_inconsistent())
   {
@@ -94,6 +101,11 @@ Preprocessor::preprocess()
   // Sync backtrack manager to level. This is required if there are levels
   // that do not contain any assertions.
   sync_scope(d_global_backtrack_mgr.num_levels());
+
+  if (d_logger.is_msg_enabled(1))
+  {
+    print_statistics("**");
+  }
 
   // Clear rewriter and preprocessing pass caches
   d_env.rewriter().clear_cache();
@@ -194,7 +206,7 @@ Preprocessor::substitutions() const
 void
 Preprocessor::apply(AssertionVector& assertions)
 {
-  Msg(1) << "Preprocessing " << assertions.size() << " assertions";
+  // Msg(1) << "Preprocessing " << assertions.size() << " assertions";
   if (assertions.size() == 0)
   {
     return;
@@ -226,7 +238,10 @@ Preprocessor::apply(AssertionVector& assertions)
     size_t cnt;
     cnt = assertions.num_modified();
     d_pass_rewrite.apply(assertions);
-    Msg(2) << assertions.num_modified() - cnt << " after rewriting";
+    if (d_logger.is_msg_enabled(1))
+    {
+      print_statistics(d_pass_rewrite, assertions);
+    }
     if (assertions.is_inconsistent())
     {
       break;
@@ -236,7 +251,10 @@ Preprocessor::apply(AssertionVector& assertions)
     {
       cnt = assertions.num_modified();
       d_pass_flatten_and.apply(assertions);
-      Msg(2) << assertions.num_modified() - cnt << " after and flattening";
+      if (d_logger.is_msg_enabled(1))
+      {
+        print_statistics(d_pass_flatten_and, assertions);
+      }
       if (assertions.is_inconsistent())
       {
         break;
@@ -250,8 +268,10 @@ Preprocessor::apply(AssertionVector& assertions)
         assertions.reset_modified();
         cnt = assertions.num_modified();
         d_pass_variable_substitution.apply(assertions);
-        Msg(2) << assertions.num_modified() - cnt
-               << " after variable substitution";
+        if (d_logger.is_msg_enabled(1))
+        {
+          print_statistics(d_pass_variable_substitution, assertions);
+        }
       } while (assertions.modified() && !assertions.is_inconsistent());
       if (assertions.is_inconsistent())
       {
@@ -264,8 +284,10 @@ Preprocessor::apply(AssertionVector& assertions)
       cnt = assertions.num_modified();
       d_pass_skeleton_preproc.apply(assertions);
       skel_done = true;
-      Msg(2) << assertions.num_modified() - cnt
-             << " after skeleton simplification";
+      if (d_logger.is_msg_enabled(1))
+      {
+        print_statistics(d_pass_skeleton_preproc, assertions);
+      }
       if (assertions.is_inconsistent())
       {
         break;
@@ -278,6 +300,10 @@ Preprocessor::apply(AssertionVector& assertions)
       d_pass_embedded_constraints.apply(assertions);
       Msg(2) << assertions.num_modified() - cnt
              << " after embedded constraints";
+      if (d_logger.is_msg_enabled(1))
+      {
+        print_statistics(d_pass_embedded_constraints, assertions);
+      }
       if (assertions.is_inconsistent())
       {
         break;
@@ -288,20 +314,28 @@ Preprocessor::apply(AssertionVector& assertions)
     {
       cnt = assertions.num_modified();
       d_pass_contr_ands.apply(assertions);
-      Msg(2) << assertions.num_modified() - cnt << " after contradicting ands";
+      if (d_logger.is_msg_enabled(1))
+      {
+        print_statistics(d_pass_contr_ands, assertions);
+      }
     }
 
     cnt = assertions.num_modified();
     d_pass_elim_lambda.apply(assertions);
-    Msg(2) << assertions.num_modified() - cnt << " after lambda elimination";
+    if (d_logger.is_msg_enabled(1))
+    {
+      print_statistics(d_pass_elim_lambda, assertions);
+    }
 
     // This pass is not supported if incremental is enabled.
     if (false && !uninterpreted_done)
     {
       cnt = assertions.num_modified();
       d_pass_elim_uninterpreted.apply(assertions);
-      Msg(2) << assertions.num_modified() - cnt
-             << " after uninterpreted const/var elimination";
+      if (d_logger.is_msg_enabled(1))
+      {
+        print_statistics(d_pass_elim_uninterpreted, assertions);
+      }
       uninterpreted_done = true;
     }
 
@@ -309,7 +343,10 @@ Preprocessor::apply(AssertionVector& assertions)
     {
       cnt = assertions.num_modified();
       d_pass_normalize.apply(assertions);
-      Msg(2) << assertions.num_modified() - cnt << " after normalization";
+      if (d_logger.is_msg_enabled(1))
+      {
+        print_statistics(d_pass_normalize, assertions);
+      }
       if (d_assertions.is_inconsistent())
       {
         break;
@@ -320,7 +357,10 @@ Preprocessor::apply(AssertionVector& assertions)
     {
       cnt = assertions.num_modified();
       d_pass_elim_extract.apply(assertions);
-      Msg(2) << assertions.num_modified() - cnt << " after extract elimination";
+      if (d_logger.is_msg_enabled(1))
+      {
+        print_statistics(d_pass_elim_extract, assertions);
+      }
       if (d_assertions.is_inconsistent())
       {
         break;
@@ -356,6 +396,77 @@ Preprocessor::sync_scope(size_t level)
   {
     d_backtrack_mgr.push();
   }
+}
+
+void
+Preprocessor::print_statistics_header() const
+{
+  // clang-format off
+    Msg(1);
+    Msg(1) << std::setw(4) << ""
+           << std::setw(8) << ""
+           << std::setw(8) << ""
+           << std::setw(8) << ""
+           << std::setw(25) << "assertions" << std::setw(7) << " ";
+    Msg(1) << std::setw(4) << "pass"
+           << std::setw(8) << "seconds"
+           << std::setw(8) << "sum"
+           << std::setw(8) << "%"
+           << std::setw(8) << "MB"
+           << std::setw(8) << "process"
+           << std::setw(8) << "changed"
+           << std::setw(8) << "simp";
+    Msg(1);
+  // clang-format on
+}
+
+void
+Preprocessor::print_statistics(const std::string& pass)
+{
+  if (d_num_printed_stats % 20 == 0)
+  {
+    print_statistics_header();
+  }
+
+  ++d_num_printed_stats;
+
+  double time_preproc = d_stats.time_preprocess.elapsed() / 1000.0;
+
+  Msg(1) << std::setw(2) << "" << pass << std::setw(8) << std::setprecision(1)
+         << std::fixed << time_preproc << std::setw(8) << time_preproc
+         << std::setw(8) << " " << std::setw(8)
+         << util::current_memory_usage() / static_cast<double>(1 << 20)
+         << std::setw(8) << d_assertions.size();
+}
+
+void
+Preprocessor::print_statistics(const PreprocessingPass& pass,
+                               const AssertionVector& assertions)
+{
+  if (d_num_printed_stats % 20 == 0)
+  {
+    print_statistics_header();
+  }
+
+  char mark_inconsist = '\0';
+  if (assertions.is_inconsistent())
+  {
+    mark_inconsist = '*';
+  }
+
+  double time_preproc = d_stats.time_preprocess.elapsed();
+  double time_pass    = pass.statistics().time_apply.elapsed();
+
+  ++d_num_printed_stats;
+
+  Msg(1) << std::setw(2) << "" << pass.id() << mark_inconsist << std::setw(8)
+         << std::setprecision(1) << std::fixed << time_preproc / 1000.0
+         << std::setw(8) << time_pass / 1000.0 << std::setw(8)
+         << time_pass / time_preproc * 100.0 << std::setw(8)
+         << util::current_memory_usage() / static_cast<double>(1 << 20)
+         << std::setw(8) << assertions.size() << std::setw(8)
+         << assertions.num_modified() << std::setw(8)
+         << assertions.num_simplified();
 }
 
 Preprocessor::Statistics::Statistics(util::Statistics& stats)

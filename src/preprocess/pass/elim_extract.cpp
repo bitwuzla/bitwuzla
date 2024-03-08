@@ -29,7 +29,8 @@ using namespace node;
 
 PassElimExtract::PassElimExtract(Env& env,
                                  backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr), d_stats(env.statistics())
+    : PreprocessingPass(env, backtrack_mgr, "ee", "elim_extract"),
+      d_stats(env.statistics())
 {
 }
 
@@ -42,7 +43,7 @@ PassElimExtract::apply(AssertionVector& assertions)
     return;
   }
 
-  util::Timer timer(d_stats.time_apply);
+  util::Timer timer(d_stats_pass.time_apply);
   d_cache.clear();
 
   std::unordered_map<Node, std::vector<Node>> extract_map;
@@ -221,9 +222,7 @@ PassElimExtract::compute_non_overlapping(
 }
 
 PassElimExtract::Statistics::Statistics(util::Statistics& stats)
-    : time_apply(stats.new_stat<util::TimerStatistic>(
-        "preprocess::elim_extract::time_apply")),
-      num_elim(stats.new_stat<uint64_t>("preprocess::elim_extract::num_elim"))
+    : num_elim(stats.new_stat<uint64_t>("preprocess::elim_extract::num_elim"))
 {
 }
 

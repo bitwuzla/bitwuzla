@@ -27,19 +27,19 @@ using namespace node;
 
 PassSkeletonPreproc::PassSkeletonPreproc(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr),
+    : PreprocessingPass(env, backtrack_mgr, "sp", "skeleton_preproc"),
       d_sat_solver(nullptr),
       d_assertion_lits(backtrack_mgr),
       d_assertions(backtrack_mgr),
       d_reset(backtrack_mgr),
-      d_stats(env.statistics(), "preprocess::skeleton::")
+      d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
 
 void
 PassSkeletonPreproc::apply(AssertionVector& assertions)
 {
-  util::Timer timer(d_stats.time_apply);
+  util::Timer timer(d_stats_pass.time_apply);
 
   // Disabled if unsat cores enabled.
   if (d_env.options().produce_unsat_cores())
@@ -272,8 +272,7 @@ PassSkeletonPreproc::encode(const Node& assertion)
 
 PassSkeletonPreproc::Statistics::Statistics(util::Statistics& stats,
                                             const std::string& prefix)
-    : time_apply(stats.new_stat<util::TimerStatistic>(prefix + "time_apply")),
-      time_sat(stats.new_stat<util::TimerStatistic>(prefix + "time_sat")),
+    : time_sat(stats.new_stat<util::TimerStatistic>(prefix + "time_sat")),
       time_fixed(stats.new_stat<util::TimerStatistic>(prefix + "time_fixed")),
       time_encode(stats.new_stat<util::TimerStatistic>(prefix + "time_encode")),
       num_new_assertions(stats.new_stat<uint64_t>(prefix + "new_assertions")),

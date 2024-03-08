@@ -38,7 +38,6 @@ class PassElimLambda : public PreprocessingPass
   struct Statistics
   {
     Statistics(util::Statistics& stats);
-    util::TimerStatistic& time_apply;
     uint64_t& num_elim;
   } d_stats;
 };
