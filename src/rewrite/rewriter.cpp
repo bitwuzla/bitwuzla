@@ -581,6 +581,7 @@ Rewriter::rewrite_not(const Node& node)
     BZLA_APPLY_RW_RULE(NOT_EVAL);
     BZLA_APPLY_RW_RULE(NOT_NOT);
     BZLA_APPLY_RW_RULE(NOT_XOR);
+    BZLA_APPLY_RW_RULE(NOT_EQUAL_BV1_BOOL)
   }
 
 DONE:
@@ -1533,6 +1534,9 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::NOT_EVAL: out << "NOT_EVAL"; break;
     case RewriteRuleKind::NOT_NOT: out << "NOT_NOT"; break;
     case RewriteRuleKind::NOT_XOR: out << "NOT_XOR"; break;
+    case RewriteRuleKind::NOT_EQUAL_BV1_BOOL:
+      out << "NOT_EQUAL_BV1_BOOL";
+      break;
 
     case RewriteRuleKind::DISTINCT_CARD: out << "DISTINCT_CARD"; break;
     case RewriteRuleKind::DISTINCT_ELIM: out << "DISTINCT_ELIM"; break;
