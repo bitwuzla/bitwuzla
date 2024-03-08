@@ -106,6 +106,7 @@ class BvPropSolver : public Solver, public BvSolverInterface
     util::HistogramStatistic& num_props_cons_per_kind;
     util::HistogramStatistic& num_props_conflicts_per_kind;
 #endif
+    util::TimerStatistic& time_mk_node;
     util::TimerStatistic& time_check;
   } d_stats;
 };

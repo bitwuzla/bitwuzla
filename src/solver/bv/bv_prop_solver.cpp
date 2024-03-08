@@ -233,6 +233,8 @@ BvPropSolver::unsat_core(std::vector<Node>& core) const
 uint64_t
 BvPropSolver::mk_node(const Node& node)
 {
+  util::Timer timer(d_stats.time_mk_node);
+
   assert(node.type().is_bv() || node.type().is_bool());
 
   uint64_t res  = 0;
@@ -492,6 +494,8 @@ BvPropSolver::Statistics::Statistics(util::Statistics& stats,
       num_props_conflicts_per_kind(stats.new_stat<util::HistogramStatistic>(
           prefix + "num_conflicts_per")),
 #endif
+      time_mk_node(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_mk_node")),
       time_check(stats.new_stat<util::TimerStatistic>(prefix + "time_check"))
 {
 }
