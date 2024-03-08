@@ -332,6 +332,7 @@ enum class RewriteRuleKind
   NOT_EVAL,
   NOT_NOT,
   NOT_XOR,
+  NOT_EQUAL_BV1_BOOL,
 
   // Level 0+
   DISTINCT_ELIM,

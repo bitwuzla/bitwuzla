@@ -619,6 +619,34 @@ RewriteRule<RewriteRuleKind::NOT_XOR>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/**
+ * match: (not (= t c)) with boolean or bv1 value c
+ * result: (= t (bvnot c)) or (= t (not c))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::NOT_EQUAL_BV1_BOOL>::_apply(Rewriter& rewriter,
+                                                         const Node& node)
+{
+  assert(node.num_children() == 1);
+  if (node[0].kind() == Kind::EQUAL
+      && ((node[0][0].type().is_bv() && node[0][0].type().bv_size() == 1)
+          || node[0][0].type().is_bool()))
+  {
+    if (node[0][0].is_value())
+    {
+      return rewriter.mk_node(Kind::EQUAL,
+                              {rewriter.invert_node(node[0][0]), node[0][1]});
+    }
+    else if (node[0][1].is_value())
+    {
+      return rewriter.mk_node(Kind::EQUAL,
+                              {node[0][0], rewriter.invert_node(node[0][1])});
+    }
+  }
+  return node;
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>

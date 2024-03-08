@@ -97,6 +97,10 @@ template <>
 Node RewriteRule<RewriteRuleKind::NOT_XOR>::_apply(Rewriter& rewriter,
                                                    const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::NOT_EQUAL_BV1_BOOL>::_apply(
+    Rewriter& rewriter, const Node& node);
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>
