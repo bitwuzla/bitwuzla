@@ -41,6 +41,8 @@ class Parser : public bzla::parser::Parser
 
   bool parse_term(const std::string& input, bitwuzla::Term& res) override;
   bool parse_sort(const std::string& input, bitwuzla::Sort& res) override;
+  std::vector<bitwuzla::Sort> get_declared_sorts() const override;
+  std::vector<bitwuzla::Term> get_declared_funs() const override;
 
  private:
   /** A parsed item. */
@@ -806,8 +808,10 @@ class Parser : public bzla::parser::Parser
   /** The current assertion level. */
   uint64_t d_assertion_level = 0;
 
-  /** Cache declared symbols for get-model. */
-  backtrack::vector<SymbolTable::Node*> d_decls;
+  /** Cache declared function symbols for user/get-model. */
+  backtrack::vector<SymbolTable::Node*> d_decl_funs;
+  /** Cache declared function symbols for user. */
+  backtrack::vector<SymbolTable::Node*> d_decl_sorts;
 
   /** The work stack. */
   std::vector<ParsedItem> d_work;

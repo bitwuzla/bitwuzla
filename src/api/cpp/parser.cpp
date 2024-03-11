@@ -98,6 +98,20 @@ Parser::parse_sort(const std::string &input)
   return res;
 }
 
+std::vector<Sort>
+Parser::get_declared_sorts() const
+{
+  assert(d_parser);
+  return d_parser->get_declared_sorts();
+}
+
+std::vector<Term>
+Parser::get_declared_funs() const
+{
+  assert(d_parser);
+  return d_parser->get_declared_funs();
+}
+
 std::shared_ptr<bitwuzla::Bitwuzla>
 Parser::bitwuzla()
 {

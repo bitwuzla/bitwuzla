@@ -150,6 +150,44 @@ bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
   return res;
 }
 
+BitwuzlaSort*
+bitwuzla_parser_get_declared_sorts(BitwuzlaParser* parser, size_t* size)
+{
+  BitwuzlaSort* res = nullptr;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(parser);
+  auto decl_sorts = parser->d_parser->get_declared_sorts();
+  static thread_local std::vector<BitwuzlaSort> c_sorts;
+  c_sorts.clear();
+  for (const auto& s : decl_sorts)
+  {
+    c_sorts.push_back(parser->d_tm->export_sort(s));
+  }
+  *size = c_sorts.size();
+  res   = *size ? c_sorts.data() : nullptr;
+  BITWUZLA_TRY_CATCH_END;
+  return res;
+}
+
+BitwuzlaTerm*
+bitwuzla_parser_get_declared_funs(BitwuzlaParser* parser, size_t* size)
+{
+  BitwuzlaTerm* res = nullptr;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(parser);
+  auto decl_funs = parser->d_parser->get_declared_funs();
+  static thread_local std::vector<BitwuzlaTerm> c_terms;
+  c_terms.clear();
+  for (const auto& f : decl_funs)
+  {
+    c_terms.push_back(parser->d_tm->export_term(f));
+  }
+  *size = c_terms.size();
+  res   = *size ? c_terms.data() : nullptr;
+  BITWUZLA_TRY_CATCH_END;
+  return res;
+}
+
 const char*
 bitwuzla_parser_get_error_msg(BitwuzlaParser* parser)
 {

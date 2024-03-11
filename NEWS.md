@@ -2,6 +2,20 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Parser: Added support for querying the parser for declared sorts and terms.
+  + C++ API:
+    * New Function `Parser::get_declared_sorts()` to retrieve user-declared
+      sorts (SMT-LIB: declared via `declare-sort`, BTOR2: always empty).
+    * New Function `Parser::get_declared_funs()` to retrieve user-declared
+      function symbols (SMT-LIB: declared via `declare-const` and `declare-fun`,
+      BTOR2: inputs with a symbol).
+  + C API:
+    * New Function `bitwuzla_parser_get_declared_sorts(BitwuzlaParser*, size_t*)`.
+    * New Function `bitwuzla_parser_get_declared_funs(BitwuzlaParser*, size_t*)`.
+  + Python API:
+    * New Function `Parser.get_declared_sorts()`.
+    * New Function `Parser.get_declared_funs()`.
+
 ## News for version 0.4.0
 
 - Added Linux aarch64 cross-compilation support (configure flag: `--arm64`).

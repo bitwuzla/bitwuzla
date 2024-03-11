@@ -1969,6 +1969,8 @@ def test_parser_smt2(tm):
 
     parser = Parser(tm, options)
     parser.parse(filename, True)
+    assert parser.get_declared_sorts() == []
+    assert parser.get_declared_funs() == []
     os.remove(filename)
 
 def test_parser_smt2_string1(tm):
@@ -1979,6 +1981,8 @@ def test_parser_smt2_string1(tm):
         parser.parse(smt2, True, True)
     parser = Parser(tm, options)
     parser.parse(smt2, True, False)
+    assert parser.get_declared_sorts() == []
+    assert parser.get_declared_funs() == []
 
 def test_parser_smt2_string2(tm):
     str_decl  = "(declare-const a Bool)"
@@ -1991,6 +1995,10 @@ def test_parser_smt2_string2(tm):
     parser.parse(str_false, True, False)
     bitwuzla = parser.bitwuzla()
     bitwuzla.check_sat() == Result.UNSAT
+    assert parser.get_declared_sorts() == []
+    decl_funs = parser.get_declared_funs()
+    assert decl_funs == [parser.parse_term("a")]
+    assert decl_funs[0].symbol() == "a"
 
 def test_parser_smt2_string3(tm):
     options = Options()
@@ -2007,6 +2015,16 @@ def test_parser_smt2_string3(tm):
                 True,
                 False)
     parser.parse("(check-sat)", True, False)
+    assert parser.get_declared_sorts() == []
+    decl_funs = parser.get_declared_funs()
+    assert decl_funs == [
+            parser.parse_term("v0"),
+            parser.parse_term("v1"),
+            parser.parse_term("a0")]
+    decl_funs_strs = [t.symbol() for t in decl_funs]
+    assert "v0" in decl_funs_strs
+    assert "v1" in decl_funs_strs
+    assert "a0" in decl_funs_strs
 
 def test_parser_smt2_string_term(tm):
     options = Options()
@@ -2025,6 +2043,13 @@ def test_parser_smt2_string_term(tm):
                 [t_b,
                  tm.mk_bv_value(
                      tm.mk_bv_sort(16), "1011111010001010", 2)])
+    assert parser.get_declared_sorts() == []
+    decl_funs = parser.get_declared_funs()
+    assert decl_funs == [t_a, t_b, t_c]
+    decl_funs_strs = [t.symbol() for t in decl_funs]
+    assert "a" in decl_funs_strs
+    assert "b" in decl_funs_strs
+    assert "c" in decl_funs_strs
 
 def test_parser_smt2_string_sort(tm):
     options = Options()
@@ -2037,6 +2062,10 @@ def test_parser_smt2_string_sort(tm):
     parser.parse("(define-sort FPN () (_ FloatingPoint 11 53))", True, False)
     assert parser.parse_sort("(_ FloatingPoint 11 53)") == \
             parser.parse_sort("FPN")
+    decl_sorts = parser.get_declared_sorts()
+    assert decl_sorts == [parser.parse_sort("m")]
+    assert decl_sorts[0].uninterpreted_symbol() == "m"
+    assert parser.get_declared_funs() == []
 
 def test_parser_btor2(tm):
     iinput = "parse.btor2"
@@ -2060,11 +2089,15 @@ def test_parser_btor2(tm):
     parser = Parser(tm, options, 'btor2')
     parser.parse(iinput, True, True)
     parser.bitwuzla().check_sat() == Result.UNSAT
+    assert parser.get_declared_sorts() == []
+    decl_funs = parser.get_declared_funs()
+    assert len(decl_funs) == 1
+    assert decl_funs[0].symbol() == "@inp2"
     os.remove(iinput)
 
 def test_parser_btor2_string1(tm):
     btor2 = "1 sort bitvec 8\n2 input 1 @inp2\n3 sort bitvec 3\n"\
-            "4 one 3\n5 uext 1 4 5\n6 srl 1 2 5\n7 sort bitvec 1\n"\
+            "4 one 3 @one\n5 uext 1 4 5\n6 srl 1 2 5 @srl\n7 sort bitvec 1\n"\
             "8 slice 7 6 7 7\n9 constraint 8\n"
     options = Options()
     parser = Parser(tm, options, 'btor2')
@@ -2073,6 +2106,10 @@ def test_parser_btor2_string1(tm):
 
     parser = Parser(tm, options, 'btor2')
     parser.parse(btor2, True, False)
+    assert parser.get_declared_sorts() == []
+    decl_funs = parser.get_declared_funs()
+    assert len(decl_funs) == 1
+    assert decl_funs[0].symbol() == "@inp2"
 
 def test_parser_btor2_string2(tm):
     str_decl  = "(declare-const a Bool)"
@@ -2097,6 +2134,15 @@ def test_parser_btor2_string2(tm):
     parser.parse(and13, True, False)
     parser.parse(root, True, False)
     assert parser.bitwuzla().check_sat() == Result.UNSAT
+    assert parser.get_declared_sorts() == []
+    decl_funs = parser.get_declared_funs()
+    assert len(decl_funs) == 5
+    decl_funs_strs = [t.symbol() for t in decl_funs]
+    assert "@arr3" in decl_funs_strs
+    assert "@arr4" in decl_funs_strs
+    assert "@arr5" in decl_funs_strs
+    assert "@inp7" in decl_funs_strs
+    assert "@inp8" in decl_funs_strs
 
 def test_parser_btor2_string_term(tm):
     options = Options()
@@ -2116,6 +2162,13 @@ def test_parser_btor2_string_term(tm):
             tm.mk_term(Kind.BV_ADD,
                           [t_b,
                            tm.mk_bv_value(tm.mk_bv_sort(16), "1011111010001010", 2)])
+    assert parser.get_declared_sorts() == []
+    decl_funs = parser.get_declared_funs()
+    assert len(decl_funs) == 3
+    decl_funs_strs = [t.symbol() for t in decl_funs]
+    assert "a" in decl_funs_strs
+    assert "b" in decl_funs_strs
+    assert "c" in decl_funs_strs
 
 def test_parser_btor2_string_sort(tm):
     options = Options()
@@ -2124,6 +2177,8 @@ def test_parser_btor2_string_sort(tm):
     assert bv1 == tm.mk_bv_sort(1)
     assert parser.parse_sort("2 sort bitvec 32") == tm.mk_bv_sort(32)
     assert parser.parse_sort("3 sort array 1 1") == tm.mk_array_sort(bv1, bv1)
+    assert parser.get_declared_sorts() == []
+    assert parser.get_declared_funs() == []
 
 # ----------------------------------------------------------------------------
 # Termination function

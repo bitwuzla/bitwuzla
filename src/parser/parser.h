@@ -76,8 +76,32 @@ class Parser
                      std::istream& input,
                      bool parse_only) = 0;
 
+  /**
+   * Parse term from string.
+   * @param input The input string.
+   * @return The parsed term.
+   */
   virtual bool parse_term(const std::string& input, bitwuzla::Term& res) = 0;
+  /**
+   * Parse sort from string.
+   * @param input The input string.
+   * @return The parsed sort.
+   */
   virtual bool parse_sort(const std::string& input, bitwuzla::Sort& res) = 0;
+  /**
+   * Get the current set of (user-)declared sort symbols.
+   * @note Corresponds to the sorts declared via SMT-LIB command `declare-sort`.
+   *       Will always return an empty set for BTOR2 input.
+   * @return The declared sorts.
+   */
+  virtual std::vector<bitwuzla::Sort> get_declared_sorts() const = 0;
+  /**
+   * Get the current set of (user-)declared function symbols.
+   * @note Corresponds to the function symbols declared via SMT-LIB commands
+   *       `declare-const` and `declare-fun`.
+   * @return The declared function symbols.
+   */
+  virtual std::vector<bitwuzla::Term> get_declared_funs() const = 0;
 
   /** Configure Bitwuzla terminator.
    * @param terminator The terminator to configure as terminator for Bitwuzla.

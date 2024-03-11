@@ -110,6 +110,21 @@ class Parser
   Sort parse_sort(const std::string &input);
 
   /**
+   * Get the current set of (user-)declared sort symbols.
+   * @note Corresponds to the sorts declared via SMT-LIB command `declare-sort`.
+   *       Will always return an empty set for BTOR2 input.
+   * @return The declared sorts.
+   */
+  std::vector<Sort> get_declared_sorts() const;
+  /**
+   * Get the current set of (user-)declared function symbols.
+   * @note Corresponds to the function symbols declared via SMT-LIB commands
+   *       `declare-const` and `declare-fun`.
+   * @return The declared function symbols.
+   */
+  std::vector<Term> get_declared_funs() const;
+
+  /**
    * Get the associated Bitwuzla instance.
    * @return The Bitwuzla instance.
    */

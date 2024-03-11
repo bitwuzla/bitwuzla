@@ -64,16 +64,22 @@ cdef bitwuzla_api.Term _cterm(term: Term):
     return term.c_term
 
 cdef list[Term] _terms(tm: TermManager, vector[bitwuzla_api.Term]& c_terms):
-    terms = []
-    for t in c_terms:
-        terms.append(_term(tm, t))
-    return terms
+    return [_term(tm, t) for t in c_terms]
+
+cdef vector[bitwuzla_api.Term] _term_vec(terms):
+    cdef vector[bitwuzla_api.Term] vec
+    for t in terms:
+        vec.push_back(_cterm(t))
+    return vec
 
 cdef Sort _sort(tm: TermManager, sort: bitwuzla_api.Sort):
     s = Sort()
     s.c_sort = sort
     s.tm = tm
     return s
+
+cdef list[Sort] _sorts(tm: TermManager, vector[bitwuzla_api.Sort]& c_sorts):
+    return [_sort(tm, s) for s in c_sorts]
 
 cdef bitwuzla_api.Sort _csort(sort: Sort):
     return sort.c_sort
@@ -83,15 +89,6 @@ cdef vector[bitwuzla_api.Sort] _sort_vec(list sorts):
     for s in sorts:
         vec.push_back(_csort(s))
     return vec
-
-cdef vector[bitwuzla_api.Term] _term_vec(terms):
-    cdef vector[bitwuzla_api.Term] vec
-    for t in terms:
-        vec.push_back(_cterm(t))
-    return vec
-
-cdef list[Term] _term_list(tm: TermManager, vector[bitwuzla_api.Term] terms):
-    return [_term(tm, t) for t in terms]
 
 def _check_arg(arg, _type):
     if not isinstance(_type, list):
@@ -1358,7 +1355,7 @@ cdef class Bitwuzla:
         """Get currently asserted formulas.
            :return: List of current assertions.
         """
-        return _term_list(self.tm, self.c_bitwuzla.get().get_assertions())
+        return _terms(self.tm, self.c_bitwuzla.get().get_assertions())
 
     def check_sat(self, *assumptions: Term) -> Result:
         """Check satisfiability of asserted formulas under possibly given
@@ -1401,7 +1398,7 @@ cdef class Bitwuzla:
 
            :return:  List of unsatisfiable assumptions
         """
-        return _term_list(self.tm, self.c_bitwuzla.get().get_unsat_assumptions())
+        return _terms(self.tm, self.c_bitwuzla.get().get_unsat_assumptions())
 
     def get_unsat_core(self) -> list[Term]:
         """Return list of unsatisfiable assertions previously added via
@@ -1412,7 +1409,7 @@ cdef class Bitwuzla:
 
            :return:  list of unsatisfiable assertions
         """
-        return _term_list(self.tm, self.c_bitwuzla.get().get_unsat_core())
+        return _terms(self.tm, self.c_bitwuzla.get().get_unsat_core())
 
     def simplify(self):
         """Simplify current set of input assertions.
@@ -1547,6 +1544,25 @@ cdef class Parser:
         """
         return _sort(self.tm, self.c_parser.get().parse_sort(
                 <const string&> str(iinput).encode()))
+
+    def get_declared_sorts(self) -> list[Sort]:
+        """Get the current set of (user-)declared sort symbols.
+
+           :note: Corresponds to the sorts declared via SMT-LIB command
+                  ``declare-sort``. Will always return an empty list for BTOR2
+                  input.
+           :return: The declared sorts.
+        """
+        return _sorts(self.tm, self.c_parser.get().get_declared_sorts())
+
+    def get_declared_funs(self) -> list[Term]:
+        """Get the current set of (user-)declared function symbols.
+
+           :note: Corresponds to the function symbols declared via SMT-LIB
+                  commands ``declare-const`` and ``declare-fun``.
+           :return: The declared function symbols.
+        """
+        return _terms(self.tm, self.c_parser.get().get_declared_funs())
 
     def bitwuzla(self) -> Bitwuzla:
         """Get the associated Bitwuzla instance.

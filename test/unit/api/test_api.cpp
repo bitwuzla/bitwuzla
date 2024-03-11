@@ -3189,6 +3189,8 @@ TEST_F(TestApi, parser_smt2)
   {
     bitwuzla::parser::Parser parser(d_tm, options);
     ASSERT_NO_THROW(parser.parse(input, true));
+    ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>());
+    ASSERT_EQ(parser.get_declared_funs(), std::vector<bitwuzla::Term>());
   }
   std::remove(input);
 }
@@ -3209,10 +3211,14 @@ TEST_F(TestApi, parser_smt2_string1)
   {
     bitwuzla::parser::Parser parser(d_tm, options);
     ASSERT_NO_THROW(parser.parse(smt2.str(), true, false));
+    ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>());
+    ASSERT_EQ(parser.get_declared_funs(), std::vector<bitwuzla::Term>());
   }
   {
     bitwuzla::parser::Parser parser(d_tm, options);
     ASSERT_NO_THROW(parser.parse("<string>", smt2, true));
+    ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>());
+    ASSERT_EQ(parser.get_declared_funs(), std::vector<bitwuzla::Term>());
   }
 }
 
@@ -3228,6 +3234,11 @@ TEST_F(TestApi, parser_smt2_string2)
   parser.parse(str_false, true, false);
   bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla().get();
   ASSERT_EQ(bitwuzla->check_sat(), bitwuzla::Result::UNSAT);
+  ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>());
+  bitwuzla::Term a = parser.parse_term("a");
+  auto decl_funs   = parser.get_declared_funs();
+  ASSERT_EQ(decl_funs, std::vector<bitwuzla::Term>{a});
+  ASSERT_EQ(decl_funs[0].symbol()->get(), "a");
 }
 
 TEST_F(TestApi, parser_smt2_string3)
@@ -3247,6 +3258,19 @@ TEST_F(TestApi, parser_smt2_string3)
       true,
       false);
   parser.parse("(check-sat)", true, false);
+  ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>());
+  bitwuzla::Term v0 = parser.parse_term("v0");
+  bitwuzla::Term v1 = parser.parse_term("v1");
+  bitwuzla::Term a0 = parser.parse_term("a0");
+  auto decl_funs    = parser.get_declared_funs();
+  std::unordered_set<std::string> decl_funs_strs;
+  for (const auto& f : decl_funs)
+  {
+    decl_funs_strs.insert(f.symbol()->get());
+  }
+  ASSERT_NE(decl_funs_strs.find("v0"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("v1"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("a0"), decl_funs_strs.end());
 }
 
 TEST_F(TestApi, parser_smt2_string_term)
@@ -3269,6 +3293,17 @@ TEST_F(TestApi, parser_smt2_string_term)
       d_tm.mk_term(
           bitwuzla::Kind::BV_ADD,
           {t_b, d_tm.mk_bv_value(d_tm.mk_bv_sort(16), "1011111010001010", 2)}));
+  ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>());
+  auto decl_funs = parser.get_declared_funs();
+  ASSERT_EQ(decl_funs.size(), 3);
+  std::unordered_set<std::string> decl_funs_strs;
+  for (const auto& f : decl_funs)
+  {
+    decl_funs_strs.insert(f.symbol()->get());
+  }
+  ASSERT_NE(decl_funs_strs.find("a"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("b"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("c"), decl_funs_strs.end());
 }
 
 TEST_F(TestApi, parser_smt2_string_sort)
@@ -3281,10 +3316,14 @@ TEST_F(TestApi, parser_smt2_string_sort)
   ASSERT_EQ(parser.parse_sort("(_ BitVec 32)"), d_tm.mk_bv_sort(32));
   ASSERT_EQ(parser.parse_sort("RoundingMode"), d_tm.mk_rm_sort());
   parser.parse("(declare-sort m 0)", true, false);
-  ASSERT_NO_THROW(parser.parse_sort("m"));
+  bitwuzla::Sort m = parser.parse_sort("m");
   parser.parse("(define-sort FPN () (_ FloatingPoint 11 53))", true, false);
   ASSERT_EQ(parser.parse_sort("(_ FloatingPoint 11 53)"),
             parser.parse_sort("FPN"));
+  auto decl_sorts = parser.get_declared_sorts();
+  ASSERT_EQ(decl_sorts, std::vector<bitwuzla::Sort>{m});
+  ASSERT_EQ(decl_sorts[0].uninterpreted_symbol(), "m");
+  ASSERT_EQ(parser.get_declared_funs(), std::vector<bitwuzla::Term>{});
 }
 
 TEST_F(TestApi, parser_btor2)
@@ -3325,6 +3364,10 @@ TEST_F(TestApi, parser_btor2)
     bitwuzla::parser::Parser parser(d_tm, options, "btor2");
     parser.parse(input, true);
     ASSERT_EQ(parser.bitwuzla()->check_sat(), bitwuzla::Result::UNSAT);
+    ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>{});
+    auto decl_funs = parser.get_declared_funs();
+    ASSERT_EQ(decl_funs.size(), 1);
+    ASSERT_EQ(decl_funs[0].symbol()->get(), "@inp2");
   }
   std::remove(input);
 }
@@ -3335,9 +3378,9 @@ TEST_F(TestApi, parser_btor2_string1)
   btor2 << "1 sort bitvec 8" << std::endl;
   btor2 << "2 input 1 @inp2" << std::endl;
   btor2 << "3 sort bitvec 3" << std::endl;
-  btor2 << "4 one 3" << std::endl;
+  btor2 << "4 one 3 @one" << std::endl;
   btor2 << "5 uext 1 4 5" << std::endl;
-  btor2 << "6 srl 1 2 5" << std::endl;
+  btor2 << "6 srl 1 2 5 @srl" << std::endl;
   btor2 << "7 sort bitvec 1" << std::endl;
   btor2 << "8 slice 7 6 7 7" << std::endl;
   btor2 << "9 constraint 8" << std::endl;
@@ -3352,11 +3395,19 @@ TEST_F(TestApi, parser_btor2_string1)
   {
     bitwuzla::parser::Parser parser(d_tm, options, "btor2");
     ASSERT_NO_THROW(parser.parse(btor2.str(), true, false));
+    ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>{});
+    auto decl_funs = parser.get_declared_funs();
+    ASSERT_EQ(decl_funs.size(), 1);
+    ASSERT_EQ(decl_funs[0].symbol()->get(), "@inp2");
   }
   {
     bitwuzla::parser::Parser parser(d_tm, options, "btor2");
     parser.parse("<string>", btor2, true);
     ASSERT_EQ(parser.bitwuzla()->check_sat(), bitwuzla::Result::UNSAT);
+    ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>{});
+    auto decl_funs = parser.get_declared_funs();
+    ASSERT_EQ(decl_funs.size(), 1);
+    ASSERT_EQ(decl_funs[0].symbol()->get(), "@inp2");
   }
 }
 
@@ -3426,6 +3477,19 @@ TEST_F(TestApi, parser_btor2_string2)
   parser.parse(root, true, false);
   bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla().get();
   ASSERT_EQ(bitwuzla->check_sat(), bitwuzla::Result::UNSAT);
+  ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>{});
+  auto decl_funs = parser.get_declared_funs();
+  ASSERT_EQ(decl_funs.size(), 5);
+  std::unordered_set<std::string> decl_funs_strs;
+  for (const auto& f : decl_funs)
+  {
+    decl_funs_strs.insert(f.symbol()->get());
+  }
+  ASSERT_NE(decl_funs_strs.find("@arr3"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("@arr4"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("@arr5"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("@inp7"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("@inp8"), decl_funs_strs.end());
 }
 
 TEST_F(TestApi, parser_btor2_string_term)
@@ -3452,6 +3516,17 @@ TEST_F(TestApi, parser_btor2_string_term)
       d_tm.mk_term(
           bitwuzla::Kind::BV_ADD,
           {t_b, d_tm.mk_bv_value(d_tm.mk_bv_sort(16), "1011111010001010", 2)}));
+  ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>{});
+  auto decl_funs = parser.get_declared_funs();
+  ASSERT_EQ(decl_funs.size(), 3);
+  std::unordered_set<std::string> decl_funs_strs;
+  for (const auto& f : decl_funs)
+  {
+    decl_funs_strs.insert(f.symbol()->get());
+  }
+  ASSERT_NE(decl_funs_strs.find("a"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("b"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("c"), decl_funs_strs.end());
 }
 
 TEST_F(TestApi, parser_btor2_string_sort)
@@ -3464,6 +3539,8 @@ TEST_F(TestApi, parser_btor2_string_sort)
   ASSERT_EQ(parser.parse_sort("2 sort bitvec 32"), d_tm.mk_bv_sort(32));
   ASSERT_EQ(parser.parse_sort("3 sort array 1 1"),
             d_tm.mk_array_sort(bv1, bv1));
+  ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>{});
+  ASSERT_EQ(parser.get_declared_funs(), std::vector<bitwuzla::Term>{});
 }
 
 /* -------------------------------------------------------------------------- */

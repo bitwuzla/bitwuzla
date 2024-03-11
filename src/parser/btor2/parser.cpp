@@ -154,6 +154,26 @@ Parser::parse_sort(const std::string& input, bitwuzla::Sort& res)
   return true;
 }
 
+std::vector<bitwuzla::Sort>
+Parser::get_declared_sorts() const
+{
+  return {};
+}
+
+std::vector<bitwuzla::Term>
+Parser::get_declared_funs() const
+{
+  std::vector<bitwuzla::Term> res;
+  for (const auto& [id, term] : d_term_map)
+  {
+    if (term.symbol())
+    {
+      res.push_back(term);
+    }
+  }
+  return res;
+}
+
 /* Parser private ----------------------------------------------------------- */
 
 bitwuzla::Term

@@ -3253,6 +3253,13 @@ TEST_F(TestCApi, parser_smt2)
                d_error_not_null);
   bitwuzla_parser_parse(parser, filename, true, true, &error_msg);
   ASSERT_EQ(error_msg, nullptr);
+  size_t size;
+  auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(decl_sorts, nullptr);
+  auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(decl_funs, nullptr);
   bitwuzla_options_delete(options);
   bitwuzla_parser_delete(parser);
   std::remove(filename);
@@ -3276,6 +3283,13 @@ TEST_F(TestCApi, parser2_smt2)
   std::string(bitwuzla_parser_get_error_msg(parser)));
   ASSERT_NE(std::string(error_msg).find("undefined symbol 'x'"),
             std::string::npos);
+  size_t size;
+  auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(decl_sorts, nullptr);
+  auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(decl_funs, nullptr);
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);
   std::remove(filename);
@@ -3295,6 +3309,13 @@ TEST_F(TestCApi, parser_string1_smt2)
     bitwuzla_parser_parse(parser, smt2.str().c_str(), true, true, &error_msg);
     ASSERT_NE(error_msg, nullptr);
     ASSERT_NE(std::string(error_msg).find("failed to open"), std::string::npos);
+    size_t size;
+    auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_sorts, nullptr);
+    auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_funs, nullptr);
     bitwuzla_parser_delete(parser);
   }
   {
@@ -3302,6 +3323,13 @@ TEST_F(TestCApi, parser_string1_smt2)
         bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, smt2.str().c_str(), true, false, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
+    size_t size;
+    auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_sorts, nullptr);
+    auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_funs, nullptr);
     bitwuzla_parser_delete(parser);
   }
   bitwuzla_options_delete(options);
@@ -3325,6 +3353,13 @@ TEST_F(TestCApi, parser_string2_smt2)
   Bitwuzla *bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
   ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
   ASSERT_EQ(bitwuzla_get_term_mgr(bitwuzla), d_tm);
+  size_t size;
+  auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(decl_sorts, nullptr);
+  auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+  ASSERT_EQ(size, 1);
+  ASSERT_EQ(std::string(bitwuzla_term_get_symbol(decl_funs[0])), "a");
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);
 }
@@ -3376,6 +3411,22 @@ TEST_F(TestCApi, parser_smt2_string_term)
           t_b,
           bitwuzla_mk_bv_value(
               d_tm, bitwuzla_mk_bv_sort(d_tm, 16), "1011111010001010", 2)));
+  size_t size;
+  auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(decl_sorts, nullptr);
+  auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+  ASSERT_EQ(size, 3);
+  std::unordered_set<std::string> decl_funs_strs;
+  for (size_t i = 0; i < size; ++i)
+  {
+    decl_funs_strs.insert(bitwuzla_term_get_symbol(decl_funs[i]));
+  }
+  ASSERT_NE(decl_funs_strs.find("a"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("b"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("c"), decl_funs_strs.end());
+  bitwuzla_parser_delete(parser);
+  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, parser_smt2_string_sort)
@@ -3417,6 +3468,16 @@ TEST_F(TestCApi, parser_smt2_string_sort)
             bitwuzla_parser_parse_sort(
                 parser, "(_ FloatingPoint 11 53)", &error_msg));
   ASSERT_EQ(error_msg, nullptr);
+  size_t size;
+  auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+  ASSERT_EQ(size, 1);
+  ASSERT_EQ(std::string(bitwuzla_sort_get_uninterpreted_symbol(decl_sorts[0])),
+            "m");
+  auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(decl_funs, nullptr);
+  bitwuzla_parser_delete(parser);
+  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, parser_btor2)
@@ -3433,6 +3494,7 @@ TEST_F(TestCApi, parser_btor2)
   btor2 << "8 slice 7 6 7 7" << std::endl;
   btor2 << "9 constraint 8" << std::endl << std::flush;
   const char *error_msg;
+  size_t size;
 
   BitwuzlaOptions *options = bitwuzla_options_new();
 
@@ -3442,6 +3504,12 @@ TEST_F(TestCApi, parser_btor2)
     BitwuzlaParser *parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_get_bitwuzla(parser);
+    auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_sorts, nullptr);
+    auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_funs, nullptr);
     bitwuzla_parser_delete(parser);
   }
   {
@@ -3454,6 +3522,12 @@ TEST_F(TestCApi, parser_btor2)
     ASSERT_NE(
         std::string(error_msg).find("parser in unsafe state after parse error"),
         std::string::npos);
+    auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_sorts, nullptr);
+    auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_funs, nullptr);
     bitwuzla_parser_delete(parser);
   }
   {
@@ -3463,6 +3537,12 @@ TEST_F(TestCApi, parser_btor2)
     ASSERT_EQ(error_msg, nullptr);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla_parser_get_bitwuzla(parser)),
               BITWUZLA_UNSAT);
+    auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_sorts, nullptr);
+    auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+    ASSERT_EQ(size, 1);
+    ASSERT_EQ(std::string(bitwuzla_term_get_symbol(decl_funs[0])), "@inp2");
     bitwuzla_parser_delete(parser);
   }
   bitwuzla_options_delete(options);
@@ -3475,14 +3555,15 @@ TEST_F(TestCApi, parser_btor2_string1)
   btor2 << "1 sort bitvec 8" << std::endl;
   btor2 << "2 input 1 @inp2" << std::endl;
   btor2 << "3 sort bitvec 3" << std::endl;
-  btor2 << "4 one 3" << std::endl;
+  btor2 << "4 one 3 @one" << std::endl;
   btor2 << "5 uext 1 4 5" << std::endl;
-  btor2 << "6 srl 1 2 5" << std::endl;
+  btor2 << "6 srl 1 2 5 @srl" << std::endl;
   btor2 << "7 sort bitvec 1" << std::endl;
   btor2 << "8 slice 7 6 7 7" << std::endl;
   btor2 << "9 constraint 8" << std::endl;
 
   const char *error_msg;
+  size_t size;
   BitwuzlaOptions *options = bitwuzla_options_new();
   {
     BitwuzlaParser *parser =
@@ -3490,12 +3571,24 @@ TEST_F(TestCApi, parser_btor2_string1)
     bitwuzla_parser_parse(parser, btor2.str().c_str(), true, true, &error_msg);
     ASSERT_NE(error_msg, nullptr);
     ASSERT_NE(std::string(error_msg).find("failed to open"), std::string::npos);
+    auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_sorts, nullptr);
+    auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_funs, nullptr);
     bitwuzla_parser_delete(parser);
   }
   {
     BitwuzlaParser *parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, btor2.str().c_str(), true, false, &error_msg);
+    auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_sorts, nullptr);
+    auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+    ASSERT_EQ(size, 1);
+    ASSERT_EQ(std::string(bitwuzla_term_get_symbol(decl_funs[0])), "@inp2");
     bitwuzla_parser_delete(parser);
   }
   bitwuzla_options_delete(options);
@@ -3552,6 +3645,7 @@ TEST_F(TestCApi, parser_btor2_string2)
     root = ss.str();
   }
 
+  size_t size;
   const char *error_msg;
   BitwuzlaOptions *options = bitwuzla_options_new();
   {
@@ -3574,7 +3668,21 @@ TEST_F(TestCApi, parser_btor2_string2)
     ASSERT_EQ(error_msg, nullptr);
     Bitwuzla *bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
-
+    auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_sorts, nullptr);
+    auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+    ASSERT_EQ(size, 5);
+    std::unordered_set<std::string> decl_funs_strs;
+    for (size_t i = 0; i < size; ++i)
+    {
+      decl_funs_strs.insert(bitwuzla_term_get_symbol(decl_funs[i]));
+    }
+    ASSERT_NE(decl_funs_strs.find("@arr3"), decl_funs_strs.end());
+    ASSERT_NE(decl_funs_strs.find("@arr4"), decl_funs_strs.end());
+    ASSERT_NE(decl_funs_strs.find("@arr5"), decl_funs_strs.end());
+    ASSERT_NE(decl_funs_strs.find("@inp7"), decl_funs_strs.end());
+    ASSERT_NE(decl_funs_strs.find("@inp8"), decl_funs_strs.end());
     bitwuzla_parser_delete(parser);
   }
   {
@@ -3585,6 +3693,12 @@ TEST_F(TestCApi, parser_btor2_string2)
     ASSERT_EQ(error_msg, nullptr);
     bitwuzla_parser_parse(parser, "3 input 2 @arr3", true, false, &error_msg);
     ASSERT_NE(error_msg, nullptr);
+    auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(decl_sorts, nullptr);
+    auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+    ASSERT_EQ(size, 1);
+    ASSERT_EQ(std::string(bitwuzla_term_get_symbol(decl_funs[0])), "@arr3");
     bitwuzla_parser_delete(parser);
   }
   bitwuzla_options_delete(options);
@@ -3628,6 +3742,22 @@ TEST_F(TestCApi, parser_btor2_string_term)
           t_b,
           bitwuzla_mk_bv_value(
               d_tm, bitwuzla_mk_bv_sort(d_tm, 16), "1011111010001010", 2)));
+  size_t size;
+  auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(decl_sorts, nullptr);
+  auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+  ASSERT_EQ(size, 3);
+  std::unordered_set<std::string> decl_funs_strs;
+  for (size_t i = 0; i < size; ++i)
+  {
+    decl_funs_strs.insert(bitwuzla_term_get_symbol(decl_funs[i]));
+  }
+  ASSERT_NE(decl_funs_strs.find("a"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("b"), decl_funs_strs.end());
+  ASSERT_NE(decl_funs_strs.find("c"), decl_funs_strs.end());
+  bitwuzla_parser_delete(parser);
+  bitwuzla_options_delete(options);
 }
 
 TEST_F(TestCApi, parser_btor2_string_sort)
@@ -3646,6 +3776,15 @@ TEST_F(TestCApi, parser_btor2_string_sort)
   ASSERT_EQ(bitwuzla_parser_parse_sort(parser, "3 sort array 1 1", &error_msg),
             bitwuzla_mk_array_sort(d_tm, bv1, bv1));
   ASSERT_EQ(error_msg, nullptr);
+  size_t size;
+  auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(decl_sorts, nullptr);
+  auto decl_funs = bitwuzla_parser_get_declared_funs(parser, &size);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(decl_funs, nullptr);
+  bitwuzla_parser_delete(parser);
+  bitwuzla_options_delete(options);
 }
 
 /* -------------------------------------------------------------------------- */

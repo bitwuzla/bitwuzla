@@ -20,7 +20,9 @@ namespace parser::smt2 {
 Parser::Parser(bitwuzla::TermManager& tm,
                bitwuzla::Options& options,
                std::ostream* out)
-    : bzla::parser::Parser(tm, options, out), d_decls(nullptr)
+    : bzla::parser::Parser(tm, options, out),
+      d_decl_funs(nullptr),
+      d_decl_sorts(nullptr)
 {
   d_lexer.reset(new Lexer());
   d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
@@ -184,6 +186,32 @@ Parser::parse_sort(const std::string& input, bitwuzla::Sort& res)
   }
   assert(!res.is_null());
   return true;
+}
+
+std::vector<bitwuzla::Sort>
+Parser::get_declared_sorts() const
+{
+  std::vector<bitwuzla::Sort> res;
+  for (const auto& s : d_decl_sorts)
+  {
+    assert(s);
+    assert(!s->d_sort.is_null());
+    res.push_back(s->d_sort);
+  }
+  return res;
+}
+
+std::vector<bitwuzla::Term>
+Parser::get_declared_funs() const
+{
+  std::vector<bitwuzla::Term> res;
+  for (const auto& f : d_decl_funs)
+  {
+    assert(f);
+    assert(!f->d_term.is_null());
+    res.push_back(f->d_term);
+  }
+  return res;
 }
 
 /* Parser private ----------------------------------------------------------- */
@@ -428,7 +456,7 @@ Parser::parse_command_declare_fun(bool is_const)
   {
     return false;
   }
-  d_decls.push_back(symbol);
+  d_decl_funs.push_back(symbol);
   print_success();
   return true;
 }
@@ -464,6 +492,7 @@ Parser::parse_command_declare_sort()
   {
     return false;
   }
+  d_decl_sorts.push_back(symbol);
   print_success();
   return true;
 }
@@ -664,7 +693,7 @@ Parser::parse_command_get_model()
   }
   std::stringstream ss;
   ss << "(" << std::endl;
-  for (const auto& node : d_decls)
+  for (const auto& node : d_decl_funs)
   {
     ss << "  (define-fun " << node->d_symbol << " (";
     const bitwuzla::Term& term = node->d_term;
@@ -838,7 +867,8 @@ Parser::parse_command_pop()
     {
       d_table.pop_level(d_assertion_level);
       d_assertion_level -= 1;
-      d_decls.pop();
+      d_decl_funs.pop();
+      d_decl_sorts.pop();
     }
   }
   d_bitwuzla->pop(nlevels);
@@ -867,7 +897,8 @@ Parser::parse_command_push()
   {
     for (uint64_t i = 0; i < nlevels; ++i)
     {
-      d_decls.push();
+      d_decl_funs.push();
+      d_decl_sorts.push();
     }
   }
   print_success();
