@@ -403,11 +403,9 @@ Preprocessor::print_statistics_header() const
 {
   // clang-format off
     Msg(1);
-    Msg(1) << std::setw(4) << ""
-           << std::setw(8) << ""
-           << std::setw(8) << ""
-           << std::setw(8) << ""
-           << std::setw(25) << "assertions" << std::setw(7) << " ";
+    Msg(1) << std::left << std::setw(36) << "preprocessing"
+           << std::left << std::setw(24) << " assertions"
+           << std::left << std::setw(18) << "     nodes";
     Msg(1) << std::setw(4) << "pass"
            << std::setw(8) << "seconds"
            << std::setw(8) << "sum"
@@ -415,7 +413,10 @@ Preprocessor::print_statistics_header() const
            << std::setw(8) << "MB"
            << std::setw(8) << "process"
            << std::setw(8) << "changed"
-           << std::setw(8) << "simp";
+           << std::setw(8) << "simp"
+           << std::setw(10) << "alloc"
+           << std::setw(10) << "dealloc"
+           << std::setw(8) << "MB";
     Msg(1);
   // clang-format on
 }
@@ -431,12 +432,26 @@ Preprocessor::print_statistics(const std::string& pass)
   ++d_num_printed_stats;
 
   double time_preproc = d_stats.time_preprocess.elapsed() / 1000.0;
+  const auto& nm_stats = d_env.nm().statistics();
+  double mb            = static_cast<double>(1 << 20);
 
-  Msg(1) << std::setw(2) << "" << pass << std::setw(8) << std::setprecision(1)
-         << std::fixed << time_preproc << std::setw(8) << time_preproc
-         << std::setw(8) << " " << std::setw(8)
-         << util::current_memory_usage() / static_cast<double>(1 << 20)
-         << std::setw(8) << d_assertions.size();
+  // clang-format off
+  Msg(1) << std::setw(4) << pass
+         << std::setw(8) << std::setprecision(1)
+         << std::fixed << time_preproc
+         << std::setw(8) << time_preproc
+         << std::setw(8) << " "
+         << std::setw(8) << util::current_memory_usage() / mb
+         << std::setw(8) << d_assertions.size()
+         << std::setw(8) << ""
+         << std::setw(8) << ""
+         << std::setw(10) << nm_stats.d_num_node_data
+         << std::setw(10) << nm_stats.d_num_node_data_dealloc
+         << std::setw(8)
+         // Note: this is just a lower bound since it does not consider the
+         //       payload memory of node data.
+         << nm_stats.d_num_node_data * sizeof(node::NodeData) / mb;
+  // clang-format on
 }
 
 void
@@ -448,10 +463,10 @@ Preprocessor::print_statistics(const PreprocessingPass& pass,
     print_statistics_header();
   }
 
-  char mark_inconsist = '\0';
+  std::string pid = pass.id();
   if (assertions.is_inconsistent())
   {
-    mark_inconsist = '*';
+    pid += "*";
   }
 
   double time_preproc = d_stats.time_preprocess.elapsed();
@@ -459,14 +474,24 @@ Preprocessor::print_statistics(const PreprocessingPass& pass,
 
   ++d_num_printed_stats;
 
-  Msg(1) << std::setw(2) << "" << pass.id() << mark_inconsist << std::setw(8)
-         << std::setprecision(1) << std::fixed << time_preproc / 1000.0
-         << std::setw(8) << time_pass / 1000.0 << std::setw(8)
-         << time_pass / time_preproc * 100.0 << std::setw(8)
-         << util::current_memory_usage() / static_cast<double>(1 << 20)
-         << std::setw(8) << assertions.size() << std::setw(8)
-         << assertions.num_modified() << std::setw(8)
-         << assertions.num_simplified();
+  const auto& nm_stats = d_env.nm().statistics();
+  double mb            = static_cast<double>(1 << 20);
+
+  // clang-format off
+  Msg(1) << std::setw(4) << pid
+         << std::setw(8) << std::setprecision(1)
+         << std::fixed << time_preproc / 1000.0
+         << std::setw(8) << time_pass / 1000.0
+         << std::setw(8) << time_pass / time_preproc * 100.0
+         << std::setw(8) << util::current_memory_usage() / mb
+         << std::setw(8) << assertions.size()
+         << std::setw(8) << assertions.num_modified()
+         << std::setw(8) << assertions.num_simplified()
+         << std::setw(10) << nm_stats.d_num_node_data
+         << std::setw(10) << nm_stats.d_num_node_data_dealloc
+         << std::setw(8)
+         << nm_stats.d_num_node_data * sizeof(node::NodeData) / mb;
+  // clang-format on
 }
 
 Preprocessor::Statistics::Statistics(util::Statistics& stats)
