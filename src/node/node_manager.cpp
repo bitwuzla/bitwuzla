@@ -842,6 +842,7 @@ NodeManager::init_id(NodeData* data)
   assert(d_node_data.size() == static_cast<size_t>(d_node_id_counter));
   data->d_id = d_node_id_counter++;
   data->d_nm = this;
+  ++d_stats.d_num_node_data;
 }
 
 NodeData*
@@ -918,6 +919,8 @@ NodeManager::garbage_collect(NodeData* data)
     assert(d_node_data[cur->d_id - 1]->d_id == cur->d_id);
     d_symbol_table.erase(cur);
     d_node_data[cur->d_id - 1].reset(nullptr);
+    --d_stats.d_num_node_data;
+    ++d_stats.d_num_node_data_dealloc;
   } while (!visit.empty());
 
   d_in_gc_mode = false;

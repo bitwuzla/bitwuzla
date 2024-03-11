@@ -190,6 +190,8 @@ class NodeManager
   uint64_t max_node_id() const { return d_node_id_counter; }
 #endif
 
+  const auto& statistics() const { return d_stats; }
+
  private:
   /**
    * Initialize node data.
@@ -261,6 +263,12 @@ class NodeManager
 
   /** Stores symbols for nodes. */
   std::unordered_map<const node::NodeData*, std::string> d_symbol_table;
+
+  struct Statistics
+  {
+    uint64_t d_num_node_data = 0;
+    uint64_t d_num_node_data_dealloc = 0;
+  } d_stats;
 };
 
 }  // namespace bzla
