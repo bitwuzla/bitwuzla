@@ -15,8 +15,8 @@
 #include <iostream>
 
 #include "bv/bounds/bitvector_bounds.h"
+#include "bv/domain/wheel_factorizer.h"
 #include "rng/rng.h"
-#include "util/wheel_factorizer.h"
 
 namespace bzla {
 

@@ -6,7 +6,7 @@ bv_sources = [
   'bv/bitvector.cpp',
   'bv/bounds/bitvector_bounds.cpp',
   'bv/domain/bitvector_domain.cpp',
-  'util/wheel_factorizer.cpp'
+  'bv/domain/wheel_factorizer.cpp'
 ]
 
 bb_sources = [
