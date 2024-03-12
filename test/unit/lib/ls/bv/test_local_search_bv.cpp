@@ -234,14 +234,13 @@ TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
                    || res == Result::UNSAT);
             assert(res == Result::UNSAT || res == Result::SAT);
             assert(res == Result::UNSAT || ls.get_assignment(root).is_true());
-            assert(ls.d_statistics.d_nmoves == 0
-                   || (ls.d_statistics.d_nprops > 0
-                       && ls.d_statistics.d_nprops
-                              == 2 * ls.d_statistics.d_nmoves));
-            assert(ls.d_statistics.d_nmoves == 0
-                   || (ls.d_statistics.d_nupdates > 0
-                       && ls.d_statistics.d_nupdates
-                              <= 3 * ls.d_statistics.d_nmoves));
+            auto stats = ls.statistics();
+            assert(stats.num_moves == 0
+                   || (stats.num_props > 0
+                       && stats.num_props == 2 * stats.num_moves));
+            assert(stats.num_moves == 0
+                   || (stats.num_updates > 0
+                       && stats.num_updates <= 3 * stats.num_moves));
             (void) res;
           }
 
@@ -262,25 +261,25 @@ TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
                 ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
             Result res;
+            uint64_t nmoves = 0;
             do
             {
               res = ls.move();
+              nmoves = ls.statistics().num_moves;
             } while (res == Result::UNKNOWN
-                     && ls.d_statistics.d_nmoves
-                            < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
+                     && nmoves < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
             assert(!ls.get_domain(root).is_fixed()
                    || !ls.get_assignment(root).is_false()
                    || res == Result::UNSAT);
             assert(res == Result::UNSAT || res == Result::SAT);
             assert(res == Result::UNSAT || ls.get_assignment(root).is_true());
-            assert(ls.d_statistics.d_nmoves == 0
-                   || (ls.d_statistics.d_nprops > 0
-                       && ls.d_statistics.d_nprops
-                              >= 2 * ls.d_statistics.d_nmoves));
-            assert(ls.d_statistics.d_nmoves == 0
-                   || (ls.d_statistics.d_nupdates > 0
-                       && ls.d_statistics.d_nupdates
-                              <= 3 * ls.d_statistics.d_nmoves));
+            auto stats = ls.statistics();
+            assert(stats.num_moves == 0
+                   || (stats.num_props > 0
+                       && stats.num_props >= 2 * stats.num_moves));
+            assert(stats.num_moves == 0
+                   || (stats.num_updates > 0
+                       && stats.num_updates <= 3 * stats.num_moves));
           }
         } while (genx.has_next());
       }
@@ -416,12 +415,13 @@ TestLsBv::test_move_ite(uint32_t pos_x)
                     ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
                 ls.register_root(root);
                 Result res;
+                uint64_t nmoves = 0;
                 do
                 {
                   res = ls.move();
+                  nmoves = ls.statistics().num_moves;
                 } while (res == Result::UNKNOWN
-                         && ls.d_statistics.d_nmoves
-                                < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
+                         && nmoves < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
                 assert(!ls.get_domain(root).is_fixed()
                        || !ls.get_assignment(root).is_false()
                        || res == Result::UNSAT);

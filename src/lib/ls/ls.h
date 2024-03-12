@@ -13,6 +13,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -20,6 +21,10 @@
 namespace bzla {
 
 class RNG;
+
+namespace util {
+class Statistics;
+}
 
 namespace ls {
 
@@ -104,23 +109,20 @@ class LocalSearch
   using ParentsSet   = std::unordered_set<uint64_t>;
   using ParentsMap   = std::unordered_map<uint64_t, ParentsSet>;
 
-  struct
+  struct Statistics
   {
-    uint64_t d_nprops   = 0;
-    uint64_t d_nupdates = 0;
-    uint64_t d_nmoves   = 0;
-
-    uint64_t d_nprops_inv  = 0;
-    uint64_t d_nprops_cons = 0;
-
-    uint64_t d_nconf_total = 0;
-
+    uint64_t& num_props;
+    uint64_t& num_updates;
+    uint64_t& num_moves;
+    uint64_t& num_props_inv;
+    uint64_t& num_props_cons;
+    uint64_t& num_conflicts;
 #ifndef NDEBUG
-    std::unordered_map<NodeKind, uint64_t> d_ninv;
-    std::unordered_map<NodeKind, uint64_t> d_ncons;
-    std::unordered_map<NodeKind, uint64_t> d_nconf;
+    std::unordered_map<std::string, uint64_t> num_inv_values;
+    std::unordered_map<std::string, uint64_t> num_cons_values;
+    std::unordered_map<std::string, uint64_t> num_conflicts_per_kind;
 #endif
-  } d_statistics;
+  };
 
   /** The configuration options of the local search module. */
   struct
@@ -176,13 +178,20 @@ class LocalSearch
 
   /**
    * Constructor.
-   * @param max_nprops The maximum number of propagations to perform. Zero
-   *                   if unlimited.
+   * @param max_nprops   The maximum number of propagations to perform. Zero
+   *                     if unlimited.
    * @param max_nupdates The maximum number of cone updates to perform. Zero
    *                     if unlimited.
-   * @param seed The initial seed for the random number generator.
+   * @param seed         The initial seed for the random number generator.
+   * @param stats_prefix The prefix to use for statistis.
+   * @param statistics   The associated statistics object, will be nullptr
+   *                     when used outside of Bitwuzla.
    */
-  LocalSearch(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed = 1234);
+  LocalSearch(uint64_t max_nprops,
+              uint64_t max_nupdates,
+              uint32_t seed                   = 1234,
+              const std::string& stats_prefix = "lib::ls::",
+              util::Statistics* statistics    = nullptr);
   /** Destructor. */
   virtual ~LocalSearch();
 
@@ -194,6 +203,22 @@ class LocalSearch
   void init();
 
   /**
+   * Get the current number of moves.
+   * @return The number of moves.
+   */
+  uint64_t num_moves() const;
+  /**
+   * Get the current number of propagations.
+   * @return The number of propagations.
+   */
+  uint64_t num_props() const;
+  /**
+   * Get the current number of updates.
+   * @return The number of updates.
+   */
+  uint64_t num_updates() const;
+
+  /**
    * Configure the maximum number of propagations to perform.
    * @param max The maximum number of propagations.
    */
@@ -203,6 +228,12 @@ class LocalSearch
    * @param max The maximum number of updates.
    */
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }
+
+  /**
+   * Get the current statistics.
+   * @return The statistics.
+   */
+  Statistics statistics() const;
 
   /** Push assertion level. */
   void push();
@@ -275,6 +306,8 @@ class LocalSearch
   void set_log_level(uint32_t level) { d_log_level = level; }
 
  protected:
+  /** Forward declaration of internal statistics struct. */
+  struct StatisticsInternal;
   /**
    * Get node by id.
    * @param id The node id.
@@ -418,6 +451,16 @@ class LocalSearch
   uint64_t d_max_nupdates = 0;
   /** The seed for the RNG. */
   uint32_t d_seed;
+
+  /** The internal statistics. */
+  std::unique_ptr<StatisticsInternal> d_stats_internal;
+  /**
+   * The associated statistics, allocated on the heap if not configured by
+   * user via constructor.
+   */
+  util::Statistics* d_stats = nullptr;
+  /** True if d_stats was allocated and not configured via constructor. */
+  bool d_stats_needs_free = false;
 };
 
 /* -------------------------------------------------------------------------- */

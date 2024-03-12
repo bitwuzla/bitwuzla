@@ -30,15 +30,20 @@ class LocalSearchBV : public LocalSearch<BitVector>
  public:
   /**
    * Constructor.
-   * @param max_nprops The maximum number of propagations to perform. Zero
-   *                   if unlimited.
+   * @param max_nprops   The maximum number of propagations to perform. Zero
+   *                     if unlimited.
    * @param max_nupdates The maximum number of cone updates to perform. Zero
    *                     if unlimited.
-   * @param seed The initial seed for the random number generator.
+   * @param seed         The initial seed for the random number generator.
+   * @param stats_prefix The prefix to use for statistis.
+   * @param statistics   The associated statistics object, will be nullptr
+   *                     when used outside of Bitwuzla.
    */
   LocalSearchBV(uint64_t max_nprops,
                 uint64_t max_nupdates,
-                uint32_t seed = 1234);
+                uint32_t seed                   = 1234,
+                const std::string& stats_prefix = "lib::ls::bv::",
+                util::Statistics* statistics    = nullptr);
   /**
    * Create node.
    * @param kind     The node kind.

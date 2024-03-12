@@ -95,17 +95,6 @@ class BvPropSolver : public Solver, public BvSolverInterface
     uint64_t& num_assertions;
     uint64_t& num_bits_fixed;
     uint64_t& num_bits_total;
-    uint64_t& num_moves;
-    uint64_t& num_props;
-    uint64_t& num_props_inv;
-    uint64_t& num_props_cons;
-    uint64_t& num_updates;
-    uint64_t& num_conflicts;
-#ifndef NDEBUG
-    util::HistogramStatistic& num_props_inv_per_kind;
-    util::HistogramStatistic& num_props_cons_per_kind;
-    util::HistogramStatistic& num_props_conflicts_per_kind;
-#endif
     util::TimerStatistic& time_mk_node;
     util::TimerStatistic& time_check;
   } d_stats;

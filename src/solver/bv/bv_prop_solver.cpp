@@ -37,8 +37,11 @@ BvPropSolver::BvPropSolver(Env& env,
 {
   const option::Options& options = d_env.options();
 
-  d_ls.reset(new ls::LocalSearchBV(
-      options.prop_nprops(), options.prop_nupdates(), options.seed()));
+  d_ls.reset(new ls::LocalSearchBV(options.prop_nprops(),
+                                   options.prop_nupdates(),
+                                   options.seed(),
+                                   "solver::bv::prop::",
+                                   &env.statistics()));
 
   d_ls->d_options.use_ineq_bounds        = options.prop_ineq_bounds();
   d_ls->d_options.use_opt_lt_concat_sext = options.prop_opt_lt_concat_sext();
@@ -84,22 +87,22 @@ BvPropSolver::solve()
   // incremental: increase limit by given nprops/nupdates
   if (nprops)
   {
-    nprops += d_ls->d_statistics.d_nprops;
+    nprops += d_ls->num_props();
   }
   d_ls->set_max_nprops(nprops);
   Log(1) << "set propagation limit to " << nprops;
 
   if (nupdates)
   {
-    nupdates += d_ls->d_statistics.d_nupdates;
+    nupdates += d_ls->num_updates();
   }
   d_ls->set_max_nupdates(nupdates);
   Log(1) << "set cone update limit to " << nupdates;
 
   for (uint32_t j = 0;; ++j)
   {
-    if (d_env.terminate() || (nprops && d_ls->d_statistics.d_nprops >= nprops)
-        || (nupdates && d_ls->d_statistics.d_nupdates >= nupdates))
+    if (d_env.terminate() || (nprops && d_ls->num_props() >= nprops)
+        || (nupdates && d_ls->num_updates() >= nupdates))
     {
       assert(sat_result == Result::UNKNOWN);
       goto DONE;
@@ -134,18 +137,6 @@ SAT:
 UNSAT:
   sat_result = Result::UNSAT;
 DONE:
-  d_stats.num_moves += d_ls->d_statistics.d_nmoves;
-  d_stats.num_props += d_ls->d_statistics.d_nprops;
-  d_stats.num_props_inv += d_ls->d_statistics.d_nprops_inv;
-  d_stats.num_props_cons += d_ls->d_statistics.d_nprops_cons;
-  d_stats.num_updates += d_ls->d_statistics.d_nupdates;
-  d_stats.num_conflicts += d_ls->d_statistics.d_nconf_total;
-#ifndef NDEBUG
-  d_stats.num_props_inv_per_kind.import_map(d_ls->d_statistics.d_ninv);
-  d_stats.num_props_cons_per_kind.import_map(d_ls->d_statistics.d_ncons);
-  d_stats.num_props_conflicts_per_kind.import_map(d_ls->d_statistics.d_nconf);
-#endif
-
   print_progress();
 
   return sat_result;
@@ -468,9 +459,9 @@ BvPropSolver::print_progress() const
     double perc_sat     = static_cast<double>(nroots_sat) / nroots_total * 100;
     Msg(1) << nroots_sat << "/" << nroots_total << " roots satisfied ("
            << std::setprecision(3) << perc_sat
-           << "%), moves: " << d_ls->d_statistics.d_nmoves
-           << ", propagation steps: " << d_ls->d_statistics.d_nprops
-           << ", updates: " << d_ls->d_statistics.d_nupdates;
+           << "%), moves: " << d_ls->num_moves()
+           << ", propagation steps: " << d_ls->num_props()
+           << ", updates: " << d_ls->num_updates();
   }
 }
 
@@ -480,20 +471,6 @@ BvPropSolver::Statistics::Statistics(util::Statistics& stats,
       num_assertions(stats.new_stat<uint64_t>(prefix + "num_assertions")),
       num_bits_fixed(stats.new_stat<uint64_t>(prefix + "num_bits_fixed")),
       num_bits_total(stats.new_stat<uint64_t>(prefix + "num_bits_total")),
-      num_moves(stats.new_stat<uint64_t>(prefix + "num_moves")),
-      num_props(stats.new_stat<uint64_t>(prefix + "num_props")),
-      num_props_inv(stats.new_stat<uint64_t>(prefix + "num_props_inv")),
-      num_props_cons(stats.new_stat<uint64_t>(prefix + "num_props_cons")),
-      num_updates(stats.new_stat<uint64_t>(prefix + "num_updates")),
-      num_conflicts(stats.new_stat<uint64_t>(prefix + "num_conflicts")),
-#ifndef NDEBUG
-      num_props_inv_per_kind(stats.new_stat<util::HistogramStatistic>(
-          prefix + "num_props_inv_per")),
-      num_props_cons_per_kind(stats.new_stat<util::HistogramStatistic>(
-          prefix + "num_props_cons_per")),
-      num_props_conflicts_per_kind(stats.new_stat<util::HistogramStatistic>(
-          prefix + "num_conflicts_per")),
-#endif
       time_mk_node(
           stats.new_stat<util::TimerStatistic>(prefix + "time_mk_node")),
       time_check(stats.new_stat<util::TimerStatistic>(prefix + "time_check"))

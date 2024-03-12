@@ -47,6 +47,7 @@ bitblast_lib = library('bitwuzlabb',
                        install: true)
 local_search_lib = library('bitwuzlals',
                            sources: ls_sources,
+                           include_directories: include_directories('../'),
                            link_with: [bitvector_lib, util_lib],
                            link_whole: rng_lib,
                            dependencies: gmp_dep,

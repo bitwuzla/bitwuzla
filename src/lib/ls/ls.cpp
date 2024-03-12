@@ -14,6 +14,7 @@
 #include <cassert>
 #include <iostream>
 
+#include "util/statistics.h"
 #include "bv/bitvector.h"
 #include "ls/bv/bitvector_node.h"
 #include "rng/rng.h"
@@ -73,18 +74,120 @@ template struct LocalSearchMove<BitVector>;
 /* -------------------------------------------------------------------------- */
 
 template <class VALUE>
+struct LocalSearch<VALUE>::StatisticsInternal
+{
+  StatisticsInternal(util::Statistics& stats, const std::string& prefix);
+  uint64_t& num_props;
+  uint64_t& num_updates;
+  uint64_t& num_moves;
+
+  uint64_t& num_props_inv;
+  uint64_t& num_props_cons;
+
+  uint64_t& num_conflicts;
+
+#ifndef NDEBUG
+  util::HistogramStatistic& num_inv_values;
+  util::HistogramStatistic& num_cons_values;
+  util::HistogramStatistic& num_conflicts_per_kind;
+#endif
+  util::TimerStatistic& time_move;
+};
+
+template <class VALUE>
+LocalSearch<VALUE>::StatisticsInternal::StatisticsInternal(
+    util::Statistics& stats, const std::string& prefix)
+    : num_props(stats.new_stat<uint64_t>(prefix + "num_props")),
+      num_updates(stats.new_stat<uint64_t>(prefix + "num_updates")),
+      num_moves(stats.new_stat<uint64_t>(prefix + "num_moves")),
+      num_props_inv(stats.new_stat<uint64_t>(prefix + "num_props_inv")),
+      num_props_cons(stats.new_stat<uint64_t>(prefix + "num_props_cons")),
+      num_conflicts(stats.new_stat<uint64_t>(prefix + "num_conflicts")),
+#ifndef NDEBUG
+      num_inv_values(
+          stats.new_stat<util::HistogramStatistic>(prefix + "num_inv_values")),
+      num_cons_values(
+          stats.new_stat<util::HistogramStatistic>(prefix + "num_cons_values")),
+      num_conflicts_per_kind(stats.new_stat<util::HistogramStatistic>(
+          prefix + "num_conflicts_per_kind")),
+#endif
+      time_move(stats.new_stat<util::TimerStatistic>(prefix + "time_move"))
+{
+}
+
+/* -------------------------------------------------------------------------- */
+
+template <class VALUE>
 LocalSearch<VALUE>::LocalSearch(uint64_t max_nprops,
                                 uint64_t max_nupdates,
-                                uint32_t seed)
+                                uint32_t seed,
+                                const std::string& stats_prefix,
+                                util::Statistics* statistics)
     : d_max_nprops(max_nprops), d_max_nupdates(max_nupdates), d_seed(seed)
-
 {
   d_rng.reset(new RNG(d_seed));
+  d_stats            = statistics ? statistics : new util::Statistics();
+  d_stats_needs_free = statistics == nullptr;
+  d_stats_internal.reset(new StatisticsInternal(*d_stats, stats_prefix));
 }
 
 template <class VALUE>
 LocalSearch<VALUE>::~LocalSearch()
 {
+  if (d_stats_needs_free)
+  {
+    delete d_stats;
+  }
+}
+
+template <class VALUE>
+typename LocalSearch<VALUE>::Statistics
+LocalSearch<VALUE>::statistics() const
+{
+#ifndef NDEBUG
+  std::unordered_map<std::string, uint64_t> num_inv_values;
+  {
+    const auto& keys   = d_stats_internal->num_inv_values.names();
+    const auto& values = d_stats_internal->num_inv_values.values();
+    assert(keys.size() == values.size());
+    for (size_t i = 0, n = keys.size(); i < n; ++i)
+    {
+      num_inv_values.emplace(keys[i], values[i]);
+    }
+  }
+  std::unordered_map<std::string, uint64_t> num_cons_values;
+  {
+    const auto& keys   = d_stats_internal->num_cons_values.names();
+    const auto& values = d_stats_internal->num_cons_values.values();
+    assert(keys.size() == values.size());
+    for (size_t i = 0, n = keys.size(); i < n; ++i)
+    {
+      num_cons_values.emplace(keys[i], values[i]);
+    }
+  }
+  std::unordered_map<std::string, uint64_t> num_conflicts_per_kind;
+  {
+    const auto& keys   = d_stats_internal->num_conflicts_per_kind.names();
+    const auto& values = d_stats_internal->num_conflicts_per_kind.values();
+    assert(keys.size() == values.size());
+    for (size_t i = 0, n = keys.size(); i < n; ++i)
+    {
+      num_conflicts_per_kind.emplace(keys[i], values[i]);
+    }
+  }
+#endif
+  return {d_stats_internal->num_props,
+          d_stats_internal->num_updates,
+          d_stats_internal->num_moves,
+          d_stats_internal->num_props_inv,
+          d_stats_internal->num_props_cons,
+          d_stats_internal->num_conflicts,
+#ifndef NDEBUG
+          num_inv_values,
+          num_cons_values,
+          num_conflicts_per_kind
+#endif
+  };
 }
 
 template <class VALUE>
@@ -93,6 +196,27 @@ LocalSearch<VALUE>::init()
 {
   Node<VALUE>::s_path_sel_essential  = d_options.use_path_sel_essential;
   Node<VALUE>::s_prob_pick_ess_input = d_options.prob_pick_ess_input;
+}
+
+template <class VALUE>
+uint64_t
+LocalSearch<VALUE>::num_moves() const
+{
+  return d_stats_internal->num_moves;
+}
+
+template <class VALUE>
+uint64_t
+LocalSearch<VALUE>::num_props() const
+{
+  return d_stats_internal->num_props;
+}
+
+template <class VALUE>
+uint64_t
+LocalSearch<VALUE>::num_updates() const
+{
+  return d_stats_internal->num_updates;
 }
 
 template <class VALUE>
@@ -241,9 +365,12 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
 {
   assert(root);
 
-  uint64_t nprops = 0, nupdates = 0;
-  Node<VALUE>* cur = root;
-  VALUE t          = t_root;
+  StatisticsInternal& stats = *d_stats_internal;
+
+  uint64_t nprops   = 0;
+  uint64_t nupdates = 0;
+  Node<VALUE>* cur  = root;
+  VALUE t           = t_root;
   std::vector<uint64_t> ess_inputs;
 
   for (;;)
@@ -349,26 +476,26 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       {
         t = cur->inverse_value(t, pos_x);
         BZLALSLOG(1) << "    -> inverse value: " << t << std::endl;
-        d_statistics.d_nprops_inv += 1;
+        stats.num_props_inv += 1;
 #ifndef NDEBUG
-        d_statistics.d_ninv[cur->kind()] += 1;
+        stats.num_inv_values << cur->kind();
 #endif
       }
       else if (cur->is_consistent(t, pos_x))
       {
         t = cur->consistent_value(t, pos_x);
         BZLALSLOG(1) << "    -> consistent value: " << t << std::endl;
-        d_statistics.d_nprops_cons += 1;
+        stats.num_props_cons += 1;
 #ifndef NDEBUG
-        d_statistics.d_ncons[cur->kind()] += 1;
+        stats.num_cons_values << cur->kind();
 #endif
       }
       else
       {
 #ifndef NDEBUG
-        d_statistics.d_nconf[cur->kind()] += 1;
+        stats.num_conflicts_per_kind << cur->kind();
 #endif
-        d_statistics.d_nconf_total += 1;
+        stats.num_conflicts += 1;
         break;
       }
 
@@ -540,7 +667,12 @@ template <class VALUE>
 Result
 LocalSearch<VALUE>::move()
 {
-  BZLALSLOG(1) << "*** move: " << d_statistics.d_nmoves + 1 << std::endl;
+  StatisticsInternal& stats = *d_stats_internal;
+
+  util::Timer timer(stats.time_move);
+
+  BZLALSLOG(1) << "*** move: " << stats.num_moves + 1 << std::endl;
+
   if (BZLALSLOG_ENABLED(1))
   {
     BZLALSLOG(1) << "  unsatisfied roots:" << std::endl;
@@ -562,10 +694,14 @@ LocalSearch<VALUE>::move()
   LocalSearchMove<VALUE> m;
   do
   {
-    if (d_max_nprops > 0 && d_statistics.d_nprops >= d_max_nprops)
+    if (d_max_nprops > 0 && stats.num_props >= d_max_nprops)
+    {
       return Result::UNKNOWN;
-    if (d_max_nupdates > 0 && d_statistics.d_nupdates >= d_max_nupdates)
+    }
+    if (d_max_nupdates > 0 && stats.num_updates >= d_max_nupdates)
+    {
       return Result::UNKNOWN;
+    }
 
     Node<VALUE>* root =
         get_node(d_rng->pick_from_set<std::unordered_set<uint64_t>, uint64_t>(
@@ -582,8 +718,8 @@ LocalSearch<VALUE>::move()
     BZLALSLOG(1) << "  select constraint: " << *root << std::endl;
 
     m = select_move(root, *d_true);
-    d_statistics.d_nprops += m.d_nprops;
-    d_statistics.d_nupdates += m.d_nupdates;
+    stats.num_props += m.d_nprops;
+    stats.num_updates += m.d_nupdates;
   } while (m.d_input == nullptr);
 
   assert(!m.d_assignment.is_null());
@@ -596,14 +732,13 @@ LocalSearch<VALUE>::move()
   BZLALSLOG(1) << "  new   assignment: " << m.d_assignment << std::endl;
   BZLALSLOG(1) << std::endl;
 
-  d_statistics.d_nmoves += 1;
-  d_statistics.d_nupdates += update_cone(m.d_input, m.d_assignment);
+  stats.num_moves += 1;
+  stats.num_updates += update_cone(m.d_input, m.d_assignment);
 
-  BZLALSLOG(1) << "*** number of propagations: " << d_statistics.d_nprops
+  BZLALSLOG(1) << "*** number of propagations: " << stats.num_props
                << std::endl;
   BZLALSLOG(1) << std::endl;
-  BZLALSLOG(1) << "*** number of updates: " << d_statistics.d_nupdates
-               << std::endl;
+  BZLALSLOG(1) << "*** number of updates: " << stats.num_updates << std::endl;
   BZLALSLOG(1) << std::endl;
   if (d_roots_unsat.empty())
   {
