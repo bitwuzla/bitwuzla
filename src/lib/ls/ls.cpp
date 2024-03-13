@@ -16,9 +16,8 @@
 
 #include "bv/bitvector.h"
 #include "ls/bv/bitvector_node.h"
+#include "ls/internal.h"
 #include "rng/rng.h"
-#include "util/logger.h"
-#include "util/statistics.h"
 
 namespace bzla {
 namespace ls {
@@ -66,65 +65,6 @@ struct LocalSearchMove
 };
 
 template struct LocalSearchMove<BitVector>;
-
-/* -------------------------------------------------------------------------- */
-
-template <class VALUE>
-struct LocalSearch<VALUE>::StatisticsInternal
-{
-  StatisticsInternal(util::Statistics& stats, const std::string& prefix);
-  uint64_t& num_props;
-  uint64_t& num_updates;
-  uint64_t& num_moves;
-
-  uint64_t& num_props_inv;
-  uint64_t& num_props_cons;
-
-  uint64_t& num_conflicts;
-
-#ifndef NDEBUG
-  util::HistogramStatistic& num_inv_values;
-  util::HistogramStatistic& num_cons_values;
-  util::HistogramStatistic& num_conflicts_per_kind;
-#endif
-  util::TimerStatistic& time_move;
-};
-
-template <class VALUE>
-LocalSearch<VALUE>::StatisticsInternal::StatisticsInternal(
-    util::Statistics& stats, const std::string& prefix)
-    : num_props(stats.new_stat<uint64_t>(prefix + "num_props")),
-      num_updates(stats.new_stat<uint64_t>(prefix + "num_updates")),
-      num_moves(stats.new_stat<uint64_t>(prefix + "num_moves")),
-      num_props_inv(stats.new_stat<uint64_t>(prefix + "num_props_inv")),
-      num_props_cons(stats.new_stat<uint64_t>(prefix + "num_props_cons")),
-      num_conflicts(stats.new_stat<uint64_t>(prefix + "num_conflicts")),
-#ifndef NDEBUG
-      num_inv_values(
-          stats.new_stat<util::HistogramStatistic>(prefix + "num_inv_values")),
-      num_cons_values(
-          stats.new_stat<util::HistogramStatistic>(prefix + "num_cons_values")),
-      num_conflicts_per_kind(stats.new_stat<util::HistogramStatistic>(
-          prefix + "num_conflicts_per_kind")),
-#endif
-      time_move(stats.new_stat<util::TimerStatistic>(prefix + "time_move"))
-{
-}
-
-template <class VALUE>
-struct LocalSearch<VALUE>::Internal
-{
-  Internal(util::Statistics& stats,
-           const std::string& stats_prefix,
-           uint32_t log_level,
-           uint32_t verbosity,
-           const std::string& name)
-      : d_stats(stats, stats_prefix), d_logger(log_level, verbosity, name)
-  {
-  }
-  StatisticsInternal d_stats;
-  util::Logger d_logger;
-};
 
 /* -------------------------------------------------------------------------- */
 
@@ -196,7 +136,9 @@ LocalSearch<VALUE>::statistics() const
     }
   }
 #endif
-  return {stats.num_props,
+  return {stats.num_roots,
+          stats.num_roots_ineq,
+          stats.num_props,
           stats.num_updates,
           stats.num_moves,
           stats.num_props_inv,
@@ -593,6 +535,8 @@ template <class VALUE>
 uint64_t
 LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
 {
+  util::Timer timer(d_internal->d_stats.time_update_cone);
+
   assert(node);
   assert(is_leaf_node(node));
 
@@ -749,6 +693,10 @@ LocalSearch<VALUE>::move()
 
   stats.num_moves += 1;
   stats.num_updates += update_cone(m.d_input, m.d_assignment);
+  stats.num_roots       = d_roots.size();
+  stats.num_roots_ineq  = d_roots_ineq.size();
+  stats.num_roots_unsat = d_roots_unsat.size();
+  stats.num_roots_sat   = d_roots.size() - stats.num_roots_unsat;
 
   Log(1) << "*** number of propagations: " << stats.num_props;
   Log(1);

@@ -112,6 +112,8 @@ class LocalSearch
 
   struct Statistics
   {
+    uint64_t& num_roots;
+    uint64_t& num_roots_ineq;
     uint64_t& num_props;
     uint64_t& num_updates;
     uint64_t& num_moves;
@@ -280,7 +282,6 @@ class LocalSearch
    * @return The number of unsat roots.
    */
   uint64_t get_num_roots_unsat() const { return d_roots_unsat.size(); }
-
   /**
    * Get the number of sat roots.
    * @return The number of sat roots.
@@ -289,10 +290,9 @@ class LocalSearch
   {
     return d_roots.size() - d_roots_unsat.size();
   }
-
   /**
-   * Get the number of total roots.
-   * @return The number of total roots.
+   * Get the total number of roots.
+   * @return The total number of roots.
    */
   uint64_t get_num_roots() const { return d_roots.size(); }
 

@@ -19,6 +19,7 @@
 #include "bv/bitvector.h"
 #include "bv/domain/bitvector_domain.h"
 #include "ls/bv/bitvector_node.h"
+#include "ls/internal.h"
 
 namespace bzla::ls {
 
@@ -378,6 +379,9 @@ LocalSearchBV::update_bounds_aux(BitVectorNode* root, int32_t pos)
 void
 LocalSearchBV::compute_bounds(Node<BitVector>* node)
 {
+#ifndef NDEBUG
+  StatisticsInternal& stats = d_internal->d_stats;
+#endif
   BitVectorNode* n = reinterpret_cast<BitVectorNode*>(node);
   for (uint32_t i = 0, arity = node->arity(); i < arity; ++i)
   {
@@ -390,13 +394,33 @@ LocalSearchBV::compute_bounds(Node<BitVector>* node)
     for (uint64_t pid : parents)
     {
       BitVectorNode* p = get_node(pid);
+#ifndef NDEBUG
+      if (p->is_inequality())
+      {
+        if (p->kind() == NodeKind::BV_SLT)
+        {
+          stats.num_sineq_parents_per_kind << child->kind();
+        }
+        else
+        {
+          assert(p->kind() == NodeKind::BV_ULT);
+          stats.num_uineq_parents_per_kind << child->kind();
+        }
+      }
+#endif
       if (!is_ineq_root(p)) continue;
       if (p->assignment().is_true() != d_roots_ineq.at(p)) continue;
-      if (p->kind() == NodeKind::BV_NOT)
+#ifndef NDEBUG
+      if (p->kind() == NodeKind::BV_SLT)
       {
-        p = p->child(0);
+        stats.num_sbounds_per_kind << child->kind();
       }
-
+      else
+      {
+        assert(p->kind() == NodeKind::BV_ULT);
+        stats.num_ubounds_per_kind << child->kind();
+      }
+#endif
       update_bounds_aux(
           p, child == p->child(0) ? (child == p->child(1) ? -1 : 0) : 1);
     }
