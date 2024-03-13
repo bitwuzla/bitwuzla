@@ -14,10 +14,11 @@
 #include <cassert>
 #include <iostream>
 
-#include "util/statistics.h"
 #include "bv/bitvector.h"
 #include "ls/bv/bitvector_node.h"
 #include "rng/rng.h"
+#include "util/logger.h"
+#include "util/statistics.h"
 
 namespace bzla {
 namespace ls {
@@ -30,11 +31,6 @@ class OstreamVoider
   OstreamVoider() = default;
   void operator&(std::ostream& ostream) { (void) ostream; }
 };
-
-#define BZLALSLOG_ENABLED(level) (d_log_level >= (level))
-#define BZLALSLOGSTREAM(level) \
-  !(BZLALSLOG_ENABLED(level)) ? (void) 0 : OstreamVoider() & std::cout
-#define BZLALSLOG(level) BZLALSLOGSTREAM(level) << "[bzla-ls]"
 
 /* -------------------------------------------------------------------------- */
 
@@ -115,6 +111,21 @@ LocalSearch<VALUE>::StatisticsInternal::StatisticsInternal(
 {
 }
 
+template <class VALUE>
+struct LocalSearch<VALUE>::Internal
+{
+  Internal(util::Statistics& stats,
+           const std::string& stats_prefix,
+           uint32_t log_level,
+           uint32_t verbosity,
+           const std::string& name)
+      : d_stats(stats, stats_prefix), d_logger(log_level, verbosity, name)
+  {
+  }
+  StatisticsInternal d_stats;
+  util::Logger d_logger;
+};
+
 /* -------------------------------------------------------------------------- */
 
 template <class VALUE>
@@ -123,12 +134,20 @@ LocalSearch<VALUE>::LocalSearch(uint64_t max_nprops,
                                 uint32_t seed,
                                 const std::string& stats_prefix,
                                 util::Statistics* statistics)
-    : d_max_nprops(max_nprops), d_max_nupdates(max_nupdates), d_seed(seed)
+    : d_max_nprops(max_nprops),
+      d_max_nupdates(max_nupdates),
+      d_seed(seed),
+      d_stats(statistics ? statistics : new util::Statistics()),
+      d_stats_needs_free(statistics == nullptr),
+      d_internal(new Internal(*d_stats,
+                              stats_prefix,
+                              d_options.log_level,
+                              d_options.verbosity_level,
+                              "(ls::bv)")),
+      d_logger(d_internal->d_logger)
+
 {
   d_rng.reset(new RNG(d_seed));
-  d_stats            = statistics ? statistics : new util::Statistics();
-  d_stats_needs_free = statistics == nullptr;
-  d_stats_internal.reset(new StatisticsInternal(*d_stats, stats_prefix));
 }
 
 template <class VALUE>
@@ -144,11 +163,12 @@ template <class VALUE>
 typename LocalSearch<VALUE>::Statistics
 LocalSearch<VALUE>::statistics() const
 {
+  const auto& stats = d_internal->d_stats;
 #ifndef NDEBUG
   std::unordered_map<std::string, uint64_t> num_inv_values;
   {
-    const auto& keys   = d_stats_internal->num_inv_values.names();
-    const auto& values = d_stats_internal->num_inv_values.values();
+    const auto& keys   = stats.num_inv_values.names();
+    const auto& values = stats.num_inv_values.values();
     assert(keys.size() == values.size());
     for (size_t i = 0, n = keys.size(); i < n; ++i)
     {
@@ -157,8 +177,8 @@ LocalSearch<VALUE>::statistics() const
   }
   std::unordered_map<std::string, uint64_t> num_cons_values;
   {
-    const auto& keys   = d_stats_internal->num_cons_values.names();
-    const auto& values = d_stats_internal->num_cons_values.values();
+    const auto& keys   = stats.num_cons_values.names();
+    const auto& values = stats.num_cons_values.values();
     assert(keys.size() == values.size());
     for (size_t i = 0, n = keys.size(); i < n; ++i)
     {
@@ -167,8 +187,8 @@ LocalSearch<VALUE>::statistics() const
   }
   std::unordered_map<std::string, uint64_t> num_conflicts_per_kind;
   {
-    const auto& keys   = d_stats_internal->num_conflicts_per_kind.names();
-    const auto& values = d_stats_internal->num_conflicts_per_kind.values();
+    const auto& keys   = stats.num_conflicts_per_kind.names();
+    const auto& values = stats.num_conflicts_per_kind.values();
     assert(keys.size() == values.size());
     for (size_t i = 0, n = keys.size(); i < n; ++i)
     {
@@ -176,12 +196,12 @@ LocalSearch<VALUE>::statistics() const
     }
   }
 #endif
-  return {d_stats_internal->num_props,
-          d_stats_internal->num_updates,
-          d_stats_internal->num_moves,
-          d_stats_internal->num_props_inv,
-          d_stats_internal->num_props_cons,
-          d_stats_internal->num_conflicts,
+  return {stats.num_props,
+          stats.num_updates,
+          stats.num_moves,
+          stats.num_props_inv,
+          stats.num_props_cons,
+          stats.num_conflicts,
 #ifndef NDEBUG
           num_inv_values,
           num_cons_values,
@@ -202,28 +222,28 @@ template <class VALUE>
 uint64_t
 LocalSearch<VALUE>::num_moves() const
 {
-  return d_stats_internal->num_moves;
+  return d_internal->d_stats.num_moves;
 }
 
 template <class VALUE>
 uint64_t
 LocalSearch<VALUE>::num_props() const
 {
-  return d_stats_internal->num_props;
+  return d_internal->d_stats.num_props;
 }
 
 template <class VALUE>
 uint64_t
 LocalSearch<VALUE>::num_updates() const
 {
-  return d_stats_internal->num_updates;
+  return d_internal->d_stats.num_updates;
 }
 
 template <class VALUE>
 void
 LocalSearch<VALUE>::push()
 {
-  BZLALSLOG(1) << " push" << std::endl;
+  Log(1) << " push";
   d_roots_control.push_back(d_roots.size());
 }
 
@@ -231,7 +251,7 @@ template <class VALUE>
 void
 LocalSearch<VALUE>::pop()
 {
-  BZLALSLOG(1) << " pop" << std::endl;
+  Log(1) << " pop";
   if (d_roots_control.size())
   {
     size_t nroots = d_roots.size() - d_roots_control.back();
@@ -365,7 +385,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
 {
   assert(root);
 
-  StatisticsInternal& stats = *d_stats_internal;
+  StatisticsInternal& stats = d_internal->d_stats;
 
   uint64_t nprops   = 0;
   uint64_t nupdates = 0;
@@ -377,19 +397,18 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
   {
     uint32_t arity = cur->arity();
 
-    BZLALSLOG(1) << std::endl;
-    BZLALSLOG(1) << "  propagate:" << std::endl;
-    BZLALSLOG(1) << "    node: " << *cur << (cur->is_root() ? " (root)" : "")
-                 << std::endl;
+    Log(1);
+    Log(1) << "  propagate:";
+    Log(1) << "    node: " << *cur << (cur->is_root() ? " (root)" : "");
 
     if (arity == 0)
     {
-      BZLALSLOG(1) << "    target value: " << t << std::endl;
+      Log(1) << "    target value: " << t;
       return LocalSearchMove(nprops, nupdates, cur, t);
     }
     if (cur->is_value() || cur->all_value())
     {
-      BZLALSLOG(1) << "    target value: " << t << std::endl;
+      Log(1) << "    target value: " << t;
       break;
     }
     else
@@ -402,22 +421,22 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
         compute_bounds(cur);
       }
 
-      if (BZLALSLOG_ENABLED(1))
+      if (d_logger.is_log_enabled(1))
       {
         for (const auto& s : cur->log())
         {
-          BZLALSLOG(1) << s;
+          Log(1) << s;
         }
       }
-      BZLALSLOG(1) << "    -> target value: " << t << std::endl;
+      Log(1) << "    -> target value: " << t;
 
       /* Select path */
       auto [pos_x, all_but_one_const, checked_essential] =
           cur->select_path(t, ess_inputs);
       assert(pos_x < arity);
 
-      BZLALSLOG(1) << "    -> select path: node[" << pos_x << "]" << std::endl;
-      if (BZLALSLOG_ENABLED(1))
+      Log(1) << "    -> select path: node[" << pos_x << "]";
+      if (d_logger.is_log_enabled(1))
       {
         // check if checked_essential is false due to a) all but one input
         // being values or b) random path selection. In case of a), we don't
@@ -446,15 +465,13 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
 
         for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
         {
-          BZLALSLOG(1) << "        |- is_essential[" << i << "]: "
-                       << (checked_essential
-                               ? (std::find(
-                                      ess_inputs.begin(), ess_inputs.end(), i)
-                                          == ess_inputs.end()
-                                      ? "false"
-                                      : "true")
-                               : "-")
-                       << std::endl;
+          Log(1) << "        |- is_essential[" << i << "]: "
+                 << (checked_essential
+                         ? (std::find(ess_inputs.begin(), ess_inputs.end(), i)
+                                    == ess_inputs.end()
+                                ? "false"
+                                : "true")
+                         : "-");
         }
       }
 
@@ -475,7 +492,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
           && cur->is_invertible(t, pos_x))
       {
         t = cur->inverse_value(t, pos_x);
-        BZLALSLOG(1) << "    -> inverse value: " << t << std::endl;
+        Log(1) << "    -> inverse value: " << t;
         stats.num_props_inv += 1;
 #ifndef NDEBUG
         stats.num_inv_values << cur->kind();
@@ -484,7 +501,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       else if (cur->is_consistent(t, pos_x))
       {
         t = cur->consistent_value(t, pos_x);
-        BZLALSLOG(1) << "    -> consistent value: " << t << std::endl;
+        Log(1) << "    -> consistent value: " << t;
         stats.num_props_cons += 1;
 #ifndef NDEBUG
         stats.num_cons_values << cur->kind();
@@ -507,7 +524,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
     }
   }
 
-  BZLALSLOG(1) << "*** conflict" << std::endl;
+  Log(1) << "*** conflict";
 
   /* Conflict case */
   return LocalSearchMove<VALUE>(nprops, nupdates, nullptr, VALUE());
@@ -579,9 +596,8 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
   assert(node);
   assert(is_leaf_node(node));
 
-  BZLALSLOG(1) << "*** update cone: " << *node << " with: " << assignment
-               << std::endl;
-  BZLALSLOG(1) << std::endl;
+  Log(1) << "*** update cone: " << *node << " with: " << assignment;
+  Log(1);
 #ifndef NDEBUG
   for (uint64_t id : d_roots_unsat)
   {
@@ -636,18 +652,18 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
 
   for (Node<VALUE>* cur : cone)
   {
-    BZLALSLOG(2) << "  node: " << *cur << " -> ";
+    Log(2) << "  node: " << *cur;
     cur->evaluate();
+    Log(2) << "      -> new assignment: " << cur->assignment();
     nupdates += 1;
-    BZLALSLOGSTREAM(2) << cur->assignment() << std::endl;
-    if (BZLALSLOG_ENABLED(2))
+    if (d_logger.is_log_enabled(2))
     {
       for (const auto& s : cur->log())
       {
-        BZLALSLOG(2) << s;
+        Log(2) << s;
       }
     }
-    BZLALSLOG(2) << std::endl;
+    Log(2);
 
     if (cur->is_root())
     {
@@ -667,25 +683,25 @@ template <class VALUE>
 Result
 LocalSearch<VALUE>::move()
 {
-  StatisticsInternal& stats = *d_stats_internal;
+  StatisticsInternal& stats = d_internal->d_stats;
 
   util::Timer timer(stats.time_move);
 
-  BZLALSLOG(1) << "*** move: " << stats.num_moves + 1 << std::endl;
+  Log(1) << "*** move: " << stats.num_moves + 1;
 
-  if (BZLALSLOG_ENABLED(1))
+  if (d_logger.is_log_enabled(1))
   {
-    BZLALSLOG(1) << "  unsatisfied roots:" << std::endl;
+    Log(1) << "  unsatisfied roots:";
     for (uint64_t id : d_roots_unsat)
     {
-      BZLALSLOG(1) << "    - " << *get_node(id) << std::endl;
+      Log(1) << "    - " << *get_node(id);
     }
-    BZLALSLOG(1) << std::endl;
-    BZLALSLOG(1) << "  satisfied roots:" << std::endl;
+    Log(1);
+    Log(1) << "  satisfied roots:";
     for (uint64_t id : d_roots)
     {
       if (d_roots_unsat.find(id) != d_roots_unsat.end()) continue;
-      BZLALSLOG(1) << "    - " << *get_node(id) << std::endl;
+      Log(1) << "    - " << *get_node(id);
     }
   }
 
@@ -714,8 +730,8 @@ LocalSearch<VALUE>::move()
       return Result::UNSAT;
     }
 
-    BZLALSLOG(1) << std::endl;
-    BZLALSLOG(1) << "  select constraint: " << *root << std::endl;
+    Log(1);
+    Log(1) << "  select constraint: " << *root;
 
     m = select_move(root, *d_true);
     stats.num_props += m.d_nprops;
@@ -724,28 +740,40 @@ LocalSearch<VALUE>::move()
 
   assert(!m.d_assignment.is_null());
 
-  BZLALSLOG(1) << std::endl;
-  BZLALSLOG(1) << "  move" << std::endl;
-  BZLALSLOG(1) << "  input: " << *m.d_input << std::endl;
-  BZLALSLOG(1) << "  prev. assignment: " << m.d_input->assignment()
-               << std::endl;
-  BZLALSLOG(1) << "  new   assignment: " << m.d_assignment << std::endl;
-  BZLALSLOG(1) << std::endl;
+  Log(1);
+  Log(1) << "  move";
+  Log(1) << "  input: " << *m.d_input;
+  Log(1) << "  prev. assignment: " << m.d_input->assignment();
+  Log(1) << "  new   assignment: " << m.d_assignment;
+  Log(1);
 
   stats.num_moves += 1;
   stats.num_updates += update_cone(m.d_input, m.d_assignment);
 
-  BZLALSLOG(1) << "*** number of propagations: " << stats.num_props
-               << std::endl;
-  BZLALSLOG(1) << std::endl;
-  BZLALSLOG(1) << "*** number of updates: " << stats.num_updates << std::endl;
-  BZLALSLOG(1) << std::endl;
+  Log(1) << "*** number of propagations: " << stats.num_props;
+  Log(1);
+  Log(1) << "*** number of updates: " << stats.num_updates;
+  Log(1);
   if (d_roots_unsat.empty())
   {
-    BZLALSLOG(1) << " all roots satisfied" << std::endl;
+    Log(1) << " all roots satisfied";
     return Result::SAT;
   }
   return Result::UNKNOWN;
+}
+
+template <class VALUE>
+void
+LocalSearch<VALUE>::set_log_level(uint32_t level)
+{
+  d_logger.set_log_level(level);
+}
+
+template <class VALUE>
+void
+LocalSearch<VALUE>::set_verbosity_level(uint32_t level)
+{
+  d_logger.set_verbosity_level(level);
 }
 
 template class LocalSearch<BitVector>;

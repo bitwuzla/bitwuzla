@@ -146,19 +146,19 @@ BitVectorNode::log() const
     BitVectorNode& c = *child(i);
     {
       std::stringstream ss;
-      ss << "      |- node[" << i << "]: " << c << std::endl;
+      ss << "      |- node[" << i << "]: " << c;
       res.push_back(ss.str());
     }
     if (!c.bounds_u().empty())
     {
       std::stringstream ss;
-      ss << "           + bounds_u: " << c.bounds_u() << std::endl;
+      ss << "           + bounds_u: " << c.bounds_u();
       res.push_back(ss.str());
     }
     if (!c.bounds_s().empty())
     {
       std::stringstream ss;
-      ss << "           + bounds_s: " << c.bounds_s() << std::endl;
+      ss << "           + bounds_s: " << c.bounds_s();
       res.push_back(ss.str());
     }
   }

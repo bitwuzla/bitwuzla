@@ -24,6 +24,7 @@ class RNG;
 
 namespace util {
 class Statistics;
+class Logger;
 }
 
 namespace ls {
@@ -174,6 +175,11 @@ class LocalSearch
      * a random input (see use_path_sel_essential).
      */
     uint32_t prob_pick_ess_input = 990;
+
+    /** The log level. */
+    uint32_t log_level = 0;
+    /** The verbosity level. */
+    uint32_t verbosity_level = 0;
   } d_options;
 
   /**
@@ -303,11 +309,18 @@ class LocalSearch
    * Set the log level.
    * @param level The level to set.
    */
-  void set_log_level(uint32_t level) { d_log_level = level; }
+  void set_log_level(uint32_t level);
+  /**
+   * Set the verbosity level.
+   * @param level The level to set.
+   */
+  void set_verbosity_level(uint32_t level);
 
  protected:
   /** Forward declaration of internal statistics struct. */
   struct StatisticsInternal;
+  /** Forward declaration of internal struct. */
+  struct Internal;
   /**
    * Get node by id.
    * @param id The node id.
@@ -443,8 +456,6 @@ class LocalSearch
   /** The target value for each root. */
   std::unique_ptr<VALUE> d_true;
 
-  /** The log level. */
-  uint32_t d_log_level = 0;
   /** The maximum number of propagations, 0 for unlimited. */
   uint64_t d_max_nprops = 0;
   /** The maximum number of cone updates, 0 for unlimited. */
@@ -452,8 +463,6 @@ class LocalSearch
   /** The seed for the RNG. */
   uint32_t d_seed;
 
-  /** The internal statistics. */
-  std::unique_ptr<StatisticsInternal> d_stats_internal;
   /**
    * The associated statistics, allocated on the heap if not configured by
    * user via constructor.
@@ -461,6 +470,10 @@ class LocalSearch
   util::Statistics* d_stats = nullptr;
   /** True if d_stats was allocated and not configured via constructor. */
   bool d_stats_needs_free = false;
+  /** The internal statistics. */
+  std::unique_ptr<Internal> d_internal;
+  /** The associated logger instance. */
+  util::Logger& d_logger;
 };
 
 /* -------------------------------------------------------------------------- */

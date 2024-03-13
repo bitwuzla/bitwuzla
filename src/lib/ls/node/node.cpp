@@ -244,7 +244,7 @@ Node<VALUE>::log() const
   for (uint32_t i = 0, n = arity(); i < n; ++i)
   {
     std::stringstream ss;
-    ss << "      |- node[" << i << "]: " << d_children[i] << std::endl;
+    ss << "      |- node[" << i << "]: " << d_children[i];
     res.push_back(ss.str());
   }
   return res;

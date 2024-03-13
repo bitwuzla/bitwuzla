@@ -84,6 +84,11 @@ class Logger
   Line warn();
 
   /**
+   * Set the log level.
+   * @param level The log level.
+   */
+  void set_log_level(uint64_t level);
+  /**
    * Set the verbosity level.
    * @param level The verbosity level.
    */
