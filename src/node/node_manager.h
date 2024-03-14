@@ -22,6 +22,7 @@
 
 #include "node/node.h"
 #include "node/node_data.h"
+#include "node/node_unique_table.h"
 #include "type/type_manager.h"
 
 namespace bzla {
@@ -204,12 +205,18 @@ class NodeManager
   void init_id(node::NodeData* d);
 
   /**
-   * Find or insert new node data.
+   * Find or insert new node data based on given criteria.
    *
-   * @param lookup The node data to look up in d_unique_nodes
-   * @return Node data pointer if node already exists and nullptr otherwise.
+   * @param kind The node kind.
+   * @param type The node type (needed for CONST_ARRAY).
+   * @param children The node children.
+   * @param indices The indices for indexed nodes.
+   * @return The node data pointer.
    */
-  node::NodeData* find_or_insert_node(node::NodeData* lookup);
+  node::NodeData* find_or_insert_node(node::Kind kind,
+                                      const Type& type,
+                                      const std::vector<Node>& children,
+                                      const std::vector<uint64_t>& indices);
 
   /** Compute type for a node. */
   Type compute_type(node::Kind kind,
@@ -242,9 +249,7 @@ class NodeManager
   std::vector<node::NodeData*> d_node_data;
 
   /** Lookup data structure for hash consing of node data. */
-  std::
-      unordered_set<node::NodeData*, node::NodeDataHash, node::NodeDataKeyEqual>
-          d_unique_nodes;
+  node::NodeUniqueTable d_unique_table;
 
   /** Stores symbols for nodes. */
   std::unordered_map<const node::NodeData*, std::string> d_symbol_table;

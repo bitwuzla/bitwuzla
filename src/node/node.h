@@ -30,6 +30,7 @@ class FloatingPoint;
 
 namespace node {
 class NodeData;
+class NodeUniqueTable;
 }  // namespace node
 
 /* --- Node ---------------------------------------------------------------- */
@@ -37,6 +38,7 @@ class NodeData;
 class Node
 {
   friend NodeManager;
+  friend node::NodeUniqueTable;
   friend bool operator==(const Node& a, const Node& b);
   friend bool operator!=(const Node& a, const Node& b);
 

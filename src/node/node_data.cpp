@@ -45,26 +45,18 @@ NodeData::alloc(Kind kind,
     throw std::bad_alloc();
   }
   data->d_kind = kind;
-  data->d_hash = static_cast<size_t>(kind);
 
   // Connect children payload
   if (!children.empty())
   {
     auto& payload = data->payload_children();
     assert(payload.d_num_children == 0);
-    for (auto n : children)
+    for (size_t i = 0, size = children.size(); i < size; ++i)
     {
-      assert(!n.is_null());
-      payload.d_children[payload.d_num_children++] = n;
+      assert(!children[i].is_null());
+      payload.d_children[i] = children[i];
     }
-    assert(payload.d_num_children == children.size());
-
-    auto& hash = data->d_hash;
-    for (size_t i = 0; i < payload.d_num_children; ++i)
-    {
-      hash += NodeDataHash::s_primes[i % NodeDataHash::s_primes.size()]
-              * payload.d_children[i].id();
-    }
+    payload.d_num_children = children.size();
   }
 
   // Connect indices payload
@@ -72,18 +64,11 @@ NodeData::alloc(Kind kind,
   {
     auto& payload = data->payload_indexed();
     assert(payload.d_num_indices == 0);
-    for (auto i : indices)
+    for (size_t i = 0, size = indices.size(); i < size; ++i)
     {
-      payload.d_indices[payload.d_num_indices++] = i;
+      payload.d_indices[i] = indices[i];
     }
-    assert(payload.d_num_indices == indices.size());
-
-    auto& hash = data->d_hash;
-    for (size_t i = 0; i < payload.d_num_indices; ++i)
-    {
-      hash += NodeDataHash::s_primes[i % NodeDataHash::s_primes.size()]
-              * payload.d_indices[i];
-    }
+    payload.d_num_indices = indices.size();
   }
 
   return data;
@@ -92,6 +77,7 @@ NodeData::alloc(Kind kind,
 void
 NodeData::dealloc(NodeData* data)
 {
+  data->~NodeData();
   std::free(data);
 }
 
@@ -118,100 +104,6 @@ NodeData::~NodeData()
       payload.d_value.~FloatingPoint();
     }
   }
-}
-
-size_t
-NodeData::hash() const
-{
-  return d_hash;
-}
-
-bool
-NodeData::equals(const NodeData& other) const
-{
-  if (d_kind != other.d_kind)
-  {
-    return false;
-  }
-
-  if (has_children())
-  {
-    assert(other.has_children());
-    const auto& payload       = payload_children();
-    const auto& payload_other = other.payload_children();
-
-    if (payload.d_num_children != payload_other.d_num_children)
-    {
-      return false;
-    }
-
-    for (size_t i = 0, size = payload.d_num_children; i < size; ++i)
-    {
-      if (payload.d_children[i] != payload_other.d_children[i])
-      {
-        return false;
-      }
-    }
-
-    // Constant arrays are a special case since they require the type info.
-    if (get_kind() == Kind::CONST_ARRAY)
-    {
-      // not needed anymore?
-      assert(!get_type().is_null());
-      assert(!other.get_type().is_null());
-      return get_type() == other.get_type();
-    }
-  }
-
-  if (is_indexed())
-  {
-    assert(other.is_indexed());
-    const auto& payload       = payload_indexed();
-    const auto& payload_other = other.payload_indexed();
-
-    if (payload.d_num_indices != payload_other.d_num_indices)
-    {
-      return false;
-    }
-
-    for (size_t i = 0, size = payload.d_num_indices; i < size; ++i)
-    {
-      if (payload.d_indices[i] != payload_other.d_indices[i])
-      {
-        return false;
-      }
-    }
-  }
-
-  if (get_kind() == Kind::VALUE)
-  {
-    assert(!d_type.is_null());
-    assert(!other.d_type.is_null());
-    if (get_type() != other.get_type())
-    {
-      return false;
-    }
-
-    if (d_type.is_bool())
-    {
-      return get_value<bool>() == other.get_value<bool>();
-    }
-    else if (d_type.is_bv())
-    {
-      return get_value<BitVector>() == other.get_value<BitVector>();
-    }
-    else if (d_type.is_rm())
-    {
-      return get_value<RoundingMode>() == other.get_value<RoundingMode>();
-    }
-    else
-    {
-      assert(d_type.is_fp());
-      return get_value<FloatingPoint>() == other.get_value<FloatingPoint>();
-    }
-  }
-
-  return true;
 }
 
 bool

@@ -149,6 +149,7 @@ sources = files([
   'node/node_data.cpp',
   'node/node_kind.cpp',
   'node/node_manager.cpp',
+  'node/node_unique_table.cpp',
   'node/node_utils.cpp',
   'option/option.cpp',
   'parser/btor2/lexer.cpp',
