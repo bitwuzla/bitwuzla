@@ -39,7 +39,7 @@ struct PayloadChildren
 
 struct PayloadIndexed
 {
-  uint8_t d_num_indices;
+  size_t d_num_indices;
   uint64_t d_indices[1];
 };
 
@@ -57,8 +57,7 @@ struct PayloadValue
 class NodeData
 {
   friend NodeManager;
-  friend struct NodeDataHash;
-  friend struct NodeDataKeyEqual;
+  friend class NodeUniqueTable;
 
  public:
   using iterator = const Node*;
@@ -67,13 +66,11 @@ class NodeData
                          const std::vector<Node>& children,
                          const std::vector<uint64_t>& indices);
 
-  static void dealloc(NodeData* data);
-
   template <class T>
   static NodeData* alloc(const T& value)
   {
     size_t size         = sizeof(NodeData);
-    size_t payload_size = sizeof(T);
+    size_t payload_size = sizeof(PayloadValue<T>);
 
     NodeData* data =
         static_cast<NodeData*>(std::calloc(1, size + payload_size));
@@ -85,25 +82,13 @@ class NodeData
 
     auto& payload   = data->payload_value<T>();
     payload.d_value = value;
-    data->d_hash    = std::hash<T>{}(value);
     return data;
   }
 
+  static void dealloc(NodeData* data);
+
   NodeData() = delete;
   ~NodeData();
-
-  /** Compute hash value. */
-  size_t hash() const;
-
-  /**
-   * Comparison of two node data objects.
-   *
-   * @note This method is only used in NodeDataKeyEqual used for hash consing.
-   *
-   * @param other Other node data to compare to
-   * @return True if both objects store the same data.
-   */
-  bool equals(const NodeData& other) const;
 
   /**
    * @return The node id.
@@ -272,39 +257,17 @@ class NodeData
   Type d_type;
   /** Number of references. */
   uint32_t d_refs = 0;
+
   /** Associated node manager. */
   NodeManager* d_nm = nullptr;
-
-  // TODO: experiment with on-the-fly computation
-  size_t d_hash = 0;
+  /** Next node in unique table collision chain. */
+  NodeData* d_next = nullptr;
 
   // TODO: document possible payload and layout
   uint8_t d_payload[1];
 };
 
 /* ------------------------------------------------------------------------- */
-
-/**
- * Hash struct used for hash consing node data.
- */
-struct NodeDataHash
-{
-  static constexpr std::array<size_t, 4> s_primes = {
-      333444569u, 76891121u, 456790003u, 111130391u};
-
-  size_t operator()(const NodeData* d) const { return d->hash(); }
-};
-
-/**
- * Comparison struct used for hash consing node data.
- */
-struct NodeDataKeyEqual
-{
-  bool operator()(const NodeData* d0, const NodeData* d1) const
-  {
-    return d0->equals(*d1);
-  }
-};
 
 }  // namespace node
 }  // namespace bzla

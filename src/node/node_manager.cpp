@@ -10,6 +10,7 @@
 
 #include "node/node_manager.h"
 
+#include <deque>
 #include <functional>
 
 #include "bv/bitvector.h"
@@ -75,14 +76,7 @@ NodeManager::mk_const_array(const Type& t, const Node& term)
   assert(t.tm() == &d_tm);
   assert(term.nm() == this);
 
-  NodeData* data  = NodeData::alloc(Kind::CONST_ARRAY, {term}, {});
-  data->d_type    = t;
-  auto found_data = find_or_insert_node(data);
-  if (found_data)
-  {
-    NodeData::dealloc(data);
-    data = found_data;
-  }
+  NodeData* data = find_or_insert_node(Kind::CONST_ARRAY, t, {term}, {});
   return Node(data);
 }
 
@@ -104,13 +98,12 @@ NodeManager::mk_var(const Type& t, const std::optional<std::string>& symbol)
 Node
 NodeManager::mk_value(bool value)
 {
-  NodeData* data  = NodeData::alloc(value);
-  data->d_type    = mk_bool_type();
-  auto found_data = find_or_insert_node(data);
-  if (found_data)
+  Type type             = mk_bool_type();
+  auto [inserted, data] = d_unique_table.find_or_insert(type, value);
+  if (inserted)
   {
-    NodeData::dealloc(data);
-    data = found_data;
+    init_id(data);
+    data->d_type = std::move(type);
   }
   return Node(data);
 }
@@ -118,13 +111,12 @@ NodeManager::mk_value(bool value)
 Node
 NodeManager::mk_value(const BitVector& value)
 {
-  NodeData* data  = NodeData::alloc(value);
-  data->d_type    = mk_bv_type(value.size());
-  auto found_data = find_or_insert_node(data);
-  if (found_data)
+  Type type             = mk_bv_type(value.size());
+  auto [inserted, data] = d_unique_table.find_or_insert(type, value);
+  if (inserted)
   {
-    NodeData::dealloc(data);
-    data = found_data;
+    init_id(data);
+    data->d_type = std::move(type);
   }
   return Node(data);
 }
@@ -132,13 +124,12 @@ NodeManager::mk_value(const BitVector& value)
 Node
 NodeManager::mk_value(const RoundingMode value)
 {
-  NodeData* data  = NodeData::alloc(value);
-  data->d_type    = mk_rm_type();
-  auto found_data = find_or_insert_node(data);
-  if (found_data)
+  Type type             = mk_rm_type();
+  auto [inserted, data] = d_unique_table.find_or_insert(type, value);
+  if (inserted)
   {
-    NodeData::dealloc(data);
-    data = found_data;
+    init_id(data);
+    data->d_type = std::move(type);
   }
   return Node(data);
 }
@@ -146,14 +137,13 @@ NodeManager::mk_value(const RoundingMode value)
 Node
 NodeManager::mk_value(const FloatingPoint& value)
 {
-  NodeData* data = NodeData::alloc(value);
-  data->d_type =
+  Type type =
       mk_fp_type(value.get_exponent_size(), value.get_significand_size());
-  auto found_data = find_or_insert_node(data);
-  if (found_data)
+  auto [inserted, data] = d_unique_table.find_or_insert(type, value);
+  if (inserted)
   {
-    NodeData::dealloc(data);
-    data = found_data;
+    init_id(data);
+    data->d_type = std::move(type);
   }
   return Node(data);
 }
@@ -170,18 +160,8 @@ NodeManager::mk_node(Kind kind,
   assert(std::all_of(children.begin(), children.end(), [this](auto& c) {
     return c.nm() == this;
   }));
-  NodeData* data  = NodeData::alloc(kind, children, indices);
-  auto found_data = find_or_insert_node(data);
-  if (found_data)
-  {
-    NodeData::dealloc(data);
-    data = found_data;
-  }
-  else
-  {
-    // Compute type for new node
-    data->d_type = compute_type(kind, children, indices);
-  }
+
+  NodeData* data = find_or_insert_node(kind, Type(), children, indices);
   return Node(data);
 }
 
@@ -847,16 +827,27 @@ NodeManager::init_id(NodeData* data)
 }
 
 NodeData*
-NodeManager::find_or_insert_node(NodeData* lookup)
+NodeManager::find_or_insert_node(node::Kind kind,
+                                 const Type& type,
+                                 const std::vector<Node>& children,
+                                 const std::vector<uint64_t>& indices)
 {
-  auto [it, inserted] = d_unique_nodes.insert(lookup);
+  auto [inserted, data] =
+      d_unique_table.find_or_insert(kind, type, children, indices);
   if (inserted)
   {
     // Initialize new node
-    init_id(lookup);
-    return nullptr;
+    init_id(data);
+    if (type.is_null())
+    {
+      data->d_type = compute_type(kind, children, indices);
+    }
+    else
+    {
+      data->d_type = type;
+    }
   }
-  return *it;
+  return data;
 }
 
 void
@@ -867,33 +858,41 @@ NodeManager::garbage_collect(NodeData* data)
 
   d_in_gc_mode = true;
 
-  std::vector<NodeData*> visit{data};
+  std::deque<NodeData*> visit{data};
 
   NodeData* cur;
   do
   {
-    cur = visit.back();
-    visit.pop_back();
+    cur = visit.front();
+    visit.pop_front();
+
+    size_t num_children = cur->get_num_children();
 
     // Erase node data before we modify children.
-    d_unique_nodes.erase(cur);
-
-    for (size_t i = 0, size = cur->get_num_children(); i < size; ++i)
+    if (num_children > 0 || cur->get_kind() == Kind::VALUE)
     {
-      Node& child = cur->get_child(i);
-      auto d      = child.d_data;
-
-      // Manually decrement reference count to not trigger decrement of
-      // NodeData reference. This will avoid recursive call to
-      // garbage_collect().
-      --d->d_refs;
-      child.d_data = nullptr;
-      if (d->d_refs == 0)
-      {
-        visit.push_back(d);
-      }
+      d_unique_table.erase(cur);
     }
 
+    if (num_children > 0)
+    {
+      auto& payload = cur->payload_children();
+      for (size_t i = 0; i < num_children; ++i)
+      {
+        Node& child = payload.d_children[i];
+        auto d      = child.d_data;
+
+        // Manually decrement reference count to not trigger decrement of
+        // NodeData reference. This will avoid recursive calls to
+        // garbage_collect().
+        --d->d_refs;
+        child.d_data = nullptr;
+        if (d->d_refs == 0)
+        {
+          visit.push_back(d);
+        }
+      }
+    }
     assert(d_node_data[cur->d_id - 1]->d_id == cur->d_id);
     d_symbol_table.erase(cur);
     d_node_data[cur->d_id - 1] = nullptr;
