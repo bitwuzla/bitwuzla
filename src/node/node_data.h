@@ -31,6 +31,24 @@ enum class Kind;
 template <class T>
 class NodeDataValue;
 
+struct PayloadChildren
+{
+  size_t d_num_children;
+  Node d_children[1];
+};
+
+struct PayloadIndexed
+{
+  uint8_t d_num_indices;
+  uint64_t d_indices[1];
+};
+
+template <class T>
+struct PayloadValue
+{
+  T d_value;
+};
+
 /**
  * Node data base class.
  *
@@ -45,11 +63,37 @@ class NodeData
  public:
   using iterator = const Node*;
 
-  NodeData()          = delete;
-  virtual ~NodeData() = default;
+  static NodeData* alloc(Kind kind,
+                         const std::vector<Node>& children,
+                         const std::vector<uint64_t>& indices);
+
+  static void dealloc(NodeData* data);
+
+  template <class T>
+  static NodeData* alloc(const T& value)
+  {
+    size_t size         = sizeof(NodeData);
+    size_t payload_size = sizeof(T);
+
+    NodeData* data =
+        static_cast<NodeData*>(std::calloc(1, size + payload_size));
+    if (data == nullptr)
+    {
+      throw std::bad_alloc();
+    }
+    data->d_kind = Kind::VALUE;
+
+    auto& payload   = data->payload_value<T>();
+    payload.d_value = value;
+    data->d_hash    = std::hash<T>{}(value);
+    return data;
+  }
+
+  NodeData() = delete;
+  ~NodeData();
 
   /** Compute hash value. */
-  virtual size_t hash() const;
+  size_t hash() const;
 
   /**
    * Comparison of two node data objects.
@@ -59,7 +103,7 @@ class NodeData
    * @param other Other node data to compare to
    * @return True if both objects store the same data.
    */
-  virtual bool equals(const NodeData& other) const;
+  bool equals(const NodeData& other) const;
 
   /**
    * @return The node id.
@@ -135,8 +179,8 @@ class NodeData
   const T& get_value() const
   {
     assert(get_kind() == Kind::VALUE);
-    const auto& data = reinterpret_cast<const NodeDataValue<T>&>(*this);
-    return data.d_value;
+    const auto& payload = payload_value<T>();
+    return payload.d_value;
   }
 
   /**
@@ -176,10 +220,47 @@ class NodeData
   /** @return Associated node manager instance. */
   NodeManager* nm() { return d_nm; }
 
- protected:
-  NodeData(Kind kind);
-
  private:
+  PayloadChildren& payload_children()
+  {
+    return const_cast<PayloadChildren&>(
+        std::as_const(*this).payload_children());
+  }
+
+  const PayloadChildren& payload_children() const
+  {
+    assert(has_children());
+    return *reinterpret_cast<const PayloadChildren*>(&d_payload);
+  }
+
+  PayloadIndexed& payload_indexed()
+  {
+    return const_cast<PayloadIndexed&>(std::as_const(*this).payload_indexed());
+  }
+
+  const PayloadIndexed& payload_indexed() const
+  {
+    assert(is_indexed());
+    const auto& pc = payload_children();
+    size_t offset =
+        sizeof(pc.d_num_children) + sizeof(*pc.d_children) * pc.d_num_children;
+    return *reinterpret_cast<const PayloadIndexed*>(&d_payload + offset);
+  }
+
+  template <class T>
+  PayloadValue<T>& payload_value()
+  {
+    return const_cast<PayloadValue<T>&>(
+        std::as_const(*this).payload_value<T>());
+  }
+
+  template <class T>
+  const PayloadValue<T>& payload_value() const
+  {
+    assert(d_kind == Kind::VALUE);
+    return *reinterpret_cast<const PayloadValue<T>*>(&d_payload);
+  }
+
   /** Garbage collect this node. */
   void gc();
 
@@ -193,117 +274,12 @@ class NodeData
   uint32_t d_refs = 0;
   /** Associated node manager. */
   NodeManager* d_nm = nullptr;
-};
 
-/**
- * Node data with a payload of at most `s_max_children` children.
- *
- * Always allocates an std::array of size `s_max_children` to store children.
- */
-class NodeDataChildren : public NodeData
-{
-  friend NodeData;
+  // TODO: experiment with on-the-fly computation
+  size_t d_hash = 0;
 
- public:
-  static constexpr size_t s_max_children = 4;
-
-  NodeDataChildren()  = delete;
-  ~NodeDataChildren() = default;
-
-  NodeDataChildren(Kind kind, const std::vector<Node>& children);
-
-  size_t hash() const override;
-  bool equals(const NodeData& other) const override;
-
- private:
-  /** The number of stored children. */
-  uint8_t d_num_children;
-  /** Storage for at most `s_max_children` children. */
-  std::array<Node, s_max_children> d_children;
-};
-
-/**
- * Node data with a payload of at most `s_max_children` children and 2 indices.
- *
- * Always allocates an std::array of size 2 to store indices.
- */
-class NodeDataIndexed : public NodeDataChildren
-{
-  friend NodeData;
-
- public:
-  NodeDataIndexed() = delete;
-  NodeDataIndexed(Kind kind,
-                  const std::vector<Node>& children,
-                  const std::vector<uint64_t>& indices);
-  ~NodeDataIndexed() = default;
-
-  size_t hash() const override;
-  bool equals(const NodeData& other) const override;
-
- private:
-  /** The number of stored indices. */
-  uint8_t d_num_indices = 0;
-  /** Storage for at most 2 indices. */
-  std::array<uint64_t, 2> d_indices;
-};
-
-/**
- * Node data to store an arbitrary number of children.
- */
-class NodeDataNary : public NodeData
-{
-  friend NodeData;
-
- public:
-  NodeDataNary()  = delete;
-  ~NodeDataNary() = default;
-
-  NodeDataNary(Kind kind, const std::vector<Node>& children);
-
-  size_t hash() const override;
-  bool equals(const NodeData& other) const override;
-
- private:
-  /** Storage for arbitrary number of children. */
-  std::vector<Node> d_children;
-};
-
-/**
- * Node data template to store arbitrary values.
- */
-template <class T>
-class NodeDataValue : public NodeData
-{
-  friend NodeData;
-
- public:
-  NodeDataValue() = delete;
-  NodeDataValue(const T& value) : NodeData(Kind::VALUE), d_value(value){};
-
-  ~NodeDataValue() = default;
-
-  size_t hash() const override
-  {
-    return NodeData::hash() + std::hash<T>{}(d_value);
-  }
-
-  bool equals(const NodeData& other) const override
-  {
-    if (!NodeData::equals(other))
-    {
-      return false;
-    }
-    if (get_type() != other.get_type())
-    {
-      return false;
-    }
-    const auto& o = reinterpret_cast<const NodeDataValue<T>&>(other);
-    return d_value == o.d_value;
-  }
-
- private:
-  T d_value;
+  // TODO: document possible payload and layout
+  uint8_t d_payload[1];
 };
 
 /* ------------------------------------------------------------------------- */
@@ -315,7 +291,8 @@ struct NodeDataHash
 {
   static constexpr std::array<size_t, 4> s_primes = {
       333444569u, 76891121u, 456790003u, 111130391u};
-  size_t operator()(const NodeData* d) const;
+
+  size_t operator()(const NodeData* d) const { return d->hash(); }
 };
 
 /**
@@ -323,7 +300,10 @@ struct NodeDataHash
  */
 struct NodeDataKeyEqual
 {
-  bool operator()(const NodeData* d0, const NodeData* d1) const;
+  bool operator()(const NodeData* d0, const NodeData* d1) const
+  {
+    return d0->equals(*d1);
+  }
 };
 
 }  // namespace node

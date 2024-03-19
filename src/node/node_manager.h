@@ -204,21 +204,6 @@ class NodeManager
   void init_id(node::NodeData* d);
 
   /**
-   * Create node data object.
-   *
-   * Creates node data object based on the given kind (either NodeDataIndexed,
-   * NodeDataChildren or NodeDataNary).
-   *
-   * @param kind The node kind.
-   * @param children The children of the node.
-   * @param indices The indices of the node.
-   * @return Node data.
-   */
-  node::NodeData* new_data(node::Kind kind,
-                           const std::vector<Node>& children,
-                           const std::vector<uint64_t>& indices);
-
-  /**
    * Find or insert new node data.
    *
    * @param lookup The node data to look up in d_unique_nodes
@@ -254,7 +239,7 @@ class NodeManager
   bool d_in_gc_mode = false;
 
   /** Stores all node data objects, accessible via the node id. */
-  std::vector<std::unique_ptr<node::NodeData>> d_node_data;
+  std::vector<node::NodeData*> d_node_data;
 
   /** Lookup data structure for hash consing of node data. */
   std::
