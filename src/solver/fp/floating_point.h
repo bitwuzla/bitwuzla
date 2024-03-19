@@ -180,6 +180,8 @@ class FloatingPoint
 
   /** Copy constructor. */
   FloatingPoint(const FloatingPoint &other);
+  /** Copy assignment. */
+  FloatingPoint &operator=(const FloatingPoint &other);
   /** Destructor. */
   ~FloatingPoint();
 

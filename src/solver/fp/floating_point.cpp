@@ -186,6 +186,15 @@ FloatingPoint::FloatingPoint(const FloatingPoint &other)
   d_uf.reset(new UnpackedFloat(*other.unpacked()));
 }
 
+FloatingPoint &
+FloatingPoint::operator=(const FloatingPoint &other)
+
+{
+  d_size.reset(new FloatingPointTypeInfo(*other.size()));
+  d_uf.reset(new UnpackedFloat(*other.unpacked()));
+  return *this;
+}
+
 FloatingPoint::~FloatingPoint() {}
 
 uint64_t
