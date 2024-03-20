@@ -23,12 +23,20 @@ class NodeUniqueTable
  public:
   NodeUniqueTable();
 
+  /**
+   * Find node with specified criteria. If node does not exist yet, allocates
+   * new node data.
+   */
   std::pair<bool, NodeData*> find_or_insert(
       Kind kind,
       const Type& type,
       const std::vector<Node>& children,
       const std::vector<uint64_t>& indices);
 
+  /**
+   * Find value with specified criteria. If node does not exist yet, allocates
+   * new node data.
+   */
   template <class T>
   std::pair<bool, NodeData*> find_or_insert(const Type& type, const T& value)
   {
@@ -52,7 +60,7 @@ class NodeUniqueTable
 
     // Create new node and insert
     NodeData* d = NodeData::alloc(value);
-    if (full())
+    if (needs_resize())
     {
       resize();
       h = bucket_hash(hd);
@@ -65,28 +73,35 @@ class NodeUniqueTable
     return std::make_pair(true, d);
   }
 
+  /** Delete node data from unique table. */
   void erase(const NodeData* d);
 
  private:
   static constexpr std::array<size_t, 4> s_primes = {
       333444569u, 76891121u, 456790003u, 111130391u};
 
-  bool full() const { return d_num_elements >= d_buckets.capacity(); }
+  /** Check whether unique table needs to be resized. */
+  bool needs_resize() const { return d_num_elements >= d_buckets.capacity(); }
 
+  /** Resizes unique table and rehashes node data. */
   void resize();
 
+  /** Hash node data. */
   size_t hash(const NodeData* d) const;
 
+  /** Compute hash value of node lookup data. */
   size_t hash(Kind kind,
               const std::vector<Node>& children,
               const std::vector<uint64_t>& indices) const;
 
+  /** Compare node data against node lookup data. */
   bool equals(const NodeData& data,
               Kind kind,
               const Type& type,
               const std::vector<Node>& children,
               const std::vector<uint64_t>& indices) const;
 
+  /** Compute position in d_buckets based on hash value. */
   size_t bucket_hash(size_t hash, size_t mask = 0) const
   {
     if (mask == 0)
@@ -96,6 +111,7 @@ class NodeUniqueTable
     return hash & mask;
   }
 
+  /** Compute has value of value node lookup data. */
   template <class T>
   size_t hash_value(const T& value)
   {
@@ -124,7 +140,9 @@ class NodeUniqueTable
     return hash;
   }
 
+  /** Number of nodes stored in unique table. */
   size_t d_num_elements = 0;
+  /** Hash table buckets. */
   std::vector<NodeData*> d_buckets;
 };
 

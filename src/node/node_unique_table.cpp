@@ -33,7 +33,7 @@ NodeUniqueTable::find_or_insert(Kind kind,
 
   // Create new node and insert
   NodeData* d = NodeData::alloc(kind, children, indices);
-  if (full())
+  if (needs_resize())
   {
     resize();
     h = bucket_hash(hd);
