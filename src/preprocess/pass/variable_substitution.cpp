@@ -10,6 +10,8 @@
 
 #include "preprocess/pass/variable_substitution.h"
 
+#include <deque>
+
 #include "bv/bitvector.h"
 #include "env.h"
 #include "node/node_manager.h"
@@ -886,11 +888,11 @@ PassVariableSubstitution::is_direct_cycle(const Node& var,
 {
   util::Timer timer(d_stats.time_direct_cycle_check);
   node::unordered_node_ref_set cache;
-  node::node_ref_vector visit{term};
+  std::deque<ConstNodeRef> visit{term};
   do
   {
     const Node& cur = visit.front();
-    visit.erase(visit.begin());
+    visit.pop_front();
 
     // var cannot be in cur
     if (cur.id() < var.id())
