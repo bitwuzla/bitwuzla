@@ -23,7 +23,7 @@ namespace bzla::node {
 /**
  * Node kinds.
  */
-enum class Kind
+enum class Kind : uint8_t
 {
   NULL_NODE = 0,
 
