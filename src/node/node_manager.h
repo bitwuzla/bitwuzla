@@ -245,8 +245,8 @@ class NodeManager
   /** Indicates whether node manager is in garbage collection mode. */
   bool d_in_gc_mode = false;
 
-  /** Stores all node data objects, accessible via the node id. */
-  std::vector<node::NodeData*> d_node_data;
+  /** Stores allocated node data objects for constants and variables. */
+  std::unordered_set<node::NodeData*> d_alloc_nodes;
 
   /** Lookup data structure for hash consing of node data. */
   node::NodeUniqueTable d_unique_table;

@@ -26,22 +26,15 @@ using namespace node;
 
 NodeManager::~NodeManager()
 {
-  // Cleanup remaining nodes without triggering garbage_collect().
+  // Cleanup remaining node data for constants and variables.
   //
   // Note: Automatic reference counting of Node should actually prevent node
-  //       leaks. However, nodes that are stored in static memory and are
-  //       destructed after the NodeManager do not get garbage collected before
-  //       destructing the NodeManager. Hence, we have to make sure to
-  //       invalidate all nodes before destructing the node manager.
-  for (NodeData* data : d_node_data)
+  //       data leaks. However, nodes that are stored in static memory do not
+  //       get garbage collected. Hence, we have to make sure to invalidate all
+  //       node data before destructing the node manager.
+  for (NodeData* d : d_alloc_nodes)
   {
-    if (data == nullptr) continue;
-    for (size_t i = 0, size = data->get_num_children(); i < size; ++i)
-    {
-      Node& child  = data->get_child(i);
-      child.d_data = nullptr;
-    }
-    NodeData::dealloc(data);
+    NodeData::dealloc(d);
   }
 }
 
@@ -59,6 +52,7 @@ NodeManager::mk_const(const Type& t, const std::optional<std::string>& symbol)
   NodeData* data = NodeData::alloc(Kind::CONSTANT, symbol);
   data->d_type   = t;
   init_id(data);
+  d_alloc_nodes.emplace(data);
   return Node(data);
 }
 
@@ -84,6 +78,7 @@ NodeManager::mk_var(const Type& t, const std::optional<std::string>& symbol)
   NodeData* data = NodeData::alloc(Kind::VARIABLE, symbol);
   data->d_type   = t;
   init_id(data);
+  d_alloc_nodes.emplace(data);
   return Node(data);
 }
 
@@ -811,8 +806,6 @@ NodeManager::init_id(NodeData* data)
   assert(d_node_id_counter < UINT64_MAX);
   assert(data != nullptr);
   assert(data->d_id == 0);
-  d_node_data.emplace_back(data);
-  assert(d_node_data.size() == static_cast<size_t>(d_node_id_counter));
   data->d_id = d_node_id_counter++;
   data->d_nm = this;
   ++d_stats.d_num_node_data;
@@ -859,9 +852,10 @@ NodeManager::garbage_collect(NodeData* data)
     visit.pop_front();
 
     size_t num_children = cur->get_num_children();
+    Kind kind           = cur->get_kind();
 
     // Erase node data before we modify children.
-    if (num_children > 0 || cur->get_kind() == Kind::VALUE)
+    if (num_children > 0 || kind == Kind::VALUE)
     {
       d_unique_table.erase(cur);
     }
@@ -885,8 +879,10 @@ NodeManager::garbage_collect(NodeData* data)
         }
       }
     }
-    assert(d_node_data[cur->d_id - 1]->d_id == cur->d_id);
-    d_node_data[cur->d_id - 1] = nullptr;
+    else if (kind == Kind::CONSTANT || kind == Kind::VARIABLE)
+    {
+      d_alloc_nodes.erase(cur);
+    }
     NodeData::dealloc(cur);
     --d_stats.d_num_node_data;
     ++d_stats.d_num_node_data_dealloc;
