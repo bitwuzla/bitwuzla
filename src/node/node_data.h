@@ -22,30 +22,30 @@
 #include "node/node.h"
 #include "type/type.h"
 
-namespace bzla {
+namespace bzla::node {
 
-namespace node {
-
-enum class Kind;
-
+/** Payload for nodes with arbitrary number of children. */
 struct PayloadChildren
 {
   size_t d_num_children;
   Node d_children[1];
 };
 
+/** Payload for indexed nodes with arbitrary number of children. */
 struct PayloadIndexed
 {
   size_t d_num_indices;
   uint64_t d_indices[1];
 };
 
+/** Payload for values. */
 template <class T>
 struct PayloadValue
 {
   T d_value;
 };
 
+/** Payload for constants and variables. */
 struct PayloadSymbol
 {
   std::optional<std::string> d_symbol;
@@ -54,7 +54,7 @@ struct PayloadSymbol
 /**
  * Node data base class.
  *
- * Used for nodes that do not need additional payload, e.g. Kind::CONSTANT.
+ * Memory for payload will be allocated based on requirements of node kind.
  */
 class NodeData
 {
@@ -64,12 +64,15 @@ class NodeData
  public:
   using iterator = const Node*;
 
+  /** Allocate node data for constants and variables. */
   static NodeData* alloc(Kind kind, const std::optional<std::string>& symbol);
 
+  /** Allocate node data for nodes with children. */
   static NodeData* alloc(Kind kind,
                          const std::vector<Node>& children,
                          const std::vector<uint64_t>& indices);
 
+  /** Allocate node data for values. */
   template <class T>
   static NodeData* alloc(const T& value)
   {
@@ -89,6 +92,7 @@ class NodeData
     return data;
   }
 
+  /** Deallocate node data. */
   static void dealloc(NodeData* data);
 
   NodeData() = delete;
@@ -164,6 +168,9 @@ class NodeData
    */
   bool is_nary() const { return KindInfo::is_nary(d_kind); }
 
+  /**
+   * @return Value instance stored by this node data.
+   */
   template <class T>
   const T& get_value() const
   {
@@ -210,6 +217,7 @@ class NodeData
   NodeManager* nm() { return d_nm; }
 
  private:
+  /** @return Children payload of this node. */
   PayloadChildren& payload_children()
   {
     return const_cast<PayloadChildren&>(
@@ -222,6 +230,7 @@ class NodeData
     return *reinterpret_cast<const PayloadChildren*>(&d_payload);
   }
 
+  /** @return Indices payload of this node. */
   PayloadIndexed& payload_indexed()
   {
     return const_cast<PayloadIndexed&>(std::as_const(*this).payload_indexed());
@@ -231,11 +240,14 @@ class NodeData
   {
     assert(is_indexed());
     const auto& pc = payload_children();
+    // Note: Indices are always stored after children, hence we compute the
+    //       offset.
     size_t offset =
         sizeof(pc.d_num_children) + sizeof(*pc.d_children) * pc.d_num_children;
     return *reinterpret_cast<const PayloadIndexed*>(&d_payload + offset);
   }
 
+  /** @return Value payload of this node. */
   template <class T>
   PayloadValue<T>& payload_value()
   {
@@ -250,6 +262,7 @@ class NodeData
     return *reinterpret_cast<const PayloadValue<T>*>(&d_payload);
   }
 
+  /** @return Symbol payload of this node. */
   PayloadSymbol& payload_symbol()
   {
     return const_cast<PayloadSymbol&>(std::as_const(*this).payload_symbol());
@@ -278,12 +291,19 @@ class NodeData
   /** Next node in unique table collision chain. */
   NodeData* d_next = nullptr;
 
-  // TODO: document possible payload and layout
+  /**
+   * Payload placeholder.
+   *
+   * Depending on the node kind, additional memory is allocated to store:
+   *  - PayloadChildren (nodes with arbitrary number of children)
+   *  - PayloadIndexed  (indexed nodes)
+   *  - PayloadValue    (values: bool, BitVector, RoundingMode, FloatingPoint)
+   *  - PayloadSymbol   (symbols for constants and variables)
+   */
   uint8_t d_payload[1];
 };
 
 /* ------------------------------------------------------------------------- */
 
-}  // namespace node
-}  // namespace bzla
+}  // namespace bzla::node
 #endif
