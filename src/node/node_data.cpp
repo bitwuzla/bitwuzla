@@ -19,6 +19,22 @@ namespace bzla::node {
 /* --- NodeData public ----------------------------------------------------- */
 
 NodeData*
+NodeData::alloc(Kind kind, const std::optional<std::string>& symbol)
+{
+  size_t size = sizeof(NodeData) + sizeof(PayloadSymbol);
+
+  NodeData* data = static_cast<NodeData*>(std::calloc(1, size));
+  if (data == nullptr)
+  {
+    throw std::bad_alloc();
+  }
+  data->d_kind     = kind;
+  auto& payload    = data->payload_symbol();
+  payload.d_symbol = symbol;
+  return data;
+}
+
+NodeData*
 NodeData::alloc(Kind kind,
                 const std::vector<Node>& children,
                 const std::vector<uint64_t>& indices)
@@ -103,6 +119,11 @@ NodeData::~NodeData()
       auto& payload = payload_value<FloatingPoint>();
       payload.d_value.~FloatingPoint();
     }
+  }
+  else if (d_kind == Kind::CONSTANT || d_kind == Kind::VALUE)
+  {
+    auto& payload = payload_symbol();
+    payload.d_symbol.~optional();
   }
 }
 

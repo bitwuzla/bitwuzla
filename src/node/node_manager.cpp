@@ -56,13 +56,9 @@ NodeManager::mk_const(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
   assert(t.tm() == &d_tm);
-  NodeData* data = NodeData::alloc(Kind::CONSTANT, {}, {});
+  NodeData* data = NodeData::alloc(Kind::CONSTANT, symbol);
   data->d_type   = t;
   init_id(data);
-  if (symbol)
-  {
-    d_symbol_table.emplace(data, *symbol);
-  }
   return Node(data);
 }
 
@@ -85,13 +81,9 @@ NodeManager::mk_var(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
   assert(t.tm() == &d_tm);
-  NodeData* data = NodeData::alloc(Kind::VARIABLE, {}, {});
+  NodeData* data = NodeData::alloc(Kind::VARIABLE, symbol);
   data->d_type   = t;
   init_id(data);
-  if (symbol)
-  {
-    d_symbol_table.emplace(data, *symbol);
-  }
   return Node(data);
 }
 
@@ -894,7 +886,6 @@ NodeManager::garbage_collect(NodeData* data)
       }
     }
     assert(d_node_data[cur->d_id - 1]->d_id == cur->d_id);
-    d_symbol_table.erase(cur);
     d_node_data[cur->d_id - 1] = nullptr;
     NodeData::dealloc(cur);
     --d_stats.d_num_node_data;
@@ -907,12 +898,13 @@ NodeManager::garbage_collect(NodeData* data)
 const std::optional<std::reference_wrapper<const std::string>>
 NodeManager::get_symbol(const NodeData* data) const
 {
-  auto it = d_symbol_table.find(data);
-  if (it == d_symbol_table.end())
+  if (data->get_kind() != Kind::CONSTANT && data->get_kind() != Kind::VARIABLE)
   {
     return std::nullopt;
   }
-  return std::optional<std::reference_wrapper<const std::string>>{it->second};
+  const auto& payload = data->payload_symbol();
+  return std::optional<std::reference_wrapper<const std::string>>{
+      payload.d_symbol};
 }
 
 }  // namespace bzla
