@@ -10,6 +10,8 @@
 
 #include "solver/array/array_solver.h"
 
+#include <deque>
+
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
@@ -507,7 +509,7 @@ ArraySolver::collect_path_conditions(const Access& access,
   Log(3) << "goal:  " << array;
 
   // Find shortest path from access to array
-  std::vector<std::pair<ConstNodeRef, bool>> visit;
+  std::deque<std::pair<ConstNodeRef, bool>> visit;
   visit.emplace_back(access.array(), false);
   unordered_node_ref_map<Node> path;
   unordered_node_ref_set cache;
@@ -616,7 +618,7 @@ ArraySolver::collect_path_conditions(const Access& access,
         }
       }
     }
-    visit.erase(visit.begin());
+    visit.pop_front();
   } while (!visit.empty());
 
   // Construct path conditions
