@@ -22,6 +22,7 @@ class NodeUniqueTable
 {
  public:
   NodeUniqueTable();
+  ~NodeUniqueTable();
 
   /**
    * Find node with specified criteria. If node does not exist yet, allocates

@@ -8,6 +8,34 @@ namespace bzla::node {
 
 NodeUniqueTable::NodeUniqueTable() { d_buckets.resize(16, nullptr); }
 
+NodeUniqueTable::~NodeUniqueTable()
+{
+  // Cleanup remaining node data.
+  //
+  // Note: Automatic reference counting of Node should actually prevent node
+  //       data leaks. However, nodes that are stored in static memory do not
+  //       get garbage collected. Hence, we have to make sure to invalidate all
+  //       node data before destructing the unique table.
+  for (size_t i = 0, size = d_buckets.size(); i < size; ++i)
+  {
+    NodeData* cur = d_buckets[i];
+    while (cur != nullptr)
+    {
+      NodeData* next = cur->d_next;
+      if (cur->has_children())
+      {
+        auto& payload = cur->payload_children();
+        for (size_t j = 0; j < payload.d_num_children; ++j)
+        {
+          payload.d_children[j].d_data = nullptr;
+        }
+      }
+      NodeData::dealloc(cur);
+      cur = next;
+    }
+  }
+}
+
 std::pair<bool, NodeData*>
 NodeUniqueTable::find_or_insert(Kind kind,
                                 const Type& type,
