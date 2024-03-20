@@ -40,6 +40,8 @@ BvPropSolver::BvPropSolver(Env& env,
   d_ls.reset(new ls::LocalSearchBV(options.prop_nprops(),
                                    options.prop_nupdates(),
                                    options.seed(),
+                                   options.log_level(),
+                                   options.verbosity(),
                                    "solver::bv::prop::",
                                    &env.statistics()));
 
@@ -52,7 +54,6 @@ BvPropSolver::BvPropSolver(Env& env,
   d_ls->d_options.prob_pick_ess_input =
       1000 - options.prop_prob_pick_random_input();
 
-  d_ls->set_log_level(options.log_level());
   d_ls->init();
 
   d_ls_backtrack.d_ls = d_ls.get();

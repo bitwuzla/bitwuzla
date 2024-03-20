@@ -28,11 +28,15 @@ namespace bzla::ls {
 LocalSearchBV::LocalSearchBV(uint64_t max_nprops,
                              uint64_t max_nupdates,
                              uint32_t seed,
+                             uint32_t log_level,
+                             uint32_t verbosity_level,
                              const std::string& stats_prefix,
                              util::Statistics* statistics)
     : LocalSearch<BitVector>(max_nprops,
                              max_nupdates,
                              seed,
+                             log_level,
+                             verbosity_level,
                              stats_prefix,
                              "(lib::ls::bv)",
                              statistics)

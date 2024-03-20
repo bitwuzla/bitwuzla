@@ -72,6 +72,8 @@ template <class VALUE>
 LocalSearch<VALUE>::LocalSearch(uint64_t max_nprops,
                                 uint64_t max_nupdates,
                                 uint32_t seed,
+                                uint32_t log_level,
+                                uint32_t verbosity_level,
                                 const std::string& stats_prefix,
                                 const std::string& log_prefix,
                                 util::Statistics* statistics)
@@ -80,11 +82,8 @@ LocalSearch<VALUE>::LocalSearch(uint64_t max_nprops,
       d_seed(seed),
       d_stats(statistics ? statistics : new util::Statistics()),
       d_stats_needs_free(statistics == nullptr),
-      d_internal(new Internal(*d_stats,
-                              stats_prefix,
-                              d_options.log_level,
-                              d_options.verbosity_level,
-                              log_prefix)),
+      d_internal(new Internal(
+          *d_stats, stats_prefix, log_level, verbosity_level, log_prefix)),
       d_logger(d_internal->d_logger)
 
 {
@@ -709,20 +708,6 @@ LocalSearch<VALUE>::move()
     return Result::SAT;
   }
   return Result::UNKNOWN;
-}
-
-template <class VALUE>
-void
-LocalSearch<VALUE>::set_log_level(uint32_t level)
-{
-  d_logger.set_log_level(level);
-}
-
-template <class VALUE>
-void
-LocalSearch<VALUE>::set_verbosity_level(uint32_t level)
-{
-  d_logger.set_verbosity_level(level);
 }
 
 template class LocalSearch<BitVector>;

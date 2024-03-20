@@ -177,27 +177,26 @@ class LocalSearch
      * a random input (see use_path_sel_essential).
      */
     uint32_t prob_pick_ess_input = 990;
-
-    /** The log level. */
-    uint32_t log_level = 0;
-    /** The verbosity level. */
-    uint32_t verbosity_level = 0;
   } d_options;
 
   /**
    * Constructor.
-   * @param max_nprops   The maximum number of propagations to perform. Zero
-   *                     if unlimited.
-   * @param max_nupdates The maximum number of cone updates to perform. Zero
-   *                     if unlimited.
-   * @param seed         The initial seed for the random number generator.
-   * @param stats_prefix The prefix to use for statistis.
-   * @param statistics   The associated statistics object, will be nullptr
-   *                     when used outside of Bitwuzla.
+   * @param max_nprops      The maximum number of propagations to perform, zero
+   *                        if unlimited.
+   * @param max_nupdates    The maximum number of cone updates to perform, zero
+   *                        if unlimited.
+   * @param seed            The initial seed for the random number generator.
+   * @param log_level       The log level, 0 to disable log messages.
+   * @param verbosity_level The verbosity level, 0 to disable verbose messages.
+   * @param stats_prefix    The prefix to use for statistis.
+   * @param statistics      The associated statistics object, will be nullptr
+   *                        when used outside of Bitwuzla.
    */
   LocalSearch(uint64_t max_nprops,
               uint64_t max_nupdates,
               uint32_t seed                   = 1234,
+              uint32_t log_level              = 0,
+              uint32_t verbosity_level        = 0,
               const std::string& stats_prefix = "lib::ls::",
               const std::string& log_prefix   = "(lib::ls)",
               util::Statistics* statistics    = nullptr);
@@ -305,17 +304,6 @@ class LocalSearch
   //         cone updates
 
   Result move();
-
-  /**
-   * Set the log level.
-   * @param level The level to set.
-   */
-  void set_log_level(uint32_t level);
-  /**
-   * Set the verbosity level.
-   * @param level The level to set.
-   */
-  void set_verbosity_level(uint32_t level);
 
  protected:
   /** Forward declaration of internal statistics struct. */
