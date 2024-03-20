@@ -28,9 +28,6 @@ namespace node {
 
 enum class Kind;
 
-template <class T>
-class NodeDataValue;
-
 struct PayloadChildren
 {
   size_t d_num_children;
@@ -49,6 +46,11 @@ struct PayloadValue
   T d_value;
 };
 
+struct PayloadSymbol
+{
+  std::optional<std::string> d_symbol;
+};
+
 /**
  * Node data base class.
  *
@@ -61,6 +63,8 @@ class NodeData
 
  public:
   using iterator = const Node*;
+
+  static NodeData* alloc(Kind kind, const std::optional<std::string>& symbol);
 
   static NodeData* alloc(Kind kind,
                          const std::vector<Node>& children,
@@ -244,6 +248,17 @@ class NodeData
   {
     assert(d_kind == Kind::VALUE);
     return *reinterpret_cast<const PayloadValue<T>*>(&d_payload);
+  }
+
+  PayloadSymbol& payload_symbol()
+  {
+    return const_cast<PayloadSymbol&>(std::as_const(*this).payload_symbol());
+  }
+
+  const PayloadSymbol& payload_symbol() const
+  {
+    assert(d_kind == Kind::CONSTANT || d_kind == Kind::VARIABLE);
+    return *reinterpret_cast<const PayloadSymbol*>(&d_payload);
   }
 
   /** Garbage collect this node. */

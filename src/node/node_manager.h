@@ -251,9 +251,6 @@ class NodeManager
   /** Lookup data structure for hash consing of node data. */
   node::NodeUniqueTable d_unique_table;
 
-  /** Stores symbols for nodes. */
-  std::unordered_map<const node::NodeData*, std::string> d_symbol_table;
-
   struct Statistics
   {
     uint64_t d_num_node_data = 0;
