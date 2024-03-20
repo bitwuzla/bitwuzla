@@ -73,6 +73,7 @@ LocalSearch<VALUE>::LocalSearch(uint64_t max_nprops,
                                 uint64_t max_nupdates,
                                 uint32_t seed,
                                 const std::string& stats_prefix,
+                                const std::string& log_prefix,
                                 util::Statistics* statistics)
     : d_max_nprops(max_nprops),
       d_max_nupdates(max_nupdates),
@@ -83,7 +84,7 @@ LocalSearch<VALUE>::LocalSearch(uint64_t max_nprops,
                               stats_prefix,
                               d_options.log_level,
                               d_options.verbosity_level,
-                              "(ls::bv)")),
+                              log_prefix)),
       d_logger(d_internal->d_logger)
 
 {

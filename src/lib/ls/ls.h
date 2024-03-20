@@ -199,6 +199,7 @@ class LocalSearch
               uint64_t max_nupdates,
               uint32_t seed                   = 1234,
               const std::string& stats_prefix = "lib::ls::",
+              const std::string& log_prefix   = "(lib::ls)",
               util::Statistics* statistics    = nullptr);
   /** Destructor. */
   virtual ~LocalSearch();
