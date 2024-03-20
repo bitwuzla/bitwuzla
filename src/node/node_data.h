@@ -277,19 +277,18 @@ class NodeData
   /** Garbage collect this node. */
   void gc();
 
-  /** Node id. */
-  uint64_t d_id = 0;
-  /** Node kind. */
-  Kind d_kind;
-  /** Node type. */
-  Type d_type;
-  /** Number of references. */
-  uint32_t d_refs = 0;
-
   /** Associated node manager. */
   NodeManager* d_nm = nullptr;
   /** Next node in unique table collision chain. */
   NodeData* d_next = nullptr;
+  /** Node id. */
+  uint64_t d_id = 0;
+  /** Node type. */
+  Type d_type;
+  /** Number of references. */
+  uint32_t d_refs = 0;
+  /** Node kind. */
+  Kind d_kind;
 
   /**
    * Payload placeholder.
