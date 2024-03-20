@@ -86,12 +86,6 @@ Logger::warn()
 }
 
 void
-Logger::set_log_level(uint64_t level)
-{
-  d_log_level = level;
-}
-
-void
 Logger::set_verbosity_level(uint64_t level)
 {
   d_verbosity_level = level;

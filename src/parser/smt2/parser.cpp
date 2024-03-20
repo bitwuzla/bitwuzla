@@ -1139,9 +1139,7 @@ Parser::parse_command_set_option()
       }
       if (opt == d_options.lng(bitwuzla::Option::VERBOSITY))
       {
-        uint64_t level = d_options.get(bitwuzla::Option::VERBOSITY);
-        d_verbosity    = level;
-        d_logger.set_verbosity_level(level);
+        d_verbosity = d_options.get(bitwuzla::Option::VERBOSITY);
       }
     }
   }
