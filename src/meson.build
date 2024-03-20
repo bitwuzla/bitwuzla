@@ -110,6 +110,8 @@ sources_util = files([
   'util/hash_pair.cpp',
   'util/logger.cpp',
   'util/resources.cpp',
+  'util/set_depth.cpp',
+  'util/set_bv_format.cpp',
   'util/statistics.cpp',
 ])
 

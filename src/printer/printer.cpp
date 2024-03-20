@@ -24,6 +24,8 @@
 #include "parser/smt2/lexer.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
+#include "util/set_bv_format.h"
+#include "util/set_depth.h"
 
 namespace bzla {
 
@@ -31,13 +33,10 @@ using namespace node;
 
 /* --- Printer public ------------------------------------------------------- */
 
-int32_t Printer::s_stream_index_maximum_depth = std::ios_base::xalloc();
-int32_t Printer::s_stream_index_bv_format     = std::ios_base::xalloc();
-
 void
 Printer::print(std::ostream& os, const Node& node)
 {
-  size_t depth = os.iword(Printer::s_stream_index_maximum_depth);
+  size_t depth = os.iword(util::set_depth::s_stream_index_maximum_depth);
   unordered_node_ref_map<std::string> let_map, def_map;
   bool annotate = depth && node.num_children() > 0;
   if (annotate)
@@ -301,7 +300,7 @@ Printer::print(std::ostream& os,
                size_t max_depth)
 {
   // configure bit-vector output number format
-  uint8_t bv_format = os.iword(Printer::s_stream_index_bv_format);
+  uint8_t bv_format = os.iword(util::set_bv_format::s_stream_index_bv_format);
   if (!bv_format) bv_format = 2;
   assert(bv_format == 2 || bv_format == 10 || bv_format == 16);
 
@@ -737,23 +736,5 @@ Printer::letify(std::ostream& os,
     os << ")";
   }
 }
-
-namespace printer {
-
-std::ostream&
-operator<<(std::ostream& ostream, const set_depth& d)
-{
-  ostream.iword(Printer::s_stream_index_maximum_depth) = d.depth();
-  return ostream;
-}
-
-std::ostream&
-operator<<(std::ostream& ostream, const set_bv_format& f)
-{
-  ostream.iword(Printer::s_stream_index_bv_format) = f.format();
-  return ostream;
-}
-
-}  // namespace printer
 
 }  // namespace bzla

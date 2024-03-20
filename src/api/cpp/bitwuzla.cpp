@@ -28,6 +28,7 @@
 #include "solver/result.h"
 #include "solving_context.h"
 #include "terminator.h"
+#include "util/set_bv_format.h"
 #include "util/util.h"
 
 namespace bitwuzla {
@@ -354,7 +355,7 @@ set_bv_format::set_bv_format(uint8_t format) : d_format(format)
 std::ostream &
 operator<<(std::ostream &out, const set_bv_format &f)
 {
-  out.iword(bzla::Printer::s_stream_index_bv_format) = f.format();
+  out.iword(bzla::util::set_bv_format::s_stream_index_bv_format) = f.format();
   return out;
 }
 

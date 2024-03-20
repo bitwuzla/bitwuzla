@@ -10,7 +10,7 @@
 
 #include "util/logger.h"
 
-#include "printer/printer.h"
+#include "util/set_depth.h"
 
 namespace bzla::util {
 
@@ -20,7 +20,7 @@ Logger::Line::Line(uint64_t level, const char* prefix)
   // Save stream flags for restoring them later.
   d_flags = os.flags();
   // Set depth for node printing to 1
-  os << printer::set_depth(1);
+  os << set_depth(1);
   if (prefix)
   {
     os << prefix << " ";
@@ -37,7 +37,7 @@ Logger::Line::~Line()
   auto& os = stream();
   os << std::endl;
   // Reset node print depth
-  os << printer::set_depth(0);
+  os << set_depth(0);
   // Reset stream flags.
   os.flags(d_flags);
 }

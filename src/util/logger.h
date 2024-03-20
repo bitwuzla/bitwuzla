@@ -38,8 +38,20 @@ class Logger
   class Line
   {
    public:
+    /**
+     * Constructor.
+     * @param level  The log level.
+     * @param prefix The log prefix.
+     */
     Line(uint64_t level, const char* prefix = nullptr);
+    /**
+     * Destructor.
+     */
     ~Line();
+    /**
+     * Get the associated output stream.
+     * @return The output stream.
+     */
     std::ostream& stream();
 
    private:
