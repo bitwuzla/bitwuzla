@@ -10,7 +10,7 @@
 
 #include "util/logger.h"
 
-#include "util/set_depth.h"
+#include "util/printer.h"
 
 namespace bzla::util {
 

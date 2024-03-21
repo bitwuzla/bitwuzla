@@ -8,13 +8,37 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_UTIL_SET_BV_FORMAT_H_INCLUDED
-#define BZLA_UTIL_SET_BV_FORMAT_H_INCLUDED
+#ifndef BZLA_UTIL_PRINTER_H_INCLUDED
+#define BZLA_UTIL_PRINTER_H_INCLUDED
 
 #include <cstdint>
 #include <iostream>
 
 namespace bzla::util {
+
+/* -------------------------------------------------------------------------- */
+
+/** Struct to set maximum printing depth of nodes via stream manipulator. */
+struct set_depth
+{
+  /** std::ios_base index for setting maximum print depth. */
+  static int32_t s_stream_index_maximum_depth;
+  /**
+   * Constructor.
+   * @param depth The maximum printing depth.
+   */
+  set_depth(size_t depth) : d_depth(depth) {}
+  /** @return The configured maximum printing depth. */
+  size_t depth() const { return d_depth; }
+
+ private:
+  /** The configured maximum printing depth. */
+  size_t d_depth;
+};
+
+std::ostream& operator<<(std::ostream& ostream, const set_depth& d);
+
+/* -------------------------------------------------------------------------- */
 
 /** Struct to set bit-vector number format of nodes via stream manipulator. */
 struct set_bv_format
@@ -37,6 +61,8 @@ struct set_bv_format
 };
 
 std::ostream& operator<<(std::ostream& ostream, const set_bv_format& f);
+
+/* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::util
 

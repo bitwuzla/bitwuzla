@@ -28,7 +28,7 @@
 #include "solver/result.h"
 #include "solving_context.h"
 #include "terminator.h"
-#include "util/set_bv_format.h"
+#include "util/printer.h"
 #include "util/util.h"
 
 namespace bitwuzla {

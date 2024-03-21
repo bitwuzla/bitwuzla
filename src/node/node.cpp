@@ -19,7 +19,7 @@
 #include "printer/printer.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
-#include "util/set_bv_format.h"
+#include "util/printer.h"
 
 namespace bzla {
 
