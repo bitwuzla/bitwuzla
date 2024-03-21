@@ -340,17 +340,17 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
     uint32_t arity = cur->arity();
 
     Log(1);
-    Log(1) << "  propagate:";
-    Log(1) << "    node: " << *cur << (cur->is_root() ? " (root)" : "");
+    Log(1) << " ** propagate:";
+    Log(1) << "    * node: " << *cur << (cur->is_root() ? " (root)" : "");
 
     if (arity == 0)
     {
-      Log(1) << "    target value: " << t;
+      Log(1) << "    *> target value: " << t;
       return LocalSearchMove(nprops, nupdates, cur, t);
     }
     if (cur->is_value() || cur->all_value())
     {
-      Log(1) << "    target value: " << t;
+      Log(1) << "    *> target value: " << t;
       break;
     }
     else
@@ -370,14 +370,14 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
           Log(1) << s;
         }
       }
-      Log(1) << "    -> target value: " << t;
+      Log(1) << "    *> target value: " << t;
 
       /* Select path */
       auto [pos_x, all_but_one_const, checked_essential] =
           cur->select_path(t, ess_inputs);
       assert(pos_x < arity);
 
-      Log(1) << "    -> select path: node[" << pos_x << "]";
+      Log(1) << "    *> select path: node[" << pos_x << "]";
       if (d_logger.is_log_enabled(1))
       {
         // check if checked_essential is false due to a) all but one input
@@ -407,7 +407,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
 
         for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
         {
-          Log(1) << "        |- is_essential[" << i << "]: "
+          Log(1) << "          |- is_essential[" << i << "]: "
                  << (checked_essential
                          ? (std::find(ess_inputs.begin(), ess_inputs.end(), i)
                                     == ess_inputs.end()
@@ -434,7 +434,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
           && cur->is_invertible(t, pos_x))
       {
         t = cur->inverse_value(t, pos_x);
-        Log(1) << "    -> inverse value: " << t;
+        Log(1) << "    *> select inverse value: " << t;
         stats.num_props_inv += 1;
 #ifndef NDEBUG
         stats.num_inv_values << cur->kind();
@@ -443,7 +443,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
       else if (cur->is_consistent(t, pos_x))
       {
         t = cur->consistent_value(t, pos_x);
-        Log(1) << "    -> consistent value: " << t;
+        Log(1) << "    *> select consistent value: " << t;
         stats.num_props_cons += 1;
 #ifndef NDEBUG
         stats.num_cons_values << cur->kind();
@@ -631,21 +631,23 @@ LocalSearch<VALUE>::move()
 
   util::Timer timer(stats.time_move);
 
+  Log(1) << "----------------------------------------------------------------";
   Log(1) << "*** move: " << stats.num_moves + 1;
+  Log(1) << "----------------------------------------------------------------";
 
   if (d_logger.is_log_enabled(1))
   {
-    Log(1) << "  unsatisfied roots:";
+    Log(1) << "    unsatisfied roots:";
     for (uint64_t id : d_roots_unsat)
     {
-      Log(1) << "    - " << *get_node(id);
+      Log(1) << "      - " << *get_node(id);
     }
     Log(1);
-    Log(1) << "  satisfied roots:";
+    Log(1) << "    satisfied roots:";
     for (uint64_t id : d_roots)
     {
       if (d_roots_unsat.find(id) != d_roots_unsat.end()) continue;
-      Log(1) << "    - " << *get_node(id);
+      Log(1) << "      + " << *get_node(id);
     }
   }
 
@@ -675,7 +677,7 @@ LocalSearch<VALUE>::move()
     }
 
     Log(1);
-    Log(1) << "  select constraint: " << *root;
+    Log(1) << " ** select constraint: " << *root;
 
     m = select_move(root, *d_true);
     stats.num_props += m.d_nprops;
@@ -685,10 +687,10 @@ LocalSearch<VALUE>::move()
   assert(!m.d_assignment.is_null());
 
   Log(1);
-  Log(1) << "  move";
-  Log(1) << "  input: " << *m.d_input;
-  Log(1) << "  prev. assignment: " << m.d_input->assignment();
-  Log(1) << "  new   assignment: " << m.d_assignment;
+  Log(1) << " >> move";
+  Log(1) << "  | input: " << *m.d_input;
+  Log(1) << "  | prev. assignment: " << m.d_input->assignment();
+  Log(1) << "  | new   assignment: " << m.d_assignment;
   Log(1);
 
   stats.num_moves += 1;
@@ -699,7 +701,6 @@ LocalSearch<VALUE>::move()
   stats.num_roots_sat   = d_roots.size() - stats.num_roots_unsat;
 
   Log(1) << "*** number of propagations: " << stats.num_props;
-  Log(1);
   Log(1) << "*** number of updates: " << stats.num_updates;
   Log(1);
   if (d_roots_unsat.empty())
