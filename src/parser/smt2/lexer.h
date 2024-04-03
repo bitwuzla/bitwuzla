@@ -230,7 +230,10 @@ class Lexer
   void push_char(int32_t ch)
   {
     assert(ch != EOF);
-    assert(ch >= 0 && ch < 256);
+    // We cannot assert 'ch' to be in this range since users do not follow the
+    // standard and abuse the set-info command with keyword `:source` for
+    // adding, e.g., author information that is not sanitized.
+    // assert(ch >= 0 && ch < 256);
     d_token.push_back(static_cast<char>(ch));
   }
 
