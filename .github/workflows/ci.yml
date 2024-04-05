@@ -53,15 +53,17 @@ jobs:
           if [[ "${{matrix.name}}" == "release-aarch64" ]]; then
             sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
           fi
-          python3 -m pip install meson pytest cython>=3.*
-          echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
 
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
+        run: brew install gmp pkgconfig ninja
+
+      - name: Setup Python Environment
         run: |
-          brew install gmp pkgconfig ninja
+          python3 -m venv ~/.venv
+          source ~/.venv/bin/activate
           python3 -m pip install meson pytest cython>=3.*
-          echo "$(python3 -m site --user-base)/bin" >> $GITHUB_PATH
+          echo "$HOME/.venv/bin/" >> $GITHUB_PATH
 
       - name: Checkout
         uses: actions/checkout@v4
