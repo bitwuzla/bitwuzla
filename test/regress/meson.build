@@ -275,6 +275,7 @@ tests_smt2 = [
   ['parser/smt2perr211.smt2'],
   ['parser/smt2perr212.smt2'],
   ['parser/smt2perr213.smt2'],
+  ['parser/smt2perr214.smt2'],
   #['preprocess/array/nondestr_subst1.smt2'], # TODO slow
   ['preprocess/array/nondestr_subst10.smt2'],
   ['preprocess/array/nondestr_subst11.smt2'],

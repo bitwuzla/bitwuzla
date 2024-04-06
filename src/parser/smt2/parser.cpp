@@ -1289,6 +1289,10 @@ Parser::parse_term_list(std::vector<bitwuzla::Term>& terms,
     {
       repr->emplace_back(d_repr);
     }
+    if (!peek_is_term_arg())
+    {
+      return error("missing '('");
+    }
     terms.emplace_back(pop_term_arg());
   }
   return true;
