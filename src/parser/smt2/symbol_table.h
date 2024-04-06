@@ -84,12 +84,17 @@ class SymbolTable
   /**
    * Insert a new symbol.
    * If the symbol already exists, it will shadow a previous declaration.
-   * @param token The token of the symbol.
-   * @param symbol The string representation of the symbol.
+   * @param token           The token of the symbol.
+   * @param symbol          The string representation of the symbol.
+   * @param is_pending      True if the symbol is pending and should not be
+   *                        immediately inserted. This is only the case for
+   *                        var bindings of let binders, which may only be
+   *                        inserted after all of them are bound in parallel.
    * @param assertion_level The assertion level of the symbol.
    */
   Node* insert(Token token,
                const std::string& symbol,
+               bool is_pending          = false,
                uint64_t assertion_level = 0);
   /**
    * Insert a symbol table node that was not created via the above insert().
@@ -99,6 +104,8 @@ class SymbolTable
    * @param node The node.
    */
   void insert(Node* node);
+  /** Insert all pending symbols cached in d_pending_symbols. */
+  void insert_pending_symbols();
   /**
    * Remove a symbol node from the symbol table.
    * If the symbol is shadowed, this only removes the most recent declaration
@@ -131,6 +138,9 @@ class SymbolTable
   /** Print table (for dbg purposes). */
   void print() const;
 #endif
+
+  /** Clear the pending symbols cache. Only needed for error handling. */
+  void clear_pending_symbols();
 
  private:
   /** Primes for hashing of symbol strings. */
@@ -176,6 +186,14 @@ class SymbolTable
   std::
       unordered_map<std::string, std::unique_ptr<Node>, SymbolHash, SymbolEqual>
           d_table;
+  /**
+   * Pending symbols cache.
+   * This is mainly needed for var bindings of PARLETBIND since they are not
+   * inserted on creation but only after all of them are bound in parallel
+   * (they may not be used before that). Pending symbols are inserted via
+   * insert_pending_symbols().
+   */
+  std::vector<Node*> d_pending_symbols;
 };
 
 }  // namespace parser::smt2

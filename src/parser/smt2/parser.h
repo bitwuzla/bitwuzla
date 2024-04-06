@@ -31,6 +31,8 @@ class Parser : public bzla::parser::Parser
   Parser(bitwuzla::TermManager& tm,
          bitwuzla::Options& options,
          std::ostream* out = &std::cout);
+  /** Destructor. */
+  ~Parser();
 
   bool parse(const std::string& input,
              bool parse_only,
@@ -108,12 +110,12 @@ class Parser : public bzla::parser::Parser
   /**
    * Get next token from the lexer and insert new symbols into symbol table.
    * Caches parsed symbols (new and existing) in d_last_node.
-   * @param insert     True if parsed symbol is to be inserted in the symbol
-   *                   table. This will always be the case except when parsing
-   *                   sorted vars of a let binding.
+   * @param is_pending True if parsed symbol is not to be inserted in the
+   *                   symbol table immediately. This will only be the case
+   *                   when parsing sorted vars of a let binding.
    * @return The next token.
    */
-  Token next_token(bool insert = true)
+  Token next_token(bool is_pending = false)
   {
     assert(d_lexer);
     Token token = d_lexer->next_token();
@@ -124,14 +126,7 @@ class Parser : public bzla::parser::Parser
       SymbolTable::Node* node = d_table.find(symbol);
       if (!node)
       {
-        if (insert)
-        {
-          node = d_table.insert(token, symbol, d_assertion_level);
-        }
-        else
-        {
-          node = new SymbolTable::Node(token, symbol, d_assertion_level);
-        }
+        node = d_table.insert(token, symbol, is_pending, d_assertion_level);
       }
       d_last_node = node;
       token       = d_last_node->d_token;
@@ -288,16 +283,16 @@ class Parser : public bzla::parser::Parser
    * @param error_msg  A message indicating where the symbol was expected,
    *                   e.g., "after declare-const".
    * @param shadow     True if parsed symbol may shadow an existing symbol.
-   * @param insert     True if parsed symbol is to be inserted in the symbol
-   *                   table. This will always be the case except when parsing
-   *                   sorted vars of a let binding.
+   * @param is_pending True if parsed symbol is not to be inserted in the
+   *                   symbol table immediately. This will only be the case
+   *                   when parsing sorted vars of a let binding.
    * @param look_ahead True if we have a look ahead token.
    * @param la         The look ahead token.
    * @return False on error.
    */
   bool parse_symbol(const std::string& error_msg,
                     bool shadow     = false,
-                    bool insert     = true,
+                    bool is_pending = false,
                     bool look_ahead = false,
                     Token la        = Token::INVALID);
 

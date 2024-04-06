@@ -45,10 +45,18 @@ SymbolTable::Node::has_symbol() const
 SymbolTable::Node*
 SymbolTable::insert(Token token,
                     const std::string& symbol,
+                    bool is_pending,
                     uint64_t assertion_level)
 {
   Node* node = new Node(token, symbol, assertion_level);
-  insert(node);
+  if (is_pending)
+  {
+    d_pending_symbols.push_back(node);
+  }
+  else
+  {
+    insert(node);
+  }
   return node;
 }
 
@@ -68,6 +76,16 @@ SymbolTable::insert(Node* node)
 }
 
 void
+SymbolTable::insert_pending_symbols()
+{
+  for (Node* symbol : d_pending_symbols)
+  {
+    insert(symbol);
+  }
+  d_pending_symbols.clear();
+}
+
+void
 SymbolTable::remove(Node* node)
 {
   remove(node->d_symbol);
@@ -76,7 +94,7 @@ SymbolTable::remove(Node* node)
 void
 SymbolTable::remove(const std::string& symbol)
 {
-  auto it                   = d_table.find(symbol);
+  auto it = d_table.find(symbol);
   assert(it != d_table.end());
   assert(it->second->d_symbol == symbol);
   it->second = std::move(it->second->d_next);
@@ -421,6 +439,15 @@ SymbolTable::print() const
   }
 }
 #endif
+
+void
+SymbolTable::clear_pending_symbols()
+{
+  for (Node* symbol : d_pending_symbols)
+  {
+    delete symbol;
+  }
+}
 
 }  // namespace parser::smt2
 }  // namespace bzla

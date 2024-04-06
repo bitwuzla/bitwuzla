@@ -22,16 +22,16 @@ class TestSmt2SymbolTable : public ::testing::Test
 TEST_F(TestSmt2SymbolTable, insert)
 {
   SymbolTable table;
-  table.insert(Token::SYMBOL, "x", 0);
+  table.insert(Token::SYMBOL, "x", false, 0);
   SymbolTable::Node* x = table.find("x");
-  table.insert(Token::SYMBOL, "y", 0);
+  table.insert(Token::SYMBOL, "y", false, 0);
   SymbolTable::Node* y = table.find("y");
   ASSERT_NE(x, y);
   ASSERT_EQ(x->d_symbol, "x");
   ASSERT_EQ(x->d_assertion_level, 0);
   ASSERT_EQ(y->d_symbol, "y");
   ASSERT_EQ(y->d_assertion_level, 0);
-  table.insert(Token::SYMBOL, "x", 1);
+  table.insert(Token::SYMBOL, "x", false, 1);
   SymbolTable::Node* x1 = table.find("x");
   ASSERT_NE(x, x1);
   ASSERT_EQ(x1->d_symbol, "x");
@@ -48,10 +48,10 @@ TEST_F(TestSmt2SymbolTable, insert)
 TEST_F(TestSmt2SymbolTable, insert_quoted1)
 {
   SymbolTable table;
-  table.insert(Token::SYMBOL, "x", 0);
+  table.insert(Token::SYMBOL, "x", false, 0);
   SymbolTable::Node* x = table.find("x");
   ASSERT_NE(x, nullptr);
-  table.insert(Token::SYMBOL, "y", 0);
+  table.insert(Token::SYMBOL, "y", false, 0);
   SymbolTable::Node* y = table.find("y");
   ASSERT_NE(y, nullptr);
   ASSERT_NE(x, y);
@@ -59,10 +59,10 @@ TEST_F(TestSmt2SymbolTable, insert_quoted1)
   ASSERT_EQ(x->d_assertion_level, 0);
   ASSERT_EQ(y->d_symbol, "y");
   ASSERT_EQ(y->d_assertion_level, 0);
-  table.insert(Token::SYMBOL, "|x|", 1);
-  table.insert(Token::SYMBOL, "|y|", 1);
-  table.insert(Token::SYMBOL, "| x|", 2);
-  table.insert(Token::SYMBOL, "|y |", 2);
+  table.insert(Token::SYMBOL, "|x|", false, 1);
+  table.insert(Token::SYMBOL, "|y|", false, 1);
+  table.insert(Token::SYMBOL, "| x|", false, 2);
+  table.insert(Token::SYMBOL, "|y |", false, 2);
   SymbolTable::Node* x_quoted = table.find("|x|");
   ASSERT_NE(x_quoted, nullptr);
   ASSERT_NE(x, x_quoted);
@@ -106,10 +106,10 @@ TEST_F(TestSmt2SymbolTable, insert_quoted1)
 TEST_F(TestSmt2SymbolTable, insert_quoted2)
 {
   SymbolTable table;
-  table.insert(Token::SYMBOL, "|x|", 0);
+  table.insert(Token::SYMBOL, "|x|", false, 0);
   SymbolTable::Node* x = table.find("x");
   ASSERT_NE(x, nullptr);
-  table.insert(Token::SYMBOL, "|y|", 0);
+  table.insert(Token::SYMBOL, "|y|", false, 0);
   SymbolTable::Node* y = table.find("y");
   ASSERT_NE(y, nullptr);
   ASSERT_NE(x, y);
@@ -117,10 +117,10 @@ TEST_F(TestSmt2SymbolTable, insert_quoted2)
   ASSERT_EQ(x->d_assertion_level, 0);
   ASSERT_EQ(y->d_symbol, "|y|");
   ASSERT_EQ(y->d_assertion_level, 0);
-  table.insert(Token::SYMBOL, "x", 1);
-  table.insert(Token::SYMBOL, "|y|", 1);
-  table.insert(Token::SYMBOL, " x", 2);
-  table.insert(Token::SYMBOL, "y ", 2);
+  table.insert(Token::SYMBOL, "x", false, 1);
+  table.insert(Token::SYMBOL, "|y|", false, 1);
+  table.insert(Token::SYMBOL, " x", false, 2);
+  table.insert(Token::SYMBOL, "y ", false, 2);
   SymbolTable::Node* x_quoted = table.find("|x|");
   ASSERT_NE(x_quoted, nullptr);
   ASSERT_NE(x, x_quoted);
