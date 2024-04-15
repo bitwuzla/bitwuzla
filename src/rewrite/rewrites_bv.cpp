@@ -1052,6 +1052,40 @@ _rw_bv_and_concat(Rewriter& rewriter, const Node& node, size_t idx)
       return rewriter.mk_node(Kind::BV_CONCAT, {node[idx1][0], node[idx0][1]});
     }
   }
+  else if (node[idx0].kind() == Kind::BV_NOT
+           && node[idx0][0].kind() == Kind::BV_CONCAT
+           && node[idx1].kind() == Kind::BV_NOT
+           && node[idx1][0].kind() == Kind::BV_CONCAT
+           && node[idx0][0][0].type() == node[idx1][0][0].type()
+           && node[idx0][0][0].is_value() && node[idx1][0][1].is_value())
+  {
+    const BitVector& val00 = node[idx0][0][0].value<BitVector>();
+    const BitVector& val11 = node[idx1][0][1].value<BitVector>();
+    Node res;
+
+    if (val00.is_ones())
+    {
+      if (val11.is_ones())
+      {
+        res = rewriter.nm().mk_value(BitVector::mk_zero(node.type().bv_size()));
+      }
+      if (val11.is_zero())
+      {
+        res = node[idx0];
+      }
+    }
+
+    // ones / ones
+    if (val00.is_zero() && val11.is_zero())
+    {
+      res = rewriter.mk_node(Kind::BV_CONCAT, {node[idx1][0][0], node[idx0][0][1]});
+    }
+
+    if (!res.is_null())
+    {
+      return rewriter.mk_node(Kind::BV_NOT, {res});
+    }
+  }
   return node;
 }
 }  // namespace

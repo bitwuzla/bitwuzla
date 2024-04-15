@@ -1427,37 +1427,6 @@ PassNormalize::process(const Node& node)
           if (normalized) d_stats.num_normalizations += 1;
         }
 #endif
-        else if (k == Kind::BV_NOT && children[0].kind() == Kind::BV_CONCAT
-                 && children[0][0].kind() == Kind::BV_NOT
-                 && children[0][1].kind() == Kind::BV_NOT
-                 && (!d_share_aware || d_parents[children[0]] == 1))
-        {
-          it->second = nm.mk_node(Kind::BV_CONCAT,
-                                  {children[0][0][0], children[0][1][0]});
-        }
-        else if (k == Kind::BV_CONCAT && children[0].kind() == Kind::BV_NOT
-                 && children[1].kind() == Kind::BV_NOT)
-        {
-          it->second = nm.mk_node(
-              Kind::BV_NOT,
-              {nm.mk_node(Kind::BV_CONCAT, {children[0][0], children[1][0]})});
-        }
-#if 0
-        else if (k == Kind::BV_CONCAT
-                 && children[0].is_value()
-                 && children[1].kind() == Kind::BV_NOT)
-        {
-          it->second = nm.mk_node(Kind::BV_NOT, {nm.mk_node(Kind::BV_CONCAT,
-                                  {nm.mk_value(children[0].value<BitVector>().bvnot()), children[1][0]})});
-        }
-        else if (k == Kind::BV_CONCAT
-                 && children[1].is_value()
-                 && children[0].kind() == Kind::BV_NOT)
-        {
-          it->second = nm.mk_node(Kind::BV_NOT, {nm.mk_node(Kind::BV_CONCAT,
-                                  {children[0][0], nm.mk_value(children[1].value<BitVector>().bvnot())})});
-        }
-#endif
         else if (k == Kind::BV_MUL)
         {
           it->second =
@@ -1465,18 +1434,6 @@ PassNormalize::process(const Node& node)
         }
         else
         {
-#if 0
-          if (k != Kind::BV_ADD)
-          {
-            for (size_t i = 0, size = children.size(); i < size; ++i)
-            {
-              if (children[i].kind() == Kind::BV_ADD)
-              {
-                children[i] = normalize_comm_assoc(children[i]).first;
-              }
-            }
-          }
-#endif
           it->second = node::utils::rebuild_node(nm, cur, children);
         }
 

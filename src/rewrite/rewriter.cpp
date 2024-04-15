@@ -625,7 +625,8 @@ Rewriter::rewrite_eq(const Node& node)
   {
     BZLA_APPLY_RW_RULE(EQUAL_BV_ADD);
     BZLA_APPLY_RW_RULE(EQUAL_BV_ADD_ADD);
-    // BZLA_APPLY_RW_RULE(EQUAL_BV_CONCAT);
+    // this is important for the Sage benchmark TODO
+    //BZLA_APPLY_RW_RULE(EQUAL_BV_CONCAT);
     BZLA_APPLY_RW_RULE(EQUAL_BV_SUB);
     BZLA_APPLY_RW_RULE(EQUAL_EQUAL_CONST_BV1);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_SAME);
@@ -763,6 +764,7 @@ Rewriter::rewrite_bv_concat(const Node& node)
   if (d_level >= 2)
   {
     BZLA_APPLY_RW_RULE(BV_CONCAT_AND);
+    BZLA_APPLY_RW_RULE(NORM_BV_CONCAT_BV_NOT);
   }
 
 DONE:
@@ -843,7 +845,7 @@ Rewriter::rewrite_bv_not(const Node& node)
   if (d_level >= 2)
   {
     BZLA_APPLY_RW_RULE(BV_NOT_BV_NEG);
-    BZLA_APPLY_RW_RULE(BV_NOT_BV_CONCAT);
+    //BZLA_APPLY_RW_RULE(BV_NOT_BV_CONCAT);
   }
   if (d_level == LEVEL_SPECULATIVE)
   {
@@ -1616,6 +1618,9 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_CONCAT_CONST: out << "BV_CONCAT_CONST"; break;
     case RewriteRuleKind::BV_CONCAT_EXTRACT: out << "BV_CONCAT_EXTRACT"; break;
     case RewriteRuleKind::BV_CONCAT_AND: out << "BV_CONCAT_AND"; break;
+    case RewriteRuleKind::NORM_BV_CONCAT_BV_NOT:
+      out << "NORM_BV_CONCAT_BV_NOT";
+      break;
 
     case RewriteRuleKind::BV_EXTRACT_EVAL: out << "BV_EXTRACT_EVAL"; break;
     case RewriteRuleKind::BV_EXTRACT_FULL: out << "BV_EXTRACT_FULL"; break;

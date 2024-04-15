@@ -424,6 +424,8 @@ enum class RewriteRuleKind
   BV_CONCAT_EXTRACT,
   // Level 2+
   BV_CONCAT_AND,
+  // Normalization
+  NORM_BV_CONCAT_BV_NOT,
 
   //// bvextract
   // Level 1+
