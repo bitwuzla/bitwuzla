@@ -54,6 +54,20 @@ RewriteRule<RewriteRuleKind::NORM_BV_ADD_MUL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORM_BV_CONCAT_BV_NOT>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  if (node[0].kind() == Kind::BV_NOT && node[1].kind() == Kind::BV_NOT)
+  {
+    return rewriter.mk_node(Kind::BV_NOT, {rewriter.mk_node(Kind::BV_CONCAT, {node[0][0], node[1][0]})});
+  }
+  return node;
+}
+
+
+
 /**
  * match:  (bvadd (bvnot (bvmul a (bvnot b))) (_ bv1 N))
  *         (is the rewritten form of (bvneg (bvmul a (bvnot b))))
