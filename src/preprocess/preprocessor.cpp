@@ -339,7 +339,7 @@ Preprocessor::apply(AssertionVector& assertions)
       uninterpreted_done = true;
     }
 
-    if (options.pp_normalize())
+    if (options.rewrite_level() >= 2 && options.pp_normalize())
     {
       cnt = assertions.num_modified();
       d_pass_normalize.apply(assertions);
