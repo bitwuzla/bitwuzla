@@ -10,6 +10,8 @@
 
 #include "bitblast/aig/aig_manager.h"
 
+#include <cstdlib>
+
 namespace bzla::bitblast {
 
 // AigNodeUniqueTable

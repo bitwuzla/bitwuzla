@@ -2,6 +2,7 @@
 
 #include <bitwuzla/cpp/bitwuzla.h>
 
+#include <algorithm>
 #include <cassert>
 #include <iomanip>
 #include <iostream>
