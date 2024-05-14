@@ -10,6 +10,7 @@
 
 #include "bitblast/aig/aig_cnf.h"
 
+#include <cstdlib>
 #include <functional>
 #include <unordered_set>
 #include <vector>

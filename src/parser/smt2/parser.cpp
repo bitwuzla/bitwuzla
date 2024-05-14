@@ -10,6 +10,7 @@
 
 #include "parser/smt2/parser.h"
 
+#include <algorithm>
 #include <iostream>
 
 namespace bzla {

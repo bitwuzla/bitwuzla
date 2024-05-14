@@ -11,6 +11,7 @@
 #include <bitwuzla/cpp/bitwuzla.h>
 #include <bitwuzla/cpp/parser.h>
 
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 
