@@ -29,7 +29,11 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_active_abstractions(state.backtrack_mgr()),
       d_assertion_abstractions(state.backtrack_mgr()),
       d_assertion_abstractions_cache(state.backtrack_mgr()),
-      d_opt_minimum_size(env.options().abstraction_bv_size()),
+      // Some lemmas are not valid for bit-vectors of size 1 or 2. Hence, we
+      // only start abstracting from size 3+ instead of guarding each lemma
+      // separately.
+      d_opt_minimum_size(std::max(env.options().abstraction_bv_size(),
+                                  static_cast<uint64_t>(3))),
       d_opt_eager_refine(env.options().abstraction_eager_refine()),
       d_opt_value_inst_limit(env.options().abstraction_value_limit()),
       d_opt_value_inst_only(env.options().abstraction_value_only()),
