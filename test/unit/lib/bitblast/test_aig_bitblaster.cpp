@@ -82,8 +82,8 @@ class TestAigBitblaster : public TestCommon
     ASSERT_EQ("unsat", check_sat(ss));
   }
 
-  static void test_bv_mul_square(const std::vector<bb::AigNode>& res,
-                                 const std::vector<bb::AigNode>& a)
+  static void test_bv_mul_square(const std::vector<bitblast::AigNode>& res,
+                                 const std::vector<bitblast::AigNode>& a)
   {
     if (s_solver_binary == nullptr)
     {
@@ -91,7 +91,7 @@ class TestAigBitblaster : public TestCommon
     }
     std::stringstream ss;
     declare_const(ss, a);
-    bb::aig::Smt2Printer::print(ss, res);
+    bitblast::aig::Smt2Printer::print(ss, res);
     define_const(ss, "a", a);
     define_const(ss, "res", res);
     ss << "(declare-const expected (_ BitVec " << res.size() << "))\n";
@@ -345,7 +345,7 @@ TEST_F(TestAigBitblaster, bv_mul_square)
 {
   for (size_t i = 1; i < 17; ++i)
   {
-    bb::AigBitblaster bb;
+    bitblast::AigBitblaster bb;
     auto a   = bb.bv_constant(i);
     auto res = bb.bv_mul_square(a);
     test_bv_mul_square(res, a);

@@ -23,14 +23,15 @@ namespace bzla::preprocess::pass {
 using namespace node;
 
 PassElimUdiv::PassElimUdiv(Env& env, backtrack::BacktrackManager* backtrack_mgr)
-    : PreprocessingPass(env, backtrack_mgr), d_stats(env.statistics())
+    : PreprocessingPass(env, backtrack_mgr, "eud", "elim_udiv"),
+      d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
 
 void
 PassElimUdiv::apply(AssertionVector& assertions)
 {
-  util::Timer timer(d_stats.time_apply);
+  util::Timer timer(d_stats_pass.time_apply);
 
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
@@ -49,7 +50,7 @@ PassElimUdiv::process(const Node& assertion)
 {
   node::node_ref_vector visit{assertion};
 
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
   std::vector<Node> new_assertions;
   do
   {
@@ -109,21 +110,21 @@ PassElimUdiv::process(const Node& assertion)
       }
       else
       {
-        it->second = utils::rebuild_node(cur, children);
+        it->second = utils::rebuild_node(nm, cur, children);
       }
     }
     visit.pop_back();
   } while (!visit.empty());
 
   new_assertions.push_back(d_cache.at(assertion));
-  return utils::mk_nary(Kind::AND, new_assertions);
+  return utils::mk_nary(nm, Kind::AND, new_assertions);
 }
 
 const Node&
 PassElimUdiv::quotient(const Node& node)
 {
   assert(node.kind() == Kind::BV_UDIV || node.kind() == Kind::BV_UREM);
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
 
   Node lookup = nm.mk_node(Kind::BV_UDIV, {node[0], node[1]});
   auto it     = d_quot_cache.find(lookup);
@@ -140,7 +141,7 @@ const Node&
 PassElimUdiv::remainder(const Node& node)
 {
   assert(node.kind() == Kind::BV_UDIV || node.kind() == Kind::BV_UREM);
-  NodeManager& nm = NodeManager::get();
+  NodeManager& nm = d_env.nm();
 
   Node lookup = nm.mk_node(Kind::BV_UREM, {node[0], node[1]});
   auto it     = d_rem_cache.find(lookup);
@@ -153,11 +154,9 @@ PassElimUdiv::remainder(const Node& node)
   return it->second;
 }
 
-PassElimUdiv::Statistics::Statistics(util::Statistics& stats)
-    : time_apply(stats.new_stat<util::TimerStatistic>(
-        "preprocess::udiv_elim::time_apply")),
-      num_eliminated(
-          stats.new_stat<uint64_t>("preprocess::udiv_elim::num_eliminated"))
+PassElimUdiv::Statistics::Statistics(util::Statistics& stats,
+                                     const std::string& prefix)
+    : num_eliminated(stats.new_stat<uint64_t>(prefix + "num_eliminated"))
 {
 }
 

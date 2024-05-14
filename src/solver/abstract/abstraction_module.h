@@ -90,6 +90,7 @@ class AbstractionModule
   void verify_lemmas() const;
 #endif
 
+  Env& d_env;
   util::Logger& d_logger;
   SolverState& d_solver_state;
   Rewriter& d_rewriter;

@@ -323,7 +323,7 @@ std::ostream& operator<<(std::ostream& os, LemmaKind kind);
 class AbstractionLemma
 {
  public:
-  AbstractionLemma(LemmaKind kind) : d_kind(kind){};
+  AbstractionLemma(NodeManager& nm, LemmaKind kind) : d_nm(nm), d_kind(kind){};
   virtual ~AbstractionLemma() {};
 
   /** Return lemma kind. */
@@ -340,6 +340,7 @@ class AbstractionLemma
                         const Node& t) const = 0;
 
  protected:
+  NodeManager& d_nm;
   LemmaKind d_kind;
 };
 
@@ -347,8 +348,8 @@ template <enum LemmaKind K>
 class Lemma : public AbstractionLemma
 {
  public:
-  Lemma<K>() : AbstractionLemma(K){};
-  ~Lemma<K>() {};
+  Lemma(NodeManager& nm) : AbstractionLemma(nm, K){};
+  ~Lemma(){};
   Node instance(const Node& x, const Node& s, const Node& t) const override
   {
     (void) x;
