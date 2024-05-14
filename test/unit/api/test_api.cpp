@@ -1543,6 +1543,9 @@ TEST_F(TestApi, get_unsat_assumptions)
     for (const auto& a : unsat_ass)
     {
       ASSERT_TRUE(bitwuzla.is_unsat_assumption(a));
+    }
+    for (const auto& a : unsat_ass)
+    {
       bitwuzla.assert_formula(a);
     }
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);

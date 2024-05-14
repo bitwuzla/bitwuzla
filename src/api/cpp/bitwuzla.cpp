@@ -1439,7 +1439,7 @@ Bitwuzla::is_unsat_assumption(const Term &term)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_ASSUMPTIONS(d_ctx->options());
-  BITWUZLA_CHECK_LAST_CALL_UNSAT("is unsat assumption");
+  BITWUZLA_CHECK_LAST_CALL_UNSAT("query for unsat assumptions");
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   BITWUZLA_CHECK_TERM_IS_BOOL(term);
   BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(term, "assumption");
