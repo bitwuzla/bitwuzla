@@ -9,11 +9,8 @@ namespace bzla::abstract {
 
 enum class LemmaKind : uint32_t
 {
-  MUL_ZERO,  // (=> (= s #b0000) (= t #b0000))
-  MUL_ONE,   // (=> (= s #b0001) (= t x))
-  MUL_IC,    // (= (bvand (bvor (bvneg s) s) t) t),
-  MUL_NEG,   // (=> (= s (bvnot #b0000)) (= t (bvneg x)))
-  MUL_ODD,   // (= t (bvor t (bvand x (bvand s #b0001))))
+  MUL_IC,   // (= (bvand (bvor (bvneg s) s) t) t),
+  MUL_ODD,  // (= t (bvor t (bvand x (bvand s #b0001))))
   MUL_POW2,
   MUL_NEG_POW2,
 
@@ -32,180 +29,7 @@ enum class LemmaKind : uint32_t
   MUL_REFN13,  // (not (= s (bvadd #b0001 (bvshl s (bvsub x t)))))
   MUL_REF13,   // (not (= t (bvor #b0001 (bvadd x s))))
   MUL_REF12,   // (not (= x (bvnot (bvshl x (bvadd s t)))))
-
-  MUL_REF2,   // (bvuge s (bvand t (bvneg (bvor t (bvnot x)))))
-  MUL_REF4,   // (not (= #b0001 (bvnot (bvand x (bvand s t)))))
-  MUL_REF5,   // (not (= t (bvnot (bvor t (bvor #b0001 (bvand x s))))))
-  MUL_REF6,   // (bvuge s (bvshl (bvlshr t x) #b0001))
-  MUL_REF7,   // (= x (bvshl x (bvand s (bvlshr #b0001 t))))
-  MUL_REF8,   // (bvuge x (bvlshr (bvneg t) (bvnot s)))
-  MUL_REF9,   // (bvuge x (bvshl x (bvnot (bvlshr s t))))
-  MUL_REF10,  // (bvuge x (bvlshr t (bvnot (bvneg s))))
-  MUL_REF11,  // (not (= x (bvshl #b0001 (bvshl x (bvlshr s t)))))
-  MUL_REF16,  // (not (= x (bvadd #b0001 (bvshl x (bvsub t s)))))
-  MUL_REF17,  // (not (= x (bvadd #b0001 (bvshl x (bvsub s t)))))
   MUL_VALUE,
-
-  // commutative: (=> (noovfl) (bvuge (bvneg s) (bvneg t)))
-  // commutative: (=> (noovfl) (bvuge t (bvand s (bvneg x))))
-  // commutative: (=> (noovfl) (bvuge (bvneg x) (bvand s t)))
-  MUL_NOOVFL1,  // (=> (noovfl) (bvuge (bvneg x) (bvneg t)))
-  MUL_NOOVFL2,  // (=> (noovfl) (bvuge (bvneg s) (bvand x t)))
-  MUL_NOOVFL3,  // (=> (noovfl) (bvuge t (bvand x (bvneg s))))
-  MUL_NOOVFL4,  // (=> (noovfl) (bvuge (bvor #b0001 (bvnot x)) s))
-  MUL_NOOVFL5,  // (=> (noovfl) (not (= x (bvor s (bvnot (bvor x t))))))
-
-  MUL_NOOVFL_REF1,   // (=> (noovfl_condition)
-                     //  (not (bvult (bvneg x) (bvor (bvneg t) (bvand x s))))
-  MUL_NOOVFL_REF2,   // (=> (noovfl_condition)
-                     //  (bvuge t (bvneg (bvand (bvneg x) (bvneg s)))))
-  MUL_NOOVFL_REF3,   // (=> (noovfl_condition)
-                     //  (= t (bvand t (bvor x (bvneg x)))))
-  MUL_NOOVFL_REF4,   // (=> (noovfl_condition)
-                     //  (= t (bvor t (bvand x (bvand s #b0001)))))
-  MUL_NOOVFL_REF5,   // (=> (noovfl_condition)
-                     //  (bvuge (bvneg s) (bvor (bvneg t) (bvand x s))))
-  MUL_NOOVFL_REF6,   // (=> (noovfl_condition)
-                     //  (bvuge (bvneg s) (bvneg (bvand t (bvnot s)))))
-  MUL_NOOVFL_REF7,   // (=> (noovfl_condition)
-                     //  (bvuge (bvneg x) (bvneg (bvand t (bvnot x)))))
-  MUL_NOOVFL_REF8,   // (=> (noovfl_condition)
-                     //  (bvuge #b0001 (bvand x (bvand t (bvneg (bvor x s))))))
-  MUL_NOOVFL_REF9,   // (=> (noovfl_condition)
-                     //  (distinct (bvor x (bvnot (bvor t (bvand s #b0001))))))
-  MUL_NOOVFL_REF10,  // (=> (noovfl_condition)
-                     //  (bvuge (bvand t (bvneg x)) (bvand x s)))
-  MUL_NOOVFL_REF11,  // (=> (noovfl_condition)
-                     //  (distinct s (bvnot (bvor t (bvand #b0001 (bvor x
-                     //  s))))))
-  MUL_NOOVFL_REF12,  // (=> (noovfl_condition)
-                     //  (distinct t (bvor #b0001 (bvneg (bvnot (bvor x s))))))
-  MUL_NOOVFL_REF13,  // (=> (noovfl_condition)
-                     //  (bvuge (bvneg s) (bvand x t)))
-  MUL_NOOVFL_REF14,  // (=> (noovfl_condition)
-                     //  (bvuge (bvand t (bvneg x)) (bvand s t)))
-  MUL_NOOVFL_REF15,  // (=> (noovfl_condition)
-                     //  (distinct x (bvnot (bvor t (bvand #b0001 (bvor x
-                     //  s))))))
-  MUL_NOOVFL_REF16,  // (=> (noovfl_condition)
-                     //  (distinct x (bvor s (bvnot (bvor x (bvor t #b0001))))))
-  MUL_NOOVFL_REF17,  // (=> (noovfl_condition)
-                     //  (distinct x (bvor s (bvnot (bvor t (bvand x
-                     //  #b0001))))))
-  MUL_NOOVFL_REF18,  // (=> (noovfl_condition)
-                     //  (distinct #b0001 (bvnot (bvand (bvneg x) (bvor x s)))))
-  MUL_NOOVFL_REF19,  // (=> (noovfl_condition)
-                     //  (distinct #b0001 (bvor x (bvnot (bvand t (bvneg s))))))
-  MUL_NOOVFL_REF20,  // (=> (noovfl_condition)
-                     //  (distinct #b0001 (bvnot (bvand (bvneg s) (bvor x s)))))
-  MUL_NOOVFL_REF21,  // (=> (noovfl_condition)
-                     //  (bvuge s (bvlshr t (bvnot (bvneg x)))))
-  MUL_NOOVFL_REF22,  // (=> (noovfl_condition)
-                     //  (bvuge x (bvlshr t (bvnot (bvneg s)))))
-  MUL_NOOVFL_REF23,  // (=> (noovfl_condition)
-                     //  (distinct x (bvshl (bvnot #b0001) (bvlshr x s))))
-  MUL_NOOVFL_REF24,  // (=> (noovfl_condition)
-                     //  (distinct x (bvadd t (bvnot (bvshl x t)))))
-  MUL_NOOVFL_REF25,  // (=> (noovfl_condition)
-                     //  (distinct x (bvnot (bvshl x (bvadd s t)))))
-  MUL_NOOVFL_REF26,  // (=> (noovfl_condition)
-                     //  (bvuge x (bvlshr t (bvadd t (bvnot s)))))
-  MUL_NOOVFL_REF27,  // (=> (noovfl_condition)
-                     //  (distinct t (bvor #b0001 (bvadd x s))))
-  MUL_NOOVFL_REF28,  // (=> (noovfl_condition)
-                     //  (distinct #b0001 (bvor (bvnot t) (bvxor x s))))
-  MUL_NOOVFL_REF29,  // (=> (noovfl_condition)
-                     //  (distinct x (bvlshr (bvsub (bvlshr x s) #b0001)
-                     //  #b0001)))
-
-  MUL_OVFL_REF1,   // (=> (ovfl_condition)
-                   //  (= (bvand (bvor (bvneg s) s) t) t))
-  MUL_OVFL_REF2,   // (=> (ovfl_condition)
-                   //  (=> (= s #b0000) (= t #b0000))),
-  MUL_OVFL_REF3,   // (=> (ovfl_condition)
-                   //  (=> (= s #b0001) (= t x))),
-  MUL_OVFL_REF4,   // (=> (ovfl_condition)
-                   //  (=> (= s (bvnot #b0000)) (= t (bvneg x))))
-  MUL_OVFL_REF5,   // (=> (ovfl_condition)
-                   //  (not (bvult (bvand x t) (bvand s #b0001))))
-  MUL_OVFL_REF6,   // (=> (ovfl_condition)
-                   //  (not (= x (bvand x (bvshl t #b0001)))))
-  MUL_OVFL_REF7,   // (=> (ovfl_condition)
-                   //  (not (= x (bvand s (bvor #b0001 (bvand x t))))))
-  MUL_OVFL_REF8,   // (=> (ovfl_condition)
-                   //  (not (bvult (bvand s t) (bvand x #b0001))))
-  MUL_OVFL_REF9,   // (=> (ovfl_condition)
-                   //  (not (= #b0001 (bvand s (bvxor x t)))))
-  MUL_OVFL_REF10,  // (=> (ovfl_condition)
-                   //  (not (= x (bvxor s (bvneg (bvnot t))))))
-  MUL_OVFL_REF11,  // (=> (ovfl_condition)
-                   //  (not (= x (bvlshr t (bvand #b0001 (bvxor x s))))))
-  MUL_OVFL_REF12,  // (=> (ovfl_condition)
-                   //  (not (= t (bvshl s (bvand x #b0001)))))
-  MUL_OVFL_REF13,  // (=> (ovfl_condition)
-                   //  (not (distinct x (bvor x (bvand t #b0001)))))
-  MUL_OVFL_REF14,  // (=> (ovfl_condition)
-                   //  (not (= #b0001 (bvand x (bvor s t)))))
-  MUL_OVFL_REF15,  // (=> (ovfl_condition)
-                   //  (not (= x (bvneg (bvand s (bvxor t #b0001))))))
-  MUL_OVFL_REF16,  // (=> (ovfl_condition)
-                   //  (not (= x (bvxor s (bvor t (bvxor s #b0001))))))
-  MUL_OVFL_REF17,  // (=> (ovfl_condition) (not (= t (bvor s (bvneg x)))))
-  MUL_OVFL_REF18,  // (=> (ovfl_condition) (not (= t (bvor x (bvneg s)))))
-  MUL_OVFL_REF19,  // (=> (ovfl_condition) (not (bvule x (bvshl x (bvor x s)))))
-  MUL_OVFL_REF20,  // (=> (ovfl_condition)
-                   //  (not (= t (bvshl x (bvand s #b0001)))))
-  MUL_OVFL_REF21,  // (=> (ovfl_condition)
-                   //  (not (= x (bvneg (bvshl t (bvand s #b0001))))))
-  MUL_OVFL_REF22,  // (=> (ovfl_condition)
-                   //  (not (= t (bvor #b0001 (bvand x s)))))
-  MUL_OVFL_REF23,  // (=> (ovfl_condition)
-                   //  (not (= x (bvneg (bvand #b0001 (bvxor s t))))))
-  MUL_OVFL_REF24,  // (=> (ovfl_condition)
-                   //  (not (= x (bvlshr t (bvlshr s #b0001)))))
-  MUL_OVFL_REF25,  // (=> (ovfl_condition)
-                   //  (not (= x (bvshl s (bvxor x (bvlshr t #b0001))))))
-  MUL_OVFL_REF26,  // (=> (ovfl_condition)
-                   //  (not (= x (bvneg (bvlshr t (bvneg s))))))
-  MUL_OVFL_REF27,  // (=> (ovfl_condition)
-                   //  (not (= x (bvneg (bvlshr (bvneg t) s)))))
-  MUL_OVFL_REF28,  // (=> (ovfl_condition)
-                   //  (not (= x (bvand s (bvxor #b0001 (bvneg t))))))
-  MUL_OVFL_REF29,  // (=> (ovfl_condition)
-                   //  (not (= #b0001 (bvand s (bvor x t)))))
-  MUL_OVFL_REF30,  // (=> (ovfl_condition) (not (= x (bvneg (bvshl t #b0001)))))
-  MUL_OVFL_REF31,  // (=> (ovfl_condition) (not (= s (bvshl x (bvnot t)))))
-  MUL_OVFL_REF32,  // (=> (ovfl_condition) (not (= t (bvnot (bvand x s)))))
-  MUL_OVFL_REF33,  // (=> (ovfl_condition)
-                   //  (not (= #b0001 (bvand x (bvxor s t)))))
-  MUL_OVFL_REF34,  // (=> (ovfl_condition)
-                   //  (not (= x (bvor t (bvxor x (bvor s #b0001))))))
-  MUL_OVFL_REF35,  // (=> (ovfl_condition) (not (= x #b0001)))
-  MUL_OVFL_REF36,  // (=> (ovfl_condition) (not (bvule x (bvshl s (bvor x s)))))
-  MUL_OVFL_REF37,  // (=> (ovfl_condition)
-                   //  (not (= x (bvshl t (bvxor s (bvlshr x #b0001))))))
-  MUL_OVFL_REF38,  // (=> (ovfl_condition)
-                   //  (not (bvule x (bvshl x (bvnot (bvlshr s t))))))
-  MUL_OVFL_REF39,  // (=> (ovfl_condition)
-                   //  (not (= x (bvshl s (bvlshr (bvxor x t) #b0001)))))
-  MUL_OVFL_REF40,  // (=> (ovfl_condition)
-                   //  (not (= x (bvxor s (bvor #b0001 (bvand x t))))))
-  MUL_OVFL_REF41,  // (=> (ovfl_condition)
-                   //  (not (= x (bvshl s (bvshl (bvnot t) #b0001)))))
-  MUL_OVFL_REF42,  // (=> (ovfl_condition)
-                   //  (not (= x (bvshl s (bvnot (bvor t #b0001))))))
-  MUL_OVFL_REF43,  // (=> (ovfl_condition)
-                   //  (not (= x (bvxor s (bvor t (bvxor x #b0001))))))
-  MUL_OVFL_REF44,  // (=> (ovfl_condition)
-                   //  (not (bvule x (bvand s (bvshl x (bvlshr s #b0001))))))
-  MUL_OVFL_REF45,  // (=> (ovfl_condition) (not (= x (bvshl t t))))
-  MUL_OVFL_REF46,  // (=> (ovfl_condition) (not (= x (bvshl s (bvnot t)))))
-  MUL_OVFL_REF47,  // (=> (ovfl_condition)
-                   //  (not (= x (bvxor s (bvor #b0001 (bvand s t))))))
-  MUL_OVFL_REF48,  // (=> (ovfl_condition)
-                   //  (not (= x (bvneg (bvlshr (bvnot t) s)))))
-  MUL_OVFL_REF49,  // (=> (ovfl_condition)
-                   //  (not (= s (bvand x (bvxor t #b0001)))))
 
   UDIV_POW2,
 
@@ -232,7 +56,6 @@ enum class LemmaKind : uint32_t
   UDIV_REF19,  // (not (= (bvlshr x t) (bvor s t)))
   UDIV_REF20,  // (not (= s (bvnot (bvlshr s (bvlshr t #b0001)))))
   UDIV_REF21,  // (not (= x (bvnot (bvand x (bvshl t #b0001)))))
-  UDIV_REF22,  // (not (bvult x (bvshl x (bvlshr t (bvshl t #b0001)))))
   UDIV_REF23,  // (not (bvult t (bvlshr (bvshl x #b0001) s)))
   UDIV_REF24,  // (not (bvult x (bvshl s (bvnot (bvor x t)))))
   UDIV_REF25,  // (not (bvult x (bvshl t (bvnot (bvor x s)))))
@@ -245,7 +68,6 @@ enum class LemmaKind : uint32_t
   UDIV_REF32,  // (not (bvult s (bvlshr (bvadd x t) t)))
   UDIV_REF33,  // (not (= x (bvadd t (bvadd t (bvor x s)))))
   UDIV_REF34,  // (not (bvult (bvxor s (bvor x t)) (bvxor t #b0001)))
-  UDIV_REF35,  // (not (= x (bvsub #b0001 (bvshl x (bvadd x t)))))
   UDIV_REF36,  // (not (bvult t (bvlshr x (bvsub s #b0001))))
   UDIV_REF37,  // (not (bvult (bvsub s #b0001) (bvlshr x t)))
   UDIV_REF38,  // (not (= x (bvsub #b0001 (bvshl x (bvsub x t)))))
@@ -390,29 +212,17 @@ class Lemma : public AbstractionLemma
 
 // Multiplication lemmas
 
-LEMMA(MUL_ZERO);
-LEMMA(MUL_ONE);
 LEMMA(MUL_IC);
-LEMMA(MUL_NEG);
 LEMMA(MUL_ODD);
 LEMMA_VAL(MUL_POW2);
 LEMMA_VAL(MUL_NEG_POW2);
 LEMMA(MUL_REF1);
-LEMMA(MUL_REF2);
 LEMMA(MUL_REF3);
 LEMMA(MUL_REFN3);
-LEMMA(MUL_REF4);
 LEMMA(MUL_REFN4);
-LEMMA(MUL_REF5);
 LEMMA(MUL_REFN5);
-LEMMA(MUL_REF6);
 LEMMA(MUL_REFN6);
-LEMMA(MUL_REF7);
-LEMMA(MUL_REF8);
-LEMMA(MUL_REF9);
 LEMMA(MUL_REFN9);
-LEMMA(MUL_REF10);
-LEMMA(MUL_REF11);
 LEMMA(MUL_REFN11);
 LEMMA(MUL_REF12);
 LEMMA(MUL_REFN12);
@@ -420,87 +230,7 @@ LEMMA(MUL_REF13);
 LEMMA(MUL_REFN13);
 LEMMA(MUL_REF14);
 LEMMA(MUL_REF15);
-LEMMA(MUL_REF16);
-LEMMA(MUL_REF17);
 LEMMA(MUL_REF18);
-LEMMA_VAL(MUL_NOOVFL_REF1);
-LEMMA_VAL(MUL_NOOVFL_REF2);
-LEMMA_VAL(MUL_NOOVFL_REF3);
-LEMMA_VAL(MUL_NOOVFL_REF4);
-LEMMA_VAL(MUL_NOOVFL_REF5);
-LEMMA_VAL(MUL_NOOVFL_REF6);
-LEMMA_VAL(MUL_NOOVFL_REF7);
-LEMMA_VAL(MUL_NOOVFL_REF8);
-LEMMA_VAL(MUL_NOOVFL_REF9);
-LEMMA_VAL(MUL_NOOVFL_REF10);
-LEMMA_VAL(MUL_NOOVFL_REF11);
-LEMMA_VAL(MUL_NOOVFL_REF12);
-LEMMA_VAL(MUL_NOOVFL_REF13);
-LEMMA_VAL(MUL_NOOVFL_REF14);
-LEMMA_VAL(MUL_NOOVFL_REF15);
-LEMMA_VAL(MUL_NOOVFL_REF16);
-LEMMA_VAL(MUL_NOOVFL_REF17);
-LEMMA_VAL(MUL_NOOVFL_REF18);
-LEMMA_VAL(MUL_NOOVFL_REF19);
-LEMMA_VAL(MUL_NOOVFL_REF20);
-LEMMA_VAL(MUL_NOOVFL_REF21);
-LEMMA_VAL(MUL_NOOVFL_REF22);
-LEMMA_VAL(MUL_NOOVFL_REF23);
-LEMMA_VAL(MUL_NOOVFL_REF24);
-LEMMA_VAL(MUL_NOOVFL_REF25);
-LEMMA_VAL(MUL_NOOVFL_REF26);
-LEMMA_VAL(MUL_NOOVFL_REF27);
-LEMMA_VAL(MUL_NOOVFL_REF28);
-LEMMA_VAL(MUL_NOOVFL_REF29);
-LEMMA_VAL(MUL_OVFL_REF1);
-// LEMMA_VAL(MUL_OVFL_REF2);
-// LEMMA_VAL(MUL_OVFL_REF3);
-// LEMMA_VAL(MUL_OVFL_REF4);
-LEMMA_VAL(MUL_OVFL_REF5);
-LEMMA_VAL(MUL_OVFL_REF6);
-LEMMA_VAL(MUL_OVFL_REF7);
-LEMMA_VAL(MUL_OVFL_REF8);
-LEMMA_VAL(MUL_OVFL_REF9);
-LEMMA_VAL(MUL_OVFL_REF10);
-LEMMA_VAL(MUL_OVFL_REF11);
-LEMMA_VAL(MUL_OVFL_REF12);
-LEMMA_VAL(MUL_OVFL_REF13);
-LEMMA_VAL(MUL_OVFL_REF14);
-LEMMA_VAL(MUL_OVFL_REF15);
-LEMMA_VAL(MUL_OVFL_REF16);
-LEMMA_VAL(MUL_OVFL_REF17);
-LEMMA_VAL(MUL_OVFL_REF18);
-// LEMMA_VAL(MUL_OVFL_REF19);
-LEMMA_VAL(MUL_OVFL_REF20);
-LEMMA_VAL(MUL_OVFL_REF21);
-LEMMA_VAL(MUL_OVFL_REF22);
-// LEMMA_VAL(MUL_OVFL_REF23);
-LEMMA_VAL(MUL_OVFL_REF24);
-// LEMMA_VAL(MUL_OVFL_REF25);
-LEMMA_VAL(MUL_OVFL_REF26);
-// LEMMA_VAL(MUL_OVFL_REF27);
-LEMMA_VAL(MUL_OVFL_REF28);
-LEMMA_VAL(MUL_OVFL_REF29);
-// LEMMA_VAL(MUL_OVFL_REF30);
-LEMMA_VAL(MUL_OVFL_REF31);
-// LEMMA_VAL(MUL_OVFL_REF32);
-// LEMMA_VAL(MUL_OVFL_REF33);
-LEMMA_VAL(MUL_OVFL_REF34);
-// LEMMA_VAL(MUL_OVFL_REF35);
-// LEMMA_VAL(MUL_OVFL_REF36);
-// LEMMA_VAL(MUL_OVFL_REF37);
-// LEMMA_VAL(MUL_OVFL_REF38);
-// LEMMA_VAL(MUL_OVFL_REF39);
-LEMMA_VAL(MUL_OVFL_REF40);
-// LEMMA_VAL(MUL_OVFL_REF41);
-// LEMMA_VAL(MUL_OVFL_REF42);
-LEMMA_VAL(MUL_OVFL_REF43);
-// LEMMA_VAL(MUL_OVFL_REF44);
-// LEMMA_VAL(MUL_OVFL_REF45);
-// LEMMA_VAL(MUL_OVFL_REF46);
-LEMMA_VAL(MUL_OVFL_REF47);
-// LEMMA_VAL(MUL_OVFL_REF48);
-LEMMA_VAL(MUL_OVFL_REF49);
 
 // Unsigned division lemmas
 
@@ -526,7 +256,6 @@ LEMMA(UDIV_REF18);
 LEMMA(UDIV_REF19);
 LEMMA(UDIV_REF20);
 LEMMA(UDIV_REF21);
-LEMMA(UDIV_REF22);
 LEMMA(UDIV_REF23);
 LEMMA(UDIV_REF24);
 LEMMA(UDIV_REF25);
@@ -539,7 +268,6 @@ LEMMA(UDIV_REF31);
 LEMMA(UDIV_REF32);
 LEMMA(UDIV_REF33);
 LEMMA(UDIV_REF34);
-LEMMA(UDIV_REF35);
 LEMMA(UDIV_REF36);
 LEMMA(UDIV_REF37);
 LEMMA(UDIV_REF38);
