@@ -1102,11 +1102,11 @@ Lemma<LemmaKind::UREM_REF1>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
 {
-  // (=> (distinct s #b0000) (bvule t s))
+  // (=> (distinct s #b0000) (bvult t s))
   Node zero = d_nm.mk_value(BitVector::mk_zero(x.type().bv_size()));
   return d_nm.mk_node(Kind::IMPLIES,
                       {d_nm.mk_node(Kind::DISTINCT, {s, zero}),
-                       d_nm.mk_node(Kind::BV_ULE, {t, s})});
+                       d_nm.mk_node(Kind::BV_ULT, {t, s})});
 }
 
 template <>

@@ -72,7 +72,7 @@ enum class LemmaKind : uint32_t
 
   UREM_POW2,   // 1*: (=> (= s 2^i)
                //         (= t((_ zero_extend n-i) ((_ extract i-1 0) x))))
-  UREM_REF1,   // 2*: (=> (distinct s #b0000) (bvule t s))
+  UREM_REF1,   // 2*: (=> (distinct s #b0000) (bvult t s))
   UREM_REF2,   // 3*: (=> (= x #b0000) (= t #b0000))
   UREM_REF3,   // 4*: (=> (= s #b0000) (= t x))
   UREM_REF4,   // 5*: (=> (= s x) (= t #b0000))

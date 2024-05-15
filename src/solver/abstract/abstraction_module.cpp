@@ -126,7 +126,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
     urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF3>(nm));
     urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF4>(nm));
     urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF5>(nm));
-    urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF6>(nm));
+    // urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF6>(nm));
     if (!opt_initial_lemmas)
     {
       urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM_REF7>(nm));
