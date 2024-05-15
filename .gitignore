@@ -1,3 +1,8 @@
 deps/
 build/
 .gdb_history
+
+# Hides the generated content in subprojects
+subprojects/*
+!/subprojects/packagefiles
+!subprojects/*.wrap
