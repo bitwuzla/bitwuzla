@@ -48,7 +48,7 @@ endif
 # ---
 
 # Get git information
-git = find_program('git')
+git = find_program('git', required: false)
 git_id = ''
 if git.found()
   repo = meson.project_source_root()
