@@ -433,63 +433,80 @@ rw_eq_bv_concat(Rewriter& rewriter, const Node& node)
   return rewritten;
 }
 
+Node
+rw_eq_bv_concat_apply(Rewriter& rewriter, const Node& n)
+{
+  if (n.kind() == Kind::EQUAL && n[0].type().is_bv())
+  {
+    Node rewritten = rw_eq_bv_concat(rewriter, n);
+    if (rewritten != n)
+    {
+      return rewritten;
+    }
+  }
+  else if (n.kind() == Kind::NOT && n[0].kind() == Kind::EQUAL
+           && n[0][0].type().is_bv())
+  {
+    Node rewritten = rw_eq_bv_concat(rewriter, n[0]);
+    if (rewritten != n[0])
+    {
+      return rewriter.mk_node(Kind::NOT, {rewritten});
+    }
+  }
+  return Node();
+}
+
 }  // namespace
 
 std::vector<Node>
-PassVariableSubstitution::normalize_substitution_eq_bv_concat(const Node& node)
+PassVariableSubstitution::normalize_substitution_eq_bv_concat(const Node& n)
 {
-  if (node.kind() == Kind::EQUAL)
-  {
-    Node rewritten = rw_eq_bv_concat(d_env.rewriter(), node);
-    if (rewritten != node)
-    {
-      if (rewritten.kind() == Kind::EQUAL
-          && (rewritten[0].is_const() || rewritten[1].is_const()))
-      {
-        d_stats.num_norm_eq_bv_concat += 1;
-        return {rewritten};
-      }
-      if (rewritten.kind() == Kind::AND)
-      {
-        std::vector<Node> res;
-        node_ref_vector visit{rewritten[0], rewritten[1]};
-        unordered_node_ref_set visited;
-        do
-        {
-          const Node& cur = visit.back();
-          visit.pop_back();
+  std::vector<Node> res;
+  std::vector<Node> visit;
+  unordered_node_ref_set visited;
 
-          auto [it, inserted] = visited.insert(cur);
-          if (inserted)
-          {
-            if (cur.kind() == Kind::AND)
-            {
-              visit.insert(visit.end(), cur.begin(), cur.end());
-              continue;
-            }
-            if (cur.kind() == Kind::EQUAL)
-            {
-              if (cur[0].is_const() || cur[1].is_const())
-              {
-                res.push_back(cur);
-              }
-              else
-              {
-                rewritten = rw_eq_bv_concat(d_env.rewriter(), cur);
-                if (rewritten != cur)
-                {
-                  visit.push_back(rewritten);
-                }
-              }
-            }
-          }
-        } while (!visit.empty());
-        d_stats.num_norm_eq_bv_concat += res.size();
-        return res;
+  Node rewritten = rw_eq_bv_concat_apply(d_env.rewriter(), n);
+  if (!rewritten.is_null())
+  {
+    visit.push_back(rewritten);
+  }
+
+  while (!visit.empty())
+  {
+    Node cur = visit.back();
+    visit.pop_back();
+
+    auto [it, inserted] = visited.insert(cur);
+    if (inserted)
+    {
+      rewritten = rw_eq_bv_concat_apply(d_env.rewriter(), cur);
+      if (!rewritten.is_null())
+      {
+        visit.push_back(rewritten);
+      }
+      else if (cur.kind() == Kind::AND)
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+        continue;
+      }
+
+      if (cur.kind() == Kind::EQUAL && (cur[0].is_const() || cur[1].is_const()))
+      {
+        res.push_back(cur);
+      }
+      else if (cur.is_const() || (cur.kind() == Kind::NOT && cur[0].is_const()))
+      {
+        res.push_back(cur);
+      }
+      else if (cur.kind() == Kind::NOT && cur[0].kind() == Kind::EQUAL)
+      {
+        res.push_back(cur);
       }
     }
   }
-  return {};
+
+  d_stats.num_norm_eq_bv_concat += res.size();
+  return res;
 }
 
 std::vector<Node>
