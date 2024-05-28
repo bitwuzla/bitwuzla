@@ -29,7 +29,7 @@ build_static = get_option('default_library') == 'static' \
 if get_option('testing').auto()
   if get_option('buildtype') == 'release'
     enable_testing = false
-  elif get_option('buildtype') == 'debug'
+  elif get_option('buildtype') in ['debug', 'debugoptimized']
     enable_testing = true
   endif
 else
