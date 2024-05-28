@@ -47,7 +47,7 @@ main(int32_t argc, char* argv[])
       {
         bitwuzla->simplify();
       }
-      bitwuzla->print_formula(std::cout, main_options.language);
+      bitwuzla->print_formula(std::cout, "smt2");
     }
     else if (main_options.language == "btor2")
     {
