@@ -217,7 +217,7 @@ bitwuzla_inc = include_directories('../include', 'lib')
 bitwuzla_lib = library('bitwuzla',
                       sources,
                       include_directories: bitwuzla_inc,
-                      link_with: [support_libs, util_lib],
+                      link_with: [util_lib, support_libs],
                       dependencies: dependencies,
                       soversion: bitwuzla_lib_soversion,
                       install_rpath: install_rpath,
