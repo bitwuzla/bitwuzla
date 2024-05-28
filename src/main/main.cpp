@@ -53,6 +53,11 @@ main(int32_t argc, char* argv[])
     {
       bitwuzla::Result res = bitwuzla->check_sat();
       std::cout << res << std::endl;
+      if (options.get(bitwuzla::Option::PRODUCE_MODELS)
+          && res == bitwuzla::Result::SAT)
+      {
+        parser.print_model();
+      }
     }
     if (options.get(bitwuzla::Option::VERBOSITY))
     {

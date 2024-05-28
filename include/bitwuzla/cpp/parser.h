@@ -110,6 +110,11 @@ class Parser
   Sort parse_sort(const std::string &input);
 
   /**
+   * Print model for satisfiable instances to output stream.
+   */
+  void print_model();
+
+  /**
    * Get the current set of (user-)declared sort symbols.
    * @note Corresponds to the sorts declared via SMT-LIB command `declare-sort`.
    *       Will always return an empty set for BTOR2 input.

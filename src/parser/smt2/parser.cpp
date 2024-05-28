@@ -686,6 +686,12 @@ Parser::parse_command_get_model()
   {
     return false;
   }
+  return print_model();
+}
+
+bool
+Parser::print_model()
+{
   if (!d_options.get(bitwuzla::Option::PRODUCE_MODELS))
   {
     return error("model generation is not enabled");

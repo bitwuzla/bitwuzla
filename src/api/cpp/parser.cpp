@@ -98,6 +98,13 @@ Parser::parse_sort(const std::string &input)
   return res;
 }
 
+void
+Parser::print_model()
+{
+  assert(d_parser);
+  d_parser->print_model();
+}
+
 std::vector<Sort>
 Parser::get_declared_sorts() const
 {

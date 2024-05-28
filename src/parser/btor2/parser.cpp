@@ -154,6 +154,46 @@ Parser::parse_sort(const std::string& input, bitwuzla::Sort& res)
   return true;
 }
 
+bool
+Parser::print_model()
+{
+  std::stringstream ss;
+  for (const auto& [id, input] : d_inputs)
+  {
+    auto value  = d_bitwuzla->get_value(input);
+    auto symbol = input.symbol();
+    if (input.sort().is_bv())
+    {
+      ss << id << " " << value.value<std::string>(2);
+      if (symbol)
+      {
+        ss << " " << symbol->get();
+      }
+      ss << std::endl;
+    }
+    else if (input.sort().is_array())
+    {
+      bitwuzla::Term cur = value;
+      while (cur.kind() == bitwuzla::Kind::ARRAY_STORE)
+      {
+        auto index   = d_bitwuzla->get_value(cur[1]);
+        auto element = d_bitwuzla->get_value(cur[1]);
+        ss << id << "[" << index.value<std::string>(2) << "]";
+        ss << " " << element.value<std::string>(2);
+        cur = cur[0];
+        if (symbol)
+        {
+          ss << " " << symbol->get();
+        }
+        ss << std::endl;
+      }
+    }
+  }
+  (*d_out) << ss.str();
+  d_out->flush();
+  return true;
+}
+
 std::vector<bitwuzla::Sort>
 Parser::get_declared_sorts() const
 {
@@ -339,7 +379,7 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
     case Token::OUTPUT:
     case Token::STATE:
       return error("unsupported operator '" + std::to_string(op)
-                   + "', model checkin extensions not supported");
+                   + "', model checking extensions not supported");
 
     default:
       return error("expected operator, got '" + std::string(d_lexer->token())
@@ -410,6 +450,7 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       {
         term = d_tm.mk_const(sort);
       }
+      d_inputs.emplace_back(line_id, term);
       break;
 
     case Token::ONE:
