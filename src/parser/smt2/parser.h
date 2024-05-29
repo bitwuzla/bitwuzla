@@ -43,7 +43,6 @@ class Parser : public bzla::parser::Parser
 
   bool parse_term(const std::string& input, bitwuzla::Term& res) override;
   bool parse_sort(const std::string& input, bitwuzla::Sort& res) override;
-  bool print_model() override;
   std::vector<bitwuzla::Sort> get_declared_sorts() const override;
   std::vector<bitwuzla::Term> get_declared_funs() const override;
 
@@ -94,6 +93,8 @@ class Parser : public bzla::parser::Parser
      */
     bool d_from_rational = false;
   };
+
+  bool print_model();
 
   /** Initialize logic. */
   void init_logic()

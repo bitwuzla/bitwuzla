@@ -103,11 +103,6 @@ class Parser
    */
   virtual std::vector<bitwuzla::Term> get_declared_funs() const = 0;
 
-  /**
-   * Print the current model to stdout.
-   */
-  virtual bool print_model() = 0;
-
   /** Configure Bitwuzla terminator.
    * @param terminator The terminator to configure as terminator for Bitwuzla.
    */
