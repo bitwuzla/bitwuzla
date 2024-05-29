@@ -2,7 +2,17 @@
 
 This file collects a summary of important and/or user-visible changes.
 
-- Parser: Added support for querying the parser for declared sorts and terms.
+## News for version 0.4.1
+
+- Fixed incorrect result with rewrite level 0 (issue #110) (missing guard,
+  normalization preprocessing pass expects terms to be fully rewritten).
+
+- Refactored **node data** storage and unique table handling, **improves**
+  performance and memory footprint.
+
+- Added support for **BTOR2 model printing**.
+
+- Added support for querying the **parser** for declared sorts and terms.
   + C++ API:
     * New Function `Parser::get_declared_sorts()` to retrieve user-declared
       sorts (SMT-LIB: declared via `declare-sort`, BTOR2: always empty).
@@ -15,6 +25,14 @@ This file collects a summary of important and/or user-visible changes.
   + Python API:
     * New Function `Parser.get_declared_sorts()`.
     * New Function `Parser.get_declared_funs()`.
+
+- Refactored statistics printing to not print NaN values.
+
+- Improved logging and statistics for local search engine.
+
+- Several improvements to build system configuration.
+
+- Several fixes for Windows cross compilation.
 
 ## News for version 0.4.0
 
