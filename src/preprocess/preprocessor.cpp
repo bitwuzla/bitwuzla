@@ -471,6 +471,8 @@ Preprocessor::print_statistics(const PreprocessingPass& pass,
 
   double time_preproc = d_stats.time_preprocess.elapsed();
   double time_pass    = pass.statistics().time_apply.elapsed();
+  double time_pass_perc =
+      time_preproc > 0.0 ? time_pass / time_preproc * 100.0 : 0;
 
   ++d_num_printed_stats;
 
@@ -482,7 +484,7 @@ Preprocessor::print_statistics(const PreprocessingPass& pass,
          << std::setw(8) << std::setprecision(1)
          << std::fixed << time_preproc / 1000.0
          << std::setw(8) << time_pass / 1000.0
-         << std::setw(8) << time_pass / time_preproc * 100.0
+         << std::setw(8) << time_pass_perc
          << std::setw(8) << util::current_memory_usage() / mb
          << std::setw(8) << assertions.size()
          << std::setw(8) << assertions.num_modified()
