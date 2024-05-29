@@ -81,7 +81,7 @@ Parser::parse(const std::string& infile_name,
               std::istream& input,
               bool parse_only)
 {
-  (void) parse_only;
+  d_parse_only = parse_only;
 
   util::Timer timer(d_statistics.time_parse);
   Log(2) << "parse " << d_infile_name;
@@ -100,7 +100,23 @@ Parser::parse(const std::string& infile_name,
 
   Msg(1) << "parsed " << d_statistics.num_lines << " lines in "
          << ((double) d_statistics.time_parse.elapsed() / 1000) << " seconds";
-  return d_error.empty();
+
+  if (d_error.empty())
+  {
+    // If not safety properties checked, do one check-sat call.
+    if (!d_checked_bad && !d_parse_only)
+    {
+      bitwuzla::Result res = d_bitwuzla->check_sat();
+      std::cout << res << std::endl;
+      if (d_options.get(bitwuzla::Option::PRODUCE_MODELS)
+          && res == bitwuzla::Result::SAT)
+      {
+        print_model();
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 bool
@@ -381,7 +397,45 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
     case Token::XNOR: kind = bitwuzla::Kind::BV_XNOR; break;
     case Token::XOR: kind = bitwuzla::Kind::BV_XOR; break;
 
-    case Token::BAD:
+    case Token::BAD: {
+      if (!parse_term(term))
+      {
+        return false;
+      }
+      const char* symbol = nullptr;
+      if (d_lexer->look_ahead() != '\n')
+      {
+        d_lexer->next_token();
+        symbol = d_lexer->token();
+      }
+      if (pkind)
+      {
+        *pkind = ParsedKind::CONSTRAINT;
+      }
+      if (!d_parse_only)
+      {
+        d_checked_bad = true;
+        d_bitwuzla->push(1);
+        d_bitwuzla->assert_formula(bv1_term_to_bool(term));
+        auto res = d_bitwuzla->check_sat();
+        if (res == bitwuzla::Result::SAT)
+        {
+          (*d_out) << "Bad property " << line_id;
+          if (symbol)
+          {
+            (*d_out) << " (" << symbol << ")";
+          }
+          (*d_out) << " satisfiable." << std::endl;
+          if (d_options.get(bitwuzla::Option::PRODUCE_MODELS))
+          {
+            print_model();
+          }
+        }
+        d_bitwuzla->pop(1);
+      }
+      return true;
+    }
+
     case Token::FAIR:
     case Token::INIT:
     case Token::JUSTICE:

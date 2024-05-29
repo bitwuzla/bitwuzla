@@ -54,16 +54,6 @@ main(int32_t argc, char* argv[])
       }
       bitwuzla->print_formula(std::cout, "smt2");
     }
-    else if (main_options.language == "btor2")
-    {
-      bitwuzla::Result res = bitwuzla->check_sat();
-      std::cout << res << std::endl;
-      if (options.get(bitwuzla::Option::PRODUCE_MODELS)
-          && res == bitwuzla::Result::SAT)
-      {
-        parser.print_model();
-      }
-    }
 
     if (main_options.print_unsat_core)
     {

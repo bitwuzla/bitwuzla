@@ -154,6 +154,11 @@ class Parser : public bzla::parser::Parser
   /** The associated BTOR2 lexer. */
   std::unique_ptr<Lexer> d_lexer;
 
+  bool d_parse_only = false;
+
+  /** Flag indicating whether we checked safety properties. */
+  bool d_checked_bad = false;
+
   /** Parse statistics. */
   struct Statistics
   {
