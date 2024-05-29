@@ -177,7 +177,7 @@ Parser::print_model()
       while (cur.kind() == bitwuzla::Kind::ARRAY_STORE)
       {
         auto index   = d_bitwuzla->get_value(cur[1]);
-        auto element = d_bitwuzla->get_value(cur[1]);
+        auto element = d_bitwuzla->get_value(cur[2]);
         ss << id << "[" << index.value<std::string>(2) << "]";
         ss << " " << element.value<std::string>(2);
         cur = cur[0];
