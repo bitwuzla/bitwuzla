@@ -2,7 +2,7 @@
 
 This file collects a summary of important and/or user-visible changes.
 
-## News for version 0.4.1
+## News for version 0.5.0
 
 - Fixed incorrect result with rewrite level 0 (issue #110) (missing guard,
   normalization preprocessing pass expects terms to be fully rewritten).
