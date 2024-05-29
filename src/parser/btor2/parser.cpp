@@ -187,6 +187,16 @@ Parser::print_model()
         }
         ss << std::endl;
       }
+      if (cur.kind() == bitwuzla::Kind::CONST_ARRAY)
+      {
+        ss << id << "[*]";
+        ss << " " << cur[0].value<std::string>(2);
+        if (symbol)
+        {
+          ss << " " << symbol->get();
+        }
+        ss << std::endl;
+      }
     }
   }
   (*d_out) << ss.str();
