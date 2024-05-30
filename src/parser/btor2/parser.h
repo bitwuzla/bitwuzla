@@ -157,8 +157,8 @@ class Parser : public bzla::parser::Parser
 
   bool d_parse_only = false;
 
-  /** Flag indicating whether we checked safety properties. */
-  bool d_checked_bad = false;
+  std::vector<std::tuple<bitwuzla::Term, int64_t, std::string>>
+      d_bad_properties;
 
   /** Parse statistics. */
   struct Statistics

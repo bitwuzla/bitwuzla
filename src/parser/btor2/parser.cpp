@@ -103,15 +103,46 @@ Parser::parse(const std::string& infile_name,
 
   if (d_error.empty())
   {
-    // If not safety properties checked, do one check-sat call.
-    if (!d_checked_bad && !d_parse_only)
+    if (!d_parse_only)
     {
-      bitwuzla::Result res = d_bitwuzla->check_sat();
-      std::cout << res << std::endl;
-      if (d_options.get(bitwuzla::Option::PRODUCE_MODELS)
-          && res == bitwuzla::Result::SAT)
+      if (d_bad_properties.empty())
       {
-        print_model();
+        // If no safety properties checked, do one check-sat call.
+        bitwuzla::Result res = d_bitwuzla->check_sat();
+        std::cout << res << std::endl;
+        if (d_options.get(bitwuzla::Option::PRODUCE_MODELS)
+            && res == bitwuzla::Result::SAT)
+        {
+          print_model();
+        }
+      }
+      else
+      {
+        for (const auto& [bad, id, symbol] : d_bad_properties)
+        {
+          d_bitwuzla->push(1);
+          d_bitwuzla->assert_formula(bad);
+          auto res = d_bitwuzla->check_sat();
+          (*d_out) << "Bad property " << id;
+          if (!symbol.empty())
+          {
+            (*d_out) << " (" << symbol << ")";
+          }
+          if (res == bitwuzla::Result::SAT)
+          {
+            (*d_out) << " satisfiable." << std::endl;
+            if (d_options.get(bitwuzla::Option::PRODUCE_MODELS))
+            {
+              print_model();
+            }
+          }
+          else if (res == bitwuzla::Result::UNSAT)
+          {
+            (*d_out) << " unsatisfiable." << std::endl;
+          }
+          d_bitwuzla->pop(1);
+        }
+        d_bad_properties.clear();
       }
     }
     return true;
@@ -412,27 +443,7 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       {
         *pkind = ParsedKind::CONSTRAINT;
       }
-      if (!d_parse_only)
-      {
-        d_checked_bad = true;
-        d_bitwuzla->push(1);
-        d_bitwuzla->assert_formula(bv1_term_to_bool(term));
-        auto res = d_bitwuzla->check_sat();
-        if (res == bitwuzla::Result::SAT)
-        {
-          (*d_out) << "Bad property " << line_id;
-          if (symbol)
-          {
-            (*d_out) << " (" << symbol << ")";
-          }
-          (*d_out) << " satisfiable." << std::endl;
-          if (d_options.get(bitwuzla::Option::PRODUCE_MODELS))
-          {
-            print_model();
-          }
-        }
-        d_bitwuzla->pop(1);
-      }
+      d_bad_properties.emplace_back(bv1_term_to_bool(term), line_id, symbol);
       return true;
     }
 
