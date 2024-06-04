@@ -428,7 +428,7 @@ bitwuzla_assert(Bitwuzla *bitwuzla, BitwuzlaTerm term)
   BITWUZLA_TRY_CATCH_END;
 }
 
-BitwuzlaTerm *
+const BitwuzlaTerm *
 bitwuzla_get_assertions(Bitwuzla *bitwuzla, size_t *size)
 {
   static thread_local std::vector<BitwuzlaTerm> res;
@@ -459,7 +459,7 @@ bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm term)
   return res;
 }
 
-BitwuzlaTerm *
+const BitwuzlaTerm *
 bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size)
 {
   static thread_local std::vector<BitwuzlaTerm> res;
@@ -478,7 +478,7 @@ bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size)
   return *size > 0 ? res.data() : nullptr;
 }
 
-BitwuzlaTerm *
+const BitwuzlaTerm *
 bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size)
 {
   static thread_local std::vector<BitwuzlaTerm> res;

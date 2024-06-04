@@ -2582,7 +2582,8 @@ TEST_F(TestCApi, get_unsat_assumptions)
     ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1_false));
     ASSERT_FALSE(bitwuzla_is_unsat_assumption(bitwuzla, d_and_bv_const1));
     ASSERT_FALSE(bitwuzla_is_unsat_assumption(bitwuzla, d_eq_bv_const8));
-    BitwuzlaTerm *unsat_ass = bitwuzla_get_unsat_assumptions(bitwuzla, &size);
+    const BitwuzlaTerm *unsat_ass =
+        bitwuzla_get_unsat_assumptions(bitwuzla, &size);
     size_t i                = 0;
     for (; i < size; ++i)
     {
@@ -2635,14 +2636,15 @@ TEST_F(TestCApi, get_unsat_core)
         bitwuzla, assumptions.size(), assumptions.data());
     ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1_false));
     ASSERT_FALSE(bitwuzla_is_unsat_assumption(bitwuzla, d_and_bv_const1));
-    BitwuzlaTerm *unsat_core = bitwuzla_get_unsat_core(bitwuzla, &size);
+    const BitwuzlaTerm *unsat_core = bitwuzla_get_unsat_core(bitwuzla, &size);
     ASSERT_TRUE(size == 2);
     ASSERT_TRUE(unsat_core[0] == d_bv_const1_false
                 || unsat_core[0] == d_bv_const1_true);
     ASSERT_TRUE(unsat_core[1] == d_bv_const1_false
                 || unsat_core[1] == d_bv_const1_true);
 
-    BitwuzlaTerm *unsat_ass = bitwuzla_get_unsat_assumptions(bitwuzla, &size);
+    const BitwuzlaTerm *unsat_ass =
+        bitwuzla_get_unsat_assumptions(bitwuzla, &size);
     ASSERT_EQ(unsat_ass[0], d_bv_const1_false);
     ASSERT_TRUE(size == 1);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);

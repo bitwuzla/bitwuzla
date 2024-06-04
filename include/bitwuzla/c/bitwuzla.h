@@ -247,8 +247,8 @@ void bitwuzla_get_option_info(BitwuzlaOptions *options,
 /**
  * Get the string representation of a result.
  * @return A string representation of the given result.
- * @note The returned char* pointer is only valid until the next
- *       `bitwuzla_result_to_string` call.
+ * @note The returned char* pointer is only valid until the next call to
+ *       `bitwuzla_result_to_string`.
  */
 const char *bitwuzla_result_to_string(BitwuzlaResult result);
 
@@ -261,8 +261,8 @@ const char *bitwuzla_result_to_string(BitwuzlaResult result);
 /**
  * Get the string representation of a rounding mode.
  * @return A string representation of the rounding mode.
- * @note The returned char* pointer is only valid until the next
- *       `bitwuzla_rm_to_string` call.
+ * @note The returned char* pointer is only valid until the next call to
+ *       `bitwuzla_rm_to_string`.
  */
 const char *bitwuzla_rm_to_string(BitwuzlaRoundingMode rm);
 
@@ -275,8 +275,8 @@ const char *bitwuzla_rm_to_string(BitwuzlaRoundingMode rm);
 /**
  * Get the string representation of a term kind.
  * @return A string representation of the given term kind.
- * @note The returned char* pointer is only valid until the next
- *       `bitwuzla_kind_to_string` call.
+ * @note The returned char* pointer is only valid until the next call to
+ *       `bitwuzla_kind_to_string`.
  */
 const char *bitwuzla_kind_to_string(BitwuzlaKind kind);
 
@@ -428,8 +428,8 @@ uint64_t bitwuzla_sort_fun_get_arity(BitwuzlaSort sort);
  * Get the symbol of an uninterpreted sort.
  * @param sort The sort.
  * @return The symbol; NULL if no symbol is defined.
- * @note The returned char* pointer is only valid until the next
- *       `bitwuzla_sort_uninterpreted_get_symbol` call.
+ * @note The returned char* pointer is only valid until the next call to
+ *       `bitwuzla_sort_uninterpreted_get_symbol`.
  */
 const char *bitwuzla_sort_get_uninterpreted_symbol(BitwuzlaSort sort);
 
@@ -499,8 +499,8 @@ bool bitwuzla_sort_is_uninterpreted(BitwuzlaSort sort);
 /**
  * Get the SMT-LIBV v2 string representation of a sort.
  * @return A string representation of the given sort.
- * @note The returned char* pointer is only valid until the next
- *       `bitwuzla_sort_to_string` call.
+ * @note The returned char* pointer is only valid until the next call to
+ *       `bitwuzla_sort_to_string`.
  */
 const char *bitwuzla_sort_to_string(BitwuzlaSort sort);
 
@@ -1096,8 +1096,8 @@ BitwuzlaRoundingMode bitwuzla_term_value_get_rm(BitwuzlaTerm term);
  * Get the SMT-LIB v2 string representation of a term.
  * @note This uses default binary format for bit-vector value strings.
  * @return A string representation of the given term.
- * @note The returned char* pointer is only valid until the next
- *       `bitwuzla_term_to_string` call.
+ * @note The returned char* pointer is only valid until the next call to
+ *       `bitwuzla_term_to_string`.
  */
 const char *bitwuzla_term_to_string(BitwuzlaTerm term);
 
@@ -1111,8 +1111,8 @@ const char *bitwuzla_term_to_string(BitwuzlaTerm term);
  *             ignored for Boolean and RoundingMode values.
  * @return     A string representation of the given term.
  *
- * @note The returned char* pointer is only valid until the next
- *       `bitwuzla_term_to_string` call.
+ * @note The returned char* pointer is only valid until the next call to
+ *       `bitwuzla_term_to_string_fmt`.
  */
 const char *bitwuzla_term_to_string_fmt(BitwuzlaTerm term, uint8_t base);
 
@@ -1262,8 +1262,10 @@ void bitwuzla_assert(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  * @return The asserted formulas.
  * @return An array with the set of asserted formulas of size `size`. Only
  *         valid until the next `bitwuzla_get_assertions` call.
+ * @note The returned BitwuzlaTerm array pointer is only valid until the next
+ *       call to `bitwuzla_result_to_string`.
  */
-BitwuzlaTerm *bitwuzla_get_assertions(Bitwuzla *bitwuzla, size_t *size);
+const BitwuzlaTerm *bitwuzla_get_assertions(Bitwuzla *bitwuzla, size_t *size);
 
 /**
  * Determine if an assumption is an unsat assumption.
@@ -1302,11 +1304,14 @@ bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  * @return An array with unsat assumptions of size `size`. Only valid until
  *         the next `bitwuzla_get_unsat_assumptions` call.
  *
+ * @note The returned BitwuzlaTerm array pointer is only valid until the next
+ *       call to `bitwuzla_result_to_string`.
  * @see
  *   * `bitwuzla_set_option`
  *   * `bitwuzla_check_sat`
  */
-BitwuzlaTerm *bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
+const BitwuzlaTerm *bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla,
+                                                   size_t *size);
 
 /**
  * Get the unsat core (unsat assertions).
@@ -1323,11 +1328,13 @@ BitwuzlaTerm *bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
  * @return An array with unsat assertions of size `size`. Only valid until
  *         the next `bitwuzla_get_unsat_core` call.
  *
+ * @note The returned BitwuzlaTerm array pointer is only valid until the next
+ *       call to `bitwuzla_result_to_string`.
  * @see
  *   * `bitwuzla_assert`
  *   * `bitwuzla_check_sat`
  */
-BitwuzlaTerm *bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
+const BitwuzlaTerm *bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
 
 /**
  * Simplify the current input formula.
