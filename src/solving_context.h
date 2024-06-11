@@ -31,7 +31,8 @@ class SolvingContext
  public:
   SolvingContext(NodeManager& nm,
                  const option::Options& options,
-                 const std::string& name = "");
+                 const std::string& name = "",
+                 bool subsolver          = false);
   ~SolvingContext();
 
   /** Solve the current set of assertions in the context. */
@@ -116,6 +117,9 @@ class SolvingContext
 
   /** Terminator used for timeout per solve() call. */
   std::unique_ptr<ResourceTerminator> d_resource_terminator;
+
+  /** Indicates whether solving context is used as subsolver (e.g. MBQI). */
+  bool d_subsolver;
 
   struct Statistics
   {

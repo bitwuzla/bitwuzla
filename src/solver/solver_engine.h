@@ -46,6 +46,16 @@ class ComputeValueException : std::exception
   Node d_node;
 };
 
+class UnsupportedException : std::exception
+{
+ public:
+  UnsupportedException(const std::string& msg) : d_msg(msg) {}
+  const std::string& msg() const { return d_msg; }
+
+ private:
+  std::string d_msg;
+};
+
 class SolverEngine
 {
   friend SolvingContext;

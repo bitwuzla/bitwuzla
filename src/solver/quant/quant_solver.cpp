@@ -306,7 +306,6 @@ QuantSolver::skolemization_lemma(const Node& q)
       nm.mk_node(Kind::IMPLIES,
                       {nm.mk_node(Kind::NOT, {q}), nm.mk_node(Kind::NOT, {inst})}));
   auto [iit, inserted] = d_skolemization_lemmas.emplace(q, lemma);
-  // std::cout << "sk lem: " << lemma << std::endl;
   return iit->second;
 }
 
@@ -345,14 +344,13 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
   NodeManager& nm = d_env.nm();
   option::Options options;
   options.abstraction.set(d_env.options().abstraction());
-  d_mbqi_solver.reset(new SolvingContext(d_env.nm(), options, "mbqi"));
+  d_mbqi_solver.reset(new SolvingContext(d_env.nm(), options, "mbqi", true));
 
   // Assert formula
   for (const Node& c : d_consts)
   {
     Node value = d_solver_state.value(c);
     d_mbqi_solver->assert_formula(nm.mk_node(Kind::EQUAL, {c, value}));
-    // std::cout << c << ": " << value << std::endl;
   }
 
   size_t num_inactive = 0;
@@ -363,15 +361,14 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
     d_mbqi_solver->assert_formula(mbqi_inst(q));
     Log(2) << "mbqi check: " << mbqi_inst(q);
     auto res = d_mbqi_solver->solve();
+    Log(2) << res;
     // Counterexample
     if (res == Result::SAT)
     {
-      Log(2) << "counterexample";
       lemma(mbqi_lemma(q), LemmaKind::MBQI_INST);
     }
     else if (res == Result::UNSAT)
     {
-      Log(2) << "unsat";
       ++num_inactive;
     }
     d_mbqi_solver->pop();
@@ -430,7 +427,6 @@ QuantSolver::mbqi_lemma(const Node& q)
         Node tv = d_solver_state.value(t);
         if (tv == value)
         {
-          // std::cout << "use t: " << t << std::endl;
           value = t;
           break;
         }

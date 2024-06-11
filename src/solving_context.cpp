@@ -28,13 +28,15 @@ using namespace node;
 
 SolvingContext::SolvingContext(NodeManager& nm,
                                const option::Options& options,
-                               const std::string& name)
+                               const std::string& name,
+                               bool subsolver)
     : d_env(nm, options, name),
       d_logger(d_env.logger()),
       d_assertions(&d_backtrack_mgr),
       d_original_assertions(&d_backtrack_mgr),
       d_preprocessor(*this),
       d_solver_engine(*this),
+      d_subsolver(subsolver),
       d_stats(d_env.statistics())
 {
 }
@@ -54,7 +56,15 @@ SolvingContext::solve()
 
   if (d_sat_state == Result::UNKNOWN)
   {
-    d_sat_state = d_solver_engine.solve();
+    try
+    {
+      d_sat_state = d_solver_engine.solve();
+    }
+    catch (const UnsupportedException& e)
+    {
+      Warn(!d_subsolver) << e.msg();
+      d_sat_state = Result::UNKNOWN;
+    }
   }
 
   if (d_sat_state == Result::SAT

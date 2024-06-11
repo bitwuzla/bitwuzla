@@ -215,9 +215,8 @@ ArraySolver::check_access(const Node& access)
   // equality over constant arrays not yet supported
   if (access.kind() == Kind::CONST_ARRAY)
   {
-    std::cerr << "Equality over constant arrays not fully supported yet"
-              << std::endl;
-    abort();
+    d_solver_state.unsupported(
+        "Equality over constant arrays not fully supported yet");
   }
 
   Log(2);

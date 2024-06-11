@@ -21,17 +21,6 @@ using namespace node;
 
 /* --- FunSolver public ----------------------------------------------------- */
 
-namespace {
-
-void
-unsupported(const char* msg)
-{
-  std::cerr << "[bitwuzla] " << msg << std::endl;
-  abort();
-}
-
-}  // namespace
-
 bool
 FunSolver::is_theory_leaf(const Node& term)
 {
@@ -61,12 +50,13 @@ FunSolver::check()
   d_fun_models.clear();
   if (!d_fun_equalities.empty())
   {
-    unsupported("Equalities over functions not yet supported.");
+    d_solver_state.unsupported("Equalities over functions not yet supported.");
   }
 
   if (!d_equalities.empty())
   {
-    unsupported("Equalities over uninterpreted sorts not yet supported.");
+    d_solver_state.unsupported(
+        "Equalities over uninterpreted sorts not yet supported.");
   }
 
   util::Timer timer(d_stats.time_check);

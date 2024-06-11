@@ -43,4 +43,10 @@ SolverState::is_relevant(const Node& term) const
   return d_solver_engine.is_relevant(term);
 }
 
+void
+SolverState::unsupported(const std::string& msg)
+{
+  throw UnsupportedException(msg);
+}
+
 }  // namespace bzla
