@@ -3427,10 +3427,6 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
                              + "'",
                          arg_coo(j));
           }
-          if (args[i].sort().is_array())
-          {
-            return error("variable of array sort not supported", arg_coo(j));
-          }
           if (args[i].sort().is_fun())
           {
             return error("variable of function sort not supported", arg_coo(j));

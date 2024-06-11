@@ -2041,9 +2041,6 @@ TermManager::mk_term(Kind kind,
           {
             BITWUZLA_CHECK_TERM_IS_VAR_AT_IDX(args, i);
             BITWUZLA_CHECK(kind == Kind::LAMBDA
-                           || !args[i].d_node->type().is_array())
-                << "quantified variable of array sort not supported";
-            BITWUZLA_CHECK(kind == Kind::LAMBDA
                            || !args[i].d_node->type().is_fun())
                 << "quantified variable of function sort not supported";
             auto [it, inserted] = cache.insert(*args[i].d_node);

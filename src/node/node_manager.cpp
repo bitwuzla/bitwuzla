@@ -680,11 +680,6 @@ NodeManager::check_type(Kind kind,
         ss << kind << ": Expected variable at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].type().is_array())
-      {
-        ss << kind << ": Array type not supported for variables";
-        return std::make_pair(false, ss.str());
-      }
       if (children[0].type().is_fun())
       {
         ss << kind << ": Function type not supported for variables";
