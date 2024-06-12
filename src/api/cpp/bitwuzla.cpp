@@ -120,8 +120,6 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::PP_EMBEDDED_CONSTR, bzla::option::Option::PP_EMBEDDED_CONSTR},
         {Option::PP_FLATTEN_AND, bzla::option::Option::PP_FLATTEN_AND},
         {Option::PP_NORMALIZE, bzla::option::Option::PP_NORMALIZE},
-        {Option::PP_NORMALIZE_SHARE_AWARE,
-         bzla::option::Option::PP_NORMALIZE_SHARE_AWARE},
         {Option::PP_SKELETON_PREPROC,
          bzla::option::Option::PP_SKELETON_PREPROC},
         {Option::PP_VARIABLE_SUBST, bzla::option::Option::PP_VARIABLE_SUBST},

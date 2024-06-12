@@ -27,55 +27,11 @@ using namespace bzla::node;
 
 /* -------------------------------------------------------------------------- */
 
-namespace {
-void
-_count_parents(const node_ref_vector& nodes,
-               Kind kind,
-               PassNormalize::ParentsMap& parents)
-{
-  node::unordered_node_ref_set cache;
-  for (size_t i = 0, size = nodes.size(); i < size; ++i)
-  {
-    node::node_ref_vector visit{nodes[i]};
-    parents[nodes[i]] += 1;
-    do
-    {
-      const Node& cur     = visit.back();
-      auto [it, inserted] = cache.insert(cur);
-      visit.pop_back();
-      if (inserted
-          && (cur.kind() == kind
-              || (kind == Kind::BV_ADD && cur.is_inverted()
-                  && cur[0].kind() == kind)))
-      {
-        for (auto& child : cur)
-        {
-          parents[child] += 1;
-          visit.push_back(child);
-        }
-      }
-    } while (!visit.empty());
-  }
-}
-
-#if 0
-void
-print_coefficients(const PassNormalize::CoefficientsMap& coeff)
-{
-  for (const auto& c : coeff)
-  {
-    // std::cout << c.first << ": " << c.second << std::endl;
-  }
-}
-#endif
-}  // namespace
-
 /* === PassNormalize public ================================================= */
 
 PassNormalize::PassNormalize(Env& env,
                              backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr, "no", "normalize"),
-      d_share_aware(d_env.options().pp_normalize_share_aware()),
       d_rewriter(env, Rewriter::LEVEL_SPECULATIVE, "normalize"),
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
@@ -83,29 +39,9 @@ PassNormalize::PassNormalize(Env& env,
 
 /* -------------------------------------------------------------------------- */
 
-namespace {
-bool
-is_leaf(Kind kind,
-        const Node& node,
-        const PassNormalize::ParentsMap& parents,
-        const PassNormalize::ParentsMap& parents_in_chain)
-{
-  if (node.kind() != kind)
-  {
-    return true;
-  }
-  auto p = parents.find(node);
-  if (p == parents.end()) return false;
-  auto pp = parents_in_chain.find(node);
-  if (pp == parents_in_chain.end()) return false;
-  return pp->second < p->second;
-}
-}  // namespace
-
 void
 PassNormalize::compute_coefficients(const Node& node,
                                     node::Kind kind,
-                                    const ParentsMap& parents,
                                     CoefficientsMap& coeffs)
 {
   util::Timer timer(d_stats.time_compute_coefficients);
@@ -128,18 +64,6 @@ PassNormalize::compute_coefficients(const Node& node,
       nodes.push_back(cur);
       if (cur.kind() == kind)
       {
-        if (d_share_aware)
-        {
-          // Treat as leaf if node of given kind has parent references from
-          // outside the current 'kind' chain.
-          // Note: it may happen that cur is not in d_parents (intermediate
-          //       nodes created during normalization)
-          assert(parents.find(cur) != parents.end());
-          if (is_leaf(kind, cur, d_parents, parents))
-          {
-            continue;
-          }
-        }
         intermediate.insert(cur);
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
@@ -299,7 +223,6 @@ PassNormalize::mk_node(Kind kind, const CoefficientsMap& coeffs)
 BitVector
 PassNormalize::normalize_add(const Node& node,
                              CoefficientsMap& coeffs,
-                             ParentsMap& parents,
                              bool keep_value,
                              bool push_neg)
 {
@@ -332,8 +255,7 @@ PassNormalize::normalize_add(const Node& node,
       }
       // normalize inverted adders
       // ~x = ~(x + 1) + 1 = - x - 1
-      else if (push_neg && cur.is_inverted() && cur[0].kind() == Kind::BV_ADD
-               && parents[cur[0]] <= 1)
+      else if (push_neg && cur.is_inverted() && cur[0].kind() == Kind::BV_ADD)
       {
         // std::cout << "cur: " << cur << std::endl;
         assert(cache.insert(cur).second);
@@ -341,7 +263,7 @@ PassNormalize::normalize_add(const Node& node,
         CoefficientsMap cfs;
         BitVector coeff = coeffs.at(cur).bvneg();
         cur_coeff       = bvzero;
-        compute_coefficients(cur[0], cur[0].kind(), parents, cfs);
+        compute_coefficients(cur[0], cur[0].kind(), cfs);
         for (auto& [c, cf] : cfs)
         {
           cf.ibvmul(coeff);
@@ -562,19 +484,13 @@ PassNormalize::normalize_coefficients_eq(
 
   Kind kind = node0.kind();
 
-  ParentsMap parents;
-  if (d_share_aware)
-  {
-    _count_parents({node0, node1}, kind, parents);
-  }
-
-  compute_coefficients(node0, node0.kind(), parents, coeffs0);
-  compute_coefficients(node1, node1.kind(), parents, coeffs1);
+  compute_coefficients(node0, node0.kind(), coeffs0);
+  compute_coefficients(node1, node1.kind(), coeffs1);
 
   if (kind == Kind::BV_ADD)
   {
-    auto value0 = normalize_add(node0, coeffs0, parents);
-    auto value1 = normalize_add(node1, coeffs1, parents);
+    auto value0 = normalize_add(node0, coeffs0);
+    auto value1 = normalize_add(node1, coeffs1);
     normalize_coefficients_eq_add(coeffs0, coeffs1, value0);
     normalize_coefficients_eq_add(coeffs1, coeffs0, value1);
     value0.ibvsub(value1);
@@ -921,22 +837,14 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
   // std::cout << "lhs: " << top_lhs << std::endl;
   // std::cout << "rhs: " << top_rhs << std::endl;
 
-  // Note: parents could also be computed based on node0 and node1, but
-  //       get_top() and rebuild_top() do not handle this case yet.
-  ParentsMap parents;
-  if (d_share_aware)
-  {
-    _count_parents({top_lhs, top_rhs}, kind, parents);
-  }
-
   CoefficientsMap lhs, rhs;
-  compute_coefficients(top_lhs, kind, parents, lhs);
-  compute_coefficients(top_rhs, kind, parents, rhs);
+  compute_coefficients(top_lhs, kind, lhs);
+  compute_coefficients(top_rhs, kind, rhs);
   size_t lhs_coeff_size = lhs.size();
   size_t rhs_coeff_size = rhs.size();
   if (top_lhs.kind() == Kind::BV_ADD)
   {
-    normalize_add(top_lhs, lhs, parents, true, true);
+    normalize_add(top_lhs, lhs, true, true);
   }
   else if (top_lhs.kind() == Kind::BV_MUL)
   {
@@ -944,7 +852,7 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
   }
   if (top_rhs.kind() == Kind::BV_ADD)
   {
-    normalize_add(top_rhs, rhs, parents, true, true);
+    normalize_add(top_rhs, rhs, true, true);
   }
   else if (top_rhs.kind() == Kind::BV_MUL)
   {
@@ -986,22 +894,14 @@ PassNormalize::normalize_comm_assoc(const Node& node)
 
   Kind kind = node.kind();
 
-  // Note: parents could also be computed based on node0 and node1, but
-  //       get_top() and rebuild_top() do not handle this case yet.
-  ParentsMap parents;
-  // if (d_share_aware)
-  //{
-  //   _count_parents({top_lhs, top_rhs}, kind, parents);
-  // }
-
   CoefficientsMap coeffs;
   // std::cout << "compute coeff lhs: " << std::flush;
-  compute_coefficients(node, kind, parents, coeffs);
+  compute_coefficients(node, kind, coeffs);
   size_t coeffs_size = coeffs.size();
   // std::cout << "done" << std::endl;;
   if (kind == Kind::BV_ADD)
   {
-    normalize_add(node, coeffs, parents, true, true);
+    normalize_add(node, coeffs, true, true);
   }
   else if (kind == Kind::BV_MUL)
   {
@@ -1242,14 +1142,6 @@ PassNormalize::apply(AssertionVector& assertions)
   Log(1) << "Apply normalization";
 
   d_cache.clear();
-  assert(d_parents.empty());
-  if (d_share_aware)
-  {
-    for (size_t i = 0, size = assertions.size(); i < size; ++i)
-    {
-      count_parents(assertions[i], d_parents, d_parents_cache);
-    }
-  }
 
   bv::AigBitblaster bitblaster;
   bv::AigBitblaster::AigNodeRefSet cache_before, cache_after1, cache_after2;
@@ -1305,8 +1197,6 @@ PassNormalize::apply(AssertionVector& assertions)
     }
   }
 
-  d_parents.clear();
-  d_parents_cache.clear();
   d_cache.clear();
 }
 
@@ -1436,13 +1326,6 @@ PassNormalize::process(const Node& node)
         {
           it->second = node::utils::rebuild_node(nm, cur, children);
         }
-
-        if (d_share_aware)
-        {
-          // Update parent count for new node
-          d_parents[it->second] = d_parents[cur];
-          d_parents_cache.insert(it->second);
-        }
       }
       visit.pop_back();
     } while (!visit.empty());
@@ -1510,10 +1393,8 @@ PassNormalize::normalize_adders(const std::vector<Node>& assertions,
   std::unordered_map<Node, CoefficientsMap> adders;
   collect_adders(assertions, adders);
 
-  ParentsMap parents;
   for (auto& [chain, cm] : adders)
   {
-    // normalize_add(chain, cm, parents, true, false);
     remove_zero_coeffs(cm);
   }
 
@@ -1647,8 +1528,7 @@ PassNormalize::collect_adders(const std::vector<Node>& assertions,
       {
         auto [it, inserted] = adders.emplace(cur, CoefficientsMap());
         assert(inserted);
-        ParentsMap map;
-        compute_coefficients(cur, cur.kind(), map, it->second);
+        compute_coefficients(cur, cur.kind(), it->second);
         for (const auto& [node, coeff] : it->second)
         {
           visit.push_back(node);
