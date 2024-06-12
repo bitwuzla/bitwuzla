@@ -244,7 +244,6 @@ class PassNormalize : public PreprocessingPass
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
     Statistics(util::Statistics& stats);
-    util::TimerStatistic& time_apply;
     util::TimerStatistic& time_normalize_add;
     util::TimerStatistic& time_compute_coefficients;
     util::TimerStatistic& time_adder_chains;

@@ -1666,9 +1666,8 @@ PassNormalize::collect_adders(const std::vector<Node>& assertions,
 
 PassNormalize::Statistics::Statistics(util::Statistics& stats,
                                       const std::string& prefix)
-    : time_apply(stats.new_stat<util::TimerStatistic>(prefix + "time_apply")),
-      time_normalize_add(
-          stats.new_stat<util::TimerStatistic>(prefix + "time_normalize_add")),
+    : time_normalize_add(
+        stats.new_stat<util::TimerStatistic>(prefix + "time_normalize_add")),
       time_compute_coefficients(
           stats.new_stat<util::TimerStatistic>(prefix + "time_compute_coeff")),
       time_adder_chains(
