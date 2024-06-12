@@ -23,7 +23,6 @@ namespace bzla::preprocess::pass {
 class PassNormalize : public PreprocessingPass
 {
  public:
-  using ParentsMap      = std::unordered_map<Node, uint64_t>;
   using CoefficientsMap = std::map<Node, BitVector>;
 
   PassNormalize(Env& env, backtrack::BacktrackManager* backtrack_mgr);
@@ -38,19 +37,11 @@ class PassNormalize : public PreprocessingPass
    * c d)) would result in {{a -> 1}, {c -> 1}, {d -> 1}}, and (bvmul a (bvadd
    * c d)) in {{a -> 1}, {(bvadd c d) -> 1}}.
    *
-   * @note If parents are given (share aware normalization), we treat subterms
-   *       of the same kind as the top node as leafs if they have parents
-   *       outside of this chain.
-   *
    * @param node The top node.
-   * @param parents The parents count of the equality over adders/multipliers
-   *                this node is one of the operands of. Empty if we do
-   *                not normalize in a share aware manner.
    * @param coeffs The resulting map from node to its occurrence count.
    */
   void compute_coefficients(const Node& node,
                             node::Kind kind,
-                            const std::unordered_map<Node, uint64_t>& parents,
                             CoefficientsMap& coeffs);
 
   /**
@@ -75,7 +66,6 @@ class PassNormalize : public PreprocessingPass
    * @param node The adder node.
    * @param coeffs The coefficients of the adder as determined by
    *               compute_coefficients().
-   * @param parents The parents information of this adder.
    * @return A bit-vector value representing the summarized, normalized leaf
    *         values of the given adder. After normalize_add() is called, it
    *         can be asserted that no values with a coefficient > 0 occur
@@ -83,7 +73,6 @@ class PassNormalize : public PreprocessingPass
    */
   BitVector normalize_add(const Node& node,
                           CoefficientsMap& coeffs,
-                          ParentsMap& parents,
                           bool keep_value = false,
                           bool push_neg   = true);
   /**
@@ -213,25 +202,10 @@ class PassNormalize : public PreprocessingPass
                       std::unordered_map<Node, CoefficientsMap>& adders);
 
   /**
-   * True to detect occurrences > 1, i.e., nodes of given kind that have
-   * multiple parents. If true, we do not normalize such nodes to avoid
-   * blow-up.
-   */
-  bool d_share_aware = false;
-
-  /**
    * Cache of processed nodes that maybe shared across substitutions.
    * Clear after a call to process to avoid sharing.
    */
   std::unordered_map<Node, Node> d_cache;
-
-  /**
-   * Cache of parents count for currently reachable nodes, populated for the
-   * duration of a call to apply().
-   */
-  std::unordered_map<Node, uint64_t> d_parents;
-
-  std::unordered_set<Node> d_parents_cache;
 
   std::vector<Node> d_adder_chains;
   std::unordered_map<Node, uint64_t> d_adder_chains_length;
