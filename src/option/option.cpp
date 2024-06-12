@@ -14,6 +14,7 @@
 #include <cassert>
 
 #include "config.h"
+#include "rewrite/rewriter.h"
 
 namespace bzla::option {
 
@@ -183,9 +184,9 @@ Options::Options()
                  "S"),
       rewrite_level(this,
                     Option::REWRITE_LEVEL,
-                    REWRITE_LEVEL_MAX,
+                    Rewriter::LEVEL_MAX,
                     0,
-                    REWRITE_LEVEL_MAX,
+                    Rewriter::LEVEL_MAX,
                     "rewrite level",
                     "rewrite-level",
                     "rwl"),

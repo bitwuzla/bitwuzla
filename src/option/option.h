@@ -457,10 +457,9 @@ class Options
   std::unordered_map<std::string, Option> d_name2option;
 
  public:
-  static constexpr uint8_t VERBOSITY_MAX     = 4;
-  static constexpr uint8_t REWRITE_LEVEL_MAX = 2;
-  static constexpr uint64_t PROB_100         = 1000;
-  static constexpr uint64_t PROB_50          = 500;
+  static constexpr uint8_t VERBOSITY_MAX = 4;
+  static constexpr uint64_t PROB_100     = 1000;
+  static constexpr uint64_t PROB_50      = 500;
 
   /** Constructor. */
   Options();
