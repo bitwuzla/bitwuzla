@@ -92,14 +92,15 @@ diff(uint64_t max_id, const Node& rewritten)
 
 /* === Rewriter public ====================================================== */
 
-Rewriter::Rewriter(Env& env, uint8_t level)
+Rewriter::Rewriter(Env& env, uint8_t level, const std::string& id)
     : d_env(env),
       d_logger(env.logger()),
       d_level(level),
       d_stats_rewrites(env.statistics().new_stat<util::HistogramStatistic>(
-          "rewriter::rewrite"))
+          "rewriter::rewrite" + (id.empty() ? "" : "(" + id + ")")))
 {
-  assert(d_level <= option::Options::REWRITE_LEVEL_MAX);
+  static_assert(Rewriter::LEVEL_SPECULATIVE > Rewriter::LEVEL_MAX);
+  assert(d_level <= Rewriter::LEVEL_SPECULATIVE);
   (void) d_env;  // only used in debug mode
 }
 
@@ -681,8 +682,11 @@ Rewriter::rewrite_bv_add(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_ADD_ITE1);
     BZLA_APPLY_RW_RULE(BV_ADD_ITE2);
-    BZLA_APPLY_RW_RULE(BV_ADD_MUL);
     // BZLA_APPLY_RW_RULE(BV_ADD_SHL);
+  }
+  if (d_level == LEVEL_SPECULATIVE)
+  {
+    BZLA_APPLY_RW_RULE(NORM_BV_ADD_MUL);
   }
 
 DONE:
@@ -826,9 +830,11 @@ Rewriter::rewrite_bv_not(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_NOT_BV_NEG);
     BZLA_APPLY_RW_RULE(BV_NOT_BV_CONCAT);
-    BZLA_APPLY_RW_RULE(BV_NOT_OR_SHL);
   }
-
+  if (d_level == LEVEL_SPECULATIVE)
+  {
+    BZLA_APPLY_RW_RULE(NORM_BV_NOT_OR_SHL);
+  }
 DONE:
   return res;
 }
@@ -845,9 +851,9 @@ Rewriter::rewrite_bv_shl(const Node& node)
     BZLA_APPLY_RW_RULE(BV_SHL_SPECIAL_CONST);
     BZLA_APPLY_RW_RULE(BV_SHL_CONST);
   }
-  if (d_level >= 1)
+  if (d_level == LEVEL_SPECULATIVE)
   {
-    BZLA_APPLY_RW_RULE(BV_SHL_BV_NEG);
+    BZLA_APPLY_RW_RULE(NORM_BV_SHL_NEG);
   }
 
 DONE:
@@ -1560,11 +1566,8 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_ADD_UREM: out << "BV_ADD_UREM"; break;
     case RewriteRuleKind::BV_ADD_ITE1: out << "BV_ADD_ITE1"; break;
     case RewriteRuleKind::BV_ADD_ITE2: out << "BV_ADD_ITE2"; break;
-    case RewriteRuleKind::BV_ADD_MUL: out << "BV_ADD_MUL"; break;
     case RewriteRuleKind::BV_ADD_SHL: out << "BV_ADD_SHL"; break;
-    case RewriteRuleKind::BV_ADD_NORM_MUL_CONST:
-      out << "BV_ADD_NORM_MUL_CONST";
-      break;
+    case RewriteRuleKind::NORM_BV_ADD_MUL: out << "NORM_BV_ADD_MUL"; break;
 
     case RewriteRuleKind::BV_AND_EVAL: out << "BV_AND_EVAL"; break;
     case RewriteRuleKind::BV_AND_SPECIAL_CONST:
@@ -1630,14 +1633,16 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_NOT_BV_NOT: out << "BV_NOT_BV_NOT"; break;
     case RewriteRuleKind::BV_NOT_BV_NEG: out << "BV_NOT_BV_NEG"; break;
     case RewriteRuleKind::BV_NOT_BV_CONCAT: out << "BV_NOT_BV_CONCAT"; break;
-    case RewriteRuleKind::BV_NOT_OR_SHL: out << "BV_NOT_OR_SHL"; break;
+    case RewriteRuleKind::NORM_BV_NOT_OR_SHL:
+      out << "NORM_BV_NOT_OR_SHL";
+      break;
 
     case RewriteRuleKind::BV_SHL_EVAL: out << "BV_SHL_EVAL"; break;
     case RewriteRuleKind::BV_SHL_SPECIAL_CONST:
       out << "BV_SHL_SPECIAL_CONST";
       break;
     case RewriteRuleKind::BV_SHL_CONST: out << "BV_SHL_CONST"; break;
-    case RewriteRuleKind::BV_SHL_BV_NEG: out << "BV_SHL_BV_NEG"; break;
+    case RewriteRuleKind::NORM_BV_SHL_NEG: out << "NORM_BV_SHL_NEG"; break;
 
     case RewriteRuleKind::BV_SHR_EVAL: out << "BV_SHR_EVAL"; break;
     case RewriteRuleKind::BV_SHR_SPECIAL_CONST:

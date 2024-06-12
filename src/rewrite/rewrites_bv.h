@@ -64,9 +64,6 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_ITE2>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_SHL>::_apply(Rewriter& rewriter,
                                                       const Node& node);
-template <>
-Node RewriteRule<RewriteRuleKind::BV_ADD_MUL>::_apply(Rewriter& rewriter,
-                                                      const Node& node);
 
 /* bvand -------------------------------------------------------------------- */
 
@@ -267,10 +264,6 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_NOT_BV_CONCAT>::_apply(Rewriter& rewriter,
                                                             const Node& node);
 
-template <>
-Node RewriteRule<RewriteRuleKind::BV_NOT_OR_SHL>::_apply(Rewriter& rewriter,
-                                                         const Node& node);
-
 /* bvshl -------------------------------------------------------------------- */
 
 // const_binary_bv_exp
@@ -286,10 +279,6 @@ Node RewriteRule<RewriteRuleKind::BV_SHL_SPECIAL_CONST>::_apply(
 template <>
 Node RewriteRule<RewriteRuleKind::BV_SHL_CONST>::_apply(Rewriter& rewriter,
                                                         const Node& node);
-
-template <>
-Node RewriteRule<RewriteRuleKind::BV_SHL_BV_NEG>::_apply(Rewriter& rewriter,
-                                                         const Node& node);
 
 /* bvshr -------------------------------------------------------------------- */
 

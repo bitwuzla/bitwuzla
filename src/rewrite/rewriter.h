@@ -33,13 +33,27 @@ class Rewriter
 {
  public:
   /**
+   * The maximum rewrite level.
+   * This is the maximum rewrite level configurable from outside, and is
+   * considered as the maximum level of "safe" (non-size increasing or size
+   * increasing but in general always effective in practice) rewrites.
+   */
+  inline static constexpr uint8_t LEVEL_MAX = 2;
+  /**
+   * The level of speculative rewrites. This level can not be configured
+   * from the outside and rewrites of this level are only applied specifically
+   * for normalization.
+   */
+  inline static constexpr uint8_t LEVEL_SPECULATIVE = LEVEL_MAX + 1;
+  /**
    * Constructor.
    * @param env   The associated environment.
    * @param level The rewriting level; level 0 disables all rewrites
    *              except for operator elimination, level 1 enables one-level
    *              rewrites, level 2 multi-level rewrites.
+   * @param id    The identifier of this rewriter (used for stats).
    */
-  Rewriter(Env& env, uint8_t level = 0);
+  Rewriter(Env& env, uint8_t level = LEVEL_MAX, const std::string& id = "");
 
   /**
    * Rewrite given node.
@@ -363,10 +377,9 @@ enum class RewriteRuleKind
   // Level 2+
   BV_ADD_ITE1,
   BV_ADD_ITE2,
-  BV_ADD_MUL,
   BV_ADD_SHL,
   // normalization
-  BV_ADD_NORM_MUL_CONST,
+  NORM_BV_ADD_MUL,
 
   //// bvand
   // Level 1+
@@ -433,15 +446,16 @@ enum class RewriteRuleKind
   // Level 2+
   BV_NOT_BV_NEG,
   BV_NOT_BV_CONCAT,
-  BV_NOT_OR_SHL,
+  // normalization
+  NORM_BV_NOT_OR_SHL,
 
   //// bvshl
   // Level 1+
   BV_SHL_EVAL,
   BV_SHL_SPECIAL_CONST,
   BV_SHL_CONST,
-  // Level 2+
-  BV_SHL_BV_NEG,
+  // normalization
+  NORM_BV_SHL_NEG,
 
   //// bvlshr
   // Level 1+

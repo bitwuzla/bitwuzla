@@ -15,6 +15,15 @@
 
 namespace bzla {
 
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_BV_ADD_MUL>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_BV_NOT_OR_SHL>::_apply(
+    Rewriter& rewriter, const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_BV_SHL_NEG>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
 
 }  // namespace bzla
 
