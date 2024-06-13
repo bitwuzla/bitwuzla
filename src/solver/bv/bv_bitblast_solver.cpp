@@ -94,6 +94,7 @@ BvBitblastSolver::solve()
   // Update CNF statistics
   update_statistics();
 
+  d_solver_state.print_statistics();
   util::Timer timer(d_stats.time_sat);
   d_last_result = d_sat_solver->solve();
 

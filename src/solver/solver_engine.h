@@ -95,6 +95,9 @@ class SolverEngine
    */
   bool is_relevant(const Node& term) const;
 
+  /** Print statistics line. */
+  void print_statistics();
+
  private:
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);
@@ -136,9 +139,6 @@ class SolverEngine
    * the current bit-vector model.
    */
   void find_relevant();
-
-  /** Print statistics line. */
-  void print_statistics();
 
   /** Counter for how often a statistics line was printed. */
   uint64_t d_num_printed_stats = 0;

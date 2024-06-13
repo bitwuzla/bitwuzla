@@ -43,6 +43,9 @@ class SolverState
   /** Throw UnsupportedException to terminate solver. */
   void unsupported(const std::string& msg);
 
+  /** Print solver engine statistics. */
+  void print_statistics();
+
  private:
   /** Associated solver engine. */
   SolverEngine& d_solver_engine;
