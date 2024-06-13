@@ -42,7 +42,7 @@ class PassNormalize : public PreprocessingPass
    */
   void compute_coefficients(const Node& node,
                             node::Kind kind,
-                            CoefficientsMap& coeffs);
+                            CoefficientsMap& coeffs) const;
 
   /**
    * Factor out common subterms of given left hand side and right hand side
