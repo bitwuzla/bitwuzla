@@ -1146,13 +1146,7 @@ PassNormalize::apply(AssertionVector& assertions)
     const Node& assertion = assertions[i];
     if (!processed(assertion))
     {
-      const Node& processed = process(assertion);
-      if (assertions[i] != processed)
-      {
-        // assertions.replace(i, processed);
-        Log(2) << "Found normalization: " << assertions[i] << " -> "
-               << processed;
-      }
+      const Node& processed = d_env.rewriter().rewrite(process(assertion));
       assertions_pass1.push_back(processed);
     }
     else
@@ -1549,7 +1543,8 @@ PassNormalize::normalize_adders(const std::vector<Node>& assertions,
   std::unordered_map<Node, Node> subst_cache;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    norm_assertions.push_back(substitute(assertions[i], results, subst_cache));
+    norm_assertions.push_back(d_env.rewriter().rewrite(
+        substitute(assertions[i], results, subst_cache)));
   }
 }
 
