@@ -1400,11 +1400,15 @@ cmp_repr(const Node& node)
 }
 
 bool
-sort_cmp(const Node& a,
-         const std::vector<uint64_t>& va,
-         const Node& b,
-         const std::vector<uint64_t>& vb)
+sort_cmp(const std::unordered_map<Node, std::vector<uint64_t>>& occs_sort,
+         const Node& a,
+         const Node& b)
 {
+  Node ra        = cmp_repr(a);
+  Node rb        = cmp_repr(b);
+  const auto& va = occs_sort.at(ra);
+  const auto& vb = occs_sort.at(rb);
+
   if (va != vb)
   {
     for (size_t i = 0, size = std::min(va.size(), vb.size()); i < size; ++i)
@@ -1419,7 +1423,7 @@ sort_cmp(const Node& a,
       return va.size() > vb.size();
     }
   }
-  return a.id() < b.id();
+  return ra.id() < rb.id() || (ra.id() == rb.id() && a.id() < b.id());
 }
 
 }  // namespace
@@ -1429,7 +1433,7 @@ PassNormalize::normalize_adders(const std::vector<Node>& assertions,
                                 std::vector<Node>& norm_assertions)
 {
   util::Timer timer(d_stats.time_adder_chains);
-  std::unordered_map<Node, CoefficientsMap> adders;
+  std::map<Node, CoefficientsMap> adders;
   collect_adders(assertions, adders);
 
   for (auto& [chain, cm] : adders)
@@ -1501,16 +1505,11 @@ PassNormalize::normalize_adders(const std::vector<Node>& assertions,
   // TODO: performance, precompute id for comparison
   std::sort(
       occs.begin(), occs.end(), [&occs_sort](const auto& a, const auto& b) {
-        Node ra        = cmp_repr(a.first);
-        Node rb        = cmp_repr(b.first);
-        const auto& va = occs_sort.at(ra);
-        const auto& vb = occs_sort.at(rb);
-        return sort_cmp(ra, va, rb, vb);
+        return sort_cmp(occs_sort, a.first, b.first);
       });
 
   NodeManager& nm = d_env.nm();
   std::unordered_map<Node, Node> results;
-  std::unordered_map<Node, uint64_t> results_size;
   for (const auto& [element, _] : occs)
   {
     for (const auto& chain : elements[element])
@@ -1552,7 +1551,7 @@ PassNormalize::normalize_adders(const std::vector<Node>& assertions,
 
 void
 PassNormalize::collect_adders(const std::vector<Node>& assertions,
-                              std::unordered_map<Node, CoefficientsMap>& adders)
+                              std::map<Node, CoefficientsMap>& adders)
 {
   node_ref_vector visit{assertions.begin(), assertions.end()};
   unordered_node_ref_set cache;
