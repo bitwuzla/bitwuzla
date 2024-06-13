@@ -47,6 +47,11 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
     return;
   }
 
+  if (d_done)
+  {
+    return;
+  }
+
   std::vector<Node> _assertions;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
@@ -122,6 +127,10 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
       }
     }
   }
+
+  d_done = true;
+  d_sat_solver.reset(new sat::Cadical());
+  d_encode_cache.clear();
 }
 
 /* --- PassSkeletonPreproc private ------------------------------------------ */

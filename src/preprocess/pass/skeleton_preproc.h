@@ -62,6 +62,7 @@ class PassSkeletonPreproc : public PreprocessingPass
   backtrack::unordered_set<int64_t> d_assertion_lits;
   backtrack::vector<Node> d_assertions;
   ResetSkel d_reset;
+  bool d_done = false;
 
   struct Statistics
   {
