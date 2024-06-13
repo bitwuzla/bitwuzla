@@ -815,6 +815,10 @@ SolverEngine::is_relevant(const Node& term) const
 void
 SolverEngine::print_statistics()
 {
+  if (!d_logger.is_msg_enabled(1))
+  {
+    return;
+  }
   if (d_num_printed_stats % 20 == 0)
   {
     // clang-format off

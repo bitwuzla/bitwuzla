@@ -49,4 +49,10 @@ SolverState::unsupported(const std::string& msg)
   throw UnsupportedException(msg);
 }
 
+void
+SolverState::print_statistics()
+{
+  d_solver_engine.print_statistics();
+}
+
 }  // namespace bzla
