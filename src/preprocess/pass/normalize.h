@@ -199,7 +199,7 @@ class PassNormalize : public PreprocessingPass
   void normalize_adders(const std::vector<Node>& assertions,
                         std::vector<Node>& norm_assertions);
   void collect_adders(const std::vector<Node>& assertions,
-                      std::unordered_map<Node, CoefficientsMap>& adders);
+                      std::map<Node, CoefficientsMap>& adders);
 
   /**
    * Cache of processed nodes that maybe shared across substitutions.
