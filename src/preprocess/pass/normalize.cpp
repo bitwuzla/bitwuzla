@@ -1222,9 +1222,9 @@ PassNormalize::apply(AssertionVector& assertions)
     {
       if (assertions[i] != assertions_normalized[i])
       {
-        assertions.replace(i, assertions_normalized[i]);
-        cache_assertion(assertions_normalized[i]);
         cache_assertion(assertions[i]);
+        cache_assertion(assertions_normalized[i]);
+        assertions.replace(i, assertions_normalized[i]);
       }
     }
   }
@@ -1294,9 +1294,11 @@ PassNormalize::process(const Node& node)
       if (inserted)
       {
         // Do not use scoring for bit-vectors larger than 64.
-        if (cur.type().is_bv() && cur.type().bv_size() > 64)
+        if (d_enable_scoring && cur.type().is_bv() && cur.type().bv_size() > 64)
         {
           d_enable_scoring = false;
+          Log(1) << "Disable AIG scoring, found bit-vector of size "
+                 << cur.type().bv_size();
         }
         visit.insert(visit.end(), cur.begin(), cur.end());
         continue;
