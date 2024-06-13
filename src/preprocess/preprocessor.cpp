@@ -240,8 +240,6 @@ Preprocessor::apply(AssertionVector& assertions)
     assertions.reset_modified();
     ++d_stats.num_iterations;
 
-    size_t cnt;
-    cnt = assertions.num_modified();
     d_pass_rewrite.apply(assertions);
     if (d_logger.is_msg_enabled(1))
     {
@@ -254,7 +252,6 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_flatten_and())
     {
-      cnt = assertions.num_modified();
       d_pass_flatten_and.apply(assertions);
       if (d_logger.is_msg_enabled(1))
       {
@@ -271,7 +268,6 @@ Preprocessor::apply(AssertionVector& assertions)
       do
       {
         assertions.reset_modified();
-        cnt = assertions.num_modified();
         d_pass_variable_substitution.apply(assertions);
         if (d_logger.is_msg_enabled(1))
         {
@@ -286,7 +282,6 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_skeleton_preproc() && !skel_done)
     {
-      cnt = assertions.num_modified();
       d_pass_skeleton_preproc.apply(assertions);
       skel_done = true;
       if (d_logger.is_msg_enabled(1))
@@ -301,10 +296,7 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_embedded_constr())
     {
-      cnt = assertions.num_modified();
       d_pass_embedded_constraints.apply(assertions);
-      Msg(2) << assertions.num_modified() - cnt
-             << " after embedded constraints";
       if (d_logger.is_msg_enabled(1))
       {
         print_statistics(d_pass_embedded_constraints, assertions);
@@ -317,7 +309,6 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_contr_ands())
     {
-      cnt = assertions.num_modified();
       d_pass_contr_ands.apply(assertions);
       if (d_logger.is_msg_enabled(1))
       {
@@ -325,7 +316,6 @@ Preprocessor::apply(AssertionVector& assertions)
       }
     }
 
-    cnt = assertions.num_modified();
     d_pass_elim_lambda.apply(assertions);
     if (d_logger.is_msg_enabled(1))
     {
@@ -334,16 +324,20 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_elim_bv_udiv())
     {
-      cnt = assertions.num_modified();
       d_pass_elim_bvudiv.apply(assertions);
-      Msg(2) << assertions.num_modified() - cnt
-             << " after bvudiv/bvurem elimination";
+      if (d_logger.is_msg_enabled(1))
+      {
+        print_statistics(d_pass_elim_bvudiv, assertions);
+      }
+      if (d_assertions.is_inconsistent())
+      {
+        break;
+      }
     }
 
     // This pass is not supported if incremental is enabled.
     if (false && !uninterpreted_done)
     {
-      cnt = assertions.num_modified();
       d_pass_elim_uninterpreted.apply(assertions);
       if (d_logger.is_msg_enabled(1))
       {
@@ -355,7 +349,6 @@ Preprocessor::apply(AssertionVector& assertions)
     if (apply_normalization && options.rewrite_level() >= 2
         && options.pp_normalize())
     {
-      cnt = assertions.num_modified();
       d_pass_normalize.apply(assertions);
       if (d_logger.is_msg_enabled(1))
       {
@@ -369,7 +362,6 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_elim_bv_extracts())
     {
-      cnt = assertions.num_modified();
       d_pass_elim_extract.apply(assertions);
       if (d_logger.is_msg_enabled(1))
       {
