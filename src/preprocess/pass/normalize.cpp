@@ -1140,17 +1140,12 @@ PassNormalize::apply(AssertionVector& assertions)
 
   d_cache.clear();
 
-  bv::AigBitblaster bitblaster;
-  bv::AigBitblaster::AigNodeRefSet cache_before, cache_after1, cache_after2;
-  uint64_t size_before = 0, size_after1 = 0, size_after2 = 0;
-  std::vector<Node> new_assertions;
+  std::vector<Node> assertions_pass1;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    size_before += bitblaster.count_aig_ands(assertion, cache_before);
     if (!processed(assertion))
     {
-      // cache_assertion(assertion);
       const Node& processed = process(assertion);
       if (assertions[i] != processed)
       {
@@ -1158,39 +1153,83 @@ PassNormalize::apply(AssertionVector& assertions)
         Log(2) << "Found normalization: " << assertions[i] << " -> "
                << processed;
       }
-      size_after1 += bitblaster.count_aig_ands(processed, cache_after1);
-      new_assertions.push_back(processed);
+      assertions_pass1.push_back(processed);
     }
     else
     {
-      size_after1 += bitblaster.count_aig_ands(assertion, cache_after1);
-      new_assertions.push_back(assertion);
+      assertions_pass1.push_back(assertion);
     }
   }
 
-  std::vector<Node> norm_assertions;
-  normalize_adders(new_assertions, norm_assertions);
-  for (size_t i = 0, size = norm_assertions.size(); i < size; ++i)
-  {
-    size_after2 += bitblaster.count_aig_ands(norm_assertions[i], cache_after2);
-  }
+  std::vector<Node> assertions_pass2;
+  normalize_adders(assertions_pass1, assertions_pass2);
 
-  const std::vector<Node>& processed_assertions =
-      (size_after2 < size_after1) ? norm_assertions : new_assertions;
-  size_t size_after = std::min(size_after2, size_after1);
-
-  Log(1) << "AIG size initial:     " << size_before;
-  Log(1) << "AIG size first pass:  " << size_after1;
-  Log(1) << "AIG size second pass: " << size_after2;
-  if (size_after < size_before)
+  // Compute scores for bit widths <= 64
+  const std::vector<Node>* processed_assertions = &assertions_pass2;
+  bool replace_assertions                       = true;
+  if (d_enable_scoring)
   {
-    assert(processed_assertions.size() == assertions.size());
+    util::Timer timer(d_stats.time_score);
+    bv::AigBitblaster bitblaster;
+    bv::AigBitblaster::AigNodeRefSet cache_before, cache_after1, cache_after2;
+    uint64_t size_before = 0, size_pass1 = 0, size_pass2 = 0;
+    // Initial score
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
-      if (assertions[i] != processed_assertions[i])
+      size_before += bitblaster.count_aig_ands(assertions[i], cache_before);
+    }
+    // Score after first pass
+    for (const Node& assertion : assertions_pass1)
+    {
+      if (assertion.is_value() && !assertion.value<bool>())
       {
-        assertions.replace(i, processed_assertions[i]);
-        cache_assertion(processed_assertions[i]);
+        size_pass1 = 0;
+        break;
+      }
+      size_pass1 += bitblaster.count_aig_ands(assertion, cache_after1);
+      if (size_pass1 > size_before)
+      {
+        break;
+      }
+    }
+    // Score after second pass
+    for (const Node& assertion : assertions_pass2)
+    {
+      if (assertion.is_value() && !assertion.value<bool>())
+      {
+        size_pass2 = 0;
+        break;
+      }
+      size_pass2 += bitblaster.count_aig_ands(assertion, cache_after2);
+      if (size_pass2 > size_before)
+      {
+        break;
+      }
+    }
+
+    if (size_pass1 < size_pass2)
+    {
+      processed_assertions = &assertions_pass1;
+    }
+
+    size_t size_after  = std::min(size_pass1, size_pass2);
+    replace_assertions = size_after < size_before;
+
+    Log(1) << "AIG size initial: " << size_before;
+    Log(1) << "AIG size pass 1:  " << size_pass1;
+    Log(1) << "AIG size pass 2:  " << size_pass2;
+  }
+
+  if (replace_assertions)
+  {
+    const std::vector<Node>& assertions_normalized = *processed_assertions;
+    assert(assertions_normalized.size() == assertions.size());
+    for (size_t i = 0, size = assertions.size(); i < size; ++i)
+    {
+      if (assertions[i] != assertions_normalized[i])
+      {
+        assertions.replace(i, assertions_normalized[i]);
+        cache_assertion(assertions_normalized[i]);
         cache_assertion(assertions[i]);
       }
     }
@@ -1260,6 +1299,11 @@ PassNormalize::process(const Node& node)
       auto [it, inserted] = d_cache.emplace(cur, Node());
       if (inserted)
       {
+        // Do not use scoring for bit-vectors larger than 64.
+        if (cur.type().is_bv() && cur.type().bv_size() > 64)
+        {
+          d_enable_scoring = false;
+        }
         visit.insert(visit.end(), cur.begin(), cur.end());
         continue;
       }
@@ -1551,6 +1595,7 @@ PassNormalize::Statistics::Statistics(util::Statistics& stats,
           stats.new_stat<util::TimerStatistic>(prefix + "time_compute_coeff")),
       time_adder_chains(
           stats.new_stat<util::TimerStatistic>(prefix + "time_adder_chains")),
+      time_score(stats.new_stat<util::TimerStatistic>(prefix + "time_score")),
       num_normalizations(
           stats.new_stat<uint64_t>(prefix + "num_normalizations"))
 {

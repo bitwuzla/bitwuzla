@@ -214,6 +214,9 @@ class PassNormalize : public PreprocessingPass
   /** A rewriter configured specifically for normalization rewrites. */
   Rewriter d_rewriter;
 
+  /** Indicates whether we compute a bit-blasting score. */
+  bool d_enable_scoring = true;
+
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
@@ -221,6 +224,7 @@ class PassNormalize : public PreprocessingPass
     util::TimerStatistic& time_normalize_add;
     util::TimerStatistic& time_compute_coefficients;
     util::TimerStatistic& time_adder_chains;
+    util::TimerStatistic& time_score;
     uint64_t& num_normalizations;
   } d_stats;
 };
