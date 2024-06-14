@@ -1140,6 +1140,7 @@ PassNormalize::apply(AssertionVector& assertions)
 
   d_cache.clear();
 
+  bool to_process   = false;
   bool inconsistent = false;
   std::vector<Node> assertions_pass1;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
@@ -1149,6 +1150,7 @@ PassNormalize::apply(AssertionVector& assertions)
     {
       const Node& processed = d_env.rewriter().rewrite(process(assertion));
       assertions_pass1.push_back(processed);
+      to_process = true;
       if (processed.is_value() && !processed.value<bool>())
       {
         inconsistent = true;
@@ -1164,7 +1166,7 @@ PassNormalize::apply(AssertionVector& assertions)
   bool replace_assertions                       = false;
   std::vector<Node> assertions_pass2;
   // Compute scores for bit widths <= 64
-  if (d_enable_scoring && !inconsistent)
+  if (d_enable_scoring && !inconsistent && to_process)
   {
     normalize_adders(assertions_pass1, assertions_pass2);
 
@@ -1225,9 +1227,9 @@ PassNormalize::apply(AssertionVector& assertions)
     assert(assertions_normalized.size() == assertions.size());
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
+      cache_assertion(assertions[i]);
       if (assertions[i] != assertions_normalized[i])
       {
-        cache_assertion(assertions[i]);
         cache_assertion(assertions_normalized[i]);
         assertions.replace(i, assertions_normalized[i]);
       }
