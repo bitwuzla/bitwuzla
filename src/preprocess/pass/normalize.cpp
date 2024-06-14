@@ -1140,14 +1140,19 @@ PassNormalize::apply(AssertionVector& assertions)
 
   d_cache.clear();
 
+  bool inconsistent = false;
   std::vector<Node> assertions_pass1;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    if (!processed(assertion))
+    if (!processed(assertion) && !inconsistent)
     {
       const Node& processed = d_env.rewriter().rewrite(process(assertion));
       assertions_pass1.push_back(processed);
+      if (processed.is_value() && !processed.value<bool>())
+      {
+        inconsistent = true;
+      }
     }
     else
     {
@@ -1155,7 +1160,7 @@ PassNormalize::apply(AssertionVector& assertions)
     }
   }
 
-  const std::vector<Node>* processed_assertions = nullptr;
+  const std::vector<Node>* processed_assertions = &assertions_pass1;
   bool replace_assertions                       = false;
   std::vector<Node> assertions_pass2;
   // Compute scores for bit widths <= 64
@@ -1202,9 +1207,9 @@ PassNormalize::apply(AssertionVector& assertions)
       }
     }
 
-    if (size_pass1 < size_pass2)
+    if (size_pass2 < size_pass1)
     {
-      processed_assertions = &assertions_pass1;
+      processed_assertions = &assertions_pass2;
     }
 
     size_t size_after  = std::min(size_pass1, size_pass2);
@@ -1215,7 +1220,7 @@ PassNormalize::apply(AssertionVector& assertions)
     Log(1) << "AIG size pass 2:  " << size_pass2;
   }
 
-  if (replace_assertions)
+  if (replace_assertions || inconsistent)
   {
     const std::vector<Node>& assertions_normalized = *processed_assertions;
     assert(assertions_normalized.size() == assertions.size());
