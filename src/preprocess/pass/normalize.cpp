@@ -1155,14 +1155,15 @@ PassNormalize::apply(AssertionVector& assertions)
     }
   }
 
+  const std::vector<Node>* processed_assertions = nullptr;
+  bool replace_assertions                       = false;
   std::vector<Node> assertions_pass2;
-  normalize_adders(assertions_pass1, assertions_pass2);
-
   // Compute scores for bit widths <= 64
-  const std::vector<Node>* processed_assertions = &assertions_pass2;
-  bool replace_assertions                       = true;
   if (d_enable_scoring)
   {
+    normalize_adders(assertions_pass1, assertions_pass2);
+    processed_assertions = &assertions_pass2;
+
     util::Timer timer(d_stats.time_score);
     bv::AigBitblaster bitblaster;
     bv::AigBitblaster::AigNodeRefSet cache_before, cache_after1, cache_after2;
