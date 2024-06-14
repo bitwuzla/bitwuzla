@@ -1164,10 +1164,9 @@ PassNormalize::apply(AssertionVector& assertions)
   bool replace_assertions                       = false;
   std::vector<Node> assertions_pass2;
   // Compute scores for bit widths <= 64
-  if (d_enable_scoring)
+  if (d_enable_scoring && !inconsistent)
   {
     normalize_adders(assertions_pass1, assertions_pass2);
-    processed_assertions = &assertions_pass2;
 
     util::Timer timer(d_stats.time_score);
     bv::AigBitblaster bitblaster;
