@@ -59,6 +59,7 @@ class UnsupportedException : std::exception
 class SolverEngine
 {
   friend SolvingContext;
+  friend SolverState;
 
  public:
   SolverEngine(SolvingContext& context);
