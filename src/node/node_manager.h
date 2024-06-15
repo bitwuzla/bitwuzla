@@ -107,6 +107,15 @@ class NodeManager
   Node mk_value(const FloatingPoint& value);
 
   /**
+   * Create uninterpreted constant value.
+   *
+   * @param t Uninterpreted type.
+   * @param value Uninterpreted value identifier.
+   * @return Node representing given uninterpreted value.
+   */
+  Node mk_value(const Type& t, const std::string& value);
+
+  /**
    * Create node of kind `kind` with given children and indices.
    *
    * @param kind Node kind.

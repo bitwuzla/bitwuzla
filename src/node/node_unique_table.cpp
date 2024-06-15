@@ -155,11 +155,19 @@ NodeUniqueTable::hash(const NodeData* d) const
       const auto& payload = d->payload_value<RoundingMode>();
       hash += std::hash<RoundingMode>{}(payload.d_value);
     }
-    else
+    else if (t.is_fp())
     {
-      assert(t.is_fp());
       const auto& payload = d->payload_value<FloatingPoint>();
       hash += std::hash<FloatingPoint>{}(payload.d_value);
+    }
+    else if (t.is_uninterpreted())
+    {
+      const auto& payload = d->payload_value<std::string>();
+      hash += std::hash<std::string>{}(payload.d_value);
+    }
+    else
+    {
+      assert(false);
     }
   }
   else
