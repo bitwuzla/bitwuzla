@@ -1,0 +1,6 @@
+(set-info :status unsat)
+(declare-const x Bool)
+(declare-const c (Array (_ BitVec 2) (Array (_ BitVec 2) (_ BitVec 2))))
+(assert (forall ((v (_ BitVec 2))) (or (bvsge (_ bv0 2) (select (select c (_ bv0 2)) (_ bv0 2))) (bvsge (concat (ite x (bvnot (_ bv0 2)) (_ bv0 2)) (select (select c (_ bv0 2)) (_ bv1 2))) (concat (concat #b0 ((_ extract 1 1) v)) (_ bv1 2))))))
+(assert (exists ((v (_ BitVec 2))) (bvslt (_ bv0 2) (select (select c (_ bv0 2)) (_ bv0 2)))))
+(check-sat)

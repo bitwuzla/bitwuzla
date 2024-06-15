@@ -1,0 +1,8 @@
+(set-logic QF_ABV)
+(set-info :status sat)
+(set-option :check-model true)
+(declare-fun c () (Array (_ BitVec 1) (Array (_ BitVec 1) (_ BitVec 1))))
+(declare-fun c_ () (_ BitVec 1))
+(assert (= c_ (select (select c (_ bv0 1)) (_ bv0 1))))
+(assert (= c (store c (_ bv0 1) (store (select c (_ bv0 1)) (_ bv0 1) (_ bv1 1)))))
+(check-sat)
