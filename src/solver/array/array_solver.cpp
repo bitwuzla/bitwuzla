@@ -293,6 +293,11 @@ ArraySolver::check_access(const Node& access)
       else
       {
         assert(array.kind() == Kind::CONSTANT || array.kind() == Kind::APPLY);
+        if (array.kind() == Kind::APPLY)
+        {
+          // Trigger term registration for function application
+          d_solver_state.process_term(array);
+        }
       }
 
       // Propagate upwards

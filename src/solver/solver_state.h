@@ -46,6 +46,9 @@ class SolverState
   /** Print solver engine statistics. */
   void print_statistics();
 
+  /** Process term to register. */
+  void process_term(const Node& term);
+
  private:
   /** Associated solver engine. */
   SolverEngine& d_solver_engine;
