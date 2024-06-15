@@ -55,9 +55,18 @@ RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
     return nm.mk_value(
         (node[0].value<FloatingPoint>() == node[1].value<FloatingPoint>()));
   }
-  assert(node[0].type().is_rm());
-  return nm.mk_value(
-      (node[0].value<RoundingMode>() == node[1].value<RoundingMode>()));
+  if (node[0].type().is_rm())
+  {
+    return nm.mk_value(
+        (node[0].value<RoundingMode>() == node[1].value<RoundingMode>()));
+  }
+  if (node[0].type().is_uninterpreted())
+  {
+    return nm.mk_value(
+        (node[0].value<std::string>() == node[1].value<std::string>()));
+  }
+  assert(false);
+  return node;
 }
 
 /**

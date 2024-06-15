@@ -562,6 +562,14 @@ Printer::print(std::ostream& os,
         {
           os << cur.value<RoundingMode>();
         }
+        else if (type.is_uninterpreted())
+        {
+          const std::optional<std::string>& symbol =
+              type.uninterpreted_symbol();
+          os << "(as " << cur.value<std::string>() << " ";
+          os << (symbol ? *symbol : "@bzla.sort" + std::to_string(type.id()));
+          os << ")";
+        }
         else
         {
           assert(false);

@@ -136,6 +136,18 @@ NodeManager::mk_value(const FloatingPoint& value)
 }
 
 Node
+NodeManager::mk_value(const Type& t, const std::string& value)
+{
+  auto [inserted, data] = d_unique_table.find_or_insert(t, value);
+  if (inserted)
+  {
+    init_id(data);
+    data->d_type = t;
+  }
+  return Node(data);
+}
+
+Node
 NodeManager::mk_node(Kind kind,
                      const std::vector<Node>& children,
                      const std::vector<uint64_t>& indices)

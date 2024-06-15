@@ -96,7 +96,10 @@ FunSolver::value(const Node& term)
   }
   else if (term.kind() == Kind::CONSTANT && term.type().is_uninterpreted())
   {
-    return term;
+    std::stringstream ss;
+    ss << "@const_" << term.id();
+    auto val = nm.mk_value(term.type(), ss.str());
+    return val;
   }
   else if (term.kind() == Kind::APPLY)
   {
@@ -113,7 +116,9 @@ FunSolver::value(const Node& term)
     }
     if (term.type().is_uninterpreted())
     {
-      return term;
+      std::stringstream ss;
+      ss << "@const_" << term.id();
+      return nm.mk_value(term.type(), ss.str());
     }
     return node::utils::mk_default_value(nm, term.type());
   }
