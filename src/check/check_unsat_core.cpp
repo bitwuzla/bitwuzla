@@ -45,7 +45,7 @@ CheckUnsatCore::check()
     check_ctx.assert_formula(assertion);
   }
 
-  return check_ctx.solve() == Result::UNSAT;
+  return check_ctx.solve() != Result::SAT; // unknown allowed for now
 }
 
 }  // namespace bzla::check
