@@ -2,6 +2,10 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Quantification over array variables now supported.
+
+- Added new abstraction module for abstracting bit-vector arithmetic operators.
+
 ## News for version 0.5.0
 
 - Fixed incorrect result with rewrite level 0 (issue #110) (missing guard,
