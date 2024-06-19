@@ -16,4 +16,4 @@ sat
 )
 ((f (lambda ((x (_ BitVec 8))) (bvadd x #b00000001))))
 ((D ((as const (Array (_ BitVec 2) (_ BitVec 32))) #b00000000000000000000000000000000)))
-((g (lambda ((@bzla.var_42 (_ BitVec 32))) false)))
+((g (lambda ((@bzla.var_43 (_ BitVec 32))) false)))
