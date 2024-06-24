@@ -443,7 +443,8 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       {
         *pkind = ParsedKind::CONSTRAINT;
       }
-      d_bad_properties.emplace_back(bv1_term_to_bool(term), line_id, symbol);
+      d_bad_properties.emplace_back(
+          bv1_term_to_bool(term), line_id, symbol ? symbol : "");
       return true;
     }
 
