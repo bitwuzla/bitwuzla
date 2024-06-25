@@ -485,20 +485,36 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       {
         return false;
       }
-      if (token != Token::NUMBER)
+      std::string val = d_lexer->token();
+      uint8_t base    = 10;
+      if (op == Token::CONSTH)
+      {
+        base = 16;
+        for (size_t i = 0, size = val.size(); i < size; ++i)
+        {
+          if (!isxdigit(val[i]))
+          {
+            return error("expected hex value, got '"
+                         + std::string(d_lexer->token()) + "'");
+          }
+        }
+      }
+      else if (op == Token::CONST)
+      {
+        base = 2;
+        for (size_t i = 0, size = val.size(); i < size; ++i)
+        {
+          if (val[i] != '0' && val[i] != '1')
+          {
+            return error("expected binary value, got '"
+                         + std::string(d_lexer->token()) + "'");
+          }
+        }
+      }
+      else if (token != Token::NUMBER)
       {
         return error("expected value, got '" + std::string(d_lexer->token())
                      + "'");
-      }
-      std::string val = d_lexer->token();
-      uint8_t base    = 2;
-      if (op == Token::CONSTD)
-      {
-        base = 10;
-      }
-      else if (op == Token::CONSTH)
-      {
-        base = 16;
       }
       if (!sort.is_bv())
       {
