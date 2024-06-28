@@ -293,7 +293,7 @@ Parser::bv1_term_to_bool(const bitwuzla::Term& term) const
 bool
 Parser::parse_line(ParsedKind* pkind, int64_t* id)
 {
-  Token token = d_lexer->next_token();
+  Token token = d_lexer->next_token(Token::NUMBER_DEC);
 
   if (token == Token::ENDOFFILE)
   {
@@ -363,14 +363,12 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
         return false;
       }
       d_bitwuzla->assert_formula(bv1_term_to_bool(term));
-      if (d_lexer->look_ahead() != '\n')
-      {
-        d_lexer->next_token();
-      }
       if (pkind)
       {
         *pkind = ParsedKind::CONSTRAINT;
       }
+      // Symbol not used
+      parse_opt_symbol();
       return true;
 
     case Token::EQ:
@@ -433,12 +431,7 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       {
         return false;
       }
-      const char* symbol = nullptr;
-      if (d_lexer->look_ahead() != '\n')
-      {
-        d_lexer->next_token();
-        symbol = d_lexer->token();
-      }
+      const char* symbol = parse_opt_symbol();
       if (pkind)
       {
         *pkind = ParsedKind::CONSTRAINT;
@@ -481,42 +474,27 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
     case Token::CONST:
     case Token::CONSTD:
     case Token::CONSTH: {
-      token = d_lexer->next_token();
+      uint8_t base = 0;
+      if (op == Token::CONST)
+      {
+        base  = 2;
+        token = d_lexer->next_token(Token::NUMBER_BIN);
+      }
+      else if (op == Token::CONSTD)
+      {
+        base  = 10;
+        token = d_lexer->next_token(Token::NUMBER_DEC);
+      }
+      else
+      {
+        base  = 16;
+        token = d_lexer->next_token(Token::NUMBER_HEX);
+      }
       if (!check_token(op))
       {
         return false;
       }
       std::string val = d_lexer->token();
-      uint8_t base    = 10;
-      if (op == Token::CONSTH)
-      {
-        base = 16;
-        for (size_t i = 0, size = val.size(); i < size; ++i)
-        {
-          if (!isxdigit(val[i]))
-          {
-            return error("expected hex value, got '"
-                         + std::string(d_lexer->token()) + "'");
-          }
-        }
-      }
-      else if (op == Token::CONST)
-      {
-        base = 2;
-        for (size_t i = 0, size = val.size(); i < size; ++i)
-        {
-          if (val[i] != '0' && val[i] != '1')
-          {
-            return error("expected binary value, got '"
-                         + std::string(d_lexer->token()) + "'");
-          }
-        }
-      }
-      else if (token != Token::NUMBER)
-      {
-        return error("expected value, got '" + std::string(d_lexer->token())
-                     + "'");
-      }
       if (!sort.is_bv())
       {
         return error("expected bit-vector sort", sort_coo);
@@ -532,18 +510,19 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       break;
     }
 
-    case Token::INPUT:
-      if (d_lexer->look_ahead() != '\n')
+    case Token::INPUT: {
+      const char* symbol = parse_opt_symbol();
+      if (symbol)
       {
-        d_lexer->next_token();
-        term = d_tm.mk_const(sort, d_lexer->token());
+        term = d_tm.mk_const(sort, symbol);
       }
       else
       {
         term = d_tm.mk_const(sort);
       }
       d_inputs.emplace_back(line_id, term);
-      break;
+    }
+    break;
 
     case Token::ONE:
       if (!sort.is_bv())
@@ -761,8 +740,6 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
         args.push_back(term);
       }
       break;
-
-      break;
     case Token::READ:
       if (!parse_term(term))
       {
@@ -852,10 +829,10 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
                    + "', already defined");
     }
   }
-  if (op != Token::INPUT && d_lexer->look_ahead() != '\n')
-  {
-    d_lexer->next_token();
-  }
+
+  // Ignore optional symbol
+  parse_opt_symbol();
+
   return true;
 }
 
@@ -869,13 +846,13 @@ Parser::parse_number(bool sign, int64_t& res, bool look_ahead, Token la)
   }
   else
   {
-    token = d_lexer->next_token();
+    token = d_lexer->next_token(Token::NUMBER_DEC);
     if (!check_token(token))
     {
       return false;
     }
   }
-  if (token != Token::NUMBER)
+  if (token != Token::NUMBER_DEC)
   {
     return error("expected integer, got '" + std::string(d_lexer->token())
                  + "'");
@@ -897,6 +874,18 @@ Parser::parse_number(bool sign, int64_t& res, bool look_ahead, Token la)
                  + "'");
   }
   return error("expected 64 bit integer");
+}
+
+const char*
+Parser::parse_opt_symbol()
+{
+  int32_t ch = d_lexer->look_ahead();
+  if (ch != ';' && ch != '\n')
+  {
+    d_lexer->next_token();
+    return d_lexer->token();
+  }
+  return nullptr;
 }
 
 bool

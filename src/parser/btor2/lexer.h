@@ -43,7 +43,7 @@ class Lexer
    */
   void init(std::istream* input);
   /** @return The next token. */
-  Token next_token();
+  Token next_token(Token expected = Token::SYMBOL);
   /**
    * @return True if lexer parsed a token that has a non-unique string
    *         representation (e.g., symbols, attributes, binary values, etc.).
@@ -78,7 +78,9 @@ class Lexer
    */
   int32_t look_ahead()
   {
-    int32_t ch = next_char();
+    int32_t ch;
+    while ((ch = next_char()) && std::isspace(ch) && ch != '\n')
+      ;
     save_char(ch);
     return ch;
   }
@@ -168,7 +170,7 @@ class Lexer
   }
 
   /** Helper for next_token(). */
-  Token next_token_aux();
+  Token next_token_aux(Token expected);
 
   /**
    * @return The next character in the input file.

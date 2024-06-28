@@ -26,7 +26,13 @@ class TestBtor2Lexer : public ::testing::Test
                   Token expected,
                   const std::string& expected_str = "")
   {
-    Token token = lexer.next_token();
+    Token lex_expected = Token::SYMBOL;
+    if (expected == Token::NUMBER_BIN || expected == Token::NUMBER_DEC
+        || expected == Token::NUMBER_HEX)
+    {
+      lex_expected = expected;
+    }
+    Token token = lexer.next_token(lex_expected);
     if (lexer.error())
     {
       std::cout << "error: " << lexer.error_msg() << std::endl;
@@ -75,10 +81,10 @@ TEST_F(TestBtor2Lexer, sort)
   open_file(input, infile);
   Lexer lexer;
   lexer.init(&infile);
-  next_token(lexer, Token::NUMBER, "1");
+  next_token(lexer, Token::NUMBER_DEC, "1");
   next_token(lexer, Token::SORT, "sort");
   next_token(lexer, Token::BITVEC, "bitvec");
-  next_token(lexer, Token::NUMBER, "32");
+  next_token(lexer, Token::NUMBER_DEC, "32");
   next_token(lexer, Token::ENDOFFILE);
   infile.close();
 }
@@ -91,9 +97,9 @@ TEST_F(TestBtor2Lexer, input)
   open_file(input, infile);
   Lexer lexer;
   lexer.init(&infile);
-  next_token(lexer, Token::NUMBER, "4");
+  next_token(lexer, Token::NUMBER_DEC, "4");
   next_token(lexer, Token::INPUT, "input");
-  next_token(lexer, Token::NUMBER, "1");
+  next_token(lexer, Token::NUMBER_DEC, "1");
   next_token(lexer, Token::SYMBOL, "x");
   next_token(lexer, Token::ENDOFFILE);
   infile.close();
@@ -107,11 +113,11 @@ TEST_F(TestBtor2Lexer, neg)
   open_file(input, infile);
   Lexer lexer;
   lexer.init(&infile);
-  next_token(lexer, Token::NUMBER, "6");
+  next_token(lexer, Token::NUMBER_DEC, "6");
   next_token(lexer, Token::ADD, "add");
-  next_token(lexer, Token::NUMBER, "1");
-  next_token(lexer, Token::NUMBER, "-2");
-  next_token(lexer, Token::NUMBER, "-5");
+  next_token(lexer, Token::NUMBER_DEC, "1");
+  next_token(lexer, Token::NUMBER_DEC, "-2");
+  next_token(lexer, Token::NUMBER_DEC, "-5");
   next_token(lexer, Token::ENDOFFILE);
   infile.close();
 }
@@ -134,49 +140,49 @@ TEST_F(TestBtor2Lexer, formula)
   open_file(input, infile);
   Lexer lexer;
   lexer.init(&infile);
-  next_token(lexer, Token::NUMBER, "1");
+  next_token(lexer, Token::NUMBER_DEC, "1");
   next_token(lexer, Token::SORT, "sort");
   next_token(lexer, Token::BITVEC, "bitvec");
-  next_token(lexer, Token::NUMBER, "32");
-  next_token(lexer, Token::NUMBER, "2");
+  next_token(lexer, Token::NUMBER_DEC, "32");
+  next_token(lexer, Token::NUMBER_DEC, "2");
   next_token(lexer, Token::CONST, "const");
-  next_token(lexer, Token::NUMBER, "1");
-  next_token(lexer, Token::NUMBER, "11111111111111111111111111111110");
-  next_token(lexer, Token::NUMBER, "3");
+  next_token(lexer, Token::NUMBER_DEC, "1");
+  next_token(lexer, Token::NUMBER_BIN, "11111111111111111111111111111110");
+  next_token(lexer, Token::NUMBER_DEC, "3");
   next_token(lexer, Token::CONST, "const");
-  next_token(lexer, Token::NUMBER, "1");
-  next_token(lexer, Token::NUMBER, "00000000000000000000000000000010");
-  next_token(lexer, Token::NUMBER, "4");
+  next_token(lexer, Token::NUMBER_DEC, "1");
+  next_token(lexer, Token::NUMBER_BIN, "00000000000000000000000000000010");
+  next_token(lexer, Token::NUMBER_DEC, "4");
   next_token(lexer, Token::INPUT, "input");
-  next_token(lexer, Token::NUMBER, "1");
+  next_token(lexer, Token::NUMBER_DEC, "1");
   next_token(lexer, Token::SYMBOL, "x");
-  next_token(lexer, Token::NUMBER, "5");
+  next_token(lexer, Token::NUMBER_DEC, "5");
   next_token(lexer, Token::MUL, "mul");
-  next_token(lexer, Token::NUMBER, "1");
-  next_token(lexer, Token::NUMBER, "3");
-  next_token(lexer, Token::NUMBER, "4");
-  next_token(lexer, Token::NUMBER, "6");
+  next_token(lexer, Token::NUMBER_DEC, "1");
+  next_token(lexer, Token::NUMBER_DEC, "3");
+  next_token(lexer, Token::NUMBER_DEC, "4");
+  next_token(lexer, Token::NUMBER_DEC, "6");
   next_token(lexer, Token::ADD, "add");
-  next_token(lexer, Token::NUMBER, "1");
-  next_token(lexer, Token::NUMBER, "-2");
-  next_token(lexer, Token::NUMBER, "-5");
-  next_token(lexer, Token::NUMBER, "7");
+  next_token(lexer, Token::NUMBER_DEC, "1");
+  next_token(lexer, Token::NUMBER_DEC, "-2");
+  next_token(lexer, Token::NUMBER_DEC, "-5");
+  next_token(lexer, Token::NUMBER_DEC, "7");
   next_token(lexer, Token::MUL, "mul");
-  next_token(lexer, Token::NUMBER, "1");
-  next_token(lexer, Token::NUMBER, "2");
-  next_token(lexer, Token::NUMBER, "4");
-  next_token(lexer, Token::NUMBER, "8");
+  next_token(lexer, Token::NUMBER_DEC, "1");
+  next_token(lexer, Token::NUMBER_DEC, "2");
+  next_token(lexer, Token::NUMBER_DEC, "4");
+  next_token(lexer, Token::NUMBER_DEC, "8");
   next_token(lexer, Token::SORT, "sort");
   next_token(lexer, Token::BITVEC, "bitvec");
-  next_token(lexer, Token::NUMBER, "1");
-  next_token(lexer, Token::NUMBER, "9");
+  next_token(lexer, Token::NUMBER_DEC, "1");
+  next_token(lexer, Token::NUMBER_DEC, "9");
   next_token(lexer, Token::EQ, "eq");
-  next_token(lexer, Token::NUMBER, "8");
-  next_token(lexer, Token::NUMBER, "6");
-  next_token(lexer, Token::NUMBER, "7");
-  next_token(lexer, Token::NUMBER, "10");
+  next_token(lexer, Token::NUMBER_DEC, "8");
+  next_token(lexer, Token::NUMBER_DEC, "6");
+  next_token(lexer, Token::NUMBER_DEC, "7");
+  next_token(lexer, Token::NUMBER_DEC, "10");
   next_token(lexer, Token::CONSTRAINT, "constraint");
-  next_token(lexer, Token::NUMBER, "-9");
+  next_token(lexer, Token::NUMBER_DEC, "-9");
   next_token(lexer, Token::ENDOFFILE);
   infile.close();
 }

@@ -33,10 +33,12 @@ Lexer::init(std::istream* input)
 }
 
 Token
-Lexer::next_token()
+Lexer::next_token(Token expected)
 {
+  assert(expected == Token::SYMBOL || expected == Token::NUMBER_BIN
+         || expected == Token::NUMBER_DEC || expected == Token::NUMBER_HEX);
   d_last_coo = d_coo;
-  return next_token_aux();
+  return next_token_aux(expected);
 }
 
 bool
@@ -54,58 +56,77 @@ Lexer::error_msg() const
 /* Lexer private ------------------------------------------------------------ */
 
 Token
-Lexer::next_token_aux()
+Lexer::next_token_aux(Token expected)
 {
   int32_t ch;
   d_token.clear();
 
-  // skip whitespace and comments
-  for (;;)
+  // skip leading whitespaces and comments
+  do
   {
-    do
+    d_coo = d_cur_coo;
+    if ((ch = next_char()) == EOF)
     {
-      d_coo = d_cur_coo;
-      if ((ch = next_char()) == EOF)
-      {
-        d_token.push_back(0);
-        return Token::ENDOFFILE;
-      }
-    } while (is_printable(ch) && std::isspace(ch));
-
-    if (ch != ';')
-    {
-      break;
+      d_token.push_back(0);
+      return Token::ENDOFFILE;
     }
-    while ((ch = next_char()) != '\n')
+    if (ch == ';')
     {
-      if (ch == EOF)
+      while ((ch = next_char()) != '\n')
       {
-        d_token.push_back(0);
-        return error(ch, "unexpected end of file in comment");
+        if (ch == EOF)
+        {
+          d_token.push_back(0);
+          return error(ch, "unexpected end of file in comment");
+        }
       }
     }
-  }
+  } while (is_printable(ch) && std::isspace(ch));
 
-  if (is_char_class(ch, CharacterClass::NUMBER))
+  if (expected == Token::NUMBER_BIN)
   {
-    Token res = Token::NUMBER;
-    push_char(ch);
-    for (;;)
+    while (ch == '0' || ch == '1')
     {
-      ch = next_char();
-      if (!is_char_class(ch, CharacterClass::NUMBER))
-      {
-        break;
-      }
       push_char(ch);
-    }
-    if (ch == '.')
-    {
-      return error(ch, "unexpected '.' in number");
+      ch = next_char();
     }
     save_char(ch);
+    if (d_token.empty())
+    {
+      return error(ch, "expected binary number");
+    }
     d_token.push_back(0);
-    return res;
+    return expected;
+  }
+  else if (expected == Token::NUMBER_DEC)
+  {
+    while (is_char_class(ch, CharacterClass::NUMBER))
+    {
+      push_char(ch);
+      ch = next_char();
+    }
+    save_char(ch);
+    if (d_token.empty())
+    {
+      return error(ch, "expected decimal number");
+    }
+    d_token.push_back(0);
+    return expected;
+  }
+  else if (expected == Token::NUMBER_HEX)
+  {
+    while (isxdigit(ch))
+    {
+      push_char(ch);
+      ch = next_char();
+    }
+    save_char(ch);
+    if (d_token.empty())
+    {
+      return error(ch, "expected hex number");
+    }
+    d_token.push_back(0);
+    return expected;
   }
   else if (is_char_class(ch, CharacterClass::SYMBOL))
   {

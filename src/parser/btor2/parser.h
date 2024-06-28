@@ -85,6 +85,9 @@ class Parser : public bzla::parser::Parser
                     int64_t& res,
                     bool look_ahead = false,
                     Token la        = Token::INVALID);
+
+  const char* parse_opt_symbol();
+
   /**
    * Parse sort.
    * @param line_id The line id of the sort to parse.

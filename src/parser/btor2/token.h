@@ -21,7 +21,9 @@ enum class Token
 {
   INVALID,
   ENDOFFILE,
-  NUMBER,
+  NUMBER_DEC,
+  NUMBER_BIN,
+  NUMBER_HEX,
   SYMBOL,
   // BTOR2 keywords
   ADD,

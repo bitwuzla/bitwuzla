@@ -32,7 +32,9 @@ to_string(bzla::parser::btor2::Token token)
   {
     case Token::INVALID: return "<invalid token>";
     case Token::ENDOFFILE: return "<eof token>";
-    case Token::NUMBER: return "<number token>";
+    case Token::NUMBER_BIN: return "<binary number token>";
+    case Token::NUMBER_DEC: return "<decimal number token>";
+    case Token::NUMBER_HEX: return "<hex number token>";
     case Token::SYMBOL: return "<symbol token>";
     case Token::ADD: return "add";
     case Token::AND: return "and";
