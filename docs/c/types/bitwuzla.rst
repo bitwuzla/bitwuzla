@@ -1,5 +1,5 @@
 Bitwuzla
---------
+========
 
 A :cpp:type:`Bitwuzla` instance is created from a configuration
 options :cpp:type:`BitwuzlaOptions` instance. This options instance must be

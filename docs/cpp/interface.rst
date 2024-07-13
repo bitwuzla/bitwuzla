@@ -1,6 +1,32 @@
 C++ Interface
 =============
 
+This section provides a detailed description of the :doc:`C++ API <api>`,
+the primary API of Bitwuzla.
+For an introduction on how to use the C++ API, refer to the
+:ref:`quickstart <cpp/api:quickstart>` guide. A comprehensive set of
+:ref:`examples <cpp/api:examples>` covers basic and common use cases.
+
+.. container:: hide-toctree
+
+  .. toctree::
+     :hidden:
+
+     classes/bitwuzla
+     classes/exception
+     enums/kind
+     enums/option
+     classes/options
+     classes/optioninfo
+     classes/parser
+     enums/result
+     enums/roundingmode
+     classes/sort
+     classes/term
+     classes/termmanager
+     classes/terminator
+     library_info
+
 :code:`namespace bitwuzla {`
 
 Classes

@@ -1,5 +1,5 @@
 BitwuzlaRoundingMode
---------------------
+====================
 
 - enum :cpp:enum:`BitwuzlaRoundingMode`
 - :cpp:func:`bitwuzla_rm_to_string()`

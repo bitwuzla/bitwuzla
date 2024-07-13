@@ -1,5 +1,5 @@
 BitwuzlaOptionInfo
-------------------
+==================
 
 
 The configuration data of an option.

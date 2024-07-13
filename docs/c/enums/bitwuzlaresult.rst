@@ -1,5 +1,5 @@
 BitwuzlaResult
---------------
+==============
 
 - enum :cpp:enum:`BitwuzlaResult`
 - :cpp:func:`bitwuzla_result_to_string()`

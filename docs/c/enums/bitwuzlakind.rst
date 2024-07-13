@@ -1,5 +1,5 @@
 BitwuzlaKind
-------------
+============
 
 The kind of a :cpp:type:`BitwuzlaTerm`.
 

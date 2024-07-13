@@ -1,10 +1,10 @@
 BitwuzlaTerm
-------------
+============
 
 Terms of a given :cpp:enum:`BitwuzlaKind` are created via
 :cpp:func:`bitwuzla_mk_term()` (and related `bitwuzla_mk_term*()` functions
 provided for convenience). a comprehensive documentation of supported
-term kinds can be found :doc:`here <c/enums/bitwuzlakind>`.
+term kinds can be found :doc:`here </c/enums/bitwuzlakind>`.
 For creating terms that represent general and special values of a given sort,
 Bitwuzla provides additional functions, see below.
 

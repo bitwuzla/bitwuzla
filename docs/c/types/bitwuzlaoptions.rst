@@ -1,5 +1,5 @@
 BitwuzlaOptions
----------------
+===============
 
 A :cpp:type:`Bitwuzla` instance is created from a configuration
 options :cpp:type:`BitwuzlaOptions` instance via
@@ -18,7 +18,7 @@ options with option modes are configured via
 :cpp:func:`bitwuzla_set_option_mode()`.
 The option kind is defined via :cpp:enum:`BitwuzlaOption`.
 A **comprehensive list** of all configurable options is available
-:doc:`here <c/enums/bitwuzlaoption>`.
+:doc:`here </c/enums/bitwuzlaoption>`.
 
 More information on and an example for how to configure and query configuration
 options is :doc:`here </c/options>`.

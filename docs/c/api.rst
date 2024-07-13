@@ -1,5 +1,14 @@
 C API Documentation
-============================
+===================
+
+The :doc:`C API <interface>` of Bitwuzla is implemented as a thin wrapper
+around its :doc:`C++ API <../cpp/api>`, Bitwuzla's primary API.  
+This section provides a :ref:`quickstart <c/api:quickstart>` guide to give an
+introduction on how to use the C API and a comprehensive set of :ref:`examples
+<c/api:examples>` to cover basic and common use cases. A comprehensive
+description of the interface is given :doc:`here <interface>`.
+
+----
 
 .. toctree::
    :maxdepth: 1
@@ -7,9 +16,12 @@ C API Documentation
    interface
    options
    Term Kinds <enums/bitwuzlakind>
+   Parser <types/bitwuzlaparser>
 
 .. contents::
    :local:
+
+----
 
 Quickstart
 ----------
@@ -40,7 +52,7 @@ default):
      :language: c
      :lines: 28
 
-For more details on available options, see :doc:`c/options`.
+For more details on available options, see :doc:`/c/options`.
 
 Then, create a :cpp:type:`Bitwuzla` **solver** instance with a term manager
 and configured options (configuration options are now frozen and cannot be
@@ -211,9 +223,9 @@ This will print:
 
 The value of :code:`f` (a function term) and :code:`a` (an array term), on the
 other hand, cannot be represented with a simple type. Thus, function values are
-given as :cpp:enum:`BitwuzlaKind.LAMBDA <BitwuzlaKind::LAMBDA>`, and array
+given as :cpp:enum:`BITWUZLA_KIND_LAMBDA`, and array
 values are given as
-:cpp:enum:`BitwuzlaKind.ARRAY_STORE <BitwuzlaKind::ARRAY_STORE>`.
+:cpp:enum:`BITWUZLA_KIND_ARRAY_STORE`.
 We can retrieve an SMT-LIB2 string representation of the values via
 :cpp:func:`bitwuzla_term_to_string()`:
 
@@ -284,6 +296,7 @@ instances.
   :cpp:func:`bitwuzla_term_manager_release()`.
 
 
+----
 
 Examples
 --------

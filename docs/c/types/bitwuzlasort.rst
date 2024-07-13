@@ -1,5 +1,5 @@
 BitwuzlaSort
-------------
+============
 
 Bitwuzla supports array (SMT-LIB: :code:`Array`), Boolean (SMT-LIB:
 :code:`Bool`), bit-vector (SMT-LIB: :code:`(_ BitVec n)`), floating-point

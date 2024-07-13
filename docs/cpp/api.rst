@@ -1,6 +1,13 @@
 C++ API Documentation
 ======================
 
+The :doc:`C++ API <interface>` of Bitwuzla is its primary API.
+This section provides a :ref:`quickstart <cpp/api:quickstart>` guide to give an
+introduction on how to use the C++ API and a comprehensive set of
+:ref:`examples <cpp/api:examples>` to cover basic and common use cases. A
+comprehensive description of the interface is given :doc:`here <interface>`.
+
+----
 
 .. toctree::
    :maxdepth: 1
@@ -11,6 +18,8 @@ C++ API Documentation
 
 .. contents::
    :local:
+
+-----
 
 Quickstart
 ----------
@@ -268,6 +277,7 @@ This will print:
 
   value of v = x * x: 11000001
 
+-----
 
 Examples
 --------

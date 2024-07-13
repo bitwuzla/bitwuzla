@@ -1,5 +1,5 @@
 BitwuzlaOption
---------------
+==============
 
 The kind of a Bitwuzla configuration option.
 
