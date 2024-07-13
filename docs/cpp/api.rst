@@ -29,13 +29,15 @@ create sorts and terms later:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: c
-     :lines: 22
+     :start-after: docs-cpp-quickstart-0 start
+     :end-before: docs-cpp-quickstart-0 end
 
 Then, create a :cpp:class:`bitwuzla::Options` instance:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 24
+     :start-after: docs-cpp-quickstart-1 start
+     :end-before: docs-cpp-quickstart-1 end
 
 This instance can be configured via :cpp:func:`bitwuzla::Options::set()`.  
 For example, to enable model generation
@@ -43,7 +45,8 @@ For example, to enable model generation
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 26
+     :start-after: docs-cpp-quickstart-2 start
+     :end-before: docs-cpp-quickstart-2 end
 
 Some options have **modes**, which can be configured via the string
 representation of their modes. For example, to enable CaDiCaL as back end SAT
@@ -52,7 +55,8 @@ default):
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 31
+     :start-after: docs-cpp-quickstart-3 start
+     :end-before: docs-cpp-quickstart-3 end
 
 For more details on available options, see :doc:`options`.
 
@@ -62,7 +66,8 @@ changed for this instance):
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 33
+     :start-after: docs-cpp-quickstart-4 start
+     :end-before: docs-cpp-quickstart-4 end
 
 Next, you will want to **create** some **expressions** via the term manager
 `tm` and **assert formulas**.
@@ -81,7 +86,8 @@ This input is created and asserted as follows:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 21-79
+     :start-after: docs-cpp-quickstart-5 start
+     :end-before: docs-cpp-quickstart-5 end
 
 Alternatively, you can **parse** an **input file** in BTOR2 format
 :cite:`btor2` or SMT-LIB v2 format :cite:`smtlib2` by creating a parser
@@ -170,7 +176,8 @@ determined via :cpp:func:`bitwuzla::Bitwuzla::check_sat()`.
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 81-82
+     :start-after: docs-cpp-quickstart-6 start
+     :end-before: docs-cpp-quickstart-6 end
 
 Formulas can also be **assumed** via passing a vector of assumptions into
 :cpp:func:`bitwuzla::Bitwuzla::check_sat()`.
@@ -184,7 +191,8 @@ the current model via declared symbols (in this case :code:`x`, :code:`y`,
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 87-118
+     :start-after: docs-cpp-quickstart-7 start
+     :end-before: docs-cpp-quickstart-7 end
 
 This will output a possible model, in this case:
 
@@ -215,7 +223,8 @@ bit-vector terms, as binary strings:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 123-127
+     :start-after: docs-cpp-quickstart-8 start
+     :end-before: docs-cpp-quickstart-8 end
 
 This will print:
 
@@ -233,7 +242,8 @@ We can retrieve an SMT-LIB2 string representation of the values via
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 130-140
+     :start-after: docs-cpp-quickstart-9 start
+     :end-before: docs-cpp-quickstart-9 end
 
 This will print:
 
@@ -254,7 +264,8 @@ however, is given in SMT-LIB2 format. For example,
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 146-149
+     :start-after: docs-cpp-quickstart-10 start
+     :end-before: docs-cpp-quickstart-10 end
 
 This will print:
 
@@ -269,7 +280,8 @@ occur in the input formula:
 
 .. literalinclude:: ../../examples/cpp/quickstart.cpp
      :language: cpp
-     :lines: 153-154
+     :start-after: docs-cpp-quickstart-11 start
+     :end-before: docs-cpp-quickstart-11 end
 
 This will print:
 

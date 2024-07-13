@@ -16,19 +16,30 @@ int
 main()
 {
   // First, create a term manager instance.
+  //! [docs-c-quickstart-0 start]
   BitwuzlaTermManager *tm = bitwuzla_term_manager_new();
+  //! [docs-c-quickstart-0 end]
   // Create a Bitwuzla options instance.
+  //! [docs-c-quickstart-1 start]
   BitwuzlaOptions *options = bitwuzla_options_new();
+  //! [docs-c-quickstart-1 end]
   // Then, enable model generation.
+  //! [docs-c-quickstart-2 start]
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+  //! [docs-c-quickstart-2 end]
   // Now, for illustration purposes, we enable CaDiCaL as SAT solver
   // (CaDiCaL is already configured by default).
   // Note: This will silently fall back to one of the compiled in SAT solvers
   //       if the selected solver is not compiled in.
+  //! [docs-c-quickstart-3 start]
   bitwuzla_set_option_mode(options, BITWUZLA_OPT_SAT_SOLVER, "cadical");
+  //! [docs-c-quickstart-3 end]
   // Then, create a Bitwuzla instance.
+  //! [docs-c-quickstart-4 start]
   Bitwuzla *bitwuzla = bitwuzla_new(tm, options);
+  //! [docs-c-quickstart-4 end]
 
+  //! [docs-c-quickstart-5 start]
   // Create bit-vector sorts of size 4 and 8.
   BitwuzlaSort sortbv4 = bitwuzla_mk_bv_sort(tm, 4);
   BitwuzlaSort sortbv8 = bitwuzla_mk_bv_sort(tm, 8);
@@ -89,14 +100,18 @@ main()
                         BITWUZLA_KIND_EQUAL,
                         bitwuzla_mk_term2(tm, BITWUZLA_KIND_ARRAY_SELECT, a, x),
                         y));
+  //! [docs-c-quickstart-5 end]
 
   // (check-sat)
+  //! [docs-c-quickstart-6 start]
   BitwuzlaResult result = bitwuzla_check_sat(bitwuzla);
+  //! [docs-c-quickstart-6 end]
 
   printf("Expect: sat\n");
   printf("Bitwuzla: %s\n\n", bitwuzla_result_to_string(result));
 
   // Print model in SMT-LIBv2 format.
+  //! [docs-c-quickstart-7 start]
   printf("Model:\n");
   BitwuzlaTerm decls[4] = {x, y, f, a};
   printf("(\n");
@@ -143,10 +158,12 @@ main()
   }
   printf(")\n");
   printf("\n");
+  //! [docs-c-quickstart-7 end]
 
   // Print value for x, y, f and a.
   // Note: The returned string of bitwuzla_term_value_get_str is only valid
   //       until the next call to bitwuzla_term_value_get_str
+  //! [docs-c-quickstart-8 start]
   // Both x and y are bit-vector terms and their value is a bit-vector
   // value that can be printed via bitwuzla_term_value_get_str().
   printf("value of x: %s\n",
@@ -154,6 +171,8 @@ main()
   printf("value of y: %s\n",
          bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, y)));
   printf("\n");
+  //! [docs-c-quickstart-8 end]
+  //! [docs-c-quickstart-9 start]
   // f and a, on the other hand, are a function and array term, respectively.
   // The value of these terms is not a value term: for f, it is a lambda term,
   // and the value of a is represented as a store term. Thus we cannot use
@@ -164,26 +183,33 @@ main()
   printf("to_string representation of value of a:\n%s\n",
          bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, a)));
   printf("\n");
+  //! [docs-c-quickstart-9 end]
   // Note that the assignment string of bit-vector terms is given as the
   // pure assignment string, either in binary, hexadecimal or decimal format,
   // whereas bitwuzla_term_to_string() prints the value in SMT-LIB2 format
   // (in binary number format).
+  //! [docs-c-quickstart-10 start]
   printf("to_string representation of value of x: %s\n",
          bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, x)));
   printf("to_string representation of value of y: %s\n",
          bitwuzla_term_to_string(bitwuzla_get_value(bitwuzla, y)));
   printf("\n");
+  //! [docs-c-quickstart-10 end]
 
   // Query value of bit-vector term that does not occur in the input formula
+  //! [docs-c-quickstart-11 start]
   BitwuzlaTerm v = bitwuzla_get_value(
       bitwuzla, bitwuzla_mk_term2(tm, BITWUZLA_KIND_BV_MUL, x, x));
   printf("value of v = x * x: %s\n",
          bitwuzla_term_value_get_str(bitwuzla_get_value(bitwuzla, v)));
+  //! [docs-c-quickstart-11 end]
 
   // Finally, delete the Bitwuzla solver, options, and term manager instances.
+  //! [docs-c-quickstart-12 start]
   bitwuzla_delete(bitwuzla);
   bitwuzla_options_delete(options);
   bitwuzla_term_manager_delete(tm);
+  //! [docs-c-quickstart-12 end]
 
   return 0;
 }
