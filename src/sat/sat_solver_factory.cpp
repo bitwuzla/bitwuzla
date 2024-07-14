@@ -8,25 +8,33 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <cassert>
 #include "sat/sat_solver_factory.h"
 
 #include "sat/cadical.h"
 #include "sat/kissat.h"
+#include "sat/cryptominisat.h"
 
 namespace bzla::sat {
 
 SatSolver*
 new_sat_solver(option::SatSolver kind)
 {
-  (void) kind;
+  switch(kind) {
+    case option::SatSolver::CADICAL:
+      return new Cadical();
 #ifdef BZLA_USE_KISSAT
-  if (kind == option::SatSolver::KISSAT)
-  {
-    return new Kissat();
-  }
+    case option::SatSolver::KISSAT:
+      return new Kissat();
 #endif
-
-  return new Cadical();
+#ifdef BZLA_USE_CMS
+    case option::SatSolver::CRYPTOMINISAT:
+      return new CryptoMiniSat();
+#endif
+    default:
+      assert(!"sat solver not supported");
+      return new Cadical();
+  }
 }
 
 }  // namespace bzla::sat
