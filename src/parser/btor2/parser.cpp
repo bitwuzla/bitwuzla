@@ -441,8 +441,9 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       return true;
     }
 
+    case Token::INIT: break;  // handled below
+
     case Token::FAIR:
-    case Token::INIT:
     case Token::JUSTICE:
     case Token::NEXT:
     case Token::OUTPUT:
@@ -523,6 +524,45 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       d_inputs.emplace_back(line_id, term);
     }
     break;
+
+    case Token::INIT: {
+      bitwuzla::Term input;
+      bitwuzla::Term value;
+      if (!parse_term(input))
+      {
+        return false;
+      }
+      if (!input.is_const())
+      {
+        return error("expected input, got term instead");
+      }
+
+      if (!parse_term(value))
+      {
+        return false;
+      }
+      auto sort_expected =
+          input.sort().is_array() ? input.sort().array_element() : input.sort();
+      if (value.sort() != sort_expected)
+      {
+        return error(
+            "mismatching sorts for array and initialization value, expected '"
+            + sort_expected.str() + "', got '" + value.sort().str() + "'");
+      }
+
+      bitwuzla::Term init_term;
+      if (input.sort().is_array())
+      {
+        init_term = d_tm.mk_const_array(input.sort(), value);
+      }
+      else
+      {
+        init_term = value;
+      }
+      d_bitwuzla->assert_formula(
+          d_tm.mk_term(bitwuzla::Kind::EQUAL, {input, init_term}));
+      break;
+    }
 
     case Token::ONE:
       if (!sort.is_bv())
