@@ -355,7 +355,8 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
     case Token::ONE:
     case Token::ONES:
     case Token::ZERO:
-    case Token::INPUT: break;
+    case Token::INPUT:
+    case Token::STATE: break;
 
     case Token::CONSTRAINT:
       if (!parse_term(term))
@@ -447,7 +448,6 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
     case Token::JUSTICE:
     case Token::NEXT:
     case Token::OUTPUT:
-    case Token::STATE:
       return error("unsupported operator '" + std::to_string(op)
                    + "', model checking extensions not supported");
 
@@ -511,7 +511,8 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       break;
     }
 
-    case Token::INPUT: {
+    case Token::INPUT:
+    case Token::STATE: {
       const char* symbol = parse_opt_symbol();
       if (symbol)
       {
