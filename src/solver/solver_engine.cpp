@@ -762,7 +762,7 @@ SolverEngine::find_relevant()
   d_relevant_terms.clear();
   node_ref_vector visit{d_assertions_vec.begin(), d_assertions_vec.end()};
 
-  do
+  while (!visit.empty())
   {
     const Node& cur = visit.back();
     visit.pop_back();
@@ -802,7 +802,7 @@ SolverEngine::find_relevant()
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
     }
-  } while (!visit.empty());
+  }
 }
 
 bool
