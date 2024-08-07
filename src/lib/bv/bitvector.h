@@ -680,6 +680,13 @@ class BitVector
   BitVector bvsext(uint64_t n) const;
 
   /**
+   * Create a bit-vector representing this bit-vector repeated `n` times.
+   * @param n The number of times to repeat this bit-vector, must be > 0.
+   * @return A bit-vector representing the result of the repeat operation.
+   */
+  BitVector bvrepeat(uint64_t n) const;
+
+  /**
    * Calculate modular inverse for this bit-vector by means of the Extended
    * Euclidean Algorithm.
    *
@@ -1632,7 +1639,7 @@ class BitVector
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
    * @param bv The bit-vector to sign extend.
-   * @param n The number of bits to extend bit-vector `bv` with.
+   * @param n  The number of bits to extend bit-vector `bv` with.
    * @return A reference to this bit-vector, overwritten with the sign
    *         extension.
    */
@@ -1647,6 +1654,28 @@ class BitVector
    *         extension.
    */
   BitVector& ibvsext(uint64_t n);
+
+  /**
+   * Repeat (in-place) of the given bit-vector.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv The bit-vector to repeat.
+   * @param n  The number of times to repeat bit-vector `bv`, must be > 0.
+   * @return A reference to this bit-vector, overwritten with result of the
+   *         repeat operation.
+   */
+  BitVector& ibvrepeat(const BitVector& bv, uint64_t n);
+  /**
+   * Repeat (in-place) of this bit-vector.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param n  The number of times to repeat this bit-vector, must be > 0.
+   * @return A reference to this bit-vector, overwritten with the result of
+   *         the repeat operation.
+   */
+  BitVector& ibvrepeat(uint64_t n);
 
   /**
    * Create an if-then-else over the given bit-vectors (in-place).

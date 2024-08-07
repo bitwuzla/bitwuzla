@@ -9,6 +9,7 @@
  */
 
 #include <bitset>
+#include <cmath>
 #include <cstdint>
 #include <iostream>
 
@@ -41,6 +42,7 @@ class TestBitVector : public TestCommon
     REDAND,
     REDOR,
     REDXOR,
+    REPEAT,
     SDIV,
     SEXT,
     SGT,
@@ -151,6 +153,8 @@ class TestBitVector : public TestCommon
                        const BitVector& bv,
                        uint64_t n);
   void test_extend(BvFunKind fun_kind, Kind kind);
+  void test_repeat_aux(BvFunKind fun_kind, const BitVector& bv, uint64_t n);
+  void test_repeat(BvFunKind fun_kind);
   void test_extract_aux(BvFunKind fun_kind, const BitVector& bv);
   void test_extract(BvFunKind fun_kind);
   void test_is_uadd_overflow_aux(uint64_t size,
@@ -732,6 +736,79 @@ TestBitVector::test_extend(BvFunKind fun_kind, Kind kind)
     test_extend_aux(fun_kind, kind, BitVector(65 - n, *d_rng, 63, 0), n);
     n = d_rng->pick<uint64_t>(0, 127 - 1);
     test_extend_aux(fun_kind, kind, BitVector(127 - n, *d_rng, 63, 0), n);
+  }
+}
+
+void
+TestBitVector::test_repeat_aux(BvFunKind fun_kind,
+                               const BitVector& bv,
+                               uint64_t n)
+{
+  uint64_t size = bv.size();
+  std::vector<BitVector> reses{BitVector(bv)};
+  if (fun_kind == DEFAULT || fun_kind == INPLACE)
+  {
+    reses.push_back(BitVector());
+    reses.emplace_back(64);
+    reses.emplace_back(65);
+  }
+
+  for (auto& res : reses)
+  {
+    if (fun_kind == INPLACE)
+    {
+      (void) res.ibvrepeat(bv, n);
+    }
+    else if (fun_kind == INPLACE_THIS)
+    {
+      (void) res.ibvrepeat(n);
+    }
+    else if (fun_kind == INPLACE_THIS_ALL)
+    {
+      // test with *this as argument
+      (void) res.ibvrepeat(res, n);
+    }
+    else
+    {
+      res = bv.bvrepeat(n);
+    }
+    ASSERT_EQ(size * n, res.size());
+    std::string res_str = res.str();
+    std::stringstream exp_str;
+    for (uint64_t i = 0; i < n; ++i)
+    {
+      exp_str << bv.str();
+    }
+    ASSERT_EQ(res_str, exp_str.str());
+  }
+}
+
+void
+TestBitVector::test_repeat(BvFunKind fun_kind)
+{
+  /* test all values for bit-widths 2 - 8 */
+  for (uint64_t size = 2; size <= 8; ++size)
+  {
+    uint64_t n = d_rng->pick<uint64_t>(1, size - 1);
+    uint64_t s = size - n;
+    for (uint64_t i = 0, m = 1 << s; i < m; ++i)
+    {
+      test_repeat_aux(fun_kind, BitVector::from_ui(s, i), n);
+    }
+  }
+  /* test random values for bit-widths 16, 64, 65, 127 */
+  for (uint32_t i = 0; i < N_TESTS; ++i)
+  {
+    uint64_t n;
+
+    n = d_rng->pick<uint64_t>(1, 16 - 1);
+    test_repeat_aux(fun_kind, BitVector(16 - n, *d_rng), n);
+    n = d_rng->pick<uint64_t>(1, 64 - 1);
+    test_repeat_aux(fun_kind, BitVector(64 - n, *d_rng), n);
+    n = d_rng->pick<uint64_t>(1, 65 - 1);
+    test_repeat_aux(fun_kind, BitVector(65 - n, *d_rng, 63, 0), n);
+    n = d_rng->pick<uint64_t>(1, 127 - 1);
+    test_repeat_aux(fun_kind, BitVector(127 - n, *d_rng, 63, 0), n);
   }
 }
 
@@ -4300,6 +4377,8 @@ TEST_F(TestBitVector, sdiv) { test_binary_signed(DEFAULT, SDIV); }
 
 TEST_F(TestBitVector, sext) { test_extend(DEFAULT, SEXT); }
 
+TEST_F(TestBitVector, repeat) { test_repeat(DEFAULT); }
+
 TEST_F(TestBitVector, shl)
 {
   test_binary(DEFAULT, SHL);
@@ -4492,6 +4571,13 @@ TEST_F(TestBitVector, isext)
   test_extend(INPLACE, SEXT);
   test_extend(INPLACE_THIS, SEXT);
   test_extend(INPLACE_THIS_ALL, SEXT);
+}
+
+TEST_F(TestBitVector, irepeat)
+{
+  test_repeat(INPLACE);
+  test_repeat(INPLACE_THIS);
+  test_repeat(INPLACE_THIS_ALL);
 }
 
 TEST_F(TestBitVector, ishl)

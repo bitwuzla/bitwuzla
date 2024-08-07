@@ -1339,6 +1339,12 @@ BitVector::bvsext(uint64_t n) const
 }
 
 BitVector
+BitVector::bvrepeat(uint64_t n) const
+{
+  return BitVector(d_size).ibvrepeat(*this, n);
+}
+
+BitVector
 BitVector::bvmodinv() const
 {
   return BitVector(d_size).ibvmodinv(*this);
@@ -2759,6 +2765,73 @@ BitVector::ibvsext(const BitVector& bv, uint64_t n)
 }
 
 BitVector&
+BitVector::ibvrepeat(const BitVector& bv, uint64_t n)
+{
+  assert(!bv.is_null());
+  assert(n > 0);
+
+  uint64_t size = n * bv.d_size;
+  const BitVector* b;
+  BitVector bb;
+
+  /* copy to guard for bv0 == *this */
+  if (&bv == this)
+  {
+    bb = bv;
+    b  = &bb;
+  }
+  else
+  {
+    b = &bv;
+  }
+
+  if (size > s_native_size)
+  {
+    if (!is_gmp())
+    {
+      mpz_init(d_val_gmp);
+    }
+    if (b->is_gmp())
+    {
+      mpz_set(d_val_gmp, b->d_val_gmp);
+    }
+    else
+    {
+      mpz_set_ui(d_val_gmp, b->d_val_uint64);
+    }
+
+    for (uint64_t i = 1; i < n; ++i)
+    {
+      mpz_mul_2exp_ull(d_val_gmp, d_val_gmp, b->d_size);
+      if (b->is_gmp())
+      {
+        mpz_add(d_val_gmp, d_val_gmp, b->d_val_gmp);
+      }
+      else
+      {
+        mpz_add_ui(d_val_gmp, d_val_gmp, b->d_val_uint64);
+      }
+    }
+    mpz_fdiv_r_2exp_ull(d_val_gmp, d_val_gmp, size);
+  }
+  else
+  {
+    if (is_gmp())
+    {
+      mpz_clear(d_val_gmp);
+    }
+    d_val_uint64 = b->d_val_uint64;
+    for (uint64_t i = 1; i < n; ++i)
+    {
+      d_val_uint64 <<= b->d_size;
+      d_val_uint64 = uint64_fdiv_r_2exp(size, d_val_uint64 + b->d_val_uint64);
+    }
+  }
+  d_size = size;
+  return *this;
+}
+
+BitVector&
 BitVector::ibvite(const BitVector& c, const BitVector& t, const BitVector& e)
 {
   assert(!c.is_null());
@@ -3226,6 +3299,13 @@ BitVector&
 BitVector::ibvsext(uint64_t n)
 {
   ibvsext(*this, n);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvrepeat(uint64_t n)
+{
+  ibvrepeat(*this, n);
   return *this;
 }
 
