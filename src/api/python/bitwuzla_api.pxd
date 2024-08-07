@@ -21,7 +21,7 @@ from libcpp.vector cimport vector
 
 cdef extern from "<functional>" namespace "std" nogil:
     cdef cppclass reference_wrapper[T]:
-        pass
+        T& get() const
 
 cdef extern from "<iostream>" namespace "std":
     ostream cout

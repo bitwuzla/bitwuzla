@@ -47,13 +47,6 @@ cdef str _to_str(const char *string):
     cdef bytes py_str = string
     return str(py_str.decode())
 
-cdef char * _to_cstr(s):
-    if s is None:
-        return NULL
-    cdef bytes py_str = s.encode()
-    cdef char * c_str = py_str
-    return c_str
-
 cdef Term _term(tm: TermManager, term: bitwuzla_api.Term):
     t = Term()
     t.c_term = term
@@ -379,7 +372,7 @@ cdef class Term:
         """
         opt = self.c_term.symbol()
         if opt.has_value():
-            return (<string?> opt.value()).decode()
+            return opt.value().get().decode()
         return None
 
     def is_const(self) -> bool:
