@@ -1129,6 +1129,12 @@ BitVector::bvredor() const
 }
 
 BitVector
+BitVector::bvredxor() const
+{
+  return BitVector(1).ibvredxor(*this);
+}
+
+BitVector
 BitVector::bvadd(const BitVector& bv) const
 {
   return BitVector(d_size).ibvadd(*this, bv);
@@ -1482,6 +1488,31 @@ BitVector::ibvredor(const BitVector& bv)
   else if (bv.d_val_uint64 != 0)
   {
     val = 1;
+  }
+  if (is_gmp()) mpz_clear(d_val_gmp);
+  d_val_uint64 = val;
+  d_size       = 1;
+  return *this;
+}
+
+BitVector&
+BitVector::ibvredxor(const BitVector& bv)
+{
+  assert(!bv.is_null());
+  uint64_t val = 0;
+  if (bv.is_gmp())
+  {
+    val = mpz_popcount(bv.d_val_gmp) % 2 > 0 ? 1 : 0;
+  }
+  else if (bv.d_val_uint64 != 0)
+  {
+    for (uint64_t i = 0; i < bv.d_size; ++i)
+    {
+      if (bv.bit(i))
+      {
+        val ^= 1;
+      }
+    }
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
@@ -2950,6 +2981,13 @@ BitVector&
 BitVector::ibvredor()
 {
   ibvredor(*this);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvredxor()
+{
+  ibvredxor(*this);
   return *this;
 }
 

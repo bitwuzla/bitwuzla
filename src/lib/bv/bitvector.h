@@ -417,6 +417,13 @@ class BitVector
    *         bit-vector is one, and 0 otherwise).
    */
   BitVector bvredor() const;
+  /**
+   * Create a bit-vector representing the xor reduction of this bit-vector.
+   * @return A bit-vector of size 1, representing the result of the xor
+   *         reduction of this bit-vector (1 if an uneven number of bits is
+   *         set to 1, and 0 otherwise).
+   */
+  BitVector bvredxor() const;
 
   /**
    * Create a bit-vector representing the addition of this bit-vector and
@@ -827,11 +834,40 @@ class BitVector
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
-   * @param bv The bit-vector to compute the or reduction for.
+   * @param bv The bit-vector to compute the xor reduction for.
    * @return A reference to this bit-vector, overwritten with the result of the
    *         or reduction of this bit-vector.
    */
   BitVector& ibvredor();
+
+  /**
+   * Xor reduction (in-place) of the given bit-vector.
+   *
+   * Result is a bit-vector of size 1, representing the result of the xor
+   * reduction of this bit-vector (1 if an uneven number of bits is set to 1,
+   * and 0 otherwise).
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv The bit-vector to compute the or reduction for.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         xor reduction of `bv`.
+   */
+  BitVector& ibvredxor(const BitVector& bv);
+  /**
+   * Xor reduction (in-place, chainable) of this bit-vector.
+   *
+   * Result is a bit-vector of size 1, representing the result of the xor
+   * reduction of this bit-vector (1 if an uneven number of bits is set to 1,
+   * and 0 otherwise).
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv The bit-vector to compute the xor reduction for.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         xor reduction of this bit-vector.
+   */
+  BitVector& ibvredxor();
 
   /**
    * Addition (in-place) of given bit-vectors `bv0` and `bv1`.

@@ -9,6 +9,7 @@
  */
 
 #include <bitset>
+#include <cstdint>
 #include <iostream>
 
 #include "test_lib.h"
@@ -39,6 +40,7 @@ class TestBitVector : public TestCommon
     OR,
     REDAND,
     REDOR,
+    REDXOR,
     SDIV,
     SEXT,
     SGT,
@@ -99,6 +101,7 @@ class TestBitVector : public TestCommon
   static uint64_t _or(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _redand(uint64_t x, uint64_t size);
   static uint64_t _redor(uint64_t x, uint64_t size);
+  static uint64_t _redxor(uint64_t x, uint64_t size);
   static int64_t _sdiv(int64_t x, int64_t y, uint64_t size);
   static int64_t _sgt(int64_t x, int64_t y, uint64_t size);
   static int64_t _sge(int64_t x, int64_t y, uint64_t size);
@@ -216,6 +219,20 @@ TestBitVector::_redor(uint64_t x, uint64_t size)
 {
   (void) size;
   return x != 0;
+}
+
+uint64_t
+TestBitVector::_redxor(uint64_t x, uint64_t size)
+{
+  (void) size;
+  uint64_t res = 0;
+  for (uint64_t i = 0; i < size && i < 64; ++i)
+  {
+    uint64_t shift = 64 - 1 - i;
+    res            = res ^ ((x << shift) >> (shift + i));
+  }
+  assert(res == 0 || res == 1);
+  return res;
 }
 
 uint64_t
@@ -1132,6 +1149,25 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
           res = b.bvredor();
         }
         ares = _redor(a, size);
+        break;
+
+      case REDXOR:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvredxor();
+        }
+        else if (fun_kind == INPLACE_THIS_ALL)
+        {
+          (void) res.ibvredxor(b);
+          // test with *this as argument
+          tres = bv;
+          (void) tres.ibvredxor(tres);
+        }
+        else
+        {
+          res = b.bvredxor();
+        }
+        ares = _redxor(a, size);
         break;
 
       default: assert(false);
@@ -4212,6 +4248,8 @@ TEST_F(TestBitVector, redand) { test_unary(DEFAULT, REDAND); }
 
 TEST_F(TestBitVector, redor) { test_unary(DEFAULT, REDOR); }
 
+TEST_F(TestBitVector, redxor) { test_unary(DEFAULT, REDXOR); }
+
 TEST_F(TestBitVector, add) { test_binary(DEFAULT, ADD); }
 
 TEST_F(TestBitVector, and) { test_binary(DEFAULT, AND); }
@@ -4349,6 +4387,12 @@ TEST_F(TestBitVector, iredor)
 {
   test_unary(INPLACE_THIS_ALL, REDOR);
   test_unary(INPLACE_THIS, REDOR);
+}
+
+TEST_F(TestBitVector, iredxor)
+{
+  test_unary(INPLACE_THIS_ALL, REDXOR);
+  test_unary(INPLACE_THIS, REDXOR);
 }
 
 TEST_F(TestBitVector, iadd)
