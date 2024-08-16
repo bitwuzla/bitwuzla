@@ -20,6 +20,79 @@ static const char* s_solver_binary = std::getenv("SOLVER_BINARY");
 
 namespace bzla::test {
 
+namespace {
+void
+print_smt2(std::stringstream& ss, const bitblast::AigNode& n)
+{
+  bool negate = n.is_negated() && !n.is_true() && !n.is_false();
+  if (negate)
+  {
+    ss << "(bvnot ";
+  }
+  if (n.is_false())
+  {
+    ss << "#b0";
+  }
+  else if (n.is_true())
+  {
+    ss << "#b1";
+  }
+  else if (n.is_const())
+  {
+    ss << "x" << std::labs(n.get_id());
+  }
+  else
+  {
+    assert(n.is_and());
+    ss << "a" << std::labs(n.get_id());
+  }
+  if (negate)
+  {
+    ss << ")";
+  }
+}
+
+void
+print_smt2(std::stringstream& ss, const std::vector<bitblast::AigNode>& bits)
+{
+  std::vector<bitblast::AigNode> visit{bits.begin(), bits.end()};
+  std::unordered_map<int64_t, bool> cache;
+
+  do
+  {
+    bitblast::AigNode n = visit.back();
+    visit.pop_back();
+    int64_t id = std::labs(n.get_id());
+
+    auto it = cache.find(id);
+    if (it == cache.end())
+    {
+      cache.emplace(id, false);
+      if (n.is_and())
+      {
+        visit.push_back(n);
+        visit.push_back(n[0]);
+        visit.push_back(n[1]);
+      }
+    }
+    else if (!it->second)
+    {
+      it->second = true;
+      if (n.is_and())
+      {
+        ss << "(define-fun a" << id << "() (_ BitVec 1) ";
+        ss << "(bvand ";
+        print_smt2(ss, n[0]);
+        ss << " ";
+        print_smt2(ss, n[1]);
+        ss << ")";
+        ss << ")\n";
+      }
+    }
+  } while (!visit.empty());
+}
+}  // namespace
+
 class TestAigBitblaster : public TestCommon
 {
  public:
@@ -72,7 +145,7 @@ class TestAigBitblaster : public TestCommon
     std::stringstream ss;
     declare_const(ss, a);
     declare_const(ss, b);
-    bitblast::aig::Smt2Printer::print(ss, res);
+    print_smt2(ss, res);
     define_const(ss, "a", a);
     define_const(ss, "b", b);
     define_const(ss, "res", res);
@@ -91,7 +164,7 @@ class TestAigBitblaster : public TestCommon
     }
     std::stringstream ss;
     declare_const(ss, a);
-    bitblast::aig::Smt2Printer::print(ss, res);
+    print_smt2(ss, res);
     define_const(ss, "a", a);
     define_const(ss, "res", res);
     ss << "(declare-const expected (_ BitVec " << res.size() << "))\n";
@@ -105,7 +178,7 @@ class TestAigBitblaster : public TestCommon
     for (size_t i = 0; i < bits.size(); ++i)
     {
       ss << "(declare-const ";
-      bitblast::aig::Smt2Printer::print(ss, bits[i]);
+      print_smt2(ss, bits[i]);
       ss << " (_ BitVec 1))\n";
     }
   }
@@ -120,7 +193,7 @@ class TestAigBitblaster : public TestCommon
       size_t pos = bits.size() - 1 - i;
       ss << "(assert (= ((_ extract " << pos << " " << pos << ") " << name
          << ") ";
-      bitblast::aig::Smt2Printer::print(ss, bits[i]);
+      print_smt2(ss, bits[i]);
       ss << "))\n";
     }
   }
@@ -411,7 +484,7 @@ TEST_F(TestAigBitblaster, bv_ite) {
     declare_const(ss, a);
     declare_const(ss, b);
     declare_const(ss, c);
-    bitblast::aig::Smt2Printer::print(ss, bb_ite);
+    print_smt2(ss, bb_ite);
     define_const(ss, "a", a);
     define_const(ss, "b", b);
     define_const(ss, "c", c);

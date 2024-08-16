@@ -192,6 +192,16 @@ Options::Options()
                  "backend SAT solver",
                  "sat-solver",
                  "S"),
+      write_aiger(this,
+                  Option::WRITE_AIGER,
+                  "",
+                  "write bv abstraction as AIGER to filename",
+                  "write-aiger"),
+      write_cnf(this,
+                Option::WRITE_CNF,
+                "",
+                "write bv abstraction as CNF to filename",
+                "write-cnf"),
       rewrite_level(this,
                     Option::REWRITE_LEVEL,
                     Rewriter::LEVEL_MAX,
@@ -744,6 +754,8 @@ Options::data(Option opt)
     case Option::PRODUCE_UNSAT_ASSUMPTIONS: return &produce_unsat_assumptions;
     case Option::PRODUCE_UNSAT_CORES: return &produce_unsat_cores;
     case Option::SAT_SOLVER: return &sat_solver;
+    case Option::WRITE_AIGER: return &write_aiger;
+    case Option::WRITE_CNF: return &write_cnf;
     case Option::SEED: return &seed;
     case Option::VERBOSITY: return &verbosity;
     case Option::TIME_LIMIT_PER: return &time_limit_per;

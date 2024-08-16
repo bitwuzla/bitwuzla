@@ -54,6 +54,8 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
       d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
       d_last_result(Result::UNKNOWN),
+      d_opt_print_aig(!env.options().write_aiger().empty()
+                      || !env.options().write_cnf().empty()),
       d_stats(env.statistics(), "solver::bv::bitblast::")
 {
   d_sat_solver.reset(sat::new_sat_solver(env.options()));
@@ -93,6 +95,20 @@ BvBitblastSolver::solve()
   update_statistics();
 
   d_solver_state.print_statistics();
+
+  // Write current bit-vector abstraction as AIGER/CNF
+  if (d_opt_print_aig)
+  {
+    if (!d_env.options().write_aiger().empty())
+    {
+      d_aig_printer.write_aiger(d_env.options().write_aiger());
+    }
+    if (!d_env.options().write_cnf().empty())
+    {
+      d_aig_printer.write_cnf(d_env.options().write_cnf());
+    }
+  }
+
   util::Timer timer(d_stats.time_sat);
   d_last_result = d_sat_solver->solve();
 
@@ -122,6 +138,10 @@ BvBitblastSolver::register_assertion(const Node& assertion,
   {
     util::Timer timer(d_stats.time_bitblast);
     d_bitblaster.bitblast(assertion);
+    if (d_opt_print_aig)
+    {
+      d_aig_printer.add_output(d_bitblaster.bits(assertion)[0]);
+    }
   }
 
   // Update AIG statistics

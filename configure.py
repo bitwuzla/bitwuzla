@@ -99,6 +99,7 @@ def main():
              'all formats except Float16, Float32, Float64 and Float128 are ' +
              'considered experimental (due to known issues in SymFPU), use ' +
              'at your own risk')
+    bool_opt(ap, 'aiger', 'AIGER support to print AIGs')
     args = ap.parse_args()
 
     build_opts = []
@@ -149,6 +150,8 @@ def main():
             build_opts.append(f'-Dfpexp=true')
         else:
             build_opts.append(f'-Dfpexp=false')
+    if args.aiger is not None:
+        build_opts.append(f'-Daiger={_bool(args.aiger)}')
 
     configure_build(args.build_dir, build_opts)
 

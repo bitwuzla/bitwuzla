@@ -37,6 +37,9 @@ enum class Option
   REWRITE_LEVEL,  // numeric
   SAT_SOLVER,     // enum
 
+  WRITE_AIGER,  // str
+  WRITE_CNF,    // str
+
   PROP_NPROPS,                  // numeric
   PROP_NUPDATES,                // numeric
   PROP_PATH_SEL,                // enum
@@ -543,6 +546,8 @@ class Options
   // Bitwuzla-specific options
   OptionModeT<BvSolver> bv_solver;
   OptionModeT<SatSolver> sat_solver;
+  OptionStr write_aiger;
+  OptionStr write_cnf;
   OptionNumeric rewrite_level;
 
   // BV: propagation-based local search engine

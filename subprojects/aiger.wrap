@@ -1,0 +1,12 @@
+[wrap-file]
+directory = aiger-rel-1.9.19
+
+source_url = https://github.com/arminbiere/aiger/archive/refs/tags/rel-1.9.19.tar.gz
+source_filename = aiger-1.9.19.tar.gz
+source_hash = ddf5fd8ee3fa1d7f1f1a8a93419e0c47a314125e517f3dea422b8580e0de7d0b
+
+patch_directory = aiger
+
+[provide]
+aiger = aiger_dep
+

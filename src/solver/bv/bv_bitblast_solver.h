@@ -13,6 +13,7 @@
 
 #include "backtrack/vector.h"
 #include "bitblast/aig/aig_cnf.h"
+#include "bitblast/aig/aig_printer.h"
 #include "sat/sat_solver.h"
 #include "solver/bv/aig_bitblaster.h"
 #include "solver/bv/bv_solver_interface.h"
@@ -70,6 +71,10 @@ class BvBitblastSolver : public Solver, public BvSolverInterface
   std::unique_ptr<BitblastSatSolver> d_bitblast_sat_solver;
   /** Result of last solve() call. */
   Result d_last_result;
+
+  /** Option to print AIGER/CNF to file. */
+  bool d_opt_print_aig;
+  bitblast::aig::AigPrinter d_aig_printer;
 
   struct Statistics
   {

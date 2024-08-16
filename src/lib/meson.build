@@ -13,7 +13,7 @@ bb_sources = [
   'bitblast/aig/aig_cnf.cpp',
   'bitblast/aig/aig_manager.cpp',
   'bitblast/aig/aig_node.cpp',
-  'bitblast/aig/aig_printer.cpp',
+  'bitblast/aig/aig_printer.cpp'
 ]
 
 ls_sources = [
@@ -26,6 +26,14 @@ ls_sources = [
 rng_sources = [
   'rng/rng.cpp'
 ]
+
+# AIGER dependency
+aiger_dep = dependency('aiger', required: get_option('aiger'))
+
+cpp_args = []
+if aiger_dep.found()
+  cpp_args += ['-DBZLA_USE_AIGER']
+endif
 
 # RNG support library
 rng_lib = static_library('bzlarng',
@@ -42,9 +50,10 @@ bitvector_lib = library('bitwuzlabv',
 bitblast_lib = library('bitwuzlabb',
                        sources: bb_sources,
                        link_with: bitvector_lib,
-                       dependencies: gmp_dep,
+                       dependencies: [gmp_dep, aiger_dep],
                        install_rpath: install_rpath,
-                       install: true)
+                       install: true,
+                       cpp_args: cpp_args)
 local_search_lib = library('bitwuzlals',
                            sources: ls_sources,
                            include_directories: include_directories('../'),

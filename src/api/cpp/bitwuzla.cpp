@@ -65,6 +65,8 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::PRODUCE_UNSAT_CORES,
          bzla::option::Option::PRODUCE_UNSAT_CORES},
         {Option::SAT_SOLVER, bzla::option::Option::SAT_SOLVER},
+        {Option::WRITE_AIGER, bzla::option::Option::WRITE_AIGER},
+        {Option::WRITE_CNF, bzla::option::Option::WRITE_CNF},
         {Option::SEED, bzla::option::Option::SEED},
         {Option::VERBOSITY, bzla::option::Option::VERBOSITY},
         {Option::TIME_LIMIT_PER, bzla::option::Option::TIME_LIMIT_PER},

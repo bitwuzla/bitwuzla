@@ -15,6 +15,10 @@ This file collects a summary of important and/or user-visible changes.
 
 - Fixed error handling when parsing parameters of `define-fun`.
 
+- New options to print AIG and CNF of current bit-vector abstraction.
+  - --write-aiger=<name>.[aig|aag]: writes binary or ASCII AIGER to specified
+    filename, format chosen based on suffix (aig: binary, aag: ascii).
+  - --write-cnf=<name>: writes CNF in DIMACS format to specified filename.
 
 ## News for version 0.7.0
 

@@ -154,6 +154,8 @@ enum ENUM(Option)
    *    [Kissat](https://github.com/arminbiere/kissat)
    */
   EVALUE(SAT_SOLVER),
+  EVALUE(WRITE_AIGER),
+  EVALUE(WRITE_CNF),
 
   /* ---------------- BV: Prop Engine Options (Expert) ---------------------- */
 
