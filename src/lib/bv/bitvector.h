@@ -424,6 +424,13 @@ class BitVector
    *         set to 1, and 0 otherwise).
    */
   BitVector bvredxor() const;
+  /**
+   * Create a bit-vector representing a predicate that indicates if bit-vector
+   * negation produces an overflow.
+   * @return A bit-vector of size 1, representing the result of the overflow
+   *         check.
+   */
+  BitVector bvnego() const;
 
   /**
    * Create a bit-vector representing the addition of this bit-vector and
@@ -767,7 +774,6 @@ class BitVector
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
-   * @param bv The bit-vector to compute the bit-wise negation for.
    * @return A reference to this bit-vector, overwritten with the result of the
    *         bit-wise negation of this bit-vector.
    */
@@ -788,7 +794,6 @@ class BitVector
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
-   * @param bv The bit-vector to compute the increment for.
    * @return A reference to this bit-vector, overwritten with the result of the
    *         increment of this bit-vector.
    */
@@ -809,7 +814,6 @@ class BitVector
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
-   * @param bv The bit-vector to compute the decrement for.
    * @return A reference to this bit-vector, overwritten with the result of the
    *         decrement of this bit-vector.
    */
@@ -819,8 +823,8 @@ class BitVector
    * And reduction (in-place) of the given bit-vector.
    *
    * Result is a bit-vector of size 1, representing the result of the and
-   * reduction of this bit-vector (1 if all bits of this bit-vector are one,
-   * and 0 otherwise).
+   * reduction of the given bit-vector (1 if all bits of this bit-vector are
+   * one, and 0 otherwise).
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
@@ -838,7 +842,6 @@ class BitVector
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
-   * @param bv The bit-vector to compute the and reduction for.
    * @return A reference to this bit-vector, overwritten with the result of the
    *         and reduction of this bit-vector.
    */
@@ -848,8 +851,8 @@ class BitVector
    * Or reduction (in-place) of the given bit-vector.
    *
    * Result is a bit-vector of size 1, representing the result of the or
-   * reduction of this bit-vector (1 if at least one bit of this bit-vector is
-   * one, and 0 otherwise).
+   * reduction of the given bit-vector (1 if at least one bit of this bit-vector
+   * is one, and 0 otherwise).
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
@@ -867,7 +870,6 @@ class BitVector
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
-   * @param bv The bit-vector to compute the xor reduction for.
    * @return A reference to this bit-vector, overwritten with the result of the
    *         or reduction of this bit-vector.
    */
@@ -877,12 +879,12 @@ class BitVector
    * Xor reduction (in-place) of the given bit-vector.
    *
    * Result is a bit-vector of size 1, representing the result of the xor
-   * reduction of this bit-vector (1 if an uneven number of bits is set to 1,
-   * and 0 otherwise).
+   * reduction of the given bit-vector (1 if an uneven number of bits is set
+   * to 1, and 0 otherwise).
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
-   * @param bv The bit-vector to compute the or reduction for.
+   * @param bv The bit-vector to compute the xor reduction for.
    * @return A reference to this bit-vector, overwritten with the result of the
    *         xor reduction of `bv`.
    */
@@ -896,11 +898,37 @@ class BitVector
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
-   * @param bv The bit-vector to compute the xor reduction for.
    * @return A reference to this bit-vector, overwritten with the result of the
    *         xor reduction of this bit-vector.
    */
   BitVector& ibvredxor();
+
+  /**
+   * Bit-vector negation overflow check (in-place) of the given bit-vector.
+   *
+   * Result is a bit-vector of size 1, representing the result of the overflow
+   * check of the given bit-vector (1 if an overflow occurs, and 0 otherwise).
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv The bit-vector to compute the overflow check for.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         overflow check of `bv`.
+   */
+  BitVector& ibvnego(const BitVector& bv);
+  /**
+   * Bit-vector negation overflow check (in-place, chainable) of this
+   * bit-vector.
+   *
+   * Result is a bit-vector of size 1, representing the result of the overflow
+   * check of the given bit-vector (1 if an overflow occurs, and 0 otherwise).
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         overflow check of this bit-vector.
+   */
+  BitVector& ibvnego();
 
   /**
    * Addition (in-place) of given bit-vectors `bv0` and `bv1`.

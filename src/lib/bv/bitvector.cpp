@@ -1135,6 +1135,12 @@ BitVector::bvredxor() const
 }
 
 BitVector
+BitVector::bvnego() const
+{
+  return BitVector(1).ibvnego(*this);
+}
+
+BitVector
 BitVector::bvadd(const BitVector& bv) const
 {
   return BitVector(d_size).ibvadd(*this, bv);
@@ -1546,6 +1552,16 @@ BitVector::ibvredxor(const BitVector& bv)
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
+  d_size       = 1;
+  return *this;
+}
+
+BitVector&
+BitVector::ibvnego(const BitVector& bv)
+{
+  assert(!bv.is_null());
+  if (is_gmp()) mpz_clear(d_val_gmp);
+  d_val_uint64 = bv.is_min_signed() ? 1 : 0;
   d_size       = 1;
   return *this;
 }
@@ -3247,6 +3263,13 @@ BitVector&
 BitVector::ibvredxor()
 {
   ibvredxor(*this);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvnego()
+{
+  ibvnego(*this);
   return *this;
 }
 

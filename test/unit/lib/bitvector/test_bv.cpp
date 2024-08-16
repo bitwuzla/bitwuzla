@@ -37,6 +37,7 @@ class TestBitVector : public TestCommon
     NAND,
     NE,
     NEG,
+    NEGO,
     NOR,
     NOT,
     OR,
@@ -103,6 +104,7 @@ class TestBitVector : public TestCommon
   static uint64_t _nand(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _ne(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _neg(uint64_t x, uint64_t size);
+  static uint64_t _nego(uint64_t x, uint64_t size);
   static uint64_t _nor(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _not(uint64_t x, uint64_t size);
   static uint64_t _or(uint64_t x, uint64_t y, uint64_t size);
@@ -223,6 +225,12 @@ uint64_t
 TestBitVector::_neg(uint64_t x, uint64_t size)
 {
   return normalize_uint64(size, -x);
+}
+
+uint64_t
+TestBitVector::_nego(uint64_t x, uint64_t size)
+{
+  return normalize_uint64(size, 1 << (size - 1)) == x;
 }
 
 uint64_t
@@ -1183,6 +1191,25 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
           res = b.bvneg();
         }
         ares = _neg(a, size);
+        break;
+
+      case NEGO:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvnego();
+        }
+        else if (fun_kind == INPLACE_THIS_ALL)
+        {
+          (void) res.ibvnego(b);
+          // test with *this as argument
+          tres = bv;
+          (void) tres.ibvnego(tres);
+        }
+        else
+        {
+          res = b.bvnego();
+        }
+        ares = _nego(a, size);
         break;
 
       case NOT:
@@ -4569,6 +4596,8 @@ TEST_F(TestBitVector, inc) { test_unary(DEFAULT, INC); }
 
 TEST_F(TestBitVector, neg) { test_unary(DEFAULT, NEG); }
 
+TEST_F(TestBitVector, nego) { test_unary(DEFAULT, NEGO); }
+
 TEST_F(TestBitVector, not ) { test_unary(DEFAULT, NOT); }
 
 TEST_F(TestBitVector, redand) { test_unary(DEFAULT, REDAND); }
@@ -4706,6 +4735,12 @@ TEST_F(TestBitVector, ineg)
 {
   test_unary(INPLACE_THIS_ALL, NEG);
   test_unary(INPLACE_THIS, NEG);
+}
+
+TEST_F(TestBitVector, inego)
+{
+  test_unary(INPLACE_THIS_ALL, NEGO);
+  test_unary(INPLACE_THIS, NEGO);
 }
 
 TEST_F(TestBitVector, inot)
