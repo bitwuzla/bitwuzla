@@ -1007,6 +1007,21 @@ BitVector::is_uadd_overflow(const BitVector& bv) const
 }
 
 bool
+BitVector::is_sadd_overflow(const BitVector& bv) const
+{
+  assert(!is_null());
+  assert(d_size == bv.d_size);
+  bool is_signed_bv0 = msb();
+  bool is_signed_bv1 = bv.msb();
+  bool is_signed_add = bvadd(bv).msb();
+  // Overflow occurs if
+  //  1) negative + negative = positive
+  //  2) positive + positive = negative
+  return (is_signed_bv0 && is_signed_bv1 && !is_signed_add)
+         || (!is_signed_bv0 && !is_signed_bv1 && is_signed_add);
+}
+
+bool
 BitVector::is_umul_overflow(const BitVector& bv) const
 {
   assert(!is_null());
@@ -1318,6 +1333,18 @@ BitVector
 BitVector::bvsrem(const BitVector& bv) const
 {
   return BitVector(d_size).ibvsrem(*this, bv);
+}
+
+BitVector
+BitVector::bvuaddo(const BitVector& bv) const
+{
+  return BitVector(d_size).ibvuaddo(*this, bv);
+}
+
+BitVector
+BitVector::bvsaddo(const BitVector& bv) const
+{
+  return BitVector(d_size).ibvsaddo(*this, bv);
 }
 
 BitVector
@@ -2503,6 +2530,34 @@ BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1)
 }
 
 BitVector&
+BitVector::ibvuaddo(const BitVector& bv0, const BitVector& bv1)
+{
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
+  assert(bv0.d_size == bv1.d_size);
+
+  uint64_t val = bv0.is_uadd_overflow(bv1) ? 1 : 0;
+  if (is_gmp()) mpz_clear(d_val_gmp);
+  d_val_uint64 = val;
+  d_size       = 1;
+  return *this;
+}
+
+BitVector&
+BitVector::ibvsaddo(const BitVector& bv0, const BitVector& bv1)
+{
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
+  assert(bv0.d_size == bv1.d_size);
+
+  uint64_t val = bv0.is_sadd_overflow(bv1) ? 1 : 0;
+  if (is_gmp()) mpz_clear(d_val_gmp);
+  d_val_uint64 = val;
+  d_size       = 1;
+  return *this;
+}
+
+BitVector&
 BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!bv0.is_null());
@@ -2945,6 +3000,7 @@ BitVector::ibvrol(const BitVector& bv, const BitVector& n)
   {
     BitVector m = n.bvurem(BitVector::from_ui(size, size));
     bool isuint = m.shift_is_uint64(&in);
+    (void) isuint;
     assert(isuint);
   }
   ibvroli(bv, in);
@@ -3026,6 +3082,7 @@ BitVector::ibvror(const BitVector& bv, const BitVector& n)
   {
     BitVector m = n.bvurem(BitVector::from_ui(size, size));
     bool isuint = m.shift_is_uint64(&in);
+    (void) isuint;
     assert(isuint);
   }
   ibvrori(bv, in);
@@ -3480,6 +3537,20 @@ BitVector&
 BitVector::ibvsrem(const BitVector& bv)
 {
   ibvsrem(*this, bv);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvuaddo(const BitVector& bv)
+{
+  ibvuaddo(*this, bv);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvsaddo(const BitVector& bv)
+{
+  ibvsaddo(*this, bv);
   return *this;
 }
 

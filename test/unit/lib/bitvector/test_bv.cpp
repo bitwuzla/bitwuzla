@@ -49,6 +49,7 @@ class TestBitVector : public TestCommon
     REDOR,
     REDXOR,
     REPEAT,
+    SADDO,
     SDIV,
     SEXT,
     SGT,
@@ -59,6 +60,7 @@ class TestBitVector : public TestCommon
     SLE,
     SREM,
     SUB,
+    UADDO,
     UDIV,
     UGT,
     UGE,
@@ -111,6 +113,7 @@ class TestBitVector : public TestCommon
   static uint64_t _redand(uint64_t x, uint64_t size);
   static uint64_t _redor(uint64_t x, uint64_t size);
   static uint64_t _redxor(uint64_t x, uint64_t size);
+  static uint64_t _saddo(int64_t x, int64_t y, uint64_t size);
   static int64_t _sdiv(int64_t x, int64_t y, uint64_t size);
   static int64_t _sgt(int64_t x, int64_t y, uint64_t size);
   static int64_t _sge(int64_t x, int64_t y, uint64_t size);
@@ -120,6 +123,7 @@ class TestBitVector : public TestCommon
   static int64_t _sle(int64_t x, int64_t y, uint64_t size);
   static int64_t _srem(int64_t x, int64_t y, uint64_t size);
   static uint64_t _sub(uint64_t x, uint64_t y, uint64_t size);
+  static uint64_t _uaddo(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _udiv(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _ugt(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _uge(uint64_t x, uint64_t y, uint64_t size);
@@ -169,6 +173,11 @@ class TestBitVector : public TestCommon
                                  const std::string& s2,
                                  bool expected);
   void test_is_uadd_overflow(uint64_t size);
+  void test_is_sadd_overflow_aux(uint64_t size,
+                                 const std::string& s1,
+                                 const std::string& s2,
+                                 bool expected);
+  void test_is_sadd_overflow(uint64_t size);
   void test_is_umul_overflow_aux(uint64_t size,
                                  const std::string& s1,
                                  const std::string& s2,
@@ -277,6 +286,28 @@ uint64_t
 TestBitVector::_add(uint64_t x, uint64_t y, uint64_t size)
 {
   return normalize_uint64(size, x + y);
+}
+
+uint64_t
+TestBitVector::_uaddo(uint64_t x, uint64_t y, uint64_t size)
+{
+  return (size == 64 && (x + y < x || x + y < y))
+         || (size < 64 && x + y > normalize_uint64(size, ~0));
+}
+
+uint64_t
+TestBitVector::_saddo(int64_t x, int64_t y, uint64_t size)
+{
+  if (size == 1)
+  {
+    return x == -1 && y == -1;
+  }
+  if (size < 64)
+  {
+    return x + y < -std::pow(2, size - 1)
+           || x + y > static_cast<int64_t>(normalize_uint64(size - 1, ~0));
+  }
+  return y != 0 && x != 0 && (x + y) - y != x;
 }
 
 uint64_t
@@ -722,7 +753,6 @@ TestBitVector::test_extend_aux(BvFunKind fun_kind,
 
       default: assert(false);
     }
-    assert(size + n == res.size());
     ASSERT_EQ(size + n, res.size());
     std::string res_str = res.str();
     std::string bv_str  = bv.str();
@@ -855,6 +885,7 @@ TestBitVector::test_is_uadd_overflow(uint64_t size)
     case 1:
       test_is_uadd_overflow_aux(size, "0", "0", false);
       test_is_uadd_overflow_aux(size, "0", "1", false);
+      test_is_uadd_overflow_aux(size, "1", "0", false);
       test_is_uadd_overflow_aux(size, "1", "1", true);
       break;
     case 7:
@@ -878,6 +909,116 @@ TestBitVector::test_is_uadd_overflow(uint64_t size)
           size, "170141183460469231731687303715884105726", "1", false);
       test_is_uadd_overflow_aux(
           size, "170141183460469231731687303715884105726", "2", true);
+      break;
+    default: assert(false);
+  }
+}
+
+void
+TestBitVector::test_is_sadd_overflow_aux(uint64_t size,
+                                         const std::string& s1,
+                                         const std::string& s2,
+                                         bool expected)
+{
+  BitVector bv1(size, s1, 2);
+  BitVector bv2(size, s2, 2);
+  ASSERT_EQ(bv1.is_sadd_overflow(bv2), expected);
+  ASSERT_DEATH_DEBUG(bv1.is_sadd_overflow(BitVector(size + 1, *d_rng)),
+                     "d_size == bv.d_size");
+}
+
+void
+TestBitVector::test_is_sadd_overflow(uint64_t size)
+{
+  switch (size)
+  {
+    case 1:
+      test_is_sadd_overflow_aux(size, "0", "0", false);
+      test_is_sadd_overflow_aux(size, "0", "1", false);
+      test_is_sadd_overflow_aux(size, "1", "1", true);
+      break;
+    case 7:
+      test_is_sadd_overflow_aux(size, "0000011", "0000110", false);
+      test_is_sadd_overflow_aux(size, "1111110", "1010101", false);
+      test_is_sadd_overflow_aux(size, "1111110", "1000001", true);
+      break;
+    case 31:
+      test_is_sadd_overflow_aux(size,
+                                "0000000000000000000000000001111",
+                                "0000000000000000000000001001110",
+                                false);
+      test_is_sadd_overflow_aux(size,
+                                "0111111111111111111111111111111",
+                                "0000000000000000000000001001110",
+                                true);
+      test_is_sadd_overflow_aux(size,
+                                "1100000000000000000000000000000",
+                                "1000000000000000000000000000001",
+                                true);
+      break;
+    case 64:
+      test_is_sadd_overflow_aux(
+          size,
+          "1111111111111111111111111111111111111111111111111111111111111110",
+          "0000000000000000000000000000000000000000000000000000000000000001",
+          false);
+      test_is_sadd_overflow_aux(
+          size,
+          "0111111111111111111111111111111111111111111111111111111111111110",
+          "0000000000000000000000000000000000000000000000000000000000000100",
+          true);
+      test_is_sadd_overflow_aux(
+          size,
+          "1111111111111111111111111111111111111111111111111111111111111110",
+          "1000000000000000000000000000000000000000000000000000000000000001",
+          true);
+      break;
+    case 65:
+      test_is_sadd_overflow_aux(
+          size,
+          "11111111111111111111111111111111111111111111111111111111111111110",
+          "00000000000000000000000000000000000000000000000000000000000000001",
+          false);
+      test_is_sadd_overflow_aux(
+          size,
+          "01111111111111111111111111111111111111111111111111111111111111010",
+          "00000000000000000000000000000000000000000000000000000000100000001",
+          true);
+      test_is_sadd_overflow_aux(
+          size,
+          "10000000000000000000000000000000000000000000000000000000000000000",
+          "10000000000000000000000000000000000000000000000000000000000000001",
+          true);
+      break;
+    case 127:
+      test_is_sadd_overflow_aux(
+          size,
+          "01111111111111111111111111111111111111111111111111111111111111111111"
+          "11111111111111111111111111111111111111111111111111111111001",
+          "00000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000001",
+          false);
+      test_is_sadd_overflow_aux(
+          size,
+          "01111111111111111111111111111111111111111111111111111111111111111111"
+          "11111111111111111111111111111111111111111111111111111111001",
+          "00000000000000000000000100000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000001",
+          true);
+      test_is_sadd_overflow_aux(
+          size,
+          "11111111111111111111111111111111111111111111111111111111111111111111"
+          "11111111111111111111111111111111111111111111111111111111110",
+          "00000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000001",
+          false);
+      test_is_sadd_overflow_aux(
+          size,
+          "10000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000000",
+          "10000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000001",
+          true);
       break;
     default: assert(false);
   }
@@ -1745,6 +1886,35 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           atres = _sub(i1, i1, size);
           break;
 
+        case UADDO:
+          if (fun_kind == INPLACE)
+          {
+            (void) res.ibvuaddo(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
+            (void) res.ibvuaddo(b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvuaddo(tres);
+          }
+          else if (fun_kind == INPLACE_THIS_ALL)
+          {
+            // test with *this as first argument
+            (void) res.ibvuaddo(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvuaddo(tres, tres);
+          }
+          else
+          {
+            res = b1.bvuaddo(b2);
+          }
+          ares  = _uaddo(i1, i2, size);
+          atres = _uaddo(i1, i1, size);
+          break;
+
         case UDIV:
           if (fun_kind == INPLACE)
           {
@@ -2250,6 +2420,22 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       }
       break;
 
+    case UADDO:
+      if (fun_kind == INPLACE_THIS)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvuaddo(b2), "d_size == .*d_size");
+      }
+      else if (fun_kind == INPLACE_THIS_ALL)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvuaddo(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvuaddo(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH_DEBUG(b1.bvuaddo(b2), "d_size == .*d_size");
+      }
+      break;
+
     case UDIV:
       if (fun_kind == INPLACE_THIS)
       {
@@ -2434,6 +2620,35 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
     {
       switch (kind)
       {
+        case SADDO:
+          if (fun_kind == INPLACE)
+          {
+            (void) res.ibvsaddo(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
+            (void) res.ibvsaddo(b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsaddo(tres);
+          }
+          else if (fun_kind == INPLACE_THIS_ALL)
+          {
+            // test with *this as first argument
+            (void) res.ibvsaddo(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsaddo(tres, tres);
+          }
+          else
+          {
+            res = b1.bvsaddo(b2);
+          }
+          ares  = _saddo(i1, i2, size);
+          atres = _saddo(i1, i1, size);
+          break;
+
         case SDIV:
           if (fun_kind == INPLACE_THIS)
           {
@@ -2613,6 +2828,22 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
   BitVector b2(34, *d_rng);
   switch (kind)
   {
+    case SADDO:
+      if (fun_kind == INPLACE_THIS)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvsaddo(b2), "d_size == .*d_size");
+      }
+      else if (fun_kind == INPLACE_THIS_ALL)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvsaddo(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsaddo(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH_DEBUG(b1.bvsaddo(b2), "d_size == .*d_size");
+      }
+      break;
+
     case SDIV:
       if (fun_kind == INPLACE_THIS)
       {
@@ -4608,6 +4839,10 @@ TEST_F(TestBitVector, redxor) { test_unary(DEFAULT, REDXOR); }
 
 TEST_F(TestBitVector, add) { test_binary(DEFAULT, ADD); }
 
+TEST_F(TestBitVector, uaddo) { test_binary(DEFAULT, UADDO); }
+
+TEST_F(TestBitVector, saddo) { test_binary_signed(DEFAULT, SADDO); }
+
 TEST_F(TestBitVector, and) { test_binary(DEFAULT, AND); }
 
 TEST_F(TestBitVector, concat) { test_concat(DEFAULT); }
@@ -4626,6 +4861,16 @@ TEST_F(TestBitVector, is_uadd_overflow)
   test_is_uadd_overflow(64);
   test_is_uadd_overflow(65);
   test_is_uadd_overflow(127);
+}
+
+TEST_F(TestBitVector, is_sadd_overflow)
+{
+  test_is_sadd_overflow(1);
+  test_is_sadd_overflow(7);
+  test_is_sadd_overflow(31);
+  test_is_sadd_overflow(64);
+  test_is_sadd_overflow(65);
+  test_is_sadd_overflow(127);
 }
 
 TEST_F(TestBitVector, is_umul_overflow)
@@ -4772,6 +5017,20 @@ TEST_F(TestBitVector, iadd)
   test_binary(INPLACE, ADD);
   test_binary(INPLACE_THIS_ALL, ADD);
   test_binary(INPLACE_THIS, ADD);
+}
+
+TEST_F(TestBitVector, iuaddo)
+{
+  test_binary(INPLACE, UADDO);
+  test_binary(INPLACE_THIS_ALL, UADDO);
+  test_binary(INPLACE_THIS, UADDO);
+}
+
+TEST_F(TestBitVector, isaddo)
+{
+  test_binary_signed(INPLACE, SADDO);
+  test_binary_signed(INPLACE_THIS_ALL, SADDO);
+  test_binary_signed(INPLACE_THIS, SADDO);
 }
 
 TEST_F(TestBitVector, iand)

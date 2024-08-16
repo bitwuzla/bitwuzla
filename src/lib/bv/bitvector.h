@@ -355,12 +355,19 @@ class BitVector
   bool is_power_of_two() const;
 
   /**
-   * Determine if the addition of this and the given bit-vector produces
-   * an overflow.
+   * Determine if the (unsigned) addition of this and the given bit-vector
+   * produces an overflow.
    * @param bv The bit-vector to add to this bit-vector.
    * @return True if it produces an overflow.
    */
   bool is_uadd_overflow(const BitVector& bv) const;
+  /**
+   * Determine if the (signed) addition of this and the given bit-vector
+   * produces an overflow.
+   * @param bv The bit-vector to add to this bit-vector.
+   * @return True if it produces an overflow.
+   */
+  bool is_sadd_overflow(const BitVector& bv) const;
   /**
    * Determine if the multiplication of this and the given bit-vector produces
    * an overflow.
@@ -652,6 +659,21 @@ class BitVector
    * @return A bit-vector representing the result of the signed remainder.
    */
   BitVector bvsrem(const BitVector& bv) const;
+
+  /**
+   * Create a bit-vector representing a predicate that indicates if bit-vector
+   * unsigned addition produces an overflow.
+   * @param bv The other bit-vector.
+   * @return A bit-vector representing the result of the overflow check.
+   */
+  BitVector bvuaddo(const BitVector& bv) const;
+  /**
+   * Create a bit-vector representing a predicate that indicates if bit-vector
+   * signed addition produces an overflow.
+   * @param bv The other bit-vector.
+   * @return A bit-vector representing the result of the overflow check.
+   */
+  BitVector bvsaddo(const BitVector& bv) const;
 
   /**
    * Create a bit-vector representing the concatenation of this bit-vector and
@@ -1618,6 +1640,54 @@ class BitVector
    *         signed remainder of this and the given bit-vector.
    */
   BitVector& ibvsrem(const BitVector& bv);
+
+  /**
+   * Unsigned addition overflow check (in-place) of given bit-vectors `bv0` and
+   * `bv1`.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv0 The first operand of the addition.
+   * @param bv1 The second operand of the addition.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         overflow check.
+   */
+  BitVector& ibvuaddo(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Unsigned addition overflow check (in-place) of this bit-vector and the
+   * given bit-vector.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv The other bit-vector.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         overflow check.
+   */
+  BitVector& ibvuaddo(const BitVector& bv);
+
+  /**
+   * Signed addition overflow check (in-place) of given bit-vectors `bv0` and
+   * `bv1`.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv0 The first operand of the addition.
+   * @param bv1 The second operand of the addition.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         overflow check.
+   */
+  BitVector& ibvsaddo(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Signed addition overflow check (in-place) of this bit-vector and the given
+   * bit-vector.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv The other bit-vector.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         overflow check.
+   */
+  BitVector& ibvsaddo(const BitVector& bv);
 
   /**
    * Concatenation (in-place) of the given bit-vectors.
