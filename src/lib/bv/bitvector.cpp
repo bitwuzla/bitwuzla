@@ -1345,6 +1345,18 @@ BitVector::bvrepeat(uint64_t n) const
 }
 
 BitVector
+BitVector::bvroli(uint64_t n) const
+{
+  return BitVector(d_size).ibvroli(*this, n);
+}
+
+BitVector
+BitVector::bvrol(const BitVector& n) const
+{
+  return BitVector(d_size).ibvrol(*this, n);
+}
+
+BitVector
 BitVector::bvmodinv() const
 {
   return BitVector(d_size).ibvmodinv(*this);
@@ -2832,6 +2844,87 @@ BitVector::ibvrepeat(const BitVector& bv, uint64_t n)
 }
 
 BitVector&
+BitVector::ibvroli(const BitVector& bv, uint64_t n)
+{
+  assert(!bv.is_null());
+
+  uint64_t size = bv.d_size;
+  uint64_t rot  = n % size;
+  const BitVector* b;
+  BitVector bb;
+
+  /* copy to guard for bv0 == *this */
+  if (&bv == this)
+  {
+    bb = bv;
+    b  = &bb;
+  }
+  else
+  {
+    b = &bv;
+  }
+
+  if (size > s_native_size)
+  {
+    if (!is_gmp())
+    {
+      mpz_init(d_val_gmp);
+    }
+    if (b->is_gmp())
+    {
+      mpz_set(d_val_gmp, b->d_val_gmp);
+    }
+    else
+    {
+      mpz_set_ui(d_val_gmp, b->d_val_uint64);
+    }
+    if (rot)
+    {
+      // shl by number of bits to rotate left
+      mpz_mul_2exp_ull(d_val_gmp, d_val_gmp, rot);
+      // add bits that were rotated out
+      d_size = size;
+      ibvadd(b->bvshr(size - rot));
+    }
+  }
+  else
+  {
+    if (is_gmp())
+    {
+      mpz_clear(d_val_gmp);
+    }
+    d_val_uint64 = uint64_fdiv_r_2exp(size, b->d_val_uint64 << rot);
+    if (rot)
+    {
+      d_val_uint64 += uint64_fdiv_r_2exp(size, b->d_val_uint64 >> (size - rot));
+    }
+    d_size = size;
+  }
+  return *this;
+}
+
+BitVector&
+BitVector::ibvrol(const BitVector& bv, const BitVector& n)
+{
+  assert(!bv.is_null());
+  assert(!n.is_null());
+  assert(bv.d_size == n.d_size);
+
+  uint64_t in;
+  uint64_t size = bv.d_size;
+
+  if (!n.shift_is_uint64(&in))
+  {
+    BitVector m = n.bvurem(BitVector::from_ui(size, size));
+    bool isuint = m.shift_is_uint64(&in);
+    assert(isuint);
+  }
+  ibvroli(bv, in);
+  d_size = size;
+  return *this;
+}
+
+BitVector&
 BitVector::ibvite(const BitVector& c, const BitVector& t, const BitVector& e)
 {
   assert(!c.is_null());
@@ -3306,6 +3399,20 @@ BitVector&
 BitVector::ibvrepeat(uint64_t n)
 {
   ibvrepeat(*this, n);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvroli(uint64_t n)
+{
+  ibvroli(*this, n);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvrol(const BitVector& n)
+{
+  ibvrol(*this, n);
   return *this;
 }
 

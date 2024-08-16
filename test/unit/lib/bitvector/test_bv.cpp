@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <iostream>
 
+#include "bv/bitvector.h"
 #include "test_lib.h"
 
 namespace bzla::test {
@@ -39,6 +40,10 @@ class TestBitVector : public TestCommon
     NOR,
     NOT,
     OR,
+    ROL,
+    ROLI,
+    ROR,
+    RORI,
     REDAND,
     REDOR,
     REDXOR,
@@ -181,6 +186,15 @@ class TestBitVector : public TestCommon
                       const std::string& expected,
                       bool shift_by_int);
   void test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int);
+  void test_rotate_aux(BvFunKind fun_kind,
+                       Kind kind,
+                       const BitVector& bv,
+                       uint64_t n);
+  void test_rotate_aux(BvFunKind fun_kind,
+                       Kind kind,
+                       const BitVector& bv,
+                       const BitVector& n);
+  void test_rotate(BvFunKind fun_kind, Kind kind);
   void test_udivurem(uint64_t size);
   std::unique_ptr<RNG> d_rng;
 };
@@ -3190,6 +3204,177 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
 }
 
 void
+TestBitVector::test_rotate_aux(BvFunKind fun_kind,
+                               Kind kind,
+                               const BitVector& bv,
+                               uint64_t n)
+{
+  uint64_t size = bv.size();
+  std::vector<BitVector> reses{BitVector(bv)};
+  if (fun_kind == DEFAULT || fun_kind == INPLACE)
+  {
+    reses.push_back(BitVector());
+    reses.emplace_back(64);
+    reses.emplace_back(65);
+  }
+
+  for (auto& res : reses)
+  {
+    switch (kind)
+    {
+      case ROLI:
+        if (fun_kind == INPLACE)
+        {
+          (void) res.ibvroli(bv, n);
+        }
+        else if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvroli(n);
+        }
+        else if (fun_kind == INPLACE_THIS_ALL)
+        {
+          // test with *this as argument
+          (void) res.ibvroli(res, n);
+        }
+        else
+        {
+          res = bv.bvroli(n);
+        }
+        break;
+      case ROL:
+        if (fun_kind == INPLACE)
+        {
+          (void) res.ibvrol(bv, BitVector::from_ui(size, n));
+        }
+        else if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvrol(BitVector::from_ui(size, n));
+        }
+        else if (fun_kind == INPLACE_THIS_ALL)
+        {
+          // test with *this as argument
+          (void) res.ibvrol(res, BitVector::from_ui(size, n));
+        }
+        else
+        {
+          res = bv.bvrol(BitVector::from_ui(size, n));
+        }
+        break;
+
+      default: assert(false);
+    }
+    ASSERT_EQ(size, res.size());
+    std::string res_str = res.str();
+    uint64_t rot        = n % size;
+    std::stringstream exp_str;
+    if (rot)
+    {
+      if (kind == ROLI || kind == ROL)
+      {
+        exp_str << bv.bvextract(size - 1 - rot, 0)
+                << bv.bvextract(size - 1, size - rot);
+      }
+    }
+    else
+    {
+      exp_str << bv;
+    }
+    ASSERT_EQ(res_str, exp_str.str());
+  }
+}
+
+void
+TestBitVector::test_rotate_aux(BvFunKind fun_kind,
+                               Kind kind,
+                               const BitVector& bv,
+                               const BitVector& n)
+{
+  uint64_t size = bv.size();
+  std::vector<BitVector> reses{BitVector(bv)};
+  if (fun_kind == DEFAULT || fun_kind == INPLACE)
+  {
+    reses.push_back(BitVector());
+    reses.emplace_back(64);
+    reses.emplace_back(65);
+  }
+
+  for (auto& res : reses)
+  {
+    switch (kind)
+    {
+      case ROL:
+        if (fun_kind == INPLACE)
+        {
+          (void) res.ibvrol(bv, n);
+        }
+        else if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvrol(n);
+        }
+        else if (fun_kind == INPLACE_THIS_ALL)
+        {
+          // test with *this as argument
+          (void) res.ibvrol(res, n);
+        }
+        else
+        {
+          res = bv.bvrol(n);
+        }
+        break;
+
+      default: assert(false);
+    }
+    ASSERT_EQ(size, res.size());
+    std::string res_str = res.str();
+    std::string str     = n.bvurem(BitVector::from_ui(size, size)).str();
+    str.erase(0, str.find_first_not_of('0'));
+    uint64_t rot = str.empty() ? 0 : std::stoul(str, nullptr, 2);
+    std::stringstream exp_str;
+    if (rot)
+    {
+      if (kind == ROLI || kind == ROL)
+      {
+        exp_str << bv.bvextract(size - 1 - rot, 0)
+                << bv.bvextract(size - 1, size - rot);
+      }
+    }
+    else
+    {
+      exp_str << bv;
+    }
+    ASSERT_EQ(res_str, exp_str.str());
+  }
+}
+
+void
+TestBitVector::test_rotate(BvFunKind fun_kind, Kind kind)
+{
+  std::vector<uint64_t> sizes = {2, 3, 8, 65, 128};
+  for (uint64_t size : sizes)
+  {
+    for (uint64_t i = 0; i < (1u << size); ++i)
+    {
+      uint64_t n = kind == ROLI || kind == RORI
+                       ? d_rng->pick<uint64_t>(0, (1u << size) + size + 1)
+                       : d_rng->pick<uint64_t>(0, (1u << size) - 1);
+      test_rotate_aux(fun_kind, kind, BitVector::from_ui(size, i), n);
+    }
+    if ((kind == ROL || kind == ROR) && size > 64)
+    {
+      // 'n' does not fit into uint64_t
+      for (uint32_t i = 0; i < N_TESTS; ++i)
+      {
+        BitVector n(size,
+                    *d_rng,
+                    BitVector::from_ui(size, UINT64_MAX),
+                    BitVector::mk_ones(size));
+        test_rotate_aux(fun_kind, kind, BitVector::from_ui(size, i), n);
+      }
+    }
+  }
+}
+
+void
 TestBitVector::test_udivurem(uint64_t size)
 {
   BitVector zero = BitVector::mk_zero(size);
@@ -4379,6 +4564,10 @@ TEST_F(TestBitVector, sext) { test_extend(DEFAULT, SEXT); }
 
 TEST_F(TestBitVector, repeat) { test_repeat(DEFAULT); }
 
+TEST_F(TestBitVector, roli) { test_rotate(DEFAULT, ROLI); }
+
+TEST_F(TestBitVector, rol) { test_rotate(DEFAULT, ROL); }
+
 TEST_F(TestBitVector, shl)
 {
   test_binary(DEFAULT, SHL);
@@ -4609,6 +4798,20 @@ TEST_F(TestBitVector, iashr)
   test_binary(INPLACE_THIS, ASHR);
   test_shift(INPLACE_THIS_ALL, ASHR, false);
   test_shift(INPLACE_THIS, ASHR, false);
+}
+
+TEST_F(TestBitVector, iroli)
+{
+  test_rotate(INPLACE, ROLI);
+  test_rotate(INPLACE_THIS, ROLI);
+  test_rotate(INPLACE_THIS_ALL, ROLI);
+}
+
+TEST_F(TestBitVector, irol)
+{
+  test_rotate(INPLACE, ROL);
+  test_rotate(INPLACE_THIS, ROL);
+  test_rotate(INPLACE_THIS_ALL, ROL);
 }
 
 TEST_F(TestBitVector, islt)
