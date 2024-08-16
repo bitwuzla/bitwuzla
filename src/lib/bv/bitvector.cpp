@@ -1047,6 +1047,25 @@ BitVector::is_umul_overflow(const BitVector& bv) const
   return false;
 }
 
+bool
+BitVector::is_smul_overflow(const BitVector& bv) const
+{
+  assert(!is_null());
+  assert(d_size == bv.d_size);
+
+  if (d_size == 1)
+  {
+    return is_one() && bv.is_one();
+  }
+
+  BitVector mul(bvsext(d_size)); /* copy to guard for bv1 == *this */
+  mul.ibvmul(bv.bvsext(d_size));
+  return mul.signed_compare(BitVector::mk_min_signed(d_size).ibvsext(d_size))
+             < 0
+         || mul.signed_compare(BitVector::mk_max_signed(d_size).ibvsext(d_size))
+                > 0;
+}
+
 uint64_t
 BitVector::count_trailing_zeros() const
 {

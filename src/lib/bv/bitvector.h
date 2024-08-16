@@ -369,12 +369,19 @@ class BitVector
    */
   bool is_sadd_overflow(const BitVector& bv) const;
   /**
-   * Determine if the multiplication of this and the given bit-vector produces
-   * an overflow.
+   * Determine if the (unsigned) multiplication of this and the given bit-vector
+   * produces an overflow.
    * @param bv The bit-vector to multiply this bit-vector with.
    * @return True if it produces an overflow.
    */
   bool is_umul_overflow(const BitVector& bv) const;
+  /**
+   * Determine if the (signed) multiplication of this and the given bit-vector
+   * produces an overflow.
+   * @param bv The bit-vector to multiply this bit-vector with.
+   * @return True if it produces an overflow.
+   */
+  bool is_smul_overflow(const BitVector& bv) const;
 
   /** @return The number of trailing zeros (counted from lsb). */
   uint64_t count_trailing_zeros() const;
