@@ -3260,6 +3260,44 @@ TestBitVector::test_rotate_aux(BvFunKind fun_kind,
           res = bv.bvrol(BitVector::from_ui(size, n));
         }
         break;
+      case RORI:
+        if (fun_kind == INPLACE)
+        {
+          (void) res.ibvrori(bv, n);
+        }
+        else if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvrori(n);
+        }
+        else if (fun_kind == INPLACE_THIS_ALL)
+        {
+          // test with *this as argument
+          (void) res.ibvrori(res, n);
+        }
+        else
+        {
+          res = bv.bvrori(n);
+        }
+        break;
+      case ROR:
+        if (fun_kind == INPLACE)
+        {
+          (void) res.ibvror(bv, BitVector::from_ui(size, n));
+        }
+        else if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvror(BitVector::from_ui(size, n));
+        }
+        else if (fun_kind == INPLACE_THIS_ALL)
+        {
+          // test with *this as argument
+          (void) res.ibvror(res, BitVector::from_ui(size, n));
+        }
+        else
+        {
+          res = bv.bvror(BitVector::from_ui(size, n));
+        }
+        break;
 
       default: assert(false);
     }
@@ -3273,6 +3311,10 @@ TestBitVector::test_rotate_aux(BvFunKind fun_kind,
       {
         exp_str << bv.bvextract(size - 1 - rot, 0)
                 << bv.bvextract(size - 1, size - rot);
+      }
+      else if (kind == RORI || kind == ROR)
+      {
+        exp_str << bv.bvextract(rot - 1, 0) << bv.bvextract(size - 1, rot);
       }
     }
     else
@@ -3321,6 +3363,25 @@ TestBitVector::test_rotate_aux(BvFunKind fun_kind,
           res = bv.bvrol(n);
         }
         break;
+      case ROR:
+        if (fun_kind == INPLACE)
+        {
+          (void) res.ibvror(bv, n);
+        }
+        else if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvror(n);
+        }
+        else if (fun_kind == INPLACE_THIS_ALL)
+        {
+          // test with *this as argument
+          (void) res.ibvror(res, n);
+        }
+        else
+        {
+          res = bv.bvror(n);
+        }
+        break;
 
       default: assert(false);
     }
@@ -3336,6 +3397,10 @@ TestBitVector::test_rotate_aux(BvFunKind fun_kind,
       {
         exp_str << bv.bvextract(size - 1 - rot, 0)
                 << bv.bvextract(size - 1, size - rot);
+      }
+      else if (kind == RORI || kind == ROR)
+      {
+        exp_str << bv.bvextract(rot - 1, 0) << bv.bvextract(size - 1, rot);
       }
     }
     else
@@ -4568,6 +4633,10 @@ TEST_F(TestBitVector, roli) { test_rotate(DEFAULT, ROLI); }
 
 TEST_F(TestBitVector, rol) { test_rotate(DEFAULT, ROL); }
 
+TEST_F(TestBitVector, rori) { test_rotate(DEFAULT, RORI); }
+
+TEST_F(TestBitVector, ror) { test_rotate(DEFAULT, ROR); }
+
 TEST_F(TestBitVector, shl)
 {
   test_binary(DEFAULT, SHL);
@@ -4812,6 +4881,20 @@ TEST_F(TestBitVector, irol)
   test_rotate(INPLACE, ROL);
   test_rotate(INPLACE_THIS, ROL);
   test_rotate(INPLACE_THIS_ALL, ROL);
+}
+
+TEST_F(TestBitVector, irori)
+{
+  test_rotate(INPLACE, RORI);
+  test_rotate(INPLACE_THIS, RORI);
+  test_rotate(INPLACE_THIS_ALL, RORI);
+}
+
+TEST_F(TestBitVector, iror)
+{
+  test_rotate(INPLACE, ROR);
+  test_rotate(INPLACE_THIS, ROR);
+  test_rotate(INPLACE_THIS_ALL, ROR);
 }
 
 TEST_F(TestBitVector, islt)

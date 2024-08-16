@@ -700,6 +700,19 @@ class BitVector
   BitVector bvrol(const BitVector& n) const;
 
   /**
+   * Create a bit-vector representing this bit-vector rotated right by `n` bits.
+   * @param n The number of bits to rotate this bit-vector by.
+   * @return A bit-vector representing the result of the rotation.
+   */
+  BitVector bvrori(uint64_t n) const;
+  /**
+   * Create a bit-vector representing this bit-vector rotated right by `n` bits.
+   * @param n The number of bits to rotate this bit-vector by.
+   * @return A bit-vector representing the result of the rotation.
+   */
+  BitVector bvror(const BitVector& n) const;
+
+  /**
    * Calculate modular inverse for this bit-vector by means of the Extended
    * Euclidean Algorithm.
    *
@@ -1713,6 +1726,28 @@ class BitVector
   BitVector& ibvroli(uint64_t n);
 
   /**
+   * Rotate right (in-place) of the given bit-vector.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv The bit-vector to rotate.
+   * @param n  The number of bits to rotate bit-vector `bv` by.
+   * @return A reference to this bit-vector, overwritten with result of the
+   *         rotate right operation.
+   */
+  BitVector& ibvrori(const BitVector& bv, uint64_t n);
+  /**
+   * Rotate right(in-place) of this bit-vector.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param n  The number of bits to rotate bit-vector `bv` by.
+   * @return A reference to this bit-vector, overwritten with result of the
+   *         rotate right operation.
+   */
+  BitVector& ibvrori(uint64_t n);
+
+  /**
    * Rotate left (in-place) of the given bit-vector.
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
@@ -1733,6 +1768,28 @@ class BitVector
    *         rotate left operation.
    */
   BitVector& ibvrol(const BitVector& n);
+
+  /**
+   * Rotate right (in-place) of the given bit-vector.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv The bit-vector to rotate.
+   * @param n  The number of bits to rotate bit-vector `bv` by.
+   * @return A reference to this bit-vector, overwritten with result of the
+   *         rotate right operation.
+   */
+  BitVector& ibvror(const BitVector& bv, const BitVector& n);
+  /**
+   * Rotate right (in-place) of this bit-vector.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param n  The number of bits to rotate bit-vector `bv` by.
+   * @return A reference to this bit-vector, overwritten with result of the
+   *         rotate right operation.
+   */
+  BitVector& ibvror(const BitVector& n);
 
   /**
    * Create an if-then-else over the given bit-vectors (in-place).
