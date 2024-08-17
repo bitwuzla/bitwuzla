@@ -54,6 +54,7 @@ tests_smt2 = [
   ['get-value/fp_real.smt2'],
   ['get-value/fp_regr9.smt2'],
   ['parser/echo.smt2'],
+  ['parser/get_value_uf.smt2'],
   ['parser/issue59-1.smt2'],
   ['parser/issue59-2.smt2'],
   ['parser/issue66.smt2'],

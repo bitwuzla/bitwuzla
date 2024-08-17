@@ -1226,6 +1226,7 @@ Parser::parse_term(bool look_ahead, Token la)
    *       non-simplified expression) */
   Token token;
   bitwuzla::Term res;
+  int depth = 0;
 
   do
   {
@@ -1242,9 +1243,14 @@ Parser::parse_term(bool look_ahead, Token la)
     {
       return false;
     }
+    if (token == Token::LPAR)
+    {
+      depth++;
+    }
 
     if (token == Token::RPAR)
     {
+      depth--;
       if (!close_term())
       {
         return false;
@@ -1252,7 +1258,7 @@ Parser::parse_term(bool look_ahead, Token la)
     }
     else
     {
-      if (!parse_open_term(token))
+      if (!parse_open_term(token, depth == 0))
       {
         return false;
       }
@@ -1301,7 +1307,7 @@ Parser::parse_term_list(std::vector<bitwuzla::Term>& terms,
 }
 
 bool
-Parser::parse_open_term(Token token)
+Parser::parse_open_term(Token token, bool top_level)
 {
   assert(token != Token::RPAR);
   d_expect_body = false;
@@ -1389,7 +1395,7 @@ Parser::parse_open_term(Token token)
     {
       push_item(token, d_lexer->coo());
     }
-    if (!parse_open_term_symbol())
+    if (!parse_open_term_symbol(top_level))
     {
       return false;
     }
@@ -1668,7 +1674,7 @@ Parser::parse_open_term_quant()
 }
 
 bool
-Parser::parse_open_term_symbol()
+Parser::parse_open_term_symbol(bool top_level)
 {
   assert(!d_work.empty());
 
@@ -1761,7 +1767,10 @@ Parser::parse_open_term_symbol()
       }
       else
       {
-        push_item(Token::FUN_APP, d_lexer->coo());
+        if (!top_level)
+        {
+          push_item(Token::FUN_APP, d_lexer->coo());
+        }
       }
       push_item(Token::TERM, node->d_term, d_lexer->coo());
     }

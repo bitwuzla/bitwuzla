@@ -315,7 +315,7 @@ class Parser : public bzla::parser::Parser
   /**
    * Helper for parse_term, parse currently open term.
    */
-  bool parse_open_term(Token token);
+  bool parse_open_term(Token token, bool top_level);
   /**
    * Helper for parse_open_term, parse currently open (as ...) term.
    * @return False on error.
@@ -335,7 +335,7 @@ class Parser : public bzla::parser::Parser
    * Helper for parse_open_term, parse currently open symbol term.
    * @return False on error.
    */
-  bool parse_open_term_symbol();
+  bool parse_open_term_symbol(bool top_level);
 
   /**
    * Parse sort.

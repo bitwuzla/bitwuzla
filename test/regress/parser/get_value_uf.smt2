@@ -1,0 +1,6 @@
+(set-option :global-declaration true)
+(set-option :produce-models true)
+(declare-fun f (Bool) Bool)
+(check-sat)
+(get-value (f))
+(declare-fun a () Bool)
