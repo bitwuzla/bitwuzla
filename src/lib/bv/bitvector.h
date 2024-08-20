@@ -355,6 +355,11 @@ class BitVector
   bool is_power_of_two() const;
 
   /**
+   * Determine if the negation of this bit-vector produces an overflow.
+   * @return True if it produces an overflow.
+   */
+  bool is_neg_overflow() const;
+  /**
    * Determine if the (unsigned) addition of this and the given bit-vector
    * produces an overflow.
    * @param bv The bit-vector to add to this bit-vector.

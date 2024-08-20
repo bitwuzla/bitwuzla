@@ -171,6 +171,10 @@ class TestBitVector : public TestCommon
   void test_repeat(BvFunKind fun_kind);
   void test_extract_aux(BvFunKind fun_kind, const BitVector& bv);
   void test_extract(BvFunKind fun_kind);
+  void test_is_neg_overflow_aux(uint64_t size,
+                                const std::string& s1,
+                                bool expected);
+  void test_is_neg_overflow(uint64_t size);
   void test_is_uadd_overflow_aux(uint64_t size,
                                  const std::string& s1,
                                  const std::string& s2,
@@ -895,6 +899,68 @@ TestBitVector::test_repeat(BvFunKind fun_kind)
     test_repeat_aux(fun_kind, BitVector(65 - n, *d_rng, 63, 0), n);
     n = d_rng->pick<uint64_t>(1, 127 - 1);
     test_repeat_aux(fun_kind, BitVector(127 - n, *d_rng, 63, 0), n);
+  }
+}
+
+void
+TestBitVector::test_is_neg_overflow_aux(uint64_t size,
+                                        const std::string& s1,
+                                        bool expected)
+{
+  BitVector bv1(size, s1, 2);
+  ASSERT_EQ(bv1.is_neg_overflow(), expected);
+}
+
+void
+TestBitVector::test_is_neg_overflow(uint64_t size)
+{
+  switch (size)
+  {
+    case 1:
+      test_is_neg_overflow_aux(size, "0", false);
+      test_is_neg_overflow_aux(size, "1", true);
+      break;
+    case 7:
+      test_is_neg_overflow_aux(size, "0100000", false);
+      test_is_neg_overflow_aux(size, "1000000", true);
+      break;
+    case 31:
+      test_is_neg_overflow_aux(size, "1000000000000000000000000001111", false);
+      test_is_neg_overflow_aux(size, "1000000000000000000000000000000", true);
+      break;
+    case 64:
+      test_is_neg_overflow_aux(
+          size,
+          "11111111111111111111111111111111111111111111111111111111111111",
+          false);
+      test_is_neg_overflow_aux(
+          size,
+          "10000000000000000000000000000000000000000000000000000000000000",
+          false);
+      break;
+    case 65:
+      test_is_neg_overflow_aux(
+          size,
+          "100000000111111111111111111111111111111111111111111111111111110",
+          false);
+      test_is_neg_overflow_aux(
+          size,
+          "100000000000000000000000000000000000000000000000000000000000000",
+          false);
+      break;
+    case 127:
+      test_is_neg_overflow_aux(
+          size,
+          "01111111111111111111111111111111111111111111111111111111111111111111"
+          "11111111111111111111111111111111111111111111111111111111001",
+          false);
+      test_is_neg_overflow_aux(
+          size,
+          "10000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000000",
+          true);
+      break;
+    default: assert(false);
   }
 }
 
@@ -5137,6 +5203,16 @@ TEST_F(TestBitVector, eq) { test_binary(DEFAULT, EQ); }
 TEST_F(TestBitVector, extract) { test_extract(DEFAULT); }
 
 TEST_F(TestBitVector, implies) { test_binary(DEFAULT, IMPLIES); }
+
+TEST_F(TestBitVector, is_neg_overflow)
+{
+  test_is_neg_overflow(1);
+  test_is_neg_overflow(7);
+  test_is_neg_overflow(31);
+  test_is_neg_overflow(64);
+  test_is_neg_overflow(65);
+  test_is_neg_overflow(127);
+}
 
 TEST_F(TestBitVector, is_uadd_overflow)
 {

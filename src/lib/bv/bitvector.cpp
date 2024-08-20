@@ -985,6 +985,13 @@ BitVector::is_power_of_two() const
 }
 
 bool
+BitVector::is_neg_overflow() const
+{
+  assert(!is_null());
+  return is_min_signed();
+}
+
+bool
 BitVector::is_uadd_overflow(const BitVector& bv) const
 {
   assert(!is_null());
@@ -1619,7 +1626,7 @@ BitVector::ibvnego(const BitVector& bv)
 {
   assert(!bv.is_null());
   if (is_gmp()) mpz_clear(d_val_gmp);
-  d_val_uint64 = bv.is_min_signed() ? 1 : 0;
+  d_val_uint64 = bv.is_neg_overflow() ? 1 : 0;
   d_size       = 1;
   return *this;
 }
