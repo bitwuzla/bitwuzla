@@ -11,7 +11,6 @@
 #include <bitset>
 #include <cmath>
 #include <cstdint>
-#include <iostream>
 
 #include "bv/bitvector.h"
 #include "test_lib.h"
@@ -58,6 +57,7 @@ class TestBitVector : public TestCommon
     SHR,
     SLT,
     SLE,
+    SMULO,
     SREM,
     SUB,
     UADDO,
@@ -66,6 +66,7 @@ class TestBitVector : public TestCommon
     UGE,
     ULT,
     ULE,
+    UMULO,
     UREM,
     XNOR,
     XOR,
@@ -114,6 +115,7 @@ class TestBitVector : public TestCommon
   static uint64_t _redor(uint64_t x, uint64_t size);
   static uint64_t _redxor(uint64_t x, uint64_t size);
   static uint64_t _saddo(int64_t x, int64_t y, uint64_t size);
+  static uint64_t _smulo(int64_t x, int64_t y, uint64_t size);
   static int64_t _sdiv(int64_t x, int64_t y, uint64_t size);
   static int64_t _sgt(int64_t x, int64_t y, uint64_t size);
   static int64_t _sge(int64_t x, int64_t y, uint64_t size);
@@ -124,6 +126,7 @@ class TestBitVector : public TestCommon
   static int64_t _srem(int64_t x, int64_t y, uint64_t size);
   static uint64_t _sub(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _uaddo(uint64_t x, uint64_t y, uint64_t size);
+  static uint64_t _umulo(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _udiv(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _ugt(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _uge(uint64_t x, uint64_t y, uint64_t size);
@@ -313,6 +316,32 @@ TestBitVector::_saddo(int64_t x, int64_t y, uint64_t size)
            || x + y > static_cast<int64_t>(normalize_uint64(size - 1, ~0));
   }
   return y != 0 && x != 0 && (x + y) - y != x;
+}
+
+uint64_t
+TestBitVector::_umulo(uint64_t x, uint64_t y, uint64_t size)
+{
+  if (size == 64)
+  {
+    return y != 0 && x != 0 && x * y / y != x;
+  }
+  return (size > 32 && x != 0 && y != 0 && (x * y < x || x * y < y))
+         || (size <= 32 && x * y > normalize_uint64(size, ~0));
+}
+
+uint64_t
+TestBitVector::_smulo(int64_t x, int64_t y, uint64_t size)
+{
+  if (size == 1)
+  {
+    return x == -1 && y == -1;
+  }
+  if (size < 64)
+  {
+    return x * y < -std::pow(2, size - 1)
+           || x * y > static_cast<int64_t>(normalize_uint64(size - 1, ~0));
+  }
+  return y != 0 && x != 0 && x * y / y != x;
 }
 
 uint64_t
@@ -1086,7 +1115,6 @@ TestBitVector::test_is_smul_overflow_aux(uint64_t size,
 {
   BitVector bv1(size, s1, 2);
   BitVector bv2(size, s2, 2);
-  assert(bv1.is_smul_overflow(bv2) == expected);
   ASSERT_EQ(bv1.is_smul_overflow(bv2), expected);
   ASSERT_DEATH_DEBUG(bv1.is_smul_overflow(BitVector(size + 1, *d_rng)),
                      "d_size == bv.d_size");
@@ -2064,6 +2092,35 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           atres = _uaddo(i1, i1, size);
           break;
 
+        case UMULO:
+          if (fun_kind == INPLACE)
+          {
+            (void) res.ibvumulo(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
+            (void) res.ibvumulo(b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvumulo(tres);
+          }
+          else if (fun_kind == INPLACE_THIS_ALL)
+          {
+            // test with *this as first argument
+            (void) res.ibvumulo(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvumulo(tres, tres);
+          }
+          else
+          {
+            res = b1.bvumulo(b2);
+          }
+          ares  = _umulo(i1, i2, size);
+          atres = _umulo(i1, i1, size);
+          break;
+
         case UDIV:
           if (fun_kind == INPLACE)
           {
@@ -2307,12 +2364,26 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
             || BitVector::from_ui(64, atres).compare(tres.ibvextract(63, 0))
                    == 0);
       }
-      else
+      else if (b1.size() <= 64)
       {
         ASSERT_EQ(BitVector::from_ui(res.size(), ares).compare(res), 0);
         ASSERT_TRUE(tres.is_null()
                     || BitVector::from_ui(tres.size(), atres).compare(tres)
                            == 0);
+      }
+      if (kind == Kind::UADDO)
+      {
+        BitVector b1ext = b1.bvzext(1);
+        BitVector b2ext = b2.bvzext(1);
+        ASSERT_EQ(b1ext.ibvadd(b2ext).ibvextract(size, size).is_zero(),
+                  res.is_zero());
+      }
+      else if (kind == Kind::UMULO)
+      {
+        BitVector b1ext = b1.bvzext(size);
+        BitVector b2ext = b2.bvzext(size);
+        ASSERT_EQ(b1ext.ibvmul(b2ext).ibvextract(2 * size - 1, size).is_zero(),
+                  res.is_zero());
       }
     }
   }
@@ -2585,6 +2656,22 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       }
       break;
 
+    case UMULO:
+      if (fun_kind == INPLACE_THIS)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvumulo(b2), "d_size == .*d_size");
+      }
+      else if (fun_kind == INPLACE_THIS_ALL)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvumulo(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvumulo(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH_DEBUG(b1.bvumulo(b2), "d_size == .*d_size");
+      }
+      break;
+
     case UDIV:
       if (fun_kind == INPLACE_THIS)
       {
@@ -2798,6 +2885,35 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           atres = _saddo(i1, i1, size);
           break;
 
+        case SMULO:
+          if (fun_kind == INPLACE)
+          {
+            (void) res.ibvsmulo(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
+            (void) res.ibvsmulo(b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsmulo(tres);
+          }
+          else if (fun_kind == INPLACE_THIS_ALL)
+          {
+            // test with *this as first argument
+            (void) res.ibvsmulo(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsmulo(tres, tres);
+          }
+          else
+          {
+            res = b1.bvsmulo(b2);
+          }
+          ares  = _smulo(i1, i2, size);
+          atres = _smulo(i1, i1, size);
+          break;
+
         case SDIV:
           if (fun_kind == INPLACE_THIS)
           {
@@ -2990,6 +3106,22 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
       else
       {
         ASSERT_DEATH_DEBUG(b1.bvsaddo(b2), "d_size == .*d_size");
+      }
+      break;
+
+    case SMULO:
+      if (fun_kind == INPLACE_THIS)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvsmulo(b2), "d_size == .*d_size");
+      }
+      else if (fun_kind == INPLACE_THIS_ALL)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvsmulo(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsmulo(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH_DEBUG(b1.bvsmulo(b2), "d_size == .*d_size");
       }
       break;
 
@@ -4992,6 +5124,10 @@ TEST_F(TestBitVector, uaddo) { test_binary(DEFAULT, UADDO); }
 
 TEST_F(TestBitVector, saddo) { test_binary_signed(DEFAULT, SADDO); }
 
+TEST_F(TestBitVector, umulo) { test_binary(DEFAULT, UMULO); }
+
+TEST_F(TestBitVector, smulo) { test_binary_signed(DEFAULT, SMULO); }
+
 TEST_F(TestBitVector, and) { test_binary(DEFAULT, AND); }
 
 TEST_F(TestBitVector, concat) { test_concat(DEFAULT); }
@@ -5190,6 +5326,20 @@ TEST_F(TestBitVector, isaddo)
   test_binary_signed(INPLACE, SADDO);
   test_binary_signed(INPLACE_THIS_ALL, SADDO);
   test_binary_signed(INPLACE_THIS, SADDO);
+}
+
+TEST_F(TestBitVector, iumulo)
+{
+  test_binary(INPLACE, UMULO);
+  test_binary(INPLACE_THIS_ALL, UMULO);
+  test_binary(INPLACE_THIS, UMULO);
+}
+
+TEST_F(TestBitVector, ismulo)
+{
+  test_binary_signed(INPLACE, SMULO);
+  test_binary_signed(INPLACE_THIS_ALL, SMULO);
+  test_binary_signed(INPLACE_THIS, SMULO);
 }
 
 TEST_F(TestBitVector, iand)

@@ -1367,6 +1367,18 @@ BitVector::bvsaddo(const BitVector& bv) const
 }
 
 BitVector
+BitVector::bvumulo(const BitVector& bv) const
+{
+  return BitVector(d_size).ibvumulo(*this, bv);
+}
+
+BitVector
+BitVector::bvsmulo(const BitVector& bv) const
+{
+  return BitVector(d_size).ibvsmulo(*this, bv);
+}
+
+BitVector
 BitVector::bvconcat(const BitVector& bv) const
 {
   return BitVector(d_size).ibvconcat(*this, bv);
@@ -2577,6 +2589,34 @@ BitVector::ibvsaddo(const BitVector& bv0, const BitVector& bv1)
 }
 
 BitVector&
+BitVector::ibvumulo(const BitVector& bv0, const BitVector& bv1)
+{
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
+  assert(bv0.d_size == bv1.d_size);
+
+  uint64_t val = bv0.is_umul_overflow(bv1) ? 1 : 0;
+  if (is_gmp()) mpz_clear(d_val_gmp);
+  d_val_uint64 = val;
+  d_size       = 1;
+  return *this;
+}
+
+BitVector&
+BitVector::ibvsmulo(const BitVector& bv0, const BitVector& bv1)
+{
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
+  assert(bv0.d_size == bv1.d_size);
+
+  uint64_t val = bv0.is_smul_overflow(bv1) ? 1 : 0;
+  if (is_gmp()) mpz_clear(d_val_gmp);
+  d_val_uint64 = val;
+  d_size       = 1;
+  return *this;
+}
+
+BitVector&
 BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!bv0.is_null());
@@ -3570,6 +3610,20 @@ BitVector&
 BitVector::ibvsaddo(const BitVector& bv)
 {
   ibvsaddo(*this, bv);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvumulo(const BitVector& bv)
+{
+  ibvumulo(*this, bv);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvsmulo(const BitVector& bv)
+{
+  ibvsmulo(*this, bv);
   return *this;
 }
 
