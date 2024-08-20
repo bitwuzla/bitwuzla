@@ -1394,6 +1394,12 @@ BitVector::bvsmulo(const BitVector& bv) const
 }
 
 BitVector
+BitVector::bvsdivo(const BitVector& bv) const
+{
+  return BitVector(d_size).ibvsdivo(*this, bv);
+}
+
+BitVector
 BitVector::bvconcat(const BitVector& bv) const
 {
   return BitVector(d_size).ibvconcat(*this, bv);
@@ -2632,6 +2638,20 @@ BitVector::ibvsmulo(const BitVector& bv0, const BitVector& bv1)
 }
 
 BitVector&
+BitVector::ibvsdivo(const BitVector& bv0, const BitVector& bv1)
+{
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
+  assert(bv0.d_size == bv1.d_size);
+
+  uint64_t val = bv0.is_sdiv_overflow(bv1) ? 1 : 0;
+  if (is_gmp()) mpz_clear(d_val_gmp);
+  d_val_uint64 = val;
+  d_size       = 1;
+  return *this;
+}
+
+BitVector&
 BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!bv0.is_null());
@@ -3639,6 +3659,13 @@ BitVector&
 BitVector::ibvsmulo(const BitVector& bv)
 {
   ibvsmulo(*this, bv);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvsdivo(const BitVector& bv)
+{
+  ibvsdivo(*this, bv);
   return *this;
 }
 

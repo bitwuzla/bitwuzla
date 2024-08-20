@@ -50,6 +50,7 @@ class TestBitVector : public TestCommon
     REPEAT,
     SADDO,
     SDIV,
+    SDIVO,
     SEXT,
     SGT,
     SGE,
@@ -116,6 +117,7 @@ class TestBitVector : public TestCommon
   static uint64_t _redxor(uint64_t x, uint64_t size);
   static uint64_t _saddo(int64_t x, int64_t y, uint64_t size);
   static uint64_t _smulo(int64_t x, int64_t y, uint64_t size);
+  static uint64_t _sdivo(int64_t x, int64_t y, uint64_t size);
   static int64_t _sdiv(int64_t x, int64_t y, uint64_t size);
   static int64_t _sgt(int64_t x, int64_t y, uint64_t size);
   static int64_t _sge(int64_t x, int64_t y, uint64_t size);
@@ -351,6 +353,12 @@ TestBitVector::_smulo(int64_t x, int64_t y, uint64_t size)
            || x * y > static_cast<int64_t>(normalize_uint64(size - 1, ~0));
   }
   return y != 0 && x != 0 && x * y / y != x;
+}
+
+uint64_t
+TestBitVector::_sdivo(int64_t x, int64_t y, uint64_t size)
+{
+  return x == -std::pow(2, size - 1) && y == -1;
 }
 
 uint64_t
@@ -3128,6 +3136,35 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           atres = _smulo(i1, i1, size);
           break;
 
+        case SDIVO:
+          if (fun_kind == INPLACE)
+          {
+            (void) res.ibvsdivo(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
+            (void) res.ibvsdivo(b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsdivo(tres);
+          }
+          else if (fun_kind == INPLACE_THIS_ALL)
+          {
+            // test with *this as first argument
+            (void) res.ibvsdivo(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsdivo(tres, tres);
+          }
+          else
+          {
+            res = b1.bvsdivo(b2);
+          }
+          ares  = _sdivo(i1, i2, size);
+          atres = _sdivo(i1, i1, size);
+          break;
+
         case SDIV:
           if (fun_kind == INPLACE_THIS)
           {
@@ -3268,6 +3305,7 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
 
         default: assert(false);
       }
+      assert(BitVector::from_si(res.size(), ares).compare(res) == 0);
       ASSERT_EQ(BitVector::from_si(res.size(), ares).compare(res), 0);
       ASSERT_TRUE(tres.is_null()
                   || BitVector::from_si(tres.size(), atres).compare(tres) == 0);
@@ -3336,6 +3374,22 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
       else
       {
         ASSERT_DEATH_DEBUG(b1.bvsmulo(b2), "d_size == .*d_size");
+      }
+      break;
+
+    case SDIVO:
+      if (fun_kind == INPLACE_THIS)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvsdivo(b2), "d_size == .*d_size");
+      }
+      else if (fun_kind == INPLACE_THIS_ALL)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvsdivo(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsdivo(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH_DEBUG(b1.bvsdivo(b2), "d_size == .*d_size");
       }
       break;
 
@@ -5342,6 +5396,8 @@ TEST_F(TestBitVector, umulo) { test_binary(DEFAULT, UMULO); }
 
 TEST_F(TestBitVector, smulo) { test_binary_signed(DEFAULT, SMULO); }
 
+TEST_F(TestBitVector, sdivo) { test_binary_signed(DEFAULT, SDIVO); }
+
 TEST_F(TestBitVector, and) { test_binary(DEFAULT, AND); }
 
 TEST_F(TestBitVector, concat) { test_concat(DEFAULT); }
@@ -5574,6 +5630,13 @@ TEST_F(TestBitVector, ismulo)
   test_binary_signed(INPLACE, SMULO);
   test_binary_signed(INPLACE_THIS_ALL, SMULO);
   test_binary_signed(INPLACE_THIS, SMULO);
+}
+
+TEST_F(TestBitVector, isdivo)
+{
+  test_binary_signed(INPLACE, SDIVO);
+  test_binary_signed(INPLACE_THIS_ALL, SDIVO);
+  test_binary_signed(INPLACE_THIS, SDIVO);
 }
 
 TEST_F(TestBitVector, iand)

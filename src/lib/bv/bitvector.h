@@ -708,6 +708,13 @@ class BitVector
    * @return A bit-vector representing the result of the overflow check.
    */
   BitVector bvsmulo(const BitVector& bv) const;
+  /**
+   * Create a bit-vector representing a predicate that indicates if bit-vector
+   * signed division produces an overflow.
+   * @param bv The other bit-vector.
+   * @return A bit-vector representing the result of the overflow check.
+   */
+  BitVector bvsdivo(const BitVector& bv) const;
 
   /**
    * Create a bit-vector representing the concatenation of this bit-vector and
@@ -1770,6 +1777,30 @@ class BitVector
    *         overflow check.
    */
   BitVector& ibvsmulo(const BitVector& bv);
+
+  /**
+   * Signed division overflow check (in-place) of given bit-vectors `bv0` and
+   * `bv1`.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv0 The first operand of the division.
+   * @param bv1 The second operand of the division.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         overflow check.
+   */
+  BitVector& ibvsdivo(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Signed overflow division check (in-place) of this bit-vector and the
+   * given bit-vector.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv The other bit-vector.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         overflow check.
+   */
+  BitVector& ibvsdivo(const BitVector& bv);
 
   /**
    * Concatenation (in-place) of the given bit-vectors.
