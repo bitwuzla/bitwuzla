@@ -1073,6 +1073,14 @@ BitVector::is_smul_overflow(const BitVector& bv) const
                 > 0;
 }
 
+bool
+BitVector::is_sdiv_overflow(const BitVector& bv) const
+{
+  assert(!is_null());
+  assert(d_size == bv.d_size);
+  return is_min_signed() && bv.is_ones();
+}
+
 uint64_t
 BitVector::count_trailing_zeros() const
 {

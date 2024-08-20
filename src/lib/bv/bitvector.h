@@ -387,6 +387,13 @@ class BitVector
    * @return True if it produces an overflow.
    */
   bool is_smul_overflow(const BitVector& bv) const;
+  /**
+   * Determine if the (signed) division of this and the given bit-vector
+   * produces an overflow.
+   * @param bv The bit-vector to divide this bit-vector by.
+   * @return True if it produces an overflow.
+   */
+  bool is_sdiv_overflow(const BitVector& bv) const;
 
   /** @return The number of trailing zeros (counted from lsb). */
   uint64_t count_trailing_zeros() const;

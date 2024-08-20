@@ -195,6 +195,11 @@ class TestBitVector : public TestCommon
                                  const std::string& s2,
                                  bool expected);
   void test_is_smul_overflow(uint64_t size);
+  void test_is_sdiv_overflow_aux(uint64_t size,
+                                 const std::string& s1,
+                                 const std::string& s2,
+                                 bool expected);
+  void test_is_sdiv_overflow(uint64_t size);
   void test_ite_aux(BvFunKind fun_kind,
                     const BitVector& bv0,
                     const BitVector& b1,
@@ -1310,6 +1315,149 @@ TestBitVector::test_is_smul_overflow(uint64_t size)
           "11000000000000000000000000000000000000000000000000000000001101",
           "11111111111111111111111111111111111111111111111111111111111111111"
           "11111111111111111111111111111111111111100000000000000011111010",
+          true);
+      break;
+    default: assert(false);
+  }
+}
+
+void
+TestBitVector::test_is_sdiv_overflow_aux(uint64_t size,
+                                         const std::string& s1,
+                                         const std::string& s2,
+                                         bool expected)
+{
+  BitVector bv1(size, s1, 2);
+  BitVector bv2(size, s2, 2);
+  ASSERT_EQ(bv1.is_sdiv_overflow(bv2), expected);
+  ASSERT_DEATH_DEBUG(bv1.is_sdiv_overflow(BitVector(size + 1, *d_rng)),
+                     "d_size == bv.d_size");
+}
+
+void
+TestBitVector::test_is_sdiv_overflow(uint64_t size)
+{
+  switch (size)
+  {
+    case 1:
+      test_is_sdiv_overflow_aux(size, "0", "0", false);
+      test_is_sdiv_overflow_aux(size, "0", "1", false);
+      test_is_sdiv_overflow_aux(size, "1", "0", false);
+      test_is_sdiv_overflow_aux(size, "1", "1", true);
+      break;
+    case 7:
+      test_is_sdiv_overflow_aux(size, "0000011", "0000110", false);
+      test_is_sdiv_overflow_aux(size, "0111111", "0000110", false);
+      test_is_sdiv_overflow_aux(size, "1111111", "0000110", false);
+      test_is_sdiv_overflow_aux(size, "1000000", "0000110", false);
+      test_is_sdiv_overflow_aux(size, "0111100", "1010110", false);
+      test_is_sdiv_overflow_aux(size, "1000000", "1111111", true);
+      break;
+    case 31:
+      test_is_sdiv_overflow_aux(size,
+                                "0000000000000000000000000001111",
+                                "0000000000000000000000001001110",
+                                false);
+      test_is_sdiv_overflow_aux(size,
+                                "1000000000000000000000011101010",
+                                "0000000000000000000000000000010",
+                                false);
+      test_is_sdiv_overflow_aux(size,
+                                "1000000000000000000000011101010",
+                                "0111111111111111111111110000010",
+                                false);
+      test_is_sdiv_overflow_aux(size,
+                                "1000000000000000000000000001010",
+                                "1111111111111111111111111111110",
+                                false);
+      test_is_sdiv_overflow_aux(size,
+                                "1111111111111111111111111101010",
+                                "1111111111111111111111111111110",
+                                false);
+      test_is_sdiv_overflow_aux(size,
+                                "1000000000000000000000000000000",
+                                "1111111111111111111111111111111",
+                                true);
+      break;
+    case 64:
+      test_is_sdiv_overflow_aux(
+          size,
+          "0000000000000000000000000000000000000000000111111111111111111101",
+          "0000000000000000000000000000000000000000000000000000000000000010",
+          false);
+      test_is_sdiv_overflow_aux(
+          size,
+          "0111111111111111111111111111111111111111111111111111111111111101",
+          "0000000000000000000000000000000000000000000000000000000000000010",
+          false);
+      test_is_sdiv_overflow_aux(
+          size,
+          "1111111111111111111111111111111111111111111111111111111111111101",
+          "0000000000000000000000000000000000000000000000000000000000000010",
+          false);
+      test_is_sdiv_overflow_aux(
+          size,
+          "1000000000000000000000000000000000000000000000000000000000000000",
+          "1111111111111111111111111111111111111111111111111111111111111111",
+          true);
+      break;
+    case 65:
+      test_is_sdiv_overflow_aux(
+          size,
+          "00000000000000000000000000000000000000000000111111111111111111101",
+          "00000000000000000000000000000000000000000000000000000000000000011",
+          false);
+      test_is_sdiv_overflow_aux(
+          size,
+          "00111111111111111111111111111111111111111111111111111111111111101",
+          "00000000000000000000000000000000000000000000000000000000000000110",
+          false);
+      test_is_sdiv_overflow_aux(
+          size,
+          "11111111111111111111111111111111111111111111111111111111111111101",
+          "00000000000000000000000000000000000000000000000000000000000000011",
+          false);
+      test_is_sdiv_overflow_aux(
+          size,
+          "10000000000000000000000000000000000000000000000000000000000000000",
+          "11111111111111111111111111111111111111111111111111111111111111111",
+          true);
+      break;
+    case 127:
+      test_is_sdiv_overflow_aux(
+          size,
+          "00000000000000000000000000000000000000000000000000000000000000000"
+          "11000000000000000000000000000000000000000000000000000000000001",
+          "00000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000100000000000000000000000000000010",
+          false);
+      test_is_sdiv_overflow_aux(
+          size,
+          "11111111111111111111111111111111111111111111111111111111111111101"
+          "11000000000000000000000000000000000000000000000000000000001101",
+          "00000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000000010",
+          false);
+      test_is_sdiv_overflow_aux(
+          size,
+          "11000000000000000000000000000000000000000000000000000000000001101"
+          "11000000000000000000000000000000000000000000000000000000001101",
+          "00000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000100000000000000000000000000000010",
+          false);
+      test_is_sdiv_overflow_aux(
+          size,
+          "11111111111111111111111111111111111111111111111111111111111111101"
+          "11000000000000000000000000000000000000000000000000000000001101",
+          "11111111111111111111111111111111111111111111111111111111111111111"
+          "11111111111111111111111111111111111111111111111111111111111010",
+          false);
+      test_is_sdiv_overflow_aux(
+          size,
+          "10000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000000000",
+          "11111111111111111111111111111111111111111111111111111111111111111"
+          "11111111111111111111111111111111111111111111111111111111111111",
           true);
       break;
     default: assert(false);
@@ -5252,6 +5400,16 @@ TEST_F(TestBitVector, is_smul_overflow)
   test_is_smul_overflow(64);
   test_is_smul_overflow(65);
   test_is_smul_overflow(127);
+}
+
+TEST_F(TestBitVector, is_sdiv_overflow)
+{
+  test_is_sdiv_overflow(1);
+  test_is_sdiv_overflow(7);
+  test_is_sdiv_overflow(31);
+  test_is_sdiv_overflow(64);
+  test_is_sdiv_overflow(65);
+  test_is_sdiv_overflow(127);
 }
 
 TEST_F(TestBitVector, ite) { test_ite(DEFAULT); }
