@@ -1370,6 +1370,12 @@ BitVector::bvsrem(const BitVector& bv) const
 }
 
 BitVector
+BitVector::bvsmod(const BitVector& bv) const
+{
+  return BitVector(d_size).ibvsmod(*this, bv);
+}
+
+BitVector
 BitVector::bvuaddo(const BitVector& bv) const
 {
   return BitVector(d_size).ibvuaddo(*this, bv);
@@ -2582,6 +2588,68 @@ BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1)
 }
 
 BitVector&
+BitVector::ibvsmod(const BitVector& bv0, const BitVector& bv1)
+{
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
+  assert(bv0.d_size == bv1.d_size);
+  bool is_signed_bv0 = bv0.msb();
+  bool is_signed_bv1 = bv1.msb();
+
+  const BitVector *b0, *b1;
+  BitVector bb0, bb1;
+  /* copy to guard for bv1 == *this */
+  if (&bv0 == this)
+  {
+    bb0 = bv0;
+    b0  = &bb0;
+  }
+  else
+  {
+    b0 = &bv0;
+  }
+  if (&bv1 == this)
+  {
+    bb1 = bv1;
+    b1  = &bb1;
+  }
+  else
+  {
+    b1 = &bv1;
+  }
+
+  if (is_signed_bv0 && !is_signed_bv1)
+  {
+    ibvneg(bv0).ibvurem(*b1);
+    if (!is_zero())
+    {
+      ibvneg().ibvadd(*b1);
+    }
+  }
+  else if (!is_signed_bv0 && is_signed_bv1)
+  {
+    ibvneg(bv1).ibvurem(*b0, *this);
+    if (!is_zero())
+    {
+      ibvadd(*b1);
+    }
+  }
+  else if (is_signed_bv0 && is_signed_bv1)
+  {
+    ibvneg(*b0).ibvurem(b1->bvneg());
+    if (!is_zero())
+    {
+      ibvneg();
+    }
+  }
+  else
+  {
+    ibvurem(bv0, bv1);
+  }
+  return *this;
+}
+
+BitVector&
 BitVector::ibvuaddo(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!bv0.is_null());
@@ -3631,6 +3699,13 @@ BitVector&
 BitVector::ibvsrem(const BitVector& bv)
 {
   ibvsrem(*this, bv);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvsmod(const BitVector& bv)
+{
+  ibvsmod(*this, bv);
   return *this;
 }
 

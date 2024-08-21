@@ -58,6 +58,7 @@ class TestBitVector : public TestCommon
     SHR,
     SLT,
     SLE,
+    SMOD,
     SMULO,
     SREM,
     SUB,
@@ -126,6 +127,7 @@ class TestBitVector : public TestCommon
   static int64_t _slt(int64_t x, int64_t y, uint64_t size);
   static int64_t _sle(int64_t x, int64_t y, uint64_t size);
   static int64_t _srem(int64_t x, int64_t y, uint64_t size);
+  static int64_t _smod(int64_t x, int64_t y, uint64_t size);
   static uint64_t _sub(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _uaddo(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _umulo(uint64_t x, uint64_t y, uint64_t size);
@@ -564,6 +566,26 @@ TestBitVector::_srem(int64_t x, int64_t y, uint64_t size)
 {
   if (y == 0) return normalize_int64(size, x);
   return normalize_int64(size, x % y);
+}
+
+int64_t
+TestBitVector::_smod(int64_t x, int64_t y, uint64_t size)
+{
+  if (y == 0) return normalize_int64(size, x);
+  int64_t urem = normalize_int64(size, (x < 0 ? -x : x) % (y < 0 ? -y : y));
+  if (urem == 0 || (x > 0 && y > 0))
+  {
+    return urem;
+  }
+  if (x < 0 and y > 0)
+  {
+    return normalize_int64(size, -urem + y);
+  }
+  if (x > 0 and y < 0)
+  {
+    return normalize_int64(size, urem + y);
+  }
+  return normalize_int64(size, -urem);
 }
 
 uint64_t
@@ -3303,6 +3325,29 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           atres = _srem(i1, i1, size);
           break;
 
+        case SMOD:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvsmod(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvsmod(tres);
+          }
+          else if (fun_kind == INPLACE_THIS_ALL)
+          {
+            (void) res.ibvsmod(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsmod(tres, tres);
+          }
+          else
+          {
+            res = b1.bvsmod(b2);
+          }
+          ares  = _smod(i1, i2, size);
+          atres = _smod(i1, i1, size);
+          break;
+
         default: assert(false);
       }
       assert(BitVector::from_si(res.size(), ares).compare(res) == 0);
@@ -3486,6 +3531,22 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
       else
       {
         ASSERT_DEATH_DEBUG(b1.bvsrem(b2), "d_size == .*d_size");
+      }
+      break;
+
+    case SMOD:
+      if (fun_kind == INPLACE_THIS)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvsmod(b2), "d_size == .*d_size");
+      }
+      else if (fun_kind == INPLACE_THIS_ALL)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvsmod(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvsmod(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH_DEBUG(b1.bvsmod(b2), "d_size == .*d_size");
       }
       break;
 
@@ -5529,6 +5590,8 @@ TEST_F(TestBitVector, sub) { test_binary(DEFAULT, SUB); }
 
 TEST_F(TestBitVector, srem) { test_binary_signed(DEFAULT, SREM); }
 
+TEST_F(TestBitVector, smod) { test_binary_signed(DEFAULT, SMOD); }
+
 TEST_F(TestBitVector, udiv) { test_binary(DEFAULT, UDIV); }
 
 TEST_F(TestBitVector, ult) { test_binary(DEFAULT, ULT); }
@@ -5837,6 +5900,13 @@ TEST_F(TestBitVector, isrem)
   test_binary_signed(INPLACE, SREM);
   test_binary_signed(INPLACE_THIS_ALL, SREM);
   test_binary_signed(INPLACE_THIS, SREM);
+}
+
+TEST_F(TestBitVector, ismod)
+{
+  test_binary_signed(INPLACE, SMOD);
+  test_binary_signed(INPLACE_THIS_ALL, SMOD);
+  test_binary_signed(INPLACE_THIS, SMOD);
 }
 
 TEST_F(TestBitVector, iudiv)

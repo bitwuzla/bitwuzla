@@ -672,12 +672,19 @@ class BitVector
    */
   BitVector bvsdiv(const BitVector& bv) const;
   /**
-   * Create a bit-vector representing the signed remainder of this bit-vector
-   * and the given bit-vector.
+   * Create a bit-vector representing the signed remainder (sign follows
+   * dividend) of this bit-vector and the given bit-vector.
    * @param bv The other bit-vector.
    * @return A bit-vector representing the result of the signed remainder.
    */
   BitVector bvsrem(const BitVector& bv) const;
+  /**
+   * Create a bit-vector representing the signed remainder (sign follows
+   * divisor) of this bit-vector and the given bit-vector.
+   * @param bv The other bit-vector.
+   * @return A bit-vector representing the result of the signed remainder.
+   */
+  BitVector bvsmod(const BitVector& bv) const;
 
   /**
    * Create a bit-vector representing a predicate that indicates if bit-vector
@@ -1661,7 +1668,8 @@ class BitVector
   BitVector& ibvsdiv(const BitVector& bv);
 
   /**
-   * Signed remainder (in-place) of the given bit-vectors `bv0` and `bv1`.
+   * Signed remainder (sign follows dividend, in-place) of the given bit-vectors
+   * `bv0` and `bv1`.
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
@@ -1672,7 +1680,8 @@ class BitVector
    */
   BitVector& ibvsrem(const BitVector& bv0, const BitVector& bv1);
   /**
-   * Signed remainder (in-place) of this bit-vector by the given bit-vector.
+   * Signed remainder (sign follows divident, in-place) of this bit-vector by
+   * the given bit-vector.
    *
    * @note The result of this operation is stored in-place, in this bit-vector.
    *
@@ -1681,6 +1690,30 @@ class BitVector
    *         signed remainder of this and the given bit-vector.
    */
   BitVector& ibvsrem(const BitVector& bv);
+
+  /**
+   * Signed remainder (sign follows divisor, in-place) of the given bit-vectors
+   * `bv0` and `bv1`.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv0 The first operand of the signed remainder.
+   * @param bv1 The second operand of the signed remainder.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         signed remainder of the given bit-vectors.
+   */
+  BitVector& ibvsmod(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Signed remainder (sign follows divisor, in-place) of this bit-vector by the
+   * given bit-vector.
+   *
+   * @note The result of this operation is stored in-place, in this bit-vector.
+   *
+   * @param bv The other bit-vector.
+   * @return A reference to this bit-vector, overwritten with the result of the
+   *         signed remainder of this and the given bit-vector.
+   */
+  BitVector& ibvsmod(const BitVector& bv);
 
   /**
    * Unsigned addition overflow check (in-place) of given bit-vectors `bv0` and
