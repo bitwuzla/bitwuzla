@@ -374,6 +374,13 @@ class BitVector
    */
   bool is_sadd_overflow(const BitVector& bv) const;
   /**
+   * Determine if the (signed) subtraction of this and the given bit-vector
+   * produces an overflow.
+   * @param bv The bit-vector to add to this bit-vector.
+   * @return True if it produces an overflow.
+   */
+  bool is_ssub_overflow(const BitVector& bv) const;
+  /**
    * Determine if the (unsigned) multiplication of this and the given bit-vector
    * produces an overflow.
    * @param bv The bit-vector to multiply this bit-vector with.

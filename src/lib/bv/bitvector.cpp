@@ -1029,6 +1029,21 @@ BitVector::is_sadd_overflow(const BitVector& bv) const
 }
 
 bool
+BitVector::is_ssub_overflow(const BitVector& bv) const
+{
+  assert(!is_null());
+  assert(d_size == bv.d_size);
+  bool is_signed_bv0 = msb();
+  bool is_signed_bv1 = bv.msb();
+  bool is_signed_sub = bvsub(bv).msb();
+  // Overflow occurs if
+  //  1) negative - positive = positive
+  //  2) positive - negative = negative
+  return (is_signed_bv0 && !is_signed_bv1 && !is_signed_sub)
+         || (!is_signed_bv0 && is_signed_bv1 && is_signed_sub);
+}
+
+bool
 BitVector::is_umul_overflow(const BitVector& bv) const
 {
   assert(!is_null());
