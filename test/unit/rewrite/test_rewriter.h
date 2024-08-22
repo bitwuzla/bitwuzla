@@ -66,7 +66,7 @@ class TestRewriter : public ::testing::Test
   static std::string check_sat(std::stringstream& ss)
   {
     std::stringstream bench;
-    bench << "(set-logic QF_BV)\n";
+    bench << "(set-logic ALL)\n";
     bench << "(set-option :produce-models true)\n";
     bench << ss.str();
     bench << "(check-sat)\n";
