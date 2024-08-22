@@ -44,7 +44,7 @@ class TestRewriterBv : public TestRewriter
     //     RewriteRule<K>::apply(d_rewriter, node).first);
   }
 
-  std::vector<uint64_t> d_bv_sizes = {1 /*, 2, 3, 4, 8*/};
+  std::vector<uint64_t> d_bv_sizes = {1, 2, 3, 4, 8};
 };
 
 /* bvadd -------------------------------------------------------------------- */
