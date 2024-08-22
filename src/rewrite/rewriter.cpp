@@ -146,6 +146,39 @@ Rewriter::rewrite(const Node& node)
   return d_cache.at(node);
 }
 
+Node
+Rewriter::eval(const Node& node)
+{
+  node::node_ref_vector visit{node};
+  // We need a separate cache from the rewriter cache to be able to evaluate
+  // nodes even when rewriting is disabled.
+  std::unordered_map<Node, Node> cache;
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, Node());
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      if (cur.num_children())
+      {
+        it->second = _eval(cache, node::utils::rebuild_node(nm(), cur, cache));
+      }
+      else
+      {
+        it->second = cur;
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+  assert(cache.find(node) != cache.end());
+  return cache.at(node);
+}
+
 const Node&
 Rewriter::mk_node(node::Kind kind,
                   const std::vector<Node>& children,
@@ -525,6 +558,412 @@ Rewriter::_rewrite(const Node& node)
   // Cache result
   it->second = res;
 
+  return it->second;
+}
+
+const Node&
+Rewriter::_eval(std::unordered_map<Node, Node>& cache, const Node& node)
+{
+  auto [it, inserted] = cache.emplace(node, Node());
+  if (!inserted && !it->second.is_null())
+  {
+    return it->second;
+  }
+
+  Node res;
+  RewriteRuleKind kind;
+  switch (node.kind())
+  {
+    case node::Kind::AND:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::AND_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::DISTINCT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::DISTINCT_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::IMPLIES:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::IMPLIES_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::NOT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::NOT_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::OR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::OR_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::XOR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::XOR_EVAL>::apply(*this, node);
+      break;
+
+    case node::Kind::EQUAL:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::EQUAL_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::ITE:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::ITE_EVAL>::apply(*this, node);
+      break;
+
+    case node::Kind::BV_AND:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_AND_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_ADD:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_ASHR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_CONCAT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_DEC:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_DEC_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_EXTRACT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_EXTRACT_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_INC:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_INC_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_MUL:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_NOT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_NOT_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SHL:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SHR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SLT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_UDIV:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_ULT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_UREM:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::apply(*this, node);
+      break;
+
+    /* Eliminated bit-vector operators */
+    case node::Kind::BV_COMP:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_COMP_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_NAND:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_NAND_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_NEG:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_NEG_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_NEGO:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_NEGO_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_NOR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_NOR_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_OR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_OR_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_REDAND:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_REDAND_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_REDOR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_REDOR_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_REDXOR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_REDXOR_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_REPEAT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_REPEAT_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_ROL:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_ROL_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_ROLI:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_ROLI_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_ROR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_ROR_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_RORI:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_RORI_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SADDO:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SADDO_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SDIV:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SDIV_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SDIVO:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SDIVO_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SGE:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SGE_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SGT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SGT_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SIGN_EXTEND:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SIGN_EXTEND_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SLE:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SLE_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SMOD:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SMOD_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SMULO:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SMULO_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SREM:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SREM_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SSUBO:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SSUBO_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_SUB:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_SUB_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_UMULO:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_UMULO_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_UADDO:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_UADDO_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_UGE:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_UGE_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_UGT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_UGT_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_ULE:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_ULE_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_USUBO:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_USUBO_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_XNOR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_XNOR_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_XOR:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::BV_ZERO_EXTEND:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::BV_ZERO_EXTEND_EVAL>::apply(*this, node);
+      break;
+
+    case node::Kind::FP_ABS:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_ABS_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_ADD:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_ADD_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_DIV:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_DIV_EVAL>::apply(*this, node);
+      break;
+    // case node::Kind::FP_EQUAL:
+    //   std::tie(res, kind) =
+    //       RewriteRule<RewriteRuleKind::FP_EQUAL_EVAL>::apply(*this, node);
+    //   break;
+    case node::Kind::FP_FMA:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_FMA_EVAL>::apply(*this, node);
+      break;
+    // case node::Kind::FP_FP:
+    //   std::tie(res, kind) =
+    //       RewriteRule<RewriteRuleKind::FP_FP_EVAL>::apply(*this, node);
+    //   break;
+    // case node::Kind::FP_GEQ:
+    //   std::tie(res, kind) =
+    //       RewriteRule<RewriteRuleKind::FP_GEQ_EVAL>::apply(*this, node);
+    //   break;
+    // case node::Kind::FP_GT:
+    //   std::tie(res, kind) =
+    //       RewriteRule<RewriteRuleKind::FP_GT_EVAL>::apply(*this, node);
+    //   break;
+
+    case node::Kind::FP_IS_INF:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_IS_INF_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_IS_NAN:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_IS_NAN_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_IS_NEG:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_IS_NEG_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_IS_NORMAL:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_IS_NORM_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_IS_POS:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_IS_POS_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_IS_SUBNORMAL:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_IS_SUBNORM_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_IS_ZERO:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_IS_ZERO_EVAL>::apply(*this, node);
+      break;
+
+    case node::Kind::FP_LEQ:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_LEQ_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_LT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_LT_EVAL>::apply(*this, node);
+      break;
+    // case node::Kind::FP_MAX:
+    //   std::tie(res, kind) =
+    //       RewriteRule<RewriteRuleKind::FP_MAX_EVAL>::apply(*this, node);
+    //   break;
+    // case node::Kind::FP_MIN:
+    //   std::tie(res, kind) =
+    //       RewriteRule<RewriteRuleKind::FP_MIN_EVAL>::apply(*this, node);
+    //   break;
+    case node::Kind::FP_MUL:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_MUL_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_NEG:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_NEG_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_REM:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_REM_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_RTI:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_RTI_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_SQRT:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_SQRT_EVAL>::apply(*this, node);
+      break;
+    // case node::Kind::FP_SUB:
+    //   std::tie(res, kind) =
+    //       RewriteRule<RewriteRuleKind::FP_SUB_EVAL>::apply(*this, node);
+    //   break;
+
+    case node::Kind::FP_TO_FP_FROM_BV:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_BV_EVAL>::apply(*this,
+                                                                     node);
+      break;
+    case node::Kind::FP_TO_FP_FROM_FP:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_FP_EVAL>::apply(*this,
+                                                                     node);
+      break;
+    case node::Kind::FP_TO_FP_FROM_SBV:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL>::apply(*this,
+                                                                      node);
+      break;
+    case node::Kind::FP_TO_FP_FROM_UBV:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL>::apply(*this,
+                                                                      node);
+      break;
+
+    // No rewrites for FP_TO_(U|S)BV conversion yet
+    // case node::Kind::FP_TO_SBV:
+    // case node::Kind::FP_TO_UBV:
+
+    // There are no rewrites for constant arrays.
+    // case node::Kind::CONST_ARRAY: res = n; break;
+
+    // case node::Kind::SELECT:
+    // case node::Kind::STORE:
+
+    // case node::Kind::APPLY:
+    // case node::Kind::LAMBDA:
+
+    // case node::Kind::FORALL:
+    // case node::Kind::EXISTS:
+
+    default: assert(false);
+  }
+
+  assert(!res.is_null());
+  assert(res.type() == node.type());
+  assert(it == cache.find(node));
+  assert(it != cache.end());
+  if (it->second.is_null())
+  {
+    // Cache result
+    it->second = res;
+  }
+  assert(it->second == res);
   return it->second;
 }
 

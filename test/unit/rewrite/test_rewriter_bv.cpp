@@ -13,7 +13,6 @@
 #include "bv/bitvector.h"
 #include "gtest/gtest.h"
 #include "node/node_manager.h"
-#include "printer/printer.h"
 #include "rewrite/rewriter.h"
 #include "solver/fp/floating_point.h"
 #include "test/unit/rewrite/test_rewriter.h"
@@ -39,9 +38,7 @@ class TestRewriterBv : public TestRewriter
   void test_eval_elim_rule_bv(const Node& node, const Node& expected)
   {
     test_rewrite(node, expected);
-    // test_rewrite(
-    //     d_rewriter.eval(node),
-    //     RewriteRule<K>::apply(d_rewriter, node).first);
+    test_rewrite(d_rewriter.eval(node), d_rewriter.rewrite(node));
   }
 
   std::vector<uint64_t> d_bv_sizes = {1, 2, 3, 4, 8};

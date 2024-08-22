@@ -61,6 +61,13 @@ class Rewriter
    * @return The rewritten node or `node` if no rewrites applied.
    */
   const Node& rewrite(const Node& node);
+  /**
+   * Evaluate given node.
+   * @note Requires that all leaves of the given node are values.
+   * @param node The node to evaluate.
+   * @return The resulting value of evaluating the node.
+   */
+  Node eval(const Node& node);
 
   /**
    * Create node and apply rewriting.
@@ -153,7 +160,10 @@ class Rewriter
   /** The limit for recursive calls to _rewrite(). */
   static constexpr uint64_t RECURSION_LIMIT = 4096;
 
+  /** Helper for rewrite(). */
   const Node& _rewrite(const Node& node);
+  /** Helper for eval(). */
+  const Node& _eval(std::unordered_map<Node, Node>& cache, const Node& node);
 
   /* Core ---------------------------------------- */
   Node rewrite_eq(const Node& node);
