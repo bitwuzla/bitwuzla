@@ -71,6 +71,7 @@ class TestBitVector : public TestCommon
     ULE,
     UMULO,
     UREM,
+    USUBO,
     XNOR,
     XOR,
     ZEXT,
@@ -133,6 +134,7 @@ class TestBitVector : public TestCommon
   static uint64_t _sub(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _uaddo(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _umulo(uint64_t x, uint64_t y, uint64_t size);
+  static uint64_t _usubo(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _udiv(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _ugt(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _uge(uint64_t x, uint64_t y, uint64_t size);
@@ -337,6 +339,13 @@ TestBitVector::_saddo(int64_t x, int64_t y, uint64_t size)
            || x + y > static_cast<int64_t>(normalize_uint64(size - 1, ~0));
   }
   return y != 0 && x != 0 && (x + y) - y != x;
+}
+
+uint64_t
+TestBitVector::_usubo(uint64_t x, uint64_t y, uint64_t size)
+{
+  (void) size;
+  return x < y;
 }
 
 uint64_t
@@ -2632,6 +2641,35 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           atres = _umulo(i1, i1, size);
           break;
 
+        case USUBO:
+          if (fun_kind == INPLACE)
+          {
+            (void) res.ibvusubo(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
+            (void) res.ibvusubo(b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvusubo(tres);
+          }
+          else if (fun_kind == INPLACE_THIS_ALL)
+          {
+            // test with *this as first argument
+            (void) res.ibvusubo(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvusubo(tres, tres);
+          }
+          else
+          {
+            res = b1.bvusubo(b2);
+          }
+          ares  = _usubo(i1, i2, size);
+          atres = _usubo(i1, i1, size);
+          break;
+
         case UDIV:
           if (fun_kind == INPLACE)
           {
@@ -2887,6 +2925,13 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
         BitVector b1ext = b1.bvzext(1);
         BitVector b2ext = b2.bvzext(1);
         ASSERT_EQ(b1ext.ibvadd(b2ext).ibvextract(size, size).is_zero(),
+                  res.is_zero());
+      }
+      if (kind == Kind::USUBO)
+      {
+        BitVector b1ext = b1.bvzext(1);
+        BitVector b2ext = b2.bvzext(1);
+        ASSERT_EQ(b1ext.ibvsub(b2ext).ibvextract(size, size).is_zero(),
                   res.is_zero());
       }
       else if (kind == Kind::UMULO)
@@ -3180,6 +3225,22 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       else
       {
         ASSERT_DEATH_DEBUG(b1.bvumulo(b2), "d_size == .*d_size");
+      }
+      break;
+
+    case USUBO:
+      if (fun_kind == INPLACE_THIS)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvusubo(b2), "d_size == .*d_size");
+      }
+      else if (fun_kind == INPLACE_THIS_ALL)
+      {
+        ASSERT_DEATH_DEBUG(b1.ibvusubo(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH_DEBUG(b1.ibvusubo(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH_DEBUG(b1.bvusubo(b2), "d_size == .*d_size");
       }
       break;
 
@@ -5763,6 +5824,8 @@ TEST_F(TestBitVector, add) { test_binary(DEFAULT, ADD); }
 
 TEST_F(TestBitVector, uaddo) { test_binary(DEFAULT, UADDO); }
 
+TEST_F(TestBitVector, usubo) { test_binary(DEFAULT, USUBO); }
+
 TEST_F(TestBitVector, saddo) { test_binary_signed(DEFAULT, SADDO); }
 
 TEST_F(TestBitVector, ssubo) { test_binary_signed(DEFAULT, SSUBO); }
@@ -6013,6 +6076,13 @@ TEST_F(TestBitVector, isaddo)
   test_binary_signed(INPLACE, SADDO);
   test_binary_signed(INPLACE_THIS_ALL, SADDO);
   test_binary_signed(INPLACE_THIS, SADDO);
+}
+
+TEST_F(TestBitVector, iusubo)
+{
+  test_binary(INPLACE, USUBO);
+  test_binary(INPLACE_THIS_ALL, USUBO);
+  test_binary(INPLACE_THIS, USUBO);
 }
 
 TEST_F(TestBitVector, issubo)

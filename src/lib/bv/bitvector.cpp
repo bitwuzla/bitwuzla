@@ -1409,6 +1409,12 @@ BitVector::bvsaddo(const BitVector& bv) const
 }
 
 BitVector
+BitVector::bvusubo(const BitVector& bv) const
+{
+  return BitVector(d_size).ibvusubo(*this, bv);
+}
+
+BitVector
 BitVector::bvssubo(const BitVector& bv) const
 {
   return BitVector(d_size).ibvssubo(*this, bv);
@@ -2705,6 +2711,20 @@ BitVector::ibvsaddo(const BitVector& bv0, const BitVector& bv1)
 }
 
 BitVector&
+BitVector::ibvusubo(const BitVector& bv0, const BitVector& bv1)
+{
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
+  assert(bv0.d_size == bv1.d_size);
+
+  uint64_t val = bv0.is_usub_overflow(bv1) ? 1 : 0;
+  if (is_gmp()) mpz_clear(d_val_gmp);
+  d_val_uint64 = val;
+  d_size       = 1;
+  return *this;
+}
+
+BitVector&
 BitVector::ibvssubo(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!bv0.is_null());
@@ -3761,6 +3781,13 @@ BitVector&
 BitVector::ibvsaddo(const BitVector& bv)
 {
   ibvsaddo(*this, bv);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvusubo(const BitVector& bv)
+{
+  ibvusubo(*this, bv);
   return *this;
 }
 
