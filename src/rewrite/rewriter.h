@@ -304,7 +304,6 @@ enum class RewriteRuleKind
   /* Boolean rewrites ---------------------------- */
 
   // Level 1+
-  AND_EVAL,
   AND_SPECIAL_CONST,
   AND_CONST,
   AND_IDEM1,
@@ -322,7 +321,6 @@ enum class RewriteRuleKind
   AND_BV_LT,
 
   // Level 1+
-  EQUAL_EVAL,
   EQUAL_SPECIAL_CONST,
   EQUAL_CONST,
   EQUAL_EQUAL_CONST_BV1,
@@ -345,7 +343,6 @@ enum class RewriteRuleKind
   EQUAL_BV_UDIV1,
 
   // Level 1+
-  ITE_EVAL,
   ITE_SAME,
   ITE_THEN_ITE1,
   ITE_THEN_ITE2,
@@ -359,30 +356,36 @@ enum class RewriteRuleKind
   ITE_BV_OP,
 
   // Level 1+
-  NOT_EVAL,
   NOT_NOT,
   NOT_XOR,
   NOT_EQUAL_BV1_BOOL,
 
-  // Level 0+
-  DISTINCT_ELIM,
   // Level 1+
   DISTINCT_CARD,
 
   // Level 1+
   NORMALIZE_COMM,
 
-  //// Elimination rules
+  //// Eliminated operators
   // Level 0+
+  DISTINCT_ELIM,
   IMPLIES_ELIM,
   OR_ELIM,
   XOR_ELIM,
+  // eval only
+  AND_EVAL,
+  EQUAL_EVAL,
+  DISTINCT_EVAL,
+  IMPLIES_EVAL,
+  ITE_EVAL,
+  NOT_EVAL,
+  OR_EVAL,
+  XOR_EVAL,
 
   /* BV rewrites --------------------------------- */
 
   //// bvadd
   // Level 1+
-  BV_ADD_EVAL,
   BV_ADD_SPECIAL_CONST,
   BV_ADD_CONST,
   BV_ADD_BV1,
@@ -401,7 +404,6 @@ enum class RewriteRuleKind
 
   //// bvand
   // Level 1+
-  BV_AND_EVAL,
   BV_AND_SPECIAL_CONST,
   BV_AND_CONST,
   BV_AND_IDEM1,
@@ -419,12 +421,10 @@ enum class RewriteRuleKind
 
   //// bvashr
   // Level 1+
-  BV_ASHR_EVAL,
   BV_ASHR_SPECIAL_CONST,
 
   //// bvconcat
   // Level 1+
-  BV_CONCAT_EVAL,
   BV_CONCAT_CONST,
   BV_CONCAT_EXTRACT,
   // Level 2+
@@ -434,7 +434,6 @@ enum class RewriteRuleKind
 
   //// bvextract
   // Level 1+
-  BV_EXTRACT_EVAL,
   BV_EXTRACT_FULL,
   BV_EXTRACT_EXTRACT,
   // Level 1
@@ -449,7 +448,6 @@ enum class RewriteRuleKind
 
   //// bvmul
   // Level 1+
-  BV_MUL_EVAL,
   BV_MUL_SPECIAL_CONST,
   BV_MUL_CONST,
   BV_MUL_BV1,
@@ -461,7 +459,6 @@ enum class RewriteRuleKind
 
   //// bvnot
   // Level 1+
-  BV_NOT_EVAL,
   BV_NOT_BV_NOT,
   // Level 2+
   BV_NOT_BV_NEG,
@@ -471,7 +468,6 @@ enum class RewriteRuleKind
 
   //// bvshl
   // Level 1+
-  BV_SHL_EVAL,
   BV_SHL_SPECIAL_CONST,
   BV_SHL_CONST,
   // normalization
@@ -479,7 +475,6 @@ enum class RewriteRuleKind
 
   //// bvlshr
   // Level 1+
-  BV_SHR_EVAL,
   BV_SHR_SPECIAL_CONST,
   BV_SHR_CONST,
   BV_SHR_SAME,
@@ -487,7 +482,6 @@ enum class RewriteRuleKind
 
   //// bvslt
   // Level 1+
-  BV_SLT_EVAL,
   BV_SLT_SPECIAL_CONST,
   BV_SLT_SAME,
   BV_SLT_BV1,
@@ -498,7 +492,6 @@ enum class RewriteRuleKind
 
   //// bvudiv
   // Level 1+
-  BV_UDIV_EVAL,
   BV_UDIV_SPECIAL_CONST,
   BV_UDIV_BV1,
   BV_UDIV_SAME,
@@ -508,7 +501,6 @@ enum class RewriteRuleKind
 
   //// bvult
   // Level 1+
-  BV_ULT_EVAL,
   BV_ULT_SPECIAL_CONST,
   BV_ULT_SAME,
   BV_ULT_BV1,
@@ -518,18 +510,16 @@ enum class RewriteRuleKind
 
   //// bvurem
   // Level 1+
-  BV_UREM_EVAL,
   BV_UREM_SPECIAL_CONST,
   BV_UREM_BV1,
   BV_UREM_SAME,
 
   //// bvxor
   // Level 1+
-  BV_XOR_EVAL,
   BV_XOR_SAME,
   BV_XOR_SPECIAL_CONST,
 
-  //// Elimination rules
+  //// Eliminated operators
   // Level 1+
   BV_DEC_ELIM,
   BV_INC_ELIM,
@@ -568,6 +558,57 @@ enum class RewriteRuleKind
   BV_XOR_ELIM,
   BV_ZERO_EXTEND_ELIM,
   BV_COMP_ELIM,
+  // eval
+  BV_ADD_EVAL,
+  BV_AND_EVAL,
+  BV_ASHR_EVAL,
+  BV_COMP_EVAL,
+  BV_CONCAT_EVAL,
+  BV_DEC_EVAL,
+  BV_EXTRACT_EVAL,
+  BV_INC_EVAL,
+  BV_MUL_EVAL,
+  BV_NAND_EVAL,
+  BV_NEGO_EVAL,
+  BV_NEG_EVAL,
+  BV_NOR_EVAL,
+  BV_NOT_EVAL,
+  BV_OR_EVAL,
+  BV_REDAND_EVAL,
+  BV_REDOR_EVAL,
+  BV_REDXOR_EVAL,
+  BV_REPEAT_EVAL,
+  BV_ROLI_EVAL,
+  BV_ROL_EVAL,
+  BV_RORI_EVAL,
+  BV_ROR_EVAL,
+  BV_SADDO_EVAL,
+  BV_SDIVO_EVAL,
+  BV_SDIV_EVAL,
+  BV_SGE_EVAL,
+  BV_SGT_EVAL,
+  BV_SHL_EVAL,
+  BV_SHR_EVAL,
+  BV_SIGN_EXTEND_EVAL,
+  BV_SLE_EVAL,
+  BV_SLT_EVAL,
+  BV_SMOD_EVAL,
+  BV_SMULO_EVAL,
+  BV_SREM_EVAL,
+  BV_SSUBO_EVAL,
+  BV_SUB_EVAL,
+  BV_UADDO_EVAL,
+  BV_UDIV_EVAL,
+  BV_UGE_EVAL,
+  BV_UGT_EVAL,
+  BV_ULE_EVAL,
+  BV_ULT_EVAL,
+  BV_UMULO_EVAL,
+  BV_UREM_EVAL,
+  BV_USUBO_EVAL,
+  BV_XNOR_EVAL,
+  BV_XOR_EVAL,
+  BV_ZERO_EXTEND_EVAL,
 
   /* FP rewrites --------------------------------- */
 

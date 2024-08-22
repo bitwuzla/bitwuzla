@@ -517,6 +517,25 @@ TEST_F(TestRewriterBool, bool_and_resol1)
                     d_nm.mk_node(Kind::AND, {d_a, d_nm.invert_node(d_b)})}));
 }
 
+/* implies ------------------------------------------------------------------ */
+
+TEST_F(TestRewriterBool, bool_implies_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::IMPLIES_EVAL;
+  // applies
+  Node imp0 = d_nm.mk_node(Kind::IMPLIES, {d_true, d_true});
+  test_rewrite(imp0, d_true);
+  Node imp1 = d_nm.mk_node(Kind::IMPLIES, {d_false, d_true});
+  test_rewrite(imp1, d_true);
+  Node imp2 = d_nm.mk_node(Kind::IMPLIES, {d_true, d_false});
+  test_rewrite(imp2, d_false);
+  test_rewrite(d_nm.mk_node(Kind::IMPLIES, {imp0, d_false}), d_false);
+  test_rewrite(d_nm.mk_node(Kind::IMPLIES, {imp1, d_false}), d_false);
+  test_rewrite(d_nm.mk_node(Kind::IMPLIES, {imp2, d_false}), d_true);
+  // does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::IMPLIES, {d_b, d_false}));
+}
+
 /* not ---------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBool, bool_not_eval)
@@ -553,6 +572,44 @@ TEST_F(TestRewriterBool, bool_not_xor)
   //// does not apply
   test_rule_does_not_apply<kind>(
       d_nm.invert_node(d_nm.mk_node(Kind::OR, {d_a, d_b})));
+}
+
+/* or ----------------------------------------------------------------------- */
+
+TEST_F(TestRewriterBool, bool_or_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::OR_EVAL;
+  // applies
+  Node imp0 = d_nm.mk_node(Kind::OR, {d_true, d_true});
+  test_rewrite(imp0, d_true);
+  Node imp1 = d_nm.mk_node(Kind::OR, {d_false, d_true});
+  test_rewrite(imp1, d_true);
+  Node imp2 = d_nm.mk_node(Kind::OR, {d_false, d_false});
+  test_rewrite(imp2, d_false);
+  test_rewrite(d_nm.mk_node(Kind::OR, {imp0, d_false}), d_true);
+  test_rewrite(d_nm.mk_node(Kind::OR, {imp1, d_false}), d_true);
+  test_rewrite(d_nm.mk_node(Kind::OR, {imp2, d_false}), d_false);
+  // does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::OR, {d_b, d_false}));
+}
+
+/* xor ---------------------------------------------------------------------- */
+
+TEST_F(TestRewriterBool, bool_xor_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::XOR_EVAL;
+  // applies
+  Node imp0 = d_nm.mk_node(Kind::XOR, {d_true, d_true});
+  test_rewrite(imp0, d_false);
+  Node imp1 = d_nm.mk_node(Kind::XOR, {d_false, d_true});
+  test_rewrite(imp1, d_true);
+  Node imp2 = d_nm.mk_node(Kind::XOR, {d_false, d_false});
+  test_rewrite(imp2, d_false);
+  test_rewrite(d_nm.mk_node(Kind::XOR, {imp0, d_false}), d_false);
+  test_rewrite(d_nm.mk_node(Kind::XOR, {imp1, d_false}), d_true);
+  test_rewrite(d_nm.mk_node(Kind::XOR, {imp2, d_false}), d_false);
+  // does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::XOR, {d_b, d_false}));
 }
 
 /* --- Elimination Rules ---------------------------------------------------- */

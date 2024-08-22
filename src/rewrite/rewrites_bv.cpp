@@ -39,21 +39,6 @@ is_const_val_extract(const Node& node)
 /* bvadd -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
-                                                  const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvadd(node[1].value<BitVector>()));
-}
-
-/**
  * Match special values on either lhs or rhs.
  *
  * match:  (bvadd (_ bv0 N) a) or (bvadd a (_ bv0 N))
@@ -483,21 +468,6 @@ RewriteRule<RewriteRuleKind::BV_ADD_NEG_MUL>::_apply(Rewriter& rewriter,
 }
 
 /* bvand -------------------------------------------------------------------- */
-
-/**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
-                                                  const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvand(node[1].value<BitVector>()));
-}
 
 /**
  * Match special values on either lhs or rhs.
@@ -1106,21 +1076,6 @@ RewriteRule<RewriteRuleKind::BV_AND_CONCAT>::_apply(Rewriter& rewriter,
 /* bvashr ------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::_apply(Rewriter& rewriter,
-                                                   const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvashr(node[1].value<BitVector>()));
-}
-
-/**
  * Match special values on either lhs or rhs.
  *
  * match:  (bvashr (_ bv0 N) a)
@@ -1156,21 +1111,6 @@ RewriteRule<RewriteRuleKind::BV_ASHR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 }
 
 /* bvconcat ----------------------------------------------------------------- */
-
-/**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::_apply(Rewriter& rewriter,
-                                                     const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvconcat(node[1].value<BitVector>()));
-}
 
 /**
  * match:  (bvconcat (bvconcat a (_ bvX n)) (_ bvY m))
@@ -1291,22 +1231,6 @@ RewriteRule<RewriteRuleKind::BV_CONCAT_AND>::_apply(Rewriter& rewriter,
 }
 
 /* bvextract ---------------------------------------------------------------- */
-
-/**
- * Constant folding, matches when operand is a value.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_EXTRACT_EVAL>::_apply(Rewriter& rewriter,
-                                                      const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 1);
-  assert(node.num_indices() == 2);
-  if (!node[0].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvextract(node.index(0), node.index(1)));
-}
 
 /**
  * match:  ((_ extract (N - 1) 0) a)
@@ -1631,21 +1555,6 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_ADD_MUL>::_apply(Rewriter& rewriter,
 /* bvmul -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
-                                                  const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvmul(node[1].value<BitVector>()));
-}
-
-/**
  * Match special values on either lhs or rhs.
  *
  * match:  (bvmul (_ bv0 N) a) or (bvmul a (_ bv0 N))
@@ -1913,19 +1822,6 @@ RewriteRule<RewriteRuleKind::BV_MUL_ONES>::_apply(Rewriter& rewriter,
 /* bvnot -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when operand is a value.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_NOT_EVAL>::_apply(Rewriter& rewriter,
-                                                  const Node& node)
-{
-  (void) rewriter;
-  if (!node[0].is_value()) return node;
-  return rewriter.nm().mk_value(node[0].value<BitVector>().bvnot());
-}
-
-/**
  * match:  (bvnot (bvnot a))
  * result: a
  */
@@ -1981,21 +1877,6 @@ RewriteRule<RewriteRuleKind::BV_NOT_BV_CONCAT>::_apply(Rewriter& rewriter,
 }
 
 /* bvshl -------------------------------------------------------------------- */
-
-/**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::_apply(Rewriter& rewriter,
-                                                  const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvshl(node[1].value<BitVector>()));
-}
 
 /**
  * Match special values on either lhs or rhs.
@@ -2068,21 +1949,6 @@ RewriteRule<RewriteRuleKind::BV_SHL_CONST>::_apply(Rewriter& rewriter,
 }
 
 /* bvshr -------------------------------------------------------------------- */
-
-/**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::_apply(Rewriter& rewriter,
-                                                  const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvshr(node[1].value<BitVector>()));
-}
 
 /**
  * Match special values on either lhs or rhs.
@@ -2192,22 +2058,6 @@ RewriteRule<RewriteRuleKind::BV_SHR_NOT>::_apply(Rewriter& rewriter,
 }
 
 /* bvslt -------------------------------------------------------------------- */
-
-/**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
-                                                  const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().signed_compare(node[1].value<BitVector>())
-      < 0);
-}
 
 /**
  * Match special values on either lhs or rhs.
@@ -2378,21 +2228,6 @@ RewriteRule<RewriteRuleKind::BV_SLT_BV_UDIV1>::_apply(Rewriter& rewriter,
 /* bvudiv ------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::_apply(Rewriter& rewriter,
-                                                   const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvudiv(node[1].value<BitVector>()));
-}
-
-/**
  * Match special values on either lhs or rhs.
  *
  * match:  (bvudiv (_ bv0 N) a)
@@ -2546,21 +2381,6 @@ RewriteRule<RewriteRuleKind::BV_UDIV_ITE>::_apply(Rewriter& rewriter,
 }
 
 /* bvult -------------------------------------------------------------------- */
-
-/**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
-                                                  const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().compare(node[1].value<BitVector>()) < 0);
-}
 
 /**
  * Match special values on either lhs or rhs.
@@ -2724,21 +2544,6 @@ RewriteRule<RewriteRuleKind::BV_ULT_ITE>::_apply(Rewriter& rewriter,
 /* bvurem ------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
-                                                   const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvurem(node[1].value<BitVector>()));
-}
-
-/**
  * Match special values on either lhs or rhs.
  *
  * match:  (bvurem (_ bv0 N) a)
@@ -2825,21 +2630,6 @@ RewriteRule<RewriteRuleKind::BV_UREM_SAME>::_apply(Rewriter& rewriter,
 /* bvxor -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::_apply(Rewriter& rewriter,
-                                                  const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  return rewriter.nm().mk_value(
-      node[0].value<BitVector>().bvxor(node[1].value<BitVector>()));
-}
-
-/**
  * match:  (bvxor a a)
  * result: (_ bv0 N)
  */
@@ -2897,6 +2687,609 @@ RewriteRule<RewriteRuleKind::BV_XOR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     res = _rw_bv_xor_special_const(rewriter, node, 1);
   }
   return res;
+}
+
+/* ----Evaluation (Constant Folding) Rules ---------------------------------- */
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvadd(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvand(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvashr(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_COMP_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().compare(node[1].value<BitVector>()) == 0
+          ? BitVector::mk_true()
+          : BitVector::mk_false());
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvconcat(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_DEC_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(node[0].value<BitVector>().bvdec());
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_EXTRACT_EVAL>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 2);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvextract(node.index(0), node.index(1)));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_INC_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(node[0].value<BitVector>().bvinc());
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvmul(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SMULO_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().is_smul_overflow(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UMULO_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().is_umul_overflow(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_USUBO_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().is_usub_overflow(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_NAND_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvnand(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_NEG_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(node[0].value<BitVector>().bvneg());
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_NEGO_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(node[0].value<BitVector>().is_neg_overflow());
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_NOR_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvnor(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_NOT_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(node[0].value<BitVector>().bvnot());
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_OR_EVAL>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvor(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_REDAND_EVAL>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(node[0].value<BitVector>().bvredand());
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_REDOR_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(node[0].value<BitVector>().bvredor());
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_REDXOR_EVAL>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(node[0].value<BitVector>().bvredxor());
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_REPEAT_EVAL>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 1);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvrepeat(node.index(0)));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ROL_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvrol(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ROLI_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 1);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvroli(node.index(0)));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ROR_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvror(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_RORI_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 1);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvrori(node.index(0)));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UADDO_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().is_uadd_overflow(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SADDO_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().is_sadd_overflow(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvshl(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvshr(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SLE_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().signed_compare(node[1].value<BitVector>())
+      <= 0);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().signed_compare(node[1].value<BitVector>())
+      < 0);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SGE_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().signed_compare(node[1].value<BitVector>())
+      >= 0);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SGT_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().signed_compare(node[1].value<BitVector>())
+      > 0);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvudiv(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SDIV_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvsdiv(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SDIVO_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().is_sdiv_overflow(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SMOD_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvsmod(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SREM_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvsrem(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SUB_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvsub(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SSUBO_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().is_ssub_overflow(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ULE_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().compare(node[1].value<BitVector>()) <= 0);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().compare(node[1].value<BitVector>()) < 0);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UGE_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().compare(node[1].value<BitVector>()) >= 0);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UGT_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().compare(node[1].value<BitVector>()) > 0);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvurem(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvxor(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_XNOR_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvxnor(node[1].value<BitVector>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SIGN_EXTEND_EVAL>::_apply(Rewriter& rewriter,
+                                                          const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 1);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvsext(node.index(0)));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ZERO_EXTEND_EVAL>::_apply(Rewriter& rewriter,
+                                                          const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  assert(node.num_indices() == 1);
+  if (!node[0].is_value()) return node;
+  return rewriter.nm().mk_value(
+      node[0].value<BitVector>().bvzext(node.index(0)));
 }
 
 /* --- Elimination Rules ---------------------------------------------------- */

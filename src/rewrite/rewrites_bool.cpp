@@ -11,7 +11,6 @@
 #include "rewrite/rewrites_bool.h"
 
 #include "node/node_manager.h"
-#include "node/node_utils.h"
 #include "rewrite/rewrite_utils.h"
 
 namespace bzla {
@@ -572,6 +571,22 @@ RewriteRule<RewriteRuleKind::AND_BV_LT>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/* implies ------------------------------------------------------------------ */
+
+/**
+ * Constant folding, matches when all operands are values.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::IMPLIES_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  (void) rewriter;
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(!node[0].value<bool>()
+                                || node[1].value<bool>());
+}
+
 /* not ---------------------------------------------------------------------- */
 
 /**
@@ -645,6 +660,36 @@ RewriteRule<RewriteRuleKind::NOT_EQUAL_BV1_BOOL>::_apply(Rewriter& rewriter,
     }
   }
   return node;
+}
+
+/* or ----------------------------------------------------------------------- */
+
+/**
+ * Constant folding, matches when all operands are values.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::OR_EVAL>::_apply(Rewriter& rewriter,
+                                              const Node& node)
+{
+  (void) rewriter;
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(node[0].value<bool>() || node[1].value<bool>());
+}
+
+/* xor ---------------------------------------------------------------------- */
+
+/**
+ * Constant folding, matches when all operands are values.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::XOR_EVAL>::_apply(Rewriter& rewriter,
+                                               const Node& node)
+{
+  (void) rewriter;
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  return rewriter.nm().mk_value(node[0].value<bool>() ^ node[1].value<bool>());
 }
 
 /* --- Elimination Rules ---------------------------------------------------- */

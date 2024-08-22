@@ -17,10 +17,6 @@ namespace bzla {
 
 /* bvadd -------------------------------------------------------------------- */
 
-// const_binary_bv_exp
-template <>
-Node RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 template <>
@@ -67,10 +63,6 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_SHL>::_apply(Rewriter& rewriter,
 
 /* bvand -------------------------------------------------------------------- */
 
-// const_binary_bv_exp
-template <>
-Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 template <>
@@ -137,18 +129,11 @@ Node RewriteRule<RewriteRuleKind::BV_AND_CONCAT>::_apply(Rewriter& rewriter,
 /* bvashr ------------------------------------------------------------------- */
 
 template <>
-Node RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::_apply(Rewriter& rewriter,
-                                                        const Node& node);
-template <>
 Node RewriteRule<RewriteRuleKind::BV_ASHR_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 
 /* bvconcat ----------------------------------------------------------------- */
 
-// const_binary_bv_exp
-template <>
-Node RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::_apply(Rewriter& rewriter,
-                                                          const Node& node);
 // const_concat
 template <>
 Node RewriteRule<RewriteRuleKind::BV_CONCAT_CONST>::_apply(Rewriter& rewriter,
@@ -165,10 +150,6 @@ Node RewriteRule<RewriteRuleKind::BV_CONCAT_AND>::_apply(Rewriter& rewriter,
 
 /* bvextract ---------------------------------------------------------------- */
 
-// const_slice
-template <>
-Node RewriteRule<RewriteRuleKind::BV_EXTRACT_EVAL>::_apply(Rewriter& rewriter,
-                                                           const Node& node);
 // full_slice
 template <>
 Node RewriteRule<RewriteRuleKind::BV_EXTRACT_FULL>::_apply(Rewriter& rewriter,
@@ -209,10 +190,6 @@ Node RewriteRule<RewriteRuleKind::BV_EXTRACT_ADD_MUL>::_apply(
 
 /* bvmul -------------------------------------------------------------------- */
 
-// const_binary_bv_exp
-template <>
-Node RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 template <>
@@ -251,9 +228,6 @@ Node RewriteRule<RewriteRuleKind::BV_MUL_ONES>::_apply(Rewriter& rewriter,
 /* bvnot -------------------------------------------------------------------- */
 
 template <>
-Node RewriteRule<RewriteRuleKind::BV_NOT_EVAL>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
-template <>
 Node RewriteRule<RewriteRuleKind::BV_NOT_BV_NOT>::_apply(Rewriter& rewriter,
                                                          const Node& node);
 template <>
@@ -266,10 +240,6 @@ Node RewriteRule<RewriteRuleKind::BV_NOT_BV_CONCAT>::_apply(Rewriter& rewriter,
 
 /* bvshl -------------------------------------------------------------------- */
 
-// const_binary_bv_exp
-template <>
-Node RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 template <>
@@ -281,11 +251,6 @@ Node RewriteRule<RewriteRuleKind::BV_SHL_CONST>::_apply(Rewriter& rewriter,
                                                         const Node& node);
 
 /* bvshr -------------------------------------------------------------------- */
-
-// const_binary_bv_exp
-template <>
-Node RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
 
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
@@ -307,10 +272,6 @@ Node RewriteRule<RewriteRuleKind::BV_SHR_NOT>::_apply(Rewriter& rewriter,
 
 /* bvslt -------------------------------------------------------------------- */
 
-// const_binary_bv_exp
-template <>
-Node RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 template <>
@@ -338,10 +299,6 @@ Node RewriteRule<RewriteRuleKind::BV_SLT_ITE>::_apply(Rewriter& rewriter,
 
 /* bvudiv ------------------------------------------------------------------- */
 
-// const_binary_bv_exp
-template <>
-Node RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::_apply(Rewriter& rewriter,
-                                                        const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 template <>
@@ -366,10 +323,6 @@ Node RewriteRule<RewriteRuleKind::BV_UDIV_ITE>::_apply(Rewriter& rewriter,
 
 /* bvult -------------------------------------------------------------------- */
 
-// const_binary_bv_exp
-template <>
-Node RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 template <>
@@ -395,10 +348,6 @@ Node RewriteRule<RewriteRuleKind::BV_ULT_ITE>::_apply(Rewriter& rewriter,
 
 /* bvurem ------------------------------------------------------------------- */
 
-// const_binary_bv_exp
-template <>
-Node RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
-                                                        const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 template <>
@@ -416,13 +365,175 @@ Node RewriteRule<RewriteRuleKind::BV_UREM_SAME>::_apply(Rewriter& rewriter,
 /* bvxor -------------------------------------------------------------------- */
 
 template <>
-Node RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
-template <>
 Node RewriteRule<RewriteRuleKind::BV_XOR_SAME>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 template <>
 Node RewriteRule<RewriteRuleKind::BV_XOR_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
+
+/* eval---------------------------------------------------------------------- */
+
+// const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_COMP_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+// const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_DEC_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// const_slice
+template <>
+Node RewriteRule<RewriteRuleKind::BV_EXTRACT_EVAL>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_INC_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NAND_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NEG_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NEGO_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NOR_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NOT_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_OR_EVAL>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_REDAND_EVAL>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_REDOR_EVAL>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_REDXOR_EVAL>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_REPEAT_EVAL>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ROL_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ROLI_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ROR_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_RORI_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SADDO_EVAL>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SDIV_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SDIVO_EVAL>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SLE_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SGE_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SGT_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SIGN_EXTEND_EVAL>::_apply(
+    Rewriter& rewriter, const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SMOD_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SMULO_EVAL>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SREM_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SUB_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SSUBO_EVAL>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UADDO_EVAL>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ULE_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+// const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UGE_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UGT_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UMULO_EVAL>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_USUBO_EVAL>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_XNOR_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ZERO_EXTEND_EVAL>::_apply(
     Rewriter& rewriter, const Node& node);
 
 /* --- Elimination Rules ---------------------------------------------------- */

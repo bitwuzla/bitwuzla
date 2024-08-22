@@ -30,46 +30,6 @@ using namespace node;
 /* equal -------------------------------------------------------------------- */
 
 /**
- * Constant folding, matches when all operands are values.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
-                                                 const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  NodeManager& nm = rewriter.nm();
-  if (node[0].type().is_bool())
-  {
-    return nm.mk_value(node[0].value<bool>() == node[1].value<bool>());
-  }
-  if (node[0].type().is_bv())
-  {
-    return nm.mk_value(
-        (node[0].value<BitVector>() == node[1].value<BitVector>()));
-  }
-  if (node[0].type().is_fp())
-  {
-    return nm.mk_value(
-        (node[0].value<FloatingPoint>() == node[1].value<FloatingPoint>()));
-  }
-  if (node[0].type().is_rm())
-  {
-    return nm.mk_value(
-        (node[0].value<RoundingMode>() == node[1].value<RoundingMode>()));
-  }
-  if (node[0].type().is_uninterpreted())
-  {
-    return nm.mk_value(
-        (node[0].value<std::string>() == node[1].value<std::string>()));
-  }
-  assert(false);
-  return node;
-}
-
-/**
  * Match special values on either lhs or rhs.
  *
  * match:  (= (_ bv0 N) (bvxor a b))
@@ -1108,29 +1068,7 @@ RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
   return node;
 }
 
-/* distinct ----------------------------------------------------------------- */
-
-/**
- * Constant folding, matches when condition operands is value.
- */
-template <>
-Node
-RewriteRule<RewriteRuleKind::ITE_EVAL>::_apply(Rewriter& rewriter,
-                                               const Node& node)
-{
-  (void) rewriter;
-  assert(node.num_children() == 3);
-
-  if (node[0].is_value())
-  {
-    if (node[0].value<bool>())
-    {
-      return node[1];
-    }
-    return node[2];
-  }
-  return node;
-}
+/* ite ---------------------------------------------------------------------- */
 
 /**
  * match:  (ite c a a)
@@ -1518,6 +1456,92 @@ RewriteRule<RewriteRuleKind::ITE_BV_OP>::_apply(Rewriter& rewriter,
           {rewriter.mk_node(Kind::ITE, {node[0], node[1][0], node[2][1]}),
            node[1][1]});
     }
+  }
+  return node;
+}
+
+/* ----Evaluation (Constant Folding) Rules ---------------------------------- */
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  NodeManager& nm = rewriter.nm();
+  if (node[0].type().is_bool())
+  {
+    return nm.mk_value(node[0].value<bool>() == node[1].value<bool>());
+  }
+  if (node[0].type().is_bv())
+  {
+    return nm.mk_value(
+        (node[0].value<BitVector>() == node[1].value<BitVector>()));
+  }
+  if (node[0].type().is_fp())
+  {
+    return nm.mk_value(
+        (node[0].value<FloatingPoint>() == node[1].value<FloatingPoint>()));
+  }
+  if (node[0].type().is_rm())
+  {
+    return nm.mk_value(
+        (node[0].value<RoundingMode>() == node[1].value<RoundingMode>()));
+  }
+  if (node[0].type().is_uninterpreted())
+  {
+    return nm.mk_value(
+        (node[0].value<std::string>() == node[1].value<std::string>()));
+  }
+  assert(false);
+  return node;
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::DISTINCT_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  NodeManager& nm = rewriter.nm();
+  if (node[0].type().is_bool())
+  {
+    return nm.mk_value(node[0].value<bool>() != node[1].value<bool>());
+  }
+  if (node[0].type().is_bv())
+  {
+    return nm.mk_value(
+        (node[0].value<BitVector>() != node[1].value<BitVector>()));
+  }
+  if (node[0].type().is_fp())
+  {
+    return nm.mk_value(
+        (node[0].value<FloatingPoint>() != node[1].value<FloatingPoint>()));
+  }
+  assert(node[0].type().is_rm());
+  return nm.mk_value(
+      (node[0].value<RoundingMode>() != node[1].value<RoundingMode>()));
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_EVAL>::_apply(Rewriter& rewriter,
+                                               const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 3);
+
+  if (node[0].is_value())
+  {
+    if (node[0].value<bool>())
+    {
+      return node[1];
+    }
+    return node[2];
   }
   return node;
 }

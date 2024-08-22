@@ -83,6 +83,12 @@ template <>
 Node RewriteRule<RewriteRuleKind::AND_BV_LT>::_apply(Rewriter& rewriter,
                                                      const Node& node);
 
+/* implies ------------------------------------------------------------------ */
+
+template <>
+Node RewriteRule<RewriteRuleKind::IMPLIES_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
 /* not ---------------------------------------------------------------------- */
 
 template <>
@@ -100,6 +106,18 @@ Node RewriteRule<RewriteRuleKind::NOT_XOR>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::NOT_EQUAL_BV1_BOOL>::_apply(
     Rewriter& rewriter, const Node& node);
+
+/* or ----------------------------------------------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::OR_EVAL>::_apply(Rewriter& rewriter,
+                                                   const Node& node);
+
+/* xor ---------------------------------------------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::XOR_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node);
 
 /* --- Elimination Rules ---------------------------------------------------- */
 

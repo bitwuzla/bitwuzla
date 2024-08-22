@@ -31,37 +31,6 @@ class TestRewriterCore : public TestRewriter
 
 /* equal -------------------------------------------------------------------- */
 
-TEST_F(TestRewriterCore, core_equal_eval)
-{
-  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_EVAL;
-  // applies
-  Node equal0 = d_nm.mk_node(Kind::EQUAL, {d_true, d_true});
-  test_rewrite(equal0, d_true);
-  test_rewrite(d_nm.mk_node(Kind::EQUAL, {equal0, d_false}), d_false);
-
-  Node equal1 = d_nm.mk_node(
-      Kind::EQUAL,
-      {d_nm.mk_value(BitVector(2, "00")), d_nm.mk_value(BitVector(2, "00"))});
-  test_rewrite(equal1, d_true);
-  test_rewrite(d_nm.mk_node(Kind::EQUAL, {equal1, d_false}), d_false);
-
-  test_rewrite(d_nm.mk_node(Kind::EQUAL,
-                            {d_nm.mk_value(BitVector(2, "10")),
-                             d_nm.mk_value(BitVector(2, "00"))}),
-               d_false);
-  test_rewrite(
-      d_nm.mk_node(Kind::EQUAL,
-                   {d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, false)),
-                    d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, true))}),
-      d_false);
-  test_rewrite(d_nm.mk_node(Kind::EQUAL,
-                            {d_nm.mk_value(RoundingMode::RNA),
-                             d_nm.mk_value(RoundingMode::RNA)}),
-               d_true);
-  // does not apply
-  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {d_b, d_false}));
-}
-
 TEST_F(TestRewriterCore, core_equal_special_const)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_SPECIAL_CONST;
@@ -647,27 +616,6 @@ TEST_F(TestRewriterCore, core_distinct_card)
 
 /* ite ---------------------------------------------------------------------- */
 
-TEST_F(TestRewriterCore, core_ite_eval)
-{
-  constexpr RewriteRuleKind kind = RewriteRuleKind::ITE_EVAL;
-  //// applies
-  test_rewrite(
-      d_rewriter.rewrite(d_nm.mk_node(Kind::ITE, {d_true, d_bv4_a, d_bv4_b})),
-      d_bv4_a);
-  test_rewrite(
-      d_rewriter.rewrite(d_nm.mk_node(Kind::ITE, {d_false, d_bv4_a, d_bv4_b})),
-      d_bv4_b);
-  test_rewrite(
-      d_rewriter.rewrite(d_nm.mk_node(
-          Kind::ITE,
-          {d_nm.mk_node(Kind::EQUAL, {d_bv4_a, d_bv4_a}), d_bv4_a, d_bv4_b})),
-      d_bv4_a);
-  //// does not apply
-  test_rule_does_not_apply<kind>(d_nm.mk_node(
-      Kind::ITE,
-      {d_nm.mk_node(Kind::EQUAL, {d_bv4_a, d_bv4_b}), d_bv4_a, d_bv4_b}));
-}
-
 TEST_F(TestRewriterCore, core_ite_same)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::ITE_SAME;
@@ -1138,6 +1086,94 @@ TEST_F(TestRewriterCore, core_ite_bv_op)
                    {d_c,
                     d_nm.mk_node(Kind::BV_UDIV, {d_bv4_a, d_bv4_b}),
                     d_nm.mk_node(Kind::BV_UDIV, {d_bv4_b, d_bv4_c})}));
+}
+
+/* --- Evaluation (Constant Folding) Rules----------------------------------- */
+
+TEST_F(TestRewriterCore, core_equal_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_EVAL;
+  // applies
+  Node equal0 = d_nm.mk_node(Kind::EQUAL, {d_true, d_true});
+  test_rewrite(equal0, d_true);
+  test_rewrite(d_nm.mk_node(Kind::EQUAL, {equal0, d_false}), d_false);
+
+  Node equal1 = d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_value(BitVector(2, "00")), d_nm.mk_value(BitVector(2, "00"))});
+  test_rewrite(equal1, d_true);
+  test_rewrite(d_nm.mk_node(Kind::EQUAL, {equal1, d_false}), d_false);
+
+  test_rewrite(d_nm.mk_node(Kind::EQUAL,
+                            {d_nm.mk_value(BitVector(2, "10")),
+                             d_nm.mk_value(BitVector(2, "00"))}),
+               d_false);
+  test_rewrite(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, false)),
+                    d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, true))}),
+      d_false);
+  test_rewrite(d_nm.mk_node(Kind::EQUAL,
+                            {d_nm.mk_value(RoundingMode::RNA),
+                             d_nm.mk_value(RoundingMode::RNA)}),
+               d_true);
+  // does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {d_b, d_false}));
+}
+
+TEST_F(TestRewriterCore, core_distinct_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::DISTINCT_EVAL;
+  // applies
+  Node dist0 = d_nm.mk_node(Kind::DISTINCT, {d_true, d_true});
+  test_rewrite(dist0, d_false);
+  Node dist1 = d_nm.mk_node(Kind::DISTINCT, {d_true, d_false});
+  test_rewrite(dist1, d_true);
+  test_rewrite(d_nm.mk_node(Kind::DISTINCT, {dist0, d_false}), d_false);
+  test_rewrite(d_nm.mk_node(Kind::DISTINCT, {dist1, d_false}), d_true);
+
+  Node dist2 = d_nm.mk_node(
+      Kind::DISTINCT,
+      {d_nm.mk_value(BitVector(2, "01")), d_nm.mk_value(BitVector(2, "00"))});
+  test_rewrite(dist2, d_true);
+  test_rewrite(d_nm.mk_node(Kind::DISTINCT, {dist2, d_false}), d_true);
+
+  test_rewrite(d_nm.mk_node(Kind::DISTINCT,
+                            {d_nm.mk_value(BitVector(2, "00")),
+                             d_nm.mk_value(BitVector(2, "00"))}),
+               d_false);
+  test_rewrite(
+      d_nm.mk_node(Kind::DISTINCT,
+                   {d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, false)),
+                    d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, true))}),
+      d_true);
+  test_rewrite(d_nm.mk_node(Kind::DISTINCT,
+                            {d_nm.mk_value(RoundingMode::RNA),
+                             d_nm.mk_value(RoundingMode::RNA)}),
+               d_false);
+  // does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::DISTINCT, {d_b, d_false}));
+}
+
+TEST_F(TestRewriterCore, core_ite_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::ITE_EVAL;
+  //// applies
+  test_rewrite(
+      d_rewriter.rewrite(d_nm.mk_node(Kind::ITE, {d_true, d_bv4_a, d_bv4_b})),
+      d_bv4_a);
+  test_rewrite(
+      d_rewriter.rewrite(d_nm.mk_node(Kind::ITE, {d_false, d_bv4_a, d_bv4_b})),
+      d_bv4_b);
+  test_rewrite(
+      d_rewriter.rewrite(d_nm.mk_node(
+          Kind::ITE,
+          {d_nm.mk_node(Kind::EQUAL, {d_bv4_a, d_bv4_a}), d_bv4_a, d_bv4_b})),
+      d_bv4_a);
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::ITE,
+      {d_nm.mk_node(Kind::EQUAL, {d_bv4_a, d_bv4_b}), d_bv4_a, d_bv4_b}));
 }
 
 /* --- Elimination Rules ---------------------------------------------------- */

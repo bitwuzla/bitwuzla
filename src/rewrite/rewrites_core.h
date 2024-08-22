@@ -18,9 +18,6 @@ namespace bzla {
 /* equal -------------------------------------------------------------------- */
 
 template <>
-Node RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
-                                                      const Node& node);
-template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 template <>
@@ -107,10 +104,6 @@ Node RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
 
 /* ite ---------------------------------------------------------------------- */
 
-// const_cond
-template <>
-Node RewriteRule<RewriteRuleKind::ITE_EVAL>::_apply(Rewriter& rewriter,
-                                                    const Node& node);
 // equal_branches_cond
 template <>
 Node RewriteRule<RewriteRuleKind::ITE_SAME>::_apply(Rewriter& rewriter,
@@ -152,6 +145,19 @@ Node RewriteRule<RewriteRuleKind::ITE_BV_CONCAT>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::ITE_BV_OP>::_apply(Rewriter& rewriter,
                                                      const Node& node);
+
+/* ----Evaluation (Constant Folding) Rules ---------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::DISTINCT_EVAL>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+// const_cond
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_EVAL>::_apply(Rewriter& rewriter,
+                                                    const Node& node);
 
 /* --- Elimination Rules ---------------------------------------------------- */
 
