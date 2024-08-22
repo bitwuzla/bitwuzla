@@ -81,7 +81,7 @@ class TestRewriter : public ::testing::Test
     fflush(file);
 
     std::stringstream cmd;
-    cmd << s_solver_binary << " " << filename;
+    cmd << s_solver_binary << " " << filename << " 2>&1";
 
     // Execute solver and read output.
     FILE* fp = popen(cmd.str().c_str(), "r");
