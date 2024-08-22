@@ -196,6 +196,11 @@ class TestBitVector : public TestCommon
                                  const std::string& s2,
                                  bool expected);
   void test_is_ssub_overflow(uint64_t size);
+  void test_is_usub_overflow_aux(uint64_t size,
+                                 const std::string& s1,
+                                 const std::string& s2,
+                                 bool expected);
+  void test_is_usub_overflow(uint64_t size);
   void test_is_umul_overflow_aux(uint64_t size,
                                  const std::string& s1,
                                  const std::string& s2,
@@ -1164,6 +1169,130 @@ TestBitVector::test_is_sadd_overflow(uint64_t size)
       test_is_sadd_overflow_aux(
           size,
           "10000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000000",
+          "10000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000001",
+          true);
+      break;
+    default: assert(false);
+  }
+}
+
+void
+TestBitVector::test_is_usub_overflow_aux(uint64_t size,
+                                         const std::string& s1,
+                                         const std::string& s2,
+                                         bool expected)
+{
+  BitVector bv1(size, s1, 2);
+  BitVector bv2(size, s2, 2);
+  assert(bv1.is_usub_overflow(bv2) == expected);
+  ASSERT_EQ(bv1.is_usub_overflow(bv2), expected);
+  ASSERT_DEATH_DEBUG(bv1.is_usub_overflow(BitVector(size + 1, *d_rng)),
+                     "d_size == bv.d_size");
+}
+
+void
+TestBitVector::test_is_usub_overflow(uint64_t size)
+{
+  switch (size)
+  {
+    case 1:
+      test_is_usub_overflow_aux(size, "0", "0", false);
+      test_is_usub_overflow_aux(size, "0", "1", true);
+      test_is_usub_overflow_aux(size, "1", "1", false);
+      break;
+    case 7:
+      test_is_usub_overflow_aux(size, "0000011", "0000110", true);
+      test_is_usub_overflow_aux(size, "1111110", "1010101", false);
+      test_is_usub_overflow_aux(size, "1111110", "0111111", false);
+      break;
+    case 31:
+      test_is_usub_overflow_aux(size,
+                                "0000000000000000000000000001111",
+                                "0000000000000000000000001001110",
+                                true);
+      test_is_usub_overflow_aux(size,
+                                "1111111111111111111111111111111",
+                                "0000000000000000000000001001110",
+                                false);
+      test_is_usub_overflow_aux(size,
+                                "1100000000000000000000000000000",
+                                "1000000000000000000000000000001",
+                                false);
+      test_is_usub_overflow_aux(size,
+                                "0111111111111111111111111111111",
+                                "1000000000000000000000001001110",
+                                true);
+      test_is_usub_overflow_aux(size,
+                                "1100000000000000000000000000000",
+                                "0100000000000000000000000000001",
+                                false);
+      break;
+    case 64:
+      test_is_usub_overflow_aux(
+          size,
+          "1111111111111111111111111111111111111111111111111111111111111110",
+          "0000000000000000000000000000000000000000000000000000000000000001",
+          false);
+      test_is_usub_overflow_aux(
+          size,
+          "0111111111111111111111111111111111111111111111111111111111111110",
+          "0000000000000000000000000000000000000000000000000000000000000100",
+          false);
+      test_is_usub_overflow_aux(
+          size,
+          "1011111111111111111111111111111111111111111111111111111111111110",
+          "0110000000000000000000000000000000000000000000000000000000000001",
+          false);
+      test_is_usub_overflow_aux(
+          size,
+          "0111111111111111111111111111111111111111111111111111111111111110",
+          "1010000000000000000000000000000000000000000000000000000000000001",
+          true);
+      break;
+    case 65:
+      test_is_usub_overflow_aux(
+          size,
+          "11111111111111111111111111111111111111111111111111111111111111110",
+          "00000000000000000000000000000000000000000000000000000000000000001",
+          false);
+      test_is_usub_overflow_aux(
+          size,
+          "01111111111111111111111111111111111111111111111111111111111111010",
+          "11100000000000000000000000000000000000000000000000000000100000001",
+          true);
+      test_is_usub_overflow_aux(
+          size,
+          "10100010000100000100001000000000000000000000000000000000000000000",
+          "01111111111111111111111111111111111111100000000000000000000000001",
+          false);
+      break;
+    case 127:
+      test_is_usub_overflow_aux(
+          size,
+          "01111111111111111111111111111111111111111111111111111111111111111111"
+          "11111111111111111111111111111111111111111111111111111111001",
+          "00000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000001",
+          false);
+      test_is_usub_overflow_aux(
+          size,
+          "01111111111111111111111111111111111111111111111111111111111111111111"
+          "11111111111111111111111111111111111111111111111111111111001",
+          "10000000000000000000000100000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000001",
+          true);
+      test_is_usub_overflow_aux(
+          size,
+          "11111111111111111111111111111111111111111111111111111111111111111111"
+          "11111111111111111111111111111111111111111111111111111111110",
+          "00000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000001",
+          false);
+      test_is_usub_overflow_aux(
+          size,
+          "01111111111111111111111111111111111111111111111111111111111111100000"
           "00000000000000000000000000000000000000000000000000000000000",
           "10000000000000000000000000000000000000000000000000000000000000000000"
           "00000000000000000000000000000000000000000000000000000000001",
@@ -5682,6 +5811,16 @@ TEST_F(TestBitVector, is_sadd_overflow)
   test_is_sadd_overflow(64);
   test_is_sadd_overflow(65);
   test_is_sadd_overflow(127);
+}
+
+TEST_F(TestBitVector, is_usub_overflow)
+{
+  test_is_usub_overflow(1);
+  test_is_usub_overflow(7);
+  test_is_usub_overflow(31);
+  test_is_usub_overflow(64);
+  test_is_usub_overflow(65);
+  test_is_usub_overflow(127);
 }
 
 TEST_F(TestBitVector, is_ssub_overflow)

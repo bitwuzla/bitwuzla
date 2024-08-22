@@ -14,10 +14,8 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
-#include <unordered_set>
 #include <utility>
 
-#include "bv/bounds/bitvector_bounds.h"
 #include "rng/rng.h"
 
 namespace bzla {
@@ -1026,6 +1024,14 @@ BitVector::is_sadd_overflow(const BitVector& bv) const
   //  2) positive + positive = negative
   return (is_signed_bv0 && is_signed_bv1 && !is_signed_add)
          || (!is_signed_bv0 && !is_signed_bv1 && is_signed_add);
+}
+
+bool
+BitVector::is_usub_overflow(const BitVector& bv) const
+{
+  assert(!is_null());
+  assert(d_size == bv.d_size);
+  return compare(bv) < 0;
 }
 
 bool
