@@ -1,0 +1,7 @@
+(set-info :status sat)
+(set-option :global-declarations true)
+(set-option :abstraction true)
+(set-option :rewrite-level 0)
+(declare-const _x1 (_ BitVec 50))
+(assert (bvugt _x1 (bvurem _x1 _x1)))
+(check-sat)

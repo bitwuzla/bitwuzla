@@ -811,6 +811,7 @@ tests_smt2 = [
   #['solver/declsort1.smt2'], # TODO: disabled due to missing support in fun solver
   ['solver/abstract/bv_udiv_pow2.smt2'],
   ['solver/abstract/bv_urem_pow2.smt2'],
+  ['solver/abstract/murxla-d9523963f3a24521.min.smt2'],
   ['solver/abstract/red-bench-8002.smt2'],
   ['solver/array/arraycond1.btor.smt2'],
   ['solver/array/arraycond10.btor.smt2'],

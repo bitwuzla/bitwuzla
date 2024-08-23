@@ -410,7 +410,7 @@ AbstractionModule::check_lemma(const AbstractionLemma* lem,
   Node lemma;
   if (!inst.is_null())
   {
-    inst = d_rewriter.rewrite(inst);
+    inst = d_rewriter.eval(inst);
     assert(inst.is_value());
     if (!inst.value<bool>())
     {
@@ -422,7 +422,7 @@ AbstractionModule::check_lemma(const AbstractionLemma* lem,
     inst = lem->instance(val_x, val_s, val_t, val_x, val_s, val_t);
     if (!inst.is_null())
     {
-      inst = d_rewriter.rewrite(inst);
+      inst = d_rewriter.eval(inst);
       assert(inst.is_value());
       if (!inst.value<bool>())
       {
@@ -465,7 +465,7 @@ AbstractionModule::check_term_abstraction(const Node& abstr)
   Node val_x        = d_solver_state.value(x);
   Node val_s        = d_solver_state.value(s);
   Node val_t        = d_solver_state.value(t);
-  Node val_expected = d_rewriter.rewrite(nm.mk_node(kind, {val_x, val_s}));
+  Node val_expected = d_rewriter.eval(nm.mk_node(kind, {val_x, val_s}));
 
   if (val_t == val_expected)
   {
