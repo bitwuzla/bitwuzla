@@ -74,7 +74,7 @@ class AbstractionModule
 
   /** Send lemma but make sure not to abstract terms in it. */
   bool lemma_no_abstract(const Node& lemma, LemmaKind lk);
-  /** Send lemma abstract terms in it. */
+  /** Send lemma, abstract terms in it. */
   bool lemma_abstract(const Node& lemma, LemmaKind lk);
 
   /** Utility to compute score for lemma schema. */
