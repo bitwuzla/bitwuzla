@@ -592,9 +592,9 @@ AbstractionModule::check_term_abstraction(const Node& abstr)
     }
     // Use special square encoding for BV_MUL if value instantiations were all
     // square instantiations.
-    else if (kind == Kind::BV_MUL
-             && d_value_insts_square[node] > 0
-             && d_value_insts_square[node] >= d_value_insts[node])
+    else if (kind == Kind::BV_MUL && d_value_insts_square[node] > 0
+             && d_value_insts_square[node] >= d_value_insts[node]
+             && val_x == val_s)
     {
       d_lemma_buffer.emplace_back(
           node,
@@ -727,6 +727,7 @@ AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
   // Make sure that lemma is rewritten before adding to the cache.
   Node lem = d_rewriter.rewrite(lemma);
   // Cache lemma so that we won't consider it for abstraction.
+  assert(d_abstraction_cache.find(lem) == d_abstraction_cache.end());
   d_abstraction_cache.emplace(lem, lem);
   if (d_solver_state.lemma(lem))
   {
