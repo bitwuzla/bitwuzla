@@ -66,6 +66,12 @@ Preprocessor::preprocess()
 {
   util::Timer timer(d_stats.time_preprocess);
 
+  // Set of already preprocessed assertions is inconsistent
+  if (d_assertions.is_inconsistent())
+  {
+    return Result::UNSAT;
+  }
+
   // No assertions to process, return.
   if (d_assertions.empty())
   {
