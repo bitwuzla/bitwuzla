@@ -2224,12 +2224,16 @@ def test_terminate(tm):
     bitwuzla.assert_formula(a)
     assert bitwuzla.check_sat() == Result.UNSAT
 
-    # not solved by rewriting, should be terminated when configured
+    # not solved by bit-blasting without preprocessing, should be terminated in
+    # the SAT solver when configured
     tt = TestTerminator()
     options.set(Option.BV_SOLVER, 'bitblast')
     bitwuzla = Bitwuzla(tm, options)
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNSAT
+    options.set(Option.PREPROCESS, False)
+    bitwuzla = Bitwuzla(tm, options)
+    bitwuzla.assert_formula(b)
     bitwuzla.configure_terminator(tt)
     assert bitwuzla.check_sat() == Result.UNKNOWN
 
