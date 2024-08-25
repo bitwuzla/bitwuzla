@@ -163,7 +163,7 @@ class Rewriter
   /** Helper for rewrite(). */
   const Node& _rewrite(const Node& node);
   /** Helper for eval(). */
-  const Node& _eval(std::unordered_map<Node, Node>& cache, const Node& node);
+  const Node& _eval(const Node& node);
 
   /* Core ---------------------------------------- */
   Node rewrite_eq(const Node& node);
@@ -285,8 +285,14 @@ class Rewriter
 
   /** True to enable rewriting, false to only enable operator elimination. */
   uint8_t d_level;
-  /** Cache for rewritten nodes, maps node to its rewritten form. */
+  /** Cache nodes rewritten during rewrite(), maps node to rewritten form. */
   std::unordered_map<Node, Node> d_cache;
+  /**
+   * Cache nodes rewritten during eval(), maps node to rewritten form.
+   * @note We need a separate cache from the rewriter cache for eval() to be
+   *       able to evaluate nodes even when rewriting is disabled.
+   */
+  std::unordered_map<Node, Node> d_eval_cache;
 #ifndef NDEBUG
   /** Cache for detecting rewrite cycles in debug mode. */
   std::unordered_set<Node> d_rec_cache;

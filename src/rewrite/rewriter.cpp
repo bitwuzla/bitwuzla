@@ -150,13 +150,12 @@ Node
 Rewriter::eval(const Node& node)
 {
   node::node_ref_vector visit{node};
-  // We need a separate cache from the rewriter cache to be able to evaluate
-  // nodes even when rewriting is disabled.
-  std::unordered_map<Node, Node> cache;
+  // We use d_eval_cache, a separate cache from the rewriter cache to be able
+  // to evaluate nodes even when rewriting is disabled.
   do
   {
     const Node& cur     = visit.back();
-    auto [it, inserted] = cache.emplace(cur, Node());
+    auto [it, inserted] = d_eval_cache.emplace(cur, Node());
     if (inserted)
     {
       visit.insert(visit.end(), cur.begin(), cur.end());
@@ -166,7 +165,7 @@ Rewriter::eval(const Node& node)
     {
       if (cur.num_children())
       {
-        it->second = _eval(cache, node::utils::rebuild_node(nm(), cur, cache));
+        it->second = _eval(node::utils::rebuild_node(nm(), cur, d_eval_cache));
       }
       else
       {
@@ -175,8 +174,8 @@ Rewriter::eval(const Node& node)
     }
     visit.pop_back();
   } while (!visit.empty());
-  assert(cache.find(node) != cache.end());
-  return cache.at(node);
+  assert(d_eval_cache.find(node) != d_eval_cache.end());
+  return d_eval_cache.at(node);
 }
 
 const Node&
@@ -562,9 +561,9 @@ Rewriter::_rewrite(const Node& node)
 }
 
 const Node&
-Rewriter::_eval(std::unordered_map<Node, Node>& cache, const Node& node)
+Rewriter::_eval(const Node& node)
 {
-  auto [it, inserted] = cache.emplace(node, Node());
+  auto [it, inserted] = d_eval_cache.emplace(node, Node());
   if (!inserted && !it->second.is_null())
   {
     return it->second;
@@ -956,11 +955,11 @@ Rewriter::_eval(std::unordered_map<Node, Node>& cache, const Node& node)
 
   assert(!res.is_null());
   assert(res.type() == node.type());
-  assert(it == cache.find(node));
-  assert(it != cache.end());
+  assert(it == d_eval_cache.find(node));
+  assert(it != d_eval_cache.end());
   if (it->second.is_null())
   {
-    // Cache result
+    // cache result
     it->second = res;
   }
   assert(it->second == res);
