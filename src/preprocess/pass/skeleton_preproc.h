@@ -44,7 +44,7 @@ class ResetSkel : public backtrack::Backtrackable
 };
 
 /**
- * Preprocessing pass to perform rewriting on all assertions.
+ * Preprocessing pass to perform SAT preprocessing on the boolean skeleton.
  */
 class PassSkeletonPreproc : public PreprocessingPass
 {

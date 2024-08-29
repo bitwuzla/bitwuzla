@@ -19,7 +19,7 @@
 namespace bzla::preprocess::pass {
 
 /**
- * Preprocessing pass to substitute embedded constraints with true.
+ * Preprocessing pass to substitute contradicting bit-vector ands with zero.
  */
 class PassContradictingAnds : public PreprocessingPass
 {

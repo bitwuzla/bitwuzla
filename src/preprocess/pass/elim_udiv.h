@@ -17,7 +17,7 @@
 namespace bzla::preprocess::pass {
 
 /**
- * Preprocessing pass to flatten AND nodes.
+ * Preprocessing pass to eliminate bit-vector unsigned division.
  */
 class PassElimUdiv : public PreprocessingPass
 {

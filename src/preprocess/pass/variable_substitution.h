@@ -21,7 +21,8 @@
 namespace bzla::preprocess::pass {
 
 /**
- * Preprocessing pass to perform rewriting on all assertions.
+ * Preprocessing pass to perform term substitution based on top-level
+ * equalities.
  */
 class PassVariableSubstitution : public PreprocessingPass
 {

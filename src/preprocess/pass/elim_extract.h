@@ -19,7 +19,7 @@
 namespace bzla::preprocess::pass {
 
 /**
- * Preprocessing pass to eliminate applications on lambda nodes.
+ * Preprocessing pass to eliminate extracts on bit-vector constants.
  */
 class PassElimExtract : public PreprocessingPass
 {

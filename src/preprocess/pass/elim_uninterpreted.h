@@ -18,7 +18,7 @@
 namespace bzla::preprocess::pass {
 
 /**
- * Preprocessing pass to substitute embedded constraints with true.
+ * Preprocessing pass to eliminate terms of uninterpreted sort.
  */
 class PassElimUninterpreted : public PreprocessingPass
 {
