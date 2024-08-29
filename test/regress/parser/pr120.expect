@@ -1,0 +1,10 @@
+sat
+((f (lambda ((@bzla.var_12 Bool)) false)))
+(
+  (f (lambda ((@bzla.var_12 Bool)) false))
+  ((a (_ bv0 11) (_ bv0 11)) false)
+)
+(
+  ((a (_ bv0 11) (_ bv0 11)) false)
+  ((a (_ bv0 11) (_ bv0 11)) false)
+)
