@@ -1751,15 +1751,7 @@ Parser::parse_open_term_symbol()
         return error("undefined symbol '" + node->d_symbol + "'");
       }
       assert(!node->d_term.is_null());
-      if (!node->d_term.sort().is_fun())
-      {
-        if (d_work.size() && d_work.back().d_token == Token::LPAR)
-        {
-          return error("unexpected function application, '" + node->d_symbol
-                       + "' is not a function");
-        }
-      }
-      else
+      if (idx_open() == d_work.size())
       {
         push_item(Token::FUN_APP, d_lexer->coo());
       }
@@ -3389,7 +3381,9 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
       assert(!args[0].is_null());
       if (!args[0].sort().is_fun())
       {
-        return error("expected fun", arg_coo(idx));
+        return error("unexpected function application, '" + args[0].str()
+                         + "' is not a function",
+                     arg_coo(idx));
       }
       size_t arity = args[0].sort().fun_arity();
       if (n_args - 1 != arity)
