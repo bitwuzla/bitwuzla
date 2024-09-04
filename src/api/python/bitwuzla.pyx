@@ -1494,7 +1494,8 @@ cdef class Parser:
                  tm: TermManager,
                  options: Options,
                  language = "smt2",
-                 uint8_t base = 2):
+                 uint8_t base = 2,
+                 auto_print_model = False):
         """Constructor.
 
            :note: The parser creates and owns the associated Bitwuzla instance.
@@ -1516,7 +1517,8 @@ cdef class Parser:
                     dereference(tm.c_tm.get()),
                     options.c_options,
                     <const string&> str(language).encode(),
-                    &bitwuzla_api.cout))
+                    &bitwuzla_api.cout,
+                    auto_print_model))
 
     def parse(self,
               iinput,

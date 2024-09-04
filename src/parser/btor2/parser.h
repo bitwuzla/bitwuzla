@@ -22,13 +22,17 @@ class Parser : public bzla::parser::Parser
  public:
   /**
    * Constructor.
-   * @param options     The associated Bitwuzla options. Parser creates
-   *                    Bitwuzla instance from these options.
-   * @param out         The output stream.
+   * @param options          The associated Bitwuzla options. Parser creates
+   *                         Bitwuzla instance from these options.
+   * @param out              The output stream.
+   * @param auto_print_model True to automatically print the model after every
+   *                         sat query. Must be enabled to print models for
+   *                         BTOR2 input.
    */
   Parser(bitwuzla::TermManager& tm,
          bitwuzla::Options& options,
-         std::ostream* out = &std::cout);
+         std::ostream* out     = &std::cout,
+         bool auto_print_model = false);
   /** Destructor. */
   ~Parser();
 

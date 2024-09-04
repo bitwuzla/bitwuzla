@@ -2,6 +2,15 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- New command-line option `--print-model`. This enables auto-printing of models
+  after a satisfiable query. Must be enabled to print models for BTOR2 input
+  (automatically enables `-m`). Command line option `-m`, `--produce-models`
+  alone now does not print models for BTOR2 input anymore.
+
+- Parser API: Constructor functions for the parser now allow configuration
+  of `auto_print_model`, which corresponds to the command-line option
+  `--print-model` above.
+
 - Quantification over array variables now supported.
 
 - Added new abstraction module for abstracting bit-vector arithmetic operators.

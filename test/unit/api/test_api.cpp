@@ -3164,6 +3164,7 @@ TEST_F(TestApi, parser_smt2)
   smt2 << "(set-logic QF_BV)" << std::endl;
   smt2 << "(check-sat)" << std::endl;
   smt2 << "(exit)" << std::endl << std::flush;
+  smt2.close();
   bitwuzla::Options options;
 
   ASSERT_THROW(bitwuzla::parser::Parser(d_tm, options, "foo"),
@@ -3330,6 +3331,75 @@ TEST_F(TestApi, parser_smt2_string_sort)
   ASSERT_EQ(parser.get_declared_funs(), std::vector<bitwuzla::Term>{});
 }
 
+TEST_F(TestApi, parser_smt2_print_model_sat)
+{
+  const char* input = "parse.smt2";
+  std::ofstream smt2(input);
+  smt2 << "(declare-fun a () (_ BitVec 1))" << std::endl;
+  smt2 << "(declare-fun b () (_ BitVec 1))" << std::endl;
+  smt2 << "(declare-fun c () (_ BitVec 1))" << std::endl;
+  smt2 << "(declare-fun d () (_ BitVec 1))" << std::endl;
+  smt2 << "(assert (= b (ite (= (_ bv1 1) (bvand c b d a)) (_ bv0 1) (_ bv1 "
+          "1))))"
+       << std::endl;
+  smt2 << "(set-info :status sat)" << std::endl;
+  smt2 << "(check-sat)" << std::endl;
+  smt2.close();
+
+  bitwuzla::Options options;
+  {
+    // error, produce models not enabled
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    ASSERT_THROW(parser.parse(input), bitwuzla::parser::Exception);
+  }
+  options.set(bitwuzla::Option::PRODUCE_MODELS, true);
+  {
+    // parse only
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    parser.parse(input, true);
+  }
+  {
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    parser.parse(input);
+  }
+  std::remove(input);
+}
+
+TEST_F(TestApi, parser_smt2_print_model_unsat)
+{
+  const char* input = "parse.smt2";
+  std::ofstream smt2(input);
+  smt2 << "(set-info :status unsat)" << std::endl;
+  smt2 << "(set-logic QF_AUFBV)" << std::endl;
+  smt2 << "(declare-fun a () (Array (_ BitVec 32) (_ BitVec 8)))" << std::endl;
+  smt2 << "(declare-fun b () (Array (_ BitVec 32) (_ BitVec 8)))" << std::endl;
+  smt2 << "(declare-fun i () (_ BitVec 32))" << std::endl;
+  smt2 << "(declare-fun c () Bool)" << std::endl;
+  smt2 << "(assert (not (= (ite c (select a i) (select b i)) (select (ite c a "
+          "b) i))))"
+       << std::endl;
+  smt2 << "(check-sat)" << std::endl;
+  smt2.close();
+
+  bitwuzla::Options options;
+  {
+    // error, produce models not enabled
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    ASSERT_THROW(parser.parse(input), bitwuzla::parser::Exception);
+  }
+  options.set(bitwuzla::Option::PRODUCE_MODELS, true);
+  {
+    // parse only
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    parser.parse(input, true);
+  }
+  {
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    parser.parse(input);
+  }
+  std::remove(input);
+}
+
 TEST_F(TestApi, parser_btor2)
 {
   const char* input = "parse.btor2";
@@ -3343,6 +3413,7 @@ TEST_F(TestApi, parser_btor2)
   btor2 << "7 sort bitvec 1" << std::endl;
   btor2 << "8 slice 7 6 7 7" << std::endl;
   btor2 << "9 constraint 8" << std::endl << std::flush;
+  btor2.close();
 
   bitwuzla::Options options;
 
@@ -3545,6 +3616,41 @@ TEST_F(TestApi, parser_btor2_string_sort)
             d_tm.mk_array_sort(bv1, bv1));
   ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>{});
   ASSERT_EQ(parser.get_declared_funs(), std::vector<bitwuzla::Term>{});
+}
+
+TEST_F(TestApi, parser_btor2_print_model_sat)
+{
+  const char* input = "parse.btor2";
+  std::ofstream btor2(input);
+  btor2 << "1 sort bitvec 32" << std::endl;
+  btor2 << "2 input 1 x" << std::endl;
+  btor2 << "3 input 1 y" << std::endl;
+  btor2 << "4 add 1 -2 -3" << std::endl;
+  btor2 << "5 add 1 2 4" << std::endl;
+  btor2 << "6 add 1 3 5" << std::endl;
+  btor2 << "7 const 1 11111111111111111111111111111110" << std::endl;
+  btor2 << "8 sort bitvec 1" << std::endl;
+  btor2 << "9 eq 8 6 7" << std::endl;
+  btor2 << "10 constraint 9" << std::endl;
+  btor2.close();
+
+  bitwuzla::Options options;
+  {
+    // error, produce models not enabled
+    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &std::cout, true);
+    ASSERT_THROW(parser.parse(input), bitwuzla::parser::Exception);
+  }
+  options.set(bitwuzla::Option::PRODUCE_MODELS, true);
+  {
+    // parse only
+    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &std::cout, true);
+    parser.parse(input, true);
+  }
+  {
+    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &std::cout, true);
+    parser.parse(input);
+  }
+  std::remove(input);
 }
 
 /* -------------------------------------------------------------------------- */

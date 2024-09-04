@@ -35,6 +35,11 @@ typedef struct BitwuzlaParser BitwuzlaParser;
  *                     values.
  * @param outfile_name The output file name. If name is '\<stdout\>', the parser
  *                     writes to stdout.
+ * @param auto_print_model True to automatically print the model after every
+ *                         sat query. Must be enabled to print models for
+ *                         BTOR2 input. False (default) configures the
+ *                         standard behavior for SMT-LIB2 input (print model
+ *                         only after a `(get-model)` command).
  * @return A pointer to the created Bitwuzla parser instance.
  *
  * @see
@@ -44,7 +49,8 @@ BitwuzlaParser* bitwuzla_parser_new(BitwuzlaTermManager* tm,
                                     BitwuzlaOptions* options,
                                     const char* language,
                                     uint8_t base,
-                                    const char* outfile_name);
+                                    const char* outfile_name,
+                                    bool auto_print_model);
 
 /**
  * Delete a Bitwuzla parser instance.

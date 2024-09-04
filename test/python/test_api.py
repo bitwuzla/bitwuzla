@@ -2067,6 +2067,53 @@ def test_parser_smt2_string_sort(tm):
     assert decl_sorts[0].uninterpreted_symbol() == "m"
     assert parser.get_declared_funs() == []
 
+def test_parser_smt2_print_model_sat(tm):
+    filename = "parse.smt2"
+    with open(filename, 'w') as smt2:
+        smt2.write('(declare-fun a () (_ BitVec 1))\n')
+        smt2.write('(declare-fun b () (_ BitVec 1))\n')
+        smt2.write('(declare-fun c () (_ BitVec 1))\n')
+        smt2.write('(declare-fun d () (_ BitVec 1))\n')
+        smt2.write('(assert (= b (ite (= (_ bv1 1) (bvand c b d a)) (_ bv0 1)')
+        smt2.write('(_ bv1 1))))\n(set-info :status sat)\n(check-sat)\n')
+    options = Options()
+    # error, produce models not enabled
+    with pytest.raises(BitwuzlaException):
+        parser = Parser(tm, options, "smt2", 2, True)
+        parser.parse(filename, True)
+    options.set(Option.PRODUCE_MODELS, True)
+    # parse only
+    parser = Parser(tm, options, "smt2", 2, True)
+    parser.parse(filename, True)
+    # parse and execute
+    parser = Parser(tm, options, "smt2", 2, True)
+    parser.parse(filename)
+    os.remove(filename)
+
+def test_parser_smt2_print_model_unsat(tm):
+    filename = "parse.smt2"
+    with open(filename, 'w') as smt2:
+        smt2.write('(declare-fun a () (_ BitVec 1))\n')
+        smt2.write('(declare-fun b () (_ BitVec 1))\n')
+        smt2.write('(declare-fun c () (_ BitVec 1))\n')
+        smt2.write('(declare-fun d () (_ BitVec 1))\n')
+        smt2.write('(assert (= b (ite (= (_ bv1 1) (bvand c b d a))\n')
+        smt2.write('(_ bv0 1) (_ bv1 1))))\n')
+        smt2.write('(check-sat)\n')
+    options = Options()
+    # error, produce models not enabled
+    with pytest.raises(BitwuzlaException):
+        parser = Parser(tm, options, "smt2", 2, True)
+        parser.parse(filename, True)
+    options.set(Option.PRODUCE_MODELS, True)
+    # parse only
+    parser = Parser(tm, options, "smt2", 2, True)
+    parser.parse(filename, True)
+    # parse and execute
+    parser = Parser(tm, options, "smt2", 2, True)
+    parser.parse(filename)
+    os.remove(filename)
+
 def test_parser_btor2(tm):
     iinput = "parse.btor2"
     with open(iinput, 'w') as btor2:
@@ -2179,6 +2226,33 @@ def test_parser_btor2_string_sort(tm):
     assert parser.parse_sort("3 sort array 1 1") == tm.mk_array_sort(bv1, bv1)
     assert parser.get_declared_sorts() == []
     assert parser.get_declared_funs() == []
+
+def test_parser_btor2_print_model_sat(tm):
+    filename = "parse.smt2"
+    with open(filename, 'w') as btor2:
+        btor2.write('1 sort bitvec 32\n')
+        btor2.write('2 input 1 x\n')
+        btor2.write('3 input 1 y\n')
+        btor2.write('4 add 1 -2 -3\n')
+        btor2.write('5 add 1 2 4\n')
+        btor2.write('6 add 1 3 5\n')
+        btor2.write('7 const 1 11111111111111111111111111111110\n')
+        btor2.write('8 sort bitvec 1\n')
+        btor2.write('9 eq 8 6 7\n')
+        btor2.write('10 constraint 9\n')
+    options = Options()
+    # error, produce models not enabled
+    with pytest.raises(BitwuzlaException):
+        parser = Parser(tm, options, "btor2", 2, True)
+        parser.parse(filename, False)
+    options.set(Option.PRODUCE_MODELS, True)
+    # parse only
+    parser = Parser(tm, options, "btor2", 2, True)
+    parser.parse(filename, True)
+    # parse and execute
+    parser = Parser(tm, options, "btor2", 2, True)
+    parser.parse(filename)
+    os.remove(filename)
 
 # ----------------------------------------------------------------------------
 # Termination function

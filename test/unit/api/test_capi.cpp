@@ -3238,14 +3238,16 @@ TEST_F(TestCApi, parser_smt2)
 
   const char *error_msg;
   BitwuzlaOptions *options = bitwuzla_options_new();
-  ASSERT_DEATH(bitwuzla_parser_new(d_tm, nullptr, "smt2", 2, "<stdout>"),
+  ASSERT_DEATH(bitwuzla_parser_new(d_tm, nullptr, "smt2", 2, "<stdout>", false),
                d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parser_new(d_tm, options, nullptr, 2, "<stdout>"),
-               d_error_not_null);
-  ASSERT_DEATH(bitwuzla_parser_new(d_tm, options, "smt2", 12, "<stdout>"),
-               "invalid bit-vector output number format");
+  ASSERT_DEATH(
+      bitwuzla_parser_new(d_tm, options, nullptr, 2, "<stdout>", false),
+      d_error_not_null);
+  ASSERT_DEATH(
+      bitwuzla_parser_new(d_tm, options, "smt2", 12, "<stdout>", false),
+      "invalid bit-vector output number format");
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
+      bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>", false);
   ASSERT_DEATH(bitwuzla_parser_get_bitwuzla(parser), "not yet initialized");
   ASSERT_DEATH(bitwuzla_parser_parse(nullptr, filename, true, true, &error_msg),
                d_error_not_null);
@@ -3278,7 +3280,7 @@ TEST_F(TestCApi, parser2_smt2)
   const char *error_msg;
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
+      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>", false);
   bitwuzla_parser_parse(parser, filename, true, true, &error_msg);
   ASSERT_NE(error_msg, nullptr);
   ASSERT_EQ(std::string(error_msg),
@@ -3307,7 +3309,7 @@ TEST_F(TestCApi, parser_string1_smt2)
   BitwuzlaOptions *options = bitwuzla_options_new();
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>", false);
     bitwuzla_parser_parse(parser, smt2.str().c_str(), true, true, &error_msg);
     ASSERT_NE(error_msg, nullptr);
     ASSERT_NE(std::string(error_msg).find("failed to open"), std::string::npos);
@@ -3322,7 +3324,7 @@ TEST_F(TestCApi, parser_string1_smt2)
   }
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>", false);
     bitwuzla_parser_parse(parser, smt2.str().c_str(), true, false, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
     size_t size;
@@ -3345,7 +3347,7 @@ TEST_F(TestCApi, parser_string2_smt2)
   const char *error_msg;
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
+      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>", false);
   bitwuzla_parser_parse(parser, str_decl.c_str(), true, false, &error_msg);
   ASSERT_EQ(error_msg, nullptr);
   bitwuzla_parser_parse(parser, str_true.c_str(), true, false, &error_msg);
@@ -3370,7 +3372,7 @@ TEST_F(TestCApi, parser_smt2_string_term)
 {
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
+      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>", false);
   const char *error_msg;
 
   ASSERT_DEATH(bitwuzla_parser_parse_term(nullptr, "true", &error_msg),
@@ -3435,7 +3437,7 @@ TEST_F(TestCApi, parser_smt2_string_sort)
 {
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
+      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>", false);
   const char *error_msg;
 
   ASSERT_DEATH(bitwuzla_parser_parse_sort(nullptr, "Bool", &error_msg),
@@ -3482,6 +3484,104 @@ TEST_F(TestCApi, parser_smt2_string_sort)
   bitwuzla_options_delete(options);
 }
 
+TEST_F(TestCApi, parser_smt2_print_model_sat)
+{
+  const char *filename = "parse.smt2";
+  std::ofstream smt2(filename);
+  smt2 << "(declare-fun a () (_ BitVec 1))\n";
+  smt2 << "(declare-fun b () (_ BitVec 1))\n";
+  smt2 << "(declare-fun c () (_ BitVec 1))\n";
+  smt2 << "(declare-fun d () (_ BitVec 1))\n";
+  smt2 << "(assert (= b (ite (= (_ bv1 1) (bvand c b d a)) (_ bv0 1) (_ bv1 "
+          "1))))\n";
+  smt2 << "(set-info :status sat)\n";
+  smt2 << "(check-sat)\n";
+  smt2.close();
+
+  const char *error_msg;
+  BitwuzlaOptions *options = bitwuzla_options_new();
+
+  {
+    // error, produce models not enabled
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>", true);
+    bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
+    ASSERT_NE(error_msg, nullptr);
+    ASSERT_EQ(std::string(error_msg),
+              std::string(bitwuzla_parser_get_error_msg(parser)));
+    std::cout << error_msg << std::endl;
+    ASSERT_NE(std::string(error_msg).find("model generation is not enabled"),
+              std::string::npos);
+    bitwuzla_parser_delete(parser);
+  }
+  bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, true);
+  {
+    // parse only
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>", true);
+    bitwuzla_parser_parse(parser, filename, true, true, &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    bitwuzla_parser_delete(parser);
+  }
+  {
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>", true);
+    bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    bitwuzla_parser_delete(parser);
+  }
+  bitwuzla_options_delete(options);
+  std::remove(filename);
+}
+
+TEST_F(TestCApi, parser_smt2_print_model_unsat)
+{
+  const char *filename = "parse.smt2";
+  std::ofstream smt2(filename);
+  smt2 << "(set-info :status unsat)\n";
+  smt2 << "(set-logic QF_AUFBV)\n";
+  smt2 << "(declare-fun a () (Array (_ BitVec 32) (_ BitVec 8)))\n";
+  smt2 << "(declare-fun b () (Array (_ BitVec 32) (_ BitVec 8)))\n";
+  smt2 << "(declare-fun i () (_ BitVec 32))\n";
+  smt2 << "(declare-fun c () Bool)\n";
+  smt2 << "(assert (not (= (ite c (select a i) (select b i)) (select (ite c a "
+          "b) i))))\n";
+  smt2 << "(check-sat)\n";
+  smt2.close();
+
+  const char *error_msg;
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  {
+    // error, produce models not enabled
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>", true);
+    bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
+    ASSERT_NE(error_msg, nullptr);
+    ASSERT_EQ(std::string(error_msg),
+              std::string(bitwuzla_parser_get_error_msg(parser)));
+    ASSERT_NE(std::string(error_msg).find("model generation is not enabled"),
+              std::string::npos);
+    bitwuzla_parser_delete(parser);
+  }
+  bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, true);
+  {
+    // parse only
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>", false);
+    bitwuzla_parser_parse(parser, filename, true, true, &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    bitwuzla_parser_delete(parser);
+  }
+  {
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>", false);
+    bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    bitwuzla_parser_delete(parser);
+  }
+  bitwuzla_options_delete(options);
+  std::remove(filename);
+}
 TEST_F(TestCApi, parser_btor2)
 {
   const char *input = "parse.btor2";
@@ -3500,11 +3600,11 @@ TEST_F(TestCApi, parser_btor2)
 
   BitwuzlaOptions *options = bitwuzla_options_new();
 
-  ASSERT_DEATH(bitwuzla_parser_new(d_tm, options, "btor2", 10, nullptr),
+  ASSERT_DEATH(bitwuzla_parser_new(d_tm, options, "btor2", 10, nullptr, false),
                d_error_not_null);
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>", false);
     bitwuzla_parser_get_bitwuzla(parser);
     auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
     ASSERT_EQ(size, 0);
@@ -3516,7 +3616,7 @@ TEST_F(TestCApi, parser_btor2)
   }
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>", false);
     bitwuzla_parser_parse(parser, "parsex.btor2", true, true, &error_msg);
     ASSERT_NE(std::string(error_msg).find("failed to open 'parsex.btor2'"),
               std::string::npos);
@@ -3534,7 +3634,7 @@ TEST_F(TestCApi, parser_btor2)
   }
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>", false);
     bitwuzla_parser_parse(parser, input, true, true, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla_parser_get_bitwuzla(parser)),
@@ -3569,7 +3669,7 @@ TEST_F(TestCApi, parser_btor2_string1)
   BitwuzlaOptions *options = bitwuzla_options_new();
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>", false);
     bitwuzla_parser_parse(parser, btor2.str().c_str(), true, true, &error_msg);
     ASSERT_NE(error_msg, nullptr);
     ASSERT_NE(std::string(error_msg).find("failed to open"), std::string::npos);
@@ -3583,7 +3683,7 @@ TEST_F(TestCApi, parser_btor2_string1)
   }
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>", false);
     bitwuzla_parser_parse(parser, btor2.str().c_str(), true, false, &error_msg);
     auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
     ASSERT_EQ(size, 0);
@@ -3652,7 +3752,7 @@ TEST_F(TestCApi, parser_btor2_string2)
   BitwuzlaOptions *options = bitwuzla_options_new();
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>", false);
     bitwuzla_parser_parse(parser, decl_sorts.c_str(), true, false, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
     bitwuzla_parser_parse(parser, decl_inputs.c_str(), true, false, &error_msg);
@@ -3689,7 +3789,7 @@ TEST_F(TestCApi, parser_btor2_string2)
   }
   {
     BitwuzlaParser *parser =
-        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
+        bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>", false);
     bitwuzla_parser_parse(parser, decl_sorts.c_str(), true, false, &error_msg);
     bitwuzla_parser_parse(parser, "3 input 2 @arr3", true, false, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
@@ -3710,7 +3810,7 @@ TEST_F(TestCApi, parser_btor2_string_term)
 {
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
+      bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>", false);
 
   const char *error_msg;
   bitwuzla_parser_parse(parser, "1 sort bitvec 1", true, false, &error_msg);
@@ -3766,7 +3866,7 @@ TEST_F(TestCApi, parser_btor2_string_sort)
 {
   BitwuzlaOptions *options = bitwuzla_options_new();
   BitwuzlaParser *parser =
-      bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
+      bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>", false);
   const char *error_msg;
   BitwuzlaSort bv1 =
       bitwuzla_parser_parse_sort(parser, "1 sort bitvec 1", &error_msg);
@@ -3787,6 +3887,56 @@ TEST_F(TestCApi, parser_btor2_string_sort)
   ASSERT_EQ(decl_funs, nullptr);
   bitwuzla_parser_delete(parser);
   bitwuzla_options_delete(options);
+}
+
+TEST_F(TestCApi, parser_btor2_print_model_sat)
+{
+  const char *filename = "parse.btor2";
+  std::ofstream btor2(filename);
+  btor2 << "1 sort bitvec 32\n";
+  btor2 << "2 input 1 x\n";
+  btor2 << "3 input 1 y\n";
+  btor2 << "4 add 1 -2 -3\n";
+  btor2 << "5 add 1 2 4\n";
+  btor2 << "6 add 1 3 5\n";
+  btor2 << "7 const 1 11111111111111111111111111111110\n";
+  btor2 << "8 sort bitvec 1\n";
+  btor2 << "9 eq 8 6 7\n";
+  btor2 << "10 constraint 9\n";
+  btor2.close();
+
+  const char *error_msg;
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  {
+    // error, produce models not enabled
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, options, "btor2", 2, "<stdout>", true);
+    bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
+    ASSERT_NE(error_msg, nullptr);
+    ASSERT_EQ(std::string(error_msg),
+              std::string(bitwuzla_parser_get_error_msg(parser)));
+    ASSERT_NE(std::string(error_msg).find("model generation is not enabled"),
+              std::string::npos);
+    bitwuzla_parser_delete(parser);
+  }
+  bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, true);
+  {
+    // parse only
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, options, "btor2", 2, "<stdout>", true);
+    bitwuzla_parser_parse(parser, filename, true, true, &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    bitwuzla_parser_delete(parser);
+  }
+  {
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, options, "btor2", 2, "<stdout>", true);
+    bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    bitwuzla_parser_delete(parser);
+  }
+  bitwuzla_options_delete(options);
+  std::remove(filename);
 }
 
 /* -------------------------------------------------------------------------- */

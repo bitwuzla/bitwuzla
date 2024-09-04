@@ -27,23 +27,30 @@ class Parser
  public:
   /**
    * Constructor.
-   * @param options     The associated Bitwuzla options. Parser creates
-   *                    Bitwuzla instance from these options.
-   * @param out         The output stream.
+   * @param options          The associated Bitwuzla options. Parser creates
+   *                         Bitwuzla instance from these options.
+   * @param out              The output stream.
+   * @param auto_print_model True to automatically print the model after every
+   *                         sat query. Must be enabled to print models for
+   *                         BTOR2 input. False (default) configures the
+   *                         standard behavior for SMT-LIB2 input (print model
+   *                         only after a `(get-model)` command).
    * @note It is not safe to reuse a parser instance after a parse error.
    *       Subsequent parse queries after a parse error will return with
    *       an error.
    */
   Parser(bitwuzla::TermManager& tm,
          bitwuzla::Options& options,
-         std::ostream* out = &std::cout)
+         std::ostream* out     = &std::cout,
+         bool auto_print_model = false)
       : d_options_orig(options),
         d_options(options),
         d_tm(tm),
         d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
         d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
         d_logger(d_log_level, d_verbosity),
-        d_out(out)
+        d_out(out),
+        d_auto_print_model(auto_print_model)
   {
   }
 
@@ -171,6 +178,13 @@ class Parser
   bitwuzla::Result d_status = bitwuzla::Result::UNKNOWN;
   /** The result of the last check-sat call. */
   bitwuzla::Result d_result = bitwuzla::Result::UNKNOWN;
+
+  /**
+   * True to automatically print the model after every sat query.
+   * False (default) only prints the model after a `(get-model)` command for
+   * SMT-LIB2 input, and does not print the model for BTOR2 input.
+   */
+  bool d_auto_print_model = false;
 
   /** True if parser is done parsing. */
   bool d_done = false;

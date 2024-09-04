@@ -19,8 +19,9 @@ namespace parser::btor2 {
 
 Parser::Parser(bitwuzla::TermManager& tm,
                bitwuzla::Options& options,
-               std::ostream* out)
-    : bzla::parser::Parser(tm, options, out)
+               std::ostream* out,
+               bool auto_print_model)
+    : bzla::parser::Parser(tm, options, out, auto_print_model)
 {
   if (d_error.empty())
   {
@@ -110,10 +111,12 @@ Parser::parse(const std::string& infile_name,
         // If no safety properties checked, do one check-sat call.
         bitwuzla::Result res = d_bitwuzla->check_sat();
         std::cout << res << std::endl;
-        if (d_options.get(bitwuzla::Option::PRODUCE_MODELS)
-            && res == bitwuzla::Result::SAT)
+        if (d_auto_print_model && res == bitwuzla::Result::SAT)
         {
-          print_model();
+          if (!print_model())
+          {
+            return false;
+          }
         }
       }
       else
@@ -131,9 +134,12 @@ Parser::parse(const std::string& infile_name,
           if (res == bitwuzla::Result::SAT)
           {
             (*d_out) << " satisfiable." << std::endl;
-            if (d_options.get(bitwuzla::Option::PRODUCE_MODELS))
+            if (d_auto_print_model)
             {
-              print_model();
+              if (!print_model())
+              {
+                return false;
+              }
             }
           }
           else if (res == bitwuzla::Result::UNSAT)

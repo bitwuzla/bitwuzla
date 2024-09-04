@@ -52,6 +52,11 @@ class Parser
    *                    (created by the parser).
    * @param language    The format of the input.
    * @param out         The output stream.
+   * @param auto_print_model True to automatically print the model after every
+   *                         sat query. Must be enabled to print models for
+   *                         BTOR2 input. False (default) configures the
+   *                         standard behavior for SMT-LIB2 input (print model
+   *                         only after a `(get-model)` command).
    * @note It is not safe to reuse a parser instance after a parse error.
    *       Subsequent parse queries after a parse error will return with
    *       an error.
@@ -59,7 +64,8 @@ class Parser
   Parser(TermManager &tm,
          Options &options,
          const std::string &language = "smt2",
-         std::ostream *out           = &std::cout);
+         std::ostream *out           = &std::cout,
+         bool auto_print_model       = false);
   /** Destructor. */
   ~Parser();
   /**

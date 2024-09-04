@@ -25,7 +25,7 @@ main()
   // Create parser instance.
   const char* infile_name = "../smt2/quickstart.smt2";
   BitwuzlaParser* parser =
-      bitwuzla_parser_new(tm, options, "smt2", 2, "<stdout>");
+      bitwuzla_parser_new(tm, options, "smt2", 2, "<stdout>", false);
 
   // Now parse the input file.
   const char* error_msg;

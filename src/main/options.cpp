@@ -144,6 +144,8 @@ print_help()
                     format_longb("print-unsat-core"),
                     "",
                     "print unsat core in smt2 format");
+  opts.emplace_back(
+      "", format_longb("print-model"), "", "print model in smt2 format");
   opts.emplace_back(format_shortb("P"),
                     format_longb("parse-only"),
                     format_dflt(std::to_string(dflt_opts.parse_only), true),
@@ -363,6 +365,10 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
     else if (arg == "--print-unsat-core")
     {
       opts.print_unsat_core = true;
+    }
+    else if (arg == "--print-model")
+    {
+      opts.print_model = true;
     }
     else if (arg == "-P" || arg == "--parse-only")
     {

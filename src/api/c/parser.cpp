@@ -26,7 +26,8 @@ struct BitwuzlaParser
                  BitwuzlaOptions* options,
                  const char* language,
                  uint8_t base,
-                 const char* outfile_name)
+                 const char* outfile_name,
+                 bool auto_print_model)
       : d_tm(tm)
   {
     std::ofstream outfile;
@@ -38,7 +39,7 @@ struct BitwuzlaParser
     }
     (*out) << bitwuzla::set_bv_format(base);
     d_parser.reset(new bitwuzla::parser::Parser(
-        tm->d_tm, options->d_options, language, out));
+        tm->d_tm, options->d_options, language, out, auto_print_model));
   }
   /** The associated bitwuzla instance. */
   std::unique_ptr<bitwuzla::parser::Parser> d_parser;
@@ -54,14 +55,16 @@ bitwuzla_parser_new(BitwuzlaTermManager* tm,
                     BitwuzlaOptions* options,
                     const char* language,
                     uint8_t base,
-                    const char* outfile_name)
+                    const char* outfile_name,
+                    bool auto_print_model)
 {
   BitwuzlaParser* res = nullptr;
   BITWUZLA_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_NOT_NULL(language);
   BITWUZLA_CHECK_NOT_NULL(outfile_name);
-  res = new BitwuzlaParser(tm, options, language, base, outfile_name);
+  res = new BitwuzlaParser(
+      tm, options, language, base, outfile_name, auto_print_model);
   BITWUZLA_TRY_CATCH_END;
   return res;
 }
