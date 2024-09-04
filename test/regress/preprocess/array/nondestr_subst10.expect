@@ -1,0 +1,6 @@
+unsat
+sat
+(
+  (define-fun |UNROLL#6240| () (Array (_ BitVec 5) (_ BitVec 32)) ((as const (Array (_ BitVec 5) (_ BitVec 32))) #b00000000000000000000000000000000))
+  (define-fun |UNROLL#6798| () (Array (_ BitVec 5) (_ BitVec 32)) ((as const (Array (_ BitVec 5) (_ BitVec 32))) #b00000000000000000000000000000000))
+)

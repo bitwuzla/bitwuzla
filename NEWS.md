@@ -2,18 +2,23 @@
 
 This file collects a summary of important and/or user-visible changes.
 
-- New command-line option `--print-model`. This enables auto-printing of models
-  after a satisfiable query. Must be enabled to print models for BTOR2 input
-  (automatically enables `-m`). Command line option `-m`, `--produce-models`
-  alone now does not print models for BTOR2 input anymore.
+- Added new **command-line option** `--print-model`. This enables auto-printing
+  of models after a satisfiable query. Must be enabled to print models for
+  BTOR2 input (automatically enables `-m`). Command line option `-m`,
+  `--produce-models` alone now does not print models for BTOR2 input anymore.
 
-- Parser API: Constructor functions for the parser now allow configuration
-  of `auto_print_model`, which corresponds to the command-line option
-  `--print-model` above.
+- Parser now allows to configure auto-printing of models (corresponding to
+  command-line option `--print-model` above) via:
+  - C++ API: `Parser::configure_auto_print_model(bool)`
+  - C API: `bitwuzla_parser_configure_auto_print_model(BitwuzlaParser*,bool)`
+  - Python API: `Parser.configure_auto_print_model(bool)`
 
-- Quantification over array variables now supported.
+- **Quantification over array variables** now supported.
 
-- Added new abstraction module for abstracting bit-vector arithmetic operators.
+- Added new **abstraction module** for abstracting bit-vector arithmetic
+  operators, see [Aina Niemetz, Mathias Preiner and Yoni Zohar. Scalable
+  Bit-Blasting with Abstractions. CAV 2024, Springer, 2024.](
+  https://doi.org/10.1007/978-3-031-65627-9_9).
 
 ## News for version 0.5.0
 
@@ -268,8 +273,9 @@ Various fixes.
 
 Bitwuzla release 0.1.0 is a complete from-scratch rewrite in C++.
 
-A comprehensive system description will be presented at CAV 2023:  
-Aina Niemetz and Mathias Preiner. Bitwuzla. CAV 2023, Springer, 2023.
+A comprehensive **system description** was presented at CAV 2023:  
+[Aina Niemetz and Mathias Preiner. Bitwuzla. CAV 2023, Springer, 2023.](
+ https://doi.org/10.1007/978-3-031-37703-7_1)
 
 Bitwuzla now provides a C++ API as its main API, with a Python and C API
 based on top of it. Compared to commit

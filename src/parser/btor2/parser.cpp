@@ -19,9 +19,8 @@ namespace parser::btor2 {
 
 Parser::Parser(bitwuzla::TermManager& tm,
                bitwuzla::Options& options,
-               std::ostream* out,
-               bool auto_print_model)
-    : bzla::parser::Parser(tm, options, out, auto_print_model)
+               std::ostream* out)
+    : bzla::parser::Parser(tm, options, out)
 {
   if (d_error.empty())
   {

@@ -3349,17 +3349,20 @@ TEST_F(TestApi, parser_smt2_print_model_sat)
   bitwuzla::Options options;
   {
     // error, produce models not enabled
-    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout);
+    parser.configure_auto_print_model(true);
     ASSERT_THROW(parser.parse(input), bitwuzla::parser::Exception);
   }
   options.set(bitwuzla::Option::PRODUCE_MODELS, true);
   {
     // parse only
-    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout);
+    parser.configure_auto_print_model(true);
     parser.parse(input, true);
   }
   {
-    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout);
+    parser.configure_auto_print_model(true);
     parser.parse(input);
   }
   std::remove(input);
@@ -3384,17 +3387,20 @@ TEST_F(TestApi, parser_smt2_print_model_unsat)
   bitwuzla::Options options;
   {
     // error, produce models not enabled
-    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout);
+    parser.configure_auto_print_model(true);
     ASSERT_THROW(parser.parse(input), bitwuzla::parser::Exception);
   }
   options.set(bitwuzla::Option::PRODUCE_MODELS, true);
   {
     // parse only
-    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout);
+    parser.configure_auto_print_model(true);
     parser.parse(input, true);
   }
   {
-    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout, true);
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout);
+    parser.configure_auto_print_model(true);
     parser.parse(input);
   }
   std::remove(input);
@@ -3637,17 +3643,20 @@ TEST_F(TestApi, parser_btor2_print_model_sat)
   bitwuzla::Options options;
   {
     // error, produce models not enabled
-    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &std::cout, true);
+    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &std::cout);
+    parser.configure_auto_print_model(true);
     ASSERT_THROW(parser.parse(input), bitwuzla::parser::Exception);
   }
   options.set(bitwuzla::Option::PRODUCE_MODELS, true);
   {
     // parse only
-    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &std::cout, true);
+    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &std::cout);
+    parser.configure_auto_print_model(true);
     parser.parse(input, true);
   }
   {
-    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &std::cout, true);
+    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &std::cout);
+    parser.configure_auto_print_model(true);
     parser.parse(input);
   }
   std::remove(input);

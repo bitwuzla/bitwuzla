@@ -1494,8 +1494,7 @@ cdef class Parser:
                  tm: TermManager,
                  options: Options,
                  language = "smt2",
-                 uint8_t base = 2,
-                 auto_print_model = False):
+                 uint8_t base = 2):
         """Constructor.
 
            :note: The parser creates and owns the associated Bitwuzla instance.
@@ -1517,8 +1516,22 @@ cdef class Parser:
                     dereference(tm.c_tm.get()),
                     options.c_options,
                     <const string&> str(language).encode(),
-                    &bitwuzla_api.cout,
-                    auto_print_model))
+                    &bitwuzla_api.cout))
+
+    def configure_auto_print_model(self, value: bool):
+        """Enable or disable the automatic printing of the model after each
+           satisfiable query.
+
+           Enable to automatically print the model after every sat query.
+           Must be enabled to automatically print models for BTOR2 input (does
+           not provide a command to print the model like `(get-model)` in
+           SMT-LIB2). False (default) configures the standard behavior for
+           SMT-LIB2 input (print model only after a `(get-model)` command).
+
+           :note: By default, auto printing of the model is disabled.
+           :param value: True to enable auto printing of the model.
+        """
+        self.c_parser.get().configure_auto_print_model(value)
 
     def parse(self,
               iinput,

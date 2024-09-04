@@ -24,18 +24,13 @@ class Parser : public bzla::parser::Parser
  public:
   /**
    * Constructor.
-   * @param options          The associated Bitwuzla options. Parser creates
-   *                         Bitwuzla instance from these options.
-   * @param out              The output stream.
-   * @param auto_print_model True to automatically print the model after every
-   *                         sat query. False (default) configures the standard
-   *                         behavior for SMT-LIB2 input (print model only after
-   *                         a `(get-model)` command).
+   * @param options  The associated Bitwuzla options. Parser creates Bitwuzla
+   *                 instance from these options.
+   * @param out      The output stream.
    */
   Parser(bitwuzla::TermManager& tm,
          bitwuzla::Options& options,
-         std::ostream* out     = &std::cout,
-         bool auto_print_model = false);
+         std::ostream* out = &std::cout);
   /** Destructor. */
   ~Parser();
 
@@ -860,14 +855,6 @@ class Parser : public bzla::parser::Parser
 
   /** The set of currently active assumptions. */
   std::unordered_map<bitwuzla::Term, std::string> d_assumptions;
-
-  /**
-   * Flag to indicate if model has been printed after check-sat call.
-   * This is mainly needed to keep track if model needs printing when
-   * model generation was enabled via CLI and no get-model commands occur
-   * in the input.
-   */
-  bool d_printed_model = false;
 
   /** Parse statistics. */
   struct Statistics

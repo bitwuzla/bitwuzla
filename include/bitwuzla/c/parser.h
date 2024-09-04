@@ -35,11 +35,6 @@ typedef struct BitwuzlaParser BitwuzlaParser;
  *                     values.
  * @param outfile_name The output file name. If name is '\<stdout\>', the parser
  *                     writes to stdout.
- * @param auto_print_model True to automatically print the model after every
- *                         sat query. Must be enabled to print models for
- *                         BTOR2 input. False (default) configures the
- *                         standard behavior for SMT-LIB2 input (print model
- *                         only after a `(get-model)` command).
  * @return A pointer to the created Bitwuzla parser instance.
  *
  * @see
@@ -49,8 +44,7 @@ BitwuzlaParser* bitwuzla_parser_new(BitwuzlaTermManager* tm,
                                     BitwuzlaOptions* options,
                                     const char* language,
                                     uint8_t base,
-                                    const char* outfile_name,
-                                    bool auto_print_model);
+                                    const char* outfile_name);
 
 /**
  * Delete a Bitwuzla parser instance.
@@ -63,6 +57,24 @@ BitwuzlaParser* bitwuzla_parser_new(BitwuzlaTermManager* tm,
  *   * `bitwuzla_parser_new`
  */
 void bitwuzla_parser_delete(BitwuzlaParser* parser);
+
+/**
+ * Enable or disable the automatic printing of the model after each
+ * satisfiable query.
+ *
+ * Enable to automatically print the model after every sat query. Must be
+ * enabled to automatically print models for BTOR2 input (does not provide a
+ * command to print the model like `(get-model)` in SMT-LIB2). False (default)
+ * configures the standard behavior for SMT-LIB2 input (print model only after
+ * a `(get-model)` command).
+ *
+ * @note By default, auto printing of the model is disabled.
+ *
+ * @param parser     The Bitwuzla parser instance.
+ * @param value True to enable auto printing of the model.
+ */
+void bitwuzla_parser_configure_auto_print_model(BitwuzlaParser* parser,
+                                                bool value);
 
 /**
  * Parse input, either from a file or from a string.

@@ -2079,14 +2079,17 @@ def test_parser_smt2_print_model_sat(tm):
     options = Options()
     # error, produce models not enabled
     with pytest.raises(BitwuzlaException):
-        parser = Parser(tm, options, "smt2", 2, True)
-        parser.parse(filename, True)
+        parser = Parser(tm, options, "smt2", 2)
+        parser.configure_auto_print_model(True)
+        parser.parse(filename, False)
     options.set(Option.PRODUCE_MODELS, True)
     # parse only
-    parser = Parser(tm, options, "smt2", 2, True)
+    parser = Parser(tm, options, "smt2", 2)
+    parser.configure_auto_print_model(True)
     parser.parse(filename, True)
     # parse and execute
-    parser = Parser(tm, options, "smt2", 2, True)
+    parser = Parser(tm, options, "smt2", 2)
+    parser.configure_auto_print_model(True)
     parser.parse(filename)
     os.remove(filename)
 
@@ -2103,14 +2106,17 @@ def test_parser_smt2_print_model_unsat(tm):
     options = Options()
     # error, produce models not enabled
     with pytest.raises(BitwuzlaException):
-        parser = Parser(tm, options, "smt2", 2, True)
-        parser.parse(filename, True)
+        parser = Parser(tm, options, "smt2", 2)
+        parser.configure_auto_print_model(True)
+        parser.parse(filename, False)
     options.set(Option.PRODUCE_MODELS, True)
     # parse only
-    parser = Parser(tm, options, "smt2", 2, True)
+    parser = Parser(tm, options, "smt2", 2)
+    parser.configure_auto_print_model(True)
     parser.parse(filename, True)
     # parse and execute
-    parser = Parser(tm, options, "smt2", 2, True)
+    parser = Parser(tm, options, "smt2", 2)
+    parser.configure_auto_print_model(True)
     parser.parse(filename)
     os.remove(filename)
 
@@ -2243,14 +2249,17 @@ def test_parser_btor2_print_model_sat(tm):
     options = Options()
     # error, produce models not enabled
     with pytest.raises(BitwuzlaException):
-        parser = Parser(tm, options, "btor2", 2, True)
+        parser = Parser(tm, options, "btor2", 2)
+        parser.configure_auto_print_model(True)
         parser.parse(filename, False)
     options.set(Option.PRODUCE_MODELS, True)
     # parse only
-    parser = Parser(tm, options, "btor2", 2, True)
+    parser = Parser(tm, options, "btor2", 2)
+    parser.configure_auto_print_model(True)
     parser.parse(filename, True)
     # parse and execute
-    parser = Parser(tm, options, "btor2", 2, True)
+    parser = Parser(tm, options, "btor2", 2)
+    parser.configure_auto_print_model(True)
     parser.parse(filename)
     os.remove(filename)
 

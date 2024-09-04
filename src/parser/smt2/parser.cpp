@@ -20,9 +20,8 @@ namespace parser::smt2 {
 
 Parser::Parser(bitwuzla::TermManager& tm,
                bitwuzla::Options& options,
-               std::ostream* out,
-               bool auto_print_model)
-    : bzla::parser::Parser(tm, options, out, auto_print_model),
+               std::ostream* out)
+    : bzla::parser::Parser(tm, options, out),
       d_decl_funs(nullptr),
       d_decl_sorts(nullptr)
 {
@@ -400,7 +399,6 @@ Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
   d_out->flush();
   if (d_auto_print_model)
   {
-    d_printed_model = true;
     return print_model();
   }
   return true;
@@ -693,7 +691,7 @@ Parser::parse_command_get_model()
   {
     return false;
   }
-  if (!d_printed_model)
+  if (!d_auto_print_model)
   {
     return print_model();
   }

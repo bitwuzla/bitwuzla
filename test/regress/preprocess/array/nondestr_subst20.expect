@@ -1,0 +1,16 @@
+sat
+(
+  (define-fun v7 () Bool false)
+  (define-fun v19 () Bool true)
+  (define-fun v29 () Bool true)
+  (define-fun v57 () Bool false)
+  (define-fun v71 () Bool true)
+)
+sat
+(
+  (define-fun v7 () Bool false)
+  (define-fun v19 () Bool true)
+  (define-fun v29 () Bool true)
+  (define-fun v57 () Bool true)
+  (define-fun v71 () Bool true)
+)
