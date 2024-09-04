@@ -204,6 +204,12 @@ Parser::parse_sort(const std::string& input, bitwuzla::Sort& res)
 bool
 Parser::print_model()
 {
+  if (!d_options.get(bitwuzla::Option::PRODUCE_MODELS))
+  {
+    d_error = "model generation is not enabled";
+    return false;
+  }
+
   std::stringstream ss;
   for (const auto& [id, input] : d_inputs)
   {
