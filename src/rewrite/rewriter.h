@@ -289,10 +289,21 @@ class Rewriter
   std::unordered_map<Node, Node> d_cache;
   /**
    * Cache nodes rewritten during eval(), maps node to rewritten form.
-   * @note We need a separate cache from the rewriter cache for eval() to be
-   *       able to evaluate nodes even when rewriting is disabled.
+   * This points to the general rewriter cache (d_cache) if the rewrite level
+   * is greater 0, else to the separate eval cache d_eval_cache_aux.
+   * @note We only utlize d_eval_cache_aux for rwl = 0 in order to avoid
+   *       duplicate eval work (and duplicate nodes between the 2 caches) for
+   *       rwl >= 1.
    */
-  std::unordered_map<Node, Node> d_eval_cache;
+  std::unordered_map<Node, Node>& d_eval_cache;
+  /**
+   * The actual eval cache.
+   * This cache is only utilized if the rewrite level = 0 to avoid duplicate
+   * eval work (and duplicate nodes between the 2 caches) for rwl >= 1.
+   * @note We need a separate cache from the rewriter cache for eval() to be
+   *       able to evaluate nodes in case level 1 rewriting is disabled.
+   */
+  std::unordered_map<Node, Node> d_eval_cache_aux;
 #ifndef NDEBUG
   /** Cache for detecting rewrite cycles in debug mode. */
   std::unordered_set<Node> d_rec_cache;
