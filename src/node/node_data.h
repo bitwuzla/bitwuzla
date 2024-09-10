@@ -11,7 +11,6 @@
 #ifndef BZLA_NODE_NODE_DATA_H_INCLUDED
 #define BZLA_NODE_NODE_DATA_H_INCLUDED
 
-#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -216,6 +215,9 @@ class NodeData
   /** @return Associated node manager instance. */
   NodeManager* nm() { return d_nm; }
 
+  /** @return Node info flags. */
+  auto& info() { return d_info; }
+
  private:
   /** @return Children payload of this node. */
   PayloadChildren& payload_children()
@@ -289,6 +291,8 @@ class NodeData
   uint32_t d_refs = 0;
   /** Node kind. */
   Kind d_kind;
+  /** Node info flags. */
+  NodeInfo d_info;
 
   /**
    * Payload placeholder.

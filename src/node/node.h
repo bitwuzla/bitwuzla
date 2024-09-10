@@ -31,6 +31,26 @@ class FloatingPoint;
 namespace node {
 class NodeData;
 class NodeUniqueTable;
+
+/**
+ * Node info flags.
+ *
+ * Indicate whether a node with a given kind is below this node.
+ */
+struct NodeInfo
+{
+  uint8_t quantifier : 1;  // Is EXISTS/FORALL node below?
+  uint8_t lambda : 1;      // Is LAMBDA node below?
+
+  NodeInfo() : quantifier(0), lambda(0) {}
+
+  void set(const NodeInfo& info)
+  {
+    quantifier |= info.quantifier;
+    lambda |= info.lambda;
+  }
+};
+
 }  // namespace node
 
 /* --- Node ---------------------------------------------------------------- */
@@ -182,6 +202,11 @@ class Node
   /** @return Associated node manager instance. */
   NodeManager* nm();
   const NodeManager* nm() const;
+
+  const node::NodeData* payload() const { return d_data; }
+
+  /** @return Node info flags. */
+  const node::NodeInfo& node_info() const;
 
  private:
   Node(node::NodeData* data);

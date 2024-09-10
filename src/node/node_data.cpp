@@ -71,8 +71,18 @@ NodeData::alloc(Kind kind,
     {
       assert(!children[i].is_null());
       payload.d_children[i] = children[i];
+      data->d_info.set(children[i].node_info());
     }
     payload.d_num_children = children.size();
+
+    if (kind == Kind::FORALL || kind == Kind::EXISTS)
+    {
+      data->info().quantifier = 1;
+    }
+    else if (kind == Kind::LAMBDA)
+    {
+      data->info().lambda = 1;
+    }
   }
 
   // Connect indices payload

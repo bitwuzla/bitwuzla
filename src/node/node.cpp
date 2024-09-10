@@ -278,6 +278,12 @@ Node::nm() const
   return nullptr;
 }
 
+const node::NodeInfo&
+Node::node_info() const
+{
+  return d_data->info();
+}
+
 /* --- Node private -------------------------------------------------------- */
 
 Node::Node(node::NodeData* data) : d_data(data)
