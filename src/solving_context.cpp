@@ -34,11 +34,13 @@ SolvingContext::SolvingContext(NodeManager& nm,
       d_logger(d_env.logger()),
       d_assertions(&d_backtrack_mgr),
       d_original_assertions(&d_backtrack_mgr),
+      d_have_quantifiers(&d_backtrack_mgr),
       d_preprocessor(*this),
       d_solver_engine(*this),
       d_subsolver(subsolver),
       d_stats(d_env.statistics())
 {
+  d_have_quantifiers = false;
 }
 
 SolvingContext::~SolvingContext() {}
@@ -67,7 +69,7 @@ SolvingContext::solve()
     }
   }
 
-  if (d_sat_state == Result::SAT
+  if (d_sat_state == Result::SAT && d_have_quantifiers.get()
       && (options().produce_models() || options().dbg_check_model()))
   {
     ensure_model();
@@ -114,6 +116,10 @@ SolvingContext::assert_formula(const Node& formula)
   assert(formula.type().is_bool());
   if (d_assertions.push_back(formula))
   {
+    if (formula.node_info().quantifier)
+    {
+      d_have_quantifiers = true;
+    }
     d_original_assertions.push_back(formula);
   }
 }
@@ -300,6 +306,7 @@ SolvingContext::compute_formula_statistics(util::HistogramStatistic& stat)
 void
 SolvingContext::ensure_model()
 {
+  util::Timer timer(d_stats.time_ensure_model);
   std::unordered_set<Node> cache;
   std::vector<Node> visit, terms;
   bool need_check = false;
@@ -364,7 +371,9 @@ SolvingContext::set_resource_limits()
 
 SolvingContext::Statistics::Statistics(util::Statistics& stats)
     : time_solve(
-        stats.new_stat<util::TimerStatistic>("solving_context::time_solve")),
+          stats.new_stat<util::TimerStatistic>("solving_context::time_solve")),
+      time_ensure_model(stats.new_stat<util::TimerStatistic>(
+          "solving_context::time_ensure_model")),
       max_memory(stats.new_stat<uint64_t>("solving_context::max_memory")),
       formula_kinds_pre(
           stats.new_stat<util::HistogramStatistic>("formula::pre::node")),

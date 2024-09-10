@@ -106,6 +106,9 @@ class SolvingContext
   /** Original input assertions added via assert_formula(). */
   backtrack::vector<Node> d_original_assertions;
 
+  /** Do we have quantifiers in the current set of assertions? */
+  backtrack::object<bool> d_have_quantifiers;
+
   /** The solving context preprocessor. */
   preprocess::Preprocessor d_preprocessor;
 
@@ -125,6 +128,7 @@ class SolvingContext
   {
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_solve;
+    util::TimerStatistic& time_ensure_model;
     uint64_t& max_memory;
     util::HistogramStatistic& formula_kinds_pre;
     util::HistogramStatistic& formula_kinds_post;
