@@ -320,7 +320,9 @@ class Rewriter
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
     util::HistogramStatistic& rewrites;
+    util::HistogramStatistic& evals;
     uint64_t& num_rewrites;
+    uint64_t& num_evals;
   } d_stats;
 };
 

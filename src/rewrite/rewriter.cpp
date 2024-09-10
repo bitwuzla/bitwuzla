@@ -955,6 +955,8 @@ Rewriter::_eval(const Node& node)
 
     default: assert(false);
   }
+  d_stats.evals << kind;
+  ++d_stats.num_evals;
 
   assert(!res.is_null());
   assert(res.type() == node.type());
@@ -2333,7 +2335,9 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
 Rewriter::Statistics::Statistics(util::Statistics& stats,
                                  const std::string& prefix)
     : rewrites(stats.new_stat<util::HistogramStatistic>(prefix + "rewrite")),
-      num_rewrites(stats.new_stat<uint64_t>(prefix + "num_rewrites"))
+      evals(stats.new_stat<util::HistogramStatistic>(prefix + "eval")),
+      num_rewrites(stats.new_stat<uint64_t>(prefix + "num_rewrites")),
+      num_evals(stats.new_stat<uint64_t>(prefix + "num_evals"))
 {
 }
 
