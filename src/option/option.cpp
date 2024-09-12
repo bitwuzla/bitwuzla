@@ -123,6 +123,15 @@ Options::Options()
                           false,
                           "unsat core production",
                           "produce-unsat-cores"),
+      threads(this,
+              Option::THREADS,
+              1,
+              1,
+              UINT32_MAX,
+              "number of threads",
+              "threads",
+              "th"
+      ),
       seed(this,
            Option::SEED,
            42,
@@ -705,6 +714,7 @@ Options::data(Option opt)
     case Option::PRODUCE_UNSAT_ASSUMPTIONS: return &produce_unsat_assumptions;
     case Option::PRODUCE_UNSAT_CORES: return &produce_unsat_cores;
     case Option::SAT_SOLVER: return &sat_solver;
+    case Option::THREADS: return &threads;
     case Option::SEED: return &seed;
     case Option::VERBOSITY: return &verbosity;
     case Option::TIME_LIMIT_PER: return &time_limit_per;

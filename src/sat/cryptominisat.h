@@ -38,7 +38,7 @@ class CryptoMiniSat : public SatSolver
   const char *get_name() const override { return "CryptoMiniSat"; }
   const char *get_version() const override;
 
-  void set_num_threads(uint32_t n_threads) const;
+  void set_num_threads(uint32_t n_threads) const override;
 
  private:
   /**

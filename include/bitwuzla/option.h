@@ -75,6 +75,12 @@ enum ENUM(Option)
    *  * **0**: disable [**default**]
    */
   EVALUE(PRODUCE_UNSAT_CORES),
+  /*! **Number of Threads.**
+   *
+   * Values:
+   *  * An unsigned integer value. [**default**: 1]
+   */
+  EVALUE(THREADS),
   /*! **Seed for random number generator.**
    *
    * Values:

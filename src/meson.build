@@ -34,15 +34,18 @@ endif
 
 # cms does not provide pkg-config to find dependency
 cms_dep = cpp_compiler.find_library('cryptominisat5',
+                                    dirs: '/usr/local/lib',
                                     has_headers: 'cryptominisat5/cryptominisat.h',
                                     static: build_static,
                                     required: false)
+
+cadiback_dep = cpp_compiler.find_library('cadiback', required: false)
 
 # Using system include type suppresses compile warnings originating from the
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
-dependencies = [symfpu_dep, cadical_dep, kissat_dep, cms_dep, gmp_dep]
+dependencies = [symfpu_dep, cadical_dep, kissat_dep, cms_dep, gmp_dep, cadiback_dep]
 
 cpp_args = []
 if kissat_dep.found()

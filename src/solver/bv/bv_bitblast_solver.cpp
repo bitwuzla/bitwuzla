@@ -59,6 +59,10 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
       d_stats(env.statistics(), "solver::bv::bitblast::")
 {
   d_sat_solver.reset(sat::new_sat_solver(env.options().sat_solver()));
+  if(option::SatSolver::CRYPTOMINISAT == env.options().sat_solver())
+  {
+    d_sat_solver->set_num_threads(env.options().threads());
+  }
   d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
   d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_bitblast_sat_solver));
 }

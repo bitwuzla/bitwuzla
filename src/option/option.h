@@ -37,6 +37,7 @@ enum class Option
   BV_SOLVER,      // enum
   REWRITE_LEVEL,  // numeric
   SAT_SOLVER,     // enum
+  THREADS,        // numeric
 
   PROP_NPROPS,                  // numeric
   PROP_NUPDATES,                // numeric
@@ -470,6 +471,7 @@ class Options
   OptionBool produce_models;
   OptionBool produce_unsat_assumptions;
   OptionBool produce_unsat_cores;
+  OptionNumeric threads;
   OptionNumeric seed;
   OptionNumeric verbosity;
   OptionNumeric time_limit_per;
