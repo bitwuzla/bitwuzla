@@ -1859,9 +1859,9 @@ TEST_F(TestRewriterBv, bv_mul_special_const)
     test_rule_does_not_apply<kind>(
         d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, d_bv4_a}));
     test_rule_does_not_apply<kind>(d_nm.mk_node(
-        Kind::BV_MUL, {d_nm.mk_value(BitVector(4, "1110")), d_bv4_a}));
+        Kind::BV_MUL, {d_nm.mk_value(BitVector(4, "1010")), d_bv4_a}));
     test_rule_does_not_apply<kind>(d_nm.mk_node(
-        Kind::BV_MUL, {d_bv4_a, d_nm.mk_value(BitVector(4, "1110"))}));
+        Kind::BV_MUL, {d_bv4_a, d_nm.mk_value(BitVector(4, "1010"))}));
   }
   ////// special const 1
   {
@@ -1876,6 +1876,20 @@ TEST_F(TestRewriterBv, bv_mul_special_const)
     //// applies
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_ones, d_bv4_a}));
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, d_bv4_ones}));
+  }
+  ////// special const pow2
+  {
+    //// applies
+    auto pow2 = d_nm.mk_value(BitVector(4, "0100"));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {pow2, d_bv4_a}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, pow2}));
+  }
+  ////// special const negative pow2
+  {
+    //// applies
+    auto pow2 = d_nm.mk_value(BitVector(4, "0100").ibvneg());
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {pow2, d_bv4_a}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, pow2}));
   }
 }
 
@@ -2450,6 +2464,12 @@ TEST_F(TestRewriterBv, bv_udiv_special_const)
     test_rule_does_not_apply<kind>(
         d_nm.mk_node(Kind::BV_UDIV, {d_bv4_one, d_bv4_a}));
   }
+  ////// special const pow2
+  {
+    //// applies
+    auto pow2 = d_nm.mk_value(BitVector(4, "0100"));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_bv4_a, pow2}));
+  }
 }
 
 TEST_F(TestRewriterBv, bv_udiv_bv1)
@@ -2708,6 +2728,12 @@ TEST_F(TestRewriterBv, bv_urem_special_const)
         Kind::BV_UREM, {d_nm.mk_value(BitVector(4, "1110")), d_bv4_a}));
     test_rule_does_not_apply<kind>(d_nm.mk_node(
         Kind::BV_UREM, {d_bv4_a, d_nm.mk_value(BitVector(4, "1110"))}));
+  }
+  ////// special const pow2
+  {
+    //// applies
+    auto pow2 = d_nm.mk_value(BitVector(4, "0100"));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_UREM, {d_bv4_a, pow2}));
   }
 }
 

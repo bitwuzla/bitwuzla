@@ -1676,6 +1676,21 @@ _rw_bv_mul_special_const(Rewriter& rewriter, const Node& node, size_t idx)
     {
       return rewriter.mk_node(Kind::BV_NEG, {node[idx1]});
     }
+    if (value0.is_power_of_two())
+    {
+      Node shift_by = rewriter.nm().mk_value(
+          BitVector::from_ui(value0.size(), value0.count_trailing_zeros()));
+      return rewriter.mk_node(Kind::BV_SHL, {node[idx1], shift_by});
+    }
+    auto neg_pow2 = value0.bvneg();
+    if (neg_pow2.is_power_of_two())
+    {
+      Node shift_by = rewriter.nm().mk_value(
+          BitVector::from_ui(value0.size(), neg_pow2.count_trailing_zeros()));
+      return rewriter.mk_node(
+          Kind::BV_SHL,
+          {rewriter.mk_node(Kind::BV_NEG, {node[idx1]}), shift_by});
+    }
   }
   return node;
 }
@@ -2418,6 +2433,12 @@ RewriteRule<RewriteRuleKind::BV_UDIV_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     {
       return node[0];
     }
+    if (value1.is_power_of_two())
+    {
+      Node shift_by = rewriter.nm().mk_value(
+          BitVector::from_ui(value1.size(), value1.count_trailing_zeros()));
+      return rewriter.mk_node(Kind::BV_SHR, {node[0], shift_by});
+    }
   }
   return node;
 }
@@ -2754,6 +2775,15 @@ RewriteRule<RewriteRuleKind::BV_UREM_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     if (value1.is_one())
     {
       return rewriter.nm().mk_value(BitVector::mk_zero(value1.size()));
+    }
+    if (value1.is_power_of_two())
+    {
+      auto ntz = value1.count_trailing_zeros();
+      assert(ntz > 0);
+      Node extract =
+          rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {ntz - 1, 0});
+      return rewriter.mk_node(
+          Kind::BV_ZERO_EXTEND, {extract}, {value1.size() - ntz});
     }
   }
   return node;
