@@ -1,5 +1,6 @@
 (set-info :status unsat)
 (set-option :abstraction true)
+(set-option :abstraction-bv-size 16)
 (set-option :time-limit-per 1000)
 (declare-const a (_ BitVec 16))
 (declare-const b (_ BitVec 16))
