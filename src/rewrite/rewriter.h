@@ -289,7 +289,12 @@ class Rewriter
   /** Maps nodes to their parents counts. Only needed for normalization. */
   std::unordered_map<Node, uint64_t>* d_parents_map = nullptr;
 
-  util::HistogramStatistic& d_stats_rewrites;
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats, const std::string& prefix);
+    util::HistogramStatistic& rewrites;
+    uint64_t& num_rewrites;
+  } d_stats;
 };
 
 /* -------------------------------------------------------------------------- */

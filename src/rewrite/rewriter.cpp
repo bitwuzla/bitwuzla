@@ -29,7 +29,8 @@
         RewriteRule<RewriteRuleKind::rw_rule>::apply(*this, node); \
     if (res != node)                                               \
     {                                                              \
-      d_stats_rewrites << kind;                                    \
+      d_stats.rewrites << kind;                                    \
+      ++d_stats.num_rewrites;                                      \
       goto DONE;                                                   \
     }                                                              \
   } while (false);
@@ -96,8 +97,8 @@ Rewriter::Rewriter(Env& env, uint8_t level, const std::string& id)
     : d_env(env),
       d_logger(env.logger()),
       d_level(level),
-      d_stats_rewrites(env.statistics().new_stat<util::HistogramStatistic>(
-          "rewriter::rewrite" + (id.empty() ? "" : "(" + id + ")")))
+      d_stats(env.statistics(),
+              "rewriter::" + (id.empty() ? "" : "(" + id + ")::"))
 {
   static_assert(Rewriter::LEVEL_SPECULATIVE > Rewriter::LEVEL_MAX);
   assert(d_level <= Rewriter::LEVEL_SPECULATIVE);
@@ -1845,6 +1846,13 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::EXISTS_ELIM: out << "EXISTS_ELIM"; break;
   }
   return out;
+}
+
+Rewriter::Statistics::Statistics(util::Statistics& stats,
+                                 const std::string& prefix)
+    : rewrites(stats.new_stat<util::HistogramStatistic>(prefix + "rewrite")),
+      num_rewrites(stats.new_stat<uint64_t>(prefix + "num_rewrites"))
+{
 }
 
 /* -------------------------------------------------------------------------- */
