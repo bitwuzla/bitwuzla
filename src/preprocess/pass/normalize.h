@@ -226,6 +226,7 @@ class PassNormalize : public PreprocessingPass
     util::TimerStatistic& time_adder_chains;
     util::TimerStatistic& time_score;
     uint64_t& num_normalizations;
+    uint64_t& num_normalized_assertions;
   } d_stats;
 };
 

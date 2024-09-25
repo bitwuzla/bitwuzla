@@ -12,18 +12,223 @@
 
 #include <cmath>
 
+#include "bitblast/aig_bitblaster.h"
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
-#include "solver/bv/aig_bitblaster.h"
+#include "solver/bv/bv_solver.h"
 #include "util/logger.h"
 
 namespace bzla::preprocess::pass {
 
 using namespace bzla::node;
+
+/**
+ * Helper class to compute AIG score for a given set of terms.
+ *
+ * The AIG score is the number of AND gates. We do not fully bit-blast all
+ * operators, but only the ones that are necessary.
+ */
+class AigScore
+{
+ public:
+  using AigNodeRefSet =
+      std::unordered_set<std::reference_wrapper<const bitblast::AigNode>,
+                         std::hash<bitblast::AigNode>>;
+
+  /** Add term to score. */
+  void add(const Node& term) { d_visit.push_back(term); }
+
+  /**
+   * Incrementally process added terms, stop after constructing `limit` AND
+   * gates.
+   */
+  void process(uint64_t limit = 100000);
+
+  uint64_t score() const { return d_bitblaster.num_aig_ands(); }
+
+  /** @return Whether we processed all added terms. */
+  bool done() const { return d_visit.empty(); }
+
+ private:
+  /** Return encoded bits associated with bit-blasted term. */
+  const auto& bits(const Node& term) const
+  {
+    if (d_bitblaster_cache.find(term) == d_bitblaster_cache.end())
+    {
+      return d_empty;
+    }
+    return d_bitblaster_cache.at(term);
+  }
+
+  bitblast::AigBitblaster::Bits d_empty;
+
+  /** AIG bit-blaster. */
+  bitblast::AigBitblaster d_bitblaster;
+  /** Cached to store bit-blasted terms and their encoded bits. */
+  std::unordered_map<Node, bitblast::AigBitblaster::Bits> d_bitblaster_cache;
+  /** Node to process. */
+  node::node_ref_vector d_visit;
+};
+
+void
+AigScore::process(uint64_t limit)
+{
+  uint64_t cur_ands = d_bitblaster.num_aig_ands();
+  while (!d_visit.empty())
+  {
+    const Node& cur = d_visit.back();
+    assert(cur.type().is_bool() || cur.type().is_bv());
+
+    if (d_bitblaster.num_aig_ands() - cur_ands >= limit)
+    {
+      break;
+    }
+
+    auto it = d_bitblaster_cache.find(cur);
+    if (it == d_bitblaster_cache.end())
+    {
+      d_bitblaster_cache.emplace(cur, bitblast::AigBitblaster::Bits());
+      if (!bv::BvSolver::is_leaf(cur))
+      {
+        d_visit.insert(d_visit.end(), cur.begin(), cur.end());
+      }
+      continue;
+    }
+    else if (it->second.empty())
+    {
+      const Type& type = cur.type();
+      assert(type.is_bool() || type.is_bv());
+
+      switch (cur.kind())
+      {
+        case Kind::VALUE:
+          it->second = type.is_bool()
+                           ? d_bitblaster.bv_value(BitVector::from_ui(
+                                 1, cur.value<bool>() ? 1 : 0))
+                           : d_bitblaster.bv_value(cur.value<BitVector>());
+          break;
+
+        case Kind::NOT:
+        case Kind::BV_NOT:
+          assert(cur.kind() != Kind::NOT || type.is_bool());
+          assert(cur.kind() != Kind::BV_NOT || type.is_bv());
+          it->second = d_bitblaster.bv_not(bits(cur[0]));
+          break;
+
+        case Kind::AND:
+        case Kind::BV_AND:
+          assert(cur.kind() != Kind::NOT || type.is_bool());
+          assert(cur.kind() != Kind::BV_NOT || type.is_bv());
+          it->second = d_bitblaster.bv_and(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::OR:
+          assert(type.is_bool());
+          it->second = d_bitblaster.bv_or(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_XOR:
+          it->second = d_bitblaster.bv_xor(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_EXTRACT:
+          assert(type.is_bv());
+          it->second =
+              d_bitblaster.bv_extract(bits(cur[0]), cur.index(0), cur.index(1));
+          break;
+
+        case Kind::EQUAL: {
+          const Type& type0 = cur[0].type();
+          if (type0.is_bool() || type0.is_bv())
+          {
+            it->second = d_bitblaster.bv_eq(bits(cur[0]), bits(cur[1]));
+          }
+          else
+          {
+            // For all other cases we abstract equality as a Boolean constant.
+            it->second = d_bitblaster.bv_constant(1);
+          }
+        }
+        break;
+
+        case Kind::BV_COMP:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_eq(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_ADD:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_add(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_MUL:
+          assert(type.is_bv());
+          // Use more succinct encoding for squares
+          if (cur[0] == cur[1])
+          {
+            it->second = d_bitblaster.bv_mul_square(bits(cur[0]));
+          }
+          else
+          {
+            it->second = d_bitblaster.bv_mul(bits(cur[0]), bits(cur[1]));
+          }
+          break;
+
+        case Kind::BV_ULT:
+          assert(type.is_bool());
+          it->second = d_bitblaster.bv_ult(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_SHL:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_shl(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_SLT:
+          assert(type.is_bool());
+          it->second = d_bitblaster.bv_slt(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_SHR:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_shr(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_ASHR:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_ashr(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_CONCAT:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_concat(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::ITE:
+          assert(cur[0].type().is_bool());
+          it->second =
+              d_bitblaster.bv_ite(bits(cur[0])[0], bits(cur[1]), bits(cur[2]));
+          break;
+
+        // All other kinds are not included in the score. This includes UDIV and
+        // UREM since bit-blasting them is expensive and the preprocessing pass
+        // does not normalize these operators.
+        default:
+          assert(bv::BvSolver::is_leaf(cur) || cur.kind() == Kind::BV_UDIV
+                 || cur.kind() == Kind::BV_UREM);
+          it->second = type.is_bool()
+                           ? d_bitblaster.bv_constant(1)
+                           : d_bitblaster.bv_constant(type.bv_size());
+          break;
+      }
+    }
+    d_visit.pop_back();
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 
@@ -1171,41 +1376,62 @@ PassNormalize::apply(AssertionVector& assertions)
     normalize_adders(assertions_pass1, assertions_pass2);
 
     util::Timer timer(d_stats.time_score);
-    bv::AigBitblaster bitblaster;
-    bv::AigBitblaster::AigNodeRefSet cache_before, cache_after1, cache_after2;
-    uint64_t size_before = 0, size_pass1 = 0, size_pass2 = 0;
-    // Initial score
+    AigScore score_before, score_pass1, score_pass2;
+    bool pass2_inconsistent = false;
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
-      size_before += bitblaster.count_aig_ands(assertions[i], cache_before);
+      // Only compute score if assertions differ
+      if (assertions[i] != assertions_pass1[i]
+          || assertions[i] == assertions_pass2[i])
+      {
+        score_before.add(assertions[i]);
+        score_pass1.add(assertions_pass1[i]);
+        score_pass2.add(assertions_pass2[i]);
+
+        if (assertions_pass2[i].is_value()
+            && !assertions_pass2[i].value<bool>())
+        {
+          pass2_inconsistent = true;
+          break;
+        }
+      }
     }
-    // Score after first pass
-    for (const Node& assertion : assertions_pass1)
+
+    uint64_t size_before = 0, size_pass1 = 0, size_pass2 = 0;
+    if (pass2_inconsistent)
     {
-      if (assertion.is_value() && !assertion.value<bool>())
-      {
-        size_pass1 = 0;
-        break;
-      }
-      size_pass1 += bitblaster.count_aig_ands(assertion, cache_after1);
-      if (size_pass1 > size_before)
-      {
-        break;
-      }
+      size_pass1 = 1;
+      size_pass2 = 0;
     }
-    // Score after second pass
-    for (const Node& assertion : assertions_pass2)
+    else
     {
-      if (assertion.is_value() && !assertion.value<bool>())
+      // Incrementally compute AIG score until we know if pass1 or pass2 has
+      // a better score than the original assertions.
+      while (!score_before.done() || !score_pass1.done() || !score_pass2.done())
       {
-        size_pass2 = 0;
-        break;
+        score_before.process();
+        score_pass1.process();
+        score_pass2.process();
+
+        // Pass1 score computed and is better than original score.
+        if (score_pass1.done() && score_pass1.score() < score_before.score())
+        {
+          break;
+        }
+        // Pass2 score computed and is better than original score.
+        if (score_pass2.done() && score_pass2.score() < score_before.score())
+        {
+          break;
+        }
+        // Original score computed, none of the passes was better.
+        if (score_before.done())
+        {
+          break;
+        }
       }
-      size_pass2 += bitblaster.count_aig_ands(assertion, cache_after2);
-      if (size_pass2 > size_before)
-      {
-        break;
-      }
+      size_before = score_before.score();
+      size_pass1  = score_pass1.score();
+      size_pass2  = score_pass2.score();
     }
 
     if (size_pass2 < size_pass1)
@@ -1232,6 +1458,7 @@ PassNormalize::apply(AssertionVector& assertions)
       {
         cache_assertion(assertions_normalized[i]);
         assertions.replace(i, assertions_normalized[i]);
+        ++d_stats.num_normalized_assertions;
       }
     }
   }
@@ -1256,23 +1483,23 @@ namespace {
 Node
 distrib_mul(NodeManager& nm, const Node& left, const Node& right, uint8_t depth)
 {
-  if (depth && left.kind() == Kind::BV_SHL)
+  if (depth && left.kind() == Kind::BV_SHL && !right.is_value())
   {
     return nm.mk_node(Kind::BV_SHL,
                       {distrib_mul(nm, left[0], right, depth - 1), left[1]});
   }
-  if (depth && right.kind() == Kind::BV_SHL)
+  if (depth && right.kind() == Kind::BV_SHL && !left.is_value())
   {
     return nm.mk_node(Kind::BV_SHL,
                       {distrib_mul(nm, right[0], left, depth - 1), right[1]});
   }
-  if (depth && left.kind() == Kind::BV_ADD)
+  if (depth && left.kind() == Kind::BV_ADD && !right.is_value())
   {
     return nm.mk_node(Kind::BV_ADD,
                       {distrib_mul(nm, left[0], right, depth - 1),
                        distrib_mul(nm, left[1], right, depth - 1)});
   }
-  if (depth && right.kind() == Kind::BV_ADD)
+  if (depth && right.kind() == Kind::BV_ADD && !left.is_value())
   {
     return nm.mk_node(Kind::BV_ADD,
                       {distrib_mul(nm, right[0], left, depth - 1),
@@ -1509,7 +1736,6 @@ PassNormalize::normalize_adders(const std::vector<Node>& assertions,
   }
 
   // Sort elements by id vectors, tie break with element id
-  // TODO: performance, precompute id for comparison
   std::sort(
       occs.begin(), occs.end(), [&occs_sort](const auto& a, const auto& b) {
         return sort_cmp(occs_sort, a.first, b.first);
@@ -1530,7 +1756,6 @@ PassNormalize::normalize_adders(const std::vector<Node>& assertions,
       coeff.ibvdec();
     }
   }
-  // TODO: size restriction (only perform if it makes sense)
 
   for (auto& [chain, res] : results)
   {
@@ -1593,14 +1818,16 @@ PassNormalize::collect_adders(const std::vector<Node>& assertions,
 PassNormalize::Statistics::Statistics(util::Statistics& stats,
                                       const std::string& prefix)
     : time_normalize_add(
-        stats.new_stat<util::TimerStatistic>(prefix + "time_normalize_add")),
+          stats.new_stat<util::TimerStatistic>(prefix + "time_normalize_add")),
       time_compute_coefficients(
           stats.new_stat<util::TimerStatistic>(prefix + "time_compute_coeff")),
       time_adder_chains(
           stats.new_stat<util::TimerStatistic>(prefix + "time_adder_chains")),
       time_score(stats.new_stat<util::TimerStatistic>(prefix + "time_score")),
       num_normalizations(
-          stats.new_stat<uint64_t>(prefix + "num_normalizations"))
+          stats.new_stat<uint64_t>(prefix + "num_normalizations")),
+      num_normalized_assertions(
+          stats.new_stat<uint64_t>(prefix + "num_normalized_assertions"))
 {
 }
 
