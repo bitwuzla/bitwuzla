@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "backtrack/unordered_map.h"
-#include "node/node_manager.h"
+#include "node/node.h"
 
 namespace bzla::preprocess {
 

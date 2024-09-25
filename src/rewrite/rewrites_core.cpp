@@ -17,7 +17,6 @@
 #include "node/node.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
-#include "node/node_utils.h"
 #include "node/unordered_node_ref_set.h"
 #include "rewrite/rewrite_utils.h"
 #include "solver/fp/floating_point.h"

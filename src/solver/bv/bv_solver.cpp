@@ -10,13 +10,8 @@
 
 #include "solver/bv/bv_solver.h"
 
-#include "bv/bitvector.h"
 #include "env.h"
-#include "node/node_manager.h"
-#include "node/node_ref_vector.h"
-#include "node/unordered_node_ref_map.h"
 #include "solver/bv/bv_bitblast_solver.h"
-#include "solving_context.h"
 
 namespace bzla::bv {
 

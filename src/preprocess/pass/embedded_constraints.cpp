@@ -12,7 +12,6 @@
 
 #include "env.h"
 #include "node/node_manager.h"
-#include "node/node_ref_vector.h"
 
 namespace bzla::preprocess::pass {
 

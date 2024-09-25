@@ -17,12 +17,12 @@
 #include <functional>
 #include <optional>
 
+#include "bv/bitvector.h"
 #include "node/node_kind.h"
 #include "type/type.h"
 
 namespace bzla {
 
-class BitVector;
 class NodeManager;
 
 enum class RoundingMode;

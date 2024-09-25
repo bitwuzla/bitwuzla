@@ -14,7 +14,6 @@
 #include <unordered_map>
 
 #include "backtrack/unordered_map.h"
-#include "backtrack/unordered_set.h"
 #include "node/node.h"
 #include "preprocess/assertion_vector.h"
 #include "util/statistics.h"

@@ -11,9 +11,7 @@
 #ifndef BZLA_OPTION_OPTION_H_INCLUDED
 #define BZLA_OPTION_OPTION_H_INCLUDED
 
-#include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>

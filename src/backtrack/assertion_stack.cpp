@@ -10,8 +10,6 @@
 
 #include "backtrack/assertion_stack.h"
 
-#include "node/node_manager.h"
-
 namespace bzla::backtrack {
 
 /* --- AssertionStack public ------------------------------------------------ */

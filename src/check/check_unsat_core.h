@@ -10,9 +10,6 @@
 
 #ifndef BZLA_CHECK_CHECK_UNSAT_CORE_H_INCLUDED
 
-#include <unordered_map>
-#include <vector>
-
 #include "solving_context.h"
 #include "util/logger.h"
 

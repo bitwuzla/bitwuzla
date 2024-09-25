@@ -20,14 +20,11 @@
 #include <symfpu/core/sqrt.h>
 #include <symfpu/core/unpackedFloat.h>
 
-#include <sstream>
-
 #include "env.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "solver/array/array_solver.h"
-#include "solver/fp/fp_solver.h"
 #include "solver/fp/symfpu_wrapper.h"
 #include "solver/fun/fun_solver.h"
 #include "solver/quant/quant_solver.h"

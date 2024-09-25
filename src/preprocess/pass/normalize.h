@@ -13,7 +13,6 @@
 
 #include <unordered_map>
 
-#include "backtrack/unordered_map.h"
 #include "preprocess/preprocessing_pass.h"
 #include "rewrite/rewriter.h"
 #include "util/statistics.h"

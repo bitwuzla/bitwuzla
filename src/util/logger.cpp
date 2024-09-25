@@ -10,6 +10,8 @@
 
 #include "util/logger.h"
 
+#include <iomanip>
+
 #include "util/printer.h"
 
 namespace bzla::util {

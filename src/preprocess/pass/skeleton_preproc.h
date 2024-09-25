@@ -13,8 +13,8 @@
 
 #include <memory>
 
+#include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
-#include "node/unordered_node_ref_map.h"
 #include "preprocess/preprocessing_pass.h"
 #include "util/statistics.h"
 

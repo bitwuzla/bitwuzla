@@ -16,8 +16,6 @@
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-#include "node/unordered_node_ref_map.h"
-#include "node/unordered_node_ref_set.h"
 #include "util/hash_pair.h"
 
 namespace bzla::preprocess::pass {

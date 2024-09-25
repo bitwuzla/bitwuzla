@@ -12,7 +12,6 @@
 #define BZLA_SOLVER_FUN_FUN_SOLVER_H_INCLUDED
 
 #include "backtrack/vector.h"
-#include "option/option.h"
 #include "solver/solver.h"
 #include "util/statistics.h"
 

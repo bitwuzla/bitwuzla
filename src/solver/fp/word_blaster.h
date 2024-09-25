@@ -16,7 +16,6 @@
 
 #include "env.h"
 #include "node/node.h"
-#include "node/node_ref_vector.h"
 #include "solver/fp/floating_point.h"
 
 /* -------------------------------------------------------------------------- */

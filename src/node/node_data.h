@@ -16,7 +16,6 @@
 #include <cstdint>
 #include <optional>
 
-#include "bv/bitvector.h"
 #include "node/kind_info.h"
 #include "node/node.h"
 #include "type/type.h"

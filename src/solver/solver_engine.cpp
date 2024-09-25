@@ -10,7 +10,10 @@
 
 #include "solver/solver_engine.h"
 
+#include <iomanip>
+
 #include "env.h"
+#include "node/node_ref_vector.h"
 #include "printer/printer.h"
 #include "rewrite/evaluator.h"
 #include "solver/abstract/abstraction_module.h"

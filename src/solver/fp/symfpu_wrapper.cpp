@@ -10,8 +10,6 @@
 
 #include "solver/fp/symfpu_wrapper.h"
 
-#include <sstream>
-
 #include "node/node_manager.h"
 #include "node/node_utils.h"
 

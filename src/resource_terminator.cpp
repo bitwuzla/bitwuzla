@@ -1,7 +1,5 @@
 #include "resource_terminator.h"
 
-#include <iostream>
-
 #include "util/resources.h"
 
 namespace bzla {

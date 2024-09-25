@@ -10,10 +10,6 @@
 
 #include "check/check_unsat_core.h"
 
-#include <unordered_set>
-
-#include "node/node_manager.h"
-
 namespace bzla::check {
 
 using namespace node;

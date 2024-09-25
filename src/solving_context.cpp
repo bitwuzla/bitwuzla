@@ -14,8 +14,6 @@
 
 #include "check/check_model.h"
 #include "check/check_unsat_core.h"
-#include "node/node_ref_vector.h"
-#include "node/unordered_node_ref_set.h"
 #include "resource_terminator.h"
 #include "solver/fp/symfpu_nm.h"  // Temporary for setting SymFpuNM
 #include "util/exceptions.h"

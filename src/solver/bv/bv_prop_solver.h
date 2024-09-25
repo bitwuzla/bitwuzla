@@ -11,10 +11,8 @@
 #ifndef BZLA_SOLVER_BV_BV_PROP_SOLVER_H_INCLUDED
 #define BZLA_SOLVER_BV_BV_PROP_SOLVER_H_INCLUDED
 
-#include "backtrack/assertion_stack.h"
 #include "backtrack/backtrackable.h"
 #include "ls/ls_bv.h"
-#include "node/node_ref_vector.h"
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solver/bv/bv_solver_interface.h"
 #include "util/statistics.h"

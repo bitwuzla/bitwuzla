@@ -8,7 +8,7 @@
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "solver/abstract/abstraction_lemmas.h"
-#include "solver/bv/bv_solver.h"
+#include "solver/bv/aig_bitblaster.h"
 #include "util/hash_pair.h"
 
 #ifndef NDEBUG

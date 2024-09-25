@@ -12,7 +12,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <utility>
 
 #include "type/type.h"
 

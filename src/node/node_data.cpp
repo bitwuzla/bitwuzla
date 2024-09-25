@@ -10,6 +10,7 @@
 
 #include "node/node_data.h"
 
+#include "bv/bitvector.h"
 #include "node/node.h"
 #include "node/node_manager.h"
 #include "solver/fp/floating_point.h"

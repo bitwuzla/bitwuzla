@@ -10,17 +10,19 @@
 
 #include "solver/bv/bv_prop_solver.h"
 
+#include <iomanip>
 #include <iostream>
 
 #include "bv/domain/bitvector_domain.h"
+#include "env.h"
 #include "ls/ls_bv.h"
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-#include "node/unordered_node_ref_set.h"
+#include "node/unordered_node_ref_map.h"
 #include "option/option.h"
 #include "solver/bv/bv_solver.h"
 #include "solver/result.h"
-#include "solving_context.h"
 #include "util/logger.h"
 
 namespace bzla::bv {

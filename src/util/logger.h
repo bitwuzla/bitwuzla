@@ -12,7 +12,6 @@
 #define BZLA_UTIL_LOGGER_H_INCLUDED
 
 #include <cstdint>
-#include <iomanip>
 #include <iostream>
 
 #include "util/ostream_voider.h"

@@ -11,10 +11,8 @@
 #include "preprocess/pass/elim_lambda.h"
 
 #include "env.h"
-#include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-#include "node/unordered_node_ref_map.h"
 
 namespace bzla::preprocess::pass {
 

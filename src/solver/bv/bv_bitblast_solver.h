@@ -11,9 +11,6 @@
 #ifndef BZLA_SOLVER_BV_BV_BITBLAST_SOLVER_H_INCLUDED
 #define BZLA_SOLVER_BV_BV_BITBLAST_SOLVER_H_INCLUDED
 
-#include <unordered_map>
-
-#include "backtrack/assertion_stack.h"
 #include "backtrack/vector.h"
 #include "bitblast/aig/aig_cnf.h"
 #include "sat/sat_solver.h"

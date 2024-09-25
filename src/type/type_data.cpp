@@ -11,7 +11,6 @@
 #include "type/type_data.h"
 
 #include <cassert>
-#include <iostream>
 
 #include "type/type.h"
 #include "type/type_manager.h"

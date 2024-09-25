@@ -12,7 +12,6 @@
 #define BZLA_PRINTER_PRINTER_H_INCLUDED
 
 #include <ostream>
-#include <unordered_map>
 
 #include "node/node.h"
 #include "node/unordered_node_ref_map.h"

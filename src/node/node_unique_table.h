@@ -11,7 +11,6 @@
 #ifndef BZLA_NODE_NODE_UNIQUE_TABLE_H_INCLUDED
 #define BZLA_NODE_NODE_UNIQUE_TABLE_H_INCLUDED
 
-#include <iostream>
 #include <vector>
 
 #include "node/node_data.h"

@@ -3,7 +3,6 @@
 
 #include <memory>
 
-#include "backtrack/unordered_map.h"
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "env.h"

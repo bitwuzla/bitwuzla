@@ -8,10 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "node/node_manager.h"
-#include "node/node_utils.h"
-#include "rewrite/rewrite_utils.h"
-#include "rewrite/rewrites_bool.h"
+#include "rewrite/rewriter.h"
 
 namespace bzla {
 

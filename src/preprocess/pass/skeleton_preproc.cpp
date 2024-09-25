@@ -10,13 +10,11 @@
 
 #include "preprocess/pass/skeleton_preproc.h"
 
-#include <iostream>
 #include <memory>
 
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
-#include "node/unordered_node_ref_set.h"
 #include "sat/cadical.h"
 
 namespace bzla::preprocess::pass {

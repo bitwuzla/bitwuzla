@@ -10,6 +10,8 @@
 
 #include "preprocess/preprocessor.h"
 
+#include <iomanip>
+
 #include "env.h"
 #include "solving_context.h"
 #include "util/logger.h"
@@ -22,7 +24,7 @@ namespace {
 void
 count_nodes(const Node& node, std::unordered_set<Node>& cache)
 {
-  node::node_ref_vector visit{node};
+  std::vector visit{node};
   do
   {
     const Node& cur = visit.back();

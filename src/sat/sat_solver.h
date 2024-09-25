@@ -12,7 +12,6 @@
 #define BZLA_SAT_SAT_SOLVER_H_INCLUDED
 
 #include <cstdint>
-#include <string>
 
 #include "solver/result.h"
 #include "terminator.h"

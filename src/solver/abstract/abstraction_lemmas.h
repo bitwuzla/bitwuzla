@@ -1,9 +1,11 @@
 #ifndef BZLA_SOLVER_BV_ABSTRACTION_LEMMAS_H_INCLUDED
 #define BZLA_SOLVER_BV_ABSTRACTION_LEMMAS_H_INCLUDED
 
+#include <cstdint>
 #include <ostream>
 
-#include "solver/solver_state.h"
+#include "node/node.h"
+#include "node/node_manager.h"
 
 namespace bzla::abstract {
 

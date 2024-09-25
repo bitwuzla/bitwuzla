@@ -103,6 +103,7 @@ sources_util = files([
   'util/resources.cpp',
   'util/printer.cpp',
   'util/statistics.cpp',
+  'util/util.cpp'
 ])
 
 

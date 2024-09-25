@@ -13,15 +13,10 @@
 #include "env.h"
 #include "node/node_kind.h"
 #include "node/node_manager.h"
-#include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-#include "node/unordered_node_ref_map.h"
 #include "rewrite/rewriter.h"
-#include "solver/array/array_solver.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
-#include "solver/fun/fun_solver.h"
-#include "solver/quant/quant_solver.h"
 
 namespace bzla::fp {
 

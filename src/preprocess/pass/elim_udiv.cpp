@@ -10,7 +10,6 @@
 
 #include "preprocess/pass/elim_udiv.h"
 
-#include <unordered_set>
 #include <vector>
 
 #include "env.h"

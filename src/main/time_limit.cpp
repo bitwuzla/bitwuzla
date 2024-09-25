@@ -2,8 +2,6 @@
 
 #include <pthread.h>  // Required for workaround
 
-#include <atomic>
-#include <chrono>
 #include <condition_variable>
 #include <cstdlib>
 #include <iostream>

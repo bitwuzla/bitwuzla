@@ -11,7 +11,6 @@
 #ifndef BZLA_SOLVING_CONTEXT_H_INCLUDED
 #define BZLA_SOLVING_CONTEXT_H_INCLUDED
 
-#include <unordered_set>
 #include <vector>
 
 #include "backtrack/assertion_stack.h"

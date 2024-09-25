@@ -10,9 +10,7 @@
 
 #include "preprocess/preprocessing_pass.h"
 
-#include "backtrack/assertion_stack.h"
 #include "env.h"
-#include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 
