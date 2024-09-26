@@ -33,13 +33,27 @@ class Rewriter
 {
  public:
   /**
+   * The maximum rewrite level.
+   * This is the maximum rewrite level configurable from outside, and is
+   * considered as the maximum level of "safe" (non-size increasing or size
+   * increasing but in general always effective in practice) rewrites.
+   */
+  inline static constexpr uint8_t LEVEL_MAX = 2;
+  /**
+   * The level of speculative rewrites. This level can not be configured
+   * from the outside and rewrites of this level are only applied specifically
+   * for normalization.
+   */
+  inline static constexpr uint8_t LEVEL_SPECULATIVE = LEVEL_MAX + 1;
+  /**
    * Constructor.
    * @param env   The associated environment.
    * @param level The rewriting level; level 0 disables all rewrites
    *              except for operator elimination, level 1 enables one-level
    *              rewrites, level 2 multi-level rewrites.
+   * @param id    The identifier of this rewriter (used for stats).
    */
-  Rewriter(Env& env, uint8_t level = 0);
+  Rewriter(Env& env, uint8_t level = LEVEL_MAX, const std::string& id = "");
 
   /**
    * Rewrite given node.
@@ -127,6 +141,13 @@ class Rewriter
   void clear_cache();
 
   NodeManager& nm();
+
+  /**
+   * Configure map with parents counts.
+   * @param parents_map Maps nodes to their parents count. Only needed for
+   *                    the normalization rewriter.
+   */
+  void configure_parents_count(std::unordered_map<Node, uint64_t>* parents_map);
 
  private:
   /** The limit for recursive calls to _rewrite(). */
@@ -265,7 +286,15 @@ class Rewriter
   uint64_t d_num_rec_calls = 0;
   /** Indicates whether rewrite recursion limit was reached. */
   bool d_recursion_limit_reached = false;
-  util::HistogramStatistic& d_stats_rewrites;
+  /** Maps nodes to their parents counts. Only needed for normalization. */
+  std::unordered_map<Node, uint64_t>* d_parents_map = nullptr;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats, const std::string& prefix);
+    util::HistogramStatistic& rewrites;
+    uint64_t& num_rewrites;
+  } d_stats;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -313,6 +342,7 @@ enum class RewriteRuleKind
   EQUAL_ITE_INVERTED,
   EQUAL_ITE_DIS_BV1,
   EQUAL_ITE_LIFT_COND,
+  EQUAL_BV_UDIV1,
 
   // Level 1+
   ITE_EVAL,
@@ -363,11 +393,11 @@ enum class RewriteRuleKind
   // Level 2+
   BV_ADD_ITE1,
   BV_ADD_ITE2,
-  BV_ADD_MUL1,
-  BV_ADD_MUL2,
   BV_ADD_SHL,
+  BV_ADD_NEG_MUL,
   // normalization
-  BV_ADD_NORM_MUL_CONST,
+  NORM_BV_ADD_MUL,
+  NORM_BV_ADD_CONCAT,
 
   //// bvand
   // Level 1+
@@ -399,6 +429,8 @@ enum class RewriteRuleKind
   BV_CONCAT_EXTRACT,
   // Level 2+
   BV_CONCAT_AND,
+  // Normalization
+  NORM_BV_CONCAT_BV_NOT,
 
   //// bvextract
   // Level 1+
@@ -426,7 +458,6 @@ enum class RewriteRuleKind
   BV_MUL_ITE,
   BV_MUL_NEG,
   BV_MUL_ONES,
-  BV_MUL_SHL,
 
   //// bvnot
   // Level 1+
@@ -435,12 +466,16 @@ enum class RewriteRuleKind
   // Level 2+
   BV_NOT_BV_NEG,
   BV_NOT_BV_CONCAT,
+  // normalization
+  NORM_BV_NOT_OR_SHL,
 
   //// bvshl
   // Level 1+
   BV_SHL_EVAL,
   BV_SHL_SPECIAL_CONST,
   BV_SHL_CONST,
+  // normalization
+  NORM_BV_SHL_NEG,
 
   //// bvlshr
   // Level 1+
@@ -459,6 +494,7 @@ enum class RewriteRuleKind
   BV_SLT_ITE,
   // Level 2+
   BV_SLT_CONCAT,
+  BV_SLT_BV_UDIV1,
 
   //// bvudiv
   // Level 1+

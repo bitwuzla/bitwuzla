@@ -236,6 +236,8 @@ template <>
 const RoundingMode& Node::value() const;
 template <>
 const FloatingPoint& Node::value() const;
+template <>
+const std::string& Node::value() const;
 
 }  // namespace bzla
 

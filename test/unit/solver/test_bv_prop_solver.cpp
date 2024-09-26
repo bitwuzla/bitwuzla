@@ -47,11 +47,7 @@ class TestBvPropSolver : public ::testing::Test
     d_options.prop_const_bits.set(true);
     d_options.seed.set(1234);
     d_options.rewrite_level.set(0);
-    d_options.pp_contr_ands.set(false);
-    d_options.pp_embedded_constr.set(false);
-    d_options.pp_flatten_and.set(false);
-    d_options.pp_skeleton_preproc.set(false);
-    d_options.pp_variable_subst.set(false);
+    d_options.preprocess.set(false);
     d_options.dbg_check_model.set(false);
     d_options.dbg_check_unsat_core.set(false);
   }

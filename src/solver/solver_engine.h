@@ -59,6 +59,7 @@ class UnsupportedException : std::exception
 class SolverEngine
 {
   friend SolvingContext;
+  friend SolverState;
 
  public:
   SolverEngine(SolvingContext& context);
@@ -94,6 +95,9 @@ class SolverEngine
    * Determine whether given term is relevant w.r.t. current bit-vector model.
    */
   bool is_relevant(const Node& term) const;
+
+  /** Print statistics line. */
+  void print_statistics();
 
  private:
   /** Synchronize d_backtrack_mgr up to given level. */
@@ -136,9 +140,6 @@ class SolverEngine
    * the current bit-vector model.
    */
   void find_relevant();
-
-  /** Print statistics line. */
-  void print_statistics();
 
   /** Counter for how often a statistics line was printed. */
   uint64_t d_num_printed_stats = 0;

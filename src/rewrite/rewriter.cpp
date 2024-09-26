@@ -29,7 +29,8 @@
         RewriteRule<RewriteRuleKind::rw_rule>::apply(*this, node); \
     if (res != node)                                               \
     {                                                              \
-      d_stats_rewrites << kind;                                    \
+      d_stats.rewrites << kind;                                    \
+      ++d_stats.num_rewrites;                                      \
       goto DONE;                                                   \
     }                                                              \
   } while (false);
@@ -92,14 +93,15 @@ diff(uint64_t max_id, const Node& rewritten)
 
 /* === Rewriter public ====================================================== */
 
-Rewriter::Rewriter(Env& env, uint8_t level)
+Rewriter::Rewriter(Env& env, uint8_t level, const std::string& id)
     : d_env(env),
       d_logger(env.logger()),
       d_level(level),
-      d_stats_rewrites(env.statistics().new_stat<util::HistogramStatistic>(
-          "rewriter::rewrite"))
+      d_stats(env.statistics(),
+              "rewriter::" + (id.empty() ? "" : "(" + id + ")::"))
 {
-  assert(d_level <= option::Options::REWRITE_LEVEL_MAX);
+  static_assert(Rewriter::LEVEL_SPECULATIVE > Rewriter::LEVEL_MAX);
+  assert(d_level <= Rewriter::LEVEL_SPECULATIVE);
   (void) d_env;  // only used in debug mode
 }
 
@@ -356,6 +358,13 @@ NodeManager&
 Rewriter::nm()
 {
   return d_env.nm();
+}
+
+void
+Rewriter::configure_parents_count(
+    std::unordered_map<Node, uint64_t>* parents_map)
+{
+  d_parents_map = parents_map;
 }
 
 /* === Rewriter private ===================================================== */
@@ -617,13 +626,15 @@ Rewriter::rewrite_eq(const Node& node)
   {
     BZLA_APPLY_RW_RULE(EQUAL_BV_ADD);
     BZLA_APPLY_RW_RULE(EQUAL_BV_ADD_ADD);
-    // BZLA_APPLY_RW_RULE(EQUAL_BV_CONCAT);
+    // this is important for the Sage benchmark TODO
+    //BZLA_APPLY_RW_RULE(EQUAL_BV_CONCAT);
     BZLA_APPLY_RW_RULE(EQUAL_BV_SUB);
     BZLA_APPLY_RW_RULE(EQUAL_EQUAL_CONST_BV1);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_SAME);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_INVERTED);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_DIS_BV1);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_LIFT_COND);
+    BZLA_APPLY_RW_RULE(EQUAL_BV_UDIV1);
   }
 
 DONE:
@@ -681,9 +692,13 @@ Rewriter::rewrite_bv_add(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_ADD_ITE1);
     BZLA_APPLY_RW_RULE(BV_ADD_ITE2);
-    BZLA_APPLY_RW_RULE(BV_ADD_MUL1);
-    BZLA_APPLY_RW_RULE(BV_ADD_MUL2);
-    BZLA_APPLY_RW_RULE(BV_ADD_SHL);
+    // BZLA_APPLY_RW_RULE(BV_ADD_SHL);
+    BZLA_APPLY_RW_RULE(BV_ADD_NEG_MUL);
+  }
+  if (d_level == LEVEL_SPECULATIVE)
+  {
+    BZLA_APPLY_RW_RULE(NORM_BV_ADD_MUL);
+    BZLA_APPLY_RW_RULE(NORM_BV_ADD_CONCAT);
   }
 
 DONE:
@@ -750,6 +765,7 @@ Rewriter::rewrite_bv_concat(const Node& node)
   if (d_level >= 2)
   {
     BZLA_APPLY_RW_RULE(BV_CONCAT_AND);
+    BZLA_APPLY_RW_RULE(NORM_BV_CONCAT_BV_NOT);
   }
 
 DONE:
@@ -779,6 +795,10 @@ Rewriter::rewrite_bv_extract(const Node& node)
     BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_AND);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_ITE);
+  }
+
+  if (d_level == LEVEL_SPECULATIVE)
+  {
     BZLA_APPLY_RW_RULE(BV_EXTRACT_ADD_MUL);
   }
 
@@ -806,7 +826,6 @@ Rewriter::rewrite_bv_mul(const Node& node)
     BZLA_APPLY_RW_RULE(BV_MUL_NEG);
     // rewrites for Noetzli benchmarks
     BZLA_APPLY_RW_RULE(BV_MUL_ITE);
-    BZLA_APPLY_RW_RULE(BV_MUL_SHL);
   }
 
 DONE:
@@ -827,9 +846,12 @@ Rewriter::rewrite_bv_not(const Node& node)
   if (d_level >= 2)
   {
     BZLA_APPLY_RW_RULE(BV_NOT_BV_NEG);
-    BZLA_APPLY_RW_RULE(BV_NOT_BV_CONCAT);
+    //BZLA_APPLY_RW_RULE(BV_NOT_BV_CONCAT);
   }
-
+  if (d_level == LEVEL_SPECULATIVE)
+  {
+    BZLA_APPLY_RW_RULE(NORM_BV_NOT_OR_SHL);
+  }
 DONE:
   return res;
 }
@@ -845,6 +867,10 @@ Rewriter::rewrite_bv_shl(const Node& node)
     BZLA_APPLY_RW_RULE(BV_SHL_EVAL);
     BZLA_APPLY_RW_RULE(BV_SHL_SPECIAL_CONST);
     BZLA_APPLY_RW_RULE(BV_SHL_CONST);
+  }
+  if (d_level == LEVEL_SPECULATIVE)
+  {
+    BZLA_APPLY_RW_RULE(NORM_BV_SHL_NEG);
   }
 
 DONE:
@@ -887,6 +913,7 @@ Rewriter::rewrite_bv_slt(const Node& node)
   if (d_level >= 2)
   {
     BZLA_APPLY_RW_RULE(BV_SLT_CONCAT);
+    BZLA_APPLY_RW_RULE(BV_SLT_BV_UDIV1);
   }
 
 DONE:
@@ -1518,6 +1545,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::EQUAL_ITE_LIFT_COND:
       out << "EQUAL_ITE_LIFT_COND";
       break;
+    case RewriteRuleKind::EQUAL_BV_UDIV1: out << "EQUAL_BV_UDIV1"; break;
 
     case RewriteRuleKind::ITE_EVAL: out << "ITE_EVAL"; break;
     case RewriteRuleKind::ITE_SAME: out << "ITE_SAME"; break;
@@ -1557,11 +1585,11 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_ADD_UREM: out << "BV_ADD_UREM"; break;
     case RewriteRuleKind::BV_ADD_ITE1: out << "BV_ADD_ITE1"; break;
     case RewriteRuleKind::BV_ADD_ITE2: out << "BV_ADD_ITE2"; break;
-    case RewriteRuleKind::BV_ADD_MUL1: out << "BV_ADD_MUL1"; break;
-    case RewriteRuleKind::BV_ADD_MUL2: out << "BV_ADD_MUL2"; break;
     case RewriteRuleKind::BV_ADD_SHL: out << "BV_ADD_SHL"; break;
-    case RewriteRuleKind::BV_ADD_NORM_MUL_CONST:
-      out << "BV_ADD_NORM_MUL_CONST";
+    case RewriteRuleKind::BV_ADD_NEG_MUL: out << "BV_ADD_NEG_MUL"; break;
+    case RewriteRuleKind::NORM_BV_ADD_MUL: out << "NORM_BV_ADD_MUL"; break;
+    case RewriteRuleKind::NORM_BV_ADD_CONCAT:
+      out << "NORM_BV_ADD_CONCAT";
       break;
 
     case RewriteRuleKind::BV_AND_EVAL: out << "BV_AND_EVAL"; break;
@@ -1591,6 +1619,9 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_CONCAT_CONST: out << "BV_CONCAT_CONST"; break;
     case RewriteRuleKind::BV_CONCAT_EXTRACT: out << "BV_CONCAT_EXTRACT"; break;
     case RewriteRuleKind::BV_CONCAT_AND: out << "BV_CONCAT_AND"; break;
+    case RewriteRuleKind::NORM_BV_CONCAT_BV_NOT:
+      out << "NORM_BV_CONCAT_BV_NOT";
+      break;
 
     case RewriteRuleKind::BV_EXTRACT_EVAL: out << "BV_EXTRACT_EVAL"; break;
     case RewriteRuleKind::BV_EXTRACT_FULL: out << "BV_EXTRACT_FULL"; break;
@@ -1623,18 +1654,21 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_MUL_ITE: out << "BV_MUL_ITE"; break;
     case RewriteRuleKind::BV_MUL_NEG: out << "BV_MUL_NEG"; break;
     case RewriteRuleKind::BV_MUL_ONES: out << "BV_MUL_ONES"; break;
-    case RewriteRuleKind::BV_MUL_SHL: out << "BV_MUL_SHL"; break;
 
     case RewriteRuleKind::BV_NOT_EVAL: out << "BV_NOT_EVAL"; break;
     case RewriteRuleKind::BV_NOT_BV_NOT: out << "BV_NOT_BV_NOT"; break;
     case RewriteRuleKind::BV_NOT_BV_NEG: out << "BV_NOT_BV_NEG"; break;
     case RewriteRuleKind::BV_NOT_BV_CONCAT: out << "BV_NOT_BV_CONCAT"; break;
+    case RewriteRuleKind::NORM_BV_NOT_OR_SHL:
+      out << "NORM_BV_NOT_OR_SHL";
+      break;
 
     case RewriteRuleKind::BV_SHL_EVAL: out << "BV_SHL_EVAL"; break;
     case RewriteRuleKind::BV_SHL_SPECIAL_CONST:
       out << "BV_SHL_SPECIAL_CONST";
       break;
     case RewriteRuleKind::BV_SHL_CONST: out << "BV_SHL_CONST"; break;
+    case RewriteRuleKind::NORM_BV_SHL_NEG: out << "NORM_BV_SHL_NEG"; break;
 
     case RewriteRuleKind::BV_SHR_EVAL: out << "BV_SHR_EVAL"; break;
     case RewriteRuleKind::BV_SHR_SPECIAL_CONST:
@@ -1652,6 +1686,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_SLT_BV1: out << "BV_SLT_BV1"; break;
     case RewriteRuleKind::BV_SLT_ITE: out << "BV_SLT_ITE"; break;
     case RewriteRuleKind::BV_SLT_CONCAT: out << "BV_SLT_CONCAT"; break;
+    case RewriteRuleKind::BV_SLT_BV_UDIV1: out << "BV_SLT_BV_UDIV1"; break;
 
     case RewriteRuleKind::BV_UDIV_EVAL: out << "BV_UDIV_EVAL"; break;
     case RewriteRuleKind::BV_UDIV_SPECIAL_CONST:
@@ -1811,6 +1846,13 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::EXISTS_ELIM: out << "EXISTS_ELIM"; break;
   }
   return out;
+}
+
+Rewriter::Statistics::Statistics(util::Statistics& stats,
+                                 const std::string& prefix)
+    : rewrites(stats.new_stat<util::HistogramStatistic>(prefix + "rewrite")),
+      num_rewrites(stats.new_stat<uint64_t>(prefix + "num_rewrites"))
+{
 }
 
 /* -------------------------------------------------------------------------- */

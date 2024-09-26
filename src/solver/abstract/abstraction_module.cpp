@@ -1119,7 +1119,14 @@ AbstractionModule::verify_lemmas() const
       {
         std::cout << "\r" << ++i << "/" << lemmas.size() << std::flush;
         ctx.push();
-        Node inst = nm.mk_node(Kind::NOT, {lemma->instance(x, s, t)});
+        Node inst = lemma->instance(x, s, t);
+        // may be null if lemma cannot be instantiated (if not applicable, e.g.,
+        // for pow2 lemmas)
+        if (inst.is_null())
+        {
+          continue;
+        }
+        inst = nm.mk_node(Kind::NOT, {inst});
         ctx.assert_formula(inst);
         Result res = ctx.solve();
         if (res != Result::UNSAT)

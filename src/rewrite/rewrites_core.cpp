@@ -55,9 +55,18 @@ RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
     return nm.mk_value(
         (node[0].value<FloatingPoint>() == node[1].value<FloatingPoint>()));
   }
-  assert(node[0].type().is_rm());
-  return nm.mk_value(
-      (node[0].value<RoundingMode>() == node[1].value<RoundingMode>()));
+  if (node[0].type().is_rm())
+  {
+    return nm.mk_value(
+        (node[0].value<RoundingMode>() == node[1].value<RoundingMode>()));
+  }
+  if (node[0].type().is_uninterpreted())
+  {
+    return nm.mk_value(
+        (node[0].value<std::string>() == node[1].value<std::string>()));
+  }
+  assert(false);
+  return node;
 }
 
 /**
@@ -712,6 +721,36 @@ RewriteRule<RewriteRuleKind::EQUAL_ITE_LIFT_COND>::_apply(Rewriter& rewriter,
     res = _rw_eq_ite_lift_bv1(rewriter, node, 1);
   }
   return res;
+}
+
+/**
+ * match: (= 0 (bvudiv ~0 t))
+ * result: false
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_BV_UDIV1>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  (void) rewriter;
+  if (!node[0].type().is_bv())
+  {
+    return node;
+  }
+
+  if (node[0].is_value() && node[0].value<BitVector>().is_zero()
+      && node[1].kind() == Kind::BV_UDIV && node[1][0].is_value()
+      && node[1][0].value<BitVector>().is_ones())
+  {
+    return rewriter.nm().mk_value(false);
+  }
+  else if (node[1].is_value() && node[1].value<BitVector>().is_zero()
+           && node[0].kind() == Kind::BV_UDIV && node[0][0].is_value()
+           && node[0][0].value<BitVector>().is_ones())
+  {
+    return rewriter.nm().mk_value(false);
+  }
+  return node;
 }
 
 /**

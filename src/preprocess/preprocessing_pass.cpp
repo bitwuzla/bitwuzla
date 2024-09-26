@@ -110,6 +110,15 @@ PreprocessingPass::substitute(const Node& node,
   return std::make_pair(it->second, num_substs);
 }
 
+Node
+PreprocessingPass::substitute(
+    const Node& node,
+    const std::unordered_map<Node, Node>& substitutions,
+    std::unordered_map<Node, Node>& cache) const
+{
+  return node::utils::substitute(d_env.nm(), node, substitutions, cache);
+}
+
 bool
 PreprocessingPass::cache_assertion(const Node& assertion)
 {

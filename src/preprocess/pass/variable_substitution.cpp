@@ -394,20 +394,21 @@ _rw_eq_bv_concat(Rewriter& rewriter, const Node& node, size_t idx)
     Node ext1_lhs = rewriter.mk_node(Kind::BV_EXTRACT, {node[idx1]}, {u, l});
     Node ext1_rhs =
         rewriter.mk_node(Kind::BV_EXTRACT, {node[idx1]}, {l - 1, 0});
-    // Note: Introducing two extracts on node[idx1] is not necessarily
-    //       beneficial. Hence, we only rewrite if an extract on node[idx1]
-    //       is rewritten to a non-extract.
+    Node ext0_lhs = rewriter.mk_node(Kind::BV_EXTRACT, {node[idx0]}, {u, l});
+    Node ext0_rhs =
+        rewriter.mk_node(Kind::BV_EXTRACT, {node[idx0]}, {l - 1, 0});
 
-    if (ext1_lhs.kind() != Kind::BV_EXTRACT
-        || ext1_rhs.kind() != Kind::BV_EXTRACT)
+    if ((ext1_lhs.kind() != Kind::BV_EXTRACT
+         || ext1_lhs[0].kind() == Kind::CONSTANT)
+        && (ext1_rhs.kind() != Kind::BV_EXTRACT
+            || ext1_rhs[0].kind() == Kind::CONSTANT)
+        && (ext0_lhs.kind() != Kind::BV_EXTRACT
+            || ext0_lhs[0].kind() == Kind::CONSTANT)
+        && (ext0_rhs.kind() != Kind::BV_EXTRACT
+            || ext0_rhs[0].kind() == Kind::CONSTANT))
     {
-      Node lhs = rewriter.mk_node(
-          Kind::EQUAL,
-          {rewriter.mk_node(Kind::BV_EXTRACT, {node[idx0]}, {u, l}), ext1_lhs});
-      Node rhs = rewriter.mk_node(
-          Kind::EQUAL,
-          {rewriter.mk_node(Kind::BV_EXTRACT, {node[idx0]}, {l - 1, 0}),
-           ext1_rhs});
+      Node lhs = rewriter.mk_node(Kind::EQUAL, {ext0_lhs, ext1_lhs});
+      Node rhs = rewriter.mk_node(Kind::EQUAL, {ext0_rhs, ext1_rhs});
       return rewriter.mk_node(Kind::AND, {lhs, rhs});
     }
   }

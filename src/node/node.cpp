@@ -211,6 +211,15 @@ Node::value() const
   return d_data->get_value<FloatingPoint>();
 }
 
+template <>
+const std::string&
+Node::value() const
+{
+  assert(!is_null());
+  assert(type().is_uninterpreted());
+  return d_data->get_value<std::string>();
+}
+
 std::optional<std::reference_wrapper<const std::string>>
 Node::symbol() const
 {

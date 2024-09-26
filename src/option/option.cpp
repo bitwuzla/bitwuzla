@@ -14,6 +14,7 @@
 #include <cassert>
 
 #include "config.h"
+#include "rewrite/rewriter.h"
 
 namespace bzla::option {
 
@@ -183,9 +184,9 @@ Options::Options()
                  "S"),
       rewrite_level(this,
                     Option::REWRITE_LEVEL,
-                    REWRITE_LEVEL_MAX,
+                    Rewriter::LEVEL_MAX,
                     0,
-                    REWRITE_LEVEL_MAX,
+                    Rewriter::LEVEL_MAX,
                     "rewrite level",
                     "rewrite-level",
                     "rwl"),
@@ -379,12 +380,6 @@ Options::Options()
                    true,
                    "enable normalization pass",
                    "pp-normalize"),
-      pp_normalize_share_aware(this,
-                               Option::PP_NORMALIZE_SHARE_AWARE,
-                               true,
-                               "disable normalizations in normalization pass "
-                               "that may yield blow-up on the bit-level",
-                               "pp-normalize-share-aware"),
       pp_skeleton_preproc(this,
                           Option::PP_SKELETON_PREPROC,
                           true,
@@ -748,7 +743,6 @@ Options::data(Option opt)
     case Option::PP_EMBEDDED_CONSTR: return &pp_embedded_constr;
     case Option::PP_FLATTEN_AND: return &pp_flatten_and;
     case Option::PP_NORMALIZE: return &pp_normalize;
-    case Option::PP_NORMALIZE_SHARE_AWARE: return &pp_normalize_share_aware;
     case Option::PP_SKELETON_PREPROC: return &pp_skeleton_preproc;
     case Option::PP_VARIABLE_SUBST: return &pp_variable_subst;
     case Option::PP_VARIABLE_SUBST_NORM_BV_INEQ:

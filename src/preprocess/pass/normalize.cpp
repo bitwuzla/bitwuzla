@@ -12,101 +12,245 @@
 
 #include <cmath>
 
+#include "bitblast/aig_bitblaster.h"
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
+#include "solver/bv/bv_solver.h"
 #include "util/logger.h"
 
 namespace bzla::preprocess::pass {
 
 using namespace bzla::node;
 
-/* -------------------------------------------------------------------------- */
-
-namespace {
-void
-_count_parents(const node_ref_vector& nodes,
-               Kind kind,
-               PassNormalize::ParentsMap& parents)
+/**
+ * Helper class to compute AIG score for a given set of terms.
+ *
+ * The AIG score is the number of AND gates. We do not fully bit-blast all
+ * operators, but only the ones that are necessary.
+ */
+class AigScore
 {
-  node::unordered_node_ref_set cache;
-  for (size_t i = 0, size = nodes.size(); i < size; ++i)
+ public:
+  using AigNodeRefSet =
+      std::unordered_set<std::reference_wrapper<const bitblast::AigNode>,
+                         std::hash<bitblast::AigNode>>;
+
+  /** Add term to score. */
+  void add(const Node& term) { d_visit.push_back(term); }
+
+  /**
+   * Incrementally process added terms, stop after constructing `limit` AND
+   * gates.
+   */
+  void process(uint64_t limit = 100000);
+
+  uint64_t score() const { return d_bitblaster.num_aig_ands(); }
+
+  /** @return Whether we processed all added terms. */
+  bool done() const { return d_visit.empty(); }
+
+ private:
+  /** Return encoded bits associated with bit-blasted term. */
+  const auto& bits(const Node& term) const
   {
-    node::node_ref_vector visit{nodes[i]};
-    parents[nodes[i]] += 1;
-    do
+    if (d_bitblaster_cache.find(term) == d_bitblaster_cache.end())
     {
-      const Node& cur     = visit.back();
-      auto [it, inserted] = cache.insert(cur);
-      visit.pop_back();
-      if (inserted
-          && (cur.kind() == kind
-              || (kind == Kind::BV_ADD && cur.is_inverted()
-                  && cur[0].kind() == kind)))
+      return d_empty;
+    }
+    return d_bitblaster_cache.at(term);
+  }
+
+  bitblast::AigBitblaster::Bits d_empty;
+
+  /** AIG bit-blaster. */
+  bitblast::AigBitblaster d_bitblaster;
+  /** Cached to store bit-blasted terms and their encoded bits. */
+  std::unordered_map<Node, bitblast::AigBitblaster::Bits> d_bitblaster_cache;
+  /** Node to process. */
+  node::node_ref_vector d_visit;
+};
+
+void
+AigScore::process(uint64_t limit)
+{
+  uint64_t cur_ands = d_bitblaster.num_aig_ands();
+  while (!d_visit.empty())
+  {
+    const Node& cur = d_visit.back();
+    assert(cur.type().is_bool() || cur.type().is_bv());
+
+    if (d_bitblaster.num_aig_ands() - cur_ands >= limit)
+    {
+      break;
+    }
+
+    auto it = d_bitblaster_cache.find(cur);
+    if (it == d_bitblaster_cache.end())
+    {
+      d_bitblaster_cache.emplace(cur, bitblast::AigBitblaster::Bits());
+      if (!bv::BvSolver::is_leaf(cur))
       {
-        for (auto& child : cur)
-        {
-          parents[child] += 1;
-          visit.push_back(child);
-        }
+        d_visit.insert(d_visit.end(), cur.begin(), cur.end());
       }
-    } while (!visit.empty());
+      continue;
+    }
+    else if (it->second.empty())
+    {
+      const Type& type = cur.type();
+      assert(type.is_bool() || type.is_bv());
+
+      switch (cur.kind())
+      {
+        case Kind::VALUE:
+          it->second = type.is_bool()
+                           ? d_bitblaster.bv_value(BitVector::from_ui(
+                                 1, cur.value<bool>() ? 1 : 0))
+                           : d_bitblaster.bv_value(cur.value<BitVector>());
+          break;
+
+        case Kind::NOT:
+        case Kind::BV_NOT:
+          assert(cur.kind() != Kind::NOT || type.is_bool());
+          assert(cur.kind() != Kind::BV_NOT || type.is_bv());
+          it->second = d_bitblaster.bv_not(bits(cur[0]));
+          break;
+
+        case Kind::AND:
+        case Kind::BV_AND:
+          assert(cur.kind() != Kind::NOT || type.is_bool());
+          assert(cur.kind() != Kind::BV_NOT || type.is_bv());
+          it->second = d_bitblaster.bv_and(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::OR:
+          assert(type.is_bool());
+          it->second = d_bitblaster.bv_or(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_XOR:
+          it->second = d_bitblaster.bv_xor(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_EXTRACT:
+          assert(type.is_bv());
+          it->second =
+              d_bitblaster.bv_extract(bits(cur[0]), cur.index(0), cur.index(1));
+          break;
+
+        case Kind::EQUAL: {
+          const Type& type0 = cur[0].type();
+          if (type0.is_bool() || type0.is_bv())
+          {
+            it->second = d_bitblaster.bv_eq(bits(cur[0]), bits(cur[1]));
+          }
+          else
+          {
+            // For all other cases we abstract equality as a Boolean constant.
+            it->second = d_bitblaster.bv_constant(1);
+          }
+        }
+        break;
+
+        case Kind::BV_COMP:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_eq(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_ADD:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_add(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_MUL:
+          assert(type.is_bv());
+          // Use more succinct encoding for squares
+          if (cur[0] == cur[1])
+          {
+            it->second = d_bitblaster.bv_mul_square(bits(cur[0]));
+          }
+          else
+          {
+            it->second = d_bitblaster.bv_mul(bits(cur[0]), bits(cur[1]));
+          }
+          break;
+
+        case Kind::BV_ULT:
+          assert(type.is_bool());
+          it->second = d_bitblaster.bv_ult(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_SHL:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_shl(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_SLT:
+          assert(type.is_bool());
+          it->second = d_bitblaster.bv_slt(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_SHR:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_shr(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_ASHR:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_ashr(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::BV_CONCAT:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_concat(bits(cur[0]), bits(cur[1]));
+          break;
+
+        case Kind::ITE:
+          assert(cur[0].type().is_bool());
+          it->second =
+              d_bitblaster.bv_ite(bits(cur[0])[0], bits(cur[1]), bits(cur[2]));
+          break;
+
+        // All other kinds are not included in the score. This includes UDIV and
+        // UREM since bit-blasting them is expensive and the preprocessing pass
+        // does not normalize these operators.
+        default:
+          assert(bv::BvSolver::is_leaf(cur) || cur.kind() == Kind::BV_UDIV
+                 || cur.kind() == Kind::BV_UREM);
+          it->second = type.is_bool()
+                           ? d_bitblaster.bv_constant(1)
+                           : d_bitblaster.bv_constant(type.bv_size());
+          break;
+      }
+    }
+    d_visit.pop_back();
   }
 }
 
-#if 0
-void
-print_coefficients(PassNormalize::CoefficientsMap& coeff)
-{
-  for (const auto& c : coeff)
-  {
-    std::cout << c.first << ": " << c.second << std::endl;
-  }
-}
-#endif
-}  // namespace
+/* -------------------------------------------------------------------------- */
 
 /* === PassNormalize public ================================================= */
 
 PassNormalize::PassNormalize(Env& env,
                              backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr, "no", "normalize"),
-      d_share_aware(d_env.options().pp_normalize_share_aware()),
+      d_rewriter(env, Rewriter::LEVEL_SPECULATIVE, "normalize"),
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
 
 /* -------------------------------------------------------------------------- */
 
-namespace {
-bool
-is_leaf(Kind kind,
-        const Node& node,
-        const PassNormalize::ParentsMap& parents,
-        const PassNormalize::ParentsMap& parents_in_chain)
-{
-  if (node.kind() != kind)
-  {
-    return true;
-  }
-  auto p = parents.find(node);
-  if (p == parents.end()) return false;
-  auto pp = parents_in_chain.find(node);
-  if (pp == parents_in_chain.end()) return false;
-  return pp->second < p->second;
-}
-}  // namespace
-
 void
 PassNormalize::compute_coefficients(const Node& node,
                                     node::Kind kind,
-                                    const ParentsMap& parents,
-                                    CoefficientsMap& coeffs)
+                                    CoefficientsMap& coeffs) const
 {
-  BitVector zero   = BitVector::mk_zero(node.type().bv_size());
+  util::Timer timer(d_stats.time_compute_coefficients);
+  BitVector zero = BitVector::mk_zero(node.type().bv_size());
 
   node_ref_vector nodes;
   unordered_node_ref_set intermediate;
@@ -125,17 +269,6 @@ PassNormalize::compute_coefficients(const Node& node,
       nodes.push_back(cur);
       if (cur.kind() == kind)
       {
-        if (d_share_aware)
-        {
-          // treat as leaf if node of given kind has parent references
-          // from outside the current 'kind' chain
-          assert(d_parents.find(cur) != d_parents.end());
-          assert(parents.find(cur) != parents.end());
-          if (is_leaf(kind, cur, d_parents, parents))
-          {
-            continue;
-          }
-        }
         intermediate.insert(cur);
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
@@ -295,21 +428,25 @@ PassNormalize::mk_node(Kind kind, const CoefficientsMap& coeffs)
 BitVector
 PassNormalize::normalize_add(const Node& node,
                              CoefficientsMap& coeffs,
-                             ParentsMap& parents,
-                             bool keep_value)
+                             bool keep_value,
+                             bool push_neg)
 {
   assert(node.kind() == Kind::BV_ADD);
+  util::Timer timer(d_stats.time_normalize_add);
 
   uint64_t bv_size = node.type().bv_size();
   BitVector bvzero = BitVector::mk_zero(bv_size);
   BitVector value  = bvzero;
 
+  std::unordered_set<Node> cache;
+  // std::cout << "----" << std::endl;
   bool progress;
   do
   {
     progress = false;
-    for (auto& [cur, cur_coeff] : coeffs)
+    for (auto it = coeffs.rbegin(); it != coeffs.rend(); ++it)
     {
+      auto& [cur, cur_coeff] = *it;
       if (cur_coeff.is_zero())
       {
         continue;
@@ -321,35 +458,7 @@ PassNormalize::normalize_add(const Node& node,
         value.ibvadd(cur.value<BitVector>().bvmul(cur_coeff));
         cur_coeff = bvzero;
       }
-      // normalize inverted adders
-      // ~x = ~(x + 1) + 1 = - x - 1
-      else if (cur.is_inverted() && cur[0].kind() == Kind::BV_ADD)
-      {
-        progress = true;
-        CoefficientsMap cfs;
-        BitVector coeff = coeffs.at(cur).bvneg();
-        cur_coeff       = bvzero;
-        compute_coefficients(cur[0], cur[0].kind(), parents, cfs);
-        for (auto& [c, cf] : cfs)
-        {
-          cf.ibvmul(coeff);
-          if (c.is_value())
-          {
-            value.ibvadd(c.value<BitVector>().bvmul(cf));
-          }
-          else
-          {
-            auto [it, inserted] = coeffs.emplace(c, cf);
-            if (!inserted)
-            {
-              it->second.ibvadd(cf);
-            }
-          }
-        }
-        value.ibvadd(coeff);
-        break;
-      }
-      else if (false && cur.is_inverted())
+      else if (cur.is_inverted())
       {
         auto it = coeffs.find(cur[0]);
         if (it != coeffs.end())
@@ -357,6 +466,36 @@ PassNormalize::normalize_add(const Node& node,
           value.ibvadd(cur_coeff.bvneg());
           it->second.ibvsub(cur_coeff);
           cur_coeff = bvzero;
+        }
+        // normalize inverted adders
+        // ~x = ~(x + 1) + 1 = - x - 1
+        else if (push_neg && cur[0].kind() == Kind::BV_ADD)
+        {
+          // std::cout << "cur: " << cur << std::endl;
+          assert(cache.insert(cur).second);
+          progress = true;
+          CoefficientsMap cfs;
+          BitVector coeff = coeffs.at(cur).bvneg();
+          cur_coeff       = bvzero;
+          compute_coefficients(cur[0], cur[0].kind(), cfs);
+          for (auto& [c, cf] : cfs)
+          {
+            cf.ibvmul(coeff);
+            if (c.is_value())
+            {
+              value.ibvadd(c.value<BitVector>().bvmul(cf));
+            }
+            else
+            {
+              auto [it, inserted] = coeffs.emplace(c, cf);
+              if (!inserted)
+              {
+                it->second.ibvadd(cf);
+              }
+            }
+          }
+          value.ibvadd(coeff);
+          break;
         }
       }
     }
@@ -478,7 +617,7 @@ PassNormalize::normalize_coefficients_eq_add(
 
   uint64_t bv_size = value.size();
   NodeManager& nm  = d_env.nm();
-  Node one        = nm.mk_value(BitVector::mk_one(bv_size));
+  Node one         = nm.mk_value(BitVector::mk_one(bv_size));
   BitVector bvzero = BitVector::mk_zero(bv_size);
 
   // move negated occurrences to other side
@@ -511,7 +650,7 @@ PassNormalize::normalize_coefficients_eq_add(
       }
       else
       {
-        neg = cur[0];
+        neg      = cur[0];
         f.second = bvzero;
       }
       if (!neg.is_null())
@@ -550,19 +689,13 @@ PassNormalize::normalize_coefficients_eq(
 
   Kind kind = node0.kind();
 
-  ParentsMap parents;
-  if (d_share_aware)
-  {
-    _count_parents({node0, node1}, kind, parents);
-  }
-
-  compute_coefficients(node0, node0.kind(), parents, coeffs0);
-  compute_coefficients(node1, node1.kind(), parents, coeffs1);
+  compute_coefficients(node0, node0.kind(), coeffs0);
+  compute_coefficients(node1, node1.kind(), coeffs1);
 
   if (kind == Kind::BV_ADD)
   {
-    auto value0 = normalize_add(node0, coeffs0, parents);
-    auto value1 = normalize_add(node1, coeffs1, parents);
+    auto value0 = normalize_add(node0, coeffs0);
+    auto value1 = normalize_add(node1, coeffs1);
     normalize_coefficients_eq_add(coeffs0, coeffs1, value0);
     normalize_coefficients_eq_add(coeffs1, coeffs0, value1);
     value0.ibvsub(value1);
@@ -657,26 +790,26 @@ PassNormalize::_normalize_eq_mul(const CoefficientsMap& coeffs0,
     assert(BitVector::fits_in_size(64, f.second.str(), 2));
     lhs.insert(lhs.end(), f.second.to_uint64(true), f.first);
   }
-    for (const auto& f : coeffs1)
+  for (const auto& f : coeffs1)
+  {
+    if (f.second.is_zero())
     {
-      if (f.second.is_zero())
-      {
-        continue;
-      }
-      assert(BitVector::fits_in_size(64, f.second.str(), 2));
-      rhs.insert(rhs.end(), f.second.to_uint64(true), f.first);
+      continue;
     }
+    assert(BitVector::fits_in_size(64, f.second.str(), 2));
+    rhs.insert(rhs.end(), f.second.to_uint64(true), f.first);
+  }
 
-    if (lhs.empty())
-    {
-      lhs.push_back(nm.mk_value(
-          BitVector::mk_one(coeffs0.begin()->first.type().bv_size())));
-    }
-    if (rhs.empty())
-    {
-      rhs.push_back(nm.mk_value(
-          BitVector::mk_one(coeffs1.begin()->first.type().bv_size())));
-    }
+  if (lhs.empty())
+  {
+    lhs.push_back(nm.mk_value(
+        BitVector::mk_one(coeffs0.begin()->first.type().bv_size())));
+  }
+  if (rhs.empty())
+  {
+    rhs.push_back(nm.mk_value(
+        BitVector::mk_one(coeffs1.begin()->first.type().bv_size())));
+  }
 
   std::sort(lhs.begin(), lhs.end());
   std::sort(rhs.begin(), rhs.end());
@@ -688,7 +821,7 @@ PassNormalize::_normalize_eq_mul(const CoefficientsMap& coeffs0,
   {
     left = nm.mk_node(Kind::BV_MUL, {lhs[n - i - 1], left});
   }
-  n = rhs.size();
+  n     = rhs.size();
   right = rhs[n - 1];
   for (size_t i = 1; i < n; ++i)
   {
@@ -729,8 +862,8 @@ PassNormalize::_normalize_eq_add(PassNormalize::CoefficientsMap& coeffs0,
 
   for (const auto& f : coeffs0)
   {
-    const Node& cur         = f.first;
-    const BitVector& coeff  = f.second;
+    const Node& cur        = f.first;
+    const BitVector& coeff = f.second;
     if (coeff.is_zero())
     {
       continue;
@@ -747,8 +880,8 @@ PassNormalize::_normalize_eq_add(PassNormalize::CoefficientsMap& coeffs0,
   }
   for (const auto& f : coeffs1)
   {
-    const Node& cur         = f.first;
-    const BitVector& coeff  = f.second;
+    const Node& cur        = f.first;
+    const BitVector& coeff = f.second;
     if (coeff.is_zero())
     {
       continue;
@@ -818,6 +951,23 @@ namespace {
 
 }  // namespace
 
+void
+PassNormalize::remove_zero_coeffs(PassNormalize::CoefficientsMap& coeffs)
+{
+  auto it = coeffs.begin();
+  while (it != coeffs.end())
+  {
+    if (it->second.is_zero())
+    {
+      it = coeffs.erase(it);
+    }
+    else
+    {
+      ++it;
+    }
+  }
+}
+
 std::pair<Node, Node>
 PassNormalize::normalize_common(Kind kind,
                                 PassNormalize::CoefficientsMap& lhs,
@@ -846,31 +996,8 @@ PassNormalize::normalize_common(Kind kind,
     }
   }
 
-  // Remove zero coefficients
-  auto it = lhs.begin();
-  while (it != lhs.end())
-  {
-    if (it->second.is_zero())
-    {
-      it = lhs.erase(it);
-    }
-    else
-    {
-      ++it;
-    }
-  }
-  it = rhs.begin();
-  while (it != rhs.end())
-  {
-    if (it->second.is_zero())
-    {
-      it = rhs.erase(it);
-    }
-    else
-    {
-      ++it;
-    }
-  }
+  remove_zero_coeffs(lhs);
+  remove_zero_coeffs(rhs);
 
   Node left, right;
   if (!lhs.empty())
@@ -913,20 +1040,12 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
     }
   }
 
-  // Note: parents could also be computed based on node0 and node1, but
-  //       get_top() and rebuild_top() do not handle this case yet.
-  ParentsMap parents;
-  if (d_share_aware)
-  {
-    _count_parents({top_lhs, top_rhs}, kind, parents);
-  }
-
   CoefficientsMap lhs, rhs;
-  compute_coefficients(top_lhs, kind, parents, lhs);
-  compute_coefficients(top_rhs, kind, parents, rhs);
+  compute_coefficients(top_lhs, kind, lhs);
+  compute_coefficients(top_rhs, kind, rhs);
   if (top_lhs.kind() == Kind::BV_ADD)
   {
-    normalize_add(top_lhs, lhs, parents, true);
+    normalize_add(top_lhs, lhs, true, true);
   }
   else if (top_lhs.kind() == Kind::BV_MUL)
   {
@@ -934,7 +1053,7 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
   }
   if (top_rhs.kind() == Kind::BV_ADD)
   {
-    normalize_add(top_rhs, rhs, parents, true);
+    normalize_add(top_rhs, rhs, true, true);
   }
   else if (top_rhs.kind() == Kind::BV_MUL)
   {
@@ -944,8 +1063,45 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
   auto rebuilt_left  = rebuild_top(node0, top_lhs, left);
   auto rebuilt_right = rebuild_top(node1, top_rhs, right);
 
+  // std::cout << "normalization done" << std::endl;
   return {nm.mk_node(parent_kind, {rebuilt_left, rebuilt_right}),
           rebuilt_left != node0 || rebuilt_right != node1};
+}
+
+std::pair<Node, bool>
+PassNormalize::normalize_comm_assoc(const Node& node)
+{
+  NodeManager& nm = d_env.nm();
+  assert(node.kind() == Kind::BV_ADD || node.kind() == Kind::BV_MUL);
+
+  Kind kind = node.kind();
+
+  CoefficientsMap coeffs;
+  // std::cout << "compute coeff lhs: " << std::flush;
+  compute_coefficients(node, kind, coeffs);
+  size_t coeffs_size = coeffs.size();
+  // std::cout << "done" << std::endl;;
+  if (kind == Kind::BV_ADD)
+  {
+    normalize_add(node, coeffs, true, true);
+  }
+  else if (kind == Kind::BV_MUL)
+  {
+    normalize_mul(node, coeffs, true);
+  }
+  remove_zero_coeffs(coeffs);
+#if 1
+  if (coeffs_size <= coeffs.size())
+  {
+    return {node, false};
+  }
+#endif
+  Node res = coeffs.empty()
+                 ? nm.mk_value(BitVector::mk_zero(node.type().bv_size()))
+                 : mk_node(kind, coeffs);
+
+  // std::cout << "normalization done" << std::endl;
+  return {res, res != node};
 }
 
 Node
@@ -958,6 +1114,22 @@ PassNormalize::get_top(const Node& node)
     k = cur.kind();
     if (k == Kind::BV_NOT || k == Kind::BV_SHL || k == Kind::BV_SHR
         || k == Kind::BV_EXTRACT)
+    {
+      cur = cur[0];
+    }
+    else if (k == Kind::BV_CONCAT && cur[0].is_value())
+    {
+      cur = cur[1];
+    }
+    else if (k == Kind::BV_CONCAT && cur[1].is_value())
+    {
+      cur = cur[0];
+    }
+    else if (k == Kind::BV_AND && cur[0].is_value())
+    {
+      cur = cur[1];
+    }
+    else if (k == Kind::BV_AND && cur[1].is_value())
     {
       cur = cur[0];
     }
@@ -1001,6 +1173,30 @@ PassNormalize::rebuild_top(const Node& node,
         {
           cache.emplace(cur[i], cur[i]);
         }
+        continue;
+      }
+      else if (k == Kind::BV_CONCAT && cur[0].is_value())
+      {
+        visit.push_back(cur[1]);
+        cache.emplace(cur[0], cur[0]);
+        continue;
+      }
+      else if (k == Kind::BV_CONCAT && cur[1].is_value())
+      {
+        visit.push_back(cur[0]);
+        cache.emplace(cur[1], cur[1]);
+        continue;
+      }
+      else if (k == Kind::BV_AND && cur[0].is_value())
+      {
+        visit.push_back(cur[1]);
+        cache.emplace(cur[0], cur[0]);
+        continue;
+      }
+      else if (k == Kind::BV_AND && cur[1].is_value())
+      {
+        visit.push_back(cur[0]);
+        cache.emplace(cur[1], cur[1]);
         continue;
       }
       else
@@ -1059,11 +1255,11 @@ print_diff(const std::unordered_map<Kind, uint64_t>& before,
            const std::unordered_map<Kind, uint64_t>& after)
 {
   std::unordered_set<Kind> kinds;
-  std::cout << "*** before:" << std::endl;
+  //std::cout << "*** before:" << std::endl;
   std::vector<std::pair<int64_t, Kind>> pairs;
   for (auto [k, v] : before)
   {
-    std::cout << v << ": " << k << std::endl;
+    //std::cout << v << ": " << k << std::endl;
     auto it = after.find(k);
     if (it != after.end())
     {
@@ -1079,18 +1275,65 @@ print_diff(const std::unordered_map<Kind, uint64_t>& before,
     }
   }
 
-  std::cout << "*** diff:" << std::endl;
+  //std::cout << "*** diff:" << std::endl;
   std::sort(pairs.begin(), pairs.end());
   for (auto [v, k] : pairs)
   {
     if (v != 0)
     {
-      std::cout << std::showpos << v << std::noshowpos << ": " << k
+      //std::cout << std::showpos << v << std::noshowpos << ": " << k
                 << std::endl;
     }
   }
 }
 #endif
+
+Node
+rewrite_term(NodeManager& nm,
+             const Node& cur,
+             const std::vector<Node>& children)
+{
+  Kind k = cur.kind();
+
+  if (k == Kind::EQUAL)
+  {
+    Node mul, val;
+    if (children[0].kind() == Kind::BV_MUL)
+    {
+      mul = children[0];
+      val = children[1];
+    }
+    else if (children[1].kind() == Kind::BV_MUL)
+    {
+      mul = children[1];
+      val = children[0];
+    }
+
+    if (!val.is_null() && val.is_value() && val.value<BitVector>().is_zero())
+    {
+      Node udiv, t;
+      if (mul[0].kind() == Kind::BV_UDIV)
+      {
+        udiv = mul[0];
+        t    = mul[1];
+      }
+      else if (mul[1].kind() == Kind::BV_UDIV)
+      {
+        udiv = mul[1];
+        t    = mul[0];
+      }
+
+      if (!udiv.is_null() && udiv[1] == t)
+      {
+        return nm.mk_node(Kind::OR,
+                          {nm.mk_node(Kind::EQUAL, {t, val}),
+                           nm.mk_node(Kind::BV_UGT, {t, udiv[0]})});
+      }
+    }
+  }
+
+  return Node();
+}
 
 }  // namespace
 
@@ -1101,112 +1344,490 @@ PassNormalize::apply(AssertionVector& assertions)
   Log(1) << "Apply normalization";
 
   d_cache.clear();
-  assert(d_parents.empty());
-  if (d_share_aware)
-  {
-    for (size_t i = 0, size = assertions.size(); i < size; ++i)
-    {
-      count_parents(assertions[i], d_parents, d_parents_cache);
-    }
-  }
 
+  bool to_process   = false;
+  bool inconsistent = false;
+  std::vector<Node> assertions_pass1;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    if (!processed(assertion))
+    if (!processed(assertion) && !inconsistent)
     {
-      const Node& processed = process(assertion);
-      if (assertions[i] != processed)
+      const Node& processed = d_env.rewriter().rewrite(process(assertion));
+      assertions_pass1.push_back(processed);
+      to_process = true;
+      if (processed.is_value() && !processed.value<bool>())
       {
-        assertions.replace(i, processed);
-        cache_assertion(processed);
-        Log(2) << "Found normalization: " << assertions[i] << " -> "
-               << processed;
+        inconsistent = true;
+      }
+    }
+    else
+    {
+      assertions_pass1.push_back(assertion);
+    }
+  }
+
+  const std::vector<Node>* processed_assertions = &assertions_pass1;
+  bool replace_assertions                       = false;
+  std::vector<Node> assertions_pass2;
+  // Compute scores for bit widths <= 64
+  if (d_enable_scoring && !inconsistent && to_process)
+  {
+    normalize_adders(assertions_pass1, assertions_pass2);
+
+    util::Timer timer(d_stats.time_score);
+    AigScore score_before, score_pass1, score_pass2;
+    bool pass2_inconsistent = false;
+    for (size_t i = 0, size = assertions.size(); i < size; ++i)
+    {
+      // Only compute score if assertions differ
+      if (assertions[i] != assertions_pass1[i]
+          || assertions[i] == assertions_pass2[i])
+      {
+        score_before.add(assertions[i]);
+        score_pass1.add(assertions_pass1[i]);
+        score_pass2.add(assertions_pass2[i]);
+
+        if (assertions_pass2[i].is_value()
+            && !assertions_pass2[i].value<bool>())
+        {
+          pass2_inconsistent = true;
+          break;
+        }
+      }
+    }
+
+    uint64_t size_before = 0, size_pass1 = 0, size_pass2 = 0;
+    if (pass2_inconsistent)
+    {
+      size_pass1 = 1;
+      size_pass2 = 0;
+    }
+    else
+    {
+      // Incrementally compute AIG score until we know if pass1 or pass2 has
+      // a better score than the original assertions.
+      while (!score_before.done() || !score_pass1.done() || !score_pass2.done())
+      {
+        score_before.process();
+        score_pass1.process();
+        score_pass2.process();
+
+        // Pass1 score computed and is better than original score.
+        if (score_pass1.done() && score_pass1.score() < score_before.score())
+        {
+          break;
+        }
+        // Pass2 score computed and is better than original score.
+        if (score_pass2.done() && score_pass2.score() < score_before.score())
+        {
+          break;
+        }
+        // Original score computed, none of the passes was better.
+        if (score_before.done())
+        {
+          break;
+        }
+      }
+      size_before = score_before.score();
+      size_pass1  = score_pass1.score();
+      size_pass2  = score_pass2.score();
+    }
+
+    if (size_pass2 < size_pass1)
+    {
+      processed_assertions = &assertions_pass2;
+    }
+
+    size_t size_after  = std::min(size_pass1, size_pass2);
+    replace_assertions = size_after < size_before;
+
+    Log(1) << "AIG size initial: " << size_before;
+    Log(1) << "AIG size pass 1:  " << size_pass1;
+    Log(1) << "AIG size pass 2:  " << size_pass2;
+  }
+
+  if (replace_assertions || inconsistent)
+  {
+    const std::vector<Node>& assertions_normalized = *processed_assertions;
+    assert(assertions_normalized.size() == assertions.size());
+    for (size_t i = 0, size = assertions.size(); i < size; ++i)
+    {
+      cache_assertion(assertions[i]);
+      if (assertions[i] != assertions_normalized[i])
+      {
+        cache_assertion(assertions_normalized[i]);
+        assertions.replace(i, assertions_normalized[i]);
+        ++d_stats.num_normalized_assertions;
       }
     }
   }
 
-  d_parents.clear();
-  d_parents_cache.clear();
   d_cache.clear();
 }
+
+namespace {
+/**
+ * Distributive multiplication (recursive up to a given depth).
+ *
+ * - (bvmul (bvshl x s) r) -> (bvshl (bvmul x r) s)
+ * - (bvmul l (bvshl x s)) -> (bvshl (bvmul x l) s)
+ * - (bvmul (bvadd x s) r) -> (bvadd (bvmul x r) (bvmul (s r)))
+ * - (bvmul l (bvadd x s)) -> (bvadd (bvmul x l) (bvmul (s l)))
+ *
+ * @param left  The left operand of the multiplication.
+ * @param right The right operand of the multiplication.
+ * @param depth The recursion depth.
+ * @return The resulting node.
+ */
+Node
+distrib_mul(NodeManager& nm, const Node& left, const Node& right, uint8_t depth)
+{
+  if (depth && left.kind() == Kind::BV_SHL && !right.is_value())
+  {
+    return nm.mk_node(Kind::BV_SHL,
+                      {distrib_mul(nm, left[0], right, depth - 1), left[1]});
+  }
+  if (depth && right.kind() == Kind::BV_SHL && !left.is_value())
+  {
+    return nm.mk_node(Kind::BV_SHL,
+                      {distrib_mul(nm, right[0], left, depth - 1), right[1]});
+  }
+  if (depth && left.kind() == Kind::BV_ADD && !right.is_value())
+  {
+    return nm.mk_node(Kind::BV_ADD,
+                      {distrib_mul(nm, left[0], right, depth - 1),
+                       distrib_mul(nm, left[1], right, depth - 1)});
+  }
+  if (depth && right.kind() == Kind::BV_ADD && !left.is_value())
+  {
+    return nm.mk_node(Kind::BV_ADD,
+                      {distrib_mul(nm, right[0], left, depth - 1),
+                       distrib_mul(nm, right[1], left, depth - 1)});
+  }
+  return nm.mk_node(Kind::BV_MUL, {left, right});
+}
+
+}  // namespace
 
 Node
 PassNormalize::process(const Node& node)
 {
   NodeManager& nm = d_env.nm();
-  node_ref_vector visit{node};
+  Node _node      = d_rewriter.rewrite(node);
+  bool normalized = false;
   do
   {
-    const Node& cur     = visit.back();
-    auto [it, inserted] = d_cache.emplace(cur, Node());
-    if (inserted)
+    normalized = false;
+    node_ref_vector visit{_node};
+
+    do
     {
-      visit.insert(visit.end(), cur.begin(), cur.end());
-      continue;
-    }
-    else if (it->second.is_null())
-    {
-      std::vector<Node> children;
-      for (const Node& child : cur)
+      const Node& cur     = visit.back();
+      auto [it, inserted] = d_cache.emplace(cur, Node());
+      if (inserted)
       {
-        auto itc = d_cache.find(child);
-        assert(itc != d_cache.end());
-        assert(!itc->second.is_null());
-        children.push_back(itc->second);
+        // Do not use scoring for bit-vectors larger than 64.
+        if (d_enable_scoring && cur.type().is_bv() && cur.type().bv_size() > 64)
+        {
+          d_enable_scoring = false;
+          Log(1) << "Disable AIG scoring, found bit-vector of size "
+                 << cur.type().bv_size();
+        }
+        visit.insert(visit.end(), cur.begin(), cur.end());
+        continue;
+      }
+      else if (it->second.is_null())
+      {
+        std::vector<Node> children;
+        for (const Node& child : cur)
+        {
+          auto itc = d_cache.find(child);
+          assert(itc != d_cache.end());
+          assert(!itc->second.is_null());
+          children.push_back(itc->second);
+        }
+
+        Kind k = cur.kind();
+        if (k == Kind::EQUAL && children[0].kind() == children[1].kind()
+            && (children[0].kind() == Kind::BV_ADD
+                || children[0].kind() == Kind::BV_MUL))
+        {
+          auto [res, norm] = normalize_eq_add_mul(children[0], children[1]);
+          if (norm)
+          {
+            d_stats.num_normalizations += 1;
+            normalized = true;
+          }
+          it->second = res;
+        }
+        else if (k == Kind::EQUAL)
+        {
+          Node rw = rewrite_term(nm, cur, children);
+          if (rw.is_null())
+          {
+            auto [res, norm] =
+                normalize_comm_assoc(k, children[0], children[1]);
+            it->second = res;
+            if (norm)
+            {
+              d_stats.num_normalizations += 1;
+              normalized = true;
+            }
+          }
+          else
+          {
+            it->second = rw;
+          }
+        }
+        else if (k == Kind::BV_ULT || k == Kind::BV_SLT)
+        {
+          auto [res, norm] = normalize_comm_assoc(k, children[0], children[1]);
+          it->second       = res;
+          if (norm)
+          {
+            d_stats.num_normalizations += 1;
+            normalized = true;
+          }
+        }
+        else if (k == Kind::BV_MUL)
+        {
+          it->second =
+              d_rewriter.rewrite(distrib_mul(nm, children[0], children[1], 5));
+        }
+        else
+        {
+          it->second = node::utils::rebuild_node(nm, cur, children);
+        }
+      }
+      visit.pop_back();
+    } while (!visit.empty());
+    if (normalized)
+    {
+      _node = d_cache.at(_node);
+    }
+  } while (normalized);
+  auto it = d_cache.find(_node);
+  assert(it != d_cache.end());
+  return d_rewriter.rewrite(it->second);
+}
+
+namespace {
+
+Node
+cmp_repr(const Node& node)
+{
+  std::reference_wrapper<const Node> n = node;
+  while (n.get().kind() == Kind::BV_CONCAT || n.get().kind() == Kind::BV_EXTRACT
+         || n.get().kind() == Kind::BV_NOT)
+  {
+    if (n.get().kind() == Kind::BV_CONCAT)
+    {
+      n = n.get()[1];
+    }
+    else
+    {
+      n = n.get()[0];
+    }
+  }
+  return n;
+}
+
+bool
+sort_cmp(const std::unordered_map<Node, std::vector<uint64_t>>& occs_sort,
+         const Node& a,
+         const Node& b)
+{
+  Node ra        = cmp_repr(a);
+  Node rb        = cmp_repr(b);
+  const auto& va = occs_sort.at(ra);
+  const auto& vb = occs_sort.at(rb);
+
+  if (va != vb)
+  {
+    for (size_t i = 0, size = std::min(va.size(), vb.size()); i < size; ++i)
+    {
+      if (va[i] != vb[i])
+      {
+        return va[i] < vb[i];
+      }
+    }
+    if (va.size() != vb.size())
+    {
+      return va.size() > vb.size();
+    }
+  }
+  return ra.id() < rb.id() || (ra.id() == rb.id() && a.id() < b.id());
+}
+
+}  // namespace
+
+void
+PassNormalize::normalize_adders(const std::vector<Node>& assertions,
+                                std::vector<Node>& norm_assertions)
+{
+  util::Timer timer(d_stats.time_adder_chains);
+  std::map<Node, CoefficientsMap> adders;
+  collect_adders(assertions, adders);
+
+  for (auto& [chain, cm] : adders)
+  {
+    remove_zero_coeffs(cm);
+  }
+
+  std::vector<std::pair<Node, size_t>> adder_chain_sizes;
+
+  // Map element to list of chains it occurs in
+  std::unordered_map<Node, std::vector<Node>> elements;
+  std::unordered_map<Node, std::unordered_set<Node>> elements_sort;
+  for (const auto& [chain, coeffs] : adders)
+  {
+    for (const auto& [n, coeff] : coeffs)
+    {
+      assert(!coeff.is_zero());
+      assert(!n.is_null());
+      elements[n].push_back(chain);
+      elements_sort[cmp_repr(n)].insert(chain);
+    }
+    adder_chain_sizes.emplace_back(chain, coeffs.size());
+  }
+
+  // Assign ids for each chain based on the number of elements in the chain
+  std::sort(adder_chain_sizes.begin(),
+            adder_chain_sizes.end(),
+            [](const auto& a, const auto& b) { return a.second > b.second; });
+
+  // Assign ids
+  std::unordered_map<Node, uint64_t> id_map;
+  for (const auto& [chain, _] : adder_chain_sizes)
+  {
+    id_map.emplace(chain, id_map.size());
+  }
+
+  // Map element to list of adder chains it occurs in
+  std::vector<std::pair<Node, std::vector<uint64_t>>> occs;
+  for (auto& [n, chains] : elements)
+  {
+    occs.emplace_back(n, std::vector<uint64_t>{});
+    auto& vec = occs.back().second;
+    assert(!chains.empty());
+    for (const Node& add : chains)
+    {
+      vec.push_back(id_map[add]);
+    }
+    std::sort(vec.begin(), vec.end());
+    assert(vec.size() == chains.size());
+    assert(!occs.back().first.is_null());
+  }
+
+  std::unordered_map<Node, std::vector<uint64_t>> occs_sort;
+  for (auto& [n, chains] : elements_sort)
+  {
+    auto [it, inserted] = occs_sort.emplace(n, std::vector<uint64_t>{});
+    assert(inserted);
+    auto& vec = it->second;
+    assert(!chains.empty());
+    for (const Node& add : chains)
+    {
+      vec.push_back(id_map[add]);
+    }
+    std::sort(vec.begin(), vec.end());
+    assert(vec.size() == chains.size());
+  }
+
+  // Sort elements by id vectors, tie break with element id
+  std::sort(
+      occs.begin(), occs.end(), [&occs_sort](const auto& a, const auto& b) {
+        return sort_cmp(occs_sort, a.first, b.first);
+      });
+
+  NodeManager& nm = d_env.nm();
+  std::unordered_map<Node, Node> results;
+  for (const auto& [element, _] : occs)
+  {
+    for (const auto& chain : elements[element])
+    {
+      auto [it, inserted] = results.emplace(chain, element);
+      if (!inserted)
+      {
+        it->second = nm.mk_node(Kind::BV_ADD, {element, it->second});
+      }
+      auto& coeff = adders[chain][element];
+      coeff.ibvdec();
+    }
+  }
+
+  for (auto& [chain, res] : results)
+  {
+    for (const auto& [n, rem_coeff] : adders[chain])
+    {
+      if (rem_coeff.is_zero())
+      {
+        continue;
       }
 
-      Kind k = cur.kind();
-      if (k == Kind::EQUAL && children[0].kind() == children[1].kind()
-          && (children[0].kind() == Kind::BV_ADD
-              || children[0].kind() == Kind::BV_MUL))
+      Node arg = rem_coeff.is_one()
+                     ? n
+                     : nm.mk_node(Kind::BV_MUL, {nm.mk_value(rem_coeff), n});
+      res      = nm.mk_node(Kind::BV_ADD, {arg, res});
+    }
+  }
+
+  std::unordered_map<Node, Node> subst_cache;
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  {
+    norm_assertions.push_back(d_env.rewriter().rewrite(
+        substitute(assertions[i], results, subst_cache)));
+  }
+}
+
+void
+PassNormalize::collect_adders(const std::vector<Node>& assertions,
+                              std::map<Node, CoefficientsMap>& adders)
+{
+  node_ref_vector visit{assertions.begin(), assertions.end()};
+  unordered_node_ref_set cache;
+
+  do
+  {
+    const Node& cur = visit.back();
+    visit.pop_back();
+
+    if (cache.insert(cur).second)
+    {
+      if (cur.kind() == Kind::BV_ADD)
       {
-        auto [res, normalized] = normalize_eq_add_mul(children[0], children[1]);
-        it->second = res;
-        if (normalized) d_stats.num_normalizations += 1;
+        auto [it, inserted] = adders.emplace(cur, CoefficientsMap());
+        assert(inserted);
+        compute_coefficients(cur, cur.kind(), it->second);
+        for (const auto& [node, coeff] : it->second)
+        {
+          visit.push_back(node);
+        }
       }
-#if 0  // Disable code until new normalization code is merged back.
-      else if (k == Kind::EQUAL || k == Kind::BV_ULT || k == Kind::BV_SLT)
-      {
-        auto [res, normalized] =
-            normalize_comm_assoc(k, children[0], children[1]);
-        it->second = res;
-        if (normalized) d_stats.num_normalizations += 1;
-      }
-      else if (k == Kind::BV_NOT && children[0].kind() == Kind::BV_CONCAT
-               && children[0][0].kind() == Kind::BV_NOT
-               && children[0][1].kind() == Kind::BV_NOT
-               && (!d_share_aware || d_parents[children[0]] == 1))
-      {
-        it->second =
-            nm.mk_node(Kind::BV_CONCAT, {children[0][0][0], children[0][1][0]});
-      }
-#endif
       else
       {
-        it->second = node::utils::rebuild_node(nm, cur, children);
-      }
-
-      if (d_share_aware)
-      {
-        // Update parent count for new node
-        d_parents[it->second] = d_parents[cur];
-        d_parents_cache.insert(it->second);
+        visit.insert(visit.end(), cur.begin(), cur.end());
       }
     }
-    visit.pop_back();
   } while (!visit.empty());
-  auto it = d_cache.find(node);
-  assert(it != d_cache.end());
-  return d_env.rewriter().rewrite(it->second);
 }
 
 /* --- PassNormalize private ------------------------------------------------ */
 
 PassNormalize::Statistics::Statistics(util::Statistics& stats,
                                       const std::string& prefix)
-    : num_normalizations(
-        stats.new_stat<uint64_t>(prefix + "num_normalizations"))
+    : time_normalize_add(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_normalize_add")),
+      time_compute_coefficients(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_compute_coeff")),
+      time_adder_chains(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_adder_chains")),
+      time_score(stats.new_stat<util::TimerStatistic>(prefix + "time_score")),
+      num_normalizations(
+          stats.new_stat<uint64_t>(prefix + "num_normalizations")),
+      num_normalized_assertions(
+          stats.new_stat<uint64_t>(prefix + "num_normalized_assertions"))
 {
 }
 

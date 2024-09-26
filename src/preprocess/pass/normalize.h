@@ -15,6 +15,7 @@
 
 #include "backtrack/unordered_map.h"
 #include "preprocess/preprocessing_pass.h"
+#include "rewrite/rewriter.h"
 #include "util/statistics.h"
 
 namespace bzla::preprocess::pass {
@@ -22,8 +23,7 @@ namespace bzla::preprocess::pass {
 class PassNormalize : public PreprocessingPass
 {
  public:
-  using ParentsMap      = std::unordered_map<Node, uint64_t>;
-  using CoefficientsMap = std::unordered_map<Node, BitVector>;
+  using CoefficientsMap = std::map<Node, BitVector>;
 
   PassNormalize(Env& env, backtrack::BacktrackManager* backtrack_mgr);
 
@@ -37,20 +37,12 @@ class PassNormalize : public PreprocessingPass
    * c d)) would result in {{a -> 1}, {c -> 1}, {d -> 1}}, and (bvmul a (bvadd
    * c d)) in {{a -> 1}, {(bvadd c d) -> 1}}.
    *
-   * @note If parents are given (share aware normalization), we treat subterms
-   *       of the same kind as the top node as leafs if they have parents
-   *       outside of this chain.
-   *
    * @param node The top node.
-   * @param parents The parents count of the equality over adders/multipliers
-   *                this node is one of the operands of. Empty if we do
-   *                not normalize in a share aware manner.
    * @param coeffs The resulting map from node to its occurrence count.
    */
   void compute_coefficients(const Node& node,
                             node::Kind kind,
-                            const std::unordered_map<Node, uint64_t>& parents,
-                            CoefficientsMap& coeffs);
+                            CoefficientsMap& coeffs) const;
 
   /**
    * Factor out common subterms of given left hand side and right hand side
@@ -74,7 +66,6 @@ class PassNormalize : public PreprocessingPass
    * @param node The adder node.
    * @param coeffs The coefficients of the adder as determined by
    *               compute_coefficients().
-   * @param parents The parents information of this adder.
    * @return A bit-vector value representing the summarized, normalized leaf
    *         values of the given adder. After normalize_add() is called, it
    *         can be asserted that no values with a coefficient > 0 occur
@@ -82,8 +73,8 @@ class PassNormalize : public PreprocessingPass
    */
   BitVector normalize_add(const Node& node,
                           CoefficientsMap& coeffs,
-                          ParentsMap& parents,
-                          bool keep_value = false);
+                          bool keep_value = false,
+                          bool push_neg   = true);
   /**
    * Normalize factors for bit-vector and.
    * @param node The adder node.
@@ -175,6 +166,9 @@ class PassNormalize : public PreprocessingPass
                                              const Node& node0,
                                              const Node& node1);
 
+  void remove_zero_coeffs(CoefficientsMap& coeffs);
+  std::pair<Node, bool> normalize_comm_assoc(const Node& node);
+
   /**
    * Helper to normalize common parts of lhs and rhs.
    *
@@ -202,14 +196,10 @@ class PassNormalize : public PreprocessingPass
    */
   Node rebuild_top(const Node& node, const Node& top, const Node& normalized);
 
-  void collect_adders(const Node& assertion);
-
-  /**
-   * True to detect occurrences > 1, i.e., nodes of given kind that have
-   * multiple parents. If true, we do not normalize such nodes to avoid
-   * blow-up.
-   */
-  bool d_share_aware = false;
+  void normalize_adders(const std::vector<Node>& assertions,
+                        std::vector<Node>& norm_assertions);
+  void collect_adders(const std::vector<Node>& assertions,
+                      std::map<Node, CoefficientsMap>& adders);
 
   /**
    * Cache of processed nodes that maybe shared across substitutions.
@@ -217,22 +207,26 @@ class PassNormalize : public PreprocessingPass
    */
   std::unordered_map<Node, Node> d_cache;
 
-  /**
-   * Cache of parents count for currently reachable nodes, populated for the
-   * duration of a call to apply().
-   */
-  std::unordered_map<Node, uint64_t> d_parents;
-
-  std::unordered_set<Node> d_parents_cache;
-
   std::vector<Node> d_adder_chains;
   std::unordered_map<Node, uint64_t> d_adder_chains_length;
   std::unordered_set<Node> d_adder_chains_cache;
 
+  /** A rewriter configured specifically for normalization rewrites. */
+  Rewriter d_rewriter;
+
+  /** Indicates whether we compute a bit-blasting score. */
+  bool d_enable_scoring = true;
+
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
+    Statistics(util::Statistics& stats);
+    util::TimerStatistic& time_normalize_add;
+    util::TimerStatistic& time_compute_coefficients;
+    util::TimerStatistic& time_adder_chains;
+    util::TimerStatistic& time_score;
     uint64_t& num_normalizations;
+    uint64_t& num_normalized_assertions;
   } d_stats;
 };
 

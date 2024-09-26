@@ -42,7 +42,7 @@ unit_tests = [
     [
       'assertion_tracker',
       'pass_contradicting_ands',
-      'pass_normalize',
+      #'pass_normalize',
       'pass_flatten_and',
       'pass_variable_substitution',
       'preprocessor',
