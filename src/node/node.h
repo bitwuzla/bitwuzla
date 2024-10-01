@@ -206,6 +206,9 @@ class Node
   /** @return Node info flags. */
   const node::NodeInfo& node_info() const;
 
+  /** @return Node reference counter. */
+  uint32_t refs() const;
+
  private:
   Node(node::NodeData* data);
 

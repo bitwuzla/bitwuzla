@@ -291,6 +291,12 @@ Node::node_info() const
   return d_data->info();
 }
 
+uint32_t
+Node::refs() const
+{
+  return d_data->refs();
+}
+
 /* --- Node private -------------------------------------------------------- */
 
 Node::Node(node::NodeData* data) : d_data(data)

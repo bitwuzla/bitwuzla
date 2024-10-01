@@ -221,6 +221,9 @@ class NodeData
   /** @return Node info flags. */
   auto& info() { return d_info; }
 
+  /** @return Node reference counter. */
+  uint32_t refs() const { return d_refs; }
+
  private:
   /** @return Children payload of this node. */
   PayloadChildren& payload_children()
