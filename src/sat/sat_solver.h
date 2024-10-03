@@ -81,6 +81,11 @@ class SatSolver
    * @return The version of the underly ing SAT solver.
    */
   virtual const char *get_version() const = 0;
+
+  /**
+   * Set the number of threads in SAT solver.
+   */
+  virtual void set_num_threads(uint32_t t) const {};
 };
 
 }  // namespace bzla::sat
