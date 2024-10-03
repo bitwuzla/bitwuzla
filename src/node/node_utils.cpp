@@ -250,23 +250,11 @@ rebuild_node(NodeManager& nm,
     changed |= iit->second != child;
   }
 
-  if (!changed || node.num_children() == 0)
+  if (!changed)
   {
     return node;
   }
-  else if (node.kind() == Kind::CONST_ARRAY)
-  {
-    assert(children.size() == 1);
-    return nm.mk_const_array(node.type(), children[0]);
-  }
-  else
-  {
-    if (node.num_indices() > 0)
-    {
-      return nm.mk_node(node.kind(), children, node.indices());
-    }
-    return nm.mk_node(node.kind(), children);
-  }
+  return rebuild_node(nm, node, children);
 }
 
 Node
