@@ -60,6 +60,11 @@ class NodeUniqueTable
 
     // Create new node and insert
     NodeData* d = NodeData::alloc(value);
+    d_memory_usage += d->d_alloc_size;
+    if (d_memory_usage > d_max_memory_usage)
+    {
+      d_max_memory_usage = d_memory_usage;
+    }
     if (needs_resize())
     {
       resize();
@@ -75,6 +80,9 @@ class NodeUniqueTable
 
   /** Delete node data from unique table. */
   void erase(const NodeData* d);
+
+  uint64_t memory_usage() const { return d_memory_usage; }
+  uint64_t max_memory_usage() const { return d_max_memory_usage; }
 
  private:
   static constexpr std::array<size_t, 4> s_primes = {
@@ -144,6 +152,9 @@ class NodeUniqueTable
   size_t d_num_elements = 0;
   /** Hash table buckets. */
   std::vector<NodeData*> d_buckets;
+
+  uint64_t d_memory_usage     = 0;
+  uint64_t d_max_memory_usage = 0;
 };
 
 }  // namespace bzla::node

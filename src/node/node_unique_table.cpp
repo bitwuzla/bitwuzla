@@ -61,6 +61,11 @@ NodeUniqueTable::find_or_insert(Kind kind,
 
   // Create new node and insert
   NodeData* d = NodeData::alloc(kind, children, indices);
+  d_memory_usage += d->d_alloc_size;
+  if (d_memory_usage > d_max_memory_usage)
+  {
+    d_max_memory_usage = d_memory_usage;
+  }
   if (needs_resize())
   {
     resize();
@@ -105,6 +110,7 @@ NodeUniqueTable::erase(const NodeData* d)
     prev->d_next = cur->d_next;
   }
   --d_num_elements;
+  d_memory_usage -= d->d_alloc_size;
 }
 
 /* --- NodeUniqueTable private ---------------------------------------------- */

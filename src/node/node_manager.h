@@ -199,6 +199,12 @@ class NodeManager
 
   const auto& statistics() const { return d_stats; }
 
+  uint64_t memory_usage() const { return d_unique_table.memory_usage(); }
+  uint64_t max_memory_usage() const
+  {
+    return d_unique_table.max_memory_usage();
+  }
+
  private:
   /**
    * Initialize node data.

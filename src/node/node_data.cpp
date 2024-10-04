@@ -35,6 +35,7 @@ NodeData::alloc(Kind kind, const std::optional<std::string>& symbol)
     throw std::bad_alloc();
   }
   data->d_kind     = kind;
+  data->d_alloc_size = size;
   auto& payload    = data->payload_symbol();
   payload.d_symbol = symbol;
   return data;
@@ -71,6 +72,7 @@ NodeData::alloc(Kind kind,
     throw std::bad_alloc();
   }
   data->d_kind = kind;
+  data->d_alloc_size = size + payload_size;
 
   // Connect children payload
   if (!children.empty())

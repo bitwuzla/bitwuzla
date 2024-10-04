@@ -463,9 +463,7 @@ Preprocessor::print_statistics(const std::string& pass)
          << std::setw(10) << nm_stats.d_num_node_data
          << std::setw(10) << nm_stats.d_num_node_data_dealloc
          << std::setw(8)
-         // Note: this is just a lower bound since it does not consider the
-         //       payload memory of node data.
-         << nm_stats.d_num_node_data * sizeof(node::NodeData) / mb;
+         << d_env.nm().memory_usage() / mb;
   // clang-format on
 }
 
@@ -507,7 +505,7 @@ Preprocessor::print_statistics(const PreprocessingPass& pass,
          << std::setw(10) << nm_stats.d_num_node_data
          << std::setw(10) << nm_stats.d_num_node_data_dealloc
          << std::setw(8)
-         << nm_stats.d_num_node_data * sizeof(node::NodeData) / mb;
+         << d_env.nm().memory_usage() / mb;
   // clang-format on
 }
 

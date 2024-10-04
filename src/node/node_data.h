@@ -88,6 +88,7 @@ class NodeData
       throw std::bad_alloc();
     }
     data->d_kind = Kind::VALUE;
+    data->d_alloc_size = size + payload_size;
 
     auto& payload   = data->payload_value<T>();
     payload.d_value = value;
@@ -300,6 +301,8 @@ class NodeData
   Kind d_kind;
   /** Node info flags. */
   NodeInfo d_info;
+  /** Size allocated for this node. */
+  uint16_t d_alloc_size = 0;
 
   /**
    * Payload placeholder.
