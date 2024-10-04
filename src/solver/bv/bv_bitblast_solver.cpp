@@ -15,7 +15,11 @@
 #include "node/node_manager.h"
 #include "node/node_utils.h"
 #include "sat/sat_solver_factory.h"
+#include "util/resources.h"
+
+#ifndef NDEBUG
 #include "solver/bv/bv_solver.h"
+#endif
 
 namespace bzla::bv {
 
@@ -73,15 +77,18 @@ BvBitblastSolver::solve()
   if (!d_assertions.empty())
   {
     util::Timer timer(d_stats.time_encode);
+    uint64_t mem_usage = util::current_memory_usage();
     for (const Node& assertion : d_assertions)
     {
       const auto& bits = d_bitblaster.bits(assertion);
       assert(!bits.empty());
       d_cnf_encoder->encode(bits[0], true);
     }
+    d_stats.sat_memory_usage += util::current_memory_usage() - mem_usage;
     d_assertions.clear();
   }
 
+  uint64_t mem_usage = util::current_memory_usage();
   for (const Node& assumption : d_assumptions)
   {
     const auto& bits = d_bitblaster.bits(assumption);
@@ -90,6 +97,7 @@ BvBitblastSolver::solve()
     d_cnf_encoder->encode(bits[0], false);
     d_sat_solver->assume(bits[0].get_id());
   }
+  d_stats.sat_memory_usage += util::current_memory_usage() - mem_usage;
 
   // Update CNF statistics
   update_statistics();
@@ -110,7 +118,9 @@ BvBitblastSolver::solve()
   }
 
   util::Timer timer(d_stats.time_sat);
+  mem_usage     = util::current_memory_usage();
   d_last_result = d_sat_solver->solve();
+  d_stats.sat_memory_usage += util::current_memory_usage() - mem_usage;
 
   return d_last_result;
 }
@@ -211,7 +221,7 @@ BvBitblastSolver::update_statistics()
 BvBitblastSolver::Statistics::Statistics(util::Statistics& stats,
                                          const std::string& prefix)
     : time_sat(
-        stats.new_stat<util::TimerStatistic>(prefix + "sat::time_solve")),
+          stats.new_stat<util::TimerStatistic>(prefix + "sat::time_solve")),
       time_bitblast(
           stats.new_stat<util::TimerStatistic>(prefix + "aig::time_bitblast")),
       time_encode(
@@ -221,7 +231,8 @@ BvBitblastSolver::Statistics::Statistics(util::Statistics& stats,
       num_aig_shared(stats.new_stat<uint64_t>(prefix + "aig::num_shared")),
       num_cnf_vars(stats.new_stat<uint64_t>(prefix + "cnf::num_vars")),
       num_cnf_clauses(stats.new_stat<uint64_t>(prefix + "cnf::num_clauses")),
-      num_cnf_literals(stats.new_stat<uint64_t>(prefix + "cnf::num_literals"))
+      num_cnf_literals(stats.new_stat<uint64_t>(prefix + "cnf::num_literals")),
+      sat_memory_usage(stats.new_stat<uint64_t>(prefix + "sat::memory_usage"))
 {
 }
 
