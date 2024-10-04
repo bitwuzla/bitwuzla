@@ -56,6 +56,7 @@ TimerStatistic::running() const
 
 Timer::Timer(TimerStatistic& stat) : d_stat(stat)
 {
+  d_start = d_stat.elapsed();
   if (!d_stat.running())
   {
     d_stat.start();

@@ -104,7 +104,11 @@ class Timer
   Timer(TimerStatistic& stat);
   ~Timer();
 
+  /** @return The elapsed time since creating this timer. */
+  uint64_t elapsed() const { return d_stat.elapsed() - d_start; };
+
  private:
+  uint64_t d_start;
   TimerStatistic& d_stat;
 };
 
