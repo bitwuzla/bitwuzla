@@ -55,6 +55,7 @@ SolvingContext::solve()
   check_no_free_variables();
 #endif
   d_sat_state = preprocess();
+  ++d_stats.num_solve;
 
   if (d_sat_state == Result::UNKNOWN)
   {
@@ -91,6 +92,9 @@ SolvingContext::solve()
   }
 
   d_stats.max_memory = util::maximum_memory_usage();
+  Msg(1) << "status:      " << d_sat_state;
+  Msg(1) << "solve time:  " << timer.elapsed() << "ms";
+  Msg(1) << "solve calls: " << d_stats.num_solve;
   return d_sat_state;
 }
 
@@ -381,6 +385,7 @@ SolvingContext::Statistics::Statistics(util::Statistics& stats)
           stats.new_stat<util::TimerStatistic>("solving_context::time_solve")),
       time_ensure_model(stats.new_stat<util::TimerStatistic>(
           "solving_context::time_ensure_model")),
+      num_solve(stats.new_stat<uint64_t>("solving_context::num_solve")),
       max_memory(stats.new_stat<uint64_t>("solving_context::max_memory")),
       formula_kinds_pre(
           stats.new_stat<util::HistogramStatistic>("formula::pre::node")),
