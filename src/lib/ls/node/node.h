@@ -36,7 +36,7 @@ class Node
   static inline bool s_path_sel_essential = true;
   /**
    * Probability for picking an essential input if there is one, and else
-   * a random input (see use_path_sel_essential).
+   * a random input (see LocalSearch::d_options.use_path_sel_essential).
    */
   static inline uint32_t s_prob_pick_ess_input = 990;
 
