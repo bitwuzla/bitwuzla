@@ -22,6 +22,10 @@ This file collects a summary of important and/or user-visible changes.
   Enable with option `--abstraction`, the minimum bit-width of relevant terms
   to abstract can be configured via `--abstraction-bv-size`.
 
+- Bumped Kissat to version 4.0.1.
+
+- Improved arithmetic normalization.
+
 
 ## News for version 0.5.0
 
