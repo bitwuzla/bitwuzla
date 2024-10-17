@@ -19,6 +19,9 @@ This file collects a summary of important and/or user-visible changes.
   operators, see [Aina Niemetz, Mathias Preiner and Yoni Zohar. Scalable
   Bit-Blasting with Abstractions. CAV 2024, Springer, 2024.](
   https://doi.org/10.1007/978-3-031-65627-9_9).
+  Enable with option `--abstraction`, the minimum bit-width of relevant terms
+  to abstract can be configured via `--abstraction-bv-size`.
+
 
 ## News for version 0.5.0
 
