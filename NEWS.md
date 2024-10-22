@@ -26,6 +26,10 @@ This file collects a summary of important and/or user-visible changes.
 
 - Improved arithmetic normalization.
 
+- Fixed version string generation for dev versions. Previously, git information
+  that is included in the version string was not regenerated at compile time,
+  only at configure time.
+
 
 ## News for version 0.5.0
 
