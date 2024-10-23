@@ -2,6 +2,19 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News for version 0.6.0
+
+- Added new **abstraction module** for abstracting bit-vector arithmetic
+  operators, see [Aina Niemetz, Mathias Preiner and Yoni Zohar. Scalable
+  Bit-Blasting with Abstractions. CAV 2024, Springer, 2024.](
+  https://doi.org/10.1007/978-3-031-65627-9_9).
+  Enable with option `--abstraction`, the minimum bit-width of relevant terms
+  to abstract can be configured via option `--abstraction-bv-size`.
+
+- **Quantification over array variables** now supported.
+
+- Improved arithmetic **normalization**.
+
 - Added new **command-line option** `--print-model`. This enables auto-printing
   of models after a satisfiable query. Must be enabled to print models for
   BTOR2 input (automatically enables `-m`). Command line option `-m`,
@@ -13,18 +26,7 @@ This file collects a summary of important and/or user-visible changes.
   - C API: `bitwuzla_parser_configure_auto_print_model(BitwuzlaParser*,bool)`
   - Python API: `Parser.configure_auto_print_model(bool)`
 
-- **Quantification over array variables** now supported.
-
-- Added new **abstraction module** for abstracting bit-vector arithmetic
-  operators, see [Aina Niemetz, Mathias Preiner and Yoni Zohar. Scalable
-  Bit-Blasting with Abstractions. CAV 2024, Springer, 2024.](
-  https://doi.org/10.1007/978-3-031-65627-9_9).
-  Enable with option `--abstraction`, the minimum bit-width of relevant terms
-  to abstract can be configured via `--abstraction-bv-size`.
-
 - Bumped Kissat to version 4.0.1.
-
-- Improved arithmetic normalization.
 
 - Fixed version string generation for dev versions. Previously, git information
   that is included in the version string was not regenerated at compile time,
