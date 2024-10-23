@@ -113,7 +113,7 @@ main()
 
   // (get-unsat-core)
   size_t unsat_core_size;
-  BitwuzlaTerm *unsat_core =
+  const BitwuzlaTerm *unsat_core =
       bitwuzla_get_unsat_core(bitwuzla, &unsat_core_size);
   printf("Unsat Core:\n{\n");
   for (uint32_t i = 0; i < unsat_core_size; ++i)

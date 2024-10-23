@@ -37,7 +37,7 @@ main()
 
   // Now we retrieve the set of asserted formulas and print them.
   size_t size;
-  BitwuzlaTerm* assertions =
+  const BitwuzlaTerm* assertions =
       bitwuzla_get_assertions(bitwuzla_parser_get_bitwuzla(parser), &size);
   printf("Assertions:\n");
   printf("{\n");
