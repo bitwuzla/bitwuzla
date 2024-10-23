@@ -65,6 +65,7 @@ license_text += '\n\n  SymFPU\n  https://github.com/martin-cs/symfpu'
 license_text = license_text.replace('\n', '\\n').replace('"', '\\"')
 
 # Generate header
+is_git_version = run_command('git', 'rev-parse', '--is-inside-work-tree', check: false)
 conf_data = configuration_data()
 conf_data.set('cc', c_compiler.get_id() + ' ' + c_compiler.version())
 conf_data.set('cxx', cpp_compiler.get_id() + ' ' + cpp_compiler.version())
@@ -74,6 +75,7 @@ conf_data.set('git_id', '@git_id@')
 conf_data.set('version', meson.project_version())
 conf_data.set('is_debug_build', (get_option('buildtype') == 'debug').to_string())
 conf_data.set('is_dev_version', meson.project_version().endswith('-dev').to_string())
+conf_data.set('is_git_version', (is_git_version.returncode() == 0).to_string())
 config_h = configure_file(input: 'config.h.in',
                output: 'config.h.in',
                configuration: conf_data)
