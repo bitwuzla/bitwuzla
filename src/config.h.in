@@ -15,7 +15,8 @@ namespace bzla::config {
 
 static constexpr bool is_debug_build = @is_debug_build@;
 static constexpr const char* git_id  = "@git_id@";
-static constexpr const char* version = "@version@";
+static constexpr const char* version =
+    @is_dev_version@ && @is_git_version@ ? "@version@-@git_id@" : "@version@";
 static constexpr const char* license = "@license@";
 static constexpr const char* os      = "@os@";
 static constexpr const char* cc      = "@cc@";

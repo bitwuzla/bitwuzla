@@ -119,7 +119,7 @@ main()
 
   // (get-unsat-assumptions)
   size_t unsat_assumptions_size;
-  BitwuzlaTerm *unsat_assumptions =
+  const BitwuzlaTerm *unsat_assumptions =
       bitwuzla_get_unsat_assumptions(bitwuzla, &unsat_assumptions_size);
   printf("Unsat Assumptions: {");
   for (uint32_t i = 0; i < unsat_assumptions_size; ++i)
