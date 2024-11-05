@@ -1,0 +1,5 @@
+(set-logic QF_BV)
+(set-info :status sat)
+(declare-fun z () (_ BitVec 1))
+(assert (bvslt (bvor (bvmul (_ bv2 2) ((_ zero_extend 1) z)) (concat (_ bv1 1) (bvshl (_ bv1 1) z))) (_ bv0 2)))
+(check-sat)

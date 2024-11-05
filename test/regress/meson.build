@@ -486,6 +486,7 @@ tests_smt2 = [
   ['rewrite/bv/3vl6.btor.smt2', ['-rwl=2']],
   ['rewrite/bv/eq_special_const_bvand.smt2'],
   ['rewrite/bv/eq_special_const_bvor.smt2'],
+  ['rewrite/bv/issue131.smt2'],
   ['rewrite/bv/rw1.btor.smt2'],
   ['rewrite/bv/rw10.btor.smt2'],
   ['rewrite/bv/rw100.btor.smt2', ['-rwl=0']],

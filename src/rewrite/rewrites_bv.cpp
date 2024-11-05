@@ -1041,7 +1041,7 @@ _rw_bv_and_concat(Rewriter& rewriter, const Node& node, size_t idx)
       }
       if (val11.is_zero())
       {
-        res = node[idx0];
+        res = node[idx0][0];
       }
     }
 
