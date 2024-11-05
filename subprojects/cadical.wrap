@@ -9,3 +9,4 @@ patch_directory = cadical
 
 [provide]
 cadical = cadical_dep
+cadicraig = cadicraig_dep
