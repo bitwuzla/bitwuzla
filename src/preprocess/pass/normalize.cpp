@@ -218,8 +218,6 @@ AigScore::process(uint64_t limit)
         // UREM since bit-blasting them is expensive and the preprocessing pass
         // does not normalize these operators.
         default:
-          assert(bv::BvSolver::is_leaf(cur) || cur.kind() == Kind::BV_UDIV
-                 || cur.kind() == Kind::BV_UREM);
           it->second = type.is_bool()
                            ? d_bitblaster.bv_constant(1)
                            : d_bitblaster.bv_constant(type.bv_size());
