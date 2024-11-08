@@ -1,0 +1,6 @@
+(set-logic QF_BV)
+(declare-const x (_ BitVec 1))
+(set-option :abstraction true)
+(set-option :abstraction-eager-refine true)
+(set-info :status unsat)
+(check-sat-assuming ((bvuaddo ((_ zero_extend 99) x) (bvsdiv (_ bv1 100) ((_ zero_extend 99) x)))))

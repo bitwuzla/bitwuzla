@@ -728,9 +728,9 @@ AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
   // Make sure that lemma is rewritten before adding to the cache.
   Node lem = d_rewriter.rewrite(lemma);
   // Cache lemma so that we won't consider it for abstraction.
-  assert(d_abstraction_cache.find(lem) == d_abstraction_cache.end());
-  d_abstraction_cache.emplace(lem, lem);
-  if (d_solver_state.lemma(lem))
+  auto [it, inserted] = d_abstraction_cache.emplace(lem, lem);
+  assert(inserted || d_opt_eager_refine);
+  if (inserted && d_solver_state.lemma(lem))
   {
     d_added_lemma = true;
     d_stats.lemmas << lk;

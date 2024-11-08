@@ -817,6 +817,7 @@ tests_smt2 = [
   ['solver/abstract/murxla-d9523963f3a24521.min.smt2'],
   ['solver/abstract/red-bench-8002.smt2'],
   ['solver/abstract/unsatcore1.smt2'],
+  ['solver/abstract/eagerrefine1.smt2'],
   ['solver/array/arraycond1.btor.smt2'],
   ['solver/array/arraycond10.btor.smt2'],
   ['solver/array/arraycond11.btor.smt2'],
