@@ -66,7 +66,7 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
     return;
   }
 
-  d_cache.clear();
+  std::unordered_map<Node, Node> cache;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
@@ -76,7 +76,7 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
       std::vector<Node> children;
       for (const Node& child : ass)
       {
-        children.push_back(process(child));
+        children.push_back(_process(child, cache));
       }
       Node rewritten = ass.num_indices() > 0
                            ? nm.mk_node(ass.kind(), children, ass.indices())
@@ -88,20 +88,27 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
       assertions.replace(i, rewritten);
     }
   }
-  d_cache.clear();
   Log(1) << d_stats.num_substs << " embedded constraint substitutions";
 }
 
 Node
 PassEmbeddedConstraints::process(const Node& node)
 {
-  auto [res, num_substs] = substitute(node, d_substitutions, d_cache);
+  std::unordered_map<Node, Node> cache;
+  return _process(node, cache);
+}
+
+/* --- PassEmbeddedConstraints private -------------------------------------- */
+
+Node
+PassEmbeddedConstraints::_process(const Node& node,
+                                  std::unordered_map<Node, Node>& cache)
+{
+  auto [res, num_substs] = substitute(node, d_substitutions, cache);
   res                    = d_env.rewriter().rewrite(res);
   d_stats.num_substs += num_substs;
   return res;
 }
-
-/* --- PassEmbeddedConstraints private -------------------------------------- */
 
 PassEmbeddedConstraints::Statistics::Statistics(util::Statistics& stats,
                                                 const std::string& prefix)

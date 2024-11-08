@@ -391,6 +391,7 @@ tests_smt2 = [
   ['preprocess/bv/ultsubst9.btor.smt2', ['-rwl=2']],
   ['preprocess/fun/lambda_elim1.smt2'],
   ['preprocess/fun/lambda_elim2.smt2'],
+  ['preprocess/embedded1.smt2'],
   ['preprocess/murxla-60e16cc072cca364.min.smt2'],
   ['preprocess/normalize1.smt2'],
   ['preprocess/normalize2.smt2'],

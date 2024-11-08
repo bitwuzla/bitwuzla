@@ -29,10 +29,10 @@ class PassEmbeddedConstraints : public PreprocessingPass
   Node process(const Node& node) override;
 
  private:
+  Node _process(const Node& node, std::unordered_map<Node, Node>& cache);
+
   /** Backtrackable substitution map. */
   backtrack::unordered_map<Node, Node> d_substitutions;
-  /** Cache of processed nodes that maybe shared across substitutions. */
-  std::unordered_map<Node, Node> d_cache;
 
   struct Statistics
   {
