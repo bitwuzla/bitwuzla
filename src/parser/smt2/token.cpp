@@ -173,6 +173,8 @@ to_string(bzla::parser::smt2::Token token)
     case Token::BV_NOT: return "bvnot";
     case Token::BV_OR: return "bvor";
     case Token::BV_REPEAT: return "repeat";
+    case Token::BV_ROL: return "bvrol";
+    case Token::BV_ROR: return "bvror";
     case Token::BV_ROTATE_LEFT: return "rotate_left";
     case Token::BV_ROTATE_RIGHT: return "rotate_right";
     case Token::BV_SDIV: return "bvsdiv";

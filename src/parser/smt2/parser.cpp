@@ -1917,6 +1917,8 @@ Parser::close_term()
     case Token::BV_NOT:
     case Token::BV_OR:
     case Token::BV_REPEAT:
+    case Token::BV_ROL:
+    case Token::BV_ROR:
     case Token::BV_ROTATE_LEFT:
     case Token::BV_ROTATE_RIGHT:
     case Token::BV_SDIV:
@@ -2230,6 +2232,8 @@ Parser::close_term_bv(ParsedItem& item)
     case Token::BV_NOT: kind = bitwuzla::Kind::BV_NOT; break;
     case Token::BV_OR: kind = bitwuzla::Kind::BV_OR; break;
     case Token::BV_REPEAT: kind = bitwuzla::Kind::BV_REPEAT; break;
+    case Token::BV_ROL: kind = bitwuzla::Kind::BV_ROL; break;
+    case Token::BV_ROR: kind = bitwuzla::Kind::BV_ROR; break;
     case Token::BV_ROTATE_LEFT: kind = bitwuzla::Kind::BV_ROLI; break;
     case Token::BV_ROTATE_RIGHT: kind = bitwuzla::Kind::BV_RORI; break;
     case Token::BV_SDIV: kind = bitwuzla::Kind::BV_SDIV; break;
@@ -2945,6 +2949,8 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
     case Token::BV_LSHR:
     case Token::BV_NAND:
     case Token::BV_NOR:
+    case Token::BV_ROL:
+    case Token::BV_ROR:
     case Token::BV_SDIV:
     case Token::BV_SGE:
     case Token::BV_SGT:
@@ -3195,6 +3201,8 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
     case Token::BV_NOT:
     case Token::BV_OR:
     case Token::BV_REPEAT:
+    case Token::BV_ROL:
+    case Token::BV_ROR:
     case Token::BV_ROTATE_LEFT:
     case Token::BV_ROTATE_RIGHT:
     case Token::BV_SDIV:

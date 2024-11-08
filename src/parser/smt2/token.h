@@ -193,6 +193,8 @@ enum class Token
   BV_NOT,
   BV_OR,
   BV_REPEAT,
+  BV_ROL,
+  BV_ROR,
   BV_ROTATE_LEFT,
   BV_ROTATE_RIGHT,
   BV_SDIV,

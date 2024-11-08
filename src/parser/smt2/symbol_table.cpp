@@ -330,6 +330,8 @@ SymbolTable::init_bv_symbols()
   insert(Token::BV_NOT);
   insert(Token::BV_OR);
   insert(Token::BV_REPEAT);
+  insert(Token::BV_ROL);
+  insert(Token::BV_ROR);
   insert(Token::BV_ROTATE_LEFT);
   insert(Token::BV_ROTATE_RIGHT);
   insert(Token::BV_SDIV);
