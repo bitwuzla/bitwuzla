@@ -310,6 +310,7 @@ AbstractionModule::process(const Node& assertion, bool is_lemma)
       add_abstraction(itr->second, it->second);
       d_assertion_abstractions.push_back(it->second);
       d_abstraction_cache.emplace(it->second, it->second);
+      d_abstraction_cache_assertions.emplace(it->second, assertion);
     }
     return it->second;
   }
