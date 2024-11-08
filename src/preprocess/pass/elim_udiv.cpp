@@ -59,7 +59,14 @@ PassElimUdiv::process(const Node& assertion)
     auto [it, inserted] = d_cache.emplace(cur, Node());
     if (inserted)
     {
-      visit.insert(visit.end(), cur.begin(), cur.end());
+      if (cur.kind() == Kind::FORALL || cur.kind() == Kind::EXISTS)
+      {
+        it->second = cur;
+      }
+      else
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
       continue;
     }
     else if (it->second.is_null())
