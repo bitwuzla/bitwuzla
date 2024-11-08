@@ -438,12 +438,11 @@ Options::Options()
                       config::is_debug_build,
                       "check model for each satisfiable query",
                       "check-model"),
-      dbg_check_unsat_core(
-          this,
-          Option::DBG_CHECK_UNSAT_CORE,
-          config::is_debug_build,
-          "check unsat core model for each unsatisfiable query",
-          "check-unsat-core")
+      dbg_check_unsat_core(this,
+                           Option::DBG_CHECK_UNSAT_CORE,
+                           config::is_debug_build,
+                           "check unsat core for each unsatisfiable query",
+                           "check-unsat-core")
 
 {
 }
