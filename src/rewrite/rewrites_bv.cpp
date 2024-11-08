@@ -1037,18 +1037,19 @@ _rw_bv_and_concat(Rewriter& rewriter, const Node& node, size_t idx)
     {
       if (val11.is_ones())
       {
-        res = rewriter.nm().mk_value(BitVector::mk_zero(node.type().bv_size()));
+        return rewriter.nm().mk_value(
+            BitVector::mk_zero(node.type().bv_size()));
       }
       if (val11.is_zero())
       {
         res = node[idx0][0];
       }
     }
-
     // ones / ones
-    if (val00.is_zero() && val11.is_zero())
+    else if (val00.is_zero() && val11.is_zero())
     {
-      res = rewriter.mk_node(Kind::BV_CONCAT, {node[idx1][0][0], node[idx0][0][1]});
+      res = rewriter.mk_node(Kind::BV_CONCAT,
+                             {node[idx1][0][0], node[idx0][0][1]});
     }
 
     if (!res.is_null())
