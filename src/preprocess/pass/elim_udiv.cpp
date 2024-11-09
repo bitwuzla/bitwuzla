@@ -123,8 +123,15 @@ PassElimUdiv::process(const Node& assertion)
     visit.pop_back();
   } while (!visit.empty());
 
-  new_assertions.push_back(d_cache.at(assertion));
-  return utils::mk_nary(nm, Kind::AND, new_assertions);
+  auto it = d_cache.find(assertion);
+  assert(it != d_cache.end());
+  if (!new_assertions.empty())
+  {
+    new_assertions.push_back(it->second);
+    it->second = utils::mk_nary(nm, Kind::AND, new_assertions);
+  }
+
+  return it->second;
 }
 
 const Node&
