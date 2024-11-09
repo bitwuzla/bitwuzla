@@ -185,7 +185,7 @@ template <class VALUE>
 void
 LocalSearch<VALUE>::push()
 {
-  Log(1) << " push";
+  Log(1) << "push";
   d_roots_control.push_back(d_roots.size());
 }
 
@@ -193,7 +193,7 @@ template <class VALUE>
 void
 LocalSearch<VALUE>::pop()
 {
-  Log(1) << " pop";
+  Log(1) << "pop";
   if (d_roots_control.size())
   {
     size_t nroots = d_roots.size() - d_roots_control.back();

@@ -53,11 +53,15 @@ BvSolver::is_leaf(const Node& term)
 BvSolver::BvSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_bitblast_solver(env, state),
-      d_prop_solver(env, state, d_bitblast_solver),
       d_cur_solver(env.options().bv_solver()),
       d_solver_mode(env.options().bv_solver()),
       d_stats(env.statistics())
 {
+  if (d_solver_mode == option::BvSolver::PROP
+      || d_solver_mode == option::BvSolver::PREPROP)
+  {
+    d_prop_solver.reset(new BvPropSolver(env, state, d_bitblast_solver));
+  }
 }
 
 BvSolver::~BvSolver() {}
@@ -76,7 +80,7 @@ BvSolver::register_assertion(const Node& assertion,
   if (d_solver_mode == option::BvSolver::PROP
       || d_solver_mode == option::BvSolver::PREPROP)
   {
-    d_prop_solver.register_assertion(assertion, top_level, is_lemma);
+    d_prop_solver->register_assertion(assertion, top_level, is_lemma);
   }
 }
 
@@ -100,11 +104,11 @@ BvSolver::solve()
       break;
     case option::BvSolver::PROP:
       assert(d_cur_solver == option::BvSolver::PROP);
-      d_sat_state = d_prop_solver.solve();
+      d_sat_state = d_prop_solver->solve();
       break;
     case option::BvSolver::PREPROP:
       d_cur_solver = option::BvSolver::PROP;
-      d_sat_state  = d_prop_solver.solve();
+      d_sat_state  = d_prop_solver->solve();
       if (d_sat_state == Result::UNKNOWN)
       {
         d_cur_solver = option::BvSolver::BITBLAST;
@@ -126,7 +130,7 @@ BvSolver::value(const Node& term)
     return d_bitblast_solver.value(term);
   }
   assert(d_cur_solver == option::BvSolver::PROP);
-  return d_prop_solver.value(term);
+  return d_prop_solver->value(term);
 }
 
 void
@@ -139,7 +143,7 @@ BvSolver::unsat_core(std::vector<Node>& core) const
   else
   {
     assert(d_cur_solver == option::BvSolver::PROP);
-    d_prop_solver.unsat_core(core);
+    d_prop_solver->unsat_core(core);
   }
 }
 

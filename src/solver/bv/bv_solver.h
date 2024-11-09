@@ -65,7 +65,7 @@ class BvSolver : public Solver, public BvSolverInterface
   /** Bitblast subsolver. */
   BvBitblastSolver d_bitblast_solver;
   /** Propagation-based local search subsolver. */
-  BvPropSolver d_prop_solver;
+  std::unique_ptr<BvPropSolver> d_prop_solver;
 
   /**
    * The currently enabled subsolver. Used to determine which solver to ask
