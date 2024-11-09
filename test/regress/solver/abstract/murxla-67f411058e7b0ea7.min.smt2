@@ -1,0 +1,7 @@
+(set-option :abstraction-assert true)
+(set-option :abstraction true)
+(declare-fun x (Bool) Bool)
+(set-info :status sat)
+(check-sat-assuming ((x false)))
+(set-info :status sat)
+(check-sat-assuming ((x false)))

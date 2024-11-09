@@ -308,10 +308,10 @@ AbstractionModule::process(const Node& assertion, bool is_lemma)
       Log(2) << "abstract assertion: " << itr->second
              << " (abstr: " << it->second << ", orig: " << assertion << ")";
       add_abstraction(itr->second, it->second);
-      d_assertion_abstractions.push_back(it->second);
       d_abstraction_cache.emplace(it->second, it->second);
       d_abstraction_cache_assertions.emplace(it->second, assertion);
     }
+    d_assertion_abstractions.push_back(it->second);
     return it->second;
   }
 
