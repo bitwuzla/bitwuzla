@@ -23,6 +23,7 @@ struct Options
   bool print_unsat_core   = false;
   bool print_model        = false;
   bool parse_only         = false;
+  bool pp_only            = false;
   uint8_t bv_format       = 2;
   uint64_t time_limit     = 0;
   std::string infile_name = "<stdin>";

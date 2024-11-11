@@ -151,6 +151,10 @@ print_help()
                     format_dflt(std::to_string(dflt_opts.parse_only), true),
                     "only parse input without calling check-sat");
   opts.emplace_back("",
+                    format_longb("pp-only"),
+                    format_dflt(std::to_string(dflt_opts.parse_only), true),
+                    "exit after preprocessing");
+  opts.emplace_back("",
                     format_longb("bv-output-format"),
                     format_dflt(std::to_string(dflt_opts.bv_format)),
                     "output number format for bit-vector values {2, 10, 16}");
@@ -373,6 +377,10 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
     else if (arg == "-P" || arg == "--parse-only")
     {
       opts.parse_only = true;
+    }
+    else if (arg == "--pp-only")
+    {
+      opts.pp_only = true;
     }
     else if (check_opt_value(arg, "", "--bv-output-format"))
     {
