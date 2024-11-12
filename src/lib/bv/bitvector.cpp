@@ -482,6 +482,7 @@ BitVector::BitVector(BitVector&& other)
     if (other.is_gmp())
     {
       mpz_init_set(d_val_gmp, other.d_val_gmp);
+      mpz_clear(other.d_val_gmp);
     }
     else
     {
