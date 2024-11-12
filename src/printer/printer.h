@@ -39,17 +39,40 @@ class Printer
                             const std::vector<Node>& assertions);
 
  private:
-  static void print(std::ostream& os,
-                    const Node& node,
+  /**
+   * Helper to print a node.
+   * @param os         The output stream.
+   * @param def_map    Map of expressions that shared across assertions to
+   *                   symbols (to be printed as define-fun).
+   * @param let_map    Map of expressions that are shared across expressions
+   *                   with a binder scope or assertion (to be printed as let).
+   * @param max_depth  The printing cutoff depth. Maximum depth to traversal
+   *                   depth of `node` while printing.
+   * @param no_lets    True if expressions should not be letified when printing.
+   */
+ static void print(std::ostream& os, const Node& node,
                     node::unordered_node_ref_map<std::string>& def_map,
                     node::unordered_node_ref_map<std::string>& let_map,
-                    size_t max_depth);
+                    size_t max_depth,
+                    bool no_lets);
 
+  /**
+   * Helper to letify and print a node.
+   * @param os         The output stream.
+   * @param def_map    Map of expressions that shared across assertions to
+   *                   symbols (to be printed as define-fun).
+   * @param let_map    Map of expressions that are shared across expressions
+   *                   with a binder scope or assertion (to be printed as let).
+   * @param max_depth  The printing cutoff depth. Maximum depth to traversal
+   *                   depth of `node` while printing.
+   * @param no_lets    True if expressions should not be letified when printing.
+   */
   static void letify(std::ostream& os,
                      const Node& node,
                      node::unordered_node_ref_map<std::string>& def_map,
                      node::unordered_node_ref_map<std::string>& let_map,
-                     size_t max_depth);
+                     size_t max_depth,
+                     bool no_lets);
 
   static void print_symbol(std::ostream& os, const Node& node);
 };
@@ -60,25 +83,25 @@ namespace printer {
  * The exception thrown when the printer encounters an unrecoverable error,
  * e.g., when symbols do not comply with a language standard.
  */
-class Exception : public std::exception
-{
- public:
-  /**
-   * Constructor.
-   * @param msg The exception message.
-   */
-  Exception(const std::string& msg) : d_msg(msg) {}
-  /**
-   * Get the exception message.
-   * @return The exception message.
-   */
-  const std::string& msg() const { return d_msg; }
+  class Exception : public std::exception
+  {
+   public:
+    /**
+     * Constructor.
+     * @param msg The exception message.
+     */
+    Exception(const std::string& msg) : d_msg(msg) {}
+    /**
+     * Get the exception message.
+     * @return The exception message.
+     */
+    const std::string& msg() const { return d_msg; }
 
-  const char* what() const noexcept override { return d_msg.c_str(); }
+    const char* what() const noexcept override { return d_msg.c_str(); }
 
- private:
-  /** The exception message. */
-  std::string d_msg;
+   private:
+    /** The exception message. */
+    std::string d_msg;
 };
 
 }  // namespace printer

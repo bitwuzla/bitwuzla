@@ -36,13 +36,14 @@ void
 Printer::print(std::ostream& os, const Node& node)
 {
   size_t depth = os.iword(util::set_depth::s_stream_index_maximum_depth);
+  bool no_lets = os.iword(util::set_letify::s_stream_index_no_letify);
   unordered_node_ref_map<std::string> let_map, def_map;
   bool annotate = depth && node.num_children() > 0;
   if (annotate)
   {
     os << "(!@t" << node.id() << " ";
   }
-  letify(os, node, def_map, let_map, depth);
+  letify(os, node, def_map, let_map, depth, no_lets);
   if (annotate)
   {
     os << ")";
@@ -102,6 +103,7 @@ void
 Printer::print_formula(std::ostream& os,
                        const backtrack::AssertionView& assertions)
 {
+  bool no_lets    = os.iword(util::set_letify::s_stream_index_no_letify);
   bool has_arrays = false, has_bv = false, has_fp = false, has_funs = false;
   bool has_quants = false;
   node_ref_vector visit;
@@ -261,7 +263,7 @@ Printer::print_formula(std::ostream& os,
     std::string symbol = "@def" + std::to_string(ndefs);
     os << "(define-fun " << symbol << " () " << node.type() << " ";
     node::unordered_node_ref_map<std::string> let_map;
-    letify(os, node, def_map, let_map, 0);
+    letify(os, node, def_map, let_map, 0, no_lets);
     os << ")" << std::endl;
     def_map[node] = symbol;
     ++ndefs;
@@ -280,7 +282,7 @@ Printer::print_formula(std::ostream& os,
       }
       node::unordered_node_ref_map<std::string> let_map;
       os << "(assert ";
-      letify(os, assertions[i], def_map, let_map, 0);
+      letify(os, assertions[i], def_map, let_map, 0, no_lets);
       os << ")" << std::endl;
     }
   }
@@ -307,7 +309,8 @@ Printer::print(std::ostream& os,
                const Node& node,
                node::unordered_node_ref_map<std::string>& def_map,
                node::unordered_node_ref_map<std::string>& let_map,
-               size_t max_depth)
+               size_t max_depth,
+               bool no_lets)
 {
   // configure bit-vector output number format
   uint8_t bv_format = os.iword(util::set_bv_format::s_stream_index_bv_format);
@@ -490,7 +493,7 @@ Printer::print(std::ostream& os,
           os << ")) ";
           visit.pop_back();  // Pop variable
           visit.pop_back();  // Pop body
-          letify(os, cur[1], def_map, let_map, max_depth);
+          letify(os, cur[1], def_map, let_map, max_depth, no_lets);
           break;
 
         case Kind::VALUE:
@@ -583,6 +586,10 @@ Printer::print(std::ostream& os,
       {
         os << "@t" << cur.id();
       }
+      else if (no_lets)
+      {
+        os << cur;
+      }
       else
       {
         auto lit = let_map.find(cur);
@@ -640,8 +647,15 @@ Printer::letify(std::ostream& os,
                 const Node& node,
                 node::unordered_node_ref_map<std::string>& def_map,
                 node::unordered_node_ref_map<std::string>& let_map,
-                size_t max_depth)
+                size_t max_depth,
+                bool no_lets)
 {
+  if (no_lets)
+  {
+    print(os, node, def_map, let_map, max_depth, no_lets);
+    return;
+  }
+
   node::node_ref_vector visit{node}, lets;
   std::vector<size_t> depth{0};
   node::unordered_node_ref_map<bool> cache;
@@ -739,7 +753,7 @@ Printer::letify(std::ostream& os,
       ss << "_let" << i;
 
       os << "(" << ss.str() << " ";
-      print(os, lets[i], def_map, let_map, max_depth);
+      print(os, lets[i], def_map, let_map, max_depth, no_lets);
       os << "))";
 
       let_map[lets[i]] = ss.str();
@@ -747,7 +761,7 @@ Printer::letify(std::ostream& os,
     os << " ";
   }
 
-  print(os, node, def_map, let_map, max_depth);
+  print(os, node, def_map, let_map, max_depth, no_lets);
 
   for (size_t i = 0; i < nlets; ++i)
   {

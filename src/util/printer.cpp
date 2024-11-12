@@ -36,4 +36,15 @@ operator<<(std::ostream& ostream, const set_bv_format& f)
 
 /* -------------------------------------------------------------------------- */
 
+int32_t set_letify::s_stream_index_no_letify = std::ios_base::xalloc();
+
+std::ostream&
+operator<<(std::ostream& ostream, const set_letify& l)
+{
+  ostream.iword(set_letify::s_stream_index_no_letify) = !l.letify();
+  return ostream;
+}
+
+/* -------------------------------------------------------------------------- */
+
 }  // namespace bzla::util

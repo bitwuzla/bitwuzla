@@ -17,6 +17,7 @@
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "test/unit/test.h"
+#include "util/printer.h"
 
 namespace bzla::test {
 
@@ -296,9 +297,17 @@ TEST_F(TestPrinter, print_let1)
   Node x_and_y = d_nm.mk_node(Kind::AND, {x, y});
   Node or_and  = d_nm.mk_node(Kind::OR, {x_and_y, x_and_y});
 
-  std::stringstream ss;
-  Printer::print(ss, or_and);
-  ASSERT_EQ(ss.str(), "(let ((_let0 (and x y))) (or _let0 _let0))");
+  {
+    std::stringstream ss;
+    Printer::print(ss, or_and);
+    ASSERT_EQ(ss.str(), "(let ((_let0 (and x y))) (or _let0 _let0))");
+  }
+  {
+    std::stringstream ss;
+    ss << util::set_letify(false);
+    Printer::print(ss, or_and);
+    ASSERT_EQ(ss.str(), "(or (and x y) (and x y))");
+  }
 }
 
 TEST_F(TestPrinter, print_let2)
@@ -309,11 +318,20 @@ TEST_F(TestPrinter, print_let2)
   Node or_and     = d_nm.mk_node(Kind::OR, {x_and_y, x_and_y});
   Node and_or_and = d_nm.mk_node(Kind::AND, {or_and, or_and});
 
-  std::stringstream ss;
-  Printer::print(ss, and_or_and);
-  ASSERT_EQ(ss.str(),
-            "(let ((_let0 (and x y))) (let ((_let1 (or _let0 _let0))) (and "
-            "_let1 _let1)))");
+  {
+    std::stringstream ss;
+    Printer::print(ss, and_or_and);
+    ASSERT_EQ(ss.str(),
+              "(let ((_let0 (and x y))) (let ((_let1 (or _let0 _let0))) (and "
+              "_let1 _let1)))");
+  }
+  {
+    std::stringstream ss;
+    ss << util::set_letify(false);
+    Printer::print(ss, and_or_and);
+    ASSERT_EQ(ss.str(),
+              "(and (or (and x y) (and x y)) (or (and x y) (and x y)))");
+  }
 }
 
 TEST_F(TestPrinter, print_let3)
@@ -325,10 +343,18 @@ TEST_F(TestPrinter, print_let3)
       d_nm.mk_node(Kind::FORALL, {d_nm.mk_var(d_type_bool, "x"), a_and_b});
   Node or_and = d_nm.mk_node(Kind::OR, {a_and_b, forall});
 
-  std::stringstream ss;
-  Printer::print(ss, or_and);
-  ASSERT_EQ(ss.str(),
-            "(let ((_let0 (and a b))) (or _let0 (forall ((x Bool)) _let0)))");
+  {
+    std::stringstream ss;
+    Printer::print(ss, or_and);
+    ASSERT_EQ(ss.str(),
+              "(let ((_let0 (and a b))) (or _let0 (forall ((x Bool)) _let0)))");
+  }
+  {
+    std::stringstream ss;
+    ss << util::set_letify(false);
+    Printer::print(ss, or_and);
+    ASSERT_EQ(ss.str(), "(or (and a b) (forall ((x Bool)) (and a b)))");
+  }
 }
 
 TEST_F(TestPrinter, print_let4)
@@ -340,12 +366,21 @@ TEST_F(TestPrinter, print_let4)
   Node and_or_and = d_nm.mk_node(Kind::AND, {or_and, or_and});
   Node forall     = d_nm.mk_node(Kind::FORALL,
                              {x, d_nm.mk_node(Kind::FORALL, {y, and_or_and})});
-
-  std::stringstream ss;
-  Printer::print(ss, forall);
-  ASSERT_EQ(ss.str(),
-            "(forall ((x Bool)) (forall ((y Bool)) (let ((_let0 (and x y))) "
-            "(let ((_let1 (or _let0 _let0))) (and _let1 _let1)))))");
+  {
+    std::stringstream ss;
+    Printer::print(ss, forall);
+    ASSERT_EQ(ss.str(),
+              "(forall ((x Bool)) (forall ((y Bool)) (let ((_let0 (and x y))) "
+              "(let ((_let1 (or _let0 _let0))) (and _let1 _let1)))))");
+  }
+  {
+    std::stringstream ss;
+    ss << util::set_letify(false);
+    Printer::print(ss, forall);
+    ASSERT_EQ(ss.str(),
+              "(forall ((x Bool)) (forall ((y Bool)) "
+              "(and (or (and x y) (and x y)) (or (and x y) (and x y)))))");
+  }
 }
 
 TEST_F(TestPrinter, print_nested)

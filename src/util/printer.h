@@ -64,6 +64,28 @@ std::ostream& operator<<(std::ostream& ostream, const set_bv_format& f);
 
 /* -------------------------------------------------------------------------- */
 
+/** Struct to configur if expressions should be letified when printed. */
+struct set_letify
+{
+  /** std::ios_base index for enabling/disabling letification. */
+  static int32_t s_stream_index_no_letify;
+  /**
+   * Constructor.
+   * @param depth The maximum printing depth.
+   */
+  set_letify(bool value) : d_letify(value) {}
+  /** @return The configured maximum printing depth. */
+  bool letify() const { return d_letify; }
+
+ private:
+  /** True if expressions should be letified when printed. */
+  bool d_letify;
+};
+
+std::ostream& operator<<(std::ostream& ostream, const set_letify& l);
+
+/* -------------------------------------------------------------------------- */
+
 }  // namespace bzla::util
 
 #endif
