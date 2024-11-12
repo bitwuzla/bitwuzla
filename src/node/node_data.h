@@ -243,10 +243,11 @@ class NodeData
     assert(is_indexed());
     const auto& pc = payload_children();
     // Note: Indices are always stored after children, hence we compute the
-    //       offset.
+    //       byte offset to the indices payload.
     size_t offset =
         sizeof(pc.d_num_children) + sizeof(*pc.d_children) * pc.d_num_children;
-    return *reinterpret_cast<const PayloadIndexed*>(&d_payload + offset);
+    return *reinterpret_cast<const PayloadIndexed*>(
+        reinterpret_cast<const unsigned char*>(&d_payload) + offset);
   }
 
   /** @return Value payload of this node. */
@@ -303,7 +304,7 @@ class NodeData
    *  - PayloadValue    (values: bool, BitVector, RoundingMode, FloatingPoint)
    *  - PayloadSymbol   (symbols for constants and variables)
    */
-  uint8_t d_payload[1];
+  uint64_t d_payload[1];
 };
 
 /* ------------------------------------------------------------------------- */
