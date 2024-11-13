@@ -78,6 +78,10 @@ class NodeData
     size_t size         = sizeof(NodeData);
     size_t payload_size = sizeof(PayloadValue<T>);
 
+    // Subtract size of payload placeholder in NodeData from payload size.
+    size_t reserved_size = sizeof(NodeData::d_payload);
+    payload_size = std::max(payload_size, reserved_size) - reserved_size;
+
     NodeData* data =
         static_cast<NodeData*>(std::calloc(1, size + payload_size));
     if (data == nullptr)

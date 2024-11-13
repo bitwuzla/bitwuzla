@@ -21,9 +21,14 @@ namespace bzla::node {
 NodeData*
 NodeData::alloc(Kind kind, const std::optional<std::string>& symbol)
 {
-  size_t size = sizeof(NodeData) + sizeof(PayloadSymbol);
+  size_t size         = sizeof(NodeData);
+  size_t payload_size = sizeof(PayloadSymbol);
 
-  NodeData* data = static_cast<NodeData*>(std::calloc(1, size));
+  // Subtract size of payload placeholder in NodeData from payload size.
+  size_t reserved_size = sizeof(NodeData::d_payload);
+  payload_size         = std::max(payload_size, reserved_size) - reserved_size;
+
+  NodeData* data = static_cast<NodeData*>(std::calloc(1, size + payload_size));
   if (data == nullptr)
   {
     throw std::bad_alloc();
@@ -54,6 +59,10 @@ NodeData::alloc(Kind kind,
     payload_size += sizeof(PayloadIndexed);
     payload_size += sizeof(PayloadIndexed::d_indices[0]) * (indices.size() - 1);
   }
+
+  // Subtract size of payload placeholder in NodeData from payload size.
+  size_t reserved_size = sizeof(NodeData::d_payload);
+  payload_size         = std::max(payload_size, reserved_size) - reserved_size;
 
   NodeData* data = static_cast<NodeData*>(std::calloc(1, size + payload_size));
   if (data == nullptr)
