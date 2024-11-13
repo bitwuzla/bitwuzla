@@ -29,6 +29,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_active_abstractions(state.backtrack_mgr()),
       d_assertion_abstractions(state.backtrack_mgr()),
       d_assertion_abstractions_cache(state.backtrack_mgr()),
+      d_lemma_cache(state.backtrack_mgr()),
       // Some lemmas are not valid for bit-vectors of size 1 or 2. Hence, we
       // only start abstracting from size 3+ instead of guarding each lemma
       // separately.
@@ -728,7 +729,8 @@ AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
   // Make sure that lemma is rewritten before adding to the cache.
   Node lem = d_rewriter.rewrite(lemma);
   // Cache lemma so that we won't consider it for abstraction.
-  auto [it, inserted] = d_abstraction_cache.emplace(lem, lem);
+  d_abstraction_cache.emplace(lem, lem);
+  auto [it, inserted] = d_lemma_cache.insert(lem);
   assert(inserted || d_opt_eager_refine);
   if (inserted && d_solver_state.lemma(lem))
   {

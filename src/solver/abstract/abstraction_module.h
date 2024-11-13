@@ -124,6 +124,8 @@ class AbstractionModule
   backtrack::unordered_set<Node> d_assertion_abstractions_cache;
   /** Buffer used for delaying sending lemmas. */
   std::vector<std::tuple<Node, Node, LemmaKind>> d_lemma_buffer;
+  /** Caches lemmas sent to solver engine. */
+  backtrack::unordered_set<Node> d_lemma_cache;
 
   /** Indicates whether lemma was added during check(). */
   bool d_added_lemma;
