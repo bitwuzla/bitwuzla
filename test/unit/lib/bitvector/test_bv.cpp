@@ -274,13 +274,23 @@ TestBitVector::_neg(uint64_t x, uint64_t size)
 uint64_t
 TestBitVector::_nego(uint64_t x, uint64_t size)
 {
-  return normalize_uint64(size, 1 << (size - 1)) == x;
+  /* we only test values representable in 64 bits */
+  if (size >= 64)
+  {
+    size = 63;
+  }
+  return normalize_uint64(size, static_cast<uint64_t>(1) << (size - 1)) == x;
 }
 
 uint64_t
 TestBitVector::_redand(uint64_t x, uint64_t size)
 {
-  uint64_t a = UINT64_MAX << size;
+  uint64_t a = UINT64_MAX;
+  /* we only test values representable in 64 bits */
+  if (size < 64)
+  {
+    a = a << size;
+  }
   return (x + a) == UINT64_MAX;
 }
 
@@ -370,7 +380,7 @@ TestBitVector::_umulo(uint64_t x, uint64_t y, uint64_t size)
          || (size <= 32 && x * y > normalize_uint64(size, ~0));
 }
 
-uint64_t
+__attribute__((no_sanitize("signed-integer-overflow"))) uint64_t
 TestBitVector::_smulo(int64_t x, int64_t y, uint64_t size)
 {
   if (size == 1)
@@ -4346,24 +4356,25 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
     }
   }
 
-  for (uint64_t i = 0, size = 65; i < (1u << size); ++i)
+  for (uint64_t i = 0, size = 65; i < N_TESTS; ++i)
   {
+    auto n = d_rng->pick<uint64_t>(0, UINT64_MAX);
     /* shift value fits into uint64_t */
     for (uint64_t j = 0; j < 32; ++j)
     {
       std::stringstream ss_expected;
       if (kind == SHL)
       {
-        ss_expected << std::bitset<65>(i).to_string() << std::string(j, '0');
+        ss_expected << std::bitset<65>(n).to_string() << std::string(j, '0');
       }
       else if (kind == SHR)
       {
-        ss_expected << std::string(j, '0') << std::bitset<65>(i).to_string();
+        ss_expected << std::string(j, '0') << std::bitset<65>(n).to_string();
       }
       else
       {
         assert(kind == ASHR);
-        std::bitset<65> bits_i(i);
+        std::bitset<65> bits_i(n);
         ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
                     << bits_i.to_string();
       }
@@ -4378,7 +4389,7 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
       }
       test_shift_aux(fun_kind,
                      kind,
-                     std::bitset<65>(i).to_string().c_str(),
+                     std::bitset<65>(n).to_string().c_str(),
                      std::bitset<65>(j).to_string().c_str(),
                      expected.c_str(),
                      shift_by_int);
@@ -4387,31 +4398,32 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
     {
       test_shift_aux(fun_kind,
                      kind,
-                     std::bitset<65>(i).to_string().c_str(),
+                     std::bitset<65>(n).to_string().c_str(),
                      std::bitset<65>(0u).set(64, 1).to_string().c_str(),
                      std::string(size, '0').c_str(),
                      shift_by_int);
     }
   }
 
-  for (uint64_t i = 0, size = 128; i < (1u << size); ++i)
+  for (uint64_t i = 0, size = 128; i < N_TESTS; ++i)
   {
+    auto n = d_rng->pick<uint64_t>(0, UINT64_MAX);
     /* shift value fits into uint64_t */
     for (uint64_t j = 0; j < 32; ++j)
     {
       std::stringstream ss_expected;
       if (kind == SHL)
       {
-        ss_expected << std::bitset<128>(i).to_string() << std::string(j, '0');
+        ss_expected << std::bitset<128>(n).to_string() << std::string(j, '0');
       }
       else if (kind == SHR)
       {
-        ss_expected << std::string(j, '0') << std::bitset<128>(i).to_string();
+        ss_expected << std::string(j, '0') << std::bitset<128>(n).to_string();
       }
       else
       {
         assert(kind == ASHR);
-        std::bitset<128> bits_i(i);
+        std::bitset<128> bits_i(n);
         ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
                     << bits_i.to_string();
       }
@@ -4426,7 +4438,7 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
       }
       test_shift_aux(fun_kind,
                      kind,
-                     std::bitset<128>(i).to_string().c_str(),
+                     std::bitset<128>(n).to_string().c_str(),
                      std::bitset<128>(j).to_string().c_str(),
                      expected.c_str(),
                      shift_by_int);
@@ -4436,7 +4448,7 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
     {
       test_shift_aux(fun_kind,
                      kind,
-                     std::bitset<128>(i).to_string().c_str(),
+                     std::bitset<128>(n).to_string().c_str(),
                      std::bitset<128>(0u).set(j, 1).to_string().c_str(),
                      std::string(size, '0').c_str(),
                      shift_by_int);
@@ -4655,8 +4667,7 @@ TestBitVector::test_rotate_aux(BvFunKind fun_kind,
 void
 TestBitVector::test_rotate(BvFunKind fun_kind, Kind kind)
 {
-  std::vector<uint64_t> sizes = {2, 3, 8, 65, 128};
-  for (uint64_t size : sizes)
+  for (uint64_t size : {2, 3, 8})
   {
     for (uint64_t i = 0; i < (1u << size); ++i)
     {
@@ -4665,7 +4676,10 @@ TestBitVector::test_rotate(BvFunKind fun_kind, Kind kind)
                        : d_rng->pick<uint64_t>(0, (1u << size) - 1);
       test_rotate_aux(fun_kind, kind, BitVector::from_ui(size, i), n);
     }
-    if ((kind == ROL || kind == ROR) && size > 64)
+  }
+  if (kind == ROL || kind == ROR)
+  {
+    for (uint64_t size : {65, 128})
     {
       // 'n' does not fit into uint64_t
       for (uint32_t i = 0; i < N_TESTS; ++i)
@@ -5188,7 +5202,7 @@ TEST_F(TestBitVector, is_true)
   {
     BitVector bv2 = BitVector::mk_one(i);
     BitVector bv3 =
-        BitVector::from_ui(i, d_rng->pick<uint64_t>(1, (1 << i) - 1));
+        BitVector::from_ui(i, d_rng->pick<uint64_t>(1, (1u << i) - 1));
     if (i > 1)
     {
       ASSERT_FALSE(bv2.is_true());
@@ -5210,7 +5224,7 @@ TEST_F(TestBitVector, is_false)
   {
     BitVector bv2 = BitVector::mk_zero(i);
     BitVector bv3 =
-        BitVector::from_ui(i, d_rng->pick<uint64_t>(1, (1 << i) - 1));
+        BitVector::from_ui(i, d_rng->pick<uint64_t>(1, (1u << i) - 1));
     if (i > 1)
     {
       ASSERT_FALSE(bv2.is_false());

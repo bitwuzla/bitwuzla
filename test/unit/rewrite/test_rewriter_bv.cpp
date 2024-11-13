@@ -2287,8 +2287,9 @@ TEST_F(TestRewriterBv, bv_udiv_pow2)
   for (uint64_t i = 0; i < (1u << 4); ++i)
   {
     Node c = d_nm.mk_value(BitVector::from_ui(4, i));
-    if (std::log2(i)
-        == (static_cast<double>(static_cast<uint64_t>(std::log2(i)))))
+    if (i > 0
+        && std::log2(i)
+               == (static_cast<double>(static_cast<uint64_t>(std::log2(i)))))
     {
       ////// applies
       test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_bv4_a, c}));
