@@ -2,6 +2,26 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News for version 0.6.1
+
+- SMT2 parser now supports non-indexed rotate operators. These operators are
+  binary, with the second argument representing the number of bits to rotate by:
+  - `(bvror <term> <term>)`
+  - `(bvrol <term> <term>)`
+
+- Added new CLI option `--pp-only` (preprocess only).
+
+- C++ API: Output streams can now be configured to disable letification of
+           terms when printing (letification is enabled by default).
+           To disable, for `std::ostream os`, use `os << set_letify(false);`.
+
+- Fixed BV_AND_CONCAT rewrite (issues #131 and #134).
+
+- Fixed a GMP memory leak in the BitVector move constructor.
+
+- Fixed errors detected with UBSan.
+
+
 ## News for version 0.6.0
 
 - Added new **abstraction module** for abstracting bit-vector arithmetic
@@ -135,10 +155,10 @@ This file collects a summary of important and/or user-visible changes.
     * New `bitwuzla::parser::Exception` (derived from `bitwuzla::Exception`)
       which is thrown on parse error.
   + C API:
-    * Function `BitwulzaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, FILE*, const char*, uint8_t, const char*)`
-      changed to `BitwulzaParser* bitwuzla_parser_new(BitwuzlaTermManager*, BitwuzlaOptions*, const char*, uint8_t, const char*)`.
-    * Function `const char* bitwuzla_parser_parse(BitwulzaParser*, bool)`
-      changed to `void bitwuzla_parser_parse(BitwulzaParser*, const char*, bool, bool, const char*)`.
+    * Function `BitwuzlaParser* bitwuzla_parser_new(BitwuzlaOptions*, const char*, FILE*, const char*, uint8_t, const char*)`
+      changed to `BitwuzlaParser* bitwuzla_parser_new(BitwuzlaTermManager*, BitwuzlaOptions*, const char*, uint8_t, const char*)`.
+    * Function `const char* bitwuzla_parser_parse(BitwuzlaParser*, bool)`
+      changed to `void bitwuzla_parser_parse(BitwuzlaParser*, const char*, bool, bool, const char*)`.
     * New function `const char* bitwuzla_parser_get_error_msg(BitwuzlaParser*)`
       to query error message.
     * New function `BitwuzlaTerm bitwuzla_parser_parse_term(BitwuzlaParser*, const char*, const char*)`
@@ -404,7 +424,7 @@ The most notable user-visible changes are listed below.
   + `bitwuzla_mk_fp_value_from_rational` to `bitwuzla_mk_fp_from_rational`
   + `bitwuzla_dump_formula` to `bitwuzla_print_formula`
   + `bitwuzla_sort_dump` to `bitwuzla_print_sort`
-  + `bitwuzla_term_dump` to `bitwulza_print_term`
+  + `bitwuzla_term_dump` to `bitwuzla_print_term`
 
 - `bitwuzla_print_formula` currently only supports printing the current input
   formula in SMT-LIB format. Support for printing the circuit representation of
