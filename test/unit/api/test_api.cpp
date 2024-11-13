@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <chrono>
 #include <fstream>
+#include <ostream>
 
 #include "test/unit/test.h"
 
@@ -2067,6 +2068,60 @@ TEST_F(TestApi, print_formula4)
   }
 }
 
+TEST_F(TestApi, print_formula5)
+{
+  bitwuzla::Options options;
+  std::stringstream smt2;
+  smt2 << "(declare-const _x0 Bool)" << std::endl
+       << "(assert (let ((_let0 (exists ((_x1 Bool)) (ite (= (distinct (ite "
+          "false _x1 _x0) _x1 _x0) _x0) (= (distinct (ite false _x1 _x0) _x1 "
+          "_x0) _x0) (distinct (ite false _x1 _x0) _x1 _x0)))))(ite _let0 "
+          "_let0 _x0)))"
+       << std::endl;
+
+  bitwuzla::parser::Parser parser(d_tm, options);
+  parser.parse("<string>", smt2, true);
+  auto bitwuzla = parser.bitwuzla();
+
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic )" << std::endl
+        << "(declare-const _x0 Bool)" << std::endl
+        << "(define-fun @def0 () Bool (exists ((_x1 Bool)) (let ((_let0 (ite "
+           "false _x1 _x0))) (let ((_let1 (and (and (distinct _let0 _x1) "
+           "(distinct _let0 _x0)) (distinct _x1 _x0)))) (let ((_let2 (= _let1 "
+           "_x0))) (ite _let2 _let2 _let1))))))"
+        << std::endl
+        << "(assert (ite @def0 @def0 _x0))" << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    bitwuzla->print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
+  {
+    std::stringstream expected_smt2;
+    expected_smt2
+        << "(set-logic )" << std::endl
+        << "(declare-const _x0 Bool)" << std::endl
+        << "(define-fun @def0 () Bool (exists ((_x1 Bool)) (ite (= (and (and "
+           "(distinct (ite false _x1 _x0) _x1) (distinct (ite false _x1 _x0) "
+           "_x0)) (distinct _x1 _x0)) _x0) (= (and (and (distinct (ite false "
+           "_x1 _x0) _x1) (distinct (ite false _x1 _x0) _x0)) (distinct _x1 "
+           "_x0)) _x0) (and (and (distinct (ite false _x1 _x0) _x1) (distinct "
+           "(ite false _x1 _x0) _x0)) (distinct _x1 _x0)))))"
+        << std::endl
+        << "(assert (ite @def0 @def0 _x0))" << std::endl
+        << "(check-sat)" << std::endl
+        << "(exit)" << std::endl;
+    std::stringstream ss;
+    ss << bitwuzla::set_letify(false);
+    bitwuzla->print_formula(ss, "smt2");
+    ASSERT_EQ(ss.str(), expected_smt2.str());
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Stastics                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -3237,7 +3292,7 @@ TEST_F(TestApi, parser_smt2_string2)
   parser.parse(str_decl, true, false);
   parser.parse(str_true, true, false);
   parser.parse(str_false, true, false);
-  bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla().get();
+  auto bitwuzla = parser.bitwuzla();
   ASSERT_EQ(bitwuzla->check_sat(), bitwuzla::Result::UNSAT);
   ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>());
   bitwuzla::Term a = parser.parse_term("a");
@@ -3556,7 +3611,7 @@ TEST_F(TestApi, parser_btor2_string2)
   parser.parse(reads, true, false);
   parser.parse(and13, true, false);
   parser.parse(root, true, false);
-  bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla().get();
+  auto bitwuzla = parser.bitwuzla();
   ASSERT_EQ(bitwuzla->check_sat(), bitwuzla::Result::UNSAT);
   ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>{});
   auto decl_funs = parser.get_declared_funs();

@@ -383,6 +383,17 @@ operator<<(std::ostream &out, const set_bv_format &f)
   return out;
 }
 
+/* set_letify public 000----------------------------------------------------- */
+
+set_letify::set_letify(bool value) : d_letify(value) {}
+
+std::ostream &
+operator<<(std::ostream &out, const set_letify &l)
+{
+  out.iword(bzla::util::set_letify::s_stream_index_no_letify) = !l.letify();
+  return out;
+}
+
 /* Options public ----------------------------------------------------------- */
 
 Options::Options() : d_options(new bzla::option::Options()) {}

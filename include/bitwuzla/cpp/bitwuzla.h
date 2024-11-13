@@ -142,7 +142,7 @@ struct set_bv_format
   /**
    * Constructor.
    * @param format The number format: `2` for binary, `10` for decimal and
-   *               `16` for hexadecimal.
+   *               `16` for hexadecimal. Binary by default.
    */
   set_bv_format(uint8_t format);
   /** @return The configured format. */
@@ -166,6 +166,31 @@ struct set_bv_format
  * @return The output stream.
  */
 std::ostream &operator<<(std::ostream &out, const set_bv_format &f);
+
+/** Struct to configure if expressions should be letified when printing. */
+struct set_letify
+{
+  /**
+   * Constructor.
+   * @param value True to enable letification, false to disable. Enabled by
+   *              default.
+   */
+  set_letify(bool value);
+  /** @return The configured format. */
+  bool letify() const { return d_letify; }
+
+ private:
+  /** The configured number format. */
+  uint8_t d_letify;
+};
+
+/**
+ * Configure output stream with enabling/disabling letification.
+ * @param out The output stream.
+ * @param l   The letification configuration.
+ * @return The output stream.
+ */
+std::ostream &operator<<(std::ostream &out, const set_letify &l);
 
 /* -------------------------------------------------------------------------- */
 /* Options                                                                    */

@@ -44,6 +44,7 @@ main(int32_t argc, char* argv[])
     }
 
     std::cout << bitwuzla::set_bv_format(main_options.bv_format);
+    std::cout << bitwuzla::set_letify(!main_options.print_no_letify);
     bitwuzla::parser::Parser parser(
         tm, options, main_options.language, &std::cout);
     parser.configure_auto_print_model(main_options.print_model);
@@ -51,7 +52,7 @@ main(int32_t argc, char* argv[])
         main_options.infile_name,
         main_options.print || main_options.pp_only || main_options.parse_only);
     reset_time_limit();
-    bitwuzla::Bitwuzla* bitwuzla = parser.bitwuzla().get();
+    auto bitwuzla = parser.bitwuzla();
 
     if (main_options.pp_only)
     {

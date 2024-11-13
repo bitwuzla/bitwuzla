@@ -588,7 +588,15 @@ Printer::print(std::ostream& os,
       }
       else if (no_lets)
       {
-        os << cur;
+        auto lit = def_map.find(cur);
+        if (lit != def_map.end())
+        {
+          os << lit->second;
+        }
+        else
+        {
+          os << cur;
+        }
       }
       else
       {
