@@ -40,7 +40,7 @@ class SolverState
    */
   bool is_relevant(const Node& term) const;
 
-  /** Throw UnsupportedException to terminate solver. */
+  /** Throw Unsupported exception to terminate solver. */
   void unsupported(const std::string& msg);
 
   /** Print solver engine statistics. */

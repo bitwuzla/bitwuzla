@@ -16,6 +16,8 @@
 
 #include <cassert>
 
+#include "util/exceptions.h"
+
 /*------------------------------------------------------------------------*/
 
 namespace bzla::sat {
@@ -52,6 +54,7 @@ Kissat::assume(int32_t lit)
 {
   (void) lit;
   assert(false);
+  throw Error("Incremental solving not supported in Kissat");
 }
 
 int32_t
@@ -68,6 +71,7 @@ Kissat::failed(int32_t lit)
 {
   (void) lit;
   assert(false);
+  throw Error("Incremental solving not supported in Kissat");
   return false;
 }
 
@@ -76,6 +80,7 @@ Kissat::fixed(int32_t lit)
 {
   (void) lit;
   assert(false);
+  throw Error("fixed() not supported in Kissat");
   return false;
 }
 

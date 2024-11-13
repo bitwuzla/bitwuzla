@@ -11,6 +11,7 @@
 #include "solver/solver_state.h"
 
 #include "solver/solver_engine.h"
+#include "util/exceptions.h"
 
 namespace bzla {
 
@@ -46,7 +47,7 @@ SolverState::is_relevant(const Node& term) const
 void
 SolverState::unsupported(const std::string& msg)
 {
-  throw UnsupportedException(msg);
+  throw Unsupported(msg);
 }
 
 void

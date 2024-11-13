@@ -18,6 +18,7 @@
 #include "node/unordered_node_ref_set.h"
 #include "resource_terminator.h"
 #include "solver/fp/symfpu_nm.h"  // Temporary for setting SymFpuNM
+#include "util/exceptions.h"
 #include "util/resources.h"
 
 namespace bzla {
@@ -62,10 +63,15 @@ SolvingContext::solve()
     {
       d_sat_state = d_solver_engine.solve();
     }
-    catch (const UnsupportedException& e)
+    catch (const Unsupported& e)
     {
       Warn(!d_subsolver) << e.msg();
       d_sat_state = Result::UNKNOWN;
+    }
+    catch (const Error& e)
+    {
+      std::cerr << "[bzla] error: " << e.msg() << std::endl;
+      std::exit(EXIT_FAILURE);
     }
   }
 
