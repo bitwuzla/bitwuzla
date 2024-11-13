@@ -916,7 +916,7 @@ BitVector::is_ones() const
       if ((static_cast<uint64_t>(limb)) != max) return false;
     }
     mp_limb_t limb = mpz_getlimbn(d_val_gmp, n - 1);
-    if (d_size == static_cast<uint64_t>(mp_bits_per_limb))
+    if (d_size % static_cast<uint64_t>(mp_bits_per_limb) == 0)
     {
       return (static_cast<uint64_t>(limb)) == max;
     }
@@ -967,7 +967,7 @@ BitVector::is_max_signed() const
   }
   else
   {
-    if (d_size == 1 && d_val_uint64 == 0) return true;
+    if (d_size == 1) return d_val_uint64 == 0;
     if (d_val_uint64 != (~((uint64_t) 0) >> (64 - d_size + 1)))
     {
       return false;
@@ -4002,6 +4002,7 @@ BitVector::get_limb(void* limb, uint64_t nbits_rem, bool zeros) const
   mp_limb_t* gmp_limb = static_cast<mp_limb_t*>(limb);
   uint64_t i, n_limbs, n_limbs_total;
   mp_limb_t res = 0u, mask;
+  const int32_t bits_per_limb = sizeof(d_val_uint64) * 8;
 
   if (is_gmp())
   {
@@ -4016,9 +4017,10 @@ BitVector::get_limb(void* limb, uint64_t nbits_rem, bool zeros) const
     }
     else
     {
-      n_limbs = (d_val_uint64 >> mp_bits_per_limb) == 0
+      n_limbs = (mp_bits_per_limb >= bits_per_limb)
+                        || (d_val_uint64 >> mp_bits_per_limb) == 0
                     ? 1
-                    : 64 / static_cast<uint64_t>(mp_bits_per_limb);
+                    : bits_per_limb / static_cast<uint64_t>(mp_bits_per_limb);
     }
   }
 
@@ -4037,8 +4039,10 @@ BitVector::get_limb(void* limb, uint64_t nbits_rem, bool zeros) const
       }
       else
       {
-        *gmp_limb =
-            n_limbs == 1 ? d_val_uint64 : d_val_uint64 >> mp_bits_per_limb;
+        *gmp_limb = n_limbs == 1 ? d_val_uint64
+                                 : (mp_bits_per_limb >= bits_per_limb
+                                        ? 0
+                                        : (d_val_uint64 >> mp_bits_per_limb));
       }
     }
     return n_limbs;
@@ -4059,6 +4063,10 @@ BitVector::get_limb(void* limb, uint64_t nbits_rem, bool zeros) const
     if (is_gmp())
     {
       res = mpz_getlimbn(d_val_gmp, n_limbs - 1 - i);
+    }
+    else if (mp_bits_per_limb >= bits_per_limb)
+    {
+      res = d_val_uint64;
     }
     else
     {
