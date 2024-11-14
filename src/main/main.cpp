@@ -58,9 +58,9 @@ main(int32_t argc, char* argv[])
     {
       bitwuzla->simplify();
     }
-    else if (main_options.print)
+    if (main_options.print)
     {
-      if (!main_options.parse_only)
+      if (!main_options.parse_only && !main_options.pp_only)
       {
         bitwuzla->simplify();
       }
