@@ -307,7 +307,7 @@ class NodeData
    *  - PayloadValue    (values: bool, BitVector, RoundingMode, FloatingPoint)
    *  - PayloadSymbol   (symbols for constants and variables)
    */
-  uint64_t d_payload[1];
+  alignas(char*) char d_payload[1];
 };
 
 /* ------------------------------------------------------------------------- */
