@@ -245,6 +245,7 @@ sources = files([
   'solver/abstract/abstraction_lemmas.cpp',
   'solver/abstract/abstraction_module.cpp',
   'solver/bv/bv_bitblast_solver.cpp',
+  'solver/bv/bv_interpolation_solver.cpp',
   'solver/bv/bv_prop_solver.cpp',
   'solver/bv/bv_solver.cpp',
   'solver/bv/aig_bitblaster.cpp',

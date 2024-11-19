@@ -50,6 +50,8 @@ class Cadical : public SatSolver
   const char *get_name() const override { return "CaDiCaL"; }
   const char *get_version() const override;
 
+  CaDiCaL::Solver* solver() { return d_solver.get(); }
+
  private:
   std::unique_ptr<CaDiCaL::Solver> d_solver   = nullptr;
   std::unique_ptr<CaDiCaL::Terminator> d_term = nullptr;

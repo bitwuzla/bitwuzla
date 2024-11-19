@@ -49,6 +49,7 @@ BvSolver::BvSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_bitblast_solver(env, state),
       d_cur_solver(env.options().bv_solver()),
+      d_produce_interpolants(env.options().produce_interpolants()),
       d_solver_mode(env.options().bv_solver()),
       d_stats(env.statistics())
 {
@@ -56,6 +57,10 @@ BvSolver::BvSolver(Env& env, SolverState& state)
       || d_solver_mode == option::BvSolver::PREPROP)
   {
     d_prop_solver.reset(new BvPropSolver(env, state, d_bitblast_solver));
+  }
+  if (env.options().produce_interpolants())
+  {
+    d_interpol_solver.reset(new BvInterpolationSolver(env, state));
   }
 }
 
@@ -70,7 +75,14 @@ BvSolver::register_assertion(const Node& assertion,
   if (d_solver_mode == option::BvSolver::BITBLAST
       || d_solver_mode == option::BvSolver::PREPROP)
   {
-    d_bitblast_solver.register_assertion(assertion, top_level, is_lemma);
+    if (d_produce_interpolants)
+    {
+      d_interpol_solver->register_assertion(assertion, top_level, is_lemma);
+    }
+    else
+    {
+      d_bitblast_solver.register_assertion(assertion, top_level, is_lemma);
+    }
   }
   if (d_solver_mode == option::BvSolver::PROP
       || d_solver_mode == option::BvSolver::PREPROP)
@@ -83,6 +95,8 @@ Result
 BvSolver::solve()
 {
   util::Timer timer(d_stats.time_check);
+
+  assert(!d_produce_interpolants);
 
   if (d_env.terminate())
   {
@@ -118,6 +132,7 @@ BvSolver::solve()
 Node
 BvSolver::value(const Node& term)
 {
+  assert(!d_produce_interpolants);
   assert(is_leaf(term));
   assert(term.type().is_bool() || term.type().is_bv());
   if (d_cur_solver == option::BvSolver::BITBLAST)
@@ -131,6 +146,7 @@ BvSolver::value(const Node& term)
 void
 BvSolver::unsat_core(std::vector<Node>& core) const
 {
+  assert(!d_produce_interpolants);
   if (d_cur_solver == option::BvSolver::BITBLAST)
   {
     d_bitblast_solver.unsat_core(core);
@@ -147,9 +163,8 @@ BvSolver::unsat_core(std::vector<Node>& core) const
 Node
 BvSolver::interpolant(const std::vector<Node>& A, const Node& C)
 {
-  (void) A;
-  (void) C;
-  return Node();
+  assert(d_produce_interpolants);
+  return d_interpol_solver->interpolant(A, C);
 }
 
 BvSolver::Statistics::Statistics(util::Statistics& stats)
