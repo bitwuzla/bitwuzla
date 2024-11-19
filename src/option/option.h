@@ -26,6 +26,7 @@ enum class Option
   PRODUCE_MODELS,             // bool
   PRODUCE_UNSAT_ASSUMPTIONS,  // bool
   PRODUCE_UNSAT_CORES,        // bool
+  PRODUCE_INTERPOLANTS,       // bool
   SEED,                       // numeric
   VERBOSITY,                  // numeric
   TIME_LIMIT_PER,             // numeric
@@ -83,10 +84,11 @@ enum class Option
   PP_VARIABLE_SUBST_NORM_EQ,       // bool
   PP_VARIABLE_SUBST_NORM_DISEQ,    // bool
 
-  DBG_RW_NODE_THRESH,    // numeric
-  DBG_PP_NODE_THRESH,    // numeric
-  DBG_CHECK_MODEL,       // bool
-  DBG_CHECK_UNSAT_CORE,  // bool
+  DBG_RW_NODE_THRESH,     // numeric
+  DBG_PP_NODE_THRESH,     // numeric
+  DBG_CHECK_MODEL,        // bool
+  DBG_CHECK_UNSAT_CORE,   // bool
+  DBG_CHECK_INTERPOLANT,  // bool
 
   NUM_OPTIONS,
 };
@@ -437,6 +439,12 @@ class OptionModeT : public OptionMode
   /** @return The default value of this option. */
   const T& dflt() const { return d_default; }
 
+  /**
+   * Set the current option value.
+   * @param value The option value.
+   */
+  void set(T value) { d_value = value; }
+
   std::string mode_to_string(T mode) { return d_mode2string.at(mode); }
 
  private:
@@ -545,6 +553,7 @@ class Options
   OptionBool produce_models;
   OptionBool produce_unsat_assumptions;
   OptionBool produce_unsat_cores;
+  OptionBool produce_interpolants;
   OptionNumeric seed;
   OptionNumeric verbosity;
   OptionNumeric time_limit_per;
@@ -604,6 +613,7 @@ class Options
   OptionNumeric dbg_pp_node_thresh;
   OptionBool dbg_check_model;
   OptionBool dbg_check_unsat_core;
+  OptionBool dbg_check_interpolant;
 
   /** @return True if the given option is a Boolean option. */
   bool is_bool(Option opt);

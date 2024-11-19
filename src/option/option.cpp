@@ -181,6 +181,11 @@ Options::Options()
                           false,
                           "unsat core production",
                           "produce-unsat-cores"),
+      produce_interpolants(this,
+                           Option::PRODUCE_INTERPOLANTS,
+                           false,
+                           "interpolants production",
+                           "produce-interpolants"),
       seed(this,
            Option::SEED,
            27644437,
@@ -525,8 +530,12 @@ Options::Options()
                            Option::DBG_CHECK_UNSAT_CORE,
                            config::is_debug_build,
                            "check unsat core for each unsatisfiable query",
-                           "check-unsat-core")
-
+                           "check-unsat-core"),
+      dbg_check_interpolant(this,
+                            Option::DBG_CHECK_INTERPOLANT,
+                            config::is_debug_build,
+                            "check interpolant for each get-interpolant query",
+                            "check-interpolant")
 {
 }
 
@@ -798,6 +807,11 @@ Options::finalize()
     // enable unsat cores when enabling unsat assumptions
     produce_unsat_cores.set(true);
   }
+  if (produce_interpolants())
+  {
+    // Interpolation is currently only supported with CaDiCaL.
+    sat_solver.set(SatSolver::CADICAL);
+  }
   // configure default values for number of propagations and updates in case
   // of sequential portfolio bv solver configuration PREPROP
   if (bv_solver() == BvSolver::PREPROP)
@@ -850,6 +864,7 @@ Options::data(Option opt)
     case Option::PRODUCE_MODELS: return &produce_models;
     case Option::PRODUCE_UNSAT_ASSUMPTIONS: return &produce_unsat_assumptions;
     case Option::PRODUCE_UNSAT_CORES: return &produce_unsat_cores;
+    case Option::PRODUCE_INTERPOLANTS: return &produce_interpolants;
     case Option::SAT_SOLVER: return &sat_solver;
     case Option::WRITE_AIGER: return &write_aiger;
     case Option::WRITE_CNF: return &write_cnf;
@@ -907,6 +922,7 @@ Options::data(Option opt)
     case Option::DBG_PP_NODE_THRESH: return &dbg_pp_node_thresh;
     case Option::DBG_CHECK_MODEL: return &dbg_check_model;
     case Option::DBG_CHECK_UNSAT_CORE: return &dbg_check_unsat_core;
+    case Option::DBG_CHECK_INTERPOLANT: return &dbg_check_interpolant;
 
     case Option::PP_OPT_END:
     case Option::NUM_OPTIONS: assert(false);
