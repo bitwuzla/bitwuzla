@@ -41,6 +41,12 @@ class AigBitblaster
 
   int64_t aig_id_counter() const { return d_bitblaster.aig_id_counter(); }
 
+  const std::unordered_map<Node, bitblast::AigBitblaster::Bits>&
+  bitblaster_cache() const
+  {
+    return d_bitblaster_cache;
+  }
+
  private:
   bitblast::AigBitblaster::Bits d_empty;
 
