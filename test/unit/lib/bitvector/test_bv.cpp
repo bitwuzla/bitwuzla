@@ -615,11 +615,11 @@ TestBitVector::_smod(int64_t x, int64_t y, uint64_t size)
   {
     return urem;
   }
-  if (x < 0 and y > 0)
+  if (x < 0 && y > 0)
   {
     return normalize_int64(size, -urem + y);
   }
-  if (x > 0 and y < 0)
+  if (x > 0 && y < 0)
   {
     return normalize_int64(size, urem + y);
   }
