@@ -39,6 +39,8 @@ class AigBitblaster
   uint64_t num_aig_consts() const { return d_bitblaster.num_aig_consts(); }
   uint64_t num_aig_shared() const { return d_bitblaster.num_aig_shared(); }
 
+  int64_t aig_id_counter() const { return d_bitblaster.aig_id_counter(); }
+
  private:
   bitblast::AigBitblaster::Bits d_empty;
 

@@ -72,6 +72,8 @@ class AigManager
     return rewrite_and(a, b);
   }
 
+  int64_t aig_ig_counter() const { return d_aig_id_counter; }
+
   /** @return AIG statistics. */
   const Statistics& statistics() const;
 

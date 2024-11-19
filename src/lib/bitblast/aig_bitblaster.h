@@ -49,6 +49,8 @@ class BitInterface<AigNode>
     return mk_or(mk_and(c, a), mk_and(mk_not(c), b));
   }
 
+  const AigManager& amgr() const { return d_amgr; }
+
   const auto& statistics() const { return d_amgr.statistics(); }
 
  private:
@@ -66,6 +68,8 @@ class AigBitblaster : public BitblasterInterface<AigNode>
 
   /** @return Number of shared AND gates. */
   uint64_t num_aig_shared() const { return d_bit_mgr.statistics().num_shared; }
+
+  int64_t aig_id_counter() const { return d_bit_mgr.amgr().aig_ig_counter(); }
 };
 
 }  // namespace bzla::bitblast
