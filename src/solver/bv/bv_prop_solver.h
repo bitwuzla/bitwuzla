@@ -36,9 +36,9 @@ class BvPropSolver : public Solver, public BvSolverInterface
                           bool is_lemma) override;
 
   Node value(const Node& term) override;
-
-  /** Get unsat core of last solve() call. */
   void unsat_core(std::vector<Node>& core) const override;
+  // unsupported
+  Node interpolant(const std::vector<Node>& A, const Node& C) override;
 
  private:
   /** Backtrack manager to sync push/pop with local search engine. */

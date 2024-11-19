@@ -36,6 +36,12 @@ class BvSolverInterface
 
   /** Get unsat core of last solve() call. */
   virtual void unsat_core(std::vector<Node>& core) const = 0;
+
+  /**
+   * Get interpolant I given the set of formulas A and a conjecture C such that
+   * (and A (not C)) is unsat and (=> A I) and (=> I C) are valid.
+   */
+  virtual Node interpolant(const std::vector<Node>& A, const Node& C) = 0;
 };
 
 }  // namespace bzla::bv

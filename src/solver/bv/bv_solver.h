@@ -43,9 +43,8 @@ class BvSolver : public Solver, public BvSolverInterface
                           bool is_lemma) override;
 
   Result solve() override;
-
-  /** Get unsat core of last solve() call. */
   void unsat_core(std::vector<Node>& core) const override;
+  Node interpolant(const std::vector<Node>& A, const Node& C) override;
 
   /** Get overall BV solver statistics. */
   const auto& statistics() const { return d_stats; }

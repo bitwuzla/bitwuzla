@@ -144,6 +144,14 @@ BvSolver::unsat_core(std::vector<Node>& core) const
 
 /* --- BvSolver private ----------------------------------------------------- */
 
+Node
+BvSolver::interpolant(const std::vector<Node>& A, const Node& C)
+{
+  (void) A;
+  (void) C;
+  return Node();
+}
+
 BvSolver::Statistics::Statistics(util::Statistics& stats)
     : num_checks(stats.new_stat<uint64_t>("solver::bv::num_checks")),
       num_assertions(stats.new_stat<uint64_t>("solver::bv::num_assertions")),
