@@ -206,7 +206,8 @@ AigBitblaster::bits(const Node& term) const
 }
 
 uint64_t
-AigBitblaster::count_aig_ands(const Node& term, AigNodeRefSet& cache)
+AigBitblaster::count_aig_ands(const Node& term,
+                              unordered_aig_node_ref_set& cache)
 {
   std::vector<std::reference_wrapper<const bitblast::AigNode>> visit;
   bitblast(term);

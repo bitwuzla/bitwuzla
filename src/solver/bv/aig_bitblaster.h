@@ -22,7 +22,7 @@ namespace bzla::bv {
 class AigBitblaster
 {
  public:
-  using AigNodeRefSet =
+  using unordered_aig_node_ref_set =
       std::unordered_set<std::reference_wrapper<const bitblast::AigNode>,
                          std::hash<bitblast::AigNode>>;
 
@@ -33,7 +33,7 @@ class AigBitblaster
   const bitblast::AigBitblaster::Bits& bits(const Node& term) const;
 
   /** Count number of AIG nodes in term. */
-  uint64_t count_aig_ands(const Node& term, AigNodeRefSet& cache);
+  uint64_t count_aig_ands(const Node& term, unordered_aig_node_ref_set& cache);
 
   uint64_t num_aig_ands() const { return d_bitblaster.num_aig_ands(); }
   uint64_t num_aig_consts() const { return d_bitblaster.num_aig_consts(); }
