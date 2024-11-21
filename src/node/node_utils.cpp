@@ -324,4 +324,16 @@ substitute(NodeManager& nm,
   return it->second;
 }
 
+Node
+invert_node(NodeManager& nm, const Node& node)
+{
+  const Type& type = node.type();
+  if (type.is_bv())
+  {
+    return nm.mk_node(Kind::BV_NOT, {node});
+  }
+  assert(type.is_bool());
+  return nm.mk_node(Kind::NOT, {node});
+}
+
 }  // namespace bzla::node::utils

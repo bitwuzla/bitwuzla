@@ -97,6 +97,14 @@ Node substitute(NodeManager& nm,
                 const Node& node,
                 const std::unordered_map<Node, Node>& substitutions,
                 std::unordered_map<Node, Node>& cache);
-}
 
+/**
+ * Invert Boolean or bit-vector node.
+ *
+ * @param node The node to invert.
+ * @return The inverted node.
+ */
+Node invert_node(NodeManager& nm, const Node& node);
+
+}  // namespace bzla::node::utils
 #endif
