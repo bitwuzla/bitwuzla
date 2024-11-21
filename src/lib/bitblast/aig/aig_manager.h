@@ -72,6 +72,14 @@ class AigManager
     return rewrite_and(a, b);
   }
 
+  /**
+   * Get AigNode by id.
+   * @param id The id of the AIG node.
+   * @return The AIG node.
+   */
+  AigNode get_node(int64_t id) const;
+
+  /** @return The current AIG id counter. */
   int64_t aig_ig_counter() const { return d_aig_id_counter; }
 
   /** @return AIG statistics. */
@@ -101,9 +109,6 @@ class AigManager
    *     Robert Brummayer, Armin Biere.
    */
   AigNode rewrite_and(const AigNode& left, const AigNode& right);
-
-  /** Get AigNode by id. */
-  AigNode get_node(int64_t id);
 
   /** Get children ids from AND gate. */
   std::pair<int64_t, int64_t> get_children(int64_t id) const;

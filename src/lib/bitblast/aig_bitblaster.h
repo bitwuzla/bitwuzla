@@ -69,7 +69,15 @@ class AigBitblaster : public BitblasterInterface<AigNode>
   /** @return Number of shared AND gates. */
   uint64_t num_aig_shared() const { return d_bit_mgr.statistics().num_shared; }
 
+  /** @return The id of the most recently created AIG. */
   int64_t aig_id_counter() const { return d_bit_mgr.amgr().aig_ig_counter(); }
+
+  /**
+   * Get AigNode by id.
+   * @param id The id of the AIG node.
+   * @return The AIG node.
+   */
+  AigNode get_node(int64_t id) const { return d_bit_mgr.amgr().get_node(id); }
 };
 
 }  // namespace bzla::bitblast

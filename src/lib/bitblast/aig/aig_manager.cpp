@@ -405,7 +405,7 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
 }
 
 AigNode
-AigManager::get_node(int64_t id)
+AigManager::get_node(int64_t id) const
 {
   assert(static_cast<size_t>(std::abs(id)) <= d_node_data.size());
   return AigNode(d_node_data[std::abs(id) - 1].get(), id < 0);
