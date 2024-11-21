@@ -105,26 +105,29 @@ ArraySolver::value(const Node& term)
   Kind k = term.kind();
   if (k == Kind::SELECT)
   {
-    // Select element from array model for given index
+    // Select array model from given index
     Node index_val = d_solver_state.value(term[1]);
     Node default_value = get_index_value_pairs(term[0], map);
     assert(default_value.kind() == Kind::CONST_ARRAY);
     auto it = map.find(index_val);
     if (it != map.end())
     {
-      assert(it->second.type() == term.type());
       return it->second;
     }
-
-    // May happen if get-value is called on select not in the bit-vector
-    // abstraction.
-    if (!term.type().is_array())
+    // If we don't have a model for given index, build a model from
+    // index/values pairs that accessed this array term.
+    if (term.type().is_array())
     {
-      return d_solver_state.value(default_value[0]);
+      map.clear();
+      Node res        = get_index_value_pairs(term, map);
+      NodeManager& nm = d_env.nm();
+      for (const auto& [index, value] : map)
+      {
+        res = nm.mk_node(Kind::STORE, {res, index, value});
+      }
+      return res;
     }
-
-    // Go to base case
-    map.clear();
+    return d_solver_state.value(default_value[0]);
   }
   else if (k == Kind::EQUAL)
   {
@@ -798,7 +801,7 @@ ArraySolver::get_index_value_pairs(const Node& array, std::map<Node, Node>& map)
   }
 
   if (array.kind() == Kind::STORE || array.kind() == Kind::ITE
-      || array.kind() == Kind::SELECT)
+      || array.kind() == Kind::CONST_ARRAY)
   {
     Node base;
     Node cur = array;
@@ -814,26 +817,9 @@ ArraySolver::get_index_value_pairs(const Node& array, std::map<Node, Node>& map)
       {
         cur = d_solver_state.value(cur[0]).value<bool>() ? cur[1] : cur[2];
       }
-      else if (k == Kind::SELECT)
-      {
-        std::map<Node, Node> map_sel;
-        Node index_val     = d_solver_state.value(cur[1]);
-        Node default_value = get_index_value_pairs(cur[0], map_sel);
-        auto it            = map_sel.find(index_val);
-        if (it != map_sel.end())
-        {
-          base = it->second;
-        }
-        else
-        {
-          assert(default_value.kind() == Kind::CONST_ARRAY);
-          base = default_value[0];
-        }
-        assert(base.type().is_array());
-        break;
-      }
       else
       {
+        assert(base.is_null() || base == cur);
         base = cur;
         break;
       }
@@ -842,9 +828,22 @@ ArraySolver::get_index_value_pairs(const Node& array, std::map<Node, Node>& map)
     assert(!base.is_null());
     if (base.kind() == Kind::CONST_ARRAY)
     {
-      return base;
+      return d_env.nm().mk_const_array(base.type(),
+                                       d_solver_state.value(base[0]));
     }
     return get_index_value_pairs(base, map);
+  }
+  else if (array.kind() == Kind::SELECT)
+  {
+    std::map<Node, Node> map_sel;
+    Node index_val     = d_solver_state.value(array[1]);
+    Node default_value = get_index_value_pairs(array[0], map_sel);
+    auto it            = map_sel.find(index_val);
+    if (it != map_sel.end())
+    {
+      return get_index_value_pairs(it->second, map);
+    }
+    return default_value[0];
   }
   return utils::mk_default_value(d_env.nm(), array.type());
 }
