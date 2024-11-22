@@ -358,4 +358,79 @@ TEST_F(TestBvInterpolationSolver, interpol7)
   test_get_interpolant({A0, A1}, C);
 }
 
+TEST_F(TestBvInterpolationSolver, interpol8)
+{
+  Type bv16 = d_nm.mk_bv_type(16);
+  Node x    = d_nm.mk_const(bv16, "x");
+  Node y    = d_nm.mk_const(bv16, "y");
+  Node zero = d_nm.mk_value(BitVector::mk_zero(16));
+  Node one  = d_nm.mk_value(BitVector::mk_one(16));
+  Node two  = d_nm.mk_value(BitVector::from_ui(16, 2));
+  // (distinct (_ bv0 16) (bvadd x y))
+  Node A0 =
+      d_nm.mk_node(Kind::DISTINCT, {zero, d_nm.mk_node(Kind::BV_ADD, {x, y})});
+  // (= (bvadd x (_ bv2 16)) (bvneg (bvadd y (bvmul x (_ bv2 16)))))
+  Node A1 = d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_ADD, {x, two}),
+       d_nm.mk_node(
+           Kind::BV_NEG,
+           {d_nm.mk_node(Kind::BV_ADD,
+                         {y, d_nm.mk_node(Kind::BV_MUL, {x, two})})})});
+  // (distinct (_ bv0 16) (bvadd x (_ bv1 16)))
+  Node C = d_nm.mk_node(Kind::DISTINCT,
+                        {zero, d_nm.mk_node(Kind::BV_ADD, {x, one})});
+
+  test_get_interpolant({A0, A1}, C);
+}
+
+TEST_F(TestBvInterpolationSolver, interpol9)
+{
+  Type bv32 = d_nm.mk_bv_type(32);
+  Type bv30 = d_nm.mk_bv_type(30);
+  Node x    = d_nm.mk_const(d_nm.mk_bv_type(2), "x");
+  Node one  = d_nm.mk_value(BitVector::mk_one(32));
+  Node four = d_nm.mk_value(BitVector::from_ui(32, 4));
+  Node xext = d_nm.mk_node(Kind::BV_ZERO_EXTEND, {x}, {30});
+  // (bvule
+  //  (bvmul
+  //    ((_ zero_extend 30) x)
+  //    (bvmul
+  //      (_ bv4 32)
+  //      (bvmul ((_ zero_extend 30) x) (_ bv4 32))))
+  //  (_ bv119 32))
+  Node A0 = d_nm.mk_node(
+      Kind::BV_ULE,
+      {d_nm.mk_node(
+           Kind::BV_MUL,
+           {xext,
+            d_nm.mk_node(Kind::BV_MUL,
+                         {four, d_nm.mk_node(Kind::BV_MUL, {xext, four})})}),
+       d_nm.mk_value(BitVector::from_ui(32, 119))});
+  // (bvult
+  //   (bvadd
+  //     (_ bv1 32)
+  //     (bvmul
+  //       ((_ zero_extend 30) x)
+  //       (bvmul
+  //         (_ bv4 32)
+  //         (bvmul
+  //           ((_ zero_extend 30) x)
+  //           (_ bv4 32)))))
+  //   (_ bv128 32))
+  Node C = d_nm.mk_node(
+      Kind::BV_ULT,
+      {d_nm.mk_node(
+           Kind::BV_ADD,
+           {one,
+            {d_nm.mk_node(
+                Kind::BV_MUL,
+                {xext,
+                 d_nm.mk_node(
+                     Kind::BV_MUL,
+                     {four, d_nm.mk_node(Kind::BV_MUL, {xext, four})})})}}),
+       d_nm.mk_value(BitVector::from_ui(32, 128))});
+
+  test_get_interpolant({A0}, C);
+}
 }  // namespace bzla::test
