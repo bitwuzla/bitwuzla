@@ -60,6 +60,10 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   /** Update AIG and CNF statistics. */
   void update_statistics();
 
+  /**
+   * Helper to map known SAT variables to nodes.
+   * @param vars      The known SAT vars occurring in the interpolant.
+   */
   std::unordered_map<int64_t, Node> map_vars_to_node(
       const std::unordered_set<int64_t>& vars) const;
 

@@ -87,6 +87,7 @@ unit_tests = [
       'fun_solver',
       'incremental',
       'bv_solver',
+      'bv_interpolation_solver',
       'bv_prop_solver',
       'fp_solver',
     ]

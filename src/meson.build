@@ -191,6 +191,7 @@ sources = files([
   'api/cpp/terminator.cpp',
   'backtrack/assertion_stack.cpp',
   'backtrack/backtrackable.cpp',
+  'check/check_interpolant.cpp',
   'check/check_model.cpp',
   'check/check_unsat_core.cpp',
   'env.cpp',

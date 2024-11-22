@@ -69,9 +69,15 @@ class SolverEngine
   /** Get unsat core of last solve() call. */
   void unsat_core(std::vector<Node>& core) const;
 
-  /** Add a lemma.
-   *
-   * @note: A solver is not allowed to send duplicate lemmas.
+  /**
+   * Get interpolant I given the set of formulas A and a conjecture C such that
+   * (and A (not C)) is unsat and (=> A I) and (=> I C) are valid.
+   */
+  Node interpolant(const std::vector<Node>& A, const Node& C);
+
+  /**
+   * Add a lemma.
+   * @note A solver is not allowed to send duplicate lemmas.
    */
   bool lemma(const Node& lemma);
 

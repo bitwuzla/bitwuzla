@@ -12,6 +12,7 @@
 
 #include <cassert>
 
+#include "check/check_interpolant.h"
 #include "check/check_model.h"
 #include "check/check_unsat_core.h"
 #include "node/node.h"
@@ -173,6 +174,27 @@ SolvingContext::get_unsat_core()
   res = d_preprocessor.post_process_unsat_core(core, orig);
 
   return res;
+}
+
+Node
+SolvingContext::get_interpolant(const std::vector<Node>& A, const Node& C)
+{
+  assert(d_assertions.size() == 0);
+  assert(d_env.options().produce_interpolants());
+  std::vector<Node> AA;
+  for (const auto& a : A)
+  {
+    AA.push_back(d_env.rewriter().rewrite(a));
+  }
+  Node ipol = d_solver_engine.interpolant(AA, d_env.rewriter().rewrite(C));
+  if (!ipol.is_null() && options().dbg_check_interpolant())
+  {
+    check::CheckInterpolant ci(*this);
+    auto res = ci.check(A, C, ipol);
+    assert(res);
+    Warn(!res) << "interpolant check failed";
+  }
+  return ipol;
 }
 
 void

@@ -13,6 +13,7 @@
 #include <iomanip>
 
 #include "env.h"
+#include "node/node.h"
 #include "node/node_ref_vector.h"
 #include "printer/smt2_printer.h"
 #include "rewrite/evaluator.h"
@@ -179,6 +180,13 @@ SolverEngine::unsat_core(std::vector<Node>& core) const
       }
     }
   }
+}
+
+Node
+SolverEngine::interpolant(const std::vector<Node>& A, const Node& C)
+{
+  assert(d_assertions.empty());
+  return d_bv_solver.interpolant(A, C);
 }
 
 bool
