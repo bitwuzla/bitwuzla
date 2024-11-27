@@ -2667,6 +2667,30 @@ TEST_F(TestCApi, simplify)
   bitwuzla_options_delete(options);
 }
 
+TEST_F(TestCApi, simplify_term)
+{
+  BitwuzlaSort bv4         = bitwuzla_mk_bv_sort(d_tm, 4);
+  BitwuzlaTerm bv4_a       = bitwuzla_mk_const(d_tm, bv4, "a");
+  BitwuzlaOptions *options = bitwuzla_options_new();
+  Bitwuzla *bitwuzla       = bitwuzla_new(d_tm, options);
+  ASSERT_EQ(bitwuzla_simplify_term(
+                bitwuzla,
+                bitwuzla_mk_term2(
+                    d_tm,
+                    BITWUZLA_KIND_BV_ADD,
+                    bv4_a,
+                    bitwuzla_mk_term1(d_tm, BITWUZLA_KIND_BV_NEG, bv4_a))),
+            bitwuzla_mk_bv_zero(d_tm, bv4));
+  BitwuzlaSort fp32   = bitwuzla_mk_fp_sort(d_tm, 8, 24);
+  BitwuzlaTerm fp32_a = bitwuzla_mk_const(d_tm, fp32, "a");
+  BitwuzlaTerm fpabs  = bitwuzla_mk_term1(d_tm, BITWUZLA_KIND_FP_ABS, fp32_a);
+  ASSERT_EQ(bitwuzla_simplify_term(
+                bitwuzla, bitwuzla_mk_term1(d_tm, BITWUZLA_KIND_FP_ABS, fpabs)),
+            fpabs);
+  bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
+}
+
 TEST_F(TestCApi, check_sat)
 {
   ASSERT_DEATH(bitwuzla_check_sat(nullptr), d_error_not_null);

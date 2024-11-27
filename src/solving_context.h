@@ -18,6 +18,7 @@
 #include "env.h"
 #include "node/node.h"
 #include "preprocess/preprocessor.h"
+#include "rewrite/rewriter.h"
 #include "solver/result.h"
 #include "solver/solver_engine.h"
 
@@ -39,6 +40,9 @@ class SolvingContext
 
   /** Preprocess current set of assertions. */
   Result preprocess();
+
+  /** Rewrite given node. */
+  Node rewrite(const Node& node);
 
   /** Assert formula to context. */
   void assert_formula(const Node& formula);

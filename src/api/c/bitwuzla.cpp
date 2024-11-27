@@ -506,6 +506,19 @@ bitwuzla_simplify(Bitwuzla *bitwuzla)
   BITWUZLA_TRY_CATCH_END;
 }
 
+BitwuzlaTerm
+bitwuzla_simplify_term(Bitwuzla *bitwuzla, BitwuzlaTerm term)
+{
+  BitwuzlaTerm res = nullptr;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  BITWUZLA_CHECK_TERM(term);
+  res = bitwuzla->d_tm->export_term(
+      bitwuzla->d_bitwuzla->simplify(BitwuzlaTermManager::import_term(term)));
+  BITWUZLA_TRY_CATCH_END;
+  return res;
+}
+
 BitwuzlaResult
 bitwuzla_check_sat(Bitwuzla *bitwuzla)
 {

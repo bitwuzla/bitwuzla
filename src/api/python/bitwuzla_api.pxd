@@ -282,6 +282,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         vector[Term] get_unsat_assumptions() except +raise_error
         vector[Term] get_unsat_core() except +raise_error
         void simplify() except +raise_error
+        Term simplify(const Term& term) except +raise_error
         Result check_sat(const vector[Term] &assumptions) except +raise_error
         Term get_value(const Term &term) except +raise_error
         void print_formula(ostream& outfile, string& fmt) except +raise_error

@@ -1351,6 +1351,21 @@ const BitwuzlaTerm *bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
 void bitwuzla_simplify(Bitwuzla *bitwuzla);
 
 /**
+ * Simplify the given term.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param term     The term to simplify.
+ *
+ * @note Each call to `bitwuzla_check_sat()` and `bitwuzla_check_sat_assuming()`
+ *       simplifies the input formula as a preprocessing step.
+ *
+ * @see
+ *   * `bitwuzla_simplify`
+ *   * `bitwuzla_assert`
+ */
+BitwuzlaTerm bitwuzla_simplify_term(Bitwuzla *bitwuzla, BitwuzlaTerm term);
+
+/**
  * Check satisfiability of current input formula.
  *
  * An input formula consists of assertions added via `bitwuzla_assert()`.

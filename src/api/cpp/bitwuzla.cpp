@@ -1512,6 +1512,14 @@ Bitwuzla::simplify()
   d_ctx->preprocess();
 }
 
+Term
+Bitwuzla::simplify(const Term &term)
+{
+  BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  solver_state_change();
+  return d_ctx->rewrite(*term.d_node);
+}
+
 Result
 Bitwuzla::check_sat(const std::vector<Term> &assumptions)
 {

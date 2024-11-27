@@ -1415,6 +1415,15 @@ cdef class Bitwuzla:
         """
         self.c_bitwuzla.get().simplify()
 
+    def simplify_term(self, term: Term):
+        """Simplify the given term.
+
+           .. note::
+               Each call to :func:`~bitwuzla.Bitwuzla.check_sat`
+               simplifies the input formula as a preprocessing step.
+        """
+        return _term(self.tm, self.c_bitwuzla.get().simplify(_cterm(term)))
+
     def get_value(self, term: Term) -> Term:
         """Get model value of term.
 

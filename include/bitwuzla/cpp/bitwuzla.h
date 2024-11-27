@@ -1596,7 +1596,7 @@ class Bitwuzla
    * @return A vector with unsat assertions.
    *
    * @see
-   *   * `assert()`
+   *   * `assert_formula()`
    *   * `check_sat()`
    */
   std::vector<Term> get_unsat_core();
@@ -1612,6 +1612,20 @@ class Bitwuzla
    *   * `assert_formula()`
    */
   void simplify();
+
+  /**
+   * Simplify the given term.
+   *
+   * @param term     The term to simplify.
+   *
+   * @note Each call to `Bitwuzla::check_sat()` simplifies the input formula as
+   *       a preprocessing step.
+   *
+   * @see
+   *   * `simplify()`
+   *   * `assert_formula()`
+   */
+  Term simplify(const Term &term);
 
   /**
    * Check satisfiability of current input formula.

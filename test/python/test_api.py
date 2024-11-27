@@ -589,6 +589,19 @@ def test_simplify(tm):
     bitwuzla.simplify()
 
 
+def test_simplify_term(tm):
+    bitwuzla = Bitwuzla(tm)
+    bv4 = tm.mk_bv_sort(4)
+    bv4_a = tm.mk_const(bv4, "a")
+    assert bitwuzla.simplify_term(
+        tm.mk_term(Kind.BV_ADD, [bv4_a, tm.mk_term(Kind.BV_NEG, [bv4_a])])) ==\
+        tm.mk_bv_zero(bv4)
+    fp32 = tm.mk_fp_sort(8, 24)
+    fp32_a = tm.mk_const(fp32, "a")
+    fpabs = tm.mk_term(Kind.FP_ABS, [fp32_a])
+    assert bitwuzla.simplify_term(tm.mk_term(Kind.FP_ABS, [fpabs])) == fpabs
+
+
 def test_check_sat(tm):
     bitwuzla = Bitwuzla(tm)
     bitwuzla.check_sat()

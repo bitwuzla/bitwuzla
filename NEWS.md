@@ -2,6 +2,11 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Add API support for simplifying terms.
+  - C++ API: `Bitwuzla::simplify(const Term&)`
+  - C API: `bitwuzla_simplify_term(Bitwuzla*, BitwuzlaTerm)`
+  - Python API: `Bitwuzla.simplify_term(Term)`
+
 ## News for version 0.6.1
 
 - SMT2 parser now supports non-indexed rotate operators. These operators are

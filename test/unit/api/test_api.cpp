@@ -1612,6 +1612,22 @@ TEST_F(TestApi, simplify)
   bitwuzla.simplify();
 }
 
+TEST_F(TestApi, simplify_term)
+{
+  bitwuzla::Sort bv4   = d_tm.mk_bv_sort(4);
+  bitwuzla::Term bv4_a = d_tm.mk_const(bv4, "a");
+  bitwuzla::Bitwuzla bitwuzla(d_tm);
+  ASSERT_EQ(bitwuzla.simplify(d_tm.mk_term(
+                bitwuzla::Kind::BV_ADD,
+                {bv4_a, d_tm.mk_term(bitwuzla::Kind::BV_NEG, {bv4_a})})),
+            d_tm.mk_bv_value_uint64(bv4, 0));
+  bitwuzla::Sort fp32   = d_tm.mk_fp_sort(8, 24);
+  bitwuzla::Term fp32_a = d_tm.mk_const(fp32, "a");
+  bitwuzla::Term fpabs  = d_tm.mk_term(bitwuzla::Kind::FP_ABS, {fp32_a});
+  ASSERT_EQ(bitwuzla.simplify(d_tm.mk_term(bitwuzla::Kind::FP_ABS, {fpabs})),
+            fpabs);
+}
+
 TEST_F(TestApi, check_sat)
 {
   bitwuzla::Bitwuzla bitwuzla(d_tm);

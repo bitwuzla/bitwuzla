@@ -14,6 +14,7 @@
 
 #include "check/check_model.h"
 #include "check/check_unsat_core.h"
+#include "node/node.h"
 #include "resource_terminator.h"
 #include "solver/fp/symfpu_nm.h"  // Temporary for setting SymFpuNM
 #include "util/exceptions.h"
@@ -112,6 +113,13 @@ SolvingContext::preprocess()
     compute_formula_statistics(d_stats.formula_kinds_post);
   }
   return res;
+}
+
+Node
+SolvingContext::rewrite(const Node& node)
+{
+  fp::SymFpuNM snm(d_env.nm());
+  return d_env.rewriter().rewrite(node);
 }
 
 void
