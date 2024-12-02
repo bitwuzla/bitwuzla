@@ -652,6 +652,22 @@ Options::max(Option opt)
 void
 Options::finalize()
 {
+#ifndef BZLA_USE_KISSAT
+  if (sat_solver() == SatSolver::KISSAT)
+  {
+    throw Exception("invalid configuration for option --"
+                    + std::string(sat_solver.lng())
+                    + ", Kissat not compiled in");
+  }
+#endif
+#ifndef BZLA_USE_CMS
+  if (sat_solver() == SatSolver::CRYPTOMINISAT)
+  {
+    throw Exception("invalid configuration for option --"
+                    + std::string(sat_solver.lng())
+                    + "CryptoMinisat not compiled in");
+  }
+#endif
   if (produce_unsat_assumptions())
   {
     // we overrule the user here in case they disabled unsat cores, we must

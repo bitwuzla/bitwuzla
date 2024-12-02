@@ -3854,6 +3854,7 @@ TEST_F(TestApi, terminate_sat)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
+#ifdef BZLA_USE_KISSAT
   {
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
@@ -3864,6 +3865,7 @@ TEST_F(TestApi, terminate_sat)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
+#endif
 }
 
 TEST_F(TestApi, terminate_timeout_wrap)

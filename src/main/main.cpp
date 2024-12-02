@@ -87,10 +87,17 @@ main(int32_t argc, char* argv[])
   }
   catch (const bitwuzla::Exception& e)
   {
-    // Remove the "invalid call to '...', prefix
-    const std::string& msg = e.msg();
-    size_t pos             = msg.find("', ");
-    Error() << msg.substr(pos + 3);
+    //// Remove the "invalid call to '...', prefix
+    if (e.msg().find("invalid call") == 0)
+    {
+      const std::string& msg = e.msg();
+      size_t pos             = msg.find("', ");
+      Error() << msg.substr(pos + 3);
+    }
+    else
+    {
+      Error() << e.msg();
+    }
   }
   std::exit(EXIT_SUCCESS);
 }

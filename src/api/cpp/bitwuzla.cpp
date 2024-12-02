@@ -1364,10 +1364,17 @@ class TerminatorInternal : public bzla::Terminator
 
 /* Bitwuzla public ---------------------------------------------------------- */
 
-Bitwuzla::Bitwuzla(TermManager &tm, const Options &options)
-    : d_ctx(new bzla::SolvingContext(*tm.d_nm, *options.d_options, "main")),
-      d_tm(tm)
+Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
 {
+  try
+  {
+    d_ctx.reset(
+        new bzla::SolvingContext(*d_tm.d_nm, *options.d_options, "main"));
+  }
+  catch (bzla::option::Exception &e)
+  {
+    throw Exception(e.msg());
+  }
 }
 
 Bitwuzla::~Bitwuzla() {}

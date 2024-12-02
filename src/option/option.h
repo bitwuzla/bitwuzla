@@ -669,6 +669,31 @@ template <>
 const uint64_t& Options::max(Option opt);
 
 /* -------------------------------------------------------------------------- */
+
+/**
+ * The exception thrown incompatible options result in an unrecoverable error,
+ * e.g., when the selected SAT solver is not compiled in.
+ */
+class Exception : public std::exception
+{
+ public:
+  /**
+   * Constructor.
+   * @param msg The exception message.
+   */
+  Exception(const std::string& msg) : d_msg(msg) {}
+  /**
+   * Get the exception message.
+   * @return The exception message.
+   */
+  const std::string& msg() const { return d_msg; }
+
+  const char* what() const noexcept override { return d_msg.c_str(); }
+
+ private:
+  /** The exception message. */
+  std::string d_msg;
+};
 }  // namespace bzla::option
 
 #endif
