@@ -50,6 +50,13 @@ class TestBvInterpolationSolver : public TestCommon
   void test_get_interpolant_aux(const std::vector<Node>& A, const Node& C)
   {
     // get interpolant
+    if (d_options.log_level())
+    {
+      std::cout << std::endl
+                << ">> rewrite level: " << d_options.rewrite_level()
+                << "  pp: " << (d_options.preprocess() ? "enabled" : "disabled")
+                << std::endl;
+    }
     {
       d_options.preprocess.set(true);
       d_options.rewrite_level.set(d_options.rewrite_level.dflt());
@@ -57,6 +64,13 @@ class TestBvInterpolationSolver : public TestCommon
       d_ctx->get_interpolant(A, C);
     }
     // get_interpolant when preprocessing is disabled
+    if (d_options.log_level())
+    {
+      std::cout << std::endl
+                << ">> rewrite level: " << d_options.rewrite_level()
+                << "  pp: " << (d_options.preprocess() ? "enabled" : "disabled")
+                << std::endl;
+    }
     {
       d_options.preprocess.set(false);
       d_options.rewrite_level.set(d_options.rewrite_level.dflt());
@@ -64,6 +78,13 @@ class TestBvInterpolationSolver : public TestCommon
       d_ctx->get_interpolant(A, C);
     }
     // get_interpolant when rewriting is disabled
+    if (d_options.log_level())
+    {
+      std::cout << std::endl
+                << ">> rewrite level: " << d_options.rewrite_level()
+                << "  pp: " << (d_options.preprocess() ? "enabled" : "disabled")
+                << std::endl;
+    }
     {
       d_options.preprocess.set(true);
       d_options.rewrite_level.set(0);
@@ -71,6 +92,13 @@ class TestBvInterpolationSolver : public TestCommon
       d_ctx->get_interpolant(A, C);
     }
     // get_interpolant when preprocessing and rewriting is disabled
+    if (d_options.log_level())
+    {
+      std::cout << std::endl
+                << ">> rewrite level: " << d_options.rewrite_level()
+                << "  pp: " << (d_options.preprocess() ? "enabled" : "disabled")
+                << std::endl;
+    }
     {
       d_options.preprocess.set(false);
       d_options.rewrite_level.set(0);
@@ -433,4 +461,72 @@ TEST_F(TestBvInterpolationSolver, interpol9)
 
   test_get_interpolant({A0}, C);
 }
+
+TEST_F(TestBvInterpolationSolver, interpol10)
+{
+  Type bv4   = d_nm.mk_bv_type(4);
+  Node x     = d_nm.mk_const(bv4, "x");
+  Node s     = d_nm.mk_const(bv4, "s");
+  Node t     = d_nm.mk_const(bv4, "t");
+  Node val_x = d_nm.mk_value(BitVector::from_ui(4, 3));
+  Node val_s = d_nm.mk_value(BitVector::from_ui(4, 2));
+  Node val_t = d_nm.mk_value(BitVector::from_ui(4, 6));
+  Node A0 =
+      d_nm.mk_node(Kind::AND,
+                   {d_nm.mk_node(Kind::AND,
+                                 {
+                                     d_nm.mk_node(Kind::EQUAL, {x, val_x}),
+                                     d_nm.mk_node(Kind::EQUAL, {s, val_s}),
+                                 }),
+                    d_nm.mk_node(Kind::EQUAL, {t, val_t})});
+  Node C = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
+  test_get_interpolant({A0}, C);
+}
+
+TEST_F(TestBvInterpolationSolver, interpol11)
+{
+  Type bv4    = d_nm.mk_bv_type(4);
+  Node x      = d_nm.mk_const(bv4, "x");
+  Node s      = d_nm.mk_const(bv4, "s");
+  Node t      = d_nm.mk_const(bv4, "t");
+  Node val_x0 = d_nm.mk_value(BitVector::from_ui(4, 3));
+  Node val_s0 = d_nm.mk_value(BitVector::from_ui(4, 2));
+  Node val_t0 = d_nm.mk_value(BitVector::from_ui(4, 6));
+  Node val_x1 = d_nm.mk_value(BitVector::from_ui(4, 5));
+  Node val_s1 = d_nm.mk_value(BitVector::from_ui(4, 4));
+  Node val_t1 = d_nm.mk_value(BitVector::from_ui(4, 4));
+  Node val_x2 = d_nm.mk_value(BitVector::from_ui(4, 5));
+  Node val_s2 = d_nm.mk_value(BitVector::from_ui(4, 3));
+  Node val_t2 = d_nm.mk_value(BitVector::from_ui(4, 15));
+  Node A0     = d_nm.mk_node(
+      Kind::OR,
+      {d_nm.mk_node(Kind::AND,
+                        {d_nm.mk_node(Kind::AND,
+                                      {
+                                      d_nm.mk_node(Kind::EQUAL, {x, val_x0}),
+                                      d_nm.mk_node(Kind::EQUAL, {s, val_s0}),
+                                  }),
+                         d_nm.mk_node(Kind::EQUAL, {t, val_t0})}),
+           d_nm.mk_node(
+           Kind::OR,
+           {d_nm.mk_node(
+                Kind::AND,
+                {d_nm.mk_node(Kind::AND,
+                                  {
+                                  d_nm.mk_node(Kind::EQUAL, {x, val_x1}),
+                                  d_nm.mk_node(Kind::EQUAL, {s, val_s1}),
+                              }),
+                     d_nm.mk_node(Kind::EQUAL, {t, val_t1})}),
+                d_nm.mk_node(
+                Kind::AND,
+                {d_nm.mk_node(Kind::AND,
+                                  {
+                                  d_nm.mk_node(Kind::EQUAL, {x, val_x2}),
+                                  d_nm.mk_node(Kind::EQUAL, {s, val_s2}),
+                              }),
+                     d_nm.mk_node(Kind::EQUAL, {t, val_t2})})})});
+  Node C = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
+  test_get_interpolant({A0}, C);
+}
+
 }  // namespace bzla::test

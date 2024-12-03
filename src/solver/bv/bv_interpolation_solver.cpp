@@ -516,15 +516,12 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
     Log(2) << ss.str();
   }
 
-  Node res = nm.mk_value(true);
   for (const auto& clause : clauses)
   {
-    Node cl = nm.mk_value(false);
     for (int64_t lit : clause)
     {
       int64_t var = std::abs(lit);
       auto it     = map.find(var);
-      Node bit;
       if (it == map.end())
       {
         auto iit = and_gates.find(var);
@@ -541,19 +538,46 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
         {
           right = node::utils::invert_node(nm, right);
         }
-        bit      = nm.mk_node(Kind::AND, {left, right});
-        map[var] = bit;
+        map[var] = nm.mk_node(Kind::AND, {left, right});
       }
-      else
-      {
-        bit = it->second;
-      }
-      cl = nm.mk_node(Kind::OR,
-                      {cl, lit < 0 ? nm.mk_node(Kind::NOT, {bit}) : bit});
     }
-    res = nm.mk_node(Kind::AND, {res, cl});
   }
-  return d_env.rewriter().rewrite(res);
+
+  assert(clauses[clauses.size() - 1].size() == 1);
+  int64_t root = clauses[clauses.size() - 1][0];
+  assert(map.find(std::abs(root)) != map.end());
+  Node res = map.at(std::abs(root));
+  if (root < 0)
+  {
+    res = nm.mk_node(Kind::NOT, {res});
+  }
+  res = d_env.rewriter().rewrite(res);
+
+  Log(1) << "interpolant: " << res;
+  if (d_logger.is_log_enabled(1))
+  {
+    node_ref_vector visit{res};
+    unordered_node_ref_set cache;
+    uint64_t interpol_size = 0;
+    do
+    {
+      const Node& cur = visit.back();
+      visit.pop_back();
+      auto [it, inserted] = cache.insert(cur);
+      if (inserted)
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+        assert(cur.kind() != Kind::BV_AND);
+        if (cur.kind() == Kind::AND)
+        {
+          interpol_size += 1;
+        }
+      }
+    } while (!visit.empty());
+    Log(1) << "interpolant size: " << interpol_size << " ands";
+  }
+
+  return res;
 }
 
 void
