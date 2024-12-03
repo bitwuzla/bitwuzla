@@ -204,6 +204,8 @@ AbstractionModule::check()
 
 #ifndef NDEBUG
   // verify_lemmas();
+  // std::unordered_map<LemmaKind, uint64_t> map;
+  // score_lemmas(Kind::BV_MUL, 4, map);
 #endif
 
   d_added_lemma = false;
@@ -760,16 +762,10 @@ AbstractionModule::score_lemmas(
     std::unordered_map<LemmaKind, uint64_t>& rank_map) const
 {
   NodeManager& nm = d_env.nm();
-  uint64_t max    = 1;
-  for (size_t i = 0; i < bv_size; ++i)
-  {
-    max *= 2;
-  }
+  uint64_t max    = 1u << bv_size;
   std::vector<Node> values;
   std::vector<std::vector<std::vector<bool>>> results_lemmas(
       max, std::vector<std::vector<bool>>(max, std::vector<bool>(max, true)));
-  std::vector<std::vector<std::vector<bool>>> results_optimal(
-      max, std::vector<std::vector<bool>>(max, std::vector<bool>(max, false)));
 
   // Create all possible values [0, max[
   for (uint64_t i = 0; i < max; ++i)
@@ -785,12 +781,11 @@ AbstractionModule::score_lemmas(
     {
       for (uint64_t k = 0; k < values.size(); ++k)
       {
-        Node val = d_rewriter.rewrite(
+        Node val = d_rewriter.eval(
             nm.mk_node(Kind::EQUAL,
                        {values[k], nm.mk_node(kind, {values[i], values[j]})}));
         assert(val.is_value());
-        results_optimal[i][j][k] = val.value<bool>();
-        if (results_optimal[i][j][k])
+        if (val.value<bool>())
         {
           ++optimal_score;
         }
