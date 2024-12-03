@@ -203,8 +203,6 @@ class Node
   NodeManager* nm();
   const NodeManager* nm() const;
 
-  const node::NodeData* payload() const { return d_data; }
-
   /** @return Node info flags. */
   const node::NodeInfo& node_info() const;
 
