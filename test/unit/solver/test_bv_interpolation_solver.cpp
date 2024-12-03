@@ -498,33 +498,33 @@ TEST_F(TestBvInterpolationSolver, interpol11)
   Node val_x2 = d_nm.mk_value(BitVector::from_ui(4, 5));
   Node val_s2 = d_nm.mk_value(BitVector::from_ui(4, 3));
   Node val_t2 = d_nm.mk_value(BitVector::from_ui(4, 15));
-  Node A0     = d_nm.mk_node(
-      Kind::OR,
-      {d_nm.mk_node(Kind::AND,
-                        {d_nm.mk_node(Kind::AND,
-                                      {
-                                      d_nm.mk_node(Kind::EQUAL, {x, val_x0}),
-                                      d_nm.mk_node(Kind::EQUAL, {s, val_s0}),
-                                  }),
-                         d_nm.mk_node(Kind::EQUAL, {t, val_t0})}),
-           d_nm.mk_node(
-           Kind::OR,
-           {d_nm.mk_node(
-                Kind::AND,
-                {d_nm.mk_node(Kind::AND,
-                                  {
-                                  d_nm.mk_node(Kind::EQUAL, {x, val_x1}),
-                                  d_nm.mk_node(Kind::EQUAL, {s, val_s1}),
-                              }),
-                     d_nm.mk_node(Kind::EQUAL, {t, val_t1})}),
-                d_nm.mk_node(
-                Kind::AND,
-                {d_nm.mk_node(Kind::AND,
-                                  {
-                                  d_nm.mk_node(Kind::EQUAL, {x, val_x2}),
-                                  d_nm.mk_node(Kind::EQUAL, {s, val_s2}),
-                              }),
-                     d_nm.mk_node(Kind::EQUAL, {t, val_t2})})})});
+  Node or0 =
+      d_nm.mk_node(Kind::AND,
+                   {d_nm.mk_node(Kind::AND,
+                                 {
+                                     d_nm.mk_node(Kind::EQUAL, {x, val_x0}),
+                                     d_nm.mk_node(Kind::EQUAL, {s, val_s0}),
+                                 }),
+                    d_nm.mk_node(Kind::EQUAL, {t, val_t0})});
+  Node or1 =
+      d_nm.mk_node(Kind::AND,
+                   {d_nm.mk_node(Kind::AND,
+                                 {
+                                     d_nm.mk_node(Kind::EQUAL, {x, val_x1}),
+                                     d_nm.mk_node(Kind::EQUAL, {s, val_s1}),
+                                 }),
+                    d_nm.mk_node(Kind::EQUAL, {t, val_t1})});
+  Node or2 =
+      d_nm.mk_node(Kind::AND,
+                   {d_nm.mk_node(Kind::AND,
+                                 {
+                                     d_nm.mk_node(Kind::EQUAL, {x, val_x2}),
+                                     d_nm.mk_node(Kind::EQUAL, {s, val_s2}),
+                                 }),
+                    d_nm.mk_node(Kind::EQUAL, {t, val_t2})});
+  Node A0 = d_nm.mk_node(Kind::OR, {or0, d_nm.mk_node(Kind::OR, {or1, or2})});
+  // Node A0 = d_nm.mk_node(Kind::OR, {or0, or1});
+  // Node A0 = or0;
   Node C = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
   test_get_interpolant({A0}, C);
 }
