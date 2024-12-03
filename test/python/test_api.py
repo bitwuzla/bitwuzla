@@ -2371,10 +2371,14 @@ def test_terminate_sat(tm):
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNKNOWN
 
-    options.set(Option.BV_SOLVER, 'bitblast')
+    # may fail with exception if Kissat is not compiled in
     options.set(Option.SAT_SOLVER, 'kissat')
     options.set(Option.PREPROCESS, False)
-    bitwuzla = Bitwuzla(tm, options)
+    options.set(Option.BV_SOLVER, 'bitblast')
+    try:
+        bitwuzla = Bitwuzla(tm, options)
+    except BitwuzlaException as e:
+        assert "Kissat not compiled in" in str(e)
     bitwuzla.configure_terminator(tt)
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNKNOWN

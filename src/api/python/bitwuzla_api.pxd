@@ -272,7 +272,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
                                 except +raise_error
 
     cdef cppclass Bitwuzla:
-        Bitwuzla(TermManager& tm, const Options &options);
+        Bitwuzla(TermManager& tm, const Options &options) except +raise_error
         void configure_terminator(Terminator *terminator) except +raise_error
         void push(uint32_t nlevels) except +raise_error
         void pop(uint32_t nlevels) except +raise_error
