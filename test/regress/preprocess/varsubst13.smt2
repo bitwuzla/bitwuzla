@@ -1,0 +1,6 @@
+(set-info :status sat)
+(declare-const o (_ BitVec 1))
+(declare-fun o5 () (_ BitVec 8))
+(declare-fun v () (_ BitVec 8))
+(assert (= ((_ zero_extend 7) o) (bvadd o5 v (_ bv3 8))))
+(check-sat)
