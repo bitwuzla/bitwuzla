@@ -17,6 +17,7 @@
 #endif
 
 #include "node/node.h"
+#include "preprocess/simplify_cache.h"
 #include "util/statistics.h"
 
 namespace bzla {
@@ -53,14 +54,18 @@ class Rewriter
    *              rewrites, level 2 multi-level rewrites.
    * @param id    The identifier of this rewriter (used for stats).
    */
-  Rewriter(Env& env, uint8_t level = LEVEL_MAX, const std::string& id = "");
+  Rewriter(Env& env,
+           preprocess::SimplifyCache& cache,
+           uint8_t level         = LEVEL_MAX,
+           const std::string& id = "");
 
   /**
    * Rewrite given node.
    * @param node The node to rewrite.
    * @return The rewritten node or `node` if no rewrites applied.
    */
-  const Node& rewrite(const Node& node);
+  Node rewrite(const Node& node);
+
   /**
    * Evaluate given node.
    * @note Requires that all leaves of the given node are values.
@@ -76,23 +81,23 @@ class Rewriter
    * @param indices  The indices of the node to create.
    * @return The created, rewritten node.
    */
-  const Node& mk_node(node::Kind kind,
-                      const std::vector<Node>& children,
-                      const std::vector<uint64_t>& indices = {});
+  Node mk_node(node::Kind kind,
+               const std::vector<Node>& children,
+               const std::vector<uint64_t>& indices = {});
 
   /**
    * Helper to create an inverted Boolean or bit-vector node.
    * @param node The node to invert.
    * @return The inverted node.
    */
-  const Node& invert_node(const Node& node);
+  Node invert_node(const Node& node);
   /**
    * Helper to conditionally create an inverted Boolean or bit-vector node.
    * @param condition True to invert the given node.
    * @param node The node to invert.
    * @return The inverted node.
    */
-  const Node& invert_node_if(bool condition, const Node& node);
+  Node invert_node_if(bool condition, const Node& node);
 
   /**
    * @return True if given node corresponds to a (rewritten) OR node.
@@ -144,9 +149,6 @@ class Rewriter
    */
   bool is_bv_xnor(const Node& node, Node& child0, Node& child1);
 
-  /** Clear rewrite cache. */
-  void clear_cache();
-
   NodeManager& nm();
 
   /**
@@ -162,8 +164,11 @@ class Rewriter
 
   /** Helper for rewrite(). */
   const Node& _rewrite(const Node& node);
+
+  /** Evaluate term with local cache. Does not use d_preproc_cache. */
+  Node eval_no_cache(const Node& node);
   /** Helper for eval(). */
-  const Node& _eval(const Node& node);
+  Node _eval(const Node& node);
 
   /* Core ---------------------------------------- */
   Node rewrite_eq(const Node& node);
@@ -284,27 +289,15 @@ class Rewriter
   util::Logger& d_logger;
 
   /** True to enable rewriting, false to only enable operator elimination. */
-  uint8_t d_level;
+  const uint8_t d_level;
   const bool d_arithmetic;
-  /** Cache nodes rewritten during rewrite(), maps node to rewritten form. */
-  std::unordered_map<Node, Node> d_cache;
+
   /**
-   * Cache nodes rewritten during eval(), maps node to rewritten form.
-   * This points to the general rewriter cache (d_cache) if the rewrite level
-   * is greater 0, else to the separate eval cache d_eval_cache_aux.
-   * @note We only utlize d_eval_cache_aux for rwl = 0 in order to avoid
-   *       duplicate eval work (and duplicate nodes between the 2 caches) for
-   *       rwl >= 1.
+   * The simplification cache.
+   * Note that the eval() only uses this cache for d_level > 0.
    */
-  std::unordered_map<Node, Node>& d_eval_cache;
-  /**
-   * The actual eval cache.
-   * This cache is only utilized if the rewrite level = 0 to avoid duplicate
-   * eval work (and duplicate nodes between the 2 caches) for rwl >= 1.
-   * @note We need a separate cache from the rewriter cache for eval() to be
-   *       able to evaluate nodes in case level 1 rewriting is disabled.
-   */
-  std::unordered_map<Node, Node> d_eval_cache_aux;
+  preprocess::SimplifyCache& d_preproc_cache;
+
 #ifndef NDEBUG
   /** Cache for detecting rewrite cycles in debug mode. */
   std::unordered_set<Node> d_rec_cache;

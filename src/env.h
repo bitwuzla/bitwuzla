@@ -88,8 +88,6 @@ class Env
   option::Options d_options;
   /** The statistics. */
   util::Statistics d_statistics;
-  /** The associated rewriter instance. */
-  Rewriter d_rewriter;
   /** The associated terminator. */
   Terminator* d_terminator = nullptr;
   /** The associated logger class. */
@@ -98,6 +96,8 @@ class Env
   std::unique_ptr<backtrack::BacktrackManager> d_simplify_backtrack_mgr;
   /** Node simplification cache for preprocessor and rewriter. */
   std::unique_ptr<preprocess::SimplifyCache> d_simplify_cache;
+  /** The associated rewriter. */
+  Rewriter d_rewriter;
 };
 
 }  // namespace bzla

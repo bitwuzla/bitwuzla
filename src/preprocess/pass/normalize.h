@@ -174,6 +174,7 @@ class PassNormalize : public PreprocessingPass
   std::unordered_set<Node> d_adder_chains_cache;
 
   /** A rewriter configured specifically for normalization rewrites. */
+  preprocess::SimplifyCache d_rewriter_preproc_cache;
   Rewriter d_rewriter;
 
   /** Indicates whether we compute a bit-blasting score. */

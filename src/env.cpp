@@ -24,13 +24,13 @@ Env::Env(NodeManager& nm,
          const std::string& name)
     : d_nm(nm),
       d_options(options),
-      d_rewriter(*this, options.rewrite_level()),
       d_logger(options.log_level(),
                options.verbosity(),
                name.empty() ? "" : "(" + name + ")"),
       d_simplify_backtrack_mgr(new backtrack::BacktrackManager()),
       d_simplify_cache(
-          new preprocess::SimplifyCache(*this, d_simplify_backtrack_mgr.get()))
+          new preprocess::SimplifyCache(*this, d_simplify_backtrack_mgr.get())),
+      d_rewriter(*this, *d_simplify_cache, options.rewrite_level())
 {
   d_options.finalize();
 }

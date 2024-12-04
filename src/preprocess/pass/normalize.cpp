@@ -248,7 +248,12 @@ AigScore::process(uint64_t limit)
 PassNormalize::PassNormalize(Env& env,
                              backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr, "no", "normalize"),
-      d_rewriter(env, Rewriter::LEVEL_ARITHMETIC, "normalize"),
+      d_rewriter_preproc_cache(
+          env, backtrack_mgr, "preprocess::normalize::rewriter"),
+      d_rewriter(env,
+                 d_rewriter_preproc_cache,
+                 Rewriter::LEVEL_ARITHMETIC,
+                 "normalize"),
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }

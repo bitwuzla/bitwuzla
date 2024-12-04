@@ -89,13 +89,15 @@ diff(uint64_t max_id, const Node& rewritten)
 
 /* === Rewriter public ====================================================== */
 
-Rewriter::Rewriter(Env& env, uint8_t level, const std::string& id)
+Rewriter::Rewriter(Env& env,
+                   preprocess::SimplifyCache& cache,
+                   uint8_t level,
+                   const std::string& id)
     : d_env(env),
       d_logger(env.logger()),
       d_level(level),
       d_arithmetic(level == LEVEL_ARITHMETIC),
-      d_eval_cache(env.options().rewrite_level() > 0 ? d_cache
-                                                     : d_eval_cache_aux),
+      d_preproc_cache(cache),
       d_stats(env.statistics(),
               "rewriter::" + (id.empty() ? "" : "(" + id + ")::"))
 {
@@ -104,17 +106,30 @@ Rewriter::Rewriter(Env& env, uint8_t level, const std::string& id)
   (void) d_env;  // only used in debug mode
 }
 
-const Node&
+Node
 Rewriter::rewrite(const Node& node)
 {
-  node::node_ref_vector visit{node};
+  std::vector<Node> visit{node};
+  std::unordered_map<Node, Node> cache;
   do
   {
-    const Node& cur = visit.back();
-    auto [it, inserted] = d_cache.emplace(cur, Node());
+    Node cur = visit.back();
+
+    if (d_preproc_cache.cached(cur,
+                               preprocess::SimplifyCache::Cacher::REWRITER))
+    {
+      cache.emplace(cur, d_preproc_cache.get(cur));
+      visit.pop_back();
+      continue;
+    }
+
+    auto [it, inserted] = cache.emplace(cur, Node());
     if (inserted)
     {
-      visit.insert(visit.end(), cur.begin(), cur.end());
+      for (const Node& child : cur)
+      {
+        visit.push_back(d_preproc_cache.get(child));
+      }
       continue;
     }
     else if (it->second.is_null())
@@ -127,7 +142,7 @@ Rewriter::rewrite(const Node& node)
         // Save current maximum node id
         int64_t max_id = d_env.nm().max_node_id();
 #endif
-        it->second = _rewrite(node::utils::rebuild_node(nm(), cur, d_cache));
+        it->second = _rewrite(d_preproc_cache.rebuild_node(nm(), cur));
 #ifndef NDEBUG
         uint64_t thresh = d_env.options().dbg_rw_node_thresh();
         if (thresh > 0 && d_num_nodes > 0)
@@ -142,46 +157,64 @@ Rewriter::rewrite(const Node& node)
       {
         it->second = cur;
       }
+      d_preproc_cache.add(
+          cur, it->second, preprocess::SimplifyCache::Cacher::REWRITER);
     }
     visit.pop_back();
   } while (!visit.empty());
-  assert(d_cache.find(node) != d_cache.end());
-  return d_cache.at(node);
+  return d_preproc_cache.get(node);
 }
 
 Node
 Rewriter::eval(const Node& node)
 {
-  node::node_ref_vector visit{node};
-  // We use d_eval_cache, a separate cache from the rewriter cache to be able
-  // to evaluate nodes even when rewriting is disabled.
+  if (d_level == 0)
+  {
+    return eval_no_cache(node);
+  }
+
+  std::vector<Node> visit{node};
+  std::unordered_map<Node, Node> cache;
   do
   {
-    const Node& cur     = visit.back();
-    auto [it, inserted] = d_eval_cache.emplace(cur, Node());
+    Node cur = visit.back();
+
+    if (d_preproc_cache.cached(cur,
+                               preprocess::SimplifyCache::Cacher::REWRITER))
+    {
+      cache.emplace(cur, d_preproc_cache.get(cur));
+      visit.pop_back();
+      continue;
+    }
+
+    auto [it, inserted] = cache.emplace(cur, Node());
     if (inserted)
     {
-      visit.insert(visit.end(), cur.begin(), cur.end());
+      for (const Node& child : cur)
+      {
+        visit.push_back(d_preproc_cache.get(child));
+      }
       continue;
     }
     else if (it->second.is_null())
     {
       if (cur.num_children())
       {
-        it->second = _eval(node::utils::rebuild_node(nm(), cur, d_eval_cache));
+        it->second = _eval(d_preproc_cache.rebuild_node(nm(), cur));
       }
       else
       {
         it->second = cur;
       }
+      d_preproc_cache.add(
+          cur, it->second, preprocess::SimplifyCache::Cacher::REWRITER);
     }
     visit.pop_back();
   } while (!visit.empty());
-  assert(d_eval_cache.find(node) != d_eval_cache.end());
-  return d_eval_cache.at(node);
+  return d_preproc_cache.get(node);
 }
 
-const Node&
+Node
 Rewriter::mk_node(node::Kind kind,
                   const std::vector<Node>& children,
                   const std::vector<uint64_t>& indices)
@@ -207,7 +240,7 @@ Rewriter::mk_node(node::Kind kind,
   return res;
 }
 
-const Node&
+Node
 Rewriter::invert_node(const Node& node)
 {
   assert(node.type().is_bool() || node.type().is_bv());
@@ -218,7 +251,7 @@ Rewriter::invert_node(const Node& node)
   return mk_node(node::Kind::BV_NOT, {node});
 }
 
-const Node&
+Node
 Rewriter::invert_node_if(bool condition, const Node& node)
 {
   assert(node.type().is_bool() || node.type().is_bv());
@@ -379,13 +412,6 @@ Rewriter::is_bv_xnor(const Node& node, Node& child0, Node& child1)
   return false;
 }
 
-void
-Rewriter::clear_cache()
-{
-  d_cache.clear();
-  d_eval_cache.clear();
-}
-
 NodeManager&
 Rewriter::nm()
 {
@@ -405,10 +431,9 @@ const Node&
 Rewriter::_rewrite(const Node& node)
 {
   // Lookup rewrite cache
-  auto [it, inserted] = d_cache.emplace(node, Node());
-  if (!inserted && !it->second.is_null())
+  if (d_preproc_cache.cached(node, preprocess::SimplifyCache::Cacher::REWRITER))
   {
-    return it->second;
+    return d_preproc_cache.get(node);
   }
 
   // Limit rewrite recursion depth if we run into rewrite cycles in production
@@ -417,8 +442,7 @@ Rewriter::_rewrite(const Node& node)
   {
     assert(false);
     d_recursion_limit_reached = true;
-    it->second                = node;
-    return it->second;
+    return node;
   }
 
   // Normalize before rewriting
@@ -552,25 +576,53 @@ Rewriter::_rewrite(const Node& node)
   assert(!res.is_null());
   assert(res.type() == node.type());
 
-  // Get iterator again in case a recursive call changed the size of d_cache
-  // and invalidated the iterator.
-  it = d_cache.find(node);
-  assert(it != d_cache.end());
-  assert(it->second.is_null());
-
-  // Cache result
-  it->second = res;
-
-  return it->second;
+  d_preproc_cache.add(node, res, preprocess::SimplifyCache::Cacher::REWRITER);
+  return d_preproc_cache.get(node);
 }
 
-const Node&
+Node
+Rewriter::eval_no_cache(const Node& node)
+{
+  assert(d_level == 0);
+
+  std::vector<Node> visit{node};
+  std::unordered_map<Node, Node> cache;
+  do
+  {
+    Node cur = visit.back();
+
+    auto [it, inserted] = cache.emplace(cur, Node());
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      if (cur.num_children())
+      {
+        it->second = _eval(node::utils::rebuild_node(nm(), cur, cache));
+      }
+      else
+      {
+        it->second = cur;
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+  assert(cache.find(node) != cache.end());
+  return cache.at(node);
+}
+
+Node
 Rewriter::_eval(const Node& node)
 {
-  auto [it, inserted] = d_eval_cache.emplace(node, Node());
-  if (!inserted && !it->second.is_null())
+  // Lookup rewrite cache
+  if (d_level > 0
+      && d_preproc_cache.cached(node,
+                                preprocess::SimplifyCache::Cacher::REWRITER))
   {
-    return it->second;
+    return d_preproc_cache.get(node);
   }
 
   Node res;
@@ -961,15 +1013,13 @@ Rewriter::_eval(const Node& node)
 
   assert(!res.is_null());
   assert(res.type() == node.type());
-  assert(it == d_eval_cache.find(node));
-  assert(it != d_eval_cache.end());
-  if (it->second.is_null())
+
+  if (d_level > 0)
   {
-    // cache result
-    it->second = res;
+    d_preproc_cache.add(node, res, preprocess::SimplifyCache::Cacher::REWRITER);
+    return d_preproc_cache.get(node);
   }
-  assert(it->second == res);
-  return it->second;
+  return res;
 }
 
 /* Boolean rewrites --------------------------------------------------------- */
