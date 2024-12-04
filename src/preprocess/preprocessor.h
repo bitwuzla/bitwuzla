@@ -38,6 +38,8 @@ class Logger;
 
 namespace preprocess {
 
+class SimplifyCache;
+
 class Preprocessor
 {
   friend class BacktrackCallback;
@@ -83,7 +85,7 @@ class Preprocessor
   backtrack::AssertionView& d_assertions;
 
   /** Preprocessor backtrack manager. */
-  backtrack::BacktrackManager d_backtrack_mgr;
+  backtrack::BacktrackManager& d_backtrack_mgr;
 
   /** Global backtrack manager of solving context. */
   const backtrack::BacktrackManager& d_global_backtrack_mgr;
@@ -93,6 +95,9 @@ class Preprocessor
 
   /** Assertion tracking for unsat cores. */
   std::unique_ptr<AssertionTracker> d_assertion_tracker;
+
+  /** The preprocessing cache. */
+  SimplifyCache& d_preproc_cache;
 
   /** Preprocessing passes */
   pass::PassRewrite d_pass_rewrite;

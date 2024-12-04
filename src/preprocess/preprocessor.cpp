@@ -13,6 +13,7 @@
 #include <iomanip>
 
 #include "env.h"
+#include "preprocess/simplify_cache.h"
 #include "solving_context.h"
 #include "util/logger.h"
 #include "util/resources.h"
@@ -43,11 +44,13 @@ Preprocessor::Preprocessor(SolvingContext& context)
     : d_env(context.env()),
       d_logger(d_env.logger()),
       d_assertions(context.assertions()),
+      d_backtrack_mgr(d_env.simplify_backtrack_mgr()),
       d_global_backtrack_mgr(*context.backtrack_mgr()),
       d_pop_callback(context.backtrack_mgr(), &d_backtrack_mgr),
       d_assertion_tracker(d_env.options().produce_unsat_cores()
                               ? new AssertionTracker(&d_backtrack_mgr)
                               : nullptr),
+      d_preproc_cache(d_env.simplify_cache()),
       d_pass_rewrite(d_env, &d_backtrack_mgr),
       d_pass_contr_ands(d_env, &d_backtrack_mgr),
       d_pass_elim_lambda(d_env, &d_backtrack_mgr),

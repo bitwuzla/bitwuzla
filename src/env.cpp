@@ -10,7 +10,9 @@
 
 #include "env.h"
 
+#include "backtrack/backtrackable.h"
 #include "node/node_manager.h"
+#include "preprocess/simplify_cache.h"
 #include "sat/sat_solver_factory.h"
 #include "terminator.h"
 #include "util/exceptions.h"
@@ -25,7 +27,10 @@ Env::Env(NodeManager& nm,
       d_rewriter(*this, options.rewrite_level()),
       d_logger(options.log_level(),
                options.verbosity(),
-               name.empty() ? "" : "(" + name + ")")
+               name.empty() ? "" : "(" + name + ")"),
+      d_simplify_backtrack_mgr(new backtrack::BacktrackManager()),
+      d_simplify_cache(
+          new preprocess::SimplifyCache(*this, d_simplify_backtrack_mgr.get()))
 {
   d_options.finalize();
 }
@@ -41,7 +46,6 @@ Env::statistics()
 {
   return d_statistics;
 }
-
 
 Rewriter&
 Env::rewriter()

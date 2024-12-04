@@ -19,6 +19,14 @@
 
 namespace bzla {
 
+namespace backtrack {
+class BacktrackManager;
+}
+
+namespace preprocess {
+class SimplifyCache;
+}  // namespace preprocess
+
 class Terminator;
 
 class Env
@@ -67,6 +75,12 @@ class Env
   /** @return The currently connected terminator instance. */
   Terminator* terminator() const { return d_terminator; }
 
+  /** @return Simplification backtrack manager. */
+  auto& simplify_backtrack_mgr() { return *d_simplify_backtrack_mgr; }
+
+  /** @return Node simplification cache. */
+  auto& simplify_cache() { return *d_simplify_cache; }
+
  private:
   /** The associated node manager. */
   NodeManager& d_nm;
@@ -80,6 +94,10 @@ class Env
   Terminator* d_terminator = nullptr;
   /** The associated logger class. */
   util::Logger d_logger;
+  /** Backtrack manager for preprocessor and rewriter. */
+  std::unique_ptr<backtrack::BacktrackManager> d_simplify_backtrack_mgr;
+  /** Node simplification cache for preprocessor and rewriter. */
+  std::unique_ptr<preprocess::SimplifyCache> d_simplify_cache;
 };
 
 }  // namespace bzla
