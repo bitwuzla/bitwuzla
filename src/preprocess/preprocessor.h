@@ -61,9 +61,6 @@ class Preprocessor
       const std::vector<Node>& assertions,
       const std::unordered_set<Node>& original_assertions) const;
 
-  /** Get current map of active substitutions. */
-  const std::unordered_map<Node, Node>& substitutions() const;
-
  private:
   /** Apply all preprocessing passes to assertions until fixed-point. */
   void apply(AssertionVector& assertions);
@@ -120,6 +117,7 @@ class Preprocessor
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_preprocess;
     util::TimerStatistic& time_process;
+    util::TimerStatistic& time_freeze;
     uint64_t& num_iterations;
   } d_stats;
 };

@@ -13,6 +13,7 @@
 #include <iomanip>
 
 #include "env.h"
+#include "node/node_ref_vector.h"
 #include "preprocess/simplify_cache.h"
 #include "solving_context.h"
 #include "util/logger.h"
@@ -94,6 +95,7 @@ Preprocessor::preprocess()
   while (!d_assertions.empty() && !d_assertions.is_inconsistent())
   {
     size_t level = d_assertions.level(d_assertions.begin());
+    Log(1) << "Preprocessing assertions at level " << level;
 
     // Sync backtrack manager to level. This is required if there are levels
     // that do not contain any assertions.
@@ -167,7 +169,7 @@ Preprocessor::post_process_unsat_core(
   // TODO: add support for more preprocessing passes (right now disabled)
   std::unordered_set<Node> cache, core_cache;
   std::vector<Node> visit;
-  const auto& substs = substitutions();
+  const auto& substs = d_pass_variable_substitution.substitutions();
   for (size_t i = 0; i < traced_back.size(); ++i)
   {
     const Node& assertion = traced_back[i];
@@ -206,12 +208,6 @@ Preprocessor::post_process_unsat_core(
 #endif
 
   return unsat_core;
-}
-
-const std::unordered_map<Node, Node>&
-Preprocessor::substitutions() const
-{
-  return d_pass_variable_substitution.substitutions();
 }
 
 /* --- Preprocessor private ------------------------------------------------- */
@@ -387,6 +383,26 @@ Preprocessor::apply(AssertionVector& assertions)
   } while (assertions.modified() && !assertions.is_inconsistent()
            && !d_env.terminate());
 
+  {
+    util::Timer timer(d_stats.time_freeze);
+    std::vector<Node> visit;
+    for (size_t i = 0, size = assertions.size(); i < size; ++i)
+    {
+      visit.push_back(assertions[i]);
+    }
+    while (!visit.empty())
+    {
+      Node cur = visit.back();
+      visit.pop_back();
+
+      if (!d_preproc_cache.frozen(cur))
+      {
+        d_preproc_cache.freeze(cur);
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+    }
+  }
+
 #ifndef NDEBUG
   if (d_env.options().dbg_pp_node_thresh())
   {
@@ -512,10 +528,12 @@ Preprocessor::print_statistics(const PreprocessingPass& pass,
 }
 
 Preprocessor::Statistics::Statistics(util::Statistics& stats)
-    : time_preprocess(
-        stats.new_stat<util::TimerStatistic>("preprocessor::time_preprocess")),
+    : time_preprocess(stats.new_stat<util::TimerStatistic>(
+          "preprocessor::time_preprocess")),
       time_process(
           stats.new_stat<util::TimerStatistic>("preprocessor::time_process")),
+      time_freeze(
+          stats.new_stat<util::TimerStatistic>("preprocessor::time_freeze")),
       num_iterations(stats.new_stat<uint64_t>("preprocessor::num_iterations"))
 {
 }

@@ -14,6 +14,7 @@
 #include "backtrack/unordered_map.h"
 #include "backtrack/unordered_set.h"
 #include "preprocess/preprocessing_pass.h"
+#include "preprocess/simplify_cache.h"
 #include "util/statistics.h"
 
 namespace bzla::preprocess::pass {
@@ -34,16 +35,13 @@ class PassVariableSubstitution : public PreprocessingPass
   Node process(const Node& term) override;
 
   /** Get current set of substitutions. */
-  const std::unordered_map<Node, Node>& substitutions() const;
+  const backtrack::unordered_map<Node, std::pair<Node, Node>>& substitutions()
+      const;
 
   /** Get substitution assertion for substituted variable. */
   const Node& substitution_assertion(const Node& var) const;
 
  private:
-  void remove_indirect_cycles(std::unordered_map<Node, Node>& substs) const;
-
-  bool is_direct_cycle(const Node& var, const Node& term) const;
-
   /**
    * Extract variable substitution, if possible.
    * @param assertion The assertion to extract a variable substitution from.
@@ -56,79 +54,47 @@ class PassVariableSubstitution : public PreprocessingPass
   std::pair<Node, Node> normalize_substitution_bv_ineq(const Node& node);
   std::vector<Node> normalize_substitution_eq_bv_concat(const Node& node);
 
-  Node substitute(const Node& term,
-                  const Node& excl_var,
-                  const std::unordered_map<Node, Node>& substitutions,
-                  std::unordered_map<Node, Node>& subst_cache);
+  Node substitute(
+      const Node& term,
+      const std::unordered_map<Node, std::vector<Node>>& substitutions,
+      std::unordered_map<Node, bool>& subst_cache,
+      bool use_coi);
 
-  Node process(const Node& term, const Node& excl_var);
-
-  /**
-   * Determines whether we can fully substitute given variable, or if we have
-   * to keep the substitution assertion.
-   */
-  bool is_safe_to_substitute(const Node& var, size_t assertion_start_index);
-  /** Maps variables found in assertion to index. */
-  void find_vars(const Node& assertion, size_t index);
+  /** Determines whether we can fully substitute given variable. */
+  bool is_safe_to_substitute(const Node& var);
+  /** Mark COI of substitutions and remove cyclic candidate substitutions. */
+  void mark_coi(const AssertionVector& assertions,
+                std::unordered_map<Node, std::vector<Node>>& subst_candidates);
 
   /** Current set of variable substitutions. */
   backtrack::unordered_map<Node, std::pair<Node, Node>> d_substitutions;
-  /**
-   * Current set of variable substitution assertions, maps assertion index to
-   * substituted var.
-   */
-  backtrack::unordered_map<size_t, Node> d_substitution_assertions;
 
-  /**
-   * Maps first occurrence of variable to assertion index where it was found.
-   */
-  backtrack::unordered_map<Node, size_t> d_first_seen;
-  /** Cache for find_vars. */
-  backtrack::unordered_set<Node> d_first_seen_cache;
+  /** Caches visited nodes during substitution. */
+  std::unordered_map<Node, bool> d_subst_cache;
+  /** Caches visited nodes during COI computation. */
+  std::unordered_map<Node, std::pair<bool, size_t>> d_coi_cache;
 
-  /** Backtrackable cache. */
-  class Cache : public backtrack::Backtrackable
-  {
-   public:
-    Cache(backtrack::BacktrackManager* mgr);
-
-    void push() override;
-
-    void pop() override;
-
-    /** @return Current substitution map. */
-    std::unordered_map<Node, Node>& substitutions();
-
-    const std::unordered_map<Node, Node>& substitutions() const;
-
-    /** @return Current substitution cache. */
-    std::unordered_map<Node, Node>& cache();
-
-   private:
-    /** Backtrackable substitution map. One map per scope level. */
-    std::vector<std::unordered_map<Node, Node>> d_map;
-    /** Backtrackable substitution cache. One cache per scope level. */
-    std::vector<std::unordered_map<Node, Node>> d_cache;
-  };
-
-  /** Backtrackable substitution cache. */
-  Cache d_cache;
+  /** COI for current set of substitutions. */
+  backtrack::unordered_set<Node> d_coi;
 
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
     util::TimerStatistic& time_register;
-    util::TimerStatistic& time_direct_cycle_check;
-    util::TimerStatistic& time_remove_cycles;
+    util::TimerStatistic& time_backtrack_cyclic_subst;
     util::TimerStatistic& time_substitute;
-    util::TimerStatistic& time_find_vars;
+    util::TimerStatistic& time_coi;
     util::TimerStatistic& time_find_substitution;
+    util::TimerStatistic& time_process;
     uint64_t& num_substs;
+    uint64_t& num_cycles;
     uint64_t& num_norm_eq_linear_eq;
     uint64_t& num_norm_eq_gauss_elim;
     uint64_t& num_norm_eq_bv_concat;
     uint64_t& num_norm_bv_ult;
     uint64_t& num_norm_bv_slt;
+    uint64_t& num_coi_trav;
+    uint64_t& num_subst_trav;
   } d_stats;
 };
 

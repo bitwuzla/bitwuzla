@@ -63,6 +63,8 @@ SolverEngine::solve()
     print_statistics();
   }
 
+  Log(1) << "Assertion level: " << d_backtrack_mgr.num_levels();
+
   // Process unprocessed assertions.
   process_assertions();
 

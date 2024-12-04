@@ -118,16 +118,16 @@ TEST_F(TestPassVariableSubstitution, cycle3)
   Node eq2     = d_nm.mk_node(Kind::EQUAL, {y, x_and_z});
 
   d_as.push_back(x_and_z);
-  d_as.push_back(eq2);
   d_as.push_back(eq1);
+  d_as.push_back(eq2);
 
   preprocess::AssertionVector assertions(d_as.view());
   d_pass.apply(assertions);
 
   Node y_and_z = d_nm.mk_node(Kind::AND, {y, z});
   ASSERT_EQ(d_as[0], y_and_z);
-  ASSERT_EQ(d_as[1], d_nm.mk_node(Kind::EQUAL, {y, y_and_z}));
-  ASSERT_EQ(d_as[2], d_nm.mk_value(true));
+  ASSERT_EQ(d_as[1], d_nm.mk_value(true));
+  ASSERT_EQ(d_as[2], d_nm.mk_node(Kind::EQUAL, {y, y_and_z}));
 }
 
 TEST_F(TestPassVariableSubstitution, cycle4)
@@ -270,9 +270,9 @@ TEST_F(TestPassVariableSubstitution, inc2)
     Node y_and_y = d_nm.mk_node(Kind::AND, {y, y});
     ASSERT_EQ(as[0], di);
     ASSERT_EQ(as[1], eq);
-    ASSERT_EQ(as[2], y_and_y);
-    ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {y, y}));
-    ASSERT_EQ(pp.process(x_and_y), y_and_y);
+    ASSERT_EQ(as[2], x_and_y);
+    ASSERT_EQ(pp.process(eq), eq);
+    ASSERT_EQ(pp.process(x_and_y), x_and_y);
 
     ctx.pop();
     ctx.preprocess();
@@ -336,16 +336,16 @@ TEST_F(TestPassVariableSubstitution, inc3)
     Node y_and_y = d_nm.mk_node(Kind::AND, {y, y});
     ASSERT_EQ(as[0], di);
     ASSERT_EQ(as[1], eq);
-    ASSERT_EQ(as[2], y_and_y);
-    ASSERT_EQ(as[3], y_and_z);
-    ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {y, y}));
-    ASSERT_EQ(pp.process(x_and_y), y_and_y);
-    ASSERT_EQ(pp.process(x_and_z), y_and_z);
+    ASSERT_EQ(as[2], x_and_y);
+    ASSERT_EQ(as[3], x_and_z);
+    ASSERT_EQ(pp.process(eq), eq);
+    ASSERT_EQ(pp.process(x_and_y), x_and_y);
+    ASSERT_EQ(pp.process(x_and_z), x_and_z);
 
     ctx.pop();
-    ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {y, y}));
-    ASSERT_EQ(pp.process(x_and_y), y_and_y);
-    ASSERT_EQ(pp.process(x_and_z), y_and_z);
+    ASSERT_EQ(pp.process(eq), eq);
+    ASSERT_EQ(pp.process(x_and_y), x_and_y);
+    ASSERT_EQ(pp.process(x_and_z), x_and_z);
 
     ctx.pop();
     ctx.pop();
