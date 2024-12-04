@@ -574,26 +574,25 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       {
         continue;
       }
-      // TODO: check if we should do this in the var.is_null() case below.
-      // Try to normalize assertion for term substitution.
-      auto normalized = normalize_for_substitution(assertion);
-      if (!normalized.empty())
-      {
-        // Explicitly add normalized assertion that was derived from assertion.
-        // Note: Do not use assertion here since this reference may become
-        //       invalid when resizing the assertions vector.
-        Node parent = assertion;
-        for (const auto& n : normalized)
-        {
-          assertions.push_back(n, parent);
-        }
-        continue;
-      }
       auto [var, term] = find_substitution(assertion);
 
       // No variable substitution
       if (var.is_null())
       {
+        // Try to normalize assertion for term substitution.
+        auto normalized = normalize_for_substitution(assertion);
+        if (!normalized.empty())
+        {
+          // Explicitly add normalized assertion that was derived from
+          // assertion. Note: Do not use assertion here since this reference may
+          // become
+          //       invalid when resizing the assertions vector.
+          Node parent = assertion;
+          for (const auto& n : normalized)
+          {
+            assertions.push_back(n, parent);
+          }
+        }
         continue;
       }
 
