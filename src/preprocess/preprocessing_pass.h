@@ -16,6 +16,7 @@
 #include "backtrack/unordered_map.h"
 #include "node/node.h"
 #include "preprocess/assertion_vector.h"
+#include "preprocess/simplify_cache.h"
 #include "util/statistics.h"
 
 namespace bzla {
@@ -114,6 +115,8 @@ class PreprocessingPass
   Env& d_env;
   /** The associated logger. */
   util::Logger& d_logger;
+  /** The associated preprocessing cache. */
+  SimplifyCache& d_preproc_cache;
 
   struct Statistics
   {

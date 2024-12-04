@@ -24,6 +24,7 @@ PreprocessingPass::PreprocessingPass(Env& env,
                                      const std::string& name)
     : d_env(env),
       d_logger(env.logger()),
+      d_preproc_cache(env.simplify_cache()),
       d_stats_pass(d_env.statistics(), "preprocess::" + name + "::"),
       d_id(id),
       d_name(name)
