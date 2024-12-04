@@ -202,6 +202,7 @@ sources = files([
   'preprocess/pass/variable_substitution.cpp',
   'preprocess/preprocessing_pass.cpp',
   'preprocess/preprocessor.cpp',
+  'preprocess/simplify_cache.cpp',
   'printer/printer.cpp',
   'rewrite/evaluator.cpp',
   'rewrite/rewrite_utils.cpp',

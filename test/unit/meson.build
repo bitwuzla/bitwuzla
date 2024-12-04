@@ -46,6 +46,7 @@ unit_tests = [
       'pass_flatten_and',
       'pass_variable_substitution',
       'preprocessor',
+      'simplify_cache',
     ]
   ],
 
