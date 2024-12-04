@@ -155,7 +155,7 @@ PassElimLambda::reduce(const Node& node) const
 }
 
 PassElimLambda::Statistics::Statistics(util::Statistics& stats)
-    : num_elim(stats.new_stat<uint64_t>("preprocess::lambda::num_elim"))
+    : num_elim(stats.new_stat<uint64_t>("preprocess::elim_lambda::num_elim"))
 {
 }
 
