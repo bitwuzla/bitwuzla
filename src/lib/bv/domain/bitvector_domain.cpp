@@ -14,6 +14,7 @@
 #include <cassert>
 #include <iostream>
 
+#include "bv/bitvector.h"
 #include "bv/bounds/bitvector_bounds.h"
 #include "bv/domain/wheel_factorizer.h"
 #include "rng/rng.h"
@@ -374,7 +375,7 @@ BitVectorDomain::str() const
   return res;
 }
 
-/*----------------------------------------------------------------------------*/
+/* --- BitVectorDomainGenerator --------------------------------------------- */
 
 BitVectorDomainGenerator::BitVectorDomainGenerator(
     const BitVectorDomain &domain)
@@ -582,6 +583,8 @@ BitVectorDomainGenerator::generate_next(bool random)
   return res;
 }
 
+/* --- BitVectorDomainDualGenerator ----------------------------------------- */
+
 BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
     const BitVectorDomain &domain, const BitVectorBounds &bounds, RNG *rng)
     : d_rng(rng)
@@ -661,42 +664,42 @@ BitVectorDomainDualGenerator::random()
   return d_gen_hi->random();
 }
 
+/* --- BitVectorDomainSignedGenerator --------------------------------------- */
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
     const BitVectorDomain &domain)
-    : BitVectorDomainSignedGenerator(domain,
-                                     nullptr,
-                                     BitVector::mk_min_signed(domain.size()),
-                                     BitVector::mk_max_signed(domain.size()))
+    : BitVectorDomainSignedGenerator(
+          domain,
+          nullptr,
+          BitVectorRange(BitVector::mk_min_signed(domain.size()),
+                         BitVector::mk_max_signed(domain.size())))
 {
 }
 
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
-    const BitVectorDomain &domain, const BitVector &min, const BitVector &max)
-    : BitVectorDomainSignedGenerator(domain, nullptr, min, max)
+    const BitVectorDomain &domain, const BitVectorRange &range)
+    : BitVectorDomainSignedGenerator(domain, nullptr, range)
 {
 }
 
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
     const BitVectorDomain &domain, RNG *rng)
-    : BitVectorDomainSignedGenerator(domain,
-                                     rng,
-                                     BitVector::mk_min_signed(domain.size()),
-                                     BitVector::mk_max_signed(domain.size()))
+    : BitVectorDomainSignedGenerator(
+          domain,
+          rng,
+          BitVectorRange(BitVector::mk_min_signed(domain.size()),
+                         BitVector::mk_max_signed(domain.size())))
 {
 }
 
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
-    const BitVectorDomain &domain,
-    RNG *rng,
-    const BitVector &min,
-    const BitVector &max)
+    const BitVectorDomain &domain, RNG *rng, const BitVectorRange &range)
     : d_rng(rng)
 {
   uint64_t size          = domain.size();
   BitVector zero         = BitVector::mk_zero(size);
   BitVector ones         = BitVector::mk_ones(size);
-  int32_t min_scomp_zero = min.signed_compare(zero);
-  int32_t max_scomp_zero = max.signed_compare(zero);
+  int32_t min_scomp_zero = range.d_min.signed_compare(zero);
+  int32_t max_scomp_zero = range.d_max.signed_compare(zero);
 
   d_gen_lo.reset(nullptr);
   d_gen_hi.reset(nullptr);
@@ -704,13 +707,17 @@ BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
   if (min_scomp_zero < 0)
   {
     d_gen_lo.reset(new BitVectorDomainGenerator(
-        domain, rng, BitVectorRange(min, max_scomp_zero < 0 ? max : ones)));
+        domain,
+        rng,
+        BitVectorRange(range.d_min, max_scomp_zero < 0 ? range.d_max : ones)));
     d_gen_cur = d_gen_lo.get();
   }
   if (max_scomp_zero >= 0)
   {
     d_gen_hi.reset(new BitVectorDomainGenerator(
-        domain, rng, BitVectorRange(min_scomp_zero >= 0 ? min : zero, max)));
+        domain,
+        rng,
+        BitVectorRange(min_scomp_zero >= 0 ? range.d_min : zero, range.d_max)));
     if (d_gen_cur == nullptr) d_gen_cur = d_gen_hi.get();
   }
 }

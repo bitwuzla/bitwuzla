@@ -2784,7 +2784,10 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
       if (x.has_fixed_bits())
       {
         BitVectorDomainSignedGenerator gen(
-            x, d_rng, BitVector::mk_zero(size), BitVector::mk_max_signed(size));
+            x,
+            d_rng,
+            BitVectorRange(BitVector::mk_zero(size),
+                           BitVector::mk_max_signed(size)));
         if (gen.has_random())
         {
           // Consistent value: pos_x = 0: t = 0: random value
@@ -2799,7 +2802,10 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
       if (x.has_fixed_bits())
       {
         BitVectorDomainSignedGenerator gen(
-            x, d_rng, BitVector::mk_min_signed(size), BitVector::mk_ones(size));
+            x,
+            d_rng,
+            BitVectorRange(BitVector::mk_min_signed(size),
+                           BitVector::mk_ones(size)));
         if (gen.has_random())
         {
           // Consistent value:
@@ -4574,7 +4580,7 @@ BitVectorSlt::inverse_value_concat_new_random(const BitVectorDomain& d,
 
   if (d.has_fixed_bits())
   {
-    BitVectorDomainSignedGenerator gen(d, d_rng, min, max);
+    BitVectorDomainSignedGenerator gen(d, d_rng, BitVectorRange(min, max));
     if (gen.has_random())
     {
       return gen.random();
@@ -4781,8 +4787,8 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
           BitVectorDomainSignedGenerator gen(
               x,
               d_rng,
-              BitVector::mk_min_signed(size),
-              BitVector::mk_max_signed(size).ibvdec());
+              BitVectorRange(BitVector::mk_min_signed(size),
+                             BitVector::mk_max_signed(size).ibvdec()));
           assert(gen.has_random());
           BV_NODE_CACHE_CONSISTENT(gen.random());
         }
@@ -4824,8 +4830,8 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
           BitVectorDomainSignedGenerator gen(
               x,
               d_rng,
-              BitVector::mk_min_signed(size).ibvinc(),
-              BitVector::mk_max_signed(size));
+              BitVectorRange(BitVector::mk_min_signed(size).ibvinc(),
+                             BitVector::mk_max_signed(size)));
           assert(gen.has_random());
           BV_NODE_CACHE_CONSISTENT(gen.random());
         }

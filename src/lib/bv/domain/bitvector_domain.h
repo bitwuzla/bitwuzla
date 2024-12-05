@@ -404,12 +404,10 @@ class BitVectorDomainSignedGenerator
    * Construct generator for values within given range (inclusive),
    * interpreted as signed.
    * @param domain The domain to enumerate values for.
-   * @param min    The minimum value to start enumeration with.
-   * @param max    The maximum value to enumerate until.
+   * @param range  The inclusive value range for generated values.
    */
   BitVectorDomainSignedGenerator(const BitVectorDomain &domain,
-                                 const BitVector &min,
-                                 const BitVector &max);
+                                 const BitVectorRange &range);
   /**
    * Construct generator for values within the range defined by the given
    * bit-vector domain, interpreted as signed.
@@ -422,13 +420,11 @@ class BitVectorDomainSignedGenerator
    * interpreted as signed.
    * @param domain The domain to enumerate values for.
    * @param rng    The associated random number generator.
-   * @param min    The minimum value to start enumeration with.
-   * @param max    The maximum value to enumerate until.
+   * @param range  The inclusive value range for generated values.
    */
   BitVectorDomainSignedGenerator(const BitVectorDomain &domain,
                                  RNG *rng,
-                                 const BitVector &min,
-                                 const BitVector &max);
+                                 const BitVectorRange &range);
   /** Destructor. */
   ~BitVectorDomainSignedGenerator();
 
