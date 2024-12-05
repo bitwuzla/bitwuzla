@@ -102,13 +102,17 @@ ArraySolver::check()
     // Do not cache size here since d_selects may grow while iterating.
     while (i_sel < d_selects.size())
     {
-      check_access(d_selects[i_sel++]);
+      // d_selects may change during this call
+      Node select = d_selects[i_sel++];
+      check_access(select);
     }
 
-    // Do not cache size here since d_selects may grow while iterating.
+    // Do not cache size here since d_equalities may grow while iterating.
     while (i_eq < d_equalities.size())
     {
-      check_equality(d_equalities[i_eq++]);
+      // d_equalities may change during this call
+      Node eq = d_equalities[i_eq++];
+      check_equality(eq);
     }
   }
   d_in_check = false;

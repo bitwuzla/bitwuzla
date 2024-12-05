@@ -57,7 +57,7 @@ FpSolver::check()
        i < size;
        ++i)
   {
-    const Node& node = d_word_blast_queue[i];
+    const Node node = d_word_blast_queue[i];
     Node wb = d_word_blaster.word_blast(node);
 
     if (wb == node) continue;

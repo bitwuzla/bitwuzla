@@ -57,7 +57,7 @@ FunSolver::check()
   // Do not cache size here since d_applies may grow while iterating.
   for (size_t i = 0; i < d_applies.size(); ++i)
   {
-    const Node& apply = d_applies[i];
+    Node apply      = d_applies[i];
     const Node& fun = apply[0];
     auto& fun_model = d_fun_models[fun];
 

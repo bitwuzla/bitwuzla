@@ -26,7 +26,7 @@ namespace {
 void
 count_nodes(const Node& node, std::unordered_set<Node>& cache)
 {
-  std::vector visit{node};
+  node::node_ref_vector visit{node};
   do
   {
     const Node& cur = visit.back();

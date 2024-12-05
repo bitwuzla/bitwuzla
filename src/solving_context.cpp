@@ -15,6 +15,7 @@
 #include "check/check_model.h"
 #include "check/check_unsat_core.h"
 #include "node/node.h"
+#include "node/node_ref_vector.h"
 #include "resource_terminator.h"
 #include "solver/fp/symfpu_nm.h"  // Temporary for setting SymFpuNM
 #include "util/exceptions.h"
@@ -230,7 +231,7 @@ SolvingContext::env()
 void
 SolvingContext::check_no_free_variables() const
 {
-  std::vector<Node> visit;
+  node::node_ref_vector visit;
   std::unordered_map<Node, bool> cache;
   std::unordered_map<Node, uint64_t> bound_vars;
 
