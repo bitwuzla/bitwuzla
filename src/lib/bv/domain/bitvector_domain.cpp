@@ -424,17 +424,25 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
   uint64_t cnt          = 0;  // the number of bits that are not fixed
   const BitVector &mmin = lo.compare(range.d_min) <= 0 ? range.d_min : lo;
   const BitVector &mmax = hi.compare(range.d_max) >= 0 ? range.d_max : hi;
+#ifndef NDEBUG
+  d_min = mmin;
+  d_max = mmax;
+#endif
 
   if (!d_domain.d_has_fixed_bits)
   {
-    cnt = size;
+    d__bits_min = range.d_min;
+    d__bits_max = range.d_max;
+    d_bits      = &d__bits_min;
+    d_bits_min  = &d__bits_min;
+    d_bits_max  = &d__bits_max;
+    return;
   }
-  else
+
+  d_has_fixed_bits = true;
+  for (size_t i = 0; i < size; ++i)
   {
-    for (size_t i = 0; i < size; ++i)
-    {
-      if (!d_domain.is_fixed_bit(i)) cnt += 1;
-    }
+    if (!d_domain.is_fixed_bit(i)) cnt += 1;
   }
 
   if (cnt && mmin.compare(hi) <= 0 && mmax.compare(lo) >= 0)
@@ -513,10 +521,6 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
       d_bits  = &d__bits;
     }
   }
-#ifndef NDEBUG
-  d_min = mmin;
-  d_max = mmax;
-#endif
 }
 
 BitVectorDomainGenerator::~BitVectorDomainGenerator() {}
@@ -557,6 +561,10 @@ BitVectorDomainGenerator::generate_next(bool random)
 {
   assert(random || d_bits);
 
+  // Note: Random does not change the value of `d_bits` in order to not disturb
+  // sequences generated via calls to `next()` if calls to `random()` are
+  // interleaved.
+
   if (d_is_fixed)
   {
     BitVector res = *d_bits;
@@ -568,22 +576,44 @@ BitVectorDomainGenerator::generate_next(bool random)
   }
 
   uint64_t size = d_domain.size();
-  BitVector res(d_domain.d_lo);
 
-  /* Random always resets d_bits to a random value between d_bits_min and
-   * d_bits_max. */
+  if (!d_has_fixed_bits)
+  {
+    if (random)
+    {
+      assert(d_rng);
+      assert(d_bits_min);
+      assert(d_bits_max);
+      return BitVector(size, *d_rng, *d_bits_min, *d_bits_max);
+    }
+
+    BitVector res = *d_bits;
+    if (d_bits->compare(*d_bits_max) == 0)
+    {
+      d_bits = nullptr;
+    }
+    else
+    {
+      d_bits->ibvinc();
+    }
+    return res;
+  }
+
+  BitVector res(d_domain.d_lo);
   if (random)
   {
     assert(d_rng);
     assert(d_bits_min);
     assert(d_bits_max);
-    if (d_bits == nullptr)
+    BitVector tmp(d_bits_min->size(), *d_rng, *d_bits_min, *d_bits_max);
+    for (uint64_t i = 0, j = 0; i < size; ++i)
     {
-      d__bits = BitVector(d_bits_min->size());
-      d_bits  = &d__bits;
+      if (!d_domain.is_fixed_bit(i))
+      {
+        res.set_bit(i, tmp.bit(j++));
+      }
     }
-    assert(d_bits->size() == d_bits_min->size());
-    d_bits->iset(*d_rng, *d_bits_min, *d_bits_max, false);
+    return res;
   }
 
   for (uint64_t i = 0, j = 0; i < size; ++i)
@@ -597,16 +627,7 @@ BitVectorDomainGenerator::generate_next(bool random)
   /* If bits is ones, we enumerated all values. */
   if (d_bits->compare(*d_bits_max) == 0)
   {
-    /* random never terminates and bits start again at bits_min. */
-
-    if (random)
-    {
-      d_bits->iset(*d_bits_min);
-    }
-    else
-    {
-      d_bits = nullptr;
-    }
+    d_bits = nullptr;
   }
   else
   {

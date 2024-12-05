@@ -220,6 +220,7 @@ TestBvDomainGen::test_next_signed_aux(const std::string& str_d,
 
   if (random)
   {
+    assert(expected.size() || !gen->has_random());
     ASSERT_TRUE(expected.size() || !gen->has_random());
     std::unordered_set<std::string> results;
     while (results.size() < expected.size())

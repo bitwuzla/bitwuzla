@@ -315,6 +315,9 @@ class BitVectorDomainGenerator
   BitVector next();
   /**
    * Generate random element in the sequence.
+   * @note This function does not change the value of `d_bits` in order to not
+   *       disturb sequences generated via calls to `next()` if calls to
+   *       `random()` are interleaved.
    * @return A random element in the sequence.
    */
   BitVector random();
@@ -336,6 +339,8 @@ class BitVectorDomainGenerator
 #endif
   /** True if domain of this generator is fixed. */
   bool d_is_fixed = false;
+  /** True if domain of this generator has fixed bits. */
+  bool d_has_fixed_bits = false;
   /*
    * Unconstrained bits, most LSB is farthest right. Null if no next value
    * can be generated.
@@ -396,6 +401,10 @@ class BitVectorDomainDualGenerator
   BitVector next();
   /**
    * Generate random element in the sequence.
+   * @note This does not change the state of the generator, i.e., the `d_bits`
+   *       will not be updated. Thus, it is possible to iterate values via
+   *       `next()` while interspersing calls to `random()` without disturbing
+   *       the sequence of next values.
    * @return A random element in the sequence.
    */
   BitVector random();
