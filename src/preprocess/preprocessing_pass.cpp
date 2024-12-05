@@ -75,6 +75,14 @@ PreprocessingPass::substitute(const Node& node,
   do
   {
     const Node& cur     = visit.back();
+
+    if (d_preproc_cache.frozen(cur))
+    {
+      cache.emplace(cur, cur);
+      visit.pop_back();
+      continue;
+    }
+
     auto [it, inserted] = cache.emplace(cur, Node());
     if (inserted)
     {
