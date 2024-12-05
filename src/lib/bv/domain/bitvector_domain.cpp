@@ -399,6 +399,8 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
     const BitVectorDomain &domain, RNG *rng, const BitVectorRange &range)
     : d_domain(domain), d_rng(rng)
 {
+  assert(!range.empty());
+
   uint64_t cnt          = 0;
   uint64_t size         = domain.size();
   const BitVector &hi   = d_domain.d_hi;
