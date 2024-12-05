@@ -23,6 +23,9 @@ template <class K, class V>
 class unordered_map : public Backtrackable
 {
  public:
+  using iterator       = typename std::unordered_map<K, V>::iterator;
+  using const_iterator = typename std::unordered_map<K, V>::const_iterator;
+
   unordered_map() = delete;
   unordered_map(BacktrackManager* mgr) : Backtrackable(mgr) {}
 
@@ -45,9 +48,30 @@ class unordered_map : public Backtrackable
     return std::make_pair(it, inserted);
   }
 
+  template <class... Args>
+  std::pair<iterator, bool> try_emplace(Args&&... args)
+  {
+    auto [it, inserted] = d_data.try_emplace(std::forward<Args>(args)...);
+    if (inserted)
+    {
+      d_keys.emplace_back(it->first);
+    }
+    return std::make_pair(it, inserted);
+  }
+
   auto begin() const { return d_data.begin(); }
 
   auto end() const { return d_data.end(); }
+
+  void clear()
+  {
+    d_data.clear();
+    d_keys.clear();
+    for (std::size_t i = 0, size = d_control.size(); i < size; ++i)
+    {
+      d_control[i] = 0;
+    }
+  }
 
   /* --- Backtrackable interface -------------------------------------------- */
 
