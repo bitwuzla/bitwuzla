@@ -38,7 +38,7 @@ class unordered_map : public Backtrackable
   auto find(const K& key) const { return d_data.find(key); }
 
   template <class... Args>
-  auto emplace(Args&&... args)
+  std::pair<const_iterator, bool> emplace(Args&&... args)
   {
     auto [it, inserted] = d_data.emplace(std::forward<Args>(args)...);
     if (inserted)
@@ -49,7 +49,7 @@ class unordered_map : public Backtrackable
   }
 
   template <class... Args>
-  std::pair<iterator, bool> try_emplace(Args&&... args)
+  std::pair<const_iterator, bool> try_emplace(Args&&... args)
   {
     auto [it, inserted] = d_data.try_emplace(std::forward<Args>(args)...);
     if (inserted)
