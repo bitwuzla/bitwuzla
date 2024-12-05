@@ -336,7 +336,7 @@ TEST_F(TestBvDomainGen, has_next)
     {
       BitVectorDomain d(xvalues[i]);
       BitVectorDomainGenerator gen(d);
-      ASSERT_TRUE(d.is_fixed() || gen.has_next());
+      ASSERT_TRUE(gen.has_next());
       while (gen.has_next())
       {
         gen.next();
@@ -356,7 +356,7 @@ TEST_F(TestBvDomainGen, has_random)
     {
       BitVectorDomain d(xvalues[i]);
       BitVectorDomainGenerator gen(d, d_rng.get());
-      ASSERT_TRUE(d.is_fixed() || gen.has_random());
+      ASSERT_TRUE(gen.has_random());
       if (gen.has_next())
       {
         for (uint64_t j = 0; j < size; ++j)
@@ -465,7 +465,10 @@ TEST_F(TestBvDomainGen, random_signed)
 {
   test_next(true, true);
   ASSERT_DEATH_DEBUG(
-      BitVectorDomainSignedGenerator(BitVector::mk_ones(4)).random(),
+      BitVectorDomainSignedGenerator(
+          BitVector::mk_ones(4),
+          BitVectorRange(BitVector::mk_zero(4), BitVector::mk_zero(4)))
+          .random(),
       "has_random");
 }
 

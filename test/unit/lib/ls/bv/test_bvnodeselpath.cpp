@@ -83,18 +83,8 @@ TestBvNodeSelPath::test_binary(NodeKind kind)
         BitVector t = BitVector::from_ui(bw_t, j);
 
         /* The current assignment of the operands, we choose a random value. */
-        BitVector s0_val = s0.lo();
-        if (!s0.is_fixed())
-        {
-          BitVectorDomainGenerator gen(s0, d_rng.get());
-          s0_val = gen.random();
-        }
-        BitVector s1_val = s1.lo();
-        if (!s1.is_fixed())
-        {
-          BitVectorDomainGenerator gen(s1, d_rng.get());
-          s1_val = gen.random();
-        }
+        BitVector s0_val = BitVectorDomainGenerator(s0, d_rng.get()).random();
+        BitVector s1_val = BitVectorDomainGenerator(s1, d_rng.get()).random();
 
         uint64_t pos_x;
         bool is_val0, is_val1;
@@ -197,24 +187,9 @@ TestBvNodeSelPath::test_ite()
           BitVector t = BitVector::from_ui(bw_t, j);
 
           /* Current assignment of the operands, we choose a random value. */
-          BitVector s0_val = s0.lo();
-          if (!s0.is_fixed())
-          {
-            BitVectorDomainGenerator gen(s0, d_rng.get());
-            s0_val = gen.random();
-          }
-          BitVector s1_val = s1.lo();
-          if (!s1.is_fixed())
-          {
-            BitVectorDomainGenerator gen(s1, d_rng.get());
-            s1_val = gen.random();
-          }
-          BitVector s2_val = s2.lo();
-          if (!s2.is_fixed())
-          {
-            BitVectorDomainGenerator gen(s2, d_rng.get());
-            s2_val = gen.random();
-          }
+          BitVector s0_val = BitVectorDomainGenerator(s0, d_rng.get()).random();
+          BitVector s1_val = BitVectorDomainGenerator(s1, d_rng.get()).random();
+          BitVector s2_val = BitVectorDomainGenerator(s2, d_rng.get()).random();
 
           uint64_t pos_x;
           bool is_val0, is_val1, is_val2;
@@ -320,12 +295,7 @@ TestBvNodeSelPath::test_not()
       BitVector t = BitVector::from_ui(bw_t, i);
 
       /* The current assignment of the operands, we choose a random value. */
-      BitVector s0_val = s0.lo();
-      if (!s0.is_fixed())
-      {
-        BitVectorDomainGenerator gen(s0, d_rng.get());
-        s0_val = gen.random();
-      }
+      BitVector s0_val = BitVectorDomainGenerator(s0, d_rng.get()).random();
 
       uint64_t pos_x;
       bool is_val;
@@ -400,12 +370,7 @@ TestBvNodeSelPath::test_extract()
 
           /* The current assignment of the operands, we choose a random value.
            */
-          BitVector s0_val = s0.lo();
-          if (!s0.is_fixed())
-          {
-            BitVectorDomainGenerator gen(s0, d_rng.get());
-            s0_val = gen.random();
-          }
+          BitVector s0_val = BitVectorDomainGenerator(s0, d_rng.get()).random();
 
           uint64_t pos_x;
           bool is_val;
@@ -479,12 +444,7 @@ TestBvNodeSelPath::test_sext()
         BitVector t = BitVector::from_ui(bw_t, i);
 
         /* The current assignment of the operands, we choose a random value. */
-        BitVector s0_val = s0.lo();
-        if (!s0.is_fixed())
-        {
-          BitVectorDomainGenerator gen(s0, d_rng.get());
-          s0_val = gen.random();
-        }
+        BitVector s0_val = BitVectorDomainGenerator(s0, d_rng.get()).random();
 
         uint64_t pos_x;
         bool is_val;

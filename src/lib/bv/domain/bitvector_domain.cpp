@@ -401,20 +401,40 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
 {
   assert(!range.empty());
 
-  uint64_t cnt          = 0;
   uint64_t size         = domain.size();
   const BitVector &hi   = d_domain.d_hi;
   const BitVector &lo   = d_domain.d_lo;
+
+  if (d_domain.is_fixed())
+  {
+    d_is_fixed = true;
+    if (lo.compare(range.d_min) >= 0 && lo.compare(range.d_max) <= 0)
+    {
+      d_bits     = &d_domain.d_lo;
+      d_bits_min = &d_domain.d_lo;
+      d_bits_max = &d_domain.d_lo;
+    }
+#ifndef NDEBUG
+    d_min = lo;
+    d_max = hi;
+#endif
+    return;
+  }
+
+  uint64_t cnt          = 0;  // the number of bits that are not fixed
   const BitVector &mmin = lo.compare(range.d_min) <= 0 ? range.d_min : lo;
   const BitVector &mmax = hi.compare(range.d_max) >= 0 ? range.d_max : hi;
 
-  d_bits.reset(nullptr);
-  d_bits_min.reset(nullptr);
-  d_bits_max.reset(nullptr);
-
-  for (size_t i = 0; i < size; ++i)
+  if (!d_domain.d_has_fixed_bits)
   {
-    if (!d_domain.is_fixed_bit(i)) cnt += 1;
+    cnt = size;
+  }
+  else
+  {
+    for (size_t i = 0; i < size; ++i)
+    {
+      if (!d_domain.is_fixed_bit(i)) cnt += 1;
+    }
   }
 
   if (cnt && mmin.compare(hi) <= 0 && mmax.compare(lo) >= 0)
@@ -424,7 +444,8 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
 
     /* Set unconstrained bits to the minimum value that corresponds to a
      * generated value >= mmin. */
-    d_bits_min.reset(new BitVector(BitVector::mk_zero(cnt)));
+    d__bits_min = BitVector::mk_zero(cnt);
+    d_bits_min  = &d__bits_min;
     for (uint64_t i = 0, j = 0, j0 = 0; i < size; ++i)
     {
       uint64_t idx_i = size - 1 - i;
@@ -455,7 +476,8 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
 
     /* Set unconstrained bits to the maximum value that corresponds to a
      * generated value <= mmax. */
-    d_bits_max.reset(new BitVector(BitVector::mk_ones(cnt)));
+    d__bits_max = BitVector::mk_ones(cnt);
+    d_bits_max  = &d__bits_max;
     for (uint64_t i = 0, j = 0, j0 = 0; i < size; ++i)
     {
       uint64_t idx_i = size - 1 - i;
@@ -487,7 +509,8 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
     /* If bits_min > bits_max, we can't generate any value. */
     if (d_bits_min->compare(*d_bits_max) <= 0)
     {
-      d_bits.reset(new BitVector(*d_bits_min));
+      d__bits = BitVector(*d_bits_min);
+      d_bits  = &d__bits;
     }
   }
 #ifndef NDEBUG
@@ -503,7 +526,7 @@ BitVectorDomainGenerator::has_next() const
 {
   assert(d_bits == nullptr
          || (d_bits_min && d_bits->compare(*d_bits_min) >= 0));
-  return d_bits && d_bits->compare(*d_bits_max) <= 0;
+  return d_bits && (d_is_fixed || d_bits->compare(*d_bits_max) <= 0);
 }
 
 bool
@@ -512,7 +535,7 @@ BitVectorDomainGenerator::has_random() const
   assert(d_bits == nullptr
          || (d_bits_min && d_bits_min->compare(*d_bits_min) >= 0));
   assert(!d_bits_min || d_bits_max);
-  return d_bits_min && d_bits_min->compare(*d_bits_max) <= 0;
+  return d_bits_min && (d_is_fixed || d_bits_min->compare(*d_bits_max) <= 0);
 }
 
 BitVector
@@ -534,6 +557,16 @@ BitVectorDomainGenerator::generate_next(bool random)
 {
   assert(random || d_bits);
 
+  if (d_is_fixed)
+  {
+    BitVector res = *d_bits;
+    if (!random)
+    {
+      d_bits = nullptr;
+    }
+    return res;
+  }
+
   uint64_t size = d_domain.size();
   BitVector res(d_domain.d_lo);
 
@@ -544,7 +577,11 @@ BitVectorDomainGenerator::generate_next(bool random)
     assert(d_rng);
     assert(d_bits_min);
     assert(d_bits_max);
-    if (d_bits == nullptr) d_bits.reset(new BitVector(d_bits_min->size()));
+    if (d_bits == nullptr)
+    {
+      d__bits = BitVector(d_bits_min->size());
+      d_bits  = &d__bits;
+    }
     assert(d_bits->size() == d_bits_min->size());
     d_bits->iset(*d_rng, *d_bits_min, *d_bits_max, false);
   }
@@ -568,7 +605,7 @@ BitVectorDomainGenerator::generate_next(bool random)
     }
     else
     {
-      d_bits.reset(nullptr);
+      d_bits = nullptr;
     }
   }
   else

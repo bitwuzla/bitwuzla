@@ -1591,7 +1591,7 @@ BitVectorMul::is_consistent(const BitVector& t, uint64_t pos_x)
         d_rng,
         {t.is_zero() ? BitVector::mk_zero(size) : BitVector::mk_one(size),
          x.hi()});
-    assert(gen.has_random() || x.is_fixed());
+    assert(gen.has_random());
     BitVector tmp = gen.has_random() ? gen.random() : x.lo();
 
     bool res = false;

@@ -334,12 +334,32 @@ class BitVectorDomainGenerator
   BitVector d_min; /* the min value (in case of ranged init) */
   BitVector d_max; /* the max value (in case of ranged init) */
 #endif
-  /* Unconstrained bits, most LSB is farthest right. */
-  std::unique_ptr<BitVector> d_bits;
-  /* Min value of unconstrained bits. */
-  std::unique_ptr<BitVector> d_bits_min;
-  /* Max value of unconstrained bits. */
-  std::unique_ptr<BitVector> d_bits_max;
+  /** True if domain of this generator is fixed. */
+  bool d_is_fixed = false;
+  /*
+   * Unconstrained bits, most LSB is farthest right. Null if no next value
+   * can be generated.
+   * @note In the case of fixed domains, this does not represent the current
+   *       value of the unconstrained bits, but the value of the fixed domain.
+   */
+  BitVector *d_bits = nullptr;
+  /*
+   * Min value of unconstrained bits.
+   * @note In the case of fixed domains, this does not represent the current
+   *       value of the unconstrained bits, but the value of the fixed domain.
+   */
+  BitVector *d_bits_min = nullptr;
+  /* Max value of unconstrained bits.
+   * @note In the case of fixed domains, this does not represent the current
+   *       value of the unconstrained bits, but the value of the fixed domain.
+   */
+  BitVector *d_bits_max = nullptr;
+  /* Value cache for current value, most LSB is farthest right. */
+  BitVector d__bits;
+  /* Value cache for min value of unconstrained bits. */
+  BitVector d__bits_min;
+  /* Value cache for max value of unconstrained bits. */
+  BitVector d__bits_max;
 };
 
 class BitVectorDomainDualGenerator
