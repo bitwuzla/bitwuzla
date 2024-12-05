@@ -22,6 +22,10 @@ template <class T>
 class vector : public Backtrackable
 {
  public:
+  using iterator        = typename std::vector<T>::iterator;
+  using const_iterator  = typename std::vector<T>::const_iterator;
+  using const_reference = typename std::vector<T>::const_reference;
+
   vector() = delete;
   vector(BacktrackManager* mgr) : Backtrackable(mgr) {}
 
@@ -31,7 +35,7 @@ class vector : public Backtrackable
 
   bool empty() const { return d_data.empty(); }
 
-  auto operator[](std::size_t pos) const { return d_data[pos]; }
+  const_reference operator[](std::size_t pos) const { return d_data[pos]; }
 
   void push_back(const T& value) { d_data.push_back(value); }
 
@@ -41,11 +45,11 @@ class vector : public Backtrackable
     d_data.emplace_back(std::forward<Args>(args)...);
   }
 
-  auto& back() { return d_data.back(); }
+  const_reference back() { return d_data.back(); }
 
-  auto begin() const { return d_data.begin(); }
+  const_iterator begin() const { return d_data.begin(); }
 
-  auto end() const { return d_data.end(); }
+  const_iterator end() const { return d_data.end(); }
 
   void clear()
   {
