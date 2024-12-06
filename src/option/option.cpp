@@ -665,7 +665,7 @@ Options::finalize()
   {
     throw Exception("invalid configuration for option --"
                     + std::string(sat_solver.lng())
-                    + "CryptoMinisat not compiled in");
+                    + ", CryptoMiniSat not compiled in");
   }
 #endif
   if (produce_unsat_assumptions())
