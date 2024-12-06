@@ -92,6 +92,7 @@ def main():
     ap.add_argument('--wipe', action='store_true',
                     help='delete build directory if it already exists')
     bool_opt(ap, 'kissat', 'Kissat support')
+    bool_opt(ap, 'cryptominisat', 'CryptoMiniSat support')
     args = ap.parse_args()
 
     build_opts = []
@@ -133,6 +134,8 @@ def main():
         shutil.rmtree(args.build_dir)
     if args.kissat is not None:
         build_opts.append(f'-Dkissat={_bool(args.kissat)}')
+    if args.cryptominisat is not None:
+        build_opts.append(f'-Dcryptominisat={_bool(args.cryptominisat)}')
 
     configure_build(args.build_dir, build_opts)
 

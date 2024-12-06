@@ -366,6 +366,8 @@ TEST_F(TestApi, options_set)
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
     opts.set("sat-solver", "kissat");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "kissat");
+    opts.set("sat-solver", "cms");
+    ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "cms");
     ASSERT_THROW(opts.set("sat--solver", "kissat"), bitwuzla::Exception);
     ASSERT_THROW(opts.set(bitwuzla::Option::BV_SOLVER, "asdf"),
                  bitwuzla::Exception);

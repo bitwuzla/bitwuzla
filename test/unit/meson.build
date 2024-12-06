@@ -127,6 +127,9 @@ if meson.is_cross_build() and host_machine.system() == 'windows'
 endif
 
 cpp_args = ['-fno-access-control']
+if cms_dep.found()
+  cpp_args += ['-DBZLA_USE_CMS']
+endif
 if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
 endif

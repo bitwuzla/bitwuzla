@@ -179,6 +179,8 @@ def test_options_set():
     assert options.get(Option.SAT_SOLVER) == "cadical"
     options.set("sat-solver", "kissat")
     assert options.get(Option.SAT_SOLVER) == "kissat"
+    options.set("sat-solver", "cms")
+    assert options.get(Option.SAT_SOLVER) == "cms"
 
     with pytest.raises(BitwuzlaException):
         options.set("sat--solver", "kissat")

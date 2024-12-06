@@ -1,0 +1,6 @@
+[wrap-file]
+directory = cryptominisat-5.11.21
+
+source_url = https://github.com/msoos/cryptominisat/archive/5.11.21.tar.gz
+source_filename = cryptominisat-5.11.21.tar.gz
+source_hash = 288fd53d801909af797c72023361a75af3229d1806dbc87a0fcda18f5e03763b

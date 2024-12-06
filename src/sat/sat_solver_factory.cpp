@@ -11,6 +11,7 @@
 #include "sat/sat_solver_factory.h"
 
 #include "sat/cadical.h"
+#include "sat/cryptominisat.h"
 #include "sat/kissat.h"
 
 namespace bzla::sat {
@@ -23,6 +24,12 @@ new_sat_solver(option::SatSolver kind)
   if (kind == option::SatSolver::KISSAT)
   {
     return new Kissat();
+  }
+#endif
+#ifdef BZLA_USE_CMS
+  if (kind == option::SatSolver::CRYPTOMINISAT)
+  {
+    return new CryptoMiniSat();
   }
 #endif
 

@@ -97,20 +97,19 @@ CryptoMiniSat::set_num_threads(uint32_t n_threads) const
   d_solver->set_num_threads(n_threads);
 }
 
-int32_t
-CryptoMiniSat::new_var() const
-{
-  d_solver->new_var();
-  return d_solver->nVars();
-}
-
 /* --- CryptoMiniSat private ------------------------------------------------ */
 
 CMSat::Lit
 CryptoMiniSat::import_lit(int32_t lit) const
 {
   assert(lit);
-  return CMSat::Lit(abs(lit) - 1, lit < 0);
+  uint32_t var   = std::abs(lit);
+  uint32_t nvars = d_solver->nVars();
+  if (var >= nvars)
+  {
+    d_solver->new_vars(var == nvars ? 1 : var - nvars);
+  }
+  return CMSat::Lit(var - 1, lit < 0);
 }
 
 void

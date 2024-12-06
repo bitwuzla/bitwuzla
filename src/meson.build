@@ -23,6 +23,22 @@ if not cadical_dep.found()
   cadical_dep = dependency('cadical', required: true)
 endif
 
+cms_dep = cpp_compiler.find_library('cryptominisat5',
+  has_headers: 'cryptominisat5/cryptominisat.h',
+  static: build_static,
+  required: false)
+if get_option('cryptominisat') and not cms_dep.found()
+  cmake = import('cmake')
+  cms_cmake_opts = cmake.subproject_options()
+  cms_cmake_opts.add_cmake_defines({'STATICCOMPILE': build_static},
+                                   {'NOZLIB': true},
+                                   {'NOMPI': true},
+                                   {'NOBREAKID': true})
+  cms_cmake = cmake.subproject('cryptominisat',
+                               options: cms_cmake_opts)
+  cms_dep = cms_cmake.dependency('cryptominisat5')
+endif
+
 # Kissat does not provide pkg-config to find dependency
 kissat_dep = cpp_compiler.find_library('kissat',
                                         has_headers: 'kissat.h',
@@ -36,9 +52,12 @@ endif
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
-dependencies = [symfpu_dep, cadical_dep, kissat_dep, gmp_dep]
+dependencies = [symfpu_dep, cadical_dep, cms_dep, kissat_dep, gmp_dep]
 
 cpp_args = []
+if cms_dep.found()
+  cpp_args += ['-DBZLA_USE_CMS']
+endif
 if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
 endif
@@ -58,6 +77,9 @@ library see the corresponding url.'''
 license_text += '\n\n  CaDiCaL\n  https://github.com/arminbiere/cadical'
 license_text += \
   '\n\n  GMP - GNU Multiple Precision Arithmetic Library\n  https://gmplib.org'
+if cms_dep.found()
+  license_text += '\n\n  CryptoMiniSat\n  https://github.com/msoos/cryptominisat'
+endif
 if kissat_dep.found()
   license_text += '\n\n  Kissat\n  https://github.com/arminbiere/kissat'
 endif

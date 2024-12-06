@@ -2,6 +2,8 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Added support for CryptoMiniSat as back end SAT solver.
+
 - Add API support for simplifying terms.
   - C++ API: `Bitwuzla::simplify(const Term&)`
   - C API: `bitwuzla_simplify_term(Bitwuzla*, BitwuzlaTerm)`
