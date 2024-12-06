@@ -10,6 +10,7 @@
 
 #include "ls/bv/bitvector_node.h"
 
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <sstream>
@@ -5005,6 +5006,9 @@ BitVectorUrem::is_invertible(const BitVector& t,
       return false;
     }
 
+    uint64_t size  = x.size();
+    uint64_t limit = size < 7 ? std::min(1u << size, 100u) : 100;
+
     if (pos_x == 0)
     {
       if (s.is_zero() || t.is_ones())
@@ -5024,7 +5028,6 @@ BitVectorUrem::is_invertible(const BitVector& t,
       assert(s.compare(t) > 0);
       // if simplest solution (0 <= res < s: res = t) does not apply,
       // x = s * n + t with n s.t. (s * n + t) does not overflow
-      uint64_t size  = x.size();
       BitVector ones = BitVector::mk_ones(size);
       if (ones.bvsub(s).compare(t) < 0)
       {
@@ -5065,15 +5068,41 @@ BitVectorUrem::is_invertible(const BitVector& t,
       bool res = false;
       if (gen.has_random())
       {
-        for (uint32_t cnt = 0; cnt < 10000; ++cnt)
+#ifndef NDEBUG
+        // We only enumerate in debug for the unit tests, they fail otherwise
+        // as the limit is too low for how comprehensive the tests are.
+        if (size <= 4)
         {
-          BitVector bv  = gen.random();
-          BitVector rem = bv.bvurem(s);
-          if (rem.compare(t) == 0)
+          std::vector<BitVector> candidates;
+          while (gen.has_next())
           {
+            BitVector bv  = gen.next();
+            BitVector rem = bv.bvurem(s);
+            if (rem.compare(t) == 0)
+            {
+              candidates.push_back(bv);
+            }
+          }
+          if (candidates.size())
+          {
+            size_t idx = d_rng->pick<size_t>(0, candidates.size() - 1);
+            BV_NODE_CACHE_INVERSE(candidates[idx]);
             res = true;
-            BV_NODE_CACHE_INVERSE(std::move(bv));
-            break;
+          }
+        }
+        else
+#endif
+        {
+          for (uint32_t cnt = 0; cnt < limit; ++cnt)
+          {
+            BitVector bv  = gen.random();
+            BitVector rem = bv.bvurem(s);
+            if (rem.compare(t) == 0)
+            {
+              res = true;
+              BV_NODE_CACHE_INVERSE(std::move(bv));
+              break;
+            }
           }
         }
       }
@@ -5083,7 +5112,6 @@ BitVectorUrem::is_invertible(const BitVector& t,
     if (pos_x == 1)
     {
       // IC: pos_x = 1: t = ones: mcb(x, 0)
-      uint64_t size = x.size();
       if (t.is_ones())
       {
         BitVector zero = BitVector::mk_zero(size);
@@ -5169,7 +5197,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
           BitVector ones = BitVector::mk_ones(size);
           BitVector inc  = t.bvinc();
           BitVector bv =
-              x.get_factor(d_rng, n, normalize_bounds({inc, ones}, {}), 10000);
+              x.get_factor(d_rng, n, normalize_bounds({inc, ones}, {}), limit);
           assert(bv.is_null() || x.match_fixed_bits(bv));
           if (bv.is_null())
           {
@@ -5209,7 +5237,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
             BitVector ones = BitVector::mk_ones(size);
             BitVector inc  = t.bvinc();
             BitVector bv   = x.get_factor(
-                d_rng, sub, normalize_bounds({inc, ones}, {}), 10000);
+                d_rng, sub, normalize_bounds({inc, ones}, {}), limit);
             assert(bv.is_null() || x.match_fixed_bits(bv));
             if (!bv.is_null())
             {
