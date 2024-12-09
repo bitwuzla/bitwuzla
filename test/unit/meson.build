@@ -126,6 +126,11 @@ if meson.is_cross_build() and host_machine.system() == 'windows'
   env += ['WINEDEBUG=fixme-all']
 endif
 
+cpp_args = ['-fno-access-control']
+if kissat_dep.found()
+  cpp_args += ['-DBZLA_USE_KISSAT']
+endif
+
 # Add unit tests
 foreach p : unit_tests
   test_subdir = p[0]
@@ -139,7 +144,7 @@ foreach p : unit_tests
     exe = executable(exename, src,
                dependencies: test_deps,
                include_directories: test_inc,
-               cpp_args: ['-fno-access-control'])
+               cpp_args: cpp_args)
     test(name, exe, suite: ['unit', suite], timeout: 0, env: env)
   endforeach
 endforeach
