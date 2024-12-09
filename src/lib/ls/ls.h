@@ -194,7 +194,7 @@ class LocalSearch
    */
   LocalSearch(uint64_t max_nprops,
               uint64_t max_nupdates,
-              uint32_t seed                   = 1234,
+              uint32_t seed                   = 27644437,
               uint32_t log_level              = 0,
               uint32_t verbosity_level        = 0,
               const std::string& stats_prefix = "lib::ls::",

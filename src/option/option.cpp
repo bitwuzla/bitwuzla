@@ -126,7 +126,7 @@ Options::Options()
                           "produce-unsat-cores"),
       seed(this,
            Option::SEED,
-           42,
+           27644437,
            0,
            UINT32_MAX,
            "seed for the random number generator",

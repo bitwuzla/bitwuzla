@@ -27,7 +27,7 @@ class TestBvNodeCommon : public ::bzla::test::TestCommon
     TestCommon::SetUp();
     gen_values(TEST_BW, d_values);
     gen_xvalues(TEST_BW, d_xvalues);
-    d_rng.reset(new RNG(1234));
+    d_rng.reset(new RNG(27644437));
   }
 
   BitVector eval_op_binary(NodeKind op_kind,
