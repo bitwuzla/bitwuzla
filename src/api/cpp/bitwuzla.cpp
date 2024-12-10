@@ -652,7 +652,7 @@ Options::set(const std::vector<std::string> &args)
           uint64_t min = d_options->min<uint64_t>(option);
           BITWUZLA_CHECK(val >= min)
               << "invalid value '" << value << "' for numeric option '" << opt
-              << "', minimum is " << max;
+              << "', minimum is " << min;
         }
         catch (const std::invalid_argument &e)
         {
