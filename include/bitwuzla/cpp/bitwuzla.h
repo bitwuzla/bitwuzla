@@ -106,6 +106,15 @@ const char* git_id();
 /* Exception                                                                  */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * The base class for exception thrown via the API.
+ *
+ * The C++ API of Bitwuzla communicates all errors via exceptions. In general,
+ * exceptions of this type indicate that the associated object may be in an
+ * unsafe state and should no longer be used. An exception are exceptions
+ * that indicate configuration option errors (`option::Exception`),
+ * which allow to continue using the associated `Options` object.
+ */
 class Exception : public std::exception
 {
  public:
@@ -113,24 +122,47 @@ class Exception : public std::exception
    * Constructor.
    * @param msg The exception message.
    */
-  Exception(const std::string &msg);
+Exception(const std::string &msg);
+/**
+ * Constructor.
+ * @param stream The exception message given as a std::stringstream.
+ */
+Exception(const std::stringstream &stream);
+/**
+ * Get the exception message.
+ * @return The exception message.
+ */
+const std::string &msg() const;
+
+const char *what() const noexcept override;
+
+protected:
+/** The exception message. */
+std::string d_msg;
+};
+
+namespace option {
+/**
+ * Exception thrown when errors occur while configuring options.
+ *
+ * @note Exceptions of these type allow to continue using the associated
+ *       `Options` object after they were thrown.
+ */
+class Exception : public bitwuzla::Exception
+{
+ public:
+  /**
+   * Constructor.
+   * @param msg The exception message.
+   */
+  Exception(const std::string &msg) : bitwuzla::Exception(msg) {}
   /**
    * Constructor.
    * @param stream The exception message given as a std::stringstream.
    */
-  Exception(const std::stringstream &stream);
-  /**
-   * Get the exception message.
-   * @return The exception message.
-   */
-  const std::string &msg() const;
-
-  const char *what() const noexcept override;
-
- protected:
-  /** The exception message. */
-  std::string d_msg;
+  Exception(const std::stringstream &stream) : bitwuzla::Exception(stream) {}
 };
+}  // namespace option
 
 /* -------------------------------------------------------------------------- */
 /* Output stream configuration.                                               */

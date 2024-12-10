@@ -23,6 +23,12 @@ namespace bitwuzla::parser {
 
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Exception thrown when errors occur during parsing.
+ *
+ * @note Exceptions of these type are non-recoverable. It is not safe to
+ *       continue using the associated object after they are thrown.
+ */
 class Exception : public bitwuzla::Exception
 {
  public:
