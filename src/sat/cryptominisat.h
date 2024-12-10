@@ -15,7 +15,7 @@
 #ifdef BZLA_USE_CMS
 /*------------------------------------------------------------------------*/
 
-#include <cryptominisat.h>
+#include <cryptominisat5/cryptominisat.h>
 
 #include <memory>
 

@@ -23,10 +23,7 @@ if not cadical_dep.found()
   cadical_dep = dependency('cadical', required: true)
 endif
 
-cms_dep = cpp_compiler.find_library('cryptominisat5',
-  has_headers: 'cryptominisat5/cryptominisat.h',
-  static: build_static,
-  required: false)
+cms_dep = dependency('cryptominisat5', static: build_static, required: false)
 if get_option('cryptominisat') and not cms_dep.found()
   cmake = import('cmake')
   cms_cmake_opts = cmake.subproject_options()
