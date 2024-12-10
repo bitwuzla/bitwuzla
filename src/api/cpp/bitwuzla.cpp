@@ -69,6 +69,7 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::VERBOSITY, bzla::option::Option::VERBOSITY},
         {Option::TIME_LIMIT_PER, bzla::option::Option::TIME_LIMIT_PER},
         {Option::MEMORY_LIMIT, bzla::option::Option::MEMORY_LIMIT},
+        {Option::NTHREADS, bzla::option::Option::NTHREADS},
         {Option::RELEVANT_TERMS, bzla::option::Option::RELEVANT_TERMS},
         {Option::REWRITE_LEVEL, bzla::option::Option::REWRITE_LEVEL},
         {Option::PROP_CONST_BITS, bzla::option::Option::PROP_CONST_BITS},

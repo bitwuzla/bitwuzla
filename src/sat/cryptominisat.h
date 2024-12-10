@@ -26,7 +26,7 @@ namespace bzla::sat {
 class CryptoMiniSat : public SatSolver
 {
  public:
-  CryptoMiniSat();
+  CryptoMiniSat(uint32_t nthreads);
 
   void add(int32_t lit) override;
   void assume(int32_t lit) override;

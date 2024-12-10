@@ -18,7 +18,12 @@ namespace bzla::sat {
 
 /* --- CryptoMiniSat public ------------------------------------------------- */
 
-CryptoMiniSat::CryptoMiniSat() { d_solver.reset(new CMSat::SATSolver()); }
+CryptoMiniSat::CryptoMiniSat(uint32_t nthreads)
+{
+  assert(nthreads > 0);
+  d_solver.reset(new CMSat::SATSolver());
+  d_solver->set_num_threads(nthreads);
+}
 
 void
 CryptoMiniSat::add(int32_t lit)

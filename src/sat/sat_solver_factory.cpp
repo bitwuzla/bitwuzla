@@ -17,22 +17,21 @@
 namespace bzla::sat {
 
 SatSolver*
-new_sat_solver(option::SatSolver kind)
+new_sat_solver(const option::Options& options)
 {
-  (void) kind;
+  (void) options;
 #ifdef BZLA_USE_KISSAT
-  if (kind == option::SatSolver::KISSAT)
+  if (options.sat_solver() == option::SatSolver::KISSAT)
   {
     return new Kissat();
   }
 #endif
 #ifdef BZLA_USE_CMS
-  if (kind == option::SatSolver::CRYPTOMINISAT)
+  if (options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
   {
-    return new CryptoMiniSat();
+    return new CryptoMiniSat(options.nthreads());
   }
 #endif
-
   return new Cadical();
 }
 

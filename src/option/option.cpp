@@ -158,6 +158,16 @@ Options::Options()
                    "set maximum memory limit in MB",
                    "memory-limit",
                    "M"),
+      nthreads(
+          this,
+          Option::NTHREADS,
+          1,
+          1,
+          UINT64_MAX,
+          "set number of threads to utilize in parallel (currently, this only "
+          "configures parallel threads in the CryptoMiniSat back end)",
+          "nthreads",
+          "j"),
       relevant_terms(this,
                      Option::RELEVANT_TERMS,
                      false,
@@ -719,6 +729,7 @@ Options::data(Option opt)
     case Option::VERBOSITY: return &verbosity;
     case Option::TIME_LIMIT_PER: return &time_limit_per;
     case Option::MEMORY_LIMIT: return &memory_limit;
+    case Option::NTHREADS: return &nthreads;
     case Option::RELEVANT_TERMS: return &relevant_terms;
 
     case Option::BV_SOLVER: return &bv_solver;

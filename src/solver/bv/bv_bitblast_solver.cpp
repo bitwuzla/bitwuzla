@@ -56,7 +56,7 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
       d_last_result(Result::UNKNOWN),
       d_stats(env.statistics(), "solver::bv::bitblast::")
 {
-  d_sat_solver.reset(sat::new_sat_solver(env.options().sat_solver()));
+  d_sat_solver.reset(sat::new_sat_solver(env.options()));
   d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
   d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_bitblast_sat_solver));
 }

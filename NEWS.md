@@ -2,9 +2,14 @@
 
 This file collects a summary of important and/or user-visible changes.
 
-- Added support for CryptoMiniSat as back end SAT solver.
+- Added option `-j`/`--nthreads` for configuring **multi-threading**. Currently,
+  multi-threading is only supported **on the SAT solver level**, and only when
+  CryptoMiniSat is configured as the back end SAT solver. Else, configuring
+  this option it is a noop.
 
-- Add API support for simplifying terms.
+- Added support for **CryptoMiniSat** as back end SAT solver.
+
+- Add API support for **simplifying terms**.
   - C++ API: `Bitwuzla::simplify(const Term&)`
   - C API: `bitwuzla_simplify_term(Bitwuzla*, BitwuzlaTerm)`
   - Python API: `Bitwuzla.simplify_term(Term)`

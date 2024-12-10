@@ -30,6 +30,7 @@ enum class Option
   VERBOSITY,                  // numeric
   TIME_LIMIT_PER,             // numeric
   MEMORY_LIMIT,               // numeric
+  NTHREADS,                   // numeric
   RELEVANT_TERMS,             // bool
 
   BV_SOLVER,      // enum
@@ -87,7 +88,6 @@ enum class Option
   DBG_CHECK_UNSAT_CORE,  // bool
 
   NUM_OPTIONS,
-
 };
 
 // Overload increment operator for option enums.
@@ -470,6 +470,7 @@ class Options
   OptionNumeric verbosity;
   OptionNumeric time_limit_per;
   OptionNumeric memory_limit;
+  OptionNumeric nthreads;
   OptionBool relevant_terms;
 
   // Bitwuzla-specific options

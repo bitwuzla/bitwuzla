@@ -3953,6 +3953,47 @@ TEST_F(TestApi, term_manager)
   ASSERT_THROW(bzla2.assert_formula(t1), bitwuzla::Exception);
 }
 
+TEST_F(TestApi, nthreads)
+{
+  const char* input = "parse.smt2";
+  std::ofstream smt2(input);
+  smt2 << "(set-info :status unsat)" << std::endl;
+  smt2 << "(set-logic QF_AUFBV)" << std::endl;
+  smt2 << "(declare-fun a () (Array (_ BitVec 32) (_ BitVec 8)))" << std::endl;
+  smt2 << "(declare-fun b () (Array (_ BitVec 32) (_ BitVec 8)))" << std::endl;
+  smt2 << "(declare-fun i () (_ BitVec 32))" << std::endl;
+  smt2 << "(declare-fun c () Bool)" << std::endl;
+  smt2 << "(assert (not (= (ite c (select a i) (select b i)) (select (ite c a "
+          "b) i))))"
+       << std::endl;
+  smt2 << "(check-sat)" << std::endl;
+  smt2.close();
+
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::SAT_SOLVER, "cadical");
+    opts.set(bitwuzla::Option::NTHREADS, 1);
+    bitwuzla::parser::Parser parser(d_tm, opts, "smt2", &std::cout);
+    parser.parse(input);
+  }
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::SAT_SOLVER, "cadical");
+    opts.set(bitwuzla::Option::NTHREADS, 5);
+    bitwuzla::parser::Parser parser(d_tm, opts, "smt2", &std::cout);
+    parser.parse(input);
+  }
+#ifdef BZLA_USE_CMS
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::SAT_SOLVER, "cms");
+    opts.set(bitwuzla::Option::NTHREADS, 5);
+    bitwuzla::parser::Parser parser(d_tm, opts, "smt2", &std::cout);
+    parser.parse(input);
+  }
+#endif
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test

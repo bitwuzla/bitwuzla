@@ -100,6 +100,12 @@ enum ENUM(Option)
    *  * An unsigned integer for the memory limit in MB. [**default**: 0]
    */
   EVALUE(MEMORY_LIMIT),
+  /*! ** Number of parallel threads.**
+   *
+   * Values:
+   *  * An unsigned integer > 0. [**default**: 1]
+   */
+  EVALUE(NTHREADS),
   /*! **Check relevant terms only.**
    *
    * Theory solvers only perform checks on relevant terms.
