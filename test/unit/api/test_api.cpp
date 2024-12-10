@@ -364,10 +364,14 @@ TEST_F(TestApi, options_set)
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::BV_SOLVER), "bitblast");
     opts.set(bitwuzla::Option::SAT_SOLVER, "cadical");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
+#ifdef BZLA_USE_KISSAT
     opts.set("sat-solver", "kissat");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "kissat");
+#endif
+#ifdef BZLA_USE_CMS
     opts.set("sat-solver", "cms");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "cms");
+#endif
     ASSERT_THROW(opts.set("sat--solver", "kissat"), bitwuzla::Exception);
     ASSERT_THROW(opts.set(bitwuzla::Option::BV_SOLVER, "asdf"),
                  bitwuzla::Exception);

@@ -177,10 +177,16 @@ def test_options_set():
     assert options.get(Option.BV_SOLVER) == "bitblast"
     options.set(Option.SAT_SOLVER, "cadical")
     assert options.get(Option.SAT_SOLVER) == "cadical"
-    options.set("sat-solver", "kissat")
-    assert options.get(Option.SAT_SOLVER) == "kissat"
-    options.set("sat-solver", "cms")
-    assert options.get(Option.SAT_SOLVER) == "cms"
+    try:
+        options.set(Option.SAT_SOLVER, 'kissat')
+        assert options.get(Option.SAT_SOLVER) == "kissat"
+    except BitwuzlaException as e:
+        assert "Kissat not compiled in" in str(e)
+    try:
+        options.set("sat-solver", "cms")
+        assert options.get(Option.SAT_SOLVER) == "cms"
+    except BitwuzlaException as e:
+        assert "CryptoMiniSat not compiled in" in str(e)
 
     with pytest.raises(BitwuzlaException):
         options.set("sat--solver", "kissat")
@@ -2374,10 +2380,10 @@ def test_terminate_sat(tm):
     assert bitwuzla.check_sat() == Result.UNKNOWN
 
     # may fail with exception if Kissat is not compiled in
-    options.set(Option.SAT_SOLVER, 'kissat')
-    options.set(Option.PREPROCESS, False)
-    options.set(Option.BV_SOLVER, 'bitblast')
     try:
+        options.set(Option.SAT_SOLVER, 'kissat')
+        options.set(Option.PREPROCESS, False)
+        options.set(Option.BV_SOLVER, 'bitblast')
         bitwuzla = Bitwuzla(tm, options)
     except BitwuzlaException as e:
         assert "Kissat not compiled in" in str(e)

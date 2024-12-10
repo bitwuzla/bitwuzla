@@ -474,6 +474,7 @@ Options::set(Option option, uint64_t value)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
+  BITWUZLA_OPT_TRY_CATCH_BEGIN;
   if (d_options->is_bool(opt))
   {
     d_options->set<bool>(opt, value != 0, true);
@@ -490,6 +491,7 @@ Options::set(Option option, uint64_t value)
         << d_options->max<uint64_t>(opt);
     d_options->set<uint64_t>(opt, value, true);
   }
+  BITWUZLA_OPT_TRY_CATCH_END;
 }
 
 void
@@ -501,7 +503,9 @@ Options::set(Option option, const std::string &mode)
       << "expected option with option modes";
   BITWUZLA_CHECK(d_options->is_valid_mode(opt, mode))
       << "invalid mode for option";
+  BITWUZLA_OPT_TRY_CATCH_BEGIN;
   d_options->set<std::string>(s_internal_options.at(option), mode, true);
+  BITWUZLA_OPT_TRY_CATCH_END;
 }
 
 void
@@ -513,7 +517,9 @@ Options::set(Option option, const char *mode)
       << "expected option with option modes";
   BITWUZLA_CHECK(d_options->is_valid_mode(opt, mode))
       << "invalid mode for option";
+  BITWUZLA_OPT_TRY_CATCH_BEGIN;
   d_options->set<std::string>(s_internal_options.at(option), mode, true);
+  BITWUZLA_OPT_TRY_CATCH_END;
 }
 
 void
@@ -537,12 +543,15 @@ Options::set(const std::string &lng, const std::string &value)
   BITWUZLA_CHECK(!d_options->is_mode(opt)
                  || d_options->is_valid_mode(opt, value))
       << "invalid option value for option with modes";
+  BITWUZLA_OPT_TRY_CATCH_BEGIN;
   d_options->set(lng, value, true);
+  BITWUZLA_OPT_TRY_CATCH_END;
 }
 
 void
 Options::set(const std::vector<std::string> &args)
 {
+  BITWUZLA_OPT_TRY_CATCH_BEGIN;
   size_t i = 0, size = args.size();
   while (i < size)
   {
@@ -672,6 +681,7 @@ Options::set(const std::vector<std::string> &args)
       set(s_options.at(option), value);
     }
   }
+  BITWUZLA_OPT_TRY_CATCH_END;
 }
 
 uint64_t
@@ -1367,15 +1377,7 @@ class TerminatorInternal : public bzla::Terminator
 
 Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
 {
-  try
-  {
-    d_ctx.reset(
-        new bzla::SolvingContext(*d_tm.d_nm, *options.d_options, "main"));
-  }
-  catch (bzla::option::Exception &e)
-  {
-    throw Exception(e.msg());
-  }
+  d_ctx.reset(new bzla::SolvingContext(*d_tm.d_nm, *options.d_options, "main"));
 }
 
 Bitwuzla::~Bitwuzla() {}

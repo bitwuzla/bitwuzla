@@ -423,6 +423,8 @@ class OptionModeT : public OptionMode
   /** @return The default value of this option. */
   const T& dflt() const { return d_default; }
 
+  std::string mode_to_string(T mode) { return d_mode2string.at(mode); }
+
  private:
   std::vector<std::string> modes() const override;
   const std::string& get_str() const override;

@@ -49,6 +49,13 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_PREDICT_TRUE(arg) arg
 #endif
 
+#define BITWUZLA_OPT_TRY_CATCH_BEGIN \
+  try                                \
+  {
+#define BITWUZLA_OPT_TRY_CATCH_END \
+  }                                \
+  catch (bzla::option::Exception & e) { throw Exception(e.msg()); }
+
 #define BITWUZLA_CHECK(cond)                              \
   BITWUZLA_PREDICT_TRUE(cond)                             \
   ? (void) 0                                              \

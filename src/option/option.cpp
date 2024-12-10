@@ -559,6 +559,24 @@ Options::set(Option opt, const std::string& value, bool is_user_set)
 {
   assert(data(opt)->is_mode());
   assert(is_user_set || !data(opt)->d_is_user_set);
+#ifndef BZLA_USE_KISSAT
+  if (opt == Option::SAT_SOLVER
+      && value == sat_solver.mode_to_string(SatSolver::KISSAT))
+  {
+    throw Exception("invalid configuration for option --"
+                    + std::string(sat_solver.lng())
+                    + ", Kissat not compiled in");
+  }
+#endif
+#ifndef BZLA_USE_CMS
+  if (opt == Option::SAT_SOLVER
+      && value == sat_solver.mode_to_string(SatSolver::CRYPTOMINISAT))
+  {
+    throw Exception("invalid configuration for option --"
+                    + std::string(sat_solver.lng())
+                    + ", CryptoMiniSat not compiled in");
+  }
+#endif
   reinterpret_cast<OptionMode*>(data(opt))->set_str(value, is_user_set);
 }
 
@@ -662,22 +680,6 @@ Options::max(Option opt)
 void
 Options::finalize()
 {
-#ifndef BZLA_USE_KISSAT
-  if (sat_solver() == SatSolver::KISSAT)
-  {
-    throw Exception("invalid configuration for option --"
-                    + std::string(sat_solver.lng())
-                    + ", Kissat not compiled in");
-  }
-#endif
-#ifndef BZLA_USE_CMS
-  if (sat_solver() == SatSolver::CRYPTOMINISAT)
-  {
-    throw Exception("invalid configuration for option --"
-                    + std::string(sat_solver.lng())
-                    + ", CryptoMiniSat not compiled in");
-  }
-#endif
   if (produce_unsat_assumptions())
   {
     // we overrule the user here in case they disabled unsat cores, we must

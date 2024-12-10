@@ -568,14 +568,18 @@ TEST_F(TestCApi, set_option)
     ASSERT_EQ(
         std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_SAT_SOLVER)),
         "cadical");
+#ifdef BZLA_USE_KISSAT
     bitwuzla_set_option_mode(options, BITWUZLA_OPT_SAT_SOLVER, "kissat");
     ASSERT_EQ(
         std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_SAT_SOLVER)),
         "kissat");
+#endif
+#ifdef BZLA_USE_CMS
     bitwuzla_set_option_mode(options, BITWUZLA_OPT_SAT_SOLVER, "cms");
     ASSERT_EQ(
         std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_SAT_SOLVER)),
         "cms");
+#endif
     ASSERT_DEATH(
         bitwuzla_set_option_mode(options, BITWUZLA_OPT_BV_SOLVER, "asdf"),
         "invalid mode for option");
