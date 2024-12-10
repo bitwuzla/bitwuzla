@@ -11,7 +11,9 @@
 #include "solver/fun/fun_solver.h"
 
 #include "env.h"
+#include "node/node.h"
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "util/logger.h"
 
@@ -69,6 +71,7 @@ FunSolver::check()
     const Node& fun = apply[0];
     auto& fun_model = d_fun_models[fun];
 
+    Log(1) << "check: " << apply;
     Apply app(apply, d_solver_state);
     auto [it, inserted] = fun_model.insert(app);
     if (!inserted)
@@ -113,6 +116,14 @@ FunSolver::value(const Node& term)
       {
         return itv->value();
       }
+    }
+    if (term[0].kind() == Kind::LAMBDA)
+    {
+      // This is currently only called when lambda nodes are constructed
+      // internally during model construction. The beta reduction step here
+      // should be relatively cheap since all the non-function and non-array
+      // nodes are values.
+      return d_env.rewriter().rewrite(beta_reduce(term));
     }
     if (term.type().is_uninterpreted())
     {
@@ -197,6 +208,44 @@ FunSolver::add_function_congruence_lemma(const Node& a, const Node& b)
   Node lemma      = nm.mk_node(Kind::IMPLIES,
                                {utils::mk_nary(nm, Kind::AND, premise), conclusion});
   d_solver_state.lemma(lemma);
+}
+
+Node
+FunSolver::beta_reduce(const Node& apply)
+{
+  assert(apply.kind() == Kind::APPLY);
+  assert(apply[0].kind() == Kind::LAMBDA);
+
+  std::unordered_map<Node, Node> cache;
+
+  size_t i  = 1;
+  Node body = apply[0];
+  while (body.kind() == Kind::LAMBDA)
+  {
+    cache.emplace(body[0], apply[i++]);
+    body = body[1];
+  }
+
+  node::node_ref_vector visit{body};
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, Node());
+
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      it->second = utils::rebuild_node(d_env.nm(), cur, cache);
+    }
+
+    visit.pop_back();
+  } while (!visit.empty());
+
+  return cache.at(body);
 }
 
 FunSolver::Statistics::Statistics(util::Statistics& stats,

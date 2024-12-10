@@ -135,6 +135,7 @@ SolverEngine::solve()
     // that all theory solvers are able to check newly registered terms.
   } while (!d_lemmas.empty() || d_new_terms_registered);
   d_in_solving_mode = false;
+  d_value_cache.clear();
 
   if (d_logger.is_msg_enabled(1))
   {
@@ -404,8 +405,11 @@ SolverEngine::_value(const Node& term)
       else
       {
         Kind k = cur.kind();
-        if (k == Kind::APPLY || k == Kind::SELECT || k == Kind::FORALL
-            || k == Kind::LAMBDA)
+        if (k == Kind::FORALL || k == Kind::LAMBDA)
+        {
+          continue;
+        }
+        if ((k == Kind::APPLY || k == Kind::SELECT) && registered(cur))
         {
           continue;
         }
@@ -440,7 +444,9 @@ SolverEngine::_value(const Node& term)
         else if (k == Kind::SELECT)
         {
           Log(3) << "unregistered select encountered: " << cur;
-          value = d_array_solver.value(cur);
+          Node sel = d_env.nm().mk_node(
+              Kind::SELECT, {cached_value(cur[0]), cached_value(cur[1])});
+          value = d_array_solver.value(sel);
           goto CACHE_VALUE;
         }
         // Compute value of function application based on current function
@@ -448,7 +454,14 @@ SolverEngine::_value(const Node& term)
         else if (k == Kind::APPLY)
         {
           Log(3) << "unregistered apply encountered: " << cur;
-          value = d_fun_solver.value(cur);
+          std::vector<Node> args;
+          for (const Node& c : cur)
+          {
+            args.push_back(cached_value(c));
+            assert(!args.back().is_null());
+          }
+          Node app = d_env.nm().mk_node(Kind::APPLY, args);
+          value    = d_fun_solver.value(app);
           goto CACHE_VALUE;
         }
         // Compute value of equality based on the corresponding theory solver's
@@ -730,7 +743,8 @@ SolverEngine::_value(const Node& term)
       }
     CACHE_VALUE:
       assert(value.is_value() || cur.type().is_array() || cur.type().is_fun()
-             || cur.type().is_uninterpreted());
+             || cur.type().is_uninterpreted()
+             || d_env.options().rewrite_level() == 0);
       cache_value(cur, value);
     }
     visit.pop_back();

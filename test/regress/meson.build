@@ -891,6 +891,7 @@ tests_smt2 = [
   ['solver/array/issue32.smt2'],
   ['solver/array/issue35.smt2'],
   ['solver/array/issue135.smt2'],
+  ['solver/array/issue145.smt2'],
   ['solver/array/lazyreadwritebug1.btor.smt2'],
   ['solver/array/memcpy02.smt2'],
   ['solver/array/random1.btor.smt2'],
