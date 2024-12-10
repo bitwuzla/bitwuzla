@@ -146,8 +146,6 @@ enum ENUM(Option)
    *    [CryptoMiniSat](https://github.com/msoos/cryptominisat)
    *  * **kissat**:
    *    [Kissat](https://github.com/arminbiere/kissat)
-   *  * **lingeling**:
-   *    [Lingeling](https://github.com/arminbiere/lingeling)
    */
   EVALUE(SAT_SOLVER),
 
