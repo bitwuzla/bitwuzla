@@ -23,18 +23,10 @@ if not cadical_dep.found()
   cadical_dep = dependency('cadical', required: true)
 endif
 
-cms_dep = dependency('cryptominisat5', static: build_static, required: false)
-if get_option('cryptominisat') and not cms_dep.found()
-  cmake = import('cmake')
-  cms_cmake_opts = cmake.subproject_options()
-  cms_cmake_opts.add_cmake_defines({'STATICCOMPILE': build_static},
-                                   {'NOZLIB': true},
-                                   {'NOMPI': true},
-                                   {'NOBREAKID': true})
-  cms_cmake = cmake.subproject('cryptominisat',
-                               options: cms_cmake_opts)
-  cms_dep = cms_cmake.dependency('cryptominisat5')
-endif
+cms_dep = dependency('cryptominisat5',
+                     version: '5.11.21',
+                     static: build_static,
+                     required: get_option('cryptominisat'))
 
 # Kissat does not provide pkg-config to find dependency
 kissat_dep = cpp_compiler.find_library('kissat',
