@@ -811,10 +811,7 @@ SolverEngine::find_relevant()
         continue;
       }
 
-      if (!array::ArraySolver::is_theory_leaf(cur)
-          && !fun::FunSolver::is_theory_leaf(cur)
-          && !quant::QuantSolver::is_theory_leaf(cur)
-          && !fp::FpSolver::is_theory_leaf(cur))
+      if (!quant::QuantSolver::is_theory_leaf(cur))
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
