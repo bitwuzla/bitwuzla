@@ -1446,6 +1446,7 @@ tests_smt2 = [
   ['solver/quant/quant_regr9.smt2'],
   ['solver/quant/regrnormquant.smt2'],
   ['solver/quant/regsmtparselet.smt2'],
+  ['solver/murxla-f9e9ae3e50883097.min.smt2'],
 ]
 
 if get_option('fpexp')

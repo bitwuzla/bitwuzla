@@ -1,0 +1,8 @@
+(set-option :global-declarations true)
+(set-option :abstraction true)
+(set-option :relevant-terms true)
+(declare-const _x0 (_ BitVec 106))
+(define-fun _f10 ((_f10_0 (_ BitVec 106))) (_ BitVec 106) (bvurem _x0 (bvneg (_ bv15658543317040194791219155336864 106))))
+(declare-fun _x12 ((_ BitVec 106)) (_ BitVec 106))
+(set-info :status sat)
+(check-sat-assuming ( (bvsaddo (_x12 (_x12 (bvurem _x0 (bvneg (_ bv15658543317040194791219155336864 106))))) (_ bv27919324768033162444931578987020 106)) (bvsaddo (_x12 (_x12 (bvurem _x0 (bvneg (_ bv15658543317040194791219155336864 106))))) (_ bv27919324768033162444931578987020 106))))
