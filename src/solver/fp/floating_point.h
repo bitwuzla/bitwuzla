@@ -33,8 +33,18 @@ class SymFpuTraits;
 class WordBlaster;
 }  // namespace fp
 
+/* -------------------------------------------------------------------------- */
+
 using UnpackedFloat = ::symfpu::unpackedFloat<fp::SymFpuTraits>;
 
+std::ostream &operator<<(std::ostream &out,
+                         const ::symfpu::unpackedFloat<fp::SymFpuTraits> &);
+}  // namespace bzla
+namespace std {
+std::string to_string(const bzla::UnpackedFloat &uf);
+}
+
+namespace bzla {
 /* -------------------------------------------------------------------------- */
 
 class FloatingPoint
@@ -421,6 +431,12 @@ class FloatingPointTypeInfo
   /** @return The associated floating-point type. */
   const Type &get_type(void) const;
 
+  /**
+   * Get a string representation of this floating-point type info.
+   * @return The string representation.
+   */
+  std::string str() const;
+
   /* symFPU interface --------------------------------------------- */
 
   /** @return The exponent size of this format. */
@@ -451,6 +467,8 @@ class FloatingPointTypeInfo
   /** The wrapped floating-point type. */
   Type d_type;
 };
+
+std::ostream &operator<<(std::ostream &out, const FloatingPointTypeInfo &type);
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla

@@ -10,6 +10,8 @@
 
 #include "solver/fp/symfpu_wrapper.h"
 
+#include <string>
+
 #include "node/node_manager.h"
 #include "node/node_utils.h"
 
@@ -57,6 +59,13 @@ SymFpuBV<is_signed>::SymFpuBV(const BitVector &bv)
 template <bool is_signed>
 SymFpuBV<is_signed>::~SymFpuBV()
 {
+}
+
+template <bool is_signed>
+std::string
+SymFpuBV<is_signed>::str() const
+{
+  return d_bv->str();
 }
 
 template <bool is_signed>
@@ -440,6 +449,20 @@ SymFpuBV<is_signed>::extract(uint32_t upper, uint32_t lower) const
 template class SymFpuBV<true>;
 template class SymFpuBV<false>;
 
+std::ostream &
+operator<<(std::ostream &out, const SymFpuBV<true> &bv)
+{
+  out << bv.str();
+  return out;
+}
+
+std::ostream &
+operator<<(std::ostream &out, const SymFpuBV<false> &bv)
+{
+  out << bv.str();
+  return out;
+}
+
 /* --- SymFpuTraits public -------------------------------------------------- */
 
 RoundingMode
@@ -534,6 +557,12 @@ SymFpuSymProp::operator=(const SymFpuSymProp &other)
   return *this;
 }
 
+std::string
+SymFpuSymProp::str() const
+{
+  return d_node.str();
+}
+
 SymFpuSymProp
 SymFpuSymProp::operator!(void) const
 {
@@ -573,6 +602,13 @@ SymFpuSymProp::check_node(const Node &node) const
 {
   assert(!node.is_null());
   return node.type().is_bv() && node.type().bv_size() == 1;
+}
+
+std::ostream &
+operator<<(std::ostream &out, const SymFpuSymProp &prop)
+{
+  out << prop.str();
+  return out;
 }
 
 /* --- SymFpuSymBV public --------------------------------------------------- */
@@ -634,6 +670,13 @@ SymFpuSymBV<is_signed>::SymFpuSymBV(const SymFpuBV<is_signed> &bv)
 template <bool is_signed>
 SymFpuSymBV<is_signed>::~SymFpuSymBV()
 {
+}
+
+template <bool is_signed>
+std::string
+SymFpuSymBV<is_signed>::str() const
+{
+  return d_node.str();
 }
 
 template <bool is_signed>
@@ -1009,6 +1052,20 @@ SymFpuSymBV<is_signed>::check_bool_node(const Node &node) const
 template class SymFpuSymBV<true>;
 template class SymFpuSymBV<false>;
 
+std::ostream &
+operator<<(std::ostream &out, const SymFpuSymBV<true> &bv)
+{
+  out << bv.str();
+  return out;
+}
+
+std::ostream &
+operator<<(std::ostream &out, const SymFpuSymBV<false> &bv)
+{
+  out << bv.str();
+  return out;
+}
+
 /* --- SymFpuSymRM public --------------------------------------------------- */
 
 Node
@@ -1055,6 +1112,12 @@ SymFpuSymRM::SymFpuSymRM(const SymFpuSymRM &other) : d_node(other.d_node)
 
 SymFpuSymRM::~SymFpuSymRM() {}
 
+std::string
+SymFpuSymRM::str() const
+{
+  return d_node.str();
+}
+
 SymFpuSymProp
 SymFpuSymRM::valid(void) const
 {
@@ -1085,6 +1148,13 @@ SymFpuSymRM::check_node(const Node &node) const
          >= SYMFPU_NUMBER_OF_ROUNDING_MODES);
   return (node.type().is_bv() && node.type().bv_size() == BZLA_RM_BV_SIZE)
          || node.type().is_rm();
+}
+
+std::ostream &
+operator<<(std::ostream &out, const SymFpuSymRM &rm)
+{
+  out << rm.str();
+  return out;
 }
 
 /* --- SymFpuSymTraits public ----------------------------------------------- */

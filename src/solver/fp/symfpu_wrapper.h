@@ -77,6 +77,8 @@ class SymFpuBV
   SymFpuBV(const BitVector &bv);
   ~SymFpuBV();
 
+  std::string str() const;
+
   uint32_t getWidth(void) const;
   BitVector *getBv(void) const { return d_bv.get(); }
 
@@ -142,6 +144,9 @@ class SymFpuBV
   // TODO: This doesn't have to be a pointer
   std::unique_ptr<BitVector> d_bv;
 };
+
+std::ostream &operator<<(std::ostream &out, const SymFpuBV<true> &bv);
+std::ostream &operator<<(std::ostream &out, const SymFpuBV<false> &bv);
 
 /* -------------------------------------------------------------------------- */
 /* Template parameter for SymFPU templates.                                   */
@@ -211,6 +216,8 @@ class SymFpuSymProp
   SymFpuSymProp(const SymFpuSymProp &other);
   ~SymFpuSymProp();
 
+  std::string str() const;
+
   const Node &getNode() const { return d_node; }
 
   SymFpuSymProp &operator=(const SymFpuSymProp &other);
@@ -227,6 +234,8 @@ class SymFpuSymProp
  private:
   Node d_node;
 };
+
+std::ostream &operator<<(std::ostream &out, const SymFpuSymProp &prop);
 
 /* -------------------------------------------------------------------------- */
 /* Wrapper for bit-vector terms.                                              */
@@ -255,6 +264,8 @@ class SymFpuSymBV
   SymFpuSymBV(bool v);
   /** Destructor. */
   ~SymFpuSymBV();
+
+  std::string str() const;
 
   SymFpuSymBV<is_signed> &operator=(const SymFpuSymBV<is_signed> &other);
 
@@ -342,6 +353,10 @@ class SymFpuSymBV
  private:
   Node d_node;
 };
+
+std::ostream &operator<<(std::ostream &out, const SymFpuSymBV<true> &bv);
+std::ostream &operator<<(std::ostream &out, const SymFpuSymBV<false> &bv);
+
 /* -------------------------------------------------------------------------- */
 /* Wrapper for rounding modes.                                                */
 /* -------------------------------------------------------------------------- */
@@ -359,6 +374,8 @@ class SymFpuSymRM
   /* Destructor. */
   ~SymFpuSymRM();
 
+  std::string str() const;
+
   const Node &getNode() const { return d_node; }
 
   SymFpuSymProp valid(void) const;
@@ -371,6 +388,8 @@ class SymFpuSymRM
   Node mk_value(const RoundingMode rm);
   Node d_node;
 };
+
+std::ostream &operator<<(std::ostream &out, const SymFpuSymRM &rm);
 
 /* -------------------------------------------------------------------------- */
 /* Template parameter for SymFPU templates.                                   */

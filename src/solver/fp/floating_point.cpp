@@ -33,6 +33,31 @@ class SymFpuSymBV;
 namespace bzla {
 using namespace node;
 
+/* --- UnpackedFloat -------------------------------------------------------- */
+
+std::ostream &
+operator<<(std::ostream &out,
+           const ::symfpu::unpackedFloat<fp::SymFpuTraits> &uf)
+{
+  out << std::to_string(uf);
+  return out;
+}
+}  // namespace bzla
+
+namespace std {
+std::string
+to_string(const bzla::UnpackedFloat &uf)
+{
+  std::stringstream ss;
+  ss << "nan: " << uf.nan << " inf: " << uf.inf << " zero: " << uf.zero
+     << " sign: " << uf.sign << " exponent: " << uf.exponent
+     << " significand: " << uf.significand;
+  return ss.str();
+}
+}  // namespace std
+
+namespace bzla {
+
 /* --- FloatingPoint public static ------------------------------------------ */
 
 void
@@ -791,6 +816,19 @@ const Type &
 FloatingPointTypeInfo::get_type(void) const
 {
   return d_type;
+}
+
+std::string
+FloatingPointTypeInfo::str() const
+{
+  return d_type.str();
+}
+
+std::ostream &
+operator<<(std::ostream &out, const FloatingPointTypeInfo &type)
+{
+  out << type.str();
+  return out;
 }
 
 /* --- Other ---------------------------------------------------------------- */
