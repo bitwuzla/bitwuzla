@@ -80,7 +80,7 @@ class SymFpuBV
   std::string str() const;
 
   uint32_t getWidth(void) const;
-  BitVector *getBv(void) const { return d_bv.get(); }
+  const BitVector &getBv(void) const { return d_bv; }
 
   static SymFpuBV<is_signed> one(const uint32_t &bw);
   static SymFpuBV<is_signed> zero(const uint32_t &bw);
@@ -141,8 +141,7 @@ class SymFpuBV
   SymFpuBV<is_signed> extract(uint32_t upper, uint32_t lower) const;
 
  private:
-  // TODO: This doesn't have to be a pointer
-  std::unique_ptr<BitVector> d_bv;
+  BitVector d_bv;
 };
 
 std::ostream &operator<<(std::ostream &out, const SymFpuBV<true> &bv);

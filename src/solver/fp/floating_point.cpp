@@ -248,8 +248,8 @@ FloatingPoint::hash() const
   hash += d_uf->getInf() * s_hash_primes[1];
   hash += d_uf->getZero() * s_hash_primes[2];
   hash += d_uf->getSign() * s_hash_primes[3];
-  hash += d_uf->getExponent().getBv()->hash() * s_hash_primes[4];
-  hash += d_uf->getSignificand().getBv()->hash() * s_hash_primes[5];
+  hash += d_uf->getExponent().getBv().hash() * s_hash_primes[4];
+  hash += d_uf->getSignificand().getBv().hash() * s_hash_primes[5];
   return hash;
 }
 
@@ -280,21 +280,21 @@ FloatingPoint::compare(const FloatingPoint &fp) const
   UnpackedFloat *uf_a = d_uf.get();
   UnpackedFloat *uf_b = fp.unpacked();
 
-  BitVector *exp_a = uf_a->getExponent().getBv();
-  BitVector *sig_a = uf_a->getSignificand().getBv();
+  const BitVector &exp_a = uf_a->getExponent().getBv();
+  const BitVector &sig_a = uf_a->getSignificand().getBv();
 
-  BitVector *exp_b = uf_b->getExponent().getBv();
-  BitVector *sig_b = uf_b->getSignificand().getBv();
+  const BitVector &exp_b = uf_b->getExponent().getBv();
+  const BitVector &sig_b = uf_b->getSignificand().getBv();
 
-  if (exp_a->size() != exp_b->size() || sig_a->size() != sig_b->size())
+  if (exp_a.size() != exp_b.size() || sig_a.size() != sig_b.size())
   {
     return -1;
   }
 
   if (uf_a->getNaN() == uf_b->getNaN() && uf_a->getInf() == uf_b->getInf()
       && uf_a->getZero() == uf_b->getZero()
-      && uf_a->getSign() == uf_b->getSign() && exp_a->compare(*exp_b) == 0
-      && sig_a->compare(*sig_b) == 0)
+      && uf_a->getSign() == uf_b->getSign() && exp_a.compare(exp_b) == 0
+      && sig_a.compare(sig_b) == 0)
   {
     return 0;
   }
@@ -485,7 +485,7 @@ FloatingPoint::fpfma(const RoundingMode rm,
 BitVector
 FloatingPoint::as_bv() const
 {
-  return *symfpu::pack(*d_size, *d_uf).getBv();
+  return symfpu::pack(*d_size, *d_uf).getBv();
 }
 
 /* --- Floating private ----------------------------------------------------- */
