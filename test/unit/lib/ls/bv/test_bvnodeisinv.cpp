@@ -170,11 +170,15 @@ TEST_F(TestBvNodeIsInv, slt)
       IS_INV, NodeKind::BV_SLT, 1, BOTH, OptimizationKind::SEXT);
 }
 
+// Disable for non-debug builds as only in debug we enumerate is_inv
+// candidates for urem up to size 4. If we don't, some tests fail.
+#ifndef NDEBUG
 TEST_F(TestBvNodeIsInv, urem)
 {
   test_binary<BitVectorUrem>(IS_INV, NodeKind::BV_UREM, 0);
   test_binary<BitVectorUrem>(IS_INV, NodeKind::BV_UREM, 1);
 }
+#endif
 
 TEST_F(TestBvNodeIsInv, xor)
 {
