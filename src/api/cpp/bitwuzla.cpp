@@ -2220,6 +2220,10 @@ TermManager::mk_term(Kind kind,
           BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, false);
           BITWUZLA_CHECK(args[0].d_node->type().bv_size() == 1)
               << "expected bit-vector term of size 1 at index 0";
+#ifndef BZLA_USE_FPEXP
+          BITWUZLA_CHECK_FP_FORMAT(args[1].d_node->type().bv_size(),
+                                   args[2].d_node->type().bv_size());
+#endif
           break;
         default:
           BITWUZLA_CHECK_MK_TERM_ARGS(args, 1, is_fp, true);

@@ -4000,6 +4000,33 @@ TEST_F(TestApi, nthreads)
 #endif
 }
 
+TEST_F(TestApi, fpexp)
+{
+  bitwuzla::Term bv1  = d_tm.mk_bv_value(d_tm.mk_bv_sort(1), "1");
+  bitwuzla::Term bv3  = d_tm.mk_bv_value(d_tm.mk_bv_sort(3), "100");
+  bitwuzla::Term bv23 = d_tm.mk_bv_value(d_tm.mk_bv_sort(23), "100", 10);
+  bitwuzla::Term c1   = d_tm.mk_const(d_tm.mk_bv_sort(1));
+  bitwuzla::Term c3   = d_tm.mk_const(d_tm.mk_bv_sort(3));
+  bitwuzla::Term c23  = d_tm.mk_const(d_tm.mk_bv_sort(23));
+#ifndef BZLA_USE_FPEXP
+  ASSERT_THROW(d_tm.mk_fp_sort(5, 13), bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_value(bv1, bv3, bv23), bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_term(bitwuzla::Kind::FP_FP, {bv1, bv3, bv23}),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_term(bitwuzla::Kind::FP_FP, {c1, c3, c23}),
+               bitwuzla::Exception);
+#else
+  (void) d_tm.mk_fp_sort(5, 13);
+  (void) d_tm.mk_fp_value(bv1, bv3, bv23);
+  (void) d_tm.mk_term(bitwuzla::Kind::FP_FP, {bv1, bv3, bv23});
+  (void) d_tm.mk_term(bitwuzla::Kind::FP_FP, {c1, c3, c23});
+#endif
+  (void) d_tm.mk_fp_sort(5, 11);
+  (void) d_tm.mk_fp_sort(8, 24);
+  (void) d_tm.mk_fp_sort(11, 53);
+  (void) d_tm.mk_fp_sort(15, 113);
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test
