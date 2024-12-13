@@ -2,6 +2,8 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News for version 0.7.0
+
 - Support for **experimental floating-point formats** is now **disabled** by
   default, due to known issues with experimental formats in SymFPU.
   Floating-point formats **Float16**, **Float32**, **Float64** and **Float128**
@@ -20,6 +22,8 @@ This file collects a summary of important and/or user-visible changes.
   - C++ API: `Bitwuzla::simplify(const Term&)`
   - C API: `bitwuzla_simplify_term(Bitwuzla*, BitwuzlaTerm)`
   - Python API: `Bitwuzla.simplify_term(Term)`
+
+- Fixed issue with model construction for arrays (issue #145).
 
 ## News for version 0.6.1
 
