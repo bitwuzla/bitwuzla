@@ -111,12 +111,14 @@ SolverEngine::solve()
       d_stats.num_lemmas_abstr += d_lemmas.size();
       continue;
     }
+    d_value_cache.clear();
     d_array_solver.check();
     if (!d_lemmas.empty())
     {
       d_stats.num_lemmas_array += d_lemmas.size();
       continue;
     }
+    d_value_cache.clear();
     d_fun_solver.check();
     if (!d_lemmas.empty())
     {
