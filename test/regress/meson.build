@@ -1409,7 +1409,6 @@ tests_smt2 = [
   ['solver/process_term2.smt2'],
   ['solver/time_limit_per1.smt2'],
   ['solver/time_limit_per2.smt2'],
-  ['solver/quant/duplicatelemma1.smt2'],
   ['solver/quant/issue96.smt2'],
   ['solver/quant/issue97.smt2'],
   ['solver/quant/quant_regr1.smt2'],
@@ -1446,7 +1445,11 @@ tests_smt2 = [
 ]
 
 if get_option('fpexp')
-  tests_smt2 += [['check/regr_cm3.smt2'], ['solver/fp/fp_regr11.smt2']]
+  tests_smt2 += [
+    ['check/regr_cm3.smt2'],
+    ['solver/fp/fp_regr11.smt2'],
+    ['solver/quant/duplicatelemma1.smt2'],
+  ]
 endif
 
 if get_option('b_sanitize') == 'none'
