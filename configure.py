@@ -93,6 +93,12 @@ def main():
                     help='delete build directory if it already exists')
     bool_opt(ap, 'kissat', 'Kissat support')
     bool_opt(ap, 'cryptominisat', 'CryptoMiniSat support')
+    bool_opt(ap,
+             'fpexp',
+             'support for experimental floating-point formats, ' +
+             'all formats except Float16, Float32, Float64 and Float128 are ' +
+             'considered experimental (due to known issues in SymFPU), use ' +
+             'at your own risk')
     args = ap.parse_args()
 
     build_opts = []
@@ -136,6 +142,13 @@ def main():
         build_opts.append(f'-Dkissat={_bool(args.kissat)}')
     if args.cryptominisat is not None:
         build_opts.append(f'-Dcryptominisat={_bool(args.cryptominisat)}')
+    if args.fpexp is not None:
+        build_opts.append(f'-Dfpexp={_bool(args.fpexp)}')
+    else:
+        if args.buildtype and args.buildtype != 'release':
+            build_opts.append(f'-Dfpexp=true')
+        else:
+            build_opts.append(f'-Dfpexp=false')
 
     configure_build(args.build_dir, build_opts)
 

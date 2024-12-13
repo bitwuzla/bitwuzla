@@ -4602,6 +4602,7 @@ TEST_F(TestCApi, term_print)
   BitwuzlaSort bv4  = bitwuzla_mk_bv_sort(d_tm, 4);
   BitwuzlaSort bv8  = bitwuzla_mk_bv_sort(d_tm, 8);
 
+#ifdef BZLA_USE_FPEXP
   {
     BitwuzlaTerm t =
         bitwuzla_mk_fp_value(d_tm,
@@ -4625,6 +4626,7 @@ TEST_F(TestCApi, term_print)
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output, "(fp #b1 #b0011 #b00010111)");
   }
+#endif
 }
 
 TEST_F(TestCApi, term_print_fmt)
@@ -4661,6 +4663,7 @@ TEST_F(TestCApi, term_print_fmt)
   BitwuzlaSort bv4  = bitwuzla_mk_bv_sort(d_tm, 4);
   BitwuzlaSort bv8  = bitwuzla_mk_bv_sort(d_tm, 8);
 
+#ifdef BZLA_USE_FPEXP
   {
     BitwuzlaTerm t =
         bitwuzla_mk_fp_value(d_tm,
@@ -4694,6 +4697,7 @@ TEST_F(TestCApi, term_print_fmt)
               "(fp (_ bv1 1) (_ bv3 4) (_ bv23 8))"
               "(fp #b1 #b0011 #b00010111)");
   }
+#endif
 }
 
 TEST_F(TestCApi, term_print_regr0)

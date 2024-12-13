@@ -52,6 +52,18 @@ if kissat_dep.found()
 endif
 
 # ---
+# Additional build definitions
+# ---
+
+if cpp_compiler.has_function('getrusage', prefix: '#include <sys/resource.h>')
+  cpp_args += ['-DHAVE_RUSAGE']
+endif
+
+if get_option('fpexp')
+  cpp_args += ['-DBZLA_USE_FPEXP']
+endif
+
+# ---
 # Generate config.h
 # ---
 
@@ -116,11 +128,6 @@ sources_util = files([
   'util/statistics.cpp',
   'util/util.cpp'
 ])
-
-
-if cpp_compiler.has_function('getrusage', prefix: '#include <sys/resource.h>')
-  cpp_args += ['-DHAVE_RUSAGE']
-endif
 
 util_lib = static_library('bzlautil', sources_util, cpp_args: cpp_args)
 

@@ -133,6 +133,9 @@ endif
 if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
 endif
+if get_option('fpexp')
+  cpp_args += ['-DBZLA_USE_FPEXP']
+endif
 
 # Add unit tests
 foreach p : unit_tests

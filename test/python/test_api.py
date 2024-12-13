@@ -1434,26 +1434,29 @@ def test_term_print(tm):
     bv4  = tm.mk_bv_sort(4)
     bv8  = tm.mk_bv_sort(8)
 
-    t = tm.mk_fp_value(tm.mk_bv_one(bv1),
-                    tm.mk_bv_value(bv5, 3),
-                    tm.mk_bv_value(bv10, 23))
+    # may fail if support for experimental FP formats not enabled
+    try:
+        t = tm.mk_fp_value(tm.mk_bv_one(bv1),
+                        tm.mk_bv_value(bv5, 3),
+                        tm.mk_bv_value(bv10, 23))
 
-    expected = '(fp #b1 #b00011 #b0000010111)' \
-               + '(fp (_ bv1 1) (_ bv3 5) (_ bv23 10))' \
-               + '(fp #b1 #b00011 #b0000010111)'
-    res = t.str() + t.str(10) + t.str(16)
-    assert res == expected
+        expected = '(fp #b1 #b00011 #b0000010111)' \
+                   + '(fp (_ bv1 1) (_ bv3 5) (_ bv23 10))' \
+                   + '(fp #b1 #b00011 #b0000010111)'
+        res = t.str() + t.str(10) + t.str(16)
+        assert res == expected
 
-    t = tm.mk_fp_value(tm.mk_bv_one(bv1),
-                    tm.mk_bv_value(bv4, 3),
-                    tm.mk_bv_value(bv8, 23))
+        t = tm.mk_fp_value(tm.mk_bv_one(bv1),
+                        tm.mk_bv_value(bv4, 3),
+                        tm.mk_bv_value(bv8, 23))
 
-    expected = '(fp #b1 #b0011 #b00010111)' \
-               + '(fp (_ bv1 1) (_ bv3 4) (_ bv23 8))' \
-               + '(fp #b1 #b0011 #b00010111)'
-    res = t.str() + t.str(10) + t.str(16)
-    assert res == expected
-
+        expected = '(fp #b1 #b0011 #b00010111)' \
+                   + '(fp (_ bv1 1) (_ bv3 4) (_ bv23 8))' \
+                   + '(fp #b1 #b0011 #b00010111)'
+        res = t.str() + t.str(10) + t.str(16)
+        assert res == expected
+    except BitwuzlaException as e:
+        assert "Unsupported experimental floating-point format" in str(e)
 
 def test_term_print_regr0(tm):
     res = tm.mk_rm_value(RoundingMode.RNA).str() + '\n' \

@@ -13,7 +13,6 @@ tests_smt2 = [
   ['check/regr_cm13.smt2'],
   ['check/regr_cm14.smt2'],
   ['check/regr_cm2.smt2'],
-  ['check/regr_cm3.smt2'],
   ['check/regr_cm4.smt2'],
   ['check/regr_cm5.smt2'],
   ['check/regr_cm6.smt2'],
@@ -1383,7 +1382,6 @@ tests_smt2 = [
   ['solver/fp/fp_real.smt2'],
   ['solver/fp/fp_regr1.smt2'],
   ['solver/fp/fp_regr10.smt2'],
-  ['solver/fp/fp_regr11.smt2'],
   ['solver/fp/fp_regr12.smt2'],
   ['solver/fp/fp_regr13.smt2'],
   ['solver/fp/fp_regr14.smt2'],
@@ -1446,6 +1444,10 @@ tests_smt2 = [
   ['solver/quant/regrnormquant.smt2'],
   ['solver/quant/regsmtparselet.smt2'],
 ]
+
+if get_option('fpexp')
+  tests_smt2 += [['check/regr_cm3.smt2'], ['solver/fp/fp_regr11.smt2']]
+endif
 
 if get_option('b_sanitize') == 'none'
   # Regression test leads to false positives with ASAN due to gmp built with

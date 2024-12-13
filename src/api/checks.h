@@ -12,6 +12,7 @@
 #define BITWUZLA_API_CHECKS_H_INCLUDED
 
 #include <iostream>
+#include <ostream>
 #include <sstream>
 
 #include "util/ostream_voider.h"
@@ -301,4 +302,16 @@ class BitwuzlaExceptionStream
 
 }  // namespace bitwuzla
 
+#define BITWUZLA_CHECK_FP_FORMAT(exp_size, sig_size)                          \
+  BITWUZLA_CHECK((exp_size == 5 && sig_size == 11)                            \
+                 || (exp_size == 8 && sig_size == 24)                         \
+                 || (exp_size == 11 && sig_size == 53)                        \
+                 || (exp_size == 15 && sig_size == 113))                      \
+      << "Unsupported experimental floating-point format (non-experimental: " \
+         "Float16, Float32, Float64, Float128), "                             \
+      << "enable experimental FP formats with build configuration "           \
+         "option --fpexp. "                                                   \
+      << std::endl                                                            \
+      << "Note that there are known issues with experimental formats in "     \
+         "SymFPU, use at your own risk.";
 #endif

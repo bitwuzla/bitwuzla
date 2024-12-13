@@ -2,6 +2,13 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Support for **experimental floating-point formats** is now **disabled** by
+  default, due to known issues with experimental formats in SymFPU.
+  Floating-point formats **Float16**, **Float32**, **Float64** and **Float128**
+  are considered **non-experimental**, every other format is considered
+  **experimental**. Support for experimental formats can be enabled via build
+  configuration option `--fpexp`. Use at your own risk.
+
 - Added option `-j`/`--nthreads` for configuring **multi-threading**. Currently,
   multi-threading is only supported **on the SAT solver level**, and only when
   CryptoMiniSat is configured as the back end SAT solver. Else, configuring

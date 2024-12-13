@@ -1662,6 +1662,9 @@ TermManager::mk_fp_sort(uint64_t exp_size, uint64_t sig_size)
 {
   BITWUZLA_CHECK_GREATER_ONE(exp_size);
   BITWUZLA_CHECK_GREATER_ONE(sig_size);
+#ifndef BZLA_USE_FPEXP
+  BITWUZLA_CHECK_FP_FORMAT(exp_size, sig_size);
+#endif
   return d_nm->mk_fp_type(exp_size, sig_size);
 }
 
@@ -1861,6 +1864,10 @@ TermManager::mk_fp_value(const Term &bv_sign,
       << "invalid bit-vector size for argument 'bv_sign', expected size 1";
   BITWUZLA_CHECK(bv_exponent.d_node->type().bv_size() > 1)
       << "invalid bit-vector size for argument 'bv_sign', expected size > 1";
+#ifndef BZLA_USE_FPEXP
+  BITWUZLA_CHECK_FP_FORMAT(bv_exponent.d_node->type().bv_size(),
+                           bv_significand.d_node->type().bv_size() + 1);
+#endif
   BITWUZLA_CHECK_TERM_TERM_MGR(bv_sign, "bv_sign");
   BITWUZLA_CHECK_TERM_TERM_MGR(bv_exponent, "bv_exponent");
   BITWUZLA_CHECK_TERM_TERM_MGR(bv_significand, "bv_significand");

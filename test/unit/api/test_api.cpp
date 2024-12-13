@@ -2607,6 +2607,7 @@ TEST_F(TestApi, term_print)
   bitwuzla::Sort bv4  = d_tm.mk_bv_sort(4);
   bitwuzla::Sort bv8  = d_tm.mk_bv_sort(8);
 
+#ifdef BZLA_USE_FPEXP
   {
     bitwuzla::Term t = d_tm.mk_fp_value(d_tm.mk_bv_one(bv1),
                                         d_tm.mk_bv_value_uint64(bv5, 3),
@@ -2638,6 +2639,7 @@ TEST_F(TestApi, term_print)
               "(fp (_ bv1 1) (_ bv3 4) (_ bv23 8))"
               "(fp #b1 #b0011 #b00010111)");
   }
+#endif
 }
 
 TEST_F(TestApi, term_print_regr0)
