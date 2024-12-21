@@ -1,0 +1,6 @@
+(declare-const x (Array Bool Bool))
+(declare-fun x2 ((Array Bool (Array Bool Bool))) Bool)
+(declare-const x3 (Array Bool (Array Bool Bool)))
+(declare-const x4 (Array Bool Bool))
+(set-info :status sat)
+(check-sat-assuming ((x2 (store (store x3 (x2 x3) (store x4 (x2 x3) (x2 (store x3 false (ite (x2 x3) x x4))))) false x4))))

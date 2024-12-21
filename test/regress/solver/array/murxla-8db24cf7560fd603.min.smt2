@@ -1,0 +1,7 @@
+(declare-const x23 (Array Bool (Array Bool (Array Bool Bool))))
+(declare-const x (Array Bool Bool))
+(declare-const _x (Array Bool (Array Bool (Array Bool (Array Bool Bool)))))
+(declare-const x1 (Array Bool (Array Bool Bool)))
+(declare-const x2 Bool)
+(set-info :status sat)
+(check-sat-assuming ((= (store x1 true (ite x2 (select x1 x2) x)) (select (store x23 false (select (select (store _x true (store x23 false x1)) true) false)) x2))))

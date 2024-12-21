@@ -1,0 +1,7 @@
+(declare-const x78 Bool)
+(set-option :rewrite-level 0)
+(declare-const x (Array Bool (Array Bool Bool)))
+(declare-const x2 (Array Bool Bool))
+(declare-fun x7 (Bool) Bool)
+(set-info :status sat)
+(check-sat-assuming ((select (store x2 false (distinct (store x x78 (store x2 true true)) (store x (x7 false) x2))) false)))

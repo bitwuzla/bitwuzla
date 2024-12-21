@@ -1,0 +1,6 @@
+(declare-const x Bool)
+(declare-const x2 (Array Bool Bool))
+(declare-const _x (Array Bool (Array Bool Bool)))
+(assert (select (select (store _x x (store x2 false false)) false) false))
+(set-info :status sat)
+(check-sat)

@@ -38,6 +38,7 @@ ArraySolver::ArraySolver(Env& env, SolverState& state)
       d_selects(state.backtrack_mgr()),
       d_equalities(state.backtrack_mgr()),
       d_active_parents(state.backtrack_mgr()),
+      d_disequality_lemma_cache(state.backtrack_mgr()),
       d_stats(env.statistics(), "solver::array::"),
       d_logger(env.logger())
 {
@@ -59,6 +60,8 @@ ArraySolver::check()
     return true;
   }
 
+  d_in_check = true;
+
   util::Timer timer(d_stats.time_check);
   d_check_access_cache.clear();
   d_lemma_cache.clear();
@@ -71,8 +74,8 @@ ArraySolver::check()
   for (const Node& eq : d_equalities)
   {
     bool val = d_solver_state.value(eq).value<bool>();
-    d_active_equalities[std::make_pair(eq[0], eq[1])] = val;
     Log(2) << "  " << (val ? "true" : "false") << ": " << eq;
+    d_active_equalities.emplace(eq, val);
     compute_parents(eq);
   }
 
@@ -92,6 +95,7 @@ ArraySolver::check()
       check_equality(d_equalities[i_eq++]);
     }
   }
+  d_in_check = false;
   return true;
 }
 
@@ -99,36 +103,10 @@ Node
 ArraySolver::value(const Node& term)
 {
   assert(term.type().is_array() || is_theory_leaf(term));
+  assert(!d_in_check);
 
-  std::map<Node, Node> map;
   Kind k = term.kind();
-  if (k == Kind::SELECT)
-  {
-    // Select array model from given index
-    Node index_val = d_solver_state.value(term[1]);
-    Node default_value = get_index_value_pairs(term[0], map);
-    assert(default_value.kind() == Kind::CONST_ARRAY);
-    auto it = map.find(index_val);
-    if (it != map.end())
-    {
-      return it->second;
-    }
-    // If we don't have a model for given index, build a model from
-    // index/values pairs that accessed this array term.
-    if (term.type().is_array())
-    {
-      map.clear();
-      Node res        = get_index_value_pairs(term, map);
-      NodeManager& nm = d_env.nm();
-      for (const auto& [index, value] : map)
-      {
-        res = nm.mk_node(Kind::STORE, {res, index, value});
-      }
-      return res;
-    }
-    return d_solver_state.value(default_value[0]);
-  }
-  else if (k == Kind::EQUAL)
+  if (k == Kind::EQUAL)
   {
     // Only not registered equalities should be queried, for all others we can
     // use the value in the bit-vector abstraction. This should only happen
@@ -171,12 +149,37 @@ ArraySolver::value(const Node& term)
     }
     return d_env.nm().mk_value(true);
   }
-  // Construct normalized array value, i.e., ordered by index
-  Node res        = get_index_value_pairs(term, map);
+
   NodeManager& nm = d_env.nm();
+  if (term.kind() == Kind::SELECT)
+  {
+    std::map<Node, Node> map_sel;
+    Node index_val     = d_solver_state.value(term[1]);
+    Node default_value = get_index_value_pairs(term[0], map_sel);
+    auto it            = map_sel.find(index_val);
+    if (it != map_sel.end())
+    {
+      return it->second;
+    }
+
+    if (!term.type().is_array())
+    {
+      // Only return default value for non-array selects
+      assert(default_value.kind() == Kind::CONST_ARRAY);
+      return default_value[0];
+    }
+  }
+  // Construct normalized array value, i.e., ordered by index
+  std::map<Node, Node> map;
+  Node res = get_index_value_pairs(term, map);
+  assert(res.kind() == Kind::CONST_ARRAY);
+  const Node& default_value = res[0];
   for (const auto& [index, value] : map)
   {
-    res = nm.mk_node(Kind::STORE, {res, index, value});
+    if (value != default_value)
+    {
+      res = nm.mk_node(Kind::STORE, {res, index, value});
+    }
   }
   return res;
 }
@@ -433,6 +436,7 @@ ArraySolver::add_access_store_lemma(const Access& acc, const Node& store)
 
   NodeManager& nm = d_env.nm();
   Node conclusion = nm.mk_node(Kind::EQUAL, {acc.element(), store[2]});
+
   std::vector<Node> conjuncts;
   collect_path_conditions(acc, store, conjuncts);
   conjuncts.push_back(nm.mk_node(Kind::EQUAL, {acc.index(), store[1]}));
@@ -779,20 +783,14 @@ ArraySolver::lemma(const Node& lemma)
 Node
 ArraySolver::get_index_value_pairs(const Node& array, std::map<Node, Node>& map)
 {
+  assert(!d_in_check);
   assert(array.type().is_array());
-
-  auto it = d_array_models.find(array);
-  if (it != d_array_models.end())
+  if (array.kind() == Kind::CONST_ARRAY)
   {
-    const auto& array_model = it->second;
-    for (const auto& acc : array_model)
-    {
-      map.emplace(acc.index_value(), acc.element_value());
-    }
+    return d_env.nm().mk_const_array(array.type(),
+                                     d_solver_state.value(array[0]));
   }
-
-  if (array.kind() == Kind::STORE || array.kind() == Kind::ITE
-      || array.kind() == Kind::CONST_ARRAY)
+  else if (array.kind() == Kind::STORE || array.kind() == Kind::ITE)
   {
     Node base;
     Node cur = array;
@@ -817,26 +815,71 @@ ArraySolver::get_index_value_pairs(const Node& array, std::map<Node, Node>& map)
     } while (true);
 
     assert(!base.is_null());
-    if (base.kind() == Kind::CONST_ARRAY)
-    {
-      return d_env.nm().mk_const_array(base.type(),
-                                       d_solver_state.value(base[0]));
-    }
     return get_index_value_pairs(base, map);
   }
-  else if (array.kind() == Kind::SELECT)
+
+  assert(array.kind() == Kind::CONSTANT || array.kind() == Kind::SELECT
+         || array.kind() == Kind::APPLY);
+
+  auto it = d_array_models.find(array);
+  if (it != d_array_models.end())
   {
-    std::map<Node, Node> map_sel;
-    Node index_val     = d_solver_state.value(array[1]);
-    Node default_value = get_index_value_pairs(array[0], map_sel);
-    auto it            = map_sel.find(index_val);
-    if (it != map_sel.end())
+    const auto& array_model = it->second;
+    for (const auto& acc : array_model)
     {
-      return get_index_value_pairs(it->second, map);
+      const Node& i = acc.index_value();
+      const Node& e = acc.element_value();
+      if (e.type().is_array())
+      {
+        map.emplace(i, value_from_access_map(acc.element()));
+      }
+      else
+      {
+        map.emplace(i, e);
+      }
     }
-    return default_value[0];
   }
   return utils::mk_default_value(d_env.nm(), array.type());
+}
+
+Node
+ArraySolver::value_from_access_map(const Node& array)
+{
+  assert(array.type().is_array());
+  assert(!d_in_check);
+
+  std::map<Node, Node> map;
+  auto it = d_array_models.find(array);
+  if (it != d_array_models.end())
+  {
+    const auto& array_model = it->second;
+    for (const auto& acc : array_model)
+    {
+      const Node& i = acc.index_value();
+      const Node& e = acc.element_value();
+      if (e.type().is_array())
+      {
+        map.emplace(i, value_from_access_map(acc.element()));
+      }
+      else
+      {
+        map.emplace(i, e);
+      }
+    }
+  }
+
+  Node res = utils::mk_default_value(d_env.nm(), array.type());
+  assert(res.kind() == Kind::CONST_ARRAY);
+  const Node& default_value = res[0];
+  NodeManager& nm           = d_env.nm();
+  for (const auto& [index, value] : map)
+  {
+    if (value != default_value)
+    {
+      res = nm.mk_node(Kind::STORE, {res, index, value});
+    }
+  }
+  return res;
 }
 
 bool
@@ -858,29 +901,16 @@ ArraySolver::is_equal(const Access& acc, const Node& a)
     {
       return true;
     }
-    auto key = std::make_pair(acc.element(), a);
-    auto it  = d_active_equalities.find(key);
+    Node eq = d_env.nm().mk_node(Kind::EQUAL, {acc.element(), a});
+    Node rw = d_env.rewriter().rewrite(eq);
+    auto it = d_active_equalities.find(rw);
     if (it != d_active_equalities.end())
     {
       return it->second;
     }
-    return false;
+    return d_solver_state.value(rw).value<bool>();
   }
   return acc.element_value() == d_solver_state.value(a);
-}
-
-size_t
-ArraySolver::HashPair::operator()(const std::pair<Node, Node>& p) const
-{
-  return std::hash<Node>()(p.first) + std::hash<Node>()(p.second);
-}
-
-bool
-ArraySolver::KeyEqualPair::operator()(const std::pair<Node, Node>& p1,
-                                      const std::pair<Node, Node>& p2) const
-{
-  return (p1.first == p2.first && p1.second == p2.second)
-         || (p1.first == p2.second && p1.second == p2.first);
 }
 
 ArraySolver::Statistics::Statistics(util::Statistics& stats,
@@ -908,8 +938,18 @@ ArraySolver::Access::Access(const Node& access, SolverState& state)
   d_index_value = state.value(index());
   d_hash += std::hash<Node>{}(d_index_value);
 
-  // Cache value of access
-  d_value = state.value(element());
+  if (element().type().is_array())
+  {
+    // Array values are always considered to be incomplete/partial unless the
+    // array solver concludes that everything is consistent. Equality is handled
+    // separately for these terms.
+    d_value = element();
+  }
+  else
+  {
+    // Cache value of access
+    d_value = state.value(element());
+  }
 }
 
 const Node&

@@ -1,0 +1,8 @@
+(declare-fun x ((Array Bool Bool)) (Array Bool (Array Bool Bool)))
+(declare-fun _x ((Array Bool Bool)) (Array Bool (Array Bool Bool)))
+(declare-const x2 (Array Bool Bool))
+(assert (distinct (x x2) (_x x2)))
+(set-info :status sat)
+(check-sat-assuming (true))
+(set-info :status sat)
+(check-sat)

@@ -14,6 +14,7 @@
 #include <map>
 #include <unordered_map>
 
+#include "backtrack/unordered_map.h"
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "solver/solver.h"
@@ -38,6 +39,11 @@ class ArraySolver : public Solver
   bool check() override;
 
   Node value(const Node& term) override;
+
+  /**
+   * Get the representative select stored in d_array_models.
+   */
+  Node repr(const Node& term) const;
 
   void register_term(const Node& term) override;
 
@@ -171,6 +177,8 @@ class ArraySolver : public Solver
 
   Node get_index_value_pairs(const Node& term, std::map<Node, Node>& map);
 
+  Node value_from_access_map(const Node& array);
+
   bool is_equal(const Access& acc1, const Access& acc2);
   bool is_equal(const Access& acc, const Node& a);
 
@@ -204,35 +212,17 @@ class ArraySolver : public Solver
    * Lemma cache for array disequalities. Maps equality to pair of selects,
    * which acts as witnesses for array disequality.
    */
-  std::unordered_map<Node, std::pair<Node, Node>> d_disequality_lemma_cache;
+  backtrack::unordered_map<Node, std::pair<Node, Node>>
+      d_disequality_lemma_cache;
 
   /** Lemma cache for finding duplicate lemmas in current check() call. */
   std::unordered_set<Node> d_lemma_cache;
 
-  /**
-   * Hash node pair (a, b).
-   *
-   * Position of nodes is irrelevant, i.e, hash(a, b) = hash(b, a)
-   */
-  struct HashPair
-  {
-    size_t operator()(const std::pair<Node, Node>& p) const;
-  };
-
-  /**
-   * Compare node pair (a, b).
-   *
-   * Position of nodes is irrelevant, i.e, (a, b) = (b, a)
-   */
-  struct KeyEqualPair
-  {
-    bool operator()(const std::pair<Node, Node>& p1,
-                    const std::pair<Node, Node>& p2) const;
-  };
-
   /** Maps currently registered equalities to their current model value. */
-  std::unordered_map<std::pair<Node, Node>, bool, HashPair, KeyEqualPair>
-      d_active_equalities;
+  std::unordered_map<Node, bool> d_active_equalities;
+
+  /** Flag that indicates whether array solver is currently in check(). */
+  bool d_in_check = false;
 
   struct Statistics
   {

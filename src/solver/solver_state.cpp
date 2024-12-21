@@ -10,6 +10,7 @@
 
 #include "solver/solver_state.h"
 
+#include "solver/solver.h"
 #include "solver/solver_engine.h"
 #include "util/exceptions.h"
 
