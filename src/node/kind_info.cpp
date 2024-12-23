@@ -137,8 +137,8 @@ constexpr KindInfo::KindInfo()
   init(Kind::FP_TO_FP_FROM_FP, 2, 2, "FP_TO_FP_FROM_FP", "to_fp");
   init(Kind::FP_TO_FP_FROM_SBV, 2, 2, "FP_TO_FP_FROM_SBV", "to_fp");
   init(Kind::FP_TO_FP_FROM_UBV, 2, 2, "FP_TO_FP_FROM_UBV", "to_fp_unsigned");
-  init(Kind::FP_TO_SBV, 2, 1, "FP_TO_SBV", "to_sbv");
-  init(Kind::FP_TO_UBV, 2, 1, "FP_TO_UBV", "to_ubv");
+  init(Kind::FP_TO_SBV, 2, 1, "FP_TO_SBV", "fp.to_sbv");
+  init(Kind::FP_TO_UBV, 2, 1, "FP_TO_UBV", "fp.to_ubv");
 
   /* Arrays */
   init(Kind::CONST_ARRAY, 1, 0, "CONST_ARRAY");
