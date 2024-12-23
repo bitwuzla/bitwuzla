@@ -2149,18 +2149,15 @@ TEST_F(TestApi, print_fp_to_sbv_to_ubv)
   bitwuzla::Sort sort = d_tm.mk_fp_sort(8, 24);
   bitwuzla::Term rm   = d_tm.mk_rm_value(bitwuzla::RoundingMode::RNE);
   bitwuzla::Term fp   = d_tm.mk_fp_value(sort, rm, "1");
+  bitwuzla::Options options;
+  bitwuzla::parser::Parser parser(d_tm, options);
   {
     bitwuzla::Term t1 = d_tm.mk_term(bitwuzla::Kind::FP_TO_SBV, {rm, fp}, {32});
-    bitwuzla::Options options;
-    bitwuzla::parser::Parser parser(d_tm, options);
     bitwuzla::Term t2 = parser.parse_term(t1.str());
     ASSERT_EQ(t1, t2);
   }
   {
-    bitwuzla::Term fp = d_tm.mk_fp_value(sort, rm, "1");
     bitwuzla::Term t1 = d_tm.mk_term(bitwuzla::Kind::FP_TO_UBV, {rm, fp}, {32});
-    bitwuzla::Options options;
-    bitwuzla::parser::Parser parser(d_tm, options);
     bitwuzla::Term t2 = parser.parse_term(t1.str());
     ASSERT_EQ(t1, t2);
   }
