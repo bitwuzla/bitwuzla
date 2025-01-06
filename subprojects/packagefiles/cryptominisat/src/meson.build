@@ -84,8 +84,12 @@ sources = [
   gitsha1_cpp
 ]
 
-cms_lib = library('cryptominisat5', sources: sources)
+cms_lib = library('cryptominisat5',
+                  install: true,
+                  sources: sources)
+
 cms_dep = declare_dependency(
-                  include_directories: include_directories(['..', '.']),
+                  include_directories: include_directories(['..']),
                   link_with: cms_lib,
-                  dependencies: dependency('threads'))
+                  dependencies: dependency('threads'),
+                  sources: header_targets)

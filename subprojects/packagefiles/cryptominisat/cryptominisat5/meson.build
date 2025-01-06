@@ -1,2 +1,8 @@
 fs = import('fs')
-fs.copyfile('../src/cryptominisat.h', 'cryptominisat.h')
+headers = [
+  'cryptominisat.h',
+  'solvertypesmini.h'
+]
+foreach header : headers
+  header_targets += [fs.copyfile(join_paths('../src', header), header)]
+endforeach

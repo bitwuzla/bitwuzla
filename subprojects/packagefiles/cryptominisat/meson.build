@@ -11,5 +11,7 @@ project('cryptominisat5',
   ]
 )
 
+header_targets=[]
+
 subdir('cryptominisat5')
 subdir('src')
