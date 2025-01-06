@@ -1377,7 +1377,9 @@ class TerminatorInternal : public bzla::Terminator
 
 Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
 {
+  BITWUZLA_TRY_CATCH_BEGIN;
   d_ctx.reset(new bzla::SolvingContext(*d_tm.d_nm, *options.d_options, "main"));
+  BITWUZLA_TRY_CATCH_END;
 }
 
 Bitwuzla::~Bitwuzla() {}
@@ -1385,6 +1387,7 @@ Bitwuzla::~Bitwuzla() {}
 void
 Bitwuzla::configure_terminator(Terminator *terminator)
 {
+  BITWUZLA_TRY_CATCH_BEGIN;
   if (terminator == nullptr)
   {
     if (d_terminator != nullptr)
@@ -1399,17 +1402,20 @@ Bitwuzla::configure_terminator(Terminator *terminator)
   }
   d_ctx->env().configure_terminator(d_terminator_internal.get());
   d_terminator = terminator;
+  BITWUZLA_TRY_CATCH_END;
 }
 
 void
 Bitwuzla::push(uint32_t nlevels)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  BITWUZLA_TRY_CATCH_BEGIN;
   solver_state_change();
   for (uint32_t i = 0; i < nlevels; ++i)
   {
     d_ctx->push();
   }
+  BITWUZLA_TRY_CATCH_END;
 }
 
 void
@@ -1421,11 +1427,13 @@ Bitwuzla::pop(uint32_t nlevels)
       << ") greater than number of pushed context levels ("
       << d_ctx->backtrack_mgr()->num_levels() << ")";
 
+  BITWUZLA_TRY_CATCH_BEGIN;
   solver_state_change();
   for (uint32_t i = 0; i < nlevels; ++i)
   {
     d_ctx->pop();
   }
+  BITWUZLA_TRY_CATCH_END;
 }
 
 void
@@ -1436,8 +1444,10 @@ Bitwuzla::assert_formula(const Term &term)
   BITWUZLA_CHECK_TERM_IS_BOOL(term);
   BITWUZLA_CHECK_TERM_IS_NOT_VAR(term);
   BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(term, "asserted formula");
+  BITWUZLA_TRY_CATCH_BEGIN;
   solver_state_change();
   d_ctx->assert_formula(*term.d_node);
+  BITWUZLA_TRY_CATCH_END;
 }
 
 std::vector<Term>
@@ -1445,11 +1455,13 @@ Bitwuzla::get_assertions()
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   std::vector<Term> res;
+  BITWUZLA_TRY_CATCH_BEGIN;
   const bzla::backtrack::AssertionView &assertions = d_ctx->assertions();
   for (size_t i = 0, n = assertions.size(); i < n; ++i)
   {
     res.push_back(assertions[i]);
   }
+  BITWUZLA_TRY_CATCH_END;
   return res;
 }
 
@@ -1518,22 +1530,29 @@ void
 Bitwuzla::simplify()
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  BITWUZLA_TRY_CATCH_BEGIN;
   solver_state_change();
   d_ctx->preprocess();
+  BITWUZLA_TRY_CATCH_END;
 }
 
 Term
 Bitwuzla::simplify(const Term &term)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  Term res;
+  BITWUZLA_TRY_CATCH_BEGIN;
   solver_state_change();
-  return d_ctx->rewrite(*term.d_node);
+  res = d_ctx->rewrite(*term.d_node);
+  BITWUZLA_TRY_CATCH_END;
+  return res;
 }
 
 Result
 Bitwuzla::check_sat(const std::vector<Term> &assumptions)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  BITWUZLA_TRY_CATCH_BEGIN;
   solver_state_change();
   d_n_sat_calls += 1;
   d_assumptions.clear();
@@ -1560,6 +1579,7 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
   {
     d_last_check_sat = s_results.at(d_ctx->solve());
   }
+  BITWUZLA_TRY_CATCH_END;
   return d_last_check_sat;
 }
 
@@ -1571,7 +1591,11 @@ Bitwuzla::get_value(const Term &term)
   BITWUZLA_CHECK_OPT_PRODUCE_MODELS(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_SAT("get value");
   BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(term, "term");
-  return d_ctx->get_value(*term.d_node);
+  Term res;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  res = d_ctx->get_value(*term.d_node);
+  BITWUZLA_TRY_CATCH_END;
+  return res;
 }
 
 void
@@ -1582,6 +1606,10 @@ Bitwuzla::print_formula(std::ostream &out, const std::string &format) const
   try
   {
     bzla::Printer::print_formula(out, d_ctx->assertions());
+  }
+  catch (bzla::Error &e)
+  {
+    throw Exception(e.msg());
   }
   catch (bzla::printer::Exception &e)
   {
@@ -1595,10 +1623,12 @@ Bitwuzla::print_unsat_core(std::ostream &out, const std::string &format) const
   BITWUZLA_CHECK_STR_NOT_EMPTY(format);
   BITWUZLA_CHECK(format == "smt2") << "invalid format, expected 'smt2'";
   BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(d_ctx->options());
+  BITWUZLA_TRY_CATCH_BEGIN;
   if (d_last_check_sat == Result::UNSAT)
   {
     bzla::Printer::print_formula(out, d_ctx->get_unsat_core());
   }
+  BITWUZLA_TRY_CATCH_END;
 }
 
 std::map<std::string, std::string>

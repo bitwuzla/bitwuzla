@@ -67,11 +67,6 @@ SolvingContext::solve()
       Warn(!d_subsolver) << e.msg();
       d_sat_state = Result::UNKNOWN;
     }
-    catch (const Error& e)
-    {
-      std::cerr << "[bzla] error: " << e.msg() << std::endl;
-      std::exit(EXIT_FAILURE);
-    }
   }
 
   if (d_sat_state == Result::SAT && d_have_quantifiers.get()

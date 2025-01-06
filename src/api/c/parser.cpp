@@ -57,31 +57,31 @@ bitwuzla_parser_new(BitwuzlaTermManager* tm,
                     const char* outfile_name)
 {
   BitwuzlaParser* res = nullptr;
-  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_NOT_NULL(language);
   BITWUZLA_CHECK_NOT_NULL(outfile_name);
   res = new BitwuzlaParser(tm, options, language, base, outfile_name);
-  BITWUZLA_TRY_CATCH_END;
+  BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
 
 void
 bitwuzla_parser_delete(BitwuzlaParser* parser)
 {
-  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   delete parser;
-  BITWUZLA_TRY_CATCH_END;
+  BITWUZLA_C_TRY_CATCH_END;
 }
 
 void
 bitwuzla_parser_configure_auto_print_model(BitwuzlaParser* parser, bool value)
 {
-  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   parser->d_parser->configure_auto_print_model(value);
-  BITWUZLA_TRY_CATCH_END;
+  BITWUZLA_C_TRY_CATCH_END;
 }
 
 void
@@ -91,7 +91,7 @@ bitwuzla_parser_parse(BitwuzlaParser* parser,
                       bool parse_file,
                       const char** error_msg)
 {
-  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(input);
   BITWUZLA_CHECK_NOT_NULL(error_msg);
@@ -106,7 +106,7 @@ bitwuzla_parser_parse(BitwuzlaParser* parser,
     *error_msg =
         parser->d_error_msg.empty() ? NULL : parser->d_error_msg.c_str();
   }
-  BITWUZLA_TRY_CATCH_END;
+  BITWUZLA_C_TRY_CATCH_END;
 }
 
 BitwuzlaTerm
@@ -115,7 +115,7 @@ bitwuzla_parser_parse_term(BitwuzlaParser* parser,
                            const char** error_msg)
 {
   BitwuzlaTerm res = 0;
-  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(input);
   BITWUZLA_CHECK_NOT_NULL(error_msg);
@@ -130,7 +130,7 @@ bitwuzla_parser_parse_term(BitwuzlaParser* parser,
     *error_msg =
         parser->d_error_msg.empty() ? NULL : parser->d_error_msg.c_str();
   }
-  BITWUZLA_TRY_CATCH_END;
+  BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
 
@@ -140,7 +140,7 @@ bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
                            const char** error_msg)
 {
   BitwuzlaSort res = 0;
-  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   BITWUZLA_CHECK_NOT_NULL(input);
   BITWUZLA_CHECK_NOT_NULL(error_msg);
@@ -155,7 +155,7 @@ bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
     *error_msg =
         parser->d_error_msg.empty() ? NULL : parser->d_error_msg.c_str();
   }
-  BITWUZLA_TRY_CATCH_END;
+  BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
 
@@ -163,7 +163,7 @@ BitwuzlaSort*
 bitwuzla_parser_get_declared_sorts(BitwuzlaParser* parser, size_t* size)
 {
   BitwuzlaSort* res = nullptr;
-  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   auto decl_sorts = parser->d_parser->get_declared_sorts();
   static thread_local std::vector<BitwuzlaSort> c_sorts;
@@ -174,7 +174,7 @@ bitwuzla_parser_get_declared_sorts(BitwuzlaParser* parser, size_t* size)
   }
   *size = c_sorts.size();
   res   = *size ? c_sorts.data() : nullptr;
-  BITWUZLA_TRY_CATCH_END;
+  BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
 
@@ -182,7 +182,7 @@ BitwuzlaTerm*
 bitwuzla_parser_get_declared_funs(BitwuzlaParser* parser, size_t* size)
 {
   BitwuzlaTerm* res = nullptr;
-  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   auto decl_funs = parser->d_parser->get_declared_funs();
   static thread_local std::vector<BitwuzlaTerm> c_terms;
@@ -193,7 +193,7 @@ bitwuzla_parser_get_declared_funs(BitwuzlaParser* parser, size_t* size)
   }
   *size = c_terms.size();
   res   = *size ? c_terms.data() : nullptr;
-  BITWUZLA_TRY_CATCH_END;
+  BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
 
@@ -201,10 +201,10 @@ const char*
 bitwuzla_parser_get_error_msg(BitwuzlaParser* parser)
 {
   const char* res = nullptr;
-  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   res = parser->d_error_msg.c_str();
-  BITWUZLA_TRY_CATCH_END;
+  BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
 
@@ -212,7 +212,7 @@ Bitwuzla*
 bitwuzla_parser_get_bitwuzla(BitwuzlaParser* parser)
 {
   Bitwuzla* res = nullptr;
-  BITWUZLA_TRY_CATCH_BEGIN;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
   if (!parser->d_bitwuzla)
   {
@@ -220,6 +220,6 @@ bitwuzla_parser_get_bitwuzla(BitwuzlaParser* parser)
         new Bitwuzla(parser->d_tm, parser->d_parser->bitwuzla().get()));
   }
   res = parser->d_bitwuzla.get();
-  BITWUZLA_TRY_CATCH_END;
+  BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
