@@ -16,11 +16,11 @@ jobs:
             config: --testing --no-unit-testing --python
 
           - name: debug
-            config: debug --python
+            config: debug --python --cryptominisat --kissat
 
           - name: release-clang
             os: ubuntu-latest
-            config: --testing --no-unit-testing --python
+            config: --testing --no-unit-testing --python --cryptominisat --kissat
             env: CC=clang CXX=clang++
 
           - name: debug-clang
