@@ -94,4 +94,4 @@ jobs:
           pythonlibdir=$(find ${{ github.workspace }}/build/install/lib -name site-packages)
           meson setup build --pkg-config-path=$pkgconfigdir -Dpython_path=$pythonlibdir
           cd build
-          meson test
+          meson test -v
