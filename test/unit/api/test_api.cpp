@@ -3804,8 +3804,7 @@ TEST_F(TestApi, terminate)
     bitwuzla.assert_formula(a);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
   }
-  // not solved by rewriting, should be terminated when configured
-  TestTerminator tt;
+  // not solved by rewriting, should be terminated in the PP when configured
   {
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
@@ -3814,6 +3813,7 @@ TEST_F(TestApi, terminate)
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
   }
   {
+    TestTerminator tt;
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
@@ -3823,6 +3823,7 @@ TEST_F(TestApi, terminate)
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
   {
+    TestTerminator tt;
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
     opts.set(bitwuzla::Option::BV_SOLVER, "prop");
@@ -3831,6 +3832,38 @@ TEST_F(TestApi, terminate)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
+#ifdef BZLA_USE_CMS
+  // no terminator support in CryptoMiniSat, but this will still terminate in
+  // the PP (as the terminator immediately terminates the execution on the
+  // first call to terminate)
+  {
+    TestTerminator tt;
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::SAT_SOLVER, "cms");
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+#endif
+#ifdef BZLA_USE_KISSAT
+  {
+    // no terminator support in Kissat, but this will still terminate in
+    // the PP (as the terminator immediately terminates the execution on the
+    // first call to terminate)
+    TestTerminator tt;
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+#endif
 }
 
 TEST_F(TestApi, terminate_sat)
@@ -3871,8 +3904,8 @@ TEST_F(TestApi, terminate_sat)
                             {d_tm.mk_term(bitwuzla::Kind::BV_MUL, {s, x}), t})});
   // not solved by bit-blasting without preprocessing, should be terminated in
   // the SAT solver when configured
-  TestTerminator tt(1000);
   {
+    TestTerminator tt(1000);
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
     opts.set(bitwuzla::Option::PREPROCESS, false);
@@ -3881,12 +3914,28 @@ TEST_F(TestApi, terminate_sat)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
-#ifdef BZLA_USE_KISSAT
+  // Note: CryptoMiniSat and Kissat do not implement terminator support. For
+  //       now we only print the warning on configuration.
+#ifdef BZLA_USE_CMS
   {
+    TestTerminator tt(1000);
     bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::SAT_SOLVER, "cms");
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
     opts.set(bitwuzla::Option::PREPROCESS, false);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+#endif
+#ifdef BZLA_USE_KISSAT
+  {
+    TestTerminator tt(1000);
+    bitwuzla::Options opts;
     opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::PREPROCESS, false);
     bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
     bitwuzla.configure_terminator(&tt);
     bitwuzla.assert_formula(b);

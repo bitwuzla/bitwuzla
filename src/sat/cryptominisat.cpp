@@ -14,6 +14,8 @@
 
 #include "sat/cryptominisat.h"
 
+#include "util/exceptions.h"
+
 namespace bzla::sat {
 
 /* --- CryptoMiniSat public ------------------------------------------------- */
@@ -88,6 +90,7 @@ void
 CryptoMiniSat::configure_terminator(Terminator *terminator)
 {
   (void) terminator;
+  throw Unsupported("terminator not supported in CryptoMiniSat");
 }
 
 const char *

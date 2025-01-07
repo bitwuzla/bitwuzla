@@ -2331,8 +2331,7 @@ def test_terminate(tm):
     bitwuzla.assert_formula(a)
     assert bitwuzla.check_sat() == Result.UNSAT
 
-    # not solved by bit-blasting without preprocessing, should be terminated in
-    # the SAT solver when configured
+    # not solved by rewriting, should be terminated in the PP when configured
     tt = TestTerminator()
     options.set(Option.BV_SOLVER, 'bitblast')
     bitwuzla = Bitwuzla(tm, options)
@@ -2344,6 +2343,7 @@ def test_terminate(tm):
     bitwuzla.configure_terminator(tt)
     assert bitwuzla.check_sat() == Result.UNKNOWN
 
+    tt = TestTerminator()
     options.set(Option.BV_SOLVER, 'prop')
     options.set(Option.REWRITE_LEVEL, 0)
     bitwuzla = Bitwuzla(tm, options)
@@ -2351,6 +2351,31 @@ def test_terminate(tm):
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNKNOWN
 
+    # no terminator support in CryptoMiniSat and Kissat, but this will still
+    # terminate in the PP (as the terminator immediately terminates the
+    # execution on the first call to terminate)
+    try:
+        tt = TestTerminator()
+        options.set(Option.BV_SOLVER, 'bitblast')
+        options.set(Option.SAT_SOLVER, 'cms')
+        options.set(Option.REWRITE_LEVEL, 0)
+        bitwuzla = Bitwuzla(tm, options)
+        bitwuzla.configure_terminator(tt)
+        bitwuzla.assert_formula(b)
+        assert bitwuzla.check_sat() == Result.UNKNOWN
+    except BitwuzlaException as e:
+        assert "CryptoMiniSat not compiled in" in str(e)
+    try:
+        tt = TestTerminator()
+        options.set(Option.BV_SOLVER, 'bitblast')
+        options.set(Option.SAT_SOLVER, 'kissat')
+        options.set(Option.REWRITE_LEVEL, 0)
+        bitwuzla = Bitwuzla(tm, options)
+        bitwuzla.configure_terminator(tt)
+        bitwuzla.assert_formula(b)
+        assert bitwuzla.check_sat() == Result.UNKNOWN
+    except BitwuzlaException as e:
+        assert "Kissat not compiled in" in str(e)
 
 def test_terminate_sat(tm):
     class TestTerminator:
@@ -2381,18 +2406,7 @@ def test_terminate_sat(tm):
     bitwuzla.configure_terminator(tt)
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNKNOWN
-
-    # may fail with exception if Kissat is not compiled in
-    try:
-        options.set(Option.SAT_SOLVER, 'kissat')
-        options.set(Option.PREPROCESS, False)
-        options.set(Option.BV_SOLVER, 'bitblast')
-        bitwuzla = Bitwuzla(tm, options)
-    except BitwuzlaException as e:
-        assert "Kissat not compiled in" in str(e)
-    bitwuzla.configure_terminator(tt)
-    bitwuzla.assert_formula(b)
-    assert bitwuzla.check_sat() == Result.UNKNOWN
+    # Note: CryptoMiniSat and Kissat do not implement terminator support
 
 
 def test_terminate_timeout_wrap(tm):

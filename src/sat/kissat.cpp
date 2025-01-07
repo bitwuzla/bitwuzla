@@ -95,6 +95,7 @@ Kissat::configure_terminator(Terminator* terminator)
 {
   if (terminator)
   {
+    throw Unsupported("terminator not supported in Kissat");
     kissat_set_terminate(d_solver, terminator, kissat_terminate_wrapper);
   }
 }
