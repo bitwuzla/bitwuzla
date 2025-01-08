@@ -530,6 +530,7 @@ Parser::parse_command_define_fun()
 
   bitwuzla::Sort sort;
   std::vector<bitwuzla::Term> args;
+  std::unordered_set<std::string> sorted_var_symbols;
   Token la;
   for (;;)
   {
@@ -546,14 +547,21 @@ Parser::parse_command_define_fun()
     {
       return false;
     }
-    SymbolTable::Node* symbol = peek_node_arg();
+    SymbolTable::Node* var_symbol = peek_node_arg();
+    auto [it, inserted] = sorted_var_symbols.insert(var_symbol->d_symbol);
+    if (!inserted)
+    {
+      return error_arg("symbol '" + var_symbol->d_symbol
+                       + "' already defined as argument to function '"
+                       + symbol->d_symbol + "'");
+    }
     if (!parse_sort(sort))
     {
       return false;
     }
     parse_rpar();
-    symbol->d_term = d_tm.mk_var(sort, symbol->d_symbol);
-    args.emplace_back(symbol->d_term);
+    var_symbol->d_term = d_tm.mk_var(sort, var_symbol->d_symbol);
+    args.emplace_back(var_symbol->d_term);
   }
 
   if (!parse_sort(sort))
