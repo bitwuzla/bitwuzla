@@ -1,0 +1,2 @@
+regress/parser/smt2perr216.smt2:3:26: symbol 'x' already defined as argument to function 'P'
+
