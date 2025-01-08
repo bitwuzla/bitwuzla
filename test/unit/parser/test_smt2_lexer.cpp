@@ -268,7 +268,8 @@ TEST_F(TestSmt2Lexer, input2)
 {
   std::stringstream input;
   input << "(declare-fun ~ () Float64)" << std::endl
-        << "(assert (= x (fp.add c ~ (fp (_ bv0 1) (_ bv0 11) (_ bv0 52)))))";
+        << "(assert (= x (fp.add c ~ (fp (_ bv0 1) (_ bv0 11) (_ bv0 52)))))"
+        << "(declare-const |ꯍ| Bool)";
   std::ifstream infile;
   open_file(input, infile);
   Lexer lexer;
@@ -309,6 +310,11 @@ TEST_F(TestSmt2Lexer, input2)
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::RPAR);
+  next_token(lexer, Token::RPAR);
+  next_token(lexer, Token::LPAR);
+  next_token(lexer, Token::SYMBOL, "declare-const");
+  next_token(lexer, Token::SYMBOL, "|ꯍ|");
+  next_token(lexer, Token::SYMBOL, "Bool");
   next_token(lexer, Token::RPAR);
   next_token(lexer, Token::ENDOFFILE);
   infile.close();

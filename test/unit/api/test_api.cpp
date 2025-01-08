@@ -2163,6 +2163,14 @@ TEST_F(TestApi, print_fp_to_sbv_to_ubv)
   }
 }
 
+TEST_F(TestApi, print_unicode)
+{
+  bitwuzla::Term x = d_tm.mk_const(d_tm.mk_bool_sort(), "|ꯍ|");
+  bitwuzla::Bitwuzla bitwuzla(d_tm);
+  bitwuzla.assert_formula(x);
+  bitwuzla.print_formula(std::cout);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Stastics                                                                   */
 /* -------------------------------------------------------------------------- */

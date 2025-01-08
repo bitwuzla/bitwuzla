@@ -137,7 +137,7 @@ Lexer::is_valid_quoted_symbol(const std::string& s)
   }
   for (size_t i = 1, n = s.size() - 1; i < n; ++i)
   {
-    if (s[i] == '\\' || s[i] == '|' || !CharacterClasses::is_printable(s[i]))
+    if (s[i] == '\\' || s[i] == '|')
     {
       return false;
     }
