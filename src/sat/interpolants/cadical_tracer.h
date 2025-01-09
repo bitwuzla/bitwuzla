@@ -20,12 +20,9 @@
 
 namespace bzla::sat::interpolants {
 
-class CadicalTracer : public CaDiCaL::Tracer
+class Tracer : public CaDiCaL::Tracer
 {
  public:
-  CadicalTracer(bitblast::AigManager& amgr) : d_amgr(amgr) {}
-  ~CadicalTracer();
-
   enum class VariableKind
   {
     A,
@@ -38,6 +35,45 @@ class CadicalTracer : public CaDiCaL::Tracer
     B,
     LEARNED,  // internal
   };
+  // temporary
+  enum class CnfKind : uint8_t
+  {
+    NONE,
+    CONSTANT0,
+    CONSTANT1,
+    NORMAL
+  };
+
+  /**
+   * Label variable with given kind.
+   * @param id   The variable id.
+   * @param kind The variable kind.
+   */
+  virtual void label_variable(int32_t id, VariableKind kind) = 0;
+
+  /**
+   * Label clause with given kind.
+   * @note Clause IDs must be consecutive.
+   * @param id   The clause id.
+   * @param kind The clause kind.
+   */
+  virtual void label_clause(int32_t id, ClauseKind kind) = 0;
+
+  // temporary
+  virtual CnfKind create_craig_interpolant(std::vector<std::vector<int>>& cnf,
+                                           int& tseitin_offset)
+  {
+    (void) cnf;
+    (void) tseitin_offset;
+    return CnfKind::NONE;
+  }
+};
+
+class CadicalTracer : public Tracer
+{
+ public:
+  CadicalTracer(bitblast::AigManager& amgr) : d_amgr(amgr) {}
+  ~CadicalTracer();
 
   struct Interpolant
   {
@@ -78,20 +114,9 @@ class CadicalTracer : public CaDiCaL::Tracer
 
   /* --------------------------------------------------------------------- */
 
-  /**
-   * Label variable with given kind.
-   * @param id   The variable id.
-   * @param kind The variable kind.
-   */
-  void label_variable(int32_t id, VariableKind kind);
+  void label_variable(int32_t id, VariableKind kind) override;
 
-  /**
-   * Label clause with given kind.
-   * @note Clause IDs must be consecutive.
-   * @param id   The clause id.
-   * @param kind The clause kind.
-   */
-  void label_clause(int32_t id, ClauseKind kind);
+  void label_clause(int32_t id, ClauseKind kind) override;
 
  private:
   /**

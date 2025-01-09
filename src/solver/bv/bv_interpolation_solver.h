@@ -30,6 +30,9 @@ namespace bzla {
 
 namespace sat {
 class Cadical;
+namespace interpolants {
+class Tracer;
+}
 }
 
 namespace bv {
@@ -39,6 +42,9 @@ class BvSolver;
 class BvInterpolationSolver : public Solver, public BvSolverInterface
 {
  public:
+  /** Sat interface used for d_cnf_encoder. */
+  class InterpolationSatSolver;
+
   BvInterpolationSolver(Env& env, SolverState& state);
   ~BvInterpolationSolver();
 
@@ -67,9 +73,6 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   std::unordered_map<int64_t, Node> map_vars_to_node(
       const std::unordered_set<int64_t>& vars) const;
 
-  /** Sat interface used for d_cnf_encoder. */
-  class InterpolationSatSolver;
-
   /** The current set of assertions. */
   backtrack::vector<Node> d_assertions;
   /** The current set of assumptions. */
@@ -82,7 +85,7 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   std::unique_ptr<bitblast::AigCnfEncoder> d_cnf_encoder;
   /** SAT solver used for solving bit-blasted formula. */
   std::unique_ptr<sat::Cadical> d_sat_solver;
-  std::unique_ptr<CaDiCraig::CraigTracer> d_craig_tracer;
+  std::unique_ptr<sat::interpolants::Tracer> d_tracer;
   /** SAT solver interface for CNF encoder, which wraps `d_sat_solver`. */
   std::unique_ptr<InterpolationSatSolver> d_interpol_sat_solver;
   /** Result of last solve() call. */

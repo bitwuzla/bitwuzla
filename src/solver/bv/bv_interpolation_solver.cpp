@@ -22,24 +22,115 @@
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "sat/cadical.h"
+#include "sat/interpolants/cadical_tracer.h"
 #include "sat/sat_solver_factory.h"
 #include "solver/bv/bv_solver.h"
 #include "solving_context.h"
 #include "util/logger.h"
 
+using namespace bzla::node;
+using namespace bzla::sat::interpolants;
+
 namespace bzla::bv {
 
-using namespace bzla::node;
+static std::unordered_map<Tracer::VariableKind, CaDiCraig::CraigVarType>
+    s_var_kind_to_cadicraig = {
+        {Tracer::VariableKind::A, CaDiCraig::CraigVarType::A_LOCAL},
+        {Tracer::VariableKind::B, CaDiCraig::CraigVarType::B_LOCAL},
+        {Tracer::VariableKind::GLOBAL, CaDiCraig::CraigVarType::GLOBAL},
+};
+static std::unordered_map<Tracer::ClauseKind, CaDiCraig::CraigClauseType>
+    s_clause_kind_to_cadicraig = {
+        {Tracer::ClauseKind::A, CaDiCraig::CraigClauseType::A_CLAUSE},
+        {Tracer::ClauseKind::B, CaDiCraig::CraigClauseType::B_CLAUSE},
+        {Tracer::ClauseKind::LEARNED, CaDiCraig::CraigClauseType::L_CLAUSE},
+};
+static std::unordered_map<CaDiCraig::CraigCnfType, Tracer::CnfKind>
+    s_cnf_kind_to_cadicraig = {
+        {CaDiCraig::CraigCnfType::NONE, Tracer::CnfKind::NONE},
+        {CaDiCraig::CraigCnfType::CONSTANT0, Tracer::CnfKind::CONSTANT0},
+        {CaDiCraig::CraigCnfType::CONSTANT1, Tracer::CnfKind::CONSTANT1},
+        {CaDiCraig::CraigCnfType::NORMAL, Tracer::CnfKind::NORMAL},
+};
 
-/** Interpolating SAT solver wrapper for AIG encoder. */
+/* --- InterpolationSatSolver ---------------------------------------------- */
+
+/** Interface for interpolating SAT solver wrapper for AIG encoder. */
 class BvInterpolationSolver::InterpolationSatSolver
     : public bitblast::SatInterface
 {
  public:
-  InterpolationSatSolver(Env& env,
-                         sat::SatSolver& solver,
-                         CaDiCraig::CraigTracer& tracer)
-      : d_logger(env.logger()), d_solver(solver), d_craig_tracer(tracer)
+  InterpolationSatSolver(Env& env, sat::SatSolver& solver)
+      : d_logger(env.logger()), d_solver(solver)
+  {
+  }
+  virtual void set_clause_label(Tracer::ClauseKind kind) = 0;
+
+  void add_clause(const std::initializer_list<int64_t>& literals) override
+  {
+    for (int64_t lit : literals)
+    {
+      add(lit);
+    }
+    add(0);
+  }
+
+  bool value(int64_t lit) override
+  {
+    (void) lit;
+    assert(false);
+    return false;
+  }
+
+ protected:
+  void resize(int64_t lit)
+  {
+    size_t pos = static_cast<size_t>(std::abs(lit) - 1);
+    if (pos < d_var_labeled.size())
+    {
+      return;
+    }
+    d_var_labeled.resize(pos + 1, false);
+  }
+
+  bool is_labeled(int64_t lit) const
+  {
+    size_t pos = static_cast<size_t>(std::abs(lit) - 1);
+    if (pos < d_var_labeled.size())
+    {
+      return d_var_labeled[pos];
+    }
+    return false;
+  }
+
+  void set_labeled(int64_t lit)
+  {
+    size_t pos = static_cast<size_t>(std::abs(lit) - 1);
+    assert(pos < d_var_labeled.size());
+    d_var_labeled[pos] = true;
+  }
+
+  /** The associated logger instance. */
+  util::Logger& d_logger;
+  /** The associated SAT solver. */
+  sat::SatSolver& d_solver;
+  /** Maps var to flag that indicates whether the var was already labeled. */
+  std::vector<bool> d_var_labeled;
+  /** Cache literals of current clause. */
+  std::vector<int64_t> d_clause;
+  /** The current number of clauses added. */
+  int64_t d_clause_cnt = 0;
+};
+
+/** Interpolating SAT solver wrapper for AIG encoder, using CadiCraig. */
+class InterpolationCadiCraigSatSolver
+    : public BvInterpolationSolver::InterpolationSatSolver
+{
+ public:
+  InterpolationCadiCraigSatSolver(Env& env,
+                                  sat::SatSolver& solver,
+                                  CaDiCraig::CraigTracer& tracer)
+      : InterpolationSatSolver(env, solver), d_tracer(tracer)
   {
   }
 
@@ -47,7 +138,7 @@ class BvInterpolationSolver::InterpolationSatSolver
   {
     if (lit == 0)
     {
-      d_craig_tracer.label_clause(++d_clause_cnt, d_clause_type);
+      d_tracer.label_clause(++d_clause_cnt, d_clause_type);
       Log(3) << "CaDiCraig label clause: " << d_clause_cnt << " "
              << (d_clause_type == CaDiCraig::CraigClauseType::A_CLAUSE ? "A"
                                                                        : "B");
@@ -73,7 +164,7 @@ class BvInterpolationSolver::InterpolationSatSolver
           // TODO: determine what to label as A_LOCAL, B_LOCAL
           // clause is unit if size == 1
           // tseitin variable: !is_unit && i == 0
-          d_craig_tracer.label_variable(std::abs(lit), var_type);
+          d_tracer.label_variable(std::abs(lit), var_type);
           Log(3) << "CaDiCraig label var: " << std::abs(lit) << " ("
                  << (var_type == CaDiCraig::CraigVarType::A_LOCAL
                          ? "A_LOCAL"
@@ -94,68 +185,99 @@ class BvInterpolationSolver::InterpolationSatSolver
     }
   }
 
-  void add_clause(const std::initializer_list<int64_t>& literals) override
+  void set_clause_label(Tracer::ClauseKind kind) override
   {
-    for (int64_t lit : literals)
-    {
-      add(lit);
-    }
-    add(0);
-  }
-
-  bool value(int64_t lit) override
-  {
-    (void) lit;
-    assert(false);
-    return false;
-  }
-
-  void set_clause_label(CaDiCraig::CraigClauseType type)
-  {
-    d_clause_type = type;
+    d_clause_type = s_clause_kind_to_cadicraig[kind];
   }
 
  private:
-  void resize(int64_t lit)
-  {
-    size_t pos = static_cast<size_t>(std::abs(lit) - 1);
-    if (pos < d_var_labeled.size())
-    {
-      return;
-    }
-    d_var_labeled.resize(pos + 1, false);
-  }
-  bool is_labeled(int64_t lit) const
-  {
-    size_t pos = static_cast<size_t>(std::abs(lit) - 1);
-    if (pos < d_var_labeled.size())
-    {
-      return d_var_labeled[pos];
-    }
-    return false;
-  }
-  void set_labeled(int64_t lit)
-  {
-    size_t pos = static_cast<size_t>(std::abs(lit) - 1);
-    assert(pos < d_var_labeled.size());
-    d_var_labeled[pos] = true;
-  }
-
-  /** The associated logger instance. */
-  util::Logger& d_logger;
-  /** The associated SAT solver. */
-  sat::SatSolver& d_solver;
   /** The associated CaDiCraig tracer. */
-  CaDiCraig::CraigTracer& d_craig_tracer;
-  /** Maps var to flag that indicates whether the var was already labeled. */
-  std::vector<bool> d_var_labeled;
+  CaDiCraig::CraigTracer& d_tracer;
   /** The current clause type (A or B). */
   CaDiCraig::CraigClauseType d_clause_type =
       CaDiCraig::CraigClauseType::A_CLAUSE;
-  /** Cache literals of current clause. */
-  std::vector<int64_t> d_clause;
-  /** The current number of clauses added. */
-  int64_t d_clause_cnt = 0;
+};
+
+/* --- sat::interpolants::Tracer ------------------------------------------- */
+
+class CadiCraigTracer : public Tracer
+{
+ public:
+  CadiCraigTracer()
+  {
+    d_tracer.reset(new CaDiCraig::CraigTracer());
+    d_tracer->set_craig_construction(CaDiCraig::CraigConstruction::ASYMMETRIC);
+  }
+  ~CadiCraigTracer() {}
+
+  /* CaDiCaL::Tracer interface ------------------------------------------- */
+
+  void add_original_clause(uint64_t id,
+                           bool redundant,
+                           const std::vector<int32_t>& clause,
+                           bool restore = false) override
+  {
+    d_tracer->add_original_clause(id, redundant, clause, restore);
+  }
+
+  void add_derived_clause(uint64_t id,
+                          bool redundant,
+                          const std::vector<int>& clause,
+                          const std::vector<uint64_t>& proof_chain) override
+  {
+    d_tracer->add_derived_clause(id, redundant, clause, proof_chain);
+  }
+
+  void add_assumption_clause(uint64_t id,
+                             const std::vector<int>& clause,
+                             const std::vector<uint64_t>& proof_chain) override
+  {
+    d_tracer->add_assumption_clause(id, clause, proof_chain);
+  }
+
+  void delete_clause(uint64_t id,
+                     bool redundant,
+                     const std::vector<int>& clause) override
+  {
+    d_tracer->delete_clause(id, redundant, clause);
+  }
+
+  void add_assumption(int32_t lit) override { d_tracer->add_assumption(lit); }
+
+  void add_constraint(const std::vector<int32_t>& clause) override
+  {
+    d_tracer->add_constraint(clause);
+  }
+
+  void reset_assumptions() override { d_tracer->reset_assumptions(); }
+
+  void conclude_unsat(CaDiCaL::ConclusionType conclusion,
+                      const std::vector<uint64_t>& proof_chain) override
+  {
+    d_tracer->conclude_unsat(conclusion, proof_chain);
+  }
+
+  /* --------------------------------------------------------------------- */
+
+  void label_variable(int32_t id, VariableKind kind) override
+  {
+    d_tracer->label_variable(id, s_var_kind_to_cadicraig[kind]);
+  }
+
+  void label_clause(int32_t id, ClauseKind kind) override
+  {
+    d_tracer->label_clause(id, s_clause_kind_to_cadicraig[kind]);
+  }
+
+  CnfKind create_craig_interpolant(std::vector<std::vector<int>>& cnf,
+                                   int& tseitin_offset) override
+  {
+    CaDiCraig::CraigCnfType res = d_tracer->create_craig_interpolant(
+        CaDiCraig::CraigInterpolant::ASYMMETRIC, cnf, tseitin_offset);
+    return s_cnf_kind_to_cadicraig[res];
+  }
+
+  std::unique_ptr<CaDiCraig::CraigTracer> d_tracer;
 };
 
 /* --- BvInterpolationSolver public ---------------------------------------- */
@@ -167,19 +289,25 @@ BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
       d_last_result(Result::UNKNOWN),
       d_stats(env.statistics(), "solver::bv::interpol::")
 {
-  d_craig_tracer.reset(new CaDiCraig::CraigTracer());
-  d_craig_tracer->set_craig_construction(
-      CaDiCraig::CraigConstruction::ASYMMETRIC);
   d_sat_solver.reset(new sat::Cadical());
-  d_sat_solver->solver()->connect_proof_tracer(d_craig_tracer.get(), true);
-  d_interpol_sat_solver.reset(
-      new InterpolationSatSolver(env, *d_sat_solver, *d_craig_tracer));
+  if (env.options().tmp_interpol_use_cadicraig())
+  {
+    CadiCraigTracer* cctracer = new CadiCraigTracer();
+    d_tracer.reset(cctracer);
+    d_interpol_sat_solver.reset(new InterpolationCadiCraigSatSolver(
+        env, *d_sat_solver, *cctracer->d_tracer));
+  }
+  else
+  {
+    assert(false);
+  }
+  d_sat_solver->solver()->connect_proof_tracer(d_tracer.get(), true);
   d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_interpol_sat_solver));
 }
 
 BvInterpolationSolver::~BvInterpolationSolver()
 {
-  d_sat_solver->solver()->disconnect_proof_tracer(d_craig_tracer.get());
+  d_sat_solver->solver()->disconnect_proof_tracer(d_tracer.get());
 }
 
 std::unordered_map<int64_t, Node>
@@ -351,8 +479,7 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
   if (!A.empty())
   {
     util::Timer timer(d_stats.time_encode);
-    d_interpol_sat_solver->set_clause_label(
-        CaDiCraig::CraigClauseType::A_CLAUSE);
+    d_interpol_sat_solver->set_clause_label(CadicalTracer::ClauseKind::A);
     for (const Node& a : A)
     {
       {
@@ -365,7 +492,7 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
     }
   }
 
-  d_interpol_sat_solver->set_clause_label(CaDiCraig::CraigClauseType::B_CLAUSE);
+  d_interpol_sat_solver->set_clause_label(CadicalTracer::ClauseKind::B);
   {
     util::Timer timer(d_stats.time_bitblast);
     d_bitblaster.bitblast(B);
@@ -393,20 +520,20 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
   Log(3) << "cur_aig_id: " << cur_aig_id;
 
   std::vector<std::vector<int>> clauses;
-  CaDiCraig::CraigCnfType result = d_craig_tracer->create_craig_interpolant(
-      CaDiCraig::CraigInterpolant::ASYMMETRIC, clauses, next_aig_id);
+  Tracer::CnfKind result =
+      d_tracer->create_craig_interpolant(clauses, next_aig_id);
 
-  if (result == CaDiCraig::CraigCnfType::NONE)
+  if (result == Tracer::CnfKind::NONE)
   {
     Log(1) << "NONE";
     return Node();
   }
-  if (result == CaDiCraig::CraigCnfType::CONSTANT0)
+  if (result == Tracer::CnfKind::CONSTANT0)
   {
     Log(1) << "CONSTANT0";
     return nm.mk_value(false);
   }
-  if (result == CaDiCraig::CraigCnfType::CONSTANT1)
+  if (result == Tracer::CnfKind::CONSTANT1)
   {
     Log(1) << "CONSTANT1";
     return nm.mk_value(true);
@@ -431,7 +558,7 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
     }
   }
 
-  assert(result == CaDiCraig::CraigCnfType::NORMAL);
+  assert(result == Tracer::CnfKind::NORMAL);
   std::unordered_map<int64_t, std::pair<int64_t, int64_t>> and_gates;
   std::unordered_set<int64_t> vars;
   for (const auto& clause : clauses)
