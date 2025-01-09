@@ -13,8 +13,8 @@
 
 #include <unordered_map>
 
+#include "bitblast/aig/aig_manager.h"
 #include "cadical.hpp"
-#include "lib/bitblast/aig/aig_node.h"
 #include "tracer.hpp"
 
 namespace bzla::sat::interpolants {
@@ -22,7 +22,7 @@ namespace bzla::sat::interpolants {
 class CadicalTracer : public CaDiCaL::Tracer
 {
  public:
-  CadicalTracer();
+  CadicalTracer(bitblast::AigManager& amgr) : d_amgr(amgr) {}
   ~CadicalTracer();
 
   enum class VariableKind
@@ -81,9 +81,41 @@ class CadicalTracer : public CaDiCaL::Tracer
   void label_clause(int32_t id, ClauseKind kind);
 
  private:
+  struct Interpolant
+  {
+    bitblast::AigNode d_interpolant;
+    ClauseKind d_kind;
+  };
+
+  /**
+   * Mark variable with phase of literal.
+   * @return True if variable was marked but phase switched.
+   */
+  uint8_t mark_var(int32_t lit);
+
+  Interpolant get_interpolant(const std::vector<int32_t>& clause,
+                              ClauseKind kind);
+  void extend_interpolant(Interpolant& interpolant,
+                          Interpolant& ext,
+                          VariableKind kind);
+  bitblast::AigNode mk_or(bitblast::AigNode& aig0,
+                          bitblast::AigNode& aig1) const;
+  bitblast::AigNode mk_or(std::vector<bitblast::AigNode> lits) const;
+
+  /** The associated AIG manager. */
+  bitblast::AigManager& d_amgr;
+  /** The variable labels. */
   std::unordered_map<int32_t, VariableKind> d_labeled_vars;
+  /** The clause labels. */
   std::unordered_map<int32_t, ClauseKind> d_labeled_clauses;
-  std::unordered_map<int32_t, bool> d_marked_vars;
+  std::unordered_map<int32_t, uint8_t> d_marked_vars;
+  /** The added clauses, dummy at index 0 to enable access via clause id. */
+  std::vector<std::vector<int32_t>> d_clauses = {{}};
+  /** The id of the most recently added clause. */
+  uint64_t d_cur_clause_id = 0;
+  /** The interpolants, dummy at index 0 to enable access via clause id. */
+  std::vector<Interpolant> d_interpolants = {
+      {bitblast::AigNode(), ClauseKind::LEARNED}};
 };
 
 }  // namespace bzla::sat::interpolants
