@@ -12,6 +12,7 @@
 #define BZLA_SAT_INTERPOLANTS_CADICAL_TRACER_H_INCLUDED
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include "bitblast/aig/aig_manager.h"
 #include "cadical.hpp"
@@ -38,10 +39,12 @@ class CadicalTracer : public CaDiCaL::Tracer
     LEARNED,  // internal
   };
 
-  struct interpolant
+  struct Interpolant
   {
-    bitblast::AigNode aig;
-    ClauseKind kind;
+    bitblast::AigNode d_interpolant;
+    ClauseKind d_kind;
+    bool is_null() const { return d_interpolant.is_null(); }
+    void reset() { d_interpolant = bitblast::AigNode(); }
   };
 
   /* CaDiCaL::Tracer interface ------------------------------------------- */
@@ -56,10 +59,9 @@ class CadicalTracer : public CaDiCaL::Tracer
                           const std::vector<int>& clause,
                           const std::vector<uint64_t>& proof_chain) override;
 
-  // void add_assumption_clause(uint64_t id,
-  //                            const std::vector<int> &clause,
-  //                            const std::vector<uint64_t> &proof_chain)
-  //                            override;
+  void add_assumption_clause(uint64_t id,
+                             const std::vector<int>& clause,
+                             const std::vector<uint64_t>& proof_chain) override;
 
   void delete_clause(uint64_t id,
                      bool redundant,
@@ -71,36 +73,73 @@ class CadicalTracer : public CaDiCaL::Tracer
 
   void reset_assumptions() override;
 
-  void conclude_unsat(CaDiCaL::ConclusionType,
+  void conclude_unsat(CaDiCaL::ConclusionType conclusion,
                       const std::vector<uint64_t>& proof_chain) override;
 
   /* --------------------------------------------------------------------- */
 
+  /**
+   * Label variable with given kind.
+   * @param id   The variable id.
+   * @param kind The variable kind.
+   */
   void label_variable(int32_t id, VariableKind kind);
 
+  /**
+   * Label clause with given kind.
+   * @note Clause IDs must be consecutive.
+   * @param id   The clause id.
+   * @param kind The clause kind.
+   */
   void label_clause(int32_t id, ClauseKind kind);
 
  private:
-  struct Interpolant
-  {
-    bitblast::AigNode d_interpolant;
-    ClauseKind d_kind;
-  };
-
   /**
-   * Mark variable with phase of literal.
-   * @return True if variable was marked but phase switched.
+   * Construct interpolant for given clause.
+   * @param clause The clause to construct the interpolant for.
+   * @param kind   The kind of the clause.
+   * @return The interpolant.
    */
-  uint8_t mark_var(int32_t lit);
-
   Interpolant get_interpolant(const std::vector<int32_t>& clause,
                               ClauseKind kind);
+  /**
+   * Construct interpolant for given literal (i.e., assumption).
+   * @param lit The literal to construct the interpolant for.
+   * @return The interpolant.
+   */
+  Interpolant get_interpolant(int32_t lit);
+
+  /**
+   * Extend `interpolant` with interpolant `ext` for a given variable kind.
+   * @param interpolant The interpolant to be extended.
+   * @param ext         The interpolant to extend with.
+   * @param kind        The variable kind.
+   */
   void extend_interpolant(Interpolant& interpolant,
                           Interpolant& ext,
                           VariableKind kind);
+  /**
+   * Mark variable with phase of literal.
+   * @param marked_vars The currently marked vars.
+   * @param lit         The literal to mark the variable for.
+   * @return True if variable was marked but its phase switched.
+   */
+  uint8_t mark_var(std::unordered_map<int32_t, uint8_t> marked_vars,
+                   int32_t lit);
+  /**
+   * Helper to create AIG or over two AIGs.
+   * @param aig0 The first AIG.
+   * @param aig1 The second AIG.
+   * @return The AIG representing a logical OR over the given AIGs.
+   */
   bitblast::AigNode mk_or(bitblast::AigNode& aig0,
                           bitblast::AigNode& aig1) const;
-  bitblast::AigNode mk_or(std::vector<bitblast::AigNode> lits) const;
+  /**
+   * Helper to create AIG or over a list of AIGs.
+   * @param aigs The AIGs.
+   * @return The AIG representing a logical OR over the given AIGs.
+   */
+  bitblast::AigNode mk_or(std::vector<bitblast::AigNode> aigs) const;
 
   /** The associated AIG manager. */
   bitblast::AigManager& d_amgr;
@@ -108,14 +147,25 @@ class CadicalTracer : public CaDiCaL::Tracer
   std::unordered_map<int32_t, VariableKind> d_labeled_vars;
   /** The clause labels. */
   std::unordered_map<int32_t, ClauseKind> d_labeled_clauses;
-  std::unordered_map<int32_t, uint8_t> d_marked_vars;
   /** The added clauses, dummy at index 0 to enable access via clause id. */
   std::vector<std::vector<int32_t>> d_clauses = {{}};
   /** The id of the most recently added clause. */
   uint64_t d_cur_clause_id = 0;
-  /** The interpolants, dummy at index 0 to enable access via clause id. */
-  std::vector<Interpolant> d_interpolants = {
+  /** The current added constraint, empty if none. */
+  std::vector<int32_t> d_constraint;
+  /** The kind of the currently added constraint. */
+  ClauseKind d_constraint_kind = ClauseKind::LEARNED;
+  /** The currently active assumptions. */
+  std::unordered_set<int32_t> d_assumptions;
+  /** The clauses observed via add_assumption_clause(). */
+  std::vector<uint64_t> d_assumption_clauses;
+  /**
+   * The partial interpolants, dummy at index 0 to enable access via clause id.
+   */
+  std::vector<Interpolant> d_part_interpolants = {
       {bitblast::AigNode(), ClauseKind::LEARNED}};
+  /** The interpolant after concluding unsat, is_null() if none. */
+  Interpolant d_interpolant;
 };
 
 }  // namespace bzla::sat::interpolants
