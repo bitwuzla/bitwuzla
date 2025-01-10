@@ -61,12 +61,7 @@ class Tracer : public CaDiCaL::Tracer
 
   // temporary
   virtual CnfKind create_craig_interpolant(std::vector<std::vector<int>>& cnf,
-                                           int& tseitin_offset)
-  {
-    (void) cnf;
-    (void) tseitin_offset;
-    return CnfKind::NONE;
-  }
+                                           int& tseitin_offset) = 0;
 };
 
 class CadicalTracer : public Tracer
@@ -117,6 +112,9 @@ class CadicalTracer : public Tracer
   void label_variable(int32_t id, VariableKind kind) override;
 
   void label_clause(int32_t id, ClauseKind kind) override;
+
+  CnfKind create_craig_interpolant(std::vector<std::vector<int>>& cnf,
+                                   int& tseitin_offset) override;
 
  private:
   /**

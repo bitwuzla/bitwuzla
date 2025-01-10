@@ -71,7 +71,7 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
    * @param vars      The known SAT vars occurring in the interpolant.
    */
   std::unordered_map<int64_t, Node> map_vars_to_node(
-      const std::unordered_set<int64_t>& vars) const;
+      const std::unordered_set<int64_t>& vars);
 
   /** The current set of assertions. */
   backtrack::vector<Node> d_assertions;

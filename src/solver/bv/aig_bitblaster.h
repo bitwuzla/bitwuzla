@@ -46,17 +46,15 @@ class AigBitblaster
   uint64_t num_aig_consts() const { return d_bitblaster.num_aig_consts(); }
   uint64_t num_aig_shared() const { return d_bitblaster.num_aig_shared(); }
 
-  /** @return The id of the most recently created AIG. */
-  int64_t aig_id_counter() const { return d_bitblaster.aig_id_counter(); }
+  /** @return The associated AIG manager. */
+  bitblast::AigManager& amgr() { return d_bitblaster.amgr(); }
+
   /**
    * Get AigNode by id.
    * @param id The id of the AIG node.
    * @return The AIG node.
    */
-  bitblast::AigNode get_node(int64_t id) const
-  {
-    return d_bitblaster.get_node(id);
-  }
+  bitblast::AigNode get_node(int64_t id) { return d_bitblaster.get_node(id); }
 
   const std::unordered_map<Node, bitblast::AigBitblaster::Bits>&
   bitblaster_cache() const

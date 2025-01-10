@@ -80,7 +80,7 @@ class AigManager
   AigNode get_node(int64_t id) const;
 
   /** @return The current AIG id counter. */
-  int64_t aig_ig_counter() const { return d_aig_id_counter; }
+  int64_t aig_id_counter() const { return d_aig_id_counter; }
 
   /** @return AIG statistics. */
   const Statistics& statistics() const;

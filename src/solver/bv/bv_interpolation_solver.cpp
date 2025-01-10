@@ -276,7 +276,7 @@ BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
   }
   else
   {
-    assert(false);
+    d_tracer.reset(new CadicalTracer(d_bitblaster.amgr()));
   }
   d_interpol_sat_solver.reset(
       new InterpolationSatSolver(env, *d_sat_solver, *d_tracer));
@@ -290,8 +290,7 @@ BvInterpolationSolver::~BvInterpolationSolver()
 }
 
 std::unordered_map<int64_t, Node>
-BvInterpolationSolver::map_vars_to_node(
-    const std::unordered_set<int64_t>& vars) const
+BvInterpolationSolver::map_vars_to_node(const std::unordered_set<int64_t>& vars)
 {
   std::unordered_map<int64_t, Node> res;
   NodeManager& nm   = d_env.nm();
@@ -494,7 +493,7 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
   }
 
   util::Timer timer(d_stats.time_interpol);
-  int32_t cur_aig_id  = d_bitblaster.aig_id_counter();
+  int32_t cur_aig_id  = d_bitblaster.amgr().aig_id_counter();
   int32_t next_aig_id = cur_aig_id + 1;
   Log(3) << "cur_aig_id: " << cur_aig_id;
 

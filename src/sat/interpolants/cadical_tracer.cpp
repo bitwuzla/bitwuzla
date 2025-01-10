@@ -13,11 +13,14 @@
 #include <cassert>
 #include <cmath>
 
+#include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig/aig_node.h"
 
 using namespace bzla::bitblast;
 
 namespace bzla::sat::interpolants {
+
+CadicalTracer::~CadicalTracer() {}
 
 /* CaDiCaL::Tracer interface ------------------------------------------- */
 
@@ -274,6 +277,80 @@ CadicalTracer::label_clause(int32_t id, ClauseKind kind)
 {
   assert(id > 0);
   d_labeled_clauses[id] = kind;
+}
+
+class CnfSatSolver : public bitblast::SatInterface
+{
+ public:
+  CnfSatSolver(std::vector<std::vector<int32_t>>& cnf) : d_cnf(cnf) {}
+
+  void add(int64_t lit) override
+  {
+    if (lit == 0)
+    {
+      d_cnf.push_back(d_clause);
+      d_clause.clear();
+    }
+    else
+    {
+      d_clause.push_back(lit);
+    }
+  }
+
+  void add_clause(const std::initializer_list<int64_t>& literals) override
+  {
+    for (int64_t lit : literals)
+    {
+      add(lit);
+    }
+    add(0);
+  }
+
+  bool value(int64_t lit) override
+  {
+    (void) lit;
+    assert(false);
+    return false;
+  }
+
+ private:
+  std::vector<int32_t> d_clause;
+  std::vector<std::vector<int32_t>>& d_cnf;
+};
+
+Tracer::CnfKind
+CadicalTracer::create_craig_interpolant(std::vector<std::vector<int>>& cnf,
+                                        int& tseitin_offset)
+{
+  (void) tseitin_offset;
+  cnf.clear();
+
+  if (d_interpolant.is_null())
+  {
+    return CnfKind::NONE;
+  }
+
+  if (d_interpolant.d_interpolant.is_true())
+  {
+    return CnfKind::CONSTANT1;
+  }
+  if (d_interpolant.d_interpolant.is_false())
+  {
+    cnf.push_back({});
+    return CnfKind::CONSTANT0;
+  }
+  if (d_interpolant.d_interpolant.is_const())
+  {
+    int32_t lit = d_interpolant.d_interpolant.get_id();
+    assert(lit);
+    cnf.push_back({lit});
+    return CnfKind::NORMAL;
+  }
+
+  CnfSatSolver cnf_converter(cnf);
+  bitblast::AigCnfEncoder d_cnf_encoder(cnf_converter);
+  d_cnf_encoder.encode(d_interpolant.d_interpolant);
+  return CnfKind::NORMAL;
 }
 
 /* --------------------------------------------------------------------- */
