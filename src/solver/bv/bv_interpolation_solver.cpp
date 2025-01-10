@@ -60,11 +60,61 @@ class BvInterpolationSolver::InterpolationSatSolver
     : public bitblast::SatInterface
 {
  public:
-  InterpolationSatSolver(Env& env, sat::SatSolver& solver)
-      : d_logger(env.logger()), d_solver(solver)
+  InterpolationSatSolver(Env& env, sat::SatSolver& solver, Tracer& tracer)
+      : d_logger(env.logger()), d_solver(solver), d_tracer(tracer)
   {
   }
-  virtual void set_clause_label(Tracer::ClauseKind kind) = 0;
+
+  void set_clause_label(Tracer::ClauseKind kind) { d_clause_kind = kind; }
+
+  void add(int64_t lit) override
+  {
+    if (lit == 0)
+    {
+      d_tracer.label_clause(++d_clause_cnt, d_clause_kind);
+      Log(3) << "CaDiCraig label clause: " << d_clause_cnt << " "
+             << (d_clause_kind == Tracer::ClauseKind::A ? "A" : "B");
+      size_t size = d_clause.size();
+      if (d_logger.is_log_enabled(2))
+      {
+        std::stringstream ss;
+        ss << "CaDiCraig clause: ";
+        for (auto a : d_clause)
+        {
+          ss << " " << a;
+        }
+        Log(3) << ss.str();
+      }
+      for (size_t i = 0; i < size; ++i)
+      {
+        int64_t lit = d_clause[i];
+        Log(3) << "CaDiCraig add: " << lit;
+        resize(lit);
+        if (!is_labeled(lit))
+        {
+          Tracer::VariableKind var_kind = Tracer::VariableKind::GLOBAL;
+          // TODO: determine what to label as A_LOCAL, B_LOCAL
+          // clause is unit if size == 1
+          // tseitin variable: !is_unit && i == 0
+          d_tracer.label_variable(std::abs(lit), var_kind);
+          Log(3) << "label var: " << std::abs(lit) << " ("
+                 << (var_kind == Tracer::VariableKind::A
+                         ? "A"
+                         : (var_kind == Tracer::VariableKind::B ? "B"
+                                                                : "GLOBAL"))
+                 << ")";
+          set_labeled(lit);
+        }
+        d_solver.add(lit);
+      }
+      d_solver.add(0);
+      d_clause.clear();
+    }
+    else
+    {
+      d_clause.push_back(lit);
+    }
+  }
 
   void add_clause(const std::initializer_list<int64_t>& literals) override
   {
@@ -82,7 +132,7 @@ class BvInterpolationSolver::InterpolationSatSolver
     return false;
   }
 
- protected:
+ private:
   void resize(int64_t lit)
   {
     size_t pos = static_cast<size_t>(std::abs(lit) - 1);
@@ -120,82 +170,11 @@ class BvInterpolationSolver::InterpolationSatSolver
   std::vector<int64_t> d_clause;
   /** The current number of clauses added. */
   int64_t d_clause_cnt = 0;
-};
 
-/** Interpolating SAT solver wrapper for AIG encoder, using CadiCraig. */
-class InterpolationCadiCraigSatSolver
-    : public BvInterpolationSolver::InterpolationSatSolver
-{
- public:
-  InterpolationCadiCraigSatSolver(Env& env,
-                                  sat::SatSolver& solver,
-                                  CaDiCraig::CraigTracer& tracer)
-      : InterpolationSatSolver(env, solver), d_tracer(tracer)
-  {
-  }
-
-  void add(int64_t lit) override
-  {
-    if (lit == 0)
-    {
-      d_tracer.label_clause(++d_clause_cnt, d_clause_type);
-      Log(3) << "CaDiCraig label clause: " << d_clause_cnt << " "
-             << (d_clause_type == CaDiCraig::CraigClauseType::A_CLAUSE ? "A"
-                                                                       : "B");
-      size_t size = d_clause.size();
-      if (d_logger.is_log_enabled(2))
-      {
-        std::stringstream ss;
-        ss << "CaDiCraig clause: ";
-        for (auto a : d_clause)
-        {
-          ss << " " << a;
-        }
-        Log(3) << ss.str();
-      }
-      for (size_t i = 0; i < size; ++i)
-      {
-        int64_t lit = d_clause[i];
-        Log(3) << "CaDiCraig add: " << lit;
-        resize(lit);
-        if (!is_labeled(lit))
-        {
-          CaDiCraig::CraigVarType var_type = CaDiCraig::CraigVarType::GLOBAL;
-          // TODO: determine what to label as A_LOCAL, B_LOCAL
-          // clause is unit if size == 1
-          // tseitin variable: !is_unit && i == 0
-          d_tracer.label_variable(std::abs(lit), var_type);
-          Log(3) << "CaDiCraig label var: " << std::abs(lit) << " ("
-                 << (var_type == CaDiCraig::CraigVarType::A_LOCAL
-                         ? "A_LOCAL"
-                         : (var_type == CaDiCraig::CraigVarType::B_LOCAL
-                                ? "B_LOCAL"
-                                : "GLOBAL"))
-                 << ")";
-          set_labeled(lit);
-        }
-        d_solver.add(lit);
-      }
-      d_solver.add(0);
-      d_clause.clear();
-    }
-    else
-    {
-      d_clause.push_back(lit);
-    }
-  }
-
-  void set_clause_label(Tracer::ClauseKind kind) override
-  {
-    d_clause_type = s_clause_kind_to_cadicraig[kind];
-  }
-
- private:
-  /** The associated CaDiCraig tracer. */
-  CaDiCraig::CraigTracer& d_tracer;
+  /** The associated tracer. */
+  Tracer& d_tracer;
   /** The current clause type (A or B). */
-  CaDiCraig::CraigClauseType d_clause_type =
-      CaDiCraig::CraigClauseType::A_CLAUSE;
+  Tracer::ClauseKind d_clause_kind = Tracer::ClauseKind::A;
 };
 
 /* --- sat::interpolants::Tracer ------------------------------------------- */
@@ -294,13 +273,13 @@ BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
   {
     CadiCraigTracer* cctracer = new CadiCraigTracer();
     d_tracer.reset(cctracer);
-    d_interpol_sat_solver.reset(new InterpolationCadiCraigSatSolver(
-        env, *d_sat_solver, *cctracer->d_tracer));
   }
   else
   {
     assert(false);
   }
+  d_interpol_sat_solver.reset(
+      new InterpolationSatSolver(env, *d_sat_solver, *d_tracer));
   d_sat_solver->solver()->connect_proof_tracer(d_tracer.get(), true);
   d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_interpol_sat_solver));
 }
