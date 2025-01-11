@@ -104,6 +104,7 @@ namespace {
 bool
 is_ite(const AigNode& aig, std::vector<const AigNode*>& children)
 {
+  return false;
   assert(aig.is_and());
   assert(children.empty());
 
