@@ -539,22 +539,60 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
   assert(result == Tracer::CnfKind::NORMAL);
   std::unordered_map<int64_t, std::pair<int64_t, int64_t>> and_gates;
   std::unordered_set<int64_t> vars;
-  for (const auto& clause : clauses)
-  {
-    // Every variable with id > cur_aig_id is a tseitin variable introduced
-    // by CaDiCraig during CNF conversion of the AIG interpolant. The CNF
-    // encoding of an AND gate is of the form, e.g.,
-    // (-4 1)
-    // (-4 2)
-    // (4 -1 -2)
-    // where 4 is a tseitin variable, 1 and 2 are the inputs of the AND gate
-    // and thus 4 -> (and 1 2).
 
-    // Collect AND gates introduced by CaDiCraig and known SAT vars to be mapped
-    // to Nodes.
-    int64_t var = std::abs(clause[0]);
-    if (var > cur_aig_id)  // tseitin var, clause is part of AND encoding
+  if (d_env.options().tmp_interpol_use_cadicraig())
+  {
+    for (const auto& clause : clauses)
     {
+      // Every variable with id > cur_aig_id is a tseitin variable introduced
+      // by CaDiCraig during CNF conversion of the AIG interpolant. The CNF
+      // encoding of an AND gate is of the form, e.g.,
+      // (-4 1)
+      // (-4 2)
+      // (4 -1 -2)
+      // where 4 is a tseitin variable, 1 and 2 are the inputs of the AND gate
+      // and thus 4 -> (and 1 2).
+
+      // Collect AND gates introduced by CaDiCraig and known SAT vars to be
+      // mapped to Nodes.
+      int64_t var = std::abs(clause[0]);
+      if (var > cur_aig_id)  // tseitin var, clause is part of AND encoding
+      {
+        if (clause.size() > 1)
+        {
+          auto [it, inserted] = and_gates.emplace(var, std::make_pair(0, 0));
+          if (clause[0] < 0)
+          {
+            assert(clause.size() == 2);
+            if (it->second.first == 0)
+            {
+              it->second.first = clause[1];
+            }
+            else
+            {
+              assert(it->second.second == 0);
+              it->second.second = clause[1];
+            }
+          }
+          var = std::abs(clause[1]);
+          if (var <= cur_aig_id)
+          {
+            vars.insert(var);
+          }
+        }
+      }
+      else
+      {
+        assert(clause.size() == 1);
+        vars.insert(var);
+      }
+    }
+  }
+  else
+  {
+    for (const auto& clause : clauses)
+    {
+      int64_t var = std::abs(clause[0]);
       if (clause.size() > 1)
       {
         auto [it, inserted] = and_gates.emplace(var, std::make_pair(0, 0));
@@ -577,10 +615,6 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
           vars.insert(var);
         }
       }
-    }
-    else
-    {
-      assert(clause.size() == 1);
       vars.insert(var);
     }
   }
@@ -621,8 +655,14 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
     Log(2) << ss.str();
   }
 
+  std::vector<int64_t> roots;
   for (const auto& clause : clauses)
   {
+    if (clause.size() == 1)
+    {
+      roots.push_back(clause[0]);
+    }
+
     for (int64_t lit : clause)
     {
       int64_t var = std::abs(lit);
@@ -648,14 +688,26 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
     }
   }
 
-  assert(clauses[clauses.size() - 1].size() == 1);
-  int64_t root = clauses[clauses.size() - 1][0];
-  assert(map.find(std::abs(root)) != map.end());
-  Node res = map.at(std::abs(root));
-  if (root < 0)
+  assert(roots.size());
+  assert(!d_env.options().tmp_interpol_use_cadicraig()
+         || (clauses[clauses.size() - 1].size() == 1 && roots.size() == 1));
+  Node res;
+  for (int64_t root : roots)
   {
-    res = nm.mk_node(Kind::NOT, {res});
+    assert(map.find(std::abs(root)) != map.end());
+    Node n = map.at(std::abs(root));
+    if (root < 0)
+    {
+      n = nm.mk_node(Kind::NOT, {n});
+    }
+    res = res.is_null() ? n : nm.mk_node(Kind::AND, {res, n});
   }
+  // int64_t root = clauses[clauses.size() - 1][0];
+  // Node res = map.at(std::abs(root));
+  // if (root < 0)
+  //{
+  //   res = nm.mk_node(Kind::NOT, {res});
+  // }
   res = d_env.rewriter().rewrite(res);
 
   Log(1) << "interpolant: " << res;

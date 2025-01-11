@@ -27,8 +27,10 @@ AigNode::~AigNode()
 
 AigNode::AigNode(const AigNode& other) : d_data(other.d_data)
 {
-  assert(!other.is_null());
-  data()->inc_refs();
+  if (!is_null())
+  {
+    data()->inc_refs();
+  }
 }
 
 AigNode&

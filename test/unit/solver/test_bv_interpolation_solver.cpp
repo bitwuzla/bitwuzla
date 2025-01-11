@@ -29,6 +29,8 @@ class TestBvInterpolationSolver : public TestCommon
     d_options.dbg_check_interpolant.set(true);
     d_options.log_level.set(0);
     d_sat_factory.reset(new sat::SatSolverFactory(d_options));
+    d_ctx_cadicraig.reset(new SolvingContext(d_nm, d_options, *d_sat_factory));
+    d_options.tmp_interpol_use_cadicraig.set(false);
     d_ctx.reset(new SolvingContext(d_nm, d_options, *d_sat_factory));
   }
 
@@ -61,6 +63,17 @@ class TestBvInterpolationSolver : public TestCommon
       d_options.preprocess.set(true);
       d_options.rewrite_level.set(d_options.rewrite_level.dflt());
       SolvingContext ctx = SolvingContext(d_nm, d_options, *d_sat_factory);
+      if (d_options.log_level())
+      {
+        std::cout << std::endl
+                  << ">>> get interpolant with CaDiCraig" << std::endl;
+      }
+      d_ctx_cadicraig->get_interpolant(A, C);
+      if (d_options.log_level())
+      {
+        std::cout << std::endl
+                  << ">>> get interpolant with INTERNAL" << std::endl;
+      }
       d_ctx->get_interpolant(A, C);
     }
     // get_interpolant when preprocessing is disabled
@@ -75,6 +88,7 @@ class TestBvInterpolationSolver : public TestCommon
       d_options.preprocess.set(false);
       d_options.rewrite_level.set(d_options.rewrite_level.dflt());
       SolvingContext ctx = SolvingContext(d_nm, d_options, *d_sat_factory);
+      d_ctx_cadicraig->get_interpolant(A, C);
       d_ctx->get_interpolant(A, C);
     }
     // get_interpolant when rewriting is disabled
@@ -89,6 +103,7 @@ class TestBvInterpolationSolver : public TestCommon
       d_options.preprocess.set(true);
       d_options.rewrite_level.set(0);
       SolvingContext ctx = SolvingContext(d_nm, d_options, *d_sat_factory);
+      d_ctx_cadicraig->get_interpolant(A, C);
       d_ctx->get_interpolant(A, C);
     }
     // get_interpolant when preprocessing and rewriting is disabled
@@ -103,6 +118,7 @@ class TestBvInterpolationSolver : public TestCommon
       d_options.preprocess.set(false);
       d_options.rewrite_level.set(0);
       SolvingContext ctx = SolvingContext(d_nm, d_options, *d_sat_factory);
+      d_ctx_cadicraig->get_interpolant(A, C);
       d_ctx->get_interpolant(A, C);
     }
   }
@@ -111,6 +127,7 @@ class TestBvInterpolationSolver : public TestCommon
   NodeManager d_nm;
   std::unique_ptr<sat::SatSolverFactory> d_sat_factory;
   std::unique_ptr<SolvingContext> d_ctx;
+  std::unique_ptr<SolvingContext> d_ctx_cadicraig;
 };
 
 // test with other SAT solver

@@ -11,6 +11,7 @@
 #ifndef BZLA_SAT_INTERPOLANTS_CADICAL_TRACER_H_INCLUDED
 #define BZLA_SAT_INTERPOLANTS_CADICAL_TRACER_H_INCLUDED
 
+#include <limits>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -60,8 +61,8 @@ class Tracer : public CaDiCaL::Tracer
   virtual void label_clause(int32_t id, ClauseKind kind) = 0;
 
   // temporary
-  virtual CnfKind create_craig_interpolant(std::vector<std::vector<int>>& cnf,
-                                           int& tseitin_offset) = 0;
+  virtual CnfKind create_craig_interpolant(
+      std::vector<std::vector<int32_t>>& cnf, int32_t& tseitin_offset) = 0;
 };
 
 class CadicalTracer : public Tracer
@@ -72,10 +73,18 @@ class CadicalTracer : public Tracer
 
   struct Interpolant
   {
-    bitblast::AigNode d_interpolant;
-    ClauseKind d_kind;
+    Interpolant()
+        : d_interpolant(bitblast::AigNode()), d_kind(ClauseKind::LEARNED)
+    {
+    }
+    Interpolant(const bitblast::AigNode& interpolant, ClauseKind kind)
+        : d_interpolant(interpolant), d_kind(kind)
+    {
+    }
     bool is_null() const { return d_interpolant.is_null(); }
     void reset() { d_interpolant = bitblast::AigNode(); }
+    bitblast::AigNode d_interpolant;
+    ClauseKind d_kind = ClauseKind::LEARNED;
   };
 
   /* CaDiCaL::Tracer interface ------------------------------------------- */
@@ -147,7 +156,7 @@ class CadicalTracer : public Tracer
    * @param lit         The literal to mark the variable for.
    * @return True if variable was marked but its phase switched.
    */
-  uint8_t mark_var(std::unordered_map<int32_t, uint8_t> marked_vars,
+  uint8_t mark_var(std::unordered_map<int32_t, uint8_t>& marked_vars,
                    int32_t lit);
   /**
    * Helper to create AIG or over two AIGs.
@@ -185,8 +194,7 @@ class CadicalTracer : public Tracer
   /**
    * The partial interpolants, dummy at index 0 to enable access via clause id.
    */
-  std::vector<Interpolant> d_part_interpolants = {
-      {bitblast::AigNode(), ClauseKind::LEARNED}};
+  std::vector<Interpolant> d_part_interpolants = {Interpolant()};
   /** The interpolant after concluding unsat, is_null() if none. */
   Interpolant d_interpolant;
 };

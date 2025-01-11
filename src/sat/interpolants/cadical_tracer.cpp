@@ -12,6 +12,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <iostream>
 
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig/aig_node.h"
@@ -89,12 +90,15 @@ CadicalTracer::add_derived_clause(uint64_t id,
   {
     mark_var(marked_vars, lit);
   }
+  assert(!marked_vars.empty());
+
   // Extend interpolant with pivot lit of each clause that was resolved with.
   Interpolant interpolant = d_part_interpolants[proof_chain.back()];
   size_t size             = proof_chain.size();
   for (size_t i = 1; i < size; ++i)
   {
-    for (int32_t lit : d_clauses[proof_chain[size - i - 1]])
+    size_t idx = size - i - 1;
+    for (int32_t lit : d_clauses[proof_chain[idx]])
     {
       // skip if not marked with the opposite phase in conflict clause
       if (!mark_var(marked_vars, lit))
@@ -102,8 +106,8 @@ CadicalTracer::add_derived_clause(uint64_t id,
         continue;
       }
       extend_interpolant(interpolant,
-                         d_part_interpolants[proof_chain[i]],
-                         d_labeled_vars.at(lit));
+                         d_part_interpolants[proof_chain[idx]],
+                         d_labeled_vars.at(std::abs(lit)));
     }
   }
   assert(d_clauses.size() == id);
@@ -150,7 +154,7 @@ CadicalTracer::add_assumption_clause(uint64_t id,
     Interpolant ip = get_interpolant(-lit);
     if (!interpolant.is_null())
     {
-      extend_interpolant(interpolant, ip, d_labeled_vars.at(lit));
+      extend_interpolant(interpolant, ip, d_labeled_vars.at(std::abs(lit)));
     }
     else
     {
@@ -205,8 +209,13 @@ CadicalTracer::add_constraint(const std::vector<int>& clause)
 void
 CadicalTracer::reset_assumptions()
 {
-  // TODO
-  assert(false);
+  for (uint64_t id : d_assumption_clauses)
+  {
+    d_clauses[id].clear();
+  }
+  d_assumptions.clear();
+  d_constraint.clear();
+  d_assumption_clauses.clear();
 }
 
 void
@@ -257,7 +266,7 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
         }
         extend_interpolant(d_interpolant,
                            d_part_interpolants[proof_chain[i]],
-                           d_labeled_vars.at(lit));
+                           d_labeled_vars.at(std::abs(lit)));
       }
     }
   }
@@ -319,8 +328,8 @@ class CnfSatSolver : public bitblast::SatInterface
 };
 
 Tracer::CnfKind
-CadicalTracer::create_craig_interpolant(std::vector<std::vector<int>>& cnf,
-                                        int& tseitin_offset)
+CadicalTracer::create_craig_interpolant(std::vector<std::vector<int32_t>>& cnf,
+                                        int32_t& tseitin_offset)
 {
   (void) tseitin_offset;
   cnf.clear();
@@ -349,14 +358,14 @@ CadicalTracer::create_craig_interpolant(std::vector<std::vector<int>>& cnf,
 
   CnfSatSolver cnf_converter(cnf);
   bitblast::AigCnfEncoder d_cnf_encoder(cnf_converter);
-  d_cnf_encoder.encode(d_interpolant.d_interpolant);
+  d_cnf_encoder.encode(d_interpolant.d_interpolant, true);
   return CnfKind::NORMAL;
 }
 
 /* --------------------------------------------------------------------- */
 
 uint8_t
-CadicalTracer::mark_var(std::unordered_map<int32_t, uint8_t> marked_vars,
+CadicalTracer::mark_var(std::unordered_map<int32_t, uint8_t>& marked_vars,
                         int32_t lit)
 {
   int32_t var    = std::abs(lit);
@@ -410,7 +419,6 @@ CadicalTracer::get_interpolant(const std::vector<int32_t>& clause,
       res = mk_or(lits);
     }
   }
-  assert(kind == ClauseKind::B);
   return {res, kind};
 }
 
