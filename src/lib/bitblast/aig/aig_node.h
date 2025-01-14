@@ -14,6 +14,7 @@
 #include <cassert>
 #include <cstdint>
 #include <functional>
+#include <iomanip>
 
 namespace bzla::bitblast {
 
@@ -53,6 +54,8 @@ class AigNode
   uint32_t parents() const;
 
   bool is_null() const { return d_data == 0; }
+
+  std::string str() const;
 
  private:
   static const int64_t s_true_id = 1;
@@ -186,6 +189,8 @@ AigNode::parents() const
   assert(!is_null());
   return data()->d_parents;
 }
+
+std::ostream& operator<<(std::ostream& out, const AigNode& aig);
 
 }  // namespace bzla::bitblast
 

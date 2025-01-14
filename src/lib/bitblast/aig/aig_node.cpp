@@ -67,10 +67,44 @@ AigNode::operator=(AigNode&& other)
   return *this;
 }
 
+std::string
+AigNode::str() const
+{
+  std::stringstream ss;
+  ss << get_id() << ": ";
+  if (is_null())
+  {
+    ss << "(nil)";
+  }
+  else if (is_true())
+  {
+    ss << "true";
+  }
+  else if (is_false())
+  {
+    ss << "false";
+  }
+  else if (is_const())
+  {
+    ss << "const";
+  }
+  else
+  {
+    ss << (*this)[0].get_id() << " " << (*this)[1].get_id();
+  }
+  return ss.str();
+}
+
 void
 AigNodeData::gc()
 {
   d_mgr->garbage_collect(this);
 }
 
+std::ostream&
+operator<<(std::ostream& out, const AigNode& aig)
+{
+  out << aig.str();
+  return out;
+}
 }  // namespace bzla::bitblast
