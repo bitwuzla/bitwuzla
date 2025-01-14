@@ -14,7 +14,6 @@
 #include <cmath>
 #include <iostream>
 
-#include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig/aig_node.h"
 #include "node/node.h"
 #include "node/node_utils.h"
@@ -295,45 +294,6 @@ CadicalTracer::label_clause(int32_t id, ClauseKind kind)
   assert(id > 0);
   d_labeled_clauses[id] = kind;
 }
-
-class CnfSatSolver : public bitblast::SatInterface
-{
- public:
-  CnfSatSolver(std::vector<std::vector<int32_t>>& cnf) : d_cnf(cnf) {}
-
-  void add(int64_t lit) override
-  {
-    if (lit == 0)
-    {
-      d_cnf.push_back(d_clause);
-      d_clause.clear();
-    }
-    else
-    {
-      d_clause.push_back(lit);
-    }
-  }
-
-  void add_clause(const std::initializer_list<int64_t>& literals) override
-  {
-    for (int64_t lit : literals)
-    {
-      add(lit);
-    }
-    add(0);
-  }
-
-  bool value(int64_t lit) override
-  {
-    (void) lit;
-    assert(false);
-    return false;
-  }
-
- private:
-  std::vector<int32_t> d_clause;
-  std::vector<std::vector<int32_t>>& d_cnf;
-};
 
 Node
 CadicalTracer::get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache)
