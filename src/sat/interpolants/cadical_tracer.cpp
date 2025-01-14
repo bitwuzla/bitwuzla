@@ -10,32 +10,19 @@
 
 #include "sat/interpolants/cadical_tracer.h"
 
-#include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <functional>
 #include <iostream>
 
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig/aig_node.h"
-#include "bitblast/aig_bitblaster.h"
-#include "env.h"
 #include "node/node.h"
 #include "node/node_utils.h"
-#include "solver/bv/aig_bitblaster.h"
 
 using namespace bzla::bitblast;
 using namespace bzla::node;
 
 namespace bzla::sat::interpolants {
-
-Tracer::Tracer(Env& env, bv::AigBitblaster& bitblaster)
-    : d_nm(env.nm()),
-      d_bitblaster(bitblaster),
-      d_amgr(bitblaster.amgr()),
-      d_logger(env.logger())
-{
-}
 
 CadicalTracer::CadicalTracer(Env& env, bv::AigBitblaster& bitblaster)
     : Tracer(env, bitblaster)
@@ -362,7 +349,7 @@ CadicalTracer::get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache)
     assert(is_bv || idx == 0);
     if (is_bv)
     {
-      node = node::utils::bv1_to_bool(
+      node = utils::bv1_to_bool(
           d_nm, d_nm.mk_node(Kind::BV_EXTRACT, {node}, {idx, idx}));
     }
     return node;
@@ -370,13 +357,13 @@ CadicalTracer::get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache)
   const auto& nit = cache.find(-aig_id);
   if (nit != cache.end())
   {
-    node       = node::utils::invert_node(d_nm, nit->second.first);
+    node       = utils::invert_node(d_nm, nit->second.first);
     idx        = nit->second.second;
     bool is_bv = node.type().is_bv();
     assert(is_bv || idx == 0);
     if (is_bv)
     {
-      node = node::utils::bv1_to_bool(
+      node = utils::bv1_to_bool(
           d_nm, d_nm.mk_node(Kind::BV_EXTRACT, {node}, {idx, idx}));
     }
     return node;
@@ -463,12 +450,12 @@ CadicalTracer::get_interpolant()
           Node left        = vars_to_nodes.at(std::abs(id_left));
           if (id_left < 0)
           {
-            left = node::utils::invert_node(d_nm, left);
+            left = utils::invert_node(d_nm, left);
           }
           Node right = vars_to_nodes.at(std::abs(id_right));
           if (id_right < 0)
           {
-            right = node::utils::invert_node(d_nm, right);
+            right = utils::invert_node(d_nm, right);
           }
           it->second = d_nm.mk_node(Kind::AND, {left, right});
         }
@@ -492,7 +479,7 @@ CadicalTracer::get_interpolant()
   assert(!res.is_null());
   if (id < 0)
   {
-    res = node::utils::invert_node(d_nm, res);
+    res = utils::invert_node(d_nm, res);
   }
   return res;
 }
