@@ -38,7 +38,7 @@ CheckModel::check()
   option::Options opts;
   opts.dbg_check_model.set(false);
   NodeManager& nm = d_ctx.env().nm();
-  SolvingContext check_ctx(nm, opts, "chkmodel");
+  SolvingContext check_ctx(nm, opts, "chkmodel", true);
   for (const Node& assertion : d_ctx.original_assertions())
   {
     check_ctx.assert_formula(assertion);
@@ -125,13 +125,18 @@ CheckModel::assert_array_model(SolvingContext& ctx,
 {
   NodeManager& nm = ctx.env().nm();
   Node cur        = value;
+  std::unordered_set<Node> indices;
   while (cur.kind() == Kind::STORE)
   {
     // Special handling until equality over constant arrays supported
     if (!cur[2].type().is_array())
     {
-      Node read = nm.mk_node(Kind::SELECT, {input, cur[1]});
-      ctx.assert_formula(nm.mk_node(Kind::EQUAL, {read, cur[2]}));
+      auto [it, inserted] = indices.insert(cur[1]);
+      if (inserted)
+      {
+        Node read = nm.mk_node(Kind::SELECT, {input, cur[1]});
+        ctx.assert_formula(nm.mk_node(Kind::EQUAL, {read, cur[2]}));
+      }
     }
     cur = cur[0];
   }
