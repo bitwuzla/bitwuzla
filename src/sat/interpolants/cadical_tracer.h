@@ -17,9 +17,17 @@
 
 #include "bitblast/aig/aig_manager.h"
 #include "cadical.hpp"
+#include "solver/bv/aig_bitblaster.h"
 #include "tracer.hpp"
+#include "util/logger.h"
 
-namespace bzla::sat::interpolants {
+namespace bzla {
+
+class Env;
+class Node;
+class NodeManager;
+
+namespace sat::interpolants {
 
 class Tracer : public CaDiCaL::Tracer
 {
@@ -36,14 +44,13 @@ class Tracer : public CaDiCaL::Tracer
     B,
     LEARNED,  // internal
   };
-  // temporary
-  enum class CnfKind : uint8_t
-  {
-    NONE,
-    CONSTANT0,
-    CONSTANT1,
-    NORMAL
-  };
+
+  /**
+   * Constructor.
+   * @param env        The associated environment.
+   * @param bitblaster The associated bitblaster.
+   */
+  Tracer(Env& env, bv::AigBitblaster& bitblaster);
 
   /**
    * Label variable with given kind.
@@ -61,14 +68,23 @@ class Tracer : public CaDiCaL::Tracer
   virtual void label_clause(int32_t id, ClauseKind kind) = 0;
 
   // temporary
-  virtual CnfKind create_craig_interpolant(
-      std::vector<std::vector<int32_t>>& cnf, int32_t& tseitin_offset) = 0;
+  virtual Node get_interpolant() = 0;
+
+ protected:
+  /** The associated node manager. */
+  NodeManager& d_nm;
+  /** The associated bitblaster. */
+  bv::AigBitblaster& d_bitblaster;
+  /** The associated AIG manager. */
+  bitblast::AigManager& d_amgr;
+  /** The associated logger instance. */
+  util::Logger& d_logger;
 };
 
 class CadicalTracer : public Tracer
 {
  public:
-  CadicalTracer(bitblast::AigManager& amgr) : d_amgr(amgr) {}
+  CadicalTracer(Env& env, bv::AigBitblaster& bitblaster);
   ~CadicalTracer();
 
   struct Interpolant
@@ -122,10 +138,15 @@ class CadicalTracer : public Tracer
 
   void label_clause(int32_t id, ClauseKind kind) override;
 
-  CnfKind create_craig_interpolant(std::vector<std::vector<int>>& cnf,
-                                   int& tseitin_offset) override;
+  Node get_interpolant() override;
 
  private:
+  /**
+   * Alias for reverse bitblaster cache, maps aig id (SAT variable, thus always
+   * non-negative) to the Node the AIG occurs in and the bit index it is at.
+   */
+  using RevBitblasterCache =
+      std::unordered_map<int64_t, std::pair<ConstNodeRef, size_t>>;
   /**
    * Construct interpolant for given clause.
    * @param clause The clause to construct the interpolant for.
@@ -173,8 +194,17 @@ class CadicalTracer : public Tracer
    */
   bitblast::AigNode mk_or(std::vector<bitblast::AigNode> aigs) const;
 
-  /** The associated AIG manager. */
-  bitblast::AigManager& d_amgr;
+  /**
+   * Helper to get the node from the bitblaster cache that represents the AIG
+   * node with the given id.
+   * @param aig_id The id of the AIG node to get the node representation of.
+   * @param cache  The reverse bitblaster cache, which is the reverse mapping
+   *               of the bitblaster cache.
+   * @return The node representation of the given AIG, null if the AIG does not
+   *         occur in the bitblaster cache.
+   */
+  Node get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache);
+
   /** The variable labels. */
   std::unordered_map<int32_t, VariableKind> d_labeled_vars;
   /** The clause labels. */
@@ -199,5 +229,6 @@ class CadicalTracer : public Tracer
   Interpolant d_interpolant;
 };
 
-}  // namespace bzla::sat::interpolants
+}  // namespace sat::interpolants
+}  // namespace bzla
 #endif

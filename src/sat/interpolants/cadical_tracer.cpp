@@ -10,16 +10,37 @@
 
 #include "sat/interpolants/cadical_tracer.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <functional>
 #include <iostream>
 
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig/aig_node.h"
+#include "bitblast/aig_bitblaster.h"
+#include "env.h"
+#include "node/node.h"
+#include "node/node_utils.h"
+#include "solver/bv/aig_bitblaster.h"
 
 using namespace bzla::bitblast;
+using namespace bzla::node;
 
 namespace bzla::sat::interpolants {
+
+Tracer::Tracer(Env& env, bv::AigBitblaster& bitblaster)
+    : d_nm(env.nm()),
+      d_bitblaster(bitblaster),
+      d_amgr(bitblaster.amgr()),
+      d_logger(env.logger())
+{
+}
+
+CadicalTracer::CadicalTracer(Env& env, bv::AigBitblaster& bitblaster)
+    : Tracer(env, bitblaster)
+{
+}
 
 CadicalTracer::~CadicalTracer() {}
 
@@ -327,39 +348,153 @@ class CnfSatSolver : public bitblast::SatInterface
   std::vector<std::vector<int32_t>>& d_cnf;
 };
 
-Tracer::CnfKind
-CadicalTracer::create_craig_interpolant(std::vector<std::vector<int32_t>>& cnf,
-                                        int32_t& tseitin_offset)
+Node
+CadicalTracer::get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache)
 {
-  (void) tseitin_offset;
-  cnf.clear();
+  Node node;
+  size_t idx     = 0;
+  const auto& it = cache.find(aig_id);
+  if (it != cache.end())
+  {
+    node       = it->second.first;
+    idx        = it->second.second;
+    bool is_bv = node.type().is_bv();
+    assert(is_bv || idx == 0);
+    if (is_bv)
+    {
+      node = node::utils::bv1_to_bool(
+          d_nm, d_nm.mk_node(Kind::BV_EXTRACT, {node}, {idx, idx}));
+    }
+    return node;
+  }
+  const auto& nit = cache.find(-aig_id);
+  if (nit != cache.end())
+  {
+    node       = node::utils::invert_node(d_nm, nit->second.first);
+    idx        = nit->second.second;
+    bool is_bv = node.type().is_bv();
+    assert(is_bv || idx == 0);
+    if (is_bv)
+    {
+      node = node::utils::bv1_to_bool(
+          d_nm, d_nm.mk_node(Kind::BV_EXTRACT, {node}, {idx, idx}));
+    }
+    return node;
+  }
+  return Node();
+}
 
+Node
+CadicalTracer::get_interpolant()
+{
   if (d_interpolant.is_null())
   {
-    return CnfKind::NONE;
+    return Node();
   }
 
   if (d_interpolant.d_interpolant.is_true())
   {
-    return CnfKind::CONSTANT1;
+    return d_nm.mk_value(true);
   }
   if (d_interpolant.d_interpolant.is_false())
   {
-    cnf.push_back({});
-    return CnfKind::CONSTANT0;
-  }
-  if (d_interpolant.d_interpolant.is_const())
-  {
-    int32_t lit = d_interpolant.d_interpolant.get_id();
-    assert(lit);
-    cnf.push_back({lit});
-    return CnfKind::NORMAL;
+    return d_nm.mk_value(false);
   }
 
-  CnfSatSolver cnf_converter(cnf);
-  bitblast::AigCnfEncoder d_cnf_encoder(cnf_converter);
-  d_cnf_encoder.encode(d_interpolant.d_interpolant, true);
-  return CnfKind::NORMAL;
+  // Get reverse mapping for nodes in bitblaster cache
+  const auto& bb_cache = d_bitblaster.bitblaster_cache();
+  RevBitblasterCache rev_bb_cache;
+  Log(2);
+  Log(2) << "Bitblaster cache: " << bb_cache.size() << " entries";
+  for (const auto& p : bb_cache)
+  {
+    if (d_logger.is_log_enabled(2))
+    {
+      std::stringstream ss;
+      ss << p.first << ": (";
+      for (const auto& a : p.second)
+      {
+        ss << " " << a.get_id();
+      }
+      ss << " )";
+      Log(2) << ss.str();
+    }
+
+    bool is_bv = p.first.type().is_bv();
+    assert(is_bv || p.first.type().is_bool());
+    for (size_t i = 0, size = p.second.size(); i < size; ++i)
+    {
+      const bitblast::AigNode& a = p.second[i];
+      size_t j                   = size - 1 - i;
+      assert(is_bv || j == 0);
+      rev_bb_cache.try_emplace(a.get_id(), p.first, j);
+    }
+  }
+
+  // Convert AIG interpolant to Node
+  bv::AigBitblaster::aig_node_ref_vector visit{d_interpolant.d_interpolant};
+  std::unordered_map<int64_t, Node> vars_to_nodes;
+  do
+  {
+    const bitblast::AigNode& cur = visit.back();
+    int64_t id                   = cur.get_id();
+    int64_t var                  = std::abs(id);
+
+    auto [it, inserted] = vars_to_nodes.emplace(var, Node());
+
+    if (inserted)
+    {
+      if (cur.is_and())
+      {
+        visit.push_back(cur[0]);
+        visit.push_back(cur[1]);
+      }
+    }
+    else
+    {
+      if (it->second.is_null())
+      {
+        it->second =
+            get_node_from_bb_cache(std::abs(cur.get_id()), rev_bb_cache);
+        if (it->second.is_null())
+        {
+          int64_t id_left  = cur[0].get_id();
+          int64_t id_right = cur[1].get_id();
+          Node left        = vars_to_nodes.at(std::abs(id_left));
+          if (id_left < 0)
+          {
+            left = node::utils::invert_node(d_nm, left);
+          }
+          Node right = vars_to_nodes.at(std::abs(id_right));
+          if (id_right < 0)
+          {
+            right = node::utils::invert_node(d_nm, right);
+          }
+          it->second = d_nm.mk_node(Kind::AND, {left, right});
+        }
+      }
+      visit.pop_back();
+    }
+  } while (!visit.empty());
+
+  if (d_logger.is_log_enabled(2))
+  {
+    Log(2);
+    Log(2) << "SAT vars to nodes:";
+    for (const auto& p : vars_to_nodes)
+    {
+      Log(2) << p.first << ": " << p.second;
+    }
+  }
+
+  int64_t id = d_interpolant.d_interpolant.get_id();
+  Node res   = vars_to_nodes.at(std::abs(id));
+  assert(!res.is_null());
+  if (id < 0)
+  {
+    res = node::utils::invert_node(d_nm, res);
+  }
+  return res;
 }
 
 /* --------------------------------------------------------------------- */
