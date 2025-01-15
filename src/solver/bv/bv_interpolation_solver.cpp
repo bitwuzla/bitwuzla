@@ -266,6 +266,10 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
       const Node& cur = visit.back();
       visit.pop_back();
       auto [it, inserted] = cache.insert(cur);
+      if (cur.type().is_bv())
+      {
+        continue;
+      }
       if (inserted)
       {
         visit.insert(visit.end(), cur.begin(), cur.end());

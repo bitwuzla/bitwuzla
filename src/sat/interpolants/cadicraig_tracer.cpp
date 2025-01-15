@@ -236,6 +236,7 @@ CadiCraigTracer::get_interpolant()
     Log(2) << ss.str();
   }
 
+  uint64_t interpol_size = 0;
   std::vector<int64_t> roots;
   for (const auto& clause : clauses)
   {
@@ -265,6 +266,7 @@ CadiCraigTracer::get_interpolant()
           right = utils::invert_node(d_nm, right);
         }
         map[var] = d_nm.mk_node(Kind::AND, {left, right});
+        interpol_size += 1;
       }
     }
   }
@@ -280,8 +282,20 @@ CadiCraigTracer::get_interpolant()
     {
       n = d_nm.mk_node(Kind::NOT, {n});
     }
-    res = res.is_null() ? n : d_nm.mk_node(Kind::AND, {res, n});
+    if (res.is_null())
+    {
+      res = n;
+    }
+    else
+    {
+      res = d_nm.mk_node(Kind::AND, {res, n});
+      interpol_size += 1;
+    }
   }
+
+  Log(2) << "extracted and gates: " << and_gates.size();
+  Log(1) << "SAT interpolant size: " << interpol_size << " ands";
+
   return res;
 }
 

@@ -8,6 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <cstdint>
 #include <iostream>
 
 #include "node/node_manager.h"
@@ -28,17 +29,17 @@ class TestBvInterpolationSolver : public TestCommon
     d_options.produce_interpolants.set(true);
     d_options.dbg_check_interpolant.set(true);
     d_options.log_level.set(0);
-    d_sat_factory.reset(new sat::SatSolverFactory(d_options));
-    d_ctx_cadicraig.reset(new SolvingContext(d_nm, d_options, *d_sat_factory));
+    d_options_cadicraig = d_options;
     d_options.tmp_interpol_use_cadicraig.set(false);
-    d_ctx.reset(new SolvingContext(d_nm, d_options, *d_sat_factory));
+    d_options_cadicraig.tmp_interpol_use_cadicraig.set(true);
   }
 
   void test_get_interpolant(const std::vector<Node>& A, const Node& C)
   {
     // check if (and A (not C)) is unsat
     option::Options opts_solve;
-    SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, *d_sat_factory);
+    sat::SatSolverFactory sat_factory(opts_solve);
+    SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
     for (const auto& a : A)
     {
       ctx_solve.assert_formula(a);
@@ -51,83 +52,89 @@ class TestBvInterpolationSolver : public TestCommon
 
   void test_get_interpolant_aux(const std::vector<Node>& A, const Node& C)
   {
+    test_get_interpolant_aux_internal(A, C);
+    test_get_interpolant_aux_cadicraig(A, C);
+  }
+
+  void test_get_interpolant_aux_internal(const std::vector<Node>& A,
+                                         const Node& C)
+  {
+    if (d_options.log_level())
+    {
+      std::cout << std::endl
+                << ">>>>> get interpolant with INTERNAL" << std::endl;
+    }
     // get interpolant
-    if (d_options.log_level())
-    {
-      std::cout << std::endl
-                << ">> rewrite level: " << d_options.rewrite_level()
-                << "  pp: " << (d_options.preprocess() ? "enabled" : "disabled")
-                << std::endl;
-    }
-    {
-      d_options.preprocess.set(true);
-      d_options.rewrite_level.set(d_options.rewrite_level.dflt());
-      SolvingContext ctx = SolvingContext(d_nm, d_options, *d_sat_factory);
-      if (d_options.log_level())
-      {
-        std::cout << std::endl
-                  << ">>> get interpolant with CaDiCraig" << std::endl;
-      }
-      d_ctx_cadicraig->get_interpolant(A, C);
-      if (d_options.log_level())
-      {
-        std::cout << std::endl
-                  << ">>> get interpolant with INTERNAL" << std::endl;
-      }
-      d_ctx->get_interpolant(A, C);
-    }
+    test_get_interpolant_aux_internal(
+        true, d_options.rewrite_level.dflt(), A, C);
     // get_interpolant when preprocessing is disabled
-    if (d_options.log_level())
-    {
-      std::cout << std::endl
-                << ">> rewrite level: " << d_options.rewrite_level()
-                << "  pp: " << (d_options.preprocess() ? "enabled" : "disabled")
-                << std::endl;
-    }
-    {
-      d_options.preprocess.set(false);
-      d_options.rewrite_level.set(d_options.rewrite_level.dflt());
-      SolvingContext ctx = SolvingContext(d_nm, d_options, *d_sat_factory);
-      d_ctx_cadicraig->get_interpolant(A, C);
-      d_ctx->get_interpolant(A, C);
-    }
+    test_get_interpolant_aux_internal(
+        false, d_options.rewrite_level.dflt(), A, C);
     // get_interpolant when rewriting is disabled
-    if (d_options.log_level())
-    {
-      std::cout << std::endl
-                << ">> rewrite level: " << d_options.rewrite_level()
-                << "  pp: " << (d_options.preprocess() ? "enabled" : "disabled")
-                << std::endl;
-    }
-    {
-      d_options.preprocess.set(true);
-      d_options.rewrite_level.set(0);
-      SolvingContext ctx = SolvingContext(d_nm, d_options, *d_sat_factory);
-      d_ctx_cadicraig->get_interpolant(A, C);
-      d_ctx->get_interpolant(A, C);
-    }
+    test_get_interpolant_aux_internal(true, 0, A, C);
     // get_interpolant when preprocessing and rewriting is disabled
+    test_get_interpolant_aux_internal(false, 0, A, C);
+  }
+
+  void test_get_interpolant_aux_cadicraig(const std::vector<Node>& A,
+                                          const Node& C)
+  {
     if (d_options.log_level())
     {
       std::cout << std::endl
-                << ">> rewrite level: " << d_options.rewrite_level()
-                << "  pp: " << (d_options.preprocess() ? "enabled" : "disabled")
-                << std::endl;
+                << ">>>>> get interpolant with CaDiCraig" << std::endl;
     }
+    // get interpolant
+    test_get_interpolant_aux_cadicraig(
+        true, d_options.rewrite_level.dflt(), A, C);
+    // get_interpolant when preprocessing is disabled
+    test_get_interpolant_aux_cadicraig(
+        false, d_options.rewrite_level.dflt(), A, C);
+    // get_interpolant when rewriting is disabled
+    test_get_interpolant_aux_cadicraig(true, 0, A, C);
+    // get_interpolant when preprocessing and rewriting is disabled
+    test_get_interpolant_aux_cadicraig(false, 0, A, C);
+  }
+
+  void test_get_interpolant_aux_internal(bool pp,
+                                         uint64_t rwl,
+                                         const std::vector<Node>& A,
+                                         const Node& C)
+  {
+    if (d_options.log_level())
     {
-      d_options.preprocess.set(false);
-      d_options.rewrite_level.set(0);
-      SolvingContext ctx = SolvingContext(d_nm, d_options, *d_sat_factory);
-      d_ctx_cadicraig->get_interpolant(A, C);
-      d_ctx->get_interpolant(A, C);
+      std::cout << std::endl
+                << ">> rewrite level: " << rwl
+                << "  pp: " << (pp ? "enabled" : "disabled") << std::endl;
+    }
+    d_options.preprocess.set(pp);
+    d_options.rewrite_level.set(rwl);
+    sat::SatSolverFactory sat_factory(d_options);
+    SolvingContext ctx(d_nm, d_options, sat_factory);
+    ctx.get_interpolant(A, C);
+  }
+
+  void test_get_interpolant_aux_cadicraig(bool pp,
+                                          uint64_t rwl,
+                                          const std::vector<Node>& A,
+                                          const Node& C)
+  {
+    if (d_options.log_level())
+    {
+      std::cout << std::endl
+                << ">> rewrite level: " << rwl
+                << "  pp: " << (pp ? "enabled" : "disabled") << std::endl;
+      d_options_cadicraig.preprocess.set(pp);
+      d_options_cadicraig.rewrite_level.set(rwl);
+      sat::SatSolverFactory sat_factory(d_options);
+      SolvingContext ctx(d_nm, d_options_cadicraig, sat_factory);
+      ctx.get_interpolant(A, C);
     }
   }
 
   option::Options d_options;
+  option::Options d_options_cadicraig;
   NodeManager d_nm;
-  std::unique_ptr<sat::SatSolverFactory> d_sat_factory;
-  std::unique_ptr<SolvingContext> d_ctx;
-  std::unique_ptr<SolvingContext> d_ctx_cadicraig;
 };
 
 // test with other SAT solver
@@ -135,13 +142,16 @@ class TestBvInterpolationSolver : public TestCommon
 
 TEST_F(TestBvInterpolationSolver, solve)
 {
-  ASSERT_DEATH(d_ctx->solve(), "!d_produce_interpolants");
+  sat::SatSolverFactory sat_factory(d_options);
+  SolvingContext ctx(d_nm, d_options, sat_factory);
+  ASSERT_DEATH(ctx.solve(), "!d_produce_interpolants");
 }
 
 TEST_F(TestBvInterpolationSolver, produce_interpolants)
 {
   d_options.produce_interpolants.set(false);
-  SolvingContext ctx = SolvingContext(d_nm, d_options, *d_sat_factory);
+  sat::SatSolverFactory sat_factory(d_options);
+  SolvingContext ctx = SolvingContext(d_nm, d_options, sat_factory);
   ASSERT_DEATH(ctx.get_interpolant({}, d_nm.mk_const(d_nm.mk_bool_type())),
                "produce_interpolants");
 }
@@ -170,7 +180,9 @@ TEST_F(TestBvInterpolationSolver, preprop)
 
 TEST_F(TestBvInterpolationSolver, bool_conj)
 {
-  ASSERT_DEATH(d_ctx->get_interpolant({}, d_nm.mk_const(d_nm.mk_bv_type(8))),
+  sat::SatSolverFactory sat_factory(d_options);
+  SolvingContext ctx(d_nm, d_options, sat_factory);
+  ASSERT_DEATH(ctx.get_interpolant({}, d_nm.mk_const(d_nm.mk_bv_type(8))),
                "is_bool");
 }
 
@@ -180,13 +192,17 @@ TEST_F(TestBvInterpolationSolver, not_unsat1)
   std::vector<Node> A;
   Node C = x;
   // check if (and A (not C)) is unsat
-  option::Options opts_solve;
-  sat::SatSolverFactory sat_factory(opts_solve);
-  SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
-  ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
-  ASSERT_EQ(ctx_solve.solve(), Result::SAT);
+  {
+    option::Options opts_solve;
+    sat::SatSolverFactory sat_factory(opts_solve);
+    SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
+    ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+    ASSERT_EQ(ctx_solve.solve(), Result::SAT);
+  }
   // (and A (not C)) not unsat
-  ASSERT_EQ(d_ctx->get_interpolant(A, C), Node());
+  sat::SatSolverFactory sat_factory(d_options);
+  SolvingContext ctx(d_nm, d_options, sat_factory);
+  ASSERT_EQ(ctx.get_interpolant(A, C), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat2)
@@ -195,14 +211,18 @@ TEST_F(TestBvInterpolationSolver, not_unsat2)
   std::vector<Node> A = {d_nm.mk_node(Kind::NOT, {x})};
   Node C              = x;
   // check if (and A (not C)) is unsat
-  option::Options opts_solve;
-  sat::SatSolverFactory sat_factory(opts_solve);
-  SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
-  ctx_solve.assert_formula(A[0]);
-  ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
-  ASSERT_EQ(ctx_solve.solve(), Result::SAT);
+  {
+    option::Options opts_solve;
+    sat::SatSolverFactory sat_factory(opts_solve);
+    SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
+    ctx_solve.assert_formula(A[0]);
+    ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+    ASSERT_EQ(ctx_solve.solve(), Result::SAT);
+  }
   // (and A (not C)) not unsat
-  ASSERT_EQ(d_ctx->get_interpolant(A, C), Node());
+  sat::SatSolverFactory sat_factory(d_options);
+  SolvingContext ctx(d_nm, d_options, sat_factory);
+  ASSERT_EQ(ctx.get_interpolant(A, C), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat3)
@@ -211,14 +231,18 @@ TEST_F(TestBvInterpolationSolver, not_unsat3)
   std::vector<Node> A = {x};
   Node C              = d_nm.mk_node(Kind::NOT, {x});
   // check if (and A (not C)) is unsat
-  option::Options opts_solve;
-  sat::SatSolverFactory sat_factory(opts_solve);
-  SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
-  ctx_solve.assert_formula(A[0]);
-  ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
-  ASSERT_EQ(ctx_solve.solve(), Result::SAT);
+  {
+    option::Options opts_solve;
+    sat::SatSolverFactory sat_factory(opts_solve);
+    SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
+    ctx_solve.assert_formula(A[0]);
+    ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+    ASSERT_EQ(ctx_solve.solve(), Result::SAT);
+  }
   // (and A (not C)) not unsat
-  ASSERT_EQ(d_ctx->get_interpolant(A, C), Node());
+  sat::SatSolverFactory sat_factory(d_options);
+  SolvingContext ctx(d_nm, d_options, sat_factory);
+  ASSERT_EQ(ctx.get_interpolant(A, C), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat4)
@@ -233,14 +257,18 @@ TEST_F(TestBvInterpolationSolver, not_unsat4)
   std::vector<Node> A = {d_nm.mk_node(Kind::OR, {or0, or1})};
   Node C              = d_nm.mk_node(Kind::BV_UGE, {x, y});
   // check if (and A (not C)) is unsat
-  option::Options opts_solve;
-  sat::SatSolverFactory sat_factory(opts_solve);
-  SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
-  ctx_solve.assert_formula(A[0]);
-  ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
-  ASSERT_EQ(ctx_solve.solve(), Result::SAT);
+  {
+    option::Options opts_solve;
+    sat::SatSolverFactory sat_factory(opts_solve);
+    SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
+    ctx_solve.assert_formula(A[0]);
+    ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+    ASSERT_EQ(ctx_solve.solve(), Result::SAT);
+  }
   // (and A (not C)) not unsat
-  ASSERT_EQ(d_ctx->get_interpolant(A, C), Node());
+  sat::SatSolverFactory sat_factory(d_options);
+  SolvingContext ctx(d_nm, d_options, sat_factory);
+  ASSERT_EQ(ctx.get_interpolant(A, C), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, interpol1)

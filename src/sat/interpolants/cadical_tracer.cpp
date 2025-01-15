@@ -381,6 +381,7 @@ CadicalTracer::get_interpolant()
   // Convert AIG interpolant to Node
   bv::AigBitblaster::aig_node_ref_vector visit{d_interpolant.d_interpolant};
   std::unordered_map<int64_t, Node> vars_to_nodes;
+  uint64_t interpol_size = 0;
   do
   {
     const bitblast::AigNode& cur = visit.back();
@@ -418,6 +419,7 @@ CadicalTracer::get_interpolant()
             right = utils::invert_node(d_nm, right);
           }
           it->second = d_nm.mk_node(Kind::AND, {left, right});
+          interpol_size += 1;
         }
       }
       visit.pop_back();
@@ -433,6 +435,8 @@ CadicalTracer::get_interpolant()
       Log(2) << p.first << ": " << p.second;
     }
   }
+
+  Log(1) << "SAT interpolant size: " << interpol_size << " ands";
 
   int64_t id = d_interpolant.d_interpolant.get_id();
   Node res   = vars_to_nodes.at(std::abs(id));
