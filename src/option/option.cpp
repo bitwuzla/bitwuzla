@@ -539,7 +539,7 @@ Options::Options()
       // temporary
       tmp_interpol_use_cadicraig(this,
                                  Option::TMP_INTERPOL_USE_CADICRAIG,
-                                 true,
+                                 false,
                                  "use CaDiCraig as interpolant tracer",
                                  "interpol-use-cadicraig")
 {
