@@ -2,6 +2,8 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Bumped CaDiCaL to version 2.1.2.
+
 ## News for version 0.7.0
 
 - Support for **experimental floating-point formats** is now **disabled** by

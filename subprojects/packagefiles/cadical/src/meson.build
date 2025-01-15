@@ -32,6 +32,7 @@ sources = [
   'decide.cpp',
   'decompose.cpp',
   'deduplicate.cpp',
+  'drattracer.cpp',
   'elim.cpp',
   'ema.cpp',
   'extend.cpp',
@@ -41,15 +42,19 @@ sources = [
   'flags.cpp',
   'flip.cpp',
   'format.cpp',
+  'frattracer.cpp',
   'gates.cpp',
+  'idruptracer.cpp',
   'instantiate.cpp',
   'internal.cpp',
   'ipasir.cpp',
+  'lidruptracer.cpp',
   'limit.cpp',
   'logging.cpp',
   'lookahead.cpp',
   'lratbuilder.cpp',
   'lratchecker.cpp',
+  'lrattracer.cpp',
   'lucky.cpp',
   'message.cpp',
   'minimize.cpp',
@@ -79,10 +84,10 @@ sources = [
   'subsume.cpp',
   'terminal.cpp',
   'ternary.cpp',
-  'tracer.cpp',
   'transred.cpp',
   'util.cpp',
   'var.cpp',
+  'veripbtracer.cpp',
   'version.cpp',
   'vivify.cpp',
   'walk.cpp',
@@ -98,6 +103,9 @@ endif
 cpp_args = []
 if not compiler.has_function('getc_unlocked', prefix: '#include <cstdio>')
   cpp_args += ['-DNUNLOCKED']
+endif
+if not compiler.has_function('closefrom', prefix: '#include <fcntl.h>')
+  cpp_args += ['-DNCLOSEFROM']
 endif
 
 cadical_lib = library('cadical', sources: sources, cpp_args: cpp_args)
