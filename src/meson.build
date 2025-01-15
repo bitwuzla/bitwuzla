@@ -242,6 +242,7 @@ sources = files([
   'sat/gimsatul.cpp',
   'sat/interpolants/cadical_tracer.cpp',
   'sat/interpolants/cadicraig_tracer.cpp',
+  'sat/interpolants/tracer.cpp',
   'sat/kissat.cpp',
   'sat/sat_solver_factory.cpp',
   'solver/array/array_solver.cpp',

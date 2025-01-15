@@ -351,22 +351,8 @@ CadicalTracer::get_interpolant()
   // Get reverse mapping for nodes in bitblaster cache
   const auto& bb_cache = d_bitblaster.bitblaster_cache();
   RevBitblasterCache rev_bb_cache;
-  Log(2);
-  Log(2) << "Bitblaster cache: " << bb_cache.size() << " entries";
   for (const auto& p : bb_cache)
   {
-    if (d_logger.is_log_enabled(2))
-    {
-      std::stringstream ss;
-      ss << p.first << ": (";
-      for (const auto& a : p.second)
-      {
-        ss << " " << a.get_id();
-      }
-      ss << " )";
-      Log(2) << ss.str();
-    }
-
     bool is_bv = p.first.type().is_bv();
     assert(is_bv || p.first.type().is_bool());
     for (size_t i = 0, size = p.second.size(); i < size; ++i)
@@ -434,6 +420,7 @@ CadicalTracer::get_interpolant()
     {
       Log(2) << p.first << ": " << p.second;
     }
+    Log(2);
   }
 
   Log(1) << "SAT interpolant size: " << interpol_size << " ands";
@@ -473,7 +460,11 @@ CadicalTracer::mk_or(bitblast::AigNode& aig0, bitblast::AigNode& aig1) const
 AigNode
 CadicalTracer::mk_or(std::vector<AigNode> aigs) const
 {
-  assert(!aigs.empty());
+  if (aigs.empty())
+  {
+    return d_amgr.mk_false();
+  }
+
   size_t size = aigs.size();
   if (size == 1)
   {

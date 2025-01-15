@@ -83,6 +83,9 @@ class Tracer : public CaDiCaL::Tracer
   util::Logger& d_logger;
 };
 
+std::ostream& operator<<(std::ostream& out, Tracer::VariableKind kind);
+std::ostream& operator<<(std::ostream& out, Tracer::ClauseKind kind);
+
 }  // namespace sat::interpolants
 }  // namespace bzla
 

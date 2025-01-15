@@ -11,12 +11,8 @@
 #ifndef BZLA_SOLVER_BV_BV_INTERPOLATION_SOLVER_H_INCLUDED
 #define BZLA_SOLVER_BV_BV_INTERPOLATION_SOLVER_H_INCLUDED
 
-#include <unordered_map>
-
-#include "backtrack/assertion_stack.h"
 #include "backtrack/vector.h"
 #include "bitblast/aig/aig_cnf.h"
-#include "sat/sat_solver.h"
 #include "solver/bv/aig_bitblaster.h"
 #include "solver/bv/bv_solver_interface.h"
 #include "solver/solver.h"
@@ -78,6 +74,7 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   std::unique_ptr<bitblast::AigCnfEncoder> d_cnf_encoder;
   /** SAT solver used for solving bit-blasted formula. */
   std::unique_ptr<sat::Cadical> d_sat_solver;
+  /** Interpolation tracer. */
   std::unique_ptr<sat::interpolants::Tracer> d_tracer;
   /** SAT solver interface for CNF encoder, which wraps `d_sat_solver`. */
   std::unique_ptr<InterpolationSatSolver> d_interpol_sat_solver;
@@ -89,6 +86,7 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
     Statistics(util::Statistics& stats, const std::string& prefix);
     util::TimerStatistic& time_interpol;
     util::TimerStatistic& time_bitblast;
+    util::TimerStatistic& time_label;
     util::TimerStatistic& time_encode;
     uint64_t& num_aig_ands;
     uint64_t& num_aig_consts;

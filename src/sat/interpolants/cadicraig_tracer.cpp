@@ -293,7 +293,9 @@ CadiCraigTracer::get_interpolant()
     }
   }
 
+  Log(2);
   Log(2) << "extracted and gates: " << and_gates.size();
+  Log(2);
   Log(1) << "SAT interpolant size: " << interpol_size << " ands";
 
   return res;
@@ -316,24 +318,8 @@ CadiCraigTracer::map_vars_to_node(const std::unordered_set<int64_t>& vars)
   // Map SAT vars to <node, bit index> for vars that do not occur in `vars`,
   // we may need them when creating nodes for internal AIG nodes.
   std::unordered_map<int64_t, std::pair<Node, int64_t>> skipped_vars_to_node;
-
-  Log(2);
-  Log(2) << "Bitblaster cache: " << cache.size() << " entries";
-
   for (const auto& p : cache)
   {
-    if (d_logger.is_log_enabled(2))
-    {
-      std::stringstream ss;
-      ss << p.first << ": (";
-      for (const auto& a : p.second)
-      {
-        ss << " " << a.get_id();
-      }
-      ss << " )";
-      Log(2) << ss.str();
-    }
-
     bool is_bv = p.first.type().is_bv();
     assert(is_bv || p.first.type().is_bool());
     for (size_t i = 0, size = p.second.size(); i < size; ++i)

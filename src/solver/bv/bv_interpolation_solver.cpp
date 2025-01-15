@@ -46,13 +46,14 @@ class BvInterpolationSolver::InterpolationSatSolver
     if (lit == 0)
     {
       d_tracer.label_clause(++d_clause_cnt, d_clause_kind);
-      Log(3) << "bitblaster: label clause: " << d_clause_cnt << " "
+      Log(3) << "CNF encoder: add clause";
+      Log(3) << "  label clause: " << d_clause_cnt << " "
              << (d_clause_kind == Tracer::ClauseKind::A ? "A" : "B");
       size_t size = d_clause.size();
       if (d_logger.is_log_enabled(2))
       {
         std::stringstream ss;
-        ss << "bitblaster: clause: ";
+        ss << "  clause: ";
         for (auto a : d_clause)
         {
           ss << " " << a;
@@ -62,16 +63,14 @@ class BvInterpolationSolver::InterpolationSatSolver
       for (size_t i = 0; i < size; ++i)
       {
         int64_t lit = d_clause[i];
-        Log(3) << "bitblaster: add: " << lit;
+        Log(3) << "  CNF encoder: add: " << lit;
         resize(lit);
         if (!is_labeled(lit))
         {
-          Tracer::VariableKind var_kind = Tracer::VariableKind::GLOBAL;
-          // TODO: determine what to label as A_LOCAL, B_LOCAL
-          // clause is unit if size == 1
-          // tseitin variable: !is_unit && i == 0
-          d_tracer.label_variable(std::abs(lit), var_kind);
-          Log(3) << "label var: " << std::abs(lit) << " ("
+          int64_t var                   = std::abs(lit);
+          Tracer::VariableKind var_kind = d_vars_to_kinds.at(var);
+          d_tracer.label_variable(var, var_kind);
+          Log(3) << "  label var: " << var << " ("
                  << (var_kind == Tracer::VariableKind::A
                          ? "A"
                          : (var_kind == Tracer::VariableKind::B ? "B"
@@ -106,6 +105,48 @@ class BvInterpolationSolver::InterpolationSatSolver
     return false;
   }
 
+  void label_bits(const bitblast::AigBitblaster::Bits& bits,
+                  Tracer::VariableKind kind)
+  {
+    bv::AigBitblaster::aig_node_ref_vector visit;
+    std::unordered_set<int64_t> cache;
+    for (const auto& aig : bits)
+    {
+      visit.push_back(aig);
+    }
+    do
+    {
+      const bitblast::AigNode& cur = visit.back();
+      int64_t id                   = cur.get_id();
+      int64_t var                  = std::abs(id);
+
+      {
+        auto [it, inserted] = cache.insert(var);
+        if (!inserted)
+        {
+          visit.pop_back();
+          continue;
+        }
+      }
+      auto [it, inserted] = d_vars_to_kinds.emplace(var, kind);
+      visit.pop_back();
+
+      if (cur.is_and())
+      {
+        visit.push_back(cur[0]);
+        visit.push_back(cur[1]);
+      }
+      if (!inserted && it->second != kind
+          && it->second != Tracer::VariableKind::GLOBAL)
+      {
+        it->second = Tracer::VariableKind::GLOBAL;
+      }
+    } while (!visit.empty());
+  }
+
+  /** Maps var to kind as labeled after bit-blasting. */
+  std::unordered_map<int64_t, Tracer::VariableKind> d_vars_to_kinds;
+
  private:
   void resize(int64_t lit)
   {
@@ -138,7 +179,7 @@ class BvInterpolationSolver::InterpolationSatSolver
   util::Logger& d_logger;
   /** The associated SAT solver. */
   sat::SatSolver& d_solver;
-  /** Maps var to flag that indicates whether the var was already labeled. */
+  /** Indicates whether var was already labeled in the tracer. */
   std::vector<bool> d_var_labeled;
   /** Cache literals of current clause. */
   std::vector<int64_t> d_clause;
@@ -213,31 +254,82 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
   NodeManager& nm = d_env.nm();
   Node B          = d_env.rewriter().rewrite(nm.mk_node(Kind::NOT, {C}));
 
+  // First bitblast and label all SAT variables in A and C.
   if (!A.empty())
   {
-    util::Timer timer(d_stats.time_encode);
-    d_interpol_sat_solver->set_clause_label(CadicalTracer::ClauseKind::A);
     for (const Node& a : A)
     {
       {
         util::Timer timer(d_stats.time_bitblast);
         d_bitblaster.bitblast(a);
       }
+      {
+        util::Timer timer(d_stats.time_label);
+        d_interpol_sat_solver->label_bits(d_bitblaster.bits(a),
+                                          Tracer::VariableKind::A);
+      }
+    }
+  }
+  {
+    util::Timer timer(d_stats.time_bitblast);
+    d_bitblaster.bitblast(B);
+  }
+  {
+    util::Timer timer(d_stats.time_bitblast);
+    d_interpol_sat_solver->label_bits(d_bitblaster.bits(B),
+                                      Tracer::VariableKind::B);
+  }
+
+  Log(2);
+  Log(2) << "Bitblaster cache: " << d_bitblaster.bitblaster_cache().size()
+         << " entries";
+  if (d_logger.is_log_enabled(2))
+  {
+    for (const auto& p : d_bitblaster.bitblaster_cache())
+    {
+      std::stringstream ss;
+      ss << "@t" << p.first.id() << ": " << p.first << ": (";
+      for (const auto& a : p.second)
+      {
+        ss << " " << a.get_id();
+      }
+      ss << " )";
+      Log(2) << ss.str();
+    }
+  }
+
+  if (d_logger.is_log_enabled(3))
+  {
+    Log(3);
+    Log(3) << "SAT var to kinds:";
+    for (const auto& p : d_interpol_sat_solver->d_vars_to_kinds)
+    {
+      Log(3) << p.first << ": "
+             << (p.second == Tracer::VariableKind::A
+                     ? "A"
+                     : (p.second == Tracer::VariableKind::B ? "B" : "GLOBAL"));
+    }
+    Log(3);
+  }
+
+  // Then encode A and C to SAT.
+  if (!A.empty())
+  {
+    util::Timer timer(d_stats.time_encode);
+    d_interpol_sat_solver->set_clause_label(Tracer::ClauseKind::A);
+    for (const Node& a : A)
+    {
       const auto& bits = d_bitblaster.bits(a);
       assert(!bits.empty());
       d_cnf_encoder->encode(bits[0], true);
     }
   }
 
-  d_interpol_sat_solver->set_clause_label(CadicalTracer::ClauseKind::B);
-  {
-    util::Timer timer(d_stats.time_bitblast);
-    d_bitblaster.bitblast(B);
-  }
-  const auto& bits = d_bitblaster.bits(B);
-  assert(!bits.empty());
   {
     util::Timer timer(d_stats.time_encode);
+    d_interpol_sat_solver->set_clause_label(Tracer::ClauseKind::B);
+    const auto& bits = d_bitblaster.bits(B);
+    assert(!bits.empty());
     d_cnf_encoder->encode(bits[0], true);
   }
 
@@ -254,7 +346,6 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
   util::Timer timer(d_stats.time_interpol);
   Node res = d_env.rewriter().rewrite(d_tracer->get_interpolant());
 
-  Log(2);
   Log(1) << "interpolant: " << res;
   if (d_logger.is_log_enabled(1))
   {
@@ -337,7 +428,7 @@ BvInterpolationSolver::unsat_core(std::vector<Node>& core) const
   assert(false);
 }
 
-/* --- BvBitblastSolver private --------------------------------------------- */
+/* --- BvInterpolationSolver private ---------------------------------------- */
 
 void
 BvInterpolationSolver::update_statistics()
@@ -357,6 +448,8 @@ BvInterpolationSolver::Statistics::Statistics(util::Statistics& stats,
           stats.new_stat<util::TimerStatistic>(prefix + "sat::time_interpol")),
       time_bitblast(
           stats.new_stat<util::TimerStatistic>(prefix + "aig::time_bitblast")),
+      time_label(
+          stats.new_stat<util::TimerStatistic>(prefix + "aig::time_label")),
       time_encode(
           stats.new_stat<util::TimerStatistic>(prefix + "cnf::time_encode")),
       num_aig_ands(stats.new_stat<uint64_t>(prefix + "aig::num_ands")),
