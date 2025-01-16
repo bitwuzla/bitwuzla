@@ -293,7 +293,7 @@ SolverEngine::process_assertion(const Node& assertion,
                                 bool is_lemma)
 {
   Node _assertion =
-      d_am == nullptr ? assertion : d_am->process(assertion, is_lemma);
+      d_am ? d_am->process_assertion(assertion, is_lemma) : assertion;
 
   // Send assertion to bit-vector solver.
   auto [it, inserted] = d_register_assertion_cache.insert(_assertion);
@@ -311,7 +311,8 @@ void
 SolverEngine::process_term(const Node& term, bool relevant)
 {
   util::Timer timer(d_stats.time_register_term);
-  node::node_ref_vector visit{term};
+  // Make sure that terms are processed by the abstraction module.
+  node::node_ref_vector visit{d_am ? d_am->process(term) : term};
   do
   {
     const Node& cur = visit.back();

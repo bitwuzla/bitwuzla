@@ -29,8 +29,11 @@ class AbstractionModule
   /** Check currently active abstractions. */
   void check();
 
-  /** Process assertion to abstract relevant terms. */
-  const Node& process(const Node& assertion, bool is_lemma);
+  /** Process term and abstract relevant terms. */
+  const Node& process(const Node& term);
+
+  /** Process assertion and abstract relevant terms. */
+  const Node& process_assertion(const Node& assertion, bool is_lemma);
 
   /**
    * @return True if processed assertion contains an abstracted term. Required

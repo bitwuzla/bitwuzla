@@ -251,11 +251,11 @@ AbstractionModule::check()
 }
 
 const Node&
-AbstractionModule::process(const Node& assertion, bool is_lemma)
+AbstractionModule::process(const Node& term)
 {
   NodeManager& nm = d_env.nm();
 
-  node_ref_vector visit{assertion};
+  node_ref_vector visit{term};
   do
   {
     const Node& cur     = visit.back();
@@ -286,31 +286,39 @@ AbstractionModule::process(const Node& assertion, bool is_lemma)
           assert(itt != d_abstraction_cache.end());
           children.push_back(itt->second);
         }
-        it->second = d_rewriter.rewrite(nm.mk_node(Kind::APPLY, children));
+        it->second =
+            d_env.rewriter().rewrite(nm.mk_node(Kind::APPLY, children));
         add_abstraction(cur, it->second);
       }
       else
       {
-        it->second = d_rewriter.rewrite(
+        it->second = d_env.rewriter().rewrite(
             utils::rebuild_node(nm, cur, d_abstraction_cache));
       }
+      assert(!abstract(it->second));
     }
     visit.pop_back();
   } while (!visit.empty());
 
+  return d_abstraction_cache.at(term);
+}
+
+const Node&
+AbstractionModule::process_assertion(const Node& assertion, bool is_lemma)
+{
+  const Node& processed = process(assertion);
+
   // Do not abstract assertions that are lemmas
   if (d_opt_abstract_assertions && !is_lemma)
   {
-    auto itr = d_abstraction_cache.find(assertion);
-    assert(itr != d_abstraction_cache.end());
-
-    auto [it, inserted] = d_abstr_consts.try_emplace(itr->second);
+    auto [it, inserted] = d_abstr_consts.try_emplace(processed);
     if (inserted)
     {
+      NodeManager& nm = d_env.nm();
       it->second = nm.mk_const(nm.mk_bool_type());
-      Log(2) << "abstract assertion: " << itr->second
-             << " (abstr: " << it->second << ", orig: " << assertion << ")";
-      add_abstraction(itr->second, it->second);
+      Log(2) << "abstract assertion: " << processed << " (abstr: " << it->second
+             << ", orig: " << assertion << ")";
+      add_abstraction(processed, it->second);
       d_abstraction_cache.emplace(it->second, it->second);
       d_abstraction_cache_assertions.emplace(it->second, assertion);
     }
@@ -318,12 +326,12 @@ AbstractionModule::process(const Node& assertion, bool is_lemma)
     return it->second;
   }
 
-  const auto& processed = d_abstraction_cache.at(assertion);
   // Map original assertion to processed assertion for unsat cores.
   if (processed != assertion)
   {
     d_abstraction_cache_assertions.emplace(processed, assertion);
   }
+
   return processed;
 }
 
