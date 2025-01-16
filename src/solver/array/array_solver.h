@@ -83,9 +83,6 @@ class ArraySolver : public Solver
     /** @return Value of read index. */
     const Node& index_value() const;
 
-    /** Compare two access nodes based on d_index_value. */
-    bool operator==(const Access& other) const;
-
     /** Compute hash value based on d_index_value. */
     size_t hash() const;
 
@@ -103,8 +100,18 @@ class ArraySolver : public Solver
   /** Hash struct for hashing Access. */
   struct HashAccess
   {
-    size_t operator()(const Access& access) const { return access.hash(); }
+    size_t operator()(const Access* access) const { return access->hash(); }
   };
+
+  struct CompareAccess
+  {
+    size_t operator()(const Access* acc1, const Access* acc2) const
+    {
+      return acc1->index_value() == acc2->index_value();
+    }
+  };
+
+  const Access* get_access(const Node& acc);
 
   /** Check theory consistency of access. */
   void check_access(const Node& access);
@@ -179,8 +186,8 @@ class ArraySolver : public Solver
 
   Node value_from_access_map(const Node& array);
 
-  bool is_equal(const Access& acc1, const Access& acc2);
-  bool is_equal(const Access& acc, const Node& a);
+  bool is_equal(const Access* acc1, const Access* acc2);
+  bool is_equal(const Access* acc, const Node& a);
 
   /** Registered array selects. */
   backtrack::vector<Node> d_selects;
@@ -192,8 +199,13 @@ class ArraySolver : public Solver
    * Array models constructed during check().
    * @note This cache is reset each check() call.
    */
-  std::unordered_map<Node, std::unordered_set<Access, HashAccess>>
+  std::unordered_map<
+      Node,
+      std::unordered_set<const Access*, HashAccess, CompareAccess>>
       d_array_models;
+
+  /** Maps access node to Access objects. */
+  std::unordered_map<Node, Access> d_accesses;
 
   /**
    * Caches access nodes already checked in check_access().

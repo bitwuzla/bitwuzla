@@ -53,6 +53,7 @@ ArraySolver::check()
   Log(1) << "*** check arrays";
 
   d_array_models.clear();
+  d_accesses.clear();
 
   // Nothing to check
   if (d_equalities.empty() && d_selects.empty())
@@ -205,6 +206,13 @@ ArraySolver::register_term(const Node& term)
 
 /* --- ArraySolver private -------------------------------------------------- */
 
+const ArraySolver::Access*
+ArraySolver::get_access(const Node& acc)
+{
+  auto it = d_accesses.try_emplace(acc, acc, d_solver_state);
+  return &it.first->second;
+}
+
 void
 ArraySolver::check_access(const Node& access)
 {
@@ -223,10 +231,10 @@ ArraySolver::check_access(const Node& access)
 
   Log(2);
   Log(1) << "check: " << access;
-  Access acc(access, d_solver_state);
-  Log(2) << "index:   " << acc.index_value();
-  Log(2) << "element: " << acc.element_value();
-  node_ref_vector visit{acc.array()};
+  const Access* acc = get_access(access);
+  Log(2) << "index:   " << acc->index_value();
+  Log(2) << "element: " << acc->element_value();
+  node_ref_vector visit{acc->array()};
   do
   {
     const Node& array = visit.back();
@@ -242,9 +250,9 @@ ArraySolver::check_access(const Node& access)
       if (!is_equal(acc, *it))
       {
         Log(2) << "\u2716 congruence lemma";
-        Log(2) << "access1: " << acc.get();
-        Log(2) << "access2: " << it->get();
-        add_congruence_lemma(array, acc, *it);
+        Log(2) << "access1: " << acc->get();
+        Log(2) << "access2: " << (*it)->get();
+        add_congruence_lemma(array, *acc, **it);
         break;
       }
     }
@@ -255,14 +263,14 @@ ArraySolver::check_access(const Node& access)
         Node index_value = d_solver_state.value(array[1]);
         Log(2) << "index: " << index_value;
         // Check access-over-write consistency
-        if (acc.index_value() == index_value)
+        if (acc->index_value() == index_value)
         {
           if (!is_equal(acc, array[2]))
           {
             Log(2) << "\u2716 access store lemma";
-            Log(2) << "access: " << acc.get();
+            Log(2) << "access: " << acc->get();
             Log(2) << "store: " << array;
-            add_access_store_lemma(acc, array);
+            add_access_store_lemma(*acc, array);
             break;
           }
         }
@@ -277,7 +285,7 @@ ArraySolver::check_access(const Node& access)
       {
         if (!is_equal(acc, array[0]))
         {
-          add_access_const_array_lemma(acc, array);
+          add_access_const_array_lemma(*acc, array);
           break;
         }
       }
@@ -304,7 +312,7 @@ ArraySolver::check_access(const Node& access)
           if (parent.kind() == Kind::STORE)
           {
             Node index_value = d_solver_state.value(parent[1]);
-            if (index_value != acc.index_value())
+            if (index_value != acc->index_value())
             {
               visit.push_back(parent);
               ++d_stats.num_propagations_up;
@@ -825,13 +833,13 @@ ArraySolver::get_index_value_pairs(const Node& array, std::map<Node, Node>& map)
   if (it != d_array_models.end())
   {
     const auto& array_model = it->second;
-    for (const auto& acc : array_model)
+    for (const auto acc : array_model)
     {
-      const Node& i = acc.index_value();
-      const Node& e = acc.element_value();
+      const Node& i = acc->index_value();
+      const Node& e = acc->element_value();
       if (e.type().is_array())
       {
-        map.emplace(i, value_from_access_map(acc.element()));
+        map.emplace(i, value_from_access_map(acc->element()));
       }
       else
       {
@@ -855,11 +863,11 @@ ArraySolver::value_from_access_map(const Node& array)
     const auto& array_model = it->second;
     for (const auto& acc : array_model)
     {
-      const Node& i = acc.index_value();
-      const Node& e = acc.element_value();
+      const Node& i = acc->index_value();
+      const Node& e = acc->element_value();
       if (e.type().is_array())
       {
-        map.emplace(i, value_from_access_map(acc.element()));
+        map.emplace(i, value_from_access_map(acc->element()));
       }
       else
       {
@@ -883,25 +891,25 @@ ArraySolver::value_from_access_map(const Node& array)
 }
 
 bool
-ArraySolver::is_equal(const Access& acc1, const Access& acc2)
+ArraySolver::is_equal(const Access* acc1, const Access* acc2)
 {
-  if (acc1.element().type().is_array())
+  if (acc1->element().type().is_array())
   {
-    return is_equal(acc1, acc2.element());
+    return is_equal(acc1, acc2->element());
   }
-  return acc1.element_value() == acc2.element_value();
+  return acc1->element_value() == acc2->element_value();
 }
 
 bool
-ArraySolver::is_equal(const Access& acc, const Node& a)
+ArraySolver::is_equal(const Access* acc, const Node& a)
 {
-  if (acc.element().type().is_array())
+  if (acc->element().type().is_array())
   {
-    if (acc.element() == a)
+    if (acc->element() == a)
     {
       return true;
     }
-    Node eq = d_env.nm().mk_node(Kind::EQUAL, {acc.element(), a});
+    Node eq = d_env.nm().mk_node(Kind::EQUAL, {acc->element(), a});
     Node rw = d_env.rewriter().rewrite(eq);
     auto it = d_active_equalities.find(rw);
     if (it != d_active_equalities.end())
@@ -910,7 +918,7 @@ ArraySolver::is_equal(const Access& acc, const Node& a)
     }
     return d_solver_state.value(rw).value<bool>();
   }
-  return acc.element_value() == d_solver_state.value(a);
+  return acc->element_value() == d_solver_state.value(a);
 }
 
 ArraySolver::Statistics::Statistics(util::Statistics& stats,
@@ -994,12 +1002,6 @@ const Node&
 ArraySolver::Access::index_value() const
 {
   return d_index_value;
-}
-
-bool
-ArraySolver::Access::operator==(const Access& other) const
-{
-  return d_index_value == other.d_index_value;
 }
 
 size_t
