@@ -30,8 +30,7 @@ bool
 ArraySolver::is_theory_leaf(const Node& term)
 {
   Kind k = term.kind();
-  return k == Kind::SELECT || k == Kind::STORE
-         || (k == Kind::EQUAL && (term[0].type().is_array()));
+  return k == Kind::SELECT || (k == Kind::EQUAL && (term[0].type().is_array()));
 }
 
 ArraySolver::ArraySolver(Env& env, SolverState& state)
@@ -286,18 +285,10 @@ ArraySolver::check_access(const Node& access)
         ++d_stats.num_propagations_down;
         Log(2) << "D ite: " << visit.back();
       }
-      else if (array.kind() == Kind::SELECT)
-      {
-        d_selects.push_back(array);
-      }
       else
       {
-        assert(array.kind() == Kind::CONSTANT || array.kind() == Kind::APPLY);
-        if (array.kind() == Kind::APPLY)
-        {
-          // Trigger term registration for function application
-          d_solver_state.process_term(array);
-        }
+        assert(array.kind() == Kind::CONSTANT || array.kind() == Kind::SELECT
+               || array.kind() == Kind::APPLY);
       }
 
       // Propagate upwards

@@ -1,0 +1,7 @@
+(declare-const x RoundingMode)
+(declare-fun x1 (RoundingMode) RoundingMode)
+(assert (distinct (x1 x) (x1 (x1 x))))
+(set-info :status sat)
+(check-sat-assuming (true))
+(set-info :status sat)
+(check-sat)

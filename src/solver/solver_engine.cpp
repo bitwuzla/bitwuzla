@@ -73,11 +73,13 @@ SolverEngine::solve()
   {
     // Reset model cache
     d_value_cache.clear();
-    // Reset term registration flag
-    d_new_terms_registered = false;
 
     // Process lemmas generated in previous iteration.
     process_lemmas();
+
+    // Reset term registration flag. Reset flag after new terms were registered
+    // in process_lemma().
+    d_new_terms_registered = false;
 
     if (d_logger.is_msg_enabled(1))
     {
@@ -321,27 +323,12 @@ SolverEngine::process_term(const Node& term, bool relevant)
     auto [it, inserted] = d_register_term_cache.insert(cur);
     if (inserted)
     {
-      if (array::ArraySolver::is_theory_leaf(cur))
+      if (d_opt_relevant_terms && relevant)
       {
-        Log(2) << "register array term: " << cur;
-        d_array_solver.register_term(cur);
-        d_new_terms_registered = true;
+        d_relevant_terms.insert(cur);
       }
-      else if (fun::FunSolver::is_theory_leaf(cur))
-      {
-        if (d_am != nullptr && d_am->is_abstraction(cur))
-        {
-          Log(2) << "register abstraction term: " << cur;
-          d_am->register_abstraction(cur);
-        }
-        else
-        {
-          Log(2) << "register function term: " << cur;
-          d_fun_solver.register_term(cur);
-        }
-        d_new_terms_registered = true;
-      }
-      else if (quant::QuantSolver::is_theory_leaf(cur))
+
+      if (quant::QuantSolver::is_theory_leaf(cur))
       {
         Log(2) << "register quantifier term: " << cur;
         d_quant_solver.register_term(cur);
@@ -349,17 +336,33 @@ SolverEngine::process_term(const Node& term, bool relevant)
       }
       else
       {
-        if (fp::FpSolver::is_theory_leaf(cur))
+        if (fun::FunSolver::is_theory_leaf(cur))
+        {
+          if (d_am != nullptr && d_am->is_abstraction(cur))
+          {
+            Log(2) << "register abstraction term: " << cur;
+            d_am->register_abstraction(cur);
+          }
+          else
+          {
+            Log(2) << "register function term: " << cur;
+            d_fun_solver.register_term(cur);
+          }
+          d_new_terms_registered = true;
+        }
+        else if (array::ArraySolver::is_theory_leaf(cur))
+        {
+          Log(2) << "register array term: " << cur;
+          d_array_solver.register_term(cur);
+          d_new_terms_registered = true;
+        }
+        else if (fp::FpSolver::is_theory_leaf(cur))
         {
           Log(2) << "register floating-point term: " << cur;
           d_fp_solver.register_term(cur);
           d_new_terms_registered = true;
         }
         visit.insert(visit.end(), cur.begin(), cur.end());
-      }
-      if (d_opt_relevant_terms && relevant)
-      {
-        d_relevant_terms.insert(cur);
       }
     }
   } while (!visit.empty());

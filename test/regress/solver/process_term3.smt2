@@ -1,0 +1,5 @@
+(set-info :status sat)
+(declare-const __ (_ BitVec 1))
+(declare-const x3 (Array (_ BitVec 1) Float16))
+(declare-const x (Array (_ BitVec 5) (Array (_ BitVec 1) Float16)))
+(check-sat-assuming ((fp.eq (fp (_ bv0 1) (_ bv0 5) (_ bv0 10)) (fp.max (fp (_ bv0 1) (_ bv0 5) (_ bv0 10)) (select (select (store x (_ bv0 5) (store x3 (_ bv0 1) (fp.max (fp (_ bv0 1) (_ bv0 5) (_ bv0 10)) (fp (_ bv1 1) (_ bv0 5) (_ bv0 10))))) ((_ zero_extend 4) __)) (_ bv0 1))))))

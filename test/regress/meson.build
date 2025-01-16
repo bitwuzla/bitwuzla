@@ -1413,6 +1413,8 @@ tests_smt2 = [
   ['solver/fun/regrencparamapps.smt2'],
   ['solver/process_term1.smt2'],
   ['solver/process_term2.smt2'],
+  ['solver/process_term3.smt2'],
+  ['solver/process_term4.smt2'],
   ['solver/time_limit_per1.smt2'],
   ['solver/time_limit_per2.smt2'],
   ['solver/quant/issue96.smt2'],
@@ -1450,6 +1452,7 @@ tests_smt2 = [
   ['solver/quant/regsmtparselet.smt2'],
   ['solver/murxla-fb7c754b7b2abd73.min.smt2'],
   ['solver/murxla-f9e9ae3e50883097.min.smt2'],
+  ['solver/murxla-a8c3bd9681982556.min.smt2'],
 ]
 
 if get_option('fpexp')

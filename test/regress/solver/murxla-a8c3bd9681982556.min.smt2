@@ -1,0 +1,6 @@
+(declare-const x RoundingMode)
+(declare-const x3 RoundingMode)
+(declare-fun x6 (RoundingMode Bool Bool Bool RoundingMode) Bool)
+(assert (x6 x3 (= true (x6 x3 false true true x)) true (distinct x x3) x3))
+(set-info :status sat)
+(check-sat)
