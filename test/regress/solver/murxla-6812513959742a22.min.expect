@@ -1,0 +1,2 @@
+sat
+(((ite (fp.geq ((_ to_fp 8 24) ((_ zero_extend 31) __)) ((_ to_fp 8 24) ((_ zero_extend 31) __))) (_ bv1 15) (_ bv0 15)) #b000000000000001))

@@ -822,6 +822,7 @@ tests_smt2 = [
   ['solver/abstract/murxla-d9523963f3a24521.min.smt2'],
   ['solver/abstract/murxla-67f411058e7b0ea7.min.smt2'],
   ['solver/abstract/murxla-a2f5f3aa83d5a854.min.smt2'],
+  ['solver/abstract/murxla-346218efd24c9aba.min.smt2'],
   ['solver/abstract/red-bench-8002.smt2'],
   ['solver/abstract/unsatcore1.smt2'],
   ['solver/abstract/eagerrefine1.smt2'],
@@ -1453,6 +1454,7 @@ tests_smt2 = [
   ['solver/murxla-fb7c754b7b2abd73.min.smt2'],
   ['solver/murxla-f9e9ae3e50883097.min.smt2'],
   ['solver/murxla-a8c3bd9681982556.min.smt2'],
+  ['solver/murxla-6812513959742a22.min.smt2'],
 ]
 
 if get_option('fpexp')

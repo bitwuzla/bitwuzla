@@ -1,0 +1,5 @@
+(declare-const __ (_ BitVec 1))
+(set-option :produce-models true)
+(set-info :status sat)
+(check-sat-assuming ((fp.isNegative (ite (fp.geq ((_ to_fp 8 24) ((_ zero_extend 31) __)) ((_ to_fp 8 24) ((_ zero_extend 31) __))) (fp (_ bv1 1) (_ bv0 8) (_ bv0 23)) (fp (_ bv0 1) (_ bv0 8) (_ bv0 23))))))
+(get-value ((ite (fp.geq ((_ to_fp 8 24) ((_ zero_extend 31) __)) ((_ to_fp 8 24) ((_ zero_extend 31) __))) (_ bv1 15) (_ bv0 15))))
