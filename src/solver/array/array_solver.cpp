@@ -24,6 +24,21 @@ namespace bzla::array {
 
 using namespace node;
 
+/* --- LemmaId public --------------------------------------------------- */
+
+std::ostream&
+operator<<(std::ostream& os, const LemmaId& lid)
+{
+  switch (lid)
+  {
+    case LemmaId::ACCESS_CONST_ARRAY: os << "ACCESS_CONST_ARRAY"; break;
+    case LemmaId::ACCESS_STORE: os << "ACCESS_STORE"; break;
+    case LemmaId::CONGRUENCE: os << "CONGRUENCE"; break;
+    case LemmaId::DISEQUALITY: os << "DISEQUALITY"; break;
+  }
+  return os;
+}
+
 /* --- ArraySolver public --------------------------------------------------- */
 
 bool
@@ -191,11 +206,13 @@ ArraySolver::register_term(const Node& term)
   if (term.kind() == Kind::SELECT)
   {
     d_selects.push_back(term);
+    ++d_stats.num_selects;
   }
   else if (term.kind() == Kind::EQUAL)
   {
     assert(term[0].type().is_array());
     d_equalities.push_back(term);
+    ++d_stats.num_equalities;
   }
   else
   {
@@ -452,7 +469,7 @@ ArraySolver::add_access_store_lemma(const Access& acc, const Node& store)
   Node lem =
       nm.mk_node(Kind::IMPLIES,
                  {node::utils::mk_nary(nm, Kind::AND, conjuncts), conclusion});
-  lemma(lem);
+  lemma(lem, LemmaId::ACCESS_STORE);
 }
 
 void
@@ -478,7 +495,7 @@ ArraySolver::add_access_const_array_lemma(const Access& acc, const Node& array)
         Kind::IMPLIES,
         {node::utils::mk_nary(nm, Kind::AND, conjuncts), conclusion});
   }
-  lemma(lem);
+  lemma(lem, LemmaId::ACCESS_CONST_ARRAY);
 }
 
 void
@@ -498,7 +515,7 @@ ArraySolver::add_congruence_lemma(const Node& array,
   Node lem =
       nm.mk_node(Kind::IMPLIES,
                  {node::utils::mk_nary(nm, Kind::AND, conjuncts), conclusion});
-  lemma(lem);
+  lemma(lem, LemmaId::CONGRUENCE);
 }
 
 void
@@ -732,7 +749,7 @@ ArraySolver::add_disequality_lemma(const Node& eq)
   Node lem        = nm.mk_node(Kind::IMPLIES,
                         {nm.mk_node(Kind::NOT, {eq}),
                                 nm.mk_node(Kind::DISTINCT, {sel_a, sel_b})});
-  lemma(lem);
+  lemma(lem, LemmaId::DISEQUALITY);
   auto p = std::make_pair(sel_a, sel_b);
   d_disequality_lemma_cache.emplace(eq, p);
   return p;
@@ -777,13 +794,14 @@ ArraySolver::compute_parents(const Node& term)
 }
 
 void
-ArraySolver::lemma(const Node& lemma)
+ArraySolver::lemma(const Node& lemma, const LemmaId lid)
 {
   Node lem            = d_env.rewriter().rewrite(lemma);
   auto [it, inserted] = d_lemma_cache.insert(lem);
   // Do not send duplicate lemmas in this check() round.
   if (inserted)
   {
+    d_stats.lemmas << lid;
     d_solver_state.lemma(lem);
   }
 }
@@ -928,8 +946,13 @@ ArraySolver::Statistics::Statistics(util::Statistics& stats,
       num_propagations_up(stats.new_stat<uint64_t>(prefix + "propagations_up")),
       num_propagations_down(
           stats.new_stat<uint64_t>(prefix + "propagations_down")),
+      num_selects(
+          stats.new_stat<uint64_t>(prefix + "selects")),
+      num_equalities(
+          stats.new_stat<uint64_t>(prefix + "equalities")),
       num_lemma_size(
           stats.new_stat<util::HistogramStatistic>(prefix + "lemma_size")),
+      lemmas(stats.new_stat<util::HistogramStatistic>(prefix + "lemmas")),
       time_check(stats.new_stat<util::TimerStatistic>(prefix + "time_check"))
 {
 }

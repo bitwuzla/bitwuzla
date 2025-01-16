@@ -23,6 +23,16 @@
 
 namespace bzla::array {
 
+enum class LemmaId
+{
+  CONGRUENCE,
+  ACCESS_STORE,
+  ACCESS_CONST_ARRAY,
+  DISEQUALITY,
+};
+
+std::ostream& operator<<(std::ostream& os, const LemmaId& lid);
+
 class ArraySolver : public Solver
 {
  public:
@@ -180,7 +190,7 @@ class ArraySolver : public Solver
   void compute_parents(const Node& term);
 
   /** Send de-duplicated lemma to solver state */
-  void lemma(const Node& lemma);
+  void lemma(const Node& lemma, const LemmaId lid);
 
   Node get_index_value_pairs(const Node& term, std::map<Node, Node>& map);
 
@@ -243,7 +253,10 @@ class ArraySolver : public Solver
     uint64_t& num_propagations;
     uint64_t& num_propagations_up;
     uint64_t& num_propagations_down;
+    uint64_t& num_selects;
+    uint64_t& num_equalities;
     util::HistogramStatistic& num_lemma_size;
+    util::HistogramStatistic& lemmas;
     util::TimerStatistic& time_check;
   } d_stats;
 
