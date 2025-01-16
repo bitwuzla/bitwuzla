@@ -1,0 +1,6 @@
+(declare-const __ (_ BitVec 1))
+(set-option :pp-elim-bvudiv true)
+(set-info :status unsat)
+(check-sat-assuming ((bvsaddo (_ bv0 51) (bvudiv ((_ zero_extend 50) __) (_ bv17 51)))))
+(set-info :status unsat)
+(check-sat-assuming ((bvsaddo (_ bv1 51) (bvudiv ((_ zero_extend 50) __) (_ bv17 51)))))

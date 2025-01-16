@@ -396,6 +396,7 @@ tests_smt2 = [
   ['preprocess/elimudiv1.smt2'],
   ['preprocess/embedded1.smt2'],
   ['preprocess/murxla-60e16cc072cca364.min.smt2'],
+  ['preprocess/murxla-99627c7d950e42b3.min.smt2'],
   ['preprocess/normalize1.smt2'],
   ['preprocess/normalize2.smt2'],
   ['preprocess/normalize3.smt2'],

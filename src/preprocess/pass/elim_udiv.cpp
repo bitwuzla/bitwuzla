@@ -32,6 +32,7 @@ PassElimUdiv::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats_pass.time_apply);
 
+  d_cache.clear();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     Node assertion = assertions[i];
