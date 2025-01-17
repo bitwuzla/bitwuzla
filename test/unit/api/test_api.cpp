@@ -3769,6 +3769,49 @@ TEST_F(TestApi, parser_btor2_print_model_sat)
 }
 
 /* -------------------------------------------------------------------------- */
+/* SAT solver                                                                 */
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestApi, sat_solvers)
+{
+  const char* input = "parse.smt2";
+  std::ofstream smt2(input);
+  smt2 << "(set-logic QF_BV)" << std::endl;
+  smt2 << "(declare-fun u0 () (_ BitVec 4))" << std::endl;
+  smt2 << "(declare-fun u1 () (_ BitVec 4))" << std::endl;
+  smt2 << "(assert (distinct (bvadd (bvshl u0 (bvshl (_ bv1 4) (_ bv0 4))) u0) "
+          "(bvnot "
+          "(_ bv0 4))))"
+       << std::endl;
+  smt2 << "(check-sat)" << std::endl;
+  smt2.close();
+
+  bitwuzla::Options options;
+  {
+    options.set(bitwuzla::Option::SAT_SOLVER, "cadical");
+    // error, produce models not enabled
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout);
+    parser.parse(input);
+  }
+#ifdef BZLA_USE_CMS
+  {
+    options.set(bitwuzla::Option::SAT_SOLVER, "cms");
+    // error, produce models not enabled
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout);
+    parser.parse(input);
+  }
+#endif
+#ifdef BZLA_USE_KISSAT
+  {
+    options.set(bitwuzla::Option::SAT_SOLVER, "kissat");
+    // error, produce models not enabled
+    bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout);
+    parser.parse(input);
+  }
+#endif
+}
+
+/* -------------------------------------------------------------------------- */
 /* Termination function                                                       */
 /* -------------------------------------------------------------------------- */
 
@@ -3974,15 +4017,15 @@ TEST_F(TestApi, terminate_timeout_wrap)
                             {s, d_tm.mk_term(bitwuzla::Kind::BV_MUL, {x, t})}),
                d_tm.mk_term(bitwuzla::Kind::BV_MUL,
                             {d_tm.mk_term(bitwuzla::Kind::BV_MUL, {s, x}), t})});
+  bitwuzla::Options opts;
+  opts.set(bitwuzla::Option::TIME_LIMIT_PER, 100);
+  opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+  opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
+  opts.set(bitwuzla::Option::PREPROCESS, false);
   // not solved by bit-blasting, should be terminated in the SAT solver when
   // configured
   {
     TestTerminator tt;
-    bitwuzla::Options opts;
-    opts.set(bitwuzla::Option::TIME_LIMIT_PER, 100);
-    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
-    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
-    opts.set(bitwuzla::Option::PREPROCESS, false);
     bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
     bitwuzla.configure_terminator(&tt);
     bitwuzla.assert_formula(b);
@@ -3999,17 +4042,14 @@ TEST_F(TestApi, terminate_timeout_wrap)
   };
   {
     TestTerminator2 tt;
-    bitwuzla::Options opts;
-    opts.set(bitwuzla::Option::TIME_LIMIT_PER, 100);
-    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
-    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
-    opts.set(bitwuzla::Option::PREPROCESS, false);
     bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
     bitwuzla.configure_terminator(&tt);
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
 }
+
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestApi, term_manager)
 {

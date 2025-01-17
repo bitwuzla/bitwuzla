@@ -89,8 +89,10 @@ CryptoMiniSat::solve()
 void
 CryptoMiniSat::configure_terminator(Terminator *terminator)
 {
-  (void) terminator;
-  throw Unsupported("terminator not supported in CryptoMiniSat");
+  if (terminator)
+  {
+    throw Unsupported("terminator not supported in CryptoMiniSat");
+  }
 }
 
 const char *
