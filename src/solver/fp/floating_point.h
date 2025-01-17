@@ -222,6 +222,8 @@ class FloatingPoint
    */
   std::string str(uint8_t bv_format = 2) const;
 
+  std::string to_real_str() const;
+
   /**
    * Compare this floating-point with given floating-point.
    *

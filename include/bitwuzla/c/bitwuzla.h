@@ -1117,6 +1117,19 @@ const char *bitwuzla_term_to_string(BitwuzlaTerm term);
 const char *bitwuzla_term_to_string_fmt(BitwuzlaTerm term, uint8_t base);
 
 /**
+ * Get the SMT-LIB v2 string representation as a Real of this floating-point
+ * value term.
+ * @note The floating-point values for NaN and positive and negative infinity
+ *       don't have a representation as a Real and are thus printed as, e.g.,
+ *       `(fp.to_real (_ NaN 5 11))` (for Float16).
+ * @return The string representation.
+ *
+ * @note The returned char* pointer is only valid until the next call to
+ *       `bitwuzla_term_to_string_fmt`.
+ */
+const char *bitwuzla_term_fp_value_to_real_string(BitwuzlaTerm term);
+
+/**
  * Print term in SMT-LIB v2 format.
  * @note This uses default binary format for bit-vector value strings.
  * @param term  The term.

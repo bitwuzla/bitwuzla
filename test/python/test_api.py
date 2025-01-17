@@ -1953,7 +1953,7 @@ def test_term_print3(tm):
     assert t.str() == 'a'
 
 
-def test_arrayfun(tm):
+def test_term_arrayfun(tm):
     bvsort = tm.mk_bv_sort(4)
     domain = [bvsort]
     funsort = tm.mk_fun_sort(domain, bvsort)
@@ -1965,6 +1965,46 @@ def test_arrayfun(tm):
     assert not a.sort().is_fun()
     assert not f.sort().is_array()
     assert a.sort().is_array()
+
+
+def test_term_term_fp_val_to_real_str(tm):
+    fp16 = tm.mk_fp_sort(5, 11)
+    rm_const = tm.mk_const(tm.mk_rm_sort())
+    fp_from_real = tm.mk_fp_value(fp16, rm_const, "1.1")
+    with pytest.raises(BitwuzlaException):
+        fp_from_real.fp_value_to_real_str()
+
+    rm_val = tm.mk_rm_value(RoundingMode.RNA)
+    fp_val = tm.mk_fp_value(fp16, rm_val, "1.1")
+    assert fp_val.fp_value_to_real_str() == '563/512'
+
+    fp_val = tm.mk_fp_value(fp16, rm_val, "1", "2")
+    assert fp_val.fp_value_to_real_str() == '1/2'
+
+    fp_val = tm.mk_fp_value(fp16, rm_val, "6", "3")
+    assert fp_val.fp_value_to_real_str() == '2.0'
+
+    fp_val = tm.mk_fp_value(fp16, rm_val, "-4.3")
+    assert fp_val.fp_value_to_real_str() == '-1101/256'
+
+    fp_val = tm.mk_fp_value(fp16, rm_val, "-3.0")
+    assert fp_val.fp_value_to_real_str() == '-3.0'
+
+    fp_val = tm.mk_fp_pos_zero(fp16)
+    assert fp_val.fp_value_to_real_str() == '0.0'
+
+    fp_val = tm.mk_fp_neg_zero(fp16)
+    assert fp_val.fp_value_to_real_str() == '0.0'
+
+    fp_val = tm.mk_fp_pos_inf(fp16)
+    assert fp_val.fp_value_to_real_str() == '(fp.to_real (_ +oo 5 11))'
+
+    fp_val = tm.mk_fp_neg_inf(fp16)
+    assert fp_val.fp_value_to_real_str() == '(fp.to_real (_ -oo 5 11))'
+
+    fp_val = tm.mk_fp_nan(fp16)
+    assert fp_val.fp_value_to_real_str() == '(fp.to_real (_ NaN 5 11))'
+
 
 # ----------------------------------------------------------------------------
 # Parsing

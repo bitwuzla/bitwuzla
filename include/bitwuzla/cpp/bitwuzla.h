@@ -729,6 +729,16 @@ class Term
   std::string str(uint8_t base = 2) const;
 
   /**
+   * Get the SMT-LIB v2 string representation as a Real of this floating-point
+   * value term.
+   * @note The floating-point values for NaN and positive and negative infinity
+   *       don't have a representation as a Real and are thus printed as, e.g.,
+   *       `(fp.to_real (_ NaN 5 11))` (for Float16).
+   * @return The string representation.
+   */
+  std::string fp_value_to_real_str() const;
+
+  /**
    * Get value from value term.
    *
    * This function is instantiated for types

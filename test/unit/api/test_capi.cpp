@@ -5465,7 +5465,7 @@ TEST_F(TestCApi, term_print3)
   ASSERT_EQ(std::string(bitwuzla_term_to_string(t)), "a");
 }
 
-TEST_F(TestCApi, arrayfun)
+TEST_F(TestCApi, term_arrayfun)
 {
   BitwuzlaSort bvsort = bitwuzla_mk_bv_sort(d_tm, 4);
   std::vector<BitwuzlaSort> domain({bvsort});
@@ -5479,6 +5479,48 @@ TEST_F(TestCApi, arrayfun)
   ASSERT_TRUE(!bitwuzla_term_is_fun(a));
   ASSERT_TRUE(!bitwuzla_term_is_array(f));
   ASSERT_TRUE(bitwuzla_term_is_array(a));
+}
+
+TEST_F(TestCApi, term_fp_val_to_real_str)
+{
+  ASSERT_DEATH(bitwuzla_term_fp_value_to_real_string(0), d_error_inv_term);
+
+  BitwuzlaTerm rm_val = bitwuzla_mk_rm_value(d_tm, BITWUZLA_RM_RNA);
+  BitwuzlaTerm fp_val =
+      bitwuzla_mk_fp_from_real(d_tm, d_fp_sort16, rm_val, "1.1");
+  ASSERT_EQ(std::string(bitwuzla_term_fp_value_to_real_string(fp_val)),
+            "563/512");
+
+  fp_val = bitwuzla_mk_fp_from_rational(d_tm, d_fp_sort16, rm_val, "1", "2");
+  ASSERT_EQ(std::string(bitwuzla_term_fp_value_to_real_string(fp_val)), "1/2");
+
+  fp_val = bitwuzla_mk_fp_from_rational(d_tm, d_fp_sort16, rm_val, "6", "3");
+  ASSERT_EQ(std::string(bitwuzla_term_fp_value_to_real_string(fp_val)), "2.0");
+
+  fp_val = bitwuzla_mk_fp_from_real(d_tm, d_fp_sort16, rm_val, "-4.3");
+  ASSERT_EQ(std::string(bitwuzla_term_fp_value_to_real_string(fp_val)),
+            "-1101/256");
+
+  fp_val = bitwuzla_mk_fp_from_real(d_tm, d_fp_sort16, rm_val, "-3.0");
+  ASSERT_EQ(std::string(bitwuzla_term_fp_value_to_real_string(fp_val)), "-3.0");
+
+  fp_val = bitwuzla_mk_fp_pos_zero(d_tm, d_fp_sort16);
+  ASSERT_EQ(std::string(bitwuzla_term_fp_value_to_real_string(fp_val)), "0.0");
+
+  fp_val = bitwuzla_mk_fp_neg_zero(d_tm, d_fp_sort16);
+  ASSERT_EQ(std::string(bitwuzla_term_fp_value_to_real_string(fp_val)), "0.0");
+
+  fp_val = bitwuzla_mk_fp_pos_inf(d_tm, d_fp_sort16);
+  ASSERT_EQ(std::string(bitwuzla_term_fp_value_to_real_string(fp_val)),
+            "(fp.to_real (_ +oo 5 11))");
+
+  fp_val = bitwuzla_mk_fp_neg_inf(d_tm, d_fp_sort16);
+  ASSERT_EQ(std::string(bitwuzla_term_fp_value_to_real_string(fp_val)),
+            "(fp.to_real (_ -oo 5 11))");
+
+  fp_val = bitwuzla_mk_fp_nan(d_tm, d_fp_sort16);
+  ASSERT_EQ(std::string(bitwuzla_term_fp_value_to_real_string(fp_val)),
+            "(fp.to_real (_ NaN 5 11))");
 }
 
 /* -------------------------------------------------------------------------- */

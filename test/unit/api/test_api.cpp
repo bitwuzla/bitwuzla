@@ -3244,7 +3244,7 @@ TEST_F(TestApi, term_print3)
   ASSERT_EQ(ss.str(), "a");
 }
 
-TEST_F(TestApi, arrayfun)
+TEST_F(TestApi, term_arrayfun)
 {
   bitwuzla::Sort bvsort = d_tm.mk_bv_sort(4);
   std::vector<bitwuzla::Sort> domain{bvsort};
@@ -3257,6 +3257,44 @@ TEST_F(TestApi, arrayfun)
   ASSERT_TRUE(!a.sort().is_fun());
   ASSERT_TRUE(!f.sort().is_array());
   ASSERT_TRUE(a.sort().is_array());
+}
+
+TEST_F(TestApi, term_fp_val_to_real_str)
+{
+  bitwuzla::Term fp_from_real =
+      d_tm.mk_fp_value(d_fp_sort16, d_rm_const, "1.1");
+  ASSERT_THROW(fp_from_real.fp_value_to_real_str(), bitwuzla::Exception);
+
+  bitwuzla::Term rm_val = d_tm.mk_rm_value(bitwuzla::RoundingMode::RNA);
+  bitwuzla::Term fp_val = d_tm.mk_fp_value(d_fp_sort16, rm_val, "1.1");
+  ASSERT_EQ(fp_val.fp_value_to_real_str(), "563/512");
+
+  fp_val = d_tm.mk_fp_value(d_fp_sort16, rm_val, "1", "2");
+  ASSERT_EQ(fp_val.fp_value_to_real_str(), "1/2");
+
+  fp_val = d_tm.mk_fp_value(d_fp_sort16, rm_val, "6", "3");
+  ASSERT_EQ(fp_val.fp_value_to_real_str(), "2.0");
+
+  fp_val = d_tm.mk_fp_value(d_fp_sort16, rm_val, "-4.3");
+  ASSERT_EQ(fp_val.fp_value_to_real_str(), "-1101/256");
+
+  fp_val = d_tm.mk_fp_value(d_fp_sort16, rm_val, "-3.0");
+  ASSERT_EQ(fp_val.fp_value_to_real_str(), "-3.0");
+
+  fp_val = d_tm.mk_fp_pos_zero(d_fp_sort16);
+  ASSERT_EQ(fp_val.fp_value_to_real_str(), "0.0");
+
+  fp_val = d_tm.mk_fp_neg_zero(d_fp_sort16);
+  ASSERT_EQ(fp_val.fp_value_to_real_str(), "0.0");
+
+  fp_val = d_tm.mk_fp_pos_inf(d_fp_sort16);
+  ASSERT_EQ(fp_val.fp_value_to_real_str(), "(fp.to_real (_ +oo 5 11))");
+
+  fp_val = d_tm.mk_fp_neg_inf(d_fp_sort16);
+  ASSERT_EQ(fp_val.fp_value_to_real_str(), "(fp.to_real (_ -oo 5 11))");
+
+  fp_val = d_tm.mk_fp_nan(d_fp_sort16);
+  ASSERT_EQ(fp_val.fp_value_to_real_str(), "(fp.to_real (_ NaN 5 11))");
 }
 
 /* -------------------------------------------------------------------------- */

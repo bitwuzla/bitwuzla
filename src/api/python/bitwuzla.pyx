@@ -572,6 +572,17 @@ cdef class Term:
         """
         return self.c_term.str(base).decode()
 
+    def fp_value_to_real_str(self) -> str:
+        """Get the SMT-LIB v2 string representation as a Real of this
+           floating-point
+
+           :note: The floating-point values for NaN and positive and negative
+                  infinity don't have a representation as a Real and are thus
+                  printed as, e.g., ``(fp.to_real (_ NaN 5 11))`` (for Float16).
+           :return: A string representation of this term.
+        """
+        return self.c_term.fp_value_to_real_str().decode()
+
     def __str__(self) -> str:
         """Get the SMT-LIB v2 string representation of this term.
 

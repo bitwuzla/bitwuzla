@@ -18,10 +18,15 @@ This file collects a summary of important and/or user-visible changes.
 
 - Added support for **CryptoMiniSat** as back end SAT solver.
 
+- Add API support for converting a floating-point value to a Real string.
+  - C++ API: `Term::fp_value_to_real_str()`
+  - C API: `bitwuzla_term_fp_value_to_real_string(Bitwuzla*, BitwuzlaTerm)`
+  - Python API: `Term.fp_value_to_real_str()`
+
 - Add API support for **simplifying terms**.
   - C++ API: `Bitwuzla::simplify(const Term&)`
   - C API: `bitwuzla_simplify_term(Bitwuzla*, BitwuzlaTerm)`
-  - Python API: `Bitwuzla.simplify_term(Term)`
+  - Python API: `Bitwuzla.simplify_term()`
 
 - Fixed issue with model construction for arrays (issue #145).
 

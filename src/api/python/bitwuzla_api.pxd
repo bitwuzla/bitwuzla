@@ -207,6 +207,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         bool is_rm_value_rtp() except +raise_error
         bool is_rm_value_rtz() except +raise_error
         string str(uint8_t base) except +raise_error
+        string fp_value_to_real_str() except +raise_error
         bool value[bool](uint8_t base) except +raise_error
         RoundingMode value[RoundingMode](uint8_t base) except +raise_error
         string value[string](uint8_t base) except +raise_error

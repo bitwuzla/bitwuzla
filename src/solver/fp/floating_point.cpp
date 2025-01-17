@@ -10,6 +10,7 @@
 
 #include "solver/fp/floating_point.h"
 
+#include <gmp.h>
 #include <gmpxx.h>
 #include <symfpu/core/add.h>
 #include <symfpu/core/classify.h>
@@ -272,6 +273,102 @@ FloatingPoint::str(uint8_t bv_format) const
   }
   ss << ")";
   return ss.str();
+}
+
+std::string
+FloatingPoint::to_real_str() const
+{
+  uint64_t size_exp = get_exponent_size();
+  uint64_t size_sig = get_significand_size();
+
+  if (fpisnan())
+  {
+    return "(fp.to_real (_ NaN " + std::to_string(size_exp) + " "
+           + std::to_string(size_sig) + "))";
+  }
+
+  if (fpisinf())
+  {
+    if (fpisneg())
+    {
+      return "(fp.to_real (_ -oo " + std::to_string(size_exp) + " "
+             + std::to_string(size_sig) + "))";
+    }
+    return "(fp.to_real (_ +oo " + std::to_string(size_exp) + " "
+           + std::to_string(size_sig) + "))";
+  }
+  if (fpiszero())
+  {
+    return "0.0";
+  }
+
+  assert(size_exp < 64 && size_sig < 64);
+
+  BitVector bv_sign, bv_exp, bv_sig;
+  FloatingPoint::ieee_bv_as_bvs(
+      d_size->get_type(), as_bv(), bv_sign, bv_exp, bv_sig);
+
+  UnpackedFloat *uf  = unpacked();
+  const auto &uf_exp = uf->getExponent();
+  const auto &uf_sig = uf->getSignificand();
+  mpz_t gmp_exp;
+  mpz_init(gmp_exp);
+  const BitVector &uf_exp_bv = uf_exp.getBv();
+  if (uf_exp_bv.msb())
+  {
+    mpz_init_set_ui(gmp_exp,
+                    uf_exp_bv.bvnot()
+                        .ibvadd(bzla::BitVector::mk_one(uf_exp_bv.size()))
+                        .to_uint64());
+    mpz_neg(gmp_exp, gmp_exp);
+  }
+  else
+  {
+    mpz_set_ui(gmp_exp, uf_exp_bv.to_uint64());
+  }
+  mpz_sub_ui(gmp_exp, gmp_exp, size_sig - 1);
+  mpz_t gmp_sig;
+  mpz_init_set_ui(gmp_sig, uf_sig.getBv().to_uint64());
+  if (bv_sign.is_one())
+  {
+    mpz_neg(gmp_sig, gmp_sig);
+  }
+
+  std::string res;
+  if (mpz_cmp_ui(gmp_exp, 0) >= 0)
+  {
+    mpz_mul_2exp(gmp_sig, gmp_sig, mpz_get_ui(gmp_exp));
+    mpq_t gmp_res;
+    mpq_init(gmp_res);
+    mpq_set_z(gmp_res, gmp_sig);
+    mpq_canonicalize(gmp_res);
+    res = mpq_get_str(0, 10, gmp_res);
+    mpz_clear(gmp_exp);
+    mpz_clear(gmp_sig);
+    mpq_clear(gmp_res);
+  }
+  else
+  {
+    mpz_t gmp_q;
+    mpz_init_set_ui(gmp_q, 1);
+    mpz_neg(gmp_exp, gmp_exp);
+    mpz_mul_2exp(gmp_q, gmp_q, mpz_get_ui(gmp_exp));
+    mpq_t gmp_res;
+    mpq_init(gmp_res);
+    mpq_set_num(gmp_res, gmp_sig);
+    mpq_set_den(gmp_res, gmp_q);
+    mpq_canonicalize(gmp_res);
+    res = mpq_get_str(0, 10, gmp_res);
+    mpz_clear(gmp_exp);
+    mpz_clear(gmp_sig);
+    mpz_clear(gmp_q);
+    mpq_clear(gmp_res);
+  }
+  if (res.find('/') == std::string::npos && res.find('.') == std::string::npos)
+  {
+    res += ".0";
+  }
+  return res;
 }
 
 int32_t

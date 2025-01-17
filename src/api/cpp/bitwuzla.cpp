@@ -1032,6 +1032,20 @@ Term::str(uint8_t base) const
   return d_node->str(base);
 }
 
+std::string
+Term::fp_value_to_real_str() const
+{
+  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK(d_node->type().is_fp() && d_node->is_value())
+      << "expected floating-point value term";
+  bzla::FloatingPoint fpval = d_node->value<bzla::FloatingPoint>();
+  uint64_t size_exp         = fpval.get_exponent_size();
+  uint64_t size_sig         = fpval.get_significand_size();
+  BITWUZLA_CHECK(size_exp < 64 && size_sig < 64)
+      << "unsupported floating-point format for to_real string conversion";
+  return fpval.to_real_str();
+}
+
 template <>
 bool
 Term::value(uint8_t base) const

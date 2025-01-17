@@ -127,6 +127,17 @@ bitwuzla_term_to_string_fmt(BitwuzlaTerm term, uint8_t base)
   return str.c_str();
 }
 
+const char *
+bitwuzla_term_fp_value_to_real_string(BitwuzlaTerm term)
+{
+  static thread_local std::string str;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM(term);
+  str = BitwuzlaTermManager::import_term(term).fp_value_to_real_str();
+  BITWUZLA_C_TRY_CATCH_END;
+  return str.c_str();
+}
+
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */
