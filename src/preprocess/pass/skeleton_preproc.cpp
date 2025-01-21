@@ -265,6 +265,10 @@ PassSkeletonPreproc::encode(const Node& assertion)
         }
         break;
 
+        case Kind::VALUE:
+          d_sat_solver->add(cur.value<bool>() ? lit(cur) : -lit(cur));
+          break;
+
         default: break;
       }
     }
