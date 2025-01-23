@@ -58,6 +58,11 @@ class BvSolver : public Solver, public BvSolverInterface
 
   option::BvSolver cur_solver() const { return d_cur_solver; }
 
+  BvInterpolationSolver* interpol_solver() const
+  {
+    return d_interpol_solver.get();
+  }
+
  private:
   /** Result of the last check() call. */
   Result d_sat_state = Result::UNKNOWN;
