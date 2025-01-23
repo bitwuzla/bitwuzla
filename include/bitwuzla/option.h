@@ -841,6 +841,12 @@ enum ENUM(Option)
    */
   EVALUE(DBG_PP_NODE_THRESH),
   /*!
+   * **Debug: Check interpolants for each get-interpolant query.**
+   *
+   *  @warning This is an expert debug option.
+   */
+  EVALUE(DBG_CHECK_INTERPOLANT),
+  /*!
    * **Debug: Check models for each satisfiable query.**
    *
    * @warning This is an expert debug option.
