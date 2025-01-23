@@ -90,6 +90,8 @@ class SolverEngine
   /** Print statistics line. */
   void print_statistics();
 
+  const bv::BvSolver& bv_solver() const { return d_bv_solver; }
+
  private:
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);
