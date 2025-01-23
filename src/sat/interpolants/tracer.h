@@ -47,7 +47,8 @@ class Tracer : public CaDiCaL::Tracer
    * @param bitblaster The associated bitblaster.
    */
   Tracer(Env& env, bv::AigBitblaster& bitblaster)
-      : d_nm(env.nm()),
+      : d_stats(env.statistics(), "sat::interpol::"),
+        d_nm(env.nm()),
         d_bitblaster(bitblaster),
         d_amgr(bitblaster.amgr()),
         d_logger(env.logger())
@@ -69,8 +70,17 @@ class Tracer : public CaDiCaL::Tracer
    */
   virtual void label_clause(int32_t id, ClauseKind kind) = 0;
 
-  // temporary
+  /**
+   * Get interpolant.
+   * @return The interpolant.
+   */
   virtual Node get_interpolant() = 0;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats, const std::string& prefix);
+    uint64_t& size_interpolant;
+  } d_stats;
 
  protected:
   /** The associated node manager. */

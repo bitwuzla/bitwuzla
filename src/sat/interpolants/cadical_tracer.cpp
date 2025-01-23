@@ -426,6 +426,7 @@ CadicalTracer::get_interpolant()
   }
 
   Log(1) << "SAT interpolant size: " << interpol_size << " ands";
+  d_stats.size_interpolant = interpol_size;
 
   int64_t id = d_interpolant.d_interpolant.get_id();
   Node res   = vars_to_nodes.at(std::abs(id));

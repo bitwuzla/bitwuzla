@@ -11,6 +11,8 @@
 #ifndef BZLA_SOLVER_BV_BV_INTERPOLATION_SOLVER_H_INCLUDED
 #define BZLA_SOLVER_BV_BV_INTERPOLATION_SOLVER_H_INCLUDED
 
+#include <cstdint>
+
 #include "backtrack/vector.h"
 #include "bitblast/aig/aig_cnf.h"
 #include "solver/bv/aig_bitblaster.h"
@@ -58,6 +60,22 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   Node value(const Node& term) override;
   void unsat_core(std::vector<Node>& core) const override;
 
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats, const std::string& prefix);
+    util::TimerStatistic& time_interpol;
+    util::TimerStatistic& time_bitblast;
+    util::TimerStatistic& time_label;
+    util::TimerStatistic& time_encode;
+    uint64_t& size_interpolant;
+    uint64_t& bb_num_aig_ands;
+    uint64_t& bb_num_aig_consts;
+    uint64_t& bb_num_aig_shared;
+    uint64_t& bb_num_cnf_vars;
+    uint64_t& bb_num_cnf_clauses;
+    uint64_t& bb_num_cnf_literals;
+  } d_stats;
+
  private:
   /** Update AIG and CNF statistics. */
   void update_statistics();
@@ -80,21 +98,6 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   std::unique_ptr<InterpolationSatSolver> d_interpol_sat_solver;
   /** Result of last solve() call. */
   Result d_last_result;
-
-  struct Statistics
-  {
-    Statistics(util::Statistics& stats, const std::string& prefix);
-    util::TimerStatistic& time_interpol;
-    util::TimerStatistic& time_bitblast;
-    util::TimerStatistic& time_label;
-    util::TimerStatistic& time_encode;
-    uint64_t& num_aig_ands;
-    uint64_t& num_aig_consts;
-    uint64_t& num_aig_shared;
-    uint64_t& num_cnf_vars;
-    uint64_t& num_cnf_clauses;
-    uint64_t& num_cnf_literals;
-  } d_stats;
 };
 
 }  // namespace bv

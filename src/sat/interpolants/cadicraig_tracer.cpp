@@ -297,6 +297,7 @@ CadiCraigTracer::get_interpolant()
   Log(2) << "extracted and gates: " << and_gates.size();
   Log(2);
   Log(1) << "SAT interpolant size: " << interpol_size << " ands";
+  d_stats.size_interpolant = interpol_size;
 
   return res;
 }

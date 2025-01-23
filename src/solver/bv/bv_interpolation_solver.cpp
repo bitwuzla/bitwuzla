@@ -196,10 +196,10 @@ class BvInterpolationSolver::InterpolationSatSolver
 
 BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
     : Solver(env, state),
+      d_stats(env.statistics(), "solver::bv::interpol::"),
       d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
-      d_last_result(Result::UNKNOWN),
-      d_stats(env.statistics(), "solver::bv::interpol::")
+      d_last_result(Result::UNKNOWN)
 {
   d_sat_solver.reset(new sat::Cadical());
   if (env.options().tmp_interpol_use_cadicraig())
@@ -253,8 +253,10 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
 
   NodeManager& nm = d_env.nm();
   Node B          = d_env.rewriter().rewrite(nm.mk_node(Kind::NOT, {C}));
+  Node I;
 
   // First bitblast and label all SAT variables in A and C.
+  Log(2) << "bitblast and label A";
   if (!A.empty())
   {
     for (const Node& a : A)
@@ -262,22 +264,40 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
       {
         util::Timer timer(d_stats.time_bitblast);
         d_bitblaster.bitblast(a);
+        if (d_env.terminate())
+        {
+          return I;
+        }
       }
       {
         util::Timer timer(d_stats.time_label);
         d_interpol_sat_solver->label_bits(d_bitblaster.bits(a),
                                           Tracer::VariableKind::A);
+        if (d_env.terminate())
+        {
+          return I;
+        }
       }
     }
   }
+  Log(2) << "bitblast B";
   {
     util::Timer timer(d_stats.time_bitblast);
     d_bitblaster.bitblast(B);
+    if (d_env.terminate())
+    {
+      return I;
+    }
   }
+  Log(2) << "label B";
   {
     util::Timer timer(d_stats.time_bitblast);
     d_interpol_sat_solver->label_bits(d_bitblaster.bits(B),
                                       Tracer::VariableKind::B);
+    if (d_env.terminate())
+    {
+      return I;
+    }
   }
 
   Log(2);
@@ -322,6 +342,10 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
       const auto& bits = d_bitblaster.bits(a);
       assert(!bits.empty());
       d_cnf_encoder->encode(bits[0], true);
+      if (d_env.terminate())
+      {
+        return I;
+      }
     }
   }
 
@@ -331,6 +355,10 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
     const auto& bits = d_bitblaster.bits(B);
     assert(!bits.empty());
     d_cnf_encoder->encode(bits[0], true);
+    if (d_env.terminate())
+    {
+      return I;
+    }
   }
 
   // Update CNF statistics
@@ -345,6 +373,7 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
 
   util::Timer timer(d_stats.time_interpol);
   Node res = d_env.rewriter().rewrite(d_tracer->get_interpolant());
+  d_stats.size_interpolant += d_tracer->d_stats.size_interpolant;
 
   Log(1) << "interpolant: " << res;
   if (d_logger.is_log_enabled(1))
@@ -433,31 +462,34 @@ BvInterpolationSolver::unsat_core(std::vector<Node>& core) const
 void
 BvInterpolationSolver::update_statistics()
 {
-  d_stats.num_aig_ands     = d_bitblaster.num_aig_ands();
-  d_stats.num_aig_consts   = d_bitblaster.num_aig_consts();
-  d_stats.num_aig_shared   = d_bitblaster.num_aig_shared();
+  d_stats.bb_num_aig_ands     = d_bitblaster.num_aig_ands();
+  d_stats.bb_num_aig_consts   = d_bitblaster.num_aig_consts();
+  d_stats.bb_num_aig_shared   = d_bitblaster.num_aig_shared();
   auto& cnf_stats          = d_cnf_encoder->statistics();
-  d_stats.num_cnf_vars     = cnf_stats.num_vars;
-  d_stats.num_cnf_clauses  = cnf_stats.num_clauses;
-  d_stats.num_cnf_literals = cnf_stats.num_literals;
+  d_stats.bb_num_cnf_vars     = cnf_stats.num_vars;
+  d_stats.bb_num_cnf_clauses  = cnf_stats.num_clauses;
+  d_stats.bb_num_cnf_literals = cnf_stats.num_literals;
 }
 
 BvInterpolationSolver::Statistics::Statistics(util::Statistics& stats,
                                               const std::string& prefix)
     : time_interpol(
-          stats.new_stat<util::TimerStatistic>(prefix + "sat::time_interpol")),
+          stats.new_stat<util::TimerStatistic>(prefix + "time_interpol")),
       time_bitblast(
-          stats.new_stat<util::TimerStatistic>(prefix + "aig::time_bitblast")),
-      time_label(
-          stats.new_stat<util::TimerStatistic>(prefix + "aig::time_label")),
-      time_encode(
-          stats.new_stat<util::TimerStatistic>(prefix + "cnf::time_encode")),
-      num_aig_ands(stats.new_stat<uint64_t>(prefix + "aig::num_ands")),
-      num_aig_consts(stats.new_stat<uint64_t>(prefix + "aig::num_consts")),
-      num_aig_shared(stats.new_stat<uint64_t>(prefix + "aig::num_shared")),
-      num_cnf_vars(stats.new_stat<uint64_t>(prefix + "cnf::num_vars_a")),
-      num_cnf_clauses(stats.new_stat<uint64_t>(prefix + "cnf::num_clauses_a")),
-      num_cnf_literals(stats.new_stat<uint64_t>(prefix + "cnf::num_literals_a"))
+          stats.new_stat<util::TimerStatistic>(prefix + "time_bitblast")),
+      time_label(stats.new_stat<util::TimerStatistic>(prefix + "time_label")),
+      time_encode(stats.new_stat<util::TimerStatistic>(prefix + "time_encode")),
+      size_interpolant(stats.new_stat<uint64_t>(prefix + "size_interpolant")),
+      bb_num_aig_ands(stats.new_stat<uint64_t>(prefix + "bb::aig::num_ands")),
+      bb_num_aig_consts(
+          stats.new_stat<uint64_t>(prefix + "bb::aig::num_consts")),
+      bb_num_aig_shared(
+          stats.new_stat<uint64_t>(prefix + "bb::aig::num_shared")),
+      bb_num_cnf_vars(stats.new_stat<uint64_t>(prefix + "bb::cnf::num_vars")),
+      bb_num_cnf_clauses(
+          stats.new_stat<uint64_t>(prefix + "bb::cnf::num_clauses")),
+      bb_num_cnf_literals(
+          stats.new_stat<uint64_t>(prefix + "bb::cnf::num_literals"))
 {
 }
 

@@ -12,6 +12,13 @@
 
 namespace bzla::sat::interpolants {
 
+Tracer::Statistics::Statistics(util::Statistics& stats,
+                               const std::string& prefix)
+    : size_interpolant(
+          stats.new_stat<uint64_t>(prefix + "sat::interpolant::size"))
+{
+}
+
 std::ostream&
 operator<<(std::ostream& out, Tracer::VariableKind kind)
 {
