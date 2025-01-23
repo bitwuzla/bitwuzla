@@ -25,9 +25,68 @@ Evaluator::evaluate(NodeManager& nm,
 {
   switch (kind)
   {
-    // TODO: bool
-    // TODO: bit-vectors
     case Kind::EQUAL: return nm.mk_value(values[0] == values[1]);
+
+    case Kind::ITE: return values[0].value<bool>() ? values[1] : values[2];
+
+    // Boolean kinds
+    case Kind::NOT: return nm.mk_value(!values[0].value<bool>());
+
+    case Kind::AND:
+      return nm.mk_value(values[0].value<bool>() && values[1].value<bool>());
+
+    case Kind::OR:
+      return nm.mk_value(values[0].value<bool>() || values[1].value<bool>());
+
+    // Bit-vector kinds
+    case Kind::BV_NOT: return nm.mk_value(values[0].value<BitVector>().bvnot());
+    case Kind::BV_DEC: return nm.mk_value(values[0].value<BitVector>().bvdec());
+    case Kind::BV_INC: return nm.mk_value(values[0].value<BitVector>().bvinc());
+    case Kind::BV_AND:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvand(values[1].value<BitVector>()));
+    case Kind::BV_XOR:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvxor(values[1].value<BitVector>()));
+    case Kind::BV_EXTRACT:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvextract(indices[0], indices[1]));
+    case Kind::BV_COMP:
+      return nm.mk_value(BitVector::from_ui(1, values[0] == values[1] ? 1 : 0));
+    case Kind::BV_ADD:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvadd(values[1].value<BitVector>()));
+    case Kind::BV_MUL:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvmul(values[1].value<BitVector>()));
+    case Kind::BV_ULT:
+      return nm.mk_value(
+          values[0].value<BitVector>().compare(values[1].value<BitVector>())
+          < 0);
+    case Kind::BV_SHL:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvshl(values[1].value<BitVector>()));
+    case Kind::BV_SLT:
+      return nm.mk_value(values[0].value<BitVector>().signed_compare(
+                             values[1].value<BitVector>())
+                         < 0);
+    case Kind::BV_SHR:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvshr(values[1].value<BitVector>()));
+    case Kind::BV_ASHR:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvashr(values[1].value<BitVector>()));
+    case Kind::BV_UDIV:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvudiv(values[1].value<BitVector>()));
+    case Kind::BV_UREM:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvurem(values[1].value<BitVector>()));
+    case Kind::BV_CONCAT:
+      return nm.mk_value(
+          values[0].value<BitVector>().bvconcat(values[1].value<BitVector>()));
+
+    // Floating-point kinds
     case Kind::FP_IS_INF:
       return nm.mk_value(values[0].value<FloatingPoint>().fpisinf());
     case Kind::FP_IS_NAN:
