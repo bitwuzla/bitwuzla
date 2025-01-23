@@ -291,7 +291,7 @@ enum ENUM(Option)
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION),
   /*! **Abstraction module: Minimum bit-vector term size. **
@@ -303,10 +303,10 @@ enum ENUM(Option)
    *  * **>0**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_SIZE),
-  /*! **Bit-vector bitblasting solver: Abstraction module eager mode. **
+  /*! **Abstraction module: Eager mode. **
    *
    * When enabled, eagerly adds violated refinement lemmas.
    *
@@ -314,11 +314,10 @@ enum ENUM(Option)
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_EAGER_REFINE),
-  /*! **Bit-vector bitblasting solver: Abstraction module value instantiation
-   * limit. **
+  /*! **Abstraction module: Value instantiation limit. **
    *
    * Specifies the limit on the number of value instantiations per abstaction.
    * If the limit is hit, we fall back to fully bit-blasting the specific term.
@@ -327,11 +326,10 @@ enum ENUM(Option)
    *  * **>0**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_VALUE_LIMIT),
-  /*! **Bit-vector bitblasting solver: Abstraction module value instantiations
-   * only. **
+  /*! **Abstraction module: Value instantiations only. **
    *
    * When enabled, only adds value instantiations.
    *
@@ -339,7 +337,7 @@ enum ENUM(Option)
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_VALUE_ONLY),
   /*! **Abstraction module: Abstract assertions. **
@@ -350,7 +348,7 @@ enum ENUM(Option)
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_ASSERT),
   /*! **Abstraction module: Assertion refinements. **
@@ -360,7 +358,7 @@ enum ENUM(Option)
    * Values:
    *  * An unsigned integer value > 0.
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_ASSERT_REFS),
   /*! **Abstraction module: Use initial lemmas only. **
@@ -371,7 +369,7 @@ enum ENUM(Option)
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_INITIAL_LEMMAS),
   /*! **Abstraction module: Incrementally bit-blast bvmul and bvadd terms. **
@@ -380,7 +378,7 @@ enum ENUM(Option)
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_INC_BITBLAST),
   /*! **Abstraction module: Abstract bit-vector addition terms. **
@@ -389,7 +387,7 @@ enum ENUM(Option)
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_ADD),
   /*! **Abstraction module: Abstract bit-vector multiplication terms. **
@@ -398,7 +396,7 @@ enum ENUM(Option)
    *  * **1**: enable [**default**]
    *  * **0**: disable
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_MUL),
   /*! **Abstraction module: Abstract bit-vector unsigned division terms. **
@@ -407,7 +405,7 @@ enum ENUM(Option)
    *  * **1**: enable [**default**]
    *  * **0**: disable
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_UDIV),
   /*! **Abstraction module: Abstract bit-vector unsigned remainder terms. **
@@ -416,7 +414,7 @@ enum ENUM(Option)
    *  * **1**: enable [**default**]
    *  * **0**: disable
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_UREM),
   /*! **Abstraction module: Abstract equality terms. **
@@ -425,7 +423,7 @@ enum ENUM(Option)
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_EQUAL),
   /*! **Abstraction module: Abstract ITE terms. **
@@ -434,7 +432,7 @@ enum ENUM(Option)
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   *  @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_ITE),
 
