@@ -353,7 +353,9 @@ CadicalTracer::get_interpolant()
   RevBitblasterCache rev_bb_cache;
   for (const auto& p : bb_cache)
   {
+#ifndef NDEBUG
     bool is_bv = p.first.type().is_bv();
+#endif
     assert(is_bv || p.first.type().is_bool());
     for (size_t i = 0, size = p.second.size(); i < size; ++i)
     {
