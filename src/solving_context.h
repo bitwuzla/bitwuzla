@@ -77,7 +77,7 @@ class SolvingContext
   backtrack::BacktrackManager* backtrack_mgr();
 
   /** @return The solving context preprocessor. */
-  preprocess::Preprocessor& preprocessor() { return d_preprocessor; };
+  preprocess::Preprocessor& preprocessor() { return d_preprocessor; }
 
   /** @return The solving context rewriter. */
   Rewriter& rewriter();
