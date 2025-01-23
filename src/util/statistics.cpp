@@ -70,6 +70,15 @@ Timer::~Timer()
   }
 }
 
+/* --- TimeStatistic public ------------------------------------------------- */
+
+TimeStatistic&
+TimeStatistic::operator+=(const TimerStatistic& other)
+{
+  d_elapsed += other.elapsed();
+  return *this;
+}
+
 /* --- Statistics public ---------------------------------------------------- */
 
 void
@@ -84,6 +93,11 @@ Statistics::print() const
     else if (std::holds_alternative<TimerStatistic>(val))
     {
       std::cout << name << ": " << std::get<TimerStatistic>(val).elapsed()
+                << "ms" << std::endl;
+    }
+    else if (std::holds_alternative<TimeStatistic>(val))
+    {
+      std::cout << name << ": " << std::get<TimeStatistic>(val).elapsed()
                 << "ms" << std::endl;
     }
     else
@@ -116,6 +130,11 @@ Statistics::get() const
     {
       res.emplace(
           name, std::to_string(std::get<TimerStatistic>(val).elapsed()) + "ms");
+    }
+    else if (std::holds_alternative<TimeStatistic>(val))
+    {
+      res.emplace(
+          name, std::to_string(std::get<TimeStatistic>(val).elapsed()) + "ms");
     }
     else
     {

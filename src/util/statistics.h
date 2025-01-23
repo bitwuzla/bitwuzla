@@ -94,6 +94,25 @@ class TimerStatistic
   bool d_running;
 };
 
+/** Simple time statistic to record elapsed time in ms. */
+class TimeStatistic
+{
+ public:
+  TimeStatistic() : d_elapsed(0) {}
+  /** @return The recorded elapsed ms. */
+  uint64_t elapsed() const { return d_elapsed; }
+  /**
+   * Operator overload to add to the recorded elapsed time.
+   * @param other The other TimeStatistic of which the elapsed time is to be
+   *              added to this statistic's elapsed time.
+   */
+  TimeStatistic& operator+=(const TimerStatistic& other);
+
+ private:
+  /** The number of elapsed ms. */
+  uint64_t d_elapsed;
+};
+
 /**
  * Timer for measuring elapsed time.
  * Starts wrapped timer when constructd, stops timer when destructed.
@@ -127,7 +146,8 @@ class Statistics
   std::map<std::string, std::string> get() const;
 
  private:
-  using stat_value = std::variant<uint64_t, TimerStatistic, HistogramStatistic>;
+  using stat_value =
+      std::variant<uint64_t, TimerStatistic, TimeStatistic, HistogramStatistic>;
   /** Registered statistic values. */
   std::map<std::string, stat_value> d_stats;
 };
