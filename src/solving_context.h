@@ -100,6 +100,9 @@ class SolvingContext
   /** @return The solving context environment. */
   Env& env();
 
+  /** @return The solver engine. */
+  const SolverEngine& solver_engine() const { return d_solver_engine; }
+
  private:
   void check_no_free_variables() const;
 
