@@ -35,7 +35,10 @@ class BvInterpolationSolver::InterpolationSatSolver
 {
  public:
   InterpolationSatSolver(Env& env, sat::SatSolver& solver, Tracer& tracer)
-      : d_logger(env.logger()), d_solver(solver), d_tracer(tracer)
+      : d_logger(env.logger()),
+        d_solver(solver),
+        d_tracer(tracer),
+        d_auto_label(env.options().interpolation_auto_label())
   {
   }
 
@@ -68,7 +71,9 @@ class BvInterpolationSolver::InterpolationSatSolver
         if (!is_labeled(lit))
         {
           int64_t var                   = std::abs(lit);
-          Tracer::VariableKind var_kind = d_vars_to_kinds.at(var);
+          Tracer::VariableKind var_kind = d_auto_label
+                                              ? d_vars_to_kinds.at(var)
+                                              : Tracer::VariableKind::GLOBAL;
           d_tracer.label_variable(var, var_kind);
           Log(3) << "  label var: " << var << " ("
                  << (var_kind == Tracer::VariableKind::A
@@ -190,6 +195,11 @@ class BvInterpolationSolver::InterpolationSatSolver
   Tracer& d_tracer;
   /** The current clause type (A or B). */
   Tracer::ClauseKind d_clause_kind = Tracer::ClauseKind::A;
+  /**
+   * True if A/B/GLOBAL labeling is to be determined automatically. Else, all
+   * SAT variables are labeled as GLOBAL.
+   */
+  bool d_auto_label;
 };
 
 /* --- BvInterpolationSolver public ---------------------------------------- */
@@ -256,7 +266,8 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
   Node I;
 
   // First bitblast and label all SAT variables in A and C.
-  Log(2) << "bitblast and label A";
+  bool auto_label = d_env.options().interpolation_auto_label();
+  Log(2) << "bitblast " << (auto_label ? "and label " : "") << "A";
   if (!A.empty())
   {
     for (const Node& a : A)
@@ -269,6 +280,7 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
           return I;
         }
       }
+      if (auto_label)
       {
         util::Timer timer(d_stats.time_label);
         d_interpol_sat_solver->label_bits(d_bitblaster.bits(a),
@@ -289,8 +301,9 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A, const Node& C)
       return I;
     }
   }
-  Log(2) << "label B";
+  if (auto_label)
   {
+    Log(2) << "label B";
     util::Timer timer(d_stats.time_bitblast);
     d_interpol_sat_solver->label_bits(d_bitblaster.bits(B),
                                       Tracer::VariableKind::B);
