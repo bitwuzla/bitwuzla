@@ -80,6 +80,7 @@ SolvingContext::solve()
 
   if (d_sat_state == Result::SAT && options().dbg_check_model())
   {
+    util::Timer timer(d_stats.time_check_model);
     check::CheckModel cm(*this);
     auto res = cm.check();
     assert(res);
@@ -87,6 +88,7 @@ SolvingContext::solve()
   }
   else if (d_sat_state == Result::UNSAT && options().dbg_check_unsat_core())
   {
+    util::Timer timer(d_stats.time_check_unsat_core);
     check::CheckUnsatCore cuc(*this);
     auto res = cuc.check();
     assert(res);
@@ -189,6 +191,7 @@ SolvingContext::get_interpolant(const std::vector<Node>& A, const Node& C)
   Node ipol = d_solver_engine.interpolant(AA, d_env.rewriter().rewrite(C));
   if (!ipol.is_null() && options().dbg_check_interpolant())
   {
+    util::Timer timer(d_stats.time_check_interpolant);
     check::CheckInterpolant ci(*this);
     auto res = ci.check(A, C, ipol);
     assert(res);
@@ -405,6 +408,12 @@ SolvingContext::Statistics::Statistics(util::Statistics& stats)
           stats.new_stat<util::TimerStatistic>("solving_context::time_solve")),
       time_ensure_model(stats.new_stat<util::TimerStatistic>(
           "solving_context::time_ensure_model")),
+      time_check_model(stats.new_stat<util::TimerStatistic>(
+          "solving_context::time_check_model")),
+      time_check_unsat_core(stats.new_stat<util::TimerStatistic>(
+          "solving_context::time_check_unsat_core")),
+      time_check_interpolant(stats.new_stat<util::TimerStatistic>(
+          "solving_context::time_check_interpolant")),
       max_memory(stats.new_stat<uint64_t>("solving_context::max_memory")),
       formula_kinds_pre(
           stats.new_stat<util::HistogramStatistic>("formula::pre::node")),

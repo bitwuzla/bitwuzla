@@ -150,6 +150,9 @@ class SolvingContext
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_solve;
     util::TimerStatistic& time_ensure_model;
+    util::TimerStatistic& time_check_model;
+    util::TimerStatistic& time_check_unsat_core;
+    util::TimerStatistic& time_check_interpolant;
     uint64_t& max_memory;
     util::HistogramStatistic& formula_kinds_pre;
     util::HistogramStatistic& formula_kinds_post;

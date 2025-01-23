@@ -39,6 +39,7 @@ CheckInterpolant::check(const std::vector<Node>& A,
     opts.dbg_check_interpolant.set(false);
     SolvingContext check_ctx(
         nm, opts, d_ctx.env().sat_factory(), "chkinterpol");
+    check_ctx.env().configure_terminator(d_ctx.env().terminator());
     for (size_t i = 0, n = A.size(); i < n; ++i)
     {
       Log(1) << "A[" << i << "]: " << A[i];
@@ -48,6 +49,7 @@ CheckInterpolant::check(const std::vector<Node>& A,
     Log(1) << "I: " << interpolant;
     Log(1);
     check_ctx.assert_formula(nm.mk_node(node::Kind::NOT, {interpolant}));
+    Log(1) << "check: (and A (not I))";
     Result res = check_ctx.solve();
     Log(1) << "(and A (not I)): " << res;
     if (res != Result::UNSAT)
@@ -60,13 +62,12 @@ CheckInterpolant::check(const std::vector<Node>& A,
   option::Options opts;
   opts.dbg_check_interpolant.set(false);
   SolvingContext check_ctx(nm, opts, d_ctx.env().sat_factory(), "chkinterpol");
+  check_ctx.env().configure_terminator(d_ctx.env().terminator());
   check_ctx.assert_formula(interpolant);
   check_ctx.assert_formula(nm.mk_node(node::Kind::NOT, {C}));
+  Log(1) << "check: (and A (not I))";
   Result res = check_ctx.solve();
-  if (d_logger.is_log_enabled(1))
-  {
-    Log(1) << "(and I (not C)): " << res;
-  }
+  Log(1) << "(and I (not C)): " << res;
   return res == Result::UNSAT;
 }
 }  // namespace bzla::check
