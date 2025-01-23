@@ -168,6 +168,9 @@ class OptionBase
   /** @return The short name of this option. */
   const char* shrt() const { return d_short; }
 
+  /** @return True if this option was set from outside. */
+  bool is_user_set() const { return d_is_user_set; }
+
  protected:
   /** The option description. */
   const char* d_description;
