@@ -1,6 +1,7 @@
 #include "bitblast/aig/aig_node.h"
 
 #include <cassert>
+#include <sstream>
 
 #include "bitblast/aig/aig_manager.h"
 
