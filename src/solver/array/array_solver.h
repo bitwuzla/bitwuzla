@@ -192,9 +192,16 @@ class ArraySolver : public Solver
   /** Send de-duplicated lemma to solver state */
   void lemma(const Node& lemma, const LemmaId lid);
 
-  Node get_index_value_pairs(const Node& term, std::map<Node, Node>& map);
-
-  Node value_from_access_map(const Node& array);
+  /**
+   * Construct model value for array.
+   *
+   * @param term: Array term.
+   * @param cache: Caches array term values.
+   * @param selected_index: Get model value for given index.
+   */
+  Node construct_model_value(const Node& term,
+                             std::unordered_map<Node, Node>& cache,
+                             const Node& selected_index = Node());
 
   bool is_equal(const Access* acc1, const Access* acc2);
   bool is_equal(const Access* acc, const Node& a);

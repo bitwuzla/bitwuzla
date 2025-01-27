@@ -130,18 +130,37 @@ ArraySolver::value(const Node& term)
     // bit-vector abstraction.
     assert(std::find(d_equalities.begin(), d_equalities.end(), term)
            == std::end(d_equalities));
-    std::map<Node, Node> m1, m2;
-    Node ca1 = get_index_value_pairs(term[0], m1);
-    Node ca2 = get_index_value_pairs(term[1], m2);
-    assert(ca1.kind() == Kind::CONST_ARRAY);
-    assert(ca2.kind() == Kind::CONST_ARRAY);
+    std::unordered_map<Node, Node> cache;
+    Node a1 = construct_model_value(term[0], cache);
+    Node a2 = construct_model_value(term[1], cache);
+    if (a1 == a2)
+    {
+      return d_env.nm().mk_value(true);
+    }
 
-    Node ca1v = d_solver_state.value(ca1[0]);
-    Node ca2v = d_solver_state.value(ca2[0]);
+    std::unordered_map<Node, Node> m1, m2;
+    Node cur = a1;
+    while (cur.kind() == Kind::STORE)
+    {
+      assert(m1.find(cur[1]) == m1.end());
+      m1.emplace(cur[1], cur[2]);
+      cur = cur[0];
+    }
+    Node def1 = cur;
+
+    cur = a2;
+    while (cur.kind() == Kind::STORE)
+    {
+      assert(m2.find(cur[1]) == m2.end());
+      m2.emplace(cur[1], cur[2]);
+      cur = cur[0];
+    }
+    Node def2 = cur;
+
     for (auto it1 = m1.begin(), end = m1.end(); it1 != end; ++it1)
     {
       auto it2 = m2.find(it1->first);
-      if ((it2 == m2.end() && it1->second != ca2v)
+      if ((it2 == m2.end() && it1->second != def2[0])
           || (it2 != m2.end() && it2->second != it1->second))
       {
         return d_env.nm().mk_value(false);
@@ -150,54 +169,28 @@ ArraySolver::value(const Node& term)
     for (auto it2 = m2.begin(), end = m2.end(); it2 != end; ++it2)
     {
       auto it1 = m1.find(it2->first);
-      if ((it1 == m1.end() && it2->second != ca1v)
+      if ((it1 == m1.end() && it2->second != def1[0])
           || (it1 != m1.end() && it1->second != it2->second))
       {
         return d_env.nm().mk_value(false);
       }
     }
+
     // TODO: This is not entirely correct since we have to check whether all
     // indices have been overwritten. Refine this condition with a cardinality
     // check of the index type.
-    if (ca1v != ca2v)
-    {
-      return d_env.nm().mk_value(false);
-    }
-    return d_env.nm().mk_value(true);
+    return d_env.nm().mk_value(def1 == def2);
   }
-
-  NodeManager& nm = d_env.nm();
-  if (term.kind() == Kind::SELECT)
+  else if (term.kind() == Kind::SELECT)
   {
-    std::map<Node, Node> map_sel;
-    Node index_val     = d_solver_state.value(term[1]);
-    Node default_value = get_index_value_pairs(term[0], map_sel);
-    auto it            = map_sel.find(index_val);
-    if (it != map_sel.end())
-    {
-      return it->second;
-    }
-
-    if (!term.type().is_array())
-    {
-      // Only return default value for non-array selects
-      assert(default_value.kind() == Kind::CONST_ARRAY);
-      return default_value[0];
-    }
+    // Select index from constructed normalized array value.
+    std::unordered_map<Node, Node> cache;
+    return construct_model_value(term[0], cache, d_solver_state.value(term[1]));
   }
+
   // Construct normalized array value, i.e., ordered by index
-  std::map<Node, Node> map;
-  Node res = get_index_value_pairs(term, map);
-  assert(res.kind() == Kind::CONST_ARRAY);
-  const Node& default_value = res[0];
-  for (const auto& [index, value] : map)
-  {
-    if (value != default_value)
-    {
-      res = nm.mk_node(Kind::STORE, {res, index, value});
-    }
-  }
-  return res;
+  std::unordered_map<Node, Node> cache;
+  return construct_model_value(term, cache);
 }
 
 void
@@ -242,6 +235,7 @@ ArraySolver::check_access(const Node& access)
   // equality over constant arrays not yet supported
   if (access.kind() == Kind::CONST_ARRAY)
   {
+    d_in_check = false;
     d_solver_state.unsupported(
         "Equality over constant arrays not fully supported yet");
   }
@@ -807,97 +801,97 @@ ArraySolver::lemma(const Node& lemma, const LemmaId lid)
 }
 
 Node
-ArraySolver::get_index_value_pairs(const Node& array, std::map<Node, Node>& map)
+ArraySolver::construct_model_value(const Node& array,
+                                   std::unordered_map<Node, Node>& cache,
+                                   const Node& selected_index)
 {
   assert(!d_in_check);
   assert(array.type().is_array());
-  if (array.kind() == Kind::CONST_ARRAY)
+
+  auto it = cache.find(array);
+  if (it != cache.end())
   {
-    return d_env.nm().mk_const_array(array.type(),
-                                     d_solver_state.value(array[0]));
+    return it->second;
   }
-  else if (array.kind() == Kind::STORE || array.kind() == Kind::ITE)
-  {
-    Node base;
-    Node cur = array;
-    do
-    {
-      Kind k = cur.kind();
-      if (k == Kind::STORE)
-      {
-        map.emplace(d_solver_state.value(cur[1]), d_solver_state.value(cur[2]));
-        cur = cur[0];
-      }
-      else if (k == Kind::ITE)
-      {
-        cur = d_solver_state.value(cur[0]).value<bool>() ? cur[1] : cur[2];
-      }
-      else
-      {
-        assert(base.is_null() || base == cur);
-        base = cur;
-        break;
-      }
-    } while (true);
-
-    assert(!base.is_null());
-    return get_index_value_pairs(base, map);
-  }
-
-  assert(array.kind() == Kind::CONSTANT || array.kind() == Kind::SELECT
-         || array.kind() == Kind::APPLY);
-
-  auto it = d_array_models.find(array);
-  if (it != d_array_models.end())
-  {
-    const auto& array_model = it->second;
-    for (const auto acc : array_model)
-    {
-      const Node& i = acc->index_value();
-      const Node& e = acc->element_value();
-      if (e.type().is_array())
-      {
-        map.emplace(i, value_from_access_map(acc->element()));
-      }
-      else
-      {
-        map.emplace(i, e);
-      }
-    }
-  }
-  return utils::mk_default_value(d_env.nm(), array.type());
-}
-
-Node
-ArraySolver::value_from_access_map(const Node& array)
-{
-  assert(array.type().is_array());
-  assert(!d_in_check);
 
   std::map<Node, Node> map;
-  auto it = d_array_models.find(array);
-  if (it != d_array_models.end())
+  Node cur = array;
+  while (cur.kind() == Kind::STORE || cur.kind() == Kind::ITE)
   {
-    const auto& array_model = it->second;
-    for (const auto& acc : array_model)
+    Kind k = cur.kind();
+    if (k == Kind::STORE)
     {
-      const Node& i = acc->index_value();
-      const Node& e = acc->element_value();
-      if (e.type().is_array())
+      Node index          = d_solver_state.value(cur[1]);
+      auto [it, inserted] = map.emplace(index, Node());
+      if (inserted)
       {
-        map.emplace(i, value_from_access_map(acc->element()));
+        if (cur[2].type().is_array())
+        {
+          it->second = construct_model_value(cur[2], cache);
+        }
+        else
+        {
+          it->second = d_solver_state.value(cur[2]);
+        }
+        if (index == selected_index)
+        {
+          return it->second;
+        }
       }
-      else
-      {
-        map.emplace(i, e);
-      }
+      cur = cur[0];
+    }
+    else if (k == Kind::ITE)
+    {
+      cur = d_solver_state.value(cur[0]).value<bool>() ? cur[1] : cur[2];
     }
   }
 
-  Node res = utils::mk_default_value(d_env.nm(), array.type());
+  NodeManager& nm = d_env.nm();
+  Node res;
+  if (cur.kind() == Kind::CONST_ARRAY)
+  {
+    res = nm.mk_const_array(cur.type(), d_solver_state.value(cur[0]));
+  }
+  else
+  {
+    assert(cur.kind() == Kind::CONSTANT || cur.kind() == Kind::SELECT
+           || cur.kind() == Kind::APPLY);
+
+    auto it = d_array_models.find(cur);
+    if (it != d_array_models.end())
+    {
+      for (const auto acc : it->second)
+      {
+        Node index           = d_solver_state.value(acc->index());
+        auto [itm, inserted] = map.emplace(index, Node());
+        if (inserted)
+        {
+          const Node& element = acc->element();
+          if (element.type().is_array())
+          {
+            itm->second = construct_model_value(element, cache);
+          }
+          else
+          {
+            itm->second = d_solver_state.value(element);
+          }
+          if (index == selected_index)
+          {
+            return itm->second;
+          }
+        }
+      }
+    }
+    res = utils::mk_default_value(nm, cur.type());
+  }
   assert(res.kind() == Kind::CONST_ARRAY);
+
+  if (!selected_index.is_null())
+  {
+    return res[0];
+  }
+
   const Node& default_value = res[0];
-  NodeManager& nm           = d_env.nm();
   for (const auto& [index, value] : map)
   {
     if (value != default_value)
@@ -905,6 +899,7 @@ ArraySolver::value_from_access_map(const Node& array)
       res = nm.mk_node(Kind::STORE, {res, index, value});
     }
   }
+  cache.emplace(array, res);
   return res;
 }
 

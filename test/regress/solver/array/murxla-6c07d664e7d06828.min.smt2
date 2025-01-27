@@ -1,0 +1,6 @@
+(declare-const x (Array Bool Bool))
+(declare-const x2 (Array Bool Bool))
+(declare-const _x (Array Bool Bool))
+(assert (select x2 (distinct x2 x _x)))
+(set-info :status sat)
+(check-sat)

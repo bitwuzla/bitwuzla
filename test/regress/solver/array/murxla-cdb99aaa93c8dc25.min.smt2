@@ -1,0 +1,5 @@
+(declare-fun x (Bool) (Array Bool Bool))
+(declare-fun x4 ((Array Bool Bool)) (Array Bool (Array Bool Bool)))
+(assert (= (x4 (x false)) (store (x4 (x false)) false (store (x false) false true))))
+(set-info :status sat)
+(check-sat)
