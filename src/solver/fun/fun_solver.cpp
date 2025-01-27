@@ -152,13 +152,20 @@ FunSolver::value(const Node& term)
     {
       const std::vector<Node>& values = apply.values();
       assert(vars.size() == values.size());
+      const Node& value = apply.value();
+
+      if (value == res)
+      {
+        continue;
+      }
+
       std::vector<Node> eqs;
       for (size_t i = 0, size = vars.size(); i < size; ++i)
       {
         eqs.push_back(nm.mk_node(Kind::EQUAL, {vars[i], values[i]}));
       }
       Node cond = utils::mk_nary(nm, Kind::AND, eqs);
-      res       = nm.mk_node(Kind::ITE, {cond, apply.value(), res});
+      res       = nm.mk_node(Kind::ITE, {cond, value, res});
     }
     vars.push_back(res);
     return utils::mk_binder(nm, Kind::LAMBDA, vars);
