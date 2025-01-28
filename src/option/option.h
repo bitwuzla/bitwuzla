@@ -160,6 +160,8 @@ class OptionBase
    * @return True if this option is an option that takes a mode (an enum value).
    */
   virtual bool is_mode() { return false; }
+  /** @return True if this option is a string option. */
+  virtual bool is_str() { return false; }
 
   /** @return The description of this option. */
   const char* description() const { return d_description; }
@@ -445,6 +447,66 @@ class OptionModeT : public OptionMode
   String2ModeMap d_string2mode;
 };
 
+class OptionStr : public OptionBase
+{
+ public:
+  /**
+   * Constructor.
+   *
+   * @note On construction, given string value determines the initial and the
+   *       default value of the option.
+   *
+   * @param options   The associated options object.
+   * @param opt       The corresponding option.
+   * @param value     The initial and default value of the option.
+   * @param desc      The option description (used for CLI help message).
+   * @param lng       The long name of the option (`--<lng>` for the CLI).
+   * @param shrt      The short name of the option (`-<shrt>` for the CLI).
+   * @param is_expert True if this is an expert option.
+   */
+  OptionStr(Options* options,
+            Option opt,
+            const std::string& value,
+            const char* desc,
+            const char* lng,
+            const char* shrt = nullptr,
+            bool is_expert   = false)
+      : OptionBase(options, opt, desc, lng, shrt, is_expert),
+        d_value(value),
+        d_default(value)
+  {
+  }
+  OptionStr() = delete;
+
+  bool is_str() override { return true; }
+
+  /**
+   * Set the current value of a string option.
+   * @param value       The current value.
+   * @param is_user_set True if this option was configured from outside.
+   */
+  void set(const std::string& value, bool is_user_set = false)
+  {
+    d_value       = value;
+    d_is_user_set = is_user_set;
+  }
+
+  /**
+   * Get the current value of a string option.
+   * @return The current value of a string option.
+   */
+  const std::string& operator()() const { return d_value; }
+
+  /** @return The default value of this option. */
+  const std::string& dflt() const { return d_default; }
+
+ private:
+  /** The current value. */
+  std::string d_value;
+  /** The default value. */
+  std::string d_default;
+};
+
 /* -------------------------------------------------------------------------- */
 
 class Options
@@ -540,6 +602,8 @@ class Options
   bool is_numeric_inc(Option opt);
   /** @return True if the given option is an option with modes. */
   bool is_mode(Option opt);
+  /** @return True if the given option is a string option. */
+  bool is_str(Option opt);
 
   /** @return True if given string is a valid short or long option name. */
   bool is_valid(const std::string& name) const;

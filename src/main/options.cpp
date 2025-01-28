@@ -18,7 +18,8 @@ namespace {
 
 /** Helper to format option names and add meta variables. */
 std::string
-format_opt(const char* name, bool is_shrt, bool is_numeric, bool is_mode)
+format_opt(
+    const char* name, bool is_shrt, bool is_numeric, bool is_mode, bool is_str)
 {
   if (name)
   {
@@ -32,6 +33,10 @@ format_opt(const char* name, bool is_shrt, bool is_numeric, bool is_mode)
     {
       fmt += " <M>";
     }
+    else if (is_str)
+    {
+      fmt += " <...>";
+    }
     return fmt;
   }
   return std::string();
@@ -41,42 +46,54 @@ format_opt(const char* name, bool is_shrt, bool is_numeric, bool is_mode)
 std::string
 format_shortm(const char* shrt)
 {
-  return format_opt(shrt, true, false, true);
+  return format_opt(shrt, true, false, true, false);
 }
 
 /** Format long name of mode option. */
 std::string
 format_longm(const char* lng)
 {
-  return format_opt(lng, false, false, true);
+  return format_opt(lng, false, false, true, false);
 }
 
 /** Format short name of numeric option. */
 std::string
 format_shortn(const char* shrt)
 {
-  return format_opt(shrt, true, true, false);
+  return format_opt(shrt, true, true, false, false);
 }
 
 /** Format long name of numeric option. */
 std::string
 format_longn(const char* lng)
 {
-  return format_opt(lng, false, true, false);
+  return format_opt(lng, false, true, false, false);
+}
+
+std::string
+format_shorts(const char* shrt)
+{
+  return format_opt(shrt, true, false, false, true);
+}
+
+std::string
+format_longs(const char* shrt)
+{
+  return format_opt(shrt, false, false, false, true);
 }
 
 /** Format short name of boolean option. */
 std::string
 format_shortb(const char* shrt)
 {
-  return format_opt(shrt, true, false, false);
+  return format_opt(shrt, true, false, false, false);
 }
 
 /** Format long name of boolean option. */
 std::string
 format_longb(const char* lng)
 {
-  return format_opt(lng, false, false, false);
+  return format_opt(lng, false, false, false, false);
 }
 
 /** Format string of default value. */
@@ -206,6 +223,13 @@ print_help()
       opts.emplace_back(format_shortn(shrt),
                         format_longn(lng),
                         format_dflt(std::to_string(options.get(o))),
+                        options.description(o));
+    }
+    else if (options.is_str(o))
+    {
+      opts.emplace_back(format_shorts(shrt),
+                        format_longs(lng),
+                        format_dflt(options.get_str(o)),
                         options.description(o));
     }
     else
@@ -431,7 +455,7 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
         if (library_opts.is_valid(name))
         {
           auto option = library_opts.option(name.c_str());
-          if (library_opts.is_mode(option))
+          if (library_opts.is_mode(option) || library_opts.is_str(option))
           {
             if (i + 1 < argc)
             {

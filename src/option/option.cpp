@@ -484,6 +484,12 @@ Options::is_mode(Option opt)
 }
 
 bool
+Options::is_str(Option opt)
+{
+  return data(opt)->is_str();
+}
+
+bool
 Options::is_valid(const std::string& name) const
 {
   return d_name2option.find(name) != d_name2option.end();
@@ -557,27 +563,34 @@ template <>
 void
 Options::set(Option opt, const std::string& value, bool is_user_set)
 {
-  assert(data(opt)->is_mode());
+  assert(data(opt)->is_mode() || data(opt)->is_str());
   assert(is_user_set || !data(opt)->d_is_user_set);
-#ifndef BZLA_USE_KISSAT
-  if (opt == Option::SAT_SOLVER
-      && value == sat_solver.mode_to_string(SatSolver::KISSAT))
+  if (data(opt)->is_mode())
   {
-    throw Exception("invalid configuration for option --"
-                    + std::string(sat_solver.lng())
-                    + ", Kissat not compiled in");
-  }
+#ifndef BZLA_USE_KISSAT
+    if (opt == Option::SAT_SOLVER
+        && value == sat_solver.mode_to_string(SatSolver::KISSAT))
+    {
+      throw Exception("invalid configuration for option --"
+                      + std::string(sat_solver.lng())
+                      + ", Kissat not compiled in");
+    }
 #endif
 #ifndef BZLA_USE_CMS
-  if (opt == Option::SAT_SOLVER
-      && value == sat_solver.mode_to_string(SatSolver::CRYPTOMINISAT))
-  {
-    throw Exception("invalid configuration for option --"
-                    + std::string(sat_solver.lng())
-                    + ", CryptoMiniSat not compiled in");
-  }
+    if (opt == Option::SAT_SOLVER
+        && value == sat_solver.mode_to_string(SatSolver::CRYPTOMINISAT))
+    {
+      throw Exception("invalid configuration for option --"
+                      + std::string(sat_solver.lng())
+                      + ", CryptoMiniSat not compiled in");
+    }
 #endif
-  reinterpret_cast<OptionMode*>(data(opt))->set_str(value, is_user_set);
+    reinterpret_cast<OptionMode*>(data(opt))->set_str(value, is_user_set);
+  }
+  else
+  {
+    reinterpret_cast<OptionStr*>(data(opt))->set(value, is_user_set);
+  }
 }
 
 void
@@ -633,8 +646,12 @@ template <>
 const std::string&
 Options::get(Option opt)
 {
-  assert(data(opt)->is_mode());
-  return reinterpret_cast<OptionMode*>(data(opt))->get_str();
+  assert(data(opt)->is_mode() || data(opt)->is_str());
+  if (data(opt)->is_mode())
+  {
+    return reinterpret_cast<OptionMode*>(data(opt))->get_str();
+  }
+  return (*reinterpret_cast<OptionStr*>(data(opt)))();
 }
 
 template <>

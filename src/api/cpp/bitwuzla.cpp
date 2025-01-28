@@ -437,6 +437,12 @@ Options::is_mode(Option option) const
   return d_options->is_mode(s_internal_options.at(option));
 }
 
+bool
+Options::is_str(Option option) const
+{
+  return d_options->is_str(s_internal_options.at(option));
+}
+
 const char *
 Options::shrt(Option option) const
 {
@@ -495,30 +501,32 @@ Options::set(Option option, uint64_t value)
 }
 
 void
-Options::set(Option option, const std::string &mode)
+Options::set(Option option, const std::string &value)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_mode(opt))
-      << "expected option with option modes";
-  BITWUZLA_CHECK(d_options->is_valid_mode(opt, mode))
+  BITWUZLA_CHECK(d_options->is_mode(opt) || d_options->is_str(opt))
+      << "expected option with option modes or strings";
+  BITWUZLA_CHECK(!d_options->is_mode(opt)
+                 || d_options->is_valid_mode(opt, value))
       << "invalid mode for option";
   BITWUZLA_OPT_TRY_CATCH_BEGIN;
-  d_options->set<std::string>(s_internal_options.at(option), mode, true);
+  d_options->set<std::string>(s_internal_options.at(option), value, true);
   BITWUZLA_OPT_TRY_CATCH_END;
 }
 
 void
-Options::set(Option option, const char *mode)
+Options::set(Option option, const char *value)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_mode(opt))
-      << "expected option with option modes";
-  BITWUZLA_CHECK(d_options->is_valid_mode(opt, mode))
+  BITWUZLA_CHECK(d_options->is_mode(opt) || d_options->is_str(opt))
+      << "expected option with option modes or strings";
+  BITWUZLA_CHECK(!d_options->is_mode(opt)
+                 || d_options->is_valid_mode(opt, value))
       << "invalid mode for option";
   BITWUZLA_OPT_TRY_CATCH_BEGIN;
-  d_options->set<std::string>(s_internal_options.at(option), mode, true);
+  d_options->set<std::string>(s_internal_options.at(option), value, true);
   BITWUZLA_OPT_TRY_CATCH_END;
 }
 
@@ -672,6 +680,12 @@ Options::set(const std::vector<std::string> &args)
       }
       set(s_options.at(option), val);
     }
+    else if (d_options->is_str(option))
+    {
+      BITWUZLA_CHECK(!value.empty())
+          << "expected value for option '" << opt << "'";
+      set(s_options.at(option), value);
+    }
     else
     {
       BITWUZLA_CHECK(!value.empty())
@@ -703,8 +717,19 @@ Options::get_mode(Option option) const
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
+  assert(d_options->is_mode(opt));
   BITWUZLA_CHECK(d_options->is_mode(opt))
       << "expected option with option modes";
+  return d_options->get<std::string>(opt);
+}
+
+const std::string &
+Options::get_str(Option option) const
+{
+  BITWUZLA_CHECK_NOT_NULL(d_options);
+  bzla::option::Option opt = s_internal_options.at(option);
+  assert(d_options->is_str(opt));
+  BITWUZLA_CHECK(d_options->is_str(opt)) << "expected string option";
   return d_options->get<std::string>(opt);
 }
 

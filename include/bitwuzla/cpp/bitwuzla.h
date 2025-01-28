@@ -272,6 +272,12 @@ class Options
    * @return True if `option` is an option with a mode.
    */
   bool is_mode(Option option) const;
+  /**
+   * Determine if given option is a string option.
+   * @param option The option to query.
+   * @return True if `option` is a string option.
+   */
+  bool is_str(Option option) const;
 
   /** @return The short name of this option. */
   const char *shrt(Option option) const;
@@ -347,6 +353,13 @@ class Options
    * @return The option value.
    */
   const std::string &get_mode(Option option) const;
+  /**
+   * Get the current value of a string option.
+   *
+   * @param option The option.
+   * @return The option value.
+   */
+  const std::string &get_str(Option option) const;
 
  private:
   /** The wrapped internal options. */
