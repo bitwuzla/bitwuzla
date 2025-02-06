@@ -40,7 +40,7 @@ main()
       printf("  + min:       %" PRIu64 "\n", info.numeric.min);
       printf("  + max:       %" PRIu64 "\n", info.numeric.max);
     }
-    else
+    else if (info.is_mode)
     {
       printf("modes\n");
       printf("  values:\n");
@@ -52,6 +52,14 @@ main()
         printf("%s %s", (i > 0 ? "," : ""), info.mode.modes[i]);
       }
       printf(" }\n");
+    }
+    else
+    {
+      // info.is_string
+      printf("string\n");
+      printf("  values:\n");
+      printf("  + current:   %s\n", info.string.cur);
+      printf("  + default:   %s\n", info.string.dflt);
     }
     printf("  description: %s\n\n", info.description);
   }

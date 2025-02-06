@@ -602,7 +602,7 @@ TEST_F(TestCApi, option_info)
       ASSERT_GE(info.numeric.cur, info.numeric.min);
       ASSERT_LE(info.numeric.cur, info.numeric.max);
     }
-    else
+    else if (info.is_mode)
     {
       ASSERT_EQ(std::string(bitwuzla_get_option_mode(options, opt)),
                 std::string(info.mode.cur));
@@ -618,6 +618,12 @@ TEST_F(TestCApi, option_info)
         }
       }
       ASSERT_TRUE(in_modes);
+    }
+    else
+    {
+      ASSERT_TRUE(info.is_string);
+      ASSERT_EQ(std::string(info.string.cur),
+                std::string(bitwuzla_get_option_string(options, opt)));
     }
     ASSERT_TRUE(info.description && !std::string(info.description).empty());
   }

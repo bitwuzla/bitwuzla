@@ -53,7 +53,7 @@ main()
       std::cout << "  + min:       " << values.min << std::endl;
       std::cout << "  + max:       " << values.max << std::endl;
     }
-    else
+    else if (info.kind == OptionInfo::Kind::MODE)
     {
       std::cout << "modes" << std::endl;
       std::cout << "  values:" << std::endl;
@@ -66,6 +66,15 @@ main()
         std::cout << (i > 0 ? "," : "") << " " << values.modes[i];
       }
       std::cout << " }" << std::endl;
+    }
+    else
+    {
+      // info.kind == OptionInfo::Kind::STRING
+      std::cout << "string" << std::endl;
+      std::cout << "  values:" << std::endl;
+      const auto& values = std::get<OptionInfo::String>(info.values);
+      std::cout << "  + current:   " << values.cur << std::endl;
+      std::cout << "  + default:   " << values.dflt << std::endl;
     }
     std::cout << "  description: " << info.description << std::endl;
     std::cout << std::endl;

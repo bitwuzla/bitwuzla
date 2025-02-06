@@ -72,8 +72,12 @@ struct BitwuzlaOptionInfo
   const char *lng;
   /** Option description. */
   const char *description;
-  /** Indicates whether values are numeric or strings. */
+  /** Indicates whether values are numeric. */
   bool is_numeric;
+  /** Indicates whether values are modes. */
+  bool is_mode;
+  /** Indicates whether values are strings. */
+  bool is_string;
 
   struct NumericValue
   {
@@ -98,6 +102,14 @@ struct BitwuzlaOptionInfo
     /** List of available modes. */
     const char **modes;
   } mode;
+
+  struct StringValue
+  {
+    /** Current string option value. */
+    const char *cur;
+    /** Default string option value. */
+    const char *dflt;
+  } string;
 };
 
 #ifndef DOXYGEN_SKIP
@@ -156,12 +168,19 @@ bool bitwuzla_option_is_valid(BitwuzlaOptions *options, const char *name);
 bool bitwuzla_option_is_numeric(BitwuzlaOptions *options,
                                 BitwuzlaOption option);
 /**
- * Determine if a given option is an option with a mode
+ * Determine if a given option is an option with a mode.
  * @param options The Bitwuzla options instance.
  * @param option The option.
  * @return True if the given option is an option with a mode.
  */
 bool bitwuzla_option_is_mode(BitwuzlaOptions *options, BitwuzlaOption option);
+/**
+ * Determine if a given option is an option with a string value.
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
+ * @return True if the given option is an option with a string value.
+ */
+bool bitwuzla_option_is_string(BitwuzlaOptions *options, BitwuzlaOption option);
 
 /**
  * Set option.
@@ -194,6 +213,21 @@ void bitwuzla_set_option_mode(BitwuzlaOptions *options,
                               const char *val);
 
 /**
+ * Set value for string options.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
+ * @param val The option string value.
+ *
+ * @see
+ *   * `BitwuzlaOption`
+ *   * `bitwuzla_get_option_string`
+ */
+void bitwuzla_set_option_string(BitwuzlaOptions *options,
+                                BitwuzlaOption option,
+                                const char *val);
+
+/**
  * Get the current value of an option.
  *
  * @param options The Bitwuzla options instance.
@@ -220,6 +254,21 @@ uint64_t bitwuzla_get_option(BitwuzlaOptions *options, BitwuzlaOption option);
  */
 const char *bitwuzla_get_option_mode(BitwuzlaOptions *options,
                                      BitwuzlaOption option);
+
+/**
+ * Get the current string value of an option.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
+ *
+ * @return The option value.
+ *
+ * @see
+ *   * `BitwuzlaOption`
+ *   * `bitwuzla_set_option_string`
+ */
+const char *bitwuzla_get_option_string(BitwuzlaOptions *options,
+                                       BitwuzlaOption option);
 
 /**
  * Get the details of an option.

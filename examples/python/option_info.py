@@ -38,10 +38,16 @@ if __name__ == '__main__':
             print(f'  + default:   {info.dflt()}')
             print(f'  + min:       {info.min()}')
             print(f'  + max:       {info.max()}')
-        else:
+        elif info.kind() == OptionInfoKind.MODE:
             print('modes')
             print('  values:')
             print(f'  + current:   {info.cur()}')
             print(f'  + default:   {info.dflt()}')
             print(f'  + modes:     {info.modes()}')
+        else:
+            assert info.kind() == OptionInfoKind.STRING
+            print('string')
+            print('  values:')
+            print(f'  + current:   {info.cur()}')
+            print(f'  + default:   {info.dflt()}')
         print(f'  description: {info.description()}\n')

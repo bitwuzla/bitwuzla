@@ -750,6 +750,7 @@ class OptionInfoKind(Enum):
     BOOL = bitwuzla_api.CppOptionInfoKind.BOOL
     NUMERIC = bitwuzla_api.CppOptionInfoKind.NUMERIC
     MODE = bitwuzla_api.CppOptionInfoKind.MODE
+    STRING = bitwuzla_api.CppOptionInfoKind.STRING
 
 cdef class OptionInfo:
     """ The class holding all information about an option.
@@ -787,6 +788,10 @@ cdef class OptionInfo:
         if self.kind() == OptionInfoKind.MODE:
             return self.c_info.get().value[
                     bitwuzla_api.OptionInfoMode]().dflt.decode()
+        if self.kind() == OptionInfoKind.STRING:
+            return self.c_info.get().value[
+                    bitwuzla_api.OptionInfoString]().dflt.decode()
+        assert self.kind() == OptionInfoKind.NUMERIC
         return self.c_info.get().value[bitwuzla_api.OptionInfoNumeric]().dflt
 
     def cur(self):
@@ -798,6 +803,10 @@ cdef class OptionInfo:
         if self.kind() == OptionInfoKind.MODE:
             return self.c_info.get().value[
                     bitwuzla_api.OptionInfoMode]().cur.decode()
+        if self.kind() == OptionInfoKind.STRING:
+            return self.c_info.get().value[
+                    bitwuzla_api.OptionInfoString]().cur.decode()
+        assert self.kind() == OptionInfoKind.NUMERIC
         return self.c_info.get().value[bitwuzla_api.OptionInfoNumeric]().cur
 
     def min(self):

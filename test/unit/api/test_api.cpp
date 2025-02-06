@@ -414,7 +414,7 @@ TEST_F(TestApi, option_info)
       ASSERT_GE(cur, std::get<bitwuzla::OptionInfo::Numeric>(info.values).min);
       ASSERT_LE(cur, std::get<bitwuzla::OptionInfo::Numeric>(info.values).max);
     }
-    else
+    else if (info.kind == bitwuzla::OptionInfo::Kind::MODE)
     {
       const auto& values = std::get<bitwuzla::OptionInfo::Mode>(info.values);
       std::string cur    = values.cur;
@@ -431,6 +431,11 @@ TEST_F(TestApi, option_info)
         }
       }
       ASSERT_TRUE(in_modes);
+    }
+    else
+    {
+      ASSERT_EQ(options.get_str(opt),
+                std::get<bitwuzla::OptionInfo::String>(info.values).cur);
     }
     ASSERT_TRUE(info.description && !std::string(info.description).empty());
   }

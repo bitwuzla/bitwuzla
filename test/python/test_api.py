@@ -218,8 +218,10 @@ def test_option_info():
             assert info.cur() == True or info.cur() == False
         elif info.kind() == OptionInfoKind.NUMERIC:
             assert info.cur() >= info.min() and info.cur() <= info.max()
-        else:
+        elif info.kind() == OptionInfoKind.MODE:
             assert info.cur() in info.modes()
+        else:
+            assert info.kind() == OptionInfoKind.STRING
         assert info.cur() == info.dflt()
         assert info.description()
 

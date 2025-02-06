@@ -760,13 +760,19 @@ OptionInfo::OptionInfo(const Options &options, Option option) : opt(option)
                        options.d_options->min<uint64_t>(opt),
                        options.d_options->max<uint64_t>(opt)};
     }
-    else
+    else if (options.is_mode(option))
     {
-      assert(options.is_mode(option));
       kind   = Kind::MODE;
       values = Mode{options.d_options->get<std::string>(opt),
                     options.d_options->dflt<std::string>(opt),
                     options.d_options->modes(opt)};
+    }
+    else
+    {
+      assert(options.is_str(option));
+      kind   = Kind::STRING;
+      values = String{options.d_options->get<std::string>(opt),
+                      options.d_options->dflt<std::string>(opt)};
     }
   }
   catch (std::out_of_range &e)
@@ -797,6 +803,14 @@ OptionInfo::value() const
 {
   BITWUZLA_CHECK(kind == Kind::MODE) << "expected option with modes";
   return std::get<OptionInfo::Mode>(values);
+}
+
+template <>
+OptionInfo::String
+OptionInfo::value() const
+{
+  BITWUZLA_CHECK(kind == Kind::STRING) << "expected String option";
+  return std::get<OptionInfo::String>(values);
 }
 
 /* Term public -------------------------------------------------------------- */

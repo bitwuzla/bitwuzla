@@ -209,6 +209,17 @@ bitwuzla_option_is_mode(BitwuzlaOptions *options, BitwuzlaOption option)
   return res;
 }
 
+bool
+bitwuzla_option_is_string(BitwuzlaOptions *options, BitwuzlaOption option)
+{
+  bool res = false;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  res = options->d_options.is_str(static_cast<bitwuzla::Option>(option));
+  BITWUZLA_C_TRY_CATCH_END;
+  return res;
+}
+
 void
 bitwuzla_set_option(BitwuzlaOptions *options,
                     BitwuzlaOption option,
@@ -225,6 +236,19 @@ void
 bitwuzla_set_option_mode(BitwuzlaOptions *options,
                          BitwuzlaOption option,
                          const char *value)
+{
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_OPTION(option);
+  BITWUZLA_CHECK_NOT_NULL(value);
+  options->d_options.set(import_option(option), value);
+  BITWUZLA_C_TRY_CATCH_END;
+}
+
+void
+bitwuzla_set_option_string(BitwuzlaOptions *options,
+                           BitwuzlaOption option,
+                           const char *value)
 {
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
@@ -258,6 +282,18 @@ bitwuzla_get_option_mode(BitwuzlaOptions *options, BitwuzlaOption option)
   return res;
 }
 
+const char *
+bitwuzla_get_option_string(BitwuzlaOptions *options, BitwuzlaOption option)
+{
+  const char *res = nullptr;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_OPTION(option);
+  res = options->d_options.get_str(import_option(option)).c_str();
+  BITWUZLA_C_TRY_CATCH_END;
+  return res;
+}
+
 void
 bitwuzla_get_option_info(BitwuzlaOptions *options,
                          BitwuzlaOption option,
@@ -276,32 +312,30 @@ bitwuzla_get_option_info(BitwuzlaOptions *options,
   info->shrt        = cpp_info.shrt;
   info->lng         = cpp_info.lng;
   info->description = cpp_info.description;
-  info->is_numeric = cpp_info.kind != bitwuzla::OptionInfo::Kind::MODE;
 
-  if (info->is_numeric)
+  if (cpp_info.kind == bitwuzla::OptionInfo::Kind::BOOL)
   {
-    if (cpp_info.kind == bitwuzla::OptionInfo::Kind::BOOL)
-    {
-      info->numeric.cur =
-          std::get<bitwuzla::OptionInfo::Bool>(cpp_info.values).cur;
-      info->numeric.dflt =
-          std::get<bitwuzla::OptionInfo::Bool>(cpp_info.values).dflt;
-      info->numeric.min = 0;
-      info->numeric.max = 1;
-    }
-    else
-    {
-      info->numeric.cur =
-          std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).cur;
-      info->numeric.dflt =
-          std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).dflt;
-      info->numeric.min =
-          std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).min;
-      info->numeric.max =
-          std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).max;
-    }
+    info->numeric.cur =
+        std::get<bitwuzla::OptionInfo::Bool>(cpp_info.values).cur;
+    info->numeric.dflt =
+        std::get<bitwuzla::OptionInfo::Bool>(cpp_info.values).dflt;
+    info->numeric.min = 0;
+    info->numeric.max = 1;
+    info->is_numeric  = true;
   }
-  else
+  else if (cpp_info.kind == bitwuzla::OptionInfo::Kind::NUMERIC)
+  {
+    info->numeric.cur =
+        std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).cur;
+    info->numeric.dflt =
+        std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).dflt;
+    info->numeric.min =
+        std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).min;
+    info->numeric.max =
+        std::get<bitwuzla::OptionInfo::Numeric>(cpp_info.values).max;
+    info->is_numeric = true;
+  }
+  else if (cpp_info.kind == bitwuzla::OptionInfo::Kind::MODE)
   {
     info->mode.cur =
         std::get<bitwuzla::OptionInfo::Mode>(cpp_info.values).cur.c_str();
@@ -317,6 +351,16 @@ bitwuzla_get_option_info(BitwuzlaOptions *options,
       c_modes.push_back(m.c_str());
     }
     info->mode.modes = c_modes.data();
+    info->is_mode    = true;
+  }
+  else
+  {
+    assert(cpp_info.kind == bitwuzla::OptionInfo::Kind::STRING);
+    info->string.cur =
+        std::get<bitwuzla::OptionInfo::String>(cpp_info.values).cur.c_str();
+    info->string.dflt =
+        std::get<bitwuzla::OptionInfo::String>(cpp_info.values).dflt.c_str();
+    info->is_string = true;
   }
   BITWUZLA_C_TRY_CATCH_END;
 }

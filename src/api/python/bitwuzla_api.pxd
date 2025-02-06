@@ -123,7 +123,8 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
     cdef enum class CppOptionInfoKind "bitwuzla::OptionInfo::Kind":
         BOOL,
         NUMERIC,
-        MODE
+        MODE,
+        STRING
 
     cdef cppclass OptionInfoBool "bitwuzla::OptionInfo::Bool":
         bool cur
@@ -140,6 +141,10 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         string dflt
         vector[string] modes
 
+    cdef cppclass OptionInfoString "bitwuzla::OptionInfo::String":
+        string cur
+        string dflt
+
     cdef cppclass OptionInfo:
         OptionInfo()
         OptionInfo(Options options, Option option) except +raise_error
@@ -150,6 +155,7 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         OptionInfoBool value[OptionInfoBool]() except +raise_error
         OptionInfoNumeric value[OptionInfoNumeric]() except +raise_error
         OptionInfoMode value[OptionInfoMode]() except +raise_error
+        OptionInfoString value[OptionInfoString]() except +raise_error
 
     cdef cppclass Sort:
         Sort() except +raise_error

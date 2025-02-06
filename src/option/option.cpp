@@ -631,7 +631,7 @@ Options::set(const std::string& name,
   }
   else
   {
-    assert(is_mode(it->second));
+    assert(is_mode(it->second) || is_str(it->second));
     set<std::string>(it->second, value, is_user_set);
   }
 }
@@ -684,8 +684,12 @@ template <>
 const std::string&
 Options::dflt(Option opt)
 {
-  assert(data(opt)->is_mode());
-  return reinterpret_cast<OptionMode*>(data(opt))->dflt_str();
+  assert(data(opt)->is_mode() || data(opt)->is_str());
+  if (data(opt)->is_mode())
+  {
+    return reinterpret_cast<OptionMode*>(data(opt))->dflt_str();
+  }
+  return reinterpret_cast<OptionStr*>(data(opt))->dflt();
 }
 
 template <>

@@ -380,6 +380,8 @@ struct OptionInfo
     NUMERIC,
     /*! Option with configuration modes. */
     MODE,
+    /*! Option with string arguments. */
+    STRING,
   };
 
   /** The option value data of a Boolean option. */
@@ -412,6 +414,14 @@ struct OptionInfo
     /** List of available modes. */
     std::vector<std::string> modes;
   };
+  /** The option value data of string options. */
+  struct String
+  {
+    /** Current String option value. */
+    std::string cur;
+    /** Default String option value. */
+    std::string dflt;
+  };
 
   /**
    * Constructor.
@@ -436,7 +446,7 @@ struct OptionInfo
   const char *description;
 
   /** The values. */
-  std::variant<Bool, Numeric, Mode> values;
+  std::variant<Bool, Numeric, Mode, String> values;
 
   /**
    * Additionall getter for values.
@@ -467,6 +477,13 @@ OptionInfo::Numeric OptionInfo::value() const;
  */
 template <>
 OptionInfo::Mode OptionInfo::value() const;
+
+/**
+ * Get String option info wrapper.
+ * @return The option info wrapper.
+ */
+template <>
+OptionInfo::String OptionInfo::value() const;
 
 /* -------------------------------------------------------------------------- */
 /* Result                                                                     */
