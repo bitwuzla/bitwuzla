@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include "node/node_manager.h"
+#include "node/node_utils.h"
 #include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
@@ -576,4 +577,68 @@ TEST_F(TestBvInterpolationSolver, interpol11)
   test_get_interpolant({A0}, C);
 }
 
+TEST_F(TestBvInterpolationSolver, interpol_array1)
+{
+  Type bv3   = d_nm.mk_bv_type(3);
+  Type arr   = d_nm.mk_array_type(bv3, bv3);
+  Node zero  = d_nm.mk_value(BitVector::mk_zero(3));
+  Node one   = d_nm.mk_value(BitVector::mk_one(3));
+  Node two   = d_nm.mk_value(BitVector::from_ui(3, 2));
+  Node three = d_nm.mk_value(BitVector::from_ui(3, 3));
+  Node four  = d_nm.mk_value(BitVector::from_ui(3, 4));
+  Node five  = d_nm.mk_value(BitVector::from_ui(3, 5));
+  Node six   = d_nm.mk_value(BitVector::from_ui(3, 6));
+  Node seven = d_nm.mk_value(BitVector::from_ui(3, 7));
+  //(declare-fun a () (Array (_ BitVec 3) (_ BitVec 3)))
+  Node a = d_nm.mk_const(arr, "a");
+  //(declare-fun b () (Array (_ BitVec 3) (_ BitVec 3)))
+  Node b = d_nm.mk_const(arr, "b");
+  //(assert (! (= (select a (_ bv1 3)) (select b (_ bv1 3))) :named a0))
+  Node A0 = d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::SELECT, {a, one}),
+                          d_nm.mk_node(Kind::SELECT, {b, one})});
+  //(assert (! (= (select a (_ bv3 3)) (select b (_ bv3 3))) :named a1))
+  Node A1 = d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::SELECT, {a, three}),
+                          d_nm.mk_node(Kind::SELECT, {b, three})});
+  //(assert (! (= (select a (_ bv5 3)) (select b (_ bv5 3))) :named a2))
+  Node A2 = d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::SELECT, {a, five}),
+                          d_nm.mk_node(Kind::SELECT, {b, five})});
+  //(assert (! (= (select a (_ bv7 3)) (select b (_ bv7 3))) :named a3))
+  Node A3 = d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::SELECT, {a, seven}),
+                          d_nm.mk_node(Kind::SELECT, {b, seven})});
+  //(assert (! (not (= a b)) :named a4))
+  Node A4 = d_nm.mk_node(Kind::DISTINCT, {a, b});
+  //(define-fun b0 () Bool (= (select a (_ bv0 3)) (select b (_ bv0 3))))
+  Node C0 = d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::SELECT, {a, zero}),
+                          d_nm.mk_node(Kind::SELECT, {b, zero})});
+  //(define-fun b1 () Bool (= (select a (_ bv2 3)) (select b (_ bv2 3))))
+  Node C1 = d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::SELECT, {a, two}),
+                          d_nm.mk_node(Kind::SELECT, {b, two})});
+  //(define-fun b2 () Bool (= (select a (_ bv4 3)) (select b (_ bv4 3))))
+  Node C2 = d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::SELECT, {a, four}),
+                          d_nm.mk_node(Kind::SELECT, {b, four})});
+  //(define-fun b3 () Bool (= (select a (_ bv6 3)) (select b (_ bv6 3))))
+  Node C3 = d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::SELECT, {a, six}),
+                          d_nm.mk_node(Kind::SELECT, {b, six})});
+  Node C  = d_nm.mk_node(Kind::NOT,
+                         {utils::mk_nary(d_nm, Kind::AND, {C0, C1, C2, C3})});
+  option::Options options;
+  sat::SatSolverFactory sat_factory(options);
+  SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
+  ctx.assert_formula(A0);
+  ctx.assert_formula(A1);
+  ctx.assert_formula(A2);
+  ctx.assert_formula(A3);
+  ctx.assert_formula(A4);
+  ctx.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+  assert(ctx.solve() == Result::UNSAT);
+  test_get_interpolant({A0, A1, A2, A3, A4}, C);
+}
 }  // namespace bzla::test
