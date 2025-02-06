@@ -8,7 +8,8 @@ if pytest.found()
   foreach t : tests
     file = t + '.py'
     args = [join_paths(meson.current_source_dir(), file)]
-    test(t, pytest, args: args, suite: 'python', env: env)
+    test(t, pytest, args: args, suite: 'python', env: env,
+         depends: bitwuzla_py_ext)
   endforeach
 else
   warning('pytest not found, disabling python unit tests')
