@@ -111,7 +111,8 @@ class TestBvInterpolationSolver : public TestCommon
     d_options.rewrite_level.set(rwl);
     sat::SatSolverFactory sat_factory(d_options);
     SolvingContext ctx(d_nm, d_options, sat_factory);
-    ctx.get_interpolant(A, C);
+    Node interpolant = ctx.get_interpolant(A, C);
+    ASSERT_FALSE(interpolant.is_null());
   }
 
   void test_get_interpolant_aux_cadicraig(bool pp,
@@ -124,12 +125,13 @@ class TestBvInterpolationSolver : public TestCommon
       std::cout << std::endl
                 << ">> rewrite level: " << rwl
                 << "  pp: " << (pp ? "enabled" : "disabled") << std::endl;
-      d_options_cadicraig.preprocess.set(pp);
-      d_options_cadicraig.rewrite_level.set(rwl);
-      sat::SatSolverFactory sat_factory(d_options);
-      SolvingContext ctx(d_nm, d_options_cadicraig, sat_factory);
-      ctx.get_interpolant(A, C);
     }
+    d_options_cadicraig.preprocess.set(pp);
+    d_options_cadicraig.rewrite_level.set(rwl);
+    sat::SatSolverFactory sat_factory(d_options);
+    SolvingContext ctx(d_nm, d_options_cadicraig, sat_factory);
+    Node interpolant = ctx.get_interpolant(A, C);
+    ASSERT_FALSE(interpolant.is_null());
   }
 
   option::Options d_options;
