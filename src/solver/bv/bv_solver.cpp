@@ -17,7 +17,7 @@ namespace bzla::bv {
 
 using namespace bzla::node;
 
-/* --- BvBitblastSolver public ---------------------------------------------- */
+/* --- BvSolver public ------------------------------------------------------ */
 
 bool
 BvSolver::is_leaf(const Node& term)
@@ -142,7 +142,7 @@ BvSolver::unsat_core(std::vector<Node>& core) const
   }
 }
 
-/* --- BvBitblastSolver private --------------------------------------------- */
+/* --- BvSolver private ----------------------------------------------------- */
 
 BvSolver::Statistics::Statistics(util::Statistics& stats)
     : num_checks(stats.new_stat<uint64_t>("solver::bv::num_checks")),
