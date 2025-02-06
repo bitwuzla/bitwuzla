@@ -154,7 +154,19 @@ enum ENUM(Option)
    *    [Kissat](https://github.com/arminbiere/kissat)
    */
   EVALUE(SAT_SOLVER),
+  /*! **Print bit-vector abstraction as AIG in binary or ascii AIGER format.**
+   *
+   * @note The filename suffix determines whether binary (.aig) or ascii (.aag)
+   *       AIGER is used.
+   * @note Incremental queries to the SAT solver will overwrite the file with
+   *       the latest AIG.
+   */
   EVALUE(WRITE_AIGER),
+  /*! **Print bit-vector abstraction as CNF in DIMACS format.**
+   *
+   * @note Incremental queries to the SAT solver will overwrite the file with
+   *       the latest CNF.
+   */
   EVALUE(WRITE_CNF),
 
   /* ---------------- BV: Prop Engine Options (Expert) ---------------------- */

@@ -30,9 +30,9 @@ rng_sources = [
 # AIGER dependency
 aiger_dep = dependency('aiger', required: get_option('aiger'))
 
-cpp_args = []
+cpp_args_bb_lib = []
 if aiger_dep.found()
-  cpp_args += ['-DBZLA_USE_AIGER']
+  cpp_args_bb_lib += ['-DBZLA_USE_AIGER']
 endif
 
 # RNG support library
@@ -53,7 +53,7 @@ bitblast_lib = library('bitwuzlabb',
                        dependencies: [gmp_dep, aiger_dep],
                        install_rpath: install_rpath,
                        install: true,
-                       cpp_args: cpp_args)
+                       cpp_args: cpp_args_bb_lib)
 local_search_lib = library('bitwuzlals',
                            sources: ls_sources,
                            include_directories: include_directories('../'),
