@@ -581,12 +581,12 @@ AbstractionModule::check_term_abstraction(const Node& abstr)
     else if (d_opt_inc_bitblast
              && (kind == Kind::BV_MUL || kind == Kind::BV_ADD))
     {
+      constexpr uint64_t increment = 32;
       const auto& bv_t = val_t.value<BitVector>();
       const auto& bv_e = val_expected.value<BitVector>();
       auto bv_xor      = bv_t.bvxor(bv_e);
-      uint64_t upper   = bv_xor.count_trailing_zeros() + 32;
-      uint64_t size    = bv_t.size();
-      assert(upper < size);
+      uint64_t upper               = bv_xor.count_trailing_zeros() + increment;
+      uint64_t size                = bv_t.size();
       upper = std::min(upper, size) - 1;
 
       Node extr_x = nm.mk_node(Kind::BV_EXTRACT, {x}, {upper, 0});
