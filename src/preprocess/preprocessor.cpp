@@ -330,7 +330,8 @@ Preprocessor::apply(AssertionVector& assertions)
       print_statistics(d_pass_elim_lambda, assertions);
     }
 
-    if (options.pp_elim_bv_udiv())
+    // Disabled until murxla-c598aa85aefc51a0.min.smt2 is fixed.
+    if (false && options.pp_elim_bv_udiv())
     {
       d_pass_elim_bvudiv.apply(assertions);
       if (d_logger.is_msg_enabled(1))

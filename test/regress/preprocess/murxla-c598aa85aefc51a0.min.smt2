@@ -1,0 +1,6 @@
+(set-option :pp-elim-bvudiv true)
+(declare-const x (_ BitVec 46))
+(declare-const x6 Bool)
+(assert (not (= x6 (bvsgt x (_ bv0 46)))))
+(set-info :status sat)
+(check-sat-assuming ((= x6 (bvsgt (_ bv0 46) (bvsrem (_ bv1 46) x)))))
