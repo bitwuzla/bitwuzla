@@ -104,6 +104,9 @@ class SolvingContext
   const SolverEngine& solver_engine() const { return d_solver_engine; }
 
  private:
+  /** Helper for checking models, unsat cores and interpolants after solve. */
+  void check();
+
   void check_no_free_variables() const;
 
   void compute_formula_statistics(util::HistogramStatistic& stat);

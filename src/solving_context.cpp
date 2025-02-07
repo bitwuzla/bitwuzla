@@ -78,23 +78,7 @@ SolvingContext::solve()
     ensure_model();
   }
 
-  if (d_sat_state == Result::SAT && options().dbg_check_model())
-  {
-    util::Timer timer(d_stats.time_check_model);
-    check::CheckModel cm(*this);
-    auto res = cm.check();
-    assert(res);
-    Warn(!res) << "model check failed";
-  }
-  else if (d_sat_state == Result::UNSAT && options().dbg_check_unsat_core())
-  {
-    util::Timer timer(d_stats.time_check_unsat_core);
-    check::CheckUnsatCore cuc(*this);
-    auto res = cuc.check();
-    assert(res);
-    Warn(!res) << "unsat core check failed";
-  }
-
+  check();
   d_stats.max_memory = util::maximum_memory_usage();
   return d_sat_state;
 }
@@ -249,6 +233,27 @@ SolvingContext::env()
 }
 
 /* --- SolvingContext private ----------------------------------------------- */
+
+void
+SolvingContext::check()
+{
+  if (d_sat_state == Result::SAT && options().dbg_check_model())
+  {
+    util::Timer timer(d_stats.time_check_model);
+    check::CheckModel cm(*this);
+    auto res = cm.check();
+    assert(res);
+    Warn(!res) << "model check failed";
+  }
+  else if (d_sat_state == Result::UNSAT && options().dbg_check_unsat_core())
+  {
+    util::Timer timer(d_stats.time_check_unsat_core);
+    check::CheckUnsatCore cuc(*this);
+    auto res = cuc.check();
+    assert(res);
+    Warn(!res) << "unsat core check failed";
+  }
+}
 
 void
 SolvingContext::check_no_free_variables() const
