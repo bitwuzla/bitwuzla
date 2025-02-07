@@ -216,10 +216,7 @@ AbstractionModule::check()
     // Do not use reference here, since d_active_abstractions may change when
     // calling check_abstraction().
     const Node abstr_term = d_active_abstractions[i];
-    if (d_solver_state.is_relevant(abstr_term))
-    {
-      check_term_abstraction(abstr_term);
-    }
+    check_term_abstraction(abstr_term);
   }
 
   // Check abstracted assertions

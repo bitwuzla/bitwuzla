@@ -31,7 +31,6 @@ enum class Option
   TIME_LIMIT_PER,             // numeric
   MEMORY_LIMIT,               // numeric
   NTHREADS,                   // numeric
-  RELEVANT_TERMS,             // bool
 
   BV_SOLVER,      // enum
   REWRITE_LEVEL,  // numeric
@@ -541,7 +540,6 @@ class Options
   OptionNumeric time_limit_per;
   OptionNumeric memory_limit;
   OptionNumeric nthreads;
-  OptionBool relevant_terms;
 
   // Bitwuzla-specific options
   OptionModeT<BvSolver> bv_solver;

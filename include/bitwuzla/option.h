@@ -106,17 +106,6 @@ enum ENUM(Option)
    *  * An unsigned integer > 0. [**default**: 1]
    */
   EVALUE(NTHREADS),
-  /*! **Check relevant terms only.**
-   *
-   * Theory solvers only perform checks on relevant terms.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disabe [**default**]
-   *
-   *  @warning This is an expert option to configure theory solvers.
-   */
-  EVALUE(RELEVANT_TERMS),
 
   /* ---------------- Bitwuzla-specific Options ----------------------------- */
 

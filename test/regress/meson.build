@@ -1468,6 +1468,7 @@ tests_smt2 = [
   ['solver/murxla-f9e9ae3e50883097.min.smt2'],
   ['solver/murxla-a8c3bd9681982556.min.smt2'],
   ['solver/murxla-6812513959742a22.min.smt2'],
+  ['solver/murxla-61282565da842d10.min.smt2'],
 ]
 
 if get_option('fpexp')

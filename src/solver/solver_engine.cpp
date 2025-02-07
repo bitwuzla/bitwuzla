@@ -32,7 +32,6 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_assertions(context.assertions()),
       d_register_assertion_cache(&d_backtrack_mgr),
       d_register_term_cache(&d_backtrack_mgr),
-      d_assertions_vec(&d_backtrack_mgr),
       d_lemma_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
       d_in_solving_mode(false),
@@ -47,8 +46,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_quant_solver(context.env(), d_solver_state),
       d_am(context.env().options().abstraction()
                ? new abstract::AbstractionModule(context.env(), d_solver_state)
-               : nullptr),
-      d_opt_relevant_terms(d_env.options().relevant_terms())
+               : nullptr)
 {
 }
 
@@ -90,12 +88,6 @@ SolverEngine::solve()
     if (d_sat_state != Result::SAT)
     {
       break;
-    }
-
-    // Determine relevant terms based on current bit-vector model
-    if (d_opt_relevant_terms)
-    {
-      find_relevant();
     }
 
     d_fp_solver.check();
@@ -164,7 +156,7 @@ SolverEngine::value(const Node& term)
   {
     // Make sure that term is processed by abstraction module
     const Node& _term = d_am ? d_am->process(term) : term;
-    process_term(_term, true);
+    process_term(_term);
     return _value(_term);
   }
 
@@ -310,13 +302,12 @@ SolverEngine::process_assertion(const Node& assertion,
     Log(2) << "register assertion (top: " << top_level << "): " << _assertion;
     d_bv_solver.register_assertion(_assertion, top_level, is_lemma);
     d_quant_solver.register_assertion(_assertion);
-    d_assertions_vec.push_back(_assertion);
   }
   process_term(_assertion);
 }
 
 void
-SolverEngine::process_term(const Node& term, bool relevant)
+SolverEngine::process_term(const Node& term)
 {
   assert(d_am == nullptr || d_am->process(term) == term);
   util::Timer timer(d_stats.time_register_term);
@@ -330,11 +321,6 @@ SolverEngine::process_term(const Node& term, bool relevant)
     auto [it, inserted] = d_register_term_cache.insert(cur);
     if (inserted)
     {
-      if (d_opt_relevant_terms && relevant)
-      {
-        d_relevant_terms.insert(cur);
-      }
-
       if (quant::QuantSolver::is_theory_leaf(cur))
       {
         Log(2) << "register quantifier term: " << cur;
@@ -514,32 +500,16 @@ SolverEngine::_value(const Node& term)
 
         case Kind::EQUAL: {
           const Type& type0 = cur[0].type();
-          if (type0.is_bool() || type0.is_bv())
+          if (type0.is_bool() || type0.is_bv() || !registered(cur))
           {
             goto EVALUATE;
           }
-          // For all other equalities use the current value in the
+          // For all other registered equalities use the current value in the
           // bit-vector abstraction.
-          else if (registered(cur))
+          else
           {
+            assert(registered(cur));
             value = d_bv_solver.value(cur);
-          }
-          // We can always evaluate FP equalities
-          else if (type0.is_fp() || type0.is_rm())
-          {
-            goto EVALUATE;
-          }
-          // For unregistered nodes or offline value computation for equality
-          // we ask the corresponding theory solver's model.
-          else if (type0.is_array())
-          {
-            Log(3) << "unregistered array equality encountered: " << cur;
-            value = d_array_solver.value(cur);
-          }
-          else if (type0.is_fun() || type0.is_uninterpreted())
-          {
-            Log(3) << "unregistered function equality encountered: " << cur;
-            value = d_fun_solver.value(cur);
           }
         }
         break;
@@ -703,60 +673,6 @@ SolverEngine::cached_value(const Node& term) const
 }
 
 void
-SolverEngine::find_relevant()
-{
-  util::Timer timer(d_stats.time_relevant);
-  d_relevant_terms.clear();
-  node_ref_vector visit{d_assertions_vec.begin(), d_assertions_vec.end()};
-
-  while (!visit.empty())
-  {
-    const Node& cur = visit.back();
-    visit.pop_back();
-
-    auto [it, inserted] = d_relevant_terms.insert(cur);
-    if (inserted)
-    {
-      Kind k = cur.kind();
-      if (k == Kind::AND)
-      {
-        Node val = d_solver_state.value(cur[0]);
-        if (!val.value<bool>())
-        {
-          visit.push_back(cur[0]);
-          continue;
-        }
-        val = d_solver_state.value(cur[1]);
-        if (!val.value<bool>())
-        {
-          visit.push_back(cur[1]);
-          continue;
-        }
-      }
-      else if (k == Kind::ITE)
-      {
-        auto val = d_solver_state.value(cur[0]);
-        visit.push_back(cur[0]);
-        visit.push_back(val.value<bool>() ? cur[1] : cur[2]);
-        continue;
-      }
-
-      if (!quant::QuantSolver::is_theory_leaf(cur))
-      {
-        visit.insert(visit.end(), cur.begin(), cur.end());
-      }
-    }
-  }
-}
-
-bool
-SolverEngine::is_relevant(const Node& term) const
-{
-  return !d_opt_relevant_terms
-         || d_relevant_terms.find(term) != d_relevant_terms.end();
-}
-
-void
 SolverEngine::print_statistics()
 {
   if (!d_logger.is_msg_enabled(1))
@@ -825,9 +741,7 @@ SolverEngine::Statistics::Statistics(util::Statistics& stats,
       num_lemmas_abstr(stats.new_stat<uint64_t>(prefix + "lemmas::abstr")),
       time_register_term(
           stats.new_stat<util::TimerStatistic>(prefix + "time_register_term")),
-      time_solve(stats.new_stat<util::TimerStatistic>(prefix + "time_solve")),
-      time_relevant(
-          stats.new_stat<util::TimerStatistic>(prefix + "time_relevant"))
+      time_solve(stats.new_stat<util::TimerStatistic>(prefix + "time_solve"))
 {
 }
 
