@@ -183,10 +183,9 @@ SolverEngine::unsat_core(std::vector<Node>& core) const
 }
 
 Node
-SolverEngine::interpolant(const std::vector<Node>& A, const Node& C)
+SolverEngine::interpolant()
 {
-  assert(d_assertions.empty());
-  return d_bv_solver.interpolant(A, C);
+  return d_bv_solver.interpolant();
 }
 
 bool

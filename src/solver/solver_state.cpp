@@ -45,6 +45,12 @@ SolverState::unsupported(const std::string& msg)
   throw Unsupported(msg);
 }
 
+bool
+SolverState::is_interpol_conj(const Node& term) const
+{
+  return d_solver_engine.interpol_conj_assertion() == term;
+}
+
 void
 SolverState::print_statistics()
 {

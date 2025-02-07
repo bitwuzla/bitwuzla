@@ -38,6 +38,12 @@ class SolverState
   /** Throw Unsupported exception to terminate solver. */
   void unsupported(const std::string& msg);
 
+  /**
+   * Determine whether given term is the assertion B = (not C) corresponding to
+   * the current interpolation conjecture C.
+   */
+  bool is_interpol_conj(const Node& term) const;
+
   /** Print solver engine statistics. */
   void print_statistics();
 

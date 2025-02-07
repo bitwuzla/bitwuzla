@@ -824,6 +824,11 @@ Options::finalize()
   {
     // Interpolation is currently only supported with CaDiCaL.
     sat_solver.set(SatSolver::CADICAL);
+    // We disable preprocessing for now to ensure that the interpolant we
+    // compute is indeed an interpolant for the original query. In the future,
+    // we may want to reenable, which will require to map back preprocessed
+    // terms to the original terms.
+    preprocess.set(false);
   }
   // configure default values for number of propagations and updates in case
   // of sequential portfolio bv solver configuration PREPROP

@@ -70,26 +70,58 @@ class SolverEngine
   void unsat_core(std::vector<Node>& core) const;
 
   /**
-   * Get interpolant I given the set of formulas A and a conjecture C such that
+   * Get interpolant I of a set of formulas A and a conjecture C such that
    * (and A (not C)) is unsat and (=> A I) and (=> I C) are valid.
+   *
+   * Note that our SAT interpolation tracer interface defines interpolant I as
+   * (A -> I) and (I -> not B), for formulas A, B with (and A B) unsat. That is,
+   * in our word-level interface (in SolvingContext), C = not B.
+   *
+   * For computing the interpolant, we first need to determine unsat of
+   * (and A (not C)). That is,
+   *   - A and (not C) must have been asserted
+   *   - C must have been cached via SolverEngine::cache_interpol_conj_assertion
+   *     as the (preprocessed) assertion B = (not C) on the assertion stack
+   *   - and its satisfiability must have been determined via solver() as unsat
+   * before calling this function.
    */
-  Node interpolant(const std::vector<Node>& A, const Node& C);
+  Node interpolant();
 
   /**
    * Add a lemma.
    * @note A solver is not allowed to send duplicate lemmas.
+   * @param lemma The lemma.
+   * @return True if the lemma was added (duplicates are not added).
    */
   bool lemma(const Node& lemma);
-
-  /** @return Solver engine backtrack manager. */
-  backtrack::BacktrackManager* backtrack_mgr();
 
   /** Ensure that we have model values for given terms. */
   void ensure_model(const std::vector<Node>& terms);
 
+  /**
+   * Cache the assertion B corresponding to the conjecture C for an
+   * interpolation query.
+   *
+   * Interpolant I is determined for a set of formulas A and a conjecture C
+   * with A -> C such that A -> I and I -> C. That is, to compute an I,
+   * (and A (not C)) must be unsat (B is defined as (not C)).
+   */
+  void cache_interpol_conj_assertion(const Node& term)
+  {
+    d_cur_interpol_conj = term;
+  }
+  /**
+   * @return The cached assertion B corresponding to interpolation conjecture C.
+   */
+  Node& interpol_conj_assertion() { return d_cur_interpol_conj; }
+
   /** Print statistics line. */
   void print_statistics();
 
+  /** @return Solver engine backtrack manager. */
+  backtrack::BacktrackManager* backtrack_mgr();
+
+  /** @return The associated bit-vector solver instance. */
   const bv::BvSolver& bv_solver() const { return d_bv_solver; }
 
  private:
@@ -153,6 +185,15 @@ class SolverEngine
   bool d_new_terms_registered = false;
   /** Lemma cache. */
   backtrack::unordered_set<Node> d_lemma_cache;
+
+  /**
+   * The assertion B corresponding to conjecture C for an interpolation query.
+   *
+   * Interpolant I is determined for a set of formulas A and a conjecture C
+   * with A -> C such that A -> I and I -> C. That is, to compute an I,
+   * (and A (not C)) must be unsat (B is defined as (not C)).
+   */
+  Node d_cur_interpol_conj;
 
   /** Result of latest solve() call. */
   Result d_sat_state;

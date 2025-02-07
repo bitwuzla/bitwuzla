@@ -147,7 +147,7 @@ TEST_F(TestBvInterpolationSolver, solve)
 {
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx(d_nm, d_options, sat_factory);
-  ASSERT_DEATH(ctx.solve(), "!d_produce_interpolants");
+  ASSERT_NO_FATAL_FAILURE(ctx.solve());
 }
 
 TEST_F(TestBvInterpolationSolver, produce_interpolants)
@@ -179,6 +179,15 @@ TEST_F(TestBvInterpolationSolver, preprop)
   SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
   ASSERT_NO_FATAL_FAILURE(
       ctx.get_interpolant({}, d_nm.mk_const(d_nm.mk_bool_type())));
+}
+
+TEST_F(TestBvInterpolationSolver, bool_A)
+{
+  sat::SatSolverFactory sat_factory(d_options);
+  SolvingContext ctx(d_nm, d_options, sat_factory);
+  ASSERT_DEATH(ctx.get_interpolant({d_nm.mk_const(d_nm.mk_bv_type(8))},
+                                   d_nm.mk_const(d_nm.mk_bool_type())),
+               "is_bool");
 }
 
 TEST_F(TestBvInterpolationSolver, bool_conj)

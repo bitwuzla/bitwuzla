@@ -195,15 +195,6 @@ BvBitblastSolver::unsat_core(std::vector<Node>& core) const
   }
 }
 
-Node
-BvBitblastSolver::interpolant(const std::vector<Node>& A, const Node& C)
-{
-  (void) A;
-  (void) C;
-  assert(false);
-  return Node();
-}
-
 /* --- BvBitblastSolver private --------------------------------------------- */
 
 void

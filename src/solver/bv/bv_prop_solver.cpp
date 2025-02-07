@@ -219,15 +219,6 @@ BvPropSolver::unsat_core(std::vector<Node>& core) const
   core.push_back(it->second);
 }
 
-Node
-BvPropSolver::interpolant(const std::vector<Node>& A, const Node& C)
-{
-  (void) A;
-  (void) C;
-  assert(false);
-  return Node();
-}
-
 uint64_t
 BvPropSolver::mk_node(const Node& node)
 {

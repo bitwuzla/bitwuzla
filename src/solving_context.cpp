@@ -165,22 +165,95 @@ SolvingContext::get_unsat_core()
 Node
 SolvingContext::get_interpolant(const std::vector<Node>& A, const Node& C)
 {
+  util::Timer timer(d_stats.time_get_interpolant);
+
   assert(d_assertions.size() == 0);
   assert(d_env.options().produce_interpolants());
-  std::vector<Node> AA;
-  for (const auto& a : A)
+
+  fp::SymFpuNM snm(d_env.nm());
+  set_resource_limits();
+
+  Log(1);
+  Log(1) << "*** interpolant";
+  Log(1);
+  for (size_t i = 0, n = A.size(); i < n; ++i)
   {
-    AA.push_back(d_env.rewriter().rewrite(a));
+    Node a = d_env.rewriter().rewrite(A[i]);
+    assert(a.type().is_bool());
+    Log(1) << "A[" << i << "]: " << A[i];
+    assert_formula(a);
   }
-  Node ipol = d_solver_engine.interpolant(AA, d_env.rewriter().rewrite(C));
-  if (!ipol.is_null() && options().dbg_check_interpolant())
+  Log(1) << "C: " << C;
+  Log(1);
+  assert(C.type().is_bool());
+
+  // Our SAT interpolation tracer interface defines interpolant I as (A -> I)
+  // and (I -> not B), for formulas A, B with (and A B) unsat. In our word-level
+  // interface here, C = not B.
+  size_t idx_B = d_assertions.size();
+  Node B       = d_env.nm().mk_node(Kind::NOT, {d_env.rewriter().rewrite(C)});
+  assert_formula(B);
+
+  // Solve, we only compute on unsat
   {
-    util::Timer timer(d_stats.time_check_interpolant);
-    check::CheckInterpolant ci(*this);
-    auto res = ci.check(A, C, ipol);
-    assert(res);
-    Warn(!res) << "interpolant check failed";
+    util::Timer timer(d_stats.time_solve);
+#ifndef NDEBUG
+    check_no_free_variables();
+#endif
+    d_sat_state = preprocess();
+    // Note: no shortcuts when preprocessing determines unsat, we need the
+    //       we need to solve to kick off interpolation tracing, else we
+    //       cannot compute an interpolant
+    d_solver_engine.cache_interpol_conj_assertion(d_assertions[idx_B]);
+
+    if (d_sat_state != Result::SAT)
+    {
+      try
+      {
+        d_sat_state = d_solver_engine.solve();
+      }
+      catch (const Unsupported& e)
+      {
+        Warn(!d_subsolver) << e.msg();
+        d_sat_state = Result::UNKNOWN;
+      }
+      catch (const Error& e)
+      {
+        std::cerr << "[bzla] error: " << e.msg() << std::endl;
+        std::exit(EXIT_FAILURE);
+      }
+    }
+    if (d_sat_state == Result::SAT && d_have_quantifiers.get()
+        && (options().produce_models() || options().dbg_check_model()))
+    {
+      ensure_model();
+    }
+    check();
   }
+
+  Node ipol;
+  if (d_sat_state == Result::UNSAT)
+  {
+    {
+      util::Timer timer(d_stats.time_compute_interpolant);
+      ipol = d_solver_engine.interpolant();
+    }
+
+    if (!ipol.is_null() && options().dbg_check_interpolant())
+    {
+      util::Timer timer(d_stats.time_check_interpolant);
+      check::CheckInterpolant ci(*this);
+      auto res = ci.check(A, C, ipol);
+      assert(res);
+      Warn(!res) << "interpolant check failed";
+    }
+  }
+  else
+  {
+    Log(1) << "not unsat";
+  }
+
+  d_stats.max_memory = util::maximum_memory_usage();
   return ipol;
 }
 
@@ -417,6 +490,10 @@ SolvingContext::Statistics::Statistics(util::Statistics& stats)
           "solving_context::time_check_model")),
       time_check_unsat_core(stats.new_stat<util::TimerStatistic>(
           "solving_context::time_check_unsat_core")),
+      time_get_interpolant(stats.new_stat<util::TimerStatistic>(
+          "solving_context::time_get_interpolant")),
+      time_compute_interpolant(stats.new_stat<util::TimerStatistic>(
+          "solving_context::time_compute_interpolant")),
       time_check_interpolant(stats.new_stat<util::TimerStatistic>(
           "solving_context::time_check_interpolant")),
       max_memory(stats.new_stat<uint64_t>("solving_context::max_memory")),

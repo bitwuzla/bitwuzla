@@ -46,23 +46,38 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   BvInterpolationSolver(Env& env, SolverState& state);
   ~BvInterpolationSolver();
 
-  Node interpolant(const std::vector<Node>& A, const Node& C) override;
-
   void register_assertion(const Node& assertion,
                           bool top_level,
                           bool is_lemma) override;
-
-  /** Get statistics. */
-  const auto& statistics() const { return d_stats; }
-
-  /** The following are unsupported and should never be called. */
   Result solve() override;
   Node value(const Node& term) override;
   void unsat_core(std::vector<Node>& core) const override;
 
+  /**
+   * Get interpolant I of a set of formulas A and a conjecture C such that
+   * (and A (not C)) is unsat and (=> A I) and (=> I C) are valid.
+   *
+   * Note that our SAT interpolation tracer interface defines interpolant I as
+   * (A -> I) and (I -> not B), for formulas A, B with (and A B) unsat. That is,
+   * in our word-level interface (in SolvingContext), C = not B.
+   *
+   * For computing the interpolant, we first need to determine unsat of
+   * (and A (not C)). That is,
+   *   - A and (not C) must have been asserted
+   *   - C must have been cached via SolverEngine::cache_interpol_conj_assertion
+   *     as the (preprocessed) assertion B = (not C) on the assertion stack
+   *   - and its satisfiability must have been determined via solver() as unsat
+   * before calling this function.
+   */
+  Node interpolant();
+
+  /** Get statistics. */
+  const auto& statistics() const { return d_stats; }
+
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
+    util::TimerStatistic& time_sat;
     util::TimerStatistic& time_interpol;
     util::TimerStatistic& time_bitblast;
     util::TimerStatistic& time_label;
@@ -84,6 +99,9 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   backtrack::vector<Node> d_assertions;
   /** The current set of assumptions. */
   backtrack::vector<Node> d_assumptions;
+
+  /** True if option interolation_auto_label is enabled. */
+  bool d_opt_auto_label;
 
   /** AIG bit-blaster. */
   AigBitblaster d_bitblaster;

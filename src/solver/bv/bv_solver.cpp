@@ -96,8 +96,6 @@ BvSolver::solve()
 {
   util::Timer timer(d_stats.time_check);
 
-  assert(!d_produce_interpolants);
-
   if (d_env.terminate())
   {
     return Result::UNKNOWN;
@@ -109,7 +107,10 @@ BvSolver::solve()
   {
     case option::BvSolver::BITBLAST:
       assert(d_cur_solver == option::BvSolver::BITBLAST);
-      d_sat_state = d_bitblast_solver.solve();
+      assert(!d_env.options().produce_interpolants() || d_interpol_solver);
+      d_sat_state = d_env.options().produce_interpolants()
+                        ? d_interpol_solver->solve()
+                        : d_bitblast_solver.solve();
       break;
     case option::BvSolver::PROP:
       assert(d_cur_solver == option::BvSolver::PROP);
@@ -132,11 +133,14 @@ BvSolver::solve()
 Node
 BvSolver::value(const Node& term)
 {
-  assert(!d_produce_interpolants);
   assert(is_leaf(term));
   assert(term.type().is_bool() || term.type().is_bv());
   if (d_cur_solver == option::BvSolver::BITBLAST)
   {
+    if (d_env.options().produce_interpolants())
+    {
+      return d_interpol_solver->value(term);
+    }
     return d_bitblast_solver.value(term);
   }
   assert(d_cur_solver == option::BvSolver::PROP);
@@ -161,10 +165,10 @@ BvSolver::unsat_core(std::vector<Node>& core) const
 /* --- BvSolver private ----------------------------------------------------- */
 
 Node
-BvSolver::interpolant(const std::vector<Node>& A, const Node& C)
+BvSolver::interpolant()
 {
   assert(d_produce_interpolants);
-  return d_interpol_solver->interpolant(A, C);
+  return d_interpol_solver->interpolant();
 }
 
 BvSolver::Statistics::Statistics(util::Statistics& stats)
