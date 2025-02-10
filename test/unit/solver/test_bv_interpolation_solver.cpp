@@ -24,15 +24,18 @@ using namespace node;
 class TestBvInterpolationSolver : public TestCommon
 {
  protected:
+  constexpr static bool s_test_internal   = true;
+  constexpr static bool s_test_cadicraig  = true;
+  constexpr static bool s_full_pp_rw_only = false;
+
   void SetUp() override
   {
     d_options.bv_solver.set_str("bitblast");
     d_options.produce_interpolants.set(true);
     d_options.dbg_check_interpolant.set(true);
-    d_options.log_level.set(0);
-    d_options_cadicraig = d_options;
+    d_options.log_level.set(2);
     d_options.tmp_interpol_use_cadicraig.set(false);
-    d_options_cadicraig.tmp_interpol_use_cadicraig.set(true);
+    d_options.interpolation_auto_label.set(true);
   }
 
   void test_get_interpolant(const std::vector<Node>& A, const Node& C)
@@ -53,8 +56,14 @@ class TestBvInterpolationSolver : public TestCommon
 
   void test_get_interpolant_aux(const std::vector<Node>& A, const Node& C)
   {
-    test_get_interpolant_aux_internal(A, C);
-    test_get_interpolant_aux_cadicraig(A, C);
+    if (s_test_internal)
+    {
+      test_get_interpolant_aux_internal(A, C);
+    }
+    if (s_test_cadicraig)
+    {
+      test_get_interpolant_aux_cadicraig(A, C);
+    }
   }
 
   void test_get_interpolant_aux_internal(const std::vector<Node>& A,
@@ -68,13 +77,17 @@ class TestBvInterpolationSolver : public TestCommon
     // get interpolant
     test_get_interpolant_aux_internal(
         true, d_options.rewrite_level.dflt(), A, C);
-    // get_interpolant when preprocessing is disabled
-    test_get_interpolant_aux_internal(
-        false, d_options.rewrite_level.dflt(), A, C);
-    // get_interpolant when rewriting is disabled
-    test_get_interpolant_aux_internal(true, 0, A, C);
-    // get_interpolant when preprocessing and rewriting is disabled
-    test_get_interpolant_aux_internal(false, 0, A, C);
+
+    if (!s_full_pp_rw_only)
+    {
+      // get_interpolant when preprocessing is disabled
+      test_get_interpolant_aux_internal(
+          false, d_options.rewrite_level.dflt(), A, C);
+      // get_interpolant when rewriting is disabled
+      test_get_interpolant_aux_internal(true, 0, A, C);
+      // get_interpolant when preprocessing and rewriting is disabled
+      test_get_interpolant_aux_internal(false, 0, A, C);
+    }
   }
 
   void test_get_interpolant_aux_cadicraig(const std::vector<Node>& A,
@@ -88,13 +101,16 @@ class TestBvInterpolationSolver : public TestCommon
     // get interpolant
     test_get_interpolant_aux_cadicraig(
         true, d_options.rewrite_level.dflt(), A, C);
-    // get_interpolant when preprocessing is disabled
-    test_get_interpolant_aux_cadicraig(
-        false, d_options.rewrite_level.dflt(), A, C);
-    // get_interpolant when rewriting is disabled
-    test_get_interpolant_aux_cadicraig(true, 0, A, C);
-    // get_interpolant when preprocessing and rewriting is disabled
-    test_get_interpolant_aux_cadicraig(false, 0, A, C);
+    if (!s_full_pp_rw_only)
+    {
+      // get_interpolant when preprocessing is disabled
+      test_get_interpolant_aux_cadicraig(
+          false, d_options.rewrite_level.dflt(), A, C);
+      // get_interpolant when rewriting is disabled
+      test_get_interpolant_aux_cadicraig(true, 0, A, C);
+      // get_interpolant when preprocessing and rewriting is disabled
+      test_get_interpolant_aux_cadicraig(false, 0, A, C);
+    }
   }
 
   void test_get_interpolant_aux_internal(bool pp,
@@ -127,16 +143,16 @@ class TestBvInterpolationSolver : public TestCommon
                 << ">> rewrite level: " << rwl
                 << "  pp: " << (pp ? "enabled" : "disabled") << std::endl;
     }
-    d_options_cadicraig.preprocess.set(pp);
-    d_options_cadicraig.rewrite_level.set(rwl);
+    d_options.tmp_interpol_use_cadicraig.set(true);
+    d_options.preprocess.set(pp);
+    d_options.rewrite_level.set(rwl);
     sat::SatSolverFactory sat_factory(d_options);
-    SolvingContext ctx(d_nm, d_options_cadicraig, sat_factory);
+    SolvingContext ctx(d_nm, d_options, sat_factory);
     Node interpolant = ctx.get_interpolant(A, C);
     ASSERT_FALSE(interpolant.is_null());
   }
 
   option::Options d_options;
-  option::Options d_options_cadicraig;
   NodeManager d_nm;
 };
 
@@ -587,6 +603,44 @@ TEST_F(TestBvInterpolationSolver, interpol11)
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_array1)
+{
+  Type bv1  = d_nm.mk_bv_type(1);
+  Type arr  = d_nm.mk_array_type(bv1, bv1);
+  Node zero = d_nm.mk_value(BitVector::mk_zero(1));
+  Node one  = d_nm.mk_value(BitVector::mk_one(1));
+  //(declare-fun a () (Array (_ BitVec 1) (_ BitVec 1)))
+  Node a = d_nm.mk_const(arr, "a");
+  //(declare-fun b () (Array (_ BitVec 1) (_ BitVec 1)))
+  Node b = d_nm.mk_const(arr, "b");
+  // (assert (= (select a #b0) #b0))
+  Node A0 =
+      d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::SELECT, {a, zero}), zero});
+  // (assert (= (select b #b0) #b0))
+  Node A1 =
+      d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::SELECT, {b, zero}), zero});
+  // (assert (distinct a b))
+  Node A2 = d_nm.mk_node(Kind::DISTINCT, {a, b});
+  // (assert (= (select a #b1) #b0))
+  Node C0 =
+      d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::SELECT, {a, one}), zero});
+  // (assert (= (select b #b1) #b0))
+  Node C1 =
+      d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::SELECT, {b, one}), zero});
+
+  Node C = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::AND, {C0, C1})});
+
+  option::Options options;
+  sat::SatSolverFactory sat_factory(options);
+  SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
+  ctx.assert_formula(A0);
+  ctx.assert_formula(A1);
+  ctx.assert_formula(A2);
+  ctx.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+  assert(ctx.solve() == Result::UNSAT);
+  test_get_interpolant({A0, A1, A2}, C);
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_array2)
 {
   Type bv3   = d_nm.mk_bv_type(3);
   Type arr   = d_nm.mk_array_type(bv3, bv3);
