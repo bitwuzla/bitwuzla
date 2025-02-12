@@ -634,13 +634,6 @@ TEST_F(TestBvInterpolationSolver, interpol_array1)
                            });
   Node C  = d_nm.mk_node(Kind::EQUAL, {a4, a5});
 
-  option::Options options;
-  SolvingContext ctx = SolvingContext(d_nm, options);
-  ctx.assert_formula(A0);
-  ctx.assert_formula(A1);
-  ctx.assert_formula(A2);
-  ctx.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
-  assert(ctx.solve() == Result::UNSAT);
   test_get_interpolant({A0, A1, A2}, C);
 }
 
@@ -671,14 +664,6 @@ TEST_F(TestBvInterpolationSolver, interpol_array2)
 
   Node C = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::AND, {C0, C1})});
 
-  option::Options options;
-  sat::SatSolverFactory sat_factory(options);
-  SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
-  ctx.assert_formula(A0);
-  ctx.assert_formula(A1);
-  ctx.assert_formula(A2);
-  ctx.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
-  assert(ctx.solve() == Result::UNSAT);
   test_get_interpolant({A0, A1, A2}, C);
 }
 
@@ -774,12 +759,99 @@ TEST_F(TestBvInterpolationSolver, interpol_array4)
   Node C = d_nm.mk_node(Kind::EQUAL,
                         {d_nm.mk_node(Kind::SELECT, {h, b}),
                          d_nm.mk_node(Kind::SELECT, {hh, b})});
-  option::Options options;
-  SolvingContext ctx = SolvingContext(d_nm, options);
-  ctx.assert_formula(A0);
-  ctx.assert_formula(A1);
-  ctx.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
-  assert(ctx.solve() == Result::UNSAT);
   test_get_interpolant({A0, A1}, C);
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_fp1)
+{
+  Type f16       = d_nm.mk_fp_type(5, 11);
+  Node a         = d_nm.mk_const(f16, "a");
+  Node b         = d_nm.mk_const(f16, "b");
+  Node rm        = d_nm.mk_const(d_nm.mk_rm_type(), "rm");
+  Node rna       = d_nm.mk_value(RoundingMode::RNA);
+  Node rne       = d_nm.mk_value(RoundingMode::RNE);
+  Node rtn       = d_nm.mk_value(RoundingMode::RTN);
+  Node rtp       = d_nm.mk_value(RoundingMode::RTP);
+  Node rtz       = d_nm.mk_value(RoundingMode::RTZ);
+  Node fpneg_a   = d_nm.mk_node(Kind::FP_NEG, {a});
+  Node fpabs_a   = d_nm.mk_node(Kind::FP_ABS, {a});
+  Node fpposzero = d_nm.mk_value(FloatingPoint::fpzero(5, 11, false));
+  Node fpnegzero = d_nm.mk_value(FloatingPoint::fpzero(5, 11, true));
+  // (assert (not (fp.isNaN b)))
+  Node A0 = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NAN, {b})});
+  // (assert (not (fp.isNegative b)))
+  Node A1 = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NEG, {b})});
+  // (assert (fp.isPositive b))
+  Node A2 = d_nm.mk_node(Kind::FP_IS_POS, {b});
+  // (assert (and (fp.leq a a) (not (fp.lt a a))))
+  Node A3 = d_nm.mk_node(
+      Kind::AND,
+      {d_nm.mk_node(Kind::FP_LEQ, {a, a}),
+       d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_LT, {a, a})})});
+  // (assert (and
+  //           (fp.geq (fp.sqrt RNE a) (fp.roundToIntegral RNE b))
+  //           (not (fp.gt (fp.add RNA a a) b))))
+  Node A4 = d_nm.mk_node(
+      Kind::AND,
+      {d_nm.mk_node(Kind::FP_GEQ,
+                    {d_nm.mk_node(Kind::FP_SQRT, {rne, a}),
+                     d_nm.mk_node(Kind::FP_RTI, {rne, b})}),
+       d_nm.mk_node(
+           Kind::NOT,
+           {d_nm.mk_node(Kind::FP_GT,
+                         {d_nm.mk_node(Kind::FP_ADD, {rna, a, a}), b})})});
+  // (assert (fp.geq (fp.add RTN a b) (fp.sub RTN a b)))
+  Node A5 = d_nm.mk_node(Kind::FP_GEQ,
+                         {d_nm.mk_node(Kind::FP_ADD, {rtn, a, b}),
+                          d_nm.mk_node(Kind::FP_SUB, {rtn, a, b})});
+  // (assert (fp.leq (fp.mul RTP a (_ +zero 5 11)) (_ -zero 5 11)))
+  Node A6 = d_nm.mk_node(
+      Kind::FP_LEQ,
+      {d_nm.mk_node(Kind::FP_MUL, {rtp, a, fpposzero}), fpnegzero});
+  // (assert (fp.isNaN (fp.div RTP a (_ +zero 5 11))))
+  Node A7 = d_nm.mk_node(Kind::FP_IS_NAN,
+                         {d_nm.mk_node(Kind::FP_DIV, {rtp, a, fpposzero})});
+  // (assert (= (fp.add rm (fp.mul RTZ a b) a) (fp.fma RTZ a b (fp.rem a b))))
+  Node A8 = d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::FP_ADD,
+                    {rm, d_nm.mk_node(Kind::FP_MUL, {rtz, a, b}), a}),
+       d_nm.mk_node(Kind::FP_FMA,
+                    {rtz, a, b, d_nm.mk_node(Kind::FP_REM, {a, b})})});
+  // (check-sat-assuming (b0 b1 b2 b3 b4 b5))
+  // (define-fun b0 () Bool (= (fp.abs a) b))
+  Node C0 = d_nm.mk_node(Kind::EQUAL, {fpabs_a, b});
+  // (define-fun b1 () Bool (= (fp.abs a) (fp.abs (fp.neg a))))
+  Node C1 = d_nm.mk_node(Kind::EQUAL,
+                         {fpabs_a, d_nm.mk_node(Kind::FP_ABS, {fpneg_a})});
+  // (define-fun b2 () Bool
+  //   (not (and (fp.isNormal (fp.neg a)) (not (fp.isNormal a)))))
+  Node C2 = d_nm.mk_node(
+      Kind::NOT,
+      {d_nm.mk_node(
+          Kind::AND,
+          {d_nm.mk_node(Kind::FP_IS_NORMAL, {fpneg_a}),
+           d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NORMAL, {a})})})});
+  // (define-fun b3 () Bool
+  //   (not (and (fp.isSubnormal (fp.neg a)) (not (fp.isSubnormal a)))))
+  Node C3 = d_nm.mk_node(
+      Kind::NOT,
+      {d_nm.mk_node(
+          Kind::AND,
+          {d_nm.mk_node(Kind::FP_IS_SUBNORMAL, {fpneg_a}),
+           d_nm.mk_node(Kind::NOT,
+                        {d_nm.mk_node(Kind::FP_IS_SUBNORMAL, {a})})})});
+  // (define-fun b4 () Bool (and (fp.isZero (fp.neg a)) (not (fp.isNormal a))))
+  Node C4 = d_nm.mk_node(
+      Kind::AND,
+      {d_nm.mk_node(Kind::FP_IS_ZERO, {fpneg_a}),
+       d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NORMAL, {a})})});
+  // (define-fun b5 () Bool (not (fp.isInfinite b)))
+  Node C5 = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_INF, {b})});
+
+  Node C = d_nm.mk_node(
+      Kind::NOT, {utils::mk_nary(d_nm, Kind::AND, {C0, C1, C2, C3, C4, C5})});
+
+  test_get_interpolant({A0, A1, A2, A3, A4, A5, A6, A7, A8}, C);
 }
 }  // namespace bzla::test
