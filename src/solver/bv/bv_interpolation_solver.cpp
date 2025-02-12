@@ -256,6 +256,7 @@ BvInterpolationSolver::interpolant()
   Log(2);
   Log(2) << "Bitblaster cache: " << d_bitblaster.bitblaster_cache().size()
          << " entries";
+  Log(2);
   if (d_logger.is_log_enabled(2))
   {
     for (const auto& p : d_bitblaster.bitblaster_cache())
