@@ -37,10 +37,7 @@ class BvInterpolationSolver::InterpolationSatSolver
 {
  public:
   InterpolationSatSolver(Env& env, sat::SatSolver& solver, Tracer& tracer)
-      : d_logger(env.logger()),
-        d_solver(solver),
-        d_tracer(tracer),
-        d_auto_label(env.options().interpolation_auto_label())
+      : d_logger(env.logger()), d_solver(solver), d_tracer(tracer)
   {
   }
 
@@ -73,7 +70,8 @@ class BvInterpolationSolver::InterpolationSatSolver
         if (!is_labeled(lit))
         {
           int64_t var                   = std::abs(lit);
-          Tracer::VariableKind var_kind = d_auto_label
+          auto it                       = d_vars_to_kinds.find(var);
+          Tracer::VariableKind var_kind = it != d_vars_to_kinds.end()
                                               ? d_vars_to_kinds.at(var)
                                               : Tracer::VariableKind::GLOBAL;
           d_tracer.label_variable(var, var_kind);
@@ -110,8 +108,25 @@ class BvInterpolationSolver::InterpolationSatSolver
     return d_solver.value(lit) == 1 ? true : false;
   }
 
+  /**
+   * Label all SAT variables occuring in the given AIG with the given kind.
+   *
+   * Optionally, variables that occur in both A and B can be labeled as shared.
+   * Generally, labeling variables as local to A or B requires absolute
+   * confidence that they will not occur in any future incoming clauses that
+   * are not A (for A clauses) or B (for B clauses).
+   *
+   * Note that if label_bits is not called explicitly to label an AIG, it
+   * will be labeled as shared.
+   *
+   * @param bits The AIG to label.
+   * @param kind The label kind.
+   * @param auto_shared True to automatically label SAT variables that occur
+   *                    in both A and B as shared.
+   */
   void label_bits(const bitblast::AigBitblaster::Bits& bits,
-                  Tracer::VariableKind kind)
+                  Tracer::VariableKind kind,
+                  bool auto_shared = false)
   {
     bv::AigBitblaster::aig_node_ref_vector visit;
     std::unordered_set<int64_t> cache;
@@ -141,10 +156,15 @@ class BvInterpolationSolver::InterpolationSatSolver
         visit.push_back(cur[0]);
         visit.push_back(cur[1]);
       }
-      if (!inserted && it->second != kind
-          && it->second != Tracer::VariableKind::GLOBAL)
+      if (auto_shared)
       {
-        it->second = Tracer::VariableKind::GLOBAL;
+        assert(kind == Tracer::VariableKind::B || inserted
+               || kind == it->second);
+        if (!inserted && it->second != kind
+            && it->second != Tracer::VariableKind::GLOBAL)
+        {
+          it->second = Tracer::VariableKind::GLOBAL;
+        }
       }
     } while (!visit.empty());
   }
@@ -195,11 +215,6 @@ class BvInterpolationSolver::InterpolationSatSolver
   Tracer& d_tracer;
   /** The current clause type (A or B). */
   Tracer::ClauseKind d_clause_kind = Tracer::ClauseKind::A;
-  /**
-   * True if A/B/GLOBAL labeling is to be determined automatically. Else, all
-   * SAT variables are labeled as GLOBAL.
-   */
-  bool d_auto_label;
 };
 
 /* --- BvInterpolationSolver public ---------------------------------------- */
@@ -334,7 +349,7 @@ BvInterpolationSolver::register_assertion(const Node& assertion,
     util::Timer timer(d_stats.time_bitblast);
     d_bitblaster.bitblast(assertion);
   }
-  if (d_opt_auto_label)
+  if (is_lemma)
   {
     Log(2) << "label " << kind;
     util::Timer timer(d_stats.time_label);

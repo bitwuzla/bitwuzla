@@ -33,9 +33,9 @@ class TestBvInterpolationSolver : public TestCommon
     d_options.bv_solver.set_str("bitblast");
     d_options.produce_interpolants.set(true);
     d_options.dbg_check_interpolant.set(true);
-    d_options.log_level.set(2);
+    d_options.log_level.set(0);
     d_options.tmp_interpol_use_cadicraig.set(false);
-    d_options.interpolation_auto_label.set(true);
+    d_options.interpolation_auto_label.set(false);
   }
 
   void test_get_interpolant(const std::vector<Node>& A, const Node& C)
@@ -604,6 +604,48 @@ TEST_F(TestBvInterpolationSolver, interpol11)
 
 TEST_F(TestBvInterpolationSolver, interpol_array1)
 {
+  Type arr = d_nm.mk_array_type(d_nm.mk_bool_type(), d_nm.mk_bool_type());
+  Node a1  = d_nm.mk_const(arr, "a1");
+  Node a2  = d_nm.mk_const(arr, "a2");
+  Node a3  = d_nm.mk_const(arr, "a3");
+  Node a4  = d_nm.mk_const(arr, "a4");
+  Node a5  = d_nm.mk_const(arr, "a5");
+
+  Node A0 = utils::mk_nary(d_nm,
+                           Kind::AND,
+                           {
+                               d_nm.mk_node(Kind::DISTINCT, {a1, a2}),
+                               d_nm.mk_node(Kind::DISTINCT, {a1, a3}),
+                               d_nm.mk_node(Kind::DISTINCT, {a1, a4}),
+                               d_nm.mk_node(Kind::DISTINCT, {a1, a5}),
+                           });
+  Node A1 = utils::mk_nary(d_nm,
+                           Kind::AND,
+                           {
+                               d_nm.mk_node(Kind::DISTINCT, {a2, a3}),
+                               d_nm.mk_node(Kind::DISTINCT, {a2, a4}),
+                               d_nm.mk_node(Kind::DISTINCT, {a2, a5}),
+                           });
+  Node A2 = utils::mk_nary(d_nm,
+                           Kind::AND,
+                           {
+                               d_nm.mk_node(Kind::DISTINCT, {a3, a4}),
+                               d_nm.mk_node(Kind::DISTINCT, {a3, a5}),
+                           });
+  Node C  = d_nm.mk_node(Kind::EQUAL, {a4, a5});
+
+  option::Options options;
+  SolvingContext ctx = SolvingContext(d_nm, options);
+  ctx.assert_formula(A0);
+  ctx.assert_formula(A1);
+  ctx.assert_formula(A2);
+  ctx.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+  assert(ctx.solve() == Result::UNSAT);
+  test_get_interpolant({A0, A1, A2}, C);
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_array2)
+{
   Type bv1  = d_nm.mk_bv_type(1);
   Type arr  = d_nm.mk_array_type(bv1, bv1);
   Node zero = d_nm.mk_value(BitVector::mk_zero(1));
@@ -640,7 +682,7 @@ TEST_F(TestBvInterpolationSolver, interpol_array1)
   test_get_interpolant({A0, A1, A2}, C);
 }
 
-TEST_F(TestBvInterpolationSolver, interpol_array2)
+TEST_F(TestBvInterpolationSolver, interpol_array3)
 {
   Type bv3   = d_nm.mk_bv_type(3);
   Type arr   = d_nm.mk_array_type(bv3, bv3);
@@ -703,5 +745,41 @@ TEST_F(TestBvInterpolationSolver, interpol_array2)
   ctx.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
   assert(ctx.solve() == Result::UNSAT);
   test_get_interpolant({A0, A1, A2, A3, A4}, C);
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_array4)
+{
+  Type btype = d_nm.mk_bool_type();
+  Type arr   = d_nm.mk_array_type(btype, btype);
+  // (declare-const h (Array Bool Bool))
+  Node h = d_nm.mk_const(arr, "h");
+  // (declare-const i Bool)
+  Node i = d_nm.mk_const(btype, "i");
+  // (declare-const e Bool)
+  Node e = d_nm.mk_const(btype, "e");
+  // (define-fun hh () (Array Bool Bool) (store h i e))
+  Node hh = d_nm.mk_node(Kind::STORE, {h, i, e});
+  // (declare-const a Bool)
+  Node a = d_nm.mk_const(btype, "a");
+  // (declare-const b Bool)
+  Node b = d_nm.mk_const(btype, "b");
+
+  // (assert (distinct a b))
+  Node A0 = d_nm.mk_node(Kind::DISTINCT, {a, b});
+  // (assert (distinct (select h a) (select hh a)))
+  Node A1 = d_nm.mk_node(Kind::DISTINCT,
+                         {d_nm.mk_node(Kind::SELECT, {h, a}),
+                          d_nm.mk_node(Kind::SELECT, {hh, a})});
+  // (assert (distinct (select h b) (select hh b)))
+  Node C = d_nm.mk_node(Kind::EQUAL,
+                        {d_nm.mk_node(Kind::SELECT, {h, b}),
+                         d_nm.mk_node(Kind::SELECT, {hh, b})});
+  option::Options options;
+  SolvingContext ctx = SolvingContext(d_nm, options);
+  ctx.assert_formula(A0);
+  ctx.assert_formula(A1);
+  ctx.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+  assert(ctx.solve() == Result::UNSAT);
+  test_get_interpolant({A0, A1}, C);
 }
 }  // namespace bzla::test
