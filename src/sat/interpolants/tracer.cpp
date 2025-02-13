@@ -19,6 +19,29 @@ Tracer::Statistics::Statistics(util::Statistics& stats,
 {
 }
 
+Tracer::RevBitblasterCache
+Tracer::compute_rev_bb_cache() const
+{
+  RevBitblasterCache res;
+  // Get reverse mapping for nodes in bitblaster cache
+  const auto& bb_cache = d_bitblaster.bitblaster_cache();
+  for (const auto& p : bb_cache)
+  {
+#ifndef NDEBUG
+    bool is_bv = p.first.type().is_bv();
+#endif
+    assert(is_bv || p.first.type().is_bool());
+    for (size_t i = 0, size = p.second.size(); i < size; ++i)
+    {
+      const bitblast::AigNode& a = p.second[i];
+      size_t j                   = size - 1 - i;
+      assert(is_bv || j == 0);
+      res.try_emplace(a.get_id(), p.first, j);
+    }
+  }
+  return res;
+}
+
 std::ostream&
 operator<<(std::ostream& out, Tracer::VariableKind kind)
 {

@@ -79,12 +79,6 @@ class CadicalTracer : public Tracer
 
  private:
   /**
-   * Alias for reverse bitblaster cache, maps aig id (SAT variable, thus always
-   * non-negative) to the Node the AIG occurs in and the bit index it is at.
-   */
-  using RevBitblasterCache =
-      std::unordered_map<int64_t, std::pair<ConstNodeRef, size_t>>;
-  /**
    * Construct interpolant for given clause.
    * @param clause The clause to construct the interpolant for.
    * @param kind   The kind of the clause.

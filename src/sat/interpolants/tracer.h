@@ -83,6 +83,20 @@ class Tracer : public CaDiCaL::Tracer
   } d_stats;
 
  protected:
+  /**
+   * Alias for reverse bitblaster cache, maps AIG id (SAT variable, thus always
+   * non-negative) to the Node the AIG occurs in and the bit index it is at.
+   */
+  using RevBitblasterCache =
+      std::unordered_map<int64_t, std::pair<ConstNodeRef, size_t>>;
+
+  /**
+   * Compute a reverse mapping of the current bitblaster cache.
+   * @return A mapping from AIG id (SAT variable, thus always non-negative) to
+   *         the Node the AIG occurs in and the bit index it is at.
+   */
+  RevBitblasterCache compute_rev_bb_cache() const;
+
   /** The associated node manager. */
   NodeManager& d_nm;
   /** The associated bitblaster. */

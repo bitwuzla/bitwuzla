@@ -348,23 +348,7 @@ CadicalTracer::get_interpolant()
     return d_nm.mk_value(false);
   }
 
-  // Get reverse mapping for nodes in bitblaster cache
-  const auto& bb_cache = d_bitblaster.bitblaster_cache();
-  RevBitblasterCache rev_bb_cache;
-  for (const auto& p : bb_cache)
-  {
-#ifndef NDEBUG
-    bool is_bv = p.first.type().is_bv();
-#endif
-    assert(is_bv || p.first.type().is_bool());
-    for (size_t i = 0, size = p.second.size(); i < size; ++i)
-    {
-      const bitblast::AigNode& a = p.second[i];
-      size_t j                   = size - 1 - i;
-      assert(is_bv || j == 0);
-      rev_bb_cache.try_emplace(a.get_id(), p.first, j);
-    }
-  }
+  RevBitblasterCache rev_bb_cache = compute_rev_bb_cache();
 
   // Convert AIG interpolant to Node
   bv::AigBitblaster::aig_node_ref_vector visit{d_interpolant.d_interpolant};
