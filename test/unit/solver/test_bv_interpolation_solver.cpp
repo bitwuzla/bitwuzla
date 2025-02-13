@@ -881,4 +881,47 @@ TEST_F(TestBvInterpolationSolver, interpol_quant1)
                 d_nm.mk_value(BitVector::from_ui(2, 3))})})});
   test_get_interpolant({A}, C);
 }
+
+TEST_F(TestBvInterpolationSolver, interpol_quant2)
+{
+  Type bv32 = d_nm.mk_bv_type(32);
+  Node c    = d_nm.mk_const(bv32, "c");
+  Node c_   = d_nm.mk_const(bv32, "c_");
+  Node m    = d_nm.mk_const(bv32, "m");
+  Node mm   = d_nm.mk_var(bv32, "mm");
+
+  // (assert (and (bvsle c_ (_ bv4 32)) (bvsle m (_ bv0 32))))
+  Node A = d_nm.mk_node(
+      Kind::AND,
+      {d_nm.mk_node(Kind::BV_SLE,
+                    {c_, d_nm.mk_value(BitVector::from_ui(32, 4))}),
+       d_nm.mk_node(Kind::BV_SLE, {m, d_nm.mk_value(BitVector::mk_zero(32))})});
+  // (assert (or
+  //    false
+  //    (forall ((m (_ BitVec 32)))
+  //      (and (bvsle c_ (bvmul m (_ bv2 32)))
+  //           (bvsle m (_ bv1 32))
+  //           (bvsle m c)))))
+  Node C = d_nm.mk_node(
+      Kind::NOT,
+      {d_nm.mk_node(
+          Kind::OR,
+          {d_nm.mk_value(false),
+           d_nm.mk_node(
+               Kind::FORALL,
+               {mm,
+                utils::mk_nary(
+                    d_nm,
+                    Kind::AND,
+                    {d_nm.mk_node(
+                         Kind::BV_SLE,
+                         {c_,
+                          d_nm.mk_node(
+                              Kind::BV_MUL,
+                              {mm, d_nm.mk_value(BitVector::from_ui(32, 2))})}),
+                     d_nm.mk_node(Kind::BV_SLE,
+                                  {mm, d_nm.mk_value(BitVector::mk_one(32))}),
+                     d_nm.mk_node(Kind::BV_SLE, {mm, c})})})})});
+  test_get_interpolant({A}, C);
+}
 }  // namespace bzla::test
