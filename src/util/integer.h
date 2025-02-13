@@ -71,6 +71,8 @@ class Integer
   Integer& operator++();
   Integer& operator--();
 
+  Integer& ipow(uint32_t exp);
+
   /** Return whether integer is odd. */
   bool is_odd() const;
 

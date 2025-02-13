@@ -2207,6 +2207,9 @@ class BitVector
    */
   void bvudivurem(const BitVector& bv, BitVector* quot, BitVector* rem) const;
 
+  /** Get mpz_t value from Integer class. */
+  const mpz_t& gmp_value() const;
+
  private:
   /**
    * Normalize uint64_t value for a given bit-width.

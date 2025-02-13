@@ -210,6 +210,13 @@ Integer::operator--()
   return *this;
 }
 
+Integer&
+Integer::ipow(uint32_t exp)
+{
+  mpz_pow_ui(d_val_gmp, d_val_gmp, exp);
+  return *this;
+}
+
 bool
 Integer::is_odd() const
 {

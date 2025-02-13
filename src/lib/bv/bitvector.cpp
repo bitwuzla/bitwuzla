@@ -3925,6 +3925,13 @@ BitVector::bvudivurem(const BitVector& bv,
   }
 }
 
+const mpz_t&
+BitVector::gmp_value() const
+{
+  assert(is_gmp());
+  return d_val_gmp;
+}
+
 /* -------------------------------------------------------------------------- */
 
 #define BZLA_BV_MASK_BITS_UINT64(size)
