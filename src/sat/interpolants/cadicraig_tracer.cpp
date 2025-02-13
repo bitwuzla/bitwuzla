@@ -313,54 +313,21 @@ std::unordered_map<int64_t, Node>
 CadiCraigTracer::map_vars_to_node(const std::unordered_set<int64_t>& vars)
 {
   std::unordered_map<int64_t, Node> res;
-  Node one          = d_nm.mk_value(BitVector::mk_true());
-  const auto& cache = d_bitblaster.bitblaster_cache();
-
-  // Map SAT vars to <node, bit index> for vars that do not occur in `vars`,
-  // we may need them when creating nodes for internal AIG nodes.
-  std::unordered_map<int64_t, std::pair<Node, int64_t>> skipped_vars_to_node;
-  for (const auto& p : cache)
-  {
-    bool is_bv = p.first.type().is_bv();
-    assert(is_bv || p.first.type().is_bool());
-    for (size_t i = 0, size = p.second.size(); i < size; ++i)
-    {
-      const AigNode& a = p.second[i];
-      int64_t id       = a.get_id();
-      int64_t var      = std::abs(id);
-      auto it          = res.find(var);
-      // already processed
-      if (it != res.end())
-      {
-        continue;
-      }
-      size_t j = size - 1 - i;
-      // don't need to consider
-      if (vars.find(var) == vars.end())
-      {
-        skipped_vars_to_node.emplace(
-            var,
-            std::make_pair(id < 0 ? utils::invert_node(d_nm, p.first) : p.first,
-                           j));
-        continue;
-      }
-      // insert
-      Node bit = p.first;
-      assert(is_bv || j == 0);
-      if (is_bv)
-      {
-        bit = utils::bv1_to_bool(d_nm,
-                                 d_nm.mk_node(Kind::BV_EXTRACT, {bit}, {j, j}));
-      }
-      res.emplace(var, id < 0 ? d_nm.mk_node(Kind::NOT, {bit}) : bit);
-    }
-  }
+  RevBitblasterCache rev_bb_cache = compute_rev_bb_cache();
   for (const int64_t var : vars)
   {
     if (res.find(var) != res.end())
     {
       continue;
     }
+
+    Node node = get_node_from_bb_cache(var, rev_bb_cache);
+    if (!node.is_null())
+    {
+      res.emplace(var, node);
+      continue;
+    }
+
     // var is a circuit-internal AND gate, reconstruct in terms of inputs
     AigNode aig_node = d_bitblaster.get_node(var);
     bv::AigBitblaster::aig_node_ref_vector visit{aig_node};
@@ -378,22 +345,12 @@ CadiCraigTracer::map_vars_to_node(const std::unordered_set<int64_t>& vars)
         continue;
       }
 
+      Node node = get_node_from_bb_cache(var, rev_bb_cache);
+      if (!node.is_null())
       {
-        auto it = skipped_vars_to_node.find(var);
-        if (it != skipped_vars_to_node.end())
-        {
-          Node bit   = it->second.first;
-          size_t idx = it->second.second;
-          assert(bit.type().is_bv() || idx == 0);
-          if (bit.type().is_bv())
-          {
-            bit = utils::bv1_to_bool(
-                d_nm, d_nm.mk_node(Kind::BV_EXTRACT, {bit}, {idx, idx}));
-          }
-          res.emplace(var, bit);
-          visit.pop_back();
-          continue;
-        }
+        res.emplace(var, node);
+        visit.pop_back();
+        continue;
       }
 
       assert(cur.is_and());

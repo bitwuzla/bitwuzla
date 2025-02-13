@@ -125,17 +125,6 @@ class CadicalTracer : public Tracer
    */
   bitblast::AigNode mk_or(std::vector<bitblast::AigNode> aigs) const;
 
-  /**
-   * Helper to get the node from the bitblaster cache that represents the AIG
-   * node with the given id.
-   * @param aig_id The id of the AIG node to get the node representation of.
-   * @param cache  The reverse bitblaster cache, which is the reverse mapping
-   *               of the bitblaster cache.
-   * @return The node representation of the given AIG, null if the AIG does not
-   *         occur in the bitblaster cache.
-   */
-  Node get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache);
-
   /** The variable labels. */
   std::unordered_map<int32_t, VariableKind> d_labeled_vars;
   /** The clause labels. */

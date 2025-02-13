@@ -296,42 +296,6 @@ CadicalTracer::label_clause(int32_t id, ClauseKind kind)
 }
 
 Node
-CadicalTracer::get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache)
-{
-  Node node;
-  size_t idx     = 0;
-  const auto& it = cache.find(aig_id);
-  if (it != cache.end())
-  {
-    node       = it->second.first;
-    idx        = it->second.second;
-    bool is_bv = node.type().is_bv();
-    assert(is_bv || idx == 0);
-    if (is_bv)
-    {
-      node = utils::bv1_to_bool(
-          d_nm, d_nm.mk_node(Kind::BV_EXTRACT, {node}, {idx, idx}));
-    }
-    return node;
-  }
-  const auto& nit = cache.find(-aig_id);
-  if (nit != cache.end())
-  {
-    node       = utils::invert_node(d_nm, nit->second.first);
-    idx        = nit->second.second;
-    bool is_bv = node.type().is_bv();
-    assert(is_bv || idx == 0);
-    if (is_bv)
-    {
-      node = utils::bv1_to_bool(
-          d_nm, d_nm.mk_node(Kind::BV_EXTRACT, {node}, {idx, idx}));
-    }
-    return node;
-  }
-  return Node();
-}
-
-Node
 CadicalTracer::get_interpolant()
 {
   if (d_interpolant.is_null())
