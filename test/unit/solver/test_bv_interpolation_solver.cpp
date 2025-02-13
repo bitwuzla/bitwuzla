@@ -854,4 +854,31 @@ TEST_F(TestBvInterpolationSolver, interpol_fp1)
 
   test_get_interpolant({A0, A1, A2, A3, A4, A5, A6, A7, A8}, C);
 }
+
+TEST_F(TestBvInterpolationSolver, interpol_quant1)
+{
+  Type btype = d_nm.mk_bool_type();
+  Node x     = d_nm.mk_var(btype, "x");
+  Node y     = d_nm.mk_var(btype, "y");
+  Node z     = d_nm.mk_var(d_nm.mk_bv_type(2), "z");
+  // (assert (exists ((x Bool) (y Bool)) (not (and x y))))
+  Node A = d_nm.mk_node(
+      Kind::EXISTS,
+      {x,
+       d_nm.mk_node(
+           Kind::EXISTS,
+           {y, d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::AND, {x, y})})})});
+  // (assert (exists ((z (_ BitVec 2))) (= (bvmul z #b10) #b11)))
+  Node C = d_nm.mk_node(
+      Kind::NOT,
+      {d_nm.mk_node(
+          Kind::EXISTS,
+          {z,
+           d_nm.mk_node(
+               Kind::EQUAL,
+               {d_nm.mk_node(Kind::BV_MUL,
+                             {z, d_nm.mk_value(BitVector::from_ui(2, 2))}),
+                d_nm.mk_value(BitVector::from_ui(2, 3))})})});
+  test_get_interpolant({A}, C);
+}
 }  // namespace bzla::test

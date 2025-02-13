@@ -40,7 +40,40 @@ Tracer::compute_rev_bb_cache() const
       const bitblast::AigNode& a = p.second[i];
       size_t j                   = size - 1 - i;
       assert(is_bv || j == 0);
-      res.try_emplace(a.get_id(), p.first, j);
+      auto [it, inserted] = res.try_emplace(a.get_id(), p.first, j);
+      // If more than one node maps to the same AIG ID, we use the one with the
+      // lowest node id. The reasoning behind this is that if multiple nodes map
+      // to the same AIG, we want to use the one that is the closest to the
+      // original term (lowest id).
+      //
+      // We have encountered this case with quantifiers, where a quantified term
+      // and a term with skolems of the quantified variable that occurs in that
+      // term map to the same AIG .
+      //
+      // For example (sk(56) is the skolem introduced for z):
+      // @t56: (forall ((z (_ BitVec 2)))
+      //         (not (= #b11 (concat ((_ extract 0 0) z) #b0))))
+      // @t97: (not (and
+      //              (not (forall ((z (_ BitVec 2)))
+      //                     (not (= #b11 (concat ((_ extract 0 0) z) #b0)))))
+      //              (not (= #b11 (concat ((_ extract 0 0) |sk(56)|) #b0)))))
+      // Both map to the same AIG, but in the interpolant, we should not use
+      // terms that are introduced via lemmas (the skolems, in this case).
+      //
+      // In general, it should always be more beneficial to use the node with
+      // the lowest id. There's only one case where this may not be the case:
+      // if a term x was introduced in a lemma and maps to the same AIG as a
+      // term y and id(x) > id(y) but x does not contain y (and no skolems)
+      // but is a simpler version of y. This would indicate that we are missing
+      // a rewrite from y -> x.
+      if (!inserted)
+      {
+        if (it->second.first.get().id() > p.first.id())
+        {
+          it->second.first  = p.first;
+          it->second.second = j;
+        }
+      }
     }
   }
   return res;
