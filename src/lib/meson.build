@@ -43,6 +43,8 @@ rng_lib = static_library('bzlarng',
 # Bitwuzla bit-vector, bit-blast and local search libraries
 bitvector_lib = library('bitwuzlabv',
                         sources: bv_sources,
+                        include_directories: include_directories('../'),
+                        link_with: util_lib,
                         link_whole: rng_lib,
                         dependencies: gmp_dep,
                         install_rpath: install_rpath,

@@ -17,8 +17,11 @@
 #include <utility>
 
 #include "rng/rng.h"
+#include "util/gmp_utils.h"
 
 namespace bzla {
+
+using namespace util;
 
 namespace {
 #ifndef NDEBUG
@@ -73,103 +76,6 @@ clz_limb(uint64_t nbits_per_limb, mp_limb_t limb)
   return nbits_per_limb - 1 - w;
 }
 #endif
-
-// GMP wrapper functions to properly handle case where unsigned long is 32 bit
-// (Windows builds).
-
-void
-mpz_set_ull(mpz_t rop, uint64_t op)
-{
-  if constexpr (sizeof(uint64_t) != sizeof(unsigned long))
-  {
-    uint32_t hi = static_cast<uint32_t>(op >> 32);
-    uint32_t lo = static_cast<uint32_t>(op);
-    mpz_set_ui(rop, hi);
-    mpz_mul_2exp(rop, rop, 32);
-    mpz_add_ui(rop, rop, lo);
-  }
-  else
-  {
-    mpz_set_ui(rop, op);
-  }
-}
-
-uint64_t
-mpz_get_ull(const mpz_t rop)
-{
-  if (mp_bits_per_limb == 64)
-  {
-    mp_limb_t limb = mpz_getlimbn(rop, 0);
-    return limb;
-  }
-  assert(mp_bits_per_limb == 32);
-  assert(mpz_size(rop) >= 1);
-  uint64_t limb_lo = static_cast<uint64_t>(mpz_getlimbn(rop, 0));
-  uint64_t limb_hi = 0;
-  if (mpz_size(rop) >= 2)
-  {
-    limb_hi = static_cast<uint64_t>(mpz_getlimbn(rop, 1));
-  }
-  return (limb_hi << 32) | limb_lo;
-}
-
-void
-mpz_init_set_ull(mpz_t rop, uint64_t op)
-{
-  if constexpr (BitVector::s_native_size == 32)
-  {
-    uint32_t hi = static_cast<uint32_t>(op >> 32);
-    uint32_t lo = static_cast<uint32_t>(op);
-    mpz_init_set_ui(rop, hi);
-    mpz_mul_2exp(rop, rop, 32);
-    mpz_add_ui(rop, rop, lo);
-  }
-  else
-  {
-    mpz_init_set_ui(rop, op);
-  }
-}
-
-void
-mpz_init_set_sll(mpz_t rop, int64_t op)
-{
-  if constexpr (BitVector::s_native_size == 32)
-  {
-    int32_t hi = static_cast<int32_t>(op >> 32);
-    int32_t lo = static_cast<int32_t>(op);
-    mpz_init_set_si(rop, hi);
-    mpz_mul_2exp(rop, rop, 32);
-    mpz_add_ui(rop, rop, lo);
-  }
-  else
-  {
-    mpz_init_set_si(rop, op);
-  }
-}
-
-// These functions only guard their *_ui counterparts with an assertion for the
-// Windows 32-bit case. In the cases where these functions are used we should
-// never use values that require more than 32 bit.
-void
-mpz_fdiv_q_2exp_ull(mpz_t q, const mpz_t n, uint64_t b)
-{
-  assert(BitVector::s_native_size != 32 || b <= UINT32_MAX);
-  mpz_fdiv_q_2exp(q, n, b);
-}
-
-void
-mpz_fdiv_r_2exp_ull(mpz_t r, const mpz_t n, uint64_t b)
-{
-  assert(BitVector::s_native_size != 32 || b <= UINT32_MAX);
-  mpz_fdiv_r_2exp(r, n, b);
-}
-
-void
-mpz_mul_2exp_ull(mpz_t rop, const mpz_t op1, uint64_t op2)
-{
-  assert(BitVector::s_native_size != 32 || op2 <= UINT32_MAX);
-  mpz_mul_2exp(rop, op1, op2);
-}
 
 }  // namespace
 
