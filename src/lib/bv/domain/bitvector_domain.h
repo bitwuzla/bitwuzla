@@ -12,6 +12,7 @@
 #define BZLA__BV_BITVECTOR_DOMAIN_H
 
 #include "bv/bitvector.h"
+#include <memory>
 
 namespace bzla {
 

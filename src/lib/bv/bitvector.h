@@ -14,14 +14,13 @@
 #include <gmpxx.h>
 
 #include <cstdint>
-#include <memory>
+#include <functional>
 #include <string>
 
 namespace bzla {
 
 /* -------------------------------------------------------------------------- */
 
-struct GMPMpz;
 class RNG;
 
 /* -------------------------------------------------------------------------- */
@@ -2206,7 +2205,7 @@ class BitVector
    * bit are stored as GMP value, for 64-bit Linux and macOS values exceeding
    * 64 bit are stored as GMP value.
    *
-   * @return True if bit-vector wraps a GMPMpz.
+   * @return True if bit-vector wraps a mpz_t.
    */
   bool is_gmp() const { return d_size > s_native_size; }
 
