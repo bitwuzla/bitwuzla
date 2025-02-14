@@ -59,9 +59,17 @@ class BitVector
    * @param size The size of the bit-vector.
    * @param value The integer value.
    * @param sign True if given value is to be interpreted as signed.
-   * @return True if given value fits into a bit-vecgtor of given size.
+   * @return True if given value fits into a bit-vector of given size.
    */
   static bool fits_in_size(uint64_t size, uint64_t value, bool sign = false);
+
+  /**
+   * Determine if given GMP value fits into a bit-vector of given size.
+   * @param size The size of the bit-vector.
+   * @param value The GMP value.
+   * @return True if given value fits into a bit-vector of given size.
+   */
+  static bool fits_in_size(uint64_t size, const mpz_t value);
 
   /**
    * Construct a bit-vector of given size from given uint64 value.
@@ -223,6 +231,17 @@ class BitVector
    *              16 for hexadecimal).
    */
   BitVector(uint64_t size, const std::string& value, uint32_t base = 2);
+
+  /**
+   * Construct a bit-vector of given size from given GMP value.
+   *
+   * @param size  The size of the bit-vector.
+   * @param value A GMP value representing the bit-vector value. The value must
+   * be representable with `size` bits if `truncate` is false.
+   * @param truncate True to allow truncating the value if it is not
+   *                 representable with `size` bits.
+   */
+  BitVector(uint64_t size, const mpz_t value, bool truncate = false);
 
   /** Copy constructor. */
   BitVector(const BitVector& other);

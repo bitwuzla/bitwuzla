@@ -133,6 +133,12 @@ BitVector::fits_in_size(uint64_t size, uint64_t value, bool sign)
   return res;
 }
 
+bool
+BitVector::fits_in_size(uint64_t size, const mpz_t value)
+{
+  return size >= mpz_sizeinbase(value, 2);
+}
+
 BitVector
 BitVector::mk_true()
 {
@@ -301,6 +307,31 @@ BitVector::BitVector(uint64_t size, const std::string& value, uint32_t base)
   {
     d_val_uint64 = uint64_fdiv_r_2exp(
         size, std::stoull(value, 0, static_cast<int32_t>(base)));
+  }
+}
+
+BitVector::BitVector(uint64_t size, const mpz_t value, bool truncate)
+    : d_size(size)
+{
+  (void) truncate;
+  assert(size > 0);
+  assert(truncate || fits_in_size(size, value));
+
+  mpz_init_set(d_val_gmp, value);
+  if (mpz_sgn(value) < 0)
+  {
+    mpz_abs(d_val_gmp, d_val_gmp);
+    mpz_com(d_val_gmp, d_val_gmp);
+    mpz_add_ui(d_val_gmp, d_val_gmp, 1);
+  }
+  mpz_fdiv_r_2exp_ull(d_val_gmp, d_val_gmp, size);
+
+  // Can we use the native type?
+  if (!is_gmp())
+  {
+    uint64_t val = mpz_get_ui(d_val_gmp);
+    mpz_clear(d_val_gmp);
+    d_val_uint64 = val;
   }
 }
 

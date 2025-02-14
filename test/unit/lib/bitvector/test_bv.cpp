@@ -14,6 +14,7 @@
 
 #include "bv/bitvector.h"
 #include "test_lib.h"
+#include "util/integer.h"
 
 namespace bzla::test {
 
@@ -4861,6 +4862,22 @@ TEST_F(TestBitVector, ctor_dtor)
 
   ASSERT_EQ(BitVector::from_ui(6, 141, true).str(), "001101");
   ASSERT_EQ(BitVector::from_si(6, -129, true).str(), "111111");
+
+  ASSERT_EQ(BitVector(11, util::Integer(1234).gmp_value()).str(),
+            "10011010010");
+  ASSERT_EQ(BitVector(16, util::Integer(1234).gmp_value()).str(),
+            "0000010011010010");
+  ASSERT_EQ(BitVector(16, util::Integer(-1).gmp_value()).str(),
+            "1111111111111111");
+  ASSERT_EQ(BitVector(8, util::Integer(-3).gmp_value()).str(), "11111101");
+  ASSERT_EQ(BitVector(8, util::Integer(-127).gmp_value()).str(), "10000001");
+  ASSERT_EQ(BitVector(8, util::Integer(-128).gmp_value()).str(), "10000000");
+  ASSERT_EQ(
+      BitVector(68, util::Integer(-3).gmp_value()).str(),
+      "11111111111111111111111111111111111111111111111111111111111111111101");
+  ASSERT_EQ(
+      BitVector(68, util::Integer(static_cast<uint64_t>(-3)).gmp_value()).str(),
+      "00001111111111111111111111111111111111111111111111111111111111111101");
 
   ASSERT_DEATH_DEBUG(BitVector(0), "> 0");
   ASSERT_DEATH_DEBUG(BitVector(2, "101010"), "fits_in_size");
