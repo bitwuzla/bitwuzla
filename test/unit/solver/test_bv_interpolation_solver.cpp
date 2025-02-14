@@ -58,65 +58,45 @@ class TestBvInterpolationSolver : public TestCommon
   {
     if (s_test_internal)
     {
-      test_get_interpolant_aux_internal(A, C);
+      test_get_interpolant_aux(A, C, true);
     }
     if (s_test_cadicraig)
     {
-      test_get_interpolant_aux_cadicraig(A, C);
+      test_get_interpolant_aux(A, C, false);
     }
   }
 
-  void test_get_interpolant_aux_internal(const std::vector<Node>& A,
-                                         const Node& C)
+  void test_get_interpolant_aux(const std::vector<Node>& A,
+                                const Node& C,
+                                bool internal)
   {
     if (d_options.log_level())
     {
       std::cout << std::endl
-                << ">>>>> get interpolant with INTERNAL" << std::endl;
+                << ">>>>> get interpolant with "
+                << (internal ? "INTERNAL" : "CaDiCraig") << std::endl;
     }
     // get interpolant
-    test_get_interpolant_aux_internal(
-        true, d_options.rewrite_level.dflt(), A, C);
+    test_get_interpolant_aux(
+        true, d_options.rewrite_level.dflt(), A, C, internal);
 
     if (!s_full_pp_rw_only)
     {
       // get_interpolant when preprocessing is disabled
-      test_get_interpolant_aux_internal(
-          false, d_options.rewrite_level.dflt(), A, C);
+      test_get_interpolant_aux(
+          false, d_options.rewrite_level.dflt(), A, C, internal);
       // get_interpolant when rewriting is disabled
-      test_get_interpolant_aux_internal(true, 0, A, C);
+      test_get_interpolant_aux(true, 0, A, C, internal);
       // get_interpolant when preprocessing and rewriting is disabled
-      test_get_interpolant_aux_internal(false, 0, A, C);
+      test_get_interpolant_aux(false, 0, A, C, internal);
     }
   }
 
-  void test_get_interpolant_aux_cadicraig(const std::vector<Node>& A,
-                                          const Node& C)
-  {
-    if (d_options.log_level())
-    {
-      std::cout << std::endl
-                << ">>>>> get interpolant with CaDiCraig" << std::endl;
-    }
-    // get interpolant
-    test_get_interpolant_aux_cadicraig(
-        true, d_options.rewrite_level.dflt(), A, C);
-    if (!s_full_pp_rw_only)
-    {
-      // get_interpolant when preprocessing is disabled
-      test_get_interpolant_aux_cadicraig(
-          false, d_options.rewrite_level.dflt(), A, C);
-      // get_interpolant when rewriting is disabled
-      test_get_interpolant_aux_cadicraig(true, 0, A, C);
-      // get_interpolant when preprocessing and rewriting is disabled
-      test_get_interpolant_aux_cadicraig(false, 0, A, C);
-    }
-  }
-
-  void test_get_interpolant_aux_internal(bool pp,
-                                         uint64_t rwl,
-                                         const std::vector<Node>& A,
-                                         const Node& C)
+  void test_get_interpolant_aux(bool pp,
+                                uint64_t rwl,
+                                const std::vector<Node>& A,
+                                const Node& C,
+                                bool internal)
   {
     if (d_options.log_level())
     {
@@ -126,26 +106,7 @@ class TestBvInterpolationSolver : public TestCommon
     }
     d_options.preprocess.set(pp);
     d_options.rewrite_level.set(rwl);
-    sat::SatSolverFactory sat_factory(d_options);
-    SolvingContext ctx(d_nm, d_options, sat_factory);
-    Node interpolant = ctx.get_interpolant(A, C);
-    ASSERT_FALSE(interpolant.is_null());
-  }
-
-  void test_get_interpolant_aux_cadicraig(bool pp,
-                                          uint64_t rwl,
-                                          const std::vector<Node>& A,
-                                          const Node& C)
-  {
-    if (d_options.log_level())
-    {
-      std::cout << std::endl
-                << ">> rewrite level: " << rwl
-                << "  pp: " << (pp ? "enabled" : "disabled") << std::endl;
-    }
-    d_options.tmp_interpol_use_cadicraig.set(true);
-    d_options.preprocess.set(pp);
-    d_options.rewrite_level.set(rwl);
+    d_options.tmp_interpol_use_cadicraig.set(!internal);
     sat::SatSolverFactory sat_factory(d_options);
     SolvingContext ctx(d_nm, d_options, sat_factory);
     Node interpolant = ctx.get_interpolant(A, C);
