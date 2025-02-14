@@ -126,10 +126,13 @@ sources_util = files([
   'util/resources.cpp',
   'util/printer.cpp',
   'util/statistics.cpp',
-  'util/util.cpp'
+  'util/util.cpp',
+  'util/integer.cpp',
+  'util/gmp_utils.cpp'
 ])
 
-util_lib = static_library('bzlautil', sources_util, cpp_args: cpp_args)
+util_lib = static_library('bzlautil', sources_util, cpp_args: cpp_args,
+                          dependencies: gmp_dep)
 
 # ---
 # Add Bitwuzla support libraries

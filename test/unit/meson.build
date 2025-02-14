@@ -112,7 +112,14 @@ unit_tests = [
       'bvnodeselpath',
       'local_search_bv',
       ]
-  ]
+  ],
+
+  ['util',
+    [
+      'integer',
+    ]
+  ],
+
 ]
 
 gtest_dep = dependency('gtest_main', required: true)
