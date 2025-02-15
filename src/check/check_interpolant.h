@@ -19,9 +19,17 @@ class CheckInterpolant
 {
  public:
   CheckInterpolant(SolvingContext& ctx);
-  bool check(const std::vector<Node>& A,
-             const Node& C,
-             const Node& interpolant);
+  /**
+   * Check interpolant.
+   * This checks the given interpolant I wrt to the current set of assertions A
+   * and conjecture C, i.e., (and A (not I)) and (and I (not C)) are both unsat.
+   * @param C           The conjecture.
+   * @param idx_B       The index of the assertion B (not C) corresponding to C
+   *                    on the assertion stack.
+   * @param interpolant The interpolant I.
+   * @return True if the check succeeds.
+   */
+  bool check(const Node& C, size_t idx_B, const Node& interpolant);
 
  private:
   SolvingContext& d_ctx;

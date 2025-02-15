@@ -163,11 +163,10 @@ SolvingContext::get_unsat_core()
 }
 
 Node
-SolvingContext::get_interpolant(const std::vector<Node>& A, const Node& C)
+SolvingContext::get_interpolant(const Node& C)
 {
   util::Timer timer(d_stats.time_get_interpolant);
 
-  assert(d_assertions.size() == 0);
   assert(d_env.options().produce_interpolants());
 
   fp::SymFpuNM snm(d_env.nm());
@@ -176,12 +175,12 @@ SolvingContext::get_interpolant(const std::vector<Node>& A, const Node& C)
   Log(1);
   Log(1) << "*** interpolant";
   Log(1);
-  for (size_t i = 0, n = A.size(); i < n; ++i)
+  if (d_logger.is_log_enabled(1))
   {
-    Node a = d_env.rewriter().rewrite(A[i]);
-    assert(a.type().is_bool());
-    Log(1) << "A[" << i << "]: " << A[i];
-    assert_formula(a);
+    for (size_t i = 0, n = d_original_assertions.size(); i < n; ++i)
+    {
+      Log(1) << "A[" << i << "]: " << d_original_assertions[i];
+    }
   }
   Log(1) << "C: " << C;
   Log(1);
@@ -201,9 +200,8 @@ SolvingContext::get_interpolant(const std::vector<Node>& A, const Node& C)
     check_no_free_variables();
 #endif
     d_sat_state = preprocess();
-    // Note: no shortcuts when preprocessing determines unsat, we need the
-    //       we need to solve to kick off interpolation tracing, else we
-    //       cannot compute an interpolant
+    // Note: no shortcuts when preprocessing determines unsat: we need to solve
+    // to kick off interpolation tracing, else we cannot compute an interpolant
     d_solver_engine.cache_interpol_conj_assertion(d_assertions[idx_B]);
 
     if (d_sat_state != Result::SAT)
@@ -243,7 +241,7 @@ SolvingContext::get_interpolant(const std::vector<Node>& A, const Node& C)
     {
       util::Timer timer(d_stats.time_check_interpolant);
       check::CheckInterpolant ci(*this);
-      auto res = ci.check(A, C, ipol);
+      auto res = ci.check(C, idx_B, ipol);
       assert(res);
       Warn(!res) << "interpolant check failed";
     }

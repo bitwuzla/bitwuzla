@@ -109,7 +109,11 @@ class TestBvInterpolationSolver : public TestCommon
     d_options.tmp_interpol_use_cadicraig.set(!internal);
     sat::SatSolverFactory sat_factory(d_options);
     SolvingContext ctx(d_nm, d_options, sat_factory);
-    Node interpolant = ctx.get_interpolant(A, C);
+    for (const auto& a : A)
+    {
+      ctx.assert_formula(a);
+    }
+    Node interpolant = ctx.get_interpolant(C);
     ASSERT_FALSE(interpolant.is_null());
   }
 
@@ -132,7 +136,7 @@ TEST_F(TestBvInterpolationSolver, produce_interpolants)
   d_options.produce_interpolants.set(false);
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx = SolvingContext(d_nm, d_options, sat_factory);
-  ASSERT_DEATH(ctx.get_interpolant({}, d_nm.mk_const(d_nm.mk_bool_type())),
+  ASSERT_DEATH(ctx.get_interpolant(d_nm.mk_const(d_nm.mk_bool_type())),
                "produce_interpolants");
 }
 
@@ -144,7 +148,7 @@ TEST_F(TestBvInterpolationSolver, prop)
   sat::SatSolverFactory sat_factory(options);
   SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
   ASSERT_NO_FATAL_FAILURE(
-      ctx.get_interpolant({}, d_nm.mk_const(d_nm.mk_bool_type())));
+      ctx.get_interpolant(d_nm.mk_const(d_nm.mk_bool_type())));
 }
 
 TEST_F(TestBvInterpolationSolver, preprop)
@@ -155,30 +159,20 @@ TEST_F(TestBvInterpolationSolver, preprop)
   sat::SatSolverFactory sat_factory(options);
   SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
   ASSERT_NO_FATAL_FAILURE(
-      ctx.get_interpolant({}, d_nm.mk_const(d_nm.mk_bool_type())));
-}
-
-TEST_F(TestBvInterpolationSolver, bool_A)
-{
-  sat::SatSolverFactory sat_factory(d_options);
-  SolvingContext ctx(d_nm, d_options, sat_factory);
-  ASSERT_DEATH(ctx.get_interpolant({d_nm.mk_const(d_nm.mk_bv_type(8))},
-                                   d_nm.mk_const(d_nm.mk_bool_type())),
-               "is_bool");
+      ctx.get_interpolant(d_nm.mk_const(d_nm.mk_bool_type())));
 }
 
 TEST_F(TestBvInterpolationSolver, bool_conj)
 {
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx(d_nm, d_options, sat_factory);
-  ASSERT_DEATH(ctx.get_interpolant({}, d_nm.mk_const(d_nm.mk_bv_type(8))),
+  ASSERT_DEATH(ctx.get_interpolant(d_nm.mk_const(d_nm.mk_bv_type(8))),
                "is_bool");
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat1)
 {
   Node x = d_nm.mk_const(d_nm.mk_bool_type(), "x");
-  std::vector<Node> A;
   Node C = x;
   // check if (and A (not C)) is unsat
   {
@@ -191,47 +185,49 @@ TEST_F(TestBvInterpolationSolver, not_unsat1)
   // (and A (not C)) not unsat
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx(d_nm, d_options, sat_factory);
-  ASSERT_EQ(ctx.get_interpolant(A, C), Node());
+  ASSERT_EQ(ctx.get_interpolant(C), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat2)
 {
-  Node x              = d_nm.mk_const(d_nm.mk_bool_type(), "x");
-  std::vector<Node> A = {d_nm.mk_node(Kind::NOT, {x})};
-  Node C              = x;
+  Node x = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+  Node A = d_nm.mk_node(Kind::NOT, {x});
+  Node C = x;
   // check if (and A (not C)) is unsat
   {
     option::Options opts_solve;
     sat::SatSolverFactory sat_factory(opts_solve);
     SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
-    ctx_solve.assert_formula(A[0]);
+    ctx_solve.assert_formula(A);
     ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
     ASSERT_EQ(ctx_solve.solve(), Result::SAT);
   }
   // (and A (not C)) not unsat
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx(d_nm, d_options, sat_factory);
-  ASSERT_EQ(ctx.get_interpolant(A, C), Node());
+  ctx.assert_formula(A);
+  ASSERT_EQ(ctx.get_interpolant(C), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat3)
 {
-  Node x              = d_nm.mk_const(d_nm.mk_bool_type(), "x");
-  std::vector<Node> A = {x};
-  Node C              = d_nm.mk_node(Kind::NOT, {x});
+  Node x = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+  Node A = x;
+  Node C = d_nm.mk_node(Kind::NOT, {x});
   // check if (and A (not C)) is unsat
   {
     option::Options opts_solve;
     sat::SatSolverFactory sat_factory(opts_solve);
     SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
-    ctx_solve.assert_formula(A[0]);
+    ctx_solve.assert_formula(A);
     ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
     ASSERT_EQ(ctx_solve.solve(), Result::SAT);
   }
   // (and A (not C)) not unsat
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx(d_nm, d_options, sat_factory);
-  ASSERT_EQ(ctx.get_interpolant(A, C), Node());
+  ctx.assert_formula(A);
+  ASSERT_EQ(ctx.get_interpolant(C), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat4)
@@ -243,21 +239,22 @@ TEST_F(TestBvInterpolationSolver, not_unsat4)
       d_nm.mk_node(Kind::EQUAL, {x, d_nm.mk_value(BitVector::mk_zero(2))});
   Node or1 =
       d_nm.mk_node(Kind::BV_UGE, {x, d_nm.mk_node(Kind::BV_AND, {x, y})});
-  std::vector<Node> A = {d_nm.mk_node(Kind::OR, {or0, or1})};
-  Node C              = d_nm.mk_node(Kind::BV_UGE, {x, y});
+  Node A = d_nm.mk_node(Kind::OR, {or0, or1});
+  Node C = d_nm.mk_node(Kind::BV_UGE, {x, y});
   // check if (and A (not C)) is unsat
   {
     option::Options opts_solve;
     sat::SatSolverFactory sat_factory(opts_solve);
     SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
-    ctx_solve.assert_formula(A[0]);
+    ctx_solve.assert_formula(A);
     ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
     ASSERT_EQ(ctx_solve.solve(), Result::SAT);
   }
   // (and A (not C)) not unsat
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx(d_nm, d_options, sat_factory);
-  ASSERT_EQ(ctx.get_interpolant(A, C), Node());
+  ctx.assert_formula(A);
+  ASSERT_EQ(ctx.get_interpolant(C), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, interpol1)

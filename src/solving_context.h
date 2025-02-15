@@ -71,10 +71,11 @@ class SolvingContext
   // bool is_in_unsat_core(const Node& term) const;
 
   /**
-   * Get interpolant I given the set of formulas A and a conjecture C such that
-   * (and A (not C)) is unsat and (=> A I) and (=> I C) are valid.
+   * Get interpolant I given the current set of assertions/assumptions A and a
+   * conjecture C such that (and A (not C)) is unsat and (=> A I) and (=> I C)
+   * are valid.
    */
-  Node get_interpolant(const std::vector<Node>& A, const Node& C);
+  Node get_interpolant(const Node& C);
 
   /** Increase assertion stack level. */
   void push();

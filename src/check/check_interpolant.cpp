@@ -18,9 +18,7 @@ CheckInterpolant::CheckInterpolant(SolvingContext& ctx)
 }
 
 bool
-CheckInterpolant::check(const std::vector<Node>& A,
-                        const Node& C,
-                        const Node& interpolant)
+CheckInterpolant::check(const Node& C, size_t idx_B, const Node& interpolant)
 {
   if (!d_ctx.options().dbg_check_interpolant())
   {
@@ -40,10 +38,12 @@ CheckInterpolant::check(const std::vector<Node>& A,
     SolvingContext check_ctx(
         nm, opts, d_ctx.env().sat_factory(), "chkinterpol");
     check_ctx.env().configure_terminator(d_ctx.env().terminator());
-    for (size_t i = 0, n = A.size(); i < n; ++i)
+    const auto& assertions = d_ctx.original_assertions();
+    for (size_t i = 0, n = assertions.size(); i < n; ++i)
     {
-      Log(1) << "A[" << i << "]: " << A[i];
-      check_ctx.assert_formula(A[i]);
+      if (i == idx_B) continue;
+      Log(1) << "A[" << i << "]: " << assertions[i];
+      check_ctx.assert_formula(assertions[i]);
     }
     Log(1) << "C: " << C;
     Log(1) << "I: " << interpolant;
