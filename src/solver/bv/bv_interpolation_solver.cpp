@@ -384,11 +384,14 @@ BvInterpolationSolver::solve()
 
   for (const Node& assumption : d_assumptions)
   {
+    Tracer::ClauseKind kind = d_solver_state.is_interpol_conj(assumption)
+                                  ? Tracer::ClauseKind::B
+                                  : Tracer::ClauseKind::A;
+    d_interpol_sat_solver->set_clause_label(kind);
     const auto& bits = d_bitblaster.bits(assumption);
     assert(!bits.empty());
     util::Timer timer(d_stats.time_encode);
-    // TODO: how do we label assumptions?
-    d_cnf_encoder->encode(bits[0], false);
+    d_cnf_encoder->encode(bits[0], true);
     d_sat_solver->assume(bits[0].get_id());
   }
 
