@@ -138,10 +138,6 @@ class CnfPrinter : public bitblast::SatInterface
     {
       d_max_var = abs_lit;
     }
-    if (lit == 0)
-    {
-      ++d_num_clauses;
-    }
     d_literals.push_back(lit);
   }
 
@@ -163,28 +159,34 @@ class CnfPrinter : public bitblast::SatInterface
 
   void print(std::stringstream& out)
   {
-    out << "p cnf " << d_max_var << " " << d_num_clauses << std::endl;
-    bool new_line = true;
+    std::stringstream clauses;
+    std::vector<int64_t> vars(d_max_var + 1, 0);
+
+    uint64_t num_vars = 0, num_clauses = 0;
     for (size_t i = 0, size = d_literals.size(); i < size; ++i)
     {
-      int32_t lit = d_literals[i];
-      if (!new_line)
+      int64_t lit = d_literals[i];
+      if (lit)
       {
-        out << " ";
+        int64_t& cnf_var = vars[std::abs(lit)];
+        if (cnf_var == 0)
+        {
+          cnf_var = ++num_vars;
+        }
+        clauses << (lit < 0 ? -cnf_var : cnf_var) << " ";
       }
-      out << lit;
-      new_line = false;
-      if (lit == 0)
+      else
       {
-        out << std::endl;
-        new_line = true;
+        clauses << "0\n";
+        ++num_clauses;
       }
     }
+    out << "p cnf " << num_vars << " " << num_clauses << "\n";
+    out << clauses.str();
   }
 
  private:
-  int64_t d_max_var     = 0;
-  int64_t d_num_clauses = 0;
+  int64_t d_max_var = 0;
   std::vector<int64_t> d_literals;
 };
 
