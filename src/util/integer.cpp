@@ -145,6 +145,14 @@ Integer::operator*(const Integer& other) const
 }
 
 Integer
+Integer::operator/(const Integer& other) const
+{
+  Integer res = from_mpz_t(d_val_gmp);
+  res /= other;
+  return res;
+}
+
+Integer
 Integer::operator++(int)
 {
   Integer res = from_mpz_t(d_val_gmp);
@@ -182,6 +190,13 @@ Integer::operator*=(const Integer& other)
 }
 
 Integer&
+Integer::operator/=(const Integer& other)
+{
+  mpz_fdiv_q(d_val_gmp, d_val_gmp, other.d_val_gmp);
+  return *this;
+}
+
+Integer&
 Integer::operator++()
 {
   mpz_add_ui(d_val_gmp, d_val_gmp, 1);
@@ -193,6 +208,12 @@ Integer::operator--()
 {
   mpz_sub_ui(d_val_gmp, d_val_gmp, 1);
   return *this;
+}
+
+bool
+Integer::is_odd() const
+{
+  return mpz_odd_p(d_val_gmp) != 0;
 }
 
 size_t
@@ -209,6 +230,13 @@ Integer::str() const
   ss << tmp;
   free(tmp);
   return ss.str();
+}
+
+std::ostream&
+operator<<(std::ostream& os, const Integer& i)
+{
+  os << i.str();
+  return os;
 }
 
 }  // namespace bzla::util

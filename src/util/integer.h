@@ -59,15 +59,20 @@ class Integer
   Integer operator-() const;
   Integer operator-(const Integer& other) const;
   Integer operator*(const Integer& other) const;
+  Integer operator/(const Integer& other) const;
   Integer operator++(int);
   Integer operator--(int);
 
-  // Inplace arithmetic operators
+  // In-place arithmetic operators
   Integer& operator+=(const Integer& other);
   Integer& operator-=(const Integer& other);
   Integer& operator*=(const Integer& other);
+  Integer& operator/=(const Integer& other);
   Integer& operator++();
   Integer& operator--();
+
+  /** Return whether integer is odd. */
+  bool is_odd() const;
 
   /** Compute hash value. */
   size_t hash() const;
@@ -80,6 +85,8 @@ class Integer
  private:
   mpz_t d_val_gmp;
 };
+
+std::ostream& operator<<(std::ostream& os, const Integer& i);
 
 }  // namespace bzla::util
 

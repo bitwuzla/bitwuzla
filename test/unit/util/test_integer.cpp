@@ -33,6 +33,9 @@ TEST_F(TestInteger, comparisons)
   ASSERT_TRUE(c >= b);
   ASSERT_TRUE(a < 1);
   ASSERT_TRUE(b != 0);
+  ASSERT_TRUE(!a.is_odd());
+  ASSERT_TRUE(b.is_odd());
+  ASSERT_TRUE(!c.is_odd());
 }
 
 TEST_F(TestInteger, arithmetic)
@@ -45,6 +48,8 @@ TEST_F(TestInteger, arithmetic)
   ASSERT_EQ(c - b, a);
   ASSERT_EQ(-b, d);
   ASSERT_EQ(b * c, 6);
+  ASSERT_EQ(b / d, -1);
+  ASSERT_EQ(c / b, 1);
   ASSERT_EQ(a++, 1);
   ASSERT_EQ(a, 2);
   ASSERT_EQ(a--, 2);
@@ -62,6 +67,7 @@ TEST_F(TestInteger, arithmetic_inplace)
   ASSERT_EQ(a += b, -2);
   ASSERT_EQ(a *= -b, 8);
   ASSERT_EQ(a += "123", 131);
+  ASSERT_EQ(a /= 3, 43);
 }
 
 TEST_F(TestInteger, hash)
