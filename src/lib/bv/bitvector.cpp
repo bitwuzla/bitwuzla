@@ -1436,6 +1436,12 @@ BitVector::bvmodinv() const
   return BitVector(d_size).ibvmodinv(*this);
 }
 
+BitVector
+BitVector::bvpow(const mpz_t exp) const
+{
+  return BitVector(d_size).ibvpow(*this, exp);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Bit-vector operations, in-place, requires all operands as arguments.       */
 /* -------------------------------------------------------------------------- */
@@ -3824,6 +3830,37 @@ BitVector&
 BitVector::ibvmodinv()
 {
   ibvmodinv(*this);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvpow(const BitVector& base, const mpz_t exp)
+{
+  mpz_t mod;
+  mpz_init_set_ull(mod, 1);
+  mpz_mul_2exp_ull(mod, mod, size());
+  if (is_gmp())
+  {
+    assert(base.is_gmp());
+    mpz_powm(d_val_gmp, base.d_val_gmp, exp, mod);
+  }
+  else
+  {
+    assert(!base.is_gmp());
+    mpz_t res;
+    mpz_init_set_ull(res, base.d_val_uint64);
+    mpz_powm(res, res, exp, mod);
+    d_val_uint64 = util::mpz_get_ull(res);
+    mpz_clear(res);
+  }
+  mpz_clear(mod);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvpow(const mpz_t exp)
+{
+  ibvpow(*this, exp);
   return *this;
 }
 

@@ -6450,6 +6450,22 @@ TEST_F(TestBitVector, izext)
   test_extend(INPLACE_THIS_ALL, ZEXT);
 }
 
+TEST_F(TestBitVector, bvpow)
+{
+  ASSERT_EQ(BitVector::from_ui(128, 1).ibvshl(32),
+            BitVector::from_ui(128, 2).ibvpow(util::Integer(32).gmp_value()));
+  ASSERT_EQ(BitVector::from_ui(16, 0),
+            BitVector::from_ui(16, 2).bvpow(util::Integer(16).gmp_value()));
+  ASSERT_EQ(BitVector::from_ui(16, 9),
+            BitVector::from_ui(16, 3).ibvpow(util::Integer(2).gmp_value()));
+  ASSERT_EQ(BitVector::from_ui(16, 125),
+            BitVector::from_ui(16, 5).bvpow(util::Integer(3).gmp_value()));
+  ASSERT_EQ(BitVector::from_ui(8, 87),
+            BitVector::from_ui(8, 7).ibvpow(util::Integer(3).gmp_value()));
+  ASSERT_EQ(BitVector::from_ui(8, 43),
+            BitVector::from_ui(8, 19).bvpow(util::Integer(331).gmp_value()));
+}
+
 /* -------------------------------------------------------------------------- */
 
 #if 0

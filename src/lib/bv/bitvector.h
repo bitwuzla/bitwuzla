@@ -846,6 +846,14 @@ class BitVector
    */
   BitVector bvmodinv() const;
 
+  /**
+   * Calculate a bit-vector representing this bit-vector exponentiated by `exp`.
+   *
+   * @param exp The exponent GMP value.
+   * @return A bit-vector representing the result of the exponentiation.
+   */
+  BitVector bvpow(const mpz_t exp) const;
+
   /* ----------------------------------------------------------------------- */
   /* In-place versions of bit-vector operations.                             */
   /*                                                                         */
@@ -2168,6 +2176,24 @@ class BitVector
    *         inverse.
    */
   BitVector& ibvmodinv();
+
+  /**
+   * Calculate a bit-vector base exponentiated by `exp` (in-place).
+   *
+   * @param base The base bit-vector.
+   * @param exp The exponent GMP value.
+   * @return A bit-vector representing the result of the exponentiation.
+   */
+  BitVector& ibvpow(const BitVector& base, const mpz_t exp);
+
+  /**
+   * Calculate a bit-vector representing this bit-vector exponentiated by `exp`
+   * (in-place).
+   *
+   * @param exp The exponent GMP value.
+   * @return A bit-vector representing the result of the exponentiation.
+   */
+  BitVector& ibvpow(const mpz_t exp);
 
   /** Merged bit-vector operations. ----------------------------------------- */
 
