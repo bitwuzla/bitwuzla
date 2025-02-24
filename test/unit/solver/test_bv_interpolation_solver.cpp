@@ -690,7 +690,7 @@ TEST_F(TestBvInterpolationSolver, interpol_array3)
   test_get_interpolant({A0, A1, A2, A3, A4}, C);
 }
 
-TEST_F(TestBvInterpolationSolver, interpol_array4)
+TEST_F(TestBvInterpolationSolver, interpol_array4a)
 {
   Type btype = d_nm.mk_bool_type();
   Type arr   = d_nm.mk_array_type(btype, btype);
@@ -718,6 +718,42 @@ TEST_F(TestBvInterpolationSolver, interpol_array4)
                         {d_nm.mk_node(Kind::SELECT, {h, b}),
                          d_nm.mk_node(Kind::SELECT, {hh, b})});
   test_get_interpolant({A0, A1}, C);
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_array4b)
+{
+  // this should not have an interpolant over h and hh
+  Type btype = d_nm.mk_bool_type();
+  Type arr   = d_nm.mk_array_type(btype, btype);
+  // (declare-const h (Array Bool Bool))
+  Node h = d_nm.mk_const(arr, "h");
+  // (declare-const hh (Array Bool Bool))
+  Node hh = d_nm.mk_const(arr, "hh");
+  // (declare-const i Bool)
+  Node i = d_nm.mk_const(btype, "i");
+  // (declare-const e Bool)
+  Node e = d_nm.mk_const(btype, "e");
+  // (declare-const a Bool)
+  Node a = d_nm.mk_const(btype, "a");
+  // (declare-const b Bool)
+  Node b = d_nm.mk_const(btype, "b");
+
+  // (assert (= hh (store h i e)))
+  Node A =
+      d_nm.mk_node(Kind::EQUAL, {hh, d_nm.mk_node(Kind::STORE, {h, i, e})});
+  // (assert (distinct a b))
+  Node B0 = d_nm.mk_node(Kind::DISTINCT, {a, b});
+  // (assert (distinct (select h a) (select hh a)))
+  Node B1 = d_nm.mk_node(Kind::DISTINCT,
+                         {d_nm.mk_node(Kind::SELECT, {h, a}),
+                          d_nm.mk_node(Kind::SELECT, {hh, a})});
+  // (assert (distinct (select h b) (select hh b)))
+  Node B2 = d_nm.mk_node(Kind::DISTINCT,
+                         {d_nm.mk_node(Kind::SELECT, {h, b}),
+                          d_nm.mk_node(Kind::SELECT, {hh, b})});
+  Node C =
+      d_nm.mk_node(Kind::NOT, {utils::mk_nary(d_nm, Kind::AND, {B0, B1, B2})});
+  test_get_interpolant({A}, C);
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_fp1)
