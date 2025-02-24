@@ -26,7 +26,7 @@ class TestBvInterpolationSolver : public TestCommon
  protected:
   constexpr static bool s_test_internal   = true;
   constexpr static bool s_test_cadicraig  = true;
-  constexpr static bool s_full_pp_rw_only = false;
+  constexpr static bool s_all_pp_rw       = true;
 
   void SetUp() override
   {
@@ -80,7 +80,7 @@ class TestBvInterpolationSolver : public TestCommon
     test_get_interpolant_aux(
         true, d_options.rewrite_level.dflt(), A, C, internal);
 
-    if (!s_full_pp_rw_only)
+    if (s_all_pp_rw)
     {
       // get_interpolant when preprocessing is disabled
       test_get_interpolant_aux(
