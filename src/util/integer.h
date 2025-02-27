@@ -81,6 +81,18 @@ class Integer
 
   /** Get mpz_t value from Integer class. */
   const mpz_t& gmp_value() const { return d_val_gmp; }
+  /**
+   * Get uint64_t representation of Integer.
+   *
+   * Note: This will fail if the stored value does not fit into uint64_t.
+   */
+  uint64_t to_uint64() const;
+  /**
+   * Get int64_t representation of Integer.
+   *
+   * Note: This will fail if the stored value does not fit into int64_t.
+   */
+  int64_t to_int64() const;
 
  private:
   mpz_t d_val_gmp;

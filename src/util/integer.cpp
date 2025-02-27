@@ -232,6 +232,29 @@ Integer::str() const
   return ss.str();
 }
 
+uint64_t
+Integer::to_uint64() const
+{
+  assert(64 >= mpz_sizeinbase(d_val_gmp, 2));
+  assert(mpz_sgn(d_val_gmp) >= 0);
+  return mpz_get_ull(d_val_gmp);
+}
+
+int64_t
+Integer::to_int64() const
+{
+  assert(64 >= mpz_sizeinbase(d_val_gmp, 2));
+  uint64_t value = mpz_get_ull(d_val_gmp);
+  if (mpz_sgn(d_val_gmp) < 0)
+  {
+    assert(value <= static_cast<uint64_t>(
+               std::abs(std::numeric_limits<int64_t>::min())));
+    return -value;
+  }
+  assert(value <= std::numeric_limits<int64_t>::max());
+  return value;
+}
+
 std::ostream&
 operator<<(std::ostream& os, const Integer& i)
 {

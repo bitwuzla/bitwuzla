@@ -1,3 +1,6 @@
+#include <cstdint>
+
+#include "gtest/gtest.h"
 #include "test.h"
 #include "util/integer.h"
 
@@ -68,6 +71,28 @@ TEST_F(TestInteger, arithmetic_inplace)
   ASSERT_EQ(a *= -b, 8);
   ASSERT_EQ(a += "123", 131);
   ASSERT_EQ(a /= 3, 43);
+}
+
+TEST_F(TestInteger, conversion)
+{
+  ASSERT_EQ(Integer(-1).to_int64(), -1);
+  ASSERT_EQ(Integer(2).to_int64(), 2);
+  ASSERT_EQ(Integer(INT64_MIN).to_int64(), INT64_MIN);
+  ASSERT_EQ(Integer(INT64_MAX).to_int64(), INT64_MAX);
+  EXPECT_DEBUG_DEATH(Integer(UINT64_MAX).to_int64(),
+                     "value <= std::numeric_limits<int64_t>::max()");
+  EXPECT_DEBUG_DEATH(Integer("-9223372036854775809").to_int64(),
+                     "value <= .*std::numeric_limits<int64_t>::min().*");
+  EXPECT_DEBUG_DEATH(Integer("-18446744073709551616").to_int64(),
+                     "64 >= mpz_sizeinbase.*");
+
+  ASSERT_EQ(Integer(1).to_uint64(), 1);
+  ASSERT_EQ(Integer(0).to_uint64(), 0);
+  ASSERT_EQ(Integer(UINT_MAX).to_uint64(), UINT_MAX);
+  ASSERT_EQ(Integer(INT64_MAX).to_uint64(), INT64_MAX);
+  EXPECT_DEBUG_DEATH(Integer(-1).to_uint64(), "mpz_sgn.* >= 0");
+  EXPECT_DEBUG_DEATH(Integer("18446744073709551616").to_uint64(),
+                     "64 >= mpz_sizeinbase.*");
 }
 
 TEST_F(TestInteger, hash)
