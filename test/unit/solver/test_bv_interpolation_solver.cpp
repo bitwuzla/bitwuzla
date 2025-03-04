@@ -28,6 +28,13 @@ class TestBvInterpolationSolver : public TestCommon
   constexpr static bool s_test_cadicraig  = true;
   constexpr static bool s_all_pp_rw       = true;
 
+  enum class AssumptionConfig
+  {
+    NONE,
+    ALL,
+    ONLY_C,
+  };
+
   void SetUp() override
   {
     d_options.bv_solver.set_str("bitblast");
@@ -51,27 +58,28 @@ class TestBvInterpolationSolver : public TestCommon
     ASSERT_EQ(ctx_solve.solve(), Result::SAT);
     ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
     ASSERT_EQ(ctx_solve.solve(), Result::UNSAT);
-    test_get_interpolant_aux(A, C, false);
-    test_get_interpolant_aux(A, C, true);
+    test_get_interpolant_aux(A, C, AssumptionConfig::NONE);
+    test_get_interpolant_aux(A, C, AssumptionConfig::ALL);
+    test_get_interpolant_aux(A, C, AssumptionConfig::ONLY_C);
   }
 
   void test_get_interpolant_aux(const std::vector<Node>& A,
                                 const Node& C,
-                                bool use_assumptions)
+                                AssumptionConfig config)
   {
     if (s_test_internal)
     {
-      test_get_interpolant_aux(A, C, use_assumptions, true);
+      test_get_interpolant_aux(A, C, config, true);
     }
     if (s_test_cadicraig)
     {
-      test_get_interpolant_aux(A, C, use_assumptions, false);
+      test_get_interpolant_aux(A, C, config, false);
     }
   }
 
   void test_get_interpolant_aux(const std::vector<Node>& A,
                                 const Node& C,
-                                bool use_assumptions,
+                                AssumptionConfig config,
                                 bool internal)
   {
     if (d_options.log_level())
@@ -82,21 +90,17 @@ class TestBvInterpolationSolver : public TestCommon
     }
     // get interpolant
     test_get_interpolant_aux(
-        true, d_options.rewrite_level.dflt(), A, C, use_assumptions, internal);
+        true, d_options.rewrite_level.dflt(), A, C, config, internal);
 
     if (s_all_pp_rw)
     {
       // get_interpolant when preprocessing is disabled
-      test_get_interpolant_aux(false,
-                               d_options.rewrite_level.dflt(),
-                               A,
-                               C,
-                               use_assumptions,
-                               internal);
+      test_get_interpolant_aux(
+          false, d_options.rewrite_level.dflt(), A, C, config, internal);
       // get_interpolant when rewriting is disabled
-      test_get_interpolant_aux(true, 0, A, C, use_assumptions, internal);
+      test_get_interpolant_aux(true, 0, A, C, config, internal);
       // get_interpolant when preprocessing and rewriting is disabled
-      test_get_interpolant_aux(false, 0, A, C, use_assumptions, internal);
+      test_get_interpolant_aux(false, 0, A, C, config, internal);
     }
   }
 
@@ -104,7 +108,7 @@ class TestBvInterpolationSolver : public TestCommon
                                 uint64_t rwl,
                                 const std::vector<Node>& A,
                                 const Node& C,
-                                bool use_assumptions,
+                                AssumptionConfig config,
                                 bool internal)
   {
     if (d_options.log_level())
@@ -118,13 +122,17 @@ class TestBvInterpolationSolver : public TestCommon
     d_options.tmp_interpol_use_cadicraig.set(!internal);
     sat::SatSolverFactory sat_factory(d_options);
     SolvingContext ctx(d_nm, d_options, sat_factory);
-    if (use_assumptions)
+    if (config == AssumptionConfig::ALL)
     {
       ctx.push();
     }
     for (const auto& a : A)
     {
       ctx.assert_formula(a);
+    }
+    if (config == AssumptionConfig::ONLY_C)
+    {
+      ctx.push();
     }
     Node interpolant = ctx.get_interpolant(C);
     ASSERT_FALSE(interpolant.is_null());
@@ -293,8 +301,12 @@ TEST_F(TestBvInterpolationSolver, interpol2)
   ASSERT_EQ(ctx_solve.solve(), Result::UNSAT);
   ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
   ASSERT_EQ(ctx_solve.solve(), Result::UNSAT);
-  test_get_interpolant_aux(A, C, false);
-  test_get_interpolant_aux(A, C, true);
+  test_get_interpolant_aux(
+      A, C, TestBvInterpolationSolver::AssumptionConfig::NONE);
+  test_get_interpolant_aux(
+      A, C, TestBvInterpolationSolver::AssumptionConfig::ALL);
+  test_get_interpolant_aux(
+      A, C, TestBvInterpolationSolver::AssumptionConfig::ONLY_C);
 }
 
 TEST_F(TestBvInterpolationSolver, interpol3)
