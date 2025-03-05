@@ -10,6 +10,13 @@
 
 #include "check/check_interpolant.h"
 
+#include "node/node_ref_vector.h"
+#include "node/unordered_node_ref_map.h"
+#include "sat/interpolants/tracer_kinds.h"
+
+using namespace bzla::node;
+using namespace bzla::sat::interpolants;
+
 namespace bzla::check {
 
 CheckInterpolant::CheckInterpolant(SolvingContext& ctx)
@@ -30,6 +37,7 @@ CheckInterpolant::check(const Node& C, size_t idx_B, const Node& interpolant)
   Log(1);
 
   NodeManager& nm = d_ctx.env().nm();
+  const auto& assertions = d_ctx.original_assertions();
 
   // First, check if A implies interpolant.
   {
@@ -38,7 +46,6 @@ CheckInterpolant::check(const Node& C, size_t idx_B, const Node& interpolant)
     SolvingContext check_ctx(
         nm, opts, d_ctx.env().sat_factory(), "chkinterpol");
     check_ctx.env().configure_terminator(d_ctx.env().terminator());
-    const auto& assertions = d_ctx.original_assertions();
     for (size_t i = 0, n = assertions.size(); i < n; ++i)
     {
       if (i == idx_B) continue;
@@ -57,6 +64,7 @@ CheckInterpolant::check(const Node& C, size_t idx_B, const Node& interpolant)
       return false;
     }
   }
+  Log(1);
 
   // Then, check if interpolant implies C
   option::Options opts;
@@ -68,6 +76,101 @@ CheckInterpolant::check(const Node& C, size_t idx_B, const Node& interpolant)
   Log(1) << "check: (and A (not I))";
   Result res = check_ctx.solve();
   Log(1) << "(and I (not C)): " << res;
-  return res == Result::UNSAT;
+  if (res != Result::UNSAT)
+  {
+    return false;
+  }
+  Log(1);
+
+  // Finally, check if uninterpreted symbols occurring in I are shared, i.e.,
+  // that it contains no symbols that are local to A or C.
+  Log(1) << "check: symbols in I";
+  std::unordered_map<Node, VariableKind> consts;
+  node_ref_vector visit{assertions.begin(), assertions.end()};
+  unordered_node_ref_map<bool> cache;
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, true);
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second)
+    {
+      it->second = false;
+      if (cur.is_const())
+      {
+        consts.emplace(cur, VariableKind::A);
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+
+  cache.clear();
+  visit.push_back(C);
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, true);
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second)
+    {
+      it->second = false;
+      if (cur.is_const())
+      {
+        auto [cit, cinserted] = consts.emplace(cur, VariableKind::B);
+        if (!inserted && cit->second == VariableKind::A)
+        {
+          cit->second = VariableKind::GLOBAL;
+        }
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+
+  cache.clear();
+  visit.push_back(interpolant);
+  visit.push_back(C);
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, true);
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second)
+    {
+      it->second = false;
+      if (cur.is_const())
+      {
+        auto cit = consts.find(cur);
+        if (cit == consts.end())
+        {
+          Log(1) << "check: '" << cur << "': " << std::setw(6) << "(new)"
+                 << " : \u2716";
+          return false;
+        }
+        if (cit->second != VariableKind::GLOBAL)
+        {
+          Log(1) << "check: '" << cur << "': " << std::setw(6) << cit->second
+                 << ": \u2716";
+          return false;
+        }
+        Log(1) << "check: '" << cur << "': " << std::setw(6) << cit->second
+               << ": \u2713";
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+
+  return true;
 }
 }  // namespace bzla::check
