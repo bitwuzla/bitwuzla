@@ -13,6 +13,7 @@
 
 #include "bitblast/aig/aig_manager.h"
 #include "env.h"
+#include "sat/interpolants/tracer_kinds.h"
 #include "solver/bv/aig_bitblaster.h"
 #include "tracer.hpp"
 #include "util/logger.h"
@@ -28,19 +29,6 @@ namespace sat::interpolants {
 class Tracer : public CaDiCaL::Tracer
 {
  public:
-  enum class VariableKind
-  {
-    A,
-    B,
-    GLOBAL,
-  };
-  enum class ClauseKind
-  {
-    A,
-    B,
-    LEARNED,  // internal
-  };
-
   /**
    * Constructor.
    * @param env        The associated environment.
@@ -117,9 +105,6 @@ class Tracer : public CaDiCaL::Tracer
   /** The associated logger instance. */
   util::Logger& d_logger;
 };
-
-std::ostream& operator<<(std::ostream& out, Tracer::VariableKind kind);
-std::ostream& operator<<(std::ostream& out, Tracer::ClauseKind kind);
 
 }  // namespace sat::interpolants
 }  // namespace bzla

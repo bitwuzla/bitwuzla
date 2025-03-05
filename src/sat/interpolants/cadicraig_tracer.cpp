@@ -20,17 +20,17 @@ using namespace bzla::node;
 
 namespace bzla::sat::interpolants {
 
-static std::unordered_map<Tracer::VariableKind, CaDiCraig::CraigVarType>
+static std::unordered_map<VariableKind, CaDiCraig::CraigVarType>
     s_var_kind_to_cadicraig = {
-        {Tracer::VariableKind::A, CaDiCraig::CraigVarType::A_LOCAL},
-        {Tracer::VariableKind::B, CaDiCraig::CraigVarType::B_LOCAL},
-        {Tracer::VariableKind::GLOBAL, CaDiCraig::CraigVarType::GLOBAL},
+        {VariableKind::A, CaDiCraig::CraigVarType::A_LOCAL},
+        {VariableKind::B, CaDiCraig::CraigVarType::B_LOCAL},
+        {VariableKind::GLOBAL, CaDiCraig::CraigVarType::GLOBAL},
 };
-static std::unordered_map<Tracer::ClauseKind, CaDiCraig::CraigClauseType>
+static std::unordered_map<ClauseKind, CaDiCraig::CraigClauseType>
     s_clause_kind_to_cadicraig = {
-        {Tracer::ClauseKind::A, CaDiCraig::CraigClauseType::A_CLAUSE},
-        {Tracer::ClauseKind::B, CaDiCraig::CraigClauseType::B_CLAUSE},
-        {Tracer::ClauseKind::LEARNED, CaDiCraig::CraigClauseType::L_CLAUSE},
+        {ClauseKind::A, CaDiCraig::CraigClauseType::A_CLAUSE},
+        {ClauseKind::B, CaDiCraig::CraigClauseType::B_CLAUSE},
+        {ClauseKind::LEARNED, CaDiCraig::CraigClauseType::L_CLAUSE},
 };
 
 void

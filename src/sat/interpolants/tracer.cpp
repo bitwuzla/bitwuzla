@@ -115,21 +115,4 @@ Tracer::get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache) const
   return Node();
 }
 
-std::ostream&
-operator<<(std::ostream& out, Tracer::VariableKind kind)
-{
-  out << (kind == Tracer::VariableKind::A
-              ? "A"
-              : (kind == Tracer::VariableKind::B ? "B" : "GLOBAL"));
-  return out;
-}
-
-std::ostream&
-operator<<(std::ostream& out, Tracer::ClauseKind kind)
-{
-  out << (kind == Tracer::ClauseKind::A
-              ? "A"
-              : (kind == Tracer::ClauseKind::B ? "B" : "LEARNED"));
-  return out;
-}
 }  // namespace bzla::sat::interpolants

@@ -21,6 +21,7 @@
 #include "sat/cadical.h"
 #include "sat/interpolants/cadical_tracer.h"
 #include "sat/interpolants/cadicraig_tracer.h"
+#include "sat/interpolants/tracer_kinds.h"
 #include "solver/bv/aig_bitblaster.h"
 #include "solver/bv/bv_solver.h"
 
@@ -41,7 +42,7 @@ class BvInterpolationSolver::InterpolationSatSolver
   {
   }
 
-  void set_clause_label(Tracer::ClauseKind kind) { d_clause_kind = kind; }
+  void set_clause_label(ClauseKind kind) { d_clause_kind = kind; }
 
   void add(int64_t lit) override
   {
@@ -50,7 +51,7 @@ class BvInterpolationSolver::InterpolationSatSolver
       d_tracer.label_clause(++d_clause_cnt, d_clause_kind);
       Log(3) << "CNF encoder: add clause";
       Log(3) << "  label clause: " << d_clause_cnt << " "
-             << (d_clause_kind == Tracer::ClauseKind::A ? "A" : "B");
+             << (d_clause_kind == ClauseKind::A ? "A" : "B");
       size_t size = d_clause.size();
       if (d_logger.is_log_enabled(2))
       {
@@ -71,15 +72,14 @@ class BvInterpolationSolver::InterpolationSatSolver
         {
           int64_t var                   = std::abs(lit);
           auto it                       = d_vars_to_kinds.find(var);
-          Tracer::VariableKind var_kind = it != d_vars_to_kinds.end()
+          VariableKind var_kind         = it != d_vars_to_kinds.end()
                                               ? d_vars_to_kinds.at(var)
-                                              : Tracer::VariableKind::GLOBAL;
+                                              : VariableKind::GLOBAL;
           d_tracer.label_variable(var, var_kind);
           Log(3) << "  label var: " << var << " ("
-                 << (var_kind == Tracer::VariableKind::A
+                 << (var_kind == VariableKind::A
                          ? "A"
-                         : (var_kind == Tracer::VariableKind::B ? "B"
-                                                                : "GLOBAL"))
+                         : (var_kind == VariableKind::B ? "B" : "GLOBAL"))
                  << ")";
           set_labeled(lit);
         }
@@ -125,7 +125,7 @@ class BvInterpolationSolver::InterpolationSatSolver
    *                    in both A and B as shared.
    */
   void label_bits(const bitblast::AigBitblaster::Bits& bits,
-                  Tracer::VariableKind kind,
+                  VariableKind kind,
                   bool auto_shared = false)
   {
     bv::AigBitblaster::aig_node_ref_vector visit;
@@ -158,19 +158,18 @@ class BvInterpolationSolver::InterpolationSatSolver
       }
       if (auto_shared)
       {
-        assert(kind == Tracer::VariableKind::B || inserted
-               || kind == it->second);
+        assert(kind == VariableKind::B || inserted || kind == it->second);
         if (!inserted && it->second != kind
-            && it->second != Tracer::VariableKind::GLOBAL)
+            && it->second != VariableKind::GLOBAL)
         {
-          it->second = Tracer::VariableKind::GLOBAL;
+          it->second = VariableKind::GLOBAL;
         }
       }
     } while (!visit.empty());
   }
 
   /** Maps var to kind as labeled after bit-blasting. */
-  std::unordered_map<int64_t, Tracer::VariableKind> d_vars_to_kinds;
+  std::unordered_map<int64_t, VariableKind> d_vars_to_kinds;
 
  private:
   void resize(int64_t lit)
@@ -214,7 +213,7 @@ class BvInterpolationSolver::InterpolationSatSolver
   /** The associated tracer. */
   Tracer& d_tracer;
   /** The current clause type (A or B). */
-  Tracer::ClauseKind d_clause_kind = Tracer::ClauseKind::A;
+  ClauseKind d_clause_kind = ClauseKind::A;
 };
 
 /* --- BvInterpolationSolver public ---------------------------------------- */
@@ -279,9 +278,9 @@ BvInterpolationSolver::interpolant()
     for (const auto& p : d_interpol_sat_solver->d_vars_to_kinds)
     {
       Log(3) << p.first << ": "
-             << (p.second == Tracer::VariableKind::A
+             << (p.second == VariableKind::A
                      ? "A"
-                     : (p.second == Tracer::VariableKind::B ? "B" : "GLOBAL"));
+                     : (p.second == VariableKind::B ? "B" : "GLOBAL"));
     }
     Log(3);
   }
@@ -342,9 +341,9 @@ BvInterpolationSolver::register_assertion(const Node& assertion,
   }
 
   // Bit-blast and label assertion
-  Tracer::VariableKind kind = d_solver_state.is_interpol_conj(assertion)
-                                  ? Tracer::VariableKind::B
-                                  : Tracer::VariableKind::A;
+  VariableKind kind = d_solver_state.is_interpol_conj(assertion)
+                          ? VariableKind::B
+                          : VariableKind::A;
   Log(2) << "bitblast " << kind << ": " << assertion;
   {
     util::Timer timer(d_stats.time_bitblast);
@@ -371,9 +370,9 @@ BvInterpolationSolver::solve()
     util::Timer timer(d_stats.time_encode);
     for (const Node& assertion : d_assertions)
     {
-      Tracer::ClauseKind kind = d_solver_state.is_interpol_conj(assertion)
-                                    ? Tracer::ClauseKind::B
-                                    : Tracer::ClauseKind::A;
+      ClauseKind kind = d_solver_state.is_interpol_conj(assertion)
+                            ? ClauseKind::B
+                            : ClauseKind::A;
       d_interpol_sat_solver->set_clause_label(kind);
       const auto& bits = d_bitblaster.bits(assertion);
       assert(!bits.empty());
@@ -384,9 +383,9 @@ BvInterpolationSolver::solve()
 
   for (const Node& assumption : d_assumptions)
   {
-    Tracer::ClauseKind kind = d_solver_state.is_interpol_conj(assumption)
-                                  ? Tracer::ClauseKind::B
-                                  : Tracer::ClauseKind::A;
+    ClauseKind kind = d_solver_state.is_interpol_conj(assumption)
+                          ? ClauseKind::B
+                          : ClauseKind::A;
     d_interpol_sat_solver->set_clause_label(kind);
     const auto& bits = d_bitblaster.bits(assumption);
     assert(!bits.empty());
