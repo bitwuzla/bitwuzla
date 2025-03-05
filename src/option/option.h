@@ -67,9 +67,6 @@ enum class Option
   ABSTRACTION_EQUAL,           // bool
   ABSTRACTION_ITE,             // bool
 
-  // Interpolation
-  INTERPOLATION_AUTO_LABEL,  // bool
-
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,             // bool
   PP_CONTRADICTING_ANDS,  // bool
@@ -599,8 +596,6 @@ class Options
   OptionBool abstraction_bv_urem;
   OptionBool abstraction_eq;
   OptionBool abstraction_ite;
-
-  OptionBool interpolation_auto_label;
 
   // Preprocessing
   OptionBool preprocess;

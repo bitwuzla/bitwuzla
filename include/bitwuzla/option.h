@@ -687,20 +687,6 @@ enum ENUM(Option)
   EVALUE(ABSTRACTION_ITE),
 
   /*!
-   * **Interpolation: Automatically determine labels for SAT variables when
-   *                  computing interpolant.**
-   *
-   * When disabled, all SAT variables are labeled as global, i.e., shared.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   *
-   *  @warning This is an expert option to configure the interpolation engine.
-   */
-  EVALUE(INTERPOLATION_AUTO_LABEL),
-
-  /*!
    * **Preprocessing.**
    *
    * When enabled, applies all enabled preprocessing passes.

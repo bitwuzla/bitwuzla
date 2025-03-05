@@ -100,9 +100,6 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   /** The current set of assumptions. */
   backtrack::vector<Node> d_assumptions;
 
-  /** True if option interolation_auto_label is enabled. */
-  bool d_opt_auto_label;
-
   /** AIG bit-blaster. */
   AigBitblaster d_bitblaster;
 

@@ -112,9 +112,6 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::ABSTRACTION_EQUAL, bzla::option::Option::ABSTRACTION_EQUAL},
         {Option::ABSTRACTION_ITE, bzla::option::Option::ABSTRACTION_ITE},
 
-        {Option::INTERPOLATION_AUTO_LABEL,
-         bzla::option::Option::INTERPOLATION_AUTO_LABEL},
-
         {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
 
         {Option::PREPROCESS, bzla::option::Option::PREPROCESS},

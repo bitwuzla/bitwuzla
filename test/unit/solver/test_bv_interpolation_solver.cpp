@@ -42,7 +42,6 @@ class TestBvInterpolationSolver : public TestCommon
     d_options.dbg_check_interpolant.set(true);
     d_options.log_level.set(0);
     d_options.tmp_interpol_use_cadicraig.set(false);
-    d_options.interpolation_auto_label.set(false);
   }
 
   void test_get_interpolant(const std::vector<Node>& A, const Node& C)

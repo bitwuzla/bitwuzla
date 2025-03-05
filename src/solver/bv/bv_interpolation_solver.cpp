@@ -223,7 +223,6 @@ BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
       d_stats(env.statistics(), "solver::bv::interpol::"),
       d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
-      d_opt_auto_label(env.options().interpolation_auto_label()),
       d_last_result(Result::UNKNOWN)
 {
   d_sat_solver.reset(new sat::Cadical());

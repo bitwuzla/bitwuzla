@@ -434,13 +434,6 @@ Options::Options()
                       false,
                       "term abstraction for ite",
                       "abstraction-ite"),
-      interpolation_auto_label(this,
-                               Option::INTERPOLATION_AUTO_LABEL,
-                               false,
-                               "automatically determine labels for SAT "
-                               "variables when computing interpolant (if "
-                               "disabled, all variables are labeled as global)",
-                               "interpolation-auto-label"),
 
       // Preprocessing
       preprocess(
@@ -920,8 +913,6 @@ Options::data(Option opt)
     case Option::ABSTRACTION_BV_UREM: return &abstraction_bv_urem;
     case Option::ABSTRACTION_EQUAL: return &abstraction_eq;
     case Option::ABSTRACTION_ITE: return &abstraction_ite;
-
-    case Option::INTERPOLATION_AUTO_LABEL: return &interpolation_auto_label;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;
