@@ -34,7 +34,7 @@ class AigBitblaster
                          std::hash<bitblast::AigNode>>;
 
   /** Recursively bit-blast `term`. */
-  void bitblast(const Node& term);
+  virtual void bitblast(const Node& term);
 
   /** Return encoded bits associated with bit-blasted term. */
   const bitblast::AigBitblaster::Bits& bits(const Node& term) const;
@@ -62,7 +62,7 @@ class AigBitblaster
     return d_bitblaster_cache;
   }
 
- private:
+ protected:
   bitblast::AigBitblaster::Bits d_empty;
 
   /** AIG bit-blaster. */

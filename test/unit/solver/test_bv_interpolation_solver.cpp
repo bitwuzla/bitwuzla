@@ -287,8 +287,8 @@ TEST_F(TestBvInterpolationSolver, interpol1)
 
 TEST_F(TestBvInterpolationSolver, interpol2)
 {
-  Node x              = d_nm.mk_const(d_nm.mk_bool_type());
-  Node y              = d_nm.mk_const(d_nm.mk_bool_type());
+  Node x              = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+  Node y              = d_nm.mk_const(d_nm.mk_bool_type(), "y");
   std::vector<Node> A = {x, d_nm.mk_node(Kind::NOT, {x})};
   Node C              = d_nm.mk_node(Kind::NOT, {y});
   // check if (and A (not C)) is unsat (A is already unsat)
@@ -311,8 +311,8 @@ TEST_F(TestBvInterpolationSolver, interpol2)
 TEST_F(TestBvInterpolationSolver, interpol3)
 {
   Type bv1    = d_nm.mk_bv_type(1);
-  Node x      = d_nm.mk_const(bv1);
-  Node y      = d_nm.mk_const(bv1);
+  Node x      = d_nm.mk_const(bv1, "x");
+  Node y      = d_nm.mk_const(bv1, "y");
   Node one    = d_nm.mk_value(BitVector::mk_true());
   Node zero   = d_nm.mk_value(BitVector::mk_false());
   Node bvnoty = d_nm.mk_node(Kind::BV_NOT, {y});
@@ -584,6 +584,96 @@ TEST_F(TestBvInterpolationSolver, interpol11)
   Node C = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
   test_get_interpolant({A0}, C);
 }
+
+TEST_F(TestBvInterpolationSolver, interpol_bv_abstr1)
+{
+  d_options.abstraction.set(true);
+  d_options.abstraction_bv_size.set(8);
+  Type bv8      = d_nm.mk_bv_type(8);
+  Node a        = d_nm.mk_const(bv8, "a");
+  Node c        = d_nm.mk_const(bv8, "c");
+  Node one      = d_nm.mk_value(BitVector::mk_one(8));
+  Node shift_by = d_nm.mk_const(bv8, "shift_by");
+  // (assert (bvult shift_by (_ bv8 8)))
+  Node A0 = d_nm.mk_node(Kind::BV_ULT,
+                         {shift_by, d_nm.mk_value(BitVector::from_ui(8, 8))});
+  // (assert (= (_ bv1 8) (bvshl (_ bv1 8) shift_by)))
+  Node A1 = d_nm.mk_node(Kind::EQUAL,
+                         {one, d_nm.mk_node(Kind::BV_SHL, {one, shift_by})});
+  // (assert (= c (bvudiv a (_ bv1 8))))
+  Node A2 =
+      d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_UDIV, {a, one})});
+  // (assert (distinct c (bvlshr a shift_by))
+  Node C =
+      d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_SHR, {a, shift_by})});
+  test_get_interpolant({A0, A1, A2}, C);
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_bv_abstr2)
+{
+  d_options.abstraction.set(true);
+  d_options.abstraction_bv_size.set(3);
+  Type bv3      = d_nm.mk_bv_type(3);
+  Node a        = d_nm.mk_const(bv3, "a");
+  Node c        = d_nm.mk_const(bv3, "c");
+  Node pow2     = d_nm.mk_const(bv3, "pow2");
+  Node one      = d_nm.mk_value(BitVector::mk_one(3));
+  Node shift_by = d_nm.mk_const(bv3, "shift_by");
+  // (assert (bvult shift_by (_ bv3 3)))
+  Node A0 = d_nm.mk_node(Kind::BV_ULT,
+                         {shift_by, d_nm.mk_value(BitVector::from_ui(3, 3))});
+  // (assert (= pow2 (bvshl (_ bv1 2) shift_by)))
+  Node A1 = d_nm.mk_node(Kind::EQUAL,
+                         {pow2, d_nm.mk_node(Kind::BV_SHL, {one, shift_by})});
+  // (assert (= c (bvudiv a pow2)))
+  Node A2 =
+      d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_UDIV, {a, pow2})});
+  // (assert (distinct c (bvlshr a shift_by))
+  Node C =
+      d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_SHR, {a, shift_by})});
+  test_get_interpolant({A0, A1, A2}, C);
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_bv_abstr3)
+{
+  d_options.abstraction.set(true);
+  d_options.abstraction_bv_size.set(6);
+  Type bv6      = d_nm.mk_bv_type(6);
+  Node a        = d_nm.mk_const(bv6, "a");
+  Node c        = d_nm.mk_const(bv6, "c");
+  Node pow2     = d_nm.mk_const(bv6, "pow2");
+  Node one      = d_nm.mk_value(BitVector::mk_one(6));
+  Node mask     = d_nm.mk_const(bv6, "mask");
+  Node shift_by = d_nm.mk_const(bv6, "shift_by");
+  // (assert (bvult shift_by (_ bv6 6)))
+  Node A0 = d_nm.mk_node(Kind::BV_ULT,
+                         {shift_by, d_nm.mk_value(BitVector::from_ui(6, 6))});
+  // (assert (= pow2 (bvshl (_ bv1 6) shift_by)))
+  Node A1 = d_nm.mk_node(Kind::EQUAL,
+                         {pow2, d_nm.mk_node(Kind::BV_SHL, {one, shift_by})});
+  // (assert (= mask (bvnot (bvshl (bvnot (_ bv0 6)) shift_by))))
+  Node A2 = d_nm.mk_node(
+      Kind::EQUAL,
+      {mask,
+       d_nm.mk_node(
+           Kind::BV_NOT,
+           {d_nm.mk_node(Kind::BV_SHL,
+                         {d_nm.mk_node(Kind::BV_NOT,
+                                       {d_nm.mk_value(BitVector::mk_zero(6))}),
+                          shift_by})})});
+  // (assert (= c (bvurem a pow2)))
+  Node A3 =
+      d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_UREM, {a, pow2})});
+  // (assert (distinct c (bvand mask a)))
+  Node C =
+      d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_AND, {mask, a})});
+  test_get_interpolant({A0, A1, A2, A3}, C);
+}
+
+#if 0
+// For now, since we now strictly follow the definition of interpolation where
+// the interpolant may only contain shared uninterpreted symbols, we don't
+// support interpolation when arrays and UF are involved.
 
 TEST_F(TestBvInterpolationSolver, interpol_array1)
 {
@@ -943,4 +1033,5 @@ TEST_F(TestBvInterpolationSolver, interpol_quant2)
                      d_nm.mk_node(Kind::BV_SLE, {mm, c})})})})});
   test_get_interpolant({A}, C);
 }
+#endif
 }  // namespace bzla::test
