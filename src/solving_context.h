@@ -85,8 +85,10 @@ class SolvingContext
   /** @return Context options object. */
   const option::Options& options() const;
 
+  /** @return The current set of assertions. */
   backtrack::AssertionView& assertions();
 
+  /** @return The set of original input assertions. */
   const backtrack::vector<Node>& original_assertions() const;
 
   /** @return The solving context backtrack manager. */
