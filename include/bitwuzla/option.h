@@ -303,8 +303,9 @@ enum ENUM(Option)
    * abstracted.
    *
    * Values:
-   *  * **>0**: enable
-   *  * **0**: disable [**default**]
+   *  * **min**: >=3
+   *  * **max**: UINT64_MAX
+   *  * **default**: 32
    *
    *  @warning This is an expert option to configure the abstraction module.
    */

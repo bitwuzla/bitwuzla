@@ -287,7 +287,7 @@ Options::Options()
           this,
           Option::ABSTRACTION_BV_SIZE,
           32,
-          0,
+          3,
           UINT64_MAX,
           "enable abstraction for bit-vector terms of given minimum size",
           "abstraction-bv-size"),
