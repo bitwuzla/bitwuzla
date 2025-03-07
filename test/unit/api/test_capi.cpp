@@ -4602,13 +4602,12 @@ TEST_F(TestCApi, term_print)
               "(exists ((q (_ BitVec 8))) (= #b00000000 (bvmul bv8 q)))");
   }
 
+#ifdef BZLA_USE_FPEXP
   BitwuzlaSort bv1  = bitwuzla_mk_bv_sort(d_tm, 1);
   BitwuzlaSort bv5  = bitwuzla_mk_bv_sort(d_tm, 5);
   BitwuzlaSort bv10 = bitwuzla_mk_bv_sort(d_tm, 10);
   BitwuzlaSort bv4  = bitwuzla_mk_bv_sort(d_tm, 4);
   BitwuzlaSort bv8  = bitwuzla_mk_bv_sort(d_tm, 8);
-
-#ifdef BZLA_USE_FPEXP
   {
     BitwuzlaTerm t =
         bitwuzla_mk_fp_value(d_tm,
@@ -4663,13 +4662,12 @@ TEST_F(TestCApi, term_print_fmt)
               "(exists ((q (_ BitVec 8))) (= #x00 (bvmul bv8 q)))");
   }
 
+#ifdef BZLA_USE_FPEXP
   BitwuzlaSort bv1  = bitwuzla_mk_bv_sort(d_tm, 1);
   BitwuzlaSort bv5  = bitwuzla_mk_bv_sort(d_tm, 5);
   BitwuzlaSort bv10 = bitwuzla_mk_bv_sort(d_tm, 10);
   BitwuzlaSort bv4  = bitwuzla_mk_bv_sort(d_tm, 4);
   BitwuzlaSort bv8  = bitwuzla_mk_bv_sort(d_tm, 8);
-
-#ifdef BZLA_USE_FPEXP
   {
     BitwuzlaTerm t =
         bitwuzla_mk_fp_value(d_tm,
