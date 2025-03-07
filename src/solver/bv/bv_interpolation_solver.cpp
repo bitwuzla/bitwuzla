@@ -187,6 +187,16 @@ class BvInterpolationSolver::InterpolationSatSolver
    */
   void label_lemma(const bitblast::AigBitblaster::Bits& bits)
   {
+    if (d_logger.is_log_enabled(2))
+    {
+      std::stringstream ss;
+      for (const auto& aig : bits)
+      {
+        ss << " " << aig;
+      }
+      Log(2) << "label_lemma: (" << ss.str() << ")";
+    }
+
     bv::AigBitblaster::aig_node_ref_vector visit;
     std::unordered_set<int64_t> cache;
     std::vector<int64_t> aig_consts;
@@ -386,24 +396,7 @@ BvInterpolationSolver::interpolant()
 {
   assert(d_last_result == Result::UNSAT);
 
-  Log(2);
-  Log(2) << "Bitblaster cache: " << d_bitblaster->bitblaster_cache().size()
-         << " entries";
-  Log(2);
-  if (d_logger.is_log_enabled(2))
-  {
-    for (const auto& p : d_bitblaster->bitblaster_cache())
-    {
-      std::stringstream ss;
-      ss << "@t" << p.first.id() << ": " << p.first << ": (";
-      for (const auto& a : p.second)
-      {
-        ss << " " << a.get_id();
-      }
-      ss << " )";
-      Log(2) << ss.str();
-    }
-  }
+  log_bitblaster_cache(2);
 
   if (d_logger.is_log_enabled(3))
   {
@@ -485,38 +478,6 @@ BvInterpolationSolver::register_assertion(const Node& assertion,
 
   // Update AIG statistics
   update_statistics();
-}
-
-void
-BvInterpolationSolver::label(const Node& node, VariableKind kind)
-{
-  node_ref_vector visit{node};
-  unordered_node_ref_map<bool> cache;
-  do
-  {
-    const Node& cur     = visit.back();
-    auto [it, inserted] = cache.emplace(cur, true);
-
-    if (inserted)
-    {
-      visit.insert(visit.end(), cur.begin(), cur.end());
-      continue;
-    }
-    else if (it->second)
-    {
-      it->second = false;
-      if (cur.is_const())
-      {
-        auto [lit, linserted] = d_consts_to_kinds.emplace(cur, kind);
-        if (!linserted && lit->second != VariableKind::GLOBAL
-            && lit->second != kind)
-        {
-          lit->second = VariableKind::GLOBAL;
-        }
-      }
-    }
-    visit.pop_back();
-  } while (!visit.empty());
 }
 
 Result
@@ -678,6 +639,61 @@ BvInterpolationSolver::update_statistics()
   d_stats.bb_num_cnf_vars     = cnf_stats.num_vars;
   d_stats.bb_num_cnf_clauses  = cnf_stats.num_clauses;
   d_stats.bb_num_cnf_literals = cnf_stats.num_literals;
+}
+
+void
+BvInterpolationSolver::label(const Node& node, VariableKind kind)
+{
+  node_ref_vector visit{node};
+  unordered_node_ref_map<bool> cache;
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, true);
+
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second)
+    {
+      it->second = false;
+      if (cur.is_const())
+      {
+        auto [lit, linserted] = d_consts_to_kinds.emplace(cur, kind);
+        if (!linserted && lit->second != VariableKind::GLOBAL
+            && lit->second != kind)
+        {
+          lit->second = VariableKind::GLOBAL;
+        }
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+}
+
+void
+BvInterpolationSolver::log_bitblaster_cache(uint64_t level) const
+{
+  if (d_logger.is_log_enabled(level))
+  {
+    Log(level);
+    Log(level) << "Bitblaster cache: "
+               << d_bitblaster->bitblaster_cache().size() << " entries";
+    Log(level);
+    for (const auto& p : d_bitblaster->bitblaster_cache())
+    {
+      std::stringstream ss;
+      ss << "@t" << p.first.id() << ": " << p.first << ": (";
+      for (const auto& a : p.second)
+      {
+        ss << " " << a.get_id();
+      }
+      ss << " )";
+      Log(level) << ss.str();
+    }
+  }
 }
 
 BvInterpolationSolver::Statistics::Statistics(util::Statistics& stats,

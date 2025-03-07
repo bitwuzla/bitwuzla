@@ -98,7 +98,18 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   /** Update AIG and CNF statistics. */
   void update_statistics();
 
+  /**
+   * Label bit-vector consts in node.
+   * @param node The node.
+   * @param kind The SAT variable kind to label with.
+   */
   void label(const Node& node, sat::interpolants::VariableKind kind);
+
+  /**
+   * Log current state of bitblaster cache when given log level is enabled.
+   * @param level The log level.
+   */
+  void log_bitblaster_cache(uint64_t level) const;
 
   /** The current set of assertions. */
   backtrack::vector<Node> d_assertions;
