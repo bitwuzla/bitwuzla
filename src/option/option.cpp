@@ -155,7 +155,7 @@ Options::Options()
                    0,
                    0,
                    UINT64_MAX,
-                   "set maximum memory limit in MB",
+                   "set maximum memory limit in MB per satisfiability check",
                    "memory-limit",
                    "M"),
       nthreads(

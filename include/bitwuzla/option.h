@@ -44,525 +44,641 @@ namespace bitwuzla {
 enum ENUM(Option)
 {
   /* ----------------- General Options -------------------------------------- */
-  /*! **Log level.**
+  /*!
+   * **Log level.**
    *
-   * Values:
-   *  * An unsigned integer value. [**default**: 0]
+   * *Values:*
+   *  - An unsigned integer value. [**default**: 0]
    */
   EVALUE(LOGLEVEL),
-  /*! **Model generation.**
+  /*!
+   * **Model generation.**
    *
-   * Values:
-   *  * **1**: enable, generate model for assertions only
-   *  * **2**: enable, generate model for all created terms
-   *  * **0**: disable [**default**]
+   * *SMT-LIB:* `:produce-models`
    *
-   * @note This option cannot be enabled in combination with option
-   *       `::EVALUE(PP_UNCONSTRAINED_OPTIMIZATION`.
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    */
   EVALUE(PRODUCE_MODELS),
-  /*! **Unsat assumptions generation.**
+  /*!
+   * **Unsat assumptions generation.**
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *SMT-LIB:* `:produce-unsat-assumptions`
+   *
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    */
   EVALUE(PRODUCE_UNSAT_ASSUMPTIONS),
-  /*! **Unsat core generation.**
+  /*!
+   * **Unsat core generation.**
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *SMT-LIB:* `:produce-unsat-core`
+   *
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    */
   EVALUE(PRODUCE_UNSAT_CORES),
-  /*! **Seed for random number generator.**
+  /*!
+   * **Seed for the random number generator.**
    *
-   * Values:
-   *  * An unsigned integer value. [**default**: 0]
+   * *Values:*
+   *  - **min**: 1
+   *  - **max**: UINT32_MAX
+   *  - **default**: 27644437
    */
   EVALUE(SEED),
-  /*! **Verbosity level.**
+  /*!
+   * **Verbosity level.**
    *
-   * Values:
-   *  * An unsigned integer value <= 4. [**default**: 0]
+   * *Values:*
+   *  - An unsigned integer value <= 4. [**default**: 0]
    */
   EVALUE(VERBOSITY),
 
-  /*! **Time limit in milliseconds per satisfiability check.**
+  /*!
+   * **Time limit per satisfiability check in milliseconds.**
    *
-   * Values:
-   *  * An unsigned integer for the time limit in milliseconds. [**default**: 0]
+   * A configuration value of 0 disables the time limit (no time limit).
+   *
+   * *Values:*
+   *  - An unsigned 64-bit integer. [**default**: 0]
    */
   EVALUE(TIME_LIMIT_PER),
-  /*! ** Memory limit in MB.**
+  /*!
+   * **Memory limit per satisfiability check in MB.**
    *
-   * Values:
-   *  * An unsigned integer for the memory limit in MB. [**default**: 0]
+   * A configuration value of 0 disables the memory limit (no memory limit).
+   *
+   * *Values:*
+   *  - An unsigned 64-bit integer. [**default**: 0]
    */
   EVALUE(MEMORY_LIMIT),
-  /*! ** Number of parallel threads.**
+  /*!
+   * **Number of parallel threads.**
    *
-   * Values:
-   *  * An unsigned integer > 0. [**default**: 1]
+   * *Values:*
+   *  - **min**: 1
+   *  - **max**: UINT64_MAX
+   *  - **default**: 1
    */
   EVALUE(NTHREADS),
 
   /* ---------------- Bitwuzla-specific Options ----------------------------- */
 
-  /*! **Configure the bit-vector solver engine.**
+  /*!
+   * **Configure the bit-vector solver engine.**
    *
-   * Values:
-   *  * **bitblast**: The classical bit-blasting approach. [**default**]
-   *  * **prop**: Propagation-based local search (sat only).
-   *  * **preprop**: Sequential portfolio combination of bit-blasting and
-   *                 propagation-based local search.
+   * *Values:*
+   * \verbatim embed:rst:leading-asterisk
+   *  - **bitblast**: The classical bit-blasting approach. [**default**]
+   *  - **prop:** Propagation-based local search, see :cite:`fmsd17,fmcad20`.
+   *  - **preprop**: Sequential portfolio of ``bitblast`` and ``prop``.
+   * \endverbatim
+   *
+   * @note Propagation-based local search is only able to determine
+   *       satisfiability.
    */
   EVALUE(BV_SOLVER),
-  /*! **Rewrite level.**
+  /*!
+   * **Rewrite level.**
    *
-   * Values:
-   * * **0**: no rewriting
-   * * **1**: term level rewriting
-   * * **2**: term level rewriting and basic preprocessing
-   * * **3**: term level rewriting and full preprocessing [**default**]
-   *
-   * @note Configuring the rewrite level after terms have been created
-   *       is not allowed.
+   * *Values:*
+   *  - **0**: no rewriting
+   *  - **1**: term level rewriting (only "cheap" rewrites)
+   *  - **2**: term level rewriting (full) and preprocessing [**default**]
    *
    *  @warning This is an expert option to configure rewriting.
    */
   EVALUE(REWRITE_LEVEL),
-  /*! **Configure the SAT solver engine.**
+  /*!
+   * **Configure the SAT solver engine.**
    *
-   * Values:
-   *  * **cadical**:
-   *    [CaDiCaL](https://github.com/arminbiere/cadical) [**default**]
-   *  * **cms**:
-   *    [CryptoMiniSat](https://github.com/msoos/cryptominisat)
-   *  * **kissat**:
-   *    [Kissat](https://github.com/arminbiere/kissat)
+   * *Values:*
+   *  - **cadical**:
+   *    Use [CaDiCaL](https://github.com/arminbiere/cadical)
+   *    as the backend SAT solver. [**default**]
+   *  - **cms**:
+   *    Use [CryptoMiniSat](https://github.com/msoos/cryptominisat)
+   *    as the backend SAT solver.
+   *  - **kissat**:
+   *    Use [Kissat](https://github.com/arminbiere/kissat)
+   *    as the backend SAT solver.
    */
   EVALUE(SAT_SOLVER),
   /*! **Print bit-vector abstraction as AIG in binary or ascii AIGER format.**
    *
-   * @note The filename suffix determines whether binary (.aig) or ascii (.aag)
-   *       AIGER is used.
+   * Expects a filename (as string) as the configuration value.
+   * The filename suffix determines whether binary (.aig) or ascii (.aag)
+   * AIGER is used. A configuration value representing the empty string
+   * disables the option.
+   *
    * @note Incremental queries to the SAT solver will overwrite the file with
    *       the latest AIG.
+   *
+   * *Values:*
+   *  - A string denoting the filename the AIGER output is written to.
+   *    [**default:** ""]
    */
   EVALUE(WRITE_AIGER),
-  /*! **Print bit-vector abstraction as CNF in DIMACS format.**
+  /*!
+   * **Print bit-vector abstraction as CNF in DIMACS format.**
+   *
+   * Expects a filename (as string) as the configuration value.
+   * A configuration value representing the empty string disables the option.
    *
    * @note Incremental queries to the SAT solver will overwrite the file with
    *       the latest CNF.
+   *
+   * *Values:*
+   *  - A string denoting the filename the DIMACS output is written to.
+   *    [**default:** ""]
    */
   EVALUE(WRITE_CNF),
 
   /* ---------------- BV: Prop Engine Options (Expert) ---------------------- */
 
-  /*! **Propagation-based local search solver engine:
-   *    Constant bits.**
+  /*!
+   * **Propagation-based local search solver engine: Constant bits.**
    *
-   * Configure constant bit propagation (requires bit-blasting to AIG).
+   * Enable/disable constant bit propagation in the propagation-based local
+   * search engine (requires bit-blasting to AIG).
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * \verbatim embed:rst:leading-asterisk
+   * Our procedure for augmenting propagation-based local search with constant
+   * bit information is described in :cite:`fmcad20`.
+   * \endverbatim
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
+   *
+   * @see #BV_SOLVER
+   * @warning This is an expert option to configure the `prop` bit-vector
+   *          solver engine.
    */
   EVALUE(PROP_CONST_BITS),
-  /*! **Propagation-based local search solver engine:
-   *    Infer bounds for inequalities for value computation.**
+  /*!
+   * **Propagation-based local search solver engine: Infer bounds.**
    *
    * When enabled, infer bounds for value computation for inequalities based on
    * satisfied top level inequalities.
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   * @see #BV_SOLVER
+   * @warning This is an expert option to configure the `prop` bit-vector
+   *          solver engine.
    */
   EVALUE(PROP_INFER_INEQ_BOUNDS),
-  /*! **Propagation-based local search solver engine:
-   *    Number of propagations.**
+  /*!
+   * **Propagation-based local search solver engine: Number of propagations.**
    *
    * Configure the number of propagations used as a limit for the
    * propagation-based local search solver engine. No limit if 0.
    *
-   * Values:
-   *  * An unsigned integer value. [**default**: 0]
+   * *Values:*
+   *  - An unsigned integer value. [**default**: 0]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   * @see #BV_SOLVER
+   * @warning This is an expert option to configure the `prop` bit-vector
+   *          solver engine.
    */
   EVALUE(PROP_NPROPS),
-  /*! **Propagation-based local search solver engine:
-   *    Number of updates.**
+  /*!
+   * **Propagation-based local search solver engine: Number of updates.**
    *
    * Configure the number of model value updates used as a limit for the
    * propagation-based local search solver engine. No limit if 0.
    *
-   * Values:
-   *  * An unsigned integer value. [**default**: 0]
+   * *Values:*
+   *  - An unsigned integer value. [**default**: 0]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   * @see #BV_SOLVER
+   * @warning This is an expert option to configure the `prop` bit-vector
+   *          solver engine.
    */
   EVALUE(PROP_NUPDATES),
-  /*! **Propagation-based local search solver engine:
-   *    Optimization for inverse value computation of inequalities over
-   *    concat and sign extension operands.**
+  /*!
+   * **Propagation-based local search solver engine: Concat optimization.**
    *
-   * When enabled, use optimized inverse value value computation for
-   * inequalities over concats.
+   * Optimization for inverse value computation of inequalities over concat and
+   * sign extension operands. When enabled, use optimized inverse value value
+   * computation for inequalities over concats.
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   * @see #BV_SOLVER
+   * @warning This is an expert option to configure the `prop` bit-vector
+   *          solver engine.
    */
   EVALUE(PROP_OPT_LT_CONCAT_SEXT),
-  /*! **Propagation-based local search solver engine:
-   *    Path selection.**
+  /*!
+   * **Propagation-based local search solver engine: Path selection.**
    *
    * Configure mode for path selection.
    *
-   * Values:
-   *  * **essential**:
-   *    Select path based on essential inputs. [default]
-   *  * **random**:
+   * *Values:*
+   *  - **essential**:
+   *    Select path based on essential inputs. [**default**]
+   *  - **random**:
    *    Select path randomly.
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   * @see #BV_SOLVER
+   * @warning This is an expert option to configure the `prop` bit-vector
+   *          solver engine.
    */
   EVALUE(PROP_PATH_SEL),
-  /*! **Propagation-based local search solver engine:
-   *    Probability for selecting random input.**
+  /*!
+   * **Propagation-based local search solver engine: Input probability.**
    *
-   * Configure the probability with which to select a random input instead of
-   * an essential input when selecting the path.
+   * Configure the probability for selecting random (over essential) input
+   * when selecting the propagation path.
    *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%). [**default**: 0]
+   * *Values:*
+   *  - An unsigned integer value <= 1000 (= 100%). [**default**: 10 (= 1%)]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   * @see #BV_SOLVER
+   * @warning This is an expert option to configure the `prop` bit-vector
+   *          solver engine.
    */
   EVALUE(PROP_PROB_RANDOM_INPUT),
-  /*! **Propagation-based local search solver engine:
-   *    Probability for inverse values.**
+  /*!
+   * **Propagation-based local search solver engine: Value probability.**
    *
-   * Configure the probability with which to choose an inverse value over a
-   * consistent value when aninverse value exists.
+   * Configure the probability for selcting an inverse value over a consistent
+   * value (if an inverse value exists).
    *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%). [**default**: 990]
+   * *Values:*
+   *  - An unsigned integer value <= 1000 (= 100%). [**default**: 990 (= 99%)]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   * @see #BV_SOLVER
+   * @warning This is an expert option to configure the `prop` bit-vector
+   *          solver engine.
    */
   EVALUE(PROP_PROB_USE_INV_VALUE),
-  /*! **Propagation-based local search solver engine:
-   *    Value computation for sign extension.**
+  /*!
+   * **Propagation-based local search solver engine: Sign extension.**
    *
-   * When enabled, detect sign extension operations (are rewritten on
-   * construction) and use value computation for sign extension.
+   * When enabled, treat concat nodes that represent sign extension natively as
+   * sign extension.
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   * @see #BV_SOLVER
+   * @warning This is an expert option to configure the `prop` bit-vector
+   *          solver engine.
    */
   EVALUE(PROP_SEXT),
-  /*! **Propagation-based local search solver engine:
-   *    Local search specific normalization.**
+  /*!
+   * **Propagation-based local search solver engine: Normalization.**
    *
    * When enabled, perform normalizations for local search, on the local search
    * layer (does not affect node layer).
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the prop solver engine.
+   * @see #BV_SOLVER
+   * @warning This is an expert option to configure the `prop` bit-vector
+   *          solver engine.
    */
   EVALUE(PROP_NORMALIZE),
 
-  /*! **Abstraction module**
+  /*!
+   * **Abstraction module.**
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * \verbatim embed:rst:leading-asterisk
+   * Our bit-vector abstraction procedure is described in :cite:`cav24`.
+   * \endverbatim
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * *Values:*
+   *  - **1**: enable
+   *  - **0**: disable [**default**]
+   *
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION),
-  /*! **Abstraction module: Minimum bit-vector term size. **
+  /*!
+   * **Abstraction module. Minimum bit-vector term size.**
    *
-   * Specifies at which size supported bit-vector operators should be
+   * Configure the minimum size for considered bit-vector operations to be
    * abstracted.
    *
-   * Values:
-   *  * **min**: >=3
-   *  * **max**: UINT64_MAX
-   *  * **default**: 32
+   * *Values:*
+   *  - **min**: >=3
+   *  - **max**: UINT64_MAX
+   *  - **default**: 32
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_SIZE),
-  /*! **Abstraction module: Eager mode. **
+  /*!
+   * **Abstraction module: Eager mode.**
    *
-   * When enabled, eagerly adds violated refinement lemmas.
+   * When enabled, violated refinement lemmas are added eagerly.
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **1**: enable
+   *  - **0**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_EAGER_REFINE),
-  /*! **Abstraction module: Value instantiation limit. **
+  /*!
+   * **Abstraction module: Value instantiation limit.**
    *
-   * Specifies the limit on the number of value instantiations per abstaction.
-   * If the limit is hit, we fall back to fully bit-blasting the specific term.
+   * Configure `n` for value instantiation limit `bit-width/<n>`. The value
+   * instantiation limit defines the maximum number of value instantiation
+   * lemmas to be added for an abstracted term. A configuration value of 0
+   * disables adding value instantiation lemmas.
    *
-   * Values:
-   *  * **>0**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - An unsigned 64-bit integer. [**default:** 8]
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_VALUE_LIMIT),
-  /*! **Abstraction module: Value instantiations only. **
+  /*!
+   * **Abstraction module: Value instantiations only.**
    *
    * When enabled, only adds value instantiations.
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_VALUE_ONLY),
-  /*! **Abstraction module: Abstract assertions. **
+  /*!
+   * **Abstraction module: Abstract assertions.**
    *
    * When enabled, abstracts assertions.
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_ASSERT),
-  /*! **Abstraction module: Assertion refinements. **
+  /*!
+   * **Abstraction module: Assertion refinements.**
    *
    * Maximum number of assertion refinements added per check.
    *
-   * Values:
-   *  * An unsigned integer value > 0.
+   * *Values:*
+   *  - An unsigned 64-bit integer value > 0. [**default:** 100]
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_ASSERT_REFS),
-  /*! **Abstraction module: Use initial lemmas only. **
+  /*!
+   * **Abstraction module: Use initial lemmas only.**
    *
    * Initial lemmas are those lemmas not generated through abduction.
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_INITIAL_LEMMAS),
-  /*! **Abstraction module: Incrementally bit-blast bvmul and bvadd terms. **
+  /*!
+   * **Abstraction module: Incrementally bit-blast bvmul and bvadd terms.**
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_INC_BITBLAST),
-  /*! **Abstraction module: Abstract bit-vector addition terms. **
+  /*!
+   * **Abstraction module: Abstract bit-vector addition terms.**
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_ADD),
-  /*! **Abstraction module: Abstract bit-vector multiplication terms. **
+  /*!
+   * **Abstraction module: Abstract bit-vector multiplication terms.**
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_MUL),
-  /*! **Abstraction module: Abstract bit-vector unsigned division terms. **
+  /*!
+   * **Abstraction module: Abstract bit-vector unsigned division terms.**
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_UDIV),
-  /*! **Abstraction module: Abstract bit-vector unsigned remainder terms. **
+  /*!
+   * **Abstraction module: Abstract bit-vector unsigned remainder terms.**
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_UREM),
-  /*! **Abstraction module: Abstract equality terms. **
+  /*!
+   * **Abstraction module: Abstract equality terms.**
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_EQUAL),
-  /*! **Abstraction module: Abstract ITE terms. **
+  /*!
+   * **Abstraction module: Abstract ITE terms.**
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    *
-   *  @warning This is an expert option to configure the abstraction module.
+   * @see #ABSTRACTION
+   * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_ITE),
 
-  /*! **Preprocessing**
+  /*!
+   * **Preprocessing.**
    *
    * When enabled, applies all enabled preprocessing passes.
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
   EVALUE(PREPROCESS),
-  /*! **Preprocessing: Find contradicting bit-vector ands**
+  /*!
+   * **Preprocessing: Find contradicting bit-vector ands.**
    *
    * When enabled, substitutes contradicting nodes of kind #BV_AND with zero.
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    */
   EVALUE(PP_CONTRADICTING_ANDS),
-  /*! **Preprocessing: Eliminate bit-vector extracts on bit-vector constants**
+  /*!
+   * **Preprocessing: Eliminate bit-vector extracts on bit-vector constants.**
    *
    * When enabled, eliminates bit-vector extracts on constants.
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    */
   EVALUE(PP_ELIM_BV_EXTRACTS),
-  /*! **Preprocessing: Eliminate bit-vector operators bvudiv and bvurem**
+  /*!
+   * **Preprocessing: Eliminate bit-vector operators bvudiv and bvurem.**
    *
    * When enabled, eliminates bit-vector unsigned division and remainder
    * operation in terms of multiplication.
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    */
   EVALUE(PP_ELIM_BV_UDIV),
-  /*! **Preprocessing: Embedded constraint substitution**
+  /*!
+   * **Preprocessing: Embedded constraint substitution.**
    *
    * When enabled, substitutes assertions that occur as sub-expression in the
    * formula with their respective Boolean value.
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
   EVALUE(PP_EMBEDDED_CONSTR),
-  /*! **Preprocessing: AND flattening**
+  /*!
+   * **Preprocessing: AND flattening.**
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
   EVALUE(PP_FLATTEN_AND),
-  /*! **Preprocessing: Normalization**
+  /*!
+   * **Preprocessing: Normalization.**
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
   EVALUE(PP_NORMALIZE),
-  /*! **Preprocessing: Boolean skeleton preprocessing**
+  /*!
+   * **Preprocessing: Boolean skeleton preprocessing.**
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
   EVALUE(PP_SKELETON_PREPROC),
-  /*! **Preprocessing: Variable substitution**
+  /*!
+   * **Preprocessing: Variable substitution.**
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  * **true**: enable [**default**]
+   *  * **false**: disable
    */
   EVALUE(PP_VARIABLE_SUBST),
-  /*! **Preprocessing: Variable substitution: Equality Normalization**
+  /*!
+   * **Preprocessing: Variable substitution: Equality normalization.**
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
   EVALUE(PP_VARIABLE_SUBST_NORM_EQ),
-  /*! **Preprocessing: Variable substitution: Disequality Normalization**
+  /*!
+   * **Preprocessing: Variable substitution: Disequality Normalization.**
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
   EVALUE(PP_VARIABLE_SUBST_NORM_DISEQ),
-  /*! **Preprocessing: Variable substitution: Bit-Vector Inequality
-   * Normalization**
+  /*!
+   * **Preprocessing: Variable substitution:
+   *   Bit-Vector Inequality Normalization.**
    *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   * *Values:*
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
   EVALUE(PP_VARIABLE_SUBST_NORM_BV_INEQ),
 
-  /*! **Debug:
-   *    Threshold for number of new nodes introduced for recursive call of
-   *    rewrite(). **
+  /*!
+   * **Debug: Recursive rewrite threshold.**
    *
-   *  Prints a warning number of newly introduced nodes is above threshold.
+   * Threshold for number of new nodes introduced for recursive call of
+   * rewrite(). Prints a warning when number of newly introduced nodes is above
+   * threshold.
    *
-   *  @warning This is an expert debug option.
+   * @warning This is an expert debug option.
    */
   EVALUE(DBG_RW_NODE_THRESH),
-  /*! **Debug:
-   *    Threshold for formula size increase after preprocessing in percent. **
+  /*!
+   * **Debug: Formula size increase threshold.**
    *
-   *  Prints a warning if formula size increase is above threshold.
+   * Threshold for formula size increase after preprocessing in percent. Prints
+   * a warning if formula size increase is above threshold.
    *
-   *  @warning This is an expert debug option.
+   * @warning This is an expert debug option.
    */
   EVALUE(DBG_PP_NODE_THRESH),
-  /*! **Debug: Check models for each satisfiable query. **
+  /*!
+   * **Debug: Check models for each satisfiable query.**
    *
-   *  @warning This is an expert debug option.
+   * @warning This is an expert debug option.
    */
   EVALUE(DBG_CHECK_MODEL),
-  /*! **Debug: Check unsat core for each unsatisfiable query. **
+  /*!
+   * **Debug: Check unsat core for each unsatisfiable query.**
    *
-   *  @warning This is an expert debug option.
+   * @warning This is an expert debug option.
    */
   EVALUE(DBG_CHECK_UNSAT_CORE),
 
