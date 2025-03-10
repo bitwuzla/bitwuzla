@@ -87,6 +87,8 @@ BvPropSolver::solve()
     d_ls->normalize();
   }
 
+  d_ls->compute_initial_assignment();
+
   // incremental: increase limit by given nprops/nupdates
   if (nprops)
   {

@@ -73,7 +73,6 @@ class TestLsBvNormalize : public ::testing::Test
       ASSERT_EQ(orig == nullptr, child0 == normalized);
       if (expected[i].size() > 1)
       {
-        ASSERT_EQ(*d_ls->d_parents.at(normalized->id()).begin(), ex->id());
         ASSERT_TRUE(normalized->kind() == NodeKind::BV_CONCAT);
         for (auto p : expected[i])
         {

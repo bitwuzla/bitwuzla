@@ -228,6 +228,7 @@ TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
             uint64_t root =
                 ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
+            ls.compute_initial_assignment();
             Result res = ls.move();
             assert(!ls.get_domain(root).is_fixed()
                    || !ls.get_assignment(root).is_false()
@@ -260,6 +261,7 @@ TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
             uint64_t root =
                 ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
+            ls.compute_initial_assignment();
             Result res;
             uint64_t nmoves = 0;
             do
@@ -377,6 +379,7 @@ TestLsBv::test_move_ite(uint32_t pos_x)
                 uint64_t root =
                     ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
                 ls.register_root(root);
+                ls.compute_initial_assignment();
                 Result res = ls.move();
                 assert(!ls.get_domain(root).is_fixed()
                        || !ls.get_assignment(root).is_false()
@@ -414,6 +417,7 @@ TestLsBv::test_move_ite(uint32_t pos_x)
                 uint64_t root =
                     ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
                 ls.register_root(root);
+                ls.compute_initial_assignment();
                 Result res;
                 uint64_t nmoves = 0;
                 do
@@ -470,6 +474,7 @@ TestLsBv::test_move_not()
       uint64_t t    = ls.mk_node(t_val, BitVectorDomain(t_val));
       uint64_t root = ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
       ls.register_root(root);
+      ls.compute_initial_assignment();
       Result res = ls.move();
       assert(!ls.get_domain(root).is_fixed()
              || !ls.get_assignment(root).is_false() || res == Result::UNSAT);
@@ -521,6 +526,7 @@ TestLsBv::test_move_extract()
             uint64_t root =
                 ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
+            ls.compute_initial_assignment();
             Result res = ls.move();
             assert(!ls.get_domain(root).is_fixed()
                    || !ls.get_assignment(root).is_false()
@@ -572,6 +578,7 @@ TestLsBv::test_move_sext()
         uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
         uint64_t root = ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
         ls.register_root(root);
+        ls.compute_initial_assignment();
         Result res = ls.move();
         assert(!ls.get_domain(root).is_fixed()
                || !ls.get_assignment(root).is_false() || res == Result::UNSAT);
@@ -587,6 +594,7 @@ TEST_F(TestLsBv, parents)
 {
   d_ls->register_root(d_root1);
   d_ls->register_root(d_root2);
+  d_ls->compute_initial_assignment();
 
   const LocalSearchBV::ParentsMap& parents   = get_parents();
   LocalSearchBV::ParentsMap parents_expected = get_expected_parents();
@@ -739,6 +747,10 @@ TEST_F(TestLsBv, update_cone)
       {d_root1, d_zero1},        // 0110 <s 1111 = 0
       {d_root2, d_zero1},        // 0110 == 0000 = 0
   };
+
+  d_ls->register_root(d_root1);
+  d_ls->register_root(d_root2);
+  d_ls->compute_initial_assignment();
 
   for (auto& p : ass_init)
   {

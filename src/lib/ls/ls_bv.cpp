@@ -78,8 +78,6 @@ LocalSearchBV::mk_node(const BitVector& assignment,
   res->set_symbol(symbol);
   d_nodes.push_back(std::move(res));
   assert(get_node(id) == d_nodes.back().get());
-  assert(d_parents.find(id) == d_parents.end());
-  d_parents[id] = {};
   return id;
 }
 
@@ -129,15 +127,7 @@ LocalSearchBV::_mk_node(NodeKind kind,
                         const std::optional<std::string>& symbol)
 {
   uint64_t id = d_nodes.size();
-  for (uint64_t c : children)
-  {
-    assert(c < id);  // API check
-    assert(d_parents.find(c) != d_parents.end());
-    d_parents.at(c).insert(id);
-  }
-
   std::unique_ptr<BitVectorNode> res;
-
   switch (kind)
   {
     case NodeKind::CONST:
@@ -276,8 +266,6 @@ LocalSearchBV::_mk_node(NodeKind kind,
   res->set_symbol(symbol);
   d_nodes.push_back(std::move(res));
   assert(get_node(id) == d_nodes.back().get());
-  assert(d_parents.find(id) == d_parents.end());
-  d_parents[id] = {};
 
   return id;
 }
@@ -555,6 +543,7 @@ LocalSearchBV::mk_normalized_concat(BitVectorNode* child0,
 void
 LocalSearchBV::normalize_extracts(BitVectorNode* node)
 {
+  Log(2) << "normalize extracts: " << node;
   const auto& extracts = node->get_extracts();
   if (extracts.size() < 2) return;
 
@@ -590,14 +579,6 @@ LocalSearchBV::normalize_extracts(BitVectorNode* node)
     }
     if (normalized)
     {
-      uint64_t id = normalized->id();
-      assert(d_parents[id].empty());
-      // The normalized node is uniquely created for each normalized child1
-      // of an extract, thus only that extract is its parent.
-      d_parents[id] = {ex->id()};
-      // Remove this extract from the parents list of the normalized child
-      assert(!d_parents[ex->child(0)->id()].empty());
-      d_parents[ex->child(0)->id()].erase(ex->id());
       ex->normalize(normalized);
     }
   }
@@ -606,6 +587,7 @@ LocalSearchBV::normalize_extracts(BitVectorNode* node)
 void
 LocalSearchBV::normalize()
 {
+  Log(2) << "normalize";
   for (auto& node : d_to_normalize_nodes)
   {
     normalize_extracts(node);

@@ -497,6 +497,76 @@ LocalSearch<VALUE>::update_unsat_roots(Node<VALUE>* root)
 
 template <class VALUE>
 void
+LocalSearch<VALUE>::compute_initial_assignment()
+{
+  Log(1) << "*** compute parents";
+
+  d_parents.clear();
+
+  if (d_roots.empty())
+  {
+    return;
+  }
+
+  std::unordered_map<Node<VALUE>*, bool> cache;
+
+  std::vector<Node<VALUE>*> visit;
+  for (auto root : d_roots)
+  {
+    visit.push_back(get_node(root));
+    d_parents.emplace(root, ParentsSet());
+  }
+
+  do
+  {
+    Node<VALUE>* cur    = visit.back();
+    auto [it, inserted] = cache.emplace(cur, true);
+    if (inserted)
+    {
+      uint64_t id = cur->id();
+      for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+      {
+        visit.push_back((*cur)[i]);
+        d_parents[(*cur)[i]->id()].insert(id);
+      }
+      continue;
+    }
+    else if (it->second)
+    {
+      it->second = true;
+      cur->evaluate();
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+
+  for (auto root : d_roots)
+  {
+    update_unsat_roots(get_node(root));
+  }
+}
+
+template <class VALUE>
+void
+LocalSearch<VALUE>::log_parents_map(uint32_t log_level) const
+{
+  if (d_logger.is_log_enabled(log_level))
+  {
+    Log(log_level) << "** parents map: " << d_parents.size();
+    for (const auto& p : d_parents)
+    {
+      std::stringstream ss;
+      ss << "   " << p.first << " -> {";
+      for (const auto& pp : p.second)
+      {
+        ss << " " << pp;
+      }
+      Log(log_level) << ss.str() << " }";
+    }
+  }
+}
+
+template <class VALUE>
+void
 LocalSearch<VALUE>::normalize_ids()
 {
   if (d_roots.empty()) return;
@@ -526,6 +596,12 @@ LocalSearch<VALUE>::normalize_ids()
     {
       it->second = false;
       cur->set_normalized_id(id++);
+#ifndef NDEBUG
+      for (size_t i = 0; i < cur->arity(); ++i)
+      {
+        assert((*cur)[i]->normalized_id() < cur->normalized_id());
+      }
+#endif
     }
     visit.pop_back();
   } while (!visit.empty());
@@ -559,6 +635,8 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
   std::vector<Node<VALUE>*> cone;
   std::vector<Node<VALUE>*> to_visit;
   std::unordered_set<Node<VALUE>*> visited;
+
+  log_parents_map(2);
 
   /* reset cone */
   const std::unordered_set<uint64_t>& parents = d_parents.at(node->id());

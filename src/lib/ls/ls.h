@@ -300,10 +300,14 @@ class LocalSearch
    * Get the root responsible for returning unsat.
    */
   uint64_t get_false_root() const { return d_false_root; }
-  // TODO: - we might want to exclude nodes that are not in the formula from
-  //         cone updates
 
   Result move();
+
+  /**
+   * Compute initial assignment and parents map.
+   * @note Parents map is recomputed from scratch.
+   */
+  void compute_initial_assignment();
 
  protected:
   /** Forward declaration of internal statistics struct. */
@@ -398,6 +402,12 @@ class LocalSearch
    * @return An object encapsulating all information necessary for that move.
    */
   LocalSearchMove<VALUE> select_move(Node<VALUE>* root, const VALUE& t_root);
+
+  /**
+   * Log contents of parents map if given log_level is enabled.
+   * @param log_level The log level.
+   */
+  void log_parents_map(uint32_t log_level) const;
 
   /** The random number generator. */
   std::unique_ptr<RNG> d_rng;
