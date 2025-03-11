@@ -190,11 +190,22 @@ Node RewriteRule<RewriteRuleKind::BV_EXTRACT_ADD_MUL>::_apply(
 
 /* bvmul -------------------------------------------------------------------- */
 
-// special_const_lhs_binary_exp
-// special_const_rhs_binary_exp
 template <>
-Node RewriteRule<RewriteRuleKind::BV_MUL_SPECIAL_CONST>::_apply(
-    Rewriter& rewriter, const Node& node);
+Node RewriteRule<RewriteRuleKind::BV_MUL_ZERO>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_ONE>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
+
+// ones_mul
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_ONES>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_POW2>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
 // bool_mul
 template <>
 Node RewriteRule<RewriteRuleKind::BV_MUL_BV1>::_apply(Rewriter& rewriter,
@@ -220,11 +231,6 @@ Node RewriteRule<RewriteRuleKind::BV_MUL_ITE>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_MUL_NEG>::_apply(Rewriter& rewriter,
                                                       const Node& node);
-// ones_mul
-template <>
-Node RewriteRule<RewriteRuleKind::BV_MUL_ONES>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
-
 /* bvnot -------------------------------------------------------------------- */
 
 template <>

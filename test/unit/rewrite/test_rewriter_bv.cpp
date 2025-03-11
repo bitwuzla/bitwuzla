@@ -1731,9 +1731,9 @@ TEST_F(TestRewriterBv, bv_extract_add_mul)
 
 TEST_F(TestRewriterBv, bv_mul_special_const)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_SPECIAL_CONST;
   ////// special const 0
   {
+    constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_ZERO;
     //// applies
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, d_bv4_a}));
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, d_bv4_zero}));
@@ -1747,6 +1747,7 @@ TEST_F(TestRewriterBv, bv_mul_special_const)
   }
   ////// special const 1
   {
+    constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_ONE;
     //// applies
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv1_one, d_bv1_a}));
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_one, d_bv4_a}));
@@ -1755,12 +1756,14 @@ TEST_F(TestRewriterBv, bv_mul_special_const)
   }
   ////// special const ones
   {
+    constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_ONES;
     //// applies
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_ones, d_bv4_a}));
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, d_bv4_ones}));
   }
   ////// special const pow2
   {
+    constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_POW2;
     //// applies
     auto pow2 = d_nm.mk_value(BitVector(4, "0100"));
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {pow2, d_bv4_a}));
@@ -1768,6 +1771,7 @@ TEST_F(TestRewriterBv, bv_mul_special_const)
   }
   ////// special const negative pow2
   {
+    constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_POW2;
     //// applies
     auto pow2 = d_nm.mk_value(BitVector(4, "0100").ibvneg());
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {pow2, d_bv4_a}));

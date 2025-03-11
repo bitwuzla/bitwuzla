@@ -1254,14 +1254,16 @@ Rewriter::rewrite_bv_mul(const Node& node)
   if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(BV_MUL_EVAL);
-    BZLA_APPLY_RW_RULE(BV_MUL_SPECIAL_CONST);
+    BZLA_APPLY_RW_RULE(BV_MUL_ZERO);
+    BZLA_APPLY_RW_RULE(BV_MUL_ONE);
+    BZLA_APPLY_RW_RULE(BV_MUL_ONES);
+    BZLA_APPLY_RW_RULE(BV_MUL_POW2);
     BZLA_APPLY_RW_RULE(BV_MUL_CONST);
     BZLA_APPLY_RW_RULE(BV_MUL_BV1);
   }
   if (d_level >= 2)
   {
     BZLA_APPLY_RW_RULE(BV_MUL_CONST_ADD);
-    BZLA_APPLY_RW_RULE(BV_MUL_ONES);
     BZLA_APPLY_RW_RULE(BV_MUL_NEG);
     // rewrites for Noetzli benchmarks
     BZLA_APPLY_RW_RULE(BV_MUL_ITE);
@@ -2074,15 +2076,15 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
       out << "BV_EXTRACT_ADD_MUL";
       break;
 
-    case RewriteRuleKind::BV_MUL_SPECIAL_CONST:
-      out << "BV_MUL_SPECIAL_CONST";
-      break;
     case RewriteRuleKind::BV_MUL_CONST: out << "BV_MUL_CONST"; break;
     case RewriteRuleKind::BV_MUL_BV1: out << "BV_MUL_BV1"; break;
     case RewriteRuleKind::BV_MUL_CONST_ADD: out << "BV_MUL_CONST_ADD"; break;
     case RewriteRuleKind::BV_MUL_ITE: out << "BV_MUL_ITE"; break;
     case RewriteRuleKind::BV_MUL_NEG: out << "BV_MUL_NEG"; break;
+    case RewriteRuleKind::BV_MUL_ZERO: out << "BV_MUL_ZERO"; break;
+    case RewriteRuleKind::BV_MUL_ONE: out << "BV_MUL_ONE"; break;
     case RewriteRuleKind::BV_MUL_ONES: out << "BV_MUL_ONES"; break;
+    case RewriteRuleKind::BV_MUL_POW2: out << "BV_MUL_POW2"; break;
 
     case RewriteRuleKind::BV_NOT_BV_NOT: out << "BV_NOT_BV_NOT"; break;
     case RewriteRuleKind::BV_NOT_BV_NEG: out << "BV_NOT_BV_NEG"; break;

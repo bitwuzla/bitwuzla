@@ -477,14 +477,16 @@ enum class RewriteRuleKind
 
   //// bvmul
   // Level 1+
-  BV_MUL_SPECIAL_CONST,
+  BV_MUL_ZERO,
+  BV_MUL_ONE,
+  BV_MUL_ONES,
+  BV_MUL_POW2,
   BV_MUL_CONST,
   BV_MUL_BV1,
   // Level 2+
   BV_MUL_CONST_ADD,
   BV_MUL_ITE,
   BV_MUL_NEG,
-  BV_MUL_ONES,
 
   //// bvnot
   // Level 1+
