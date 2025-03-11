@@ -134,8 +134,8 @@ std::string
 BitVectorNode::str() const
 {
   return (d_symbol ? *d_symbol + " " : "") + "[" + std::to_string(d_id) + "] "
-         + "(" + std::to_string(d_normalized_id) + ") " + std::to_string(kind())
-         + ": " + d_domain.str() + " (" + d_assignment.str() + ")";
+         + std::to_string(kind()) + ": " + d_domain.str() + " ("
+         + d_assignment.str() + ")";
 }
 
 std::vector<std::string>
@@ -171,13 +171,6 @@ BitVectorNode::child(uint64_t pos) const
 {
   assert(dynamic_cast<BitVectorNode*>(d_children[pos]) != nullptr);
   return reinterpret_cast<BitVectorNode*>(d_children[pos]);
-}
-
-void
-BitVectorNode::register_extract(BitVectorNode* node)
-{
-  assert(node->kind() == NodeKind::BV_EXTRACT);
-  d_extracts.push_back(static_cast<BitVectorExtract*>(node));
 }
 
 void
@@ -6128,12 +6121,8 @@ BitVectorNot::consistent_value(const BitVector& t, uint64_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorExtract::BitVectorExtract(RNG* rng,
-                                   uint64_t size,
-                                   BitVectorNode* child0,
-                                   uint64_t hi,
-                                   uint64_t lo,
-                                   bool normalize)
+BitVectorExtract::BitVectorExtract(
+    RNG* rng, uint64_t size, BitVectorNode* child0, uint64_t hi, uint64_t lo)
     : BitVectorNode(rng, size, child0), d_hi(hi), d_lo(lo)
 {
   assert(hi < child0->size());
@@ -6141,10 +6130,6 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
   assert(size == hi - lo + 1);
   d_x_slice_left.reset(nullptr);
   d_x_slice_right.reset(nullptr);
-  if (normalize)
-  {
-    child0->register_extract(this);
-  }
   _evaluate_and_set_domain();
 }
 
@@ -6152,8 +6137,7 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
                                    const BitVectorDomain& domain,
                                    BitVectorNode* child0,
                                    uint64_t hi,
-                                   uint64_t lo,
-                                   bool normalize)
+                                   uint64_t lo)
     : BitVectorNode(rng, domain, child0), d_hi(hi), d_lo(lo)
 {
   assert(hi < child0->size());
@@ -6161,10 +6145,6 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
   assert(domain.size() == hi - lo + 1);
   d_x_slice_left.reset(nullptr);
   d_x_slice_right.reset(nullptr);
-  if (normalize)
-  {
-    child0->register_extract(this);
-  }
   _evaluate_and_set_domain();
 }
 
@@ -6178,26 +6158,6 @@ uint64_t
 BitVectorExtract::lo() const
 {
   return d_lo;
-}
-
-void
-BitVectorExtract::normalize(BitVectorNode* node)
-{
-  assert(!d_child0_original);
-  assert(!node || node->size() == size());
-  assert(!node || node->assignment() == d_assignment);
-  d_child0_original = child(0);
-  d_hi_original     = d_hi;
-  d_lo_original     = d_lo;
-  d_children[0]     = node;
-  d_hi              = size() - 1;
-  d_lo              = 0;
-}
-
-bool
-BitVectorExtract::is_normalized() const
-{
-  return d_child0_original != nullptr;
 }
 
 void
@@ -6447,9 +6407,7 @@ BitVectorExtract::consistent_value(const BitVector& t, uint64_t pos_x)
 std::string
 BitVectorExtract::str() const
 {
-  return "[" + std::to_string(d_id) + "] (" + std::to_string(d_normalized_id)
-         + ") " + std::to_string(kind()) + ": "
-         + (is_normalized() ? "(normalized) " : "") + "["
+  return "[" + std::to_string(d_id) + "] " + std::to_string(kind()) + ": " + "["
          + std::to_string(d_hi) + ":" + std::to_string(d_lo)
          + "]: " + d_domain.str() + " (" + d_assignment.str() + ")";
 }
@@ -6680,9 +6638,8 @@ BitVectorSignExtend::consistent_value(const BitVector& t, uint64_t pos_x)
 std::string
 BitVectorSignExtend::str() const
 {
-  return "[" + std::to_string(d_id) + "] (" + std::to_string(d_normalized_id)
-         + ") " + std::to_string(kind()) + ": " + d_domain.str() + " ("
-         + d_assignment.str() + ")";
+  return "[" + std::to_string(d_id) + "] " + std::to_string(kind()) + ": "
+         + d_domain.str() + " (" + d_assignment.str() + ")";
 }
 
 /* -------------------------------------------------------------------------- */

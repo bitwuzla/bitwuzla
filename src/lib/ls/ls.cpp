@@ -571,48 +571,6 @@ LocalSearch<VALUE>::log_parents_map(uint32_t log_level) const
 }
 
 template <class VALUE>
-void
-LocalSearch<VALUE>::normalize_ids()
-{
-  if (d_roots.empty()) return;
-
-  uint64_t id = 0;
-  std::unordered_map<Node<VALUE>*, bool> cache;
-
-  std::vector<Node<VALUE>*> visit;
-  for (auto root : d_roots)
-  {
-    visit.push_back(get_node(root));
-  }
-
-  do
-  {
-    Node<VALUE>* cur    = visit.back();
-    auto [it, inserted] = cache.emplace(cur, true);
-    if (inserted)
-    {
-      for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
-      {
-        visit.push_back((*cur)[i]);
-      }
-      continue;
-    }
-    else if (it->second)
-    {
-      it->second = false;
-      cur->set_normalized_id(id++);
-#ifndef NDEBUG
-      for (size_t i = 0; i < cur->arity(); ++i)
-      {
-        assert((*cur)[i]->normalized_id() < cur->normalized_id());
-      }
-#endif
-    }
-    visit.pop_back();
-  } while (!visit.empty());
-}
-
-template <class VALUE>
 uint64_t
 LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
 {
@@ -674,7 +632,7 @@ LocalSearch<VALUE>::update_cone(Node<VALUE>* node, const VALUE& assignment)
 
   std::sort(
       cone.begin(), cone.end(), [](const Node<VALUE>* a, const Node<VALUE>* b) {
-        return a->normalized_id() < b->normalized_id();
+        return a->id() < b->id();
       });
 
   for (Node<VALUE>* cur : cone)

@@ -111,7 +111,6 @@ unit_tests = [
       'bvnodeisinv',
       'bvnodeselpath',
       'local_search_bv',
-      'normalize'
       ]
   ]
 ]

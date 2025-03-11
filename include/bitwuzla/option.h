@@ -338,21 +338,6 @@ enum ENUM(Option)
    *          solver engine.
    */
   EVALUE(PROP_SEXT),
-  /*!
-   * **Propagation-based local search solver engine: Normalization.**
-   *
-   * When enabled, perform normalizations for local search, on the local search
-   * layer (does not affect node layer).
-   *
-   * *Values:*
-   *  - **true**: enable
-   *  - **false**: disable [**default**]
-   *
-   * @see #BV_SOLVER
-   * @warning This is an expert option to configure the `prop` bit-vector
-   *          solver engine.
-   */
-  EVALUE(PROP_NORMALIZE),
 
   /*!
    * **Abstraction module.**

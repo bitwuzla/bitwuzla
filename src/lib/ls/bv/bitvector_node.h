@@ -81,17 +81,6 @@ class BitVectorNode : public Node<BitVector>
   uint64_t size() const { return d_assignment.size(); }
 
   /**
-   * Register parent extract for normalization.
-   * @param node The parent extract node to register.
-   */
-  void register_extract(BitVectorNode* node);
-  /**
-   * Get the set of parent extracts for normalization.
-   * @return The set of registered extracts.
-   */
-  const std::vector<BitVectorExtract*>& get_extracts() { return d_extracts; }
-
-  /**
    * Tighten signed and/or unsigned bounds of this node wrt. to the given
    * signed and unsigned bounds. If the given signed and unsigned ranges don't
    * have any intersection with the bounds of this node, all return parameters
@@ -240,8 +229,6 @@ class BitVectorNode : public Node<BitVector>
   BitVectorRange d_bounds_u;
   /** Signed bounds for inverse value computation. */
   BitVectorRange d_bounds_s;
-
-  std::vector<BitVectorExtract*> d_extracts;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorNode& node);
@@ -1633,15 +1620,9 @@ class BitVectorExtract : public BitVectorNode
    * @param child0    The child at index 0.
    * @param hi        The upper index.
    * @param lo        The lower index.
-   * @param normalize True if this extract should be registered in its child
-   *                  node for normalization.
    */
-  BitVectorExtract(RNG* rng,
-                   uint64_t size,
-                   BitVectorNode* child0,
-                   uint64_t hi,
-                   uint64_t lo,
-                   bool normalize);
+  BitVectorExtract(
+      RNG* rng, uint64_t size, BitVectorNode* child0, uint64_t hi, uint64_t lo);
   /**
    * Constructor.
    * @param rng       The associated random number generator.
@@ -1649,15 +1630,12 @@ class BitVectorExtract : public BitVectorNode
    * @param child0    The child at index 0.
    * @param hi        The upper index.
    * @param lo        The lower index.
-   * @param normalize True if this extract should be registered in its child
-   *                  node for normalization.
    */
   BitVectorExtract(RNG* rng,
                    const BitVectorDomain& domain,
                    BitVectorNode* child0,
                    uint64_t hi,
-                   uint64_t lo,
-                   bool normalize);
+                   uint64_t lo);
 
   NodeKind kind() const override { return NodeKind::BV_EXTRACT; }
 
@@ -1692,18 +1670,6 @@ class BitVectorExtract : public BitVectorNode
   uint64_t hi() const;
   /** @return The lower index of this extract. */
   uint64_t lo() const;
-
-  /**
-   * Normalize node.
-   * This caches the original child and indices, replaces the child with
-   * the normalized node and resets its indices to represent a full slice
-   * (upper index is msb, lower index is lsb).
-   * @param node The normalized representation of the child node.
-   */
-  void normalize(BitVectorNode* node);
-
-  /** @return True if this extract is normalized. */
-  bool is_normalized() const;
 
  private:
   /**
@@ -1758,22 +1724,6 @@ class BitVectorExtract : public BitVectorNode
    * Cache for inverse_value.
    */
   std::unique_ptr<BitVectorDomain> d_x_slice_right;
-
-  /**
-   * Cache the original child node that has been replaced with a normalized
-   * node. We cache to be able to restore in incremental mode.
-   */
-  BitVectorNode* d_child0_original = nullptr;
-  /**
-   * Cache the original upper index, replaced by the msb index after
-   * normalization. We cache to be able to restore in incremental mode.
-   */
-  uint64_t d_hi_original = 0;
-  /**
-   * Cache the original lower index, replaced by the msb index after
-   * normalization. We cache to be able to restore in incremental mode.
-   */
-  uint64_t d_lo_original = 0;
 };
 
 /* -------------------------------------------------------------------------- */

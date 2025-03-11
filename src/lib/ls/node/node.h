@@ -209,20 +209,10 @@ class Node
    */
   void set_id(uint64_t id);
   /**
-   * Set normalized id of this node.
-   * @param id The id to set.
-   */
-  void set_normalized_id(uint64_t id);
-  /**
    * Get id of this node.
    * @return The id of this node.
    */
   uint64_t id() const { return d_id; }
-  /**
-   * Get normalized id of this node.
-   * @return The id of this node.
-   */
-  uint64_t normalized_id() const { return d_normalized_id; }
 
   /** Get the string representation of this node. */
   virtual std::string str() const = 0;
@@ -271,20 +261,6 @@ class Node
 
   /** The id of this node. */
   uint64_t d_id = 0;
-  /**
-   * The id of this node after normalization.
-   *
-   * It is guaranteed that ordering nodes (ascending) by this id corresponds to
-   * their DAG post-order. This is relevant for cone updates, where we need
-   * to update the assignments of children before we update their parents.
-   * `d_id` originally has this property, but normalization may violate it
-   * by "semi-destructive" (destructive, but can be reverted) rewriting
-   * (see LocalSearchBV::normalize_extracts()). Thus, after normalization,
-   * this id needs to be recomputed in a post-order DAG traversal manner.
-   * If a LocalSearch implementation does not perform destructive rewriting, no
-   * extra handling but setting this to the same value as `d_id` is required.
-   */
-  uint64_t d_normalized_id = 0;
 
   /** The children of this node. */
   std::vector<Node<VALUE>*> d_children;

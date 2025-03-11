@@ -1,5 +1,4 @@
 (declare-const x4 Bool)
-(set-option :prop-normalize true)
 (set-option :bv-solver "prop")
 (declare-const x1 Bool)
 (declare-const x2 Bool)

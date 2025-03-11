@@ -273,11 +273,6 @@ Options::Options()
                 "concats that represent sign_extend nodes for "
                 "propagation-based local search engine",
                 "prop-sext"),
-      prop_normalize(this,
-                     Option::PROP_NORMALIZE,
-                     false,
-                     "enable normalization for local search",
-                     "prop-normalize"),
       abstraction(this,
                   Option::ABSTRACTION,
                   false,
@@ -774,7 +769,6 @@ Options::data(Option opt)
     case Option::PROP_INEQ_BOUNDS: return &prop_ineq_bounds;
     case Option::PROP_OPT_LT_CONCAT_SEXT: return &prop_opt_lt_concat_sext;
     case Option::PROP_SEXT: return &prop_sext;
-    case Option::PROP_NORMALIZE: return &prop_normalize;
     case Option::ABSTRACTION: return &abstraction;
     case Option::ABSTRACTION_BV_SIZE: return &abstraction_bv_size;
     case Option::ABSTRACTION_EAGER_REFINE: return &abstraction_eager_refine;

@@ -52,7 +52,7 @@ LocalSearchBV::mk_node(NodeKind kind,
                        const std::vector<uint64_t>& indices,
                        const std::optional<std::string>& symbol)
 {
-  return _mk_node(kind, size, children, indices, true, symbol);
+  return _mk_node(kind, size, children, indices, symbol);
 }
 
 uint64_t
@@ -62,7 +62,7 @@ LocalSearchBV::mk_node(NodeKind kind,
                        const std::vector<uint64_t>& indices,
                        const std::optional<std::string>& symbol)
 {
-  return _mk_node(kind, domain, children, indices, true, symbol);
+  return _mk_node(kind, domain, children, indices, symbol);
 }
 
 uint64_t
@@ -111,11 +111,9 @@ LocalSearchBV::_mk_node(NodeKind kind,
                         uint64_t size,
                         const std::vector<uint64_t>& children,
                         const std::vector<uint64_t>& indices,
-                        bool normalize,
                         const std::optional<std::string>& symbol)
 {
-  return _mk_node(
-      kind, BitVectorDomain(size), children, indices, normalize, symbol);
+  return _mk_node(kind, BitVectorDomain(size), children, indices, symbol);
 }
 
 uint64_t
@@ -123,7 +121,6 @@ LocalSearchBV::_mk_node(NodeKind kind,
                         const BitVectorDomain& domain,
                         const std::vector<uint64_t>& children,
                         const std::vector<uint64_t>& indices,
-                        bool normalize,
                         const std::optional<std::string>& symbol)
 {
   uint64_t id = d_nodes.size();
@@ -245,11 +242,7 @@ LocalSearchBV::_mk_node(NodeKind kind,
       assert(indices[0] < get_node(children[0])->size());
       BitVectorNode* child0 = get_node(children[0]);
       res.reset(new BitVectorExtract(
-          d_rng.get(), domain, child0, indices[0], indices[1], normalize));
-      if (normalize)
-      {
-        d_to_normalize_nodes.insert(child0);
-      }
+          d_rng.get(), domain, child0, indices[0], indices[1]));
       break;
     }
 
@@ -421,178 +414,6 @@ LocalSearchBV::compute_bounds(Node<BitVector>* node)
           p, child == p->child(0) ? (child == p->child(1) ? -1 : 0) : 1);
     }
   }
-}
-
-std::vector<std::pair<uint64_t, uint64_t>>
-LocalSearchBV::split_indices(BitVectorNode* node)
-{
-  std::unordered_set<std::pair<uint64_t, uint64_t>> slices{
-      {node->size() - 1, 0}};
-
-  const auto& extracts = node->get_extracts();
-  if (extracts.size() < 2)
-  {
-    return {};
-  }
-
-  for (BitVectorExtract* ex : extracts)
-  {
-    slices.insert({ex->hi(), ex->lo()});
-  }
-
-  bool restart = false;
-  do
-  {
-    for (auto slice : slices)
-    {
-      restart       = false;
-      auto [hi, lo] = slice;
-      for (auto s : slices)
-      {
-        if (s == slice) continue;
-
-        auto [h, l] = s;
-        // not overlapping?
-        if (lo > h || hi < l || l > hi || h < lo)
-        {
-          continue;
-        }
-        // overlapping
-        if (hi == h)
-        {
-          uint64_t max = std::max(lo, l);
-          uint64_t min = std::min(lo, l);
-          if (min == lo)
-          {
-            slices.erase(slice);
-          }
-          else
-          {
-            slices.erase(s);
-          }
-          slices.insert({max - 1, min});
-          restart = true;
-          break;
-        }
-        else if (lo == l)
-        {
-          uint64_t max = std::max(hi, h);
-          uint64_t min = std::min(hi, h);
-          if (max == hi)
-          {
-            slices.erase(slice);
-          }
-          else
-          {
-            slices.erase(s);
-          }
-          slices.insert({max, min + 1});
-          restart = true;
-          break;
-        }
-        else
-        {
-          std::vector<uint64_t> idxs = {hi, lo, h, l};
-          std::sort(idxs.begin(), idxs.end());
-          // we have to copy s to ensure that we erase the expected element
-          // after slice has been erased (both are references)
-          std::pair<uint64_t, uint64_t> tmp = s;
-          slices.erase(slice);
-          slices.erase(tmp);
-          slices.insert({idxs[3], idxs[2] + 1});
-          slices.insert({idxs[2], idxs[1]});
-          slices.insert({idxs[1] - 1, idxs[0]});
-          restart = true;
-          break;
-        }
-      }
-      if (restart) break;
-    }
-  } while (restart);
-
-  std::vector<std::pair<uint64_t, uint64_t>> sorted{slices.begin(),
-                                                    slices.end()};
-  std::sort(sorted.begin(), sorted.end());
-  return sorted;
-}
-
-BitVectorNode*
-LocalSearchBV::mk_normalized_extract(BitVectorNode* child,
-                                     uint64_t hi,
-                                     uint64_t lo)
-{
-  assert(child);
-  return get_node(_mk_node(NodeKind::BV_EXTRACT,
-                           child->domain().bvextract(hi, lo),
-                           {child->id()},
-                           {hi, lo},
-                           false));
-}
-
-BitVectorNode*
-LocalSearchBV::mk_normalized_concat(BitVectorNode* child0,
-                                    BitVectorNode* child1)
-{
-  assert(child0);
-  assert(child1);
-  return get_node(mk_node(NodeKind::BV_CONCAT,
-                          child0->domain().bvconcat(child1->domain()),
-                          {child0->id(), child1->id()}));
-}
-
-void
-LocalSearchBV::normalize_extracts(BitVectorNode* node)
-{
-  Log(2) << "normalize extracts: " << node;
-  const auto& extracts = node->get_extracts();
-  if (extracts.size() < 2) return;
-
-  std::vector<std::pair<uint64_t, uint64_t>> sorted_idxs = split_indices(node);
-
-  for (BitVectorExtract* ex : extracts)
-  {
-    if (ex->is_normalized()) continue;
-
-    uint64_t hi               = ex->hi();
-    uint64_t lo               = ex->lo();
-    BitVectorNode* normalized = nullptr;
-    for (auto rit = sorted_idxs.rbegin(); rit != sorted_idxs.rend(); ++rit)
-    {
-      if (rit->first == hi)
-      {
-        assert(!normalized);
-        if (rit->second == lo)
-        {
-          break;
-        }
-        normalized = mk_normalized_extract(node, rit->first, rit->second);
-      }
-      else if (rit->first < hi)
-      {
-        normalized = mk_normalized_concat(
-            normalized, mk_normalized_extract(node, rit->first, rit->second));
-        if (rit->second == lo)
-        {
-          break;
-        }
-      }
-    }
-    if (normalized)
-    {
-      ex->normalize(normalized);
-    }
-  }
-}
-
-void
-LocalSearchBV::normalize()
-{
-  Log(2) << "normalize";
-  for (auto& node : d_to_normalize_nodes)
-  {
-    normalize_extracts(node);
-  }
-  normalize_ids();
 }
 
 /* -------------------------------------------------------------------------- */

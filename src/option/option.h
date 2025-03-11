@@ -48,7 +48,6 @@ enum class Option
   PROP_INEQ_BOUNDS,             // bool
   PROP_OPT_LT_CONCAT_SEXT,      // bool
   PROP_SEXT,                    // bool
-  PROP_NORMALIZE,               // bool
 
   // Abstraction module
   ABSTRACTION,                 // bool
@@ -558,7 +557,6 @@ class Options
   OptionBool prop_ineq_bounds;
   OptionBool prop_opt_lt_concat_sext;
   OptionBool prop_sext;
-  OptionBool prop_normalize;
 
   OptionBool abstraction;
   OptionNumeric abstraction_bv_size;

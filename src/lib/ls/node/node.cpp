@@ -225,15 +225,7 @@ template <class VALUE>
 void
 Node<VALUE>::set_id(uint64_t id)
 {
-  d_id            = id;
-  d_normalized_id = id;
-}
-
-template <class VALUE>
-void
-Node<VALUE>::set_normalized_id(uint64_t id)
-{
-  d_normalized_id = id;
+  d_id = id;
 }
 
 template <class VALUE>

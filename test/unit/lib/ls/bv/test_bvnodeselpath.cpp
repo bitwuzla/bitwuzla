@@ -379,7 +379,7 @@ TestBvNodeSelPath::test_extract()
           /* Operand is leaf node. */
           std::unique_ptr<BitVectorNode> leaf0(
               new BitVectorNode(d_rng.get(), s0_val, s0));
-          BitVectorExtract lop(d_rng.get(), bw_t, leaf0.get(), hi, lo, false);
+          BitVectorExtract lop(d_rng.get(), bw_t, leaf0.get(), hi, lo);
           is_val       = lop[0]->is_value();
           is_essential = lop.is_essential(t, 0);
           /* we only perform this death test once (for performance reasons) */
@@ -401,7 +401,7 @@ TestBvNodeSelPath::test_extract()
               new BitVectorNode(d_rng.get(), bw_x));
           std::unique_ptr<BitVectorNode> op_s0(
               new BitVectorMul(d_rng.get(), s0, child.get(), child.get()));
-          BitVectorExtract oop(d_rng.get(), bw_t, op_s0.get(), hi, lo, false);
+          BitVectorExtract oop(d_rng.get(), bw_t, op_s0.get(), hi, lo);
           is_val       = lop[0]->is_value();
           is_essential = oop.is_essential(t, 0);
           /* we only perform this death test once (for performance reasons) */
