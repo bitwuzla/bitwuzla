@@ -15,6 +15,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "bv/bitvector.h"
 #include "rng/rng.h"
 
 namespace bzla {
@@ -71,6 +72,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
 {
   assert(assignment.size() == domain.size());
   assert(domain.match_fixed_bits(assignment));
+  fix_domain();
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
@@ -80,6 +82,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_domain(domain)
 {
   assert(rng);
+  fix_domain();
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
@@ -90,6 +93,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_domain(domain)
 {
   assert(rng);
+  fix_domain();
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
@@ -102,6 +106,21 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_domain(domain)
 {
   assert(rng);
+  fix_domain();
+}
+
+void
+BitVectorNode::fix_domain()
+{
+  if (d_all_value)
+  {
+    if (!d_is_value)
+    {
+      d_domain.fix(d_assignment);
+      d_is_value = true;
+    }
+  }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 bool
@@ -534,7 +553,6 @@ BitVectorAdd::BitVectorAdd(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorAdd::BitVectorAdd(RNG* rng,
@@ -545,34 +563,12 @@ BitVectorAdd::BitVectorAdd(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorAdd::_evaluate()
-{
-  d_assignment.ibvadd(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorAdd::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorAdd::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvadd(child(0)->assignment(), child(1)->assignment());
 }
 
 bool
@@ -684,7 +680,6 @@ BitVectorAnd::BitVectorAnd(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorAnd::BitVectorAnd(RNG* rng,
@@ -695,34 +690,12 @@ BitVectorAnd::BitVectorAnd(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorAnd::_evaluate()
-{
-  d_assignment.ibvand(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorAnd::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorAnd::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvand(child(0)->assignment(), child(1)->assignment());
 }
 
 std::tuple<BitVectorRange, BitVectorRange>
@@ -901,7 +874,6 @@ BitVectorConcat::BitVectorConcat(RNG* rng,
     : BitVectorNode(rng, size, child0, child1)
 {
   assert(size == child0->size() + child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
@@ -911,34 +883,12 @@ BitVectorConcat::BitVectorConcat(RNG* rng,
     : BitVectorNode(rng, domain, child0, child1)
 {
   assert(domain.size() == child0->size() + child1->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorConcat::_evaluate()
-{
-  d_assignment.ibvconcat(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorConcat::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorConcat::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvconcat(child(0)->assignment(), child(1)->assignment());
 }
 
 bool
@@ -1078,7 +1028,6 @@ BitVectorEq::BitVectorEq(RNG* rng,
 {
   assert(size == 1);
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorEq::BitVectorEq(RNG* rng,
@@ -1089,34 +1038,12 @@ BitVectorEq::BitVectorEq(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == 1);
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorEq::_evaluate()
-{
-  d_assignment.ibveq(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorEq::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorEq::evaluate()
 {
-  _evaluate();
+  d_assignment.ibveq(child(0)->assignment(), child(1)->assignment());
 }
 
 bool
@@ -1275,7 +1202,6 @@ BitVectorMul::BitVectorMul(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorMul::BitVectorMul(RNG* rng,
@@ -1286,34 +1212,12 @@ BitVectorMul::BitVectorMul(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorMul::_evaluate()
-{
-  d_assignment.ibvmul(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorMul::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorMul::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvmul(child(0)->assignment(), child(1)->assignment());
 }
 
 // TODO maybe use this as default implementation when bounds support is
@@ -1707,7 +1611,6 @@ BitVectorShl::BitVectorShl(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorShl::BitVectorShl(RNG* rng,
@@ -1718,34 +1621,12 @@ BitVectorShl::BitVectorShl(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorShl::_evaluate()
-{
-  d_assignment.ibvshl(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorShl::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorShl::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvshl(child(0)->assignment(), child(1)->assignment());
 }
 
 bool
@@ -2132,7 +2013,6 @@ BitVectorShr::BitVectorShr(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorShr::BitVectorShr(RNG* rng,
@@ -2143,34 +2023,12 @@ BitVectorShr::BitVectorShr(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorShr::_evaluate()
-{
-  d_assignment.ibvshr(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorShr::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorShr::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvshr(child(0)->assignment(), child(1)->assignment());
 }
 
 bool
@@ -2606,7 +2464,6 @@ BitVectorAshr::BitVectorAshr(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
@@ -2617,34 +2474,12 @@ BitVectorAshr::BitVectorAshr(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorAshr::_evaluate()
-{
-  d_assignment.ibvashr(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorAshr::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorAshr::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvashr(child(0)->assignment(), child(1)->assignment());
 }
 
 bool
@@ -2954,7 +2789,6 @@ BitVectorUdiv::BitVectorUdiv(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorUdiv::BitVectorUdiv(RNG* rng,
@@ -2965,34 +2799,12 @@ BitVectorUdiv::BitVectorUdiv(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorUdiv::_evaluate()
-{
-  d_assignment.ibvudiv(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorUdiv::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorUdiv::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvudiv(child(0)->assignment(), child(1)->assignment());
 }
 
 bool
@@ -3642,7 +3454,6 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
 {
   assert(size == 1);
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorUlt::BitVectorUlt(RNG* rng,
@@ -3655,34 +3466,12 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == 1);
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorUlt::_evaluate()
-{
-  d_assignment.ibvult(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorUlt::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorUlt::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvult(child(0)->assignment(), child(1)->assignment());
 }
 
 std::tuple<BitVectorRange, BitVectorRange>
@@ -4275,7 +4064,6 @@ BitVectorSlt::BitVectorSlt(RNG* rng,
 {
   assert(size == 1);
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorSlt::BitVectorSlt(RNG* rng,
@@ -4288,34 +4076,12 @@ BitVectorSlt::BitVectorSlt(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == 1);
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorSlt::_evaluate()
-{
-  d_assignment.ibvslt(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorSlt::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorSlt::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvslt(child(0)->assignment(), child(1)->assignment());
 }
 
 std::tuple<BitVectorRange, BitVectorRange>
@@ -4907,7 +4673,6 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
   assert(size == child0->size());
   assert(child0->size() == child1->size());
   d_inverse_domain.reset(nullptr);
-  _evaluate_and_set_domain();
 }
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
@@ -4919,34 +4684,12 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
   d_inverse_domain.reset(nullptr);
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorUrem::_evaluate()
-{
-  d_assignment.ibvurem(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorUrem::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorUrem::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvurem(child(0)->assignment(), child(1)->assignment());
 }
 
 bool
@@ -5520,7 +5263,6 @@ BitVectorXor::BitVectorXor(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorXor::BitVectorXor(RNG* rng,
@@ -5531,34 +5273,12 @@ BitVectorXor::BitVectorXor(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorXor::_evaluate()
-{
-  d_assignment.ibvxor(child(0)->assignment(), child(1)->assignment());
-}
-
-void
-BitVectorXor::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorXor::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvxor(child(0)->assignment(), child(1)->assignment());
 }
 
 bool
@@ -5668,7 +5388,6 @@ BitVectorIte::BitVectorIte(RNG* rng,
   assert(size == child1->size());
   assert(child0->size() == 1);
   assert(child1->size() == child2->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorIte::BitVectorIte(RNG* rng,
@@ -5681,35 +5400,13 @@ BitVectorIte::BitVectorIte(RNG* rng,
   assert(child0->size() == 1);
   assert(child1->size() == child2->size());
   assert(domain.size() == child1->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorIte::_evaluate()
-{
-  d_assignment.ibvite(
-      child(0)->assignment(), child(1)->assignment(), child(2)->assignment());
-}
-
-void
-BitVectorIte::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorIte::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvite(
+      child(0)->assignment(), child(1)->assignment(), child(2)->assignment());
 }
 
 bool
@@ -6021,7 +5718,6 @@ BitVectorNot::BitVectorNot(RNG* rng, uint64_t size, BitVectorNode* child0)
     : BitVectorNode(rng, size, child0)
 {
   assert(size == child0->size());
-  _evaluate_and_set_domain();
 }
 
 BitVectorNot::BitVectorNot(RNG* rng,
@@ -6030,34 +5726,12 @@ BitVectorNot::BitVectorNot(RNG* rng,
     : BitVectorNode(rng, domain, child0)
 {
   assert(domain.size() == child0->size());
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorNot::_evaluate()
-{
-  d_assignment.ibvnot(child(0)->assignment());
-}
-
-void
-BitVectorNot::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorNot::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvnot(child(0)->assignment());
 }
 
 bool
@@ -6130,7 +5804,6 @@ BitVectorExtract::BitVectorExtract(
   assert(size == hi - lo + 1);
   d_x_slice_left.reset(nullptr);
   d_x_slice_right.reset(nullptr);
-  _evaluate_and_set_domain();
 }
 
 BitVectorExtract::BitVectorExtract(RNG* rng,
@@ -6145,7 +5818,6 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
   assert(domain.size() == hi - lo + 1);
   d_x_slice_left.reset(nullptr);
   d_x_slice_right.reset(nullptr);
-  _evaluate_and_set_domain();
 }
 
 uint64_t
@@ -6161,30 +5833,9 @@ BitVectorExtract::lo() const
 }
 
 void
-BitVectorExtract::_evaluate()
-{
-  d_assignment.ibvextract(child(0)->assignment(), d_hi, d_lo);
-}
-
-void
-BitVectorExtract::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
-}
-
-void
 BitVectorExtract::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvextract(child(0)->assignment(), d_hi, d_lo);
 }
 
 bool
@@ -6421,7 +6072,6 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
     : BitVectorNode(rng, size, child0), d_n(n)
 {
   assert(size == child0->size() + n);
-  _evaluate_and_set_domain();
 }
 
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
@@ -6431,34 +6081,12 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
     : BitVectorNode(rng, domain, child0), d_n(n)
 {
   assert(domain.size() == child0->size() + n);
-  _evaluate_and_set_domain();
-}
-
-void
-BitVectorSignExtend::_evaluate()
-{
-  d_assignment.ibvsext(child(0)->assignment(), d_n);
-}
-
-void
-BitVectorSignExtend::_evaluate_and_set_domain()
-{
-  _evaluate();
-  if (d_all_value)
-  {
-    if (!d_is_value)
-    {
-      d_domain.fix(d_assignment);
-      d_is_value = true;
-    }
-  }
-  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
 BitVectorSignExtend::evaluate()
 {
-  _evaluate();
+  d_assignment.ibvsext(child(0)->assignment(), d_n);
 }
 
 BitVectorBounds
