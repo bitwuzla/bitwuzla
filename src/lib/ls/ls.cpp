@@ -242,6 +242,8 @@ LocalSearch<VALUE>::register_root(uint64_t id, bool fixed)
 {
   assert(id < d_nodes.size());  // API check
 
+  d_assignment_consistent = false;
+
   // register root
   if (fixed && d_roots_control.size())
   {
@@ -499,9 +501,12 @@ template <class VALUE>
 void
 LocalSearch<VALUE>::compute_initial_assignment()
 {
-  Log(1) << "*** compute parents";
+  util::Timer timer(d_internal->d_stats.time_init_assignment);
+
+  Log(1) << "*** compute parents and initial assignment";
 
   d_parents.clear();
+  d_assignment_consistent = true;
 
   if (d_roots.empty())
   {
@@ -705,8 +710,12 @@ template <class VALUE>
 Result
 LocalSearch<VALUE>::move()
 {
-  StatisticsInternal& stats = d_internal->d_stats;
+  if (!d_assignment_consistent)
+  {
+    compute_initial_assignment();
+  }
 
+  StatisticsInternal& stats = d_internal->d_stats;
   util::Timer timer(stats.time_move);
 
   Log(1) << "----------------------------------------------------------------";

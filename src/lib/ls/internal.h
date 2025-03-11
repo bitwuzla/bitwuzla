@@ -44,6 +44,7 @@ struct LocalSearch<VALUE>::StatisticsInternal
 #endif
   util::TimerStatistic& time_move;
   util::TimerStatistic& time_update_cone;
+  util::TimerStatistic& time_init_assignment;
 };
 
 template <class VALUE>
@@ -77,7 +78,9 @@ LocalSearch<VALUE>::StatisticsInternal::StatisticsInternal(
 #endif
       time_move(stats.new_stat<util::TimerStatistic>(prefix + "time_move")),
       time_update_cone(
-          stats.new_stat<util::TimerStatistic>(prefix + "time_update_cone"))
+          stats.new_stat<util::TimerStatistic>(prefix + "time_update_cone")),
+      time_init_assignment(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_init_assignment"))
 {
 }
 

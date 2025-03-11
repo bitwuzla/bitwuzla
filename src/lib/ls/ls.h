@@ -303,17 +303,16 @@ class LocalSearch
 
   Result move();
 
-  /**
-   * Compute initial assignment and parents map.
-   * @note Parents map is recomputed from scratch.
-   */
-  void compute_initial_assignment();
-
  protected:
   /** Forward declaration of internal statistics struct. */
   struct StatisticsInternal;
   /** Forward declaration of internal struct. */
   struct Internal;
+  /**
+   * Compute initial assignment and parents map.
+   * @note Parents map is recomputed from scratch.
+   */
+  void compute_initial_assignment();
   /**
    * Get node by id.
    * @param id The node id.
@@ -473,6 +472,14 @@ class LocalSearch
   std::unique_ptr<Internal> d_internal;
   /** The associated logger instance. */
   util::Logger& d_logger;
+
+  /**
+   * True if current assignment is consistent. This is the case after
+   * compute_initial_assignment() until new roots are registered via
+   * register_root(). During consecutive calls to move() (the search loop),
+   * the assignment is always consistent.
+   */
+  bool d_assignment_consistent = false;
 };
 
 /* -------------------------------------------------------------------------- */
