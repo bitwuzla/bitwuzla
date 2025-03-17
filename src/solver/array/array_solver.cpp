@@ -408,7 +408,7 @@ ArraySolver::check_equality(const Node& eq)
         {
           const_arrays.push_back(cur);
         }
-        else if (cur.kind() == Kind::CONSTANT)
+        else
         {
           base_arrays.push_back(cur);
         }
