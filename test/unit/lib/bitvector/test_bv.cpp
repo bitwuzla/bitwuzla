@@ -5042,7 +5042,7 @@ TEST_F(TestBitVector, to_uint64)
   }
   ASSERT_NO_FATAL_FAILURE(BitVector(28).to_uint64());
   ASSERT_EQ(BitVector(128, std::string(65, '1')).to_uint64(true), UINT64_MAX);
-  ASSERT_DEATH_DEBUG(BitVector(128).to_uint64(), "d_size <= 64");
+  ASSERT_DEATH_DEBUG(BitVector(128).ibvnot().to_uint64(), "fits_in_size");
 }
 
 TEST_F(TestBitVector, compare)

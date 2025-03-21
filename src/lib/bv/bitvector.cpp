@@ -678,11 +678,12 @@ BitVector::to_uint64(bool truncate) const
 {
   (void) truncate;
   assert(!is_null());
-  assert(truncate || d_size <= 64);
   if (is_gmp())
   {
+    assert(truncate || fits_in_size(64, d_val_gmp));
     return mpz_get_ull(d_val_gmp);
   }
+  assert(truncate || fits_in_size(64, d_val_uint64));
   return d_val_uint64;
 }
 
