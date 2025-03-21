@@ -93,13 +93,14 @@ Rewriter::Rewriter(Env& env, uint8_t level, const std::string& id)
     : d_env(env),
       d_logger(env.logger()),
       d_level(level),
+      d_arithmetic(level == LEVEL_ARITHMETIC),
       d_eval_cache(env.options().rewrite_level() > 0 ? d_cache
                                                      : d_eval_cache_aux),
       d_stats(env.statistics(),
               "rewriter::" + (id.empty() ? "" : "(" + id + ")::"))
 {
-  static_assert(Rewriter::LEVEL_SPECULATIVE > Rewriter::LEVEL_MAX);
-  assert(d_level <= Rewriter::LEVEL_SPECULATIVE);
+  static_assert(Rewriter::LEVEL_ARITHMETIC > Rewriter::LEVEL_MAX);
+  assert(d_level <= Rewriter::LEVEL_ARITHMETIC);
   (void) d_env;  // only used in debug mode
 }
 
@@ -1068,6 +1069,7 @@ Rewriter::rewrite_eq(const Node& node)
     // this is important for the Sage benchmark TODO
     //BZLA_APPLY_RW_RULE(EQUAL_BV_CONCAT);
     BZLA_APPLY_RW_RULE(EQUAL_BV_SUB);
+    BZLA_APPLY_RW_RULE(EQUAL_BV_MUL_UDIV_ZERO);
     BZLA_APPLY_RW_RULE(EQUAL_EQUAL_CONST_BV1);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_SAME);
     BZLA_APPLY_RW_RULE(EQUAL_ITE_INVERTED);
@@ -1134,10 +1136,13 @@ Rewriter::rewrite_bv_add(const Node& node)
     // BZLA_APPLY_RW_RULE(BV_ADD_SHL);
     BZLA_APPLY_RW_RULE(BV_ADD_NEG_MUL);
   }
-  if (d_level == LEVEL_SPECULATIVE)
+  if (d_arithmetic)
   {
-    BZLA_APPLY_RW_RULE(NORM_BV_ADD_MUL);
+    // BZLA_APPLY_RW_RULE(NORM_BV_ADD_MUL);
     BZLA_APPLY_RW_RULE(NORM_BV_ADD_CONCAT);
+    BZLA_APPLY_RW_RULE(NORM_BV_EXTRACT_ADD_MUL_REV2);
+    BZLA_APPLY_RW_RULE(NORM_FACT_BV_ADD_MUL);
+    BZLA_APPLY_RW_RULE(NORM_FACT_BV_ADD_SHL);
   }
 
 DONE:
@@ -1207,6 +1212,10 @@ Rewriter::rewrite_bv_concat(const Node& node)
     BZLA_APPLY_RW_RULE(BV_CONCAT_AND);
     BZLA_APPLY_RW_RULE(NORM_BV_CONCAT_BV_NOT);
   }
+  if (d_arithmetic)
+  {
+    BZLA_APPLY_RW_RULE(NORM_BV_MUL_POW2_REV);
+  }
 
 DONE:
   return res;
@@ -1237,7 +1246,7 @@ Rewriter::rewrite_bv_extract(const Node& node)
     BZLA_APPLY_RW_RULE(BV_EXTRACT_ITE);
   }
 
-  if (d_level == LEVEL_SPECULATIVE)
+  if (!d_arithmetic)
   {
     BZLA_APPLY_RW_RULE(BV_EXTRACT_ADD_MUL);
   }
@@ -1258,16 +1267,33 @@ Rewriter::rewrite_bv_mul(const Node& node)
     BZLA_APPLY_RW_RULE(BV_MUL_ZERO);
     BZLA_APPLY_RW_RULE(BV_MUL_ONE);
     BZLA_APPLY_RW_RULE(BV_MUL_ONES);
-    BZLA_APPLY_RW_RULE(BV_MUL_POW2);
+    if (d_arithmetic)
+    {
+      BZLA_APPLY_RW_RULE(NORM_BV_MUL_POW2_REV);
+    }
+    else
+    {
+      BZLA_APPLY_RW_RULE(BV_MUL_POW2);
+    }
     BZLA_APPLY_RW_RULE(BV_MUL_CONST);
     BZLA_APPLY_RW_RULE(BV_MUL_BV1);
   }
   if (d_level >= 2)
   {
-    BZLA_APPLY_RW_RULE(BV_MUL_CONST_ADD);
+    if (!d_arithmetic)
+    {
+      BZLA_APPLY_RW_RULE(BV_MUL_CONST_ADD);
+    }
+    BZLA_APPLY_RW_RULE(BV_MUL_CONST_SHL);
     BZLA_APPLY_RW_RULE(BV_MUL_NEG);
     // rewrites for Noetzli benchmarks
     BZLA_APPLY_RW_RULE(BV_MUL_ITE);
+  }
+
+  if (d_arithmetic)
+  {
+    BZLA_APPLY_RW_RULE(NORM_BV_EXTRACT_ADD_MUL_REV3);
+    BZLA_APPLY_RW_RULE(NORM_FACT_BV_MUL_SHL);
   }
 
 DONE:
@@ -1290,9 +1316,10 @@ Rewriter::rewrite_bv_not(const Node& node)
     BZLA_APPLY_RW_RULE(BV_NOT_BV_NEG);
     //BZLA_APPLY_RW_RULE(BV_NOT_BV_CONCAT);
   }
-  if (d_level == LEVEL_SPECULATIVE)
+  if (d_arithmetic)
   {
     BZLA_APPLY_RW_RULE(NORM_BV_NOT_OR_SHL);
+    BZLA_APPLY_RW_RULE(NORM_BV_EXTRACT_ADD_MUL_REV1);
   }
 DONE:
   return res;
@@ -1310,9 +1337,10 @@ Rewriter::rewrite_bv_shl(const Node& node)
     BZLA_APPLY_RW_RULE(BV_SHL_SPECIAL_CONST);
     BZLA_APPLY_RW_RULE(BV_SHL_CONST);
   }
-  if (d_level == LEVEL_SPECULATIVE)
+  if (d_arithmetic)
   {
     BZLA_APPLY_RW_RULE(NORM_BV_SHL_NEG);
+    BZLA_APPLY_RW_RULE(NORM_FACT_BV_SHL_MUL);
   }
 
 DONE:
@@ -1977,6 +2005,9 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::EQUAL_BV_ADD_ADD: out << "EQUAL_BV_ADD_ADD"; break;
     case RewriteRuleKind::EQUAL_BV_CONCAT: out << "EQUAL_BV_CONCAT"; break;
     case RewriteRuleKind::EQUAL_BV_SUB: out << "EQUAL_BV_SUB"; break;
+    case RewriteRuleKind::EQUAL_BV_MUL_UDIV_ZERO:
+      out << "EQUAL_BV_MUL_UDIV_ZERO";
+      break;
     case RewriteRuleKind::EQUAL_ITE_SAME: out << "EQUAL_ITE_SAME"; break;
     case RewriteRuleKind::EQUAL_ITE_INVERTED:
       out << "EQUAL_ITE_INVERTED";
@@ -2077,9 +2108,19 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_EXTRACT_ADD_MUL:
       out << "BV_EXTRACT_ADD_MUL";
       break;
+    case RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV1:
+      out << "BV_EXTRACT_ADD_MUL_REV1";
+      break;
+    case RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV2:
+      out << "BV_EXTRACT_ADD_MUL_REV2";
+      break;
+    case RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV3:
+      out << "BV_EXTRACT_ADD_MUL_REV3";
+      break;
 
     case RewriteRuleKind::BV_MUL_CONST: out << "BV_MUL_CONST"; break;
     case RewriteRuleKind::BV_MUL_BV1: out << "BV_MUL_BV1"; break;
+    case RewriteRuleKind::BV_MUL_CONST_SHL: out << "BV_MUL_CONST_SHL"; break;
     case RewriteRuleKind::BV_MUL_CONST_ADD: out << "BV_MUL_CONST_ADD"; break;
     case RewriteRuleKind::BV_MUL_ITE: out << "BV_MUL_ITE"; break;
     case RewriteRuleKind::BV_MUL_NEG: out << "BV_MUL_NEG"; break;
@@ -2087,6 +2128,11 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_MUL_ONE: out << "BV_MUL_ONE"; break;
     case RewriteRuleKind::BV_MUL_ONES: out << "BV_MUL_ONES"; break;
     case RewriteRuleKind::BV_MUL_POW2: out << "BV_MUL_POW2"; break;
+    case RewriteRuleKind::NORM_BV_MUL_POW2_REV: out << "BV_MUL_POW2_REV"; break;
+    case RewriteRuleKind::NORM_FACT_BV_ADD_MUL: out << "NORM_FACT_BV_ADD_MUL"; break;
+    case RewriteRuleKind::NORM_FACT_BV_ADD_SHL: out << "NORM_FACT_BV_ADD_SHL"; break;
+    case RewriteRuleKind::NORM_FACT_BV_SHL_MUL: out << "NORM_FACT_BV_SHL_MUL"; break;
+    case RewriteRuleKind::NORM_FACT_BV_MUL_SHL: out << "NORM_FACT_BV_MUL_SHL"; break;
 
     case RewriteRuleKind::BV_NOT_BV_NOT: out << "BV_NOT_BV_NOT"; break;
     case RewriteRuleKind::BV_NOT_BV_NEG: out << "BV_NOT_BV_NEG"; break;

@@ -1044,6 +1044,51 @@ RewriteRule<RewriteRuleKind::EQUAL_BV_SUB>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match: (= (bvmul (bvudiv a b) b) zero)
+ * result: (or (= b zero) (bvugt b a))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_BV_MUL_UDIV_ZERO>::_apply(Rewriter& rewriter,
+                                                             const Node& node)
+{
+  Node mul, val;
+  if (node[0].kind() == Kind::BV_MUL)
+  {
+    mul = node[0];
+    val = node[1];
+  }
+  else if (node[1].kind() == Kind::BV_MUL)
+  {
+    mul = node[1];
+    val = node[0];
+  }
+
+  if (!val.is_null() && val.is_value() && val.value<BitVector>().is_zero())
+  {
+    Node udiv, t;
+    if (mul[0].kind() == Kind::BV_UDIV)
+    {
+      udiv = mul[0];
+      t    = mul[1];
+    }
+    else if (mul[1].kind() == Kind::BV_UDIV)
+    {
+      udiv = mul[1];
+      t    = mul[0];
+    }
+
+    if (!udiv.is_null() && udiv[1] == t)
+    {
+      return rewriter.mk_node(Kind::OR,
+                              {rewriter.mk_node(Kind::EQUAL, {t, val}),
+                               rewriter.mk_node(Kind::BV_UGT, {t, udiv[0]})});
+    }
+  }
+  return node;
+}
+
 /* distinct ----------------------------------------------------------------- */
 
 template <>

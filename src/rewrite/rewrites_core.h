@@ -96,6 +96,10 @@ template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_BV_SUB>::_apply(Rewriter& rewriter,
                                                         const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::EQUAL_BV_MUL_UDIV_ZERO>::_apply(
+    Rewriter& rewriter, const Node& node);
+
 /* distinct ----------------------------------------------------------------- */
 
 template <>

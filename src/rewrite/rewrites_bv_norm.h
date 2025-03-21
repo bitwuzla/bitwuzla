@@ -29,6 +29,41 @@ template <>
 Node RewriteRule<RewriteRuleKind::NORM_BV_SHL_NEG>::_apply(Rewriter& rewriter,
                                                            const Node& node);
 
+// Reverse noramlization rules
+
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV1>::_apply(
+    Rewriter& rewriter, const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV2>::_apply(
+    Rewriter& rewriter, const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV3>::_apply(
+    Rewriter& rewriter, const Node& node);
+
+// Reverse rule for BV_MUL_POW2
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_BV_MUL_POW2_REV>::_apply(
+    Rewriter& rewriter, const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_FACT_BV_ADD_MUL>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_FACT_BV_ADD_SHL>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_FACT_BV_SHL_MUL>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::NORM_FACT_BV_MUL_SHL>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
+
 }  // namespace bzla
 
 #endif

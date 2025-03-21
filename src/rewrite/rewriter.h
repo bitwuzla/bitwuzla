@@ -44,7 +44,7 @@ class Rewriter
    * from the outside and rewrites of this level are only applied specifically
    * for normalization.
    */
-  inline static constexpr uint8_t LEVEL_SPECULATIVE = LEVEL_MAX + 1;
+  inline static constexpr uint8_t LEVEL_ARITHMETIC = LEVEL_MAX + 1;
   /**
    * Constructor.
    * @param env   The associated environment.
@@ -285,6 +285,7 @@ class Rewriter
 
   /** True to enable rewriting, false to only enable operator elimination. */
   uint8_t d_level;
+  const bool d_arithmetic;
   /** Cache nodes rewritten during rewrite(), maps node to rewritten form. */
   std::unordered_map<Node, Node> d_cache;
   /**
@@ -365,6 +366,7 @@ enum class RewriteRuleKind
   EQUAL_BV_ADD_ADD,
   EQUAL_BV_CONCAT,
   EQUAL_BV_SUB,
+  EQUAL_BV_MUL_UDIV_ZERO,
   EQUAL_ITE_SAME,
   EQUAL_ITE_INVERTED,
   EQUAL_ITE_DIS_BV1,
@@ -430,6 +432,8 @@ enum class RewriteRuleKind
   // normalization
   NORM_BV_ADD_MUL,
   NORM_BV_ADD_CONCAT,
+  NORM_FACT_BV_ADD_MUL,
+  NORM_FACT_BV_ADD_SHL,
 
   //// bvand
   // Level 1+
@@ -475,6 +479,9 @@ enum class RewriteRuleKind
   BV_EXTRACT_AND,
   BV_EXTRACT_ITE,
   BV_EXTRACT_ADD_MUL,
+  NORM_BV_EXTRACT_ADD_MUL_REV1,
+  NORM_BV_EXTRACT_ADD_MUL_REV2,
+  NORM_BV_EXTRACT_ADD_MUL_REV3,
 
   //// bvmul
   // Level 1+
@@ -484,10 +491,13 @@ enum class RewriteRuleKind
   BV_MUL_POW2,
   BV_MUL_CONST,
   BV_MUL_BV1,
+  BV_MUL_CONST_SHL,
   // Level 2+
   BV_MUL_CONST_ADD,
   BV_MUL_ITE,
   BV_MUL_NEG,
+  NORM_BV_MUL_POW2_REV,
+  NORM_FACT_BV_MUL_SHL,
 
   //// bvnot
   // Level 1+
@@ -504,6 +514,7 @@ enum class RewriteRuleKind
   BV_SHL_CONST,
   // normalization
   NORM_BV_SHL_NEG,
+  NORM_FACT_BV_SHL_MUL,
 
   //// bvlshr
   // Level 1+

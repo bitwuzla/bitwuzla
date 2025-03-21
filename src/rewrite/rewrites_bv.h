@@ -227,6 +227,9 @@ Node RewriteRule<RewriteRuleKind::BV_MUL_CONST>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_MUL_CONST_ADD>::_apply(Rewriter& rewriter,
                                                             const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_CONST_SHL>::_apply(Rewriter& rewriter,
+                                                            const Node& node);
 // push_ite_mul
 template <>
 Node RewriteRule<RewriteRuleKind::BV_MUL_ITE>::_apply(Rewriter& rewriter,

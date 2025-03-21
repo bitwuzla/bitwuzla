@@ -11,6 +11,7 @@
 #include "rewrite/rewrites_bv.h"
 
 #include "bv/bitvector.h"
+#include "node/node_kind.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "rewrite/rewrite_utils.h"
@@ -1573,7 +1574,12 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_ADD_MUL>::_apply(Rewriter& rewriter,
       {
         if (k == Kind::BV_MUL || k == Kind::BV_ADD || k == Kind::BV_NOT)
         {
-          it->second = node::utils::rebuild_node(rewriter.nm(), cur, cache);
+          std::vector<Node> children;
+          for (const Node& c : cur)
+          {
+            children.push_back(cache.at(c));
+          }
+          it->second = rewriter.mk_node(k, children);
         }
         else
         {
@@ -1782,6 +1788,41 @@ RewriteRule<RewriteRuleKind::BV_MUL_CONST_ADD>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_bv_mul_const_add(rewriter, node, 1);
+  }
+  return res;
+}
+
+/*
+ * match:  (bvmul (_ bvX N) (bvshl (_ bvY N) a)
+ * result: (bvshl Z a) with Z = X * Y
+ */
+namespace {
+Node
+_rw_bv_mul_const_shl(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx1 = 1 - idx;
+  if (node[idx].kind() == Kind::BV_SHL && node[idx][0].is_value()
+      && node[idx1].is_value())
+  {
+    return rewriter.mk_node(
+        Kind::BV_SHL,
+        {rewriter.mk_node(Kind::BV_MUL, {node[idx][0], node[idx1]}),
+         node[idx][1]});
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_MUL_CONST_SHL>::_apply(Rewriter& rewriter,
+                                                       const Node& node)
+{
+  Node res = _rw_bv_mul_const_shl(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_mul_const_shl(rewriter, node, 1);
   }
   return res;
 }

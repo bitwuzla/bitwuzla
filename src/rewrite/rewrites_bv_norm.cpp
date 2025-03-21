@@ -11,6 +11,8 @@
 #include "rewrite/rewrites_bv_norm.h"
 
 #include "bv/bitvector.h"
+#include "node/node_kind.h"
+#include "node/node_manager.h"
 
 namespace bzla {
 
@@ -61,7 +63,9 @@ RewriteRule<RewriteRuleKind::NORM_BV_CONCAT_BV_NOT>::_apply(Rewriter& rewriter,
 {
   if (node[0].kind() == Kind::BV_NOT && node[1].kind() == Kind::BV_NOT)
   {
-    return rewriter.mk_node(Kind::BV_NOT, {rewriter.mk_node(Kind::BV_CONCAT, {node[0][0], node[1][0]})});
+    return rewriter.mk_node(
+        Kind::BV_NOT,
+        {rewriter.mk_node(Kind::BV_CONCAT, {node[0][0], node[1][0]})});
   }
   return node;
 }
@@ -153,6 +157,238 @@ RewriteRule<RewriteRuleKind::NORM_BV_SHL_NEG>::_apply(Rewriter& rewriter,
   {
     return rewriter.mk_node(Kind::BV_NEG,
                             {rewriter.mk_node(Kind::BV_SHL, {neg0, node[1]})});
+  }
+  return node;
+}
+
+namespace {
+
+Node
+_bv_extract_lower_rev(Rewriter& rewriter, const Kind kind, const Node& node)
+{
+  if (kind == Kind::BV_NOT)
+  {
+    if (node[0].kind() == Kind::BV_EXTRACT && node[0].index(1) == 0)
+    {
+      Node bvnot = rewriter.mk_node(Kind::BV_NOT, {node[0][0]});
+      return rewriter.mk_node(Kind::BV_EXTRACT, {bvnot}, node[0].indices());
+    }
+  }
+  else if (kind == Kind::BV_ADD || kind == Kind::BV_MUL)
+  {
+    if (node[0].kind() == Kind::BV_EXTRACT && node[0].index(1) == 0
+        && node[1].kind() == Kind::BV_EXTRACT && node[1].index(1) == 0
+        && node[0][0].type() == node[1][0].type())
+    {
+      assert(node[0].index(0) == node[1].index(0));
+      Node t = rewriter.mk_node(kind, {node[0][0], node[1][0]});
+      return rewriter.mk_node(Kind::BV_EXTRACT, {t}, node[0].indices());
+    }
+  }
+  return node;
+}
+
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV1>::_apply(
+    Rewriter& rewriter, const Node& node)
+{
+  assert(node.kind() == Kind::BV_NOT);
+  return _bv_extract_lower_rev(rewriter, Kind::BV_NOT, node);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV2>::_apply(
+    Rewriter& rewriter, const Node& node)
+{
+  assert(node.kind() == Kind::BV_ADD);
+  return _bv_extract_lower_rev(rewriter, Kind::BV_ADD, node);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV3>::_apply(
+    Rewriter& rewriter, const Node& node)
+{
+  assert(node.kind() == Kind::BV_MUL);
+  return _bv_extract_lower_rev(rewriter, Kind::BV_MUL, node);
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORM_BV_MUL_POW2_REV>::_apply(Rewriter& rewriter,
+                                                           const Node& node)
+{
+  if (node[1].is_value() && node[1].value<BitVector>().is_zero()
+      && node[0].kind() == Kind::BV_EXTRACT && node[0].index(1) == 0
+      && node[0][0].type() == node.type())
+  {
+    uint64_t tz = node[1].type().bv_size();
+    assert(tz <= std::numeric_limits<uint32_t>::max());
+    auto pow2 = rewriter.nm().mk_value(
+        BitVector::mk_one(node.type().bv_size()).ibvshl(tz));
+    return rewriter.mk_node(Kind::BV_MUL, {pow2, node[0][0]});
+  }
+  return node;
+}
+
+/**
+ * match: (bvadd (bvmul a t1) (bvmul a t2))
+ * result: (bvmul a (bvadd t1 t2))
+ *
+ * match: (bvadd a (bvmul a t2))
+ * result: (bvmul a (1 t2))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORM_FACT_BV_ADD_MUL>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  assert(node.kind() == Kind::BV_ADD);
+
+  if (node[0].kind() == Kind::BV_MUL && node[1].kind() == Kind::BV_MUL)
+  {
+    size_t ic, i1;
+    if (node[0][0] == node[1][0] || node[0][0] == node[1][1])
+    {
+      ic = 0;
+      i1 = node[0][0] == node[1][0] ? 1 : 0;
+    }
+    else if (node[0][1] == node[1][0] || node[0][1] == node[1][1])
+    {
+      ic = 1;
+      i1 = node[0][1] == node[1][0] ? 1 : 0;
+    }
+    else
+    {
+      return node;
+    }
+
+    const Node& c  = node[0][ic];
+    const Node& t0 = node[0][1 - ic];
+    const Node& t1 = node[1][i1];
+    Node add       = rewriter.mk_node(Kind::BV_ADD, {t0, t1});
+    auto res       = rewriter.mk_node(Kind::BV_MUL, {c, add});
+    return res;
+  }
+  if (((node[0].kind() == Kind::BV_MUL
+        && (node[0][0] == node[1] || node[0][1] == node[1]))
+       || (node[1].kind() == Kind::BV_MUL
+           && (node[1][0] == node[0] || node[1][1] == node[0]))))
+  {
+    size_t ic, i0;
+    if (node[0].kind() == Kind::BV_MUL)
+    {
+      ic = 1;
+      i0 = node[0][0] == node[1] ? 1 : 0;
+    }
+    else
+    {
+      ic = 0;
+      i0 = node[1][0] == node[0] ? 1 : 0;
+    }
+    const Node& c = node[ic];
+    const Node& t = node[1 - ic][i0];
+    Node one = rewriter.nm().mk_value(BitVector::mk_one(c.type().bv_size()));
+    Node add = rewriter.mk_node(Kind::BV_ADD, {one, t});
+    return rewriter.mk_node(Kind::BV_MUL, {c, add});
+  }
+  return node;
+}
+
+/**
+ * match: (bvadd (bvshl a t1) (bvshl a t2))
+ * result: (bvmul a (bvadd (bvshl 1 t1) (bvshl 1 t2)))
+ *
+ * match: (bvadd (bvshl a t1) a)
+ * result: (bvmul a (bvadd (bvshl 1 t1) 1))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORM_FACT_BV_ADD_SHL>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  assert(node.kind() == Kind::BV_ADD);
+
+  if (node[0].kind() == Kind::BV_SHL && node[1].kind() == Kind::BV_SHL)
+  {
+    if (node[0][0] == node[1][0])
+    {
+      const Node& c = node[0][0];
+      if (!c.is_value() || !c.value<BitVector>().is_one())
+      {
+        Node one =
+            rewriter.nm().mk_value(BitVector::mk_one(c.type().bv_size()));
+        Node shl1 = rewriter.mk_node(Kind::BV_SHL, {one, node[0][1]});
+        Node shl2 = rewriter.mk_node(Kind::BV_SHL, {one, node[1][1]});
+        Node add  = rewriter.mk_node(Kind::BV_ADD, {shl1, shl2});
+        auto res  = rewriter.mk_node(Kind::BV_MUL, {c, add});
+        return res;
+      }
+    }
+  }
+  if ((node[0].kind() == Kind::BV_SHL && node[0][0] == node[1])
+      || (node[1].kind() == Kind::BV_SHL && node[1][0] == node[0]))
+  {
+    size_t idx    = node[0].kind() == Kind::BV_SHL ? 0 : 1;
+    const Node& c = node[idx][0];
+    if (!c.is_value() || !c.value<BitVector>().is_one())
+    {
+      Node one  = rewriter.nm().mk_value(BitVector::mk_one(c.type().bv_size()));
+      Node shl1 = rewriter.mk_node(Kind::BV_SHL, {one, node[idx][1]});
+      Node add  = rewriter.mk_node(Kind::BV_ADD, {shl1, one});
+      auto res  = rewriter.mk_node(Kind::BV_MUL, {c, add});
+      return res;
+    }
+  }
+  return node;
+}
+
+/**
+ * match: (bvshl (bvmul a t1) t2)
+ * result: (bvmul a (bvshl t1 t2)) for a < t1
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORM_FACT_BV_SHL_MUL>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  assert(node.kind() == Kind::BV_SHL);
+
+  if (node[0].kind() == Kind::BV_MUL)
+  {
+    size_t idx = node[0][0] < node[0][1] ? 0 : 1;
+    Node bvshl = rewriter.mk_node(Kind::BV_SHL, {node[0][1 - idx], node[1]});
+    return rewriter.mk_node(Kind::BV_MUL, {node[0][idx], bvshl});
+  }
+  return node;
+}
+
+/**
+ * match: (bvmul (bvshl a t1) t2)
+ * result: (bvmul a (bvshl t2 t1)) for a < t2
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::NORM_FACT_BV_MUL_SHL>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  assert(node.kind() == Kind::BV_MUL);
+
+  if (node[0].kind() == Kind::BV_SHL || node[1].kind() == Kind::BV_SHL)
+  {
+    size_t idx        = node[0].kind() == Kind::BV_SHL ? 0 : 1;
+    const Node& bvshl = node[idx];
+    const Node& other = node[1 - idx];
+    if (bvshl[0] < other)
+    {
+      return rewriter.mk_node(
+          Kind::BV_MUL,
+          {bvshl[0], rewriter.mk_node(Kind::BV_SHL, {other, bvshl[1]})});
+    }
   }
   return node;
 }
