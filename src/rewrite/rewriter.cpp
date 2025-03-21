@@ -1959,428 +1959,306 @@ DONE:
   return res;
 }
 
+#define CASE(eval) \
+  case RewriteRuleKind::eval: out << #eval; break
+
 std::ostream&
 operator<<(std::ostream& out, RewriteRuleKind kind)
 {
-  /* Boolean rewrites ---------------------------- */
   switch (kind)
   {
-    case RewriteRuleKind::AND_SPECIAL_CONST: out << "AND_SPECIAL_CONST"; break;
-    case RewriteRuleKind::AND_CONST: out << "AND_CONST"; break;
-    case RewriteRuleKind::AND_IDEM1: out << "AND_IDEM1"; break;
-    case RewriteRuleKind::AND_IDEM2: out << "AND_IDEM2"; break;
-    case RewriteRuleKind::AND_IDEM3: out << "AND_IDEM3"; break;
-    case RewriteRuleKind::AND_CONTRA1: out << "AND_CONTRA1"; break;
-    case RewriteRuleKind::AND_CONTRA2: out << "AND_CONTRA2"; break;
-    case RewriteRuleKind::AND_CONTRA3: out << "AND_CONTRA3"; break;
-    case RewriteRuleKind::AND_RESOL1: out << "AND_RESOL1"; break;
-    case RewriteRuleKind::AND_SUBSUM1: out << "AND_SUBSUM1"; break;
-    case RewriteRuleKind::AND_SUBSUM2: out << "AND_SUBSUM2"; break;
-    case RewriteRuleKind::AND_NOT_AND1: out << "AND_NOT_AND1"; break;
-    case RewriteRuleKind::AND_NOT_AND2: out << "AND_NOT_AND2"; break;
-    case RewriteRuleKind::AND_BV_LT_FALSE: out << "AND_BV_LT_FALSE"; break;
-    case RewriteRuleKind::AND_BV_LT: out << "AND_BV_LT"; break;
-
-    case RewriteRuleKind::EQUAL_SPECIAL_CONST:
-      out << "EQUAL_SPECIAL_CONST";
-      break;
-    case RewriteRuleKind::EQUAL_CONST: out << "EQUAL_CONST"; break;
-    case RewriteRuleKind::EQUAL_EQUAL_CONST_BV1:
-      out << "EQUAL_EQUAL_CONST_BV1";
-      break;
-    case RewriteRuleKind::EQUAL_TRUE: out << "EQUAL_TRUE"; break;
-    case RewriteRuleKind::EQUAL_ITE: out << "EQUAL_ITE"; break;
-    case RewriteRuleKind::EQUAL_FALSE: out << "EQUAL_FALSE"; break;
-    case RewriteRuleKind::EQUAL_INV: out << "EQUAL_INV"; break;
-    case RewriteRuleKind::EQUAL_CONST_BV_ADD:
-      out << "EQUAL_CONST_BV_ADD";
-      break;
-    case RewriteRuleKind::EQUAL_CONST_BV_MUL:
-      out << "EQUAL_CONST_BV_MUL";
-      break;
-    case RewriteRuleKind::EQUAL_CONST_BV_NOT:
-      out << "EQUAL_CONST_BV_NOT";
-      break;
-    case RewriteRuleKind::EQUAL_BV_ADD: out << "EQUAL_BV_ADD"; break;
-    case RewriteRuleKind::EQUAL_BV_ADD_ADD: out << "EQUAL_BV_ADD_ADD"; break;
-    case RewriteRuleKind::EQUAL_BV_CONCAT: out << "EQUAL_BV_CONCAT"; break;
-    case RewriteRuleKind::EQUAL_BV_SUB: out << "EQUAL_BV_SUB"; break;
-    case RewriteRuleKind::EQUAL_BV_MUL_UDIV_ZERO:
-      out << "EQUAL_BV_MUL_UDIV_ZERO";
-      break;
-    case RewriteRuleKind::EQUAL_ITE_SAME: out << "EQUAL_ITE_SAME"; break;
-    case RewriteRuleKind::EQUAL_ITE_INVERTED:
-      out << "EQUAL_ITE_INVERTED";
-      break;
-    case RewriteRuleKind::EQUAL_ITE_DIS_BV1: out << "EQUAL_ITE_DIS_BV1"; break;
-    case RewriteRuleKind::EQUAL_ITE_LIFT_COND:
-      out << "EQUAL_ITE_LIFT_COND";
-      break;
-    case RewriteRuleKind::EQUAL_BV_UDIV1: out << "EQUAL_BV_UDIV1"; break;
-
-    case RewriteRuleKind::ITE_SAME: out << "ITE_SAME"; break;
-    case RewriteRuleKind::ITE_THEN_ITE1: out << "ITE_THEN_ITE1"; break;
-    case RewriteRuleKind::ITE_THEN_ITE2: out << "ITE_THEN_ITE2"; break;
-    case RewriteRuleKind::ITE_THEN_ITE3: out << "ITE_THEN_ITE3"; break;
-    case RewriteRuleKind::ITE_ELSE_ITE1: out << "ITE_ELSE_ITE1"; break;
-    case RewriteRuleKind::ITE_ELSE_ITE2: out << "ITE_ELSE_ITE2"; break;
-    case RewriteRuleKind::ITE_ELSE_ITE3: out << "ITE_ELSE_ITE3"; break;
-    case RewriteRuleKind::ITE_BOOL: out << "ITE_BOOL"; break;
-    case RewriteRuleKind::ITE_BV_CONCAT: out << "ITE_BV_CONCAT"; break;
-    case RewriteRuleKind::ITE_BV_OP: out << "ITE_BV_OP"; break;
-
-    case RewriteRuleKind::NOT_NOT: out << "NOT_NOT"; break;
-    case RewriteRuleKind::NOT_XOR: out << "NOT_XOR"; break;
-    case RewriteRuleKind::NOT_EQUAL_BV1_BOOL:
-      out << "NOT_EQUAL_BV1_BOOL";
-      break;
-
-    case RewriteRuleKind::DISTINCT_CARD: out << "DISTINCT_CARD"; break;
-    case RewriteRuleKind::DISTINCT_ELIM: out << "DISTINCT_ELIM"; break;
-
-    case RewriteRuleKind::IMPLIES_ELIM: out << "IMPLIES_ELIM"; break;
-    case RewriteRuleKind::OR_ELIM: out << "OR_ELIM"; break;
-    case RewriteRuleKind::XOR_ELIM: out << "XOR_ELIM"; break;
-
-    case RewriteRuleKind::BV_ADD_SPECIAL_CONST:
-      out << "BV_ADD_SPECIAL_CONST";
-      break;
-    case RewriteRuleKind::BV_ADD_CONST: out << "BV_ADD_CONST"; break;
-    case RewriteRuleKind::BV_ADD_BV1: out << "BV_ADD_BV1"; break;
-    case RewriteRuleKind::BV_ADD_SAME: out << "BV_ADD_SAME"; break;
-    case RewriteRuleKind::BV_ADD_NOT: out << "BV_ADD_NOT"; break;
-    case RewriteRuleKind::BV_ADD_NEG: out << "BV_ADD_NEG"; break;
-    case RewriteRuleKind::BV_ADD_UREM: out << "BV_ADD_UREM"; break;
-    case RewriteRuleKind::BV_ADD_ITE1: out << "BV_ADD_ITE1"; break;
-    case RewriteRuleKind::BV_ADD_ITE2: out << "BV_ADD_ITE2"; break;
-    case RewriteRuleKind::BV_ADD_SHL: out << "BV_ADD_SHL"; break;
-    case RewriteRuleKind::BV_ADD_NEG_MUL: out << "BV_ADD_NEG_MUL"; break;
-    case RewriteRuleKind::NORM_BV_ADD_MUL: out << "NORM_BV_ADD_MUL"; break;
-    case RewriteRuleKind::NORM_BV_ADD_CONCAT:
-      out << "NORM_BV_ADD_CONCAT";
-      break;
-
-    case RewriteRuleKind::BV_AND_SPECIAL_CONST:
-      out << "BV_AND_SPECIAL_CONST";
-      break;
-    case RewriteRuleKind::BV_AND_CONST: out << "BV_AND_CONST"; break;
-    case RewriteRuleKind::BV_AND_IDEM1: out << "BV_AND_IDEM1"; break;
-    case RewriteRuleKind::BV_AND_IDEM2: out << "BV_AND_IDEM2"; break;
-    case RewriteRuleKind::BV_AND_IDEM3: out << "BV_AND_IDEM3"; break;
-    case RewriteRuleKind::BV_AND_CONTRA1: out << "BV_AND_CONTRA1"; break;
-    case RewriteRuleKind::BV_AND_CONTRA2: out << "BV_AND_CONTRA2"; break;
-    case RewriteRuleKind::BV_AND_CONTRA3: out << "BV_AND_CONTRA3"; break;
-    case RewriteRuleKind::BV_AND_SUBSUM1: out << "BV_AND_SUBSUM1"; break;
-    case RewriteRuleKind::BV_AND_SUBSUM2: out << "BV_AND_SUBSUM2"; break;
-    case RewriteRuleKind::BV_AND_RESOL1: out << "BV_AND_RESOL1"; break;
-    case RewriteRuleKind::BV_AND_NOT_AND1: out << "BV_AND_NOT_AND1"; break;
-    case RewriteRuleKind::BV_AND_NOT_AND2: out << "BV_AND_NOT_AND2"; break;
-    case RewriteRuleKind::BV_AND_CONCAT: out << "BV_AND_CONCAT"; break;
-
-    case RewriteRuleKind::BV_ASHR_SPECIAL_CONST:
-      out << "BV_ASHR_SPECIAL_CONST";
-      break;
-    case RewriteRuleKind::BV_ASHR_CONST: out << "BV_ASHR_CONST"; break;
-
-    case RewriteRuleKind::BV_CONCAT_CONST: out << "BV_CONCAT_CONST"; break;
-    case RewriteRuleKind::BV_CONCAT_EXTRACT: out << "BV_CONCAT_EXTRACT"; break;
-    case RewriteRuleKind::BV_CONCAT_AND: out << "BV_CONCAT_AND"; break;
-    case RewriteRuleKind::NORM_BV_CONCAT_BV_NOT:
-      out << "NORM_BV_CONCAT_BV_NOT";
-      break;
-
-    case RewriteRuleKind::BV_EXTRACT_FULL: out << "BV_EXTRACT_FULL"; break;
-    case RewriteRuleKind::BV_EXTRACT_EXTRACT:
-      out << "BV_EXTRACT_EXTRACT";
-      break;
-    case RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_RHS:
-      out << "BV_EXTRACT_CONCAT_FULL_RHS";
-      break;
-    case RewriteRuleKind::BV_EXTRACT_CONCAT_FULL_LHS:
-      out << "BV_EXTRACT_CONCAT_FULL_LHS";
-      break;
-    case RewriteRuleKind::BV_EXTRACT_CONCAT_LHS_RHS:
-      out << "BV_EXTRACT_CONCAT_LHS_RHS";
-      break;
-    case RewriteRuleKind::BV_EXTRACT_CONCAT: out << "BV_EXTRACT_CONCAT"; break;
-    case RewriteRuleKind::BV_EXTRACT_AND: out << "BV_EXTRACT_AND"; break;
-    case RewriteRuleKind::BV_EXTRACT_ITE: out << "BV_EXTRACT_ITE"; break;
-    case RewriteRuleKind::BV_EXTRACT_ADD_MUL:
-      out << "BV_EXTRACT_ADD_MUL";
-      break;
-    case RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV1:
-      out << "BV_EXTRACT_ADD_MUL_REV1";
-      break;
-    case RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV2:
-      out << "BV_EXTRACT_ADD_MUL_REV2";
-      break;
-    case RewriteRuleKind::NORM_BV_EXTRACT_ADD_MUL_REV3:
-      out << "BV_EXTRACT_ADD_MUL_REV3";
-      break;
-
-    case RewriteRuleKind::BV_MUL_CONST: out << "BV_MUL_CONST"; break;
-    case RewriteRuleKind::BV_MUL_BV1: out << "BV_MUL_BV1"; break;
-    case RewriteRuleKind::BV_MUL_CONST_SHL: out << "BV_MUL_CONST_SHL"; break;
-    case RewriteRuleKind::BV_MUL_CONST_ADD: out << "BV_MUL_CONST_ADD"; break;
-    case RewriteRuleKind::BV_MUL_ITE: out << "BV_MUL_ITE"; break;
-    case RewriteRuleKind::BV_MUL_NEG: out << "BV_MUL_NEG"; break;
-    case RewriteRuleKind::BV_MUL_ZERO: out << "BV_MUL_ZERO"; break;
-    case RewriteRuleKind::BV_MUL_ONE: out << "BV_MUL_ONE"; break;
-    case RewriteRuleKind::BV_MUL_ONES: out << "BV_MUL_ONES"; break;
-    case RewriteRuleKind::BV_MUL_POW2: out << "BV_MUL_POW2"; break;
-    case RewriteRuleKind::NORM_BV_MUL_POW2_REV: out << "BV_MUL_POW2_REV"; break;
-    case RewriteRuleKind::NORM_FACT_BV_ADD_MUL: out << "NORM_FACT_BV_ADD_MUL"; break;
-    case RewriteRuleKind::NORM_FACT_BV_ADD_SHL: out << "NORM_FACT_BV_ADD_SHL"; break;
-    case RewriteRuleKind::NORM_FACT_BV_SHL_MUL: out << "NORM_FACT_BV_SHL_MUL"; break;
-    case RewriteRuleKind::NORM_FACT_BV_MUL_SHL: out << "NORM_FACT_BV_MUL_SHL"; break;
-
-    case RewriteRuleKind::BV_NOT_BV_NOT: out << "BV_NOT_BV_NOT"; break;
-    case RewriteRuleKind::BV_NOT_BV_NEG: out << "BV_NOT_BV_NEG"; break;
-    case RewriteRuleKind::BV_NOT_BV_CONCAT: out << "BV_NOT_BV_CONCAT"; break;
-    case RewriteRuleKind::NORM_BV_NOT_OR_SHL:
-      out << "NORM_BV_NOT_OR_SHL";
-      break;
-
-    case RewriteRuleKind::BV_SHL_SPECIAL_CONST:
-      out << "BV_SHL_SPECIAL_CONST";
-      break;
-    case RewriteRuleKind::BV_SHL_CONST: out << "BV_SHL_CONST"; break;
-    case RewriteRuleKind::NORM_BV_SHL_NEG: out << "NORM_BV_SHL_NEG"; break;
-
-    case RewriteRuleKind::BV_SHR_SPECIAL_CONST:
-      out << "BV_SHR_SPECIAL_CONST";
-      break;
-    case RewriteRuleKind::BV_SHR_CONST: out << "BV_SHR_CONST"; break;
-    case RewriteRuleKind::BV_SHR_SAME: out << "BV_SHR_SAME"; break;
-    case RewriteRuleKind::BV_SHR_NOT: out << "BV_SHR_NOT"; break;
-
-    case RewriteRuleKind::BV_SLT_SPECIAL_CONST:
-      out << "BV_SLT_SPECIAL_CONST";
-      break;
-    case RewriteRuleKind::BV_SLT_SAME: out << "BV_SLT_SAME"; break;
-    case RewriteRuleKind::BV_SLT_BV1: out << "BV_SLT_BV1"; break;
-    case RewriteRuleKind::BV_SLT_ITE: out << "BV_SLT_ITE"; break;
-    case RewriteRuleKind::BV_SLT_CONCAT: out << "BV_SLT_CONCAT"; break;
-    case RewriteRuleKind::BV_SLT_BV_UDIV1: out << "BV_SLT_BV_UDIV1"; break;
-
-    case RewriteRuleKind::BV_UDIV_SPECIAL_CONST:
-      out << "BV_UDIV_SPECIAL_CONST";
-      break;
-    case RewriteRuleKind::BV_UDIV_BV1: out << "BV_UDIV_BV1"; break;
-    case RewriteRuleKind::BV_UDIV_SAME: out << "BV_UDIV_SAME"; break;
-    case RewriteRuleKind::BV_UDIV_POW2: out << "BV_UDIV_POW2"; break;
-    case RewriteRuleKind::BV_UDIV_ITE: out << "BV_UDIV_ITE"; break;
-
-    case RewriteRuleKind::BV_ULT_SPECIAL_CONST:
-      out << "BV_ULT_SPECIAL_CONST";
-      break;
-    case RewriteRuleKind::BV_ULT_SAME: out << "BV_ULT_SAME"; break;
-    case RewriteRuleKind::BV_ULT_BV1: out << "BV_ULT_BV1"; break;
-    case RewriteRuleKind::BV_ULT_ITE: out << "BV_ULT_ITE"; break;
-    case RewriteRuleKind::BV_ULT_CONCAT: out << "BV_ULT_CONCAT"; break;
-
-    case RewriteRuleKind::BV_UREM_SPECIAL_CONST:
-      out << "BV_UREM_SPECIAL_CONST";
-      break;
-    case RewriteRuleKind::BV_UREM_BV1: out << "BV_UREM_BV1"; break;
-    case RewriteRuleKind::BV_UREM_SAME: out << "BV_UREM_SAME"; break;
-
-    case RewriteRuleKind::BV_XOR_SAME: out << "BV_XOR_SAME"; break;
-    case RewriteRuleKind::BV_XOR_SPECIAL_CONST:
-      out << "BV_XOR_SPECIAL_CONST";
-      break;
-
-    case RewriteRuleKind::AND_EVAL: out << "AND_EVAL"; break;
-    case RewriteRuleKind::BV_ADD_EVAL: out << "BV_ADD_EVAL"; break;
-    case RewriteRuleKind::BV_AND_EVAL: out << "BV_AND_EVAL"; break;
-    case RewriteRuleKind::BV_ASHR_EVAL: out << "BV_ASHR_EVAL"; break;
-    case RewriteRuleKind::BV_COMP_EVAL: out << "BV_COMP_EVAL"; break;
-    case RewriteRuleKind::BV_CONCAT_EVAL: out << "BV_CONCAT_EVAL"; break;
-    case RewriteRuleKind::BV_DEC_EVAL: out << "BV_DEC_EVAL"; break;
-    case RewriteRuleKind::BV_EXTRACT_EVAL: out << "BV_EXTRACT_EVAL"; break;
-    case RewriteRuleKind::BV_INC_EVAL: out << "BV_INC_EVAL"; break;
-    case RewriteRuleKind::BV_MUL_EVAL: out << "BV_MUL_EVAL"; break;
-    case RewriteRuleKind::BV_NAND_EVAL: out << "BV_NAND_EVAL"; break;
-    case RewriteRuleKind::BV_NEGO_EVAL: out << "BV_NEGO_EVAL"; break;
-    case RewriteRuleKind::BV_NEG_EVAL: out << "BV_NEG_EVAL"; break;
-    case RewriteRuleKind::BV_NOR_EVAL: out << "BV_NOR_EVAL"; break;
-    case RewriteRuleKind::BV_NOT_EVAL: out << "BV_NOT_EVAL"; break;
-    case RewriteRuleKind::BV_OR_EVAL: out << "BV_OR_EVAL"; break;
-    case RewriteRuleKind::BV_REDAND_EVAL: out << "BV_REDAND_EVAL"; break;
-    case RewriteRuleKind::BV_REDOR_EVAL: out << "BV_REDOR_EVAL"; break;
-    case RewriteRuleKind::BV_REDXOR_EVAL: out << "BV_REDXOR_EVAL"; break;
-    case RewriteRuleKind::BV_REPEAT_EVAL: out << "BV_REPEAT_EVAL"; break;
-    case RewriteRuleKind::BV_ROLI_EVAL: out << "BV_ROLI_EVAL"; break;
-    case RewriteRuleKind::BV_ROL_EVAL: out << "BV_ROL_EVAL"; break;
-    case RewriteRuleKind::BV_RORI_EVAL: out << "BV_RORI_EVAL"; break;
-    case RewriteRuleKind::BV_ROR_EVAL: out << "BV_ROR_EVAL"; break;
-    case RewriteRuleKind::BV_SADDO_EVAL: out << "BV_SADDO_EVAL"; break;
-    case RewriteRuleKind::BV_SDIVO_EVAL: out << "BV_SDIVO_EVAL"; break;
-    case RewriteRuleKind::BV_SDIV_EVAL: out << "BV_SDIV_EVAL"; break;
-    case RewriteRuleKind::BV_SGE_EVAL: out << "BV_SGE_EVAL"; break;
-    case RewriteRuleKind::BV_SGT_EVAL: out << "BV_SGT_EVAL"; break;
-    case RewriteRuleKind::BV_SHL_EVAL: out << "BV_SHL_EVAL"; break;
-    case RewriteRuleKind::BV_SHR_EVAL: out << "BV_SHR_EVAL"; break;
-    case RewriteRuleKind::BV_SIGN_EXTEND_EVAL:
-      out << "BV_SIGN_EXTEND_EVAL";
-      break;
-    case RewriteRuleKind::BV_SLE_EVAL: out << "BV_SLE_EVAL"; break;
-    case RewriteRuleKind::BV_SLT_EVAL: out << "BV_SLT_EVAL"; break;
-    case RewriteRuleKind::BV_SMOD_EVAL: out << "BV_SMOD_EVAL"; break;
-    case RewriteRuleKind::BV_SMULO_EVAL: out << "BV_SMULO_EVAL"; break;
-    case RewriteRuleKind::BV_SREM_EVAL: out << "BV_SREM_EVAL"; break;
-    case RewriteRuleKind::BV_SSUBO_EVAL: out << "BV_SSUBO_EVAL"; break;
-    case RewriteRuleKind::BV_SUB_EVAL: out << "BV_SUB_EVAL"; break;
-    case RewriteRuleKind::BV_UADDO_EVAL: out << "BV_UADDO_EVAL"; break;
-    case RewriteRuleKind::BV_UDIV_EVAL: out << "BV_UDIV_EVAL"; break;
-    case RewriteRuleKind::BV_UGE_EVAL: out << "BV_UGE_EVAL"; break;
-    case RewriteRuleKind::BV_UGT_EVAL: out << "BV_UGT_EVAL"; break;
-    case RewriteRuleKind::BV_ULE_EVAL: out << "BV_ULE_EVAL"; break;
-    case RewriteRuleKind::BV_ULT_EVAL: out << "BV_ULT_EVAL"; break;
-    case RewriteRuleKind::BV_UMULO_EVAL: out << "BV_UMULO_EVAL"; break;
-    case RewriteRuleKind::BV_UREM_EVAL: out << "BV_UREM_EVAL"; break;
-    case RewriteRuleKind::BV_USUBO_EVAL: out << "BV_USUBO_EVAL"; break;
-    case RewriteRuleKind::BV_XNOR_EVAL: out << "BV_XNOR_EVAL"; break;
-    case RewriteRuleKind::BV_XOR_EVAL: out << "BV_XOR_EVAL"; break;
-    case RewriteRuleKind::BV_ZERO_EXTEND_EVAL:
-      out << "BV_ZERO_EXTEND_EVAL";
-      break;
-    case RewriteRuleKind::DISTINCT_EVAL: out << "DISTINCT_EVAL"; break;
-    case RewriteRuleKind::EQUAL_EVAL: out << "EQUAL_EVAL"; break;
-    case RewriteRuleKind::IMPLIES_EVAL: out << "IMPLIES_EVAL"; break;
-    case RewriteRuleKind::ITE_EVAL: out << "ITE_EVAL"; break;
-    case RewriteRuleKind::NOT_EVAL: out << "NOT_EVAL"; break;
-    case RewriteRuleKind::OR_EVAL: out << "OR_EVAL"; break;
-    case RewriteRuleKind::XOR_EVAL: out << "XOR_EVAL"; break;
-
-    case RewriteRuleKind::BV_DEC_ELIM: out << "BV_DEC_ELIM"; break;
-    case RewriteRuleKind::BV_INC_ELIM: out << "BV_INC_ELIM"; break;
-    case RewriteRuleKind::BV_NAND_ELIM: out << "BV_NAND_ELIM"; break;
-    case RewriteRuleKind::BV_NEG_ELIM: out << "BV_NEG_ELIM"; break;
-    case RewriteRuleKind::BV_NEGO_ELIM: out << "BV_NEGO_ELIM"; break;
-    case RewriteRuleKind::BV_NOR_ELIM: out << "BV_NOR_ELIM"; break;
-    case RewriteRuleKind::BV_OR_ELIM: out << "BV_OR_ELIM"; break;
-    case RewriteRuleKind::BV_REDAND_ELIM: out << "BV_REDAND_ELIM"; break;
-    case RewriteRuleKind::BV_REDOR_ELIM: out << "BV_REDOR_ELIM"; break;
-    case RewriteRuleKind::BV_REDXOR_ELIM: out << "BV_REDXOR_ELIM"; break;
-    case RewriteRuleKind::BV_REPEAT_ELIM: out << "BV_REPEAT_ELIM"; break;
-    case RewriteRuleKind::BV_ROL_ELIM: out << "BV_ROL_ELIM"; break;
-    case RewriteRuleKind::BV_ROLI_ELIM: out << "BV_ROLI_ELIM"; break;
-    case RewriteRuleKind::BV_ROR_ELIM: out << "BV_ROR_ELIM"; break;
-    case RewriteRuleKind::BV_RORI_ELIM: out << "BV_RORI_ELIM"; break;
-    case RewriteRuleKind::BV_SADDO_ELIM: out << "BV_SADDO_ELIM"; break;
-    case RewriteRuleKind::BV_SDIV_ELIM: out << "BV_SDIV_ELIM"; break;
-    case RewriteRuleKind::BV_SDIVO_ELIM: out << "BV_SDIVO_ELIM"; break;
-    case RewriteRuleKind::BV_SGE_ELIM: out << "BV_SGE_ELIM"; break;
-    case RewriteRuleKind::BV_SGT_ELIM: out << "BV_SGT_ELIM"; break;
-    case RewriteRuleKind::BV_SIGN_EXTEND_ELIM:
-      out << "BV_SIGN_EXTEND_ELIM";
-      break;
-    case RewriteRuleKind::BV_SLE_ELIM: out << "BV_SLE_ELIM"; break;
-    case RewriteRuleKind::BV_SMOD_ELIM: out << "BV_SMOD_ELIM"; break;
-    case RewriteRuleKind::BV_SMULO_ELIM: out << "BV_SMULO_ELIM"; break;
-    case RewriteRuleKind::BV_SREM_ELIM: out << "BV_SREM_ELIM"; break;
-    case RewriteRuleKind::BV_SSUBO_ELIM: out << "BV_SSUBO_ELIM"; break;
-    case RewriteRuleKind::BV_SUB_ELIM: out << "BV_SUB_ELIM"; break;
-    case RewriteRuleKind::BV_UADDO_ELIM: out << "BV_UADDO_ELIM"; break;
-    case RewriteRuleKind::BV_UGE_ELIM: out << "BV_UGE_ELIM"; break;
-    case RewriteRuleKind::BV_UGT_ELIM: out << "BV_UGT_ELIM"; break;
-    case RewriteRuleKind::BV_ULE_ELIM: out << "BV_ULE_ELIM"; break;
-    case RewriteRuleKind::BV_UMULO_ELIM: out << "BV_UMULO_ELIM"; break;
-    case RewriteRuleKind::BV_USUBO_ELIM: out << "BV_USUBO_ELIM"; break;
-    case RewriteRuleKind::BV_XNOR_ELIM: out << "BV_XNOR_ELIM"; break;
-    case RewriteRuleKind::BV_XOR_ELIM: out << "BV_XOR_ELIM"; break;
-    case RewriteRuleKind::BV_ZERO_EXTEND_ELIM:
-      out << "BV_ZERO_EXTEND_ELIM";
-      break;
-    case RewriteRuleKind::BV_COMP_ELIM: out << "BV_COMP_ELIM"; break;
-
-    case RewriteRuleKind::FP_ABS_EVAL: out << "FP_ABS_EVAL"; break;
-    case RewriteRuleKind::FP_ABS_ABS_NEG: out << "FP_ABS_ABS_NEG"; break;
-
-    case RewriteRuleKind::FP_ADD_EVAL: out << "FP_ADD_EVAL"; break;
-    case RewriteRuleKind::FP_DIV_EVAL: out << "FP_DIV_EVAL"; break;
-    case RewriteRuleKind::FP_FMA_EVAL: out << "FP_FMA_EVAL"; break;
-
-    case RewriteRuleKind::FP_IS_INF_EVAL: out << "FP_IS_INF_EVAL"; break;
-    case RewriteRuleKind::FP_IS_INF_ABS_NEG: out << "FP_IS_INF_ABS_NEG"; break;
-
-    case RewriteRuleKind::FP_IS_NAN_EVAL: out << "FP_IS_NAN_EVAL"; break;
-    case RewriteRuleKind::FP_IS_NAN_ABS_NEG: out << "FP_IS_NAN_ABS_NEG"; break;
-
-    case RewriteRuleKind::FP_IS_NEG_EVAL: out << "FP_IS_NEG_EVAL"; break;
-
-    case RewriteRuleKind::FP_IS_NORM_EVAL: out << "FP_IS_NORM_EVAL"; break;
-    case RewriteRuleKind::FP_IS_NORM_ABS_NEG:
-      out << "FP_IS_NORM_ABS_NEG";
-      break;
-
-    case RewriteRuleKind::FP_IS_POS_EVAL: out << "FP_IS_POS_EVAL"; break;
-
-    case RewriteRuleKind::FP_IS_SUBNORM_EVAL:
-      out << "FP_IS_SUBNORM_EVAL";
-      break;
-    case RewriteRuleKind::FP_IS_SUBNORM_ABS_NEG:
-      out << "FP_IS_SUBNORM_ABS_NEG";
-      break;
-
-    case RewriteRuleKind::FP_IS_ZERO_EVAL: out << "FP_IS_ZERO_EVAL"; break;
-    case RewriteRuleKind::FP_IS_ZERO_ABS_NEG:
-      out << "FP_IS_ZERO_ABS_NEG";
-      break;
-
-    case RewriteRuleKind::FP_LEQ_EVAL: out << "FP_LEQ_EVAL"; break;
-    case RewriteRuleKind::FP_LEQ_EQ: out << "FP_LEQ_EQ"; break;
-
-    case RewriteRuleKind::FP_LT_EVAL: out << "FP_LT_EVAL"; break;
-    case RewriteRuleKind::FP_LT_EQ: out << "FP_LT_EQ"; break;
-
-    case RewriteRuleKind::FP_MIN_EVAL: out << "FP_MIN_EVAL"; break;
-    case RewriteRuleKind::FP_MIN_EQ: out << "FP_MIN_EQ"; break;
-
-    case RewriteRuleKind::FP_MAX_EVAL: out << "FP_MAX_EVAL"; break;
-    case RewriteRuleKind::FP_MAX_EQ: out << "FP_MAX_EQ"; break;
-
-    case RewriteRuleKind::FP_MUL_EVAL: out << "FP_MUL_EVAL"; break;
-
-    case RewriteRuleKind::FP_NEG_EVAL: out << "FP_NEG_EVAL"; break;
-    case RewriteRuleKind::FP_NEG_NEG: out << "FP_NEG_NEG"; break;
-
-    case RewriteRuleKind::FP_REM_EVAL: out << "FP_REM_EVAL"; break;
-    case RewriteRuleKind::FP_REM_SAME_DIV: out << "FP_REM_SAME_DIV"; break;
-    case RewriteRuleKind::FP_REM_ABS_NEG: out << "FP_REM_ABS_NEG"; break;
-    case RewriteRuleKind::FP_REM_NEG: out << "FP_REM_NEG"; break;
-
-    case RewriteRuleKind::FP_RTI_EVAL: out << "FP_RTI_EVAL"; break;
-    case RewriteRuleKind::FP_SQRT_EVAL: out << "FP_SQRT_EVAL"; break;
-    case RewriteRuleKind::FP_TO_FP_FROM_BV_EVAL:
-      out << "FP_TO_FP_FROM_BV_EVAL";
-      break;
-    case RewriteRuleKind::FP_TO_FP_FROM_FP_EVAL:
-      out << "FP_TO_FP_FROM_FP_EVAL";
-      break;
-    case RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL:
-      out << "FP_TO_FP_FROM_SBV_EVAL";
-      break;
-    case RewriteRuleKind::FP_TO_FP_FROM_SBV_BV1_ELIM:
-      out << "FP_TO_FP_FROM_SBV_BV1_ELIM";
-      break;
-    case RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL:
-      out << "FP_TO_FP_FROM_UBV_EVAL";
-      break;
-
-    case RewriteRuleKind::FP_EQUAL_ELIM: out << "FP_EQUAL_ELIM"; break;
-    case RewriteRuleKind::FP_FP_ELIM: out << "FP_FP_ELIM"; break;
-    case RewriteRuleKind::FP_GEQ_ELIM: out << "FP_GEQ_ELIM"; break;
-    case RewriteRuleKind::FP_GT_ELIM: out << "FP_GT_ELIM"; break;
-    case RewriteRuleKind::FP_SUB_ELIM: out << "FP_SUB_ELIM"; break;
-
-    case RewriteRuleKind::ARRAY_PROP_SELECT: out << "ARRAY_PROP_SELECT"; break;
-    case RewriteRuleKind::NORMALIZE_COMM: out << "NORMALIZE_COMM"; break;
-    case RewriteRuleKind::EXISTS_ELIM: out << "EXISTS_ELIM"; break;
+    CASE(AND_SPECIAL_CONST);
+    CASE(AND_CONST);
+    CASE(AND_IDEM1);
+    CASE(AND_IDEM2);
+    CASE(AND_IDEM3);
+    CASE(AND_CONTRA1);
+    CASE(AND_CONTRA2);
+    CASE(AND_CONTRA3);
+    CASE(AND_RESOL1);
+    CASE(AND_SUBSUM1);
+    CASE(AND_SUBSUM2);
+    CASE(AND_NOT_AND1);
+    CASE(AND_NOT_AND2);
+    CASE(AND_BV_LT_FALSE);
+    CASE(AND_BV_LT);
+    CASE(EQUAL_SPECIAL_CONST);
+    CASE(EQUAL_CONST);
+    CASE(EQUAL_EQUAL_CONST_BV1);
+    CASE(EQUAL_TRUE);
+    CASE(EQUAL_ITE);
+    CASE(EQUAL_FALSE);
+    CASE(EQUAL_INV);
+    CASE(EQUAL_CONST_BV_ADD);
+    CASE(EQUAL_CONST_BV_MUL);
+    CASE(EQUAL_CONST_BV_NOT);
+    CASE(EQUAL_BV_ADD);
+    CASE(EQUAL_BV_ADD_ADD);
+    CASE(EQUAL_BV_CONCAT);
+    CASE(EQUAL_BV_SUB);
+    CASE(EQUAL_BV_MUL_UDIV_ZERO);
+    CASE(EQUAL_ITE_SAME);
+    CASE(EQUAL_ITE_INVERTED);
+    CASE(EQUAL_ITE_DIS_BV1);
+    CASE(EQUAL_ITE_LIFT_COND);
+    CASE(EQUAL_BV_UDIV1);
+    CASE(ITE_SAME);
+    CASE(ITE_THEN_ITE1);
+    CASE(ITE_THEN_ITE2);
+    CASE(ITE_THEN_ITE3);
+    CASE(ITE_ELSE_ITE1);
+    CASE(ITE_ELSE_ITE2);
+    CASE(ITE_ELSE_ITE3);
+    CASE(ITE_BOOL);
+    CASE(ITE_BV_CONCAT);
+    CASE(ITE_BV_OP);
+    CASE(NOT_NOT);
+    CASE(NOT_XOR);
+    CASE(NOT_EQUAL_BV1_BOOL);
+    CASE(DISTINCT_CARD);
+    CASE(DISTINCT_ELIM);
+    CASE(IMPLIES_ELIM);
+    CASE(OR_ELIM);
+    CASE(XOR_ELIM);
+    CASE(BV_ADD_SPECIAL_CONST);
+    CASE(BV_ADD_CONST);
+    CASE(BV_ADD_BV1);
+    CASE(BV_ADD_SAME);
+    CASE(BV_ADD_NOT);
+    CASE(BV_ADD_NEG);
+    CASE(BV_ADD_UREM);
+    CASE(BV_ADD_ITE1);
+    CASE(BV_ADD_ITE2);
+    CASE(BV_ADD_SHL);
+    CASE(BV_ADD_NEG_MUL);
+    CASE(NORM_BV_ADD_MUL);
+    CASE(NORM_BV_ADD_CONCAT);
+    CASE(BV_AND_SPECIAL_CONST);
+    CASE(BV_AND_CONST);
+    CASE(BV_AND_IDEM1);
+    CASE(BV_AND_IDEM2);
+    CASE(BV_AND_IDEM3);
+    CASE(BV_AND_CONTRA1);
+    CASE(BV_AND_CONTRA2);
+    CASE(BV_AND_CONTRA3);
+    CASE(BV_AND_SUBSUM1);
+    CASE(BV_AND_SUBSUM2);
+    CASE(BV_AND_RESOL1);
+    CASE(BV_AND_NOT_AND1);
+    CASE(BV_AND_NOT_AND2);
+    CASE(BV_AND_CONCAT);
+    CASE(BV_ASHR_SPECIAL_CONST);
+    CASE(BV_ASHR_CONST);
+    CASE(BV_CONCAT_CONST);
+    CASE(BV_CONCAT_EXTRACT);
+    CASE(BV_CONCAT_AND);
+    CASE(NORM_BV_CONCAT_BV_NOT);
+    CASE(BV_EXTRACT_FULL);
+    CASE(BV_EXTRACT_EXTRACT);
+    CASE(BV_EXTRACT_CONCAT_FULL_RHS);
+    CASE(BV_EXTRACT_CONCAT_FULL_LHS);
+    CASE(BV_EXTRACT_CONCAT_LHS_RHS);
+    CASE(BV_EXTRACT_CONCAT);
+    CASE(BV_EXTRACT_AND);
+    CASE(BV_EXTRACT_ITE);
+    CASE(BV_EXTRACT_ADD_MUL);
+    CASE(NORM_BV_EXTRACT_ADD_MUL_REV1);
+    CASE(NORM_BV_EXTRACT_ADD_MUL_REV2);
+    CASE(NORM_BV_EXTRACT_ADD_MUL_REV3);
+    CASE(BV_MUL_CONST);
+    CASE(BV_MUL_BV1);
+    CASE(BV_MUL_CONST_SHL);
+    CASE(BV_MUL_CONST_ADD);
+    CASE(BV_MUL_ITE);
+    CASE(BV_MUL_NEG);
+    CASE(BV_MUL_ZERO);
+    CASE(BV_MUL_ONE);
+    CASE(BV_MUL_ONES);
+    CASE(BV_MUL_POW2);
+    CASE(NORM_BV_MUL_POW2_REV);
+    CASE(NORM_FACT_BV_ADD_MUL);
+    CASE(NORM_FACT_BV_ADD_SHL);
+    CASE(NORM_FACT_BV_SHL_MUL);
+    CASE(NORM_FACT_BV_MUL_SHL);
+    CASE(BV_NOT_BV_NOT);
+    CASE(BV_NOT_BV_NEG);
+    CASE(BV_NOT_BV_CONCAT);
+    CASE(NORM_BV_NOT_OR_SHL);
+    CASE(BV_SHL_SPECIAL_CONST);
+    CASE(BV_SHL_CONST);
+    CASE(NORM_BV_SHL_NEG);
+    CASE(BV_SHR_SPECIAL_CONST);
+    CASE(BV_SHR_CONST);
+    CASE(BV_SHR_SAME);
+    CASE(BV_SHR_NOT);
+    CASE(BV_SLT_SPECIAL_CONST);
+    CASE(BV_SLT_SAME);
+    CASE(BV_SLT_BV1);
+    CASE(BV_SLT_ITE);
+    CASE(BV_SLT_CONCAT);
+    CASE(BV_SLT_BV_UDIV1);
+    CASE(BV_UDIV_SPECIAL_CONST);
+    CASE(BV_UDIV_BV1);
+    CASE(BV_UDIV_SAME);
+    CASE(BV_UDIV_POW2);
+    CASE(BV_UDIV_ITE);
+    CASE(BV_ULT_SPECIAL_CONST);
+    CASE(BV_ULT_SAME);
+    CASE(BV_ULT_BV1);
+    CASE(BV_ULT_ITE);
+    CASE(BV_ULT_CONCAT);
+    CASE(BV_UREM_SPECIAL_CONST);
+    CASE(BV_UREM_BV1);
+    CASE(BV_UREM_SAME);
+    CASE(BV_XOR_SAME);
+    CASE(BV_XOR_SPECIAL_CONST);
+    CASE(AND_EVAL);
+    CASE(BV_ADD_EVAL);
+    CASE(BV_AND_EVAL);
+    CASE(BV_ASHR_EVAL);
+    CASE(BV_COMP_EVAL);
+    CASE(BV_CONCAT_EVAL);
+    CASE(BV_DEC_EVAL);
+    CASE(BV_EXTRACT_EVAL);
+    CASE(BV_INC_EVAL);
+    CASE(BV_MUL_EVAL);
+    CASE(BV_NAND_EVAL);
+    CASE(BV_NEGO_EVAL);
+    CASE(BV_NEG_EVAL);
+    CASE(BV_NOR_EVAL);
+    CASE(BV_NOT_EVAL);
+    CASE(BV_OR_EVAL);
+    CASE(BV_REDAND_EVAL);
+    CASE(BV_REDOR_EVAL);
+    CASE(BV_REDXOR_EVAL);
+    CASE(BV_REPEAT_EVAL);
+    CASE(BV_ROLI_EVAL);
+    CASE(BV_ROL_EVAL);
+    CASE(BV_RORI_EVAL);
+    CASE(BV_ROR_EVAL);
+    CASE(BV_SADDO_EVAL);
+    CASE(BV_SDIVO_EVAL);
+    CASE(BV_SDIV_EVAL);
+    CASE(BV_SGE_EVAL);
+    CASE(BV_SGT_EVAL);
+    CASE(BV_SHL_EVAL);
+    CASE(BV_SHR_EVAL);
+    CASE(BV_SIGN_EXTEND_EVAL);
+    CASE(BV_SLE_EVAL);
+    CASE(BV_SLT_EVAL);
+    CASE(BV_SMOD_EVAL);
+    CASE(BV_SMULO_EVAL);
+    CASE(BV_SREM_EVAL);
+    CASE(BV_SSUBO_EVAL);
+    CASE(BV_SUB_EVAL);
+    CASE(BV_UADDO_EVAL);
+    CASE(BV_UDIV_EVAL);
+    CASE(BV_UGE_EVAL);
+    CASE(BV_UGT_EVAL);
+    CASE(BV_ULE_EVAL);
+    CASE(BV_ULT_EVAL);
+    CASE(BV_UMULO_EVAL);
+    CASE(BV_UREM_EVAL);
+    CASE(BV_USUBO_EVAL);
+    CASE(BV_XNOR_EVAL);
+    CASE(BV_XOR_EVAL);
+    CASE(BV_ZERO_EXTEND_EVAL);
+    CASE(DISTINCT_EVAL);
+    CASE(EQUAL_EVAL);
+    CASE(IMPLIES_EVAL);
+    CASE(ITE_EVAL);
+    CASE(NOT_EVAL);
+    CASE(OR_EVAL);
+    CASE(XOR_EVAL);
+    CASE(BV_DEC_ELIM);
+    CASE(BV_INC_ELIM);
+    CASE(BV_NAND_ELIM);
+    CASE(BV_NEG_ELIM);
+    CASE(BV_NEGO_ELIM);
+    CASE(BV_NOR_ELIM);
+    CASE(BV_OR_ELIM);
+    CASE(BV_REDAND_ELIM);
+    CASE(BV_REDOR_ELIM);
+    CASE(BV_REDXOR_ELIM);
+    CASE(BV_REPEAT_ELIM);
+    CASE(BV_ROL_ELIM);
+    CASE(BV_ROLI_ELIM);
+    CASE(BV_ROR_ELIM);
+    CASE(BV_RORI_ELIM);
+    CASE(BV_SADDO_ELIM);
+    CASE(BV_SDIV_ELIM);
+    CASE(BV_SDIVO_ELIM);
+    CASE(BV_SGE_ELIM);
+    CASE(BV_SGT_ELIM);
+    CASE(BV_SIGN_EXTEND_ELIM);
+    CASE(BV_SLE_ELIM);
+    CASE(BV_SMOD_ELIM);
+    CASE(BV_SMULO_ELIM);
+    CASE(BV_SREM_ELIM);
+    CASE(BV_SSUBO_ELIM);
+    CASE(BV_SUB_ELIM);
+    CASE(BV_UADDO_ELIM);
+    CASE(BV_UGE_ELIM);
+    CASE(BV_UGT_ELIM);
+    CASE(BV_ULE_ELIM);
+    CASE(BV_UMULO_ELIM);
+    CASE(BV_USUBO_ELIM);
+    CASE(BV_XNOR_ELIM);
+    CASE(BV_XOR_ELIM);
+    CASE(BV_ZERO_EXTEND_ELIM);
+    CASE(BV_COMP_ELIM);
+    CASE(FP_ABS_EVAL);
+    CASE(FP_ABS_ABS_NEG);
+    CASE(FP_ADD_EVAL);
+    CASE(FP_DIV_EVAL);
+    CASE(FP_FMA_EVAL);
+    CASE(FP_IS_INF_EVAL);
+    CASE(FP_IS_INF_ABS_NEG);
+    CASE(FP_IS_NAN_EVAL);
+    CASE(FP_IS_NAN_ABS_NEG);
+    CASE(FP_IS_NEG_EVAL);
+    CASE(FP_IS_NORM_EVAL);
+    CASE(FP_IS_NORM_ABS_NEG);
+    CASE(FP_IS_POS_EVAL);
+    CASE(FP_IS_SUBNORM_EVAL);
+    CASE(FP_IS_SUBNORM_ABS_NEG);
+    CASE(FP_IS_ZERO_EVAL);
+    CASE(FP_IS_ZERO_ABS_NEG);
+    CASE(FP_LEQ_EVAL);
+    CASE(FP_LEQ_EQ);
+    CASE(FP_LT_EVAL);
+    CASE(FP_LT_EQ);
+    CASE(FP_MIN_EVAL);
+    CASE(FP_MIN_EQ);
+    CASE(FP_MAX_EVAL);
+    CASE(FP_MAX_EQ);
+    CASE(FP_MUL_EVAL);
+    CASE(FP_NEG_EVAL);
+    CASE(FP_NEG_NEG);
+    CASE(FP_REM_EVAL);
+    CASE(FP_REM_SAME_DIV);
+    CASE(FP_REM_ABS_NEG);
+    CASE(FP_REM_NEG);
+    CASE(FP_RTI_EVAL);
+    CASE(FP_SQRT_EVAL);
+    CASE(FP_TO_FP_FROM_BV_EVAL);
+    CASE(FP_TO_FP_FROM_FP_EVAL);
+    CASE(FP_TO_FP_FROM_SBV_EVAL);
+    CASE(FP_TO_FP_FROM_SBV_BV1_ELIM);
+    CASE(FP_TO_FP_FROM_UBV_EVAL);
+    CASE(FP_EQUAL_ELIM);
+    CASE(FP_FP_ELIM);
+    CASE(FP_GEQ_ELIM);
+    CASE(FP_GT_ELIM);
+    CASE(FP_SUB_ELIM);
+    CASE(ARRAY_PROP_SELECT);
+    CASE(NORMALIZE_COMM);
+    CASE(EXISTS_ELIM);
   }
   return out;
 }
+
+#undef CASE
 
 Rewriter::Statistics::Statistics(util::Statistics& stats,
                                  const std::string& prefix)
