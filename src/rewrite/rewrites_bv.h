@@ -132,6 +132,10 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_ASHR_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ASHR_CONST>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
 /* bvconcat ----------------------------------------------------------------- */
 
 // const_concat

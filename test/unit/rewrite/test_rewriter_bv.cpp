@@ -1987,11 +1987,9 @@ TEST_F(TestRewriterBv, bv_shl_const)
       Kind::BV_SHL, {a64, d_nm.mk_value(BitVector::from_ui(64, 244))}));
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_SHL, {a64, d_nm.mk_value(BitVector::from_ui(64, 24))}));
-  //// does not apply
-  test_rule_does_not_apply<kind>(d_nm.mk_node(
+  test_rule<kind>(d_nm.mk_node(
       Kind::BV_SHL, {a65, d_nm.mk_value(BitVector::from_ui(65, 24))}));
-  test_rule_does_not_apply<kind>(
-      d_nm.mk_node(Kind::BV_SHL, {d_bv4_a, d_bv4_b}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_SHL, {d_bv4_a, d_bv4_b}));
 }
 
 /* bvshr -------------------------------------------------------------------- */
@@ -2036,11 +2034,9 @@ TEST_F(TestRewriterBv, bv_shr_const)
       Kind::BV_SHR, {a64, d_nm.mk_value(BitVector::from_ui(64, 244))}));
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_SHR, {a64, d_nm.mk_value(BitVector::from_ui(64, 24))}));
-  //// does not apply
-  test_rule_does_not_apply<kind>(d_nm.mk_node(
+  test_rule<kind>(d_nm.mk_node(
       Kind::BV_SHR, {a65, d_nm.mk_value(BitVector::from_ui(65, 24))}));
-  test_rule_does_not_apply<kind>(
-      d_nm.mk_node(Kind::BV_SHR, {d_bv4_a, d_bv4_b}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_SHR, {d_bv4_a, d_bv4_b}));
 }
 
 TEST_F(TestRewriterBv, bv_shr_same)
@@ -2609,6 +2605,33 @@ TEST_F(TestRewriterBv, bv_ashr_eval)
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::BV_ASHR, {d_bv4_a, d_nm.mk_value(BitVector(4, "0010"))}));
+}
+
+TEST_F(TestRewriterBv, bv_ashr_const)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ASHR_CONST;
+  Type bv64_type                 = d_nm.mk_bv_type(64);
+  Node a64                       = d_nm.mk_const(bv64_type);
+  Type bv65_type                 = d_nm.mk_bv_type(65);
+  Node a65                       = d_nm.mk_const(bv65_type);
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ASHR,
+                               {d_bv4_a, d_nm.mk_value(BitVector(4, "1111"))}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ASHR,
+                               {d_bv4_a, d_nm.mk_value(BitVector(4, "0100"))}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ASHR,
+                               {d_bv4_a, d_nm.mk_value(BitVector(4, "0011"))}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ASHR,
+                               {d_bv4_a, d_nm.mk_value(BitVector(4, "0011"))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ASHR, {a64, d_nm.mk_value(BitVector::from_ui(64, UINT64_MAX))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ASHR, {a64, d_nm.mk_value(BitVector::from_ui(64, 244))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ASHR, {a64, d_nm.mk_value(BitVector::from_ui(64, 24))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ASHR, {a65, d_nm.mk_value(BitVector::from_ui(65, 24))}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ASHR, {d_bv4_a, d_bv4_b}));
 }
 
 TEST_F(TestRewriterBv, bv_comp_eval)

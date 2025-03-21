@@ -13,7 +13,6 @@
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
-#include "node/node_utils.h"
 #include "rewrite/rewrite_utils.h"
 
 namespace bzla {
@@ -1111,6 +1110,41 @@ RewriteRule<RewriteRuleKind::BV_ASHR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   return node;
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ASHR_CONST>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[1].is_value())
+  {
+    const BitVector& shift = node[1].value<BitVector>();
+    uint64_t size          = shift.size();
+    BitVector bv_size      = BitVector::from_ui(size, size);
+
+    uint64_t padding = size;
+    if (shift.compare(bv_size) < 0)
+    {
+      padding = shift.to_uint64(false);
+    }
+
+    Node pad = rewriter.mk_node(
+        Kind::BV_REPEAT,
+        {rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, size - 1})},
+        {padding});
+
+    if (padding < size)
+    {
+      return rewriter.mk_node(
+          Kind::BV_CONCAT,
+          {pad,
+           rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, padding})});
+    }
+    return pad;
+  }
+  return node;
+}
+
 /* bvconcat ----------------------------------------------------------------- */
 
 /**
@@ -1938,15 +1972,11 @@ RewriteRule<RewriteRuleKind::BV_SHL_CONST>::_apply(Rewriter& rewriter,
     {
       return rewriter.nm().mk_value(BitVector::mk_zero(size));
     }
-    if (size <= 64)
-    {
-      uint64_t uishift = shift.to_uint64();
-      return rewriter.mk_node(
-          Kind::BV_CONCAT,
-          {rewriter.mk_node(
-               Kind::BV_EXTRACT, {node[0]}, {size - uishift - 1, 0}),
-           rewriter.nm().mk_value(BitVector::mk_zero(uishift))});
-    }
+    uint64_t uishift = shift.to_uint64(false);
+    return rewriter.mk_node(
+        Kind::BV_CONCAT,
+        {rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - uishift - 1, 0}),
+         rewriter.nm().mk_value(BitVector::mk_zero(uishift))});
   }
   return node;
 }
@@ -2010,14 +2040,11 @@ RewriteRule<RewriteRuleKind::BV_SHR_CONST>::_apply(Rewriter& rewriter,
     {
       return rewriter.nm().mk_value(BitVector::mk_zero(size));
     }
-    if (size <= 64)
-    {
-      uint64_t uishift = shift.to_uint64();
-      return rewriter.mk_node(
-          Kind::BV_CONCAT,
-          {rewriter.nm().mk_value(BitVector::mk_zero(uishift)),
-           rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, uishift})});
-    }
+    uint64_t uishift = shift.to_uint64(false);
+    return rewriter.mk_node(
+        Kind::BV_CONCAT,
+        {rewriter.nm().mk_value(BitVector::mk_zero(uishift)),
+         rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, uishift})});
   }
   return node;
 }

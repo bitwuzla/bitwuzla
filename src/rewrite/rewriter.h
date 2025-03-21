@@ -451,6 +451,7 @@ enum class RewriteRuleKind
   //// bvashr
   // Level 1+
   BV_ASHR_SPECIAL_CONST,
+  BV_ASHR_CONST,
 
   //// bvconcat
   // Level 1+

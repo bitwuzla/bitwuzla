@@ -1183,6 +1183,7 @@ Rewriter::rewrite_bv_ashr(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_ASHR_EVAL);
     BZLA_APPLY_RW_RULE(BV_ASHR_SPECIAL_CONST);
+    BZLA_APPLY_RW_RULE(BV_ASHR_CONST);
   }
 
 DONE:
@@ -2048,6 +2049,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     case RewriteRuleKind::BV_ASHR_SPECIAL_CONST:
       out << "BV_ASHR_SPECIAL_CONST";
       break;
+    case RewriteRuleKind::BV_ASHR_CONST: out << "BV_ASHR_CONST"; break;
 
     case RewriteRuleKind::BV_CONCAT_CONST: out << "BV_CONCAT_CONST"; break;
     case RewriteRuleKind::BV_CONCAT_EXTRACT: out << "BV_CONCAT_EXTRACT"; break;
