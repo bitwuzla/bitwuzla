@@ -126,7 +126,7 @@ class Parser : public bzla::parser::Parser
       assert(d_lexer->has_token());
       std::string symbol      = d_lexer->token();
       SymbolTable::Node* node = d_table.find(symbol);
-      if (!node)
+      if (!node || is_pending)
       {
         node = d_table.insert(token, symbol, is_pending, d_assertion_level);
       }
