@@ -56,6 +56,7 @@ tests_smt2 = [
   ['parser/issue59-1.smt2'],
   ['parser/issue59-2.smt2'],
   ['parser/issue66.smt2'],
+  ['parser/issue169.smt2'],
   ['parser/let.smt2'],
   ['parser/pr120.smt2'],
   ['parser/regmismatch.smt2'],

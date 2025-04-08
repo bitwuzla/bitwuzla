@@ -1,0 +1,8 @@
+(set-logic ALL)
+(define-fun foo ((x (_ BitVec 4))) (_ BitVec 4)
+  (let ((x (bvadd x #b0001))) x)
+)
+(set-info :status sat)
+(check-sat-assuming ((= (foo #b0000) #b0001)))
+(set-info :status unsat)
+(check-sat-assuming ((= (foo #b0000) #b0000)))
