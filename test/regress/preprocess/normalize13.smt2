@@ -1,0 +1,5 @@
+(set-info :status unsat)
+(declare-const P (_ BitVec 1))
+(declare-fun I () (Array (_ BitVec 32) (_ BitVec 32)))
+(assert (distinct (_ bv0 32) (ite (= (_ bv1 32) (select (store I (_ bv0 32) (select (store I (_ bv0 32) (bvadd (bvmul (select I (_ bv0 32)) ((_ fp.to_ubv 32) roundTowardZero (fp (_ bv0 1) (_ bv0 8) (_ bv0 23)))) (select (store I (_ bv0 32) (bvmul ((_ zero_extend 31) P) (bvmul (select I (_ bv0 32)) ((_ fp.to_ubv 32) roundTowardZero (fp (_ bv0 1) (_ bv0 8) (_ bv0 23)))))) (_ bv0 32)))) (_ bv0 32))) (_ bv0 32))) (_ bv1 32) (_ bv0 32))))
+(check-sat)

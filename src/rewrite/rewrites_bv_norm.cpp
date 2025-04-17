@@ -184,6 +184,22 @@ _bv_extract_lower_rev(Rewriter& rewriter, const Kind kind, const Node& node)
       Node t = rewriter.mk_node(kind, {node[0][0], node[1][0]});
       return rewriter.mk_node(Kind::BV_EXTRACT, {t}, node[0].indices());
     }
+    else if (node[0].is_value() && node[1].kind() == Kind::BV_EXTRACT
+             && node[1].index(1) == 0)
+    {
+      uint64_t ext = node[1][0].type().bv_size() - node[0].type().bv_size();
+      Node val = rewriter.nm().mk_value(node[0].value<BitVector>().bvzext(ext));
+      Node t   = rewriter.mk_node(kind, {val, node[1][0]});
+      return rewriter.mk_node(Kind::BV_EXTRACT, {t}, node[1].indices());
+    }
+    else if (node[1].is_value() && node[0].kind() == Kind::BV_EXTRACT
+             && node[0].index(1) == 0)
+    {
+      uint64_t ext = node[0][0].type().bv_size() - node[1].type().bv_size();
+      Node val = rewriter.nm().mk_value(node[1].value<BitVector>().bvzext(ext));
+      Node t   = rewriter.mk_node(kind, {val, node[0][0]});
+      return rewriter.mk_node(Kind::BV_EXTRACT, {t}, node[0].indices());
+    }
   }
   return node;
 }
@@ -240,7 +256,7 @@ RewriteRule<RewriteRuleKind::NORM_BV_MUL_POW2_REV>::_apply(Rewriter& rewriter,
  * result: (bvmul a (bvadd t1 t2))
  *
  * match: (bvadd a (bvmul a t2))
- * result: (bvmul a (1 t2))
+ * result: (bvmul a (bvadd 1 t2))
  */
 template <>
 Node
@@ -291,10 +307,13 @@ RewriteRule<RewriteRuleKind::NORM_FACT_BV_ADD_MUL>::_apply(Rewriter& rewriter,
       i0 = node[1][0] == node[0] ? 1 : 0;
     }
     const Node& c = node[ic];
-    const Node& t = node[1 - ic][i0];
-    Node one = rewriter.nm().mk_value(BitVector::mk_one(c.type().bv_size()));
-    Node add = rewriter.mk_node(Kind::BV_ADD, {one, t});
-    return rewriter.mk_node(Kind::BV_MUL, {c, add});
+    if (!c.is_value())
+    {
+      const Node& t = node[1 - ic][i0];
+      Node one = rewriter.nm().mk_value(BitVector::mk_one(c.type().bv_size()));
+      Node add = rewriter.mk_node(Kind::BV_ADD, {one, t});
+      return rewriter.mk_node(Kind::BV_MUL, {c, add});
+    }
   }
   return node;
 }

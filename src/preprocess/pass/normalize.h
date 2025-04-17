@@ -40,9 +40,8 @@ class PassNormalize : public PreprocessingPass
    * @param node The top node.
    * @param occs The resulting map from node to its occurrence count.
    */
-  void compute_occurrences(const Node& node,
-                           node::Kind kind,
-                           OccMap& occs) const;
+  void compute_occurrences_mul(const Node& node, OccMap& occs) const;
+  void compute_occurrences_add(const Node& node, OccMap& occs) const;
 
   /**
    * Factor out common subterms of given left hand side and right hand side
@@ -126,43 +125,16 @@ class PassNormalize : public PreprocessingPass
                                      const Node& node0,
                                      const Node& node1);
 
-  std::pair<Node, bool> normalize_eq_add(const Node& node0, const Node& node1);
   /**
-   * Helper to normalize equality over multiplication.
+   * Helper for normalize_occurrences_eq().
    * @param occs0 The normalized occurrences of the left hand side of the
-   *                equality.
+   *              equality.
    * @param occs1 The normalized occurrences of the right hand side of the
-   *                equality.
-   * @param A pair of lhs and rhs normalized nodes.
+   *              equality.
    */
-  std::pair<Node, Node> _normalize_eq_mul(const OccMap& occs0,
-                                          const OccMap& occs1);
-  /**
-   * Helper to normalize equality over addition.
-   * @param occs0 The normalized occurrences of the left hand side of the
-   *                equality.
-   * @param occs1 The normalized occurrences of the right hand side of the
-   *                equality.
-   * @param bv_size The bit-vector size of the operands of the equality.
-   * @return A pair of lhs and rhs normalized nodes.
-   */
-  std::pair<Node, Node> _normalize_eq_add(OccMap& occs0,
-                                          OccMap& occs1,
-                                          uint64_t bv_size);
-
-  /**
-   * Helper for _normalize_eq_add().
-   * @param occs0 The normalized occurrences of the left hand side of the
-   *                equality.
-   * @param occs1 The normalized occurrences of the right hand side of the
-   *                equality.
-   * @param value   The summarized lhs value as determined by normalize_add.
-   *                Is updated during normalization and not added to the
-   *                occurrences map.
-   */
-  void normalize_occurrences_eq_add(PassNormalize::OccMap& occs0,
-                                    PassNormalize::OccMap& occs1,
-                                    BitVector& value);
+  void normalize_occurrences_eq_add(uint64_t bv_size,
+                                    OccMap& occs0,
+                                    OccMap& occs1);
 
   /**
    * General normalization of associative and commutative operators.
@@ -170,21 +142,6 @@ class PassNormalize : public PreprocessingPass
   std::pair<Node, bool> normalize_comm_assoc(node::Kind parent_kind,
                                              const Node& node0,
                                              const Node& node1);
-
-  void remove_zero_occs(OccMap& occs);
-  std::pair<Node, bool> normalize_comm_assoc(const Node& node);
-
-  /**
-   * Helper to normalize common parts of lhs and rhs.
-   *
-   * @param kind Operator kind used to join operands in lhs.
-   * @param lhs The normalized operands of the left hand side.
-   * @param rhs The normalized operands of the right hand side.
-   * @return Normalized left and right node.
-   */
-  std::pair<Node, Node> normalize_common(node::Kind kind,
-                                         OccMap& lhs,
-                                         OccMap& rhs);
 
   /**
    * Helper to extract top-most adder or multiplier from node.
@@ -227,11 +184,15 @@ class PassNormalize : public PreprocessingPass
     Statistics(util::Statistics& stats, const std::string& prefix);
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_normalize_add;
+    util::TimerStatistic& time_normalize_mul;
     util::TimerStatistic& time_compute_occurrences;
     util::TimerStatistic& time_adder_chains;
     util::TimerStatistic& time_score;
     uint64_t& num_normalizations;
+    uint64_t& num_common_normalizations;
     uint64_t& num_normalized_assertions;
+    uint64_t& num_pass1_successful;
+    uint64_t& num_pass2_successful;
   } d_stats;
 };
 

@@ -1,0 +1,5 @@
+(set-info :status unsat)
+(declare-const T (_ BitVec 1))
+(declare-const _T (_ BitVec 1))
+(assert (= (_ bv0 32) (bvadd ((_ zero_extend 31) _T) (bvmul (_ bv113 32) (_ bv113 32) (_ bv113 32) (_ bv14 32) (bvadd (_ bv56 32) ((_ zero_extend 31) T)) (bvadd (_ bv56 32) ((_ zero_extend 31) T))))))
+(check-sat)

@@ -1,0 +1,7 @@
+(set-info :status sat)
+(declare-fun I () (Array (_ BitVec 16) (_ BitVec 16)))
+(declare-fun H () (_ BitVec 16))
+(push 1)
+(assert (bvult (_ bv0 16) (select I #b0000000000000000)))
+(assert (not (= #b0000000000000000 (bvadd ((_ fp.to_ubv 16) RTZ (fp #b0 #b00000 #b0000000000)) (bvadd (select I #b0000000000000001) (bvmul (select I #b0000000000000000) (bvmul H (select I #b0000000000000001))))))))
+(check-sat)

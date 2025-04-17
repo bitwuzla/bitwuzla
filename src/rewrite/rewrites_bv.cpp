@@ -1129,19 +1129,23 @@ RewriteRule<RewriteRuleKind::BV_ASHR_CONST>::_apply(Rewriter& rewriter,
       padding = shift.to_uint64(false);
     }
 
-    Node pad = rewriter.mk_node(
-        Kind::BV_REPEAT,
-        {rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, size - 1})},
-        {padding});
+    Node zero = rewriter.nm().mk_value(BitVector(padding));
+    Node ones = rewriter.nm().mk_value(zero.value<BitVector>().bvneg());
 
-    if (padding < size)
+    Node msb =
+        rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, size - 1});
+    Node cond = rewriter.mk_node(
+        Kind::EQUAL, {msb, rewriter.nm().mk_value(BitVector::mk_one(1))});
+
+    Node ite = rewriter.mk_node(Kind::ITE, {cond, ones, zero});
+
+    if (padding == size)
     {
-      return rewriter.mk_node(
-          Kind::BV_CONCAT,
-          {pad,
-           rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, padding})});
+      return ite;
     }
-    return pad;
+    Node extr =
+        rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, padding});
+    return rewriter.mk_node(Kind::BV_CONCAT, {ite, extr});
   }
   return node;
 }

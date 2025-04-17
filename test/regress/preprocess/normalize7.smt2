@@ -1,0 +1,8 @@
+(set-info :status unsat)
+(set-logic QF_BV)
+(declare-const x (_ BitVec 32))
+(declare-const y (_ BitVec 32))
+(define-fun @def0 () (_ BitVec 32) (bvadd x y))
+(assert (not (= (bvmul @def0 @def0) (bvadd (bvmul x x) (bvmul y (bvadd y (bvadd x x)))))))
+(check-sat)
+(exit)

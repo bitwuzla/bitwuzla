@@ -256,18 +256,14 @@ PassNormalize::PassNormalize(Env& env,
 /* -------------------------------------------------------------------------- */
 
 void
-PassNormalize::compute_occurrences(const Node& node,
-                                   node::Kind kind,
-                                   OccMap& occs) const
+PassNormalize::compute_occurrences_mul(const Node& node, OccMap& occs) const
 {
   util::Timer timer(d_stats.time_compute_occurrences);
 
   node_ref_vector nodes;
-  unordered_node_ref_set intermediate;
   unordered_node_ref_map<util::Integer> occmap;  // all occurrences
 
-  // Collect all traversed nodes (intermediate nodes of specified kind and
-  // leafs) and initialize occurrences for each node to zero.
+  // Collect nodes and initialize occurrences for each node to zero.
   node_ref_vector visit{node};
   do
   {
@@ -277,9 +273,8 @@ PassNormalize::compute_occurrences(const Node& node,
     if (inserted)
     {
       nodes.push_back(cur);
-      if (cur.kind() == kind)
+      if (cur.kind() == Kind::BV_MUL)
       {
-        intermediate.insert(cur);
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
     }
@@ -296,34 +291,99 @@ PassNormalize::compute_occurrences(const Node& node,
   for (auto it = nodes.rbegin(), rend = nodes.rend(); it != rend; ++it)
   {
     const Node& cur = *it;
-    auto fit        = occmap.find(cur);
-    assert(fit != occmap.end());
+    assert(occmap.find(cur) != occmap.end());
+    const auto& cur_occ = occmap[cur];
 
     // If it's an intermediate node, push occurrence down to children
-    if (intermediate.find(cur) != intermediate.end())
+    if (cur.kind() == Kind::BV_MUL)
     {
-      assert(cur.kind() == kind);
       for (const auto& child : cur)
       {
         assert(occmap.find(child) != occmap.end());
-        occmap[child] += fit->second;
+        occmap[child] += cur_occ;
       }
     }
     // If it's a leaf, just copy the result
     else
     {
-      auto [it, inserted] = occs.emplace(cur, occmap[cur]);
-      if (!inserted)
+      occs[cur] += cur_occ;
+    }
+  }
+}
+
+void
+PassNormalize::compute_occurrences_add(const Node& node, OccMap& occs) const
+{
+  util::Timer timer(d_stats.time_compute_occurrences);
+
+  node_ref_vector nodes;
+  unordered_node_ref_map<util::Integer> occmap;  // all occurrences
+
+  // Collect nodes and initialize occurrences for each node to zero.
+  node_ref_vector visit{node};
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = occmap.try_emplace(cur, 0);
+    visit.pop_back();
+    if (inserted)
+    {
+      nodes.push_back(cur);
+      if (cur.kind() == Kind::BV_ADD)
       {
-        it->second += occmap[cur];
+        visit.insert(visit.end(), cur.begin(), cur.end());
       }
+      else if (cur.kind() == Kind::BV_NOT && cur[0].kind() == Kind::BV_ADD)
+      {
+        visit.insert(visit.end(), cur[0].begin(), cur[0].end());
+      }
+    }
+  } while (!visit.empty());
+
+  // Compute leaf occurrences by pushing initial top node occurrence to leafs.
+  //
+  // Note: We have to ensure that parents are fully processed before we compute
+  //       the occurrences for its children. Hence, we sort the nodes in
+  //       ascending order and process the nodes with the higher IDs first.
+  std::sort(nodes.begin(), nodes.end());
+  assert(nodes.back() == node);
+
+  Node ones = d_env.nm().mk_value(BitVector::mk_ones(node.type().bv_size()));
+  ++occmap[node];  // Set initial occurrence of top node
+  for (auto it = nodes.rbegin(), rend = nodes.rend(); it != rend; ++it)
+  {
+    const Node& cur = *it;
+    assert(occmap.find(cur) != occmap.end());
+    const auto& cur_occ = occmap[cur];
+
+    // If it's an intermediate node, push occurrence down to children
+    if (cur.kind() == Kind::BV_NOT && cur[0].kind() == Kind::BV_ADD)
+    {
+      for (const auto& child : cur[0])
+      {
+        assert(occmap.find(child) != occmap.end());
+        occmap[child] -= cur_occ;
+      }
+      occs[ones] += cur_occ;
+    }
+    else if (cur.kind() == Kind::BV_ADD)
+    {
+      for (const auto& child : cur)
+      {
+        assert(occmap.find(child) != occmap.end());
+        occmap[child] += cur_occ;
+      }
+    }
+    // If it's a leaf, just copy the result
+    else
+    {
+      occs[cur] += cur_occ;
     }
   }
 }
 
 PassNormalize::OccMap
-PassNormalize::compute_common_subterms(PassNormalize::OccMap& lhs,
-                                       PassNormalize::OccMap& rhs)
+PassNormalize::compute_common_subterms(OccMap& lhs, OccMap& rhs)
 {
   // We factor out common combinations of common leafs to maximize sharing.
   // For example,
@@ -373,60 +433,165 @@ PassNormalize::mk_node(Kind kind, const OccMap& occs)
   }
 
   util::Integer zero, one(1);
-  std::vector<std::pair<Node, util::Integer>> vec;
-  for (const auto& [n, c] : occs)
-  {
-    if (c != zero)
-    {
-      vec.emplace_back(n, c);
-    }
-  }
-
-  uint64_t size   = vec[0].first.type().bv_size();
   NodeManager& nm = d_env.nm();
   // combine common subterms
   if (kind == Kind::BV_ADD)
   {
+    std::vector<std::pair<Node, util::Integer>> vec;
+    for (const auto& [n, c] : occs)
+    {
+      if (c != zero)
+      {
+        vec.emplace_back(n, c);
+      }
+    }
+
+    if (vec.empty())
+    {
+      return Node();
+    }
+
+    uint64_t size   = vec[0].first.type().bv_size();
+    BitVector value = BitVector::mk_zero(size);
+
+    // Extract common factors
+    OccMap common;
+    if (vec.size() > 1)
+    {
+      for (const auto& [n, c] : vec)
+      {
+        if (n.kind() != Kind::BV_MUL)
+        {
+          common.clear();
+          break;
+        }
+        OccMap o;
+        compute_occurrences_mul(n, o);
+        if (common.empty())
+        {
+          common = std::move(o);
+        }
+        else
+        {
+          auto com = compute_common_subterms(common, o);
+          common   = std::move(com);
+        }
+        if (common.empty())
+        {
+          break;
+        }
+      }
+    }
+
+    // Remove common factors
+    if (!common.empty())
+    {
+      for (auto& [n, c] : vec)
+      {
+        OccMap occs;
+        compute_occurrences_mul(n, occs);
+        for (const auto& [cn, cc] : common)
+        {
+          occs[cn] -= cc;
+        }
+        n = mk_node(Kind::BV_MUL, occs);
+        if (n.is_null())
+        {
+          n = nm.mk_value(BitVector::mk_one(size));
+        }
+      }
+    }
+
     std::sort(vec.begin(), vec.end(), [](const auto& a, const auto& b) {
       return a.first.id() < b.first.id();
     });
 
-    const auto& [node, occ] = vec[0];
-    assert(occ != 0);
-    res = occ == one
-              ? node
-              : nm.mk_node(Kind::BV_MUL,
-                           {nm.mk_value(BitVector(size, occ.gmp_value(), true)),
-                            node});
-    for (size_t i = 1, n = vec.size(); i < n; ++i)
+    for (const auto& [node, occ] : vec)
     {
-      const auto& [node, occ] = vec[i];
+      if (occ == zero)
+      {
+        continue;
+      }
 
-      res = nm.mk_node(
-          Kind::BV_ADD,
-          {res,
-           occ == one ? node
-                      : nm.mk_node(Kind::BV_MUL,
-                                   {nm.mk_value(
-                                        BitVector(size, occ.gmp_value(), true)),
-                                    node})});
+      BitVector bvc(size, occ.gmp_value(), true);
+
+      if (node.is_value())
+      {
+        value.ibvadd(node.value<BitVector>().bvmul(bvc));
+        continue;
+      }
+
+      Node m = bvc.is_one()
+                   ? node
+                   : nm.mk_node(Kind::BV_MUL, {nm.mk_value(bvc), node});
+      res    = res.is_null() ? m : nm.mk_node(Kind::BV_ADD, {res, m});
+    }
+    Node val = nm.mk_value(value);
+    res      = res.is_null() ? val : nm.mk_node(Kind::BV_ADD, {res, val});
+
+    // Multiply sum with common factors
+    if (!common.empty())
+    {
+      ++common[res];
+      res = mk_node(Kind::BV_MUL, common);
     }
   }
   else
   {
     assert(kind == Kind::BV_MUL);
 
-    const auto sort_desc = [](const auto& a, const auto& b) {
-      return a.second > b.second;
-    };
+    std::vector<std::pair<Node, util::Integer>> vec, shl;
+    Node value;
+    for (const auto& [n, c] : occs)
+    {
+      if (c != zero)
+      {
+        if (n.kind() == Kind::BV_SHL && c == one && n[0].is_value()
+            && n[0].value<BitVector>().is_one())
+        {
+          shl.emplace_back(n, c);
+        }
+        else if (n.is_value())
+        {
+          assert(c == one);
+          assert(value.is_null());
+          value = n;
+        }
+        else
+        {
+          vec.emplace_back(n, c);
+        }
+      }
+    }
+
+    if (vec.empty() && shl.empty() && value.is_null())
+    {
+      return Node();
+    }
 
     // Sort nodes by exponent in descending order
+    const auto sort_desc = [](const auto& a, const auto& b) {
+      return a.second > b.second
+             || (a.second == b.second && a.first.id() < b.first.id());
+    };
     std::sort(vec.begin(), vec.end(), sort_desc);
 
-    // All exponents were zero, we return 1.
+    // Sort shifts by shift width
+    std::sort(shl.begin(), shl.end(), [](const auto& a, const auto& b) {
+      return a.first[1] < b.first[1];
+    });
+
     if (vec.empty())
     {
-      res = nm.mk_value(BitVector::mk_one(size));
+      if (value.is_null())
+      {
+        uint64_t size = occs.begin()->first.type().bv_size();
+        res           = nm.mk_value(BitVector::mk_one(size));
+      }
+      else
+      {
+        res = value;
+      }
     }
     else
     {
@@ -446,7 +611,9 @@ PassNormalize::mk_node(Kind kind, const OccMap& occs)
           assert(exp1 >= 1);
           if (is_odd)
           {
-            vec.emplace_back(node1, 1);
+            std::pair<Node, util::Integer> p = std::make_pair(node1, 1);
+            auto it = std::lower_bound(vec.begin(), vec.end(), p, sort_desc);
+            vec.insert(it, std::move(p));
           }
           vec[0].first = squared;
         }
@@ -462,20 +629,46 @@ PassNormalize::mk_node(Kind kind, const OccMap& occs)
           {
             vec.erase(vec.begin());
           }
-          else if (exp1 < exp2)
+
+          // vec[1] changed, move to correct position.
+          for (size_t i = 1, j = 2, size = vec.size();
+               j < size && !sort_desc(vec[i], vec[j]);
+               ++i, ++j)
           {
-            std::sort(vec.begin(), vec.end(), sort_desc);
+            std::swap(vec[i], vec[j]);
           }
         }
+
+        // vec[0] changed, move to correct position.
+        for (size_t i = 0, j = 1, size = vec.size();
+             j < size && !sort_desc(vec[i], vec[j]);
+             ++i, ++j)
+        {
+          std::swap(vec[i], vec[j]);
+        }
+
         assert(!vec.empty());
       }
 
       assert(vec.size() == 1);
       assert(vec[0].second == 1);
       res = vec[0].first;
+      if (!value.is_null())
+      {
+        res = nm.mk_node(Kind::BV_MUL, {value, res});
+      }
+    }
+
+    // Add shifts on top
+    for (const auto& [n, o] : shl)
+    {
+      assert(o == 1);
+      assert(n[0].is_value());
+      assert(n[0].value<BitVector>().is_one());
+      res = nm.mk_node(Kind::BV_SHL, {res, n[1]});
     }
   }
-  return res;
+  return d_rewriter.rewrite(res);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -483,18 +676,11 @@ PassNormalize::mk_node(Kind kind, const OccMap& occs)
 namespace {
 
 util::Integer
-sbv_to_int(const BitVector& bv)
+ubv_to_int(const BitVector& bv)
 {
-  if (bv.size() <= BitVector::s_native_size)
-  {
-    auto val = util::Integer(bv.to_uint64());
-    if (bv.bit(bv.size() - 1))
-    {
-      return val - util::Integer(2).ipow(bv.size());
-    }
-    return val;
-  }
-  return util::Integer::from_mpz_t(bv.gmp_value());
+  return (bv.size() <= BitVector::s_native_size)
+             ? util::Integer(bv.to_uint64())
+             : util::Integer::from_mpz_t(bv.gmp_value());
 }
 
 }  // namespace
@@ -505,7 +691,6 @@ PassNormalize::normalize_add(const Node& node,
                              bool keep_value,
                              bool push_neg)
 {
-  // assert(node.kind() == Kind::BV_ADD);
   util::Timer timer(d_stats.time_normalize_add);
 
   uint64_t bv_size = node.type().bv_size();
@@ -517,131 +702,129 @@ PassNormalize::normalize_add(const Node& node,
   std::unordered_set<Node> cache;
 #endif
 
-  bool progress;
-  do
+  std::vector<std::pair<Node, util::Integer>> work(occs.begin(), occs.end());
+  occs.clear();
+
+  for (size_t i = 0; i < work.size(); ++i)
   {
-    progress = false;
-    for (auto it = occs.rbegin(); it != occs.rend(); ++it)
+    if (work[i].second == zero)
     {
-      auto& [cur, cur_occ] = *it;
-      if (cur_occ == zero)
+      continue;
+    }
+
+    auto [cur, cur_occ] = work[i];
+
+    // summarize values
+    if (cur.is_value())
+    {
+      BitVector c(bv_size, cur_occ.gmp_value(), true);
+      value.ibvadd(cur.value<BitVector>().bvmul(c));
+      continue;
+    }
+    else if (cur.kind() == Kind::BV_MUL
+             && (cur[0].is_value() || cur[1].is_value()))
+    {
+      size_t idx      = cur[0].is_value() ? 0 : 1;
+      const Node& val = cur[idx];
+      const Node& t   = cur[1 - idx];
+      work.emplace_back(t, ubv_to_int(val.value<BitVector>()) * cur_occ);
+      continue;
+    }
+    else if (cur.kind() == Kind::BV_ADD
+             || (push_neg
+                 && (cur.kind() == Kind::BV_NOT
+                     && cur[0].kind() == Kind::BV_ADD)))
+    {
+      OccMap occmap;
+      compute_occurrences_add(cur, occmap);
+      for (auto& [c, o] : occmap)
       {
+        o *= cur_occ;
+        work.emplace_back(c, o);
+      }
+      continue;
+    }
+    else if (cur.is_inverted())
+    {
+      value.ibvsub(BitVector(bv_size, cur_occ.gmp_value(), true));
+      work.emplace_back(cur[0], -cur_occ);
+      continue;
+    }
+    else if (cur.kind() == Kind::BV_MUL)
+    {
+      if (cur[0].kind() == Kind::BV_ADD)
+      {
+        work.emplace_back(d_rewriter.mk_node(Kind::BV_MUL, {cur[0][0], cur[1]}),
+                          cur_occ);
+        work.emplace_back(d_rewriter.mk_node(Kind::BV_MUL, {cur[0][1], cur[1]}),
+                          cur_occ);
         continue;
       }
-
-      // summarize values
-      if (cur.is_value())
+      else if (cur[1].kind() == Kind::BV_ADD)
       {
-        BitVector c(bv_size, cur_occ.gmp_value(), true);
-        value.ibvadd(cur.value<BitVector>().bvmul(c));
-        cur_occ = zero;
+        work.emplace_back(d_rewriter.mk_node(Kind::BV_MUL, {cur[1][0], cur[0]}),
+                          cur_occ);
+        work.emplace_back(d_rewriter.mk_node(Kind::BV_MUL, {cur[1][1], cur[0]}),
+                          cur_occ);
+        continue;
       }
-      else if (cur.is_inverted())
+      else
       {
-        auto it = occs.find(cur[0]);
-        // x already in occs: ~x == -x -1
-        if (it != occs.end())
+        OccMap prod;
+        compute_occurrences_mul(cur, prod);
+        BitVector value = normalize_mul(cur, prod, false);
+        Node norm       = mk_node(Kind::BV_MUL, prod);
+        if (norm != cur)
         {
-          value.ibvsub(BitVector(bv_size, cur_occ.gmp_value(), true));
-          it->second -= cur_occ;
-          cur_occ = zero;
-        }
-        // normalize inverted adders
-        // ~x = ~(x + 1) + 1 = - x - 1
-        else if (push_neg && cur[0].kind() == Kind::BV_ADD)
-        {
-          assert(cache.insert(cur).second);
-          progress = true;
-          OccMap occmap;
-          auto occ = -occs.at(cur);
-          cur_occ  = zero;
-          compute_occurrences(cur[0], cur[0].kind(), occmap);
-          for (auto& [c, o] : occmap)
-          {
-            o *= occ;
-            if (c.is_value())
-            {
-              value.ibvadd(c.value<BitVector>().bvmul(
-                  BitVector(bv_size, o.gmp_value(), true)));
-            }
-            else
-            {
-              auto [it, inserted] = occs.emplace(c, o);
-              if (!inserted)
-              {
-                it->second += o;
-              }
-            }
-          }
-          value.ibvadd(BitVector(bv_size, occ.gmp_value(), true));
-          break;
-        }
-      }
-      else if (cur.kind() == Kind::BV_MUL
-               && (cur[0].is_value() || cur[1].is_value()))
-      {
-        size_t idx          = cur[0].is_value() ? 0 : 1;
-        const Node& val     = cur[idx];
-        const Node& t       = cur[1 - idx];
-        auto c              = sbv_to_int(val.value<BitVector>()) * cur_occ;
-        cur_occ             = zero;
-        auto [it, inserted] = occs.emplace(t, c);
-        if (!inserted)
-        {
-          it->second += c;
-        }
-        else
-        {
-          progress = true;
-        }
-      }
-      else if (cur.kind() == Kind::BV_ADD)
-      {
-        OccMap occmap;
-        auto occ = cur_occ;
-        cur_occ  = zero;
-        compute_occurrences(cur, cur.kind(), occmap);
-        for (auto& [c, o] : occmap)
-        {
-          o *= occ;
-          if (c.is_value())
-          {
-            value.ibvadd(c.value<BitVector>().bvmul(
-                BitVector(bv_size, o.gmp_value(), true)));
-          }
-          else
-          {
-            auto [it, inserted] = occs.emplace(c, o);
-            if (!inserted)
-            {
-              it->second += o;
-            }
-            else
-            {
-              progress = true;
-            }
-          }
-        }
-        if (progress)
-        {
-          break;
+          work.emplace_back(norm, ubv_to_int(value) * cur_occ);
+          continue;
         }
       }
     }
-  } while (progress);
+    else if (cur.kind() == Kind::BV_EXTRACT && cur.index(1) == 0)
+    {
+      if (cur[0].kind() == Kind::BV_ADD)
+      {
+        work.emplace_back(
+            d_rewriter.mk_node(Kind::BV_EXTRACT, {cur[0][0]}, cur.indices()),
+            cur_occ);
+        work.emplace_back(
+            d_rewriter.mk_node(Kind::BV_EXTRACT, {cur[0][1]}, cur.indices()),
+            cur_occ);
+        continue;
+      }
+      else if (cur[0].kind() == Kind::BV_MUL
+               && (cur[0][0].is_value() || cur[0][1].is_value()))
+      {
+        uint64_t idx = cur[0][0].is_value() ? 0 : 1;
+        BitVector c  = cur[0][idx].value<BitVector>().bvextract(cur.index(0),
+                                                               cur.index(1));
+        work.emplace_back(
+            d_rewriter.mk_node(
+                Kind::BV_EXTRACT, {cur[0][1 - idx]}, cur.indices()),
+            ubv_to_int(c) * cur_occ);
+        continue;
+      }
+      else if (cur[0].kind() == Kind::BV_NOT)
+      {
+        value.ibvsub(BitVector(bv_size, cur_occ.gmp_value(), true));
+        work.emplace_back(
+            d_rewriter.mk_node(Kind::BV_EXTRACT, {cur[0][0]}, cur.indices()),
+            -cur_occ);
+        continue;
+      }
+    }
+    assert(cur_occ != zero);
+    assert(cur.kind() != Kind::BV_ADD);
+    assert(cur.kind() != Kind::BV_MUL
+           || (!cur[0].is_value() && !cur[1].is_value()));
+    occs[cur] += cur_occ;
+  }
 
-  if (keep_value && !value.is_zero())
+  if (keep_value && (!value.is_zero() || occs.empty()))
   {
     Node val = d_env.nm().mk_value(value);
-    auto it  = occs.find(val);
-    if (it == occs.end())
-    {
-      occs.try_emplace(val, 1);
-    }
-    else
-    {
-      ++it->second;
-    }
+    ++occs[val];
     return value;
   }
 
@@ -651,12 +834,10 @@ PassNormalize::normalize_add(const Node& node,
 /* -------------------------------------------------------------------------- */
 
 BitVector
-PassNormalize::normalize_and(const Node& node, PassNormalize::OccMap& occs)
+PassNormalize::normalize_and(const Node& node, OccMap& occs)
 {
   uint64_t bv_size = node.type().bv_size();
-  BitVector bvzero = BitVector::mk_zero(bv_size);
-  BitVector bvone  = BitVector::mk_one(bv_size);
-  BitVector value  = bvone;
+  BitVector value  = BitVector::mk_one(bv_size);
   util::Integer zero, one(1);
 
   for (auto& f : occs)
@@ -680,58 +861,47 @@ PassNormalize::normalize_and(const Node& node, PassNormalize::OccMap& occs)
 /* -------------------------------------------------------------------------- */
 
 BitVector
-PassNormalize::normalize_mul(const Node& node,
-                             PassNormalize::OccMap& occs,
-                             bool keep_value)
+PassNormalize::normalize_mul(const Node& node, OccMap& occs, bool keep_value)
 {
-  assert(node.kind() == Kind::BV_MUL);
+  util::Timer timer(d_stats.time_normalize_mul);
 
-  BitVector bvzero = BitVector::mk_zero(64);
   BitVector value  = BitVector::mk_one(node.type().bv_size());
   util::Integer zero;
 
-  for (auto& [cur, d] : occs)
+  std::vector<std::pair<Node, util::Integer>> work(occs.begin(), occs.end());
+  occs.clear();
+
+  NodeManager& nm = d_env.nm();
+
+  bool folded = false;
+  for (size_t i = 0; i < work.size(); ++i)
   {
+    auto [cur, d] = work[i];
+
     // constant fold values
     if (cur.is_value())
     {
       BitVector res = cur.value<BitVector>().bvpow(d.gmp_value());
       value.ibvmul(res);
-      d = zero;
+      folded = true;
+      continue;
     }
-    // TODO: remove, shouldn't be needed anymore
-    // TODO: this should also be useful for normalize_add
-    // undo multiplication by power-of-two
-    else if (cur.kind() == Kind::BV_CONCAT && cur[1].is_value()
-             && cur[1].value<BitVector>().is_zero()
-             && cur[0].kind() == Kind::BV_EXTRACT && cur[0].index(1) == 0
-             && cur[0][0].type() == cur.type())
+    // unpack (bvshl a b) to (bvmul a (bvshl 1 b))
+    else if (cur.kind() == Kind::BV_SHL
+             && (!cur[0].is_value() || !cur[0].value<BitVector>().is_one()))
     {
-      uint64_t tz = cur[1].value<BitVector>().count_trailing_zeros();
-      auto val =
-          BitVector::mk_one(value.size()).ibvshl(tz).ibvpow(d.gmp_value());
-      value.ibvmul(val);
-      auto [iit, inserted] = occs.emplace(cur[0][0], d);
-      if (!inserted)
-      {
-        iit->second += d;
-      }
-      d = zero;
+      Node n     = cur[0];
+      Node bvone = nm.mk_value(BitVector::mk_one(node.type().bv_size()));
+      cur        = nm.mk_node(Kind::BV_SHL, {bvone, cur[1]});
+      work.emplace_back(n, d);
     }
+    occs[cur] += d;
   }
 
-  if (keep_value && !value.is_one())
+  if (keep_value && folded)
   {
     Node val = d_env.nm().mk_value(value);
-    auto it  = occs.find(val);
-    if (it == occs.end())
-    {
-      occs.try_emplace(val, 1);
-    }
-    else
-    {
-      ++it->second;
-    }
+    ++occs[val];
     return value;
   }
 
@@ -741,83 +911,28 @@ PassNormalize::normalize_mul(const Node& node,
 /* -------------------------------------------------------------------------- */
 
 void
-PassNormalize::normalize_occurrences_eq_add(PassNormalize::OccMap& occs0,
-                                            PassNormalize::OccMap& occs1,
-                                            BitVector& value)
+PassNormalize::normalize_occurrences_eq_add(uint64_t bv_size,
+                                            OccMap& occs0,
+                                            OccMap& occs1)
 {
-  // Note: Occurrences must already be normalized in the sense that they only
-  //       either appear on the left or right hand side (this function must
-  //       be called with occurrences determined by
-  //       normalize_occurrences_eq()).
-  //       We also assume that the adders have been normalized via
-  //       normalize_add(), thus both occurrence maps do not contain values
-  //       with occurrences > 0.
-
+  // Moves negated occurrences to other side.
+  //
+  // Note: Occurrences must already be normalized via normalize_add().
   // (a - b + c = -d + e) is normalized to (a + c + d = b + e)
 
-  // ~x = ~(x + 1) + 1
-  // -x = ~x + 1
-
-  uint64_t bv_size = value.size();
-  NodeManager& nm  = d_env.nm();
-  Node one         = nm.mk_value(BitVector::mk_one(bv_size));
-  BitVector bvzero = BitVector::mk_zero(bv_size);
   util::Integer zero;
-
-  // move negated occurrences to other side
-  for (auto& f : occs0)
+  for (auto& [cur, occ] : occs0)
   {
-    const Node& cur = f.first;
-    const auto occ  = f.second;
     assert(!cur.is_value() || occ == zero);
-    if (occ == zero)
+    assert(!cur.is_inverted());
+    BitVector bv(bv_size, occ.gmp_value(), true);
+    // Do not move min_signed coefficients unless term already exists on
+    // other side. This avoids terms being moved back and forth due to
+    // -min_signed == min_signed.
+    if (bv.msb() && !bv.is_min_signed())
     {
-      continue;
-    }
-    if (cur.is_inverted())
-    {
-      Node neg;
-      if (cur[0].kind() == Kind::BV_ADD)
-      {
-        if (cur[0][0] == one)
-        {
-          neg = cur[0][1];
-          value.ibvsub(BitVector(bv_size, occ.gmp_value(), true));
-          f.second = zero;
-        }
-        else if (cur[0][1] == one)
-        {
-          neg = cur[0][0];
-          value.ibvsub(BitVector(bv_size, occ.gmp_value(), true));
-          f.second = zero;
-        }
-      }
-      else
-      {
-        neg      = cur[0];
-        f.second = zero;
-      }
-      if (!neg.is_null())
-      {
-        if (neg.is_value())
-        {
-          value.ibvsub(neg.value<BitVector>().bvmul(
-              BitVector(bv_size, occ.gmp_value(), true)));
-        }
-        else
-        {
-          auto it = occs1.find(neg);
-          if (it == occs1.end())
-          {
-            occs1.emplace(neg, occ);
-          }
-          else
-          {
-            it->second += occ;
-          }
-        }
-        value.ibvsub(BitVector(bv_size, occ.gmp_value(), true));
-      }
+      occs1[cur] -= occ;
+      occ = zero;
     }
   }
 }
@@ -826,194 +941,90 @@ void
 PassNormalize::normalize_occurrences_eq(Kind kind,
                                         const Node& node0,
                                         const Node& node1,
-                                        PassNormalize::OccMap& occs0,
-                                        PassNormalize::OccMap& occs1)
+                                        OccMap& occs0,
+                                        OccMap& occs1)
 {
-  assert(node0.kind() == node1.kind() || kind == Kind::BV_ADD);
-  // assert(node0.kind() == Kind::BV_ADD || node0.kind() == Kind::BV_MUL);
-
-  compute_occurrences(node0, kind, occs0);
-  compute_occurrences(node1, kind, occs1);
+  assert(kind == Kind::BV_ADD || kind == Kind::BV_MUL);
 
   if (kind == Kind::BV_ADD)
   {
+    compute_occurrences_add(node0, occs0);
+    compute_occurrences_add(node1, occs1);
+
     auto value0 = normalize_add(node0, occs0);
     auto value1 = normalize_add(node1, occs1);
 
-    normalize_occurrences_eq_add(occs0, occs1, value0);
-    normalize_occurrences_eq_add(occs1, occs0, value1);
+    normalize_occurrences_eq_add(node0.type().bv_size(), occs0, occs1);
+    normalize_occurrences_eq_add(node0.type().bv_size(), occs1, occs0);
 
-    value0.ibvsub(value1);
-    // add normalized value to lhs occurrence map
-    if (!value0.is_zero())
+    if (!value0.is_zero() && !value1.is_zero())
     {
+      value0.ibvsub(value1);
       Node val = d_env.nm().mk_value(value0);
-      auto it  = occs0.find(val);
-      if (it == occs0.end())
+      ++occs0[val];
+    }
+    else
+    {
+      // add normalized value to lhs occurrence map
+      if (!value0.is_zero() || occs0.empty())
       {
-        occs0.try_emplace(val, 1);
+        Node val = d_env.nm().mk_value(value0);
+        ++occs0[val];
       }
-      else
+      if (!value1.is_zero() || occs1.empty())
       {
-        assert(it->second == 0);
-        ++it->second;
+        Node val = d_env.nm().mk_value(value1);
+        ++occs1[val];
       }
+    }
+
+    if (occs1.empty())
+    {
+      Node val =
+          d_env.nm().mk_value(BitVector::mk_zero(node1.type().bv_size()));
+      ++occs1[val];
     }
   }
   else
   {
     assert(kind == Kind::BV_MUL);
+
+    compute_occurrences_mul(node0, occs0);
+    compute_occurrences_mul(node1, occs1);
+
     auto value0 = normalize_mul(node0, occs0);
     auto value1 = normalize_mul(node1, occs1);
-    if (!value0.is_one())
+
+    if (!value0.is_one() || occs0.empty())
     {
       Node val = d_env.nm().mk_value(value0);
-      auto it  = occs0.find(val);
-      if (it == occs0.end())
-      {
-        occs0.try_emplace(val, 1);
-      }
-      else
-      {
-        assert(it->second == 0);
-        ++it->second;
-      }
+      ++occs0[val];
     }
-    if (!value1.is_one())
+    if (!value1.is_one() || occs1.empty())
     {
       Node val = d_env.nm().mk_value(value1);
-      auto it  = occs1.find(val);
-      if (it == occs1.end())
-      {
-        occs1.try_emplace(val, 1);
-      }
-      else
-      {
-        assert(it->second == 0);
-        ++it->second;
-      }
+      ++occs1[val];
     }
   }
 
   auto common_occs = compute_common_subterms(occs0, occs1);
-  Node common      = mk_node(kind, common_occs);
-  if (kind == Kind::BV_MUL && !common.is_null())
+  d_stats.num_common_normalizations += common_occs.size();
+  if (kind == Kind::BV_MUL)
   {
+    Node common = mk_node(kind, common_occs);
+    if (!common.is_null())
     {
-      auto [it, inserted] = occs0.try_emplace(common, 1);
-      if (!inserted)
-      {
-        ++occs0[common];
-      }
-    }
-    {
-      auto [it, inserted] = occs1.try_emplace(common, 1);
-      if (!inserted)
-      {
-        ++occs1[common];
-      }
+      ++occs0[common];
+      ++occs1[common];
     }
   }
-}
-
-std::pair<Node, Node>
-PassNormalize::_normalize_eq_mul(const OccMap& occs0, const OccMap& occs1)
-{
-  assert(!occs0.empty());
-  assert(!occs1.empty());
-  return {mk_node(Kind::BV_MUL, occs0), mk_node(Kind::BV_MUL, occs1)};
-}
-
-namespace {
-Node
-get_factorized_add(NodeManager& nm, const Node& node, const util::Integer& occ)
-{
-  assert(!node.is_null());
-  assert(occ != 0);
-  if (occ == 1)
-  {
-    return node;
-  }
-  if (occ == -1)
-  {
-    return nm.mk_node(Kind::BV_NEG, {node});
-  }
-  return nm.mk_node(
-      Kind::BV_MUL,
-      {nm.mk_value(BitVector(node.type().bv_size(), occ.gmp_value(), true)),
-       node});
-}
-}  // namespace
-
-std::pair<Node, Node>
-PassNormalize::_normalize_eq_add(PassNormalize::OccMap& occs0,
-                                 PassNormalize::OccMap& occs1,
-                                 uint64_t bv_size)
-{
-  NodeManager& nm = d_env.nm();
-
-  BitVector lvalue = BitVector::mk_zero(bv_size);
-  BitVector rvalue = BitVector::mk_zero(bv_size);
-
-  std::vector<Node> lhs, rhs;
-  util::Integer zero;
-
-  for (const auto& [cur, occ] : occs0)
-  {
-    if (occ == zero)
-    {
-      continue;
-    }
-    if (cur.is_value())
-    {
-      assert(occ == 1);
-      lvalue.ibvadd(cur.value<BitVector>());
-    }
-    else
-    {
-      lhs.push_back(get_factorized_add(nm, cur, occ));
-    }
-  }
-  for (const auto& [cur, occ] : occs1)
-  {
-    if (occ == zero)
-    {
-      continue;
-    }
-    assert(!cur.is_value());
-    rhs.push_back(get_factorized_add(nm, cur, occ));
-  }
-
-  // normalize values, e.g., (a + 2 = b + 3) -> (a - 1 = b)
-  if (!lvalue.is_zero())
-  {
-    lvalue.ibvsub(rvalue);
-    if (!lvalue.is_zero())
-    {
-      lhs.push_back(nm.mk_value(lvalue));
-    }
-  }
-  else if (!rvalue.is_zero())
-  {
-    rhs.push_back(nm.mk_value(rvalue));
-  }
-
-  std::sort(lhs.begin(), lhs.end());
-  std::sort(rhs.begin(), rhs.end());
-
-  Node left  = lhs.empty() ? nm.mk_value(BitVector::mk_zero(bv_size))
-                           : node::utils::mk_nary(nm, Kind::BV_ADD, lhs);
-  Node right = rhs.empty() ? nm.mk_value(BitVector::mk_zero(bv_size))
-                           : node::utils::mk_nary(nm, Kind::BV_ADD, rhs);
-  return {left, right};
+  // For sums, common parts are subtracted from both sides.
 }
 
 std::pair<Node, bool>
 PassNormalize::normalize_eq(Kind kind, const Node& node0, const Node& node1)
 {
-  assert((node0.kind() == node1.kind() && kind == node0.kind())
-         || (kind == Kind::BV_ADD
-             && (node0.kind() == kind || node1.kind() == kind)));
+  assert(kind == Kind::BV_ADD || kind == Kind::BV_MUL);
 
   NodeManager& nm = d_env.nm();
 
@@ -1023,126 +1034,33 @@ PassNormalize::normalize_eq(Kind kind, const Node& node0, const Node& node1)
   assert(!occs0.empty());
   assert(!occs1.empty());
 
-  auto [left, right] =
-      kind == Kind::BV_ADD
-          ? _normalize_eq_add(occs0, occs1, node0.type().bv_size())
-          : _normalize_eq_mul(occs0, occs1);
+  Node left  = mk_node(kind, occs0);
+  Node right = mk_node(kind, occs1);
+
+  if (left.is_null())
+  {
+    uint64_t size = node0.type().bv_size();
+    left          = nm.mk_value(kind == Kind::BV_MUL ? BitVector::mk_one(size)
+                                            : BitVector::mk_zero(size));
+  }
+  if (right.is_null())
+  {
+    uint64_t size = node1.type().bv_size();
+    right         = nm.mk_value(kind == Kind::BV_MUL ? BitVector::mk_one(size)
+                                             : BitVector::mk_zero(size));
+  }
 
   if (left == right)
   {
     return {nm.mk_value(true), true};
   }
 
-  if (left == node0 && right == node1)
-  {
-    return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
-  }
-
-  return {nm.mk_node(Kind::EQUAL, {left, right}), true};
-}
-
-std::pair<Node, bool>
-PassNormalize::normalize_eq_add(const Node& node0, const Node& node1)
-{
-  assert(node0.kind() == Kind::BV_ADD || node1.kind() == Kind::BV_ADD);
-
-  NodeManager& nm = d_env.nm();
-
-  OccMap occs0, occs1;
-  normalize_occurrences_eq(Kind::BV_ADD, node0, node1, occs0, occs1);
-
-  assert(!occs0.empty());
-  assert(!occs1.empty());
-
-  auto [left, right] = _normalize_eq_add(occs0, occs1, node0.type().bv_size());
-
-  if (left == right)
-  {
-    return {nm.mk_value(true), true};
-  }
-
-  if (left == node0 && right == node1)
-  {
-    return {nm.mk_node(Kind::EQUAL, {node0, node1}), false};
-  }
-
-  return {nm.mk_node(Kind::EQUAL, {left, right}), true};
+  bool normalized = left != node0 || right != node1;
+  Node res        = d_rewriter.rewrite(nm.mk_node(Kind::EQUAL, {left, right}));
+  return {res, normalized};
 }
 
 /* -------------------------------------------------------------------------- */
-
-namespace {
-
-}  // namespace
-
-void
-PassNormalize::remove_zero_occs(PassNormalize::OccMap& occs)
-{
-  util::Integer zero;
-  auto it = occs.begin();
-  while (it != occs.end())
-  {
-    if (it->second == zero)
-    {
-      it = occs.erase(it);
-    }
-    else
-    {
-      ++it;
-    }
-  }
-}
-
-std::pair<Node, Node>
-PassNormalize::normalize_common(Kind kind,
-                                PassNormalize::OccMap& lhs,
-                                PassNormalize::OccMap& rhs)
-{
-  std::vector<Node> lhs_norm, rhs_norm;
-  assert(!lhs.empty());
-  assert(!rhs.empty());
-
-  size_t lhs_size    = lhs.begin()->first.type().bv_size();
-  size_t rhs_size    = rhs.begin()->first.type().bv_size();
-  auto common_occs   = compute_common_subterms(lhs, rhs);
-  Node common        = mk_node(kind, common_occs);
-
-  if (!common.is_null())
-  {
-    auto [it, inserted] = lhs.try_emplace(common, 1);
-    if (!inserted)
-    {
-      ++it->second;
-    }
-    std::tie(it, inserted) = rhs.try_emplace(common, 1);
-    if (!inserted)
-    {
-      ++it->second;
-    }
-  }
-
-  remove_zero_occs(lhs);
-  remove_zero_occs(rhs);
-
-  Node left, right;
-  if (!lhs.empty())
-  {
-    left = mk_node(kind, lhs);
-  }
-  else
-  {
-    left = d_env.nm().mk_value(BitVector::mk_zero(lhs_size));
-  }
-  if (!rhs.empty())
-  {
-    right = mk_node(kind, rhs);
-  }
-  else
-  {
-    right = d_env.nm().mk_value(BitVector::mk_zero(rhs_size));
-  }
-  return {left, right};
-}
 
 std::pair<Node, bool>
 PassNormalize::normalize_comm_assoc(Kind parent_kind,
@@ -1155,75 +1073,67 @@ PassNormalize::normalize_comm_assoc(Kind parent_kind,
   Node top_rhs = get_top(node1);
 
   Kind kind = top_lhs.kind();
-  if (kind != Kind::BV_ADD && kind != Kind::BV_MUL)
-  // && kind != Kind::BV_AND && kind != Kind::BV_XOR))
+  if (kind != Kind::BV_ADD && kind != Kind::BV_MUL
+      && (kind != Kind::BV_NOT || top_lhs[0].kind() != Kind::BV_ADD))
   {
     kind = top_rhs.kind();
-    if (kind != Kind::BV_ADD && kind != Kind::BV_MUL)
+    if (kind != Kind::BV_ADD && kind != Kind::BV_MUL
+        && (kind != Kind::BV_NOT || top_rhs[0].kind() != Kind::BV_ADD))
     {
       return {nm.mk_node(parent_kind, {node0, node1}), false};
     }
   }
 
   OccMap lhs, rhs;
-  compute_occurrences(top_lhs, kind, lhs);
-  compute_occurrences(top_rhs, kind, rhs);
-  if (top_lhs.kind() == Kind::BV_ADD)
+  if (kind == Kind::BV_ADD || kind == Kind::BV_NOT)
   {
+    compute_occurrences_add(top_lhs, lhs);
+    compute_occurrences_add(top_rhs, rhs);
     normalize_add(top_lhs, lhs, true, true);
-  }
-  else if (top_lhs.kind() == Kind::BV_MUL)
-  {
-    normalize_mul(top_lhs, lhs, true);
-  }
-  if (top_rhs.kind() == Kind::BV_ADD)
-  {
     normalize_add(top_rhs, rhs, true, true);
+    kind = Kind::BV_ADD;
   }
-  else if (top_rhs.kind() == Kind::BV_MUL)
+  else
   {
+    assert(kind == Kind::BV_MUL);
+    compute_occurrences_mul(top_lhs, lhs);
+    compute_occurrences_mul(top_rhs, rhs);
+    normalize_mul(top_lhs, lhs, true);
     normalize_mul(top_rhs, rhs, true);
   }
 
-  auto [left, right] = normalize_common(kind, lhs, rhs);
-  auto rebuilt_left  = rebuild_top(node0, top_lhs, left);
-  auto rebuilt_right = rebuild_top(node1, top_rhs, right);
+  // Factor out common subterms
+  auto common_occs = compute_common_subterms(lhs, rhs);
+  Node common      = mk_node(kind, common_occs);
 
-  return {nm.mk_node(parent_kind, {rebuilt_left, rebuilt_right}),
-          rebuilt_left != node0 || rebuilt_right != node1};
-}
-
-std::pair<Node, bool>
-PassNormalize::normalize_comm_assoc(const Node& node)
-{
-  NodeManager& nm = d_env.nm();
-  assert(node.kind() == Kind::BV_ADD || node.kind() == Kind::BV_MUL);
-
-  Kind kind = node.kind();
-
-  OccMap occs;
-  compute_occurrences(node, kind, occs);
-  size_t occs_size = occs.size();
-  if (kind == Kind::BV_ADD)
+  if (!common.is_null())
   {
-    normalize_add(node, occs, true, true);
+    ++lhs[common];
+    ++rhs[common];
   }
-  else if (kind == Kind::BV_MUL)
-  {
-    normalize_mul(node, occs, true);
-  }
-  remove_zero_occs(occs);
-#if 1
-  if (occs_size <= occs.size())
-  {
-    return {node, false};
-  }
-#endif
-  Node res = occs.empty()
-                 ? nm.mk_value(BitVector::mk_zero(node.type().bv_size()))
-                 : mk_node(kind, occs);
 
-  return {res, res != node};
+  Node left = mk_node(kind, lhs);
+  if (left.is_null())
+  {
+    uint64_t size = top_lhs.type().bv_size();
+    left          = nm.mk_value(kind == Kind::BV_MUL ? BitVector::mk_one(size)
+                                            : BitVector::mk_zero(size));
+  }
+  Node right = mk_node(kind, rhs);
+  if (right.is_null())
+  {
+    uint64_t size = top_rhs.type().bv_size();
+    right         = nm.mk_value(kind == Kind::BV_MUL ? BitVector::mk_one(size)
+                                             : BitVector::mk_zero(size));
+  }
+
+  // Rebuild original term
+  left  = rebuild_top(node0, top_lhs, left);
+  right = rebuild_top(node1, top_rhs, right);
+
+  bool normalized = left != node0 || right != node1;
+  Node res        = d_rewriter.rewrite(nm.mk_node(parent_kind, {left, right}));
+  return {res, normalized};
 }
 
 Node
@@ -1234,8 +1144,8 @@ PassNormalize::get_top(const Node& node)
   while (true)
   {
     k = cur.kind();
-    if (k == Kind::BV_NOT || k == Kind::BV_SHL || k == Kind::BV_SHR
-        || k == Kind::BV_EXTRACT)
+    if ((k == Kind::BV_NOT && cur[0].kind() != Kind::BV_ADD)
+        || k == Kind::BV_SHL || k == Kind::BV_SHR || k == Kind::BV_EXTRACT)
     {
       cur = cur[0];
     }
@@ -1286,8 +1196,8 @@ PassNormalize::rebuild_top(const Node& node,
     if (inserted)
     {
       k = cur.kind();
-      if (k == Kind::BV_NOT || k == Kind::BV_SHL || k == Kind::BV_SHR
-          || k == Kind::BV_EXTRACT)
+      if ((k == Kind::BV_NOT && cur[0].kind() != Kind::BV_ADD)
+          || k == Kind::BV_SHL || k == Kind::BV_SHR || k == Kind::BV_EXTRACT)
       {
         visit.push_back(cur[0]);
         // Other children stay the same
@@ -1338,128 +1248,6 @@ PassNormalize::rebuild_top(const Node& node,
   return cache.at(node);
 }
 
-namespace {
-#if 0
-void
-_count_kinds(const Node& node,
-             std::unordered_set<Node>& cache,
-             std::unordered_map<Kind, uint64_t>& kinds)
-{
-  std::vector<Node> visit{node};
-  do
-  {
-    Node cur = visit.back();
-    visit.pop_back();
-    auto [it, inserted] = cache.insert(cur);
-    if (inserted)
-    {
-      kinds[cur.kind()] += 1;
-      visit.insert(visit.end(), cur.begin(), cur.end());
-    }
-  } while (!visit.empty());
-}
-
-std::unordered_map<Kind, uint64_t>
-_count_kinds(AssertionVector& assertions)
-{
-  std::unordered_map<Kind, uint64_t> kinds;
-  std::unordered_set<Node> cache;
-  for (size_t i = 0, size = assertions.size(); i < size; ++i)
-  {
-    const Node& assertion = assertions[i];
-    _count_kinds(assertion, cache, kinds);
-  }
-  return kinds;
-}
-
-void
-print_diff(const std::unordered_map<Kind, uint64_t>& before,
-           const std::unordered_map<Kind, uint64_t>& after)
-{
-  std::unordered_set<Kind> kinds;
-  std::cout << "*** before:" << std::endl;
-  std::vector<std::pair<int64_t, Kind>> pairs;
-  for (auto [k, v] : before)
-  {
-    std::cout << v << ": " << k << std::endl;
-    auto it = after.find(k);
-    if (it != after.end())
-    {
-      pairs.emplace_back(it->second - v, k);
-    }
-  }
-  for (auto [k, v] : after)
-  {
-    auto it = before.find(k);
-    if (it == before.end())
-    {
-      pairs.emplace_back(v, k);
-    }
-  }
-
-  std::cout << "*** diff:" << std::endl;
-  std::sort(pairs.begin(), pairs.end());
-  for (auto [v, k] : pairs)
-  {
-    if (v != 0)
-    {
-      std::cout << std::showpos << v << std::noshowpos << ": " << k
-                << std::endl;
-    }
-  }
-}
-#endif
-
-Node
-rewrite_term(NodeManager& nm,
-             const Node& cur,
-             const std::vector<Node>& children)
-{
-  Kind k = cur.kind();
-
-  if (k == Kind::EQUAL)
-  {
-    Node mul, val;
-    if (children[0].kind() == Kind::BV_MUL)
-    {
-      mul = children[0];
-      val = children[1];
-    }
-    else if (children[1].kind() == Kind::BV_MUL)
-    {
-      mul = children[1];
-      val = children[0];
-    }
-
-    // ((a / b) * b) = 0 --> b = 0 \/ b > a
-    if (!val.is_null() && val.is_value() && val.value<BitVector>().is_zero())
-    {
-      Node udiv, t;
-      if (mul[0].kind() == Kind::BV_UDIV)
-      {
-        udiv = mul[0];
-        t    = mul[1];
-      }
-      else if (mul[1].kind() == Kind::BV_UDIV)
-      {
-        udiv = mul[1];
-        t    = mul[0];
-      }
-
-      if (!udiv.is_null() && udiv[1] == t)
-      {
-        return nm.mk_node(Kind::OR,
-                          {nm.mk_node(Kind::EQUAL, {t, val}),
-                           nm.mk_node(Kind::BV_UGT, {t, udiv[0]})});
-      }
-    }
-  }
-
-  return cur;
-}
-
-}  // namespace
-
 void
 PassNormalize::apply(AssertionVector& assertions)
 {
@@ -1476,7 +1264,9 @@ PassNormalize::apply(AssertionVector& assertions)
     const Node& assertion = assertions[i];
     if (!processed(assertion) && !inconsistent)
     {
-      const Node& processed = d_env.rewriter().rewrite(process(assertion));
+      Node proc = process(assertion);
+      assert(proc == process(assertion));
+      const Node& processed = d_rewriter.rewrite(proc);
       assertions_pass1.push_back(processed);
       to_process = true;
       if (processed.is_value() && !processed.value<bool>())
@@ -1505,11 +1295,11 @@ PassNormalize::apply(AssertionVector& assertions)
     {
       // Only compute score if assertions differ
       if (assertions[i] != assertions_pass1[i]
-          || assertions[i] == assertions_pass2[i])
+          || assertions[i] != assertions_pass2[i])
       {
         score_before.add(assertions[i]);
-        score_pass1.add(assertions_pass1[i]);
-        score_pass2.add(assertions_pass2[i]);
+        score_pass1.add(d_env.rewriter().rewrite(assertions_pass1[i]));
+        score_pass2.add(d_env.rewriter().rewrite(assertions_pass2[i]));
 
         if (assertions_pass2[i].is_value()
             && !assertions_pass2[i].value<bool>())
@@ -1539,11 +1329,13 @@ PassNormalize::apply(AssertionVector& assertions)
         // Pass1 score computed and is better than original score.
         if (score_pass1.done() && score_pass1.score() < score_before.score())
         {
+          ++d_stats.num_pass1_successful;
           break;
         }
         // Pass2 score computed and is better than original score.
         if (score_pass2.done() && score_pass2.score() < score_before.score())
         {
+          ++d_stats.num_pass2_successful;
           break;
         }
         // Original score computed, none of the passes was better.
@@ -1576,11 +1368,12 @@ PassNormalize::apply(AssertionVector& assertions)
     assert(assertions_normalized.size() == assertions.size());
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
+      Node norm_assertion = d_env.rewriter().rewrite(assertions_normalized[i]);
       cache_assertion(assertions[i]);
-      if (assertions[i] != assertions_normalized[i])
+      if (assertions[i] != norm_assertion)
       {
-        cache_assertion(assertions_normalized[i]);
-        assertions.replace(i, assertions_normalized[i]);
+        cache_assertion(norm_assertion);
+        assertions.replace(i, norm_assertion);
         ++d_stats.num_normalized_assertions;
       }
     }
@@ -1589,178 +1382,146 @@ PassNormalize::apply(AssertionVector& assertions)
   d_cache.clear();
 }
 
-namespace {
-/**
- * Distributive multiplication (recursive up to a given depth).
- *
- * - (bvmul (bvshl x s) r) -> (bvshl (bvmul x r) s)
- * - (bvmul l (bvshl x s)) -> (bvshl (bvmul x l) s)
- * - (bvmul (bvadd x s) r) -> (bvadd (bvmul x r) (bvmul (s r)))
- * - (bvmul l (bvadd x s)) -> (bvadd (bvmul x l) (bvmul (s l)))
- *
- * @param left  The left operand of the multiplication.
- * @param right The right operand of the multiplication.
- * @param depth The recursion depth.
- * @return The resulting node.
- */
-Node
-distrib_mul(NodeManager& nm, const Node& left, const Node& right, uint8_t depth)
-{
-  if (depth && left.kind() == Kind::BV_SHL && !right.is_value())
-  {
-    return nm.mk_node(Kind::BV_SHL,
-                      {distrib_mul(nm, left[0], right, depth - 1), left[1]});
-  }
-  if (depth && right.kind() == Kind::BV_SHL && !left.is_value())
-  {
-    return nm.mk_node(Kind::BV_SHL,
-                      {distrib_mul(nm, right[0], left, depth - 1), right[1]});
-  }
-  if (depth && left.kind() == Kind::BV_ADD && !right.is_value())
-  {
-    return nm.mk_node(Kind::BV_ADD,
-                      {distrib_mul(nm, left[0], right, depth - 1),
-                       distrib_mul(nm, left[1], right, depth - 1)});
-  }
-  if (depth && right.kind() == Kind::BV_ADD && !left.is_value())
-  {
-    return nm.mk_node(Kind::BV_ADD,
-                      {distrib_mul(nm, right[0], left, depth - 1),
-                       distrib_mul(nm, right[1], left, depth - 1)});
-  }
-  return nm.mk_node(Kind::BV_MUL, {left, right});
-}
-
-}  // namespace
-
 Node
 PassNormalize::process(const Node& node)
 {
   NodeManager& nm = d_env.nm();
   Node _node      = d_rewriter.rewrite(node);
-  bool normalized = false;
+
+  node_ref_vector visit{_node};
   do
   {
-    normalized = false;
-    node_ref_vector visit{_node};
-
-    do
+    const Node& cur     = visit.back();
+    auto [it, inserted] = d_cache.emplace(cur, Node());
+    if (inserted)
     {
-      const Node& cur     = visit.back();
-      auto [it, inserted] = d_cache.emplace(cur, Node());
-      if (inserted)
+      // Do not use scoring for bit-vectors larger than 64.
+      if (d_enable_scoring && cur.type().is_bv() && cur.type().bv_size() > 64)
       {
-        // Do not use scoring for bit-vectors larger than 64.
-        if (d_enable_scoring && cur.type().is_bv() && cur.type().bv_size() > 64)
-        {
-          d_enable_scoring = false;
-          Log(1) << "Disable AIG scoring, found bit-vector of size "
-                 << cur.type().bv_size();
-        }
-        visit.insert(visit.end(), cur.begin(), cur.end());
-        continue;
+        d_enable_scoring = false;
+        Log(1) << "Disable AIG scoring, found bit-vector of size "
+               << cur.type().bv_size();
       }
-      else if (it->second.is_null())
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      std::vector<Node> children;
+      for (const Node& child : cur)
       {
-        std::vector<Node> children;
-        for (const Node& child : cur)
-        {
-          auto itc = d_cache.find(child);
-          assert(itc != d_cache.end());
-          assert(!itc->second.is_null());
-          children.push_back(itc->second);
-        }
+        auto itc = d_cache.find(child);
+        assert(itc != d_cache.end());
+        assert(!itc->second.is_null());
+        children.push_back(itc->second);
+      }
 
-        Kind k = cur.kind();
-        if (k == Kind::EQUAL)
+      Kind k = cur.kind();
+      if (k == Kind::EQUAL)
+      {
+        bool norm;
+        Node res = utils::rebuild_node(nm, cur, children);
+        Node prev_res1, prev_res2, prev_res3, prev_res4;
+
+#ifndef NDEBUG
+        std::unordered_set<Node> norm_cache;
+#endif
+
+        // Apply normalization until fixed point.
+        while (true)
         {
-          bool norm = false;
-          Node res;
+          assert(norm_cache.insert(res).second);
           // normalize: sum = sum
           // normalize: product = product
-          if (children[0].kind() == children[1].kind()
-              && (children[0].kind() == Kind::BV_ADD
-                  || children[0].kind() == Kind::BV_MUL))
+          if (prev_res1 != res && res.kind() == Kind::EQUAL
+              && res[0].kind() == res[1].kind()
+              && (res[0].kind() == Kind::BV_ADD
+                  || res[0].kind() == Kind::BV_MUL))
           {
-            std::tie(res, norm) =
-                normalize_eq(children[0].kind(), children[0], children[1]);
-          }
-          // normalize: sum = t
-          else if (children[0].kind() == Kind::BV_ADD
-                   || children[1].kind() == Kind::BV_ADD)
-          {
-            std::tie(res, norm) =
-                normalize_eq(Kind::BV_ADD, children[0], children[1]);
-          }
-          // normalize: top(sum|product) = top(sum|product)
-          else
-          {
-            std::tie(res, norm) =
-                normalize_comm_assoc(k, children[0], children[1]);
+            std::tie(res, norm) = normalize_eq(res[0].kind(), res[0], res[1]);
+            if (norm)
+            {
+              d_stats.num_normalizations += 1;
+              res = d_rewriter.rewrite(res);
+              assert(prev_res1 != res);
+              prev_res1 = res;
+              continue;
+            }
           }
 
-          if (norm)
+          // normalize: sum = t
+          if (prev_res2 != res && res.kind() == Kind::EQUAL
+              && (res[0].kind() == Kind::BV_ADD
+                  || res[1].kind() == Kind::BV_ADD))
           {
-            d_stats.num_normalizations += 1;
-            normalized = true;
-            it->second = res;
+            std::tie(res, norm) = normalize_eq(Kind::BV_ADD, res[0], res[1]);
+            if (norm)
+            {
+              d_stats.num_normalizations += 1;
+              res = d_rewriter.rewrite(res);
+              assert(prev_res2 != res);
+              prev_res2 = res;
+              continue;
+            }
           }
-          else
+
+          // normalize: product = t
+          if (prev_res3 != res && res.kind() == Kind::EQUAL
+              && (((res[0].kind() == Kind::BV_MUL
+                    || res[1].kind() == Kind::BV_MUL)
+                   && (res[0].kind() != res[1].kind()))
+                  || res[0].kind() == Kind::BV_SHL
+                  || res[1].kind() == Kind::BV_SHL))
           {
-            it->second = rewrite_term(nm, cur, children);
+            std::tie(res, norm) = normalize_eq(Kind::BV_MUL, res[0], res[1]);
+            if (norm)
+            {
+              d_stats.num_normalizations += 1;
+              res = d_rewriter.rewrite(res);
+              assert(prev_res3 != res);
+              prev_res3 = res;
+              continue;
+            }
           }
-        }
-        else if (k == Kind::BV_ULT || k == Kind::BV_SLT)
-        {
-          auto [res, norm] = normalize_comm_assoc(k, children[0], children[1]);
-          it->second       = res;
-          if (norm)
+
+          //  normalize: top(sum|product) = top(sum|product)
+          if (prev_res4 != res && res.kind() == Kind::EQUAL
+              && (res[0].kind() != Kind::BV_ADD && res[0].kind() != Kind::BV_MUL
+                  && res[1].kind() != Kind::BV_ADD
+                  && res[1].kind() != Kind::BV_MUL))
           {
-            d_stats.num_normalizations += 1;
-            normalized = true;
+            std::tie(res, norm) = normalize_comm_assoc(k, res[0], res[1]);
+            if (norm)
+            {
+              d_stats.num_normalizations += 1;
+              res = d_rewriter.rewrite(res);
+              assert(prev_res4 != res);
+              prev_res4 = res;
+              continue;
+            }
           }
+          break;
         }
-        // Pull up extracts (undoing some of the rewrites for now)
-        else if ((k == Kind::BV_ADD || k == Kind::BV_MUL)
-                 && children[0].kind() == children[1].kind()
-                 && children[0].kind() == Kind::BV_EXTRACT
-                 && children[0].index(1) == 0 && children[1].index(1) == 0)
+        it->second = res;
+      }
+      else if (k == Kind::BV_ULT || k == Kind::BV_SLT)
+      {
+        auto [res, norm] = normalize_comm_assoc(k, children[0], children[1]);
+        it->second       = res;
+        if (norm)
         {
-          const auto& a = children[0][0];
-          const auto& b = children[1][0];
-          Node t        = b < a ? nm.mk_node(k, {b, a}) : nm.mk_node(k, {a, b});
-          it->second = nm.mk_node(Kind::BV_EXTRACT, {t}, children[0].indices());
-        }
-        // Multiply by power of two
-        else if (k == Kind::BV_CONCAT && children[1].is_value()
-                 && children[1].value<BitVector>().is_zero()
-                 && children[0].kind() == Kind::BV_EXTRACT
-                 && children[0].index(1) == 0
-                 && children[0][0].type() == cur.type())
-        {
-          uint64_t tz = cur[1].value<BitVector>().count_trailing_zeros();
-          assert(tz <= std::numeric_limits<uint32_t>::max());
-          auto pow2 =
-              nm.mk_value(BitVector::mk_one(cur.type().bv_size()).ibvshl(tz));
-          it->second = nm.mk_node(Kind::BV_MUL, {pow2, children[0][0]});
-        }
-        else if (k == Kind::BV_MUL)
-        {
-          it->second =
-              d_rewriter.rewrite(distrib_mul(nm, children[0], children[1], 5));
-        }
-        else
-        {
-          it->second = node::utils::rebuild_node(nm, cur, children);
+          d_stats.num_normalizations += 1;
         }
       }
-      visit.pop_back();
-    } while (!visit.empty());
-    if (normalized)
-    {
-      _node = d_cache.at(_node);
+      else
+      {
+        it->second = node::utils::rebuild_node(nm, cur, children);
+      }
+      it->second = d_rewriter.rewrite(it->second);
     }
-  } while (normalized);
+    visit.pop_back();
+  } while (!visit.empty());
+
   auto it = d_cache.find(_node);
   assert(it != d_cache.end());
   return d_rewriter.rewrite(it->second);
@@ -1812,6 +1573,24 @@ sort_cmp(const std::unordered_map<Node, std::vector<uint64_t>>& occs_sort,
     }
   }
   return ra.id() < rb.id() || (ra.id() == rb.id() && a.id() < b.id());
+}
+
+void
+remove_zero_occs(PassNormalize::OccMap& occs)
+{
+  util::Integer zero;
+  auto it = occs.begin();
+  while (it != occs.end())
+  {
+    if (it->second == zero)
+    {
+      it = occs.erase(it);
+    }
+    else
+    {
+      ++it;
+    }
+  }
 }
 
 }  // namespace
@@ -1934,8 +1713,8 @@ PassNormalize::normalize_adders(const std::vector<Node>& assertions,
   std::unordered_map<Node, Node> subst_cache;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    norm_assertions.push_back(d_env.rewriter().rewrite(
-        substitute(assertions[i], results, subst_cache)));
+    norm_assertions.push_back(
+        d_rewriter.rewrite(substitute(assertions[i], results, subst_cache)));
   }
 }
 
@@ -1957,7 +1736,7 @@ PassNormalize::collect_adders(const std::vector<Node>& assertions,
       {
         auto [it, inserted] = adders.emplace(cur, OccMap());
         assert(inserted);
-        compute_occurrences(cur, cur.kind(), it->second);
+        compute_occurrences_add(cur, it->second);
         for (const auto& [node, occ] : it->second)
         {
           visit.push_back(node);
@@ -1977,6 +1756,8 @@ PassNormalize::Statistics::Statistics(util::Statistics& stats,
                                       const std::string& prefix)
     : time_normalize_add(
           stats.new_stat<util::TimerStatistic>(prefix + "time_normalize_add")),
+      time_normalize_mul(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_normalize_mul")),
       time_compute_occurrences(
           stats.new_stat<util::TimerStatistic>(prefix + "time_compute_occs")),
       time_adder_chains(
@@ -1984,8 +1765,12 @@ PassNormalize::Statistics::Statistics(util::Statistics& stats,
       time_score(stats.new_stat<util::TimerStatistic>(prefix + "time_score")),
       num_normalizations(
           stats.new_stat<uint64_t>(prefix + "num_normalizations")),
+      num_common_normalizations(
+          stats.new_stat<uint64_t>(prefix + "num_common_normalizations")),
       num_normalized_assertions(
-          stats.new_stat<uint64_t>(prefix + "num_normalized_assertions"))
+          stats.new_stat<uint64_t>(prefix + "num_normalized_assertions")),
+      num_pass1_successful(stats.new_stat<uint64_t>(prefix + "num_pass1")),
+      num_pass2_successful(stats.new_stat<uint64_t>(prefix + "num_pass2"))
 {
 }
 

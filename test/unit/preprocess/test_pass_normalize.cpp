@@ -78,7 +78,14 @@ class TestPassNormalize : public TestPreprocessingPass
       bool consider_neg)
   {
     PassNormalize::OccMap occs;
-    d_pass->compute_occurrences(node, node.kind(), occs);
+    if (node.kind() == Kind::BV_ADD)
+    {
+      d_pass->compute_occurrences_add(node, occs);
+    }
+    else
+    {
+      d_pass->compute_occurrences_mul(node, occs);
+    }
 
     if (consider_neg)
     {
@@ -163,8 +170,16 @@ class TestPassNormalize : public TestPreprocessingPass
       bool consider_neg)
   {
     PassNormalize::OccMap occs0, occs1;
-    d_pass->compute_occurrences(node[0], node[0].kind(), occs0);
-    d_pass->compute_occurrences(node[1], node[1].kind(), occs1);
+    if (node[0].kind() == Kind::BV_ADD)
+    {
+      d_pass->compute_occurrences_add(node[0], occs0);
+      d_pass->compute_occurrences_add(node[1], occs1);
+    }
+    else
+    {
+      d_pass->compute_occurrences_mul(node[0], occs0);
+      d_pass->compute_occurrences_mul(node[1], occs1);
+    }
 
     test_compute_occurrences(node[0], expected0, consider_neg);
     test_compute_occurrences(node[1], expected1, consider_neg);
@@ -207,7 +222,6 @@ TEST_F(TestPassNormalize, normalize_add1)
 {
   PassNormalize::OccMap occs{{a, 2}, {b, 1}, {two, 1}, {one, 2}};
   auto val = d_pass->normalize_add(a, occs);
-  d_pass->remove_zero_occs(occs);
 
   PassNormalize::OccMap occs_exp = {{a, 2}, {b, 1}};
 
@@ -219,9 +233,8 @@ TEST_F(TestPassNormalize, normalize_add2)
 {
   PassNormalize::OccMap occs{{a, 2}, {b, 1}, {inv(b), 1}, {one, 1}};
   auto val = d_pass->normalize_add(a, occs);
-  d_pass->remove_zero_occs(occs);
 
-  PassNormalize::OccMap occs_exp = {{a, 2}};
+  PassNormalize::OccMap occs_exp = {{a, 2}, {b, 0}};
 
   ASSERT_EQ(val, BitVector::from_ui(d_bv_type.bv_size(), 0));
   ASSERT_EQ(occs_exp, occs);
@@ -231,7 +244,6 @@ TEST_F(TestPassNormalize, normalize_add3)
 {
   PassNormalize::OccMap occs{{a, 2}, {b, 1}, {add(a, b), 1}};
   auto val = d_pass->normalize_add(a, occs);
-  d_pass->remove_zero_occs(occs);
 
   PassNormalize::OccMap occs_exp = {{a, 3}, {b, 2}};
 
@@ -243,7 +255,6 @@ TEST_F(TestPassNormalize, normalize_add4)
 {
   PassNormalize::OccMap occs{{a, 2}, {b, 1}, {mul(two, add(a, b)), 1}};
   auto val = d_pass->normalize_add(a, occs);
-  d_pass->remove_zero_occs(occs);
 
   PassNormalize::OccMap occs_exp = {{a, 4}, {b, 3}};
 
@@ -255,9 +266,8 @@ TEST_F(TestPassNormalize, normalize_add5)
 {
   PassNormalize::OccMap occs{{a, 2}, {b, 1}, {inv(add(a, b)), 1}};
   auto val = d_pass->normalize_add(a, occs);
-  d_pass->remove_zero_occs(occs);
 
-  PassNormalize::OccMap occs_exp = {{a, 1}};
+  PassNormalize::OccMap occs_exp = {{a, 1}, {b, 0}};
 
   ASSERT_EQ(val, BitVector::mk_ones(d_bv_type.bv_size()));
   ASSERT_EQ(occs_exp, occs);
@@ -267,9 +277,8 @@ TEST_F(TestPassNormalize, normalize_add6)
 {
   PassNormalize::OccMap occs{{mul(ones, add(a, b)), 1}};
   auto val = d_pass->normalize_add(a, occs);
-  d_pass->remove_zero_occs(occs);
 
-  PassNormalize::OccMap occs_exp = {{a, -1}, {b, -1}};
+  PassNormalize::OccMap occs_exp = {{a, 255}, {b, 255}};
 
   ASSERT_EQ(val, BitVector::from_ui(d_bv_type.bv_size(), 0));
   ASSERT_EQ(occs_exp, occs);
@@ -458,10 +467,7 @@ TEST_F(TestPassNormalize, compute_occurrences_neg0)
   Node add_ad_e_ab = add(add_ad, add_e_ab);
   Node add0        = add(add_ab, add_ad_e_ab);
 
-  test_compute_occurrences(
-      add0,
-      {{a, 1}, {inv(a), 0}, {b, 2}, {d, 1}, {inv(e), 1}, {one, 1}, {two, 0}},
-      true);
+  test_compute_occurrences(add0, {{a, 1}, {b, 2}, {d, 1}, {e, -1}}, true);
 }
 
 TEST_F(TestPassNormalize, compute_occurrences_neg1)
@@ -700,7 +706,7 @@ TEST_F(TestPassNormalize, mul_normalize1)
 
   // common: abde
   // a * common = c * common
-  Node common = mul(mul(mul(a, b), d), e);
+  Node common = mul(mul(a, b), mul(d, e));
   Node exp    = equal(mul(a, common), mul(c, common));
 
   test_assertion(equal(mul0, mul1), exp);
@@ -721,7 +727,7 @@ TEST_F(TestPassNormalize, mul_normalize2)
 
   // common: abce
   // d * common = a * common
-  Node common = mul(mul(mul(a, b), c), e);
+  Node common = mul(mul(a, b), mul(c, e));
   Node exp    = equal(mul(d, common), mul(a, common));
 
   test_assertion(equal(mul0, mul1), exp);
@@ -743,7 +749,7 @@ TEST_F(TestPassNormalize, mul_normalize3)
 
   // common: (ab)cde
   // common = (ab) * common
-  Node common = mul(mul(mul(mul(a, b), c), d), e);
+  Node common = mul(mul(mul(a, b), e), mul(c, d));
   Node exp    = equal(common, mul(mul(a, b), common));
 
   test_assertion(equal(mul0, mul1), exp);
@@ -1077,10 +1083,7 @@ TEST_F(TestPassNormalize, add_normalize6)
   Node add_ab_ab_ab_ab = add(add_ab_ab, add_ab_ab);
   Node add1            = add(add_a_ab_ab, add_ab_ab_ab_ab);
 
-  Node a4 = mul(four, a);
-  Node b4 = mul(four, b);
-
-  test_assertion(equal(add0, add1), equal(add(d, e), add(a4, b4)));
+  test_assertion(equal(add0, add1), equal(add(d, e), mul(four, add(a, b))));
 }
 
 TEST_F(TestPassNormalize, add_normalize7)
@@ -1101,7 +1104,7 @@ TEST_F(TestPassNormalize, add_normalize7)
 
   test_assertion(
       equal(add0, add1),
-      equal(add(add(add(a, b), e), mul_ad), add(add(c, d), mul_a_cd)));
+      equal(add(add(add(a, b), e), mul_ad), add(add(c, d), mul(d, mul(a, c)))));
 }
 
 TEST_F(TestPassNormalize, add_normalize8)
@@ -1123,7 +1126,7 @@ TEST_F(TestPassNormalize, add_normalize8)
   test_assertion(
       equal(add0, add1),
       equal(add(add(e, mul_ad), d_nm.mk_node(Kind::ITE, {d_true, zero, one})),
-            add(add(c, d), mul_a_cd)));
+            add(add(c, d), mul(d, mul(a, c)))));
 }
 
 TEST_F(TestPassNormalize, add_normalize9)
@@ -1269,10 +1272,8 @@ TEST_F(TestPassNormalize, add_normalize13)
 TEST_F(TestPassNormalize, add_normalize_neg0)
 {
   // (a + b) = (-b + -a)
-  Node a2 = mul(two, a);
-  Node b2 = mul(two, b);
   test_assertion(equal(add(a, b), add(neg(b), neg(a))),
-                 equal(add(a2, b2), zero));
+                 equal(mul(two, add(a, b)), zero));
 }
 
 TEST_F(TestPassNormalize, add_normalize_neg1)
@@ -1290,7 +1291,7 @@ TEST_F(TestPassNormalize, add_normalize_neg2)
   // actual: 2a = b - 1
   test_assertion(equal(add(add(add(a, inv(b)), c), two),
                        add(add(neg(b), neg(a)), add(b, c))),
-                 equal(mul(two, a), add(b, ones)));
+                 equal(add(one, mul(two, a)), b));
 }
 
 TEST_F(TestPassNormalize, add_normalize_neg3)
@@ -1334,7 +1335,7 @@ TEST_F(TestPassNormalize, add_normalize_neg5)
   // expected: 3a 2b c == -2
   test_assertion(
       equal(add0, add1),
-      equal(d_nm.mk_value(BitVector::from_si(8, -2)), add(add(m3a, c), m2b)));
+      equal(d_nm.mk_value(BitVector::from_si(8, -2)), add(add(m3a, m2b), c)));
 }
 //(not (= s (bvadd (bvadd (bvadd s t) (bvmul s t)) (bvmul t (bvnot s)))))
 
@@ -1348,7 +1349,7 @@ TEST_F(TestPassNormalize, mk_node1)
   ASSERT_EQ(d_pass->mk_node(Kind::BV_MUL, occs2), mul(aa, aa));
 
   PassNormalize::OccMap occs3{{a, 5}};
-  ASSERT_EQ(d_pass->mk_node(Kind::BV_MUL, occs3), mul(mul(aa, aa), a));
+  ASSERT_EQ(d_pass->mk_node(Kind::BV_MUL, occs3), mul(a, mul(aa, aa)));
 }
 
 #if 0 // Disable code until new normalization code is merged back.

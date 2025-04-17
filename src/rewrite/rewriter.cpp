@@ -1188,7 +1188,7 @@ Rewriter::rewrite_bv_ashr(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_ASHR_EVAL);
     BZLA_APPLY_RW_RULE(BV_ASHR_SPECIAL_CONST);
-    BZLA_APPLY_RW_RULE(BV_ASHR_CONST);
+    // BZLA_APPLY_RW_RULE(BV_ASHR_CONST);
   }
 
 DONE:
@@ -1267,11 +1267,7 @@ Rewriter::rewrite_bv_mul(const Node& node)
     BZLA_APPLY_RW_RULE(BV_MUL_ZERO);
     BZLA_APPLY_RW_RULE(BV_MUL_ONE);
     BZLA_APPLY_RW_RULE(BV_MUL_ONES);
-    if (d_arithmetic)
-    {
-      BZLA_APPLY_RW_RULE(NORM_BV_MUL_POW2_REV);
-    }
-    else
+    if (!d_arithmetic)
     {
       BZLA_APPLY_RW_RULE(BV_MUL_POW2);
     }

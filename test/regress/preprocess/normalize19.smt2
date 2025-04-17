@@ -1,0 +1,5 @@
+(set-info :status sat)
+(declare-const __ (_ BitVec 2))
+(declare-const f (_ BitVec 1))
+(assert (not (= (_ bv0 32) (bvadd (_ bv1 32) (_ bv1 32) (_ bv1 32) (_ bv1 32) (_ bv1 32) (bvsub (bvand (_ bv3 32) ((_ extract 31 0) (bvadd ((_ zero_extend 56) ((_ extract 7 0) ((_ extract 31 0) (bvadd ((_ zero_extend 63) f) ((_ zero_extend 63) f))))) ((_ zero_extend 56) ((_ extract 7 0) (bvadd ((_ zero_extend 30) __) ((_ extract 31 0) (bvadd ((_ zero_extend 63) f) ((_ zero_extend 63) f))))))))) (_ bv8 32))))))
+(check-sat)
