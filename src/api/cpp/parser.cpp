@@ -127,6 +127,12 @@ Parser::bitwuzla()
   return d_parser->bitwuzla();
 }
 
+void Parser::configure_terminator(bitwuzla::Terminator* terminator)
+{
+  assert(d_parser);
+  d_parser->configure_terminator(terminator);
+}
+
 Parser::~Parser() {}
 
 /* -------------------------------------------------------------------------- */

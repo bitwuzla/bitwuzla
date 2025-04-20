@@ -151,6 +151,8 @@ class Parser
    */
   std::shared_ptr<bitwuzla::Bitwuzla> bitwuzla();
 
+  void configure_terminator(bitwuzla::Terminator* terminator);
+
  private:
   std::unique_ptr<bzla::parser::Parser> d_parser;
 };
