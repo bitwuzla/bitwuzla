@@ -14,6 +14,7 @@
 #include <bitwuzla/enums.h>
 #include <bitwuzla/option.h>
 
+#include <cstdint>
 #include <functional>
 #include <iostream>
 #include <map>
