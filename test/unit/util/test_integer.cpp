@@ -1,6 +1,7 @@
+#include <gtest/gtest.h>
+
 #include <cstdint>
 
-#include "gtest/gtest.h"
 #include "test.h"
 #include "util/integer.h"
 

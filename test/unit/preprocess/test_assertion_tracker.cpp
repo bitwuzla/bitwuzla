@@ -8,7 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+
 #include "node/node_manager.h"
 #include "preprocess/assertion_tracker.h"
 

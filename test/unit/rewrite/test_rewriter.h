@@ -8,8 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <gtest/gtest.h>
+
 #include "env.h"
-#include "gtest/gtest.h"
 #include "node/kind_info.h"
 #include "node/node_manager.h"
 #include "rewrite/rewriter.h"

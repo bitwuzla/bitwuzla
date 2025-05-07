@@ -8,7 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+
 #include "printer/printer.h"
 #include "solver/fp/symfpu_nm.h"
 #include "test/unit/rewrite/test_rewriter.h"

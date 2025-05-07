@@ -8,8 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <gtest/gtest.h>
+
 #include "backtrack/assertion_stack.h"
-#include "gtest/gtest.h"
 #include "node/node_manager.h"
 
 namespace bzla::test {

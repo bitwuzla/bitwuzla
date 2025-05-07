@@ -8,8 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <gtest/gtest.h>
+
 #include "backtrack/object.h"
-#include "gtest/gtest.h"
 
 namespace bzla::test {
 

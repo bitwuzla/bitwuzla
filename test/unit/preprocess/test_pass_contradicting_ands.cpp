@@ -8,7 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+
 #include "option/option.h"
 #include "preprocess/pass/contradicting_ands.h"
 #include "test/unit/preprocess/test_preprocess_pass.h"

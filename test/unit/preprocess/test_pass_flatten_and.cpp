@@ -8,8 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <gtest/gtest.h>
+
 #include "backtrack/backtrackable.h"
-#include "gtest/gtest.h"
 #include "preprocess/pass/flatten_and.h"
 #include "test/unit/preprocess/test_preprocess_pass.h"
 

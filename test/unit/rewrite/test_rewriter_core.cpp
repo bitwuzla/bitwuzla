@@ -8,8 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <gtest/gtest.h>
+
 #include "bv/bitvector.h"
-#include "gtest/gtest.h"
 #include "node/node_manager.h"
 #include "rewrite/rewrites_core.h"
 #include "solver/fp/floating_point.h"

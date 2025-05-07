@@ -8,7 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+
 #include "preprocess/pass/normalize.h"
 #include "rewrite/rewriter.h"
 #include "test/unit/preprocess/test_preprocess_pass.h"

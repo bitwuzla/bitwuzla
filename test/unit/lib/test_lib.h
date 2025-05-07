@@ -11,11 +11,12 @@
 #ifndef BZLALS__TEST__TEST_H
 #define BZLALS__TEST__TEST_H
 
+#include <gtest/gtest.h>
+
 #include <cmath>
 #include <string>
 
 #include "bv/bitvector.h"
-#include "gtest/gtest.h"
 #include "rng/rng.h"
 #include "test.h"
 

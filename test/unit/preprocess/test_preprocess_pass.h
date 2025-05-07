@@ -8,9 +8,10 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <gtest/gtest.h>
+
 #include "backtrack/assertion_stack.h"
 #include "env.h"
-#include "gtest/gtest.h"
 #include "node/node_manager.h"
 #include "rewrite/rewriter.h"
 
