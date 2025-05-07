@@ -13,11 +13,13 @@ host = run_command(host_compiler, '-dumpmachine',
                    capture: true, check: true).stdout().strip()
 build = run_command(build_compiler, '-dumpmachine',
                    capture: true, check: true).stdout().strip()
-
 env = environment()
 if meson.is_cross_build()
   env.set('CC_FOR_BUILD', build_compiler.get_id())
 endif
+
+# GCC-15 defaults to gnu23, which GMP doesn't like (yet).
+env.set('CFLAGS', '-std=gnu17')
 
 p = mod.add_project('configure',
   configure_options: [

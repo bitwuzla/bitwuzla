@@ -7,9 +7,23 @@ cpp_compiler = meson.get_compiler('cpp')
 
 # External dependencies
 gmp_dep = dependency('gmp',
-                     version: '>=6.1',
+                     version: '>=6.3',
                      required: true,
                      static: build_static)
+
+# Check if static GMP library is really available. dependency() only tries to
+# get the static dependency, but will return the shared one if the static is
+# not available.
+if build_static and gmp_dep.found()
+  gmp_dep = cpp_compiler.find_library('gmp',
+                                      has_headers: ['gmp.h', 'gmpxx.h'],
+                                      static: true,
+                                      required: false)
+  # If we don't find the static library, build the GMP subproject as fallback.
+  if not gmp_dep.found()
+    gmp_dep = subproject('gmp-6.3.0').get_variable('gmp_dep')
+  endif
+endif
 
 
 # Subproject dependencies
