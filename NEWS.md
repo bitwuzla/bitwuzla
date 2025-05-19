@@ -3,6 +3,11 @@
 This file collects a summary of important and/or user-visible changes.
 
 
+- Refactored and improved arithmetic **normalization**, fixed issue related to
+  arithmetic normalization (issue #168).
+
+- Fixed shadow handling of let bindings (issue #169).
+
 - Bumped **CaDiCaL** to version 2.1.2.
 
 - Added API support for **converting** a floating-point value to a Real string.
@@ -16,9 +21,9 @@ This file collects a summary of important and/or user-visible changes.
 - Fixed error handling when parsing parameters of `define-fun`.
 
 - New options to print AIG and CNF of current bit-vector abstraction.
-  - --write-aiger=<name>.[aig|aag]: writes binary or ASCII AIGER to specified
-    filename, format chosen based on suffix (aig: binary, aag: ascii).
-  - --write-cnf=<name>: writes CNF in DIMACS format to specified filename.
+  - `--write-aiger=<name>.[aig|aag]`: writes binary or ASCII AIGER to specified
+    filename, format chosen based on suffix (`aig`: binary, `aag`: ascii).
+  - `--write-cnf=<name>`: writes CNF in DIMACS format to specified filename.
 
 ## News for version 0.7.0
 
