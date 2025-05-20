@@ -83,8 +83,6 @@ enum class Option
   PP_VARIABLE_SUBST_NORM_EQ,       // bool
   PP_VARIABLE_SUBST_NORM_DISEQ,    // bool
 
-  DBG_RW_NODE_THRESH,    // numeric
-  DBG_PP_NODE_THRESH,    // numeric
   DBG_CHECK_MODEL,       // bool
   DBG_CHECK_UNSAT_CORE,  // bool
 
@@ -589,8 +587,6 @@ class Options
   OptionBool pp_variable_subst_norm_bv_ineq;
 
   // Debug options
-  OptionNumeric dbg_rw_node_thresh;
-  OptionNumeric dbg_pp_node_thresh;
   OptionBool dbg_check_model;
   OptionBool dbg_check_unsat_core;
 

@@ -13,10 +13,7 @@
 #include "env.h"
 #include "node/node_kind.h"
 #include "node/node_manager.h"
-#include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-#include "node/unordered_node_ref_set.h"
-#include "util/logger.h"
 
 #define BZLA_APPLY_RW_RULE(rw_rule)                                \
   do                                                               \
@@ -46,46 +43,6 @@
 namespace bzla {
 
 using namespace node;
-
-#ifndef NDEBUG
-namespace {
-
-std::pair<size_t, size_t>
-diff(uint64_t max_id, const Node& rewritten)
-{
-  node::node_ref_vector visit{rewritten};
-  std::vector<size_t> depths{0};
-  size_t max_depth = 0;
-  node::unordered_node_ref_set cache;
-  do
-  {
-    const Node& cur = visit.back();
-    size_t depth    = depths.back();
-    visit.pop_back();
-    depths.pop_back();
-    if (cur.id() < max_id)
-    {
-      continue;
-    }
-    if (depth > max_depth)
-    {
-      max_depth = depth;
-    }
-    auto [it, inserted] = cache.insert(cur);
-    if (inserted)
-    {
-      visit.insert(visit.end(), cur.begin(), cur.end());
-      for (size_t i = 0; i < cur.num_children(); ++i)
-      {
-        depths.push_back(depth + 1);
-      }
-    }
-  } while (!visit.empty());
-  return std::make_pair(cache.size(), max_depth);
-}
-
-}  // namespace
-#endif
 
 /* === Rewriter public ====================================================== */
 
@@ -139,19 +96,8 @@ Rewriter::rewrite(const Node& node)
 #ifndef NDEBUG
         // Reset nodes counter
         d_num_nodes = 0;
-        // Save current maximum node id
-        int64_t max_id = d_env.nm().max_node_id();
 #endif
         it->second = _rewrite(d_preproc_cache.rebuild_node(nm(), cur));
-#ifndef NDEBUG
-        uint64_t thresh = d_env.options().dbg_rw_node_thresh();
-        if (thresh > 0 && d_num_nodes > 0)
-        {
-          auto [new_nodes, depth] = diff(max_id, it->second);
-          Warn(new_nodes >= thresh) << "_rewrite() introduced " << new_nodes
-                                    << " new nodes up to depth " << depth;
-        }
-#endif
       }
       else
       {

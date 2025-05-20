@@ -636,25 +636,6 @@ enum ENUM(Option)
   EVALUE(PP_VARIABLE_SUBST_NORM_BV_INEQ),
 
   /*!
-   * **Debug: Recursive rewrite threshold.**
-   *
-   * Threshold for number of new nodes introduced for recursive call of
-   * rewrite(). Prints a warning when number of newly introduced nodes is above
-   * threshold.
-   *
-   * @warning This is an expert debug option.
-   */
-  EVALUE(DBG_RW_NODE_THRESH),
-  /*!
-   * **Debug: Formula size increase threshold.**
-   *
-   * Threshold for formula size increase after preprocessing in percent. Prints
-   * a warning if formula size increase is above threshold.
-   *
-   * @warning This is an expert debug option.
-   */
-  EVALUE(DBG_PP_NODE_THRESH),
-  /*!
    * **Debug: Check models for each satisfiable query.**
    *
    * @warning This is an expert debug option.

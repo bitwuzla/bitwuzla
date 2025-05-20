@@ -423,26 +423,6 @@ Options::Options()
           "pp-variable-subst-norm-bv-ineq"),
 
       // Debugging
-      dbg_rw_node_thresh(
-          this,
-          Option::DBG_RW_NODE_THRESH,
-          0,
-          0,
-          UINT64_MAX,
-          "warn threshold [#] for new nodes created through rewriting steps",
-          "dbg-rw-node-thresh",
-          nullptr,
-          true),
-      dbg_pp_node_thresh(this,
-                         Option::DBG_PP_NODE_THRESH,
-                         0,
-                         0,
-                         100,
-                         "warn threshold [%] for new nodes created through "
-                         "preprocessing in total",
-                         "dbg-pp-node-thresh",
-                         nullptr,
-                         true),
       dbg_check_model(this,
                       Option::DBG_CHECK_MODEL,
                       config::is_debug_build,
@@ -800,8 +780,6 @@ Options::data(Option opt)
     case Option::PP_VARIABLE_SUBST_NORM_DISEQ:
       return &pp_variable_subst_norm_diseq;
 
-    case Option::DBG_RW_NODE_THRESH: return &dbg_rw_node_thresh;
-    case Option::DBG_PP_NODE_THRESH: return &dbg_pp_node_thresh;
     case Option::DBG_CHECK_MODEL: return &dbg_check_model;
     case Option::DBG_CHECK_UNSAT_CORE: return &dbg_check_unsat_core;
 

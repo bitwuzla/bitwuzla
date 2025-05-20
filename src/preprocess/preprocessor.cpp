@@ -21,26 +21,6 @@
 
 namespace bzla::preprocess {
 
-#ifndef NDEBUG
-namespace {
-void
-count_nodes(const Node& node, std::unordered_set<Node>& cache)
-{
-  node::node_ref_vector visit{node};
-  do
-  {
-    const Node& cur = visit.back();
-    visit.pop_back();
-    auto [it, inserted] = cache.insert(cur);
-    if (inserted)
-    {
-      visit.insert(visit.end(), cur.begin(), cur.end());
-    }
-  } while (!visit.empty());
-}
-}  // namespace
-#endif
-
 Preprocessor::Preprocessor(SolvingContext& context)
     : d_env(context.env()),
       d_logger(d_env.logger()),
@@ -221,17 +201,6 @@ Preprocessor::apply(AssertionVector& assertions)
     return;
   }
 
-#ifndef NDEBUG
-  std::unordered_set<Node> cache_pre;
-  if (d_env.options().dbg_pp_node_thresh())
-  {
-    for (size_t i = 0; i < assertions.size(); ++i)
-    {
-      count_nodes(assertions[i], cache_pre);
-    }
-  }
-#endif
-
   auto& options = d_env.options();
   // Only apply skeleton preprocessing once to the initial assertions to
   // limit the overhead.
@@ -402,24 +371,6 @@ Preprocessor::apply(AssertionVector& assertions)
       }
     }
   }
-
-#ifndef NDEBUG
-  if (d_env.options().dbg_pp_node_thresh())
-  {
-    double thresh = 1 + d_env.options().dbg_pp_node_thresh() / 100.0;
-    std::unordered_set<Node> cache_post;
-    for (size_t i = 0; i < assertions.size(); ++i)
-    {
-      count_nodes(assertions[i], cache_post);
-    }
-    double ratio = cache_post.size() / static_cast<double>(cache_pre.size());
-    Warn(ratio >= thresh) << "Preprocessed assertions contain "
-                          << std::setprecision(3) << (ratio - 1) * 100
-                          << "% more nodes than original assertions ("
-                          << cache_pre.size() << " vs. " << cache_post.size()
-                          << ")";
-  }
-#endif
 }
 
 void
