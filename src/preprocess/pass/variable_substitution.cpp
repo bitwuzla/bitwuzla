@@ -569,7 +569,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     util::Timer timer(d_stats.time_register);
     for (size_t i = 0; i < assertions.size(); ++i)
     {
-      const Node& assertion  = assertions[i];
+      const Node assertion = assertions[i];
       if (!cache_assertion(assertion))
       {
         continue;
@@ -584,13 +584,10 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
         if (!normalized.empty())
         {
           // Explicitly add normalized assertion that was derived from
-          // assertion. Note: Do not use assertion here since this reference may
-          // become
-          //       invalid when resizing the assertions vector.
-          Node parent = assertion;
+          // assertion.
           for (const auto& n : normalized)
           {
-            assertions.push_back(n, parent);
+            assertions.push_back(n, assertion);
           }
         }
         continue;
