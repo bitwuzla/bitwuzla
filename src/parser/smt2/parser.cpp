@@ -22,8 +22,9 @@ Parser::Parser(bitwuzla::TermManager& tm,
                bitwuzla::Options& options,
                std::ostream* out)
     : bzla::parser::Parser(tm, options, out),
-      d_decl_funs(nullptr),
-      d_decl_sorts(nullptr)
+      d_decl_funs(&d_backtrack_mgr),
+      d_decl_sorts(&d_backtrack_mgr),
+      d_named_assertions(&d_backtrack_mgr)
 {
   d_lexer.reset(new Lexer());
   d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
@@ -893,8 +894,7 @@ Parser::parse_command_pop()
     {
       d_table.pop_level(d_assertion_level);
       d_assertion_level -= 1;
-      d_decl_funs.pop();
-      d_decl_sorts.pop();
+      d_backtrack_mgr.pop();
     }
   }
   d_bitwuzla->pop(nlevels);
@@ -923,8 +923,7 @@ Parser::parse_command_push()
   {
     for (uint64_t i = 0; i < nlevels; ++i)
     {
-      d_decl_funs.push();
-      d_decl_sorts.push();
+      d_backtrack_mgr.push();
     }
   }
   print_success();
@@ -2145,7 +2144,7 @@ Parser::close_term_bang(ParsedItem& item)
       set_item(item, Token::TERM, symbol->d_term);
       if (d_record_named_assertions)
       {
-        d_named_assertions[symbol->d_term] = symbol;
+        d_named_assertions.emplace(symbol->d_term, symbol);
       }
     }
     // all other attributes are ignored

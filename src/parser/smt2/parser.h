@@ -11,6 +11,7 @@
 #ifndef BZLA_PARSER_SMT2_PARSER_H_INCLUDED
 #define BZLA_PARSER_SMT2_PARSER_H_INCLUDED
 
+#include "backtrack/unordered_map.h"
 #include "backtrack/vector.h"
 #include "parser/parser.h"
 #include "parser/smt2/lexer.h"
@@ -784,6 +785,9 @@ class Parser : public bzla::parser::Parser
   void print_work_control_stack();
 #endif
 
+  /** Manager for backtrackable data structures (on push/pop). */
+  backtrack::BacktrackManager d_backtrack_mgr;
+
   /** The associated SMT-LIB2 lexer. */
   std::unique_ptr<Lexer> d_lexer;
   /** The associated symbol table. */
@@ -850,8 +854,12 @@ class Parser : public bzla::parser::Parser
    * be recorded in d_named_assertions.
    */
   bool d_record_named_assertions = false;
-  /** A map from annotated (:named) assertions to their named symbol. */
-  std::unordered_map<bitwuzla::Term, SymbolTable::Node*> d_named_assertions;
+  /**
+   * A stack (organized by assertion level) with maps from annotated (:named)
+   * assertions to their named symbol.
+   */
+  backtrack::unordered_map<bitwuzla::Term, SymbolTable::Node*>
+      d_named_assertions;
 
   /** The set of currently active assumptions. */
   std::unordered_map<bitwuzla::Term, std::string> d_assumptions;
