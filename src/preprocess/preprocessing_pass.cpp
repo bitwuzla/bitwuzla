@@ -76,16 +76,13 @@ PreprocessingPass::substitute(const Node& node,
   {
     const Node& cur     = visit.back();
 
-    if (d_preproc_cache.frozen(cur))
-    {
-      cache.emplace(cur, cur);
-      visit.pop_back();
-      continue;
-    }
-
     auto [it, inserted] = cache.emplace(cur, Node());
     if (inserted)
     {
+      if (d_preproc_cache.frozen(cur))
+      {
+        continue;
+      }
       visit.insert(visit.end(), cur.begin(), cur.end());
       continue;
     }
@@ -96,6 +93,10 @@ PreprocessingPass::substitute(const Node& node,
       {
         it->second = its->second;
         num_substs += 1;
+      }
+      else if (d_preproc_cache.frozen(cur))
+      {
+        it->second = cur;
       }
       else
       {
