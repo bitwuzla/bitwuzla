@@ -84,7 +84,7 @@ class AigScore
   /** Cached to store bit-blasted terms and their encoded bits. */
   std::unordered_map<Node, bitblast::AigBitblaster::Bits> d_bitblaster_cache;
   /** Node to process. */
-  node::node_ref_vector d_visit;
+  std::vector<Node> d_visit;
 };
 
 void
