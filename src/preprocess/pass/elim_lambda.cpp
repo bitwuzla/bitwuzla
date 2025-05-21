@@ -61,19 +61,16 @@ PassElimLambda::process(const Node& term)
 
     if (inserted)
     {
+      if (!cur.node_info().lambda)
+      {
+        it->second = cur;
+        continue;
+      }
       visit.insert(visit.end(), cur.begin(), cur.end());
       continue;
     }
     else if (it->second.is_null())
     {
-      std::vector<Node> children;
-      for (const Node& child : cur)
-      {
-        auto iit = d_cache.find(child);
-        assert(iit != d_cache.end());
-        children.push_back(iit->second);
-      }
-
       // Eliminate function applications on lambdas
       if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
       {
@@ -82,6 +79,14 @@ PassElimLambda::process(const Node& term)
       }
       else
       {
+        std::vector<Node> children;
+        for (const Node& child : cur)
+        {
+          auto iit = d_cache.find(child);
+          assert(iit != d_cache.end());
+          children.push_back(iit->second);
+        }
+
         it->second = utils::rebuild_node(d_env.nm(), cur, children);
       }
     }
