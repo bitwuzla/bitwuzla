@@ -13,7 +13,6 @@
 #include <iomanip>
 
 #include "env.h"
-#include "node/node_ref_vector.h"
 #include "preprocess/simplify_cache.h"
 #include "solving_context.h"
 #include "util/logger.h"
