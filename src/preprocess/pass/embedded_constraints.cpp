@@ -46,15 +46,30 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
   {
     const Node& assertion = assertions[i];
     if (assertion.is_value()) continue;
+
+    if (assertion.kind() == Kind::EQUAL)
+    {
+      if (assertion[0].is_value())
+      {
+        n_substs += 1;
+        d_substitutions.emplace(assertion[1], assertion[0]);
+        continue;
+      }
+      else if (assertion[1].is_value())
+      {
+        n_substs += 1;
+        d_substitutions.emplace(assertion[0], assertion[1]);
+        continue;
+      }
+    }
+
     if (assertion.is_inverted())
     {
-      assert(!assertion[0].is_const());
       n_substs += 1;
       d_substitutions.emplace(assertion[0], nm.mk_value(false));
     }
     else
     {
-      assert(!assertion.is_const());
       n_substs += 1;
       d_substitutions.emplace(assertion, nm.mk_value(true));
     }
@@ -69,17 +84,51 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    const Node& ass       = assertion.is_inverted() ? assertion[0] : assertion;
-    if (ass.num_children() > 0)
+
+    if (assertion.kind() == Kind::EQUAL)
+    {
+      if (assertion[0].is_value() && assertion[1].num_children() > 0)
+      {
+        std::vector<Node> children;
+        for (const Node& child : assertion[1])
+        {
+          children.push_back(_process(child, cache));
+        }
+        Node rewritten =
+            nm.mk_node(assertion[1].kind(), children, assertion[1].indices());
+        rewritten = nm.mk_node(Kind::EQUAL, {assertion[0], rewritten});
+        assertions.replace(i, rewritten);
+        continue;
+      }
+      else if (assertion[1].is_value() && assertion[0].num_children() > 0)
+      {
+        std::vector<Node> children;
+        for (const Node& child : assertion[0])
+        {
+          children.push_back(_process(child, cache));
+        }
+        Node rewritten =
+            nm.mk_node(assertion[0].kind(), children, assertion[0].indices());
+        rewritten = nm.mk_node(Kind::EQUAL, {rewritten, assertion[1]});
+        assertions.replace(i, rewritten);
+        continue;
+      }
+      else if (assertion[0].is_value() || assertion[1].is_value())
+      {
+        continue;
+      }
+    }
+
+    const Node& as = assertion.is_inverted() ? assertion[0] : assertion;
+    if (as.num_children() > 0)
     {
       std::vector<Node> children;
-      for (const Node& child : ass)
+      for (const Node& child : as)
       {
         children.push_back(_process(child, cache));
       }
-      Node rewritten = ass.num_indices() > 0
-                           ? nm.mk_node(ass.kind(), children, ass.indices())
-                           : nm.mk_node(ass.kind(), children);
+      assert(as.num_indices() == 0);
+      Node rewritten = nm.mk_node(as.kind(), children);
       if (assertion.is_inverted())
       {
         rewritten = nm.invert_node(rewritten);
