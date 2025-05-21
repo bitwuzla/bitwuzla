@@ -343,7 +343,7 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
   // Initialize MBQI solver
   NodeManager& nm = d_env.nm();
   option::Options options;
-  options.abstraction.set(d_env.options().abstraction());
+  options.abstraction.set(false);
   options.pp_normalize.set(false);
   d_mbqi_solver.reset(new SolvingContext(d_env.nm(), options, "mbqi", true));
 
