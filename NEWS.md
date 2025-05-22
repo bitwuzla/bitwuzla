@@ -3,6 +3,10 @@
 This file collects a summary of important and/or user-visible changes.
 
 
+- **Abstraction module** (option `--abstraction`) for abstracting bit-vector
+  arithmetic operators, is now enabled by default. Default minimum bit-vector
+  size for abstraction (option `--abstraction-bv-size`) is now 33.
+
 - Refactored and improved arithmetic **normalization**, fixed issue related to
   arithmetic normalization (issue #168).
 
