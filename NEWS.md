@@ -2,6 +2,7 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News for version 0.8.0
 
 - **Abstraction module** (option `--abstraction`) for abstracting bit-vector
   arithmetic operators, is now enabled by default. Default minimum bit-vector
