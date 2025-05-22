@@ -24,8 +24,9 @@ sys.path.insert(0, '@current_source_dir@/extensions/')
 
 # -- Project information -----------------------------------------------------
 
+from datetime import datetime
 project = 'Bitwuzla'
-copyright = '2023, the authors of Bitwuzla'
+copyright = f'{datetime.now().year}, the authors of Bitwuzla'
 author = 'The authors of Bitwuzla'
 version = '@version@'
 
