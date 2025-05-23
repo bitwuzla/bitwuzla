@@ -142,6 +142,9 @@ endif
 if get_option('fpexp')
   cpp_args += ['-DBZLA_USE_FPEXP']
 endif
+if get_option('unit_testing').enabled()
+  cpp_args += ['-DBZLA_ENABLE_UNIT_TESTING']
+endif
 
 # Add unit tests
 foreach p : unit_tests

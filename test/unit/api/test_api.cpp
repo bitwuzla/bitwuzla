@@ -2791,7 +2791,6 @@ TEST_F(TestApi, terms_indexed)
 
 TEST_F(TestApi, terms)
 {
-#ifndef NDEBUG
   bitwuzla::Sort array_sort = d_tm.mk_array_sort(d_bv_sort16, d_bv_sort16);
   std::vector<bitwuzla::Sort> domain = {d_bv_sort16, d_bv_sort16, d_bv_sort16};
   bitwuzla::Sort fun_sort            = d_tm.mk_fun_sort(domain, d_bv_sort16);
@@ -2971,8 +2970,10 @@ TEST_F(TestApi, terms)
         break;
 
       case bitwuzla::Kind::FP_FP:
-        term = d_tm.mk_term(
-            kind, {d_tm.mk_const(d_tm.mk_bv_sort(1)), bv_args[0], bv_args[1]});
+        term = d_tm.mk_term(kind,
+                            {d_tm.mk_const(d_tm.mk_bv_sort(1)),
+                             d_tm.mk_const(d_tm.mk_bv_sort(5)),
+                             d_tm.mk_const(d_tm.mk_bv_sort(10))});
         break;
 
       // FP Quaternery
@@ -3111,7 +3112,6 @@ TEST_F(TestApi, terms)
   // bitwuzla::Term const_array = d_tm.mk_const_array(array_sort, bv_val);
   // ASSERT_EQ(const_array.kind(), bitwuzla::Kind::VALUE);
   // ASSERT_TRUE(const_array.children().empty());
-#endif
 }
 
 TEST_F(TestApi, substitute)

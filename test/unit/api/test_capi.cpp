@@ -5039,7 +5039,10 @@ TEST_F(TestCApi, terms)
         break;
 
       case BITWUZLA_KIND_FP_FP: {
-        std::vector<BitwuzlaTerm> args = {d_bv_const1, bv_args[0], bv_args[1]};
+        std::vector<BitwuzlaTerm> args = {
+            d_bv_const1,
+            bitwuzla_mk_const(d_tm, bitwuzla_mk_bv_sort(d_tm, 5), nullptr),
+            bitwuzla_mk_const(d_tm, bitwuzla_mk_bv_sort(d_tm, 10), nullptr)};
         term = bitwuzla_mk_term(d_tm, kind, args.size(), args.data());
         break;
       }

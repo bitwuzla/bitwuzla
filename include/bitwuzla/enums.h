@@ -1774,7 +1774,8 @@ enum ENUM(Kind)
    *   * `bitwuzla::mk_term()`
    */
   EVALUE(FP_TO_UBV),
-#if (!defined(NDEBUG) || defined(BITWUZLA_API_USE_C_ENUMS))
+#if (!defined(NDEBUG) || defined(BITWUZLA_API_USE_C_ENUMS) \
+     || defined(BZLA_ENABLE_UNIT_TESTING))
 #ifndef DOXYGEN_SKIP
   EVALUE(NUM_KINDS),
 #endif
