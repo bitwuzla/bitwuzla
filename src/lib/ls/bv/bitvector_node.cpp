@@ -4810,7 +4810,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
       bool res = false;
       if (gen.has_random())
       {
-#ifndef NDEBUG
+#if defined(BZLA_ENABLE_UNIT_TESTING)
         // We only enumerate in debug for the unit tests, they fail otherwise
         // as the limit is too low for how comprehensive the tests are.
         if (size <= 4)

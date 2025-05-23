@@ -34,6 +34,10 @@ cpp_args_bb_lib = []
 if aiger_dep.found()
   cpp_args_bb_lib += ['-DBZLA_USE_AIGER']
 endif
+cpp_args_ls_lib = []
+if enable_unit_testing
+  cpp_args_ls_lib += ['-DBZLA_ENABLE_UNIT_TESTING']
+endif
 
 # RNG support library
 rng_lib = static_library('bzlarng',
@@ -63,7 +67,8 @@ local_search_lib = library('bitwuzlals',
                            link_whole: rng_lib,
                            dependencies: gmp_dep,
                            install_rpath: install_rpath,
-                           install: true)
+                           install: true,
+                           cpp_args: cpp_args_ls_lib)
 
 # Exported dependencies
 #inc = include_directories('.')
