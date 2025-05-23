@@ -152,6 +152,25 @@ const char* bitwuzla_parser_get_error_msg(BitwuzlaParser* parser);
  */
 Bitwuzla* bitwuzla_parser_get_bitwuzla(BitwuzlaParser* parser);
 
+/**
+ * Get current parser statistics.
+ *
+ * The statistics are retrieved as a mapping from statistic name (`keys`)
+ * to statistic value (`values`).
+ *
+ * @param parser The Bitwuzla parser instance.
+ * @param keys   The resulting set of statistic names.
+ * @param values The resulting set of statistic values.
+ * @param size   The resulting size of `keys` and `values`.
+ *
+ * @note Output parameters `keys` and `values` are only valid until the
+ *       next call to `bitwuzla_parser_get_statistics()`.
+ */
+void bitwuzla_parser_get_statistics(BitwuzlaParser* parser,
+                                    const char*** keys,
+                                    const char*** values,
+                                    size_t* size);
+
 /** @} */
 
 #endif

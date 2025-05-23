@@ -137,6 +137,9 @@ class Parser
   /** @return The error message. */
   const std::string& error_msg() { return d_error; }
 
+  /** @return The current parser statistics. */
+  virtual std::map<std::string, std::string> statistics() const { return {}; }
+
  protected:
   /** Initialize Bitwuzla instance. */
   void init_bitwuzla()

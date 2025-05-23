@@ -151,6 +151,13 @@ class Parser
    */
   std::shared_ptr<bitwuzla::Bitwuzla> bitwuzla();
 
+  /**
+   * Get current parser statistics.
+   * @return A map of strings of statistics entries, maps statistic name
+   *         to value.
+   */
+  std::map<std::string, std::string> statistics() const;
+
  private:
   std::unique_ptr<bzla::parser::Parser> d_parser;
 };

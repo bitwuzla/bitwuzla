@@ -75,6 +75,7 @@ main(int32_t argc, char* argv[])
     if (options.get(bitwuzla::Option::VERBOSITY))
     {
       auto stats = bitwuzla->statistics();
+      stats.merge(parser.statistics());
       for (auto& [name, val] : stats)
       {
         std::cout << name << ": " << val << std::endl;

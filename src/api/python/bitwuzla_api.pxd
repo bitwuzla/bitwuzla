@@ -313,5 +313,6 @@ cdef extern from "bitwuzla/cpp/parser.h" namespace "bitwuzla::parser":
         vector[Term] get_declared_funs() except +raise_error
         string error_msg() except +raise_error
         shared_ptr[Bitwuzla] bitwuzla() except +raise_error
+        map[string, string] statistics() except +raise_error
 
 # -------------------------------------------------------------------------- #

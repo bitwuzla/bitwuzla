@@ -127,6 +127,12 @@ Parser::bitwuzla()
   return d_parser->bitwuzla();
 }
 
+std::map<std::string, std::string>
+Parser::statistics() const
+{
+  return d_parser->statistics();
+}
+
 Parser::~Parser() {}
 
 /* -------------------------------------------------------------------------- */

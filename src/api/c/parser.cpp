@@ -223,3 +223,32 @@ bitwuzla_parser_get_bitwuzla(BitwuzlaParser* parser)
   BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
+
+void
+bitwuzla_parser_get_statistics(BitwuzlaParser* parser,
+                               const char*** keys,
+                               const char*** values,
+                               size_t* size)
+{
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(parser);
+  BITWUZLA_CHECK_NOT_NULL(keys);
+  BITWUZLA_CHECK_NOT_NULL(values);
+  BITWUZLA_CHECK_NOT_NULL(size);
+  static thread_local std::vector<const char*> rkeys;
+  static thread_local std::vector<const char*> rvalues;
+  static thread_local std::map<std::string, std::string> stats;
+  rkeys.clear();
+  rvalues.clear();
+  stats.clear();
+  stats = parser->d_parser->statistics();
+  for (auto& [key, value] : stats)
+  {
+    rkeys.push_back(key.c_str());
+    rvalues.push_back(value.c_str());
+  }
+  *keys   = rkeys.data();
+  *values = rvalues.data();
+  *size   = rkeys.size();
+  BITWUZLA_C_TRY_CATCH_END;
+}

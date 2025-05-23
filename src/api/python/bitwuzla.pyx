@@ -1628,3 +1628,12 @@ cdef class Parser:
            :return: The Bitwuzla instance.
         """
         return Bitwuzla.from_shared_ptr(self.tm, self.c_parser.get().bitwuzla())
+
+    def statistics(self) -> dict[str, str]:
+        """Get current statistics.
+
+           :return: A map of strings of statistics entries, maps statistic name
+                    to value.
+        """
+        return {_to_str(k): _to_str(v)
+                for [k, v] in self.c_parser.get().statistics()}
