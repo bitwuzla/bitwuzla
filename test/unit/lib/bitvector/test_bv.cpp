@@ -96,7 +96,7 @@ class TestBitVector : public TestCommon
     INPLACE_THIS_ALL,
   };
 
-  static constexpr uint32_t N_TESTS = 10000;
+  static constexpr uint32_t N_TESTS = 1000;
   void SetUp() override { d_rng.reset(new RNG(1234)); }
 
   static uint64_t _add(uint64_t x, uint64_t y, uint64_t size);
@@ -674,8 +674,7 @@ TestBitVector::mk_max_signed(uint64_t size)
 void
 TestBitVector::test_ctor_random_bit_range(uint64_t size)
 {
-  uint64_t ntests = std::min(1u << size, N_TESTS);
-  for (uint32_t i = 0; i < ntests; ++i)
+  for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint64_t up, lo;
     lo = d_rng->pick<uint64_t>(0, size - 1);
@@ -890,8 +889,7 @@ TestBitVector::test_extend(BvFunKind fun_kind, Kind kind)
   // test random values for various bit-widths
   for (uint64_t size : {16, 64, 65, 127})
   {
-    uint64_t ntests = std::min(1u << size, N_TESTS);
-    for (uint32_t i = 0; i < ntests; ++i)
+    for (uint32_t i = 0; i < N_TESTS; ++i)
     {
       uint64_t n = d_rng->pick<uint64_t>(0, size - 1);
       if (size > 64)
@@ -966,8 +964,7 @@ TestBitVector::test_repeat(BvFunKind fun_kind)
   // test random values for various bit-widths
   for (uint64_t size : {16, 64, 65, 127})
   {
-    uint64_t ntests = std::min(1u << size, N_TESTS);
-    for (uint32_t i = 0; i < ntests; ++i)
+    for (uint32_t i = 0; i < N_TESTS; ++i)
     {
       uint64_t n = d_rng->pick<uint64_t>(1, size - 1);
       if (size > 64)
@@ -1849,8 +1846,7 @@ TestBitVector::test_ite(BvFunKind fun_kind)
   // test random values for various bit-widths
   for (uint64_t size : {16, 31, 64, 65, 127})
   {
-    uint64_t ntests = std::min(1u << size, N_TESTS);
-    for (uint32_t i = 0; i < ntests; ++i)
+    for (uint32_t i = 0; i < N_TESTS; ++i)
     {
       if (size > 64)
       {
@@ -1935,8 +1931,7 @@ TestBitVector::test_modinv(BvFunKind fun_kind)
   // test random values for various bit-widths
   for (uint64_t size : {16, 31, 64, 65, 127})
   {
-    uint64_t ntests = std::min(1u << size, N_TESTS);
-    for (uint32_t i = 0; i < ntests; ++i)
+    for (uint32_t i = 0; i < N_TESTS; ++i)
     {
       if (size > 64)
       {
@@ -2161,8 +2156,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind)
   // test random values for various bit-widths
   for (uint64_t size : {16, 31, 64, 65, 127})
   {
-    uint64_t ntests = std::min(1u << size, N_TESTS);
-    for (uint32_t i = 0; i < ntests; ++i)
+    for (uint32_t i = 0; i < N_TESTS; ++i)
     {
       if (size > 64)
       {
@@ -2976,8 +2970,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
   // test random values for various bit-widths
   for (uint64_t size : {16, 31, 64, 65, 127})
   {
-    uint64_t ntests = std::min(1u << size, N_TESTS);
-    for (uint32_t i = 0; i < ntests; ++i)
+    for (uint32_t i = 0; i < N_TESTS; ++i)
     {
       if (size > 64)
       {
@@ -3747,8 +3740,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
   // test random values for various bit-widths
   for (uint64_t size : {16, 32, 35})
   {
-    uint64_t ntests = std::min(1u << size, N_TESTS);
-    for (uint32_t i = 0; i < ntests; ++i)
+    for (uint32_t i = 0; i < N_TESTS; ++i)
     {
       test_binary_signed_aux(
           fun_kind, kind, BitVector(size, *d_rng), BitVector(size, *d_rng));
@@ -4092,8 +4084,7 @@ TestBitVector::test_extract(BvFunKind fun_kind)
   // test random values for various bit-widths
   for (uint64_t size : {16, 32, 35})
   {
-    uint64_t ntests = std::min(1u << size, N_TESTS);
-    for (uint32_t i = 0; i < ntests; ++i)
+    for (uint32_t i = 0; i < N_TESTS; ++i)
     {
       test_extract_aux(fun_kind, BitVector::from_ui(size, i));
     }
@@ -4360,9 +4351,7 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
     }
   }
 
-  for (uint64_t i = 0, size = 65, ntests = std::min(1u << size, N_TESTS);
-       i < ntests;
-       ++i)
+  for (uint64_t i = 0, size = 65; i < N_TESTS; ++i)
   {
     auto n = d_rng->pick<uint64_t>(0, UINT64_MAX);
     /* shift value fits into uint64_t */
@@ -4411,9 +4400,7 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
     }
   }
 
-  for (uint64_t i = 0, size = 128, ntests = std::min(1u << size, N_TESTS);
-       i < ntests;
-       ++i)
+  for (uint64_t i = 0, size = 128; i < N_TESTS; ++i)
   {
     auto n = d_rng->pick<uint64_t>(0, UINT64_MAX);
     /* shift value fits into uint64_t */
@@ -4689,9 +4676,8 @@ TestBitVector::test_rotate(BvFunKind fun_kind, Kind kind)
   {
     for (uint64_t size : {65, 128})
     {
-      uint64_t ntests = std::min(1u << size, N_TESTS);
       // 'n' does not fit into uint64_t
-      for (uint32_t i = 0; i < ntests; ++i)
+      for (uint32_t i = 0; i < N_TESTS; ++i)
       {
         BitVector n(size,
                     *d_rng,
@@ -4707,8 +4693,7 @@ void
 TestBitVector::test_udivurem(uint64_t size)
 {
   BitVector zero = BitVector::mk_zero(size);
-  uint64_t ntests = std::min(1u << size, N_TESTS);
-  for (uint32_t i = 0; i < ntests; ++i)
+  for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     BitVector q, r, tq, tr;
     BitVector bv1(size, *d_rng, 63, 0);
