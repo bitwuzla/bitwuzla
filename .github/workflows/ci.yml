@@ -13,14 +13,14 @@ jobs:
 
         include:
           - name: release
-            config: --testing --no-unit-testing --python
+            config: --testing --unit-testing --python
 
           - name: debug
             config: debug --python --cryptominisat --kissat
 
           - name: release-clang
             os: ubuntu-latest
-            config: --testing --no-unit-testing --python --cryptominisat --kissat
+            config: --testing --unit-testing --python --cryptominisat --kissat
             env: CC=clang CXX=clang++
 
           - name: debug-clang
