@@ -371,6 +371,7 @@ Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
     }
     if (!parse_only)
     {
+      util::Timer timer(d_statistics.time_check_sat);
       d_result = d_bitwuzla->check_sat(assumptions);
     }
   }
@@ -382,6 +383,7 @@ Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
     }
     if (!parse_only)
     {
+      util::Timer timer(d_statistics.time_check_sat);
       d_result = d_bitwuzla->check_sat();
     }
   }
@@ -3762,13 +3764,16 @@ Parser::print_work_control_stack()
 /* Parser::Statistics ------------------------------------------------------- */
 
 Parser::Statistics::Statistics()
-    : num_assertions(d_stats.new_stat<uint64_t>("parser::smt2:num_assertions")),
-      num_check_sat(d_stats.new_stat<uint64_t>("parser::smt2:num_check_sat")),
-      num_commands(d_stats.new_stat<uint64_t>("parser::smt2:num_commands")),
-      num_exit(d_stats.new_stat<uint64_t>("parser::smt2:num_exit")),
-      num_set_logic(d_stats.new_stat<uint64_t>("parser::smt2:num_set_logic")),
+    : num_assertions(
+          d_stats.new_stat<uint64_t>("parser::smt2::num_assertions")),
+      num_check_sat(d_stats.new_stat<uint64_t>("parser::smt2::num_check_sat")),
+      num_commands(d_stats.new_stat<uint64_t>("parser::smt2::num_commands")),
+      num_exit(d_stats.new_stat<uint64_t>("parser::smt2::num_exit")),
+      num_set_logic(d_stats.new_stat<uint64_t>("parser::smt2::num_set_logic")),
       time_parse(
-          d_stats.new_stat<util::TimerStatistic>("parser::smt2::time_parse"))
+          d_stats.new_stat<util::TimerStatistic>("parser::smt2::time_parse")),
+      time_check_sat(d_stats.new_stat<util::TimerStatistic>(
+          "parser::smt2::time_check_sat"))
 {
 }
 

@@ -47,6 +47,11 @@ class Parser : public bzla::parser::Parser
   std::vector<bitwuzla::Sort> get_declared_sorts() const override;
   std::vector<bitwuzla::Term> get_declared_funs() const override;
 
+  std::map<std::string, std::string> statistics() const override
+  {
+    return d_statistics.d_stats.get();
+  }
+
  private:
   /** A parsed item. */
   struct ParsedItem
@@ -905,6 +910,7 @@ class Parser : public bzla::parser::Parser
      *       solver (check-sat, get-model, ...).
      */
     util::TimerStatistic& time_parse;
+    util::TimerStatistic& time_check_sat;
 
   } d_statistics;
 };

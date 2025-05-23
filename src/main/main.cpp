@@ -76,6 +76,7 @@ main(int32_t argc, char* argv[])
     {
       auto& os   = parser.diagnostic_output_stream();
       auto stats = bitwuzla->statistics();
+      stats.merge(parser.statistics());
       for (auto& [name, val] : stats)
       {
         os << name << ": " << val << std::endl;

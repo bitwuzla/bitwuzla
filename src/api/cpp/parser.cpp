@@ -140,6 +140,12 @@ Parser::diagnostic_output_stream() const
   return d_parser->diagnostic_output_channel();
 }
 
+std::map<std::string, std::string>
+Parser::statistics() const
+{
+  return d_parser->statistics();
+}
+
 Parser::~Parser() {}
 
 /* -------------------------------------------------------------------------- */

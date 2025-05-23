@@ -141,6 +141,9 @@ class Parser
   /** @return The diagnostic output channel. */
   std::ostream& diagnostic_output_channel() { return *d_diag_out; }
 
+  /** @return The current parser statistics. */
+  virtual std::map<std::string, std::string> statistics() const { return {}; }
+
  protected:
   /** Initialize Bitwuzla instance. */
   void init_bitwuzla()

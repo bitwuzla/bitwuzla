@@ -39,6 +39,11 @@ This file collects a summary of important and/or user-visible changes.
     - C API: `bitwuzla_options_set_diagnostic_output_stream(BitwuzlaOptions*, const char* filename)`
     - Python API: not supported
 
+ - Add support for retrieving parser statistics.
+    - C++ API: `std::map<std::string, std::string> Parser::statistics()`
+    - C API: `bitwuzla_parser_get_statistics(BitwuzlaParser*, const char***, const char***, size_t*)`
+    - Python API: `Parser.statistics()`
+
 ## News for version 0.8.2
 
 - Fixed issue with model values in MBQI solver (#185).
