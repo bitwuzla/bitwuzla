@@ -24,6 +24,9 @@ TestBvNode::test_normalize_bounds(const BitVector& min_u,
                                   const BitVectorRange& lo_exp,
                                   const BitVectorRange& hi_exp)
 {
+  (void) lo_exp;
+  (void) hi_exp;
+
   BitVectorNode node(d_rng.get(), 4);
   if (!min_u.is_null())
   {

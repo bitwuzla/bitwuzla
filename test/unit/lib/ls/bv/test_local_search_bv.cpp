@@ -234,6 +234,7 @@ TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
                    || res == Result::UNSAT);
             assert(res == Result::UNSAT || res == Result::SAT);
             assert(res == Result::UNSAT || ls.get_assignment(root).is_true());
+#ifndef NDEBUG
             auto stats = ls.statistics();
             assert(stats.num_moves == 0
                    || (stats.num_props > 0
@@ -241,6 +242,7 @@ TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
             assert(stats.num_moves == 0
                    || (stats.num_updates > 0
                        && stats.num_updates <= 3 * stats.num_moves));
+#endif
             (void) res;
           }
 
@@ -273,6 +275,7 @@ TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
                    || res == Result::UNSAT);
             assert(res == Result::UNSAT || res == Result::SAT);
             assert(res == Result::UNSAT || ls.get_assignment(root).is_true());
+#ifndef NDEBUG
             auto stats = ls.statistics();
             assert(stats.num_moves == 0
                    || (stats.num_props > 0
@@ -280,6 +283,7 @@ TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
             assert(stats.num_moves == 0
                    || (stats.num_updates > 0
                        && stats.num_updates <= 3 * stats.num_moves));
+#endif
           }
         } while (genx.has_next());
       }
