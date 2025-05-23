@@ -149,6 +149,9 @@ class TestBitVector : public TestCommon
   BitVector mk_ones(uint64_t size);
   BitVector mk_min_signed(uint64_t size);
   BitVector mk_max_signed(uint64_t size);
+
+  std::string to_bin_string(uint64_t size, uint64_t val);
+
   void test_ctor_random_bit_range(uint64_t size);
   void test_count(uint64_t size, bool leading, bool zeros);
   void test_count_aux(const std::string& val, bool leading, bool zeros);
@@ -671,6 +674,24 @@ TestBitVector::mk_max_signed(uint64_t size)
   return l.bvconcat(r);
 }
 
+std::string
+TestBitVector::to_bin_string(uint64_t size, uint64_t val)
+{
+  switch (size)
+  {
+    case 1: return std::bitset<1>(val).to_string();
+    case 2: return std::bitset<2>(val).to_string();
+    case 3: return std::bitset<3>(val).to_string();
+    case 8: return std::bitset<8>(val).to_string();
+    case 64: return std::bitset<64>(val).to_string();
+    case 65: return std::bitset<65>(val).to_string();
+    case 128: return std::bitset<128>(val).to_string();
+
+    default: assert(false);
+  }
+  return std::string();
+}
+
 void
 TestBitVector::test_ctor_random_bit_range(uint64_t size)
 {
@@ -742,61 +763,27 @@ TestBitVector::test_count(uint64_t size, bool leading, bool zeros)
   {
     for (uint64_t i = 0; i < (1u << 8); ++i)
     {
-      std::stringstream ss;
-      ss << std::bitset<8>(i).to_string();
-      test_count_aux(ss.str(), leading, zeros);
+      test_count_aux(to_bin_string(8, i), leading, zeros);
     }
   }
   else
   {
-    // concat 8-bit value with 0s to create value for bv
     for (uint64_t i = 0; i < (1u << 8); ++i)
     {
-      std::stringstream ss;
-      std::string v = std::bitset<8>(i).to_string();
-      ss << v << std::string(size - 8, '0');
-      test_count_aux(ss.str(), leading, zeros);
-    }
-
-    for (uint64_t i = 0; i < (1u << 8); ++i)
-    {
-      std::stringstream ss;
-      std::string v = std::bitset<8>(i).to_string();
-      ss << std::string(size - 8, '0') << v;
-      test_count_aux(ss.str(), leading, zeros);
-    }
-
-    for (uint64_t i = 0; i < (1u << 8); ++i)
-    {
-      std::stringstream ss;
-      std::string v = std::bitset<8>(i).to_string();
-      ss << v << std::string(size - 16, '0') << v;
-      test_count_aux(ss.str(), leading, zeros);
-    }
-
-    // concat 8-bit values with 1s to create value for bv
-    for (uint64_t i = 0; i < (1u << 8); ++i)
-    {
-      std::stringstream ss;
-      std::string v = std::bitset<8>(i).to_string();
-      ss << v << std::string(size - 8, '1');
-      test_count_aux(ss.str(), leading, zeros);
-    }
-
-    for (uint64_t i = 0; i < (1u << 8); ++i)
-    {
-      std::stringstream ss;
-      std::string v = std::bitset<8>(i).to_string();
-      ss << std::string(size - 8, '1') << v;
-      test_count_aux(ss.str(), leading, zeros);
-    }
-
-    for (uint64_t i = 0; i < (1u << 8); ++i)
-    {
-      std::stringstream ss;
-      std::string v = std::bitset<8>(i).to_string();
-      ss << v << std::string(size - 16, '1') << v;
-      test_count_aux(ss.str(), leading, zeros);
+      // concat 8-bit value with 0s to create value for bv
+      test_count_aux(
+          to_bin_string(8, i) + std::string(size - 8, '0'), leading, zeros);
+      test_count_aux(
+          std::string(size - 8, '0') + to_bin_string(8, i), leading, zeros);
+      test_count_aux(
+          to_bin_string(8, i) + std::string(size - 16, '0'), leading, zeros);
+      // concat 8-bit values with 1s to create value for bv
+      test_count_aux(
+          to_bin_string(8, i) + std::string(size - 8, '1'), leading, zeros);
+      test_count_aux(
+          std::string(size - 8, '1') + to_bin_string(8, i), leading, zeros);
+      test_count_aux(
+          to_bin_string(8, i) + std::string(size - 16, '1'), leading, zeros);
     }
   }
 }
@@ -1205,7 +1192,6 @@ TestBitVector::test_is_usub_overflow_aux(uint64_t size,
 {
   BitVector bv1(size, s1, 2);
   BitVector bv2(size, s2, 2);
-  assert(bv1.is_usub_overflow(bv2) == expected);
   ASSERT_EQ(bv1.is_usub_overflow(bv2), expected);
 }
 
@@ -1327,7 +1313,6 @@ TestBitVector::test_is_ssub_overflow_aux(uint64_t size,
 {
   BitVector bv1(size, s1, 2);
   BitVector bv2(size, s2, 2);
-  assert(bv1.is_ssub_overflow(bv2) == expected);
   ASSERT_EQ(bv1.is_ssub_overflow(bv2), expected);
 }
 
@@ -3712,7 +3697,6 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
 
         default: assert(false);
       }
-      assert(BitVector::from_si(res.size(), ares).compare(res) == 0);
       ASSERT_EQ(BitVector::from_si(res.size(), ares).compare(res), 0);
       ASSERT_TRUE(tres.is_null()
                   || BitVector::from_si(tres.size(), atres).compare(tres) == 0);
@@ -4237,65 +4221,67 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
 void
 TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
 {
-  for (uint64_t i = 0, size = 2; i < (1u << size); ++i)
+  for (uint64_t size : {2, 3, 8})
   {
-    for (uint64_t j = 0; j < (1u << size); ++j)
+    for (uint64_t i = 0; i < (1u << size); ++i)
     {
-      std::stringstream ss_expected;
-      if (kind == SHL)
+      for (uint64_t j = 0; j < (1u << size); ++j)
       {
-        ss_expected << std::bitset<2>(i).to_string() << std::string(j, '0');
+        std::string expected;
+        if (kind == SHL)
+        {
+          expected = to_bin_string(size, i) + std::string(j, '0');
+        }
+        else if (kind == SHR)
+        {
+          expected = std::string(j, '0') + to_bin_string(size, i);
+        }
+        else
+        {
+          assert(kind == ASHR);
+          std::string bits_i = to_bin_string(size, i);
+          expected = std::string(j, bits_i[0] == '1' ? '1' : '0') + bits_i;
+        }
+        if (kind == SHL)
+        {
+          expected = expected.substr(expected.size() - size, size);
+        }
+        else
+        {
+          expected = expected.substr(0, size);
+        }
+        test_shift_aux(fun_kind,
+                       kind,
+                       to_bin_string(size, i),
+                       to_bin_string(size, j),
+                       expected,
+                       shift_by_int);
       }
-      else if (kind == SHR)
-      {
-        ss_expected << std::string(j, '0') << std::bitset<2>(i).to_string();
-      }
-      else
-      {
-        assert(kind == ASHR);
-        std::bitset<2> bits_i(i);
-        ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
-                    << bits_i.to_string();
-      }
-      std::string expected = ss_expected.str();
-      if (kind == SHL)
-      {
-        expected = expected.substr(expected.size() - size, size);
-      }
-      else
-      {
-        expected = expected.substr(0, size);
-      }
-      test_shift_aux(fun_kind,
-                     kind,
-                     std::bitset<2>(i).to_string().c_str(),
-                     std::bitset<2>(j).to_string().c_str(),
-                     expected.c_str(),
-                     shift_by_int);
     }
   }
-
-  for (uint64_t i = 0, size = 3; i < (1u << size); ++i)
+  for (uint64_t size : {65, 128})
   {
-    for (uint64_t j = 0; j < (1u << size); ++j)
+    for (uint64_t i = 0; i < N_TESTS; ++i)
     {
-      std::stringstream ss_expected;
+      uint64_t n           = d_rng->pick<uint64_t>();
+      uint64_t m           = d_rng->pick<uint64_t>();
+      std::string to_shift = to_bin_string(size - 64, m) + to_bin_string(64, n);
+      uint64_t s           = d_rng->pick<uint64_t>(0, size + 2);
+      std::string shift    = to_bin_string(size, s);
+      std::string expected;
       if (kind == SHL)
       {
-        ss_expected << std::bitset<3>(i).to_string() << std::string(j, '0');
+        expected = to_shift + std::string(s, '0');
       }
       else if (kind == SHR)
       {
-        ss_expected << std::string(j, '0') << std::bitset<3>(i).to_string();
+        expected = std::string(s, '0') + to_shift;
       }
       else
       {
         assert(kind == ASHR);
-        std::bitset<3> bits_i(i);
-        ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
-                    << bits_i.to_string();
+        expected = std::string(s, to_shift[0] == '1' ? '1' : '0') + to_shift;
       }
-      std::string expected = ss_expected.str();
       if (kind == SHL)
       {
         expected = expected.substr(expected.size() - size, size);
@@ -4304,149 +4290,20 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
       {
         expected = expected.substr(0, size);
       }
-      test_shift_aux(fun_kind,
-                     kind,
-                     std::bitset<3>(i).to_string().c_str(),
-                     std::bitset<3>(j).to_string().c_str(),
-                     expected.c_str(),
-                     shift_by_int);
-    }
-  }
+      test_shift_aux(fun_kind, kind, to_shift, shift, expected, shift_by_int);
 
-  for (uint64_t i = 0, size = 8; i < (1u << size); ++i)
-  {
-    for (uint64_t j = 0; j < (1u << size); ++j)
-    {
-      std::stringstream ss_expected;
-      if (kind == SHL)
+      /* shift value doesn't fit into uint64_t */
+      if (size > 64)
       {
-        ss_expected << std::bitset<8>(i).to_string() << std::string(j, '0');
+        std::string shift = to_bin_string(size, d_rng->pick<uint64_t>());
+        shift[0]          = '1';
+        test_shift_aux(fun_kind,
+                       kind,
+                       to_bin_string(size, n),
+                       shift,
+                       std::string(size, '0'),
+                       shift_by_int);
       }
-      else if (kind == SHR)
-      {
-        ss_expected << std::string(j, '0') << std::bitset<8>(i).to_string();
-      }
-      else
-      {
-        assert(kind == ASHR);
-        std::bitset<8> bits_i(i);
-        ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
-                    << bits_i.to_string();
-      }
-      std::string expected = ss_expected.str();
-      if (kind == SHL)
-      {
-        expected = expected.substr(expected.size() - size, size);
-      }
-      else
-      {
-        expected = expected.substr(0, size);
-      }
-      test_shift_aux(fun_kind,
-                     kind,
-                     std::bitset<8>(i).to_string().c_str(),
-                     std::bitset<8>(j).to_string().c_str(),
-                     expected.c_str(),
-                     shift_by_int);
-    }
-  }
-
-  for (uint64_t i = 0, size = 65; i < N_TESTS; ++i)
-  {
-    auto n = d_rng->pick<uint64_t>(0, UINT64_MAX);
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      if (kind == SHL)
-      {
-        ss_expected << std::bitset<65>(n).to_string() << std::string(j, '0');
-      }
-      else if (kind == SHR)
-      {
-        ss_expected << std::string(j, '0') << std::bitset<65>(n).to_string();
-      }
-      else
-      {
-        assert(kind == ASHR);
-        std::bitset<65> bits_i(n);
-        ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
-                    << bits_i.to_string();
-      }
-      std::string expected = ss_expected.str();
-      if (kind == SHL)
-      {
-        expected = expected.substr(expected.size() - size, size);
-      }
-      else
-      {
-        expected = expected.substr(0, size);
-      }
-      test_shift_aux(fun_kind,
-                     kind,
-                     std::bitset<65>(n).to_string().c_str(),
-                     std::bitset<65>(j).to_string().c_str(),
-                     expected.c_str(),
-                     shift_by_int);
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift_aux(fun_kind,
-                     kind,
-                     std::bitset<65>(n).to_string().c_str(),
-                     std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                     std::string(size, '0').c_str(),
-                     shift_by_int);
-    }
-  }
-
-  for (uint64_t i = 0, size = 128; i < N_TESTS; ++i)
-  {
-    auto n = d_rng->pick<uint64_t>(0, UINT64_MAX);
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      if (kind == SHL)
-      {
-        ss_expected << std::bitset<128>(n).to_string() << std::string(j, '0');
-      }
-      else if (kind == SHR)
-      {
-        ss_expected << std::string(j, '0') << std::bitset<128>(n).to_string();
-      }
-      else
-      {
-        assert(kind == ASHR);
-        std::bitset<128> bits_i(n);
-        ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
-                    << bits_i.to_string();
-      }
-      std::string expected = ss_expected.str();
-      if (kind == SHL)
-      {
-        expected = expected.substr(expected.size() - size, size);
-      }
-      else
-      {
-        expected = expected.substr(0, size);
-      }
-      test_shift_aux(fun_kind,
-                     kind,
-                     std::bitset<128>(n).to_string().c_str(),
-                     std::bitset<128>(j).to_string().c_str(),
-                     expected.c_str(),
-                     shift_by_int);
-    }
-    /* shift value doesn't fit into uint64_t */
-    for (uint64_t j = 64; j < 128; ++j)
-    {
-      test_shift_aux(fun_kind,
-                     kind,
-                     std::bitset<128>(n).to_string().c_str(),
-                     std::bitset<128>(0u).set(j, 1).to_string().c_str(),
-                     std::string(size, '0').c_str(),
-                     shift_by_int);
     }
   }
 }
@@ -4778,7 +4635,6 @@ TestBitVector::test_udivurem(uint64_t size)
     bv1.bvudivurem(bv2, &q, &r);
     bres_div = size >= 64 ? q.bvextract(63, 0).to_uint64() : q.to_uint64();
     bres_rem = size >= 64 ? r.bvextract(63, 0).to_uint64() : r.to_uint64();
-    assert(ares_div == bres_div);
     ASSERT_EQ(ares_div, bres_div);
     ASSERT_EQ(ares_rem, bres_rem);
     // test with *this as argument
@@ -4787,8 +4643,7 @@ TestBitVector::test_udivurem(uint64_t size)
     tq.bvudivurem(bv2, &tq, &tr);
     bres_div = size > 64 ? tq.bvextract(63, 0).to_uint64() : tq.to_uint64();
     bres_rem = size > 64 ? tr.bvextract(63, 0).to_uint64() : tr.to_uint64();
-    assert(ares_div == bres_div);
-    assert(ares_div == bres_div);
+    ASSERT_EQ(ares_div, bres_div);
     ASSERT_EQ(ares_rem, bres_rem);
     tq = BitVector();
     tr = bv1;
@@ -5724,68 +5579,29 @@ TEST_F(TestBitVector, is_min_signed)
 
 TEST_F(TestBitVector, is_power_of_two)
 {
-  for (uint64_t i = 0; i < (1u << 1); ++i)
+  for (uint64_t size : {1, 2, 3, 8})
   {
-    std::string v = std::bitset<1>(i).to_string();
-    size_t first  = v.find_first_of('1');
-    size_t last   = v.find_last_of('1');
-    if (first != std::string::npos && first == last)
+    for (uint64_t i = 0; i < (1u << size); ++i)
     {
-      ASSERT_TRUE(BitVector(1, v).is_power_of_two());
-    }
-    else
-    {
-      ASSERT_FALSE(BitVector(1, v).is_power_of_two());
+      std::string v = to_bin_string(size, i);
+      size_t first  = v.find_first_of('1');
+      size_t last   = v.find_last_of('1');
+      if (first != std::string::npos && first == last)
+      {
+        ASSERT_TRUE(BitVector(size, v).is_power_of_two());
+      }
+      else
+      {
+        ASSERT_FALSE(BitVector(size, v).is_power_of_two());
+      }
     }
   }
-  for (uint64_t i = 0; i < (1u << 2); ++i)
-  {
-    std::string v = std::bitset<2>(i).to_string();
-    size_t first  = v.find_first_of('1');
-    size_t last   = v.find_last_of('1');
-    if (first != std::string::npos && first == last)
-    {
-      ASSERT_TRUE(BitVector(2, v).is_power_of_two());
-    }
-    else
-    {
-      ASSERT_FALSE(BitVector(2, v).is_power_of_two());
-    }
-  }
-  for (uint64_t i = 0; i < (1u << 3); ++i)
-  {
-    std::string v = std::bitset<3>(i).to_string();
-    size_t first  = v.find_first_of('1');
-    size_t last   = v.find_last_of('1');
-    if (first != std::string::npos && first == last)
-    {
-      ASSERT_TRUE(BitVector(3, v).is_power_of_two());
-    }
-    else
-    {
-      ASSERT_FALSE(BitVector(3, v).is_power_of_two());
-    }
-  }
-  for (uint64_t i = 0; i < (1u << 8); ++i)
-  {
-    std::string v = std::bitset<8>(i).to_string();
-    size_t first  = v.find_first_of('1');
-    size_t last   = v.find_last_of('1');
-    if (first != std::string::npos && first == last)
-    {
-      ASSERT_TRUE(BitVector(8, v).is_power_of_two());
-    }
-    else
-    {
-      ASSERT_FALSE(BitVector(8, v).is_power_of_two());
-    }
-  }
-  for (uint64_t i = 0; i < 10000; ++i)
+  for (uint64_t i = 0; i < N_TESTS; ++i)
   {
     uint64_t l = d_rng->pick<uint64_t>();
     for (uint64_t r = 0; r < 2; ++r)
     {
-      std::string v = std::bitset<64>(l).to_string() + std::to_string(r);
+      std::string v = to_bin_string(64, l) + std::to_string(r);
       size_t first  = v.find_first_of('1');
       size_t last   = v.find_last_of('1');
       if (first != std::string::npos && first == last)
