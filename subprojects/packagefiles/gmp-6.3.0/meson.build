@@ -26,6 +26,8 @@ p = mod.add_project('configure',
         '--prefix=@PREFIX@',
         '--libdir=@PREFIX@/@LIBDIR@',
         '--includedir=@PREFIX@/@INCLUDEDIR@',
+        '--enable-static',
+        '--disable-shared',
         '--with-pic',
         '--enable-cxx'
   ],
