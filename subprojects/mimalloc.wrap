@@ -1,0 +1,11 @@
+[wrap-file]
+directory = mimalloc-2.2.4
+
+source_url = https://github.com/microsoft/mimalloc/archive/refs/tags/v2.2.4.tar.gz
+source_filename = mimalloc-2.2.4.tar.gz
+source_hash = 754a98de5e2912fddbeaf24830f982b4540992f1bab4a0a8796ee118e0752bda
+
+patch_directory = mimalloc
+
+[provide]
+mimalloc-static = mimalloc_static_dep

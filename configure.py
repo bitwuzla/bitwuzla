@@ -101,6 +101,7 @@ def main():
              'considered experimental (due to known issues in SymFPU), use ' +
              'at your own risk')
     bool_opt(ap, 'aiger', 'AIGER support to print AIGs')
+    bool_opt(ap, 'mimalloc', 'Use mimalloc memory allocator')
     args = ap.parse_args()
 
     build_opts = []
@@ -155,6 +156,8 @@ def main():
             build_opts.append(f'-Dfpexp=false')
     if args.aiger is not None:
         build_opts.append(f'-Daiger={_bool(args.aiger)}')
+    if args.mimalloc is not None:
+        build_opts.append(f'-Dmimalloc={_bool(args.mimalloc)}')
 
     configure_build(args.build_dir, build_opts)
 

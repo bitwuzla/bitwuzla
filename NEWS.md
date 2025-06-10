@@ -26,6 +26,8 @@ This file collects a summary of important and/or user-visible changes.
 - Removed unreliable GMP fallback subproject. The build system now requires
   shared/static GMP libraries to be installed on the system.
 
+- Add support for linking against mimalloc memory allocator.
+
 ## News for version 0.8.2
 
 - Fixed issue with model values in MBQI solver (#185).
