@@ -11,8 +11,12 @@
 #include "sat/sat_solver_factory.h"
 
 #include "sat/cadical.h"
+#ifdef BZLA_USE_CMS
 #include "sat/cryptominisat.h"
+#endif
+#ifdef BZLA_USE_KISSAT
 #include "sat/kissat.h"
+#endif
 
 namespace bzla::sat {
 
@@ -33,6 +37,25 @@ new_sat_solver(const option::Options& options)
   }
 #endif
   return new Cadical();
+}
+
+bool
+has_sat_solver_terminator_support(const option::Options& options)
+{
+  (void) options;
+#ifdef BZLA_USE_KISSAT
+  if (options.sat_solver() == option::SatSolver::KISSAT)
+  {
+    return false;
+  }
+#endif
+#ifdef BZLA_USE_CMS
+  if (options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
+  {
+    return false;
+  }
+#endif
+  return true;
 }
 
 }  // namespace bzla::sat

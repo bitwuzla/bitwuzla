@@ -16,7 +16,10 @@
 
 namespace bzla::sat {
 
+/** Create new SAT solver instance. */
 SatSolver* new_sat_solver(const option::Options& options);
+/** Determine if configured SAT solver has terminator support. */
+bool has_sat_solver_terminator_support(const option::Options& options);
 }
 
 #endif

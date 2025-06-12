@@ -54,9 +54,10 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_TRY_CATCH_BEGIN \
   try                            \
   {
-#define BITWUZLA_TRY_CATCH_END \
-  }                            \
-  catch (bzla::Error & e) { throw Exception(e.msg()); }
+#define BITWUZLA_TRY_CATCH_END                          \
+  }                                                     \
+  catch (bzla::Error & e) { throw Exception(e.msg()); } \
+  catch (bzla::Unsupported & e) { throw Exception(e.msg()); }
 
 #define BITWUZLA_OPT_TRY_CATCH_BEGIN \
   try                                \

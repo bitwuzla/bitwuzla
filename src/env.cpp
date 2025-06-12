@@ -11,7 +11,9 @@
 #include "env.h"
 
 #include "node/node_manager.h"
+#include "sat/sat_solver_factory.h"
 #include "terminator.h"
+#include "util/exceptions.h"
 
 namespace bzla {
 
@@ -62,6 +64,10 @@ Env::nm()
 void
 Env::configure_terminator(Terminator* terminator)
 {
+  if (!sat::has_sat_solver_terminator_support(d_options))
+  {
+    throw Unsupported("terminator not supported in configured SAT solver");
+  }
   d_terminator = terminator;
 }
 
