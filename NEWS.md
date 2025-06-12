@@ -18,6 +18,9 @@ This file collects a summary of important and/or user-visible changes.
 
 - Bumped Kissat to version 4.0.4.
 
+- Add support for Gimsatul as SAT backend. Number of threads can be specified
+  via `-j/--nthreads` option.
+
 ## News for version 0.8.2
 
 - Fixed issue with model values in MBQI solver (#185).
