@@ -17,6 +17,9 @@
 #ifdef BZLA_USE_KISSAT
 #include "sat/kissat.h"
 #endif
+#ifdef BZLA_USE_GIMSATUL
+#include "sat/gimsatul.h"
+#endif
 
 namespace bzla::sat {
 
@@ -34,6 +37,12 @@ new_sat_solver(const option::Options& options)
   if (options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
   {
     return new CryptoMiniSat(options.nthreads());
+  }
+#endif
+#ifdef BZLA_USE_GIMSATUL
+  if (options.sat_solver() == option::SatSolver::GIMSATUL)
+  {
+    return new Gimsatul(options.nthreads());
   }
 #endif
   return new Cadical();

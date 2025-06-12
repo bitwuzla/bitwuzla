@@ -114,6 +114,7 @@ enum class SatSolver
 {
   CADICAL,
   CRYPTOMINISAT,
+  GIMSATUL,
   KISSAT,
 };
 

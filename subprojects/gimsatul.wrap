@@ -1,0 +1,11 @@
+[wrap-file]
+directory = gimsatul-b0ed0f698ec9138a127972c8c9a40d14c00115bb
+
+source_url = https://github.com/arminbiere/gimsatul/archive/b0ed0f698ec9138a127972c8c9a40d14c00115bb.tar.gz
+source_filename = b0ed0f698ec9138a127972c8c9a40d14c00115bb.tar.gz
+source_hash = ed145ae15375df625542b5bc5084535c785d15a685548f97d9b079ef2bb8509f
+
+patch_directory = gimsatul
+
+[provide]
+gimsatul = gimsatul_dep

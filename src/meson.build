@@ -51,11 +51,13 @@ if not kissat_dep.found()
   kissat_dep = dependency('kissat', required: get_option('kissat'))
 endif
 
+gimsatul_dep = dependency('gimsatul', required: get_option('gimsatul'))
+
 # Using system include type suppresses compile warnings originating from the
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
-dependencies = [symfpu_dep, cadical_dep, cms_dep, kissat_dep, gmp_dep]
+dependencies = [symfpu_dep, cadical_dep, cms_dep, kissat_dep, gmp_dep, gimsatul_dep]
 
 cpp_args = []
 if cms_dep.found()
@@ -63,6 +65,9 @@ if cms_dep.found()
 endif
 if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
+endif
+if gimsatul_dep.found()
+  cpp_args += ['-DBZLA_USE_GIMSATUL']
 endif
 
 # ---
@@ -215,6 +220,7 @@ sources = files([
   'resource_terminator.cpp',
   'sat/cadical.cpp',
   'sat/cryptominisat.cpp',
+  'sat/gimsatul.cpp',
   'sat/kissat.cpp',
   'sat/sat_solver_factory.cpp',
   'solver/array/array_solver.cpp',
