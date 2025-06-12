@@ -17,9 +17,13 @@
 #ifdef BZLA_USE_CMS
 #include "sat/cryptominisat.h"
 #endif
+#ifdef BZLA_USE_GIMSATUL
+#include "sat/gimsatul.h"
+#endif
 #ifdef BZLA_USE_KISSAT
 #include "sat/kissat.h"
 #endif
+
 #include <cassert>
 
 #include "sat/sat_solver.h"
@@ -41,6 +45,12 @@ SatSolverFactory::new_sat_solver()
     return std::unique_ptr<SatSolver>(new CryptoMiniSat(d_options.nthreads()));
   }
 #endif
+#ifdef BZLA_USE_GIMSATUL
+  if (d_options.sat_solver() == option::SatSolver::GIMSATUL)
+  {
+    return std::unique_ptr<SatSolver>(new Gimsatul(d_options.nthreads()));
+  }
+#endif
   assert(d_options.sat_solver() == option::SatSolver::CADICAL);
 #ifdef BZLA_USE_CADICAL
   return std::unique_ptr<SatSolver>(new Cadical());
@@ -60,6 +70,12 @@ SatSolverFactory::has_terminator_support()
 #endif
 #ifdef BZLA_USE_CMS
   if (d_options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
+  {
+    return false;
+  }
+#endif
+#ifdef BZLA_USE_GIMSATUL
+  if (d_options.sat_solver() == option::SatSolver::GIMSATUL)
   {
     return false;
   }

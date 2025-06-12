@@ -186,14 +186,17 @@ Options::Options()
                  SatSolver::CRYPTOMINISAT,
 #elif defined(BZLA_USE_KISSAT)
                  SatSolver::KISSAT,
+#elif defined(BZLA_USE_GIMSATUL)
+                 SatSolver::GIMSATUL,
 #else
                  SatSolver::NONE,
 #endif
                  {{SatSolver::CADICAL, "cadical"},
                   {SatSolver::CRYPTOMINISAT, "cms"},
-                  {SatSolver::KISSAT, "kissat"}
+                  {SatSolver::KISSAT, "kissat"},
+                  {SatSolver::GIMSATUL, "gimsatul"}
 #if !defined(BZLA_USE_CADICAL) && !defined(BZLA_USE_CMS) \
-    && !defined(BZLA_USE_KISSAT)
+    && !defined(BZLA_USE_KISSAT) && !defined(BZLA_USE_GIMSATUL)
                   ,
                   {SatSolver::NONE, "none"}
 #endif
@@ -606,6 +609,15 @@ Options::set(Option opt, const std::string& value, bool is_user_set)
       throw Exception("invalid configuration for option --"
                       + std::string(sat_solver.lng())
                       + ", Kissat not compiled in");
+    }
+#endif
+#ifndef BZLA_USE_GIMSATUL
+    if (opt == Option::SAT_SOLVER
+        && value == sat_solver.mode_to_string(SatSolver::GIMSATUL))
+    {
+      throw Exception("invalid configuration for option --"
+                      + std::string(sat_solver.lng())
+                      + ", Gimsatul not compiled in");
     }
 #endif
     reinterpret_cast<OptionMode*>(data(opt))->set_str(value, is_user_set);

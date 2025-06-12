@@ -114,6 +114,7 @@ enum class SatSolver
 {
   CADICAL,
   CRYPTOMINISAT,
+  GIMSATUL,
   KISSAT,
 #if !defined(BZLA_USE_CADICAL) && !defined(BZLA_USE_CMS) \
     && !defined(BZLA_USE_KISSAT)
