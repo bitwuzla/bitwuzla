@@ -183,6 +183,7 @@ Options::Options()
                  SatSolver::CADICAL,
                  {{SatSolver::CADICAL, "cadical"},
                   {SatSolver::CRYPTOMINISAT, "cms"},
+                  {SatSolver::GIMSATUL, "gimsatul"},
                   {SatSolver::KISSAT, "kissat"}},
                  "backend SAT solver",
                  "sat-solver",
@@ -563,6 +564,15 @@ Options::set(Option opt, const std::string& value, bool is_user_set)
       throw Exception("invalid configuration for option --"
                       + std::string(sat_solver.lng())
                       + ", CryptoMiniSat not compiled in");
+    }
+#endif
+#ifndef BZLA_USE_GIMSATUL
+    if (opt == Option::SAT_SOLVER
+        && value == sat_solver.mode_to_string(SatSolver::GIMSATUL))
+    {
+      throw Exception("invalid configuration for option --"
+                      + std::string(sat_solver.lng())
+                      + ", Gimsatul not compiled in");
     }
 #endif
     reinterpret_cast<OptionMode*>(data(opt))->set_str(value, is_user_set);
