@@ -1,0 +1,44 @@
+{
+  "name": "Bitwuzla",
+  "contributors": ["Aina Niemetz", "Mathias Preiner"],
+  "contacts": ["Mathias Preiner <preiner@cs.stanford.edu>"],
+
+  "archive": {
+    "url": "https://zenodo.org/records/15660376/files/bitwuzla-submission-smtcomp-2025.zip?download=1",
+    "h": {"sha256": "3c8773ac800272e333d1efaa857ede92e3ba6ac6b6735224092799ac00fb0bd0"}
+  },
+
+  "command": ["bin/bitwuzla"],
+
+  "website": "https://bitwuzla.github.io",
+  "system_description": "https://bitwuzla.github.io/data/smtcomp2025/paper.pdf",
+  "solver_type": "Standalone",
+  "seed": "42",
+  "participations": [
+    {
+      "tracks": ["SingleQuery"],
+      "logics": "^((QF_)?(A)?(UF)?(BV|FP|FPLRA)+)$",
+      "command": ["bin/bitwuzla"]
+    },
+    {
+      "tracks": ["Incremental"],
+      "logics": "^((QF_)?(A)?(UF)?(BV|FP|FPLRA)+)$",
+      "command": ["bin/bitwuzla"]
+    },
+    {
+      "tracks": ["UnsatCore"],
+      "logics": "^((QF_)?(A)?(UF)?(BV|FP|FPLRA)+)$",
+      "command": ["bin/bitwuzla"]
+    },
+    {
+      "tracks": ["ModelValidation"],
+      "logics": "^((QF_)?(A)?(UF)?(BV|FP|FPLRA)+)$",
+      "command": ["bin/bitwuzla"]
+    },
+    {
+      "tracks": ["Parallel"],
+      "logics": "^((QF_)?(A)?(UF)?(BV|FP|FPLRA)+)$",
+      "command": ["bin/bitwuzla", "--sat-solver=gimsatul", "-j", "128"]
+    }
+  ]
+}
