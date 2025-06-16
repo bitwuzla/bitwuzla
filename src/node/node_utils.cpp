@@ -165,6 +165,12 @@ mk_default_value(NodeManager& nm, const Type& type)
   {
     return nm.mk_const_array(type, mk_default_value(nm, type.array_element()));
   }
+  else if (type.is_uninterpreted())
+  {
+    std::stringstream ss;
+    ss << "@const_def" << type.id();
+    return nm.mk_value(type, ss.str());
+  }
   assert(type.is_rm());
   return nm.mk_value(RoundingMode::RNA);
 }

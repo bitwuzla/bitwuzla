@@ -101,8 +101,7 @@ FunSolver::value(const Node& term)
   {
     std::stringstream ss;
     ss << "@const_" << term.id();
-    auto val = nm.mk_value(term.type(), ss.str());
-    return val;
+    return nm.mk_value(term.type(), ss.str());
   }
   else if (term.kind() == Kind::APPLY)
   {

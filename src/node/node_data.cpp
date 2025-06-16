@@ -139,8 +139,13 @@ NodeData::~NodeData()
       auto& payload = payload_value<FloatingPoint>();
       payload.d_value.~FloatingPoint();
     }
+    else if (d_type.is_uninterpreted())
+    {
+      auto& payload = payload_value<std::string>();
+      payload.d_value.~basic_string();
+    }
   }
-  else if (d_kind == Kind::CONSTANT || d_kind == Kind::VALUE)
+  else if (d_kind == Kind::CONSTANT || d_kind == Kind::VARIABLE)
   {
     auto& payload = payload_symbol();
     payload.d_symbol.~optional();
