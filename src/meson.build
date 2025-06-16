@@ -55,7 +55,25 @@ endif
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
-dependencies = [symfpu_dep, cadical_dep, cms_dep, kissat_dep, gmp_dep]
+mpfr_dep = dependency('mpfr',
+                     version: '>=4.2.2',
+                     static: build_static,
+                     required: get_option('mpfr'))
+# Check if static MPFR library is really available. dependency() only tries to
+# get the static dependency, but will return the shared one if the static is
+# not available.
+if build_static and mpfr_dep.found()
+  mpfr_dep = cpp_compiler.find_library('mpfr',
+                                      has_headers: ['mpfr.h'],
+                                      static: true,
+                                      required: false)
+  # If we don't find the static library, build the GMP subproject as fallback.
+  if not mpfr_dep.found()
+    mpfr_dep = subproject('mpfr-4.2.2').get_variable('mpfr_dep')
+  endif
+endif
+
+dependencies = [symfpu_dep, cadical_dep, cms_dep, kissat_dep, gmp_dep, mpfr_dep]
 
 cpp_args = []
 if cms_dep.found()
@@ -63,6 +81,9 @@ if cms_dep.found()
 endif
 if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
+endif
+if mpfr_dep.found()
+  cpp_args += ['-DBZLA_USE_MPFR']
 endif
 
 # ---
