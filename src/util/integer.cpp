@@ -40,7 +40,7 @@ Integer::Integer(const std::string& val)
 Integer Integer::from_mpz_t(const mpz_t val)
 {
   Integer res;
-  mpz_init_set(res.d_val_gmp, val);
+  mpz_set(res.d_val_gmp, val);
   return res;
 }
 
