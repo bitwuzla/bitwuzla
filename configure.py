@@ -99,6 +99,9 @@ def main():
              'all formats except Float16, Float32, Float64 and Float128 are ' +
              'considered experimental (due to known issues in SymFPU), use ' +
              'at your own risk')
+    bool_opt(ap,
+             'mpfr',
+             'use GNU MPFR instead of SymFPU for FP constant folding')
     bool_opt(ap, 'aiger', 'AIGER support to print AIGs')
     args = ap.parse_args()
 
@@ -150,6 +153,8 @@ def main():
             build_opts.append(f'-Dfpexp=true')
         else:
             build_opts.append(f'-Dfpexp=false')
+    if args.mpfr is not None:
+        build_opts.append(f'-Dmpfr={_bool(args.mpfr)}')
     if args.aiger is not None:
         build_opts.append(f'-Daiger={_bool(args.aiger)}')
 

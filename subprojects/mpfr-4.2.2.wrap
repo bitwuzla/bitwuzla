@@ -1,0 +1,11 @@
+[wrap-file]
+directory = mpfr-4.2.2
+
+source_url = https://www.mpfr.org/mpfr-current/mpfr-4.2.2.tar.xz
+source_filename = mpfr-4.2.2.tar.xz
+source_hash = b67ba0383ef7e8a8563734e2e889ef5ec3c3b898a01d00fa0a6869ad81c6ce01
+
+patch_directory = mpfr-4.2.2
+
+[provide]
+mpfr = mpfr_dep
