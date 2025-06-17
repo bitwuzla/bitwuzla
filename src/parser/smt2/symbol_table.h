@@ -137,6 +137,8 @@ class SymbolTable
 #ifndef NDEBUG
   /** Print table (for dbg purposes). */
   void print() const;
+  /** Print entry for given symbol (for dbg purposes). */
+  void print(const std::string& symbol) const;
 #endif
 
   /** Clear the pending symbols cache. Only needed for error handling. */

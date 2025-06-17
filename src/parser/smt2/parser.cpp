@@ -2436,7 +2436,14 @@ Parser::close_term_let(ParsedItem& item)
   size_t n   = nargs();
   for (size_t i = 0; i < n; ++i)
   {
-    SymbolTable::Node* symbol = peek_node_arg(idx + 1 + i);
+    // We remove from last to first variable binding to avoid that symbol
+    // table nodes are removed out of order. This can only happen in the
+    // error case where variable bindings are not distinct, e.g.,
+    // (let ((x foo) (x bar)) ...), which would be stored in the symbol
+    // table with vb2 -> vb1 (i.e, the newer variable binding would be the
+    // one currently in scope in the symbol table but we would attempt to
+    // remove vb1 from the table first).
+    SymbolTable::Node* symbol = peek_node_arg(idx + n - i);
     assert(symbol);
     assert(symbol->d_token == Token::SYMBOL);
     assert(symbol->d_coo.line);

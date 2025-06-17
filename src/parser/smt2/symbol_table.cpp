@@ -440,6 +440,25 @@ SymbolTable::print() const
     std::cout << std::endl;
   }
 }
+void
+SymbolTable::print(const std::string& symbol) const
+{
+  std::cout << "SymbolTable: ";
+  auto it = d_table.find(symbol);
+  if (it == d_table.end())
+  {
+    std::cout << "no entry for '" << symbol << "'" << std::endl;
+  }
+  else
+  {
+    std::cout << "'" << symbol << "': ";
+    for (Node* n = it->second.get(); n; n = n->d_next.get())
+    {
+      std::cout << " (" << n->d_symbol << ", " << n->d_assertion_level << ")";
+    }
+    std::cout << std::endl;
+  }
+}
 #endif
 
 void
