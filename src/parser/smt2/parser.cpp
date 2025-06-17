@@ -1334,7 +1334,14 @@ Parser::parse_open_term(Token token)
         return false;
       }
       assert(peek_is_node_arg());
-      peek_node_arg()->d_coo = d_lexer->coo();
+      SymbolTable::Node* var_symbol = peek_node_arg();
+      auto [it, inserted] = d_var_bindings.insert(var_symbol->d_symbol);
+      if (!inserted)
+      {
+        return error_arg("symbol '" + var_symbol->d_symbol
+                         + "' already bound in current let scope");
+      }
+      var_symbol->d_coo = d_lexer->coo();
     }
     else if (d_is_sorted_var)
     {
@@ -1712,6 +1719,7 @@ Parser::parse_open_term_symbol()
       push_item(Token::PARLETBIND, d_lexer->coo());
       assert(!d_is_var_binding);
       d_is_var_binding = true;
+      d_var_bindings.clear();
     }
     else if (token == Token::FORALL || token == Token::EXISTS)
     {
@@ -2443,6 +2451,9 @@ Parser::close_term_let(ParsedItem& item)
     // table with vb2 -> vb1 (i.e, the newer variable binding would be the
     // one currently in scope in the symbol table but we would attempt to
     // remove vb1 from the table first).
+    // Note that this error case should not happen as the case of non-distinct
+    // variable bindings is caught on construction. We still respect the order
+    // in which symbols have been added to the table for removal.
     SymbolTable::Node* symbol = peek_node_arg(idx + n - i);
     assert(symbol);
     assert(symbol->d_token == Token::SYMBOL);

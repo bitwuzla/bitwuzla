@@ -834,6 +834,7 @@ class Parser : public bzla::parser::Parser
   bool d_is_sorted_var  = false;
   /** True if currently open term is a variable binding. */
   bool d_is_var_binding = false;
+  std::unordered_set<std::string> d_var_bindings;
 
   /**
    * True to ignore any undefined symbols when parsing unsupported attribute

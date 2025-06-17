@@ -55,6 +55,8 @@ tests_smt2 = [
   ['parser/echo.smt2'],
   ['parser/issue59-1.smt2'],
   ['parser/issue59-2.smt2'],
+  ['parser/issue59-3.smt2'],
+  ['parser/issue59-4.smt2'],
   ['parser/issue66.smt2'],
   ['parser/issue169.smt2'],
   ['parser/issue175.smt2'],

@@ -1,1 +1,1 @@
-regress/parser/smt2perr217.smt2:3:1: missing ')'
+regress/parser/smt2perr217.smt2:2:45: symbol 'b.c' already bound in current let scope
