@@ -24,6 +24,9 @@ uint64_t mpz_get_ull(const mpz_t op);
 /** 64-bit version of mpz_init_set_ui. */
 void mpz_init_set_ull(mpz_t rop, uint64_t op);
 
+/** Convert uint64_t to mpz_class. */
+mpz_class uint64_to_mpz_class(uint64_t op);
+
 /** 64-bit version of mpz_init_set_si. */
 void mpz_init_set_sll(mpz_t rop, int64_t op);
 

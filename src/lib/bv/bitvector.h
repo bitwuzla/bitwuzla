@@ -2210,6 +2210,9 @@ class BitVector
   /** Get mpz_t value from Integer class. */
   const mpz_t& gmp_value() const;
 
+  /** Convert bit-vector to mpz_class. */
+  mpz_class to_mpz() const;
+
  private:
   /**
    * Normalize uint64_t value for a given bit-width.

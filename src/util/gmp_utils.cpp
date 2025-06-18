@@ -59,6 +59,16 @@ mpz_init_set_ull(mpz_t rop, uint64_t op)
   }
 }
 
+mpz_class
+uint64_to_mpz_class(uint64_t op)
+{
+  uint32_t hi = static_cast<uint32_t>(op >> 32);
+  uint32_t lo = static_cast<uint32_t>(op);
+  mpz_class res(hi);
+  res = (res << 32) + lo;
+  return res;
+}
+
 void
 mpz_init_set_sll(mpz_t rop, int64_t op)
 {

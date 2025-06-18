@@ -3933,6 +3933,16 @@ BitVector::gmp_value() const
   return d_val_gmp;
 }
 
+mpz_class
+BitVector::to_mpz() const
+{
+  if (is_gmp())
+  {
+    return mpz_class(d_val_gmp);
+  }
+  return util::uint64_to_mpz_class(d_val_uint64);
+}
+
 /* -------------------------------------------------------------------------- */
 
 #define BZLA_BV_MASK_BITS_UINT64(size)
