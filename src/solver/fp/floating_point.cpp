@@ -555,7 +555,7 @@ FloatingPoint::as_bv() const
   return symfpu::pack(*d_size, *d_uf).getBv();
 }
 
-/* --- Floating private ----------------------------------------------------- */
+/* --- FloatingPoint private ------------------------------------------------ */
 
 FloatingPoint
 FloatingPoint::from_unpacked(NodeManager &nm,
@@ -854,6 +854,15 @@ FloatingPoint::convert_from_rational_aux(NodeManager &nm,
   return res;
 }
 
+/* -------------------------------------------------------------------------- */
+
+std::ostream &
+operator<<(std::ostream &out, const FloatingPoint &fp)
+{
+  out << fp.str();
+  return out;
+}
+
 /* --- FloatingPointTypeInfo public ----------------------------------------- */
 
 FloatingPointTypeInfo::FloatingPointTypeInfo(const Type &type)
@@ -898,14 +907,7 @@ operator<<(std::ostream &out, const FloatingPointTypeInfo &type)
   return out;
 }
 
-/* --- Other ---------------------------------------------------------------- */
-
-std::ostream &
-operator<<(std::ostream &out, const FloatingPoint &fp)
-{
-  out << fp.str();
-  return out;
-}
+/* -------------------------------------------------------------------------- */
 
 }  // namespace bzla
 
