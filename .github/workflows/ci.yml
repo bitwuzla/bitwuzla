@@ -13,7 +13,19 @@ jobs:
 
         include:
           - name: release
+            os: ubuntu-latest
             config: --testing --unit-testing --python
+            package-name: Bitwuzla-Linux-x86_64
+
+          - name: release
+            os: macos-latest
+            config: --testing --unit-testing --python
+            package-name: Bitwuzla-macOS-arm64
+
+          - name: release
+            os: ubuntu-24.04-arm
+            config: --testing --unit-testing --python
+            package-name: Bitwuzla-Linux-arm64
 
           - name: debug
             config: debug --python --cryptominisat --kissat
@@ -31,10 +43,7 @@ jobs:
           - name: release-win64
             os: ubuntu-latest
             config: --win64
-
-          - name: release-aarch64
-            os: ubuntu-latest
-            config: --arm64
+            package-name: Bitwuzla-Win64-x86_64
 
     name: ${{ matrix.os }}:${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -78,7 +87,10 @@ jobs:
         run: ${{ matrix.env }} ./configure.py --prefix=${{ github.workspace }}/build/install ${{ matrix.config }}
 
       - name: Build
-        run: ninja install
+        id: build
+        run: |
+          ninja install
+          echo "build-dir=$(pwd)" >> $GITHUB_OUTPUT
         working-directory: build
 
       - name: Test
@@ -95,3 +107,14 @@ jobs:
           meson setup build --pkg-config-path=$pkgconfigdir -Dpython_path=$pythonlibdir
           cd build
           meson test -v
+
+      - name: Create and add static package to latest and release
+        id: create-static-package
+        if: matrix.package-name && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+        uses: ./.github/actions/add-package
+        with:
+          build-dir: ${{ steps.build.outputs.build-dir }}
+          package-name: ${{ matrix.package-name }}-static
+          # when using GITHUB_TOKEN, no further workflows are triggered
+          github-token-latest: ${{ secrets.GITHUB_TOKEN }}
+          github-token-release: ${{ secrets.GITHUB_TOKEN }}

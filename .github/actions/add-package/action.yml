@@ -1,0 +1,68 @@
+name: Add package
+description: Create a package and store it to the latest tag or the current release
+inputs:
+  build-dir:
+    description: path to the build directory
+  package-name:
+    description: target name of the package
+  github-token-latest:
+    description: token to upload package to latest
+  github-token-release:
+    description: token to upload package to release
+  shell:
+    default: bash
+outputs:
+  install-path:
+    description: path to the installation directory
+    value: ${{ steps.create-zip.outputs.install-path }}
+runs:
+  using: composite
+  steps:
+    - name: Create ZIP file
+      id: create-zip
+      shell: ${{ inputs.shell }}
+      run: |
+        echo "::group::Create ZIP file"
+
+        # Remove Python bindings (if any).
+        # They are built for testing purposes, but
+        # only work for the specific CI Python version.
+        rm -rf ${{ inputs.build-dir }}/install/lib/python*
+        rm -rf ${{ inputs.build-dir }}/install/lib/site-packages
+
+        # Copy AUTHORS and COPYING files and licenses directory to install directory
+        cp AUTHORS COPYING ${{ inputs.build-dir }}/install/
+
+        # Create ZIP file
+        pushd ${{ inputs.build-dir }}
+        mv install ${{ inputs.package-name }}
+        echo "install-path=${{ inputs.build-dir }}/${{ inputs.package-name }}" >> $GITHUB_OUTPUT
+        zip -r ${{ inputs.package-name }} ${{ inputs.package-name }}
+        popd
+
+        # Move package to root directory
+        mv ${{ inputs.build-dir }}/${{ inputs.package-name }}.zip .
+        echo "::endgroup::"
+
+    - name: Install pyGithub
+      shell: ${{ inputs.shell }}
+      run: |
+        # Upgrading pyopenssl resolves the following error:
+        # AttributeError:
+        #   module 'lib' has no attribute 'X509_V_FLAG_NOTIFY_POLICY'
+        python3 -m pip install -U pyopenssl
+        python3 -m pip install pyGithub
+
+    - name: Store to latest
+      if: github.ref == 'refs/heads/main'
+      uses: ./.github/actions/store-to-latest
+      with:
+        asset-filename: ${{ inputs.package-name }}.zip
+        github-token: ${{ inputs.github-token-latest }}
+
+    #- name: Store to release
+    #  if: startsWith(github.ref, 'refs/tags/')
+    #  uses: ./.github/actions/store-to-release
+    #  with:
+    #    asset-filename: ${{ inputs.package-name }}.zip
+    #    github-token: ${{ inputs.github-token-release }}
