@@ -1,0 +1,45 @@
+name: Store to release
+description: Store an asset on the release page associated to current release
+inputs:
+  asset-filename:
+    description: filename of the asset
+  github-token:
+    description: token to upload asset to current release
+
+runs:
+  using: composite
+  steps:
+    - name: Store to release
+      shell: 'python3 {0}'
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PACKAGE: ${{ inputs.asset-filename }}
+      run: |
+        import os
+        import re
+        from github import Github
+
+        refname = os.getenv('GITHUB_REF_NAME')
+        gh = Github(os.getenv('GITHUB_TOKEN'))
+        repo = gh.get_repo(os.getenv('GITHUB_REPOSITORY'))
+        try:
+          rel = repo.get_release(refname)
+        except:
+          print("New release from " + refname)
+          ref = repo.get_git_ref('tags/' + refname)
+          commit = repo.get_git_commit(ref.object.sha)
+          # release name
+          relname = 'Release ' + refname
+          # extract news for release message
+          relmsg = commit.message
+          content = repo.get_contents('NEWS.md').decoded_content.decode()
+          pattern = re.compile(r'## News for version [0-9]\.[0-9]+\.[0-9]+\n')
+          m = pattern.search(content)
+          if m:
+            start = m.end()
+            m = pattern.search(content, start + 1)
+            if m:
+              end = m.start()
+              relmsg = content[start:end].strip()
+          rel = repo.create_git_release(refname, relname, relmsg)
+        rel.upload_asset(os.getenv('PACKAGE'))
