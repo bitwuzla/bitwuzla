@@ -50,16 +50,6 @@ FunSolver::check()
   Log(1) << "*** check functions";
 
   d_fun_models.clear();
-  if (!d_fun_equalities.empty())
-  {
-    d_solver_state.unsupported("Equalities over functions not yet supported.");
-  }
-
-  if (!d_equalities.empty())
-  {
-    d_solver_state.unsupported(
-        "Equalities over uninterpreted sorts not yet supported.");
-  }
 
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
@@ -185,10 +175,14 @@ FunSolver::register_term(const Node& term)
     assert(term.kind() == Kind::EQUAL);
     if (term[0].type().is_fun())
     {
+      d_solver_state.unsupported(
+          "Equalities over functions not yet supported.");
       d_fun_equalities.push_back(term);
     }
     else
     {
+      d_solver_state.unsupported(
+          "Equalities over uninterpreted sorts not yet supported.");
       d_equalities.push_back(term);
     }
   }
