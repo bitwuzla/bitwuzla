@@ -261,7 +261,7 @@ FloatingPoint::str(uint8_t bv_format) const
   assert(bv_format == 2 || bv_format == 10);
   std::stringstream ss;
   BitVector sign, exp, sig;
-  FloatingPoint::ieee_bv_as_bvs(d_size->get_type(), as_bv(), sign, exp, sig);
+  FloatingPoint::ieee_bv_as_bvs(d_size->type(), as_bv(), sign, exp, sig);
   ss << "(fp ";
   if (bv_format == 2)
   {
@@ -305,7 +305,7 @@ FloatingPoint::to_real_str() const
 
   BitVector bv_sign, bv_exp, bv_sig;
   FloatingPoint::ieee_bv_as_bvs(
-      d_size->get_type(), as_bv(), bv_sign, bv_exp, bv_sig);
+      d_size->type(), as_bv(), bv_sign, bv_exp, bv_sig);
 
   UnpackedFloat *uf  = unpacked();
   const auto &uf_exp = uf->getExponent();
@@ -889,7 +889,7 @@ FloatingPointTypeInfo::FloatingPointTypeInfo(const FloatingPointTypeInfo &other)
 FloatingPointTypeInfo::~FloatingPointTypeInfo() {}
 
 const Type &
-FloatingPointTypeInfo::get_type(void) const
+FloatingPointTypeInfo::type() const
 {
   return d_type;
 }

@@ -431,7 +431,7 @@ class FloatingPointTypeInfo
   ~FloatingPointTypeInfo();
 
   /** @return The associated floating-point type. */
-  const Type &get_type(void) const;
+  const Type &type() const;
 
   /**
    * Get a string representation of this floating-point type info.
