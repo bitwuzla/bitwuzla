@@ -9,6 +9,7 @@
  */
 
 #include <bitset>
+#include <cstdint>
 
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
@@ -48,19 +49,76 @@ class TestFp : public TestCommon
     d_fp128 = d_nm.mk_fp_type(15, 113);
   }
 
-  void test_fp_cons_str_as_bv(const BitVector &bvsign,
-                              const BitVector &bvexp,
-                              const BitVector &bvsig)
+  void test_for_formats(
+      const std::vector<std::pair<uint64_t, uint64_t>> &formats,
+      std::function<void(NodeManager &nm,
+                         const BitVector &,
+                         const BitVector &,
+                         const BitVector &)> fun)
+  {
+    for (const auto &format : formats)
+    {
+      uint64_t exp_size = format.first;
+      uint64_t sig_size = format.second - 1;
+      for (uint32_t i = 0; i < N_TESTS; ++i)
+      {
+        BitVector bvexp, bvsig;
+        bool sign = d_rng->flip_coin();
+        if (d_rng->flip_coin())
+        {
+          // normals
+          bvexp = BitVector(exp_size,
+                            *d_rng,
+                            BitVector::mk_one(exp_size),
+                            BitVector::mk_ones(exp_size).ibvdec());
+          bvsig = BitVector(sig_size, *d_rng);
+        }
+        else
+        {
+          if (d_rng->pick_with_prob(600))
+          {
+            // zero exponent
+            bvexp = BitVector::mk_zero(exp_size);
+            bvsig = BitVector(sig_size, *d_rng);
+          }
+          else
+          {
+            // ones exponent
+            bvexp = BitVector::mk_ones(exp_size);
+            if (d_rng->pick_with_prob(100))
+            {
+              // inf
+              bvsig = BitVector::mk_zero(sig_size);
+            }
+            else
+            {
+              // nan
+              bvsig = BitVector(sig_size, *d_rng);
+            }
+          }
+        }
+        fun(d_nm,
+            sign ? BitVector::mk_true() : BitVector::mk_false(),
+            bvexp,
+            bvsig);
+      }
+    }
+  }
+
+  static void test_fp_cons_str_as_bv(NodeManager &nm,
+                                     const BitVector &bvsign,
+                                     const BitVector &bvexp,
+                                     const BitVector &bvsig)
   {
     assert(bvsign.size() == 1);
 
     uint64_t exp_size = bvexp.size();
     uint64_t sig_size = bvsig.size() + 1;
 
-    Type type_sign = d_nm.mk_bv_type(1);
-    Type type_exp  = d_nm.mk_bv_type(exp_size);
-    Type type_sig  = d_nm.mk_bv_type(sig_size - 1);
-    Type type_fp   = d_nm.mk_fp_type(exp_size, sig_size);
+    Type type_sign = nm.mk_bv_type(1);
+    Type type_exp  = nm.mk_bv_type(exp_size);
+    Type type_sig  = nm.mk_bv_type(sig_size - 1);
+    Type type_fp   = nm.mk_fp_type(exp_size, sig_size);
 
     BitVector bv = bvsign.bvconcat(bvexp).ibvconcat(bvsig);
 
@@ -86,9 +144,9 @@ class TestFp : public TestCommon
     ASSERT_EQ(fp.str(), fp_mpfr.str());
 
     // test as_bv() via fpfp() and Node
-    FloatingPoint fpfp = FloatingPoint::fpfp(d_nm, bvsign, bvexp, bvsig);
+    FloatingPoint fpfp = FloatingPoint::fpfp(nm, bvsign, bvexp, bvsig);
     ASSERT_EQ(fp.str(), fpfp.str());
-    Node node_fp    = d_nm.mk_value(fpfp);
+    Node node_fp    = nm.mk_value(fpfp);
     fpfp            = node_fp.value<FloatingPoint>();
     BitVector as_bv = fpfp.as_bv();
     BitVector as_bvsign, as_bvexp, as_bvsig;
@@ -106,7 +164,7 @@ class TestFp : public TestCommon
               0);
     // only via fpfp() for MPFR implementation
     FloatingPointMPFR fpfp_mpfr =
-        FloatingPointMPFR::fpfp(d_nm, bvsign, bvexp, bvsig);
+        FloatingPointMPFR::fpfp(nm, bvsign, bvexp, bvsig);
     ASSERT_EQ(fp.str(), fpfp_mpfr.str());
     BitVector as_bv_mpfr = fpfp_mpfr.as_bv();
     BitVector as_bvsign_mpfr, as_bvexp_mpfr, as_bvsig_mpfr;
@@ -1404,6 +1462,8 @@ class TestFp : public TestCommon
 
   std::vector<std::pair<uint64_t, uint64_t>> d_all_formats{
       {5, 11}, {8, 24}, {11, 53}, {15, 113}};
+  std::vector<std::pair<uint64_t, uint64_t>> d_formats_32_128{
+      {8, 24}, {11, 53}, {15, 113}};
 };
 
 /* -------------------------------------------------------------------------- */
@@ -1610,63 +1670,15 @@ TEST_F(TestFp, str_as_bv)
       bool pos        = d_rng->flip_coin();
       if (TEST_SLOW || pos)
       {
-        test_fp_cons_str_as_bv(BitVector::mk_false(), bvexp, bvsig);
+        test_fp_cons_str_as_bv(d_nm, BitVector::mk_false(), bvexp, bvsig);
       }
       if (TEST_SLOW || !pos)
       {
-        test_fp_cons_str_as_bv(BitVector::mk_true(), bvexp, bvsig);
+        test_fp_cons_str_as_bv(d_nm, BitVector::mk_true(), bvexp, bvsig);
       }
     }
   }
-  // Float32
-  std::vector<std::pair<uint64_t, uint64_t>> formats{
-      {8, 24}, {11, 53}, {15, 113}};
-
-  for (const auto &format : formats)
-  {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    for (uint32_t i = 0; i < N_TESTS; ++i)
-    {
-      BitVector bvexp, bvsig;
-      bool sign = d_rng->flip_coin();
-      if (d_rng->flip_coin())
-      {
-        // normals
-        bvexp = BitVector(exp_size,
-                          *d_rng,
-                          BitVector::mk_one(exp_size),
-                          BitVector::mk_ones(exp_size).ibvdec());
-        bvsig = BitVector(sig_size, *d_rng);
-      }
-      else
-      {
-        if (d_rng->pick_with_prob(600))
-        {
-          // zero exponent
-          bvexp = BitVector::mk_zero(exp_size);
-          bvsig = BitVector(sig_size, *d_rng);
-        }
-        else
-        {
-          // ones exponent
-          bvexp = BitVector::mk_ones(exp_size);
-          if (d_rng->pick_with_prob(100))
-          {
-            // inf
-            bvsig = BitVector::mk_zero(sig_size);
-          }
-          else
-          {
-            // nan
-            bvsig = BitVector(sig_size, *d_rng);
-          }
-        }
-      }
-      test_fp_cons_str_as_bv(
-          sign ? BitVector::mk_true() : BitVector::mk_false(), bvexp, bvsig);
-    }
-  }
+  test_for_formats(d_formats_32_128, TestFp::test_fp_cons_str_as_bv);
 }
 
 TEST_F(TestFp, fp_is_value)
