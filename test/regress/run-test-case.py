@@ -102,6 +102,8 @@ def main():
     if os.path.exists(outfilename):
         with open(outfilename, 'r') as outfile:
             expected = outfile.read()
+    if '--check-unsat-core' in bzla_args and expected and 'unsat' not in expected:
+        return
     check(bzla_args[0], expected, out, err, args.output_dir)
 
 

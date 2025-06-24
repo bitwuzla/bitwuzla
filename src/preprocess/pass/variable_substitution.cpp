@@ -564,6 +564,12 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
   util::Timer timer(d_stats_pass.time_apply);
   Log(1) << "Apply variable substitution";
 
+  // Disabled if unsat cores enabled for now.
+  if (d_env.options().produce_unsat_cores())
+  {
+    return;
+  }
+
   // Check current set of assertions for variable substitutions
   std::unordered_map<Node, std::vector<Node>> new_substs;
   std::unordered_map<Node, std::vector<Node>> subst_asserts;
