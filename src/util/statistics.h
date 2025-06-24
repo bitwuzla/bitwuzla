@@ -61,6 +61,13 @@ class HistogramStatistic
   /** @return: Stored names for values. */
   const std::vector<std::string>& names() const { return d_names; }
 
+  /** Clear the statistics. */
+  void clear()
+  {
+    d_values.clear();
+    d_names.clear();
+  }
+
  private:
   /** Stores counters for values added via operator<<. */
   std::vector<uint64_t> d_values;

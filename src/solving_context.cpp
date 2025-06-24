@@ -301,6 +301,7 @@ SolvingContext::compute_formula_statistics(util::HistogramStatistic& stat)
     visit.push_back(d_assertions[i]);
   }
 
+  stat.clear();
   std::unordered_set<Node> cache;
   while (!visit.empty())
   {
