@@ -10,9 +10,11 @@
 
 #include <bitset>
 
+#include "bv/bitvector.h"
 #include "node/node_manager.h"
 #include "rng/rng.h"
 #include "solver/fp/floating_point.h"
+#include "solver/fp/floating_point_mpfr.h"
 #include "solver/fp/symfpu_nm.h"
 #include "test/unit/test.h"
 
@@ -45,43 +47,75 @@ class TestFp : public TestCommon
     d_fp128 = d_nm.mk_fp_type(15, 113);
   }
 
-  void test_fp_as_bv(std::string sign, std::string exp, std::string sig)
+  void test_fp_cons_str_as_bv(std::string sign,
+                              std::string exp,
+                              std::string sig)
   {
     assert(sign.size() == 1);
 
     Type type_sign = d_nm.mk_bv_type(1);
     Type type_exp  = d_nm.mk_bv_type(exp.size());
     Type type_sig  = d_nm.mk_bv_type(sig.size());
+    Type type_fp   = d_nm.mk_fp_type(exp.size(), sig.size() + 1);
 
-    BitVector bv_sign(1, sign);
-    BitVector bv_exp(exp.size(), exp);
-    BitVector bv_sig(sig.size(), sig);
+    BitVector bvsign(1, sign);
+    BitVector bvexp(exp.size(), exp);
+    BitVector bvsig(sig.size(), sig);
+    BitVector bv = bvsign.bvconcat(bvexp).ibvconcat(bvsig);
 
-    Node node_sign = d_nm.mk_value(bv_sign);
-    Node node_exp  = d_nm.mk_value(bv_exp);
-    Node node_sig  = d_nm.mk_value(bv_sig);
-
-    Type type_fp = d_nm.mk_fp_type(exp.size(), sig.size() + 1);
-    Node node_fp =
-        d_nm.mk_value(FloatingPoint::fpfp(d_nm, bv_sign, bv_exp, bv_sig));
-
-    FloatingPoint fp = node_fp.value<FloatingPoint>();
-
-    BitVector res_bv = fp.as_bv();
-    BitVector res_sign, res_exp, res_sig;
-    FloatingPoint::ieee_bv_as_bvs(type_fp, res_bv, res_sign, res_exp, res_sig);
-    ASSERT_EQ(res_bv.compare(res_sign.bvconcat(res_exp).ibvconcat(res_sig)), 0);
-
+    // test constructor and str()
+    FloatingPoint fp(type_fp, bv);
+    FloatingPointMPFR fp_mpfr(type_fp, bv);
     if (fp.fpisnan())
     {
       ASSERT_TRUE(fp == FloatingPoint::fpnan(type_fp));
+      std::string str = "(fp #b" + BitVector::mk_false().str() + " #b"
+                        + BitVector::mk_ones(exp.size()).str() + " #b"
+                        + BitVector::mk_min_signed(sig.size()).str() + ")";
+      ASSERT_EQ(fp.str(), str);
+      ASSERT_EQ(fp_mpfr.str(), str);
     }
     else
     {
-      ASSERT_EQ(bv_sign.compare(res_sign), 0);
-      ASSERT_EQ(bv_exp.compare(res_exp), 0);
-      ASSERT_EQ(bv_sig.compare(res_sig), 0);
+      std::string str = "(fp #b" + bvsign.str() + " #b" + bvexp.str() + " #b"
+                        + bvsig.str() + ")";
+      ASSERT_EQ(fp.str(), str);
+      ASSERT_EQ(fp.str(), str);
     }
+    ASSERT_EQ(fp.str(), fp_mpfr.str());
+
+    // test as_bv() via fpfp() and Node
+    FloatingPoint fpfp = FloatingPoint::fpfp(d_nm, bvsign, bvexp, bvsig);
+    ASSERT_EQ(fp.str(), fpfp.str());
+    Node node_fp    = d_nm.mk_value(fpfp);
+    fpfp            = node_fp.value<FloatingPoint>();
+    BitVector as_bv = fpfp.as_bv();
+    BitVector as_bvsign, as_bvexp, as_bvsig;
+    FloatingPoint::ieee_bv_as_bvs(
+        type_fp, as_bv, as_bvsign, as_bvexp, as_bvsig);
+    if (bvexp.is_ones() && !bvsig.is_zero())
+    {
+      // we use a single nan representation
+      bv = BitVector(bv.size(),
+                     "0" + BitVector::mk_ones(bvexp.size()).str()
+                         + BitVector::mk_min_signed(bvsig.size()).str());
+    }
+    ASSERT_EQ(as_bv.compare(bv), 0);
+    ASSERT_EQ(as_bv.compare(as_bvsign.bvconcat(as_bvexp).ibvconcat(as_bvsig)),
+              0);
+    // only via fpfp() for MPFR implementation
+    FloatingPointMPFR fpfp_mpfr =
+        FloatingPointMPFR::fpfp(d_nm, bvsign, bvexp, bvsig);
+    ASSERT_EQ(fp.str(), fpfp_mpfr.str());
+    BitVector as_bv_mpfr = fpfp_mpfr.as_bv();
+    BitVector as_bvsign_mpfr, as_bvexp_mpfr, as_bvsig_mpfr;
+    FloatingPoint::ieee_bv_as_bvs(
+        type_fp, as_bv_mpfr, as_bvsign_mpfr, as_bvexp_mpfr, as_bvsig_mpfr);
+    ASSERT_EQ(as_bv_mpfr.compare(bv), 0);
+    ASSERT_EQ(
+        as_bv_mpfr.compare(
+            as_bvsign_mpfr.bvconcat(as_bvexp_mpfr).ibvconcat(as_bvsig_mpfr)),
+        0);
   }
 
   void test_to_fp_from_real(RoundingMode rm,
@@ -1371,7 +1405,200 @@ class TestFp : public TestCommon
       {5, 11}, {8, 24}, {11, 53}, {15, 113}};
 };
 
-TEST_F(TestFp, fp_as_bv)
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestFp, isX)
+{
+  for (uint64_t i = 0; i < (1u << 5); ++i)
+  {
+    BitVector bvexp = BitVector::from_ui(5, i);
+    bool exp_iszero = bvexp.is_zero();
+    bool exp_isones = bvexp.is_ones();
+    for (uint64_t j = 0; j < (1u << 10); ++j)
+    {
+      BitVector bvsig = BitVector::from_ui(10, j);
+      FloatingPoint fp_pos(
+          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
+      FloatingPoint fp_neg(
+          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
+      FloatingPointMPFR fp_mpfr_pos(
+          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
+      FloatingPointMPFR fp_mpfr_neg(
+          d_fp16, BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig));
+      if (!exp_iszero)
+      {
+        if (!exp_isones)
+        {
+          ASSERT_TRUE(fp_pos.fpisnormal());
+          ASSERT_TRUE(fp_neg.fpisnormal());
+
+          ASSERT_FALSE(fp_pos.fpissubnormal());
+          ASSERT_FALSE(fp_neg.fpissubnormal());
+
+          ASSERT_FALSE(fp_pos.fpisinf());
+          ASSERT_FALSE(fp_neg.fpisinf());
+
+          ASSERT_FALSE(fp_pos.fpisnan());
+          ASSERT_FALSE(fp_neg.fpisnan());
+
+          ASSERT_FALSE(fp_pos.fpiszero());
+          ASSERT_FALSE(fp_neg.fpiszero());
+
+          ASSERT_TRUE(fp_mpfr_pos.fpisnormal());
+          ASSERT_TRUE(fp_mpfr_neg.fpisnormal());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpissubnormal());
+          ASSERT_FALSE(fp_mpfr_neg.fpissubnormal());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpisinf());
+          ASSERT_FALSE(fp_mpfr_neg.fpisinf());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpisnan());
+          ASSERT_FALSE(fp_mpfr_neg.fpisnan());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpiszero());
+          ASSERT_FALSE(fp_mpfr_neg.fpiszero());
+        }
+        else
+        {
+          if (bvsig.is_zero())
+          {
+            ASSERT_TRUE(fp_pos.fpisinf());
+            ASSERT_TRUE(fp_neg.fpisinf());
+
+            ASSERT_FALSE(fp_pos.fpisnan());
+            ASSERT_FALSE(fp_neg.fpisnan());
+
+            ASSERT_FALSE(fp_pos.fpisnormal());
+            ASSERT_FALSE(fp_neg.fpisnormal());
+
+            ASSERT_FALSE(fp_pos.fpissubnormal());
+            ASSERT_FALSE(fp_neg.fpissubnormal());
+
+            ASSERT_FALSE(fp_pos.fpiszero());
+            ASSERT_FALSE(fp_neg.fpiszero());
+
+            ASSERT_TRUE(fp_mpfr_pos.fpisinf());
+            ASSERT_TRUE(fp_mpfr_neg.fpisinf());
+
+            ASSERT_FALSE(fp_mpfr_pos.fpisnan());
+            ASSERT_FALSE(fp_mpfr_neg.fpisnan());
+
+            ASSERT_FALSE(fp_mpfr_pos.fpisnormal());
+            ASSERT_FALSE(fp_mpfr_neg.fpisnormal());
+
+            ASSERT_FALSE(fp_mpfr_pos.fpissubnormal());
+            ASSERT_FALSE(fp_mpfr_neg.fpissubnormal());
+
+            ASSERT_FALSE(fp_mpfr_pos.fpiszero());
+            ASSERT_FALSE(fp_mpfr_neg.fpiszero());
+          }
+          else
+          {
+            ASSERT_TRUE(fp_pos.fpisnan());
+            ASSERT_TRUE(fp_neg.fpisnan());
+
+            ASSERT_FALSE(fp_pos.fpisinf());
+            ASSERT_FALSE(fp_neg.fpisinf());
+
+            ASSERT_FALSE(fp_pos.fpisnormal());
+            ASSERT_FALSE(fp_neg.fpisnormal());
+
+            ASSERT_FALSE(fp_pos.fpissubnormal());
+            ASSERT_FALSE(fp_neg.fpissubnormal());
+
+            ASSERT_FALSE(fp_pos.fpiszero());
+            ASSERT_FALSE(fp_neg.fpiszero());
+
+            ASSERT_TRUE(fp_mpfr_pos.fpisnan());
+            ASSERT_TRUE(fp_mpfr_neg.fpisnan());
+
+            ASSERT_FALSE(fp_mpfr_pos.fpisinf());
+            ASSERT_FALSE(fp_mpfr_neg.fpisinf());
+
+            ASSERT_FALSE(fp_mpfr_pos.fpisnormal());
+            ASSERT_FALSE(fp_mpfr_neg.fpisnormal());
+
+            ASSERT_FALSE(fp_mpfr_pos.fpissubnormal());
+            ASSERT_FALSE(fp_mpfr_neg.fpissubnormal());
+
+            ASSERT_FALSE(fp_mpfr_pos.fpiszero());
+            ASSERT_FALSE(fp_mpfr_neg.fpiszero());
+          }
+        }
+      }
+      else
+      {
+        if (bvsig.is_zero())
+        {
+          ASSERT_TRUE(fp_pos.fpiszero());
+          ASSERT_TRUE(fp_neg.fpiszero());
+
+          ASSERT_FALSE(fp_pos.fpisnormal());
+          ASSERT_FALSE(fp_neg.fpisnormal());
+
+          ASSERT_FALSE(fp_pos.fpissubnormal());
+          ASSERT_FALSE(fp_neg.fpissubnormal());
+
+          ASSERT_FALSE(fp_pos.fpisinf());
+          ASSERT_FALSE(fp_neg.fpisinf());
+
+          ASSERT_FALSE(fp_pos.fpisnan());
+          ASSERT_FALSE(fp_neg.fpisnan());
+
+          ASSERT_TRUE(fp_mpfr_pos.fpiszero());
+          ASSERT_TRUE(fp_mpfr_neg.fpiszero());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpisnormal());
+          ASSERT_FALSE(fp_mpfr_neg.fpisnormal());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpissubnormal());
+          ASSERT_FALSE(fp_mpfr_neg.fpissubnormal());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpisinf());
+          ASSERT_FALSE(fp_mpfr_neg.fpisinf());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpisnan());
+          ASSERT_FALSE(fp_mpfr_neg.fpisnan());
+        }
+        else
+        {
+          ASSERT_TRUE(fp_pos.fpissubnormal());
+          ASSERT_TRUE(fp_neg.fpissubnormal());
+
+          ASSERT_FALSE(fp_pos.fpisnormal());
+          ASSERT_FALSE(fp_neg.fpisnormal());
+
+          ASSERT_FALSE(fp_pos.fpisinf());
+          ASSERT_FALSE(fp_neg.fpisinf());
+
+          ASSERT_FALSE(fp_pos.fpisnan());
+          ASSERT_FALSE(fp_neg.fpisnan());
+
+          ASSERT_FALSE(fp_pos.fpiszero());
+          ASSERT_FALSE(fp_neg.fpiszero());
+
+          ASSERT_TRUE(fp_mpfr_pos.fpissubnormal());
+          ASSERT_TRUE(fp_mpfr_neg.fpissubnormal());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpisnormal());
+          ASSERT_FALSE(fp_mpfr_neg.fpisnormal());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpisinf());
+          ASSERT_FALSE(fp_mpfr_neg.fpisinf());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpisnan());
+          ASSERT_FALSE(fp_mpfr_neg.fpisnan());
+
+          ASSERT_FALSE(fp_mpfr_pos.fpiszero());
+          ASSERT_FALSE(fp_mpfr_neg.fpiszero());
+        }
+      }
+    }
+  }
+}
+
+TEST_F(TestFp, str_as_bv)
 {
   for (uint64_t i = 0; i < (1u << 5); ++i)
   {
@@ -1381,10 +1608,46 @@ TEST_F(TestFp, fp_as_bv)
     {
       std::stringstream ss;
       std::string sig = std::bitset<10>(j).to_string();
-      test_fp_as_bv("0", exp.c_str(), sig.c_str());
-      test_fp_as_bv("1", exp.c_str(), sig.c_str());
+      test_fp_cons_str_as_bv("0", exp, sig);
+      test_fp_cons_str_as_bv("1", exp, sig);
     }
   }
+  // // Float32
+  // for (uint32_t i = 0; i < N_TESTS; ++i)
+  // {
+  //   BitVector bvexp, bvsig;
+  //   bool sign = d_rng->flip_coin();
+  //   if (d_rng->flip_coin())
+  //   {
+  //     // normals
+  //     bvexp = BitVector(
+  //         8, *d_rng, BitVector::mk_one(8), BitVector::mk_ones(8).ibvdec());
+  //     bvsig = BitVector(23, *d_rng);
+  //   }
+  //   else {
+  //     if (d_rng->pick_with_prob(600))
+  //     {
+  //       // zero exponent
+  //       bvexp = BitVector::mk_zero(8);
+  //       bvsig = BitVector(23, *d_rng);
+  //     }
+  //     else
+  //     {
+  //       // ones exponent
+  //       bvexp = BitVector::mk_ones(8);
+  //       if (d_rng->pick_with_prob(100))
+  //       {
+  //         // inf
+  //         bvsig = BitVector::mk_zero(23);
+  //       }
+  //       else {
+  //         // nan
+  //         bvsig = BitVector(23, *d_rng);
+  //       }
+  //     }
+  //   }
+  //    test_fp_cons(sign ? "1" : "0", bvexp.str(), bvsig.str());
+  // }
 }
 
 TEST_F(TestFp, fp_is_value)
