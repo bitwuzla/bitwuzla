@@ -237,6 +237,7 @@ sources = files([
   'solver/bv/bv_solver.cpp',
   'solver/bv/aig_bitblaster.cpp',
   'solver/fp/floating_point.cpp',
+  'solver/fp/floating_point_mpfr.cpp',
   'solver/fp/fp_solver.cpp',
   'solver/fp/rounding_mode.cpp',
   'solver/fp/symfpu_nm.cpp',
