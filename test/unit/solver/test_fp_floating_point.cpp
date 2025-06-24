@@ -28,6 +28,7 @@ class TestFp : public TestCommon
 
  protected:
   static constexpr uint32_t N_TESTS = 1000;
+  static constexpr bool TEST_SLOW   = false;
 
   enum RationalMode
   {
@@ -47,20 +48,20 @@ class TestFp : public TestCommon
     d_fp128 = d_nm.mk_fp_type(15, 113);
   }
 
-  void test_fp_cons_str_as_bv(std::string sign,
-                              std::string exp,
-                              std::string sig)
+  void test_fp_cons_str_as_bv(const BitVector &bvsign,
+                              const BitVector &bvexp,
+                              const BitVector &bvsig)
   {
-    assert(sign.size() == 1);
+    assert(bvsign.size() == 1);
+
+    uint64_t exp_size = bvexp.size();
+    uint64_t sig_size = bvsig.size() + 1;
 
     Type type_sign = d_nm.mk_bv_type(1);
-    Type type_exp  = d_nm.mk_bv_type(exp.size());
-    Type type_sig  = d_nm.mk_bv_type(sig.size());
-    Type type_fp   = d_nm.mk_fp_type(exp.size(), sig.size() + 1);
+    Type type_exp  = d_nm.mk_bv_type(exp_size);
+    Type type_sig  = d_nm.mk_bv_type(sig_size - 1);
+    Type type_fp   = d_nm.mk_fp_type(exp_size, sig_size);
 
-    BitVector bvsign(1, sign);
-    BitVector bvexp(exp.size(), exp);
-    BitVector bvsig(sig.size(), sig);
     BitVector bv = bvsign.bvconcat(bvexp).ibvconcat(bvsig);
 
     // test constructor and str()
@@ -70,8 +71,8 @@ class TestFp : public TestCommon
     {
       ASSERT_TRUE(fp == FloatingPoint::fpnan(type_fp));
       std::string str = "(fp #b" + BitVector::mk_false().str() + " #b"
-                        + BitVector::mk_ones(exp.size()).str() + " #b"
-                        + BitVector::mk_min_signed(sig.size()).str() + ")";
+                        + BitVector::mk_ones(exp_size).str() + " #b"
+                        + BitVector::mk_min_signed(sig_size - 1).str() + ")";
       ASSERT_EQ(fp.str(), str);
       ASSERT_EQ(fp_mpfr.str(), str);
     }
@@ -97,8 +98,8 @@ class TestFp : public TestCommon
     {
       // we use a single nan representation
       bv = BitVector(bv.size(),
-                     "0" + BitVector::mk_ones(bvexp.size()).str()
-                         + BitVector::mk_min_signed(bvsig.size()).str());
+                     "0" + BitVector::mk_ones(exp_size).str()
+                         + BitVector::mk_min_signed(sig_size - 1).str());
     }
     ASSERT_EQ(as_bv.compare(bv), 0);
     ASSERT_EQ(as_bv.compare(as_bvsign.bvconcat(as_bvexp).ibvconcat(as_bvsig)),
@@ -1602,52 +1603,70 @@ TEST_F(TestFp, str_as_bv)
 {
   for (uint64_t i = 0; i < (1u << 5); ++i)
   {
-    std::stringstream ss;
-    std::string exp = std::bitset<5>(i).to_string();
     for (uint64_t j = 0; j < (1u << 10); ++j)
     {
-      std::stringstream ss;
-      std::string sig = std::bitset<10>(j).to_string();
-      test_fp_cons_str_as_bv("0", exp, sig);
-      test_fp_cons_str_as_bv("1", exp, sig);
+      BitVector bvexp = BitVector::from_ui(5, i);
+      BitVector bvsig = BitVector::from_ui(10, j);
+      bool pos        = d_rng->flip_coin();
+      if (TEST_SLOW || pos)
+      {
+        test_fp_cons_str_as_bv(BitVector::mk_false(), bvexp, bvsig);
+      }
+      if (TEST_SLOW || !pos)
+      {
+        test_fp_cons_str_as_bv(BitVector::mk_true(), bvexp, bvsig);
+      }
     }
   }
-  // // Float32
-  // for (uint32_t i = 0; i < N_TESTS; ++i)
-  // {
-  //   BitVector bvexp, bvsig;
-  //   bool sign = d_rng->flip_coin();
-  //   if (d_rng->flip_coin())
-  //   {
-  //     // normals
-  //     bvexp = BitVector(
-  //         8, *d_rng, BitVector::mk_one(8), BitVector::mk_ones(8).ibvdec());
-  //     bvsig = BitVector(23, *d_rng);
-  //   }
-  //   else {
-  //     if (d_rng->pick_with_prob(600))
-  //     {
-  //       // zero exponent
-  //       bvexp = BitVector::mk_zero(8);
-  //       bvsig = BitVector(23, *d_rng);
-  //     }
-  //     else
-  //     {
-  //       // ones exponent
-  //       bvexp = BitVector::mk_ones(8);
-  //       if (d_rng->pick_with_prob(100))
-  //       {
-  //         // inf
-  //         bvsig = BitVector::mk_zero(23);
-  //       }
-  //       else {
-  //         // nan
-  //         bvsig = BitVector(23, *d_rng);
-  //       }
-  //     }
-  //   }
-  //    test_fp_cons(sign ? "1" : "0", bvexp.str(), bvsig.str());
-  // }
+  // Float32
+  std::vector<std::pair<uint64_t, uint64_t>> formats{
+      {8, 24}, {11, 53}, {15, 113}};
+
+  for (const auto &format : formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bvexp, bvsig;
+      bool sign = d_rng->flip_coin();
+      if (d_rng->flip_coin())
+      {
+        // normals
+        bvexp = BitVector(exp_size,
+                          *d_rng,
+                          BitVector::mk_one(exp_size),
+                          BitVector::mk_ones(exp_size).ibvdec());
+        bvsig = BitVector(sig_size, *d_rng);
+      }
+      else
+      {
+        if (d_rng->pick_with_prob(600))
+        {
+          // zero exponent
+          bvexp = BitVector::mk_zero(exp_size);
+          bvsig = BitVector(sig_size, *d_rng);
+        }
+        else
+        {
+          // ones exponent
+          bvexp = BitVector::mk_ones(exp_size);
+          if (d_rng->pick_with_prob(100))
+          {
+            // inf
+            bvsig = BitVector::mk_zero(sig_size);
+          }
+          else
+          {
+            // nan
+            bvsig = BitVector(sig_size, *d_rng);
+          }
+        }
+      }
+      test_fp_cons_str_as_bv(
+          sign ? BitVector::mk_true() : BitVector::mk_false(), bvexp, bvsig);
+    }
+  }
 }
 
 TEST_F(TestFp, fp_is_value)
