@@ -12,8 +12,10 @@ rm -rf "$BUILD_DIR"
 # Include sources for all required subprojects
 meson setup "$BUILD_DIR" \
   --buildtype release \
-  --force-fallback-for=cadical,gmp,symfpu \
-  -Dfpexp=true
+  --force-fallback-for=cadical,gmp,symfpu,gimsatul,mimalloc\
+  -Dfpexp=true \
+  -Dgimsatul=true \
+  -Dmimalloc=true
 
 pushd "$BUILD_DIR"
   meson dist --include-subprojects

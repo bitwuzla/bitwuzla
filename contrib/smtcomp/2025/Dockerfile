@@ -13,7 +13,12 @@ WORKDIR /src
 FROM base as binary-builder
 COPY bitwuzla-src.tar.xz .
 RUN tar --strip-components=1 -xf bitwuzla-src.tar.xz
-RUN meson setup build --buildtype release -Dgimsatul=true --force-fallback-for=cadical,gmp,symfpu
+RUN meson setup build \
+      --buildtype release \
+      -Dfpexp=true \
+      -Dgimsatul=true \
+      -Dmimalloc=true \
+      --force-fallback-for=cadical,gmp,symfpu,gimsatul,mimalloc
 RUN cd build && ninja
 
 # Copy bitwuzla binary
