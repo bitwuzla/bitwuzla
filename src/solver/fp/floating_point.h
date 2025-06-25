@@ -225,20 +225,17 @@ class FloatingPoint
   std::string to_real_str() const;
 
   /**
-   * Compare this floating-point with given floating-point.
-   *
-   * @param fp The floating-point to compare this floating-point with.
-   * @return 0 if the floating-points are equal and -1 if they are disequal.
-   */
-  int32_t compare(const FloatingPoint &fp) const;
-
-  /**
    * Equality comparison operator.
+   * @note This compares for "syntactic" equality, i.e., if the underlying
+   *       floating-point representation represents the same value, this will
+   *       return true. Consequently, this will NOT return true when comparing
+   *       NaN with any other value than NaN.
    * @param other The floating-point to compare this floating-point to.
    */
   bool operator==(const FloatingPoint &other) const;
   /**
    * Disequality comparison operator.
+   * @note This is dual to `operator==` and compares for "syntactic" equality.
    * @param other The floating-point to compare this floating-point to.
    */
   bool operator!=(const FloatingPoint &other) const;

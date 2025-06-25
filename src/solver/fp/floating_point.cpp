@@ -341,43 +341,26 @@ FloatingPoint::to_real_str() const
   return res;
 }
 
-int32_t
-FloatingPoint::compare(const FloatingPoint &fp) const
-{
-  UnpackedFloat *uf_a = d_uf.get();
-  UnpackedFloat *uf_b = fp.unpacked();
-
-  const BitVector &exp_a = uf_a->getExponent().getBv();
-  const BitVector &sig_a = uf_a->getSignificand().getBv();
-
-  const BitVector &exp_b = uf_b->getExponent().getBv();
-  const BitVector &sig_b = uf_b->getSignificand().getBv();
-
-  if (exp_a.size() != exp_b.size() || sig_a.size() != sig_b.size())
-  {
-    return -1;
-  }
-
-  if (uf_a->getNaN() == uf_b->getNaN() && uf_a->getInf() == uf_b->getInf()
-      && uf_a->getZero() == uf_b->getZero()
-      && uf_a->getSign() == uf_b->getSign() && exp_a.compare(exp_b) == 0
-      && sig_a.compare(sig_b) == 0)
-  {
-    return 0;
-  }
-  return -1;
-}
-
 bool
 FloatingPoint::operator==(const FloatingPoint &other) const
 {
-  return compare(other) == 0;
+  UnpackedFloat *uf_a = d_uf.get();
+  UnpackedFloat *uf_b = other.unpacked();
+  if (uf_a->getNaN() == uf_b->getNaN() && uf_a->getInf() == uf_b->getInf()
+      && uf_a->getZero() == uf_b->getZero()
+      && uf_a->getSign() == uf_b->getSign()
+      && uf_a->getExponent().getBv() == uf_b->getExponent().getBv()
+      && uf_a->getSignificand().getBv() == uf_b->getSignificand().getBv())
+  {
+    return true;
+  }
+  return false;
 }
 
 bool
 FloatingPoint::operator!=(const FloatingPoint &other) const
 {
-  return compare(other) != 0;
+  return !(*this == other);
 }
 
 UnpackedFloat *

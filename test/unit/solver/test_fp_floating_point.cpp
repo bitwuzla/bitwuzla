@@ -11,6 +11,7 @@
 #include <bitset>
 
 #include "node/node_manager.h"
+#include "rng/rng.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/symfpu_nm.h"
 #include "test/unit/test.h"
@@ -24,6 +25,8 @@ class TestFp : public TestCommon
   TestFp() : snm(d_nm) {}
 
  protected:
+  static constexpr uint32_t N_TESTS = 1000;
+
   enum RationalMode
   {
     INT,
@@ -35,6 +38,7 @@ class TestFp : public TestCommon
   void SetUp() override
   {
     TestCommon::SetUp();
+    d_rng.reset(new RNG(1234));
     d_fp16  = d_nm.mk_fp_type(5, 11);
     d_fp32  = d_nm.mk_fp_type(8, 24);
     d_fp64  = d_nm.mk_fp_type(11, 53);
@@ -70,7 +74,7 @@ class TestFp : public TestCommon
 
     if (fp.fpisnan())
     {
-      ASSERT_EQ(fp.compare(FloatingPoint::fpnan(type_fp)), 0);
+      ASSERT_TRUE(fp == FloatingPoint::fpnan(type_fp));
     }
     else
     {
@@ -1355,10 +1359,16 @@ class TestFp : public TestCommon
       {"9993908270191.0", "10000000000000.0"},
       {"99984769515639.0", "100000000000000.0"},
   };
+
+  std::unique_ptr<RNG> d_rng;
+
   Type d_fp16;
   Type d_fp32;
   Type d_fp64;
   Type d_fp128;
+
+  std::vector<std::pair<uint64_t, uint64_t>> d_all_formats{
+      {5, 11}, {8, 24}, {11, 53}, {15, 113}};
 };
 
 TEST_F(TestFp, fp_as_bv)
@@ -2608,4 +2618,57 @@ TEST_F(TestFp, fp_from_real_rat_str_rtz)
   test_to_fp_from_rational(DEC, RoundingMode::RTZ, expected);
 }
 
+TEST_F(TestFp, op_eq)
+{
+  //// format different
+  ASSERT_FALSE(FloatingPoint::fpzero(d_fp16, false)
+               == FloatingPoint::fpzero(d_nm.mk_fp_type(6, 8), false));
+  ASSERT_TRUE(FloatingPoint::fpzero(d_fp16, false)
+              != FloatingPoint::fpzero(d_nm.mk_fp_type(6, 8), false));
+  //// same format
+  ASSERT_EQ(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"),
+            FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
+  ASSERT_NE(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1"),
+            FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
+  ASSERT_EQ(
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"));
+  ASSERT_NE(
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RTZ, "-5.17777"));
+  ASSERT_NE(
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8"));
+  ASSERT_EQ(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"),
+            FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"));
+  ASSERT_EQ(FloatingPoint::fpnan(d_fp16), FloatingPoint::fpnan(d_fp16));
+  ASSERT_EQ(FloatingPoint::fpinf(d_fp16, true),
+            FloatingPoint::fpinf(d_fp16, true));
+  ASSERT_EQ(FloatingPoint::fpinf(d_fp16, false),
+            FloatingPoint::fpinf(d_fp16, false));
+  ASSERT_NE(FloatingPoint::fpinf(d_fp16, true),
+            FloatingPoint::fpinf(d_fp16, false));
+  ASSERT_EQ(FloatingPoint::fpzero(d_fp16, false),
+            FloatingPoint::fpzero(d_fp16, false));
+  ASSERT_NE(FloatingPoint::fpzero(d_fp16, true),
+            FloatingPoint::fpzero(d_fp16, false));
+  ASSERT_NE(FloatingPoint::fpzero(d_fp16, true),
+            FloatingPoint::fpinf(d_fp16, true));
+  ASSERT_NE(FloatingPoint::fpnan(d_fp16), FloatingPoint::fpinf(d_fp16, false));
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
+      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp1(t, bv1);
+      FloatingPoint fp2(t, bv2);
+      ASSERT_EQ(bv1 == bv2, fp1 == fp2);
+      ASSERT_EQ(bv1 != bv2, fp1 != fp2);
+    }
+  }
+}
 }  // namespace bzla::test
