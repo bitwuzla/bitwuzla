@@ -62,6 +62,18 @@ sub_threshold(uint64_t exp_size)
 {
   return -static_cast<int64_t>(exp_bias(exp_size) - 1);
 }
+mpfr_rnd_t
+rm2mpfr(bzla::RoundingMode rm)
+{
+  switch (rm)
+  {
+    case bzla::RoundingMode::RNA: return MPFR_RNDNA;
+    case bzla::RoundingMode::RNE: return MPFR_RNDN;
+    case bzla::RoundingMode::RTN: return MPFR_RNDD;
+    case bzla::RoundingMode::RTP: return MPFR_RNDU;
+    default: assert(rm == bzla::RoundingMode::RTZ); return MPFR_RNDZ;
+  }
+}
 }  // namespace
 
 namespace bzla {
@@ -90,7 +102,9 @@ FloatingPointMPFR::from_real(NodeManager &nm,
                              const RoundingMode rm,
                              const std::string &real)
 {
-  return convert_from_rational_aux(nm, type, rm, real.c_str(), nullptr);
+  FloatingPointMPFR res(type);
+  mpfr_set_str(res.d_mpfr, real.c_str(), 0, rm2mpfr(rm));
+  return res;
 }
 
 FloatingPointMPFR
@@ -399,17 +413,23 @@ FloatingPointMPFR::to_real_str() const
 bool
 FloatingPointMPFR::operator==(const FloatingPointMPFR &other) const
 {
-  // UnpackedFloat *uf_a = d_uf.get();
-  // UnpackedFloat *uf_b = other.unpacked();
-  // if (uf_a->getNaN() == uf_b->getNaN() && uf_a->getInf() == uf_b->getInf()
-  //     && uf_a->getZero() == uf_b->getZero()
-  //     && uf_a->getSign() == uf_b->getSign()
-  //     && uf_a->getExponent().getBv() == uf_b->getExponent().getBv()
-  //     && uf_a->getSignificand().getBv() == uf_b->getSignificand().getBv())
-  // {
-  //   return true;
-  // }
-  return false;
+  if (d_size->type() != other.d_size->type())
+  {
+    return false;
+  }
+  bool isnan1 = fpisnan();
+  bool isnan2 = other.fpisnan();
+  if (isnan1 || isnan2)
+  {
+    return isnan1 == isnan2;
+  }
+  bool iszero1 = fpiszero();
+  bool iszero2 = other.fpiszero();
+  if (iszero1 || iszero2)
+  {
+    return iszero1 == iszero2 && fpisneg() == other.fpisneg();
+  }
+  return mpfr_equal_p(d_mpfr, other.d_mpfr) > 0;
 }
 
 bool
