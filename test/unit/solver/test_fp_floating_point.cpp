@@ -1719,7 +1719,8 @@ TEST_F(TestFp, fp_is_value)
   for (uint32_t i = 0; i < 4; i++)
   {
     {
-      Node value = d_nm.mk_value(FloatingPoint::fpzero(types[i], false));
+      FloatingPoint fp = FloatingPoint::fpzero(types[i], false);
+      Node value       = d_nm.mk_value(fp);
       ASSERT_TRUE(value.is_value());
       FloatingPoint fp_value = value.value<FloatingPoint>();
       ASSERT_TRUE(fp_value.fpiszero());
@@ -1727,9 +1728,18 @@ TEST_F(TestFp, fp_is_value)
       ASSERT_FALSE(fp_value.fpisneg());
       ASSERT_FALSE(fp_value.fpisinf());
       ASSERT_FALSE(fp_value.fpisnan());
+#ifdef BZLA_USE_MPFR
+      FloatingPointMPFR fp_mpfr = FloatingPointMPFR::fpzero(types[i], false);
+      ASSERT_TRUE(fp_mpfr.fpiszero());
+      ASSERT_TRUE(fp_mpfr.fpispos());
+      ASSERT_FALSE(fp_mpfr.fpisneg());
+      ASSERT_FALSE(fp_mpfr.fpisinf());
+      ASSERT_FALSE(fp_mpfr.fpisnan());
+#endif
     }
     {
-      Node value = d_nm.mk_value(FloatingPoint::fpzero(types[i], true));
+      FloatingPoint fp = FloatingPoint::fpzero(types[i], true);
+      Node value       = d_nm.mk_value(fp);
       ASSERT_TRUE(value.is_value());
       FloatingPoint fp_value = value.value<FloatingPoint>();
       ASSERT_TRUE(fp_value.fpiszero());
@@ -1737,9 +1747,18 @@ TEST_F(TestFp, fp_is_value)
       ASSERT_TRUE(fp_value.fpisneg());
       ASSERT_FALSE(fp_value.fpisinf());
       ASSERT_FALSE(fp_value.fpisnan());
+#ifdef BZLA_USE_MPFR
+      FloatingPointMPFR fp_mpfr = FloatingPointMPFR::fpzero(types[i], true);
+      ASSERT_TRUE(fp_mpfr.fpiszero());
+      ASSERT_FALSE(fp_mpfr.fpispos());
+      ASSERT_TRUE(fp_mpfr.fpisneg());
+      ASSERT_FALSE(fp_mpfr.fpisinf());
+      ASSERT_FALSE(fp_mpfr.fpisnan());
+#endif
     }
     {
-      Node value = d_nm.mk_value(FloatingPoint::fpinf(types[i], false));
+      FloatingPoint fp = FloatingPoint::fpinf(types[i], false);
+      Node value       = d_nm.mk_value(fp);
       ASSERT_TRUE(value.is_value());
       FloatingPoint fp_value = value.value<FloatingPoint>();
       ASSERT_FALSE(fp_value.fpiszero());
@@ -1747,9 +1766,18 @@ TEST_F(TestFp, fp_is_value)
       ASSERT_FALSE(fp_value.fpisneg());
       ASSERT_TRUE(fp_value.fpisinf());
       ASSERT_FALSE(fp_value.fpisnan());
+#ifdef BZLA_USE_MPFR
+      FloatingPointMPFR fp_mpfr = FloatingPointMPFR::fpinf(types[i], false);
+      ASSERT_FALSE(fp_mpfr.fpiszero());
+      ASSERT_TRUE(fp_mpfr.fpispos());
+      ASSERT_FALSE(fp_mpfr.fpisneg());
+      ASSERT_TRUE(fp_mpfr.fpisinf());
+      ASSERT_FALSE(fp_mpfr.fpisnan());
+#endif
     }
     {
-      Node value = d_nm.mk_value(FloatingPoint::fpinf(types[i], true));
+      FloatingPoint fp = FloatingPoint::fpinf(types[i], true);
+      Node value       = d_nm.mk_value(fp);
       ASSERT_TRUE(value.is_value());
       FloatingPoint fp_value = value.value<FloatingPoint>();
       ASSERT_FALSE(fp_value.fpiszero());
@@ -1757,9 +1785,18 @@ TEST_F(TestFp, fp_is_value)
       ASSERT_TRUE(fp_value.fpisneg());
       ASSERT_TRUE(fp_value.fpisinf());
       ASSERT_FALSE(fp_value.fpisnan());
+#ifdef BZLA_USE_MPFR
+      FloatingPointMPFR fp_mpfr = FloatingPointMPFR::fpinf(types[i], true);
+      ASSERT_FALSE(fp_mpfr.fpiszero());
+      ASSERT_FALSE(fp_mpfr.fpispos());
+      ASSERT_TRUE(fp_mpfr.fpisneg());
+      ASSERT_TRUE(fp_mpfr.fpisinf());
+      ASSERT_FALSE(fp_mpfr.fpisnan());
+#endif
     }
     {
-      Node value = d_nm.mk_value(FloatingPoint::fpnan(types[i]));
+      FloatingPoint fp = FloatingPoint::fpnan(types[i]);
+      Node value       = d_nm.mk_value(fp);
       ASSERT_TRUE(value.is_value());
       FloatingPoint fp_value = value.value<FloatingPoint>();
       ASSERT_FALSE(fp_value.fpiszero());
@@ -1767,6 +1804,14 @@ TEST_F(TestFp, fp_is_value)
       ASSERT_FALSE(fp_value.fpisneg());
       ASSERT_FALSE(fp_value.fpisinf());
       ASSERT_TRUE(fp_value.fpisnan());
+#ifdef BZLA_USE_MPFR
+      FloatingPointMPFR fp_mpfr = FloatingPointMPFR::fpnan(types[i]);
+      ASSERT_FALSE(fp_mpfr.fpiszero());
+      ASSERT_FALSE(fp_mpfr.fpispos());
+      ASSERT_FALSE(fp_mpfr.fpisneg());
+      ASSERT_FALSE(fp_mpfr.fpisinf());
+      ASSERT_TRUE(fp_mpfr.fpisnan());
+#endif
     }
   }
 }

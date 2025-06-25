@@ -485,13 +485,13 @@ FloatingPointMPFR::fpisinf() const
 bool
 FloatingPointMPFR::fpisneg() const
 {
-  return mpfr_signbit(d_mpfr) != 0;
+  return !fpisnan() && mpfr_signbit(d_mpfr) != 0;
 }
 
 bool
 FloatingPointMPFR::fpispos() const
 {
-  return mpfr_signbit(d_mpfr) == 0;
+  return !fpisnan() && mpfr_signbit(d_mpfr) == 0;
 }
 
 bool
