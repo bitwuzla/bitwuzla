@@ -607,39 +607,31 @@ FloatingPointMPFR::fpispos() const
 bool
 FloatingPointMPFR::fpeq(const FloatingPointMPFR &fp) const
 {
-  // return symfpu::smtlibEqual<fp::SymFpuTraits>(*d_size, *d_uf,
-  // *fp.unpacked());
-  return false;
+  return mpfr_equal_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPointMPFR::fplt(const FloatingPointMPFR &fp) const
 {
-  // return symfpu::lessThan<fp::SymFpuTraits>(*d_size, *d_uf, *fp.unpacked());
-  return false;
+  return mpfr_less_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPointMPFR::fple(const FloatingPointMPFR &fp) const
 {
-  // return symfpu::lessThanOrEqual<fp::SymFpuTraits>(
-  //     *d_size, *d_uf, *fp.unpacked());
-  return false;
+  return mpfr_lessequal_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPointMPFR::fpgt(const FloatingPointMPFR &fp) const
 {
-  // return symfpu::lessThan<fp::SymFpuTraits>(*d_size, *fp.unpacked(), *d_uf);
-  return false;
+  return mpfr_greater_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPointMPFR::fpge(const FloatingPointMPFR &fp) const
 {
-  // return symfpu::lessThanOrEqual<fp::SymFpuTraits>(
-  //     *d_size, *fp.unpacked(), *d_uf);
-  return false;
+  return mpfr_greaterequal_p(d_mpfr, fp.d_mpfr);
 }
 
 FloatingPointMPFR

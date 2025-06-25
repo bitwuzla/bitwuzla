@@ -3139,4 +3139,84 @@ TEST_F(TestFp, op_eq)
     }
   }
 }
+
+#ifdef BZLA_USE_MPFR
+TEST_F(TestFp, lt)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
+      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp1(t, bv1);
+      FloatingPoint fp2(t, bv2);
+      FloatingPointMPFR fp_mpfr1(t, bv1);
+      FloatingPointMPFR fp_mpfr2(t, bv2);
+      ASSERT_EQ(fp1.fplt(fp2), fp_mpfr1.fplt(fp_mpfr2));
+    }
+  }
+}
+TEST_F(TestFp, leq)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
+      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp1(t, bv1);
+      FloatingPoint fp2(t, bv2);
+      FloatingPointMPFR fp_mpfr1(t, bv1);
+      FloatingPointMPFR fp_mpfr2(t, bv2);
+      ASSERT_EQ(fp1.fple(fp2), fp_mpfr1.fple(fp_mpfr2));
+    }
+  }
+}
+TEST_F(TestFp, gt)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
+      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp1(t, bv1);
+      FloatingPoint fp2(t, bv2);
+      FloatingPointMPFR fp_mpfr1(t, bv1);
+      FloatingPointMPFR fp_mpfr2(t, bv2);
+      ASSERT_EQ(fp1.fpgt(fp2), fp_mpfr1.fpgt(fp_mpfr2));
+    }
+  }
+}
+TEST_F(TestFp, geq)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
+      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp1(t, bv1);
+      FloatingPoint fp2(t, bv2);
+      FloatingPointMPFR fp_mpfr1(t, bv1);
+      FloatingPointMPFR fp_mpfr2(t, bv2);
+      ASSERT_EQ(fp1.fpge(fp2), fp_mpfr1.fpge(fp_mpfr2));
+    }
+  }
+}
+#endif
+
 }  // namespace bzla::test
