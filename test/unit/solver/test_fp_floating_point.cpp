@@ -1451,6 +1451,14 @@ TestFp::test_to_fp_from_real(RoundingMode rm,
     ASSERT_EQ(sign.str(), expected[i][0]);
     ASSERT_EQ(exp.str(), expected[i][1]);
     ASSERT_EQ(sig.str(), expected[i][2]);
+#ifdef BZLA_USE_MPFR
+    FloatingPointMPFR fp_mpfr =
+        FloatingPointMPFR::from_real(d_nm, d_fp16, rm, d_constants_dec[i]);
+    FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
+    ASSERT_EQ(sign.str(), expected[i][0]);
+    ASSERT_EQ(exp.str(), expected[i][1]);
+    ASSERT_EQ(sig.str(), expected[i][2]);
+#endif
   }
 }
 
@@ -2942,36 +2950,120 @@ TEST_F(TestFp, op_eq)
                == FloatingPoint::fpzero(d_nm.mk_fp_type(6, 8), false));
   ASSERT_TRUE(FloatingPoint::fpzero(d_fp16, false)
               != FloatingPoint::fpzero(d_nm.mk_fp_type(6, 8), false));
+#ifdef BZLA_USE_MPFR
+  ASSERT_FALSE(FloatingPointMPFR::fpzero(d_fp16, false)
+               == FloatingPointMPFR::fpzero(d_nm.mk_fp_type(6, 8), false));
+  ASSERT_TRUE(FloatingPointMPFR::fpzero(d_fp16, false)
+              != FloatingPointMPFR::fpzero(d_nm.mk_fp_type(6, 8), false));
+#endif
+
   //// same format
   ASSERT_EQ(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"),
             FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
+#ifdef BZLA_USE_MPFR
+  ASSERT_EQ(
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"),
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
+#endif
+
   ASSERT_NE(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1"),
             FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
+#ifdef BZLA_USE_MPFR
+  ASSERT_NE(
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1"),
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
+#endif
+
   ASSERT_EQ(
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"));
+#ifdef BZLA_USE_MPFR
+  ASSERT_EQ(
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
+      FloatingPointMPFR::from_real(
+          d_nm, d_fp16, RoundingMode::RNE, "-5.17777"));
+#endif
+
   ASSERT_NE(
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RTZ, "-5.17777"));
+#ifdef BZLA_USE_MPFR
+  ASSERT_NE(
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
+      FloatingPointMPFR::from_real(
+          d_nm, d_fp16, RoundingMode::RTZ, "-5.17777"));
+#endif
+
   ASSERT_NE(
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8"));
+#ifdef BZLA_USE_MPFR
+  ASSERT_NE(
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8"));
+#endif
+
   ASSERT_EQ(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"),
             FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"));
+#ifdef BZLA_USE_MPFR
+  ASSERT_EQ(
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"),
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"));
+#endif
+
   ASSERT_EQ(FloatingPoint::fpnan(d_fp16), FloatingPoint::fpnan(d_fp16));
+#ifdef BZLA_USE_MPFR
+  ASSERT_EQ(FloatingPointMPFR::fpnan(d_fp16), FloatingPointMPFR::fpnan(d_fp16));
+#endif
+
   ASSERT_EQ(FloatingPoint::fpinf(d_fp16, true),
             FloatingPoint::fpinf(d_fp16, true));
+#ifdef BZLA_USE_MPFR
+  ASSERT_EQ(FloatingPointMPFR::fpinf(d_fp16, true),
+            FloatingPointMPFR::fpinf(d_fp16, true));
+#endif
+
   ASSERT_EQ(FloatingPoint::fpinf(d_fp16, false),
             FloatingPoint::fpinf(d_fp16, false));
+#ifdef BZLA_USE_MPFR
+  ASSERT_EQ(FloatingPointMPFR::fpinf(d_fp16, false),
+            FloatingPointMPFR::fpinf(d_fp16, false));
+#endif
+
   ASSERT_NE(FloatingPoint::fpinf(d_fp16, true),
             FloatingPoint::fpinf(d_fp16, false));
+#ifdef BZLA_USE_MPFR
+  ASSERT_NE(FloatingPointMPFR::fpinf(d_fp16, true),
+            FloatingPointMPFR::fpinf(d_fp16, false));
+#endif
+
   ASSERT_EQ(FloatingPoint::fpzero(d_fp16, false),
             FloatingPoint::fpzero(d_fp16, false));
+#ifdef BZLA_USE_MPFR
+  ASSERT_EQ(FloatingPointMPFR::fpzero(d_fp16, false),
+            FloatingPointMPFR::fpzero(d_fp16, false));
+#endif
+
   ASSERT_NE(FloatingPoint::fpzero(d_fp16, true),
             FloatingPoint::fpzero(d_fp16, false));
+#ifdef BZLA_USE_MPFR
+  ASSERT_NE(FloatingPointMPFR::fpzero(d_fp16, true),
+            FloatingPointMPFR::fpzero(d_fp16, false));
+#endif
+
   ASSERT_NE(FloatingPoint::fpzero(d_fp16, true),
             FloatingPoint::fpinf(d_fp16, true));
+#ifdef BZLA_USE_MPFR
+  ASSERT_NE(FloatingPointMPFR::fpzero(d_fp16, true),
+            FloatingPointMPFR::fpinf(d_fp16, true));
+#endif
+
   ASSERT_NE(FloatingPoint::fpnan(d_fp16), FloatingPoint::fpinf(d_fp16, false));
+#ifdef BZLA_USE_MPFR
+  ASSERT_NE(FloatingPointMPFR::fpnan(d_fp16),
+            FloatingPointMPFR::fpinf(d_fp16, false));
+#endif
+
   for (const auto &format : d_all_formats)
   {
     uint64_t exp_size = format.first;
@@ -2985,6 +3077,12 @@ TEST_F(TestFp, op_eq)
       FloatingPoint fp2(t, bv2);
       ASSERT_EQ(bv1 == bv2, fp1 == fp2);
       ASSERT_EQ(bv1 != bv2, fp1 != fp2);
+#ifdef BZLA_USE_MPFR
+      FloatingPointMPFR fp_mpfr1(t, bv1);
+      FloatingPointMPFR fp_mpfr2(t, bv2);
+      ASSERT_EQ(bv1 == bv2, fp1 == fp2);
+      ASSERT_EQ(bv1 != bv2, fp1 != fp2);
+#endif
     }
   }
 }
