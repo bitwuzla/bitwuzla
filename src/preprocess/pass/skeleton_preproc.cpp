@@ -98,7 +98,6 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
   }
 
   NodeManager& nm = d_env.nm();
-  res             = d_sat_solver->solve();
   if (res == Result::SAT)
   {
     util::Timer timer(d_stats.time_fixed);
