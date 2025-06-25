@@ -1494,6 +1494,14 @@ TestFp::test_to_fp_from_rational(
     ASSERT_EQ(sign.str(), expected[i][0]);
     ASSERT_EQ(exp.str(), expected[i][1]);
     ASSERT_EQ(sig.str(), expected[i][2]);
+#ifdef BZLA_USE_MPFR
+    FloatingPointMPFR fp_mpfr = FloatingPointMPFR::from_rational(
+        d_nm, d_fp16, rm, constants[i].first, constants[i].second);
+    FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
+    ASSERT_EQ(sign.str(), expected[i][0]);
+    ASSERT_EQ(exp.str(), expected[i][1]);
+    ASSERT_EQ(sig.str(), expected[i][2]);
+#endif
   }
 }
 

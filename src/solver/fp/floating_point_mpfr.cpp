@@ -74,6 +74,109 @@ rm2mpfr(bzla::RoundingMode rm)
     default: assert(rm == bzla::RoundingMode::RTZ); return MPFR_RNDZ;
   }
 }
+
+void
+make_mpq_from_dec_string(mpq_t &res, std::string str)
+{
+  std::string::size_type decimal_point(str.find("."));
+  mpq_init(res);
+
+  if (decimal_point == std::string::npos)
+  {
+#ifndef NDEBUG
+    assert(mpq_set_str(res, str.c_str(), 10) == 0);
+#else
+    mpq_set_str(res, str.c_str(), 10);
+#endif
+  }
+  else
+  {
+    /* We represent nnn.mmm as nnnmmm / 10^(number of m). */
+    str.erase(decimal_point, 1);
+    mpz_t num, den;
+    /* nnnmmm */
+#ifndef NDEBUG
+    assert(mpz_init_set_str(num, str.c_str(), 10) == 0);
+#else
+    mpz_init_set_str(num, str.c_str(), 10);
+#endif
+    /* 10^(number of m */
+    mpz_init_set_ui(den, 10);
+    mpz_pow_ui(den, den, str.size() - decimal_point);
+
+    mpz_set(mpq_numref(res), num);
+    mpz_set(mpq_denref(res), den);
+
+    mpz_clear(num);
+    mpz_clear(den);
+  }
+
+  mpq_canonicalize(res);
+}
+
+static void
+make_mpq_from_rat_string(mpq_t &res, const char *str_num, const char *str_den)
+{
+  mpq_init(res);
+
+  bool num_is_dec = std::string(str_num).find(".") != std::string::npos;
+  bool den_is_dec = std::string(str_den).find(".") != std::string::npos;
+
+  if (num_is_dec || den_is_dec)
+  {
+    mpq_t num, den;
+
+    if (num_is_dec)
+    {
+      make_mpq_from_dec_string(num, str_num);
+    }
+    else
+    {
+      mpq_init(num);
+      mpz_t znum;
+      mpz_init_set_str(znum, str_num, 10);
+      mpq_set_z(num, znum);
+      mpz_clear(znum);
+    }
+    if (den_is_dec)
+    {
+      make_mpq_from_dec_string(den, str_den);
+    }
+    else
+    {
+      mpq_init(den);
+      mpz_t zden;
+      mpz_init_set_str(zden, str_den, 10);
+      mpq_set_z(den, zden);
+      mpz_clear(zden);
+    }
+
+    mpq_div(res, num, den);
+    mpq_clear(num);
+    mpq_clear(den);
+  }
+  else
+  {
+    mpz_t num, den;
+    mpz_init_set_str(num, str_num, 10);
+    mpz_init_set_str(den, str_den, 10);
+    mpz_set(mpq_numref(res), num);
+    mpz_set(mpq_denref(res), den);
+    mpz_clear(num);
+    mpz_clear(den);
+  }
+
+  mpq_canonicalize(res);
+}
+
+static void
+make_mpq_from_ui(mpq_t &res, uint32_t n, uint32_t d)
+{
+  mpq_init(res);
+  mpq_set_ui(res, n, d);
+  mpq_canonicalize(res);
+}
+
 }  // namespace
 
 namespace bzla {
@@ -102,6 +205,7 @@ FloatingPointMPFR::from_real(NodeManager &nm,
                              const RoundingMode rm,
                              const std::string &real)
 {
+  (void) nm;
   FloatingPointMPFR res(type);
   mpfr_set_str(res.d_mpfr, real.c_str(), 0, rm2mpfr(rm));
   return res;
@@ -114,7 +218,13 @@ FloatingPointMPFR::from_rational(NodeManager &nm,
                                  const std::string &num,
                                  const std::string &den)
 {
-  return convert_from_rational_aux(nm, type, rm, num.c_str(), den.c_str());
+  (void) nm;
+  FloatingPointMPFR res(type);
+  mpq_t mpq;
+  make_mpq_from_rat_string(mpq, num.c_str(), den.c_str());
+  mpfr_set_q(res.d_mpfr, mpq, rm2mpfr(rm));
+  mpq_clear(mpq);
+  return res;
 }
 
 FloatingPointMPFR
@@ -682,110 +792,6 @@ FloatingPointMPFR::from_unpacked(NodeManager &nm,
   //                   UnpackedFloat(sign.is_one(), exp, sig));
   // return res;
 }
-
-namespace {
-void
-make_mpq_from_dec_string(mpq_t &res, std::string str)
-{
-  std::string::size_type decimal_point(str.find("."));
-  mpq_init(res);
-
-  if (decimal_point == std::string::npos)
-  {
-#ifndef NDEBUG
-    assert(mpq_set_str(res, str.c_str(), 10) == 0);
-#else
-    mpq_set_str(res, str.c_str(), 10);
-#endif
-  }
-  else
-  {
-    /* We represent nnn.mmm as nnnmmm / 10^(number of m). */
-    str.erase(decimal_point, 1);
-    mpz_t num, den;
-    /* nnnmmm */
-#ifndef NDEBUG
-    assert(mpz_init_set_str(num, str.c_str(), 10) == 0);
-#else
-    mpz_init_set_str(num, str.c_str(), 10);
-#endif
-    /* 10^(number of m */
-    mpz_init_set_ui(den, 10);
-    mpz_pow_ui(den, den, str.size() - decimal_point);
-
-    mpz_set(mpq_numref(res), num);
-    mpz_set(mpq_denref(res), den);
-
-    mpz_clear(num);
-    mpz_clear(den);
-  }
-
-  mpq_canonicalize(res);
-}
-
-static void
-make_mpq_from_rat_string(mpq_t &res, const char *str_num, const char *str_den)
-{
-  mpq_init(res);
-
-  bool num_is_dec = std::string(str_num).find(".") != std::string::npos;
-  bool den_is_dec = std::string(str_den).find(".") != std::string::npos;
-
-  if (num_is_dec || den_is_dec)
-  {
-    mpq_t num, den;
-
-    if (num_is_dec)
-    {
-      make_mpq_from_dec_string(num, str_num);
-    }
-    else
-    {
-      mpq_init(num);
-      mpz_t znum;
-      mpz_init_set_str(znum, str_num, 10);
-      mpq_set_z(num, znum);
-      mpz_clear(znum);
-    }
-    if (den_is_dec)
-    {
-      make_mpq_from_dec_string(den, str_den);
-    }
-    else
-    {
-      mpq_init(den);
-      mpz_t zden;
-      mpz_init_set_str(zden, str_den, 10);
-      mpq_set_z(den, zden);
-      mpz_clear(zden);
-    }
-
-    mpq_div(res, num, den);
-    mpq_clear(num);
-    mpq_clear(den);
-  }
-  else
-  {
-    mpz_t num, den;
-    mpz_init_set_str(num, str_num, 10);
-    mpz_init_set_str(den, str_den, 10);
-    mpz_set(mpq_numref(res), num);
-    mpz_set(mpq_denref(res), den);
-    mpz_clear(num);
-    mpz_clear(den);
-  }
-
-  mpq_canonicalize(res);
-}
-
-static void
-make_mpq_from_ui(mpq_t &res, uint32_t n, uint32_t d)
-{
-  mpq_init(res);
-  mpq_set_ui(res, n, d);
-  mpq_canonicalize(res);
-}
-}  // namespace
 
 FloatingPointMPFR
 FloatingPointMPFR::convert_from_rational_aux(NodeManager &nm,
