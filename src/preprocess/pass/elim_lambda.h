@@ -1,6 +1,5 @@
 /***
  * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
- *
  * Copyright (C) 2022 by the authors listed in the AUTHORS file at
  * https://github.com/bitwuzla/bitwuzla/blob/main/AUTHORS
  *
@@ -10,8 +9,6 @@
 
 #ifndef BZLA_PREPROCESS_PASS_ELIM_LAMBDA_H_INCLUDED
 #define BZLA_PREPROCESS_PASS_ELIM_LAMBDA_H_INCLUDED
-
-#include <unordered_map>
 
 #include "preprocess/preprocessing_pass.h"
 #include "util/statistics.h"
@@ -32,8 +29,6 @@ class PassElimLambda : public PreprocessingPass
 
  private:
   Node reduce(const Node& node) const;
-
-  std::unordered_map<Node, Node> d_cache;
 
   struct Statistics
   {

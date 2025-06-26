@@ -45,6 +45,7 @@ unit_tests = [
       'pass_normalize',
       'pass_flatten_and',
       'pass_variable_substitution',
+      'pass_elim_lambda',
       'preprocessor',
       'simplify_cache',
     ]

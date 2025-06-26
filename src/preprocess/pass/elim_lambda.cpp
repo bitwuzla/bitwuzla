@@ -10,6 +10,8 @@
 
 #include "preprocess/pass/elim_lambda.h"
 
+#include <unordered_map>
+
 #include "env.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
@@ -31,70 +33,61 @@ void
 PassElimLambda::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats_pass.time_apply);
-  d_cache.clear();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    if (!processed(assertion))
+    if (assertion.node_info().lambda)
     {
-      if (assertion.node_info().lambda)
-      {
-        const Node& processed = process(assertion);
-        assertions.replace(i, processed);
-        cache_assertion(processed);
-      }
-      cache_assertion(assertion);
+      const Node& processed = process(assertion);
+      assertions.replace(i, processed);
     }
   }
-  d_cache.clear();
 }
 
 Node
 PassElimLambda::process(const Node& term)
 {
   node::node_ref_vector visit{term};
+  std::unordered_map<Node, bool> cache;
 
   do
   {
-    const Node& cur     = visit.back();
-    auto [it, inserted] = d_cache.emplace(cur, Node());
+    const Node& cur = visit.back();
 
+    if (d_preproc_cache.cached(cur, SimplifyCache::Cacher::ELIM_LAMBDA)
+        || !cur.node_info().lambda)
+    {
+      cache.emplace(cur, true);
+      visit.pop_back();
+      continue;
+    }
+
+    auto [it, inserted] = cache.emplace(cur, false);
     if (inserted)
     {
-      if (!cur.node_info().lambda)
-      {
-        it->second = cur;
-        continue;
-      }
       visit.insert(visit.end(), cur.begin(), cur.end());
       continue;
     }
-    else if (it->second.is_null())
+    else if (!it->second)
     {
+      it->second = true;
+      Node res;
       // Eliminate function applications on lambdas
       if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
       {
         ++d_stats.num_elim;
-        it->second = reduce(cur);
+        res = reduce(cur);
       }
       else
       {
-        std::vector<Node> children;
-        for (const Node& child : cur)
-        {
-          auto iit = d_cache.find(child);
-          assert(iit != d_cache.end());
-          children.push_back(iit->second);
-        }
-
-        it->second = utils::rebuild_node(d_env.nm(), cur, children);
+        res = d_preproc_cache.rebuild_node(d_env.nm(), cur);
       }
+      d_preproc_cache.add(cur, res, SimplifyCache::Cacher::ELIM_LAMBDA);
     }
-
     visit.pop_back();
   } while (!visit.empty());
 
-  return d_cache.at(term);
+  return d_preproc_cache.get(term);
 }
 
 /* --- PassElimLambda private ----------------------------------------------- */
@@ -105,51 +98,46 @@ PassElimLambda::reduce(const Node& node) const
   assert(node.kind() == Kind::APPLY);
   assert(node[0].kind() == Kind::LAMBDA);
 
-  std::unordered_map<Node, Node> substitutions;
+  std::unordered_map<Node, Node> cache;
   auto it   = node.begin();
   Node body = *it++;
   for (; it != node.end(); ++it)
   {
     const Node& var = body[0];
-    substitutions.emplace(var, d_cache.at(*it));
+    cache.emplace(var, d_preproc_cache.get(*it));
     body = body[1];
   }
   assert(body.kind() != Kind::LAMBDA);
 
-  std::unordered_map<Node, Node> cache;
   node::node_ref_vector visit{body};
   do
   {
-    const Node& cur = visit.back();
-
+    const Node& cur     = visit.back();
     auto [it, inserted] = cache.emplace(cur, Node());
     if (inserted)
     {
-      if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
+      if (d_preproc_cache.cached(cur, SimplifyCache::Cacher::ELIM_LAMBDA))
       {
-        assert(d_cache.find(cur) != d_cache.end());
-        visit.push_back(d_cache.at(cur));
+        visit.push_back(d_preproc_cache.get(cur));
       }
       else
       {
+        // Lambdas below already reduced and cached.
+        assert(cur.kind() != Kind::APPLY || cur[0].kind() != Kind::LAMBDA);
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
       continue;
     }
     else if (it->second.is_null())
     {
-      if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
+      if (d_preproc_cache.cached(cur, SimplifyCache::Cacher::ELIM_LAMBDA))
       {
-        assert(d_cache.find(cur) != d_cache.end());
-        it->second = cache.at(d_cache.at(cur));
-      }
-      else if (substitutions.find(cur) != substitutions.end())
-      {
-        assert(cur.kind() == Kind::VARIABLE);
-        it->second = substitutions.at(cur);
+        it->second = cache.at(d_preproc_cache.get(cur));
       }
       else
       {
+        // Lambdas below already reduced and cached.
+        assert(cur.kind() != Kind::APPLY || cur[0].kind() != Kind::LAMBDA);
         it->second = utils::rebuild_node(d_env.nm(), cur, cache);
       }
     }
