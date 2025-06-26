@@ -26,13 +26,7 @@ PassRewrite::apply(AssertionVector& assertions)
   auto& rw = d_env.rewriter();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    const Node& assertion = assertions[i];
-    if (!processed(assertion))
-    {
-      const Node& rewritten = rw.rewrite(assertion);
-      assertions.replace(i, rewritten);
-      cache_assertion(rewritten);
-    }
+    assertions.replace(i, rw.rewrite(assertions[i]));
   }
 
 #ifndef NDEBUG

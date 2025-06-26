@@ -102,7 +102,6 @@ Preprocessor::preprocess()
   }
 
   // Clear rewriter and preprocessing pass caches
-  d_pass_rewrite.clear_cache();
   d_pass_contr_ands.clear_cache();
   d_pass_elim_lambda.clear_cache();
   d_pass_elim_bvudiv.clear_cache();
