@@ -24,6 +24,7 @@ operator<<(std::ostream& os, const SimplifyCache::Cacher cacher)
   {
     case SimplifyCache::Cacher::REWRITER: os << "rewriter"; break;
     case SimplifyCache::Cacher::VARSUBST: os << "varsubst"; break;
+    case SimplifyCache::Cacher::ELIM_LAMBDA: os << "elim_lambda"; break;
   }
   return os;
 }
@@ -75,11 +76,7 @@ SimplifyCache::add(const Node& node, const Node& subst, const Cacher cacher)
     ++d_stats.num_added;
   }
 
-  switch (cacher)
-  {
-    case Cacher::REWRITER: it->second.d_flags.rewriter = 1; break;
-    case Cacher::VARSUBST: it->second.d_flags.varsubst = 1; break;
-  }
+  it->second.d_flags.set(cacher);
 }
 
 const Node&
@@ -139,12 +136,7 @@ SimplifyCache::cached(const Node& node, const Cacher cacher) const
   {
     return false;
   }
-  switch (cacher)
-  {
-    case Cacher::REWRITER: return it->second.d_flags.rewriter;
-    case Cacher::VARSUBST: return it->second.d_flags.varsubst;
-  }
-  return false;
+  return it->second.d_flags.processed(cacher);
 }
 
 bool
@@ -269,6 +261,24 @@ SimplifyCache::rebuild_node(NodeManager& nm, const Node& node)
   return node::utils::rebuild_node(nm, node, children);
 }
 
+void
+SimplifyCache::gc()
+{
+  for (auto it = d_simplified.begin(); it != d_simplified.end();)
+  {
+    if (!it->second.frozen()
+        && (!it->first.is_const() || it->first == it->second.subst()))
+    {
+      it = d_simplified.erase(it);
+      ++d_stats.num_gc;
+    }
+    else
+    {
+      ++it;
+    }
+  }
+}
+
 /* --- PreprocessorCache private -------------------------------------------- */
 
 void
@@ -325,7 +335,8 @@ SimplifyCache::Statistics::Statistics(util::Statistics& stats,
       num_popped(stats.new_stat<uint64_t>(prefix + "num_popped")),
       num_compressed(stats.new_stat<uint64_t>(prefix + "num_compressed")),
       num_deleted(stats.new_stat<uint64_t>(prefix + "num_deleted")),
-      num_frozen(stats.new_stat<uint64_t>(prefix + "num_frozen"))
+      num_frozen(stats.new_stat<uint64_t>(prefix + "num_frozen")),
+      num_gc(stats.new_stat<uint64_t>(prefix + "num_gc"))
 {
 }
 

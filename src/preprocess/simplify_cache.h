@@ -33,17 +33,25 @@ namespace bzla::preprocess {
 class SimplifyCache : public backtrack::Backtrackable
 {
  public:
-  enum class Cacher
+  enum class Cacher : uint8_t
   {
-    REWRITER = 0,
-    VARSUBST = 1,
+    REWRITER    = 0,
+    VARSUBST    = 1,
+    ELIM_LAMBDA = 2,
   };
   struct ProcessedFlags
   {
-    uint8_t rewriter : 1;
-    uint8_t varsubst : 1;
+    ProcessedFlags() : d_flags(0) {}
 
-    ProcessedFlags() : rewriter(0), varsubst(0) {}
+    void set(const Cacher c) { d_flags |= 1 << static_cast<uint8_t>(c); }
+
+    bool processed(const Cacher c) const
+    {
+      return ((d_flags >> static_cast<uint8_t>(c)) & 1) == 1;
+    }
+
+   private:
+    uint8_t d_flags;
   };
 
   SimplifyCache(Env& env,
@@ -93,6 +101,8 @@ class SimplifyCache : public backtrack::Backtrackable
    * @return Rebuilt node.
    */
   Node rebuild_node(NodeManager& nm, const Node& node);
+
+  void gc();
 
  private:
   /**
@@ -197,6 +207,7 @@ class SimplifyCache : public backtrack::Backtrackable
     uint64_t& num_compressed;
     uint64_t& num_deleted;
     uint64_t& num_frozen;
+    uint64_t& num_gc;
   } d_stats;
 };
 
