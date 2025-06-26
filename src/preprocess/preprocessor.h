@@ -18,7 +18,6 @@
 #include "preprocess/pass/elim_extract.h"
 #include "preprocess/pass/elim_lambda.h"
 #include "preprocess/pass/elim_udiv.h"
-#include "preprocess/pass/elim_uninterpreted.h"
 #include "preprocess/pass/embedded_constraints.h"
 #include "preprocess/pass/flatten_and.h"
 #include "preprocess/pass/normalize.h"
@@ -101,7 +100,6 @@ class Preprocessor
   pass::PassContradictingAnds d_pass_contr_ands;
   pass::PassElimLambda d_pass_elim_lambda;
   pass::PassElimUdiv d_pass_elim_bvudiv;
-  pass::PassElimUninterpreted d_pass_elim_uninterpreted;
   pass::PassEmbeddedConstraints d_pass_embedded_constraints;
   pass::PassVariableSubstitution d_pass_variable_substitution;
   pass::PassFlattenAnd d_pass_flatten_and;

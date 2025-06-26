@@ -198,7 +198,6 @@ sources = files([
   'preprocess/pass/elim_extract.cpp',
   'preprocess/pass/elim_lambda.cpp',
   'preprocess/pass/elim_udiv.cpp',
-  'preprocess/pass/elim_uninterpreted.cpp',
   'preprocess/pass/embedded_constraints.cpp',
   'preprocess/pass/flatten_and.cpp',
   'preprocess/pass/normalize.cpp',
