@@ -53,6 +53,14 @@ mpfr_set_format(uint64_t exp_size, uint64_t sig_size)
   mpfr_set_emin(-emax - sig_size + 2);
 }
 void
+mpfr_set_format(bzla::Type type)
+{
+  uint64_t emax = exp_max(type.fp_exp_size());
+  assert(emax < INT64_MAX);
+  mpfr_set_emax(emax);
+  mpfr_set_emin(-emax - type.fp_sig_size() + 2);
+}
+void
 mpfr_reset_format()
 {
   mpfr_set_emax(mpfr_get_emax_max());
@@ -267,6 +275,7 @@ FloatingPointMPFR::fpfp(NodeManager &nm,
 
 FloatingPointMPFR::FloatingPointMPFR(const Type &type)
 {
+  mpfr_reset_format();
   d_size.reset(new FloatingPointTypeInfo(type));
   // MPFR precision includes the hidden bit (not the sign bit), we can use
   // significand size (which is also +1 because of the sign bit).
@@ -289,7 +298,6 @@ FloatingPointMPFR::FloatingPointMPFR(const Type &type, const BitVector &bv)
     : FloatingPointMPFR(type)
 {
   assert(type.fp_ieee_bv_size() == bv.size());
-  mpfr_reset_format();
 
   BitVector bvsign, bvexp, bvsig;
   ieee_bv_as_bvs(type, bv, bvsign, bvexp, bvsig);
@@ -639,6 +647,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpabs() const
 {
   FloatingPointMPFR res(*d_size);
+  mpfr_set_format(d_size->type());
   mpfr_abs(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
 }
@@ -647,6 +656,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpneg() const
 {
   FloatingPointMPFR res(*d_size);
+  mpfr_set_format(d_size->type());
   mpfr_neg(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
 }
@@ -655,6 +665,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpsqrt(const RoundingMode rm) const
 {
   FloatingPointMPFR res(*d_size);
+  mpfr_set_format(d_size->type());
   // res.d_uf.reset(new UnpackedFloat(
   //     symfpu::sqrt<fp::SymFpuTraits>(*res.size(), rm, *d_uf)));
   return res;
@@ -664,6 +675,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fprti(const RoundingMode rm) const
 {
   FloatingPointMPFR res(*d_size);
+  mpfr_set_format(d_size->type());
   // res.d_uf.reset(new UnpackedFloat(
   //     symfpu::roundToIntegral<fp::SymFpuTraits>(*res.size(), rm, *d_uf)));
   return res;
@@ -673,6 +685,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fprem(const FloatingPointMPFR &fp) const
 {
   FloatingPointMPFR res(*d_size);
+  mpfr_set_format(d_size->type());
   // res.d_uf.reset(new UnpackedFloat(
   //     symfpu::remainder<fp::SymFpuTraits>(*res.size(), *d_uf,
   //     *fp.unpacked())));
@@ -684,6 +697,7 @@ FloatingPointMPFR::fpadd(const RoundingMode rm,
                          const FloatingPointMPFR &fp) const
 {
   FloatingPointMPFR res(*d_size);
+  mpfr_set_format(d_size->type());
   // res.d_uf.reset(new UnpackedFloat(symfpu::add<fp::SymFpuTraits>(
   //     *res.size(), rm, *d_uf, *fp.unpacked(), true)));
   return res;
@@ -694,6 +708,7 @@ FloatingPointMPFR::fpmul(const RoundingMode rm,
                          const FloatingPointMPFR &fp) const
 {
   FloatingPointMPFR res(*d_size);
+  mpfr_set_format(d_size->type());
   // res.d_uf.reset(new UnpackedFloat(symfpu::multiply<fp::SymFpuTraits>(
   //     *res.size(), rm, *d_uf, *fp.unpacked())));
   return res;
@@ -704,6 +719,7 @@ FloatingPointMPFR::fpdiv(const RoundingMode rm,
                          const FloatingPointMPFR &fp) const
 {
   FloatingPointMPFR res(*d_size);
+  mpfr_set_format(d_size->type());
   // res.d_uf.reset(new UnpackedFloat(symfpu::divide<fp::SymFpuTraits>(
   //     *res.size(), rm, *d_uf, *fp.unpacked())));
   return res;
@@ -715,6 +731,7 @@ FloatingPointMPFR::fpfma(const RoundingMode rm,
                          const FloatingPointMPFR &fp1) const
 {
   FloatingPointMPFR res(*d_size);
+  mpfr_set_format(d_size->type());
   // res.d_uf.reset(new UnpackedFloat(symfpu::fma<fp::SymFpuTraits>(
   //     *res.size(), rm, *d_uf, *fp0.unpacked(), *fp1.unpacked())));
   return res;
