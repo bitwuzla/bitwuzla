@@ -3217,6 +3217,38 @@ TEST_F(TestFp, geq)
     }
   }
 }
+TEST_F(TestFp, abs)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp(t, bv);
+      FloatingPointMPFR fp_mpfr(t, bv);
+      ASSERT_EQ(fp.fpabs().str(), fp_mpfr.fpabs().str());
+    }
+  }
+}
+TEST_F(TestFp, neg)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp(t, bv);
+      FloatingPointMPFR fp_mpfr(t, bv);
+      ASSERT_EQ(fp.fpneg().str(), fp_mpfr.fpneg().str());
+    }
+  }
+}
 #endif
 
 }  // namespace bzla::test
