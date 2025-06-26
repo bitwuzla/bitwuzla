@@ -638,8 +638,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpabs() const
 {
   FloatingPointMPFR res(*d_size);
-  // res.d_uf.reset(new UnpackedFloat(
-  //     symfpu::absolute<fp::SymFpuTraits>(*res.size(), *d_uf)));
+  mpfr_abs(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
 }
 
@@ -647,9 +646,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpneg() const
 {
   FloatingPointMPFR res(*d_size);
-  // res.d_uf.reset(
-  //     new UnpackedFloat(symfpu::negate<fp::SymFpuTraits>(*res.size(),
-  //     *d_uf)));
+  mpfr_neg(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
 }
 
