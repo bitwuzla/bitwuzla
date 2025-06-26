@@ -3064,6 +3064,17 @@ TEST_F(TestFp, op_eq)
       FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"));
 #endif
 
+  ASSERT_NE(
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-12.11328125"),
+      FloatingPoint::from_real(
+          d_nm, d_fp16, RoundingMode::RNA, "-12.11328125"));
+#ifdef BZLA_USE_MPFR
+  ASSERT_NE(FloatingPointMPFR::from_real(
+                d_nm, d_fp16, RoundingMode::RNE, "-12.11328125"),
+            FloatingPointMPFR::from_real(
+                d_nm, d_fp16, RoundingMode::RNA, "-12.11328125"));
+#endif
+
   ASSERT_EQ(FloatingPoint::fpnan(d_fp16), FloatingPoint::fpnan(d_fp16));
 #ifdef BZLA_USE_MPFR
   ASSERT_EQ(FloatingPointMPFR::fpnan(d_fp16), FloatingPointMPFR::fpnan(d_fp16));
