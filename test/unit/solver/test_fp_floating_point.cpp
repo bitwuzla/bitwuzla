@@ -3228,6 +3228,35 @@ TEST_F(TestFp, neg)
   }
 }
 
+TEST_F(TestFp, sqrt)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp(t, bv);
+      FloatingPointMPFR fp_mpfr(t, bv);
+      for (int32_t i = 0, n = static_cast<int32_t>(RoundingMode::NUM_RM); i < n;
+           ++i)
+      {
+        RoundingMode rm = static_cast<RoundingMode>(i);
+        if (fp.fpsqrt(rm).str() != fp_mpfr.fpsqrt(rm).str())
+        {
+          std::cout << "bv: " << bv << std::endl;
+          std::cout << "rm: " << rm << std::endl;
+          std::cout << "fp: " << fp << std::endl;
+          std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
+        }
+        ASSERT_EQ(fp.fpsqrt(rm).str(), fp_mpfr.fpsqrt(rm).str());
+      }
+    }
+  }
+}
+
 TEST_F(TestFp, to_real_str)
 {
   ASSERT_EQ(FloatingPoint::fpnan(d_fp16).to_real_str(),
