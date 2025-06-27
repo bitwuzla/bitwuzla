@@ -1353,6 +1353,13 @@ TestFp::test_fp_cons_str_as_bv(NodeManager &nm,
 #endif
   }
 #ifdef BZLA_USE_MPFR
+  if (fp.str() != fp_mpfr.str())
+  {
+    std::cout << "bv: " << bv << std::endl;
+    std::cout << "fp: " << fp << std::endl;
+    std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
+  }
+  assert(fp.str() == fp_mpfr.str());
   ASSERT_EQ(fp.str(), fp_mpfr.str());
 #endif
 
@@ -3278,5 +3285,135 @@ TEST_F(TestFp, neg)
   }
 }
 #endif
+
+TEST_F(TestFp, to_real_str)
+{
+  ASSERT_EQ(FloatingPoint::fpnan(d_fp16).to_real_str(),
+            "(fp.to_real (_ NaN 5 11))");
+  ASSERT_EQ(FloatingPoint::fpinf(d_fp16, false).to_real_str(),
+            "(fp.to_real (_ +oo 5 11))");
+  ASSERT_EQ(FloatingPoint::fpinf(d_fp16, true).to_real_str(),
+            "(fp.to_real (_ -oo 5 11))");
+  ASSERT_EQ(FloatingPoint::fpzero(d_fp16, false).to_real_str(), "0.0");
+  ASSERT_EQ(FloatingPoint::fpzero(d_fp16, true).to_real_str(), "0.0");
+  ASSERT_NE(
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-12.11328125")
+          .to_real_str(),
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNA, "-12.11328125")
+          .to_real_str());
+
+#if BZLA_USE_MPFR
+  ASSERT_EQ(FloatingPointMPFR::fpnan(d_fp16).to_real_str(),
+            "(fp.to_real (_ NaN 5 11))");
+  ASSERT_EQ(FloatingPointMPFR::fpinf(d_fp16, false).to_real_str(),
+            "(fp.to_real (_ +oo 5 11))");
+  ASSERT_EQ(FloatingPointMPFR::fpinf(d_fp16, true).to_real_str(),
+            "(fp.to_real (_ -oo 5 11))");
+  ASSERT_EQ(FloatingPointMPFR::fpzero(d_fp16, false).to_real_str(), "0.0");
+  ASSERT_EQ(FloatingPointMPFR::fpzero(d_fp16, true).to_real_str(), "0.0");
+  ASSERT_NE(FloatingPointMPFR::from_real(
+                d_nm, d_fp16, RoundingMode::RNE, "-12.11328125")
+                .to_real_str(),
+            FloatingPointMPFR::from_real(
+                d_nm, d_fp16, RoundingMode::RNA, "-12.11328125")
+                .to_real_str());
+
+  ASSERT_EQ(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1")
+                .to_real_str(),
+            FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1")
+                .to_real_str());
+  ASSERT_EQ(
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1")
+          .to_real_str(),
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1")
+          .to_real_str());
+  ASSERT_NE(
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1")
+          .to_real_str(),
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1")
+          .to_real_str());
+
+  ASSERT_EQ(
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777")
+          .to_real_str(),
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777")
+          .to_real_str());
+  ASSERT_NE(
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777")
+          .to_real_str(),
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RTZ, "-5.17777")
+          .to_real_str());
+
+  ASSERT_EQ(
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8")
+          .to_real_str(),
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8")
+          .to_real_str());
+
+  ASSERT_EQ(
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27")
+          .to_real_str(),
+      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27")
+          .to_real_str());
+
+  ASSERT_EQ(FloatingPoint::from_real(
+                d_nm, d_fp16, RoundingMode::RNE, "-12.11328125").to_real_str(),
+            FloatingPointMPFR::from_real(
+                d_nm, d_fp16, RoundingMode::RNE, "-12.11328125").to_real_str());
+  ASSERT_EQ(FloatingPoint::from_real(
+                d_nm, d_fp16, RoundingMode::RNA, "-12.11328125").to_real_str(),
+            FloatingPointMPFR::from_real(
+                d_nm, d_fp16, RoundingMode::RNA, "-12.11328125").to_real_str());
+
+  for (uint64_t i = 0; i < (1u << 5); ++i)
+  {
+    BitVector bvexp = BitVector::from_ui(5, i);
+    for (uint64_t j = 0; j < (1u << 10); ++j)
+    {
+      BitVector bvsig = BitVector::from_ui(10, j);
+      FloatingPoint fp_pos(
+          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
+      FloatingPoint fp_neg(
+          d_fp16, BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig));
+      FloatingPointMPFR fp_mpfr_pos(
+          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
+      FloatingPointMPFR fp_mpfr_neg(
+          d_fp16, BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig));
+      if (fp_pos.to_real_str() != fp_mpfr_pos.to_real_str())
+      {
+        std::cout << "fp_pos: " << fp_pos << std::endl;
+        std::cout << "fp_mpfr_pos: " << fp_mpfr_pos << std::endl;
+      }
+      if (fp_neg.to_real_str() != fp_mpfr_neg.to_real_str())
+      {
+        std::cout << "fp_neg: " << fp_neg << std::endl;
+        std::cout << "fp_mpfr_neg: " << fp_mpfr_neg << std::endl;
+      }
+      ASSERT_EQ(fp_pos.to_real_str(), fp_mpfr_pos.to_real_str());
+      ASSERT_EQ(fp_neg.to_real_str(), fp_mpfr_neg.to_real_str());
+    }
+  }
+
+  for (const auto &format : d_formats_32_128)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp(t, bv);
+      FloatingPointMPFR fp_mpfr(t, bv);
+      if (fp.to_real_str() != fp_mpfr.to_real_str())
+      {
+        std::cout << bv << std::endl;
+        std::cout << "fp: " << fp << std::endl;
+        std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
+      }
+      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+    }
+  }
+#endif
+}
 
 }  // namespace bzla::test
