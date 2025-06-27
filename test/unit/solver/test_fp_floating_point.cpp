@@ -49,10 +49,9 @@ class TestFp : public TestCommon
     d_fp128 = d_nm.mk_fp_type(15, 113);
   }
 
-  static void test_fp_cons_str_as_bv(NodeManager &nm,
-                                     const BitVector &bvsign,
-                                     const BitVector &bvexp,
-                                     const BitVector &bvsig);
+  static void test_for_float16(
+      std::function<void(const BitVector &, const BitVector &)> fun);
+
   void test_for_formats(
       const std::vector<std::pair<uint64_t, uint64_t>> &formats,
       std::function<void(NodeManager &nm,
@@ -60,6 +59,10 @@ class TestFp : public TestCommon
                          const BitVector &,
                          const BitVector &)> fun);
 
+  static void test_fp_cons_str_as_bv(NodeManager &nm,
+                                     const BitVector &bvsign,
+                                     const BitVector &bvexp,
+                                     const BitVector &bvsig);
   void test_to_fp_from_real(RoundingMode rm,
                             std::vector<std::vector<const char *>> &expected);
 
@@ -1388,6 +1391,21 @@ TestFp::test_fp_cons_str_as_bv(NodeManager &nm,
 }
 
 void
+TestFp::test_for_float16(
+    std::function<void(const BitVector &bvexp, const BitVector &bvsig)> fun)
+{
+  for (uint64_t i = 0; i < (1u << 5); ++i)
+  {
+    for (uint64_t j = 0; j < (1u << 10); ++j)
+    {
+      BitVector bvexp = BitVector::from_ui(5, i);
+      BitVector bvsig = BitVector::from_ui(10, j);
+      fun(bvexp, bvsig);
+    }
+  }
+}
+
+void
 TestFp::test_for_formats(
     const std::vector<std::pair<uint64_t, uint64_t>> &formats,
     std::function<void(NodeManager &nm,
@@ -1705,23 +1723,18 @@ TEST_F(TestFp, isX)
 
 TEST_F(TestFp, str_as_bv)
 {
-  for (uint64_t i = 0; i < (1u << 5); ++i)
-  {
-    for (uint64_t j = 0; j < (1u << 10); ++j)
+  auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {
+    bool pos = d_rng->flip_coin();
+    if (TEST_SLOW || pos)
     {
-      BitVector bvexp = BitVector::from_ui(5, i);
-      BitVector bvsig = BitVector::from_ui(10, j);
-      bool pos        = d_rng->flip_coin();
-      if (TEST_SLOW || pos)
-      {
-        test_fp_cons_str_as_bv(d_nm, BitVector::mk_false(), bvexp, bvsig);
-      }
-      if (TEST_SLOW || !pos)
-      {
-        test_fp_cons_str_as_bv(d_nm, BitVector::mk_true(), bvexp, bvsig);
-      }
+      test_fp_cons_str_as_bv(d_nm, BitVector::mk_false(), bvexp, bvsig);
     }
-  }
+    if (TEST_SLOW || !pos)
+    {
+      test_fp_cons_str_as_bv(d_nm, BitVector::mk_true(), bvexp, bvsig);
+    }
+  };
+  test_for_float16(fun);
   test_for_formats(d_formats_32_128, TestFp::test_fp_cons_str_as_bv);
 }
 
@@ -3197,7 +3210,25 @@ TEST_F(TestFp, geq)
 }
 TEST_F(TestFp, abs)
 {
-  for (const auto &format : d_all_formats)
+  // comprehensive tests for all values in Float16
+  auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {
+    {
+      BitVector bv = BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig);
+      FloatingPoint fp(d_fp16, bv);
+      FloatingPointMPFR fp_mpfr(d_fp16, bv);
+      ASSERT_EQ(fp.fpabs().str(), fp_mpfr.fpabs().str());
+    }
+    {
+      BitVector bv = BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig);
+      FloatingPoint fp(d_fp16, bv);
+      FloatingPointMPFR fp_mpfr(d_fp16, bv);
+      ASSERT_EQ(fp.fpabs().str(), fp_mpfr.fpabs().str());
+    }
+  };
+  test_for_float16(fun);
+
+  // random tests for all Float32, Float64, Float128
+  for (const auto &format : d_formats_32_128)
   {
     uint64_t exp_size = format.first;
     uint64_t sig_size = format.second - 1;
@@ -3213,7 +3244,25 @@ TEST_F(TestFp, abs)
 }
 TEST_F(TestFp, neg)
 {
-  for (const auto &format : d_all_formats)
+  // comprehensive tests for all values in Float16
+  auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {
+    {
+      BitVector bv = BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig);
+      FloatingPoint fp(d_fp16, bv);
+      FloatingPointMPFR fp_mpfr(d_fp16, bv);
+      ASSERT_EQ(fp.fpneg().str(), fp_mpfr.fpneg().str());
+    }
+    {
+      BitVector bv = BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig);
+      FloatingPoint fp(d_fp16, bv);
+      FloatingPointMPFR fp_mpfr(d_fp16, bv);
+      ASSERT_EQ(fp.fpneg().str(), fp_mpfr.fpneg().str());
+    }
+  };
+  test_for_float16(fun);
+
+  // random tests for all Float32, Float64, Float128
+  for (const auto &format : d_formats_32_128)
   {
     uint64_t exp_size = format.first;
     uint64_t sig_size = format.second - 1;
@@ -3230,7 +3279,30 @@ TEST_F(TestFp, neg)
 
 TEST_F(TestFp, sqrt)
 {
-  for (const auto &format : d_all_formats)
+  // comprehensive tests for all values in Float16
+  auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {
+    for (int32_t i = 0, n = static_cast<int32_t>(RoundingMode::NUM_RM); i < n;
+         ++i)
+    {
+      RoundingMode rm = static_cast<RoundingMode>(i);
+      {
+        BitVector bv = BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig);
+        FloatingPoint fp(d_fp16, bv);
+        FloatingPointMPFR fp_mpfr(d_fp16, bv);
+        ASSERT_EQ(fp.fpsqrt(rm).str(), fp_mpfr.fpsqrt(rm).str());
+      }
+      {
+        BitVector bv = BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig);
+        FloatingPoint fp(d_fp16, bv);
+        FloatingPointMPFR fp_mpfr(d_fp16, bv);
+        ASSERT_EQ(fp.fpsqrt(rm).str(), fp_mpfr.fpsqrt(rm).str());
+      }
+    }
+  };
+  test_for_float16(fun);
+
+  // random tests for all Float32, Float64, Float128
+  for (const auto &format : d_formats_32_128)
   {
     uint64_t exp_size = format.first;
     uint64_t sig_size = format.second - 1;
@@ -3244,13 +3316,6 @@ TEST_F(TestFp, sqrt)
            ++i)
       {
         RoundingMode rm = static_cast<RoundingMode>(i);
-        if (fp.fpsqrt(rm).str() != fp_mpfr.fpsqrt(rm).str())
-        {
-          std::cout << "bv: " << bv << std::endl;
-          std::cout << "rm: " << rm << std::endl;
-          std::cout << "fp: " << fp << std::endl;
-          std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
-        }
         ASSERT_EQ(fp.fpsqrt(rm).str(), fp_mpfr.fpsqrt(rm).str());
       }
     }
@@ -3339,35 +3404,36 @@ TEST_F(TestFp, to_real_str)
           d_nm, d_fp16, RoundingMode::RNA, "-12.11328125")
           .to_real_str());
 
-  for (uint64_t i = 0; i < (1u << 5); ++i)
-  {
-    BitVector bvexp = BitVector::from_ui(5, i);
-    for (uint64_t j = 0; j < (1u << 10); ++j)
+  // comprehensive tests for all values in Float16
+  auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {
     {
-      BitVector bvsig = BitVector::from_ui(10, j);
-      FloatingPoint fp_pos(
-          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
-      FloatingPoint fp_neg(
-          d_fp16, BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig));
-      FloatingPointMPFR fp_mpfr_pos(
-          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
-      FloatingPointMPFR fp_mpfr_neg(
-          d_fp16, BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig));
-      if (fp_pos.to_real_str() != fp_mpfr_pos.to_real_str())
+      BitVector bv = BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig);
+      FloatingPoint fp(d_fp16, bv);
+      FloatingPointMPFR fp_mpfr(d_fp16, bv);
+      if (fp.to_real_str() != fp_mpfr.to_real_str())
       {
-        std::cout << "fp_pos: " << fp_pos << std::endl;
-        std::cout << "fp_mpfr_pos: " << fp_mpfr_pos << std::endl;
+        std::cout << "bv: " << bv << std::endl;
+        std::cout << "fp: " << fp << std::endl;
+        std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
       }
-      if (fp_neg.to_real_str() != fp_mpfr_neg.to_real_str())
-      {
-        std::cout << "fp_neg: " << fp_neg << std::endl;
-        std::cout << "fp_mpfr_neg: " << fp_mpfr_neg << std::endl;
-      }
-      ASSERT_EQ(fp_pos.to_real_str(), fp_mpfr_pos.to_real_str());
-      ASSERT_EQ(fp_neg.to_real_str(), fp_mpfr_neg.to_real_str());
+      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
     }
-  }
+    {
+      BitVector bv = BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig);
+      FloatingPoint fp(d_fp16, bv);
+      FloatingPointMPFR fp_mpfr(d_fp16, bv);
+      if (fp.to_real_str() != fp_mpfr.to_real_str())
+      {
+        std::cout << "bv: " << bv << std::endl;
+        std::cout << "fp: " << fp << std::endl;
+        std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
+      }
+      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+    }
+  };
+  test_for_float16(fun);
 
+  // random tests for all Float32, Float64, Float128
   for (const auto &format : d_formats_32_128)
   {
     uint64_t exp_size = format.first;
