@@ -692,8 +692,17 @@ FloatingPointMPFR::fpadd(const RoundingMode rm,
 {
   FloatingPointMPFR res(*d_size);
   mpfr_set_format(d_size->type());
-  // res.d_uf.reset(new UnpackedFloat(symfpu::add<fp::SymFpuTraits>(
-  //     *res.size(), rm, *d_uf, *fp.unpacked(), true)));
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_add, res.d_mpfr, d_mpfr, fp.d_mpfr);
+  }
+  else
+  {
+    i = mpfr_add(res.d_mpfr, d_mpfr, fp.d_mpfr, rm_mpfr);
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
   return res;
 }
 
