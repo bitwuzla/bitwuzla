@@ -35,8 +35,7 @@ class PassVariableSubstitution : public PreprocessingPass
   Node process(const Node& term) override;
 
   /** Get current set of substitutions. */
-  const backtrack::unordered_map<Node, std::pair<Node, Node>>& substitutions()
-      const;
+  const backtrack::unordered_map<Node, Node>& substitutions() const;
 
   /** Get substitution assertion for substituted variable. */
   const Node& substitution_assertion(const Node& var) const;
@@ -67,8 +66,8 @@ class PassVariableSubstitution : public PreprocessingPass
       const AssertionVector& assertions,
       std::unordered_map<Node, std::vector<Node>>& subst_candidates);
 
-  /** Current set of variable substitutions. */
-  backtrack::unordered_map<Node, std::pair<Node, Node>> d_substitutions;
+  /** Maps variable to its original substitution assertion. */
+  backtrack::unordered_map<Node, Node> d_substitutions;
 
   /** Caches visited nodes during substitution. */
   backtrack::unordered_map<Node, bool> d_subst_cache;

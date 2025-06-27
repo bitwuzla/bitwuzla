@@ -686,7 +686,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     auto it = subst_asserts.find(var);
     assert(it != subst_asserts.end());
     size_t i = it->second.size() - terms.size();
-    d_substitutions.emplace(var, std::make_pair(terms.front(), it->second[i]));
+    d_substitutions.emplace(var, it->second[i]);
   }
 }
 
@@ -839,7 +839,7 @@ PassVariableSubstitution::mark_coi_and_remove_cycles(
   }
 }
 
-const backtrack::unordered_map<Node, std::pair<Node, Node>>&
+const backtrack::unordered_map<Node, Node>&
 PassVariableSubstitution::substitutions() const
 {
   return d_substitutions;
@@ -850,7 +850,7 @@ PassVariableSubstitution::substitution_assertion(const Node& var) const
 {
   auto it = d_substitutions.find(var);
   assert(it != d_substitutions.end());
-  return it->second.second;
+  return it->second;
 }
 
 /* --- PassVariableSubstitution private ------------------------------------- */
@@ -861,7 +861,7 @@ namespace {
 void
 dbg_check_all_substituted(
     const Node& n,
-    const backtrack::unordered_map<Node, std::pair<Node, Node>>& substitutions,
+    const backtrack::unordered_map<Node, Node>& substitutions,
     const std::unordered_map<Node, std::vector<Node>>& new_substitutions)
 {
   std::vector<Node> visit{n};
