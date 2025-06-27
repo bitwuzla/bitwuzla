@@ -23,6 +23,7 @@ struct Options
   bool print_unsat_core   = false;
   bool print_model        = false;
   bool print_no_letify    = false;
+  bool print_statistics   = false;
   bool parse_only         = false;
   bool pp_only            = false;
   uint8_t bv_format       = 2;

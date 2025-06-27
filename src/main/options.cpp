@@ -406,6 +406,10 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
     {
       opts.print_no_letify = true;
     }
+    else if (arg == "--stats")
+    {
+      opts.print_statistics = true;
+    }
     else if (arg == "-P" || arg == "--parse-only")
     {
       opts.parse_only = true;

@@ -73,7 +73,8 @@ main(int32_t argc, char* argv[])
       bitwuzla->print_unsat_core(std::cout);
     }
 
-    if (options.get(bitwuzla::Option::VERBOSITY))
+    if (options.get(bitwuzla::Option::VERBOSITY)
+        || main_options.print_statistics)
     {
       auto stats = bitwuzla->statistics();
       stats.merge(parser.statistics());
