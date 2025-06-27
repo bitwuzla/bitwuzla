@@ -59,6 +59,9 @@ endif
 if gimsatul_dep.found()
   cpp_args += ['-DBZLA_USE_GIMSATUL']
 endif
+if mpfr_dep.found()
+  cpp_args += ['-DMPFR_USE_C99_FEATURE=1']
+endif
 
 # ---
 # Additional build definitions
