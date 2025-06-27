@@ -42,7 +42,7 @@
       }                                                                 \
     };                                                                  \
     test_for_float16(fun);                                              \
-    /* random tests for all Float32, Float64, Float128 */               \
+    /* random tests for Float32, Float64, Float128 */                   \
     for (const auto &format : d_formats_32_128)                         \
     {                                                                   \
       uint64_t exp_size = format.first;                                 \
@@ -88,7 +88,7 @@
       }                                                                     \
     };                                                                      \
     test_for_float16(fun);                                                  \
-    /* random tests for all Float32, Float64, Float128 */                   \
+    /* random tests for Float32, Float64, Float128 */                       \
     for (const auto &format : d_formats_32_128)                             \
     {                                                                       \
       uint64_t exp_size = format.first;                                     \
@@ -108,6 +108,28 @@
         }                                                                   \
       }                                                                     \
     }                                                                       \
+  } while (0);
+
+#define TEST_BINARY(FUN)                                                     \
+  do                                                                         \
+  {                                                                          \
+    /* random tests for Float16, Float32, Float64, Float128 */               \
+    for (const auto &format : d_formats_32_128)                              \
+    {                                                                        \
+      uint64_t exp_size = format.first;                                      \
+      uint64_t sig_size = format.second - 1;                                 \
+      Type t            = d_nm.mk_fp_type(exp_size, sig_size);               \
+      for (uint32_t i = 0; i < N_TESTS; ++i)                                 \
+      {                                                                      \
+        BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);              \
+        BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);              \
+        FloatingPoint fp1(t, bv1);                                           \
+        FloatingPoint fp2(t, bv2);                                           \
+        FloatingPointMPFR fp_mpfr1(t, bv1);                                  \
+        FloatingPointMPFR fp_mpfr2(t, bv2);                                  \
+        ASSERT_EQ(fp1.fp##FUN(fp2).str(), fp_mpfr1.fp##FUN(fp_mpfr2).str()); \
+      }                                                                      \
+    }                                                                        \
   } while (0);
 
 namespace bzla::test {
@@ -3303,6 +3325,7 @@ TEST_F(TestFp, geq)
 TEST_F(TestFp, abs) { TEST_UNARY(abs); }
 TEST_F(TestFp, neg) { TEST_UNARY(neg); }
 TEST_F(TestFp, sqrt) { TEST_UNARY_RM(sqrt); }
+TEST_F(TestFp, rem) { TEST_BINARY(rem); }
 
 TEST_F(TestFp, to_real_str)
 {
@@ -3415,7 +3438,7 @@ TEST_F(TestFp, to_real_str)
   };
   test_for_float16(fun);
 
-  // random tests for all Float32, Float64, Float128
+  // random tests for Float32, Float64, Float128
   for (const auto &format : d_formats_32_128)
   {
     uint64_t exp_size = format.first;

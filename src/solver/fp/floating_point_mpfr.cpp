@@ -681,9 +681,8 @@ FloatingPointMPFR::fprem(const FloatingPointMPFR &fp) const
 {
   FloatingPointMPFR res(*d_size);
   mpfr_set_format(d_size->type());
-  // res.d_uf.reset(new UnpackedFloat(
-  //     symfpu::remainder<fp::SymFpuTraits>(*res.size(), *d_uf,
-  //     *fp.unpacked())));
+  int32_t i = mpfr_remainder(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, MPFR_RNDN);
   return res;
 }
 
