@@ -18,18 +18,33 @@
 #include "util/gmp_utils.h"
 
 namespace {
-uint64_t
-exp_max(uint64_t exp_size)
+int64_t
+ieee_exp_max(uint64_t exp_size)
 {
-  assert(exp_size < 64);
+  assert(exp_size < 63);
   // TODO we need to make this robust wrt to underlying impl (64 vs 32 bit)
   uint64_t one = 1;
-  return one << (exp_size - one);
+  return (one << (exp_size - one)) - one;
 }
-uint64_t
+int64_t
+ieee_exp_min(uint64_t exp_size)
+{
+  return 1 - ieee_exp_max(exp_size);
+}
+int64_t
+mpfr_exp_max(uint64_t exp_size)
+{
+  return ieee_exp_max(exp_size) + 1;
+}
+int64_t
+mpfr_exp_min(uint64_t exp_size, uint64_t sig_size)
+{
+  return ieee_exp_min(exp_size) - sig_size + 2;
+}
+int64_t
 exp_bias(uint64_t exp_size)
 {
-  return exp_max(exp_size) - 1;
+  return ieee_exp_max(exp_size);
 }
 mpfr_exp_t
 exp2mpfr(uint64_t exp_size, uint64_t exp)
@@ -37,7 +52,7 @@ exp2mpfr(uint64_t exp_size, uint64_t exp)
   // Remove bias and account for MPFR's hidden bit.
   return exp - exp_bias(exp_size) + 1;
 }
-uint64_t
+int64_t
 mpfr2exp(uint64_t exp_size, mpfr_exp_t exp)
 {
   // Add bias and remove MPFR's hidden bit.
@@ -46,18 +61,15 @@ mpfr2exp(uint64_t exp_size, mpfr_exp_t exp)
 void
 mpfr_set_format(uint64_t exp_size, uint64_t sig_size)
 {
-  uint64_t emax = exp_max(exp_size);
-  assert(emax < INT64_MAX);
-  mpfr_set_emax(emax);
-  mpfr_set_emin(-emax - sig_size + 2);
+  // TODO make robust with respect to MPFR implementation size of exponent
+  assert(sizeof(mpfr_exp_t) == sizeof(uint64_t));
+  mpfr_set_emax(mpfr_exp_max(exp_size));
+  mpfr_set_emin(mpfr_exp_min(exp_size, sig_size));
 }
 void
 mpfr_set_format(bzla::Type type)
 {
-  uint64_t emax = exp_max(type.fp_exp_size());
-  assert(emax < INT64_MAX);
-  mpfr_set_emax(emax);
-  mpfr_set_emin(-emax - type.fp_sig_size() + 2);
+  mpfr_set_format(type.fp_exp_size(), type.fp_sig_size());
 }
 void
 mpfr_reset_format()
@@ -215,7 +227,11 @@ FloatingPointMPFR::from_real(NodeManager &nm,
 {
   (void) nm;
   FloatingPointMPFR res(type);
-  mpfr_set_str(res.d_mpfr, real.c_str(), 0, rm2mpfr(rm));
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  mpfr_set_format(type);
+  mpfr_set_str(res.d_mpfr, real.c_str(), 0, rm_mpfr);
+  mpfr_set_format(type);
+  // mpfr_subnormalize((mpfr_ptr)res.d_mpfr, 1, rm_mpfr);
   return res;
 }
 
@@ -298,6 +314,8 @@ FloatingPointMPFR::FloatingPointMPFR(const Type &type, const BitVector &bv)
 {
   assert(type.fp_ieee_bv_size() == bv.size());
 
+  mpfr_set_format(d_size->type());
+
   BitVector bvsign, bvexp, bvsig;
   ieee_bv_as_bvs(type, bv, bvsign, bvexp, bvsig);
   int32_t sign = bvsign.is_true() ? -1 : 1;
@@ -322,7 +340,7 @@ FloatingPointMPFR::FloatingPointMPFR(const Type &type, const BitVector &bv)
     {
       // subnormals
       std::string sign_str = sign < 0 ? "-" : "";
-      std::string s        = sign_str + "0.1" + bvsig.str();
+      std::string s        = sign_str + "0." + bvsig.str();
       mpfr_set_str(d_mpfr, s.c_str(), 2, MPFR_RNDN);
       mpfr_exp_t exp = mpfr_get_exp(d_mpfr);
       mpfr_set_exp(d_mpfr, exp + exp2mpfr(bvexp.size(), 0));
@@ -465,66 +483,35 @@ FloatingPointMPFR::str(uint8_t bv_format) const
 std::string
 FloatingPointMPFR::to_real_str() const
 {
-  uint64_t size_exp = get_exponent_size();
-  uint64_t size_sig = get_significand_size();
-
   if (fpisnan())
   {
-    return "(fp.to_real (_ NaN " + std::to_string(size_exp) + " "
-           + std::to_string(size_sig) + "))";
+    return "(fp.to_real (_ NaN " + std::to_string(d_size->type().fp_exp_size())
+           + " " + std::to_string(d_size->type().fp_sig_size()) + "))";
   }
 
   if (fpisinf())
   {
     if (fpisneg())
     {
-      return "(fp.to_real (_ -oo " + std::to_string(size_exp) + " "
-             + std::to_string(size_sig) + "))";
+      return "(fp.to_real (_ -oo "
+             + std::to_string(d_size->type().fp_exp_size()) + " "
+             + std::to_string(d_size->type().fp_sig_size()) + "))";
     }
-    return "(fp.to_real (_ +oo " + std::to_string(size_exp) + " "
-           + std::to_string(size_sig) + "))";
+    return "(fp.to_real (_ +oo " + std::to_string(d_size->type().fp_exp_size())
+           + " " + std::to_string(d_size->type().fp_sig_size()) + "))";
   }
   if (fpiszero())
   {
     return "0.0";
   }
 
-  BitVector bv_sign, bv_exp, bv_sig;
-  FloatingPointMPFR::ieee_bv_as_bvs(
-      d_size->type(), as_bv(), bv_sign, bv_exp, bv_sig);
-
-  // UnpackedFloat *uf  = unpacked();
-  // const auto &uf_exp = uf->getExponent();
-  // const auto &uf_sig = uf->getSignificand();
-  //
-  // const BitVector &exp = uf_exp.getBv();
-  // mpz_class gmp_exp(exp.msb() ? -exp.bvneg().to_mpz() : exp.to_mpz());
-  // gmp_exp -= util::uint64_to_mpz_class(size_sig - 1);
-  //
-  // mpz_class gmp_sig = uf_sig.getBv().to_mpz();
-  // if (bv_sign.is_one())
-  // {
-  //   gmp_sig = -gmp_sig;
-  // }
-  //
-  // mpz_class one(1);
-  // mpq_class q_res;
-  // if (gmp_exp >= 0)
-  // {
-  //   q_res = gmp_sig * (one << gmp_exp.get_ui());
-  // }
-  // else
-  // {
-  //   gmp_exp = -gmp_exp;
-  //   q_res   = mpq_class(gmp_sig, one << gmp_exp.get_ui());
-  // }
-  // q_res.canonicalize();
-  std::string res;  // = q_res.get_str(10);
-  // if (res.find('/') == std::string::npos && res.find('.') ==
-  // std::string::npos)
-  // {
-  //   res += ".0";
-  // }
+  mpq_class mpq;
+  mpfr_get_q(mpq.get_mpq_t(), d_mpfr);
+  std::string res = mpq.get_str();
+  if (res.find('/') == std::string::npos && res.find('.') == std::string::npos)
+  {
+    res += ".0";
+  }
   return res;
 }
 
@@ -743,7 +730,7 @@ FloatingPointMPFR::as_bv() const
   uint64_t sig_size = d_size->type().fp_sig_size();
   if (fpisnan())
   {
-    // We use single representation for NaN, same as SymFPU uses.
+    // We use single representation for NaN, the same as SymFPU uses.
     return BitVector::mk_false()
         .ibvconcat(BitVector::mk_ones(exp_size))
         .ibvconcat(BitVector::mk_min_signed(sig_size - 1));
@@ -765,20 +752,22 @@ FloatingPointMPFR::as_bv() const
   char *str = mpfr_get_str(0, &exp, 2, sig_size, d_mpfr, MPFR_RNDN);
   assert(strlen(str) > 1 && (str[0] != '-' || strlen(str) > 2));
   assert(strlen(str[0] == '-' ? str + 1 : str) == sig_size);
-  std::string sig_str = str[0] == '-' ? str + 2 : str + 1;
   BitVector bvexp     = BitVector::mk_zero(exp_size);
   BitVector bvsig;
   if (!fpissubnormal())
   {
+    std::string sig_str = str[0] == '-' ? str + 2 : str + 1;
     bvexp = BitVector::from_si(exp_size,
                                static_cast<int64_t>(mpfr2exp(exp_size, exp)));
     bvsig = BitVector(sig_size - 1, sig_str);
   }
   else
   {
-    std::string s = std::string(sub_threshold(exp_size) - exp, '0') + sig_str;
-    s.resize(sig_size - 1);
-    bvsig = BitVector(sig_size - 1, s, 2);
+    std::string sig_str = str[0] == '-' ? str + 1 : str;
+    sig_str.resize(sig_size - 1);
+    assert(mpfr2exp(exp_size, exp) <= 0);
+    bvsig =
+        BitVector(sig_size - 1, sig_str, 2).ibvshr(-mpfr2exp(exp_size, exp));
   }
   mpfr_free_str(str);
   assert(bvexp.size() == exp_size);
