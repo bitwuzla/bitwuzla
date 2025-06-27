@@ -13,11 +13,17 @@
 
 #include <cstdint>
 
+namespace bitwuzla::parser {
+class Parser;
+}
+
 namespace bzla::main {
 
 void set_time_limit(uint64_t time_limit);
 
 void reset_time_limit();
+
+void print_statistics_time_limit(bitwuzla::parser::Parser* parser);
 
 }  // namespace bzla::main
 

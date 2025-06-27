@@ -46,6 +46,10 @@ main(int32_t argc, char* argv[])
   bitwuzla::parser::Parser parser(
       tm, options, main_options.language, &std::cout);
   parser.configure_auto_print_model(main_options.print_model);
+  if (main_options.print_statistics)
+  {
+    print_statistics_time_limit(&parser);
+  }
 
   try
   {
