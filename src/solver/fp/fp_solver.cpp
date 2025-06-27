@@ -39,7 +39,8 @@ FpSolver::FpSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_word_blaster(env, state),
       d_word_blast_queue(state.backtrack_mgr()),
-      d_word_blast_index(state.backtrack_mgr())
+      d_word_blast_index(state.backtrack_mgr()),
+      d_stats(env.statistics())
 {
 }
 
@@ -50,6 +51,9 @@ FpSolver::check()
 {
   Log(1);
   Log(1) << "*** check fp";
+
+  util::Timer timer(d_stats.time_check);
+  ++d_stats.num_checks;
 
   reset_cached_values();
   NodeManager& nm = d_env.nm();
@@ -118,6 +122,14 @@ void
 FpSolver::register_term(const Node& term)
 {
   d_word_blast_queue.push_back(term);
+}
+
+/* --- FpSolver private ----------------------------------------------------- */
+
+FpSolver::Statistics::Statistics(util::Statistics& stats)
+    : num_checks(stats.new_stat<uint64_t>("solver::fp::num_checks")),
+      time_check(stats.new_stat<util::TimerStatistic>("solver::fp::time_check"))
+{
 }
 
 }  // namespace bzla::fp

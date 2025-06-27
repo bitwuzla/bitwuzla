@@ -44,6 +44,13 @@ class FpSolver : public Solver
   backtrack::vector<Node> d_word_blast_queue;
   /** Index in d_word_blast_queue to mark already word-blasted terms. */
   backtrack::object<size_t> d_word_blast_index;
+
+  struct Statistics
+  {
+    Statistics(util::Statistics& stats);
+    uint64_t& num_checks;
+    util::TimerStatistic& time_check;
+  } d_stats;
 };
 
 }  // namespace bzla::fp
