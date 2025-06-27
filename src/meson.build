@@ -83,7 +83,7 @@ if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
 endif
 if mpfr_dep.found()
-  cpp_args += ['-DBZLA_USE_MPFR']
+  cpp_args += ['-DBZLA_USE_MPFR', '-DMPFR_USE_C99_FEATURE=1']
 endif
 
 # ---
