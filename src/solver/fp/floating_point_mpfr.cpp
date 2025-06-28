@@ -721,8 +721,17 @@ FloatingPointMPFR::fpmul(const RoundingMode rm,
 {
   FloatingPointMPFR res(*d_size);
   mpfr_set_format(d_size->type());
-  // res.d_uf.reset(new UnpackedFloat(symfpu::multiply<fp::SymFpuTraits>(
-  //     *res.size(), rm, *d_uf, *fp.unpacked())));
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_mul, res.d_mpfr, d_mpfr, fp.d_mpfr);
+  }
+  else
+  {
+    i = mpfr_mul(res.d_mpfr, d_mpfr, fp.d_mpfr, rm_mpfr);
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
   return res;
 }
 
@@ -732,8 +741,17 @@ FloatingPointMPFR::fpdiv(const RoundingMode rm,
 {
   FloatingPointMPFR res(*d_size);
   mpfr_set_format(d_size->type());
-  // res.d_uf.reset(new UnpackedFloat(symfpu::divide<fp::SymFpuTraits>(
-  //     *res.size(), rm, *d_uf, *fp.unpacked())));
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_div, res.d_mpfr, d_mpfr, fp.d_mpfr);
+  }
+  else
+  {
+    i = mpfr_div(res.d_mpfr, d_mpfr, fp.d_mpfr, rm_mpfr);
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
   return res;
 }
 
@@ -744,8 +762,18 @@ FloatingPointMPFR::fpfma(const RoundingMode rm,
 {
   FloatingPointMPFR res(*d_size);
   mpfr_set_format(d_size->type());
-  // res.d_uf.reset(new UnpackedFloat(symfpu::fma<fp::SymFpuTraits>(
-  //     *res.size(), rm, *d_uf, *fp0.unpacked(), *fp1.unpacked())));
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(
+        mpfr_fma, res.d_mpfr, d_mpfr, fp0.d_mpfr, fp1.d_mpfr);
+  }
+  else
+  {
+    i = mpfr_fma(res.d_mpfr, d_mpfr, fp0.d_mpfr, fp1.d_mpfr, rm_mpfr);
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
   return res;
 }
 
