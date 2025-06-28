@@ -103,8 +103,17 @@
              i < n;                                                         \
              ++i)                                                           \
         {                                                                   \
-          RoundingMode rm = static_cast<RoundingMode>(i);                   \
-          ASSERT_EQ(fp.fp##FUN(rm).str(), fp_mpfr.fp##FUN(rm).str());       \
+          RoundingMode rm         = static_cast<RoundingMode>(i);           \
+          std::string fp_str      = fp.fp##FUN(rm).str();                   \
+          std::string fp_mpfr_str = fp_mpfr.fp##FUN(rm).str();              \
+          if (fp_str != fp_mpfr_str)                                        \
+          {                                                                 \
+            std::cout << "rm: " << rm << std::endl;                         \
+            std::cout << "bv: " << bv << std::endl;                         \
+            std::cout << "fp: " << fp_str << std::endl;                     \
+            std::cout << "fp_mpfr: " << fp_mpfr_str << std::endl;           \
+          }                                                                 \
+          ASSERT_EQ(fp_str, fp_mpfr_str);                                   \
         }                                                                   \
       }                                                                     \
     }                                                                       \
@@ -3411,6 +3420,7 @@ TEST_F(TestFp, geq)
 TEST_F(TestFp, abs) { TEST_UNARY(abs); }
 TEST_F(TestFp, neg) { TEST_UNARY(neg); }
 TEST_F(TestFp, sqrt) { TEST_UNARY_RM(sqrt); }
+TEST_F(TestFp, rti) { TEST_UNARY_RM(rti); }
 TEST_F(TestFp, rem) { TEST_BINARY(rem); }
 TEST_F(TestFp, add) { TEST_BINARY_RM(add); }
 
