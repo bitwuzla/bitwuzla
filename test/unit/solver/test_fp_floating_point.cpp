@@ -193,16 +193,22 @@
            i < n;                                                           \
            ++i)                                                             \
       {                                                                     \
-        RoundingMode rm         = static_cast<RoundingMode>(i);             \
-        std::string fp_str      = fp1.fp##FUN(rm, fp2).str();               \
-        std::string fp_mpfr_str = fp_mpfr1.fp##FUN(rm, fp_mpfr2).str();     \
+        RoundingMode rm           = static_cast<RoundingMode>(i);           \
+        FloatingPoint fp          = fp1.fp##FUN(rm, fp2);                   \
+        FloatingPointMPFR fp_mpfr = fp_mpfr1.fp##FUN(rm, fp_mpfr2);         \
+        std::string fp_str        = fp.str();                               \
+        std::string fp_mpfr_str   = fp_mpfr.str();                          \
         if (fp_str != fp_mpfr_str)                                          \
         {                                                                   \
           std::cout << "rm: " << rm << std::endl;                           \
-          std::cout << "bv1: " << bv1 << std::endl;                         \
-          std::cout << "bv2: " << bv2 << std::endl;                         \
-          std::cout << "fp: " << fp_str << std::endl;                       \
-          std::cout << "fp_mpfr: " << fp_mpfr_str << std::endl;             \
+          std::cout << "bv1: " << bv1 << " (" << fp1.to_real_str() << ")"   \
+                    << std::endl;                                           \
+          std::cout << "bv2: " << bv2 << " (" << fp2.to_real_str() << ")"   \
+                    << std::endl;                                           \
+          std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")"  \
+                    << std::endl;                                           \
+          std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                   \
+                    << fp_mpfr.to_real_str() << ")" << std::endl;           \
         }                                                                   \
         ASSERT_EQ(fp_str, fp_mpfr_str);                                     \
       }                                                                     \
@@ -230,6 +236,78 @@
           RoundingMode rm = static_cast<RoundingMode>(i);                   \
           ASSERT_EQ(fp1.fp##FUN(rm, fp2).str(),                             \
                     fp_mpfr1.fp##FUN(rm, fp_mpfr2).str());                  \
+        }                                                                   \
+      }                                                                     \
+    }                                                                       \
+  } while (0);
+
+#define TEST_TERNARY_RM(FUN)                                                \
+  do                                                                        \
+  {                                                                         \
+    /* more comprehensive tests for all values in Float16 */                \
+    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {     \
+      BitVector bv1;                                                        \
+      if (d_rng->flip_coin())                                               \
+      {                                                                     \
+        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);       \
+      }                                                                     \
+      else                                                                  \
+      {                                                                     \
+        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);        \
+      }                                                                     \
+      FloatingPoint fp1(d_fp16, bv1);                                       \
+      FloatingPointMPFR fp_mpfr1(d_fp16, bv1);                              \
+      BitVector bv2(16, *d_rng);                                            \
+      FloatingPoint fp2(d_fp16, bv2);                                       \
+      FloatingPointMPFR fp_mpfr2(d_fp16, bv2);                              \
+      BitVector bv3(16, *d_rng);                                            \
+      FloatingPoint fp3(d_fp16, bv2);                                       \
+      FloatingPointMPFR fp_mpfr3(d_fp16, bv2);                              \
+      for (int32_t i = 0, n = static_cast<int32_t>(RoundingMode::NUM_RM);   \
+           i < n;                                                           \
+           ++i)                                                             \
+      {                                                                     \
+        RoundingMode rm    = static_cast<RoundingMode>(i);                  \
+        std::string fp_str = fp1.fp##FUN(rm, fp2, fp3).str();               \
+        std::string fp_mpfr_str =                                           \
+            fp_mpfr1.fp##FUN(rm, fp_mpfr2, fp_mpfr3).str();                 \
+        if (fp_str != fp_mpfr_str)                                          \
+        {                                                                   \
+          std::cout << "rm: " << rm << std::endl;                           \
+          std::cout << "bv1: " << bv1 << std::endl;                         \
+          std::cout << "bv2: " << bv2 << std::endl;                         \
+          std::cout << "fp: " << fp_str << std::endl;                       \
+          std::cout << "fp_mpfr: " << fp_mpfr_str << std::endl;             \
+        }                                                                   \
+        ASSERT_EQ(fp_str, fp_mpfr_str);                                     \
+      }                                                                     \
+    };                                                                      \
+    test_for_float16(fun);                                                  \
+                                                                            \
+    /* random tests for Float32, Float64, Float128 */                       \
+    for (const auto &format : d_formats_32_128)                             \
+    {                                                                       \
+      uint64_t exp_size = format.first;                                     \
+      uint64_t sig_size = format.second - 1;                                \
+      Type t            = d_nm.mk_fp_type(exp_size, sig_size);              \
+      for (uint32_t i = 0; i < N_TESTS; ++i)                                \
+      {                                                                     \
+        BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);             \
+        BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);             \
+        BitVector bv3 = BitVector(exp_size + sig_size, *d_rng);             \
+        FloatingPoint fp1(t, bv1);                                          \
+        FloatingPoint fp2(t, bv2);                                          \
+        FloatingPoint fp3(t, bv3);                                          \
+        FloatingPointMPFR fp_mpfr1(t, bv1);                                 \
+        FloatingPointMPFR fp_mpfr2(t, bv2);                                 \
+        FloatingPointMPFR fp_mpfr3(t, bv3);                                 \
+        for (int32_t i = 0, n = static_cast<int32_t>(RoundingMode::NUM_RM); \
+             i < n;                                                         \
+             ++i)                                                           \
+        {                                                                   \
+          RoundingMode rm = static_cast<RoundingMode>(i);                   \
+          ASSERT_EQ(fp1.fp##FUN(rm, fp2, fp3).str(),                        \
+                    fp_mpfr1.fp##FUN(rm, fp_mpfr2, fp_mpfr3).str());        \
         }                                                                   \
       }                                                                     \
     }                                                                       \
@@ -3423,6 +3501,13 @@ TEST_F(TestFp, sqrt) { TEST_UNARY_RM(sqrt); }
 TEST_F(TestFp, rti) { TEST_UNARY_RM(rti); }
 TEST_F(TestFp, rem) { TEST_BINARY(rem); }
 TEST_F(TestFp, add) { TEST_BINARY_RM(add); }
+TEST_F(TestFp, mul) { TEST_BINARY_RM(mul); }
+#ifdef NDEBUG
+// SymFPU fails with an assertion failure (see issue #164) but agrees with
+// MPFR on all tests for release builds without assertions.
+TEST_F(TestFp, div) { TEST_BINARY_RM(div); }
+#endif
+TEST_F(TestFp, fma) { TEST_TERNARY_RM(fma); }
 
 TEST_F(TestFp, to_real_str)
 {
