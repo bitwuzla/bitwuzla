@@ -51,10 +51,7 @@ class SimplifyCache : public backtrack::Backtrackable
                 const std::string& id = "preprocessor");
 
   /** Add new substition `node` -> `subst`. */
-  // TEMPORARY default
-  void add(const Node& node,
-           const Node& subst,
-           const Cacher cacher = Cacher::REWRITER);
+  void add(const Node& node, const Node& subst, const Cacher cacher);
 
   /**
    * @return The representative of `node`.
@@ -99,21 +96,79 @@ class SimplifyCache : public backtrack::Backtrackable
 
  private:
   /**
-   * Struct to hold additional information.
+   * Class to manage substitutions for a node.
    */
-  struct CacheInfo
+  class CacheNode
   {
-    /** Substitition node. */
-    Node d_subst;
-    /** Assertion stack level when substitution happend. */
-    uint32_t d_level;
-    ProcessedFlags d_flags;
-    bool d_frozen = false;
-
-    CacheInfo(const Node& subst, uint32_t level)
-        : d_subst(subst), d_level(level)
+   public:
+    CacheNode(const Node& subst, uint32_t level)
     {
+      d_substs.emplace_back(subst, level);
     }
+
+    const Node& subst() const
+    {
+      assert(!d_substs.empty());
+      return d_substs.back().first;
+    }
+
+    uint32_t level() const
+    {
+      assert(!d_substs.empty());
+      return d_substs.back().second;
+    }
+
+    bool pop()
+    {
+      assert(!d_substs.empty());
+      d_substs.pop_back();
+      return d_substs.empty();
+    }
+
+    void update(const Node& subst, uint32_t lvl)
+    {
+      if (lvl == level())
+      {
+        update(subst);
+      }
+      else
+      {
+        d_substs.emplace_back(subst, lvl);
+      }
+    }
+
+    void update(const Node& subst)
+    {
+      assert(!d_substs.empty());
+      d_substs.back().first = subst;
+    }
+
+    void freeze(uint32_t level)
+    {
+      d_frozen       = true;
+      d_frozen_level = level;
+    }
+
+    bool frozen() const { return d_frozen; }
+
+    uint32_t frozen_level() const { return d_frozen_level; }
+
+    void unfreeze()
+    {
+      assert(d_frozen);
+      d_frozen       = false;
+      d_frozen_level = 0;
+    }
+
+    ProcessedFlags d_flags;
+
+   private:
+    /** Substitition node and level it was substituted. */
+    std::vector<std::pair<Node, uint32_t>> d_substs;
+    /** Is node frozen? */
+    bool d_frozen = false;
+    /** Assertion stack level when node was frozen. */
+    uint32_t d_frozen_level = 0;
   };
 
   /**
@@ -130,7 +185,7 @@ class SimplifyCache : public backtrack::Backtrackable
   std::string d_id;
 
   /** Maps nodes to their substitutions with corrsponding assertion level. */
-  std::unordered_map<Node, CacheInfo> d_simplified;
+  std::unordered_map<Node, CacheNode> d_simplified;
 
   struct Statistics
   {
@@ -144,6 +199,8 @@ class SimplifyCache : public backtrack::Backtrackable
     uint64_t& num_frozen;
   } d_stats;
 };
+
+std::ostream& operator<<(std::ostream& os, const SimplifyCache::Cacher cacher);
 
 }  // namespace bzla::preprocess
 

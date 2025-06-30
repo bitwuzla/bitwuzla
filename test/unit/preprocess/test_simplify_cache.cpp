@@ -38,7 +38,7 @@ TEST_F(TestSimplifyCache, cache1)
   Node x  = d_nm.mk_const(bt, "x");
   Node y  = d_nm.mk_const(bt, "y");
 
-  cache.add(x, y);
+  cache.add(x, y, preprocess::SimplifyCache::Cacher::REWRITER);
   ASSERT_EQ(cache.get(x), y);
   ASSERT_EQ(cache.get(y), y);
 }
@@ -53,8 +53,8 @@ TEST_F(TestSimplifyCache, cache2)
   Node y  = d_nm.mk_const(bt, "y");
   Node z  = d_nm.mk_const(bt, "z");
 
-  cache.add(x, y);
-  cache.add(y, z);
+  cache.add(x, y, preprocess::SimplifyCache::Cacher::REWRITER);
+  cache.add(y, z, preprocess::SimplifyCache::Cacher::REWRITER);
   ASSERT_EQ(cache.get(x), z);
   ASSERT_EQ(cache.get(y), z);
   ASSERT_EQ(cache.get(z), z);
@@ -73,12 +73,12 @@ TEST_F(TestSimplifyCache, cache3)
   Node y  = d_nm.mk_const(bt, "y");
   Node z  = d_nm.mk_const(bt, "z");
 
-  cache.add(u, v);
-  cache.add(v, w);
-  cache.add(w, x);
+  cache.add(u, v, preprocess::SimplifyCache::Cacher::REWRITER);
+  cache.add(v, w, preprocess::SimplifyCache::Cacher::REWRITER);
+  cache.add(w, x, preprocess::SimplifyCache::Cacher::REWRITER);
 
-  cache.add(x, y);
-  cache.add(y, z);
+  cache.add(x, y, preprocess::SimplifyCache::Cacher::REWRITER);
+  cache.add(y, z, preprocess::SimplifyCache::Cacher::REWRITER);
   ASSERT_EQ(cache.get(x), z);
   ASSERT_EQ(cache.get(y), z);
   ASSERT_EQ(cache.get(z), z);
@@ -98,10 +98,10 @@ TEST_F(TestSimplifyCache, cache4)
   Node y  = d_nm.mk_const(bt, "y");
   Node z  = d_nm.mk_const(bt, "z");
 
-  cache.add(x, w);
-  cache.add(y, x);
+  cache.add(x, w, preprocess::SimplifyCache::Cacher::REWRITER);
+  cache.add(y, x, preprocess::SimplifyCache::Cacher::REWRITER);
   d_backtrack_mgr.push();
-  cache.add(z, y);
+  cache.add(z, y, preprocess::SimplifyCache::Cacher::REWRITER);
   ASSERT_EQ(cache.size(), 3);
   ASSERT_EQ(cache.get(w), w);
   ASSERT_EQ(cache.get(z), w);
@@ -125,9 +125,9 @@ TEST_F(TestSimplifyCache, cache5)
   Node y  = d_nm.mk_const(bt, "y");
   Node z  = d_nm.mk_const(bt, "z");
 
-  cache.add(x, y);
+  cache.add(x, y, preprocess::SimplifyCache::Cacher::REWRITER);
   d_backtrack_mgr.push();
-  cache.add(z, x);
+  cache.add(z, x, preprocess::SimplifyCache::Cacher::REWRITER);
   ASSERT_EQ(cache.size(), 2);
   ASSERT_EQ(cache.get(z), y);
   ASSERT_EQ(cache.get(x), y);
@@ -152,9 +152,9 @@ TEST_F(TestSimplifyCache, cache6)
     // x and y are intermediate nodes (no external references)
     Node x = d_nm.mk_const(bt, "x");
     Node y = d_nm.mk_const(bt, "y");
-    cache.add(u, x);
-    cache.add(x, y);
-    cache.add(y, z);
+    cache.add(u, x, preprocess::SimplifyCache::Cacher::REWRITER);
+    cache.add(x, y, preprocess::SimplifyCache::Cacher::REWRITER);
+    cache.add(y, z, preprocess::SimplifyCache::Cacher::REWRITER);
   }
 
   ASSERT_EQ(cache.size(), 3);

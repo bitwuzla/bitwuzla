@@ -13,9 +13,20 @@
 #include "env.h"
 #include "node/node_utils.h"
 
-//#define SIMPLIFY_CACHE_DEBUG
+// #define SIMPLIFY_CACHE_DEBUG
 
 namespace bzla::preprocess {
+
+std::ostream&
+operator<<(std::ostream& os, const SimplifyCache::Cacher cacher)
+{
+  switch (cacher)
+  {
+    case SimplifyCache::Cacher::REWRITER: os << "rewriter"; break;
+    case SimplifyCache::Cacher::VARSUBST: os << "varsubst"; break;
+  }
+  return os;
+}
 
 /* --- PreprocessorCache public --------------------------------------------- */
 
@@ -39,17 +50,15 @@ SimplifyCache::add(const Node& node, const Node& subst, const Cacher cacher)
   auto [it, inserted] = d_simplified.try_emplace(node, cached, d_level);
   if (!inserted)
   {
-    if (!it->second.d_frozen) // && cached != it->second.d_subst)
+    if (!it->second.frozen() && cached != it->second.subst())
     {
 #ifdef SIMPLIFY_CACHE_DEBUG
-      std::cout << this << " cache update @" << d_level << ": " << node << " -> "
-                << cached << " (before: " << it->second.d_subst << " @ "
-                << it->second.d_level
-                << ", who: " << static_cast<uint32_t>(cacher) << ")"
+      std::cout << this << " cache update @" << d_level << ": " << node
+                << " -> " << cached << " (before: " << it->second.subst()
+                << " @ " << it->second.level() << ", who: " << cacher << ")"
                 << std::endl;
 #endif
-      it->second.d_subst = cached;
-      it->second.d_level = d_level;
+      it->second.update(cached, d_level);
       ++d_stats.num_updated;
     }
     else
@@ -60,8 +69,8 @@ SimplifyCache::add(const Node& node, const Node& subst, const Cacher cacher)
   else
   {
 #ifdef SIMPLIFY_CACHE_DEBUG
-    std::cout << this << " cache add @" << d_level << ": " << node << " -> " << cached
-              << " (who: " << static_cast<uint32_t>(cacher) << ")" << std::endl;
+    std::cout << this << " cache add @" << d_level << ": " << node << " -> "
+              << cached << " (who: " << cacher << ")" << std::endl;
 #endif
     ++d_stats.num_added;
   }
@@ -83,43 +92,43 @@ SimplifyCache::get(const Node& node)
   }
 
   Node cur_node    = node;
-  size_t cur_level = it->second.d_level;
+  size_t cur_level = it->second.level();
   auto prev_it     = it;
   // Get representative for each level
   do
   {
-    if (it->first == it->second.d_subst)
+    if (it->first == it->second.subst())
     {
       break;
     }
     // Found representative for this current level
-    if (cur_level != it->second.d_level)
+    if (cur_level != it->second.level())
     {
       // Compress path if length > 1 for cur_level
-      compress_path(cur_node, prev_it->first, prev_it->second.d_subst);
+      compress_path(cur_node, prev_it->first, prev_it->second.subst());
 
       // Continue with next level
       cur_node  = it->first;
-      cur_level = it->second.d_level;
+      cur_level = it->second.level();
     }
 
     prev_it = it;
-    it      = d_simplified.find(it->second.d_subst);
+    it      = d_simplified.find(it->second.subst());
   } while (it != d_simplified.end());
 
   // If level did not change, compress path
   if (cur_node == node)
   {
-    const Node& repr = prev_it->second.d_subst;
+    const Node& repr = prev_it->second.subst();
     compress_path(cur_node, prev_it->first, repr);
 
     auto it = d_simplified.find(cur_node);
     assert(it != d_simplified.end());
-    return it->second.d_subst;
+    return it->second.subst();
   }
 
   // Return representative
-  return prev_it->second.d_subst;
+  return prev_it->second.subst();
 }
 
 bool
@@ -146,19 +155,20 @@ SimplifyCache::frozen(const Node& node) const
   {
     return false;
   }
-  return it->second.d_frozen;
+  return it->second.frozen();
 }
 
 void
 SimplifyCache::freeze(const Node& node)
 {
   auto [it, inserted] = d_simplified.try_emplace(node, node, d_level);
-  if (!it->second.d_frozen)
+  if (!it->second.frozen())
   {
 #ifdef SIMPLIFY_CACHE_DEBUG
-    std::cout << this << " cache freeze @ " << d_level << ": " << node << std::endl;
+    std::cout << this << " cache freeze @ " << d_level << ": " << node
+              << std::endl;
 #endif
-    it->second.d_frozen = true;
+    it->second.freeze(d_level);
     ++d_stats.num_frozen;
   }
 }
@@ -173,41 +183,68 @@ void
 SimplifyCache::push()
 {
   ++d_level;
+#ifdef SIMPLIFY_CACHE_DEBUG
+  std::cout << this << " cache::push: " << d_level << std::endl;
+#endif
 }
 
 void
 SimplifyCache::pop()
 {
+#ifdef SIMPLIFY_CACHE_DEBUG
+  std::cout << this << " cache::pop: " << d_level << std::endl;
+#endif
   // Remove all entries with the current level
-  for (auto it = d_simplified.cbegin(); it != d_simplified.cend();)
+  for (auto it = d_simplified.begin(); it != d_simplified.end();)
   {
-    if (it->second.d_level == d_level)
+    if (it->second.level() == d_level)
     {
-#ifdef SIMPLIFY_CACHE_DEBUG
-      std::cout << this << " cache remove @" << d_level << ": " << it->first << " -> "
-                << it->second.d_subst << std::endl;
-#endif
-      it = d_simplified.erase(it);
-      ++d_stats.num_popped;
-    }
-    // If the cache holds the last reference to this node, delete it.
-    else if (it->first.refs() == 1
-             || (it->first == it->second.d_subst && it->first.refs() == 2))
-    {
-      if (it->second.d_frozen)
+      if (it->second.pop())
       {
-        --d_stats.num_frozen;
-      }
 #ifdef SIMPLIFY_CACHE_DEBUG
-      std::cout << this << " cache cleanup @" << d_level << ": " << it->first << " -> "
-                << it->second.d_subst << std::endl;
+        std::cout << this << " cache remove @" << d_level << ": " << it->first
+                  << std::endl;
 #endif
-      it = d_simplified.erase(it);
-      ++d_stats.num_deleted;
+        it = d_simplified.erase(it);
+      }
+      else
+      {
+#ifdef SIMPLIFY_CACHE_DEBUG
+        std::cout << this << " cache restore @" << d_level << ": " << it->first
+                  << " -> " << it->second.subst() << " @ " << it->second.level()
+                  << std::endl;
+#endif
+      }
+      ++d_stats.num_popped;
     }
     else
     {
-      ++it;
+      // If the cache holds the last reference to this node, delete it.
+      auto refs = it->first.refs();
+      if (refs == 1 || (it->first == it->second.subst() && refs == 2))
+      {
+        if (it->second.frozen())
+        {
+          --d_stats.num_frozen;
+        }
+#ifdef SIMPLIFY_CACHE_DEBUG
+        std::cout << this << " cache cleanup @" << d_level << ": " << it->first
+                  << " -> " << it->second.subst() << std::endl;
+#endif
+        it = d_simplified.erase(it);
+        ++d_stats.num_deleted;
+      }
+      else
+      {
+        // If node was frozen in current level but added in lower level, we can
+        // unfreeze the node.
+        if (it->second.frozen_level() == d_level)
+        {
+          it->second.unfreeze();
+          --d_stats.num_frozen;
+        }
+        ++it;
+      }
     }
   }
   --d_level;
@@ -247,24 +284,28 @@ SimplifyCache::compress_path(const Node& start,
   auto itc = d_simplified.find(start);
   while (true)
   {
-    assert(itc->second.d_level == d_simplified.find(start)->second.d_level);
+    assert(itc->second.level() == d_simplified.find(start)->second.level());
     assert(itc->first != repr);
     bool done = itc->first == end;
-    Node next = itc->second.d_subst;
+    Node next = itc->second.subst();
     // If the cache holds the last reference to this node, delete it.
-    if (itc->first.refs() == 1
-        || (itc->first == itc->second.d_subst && itc->first.refs() == 2))
+    auto refs = itc->first.refs();
+    if (refs == 1 || (itc->first == itc->second.subst() && refs == 2))
     {
-      if (itc->second.d_frozen)
+      if (itc->second.frozen())
       {
         --d_stats.num_frozen;
       }
-      d_simplified.erase(itc);
-      ++d_stats.num_deleted;
+      if (itc->second.pop())
+      {
+        d_simplified.erase(itc);
+        ++d_stats.num_deleted;
+      }
     }
     else
     {
-      itc->second.d_subst = repr;
+      // Update in-place, same level
+      itc->second.update(repr);
     }
     ++d_stats.num_compressed;
     if (done)
