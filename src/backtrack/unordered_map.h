@@ -43,7 +43,8 @@ class unordered_map : public Backtrackable
     auto [it, inserted] = d_data.emplace(std::forward<Args>(args)...);
     if (inserted)
     {
-      d_keys.emplace_back(it->first);
+      d_key_pos.emplace(it->first, d_keys.size());
+      d_keys.emplace_back(it->first, true);
     }
     return std::make_pair(it, inserted);
   }
@@ -54,9 +55,42 @@ class unordered_map : public Backtrackable
     auto [it, inserted] = d_data.try_emplace(std::forward<Args>(args)...);
     if (inserted)
     {
-      d_keys.emplace_back(it->first);
+      d_key_pos.emplace(it->first, d_keys.size());
+      d_keys.emplace_back(it->first, true);
     }
     return std::make_pair(it, inserted);
+  }
+
+  iterator modify(const_iterator& pos)
+  {
+    // We can only modify elements in the current level
+    assert(d_key_pos.at(pos->first)
+           >= (d_control.empty() ? 0 : d_control.back()));
+    return d_data.find(pos->first);
+  }
+
+  auto erase(const K& key)
+  {
+    auto it = d_key_pos.find(key);
+    if (it != d_key_pos.end())
+    {
+      // We can only erase elements in the current level
+      assert(it->second >= (d_control.empty() ? 0 : d_control.back()));
+      d_keys[it->second].second = false;
+      d_key_pos.erase(it);
+    }
+    return d_data.erase(key);
+  }
+
+  auto erase(const_iterator& pos)
+  {
+    auto it = d_key_pos.find(pos->first);
+    assert(it != d_key_pos.end());
+    // We can only erase elements in the current level
+    assert(it->second >= (d_control.empty() ? 0 : d_control.back()));
+    d_keys[it->second].second = false;
+    d_key_pos.erase(it);
+    return d_data.erase(pos);
   }
 
   auto begin() const { return d_data.begin(); }
@@ -67,6 +101,7 @@ class unordered_map : public Backtrackable
   {
     d_data.clear();
     d_keys.clear();
+    d_key_pos.clear();
     for (std::size_t i = 0, size = d_control.size(); i < size; ++i)
     {
       d_control[i] = 0;
@@ -86,14 +121,21 @@ class unordered_map : public Backtrackable
 
     while (d_keys.size() > pop_to)
     {
-      d_data.erase(d_keys.back());
+      const auto& [k, is_active] = d_keys.back();
+      if (is_active)
+      {
+        assert(d_key_pos.at(k) == d_keys.size() - 1);
+        d_key_pos.erase(k);
+        d_data.erase(k);
+      }
       d_keys.pop_back();
     }
   }
 
  private:
   std::unordered_map<K, V> d_data;
-  std::vector<std::reference_wrapper<const K>> d_keys;
+  std::unordered_map<K, size_t> d_key_pos;
+  std::vector<std::pair<std::reference_wrapper<const K>, bool>> d_keys;
 };
 
 }  // namespace bzla::backtrack
