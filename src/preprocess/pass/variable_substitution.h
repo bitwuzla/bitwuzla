@@ -57,22 +57,23 @@ class PassVariableSubstitution : public PreprocessingPass
   Node substitute(
       const Node& term,
       const std::unordered_map<Node, std::vector<Node>>& substitutions,
-      std::unordered_map<Node, bool>& subst_cache,
+      backtrack::unordered_map<Node, bool>& subst_cache,
       bool use_coi);
 
   /** Determines whether we can fully substitute given variable. */
   bool is_safe_to_substitute(const Node& var);
   /** Mark COI of substitutions and remove cyclic candidate substitutions. */
-  void mark_coi(const AssertionVector& assertions,
-                std::unordered_map<Node, std::vector<Node>>& subst_candidates);
+  void mark_coi_and_remove_cycles(
+      const AssertionVector& assertions,
+      std::unordered_map<Node, std::vector<Node>>& subst_candidates);
 
   /** Current set of variable substitutions. */
   backtrack::unordered_map<Node, std::pair<Node, Node>> d_substitutions;
 
   /** Caches visited nodes during substitution. */
-  std::unordered_map<Node, bool> d_subst_cache;
+  backtrack::unordered_map<Node, bool> d_subst_cache;
   /** Caches visited nodes during COI computation. */
-  std::unordered_map<Node, std::pair<bool, size_t>> d_coi_cache;
+  backtrack::unordered_map<Node, std::pair<bool, size_t>> d_coi_cache;
 
   /** COI for current set of substitutions. */
   backtrack::unordered_set<Node> d_coi;

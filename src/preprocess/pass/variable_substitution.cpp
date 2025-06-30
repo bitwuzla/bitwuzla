@@ -551,6 +551,8 @@ PassVariableSubstitution::PassVariableSubstitution(
     Env& env, backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr, "vs", "varsubst"),
       d_substitutions(backtrack_mgr),
+      d_subst_cache(backtrack_mgr),
+      d_coi_cache(backtrack_mgr),
       d_coi(backtrack_mgr),
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
@@ -644,7 +646,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     return;
   }
 
-  // Reset substitution cache since we have new substitutions
+  // Reset substitution caches since we have new substitutions
   if (!new_substs.empty())
   {
     d_subst_cache.clear();
@@ -652,7 +654,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
   }
 
   // Compute COI of substitutions and remove cyclic substitutions
-  mark_coi(assertions, new_substs);
+  mark_coi_and_remove_cycles(assertions, new_substs);
   Log(2) << "Substitution COI size: " << d_coi.size();
 
   if (d_substitutions.empty() && new_substs.empty())
@@ -679,8 +681,6 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     assert(it != subst_asserts.end());
     size_t i = it->second.size() - terms.size();
     d_substitutions.emplace(var, std::make_pair(terms.front(), it->second[i]));
-    // Make sure that substituted variables are frozen.
-    d_preproc_cache.freeze(var);
   }
 }
 
@@ -699,22 +699,28 @@ PassVariableSubstitution::is_safe_to_substitute(const Node& var)
 }
 
 void
-PassVariableSubstitution::mark_coi(
+PassVariableSubstitution::mark_coi_and_remove_cycles(
     const AssertionVector& assertions,
     std::unordered_map<Node, std::vector<Node>>& subst_candidates)
 {
   // Compute COI of substitutions for current set of assertions
   util::Timer timer(d_stats.time_coi);
-  node_ref_vector coi_visit;
+  std::vector<Node> coi_visit;
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     coi_visit.push_back(assertions[i]);
   }
 
+  // Make sure to include substitution terms in COI.
+  for (const auto& p : subst_candidates)
+  {
+    coi_visit.push_back(p.first);
+  }
+
   std::vector<size_t> subst_var;
   while (!coi_visit.empty())
   {
-    const Node& cur = coi_visit.back();
+    const Node cur = coi_visit.back();
     ++d_stats.num_coi_trav;
 
     if (d_preproc_cache.frozen(cur))
@@ -797,8 +803,9 @@ PassVariableSubstitution::mark_coi(
       }
       else
       {
-        it->second.first = true;
-        it->second.second = 0;
+        auto m_it           = d_coi_cache.modify(it);
+        m_it->second.first  = true;
+        m_it->second.second = 0;
         if (cur.is_const())
         {
           auto its = subst_candidates.find(cur);
@@ -862,12 +869,21 @@ dbg_check_all_substituted(
     auto [it, inserted] = cache.insert(cur);
     if (inserted)
     {
+      if (substitutions.find(cur) != substitutions.end())
+      {
+        std::cout << "not substituted (old): " << cur << std::endl;
+      }
       assert(substitutions.find(cur) == substitutions.end());
+      if (new_substitutions.find(cur) != new_substitutions.end())
+      {
+        std::cout << "not substituted (new): " << cur << std::endl;
+      }
       assert(new_substitutions.find(cur) == new_substitutions.end());
       visit.insert(visit.end(), cur.begin(), cur.end());
     }
   } while (!visit.empty());
 }
+
 }  // namespace
 #endif
 
@@ -875,7 +891,7 @@ Node
 PassVariableSubstitution::substitute(
     const Node& term,
     const std::unordered_map<Node, std::vector<Node>>& substitutions,
-    std::unordered_map<Node, bool>& cache,
+    backtrack::unordered_map<Node, bool>& cache,
     bool use_coi)
 {
   util::Timer timer(d_stats.time_substitute);
@@ -918,7 +934,8 @@ PassVariableSubstitution::substitute(
     }
     else if (!it->second)
     {
-      it->second = true;
+      auto m_it    = cache.modify(it);
+      m_it->second = true;
       auto its = cur.is_const() ? substitutions.find(cur) : substitutions.end();
 
       Node res;

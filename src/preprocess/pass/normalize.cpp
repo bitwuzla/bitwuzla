@@ -10,8 +10,6 @@
 
 #include "preprocess/pass/normalize.h"
 
-#include <cmath>
-
 #include "bitblast/aig_bitblaster.h"
 #include "env.h"
 #include "node/node_kind.h"
