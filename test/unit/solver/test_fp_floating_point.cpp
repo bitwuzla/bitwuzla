@@ -3644,6 +3644,54 @@ TEST_F(TestFp, mul) { TEST_BINARY_RM(mul); }
 TEST_F(TestFp, div) { TEST_BINARY_RM(div); }
 TEST_F(TestFp, fma) { TEST_TERNARY_RM(fma); }
 
+TEST_F(TestFp, chained)
+{
+  auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {
+    BitVector bv1;
+    if (d_rng->flip_coin())
+    {
+      bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);
+    }
+    else
+    {
+      bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);
+    }
+    FloatingPoint fp1(d_fp16, bv1);
+    FloatingPointMPFR fp_mpfr1(d_fp16, bv1);
+    BitVector bv2(16, *d_rng);
+    FloatingPoint fp2(d_fp16, bv2);
+    FloatingPointMPFR fp_mpfr2(d_fp16, bv2);
+    BitVector bv3(16, *d_rng);
+    FloatingPoint fp3(d_fp16, bv2);
+    FloatingPointMPFR fp_mpfr3(d_fp16, bv2);
+    for (int32_t i = 0, n = static_cast<int32_t>(RoundingMode::NUM_RM); i < n;
+         ++i)
+    {
+      RoundingMode rm            = static_cast<RoundingMode>(i);
+      FloatingPoint _fp          = fp1.fpadd(rm, fp2);
+      FloatingPointMPFR _fp_mpfr = fp_mpfr1.fpadd(rm, fp_mpfr2);
+      FloatingPoint fp           = _fp.fprem(fp3);
+      FloatingPointMPFR fp_mpfr  = _fp_mpfr.fprem(fp_mpfr3);
+
+      std::string fp_str      = fp.str();
+      std::string fp_mpfr_str = fp_mpfr.str();
+      if (fp_str != fp_mpfr_str)
+      {
+        std::cout << "rm: " << rm << std::endl;
+        std::cout << "bv1: " << bv1 << " (" << fp1.to_real_str() << ")"
+                  << std::endl;
+        std::cout << "bv2: " << bv2 << " (" << fp2.to_real_str() << ")"
+                  << std::endl;
+        std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")"
+                  << std::endl;
+        std::cout << "fp_mpfr: " << fp_mpfr_str << " (" << fp_mpfr.to_real_str()
+                  << ")" << std::endl;
+      }
+      ASSERT_EQ(fp_str, fp_mpfr_str);
+    }
+  };
+  test_for_float16(fun);
+}
 #endif
 
 }  // namespace bzla::test
