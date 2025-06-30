@@ -19,6 +19,8 @@
 #include "solver/fp/symfpu_nm.h"
 #include "test/unit/test.h"
 
+/* -------------------------------------------------------------------------- */
+
 #define TEST_UNARY(FUN)                                                 \
   do                                                                    \
   {                                                                     \
@@ -312,6 +314,8 @@
       }                                                                     \
     }                                                                       \
   } while (0);
+
+/* -------------------------------------------------------------------------- */
 
 namespace bzla::test {
 
@@ -3418,97 +3422,6 @@ TEST_F(TestFp, op_eq)
   }
 }
 
-TEST_F(TestFp, lt)
-{
-  for (const auto &format : d_all_formats)
-  {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
-    for (uint32_t i = 0; i < N_TESTS; ++i)
-    {
-      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
-      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
-      FloatingPoint fp1(t, bv1);
-      FloatingPoint fp2(t, bv2);
-      FloatingPointMPFR fp_mpfr1(t, bv1);
-      FloatingPointMPFR fp_mpfr2(t, bv2);
-      ASSERT_EQ(fp1.fplt(fp2), fp_mpfr1.fplt(fp_mpfr2));
-    }
-  }
-}
-TEST_F(TestFp, leq)
-{
-  for (const auto &format : d_all_formats)
-  {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
-    for (uint32_t i = 0; i < N_TESTS; ++i)
-    {
-      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
-      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
-      FloatingPoint fp1(t, bv1);
-      FloatingPoint fp2(t, bv2);
-      FloatingPointMPFR fp_mpfr1(t, bv1);
-      FloatingPointMPFR fp_mpfr2(t, bv2);
-      ASSERT_EQ(fp1.fple(fp2), fp_mpfr1.fple(fp_mpfr2));
-    }
-  }
-}
-TEST_F(TestFp, gt)
-{
-  for (const auto &format : d_all_formats)
-  {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
-    for (uint32_t i = 0; i < N_TESTS; ++i)
-    {
-      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
-      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
-      FloatingPoint fp1(t, bv1);
-      FloatingPoint fp2(t, bv2);
-      FloatingPointMPFR fp_mpfr1(t, bv1);
-      FloatingPointMPFR fp_mpfr2(t, bv2);
-      ASSERT_EQ(fp1.fpgt(fp2), fp_mpfr1.fpgt(fp_mpfr2));
-    }
-  }
-}
-TEST_F(TestFp, geq)
-{
-  for (const auto &format : d_all_formats)
-  {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
-    for (uint32_t i = 0; i < N_TESTS; ++i)
-    {
-      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
-      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
-      FloatingPoint fp1(t, bv1);
-      FloatingPoint fp2(t, bv2);
-      FloatingPointMPFR fp_mpfr1(t, bv1);
-      FloatingPointMPFR fp_mpfr2(t, bv2);
-      ASSERT_EQ(fp1.fpge(fp2), fp_mpfr1.fpge(fp_mpfr2));
-    }
-  }
-}
-
-TEST_F(TestFp, abs) { TEST_UNARY(abs); }
-TEST_F(TestFp, neg) { TEST_UNARY(neg); }
-TEST_F(TestFp, sqrt) { TEST_UNARY_RM(sqrt); }
-TEST_F(TestFp, rti) { TEST_UNARY_RM(rti); }
-TEST_F(TestFp, rem) { TEST_BINARY(rem); }
-TEST_F(TestFp, add) { TEST_BINARY_RM(add); }
-TEST_F(TestFp, mul) { TEST_BINARY_RM(mul); }
-#ifdef NDEBUG
-// SymFPU fails with an assertion failure (see issue #164) but agrees with
-// MPFR on all tests for release builds without assertions.
-TEST_F(TestFp, div) { TEST_BINARY_RM(div); }
-#endif
-TEST_F(TestFp, fma) { TEST_TERNARY_RM(fma); }
-
 TEST_F(TestFp, to_real_str)
 {
   ASSERT_EQ(FloatingPoint::fpnan(d_fp16).to_real_str(),
@@ -3641,5 +3554,96 @@ TEST_F(TestFp, to_real_str)
     }
   }
 }
+
+TEST_F(TestFp, lt)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
+      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp1(t, bv1);
+      FloatingPoint fp2(t, bv2);
+      FloatingPointMPFR fp_mpfr1(t, bv1);
+      FloatingPointMPFR fp_mpfr2(t, bv2);
+      ASSERT_EQ(fp1.fplt(fp2), fp_mpfr1.fplt(fp_mpfr2));
+    }
+  }
+}
+TEST_F(TestFp, leq)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
+      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp1(t, bv1);
+      FloatingPoint fp2(t, bv2);
+      FloatingPointMPFR fp_mpfr1(t, bv1);
+      FloatingPointMPFR fp_mpfr2(t, bv2);
+      ASSERT_EQ(fp1.fple(fp2), fp_mpfr1.fple(fp_mpfr2));
+    }
+  }
+}
+TEST_F(TestFp, gt)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
+      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp1(t, bv1);
+      FloatingPoint fp2(t, bv2);
+      FloatingPointMPFR fp_mpfr1(t, bv1);
+      FloatingPointMPFR fp_mpfr2(t, bv2);
+      ASSERT_EQ(fp1.fpgt(fp2), fp_mpfr1.fpgt(fp_mpfr2));
+    }
+  }
+}
+TEST_F(TestFp, geq)
+{
+  for (const auto &format : d_all_formats)
+  {
+    uint64_t exp_size = format.first;
+    uint64_t sig_size = format.second - 1;
+    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
+      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
+      FloatingPoint fp1(t, bv1);
+      FloatingPoint fp2(t, bv2);
+      FloatingPointMPFR fp_mpfr1(t, bv1);
+      FloatingPointMPFR fp_mpfr2(t, bv2);
+      ASSERT_EQ(fp1.fpge(fp2), fp_mpfr1.fpge(fp_mpfr2));
+    }
+  }
+}
+TEST_F(TestFp, abs) { TEST_UNARY(abs); }
+TEST_F(TestFp, neg) { TEST_UNARY(neg); }
+TEST_F(TestFp, sqrt) { TEST_UNARY_RM(sqrt); }
+TEST_F(TestFp, rti) { TEST_UNARY_RM(rti); }
+TEST_F(TestFp, rem) { TEST_BINARY(rem); }
+TEST_F(TestFp, add) { TEST_BINARY_RM(add); }
+TEST_F(TestFp, mul) { TEST_BINARY_RM(mul); }
+#ifdef NDEBUG
+// SymFPU fails with an assertion failure (see issue #164) but agrees with
+// MPFR on all tests for release builds without assertions.
+TEST_F(TestFp, div) { TEST_BINARY_RM(div); }
+TEST_F(TestFp, fma) { TEST_TERNARY_RM(fma); }
+
+#endif
 
 }  // namespace bzla::test
