@@ -45,16 +45,14 @@
     };                                                                  \
     test_for_float16(fun);                                              \
     /* random tests for Float32, Float64, Float128 */                   \
-    for (const auto &format : d_formats_32_128)                         \
+    for (const auto &type : d_formats_32_128)                           \
     {                                                                   \
-      uint64_t exp_size = format.first;                                 \
-      uint64_t sig_size = format.second - 1;                            \
-      Type t            = d_nm.mk_fp_type(exp_size, sig_size);          \
+      uint64_t bv_size = type.fp_ieee_bv_size();                        \
       for (uint32_t i = 0; i < N_TESTS; ++i)                            \
       {                                                                 \
-        BitVector bv = BitVector(exp_size + sig_size, *d_rng);          \
-        FloatingPoint fp(t, bv);                                        \
-        FloatingPointMPFR fp_mpfr(t, bv);                               \
+        BitVector bv = BitVector(bv_size, *d_rng);                      \
+        FloatingPoint fp(type, bv);                                     \
+        FloatingPointMPFR fp_mpfr(type, bv);                            \
         ASSERT_EQ(fp.fp##FUN().str(), fp_mpfr.fp##FUN().str());         \
       }                                                                 \
     }                                                                   \
@@ -88,16 +86,14 @@
     };                                                                  \
     test_for_float16(fun);                                              \
     /* random tests for Float32, Float64, Float128 */                   \
-    for (const auto &format : d_formats_32_128)                         \
+    for (const auto &type : d_formats_32_128)                           \
     {                                                                   \
-      uint64_t exp_size = format.first;                                 \
-      uint64_t sig_size = format.second - 1;                            \
-      Type t            = d_nm.mk_fp_type(exp_size, sig_size);          \
+      uint64_t bv_size = type.fp_ieee_bv_size();                        \
       for (uint32_t i = 0; i < N_TESTS; ++i)                            \
       {                                                                 \
-        BitVector bv = BitVector(exp_size + sig_size, *d_rng);          \
-        FloatingPoint fp(t, bv);                                        \
-        FloatingPointMPFR fp_mpfr(t, bv);                               \
+        BitVector bv = BitVector(bv_size, *d_rng);                      \
+        FloatingPoint fp(type, bv);                                     \
+        FloatingPointMPFR fp_mpfr(type, bv);                            \
         for (auto rm : d_all_rms)                                       \
         {                                                               \
           std::string fp_str      = fp.fp##FUN(rm).str();               \
@@ -148,19 +144,17 @@
     test_for_float16(fun);                                                   \
                                                                              \
     /* random tests for Float32, Float64, Float128 */                        \
-    for (const auto &format : d_formats_32_128)                              \
+    for (const auto &type : d_formats_32_128)                                \
     {                                                                        \
-      uint64_t exp_size = format.first;                                      \
-      uint64_t sig_size = format.second - 1;                                 \
-      Type t            = d_nm.mk_fp_type(exp_size, sig_size);               \
+      uint64_t bv_size = type.fp_ieee_bv_size();                             \
       for (uint32_t i = 0; i < N_TESTS; ++i)                                 \
       {                                                                      \
-        BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);              \
-        BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);              \
-        FloatingPoint fp1(t, bv1);                                           \
-        FloatingPoint fp2(t, bv2);                                           \
-        FloatingPointMPFR fp_mpfr1(t, bv1);                                  \
-        FloatingPointMPFR fp_mpfr2(t, bv2);                                  \
+        BitVector bv1 = BitVector(bv_size, *d_rng);                          \
+        BitVector bv2 = BitVector(bv_size, *d_rng);                          \
+        FloatingPoint fp1(type, bv1);                                        \
+        FloatingPoint fp2(type, bv2);                                        \
+        FloatingPointMPFR fp_mpfr1(type, bv1);                               \
+        FloatingPointMPFR fp_mpfr2(type, bv2);                               \
         ASSERT_EQ(fp1.fp##FUN(fp2).str(), fp_mpfr1.fp##FUN(fp_mpfr2).str()); \
       }                                                                      \
     }                                                                        \
@@ -207,19 +201,17 @@
     test_for_float16(fun);                                                 \
                                                                            \
     /* random tests for Float32, Float64, Float128 */                      \
-    for (const auto &format : d_formats_32_128)                            \
+    for (const auto &type : d_formats_32_128)                              \
     {                                                                      \
-      uint64_t exp_size = format.first;                                    \
-      uint64_t sig_size = format.second - 1;                               \
-      Type t            = d_nm.mk_fp_type(exp_size, sig_size);             \
+      uint64_t bv_size = type.fp_ieee_bv_size();                           \
       for (uint32_t i = 0; i < N_TESTS; ++i)                               \
       {                                                                    \
-        BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);            \
-        BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);            \
-        FloatingPoint fp1(t, bv1);                                         \
-        FloatingPoint fp2(t, bv2);                                         \
-        FloatingPointMPFR fp_mpfr1(t, bv1);                                \
-        FloatingPointMPFR fp_mpfr2(t, bv2);                                \
+        BitVector bv1 = BitVector(bv_size, *d_rng);                        \
+        BitVector bv2 = BitVector(bv_size, *d_rng);                        \
+        FloatingPoint fp1(type, bv1);                                      \
+        FloatingPoint fp2(type, bv2);                                      \
+        FloatingPointMPFR fp_mpfr1(type, bv1);                             \
+        FloatingPointMPFR fp_mpfr2(type, bv2);                             \
         for (auto rm : d_all_rms)                                          \
         {                                                                  \
           ASSERT_EQ(fp1.fp##FUN(rm, fp2).str(),                            \
@@ -270,22 +262,20 @@
     test_for_float16(fun);                                              \
                                                                         \
     /* random tests for Float32, Float64, Float128 */                   \
-    for (const auto &format : d_formats_32_128)                         \
+    for (const auto &type : d_formats_32_128)                           \
     {                                                                   \
-      uint64_t exp_size = format.first;                                 \
-      uint64_t sig_size = format.second - 1;                            \
-      Type t            = d_nm.mk_fp_type(exp_size, sig_size);          \
+      uint64_t bv_size = type.fp_ieee_bv_size();                        \
       for (uint32_t i = 0; i < N_TESTS; ++i)                            \
       {                                                                 \
-        BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);         \
-        BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);         \
-        BitVector bv3 = BitVector(exp_size + sig_size, *d_rng);         \
-        FloatingPoint fp1(t, bv1);                                      \
-        FloatingPoint fp2(t, bv2);                                      \
-        FloatingPoint fp3(t, bv3);                                      \
-        FloatingPointMPFR fp_mpfr1(t, bv1);                             \
-        FloatingPointMPFR fp_mpfr2(t, bv2);                             \
-        FloatingPointMPFR fp_mpfr3(t, bv3);                             \
+        BitVector bv1 = BitVector(bv_size, *d_rng);                     \
+        BitVector bv2 = BitVector(bv_size, *d_rng);                     \
+        BitVector bv3 = BitVector(bv_size, *d_rng);                     \
+        FloatingPoint fp1(type, bv1);                                   \
+        FloatingPoint fp2(type, bv2);                                   \
+        FloatingPoint fp3(type, bv3);                                   \
+        FloatingPointMPFR fp_mpfr1(type, bv1);                          \
+        FloatingPointMPFR fp_mpfr2(type, bv2);                          \
+        FloatingPointMPFR fp_mpfr3(type, bv3);                          \
         for (auto rm : d_all_rms)                                       \
         {                                                               \
           ASSERT_EQ(fp1.fp##FUN(rm, fp2, fp3).str(),                    \
@@ -321,9 +311,7 @@
       FloatingPoint fp(fp_type);                                           \
       FloatingPointMPFR fp_mpfr(fp_type);                                  \
       std::string fp_str, fp_mpfr_str;                                     \
-      RoundingMode rm =                                                    \
-          d_rng->pick_from_set<std::vector<RoundingMode>, RoundingMode>(   \
-              d_all_rms);                                                  \
+      RoundingMode rm = pick_rm();                                         \
       if (d_rng->flip_coin())                                              \
       {                                                                    \
         /* First, test order (a FUN b) rem c. */                           \
@@ -402,13 +390,28 @@ class TestFp : public TestCommon
     {
       d_all_rms.push_back(static_cast<RoundingMode>(i));
     }
+    d_all_formats    = {d_fp16, d_fp32, d_fp64, d_fp128};
+    d_formats_32_128 = {d_fp32, d_fp64, d_fp128};
+  }
+
+  RoundingMode pick_rm() const
+  {
+    return d_rng->pick_from_set<std::vector<RoundingMode>, RoundingMode>(
+        d_all_rms);
+  }
+
+  Type pick_type(const std::vector<Type> &formats) const
+  {
+    Type t = d_rng->pick_from_set<std::vector<Type>, Type>(formats);
+    assert(t.is_fp());
+    return t;
   }
 
   void test_for_float16(
       std::function<void(const BitVector &, const BitVector &)> fun);
 
   void test_for_formats(
-      const std::vector<std::pair<uint64_t, uint64_t>> &formats,
+      const std::vector<Type> &formats,
       uint64_t n_tests,
       std::function<void(const BitVector &, const BitVector &)> fun);
 
@@ -1652,10 +1655,8 @@ class TestFp : public TestCommon
   Type d_fp64;
   Type d_fp128;
 
-  std::vector<std::pair<uint64_t, uint64_t>> d_all_formats{
-      {5, 11}, {8, 24}, {11, 53}, {15, 113}};
-  std::vector<std::pair<uint64_t, uint64_t>> d_formats_32_128{
-      {8, 24}, {11, 53}, {15, 113}};
+  std::vector<Type> d_all_formats;
+  std::vector<Type> d_formats_32_128;
   std::vector<RoundingMode> d_all_rms;
 };
 
@@ -1678,14 +1679,14 @@ TestFp::test_for_float16(
 
 void
 TestFp::test_for_formats(
-    const std::vector<std::pair<uint64_t, uint64_t>> &formats,
+    const std::vector<Type> &formats,
     uint64_t n_tests,
     std::function<void(const BitVector &, const BitVector &)> fun)
 {
-  for (const auto &format : formats)
+  for (const auto &type : formats)
   {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
+    uint64_t exp_size = type.fp_exp_size();
+    uint64_t sig_size = type.fp_sig_size() - 1;
     for (uint32_t i = 0; i < n_tests; ++i)
     {
       BitVector bvexp, bvsig;
@@ -3464,22 +3465,19 @@ TEST_F(TestFp, op_eq)
   ASSERT_NE(FloatingPointMPFR::fpnan(d_fp16),
             FloatingPointMPFR::fpinf(d_fp16, false));
 
-  for (const auto &format : d_all_formats)
+  for (const auto &type : d_all_formats)
   {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    uint64_t bv_size = type.fp_ieee_bv_size();
     for (uint32_t i = 0; i < N_TESTS; ++i)
     {
-      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
-      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
-      FloatingPoint fp1(t, bv1);
-      FloatingPoint fp2(t, bv2);
+      BitVector bv1 = BitVector(bv_size, *d_rng);
+      BitVector bv2 = BitVector(bv_size, *d_rng);
+      FloatingPoint fp1(type, bv1);
+      FloatingPoint fp2(type, bv2);
       ASSERT_EQ(bv1 == bv2, fp1 == fp2);
       ASSERT_EQ(bv1 != bv2, fp1 != fp2);
-
-      FloatingPointMPFR fp_mpfr1(t, bv1);
-      FloatingPointMPFR fp_mpfr2(t, bv2);
+      FloatingPointMPFR fp_mpfr1(type, bv1);
+      FloatingPointMPFR fp_mpfr2(type, bv2);
       ASSERT_EQ(bv1 == bv2, fp1 == fp2);
       ASSERT_EQ(bv1 != bv2, fp1 != fp2);
     }
@@ -3598,16 +3596,14 @@ TEST_F(TestFp, to_real_str)
   test_for_float16(fun);
 
   // random tests for Float32, Float64, Float128
-  for (const auto &format : d_formats_32_128)
+  for (const auto &type : d_formats_32_128)
   {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    uint64_t bv_size = type.fp_ieee_bv_size();
     for (uint32_t i = 0; i < N_TESTS; ++i)
     {
-      BitVector bv = BitVector(exp_size + sig_size, *d_rng);
-      FloatingPoint fp(t, bv);
-      FloatingPointMPFR fp_mpfr(t, bv);
+      BitVector bv = BitVector(bv_size, *d_rng);
+      FloatingPoint fp(type, bv);
+      FloatingPointMPFR fp_mpfr(type, bv);
       if (fp.to_real_str() != fp_mpfr.to_real_str())
       {
         std::cout << bv << std::endl;
@@ -3623,16 +3619,10 @@ TEST_F(TestFp, assignment)
 {
   for (size_t i = 0; i < N_TESTS; ++i)
   {
-    auto format1 =
-        d_rng->pick_from_set<std::vector<std::pair<uint64_t, uint64_t>>,
-                             std::pair<uint64_t, uint64_t>>(d_all_formats);
-    auto format2 =
-        d_rng->pick_from_set<std::vector<std::pair<uint64_t, uint64_t>>,
-                             std::pair<uint64_t, uint64_t>>(d_all_formats);
-    Type type1 = d_nm.mk_fp_type(format1.first, format1.second);
-    Type type2 = d_nm.mk_fp_type(format2.first, format2.second);
-    BitVector bv1(format1.first + format1.second, *d_rng);
-    BitVector bv2(format2.first + format2.second, *d_rng);
+    Type type1 = pick_type(d_all_formats);
+    Type type2 = pick_type(d_all_formats);
+    BitVector bv1(type1.fp_ieee_bv_size(), *d_rng);
+    BitVector bv2(type2.fp_ieee_bv_size(), *d_rng);
 
     {
       FloatingPoint fp1(type1, bv1);
@@ -3680,76 +3670,68 @@ TEST_F(TestFp, assignment)
 
 TEST_F(TestFp, lt)
 {
-  for (const auto &format : d_all_formats)
+  for (const auto &type : d_all_formats)
   {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    uint64_t bv_size = type.fp_ieee_bv_size();
     for (uint32_t i = 0; i < N_TESTS; ++i)
     {
-      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
-      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
-      FloatingPoint fp1(t, bv1);
-      FloatingPoint fp2(t, bv2);
-      FloatingPointMPFR fp_mpfr1(t, bv1);
-      FloatingPointMPFR fp_mpfr2(t, bv2);
+      BitVector bv1 = BitVector(bv_size, *d_rng);
+      BitVector bv2 = BitVector(bv_size, *d_rng);
+      FloatingPoint fp1(type, bv1);
+      FloatingPoint fp2(type, bv2);
+      FloatingPointMPFR fp_mpfr1(type, bv1);
+      FloatingPointMPFR fp_mpfr2(type, bv2);
       ASSERT_EQ(fp1.fplt(fp2), fp_mpfr1.fplt(fp_mpfr2));
     }
   }
 }
 TEST_F(TestFp, leq)
 {
-  for (const auto &format : d_all_formats)
+  for (const auto &type : d_all_formats)
   {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    uint64_t bv_size = type.fp_ieee_bv_size();
     for (uint32_t i = 0; i < N_TESTS; ++i)
     {
-      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
-      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
-      FloatingPoint fp1(t, bv1);
-      FloatingPoint fp2(t, bv2);
-      FloatingPointMPFR fp_mpfr1(t, bv1);
-      FloatingPointMPFR fp_mpfr2(t, bv2);
+      BitVector bv1 = BitVector(bv_size, *d_rng);
+      BitVector bv2 = BitVector(bv_size, *d_rng);
+      FloatingPoint fp1(type, bv1);
+      FloatingPoint fp2(type, bv2);
+      FloatingPointMPFR fp_mpfr1(type, bv1);
+      FloatingPointMPFR fp_mpfr2(type, bv2);
       ASSERT_EQ(fp1.fple(fp2), fp_mpfr1.fple(fp_mpfr2));
     }
   }
 }
 TEST_F(TestFp, gt)
 {
-  for (const auto &format : d_all_formats)
+  for (const auto &type : d_all_formats)
   {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    uint64_t bv_size = type.fp_ieee_bv_size();
     for (uint32_t i = 0; i < N_TESTS; ++i)
     {
-      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
-      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
-      FloatingPoint fp1(t, bv1);
-      FloatingPoint fp2(t, bv2);
-      FloatingPointMPFR fp_mpfr1(t, bv1);
-      FloatingPointMPFR fp_mpfr2(t, bv2);
+      BitVector bv1 = BitVector(bv_size, *d_rng);
+      BitVector bv2 = BitVector(bv_size, *d_rng);
+      FloatingPoint fp1(type, bv1);
+      FloatingPoint fp2(type, bv2);
+      FloatingPointMPFR fp_mpfr1(type, bv1);
+      FloatingPointMPFR fp_mpfr2(type, bv2);
       ASSERT_EQ(fp1.fpgt(fp2), fp_mpfr1.fpgt(fp_mpfr2));
     }
   }
 }
 TEST_F(TestFp, geq)
 {
-  for (const auto &format : d_all_formats)
+  for (const auto &type : d_all_formats)
   {
-    uint64_t exp_size = format.first;
-    uint64_t sig_size = format.second - 1;
-    Type t            = d_nm.mk_fp_type(exp_size, sig_size);
+    uint64_t bv_size = type.fp_ieee_bv_size();
     for (uint32_t i = 0; i < N_TESTS; ++i)
     {
-      BitVector bv1 = BitVector(exp_size + sig_size, *d_rng);
-      BitVector bv2 = BitVector(exp_size + sig_size, *d_rng);
-      FloatingPoint fp1(t, bv1);
-      FloatingPoint fp2(t, bv2);
-      FloatingPointMPFR fp_mpfr1(t, bv1);
-      FloatingPointMPFR fp_mpfr2(t, bv2);
+      BitVector bv1 = BitVector(bv_size, *d_rng);
+      BitVector bv2 = BitVector(bv_size, *d_rng);
+      FloatingPoint fp1(type, bv1);
+      FloatingPoint fp2(type, bv2);
+      FloatingPointMPFR fp_mpfr1(type, bv1);
+      FloatingPointMPFR fp_mpfr2(type, bv2);
       ASSERT_EQ(fp1.fpge(fp2), fp_mpfr1.fpge(fp_mpfr2));
     }
   }
