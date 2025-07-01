@@ -414,15 +414,21 @@ FloatingPointMPFR::FloatingPointMPFR(const Type &type,
 FloatingPointMPFR::FloatingPointMPFR(const FloatingPointMPFR &other)
     : FloatingPointMPFR(*other.size())
 {
-  // d_uf.reset(new UnpackedFloat(*other.unpacked()));
+  mpfr_set_eminmax_for_format(d_size->type());
+  mpfr_set(d_mpfr, other.d_mpfr, MPFR_RNDN);
 }
 
 FloatingPointMPFR &
 FloatingPointMPFR::operator=(const FloatingPointMPFR &other)
 
 {
+  if (d_size->type().fp_sig_size() != other.size()->type().fp_sig_size())
+  {
+    mpfr_set_prec(d_mpfr, other.size()->type().fp_sig_size());
+  }
   d_size.reset(new FloatingPointTypeInfo(*other.size()));
-  // d_uf.reset(new UnpackedFloat(*other.unpacked()));
+  mpfr_set_eminmax_for_format(d_size->type());
+  mpfr_set(d_mpfr, other.d_mpfr, MPFR_RNDN);
   return *this;
 }
 
