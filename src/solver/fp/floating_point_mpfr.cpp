@@ -694,6 +694,7 @@ FloatingPointMPFR::fprti(const RoundingMode rm) const
 FloatingPointMPFR
 FloatingPointMPFR::fprem(const FloatingPointMPFR &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   FloatingPointMPFR res(*d_size);
   mpfr_set_eminmax_for_format(d_size->type());
   int32_t i = mpfr_remainder(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
@@ -705,6 +706,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpadd(const RoundingMode rm,
                          const FloatingPointMPFR &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   FloatingPointMPFR res(*d_size);
   mpfr_set_eminmax_for_format(d_size->type());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
@@ -725,6 +727,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpmul(const RoundingMode rm,
                          const FloatingPointMPFR &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   FloatingPointMPFR res(*d_size);
   mpfr_set_eminmax_for_format(d_size->type());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
@@ -745,6 +748,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpdiv(const RoundingMode rm,
                          const FloatingPointMPFR &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   FloatingPointMPFR res(*d_size);
   mpfr_set_eminmax_for_format(d_size->type());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
@@ -766,6 +770,8 @@ FloatingPointMPFR::fpfma(const RoundingMode rm,
                          const FloatingPointMPFR &fp0,
                          const FloatingPointMPFR &fp1) const
 {
+  assert(d_size->type() == fp0.size()->type());
+  assert(d_size->type() == fp1.size()->type());
   FloatingPointMPFR res(*d_size);
   mpfr_set_eminmax_for_format(d_size->type());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
