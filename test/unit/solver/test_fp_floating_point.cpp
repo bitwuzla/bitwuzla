@@ -351,15 +351,8 @@ class TestFp : public TestCommon
 
   void test_for_formats(
       const std::vector<std::pair<uint64_t, uint64_t>> &formats,
-      std::function<void(NodeManager &nm,
-                         const BitVector &,
-                         const BitVector &,
-                         const BitVector &)> fun);
+      std::function<void(const BitVector &, const BitVector &)> fun);
 
-  static void test_fp_cons_str_as_bv(NodeManager &nm,
-                                     const BitVector &bvsign,
-                                     const BitVector &bvexp,
-                                     const BitVector &bvsig);
   void test_to_fp_from_real(RoundingMode rm,
                             std::vector<std::vector<const char *>> &expected);
 
@@ -1609,85 +1602,6 @@ class TestFp : public TestCommon
 /* -------------------------------------------------------------------------- */
 
 void
-TestFp::test_fp_cons_str_as_bv(NodeManager &nm,
-                               const BitVector &bvsign,
-                               const BitVector &bvexp,
-                               const BitVector &bvsig)
-{
-  assert(bvsign.size() == 1);
-
-  uint64_t exp_size = bvexp.size();
-  uint64_t sig_size = bvsig.size() + 1;
-
-  Type type_sign = nm.mk_bv_type(1);
-  Type type_exp  = nm.mk_bv_type(exp_size);
-  Type type_sig  = nm.mk_bv_type(sig_size - 1);
-  Type type_fp   = nm.mk_fp_type(exp_size, sig_size);
-
-  BitVector bv = bvsign.bvconcat(bvexp).ibvconcat(bvsig);
-
-  // test constructor and str()
-  FloatingPoint fp(type_fp, bv);
-  FloatingPointMPFR fp_mpfr(type_fp, bv);
-  if (fp.fpisnan())
-  {
-    ASSERT_TRUE(fp == FloatingPoint::fpnan(type_fp));
-    std::string str = "(fp #b" + BitVector::mk_false().str() + " #b"
-                      + BitVector::mk_ones(exp_size).str() + " #b"
-                      + BitVector::mk_min_signed(sig_size - 1).str() + ")";
-    ASSERT_EQ(fp.str(), str);
-    // ASSERT_TRUE(fp_mpfr == FloatingPointMPFR::fpnan(type_fp));
-    ASSERT_EQ(fp_mpfr.str(), str);
-  }
-  else
-  {
-    std::string str = "(fp #b" + bvsign.str() + " #b" + bvexp.str() + " #b"
-                      + bvsig.str() + ")";
-    ASSERT_EQ(fp.str(), str);
-    ASSERT_EQ(fp.str(), str);
-  }
-  if (fp.str() != fp_mpfr.str())
-  {
-    std::cout << "bv: " << bv << std::endl;
-    std::cout << "fp: " << fp << std::endl;
-    std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
-  }
-  assert(fp.str() == fp_mpfr.str());
-  ASSERT_EQ(fp.str(), fp_mpfr.str());
-
-  // test as_bv() via fpfp() and Node
-  FloatingPoint fpfp = FloatingPoint::fpfp(nm, bvsign, bvexp, bvsig);
-  ASSERT_EQ(fp.str(), fpfp.str());
-  Node node_fp    = nm.mk_value(fpfp);
-  fpfp            = node_fp.value<FloatingPoint>();
-  BitVector as_bv = fpfp.as_bv();
-  BitVector as_bvsign, as_bvexp, as_bvsig;
-  FloatingPoint::ieee_bv_as_bvs(type_fp, as_bv, as_bvsign, as_bvexp, as_bvsig);
-  if (bvexp.is_ones() && !bvsig.is_zero())
-  {
-    // we use a single nan representation
-    bv = BitVector(bv.size(),
-                   "0" + BitVector::mk_ones(exp_size).str()
-                       + BitVector::mk_min_signed(sig_size - 1).str());
-  }
-  ASSERT_EQ(as_bv.compare(bv), 0);
-  ASSERT_EQ(as_bv.compare(as_bvsign.bvconcat(as_bvexp).ibvconcat(as_bvsig)), 0);
-  // only via fpfp() for MPFR implementation
-  FloatingPointMPFR fpfp_mpfr =
-      FloatingPointMPFR::fpfp(nm, bvsign, bvexp, bvsig);
-  ASSERT_EQ(fp.str(), fpfp_mpfr.str());
-  BitVector as_bv_mpfr = fpfp_mpfr.as_bv();
-  BitVector as_bvsign_mpfr, as_bvexp_mpfr, as_bvsig_mpfr;
-  FloatingPoint::ieee_bv_as_bvs(
-      type_fp, as_bv_mpfr, as_bvsign_mpfr, as_bvexp_mpfr, as_bvsig_mpfr);
-  ASSERT_EQ(as_bv_mpfr.compare(bv), 0);
-  ASSERT_EQ(
-      as_bv_mpfr.compare(
-          as_bvsign_mpfr.bvconcat(as_bvexp_mpfr).ibvconcat(as_bvsig_mpfr)),
-      0);
-}
-
-void
 TestFp::test_for_float16(
     std::function<void(const BitVector &bvexp, const BitVector &bvsig)> fun)
 {
@@ -1705,10 +1619,7 @@ TestFp::test_for_float16(
 void
 TestFp::test_for_formats(
     const std::vector<std::pair<uint64_t, uint64_t>> &formats,
-    std::function<void(NodeManager &nm,
-                       const BitVector &,
-                       const BitVector &,
-                       const BitVector &)> fun)
+    std::function<void(const BitVector &, const BitVector &)> fun)
 {
   for (const auto &format : formats)
   {
@@ -1717,7 +1628,6 @@ TestFp::test_for_formats(
     for (uint32_t i = 0; i < N_TESTS; ++i)
     {
       BitVector bvexp, bvsig;
-      bool sign = d_rng->flip_coin();
       if (d_rng->flip_coin())
       {
         // normals
@@ -1751,10 +1661,7 @@ TestFp::test_for_formats(
           }
         }
       }
-      fun(d_nm,
-          sign ? BitVector::mk_true() : BitVector::mk_false(),
-          bvexp,
-          bvsig);
+      fun(bvexp, bvsig);
     }
   }
 }
@@ -2021,11 +1928,107 @@ TEST_F(TestFp, isX)
 TEST_F(TestFp, str_as_bv)
 {
   auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {
-    test_fp_cons_str_as_bv(d_nm, BitVector::mk_false(), bvexp, bvsig);
-    test_fp_cons_str_as_bv(d_nm, BitVector::mk_true(), bvexp, bvsig);
+    uint64_t exp_size = bvexp.size();
+    uint64_t sig_size = bvsig.size() + 1;
+
+    Type type_sign = d_nm.mk_bv_type(1);
+    Type type_exp  = d_nm.mk_bv_type(exp_size);
+    Type type_sig  = d_nm.mk_bv_type(sig_size - 1);
+    Type type_fp   = d_nm.mk_fp_type(exp_size, sig_size);
+
+    for (const auto &bv :
+         {BitVector::mk_false().bvconcat(bvexp).ibvconcat(bvsig),
+          BitVector::mk_true().bvconcat(bvexp).ibvconcat(bvsig)})
+    {
+      BitVector bvsign =
+          bv.msb() ? BitVector::mk_true() : BitVector::mk_false();
+      // test constructor and str()
+      FloatingPoint fp(type_fp, bv);
+      FloatingPointMPFR fp_mpfr(type_fp, bv);
+      if (fp.fpisnan())
+      {
+        ASSERT_TRUE(fp == FloatingPoint::fpnan(type_fp));
+        std::string str = "(fp #b" + BitVector::mk_false().str() + " #b"
+                          + BitVector::mk_ones(exp_size).str() + " #b"
+                          + BitVector::mk_min_signed(sig_size - 1).str() + ")";
+        ASSERT_EQ(fp.str(), str);
+        // ASSERT_TRUE(fp_mpfr == FloatingPointMPFR::fpnan(type_fp));
+        ASSERT_EQ(fp_mpfr.str(), str);
+      }
+      else
+      {
+        std::string str = "(fp #b" + bvsign.str() + " #b" + bvexp.str() + " #b"
+                          + bvsig.str() + ")";
+        ASSERT_EQ(fp.str(), str);
+        ASSERT_EQ(fp.str(), str);
+      }
+      if (fp.str() != fp_mpfr.str())
+      {
+        std::cout << "bv: " << bv << std::endl;
+        std::cout << "fp: " << fp << std::endl;
+        std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
+      }
+      assert(fp.str() == fp_mpfr.str());
+      ASSERT_EQ(fp.str(), fp_mpfr.str());
+
+      // test as_bv() via fpfp() and Node
+      FloatingPoint fpfp = FloatingPoint::fpfp(
+          d_nm,
+          bv.msb() ? BitVector::mk_true() : BitVector::mk_false(),
+          bvexp,
+          bvsig);
+      ASSERT_EQ(fp.str(), fpfp.str());
+      Node node_fp    = d_nm.mk_value(fpfp);
+      fpfp            = node_fp.value<FloatingPoint>();
+      BitVector as_bv = fpfp.as_bv();
+      BitVector as_bvsign, as_bvexp, as_bvsig;
+      FloatingPoint::ieee_bv_as_bvs(
+          type_fp, as_bv, as_bvsign, as_bvexp, as_bvsig);
+      if (bvexp.is_ones() && !bvsig.is_zero())
+      {
+        // we use a single nan representation
+        ASSERT_EQ(
+            as_bv,
+            BitVector(bv.size(),
+                      "0" + BitVector::mk_ones(exp_size).str()
+                          + BitVector::mk_min_signed(sig_size - 1).str()));
+      }
+      else
+      {
+        ASSERT_EQ(as_bv.compare(bv), 0);
+      }
+      ASSERT_EQ(as_bv.compare(as_bvsign.bvconcat(as_bvexp).ibvconcat(as_bvsig)),
+                0);
+      // only via fpfp() for MPFR implementation
+      FloatingPointMPFR fpfp_mpfr =
+          FloatingPointMPFR::fpfp(d_nm, bvsign, bvexp, bvsig);
+      ASSERT_EQ(fp.str(), fpfp_mpfr.str());
+      BitVector as_bv_mpfr = fpfp_mpfr.as_bv();
+      BitVector as_bvsign_mpfr, as_bvexp_mpfr, as_bvsig_mpfr;
+      FloatingPoint::ieee_bv_as_bvs(
+          type_fp, as_bv_mpfr, as_bvsign_mpfr, as_bvexp_mpfr, as_bvsig_mpfr);
+      if (bvexp.is_ones() && !bvsig.is_zero())
+      {
+        // we use a single nan representation
+        ASSERT_EQ(
+            as_bv_mpfr,
+            BitVector(bv.size(),
+                      "0" + BitVector::mk_ones(exp_size).str()
+                          + BitVector::mk_min_signed(sig_size - 1).str()));
+      }
+      else
+      {
+        ASSERT_EQ(as_bv_mpfr.compare(bv), 0);
+      }
+      ASSERT_EQ(
+          as_bv_mpfr.compare(
+              as_bvsign_mpfr.bvconcat(as_bvexp_mpfr).ibvconcat(as_bvsig_mpfr)),
+          0);
+    }
   };
+
   test_for_float16(fun);
-  test_for_formats(d_formats_32_128, TestFp::test_fp_cons_str_as_bv);
+  test_for_formats(d_formats_32_128, fun);
 }
 
 TEST_F(TestFp, fp_is_value)
