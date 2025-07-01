@@ -3558,6 +3558,65 @@ TEST_F(TestFp, to_real_str)
   }
 }
 
+TEST_F(TestFp, assignment)
+{
+  for (size_t i = 0; i < N_TESTS; ++i)
+  {
+    auto format1 =
+        d_rng->pick_from_set<std::vector<std::pair<uint64_t, uint64_t>>,
+                             std::pair<uint64_t, uint64_t>>(d_all_formats);
+    auto format2 =
+        d_rng->pick_from_set<std::vector<std::pair<uint64_t, uint64_t>>,
+                             std::pair<uint64_t, uint64_t>>(d_all_formats);
+    Type type1 = d_nm.mk_fp_type(format1.first, format1.second);
+    Type type2 = d_nm.mk_fp_type(format2.first, format2.second);
+    BitVector bv1(format1.first + format1.second, *d_rng);
+    BitVector bv2(format2.first + format2.second, *d_rng);
+
+    {
+      FloatingPoint fp1(type1, bv1);
+      FloatingPoint fp2(type2, bv2);
+      FloatingPoint _fp1 = fp1;
+      FloatingPoint _fp2 = fp2;
+      ASSERT_EQ(fp1, _fp1);
+      ASSERT_EQ(fp2, _fp2);
+      _fp1 = fp2;
+      ASSERT_EQ(fp2, _fp1);
+      _fp2 = fp1;
+      ASSERT_EQ(fp1, _fp2);
+      _fp1 = fp1;
+      _fp2 = fp2;
+      ASSERT_EQ(fp1, _fp1);
+      ASSERT_EQ(fp2, _fp2);
+    }
+    {
+      FloatingPointMPFR fp1(type1, bv1);
+      FloatingPointMPFR fp2(type2, bv2);
+      FloatingPointMPFR _fp1 = fp1;
+      FloatingPointMPFR _fp2 = fp2;
+      ASSERT_EQ(fp1, _fp1);
+      ASSERT_EQ(fp2, _fp2);
+      _fp1 = fp2;
+      ASSERT_EQ(fp2, _fp1);
+      _fp2 = fp1;
+      if (fp1 != _fp2)
+      {
+        std::cout << "bv1: " << bv1 << std::endl;
+        std::cout << "bv2: " << bv2 << std::endl;
+        std::cout << "fp1: " << fp1 << std::endl;
+        std::cout << "fp2: " << fp2 << std::endl;
+        std::cout << "_fp1: " << _fp1 << std::endl;
+        std::cout << "_fp2: " << _fp2 << std::endl;
+      }
+      ASSERT_EQ(fp1, _fp2);
+      _fp1 = fp1;
+      _fp2 = fp2;
+      ASSERT_EQ(fp1, _fp1);
+      ASSERT_EQ(fp2, _fp2);
+    }
+  }
+}
+
 TEST_F(TestFp, lt)
 {
   for (const auto &format : d_all_formats)
