@@ -356,6 +356,168 @@
     test_for_formats(d_all_formats, 100, fun);                             \
   } while (0)
 
+#define TEST_CHAINED_BINARY_RM(FUN1, FUN2)                                      \
+  do                                                                            \
+  {                                                                             \
+    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {         \
+      BitVector bv1;                                                            \
+      if (d_rng->flip_coin())                                                   \
+      {                                                                         \
+        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);           \
+      }                                                                         \
+      else                                                                      \
+      {                                                                         \
+        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);            \
+      }                                                                         \
+      uint64_t bv_size = bvexp.size() + bvsig.size() + 1;                       \
+      Type fp_type     = d_nm.mk_fp_type(bvexp.size(), bvsig.size() + 1);       \
+      BitVector bv2(bv_size, *d_rng);                                           \
+      BitVector bv3(bv_size, *d_rng);                                           \
+      FloatingPoint fp1(fp_type, bv1);                                          \
+      FloatingPoint fp2(fp_type, bv2);                                          \
+      FloatingPoint fp3(fp_type, bv2);                                          \
+      FloatingPointMPFR fp_mpfr1(fp_type, bv1);                                 \
+      FloatingPointMPFR fp_mpfr2(fp_type, bv2);                                 \
+      FloatingPointMPFR fp_mpfr3(fp_type, bv2);                                 \
+      FloatingPoint fp(fp_type);                                                \
+      FloatingPointMPFR fp_mpfr(fp_type);                                       \
+      std::string fp_str, fp_mpfr_str;                                          \
+      RoundingMode rm1 = pick_rm();                                             \
+      RoundingMode rm2 = pick_rm();                                             \
+      if (d_rng->flip_coin())                                                   \
+      {                                                                         \
+        /* First, test order (a FUN1 b) FUN2 c. */                              \
+        fp          = fp1.fp##FUN1(rm1, fp2).fp##FUN2(rm2, fp3);                \
+        fp_mpfr     = fp_mpfr1.fp##FUN1(rm1, fp_mpfr2).fp##FUN2(rm2, fp_mpfr3); \
+        fp_str      = fp.str();                                                 \
+        fp_mpfr_str = fp_mpfr.str();                                            \
+        if (fp_str != fp_mpfr_str)                                              \
+        {                                                                       \
+          std::cout << "rm1: " << rm1 << std::endl;                             \
+          std::cout << "rm2: " << rm2 << std::endl;                             \
+          std::cout << "bv1: " << bv1 << std::endl;                             \
+          std::cout << "bv2: " << bv2 << std::endl;                             \
+          std::cout << "bv3: " << bv3 << std::endl;                             \
+          std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")"      \
+                    << std::endl;                                               \
+          std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                       \
+                    << fp_mpfr.to_real_str() << ")" << std::endl;               \
+        }                                                                       \
+        ASSERT_EQ(fp_str, fp_mpfr_str);                                         \
+      }                                                                         \
+      else                                                                      \
+      {                                                                         \
+        /* Then, test order (a FUN2 b) FUN1 c. */                               \
+        fp          = fp1.fp##FUN2(rm2, fp2).fp##FUN1(rm1, fp3);                \
+        fp_mpfr     = fp_mpfr1.fp##FUN2(rm2, fp_mpfr2).fp##FUN1(rm1, fp_mpfr3); \
+        fp_str      = fp.str();                                                 \
+        fp_mpfr_str = fp_mpfr.str();                                            \
+        if (fp_str != fp_mpfr_str)                                              \
+        {                                                                       \
+          std::cout << "rm1: " << rm1 << std::endl;                             \
+          std::cout << "rm2: " << rm2 << std::endl;                             \
+          std::cout << "bv1: " << bv1 << std::endl;                             \
+          std::cout << "bv2: " << bv2 << std::endl;                             \
+          std::cout << "bv3: " << bv3 << std::endl;                             \
+          std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")"      \
+                    << std::endl;                                               \
+          std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                       \
+                    << fp_mpfr.to_real_str() << ")" << std::endl;               \
+        }                                                                       \
+        ASSERT_EQ(fp_str, fp_mpfr_str);                                         \
+      }                                                                         \
+    };                                                                          \
+    test_for_formats(d_all_formats, N_TESTS, fun);                              \
+  } while (0)
+
+#define TEST_CHAINED_UNARY_BINARY_RM(FUN1, FUN2)                          \
+  do                                                                      \
+  {                                                                       \
+    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {   \
+      BitVector bv1;                                                      \
+      if (d_rng->flip_coin())                                             \
+      {                                                                   \
+        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);     \
+      }                                                                   \
+      else                                                                \
+      {                                                                   \
+        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);      \
+      }                                                                   \
+      uint64_t bv_size = bvexp.size() + bvsig.size() + 1;                 \
+      Type fp_type     = d_nm.mk_fp_type(bvexp.size(), bvsig.size() + 1); \
+      BitVector bv2(bv_size, *d_rng);                                     \
+      FloatingPoint fp1(fp_type, bv1);                                    \
+      FloatingPoint fp2(fp_type, bv2);                                    \
+      FloatingPointMPFR fp_mpfr1(fp_type, bv1);                           \
+      FloatingPointMPFR fp_mpfr2(fp_type, bv2);                           \
+      FloatingPoint fp(fp_type);                                          \
+      FloatingPointMPFR fp_mpfr(fp_type);                                 \
+      std::string fp_str, fp_mpfr_str;                                    \
+      RoundingMode rm = pick_rm();                                        \
+      fp              = fp1.fp##FUN2(rm, fp2).fp##FUN1();                 \
+      fp_mpfr         = fp_mpfr1.fp##FUN2(rm, fp_mpfr2).fp##FUN1();       \
+      fp_str          = fp.str();                                         \
+      fp_mpfr_str     = fp_mpfr.str();                                    \
+      if (fp_str != fp_mpfr_str)                                          \
+      {                                                                   \
+        std::cout << "rm: " << rm << std::endl;                           \
+        std::cout << "bv1: " << bv1 << std::endl;                         \
+        std::cout << "bv2: " << bv2 << std::endl;                         \
+        std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")"  \
+                  << std::endl;                                           \
+        std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                   \
+                  << fp_mpfr.to_real_str() << ")" << std::endl;           \
+      }                                                                   \
+      ASSERT_EQ(fp_str, fp_mpfr_str);                                     \
+    };                                                                    \
+    test_for_formats(d_all_formats, N_TESTS, fun);                        \
+  } while (0)
+
+#define TEST_CHAINED_UNARY_RM_BINARY_RM(FUN1, FUN2)                       \
+  do                                                                      \
+  {                                                                       \
+    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {   \
+      BitVector bv1;                                                      \
+      if (d_rng->flip_coin())                                             \
+      {                                                                   \
+        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);     \
+      }                                                                   \
+      else                                                                \
+      {                                                                   \
+        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);      \
+      }                                                                   \
+      uint64_t bv_size = bvexp.size() + bvsig.size() + 1;                 \
+      Type fp_type     = d_nm.mk_fp_type(bvexp.size(), bvsig.size() + 1); \
+      BitVector bv2(bv_size, *d_rng);                                     \
+      FloatingPoint fp1(fp_type, bv1);                                    \
+      FloatingPoint fp2(fp_type, bv2);                                    \
+      FloatingPointMPFR fp_mpfr1(fp_type, bv1);                           \
+      FloatingPointMPFR fp_mpfr2(fp_type, bv2);                           \
+      FloatingPoint fp(fp_type);                                          \
+      FloatingPointMPFR fp_mpfr(fp_type);                                 \
+      std::string fp_str, fp_mpfr_str;                                    \
+      RoundingMode rm1 = pick_rm();                                       \
+      RoundingMode rm2 = pick_rm();                                       \
+      fp               = fp1.fp##FUN2(rm2, fp2).fp##FUN1(rm1);            \
+      fp_mpfr          = fp_mpfr1.fp##FUN2(rm2, fp_mpfr2).fp##FUN1(rm1);  \
+      fp_str           = fp.str();                                        \
+      fp_mpfr_str      = fp_mpfr.str();                                   \
+      if (fp_str != fp_mpfr_str)                                          \
+      {                                                                   \
+        std::cout << "rm1: " << rm1 << std::endl;                         \
+        std::cout << "rm2: " << rm2 << std::endl;                         \
+        std::cout << "bv1: " << bv1 << std::endl;                         \
+        std::cout << "bv2: " << bv2 << std::endl;                         \
+        std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")"  \
+                  << std::endl;                                           \
+        std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                   \
+                  << fp_mpfr.to_real_str() << ")" << std::endl;           \
+      }                                                                   \
+      ASSERT_EQ(fp_str, fp_mpfr_str);                                     \
+    };                                                                    \
+    test_for_formats(d_all_formats, N_TESTS, fun);                        \
+  } while (0)
+
 /* -------------------------------------------------------------------------- */
 
 namespace bzla::test {
@@ -3760,6 +3922,44 @@ TEST_F(TestFp, chained_rem)
   // MPFR on all tests for release builds without assertions.
   // (a / b) rem c, (a rem b) / c
   TEST_CHAINED_BINARY_REM(div);
+#endif
+}
+TEST_F(TestFp, chained_bin_rm)
+{
+  TEST_CHAINED_BINARY_RM(add, mul);
+#ifdef NDEBUG
+  // SymFPU may fail with an assertion failure (see issue #164) but agrees with
+  // MPFR on all tests for release builds without assertions.
+  // (a / b) rem c, (a rem b) / c
+  TEST_CHAINED_BINARY_RM(add, div);
+#endif
+}
+TEST_F(TestFp, chained_un_bin_rm)
+{
+  TEST_CHAINED_UNARY_BINARY_RM(abs, add);
+  TEST_CHAINED_UNARY_BINARY_RM(neg, add);
+  TEST_CHAINED_UNARY_BINARY_RM(abs, mul);
+  TEST_CHAINED_UNARY_BINARY_RM(neg, mul);
+#ifdef NDEBUG
+  // SymFPU may fail with an assertion failure (see issue #164) but agrees with
+  // MPFR on all tests for release builds without assertions.
+  // (a / b) rem c, (a rem b) / c
+  TEST_CHAINED_UNARY_BINARY_RM(abs, div);
+  TEST_CHAINED_UNARY_BINARY_RM(neg, div);
+#endif
+}
+TEST_F(TestFp, chained_un_rm_bin_rm)
+{
+  TEST_CHAINED_UNARY_RM_BINARY_RM(sqrt, add);
+  TEST_CHAINED_UNARY_RM_BINARY_RM(rti, add);
+  TEST_CHAINED_UNARY_RM_BINARY_RM(sqrt, mul);
+  TEST_CHAINED_UNARY_RM_BINARY_RM(rti, mul);
+#ifdef NDEBUG
+  // SymFPU may fail with an assertion failure (see issue #164) but agrees with
+  // MPFR on all tests for release builds without assertions.
+  // (a / b) rem c, (a rem b) / c
+  TEST_CHAINED_UNARY_RM_BINARY_RM(sqrt, div);
+  TEST_CHAINED_UNARY_RM_BINARY_RM(rti, div);
 #endif
 }
 #endif
