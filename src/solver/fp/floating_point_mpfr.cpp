@@ -60,7 +60,7 @@ mpfr2exp(uint64_t exp_size, mpfr_exp_t exp)
   return exp + exp_bias(exp_size) - 1;
 }
 void
-mpfr_set_format(uint64_t exp_size, uint64_t sig_size)
+mpfr_set_eminmax_for_format(uint64_t exp_size, uint64_t sig_size)
 {
   // TODO make robust with respect to MPFR implementation size of exponent
   assert(sizeof(mpfr_exp_t) == sizeof(uint64_t));
@@ -68,9 +68,9 @@ mpfr_set_format(uint64_t exp_size, uint64_t sig_size)
   mpfr_set_emin(mpfr_exp_min(exp_size, sig_size));
 }
 void
-mpfr_set_format(bzla::Type type)
+mpfr_set_eminmax_for_format(bzla::Type type)
 {
-  mpfr_set_format(type.fp_exp_size(), type.fp_sig_size());
+  mpfr_set_eminmax_for_format(type.fp_exp_size(), type.fp_sig_size());
 }
 void
 mpfr_reset_format()
@@ -229,9 +229,9 @@ FloatingPointMPFR::from_real(NodeManager &nm,
   (void) nm;
   FloatingPointMPFR res(type);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
-  mpfr_set_format(type);
+  mpfr_set_eminmax_for_format(type);
   mpfr_set_str(res.d_mpfr, real.c_str(), 0, rm_mpfr);
-  mpfr_set_format(type);
+  mpfr_set_eminmax_for_format(type);
   // mpfr_subnormalize((mpfr_ptr)res.d_mpfr, 1, rm_mpfr);
   return res;
 }
@@ -315,7 +315,7 @@ FloatingPointMPFR::FloatingPointMPFR(const Type &type, const BitVector &bv)
 {
   assert(type.fp_ieee_bv_size() == bv.size());
 
-  mpfr_set_format(d_size->type());
+  mpfr_set_eminmax_for_format(d_size->type());
 
   BitVector bvsign, bvexp, bvsig;
   ieee_bv_as_bvs(type, bv, bvsign, bvexp, bvsig);
@@ -634,7 +634,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpabs() const
 {
   FloatingPointMPFR res(*d_size);
-  mpfr_set_format(d_size->type());
+  mpfr_set_eminmax_for_format(d_size->type());
   mpfr_abs(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
 }
@@ -643,7 +643,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpneg() const
 {
   FloatingPointMPFR res(*d_size);
-  mpfr_set_format(d_size->type());
+  mpfr_set_eminmax_for_format(d_size->type());
   mpfr_neg(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
 }
@@ -652,7 +652,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fpsqrt(const RoundingMode rm) const
 {
   FloatingPointMPFR res(*d_size);
-  mpfr_set_format(d_size->type());
+  mpfr_set_eminmax_for_format(d_size->type());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -671,7 +671,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fprti(const RoundingMode rm) const
 {
   FloatingPointMPFR res(*d_size);
-  mpfr_set_format(d_size->type());
+  mpfr_set_eminmax_for_format(d_size->type());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -690,7 +690,7 @@ FloatingPointMPFR
 FloatingPointMPFR::fprem(const FloatingPointMPFR &fp) const
 {
   FloatingPointMPFR res(*d_size);
-  mpfr_set_format(d_size->type());
+  mpfr_set_eminmax_for_format(d_size->type());
   int32_t i = mpfr_remainder(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
   mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, MPFR_RNDN);
   return res;
@@ -701,7 +701,7 @@ FloatingPointMPFR::fpadd(const RoundingMode rm,
                          const FloatingPointMPFR &fp) const
 {
   FloatingPointMPFR res(*d_size);
-  mpfr_set_format(d_size->type());
+  mpfr_set_eminmax_for_format(d_size->type());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -721,7 +721,7 @@ FloatingPointMPFR::fpmul(const RoundingMode rm,
                          const FloatingPointMPFR &fp) const
 {
   FloatingPointMPFR res(*d_size);
-  mpfr_set_format(d_size->type());
+  mpfr_set_eminmax_for_format(d_size->type());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -741,7 +741,7 @@ FloatingPointMPFR::fpdiv(const RoundingMode rm,
                          const FloatingPointMPFR &fp) const
 {
   FloatingPointMPFR res(*d_size);
-  mpfr_set_format(d_size->type());
+  mpfr_set_eminmax_for_format(d_size->type());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -762,7 +762,7 @@ FloatingPointMPFR::fpfma(const RoundingMode rm,
                          const FloatingPointMPFR &fp1) const
 {
   FloatingPointMPFR res(*d_size);
-  mpfr_set_format(d_size->type());
+  mpfr_set_eminmax_for_format(d_size->type());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -802,7 +802,7 @@ FloatingPointMPFR::as_bv() const
     return bvsign.ibvconcat(BitVector::mk_ones(exp_size))
         .ibvconcat(BitVector::mk_zero(sig_size - 1));
   }
-  mpfr_set_format(exp_size, sig_size);
+  mpfr_set_eminmax_for_format(exp_size, sig_size);
   mpfr_exp_t exp;
   char *str = mpfr_get_str(0, &exp, 2, sig_size, d_mpfr, MPFR_RNDN);
   assert(strlen(str) > 1 && (str[0] != '-' || strlen(str) > 2));
