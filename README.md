@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![CI](https://github.com/bitwuzla/bitwuzla/workflows/CI/badge.svg)
+![CI](https://github.com/bitwuzla/bitwuzla/actions/workflows/ci.yml/badge.svg?branch=main)
 
 # Bitwuzla
 
