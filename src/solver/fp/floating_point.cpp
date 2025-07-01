@@ -488,6 +488,7 @@ FloatingPoint::fprti(const RoundingMode rm) const
 FloatingPoint
 FloatingPoint::fprem(const FloatingPoint &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   FloatingPoint res(*d_size);
   res.d_uf.reset(new UnpackedFloat(
       symfpu::remainder<fp::SymFpuTraits>(*res.size(), *d_uf, *fp.unpacked())));
@@ -497,6 +498,7 @@ FloatingPoint::fprem(const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   FloatingPoint res(*d_size);
   res.d_uf.reset(new UnpackedFloat(symfpu::add<fp::SymFpuTraits>(
       *res.size(), rm, *d_uf, *fp.unpacked(), true)));
@@ -506,6 +508,7 @@ FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   FloatingPoint res(*d_size);
   res.d_uf.reset(new UnpackedFloat(symfpu::multiply<fp::SymFpuTraits>(
       *res.size(), rm, *d_uf, *fp.unpacked())));
@@ -515,6 +518,7 @@ FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpdiv(const RoundingMode rm, const FloatingPoint &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   FloatingPoint res(*d_size);
   res.d_uf.reset(new UnpackedFloat(symfpu::divide<fp::SymFpuTraits>(
       *res.size(), rm, *d_uf, *fp.unpacked())));
@@ -526,6 +530,8 @@ FloatingPoint::fpfma(const RoundingMode rm,
                      const FloatingPoint &fp0,
                      const FloatingPoint &fp1) const
 {
+  assert(d_size->type() == fp0.size()->type());
+  assert(d_size->type() == fp1.size()->type());
   FloatingPoint res(*d_size);
   res.d_uf.reset(new UnpackedFloat(symfpu::fma<fp::SymFpuTraits>(
       *res.size(), rm, *d_uf, *fp0.unpacked(), *fp1.unpacked())));
