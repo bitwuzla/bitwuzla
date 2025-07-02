@@ -108,10 +108,10 @@ mpz_hash(const mpz_t op, uint64_t start)
   mp_limb_t limb;
   for (i = 0, j = 0, n = mpz_size(op); i < n; ++i)
   {
-    p0 = s_hash_primes[j++];
-    if (j == s_n_primes) j = 0;
-    p1 = s_hash_primes[j++];
-    if (j == s_n_primes) j = 0;
+    p0 = hash::s_hash_primes[j++];
+    if (j == hash::s_n_primes) j = 0;
+    p1 = hash::s_hash_primes[j++];
+    if (j == hash::s_n_primes) j = 0;
     limb = mpz_getlimbn(op, i);
     if (mp_bits_per_limb == 64)
     {
@@ -121,10 +121,10 @@ mpz_hash(const mpz_t op, uint64_t start)
       x           = ((x >> 16) ^ x) * p0;
       x           = ((x >> 16) ^ x) * p1;
       x           = ((x >> 16) ^ x);
-      p0          = s_hash_primes[j++];
-      if (j == s_n_primes) j = 0;
-      p1 = s_hash_primes[j++];
-      if (j == s_n_primes) j = 0;
+      p0          = hash::s_hash_primes[j++];
+      if (j == hash::s_n_primes) j = 0;
+      p1 = hash::s_hash_primes[j++];
+      if (j == hash::s_n_primes) j = 0;
       x = x ^ hi;
     }
     else

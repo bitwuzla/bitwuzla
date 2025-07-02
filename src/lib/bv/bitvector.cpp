@@ -487,7 +487,7 @@ BitVector::hash() const
   uint64_t j = 0, res = 0;
   uint64_t x, p0, p1;
 
-  res = d_size * s_hash_primes[j++];
+  res = d_size * util::hash::s_hash_primes[j++];
 
   if (is_gmp())
   {
@@ -495,10 +495,10 @@ BitVector::hash() const
   }
   else
   {
-    p0 = s_hash_primes[j++];
-    if (j == s_n_primes) j = 0;
-    p1 = s_hash_primes[j++];
-    if (j == s_n_primes) j = 0;
+    p0 = util::hash::s_hash_primes[j++];
+    if (j == util::hash::s_n_primes) j = 0;
+    p1 = util::hash::s_hash_primes[j++];
+    if (j == util::hash::s_n_primes) j = 0;
     x   = d_val_uint64 ^ res;
     x   = ((x >> 16) ^ x) * p0;
     x   = ((x >> 16) ^ x) * p1;

@@ -28,11 +28,6 @@ class RNG;
 class BitVector
 {
  public:
-  /** Prime numbers used for hashing. */
-  static inline uint32_t s_hash_primes[] = {333444569u, 76891121u, 456790003u};
-  /** Number of prime numbers used for hashing. */
-  static constexpr uint32_t s_n_primes =
-      ((uint32_t) (sizeof s_hash_primes / sizeof *s_hash_primes));
   // mpz_*_ui functions have unsigned long (or mp_bitcnt_t) arguments, which is
   // represented as 64 bit on Linux and macOS 64-bit systems. On 64-bit Windows
   // unsigned long has a size of 32 bit, which affects the values stored in

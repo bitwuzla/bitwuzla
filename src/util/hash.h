@@ -15,11 +15,13 @@
 #include <functional>
 #include <utility>
 
+namespace bzla::util::hash {
 /** Prime numbers used for hashing. */
 static constexpr uint32_t s_hash_primes[] = {333444569u, 76891121u, 456790003u};
 /** Number of prime numbers used for hashing. */
 static constexpr uint32_t s_n_primes =
     ((uint32_t) (sizeof s_hash_primes / sizeof *s_hash_primes));
+}  // namespace bzla::util::hash
 
 namespace std {
 template <>
