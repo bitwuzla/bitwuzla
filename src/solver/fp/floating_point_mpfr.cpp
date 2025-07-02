@@ -375,43 +375,27 @@ FloatingPointMPFR::FloatingPointMPFR(const Type &type,
                                      bool sign)
     : FloatingPointMPFR(type)
 {
-  // if (sign)
-  // {
-  //   if (bv.size() == 1)
-  //   {
-  //     /* Note: We must copy the bv here, because 1) the corresponding
-  //      * constructor doesn't copy it but sets d_bv = bv and 2) the wrong
-  //      * constructor is matched (const bool &val). */
-  //     UnpackedFloat uf =
-  //         symfpu::convertUBVToFloat<fp::SymFpuTraits>(*d_size, rm, bv);
-  //     /* We need special handling for bit-vectors of size one since symFPU
-  //     does
-  //      * not allow conversions from signed bit-vectors of size one.  */
-  //     if (bv.is_one())
-  //     {
-  //       d_uf.reset(
-  //           new UnpackedFloat(symfpu::negate<fp::SymFpuTraits>(*d_size,
-  //           uf)));
-  //     }
-  //     else
-  //     {
-  //       d_uf.reset(new UnpackedFloat(uf));
-  //     }
-  //   }
-  //   else
-  //   {
-  //     /* Note: We must copy the bv here, because 1) the corresponding
-  //      * constructor doesn't copy it but sets d_bv = bv and 2) the wrong
-  //      * constructor is matched (const bool &val). */
-  //     d_uf.reset(new UnpackedFloat(
-  //         symfpu::convertSBVToFloat<fp::SymFpuTraits>(*d_size, rm, bv)));
-  //   }
-  // }
-  // else
-  // {
-  //   d_uf.reset(new UnpackedFloat(
-  //       symfpu::convertUBVToFloat<fp::SymFpuTraits>(*d_size, rm, bv)));
-  // }
+  mpfr_set_eminmax_for_format(d_size->type());
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  mpz_class bv_mpz   = bv.to_mpz(sign);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_set_z, d_mpfr, bv_mpz.get_mpz_t());
+    if (mpfr_regular_p(d_mpfr))
+    {
+      i = mpfr_round_nearest_away(mpfr_check_range, d_mpfr, i);
+    }
+  }
+  else
+  {
+    i = mpfr_set_z(d_mpfr, bv_mpz.get_mpz_t(), rm_mpfr);
+    if (mpfr_regular_p(d_mpfr))
+    {
+      i = mpfr_check_range((mpfr_ptr) d_mpfr, i, rm_mpfr);
+    }
+  }
+  mpfr_subnormalize((mpfr_ptr) d_mpfr, i, rm_mpfr);
 }
 
 FloatingPointMPFR::FloatingPointMPFR(const FloatingPointMPFR &other)
