@@ -123,14 +123,6 @@ class FloatingPointMPFR
    * @param size The floating-point size.
    */
   FloatingPointMPFR(const FloatingPointTypeInfo &size);
-  // /**
-  //  * Constructor.
-  //  * Create new floating-point of given type, wrapping the given symFPU
-  //  * unpacked float.
-  //  * @param type The floating-point type.
-  //  * @param uf The symFPU unpacked float.
-  //  */
-  // FloatingPointMPFR(const Type &type, const UnpackedFloat &uf);
   /**
    * Constructor.
    * Create new floating-point of given type from an IEEE-754 bit-vector.
@@ -180,13 +172,6 @@ class FloatingPointMPFR
 
   /** @return The size of this floating-point. */
   FloatingPointTypeInfo *size() const;
-  // /** @return The wrapped symFPU unpacked float. */
-  // UnpackedFloat *unpacked() const;
-  // /**
-  //  * Set the wrapped symFPU unpacked float.
-  //  * @param uf The unpacked float to wrap.
-  //  */
-  // void set_unpacked(const UnpackedFloat &uf);
 
   /** @return The hash value of this floating-point. */
   size_t hash() const;
@@ -344,40 +329,6 @@ class FloatingPointMPFR
  private:
   static inline std::array<uint32_t, 6> s_hash_primes = {
       333444569u, 111130391u, 22237357u, 33355519u, 456790003u, 76891121u};
-
-  /**
-   * Helper to create a floating-point from its unpacked bit-vector
-   * representation given as sign bit, exponent bits, and significand bits.
-   *
-   * This unpacked representation accounts for additional bits required for the
-   * exponent to allow subnormals to be normalized.
-   *
-   * @note This should NOT be used to create a literal from its IEEE-754
-   *       bit-vector representation -- for this, fpfp() is to be used.
-   *
-   * @param sign A bit-vector of size 1 representing the sign bit.
-   * @param exp  A bit-vector representing the unpacked exponent.
-   * @param sig  A bit-vector representing the unpacked significand.
-   * @return The floating-point corresponding to the given unpacked bit-vector
-   *         representation.
-   */
-  static FloatingPointMPFR from_unpacked(NodeManager &nm,
-                                         const BitVector &sign,
-                                         const BitVector &exp,
-                                         const BitVector &sig);
-  /**
-   * Helper for constructors from real and rational strings.
-   * @param type The floating-point type.
-   * @param rm   The rounding mode.
-   * @param num  The string denoting the numerator.
-   * @param den  The string denoting the denominator, nullptr for from real.
-   * @return The constructed floating-point.
-   */
-  static FloatingPointMPFR convert_from_rational_aux(NodeManager &nm,
-                                                     const Type &type,
-                                                     const RoundingMode rm,
-                                                     const char *num,
-                                                     const char *den);
 
   std::unique_ptr<FloatingPointTypeInfo> d_size;
   mpfr_t d_mpfr;
