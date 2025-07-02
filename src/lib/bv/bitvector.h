@@ -2205,8 +2205,11 @@ class BitVector
   /** Get mpz_t value from Integer class. */
   const mpz_t& gmp_value() const;
 
-  /** Convert bit-vector to mpz_class. */
-  mpz_class to_mpz() const;
+  /**
+   * Convert bit-vector to mpz_class.
+   * @param sign True to convert to a signed integer.
+   */
+  mpz_class to_mpz(bool sign = false) const;
 
  private:
   /**
