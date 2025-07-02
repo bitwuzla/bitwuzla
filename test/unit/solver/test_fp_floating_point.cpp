@@ -3830,6 +3830,44 @@ TEST_F(TestFp, assignment)
   }
 }
 
+TEST_F(TestFp, to_fp_from_fp)
+{
+  auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {
+    Type type       = pick_type(d_all_formats);
+    RoundingMode rm = pick_rm();
+    BitVector bv;
+    {
+      bv = BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig);
+      FloatingPoint fp(type, rm, FloatingPoint(d_fp16, bv));
+      FloatingPointMPFR fp_mpfr(type, rm, FloatingPointMPFR(d_fp16, bv));
+      ASSERT_EQ(fp.str(), fp_mpfr.str());
+      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+    }
+    {
+      bv = BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig);
+      FloatingPoint fp(type, rm, FloatingPoint(d_fp16, bv));
+      FloatingPointMPFR fp_mpfr(type, rm, FloatingPointMPFR(d_fp16, bv));
+      ASSERT_EQ(fp.str(), fp_mpfr.str());
+      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+    }
+  };
+  test_for_float16(fun);
+
+  // random tests for Float32, Float64, Float128
+  for (const auto &type1 : d_formats_32_128)
+  {
+    for (uint32_t i = 0; i < N_TESTS; ++i)
+    {
+      BitVector bv    = BitVector(type1.fp_ieee_bv_size(), *d_rng);
+      Type type2      = pick_type(d_all_formats);
+      RoundingMode rm = pick_rm();
+      FloatingPoint fp(type2, rm, FloatingPoint(type1, bv));
+      FloatingPointMPFR fp_mpfr(type2, rm, FloatingPointMPFR(type1, bv));
+      ASSERT_EQ(fp.str(), fp_mpfr.str());
+      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+    }
+  }
+}
 TEST_F(TestFp, lt)
 {
   for (const auto &type : d_all_formats)

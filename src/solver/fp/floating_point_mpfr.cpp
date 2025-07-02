@@ -347,8 +347,26 @@ FloatingPointMPFR::FloatingPointMPFR(const Type &type,
                                      const FloatingPointMPFR &fp)
     : FloatingPointMPFR(type)
 {
-  // d_uf.reset(new UnpackedFloat(symfpu::convertFloatToFloat<fp::SymFpuTraits>(
-  //     *fp.size(), *d_size, rm, *fp.unpacked())));
+  mpfr_set_eminmax_for_format(d_size->type());
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_set, d_mpfr, fp.d_mpfr);
+    if (mpfr_regular_p(d_mpfr))
+    {
+      i = mpfr_round_nearest_away(mpfr_check_range, d_mpfr, i);
+    }
+  }
+  else
+  {
+    i = mpfr_set(d_mpfr, fp.d_mpfr, rm_mpfr);
+    if (mpfr_regular_p(d_mpfr))
+    {
+      i = mpfr_check_range((mpfr_ptr) d_mpfr, i, rm_mpfr);
+    }
+  }
+  mpfr_subnormalize((mpfr_ptr) d_mpfr, i, rm_mpfr);
 }
 
 FloatingPointMPFR::FloatingPointMPFR(const Type &type,
