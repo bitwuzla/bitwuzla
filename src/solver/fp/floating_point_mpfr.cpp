@@ -189,14 +189,6 @@ make_mpq_from_rat_string(mpq_t &res, const char *str_num, const char *str_den)
   mpq_canonicalize(res);
 }
 
-static void
-make_mpq_from_ui(mpq_t &res, uint32_t n, uint32_t d)
-{
-  mpq_init(res);
-  mpq_set_ui(res, n, d);
-  mpq_canonicalize(res);
-}
-
 }  // namespace
 
 namespace bzla {
@@ -301,13 +293,6 @@ FloatingPointMPFR::FloatingPointMPFR(const FloatingPointTypeInfo &size)
     : FloatingPointMPFR(size.type())
 {
 }
-
-// FloatingPointMPFR::FloatingPointMPFR(const Type &type, const UnpackedFloat
-// &uf)
-// {
-//   d_size.reset(new FloatingPointTypeInfo(type));
-//   // d_uf.reset(new UnpackedFloat(uf));
-// }
 
 FloatingPointMPFR::FloatingPointMPFR(const Type &type, const BitVector &bv)
     : FloatingPointMPFR(type)
@@ -548,18 +533,6 @@ FloatingPointMPFR::operator!=(const FloatingPointMPFR &other) const
 {
   return !(*this == other);
 }
-
-// UnpackedFloat *
-// FloatingPointMPFR::unpacked() const
-// {
-//   return d_uf.get();
-// }
-//
-// void
-// FloatingPointMPFR::set_unpacked(const UnpackedFloat &uf)
-// {
-//   d_uf.reset(new UnpackedFloat(uf));
-// }
 
 bool
 FloatingPointMPFR::fpiszero() const
@@ -839,202 +812,6 @@ FloatingPointMPFR::as_bv() const
   assert(bvexp.size() == exp_size);
   assert(bvsig.size() == sig_size - 1);
   return bvsign.ibvconcat(bvexp).ibvconcat(bvsig);
-}
-
-/* --- FloatingPointMPFR private -------------------------------------------- */
-
-FloatingPointMPFR
-FloatingPointMPFR::from_unpacked(NodeManager &nm,
-                                 const BitVector &sign,
-                                 const BitVector &exp,
-                                 const BitVector &sig)
-{
-  // FloatingPointMPFR res(nm.mk_fp_type(exp.size(), sig.size() + 1),
-  //                   UnpackedFloat(sign.is_one(), exp, sig));
-  // return res;
-}
-
-FloatingPointMPFR
-FloatingPointMPFR::convert_from_rational_aux(NodeManager &nm,
-                                             const Type &type,
-                                             const RoundingMode rm,
-                                             const char *num,
-                                             const char *den)
-{
-  assert(num);
-
-  mpq_t r;
-  if (den == nullptr)
-  {
-    make_mpq_from_dec_string(r, num);
-  }
-  else
-  {
-    make_mpq_from_rat_string(r, num, den);
-  }
-
-  int32_t sgn = mpq_sgn(r);
-  if (sgn == 0)
-  {
-    mpq_clear(r);
-    return FloatingPointMPFR::fpzero(type, false);
-  }
-
-  /* r = abs(r) */
-  if (sgn < 0)
-  {
-    mpq_neg(r, r);
-  }
-
-  /* Exponent ---------------------------------------------------------- */
-
-  mpq_t tmp_exp;
-  mpz_t iexp, inc;
-  make_mpq_from_ui(tmp_exp, 1, 1);
-  mpz_init_set_ui(iexp, 0);
-  mpz_init_set_ui(inc, 1);
-
-  int32_t cmp = mpq_cmp(r, tmp_exp);
-  if (cmp != 0)
-  {
-    if (cmp < 0)
-    {
-      while (mpq_cmp(r, tmp_exp) < 0)
-      {
-        mpz_sub(iexp, iexp, inc);
-        mpq_div_2exp(tmp_exp, tmp_exp, 1);
-      }
-    }
-    else
-    {
-      while (mpq_cmp(r, tmp_exp) >= 0)
-      {
-        mpz_add(iexp, iexp, inc);
-        mpq_mul_2exp(tmp_exp, tmp_exp, 1);
-      }
-      mpz_sub(iexp, iexp, inc);
-      mpq_div_2exp(tmp_exp, tmp_exp, 1);
-    }
-  }
-
-  assert(mpq_cmp(tmp_exp, r) <= 0);
-#ifndef NDEBUG
-  mpq_t tmp_mul;
-  mpq_init(tmp_mul);
-  mpq_mul_2exp(tmp_mul, tmp_exp, 1);
-  assert(mpq_cmp(r, tmp_mul) < 0);
-  mpq_clear(tmp_mul);
-#endif
-  /* Determine number of bits required to represent the exponent for a
-   * normal number. */
-  uint32_t n_exp_bits = 2;
-  int32_t esgn        = mpz_sgn(iexp);
-  if (esgn > 0)
-  {
-    /* Not exactly representable with n_exp_bits, adjust. */
-    mpz_t representable;
-    mpz_init_set_ui(representable, 4);
-    while (mpz_cmp(representable, iexp) <= 0)
-    {
-      mpz_mul_2exp(representable, representable, 1);
-      n_exp_bits += 1;
-    }
-    mpz_clear(representable);
-  }
-  else if (esgn < 0)
-  {
-    /* Exactly representable with n_exp_bits + sign bit but -2^n and
-     * -(2^n - 1) are both subnormal */
-    mpz_t representable, rep_plus_two;
-    mpz_init_set_si(representable, -4);
-    mpz_init(rep_plus_two);
-    mpz_add_ui(rep_plus_two, representable, 2);
-    while (mpz_cmp(rep_plus_two, iexp) > 0)
-    {
-      mpz_mul_2exp(representable, representable, 1);
-      mpz_add_ui(rep_plus_two, representable, 2);
-      n_exp_bits += 1;
-    }
-    mpz_clear(rep_plus_two);
-    mpz_clear(representable);
-  }
-  n_exp_bits += 1; /* for sign bit */
-#ifndef NDEBUG
-  char *exp_bin_str = mpz_get_str(nullptr, 2, iexp);
-  assert(strlen(exp_bin_str) <= n_exp_bits);
-  free(exp_bin_str);
-#endif
-
-  /* Significand ------------------------------------------------------- */
-
-  /* sig bits of type + guard and sticky bits */
-  uint32_t n_sig_bits = type.fp_sig_size() + 2;
-  BitVector sig       = BitVector::mk_zero(n_sig_bits);
-  mpq_t tmp_sig, mid;
-  make_mpq_from_ui(tmp_sig, 0, 1);
-  mpq_init(mid);
-  for (uint32_t i = 0, n = n_sig_bits - 1; i < n; ++i)
-  {
-    mpq_add(mid, tmp_sig, tmp_exp);
-    if (mpq_cmp(mid, r) <= 0)
-    {
-      sig.set_bit(0, 1);
-      mpq_set(tmp_sig, mid);
-    }
-    sig.ibvshl(1);
-    mpq_div_2exp(tmp_exp, tmp_exp, 1);
-  }
-
-  /* Sticky bit -------------------------------------------------------- */
-
-  mpq_t remainder;
-  mpq_init(remainder);
-  mpq_sub(remainder, r, tmp_sig);
-#ifndef NDEBUG
-  mpq_t tmp01;
-  make_mpq_from_ui(tmp01, 0, 1);
-  assert(mpq_cmp(tmp01, remainder) <= 1);
-  mpq_clear(tmp01);
-#endif
-  if (mpq_sgn(remainder) != 0)
-  {
-    sig.set_bit(0, 1);
-  }
-
-  /* Exact float ------------------------------------------------------- */
-
-  FloatingPointTypeInfo exact_format(n_exp_bits, n_sig_bits);
-
-  /* If the format has n_exp_bits, the unpacked format may have more to allow
-   * subnormals to be normalised. */
-  uint32_t extension =
-      0;  // UnpackedFloat::exponentWidth(exact_format) - n_exp_bits;
-
-  BitVector sign = sgn < 0 ? BitVector::mk_true() : BitVector::mk_false();
-  char *str      = mpz_get_str(nullptr, 10, iexp);
-  BitVector exp(n_exp_bits, str, 10);
-  free(str);
-
-  if (extension > 0)
-  {
-    exp.ibvsext(extension);
-  }
-
-  FloatingPointMPFR exact_float = from_unpacked(nm, sign, exp, sig);
-
-  FloatingPointMPFR res(type);
-  // res.d_uf.reset(
-  //     new UnpackedFloat(symfpu::convertFloatToFloat<fp::SymFpuTraits>(
-  //         exact_format, *res.size(), rm, *exact_float.unpacked())));
-
-  mpq_clear(remainder);
-  mpq_clear(tmp_sig);
-  mpq_clear(mid);
-  mpz_clear(iexp);
-  mpz_clear(inc);
-  mpq_clear(tmp_exp);
-  mpq_clear(r);
-  return res;
 }
 
 /* -------------------------------------------------------------------------- */
