@@ -99,9 +99,9 @@ mpz_init_set_sll(mpz_t rop, int64_t op)
 }
 
 size_t
-mpz_hash(const mpz_t op)
+mpz_hash(const mpz_t op, uint64_t start)
 {
-  uint64_t i, j = 0, n, res = 0;
+  uint64_t i, j = 0, n, res = start;
   uint64_t x, p0, p1;
 
   // least significant limb is at index 0

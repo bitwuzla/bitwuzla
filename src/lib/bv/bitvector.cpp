@@ -18,6 +18,7 @@
 
 #include "rng/rng.h"
 #include "util/gmp_utils.h"
+#include "util/hash.h"
 
 namespace bzla {
 
@@ -483,45 +484,14 @@ BitVector::operator=(const BitVector& other)
 size_t
 BitVector::hash() const
 {
-  uint64_t i, j = 0, n, res = 0;
+  uint64_t j = 0, res = 0;
   uint64_t x, p0, p1;
 
   res = d_size * s_hash_primes[j++];
 
   if (is_gmp())
   {
-    // least significant limb is at index 0
-    mp_limb_t limb;
-    for (i = 0, j = 0, n = mpz_size(d_val_gmp); i < n; ++i)
-    {
-      p0 = s_hash_primes[j++];
-      if (j == s_n_primes) j = 0;
-      p1 = s_hash_primes[j++];
-      if (j == s_n_primes) j = 0;
-      limb = mpz_getlimbn(d_val_gmp, i);
-      if (mp_bits_per_limb == 64)
-      {
-        uint64_t lo = limb;
-        uint64_t hi = (limb >> 32);
-        x           = lo ^ res;
-        x           = ((x >> 16) ^ x) * p0;
-        x           = ((x >> 16) ^ x) * p1;
-        x           = ((x >> 16) ^ x);
-        p0          = s_hash_primes[j++];
-        if (j == s_n_primes) j = 0;
-        p1 = s_hash_primes[j++];
-        if (j == s_n_primes) j = 0;
-        x = x ^ hi;
-      }
-      else
-      {
-        assert(mp_bits_per_limb == 32);
-        x = res ^ limb;
-      }
-      x   = ((x >> 16) ^ x) * p0;
-      x   = ((x >> 16) ^ x) * p1;
-      res = ((x >> 16) ^ x);
-    }
+    res = mpz_hash(d_val_gmp, res);
   }
   else
   {

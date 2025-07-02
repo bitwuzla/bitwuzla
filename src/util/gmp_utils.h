@@ -43,8 +43,12 @@ mpz_class uint64_to_mpz_class(uint64_t op);
 /** 64-bit version of mpz_init_set_si. */
 void mpz_init_set_sll(mpz_t rop, int64_t op);
 
-/** Compute hash value of GMP value rop. */
-size_t mpz_hash(const mpz_t op);
+/**
+ * Compute hash value of GMP value rop
+ * @param start Optionally seed hash given value.
+ * @return The hash value.
+ */
+size_t mpz_hash(const mpz_t op, uint64_t start = 0);
 
 // These functions only guard their *_ui counterparts with an assertion for the
 // Windows 32-bit case. In the cases where these functions are used we should
