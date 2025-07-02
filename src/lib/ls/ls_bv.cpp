@@ -15,7 +15,7 @@
 #include <iostream>
 #include <unordered_set>
 
-#include "../util/hash_pair.h"
+#include "../util/hash.h"
 #include "bv/bitvector.h"
 #include "bv/domain/bitvector_domain.h"
 #include "ls/bv/bitvector_node.h"

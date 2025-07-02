@@ -14,6 +14,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "util/hash.h"
+
 namespace bzla::util {
 
 void
@@ -99,13 +101,6 @@ mpz_init_set_sll(mpz_t rop, int64_t op)
 size_t
 mpz_hash(const mpz_t op)
 {
-  /** Prime numbers used for hashing. */
-  static constexpr uint32_t s_hash_primes[] = {
-      333444569u, 76891121u, 456790003u};
-  /** Number of prime numbers used for hashing. */
-  static constexpr uint32_t s_n_primes =
-      ((uint32_t) (sizeof s_hash_primes / sizeof *s_hash_primes));
-
   uint64_t i, j = 0, n, res = 0;
   uint64_t x, p0, p1;
 

@@ -9,7 +9,7 @@
 #include "node/node_utils.h"
 #include "solver/abstract/abstraction_lemmas.h"
 #include "solver/bv/aig_bitblaster.h"
-#include "util/hash_pair.h"
+#include "util/hash.h"
 
 #ifndef NDEBUG
 #include "solving_context.h"

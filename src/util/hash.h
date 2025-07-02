@@ -8,12 +8,18 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_UTIL_HASH_PAIR_H_INCLUDED
-#define BZLA_UTIL_HASH_PAIR_H_INCLUDED
+#ifndef BZLA_UTIL_HASH_H_INCLUDED
+#define BZLA_UTIL_HASH_H_INCLUDED
 
 #include <cstdint>
 #include <functional>
 #include <utility>
+
+/** Prime numbers used for hashing. */
+static constexpr uint32_t s_hash_primes[] = {333444569u, 76891121u, 456790003u};
+/** Number of prime numbers used for hashing. */
+static constexpr uint32_t s_n_primes =
+    ((uint32_t) (sizeof s_hash_primes / sizeof *s_hash_primes));
 
 namespace std {
 template <>

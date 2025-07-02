@@ -135,7 +135,7 @@ git_config_h = vcs_tag(
 # ---
 
 sources_util = files([
-  'util/hash_pair.cpp',
+  'util/hash.cpp',
   'util/logger.cpp',
   'util/resources.cpp',
   'util/printer.cpp',

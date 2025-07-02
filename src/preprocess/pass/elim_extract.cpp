@@ -16,7 +16,7 @@
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-#include "util/hash_pair.h"
+#include "util/hash.h"
 
 namespace bzla::preprocess::pass {
 
