@@ -8,6 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifndef BZLA_UTIL_GMP_UTILS_H_INCLUDED
+#define BZLA_UTIL_GMP_UTILS_H_INCLUDED
+
 #include <gmpxx.h>
 
 #include <cstdint>
@@ -53,3 +56,5 @@ void mpz_fdiv_r_2exp_ull(mpz_t r, const mpz_t n, uint64_t b);
 void mpz_mul_2exp_ull(mpz_t rop, const mpz_t op1, uint64_t op2);
 
 }  // namespace bzla::util
+
+#endif
