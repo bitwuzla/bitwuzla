@@ -3904,13 +3904,24 @@ BitVector::gmp_value() const
 }
 
 mpz_class
-BitVector::to_mpz() const
+BitVector::to_mpz(bool sign) const
 {
+  mpz_class res;
   if (is_gmp())
   {
-    return mpz_class(d_val_gmp);
+    res = mpz_class(d_val_gmp);
   }
-  return util::uint64_to_mpz_class(d_val_uint64);
+  else
+  {
+    res = util::uint64_to_mpz_class(d_val_uint64);
+  }
+  if (sign && compare(BitVector::mk_max_signed(d_size)) > 0)
+  {
+    mpz_class pow2(1);
+    mpz_mul_2exp_ull(pow2.get_mpz_t(), pow2.get_mpz_t(), d_size);
+    res -= pow2;
+  }
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
