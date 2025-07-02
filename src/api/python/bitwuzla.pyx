@@ -1518,6 +1518,7 @@ cdef class Parser:
     cdef unique_ptr[bitwuzla_api.Parser] c_parser
     cdef Options options
     cdef TermManager tm
+    cdef unique_ptr[bitwuzla_api.PyTerminator] c_terminator
 
     def __init__(self,
                  tm: TermManager,
@@ -1628,3 +1629,22 @@ cdef class Parser:
            :return: The Bitwuzla instance.
         """
         return Bitwuzla.from_shared_ptr(self.tm, self.c_parser.get().bitwuzla())
+
+    def configure_terminator(self, callback: callable):
+        """Set a termination callback for parsing/solving.
+        
+        Args:
+            callback: A callable that returns True to terminate
+        Example:
+            def should_terminate():
+                return time.time() > deadline
+            parser.configure_terminator(should_terminate)
+        """
+        
+        # Create C++ terminator wrapper
+        self.c_terminator.reset(
+            new bitwuzla_api.PyTerminator(<PyObject*> callback))
+        
+        # Configure in both parser and Bitwuzla (if exists)
+        self.c_parser.get().configure_terminator(
+            <bitwuzla_api.Terminator*> self.c_terminator.get())
