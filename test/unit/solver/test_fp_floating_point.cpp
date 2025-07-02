@@ -3868,6 +3868,57 @@ TEST_F(TestFp, to_fp_from_fp)
     }
   }
 }
+TEST_F(TestFp, to_fp_from_ubv_sbv)
+{
+  // Exhaustive for Float16
+  for (uint64_t bw = 1; bw <= 16; ++bw)
+  {
+    // SymFpu's conversion from ubv/sbv has issues in the rounder. It produces
+    // intermediate bit-widths that do not match its own expectations. For
+    // Float16, this occurs with bw \in {11, 12}.
+    // We therefore cannot perform this full test until this is fixed.
+    if (bw == 11 || bw == 12) continue;
+    for (uint64_t i = 0; i < (1ul << bw); ++i)
+    {
+      BitVector bv = BitVector::from_ui(bw, i);
+      Type type = d_fp16;
+      for (RoundingMode rm : d_all_rms)
+      {
+        {
+          FloatingPoint fp(type, rm, bv, false);
+          FloatingPointMPFR fp_mpfr(type, rm, bv, false);
+          ASSERT_EQ(fp.str(), fp_mpfr.str());
+        }
+        {
+          FloatingPoint fp(type, rm, bv, true);
+          FloatingPointMPFR fp_mpfr(type, rm, bv, true);
+          ASSERT_EQ(fp.str(), fp_mpfr.str());
+        }
+      }
+    }
+  }
+#if 0
+  // For the same reason as above we can not enable this test for now.
+  for (uint64_t i = 0; i < 10000; ++i)
+  {
+    BitVector bv(d_rng->pick<uint64_t>(1, 257));
+    Type type      = pick_type(d_all_formats);
+    RoundingMode rm = pick_rm();
+    {
+      FloatingPoint fp(type, rm, bv, false);
+      FloatingPointMPFR fp_mpfr(type, rm, bv, false);
+      ASSERT_EQ(fp.str(), fp_mpfr.str());
+      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+    }
+    {
+      FloatingPoint fp(type, rm, bv, true);
+      FloatingPointMPFR fp_mpfr(type, rm, bv, true);
+      ASSERT_EQ(fp.str(), fp_mpfr.str());
+      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+    }
+  }
+#endif
+}
 TEST_F(TestFp, lt)
 {
   for (const auto &type : d_all_formats)
