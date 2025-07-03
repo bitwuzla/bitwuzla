@@ -1958,6 +1958,54 @@ TestFp::test_to_fp_from_rational(
 
 /* -------------------------------------------------------------------------- */
 
+TEST_F(TestFp, hash)
+{
+  std::unordered_map<size_t, std::vector<FloatingPoint>> occs;
+  std::unordered_map<size_t, std::vector<FloatingPointMPFR>> occs_mpfr;
+  for (uint64_t i = 0; i < (1u << 16); ++i)
+  {
+    BitVector bv = BitVector::from_ui(16, i);
+    FloatingPoint fp(d_fp16, bv);
+    {
+      auto [it, inserted] =
+          occs.emplace(fp.hash(), std::vector<FloatingPoint>{fp});
+      if (!inserted) it->second.push_back(fp);
+    }
+#ifdef BZLA_USE_MPFR
+    FloatingPointMPFR fp_mpfr(d_fp16, bv);
+    {
+      auto [it, inserted] = occs_mpfr.emplace(
+          fp_mpfr.hash(), std::vector<FloatingPointMPFR>{fp_mpfr});
+      if (!inserted) it->second.push_back(fp_mpfr);
+    }
+#endif
+  }
+  size_t max = 0, n_nan = ((1u << 10) - 1) * 2;
+  std::unordered_set<uint64_t> occs_cnt;
+  for (const auto &p : occs)
+  {
+    if (p.second.size() > max) max = p.second.size();
+    occs_cnt.insert(p.second.size());
+  }
+  // one entry > 1 for NaN, rest should be unique
+  ASSERT_EQ(occs_cnt.size(), 2);
+  ASSERT_TRUE(occs_cnt.find(1) != occs_cnt.end());
+  ASSERT_EQ(max, n_nan);
+#ifdef BZLA_USE_MPFR
+  size_t max_mpfr = 0;
+  std::unordered_set<uint64_t> occs_mpfr_cnt;
+  for (const auto &p : occs_mpfr)
+  {
+    if (p.second.size() > max_mpfr) max_mpfr = p.second.size();
+    occs_mpfr_cnt.insert(p.second.size());
+  }
+  // one entry > 1 for NaN, rest should be unique
+  ASSERT_EQ(occs_mpfr_cnt.size(), 2);
+  ASSERT_TRUE(occs_mpfr_cnt.find(1) != occs_cnt.end());
+  ASSERT_EQ(max_mpfr, n_nan);
+#endif
+}
+
 TEST_F(TestFp, isX)
 {
   for (uint64_t i = 0; i < (1u << 5); ++i)
