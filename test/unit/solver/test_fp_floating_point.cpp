@@ -61,6 +61,53 @@
     }                                                                   \
   } while (0)
 
+#define TEST_MIN_MAX(FUN, CMP)                                               \
+  {                                                                          \
+    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {      \
+      BitVector bv1;                                                         \
+      if (d_rng->flip_coin())                                                \
+      {                                                                      \
+        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);        \
+      }                                                                      \
+      else                                                                   \
+      {                                                                      \
+        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);         \
+      }                                                                      \
+      BitVector bv2(16, *d_rng);                                             \
+      FloatingPoint fp1(d_fp16, bv1);                                        \
+      FloatingPoint fp2(d_fp16, bv2);                                        \
+      FloatingPoint fp = fp1.fp##FUN(fp2);                                   \
+      FloatingPointMPFR fp_mpfr1(d_nm.mk_fp_type(5, 11), bv1);               \
+      FloatingPointMPFR fp_mpfr2(d_nm.mk_fp_type(5, 11), bv2);               \
+      FloatingPointMPFR fp_mpfr = fp_mpfr1.fp##FUN(fp_mpfr2);                \
+      ASSERT_EQ(fp.str(), fp_mpfr.str());                                    \
+      if (!fp1.fpisnan() && !fp2.fpisnan())                                  \
+      {                                                                      \
+        ASSERT_TRUE(fp1.fp##CMP(fp));                                        \
+        ASSERT_TRUE(fp2.fp##CMP(fp));                                        \
+        ASSERT_TRUE(fp_mpfr1.fp##CMP(fp_mpfr));                              \
+        ASSERT_TRUE(fp_mpfr2.fp##CMP(fp_mpfr));                              \
+      }                                                                      \
+    };                                                                       \
+    test_for_float16(fun);                                                   \
+                                                                             \
+    for (const auto &type : d_formats_32_128)                                \
+    {                                                                        \
+      uint64_t bv_size = type.fp_ieee_bv_size();                             \
+      for (uint32_t i = 0; i < N_TESTS; ++i)                                 \
+      {                                                                      \
+        BitVector bv1 = BitVector(bv_size, *d_rng);                          \
+        BitVector bv2 = BitVector(bv_size, *d_rng);                          \
+        FloatingPoint fp1(type, bv1);                                        \
+        FloatingPoint fp2(type, bv2);                                        \
+        FloatingPointMPFR fp_mpfr1(type, bv1);                               \
+        FloatingPointMPFR fp_mpfr2(type, bv2);                               \
+        ASSERT_EQ(fp1.fp##FUN(fp2).str(), fp_mpfr1.fp##FUN(fp_mpfr2).str()); \
+      }                                                                      \
+    }                                                                        \
+  }                                                                          \
+  while (0)
+
 #define TEST_UNARY(FUN)                                                 \
   do                                                                    \
   {                                                                     \
@@ -608,6 +655,11 @@ class TestFp : public TestCommon
     assert(t.is_fp());
     return t;
   }
+
+  void test_for_format(
+      uint64_t exp_size,
+      uint64_t sig_size,
+      std::function<void(const BitVector &bvexp, const BitVector &bvsig)> fun);
 
   void test_for_float16(
       std::function<void(const BitVector &, const BitVector &)> fun);
@@ -1865,18 +1917,28 @@ class TestFp : public TestCommon
 /* -------------------------------------------------------------------------- */
 
 void
-TestFp::test_for_float16(
+TestFp::test_for_format(
+    uint64_t exp_size,
+    uint64_t sig_size,
     std::function<void(const BitVector &bvexp, const BitVector &bvsig)> fun)
 {
-  for (uint64_t i = 0; i < (1u << 5); ++i)
+  sig_size -= 1;
+  for (uint64_t i = 0; i < (1u << exp_size); ++i)
   {
-    for (uint64_t j = 0; j < (1u << 10); ++j)
+    BitVector bvexp = BitVector::from_ui(exp_size, i);
+    for (uint64_t j = 0; j < (1u << sig_size); ++j)
     {
-      BitVector bvexp = BitVector::from_ui(5, i);
-      BitVector bvsig = BitVector::from_ui(10, j);
+      BitVector bvsig = BitVector::from_ui(sig_size, j);
       fun(bvexp, bvsig);
     }
   }
+}
+
+void
+TestFp::test_for_float16(
+    std::function<void(const BitVector &bvexp, const BitVector &bvsig)> fun)
+{
+  test_for_format(5, 11, fun);
 }
 
 void
@@ -4011,6 +4073,8 @@ TEST_F(TestFp, lt) { TEST_INEQ(lt); }
 TEST_F(TestFp, leq) { TEST_INEQ(le); }
 TEST_F(TestFp, gt) { TEST_INEQ(gt); }
 TEST_F(TestFp, geq) { TEST_INEQ(ge); }
+TEST_F(TestFp, min) { TEST_MIN_MAX(min, ge); }
+TEST_F(TestFp, max) { TEST_MIN_MAX(max, le); }
 TEST_F(TestFp, abs) { TEST_UNARY(abs); }
 TEST_F(TestFp, neg) { TEST_UNARY(neg); }
 TEST_F(TestFp, sqrt) { TEST_UNARY_RM(sqrt); }

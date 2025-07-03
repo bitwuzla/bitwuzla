@@ -639,31 +639,54 @@ FloatingPointMPFR::fpispos() const
 bool
 FloatingPointMPFR::fpeq(const FloatingPointMPFR &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   return mpfr_equal_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPointMPFR::fplt(const FloatingPointMPFR &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   return mpfr_less_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPointMPFR::fple(const FloatingPointMPFR &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   return mpfr_lessequal_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPointMPFR::fpgt(const FloatingPointMPFR &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   return mpfr_greater_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPointMPFR::fpge(const FloatingPointMPFR &fp) const
 {
+  assert(d_size->type() == fp.size()->type());
   return mpfr_greaterequal_p(d_mpfr, fp.d_mpfr);
+}
+
+FloatingPointMPFR
+FloatingPointMPFR::fpmin(const FloatingPointMPFR &fp) const
+{
+  assert(d_size->type() == fp.size()->type());
+  FloatingPointMPFR res(*d_size);
+  mpfr_min(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
+  return res;
+}
+
+FloatingPointMPFR
+FloatingPointMPFR::fpmax(const FloatingPointMPFR &fp) const
+{
+  assert(d_size->type() == fp.size()->type());
+  FloatingPointMPFR res(*d_size);
+  mpfr_max(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
+  return res;
 }
 
 FloatingPointMPFR
