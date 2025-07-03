@@ -21,6 +21,12 @@ static constexpr uint32_t s_hash_primes[] = {333444569u, 76891121u, 456790003u};
 /** Number of prime numbers used for hashing. */
 static constexpr uint32_t s_n_primes =
     ((uint32_t) (sizeof s_hash_primes / sizeof *s_hash_primes));
+
+/**
+ * FNV-1a hash algorithm for 64-bit numbers.
+ * See http://www.isthe.com/chongo/tech/comp/fnv/index.html
+ */
+uint64_t fnv1a_64(uint64_t v, uint64_t hash = 14695981039346656037u);
 }  // namespace bzla::util::hash
 
 namespace std {
