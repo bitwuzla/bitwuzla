@@ -16,6 +16,7 @@
 #include "node/node_manager.h"
 #include "solver/fp/symfpu_nm.h"
 #include "util/gmp_utils.h"
+#include "util/hash.h"
 
 namespace {
 int64_t
@@ -442,14 +443,69 @@ FloatingPointMPFR::size() const
 size_t
 FloatingPointMPFR::hash() const
 {
-  uint32_t hash = 0;
-  // hash += d_uf->getNaN() * s_hash_primes[0];
-  // hash += d_uf->getInf() * s_hash_primes[1];
-  // hash += d_uf->getZero() * s_hash_primes[2];
-  // hash += d_uf->getSign() * s_hash_primes[3];
-  // hash += d_uf->getExponent().getBv().hash() * s_hash_primes[4];
-  // hash += d_uf->getSignificand().getBv().hash() * s_hash_primes[5];
-  return hash;
+  int32_t sign = fpisneg() ? -1 : 1;
+
+  uint64_t i, j = 0, n, res = 0;
+  uint64_t x, p0, p1;
+
+  uint64_t exp_size = d_size->type().fp_exp_size();
+  uint64_t sig_size = d_size->type().fp_sig_size();
+  res               = (exp_size + sig_size) * util::hash::s_hash_primes[j++];
+
+  if (fpisinf())
+  {
+    return util::hash::fnv1a_64(
+        std::hash<std::string>{}(sign < 0 ? "-oo" : "+oo"), res);
+  }
+  if (fpisnan())
+  {
+    return util::hash::fnv1a_64(std::hash<std::string>{}("NaN"), res);
+  }
+  if (fpiszero())
+  {
+    return util::hash::fnv1a_64(
+        std::hash<std::string>{}(sign < 0 ? "-zero" : "+zero") * sign, res);
+  }
+
+  // limbs for significand
+  uint64_t nlimbs = (sig_size + mp_bits_per_limb - 1) / mp_bits_per_limb;
+
+  // hash for significand, least significant limb is at index 0
+  mp_limb_t limb;
+  for (i = 0, j = 1, n = nlimbs; i < n; ++i)
+  {
+    p0 = s_hash_primes[j++];
+    if (j == util::hash::s_n_primes) j = 0;
+    p1 = util::hash::s_hash_primes[j++];
+    if (j == util::hash::s_n_primes) j = 0;
+    limb = d_mpfr->_mpfr_d[i];
+    if (mp_bits_per_limb == 64)
+    {
+      uint64_t lo = limb;
+      uint64_t hi = (limb >> 32);
+      x           = lo ^ res;
+      x           = ((x >> 16) ^ x) * p0;
+      x           = ((x >> 16) ^ x) * p1;
+      x           = ((x >> 16) ^ x);
+      p0          = s_hash_primes[j++];
+      if (j == util::hash::s_n_primes) j = 0;
+      p1 = s_hash_primes[j++];
+      if (j == util::hash::s_n_primes) j = 0;
+      x = x ^ hi;
+    }
+    else
+    {
+      assert(mp_bits_per_limb == 32);
+      x = res ^ limb;
+    }
+    x   = ((x >> 16) ^ x) * p0;
+    x   = ((x >> 16) ^ x) * p1;
+    res = ((x >> 16) ^ x);
+  }
+  res = util::hash::fnv1a_64(
+      ((sign >> 16) ^ sign) * util::hash::s_hash_primes[j], res);
+  res = util::hash::fnv1a_64(static_cast<uint64_t>(mpfr_get_exp(d_mpfr)), res);
+  return res;
 }
 
 std::string
