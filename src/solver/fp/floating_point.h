@@ -277,6 +277,27 @@ class FloatingPoint
   bool fpge(const FloatingPoint &fp) const;
 
   /**
+   * Determine the minimum of two floating-point values.
+   * @note The +/- zero case is undefined as the IEEE 754 standard states that
+   *       min(-zero, +zero) and min(+zero, -zero) may both return either.
+   *       This function returns -zero in this case, thus users of this
+   *       function have to make sure that this undefined case is handled
+   *       properly on top of this function.
+   * @return The floating-point representing the minimum value of both.
+   */
+  FloatingPoint fpmin(const FloatingPoint &fp) const;
+  /**
+   * Determine the minimum of two floating-point values.
+   * @note The +/- zero case is undefined as the IEEE 754 standard states that
+   *       min(-zero, +zero) and min(+zero, -zero) may both return either.
+   *       This function returns +zero in this case, thus users of this
+   *       function have to make sure that this undefined case is handled
+   *       properly on top of this function.
+   * @return The floating-point representing the maximum value of both.
+   */
+  FloatingPoint fpmax(const FloatingPoint &fp) const;
+
+  /**
    * Create a floating-point representing the absolute value of this
    * floating-point.
    * @return The absolute value of this floating-point.

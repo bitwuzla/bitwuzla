@@ -450,6 +450,32 @@ FloatingPoint::fpge(const FloatingPoint &fp) const
 }
 
 FloatingPoint
+FloatingPoint::fpmin(const FloatingPoint &fp) const
+{
+  if (fpiszero() && fp.fpiszero() && fpisneg() != fp.fpisneg())
+  {
+    return FloatingPoint::fpzero(d_size->type(), true);
+  }
+  FloatingPoint res(*d_size);
+  res.d_uf.reset(new UnpackedFloat(
+      symfpu::min<fp::SymFpuTraits>(*d_size, *d_uf, *fp.unpacked(), false)));
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpmax(const FloatingPoint &fp) const
+{
+  if (fpiszero() && fp.fpiszero() && fpisneg() != fp.fpisneg())
+  {
+    return FloatingPoint::fpzero(d_size->type(), false);
+  }
+  FloatingPoint res(*d_size);
+  res.d_uf.reset(new UnpackedFloat(
+      symfpu::max<fp::SymFpuTraits>(*d_size, *d_uf, *fp.unpacked(), false)));
+  return res;
+}
+
+FloatingPoint
 FloatingPoint::fpabs() const
 {
   FloatingPoint res(*d_size);
