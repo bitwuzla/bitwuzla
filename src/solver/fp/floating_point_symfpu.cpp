@@ -591,110 +591,6 @@ FloatingPointSymFPU::from_unpacked(NodeManager &nm,
   return res;
 }
 
-namespace {
-void
-make_mpq_from_dec_string(mpq_t &res, std::string str)
-{
-  std::string::size_type decimal_point(str.find("."));
-  mpq_init(res);
-
-  if (decimal_point == std::string::npos)
-  {
-#ifndef NDEBUG
-    assert(mpq_set_str(res, str.c_str(), 10) == 0);
-#else
-    mpq_set_str(res, str.c_str(), 10);
-#endif
-  }
-  else
-  {
-    /* We represent nnn.mmm as nnnmmm / 10^(number of m). */
-    str.erase(decimal_point, 1);
-    mpz_t num, den;
-    /* nnnmmm */
-#ifndef NDEBUG
-    assert(mpz_init_set_str(num, str.c_str(), 10) == 0);
-#else
-    mpz_init_set_str(num, str.c_str(), 10);
-#endif
-    /* 10^(number of m */
-    mpz_init_set_ui(den, 10);
-    mpz_pow_ui(den, den, str.size() - decimal_point);
-
-    mpz_set(mpq_numref(res), num);
-    mpz_set(mpq_denref(res), den);
-
-    mpz_clear(num);
-    mpz_clear(den);
-  }
-
-  mpq_canonicalize(res);
-}
-
-static void
-make_mpq_from_rat_string(mpq_t &res, const char *str_num, const char *str_den)
-{
-  mpq_init(res);
-
-  bool num_is_dec = std::string(str_num).find(".") != std::string::npos;
-  bool den_is_dec = std::string(str_den).find(".") != std::string::npos;
-
-  if (num_is_dec || den_is_dec)
-  {
-    mpq_t num, den;
-
-    if (num_is_dec)
-    {
-      make_mpq_from_dec_string(num, str_num);
-    }
-    else
-    {
-      mpq_init(num);
-      mpz_t znum;
-      mpz_init_set_str(znum, str_num, 10);
-      mpq_set_z(num, znum);
-      mpz_clear(znum);
-    }
-    if (den_is_dec)
-    {
-      make_mpq_from_dec_string(den, str_den);
-    }
-    else
-    {
-      mpq_init(den);
-      mpz_t zden;
-      mpz_init_set_str(zden, str_den, 10);
-      mpq_set_z(den, zden);
-      mpz_clear(zden);
-    }
-
-    mpq_div(res, num, den);
-    mpq_clear(num);
-    mpq_clear(den);
-  }
-  else
-  {
-    mpz_t num, den;
-    mpz_init_set_str(num, str_num, 10);
-    mpz_init_set_str(den, str_den, 10);
-    mpz_set(mpq_numref(res), num);
-    mpz_set(mpq_denref(res), den);
-    mpz_clear(num);
-    mpz_clear(den);
-  }
-
-  mpq_canonicalize(res);
-}
-
-static void
-make_mpq_from_ui(mpq_t &res, uint32_t n, uint32_t d)
-{
-  mpq_init(res);
-  mpq_set_ui(res, n, d);
-  mpq_canonicalize(res);
-}
-}  // namespace
-
 FloatingPointSymFPU
 FloatingPointSymFPU::convert_from_rational_aux(NodeManager &nm,
                                                const Type &type,
@@ -707,11 +603,11 @@ FloatingPointSymFPU::convert_from_rational_aux(NodeManager &nm,
   mpq_t r;
   if (den == nullptr)
   {
-    make_mpq_from_dec_string(r, num);
+    util::mpq_from_dec_string(r, num);
   }
   else
   {
-    make_mpq_from_rat_string(r, num, den);
+    util::mpq_from_rat_string(r, num, den);
   }
 
   int32_t sgn = mpq_sgn(r);
@@ -731,7 +627,7 @@ FloatingPointSymFPU::convert_from_rational_aux(NodeManager &nm,
 
   mpq_t tmp_exp;
   mpz_t iexp, inc;
-  make_mpq_from_ui(tmp_exp, 1, 1);
+  util::mpq_from_ui(tmp_exp, 1, 1);
   mpz_init_set_ui(iexp, 0);
   mpz_init_set_ui(inc, 1);
 
@@ -812,7 +708,7 @@ FloatingPointSymFPU::convert_from_rational_aux(NodeManager &nm,
   uint32_t n_sig_bits = type.fp_sig_size() + 2;
   BitVector sig       = BitVector::mk_zero(n_sig_bits);
   mpq_t tmp_sig, mid;
-  make_mpq_from_ui(tmp_sig, 0, 1);
+  util::mpq_from_ui(tmp_sig, 0, 1);
   mpq_init(mid);
   for (uint32_t i = 0, n = n_sig_bits - 1; i < n; ++i)
   {
@@ -833,7 +729,7 @@ FloatingPointSymFPU::convert_from_rational_aux(NodeManager &nm,
   mpq_sub(remainder, r, tmp_sig);
 #ifndef NDEBUG
   mpq_t tmp01;
-  make_mpq_from_ui(tmp01, 0, 1);
+  util::mpq_from_ui(tmp01, 0, 1);
   assert(mpq_cmp(tmp01, remainder) <= 1);
   mpq_clear(tmp01);
 #endif
