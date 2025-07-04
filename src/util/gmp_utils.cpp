@@ -163,4 +163,106 @@ mpz_mul_2exp_ull(mpz_t rop, const mpz_t op1, uint64_t op2)
   mpz_mul_2exp(rop, op1, op2);
 }
 
+void
+mpq_from_dec_string(mpq_t rop, std::string str)
+{
+  std::string::size_type decimal_point(str.find("."));
+  mpq_init(rop);
+
+  if (decimal_point == std::string::npos)
+  {
+#ifndef NDEBUG
+    assert(mpq_set_str(rop, str.c_str(), 10) == 0);
+#else
+    mpq_set_str(rop, str.c_str(), 10);
+#endif
+  }
+  else
+  {
+    /* We represent nnn.mmm as nnnmmm / 10^(number of m). */
+    str.erase(decimal_point, 1);
+    mpz_t num, den;
+    /* nnnmmm */
+#ifndef NDEBUG
+    assert(mpz_init_set_str(num, str.c_str(), 10) == 0);
+#else
+    mpz_init_set_str(num, str.c_str(), 10);
+#endif
+    /* 10^(number of m */
+    mpz_init_set_ui(den, 10);
+    mpz_pow_ui(den, den, str.size() - decimal_point);
+
+    mpz_set(mpq_numref(rop), num);
+    mpz_set(mpq_denref(rop), den);
+
+    mpz_clear(num);
+    mpz_clear(den);
+  }
+
+  mpq_canonicalize(rop);
+}
+
+void
+mpq_from_rat_string(mpq_t rop, const char *str_num, const char *str_den)
+{
+  mpq_init(rop);
+
+  bool num_is_dec = std::string(str_num).find(".") != std::string::npos;
+  bool den_is_dec = std::string(str_den).find(".") != std::string::npos;
+
+  if (num_is_dec || den_is_dec)
+  {
+    mpq_t num, den;
+
+    if (num_is_dec)
+    {
+      mpq_from_dec_string(num, str_num);
+    }
+    else
+    {
+      mpq_init(num);
+      mpz_t znum;
+      mpz_init_set_str(znum, str_num, 10);
+      mpq_set_z(num, znum);
+      mpz_clear(znum);
+    }
+    if (den_is_dec)
+    {
+      mpq_from_dec_string(den, str_den);
+    }
+    else
+    {
+      mpq_init(den);
+      mpz_t zden;
+      mpz_init_set_str(zden, str_den, 10);
+      mpq_set_z(den, zden);
+      mpz_clear(zden);
+    }
+
+    mpq_div(rop, num, den);
+    mpq_clear(num);
+    mpq_clear(den);
+  }
+  else
+  {
+    mpz_t num, den;
+    mpz_init_set_str(num, str_num, 10);
+    mpz_init_set_str(den, str_den, 10);
+    mpz_set(mpq_numref(rop), num);
+    mpz_set(mpq_denref(rop), den);
+    mpz_clear(num);
+    mpz_clear(den);
+  }
+
+  mpq_canonicalize(rop);
+}
+
+void
+mpq_from_ui(mpq_t rop, uint32_t n, uint32_t d)
+{
+  mpq_init(rop);
+  mpq_set_ui(rop, n, d);
+  mpq_canonicalize(rop);
+}
+
 }  // namespace bzla::util
