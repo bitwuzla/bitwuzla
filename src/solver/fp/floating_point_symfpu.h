@@ -1,33 +1,53 @@
 /***
  * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
- * Copyright (C) 2025 by the authors listed in the AUTHORS file at
+ * Copyright (C) 2022 by the authors listed in the AUTHORS file at
  * https://github.com/bitwuzla/bitwuzla/blob/main/AUTHORS
  *
  * This file is part of Bitwuzla under the MIT license. See COPYING for more
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_SOLVER_FP_FLOATING_POINT_MPFR_H_INCLUDED
-#define BZLA_SOLVER_FP_FLOATING_POINT_MPFR_H_INCLUDED
-
-#include <mpfr.h>
+#ifndef BZLA_SOLVER_FP_FLOATING_POINT_H_INCLUDED
+#define BZLA_SOLVER_FP_FLOATING_POINT_H_INCLUDED
 
 #include <array>
 #include <memory>
 
 #include "bv/bitvector.h"
-#include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "type/type.h"
 
+namespace symfpu {
+template <class T>
+class unpackedFloat;
+}
+
 namespace bzla {
 
+class FloatingPointSymFPUTypeInfo;
 class NodeManager;
+
+namespace fp {
+class SymFpuTraits;
+class WordBlaster;
+}  // namespace fp
 
 /* -------------------------------------------------------------------------- */
 
-class FloatingPointMPFR
+using UnpackedFloat = ::symfpu::unpackedFloat<fp::SymFpuTraits>;
+
+std::ostream &operator<<(std::ostream &out,
+                         const ::symfpu::unpackedFloat<fp::SymFpuTraits> &);
+}  // namespace bzla
+namespace std {
+std::string to_string(const bzla::UnpackedFloat &uf);
+}
+
+namespace bzla {
+/* -------------------------------------------------------------------------- */
+
+class FloatingPointSymFPU
 {
   friend fp::WordBlaster;
 
@@ -55,10 +75,10 @@ class FloatingPointMPFR
    * @param real A string representing the real to convert from.
    * @return A floating-point of given type converted from the given real.
    */
-  static FloatingPointMPFR from_real(NodeManager &nm,
-                                     const Type &type,
-                                     const RoundingMode rm,
-                                     const std::string &real);
+  static FloatingPointSymFPU from_real(NodeManager &nm,
+                                       const Type &type,
+                                       const RoundingMode rm,
+                                       const std::string &real);
   /**
    * Create a floating-point of given type converted from the given rational
    * constant represented as a numerator and denominator decimal string w.r.t.
@@ -69,11 +89,11 @@ class FloatingPointMPFR
    * @param den A string representing the denominator of the rational.
    * @return A floating-point of given type converted from the given rational.
    */
-  static FloatingPointMPFR from_rational(NodeManager &nm,
-                                         const Type &type,
-                                         const RoundingMode rm,
-                                         const std::string &num,
-                                         const std::string &den);
+  static FloatingPointSymFPU from_rational(NodeManager &nm,
+                                           const Type &type,
+                                           const RoundingMode rm,
+                                           const std::string &num,
+                                           const std::string &den);
 
   /**
    * Create a floating-point of given type representing zero.
@@ -81,7 +101,7 @@ class FloatingPointMPFR
    * @param sign False for +zero and true for -zero.
    * @return A floating-point of given type representing zero.
    */
-  static FloatingPointMPFR fpzero(const Type &type, bool sign);
+  static FloatingPointSymFPU fpzero(const Type &type, bool sign);
 
   /**
    * Create a floating-point of given type representing infinity.
@@ -89,14 +109,14 @@ class FloatingPointMPFR
    * @param sign False for +inf and true for -inf.
    * @return A floating-point of given type representing infinity.
    */
-  static FloatingPointMPFR fpinf(const Type &type, bool sign);
+  static FloatingPointSymFPU fpinf(const Type &type, bool sign);
 
   /**
    * Create a floating-point of given type representing nan.
    * @param type The type.
    * @return A floating-point of given type representing nan.
    */
-  static FloatingPointMPFR fpnan(const Type &type);
+  static FloatingPointSymFPU fpnan(const Type &type);
 
   /**
    * Create a floating-point from its IEEE-754 bit-vector representation given
@@ -107,29 +127,37 @@ class FloatingPointMPFR
    * @return The floating-point corresponding to the given IEEE-754 bit-vector
    *         representation.
    */
-  static FloatingPointMPFR fpfp(NodeManager &nm,
-                                const BitVector &sign,
-                                const BitVector &exp,
-                                const BitVector &sig);
+  static FloatingPointSymFPU fpfp(NodeManager &nm,
+                                  const BitVector &sign,
+                                  const BitVector &exp,
+                                  const BitVector &sig);
   /**
    * Constructor.
    * Create new nullary floating-point of given type.
    * @param type The floating-point type.
    */
-  FloatingPointMPFR(const Type &type);
+  FloatingPointSymFPU(const Type &type);
   /**
    * Constructor.
    * Create new nullary floating-point of given size.
    * @param size The floating-point size.
    */
-  FloatingPointMPFR(const FloatingPointTypeInfo &size);
+  FloatingPointSymFPU(const FloatingPointSymFPUTypeInfo &size);
+  /**
+   * Constructor.
+   * Create new floating-point of given type, wrapping the given symFPU
+   * unpacked float.
+   * @param type The floating-point type.
+   * @param uf The symFPU unpacked float.
+   */
+  FloatingPointSymFPU(const Type &type, const UnpackedFloat &uf);
   /**
    * Constructor.
    * Create new floating-point of given type from an IEEE-754 bit-vector.
    * @param type The type.
    * @param bv The IEEE-754 bit-vector representation of the floating-point.
    */
-  FloatingPointMPFR(const Type &type, const BitVector &bv);
+  FloatingPointSymFPU(const Type &type, const BitVector &bv);
   /**
    * Constructor.
    * Create new floating-point of given type converted from the given
@@ -138,9 +166,9 @@ class FloatingPointMPFR
    * @param rm The rounding mode.
    * @param fp The floating-point to convert from.
    */
-  FloatingPointMPFR(const Type &type,
-                    const RoundingMode rm,
-                    const FloatingPointMPFR &fp);
+  FloatingPointSymFPU(const Type &type,
+                      const RoundingMode rm,
+                      const FloatingPointSymFPU &fp);
   /**
    * Constructor.
    * Create new floating-point of given type converted from the given
@@ -153,17 +181,17 @@ class FloatingPointMPFR
    * @param sign True if `bv` is to be interpreted as signed machine integer,
    *             else unsigned.
    */
-  FloatingPointMPFR(const Type &type,
-                    const RoundingMode rm,
-                    const BitVector &bv,
-                    bool sign);
+  FloatingPointSymFPU(const Type &type,
+                      const RoundingMode rm,
+                      const BitVector &bv,
+                      bool sign);
 
   /** Copy constructor. */
-  FloatingPointMPFR(const FloatingPointMPFR &other);
+  FloatingPointSymFPU(const FloatingPointSymFPU &other);
   /** Copy assignment. */
-  FloatingPointMPFR &operator=(const FloatingPointMPFR &other);
+  FloatingPointSymFPU &operator=(const FloatingPointSymFPU &other);
   /** Destructor. */
-  ~FloatingPointMPFR();
+  ~FloatingPointSymFPU();
 
   /** @return The exponent size of this floating-point. */
   uint64_t get_exponent_size() const;
@@ -171,7 +199,14 @@ class FloatingPointMPFR
   uint64_t get_significand_size() const;
 
   /** @return The size of this floating-point. */
-  FloatingPointTypeInfo *size() const;
+  FloatingPointSymFPUTypeInfo *size() const;
+  /** @return The wrapped symFPU unpacked float. */
+  UnpackedFloat *unpacked() const;
+  /**
+   * Set the wrapped symFPU unpacked float.
+   * @param uf The unpacked float to wrap.
+   */
+  void set_unpacked(const UnpackedFloat &uf);
 
   /** @return The hash value of this floating-point. */
   size_t hash() const;
@@ -197,13 +232,13 @@ class FloatingPointMPFR
    *       NaN with any other value than NaN.
    * @param other The floating-point to compare this floating-point to.
    */
-  bool operator==(const FloatingPointMPFR &other) const;
+  bool operator==(const FloatingPointSymFPU &other) const;
   /**
    * Disequality comparison operator.
    * @note This is dual to `operator==` and compares for "syntactic" equality.
    * @param other The floating-point to compare this floating-point to.
    */
-  bool operator!=(const FloatingPointMPFR &other) const;
+  bool operator!=(const FloatingPointSymFPU &other) const;
 
   /** @return True if this floating-point represents a zero value. */
   bool fpiszero() const;
@@ -227,19 +262,19 @@ class FloatingPointMPFR
   bool fpispos() const;
 
   /** @return True if this floating-point is equal to `fp`. */
-  bool fpeq(const FloatingPointMPFR &fp) const;
+  bool fpeq(const FloatingPointSymFPU &fp) const;
 
   /** @return True if this floating-point is less than `fp`. */
-  bool fplt(const FloatingPointMPFR &fp) const;
+  bool fplt(const FloatingPointSymFPU &fp) const;
 
   /** @return True if this floating-point is less than or equal `fp`. */
-  bool fple(const FloatingPointMPFR &fp) const;
+  bool fple(const FloatingPointSymFPU &fp) const;
 
   /** @return True if this floating-point is less than `fp`. */
-  bool fpgt(const FloatingPointMPFR &fp) const;
+  bool fpgt(const FloatingPointSymFPU &fp) const;
 
   /** @return True if this floating-point is less than or equal `fp`. */
-  bool fpge(const FloatingPointMPFR &fp) const;
+  bool fpge(const FloatingPointSymFPU &fp) const;
 
   /**
    * Determine the minimum of two floating-point values.
@@ -250,7 +285,7 @@ class FloatingPointMPFR
    *       properly on top of this function.
    * @return The floating-point representing the minimum value of both.
    */
-  FloatingPointMPFR fpmin(const FloatingPointMPFR &fp) const;
+  FloatingPointSymFPU fpmin(const FloatingPointSymFPU &fp) const;
   /**
    * Determine the minimum of two floating-point values.
    * @note The +/- zero case is undefined as the IEEE 754 standard states that
@@ -260,21 +295,21 @@ class FloatingPointMPFR
    *       properly on top of this function.
    * @return The floating-point representing the maximum value of both.
    */
-  FloatingPointMPFR fpmax(const FloatingPointMPFR &fp) const;
+  FloatingPointSymFPU fpmax(const FloatingPointSymFPU &fp) const;
 
   /**
    * Create a floating-point representing the absolute value of this
    * floating-point.
    * @return The absolute value of this floating-point.
    */
-  FloatingPointMPFR fpabs() const;
+  FloatingPointSymFPU fpabs() const;
 
   /**
    * Create a floating-point representing the negation of this
    * floating-point.
    * @return The negation of this floating-point.
    */
-  FloatingPointMPFR fpneg() const;
+  FloatingPointSymFPU fpneg() const;
 
   /**
    * Create a floating-point representing the square root of this
@@ -282,7 +317,7 @@ class FloatingPointMPFR
    * @param rm The rounding mode.
    * @return The square root of the given floating-point.
    */
-  FloatingPointMPFR fpsqrt(const RoundingMode rm) const;
+  FloatingPointSymFPU fpsqrt(const RoundingMode rm) const;
 
   /**
    * Create a floating-point representing the round-to-integral of this
@@ -291,7 +326,7 @@ class FloatingPointMPFR
    * @param fp The floating-point.
    * @return The round-to-integral of the given floating-point.
    */
-  FloatingPointMPFR fprti(const RoundingMode rm) const;
+  FloatingPointSymFPU fprti(const RoundingMode rm) const;
 
   /**
    * Create a floating-point representing the remainder operation of this and
@@ -299,7 +334,7 @@ class FloatingPointMPFR
    * @param fp The other operand.
    * @return The result of the remainder operation.
    */
-  FloatingPointMPFR fprem(const FloatingPointMPFR &fp) const;
+  FloatingPointSymFPU fprem(const FloatingPointSymFPU &fp) const;
 
   /**
    * Create a floating-point representing the addition of this and the  given
@@ -308,8 +343,8 @@ class FloatingPointMPFR
    * @param fp The other operand.
    * @return The addition of the operands.
    */
-  FloatingPointMPFR fpadd(const RoundingMode rm,
-                          const FloatingPointMPFR &fp) const;
+  FloatingPointSymFPU fpadd(const RoundingMode rm,
+                            const FloatingPointSymFPU &fp) const;
 
   /**
    * Create a floating-point representing the multiplication of this and the
@@ -318,8 +353,8 @@ class FloatingPointMPFR
    * @param fp The other operand.
    * @return The multiplication of the operands.
    */
-  FloatingPointMPFR fpmul(const RoundingMode rm,
-                          const FloatingPointMPFR &fp) const;
+  FloatingPointSymFPU fpmul(const RoundingMode rm,
+                            const FloatingPointSymFPU &fp) const;
 
   /**
    * Create a floating-point representing the division of this and the given
@@ -328,8 +363,8 @@ class FloatingPointMPFR
    * @param fp The other operand.
    * @return The result of the division.
    */
-  FloatingPointMPFR fpdiv(const RoundingMode rm,
-                          const FloatingPointMPFR &fp) const;
+  FloatingPointSymFPU fpdiv(const RoundingMode rm,
+                            const FloatingPointSymFPU &fp) const;
 
   /**
    * Create a floating-point representing the fused multiplication and addition
@@ -340,9 +375,9 @@ class FloatingPointMPFR
    * @param fp1 The operand to the addition.
    * @return The result of the division.
    */
-  FloatingPointMPFR fpfma(const RoundingMode rm,
-                          const FloatingPointMPFR &fp0,
-                          const FloatingPointMPFR &fp1) const;
+  FloatingPointSymFPU fpfma(const RoundingMode rm,
+                            const FloatingPointSymFPU &fp0,
+                            const FloatingPointSymFPU &fp1) const;
 
   /** @return The IEEE-754 bit-vector representation of  this floating-point. */
   BitVector as_bv() const;
@@ -351,11 +386,112 @@ class FloatingPointMPFR
   static inline std::array<uint32_t, 6> s_hash_primes = {
       333444569u, 111130391u, 22237357u, 33355519u, 456790003u, 76891121u};
 
-  std::unique_ptr<FloatingPointTypeInfo> d_size;
-  mpfr_t d_mpfr;
+  /**
+   * Helper to create a floating-point from its unpacked bit-vector
+   * representation given as sign bit, exponent bits, and significand bits.
+   *
+   * This unpacked representation accounts for additional bits required for the
+   * exponent to allow subnormals to be normalized.
+   *
+   * @note This should NOT be used to create a literal from its IEEE-754
+   *       bit-vector representation -- for this, fpfp() is to be used.
+   *
+   * @param sign A bit-vector of size 1 representing the sign bit.
+   * @param exp  A bit-vector representing the unpacked exponent.
+   * @param sig  A bit-vector representing the unpacked significand.
+   * @return The floating-point corresponding to the given unpacked bit-vector
+   *         representation.
+   */
+  static FloatingPointSymFPU from_unpacked(NodeManager &nm,
+                                           const BitVector &sign,
+                                           const BitVector &exp,
+                                           const BitVector &sig);
+  /**
+   * Helper for constructors from real and rational strings.
+   * @param type The floating-point type.
+   * @param rm   The rounding mode.
+   * @param num  The string denoting the numerator.
+   * @param den  The string denoting the denominator, nullptr for from real.
+   * @return The constructed floating-point.
+   */
+  static FloatingPointSymFPU convert_from_rational_aux(NodeManager &nm,
+                                                       const Type &type,
+                                                       const RoundingMode rm,
+                                                       const char *num,
+                                                       const char *den);
+
+  std::unique_ptr<FloatingPointSymFPUTypeInfo> d_size;
+  std::unique_ptr<UnpackedFloat> d_uf;
 };
 
-std::ostream &operator<<(std::ostream &out, const FloatingPointMPFR &fp);
+std::ostream &operator<<(std::ostream &out, const FloatingPointSymFPU &fp);
+
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Wrapper for floating-point types providing the interface required by symFPU.
+ */
+class FloatingPointSymFPUTypeInfo
+{
+ public:
+  /**
+   * Constructor.
+   * @param type The Bitwuzla floating-point type.
+   */
+  FloatingPointSymFPUTypeInfo(const Type &type);
+  /**
+   * Constructor.
+   * @param esize The size of the exponent.
+   * @param ssize The size of the significand.
+   */
+  FloatingPointSymFPUTypeInfo(uint32_t esize, uint32_t ssize);
+  /** Copy constructor. */
+  FloatingPointSymFPUTypeInfo(const FloatingPointSymFPUTypeInfo &other);
+  /** Destructor. */
+  ~FloatingPointSymFPUTypeInfo();
+
+  /** @return The associated floating-point type. */
+  const Type &type() const;
+
+  /**
+   * Get a string representation of this floating-point type info.
+   * @return The string representation.
+   */
+  std::string str() const;
+
+  /* symFPU interface --------------------------------------------- */
+
+  /** @return The exponent size of this format. */
+  uint32_t exponentWidth() const { return d_esize; }
+  /** @return The significand size of this format (incl. the sign bit). */
+  uint32_t significandWidth() const { return d_ssize; }
+  /**
+   * @return The bit-width of the IEEE-754 representation of a floating-point
+   *         of this size.
+   */
+  uint32_t packedWidth() const { return d_esize + d_ssize; }
+  /**
+   * @return The exponent size of this format in the IEEE-754 representation
+   *         (same as exponentWidth()).
+   */
+  uint32_t packedExponentWidth() const { return d_esize; }
+  /**
+   * @return The actual significand size of this format in the IEEE-754
+   *         representation (without sign bit).
+   */
+  uint32_t packedSignificandWidth() const { return d_ssize - 1; }
+
+ private:
+  /** The size of exponent. */
+  uint32_t d_esize;
+  /** The size of significand. */
+  uint32_t d_ssize;
+  /** The wrapped floating-point type. */
+  Type d_type;
+};
+
+std::ostream &operator<<(std::ostream &out,
+                         const FloatingPointSymFPUTypeInfo &type);
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla
@@ -364,9 +500,9 @@ namespace std {
 
 /** Hash function. */
 template <>
-struct hash<bzla::FloatingPointMPFR>
+struct hash<bzla::FloatingPointSymFPU>
 {
-  size_t operator()(const bzla::FloatingPointMPFR &fp) const;
+  size_t operator()(const bzla::FloatingPointSymFPU &fp) const;
 };
 
 }  // namespace std

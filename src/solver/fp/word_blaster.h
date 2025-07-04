@@ -18,6 +18,7 @@
 #include "env.h"
 #include "node/node.h"
 #include "solver/fp/floating_point.h"
+#include "solver/fp/floating_point_symfpu.h"
 
 /* -------------------------------------------------------------------------- */
 
