@@ -8,8 +8,10 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_SOLVER_FP_FLOATING_POINT_H_INCLUDED
-#define BZLA_SOLVER_FP_FLOATING_POINT_H_INCLUDED
+#ifndef BZLA_SOLVER_FP_FLOATING_POINT_MPFR_H_INCLUDED
+#define BZLA_SOLVER_FP_FLOATING_POINT_MPFR_H_INCLUDED
+
+#include <mpfr.h>
 
 #include <array>
 #include <memory>
@@ -18,33 +20,14 @@
 #include "solver/fp/rounding_mode.h"
 #include "type/type.h"
 
-namespace symfpu {
-template <class T>
-class unpackedFloat;
-}
-
 namespace bzla {
 
-class FloatingPointTypeInfo;
 class NodeManager;
 
 namespace fp {
-class SymFpuTraits;
 class WordBlaster;
 }  // namespace fp
 
-/* -------------------------------------------------------------------------- */
-
-using UnpackedFloat = ::symfpu::unpackedFloat<fp::SymFpuTraits>;
-
-std::ostream &operator<<(std::ostream &out,
-                         const ::symfpu::unpackedFloat<fp::SymFpuTraits> &);
-}  // namespace bzla
-namespace std {
-std::string to_string(const bzla::UnpackedFloat &uf);
-}
-
-namespace bzla {
 /* -------------------------------------------------------------------------- */
 
 class FloatingPoint
@@ -139,20 +122,6 @@ class FloatingPoint
   FloatingPoint(const Type &type);
   /**
    * Constructor.
-   * Create new nullary floating-point of given size.
-   * @param size The floating-point size.
-   */
-  FloatingPoint(const FloatingPointTypeInfo &size);
-  /**
-   * Constructor.
-   * Create new floating-point of given type, wrapping the given symFPU
-   * unpacked float.
-   * @param type The floating-point type.
-   * @param uf The symFPU unpacked float.
-   */
-  FloatingPoint(const Type &type, const UnpackedFloat &uf);
-  /**
-   * Constructor.
    * Create new floating-point of given type from an IEEE-754 bit-vector.
    * @param type The type.
    * @param bv The IEEE-754 bit-vector representation of the floating-point.
@@ -197,16 +166,8 @@ class FloatingPoint
   uint64_t get_exponent_size() const;
   /** @return The significand size of this floating-point. */
   uint64_t get_significand_size() const;
-
-  /** @return The size of this floating-point. */
-  FloatingPointTypeInfo *size() const;
-  /** @return The wrapped symFPU unpacked float. */
-  UnpackedFloat *unpacked() const;
-  /**
-   * Set the wrapped symFPU unpacked float.
-   * @param uf The unpacked float to wrap.
-   */
-  void set_unpacked(const UnpackedFloat &uf);
+  /** @return The associated type. */
+  const Type &type() const;
 
   /** @return The hash value of this floating-point. */
   size_t hash() const;
@@ -383,112 +344,11 @@ class FloatingPoint
   static inline std::array<uint32_t, 6> s_hash_primes = {
       333444569u, 111130391u, 22237357u, 33355519u, 456790003u, 76891121u};
 
-  /**
-   * Helper to create a floating-point from its unpacked bit-vector
-   * representation given as sign bit, exponent bits, and significand bits.
-   *
-   * This unpacked representation accounts for additional bits required for the
-   * exponent to allow subnormals to be normalized.
-   *
-   * @note This should NOT be used to create a literal from its IEEE-754
-   *       bit-vector representation -- for this, fpfp() is to be used.
-   *
-   * @param sign A bit-vector of size 1 representing the sign bit.
-   * @param exp  A bit-vector representing the unpacked exponent.
-   * @param sig  A bit-vector representing the unpacked significand.
-   * @return The floating-point corresponding to the given unpacked bit-vector
-   *         representation.
-   */
-  static FloatingPoint from_unpacked(NodeManager &nm,
-                                     const BitVector &sign,
-                                     const BitVector &exp,
-                                     const BitVector &sig);
-  /**
-   * Helper for constructors from real and rational strings.
-   * @param type The floating-point type.
-   * @param rm   The rounding mode.
-   * @param num  The string denoting the numerator.
-   * @param den  The string denoting the denominator, nullptr for from real.
-   * @return The constructed floating-point.
-   */
-  static FloatingPoint convert_from_rational_aux(NodeManager &nm,
-                                                 const Type &type,
-                                                 const RoundingMode rm,
-                                                 const char *num,
-                                                 const char *den);
-
-  std::unique_ptr<FloatingPointTypeInfo> d_size;
-  std::unique_ptr<UnpackedFloat> d_uf;
+  Type d_type;
+  mpfr_t d_mpfr;
 };
 
 std::ostream &operator<<(std::ostream &out, const FloatingPoint &fp);
-
-/* -------------------------------------------------------------------------- */
-
-/**
- * Wrapper for floating-point types providing the interface required by symFPU.
- */
-class FloatingPointTypeInfo
-{
-
- public:
-  /**
-   * Constructor.
-   * @param type The Bitwuzla floating-point type.
-   */
-  FloatingPointTypeInfo(const Type &type);
-  /**
-   * Constructor.
-   * @param esize The size of the exponent.
-   * @param ssize The size of the significand.
-   */
-  FloatingPointTypeInfo(uint32_t esize, uint32_t ssize);
-  /** Copy constructor. */
-  FloatingPointTypeInfo(const FloatingPointTypeInfo &other);
-  /** Destructor. */
-  ~FloatingPointTypeInfo();
-
-  /** @return The associated floating-point type. */
-  const Type &type() const;
-
-  /**
-   * Get a string representation of this floating-point type info.
-   * @return The string representation.
-   */
-  std::string str() const;
-
-  /* symFPU interface --------------------------------------------- */
-
-  /** @return The exponent size of this format. */
-  uint32_t exponentWidth() const { return d_esize; }
-  /** @return The significand size of this format (incl. the sign bit). */
-  uint32_t significandWidth() const { return d_ssize; }
-  /**
-   * @return The bit-width of the IEEE-754 representation of a floating-point
-   *         of this size.
-   */
-  uint32_t packedWidth() const { return d_esize + d_ssize; }
-  /**
-   * @return The exponent size of this format in the IEEE-754 representation
-   *         (same as exponentWidth()).
-   */
-  uint32_t packedExponentWidth() const { return d_esize; }
-  /**
-   * @return The actual significand size of this format in the IEEE-754
-   *         representation (without sign bit).
-   */
-  uint32_t packedSignificandWidth() const { return d_ssize - 1; }
-
- private:
-  /** The size of exponent. */
-  uint32_t d_esize;
-  /** The size of significand. */
-  uint32_t d_ssize;
-  /** The wrapped floating-point type. */
-  Type d_type;
-};
-
-std::ostream &operator<<(std::ostream &out, const FloatingPointTypeInfo &type);
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla
