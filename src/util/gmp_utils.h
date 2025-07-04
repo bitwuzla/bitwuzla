@@ -59,6 +59,30 @@ void mpz_fdiv_r_2exp_ull(mpz_t r, const mpz_t n, uint64_t b);
 
 void mpz_mul_2exp_ull(mpz_t rop, const mpz_t op1, uint64_t op2);
 
+/**
+ * Create mpq from decimal real string.
+ * @note This function will initialize rop.
+ * @param rop The resulting mpq, must not be initialized.
+ * @param str The real string.
+ */
+void mpq_from_dec_string(mpq_t rop, std::string str);
+/**
+ * Create mpq from rational, represented as decimal strings for the numerator
+ * and denominator.
+ * @note This function will initialize rop.
+ * @param rop     The resulting mpq, must not be initialized.
+ * @param str_num The string representation of the numerator.
+ * @param str_den The string representation of the denominator.
+ */
+void mpq_from_rat_string(mpq_t rop, const char* str_num, const char* str_den);
+/**
+ * Create mpq from rational given as unsigned integers.
+ * @note This function will initialize rop.
+ * @param rop The resulting mpq, must not be initialized.
+ * @param n   The numerator.
+ * @param d   The denominator.
+ */
+void mpq_from_ui(mpq_t rop, uint32_t n, uint32_t d);
 }  // namespace bzla::util
 
 #endif
