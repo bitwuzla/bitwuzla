@@ -15,7 +15,7 @@
 #include "node/node_manager.h"
 #include "rng/rng.h"
 #include "solver/fp/floating_point.h"
-#include "solver/fp/floating_point_mpfr.h"
+#include "solver/fp/floating_point_symfpu.h"
 #include "solver/fp/symfpu_nm.h"
 #include "test/unit/test.h"
 
@@ -24,7 +24,7 @@
 #define TEST_INEQ(FUN)                                                  \
   do                                                                    \
   {                                                                     \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) { \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) { \
       BitVector bv1;                                                    \
       if (d_rng->flip_coin())                                           \
       {                                                                 \
@@ -37,15 +37,15 @@
       BitVector bv2 = BitVector(16, *d_rng);                            \
       FloatingPoint fp1(d_fp16, bv1);                                   \
       FloatingPoint fp2(d_fp16, bv2);                                   \
-      FloatingPointMPFR fp_mpfr1(d_fp16, bv1);                          \
-      FloatingPointMPFR fp_mpfr2(d_fp16, bv2);                          \
-      ASSERT_EQ(fp1.fp##FUN(fp1), fp_mpfr1.fp##FUN(fp_mpfr1));          \
-      ASSERT_EQ(fp1.fp##FUN(fp2), fp_mpfr1.fp##FUN(fp_mpfr2));          \
-      ASSERT_EQ(fp1.fp##FUN(fp2), fp_mpfr1.fp##FUN(fp_mpfr2));          \
+      FloatingPointSymFPU fp_symfpu1(d_fp16, bv1);                      \
+      FloatingPointSymFPU fp_symfpu2(d_fp16, bv2);                      \
+      ASSERT_EQ(fp1.fp##FUN(fp1), fp_symfpu1.fp##FUN(fp_symfpu1));      \
+      ASSERT_EQ(fp1.fp##FUN(fp2), fp_symfpu1.fp##FUN(fp_symfpu2));      \
+      ASSERT_EQ(fp1.fp##FUN(fp2), fp_symfpu1.fp##FUN(fp_symfpu2));      \
     };                                                                  \
     test_for_float16(fun);                                              \
                                                                         \
-    for (const auto &type : d_formats_32_128)                           \
+    for (const auto& type : d_formats_32_128)                           \
     {                                                                   \
       uint64_t bv_size = type.fp_ieee_bv_size();                        \
       for (uint32_t i = 0; i < N_TESTS; ++i)                            \
@@ -54,265 +54,16 @@
         BitVector bv2 = BitVector(bv_size, *d_rng);                     \
         FloatingPoint fp1(type, bv1);                                   \
         FloatingPoint fp2(type, bv2);                                   \
-        FloatingPointMPFR fp_mpfr1(type, bv1);                          \
-        FloatingPointMPFR fp_mpfr2(type, bv2);                          \
-        ASSERT_EQ(fp1.fp##FUN(fp2), fp_mpfr1.fp##FUN(fp_mpfr2));        \
+        FloatingPointSymFPU fp_symfpu1(type, bv1);                      \
+        FloatingPointSymFPU fp_symfpu2(type, bv2);                      \
+        ASSERT_EQ(fp1.fp##FUN(fp2), fp_symfpu1.fp##FUN(fp_symfpu2));    \
       }                                                                 \
     }                                                                   \
   } while (0)
 
-#define TEST_MIN_MAX(FUN, CMP)                                               \
-  {                                                                          \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {      \
-      BitVector bv1;                                                         \
-      if (d_rng->flip_coin())                                                \
-      {                                                                      \
-        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);        \
-      }                                                                      \
-      else                                                                   \
-      {                                                                      \
-        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);         \
-      }                                                                      \
-      BitVector bv2(16, *d_rng);                                             \
-      FloatingPoint fp1(d_fp16, bv1);                                        \
-      FloatingPoint fp2(d_fp16, bv2);                                        \
-      FloatingPoint fp = fp1.fp##FUN(fp2);                                   \
-      FloatingPointMPFR fp_mpfr1(d_nm.mk_fp_type(5, 11), bv1);               \
-      FloatingPointMPFR fp_mpfr2(d_nm.mk_fp_type(5, 11), bv2);               \
-      FloatingPointMPFR fp_mpfr = fp_mpfr1.fp##FUN(fp_mpfr2);                \
-      ASSERT_EQ(fp.str(), fp_mpfr.str());                                    \
-      if (!fp1.fpisnan() && !fp2.fpisnan())                                  \
-      {                                                                      \
-        ASSERT_TRUE(fp1.fp##CMP(fp));                                        \
-        ASSERT_TRUE(fp2.fp##CMP(fp));                                        \
-        ASSERT_TRUE(fp_mpfr1.fp##CMP(fp_mpfr));                              \
-        ASSERT_TRUE(fp_mpfr2.fp##CMP(fp_mpfr));                              \
-      }                                                                      \
-    };                                                                       \
-    test_for_float16(fun);                                                   \
-                                                                             \
-    for (const auto &type : d_formats_32_128)                                \
-    {                                                                        \
-      uint64_t bv_size = type.fp_ieee_bv_size();                             \
-      for (uint32_t i = 0; i < N_TESTS; ++i)                                 \
-      {                                                                      \
-        BitVector bv1 = BitVector(bv_size, *d_rng);                          \
-        BitVector bv2 = BitVector(bv_size, *d_rng);                          \
-        FloatingPoint fp1(type, bv1);                                        \
-        FloatingPoint fp2(type, bv2);                                        \
-        FloatingPointMPFR fp_mpfr1(type, bv1);                               \
-        FloatingPointMPFR fp_mpfr2(type, bv2);                               \
-        ASSERT_EQ(fp1.fp##FUN(fp2).str(), fp_mpfr1.fp##FUN(fp_mpfr2).str()); \
-      }                                                                      \
-    }                                                                        \
-  }                                                                          \
-  while (0)
-
-#define TEST_UNARY(FUN)                                                 \
-  do                                                                    \
+#define TEST_MIN_MAX(FUN, CMP)                                          \
   {                                                                     \
-    /* comprehensive tests for all values in Float16 */                 \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) { \
-      BitVector _bv = bvexp.bvconcat(bvsig);                            \
-      for (const auto &bv : {BitVector::mk_false().ibvconcat(_bv),      \
-                             BitVector::mk_true().ibvconcat(_bv)})      \
-      {                                                                 \
-        FloatingPoint fp(d_fp16, bv);                                   \
-        FloatingPointMPFR fp_mpfr(d_fp16, bv);                          \
-        std::string fp_str      = fp.fp##FUN().str();                   \
-        std::string fp_mpfr_str = fp_mpfr.fp##FUN().str();              \
-        if (fp_str != fp_mpfr_str)                                      \
-        {                                                               \
-          std::cout << "bv: " << bv << std::endl;                       \
-          std::cout << "fp: " << fp_str << std::endl;                   \
-          std::cout << "fp_mpfr: " << fp_mpfr_str << std::endl;         \
-        }                                                               \
-        ASSERT_EQ(fp_str, fp_mpfr_str);                                 \
-      }                                                                 \
-    };                                                                  \
-    test_for_float16(fun);                                              \
-    /* random tests for Float32, Float64, Float128 */                   \
-    for (const auto &type : d_formats_32_128)                           \
-    {                                                                   \
-      uint64_t bv_size = type.fp_ieee_bv_size();                        \
-      for (uint32_t i = 0; i < N_TESTS; ++i)                            \
-      {                                                                 \
-        BitVector bv = BitVector(bv_size, *d_rng);                      \
-        FloatingPoint fp(type, bv);                                     \
-        FloatingPointMPFR fp_mpfr(type, bv);                            \
-        ASSERT_EQ(fp.fp##FUN().str(), fp_mpfr.fp##FUN().str());         \
-      }                                                                 \
-    }                                                                   \
-  } while (0);
-
-#define TEST_UNARY_RM(FUN)                                              \
-  do                                                                    \
-  {                                                                     \
-    /* comprehensive tests for all values in Float16 */                 \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) { \
-      BitVector _bv = bvexp.bvconcat(bvsig);                            \
-      for (const auto &bv : {BitVector::mk_false().ibvconcat(_bv),      \
-                             BitVector::mk_true().ibvconcat(_bv)})      \
-      {                                                                 \
-        FloatingPoint fp(d_fp16, bv);                                   \
-        FloatingPointMPFR fp_mpfr(d_fp16, bv);                          \
-        for (auto rm : d_all_rms)                                       \
-        {                                                               \
-          std::string fp_str      = fp.fp##FUN(rm).str();               \
-          std::string fp_mpfr_str = fp_mpfr.fp##FUN(rm).str();          \
-          if (fp_str != fp_mpfr_str)                                    \
-          {                                                             \
-            std::cout << "rm: " << rm << std::endl;                     \
-            std::cout << "bv: " << bv << std::endl;                     \
-            std::cout << "fp: " << fp_str << std::endl;                 \
-            std::cout << "fp_mpfr: " << fp_mpfr_str << std::endl;       \
-          }                                                             \
-          ASSERT_EQ(fp_str, fp_mpfr_str);                               \
-        }                                                               \
-      }                                                                 \
-    };                                                                  \
-    test_for_float16(fun);                                              \
-    /* random tests for Float32, Float64, Float128 */                   \
-    for (const auto &type : d_formats_32_128)                           \
-    {                                                                   \
-      uint64_t bv_size = type.fp_ieee_bv_size();                        \
-      for (uint32_t i = 0; i < N_TESTS; ++i)                            \
-      {                                                                 \
-        BitVector bv = BitVector(bv_size, *d_rng);                      \
-        FloatingPoint fp(type, bv);                                     \
-        FloatingPointMPFR fp_mpfr(type, bv);                            \
-        for (auto rm : d_all_rms)                                       \
-        {                                                               \
-          std::string fp_str      = fp.fp##FUN(rm).str();               \
-          std::string fp_mpfr_str = fp_mpfr.fp##FUN(rm).str();          \
-          if (fp_str != fp_mpfr_str)                                    \
-          {                                                             \
-            std::cout << "rm: " << rm << std::endl;                     \
-            std::cout << "bv: " << bv << std::endl;                     \
-            std::cout << "fp: " << fp_str << std::endl;                 \
-            std::cout << "fp_mpfr: " << fp_mpfr_str << std::endl;       \
-          }                                                             \
-          ASSERT_EQ(fp_str, fp_mpfr_str);                               \
-        }                                                               \
-      }                                                                 \
-    }                                                                   \
-  } while (0);
-
-#define TEST_BINARY(FUN)                                                     \
-  do                                                                         \
-  {                                                                          \
-    /* more comprehensive tests for all values in Float16 */                 \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {      \
-      BitVector bv1;                                                         \
-      if (d_rng->flip_coin())                                                \
-      {                                                                      \
-        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);        \
-      }                                                                      \
-      else                                                                   \
-      {                                                                      \
-        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);         \
-      }                                                                      \
-      BitVector bv2 = BitVector(16, *d_rng);                                 \
-      FloatingPoint fp1(d_fp16, bv1);                                        \
-      FloatingPoint fp2(d_fp16, bv2);                                        \
-      FloatingPointMPFR fp_mpfr1(d_fp16, bv1);                               \
-      FloatingPointMPFR fp_mpfr2(d_fp16, bv2);                               \
-      std::string fp_str      = fp1.fp##FUN(fp2).str();                      \
-      std::string fp_mpfr_str = fp_mpfr1.fp##FUN(fp_mpfr2).str();            \
-      if (fp_str != fp_mpfr_str)                                             \
-      {                                                                      \
-        std::cout << "bv1: " << bv1 << std::endl;                            \
-        std::cout << "bv2: " << bv2 << std::endl;                            \
-        std::cout << "fp: " << fp_str << std::endl;                          \
-        std::cout << "fp_mpfr: " << fp_mpfr_str << std::endl;                \
-      }                                                                      \
-      ASSERT_EQ(fp_str, fp_mpfr_str);                                        \
-    };                                                                       \
-    test_for_float16(fun);                                                   \
-                                                                             \
-    /* random tests for Float32, Float64, Float128 */                        \
-    for (const auto &type : d_formats_32_128)                                \
-    {                                                                        \
-      uint64_t bv_size = type.fp_ieee_bv_size();                             \
-      for (uint32_t i = 0; i < N_TESTS; ++i)                                 \
-      {                                                                      \
-        BitVector bv1 = BitVector(bv_size, *d_rng);                          \
-        BitVector bv2 = BitVector(bv_size, *d_rng);                          \
-        FloatingPoint fp1(type, bv1);                                        \
-        FloatingPoint fp2(type, bv2);                                        \
-        FloatingPointMPFR fp_mpfr1(type, bv1);                               \
-        FloatingPointMPFR fp_mpfr2(type, bv2);                               \
-        ASSERT_EQ(fp1.fp##FUN(fp2).str(), fp_mpfr1.fp##FUN(fp_mpfr2).str()); \
-      }                                                                      \
-    }                                                                        \
-  } while (0);
-
-#define TEST_BINARY_RM(FUN)                                                \
-  do                                                                       \
-  {                                                                        \
-    /* more comprehensive tests for all values in Float16 */               \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {    \
-      BitVector bv1;                                                       \
-      if (d_rng->flip_coin())                                              \
-      {                                                                    \
-        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);      \
-      }                                                                    \
-      else                                                                 \
-      {                                                                    \
-        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);       \
-      }                                                                    \
-      BitVector bv2(16, *d_rng);                                           \
-      FloatingPoint fp1(d_fp16, bv1);                                      \
-      FloatingPoint fp2(d_fp16, bv2);                                      \
-      FloatingPointMPFR fp_mpfr1(d_fp16, bv1);                             \
-      FloatingPointMPFR fp_mpfr2(d_fp16, bv2);                             \
-      for (auto rm : d_all_rms)                                            \
-      {                                                                    \
-        FloatingPoint fp          = fp1.fp##FUN(rm, fp2);                  \
-        FloatingPointMPFR fp_mpfr = fp_mpfr1.fp##FUN(rm, fp_mpfr2);        \
-        std::string fp_str        = fp.str();                              \
-        std::string fp_mpfr_str   = fp_mpfr.str();                         \
-        if (fp_str != fp_mpfr_str)                                         \
-        {                                                                  \
-          std::cout << "rm: " << rm << std::endl;                          \
-          std::cout << "bv1: " << bv1 << std::endl;                        \
-          std::cout << "bv2: " << bv2 << std::endl;                        \
-          std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")" \
-                    << std::endl;                                          \
-          std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                  \
-                    << fp_mpfr.to_real_str() << ")" << std::endl;          \
-        }                                                                  \
-        ASSERT_EQ(fp_str, fp_mpfr_str);                                    \
-      }                                                                    \
-    };                                                                     \
-    test_for_float16(fun);                                                 \
-                                                                           \
-    /* random tests for Float32, Float64, Float128 */                      \
-    for (const auto &type : d_formats_32_128)                              \
-    {                                                                      \
-      uint64_t bv_size = type.fp_ieee_bv_size();                           \
-      for (uint32_t i = 0; i < N_TESTS; ++i)                               \
-      {                                                                    \
-        BitVector bv1 = BitVector(bv_size, *d_rng);                        \
-        BitVector bv2 = BitVector(bv_size, *d_rng);                        \
-        FloatingPoint fp1(type, bv1);                                      \
-        FloatingPoint fp2(type, bv2);                                      \
-        FloatingPointMPFR fp_mpfr1(type, bv1);                             \
-        FloatingPointMPFR fp_mpfr2(type, bv2);                             \
-        for (auto rm : d_all_rms)                                          \
-        {                                                                  \
-          ASSERT_EQ(fp1.fp##FUN(rm, fp2).str(),                            \
-                    fp_mpfr1.fp##FUN(rm, fp_mpfr2).str());                 \
-        }                                                                  \
-      }                                                                    \
-    }                                                                      \
-  } while (0);
-
-#define TEST_TERNARY_RM(FUN)                                            \
-  do                                                                    \
-  {                                                                     \
-    /* more comprehensive tests for all values in Float16 */            \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) { \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) { \
       BitVector bv1;                                                    \
       if (d_rng->flip_coin())                                           \
       {                                                                 \
@@ -323,59 +74,210 @@
         bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);    \
       }                                                                 \
       BitVector bv2(16, *d_rng);                                        \
-      BitVector bv3(16, *d_rng);                                        \
-      FloatingPoint fp1(d_fp16, bv1);                                   \
-      FloatingPoint fp2(d_fp16, bv2);                                   \
-      FloatingPoint fp3(d_fp16, bv2);                                   \
-      FloatingPointMPFR fp_mpfr1(d_fp16, bv1);                          \
-      FloatingPointMPFR fp_mpfr2(d_fp16, bv2);                          \
-      FloatingPointMPFR fp_mpfr3(d_fp16, bv2);                          \
-      for (auto rm : d_all_rms)                                         \
+      FloatingPoint fp1(d_nm.mk_fp_type(5, 11), bv1);                   \
+      FloatingPoint fp2(d_nm.mk_fp_type(5, 11), bv2);                   \
+      FloatingPoint fp = fp1.fp##FUN(fp2);                              \
+      FloatingPointSymFPU fp_symfpu1(d_fp16, bv1);                      \
+      FloatingPointSymFPU fp_symfpu2(d_fp16, bv2);                      \
+      FloatingPointSymFPU fp_symfpu = fp_symfpu1.fp##FUN(fp_symfpu2);   \
+      ASSERT_EQ(fp.str(), fp_symfpu.str());                             \
+      if (!fp1.fpisnan() && !fp2.fpisnan())                             \
       {                                                                 \
-        std::string fp_str = fp1.fp##FUN(rm, fp2, fp3).str();           \
-        std::string fp_mpfr_str =                                       \
-            fp_mpfr1.fp##FUN(rm, fp_mpfr2, fp_mpfr3).str();             \
-        if (fp_str != fp_mpfr_str)                                      \
-        {                                                               \
-          std::cout << "rm: " << rm << std::endl;                       \
-          std::cout << "bv1: " << bv1 << std::endl;                     \
-          std::cout << "bv2: " << bv2 << std::endl;                     \
-          std::cout << "fp: " << fp_str << std::endl;                   \
-          std::cout << "fp_mpfr: " << fp_mpfr_str << std::endl;         \
-        }                                                               \
-        ASSERT_EQ(fp_str, fp_mpfr_str);                                 \
+        ASSERT_TRUE(fp1.fp##CMP(fp));                                   \
+        ASSERT_TRUE(fp2.fp##CMP(fp));                                   \
+        ASSERT_TRUE(fp_symfpu1.fp##CMP(fp_symfpu));                     \
+        ASSERT_TRUE(fp_symfpu2.fp##CMP(fp_symfpu));                     \
       }                                                                 \
     };                                                                  \
     test_for_float16(fun);                                              \
                                                                         \
-    /* random tests for Float32, Float64, Float128 */                   \
-    for (const auto &type : d_formats_32_128)                           \
+    for (const auto& type : d_formats_32_128)                           \
     {                                                                   \
       uint64_t bv_size = type.fp_ieee_bv_size();                        \
       for (uint32_t i = 0; i < N_TESTS; ++i)                            \
       {                                                                 \
         BitVector bv1 = BitVector(bv_size, *d_rng);                     \
         BitVector bv2 = BitVector(bv_size, *d_rng);                     \
-        BitVector bv3 = BitVector(bv_size, *d_rng);                     \
         FloatingPoint fp1(type, bv1);                                   \
         FloatingPoint fp2(type, bv2);                                   \
-        FloatingPoint fp3(type, bv3);                                   \
-        FloatingPointMPFR fp_mpfr1(type, bv1);                          \
-        FloatingPointMPFR fp_mpfr2(type, bv2);                          \
-        FloatingPointMPFR fp_mpfr3(type, bv3);                          \
+        FloatingPointSymFPU fp_symfpu1(type, bv1);                      \
+        FloatingPointSymFPU fp_symfpu2(type, bv2);                      \
+        ASSERT_EQ(fp1.fp##FUN(fp2).str(),                               \
+                  fp_symfpu1.fp##FUN(fp_symfpu2).str());                \
+      }                                                                 \
+    }                                                                   \
+  }                                                                     \
+  while (0)
+
+#define TEST_UNARY(FUN)                                                 \
+  do                                                                    \
+  {                                                                     \
+    /* comprehensive tests for all values in Float16 */                 \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) { \
+      BitVector _bv = bvexp.bvconcat(bvsig);                            \
+      for (const auto& bv : {BitVector::mk_false().ibvconcat(_bv),      \
+                             BitVector::mk_true().ibvconcat(_bv)})      \
+      {                                                                 \
+        FloatingPoint fp(d_fp16, bv);                                   \
+        FloatingPointSymFPU fp_symfpu(d_fp16, bv);                      \
+        std::string fp_str        = fp.fp##FUN().str();                 \
+        std::string fp_symfpu_str = fp_symfpu.fp##FUN().str();          \
+        ASSERT_EQ(fp_str, fp_symfpu_str);                               \
+      }                                                                 \
+    };                                                                  \
+    test_for_float16(fun);                                              \
+    /* random tests for Float32, Float64, Float128 */                   \
+    for (const auto& type : d_formats_32_128)                           \
+    {                                                                   \
+      uint64_t bv_size = type.fp_ieee_bv_size();                        \
+      for (uint32_t i = 0; i < N_TESTS; ++i)                            \
+      {                                                                 \
+        BitVector bv = BitVector(bv_size, *d_rng);                      \
+        FloatingPoint fp(type, bv);                                     \
+        FloatingPointSymFPU fp_symfpu(type, bv);                        \
+        ASSERT_EQ(fp.fp##FUN().str(), fp_symfpu.fp##FUN().str());       \
+      }                                                                 \
+    }                                                                   \
+  } while (0);
+
+#define TEST_UNARY_RM(FUN)                                              \
+  do                                                                    \
+  {                                                                     \
+    /* comprehensive tests for all values in Float16 */                 \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) { \
+      BitVector _bv = bvexp.bvconcat(bvsig);                            \
+      for (const auto& bv : {BitVector::mk_false().ibvconcat(_bv),      \
+                             BitVector::mk_true().ibvconcat(_bv)})      \
+      {                                                                 \
+        FloatingPoint fp(d_fp16, bv);                                   \
+        FloatingPointSymFPU fp_symfpu(d_fp16, bv);                      \
         for (auto rm : d_all_rms)                                       \
         {                                                               \
-          ASSERT_EQ(fp1.fp##FUN(rm, fp2, fp3).str(),                    \
-                    fp_mpfr1.fp##FUN(rm, fp_mpfr2, fp_mpfr3).str());    \
+          std::string fp_str        = fp.fp##FUN(rm).str();             \
+          std::string fp_symfpu_str = fp_symfpu.fp##FUN(rm).str();      \
+          ASSERT_EQ(fp_str, fp_symfpu_str);                             \
+        }                                                               \
+      }                                                                 \
+    };                                                                  \
+    test_for_float16(fun);                                              \
+    /* random tests for Float32, Float64, Float128 */                   \
+    for (const auto& type : d_formats_32_128)                           \
+    {                                                                   \
+      uint64_t bv_size = type.fp_ieee_bv_size();                        \
+      for (uint32_t i = 0; i < N_TESTS; ++i)                            \
+      {                                                                 \
+        BitVector bv = BitVector(bv_size, *d_rng);                      \
+        FloatingPoint fp(type, bv);                                     \
+        FloatingPointSymFPU fp_symfpu(type, bv);                        \
+        for (auto rm : d_all_rms)                                       \
+        {                                                               \
+          std::string fp_str        = fp.fp##FUN(rm).str();             \
+          std::string fp_symfpu_str = fp_symfpu.fp##FUN(rm).str();      \
+          ASSERT_EQ(fp_str, fp_symfpu_str);                             \
         }                                                               \
       }                                                                 \
     }                                                                   \
   } while (0);
 
-#define TEST_CHAINED_BINARY_REM(FUN)                                       \
+#define TEST_BINARY(FUN)                                                \
+  do                                                                    \
+  {                                                                     \
+    /* more comprehensive tests for all values in Float16 */            \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) { \
+      BitVector bv1;                                                    \
+      if (d_rng->flip_coin())                                           \
+      {                                                                 \
+        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);   \
+      }                                                                 \
+      else                                                              \
+      {                                                                 \
+        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);    \
+      }                                                                 \
+      BitVector bv2 = BitVector(16, *d_rng);                            \
+      FloatingPoint fp1(d_fp16, bv1);                                   \
+      FloatingPoint fp2(d_fp16, bv2);                                   \
+      FloatingPointSymFPU fp_symfpu1(d_fp16, bv1);                      \
+      FloatingPointSymFPU fp_symfpu2(d_fp16, bv2);                      \
+      std::string fp_str        = fp1.fp##FUN(fp2).str();               \
+      std::string fp_symfpu_str = fp_symfpu1.fp##FUN(fp_symfpu2).str(); \
+      ASSERT_EQ(fp_str, fp_symfpu_str);                                 \
+    };                                                                  \
+    test_for_float16(fun);                                              \
+                                                                        \
+    /* random tests for Float32, Float64, Float128 */                   \
+    for (const auto& type : d_formats_32_128)                           \
+    {                                                                   \
+      uint64_t bv_size = type.fp_ieee_bv_size();                        \
+      for (uint32_t i = 0; i < N_TESTS; ++i)                            \
+      {                                                                 \
+        BitVector bv1 = BitVector(bv_size, *d_rng);                     \
+        BitVector bv2 = BitVector(bv_size, *d_rng);                     \
+        FloatingPoint fp1(type, bv1);                                   \
+        FloatingPoint fp2(type, bv2);                                   \
+        FloatingPointSymFPU fp_symfpu1(type, bv1);                      \
+        FloatingPointSymFPU fp_symfpu2(type, bv2);                      \
+        ASSERT_EQ(fp1.fp##FUN(fp2).str(),                               \
+                  fp_symfpu1.fp##FUN(fp_symfpu2).str());                \
+      }                                                                 \
+    }                                                                   \
+  } while (0);
+
+#define TEST_BINARY_RM(FUN)                                                 \
+  do                                                                        \
+  {                                                                         \
+    /* more comprehensive tests for all values in Float16 */                \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) {     \
+      BitVector bv1;                                                        \
+      if (d_rng->flip_coin())                                               \
+      {                                                                     \
+        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);       \
+      }                                                                     \
+      else                                                                  \
+      {                                                                     \
+        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);        \
+      }                                                                     \
+      BitVector bv2(16, *d_rng);                                            \
+      FloatingPoint fp1(d_fp16, bv1);                                       \
+      FloatingPoint fp2(d_fp16, bv2);                                       \
+      FloatingPointSymFPU fp_symfpu1(d_fp16, bv1);                          \
+      FloatingPointSymFPU fp_symfpu2(d_fp16, bv2);                          \
+      for (auto rm : d_all_rms)                                             \
+      {                                                                     \
+        FloatingPoint fp              = fp1.fp##FUN(rm, fp2);               \
+        FloatingPointSymFPU fp_symfpu = fp_symfpu1.fp##FUN(rm, fp_symfpu2); \
+        std::string fp_str            = fp.str();                           \
+        std::string fp_symfpu_str     = fp_symfpu.str();                    \
+        ASSERT_EQ(fp_str, fp_symfpu_str);                                   \
+      }                                                                     \
+    };                                                                      \
+    test_for_float16(fun);                                                  \
+                                                                            \
+    /* random tests for Float32, Float64, Float128 */                       \
+    for (const auto& type : d_formats_32_128)                               \
+    {                                                                       \
+      uint64_t bv_size = type.fp_ieee_bv_size();                            \
+      for (uint32_t i = 0; i < N_TESTS; ++i)                                \
+      {                                                                     \
+        BitVector bv1 = BitVector(bv_size, *d_rng);                         \
+        BitVector bv2 = BitVector(bv_size, *d_rng);                         \
+        FloatingPoint fp1(type, bv1);                                       \
+        FloatingPoint fp2(type, bv2);                                       \
+        FloatingPointSymFPU fp_symfpu1(type, bv1);                          \
+        FloatingPointSymFPU fp_symfpu2(type, bv2);                          \
+        for (auto rm : d_all_rms)                                           \
+        {                                                                   \
+          ASSERT_EQ(fp1.fp##FUN(rm, fp2).str(),                             \
+                    fp_symfpu1.fp##FUN(rm, fp_symfpu2).str());              \
+        }                                                                   \
+      }                                                                     \
+    }                                                                       \
+  } while (0);
+
+#define TEST_TERNARY_RM(FUN)                                               \
   do                                                                       \
   {                                                                        \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {    \
+    /* more comprehensive tests for all values in Float16 */               \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) {    \
       BitVector bv1;                                                       \
       if (d_rng->flip_coin())                                              \
       {                                                                    \
@@ -385,142 +287,153 @@
       {                                                                    \
         bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);       \
       }                                                                    \
-      uint64_t bv_size = bvexp.size() + bvsig.size() + 1;                  \
-      Type fp_type     = d_nm.mk_fp_type(bvexp.size(), bvsig.size() + 1);  \
-      BitVector bv2(bv_size, *d_rng);                                      \
-      BitVector bv3(bv_size, *d_rng);                                      \
-      FloatingPoint fp1(fp_type, bv1);                                     \
-      FloatingPoint fp2(fp_type, bv2);                                     \
-      FloatingPoint fp3(fp_type, bv2);                                     \
-      FloatingPointMPFR fp_mpfr1(fp_type, bv1);                            \
-      FloatingPointMPFR fp_mpfr2(fp_type, bv2);                            \
-      FloatingPointMPFR fp_mpfr3(fp_type, bv2);                            \
-      FloatingPoint fp(fp_type);                                           \
-      FloatingPointMPFR fp_mpfr(fp_type);                                  \
-      std::string fp_str, fp_mpfr_str;                                     \
-      RoundingMode rm = pick_rm();                                         \
-      if (d_rng->flip_coin())                                              \
+      BitVector bv2(16, *d_rng);                                           \
+      BitVector bv3(16, *d_rng);                                           \
+      FloatingPoint fp1(d_fp16, bv1);                                      \
+      FloatingPoint fp2(d_fp16, bv2);                                      \
+      FloatingPoint fp3(d_fp16, bv2);                                      \
+      FloatingPointSymFPU fp_symfpu1(d_fp16, bv1);                         \
+      FloatingPointSymFPU fp_symfpu2(d_fp16, bv2);                         \
+      FloatingPointSymFPU fp_symfpu3(d_fp16, bv2);                         \
+      for (auto rm : d_all_rms)                                            \
       {                                                                    \
-        /* First, test order (a FUN b) rem c. */                           \
-        fp          = fp1.fp##FUN(rm, fp2).fprem(fp3);                     \
-        fp_mpfr     = fp_mpfr1.fp##FUN(rm, fp_mpfr2).fprem(fp_mpfr3);      \
-        fp_str      = fp.str();                                            \
-        fp_mpfr_str = fp_mpfr.str();                                       \
-        if (fp_str != fp_mpfr_str)                                         \
-        {                                                                  \
-          std::cout << "rm: " << rm << std::endl;                          \
-          std::cout << "bv1: " << bv1 << std::endl;                        \
-          std::cout << "bv2: " << bv2 << std::endl;                        \
-          std::cout << "bv3: " << bv3 << std::endl;                        \
-          std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")" \
-                    << std::endl;                                          \
-          std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                  \
-                    << fp_mpfr.to_real_str() << ")" << std::endl;          \
-        }                                                                  \
-        ASSERT_EQ(fp_str, fp_mpfr_str);                                    \
-      }                                                                    \
-      else                                                                 \
-      {                                                                    \
-        /* Then, test order (a rem b) FUN c. */                            \
-        fp          = fp1.fprem(fp2).fp##FUN(rm, fp3);                     \
-        fp_mpfr     = fp_mpfr1.fprem(fp_mpfr2).fp##FUN(rm, fp_mpfr3);      \
-        fp_str      = fp.str();                                            \
-        fp_mpfr_str = fp_mpfr.str();                                       \
-        if (fp_str != fp_mpfr_str)                                         \
-        {                                                                  \
-          std::cout << "rm: " << rm << std::endl;                          \
-          std::cout << "bv1: " << bv1 << std::endl;                        \
-          std::cout << "bv2: " << bv2 << std::endl;                        \
-          std::cout << "bv3: " << bv3 << std::endl;                        \
-          std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")" \
-                    << std::endl;                                          \
-          std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                  \
-                    << fp_mpfr.to_real_str() << ")" << std::endl;          \
-        }                                                                  \
-        ASSERT_EQ(fp_str, fp_mpfr_str);                                    \
+        std::string fp_str = fp1.fp##FUN(rm, fp2, fp3).str();              \
+        std::string fp_symfpu_str =                                        \
+            fp_symfpu1.fp##FUN(rm, fp_symfpu2, fp_symfpu3).str();          \
+        ASSERT_EQ(fp_str, fp_symfpu_str);                                  \
       }                                                                    \
     };                                                                     \
-    test_for_formats(d_all_formats, 100, fun);                             \
+    test_for_float16(fun);                                                 \
+                                                                           \
+    /* random tests for Float32, Float64, Float128 */                      \
+    for (const auto& type : d_formats_32_128)                              \
+    {                                                                      \
+      uint64_t bv_size = type.fp_ieee_bv_size();                           \
+      for (uint32_t i = 0; i < N_TESTS; ++i)                               \
+      {                                                                    \
+        BitVector bv1 = BitVector(bv_size, *d_rng);                        \
+        BitVector bv2 = BitVector(bv_size, *d_rng);                        \
+        BitVector bv3 = BitVector(bv_size, *d_rng);                        \
+        FloatingPoint fp1(type, bv1);                                      \
+        FloatingPoint fp2(type, bv2);                                      \
+        FloatingPoint fp3(type, bv3);                                      \
+        FloatingPointSymFPU fp_symfpu1(type, bv1);                         \
+        FloatingPointSymFPU fp_symfpu2(type, bv2);                         \
+        FloatingPointSymFPU fp_symfpu3(type, bv3);                         \
+        for (auto rm : d_all_rms)                                          \
+        {                                                                  \
+          ASSERT_EQ(fp1.fp##FUN(rm, fp2, fp3).str(),                       \
+                    fp_symfpu1.fp##FUN(rm, fp_symfpu2, fp_symfpu3).str()); \
+        }                                                                  \
+      }                                                                    \
+    }                                                                      \
+  } while (0);
+
+#define TEST_CHAINED_BINARY_REM(FUN)                                          \
+  do                                                                          \
+  {                                                                           \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) {       \
+      BitVector bv1;                                                          \
+      if (d_rng->flip_coin())                                                 \
+      {                                                                       \
+        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);         \
+      }                                                                       \
+      else                                                                    \
+      {                                                                       \
+        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);          \
+      }                                                                       \
+      uint64_t bv_size = bvexp.size() + bvsig.size() + 1;                     \
+      Type fp_type     = d_nm.mk_fp_type(bvexp.size(), bvsig.size() + 1);     \
+      BitVector bv2(bv_size, *d_rng);                                         \
+      BitVector bv3(bv_size, *d_rng);                                         \
+      FloatingPoint fp1(fp_type, bv1);                                        \
+      FloatingPoint fp2(fp_type, bv2);                                        \
+      FloatingPoint fp3(fp_type, bv2);                                        \
+      FloatingPoint fp(fp_type);                                              \
+      FloatingPointSymFPU fp_symfpu1(fp_type, bv1);                           \
+      FloatingPointSymFPU fp_symfpu2(fp_type, bv2);                           \
+      FloatingPointSymFPU fp_symfpu3(fp_type, bv2);                           \
+      FloatingPointSymFPU fp_symfpu(fp_type);                                 \
+      std::string fp_str, fp_symfpu_str;                                      \
+      RoundingMode rm = pick_rm();                                            \
+      if (d_rng->flip_coin())                                                 \
+      {                                                                       \
+        /* First, test order (a FUN b) rem c. */                              \
+        fp            = fp1.fp##FUN(rm, fp2).fprem(fp3);                      \
+        fp_symfpu     = fp_symfpu1.fp##FUN(rm, fp_symfpu2).fprem(fp_symfpu3); \
+        fp_str        = fp.str();                                             \
+        fp_symfpu_str = fp_symfpu.str();                                      \
+        ASSERT_EQ(fp_str, fp_symfpu_str);                                     \
+      }                                                                       \
+      else                                                                    \
+      {                                                                       \
+        /* Then, test order (a rem b) FUN c. */                               \
+        fp            = fp1.fprem(fp2).fp##FUN(rm, fp3);                      \
+        fp_symfpu     = fp_symfpu1.fprem(fp_symfpu2).fp##FUN(rm, fp_symfpu3); \
+        fp_str        = fp.str();                                             \
+        fp_symfpu_str = fp_symfpu.str();                                      \
+        ASSERT_EQ(fp_str, fp_symfpu_str);                                     \
+      }                                                                       \
+    };                                                                        \
+    test_for_formats(d_all_formats, 100, fun);                                \
   } while (0)
 
-#define TEST_CHAINED_BINARY_RM(FUN1, FUN2)                                      \
-  do                                                                            \
-  {                                                                             \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {         \
-      BitVector bv1;                                                            \
-      if (d_rng->flip_coin())                                                   \
-      {                                                                         \
-        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);           \
-      }                                                                         \
-      else                                                                      \
-      {                                                                         \
-        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);            \
-      }                                                                         \
-      uint64_t bv_size = bvexp.size() + bvsig.size() + 1;                       \
-      Type fp_type     = d_nm.mk_fp_type(bvexp.size(), bvsig.size() + 1);       \
-      BitVector bv2(bv_size, *d_rng);                                           \
-      BitVector bv3(bv_size, *d_rng);                                           \
-      FloatingPoint fp1(fp_type, bv1);                                          \
-      FloatingPoint fp2(fp_type, bv2);                                          \
-      FloatingPoint fp3(fp_type, bv2);                                          \
-      FloatingPointMPFR fp_mpfr1(fp_type, bv1);                                 \
-      FloatingPointMPFR fp_mpfr2(fp_type, bv2);                                 \
-      FloatingPointMPFR fp_mpfr3(fp_type, bv2);                                 \
-      FloatingPoint fp(fp_type);                                                \
-      FloatingPointMPFR fp_mpfr(fp_type);                                       \
-      std::string fp_str, fp_mpfr_str;                                          \
-      RoundingMode rm1 = pick_rm();                                             \
-      RoundingMode rm2 = pick_rm();                                             \
-      if (d_rng->flip_coin())                                                   \
-      {                                                                         \
-        /* First, test order (a FUN1 b) FUN2 c. */                              \
-        fp          = fp1.fp##FUN1(rm1, fp2).fp##FUN2(rm2, fp3);                \
-        fp_mpfr     = fp_mpfr1.fp##FUN1(rm1, fp_mpfr2).fp##FUN2(rm2, fp_mpfr3); \
-        fp_str      = fp.str();                                                 \
-        fp_mpfr_str = fp_mpfr.str();                                            \
-        if (fp_str != fp_mpfr_str)                                              \
-        {                                                                       \
-          std::cout << "rm1: " << rm1 << std::endl;                             \
-          std::cout << "rm2: " << rm2 << std::endl;                             \
-          std::cout << "bv1: " << bv1 << std::endl;                             \
-          std::cout << "bv2: " << bv2 << std::endl;                             \
-          std::cout << "bv3: " << bv3 << std::endl;                             \
-          std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")"      \
-                    << std::endl;                                               \
-          std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                       \
-                    << fp_mpfr.to_real_str() << ")" << std::endl;               \
-        }                                                                       \
-        ASSERT_EQ(fp_str, fp_mpfr_str);                                         \
-      }                                                                         \
-      else                                                                      \
-      {                                                                         \
-        /* Then, test order (a FUN2 b) FUN1 c. */                               \
-        fp          = fp1.fp##FUN2(rm2, fp2).fp##FUN1(rm1, fp3);                \
-        fp_mpfr     = fp_mpfr1.fp##FUN2(rm2, fp_mpfr2).fp##FUN1(rm1, fp_mpfr3); \
-        fp_str      = fp.str();                                                 \
-        fp_mpfr_str = fp_mpfr.str();                                            \
-        if (fp_str != fp_mpfr_str)                                              \
-        {                                                                       \
-          std::cout << "rm1: " << rm1 << std::endl;                             \
-          std::cout << "rm2: " << rm2 << std::endl;                             \
-          std::cout << "bv1: " << bv1 << std::endl;                             \
-          std::cout << "bv2: " << bv2 << std::endl;                             \
-          std::cout << "bv3: " << bv3 << std::endl;                             \
-          std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")"      \
-                    << std::endl;                                               \
-          std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                       \
-                    << fp_mpfr.to_real_str() << ")" << std::endl;               \
-        }                                                                       \
-        ASSERT_EQ(fp_str, fp_mpfr_str);                                         \
-      }                                                                         \
-    };                                                                          \
-    test_for_formats(d_all_formats, N_TESTS, fun);                              \
+#define TEST_CHAINED_BINARY_RM(FUN1, FUN2)                                  \
+  do                                                                        \
+  {                                                                         \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) {     \
+      BitVector bv1;                                                        \
+      if (d_rng->flip_coin())                                               \
+      {                                                                     \
+        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);       \
+      }                                                                     \
+      else                                                                  \
+      {                                                                     \
+        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);        \
+      }                                                                     \
+      uint64_t bv_size = bvexp.size() + bvsig.size() + 1;                   \
+      Type fp_type     = d_nm.mk_fp_type(bvexp.size(), bvsig.size() + 1);   \
+      BitVector bv2(bv_size, *d_rng);                                       \
+      BitVector bv3(bv_size, *d_rng);                                       \
+      FloatingPoint fp1(fp_type, bv1);                                      \
+      FloatingPoint fp2(fp_type, bv2);                                      \
+      FloatingPoint fp3(fp_type, bv2);                                      \
+      FloatingPoint fp(fp_type);                                            \
+      FloatingPointSymFPU fp_symfpu1(fp_type, bv1);                         \
+      FloatingPointSymFPU fp_symfpu2(fp_type, bv2);                         \
+      FloatingPointSymFPU fp_symfpu3(fp_type, bv2);                         \
+      FloatingPointSymFPU fp_symfpu(fp_type);                               \
+      std::string fp_str, fp_symfpu_str;                                    \
+      RoundingMode rm1 = pick_rm();                                         \
+      RoundingMode rm2 = pick_rm();                                         \
+      if (d_rng->flip_coin())                                               \
+      {                                                                     \
+        /* First, test order (a FUN1 b) FUN2 c. */                          \
+        fp = fp1.fp##FUN1(rm1, fp2).fp##FUN2(rm2, fp3);                     \
+        fp_symfpu =                                                         \
+            fp_symfpu1.fp##FUN1(rm1, fp_symfpu2).fp##FUN2(rm2, fp_symfpu3); \
+        fp_str        = fp.str();                                           \
+        fp_symfpu_str = fp_symfpu.str();                                    \
+        ASSERT_EQ(fp_str, fp_symfpu_str);                                   \
+      }                                                                     \
+      else                                                                  \
+      {                                                                     \
+        /* Then, test order (a FUN2 b) FUN1 c. */                           \
+        fp = fp1.fp##FUN2(rm2, fp2).fp##FUN1(rm1, fp3);                     \
+        fp_symfpu =                                                         \
+            fp_symfpu1.fp##FUN2(rm2, fp_symfpu2).fp##FUN1(rm1, fp_symfpu3); \
+        fp_str        = fp.str();                                           \
+        fp_symfpu_str = fp_symfpu.str();                                    \
+        ASSERT_EQ(fp_str, fp_symfpu_str);                                   \
+      }                                                                     \
+    };                                                                      \
+    test_for_formats(d_all_formats, N_TESTS, fun);                          \
   } while (0)
 
 #define TEST_CHAINED_UNARY_BINARY_RM(FUN1, FUN2)                          \
   do                                                                      \
   {                                                                       \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {   \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) {   \
       BitVector bv1;                                                      \
       if (d_rng->flip_coin())                                             \
       {                                                                   \
@@ -535,74 +448,53 @@
       BitVector bv2(bv_size, *d_rng);                                     \
       FloatingPoint fp1(fp_type, bv1);                                    \
       FloatingPoint fp2(fp_type, bv2);                                    \
-      FloatingPointMPFR fp_mpfr1(fp_type, bv1);                           \
-      FloatingPointMPFR fp_mpfr2(fp_type, bv2);                           \
       FloatingPoint fp(fp_type);                                          \
-      FloatingPointMPFR fp_mpfr(fp_type);                                 \
-      std::string fp_str, fp_mpfr_str;                                    \
+      FloatingPointSymFPU fp_symfpu1(fp_type, bv1);                       \
+      FloatingPointSymFPU fp_symfpu2(fp_type, bv2);                       \
+      FloatingPointSymFPU fp_symfpu(fp_type);                             \
+      std::string fp_str, fp_symfpu_str;                                  \
       RoundingMode rm = pick_rm();                                        \
       fp              = fp1.fp##FUN2(rm, fp2).fp##FUN1();                 \
-      fp_mpfr         = fp_mpfr1.fp##FUN2(rm, fp_mpfr2).fp##FUN1();       \
+      fp_symfpu       = fp_symfpu1.fp##FUN2(rm, fp_symfpu2).fp##FUN1();   \
       fp_str          = fp.str();                                         \
-      fp_mpfr_str     = fp_mpfr.str();                                    \
-      if (fp_str != fp_mpfr_str)                                          \
-      {                                                                   \
-        std::cout << "rm: " << rm << std::endl;                           \
-        std::cout << "bv1: " << bv1 << std::endl;                         \
-        std::cout << "bv2: " << bv2 << std::endl;                         \
-        std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")"  \
-                  << std::endl;                                           \
-        std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                   \
-                  << fp_mpfr.to_real_str() << ")" << std::endl;           \
-      }                                                                   \
-      ASSERT_EQ(fp_str, fp_mpfr_str);                                     \
+      fp_symfpu_str   = fp_symfpu.str();                                  \
+      ASSERT_EQ(fp_str, fp_symfpu_str);                                   \
     };                                                                    \
     test_for_formats(d_all_formats, N_TESTS, fun);                        \
   } while (0)
 
-#define TEST_CHAINED_UNARY_RM_BINARY_RM(FUN1, FUN2)                       \
-  do                                                                      \
-  {                                                                       \
-    auto fun = [this](const BitVector &bvexp, const BitVector &bvsig) {   \
-      BitVector bv1;                                                      \
-      if (d_rng->flip_coin())                                             \
-      {                                                                   \
-        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);     \
-      }                                                                   \
-      else                                                                \
-      {                                                                   \
-        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);      \
-      }                                                                   \
-      uint64_t bv_size = bvexp.size() + bvsig.size() + 1;                 \
-      Type fp_type     = d_nm.mk_fp_type(bvexp.size(), bvsig.size() + 1); \
-      BitVector bv2(bv_size, *d_rng);                                     \
-      FloatingPoint fp1(fp_type, bv1);                                    \
-      FloatingPoint fp2(fp_type, bv2);                                    \
-      FloatingPointMPFR fp_mpfr1(fp_type, bv1);                           \
-      FloatingPointMPFR fp_mpfr2(fp_type, bv2);                           \
-      FloatingPoint fp(fp_type);                                          \
-      FloatingPointMPFR fp_mpfr(fp_type);                                 \
-      std::string fp_str, fp_mpfr_str;                                    \
-      RoundingMode rm1 = pick_rm();                                       \
-      RoundingMode rm2 = pick_rm();                                       \
-      fp               = fp1.fp##FUN2(rm2, fp2).fp##FUN1(rm1);            \
-      fp_mpfr          = fp_mpfr1.fp##FUN2(rm2, fp_mpfr2).fp##FUN1(rm1);  \
-      fp_str           = fp.str();                                        \
-      fp_mpfr_str      = fp_mpfr.str();                                   \
-      if (fp_str != fp_mpfr_str)                                          \
-      {                                                                   \
-        std::cout << "rm1: " << rm1 << std::endl;                         \
-        std::cout << "rm2: " << rm2 << std::endl;                         \
-        std::cout << "bv1: " << bv1 << std::endl;                         \
-        std::cout << "bv2: " << bv2 << std::endl;                         \
-        std::cout << "fp: " << fp_str << " (" << fp.to_real_str() << ")"  \
-                  << std::endl;                                           \
-        std::cout << "fp_mpfr: " << fp_mpfr_str << " ("                   \
-                  << fp_mpfr.to_real_str() << ")" << std::endl;           \
-      }                                                                   \
-      ASSERT_EQ(fp_str, fp_mpfr_str);                                     \
-    };                                                                    \
-    test_for_formats(d_all_formats, N_TESTS, fun);                        \
+#define TEST_CHAINED_UNARY_RM_BINARY_RM(FUN1, FUN2)                          \
+  do                                                                         \
+  {                                                                          \
+    auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) {      \
+      BitVector bv1;                                                         \
+      if (d_rng->flip_coin())                                                \
+      {                                                                      \
+        bv1 = BitVector::mk_false().ibvconcat(bvexp).bvconcat(bvsig);        \
+      }                                                                      \
+      else                                                                   \
+      {                                                                      \
+        bv1 = BitVector::mk_true().ibvconcat(bvexp).bvconcat(bvsig);         \
+      }                                                                      \
+      uint64_t bv_size = bvexp.size() + bvsig.size() + 1;                    \
+      Type fp_type     = d_nm.mk_fp_type(bvexp.size(), bvsig.size() + 1);    \
+      BitVector bv2(bv_size, *d_rng);                                        \
+      FloatingPoint fp1(fp_type, bv1);                                       \
+      FloatingPoint fp2(fp_type, bv2);                                       \
+      FloatingPoint fp(fp_type);                                             \
+      FloatingPointSymFPU fp_symfpu1(fp_type, bv1);                          \
+      FloatingPointSymFPU fp_symfpu2(fp_type, bv2);                          \
+      FloatingPointSymFPU fp_symfpu(fp_type);                                \
+      std::string fp_str, fp_symfpu_str;                                     \
+      RoundingMode rm1 = pick_rm();                                          \
+      RoundingMode rm2 = pick_rm();                                          \
+      fp               = fp1.fp##FUN2(rm2, fp2).fp##FUN1(rm1);               \
+      fp_symfpu        = fp_symfpu1.fp##FUN2(rm2, fp_symfpu2).fp##FUN1(rm1); \
+      fp_str           = fp.str();                                           \
+      fp_symfpu_str    = fp_symfpu.str();                                    \
+      ASSERT_EQ(fp_str, fp_symfpu_str);                                      \
+    };                                                                       \
+    test_for_formats(d_all_formats, N_TESTS, fun);                           \
   } while (0)
 
 /* -------------------------------------------------------------------------- */
@@ -1997,22 +1889,38 @@ TestFp::test_to_fp_from_real(RoundingMode rm,
                              std::vector<std::vector<const char *>> &expected)
 {
   assert(d_constants_dec.size() == expected.size());
+  BitVector sign, exp, sig;
   for (size_t i = 0, n = d_constants_dec.size(); i < n; ++i)
   {
-    FloatingPoint fp =
-        FloatingPoint::from_real(d_nm, d_fp16, rm, d_constants_dec[i]);
-    BitVector sign, exp, sig;
-    FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
-    ASSERT_EQ(sign.str(), expected[i][0]);
-    ASSERT_EQ(exp.str(), expected[i][1]);
-    ASSERT_EQ(sig.str(), expected[i][2]);
+    {
+      FloatingPoint fp =
+          FloatingPoint::from_real(d_nm, d_fp16, rm, d_constants_dec[i]);
+      FloatingPointSymFPU::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
+      if (sig.str() != expected[i][2])
+      {
+        std::cout << "const: " << d_constants_dec[i] << std::endl;
+        std::cout << "fp: " << fp << std::endl;
+        std::cout << "fp_symfpu: "
+                  << FloatingPointSymFPU::from_real(
+                         d_nm, d_fp16, rm, d_constants_dec[i])
+                  << std::endl;
+      }
+      assert(sign.str() == expected[i][0]);
+      assert(exp.str() == expected[i][1]);
+      assert(sig.str() == expected[i][2]);
+      ASSERT_EQ(sign.str(), expected[i][0]);
+      ASSERT_EQ(exp.str(), expected[i][1]);
+      ASSERT_EQ(sig.str(), expected[i][2]);
+    }
 
-    FloatingPointMPFR fp_mpfr =
-        FloatingPointMPFR::from_real(d_nm, d_fp16, rm, d_constants_dec[i]);
-    FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
-    ASSERT_EQ(sign.str(), expected[i][0]);
-    ASSERT_EQ(exp.str(), expected[i][1]);
-    ASSERT_EQ(sig.str(), expected[i][2]);
+    {
+      FloatingPointSymFPU fp =
+          FloatingPointSymFPU::from_real(d_nm, d_fp16, rm, d_constants_dec[i]);
+      FloatingPointSymFPU::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
+      ASSERT_EQ(sign.str(), expected[i][0]);
+      ASSERT_EQ(exp.str(), expected[i][1]);
+      ASSERT_EQ(sig.str(), expected[i][2]);
+    }
   }
 }
 
@@ -2039,22 +1947,26 @@ TestFp::test_to_fp_from_rational(
   }
 
   assert(constants.size() == expected.size());
+  BitVector sign, exp, sig;
   for (size_t i = 0, n = constants.size(); i < n; ++i)
   {
-    FloatingPoint fp = FloatingPoint::from_rational(
-        d_nm, d_fp16, rm, constants[i].first, constants[i].second);
-    BitVector sign, exp, sig;
-    FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
-    ASSERT_EQ(sign.str(), expected[i][0]);
-    ASSERT_EQ(exp.str(), expected[i][1]);
-    ASSERT_EQ(sig.str(), expected[i][2]);
+    {
+      FloatingPoint fp = FloatingPoint::from_rational(
+          d_nm, d_fp16, rm, constants[i].first, constants[i].second);
+      FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
+      ASSERT_EQ(sign.str(), expected[i][0]);
+      ASSERT_EQ(exp.str(), expected[i][1]);
+      ASSERT_EQ(sig.str(), expected[i][2]);
+    }
 
-    FloatingPointMPFR fp_mpfr = FloatingPointMPFR::from_rational(
-        d_nm, d_fp16, rm, constants[i].first, constants[i].second);
-    FloatingPoint::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
-    ASSERT_EQ(sign.str(), expected[i][0]);
-    ASSERT_EQ(exp.str(), expected[i][1]);
-    ASSERT_EQ(sig.str(), expected[i][2]);
+    {
+      FloatingPointSymFPU fp = FloatingPointSymFPU::from_rational(
+          d_nm, d_fp16, rm, constants[i].first, constants[i].second);
+      FloatingPointSymFPU::ieee_bv_as_bvs(d_fp16, fp.as_bv(), sign, exp, sig);
+      ASSERT_EQ(sign.str(), expected[i][0]);
+      ASSERT_EQ(exp.str(), expected[i][1]);
+      ASSERT_EQ(sig.str(), expected[i][2]);
+    }
   }
 }
 
@@ -2063,24 +1975,22 @@ TestFp::test_to_fp_from_rational(
 TEST_F(TestFp, hash)
 {
   std::unordered_map<size_t, std::vector<FloatingPoint>> occs;
-  std::unordered_map<size_t, std::vector<FloatingPointMPFR>> occs_mpfr;
+  std::unordered_map<size_t, std::vector<FloatingPointSymFPU>> occs_symfpu;
   for (uint64_t i = 0; i < (1u << 16); ++i)
   {
     BitVector bv = BitVector::from_ui(16, i);
-    FloatingPoint fp(d_fp16, bv);
     {
+      FloatingPoint fp(d_fp16, bv);
       auto [it, inserted] =
           occs.emplace(fp.hash(), std::vector<FloatingPoint>{fp});
       if (!inserted) it->second.push_back(fp);
     }
-#ifdef BZLA_USE_MPFR
-    FloatingPointMPFR fp_mpfr(d_fp16, bv);
     {
-      auto [it, inserted] = occs_mpfr.emplace(
-          fp_mpfr.hash(), std::vector<FloatingPointMPFR>{fp_mpfr});
-      if (!inserted) it->second.push_back(fp_mpfr);
+      FloatingPointSymFPU fp(d_fp16, bv);
+      auto [it, inserted] =
+          occs_symfpu.emplace(fp.hash(), std::vector<FloatingPointSymFPU>{fp});
+      if (!inserted) it->second.push_back(fp);
     }
-#endif
   }
   size_t max = 0, n_nan = ((1u << 10) - 1) * 2;
   std::unordered_set<uint64_t> occs_cnt;
@@ -2093,19 +2003,18 @@ TEST_F(TestFp, hash)
   ASSERT_EQ(occs_cnt.size(), 2);
   ASSERT_TRUE(occs_cnt.find(1) != occs_cnt.end());
   ASSERT_EQ(max, n_nan);
-#ifdef BZLA_USE_MPFR
-  size_t max_mpfr = 0;
-  std::unordered_set<uint64_t> occs_mpfr_cnt;
-  for (const auto &p : occs_mpfr)
+
+  size_t max_symfpu = 0;
+  std::unordered_set<uint64_t> occs_symfpu_cnt;
+  for (const auto& p : occs_symfpu)
   {
-    if (p.second.size() > max_mpfr) max_mpfr = p.second.size();
-    occs_mpfr_cnt.insert(p.second.size());
+    if (p.second.size() > max_symfpu) max_symfpu = p.second.size();
+    occs_symfpu_cnt.insert(p.second.size());
   }
   // one entry > 1 for NaN, rest should be unique
-  ASSERT_EQ(occs_mpfr_cnt.size(), 2);
-  ASSERT_TRUE(occs_mpfr_cnt.find(1) != occs_cnt.end());
-  ASSERT_EQ(max_mpfr, n_nan);
-#endif
+  ASSERT_EQ(occs_symfpu_cnt.size(), 2);
+  ASSERT_TRUE(occs_symfpu_cnt.find(1) != occs_cnt.end());
+  ASSERT_EQ(max_symfpu, n_nan);
 }
 
 TEST_F(TestFp, isX)
@@ -2118,14 +2027,16 @@ TEST_F(TestFp, isX)
     for (uint64_t j = 0; j < (1u << 10); ++j)
     {
       BitVector bvsig = BitVector::from_ui(10, j);
+
       FloatingPoint fp_pos(
           d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
       FloatingPoint fp_neg(
-          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
-      FloatingPointMPFR fp_mpfr_pos(
-          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
-      FloatingPointMPFR fp_mpfr_neg(
           d_fp16, BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig));
+
+      FloatingPointSymFPU fp_pos_symfpu(
+          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
+      FloatingPointSymFPU fp_neg_symfpu(
+          d_fp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
       if (!exp_iszero)
       {
         if (!exp_isones)
@@ -2145,20 +2056,20 @@ TEST_F(TestFp, isX)
           ASSERT_FALSE(fp_pos.fpiszero());
           ASSERT_FALSE(fp_neg.fpiszero());
 
-          ASSERT_TRUE(fp_mpfr_pos.fpisnormal());
-          ASSERT_TRUE(fp_mpfr_neg.fpisnormal());
+          ASSERT_TRUE(fp_pos_symfpu.fpisnormal());
+          ASSERT_TRUE(fp_neg_symfpu.fpisnormal());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpissubnormal());
-          ASSERT_FALSE(fp_mpfr_neg.fpissubnormal());
+          ASSERT_FALSE(fp_pos_symfpu.fpissubnormal());
+          ASSERT_FALSE(fp_neg_symfpu.fpissubnormal());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpisinf());
-          ASSERT_FALSE(fp_mpfr_neg.fpisinf());
+          ASSERT_FALSE(fp_pos_symfpu.fpisinf());
+          ASSERT_FALSE(fp_neg_symfpu.fpisinf());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpisnan());
-          ASSERT_FALSE(fp_mpfr_neg.fpisnan());
+          ASSERT_FALSE(fp_pos_symfpu.fpisnan());
+          ASSERT_FALSE(fp_neg_symfpu.fpisnan());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpiszero());
-          ASSERT_FALSE(fp_mpfr_neg.fpiszero());
+          ASSERT_FALSE(fp_pos_symfpu.fpiszero());
+          ASSERT_FALSE(fp_neg_symfpu.fpiszero());
         }
         else
         {
@@ -2179,20 +2090,20 @@ TEST_F(TestFp, isX)
             ASSERT_FALSE(fp_pos.fpiszero());
             ASSERT_FALSE(fp_neg.fpiszero());
 
-            ASSERT_TRUE(fp_mpfr_pos.fpisinf());
-            ASSERT_TRUE(fp_mpfr_neg.fpisinf());
+            ASSERT_TRUE(fp_pos_symfpu.fpisinf());
+            ASSERT_TRUE(fp_neg_symfpu.fpisinf());
 
-            ASSERT_FALSE(fp_mpfr_pos.fpisnan());
-            ASSERT_FALSE(fp_mpfr_neg.fpisnan());
+            ASSERT_FALSE(fp_pos_symfpu.fpisnan());
+            ASSERT_FALSE(fp_neg_symfpu.fpisnan());
 
-            ASSERT_FALSE(fp_mpfr_pos.fpisnormal());
-            ASSERT_FALSE(fp_mpfr_neg.fpisnormal());
+            ASSERT_FALSE(fp_pos_symfpu.fpisnormal());
+            ASSERT_FALSE(fp_neg_symfpu.fpisnormal());
 
-            ASSERT_FALSE(fp_mpfr_pos.fpissubnormal());
-            ASSERT_FALSE(fp_mpfr_neg.fpissubnormal());
+            ASSERT_FALSE(fp_pos_symfpu.fpissubnormal());
+            ASSERT_FALSE(fp_neg_symfpu.fpissubnormal());
 
-            ASSERT_FALSE(fp_mpfr_pos.fpiszero());
-            ASSERT_FALSE(fp_mpfr_neg.fpiszero());
+            ASSERT_FALSE(fp_pos_symfpu.fpiszero());
+            ASSERT_FALSE(fp_neg_symfpu.fpiszero());
           }
           else
           {
@@ -2211,20 +2122,20 @@ TEST_F(TestFp, isX)
             ASSERT_FALSE(fp_pos.fpiszero());
             ASSERT_FALSE(fp_neg.fpiszero());
 
-            ASSERT_TRUE(fp_mpfr_pos.fpisnan());
-            ASSERT_TRUE(fp_mpfr_neg.fpisnan());
+            ASSERT_TRUE(fp_pos_symfpu.fpisnan());
+            ASSERT_TRUE(fp_neg_symfpu.fpisnan());
 
-            ASSERT_FALSE(fp_mpfr_pos.fpisinf());
-            ASSERT_FALSE(fp_mpfr_neg.fpisinf());
+            ASSERT_FALSE(fp_pos_symfpu.fpisinf());
+            ASSERT_FALSE(fp_neg_symfpu.fpisinf());
 
-            ASSERT_FALSE(fp_mpfr_pos.fpisnormal());
-            ASSERT_FALSE(fp_mpfr_neg.fpisnormal());
+            ASSERT_FALSE(fp_pos_symfpu.fpisnormal());
+            ASSERT_FALSE(fp_neg_symfpu.fpisnormal());
 
-            ASSERT_FALSE(fp_mpfr_pos.fpissubnormal());
-            ASSERT_FALSE(fp_mpfr_neg.fpissubnormal());
+            ASSERT_FALSE(fp_pos_symfpu.fpissubnormal());
+            ASSERT_FALSE(fp_neg_symfpu.fpissubnormal());
 
-            ASSERT_FALSE(fp_mpfr_pos.fpiszero());
-            ASSERT_FALSE(fp_mpfr_neg.fpiszero());
+            ASSERT_FALSE(fp_pos_symfpu.fpiszero());
+            ASSERT_FALSE(fp_neg_symfpu.fpiszero());
           }
         }
       }
@@ -2247,20 +2158,20 @@ TEST_F(TestFp, isX)
           ASSERT_FALSE(fp_pos.fpisnan());
           ASSERT_FALSE(fp_neg.fpisnan());
 
-          ASSERT_TRUE(fp_mpfr_pos.fpiszero());
-          ASSERT_TRUE(fp_mpfr_neg.fpiszero());
+          ASSERT_TRUE(fp_pos_symfpu.fpiszero());
+          ASSERT_TRUE(fp_neg_symfpu.fpiszero());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpisnormal());
-          ASSERT_FALSE(fp_mpfr_neg.fpisnormal());
+          ASSERT_FALSE(fp_pos_symfpu.fpisnormal());
+          ASSERT_FALSE(fp_neg_symfpu.fpisnormal());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpissubnormal());
-          ASSERT_FALSE(fp_mpfr_neg.fpissubnormal());
+          ASSERT_FALSE(fp_pos_symfpu.fpissubnormal());
+          ASSERT_FALSE(fp_neg_symfpu.fpissubnormal());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpisinf());
-          ASSERT_FALSE(fp_mpfr_neg.fpisinf());
+          ASSERT_FALSE(fp_pos_symfpu.fpisinf());
+          ASSERT_FALSE(fp_neg_symfpu.fpisinf());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpisnan());
-          ASSERT_FALSE(fp_mpfr_neg.fpisnan());
+          ASSERT_FALSE(fp_pos_symfpu.fpisnan());
+          ASSERT_FALSE(fp_neg_symfpu.fpisnan());
         }
         else
         {
@@ -2279,20 +2190,20 @@ TEST_F(TestFp, isX)
           ASSERT_FALSE(fp_pos.fpiszero());
           ASSERT_FALSE(fp_neg.fpiszero());
 
-          ASSERT_TRUE(fp_mpfr_pos.fpissubnormal());
-          ASSERT_TRUE(fp_mpfr_neg.fpissubnormal());
+          ASSERT_TRUE(fp_pos_symfpu.fpissubnormal());
+          ASSERT_TRUE(fp_neg_symfpu.fpissubnormal());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpisnormal());
-          ASSERT_FALSE(fp_mpfr_neg.fpisnormal());
+          ASSERT_FALSE(fp_pos_symfpu.fpisnormal());
+          ASSERT_FALSE(fp_neg_symfpu.fpisnormal());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpisinf());
-          ASSERT_FALSE(fp_mpfr_neg.fpisinf());
+          ASSERT_FALSE(fp_pos_symfpu.fpisinf());
+          ASSERT_FALSE(fp_neg_symfpu.fpisinf());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpisnan());
-          ASSERT_FALSE(fp_mpfr_neg.fpisnan());
+          ASSERT_FALSE(fp_pos_symfpu.fpisnan());
+          ASSERT_FALSE(fp_neg_symfpu.fpisnan());
 
-          ASSERT_FALSE(fp_mpfr_pos.fpiszero());
-          ASSERT_FALSE(fp_mpfr_neg.fpiszero());
+          ASSERT_FALSE(fp_pos_symfpu.fpiszero());
+          ASSERT_FALSE(fp_neg_symfpu.fpiszero());
         }
       }
     }
@@ -2318,7 +2229,7 @@ TEST_F(TestFp, str_as_bv)
           bv.msb() ? BitVector::mk_true() : BitVector::mk_false();
       // test constructor and str()
       FloatingPoint fp(type_fp, bv);
-      FloatingPointMPFR fp_mpfr(type_fp, bv);
+      FloatingPointSymFPU fp_symfpu(type_fp, bv);
       if (fp.fpisnan())
       {
         ASSERT_TRUE(fp == FloatingPoint::fpnan(type_fp));
@@ -2326,24 +2237,17 @@ TEST_F(TestFp, str_as_bv)
                           + BitVector::mk_ones(exp_size).str() + " #b"
                           + BitVector::mk_min_signed(sig_size - 1).str() + ")";
         ASSERT_EQ(fp.str(), str);
-        // ASSERT_TRUE(fp_mpfr == FloatingPointMPFR::fpnan(type_fp));
-        ASSERT_EQ(fp_mpfr.str(), str);
+        ASSERT_TRUE(fp_symfpu == FloatingPointSymFPU::fpnan(type_fp));
+        ASSERT_EQ(fp_symfpu.str(), str);
       }
       else
       {
         std::string str = "(fp #b" + bvsign.str() + " #b" + bvexp.str() + " #b"
                           + bvsig.str() + ")";
         ASSERT_EQ(fp.str(), str);
-        ASSERT_EQ(fp.str(), str);
+        ASSERT_EQ(fp_symfpu.str(), str);
       }
-      if (fp.str() != fp_mpfr.str())
-      {
-        std::cout << "bv: " << bv << std::endl;
-        std::cout << "fp: " << fp << std::endl;
-        std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
-      }
-      assert(fp.str() == fp_mpfr.str());
-      ASSERT_EQ(fp.str(), fp_mpfr.str());
+      ASSERT_EQ(fp.str(), fp_symfpu.str());
 
       // test as_bv() via fpfp() and Node
       FloatingPoint fpfp = FloatingPoint::fpfp(
@@ -2356,7 +2260,7 @@ TEST_F(TestFp, str_as_bv)
       fpfp            = node_fp.value<FloatingPoint>();
       BitVector as_bv = fpfp.as_bv();
       BitVector as_bvsign, as_bvexp, as_bvsig;
-      FloatingPoint::ieee_bv_as_bvs(
+      FloatingPointSymFPU::ieee_bv_as_bvs(
           type_fp, as_bv, as_bvsign, as_bvexp, as_bvsig);
       if (bvexp.is_ones() && !bvsig.is_zero())
       {
@@ -2373,31 +2277,34 @@ TEST_F(TestFp, str_as_bv)
       }
       ASSERT_EQ(as_bv.compare(as_bvsign.bvconcat(as_bvexp).ibvconcat(as_bvsig)),
                 0);
-      // only via fpfp() for MPFR implementation
-      FloatingPointMPFR fpfp_mpfr =
-          FloatingPointMPFR::fpfp(d_nm, bvsign, bvexp, bvsig);
-      ASSERT_EQ(fp.str(), fpfp_mpfr.str());
-      BitVector as_bv_mpfr = fpfp_mpfr.as_bv();
-      BitVector as_bvsign_mpfr, as_bvexp_mpfr, as_bvsig_mpfr;
-      FloatingPoint::ieee_bv_as_bvs(
-          type_fp, as_bv_mpfr, as_bvsign_mpfr, as_bvexp_mpfr, as_bvsig_mpfr);
+
+      // only via fpfp() for SymFPU implementation
+      FloatingPointSymFPU fpfp_symfpu =
+          FloatingPointSymFPU::fpfp(d_nm, bvsign, bvexp, bvsig);
+      ASSERT_EQ(fp.str(), fpfp_symfpu.str());
+      BitVector as_bv_symfpu = fpfp_symfpu.as_bv();
+      BitVector as_bvsign_symfpu, as_bvexp_symfpu, as_bvsig_symfpu;
+      FloatingPointSymFPU::ieee_bv_as_bvs(type_fp,
+                                          as_bv_symfpu,
+                                          as_bvsign_symfpu,
+                                          as_bvexp_symfpu,
+                                          as_bvsig_symfpu);
       if (bvexp.is_ones() && !bvsig.is_zero())
       {
         // we use a single nan representation
         ASSERT_EQ(
-            as_bv_mpfr,
+            as_bv_symfpu,
             BitVector(bv.size(),
                       "0" + BitVector::mk_ones(exp_size).str()
                           + BitVector::mk_min_signed(sig_size - 1).str()));
       }
       else
       {
-        ASSERT_EQ(as_bv_mpfr.compare(bv), 0);
+        ASSERT_EQ(as_bv_symfpu.compare(bv), 0);
       }
-      ASSERT_EQ(
-          as_bv_mpfr.compare(
-              as_bvsign_mpfr.bvconcat(as_bvexp_mpfr).ibvconcat(as_bvsig_mpfr)),
-          0);
+      ASSERT_EQ(as_bv_symfpu.compare(as_bvsign_symfpu.bvconcat(as_bvexp_symfpu)
+                                         .ibvconcat(as_bvsig_symfpu)),
+                0);
     }
   };
 
@@ -2415,6 +2322,7 @@ TEST_F(TestFp, fp_is_value)
       FloatingPoint fp = FloatingPoint::fpzero(types[i], false);
       Node value       = d_nm.mk_value(fp);
       ASSERT_TRUE(value.is_value());
+
       FloatingPoint fp_value = value.value<FloatingPoint>();
       ASSERT_TRUE(fp_value.fpiszero());
       ASSERT_TRUE(fp_value.fpispos());
@@ -2422,12 +2330,13 @@ TEST_F(TestFp, fp_is_value)
       ASSERT_FALSE(fp_value.fpisinf());
       ASSERT_FALSE(fp_value.fpisnan());
 
-      FloatingPointMPFR fp_mpfr = FloatingPointMPFR::fpzero(types[i], false);
-      ASSERT_TRUE(fp_mpfr.fpiszero());
-      ASSERT_TRUE(fp_mpfr.fpispos());
-      ASSERT_FALSE(fp_mpfr.fpisneg());
-      ASSERT_FALSE(fp_mpfr.fpisinf());
-      ASSERT_FALSE(fp_mpfr.fpisnan());
+      FloatingPointSymFPU fp_symfpu =
+          FloatingPointSymFPU::fpzero(types[i], false);
+      ASSERT_TRUE(fp_symfpu.fpiszero());
+      ASSERT_TRUE(fp_symfpu.fpispos());
+      ASSERT_FALSE(fp_symfpu.fpisneg());
+      ASSERT_FALSE(fp_symfpu.fpisinf());
+      ASSERT_FALSE(fp_symfpu.fpisnan());
     }
     {
       FloatingPoint fp = FloatingPoint::fpzero(types[i], true);
@@ -2440,12 +2349,13 @@ TEST_F(TestFp, fp_is_value)
       ASSERT_FALSE(fp_value.fpisinf());
       ASSERT_FALSE(fp_value.fpisnan());
 
-      FloatingPointMPFR fp_mpfr = FloatingPointMPFR::fpzero(types[i], true);
-      ASSERT_TRUE(fp_mpfr.fpiszero());
-      ASSERT_FALSE(fp_mpfr.fpispos());
-      ASSERT_TRUE(fp_mpfr.fpisneg());
-      ASSERT_FALSE(fp_mpfr.fpisinf());
-      ASSERT_FALSE(fp_mpfr.fpisnan());
+      FloatingPointSymFPU fp_symfpu =
+          FloatingPointSymFPU::fpzero(types[i], true);
+      ASSERT_TRUE(fp_symfpu.fpiszero());
+      ASSERT_FALSE(fp_symfpu.fpispos());
+      ASSERT_TRUE(fp_symfpu.fpisneg());
+      ASSERT_FALSE(fp_symfpu.fpisinf());
+      ASSERT_FALSE(fp_symfpu.fpisnan());
     }
     {
       FloatingPoint fp = FloatingPoint::fpinf(types[i], false);
@@ -2458,12 +2368,13 @@ TEST_F(TestFp, fp_is_value)
       ASSERT_TRUE(fp_value.fpisinf());
       ASSERT_FALSE(fp_value.fpisnan());
 
-      FloatingPointMPFR fp_mpfr = FloatingPointMPFR::fpinf(types[i], false);
-      ASSERT_FALSE(fp_mpfr.fpiszero());
-      ASSERT_TRUE(fp_mpfr.fpispos());
-      ASSERT_FALSE(fp_mpfr.fpisneg());
-      ASSERT_TRUE(fp_mpfr.fpisinf());
-      ASSERT_FALSE(fp_mpfr.fpisnan());
+      FloatingPointSymFPU fp_symfpu =
+          FloatingPointSymFPU::fpinf(types[i], false);
+      ASSERT_FALSE(fp_symfpu.fpiszero());
+      ASSERT_TRUE(fp_symfpu.fpispos());
+      ASSERT_FALSE(fp_symfpu.fpisneg());
+      ASSERT_TRUE(fp_symfpu.fpisinf());
+      ASSERT_FALSE(fp_symfpu.fpisnan());
     }
     {
       FloatingPoint fp = FloatingPoint::fpinf(types[i], true);
@@ -2476,12 +2387,13 @@ TEST_F(TestFp, fp_is_value)
       ASSERT_TRUE(fp_value.fpisinf());
       ASSERT_FALSE(fp_value.fpisnan());
 
-      FloatingPointMPFR fp_mpfr = FloatingPointMPFR::fpinf(types[i], true);
-      ASSERT_FALSE(fp_mpfr.fpiszero());
-      ASSERT_FALSE(fp_mpfr.fpispos());
-      ASSERT_TRUE(fp_mpfr.fpisneg());
-      ASSERT_TRUE(fp_mpfr.fpisinf());
-      ASSERT_FALSE(fp_mpfr.fpisnan());
+      FloatingPointSymFPU fp_symfpu =
+          FloatingPointSymFPU::fpinf(types[i], true);
+      ASSERT_FALSE(fp_symfpu.fpiszero());
+      ASSERT_FALSE(fp_symfpu.fpispos());
+      ASSERT_TRUE(fp_symfpu.fpisneg());
+      ASSERT_TRUE(fp_symfpu.fpisinf());
+      ASSERT_FALSE(fp_symfpu.fpisnan());
     }
     {
       FloatingPoint fp = FloatingPoint::fpnan(types[i]);
@@ -2494,12 +2406,12 @@ TEST_F(TestFp, fp_is_value)
       ASSERT_FALSE(fp_value.fpisinf());
       ASSERT_TRUE(fp_value.fpisnan());
 
-      FloatingPointMPFR fp_mpfr = FloatingPointMPFR::fpnan(types[i]);
-      ASSERT_FALSE(fp_mpfr.fpiszero());
-      ASSERT_FALSE(fp_mpfr.fpispos());
-      ASSERT_FALSE(fp_mpfr.fpisneg());
-      ASSERT_FALSE(fp_mpfr.fpisinf());
-      ASSERT_TRUE(fp_mpfr.fpisnan());
+      FloatingPointSymFPU fp_symfpu = FloatingPointSymFPU::fpnan(types[i]);
+      ASSERT_FALSE(fp_symfpu.fpiszero());
+      ASSERT_FALSE(fp_symfpu.fpispos());
+      ASSERT_FALSE(fp_symfpu.fpisneg());
+      ASSERT_FALSE(fp_symfpu.fpisinf());
+      ASSERT_TRUE(fp_symfpu.fpisnan());
     }
   }
 }
@@ -3683,99 +3595,100 @@ TEST_F(TestFp, op_eq)
                == FloatingPoint::fpzero(d_nm.mk_fp_type(6, 8), false));
   ASSERT_TRUE(FloatingPoint::fpzero(d_fp16, false)
               != FloatingPoint::fpzero(d_nm.mk_fp_type(6, 8), false));
-
-  ASSERT_FALSE(FloatingPointMPFR::fpzero(d_fp16, false)
-               == FloatingPointMPFR::fpzero(d_nm.mk_fp_type(6, 8), false));
-  ASSERT_TRUE(FloatingPointMPFR::fpzero(d_fp16, false)
-              != FloatingPointMPFR::fpzero(d_nm.mk_fp_type(6, 8), false));
+  ASSERT_FALSE(FloatingPointSymFPU::fpzero(d_fp16, false)
+               == FloatingPointSymFPU::fpzero(d_nm.mk_fp_type(6, 8), false));
+  ASSERT_TRUE(FloatingPointSymFPU::fpzero(d_fp16, false)
+              != FloatingPointSymFPU::fpzero(d_nm.mk_fp_type(6, 8), false));
 
   //// same format
   ASSERT_EQ(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"),
             FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
   ASSERT_EQ(
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"),
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
+      FloatingPointSymFPU::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"),
+      FloatingPointSymFPU::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
 
   ASSERT_NE(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1"),
             FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
   ASSERT_NE(
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1"),
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
+      FloatingPointSymFPU::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1"),
+      FloatingPointSymFPU::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1"));
 
   ASSERT_EQ(
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"));
-  ASSERT_EQ(
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
-      FloatingPointMPFR::from_real(
-          d_nm, d_fp16, RoundingMode::RNE, "-5.17777"));
+  ASSERT_EQ(FloatingPointSymFPU::from_real(
+                d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
+            FloatingPointSymFPU::from_real(
+                d_nm, d_fp16, RoundingMode::RNE, "-5.17777"));
 
   ASSERT_NE(
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RTZ, "-5.17777"));
-  ASSERT_NE(
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
-      FloatingPointMPFR::from_real(
-          d_nm, d_fp16, RoundingMode::RTZ, "-5.17777"));
+  ASSERT_NE(FloatingPointSymFPU::from_real(
+                d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
+            FloatingPointSymFPU::from_real(
+                d_nm, d_fp16, RoundingMode::RTZ, "-5.17777"));
 
   ASSERT_NE(
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8"));
   ASSERT_NE(
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8"));
+      FloatingPointSymFPU::from_real(
+          d_nm, d_fp16, RoundingMode::RNE, "-5.17777"),
+      FloatingPointSymFPU::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8"));
 
   ASSERT_EQ(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"),
             FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"));
   ASSERT_EQ(
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"),
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"));
+      FloatingPointSymFPU::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"),
+      FloatingPointSymFPU::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27"));
 
   ASSERT_NE(
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-12.11328125"),
       FloatingPoint::from_real(
           d_nm, d_fp16, RoundingMode::RNA, "-12.11328125"));
-  ASSERT_NE(FloatingPointMPFR::from_real(
+  ASSERT_NE(FloatingPointSymFPU::from_real(
                 d_nm, d_fp16, RoundingMode::RNE, "-12.11328125"),
-            FloatingPointMPFR::from_real(
+            FloatingPointSymFPU::from_real(
                 d_nm, d_fp16, RoundingMode::RNA, "-12.11328125"));
 
   ASSERT_EQ(FloatingPoint::fpnan(d_fp16), FloatingPoint::fpnan(d_fp16));
-  ASSERT_EQ(FloatingPointMPFR::fpnan(d_fp16), FloatingPointMPFR::fpnan(d_fp16));
+  ASSERT_EQ(FloatingPointSymFPU::fpnan(d_fp16),
+            FloatingPointSymFPU::fpnan(d_fp16));
 
   ASSERT_EQ(FloatingPoint::fpinf(d_fp16, true),
             FloatingPoint::fpinf(d_fp16, true));
-  ASSERT_EQ(FloatingPointMPFR::fpinf(d_fp16, true),
-            FloatingPointMPFR::fpinf(d_fp16, true));
+  ASSERT_EQ(FloatingPointSymFPU::fpinf(d_fp16, true),
+            FloatingPointSymFPU::fpinf(d_fp16, true));
 
   ASSERT_EQ(FloatingPoint::fpinf(d_fp16, false),
             FloatingPoint::fpinf(d_fp16, false));
-  ASSERT_EQ(FloatingPointMPFR::fpinf(d_fp16, false),
-            FloatingPointMPFR::fpinf(d_fp16, false));
+  ASSERT_EQ(FloatingPointSymFPU::fpinf(d_fp16, false),
+            FloatingPointSymFPU::fpinf(d_fp16, false));
 
   ASSERT_NE(FloatingPoint::fpinf(d_fp16, true),
             FloatingPoint::fpinf(d_fp16, false));
-  ASSERT_NE(FloatingPointMPFR::fpinf(d_fp16, true),
-            FloatingPointMPFR::fpinf(d_fp16, false));
+  ASSERT_NE(FloatingPointSymFPU::fpinf(d_fp16, true),
+            FloatingPointSymFPU::fpinf(d_fp16, false));
 
   ASSERT_EQ(FloatingPoint::fpzero(d_fp16, false),
             FloatingPoint::fpzero(d_fp16, false));
-  ASSERT_EQ(FloatingPointMPFR::fpzero(d_fp16, false),
-            FloatingPointMPFR::fpzero(d_fp16, false));
+  ASSERT_EQ(FloatingPointSymFPU::fpzero(d_fp16, false),
+            FloatingPointSymFPU::fpzero(d_fp16, false));
 
   ASSERT_NE(FloatingPoint::fpzero(d_fp16, true),
             FloatingPoint::fpzero(d_fp16, false));
-  ASSERT_NE(FloatingPointMPFR::fpzero(d_fp16, true),
-            FloatingPointMPFR::fpzero(d_fp16, false));
+  ASSERT_NE(FloatingPointSymFPU::fpzero(d_fp16, true),
+            FloatingPointSymFPU::fpzero(d_fp16, false));
 
   ASSERT_NE(FloatingPoint::fpzero(d_fp16, true),
             FloatingPoint::fpinf(d_fp16, true));
-  ASSERT_NE(FloatingPointMPFR::fpzero(d_fp16, true),
-            FloatingPointMPFR::fpinf(d_fp16, true));
+  ASSERT_NE(FloatingPointSymFPU::fpzero(d_fp16, true),
+            FloatingPointSymFPU::fpinf(d_fp16, true));
 
   ASSERT_NE(FloatingPoint::fpnan(d_fp16), FloatingPoint::fpinf(d_fp16, false));
-  ASSERT_NE(FloatingPointMPFR::fpnan(d_fp16),
-            FloatingPointMPFR::fpinf(d_fp16, false));
+  ASSERT_NE(FloatingPointSymFPU::fpnan(d_fp16),
+            FloatingPointSymFPU::fpinf(d_fp16, false));
 
   for (const auto &type : d_all_formats)
   {
@@ -3784,14 +3697,19 @@ TEST_F(TestFp, op_eq)
     {
       BitVector bv1 = BitVector(bv_size, *d_rng);
       BitVector bv2 = BitVector(bv_size, *d_rng);
-      FloatingPoint fp1(type, bv1);
-      FloatingPoint fp2(type, bv2);
-      ASSERT_EQ(bv1 == bv2, fp1 == fp2);
-      ASSERT_EQ(bv1 != bv2, fp1 != fp2);
-      FloatingPointMPFR fp_mpfr1(type, bv1);
-      FloatingPointMPFR fp_mpfr2(type, bv2);
-      ASSERT_EQ(bv1 == bv2, fp1 == fp2);
-      ASSERT_EQ(bv1 != bv2, fp1 != fp2);
+      {
+        FloatingPoint fp1(type, bv1);
+        FloatingPoint fp2(type, bv2);
+        ASSERT_EQ(bv1 == bv2, fp1 == fp2);
+        ASSERT_EQ(bv1 != bv2, fp1 != fp2);
+      }
+
+      {
+        FloatingPointSymFPU fp1(type, bv1);
+        FloatingPointSymFPU fp2(type, bv2);
+        ASSERT_EQ(bv1 == bv2, fp1 == fp2);
+        ASSERT_EQ(bv1 != bv2, fp1 != fp2);
+      }
     }
   }
 }
@@ -3812,70 +3730,70 @@ TEST_F(TestFp, to_real_str)
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNA, "-12.11328125")
           .to_real_str());
 
-  ASSERT_EQ(FloatingPointMPFR::fpnan(d_fp16).to_real_str(),
+  ASSERT_EQ(FloatingPointSymFPU::fpnan(d_fp16).to_real_str(),
             "(fp.to_real (_ NaN 5 11))");
-  ASSERT_EQ(FloatingPointMPFR::fpinf(d_fp16, false).to_real_str(),
+  ASSERT_EQ(FloatingPointSymFPU::fpinf(d_fp16, false).to_real_str(),
             "(fp.to_real (_ +oo 5 11))");
-  ASSERT_EQ(FloatingPointMPFR::fpinf(d_fp16, true).to_real_str(),
+  ASSERT_EQ(FloatingPointSymFPU::fpinf(d_fp16, true).to_real_str(),
             "(fp.to_real (_ -oo 5 11))");
-  ASSERT_EQ(FloatingPointMPFR::fpzero(d_fp16, false).to_real_str(), "0.0");
-  ASSERT_EQ(FloatingPointMPFR::fpzero(d_fp16, true).to_real_str(), "0.0");
-  ASSERT_NE(FloatingPointMPFR::from_real(
+  ASSERT_EQ(FloatingPointSymFPU::fpzero(d_fp16, false).to_real_str(), "0.0");
+  ASSERT_EQ(FloatingPointSymFPU::fpzero(d_fp16, true).to_real_str(), "0.0");
+  ASSERT_NE(FloatingPointSymFPU::from_real(
                 d_nm, d_fp16, RoundingMode::RNE, "-12.11328125")
                 .to_real_str(),
-            FloatingPointMPFR::from_real(
+            FloatingPointSymFPU::from_real(
                 d_nm, d_fp16, RoundingMode::RNA, "-12.11328125")
                 .to_real_str());
 
-  ASSERT_EQ(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1")
-                .to_real_str(),
-            FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1")
-                .to_real_str());
   ASSERT_EQ(
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1")
+      FloatingPointSymFPU::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1")
           .to_real_str(),
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1")
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1")
           .to_real_str());
-  ASSERT_NE(
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1")
-          .to_real_str(),
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1")
-          .to_real_str());
+  ASSERT_EQ(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1")
+                .to_real_str(),
+            FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1")
+                .to_real_str());
+  ASSERT_NE(FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-0.1")
+                .to_real_str(),
+            FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "0.1")
+                .to_real_str());
 
   ASSERT_EQ(
+      FloatingPointSymFPU::from_real(
+          d_nm, d_fp16, RoundingMode::RNE, "-5.17777")
+          .to_real_str(),
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777")
+          .to_real_str());
+  ASSERT_NE(
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777")
           .to_real_str(),
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777")
-          .to_real_str());
-  ASSERT_NE(
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-5.17777")
-          .to_real_str(),
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RTZ, "-5.17777")
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RTZ, "-5.17777")
           .to_real_str());
 
   ASSERT_EQ(
+      FloatingPointSymFPU::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8")
+          .to_real_str(),
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8")
-          .to_real_str(),
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "-8.8")
           .to_real_str());
 
   ASSERT_EQ(
+      FloatingPointSymFPU::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27")
+          .to_real_str(),
       FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27")
-          .to_real_str(),
-      FloatingPointMPFR::from_real(d_nm, d_fp16, RoundingMode::RNE, "3.27")
           .to_real_str());
 
   ASSERT_EQ(
-      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-12.11328125")
-          .to_real_str(),
-      FloatingPointMPFR::from_real(
+      FloatingPointSymFPU::from_real(
           d_nm, d_fp16, RoundingMode::RNE, "-12.11328125")
+          .to_real_str(),
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNE, "-12.11328125")
           .to_real_str());
   ASSERT_EQ(
-      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNA, "-12.11328125")
-          .to_real_str(),
-      FloatingPointMPFR::from_real(
+      FloatingPointSymFPU::from_real(
           d_nm, d_fp16, RoundingMode::RNA, "-12.11328125")
+          .to_real_str(),
+      FloatingPoint::from_real(d_nm, d_fp16, RoundingMode::RNA, "-12.11328125")
           .to_real_str());
 
   // comprehensive tests for all values in Float16
@@ -3883,26 +3801,14 @@ TEST_F(TestFp, to_real_str)
     {
       BitVector bv = BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig);
       FloatingPoint fp(d_fp16, bv);
-      FloatingPointMPFR fp_mpfr(d_fp16, bv);
-      if (fp.to_real_str() != fp_mpfr.to_real_str())
-      {
-        std::cout << "bv: " << bv << std::endl;
-        std::cout << "fp: " << fp << std::endl;
-        std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
-      }
-      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+      FloatingPointSymFPU fp_symfpu(d_fp16, bv);
+      ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
     }
     {
       BitVector bv = BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig);
       FloatingPoint fp(d_fp16, bv);
-      FloatingPointMPFR fp_mpfr(d_fp16, bv);
-      if (fp.to_real_str() != fp_mpfr.to_real_str())
-      {
-        std::cout << "bv: " << bv << std::endl;
-        std::cout << "fp: " << fp << std::endl;
-        std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
-      }
-      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+      FloatingPointSymFPU fp_symfpu(d_fp16, bv);
+      ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
     }
   };
   test_for_float16(fun);
@@ -3915,14 +3821,8 @@ TEST_F(TestFp, to_real_str)
     {
       BitVector bv = BitVector(bv_size, *d_rng);
       FloatingPoint fp(type, bv);
-      FloatingPointMPFR fp_mpfr(type, bv);
-      if (fp.to_real_str() != fp_mpfr.to_real_str())
-      {
-        std::cout << bv << std::endl;
-        std::cout << "fp: " << fp << std::endl;
-        std::cout << "fp_mpfr: " << fp_mpfr << std::endl;
-      }
-      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+      FloatingPointSymFPU fp_symfpu(type, bv);
+      ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
     }
   }
 }
@@ -3953,24 +3853,15 @@ TEST_F(TestFp, assignment)
       ASSERT_EQ(fp2, _fp2);
     }
     {
-      FloatingPointMPFR fp1(type1, bv1);
-      FloatingPointMPFR fp2(type2, bv2);
-      FloatingPointMPFR _fp1 = fp1;
-      FloatingPointMPFR _fp2 = fp2;
+      FloatingPointSymFPU fp1(type1, bv1);
+      FloatingPointSymFPU fp2(type2, bv2);
+      FloatingPointSymFPU _fp1 = fp1;
+      FloatingPointSymFPU _fp2 = fp2;
       ASSERT_EQ(fp1, _fp1);
       ASSERT_EQ(fp2, _fp2);
       _fp1 = fp2;
       ASSERT_EQ(fp2, _fp1);
       _fp2 = fp1;
-      if (fp1 != _fp2)
-      {
-        std::cout << "bv1: " << bv1 << std::endl;
-        std::cout << "bv2: " << bv2 << std::endl;
-        std::cout << "fp1: " << fp1 << std::endl;
-        std::cout << "fp2: " << fp2 << std::endl;
-        std::cout << "_fp1: " << _fp1 << std::endl;
-        std::cout << "_fp2: " << _fp2 << std::endl;
-      }
       ASSERT_EQ(fp1, _fp2);
       _fp1 = fp1;
       _fp2 = fp2;
@@ -3989,16 +3880,16 @@ TEST_F(TestFp, to_fp_from_fp)
     {
       bv = BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig);
       FloatingPoint fp(type, rm, FloatingPoint(d_fp16, bv));
-      FloatingPointMPFR fp_mpfr(type, rm, FloatingPointMPFR(d_fp16, bv));
-      ASSERT_EQ(fp.str(), fp_mpfr.str());
-      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+      FloatingPointSymFPU fp_symfpu(type, rm, FloatingPointSymFPU(d_fp16, bv));
+      ASSERT_EQ(fp.str(), fp_symfpu.str());
+      ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
     }
     {
       bv = BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig);
       FloatingPoint fp(type, rm, FloatingPoint(d_fp16, bv));
-      FloatingPointMPFR fp_mpfr(type, rm, FloatingPointMPFR(d_fp16, bv));
-      ASSERT_EQ(fp.str(), fp_mpfr.str());
-      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+      FloatingPointSymFPU fp_symfpu(type, rm, FloatingPointSymFPU(d_fp16, bv));
+      ASSERT_EQ(fp.str(), fp_symfpu.str());
+      ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
     }
   };
   test_for_float16(fun);
@@ -4012,9 +3903,9 @@ TEST_F(TestFp, to_fp_from_fp)
       Type type2      = pick_type(d_all_formats);
       RoundingMode rm = pick_rm();
       FloatingPoint fp(type2, rm, FloatingPoint(type1, bv));
-      FloatingPointMPFR fp_mpfr(type2, rm, FloatingPointMPFR(type1, bv));
-      ASSERT_EQ(fp.str(), fp_mpfr.str());
-      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+      FloatingPointSymFPU fp_symfpu(type2, rm, FloatingPointSymFPU(type1, bv));
+      ASSERT_EQ(fp.str(), fp_symfpu.str());
+      ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
     }
   }
 }
@@ -4036,13 +3927,13 @@ TEST_F(TestFp, to_fp_from_ubv_sbv)
       {
         {
           FloatingPoint fp(type, rm, bv, false);
-          FloatingPointMPFR fp_mpfr(type, rm, bv, false);
-          ASSERT_EQ(fp.str(), fp_mpfr.str());
+          FloatingPointSymFPU fp_symfpu(type, rm, bv, false);
+          ASSERT_EQ(fp.str(), fp_symfpu.str());
         }
         {
           FloatingPoint fp(type, rm, bv, true);
-          FloatingPointMPFR fp_mpfr(type, rm, bv, true);
-          ASSERT_EQ(fp.str(), fp_mpfr.str());
+          FloatingPointSymFPU fp_symfpu(type, rm, bv, true);
+          ASSERT_EQ(fp.str(), fp_symfpu.str());
         }
       }
     }
@@ -4056,15 +3947,15 @@ TEST_F(TestFp, to_fp_from_ubv_sbv)
     RoundingMode rm = pick_rm();
     {
       FloatingPoint fp(type, rm, bv, false);
-      FloatingPointMPFR fp_mpfr(type, rm, bv, false);
-      ASSERT_EQ(fp.str(), fp_mpfr.str());
-      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+      FloatingPointSymFPU fp_symfpu(type, rm, bv, false);
+      ASSERT_EQ(fp.str(), fp_symfpu.str());
+      ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
     }
     {
-      FloatingPoint fp(type, rm, bv, true);
-      FloatingPointMPFR fp_mpfr(type, rm, bv, true);
-      ASSERT_EQ(fp.str(), fp_mpfr.str());
-      ASSERT_EQ(fp.to_real_str(), fp_mpfr.to_real_str());
+      FloatingPointSymFPU fp(type, rm, bv, true);
+      FloatingPoint fp_symfpu(type, rm, bv, true);
+      ASSERT_EQ(fp.str(), fp_symfpu.str());
+      ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
     }
   }
 #endif
@@ -4086,6 +3977,7 @@ TEST_F(TestFp, mul) { TEST_BINARY_RM(mul); }
 // SymFPU fails with an assertion failure (see issue #164) but agrees with
 // MPFR on all tests for release builds without assertions.
 TEST_F(TestFp, div) { TEST_BINARY_RM(div); }
+#endif
 TEST_F(TestFp, fma) { TEST_TERNARY_RM(fma); }
 
 TEST_F(TestFp, chained_rem)
@@ -4139,6 +4031,5 @@ TEST_F(TestFp, chained_un_rm_bin_rm)
   TEST_CHAINED_UNARY_RM_BINARY_RM(rti, div);
 #endif
 }
-#endif
 
 }  // namespace bzla::test

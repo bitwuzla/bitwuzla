@@ -19,7 +19,7 @@
 #include "bv/bitvector.h"
 #include "node/node.h"
 #include "node/node_manager.h"
-#include "solver/fp/floating_point.h"
+#include "solver/fp/floating_point_symfpu.h"
 #include "solver/fp/rounding_mode.h"
 #include "solver/fp/symfpu_nm.h"
 
@@ -157,7 +157,7 @@ class SymFpuTraits
   /* The six key types that SymFPU uses. */
   using bwt  = uint32_t;
   using rm   = RoundingMode;
-  using fpt  = FloatingPointTypeInfo;
+  using fpt  = FloatingPointSymFPUTypeInfo;
   using prop = bool;
   using sbv  = SymFpuBV<true>;
   using ubv  = SymFpuBV<false>;
@@ -400,7 +400,7 @@ class SymFpuSymTraits
   /* The six key types that SymFPU uses. */
   using bwt  = uint32_t;
   using rm   = SymFpuSymRM;
-  using fpt  = FloatingPointTypeInfo;
+  using fpt  = FloatingPointSymFPUTypeInfo;
   using prop = SymFpuSymProp;
   using sbv  = SymFpuSymBV<true>;
   using ubv  = SymFpuSymBV<false>;

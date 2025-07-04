@@ -308,8 +308,11 @@ WordBlaster::_word_blast(const Node& node)
       }
       else if (type.is_fp() && cur.is_value())
       {
+        FloatingPoint value = cur.value<FloatingPoint>();
         d_internal->d_unpacked_float_map.emplace(
-            cur, *cur.value<FloatingPoint>().unpacked());
+            cur,
+            UnpackedFloat(symfpu::unpack<fp::SymFpuTraits>(
+                FloatingPointSymFPUTypeInfo(value.type()), value.as_bv())));
       }
       else if (kind == node::Kind::EQUAL && cur[0].type().is_fp())
       {
@@ -320,7 +323,7 @@ WordBlaster::_word_blast(const Node& node)
         d_internal->d_prop_map.emplace(
             cur,
             symfpu::smtlibEqual<SymFpuSymTraits>(
-                FloatingPointTypeInfo(cur[0].type()),
+                FloatingPointSymFPUTypeInfo(cur[0].type()),
                 d_internal->d_unpacked_float_map.at(cur[0]),
                 d_internal->d_unpacked_float_map.at(cur[1])));
       }
