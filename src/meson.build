@@ -56,17 +56,17 @@ endif
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
 mpfr_dep = dependency('mpfr',
-                     version: '>=4.2.2',
-                     static: build_static,
-                     required: get_option('mpfr'))
+                      version: '>=4.2.2',
+                      static: build_static,
+                      required: true)
 # Check if static MPFR library is really available. dependency() only tries to
 # get the static dependency, but will return the shared one if the static is
 # not available.
 if build_static and mpfr_dep.found()
   mpfr_dep = cpp_compiler.find_library('mpfr',
-                                      has_headers: ['mpfr.h'],
-                                      static: true,
-                                      required: false)
+                                       has_headers: ['mpfr.h'],
+                                       static: build_static,
+                                       required: false)
   # If we don't find the static library, build the GMP subproject as fallback.
   if not mpfr_dep.found()
     mpfr_dep = subproject('mpfr-4.2.2').get_variable('mpfr_dep')
@@ -83,7 +83,7 @@ if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
 endif
 if mpfr_dep.found()
-  cpp_args += ['-DBZLA_USE_MPFR', '-DMPFR_USE_C99_FEATURE=1']
+  cpp_args += ['-DMPFR_USE_C99_FEATURE=1']
 endif
 
 # ---
@@ -260,7 +260,7 @@ sources = files([
   'solver/bv/bv_solver.cpp',
   'solver/bv/aig_bitblaster.cpp',
   'solver/fp/floating_point.cpp',
-  'solver/fp/floating_point_mpfr.cpp',
+  'solver/fp/floating_point_symfpu.cpp',
   'solver/fp/fp_solver.cpp',
   'solver/fp/rounding_mode.cpp',
   'solver/fp/symfpu_nm.cpp',

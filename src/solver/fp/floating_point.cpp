@@ -12,578 +12,88 @@
 
 #include <gmp.h>
 #include <gmpxx.h>
-#include <symfpu/core/add.h>
-#include <symfpu/core/classify.h>
-#include <symfpu/core/compare.h>
-#include <symfpu/core/convert.h>
-#include <symfpu/core/divide.h>
-#include <symfpu/core/fma.h>
-#include <symfpu/core/multiply.h>
-#include <symfpu/core/packing.h>
-#include <symfpu/core/remainder.h>
-#include <symfpu/core/sign.h>
-#include <symfpu/core/sqrt.h>
-#include <symfpu/core/unpackedFloat.h>
 
 #include "node/node_manager.h"
-#include "solver/fp/symfpu_wrapper.h"
-#include "util/gmp_utils.h"
-
-template <bool T>
-class SymFpuSymBV;
-
-namespace bzla {
-using namespace node;
-
-/* --- UnpackedFloat -------------------------------------------------------- */
-
-std::ostream &
-operator<<(std::ostream &out,
-           const ::symfpu::unpackedFloat<fp::SymFpuTraits> &uf)
-{
-  out << std::to_string(uf);
-  return out;
-}
-}  // namespace bzla
-
-namespace std {
-std::string
-to_string(const bzla::UnpackedFloat &uf)
-{
-  std::stringstream ss;
-  ss << "nan: " << uf.nan << " inf: " << uf.inf << " zero: " << uf.zero
-     << " sign: " << uf.sign << " exponent: " << uf.exponent
-     << " significand: " << uf.significand;
-  return ss.str();
-}
-}  // namespace std
-
-namespace bzla {
-
-/* --- FloatingPoint public static ------------------------------------------ */
-
-void
-FloatingPoint::ieee_bv_as_bvs(const Type &type,
-                              const BitVector &bv,
-                              BitVector &sign,
-                              BitVector &exp,
-                              BitVector &sig)
-{
-  uint32_t bw     = bv.size();
-  uint32_t bw_exp = type.fp_exp_size();
-  uint32_t bw_sig = type.fp_sig_size();
-  sign            = bv.bvextract(bw - 1, bw - 1);
-  exp             = bv.bvextract(bw - 2, bw - 1 - bw_exp);
-  sig             = bv.bvextract(bw_sig - 2, 0);
-}
-
-FloatingPoint
-FloatingPoint::from_real(NodeManager &nm,
-                         const Type &type,
-                         const RoundingMode rm,
-                         const std::string &real)
-{
-  return convert_from_rational_aux(nm, type, rm, real.c_str(), nullptr);
-}
-
-FloatingPoint
-FloatingPoint::from_rational(NodeManager &nm,
-                             const Type &type,
-                             const RoundingMode rm,
-                             const std::string &num,
-                             const std::string &den)
-{
-  return convert_from_rational_aux(nm, type, rm, num.c_str(), den.c_str());
-}
-
-FloatingPoint
-FloatingPoint::fpzero(const Type &type, bool sign)
-{
-  FloatingPoint res(type);
-  res.d_uf.reset(new UnpackedFloat(UnpackedFloat::makeZero(*res.size(), sign)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpinf(const Type &type, bool sign)
-{
-  FloatingPoint res(type);
-  res.d_uf.reset(new UnpackedFloat(UnpackedFloat::makeInf(*res.size(), sign)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpnan(const Type &type)
-{
-  FloatingPoint res(type);
-  res.d_uf.reset(new UnpackedFloat(UnpackedFloat::makeNaN(*res.size())));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpfp(NodeManager &nm,
-                    const BitVector &sign,
-                    const BitVector &exp,
-                    const BitVector &sig)
-{
-  FloatingPoint res(nm.mk_fp_type(exp.size(), sig.size() + 1),
-                    sign.bvconcat(exp).ibvconcat(sig));
-  return res;
-}
-
-/* --- FloatingPoint public ------------------------------------------------- */
-
-FloatingPoint::FloatingPoint(const Type &type)
-{
-  d_size.reset(new FloatingPointTypeInfo(type));
-}
-
-FloatingPoint::FloatingPoint(const FloatingPointTypeInfo &size)
-{
-  d_size.reset(new FloatingPointTypeInfo(size));
-}
-
-FloatingPoint::FloatingPoint(const Type &type, const UnpackedFloat &uf)
-{
-  d_size.reset(new FloatingPointTypeInfo(type));
-  d_uf.reset(new UnpackedFloat(uf));
-}
-
-FloatingPoint::FloatingPoint(const Type &type, const BitVector &bv)
-    : FloatingPoint(type)
-{
-  d_uf.reset(new UnpackedFloat(symfpu::unpack<fp::SymFpuTraits>(*d_size, bv)));
-}
-
-FloatingPoint::FloatingPoint(const Type &type,
-                             const RoundingMode rm,
-                             const FloatingPoint &fp)
-    : FloatingPoint(type)
-{
-  d_uf.reset(new UnpackedFloat(symfpu::convertFloatToFloat<fp::SymFpuTraits>(
-      *fp.size(), *d_size, rm, *fp.unpacked())));
-}
-
-FloatingPoint::FloatingPoint(const Type &type,
-                             const RoundingMode rm,
-                             const BitVector &bv,
-                             bool sign)
-    : FloatingPoint(type)
-{
-  if (sign)
-  {
-    if (bv.size() == 1)
-    {
-      /* Note: We must copy the bv here, because 1) the corresponding
-       * constructor doesn't copy it but sets d_bv = bv and 2) the wrong
-       * constructor is matched (const bool &val). */
-      UnpackedFloat uf =
-          symfpu::convertUBVToFloat<fp::SymFpuTraits>(*d_size, rm, bv);
-      /* We need special handling for bit-vectors of size one since symFPU does
-       * not allow conversions from signed bit-vectors of size one.  */
-      if (bv.is_one())
-      {
-        d_uf.reset(
-            new UnpackedFloat(symfpu::negate<fp::SymFpuTraits>(*d_size, uf)));
-      }
-      else
-      {
-        d_uf.reset(new UnpackedFloat(uf));
-      }
-    }
-    else
-    {
-      /* Note: We must copy the bv here, because 1) the corresponding
-       * constructor doesn't copy it but sets d_bv = bv and 2) the wrong
-       * constructor is matched (const bool &val). */
-      d_uf.reset(new UnpackedFloat(
-          symfpu::convertSBVToFloat<fp::SymFpuTraits>(*d_size, rm, bv)));
-    }
-  }
-  else
-  {
-    d_uf.reset(new UnpackedFloat(
-        symfpu::convertUBVToFloat<fp::SymFpuTraits>(*d_size, rm, bv)));
-  }
-}
-
-FloatingPoint::FloatingPoint(const FloatingPoint &other)
-    : FloatingPoint(*other.size())
-{
-  d_uf.reset(new UnpackedFloat(*other.unpacked()));
-}
-
-FloatingPoint &
-FloatingPoint::operator=(const FloatingPoint &other)
-
-{
-  d_size.reset(new FloatingPointTypeInfo(*other.size()));
-  d_uf.reset(new UnpackedFloat(*other.unpacked()));
-  return *this;
-}
-
-FloatingPoint::~FloatingPoint() {}
-
-uint64_t
-FloatingPoint::get_exponent_size() const
-{
-  return d_size->exponentWidth();
-}
-
-uint64_t
-FloatingPoint::get_significand_size() const
-{
-  return d_size->significandWidth();
-}
-
-FloatingPointTypeInfo *
-FloatingPoint::size() const
-{
-  return d_size.get();
-}
-
-size_t
-FloatingPoint::hash() const
-{
-  uint32_t hash = 0;
-  hash += d_uf->getNaN() * s_hash_primes[0];
-  hash += d_uf->getInf() * s_hash_primes[1];
-  hash += d_uf->getZero() * s_hash_primes[2];
-  hash += d_uf->getSign() * s_hash_primes[3];
-  hash += d_uf->getExponent().getBv().hash() * s_hash_primes[4];
-  hash += d_uf->getSignificand().getBv().hash() * s_hash_primes[5];
-  return hash;
-}
-
-std::string
-FloatingPoint::str(uint8_t bv_format) const
-{
-  assert(bv_format == 2 || bv_format == 10);
-  std::stringstream ss;
-  BitVector sign, exp, sig;
-  FloatingPoint::ieee_bv_as_bvs(d_size->type(), as_bv(), sign, exp, sig);
-  ss << "(fp ";
-  if (bv_format == 2)
-  {
-    ss << "#b" << sign.str(2) << " #b" << exp.str(2) << " #b" << sig.str(2);
-  }
-  else
-  {
-    ss << "(_ bv" << sign.str(10) << " 1) (_ bv" << exp.str(10) << " "
-       << exp.size() << ") (_ bv" << sig.str(10) << " " << sig.size() << ")";
-  }
-  ss << ")";
-  return ss.str();
-}
-
-std::string
-FloatingPoint::to_real_str() const
-{
-  uint64_t size_exp = get_exponent_size();
-  uint64_t size_sig = get_significand_size();
-
-  if (fpisnan())
-  {
-    return "(fp.to_real (_ NaN " + std::to_string(size_exp) + " "
-           + std::to_string(size_sig) + "))";
-  }
-
-  if (fpisinf())
-  {
-    if (fpisneg())
-    {
-      return "(fp.to_real (_ -oo " + std::to_string(size_exp) + " "
-             + std::to_string(size_sig) + "))";
-    }
-    return "(fp.to_real (_ +oo " + std::to_string(size_exp) + " "
-           + std::to_string(size_sig) + "))";
-  }
-  if (fpiszero())
-  {
-    return "0.0";
-  }
-
-  BitVector bv_sign, bv_exp, bv_sig;
-  FloatingPoint::ieee_bv_as_bvs(
-      d_size->type(), as_bv(), bv_sign, bv_exp, bv_sig);
-
-  UnpackedFloat *uf  = unpacked();
-  const auto &uf_exp = uf->getExponent();
-  const auto &uf_sig = uf->getSignificand();
-
-  const BitVector &exp = uf_exp.getBv();
-  mpz_class gmp_exp(exp.msb() ? -exp.bvneg().to_mpz() : exp.to_mpz());
-  gmp_exp -= util::uint64_to_mpz_class(size_sig - 1);
-
-  mpz_class gmp_sig = uf_sig.getBv().to_mpz();
-  if (bv_sign.is_one())
-  {
-    gmp_sig = -gmp_sig;
-  }
-
-  mpz_class one(1);
-  mpq_class q_res;
-  if (gmp_exp >= 0)
-  {
-    q_res = gmp_sig * (one << gmp_exp.get_ui());
-  }
-  else
-  {
-    gmp_exp = -gmp_exp;
-    q_res   = mpq_class(gmp_sig, one << gmp_exp.get_ui());
-  }
-  q_res.canonicalize();
-  std::string res = q_res.get_str(10);
-  if (res.find('/') == std::string::npos && res.find('.') == std::string::npos)
-  {
-    res += ".0";
-  }
-  return res;
-}
-
-bool
-FloatingPoint::operator==(const FloatingPoint &other) const
-{
-  UnpackedFloat *uf_a = d_uf.get();
-  UnpackedFloat *uf_b = other.unpacked();
-  if (uf_a->getNaN() == uf_b->getNaN() && uf_a->getInf() == uf_b->getInf()
-      && uf_a->getZero() == uf_b->getZero()
-      && uf_a->getSign() == uf_b->getSign()
-      && uf_a->getExponent().getBv() == uf_b->getExponent().getBv()
-      && uf_a->getSignificand().getBv() == uf_b->getSignificand().getBv())
-  {
-    return true;
-  }
-  return false;
-}
-
-bool
-FloatingPoint::operator!=(const FloatingPoint &other) const
-{
-  return !(*this == other);
-}
-
-UnpackedFloat *
-FloatingPoint::unpacked() const
-{
-  return d_uf.get();
-}
-
-void
-FloatingPoint::set_unpacked(const UnpackedFloat &uf)
-{
-  d_uf.reset(new UnpackedFloat(uf));
-}
-
-bool
-FloatingPoint::fpiszero() const
-{
-  return symfpu::isZero(*d_size, *d_uf);
-}
-
-bool
-FloatingPoint::fpisnormal() const
-{
-  return symfpu::isNormal(*d_size, *d_uf);
-}
-
-bool
-FloatingPoint::fpissubnormal() const
-{
-  return symfpu::isSubnormal(*d_size, *d_uf);
-}
-
-bool
-FloatingPoint::fpisnan() const
-{
-  return symfpu::isNaN(*d_size, *d_uf);
-}
-
-bool
-FloatingPoint::fpisinf() const
-{
-  return symfpu::isInfinite(*d_size, *d_uf);
-}
-
-bool
-FloatingPoint::fpisneg() const
-{
-  return symfpu::isNegative(*d_size, *d_uf);
-}
-
-bool
-FloatingPoint::fpispos() const
-{
-  return symfpu::isPositive(*d_size, *d_uf);
-}
-
-bool
-FloatingPoint::fpeq(const FloatingPoint &fp) const
-{
-  return symfpu::smtlibEqual<fp::SymFpuTraits>(*d_size, *d_uf, *fp.unpacked());
-}
-
-bool
-FloatingPoint::fplt(const FloatingPoint &fp) const
-{
-  return symfpu::lessThan<fp::SymFpuTraits>(*d_size, *d_uf, *fp.unpacked());
-}
-
-bool
-FloatingPoint::fple(const FloatingPoint &fp) const
-{
-  return symfpu::lessThanOrEqual<fp::SymFpuTraits>(
-      *d_size, *d_uf, *fp.unpacked());
-}
-
-bool
-FloatingPoint::fpgt(const FloatingPoint &fp) const
-{
-  return symfpu::lessThan<fp::SymFpuTraits>(*d_size, *fp.unpacked(), *d_uf);
-}
-
-bool
-FloatingPoint::fpge(const FloatingPoint &fp) const
-{
-  return symfpu::lessThanOrEqual<fp::SymFpuTraits>(
-      *d_size, *fp.unpacked(), *d_uf);
-}
-
-FloatingPoint
-FloatingPoint::fpmin(const FloatingPoint &fp) const
-{
-  if (fpiszero() && fp.fpiszero() && fpisneg() != fp.fpisneg())
-  {
-    return FloatingPoint::fpzero(d_size->type(), true);
-  }
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(
-      symfpu::min<fp::SymFpuTraits>(*d_size, *d_uf, *fp.unpacked(), false)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpmax(const FloatingPoint &fp) const
-{
-  if (fpiszero() && fp.fpiszero() && fpisneg() != fp.fpisneg())
-  {
-    return FloatingPoint::fpzero(d_size->type(), false);
-  }
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(
-      symfpu::max<fp::SymFpuTraits>(*d_size, *d_uf, *fp.unpacked(), false)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpabs() const
-{
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(
-      symfpu::absolute<fp::SymFpuTraits>(*res.size(), *d_uf)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpneg() const
-{
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(
-      new UnpackedFloat(symfpu::negate<fp::SymFpuTraits>(*res.size(), *d_uf)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpsqrt(const RoundingMode rm) const
-{
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(
-      symfpu::sqrt<fp::SymFpuTraits>(*res.size(), rm, *d_uf)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fprti(const RoundingMode rm) const
-{
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(
-      symfpu::roundToIntegral<fp::SymFpuTraits>(*res.size(), rm, *d_uf)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fprem(const FloatingPoint &fp) const
-{
-  assert(d_size->type() == fp.size()->type());
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(
-      symfpu::remainder<fp::SymFpuTraits>(*res.size(), *d_uf, *fp.unpacked())));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
-{
-  assert(d_size->type() == fp.size()->type());
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(symfpu::add<fp::SymFpuTraits>(
-      *res.size(), rm, *d_uf, *fp.unpacked(), true)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
-{
-  assert(d_size->type() == fp.size()->type());
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(symfpu::multiply<fp::SymFpuTraits>(
-      *res.size(), rm, *d_uf, *fp.unpacked())));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpdiv(const RoundingMode rm, const FloatingPoint &fp) const
-{
-  assert(d_size->type() == fp.size()->type());
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(symfpu::divide<fp::SymFpuTraits>(
-      *res.size(), rm, *d_uf, *fp.unpacked())));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpfma(const RoundingMode rm,
-                     const FloatingPoint &fp0,
-                     const FloatingPoint &fp1) const
-{
-  assert(d_size->type() == fp0.size()->type());
-  assert(d_size->type() == fp1.size()->type());
-  FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(symfpu::fma<fp::SymFpuTraits>(
-      *res.size(), rm, *d_uf, *fp0.unpacked(), *fp1.unpacked())));
-  return res;
-}
-
-BitVector
-FloatingPoint::as_bv() const
-{
-  return symfpu::pack(*d_size, *d_uf).getBv();
-}
-
-/* --- FloatingPoint private ------------------------------------------------ */
-
-FloatingPoint
-FloatingPoint::from_unpacked(NodeManager &nm,
-                             const BitVector &sign,
-                             const BitVector &exp,
-                             const BitVector &sig)
-{
-  FloatingPoint res(nm.mk_fp_type(exp.size(), sig.size() + 1),
-                    UnpackedFloat(sign.is_one(), exp, sig));
-  return res;
-}
+#include "util/hash.h"
 
 namespace {
+int64_t
+ieee_exp_max(uint64_t exp_size)
+{
+  assert(exp_size < 63);
+  // TODO we need to make this robust wrt to underlying impl (64 vs 32 bit)
+  uint64_t one = 1;
+  return (one << (exp_size - one)) - one;
+}
+int64_t
+ieee_exp_min(uint64_t exp_size)
+{
+  return 1 - ieee_exp_max(exp_size);
+}
+int64_t
+mpfr_exp_max(uint64_t exp_size)
+{
+  return ieee_exp_max(exp_size) + 1;
+}
+int64_t
+mpfr_exp_min(uint64_t exp_size, uint64_t sig_size)
+{
+  return ieee_exp_min(exp_size) - sig_size + 2;
+}
+int64_t
+exp_bias(uint64_t exp_size)
+{
+  return ieee_exp_max(exp_size);
+}
+mpfr_exp_t
+exp2mpfr(uint64_t exp_size, uint64_t exp)
+{
+  // Remove bias and account for MPFR's hidden bit.
+  return exp - exp_bias(exp_size) + 1;
+}
+int64_t
+mpfr2exp(uint64_t exp_size, mpfr_exp_t exp)
+{
+  // Add bias and remove MPFR's hidden bit.
+  return exp + exp_bias(exp_size) - 1;
+}
+void
+mpfr_set_eminmax_for_format(uint64_t exp_size, uint64_t sig_size)
+{
+  // TODO make robust with respect to MPFR implementation size of exponent
+  assert(sizeof(mpfr_exp_t) == sizeof(uint64_t));
+  mpfr_set_emax(mpfr_exp_max(exp_size));
+  mpfr_set_emin(mpfr_exp_min(exp_size, sig_size));
+}
+void
+mpfr_set_eminmax_for_format(bzla::Type type)
+{
+  mpfr_set_eminmax_for_format(type.fp_exp_size(), type.fp_sig_size());
+}
+void
+mpfr_reset_format()
+{
+  mpfr_set_emax(mpfr_get_emax_max());
+  mpfr_set_emin(mpfr_get_emin_min());
+}
+int64_t
+sub_threshold(uint64_t exp_size)
+{
+  return -static_cast<int64_t>(exp_bias(exp_size) - 1);
+}
+mpfr_rnd_t
+rm2mpfr(bzla::RoundingMode rm)
+{
+  switch (rm)
+  {
+    case bzla::RoundingMode::RNA: return MPFR_RNDNA;
+    case bzla::RoundingMode::RNE: return MPFR_RNDN;
+    case bzla::RoundingMode::RTN: return MPFR_RNDD;
+    case bzla::RoundingMode::RTP: return MPFR_RNDU;
+    default: assert(rm == bzla::RoundingMode::RTZ); return MPFR_RNDZ;
+  }
+}
+
 void
 make_mpq_from_dec_string(mpq_t &res, std::string str)
 {
@@ -678,195 +188,743 @@ make_mpq_from_rat_string(mpq_t &res, const char *str_num, const char *str_den)
   mpq_canonicalize(res);
 }
 
-static void
-make_mpq_from_ui(mpq_t &res, uint32_t n, uint32_t d)
-{
-  mpq_init(res);
-  mpq_set_ui(res, n, d);
-  mpq_canonicalize(res);
-}
 }  // namespace
 
-FloatingPoint
-FloatingPoint::convert_from_rational_aux(NodeManager &nm,
-                                         const Type &type,
-                                         const RoundingMode rm,
-                                         const char *num,
-                                         const char *den)
-{
-  assert(num);
+namespace bzla {
+using namespace node;
 
-  mpq_t r;
-  if (den == nullptr)
+/* --- FloatingPoint public static ------------------------------------------ */
+
+void
+FloatingPoint::ieee_bv_as_bvs(const Type &type,
+                              const BitVector &bv,
+                              BitVector &sign,
+                              BitVector &exp,
+                              BitVector &sig)
+{
+  uint32_t bw     = bv.size();
+  uint32_t bw_exp = type.fp_exp_size();
+  uint32_t bw_sig = type.fp_sig_size();
+  sign            = bv.bvextract(bw - 1, bw - 1);
+  exp             = bv.bvextract(bw - 2, bw - 1 - bw_exp);
+  sig             = bv.bvextract(bw_sig - 2, 0);
+}
+
+FloatingPoint
+FloatingPoint::from_real(NodeManager &nm,
+                         const Type &type,
+                         const RoundingMode rm,
+                         const std::string &real)
+{
+  (void) nm;
+  FloatingPoint res(type);
+  mpfr_set_eminmax_for_format(type);
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  mpq_t mpq;
+  make_mpq_from_dec_string(mpq, real.c_str());
+  int32_t i = 0;
+  if (rm == RoundingMode::RNA)
   {
-    make_mpq_from_dec_string(r, num);
+    i = mpfr_round_nearest_away(mpfr_set_q, res.d_mpfr, mpq);
+    if (mpfr_regular_p(res.d_mpfr))
+    {
+      i = mpfr_round_nearest_away(mpfr_check_range, res.d_mpfr, i);
+    }
   }
   else
   {
-    make_mpq_from_rat_string(r, num, den);
-  }
-
-  int32_t sgn = mpq_sgn(r);
-  if (sgn == 0)
-  {
-    mpq_clear(r);
-    return FloatingPoint::fpzero(type, false);
-  }
-
-  /* r = abs(r) */
-  if (sgn < 0)
-  {
-    mpq_neg(r, r);
-  }
-
-  /* Exponent ---------------------------------------------------------- */
-
-  mpq_t tmp_exp;
-  mpz_t iexp, inc;
-  make_mpq_from_ui(tmp_exp, 1, 1);
-  mpz_init_set_ui(iexp, 0);
-  mpz_init_set_ui(inc, 1);
-
-  int32_t cmp = mpq_cmp(r, tmp_exp);
-  if (cmp != 0)
-  {
-    if (cmp < 0)
+    i = mpfr_set_q(res.d_mpfr, mpq, rm_mpfr);
+    if (mpfr_regular_p(res.d_mpfr))
     {
-      while (mpq_cmp(r, tmp_exp) < 0)
-      {
-        mpz_sub(iexp, iexp, inc);
-        mpq_div_2exp(tmp_exp, tmp_exp, 1);
-      }
+      i = mpfr_check_range((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
+    }
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
+  mpq_clear(mpq);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::from_rational(NodeManager &nm,
+                             const Type &type,
+                             const RoundingMode rm,
+                             const std::string &num,
+                             const std::string &den)
+{
+  (void) nm;
+  FloatingPoint res(type);
+  mpfr_set_eminmax_for_format(type);
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  mpq_t mpq;
+  make_mpq_from_rat_string(mpq, num.c_str(), den.c_str());
+  int32_t i = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_set_q, res.d_mpfr, mpq);
+    if (mpfr_regular_p(res.d_mpfr))
+    {
+      i = mpfr_round_nearest_away(mpfr_check_range, res.d_mpfr, i);
+    }
+  }
+  else
+  {
+    i = mpfr_set_q(res.d_mpfr, mpq, rm_mpfr);
+    if (mpfr_regular_p(res.d_mpfr))
+    {
+      i = mpfr_check_range((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
+    }
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
+  mpq_clear(mpq);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpzero(const Type &type, bool sign)
+{
+  FloatingPoint res(type);
+  mpfr_set_zero(res.d_mpfr, sign ? -1 : 1);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpinf(const Type &type, bool sign)
+{
+  FloatingPoint res(type);
+  mpfr_set_inf(res.d_mpfr, sign ? -1 : 1);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpnan(const Type &type)
+{
+  FloatingPoint res(type);
+  mpfr_set_nan(res.d_mpfr);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpfp(NodeManager &nm,
+                    const BitVector &sign,
+                    const BitVector &exp,
+                    const BitVector &sig)
+{
+  FloatingPoint res(nm.mk_fp_type(exp.size(), sig.size() + 1),
+                    sign.bvconcat(exp).ibvconcat(sig));
+  return res;
+}
+
+/* --- FloatingPoint public --------------====------------------------------- */
+
+FloatingPoint::FloatingPoint(const Type &type) : d_type(type)
+{
+  mpfr_reset_format();
+  // MPFR precision includes the hidden bit (not the sign bit), we can use
+  // significand size (which is also +1 because of the sign bit).
+  mpfr_init2(d_mpfr, type.fp_sig_size());
+}
+
+FloatingPoint::FloatingPoint(const Type &type, const BitVector &bv)
+    : FloatingPoint(type)
+{
+  assert(type.fp_ieee_bv_size() == bv.size());
+
+  mpfr_set_eminmax_for_format(d_type);
+
+  BitVector bvsign, bvexp, bvsig;
+  ieee_bv_as_bvs(type, bv, bvsign, bvexp, bvsig);
+  int32_t sign = bvsign.is_true() ? -1 : 1;
+  if (bvexp.is_ones())
+  {
+    if (bvsig.is_zero())
+    {
+      mpfr_set_inf(d_mpfr, sign);
     }
     else
     {
-      while (mpq_cmp(r, tmp_exp) >= 0)
-      {
-        mpz_add(iexp, iexp, inc);
-        mpq_mul_2exp(tmp_exp, tmp_exp, 1);
-      }
-      mpz_sub(iexp, iexp, inc);
-      mpq_div_2exp(tmp_exp, tmp_exp, 1);
+      mpfr_set_nan(d_mpfr);
     }
   }
-
-  assert(mpq_cmp(tmp_exp, r) <= 0);
-#ifndef NDEBUG
-  mpq_t tmp_mul;
-  mpq_init(tmp_mul);
-  mpq_mul_2exp(tmp_mul, tmp_exp, 1);
-  assert(mpq_cmp(r, tmp_mul) < 0);
-  mpq_clear(tmp_mul);
-#endif
-  /* Determine number of bits required to represent the exponent for a
-   * normal number. */
-  uint32_t n_exp_bits = 2;
-  int32_t esgn        = mpz_sgn(iexp);
-  if (esgn > 0)
+  else if (bvexp.is_zero())
   {
-    /* Not exactly representable with n_exp_bits, adjust. */
-    mpz_t representable;
-    mpz_init_set_ui(representable, 4);
-    while (mpz_cmp(representable, iexp) <= 0)
+    if (bvsig.is_zero())
     {
-      mpz_mul_2exp(representable, representable, 1);
-      n_exp_bits += 1;
+      mpfr_set_zero(d_mpfr, sign);
     }
-    mpz_clear(representable);
-  }
-  else if (esgn < 0)
-  {
-    /* Exactly representable with n_exp_bits + sign bit but -2^n and
-     * -(2^n - 1) are both subnormal */
-    mpz_t representable, rep_plus_two;
-    mpz_init_set_si(representable, -4);
-    mpz_init(rep_plus_two);
-    mpz_add_ui(rep_plus_two, representable, 2);
-    while (mpz_cmp(rep_plus_two, iexp) > 0)
+    else
     {
-      mpz_mul_2exp(representable, representable, 1);
-      mpz_add_ui(rep_plus_two, representable, 2);
-      n_exp_bits += 1;
+      // subnormals
+      std::string sign_str = sign < 0 ? "-" : "";
+      std::string s        = sign_str + "0." + bvsig.str();
+      mpfr_set_str(d_mpfr, s.c_str(), 2, MPFR_RNDN);
+      mpfr_exp_t exp = mpfr_get_exp(d_mpfr);
+      mpfr_set_exp(d_mpfr, exp + exp2mpfr(bvexp.size(), 0));
+      assert(fpissubnormal());
     }
-    mpz_clear(rep_plus_two);
-    mpz_clear(representable);
   }
-  n_exp_bits += 1; /* for sign bit */
-#ifndef NDEBUG
-  char *exp_bin_str = mpz_get_str(nullptr, 2, iexp);
-  assert(strlen(exp_bin_str) <= n_exp_bits);
-  free(exp_bin_str);
-#endif
-
-  /* Significand ------------------------------------------------------- */
-
-  /* sig bits of type + guard and sticky bits */
-  uint32_t n_sig_bits = type.fp_sig_size() + 2;
-  BitVector sig       = BitVector::mk_zero(n_sig_bits);
-  mpq_t tmp_sig, mid;
-  make_mpq_from_ui(tmp_sig, 0, 1);
-  mpq_init(mid);
-  for (uint32_t i = 0, n = n_sig_bits - 1; i < n; ++i)
+  else
   {
-    mpq_add(mid, tmp_sig, tmp_exp);
-    if (mpq_cmp(mid, r) <= 0)
+    // normals
+    std::string sign_str = sign < 0 ? "-" : "";
+    std::string s        = sign_str + "1." + bvsig.str();
+    mpfr_set_str(d_mpfr, s.c_str(), 2, MPFR_RNDN);
+    mpfr_set_exp(d_mpfr, exp2mpfr(bvexp.size(), bvexp.to_uint64()));
+  }
+}
+
+FloatingPoint::FloatingPoint(const Type &type,
+                             const RoundingMode rm,
+                             const FloatingPoint &fp)
+    : FloatingPoint(type)
+{
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_set, d_mpfr, fp.d_mpfr);
+    if (mpfr_regular_p(d_mpfr))
     {
-      sig.set_bit(0, 1);
-      mpq_set(tmp_sig, mid);
+      i = mpfr_round_nearest_away(mpfr_check_range, d_mpfr, i);
     }
-    sig.ibvshl(1);
-    mpq_div_2exp(tmp_exp, tmp_exp, 1);
   }
-
-  /* Sticky bit -------------------------------------------------------- */
-
-  mpq_t remainder;
-  mpq_init(remainder);
-  mpq_sub(remainder, r, tmp_sig);
-#ifndef NDEBUG
-  mpq_t tmp01;
-  make_mpq_from_ui(tmp01, 0, 1);
-  assert(mpq_cmp(tmp01, remainder) <= 1);
-  mpq_clear(tmp01);
-#endif
-  if (mpq_sgn(remainder) != 0)
+  else
   {
-    sig.set_bit(0, 1);
+    i = mpfr_set(d_mpfr, fp.d_mpfr, rm_mpfr);
+    if (mpfr_regular_p(d_mpfr))
+    {
+      i = mpfr_check_range((mpfr_ptr) d_mpfr, i, rm_mpfr);
+    }
   }
+  mpfr_subnormalize((mpfr_ptr) d_mpfr, i, rm_mpfr);
+}
 
-  /* Exact float ------------------------------------------------------- */
-
-  FloatingPointTypeInfo exact_format(n_exp_bits, n_sig_bits);
-
-  /* If the format has n_exp_bits, the unpacked format may have more to allow
-   * subnormals to be normalised. */
-  uint32_t extension = UnpackedFloat::exponentWidth(exact_format) - n_exp_bits;
-
-  BitVector sign = sgn < 0 ? BitVector::mk_true() : BitVector::mk_false();
-  char *str      = mpz_get_str(nullptr, 10, iexp);
-  BitVector exp(n_exp_bits, str, 10);
-  free(str);
-
-  if (extension > 0)
+FloatingPoint::FloatingPoint(const Type &type,
+                             const RoundingMode rm,
+                             const BitVector &bv,
+                             bool sign)
+    : FloatingPoint(type)
+{
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  mpz_class bv_mpz   = bv.to_mpz(sign);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
   {
-    exp.ibvsext(extension);
+    i = mpfr_round_nearest_away(mpfr_set_z, d_mpfr, bv_mpz.get_mpz_t());
+    if (mpfr_regular_p(d_mpfr))
+    {
+      i = mpfr_round_nearest_away(mpfr_check_range, d_mpfr, i);
+    }
+  }
+  else
+  {
+    i = mpfr_set_z(d_mpfr, bv_mpz.get_mpz_t(), rm_mpfr);
+    if (mpfr_regular_p(d_mpfr))
+    {
+      i = mpfr_check_range((mpfr_ptr) d_mpfr, i, rm_mpfr);
+    }
+  }
+  mpfr_subnormalize((mpfr_ptr) d_mpfr, i, rm_mpfr);
+}
+
+FloatingPoint::FloatingPoint(const FloatingPoint &other)
+    : FloatingPoint(other.d_type)
+{
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_set(d_mpfr, other.d_mpfr, MPFR_RNDN);
+}
+
+FloatingPoint &
+FloatingPoint::operator=(const FloatingPoint &other)
+{
+  assert(!other.d_type.is_null());
+  if (d_type.is_null())
+  {
+    mpfr_reset_format();
+    // MPFR precision includes the hidden bit (not the sign bit), we can use
+    // significand size (which is also +1 because of the sign bit).
+    mpfr_init2(d_mpfr, other.d_type.fp_sig_size());
+  }
+  else if (d_type.fp_sig_size() != other.d_type.fp_sig_size())
+  {
+    mpfr_set_prec(d_mpfr, other.d_type.fp_sig_size());
+  }
+  d_type = other.d_type;
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_set(d_mpfr, other.d_mpfr, MPFR_RNDN);
+  return *this;
+}
+
+FloatingPoint::~FloatingPoint() { mpfr_clear(d_mpfr); }
+
+uint64_t
+FloatingPoint::get_exponent_size() const
+{
+  return d_type.fp_exp_size();
+}
+
+uint64_t
+FloatingPoint::get_significand_size() const
+{
+  return d_type.fp_sig_size();
+}
+
+const Type &
+FloatingPoint::type() const
+{
+  return d_type;
+}
+
+size_t
+FloatingPoint::hash() const
+{
+  int32_t sign = fpisneg() ? -1 : 1;
+
+  uint64_t i, j = 0, n, res = 0;
+  uint64_t x, p0, p1;
+
+  uint64_t exp_size = d_type.fp_exp_size();
+  uint64_t sig_size = d_type.fp_sig_size();
+  res               = (exp_size + sig_size) * util::hash::s_hash_primes[j++];
+
+  if (fpisinf())
+  {
+    return util::hash::fnv1a_64(
+        std::hash<std::string>{}(sign < 0 ? "-oo" : "+oo"), res);
+  }
+  if (fpisnan())
+  {
+    return util::hash::fnv1a_64(std::hash<std::string>{}("NaN"), res);
+  }
+  if (fpiszero())
+  {
+    return util::hash::fnv1a_64(
+        std::hash<std::string>{}(sign < 0 ? "-zero" : "+zero") * sign, res);
   }
 
-  FloatingPoint exact_float = from_unpacked(nm, sign, exp, sig);
+  // limbs for significand
+  uint64_t nlimbs = (sig_size + mp_bits_per_limb - 1) / mp_bits_per_limb;
 
-  FloatingPoint res(type);
-  res.d_uf.reset(
-      new UnpackedFloat(symfpu::convertFloatToFloat<fp::SymFpuTraits>(
-          exact_format, *res.size(), rm, *exact_float.unpacked())));
-
-  mpq_clear(remainder);
-  mpq_clear(tmp_sig);
-  mpq_clear(mid);
-  mpz_clear(iexp);
-  mpz_clear(inc);
-  mpq_clear(tmp_exp);
-  mpq_clear(r);
+  // hash for significand, least significant limb is at index 0
+  mp_limb_t limb;
+  for (i = 0, j = 1, n = nlimbs; i < n; ++i)
+  {
+    p0 = s_hash_primes[j++];
+    if (j == util::hash::s_n_primes) j = 0;
+    p1 = util::hash::s_hash_primes[j++];
+    if (j == util::hash::s_n_primes) j = 0;
+    limb = d_mpfr->_mpfr_d[i];
+    if (mp_bits_per_limb == 64)
+    {
+      uint64_t lo = limb;
+      uint64_t hi = (limb >> 32);
+      x           = lo ^ res;
+      x           = ((x >> 16) ^ x) * p0;
+      x           = ((x >> 16) ^ x) * p1;
+      x           = ((x >> 16) ^ x);
+      p0          = s_hash_primes[j++];
+      if (j == util::hash::s_n_primes) j = 0;
+      p1 = s_hash_primes[j++];
+      if (j == util::hash::s_n_primes) j = 0;
+      x = x ^ hi;
+    }
+    else
+    {
+      assert(mp_bits_per_limb == 32);
+      x = res ^ limb;
+    }
+    x   = ((x >> 16) ^ x) * p0;
+    x   = ((x >> 16) ^ x) * p1;
+    res = ((x >> 16) ^ x);
+  }
+  res = util::hash::fnv1a_64(
+      ((sign >> 16) ^ sign) * util::hash::s_hash_primes[j], res);
+  res = util::hash::fnv1a_64(static_cast<uint64_t>(mpfr_get_exp(d_mpfr)), res);
   return res;
+}
+
+std::string
+FloatingPoint::str(uint8_t bv_format) const
+{
+  assert(bv_format == 2 || bv_format == 10);
+  std::stringstream ss;
+  BitVector sign, exp, sig;
+  FloatingPoint::ieee_bv_as_bvs(d_type, as_bv(), sign, exp, sig);
+  ss << "(fp ";
+  if (bv_format == 2)
+  {
+    ss << "#b" << sign.str(2) << " #b" << exp.str(2) << " #b" << sig.str(2);
+  }
+  else
+  {
+    ss << "(_ bv" << sign.str(10) << " 1) (_ bv" << exp.str(10) << " "
+       << exp.size() << ") (_ bv" << sig.str(10) << " " << sig.size() << ")";
+  }
+  ss << ")";
+  return ss.str();
+}
+
+std::string
+FloatingPoint::to_real_str() const
+{
+  if (fpisnan())
+  {
+    return "(fp.to_real (_ NaN " + std::to_string(d_type.fp_exp_size()) + " "
+           + std::to_string(d_type.fp_sig_size()) + "))";
+  }
+
+  if (fpisinf())
+  {
+    if (fpisneg())
+    {
+      return "(fp.to_real (_ -oo " + std::to_string(d_type.fp_exp_size()) + " "
+             + std::to_string(d_type.fp_sig_size()) + "))";
+    }
+    return "(fp.to_real (_ +oo " + std::to_string(d_type.fp_exp_size()) + " "
+           + std::to_string(d_type.fp_sig_size()) + "))";
+  }
+  if (fpiszero())
+  {
+    return "0.0";
+  }
+
+  mpq_class mpq;
+  mpfr_get_q(mpq.get_mpq_t(), d_mpfr);
+  std::string res = mpq.get_str();
+  if (res.find('/') == std::string::npos && res.find('.') == std::string::npos)
+  {
+    res += ".0";
+  }
+  return res;
+}
+
+bool
+FloatingPoint::operator==(const FloatingPoint &other) const
+{
+  if (d_type != other.d_type)
+  {
+    return false;
+  }
+  bool isnan1 = fpisnan();
+  bool isnan2 = other.fpisnan();
+  if (isnan1 || isnan2)
+  {
+    return isnan1 == isnan2;
+  }
+  bool iszero1 = fpiszero();
+  bool iszero2 = other.fpiszero();
+  if (iszero1 || iszero2)
+  {
+    return iszero1 == iszero2 && fpisneg() == other.fpisneg();
+  }
+  return mpfr_equal_p(d_mpfr, other.d_mpfr) > 0;
+}
+
+bool
+FloatingPoint::operator!=(const FloatingPoint &other) const
+{
+  return !(*this == other);
+}
+
+bool
+FloatingPoint::fpiszero() const
+{
+  return mpfr_zero_p(d_mpfr) > 0;
+}
+
+bool
+FloatingPoint::fpisnormal() const
+{
+  return mpfr_regular_p(d_mpfr)
+         && mpfr_get_exp(d_mpfr) > sub_threshold(d_type.fp_exp_size());
+}
+
+bool
+FloatingPoint::fpissubnormal() const
+{
+  return mpfr_regular_p(d_mpfr)
+         && mpfr_get_exp(d_mpfr) <= sub_threshold(d_type.fp_exp_size());
+}
+
+bool
+FloatingPoint::fpisnan() const
+{
+  return mpfr_nan_p(d_mpfr) > 0;
+}
+
+bool
+FloatingPoint::fpisinf() const
+{
+  return mpfr_inf_p(d_mpfr) > 0;
+}
+
+bool
+FloatingPoint::fpisneg() const
+{
+  return !fpisnan() && mpfr_signbit(d_mpfr) != 0;
+}
+
+bool
+FloatingPoint::fpispos() const
+{
+  return !fpisnan() && mpfr_signbit(d_mpfr) == 0;
+}
+
+bool
+FloatingPoint::fpeq(const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  return mpfr_equal_p(d_mpfr, fp.d_mpfr);
+}
+
+bool
+FloatingPoint::fplt(const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  return mpfr_less_p(d_mpfr, fp.d_mpfr);
+}
+
+bool
+FloatingPoint::fple(const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  return mpfr_lessequal_p(d_mpfr, fp.d_mpfr);
+}
+
+bool
+FloatingPoint::fpgt(const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  return mpfr_greater_p(d_mpfr, fp.d_mpfr);
+}
+
+bool
+FloatingPoint::fpge(const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  return mpfr_greaterequal_p(d_mpfr, fp.d_mpfr);
+}
+
+FloatingPoint
+FloatingPoint::fpmin(const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  FloatingPoint res(d_type);
+  mpfr_min(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpmax(const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  FloatingPoint res(d_type);
+  mpfr_max(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpabs() const
+{
+  FloatingPoint res(d_type);
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_abs(res.d_mpfr, d_mpfr, MPFR_RNDN);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpneg() const
+{
+  FloatingPoint res(d_type);
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_neg(res.d_mpfr, d_mpfr, MPFR_RNDN);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpsqrt(const RoundingMode rm) const
+{
+  FloatingPoint res(d_type);
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_sqrt, res.d_mpfr, d_mpfr);
+  }
+  else
+  {
+    i = mpfr_sqrt(res.d_mpfr, d_mpfr, rm_mpfr);
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fprti(const RoundingMode rm) const
+{
+  FloatingPoint res(d_type);
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round(res.d_mpfr, d_mpfr);
+  }
+  else
+  {
+    i = mpfr_rint(res.d_mpfr, d_mpfr, rm_mpfr);
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fprem(const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  FloatingPoint res(d_type);
+  mpfr_set_eminmax_for_format(d_type);
+  int32_t i = mpfr_remainder(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, MPFR_RNDN);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  FloatingPoint res(d_type);
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_add, res.d_mpfr, d_mpfr, fp.d_mpfr);
+  }
+  else
+  {
+    i = mpfr_add(res.d_mpfr, d_mpfr, fp.d_mpfr, rm_mpfr);
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  FloatingPoint res(d_type);
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_mul, res.d_mpfr, d_mpfr, fp.d_mpfr);
+  }
+  else
+  {
+    i = mpfr_mul(res.d_mpfr, d_mpfr, fp.d_mpfr, rm_mpfr);
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpdiv(const RoundingMode rm, const FloatingPoint &fp) const
+{
+  assert(d_type == fp.d_type);
+  FloatingPoint res(d_type);
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(mpfr_div, res.d_mpfr, d_mpfr, fp.d_mpfr);
+  }
+  else
+  {
+    i = mpfr_div(res.d_mpfr, d_mpfr, fp.d_mpfr, rm_mpfr);
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpfma(const RoundingMode rm,
+                     const FloatingPoint &fp0,
+                     const FloatingPoint &fp1) const
+{
+  assert(d_type == fp0.d_type);
+  assert(d_type == fp1.d_type);
+  FloatingPoint res(d_type);
+  mpfr_set_eminmax_for_format(d_type);
+  mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
+  int32_t i          = 0;
+  if (rm == RoundingMode::RNA)
+  {
+    i = mpfr_round_nearest_away(
+        mpfr_fma, res.d_mpfr, d_mpfr, fp0.d_mpfr, fp1.d_mpfr);
+  }
+  else
+  {
+    i = mpfr_fma(res.d_mpfr, d_mpfr, fp0.d_mpfr, fp1.d_mpfr, rm_mpfr);
+  }
+  mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, rm_mpfr);
+  return res;
+}
+
+BitVector
+FloatingPoint::as_bv() const
+{
+  uint64_t exp_size = d_type.fp_exp_size();
+  uint64_t sig_size = d_type.fp_sig_size();
+  if (fpisnan())
+  {
+    // We use single representation for NaN, the same as SymFPU uses.
+    return BitVector::mk_false()
+        .ibvconcat(BitVector::mk_ones(exp_size))
+        .ibvconcat(BitVector::mk_min_signed(sig_size - 1));
+  }
+  uint64_t sign = fpisneg();
+  if (fpiszero())
+  {
+    return sign ? BitVector::mk_min_signed(exp_size + sig_size)
+                : BitVector::mk_zero(exp_size + sig_size);
+  }
+  BitVector bvsign = sign ? BitVector::mk_true() : BitVector::mk_false();
+  if (fpisinf())
+  {
+    return bvsign.ibvconcat(BitVector::mk_ones(exp_size))
+        .ibvconcat(BitVector::mk_zero(sig_size - 1));
+  }
+  mpfr_set_eminmax_for_format(exp_size, sig_size);
+  mpfr_exp_t exp;
+  char *str = mpfr_get_str(0, &exp, 2, sig_size, d_mpfr, MPFR_RNDN);
+  assert(strlen(str) > 1 && (str[0] != '-' || strlen(str) > 2));
+  assert(strlen(str[0] == '-' ? str + 1 : str) == sig_size);
+  BitVector bvexp = BitVector::mk_zero(exp_size);
+  BitVector bvsig;
+  if (!fpissubnormal())
+  {
+    std::string sig_str = str[0] == '-' ? str + 2 : str + 1;
+    bvexp               = BitVector::from_si(exp_size,
+                               static_cast<int64_t>(mpfr2exp(exp_size, exp)));
+    bvsig               = BitVector(sig_size - 1, sig_str);
+  }
+  else
+  {
+    std::string sig_str = str[0] == '-' ? str + 1 : str;
+    sig_str.resize(sig_size - 1);
+    assert(mpfr2exp(exp_size, exp) <= 0);
+    bvsig =
+        BitVector(sig_size - 1, sig_str, 2).ibvshr(-mpfr2exp(exp_size, exp));
+  }
+  mpfr_free_str(str);
+  assert(bvexp.size() == exp_size);
+  assert(bvsig.size() == sig_size - 1);
+  return bvsign.ibvconcat(bvexp).ibvconcat(bvsig);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -875,50 +933,6 @@ std::ostream &
 operator<<(std::ostream &out, const FloatingPoint &fp)
 {
   out << fp.str();
-  return out;
-}
-
-/* --- FloatingPointTypeInfo public ----------------------------------------- */
-
-FloatingPointTypeInfo::FloatingPointTypeInfo(const Type &type)
-    : d_esize(type.fp_exp_size()), d_ssize(type.fp_sig_size())
-{
-  assert(type.is_fp());
-  d_type = type;
-}
-
-FloatingPointTypeInfo::FloatingPointTypeInfo(uint32_t esize, uint32_t ssize)
-    : d_esize(esize), d_ssize(ssize)
-{
-  NodeManager &nm = fp::SymFpuNM::get();
-  d_type          = nm.mk_fp_type(esize, ssize);
-}
-
-FloatingPointTypeInfo::FloatingPointTypeInfo(const FloatingPointTypeInfo &other)
-    : d_esize(other.d_esize), d_ssize(other.d_ssize)
-{
-  assert(other.d_type.is_fp());
-  d_type = other.d_type;
-}
-
-FloatingPointTypeInfo::~FloatingPointTypeInfo() {}
-
-const Type &
-FloatingPointTypeInfo::type() const
-{
-  return d_type;
-}
-
-std::string
-FloatingPointTypeInfo::str() const
-{
-  return d_type.str();
-}
-
-std::ostream &
-operator<<(std::ostream &out, const FloatingPointTypeInfo &type)
-{
-  out << type.str();
   return out;
 }
 

@@ -140,9 +140,6 @@ endif
 if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
 endif
-if mpfr_dep.found()
-  cpp_args += ['-DBZLA_USE_MPFR']
-endif
 if get_option('fpexp')
   cpp_args += ['-DBZLA_USE_FPEXP']
 endif
