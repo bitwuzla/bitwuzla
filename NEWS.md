@@ -1,11 +1,17 @@
 # News
 
+## News for version 0.8.1
+
 This file collects a summary of important and/or user-visible changes.
 
 - Configuring a terminator when a SAT solver that does not have terminator
   support (CryptoMiniSat, Kissat) is configured will now raise an exception
   in `Bitwuzla::configure_terminator()` rather than at `Bitwuzla::check_sat()`.
   This is also handled correspondingly in the C and Python bindings.
+
+- Fixed handling of non-distinct variable bindings in SMT2 parser.
+
+- Various fixes.
 
 ## News for version 0.8.0
 
