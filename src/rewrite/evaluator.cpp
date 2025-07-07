@@ -108,7 +108,8 @@ Evaluator::evaluate(NodeManager& nm,
       return nm.mk_value(values[0].value<FloatingPoint>().fplt(
           values[1].value<FloatingPoint>()));
     case Kind::FP_TO_FP_FROM_FP:
-      return nm.mk_value(FloatingPoint(nm.mk_fp_type(indices[0], indices[1]),
+      return nm.mk_value(FloatingPoint(indices[0],
+                                       indices[1],
                                        values[0].value<RoundingMode>(),
                                        values[1].value<FloatingPoint>()));
     case Kind::FP_ABS:
@@ -145,15 +146,17 @@ Evaluator::evaluate(NodeManager& nm,
       return nm.mk_value(values[1].value<FloatingPoint>().fpsqrt(
           values[0].value<RoundingMode>()));
     case Kind::FP_TO_FP_FROM_BV:
-      return nm.mk_value(FloatingPoint(nm.mk_fp_type(indices[0], indices[1]),
-                                       values[0].value<BitVector>()));
+      return nm.mk_value(
+          FloatingPoint(indices[0], indices[1], values[0].value<BitVector>()));
     case Kind::FP_TO_FP_FROM_SBV:
-      return nm.mk_value(FloatingPoint(nm.mk_fp_type(indices[0], indices[1]),
+      return nm.mk_value(FloatingPoint(indices[0],
+                                       indices[1],
                                        values[0].value<RoundingMode>(),
                                        values[1].value<BitVector>(),
                                        true));
     case Kind::FP_TO_FP_FROM_UBV:
-      return nm.mk_value(FloatingPoint(nm.mk_fp_type(indices[0], indices[1]),
+      return nm.mk_value(FloatingPoint(indices[0],
+                                       indices[1],
                                        values[0].value<RoundingMode>(),
                                        values[1].value<BitVector>(),
                                        false));

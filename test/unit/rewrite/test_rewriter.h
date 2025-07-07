@@ -52,8 +52,10 @@ class TestRewriter : public ::testing::Test
     d_bv1_a = d_nm.mk_const(d_bv1_type, "a_bv1");
     d_bv1_b = d_nm.mk_const(d_bv1_type, "b_bv1");
 
-    d_fp35_pzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, false));
-    d_fp35_nzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, true));
+    d_fp35_pzero = d_nm.mk_value(FloatingPoint::fpzero(
+        d_fp35_type.fp_exp_size(), d_fp35_type.fp_sig_size(), false));
+    d_fp35_nzero = d_nm.mk_value(FloatingPoint::fpzero(
+        d_fp35_type.fp_exp_size(), d_fp35_type.fp_sig_size(), true));
 
     d_fp35_a = d_nm.mk_const(d_fp35_type, "a_fp35");
     d_fp35_b = d_nm.mk_const(d_fp35_type, "b_fp35");

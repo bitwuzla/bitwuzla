@@ -635,8 +635,8 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_BV_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_indices() == 2);
   if (!node[0].is_value()) return node;
   NodeManager& nm = rewriter.nm();
-  Node res        = nm.mk_value(FloatingPoint(
-      nm.mk_fp_type(node.index(0), node.index(1)), node[0].value<BitVector>()));
+  Node res        = nm.mk_value(
+      FloatingPoint(node.index(0), node.index(1), node[0].value<BitVector>()));
   return res;
 }
 
@@ -657,10 +657,10 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_FP_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_indices() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
   NodeManager& nm = rewriter.nm();
-  Node res =
-      nm.mk_value(FloatingPoint(nm.mk_fp_type(node.index(0), node.index(1)),
-                                node[0].value<RoundingMode>(),
-                                node[1].value<FloatingPoint>()));
+  Node res        = nm.mk_value(FloatingPoint(node.index(0),
+                                       node.index(1),
+                                       node[0].value<RoundingMode>(),
+                                       node[1].value<FloatingPoint>()));
   return res;
 }
 
@@ -681,11 +681,11 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_indices() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
   NodeManager& nm = rewriter.nm();
-  Node res =
-      nm.mk_value(FloatingPoint(nm.mk_fp_type(node.index(0), node.index(1)),
-                                node[0].value<RoundingMode>(),
-                                node[1].value<BitVector>(),
-                                true));
+  Node res        = nm.mk_value(FloatingPoint(node.index(0),
+                                       node.index(1),
+                                       node[0].value<RoundingMode>(),
+                                       node[1].value<BitVector>(),
+                                       true));
   return res;
 }
 
@@ -743,11 +743,11 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL>::_apply(Rewriter& rewriter,
   assert(node.num_indices() == 2);
   if (!node[0].is_value() || !node[1].is_value()) return node;
   NodeManager& nm = rewriter.nm();
-  Node res =
-      nm.mk_value(FloatingPoint(nm.mk_fp_type(node.index(0), node.index(1)),
-                                node[0].value<RoundingMode>(),
-                                node[1].value<BitVector>(),
-                                false));
+  Node res        = nm.mk_value(FloatingPoint(node.index(0),
+                                       node.index(1),
+                                       node[0].value<RoundingMode>(),
+                                       node[1].value<BitVector>(),
+                                       false));
   return res;
 }
 

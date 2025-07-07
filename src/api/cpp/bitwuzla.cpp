@@ -1080,8 +1080,8 @@ Term::fp_value_to_real_str() const
   BITWUZLA_CHECK(d_node->type().is_fp() && d_node->is_value())
       << "expected floating-point value term";
   bzla::FloatingPoint fpval = d_node->value<bzla::FloatingPoint>();
-  uint64_t size_exp         = fpval.get_exponent_size();
-  uint64_t size_sig         = fpval.get_significand_size();
+  uint64_t size_exp         = fpval.exp_size();
+  uint64_t size_sig         = fpval.sig_size();
   BITWUZLA_CHECK(size_exp < 64 && size_sig < 64)
       << "unsupported floating-point format for to_real string conversion";
   return fpval.to_real_str();
@@ -1151,8 +1151,12 @@ Term::value(uint8_t base) const
   BITWUZLA_CHECK_VALUE_BASE(base);
   const bzla::FloatingPoint &fp_value = d_node->value<bzla::FloatingPoint>();
   bzla::BitVector sign, exp, sig;
-  bzla::FloatingPoint::ieee_bv_as_bvs(
-      d_node->type(), fp_value.as_bv(), sign, exp, sig);
+  bzla::FloatingPoint::ieee_bv_as_bvs(d_node->type().fp_exp_size(),
+                                      d_node->type().fp_sig_size(),
+                                      fp_value.as_bv(),
+                                      sign,
+                                      exp,
+                                      sig);
   return std::make_tuple(sign.str(base), exp.str(base), sig.str(base));
 }
 
@@ -1899,7 +1903,8 @@ TermManager::mk_fp_pos_zero(const Sort &sort)
   BITWUZLA_CHECK_SORT_IS_FP(sort);
   BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
   bzla::fp::SymFpuNM snm(*d_nm);
-  return d_nm->mk_value(bzla::FloatingPoint::fpzero(*sort.d_type, false));
+  return d_nm->mk_value(bzla::FloatingPoint::fpzero(
+      sort.d_type->fp_exp_size(), sort.d_type->fp_sig_size(), false));
 }
 
 Term
@@ -1909,7 +1914,8 @@ TermManager::mk_fp_neg_zero(const Sort &sort)
   BITWUZLA_CHECK_SORT_IS_FP(sort);
   BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
   bzla::fp::SymFpuNM snm(*d_nm);
-  return d_nm->mk_value(bzla::FloatingPoint::fpzero(*sort.d_type, true));
+  return d_nm->mk_value(bzla::FloatingPoint::fpzero(
+      sort.d_type->fp_exp_size(), sort.d_type->fp_sig_size(), true));
 }
 
 Term
@@ -1919,7 +1925,8 @@ TermManager::mk_fp_pos_inf(const Sort &sort)
   BITWUZLA_CHECK_SORT_IS_FP(sort);
   BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
   bzla::fp::SymFpuNM snm(*d_nm);
-  return d_nm->mk_value(bzla::FloatingPoint::fpinf(*sort.d_type, false));
+  return d_nm->mk_value(bzla::FloatingPoint::fpinf(
+      sort.d_type->fp_exp_size(), sort.d_type->fp_sig_size(), false));
 }
 
 Term
@@ -1929,7 +1936,8 @@ TermManager::mk_fp_neg_inf(const Sort &sort)
   BITWUZLA_CHECK_SORT_IS_FP(sort);
   BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
   bzla::fp::SymFpuNM snm(*d_nm);
-  return d_nm->mk_value(bzla::FloatingPoint::fpinf(*sort.d_type, true));
+  return d_nm->mk_value(bzla::FloatingPoint::fpinf(
+      sort.d_type->fp_exp_size(), sort.d_type->fp_sig_size(), true));
 }
 
 Term
@@ -1939,7 +1947,8 @@ TermManager::mk_fp_nan(const Sort &sort)
   BITWUZLA_CHECK_SORT_IS_FP(sort);
   BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
   bzla::fp::SymFpuNM snm(*d_nm);
-  return d_nm->mk_value(bzla::FloatingPoint::fpnan(*sort.d_type));
+  return d_nm->mk_value(bzla::FloatingPoint::fpnan(sort.d_type->fp_exp_size(),
+                                                   sort.d_type->fp_sig_size()));
 }
 
 Term
@@ -1966,8 +1975,8 @@ TermManager::mk_fp_value(const Term &bv_sign,
   BITWUZLA_CHECK_TERM_TERM_MGR(bv_significand, "bv_significand");
   bzla::fp::SymFpuNM snm(*d_nm);
   return d_nm->mk_value(bzla::FloatingPoint(
-      d_nm->mk_fp_type(bv_exponent.d_node->type().bv_size(),
-                       bv_significand.d_node->type().bv_size() + 1),
+      bv_exponent.d_node->type().bv_size(),
+      bv_significand.d_node->type().bv_size() + 1,
       bv_sign.d_node->value<bzla::BitVector>()
           .bvconcat(bv_exponent.d_node->value<bzla::BitVector>())
           .ibvconcat(bv_significand.d_node->value<bzla::BitVector>())));
@@ -1989,8 +1998,11 @@ TermManager::mk_fp_value(const Sort &sort,
   bzla::fp::SymFpuNM snm(*d_nm);
   if (rm.d_node->is_value())
   {
-    return d_nm->mk_value(bzla::FloatingPoint::from_real(
-        *d_nm, *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), real));
+    return d_nm->mk_value(
+        bzla::FloatingPoint::from_real(sort.d_type->fp_exp_size(),
+                                       sort.d_type->fp_sig_size(),
+                                       rm.d_node->value<bzla::RoundingMode>(),
+                                       real));
   }
 
   bzla::Node rna = d_nm->mk_value(bzla::RoundingMode::RNA);
@@ -1999,16 +2011,31 @@ TermManager::mk_fp_value(const Sort &sort,
   bzla::Node rtp = d_nm->mk_value(bzla::RoundingMode::RTP);
   bzla::Node rtz = d_nm->mk_value(bzla::RoundingMode::RTZ);
 
-  bzla::Node fp_rna = d_nm->mk_value(bzla::FloatingPoint::from_real(
-      *d_nm, *sort.d_type, rna.value<bzla::RoundingMode>(), real));
-  bzla::Node fp_rne = d_nm->mk_value(bzla::FloatingPoint::from_real(
-      *d_nm, *sort.d_type, rne.value<bzla::RoundingMode>(), real));
-  bzla::Node fp_rtn = d_nm->mk_value(bzla::FloatingPoint::from_real(
-      *d_nm, *sort.d_type, rtn.value<bzla::RoundingMode>(), real));
-  bzla::Node fp_rtp = d_nm->mk_value(bzla::FloatingPoint::from_real(
-      *d_nm, *sort.d_type, rtp.value<bzla::RoundingMode>(), real));
-  bzla::Node fp_rtz = d_nm->mk_value(bzla::FloatingPoint::from_real(
-      *d_nm, *sort.d_type, rtz.value<bzla::RoundingMode>(), real));
+  bzla::Node fp_rna = d_nm->mk_value(
+      bzla::FloatingPoint::from_real(sort.d_type->fp_exp_size(),
+                                     sort.d_type->fp_sig_size(),
+                                     rna.value<bzla::RoundingMode>(),
+                                     real));
+  bzla::Node fp_rne = d_nm->mk_value(
+      bzla::FloatingPoint::from_real(sort.d_type->fp_exp_size(),
+                                     sort.d_type->fp_sig_size(),
+                                     rne.value<bzla::RoundingMode>(),
+                                     real));
+  bzla::Node fp_rtn = d_nm->mk_value(
+      bzla::FloatingPoint::from_real(sort.d_type->fp_exp_size(),
+                                     sort.d_type->fp_sig_size(),
+                                     rtn.value<bzla::RoundingMode>(),
+                                     real));
+  bzla::Node fp_rtp = d_nm->mk_value(
+      bzla::FloatingPoint::from_real(sort.d_type->fp_exp_size(),
+                                     sort.d_type->fp_sig_size(),
+                                     rtp.value<bzla::RoundingMode>(),
+                                     real));
+  bzla::Node fp_rtz = d_nm->mk_value(
+      bzla::FloatingPoint::from_real(sort.d_type->fp_exp_size(),
+                                     sort.d_type->fp_sig_size(),
+                                     rtz.value<bzla::RoundingMode>(),
+                                     real));
 
   bzla::Node cond = d_nm->mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtp});
   bzla::Node ite = d_nm->mk_node(bzla::node::Kind::ITE, {cond, fp_rtp, fp_rtz});
@@ -2046,7 +2073,11 @@ TermManager::mk_fp_value(const Sort &sort,
   if (rm.d_node->is_value())
   {
     return d_nm->mk_value(bzla::FloatingPoint::from_rational(
-        *d_nm, *sort.d_type, rm.d_node->value<bzla::RoundingMode>(), num, den));
+        sort.d_type->fp_exp_size(),
+        sort.d_type->fp_sig_size(),
+        rm.d_node->value<bzla::RoundingMode>(),
+        num,
+        den));
   }
 
   bzla::NodeManager &nm = *d_nm;
@@ -2057,16 +2088,36 @@ TermManager::mk_fp_value(const Sort &sort,
   bzla::Node rtp = nm.mk_value(bzla::RoundingMode::RTP);
   bzla::Node rtz = nm.mk_value(bzla::RoundingMode::RTZ);
 
-  bzla::Node fp_rna = nm.mk_value(bzla::FloatingPoint::from_rational(
-      *d_nm, *sort.d_type, rna.value<bzla::RoundingMode>(), num, den));
-  bzla::Node fp_rne = nm.mk_value(bzla::FloatingPoint::from_rational(
-      *d_nm, *sort.d_type, rne.value<bzla::RoundingMode>(), num, den));
-  bzla::Node fp_rtn = nm.mk_value(bzla::FloatingPoint::from_rational(
-      *d_nm, *sort.d_type, rtn.value<bzla::RoundingMode>(), num, den));
-  bzla::Node fp_rtp = nm.mk_value(bzla::FloatingPoint::from_rational(
-      *d_nm, *sort.d_type, rtp.value<bzla::RoundingMode>(), num, den));
-  bzla::Node fp_rtz = nm.mk_value(bzla::FloatingPoint::from_rational(
-      *d_nm, *sort.d_type, rtz.value<bzla::RoundingMode>(), num, den));
+  bzla::Node fp_rna = nm.mk_value(
+      bzla::FloatingPoint::from_rational(sort.d_type->fp_exp_size(),
+                                         sort.d_type->fp_sig_size(),
+                                         rna.value<bzla::RoundingMode>(),
+                                         num,
+                                         den));
+  bzla::Node fp_rne = nm.mk_value(
+      bzla::FloatingPoint::from_rational(sort.d_type->fp_exp_size(),
+                                         sort.d_type->fp_sig_size(),
+                                         rne.value<bzla::RoundingMode>(),
+                                         num,
+                                         den));
+  bzla::Node fp_rtn = nm.mk_value(
+      bzla::FloatingPoint::from_rational(sort.d_type->fp_exp_size(),
+                                         sort.d_type->fp_sig_size(),
+                                         rtn.value<bzla::RoundingMode>(),
+                                         num,
+                                         den));
+  bzla::Node fp_rtp = nm.mk_value(
+      bzla::FloatingPoint::from_rational(sort.d_type->fp_exp_size(),
+                                         sort.d_type->fp_sig_size(),
+                                         rtp.value<bzla::RoundingMode>(),
+                                         num,
+                                         den));
+  bzla::Node fp_rtz = nm.mk_value(
+      bzla::FloatingPoint::from_rational(sort.d_type->fp_exp_size(),
+                                         sort.d_type->fp_sig_size(),
+                                         rtz.value<bzla::RoundingMode>(),
+                                         num,
+                                         den));
 
   bzla::Node cond = nm.mk_node(bzla::node::Kind::EQUAL, {*rm.d_node, rtp});
   bzla::Node ite  = nm.mk_node(bzla::node::Kind::ITE, {cond, fp_rtp, fp_rtz});

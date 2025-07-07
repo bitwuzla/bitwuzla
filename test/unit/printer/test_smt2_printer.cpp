@@ -159,9 +159,8 @@ TEST_F(TestPrinter, print_value)
 
   {
     std::stringstream ss;
-    Smt2Printer::print(ss,
-                       d_nm.mk_value(FloatingPoint(d_nm.mk_fp_type(3, 5),
-                                                   BitVector::from_ui(8, 2))));
+    Smt2Printer::print(
+        ss, d_nm.mk_value(FloatingPoint(3, 5, BitVector::from_ui(8, 2))));
     ASSERT_EQ(ss.str(), "(fp #b0 #b000 #b0010)");
   }
 
