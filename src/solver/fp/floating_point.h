@@ -14,11 +14,11 @@
 #include <mpfr.h>
 
 #include <array>
+#include <cstdint>
 #include <memory>
 
 #include "bv/bitvector.h"
 #include "solver/fp/rounding_mode.h"
-#include "type/type.h"
 
 namespace bzla {
 
@@ -38,68 +38,78 @@ class FloatingPoint
   /**
    * Convenience helper to split an IEEE-754 bit-vector into its components
    * (sign, exponent, significand).
-   * @param type The floating-point type.
+   * @param exp_size The exponent size.
+   * @param sig_size The significand size (incl. sign bit)
    * @param bv   The IEEE-754 bit-vector representation of a floating-point.
    * @param sign The output parameter for the sign bit.
    * @param exp  The output parameter for the exponent bit-vector.
    * @param sig  The output parameter for the significand bit-vector.
    */
-  static void ieee_bv_as_bvs(const Type &type,
-                             const BitVector &bv,
-                             BitVector &sign,
-                             BitVector &exp,
-                             BitVector &sig);
+  static void ieee_bv_as_bvs(uint64_t exp_size,
+                             uint64_t sig_size,
+                             const BitVector& bv,
+                             BitVector& sign,
+                             BitVector& exp,
+                             BitVector& sig);
   /**
-   * Create a floating-point of given type converted from the given real
-   * constant represented as a decimal string w.r.t. to the given rounding
-   * mode.
-   * @param type The type.
+   * Create a floating-point of given exponent and significand size, converted
+   * from the given real constant represented as a decimal string w.r.t. to the
+   * given rounding mode.
+   * @param exp_size The exponent size.
+   * @param sig_size The significand size (incl. sign bit)
    * @param rm   The rounding mode.
    * @param real A string representing the real to convert from.
-   * @return A floating-point of given type converted from the given real.
+   * @return A floating-point of given format converted from the given real.
    */
-  static FloatingPoint from_real(NodeManager &nm,
-                                 const Type &type,
+  static FloatingPoint from_real(uint64_t exp_size,
+                                 uint64_t sig_size,
                                  const RoundingMode rm,
-                                 const std::string &real);
+                                 const std::string& real);
   /**
-   * Create a floating-point of given type converted from the given rational
-   * constant represented as a numerator and denominator decimal string w.r.t.
-   * to the given rounding mode.
-   * @param type The type.
-   * @param rm  The rounding mode.
-   * @param num A string representing the numerator of the rational.
-   * @param den A string representing the denominator of the rational.
-   * @return A floating-point of given type converted from the given rational.
+   * Create a floating-point of given exponent and significand size, converted
+   * from the given rational constant represented as a numerator and
+   * denominator decimal string w.r.t. to the given rounding mode.
+   * @param exp_size The exponent size.
+   * @param sig_size The significand size (incl. sign bit)
+   * @param rm       The rounding mode.
+   * @param num      A string representing the numerator of the rational.
+   * @param den      A string representing the denominator of the rational.
+   * @return A floating-point of given format converted from the given rational.
    */
-  static FloatingPoint from_rational(NodeManager &nm,
-                                     const Type &type,
+  static FloatingPoint from_rational(uint64_t exp_size,
+                                     uint64_t sig_size,
                                      const RoundingMode rm,
-                                     const std::string &num,
-                                     const std::string &den);
+                                     const std::string& num,
+                                     const std::string& den);
 
   /**
-   * Create a floating-point of given type representing zero.
-   * @param type The type.
-   * @param sign False for +zero and true for -zero.
-   * @return A floating-point of given type representing zero.
+   * Create a floating-point of given exponent and significand size,
+   * representing zero.
+   * @param exp_size The exponent size.
+   * @param sig_size The significand size (incl. sign bit)
+   * @param sign     False for +zero and true for -zero.
+   * @return A floating-point of given format representing zero.
    */
-  static FloatingPoint fpzero(const Type &type, bool sign);
+  static FloatingPoint fpzero(uint64_t exp_size, uint64_t sig_size, bool sign);
 
   /**
-   * Create a floating-point of given type representing infinity.
-   * @param type The type.
+   * Create a floating-point of given exponent and significand size,
+   * representing infinity.
+   * @param exp_size The exponent size.
+   * @param sig_size The significand size (incl. sign bit)
    * @param sign False for +inf and true for -inf.
-   * @return A floating-point of given type representing infinity.
+   * @return A floating-point of given format representing infinity.
    */
-  static FloatingPoint fpinf(const Type &type, bool sign);
+  static FloatingPoint fpinf(uint64_t exp_size, uint64_t sig_size, bool sign);
 
   /**
-   * Create a floating-point of given type representing nan.
-   * @param type The type.
-   * @return A floating-point of given type representing nan.
+   * Create a floating-point of given exponent and significand size,
+   * representing nan.
+   * @param exp_size The exponent size.
+   * @param sig_size The significand size (incl. sign bit)
+   * @return A floating-point of given format representing nan.
    */
-  static FloatingPoint fpnan(const Type &type);
+  static FloatingPoint fpnan(uint64_t exp_size, uint64_t sig_size);
 
   /**
    * Create a floating-point from its IEEE-754 bit-vector representation given
@@ -110,49 +120,56 @@ class FloatingPoint
    * @return The floating-point corresponding to the given IEEE-754 bit-vector
    *         representation.
    */
-  static FloatingPoint fpfp(NodeManager &nm,
-                            const BitVector &sign,
-                            const BitVector &exp,
-                            const BitVector &sig);
+  static FloatingPoint fpfp(const BitVector& sign,
+                            const BitVector& exp,
+                            const BitVector& sig);
   /**
    * Constructor.
-   * Create new nullary floating-point of given type.
-   * @param type The floating-point type.
+   * Create new nullary floating-point of given exponent and signifcand size.
+   * @note Default value of a nullary floating-point is NaN.
+   * @param exp_size The exponent size.
+   * @param sig_size The significand size (incl. sign bit)
    */
-  FloatingPoint(const Type& type);
+  FloatingPoint(uint64_t exp_size, uint64_t sig_size);
   /**
    * Constructor.
-   * Create new floating-point of given type from an IEEE-754 bit-vector.
-   * @param type The type.
+   * Create new floating-point of given exponent and significand size from an
+   * IEEE-754 bit-vector.
+   * @param exp_size The exponent size.
+   * @param sig_size The significand size (incl. sign bit)
    * @param bv The IEEE-754 bit-vector representation of the floating-point.
    */
-  FloatingPoint(const Type &type, const BitVector &bv);
+  FloatingPoint(uint64_t exp_size, uint64_t sig_size, const BitVector& bv);
   /**
    * Constructor.
-   * Create new floating-point of given type converted from the given
+   * Create new floating-point of given format converted from the given
    * floating-point constant w.r.t. to the given rounding mode.
-   * @param type The type.
+   * @param exp_size The exponent size.
+   * @param sig_size The significand size (incl. sign bit)
    * @param rm The rounding mode.
    * @param fp The floating-point to convert from.
    */
-  FloatingPoint(const Type &type,
+  FloatingPoint(uint64_t exp_size,
+                uint64_t sig_size,
                 const RoundingMode rm,
-                const FloatingPoint &fp);
+                const FloatingPoint& fp);
   /**
    * Constructor.
-   * Create new floating-point of given type converted from the given
-   * bit-vector constant (interpreted as signed or unsigned machine integer)
-   * w.r.t. to the given rounding mode.
-   * @param type The type.
+   * Create new floating-point of given exponent and significand size, converted
+   * from the given bit-vector constant (interpreted as signed or unsigned
+   * machine integer) w.r.t. to the given rounding mode.
+   * @param exp_size The exponent size.
+   * @param sig_size The significand size (incl. sign bit)
    * @param rm The rounding mode.
    * @param bv The bit-vector to convert from (interpreted as signed if `sign`
    *           is true).
    * @param sign True if `bv` is to be interpreted as signed machine integer,
    *             else unsigned.
    */
-  FloatingPoint(const Type &type,
+  FloatingPoint(uint64_t exp_size,
+                uint64_t sig_size,
                 const RoundingMode rm,
-                const BitVector &bv,
+                const BitVector& bv,
                 bool sign);
 
   /** Copy constructor. */
@@ -162,12 +179,12 @@ class FloatingPoint
   /** Destructor. */
   ~FloatingPoint();
 
+  /** @return True if this is an uninitialized floating-point. */
+  bool is_null() const { return d_exp_size == 0 && d_sig_size == 0; }
   /** @return The exponent size of this floating-point. */
-  uint64_t get_exponent_size() const;
+  uint64_t exp_size() const { return d_exp_size; }
   /** @return The significand size of this floating-point. */
-  uint64_t get_significand_size() const;
-  /** @return The associated type. */
-  const Type& type() const;
+  uint64_t sig_size() const { return d_sig_size; }
 
   /** @return The hash value of this floating-point. */
   size_t hash() const;
@@ -344,7 +361,11 @@ class FloatingPoint
   static inline std::array<uint32_t, 6> s_hash_primes = {
       333444569u, 111130391u, 22237357u, 33355519u, 456790003u, 76891121u};
 
-  Type d_type;
+  /* The exponent size. */
+  uint64_t d_exp_size = 0;
+  /* The significand size (incl. sign bit). */
+  uint64_t d_sig_size = 0;
+  /* The underlying MPFR representation of the floating-point value. */
   mpfr_t d_mpfr;
 };
 

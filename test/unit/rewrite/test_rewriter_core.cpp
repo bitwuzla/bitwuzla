@@ -1110,9 +1110,12 @@ TEST_F(TestRewriterCore, core_equal_eval)
                              d_nm.mk_value(BitVector(2, "00"))}),
                d_false);
   test_rewrite(
-      d_nm.mk_node(Kind::EQUAL,
-                   {d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, false)),
-                    d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, true))}),
+      d_nm.mk_node(
+          Kind::EQUAL,
+          {d_nm.mk_value(FloatingPoint::fpzero(
+               d_fp35_type.fp_exp_size(), d_fp35_type.fp_sig_size(), false)),
+           d_nm.mk_value(FloatingPoint::fpzero(
+               d_fp35_type.fp_exp_size(), d_fp35_type.fp_sig_size(), true))}),
       d_false);
   test_rewrite(d_nm.mk_node(Kind::EQUAL,
                             {d_nm.mk_value(RoundingMode::RNA),
@@ -1144,9 +1147,12 @@ TEST_F(TestRewriterCore, core_distinct_eval)
                              d_nm.mk_value(BitVector(2, "00"))}),
                d_false);
   test_rewrite(
-      d_nm.mk_node(Kind::DISTINCT,
-                   {d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, false)),
-                    d_nm.mk_value(FloatingPoint::fpzero(d_fp35_type, true))}),
+      d_nm.mk_node(
+          Kind::DISTINCT,
+          {d_nm.mk_value(FloatingPoint::fpzero(
+               d_fp35_type.fp_exp_size(), d_fp35_type.fp_sig_size(), false)),
+           d_nm.mk_value(FloatingPoint::fpzero(
+               d_fp35_type.fp_exp_size(), d_fp35_type.fp_sig_size(), true))}),
       d_true);
   test_rewrite(d_nm.mk_node(Kind::DISTINCT,
                             {d_nm.mk_value(RoundingMode::RNA),
