@@ -148,7 +148,8 @@ mk_default_value(NodeManager& nm, const Type& type)
   }
   else if (type.is_fp())
   {
-    return nm.mk_value(FloatingPoint::fpzero(type, false));
+    return nm.mk_value(
+        FloatingPoint::fpzero(type.fp_exp_size(), type.fp_sig_size(), false));
   }
   else if (type.is_fun())
   {
