@@ -124,8 +124,7 @@ NodeManager::mk_value(const RoundingMode value)
 Node
 NodeManager::mk_value(const FloatingPoint& value)
 {
-  Type type =
-      mk_fp_type(value.get_exponent_size(), value.get_significand_size());
+  Type type             = mk_fp_type(value.exp_size(), value.sig_size());
   auto [inserted, data] = d_unique_table.find_or_insert(type, value);
   if (inserted)
   {

@@ -12,6 +12,9 @@
 
 #include <gmp.h>
 #include <gmpxx.h>
+#include <sys/types.h>
+
+#include <cstdint>
 
 #include "node/node_manager.h"
 #include "util/gmp_utils.h"
@@ -67,11 +70,6 @@ mpfr_set_eminmax_for_format(uint64_t exp_size, uint64_t sig_size)
   mpfr_set_emin(mpfr_exp_min(exp_size, sig_size));
 }
 void
-mpfr_set_eminmax_for_format(bzla::Type type)
-{
-  mpfr_set_eminmax_for_format(type.fp_exp_size(), type.fp_sig_size());
-}
-void
 mpfr_reset_format()
 {
   mpfr_set_emax(mpfr_get_emax_max());
@@ -102,29 +100,28 @@ using namespace node;
 /* --- FloatingPoint public static ------------------------------------------ */
 
 void
-FloatingPoint::ieee_bv_as_bvs(const Type &type,
+FloatingPoint::ieee_bv_as_bvs(uint64_t exp_size,
+                              uint64_t sig_size,
                               const BitVector &bv,
                               BitVector &sign,
                               BitVector &exp,
                               BitVector &sig)
 {
+  assert(!bv.is_null());
   uint32_t bw     = bv.size();
-  uint32_t bw_exp = type.fp_exp_size();
-  uint32_t bw_sig = type.fp_sig_size();
   sign            = bv.bvextract(bw - 1, bw - 1);
-  exp             = bv.bvextract(bw - 2, bw - 1 - bw_exp);
-  sig             = bv.bvextract(bw_sig - 2, 0);
+  exp             = bv.bvextract(bw - 2, bw - 1 - exp_size);
+  sig             = bv.bvextract(sig_size - 2, 0);
 }
 
 FloatingPoint
-FloatingPoint::from_real(NodeManager &nm,
-                         const Type &type,
+FloatingPoint::from_real(uint64_t exp_size,
+                         uint64_t sig_size,
                          const RoundingMode rm,
                          const std::string &real)
 {
-  (void) nm;
-  FloatingPoint res(type);
-  mpfr_set_eminmax_for_format(type);
+  FloatingPoint res(exp_size, sig_size);
+  mpfr_set_eminmax_for_format(exp_size, sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   mpq_t mpq;
   util::mpq_from_dec_string(mpq, real.c_str());
@@ -151,15 +148,14 @@ FloatingPoint::from_real(NodeManager &nm,
 }
 
 FloatingPoint
-FloatingPoint::from_rational(NodeManager &nm,
-                             const Type &type,
+FloatingPoint::from_rational(uint64_t exp_size,
+                             uint64_t sig_size,
                              const RoundingMode rm,
                              const std::string &num,
                              const std::string &den)
 {
-  (void) nm;
-  FloatingPoint res(type);
-  mpfr_set_eminmax_for_format(type);
+  FloatingPoint res(exp_size, sig_size);
+  mpfr_set_eminmax_for_format(exp_size, sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   mpq_t mpq;
   util::mpq_from_rat_string(mpq, num.c_str(), den.c_str());
@@ -186,59 +182,65 @@ FloatingPoint::from_rational(NodeManager &nm,
 }
 
 FloatingPoint
-FloatingPoint::fpzero(const Type &type, bool sign)
+FloatingPoint::fpzero(uint64_t exp_size, uint64_t sig_size, bool sign)
 {
-  FloatingPoint res(type);
+  FloatingPoint res(exp_size, sig_size);
   mpfr_set_zero(res.d_mpfr, sign ? -1 : 1);
   return res;
 }
 
 FloatingPoint
-FloatingPoint::fpinf(const Type &type, bool sign)
+FloatingPoint::fpinf(uint64_t exp_size, uint64_t sig_size, bool sign)
 {
-  FloatingPoint res(type);
+  FloatingPoint res(exp_size, sig_size);
   mpfr_set_inf(res.d_mpfr, sign ? -1 : 1);
   return res;
 }
 
 FloatingPoint
-FloatingPoint::fpnan(const Type &type)
+FloatingPoint::fpnan(uint64_t exp_size, uint64_t sig_size)
 {
-  FloatingPoint res(type);
+  FloatingPoint res(exp_size, sig_size);
   mpfr_set_nan(res.d_mpfr);
   return res;
 }
 
 FloatingPoint
-FloatingPoint::fpfp(NodeManager &nm,
-                    const BitVector &sign,
+FloatingPoint::fpfp(const BitVector &sign,
                     const BitVector &exp,
                     const BitVector &sig)
 {
-  FloatingPoint res(nm.mk_fp_type(exp.size(), sig.size() + 1),
-                    sign.bvconcat(exp).ibvconcat(sig));
+  assert(!sign.is_null());
+  assert(!exp.is_null());
+  assert(!sig.is_null());
+  FloatingPoint res(
+      exp.size(), sig.size() + 1, sign.bvconcat(exp).ibvconcat(sig));
   return res;
 }
 
 /* --- FloatingPoint public --------------====------------------------------- */
 
-FloatingPoint::FloatingPoint(const Type &type) : d_type(type)
+FloatingPoint::FloatingPoint(uint64_t exp_size, uint64_t sig_size)
+    : d_exp_size(exp_size), d_sig_size(sig_size)
 {
   mpfr_reset_format();
   // MPFR precision includes the hidden bit (not the sign bit), we can use
   // significand size (which is also +1 because of the sign bit).
-  mpfr_init2(d_mpfr, type.fp_sig_size());
+  mpfr_init2(d_mpfr, sig_size);
 }
 
-FloatingPoint::FloatingPoint(const Type &type, const BitVector &bv)
-    : FloatingPoint(type)
+FloatingPoint::FloatingPoint(uint64_t exp_size,
+                             uint64_t sig_size,
+                             const BitVector &bv)
+    : FloatingPoint(exp_size, sig_size)
 {
-  assert(type.fp_ieee_bv_size() == bv.size());
+  assert(!bv.is_null());
+  assert(exp_size + sig_size == bv.size());
 
-  mpfr_set_eminmax_for_format(d_type);
+  mpfr_set_eminmax_for_format(exp_size, sig_size);
 
   BitVector bvsign, bvexp, bvsig;
-  ieee_bv_as_bvs(type, bv, bvsign, bvexp, bvsig);
+  ieee_bv_as_bvs(exp_size, sig_size, bv, bvsign, bvexp, bvsig);
   int32_t sign = bvsign.is_true() ? -1 : 1;
   if (bvexp.is_ones())
   {
@@ -278,12 +280,14 @@ FloatingPoint::FloatingPoint(const Type &type, const BitVector &bv)
   }
 }
 
-FloatingPoint::FloatingPoint(const Type &type,
+FloatingPoint::FloatingPoint(uint64_t exp_size,
+                             uint64_t sig_size,
                              const RoundingMode rm,
                              const FloatingPoint &fp)
-    : FloatingPoint(type)
+    : FloatingPoint(exp_size, sig_size)
 {
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!fp.is_null());
+  mpfr_set_eminmax_for_format(exp_size, sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -305,13 +309,15 @@ FloatingPoint::FloatingPoint(const Type &type,
   mpfr_subnormalize((mpfr_ptr) d_mpfr, i, rm_mpfr);
 }
 
-FloatingPoint::FloatingPoint(const Type &type,
+FloatingPoint::FloatingPoint(uint64_t exp_size,
+                             uint64_t sig_size,
                              const RoundingMode rm,
                              const BitVector &bv,
                              bool sign)
-    : FloatingPoint(type)
+    : FloatingPoint(exp_size, sig_size)
 {
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!bv.is_null());
+  mpfr_set_eminmax_for_format(exp_size, sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   mpz_class bv_mpz   = bv.to_mpz(sign);
   int32_t i          = 0;
@@ -335,64 +341,50 @@ FloatingPoint::FloatingPoint(const Type &type,
 }
 
 FloatingPoint::FloatingPoint(const FloatingPoint &other)
-    : FloatingPoint(other.d_type)
+    : FloatingPoint(other.d_exp_size, other.d_sig_size)
 {
-  mpfr_set_eminmax_for_format(d_type);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_set(d_mpfr, other.d_mpfr, MPFR_RNDN);
 }
 
 FloatingPoint &
 FloatingPoint::operator=(const FloatingPoint &other)
 {
-  assert(!other.d_type.is_null());
-  if (d_type.is_null())
+  assert(other.d_exp_size && other.d_sig_size);
+  if (is_null())
   {
     mpfr_reset_format();
     // MPFR precision includes the hidden bit (not the sign bit), we can use
     // significand size (which is also +1 because of the sign bit).
-    mpfr_init2(d_mpfr, other.d_type.fp_sig_size());
+    mpfr_init2(d_mpfr, other.d_sig_size);
   }
-  else if (d_type.fp_sig_size() != other.d_type.fp_sig_size())
+  else if (d_sig_size != other.d_sig_size)
   {
-    mpfr_set_prec(d_mpfr, other.d_type.fp_sig_size());
+    mpfr_set_prec(d_mpfr, other.d_sig_size);
   }
-  d_type = other.d_type;
-  mpfr_set_eminmax_for_format(d_type);
+  d_exp_size = other.d_exp_size;
+  d_sig_size = other.d_sig_size;
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_set(d_mpfr, other.d_mpfr, MPFR_RNDN);
   return *this;
 }
 
 FloatingPoint::~FloatingPoint() { mpfr_clear(d_mpfr); }
 
-uint64_t
-FloatingPoint::get_exponent_size() const
-{
-  return d_type.fp_exp_size();
-}
-
-uint64_t
-FloatingPoint::get_significand_size() const
-{
-  return d_type.fp_sig_size();
-}
-
-const Type &
-FloatingPoint::type() const
-{
-  return d_type;
-}
-
 size_t
 FloatingPoint::hash() const
 {
+  if (is_null())
+  {
+    return 0;
+  }
+
   int32_t sign = fpisneg() ? -1 : 1;
 
   uint64_t i, j = 0, n, res = 0;
   uint64_t x, p0, p1;
 
-  uint64_t exp_size = d_type.fp_exp_size();
-  uint64_t sig_size = d_type.fp_sig_size();
-  res               = (exp_size + sig_size) * util::hash::s_hash_primes[j++];
+  res = (d_exp_size + d_sig_size) * util::hash::s_hash_primes[j++];
 
   if (fpisinf())
   {
@@ -410,7 +402,7 @@ FloatingPoint::hash() const
   }
 
   // limbs for significand
-  uint64_t nlimbs = (sig_size + mp_bits_per_limb - 1) / mp_bits_per_limb;
+  uint64_t nlimbs = (d_sig_size + mp_bits_per_limb - 1) / mp_bits_per_limb;
 
   // hash for significand, least significant limb is at index 0
   mp_limb_t limb;
@@ -454,9 +446,14 @@ std::string
 FloatingPoint::str(uint8_t bv_format) const
 {
   assert(bv_format == 2 || bv_format == 10);
+  if (is_null())
+  {
+    return "(null)";
+  }
   std::stringstream ss;
   BitVector sign, exp, sig;
-  FloatingPoint::ieee_bv_as_bvs(d_type, as_bv(), sign, exp, sig);
+  FloatingPoint::ieee_bv_as_bvs(
+      d_exp_size, d_sig_size, as_bv(), sign, exp, sig);
   ss << "(fp ";
   if (bv_format == 2)
   {
@@ -474,21 +471,25 @@ FloatingPoint::str(uint8_t bv_format) const
 std::string
 FloatingPoint::to_real_str() const
 {
+  if (is_null())
+  {
+    return "(null)";
+  }
   if (fpisnan())
   {
-    return "(fp.to_real (_ NaN " + std::to_string(d_type.fp_exp_size()) + " "
-           + std::to_string(d_type.fp_sig_size()) + "))";
+    return "(fp.to_real (_ NaN " + std::to_string(d_exp_size) + " "
+           + std::to_string(d_sig_size) + "))";
   }
 
   if (fpisinf())
   {
     if (fpisneg())
     {
-      return "(fp.to_real (_ -oo " + std::to_string(d_type.fp_exp_size()) + " "
-             + std::to_string(d_type.fp_sig_size()) + "))";
+      return "(fp.to_real (_ -oo " + std::to_string(d_exp_size) + " "
+             + std::to_string(d_sig_size) + "))";
     }
-    return "(fp.to_real (_ +oo " + std::to_string(d_type.fp_exp_size()) + " "
-           + std::to_string(d_type.fp_sig_size()) + "))";
+    return "(fp.to_real (_ +oo " + std::to_string(d_exp_size) + " "
+           + std::to_string(d_sig_size) + "))";
   }
   if (fpiszero())
   {
@@ -508,7 +509,11 @@ FloatingPoint::to_real_str() const
 bool
 FloatingPoint::operator==(const FloatingPoint &other) const
 {
-  if (d_type != other.d_type)
+  if (is_null())
+  {
+    return other.is_null();
+  }
+  if (d_exp_size != other.d_exp_size && d_sig_size != other.d_sig_size)
   {
     return false;
   }
@@ -536,87 +541,99 @@ FloatingPoint::operator!=(const FloatingPoint &other) const
 bool
 FloatingPoint::fpiszero() const
 {
-  return mpfr_zero_p(d_mpfr) > 0;
+  return !is_null() && mpfr_zero_p(d_mpfr) > 0;
 }
 
 bool
 FloatingPoint::fpisnormal() const
 {
-  return mpfr_regular_p(d_mpfr)
-         && mpfr_get_exp(d_mpfr) > sub_threshold(d_type.fp_exp_size());
+  return !is_null() && mpfr_regular_p(d_mpfr)
+         && mpfr_get_exp(d_mpfr) > sub_threshold(d_exp_size);
 }
 
 bool
 FloatingPoint::fpissubnormal() const
 {
-  return mpfr_regular_p(d_mpfr)
-         && mpfr_get_exp(d_mpfr) <= sub_threshold(d_type.fp_exp_size());
+  return !is_null() && mpfr_regular_p(d_mpfr)
+         && mpfr_get_exp(d_mpfr) <= sub_threshold(d_exp_size);
 }
 
 bool
 FloatingPoint::fpisnan() const
 {
-  return mpfr_nan_p(d_mpfr) > 0;
+  return !is_null() && mpfr_nan_p(d_mpfr) > 0;
 }
 
 bool
 FloatingPoint::fpisinf() const
 {
-  return mpfr_inf_p(d_mpfr) > 0;
+  return !is_null() && mpfr_inf_p(d_mpfr) > 0;
 }
 
 bool
 FloatingPoint::fpisneg() const
 {
-  return !fpisnan() && mpfr_signbit(d_mpfr) != 0;
+  return !is_null() && !fpisnan() && mpfr_signbit(d_mpfr) != 0;
 }
 
 bool
 FloatingPoint::fpispos() const
 {
-  return !fpisnan() && mpfr_signbit(d_mpfr) == 0;
+  return !is_null() && !fpisnan() && mpfr_signbit(d_mpfr) == 0;
 }
 
 bool
 FloatingPoint::fpeq(const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
+  assert(!is_null());
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   return mpfr_equal_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPoint::fplt(const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
+  assert(!is_null());
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   return mpfr_less_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPoint::fple(const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
+  assert(!is_null());
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   return mpfr_lessequal_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPoint::fpgt(const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
+  assert(!is_null());
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   return mpfr_greater_p(d_mpfr, fp.d_mpfr);
 }
 
 bool
 FloatingPoint::fpge(const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
+  assert(!is_null());
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   return mpfr_greaterequal_p(d_mpfr, fp.d_mpfr);
 }
 
 FloatingPoint
 FloatingPoint::fpmin(const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
-  FloatingPoint res(d_type);
+  assert(!is_null());
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
+  FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_min(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
   return res;
 }
@@ -624,8 +641,10 @@ FloatingPoint::fpmin(const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpmax(const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
-  FloatingPoint res(d_type);
+  assert(!is_null());
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
+  FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_max(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
   return res;
 }
@@ -633,8 +652,9 @@ FloatingPoint::fpmax(const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpabs() const
 {
-  FloatingPoint res(d_type);
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!is_null());
+  FloatingPoint res(d_exp_size, d_sig_size);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_abs(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
 }
@@ -642,8 +662,9 @@ FloatingPoint::fpabs() const
 FloatingPoint
 FloatingPoint::fpneg() const
 {
-  FloatingPoint res(d_type);
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!is_null());
+  FloatingPoint res(d_exp_size, d_sig_size);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_neg(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
 }
@@ -651,8 +672,9 @@ FloatingPoint::fpneg() const
 FloatingPoint
 FloatingPoint::fpsqrt(const RoundingMode rm) const
 {
-  FloatingPoint res(d_type);
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!is_null());
+  FloatingPoint res(d_exp_size, d_sig_size);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -670,8 +692,9 @@ FloatingPoint::fpsqrt(const RoundingMode rm) const
 FloatingPoint
 FloatingPoint::fprti(const RoundingMode rm) const
 {
-  FloatingPoint res(d_type);
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!is_null());
+  FloatingPoint res(d_exp_size, d_sig_size);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -689,9 +712,11 @@ FloatingPoint::fprti(const RoundingMode rm) const
 FloatingPoint
 FloatingPoint::fprem(const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
-  FloatingPoint res(d_type);
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!is_null());
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
+  FloatingPoint res(d_exp_size, d_sig_size);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   int32_t i = mpfr_remainder(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
   mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, MPFR_RNDN);
   return res;
@@ -700,9 +725,11 @@ FloatingPoint::fprem(const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
-  FloatingPoint res(d_type);
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!is_null());
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
+  FloatingPoint res(d_exp_size, d_sig_size);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -720,9 +747,10 @@ FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
-  FloatingPoint res(d_type);
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
+  FloatingPoint res(d_exp_size, d_sig_size);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -740,9 +768,11 @@ FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpdiv(const RoundingMode rm, const FloatingPoint &fp) const
 {
-  assert(d_type == fp.d_type);
-  FloatingPoint res(d_type);
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!is_null());
+  assert(!fp.is_null());
+  assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
+  FloatingPoint res(d_exp_size, d_sig_size);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -762,10 +792,13 @@ FloatingPoint::fpfma(const RoundingMode rm,
                      const FloatingPoint &fp0,
                      const FloatingPoint &fp1) const
 {
-  assert(d_type == fp0.d_type);
-  assert(d_type == fp1.d_type);
-  FloatingPoint res(d_type);
-  mpfr_set_eminmax_for_format(d_type);
+  assert(!is_null());
+  assert(!fp0.is_null());
+  assert(!fp1.is_null());
+  assert(d_exp_size == fp0.d_exp_size && d_sig_size == fp0.d_sig_size);
+  assert(d_exp_size == fp1.d_exp_size && d_sig_size == fp1.d_sig_size);
+  FloatingPoint res(d_exp_size, d_sig_size);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -784,52 +817,51 @@ FloatingPoint::fpfma(const RoundingMode rm,
 BitVector
 FloatingPoint::as_bv() const
 {
-  uint64_t exp_size = d_type.fp_exp_size();
-  uint64_t sig_size = d_type.fp_sig_size();
+  assert(!is_null());
   if (fpisnan())
   {
     // We use single representation for NaN, the same as SymFPU uses.
     return BitVector::mk_false()
-        .ibvconcat(BitVector::mk_ones(exp_size))
-        .ibvconcat(BitVector::mk_min_signed(sig_size - 1));
+        .ibvconcat(BitVector::mk_ones(d_exp_size))
+        .ibvconcat(BitVector::mk_min_signed(d_sig_size - 1));
   }
   uint64_t sign = fpisneg();
   if (fpiszero())
   {
-    return sign ? BitVector::mk_min_signed(exp_size + sig_size)
-                : BitVector::mk_zero(exp_size + sig_size);
+    return sign ? BitVector::mk_min_signed(d_exp_size + d_sig_size)
+                : BitVector::mk_zero(d_exp_size + d_sig_size);
   }
   BitVector bvsign = sign ? BitVector::mk_true() : BitVector::mk_false();
   if (fpisinf())
   {
-    return bvsign.ibvconcat(BitVector::mk_ones(exp_size))
-        .ibvconcat(BitVector::mk_zero(sig_size - 1));
+    return bvsign.ibvconcat(BitVector::mk_ones(d_exp_size))
+        .ibvconcat(BitVector::mk_zero(d_sig_size - 1));
   }
-  mpfr_set_eminmax_for_format(exp_size, sig_size);
+  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_exp_t exp;
-  char *str = mpfr_get_str(0, &exp, 2, sig_size, d_mpfr, MPFR_RNDN);
+  char *str = mpfr_get_str(0, &exp, 2, d_sig_size, d_mpfr, MPFR_RNDN);
   assert(strlen(str) > 1 && (str[0] != '-' || strlen(str) > 2));
-  assert(strlen(str[0] == '-' ? str + 1 : str) == sig_size);
-  BitVector bvexp = BitVector::mk_zero(exp_size);
+  assert(strlen(str[0] == '-' ? str + 1 : str) == d_sig_size);
+  BitVector bvexp = BitVector::mk_zero(d_exp_size);
   BitVector bvsig;
   if (!fpissubnormal())
   {
     std::string sig_str = str[0] == '-' ? str + 2 : str + 1;
-    bvexp               = BitVector::from_si(exp_size,
-                               static_cast<int64_t>(mpfr2exp(exp_size, exp)));
-    bvsig               = BitVector(sig_size - 1, sig_str);
+    bvexp               = BitVector::from_si(d_exp_size,
+                               static_cast<int64_t>(mpfr2exp(d_exp_size, exp)));
+    bvsig               = BitVector(d_sig_size - 1, sig_str);
   }
   else
   {
     std::string sig_str = str[0] == '-' ? str + 1 : str;
-    sig_str.resize(sig_size - 1);
-    assert(mpfr2exp(exp_size, exp) <= 0);
-    bvsig =
-        BitVector(sig_size - 1, sig_str, 2).ibvshr(-mpfr2exp(exp_size, exp));
+    sig_str.resize(d_sig_size - 1);
+    assert(mpfr2exp(d_exp_size, exp) <= 0);
+    bvsig = BitVector(d_sig_size - 1, sig_str, 2)
+                .ibvshr(-mpfr2exp(d_exp_size, exp));
   }
   mpfr_free_str(str);
-  assert(bvexp.size() == exp_size);
-  assert(bvsig.size() == sig_size - 1);
+  assert(bvexp.size() == d_exp_size);
+  assert(bvsig.size() == d_sig_size - 1);
   return bvsign.ibvconcat(bvexp).ibvconcat(bvsig);
 }
 
