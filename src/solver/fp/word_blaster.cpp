@@ -312,7 +312,9 @@ WordBlaster::_word_blast(const Node& node)
         d_internal->d_unpacked_float_map.emplace(
             cur,
             UnpackedFloat(symfpu::unpack<fp::SymFpuTraits>(
-                FloatingPointSymFPUTypeInfo(value.type()), value.as_bv())));
+                FloatingPointSymFPUTypeInfo(
+                    nm.mk_fp_type(value.exp_size(), value.sig_size())),
+                value.as_bv())));
       }
       else if (kind == node::Kind::EQUAL && cur[0].type().is_fp())
       {

@@ -168,7 +168,8 @@ FpSolver::value(const Node& term)
       return nm.mk_value(static_cast<RoundingMode>(rm));
     }
     assert(term.type().is_fp());
-    return nm.mk_value(FloatingPoint(term.type(), bv));
+    return nm.mk_value(FloatingPoint(
+        term.type().fp_exp_size(), term.type().fp_sig_size(), bv));
   }
   return node::utils::mk_default_value(nm, term.type());
 }

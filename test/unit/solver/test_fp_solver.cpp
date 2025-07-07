@@ -29,11 +29,14 @@ class TestFpSolver : public TestCommon
     d_fp16     = d_nm.mk_fp_type(5, 11);
     d_fp_a     = d_nm.mk_const(d_fp16, "a");
     d_fp_b     = d_nm.mk_const(d_fp16, "b");
-    d_fp_pzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp16, false));
-    d_fp_nzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp16, true));
-    d_fp_pinf  = d_nm.mk_value(FloatingPoint::fpinf(d_fp16, false));
-    d_fp_ninf  = d_nm.mk_value(FloatingPoint::fpinf(d_fp16, true));
-    d_fp_nan   = d_nm.mk_value(FloatingPoint::fpnan(d_fp16));
+    uint64_t exp_size = d_fp16.fp_exp_size();
+    uint64_t sig_size = d_fp16.fp_sig_size();
+    d_fp_pzero =
+        d_nm.mk_value(FloatingPoint::fpzero(exp_size, sig_size, false));
+    d_fp_nzero = d_nm.mk_value(FloatingPoint::fpzero(exp_size, sig_size, true));
+    d_fp_pinf  = d_nm.mk_value(FloatingPoint::fpinf(exp_size, sig_size, false));
+    d_fp_ninf  = d_nm.mk_value(FloatingPoint::fpinf(exp_size, sig_size, true));
+    d_fp_nan   = d_nm.mk_value(FloatingPoint::fpnan(exp_size, sig_size));
     d_rm       = d_nm.mk_const(d_nm.mk_rm_type());
   }
 
