@@ -121,7 +121,6 @@ FloatingPoint::from_real(uint64_t exp_size,
                          const std::string& real)
 {
   FloatingPoint res(exp_size, sig_size);
-  mpfr_set_eminmax_for_format(exp_size, sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   mpq_t mpq;
   util::mpq_from_dec_string(mpq, real.c_str());
@@ -155,7 +154,6 @@ FloatingPoint::from_rational(uint64_t exp_size,
                              const std::string& den)
 {
   FloatingPoint res(exp_size, sig_size);
-  mpfr_set_eminmax_for_format(exp_size, sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   mpq_t mpq;
   util::mpq_from_rat_string(mpq, num.c_str(), den.c_str());
@@ -227,6 +225,7 @@ FloatingPoint::FloatingPoint(uint64_t exp_size, uint64_t sig_size)
   // MPFR precision includes the hidden bit (not the sign bit), we can use
   // significand size (which is also +1 because of the sign bit).
   mpfr_init2(d_mpfr, sig_size);
+  mpfr_set_eminmax_for_format(exp_size, sig_size);
 }
 
 FloatingPoint::FloatingPoint(uint64_t exp_size,
@@ -236,8 +235,6 @@ FloatingPoint::FloatingPoint(uint64_t exp_size,
 {
   assert(!bv.is_null());
   assert(exp_size + sig_size == bv.size());
-
-  mpfr_set_eminmax_for_format(exp_size, sig_size);
 
   BitVector bvsign, bvexp, bvsig;
   ieee_bv_as_bvs(exp_size, sig_size, bv, bvsign, bvexp, bvsig);
@@ -287,7 +284,6 @@ FloatingPoint::FloatingPoint(uint64_t exp_size,
     : FloatingPoint(exp_size, sig_size)
 {
   assert(!fp.is_null());
-  mpfr_set_eminmax_for_format(exp_size, sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -317,7 +313,6 @@ FloatingPoint::FloatingPoint(uint64_t exp_size,
     : FloatingPoint(exp_size, sig_size)
 {
   assert(!bv.is_null());
-  mpfr_set_eminmax_for_format(exp_size, sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   mpz_class bv_mpz   = bv.to_mpz(sign);
   int32_t i          = 0;
@@ -343,7 +338,6 @@ FloatingPoint::FloatingPoint(uint64_t exp_size,
 FloatingPoint::FloatingPoint(const FloatingPoint& other)
     : FloatingPoint(other.d_exp_size, other.d_sig_size)
 {
-  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_set(d_mpfr, other.d_mpfr, MPFR_RNDN);
 }
 
@@ -654,7 +648,6 @@ FloatingPoint::fpabs() const
 {
   assert(!is_null());
   FloatingPoint res(d_exp_size, d_sig_size);
-  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_abs(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
 }
@@ -664,7 +657,6 @@ FloatingPoint::fpneg() const
 {
   assert(!is_null());
   FloatingPoint res(d_exp_size, d_sig_size);
-  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_neg(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
 }
@@ -674,7 +666,6 @@ FloatingPoint::fpsqrt(const RoundingMode rm) const
 {
   assert(!is_null());
   FloatingPoint res(d_exp_size, d_sig_size);
-  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -694,7 +685,6 @@ FloatingPoint::fprti(const RoundingMode rm) const
 {
   assert(!is_null());
   FloatingPoint res(d_exp_size, d_sig_size);
-  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -716,7 +706,6 @@ FloatingPoint::fprem(const FloatingPoint &fp) const
   assert(!fp.is_null());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
-  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   int32_t i = mpfr_remainder(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
   mpfr_subnormalize((mpfr_ptr) res.d_mpfr, i, MPFR_RNDN);
   return res;
@@ -729,7 +718,6 @@ FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
   assert(!fp.is_null());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
-  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -750,7 +738,6 @@ FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
   assert(!fp.is_null());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
-  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -772,7 +759,6 @@ FloatingPoint::fpdiv(const RoundingMode rm, const FloatingPoint& fp) const
   assert(!fp.is_null());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
-  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -798,7 +784,6 @@ FloatingPoint::fpfma(const RoundingMode rm,
   assert(d_exp_size == fp0.d_exp_size && d_sig_size == fp0.d_sig_size);
   assert(d_exp_size == fp1.d_exp_size && d_sig_size == fp1.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
-  mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
