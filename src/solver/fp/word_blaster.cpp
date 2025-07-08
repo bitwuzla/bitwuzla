@@ -25,6 +25,7 @@
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_map.h"
 #include "solver/array/array_solver.h"
+#include "solver/fp/symfpu_floating_point_typeinfo.h"
 #include "solver/fp/symfpu_wrapper.h"
 #include "solver/fun/fun_solver.h"
 #include "solver/quant/quant_solver.h"
@@ -312,7 +313,7 @@ WordBlaster::_word_blast(const Node& node)
         d_internal->d_unpacked_float_map.emplace(
             cur,
             UnpackedFloat(symfpu::unpack<fp::SymFpuTraits>(
-                FloatingPointSymFPUTypeInfo(
+                SymFPUFloatingPointTypeInfo(
                     nm.mk_fp_type(value.exp_size(), value.sig_size())),
                 value.as_bv())));
       }
@@ -325,7 +326,7 @@ WordBlaster::_word_blast(const Node& node)
         d_internal->d_prop_map.emplace(
             cur,
             symfpu::smtlibEqual<SymFpuSymTraits>(
-                FloatingPointSymFPUTypeInfo(cur[0].type()),
+                SymFPUFloatingPointTypeInfo(cur[0].type()),
                 d_internal->d_unpacked_float_map.at(cur[0]),
                 d_internal->d_unpacked_float_map.at(cur[1])));
       }
