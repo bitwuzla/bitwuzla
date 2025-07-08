@@ -26,6 +26,7 @@
 #include <symfpu/core/unpackedFloat.h>
 
 #include "node/node_manager.h"
+#include "solver/fp/symfpu_floating_point_typeinfo.h"
 #include "solver/fp/symfpu_wrapper.h"
 #include "util/gmp_utils.h"
 
@@ -60,8 +61,7 @@ to_string(const bzla::UnpackedFloat &uf)
 
 namespace bzla {
 
-/* --- FloatingPointSymFPU public static
- * ------------------------------------------ */
+/* --- FloatingPointSymFPU public static ------------------------------------ */
 
 void
 FloatingPointSymFPU::ieee_bv_as_bvs(const Type &type,
@@ -132,24 +132,23 @@ FloatingPointSymFPU::fpfp(NodeManager &nm,
   return res;
 }
 
-/* --- FloatingPointSymFPU public
- * ------------------------------------------------- */
+/* --- FloatingPointSymFPU public ------------------------------------------- */
 
 FloatingPointSymFPU::FloatingPointSymFPU(const Type &type)
 {
-  d_size.reset(new FloatingPointSymFPUTypeInfo(type));
+  d_size.reset(new SymFPUFloatingPointTypeInfo(type));
 }
 
 FloatingPointSymFPU::FloatingPointSymFPU(
-    const FloatingPointSymFPUTypeInfo &size)
+    const SymFPUFloatingPointTypeInfo &size)
 {
-  d_size.reset(new FloatingPointSymFPUTypeInfo(size));
+  d_size.reset(new SymFPUFloatingPointTypeInfo(size));
 }
 
 FloatingPointSymFPU::FloatingPointSymFPU(const Type &type,
                                          const UnpackedFloat &uf)
 {
-  d_size.reset(new FloatingPointSymFPUTypeInfo(type));
+  d_size.reset(new SymFPUFloatingPointTypeInfo(type));
   d_uf.reset(new UnpackedFloat(uf));
 }
 
@@ -221,7 +220,7 @@ FloatingPointSymFPU &
 FloatingPointSymFPU::operator=(const FloatingPointSymFPU &other)
 
 {
-  d_size.reset(new FloatingPointSymFPUTypeInfo(*other.size()));
+  d_size.reset(new SymFPUFloatingPointTypeInfo(*other.size()));
   d_uf.reset(new UnpackedFloat(*other.unpacked()));
   return *this;
 }
@@ -240,7 +239,7 @@ FloatingPointSymFPU::get_significand_size() const
   return d_size->significandWidth();
 }
 
-FloatingPointSymFPUTypeInfo *
+SymFPUFloatingPointTypeInfo *
 FloatingPointSymFPU::size() const
 {
   return d_size.get();
@@ -740,7 +739,7 @@ FloatingPointSymFPU::convert_from_rational_aux(NodeManager &nm,
 
   /* Exact float ------------------------------------------------------- */
 
-  FloatingPointSymFPUTypeInfo exact_format(n_exp_bits, n_sig_bits);
+  SymFPUFloatingPointTypeInfo exact_format(n_exp_bits, n_sig_bits);
 
   /* If the format has n_exp_bits, the unpacked format may have more to allow
    * subnormals to be normalised. */
@@ -779,53 +778,6 @@ std::ostream &
 operator<<(std::ostream &out, const FloatingPointSymFPU &fp)
 {
   out << fp.str();
-  return out;
-}
-
-/* --- FloatingPointSymFPUTypeInfo public
- * ----------------------------------------- */
-
-FloatingPointSymFPUTypeInfo::FloatingPointSymFPUTypeInfo(const Type &type)
-    : d_esize(type.fp_exp_size()), d_ssize(type.fp_sig_size())
-{
-  assert(type.is_fp());
-  d_type = type;
-}
-
-FloatingPointSymFPUTypeInfo::FloatingPointSymFPUTypeInfo(uint32_t esize,
-                                                         uint32_t ssize)
-    : d_esize(esize), d_ssize(ssize)
-{
-  NodeManager &nm = fp::SymFpuNM::get();
-  d_type          = nm.mk_fp_type(esize, ssize);
-}
-
-FloatingPointSymFPUTypeInfo::FloatingPointSymFPUTypeInfo(
-    const FloatingPointSymFPUTypeInfo &other)
-    : d_esize(other.d_esize), d_ssize(other.d_ssize)
-{
-  assert(other.d_type.is_fp());
-  d_type = other.d_type;
-}
-
-FloatingPointSymFPUTypeInfo::~FloatingPointSymFPUTypeInfo() {}
-
-const Type &
-FloatingPointSymFPUTypeInfo::type() const
-{
-  return d_type;
-}
-
-std::string
-FloatingPointSymFPUTypeInfo::str() const
-{
-  return d_type.str();
-}
-
-std::ostream &
-operator<<(std::ostream &out, const FloatingPointSymFPUTypeInfo &type)
-{
-  out << type.str();
   return out;
 }
 
