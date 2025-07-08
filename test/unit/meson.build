@@ -143,6 +143,10 @@ if get_option('fpexp')
   cpp_args += ['-DBZLA_USE_FPEXP']
 endif
 
+sources = files([
+  '../../src/solver/fp/floating_point_symfpu.cpp',
+  ])
+
 # Add unit tests
 foreach p : unit_tests
   test_subdir = p[0]
@@ -153,7 +157,7 @@ foreach p : unit_tests
     name = '_'.join(suite, name)
     exename = ''.join('test_', name)
 
-    exe = executable(exename, src,
+    exe = executable(exename, sources + src,
                dependencies: test_deps,
                include_directories: test_inc,
                cpp_args: cpp_args)
