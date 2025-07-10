@@ -74,33 +74,48 @@ class BitwuzlaExceptionStream
                 << "invalid call to '" << __PRETTY_FUNCTION__ << "', "
 
 #define BITWUZLA_CHECK_NOT_NULL(arg) \
-  BITWUZLA_CHECK((arg) != nullptr) << "expected non-null object";
+  BITWUZLA_CHECK((arg) != nullptr) << "expected non-null object"
 
 #define BITWUZLA_CHECK_NOT_NULL_AT_IDX(arg, i) \
-  BITWUZLA_CHECK((arg) != nullptr) << "expected non-null object at index " << i;
+  BITWUZLA_CHECK((arg) != nullptr) << "expected non-null object at index " << i
 
 #define BITWUZLA_CHECK_NOT_ZERO(arg) \
-  BITWUZLA_CHECK((arg) != 0) << "argument '" << #arg << "' must be > 0";
+  BITWUZLA_CHECK((arg) != 0) << "argument '" << #arg << "' must be > 0"
 
 #define BITWUZLA_CHECK_GREATER_ONE(arg) \
-  BITWUZLA_CHECK((arg) > 1) << "argument '" << #arg << "' must be > 1";
+  BITWUZLA_CHECK((arg) > 1) << "argument '" << #arg << "' must be > 1"
 
 #define BITWUZLA_CHECK_STR_NOT_EMPTY(arg) \
   BITWUZLA_CHECK(!(arg).empty())          \
-      << "argument '" << #arg << "' must not be an empty string";
+      << "argument '" << #arg << "' must not be an empty string"
 
-#define BITWUZLA_CHECK_SORT_TERM_MGR(sort, what)    \
-  do                                                \
-  {                                                 \
-    BITWUZLA_CHECK(d_nm->tm() == sort.d_type->tm()) \
-        << "mismatching term manager for " << what; \
-  } while (0)
+#define BITWUZLA_CHECK_SORT_TERM_MGR(sort, what)  \
+  BITWUZLA_CHECK(d_nm->tm() == sort.d_type->tm()) \
+      << "mismatching term manager for " << what
 
 #define BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort) \
   BITWUZLA_CHECK_SORT_TERM_MGR(sort, "bit-vector sort")
 
-#define BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort) \
-  BITWUZLA_CHECK_SORT_TERM_MGR(sort, "floating-point sort")
+#define BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort)                              \
+  do                                                                       \
+  {                                                                        \
+    BITWUZLA_CHECK_SORT_TERM_MGR(sort, "floating-point sort");             \
+    if (mp_bits_per_limb == 32)                                            \
+    {                                                                      \
+      BITWUZLA_CHECK(sort.d_type->fp_exp_size() <= 30)                     \
+          << "expected floating-point exponent size <= 30, got sort with " \
+             "exponent size '"                                             \
+          << sort.d_type->fp_exp_size() << "'";                            \
+    }                                                                      \
+    else                                                                   \
+    {                                                                      \
+      assert(mp_bits_per_limb == 64);                                      \
+      BITWUZLA_CHECK(sort.d_type->fp_exp_size() <= 62)                     \
+          << "expected floating-point exponent size <= 62, got sort with " \
+             "exponent size '"                                             \
+          << sort.d_type->fp_exp_size() << "'";                            \
+    }                                                                      \
+  } while (0)
 
 #define BITWUZLA_CHECK_SORTS_TERM_MGR(sorts, what)                         \
   do                                                                       \
@@ -309,8 +324,6 @@ class BitwuzlaExceptionStream
     }                                                                          \
   } while (0)
 
-}  // namespace bitwuzla
-
 #define BITWUZLA_CHECK_FP_FORMAT(exp_size, sig_size)                          \
   BITWUZLA_CHECK((exp_size == 5 && sig_size == 11)                            \
                  || (exp_size == 8 && sig_size == 24)                         \
@@ -323,4 +336,23 @@ class BitwuzlaExceptionStream
       << std::endl                                                            \
       << "Note that there are known issues with experimental formats in "     \
          "SymFPU, use at your own risk.";
+
+#define BITWUZLA_CHECK_FP_EXP_SIZE(exp_size)                   \
+  if (mp_bits_per_limb == 32)                                  \
+  {                                                            \
+    BITWUZLA_CHECK(exp_size <= 30)                             \
+        << "expected floating-point exponent size <= 30, got " \
+           "'"                                                 \
+        << exp_size << "'";                                    \
+  }                                                            \
+  else                                                         \
+  {                                                            \
+    assert(mp_bits_per_limb == 64);                            \
+    BITWUZLA_CHECK(exp_size <= 62)                             \
+        << "expected floating-point exponent size <= 62, got " \
+           "'"                                                 \
+        << exp_size << "'";                                    \
+  }
+
+}  // namespace bitwuzla
 #endif
