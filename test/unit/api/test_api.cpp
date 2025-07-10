@@ -10,6 +10,7 @@
 
 #include <bitwuzla/cpp/bitwuzla.h>
 #include <bitwuzla/cpp/parser.h>
+#include <gmp.h>
 
 #include <algorithm>
 #include <chrono>
@@ -477,6 +478,15 @@ TEST_F(TestApi, mk_fp_sort)
   ASSERT_THROW(d_tm.mk_fp_sort(5, 0), bitwuzla::Exception);
   ASSERT_THROW(d_tm.mk_fp_sort(1, 2), bitwuzla::Exception);
   ASSERT_THROW(d_tm.mk_fp_sort(2, 1), bitwuzla::Exception);
+  if (mp_bits_per_limb == 32)
+  {
+    ASSERT_THROW(d_tm.mk_fp_sort(32, 150), bitwuzla::Exception);
+  }
+  else
+  {
+    assert(mp_bits_per_limb == 64);
+    ASSERT_THROW(d_tm.mk_fp_sort(64, 150), bitwuzla::Exception);
+  }
 }
 
 TEST_F(TestApi, mk_fun_sort)

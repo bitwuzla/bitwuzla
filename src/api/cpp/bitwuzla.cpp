@@ -1079,7 +1079,7 @@ Term::fp_value_to_real_str() const
   BITWUZLA_CHECK_NOT_NULL(d_node);
   BITWUZLA_CHECK(d_node->type().is_fp() && d_node->is_value())
       << "expected floating-point value term";
-  bzla::FloatingPoint fpval = d_node->value<bzla::FloatingPoint>();
+  const bzla::FloatingPoint &fpval = d_node->value<bzla::FloatingPoint>();
   uint64_t size_exp         = fpval.exp_size();
   uint64_t size_sig         = fpval.sig_size();
   BITWUZLA_CHECK(size_exp < 64 && size_sig < 64)
@@ -1759,6 +1759,7 @@ TermManager::mk_fp_sort(uint64_t exp_size, uint64_t sig_size)
 {
   BITWUZLA_CHECK_GREATER_ONE(exp_size);
   BITWUZLA_CHECK_GREATER_ONE(sig_size);
+  BITWUZLA_CHECK_FP_EXP_SIZE(exp_size);
 #ifndef BZLA_USE_FPEXP
   BITWUZLA_CHECK_FP_FORMAT(exp_size, sig_size);
 #endif
@@ -1961,6 +1962,7 @@ TermManager::mk_fp_value(const Term &bv_sign,
   BITWUZLA_CHECK_TERM_NOT_NULL(bv_significand);
   BITWUZLA_CHECK_TERM_IS_BV_VALUE(bv_sign);
   BITWUZLA_CHECK_TERM_IS_BV_VALUE(bv_exponent);
+  BITWUZLA_CHECK_FP_EXP_SIZE(bv_exponent.sort().d_type->bv_size());
   BITWUZLA_CHECK_TERM_IS_BV_VALUE(bv_significand);
   BITWUZLA_CHECK(bv_sign.d_node->type().bv_size() == 1)
       << "invalid bit-vector size for argument 'bv_sign', expected size 1";
