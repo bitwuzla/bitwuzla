@@ -14,6 +14,8 @@ extern "C" {
 #include <sys/time.h>
 }
 
+#include <gmp.h>
+
 #include <fstream>
 
 #include "api/c/bitwuzla_structs.h"
@@ -671,6 +673,15 @@ TEST_F(TestCApi, mk_fp_sort)
                "argument 'exp_size' must be > 1");
   ASSERT_DEATH(bitwuzla_mk_fp_sort(d_tm, 2, 1),
                "argument 'sig_size' must be > 1");
+  if (mp_bits_per_limb == 32)
+  {
+    ASSERT_DEATH(bitwuzla_mk_fp_sort(d_tm, 32, 150), "exponent size <= 30");
+  }
+  else
+  {
+    assert(mp_bits_per_limb == 64);
+    ASSERT_DEATH(bitwuzla_mk_fp_sort(d_tm, 64, 150), "exponent size <= 62");
+  }
 }
 
 TEST_F(TestCApi, mk_fun_sort)
