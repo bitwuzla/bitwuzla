@@ -44,7 +44,11 @@ mpz_get_ull(const mpz_t op)
     return limb;
   }
   assert(mp_bits_per_limb == 32);
-  assert(mpz_size(op) >= 1);
+  if (mpz_size(op) == 0)
+  {
+    // mpz_size of value 0 is 0
+    return 0;
+  }
   uint64_t limb_lo = static_cast<uint64_t>(mpz_getlimbn(op, 0));
   uint64_t limb_hi = 0;
   if (mpz_size(op) >= 2)
