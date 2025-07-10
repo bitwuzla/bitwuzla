@@ -13,22 +13,27 @@ host = run_command(host_compiler, '-dumpmachine',
                    capture: true, check: true).stdout().strip()
 build = run_command(build_compiler, '-dumpmachine',
                    capture: true, check: true).stdout().strip()
-env = environment()
-# CC_FOR_BUILD not needed for cross compilation
-# if meson.is_cross_build()
-#   env.set('CC_FOR_BUILD', build_compiler.get_id())
-# endif
 
+configure_options = [
+  '--prefix=@PREFIX@',
+  '--libdir=@PREFIX@/@LIBDIR@',
+  '--includedir=@PREFIX@/@INCLUDEDIR@',
+  '--enable-static',
+  '--disable-shared',
+  '--with-pic',
+  '--enable-cxx'
+]
+
+# We built GMP on our own, use this version.
+fs = import('fs')
+deps_dir = join_paths(meson.current_build_dir(), '..', '..', 'deps')
+if fs.is_dir(deps_dir)
+  configure_options += ['--with-gmp=' + deps_dir]
+endif
+
+env = environment()
 p = mod.add_project('configure',
-  configure_options: [
-        '--prefix=@PREFIX@',
-        '--libdir=@PREFIX@/@LIBDIR@',
-        '--includedir=@PREFIX@/@INCLUDEDIR@',
-        '--enable-static',
-        '--disable-shared',
-        '--with-pic',
-        '--enable-cxx'
-  ],
+  configure_options: configure_options,
   cross_configure_options: [
     '--host=' + host,
     '--build=' + build
