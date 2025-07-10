@@ -21,7 +21,7 @@ def info(msg):
 def die(msg):
     sys.exit(f'** configure.py: {msg}')
 
-def configure_build(builddir, opts):
+def configure_build(builddir, opts, env):
     cmd = ['meson']
     if os.path.exists(os.path.join(builddir, 'meson-private', 'build.dat')):
         cmd.append('configure')
@@ -33,7 +33,7 @@ def configure_build(builddir, opts):
     cmd.append(builddir)
     cmd.extend(opts)
     info(' '.join(cmd))
-    subprocess.run(cmd)
+    subprocess.run(cmd, env=env)
     info(f'compile Bitwuzla with: cd {builddir} && meson compile')
 
 def _feat(val):
@@ -57,6 +57,26 @@ def bool_opt(ap, name, help):
     ap.add_argument(f'--no-{name}', action='store_false', dest=dest,
                     help=f'disable {help}', default=None)
 
+def build_subproject(builddir, opts, subproject):
+    print(f'Building subproject {subproject}...')
+    install_dir = os.path.join(os.getcwd(), builddir, 'deps')
+    sp_builddir = os.path.join(os.getcwd(), builddir, 'subprojects',
+                               subproject, 'build')
+    cmd = ['meson', 'setup', sp_builddir, '--prefix', install_dir] + opts
+    subprocess.run(cmd, cwd=os.path.join('subprojects', subproject))
+    subprocess.run(['ninja', f'{subproject}.stamp'], cwd=sp_builddir)
+    subprocess.run(['ninja', 'install'], cwd=sp_builddir)
+
+def build_dependencies(builddir, opts):
+    subproject_opts = []
+    for o in opts:
+        if o.startswith('--cross-file'):
+            crossfile = os.path.join(os.getcwd(), o.split('=')[1])
+            subproject_opts.append(f'--cross-file={crossfile}')
+
+    subprocess.run(['meson', 'subprojects', 'download'])
+    build_subproject(builddir, subproject_opts, 'gmp-6.3.0')
+
 def main():
     if not os.path.exists('src/main/main.cpp'):
         die('not called from Bitwuzla base directory')
@@ -73,10 +93,11 @@ def main():
                     help='build directory')
     ap.add_argument('--prefix',
                     help='install prefix')
-    ap.add_argument('--shared', action='store_true',
+    ap.add_argument('--shared', action='store_true', default=None,
                     help='shared library')
-    ap.add_argument('--static', action='store_true',
+    ap.add_argument('--static', action='store_true', default=None,
                     help='static library')
+    bool_opt(ap, 'build-gmp', 'build GMP subproject')
     bool_opt(ap, 'assertions', 'assertions')
     bool_opt(ap, 'asan', 'address sanitizer')
     bool_opt(ap, 'ubsan', 'undefined behavior sanitizer')
@@ -153,7 +174,29 @@ def main():
     if args.aiger is not None:
         build_opts.append(f'-Daiger={_bool(args.aiger)}')
 
-    configure_build(args.build_dir, build_opts)
+    # Build GMP for static builds by default
+    if args.build_gmp is None:
+        if args.static:
+            args.build_gmp = args.static
+        else:
+            if args.shared is not None:
+                args.build_gmp = not args.shared
+            else:
+                args.build_gmp = True
+
+    env = os.environ
+    if args.win64 or args.arm64 or args.build_gmp:
+        deps_dir = os.path.join(os.getcwd(), args.build_dir, 'deps')
+        if not os.path.exists(deps_dir):
+            build_dependencies(args.build_dir, build_opts)
+        pkgdir = ''
+        for root, dirs, files in os.walk(deps_dir):
+            for d in dirs:
+                if d == 'pkgconfig':
+                    pkgdir = os.path.join(root, d)
+                    break
+        env['PKG_CONFIG_LIBDIR'] = pkgdir
+    configure_build(args.build_dir, build_opts, env)
 
 if __name__ == '__main__':
     main()

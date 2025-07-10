@@ -6,27 +6,22 @@ cpp_compiler = meson.get_compiler('cpp')
 # ---
 
 # External dependencies
+
+# GMP is a dependency of MPFR. However, MPFR requires GMP to be available at
+# configure time, which prevents us from using the fallback subproject of GMP,
+# since the subproject is built in the build stage.
+# Thus, we require that GMP is installed on the system or --build-gmp was used
+# to configure this project.
 gmp_dep = dependency('gmp',
                      version: '>=6.3',
                      required: true,
-                     static: build_static)
+                     static: build_static,
+                     allow_fallback: false)
 
-# Check if static GMP library is really available. dependency() only tries to
-# get the static dependency, but will return the shared one if the static is
-# not available.
-if build_static and gmp_dep.found()
-  gmp_dep = cpp_compiler.find_library('gmp',
-                                      has_headers: ['gmp.h', 'gmpxx.h'],
-                                      static: true,
-                                      required: false)
-  # If we don't find the static library, build the GMP subproject as fallback.
-  if not gmp_dep.found()
-    gmp_dep = subproject('gmp-6.3.0').get_variable('gmp_dep')
-  endif
-endif
-
-
-# Subproject dependencies
+mpfr_dep = dependency('mpfr',
+                      version: '>=4.2.2',
+                      required: true,
+                      static: build_static)
 
 # CaDiCaL does not provide pkg-config to find dependency
 cadical_dep = cpp_compiler.find_library('cadical',
@@ -54,24 +49,6 @@ endif
 # Using system include type suppresses compile warnings originating from the
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
-
-mpfr_dep = dependency('mpfr',
-                      version: '>=4.2.2',
-                      static: build_static,
-                      required: true)
-# Check if static MPFR library is really available. dependency() only tries to
-# get the static dependency, but will return the shared one if the static is
-# not available.
-if build_static and mpfr_dep.found()
-  mpfr_dep = cpp_compiler.find_library('mpfr',
-                                       has_headers: ['mpfr.h'],
-                                       static: build_static,
-                                       required: false)
-  # If we don't find the static library, build the GMP subproject as fallback.
-  if not mpfr_dep.found()
-    mpfr_dep = subproject('mpfr-4.2.2').get_variable('mpfr_dep')
-  endif
-endif
 
 dependencies = [symfpu_dep, cadical_dep, cms_dep, kissat_dep, gmp_dep, mpfr_dep]
 
