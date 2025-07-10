@@ -24,15 +24,15 @@ namespace {
 int64_t
 ieee_exp_max(uint64_t exp_size)
 {
-  assert(exp_size < 63);
-  // TODO we need to make this robust wrt to underlying impl (64 vs 32 bit)
+  assert((mp_bits_per_limb == 64 && exp_size < 64)
+         || (mp_bits_per_limb == 32 && exp_size < 32));
   uint64_t one = 1;
   return (one << (exp_size - one)) - one;
 }
 int64_t
 ieee_exp_min(uint64_t exp_size)
 {
-  return 1 - ieee_exp_max(exp_size);
+  return ((int64_t) 1) - ieee_exp_max(exp_size);
 }
 int64_t
 mpfr_exp_max(uint64_t exp_size)
@@ -64,10 +64,22 @@ mpfr2exp(uint64_t exp_size, mpfr_exp_t exp)
 void
 mpfr_set_eminmax_for_format(uint64_t exp_size, uint64_t sig_size)
 {
-  // TODO make robust with respect to MPFR implementation size of exponent
-  assert(sizeof(mpfr_exp_t) == sizeof(uint64_t));
-  mpfr_set_emax(mpfr_exp_max(exp_size));
-  mpfr_set_emin(mpfr_exp_min(exp_size, sig_size));
+#ifndef NDEBUG
+  int32_t success;
+#endif
+  int64_t emin = mpfr_exp_min(exp_size, sig_size);
+  int64_t emax = mpfr_exp_max(exp_size);
+#ifndef NDEBUG
+  success =
+#endif
+      mpfr_set_emax(emax);
+  assert(success == 0);
+#ifndef NDEBUG
+  success =
+#endif
+      mpfr_set_emin(emin);
+  assert(success == 0);
+  assert(emin <= emax);
 }
 void
 mpfr_reset_format()
@@ -221,6 +233,11 @@ FloatingPoint::fpfp(const BitVector &sign,
 FloatingPoint::FloatingPoint(uint64_t exp_size, uint64_t sig_size)
     : d_exp_size(exp_size), d_sig_size(sig_size)
 {
+  // MPFR needs +1 for the value of the exponent due to its internal
+  // representation, thus we can only allow a maximum exponent size of 30-bit
+  // (for 32 bit architecture) and 62 bit (for 64 bit architecture).
+  assert(exp_size <= static_cast<uint64_t>(mp_bits_per_limb - 2));
+
   mpfr_reset_format();
   // MPFR precision includes the hidden bit (not the sign bit), we can use
   // significand size (which is also +1 because of the sign bit).
