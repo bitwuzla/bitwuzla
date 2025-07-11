@@ -1,6 +1,6 @@
 project('bitwuzla',
   ['c', 'cpp'],
-  meson_version: '>= 0.64',
+  meson_version: '>= 1.3',
   version: '0.8.2-dev',
   license: 'mit',
   default_options: [
