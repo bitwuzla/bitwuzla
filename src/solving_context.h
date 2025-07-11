@@ -71,11 +71,16 @@ class SolvingContext
   // bool is_in_unsat_core(const Node& term) const;
 
   /**
-   * Get interpolant I given the current set of assertions/assumptions A and a
-   * conjecture C such that (and A (not C)) is unsat and (=> A I) and (=> I C)
-   * are valid.
+   * Get interpolant I given the current set of assertions, partitioned into
+   * A and B such that (and A B) is unsat and (=> A I) and (=> I (not B)).
+   * Partition A is the given set of assertions, partition B consists of the
+   * remaining assertions that are not in A.
+   * @note Assertions in A and B must be currently asserted formulas.
+   * @note Current SAT state must be unsat.
+   * @param A The set of formulas representing partition A. This must be
+   *          a strict subset of the set of current assertions.
    */
-  Node get_interpolant(const Node& C);
+  Node get_interpolant(const std::unordered_set<Node>& A);
 
   /** Increase assertion stack level. */
   void push();
@@ -132,6 +137,12 @@ class SolvingContext
 
   /** Original input assertions added via assert_formula(). */
   backtrack::vector<Node> d_original_assertions;
+
+  /**
+   * Map original input assertions to index in (preprocessed) d_assertions.
+   * This is only required as book keeping for interpolant generation.
+   */
+  backtrack::unordered_map<Node, size_t> d_original_assertions_to_index;
 
   /** Do we have quantifiers in the current set of assertions? */
   backtrack::object<bool> d_have_quantifiers;

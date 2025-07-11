@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <unordered_set>
 
 #include "node/node_manager.h"
 #include "node/node_utils.h"
@@ -32,7 +33,7 @@ class TestBvInterpolationSolver : public TestCommon
   {
     NONE,
     ALL,
-    ONLY_C,
+    ONLY_B,
   };
 
   void SetUp() override
@@ -44,9 +45,10 @@ class TestBvInterpolationSolver : public TestCommon
     d_options.tmp_interpol_use_cadicraig.set(false);
   }
 
-  void test_get_interpolant(const std::vector<Node>& A, const Node& C)
+  void test_get_interpolant(const std::unordered_set<Node>& A,
+                            const std::unordered_set<Node>& B)
   {
-    // check if (and A (not C)) is unsat
+    // check if (and A B) is unsat
     option::Options opts_solve;
     sat::SatSolverFactory sat_factory(opts_solve);
     SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
@@ -55,29 +57,32 @@ class TestBvInterpolationSolver : public TestCommon
       ctx_solve.assert_formula(a);
     }
     ASSERT_EQ(ctx_solve.solve(), Result::SAT);
-    ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+    for (const auto& a : B)
+    {
+      ctx_solve.assert_formula(a);
+    }
     ASSERT_EQ(ctx_solve.solve(), Result::UNSAT);
-    test_get_interpolant_aux(A, C, AssumptionConfig::NONE);
-    test_get_interpolant_aux(A, C, AssumptionConfig::ALL);
-    test_get_interpolant_aux(A, C, AssumptionConfig::ONLY_C);
+    test_get_interpolant_aux(A, B, AssumptionConfig::NONE);
+    test_get_interpolant_aux(A, B, AssumptionConfig::ALL);
+    test_get_interpolant_aux(A, B, AssumptionConfig::ONLY_B);
   }
 
-  void test_get_interpolant_aux(const std::vector<Node>& A,
-                                const Node& C,
+  void test_get_interpolant_aux(const std::unordered_set<Node>& A,
+                                const std::unordered_set<Node>& B,
                                 AssumptionConfig config)
   {
     if (s_test_internal)
     {
-      test_get_interpolant_aux(A, C, config, true);
+      test_get_interpolant_aux(A, B, config, true);
     }
     if (s_test_cadicraig)
     {
-      test_get_interpolant_aux(A, C, config, false);
+      test_get_interpolant_aux(A, B, config, false);
     }
   }
 
-  void test_get_interpolant_aux(const std::vector<Node>& A,
-                                const Node& C,
+  void test_get_interpolant_aux(const std::unordered_set<Node>& A,
+                                const std::unordered_set<Node>& B,
                                 AssumptionConfig config,
                                 bool internal)
   {
@@ -89,24 +94,24 @@ class TestBvInterpolationSolver : public TestCommon
     }
     // get interpolant
     test_get_interpolant_aux(
-        true, d_options.rewrite_level.dflt(), A, C, config, internal);
+        true, d_options.rewrite_level.dflt(), A, B, config, internal);
 
     if (s_all_pp_rw)
     {
       // get_interpolant when preprocessing is disabled
       test_get_interpolant_aux(
-          false, d_options.rewrite_level.dflt(), A, C, config, internal);
+          false, d_options.rewrite_level.dflt(), A, B, config, internal);
       // get_interpolant when rewriting is disabled
-      test_get_interpolant_aux(true, 0, A, C, config, internal);
+      test_get_interpolant_aux(true, 0, A, B, config, internal);
       // get_interpolant when preprocessing and rewriting is disabled
-      test_get_interpolant_aux(false, 0, A, C, config, internal);
+      test_get_interpolant_aux(false, 0, A, B, config, internal);
     }
   }
 
   void test_get_interpolant_aux(bool pp,
                                 uint64_t rwl,
-                                const std::vector<Node>& A,
-                                const Node& C,
+                                const std::unordered_set<Node>& A,
+                                const std::unordered_set<Node>& B,
                                 AssumptionConfig config,
                                 bool internal)
   {
@@ -129,11 +134,15 @@ class TestBvInterpolationSolver : public TestCommon
     {
       ctx.assert_formula(a);
     }
-    if (config == AssumptionConfig::ONLY_C)
+    if (config == AssumptionConfig::ONLY_B)
     {
       ctx.push();
     }
-    Node interpolant = ctx.get_interpolant(C);
+    for (const auto& a : B)
+    {
+      ctx.assert_formula(a);
+    }
+    Node interpolant = ctx.get_interpolant(A);
     ASSERT_FALSE(interpolant.is_null());
   }
 
@@ -156,8 +165,8 @@ TEST_F(TestBvInterpolationSolver, produce_interpolants)
   d_options.produce_interpolants.set(false);
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx = SolvingContext(d_nm, d_options, sat_factory);
-  ASSERT_DEATH(ctx.get_interpolant(d_nm.mk_const(d_nm.mk_bool_type())),
-               "produce_interpolants");
+  ctx.assert_formula(d_nm.mk_const(d_nm.mk_bool_type()));
+  ASSERT_DEATH(ctx.get_interpolant({}), "produce_interpolants");
 }
 
 TEST_F(TestBvInterpolationSolver, prop)
@@ -167,8 +176,8 @@ TEST_F(TestBvInterpolationSolver, prop)
   options.produce_interpolants.set(true);
   sat::SatSolverFactory sat_factory(options);
   SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
-  ASSERT_NO_FATAL_FAILURE(
-      ctx.get_interpolant(d_nm.mk_const(d_nm.mk_bool_type())));
+  ctx.assert_formula(d_nm.mk_const(d_nm.mk_bool_type()));
+  ASSERT_NO_FATAL_FAILURE(ctx.get_interpolant({}));
 }
 
 TEST_F(TestBvInterpolationSolver, preprop)
@@ -178,76 +187,71 @@ TEST_F(TestBvInterpolationSolver, preprop)
   options.produce_interpolants.set(true);
   sat::SatSolverFactory sat_factory(options);
   SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
-  ASSERT_NO_FATAL_FAILURE(
-      ctx.get_interpolant(d_nm.mk_const(d_nm.mk_bool_type())));
-}
-
-TEST_F(TestBvInterpolationSolver, bool_conj)
-{
-  sat::SatSolverFactory sat_factory(d_options);
-  SolvingContext ctx(d_nm, d_options, sat_factory);
-  ASSERT_DEATH(ctx.get_interpolant(d_nm.mk_const(d_nm.mk_bv_type(8))),
-               "is_bool");
+  ctx.assert_formula(d_nm.mk_const(d_nm.mk_bool_type()));
+  ASSERT_NO_FATAL_FAILURE(ctx.get_interpolant({}));
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat1)
 {
   Node x = d_nm.mk_const(d_nm.mk_bool_type(), "x");
-  Node C = x;
+  Node B = d_nm.mk_node(Kind::NOT, {x});
   // check if (and A (not C)) is unsat
   {
     option::Options opts_solve;
     sat::SatSolverFactory sat_factory(opts_solve);
     SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
-    ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+    ctx_solve.assert_formula(B);
     ASSERT_EQ(ctx_solve.solve(), Result::SAT);
   }
   // (and A (not C)) not unsat
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx(d_nm, d_options, sat_factory);
-  ASSERT_EQ(ctx.get_interpolant(C), Node());
+  ctx.assert_formula(B);
+  ASSERT_EQ(ctx.get_interpolant({}), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat2)
 {
   Node x = d_nm.mk_const(d_nm.mk_bool_type(), "x");
   Node A = d_nm.mk_node(Kind::NOT, {x});
-  Node C = x;
+  Node B = d_nm.mk_node(Kind::NOT, {x});
   // check if (and A (not C)) is unsat
   {
     option::Options opts_solve;
     sat::SatSolverFactory sat_factory(opts_solve);
     SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
     ctx_solve.assert_formula(A);
-    ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+    ctx_solve.assert_formula(B);
     ASSERT_EQ(ctx_solve.solve(), Result::SAT);
   }
   // (and A (not C)) not unsat
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx(d_nm, d_options, sat_factory);
   ctx.assert_formula(A);
-  ASSERT_EQ(ctx.get_interpolant(C), Node());
+  ctx.assert_formula(B);
+  ASSERT_EQ(ctx.get_interpolant({A}), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat3)
 {
   Node x = d_nm.mk_const(d_nm.mk_bool_type(), "x");
   Node A = x;
-  Node C = d_nm.mk_node(Kind::NOT, {x});
+  Node B = x;
   // check if (and A (not C)) is unsat
   {
     option::Options opts_solve;
     sat::SatSolverFactory sat_factory(opts_solve);
     SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
     ctx_solve.assert_formula(A);
-    ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+    ctx_solve.assert_formula(B);
     ASSERT_EQ(ctx_solve.solve(), Result::SAT);
   }
   // (and A (not C)) not unsat
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx(d_nm, d_options, sat_factory);
   ctx.assert_formula(A);
-  ASSERT_EQ(ctx.get_interpolant(C), Node());
+  ctx.assert_formula(B);
+  ASSERT_EQ(ctx.get_interpolant({A}), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, not_unsat4)
@@ -260,52 +264,55 @@ TEST_F(TestBvInterpolationSolver, not_unsat4)
   Node or1 =
       d_nm.mk_node(Kind::BV_UGE, {x, d_nm.mk_node(Kind::BV_AND, {x, y})});
   Node A = d_nm.mk_node(Kind::OR, {or0, or1});
-  Node C = d_nm.mk_node(Kind::BV_UGE, {x, y});
+  Node B = d_nm.mk_node(Kind::BV_ULT, {x, y});
   // check if (and A (not C)) is unsat
   {
     option::Options opts_solve;
     sat::SatSolverFactory sat_factory(opts_solve);
     SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
     ctx_solve.assert_formula(A);
-    ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+    ctx_solve.assert_formula(B);
     ASSERT_EQ(ctx_solve.solve(), Result::SAT);
   }
   // (and A (not C)) not unsat
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx(d_nm, d_options, sat_factory);
   ctx.assert_formula(A);
-  ASSERT_EQ(ctx.get_interpolant(C), Node());
+  ctx.assert_formula(B);
+  ASSERT_EQ(ctx.get_interpolant({A}), Node());
 }
 
 TEST_F(TestBvInterpolationSolver, interpol1)
 {
   Node x              = d_nm.mk_const(d_nm.mk_bool_type(), "x");
-  std::vector<Node> A = {d_nm.mk_node(Kind::NOT, {x})};
-  Node C              = d_nm.mk_node(Kind::NOT, {x});
-  test_get_interpolant(A, C);
+  Node A              = d_nm.mk_node(Kind::NOT, {x});
+  Node B              = x;
+  test_get_interpolant({A}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol2)
 {
   Node x              = d_nm.mk_const(d_nm.mk_bool_type(), "x");
   Node y              = d_nm.mk_const(d_nm.mk_bool_type(), "y");
-  std::vector<Node> A = {x, d_nm.mk_node(Kind::NOT, {x})};
-  Node C              = d_nm.mk_node(Kind::NOT, {y});
-  // check if (and A (not C)) is unsat (A is already unsat)
+  std::unordered_set<Node> A = {x, d_nm.mk_node(Kind::NOT, {x})};
+  Node B                     = y;
+  // check if (and A B) is unsat (A is already unsat)
   option::Options opts_solve;
   sat::SatSolverFactory sat_factory(opts_solve);
   SolvingContext ctx_solve = SolvingContext(d_nm, opts_solve, sat_factory);
-  ctx_solve.assert_formula(A[0]);
-  ctx_solve.assert_formula(A[1]);
+  for (const auto& a : A)
+  {
+    ctx_solve.assert_formula(a);
+  }
   ASSERT_EQ(ctx_solve.solve(), Result::UNSAT);
-  ctx_solve.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+  ctx_solve.assert_formula(B);
   ASSERT_EQ(ctx_solve.solve(), Result::UNSAT);
   test_get_interpolant_aux(
-      A, C, TestBvInterpolationSolver::AssumptionConfig::NONE);
+      A, {B}, TestBvInterpolationSolver::AssumptionConfig::NONE);
   test_get_interpolant_aux(
-      A, C, TestBvInterpolationSolver::AssumptionConfig::ALL);
+      A, {B}, TestBvInterpolationSolver::AssumptionConfig::ALL);
   test_get_interpolant_aux(
-      A, C, TestBvInterpolationSolver::AssumptionConfig::ONLY_C);
+      A, {B}, TestBvInterpolationSolver::AssumptionConfig::ONLY_B);
 }
 
 TEST_F(TestBvInterpolationSolver, interpol3)
@@ -321,14 +328,11 @@ TEST_F(TestBvInterpolationSolver, interpol3)
   Node A0 = d_nm.mk_node(Kind::EQUAL, {x, bvnoty});
   // (= #b0 (bvnot y))
   Node A1 = d_nm.mk_node(Kind::EQUAL, {zero, bvnoty});
-  // (not (and (bvult x (bvnot y)) (= (bvnot y) #b0)))
-  Node C =
-      d_nm.mk_node(Kind::NOT,
-                   {d_nm.mk_node(Kind::AND,
-                                 {d_nm.mk_node(Kind::BV_ULT, {x, bvnoty}),
-                                  d_nm.mk_node(Kind::EQUAL, {bvnoty, zero})})});
-
-  test_get_interpolant({A0, A1}, C);
+  // (and (bvult x (bvnot y)) (= (bvnot y) #b0))
+  Node B = d_nm.mk_node(Kind::AND,
+                        {d_nm.mk_node(Kind::BV_ULT, {x, bvnoty}),
+                         d_nm.mk_node(Kind::EQUAL, {bvnoty, zero})});
+  test_get_interpolant({A0, A1}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol4)
@@ -353,10 +357,10 @@ TEST_F(TestBvInterpolationSolver, interpol4)
   Node A2 = d_nm.mk_node(Kind::EQUAL,
                          {goal, d_nm.mk_value(BitVector::from_ui(2, 3))});
 
-  // (distinct s0 goal)
-  Node C = d_nm.mk_node(Kind::DISTINCT, {s0, goal});
+  // (= s0 goal)
+  Node B = d_nm.mk_node(Kind::EQUAL, {s0, goal});
 
-  test_get_interpolant({A0, A1, A2}, C);
+  test_get_interpolant({A0, A1, A2}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol5)
@@ -370,10 +374,11 @@ TEST_F(TestBvInterpolationSolver, interpol5)
   Node A1 = d_nm.mk_node(Kind::EQUAL,
                          {d_nm.mk_node(Kind::BV_EXTRACT, {x}, {0, 0}),
                           d_nm.mk_value(BitVector::mk_zero(1))});
-  // (= x (_ bv0 6))
-  Node C = d_nm.mk_node(Kind::EQUAL, {x, d_nm.mk_value(BitVector::mk_zero(6))});
+  // (distinct x (_ bv0 6))
+  Node B =
+      d_nm.mk_node(Kind::DISTINCT, {x, d_nm.mk_value(BitVector::mk_zero(6))});
 
-  test_get_interpolant({A0, A1}, C);
+  test_get_interpolant({A0, A1}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol6)
@@ -408,22 +413,18 @@ TEST_F(TestBvInterpolationSolver, interpol6)
                     {d_nm.mk_node(Kind::BV_AND,
                                   {y, d_nm.mk_node(Kind::BV_SUB, {y, one})}),
                      zero})});
-  // (not
   //   (and
   //     (distinct z (_ bv0 1024))
-  //     (= (bvand z (bvsub z (_ bv1 1024))) (_ bv0 1024))))
-  Node C = d_nm.mk_node(
-      Kind::NOT,
-      {d_nm.mk_node(
-          Kind::AND,
-          {d_nm.mk_node(Kind::DISTINCT, {z, zero}),
-           d_nm.mk_node(
-               Kind::EQUAL,
-               {d_nm.mk_node(Kind::BV_AND,
-                             {z, d_nm.mk_node(Kind::BV_SUB, {z, one})}),
-                zero})})});
+  //     (= (bvand z (bvsub z (_ bv1 1024))) (_ bv0 1024)))
+  Node B = d_nm.mk_node(
+      Kind::AND,
+      {d_nm.mk_node(Kind::DISTINCT, {z, zero}),
+       d_nm.mk_node(Kind::EQUAL,
+                    {d_nm.mk_node(Kind::BV_AND,
+                                  {z, d_nm.mk_node(Kind::BV_SUB, {z, one})}),
+                     zero})});
 
-  test_get_interpolant({A0, A1, A2, A3}, C);
+  test_get_interpolant({A0, A1, A2, A3}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol7)
@@ -436,10 +437,10 @@ TEST_F(TestBvInterpolationSolver, interpol7)
   Node A0 = d_nm.mk_node(Kind::BV_ULT, {a, d_nm.mk_node(Kind::BV_ADD, {b, c})});
   // (bvult c b)
   Node A1 = d_nm.mk_node(Kind::BV_ULT, {c, b});
-  // (not (bvugt c b))
-  Node C = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::BV_UGT, {c, b})});
+  // (bvugt c b)
+  Node B = d_nm.mk_node(Kind::BV_UGT, {c, b});
 
-  test_get_interpolant({A0, A1}, C);
+  test_get_interpolant({A0, A1}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol8)
@@ -461,11 +462,11 @@ TEST_F(TestBvInterpolationSolver, interpol8)
            Kind::BV_NEG,
            {d_nm.mk_node(Kind::BV_ADD,
                          {y, d_nm.mk_node(Kind::BV_MUL, {x, two})})})});
-  // (distinct (_ bv0 16) (bvadd x (_ bv1 16)))
-  Node C = d_nm.mk_node(Kind::DISTINCT,
-                        {zero, d_nm.mk_node(Kind::BV_ADD, {x, one})});
+  // (= (_ bv0 16) (bvadd x (_ bv1 16)))
+  Node B =
+      d_nm.mk_node(Kind::EQUAL, {zero, d_nm.mk_node(Kind::BV_ADD, {x, one})});
 
-  test_get_interpolant({A0, A1}, C);
+  test_get_interpolant({A0, A1}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol9)
@@ -491,7 +492,7 @@ TEST_F(TestBvInterpolationSolver, interpol9)
             d_nm.mk_node(Kind::BV_MUL,
                          {four, d_nm.mk_node(Kind::BV_MUL, {xext, four})})}),
        d_nm.mk_value(BitVector::from_ui(32, 119))});
-  // (bvult
+  // (bvuge
   //   (bvadd
   //     (_ bv1 32)
   //     (bvmul
@@ -502,8 +503,8 @@ TEST_F(TestBvInterpolationSolver, interpol9)
   //           ((_ zero_extend 30) x)
   //           (_ bv4 32)))))
   //   (_ bv128 32))
-  Node C = d_nm.mk_node(
-      Kind::BV_ULT,
+  Node B = d_nm.mk_node(
+      Kind::BV_UGE,
       {d_nm.mk_node(
            Kind::BV_ADD,
            {one,
@@ -515,7 +516,7 @@ TEST_F(TestBvInterpolationSolver, interpol9)
                      {four, d_nm.mk_node(Kind::BV_MUL, {xext, four})})})}}),
        d_nm.mk_value(BitVector::from_ui(32, 128))});
 
-  test_get_interpolant({A0}, C);
+  test_get_interpolant({A0}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol10)
@@ -535,8 +536,9 @@ TEST_F(TestBvInterpolationSolver, interpol10)
                                      d_nm.mk_node(Kind::EQUAL, {s, val_s}),
                                  }),
                     d_nm.mk_node(Kind::EQUAL, {t, val_t})});
-  Node C = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
-  test_get_interpolant({A0}, C);
+  Node B =
+      d_nm.mk_node(Kind::DISTINCT, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
+  test_get_interpolant({A0}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol11)
@@ -579,10 +581,9 @@ TEST_F(TestBvInterpolationSolver, interpol11)
                                  }),
                     d_nm.mk_node(Kind::EQUAL, {t, val_t2})});
   Node A0 = d_nm.mk_node(Kind::OR, {or0, d_nm.mk_node(Kind::OR, {or1, or2})});
-  // Node A0 = d_nm.mk_node(Kind::OR, {or0, or1});
-  // Node A0 = or0;
-  Node C = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
-  test_get_interpolant({A0}, C);
+  Node B =
+      d_nm.mk_node(Kind::DISTINCT, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
+  test_get_interpolant({A0}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_bv_abstr1)
@@ -604,9 +605,9 @@ TEST_F(TestBvInterpolationSolver, interpol_bv_abstr1)
   Node A2 =
       d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_UDIV, {a, one})});
   // (assert (distinct c (bvlshr a shift_by))
-  Node C =
-      d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_SHR, {a, shift_by})});
-  test_get_interpolant({A0, A1, A2}, C);
+  Node B = d_nm.mk_node(Kind::DISTINCT,
+                        {c, d_nm.mk_node(Kind::BV_SHR, {a, shift_by})});
+  test_get_interpolant({A0, A1, A2}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_bv_abstr2)
@@ -629,9 +630,9 @@ TEST_F(TestBvInterpolationSolver, interpol_bv_abstr2)
   Node A2 =
       d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_UDIV, {a, pow2})});
   // (assert (distinct c (bvlshr a shift_by))
-  Node C =
-      d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_SHR, {a, shift_by})});
-  test_get_interpolant({A0, A1, A2}, C);
+  Node B = d_nm.mk_node(Kind::DISTINCT,
+                        {c, d_nm.mk_node(Kind::BV_SHR, {a, shift_by})});
+  test_get_interpolant({A0, A1, A2}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_bv_abstr3)
@@ -665,9 +666,9 @@ TEST_F(TestBvInterpolationSolver, interpol_bv_abstr3)
   Node A3 =
       d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_UREM, {a, pow2})});
   // (assert (distinct c (bvand mask a)))
-  Node C =
-      d_nm.mk_node(Kind::EQUAL, {c, d_nm.mk_node(Kind::BV_AND, {mask, a})});
-  test_get_interpolant({A0, A1, A2, A3}, C);
+  Node B =
+      d_nm.mk_node(Kind::DISTINCT, {c, d_nm.mk_node(Kind::BV_AND, {mask, a})});
+  test_get_interpolant({A0, A1, A2, A3}, {B});
 }
 
 #if 0
@@ -705,9 +706,9 @@ TEST_F(TestBvInterpolationSolver, interpol_array1)
                                d_nm.mk_node(Kind::DISTINCT, {a3, a4}),
                                d_nm.mk_node(Kind::DISTINCT, {a3, a5}),
                            });
-  Node C  = d_nm.mk_node(Kind::EQUAL, {a4, a5});
+  Node B  = d_nm.mk_node(Kind::DISTINCT, {a4, a5});
 
-  test_get_interpolant({A0, A1, A2}, C);
+  test_get_interpolant({A0, A1, A2}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_array2)
@@ -735,9 +736,9 @@ TEST_F(TestBvInterpolationSolver, interpol_array2)
   Node C1 =
       d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::SELECT, {b, one}), zero});
 
-  Node C = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::AND, {C0, C1})});
+  Node B = d_nm.mk_node(Kind::AND, {C0, C1});
 
-  test_get_interpolant({A0, A1, A2}, C);
+  test_get_interpolant({A0, A1, A2}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_array3)
@@ -790,8 +791,7 @@ TEST_F(TestBvInterpolationSolver, interpol_array3)
   Node C3 = d_nm.mk_node(Kind::EQUAL,
                          {d_nm.mk_node(Kind::SELECT, {a, six}),
                           d_nm.mk_node(Kind::SELECT, {b, six})});
-  Node C  = d_nm.mk_node(Kind::NOT,
-                         {utils::mk_nary(d_nm, Kind::AND, {C0, C1, C2, C3})});
+  Node B  = utils::mk_nary(d_nm, Kind::AND, {C0, C1, C2, C3});
   option::Options options;
   sat::SatSolverFactory sat_factory(options);
   SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
@@ -800,9 +800,9 @@ TEST_F(TestBvInterpolationSolver, interpol_array3)
   ctx.assert_formula(A2);
   ctx.assert_formula(A3);
   ctx.assert_formula(A4);
-  ctx.assert_formula(d_nm.mk_node(Kind::NOT, {C}));
+  ctx.assert_formula(B);
   assert(ctx.solve() == Result::UNSAT);
-  test_get_interpolant({A0, A1, A2, A3, A4}, C);
+  test_get_interpolant({A0, A1, A2, A3, A4}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_array4a)
@@ -829,10 +829,10 @@ TEST_F(TestBvInterpolationSolver, interpol_array4a)
                          {d_nm.mk_node(Kind::SELECT, {h, a}),
                           d_nm.mk_node(Kind::SELECT, {hh, a})});
   // (assert (distinct (select h b) (select hh b)))
-  Node C = d_nm.mk_node(Kind::EQUAL,
+  Node B = d_nm.mk_node(Kind::DISTINCT,
                         {d_nm.mk_node(Kind::SELECT, {h, b}),
                          d_nm.mk_node(Kind::SELECT, {hh, b})});
-  test_get_interpolant({A0, A1}, C);
+  test_get_interpolant({A0, A1}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_array4b)
@@ -866,9 +866,8 @@ TEST_F(TestBvInterpolationSolver, interpol_array4b)
   Node B2 = d_nm.mk_node(Kind::DISTINCT,
                          {d_nm.mk_node(Kind::SELECT, {h, b}),
                           d_nm.mk_node(Kind::SELECT, {hh, b})});
-  Node C =
-      d_nm.mk_node(Kind::NOT, {utils::mk_nary(d_nm, Kind::AND, {B0, B1, B2})});
-  test_get_interpolant({A}, C);
+  Node B = utils::mk_nary(d_nm, Kind::AND, {B0, B1, B2});
+  test_get_interpolant({A}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_fp1)
@@ -958,10 +957,9 @@ TEST_F(TestBvInterpolationSolver, interpol_fp1)
   // (define-fun b5 () Bool (not (fp.isInfinite b)))
   Node C5 = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_INF, {b})});
 
-  Node C = d_nm.mk_node(
-      Kind::NOT, {utils::mk_nary(d_nm, Kind::AND, {C0, C1, C2, C3, C4, C5})});
+  Node B = utils::mk_nary(d_nm, Kind::AND, {C0, C1, C2, C3, C4, C5});
 
-  test_get_interpolant({A0, A1, A2, A3, A4, A5, A6, A7, A8}, C);
+  test_get_interpolant({A0, A1, A2, A3, A4, A5, A6, A7, A8}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_quant1)
@@ -978,17 +976,16 @@ TEST_F(TestBvInterpolationSolver, interpol_quant1)
            Kind::EXISTS,
            {y, d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::AND, {x, y})})})});
   // (assert (exists ((z (_ BitVec 2))) (= (bvmul z #b10) #b11)))
-  Node C = d_nm.mk_node(
-      Kind::NOT,
-      {d_nm.mk_node(
+  Node B =
+      d_nm.mk_node(
           Kind::EXISTS,
           {z,
            d_nm.mk_node(
                Kind::EQUAL,
                {d_nm.mk_node(Kind::BV_MUL,
                              {z, d_nm.mk_value(BitVector::from_ui(2, 2))}),
-                d_nm.mk_value(BitVector::from_ui(2, 3))})})});
-  test_get_interpolant({A}, C);
+                d_nm.mk_value(BitVector::from_ui(2, 3))})});
+  test_get_interpolant({A}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_quant2)
@@ -1011,9 +1008,7 @@ TEST_F(TestBvInterpolationSolver, interpol_quant2)
   //      (and (bvsle c_ (bvmul m (_ bv2 32)))
   //           (bvsle m (_ bv1 32))
   //           (bvsle m c)))))
-  Node C = d_nm.mk_node(
-      Kind::NOT,
-      {d_nm.mk_node(
+  Node B = d_nm.mk_node(
           Kind::OR,
           {d_nm.mk_value(false),
            d_nm.mk_node(
@@ -1030,8 +1025,8 @@ TEST_F(TestBvInterpolationSolver, interpol_quant2)
                               {mm, d_nm.mk_value(BitVector::from_ui(32, 2))})}),
                      d_nm.mk_node(Kind::BV_SLE,
                                   {mm, d_nm.mk_value(BitVector::mk_one(32))}),
-                     d_nm.mk_node(Kind::BV_SLE, {mm, c})})})})});
-  test_get_interpolant({A}, C);
+                     d_nm.mk_node(Kind::BV_SLE, {mm, c})})})});
+  test_get_interpolant({A}, B);
 }
 #endif
 }  // namespace bzla::test

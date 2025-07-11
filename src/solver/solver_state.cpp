@@ -48,7 +48,8 @@ SolverState::unsupported(const std::string& msg)
 bool
 SolverState::is_interpol_conj(const Node& term) const
 {
-  return d_solver_engine.interpol_conj_assertion() == term;
+  return d_solver_engine.interpol_B().find(term)
+         != d_solver_engine.interpol_B().end();
 }
 
 void

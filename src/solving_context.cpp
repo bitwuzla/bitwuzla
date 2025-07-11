@@ -37,6 +37,7 @@ SolvingContext::SolvingContext(NodeManager& nm,
       d_logger(d_env.logger()),
       d_assertions(&d_backtrack_mgr),
       d_original_assertions(&d_backtrack_mgr),
+      d_original_assertions_to_index(&d_backtrack_mgr),
       d_have_quantifiers(&d_backtrack_mgr),
       d_preprocessor(*this),
       d_solver_engine(*this),
@@ -117,6 +118,13 @@ SolvingContext::assert_formula(const Node& formula)
       d_have_quantifiers = true;
     }
     d_original_assertions.push_back(formula);
+    if (d_env.options().produce_interpolants())
+    {
+      // Duplicate assertions are no issue for this book keeping, they
+      // map to the same node (albeit at different indices). We only need
+      // one mapping.
+      d_original_assertions_to_index.emplace(formula, d_assertions.size() - 1);
+    }
   }
 }
 
@@ -163,36 +171,31 @@ SolvingContext::get_unsat_core()
 }
 
 Node
-SolvingContext::get_interpolant(const Node& C)
+SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 {
   util::Timer timer(d_stats.time_get_interpolant);
 
   assert(d_env.options().produce_interpolants());
+#ifndef NDEBUG
+  for (const auto& a : A)
+  {
+    assert(d_original_assertions_to_index.find(a)
+           != d_original_assertions_to_index.end());
+  }
+#endif
+
+  Node ipol;
+  // TODO: != UNSAT when post-processing
+  if (d_sat_state == Result::SAT)
+  {
+    Log(1) << "not unsat";
+    return ipol;
+  }
 
   fp::SymFpuNM snm(d_env.nm());
   set_resource_limits();
 
-  Log(1);
-  Log(1) << "*** interpolant";
-  Log(1);
-  if (d_logger.is_log_enabled(1))
-  {
-    for (size_t i = 0, n = d_original_assertions.size(); i < n; ++i)
-    {
-      Log(1) << "A[" << i << "]: " << d_original_assertions[i];
-    }
-  }
-  Log(1) << "C: " << C;
-  Log(1);
-  assert(C.type().is_bool());
-
   NodeManager& nm = d_env.nm();
-  // Our SAT interpolation tracer interface defines interpolant I as (A -> I)
-  // and (I -> not B), for formulas A, B with (and A B) unsat. In our word-level
-  // interface here, C = not B.
-  size_t idx_B = d_assertions.size();
-  Node B       = nm.mk_node(Kind::NOT, {d_env.rewriter().rewrite(C)});
-  assert_formula(B);
 
   // Solve, we only compute on unsat
   {
@@ -201,26 +204,61 @@ SolvingContext::get_interpolant(const Node& C)
     check_no_free_variables();
 #endif
     d_sat_state = preprocess();
+
+    std::unordered_set<Node> B;
+    for (const auto& a : d_original_assertions_to_index)
+    {
+      auto it = A.find(a.first);
+      if (it == A.end())
+      {
+        B.insert(d_assertions[a.second]);
+      }
+    }
+
+    Log(1);
+    Log(1) << "*** interpolant";
+    Log(1);
+    if (d_logger.is_log_enabled(1))
+    {
+      for (size_t i = 0, ia = 0, ib = 0, n = d_original_assertions.size();
+           i < n;
+           ++i)
+      {
+        if (A.find(d_original_assertions[i]) != A.end())
+        {
+          Log(1) << "A[" << ia++ << "]: " << d_original_assertions[i];
+        }
+        else
+        {
+          Log(1) << "B[" << ib++ << "]: " << d_original_assertions[i];
+        }
+      }
+    }
+    Log(1);
+
     if (d_sat_state == Result::UNSAT)
     {
-      if (d_assertions[idx_B].is_value() && !d_assertions[idx_B].value<bool>())
+      for (const auto& a : A)
       {
-        return nm.mk_value(true);
-      }
-      for (size_t i = 0, n = d_assertions.size(); i < n; ++i)
-      {
-        if (i == idx_B)
-        {
-          continue;
-        }
-        if (d_assertions[i].is_value() && !d_assertions[i].value<bool>())
+        auto it = d_original_assertions_to_index.find(a);
+        assert(it != d_original_assertions_to_index.end());
+        const Node& n = d_assertions[it->second];
+        if (n.is_value() && !n.value<bool>())
         {
           return nm.mk_value(false);
         }
       }
+      for (const auto& a : B)
+      {
+        if (a.is_value() && !a.value<bool>())
+        {
+          return nm.mk_value(true);
+        }
+      }
     }
 
-    d_solver_engine.cache_interpol_conj_assertion(d_assertions[idx_B]);
+    // temporary, until we refactor to post-process
+    d_solver_engine.interpol_cache_B(B);
 
     if (d_sat_state != Result::SAT)
     {
@@ -247,19 +285,16 @@ SolvingContext::get_interpolant(const Node& C)
     check();
   }
 
-  Node ipol;
   if (d_sat_state == Result::UNSAT)
   {
-    {
-      util::Timer timer(d_stats.time_compute_interpolant);
-      ipol = d_solver_engine.interpolant();
-    }
+    util::Timer timer(d_stats.time_compute_interpolant);
+    ipol = d_solver_engine.interpolant();
 
     if (!ipol.is_null() && options().dbg_check_interpolant())
     {
       util::Timer timer(d_stats.time_check_interpolant);
       check::CheckInterpolant ci(*this);
-      auto res = ci.check(C, idx_B, ipol);
+      auto res = ci.check(A, ipol);
       assert(res);
       Warn(!res) << "interpolant check failed";
     }

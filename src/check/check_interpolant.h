@@ -21,15 +21,15 @@ class CheckInterpolant
   CheckInterpolant(SolvingContext& ctx);
   /**
    * Check interpolant.
-   * This checks the given interpolant I wrt to the current set of assertions A
-   * and conjecture C, i.e., (and A (not I)) and (and I (not C)) are both unsat.
-   * @param C           The conjecture.
-   * @param idx_B       The index of the assertion B (not C) corresponding to C
-   *                    on the assertion stack.
+   * This checks the given interpolant I wrt to assertions A and B (all of each
+   * currently asserted and A given in terms of original assertions).
+   * We check that (=> A I) and (=> I (not B)), i.e., that (and A (not I)) and
+   * (and I B) are both unsat.
+   * @param A           The set of original assertions representing A.
    * @param interpolant The interpolant I.
    * @return True if the check succeeds.
    */
-  bool check(const Node& C, size_t idx_B, const Node& interpolant);
+  bool check(const std::unordered_set<Node>& A, const Node& interpolant);
 
  private:
   SolvingContext& d_ctx;

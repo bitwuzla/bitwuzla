@@ -99,21 +99,15 @@ class SolverEngine
   void ensure_model(const std::vector<Node>& terms);
 
   /**
-   * Cache the assertion B corresponding to the conjecture C for an
-   * interpolation query.
-   *
-   * Interpolant I is determined for a set of formulas A and a conjecture C
-   * with A -> C such that A -> I and I -> C. That is, to compute an I,
-   * (and A (not C)) must be unsat (B is defined as (not C)).
+   * Cache B assertions. This is temporary until we refactor interpolant
+   * generation to post-processing.
    */
-  void cache_interpol_conj_assertion(const Node& term)
-  {
-    d_cur_interpol_conj = term;
-  }
+  void interpol_cache_B(std::unordered_set<Node>& B) { d_interpol_B = B; }
   /**
-   * @return The cached assertion B corresponding to interpolation conjecture C.
+   * @return The cached B assertions. This is temporary until we refactor
+   * interpolant generation to post-processing.
    */
-  Node& interpol_conj_assertion() { return d_cur_interpol_conj; }
+  std::unordered_set<Node>& interpol_B() { return d_interpol_B; }
 
   /** Print statistics line. */
   void print_statistics();
@@ -187,13 +181,10 @@ class SolverEngine
   backtrack::unordered_set<Node> d_lemma_cache;
 
   /**
-   * The assertion B corresponding to conjecture C for an interpolation query.
-   *
-   * Interpolant I is determined for a set of formulas A and a conjecture C
-   * with A -> C such that A -> I and I -> C. That is, to compute an I,
-   * (and A (not C)) must be unsat (B is defined as (not C)).
+   * The B assertions. This is temporary until we refactor interpolant
+   * generation to post-processing.
    */
-  Node d_cur_interpol_conj;
+  std::unordered_set<Node> d_interpol_B;
 
   /** Result of latest solve() call. */
   Result d_sat_state;
