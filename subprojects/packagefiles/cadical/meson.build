@@ -12,4 +12,3 @@ project('cadical',
 )
 
 subdir('src')
-subdir('contrib')

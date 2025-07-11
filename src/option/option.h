@@ -90,9 +90,6 @@ enum class Option
   DBG_CHECK_UNSAT_CORE,   // bool
   DBG_CHECK_INTERPOLANT,  // bool
 
-  // temporary
-  TMP_INTERPOL_USE_CADICRAIG,  // bool
-
   NUM_OPTIONS,
 };
 
@@ -617,9 +614,6 @@ class Options
   OptionBool dbg_check_model;
   OptionBool dbg_check_unsat_core;
   OptionBool dbg_check_interpolant;
-
-  // Temporary
-  OptionBool tmp_interpol_use_cadicraig;
 
   /** @return True if the given option is a Boolean option. */
   bool is_bool(Option opt);

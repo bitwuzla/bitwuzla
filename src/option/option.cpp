@@ -535,13 +535,7 @@ Options::Options()
                             Option::DBG_CHECK_INTERPOLANT,
                             config::is_debug_build,
                             "check interpolant for each get-interpolant query",
-                            "check-interpolant"),
-      // temporary
-      tmp_interpol_use_cadicraig(this,
-                                 Option::TMP_INTERPOL_USE_CADICRAIG,
-                                 false,
-                                 "use CaDiCraig as interpolant tracer",
-                                 "interpol-use-cadicraig")
+                            "check-interpolant")
 {
 }
 
@@ -934,8 +928,6 @@ Options::data(Option opt)
     case Option::DBG_CHECK_MODEL: return &dbg_check_model;
     case Option::DBG_CHECK_UNSAT_CORE: return &dbg_check_unsat_core;
     case Option::DBG_CHECK_INTERPOLANT: return &dbg_check_interpolant;
-
-    case Option::TMP_INTERPOL_USE_CADICRAIG: return &tmp_interpol_use_cadicraig;
 
     case Option::PP_OPT_END:
     case Option::NUM_OPTIONS: assert(false);

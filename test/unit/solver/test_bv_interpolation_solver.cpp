@@ -25,8 +25,6 @@ using namespace node;
 class TestBvInterpolationSolver : public TestCommon
 {
  protected:
-  constexpr static bool s_test_internal   = true;
-  constexpr static bool s_test_cadicraig  = true;
   constexpr static bool s_all_pp_rw       = true;
 
   enum class AssumptionConfig
@@ -42,7 +40,6 @@ class TestBvInterpolationSolver : public TestCommon
     d_options.produce_interpolants.set(true);
     d_options.dbg_check_interpolant.set(true);
     d_options.log_level.set(0);
-    d_options.tmp_interpol_use_cadicraig.set(false);
   }
 
   void test_get_interpolant(const std::unordered_set<Node>& A,
@@ -71,40 +68,19 @@ class TestBvInterpolationSolver : public TestCommon
                                 const std::unordered_set<Node>& B,
                                 AssumptionConfig config)
   {
-    if (s_test_internal)
-    {
-      test_get_interpolant_aux(A, B, config, true);
-    }
-    if (s_test_cadicraig)
-    {
-      test_get_interpolant_aux(A, B, config, false);
-    }
-  }
-
-  void test_get_interpolant_aux(const std::unordered_set<Node>& A,
-                                const std::unordered_set<Node>& B,
-                                AssumptionConfig config,
-                                bool internal)
-  {
-    if (d_options.log_level())
-    {
-      std::cout << std::endl
-                << ">>>>> get interpolant with "
-                << (internal ? "INTERNAL" : "CaDiCraig") << std::endl;
-    }
     // get interpolant
     test_get_interpolant_aux(
-        true, d_options.rewrite_level.dflt(), A, B, config, internal);
+        true, d_options.rewrite_level.dflt(), A, B, config);
 
     if (s_all_pp_rw)
     {
       // get_interpolant when preprocessing is disabled
       test_get_interpolant_aux(
-          false, d_options.rewrite_level.dflt(), A, B, config, internal);
+          false, d_options.rewrite_level.dflt(), A, B, config);
       // get_interpolant when rewriting is disabled
-      test_get_interpolant_aux(true, 0, A, B, config, internal);
+      test_get_interpolant_aux(true, 0, A, B, config);
       // get_interpolant when preprocessing and rewriting is disabled
-      test_get_interpolant_aux(false, 0, A, B, config, internal);
+      test_get_interpolant_aux(false, 0, A, B, config);
     }
   }
 
@@ -112,8 +88,7 @@ class TestBvInterpolationSolver : public TestCommon
                                 uint64_t rwl,
                                 const std::unordered_set<Node>& A,
                                 const std::unordered_set<Node>& B,
-                                AssumptionConfig config,
-                                bool internal)
+                                AssumptionConfig config)
   {
     if (d_options.log_level())
     {
@@ -123,7 +98,6 @@ class TestBvInterpolationSolver : public TestCommon
     }
     d_options.preprocess.set(pp);
     d_options.rewrite_level.set(rwl);
-    d_options.tmp_interpol_use_cadicraig.set(!internal);
     sat::SatSolverFactory sat_factory(d_options);
     SolvingContext ctx(d_nm, d_options, sat_factory);
     if (config == AssumptionConfig::ALL)
@@ -149,9 +123,6 @@ class TestBvInterpolationSolver : public TestCommon
   option::Options d_options;
   NodeManager d_nm;
 };
-
-// test with other SAT solver
-// error tests with prop solver, solve, unsat cores, value
 
 TEST_F(TestBvInterpolationSolver, solve)
 {

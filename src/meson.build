@@ -26,8 +26,6 @@ if not cadical_dep.found()
   cadical_dep = dependency('cadical', required: get_option('cadical'))
 endif
 
-cadicraig_dep = dependency('cadicraig', required: true)
-
 cms_dep = dependency('cryptominisat5',
                      version: '5.11.21',
                      static: build_static,
@@ -49,7 +47,7 @@ gimsatul_dep = dependency('gimsatul', required: get_option('gimsatul'))
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
 dependencies = [
-  gmp_dep, mpfr_dep, symfpu_dep, cadical_dep, cadicraig_dep, cms_dep, kissat_dep, gimsatul_dep]
+  gmp_dep, mpfr_dep, symfpu_dep, cadical_dep, cms_dep, kissat_dep, gimsatul_dep]
 
 cpp_args = []
 if cadical_dep.found()
@@ -241,7 +239,6 @@ sources = files([
   'sat/cryptominisat.cpp',
   'sat/gimsatul.cpp',
   'sat/interpolants/cadical_tracer.cpp',
-  'sat/interpolants/cadicraig_tracer.cpp',
   'sat/interpolants/tracer.cpp',
   'sat/interpolants/tracer_kinds.cpp',
   'sat/kissat.cpp',

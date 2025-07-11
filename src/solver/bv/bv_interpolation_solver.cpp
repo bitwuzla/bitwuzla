@@ -21,7 +21,6 @@
 #include "node/unordered_node_ref_set.h"
 #include "sat/cadical.h"
 #include "sat/interpolants/cadical_tracer.h"
-#include "sat/interpolants/cadicraig_tracer.h"
 #include "sat/interpolants/tracer_kinds.h"
 #include "solver/bv/aig_bitblaster.h"
 #include "solver/bv/bv_solver.h"
@@ -371,15 +370,7 @@ BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
   d_bitblaster.reset(
       new InterpolationBitblaster(d_consts_to_kinds, d_sat_vars_to_kinds));
   d_sat_solver.reset(new sat::Cadical());
-  if (env.options().tmp_interpol_use_cadicraig())
-  {
-    CadiCraigTracer* cctracer = new CadiCraigTracer(env, *d_bitblaster);
-    d_tracer.reset(cctracer);
-  }
-  else
-  {
-    d_tracer.reset(new CadicalTracer(d_env, *d_bitblaster));
-  }
+  d_tracer.reset(new CadicalTracer(d_env, *d_bitblaster));
   d_interpol_sat_solver.reset(new InterpolationSatSolver(
       env, *d_sat_solver, *d_tracer, d_sat_vars_to_kinds));
   d_sat_solver->solver()->connect_proof_tracer(d_tracer.get(), true);
