@@ -1,3 +1,5 @@
+fs = import('fs')
+
 c_compiler = meson.get_compiler('c')
 cpp_compiler = meson.get_compiler('cpp')
 
@@ -10,18 +12,42 @@ cpp_compiler = meson.get_compiler('cpp')
 # GMP is a dependency of MPFR. However, MPFR requires GMP to be available at
 # configure time, which prevents us from using the fallback subproject of GMP,
 # since the subproject is built in the build stage.
-# Thus, we require that GMP is installed on the system or --build-gmp was used
+# Thus, we require that GMP is installed on the system or --build-deps was used
 # to configure this project.
-gmp_dep = dependency('gmp',
-                     version: '>=6.3',
-                     required: true,
-                     static: build_static,
-                     allow_fallback: false)
+if not get_option('system_gmp_mpfr')
+  deps_dir = join_paths(meson.current_build_dir(), '..', 'deps')
+  libs_dir = join_paths(deps_dir, 'lib')
+  rel_dir = fs.relative_to(join_paths(deps_dir, 'include'), meson.current_source_dir())
+  incs_dir = include_directories(rel_dir)
+  if not fs.is_dir(deps_dir)
+    error('Missing dependencies directory ' + deps_dir +
+          '. Reconfigure with configure.py --build-deps option.')
+  endif
+  gmp_dep = cpp_compiler.find_library('gmp',
+                                    has_headers: ['gmp.h', 'gmpxx.h'],
+                                    header_include_directories: incs_dir,
+                                    static: build_static,
+                                    dirs: libs_dir,
+                                    required: true)
 
-mpfr_dep = dependency('mpfr',
-                      version: '>=4.2.2',
-                      required: true,
-                      static: build_static)
+  mpfr_dep = cpp_compiler.find_library('mpfr',
+                                    has_headers: ['mpfr.h'],
+                                    header_include_directories: incs_dir,
+                                    static: build_static,
+                                    dirs: libs_dir,
+                                    required: true)
+else
+  gmp_dep = dependency('gmp',
+                       version: '>=6.3',
+                       required: true,
+                       static: build_static,
+                       allow_fallback: false)
+
+  mpfr_dep = dependency('mpfr',
+                        version: '>=4.2.2',
+                        required: true,
+                        static: build_static)
+endif
 
 # CaDiCaL does not provide pkg-config to find dependency
 cadical_dep = cpp_compiler.find_library('cadical',
@@ -80,7 +106,6 @@ endif
 # ---
 
 # Generate license text
-fs = import('fs')
 license_text = fs.read(join_paths(meson.project_source_root(),
                                   'COPYING')).strip()
 license_text += '''\n\n

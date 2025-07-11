@@ -57,17 +57,16 @@ def bool_opt(ap, name, help):
     ap.add_argument(f'--no-{name}', action='store_false', dest=dest,
                     help=f'disable {help}', default=None)
 
-def build_subproject(builddir, opts, subproject):
+def build_subproject(subproject, builddir, installdir, opts):
     print(f'Building subproject {subproject}...')
-    install_dir = os.path.join(os.getcwd(), builddir, 'deps')
     sp_builddir = os.path.join(os.getcwd(), builddir, 'subprojects',
                                subproject, 'build')
-    cmd = ['meson', 'setup', sp_builddir, '--prefix', install_dir] + opts
+    cmd = ['meson', 'setup', sp_builddir, '--prefix', installdir] + opts
     subprocess.run(cmd, cwd=os.path.join('subprojects', subproject))
     subprocess.run(['ninja', f'{subproject}.stamp'], cwd=sp_builddir)
     subprocess.run(['ninja', 'install'], cwd=sp_builddir)
 
-def build_dependencies(builddir, opts):
+def build_dependencies(builddir, installdir, opts):
     subproject_opts = []
     for o in opts:
         if o.startswith('--cross-file'):
@@ -75,7 +74,9 @@ def build_dependencies(builddir, opts):
             subproject_opts.append(f'--cross-file={crossfile}')
 
     subprocess.run(['meson', 'subprojects', 'download'])
-    build_subproject(builddir, subproject_opts, 'gmp-6.3.0')
+    build_subproject('gmp-6.3.0', builddir, installdir, subproject_opts)
+    build_subproject('mpfr-4.2.2', builddir, installdir,
+                     subproject_opts + [f'-Dwith_gmp={installdir}'])
 
 def main():
     if not os.path.exists('src/main/main.cpp'):
@@ -97,7 +98,7 @@ def main():
                     help='shared library')
     ap.add_argument('--static', action='store_true', default=None,
                     help='static library')
-    bool_opt(ap, 'build-gmp', 'build GMP subproject')
+    bool_opt(ap, 'build-deps', 'build GMP and MPFR subprojects')
     bool_opt(ap, 'assertions', 'assertions')
     bool_opt(ap, 'asan', 'address sanitizer')
     bool_opt(ap, 'ubsan', 'undefined behavior sanitizer')
@@ -175,27 +176,31 @@ def main():
         build_opts.append(f'-Daiger={_bool(args.aiger)}')
 
     # Build GMP for static builds by default
-    if args.build_gmp is None:
+    if args.build_deps is None:
         if args.static:
-            args.build_gmp = args.static
+            args.build_deps = args.static
         else:
             if args.shared is not None:
-                args.build_gmp = not args.shared
+                args.build_deps = not args.shared
             else:
-                args.build_gmp = True
+                args.build_deps = True
 
     env = os.environ
-    if args.win64 or args.arm64 or args.build_gmp:
+    if args.win64 or args.arm64 or args.build_deps:
         deps_dir = os.path.join(os.getcwd(), args.build_dir, 'deps')
         if not os.path.exists(deps_dir):
-            build_dependencies(args.build_dir, build_opts)
-        pkgdir = ''
-        for root, dirs, files in os.walk(deps_dir):
-            for d in dirs:
-                if d == 'pkgconfig':
-                    pkgdir = os.path.join(root, d)
-                    break
-        env['PKG_CONFIG_LIBDIR'] = pkgdir
+            build_dependencies(args.build_dir, deps_dir, build_opts)
+        build_opts.append('-Dsystem_gmp_mpfr=false')
+        #pkgdir = ''
+        #for root, dirs, files in os.walk(deps_dir):
+        #    for d in dirs:
+        #        if d == 'pkgconfig':
+        #            pkgdir = os.path.join(root, d)
+        #            break
+        #if args.win64 or args.arm64:
+        #    env['PKG_CONFIG_LIBDIR'] = pkgdir
+        #else:
+        #    build_opts.append(f'-Dpkg_config_path={pkgdir}')
     configure_build(args.build_dir, build_opts, env)
 
 if __name__ == '__main__':

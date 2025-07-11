@@ -24,11 +24,8 @@ configure_options = [
   '--enable-cxx'
 ]
 
-# We built GMP on our own, use this version.
-fs = import('fs')
-deps_dir = join_paths(meson.current_build_dir(), '..', '..', 'deps')
-if fs.is_dir(deps_dir)
-  configure_options += ['--with-gmp=' + deps_dir]
+if get_option('with_gmp') != ''
+  configure_options += ['--with-gmp=' + get_option('with_gmp')]
 endif
 
 env = environment()
