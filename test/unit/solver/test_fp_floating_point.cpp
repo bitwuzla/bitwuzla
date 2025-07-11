@@ -563,6 +563,15 @@ class TestFp : public TestCommon
     return d_rng->pick_from_set<std::vector<FpFormat>, FpFormat>(formats);
   }
 
+  bool bv_is_fpnan(uint64_t exp_size,
+                   uint64_t sig_size,
+                   const BitVector &bv) const
+  {
+    BitVector bvsign, bvexp, bvsig;
+    FloatingPoint::ieee_bv_as_bvs(exp_size, sig_size, bv, bvsign, bvexp, bvsig);
+    return bvexp.is_ones() && !bvsig.is_zero();
+  }
+
   void test_for_format(
       uint64_t exp_size,
       uint64_t sig_size,
@@ -3731,18 +3740,36 @@ TEST_F(TestFp, op_eq)
     {
       BitVector bv1 = BitVector(bv_size, *d_rng);
       BitVector bv2 = BitVector(bv_size, *d_rng);
+      bool isnan1   = bv_is_fpnan(f.first, f.second, bv1);
+      bool isnan2   = bv_is_fpnan(f.first, f.second, bv2);
       {
         FloatingPoint fp1(f.first, f.second, bv1);
         FloatingPoint fp2(f.first, f.second, bv2);
-        ASSERT_EQ(bv1 == bv2, fp1 == fp2);
-        ASSERT_EQ(bv1 != bv2, fp1 != fp2);
+        if (bv1 == bv2)
+        {
+          ASSERT_TRUE(fp1 == fp2);
+          ASSERT_FALSE(fp1 != fp2);
+        }
+        else
+        {
+          ASSERT_TRUE(!isnan1 || !isnan2 || fp1 == fp2);
+          ASSERT_TRUE((isnan1 && isnan2) || fp1 != fp2);
+        }
       }
 
       {
         FloatingPointSymFPU fp1(type, bv1);
         FloatingPointSymFPU fp2(type, bv2);
-        ASSERT_EQ(bv1 == bv2, fp1 == fp2);
-        ASSERT_EQ(bv1 != bv2, fp1 != fp2);
+        if (bv1 == bv2)
+        {
+          ASSERT_TRUE(fp1 == fp2);
+          ASSERT_FALSE(fp1 != fp2);
+        }
+        else
+        {
+          ASSERT_TRUE(!isnan1 || !isnan2 || fp1 == fp2);
+          ASSERT_TRUE((isnan1 && isnan2) || fp1 != fp2);
+        }
       }
     }
   }
