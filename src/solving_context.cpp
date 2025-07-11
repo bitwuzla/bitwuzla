@@ -186,11 +186,12 @@ SolvingContext::get_interpolant(const Node& C)
   Log(1);
   assert(C.type().is_bool());
 
+  NodeManager& nm = d_env.nm();
   // Our SAT interpolation tracer interface defines interpolant I as (A -> I)
   // and (I -> not B), for formulas A, B with (and A B) unsat. In our word-level
   // interface here, C = not B.
   size_t idx_B = d_assertions.size();
-  Node B       = d_env.nm().mk_node(Kind::NOT, {d_env.rewriter().rewrite(C)});
+  Node B       = nm.mk_node(Kind::NOT, {d_env.rewriter().rewrite(C)});
   assert_formula(B);
 
   // Solve, we only compute on unsat
@@ -200,8 +201,25 @@ SolvingContext::get_interpolant(const Node& C)
     check_no_free_variables();
 #endif
     d_sat_state = preprocess();
-    // Note: no shortcuts when preprocessing determines unsat: we need to solve
-    // to kick off interpolation tracing, else we cannot compute an interpolant
+    if (d_sat_state == Result::UNSAT)
+    {
+      if (d_assertions[idx_B].is_value() && !d_assertions[idx_B].value<bool>())
+      {
+        return nm.mk_value(true);
+      }
+      for (size_t i = 0, n = d_assertions.size(); i < n; ++i)
+      {
+        if (i == idx_B)
+        {
+          continue;
+        }
+        if (d_assertions[i].is_value() && !d_assertions[i].value<bool>())
+        {
+          return nm.mk_value(false);
+        }
+      }
+    }
+
     d_solver_engine.cache_interpol_conj_assertion(d_assertions[idx_B]);
 
     if (d_sat_state != Result::SAT)
