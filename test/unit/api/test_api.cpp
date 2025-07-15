@@ -1767,6 +1767,63 @@ TEST_F(TestApi, get_rm_value)
   ASSERT_EQ("RTZ", d_rm_rtz.value<std::string>());
 }
 
+TEST_F(TestApi, get_interpolant)
+{
+  bitwuzla::Sort bv4  = d_tm.mk_bv_sort(4);
+  bitwuzla::Term x    = d_tm.mk_const(bv4, "x");
+  bitwuzla::Term y    = d_tm.mk_const(bv4, "y");
+  bitwuzla::Term z    = d_tm.mk_const(bv4, "z");
+  bitwuzla::Term zero = d_tm.mk_bv_zero(bv4);
+  bitwuzla::Term one  = d_tm.mk_bv_one(bv4);
+  // (= z (bvadd x y))
+  bitwuzla::Term a0 = d_tm.mk_term(
+      bitwuzla::Kind::EQUAL, {z, d_tm.mk_term(bitwuzla::Kind::BV_ADD, {x, y})});
+  // (distinct x y)
+  bitwuzla::Term a1 = d_tm.mk_term(bitwuzla::Kind::DISTINCT, {x, y});
+  // (and
+  //   (distinct x (_ bv0 1024))
+  //   (= (bvand x (bvsub x (_ bv1 1024))) (_ bv0 1024))))
+  bitwuzla::Term a2 = d_tm.mk_term(bitwuzla::Kind::DISTINCT, {x, zero});
+  bitwuzla::Term a3 = d_tm.mk_term(
+      bitwuzla::Kind::EQUAL,
+      {d_tm.mk_term(bitwuzla::Kind::BV_AND,
+                    {x, d_tm.mk_term(bitwuzla::Kind::BV_SUB, {x, one})}),
+       zero});
+  // (and
+  //   (distinct y (_ bv0 1024))
+  //   (= (bvand y (bvsub y (_ bv1 1024))) (_ bv0 1024)))
+  bitwuzla::Term a4 = d_tm.mk_term(bitwuzla::Kind::DISTINCT, {y, zero});
+  bitwuzla::Term a5 = d_tm.mk_term(
+      bitwuzla::Kind::EQUAL,
+      {d_tm.mk_term(bitwuzla::Kind::BV_AND,
+                    {y, d_tm.mk_term(bitwuzla::Kind::BV_SUB, {y, one})}),
+       zero});
+  //   (and
+  //     (distinct z (_ bv0 1024))
+  //     (= (bvand z (bvsub z (_ bv1 1024))) (_ bv0 1024)))
+  bitwuzla::Term b0 = d_tm.mk_term(bitwuzla::Kind::DISTINCT, {z, zero});
+  bitwuzla::Term b1 = d_tm.mk_term(
+      bitwuzla::Kind::EQUAL,
+      {d_tm.mk_term(bitwuzla::Kind::BV_AND,
+                    {z, d_tm.mk_term(bitwuzla::Kind::BV_SUB, {z, one})}),
+       zero});
+
+  {
+    bitwuzla::Options options;
+    options.set(bitwuzla::Option::PRODUCE_INTERPOLANTS, true);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, options);
+    std::vector A = {a0, a1, a2, a3, a4, a5};
+    for (const auto& t : A)
+    {
+      bitwuzla.assert_formula(t);
+    }
+    bitwuzla.assert_formula(b0);
+    bitwuzla.assert_formula(b1);
+    std::cout << "interpolant: " << bitwuzla.get_interpolant(A) << std::endl;
+    ASSERT_FALSE(bitwuzla.get_interpolant(A).is_null());
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Printing                                                                   */
 /* -------------------------------------------------------------------------- */

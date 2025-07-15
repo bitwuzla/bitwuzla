@@ -1745,14 +1745,33 @@ class Bitwuzla
   /**
    * Get a term representing the model value of a given term.
    *
-   * Requires that the last `check_sat()` query returned
-   * `Result::SAT`.
+   * Requires that the last `check_sat()` query returned `Result::SAT`.
    *
    * @param term The term to query a model value for.
    * @return A term representing the model value of term `term`.
    * @see `check_sat()`
    */
   Term get_value(const Term &term);
+
+  /**
+   * Get a term representing the interpolant I given the current set of
+   * assertions, partitioned into partitions A and B such that `(and A B)`
+   * is unsat and `(=> A I)` and `(=> I (not B))`.
+   *
+   * Partition A is the given set of assertions, partition B consists of the
+   * remaining assertions that are not in A.
+   *
+   * Requires that the last `check_sat()` query returned `Result::UNSAT`.
+   *
+   * @note Assertions in A and B must be currently asserted formulas.
+   *
+   * @param A The set of formulas representing partition A. This must be
+   *          a strict subset of the set of current assertions.
+   * @return Interpolant I such that `(=> A I)` and `(=> I (not B))`.
+   *
+   * @see `check_sat()`
+   */
+  Term get_interpolant(const std::vector<Term>& A);
 
   /**
    * Print the current input formula to the given output stream.

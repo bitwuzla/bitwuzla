@@ -62,6 +62,16 @@ enum ENUM(Option)
    */
   EVALUE(PRODUCE_MODELS),
   /*!
+   * **Interpolant generation.**
+   *
+   * *SMT-LIB:* `:produce-interpolants`
+   *
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
+   */
+  EVALUE(PRODUCE_INTERPOLANTS),
+  /*!
    * **Unsat assumptions generation.**
    *
    * *SMT-LIB:* `:produce-unsat-assumptions`

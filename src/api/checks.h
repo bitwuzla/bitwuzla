@@ -163,6 +163,10 @@ class BitwuzlaExceptionStream
 #define BITWUZLA_CHECK_OPT_PRODUCE_MODELS(opts) \
   BITWUZLA_CHECK((opts).produce_models()) << "model production not enabled";
 
+#define BITWUZLA_CHECK_OPT_PRODUCE_INTERPOLANTS(opts) \
+  BITWUZLA_CHECK((opts).produce_interpolants())       \
+      << "interpolants production not enabled";
+
 #define BITWUZLA_CHECK_LAST_CALL_SAT(what)        \
   BITWUZLA_CHECK(d_last_check_sat == Result::SAT) \
       << "cannot " << what << " if input formula is not sat";

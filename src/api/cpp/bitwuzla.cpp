@@ -61,6 +61,8 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::BV_SOLVER, bzla::option::Option::BV_SOLVER},
         {Option::LOGLEVEL, bzla::option::Option::LOG_LEVEL},
         {Option::PRODUCE_MODELS, bzla::option::Option::PRODUCE_MODELS},
+        {Option::PRODUCE_INTERPOLANTS,
+         bzla::option::Option::PRODUCE_INTERPOLANTS},
         {Option::PRODUCE_UNSAT_ASSUMPTIONS,
          bzla::option::Option::PRODUCE_UNSAT_ASSUMPTIONS},
         {Option::PRODUCE_UNSAT_CORES,
@@ -1639,6 +1641,33 @@ Bitwuzla::get_value(const Term &term)
   Term res;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = d_ctx->get_value(*term.d_node);
+  BITWUZLA_TRY_CATCH_END;
+  return res;
+}
+
+Term
+Bitwuzla::get_interpolant(const std::vector<Term>& A)
+{
+  BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  BITWUZLA_CHECK_OPT_PRODUCE_INTERPOLANTS(d_ctx->options());
+  // TODO: enable after refactor to post-processing
+  // BITWUZLA_CHECK_LAST_CALL_SAT("get interpolant");
+
+  std::unordered_set<bzla::Node> _A;
+  if (!A.empty())
+  {
+    for (size_t i = 0, size = A.size(); i < size; ++i)
+    {
+      const Term& term = A[i];
+      BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
+          term, "assertion at position " + std::to_string(i));
+      // TODO: check that given assertion is indeed currently asserted
+      _A.insert(*term.d_node);
+    }
+  }
+  Term res;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  res = d_ctx->get_interpolant(_A);
   BITWUZLA_TRY_CATCH_END;
   return res;
 }
