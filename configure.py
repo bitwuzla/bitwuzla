@@ -57,26 +57,39 @@ def bool_opt(ap, name, help):
     ap.add_argument(f'--no-{name}', action='store_false', dest=dest,
                     help=f'disable {help}', default=None)
 
-def build_subproject(subproject, builddir, installdir, opts):
+def build_subproject(subproject, builddir, prefix, opts):
     print(f'Building subproject {subproject}...')
-    sp_builddir = os.path.join(os.getcwd(), builddir, 'subprojects',
-                               subproject, 'build')
-    cmd = ['meson', 'setup', sp_builddir, '--prefix', installdir] + opts
-    subprocess.run(cmd, cwd=os.path.join('subprojects', subproject))
-    subprocess.run(['ninja', f'{subproject}.stamp'], cwd=sp_builddir)
-    subprocess.run(['ninja', 'install'], cwd=sp_builddir)
+    src_dir = os.path.join('subprojects', subproject)
+    build_dir = os.path.join(os.getcwd(), builddir, 'subprojects', subproject,
+                             'build')
 
-def build_dependencies(builddir, installdir, opts):
-    subproject_opts = []
-    for o in opts:
+    cmd = ['meson', 'setup', build_dir] + opts
+    subprocess.run(cmd, cwd=src_dir)
+    subprocess.run(['ninja', f'{subproject}.stamp'], cwd=build_dir)
+    if prefix:
+        subprocess.run(['ninja', 'install'], cwd=build_dir)
+        return prefix
+    else:
+        for root, dirs, _ in os.walk(os.path.join(build_dir, 'dist')):
+            for d in dirs:
+                if d == 'lib':
+                    return root
+    return None
+
+def build_dependencies(builddir, options, prefix):
+    opts = []
+    for o in options:
         if o.startswith('--cross-file'):
             crossfile = os.path.join(os.getcwd(), o.split('=')[1])
-            subproject_opts.append(f'--cross-file={crossfile}')
+            opts.append(f'--cross-file={crossfile}')
+        elif o.startswith('-Dprefix'):
+            opts.append(o)
 
     subprocess.run(['meson', 'subprojects', 'download'])
-    build_subproject('gmp-6.3.0', builddir, installdir, subproject_opts)
-    build_subproject('mpfr-4.2.2', builddir, installdir,
-                     subproject_opts + [f'-Dwith_gmp={installdir}'])
+    gmp_dist_dir = build_subproject('gmp-6.3.0', builddir, prefix, opts)
+    mpfr_dist_dir = build_subproject('mpfr-4.2.2', builddir, prefix,
+                     opts + [f'-Dwith_gmp={gmp_dist_dir}'])
+    return gmp_dist_dir, mpfr_dist_dir
 
 def main():
     if not os.path.exists('src/main/main.cpp'):
@@ -187,20 +200,11 @@ def main():
 
     env = os.environ
     if args.win64 or args.arm64 or args.build_deps:
-        deps_dir = os.path.join(os.getcwd(), args.build_dir, 'deps')
-        if not os.path.exists(deps_dir):
-            build_dependencies(args.build_dir, deps_dir, build_opts)
-        build_opts.append('-Dsystem_gmp_mpfr=false')
-        #pkgdir = ''
-        #for root, dirs, files in os.walk(deps_dir):
-        #    for d in dirs:
-        #        if d == 'pkgconfig':
-        #            pkgdir = os.path.join(root, d)
-        #            break
-        #if args.win64 or args.arm64:
-        #    env['PKG_CONFIG_LIBDIR'] = pkgdir
-        #else:
-        #    build_opts.append(f'-Dpkg_config_path={pkgdir}')
+        gmp_dist_dir, mpfr_dist_dir = build_dependencies(args.build_dir,
+                                                         build_opts,
+                                                         args.prefix)
+        build_opts.append(f'-Dwith_gmp={gmp_dist_dir}')
+        build_opts.append(f'-Dwith_mpfr={mpfr_dist_dir}')
     configure_build(args.build_dir, build_opts, env)
 
 if __name__ == '__main__':
