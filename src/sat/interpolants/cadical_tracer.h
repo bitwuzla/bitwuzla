@@ -24,6 +24,31 @@ class CadicalTracer : public Tracer
   CadicalTracer(Env& env, bv::AigBitblaster& bitblaster);
   ~CadicalTracer();
 
+  enum class ClauseType
+  {
+    NONE,
+    ORIGINAL,
+    DERIVED,
+    ASSUMPTION
+  };
+  struct Clause
+  {
+    Clause() {}
+    Clause(const std::vector<int32_t>& clause, ClauseType type, uint64_t id)
+        : d_clause(clause), d_type(type), d_id(id)
+    {
+    }
+
+    /** The actual clause, a vector of literals. */
+    std::vector<int32_t> d_clause;
+    /** The clause type. */
+    ClauseType d_type;
+    /**
+     * The tracer-managed clause id. Not to confuse with CaDiCaL's clause id,
+     * may be >= than the tracer clause id.
+     */
+    uint64_t d_id;
+  };
   struct Interpolant
   {
     Interpolant()
@@ -49,16 +74,16 @@ class CadicalTracer : public Tracer
 
   void add_derived_clause(uint64_t id,
                           bool redundant,
-                          const std::vector<int>& clause,
+                          const std::vector<int32_t>& clause,
                           const std::vector<uint64_t>& proof_chain) override;
 
   void add_assumption_clause(uint64_t id,
-                             const std::vector<int>& clause,
+                             const std::vector<int32_t>& clause,
                              const std::vector<uint64_t>& proof_chain) override;
 
   void delete_clause(uint64_t id,
                      bool redundant,
-                     const std::vector<int>& clause) override;
+                     const std::vector<int32_t>& clause) override;
 
   void add_assumption(int32_t lit) override;
 
@@ -67,7 +92,7 @@ class CadicalTracer : public Tracer
   void reset_assumptions() override;
 
   void conclude_unsat(CaDiCaL::ConclusionType conclusion,
-                      const std::vector<uint64_t>& proof_chain) override;
+                      const std::vector<uint64_t>& clause_ids) override;
 
   /* --------------------------------------------------------------------- */
 
@@ -92,6 +117,8 @@ class CadicalTracer : public Tracer
    * @return The interpolant.
    */
   Interpolant get_interpolant(int32_t lit);
+
+  Node get_interpolant_node(Interpolant interpolant);
 
   /**
    * Extend `interpolant` with interpolant `ext` for a given variable kind.
@@ -127,16 +154,14 @@ class CadicalTracer : public Tracer
 
   /** The variable labels. */
   std::unordered_map<int32_t, VariableKind> d_labeled_vars;
-  /** The clause labels. */
+  /** The clause labels. Maps tracer clause ids to label. */
   std::unordered_map<int32_t, ClauseKind> d_labeled_clauses;
-  /** The added clauses, dummy at index 0 to enable access via clause id. */
-  std::vector<std::vector<int32_t>> d_clauses = {{}};
+  /** Added clauses, dummy at index 0 to enable access via clause id. */
+  std::vector<Clause> d_clauses{Clause()};
+  /** Map clause id to its antecedents in the proof. */
+  std::vector<std::vector<uint64_t>> d_antecedents{{}};
   /** The id of the most recently added clause. */
   uint64_t d_cur_clause_id = 0;
-  /** The current added constraint, empty if none. */
-  std::vector<int32_t> d_constraint;
-  /** The kind of the currently added constraint. */
-  ClauseKind d_constraint_kind = ClauseKind::LEARNED;
   /** The currently active assumptions. */
   std::unordered_set<int32_t> d_assumptions;
   /** The clauses observed via add_assumption_clause(). */
@@ -144,11 +169,15 @@ class CadicalTracer : public Tracer
   /**
    * The partial interpolants, dummy at index 0 to enable access via clause id.
    */
-  std::vector<Interpolant> d_part_interpolants = {Interpolant()};
-  /** The interpolant after concluding unsat, is_null() if none. */
-  Interpolant d_interpolant;
+  std::unordered_map<uint64_t, Interpolant> d_part_interpolants = {
+      {0, Interpolant()}};
+
+  std::vector<uint64_t> d_final_clause_ids;
+  std::vector<uint64_t> d_proof_core;
 };
 
+std::ostream& operator<<(std::ostream& out,
+                         const CadicalTracer::ClauseType& type);
 std::ostream& operator<<(std::ostream& out,
                          const CadicalTracer::Interpolant& interpolant);
 

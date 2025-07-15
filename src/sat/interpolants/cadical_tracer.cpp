@@ -30,7 +30,7 @@ CadicalTracer::CadicalTracer(Env& env, bv::AigBitblaster& bitblaster)
 
 CadicalTracer::~CadicalTracer() {}
 
-/* CaDiCaL::Tracer interface ------------------------------------------- */
+/* CaDiCaL::Tracer interface ------------------------------------------------ */
 
 void
 CadicalTracer::add_original_clause(uint64_t id,
@@ -44,7 +44,8 @@ CadicalTracer::add_original_clause(uint64_t id,
   if (restore)
   {
     assert(d_clauses.size() > id);
-    d_clauses[id] = clause;
+    d_clauses[id].d_clause = clause;
+    d_clauses[id].d_type   = ClauseType::ORIGINAL;
     return;
   }
 
@@ -57,84 +58,45 @@ CadicalTracer::add_original_clause(uint64_t id,
   // inbetween.
   d_cur_clause_id += 1;
   assert(id >= d_cur_clause_id);
-  auto it_clause = d_labeled_clauses.find(d_cur_clause_id);
 #ifndef NDEBUG
+  auto it = d_labeled_clauses.find(d_cur_clause_id);
   // clause ids must be consecutive when labeled
-  assert(it_clause != d_labeled_clauses.end());
+  assert(it != d_labeled_clauses.end());
   // all literals in the clause must be labeled
   for (int32_t lit : clause)
   {
     assert(d_labeled_vars.find(std::abs(lit)) != d_labeled_vars.end());
   }
 #endif
-  ClauseKind kind         = it_clause->second;
-  Interpolant interpolant = get_interpolant(clause, kind);
   assert(d_clauses.size() == id);
-  d_clauses.push_back(clause);
-  d_part_interpolants.push_back(interpolant);
+  d_antecedents.emplace_back();  // original clause, thus no antecedents
+  d_clauses.emplace_back(clause, ClauseType::ORIGINAL, d_cur_clause_id);
 }
 
 void
 CadicalTracer::add_derived_clause(uint64_t id,
                                   bool redundant,
                                   const std::vector<int32_t>& clause,
-                                  const std::vector<uint64_t>& proof_chain)
+                                  const std::vector<uint64_t>& antecedents)
 {
   (void) id;
   (void) redundant;
-  assert(!proof_chain.empty());
-#ifndef NDEBUG
-  for (uint64_t clause_id : proof_chain)
-  {
-    assert(clause_id < d_part_interpolants.size());
-    assert(!d_part_interpolants[clause_id].d_interpolant.is_null());
-  }
-#endif
-  // Mark literals of conflicting clause
-  auto& conf_clause = d_clauses[proof_chain.back()];
-  std::unordered_map<int32_t, uint8_t> marked_vars;
-  for (int32_t lit : conf_clause)
-  {
-    mark_var(marked_vars, lit);
-  }
-  assert(!marked_vars.empty());
-
-  // Extend interpolant with pivot lit of each clause that was resolved with.
-  Interpolant interpolant = d_part_interpolants[proof_chain.back()];
-  size_t size             = proof_chain.size();
-  for (size_t i = 1; i < size; ++i)
-  {
-    size_t idx = size - i - 1;
-    for (int32_t lit : d_clauses[proof_chain[idx]])
-    {
-      // skip if not marked with the opposite phase in conflict clause
-      if (!mark_var(marked_vars, lit))
-      {
-        continue;
-      }
-      extend_interpolant(interpolant,
-                         d_part_interpolants[proof_chain[idx]],
-                         d_labeled_vars.at(std::abs(lit)));
-    }
-  }
+  assert(!antecedents.empty());
+  assert(d_antecedents.size() == id);
+  d_antecedents.push_back(antecedents);
   assert(d_clauses.size() == id);
-  d_clauses.push_back(clause);
-  d_part_interpolants.push_back(interpolant);
+  d_clauses.emplace_back(clause, ClauseType::DERIVED, 0);
 }
 
 void
 CadicalTracer::add_assumption_clause(uint64_t id,
                                      const std::vector<int32_t>& clause,
-                                     const std::vector<uint64_t>& proof_chain)
+                                     const std::vector<uint64_t>& antecedents)
 {
-  Interpolant interpolant;
-
-  if (proof_chain.size())
+  if (antecedents.size())
   {
     // We have a resolution of multiple clauses.
-    add_derived_clause(id, true, clause, proof_chain);
-    assert(id < d_part_interpolants.size());
-    interpolant = d_part_interpolants[id];
+    add_derived_clause(id, true, clause, antecedents);
   }
   else
   {
@@ -145,35 +107,20 @@ CadicalTracer::add_assumption_clause(uint64_t id,
     {
       assert(d_clauses.size() == id);
       int32_t lit = is_ass_lit0 ? -clause[1] : -clause[0];
-      d_clauses.push_back({lit});
-      d_part_interpolants.push_back(get_interpolant(-lit));
+      d_clauses.push_back({{lit}, ClauseType::ASSUMPTION, 0});
       d_assumption_clauses.push_back(id);
+      assert(d_antecedents.size() == id);
+      d_antecedents.push_back(antecedents);
       return;
     }
   }
 
-  for (int32_t lit : clause)
-  {
-    if (d_assumptions.find(-lit) != d_assumptions.end())
-    {
-      continue;
-    }
-    Interpolant ip = get_interpolant(-lit);
-    if (!interpolant.is_null())
-    {
-      extend_interpolant(interpolant, ip, d_labeled_vars.at(std::abs(lit)));
-    }
-    else
-    {
-      interpolant = ip;
-    }
-  }
-
-  if (proof_chain.empty())
+  if (antecedents.empty())
   {
     assert(d_clauses.size() == id);
-    d_clauses.push_back(clause);
-    d_part_interpolants.push_back(interpolant);
+    d_clauses.emplace_back(clause, ClauseType::ASSUMPTION, 0);
+    assert(d_antecedents.size() == id);
+    d_antecedents.push_back(antecedents);
   }
   d_assumption_clauses.push_back(id);
 }
@@ -183,22 +130,27 @@ CadicalTracer::delete_clause(uint64_t id,
                              bool redundant,
                              const std::vector<int32_t>& clause)
 {
+  (void) id;
   (void) redundant;
   (void) clause;
-  assert(id < d_clauses.size());
-#ifndef NDEBUG
-  std::unordered_set<int32_t> lits;
-  for (int32_t lit : d_clauses[id])
-  {
-    lits.insert(lit);
-  }
-  for (int32_t lit : clause)
-  {
-    assert(lits.find(lit) != lits.end());
-  }
-  assert(lits.size() == clause.size());
-#endif
-  d_clauses[id].clear();
+  //   std::cout << "delete: " << id << std::endl;
+  //   (void) redundant;
+  //   (void) clause;
+  //   assert(id < d_clauses.size());
+  // #ifndef NDEBUG
+  //   std::unordered_set<int32_t> lits;
+  //   for (int32_t lit : d_clauses[id].first)
+  //   {
+  //     lits.insert(lit);
+  //   }
+  //   for (int32_t lit : clause)
+  //   {
+  //     assert(lits.find(lit) != lits.end());
+  //   }
+  //   assert(lits.size() == clause.size());
+  // #endif
+  //   d_clauses[id].first.clear();
+  //   d_clauses[id].second = ClauseType::NONE;
 }
 
 void
@@ -210,7 +162,8 @@ CadicalTracer::add_assumption(int32_t lit)
 void
 CadicalTracer::add_constraint(const std::vector<int>& clause)
 {
-  d_constraint = clause;
+  (void) clause;
+  assert(false);
 }
 
 void
@@ -218,68 +171,61 @@ CadicalTracer::reset_assumptions()
 {
   for (uint64_t id : d_assumption_clauses)
   {
-    d_clauses[id].clear();
+    d_clauses[id].d_clause.clear();
+    d_clauses[id].d_type = ClauseType::NONE;
+    d_clauses[id].d_id   = 0;
   }
   d_assumptions.clear();
-  d_constraint.clear();
   d_assumption_clauses.clear();
 }
 
 void
 CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
-                              const std::vector<uint64_t>& proof_chain)
+                              const std::vector<uint64_t>& clause_ids)
 {
-  d_interpolant.reset();
+  assert(conclusion != CaDiCaL::ConclusionType::CONSTRAINT);
+#ifndef NDEBUG
   if (conclusion == CaDiCaL::ConclusionType::CONFLICT)
   {
     // Single global conflict, proof chain contains single empty clause.
-    assert(proof_chain.size() == 1);
-    assert(proof_chain[0] < d_clauses.size());
-    assert(d_clauses[proof_chain[0]].empty());
-    assert(proof_chain[0] < d_part_interpolants.size());
-    d_interpolant = d_part_interpolants[proof_chain[0]];
+    assert(clause_ids.size() == 1);
+    assert(clause_ids[0] < d_clauses.size());
+    assert(d_clauses[clause_ids[0]].d_clause.empty());
   }
-  else if (conclusion == CaDiCaL::ConclusionType::ASSUMPTIONS)
+  else
   {
+    assert(conclusion == CaDiCaL::ConclusionType::ASSUMPTIONS);
     // One or more constraints are responsible for the conflict, proof chain
     // contains a single clause with failed assumptions. Note that the
     // interpolant of that clause has already been resolved with the
     // interpolants of the assumptions.
-    assert(proof_chain.size() == 1);
-    assert(proof_chain[0] < d_clauses.size());
-    assert(!d_clauses[proof_chain[0]].empty());
-    d_interpolant = d_part_interpolants[proof_chain[0]];
+    assert(clause_ids.size() == 1);
+    assert(clause_ids[0] < d_clauses.size());
+    assert(!d_clauses[clause_ids[0]].d_clause.empty());
   }
-  else
+#endif
+  d_proof_core.clear();
+  assert(d_clauses.size() == d_antecedents.size());
+  d_final_clause_ids = clause_ids;
+  std::vector<uint64_t> visit{clause_ids};
+  std::vector<bool> visited(d_clauses.size(), false);
+  // Compute proof core by tracing back from final clause ids
+  while (!visit.empty())
   {
-    assert(conclusion == CaDiCaL::ConclusionType::CONSTRAINT);
-    // Constraint clause is responsible for the conflict, mark literals.
-    assert(!d_constraint.empty());
-    std::unordered_map<int32_t, uint8_t> marked_vars;
-    for (int32_t lit : d_constraint)
+    uint64_t id = visit.back();
+    visit.pop_back();
+    if (!visited[id])
     {
-      mark_var(marked_vars, lit);
-    }
-    d_interpolant = get_interpolant(d_constraint, d_constraint_kind);
-    size_t size   = proof_chain.size();
-    for (size_t i = 1; i < size; ++i)
-    {
-      for (int32_t lit : d_clauses[proof_chain[size - i - 1]])
-      {
-        // skip if not marked with the opposite phase in conflict clause
-        if (!mark_var(marked_vars, lit))
-        {
-          continue;
-        }
-        extend_interpolant(d_interpolant,
-                           d_part_interpolants[proof_chain[i]],
-                           d_labeled_vars.at(std::abs(lit)));
-      }
+      visited[id] = true;
+      d_proof_core.push_back(id);
+      const auto& antecedents = d_antecedents[id];
+      visit.insert(visit.end(), antecedents.begin(), antecedents.end());
     }
   }
+  std::sort(d_proof_core.begin(), d_proof_core.end());
 }
 
-/* --------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 void
 CadicalTracer::label_variable(int32_t id, VariableKind kind)
@@ -298,16 +244,123 @@ CadicalTracer::label_clause(int32_t id, ClauseKind kind)
 Node
 CadicalTracer::get_interpolant()
 {
-  if (d_interpolant.is_null())
+  for (uint64_t id : d_proof_core)
+  {
+    assert(id <= d_clauses.size());
+    const auto& clause = d_clauses[id].d_clause;
+    ClauseType type    = d_clauses[id].d_type;
+    assert(type != ClauseType::NONE);
+    if (type == ClauseType::ORIGINAL)
+    {
+      auto it = d_labeled_clauses.find(d_clauses[id].d_id);
+      assert(it != d_labeled_clauses.end());
+      ClauseKind kind = it->second;
+      assert(d_part_interpolants.find(id) == d_part_interpolants.end());
+      d_part_interpolants.emplace(id, get_interpolant(clause, kind));
+    }
+    else if (type == ClauseType::DERIVED)
+    {
+      assert(id <= d_antecedents.size());
+      const auto& antecedents = d_antecedents[id];
+      // Mark literals of conflicting clause
+      auto& conf_clause = d_clauses[antecedents.back()].d_clause;
+      std::unordered_map<int32_t, uint8_t> marked_vars;
+      for (int32_t lit : conf_clause)
+      {
+        mark_var(marked_vars, lit);
+      }
+      assert(!marked_vars.empty());
+      // Extend with pivot lit of each clause that was resolved with.
+      Interpolant ipol = d_part_interpolants[antecedents.back()];
+      size_t size      = antecedents.size();
+      for (size_t i = 1; i < size; ++i)
+      {
+        size_t idx = size - i - 1;
+        for (int32_t lit : d_clauses[antecedents[idx]].d_clause)
+        {
+          // skip if not marked with the opposite phase in conflict clause
+          if (!mark_var(marked_vars, lit))
+          {
+            continue;
+          }
+          extend_interpolant(ipol,
+                             d_part_interpolants[antecedents[idx]],
+                             d_labeled_vars.at(std::abs(lit)));
+        }
+      }
+      d_part_interpolants[id] = ipol;
+    }
+    else if (type == ClauseType::ASSUMPTION)
+    {
+      assert(id <= d_antecedents.size());
+      const auto& antecedents = d_antecedents[id];
+      Interpolant ipol;
+
+      if (antecedents.size())
+      {
+        auto it = d_part_interpolants.find(id);
+        assert(it != d_part_interpolants.end());
+        ipol = it->second;
+      }
+      else
+      {
+        assert(clause.size() == 2);
+        bool is_ass_lit0 =
+            d_assumptions.find(-clause[0]) != d_assumptions.end();
+        bool is_ass_lit1 =
+            d_assumptions.find(-clause[1]) != d_assumptions.end();
+        if (!is_ass_lit0 || !is_ass_lit1)
+        {
+          assert(d_clauses.size() == id);
+          int32_t lit = is_ass_lit0 ? -clause[1] : -clause[0];
+          assert(d_part_interpolants.find(id) != d_part_interpolants.end());
+          d_part_interpolants.emplace(id, get_interpolant(-lit));
+          continue;
+        }
+      }
+
+      for (int32_t lit : clause)
+      {
+        if (d_assumptions.find(-lit) != d_assumptions.end())
+        {
+          continue;
+        }
+        Interpolant ip = get_interpolant(-lit);
+        if (!ipol.is_null())
+        {
+          extend_interpolant(ipol, ip, d_labeled_vars.at(std::abs(lit)));
+        }
+        else
+        {
+          ipol = ip;
+        }
+      }
+
+      if (antecedents.empty())
+      {
+        assert(d_clauses.size() == id);
+        d_part_interpolants[id] = ipol;
+      }
+    }
+  }
+  auto it = d_part_interpolants.find(d_final_clause_ids[0]);
+  assert(it != d_part_interpolants.end());
+  return get_interpolant_node(it->second);
+}
+
+Node
+CadicalTracer::get_interpolant_node(Interpolant interpolant)
+{
+  if (interpolant.is_null())
   {
     return Node();
   }
 
-  if (d_interpolant.d_interpolant.is_true())
+  if (interpolant.d_interpolant.is_true())
   {
     return d_nm.mk_value(true);
   }
-  if (d_interpolant.d_interpolant.is_false())
+  if (interpolant.d_interpolant.is_false())
   {
     return d_nm.mk_value(false);
   }
@@ -315,7 +368,7 @@ CadicalTracer::get_interpolant()
   RevBitblasterCache rev_bb_cache = compute_rev_bb_cache();
 
   // Convert AIG interpolant to Node
-  bv::AigBitblaster::aig_node_ref_vector visit{d_interpolant.d_interpolant};
+  bv::AigBitblaster::aig_node_ref_vector visit{interpolant.d_interpolant};
   std::unordered_map<int64_t, Node> vars_to_nodes;
   uint64_t interpol_size = 0;
   do
@@ -323,6 +376,8 @@ CadicalTracer::get_interpolant()
     const bitblast::AigNode& cur = visit.back();
     int64_t id                   = cur.get_id();
     int64_t var                  = std::abs(id);
+    assert(!cur.is_null());
+    assert(id != 0);
 
     auto [it, inserted] = vars_to_nodes.emplace(var, Node());
 
@@ -376,7 +431,7 @@ CadicalTracer::get_interpolant()
   Log(1) << "SAT interpolant size: " << interpol_size << " ands";
   d_stats.size_interpolant = interpol_size;
 
-  int64_t id = d_interpolant.d_interpolant.get_id();
+  int64_t id = interpolant.d_interpolant.get_id();
   Node res   = vars_to_nodes.at(std::abs(id));
   assert(!res.is_null());
   if (id < 0)
@@ -386,7 +441,7 @@ CadicalTracer::get_interpolant()
   return res;
 }
 
-/* --------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 uint8_t
 CadicalTracer::mark_var(std::unordered_map<int32_t, uint8_t>& marked_vars,
@@ -489,11 +544,24 @@ CadicalTracer::extend_interpolant(Interpolant& interpolant,
 }
 
 std::ostream&
+operator<<(std::ostream& out, const CadicalTracer::ClauseType& type)
+{
+  switch (type)
+  {
+    case CadicalTracer::ClauseType::NONE: out << "NONE"; break;
+    case CadicalTracer::ClauseType::ORIGINAL: out << "ORIGINAL"; break;
+    case CadicalTracer::ClauseType::DERIVED: out << "DERIVED"; break;
+    case CadicalTracer::ClauseType::ASSUMPTION: out << "ASSUMPTION"; break;
+  }
+  return out;
+}
+
+std::ostream&
 operator<<(std::ostream& out, const CadicalTracer::Interpolant& interpolant)
 {
   out << interpolant.d_interpolant.str() << " (" << interpolant.d_kind << ")";
   return out;
 }
 
-/* --------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 }  // namespace bzla::sat::interpolants
