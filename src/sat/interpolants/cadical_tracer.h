@@ -149,5 +149,8 @@ class CadicalTracer : public Tracer
   Interpolant d_interpolant;
 };
 
+std::ostream& operator<<(std::ostream& out,
+                         const CadicalTracer::Interpolant& interpolant);
+
 }  // namespace bzla::sat::interpolants
 #endif

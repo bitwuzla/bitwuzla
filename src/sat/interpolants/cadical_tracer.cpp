@@ -488,5 +488,12 @@ CadicalTracer::extend_interpolant(Interpolant& interpolant,
   }
 }
 
+std::ostream&
+operator<<(std::ostream& out, const CadicalTracer::Interpolant& interpolant)
+{
+  out << interpolant.d_interpolant.str() << " (" << interpolant.d_kind << ")";
+  return out;
+}
+
 /* --------------------------------------------------------------------- */
 }  // namespace bzla::sat::interpolants
