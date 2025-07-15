@@ -69,7 +69,7 @@ CadicalTracer::add_original_clause(uint64_t id,
   }
 #endif
   assert(d_clauses.size() == id);
-  d_antecedents.emplace_back();  // original clause, thus no antecedents
+  // original clause, thus no antecedents
   d_clauses.emplace_back(clause, ClauseType::ORIGINAL, d_cur_clause_id);
 }
 
@@ -82,10 +82,8 @@ CadicalTracer::add_derived_clause(uint64_t id,
   (void) id;
   (void) redundant;
   assert(!antecedents.empty());
-  assert(d_antecedents.size() == id);
-  d_antecedents.push_back(antecedents);
   assert(d_clauses.size() == id);
-  d_clauses.emplace_back(clause, ClauseType::DERIVED, 0);
+  d_clauses.emplace_back(clause, ClauseType::DERIVED, 0, antecedents);
 }
 
 void
@@ -107,10 +105,8 @@ CadicalTracer::add_assumption_clause(uint64_t id,
     {
       assert(d_clauses.size() == id);
       int32_t lit = is_ass_lit0 ? -clause[1] : -clause[0];
-      d_clauses.push_back({{lit}, ClauseType::ASSUMPTION, 0});
+      d_clauses.push_back({{lit}, ClauseType::ASSUMPTION, 0, antecedents});
       d_assumption_clauses.push_back(id);
-      assert(d_antecedents.size() == id);
-      d_antecedents.push_back(antecedents);
       return;
     }
   }
@@ -118,9 +114,7 @@ CadicalTracer::add_assumption_clause(uint64_t id,
   if (antecedents.empty())
   {
     assert(d_clauses.size() == id);
-    d_clauses.emplace_back(clause, ClauseType::ASSUMPTION, 0);
-    assert(d_antecedents.size() == id);
-    d_antecedents.push_back(antecedents);
+    d_clauses.emplace_back(clause, ClauseType::ASSUMPTION, 0, antecedents);
   }
   d_assumption_clauses.push_back(id);
 }
@@ -205,7 +199,6 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
   }
 #endif
   d_proof_core.clear();
-  assert(d_clauses.size() == d_antecedents.size());
   d_final_clause_ids = clause_ids;
   std::vector<uint64_t> visit{clause_ids};
   std::vector<bool> visited(d_clauses.size(), false);
@@ -218,7 +211,7 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
     {
       visited[id] = true;
       d_proof_core.push_back(id);
-      const auto& antecedents = d_antecedents[id];
+      const auto& antecedents = d_clauses[id].d_antecedents;
       visit.insert(visit.end(), antecedents.begin(), antecedents.end());
     }
   }
@@ -247,21 +240,20 @@ CadicalTracer::get_interpolant()
   for (uint64_t id : d_proof_core)
   {
     assert(id <= d_clauses.size());
-    const auto& clause = d_clauses[id].d_clause;
-    ClauseType type    = d_clauses[id].d_type;
+    const auto& clause = d_clauses[id];
+    ClauseType type    = clause.d_type;
     assert(type != ClauseType::NONE);
     if (type == ClauseType::ORIGINAL)
     {
-      auto it = d_labeled_clauses.find(d_clauses[id].d_id);
+      auto it = d_labeled_clauses.find(clause.d_id);
       assert(it != d_labeled_clauses.end());
       ClauseKind kind = it->second;
       assert(d_part_interpolants.find(id) == d_part_interpolants.end());
-      d_part_interpolants.emplace(id, get_interpolant(clause, kind));
+      d_part_interpolants.emplace(id, get_interpolant(clause.d_clause, kind));
     }
     else if (type == ClauseType::DERIVED)
     {
-      assert(id <= d_antecedents.size());
-      const auto& antecedents = d_antecedents[id];
+      const auto& antecedents = clause.d_antecedents;
       // Mark literals of conflicting clause
       auto& conf_clause = d_clauses[antecedents.back()].d_clause;
       std::unordered_map<int32_t, uint8_t> marked_vars;
@@ -292,8 +284,7 @@ CadicalTracer::get_interpolant()
     }
     else if (type == ClauseType::ASSUMPTION)
     {
-      assert(id <= d_antecedents.size());
-      const auto& antecedents = d_antecedents[id];
+      const auto& antecedents = clause.d_antecedents;
       Interpolant ipol;
 
       if (antecedents.size())
@@ -304,22 +295,22 @@ CadicalTracer::get_interpolant()
       }
       else
       {
-        assert(clause.size() == 2);
+        assert(clause.d_clause.size() == 2);
         bool is_ass_lit0 =
-            d_assumptions.find(-clause[0]) != d_assumptions.end();
+            d_assumptions.find(-clause.d_clause[0]) != d_assumptions.end();
         bool is_ass_lit1 =
-            d_assumptions.find(-clause[1]) != d_assumptions.end();
+            d_assumptions.find(-clause.d_clause[1]) != d_assumptions.end();
         if (!is_ass_lit0 || !is_ass_lit1)
         {
           assert(d_clauses.size() == id);
-          int32_t lit = is_ass_lit0 ? -clause[1] : -clause[0];
+          int32_t lit = is_ass_lit0 ? -clause.d_clause[1] : -clause.d_clause[0];
           assert(d_part_interpolants.find(id) != d_part_interpolants.end());
           d_part_interpolants.emplace(id, get_interpolant(-lit));
           continue;
         }
       }
 
-      for (int32_t lit : clause)
+      for (int32_t lit : clause.d_clause)
       {
         if (d_assumptions.find(-lit) != d_assumptions.end())
         {

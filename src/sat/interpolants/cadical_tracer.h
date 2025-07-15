@@ -34,8 +34,11 @@ class CadicalTracer : public Tracer
   struct Clause
   {
     Clause() {}
-    Clause(const std::vector<int32_t>& clause, ClauseType type, uint64_t id)
-        : d_clause(clause), d_type(type), d_id(id)
+    Clause(const std::vector<int32_t>& clause,
+           ClauseType type,
+           uint64_t id,
+           const std::vector<uint64_t>& antecedents = {})
+        : d_clause(clause), d_type(type), d_id(id), d_antecedents(antecedents)
     {
     }
 
@@ -48,6 +51,9 @@ class CadicalTracer : public Tracer
      * may be >= than the tracer clause id.
      */
     uint64_t d_id;
+
+    /** Antecedents of this clause in the proof. */
+    std::vector<uint64_t> d_antecedents;
   };
   struct Interpolant
   {
@@ -158,8 +164,6 @@ class CadicalTracer : public Tracer
   std::unordered_map<int32_t, ClauseKind> d_labeled_clauses;
   /** Added clauses, dummy at index 0 to enable access via clause id. */
   std::vector<Clause> d_clauses{Clause()};
-  /** Map clause id to its antecedents in the proof. */
-  std::vector<std::vector<uint64_t>> d_antecedents{{}};
   /** The id of the most recently added clause. */
   uint64_t d_cur_clause_id = 0;
   /** The currently active assumptions. */
