@@ -3,6 +3,8 @@ fs = import('fs')
 c_compiler = meson.get_compiler('c')
 cpp_compiler = meson.get_compiler('cpp')
 
+cpp_args = []
+
 # ---
 # Bitwuzla library dependencies
 # ---
@@ -14,35 +16,38 @@ cpp_compiler = meson.get_compiler('cpp')
 # since the subproject is built in the build stage.
 # Thus, we require that GMP is installed on the system or --build-deps was used
 # to configure this project.
-if not get_option('system_gmp_mpfr')
-  deps_dir = join_paths(meson.current_build_dir(), '..', 'deps')
-  libs_dir = join_paths(deps_dir, 'lib')
-  rel_dir = fs.relative_to(join_paths(deps_dir, 'include'), meson.current_source_dir())
-  incs_dir = include_directories(rel_dir)
-  if not fs.is_dir(deps_dir)
-    error('Missing dependencies directory ' + deps_dir +
-          '. Reconfigure with configure.py --build-deps option.')
-  endif
-  gmp_dep = cpp_compiler.find_library('gmp',
-                                    has_headers: ['gmp.h', 'gmpxx.h'],
-                                    header_include_directories: incs_dir,
-                                    static: build_static,
-                                    dirs: libs_dir,
-                                    required: true)
 
-  mpfr_dep = cpp_compiler.find_library('mpfr',
-                                    has_headers: ['mpfr.h'],
-                                    header_include_directories: incs_dir,
+if get_option('with_gmp') != ''
+  gmp_dir = get_option('with_gmp')
+  libdir = join_paths(gmp_dir, 'lib')
+  incdir = join_paths(gmp_dir, 'include')
+  gmp_dep = c_compiler.find_library('gmp',
+                                    has_headers: ['gmp.h', 'gmpxx.h'],
                                     static: build_static,
-                                    dirs: libs_dir,
+                                    dirs: libdir,
+                                    header_args: '-I' + incdir,
                                     required: true)
+  cpp_args += ['-I' + incdir]
 else
   gmp_dep = dependency('gmp',
                        version: '>=6.3',
                        required: true,
                        static: build_static,
                        allow_fallback: false)
+endif
 
+if get_option('with_mpfr') != ''
+  mpfr_dir = get_option('with_mpfr')
+  libdir = join_paths(mpfr_dir, 'lib')
+  incdir = join_paths(mpfr_dir, 'include')
+  mpfr_dep = c_compiler.find_library('mpfr',
+                                    has_headers: ['mpfr.h'],
+                                    static: build_static,
+                                    dirs: libdir,
+                                    header_args: '-I' + incdir,
+                                    required: true)
+  cpp_args += ['-I' + incdir]
+else
   mpfr_dep = dependency('mpfr',
                         version: '>=4.2.2',
                         required: true,
@@ -78,7 +83,6 @@ symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
 dependencies = [symfpu_dep, cadical_dep, cms_dep, kissat_dep, gmp_dep, mpfr_dep]
 
-cpp_args = []
 if cms_dep.found()
   cpp_args += ['-DBZLA_USE_CMS']
 endif
@@ -154,8 +158,12 @@ git_config_h = vcs_tag(
 )
 
 # ---
-# Util library used by support and bitwuzla library
+# Build Bitwuzla library
 # ---
+# Note: For now we keep the util library and support library sources separately
+# so that we can easily create libraries in the future if needed.
+
+sources = []
 
 sources_util = files([
   'util/hash.cpp',
@@ -167,22 +175,49 @@ sources_util = files([
   'util/integer.cpp',
   'util/gmp_utils.cpp'
 ])
+sources += sources_util
 
-util_lib = static_library('bzlautil', sources_util, cpp_args: cpp_args,
-                          dependencies: gmp_dep)
+sources_lib_bv = files([
+  'lib/bv/bitvector.cpp',
+  'lib/bv/bounds/bitvector_bounds.cpp',
+  'lib/bv/domain/bitvector_domain.cpp',
+  'lib/bv/domain/wheel_factorizer.cpp'
+])
+sources += sources_lib_bv
 
-# ---
-# Add Bitwuzla support libraries
-# ---
+sources_lib_bb = files([
+  'lib/bitblast/aig/aig_cnf.cpp',
+  'lib/bitblast/aig/aig_manager.cpp',
+  'lib/bitblast/aig/aig_node.cpp',
+  'lib/bitblast/aig/aig_printer.cpp'
+])
+sources += sources_lib_bb
 
-subdir('lib')
-support_libs = [bitblast_lib, bitvector_lib, local_search_lib]
+sources_lib_ls = files([
+  'lib/ls/ls.cpp',
+  'lib/ls/ls_bv.cpp',
+  'lib/ls/bv/bitvector_node.cpp',
+  'lib/ls/node/node.cpp',
+])
+sources += sources_lib_ls
 
-# ---
-# Build Bitwuzla library
-# ---
+sources_lib_rng = files([
+  'lib/rng/rng.cpp'
+])
+sources += sources_lib_rng
 
-sources = files([
+# AIGER dependency
+aiger_dep = dependency('aiger', required: get_option('aiger'))
+
+if aiger_dep.found()
+  cpp_args += ['-DBZLA_USE_AIGER']
+endif
+if enable_unit_testing
+  cpp_args += ['-DBZLA_ENABLE_UNIT_TESTING']
+endif
+
+
+sources += files([
   'api/c/bitwuzla.cpp',
   'api/c/bitwuzla_structs.cpp',
   'api/c/parser.cpp',
@@ -272,7 +307,6 @@ bitwuzla_inc = include_directories('../include', 'lib')
 bitwuzla_lib = library('bitwuzla',
                       sources + git_config_h,
                       include_directories: bitwuzla_inc,
-                      link_with: [util_lib, support_libs],
                       dependencies: dependencies,
                       soversion: bitwuzla_lib_soversion,
                       install_rpath: install_rpath,
@@ -282,7 +316,7 @@ bitwuzla_lib = library('bitwuzla',
 # Create library dependency
 bitwuzla_dep = declare_dependency(include_directories: bitwuzla_inc,
                                   dependencies: dependencies,
-                                  link_with: [bitwuzla_lib, support_libs])
+                                  link_with: bitwuzla_lib)
 
 # Generate pkgconfig file.
 pkg = import('pkgconfig')
