@@ -31,7 +31,10 @@ class SatInterface
    * @param literals List of literals to be added (without terminating 0).
    */
   virtual void add_clause(const std::initializer_list<int64_t>& literals) = 0;
-
+   /**
+    * Query the value of the given literal.
+    * @return True if the literal evaluates to true.
+    */
   virtual bool value(int64_t lit) = 0;
 };
 
