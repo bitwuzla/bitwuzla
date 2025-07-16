@@ -416,12 +416,13 @@ TEST_F(TestBvInterpolationSolver, interpol7)
 
 TEST_F(TestBvInterpolationSolver, interpol8)
 {
-  Type bv16 = d_nm.mk_bv_type(16);
-  Node x    = d_nm.mk_const(bv16, "x");
-  Node y    = d_nm.mk_const(bv16, "y");
-  Node zero = d_nm.mk_value(BitVector::mk_zero(16));
-  Node one  = d_nm.mk_value(BitVector::mk_one(16));
-  Node two  = d_nm.mk_value(BitVector::from_ui(16, 2));
+  uint64_t bw = 16;
+  Type bv     = d_nm.mk_bv_type(bw);
+  Node x      = d_nm.mk_const(bv, "x");
+  Node y      = d_nm.mk_const(bv, "y");
+  Node zero   = d_nm.mk_value(BitVector::mk_zero(bw));
+  Node one    = d_nm.mk_value(BitVector::mk_one(bw));
+  Node two    = d_nm.mk_value(BitVector::from_ui(bw, 2));
   // (distinct (_ bv0 16) (bvadd x y))
   Node A0 =
       d_nm.mk_node(Kind::DISTINCT, {zero, d_nm.mk_node(Kind::BV_ADD, {x, y})});
@@ -492,13 +493,14 @@ TEST_F(TestBvInterpolationSolver, interpol9)
 
 TEST_F(TestBvInterpolationSolver, interpol10)
 {
-  Type bv4   = d_nm.mk_bv_type(4);
-  Node x     = d_nm.mk_const(bv4, "x");
-  Node s     = d_nm.mk_const(bv4, "s");
-  Node t     = d_nm.mk_const(bv4, "t");
-  Node val_x = d_nm.mk_value(BitVector::from_ui(4, 3));
-  Node val_s = d_nm.mk_value(BitVector::from_ui(4, 2));
-  Node val_t = d_nm.mk_value(BitVector::from_ui(4, 6));
+  uint64_t bw = 4;
+  Type bv     = d_nm.mk_bv_type(bw);
+  Node x      = d_nm.mk_const(bv, "x");
+  Node s      = d_nm.mk_const(bv, "s");
+  Node t      = d_nm.mk_const(bv, "t");
+  Node val_x  = d_nm.mk_value(BitVector::from_ui(bw, 3));
+  Node val_s  = d_nm.mk_value(BitVector::from_ui(bw, 2));
+  Node val_t  = d_nm.mk_value(BitVector::from_ui(bw, 6));
   Node A0 =
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND,
