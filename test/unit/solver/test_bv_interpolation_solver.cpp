@@ -26,6 +26,7 @@ class TestBvInterpolationSolver : public TestCommon
 {
  protected:
   constexpr static bool s_all_pp_rw       = true;
+  constexpr static bool s_all_ass_configs = true;
 
   enum class AssumptionConfig
   {
@@ -60,8 +61,11 @@ class TestBvInterpolationSolver : public TestCommon
     }
     ASSERT_EQ(ctx_solve.solve(), Result::UNSAT);
     test_get_interpolant_aux(A, B, AssumptionConfig::NONE);
-    test_get_interpolant_aux(A, B, AssumptionConfig::ALL);
-    test_get_interpolant_aux(A, B, AssumptionConfig::ONLY_B);
+    if (s_all_ass_configs)
+    {
+      test_get_interpolant_aux(A, B, AssumptionConfig::ALL);
+      test_get_interpolant_aux(A, B, AssumptionConfig::ONLY_B);
+    }
   }
 
   void test_get_interpolant_aux(const std::unordered_set<Node>& A,
@@ -137,7 +141,7 @@ TEST_F(TestBvInterpolationSolver, produce_interpolants)
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx = SolvingContext(d_nm, d_options, sat_factory);
   ctx.assert_formula(d_nm.mk_const(d_nm.mk_bool_type()));
-  ASSERT_DEATH(ctx.get_interpolant({}), "produce_interpolants");
+  ASSERT_DEATH_DEBUG(ctx.get_interpolant({}), "produce_interpolants");
 }
 
 TEST_F(TestBvInterpolationSolver, prop)
@@ -354,12 +358,13 @@ TEST_F(TestBvInterpolationSolver, interpol5)
 
 TEST_F(TestBvInterpolationSolver, interpol6)
 {
-  Type bv4  = d_nm.mk_bv_type(4);
-  Node x    = d_nm.mk_const(bv4, "x");
-  Node y    = d_nm.mk_const(bv4, "y");
-  Node z    = d_nm.mk_const(bv4, "z");
-  Node zero = d_nm.mk_value(BitVector::mk_zero(4));
-  Node one  = d_nm.mk_value(BitVector::mk_one(4));
+  uint64_t bw = 4;
+  Type bv     = d_nm.mk_bv_type(bw);
+  Node x      = d_nm.mk_const(bv, "x");
+  Node y      = d_nm.mk_const(bv, "y");
+  Node z      = d_nm.mk_const(bv, "z");
+  Node zero   = d_nm.mk_value(BitVector::mk_zero(bw));
+  Node one    = d_nm.mk_value(BitVector::mk_one(bw));
   // (= z (bvadd x y))
   Node A0 = d_nm.mk_node(Kind::EQUAL, {z, d_nm.mk_node(Kind::BV_ADD, {x, y})});
   // (distinct x y)
@@ -434,6 +439,12 @@ TEST_F(TestBvInterpolationSolver, interpol8)
            Kind::BV_NEG,
            {d_nm.mk_node(Kind::BV_ADD,
                          {y, d_nm.mk_node(Kind::BV_MUL, {x, two})})})});
+  option::Options options;
+  sat::SatSolverFactory sat_factory(options);
+  SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
+  ctx.assert_formula(A0);
+  ctx.assert_formula(A1);
+  assert(ctx.solve() == Result::SAT);
   // (= (_ bv0 16) (bvadd x (_ bv1 16)))
   Node B =
       d_nm.mk_node(Kind::EQUAL, {zero, d_nm.mk_node(Kind::BV_ADD, {x, one})});

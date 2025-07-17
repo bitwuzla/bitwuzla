@@ -183,9 +183,27 @@ SolverEngine::unsat_core(std::vector<Node>& core) const
 }
 
 Node
-SolverEngine::interpolant()
+SolverEngine::interpolant(const std::vector<Node>& A,
+                          const std::vector<Node>& B)
 {
-  return d_bv_solver.interpolant();
+  if (d_am)
+  {
+    // The interpolation engine needs the actual set of assertions that
+    // is being processed (for labeling). Thus, in case that our abstraction
+    // module is enabled, assertions in A/B with abstracted terms must be
+    // replaced with the corresponding abstracted assertions.
+    std::vector<Node> _A(A), _B(B);
+    for (auto& a : _A)
+    {
+      a = d_am->process_assertion(a, false);
+    }
+    for (auto& a : _B)
+    {
+      a = d_am->process_assertion(a, false);
+    }
+    return d_bv_solver.interpolant(_A, _B);
+  }
+  return d_bv_solver.interpolant(A, B);
 }
 
 bool

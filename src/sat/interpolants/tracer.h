@@ -44,25 +44,20 @@ class Tracer : public CaDiCaL::Tracer
   }
 
   /**
-   * Label variable with given kind.
-   * @param id   The variable id.
-   * @param kind The variable kind.
+   * Set the associated AIG id of the currently processed clause.
+   * @param id The AIG id.
    */
-  virtual void label_variable(int32_t id, VariableKind kind) = 0;
-
-  /**
-   * Label clause with given kind.
-   * @note Clause IDs must be consecutive.
-   * @param id   The clause id.
-   * @param kind The clause kind.
-   */
-  virtual void label_clause(int32_t id, ClauseKind kind) = 0;
+  void set_current_aig_id(int64_t id) { d_cur_aig_id = id; }
 
   /**
    * Get interpolant.
+   * @param var_labels A map of AIG id to variable kinds.
+   * @param clause_labels A map of AIG id to clause kinds.
    * @return The interpolant.
    */
-  virtual Node get_interpolant() = 0;
+  virtual Node get_interpolant(
+      const std::unordered_map<int64_t, VariableKind>& var_labels,
+      const std::unordered_map<int64_t, ClauseKind>& clause_labels) = 0;
 
   struct Statistics
   {
@@ -104,6 +99,9 @@ class Tracer : public CaDiCaL::Tracer
   bitblast::AigManager& d_amgr;
   /** The associated logger instance. */
   util::Logger& d_logger;
+
+  /** The associated AIG id of the currently processed clause. */
+  int64_t d_cur_aig_id = 0;
 };
 
 }  // namespace sat::interpolants

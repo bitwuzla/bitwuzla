@@ -36,21 +36,21 @@ class CadicalTracer : public Tracer
     Clause() {}
     Clause(const std::vector<int32_t>& clause,
            ClauseType type,
-           uint64_t id,
+           int64_t aig_id,
            const std::vector<uint64_t>& antecedents = {})
-        : d_clause(clause), d_type(type), d_id(id), d_antecedents(antecedents)
+        : d_clause(clause),
+          d_type(type),
+          d_aig_id(aig_id),
+          d_antecedents(antecedents)
     {
     }
 
     /** The actual clause, a vector of literals. */
     std::vector<int32_t> d_clause;
     /** The clause type. */
-    ClauseType d_type;
-    /**
-     * The tracer-managed clause id. Not to confuse with CaDiCaL's clause id,
-     * may be >= than the tracer clause id.
-     */
-    uint64_t d_id;
+    ClauseType d_type = ClauseType::NONE;
+    /** The id of the AIG node this clause is associated with. */
+    int64_t d_aig_id = 0;
 
     /** Antecedents of this clause in the proof. */
     std::vector<uint64_t> d_antecedents;
@@ -102,27 +102,42 @@ class CadicalTracer : public Tracer
 
   /* --------------------------------------------------------------------- */
 
-  void label_variable(int32_t id, VariableKind kind) override;
-
-  void label_clause(int32_t id, ClauseKind kind) override;
-
-  Node get_interpolant() override;
+  /**
+   * Get interpolant given the labels for SAT variables and clauses.
+   *
+   * Variable and clause labels are given as maps from AIG id to variable label.
+   * The tracer maintains a mapping from clause to associated AIG node.
+   *
+   * Requires that the current sat state is unsat.
+   *
+   * @param var_labels    The labels of the SAT variables.
+   * @param clause_labels The labels of the SAT clauses.
+   * @return The interpolant.
+   */
+  Node get_interpolant(
+      const std::unordered_map<int64_t, VariableKind>& var_labels,
+      const std::unordered_map<int64_t, ClauseKind>& clause_labels) override;
 
  private:
   /**
    * Construct interpolant for given clause.
+   * @param var_kinds The mapping from AIG id to variable kinds.
    * @param clause The clause to construct the interpolant for.
    * @param kind   The kind of the clause.
    * @return The interpolant.
    */
-  Interpolant get_interpolant(const std::vector<int32_t>& clause,
-                              ClauseKind kind);
+  Interpolant get_interpolant(
+      const std::unordered_map<int64_t, VariableKind>& var_kinds,
+      const std::vector<int32_t>& clause,
+      ClauseKind kind);
   /**
    * Construct interpolant for given literal (i.e., assumption).
+   * @param var_kinds The mapping from AIG id to variable kinds.
    * @param lit The literal to construct the interpolant for.
    * @return The interpolant.
    */
-  Interpolant get_interpolant(int32_t lit);
+  Interpolant get_interpolant(
+      const std::unordered_map<int64_t, VariableKind>& var_kinds, int32_t lit);
 
   Node get_interpolant_node(Interpolant interpolant);
 
@@ -158,14 +173,9 @@ class CadicalTracer : public Tracer
    */
   bitblast::AigNode mk_or(std::vector<bitblast::AigNode> aigs) const;
 
-  /** The variable labels. */
-  std::unordered_map<int32_t, VariableKind> d_labeled_vars;
-  /** The clause labels. Maps tracer clause ids to label. */
-  std::unordered_map<int32_t, ClauseKind> d_labeled_clauses;
   /** Added clauses, dummy at index 0 to enable access via clause id. */
   std::vector<Clause> d_clauses{Clause()};
-  /** The id of the most recently added clause. */
-  uint64_t d_cur_clause_id = 0;
+
   /** The currently active assumptions. */
   std::unordered_set<int32_t> d_assumptions;
   /** The clauses observed via add_assumption_clause(). */

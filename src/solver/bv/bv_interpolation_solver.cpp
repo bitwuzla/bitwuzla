@@ -37,28 +37,16 @@ class BvInterpolationSolver::InterpolationSatSolver
     : public bitblast::SatInterface
 {
  public:
-  InterpolationSatSolver(
-      Env& env,
-      sat::SatSolver& solver,
-      Tracer& tracer,
-      std::unordered_map<int64_t, VariableKind>& sat_vars_to_kinds)
-      : d_vars_to_kinds(sat_vars_to_kinds),
-        d_logger(env.logger()),
-        d_solver(solver),
-        d_tracer(tracer)
+  InterpolationSatSolver(Env& env, sat::SatSolver& solver, Tracer& tracer)
+      : d_logger(env.logger()), d_solver(solver), d_tracer(tracer)
   {
   }
-
-  void set_clause_label(ClauseKind kind) { d_clause_kind = kind; }
 
   void add(int64_t lit) override
   {
     if (lit == 0)
     {
-      d_tracer.label_clause(++d_clause_cnt, d_clause_kind);
       Log(3) << "CNF encoder: add clause";
-      Log(3) << "  label clause: " << d_clause_cnt << " "
-             << (d_clause_kind == ClauseKind::A ? "A" : "B");
       size_t size = d_clause.size();
       if (d_logger.is_log_enabled(2))
       {
@@ -74,22 +62,6 @@ class BvInterpolationSolver::InterpolationSatSolver
       {
         int64_t lit = d_clause[i];
         Log(3) << "  CNF encoder: add: " << lit;
-        resize(lit);
-        if (!is_labeled(lit))
-        {
-          int64_t var                   = std::abs(lit);
-          auto it                       = d_vars_to_kinds.find(var);
-          VariableKind var_kind         = it != d_vars_to_kinds.end()
-                                              ? d_vars_to_kinds.at(var)
-                                              : VariableKind::GLOBAL;
-          d_tracer.label_variable(var, var_kind);
-          Log(3) << "  label var: " << var << " ("
-                 << (var_kind == VariableKind::A
-                         ? "A"
-                         : (var_kind == VariableKind::B ? "B" : "GLOBAL"))
-                 << ")";
-          set_labeled(lit);
-        }
         d_solver.add(lit);
       }
       d_solver.add(0);
@@ -115,246 +87,20 @@ class BvInterpolationSolver::InterpolationSatSolver
     return d_solver.value(lit) == 1 ? true : false;
   }
 
-  /**
-   * Label all SAT variables occuring in the given AIG with the given kind (if
-   * yet unlabeled) or as VariableKind::GLOBAL if they occur both in A and B.
-   *
-   * Note that if label_bits is not called explicitly to label an AIG, it
-   * will be labeled as shared.
-   *
-   * @param bits The AIG representation of the bit-vector to label.
-   * @param kind The label kind.
-   */
-  void label(const bitblast::AigBitblaster::Bits& bits, VariableKind kind)
+  void set_current_aig_id(int64_t aig_id) override
   {
-    bv::AigBitblaster::aig_node_ref_vector visit;
-    std::unordered_set<int64_t> cache;
-    for (const auto& aig : bits)
-    {
-      visit.push_back(aig);
-    }
-    do
-    {
-      const bitblast::AigNode& cur = visit.back();
-      int64_t id                   = cur.get_id();
-      int64_t var                  = std::abs(id);
-
-      {
-        auto [it, inserted] = cache.insert(var);
-        if (!inserted)
-        {
-          visit.pop_back();
-          continue;
-        }
-      }
-
-      visit.pop_back();
-
-      if (cur.is_true() || cur.is_false())
-      {
-        continue;
-      }
-
-      if (cur.is_and())
-      {
-        visit.push_back(cur[0]);
-        visit.push_back(cur[1]);
-      }
-      auto [it, inserted] = d_vars_to_kinds.emplace(var, kind);
-      assert(kind == VariableKind::B || inserted
-             || it->second == VariableKind::GLOBAL || kind == it->second);
-      if (!inserted && it->second != kind && it->second != VariableKind::GLOBAL)
-      {
-        it->second = VariableKind::GLOBAL;
-      }
-    } while (!visit.empty());
+    d_tracer.set_current_aig_id(aig_id);
   }
-
-  /**
-   * Label unlabeled SAT variables occuring in a lemma depending on which kind
-   * the non-GLOBAL variables in the lemma are assigned to.
-   *
-   * That is,
-   * * A, S: labeled as A
-   * * B, S: labeled as B
-   * * S: labeled as A
-   *
-   * Note that for now, we do not allow lemmas with "mixed" occurrences, i.e.,
-   * occurences of both A and B local variables.
-   *
-   * @param bits The AIG representation of the bit-vector to label.
-   */
-  void label_lemma(const bitblast::AigBitblaster::Bits& bits)
-  {
-    if (d_logger.is_log_enabled(2))
-    {
-      std::stringstream ss;
-      for (const auto& aig : bits)
-      {
-        ss << " " << aig;
-      }
-      Log(2) << "label_lemma: (" << ss.str() << ")";
-    }
-
-    bv::AigBitblaster::aig_node_ref_vector visit;
-    std::unordered_set<int64_t> cache;
-    std::vector<int64_t> aig_consts;
-    for (const auto& aig : bits)
-    {
-      visit.push_back(aig);
-    }
-    VariableKind kind = VariableKind::GLOBAL;
-    do
-    {
-      const bitblast::AigNode& cur = visit.back();
-      int64_t id                   = cur.get_id();
-      int64_t var                  = std::abs(id);
-
-      {
-        auto [it, inserted] = cache.insert(var);
-        if (!inserted)
-        {
-          visit.pop_back();
-          continue;
-        }
-      }
-
-      visit.pop_back();
-
-      if (cur.is_and())
-      {
-        visit.push_back(cur[0]);
-        visit.push_back(cur[1]);
-      }
-
-      auto it = d_vars_to_kinds.find(var);
-      if (it == d_vars_to_kinds.end())
-      {
-        aig_consts.push_back(var);
-      }
-      else
-      {
-        if (it->second == VariableKind::GLOBAL)
-        {
-          continue;
-        }
-        assert(kind == VariableKind::GLOBAL || kind == it->second);
-        kind = it->second;
-      }
-    } while (!visit.empty());
-    for (int64_t var : aig_consts)
-    {
-      auto [it, inserted] = d_vars_to_kinds.emplace(var, kind);
-      assert(inserted);
-    }
-  }
-
-  /** Maps var to kind as labeled after bit-blasting. */
-  std::unordered_map<int64_t, VariableKind>& d_vars_to_kinds;
 
  private:
-  void resize(int64_t lit)
-  {
-    size_t pos = static_cast<size_t>(std::abs(lit) - 1);
-    if (pos < d_var_labeled.size())
-    {
-      return;
-    }
-    d_var_labeled.resize(pos + 1, false);
-  }
-
-  bool is_labeled(int64_t lit) const
-  {
-    size_t pos = static_cast<size_t>(std::abs(lit) - 1);
-    if (pos < d_var_labeled.size())
-    {
-      return d_var_labeled[pos];
-    }
-    return false;
-  }
-
-  void set_labeled(int64_t lit)
-  {
-    size_t pos = static_cast<size_t>(std::abs(lit) - 1);
-    assert(pos < d_var_labeled.size());
-    d_var_labeled[pos] = true;
-  }
-
   /** The associated logger instance. */
   util::Logger& d_logger;
   /** The associated SAT solver. */
   sat::SatSolver& d_solver;
-  /** Indicates whether var was already labeled in the tracer. */
-  std::vector<bool> d_var_labeled;
   /** Cache literals of current clause. */
   std::vector<int64_t> d_clause;
-  /** The current number of clauses added. */
-  int64_t d_clause_cnt = 0;
-
   /** The associated tracer. */
   Tracer& d_tracer;
-  /** The current clause type (A or B). */
-  ClauseKind d_clause_kind = ClauseKind::A;
-};
-
-/* --- InterpolationBitblaster --------------------------------------------- */
-
-class InterpolationBitblaster : public AigBitblaster
-{
- public:
-  InterpolationBitblaster(
-      std::unordered_map<Node, VariableKind>& consts_to_kinds,
-      std::unordered_map<int64_t, VariableKind>& sat_vars_to_kinds)
-      : d_consts_to_kinds(consts_to_kinds),
-        d_sat_vars_to_kinds(sat_vars_to_kinds)
-  {
-  }
-  /** Recursively bit-blast `term`. */
-  void bitblast(const Node& term) override
-  {
-    node_ref_vector visit{term};
-    unordered_node_ref_map<bool> cache;
-    do
-    {
-      const Node& cur     = visit.back();
-      auto [it, inserted] = cache.emplace(cur, true);
-
-      if (inserted)
-      {
-        if (!BvSolver::is_leaf(cur))
-        {
-          visit.insert(visit.end(), cur.begin(), cur.end());
-        }
-        continue;
-      }
-      else if (it->second)
-      {
-        it->second = false;
-        AigBitblaster::bitblast(cur);
-        if (cur.kind() == Kind::CONSTANT)
-        {
-          auto cit = d_consts_to_kinds.find(cur);
-          assert(cit != d_consts_to_kinds.end());
-          const auto& cur_bits = bits(cur);
-          for (const auto& bit : cur_bits)
-          {
-            auto [lit, linserted] = d_sat_vars_to_kinds.emplace(
-                std::abs(bit.get_id()), cit->second);
-            if (!linserted && lit->second != VariableKind::GLOBAL
-                && lit->second != cit->second)
-            {
-              lit->second = VariableKind::GLOBAL;
-            }
-          }
-        }
-      }
-      visit.pop_back();
-    } while (!visit.empty());
-  }
-
- private:
-  std::unordered_map<Node, VariableKind>& d_consts_to_kinds;
-  std::unordered_map<int64_t, VariableKind>& d_sat_vars_to_kinds;
 };
 
 /* --- BvInterpolationSolver public ---------------------------------------- */
@@ -367,12 +113,11 @@ BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
       d_lemmas(state.backtrack_mgr()),
       d_last_result(Result::UNKNOWN)
 {
-  d_bitblaster.reset(
-      new InterpolationBitblaster(d_consts_to_kinds, d_sat_vars_to_kinds));
+  d_bitblaster.reset(new AigBitblaster());
   d_sat_solver.reset(new sat::Cadical());
   d_tracer.reset(new CadicalTracer(d_env, *d_bitblaster));
-  d_interpol_sat_solver.reset(new InterpolationSatSolver(
-      env, *d_sat_solver, *d_tracer, d_sat_vars_to_kinds));
+  d_interpol_sat_solver.reset(
+      new InterpolationSatSolver(env, *d_sat_solver, *d_tracer));
   d_sat_solver->solver()->connect_proof_tracer(d_tracer.get(), true);
   d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_interpol_sat_solver));
 }
@@ -383,28 +128,37 @@ BvInterpolationSolver::~BvInterpolationSolver()
 }
 
 Node
-BvInterpolationSolver::interpolant()
+BvInterpolationSolver::interpolant(const std::vector<Node>& A,
+                                   const std::vector<Node>& B)
 {
   assert(d_last_result == Result::UNSAT);
 
-  log_bitblaster_cache(2);
+  std::unordered_map<int64_t, VariableKind> var_labels;
+  std::unordered_map<int64_t, ClauseKind> clause_labels;
 
-  if (d_logger.is_log_enabled(3))
   {
-    Log(3);
-    Log(3) << "SAT var to kinds:";
-    for (const auto& p : d_interpol_sat_solver->d_vars_to_kinds)
+    util::Timer timer(d_stats.time_label);
+    for (const auto& a : A)
     {
-      Log(3) << p.first << ": "
-             << (p.second == VariableKind::A
-                     ? "A"
-                     : (p.second == VariableKind::B ? "B" : "GLOBAL"));
+      label_clause(clause_labels, a, ClauseKind::A);
+      label_vars(var_labels, a, VariableKind::A);
     }
-    Log(3);
+    for (const auto& a : B)
+    {
+      label_clause(clause_labels, a, ClauseKind::B);
+      label_vars(var_labels, a, VariableKind::B);
+    }
+    for (const auto& a : d_lemmas)
+    {
+      label_lemma(var_labels, clause_labels, a);
+    }
   }
 
+  log_bitblaster_cache(2);
+
   util::Timer timer(d_stats.time_interpol);
-  Node res = d_env.rewriter().rewrite(d_tracer->get_interpolant());
+  Node res = d_env.rewriter().rewrite(
+      d_tracer->get_interpolant(var_labels, clause_labels));
   d_stats.size_interpolant += d_tracer->d_stats.size_interpolant;
 
   Log(1) << "interpolant: " << res;
@@ -458,10 +212,6 @@ BvInterpolationSolver::register_assertion(const Node& assertion,
     d_assertions.push_back(assertion);
   }
 
-  // Label bit-vector consts that occur in assertion
-  label(assertion,
-        d_solver_state.is_interpol_conj(assertion) ? VariableKind::B
-                                                   : VariableKind::A);
   if (is_lemma)
   {
     d_lemmas.insert(assertion);
@@ -483,17 +233,6 @@ BvInterpolationSolver::solve()
     for (const Node& assertion : d_assertions)
     {
       d_bitblaster->bitblast(assertion);
-      // we label lemmas after A and B assertions/assumptions have been labeled
-      if (d_lemmas.find(assertion) != d_lemmas.end())
-      {
-        continue;
-      }
-      const auto& bits = d_bitblaster->bits(assertion);
-      assert(!bits.empty());
-      VariableKind kind = d_solver_state.is_interpol_conj(assertion)
-                              ? VariableKind::B
-                              : VariableKind::A;
-      d_interpol_sat_solver->label(bits, kind);
     }
   }
   if (!d_assumptions.empty())
@@ -505,31 +244,7 @@ BvInterpolationSolver::solve()
         util::Timer timer(d_stats.time_bitblast);
         d_bitblaster->bitblast(assumption);
       }
-      // we label lemmas after A and B assertions/assumptions have been labeled
-      if (d_lemmas.find(assumption) != d_lemmas.end())
-      {
-        continue;
-      }
-      const auto& bits = d_bitblaster->bits(assumption);
-      assert(!bits.empty());
-      VariableKind kind = d_solver_state.is_interpol_conj(assumption)
-                              ? VariableKind::B
-                              : VariableKind::A;
-      d_interpol_sat_solver->label(bits, kind);
     }
-  }
-  for (const Node& lemma : d_lemmas)
-  {
-    // For now we only support interpolation in the lazy case for QF_BV +
-    // abstraction, where we can only get lemmas that contain terms with
-    // 1. only GLOBAL consts
-    // 2. A and shared consts
-    // 3. B and shared consts.
-    // Thus we can assert that we don't get mixed terms (which is not the case
-    // if UF or arrays are involved).
-    const auto& bits = d_bitblaster->bits(lemma);
-    assert(!bits.empty());
-    d_interpol_sat_solver->label_lemma(bits);
   }
 
   // Encode
@@ -538,10 +253,6 @@ BvInterpolationSolver::solve()
     util::Timer timer(d_stats.time_encode);
     for (const Node& assertion : d_assertions)
     {
-      ClauseKind kind = d_solver_state.is_interpol_conj(assertion)
-                            ? ClauseKind::B
-                            : ClauseKind::A;
-      d_interpol_sat_solver->set_clause_label(kind);
       const auto& bits = d_bitblaster->bits(assertion);
       assert(!bits.empty());
       d_cnf_encoder->encode(bits[0], true);
@@ -551,10 +262,6 @@ BvInterpolationSolver::solve()
 
   for (const Node& assumption : d_assumptions)
   {
-    ClauseKind kind = d_solver_state.is_interpol_conj(assumption)
-                          ? ClauseKind::B
-                          : ClauseKind::A;
-    d_interpol_sat_solver->set_clause_label(kind);
     const auto& bits = d_bitblaster->bits(assumption);
     assert(!bits.empty());
     util::Timer timer(d_stats.time_encode);
@@ -633,15 +340,192 @@ BvInterpolationSolver::update_statistics()
 }
 
 void
-BvInterpolationSolver::label(const Node& node, VariableKind kind)
+BvInterpolationSolver::label_clause(
+    std::unordered_map<int64_t, ClauseKind>& clause_labels,
+    const Node& node,
+    ClauseKind kind)
 {
+  const auto& bits = d_bitblaster->bits(node);
+  assert(!bits.empty());
+  bv::AigBitblaster::aig_node_ref_vector visit;
+  std::unordered_set<int64_t> cache;
+  for (const auto& aig : bits)
+  {
+    visit.push_back(aig);
+  }
+  do
+  {
+    const bitblast::AigNode& cur = visit.back();
+    int64_t id                   = cur.get_id();
+
+    {
+      auto [it, inserted] = cache.insert(id);
+      if (!inserted)
+      {
+        visit.pop_back();
+        continue;
+      }
+    }
+
+    visit.pop_back();
+
+    if (cur.is_and())
+    {
+      visit.push_back(cur[0]);
+      visit.push_back(cur[1]);
+    }
+
+    clause_labels.emplace(id, kind);
+    if (cur.is_true() || cur.is_false())
+    {
+      clause_labels.emplace(-id, kind);
+    }
+  } while (!visit.empty());
+}
+
+void
+BvInterpolationSolver::label_lemma(
+    std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+    std::unordered_map<int64_t, sat::interpolants::ClauseKind>& clause_labels,
+    const Node& node)
+{
+  const auto& bits = d_bitblaster->bits(node);
+  if (d_logger.is_log_enabled(2))
+  {
+    std::stringstream ss;
+    for (const auto& aig : bits)
+    {
+      ss << " " << aig;
+    }
+    Log(2) << "label_lemma: (" << ss.str() << ")";
+  }
+
+  bv::AigBitblaster::aig_node_ref_vector visit;
+  std::unordered_set<int64_t> cache;
+  std::vector<int64_t> aig_consts;
+  for (const auto& aig : bits)
+  {
+    visit.push_back(aig);
+  }
+  VariableKind kind = VariableKind::GLOBAL;
+  do
+  {
+    const bitblast::AigNode& cur = visit.back();
+    int64_t id                   = cur.get_id();
+    int64_t var                  = std::abs(id);
+
+    {
+      auto [it, inserted] = cache.insert(var);
+      if (!inserted)
+      {
+        visit.pop_back();
+        continue;
+      }
+    }
+
+    visit.pop_back();
+
+    if (cur.is_and())
+    {
+      visit.push_back(cur[0]);
+      visit.push_back(cur[1]);
+    }
+
+    auto it = var_labels.find(var);
+    if (it == var_labels.end())
+    {
+      aig_consts.push_back(var);
+    }
+    else
+    {
+      if (it->second == VariableKind::GLOBAL)
+      {
+        continue;
+      }
+      assert(kind == VariableKind::GLOBAL || kind == it->second);
+      kind = it->second;
+    }
+  } while (!visit.empty());
+
+  for (int64_t var : aig_consts)
+  {
+#ifndef NDEBUG
+    auto [it, inserted] =
+#endif
+        var_labels.emplace(var, kind);
+    assert(inserted);
+  }
+
+  label_clause(clause_labels,
+               node,
+               kind == VariableKind::GLOBAL || kind == VariableKind::A
+                   ? ClauseKind::A
+                   : ClauseKind::B);
+}
+
+void
+BvInterpolationSolver::label_var(
+    std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+    const bitblast::AigBitblaster::Bits& bits,
+    sat::interpolants::VariableKind kind)
+{
+  assert(!bits.empty());
+  bv::AigBitblaster::aig_node_ref_vector visit;
+  std::unordered_set<int64_t> cache;
+  for (const auto& aig : bits)
+  {
+    visit.push_back(aig);
+  }
+  do
+  {
+    const bitblast::AigNode& cur = visit.back();
+    int64_t id                   = cur.get_id();
+    int64_t var                  = std::abs(id);
+
+    {
+      auto [it, inserted] = cache.insert(var);
+      if (!inserted)
+      {
+        visit.pop_back();
+        continue;
+      }
+    }
+
+    visit.pop_back();
+
+    if (cur.is_and())
+    {
+      visit.push_back(cur[0]);
+      visit.push_back(cur[1]);
+    }
+
+    auto [it, inserted] = var_labels.emplace(var, kind);
+    assert(kind == VariableKind::B || inserted
+           || it->second == VariableKind::GLOBAL || kind == it->second);
+
+    if (!inserted && it->second != kind && it->second != VariableKind::GLOBAL)
+    {
+      it->second = VariableKind::GLOBAL;
+    }
+  } while (!visit.empty());
+}
+
+void
+BvInterpolationSolver::label_vars(
+    std::unordered_map<int64_t, VariableKind>& var_labels,
+    const Node& node,
+    VariableKind kind)
+{
+  // First, explicitly label all consts (leafs) that occur in `node`. This is
+  // necessary as we need to step all the way down in case bv abstraction
+  // is enabled. Else, if we only traversed through the bits of `node`, we
+  // would cut off above the consts that occur in the abstracted term.
   node_ref_vector visit{node};
   unordered_node_ref_map<bool> cache;
   do
   {
     const Node& cur     = visit.back();
     auto [it, inserted] = cache.emplace(cur, true);
-
     if (inserted)
     {
       visit.insert(visit.end(), cur.begin(), cur.end());
@@ -650,18 +534,23 @@ BvInterpolationSolver::label(const Node& node, VariableKind kind)
     else if (it->second)
     {
       it->second = false;
-      if (cur.is_const())
+      if (BvSolver::is_leaf(cur))
       {
-        auto [lit, linserted] = d_consts_to_kinds.emplace(cur, kind);
-        if (!linserted && lit->second != VariableKind::GLOBAL
-            && lit->second != kind)
+        const auto& bits = d_bitblaster->bits(cur);
+        // If const was not bit-blasted, it is not relevant for interpolant.
+        if (!bits.empty())
         {
-          lit->second = VariableKind::GLOBAL;
+          label_var(var_labels, bits, kind);
         }
       }
     }
     visit.pop_back();
   } while (!visit.empty());
+  // Now, label all SAT vars while traversing from the bits of `node`. This is
+  // necesary to ensure that no AIGS associated with bits of consts that are
+  // not shared between A and B get pulled into the interpolant.
+  const auto& bits = d_bitblaster->bits(node);
+  label_var(var_labels, bits, kind);
 }
 
 void

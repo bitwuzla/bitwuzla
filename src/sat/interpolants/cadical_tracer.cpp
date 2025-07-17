@@ -17,6 +17,7 @@
 #include "bitblast/aig/aig_node.h"
 #include "node/node.h"
 #include "node/node_utils.h"
+#include "sat/interpolants/tracer_kinds.h"
 
 using namespace bzla::bitblast;
 using namespace bzla::node;
@@ -30,6 +31,15 @@ CadicalTracer::CadicalTracer(Env& env, bv::AigBitblaster& bitblaster)
 
 CadicalTracer::~CadicalTracer() {}
 
+namespace {
+VariableKind
+get_var_label(const std::unordered_map<int64_t, VariableKind>& var_labels,
+              int64_t lit)
+{
+  return var_labels.at(std::abs(lit));
+}
+}  // namespace
+
 /* CaDiCaL::Tracer interface ------------------------------------------------ */
 
 void
@@ -40,37 +50,20 @@ CadicalTracer::add_original_clause(uint64_t id,
 {
   (void) redundant;
   assert(id);
+  assert(d_cur_aig_id);
 
   if (restore)
   {
     assert(d_clauses.size() > id);
     d_clauses[id].d_clause = clause;
     d_clauses[id].d_type   = ClauseType::ORIGINAL;
+    d_clauses[id].d_aig_id = d_cur_aig_id;
     return;
   }
 
-  // We allow labeling clauses ahead of adding clauses, so the id of the
-  // currently added clause does not necessary match with the last label
-  // added. However, the labels are required to be consecutive, so we
-  // keep track of the id of the current clause via d_cur_clause_id.
-  // Note that the clause `id` given by CaDiCaL here does not necessarily
-  // match our clause id as CaDiCaL may have added non-external clauses
-  // inbetween.
-  d_cur_clause_id += 1;
-  assert(id >= d_cur_clause_id);
-#ifndef NDEBUG
-  auto it = d_labeled_clauses.find(d_cur_clause_id);
-  // clause ids must be consecutive when labeled
-  assert(it != d_labeled_clauses.end());
-  // all literals in the clause must be labeled
-  for (int32_t lit : clause)
-  {
-    assert(d_labeled_vars.find(std::abs(lit)) != d_labeled_vars.end());
-  }
-#endif
   assert(d_clauses.size() == id);
   // original clause, thus no antecedents
-  d_clauses.emplace_back(clause, ClauseType::ORIGINAL, d_cur_clause_id);
+  d_clauses.emplace_back(clause, ClauseType::ORIGINAL, d_cur_aig_id);
 }
 
 void
@@ -127,9 +120,6 @@ CadicalTracer::delete_clause(uint64_t id,
   (void) id;
   (void) redundant;
   (void) clause;
-  //   std::cout << "delete: " << id << std::endl;
-  //   (void) redundant;
-  //   (void) clause;
   //   assert(id < d_clauses.size());
   // #ifndef NDEBUG
   //   std::unordered_set<int32_t> lits;
@@ -166,8 +156,8 @@ CadicalTracer::reset_assumptions()
   for (uint64_t id : d_assumption_clauses)
   {
     d_clauses[id].d_clause.clear();
-    d_clauses[id].d_type = ClauseType::NONE;
-    d_clauses[id].d_id   = 0;
+    d_clauses[id].d_type   = ClauseType::NONE;
+    d_clauses[id].d_aig_id = 0;
   }
   d_assumptions.clear();
   d_assumption_clauses.clear();
@@ -177,6 +167,7 @@ void
 CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
                               const std::vector<uint64_t>& clause_ids)
 {
+  (void) conclusion;
   assert(conclusion != CaDiCaL::ConclusionType::CONSTRAINT);
 #ifndef NDEBUG
   if (conclusion == CaDiCaL::ConclusionType::CONFLICT)
@@ -220,22 +211,10 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
 
 /* -------------------------------------------------------------------------- */
 
-void
-CadicalTracer::label_variable(int32_t id, VariableKind kind)
-{
-  assert(id > 0);
-  d_labeled_vars[id] = kind;
-}
-
-void
-CadicalTracer::label_clause(int32_t id, ClauseKind kind)
-{
-  assert(id > 0);
-  d_labeled_clauses[id] = kind;
-}
-
 Node
-CadicalTracer::get_interpolant()
+CadicalTracer::get_interpolant(
+    const std::unordered_map<int64_t, VariableKind>& var_labels,
+    const std::unordered_map<int64_t, ClauseKind>& clause_labels)
 {
   for (uint64_t id : d_proof_core)
   {
@@ -245,11 +224,12 @@ CadicalTracer::get_interpolant()
     assert(type != ClauseType::NONE);
     if (type == ClauseType::ORIGINAL)
     {
-      auto it = d_labeled_clauses.find(clause.d_id);
-      assert(it != d_labeled_clauses.end());
+      auto it = clause_labels.find(clause.d_aig_id);
+      assert(it != clause_labels.end());
       ClauseKind kind = it->second;
       assert(d_part_interpolants.find(id) == d_part_interpolants.end());
-      d_part_interpolants.emplace(id, get_interpolant(clause.d_clause, kind));
+      d_part_interpolants.emplace(
+          id, get_interpolant(var_labels, clause.d_clause, kind));
     }
     else if (type == ClauseType::DERIVED)
     {
@@ -277,7 +257,7 @@ CadicalTracer::get_interpolant()
           }
           extend_interpolant(ipol,
                              d_part_interpolants[antecedents[idx]],
-                             d_labeled_vars.at(std::abs(lit)));
+                             get_var_label(var_labels, lit));
         }
       }
       d_part_interpolants[id] = ipol;
@@ -305,7 +285,7 @@ CadicalTracer::get_interpolant()
           assert(d_clauses.size() == id);
           int32_t lit = is_ass_lit0 ? -clause.d_clause[1] : -clause.d_clause[0];
           assert(d_part_interpolants.find(id) != d_part_interpolants.end());
-          d_part_interpolants.emplace(id, get_interpolant(-lit));
+          d_part_interpolants.emplace(id, get_interpolant(var_labels, -lit));
           continue;
         }
       }
@@ -316,10 +296,10 @@ CadicalTracer::get_interpolant()
         {
           continue;
         }
-        Interpolant ip = get_interpolant(-lit);
+        Interpolant ip = get_interpolant(var_labels, -lit);
         if (!ipol.is_null())
         {
-          extend_interpolant(ipol, ip, d_labeled_vars.at(std::abs(lit)));
+          extend_interpolant(ipol, ip, get_var_label(var_labels, lit));
         }
         else
         {
@@ -476,8 +456,10 @@ CadicalTracer::mk_or(std::vector<AigNode> aigs) const
 }
 
 CadicalTracer::Interpolant
-CadicalTracer::get_interpolant(const std::vector<int32_t>& clause,
-                               ClauseKind kind)
+CadicalTracer::get_interpolant(
+    const std::unordered_map<int64_t, VariableKind>& var_labels,
+    const std::vector<int32_t>& clause,
+    ClauseKind kind)
 {
   assert(!clause.empty());
   AigNode res = d_amgr.mk_true();
@@ -486,7 +468,7 @@ CadicalTracer::get_interpolant(const std::vector<int32_t>& clause,
     std::vector<AigNode> lits;
     for (int32_t lit : clause)
     {
-      if (d_labeled_vars.at(std::abs(lit)) == VariableKind::GLOBAL)
+      if (get_var_label(var_labels, lit) == VariableKind::GLOBAL)
       {
         lits.push_back(d_amgr.get_node(lit));
       }
@@ -497,10 +479,10 @@ CadicalTracer::get_interpolant(const std::vector<int32_t>& clause,
 }
 
 CadicalTracer::Interpolant
-CadicalTracer::get_interpolant(int32_t lit)
+CadicalTracer::get_interpolant(
+    const std::unordered_map<int64_t, VariableKind>& var_labels, int32_t lit)
 {
-  int32_t var       = std::abs(lit);
-  VariableKind kind = d_labeled_vars.at(var);
+  VariableKind kind = get_var_label(var_labels, lit);
   if (kind == VariableKind::A)
   {
     return {d_amgr.mk_false(), ClauseKind::A};

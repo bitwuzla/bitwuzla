@@ -165,10 +165,10 @@ BvSolver::unsat_core(std::vector<Node>& core) const
 /* --- BvSolver private ----------------------------------------------------- */
 
 Node
-BvSolver::interpolant()
+BvSolver::interpolant(const std::vector<Node>& A, const std::vector<Node>& B)
 {
   assert(d_produce_interpolants);
-  return d_interpol_solver->interpolant();
+  return d_interpol_solver->interpolant(A, B);
 }
 
 BvSolver::Statistics::Statistics(util::Statistics& stats)

@@ -197,6 +197,8 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 
   NodeManager& nm = d_env.nm();
 
+  std::vector<Node> _A, _B;
+
   // Solve, we only compute on unsat
   {
     util::Timer timer(d_stats.time_solve);
@@ -205,13 +207,16 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 #endif
     d_sat_state = preprocess();
 
-    std::unordered_set<Node> B;
     for (const auto& a : d_original_assertions_to_index)
     {
       auto it = A.find(a.first);
       if (it == A.end())
       {
-        B.insert(d_assertions[a.second]);
+        _B.push_back(d_assertions[a.second]);
+      }
+      else
+      {
+        _A.push_back(d_assertions[a.second]);
       }
     }
 
@@ -238,7 +243,7 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 
     if (d_sat_state == Result::UNSAT)
     {
-      for (const auto& a : A)
+      for (const auto& a : _A)
       {
         auto it = d_original_assertions_to_index.find(a);
         assert(it != d_original_assertions_to_index.end());
@@ -248,7 +253,7 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
           return nm.mk_value(false);
         }
       }
-      for (const auto& a : B)
+      for (const auto& a : _B)
       {
         if (a.is_value() && !a.value<bool>())
         {
@@ -256,9 +261,6 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
         }
       }
     }
-
-    // temporary, until we refactor to post-process
-    d_solver_engine.interpol_cache_B(B);
 
     if (d_sat_state != Result::SAT)
     {
@@ -288,7 +290,7 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
   if (d_sat_state == Result::UNSAT)
   {
     util::Timer timer(d_stats.time_compute_interpolant);
-    ipol = d_solver_engine.interpolant();
+    ipol = d_solver_engine.interpolant(_A, _B);
 
     if (!ipol.is_null() && options().dbg_check_interpolant())
     {

@@ -36,6 +36,12 @@ class SatInterface
     * @return True if the literal evaluates to true.
     */
   virtual bool value(int64_t lit) = 0;
+  /**
+   * Cache AIG id associated with currently added clauses.
+   * This is necessary for keeping proof tracing and interpolant generation
+   * in sync and is otherwise not used.
+   */
+  virtual void set_current_aig_id(int64_t aig_id) { (void) aig_id; }
 };
 
 class AigCnfEncoder

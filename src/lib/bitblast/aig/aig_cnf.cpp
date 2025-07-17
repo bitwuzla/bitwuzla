@@ -20,6 +20,15 @@ namespace bzla::bitblast {
 void
 AigCnfEncoder::encode(const AigNode& node, bool top_level)
 {
+  // This is a noop if not for interpolant generation. In case of interpolant
+  // generation, we need to notify the interpolation SAT proof tracer which AIG
+  // id the following, currently encoded SAT clauses are associated with. This
+  // mapping is later utilized in the proof tracer to generate dynamic labeling
+  // of variables and clauses according to the partition of the set of current
+  // assertions into A and B formulas. For this, we only care about association
+  // with the top most AIG node.
+  d_sat_solver.set_current_aig_id(node.get_id());
+
   if (top_level)
   {
     std::unordered_set<int64_t> cache;

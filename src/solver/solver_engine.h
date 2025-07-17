@@ -70,22 +70,19 @@ class SolverEngine
   void unsat_core(std::vector<Node>& core) const;
 
   /**
-   * Get interpolant I of a set of formulas A and a conjecture C such that
-   * (and A (not C)) is unsat and (=> A I) and (=> I C) are valid.
+   * Get interpolant I of a formulas A and B such that
+   * (and A B) is unsat and (=> A I) and (=> I (not B)) are valid.
    *
-   * Note that our SAT interpolation tracer interface defines interpolant I as
-   * (A -> I) and (I -> not B), for formulas A, B with (and A B) unsat. That is,
-   * in our word-level interface (in SolvingContext), C = not B.
+   * For computing the interpolant, we require that the satisfiability of
+   * (and A B) has been determined as unsat. That is,
+   *   - A and B must have been asserted
+   *   - and its satisfiability must have been determined via solve() as unsat
+   *     before calling this function.
    *
-   * For computing the interpolant, we first need to determine unsat of
-   * (and A (not C)). That is,
-   *   - A and (not C) must have been asserted
-   *   - C must have been cached via SolverEngine::cache_interpol_conj_assertion
-   *     as the (preprocessed) assertion B = (not C) on the assertion stack
-   *   - and its satisfiability must have been determined via solver() as unsat
-   * before calling this function.
+   * @param A The set of formulas A, given as preprocessed assertions.
+   * @param B The set of formulas B, given as preprocessed assertions.
    */
-  Node interpolant();
+  Node interpolant(const std::vector<Node>& A, const std::vector<Node>& B);
 
   /**
    * Add a lemma.
@@ -97,17 +94,6 @@ class SolverEngine
 
   /** Ensure that we have model values for given terms. */
   void ensure_model(const std::vector<Node>& terms);
-
-  /**
-   * Cache B assertions. This is temporary until we refactor interpolant
-   * generation to post-processing.
-   */
-  void interpol_cache_B(std::unordered_set<Node>& B) { d_interpol_B = B; }
-  /**
-   * @return The cached B assertions. This is temporary until we refactor
-   * interpolant generation to post-processing.
-   */
-  std::unordered_set<Node>& interpol_B() { return d_interpol_B; }
 
   /** Print statistics line. */
   void print_statistics();
@@ -179,12 +165,6 @@ class SolverEngine
   bool d_new_terms_registered = false;
   /** Lemma cache. */
   backtrack::unordered_set<Node> d_lemma_cache;
-
-  /**
-   * The B assertions. This is temporary until we refactor interpolant
-   * generation to post-processing.
-   */
-  std::unordered_set<Node> d_interpol_B;
 
   /** Result of latest solve() call. */
   Result d_sat_state;

@@ -17,6 +17,7 @@
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "bitblast/aig/aig_cnf.h"
+#include "bitblast/aig_bitblaster.h"
 #include "sat/interpolants/tracer_kinds.h"
 #include "solver/bv/bv_solver_interface.h"
 #include "solver/solver.h"
@@ -37,6 +38,7 @@ class Tracer;
 
 namespace bv {
 
+class AigBitblaster;
 class BvSolver;
 class InterpolationBitblaster;
 
@@ -57,22 +59,25 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   void unsat_core(std::vector<Node>& core) const override;
 
   /**
-   * Get interpolant I of a set of formulas A and a conjecture C such that
-   * (and A (not C)) is unsat and (=> A I) and (=> I C) are valid.
+   * Get interpolant I of a formulas A and B such that
+   * (and A B) is unsat and (=> A I) and (=> I (not B)) are valid.
    *
-   * Note that our SAT interpolation tracer interface defines interpolant I as
-   * (A -> I) and (I -> not B), for formulas A, B with (and A B) unsat. That is,
-   * in our word-level interface (in SolvingContext), C = not B.
+   * For computing the interpolant, we require that the satisfiability of
+   * (and A B) has been determined as unsat. That is,
+   *   - A and B must have been asserted
+   *   - and its satisfiability must have been determined via solve() as unsat
+   *     before calling this function.
    *
-   * For computing the interpolant, we first need to determine unsat of
-   * (and A (not C)). That is,
-   *   - A and (not C) must have been asserted
-   *   - C must have been cached via SolverEngine::cache_interpol_conj_assertion
-   *     as the (preprocessed) assertion B = (not C) on the assertion stack
-   *   - and its satisfiability must have been determined via solver() as unsat
-   * before calling this function.
+   * @param A The set of formulas A, given as preprocessed assertions.
+   * @param B The set of formulas B, given as preprocessed assertions.
+   *
+   * @note In case the abstraction module is enabled, sets A and B must
+   *       contain the abstracted version of assertions with abstracted terms.
+   *       This is necessary because for labeling, the interpolation engine
+   *       needs to process the assertions that have actually been processed
+   *       during solving.
    */
-  Node interpolant();
+  Node interpolant(const std::vector<Node>& A, const std::vector<Node>& B);
 
   /** Get statistics. */
   const auto& statistics() const { return d_stats; }
@@ -99,11 +104,58 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   void update_statistics();
 
   /**
-   * Label bit-vector consts in node.
-   * @param node The node.
-   * @param kind The SAT variable kind to label with.
+   * Label associated SAT clauses in node.
+   * @param clause_labels The clause labels map to add to. Maps AIG ids to
+   *                      clause labels.
+   * @param node          The node.
+   * @param kind          The clause kind to label with.
    */
-  void label(const Node& node, sat::interpolants::VariableKind kind);
+  void label_clause(
+      std::unordered_map<int64_t, sat::interpolants::ClauseKind>& clause_labels,
+      const Node& node,
+      sat::interpolants::ClauseKind kind);
+  /**
+   * Label bit-vector consts in `node`.
+   *
+   * Labels all SAT variables corresponding and associated with to bit-vector
+   * consts with the given kind (if yet unlabeled) or as VariableKind::GLOBAL if
+   * they occur both in A and B. This includes SAT variables corresponding to
+   * nodes that are associated with the consts occuring in `node` since we have
+   * to prevent non-shared consts to be pulled into the interpolant.
+   *
+   * @param var_labels The variable labels map to add to. Maps AIG ids to
+   *                   variable labels.
+   * @param node       The node.
+   * @param kind       The variable kind to label with.
+   */
+  void label_vars(
+      std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+      const Node& node,
+      sat::interpolants::VariableKind kind);
+  void label_var(
+      std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+      const bitblast::AigBitblaster::Bits& bits,
+      sat::interpolants::VariableKind kind);
+  /**
+   * Label unlabeled SAT variables occuring in a lemma depending on which kind
+   * the non-GLOBAL variables in the lemma are assigned to.
+   *
+   * That is,
+   * * A, S: labeled as A
+   * * B, S: labeled as B
+   * * S: labeled as A
+   *
+   * @note Currently, we do not allow lemmas with "mixed" occurrences, i.e.,
+   *       occurences of both A and B local variables.
+   *
+   * @param var_labels    The variable labels map.
+   * @param clause_labels The clause labels map.
+   * @param node          The lemma.
+   */
+  void label_lemma(
+      std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+      std::unordered_map<int64_t, sat::interpolants::ClauseKind>& clause_labels,
+      const Node& node);
 
   /**
    * Log current state of bitblaster cache when given log level is enabled.
@@ -119,7 +171,7 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   backtrack::unordered_set<Node> d_lemmas;
 
   /** AIG bit-blaster. */
-  std::unique_ptr<InterpolationBitblaster> d_bitblaster;
+  std::unique_ptr<AigBitblaster> d_bitblaster;
 
   /** CNF encoder for AIGs. */
   std::unique_ptr<bitblast::AigCnfEncoder> d_cnf_encoder;
@@ -131,12 +183,6 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   std::unique_ptr<InterpolationSatSolver> d_interpol_sat_solver;
   /** Result of last solve() call. */
   Result d_last_result;
-
-  /** Cache of bit-vector const labeling. */
-  std::unordered_map<Node, sat::interpolants::VariableKind> d_consts_to_kinds;
-  /** Cache of SAT variable labeling. */
-  std::unordered_map<int64_t, sat::interpolants::VariableKind>
-      d_sat_vars_to_kinds;
 };
 
 }  // namespace bv

@@ -47,22 +47,25 @@ class BvSolver : public Solver, public BvSolverInterface
   void unsat_core(std::vector<Node>& core) const override;
 
   /**
-   * Get interpolant I of a set of formulas A and a conjecture C such that
-   * (and A (not C)) is unsat and (=> A I) and (=> I C) are valid.
+   * Get interpolant I of formulas A and B such that
+   * (and A B) is unsat and (=> A I) and (=> I (not B)) are valid.
    *
-   * Note that our SAT interpolation tracer interface defines interpolant I as
-   * (A -> I) and (I -> not B), for formulas A, B with (and A B) unsat. That is,
-   * in our word-level interface (in SolvingContext), C = not B.
+   * For computing the interpolant, we require that the satisfiability of
+   * (and A B) has been determined as unsat. That is,
+   *   - A and B must have been asserted
+   *   - and its satisfiability must have been determined via solve() as unsat
+   *     before calling this function.
    *
-   * For computing the interpolant, we first need to determine unsat of
-   * (and A (not C)). That is,
-   *   - A and (not C) must have been asserted
-   *   - C must have been cached via SolverEngine::cache_interpol_conj_assertion
-   *     as the (preprocessed) assertion B = (not C) on the assertion stack
-   *   - and its satisfiability must have been determined via solver() as unsat
-   * before calling this function.
+   * @param A The set of formulas A, given as preprocessed assertions.
+   * @param B The set of formulas B, given as preprocessed assertions.
+   *
+   * @note In case the abstraction module is enabled, sets A and B must
+   *       contain the abstracted version of assertions with abstracted terms.
+   *       This is necessary because for labeling, the interpolation engine
+   *       needs to process the assertions that have actually been processed
+   *       during solving.
    */
-  Node interpolant();
+  Node interpolant(const std::vector<Node>& A, const std::vector<Node>& B);
 
   /** Get overall BV solver statistics. */
   const auto& statistics() const { return d_stats; }
