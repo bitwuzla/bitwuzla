@@ -1650,18 +1650,23 @@ Bitwuzla::get_interpolant(const std::vector<Term>& A)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_PRODUCE_INTERPOLANTS(d_ctx->options());
-  // TODO: enable after refactor to post-processing
-  // BITWUZLA_CHECK_LAST_CALL_SAT("get interpolant");
+  BITWUZLA_CHECK_LAST_CALL_UNSAT("get interpolant");
 
   std::unordered_set<bzla::Node> _A;
   if (!A.empty())
   {
+    const auto& orig_assertions = d_ctx->original_assertions();
+    std::unordered_set<bzla::Node> _orig_assertions(orig_assertions.begin(),
+                                                    orig_assertions.end());
     for (size_t i = 0, size = A.size(); i < size; ++i)
     {
       const Term& term = A[i];
       BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
           term, "assertion at position " + std::to_string(i));
-      // TODO: check that given assertion is indeed currently asserted
+      BITWUZLA_CHECK(_orig_assertions.find(*term.d_node)
+                     != _orig_assertions.end())
+          << " assertion at position " << std::to_string(i)
+          << " is not currently asserted";
       _A.insert(*term.d_node);
     }
   }

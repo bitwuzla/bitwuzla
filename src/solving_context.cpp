@@ -58,8 +58,10 @@ SolvingContext::solve()
 #ifndef NDEBUG
   check_no_free_variables();
 #endif
-  d_sat_state = preprocess();
-
+  d_sat_state_pp = preprocess();
+  // We sometimes have to know if the SAT result came from the PP or the
+  // actual solve call, i.e., in case of interpolant generation.
+  d_sat_state = d_sat_state_pp;
   if (d_sat_state == Result::UNKNOWN)
   {
     try
@@ -176,6 +178,7 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
   util::Timer timer(d_stats.time_get_interpolant);
 
   assert(d_env.options().produce_interpolants());
+  assert(d_sat_state == Result::UNSAT);
 #ifndef NDEBUG
   for (const auto& a : A)
   {
@@ -183,127 +186,78 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
            != d_original_assertions_to_index.end());
   }
 #endif
-
-  Node ipol;
-  // TODO: != UNSAT when post-processing
-  if (d_sat_state == Result::SAT)
+  Log(1);
+  Log(1) << "*** interpolant";
+  Log(1);
+  if (d_logger.is_log_enabled(1))
   {
-    Log(1) << "not unsat";
-    return ipol;
-  }
-
-  fp::SymFpuNM snm(d_env.nm());
-  set_resource_limits();
-
-  NodeManager& nm = d_env.nm();
-
-  std::vector<Node> _A, _B;
-
-  // Solve, we only compute on unsat
-  {
-    util::Timer timer(d_stats.time_solve);
-#ifndef NDEBUG
-    check_no_free_variables();
-#endif
-    d_sat_state = preprocess();
-
-    for (const auto& a : d_original_assertions_to_index)
+    for (size_t i = 0, ia = 0, ib = 0, n = d_original_assertions.size(); i < n;
+         ++i)
     {
-      auto it = A.find(a.first);
-      if (it == A.end())
+      if (A.find(d_original_assertions[i]) != A.end())
       {
-        _B.push_back(d_assertions[a.second]);
+        Log(1) << "A[" << ia++ << "]: " << d_original_assertions[i];
       }
       else
       {
-        _A.push_back(d_assertions[a.second]);
+        Log(1) << "B[" << ib++ << "]: " << d_original_assertions[i];
       }
-    }
-
-    Log(1);
-    Log(1) << "*** interpolant";
-    Log(1);
-    if (d_logger.is_log_enabled(1))
-    {
-      for (size_t i = 0, ia = 0, ib = 0, n = d_original_assertions.size();
-           i < n;
-           ++i)
-      {
-        if (A.find(d_original_assertions[i]) != A.end())
-        {
-          Log(1) << "A[" << ia++ << "]: " << d_original_assertions[i];
-        }
-        else
-        {
-          Log(1) << "B[" << ib++ << "]: " << d_original_assertions[i];
-        }
-      }
-    }
-    Log(1);
-
-    if (d_sat_state == Result::UNSAT)
-    {
-      for (const auto& a : _A)
-      {
-        auto it = d_original_assertions_to_index.find(a);
-        assert(it != d_original_assertions_to_index.end());
-        const Node& n = d_assertions[it->second];
-        if (n.is_value() && !n.value<bool>())
-        {
-          return nm.mk_value(false);
-        }
-      }
-      for (const auto& a : _B)
-      {
-        if (a.is_value() && !a.value<bool>())
-        {
-          return nm.mk_value(true);
-        }
-      }
-    }
-
-    if (d_sat_state != Result::SAT)
-    {
-      try
-      {
-        d_sat_state = d_solver_engine.solve();
-      }
-      catch (const Unsupported& e)
-      {
-        Warn(!d_subsolver) << e.msg();
-        d_sat_state = Result::UNKNOWN;
-      }
-      catch (const Error& e)
-      {
-        std::cerr << "[bzla] error: " << e.msg() << std::endl;
-        std::exit(EXIT_FAILURE);
-      }
-    }
-    if (d_sat_state == Result::SAT && d_have_quantifiers.get()
-        && (options().produce_models() || options().dbg_check_model()))
-    {
-      ensure_model();
-    }
-    check();
-  }
-
-  if (d_sat_state == Result::UNSAT)
-  {
-    util::Timer timer(d_stats.time_compute_interpolant);
-    ipol = d_solver_engine.interpolant(_A, _B);
-
-    if (!ipol.is_null() && options().dbg_check_interpolant())
-    {
-      util::Timer timer(d_stats.time_check_interpolant);
-      check::CheckInterpolant ci(*this);
-      auto res = ci.check(A, ipol);
-      assert(res);
-      Warn(!res) << "interpolant check failed";
     }
   }
-  else
+  Log(1);
+
+  Node ipol;
+  NodeManager& nm = d_env.nm();
+  fp::SymFpuNM snm(nm);
+  set_resource_limits();
+
+  // Partition preprocessed assertions into A and B
+  std::vector<Node> _A, _B;
+  for (const auto& a : d_original_assertions_to_index)
   {
-    Log(1) << "not unsat";
+    assert(a.second < d_assertions.size());
+    auto it = A.find(a.first);
+    if (it == A.end())
+    {
+      _B.push_back(d_assertions[a.second]);
+    }
+    else
+    {
+      _A.push_back(d_assertions[a.second]);
+    }
+  }
+
+  // Preprocessor determined unsat, so we can make a shortcut.
+  if (d_sat_state_pp == Result::UNSAT)
+  {
+    for (const auto& a : _A)
+    {
+      auto it = d_original_assertions_to_index.find(a);
+      assert(it != d_original_assertions_to_index.end());
+      const Node& n = d_assertions[it->second];
+      if (n.is_value() && !n.value<bool>())
+      {
+        return nm.mk_value(false);
+      }
+    }
+    for (const auto& a : _B)
+    {
+      if (a.is_value() && !a.value<bool>())
+      {
+        return nm.mk_value(true);
+      }
+    }
+  }
+
+  ipol = d_solver_engine.interpolant(_A, _B);
+
+  if (!ipol.is_null() && options().dbg_check_interpolant())
+  {
+    util::Timer timer(d_stats.time_check_interpolant);
+    check::CheckInterpolant ci(*this);
+    auto res = ci.check(A, ipol);
+    assert(res);
+    Warn(!res) << "interpolant check failed";
   }
 
   d_stats.max_memory = util::maximum_memory_usage();
@@ -545,8 +499,6 @@ SolvingContext::Statistics::Statistics(util::Statistics& stats)
           "solving_context::time_check_unsat_core")),
       time_get_interpolant(stats.new_stat<util::TimerStatistic>(
           "solving_context::time_get_interpolant")),
-      time_compute_interpolant(stats.new_stat<util::TimerStatistic>(
-          "solving_context::time_compute_interpolant")),
       time_check_interpolant(stats.new_stat<util::TimerStatistic>(
           "solving_context::time_check_interpolant")),
       max_memory(stats.new_stat<uint64_t>("solving_context::max_memory")),

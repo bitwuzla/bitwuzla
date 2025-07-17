@@ -155,6 +155,8 @@ class SolvingContext
 
   /** Result of last solve() call. */
   Result d_sat_state = Result::UNKNOWN;
+  /** Result of last preprocess() call. */
+  Result d_sat_state_pp = Result::UNKNOWN;
 
   /** Terminator used for timeout per solve() call. */
   std::unique_ptr<ResourceTerminator> d_resource_terminator;
@@ -170,7 +172,6 @@ class SolvingContext
     util::TimerStatistic& time_check_model;
     util::TimerStatistic& time_check_unsat_core;
     util::TimerStatistic& time_get_interpolant;
-    util::TimerStatistic& time_compute_interpolant;
     util::TimerStatistic& time_check_interpolant;
     uint64_t& max_memory;
     util::HistogramStatistic& formula_kinds_pre;

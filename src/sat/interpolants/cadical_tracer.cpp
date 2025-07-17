@@ -216,6 +216,8 @@ CadicalTracer::get_interpolant(
     const std::unordered_map<int64_t, VariableKind>& var_labels,
     const std::unordered_map<int64_t, ClauseKind>& clause_labels)
 {
+  d_part_interpolants.clear();
+
   for (uint64_t id : d_proof_core)
   {
     assert(id <= d_clauses.size());
