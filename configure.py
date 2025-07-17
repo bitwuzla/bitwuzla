@@ -87,8 +87,12 @@ def build_dependencies(builddir, options, prefix):
 
     subprocess.run(['meson', 'subprojects', 'download'])
     gmp_dist_dir = build_subproject('gmp-6.3.0', builddir, prefix, opts)
+    if not gmp_dist_dir:
+        sys.exit('Problem encounted while building gmp-6.3.0')
     mpfr_dist_dir = build_subproject('mpfr-4.2.2', builddir, prefix,
                      opts + [f'-Dwith_gmp={gmp_dist_dir}'])
+    if not mpfr_dist_dir:
+        sys.exit('Problem encounted while building mpfr-4.2.2')
     return gmp_dist_dir, mpfr_dist_dir
 
 def main():
