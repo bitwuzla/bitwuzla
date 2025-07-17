@@ -19,8 +19,8 @@ cpp_args = []
 
 if get_option('with_gmp') != ''
   gmp_dir = get_option('with_gmp')
-  libdir = join_paths(gmp_dir, 'lib')
-  incdir = join_paths(gmp_dir, 'include')
+  libdir = join_paths(gmp_dir, get_option('libdir'))
+  incdir = join_paths(gmp_dir, get_option('includedir'))
   gmp_dep = c_compiler.find_library('gmp',
                                     has_headers: ['gmp.h', 'gmpxx.h'],
                                     static: build_static,
@@ -38,8 +38,8 @@ endif
 
 if get_option('with_mpfr') != ''
   mpfr_dir = get_option('with_mpfr')
-  libdir = join_paths(mpfr_dir, 'lib')
-  incdir = join_paths(mpfr_dir, 'include')
+  libdir = join_paths(mpfr_dir, get_option('libdir'))
+  incdir = join_paths(mpfr_dir, get_option('includedir'))
   mpfr_dep = c_compiler.find_library('mpfr',
                                     has_headers: ['mpfr.h'],
                                     static: build_static,
