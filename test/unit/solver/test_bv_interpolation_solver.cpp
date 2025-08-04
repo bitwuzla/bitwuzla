@@ -112,6 +112,72 @@ class TestBvInterpolationSolver : public TestCommon
     ASSERT_FALSE(interpolant.is_null());
   }
 
+  void test_get_interpolant_inc(const std::unordered_set<Node>& A,
+                                const std::unordered_set<Node>& B)
+  {
+    test_get_interpolant_inc_aux(A, B, AssumptionConfig::NONE);
+    if (s_all_ass_configs)
+    {
+      test_get_interpolant_inc_aux(A, B, AssumptionConfig::ALL);
+      test_get_interpolant_inc_aux(A, B, AssumptionConfig::ONLY_B);
+    }
+  }
+
+  void test_get_interpolant_inc_aux(const std::unordered_set<Node>& A,
+                                    const std::unordered_set<Node>& B,
+                                    AssumptionConfig config)
+  {
+    // get interpolant
+    test_get_interpolant_aux(
+        true, d_options.rewrite_level.dflt(), A, B, config);
+
+    if (s_all_pp_rw)
+    {
+      // get_interpolant when preprocessing is disabled
+      test_get_interpolant_aux(
+          false, d_options.rewrite_level.dflt(), A, B, config);
+      // get_interpolant when rewriting is disabled
+      test_get_interpolant_aux(true, 0, A, B, config);
+      // get_interpolant when preprocessing and rewriting is disabled
+      test_get_interpolant_aux(false, 0, A, B, config);
+    }
+  }
+
+  void test_get_interpolant_inc_aux(bool pp,
+                                    uint64_t rwl,
+                                    const std::unordered_set<Node>& A,
+                                    const std::unordered_set<Node>& B,
+                                    AssumptionConfig config)
+  {
+    if (d_options.log_level())
+    {
+      std::cout << std::endl
+                << ">> rewrite level: " << rwl
+                << "  pp: " << (pp ? "enabled" : "disabled") << std::endl;
+    }
+    d_options.preprocess.set(pp);
+    d_options.rewrite_level.set(rwl);
+    SolvingContext ctx(d_nm, d_options);
+    if (config == AssumptionConfig::ALL)
+    {
+      ctx.push();
+    }
+    for (const auto& a : A)
+    {
+      ctx.assert_formula(a);
+    }
+    for (const auto& a : B)
+    {
+      ctx.push();
+      ctx.assert_formula(a);
+      // (and A B) must be unsat
+      ASSERT_EQ(ctx.solve(), Result::UNSAT);
+      Node interpolant = ctx.get_interpolant(A);
+      ASSERT_FALSE(interpolant.is_null());
+      ctx.push();
+    }
+  }
+
   option::Options d_options;
   NodeManager d_nm;
 };
@@ -538,6 +604,30 @@ TEST_F(TestBvInterpolationSolver, interpol11)
   Node B =
       d_nm.mk_node(Kind::DISTINCT, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
   test_get_interpolant({A0}, {B});
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_inc1)
+{
+  uint64_t bw = 4;
+  Type bv     = d_nm.mk_bv_type(bw);
+  Node x      = d_nm.mk_const(bv, "x");
+  Node s      = d_nm.mk_const(bv, "s");
+  Node t      = d_nm.mk_const(bv, "t");
+  Node val_x  = d_nm.mk_value(BitVector::from_ui(bw, 3));
+  Node val_s  = d_nm.mk_value(BitVector::from_ui(bw, 2));
+  Node val_t  = d_nm.mk_value(BitVector::from_ui(bw, 6));
+  Node A0 =
+      d_nm.mk_node(Kind::AND,
+                   {d_nm.mk_node(Kind::AND,
+                                 {
+                                     d_nm.mk_node(Kind::EQUAL, {x, val_x}),
+                                     d_nm.mk_node(Kind::EQUAL, {s, val_s}),
+                                 }),
+                    d_nm.mk_node(Kind::EQUAL, {t, val_t})});
+  Node B =
+      d_nm.mk_node(Kind::DISTINCT, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
+  Node C = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_UREM, {x, s}), t});
+  test_get_interpolant_inc({A0}, {B, C});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_bv_abstr1)
