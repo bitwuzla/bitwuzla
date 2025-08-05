@@ -205,6 +205,43 @@ WordBlaster::valid(const Node& node)
   return {node::utils::bv1_to_bool(nm, uf.valid(type).getNode()), true};
 }
 
+Node
+WordBlaster::word_blasted(const Node& node) const
+{
+  Node res;
+  if (d_internal->d_prop_map.find(node) != d_internal->d_prop_map.end())
+  {
+    assert(node.type().is_bool());
+    res = d_internal->d_prop_map.at(node).getNode();
+  }
+  else if (d_internal->d_rm_map.find(node) != d_internal->d_rm_map.end())
+  {
+    assert(node.type().is_rm());
+    res = d_internal->d_rm_map.at(node).getNode();
+  }
+  else if (d_internal->d_sbv_map.find(node) != d_internal->d_sbv_map.end())
+  {
+    assert(node.kind() == node::Kind::FP_TO_SBV);
+    res = d_internal->d_sbv_map.at(node).getNode();
+  }
+  else if (d_internal->d_ubv_map.find(node) != d_internal->d_ubv_map.end())
+  {
+    assert(node.kind() == node::Kind::FP_TO_UBV);
+    res = d_internal->d_ubv_map.at(node).getNode();
+  }
+  else
+  {
+    assert(d_internal->d_unpacked_float_map.find(node)
+           != d_internal->d_unpacked_float_map.end());
+    d_internal->d_packed_float_map.emplace(
+        node,
+        symfpu::pack(node.type(), d_internal->d_unpacked_float_map.at(node)));
+    res = d_internal->d_packed_float_map.at(node).getNode();
+  }
+  assert(!res.is_null());
+  return res;
+}
+
 /* --- WordBlaster private -------------------------------------------------- */
 
 Node
@@ -668,37 +705,7 @@ WordBlaster::_word_blast(const Node& node)
     }
   } while (!visit.empty());
 
-  if (d_internal->d_prop_map.find(node) != d_internal->d_prop_map.end())
-  {
-    assert(node.type().is_bool());
-    res = d_internal->d_prop_map.at(node).getNode();
-  }
-  else if (d_internal->d_rm_map.find(node) != d_internal->d_rm_map.end())
-  {
-    assert(node.type().is_rm());
-    res = d_internal->d_rm_map.at(node).getNode();
-  }
-  else if (d_internal->d_sbv_map.find(node) != d_internal->d_sbv_map.end())
-  {
-    assert(node.kind() == node::Kind::FP_TO_SBV);
-    res = d_internal->d_sbv_map.at(node).getNode();
-  }
-  else if (d_internal->d_ubv_map.find(node) != d_internal->d_ubv_map.end())
-  {
-    assert(node.kind() == node::Kind::FP_TO_UBV);
-    res = d_internal->d_ubv_map.at(node).getNode();
-  }
-  else
-  {
-    assert(d_internal->d_unpacked_float_map.find(node)
-           != d_internal->d_unpacked_float_map.end());
-    d_internal->d_packed_float_map.emplace(
-        node,
-        symfpu::pack(node.type(), d_internal->d_unpacked_float_map.at(node)));
-    res = d_internal->d_packed_float_map.at(node).getNode();
-  }
-  assert(!res.is_null());
-  return res;
+  return word_blasted(node);
 }
 
 const Node&

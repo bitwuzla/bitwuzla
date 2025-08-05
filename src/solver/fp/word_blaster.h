@@ -81,6 +81,12 @@ class WordBlaster
   bool is_cur_word_blasted_const(const Node& node) const;
 
   /**
+   * @return Word-blasted representation of `node`. Asserts that `node` is
+   *         word-blasted.
+   */
+  Node word_blasted(const Node& node) const;
+
+  /**
    * Word-blast given floating-point or rounding mode constant/leaf (if not
    * word-blasted) and return constraint to ensure validity of the word-blasted
    * representation of the constant/leaf.
