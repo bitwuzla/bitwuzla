@@ -2,6 +2,10 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News for version 0.8.2
+
+- Fixed issue with model values in MBQI solver (#185).
+
 ## News for version 0.8.1
 
 - Configuring a terminator when a SAT solver that does not have terminator
