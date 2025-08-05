@@ -138,14 +138,14 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A,
 
   {
     util::Timer timer(d_stats.time_label);
+    label_clauses(clause_labels, A, ClauseKind::A);
+    label_clauses(clause_labels, B, ClauseKind::B);
     for (const auto& a : A)
     {
-      label_clause(clause_labels, a, ClauseKind::A);
       label_vars(var_labels, a, VariableKind::A);
     }
     for (const auto& a : B)
     {
-      label_clause(clause_labels, a, ClauseKind::B);
       label_vars(var_labels, a, VariableKind::B);
     }
     for (const auto& a : d_lemmas)
@@ -340,18 +340,21 @@ BvInterpolationSolver::update_statistics()
 }
 
 void
-BvInterpolationSolver::label_clause(
+BvInterpolationSolver::label_clauses(
     std::unordered_map<int64_t, ClauseKind>& clause_labels,
-    const Node& node,
+    const std::vector<Node>& nodes,
     ClauseKind kind)
 {
-  const auto& bits = d_bitblaster->bits(node);
-  assert(!bits.empty());
   bv::AigBitblaster::aig_node_ref_vector visit;
   std::unordered_set<int64_t> cache;
-  for (const auto& aig : bits)
+  for (const auto& node : nodes)
   {
-    visit.push_back(aig);
+    const auto& bits = d_bitblaster->bits(node);
+    assert(!bits.empty());
+    for (const auto& aig : bits)
+    {
+      visit.push_back(aig);
+    }
   }
   do
   {
@@ -456,11 +459,11 @@ BvInterpolationSolver::label_lemma(
     assert(inserted);
   }
 
-  label_clause(clause_labels,
-               node,
-               kind == VariableKind::GLOBAL || kind == VariableKind::A
-                   ? ClauseKind::A
-                   : ClauseKind::B);
+  label_clauses(clause_labels,
+                {node},
+                kind == VariableKind::GLOBAL || kind == VariableKind::A
+                    ? ClauseKind::A
+                    : ClauseKind::B);
 }
 
 void

@@ -104,15 +104,15 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   void update_statistics();
 
   /**
-   * Label associated SAT clauses in node.
+   * Label associated SAT clauses in a given set of nodes.
    * @param clause_labels The clause labels map to add to. Maps AIG ids to
    *                      clause labels.
-   * @param node          The node.
+   * @param nodes         The nodes.
    * @param kind          The clause kind to label with.
    */
-  void label_clause(
+  void label_clauses(
       std::unordered_map<int64_t, sat::interpolants::ClauseKind>& clause_labels,
-      const Node& node,
+      const std::vector<Node>& nodes,
       sat::interpolants::ClauseKind kind);
   /**
    * Label bit-vector consts in `node`.
