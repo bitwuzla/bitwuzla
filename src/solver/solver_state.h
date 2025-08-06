@@ -18,6 +18,9 @@ namespace bzla {
 namespace backtrack {
 class BacktrackManager;
 }
+namespace fp {
+class FpSolver;
+}
 
 class SolverEngine;
 
@@ -40,6 +43,9 @@ class SolverState
 
   /** Print solver engine statistics. */
   void print_statistics();
+
+  /** @return The associated floating-point solver instance. */
+  const fp::FpSolver& fp_solver() const;
 
  private:
   /** Associated solver engine. */

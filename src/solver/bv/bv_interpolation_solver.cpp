@@ -24,6 +24,9 @@
 #include "sat/interpolants/tracer_kinds.h"
 #include "solver/bv/aig_bitblaster.h"
 #include "solver/bv/bv_solver.h"
+#include "solver/fp/fp_solver.h"
+#include "solver/fp/word_blaster.h"
+#include "util/printer.h"
 
 using namespace bzla::node;
 using namespace bzla::sat::interpolants;
@@ -133,21 +136,18 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A,
 {
   assert(d_last_result == Result::UNSAT);
 
+  // map SAT var to label
   std::unordered_map<int64_t, VariableKind> var_labels;
+  // map SAT clause to label
   std::unordered_map<int64_t, ClauseKind> clause_labels;
 
   {
     util::Timer timer(d_stats.time_label);
     label_clauses(clause_labels, A, ClauseKind::A);
     label_clauses(clause_labels, B, ClauseKind::B);
-    for (const auto& a : A)
-    {
-      label_vars(var_labels, a, VariableKind::A);
-    }
-    for (const auto& a : B)
-    {
-      label_vars(var_labels, a, VariableKind::B);
-    }
+
+    label_vars(var_labels, A, B);
+
     for (const auto& a : d_lemmas)
     {
       label_lemma(var_labels, clause_labels, a);
@@ -514,17 +514,14 @@ BvInterpolationSolver::label_var(
 }
 
 void
-BvInterpolationSolver::label_vars(
-    std::unordered_map<int64_t, VariableKind>& var_labels,
-    const Node& node,
-    VariableKind kind)
+BvInterpolationSolver::label_consts(
+    std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+    const std::vector<Node>& nodes,
+    sat::interpolants::VariableKind kind)
 {
-  // First, explicitly label all consts (leafs) that occur in `node`. This is
-  // necessary as we need to step all the way down in case bv abstraction
-  // is enabled. Else, if we only traversed through the bits of `node`, we
-  // would cut off above the consts that occur in the abstracted term.
-  node_ref_vector visit{node};
   unordered_node_ref_map<bool> cache;
+  const auto& word_blaster = d_solver_state.fp_solver().word_blaster();
+  std::vector<Node> visit(nodes.begin(), nodes.end());
   do
   {
     const Node& cur     = visit.back();
@@ -537,23 +534,195 @@ BvInterpolationSolver::label_vars(
     else if (it->second)
     {
       it->second = false;
-      if (BvSolver::is_leaf(cur))
+      if (cur.is_const())
       {
-        const auto& bits = d_bitblaster->bits(cur);
-        // If const was not bit-blasted, it is not relevant for interpolant.
-        if (!bits.empty())
+        if (cur.type().is_bool() || cur.type().is_bv())
         {
-          label_var(var_labels, bits, kind);
+          const auto& bits = d_bitblaster->bits(cur);
+          if (!bits.empty())
+          {
+            label_var(var_labels, bits, kind);
+          }
+          // If not bit-blasted, it is not relevant for interpolant.
         }
+        else if (cur.type().is_fp())
+        {
+          if (word_blaster.is_word_blasted(cur))
+          {
+            visit.pop_back();
+            visit.push_back(word_blaster.word_blasted(cur));
+            continue;
+          }
+          // If not word-blasted or bit-blasted, it is not relevant for
+          // interpolant.
+        }
+#ifndef NDEBUG
+        else
+        {
+          assert(d_bitblaster->bits(cur).empty());
+        }
+#endif
       }
     }
     visit.pop_back();
   } while (!visit.empty());
-  // Now, label all SAT vars while traversing from the bits of `node`. This is
-  // necesary to ensure that no AIGS associated with bits of consts that are
+}
+
+void
+BvInterpolationSolver::label_leafs(
+    std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+    std::unordered_map<Node, VariableKind>& term_labels,
+    const std::vector<Node>& nodes,
+    sat::interpolants::VariableKind kind)
+{
+  unordered_node_ref_map<bool> cache;
+  const auto& word_blaster = d_solver_state.fp_solver().word_blaster();
+  std::vector<Node> visit(nodes.begin(), nodes.end());
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, true);
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second)
+    {
+      it->second = false;
+      if (cur.is_const())
+      {
+        auto [it, inserted] = term_labels.emplace(cur, kind);
+        if (!inserted && it->second != VariableKind::GLOBAL
+            && it->second != kind)
+        {
+          it->second = VariableKind::GLOBAL;
+        }
+        if (cur.type().is_fp())
+        {
+          if (word_blaster.is_word_blasted(cur))
+          {
+            visit.pop_back();
+            visit.push_back(word_blaster.word_blasted(cur));
+            continue;
+          }
+        }
+      }
+      else
+      {
+        VariableKind k = VariableKind::GLOBAL;
+        for (const auto& c : cur)
+        {
+          auto it = term_labels.find(c);
+          assert(it != term_labels.end());
+          if (it->second != VariableKind::GLOBAL)
+          {
+            assert(k == VariableKind::GLOBAL || k == it->second);
+            k = it->second;
+#ifdef NDEBUG
+            break;
+#endif
+          }
+        }
+        auto [it, inserted] = term_labels.emplace(cur, k);
+        if (!inserted && it->second != VariableKind::GLOBAL && it->second != k)
+        {
+          it->second = VariableKind::GLOBAL;
+        }
+      }
+    }
+
+    if (BvSolver::is_leaf(cur) && !cur.is_const())
+    {
+      auto it = term_labels.find(cur);
+      assert(it != term_labels.end());
+      const auto& bits = d_bitblaster->bits(cur);
+      if (!bits.empty())
+      {
+        label_var(var_labels, bits, it->second);
+      }
+      // If not bit-blasted, it is not relevant for interpolant.
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+}
+
+void
+BvInterpolationSolver::label_vars(
+    std::unordered_map<int64_t, VariableKind>& var_labels,
+    const std::vector<Node>& A,
+    const std::vector<Node>& B)
+{
+  // First, explicitly label all consts (leafs) that occur in `node`. This is
+  // necessary as we need to step all the way down in case of abstracted
+  // terms. Else, if we only traversed through the bits of a node, we would
+  // cut off above the consts that occur in the abstracted term.
+  label_consts(var_labels, A, VariableKind::A);
+  label_consts(var_labels, B, VariableKind::B);
+
+  // map terms that are not bit-blasted to label, this is necessary to determine
+  // the label of abstracted terms
+  std::unordered_map<Node, VariableKind> term_labels;
+  label_leafs(var_labels, term_labels, A, VariableKind::A);
+  label_leafs(var_labels, term_labels, B, VariableKind::B);
+
+  // Now, label all SAT vars while traversing from the bits of all nodes. This
+  // is necessary to ensure that no AIGS associated with bits of consts that are
   // not shared between A and B get pulled into the interpolant.
-  const auto& bits = d_bitblaster->bits(node);
-  label_var(var_labels, bits, kind);
+  bv::AigBitblaster::aig_node_ref_vector visit;
+  std::unordered_map<int64_t, bool> cache;
+  for (const auto& a : A)
+  {
+    const auto& bits = d_bitblaster->bits(a);
+    assert(!bits.empty());
+    for (const auto& aig : bits)
+    {
+      visit.push_back(aig);
+    }
+  }
+  for (const auto& a : B)
+  {
+    const auto& bits = d_bitblaster->bits(a);
+    assert(!bits.empty());
+    for (const auto& aig : bits)
+    {
+      visit.push_back(aig);
+    }
+  }
+  do
+  {
+    const bitblast::AigNode& cur = visit.back();
+    int64_t id                   = cur.get_id();
+    int64_t var                  = std::abs(id);
+
+    auto [it, inserted] = cache.emplace(var, true);
+    if (inserted)
+    {
+      if (cur.is_and())
+      {
+        visit.push_back(cur[0]);
+        visit.push_back(cur[1]);
+      }
+      continue;
+    }
+    else if (it->second)
+    {
+      it->second = false;
+
+      auto [iit, inserted] = var_labels.emplace(var, VariableKind::GLOBAL);
+      if (inserted)
+      {
+        assert(cur.is_and());
+        VariableKind k0 = var_labels.at(std::abs(cur[0].get_id()));
+        VariableKind k1 = var_labels.at(std::abs(cur[1].get_id()));
+        assert(k0 == VariableKind::GLOBAL || k1 == VariableKind::GLOBAL
+               || k0 == k1);
+        iit->second = k0 != VariableKind::GLOBAL ? k0 : k1;
+      }
+    }
+
+    visit.pop_back();
+  } while (!visit.empty());
 }
 
 void

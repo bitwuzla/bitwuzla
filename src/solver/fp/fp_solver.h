@@ -38,6 +38,8 @@ class FpSolver : public Solver
 
   void register_term(const Node& term) override;
 
+  const WordBlaster& word_blaster() const { return d_word_blaster; }
+
  private:
   /** The word blaster. */
   WordBlaster d_word_blaster;

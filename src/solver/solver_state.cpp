@@ -10,6 +10,7 @@
 
 #include "solver/solver_state.h"
 
+#include "solver/fp/fp_solver.h"
 #include "solver/solver.h"
 #include "solver/solver_engine.h"
 #include "util/exceptions.h"
@@ -49,6 +50,12 @@ void
 SolverState::print_statistics()
 {
   d_solver_engine.print_statistics();
+}
+
+const fp::FpSolver&
+SolverState::fp_solver() const
+{
+  return d_solver_engine.fp_solver();
 }
 
 }  // namespace bzla

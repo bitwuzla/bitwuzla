@@ -14,6 +14,7 @@
 
 #include "node/node_manager.h"
 #include "node/node_utils.h"
+#include "node/unordered_node_ref_map.h"
 #include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
@@ -157,7 +158,8 @@ class TestBvInterpolationSolver : public TestCommon
     }
     d_options.preprocess.set(pp);
     d_options.rewrite_level.set(rwl);
-    SolvingContext ctx(d_nm, d_options);
+    sat::SatSolverFactory sat_factory(d_options);
+    SolvingContext ctx(d_nm, d_options, sat_factory);
     if (config == AssumptionConfig::ALL)
     {
       ctx.push();
@@ -919,6 +921,21 @@ TEST_F(TestBvInterpolationSolver, interpol_fp1)
   Type f16       = d_nm.mk_fp_type(5, 11);
   Node a         = d_nm.mk_const(f16, "a");
   Node b         = d_nm.mk_const(f16, "b");
+  Node pzero = d_nm.mk_value(FloatingPoint::fpzero(f16, false));
+  Node nzero = d_nm.mk_value(FloatingPoint::fpzero(f16, true));
+
+  Node A0 = d_nm.mk_node(Kind::EQUAL, {a, pzero});
+  Node A1 = d_nm.mk_node(Kind::EQUAL, {b, nzero});
+  Node B = d_nm.mk_node(Kind::EQUAL, {a, b});
+
+  test_get_interpolant({A0, A1}, {B});
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_fp2)
+{
+  Type f16       = d_nm.mk_fp_type(5, 11);
+  Node a         = d_nm.mk_const(f16, "a");
+  Node b         = d_nm.mk_const(f16, "b");
   Node rm        = d_nm.mk_const(d_nm.mk_rm_type(), "rm");
   Node rna       = d_nm.mk_value(RoundingMode::RNA);
   Node rne       = d_nm.mk_value(RoundingMode::RNE);
@@ -1003,6 +1020,21 @@ TEST_F(TestBvInterpolationSolver, interpol_fp1)
   Node B = utils::mk_nary(d_nm, Kind::AND, {C0, C1, C2, C3, C4, C5});
 
   test_get_interpolant({A0, A1, A2, A3, A4, A5, A6, A7, A8}, {B});
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_fp3)
+{
+  Type f16       = d_nm.mk_fp_type(5, 11);
+  Node x         = d_nm.mk_value(FloatingPoint::fpzero(f16, false));
+  Node y         = d_nm.mk_value(FloatingPoint::fpzero(f16, true));
+  // (= (fp.min x y) x)
+  Node A0 = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::FP_MIN, {x, y}), x});
+  // (= (fp.min y x) x)
+  Node A1 = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::FP_MIN, {y, x}), x});
+  // (= (fp.min y x) y)
+  Node B = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::FP_MIN, {y, x}), y});
+
+  test_get_interpolant({A0, A1}, {B});
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_quant1)

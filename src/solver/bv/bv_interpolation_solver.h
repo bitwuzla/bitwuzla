@@ -115,23 +115,75 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
       const std::vector<Node>& nodes,
       sat::interpolants::ClauseKind kind);
   /**
-   * Label bit-vector consts in `node`.
+   * Label all SAT variables associated with assertions in A and B.
    *
-   * Labels all SAT variables corresponding and associated with to bit-vector
-   * consts with the given kind (if yet unlabeled) or as VariableKind::GLOBAL if
-   * they occur both in A and B. This includes SAT variables corresponding to
-   * nodes that are associated with the consts occuring in `node` since we have
-   * to prevent non-shared consts to be pulled into the interpolant.
+   * SAT variables that occur in both A and B are labeled as
+   * VariableKind::GLOBAL. SAT variables that correspond to ANDs associated with
+   * an assertion are labeled based on the label of their children, i.e., only
+   * if all children are labeled as VariableKind::GLOBAL, it is labeled as
+   * GLOBAL.
    *
-   * @param var_labels The variable labels map to add to. Maps AIG ids to
-   *                   variable labels.
-   * @param node       The node.
-   * @param kind       The variable kind to label with.
+   * @param var_labels  The variable labels map to add to. Maps AIG ids to
+   *                    variable labels.
+   * @param A           The set of A assertions.
+   * @param B           The set of B assertions.
    */
   void label_vars(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
-      const Node& node,
+      const std::vector<Node>& A,
+      const std::vector<Node>& B);
+
+  /**
+   * Label SAT variables associated with bits of consts in given set of `nodes`
+   * with label `kind`.
+   *
+   * If consts occur in both A and B, the corresponding SAT variables are
+   * labeled as VariableKind::GLOBAL.
+   *
+   * Helper for label_vars().
+   *
+   * @param var_labels  The variable labels map to add to. Maps AIG ids to
+   *                    variable labels.
+   * @param nodes       The set of nodes.
+   * @param kind        The variable kind to label with.
+   */
+  void label_consts(
+      std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+      const std::vector<Node>& nodes,
       sat::interpolants::VariableKind kind);
+  /**
+   * Label the bits of the bit-vector representation of BvSolver leafs (that are
+   * not consts) depending on the label of their children in a given set of
+   * `nodes`. Only if all children are labeled as VariableKind::GLOBAL, a leaf
+   * is labeled as GLOBAL. Mixed labeling of children (A and B) cannot occur.
+   *
+   * Helper for label_vars().
+   *
+   * @param var_labels  The variable labels map to add to. Maps AIG ids to
+   *                    variable labels.
+   * @param term_labels Intermediate (over labeling of all assertions) map from
+   *                    terms to variable labels for terms that are not
+   *                    bit-blasted. This is necessary to determine the label of
+   *                    abstracted terms.
+   * @param nodes       The set of nodes.
+   * @param kind        The variable kind to label with.
+   */
+  void label_leafs(
+      std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+      std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
+      const std::vector<Node>& nodes,
+      sat::interpolants::VariableKind kind);
+  /**
+   * Label SAT variables associated with given `bits` with label `kind`.
+   * If they occur in both A and B, they are labeled as VariableKind::GLOBAL.
+   *
+   * Helper for label_consts() and label_leafs().
+   *
+   * @param var_labels  The variable labels map to add to. Maps AIG ids to
+   *                    variable labels.
+   * @param nodes       The set of nodes.
+   * @param kind        The variable kind to label with.
+   */
   void label_var(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
       const bitblast::AigBitblaster::Bits& bits,

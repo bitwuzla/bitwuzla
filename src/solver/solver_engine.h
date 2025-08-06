@@ -103,6 +103,8 @@ class SolverEngine
 
   /** @return The associated bit-vector solver instance. */
   const bv::BvSolver& bv_solver() const { return d_bv_solver; }
+  /** @return The associated floating-point solver instance. */
+  const fp::FpSolver& fp_solver() const { return d_fp_solver; }
 
  private:
   /** Synchronize d_backtrack_mgr up to given level. */
