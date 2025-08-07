@@ -74,6 +74,15 @@ AigBitblaster::bitblast(const Node& t)
                            ? d_bitblaster.bv_constant(1)
                            : d_bitblaster.bv_constant(type.bv_size());
           break;
+        // FP components, bit-blasted as BV consts
+        case Kind::FP_SYMFPU_EXP:
+        case Kind::FP_SYMFPU_INF:
+        case Kind::FP_SYMFPU_NAN:
+        case Kind::FP_SYMFPU_SIG:
+        case Kind::FP_SYMFPU_SIGN:
+        case Kind::FP_SYMFPU_ZERO:
+          it->second = d_bitblaster.bv_constant(type.bv_size());
+          break;
 
         case Kind::NOT:
         case Kind::BV_NOT:

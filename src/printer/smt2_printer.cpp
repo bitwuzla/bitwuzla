@@ -438,6 +438,12 @@ Smt2Printer::print(std::ostream& os,
         case Kind::FP_RTI:
         case Kind::FP_SQRT:
         case Kind::FP_SUB:
+        case Kind::FP_SYMFPU_EXP:
+        case Kind::FP_SYMFPU_INF:
+        case Kind::FP_SYMFPU_NAN:
+        case Kind::FP_SYMFPU_SIG:
+        case Kind::FP_SYMFPU_SIGN:
+        case Kind::FP_SYMFPU_ZERO:
         case Kind::SELECT:
         case Kind::STORE: os << "(" << symbol; break;
 

@@ -17,6 +17,7 @@
 #include "node/kind_info.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
+#include "solver/fp/word_blaster.h"
 
 namespace bzla {
 
@@ -356,6 +357,16 @@ NodeManager::compute_type(Kind kind,
     case Kind::FP_TO_FP_FROM_UBV:
       return d_tm.mk_fp_type(indices[0], indices[1]);
 
+    case Kind::FP_SYMFPU_INF:
+    case Kind::FP_SYMFPU_NAN:
+    case Kind::FP_SYMFPU_SIGN:
+    case Kind::FP_SYMFPU_ZERO: return d_tm.mk_bv_type(1);
+
+    case Kind::FP_SYMFPU_EXP:
+      return d_tm.mk_bv_type(fp::WordBlaster::unpacked_exp_size(children[0]));
+    case Kind::FP_SYMFPU_SIG:
+      return d_tm.mk_bv_type(fp::WordBlaster::unpacked_sig_size(children[0]));
+
     case Kind::SELECT: return children[0].type().array_element();
 
     case Kind::APPLY: return children[0].type().fun_types().back();
@@ -505,6 +516,19 @@ NodeManager::check_type(Kind kind,
         ss << kind
            << ": Floating-point format does not match size of bit-vector term "
               "at position 0";
+        return std::make_pair(false, ss.str());
+      }
+      break;
+
+    case Kind::FP_SYMFPU_EXP:
+    case Kind::FP_SYMFPU_INF:
+    case Kind::FP_SYMFPU_NAN:
+    case Kind::FP_SYMFPU_SIG:
+    case Kind::FP_SYMFPU_SIGN:
+    case Kind::FP_SYMFPU_ZERO:
+      if (!children[0].type().is_fp())
+      {
+        ss << kind << ": Expected floating point term at position 0";
         return std::make_pair(false, ss.str());
       }
       break;

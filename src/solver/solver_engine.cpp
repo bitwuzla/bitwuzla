@@ -590,6 +590,12 @@ SolverEngine::_value(const Node& term)
         case Kind::FP_EQUAL:
         case Kind::FP_LEQ:
         case Kind::FP_LT:
+        case Kind::FP_SYMFPU_EXP:
+        case Kind::FP_SYMFPU_SIG:
+        case Kind::FP_SYMFPU_INF:
+        case Kind::FP_SYMFPU_NAN:
+        case Kind::FP_SYMFPU_SIGN:
+        case Kind::FP_SYMFPU_ZERO:
           // During solving we use the current value in the bit-vector
           // abstraction.
           if (registered(cur))

@@ -139,6 +139,12 @@ constexpr KindInfo::KindInfo()
   init(Kind::FP_TO_FP_FROM_UBV, 2, 2, "FP_TO_FP_FROM_UBV", "to_fp_unsigned");
   init(Kind::FP_TO_SBV, 2, 1, "FP_TO_SBV", "fp.to_sbv");
   init(Kind::FP_TO_UBV, 2, 1, "FP_TO_UBV", "fp.to_ubv");
+  init(Kind::FP_SYMFPU_EXP, 1, 0, "FP_SYMFPU_EXP", "fp.symfpu_exp");
+  init(Kind::FP_SYMFPU_INF, 1, 0, "FP_SYMFPU_INF", "fp.symfpu_inf");
+  init(Kind::FP_SYMFPU_NAN, 1, 0, "FP_SYMFPU_NAN", "fp.symfpu_nan");
+  init(Kind::FP_SYMFPU_SIG, 1, 0, "FP_SYMFPU_SIG", "fp.symfpu_sig");
+  init(Kind::FP_SYMFPU_SIGN, 1, 0, "FP_SYMFPU_SIGN", "fp.symfpu_sign");
+  init(Kind::FP_SYMFPU_ZERO, 1, 0, "FP_SYMFPU_ZERO", "fp.symfpu_zero");
 
   /* Arrays */
   init(Kind::CONST_ARRAY, 1, 0, "CONST_ARRAY");

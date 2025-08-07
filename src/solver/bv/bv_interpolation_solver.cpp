@@ -598,14 +598,9 @@ BvInterpolationSolver::label_leafs(
         {
           it->second = VariableKind::GLOBAL;
         }
-        if (cur.type().is_fp())
+        if (cur.type().is_fp() && word_blaster.is_word_blasted(cur))
         {
-          if (word_blaster.is_word_blasted(cur))
-          {
-            visit.pop_back();
-            visit.push_back(word_blaster.word_blasted(cur));
-            continue;
-          }
+          visit.push_back(word_blaster.word_blasted(cur));
         }
       }
       else

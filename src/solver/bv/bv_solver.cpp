@@ -40,6 +40,11 @@ BvSolver::is_leaf(const Node& term)
          // FP to BV conversion
          || k == Kind::FP_TO_SBV
          || k == Kind::FP_TO_UBV
+         // FP SymFPU components
+         || k == Kind::FP_SYMFPU_EXP || k == Kind::FP_SYMFPU_SIG
+         || k == Kind::FP_SYMFPU_SIGN || k == Kind::FP_SYMFPU_NAN
+         || k == Kind::FP_SYMFPU_INF
+         || k == Kind::FP_SYMFPU_ZERO
          // Equalities over terms that are not Booleans or bit-vectors
          || (k == Kind::EQUAL && !term[0].type().is_bool()
              && !term[0].type().is_bv());

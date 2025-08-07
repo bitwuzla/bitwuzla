@@ -33,6 +33,9 @@ FpSolver::is_theory_leaf(const Node& term)
          || k == Kind::FP_IS_SUBNORMAL || k == Kind::FP_IS_ZERO
          || k == Kind::FP_EQUAL || k == Kind::FP_LEQ || k == Kind::FP_LT
          || k == Kind::FP_TO_SBV || k == Kind::FP_TO_UBV
+         || k == Kind::FP_SYMFPU_EXP || k == Kind::FP_SYMFPU_SIG
+         || k == Kind::FP_SYMFPU_SIGN || k == Kind::FP_SYMFPU_INF
+         || k == Kind::FP_SYMFPU_NAN || k == Kind::FP_SYMFPU_ZERO
          || (k == Kind::EQUAL
              && (term[0].type().is_fp() || term[0].type().is_rm()));
 }

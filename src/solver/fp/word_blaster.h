@@ -50,6 +50,11 @@ class WordBlaster
    */
   static bool is_leaf(const Node& node);
 
+  /** @return The unpacked SymFPU exponent size of a given FP node. */
+  static uint32_t unpacked_exp_size(const Node& node);
+  /** @return The unpacked SymFPU significand size of a given FP node. */
+  static uint32_t unpacked_sig_size(const Node& node);
+
   WordBlaster(Env& env, SolverState& state);
   ~WordBlaster();
 

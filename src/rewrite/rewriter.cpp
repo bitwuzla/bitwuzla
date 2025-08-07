@@ -531,6 +531,14 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::FP_TO_SBV:
     case node::Kind::FP_TO_UBV: res = n; break;
 
+    // No rewrites for FP SymFPU components
+    case node::Kind::FP_SYMFPU_EXP:
+    case node::Kind::FP_SYMFPU_INF:
+    case node::Kind::FP_SYMFPU_NAN:
+    case node::Kind::FP_SYMFPU_SIG:
+    case node::Kind::FP_SYMFPU_SIGN:
+    case node::Kind::FP_SYMFPU_ZERO: res = n; break;
+
     // There are no rewrites for constant arrays.
     case node::Kind::CONST_ARRAY: res = n; break;
 

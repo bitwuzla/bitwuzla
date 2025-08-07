@@ -34,18 +34,6 @@
 namespace bzla {
 namespace fp {
 
-namespace {
-
-std::string
-create_component_symbol(const Node& node, const std::string& s)
-{
-  assert(!node.is_null());
-  assert(!s.empty());
-  return "_fp_var_" + std::to_string(node.id()) + s + "_component_";
-}
-
-}  // namespace
-
 struct WordBlaster::Internal
 {
   SymFpuSymRMMap d_rm_map;
@@ -186,19 +174,12 @@ WordBlaster::valid(const Node& node)
     return {node::utils::bv1_to_bool(nm, it->second.valid(type).getNode()),
             false};
   }
-  Node inf =
-      nm.mk_const(nm.mk_bv_type(1), create_component_symbol(node, "inf"));
-  Node nan =
-      nm.mk_const(nm.mk_bv_type(1), create_component_symbol(node, "nan"));
-  Node sign =
-      nm.mk_const(nm.mk_bv_type(1), create_component_symbol(node, "sign"));
-  Node zero =
-      nm.mk_const(nm.mk_bv_type(1), create_component_symbol(node, "zero"));
-  Node exp = nm.mk_const(nm.mk_bv_type(SymUnpackedFloat::exponentWidth(type)),
-                         create_component_symbol(node, "exp"));
-  Node sig =
-      nm.mk_const(nm.mk_bv_type(SymUnpackedFloat::significandWidth(type)),
-                  create_component_symbol(node, "sig"));
+  Node inf  = nm.mk_node(node::Kind::FP_SYMFPU_INF, {node});
+  Node nan  = nm.mk_node(node::Kind::FP_SYMFPU_NAN, {node});
+  Node sign = nm.mk_node(node::Kind::FP_SYMFPU_SIGN, {node});
+  Node zero = nm.mk_node(node::Kind::FP_SYMFPU_ZERO, {node});
+  Node exp  = nm.mk_node(node::Kind::FP_SYMFPU_EXP, {node});
+  Node sig  = nm.mk_node(node::Kind::FP_SYMFPU_SIG, {node});
 
   SymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
   d_internal->d_unpacked_float_map.emplace(node, uf);
@@ -226,7 +207,13 @@ WordBlaster::word_blasted(const Node& node) const
   }
   else if (d_internal->d_ubv_map.find(node) != d_internal->d_ubv_map.end())
   {
-    assert(node.kind() == node::Kind::FP_TO_UBV);
+    assert(node.kind() == node::Kind::FP_TO_UBV
+           || node.kind() == node::Kind::FP_SYMFPU_EXP
+           || node.kind() == node::Kind::FP_SYMFPU_INF
+           || node.kind() == node::Kind::FP_SYMFPU_NAN
+           || node.kind() == node::Kind::FP_SYMFPU_SIG
+           || node.kind() == node::Kind::FP_SYMFPU_SIGN
+           || node.kind() == node::Kind::FP_SYMFPU_ZERO);
     res = d_internal->d_ubv_map.at(node).getNode();
   }
   else
@@ -240,6 +227,22 @@ WordBlaster::word_blasted(const Node& node) const
   }
   assert(!res.is_null());
   return res;
+}
+
+uint32_t
+WordBlaster::unpacked_sig_size(const Node& node)
+{
+  assert(node.type().is_fp());
+  return SymUnpackedFloat::significandWidth(
+      SymFPUFloatingPointTypeInfo(node.type()));
+}
+
+uint32_t
+WordBlaster::unpacked_exp_size(const Node& node)
+{
+  assert(node.type().is_fp());
+  return SymUnpackedFloat::exponentWidth(
+      SymFPUFloatingPointTypeInfo(node.type()));
 }
 
 /* --- WordBlaster private -------------------------------------------------- */
@@ -695,6 +698,41 @@ WordBlaster::_word_blast(const Node& node)
                 type,
                 d_internal->d_rm_map.at(cur[0]),
                 SymFpuSymBV<false>(cur[1])));
+      }
+      else if (kind == node::Kind::FP_SYMFPU_EXP
+               || kind == node::Kind::FP_SYMFPU_INF
+               || kind == node::Kind::FP_SYMFPU_NAN
+               || kind == node::Kind::FP_SYMFPU_SIG
+               || kind == node::Kind::FP_SYMFPU_SIGN
+               || kind == node::Kind::FP_SYMFPU_ZERO)
+      {
+        assert(cur[0].type().is_fp());
+        auto it = d_internal->d_unpacked_float_map.find(cur[0]);
+        assert(it != d_internal->d_unpacked_float_map.end());
+        if (kind == node::Kind::FP_SYMFPU_EXP)
+        {
+          d_internal->d_ubv_map.emplace(cur, it->second.exponent);
+        }
+        else if (kind == node::Kind::FP_SYMFPU_INF)
+        {
+          d_internal->d_ubv_map.emplace(cur, it->second.inf);
+        }
+        else if (kind == node::Kind::FP_SYMFPU_NAN)
+        {
+          d_internal->d_ubv_map.emplace(cur, it->second.nan);
+        }
+        else if (kind == node::Kind::FP_SYMFPU_SIG)
+        {
+          d_internal->d_ubv_map.emplace(cur, it->second.significand);
+        }
+        else if (kind == node::Kind::FP_SYMFPU_SIGN)
+        {
+          d_internal->d_ubv_map.emplace(cur, it->second.sign);
+        }
+        else
+        {
+          d_internal->d_ubv_map.emplace(cur, it->second.zero);
+        }
       }
       visited.at(cur) = 1;
     }
