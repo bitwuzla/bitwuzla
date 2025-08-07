@@ -14,7 +14,6 @@
 
 #include "node/node_manager.h"
 #include "node/node_utils.h"
-#include "node/unordered_node_ref_map.h"
 #include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
@@ -915,14 +914,15 @@ TEST_F(TestBvInterpolationSolver, interpol_array4b)
   Node B = utils::mk_nary(d_nm, Kind::AND, {B0, B1, B2});
   test_get_interpolant({A}, {B});
 }
+#endif
 
 TEST_F(TestBvInterpolationSolver, interpol_fp1)
 {
   Type f16       = d_nm.mk_fp_type(5, 11);
   Node a         = d_nm.mk_const(f16, "a");
   Node b         = d_nm.mk_const(f16, "b");
-  Node pzero = d_nm.mk_value(FloatingPoint::fpzero(f16, false));
-  Node nzero = d_nm.mk_value(FloatingPoint::fpzero(f16, true));
+  Node pzero     = d_nm.mk_value(FloatingPoint::fpzero(5, 11, false));
+  Node nzero     = d_nm.mk_value(FloatingPoint::fpzero(5, 11, true));
 
   Node A0 = d_nm.mk_node(Kind::EQUAL, {a, pzero});
   Node A1 = d_nm.mk_node(Kind::EQUAL, {b, nzero});
@@ -1022,6 +1022,7 @@ TEST_F(TestBvInterpolationSolver, interpol_fp2)
   test_get_interpolant({A0, A1, A2, A3, A4, A5, A6, A7, A8}, {B});
 }
 
+#if 0
 TEST_F(TestBvInterpolationSolver, interpol_fp3)
 {
   Type f16       = d_nm.mk_fp_type(5, 11);
