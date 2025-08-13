@@ -149,6 +149,7 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
    */
   void label_consts(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+      std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
       const std::vector<Node>& nodes,
       sat::interpolants::VariableKind kind);
   /**
@@ -171,8 +172,7 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   void label_leafs(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
       std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
-      const std::vector<Node>& nodes,
-      sat::interpolants::VariableKind kind);
+      const std::vector<Node>& nodes);
   /**
    * Label SAT variables associated with given `bits` with label `kind`.
    * If they occur in both A and B, they are labeled as VariableKind::GLOBAL.

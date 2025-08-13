@@ -1022,8 +1022,34 @@ TEST_F(TestBvInterpolationSolver, interpol_fp2)
   test_get_interpolant({A0, A1, A2, A3, A4, A5, A6, A7, A8}, {B});
 }
 
-#if 0
 TEST_F(TestBvInterpolationSolver, interpol_fp3)
+{
+  Type f16 = d_nm.mk_fp_type(5, 11);
+  Node x   = d_nm.mk_const(f16, "x");
+  Node y   = d_nm.mk_const(f16, "y");
+  Node z   = d_nm.mk_const(f16, "z");
+  // (fp.isPositive x)
+  Node N0 = d_nm.mk_node(Kind::FP_IS_POS, {x});
+  // (= y (fp.roundToIntegral RNE x))
+  Node N1 = d_nm.mk_node(
+      Kind::EQUAL,
+      {y, d_nm.mk_node(Kind::FP_RTI, {d_nm.mk_value(RoundingMode::RNE), x})});
+  // (not (= x y))
+  Node N2 = d_nm.mk_node(Kind::DISTINCT, {x, y});
+  // (= z (fp.roundToIntegral RNE y))
+  Node N3 = d_nm.mk_node(
+      Kind::EQUAL,
+      {z, d_nm.mk_node(Kind::FP_RTI, {d_nm.mk_value(RoundingMode::RNE), y})});
+  // (not (= y z))
+  Node N4 = d_nm.mk_node(Kind::DISTINCT, {y, z});
+  test_get_interpolant({N0}, {N1, N2, N3, N4});
+  test_get_interpolant({N0, N1}, {N2, N3, N4});
+  test_get_interpolant({N0, N1, N2}, {N3, N4});
+  test_get_interpolant({N0, N1, N2, N3}, {N4});
+}
+
+#if 0
+TEST_F(TestBvInterpolationSolver, interpol_fp4)
 {
   Type f16       = d_nm.mk_fp_type(5, 11);
   Node x         = d_nm.mk_value(FloatingPoint::fpzero(f16, false));
