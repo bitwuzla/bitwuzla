@@ -264,7 +264,7 @@ BvInterpolationSolver::solve()
     const auto& bits = d_bitblaster->bits(assumption);
     assert(!bits.empty());
     util::Timer timer(d_stats.time_encode);
-    d_cnf_encoder->encode(bits[0], true);
+    d_cnf_encoder->encode(bits[0], false);
     d_sat_solver->assume(bits[0].get_id());
   }
 

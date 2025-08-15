@@ -180,15 +180,14 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
   else
   {
     assert(conclusion == CaDiCaL::ConclusionType::ASSUMPTIONS);
-    // One or more constraints are responsible for the conflict, proof chain
-    // contains a single clause with failed assumptions. Note that the
-    // interpolant of that clause has already been resolved with the
-    // interpolants of the assumptions.
+    // One or more constraints are responsible for the conflict, conclusion of
+    // proof chain is a single clause with failed assumptions.
     assert(clause_ids.size() == 1);
     assert(clause_ids[0] < d_clauses.size());
     assert(!d_clauses[clause_ids[0]].d_clause.empty());
   }
 #endif
+  d_conclusion = conclusion;
   d_proof_core.clear();
   d_final_clause_ids = clause_ids;
   std::vector<uint64_t> visit{clause_ids};
@@ -217,13 +216,14 @@ CadicalTracer::get_interpolant(
     const std::unordered_map<int64_t, ClauseKind>& clause_labels)
 {
   d_part_interpolants.clear();
-
+  uint64_t final_clause_id = d_final_clause_ids[0];
   for (uint64_t id : d_proof_core)
   {
     assert(id <= d_clauses.size());
     const auto& clause = d_clauses[id];
     ClauseType type    = clause.d_type;
     assert(type != ClauseType::NONE);
+
     if (type == ClauseType::ORIGINAL)
     {
       auto it = clause_labels.find(clause.d_aig_id);
@@ -267,15 +267,7 @@ CadicalTracer::get_interpolant(
     else if (type == ClauseType::ASSUMPTION)
     {
       const auto& antecedents = clause.d_antecedents;
-      Interpolant ipol;
-
-      if (antecedents.size())
-      {
-        auto it = d_part_interpolants.find(id);
-        assert(it != d_part_interpolants.end());
-        ipol = it->second;
-      }
-      else
+      if (antecedents.empty())
       {
         assert(clause.d_clause.size() == 2);
         bool is_ass_lit0 =
@@ -287,18 +279,25 @@ CadicalTracer::get_interpolant(
           assert(d_clauses.size() == id);
           int32_t lit = is_ass_lit0 ? -clause.d_clause[1] : -clause.d_clause[0];
           assert(d_part_interpolants.find(id) != d_part_interpolants.end());
-          d_part_interpolants.emplace(id, get_interpolant(var_labels, -lit));
+          ClauseKind kind = clause_labels.at(-lit);
+          d_part_interpolants.emplace(
+              id, get_interpolant(var_labels, {-lit}, kind));
           continue;
         }
       }
 
+      Interpolant ipol =
+          antecedents.size() ? d_part_interpolants.at(id) : Interpolant();
       for (int32_t lit : clause.d_clause)
       {
-        if (d_assumptions.find(-lit) != d_assumptions.end())
+        if (d_assumptions.find(-lit) == d_assumptions.end())
         {
           continue;
         }
-        Interpolant ip = get_interpolant(var_labels, -lit);
+        ClauseKind kind = clause_labels.at(-lit);
+        // Interpolant ip = get_interpolant(var_labels, -lit);
+        Interpolant ip = get_interpolant(var_labels, {-lit}, kind);
+        assert(!ip.is_null());
         if (!ipol.is_null())
         {
           extend_interpolant(ipol, ip, get_var_label(var_labels, lit));
@@ -311,12 +310,35 @@ CadicalTracer::get_interpolant(
 
       if (antecedents.empty())
       {
-        assert(d_clauses.size() == id);
         d_part_interpolants[id] = ipol;
       }
     }
   }
-  auto it = d_part_interpolants.find(d_final_clause_ids[0]);
+
+  // unsat determined based on assumptions
+  if (d_conclusion == CaDiCaL::ConclusionType::ASSUMPTIONS)
+  {
+    Interpolant interpolant = d_part_interpolants.at(final_clause_id);
+    for (int32_t lit : d_clauses[final_clause_id].d_clause)
+    {
+      ClauseKind kind = clause_labels.at(-lit);
+      // Interpolant ip = get_interpolant(var_labels, -lit);
+      Interpolant ip = get_interpolant(var_labels, {-lit}, kind);
+      assert(!ip.is_null());
+      if (!interpolant.is_null())
+      {
+        extend_interpolant(interpolant, ip, get_var_label(var_labels, lit));
+      }
+      else
+      {
+        interpolant = ip;
+      }
+    }
+    return get_interpolant_node(interpolant);
+  }
+
+  // derived empty clause
+  auto it = d_part_interpolants.find(final_clause_id);
   assert(it != d_part_interpolants.end());
   return get_interpolant_node(it->second);
 }
@@ -478,23 +500,6 @@ CadicalTracer::get_interpolant(
     }
   }
   return {res, kind};
-}
-
-CadicalTracer::Interpolant
-CadicalTracer::get_interpolant(
-    const std::unordered_map<int64_t, VariableKind>& var_labels, int32_t lit)
-{
-  VariableKind kind = get_var_label(var_labels, lit);
-  if (kind == VariableKind::A)
-  {
-    return {d_amgr.mk_false(), ClauseKind::A};
-  }
-  if (kind == VariableKind::B)
-  {
-    return {d_amgr.mk_true(), ClauseKind::B};
-  }
-  assert(kind == VariableKind::GLOBAL);
-  return {d_amgr.mk_true(), ClauseKind::LEARNED};
 }
 
 void

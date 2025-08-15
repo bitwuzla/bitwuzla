@@ -130,14 +130,6 @@ class CadicalTracer : public Tracer
       const std::unordered_map<int64_t, VariableKind>& var_kinds,
       const std::vector<int32_t>& clause,
       ClauseKind kind);
-  /**
-   * Construct interpolant for given literal (i.e., assumption).
-   * @param var_kinds The mapping from AIG id to variable kinds.
-   * @param lit The literal to construct the interpolant for.
-   * @return The interpolant.
-   */
-  Interpolant get_interpolant(
-      const std::unordered_map<int64_t, VariableKind>& var_kinds, int32_t lit);
 
   Node get_interpolant_node(Interpolant interpolant);
 
@@ -188,6 +180,7 @@ class CadicalTracer : public Tracer
 
   std::vector<uint64_t> d_final_clause_ids;
   std::vector<uint64_t> d_proof_core;
+  CaDiCaL::ConclusionType d_conclusion;
 };
 
 std::ostream& operator<<(std::ostream& out,

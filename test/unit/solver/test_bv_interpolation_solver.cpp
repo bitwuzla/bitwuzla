@@ -25,13 +25,14 @@ using namespace node;
 class TestBvInterpolationSolver : public TestCommon
 {
  protected:
-  constexpr static bool s_all_pp_rw       = true;
+  constexpr static bool s_all_pp_rw       = false;
   constexpr static bool s_all_ass_configs = true;
 
   enum class AssumptionConfig
   {
     NONE,
     ALL,
+    ONLY_A,
     ONLY_B,
   };
 
@@ -50,6 +51,7 @@ class TestBvInterpolationSolver : public TestCommon
     if (s_all_ass_configs)
     {
       test_get_interpolant_aux(A, B, AssumptionConfig::ALL);
+      test_get_interpolant_aux(A, B, AssumptionConfig::ONLY_A);
       test_get_interpolant_aux(A, B, AssumptionConfig::ONLY_B);
     }
   }
@@ -90,7 +92,7 @@ class TestBvInterpolationSolver : public TestCommon
     d_options.rewrite_level.set(rwl);
     sat::SatSolverFactory sat_factory(d_options);
     SolvingContext ctx(d_nm, d_options, sat_factory);
-    if (config == AssumptionConfig::ALL)
+    if (config == AssumptionConfig::ALL || config == AssumptionConfig::ONLY_A)
     {
       ctx.push();
     }
@@ -175,7 +177,7 @@ class TestBvInterpolationSolver : public TestCommon
       ASSERT_EQ(ctx.solve(), Result::UNSAT);
       Node interpolant = ctx.get_interpolant(A);
       ASSERT_FALSE(interpolant.is_null());
-      ctx.push();
+      ctx.pop();
     }
   }
 
@@ -629,6 +631,35 @@ TEST_F(TestBvInterpolationSolver, interpol_inc1)
       d_nm.mk_node(Kind::DISTINCT, {d_nm.mk_node(Kind::BV_MUL, {x, s}), t});
   Node C = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_UREM, {x, s}), t});
   test_get_interpolant_inc({A0}, {B, C});
+}
+
+TEST_F(TestBvInterpolationSolver, interpol_inc2)
+{
+  Type bv = d_nm.mk_bv_type(8);
+  Node x  = d_nm.mk_const(bv, "x");
+  Node y  = d_nm.mk_const(bv, "y");
+  Node z  = d_nm.mk_const(bv, "z");
+
+  Node A = d_nm.mk_node(
+      Kind::AND,
+      {d_nm.mk_node(Kind::BV_UGT, {x, y}), d_nm.mk_node(Kind::BV_UGT, {y, z})});
+  Node B = d_nm.mk_node(Kind::BV_ULT, {x, z});
+
+  sat::SatSolverFactory sat_factory(d_options);
+  SolvingContext ctx(d_nm, d_options, sat_factory);
+  ctx.push();
+  ctx.assert_formula(A);
+  ctx.push();
+  ctx.assert_formula(B);
+  ASSERT_EQ(ctx.solve(), Result::UNSAT);
+  Node I = ctx.get_interpolant({A});
+  assert(!I.is_null());
+
+  ctx.pop();  // pop B
+  B = d_nm.mk_node(Kind::BV_UGT, {x, z});
+  ctx.push();
+  ctx.assert_formula(B);
+  ASSERT_EQ(ctx.solve(), Result::SAT);
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_bv_abstr1)
