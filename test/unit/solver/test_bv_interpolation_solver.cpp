@@ -747,6 +747,234 @@ TEST_F(TestBvInterpolationSolver, interpol_bv_abstr3)
   test_get_interpolant({A0, A1, A2, A3}, {B});
 }
 
+TEST_F(TestBvInterpolationSolver, pono1)
+{
+  Type bv  = d_nm.mk_bv_type(32);
+  Type bv1 = d_nm.mk_bv_type(1);
+  Type bv5 = d_nm.mk_bv_type(5);
+  Node one = d_nm.mk_value(BitVector::mk_true());
+  // (declare-const state9@1 (_ BitVec 32))
+  Node state9_1 = d_nm.mk_const(bv, "state9@1");
+  // (declare-const state13@1 (_ BitVec 32))
+  Node state13_1 = d_nm.mk_const(bv, "state13@1");
+  // (declare-const state20@1 (_ BitVec 1))
+  Node state20_1 = d_nm.mk_const(bv1, "state20@1");
+  // (declare-const state20@0 (_ BitVec 1))
+  Node state20_0 = d_nm.mk_const(bv1, "state20@0");
+  // (declare-const state13@0 (_ BitVec 32))
+  Node state13_0 = d_nm.mk_const(bv, "state13@0");
+  // (declare-const input6@0 (_ BitVec 32))
+  Node input6_0 = d_nm.mk_const(bv, "state6@0");
+  // (declare-const input2@0 (_ BitVec 5))
+  Node input2_0 = d_nm.mk_const(bv5, "input2@0");
+  // (declare-const state9@0 (_ BitVec 32))
+  Node state9_0 = d_nm.mk_const(bv, "state9@0");
+  // (declare-const input7@0 (_ BitVec 1))
+  Node input7_0 = d_nm.mk_const(bv1, "input9@0");
+  // (define-fun @def0 () Bool (= #b1 ((_ extract 0 0) input2@0)))
+  Node def0 = d_nm.mk_node(
+      Kind::EQUAL, {one, d_nm.mk_node(Kind::BV_EXTRACT, {input2_0}, {0, 0})});
+
+  // (define-fun @def1 () (_ BitVec 1)
+  //     (ite @def0 ((_ extract 0 0) state9@0) ((_ extract 31 31) state9@0)))
+  Node def1 =
+      d_nm.mk_node(Kind::ITE,
+                   {def0,
+                    d_nm.mk_node(Kind::BV_EXTRACT, {state9_0}, {0, 0}),
+                    d_nm.mk_node(Kind::BV_EXTRACT, {state9_0}, {31, 31})});
+  // (define-fun @def2 () Bool (= #b1 ((_ extract 1 1) input2@0)))
+  Node def2 = d_nm.mk_node(
+      Kind::EQUAL, {one, d_nm.mk_node(Kind::BV_EXTRACT, {input2_0}, {1, 1})});
+  // (define-fun @def3 () (_ BitVec 30)
+  //     (ite
+  //         @def2
+  //         (concat
+  //             @def1
+  //             (ite
+  //                 @def0
+  //                 ((_ extract 31 3) state9@0)
+  //                 ((_ extract 30 2) state9@0)))
+  //         (ite
+  //             @def0
+  //             ((_ extract 30 1) state9@0)
+  //             ((_ extract 29 0) state9@0))))
+  Node def3 = d_nm.mk_node(
+      Kind::ITE,
+      {def2,
+       d_nm.mk_node(
+           Kind::BV_CONCAT,
+           {def1,
+            d_nm.mk_node(
+                Kind::ITE,
+                {def0,
+                 d_nm.mk_node(Kind::BV_EXTRACT, {state9_0}, {31, 3}),
+                 d_nm.mk_node(Kind::BV_EXTRACT, {state9_0}, {30, 2})})}),
+       d_nm.mk_node(Kind::ITE,
+                    {def0,
+                     d_nm.mk_node(Kind::BV_EXTRACT, {state9_0}, {30, 1}),
+                     d_nm.mk_node(Kind::BV_EXTRACT, {state9_0}, {29, 0})})});
+  // (define-fun @def4 () (_ BitVec 2)
+  //     (ite
+  //         @def2
+  //         (ite
+  //             @def0
+  //             ((_ extract 2 1) state9@0)
+  //             ((_ extract 1 0) state9@0))
+  //         (concat
+  //             @def1
+  //             (ite
+  //                 @def0
+  //                 ((_ extract 31 31) state9@0)
+  //                 ((_ extract 30 30) state9@0)))))
+  Node def4 = d_nm.mk_node(
+      Kind::ITE,
+      {def2,
+       d_nm.mk_node(Kind::ITE,
+                    {def0,
+                     d_nm.mk_node(Kind::BV_EXTRACT, {state9_0}, {2, 1}),
+                     d_nm.mk_node(Kind::BV_EXTRACT, {state9_0}, {1, 0})}),
+       d_nm.mk_node(
+           Kind::BV_CONCAT,
+           {def1,
+            d_nm.mk_node(
+                Kind::ITE,
+                {def0,
+                 d_nm.mk_node(Kind::BV_EXTRACT, {state9_0}, {31, 31}),
+                 d_nm.mk_node(Kind::BV_EXTRACT, {state9_0}, {30, 30})})})});
+
+  // (define-fun @def5 () (_ BitVec 28) (concat @def4 ((_ extract 29 4) @def3)))
+  Node def5 = d_nm.mk_node(
+      Kind::BV_CONCAT, {def4, d_nm.mk_node(Kind::BV_EXTRACT, {def3}, {29, 4})});
+  // (define-fun @def6 () Bool (= #b1 ((_ extract 2 2) input2@0)))
+  Node def6 = d_nm.mk_node(
+      Kind::EQUAL, {one, d_nm.mk_node(Kind::BV_EXTRACT, {input2_0}, {2, 2})});
+  // (define-fun @def7 () (_ BitVec 4)
+  //     (ite
+  //         @def6
+  //         ((_ extract 3 0) @def3)
+  //         (concat @def4 ((_ extract 29 28) @def3))))
+  Node def7 = d_nm.mk_node(
+      Kind::ITE,
+      {def6,
+       d_nm.mk_node(Kind::BV_EXTRACT, {def3}, {3, 0}),
+       d_nm.mk_node(Kind::BV_CONCAT,
+                    {def4, d_nm.mk_node(Kind::BV_EXTRACT, {def3}, {29, 28})})});
+  // (define-fun @def8 () Bool (= #b1 ((_ extract 3 3) input2@0)))
+  Node def8 = d_nm.mk_node(
+      Kind::EQUAL, {one, d_nm.mk_node(Kind::BV_EXTRACT, {input2_0}, {3, 3})});
+  // (define-fun @def9 () (_ BitVec 24)
+  //    (ite
+  //        @def8
+  //        (concat
+  //            @def7
+  //            (ite
+  //                @def6
+  //                ((_ extract 27 8) @def5)
+  //                ((_ extract 27 8) @def3)))
+  //        (ite
+  //            @def6
+  //            ((_ extract 27 4) @def3)
+  //            ((_ extract 23 0) @def3))))
+  Node def9 = d_nm.mk_node(
+      Kind::ITE,
+      {def8,
+       d_nm.mk_node(
+           Kind::BV_CONCAT,
+           {def7,
+            d_nm.mk_node(Kind::ITE,
+                         {def6,
+                          d_nm.mk_node(Kind::BV_EXTRACT, {def5}, {27, 8}),
+                          d_nm.mk_node(Kind::BV_EXTRACT, {def3}, {27, 8})})}),
+       d_nm.mk_node(Kind::ITE,
+                    {def6,
+                     d_nm.mk_node(Kind::BV_EXTRACT, {def3}, {27, 4}),
+                     d_nm.mk_node(Kind::BV_EXTRACT, {def3}, {23, 0})})});
+  // (define-fun @def10 () (_ BitVec 16)
+  //     (concat
+  //         (ite
+  //             @def8
+  //             (ite @def6 ((_ extract 11 4) @def3) ((_ extract 7 0) @def3))
+  //             (concat
+  //                 @def7
+  //                 (ite
+  //                     @def6
+  //                     ((_ extract 27 24) @def5)
+  //                     ((_ extract 27 24) @def3))))
+  //         ((_ extract 23 16) @def9)))
+  Node def10 = d_nm.mk_node(
+      Kind::BV_CONCAT,
+      {d_nm.mk_node(
+           Kind::ITE,
+           {def8,
+            d_nm.mk_node(Kind::ITE,
+                         {def6,
+                          d_nm.mk_node(Kind::BV_EXTRACT, {def3}, {11, 4}),
+                          d_nm.mk_node(Kind::BV_EXTRACT, {def3}, {7, 0})}),
+            d_nm.mk_node(
+                Kind::BV_CONCAT,
+                {def7,
+                 d_nm.mk_node(
+                     Kind::ITE,
+                     {def6,
+                      d_nm.mk_node(Kind::BV_EXTRACT, {def5}, {27, 24}),
+                      d_nm.mk_node(Kind::BV_EXTRACT, {def3}, {27, 24})})})}),
+       d_nm.mk_node(Kind::BV_EXTRACT, {def9}, {23, 16})});
+  // (define-fun @def11 () Bool (= #b1 ((_ extract 4 4) input2@0)))
+  Node def11 = d_nm.mk_node(
+      Kind::EQUAL, {one, d_nm.mk_node(Kind::BV_EXTRACT, {input2_0}, {4, 4})});
+
+  // (push 1)
+  // (assert let ((_let0 ((_ extract 15 0) @def9)))
+  //     (and
+  //         (and
+  //             (= state20@1 input7@0)
+  //             (and
+  //                 (=
+  //                     state13@1
+  //                     (concat
+  //                         (ite @def11 let0 @def10)
+  //                         (ite @def11 @def10 let0)))
+  //                 (= state9@1 (ite (= #b1 state20@0) state13@0 input6@0))))
+  //         (and
+  //             (= state20@0 #b0)
+  //             (and
+  //                 (= #b00000000000000000000000000000000 state13@0)
+  //                 (= #b00000000000000000000000000000000 state9@0)))))
+  // (push 1)
+  // (assert false)
+  SolvingContext ctx(d_nm, d_options);
+  ctx.push();
+  Node let0 = d_nm.mk_node(Kind::BV_EXTRACT, {def9}, {15, 0});
+  Node A    = node::utils::mk_nary(
+      d_nm,
+      Kind::AND,
+      {d_nm.mk_node(Kind::EQUAL, {state20_1, input7_0}),
+          d_nm.mk_node(
+           Kind::EQUAL,
+           {state13_1,
+               d_nm.mk_node(Kind::BV_CONCAT,
+                            {d_nm.mk_node(Kind::ITE, {def11, let0, def10}),
+                             d_nm.mk_node(Kind::ITE, {def11, def10, let0})})}),
+          d_nm.mk_node(Kind::EQUAL,
+                       {state9_1,
+                        d_nm.mk_node(Kind::ITE,
+                                     {d_nm.mk_node(Kind::EQUAL, {one, state20_0}),
+                                      state13_0,
+                                      input6_0})}),
+          d_nm.mk_node(Kind::EQUAL,
+                       {state20_0, d_nm.mk_value(BitVector::mk_false())}),
+          d_nm.mk_node(Kind::EQUAL,
+                       {state13_0, d_nm.mk_value(BitVector::mk_zero(32))}),
+          d_nm.mk_node(Kind::EQUAL,
+                       {state9_0, d_nm.mk_value(BitVector::mk_zero(32))})});
+  ctx.assert_formula(A);
+  ASSERT_EQ(ctx.solve(), Result::SAT);
+  ctx.push();
+  ctx.assert_formula(d_nm.mk_value(false));
+  ASSERT_EQ(ctx.solve(), Result::UNSAT);
+  ASSERT_EQ(ctx.get_interpolant({A}), d_nm.mk_value(true));
+}
+
 #if 0
 // For now, since we now strictly follow the definition of interpolation where
 // the interpolant may only contain shared uninterpreted symbols, we don't

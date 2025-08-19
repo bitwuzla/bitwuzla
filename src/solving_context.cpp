@@ -226,16 +226,14 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
       _A.push_back(d_assertions[a.second]);
     }
   }
+  assert(_A.size() + _B.size() == d_original_assertions.size());
 
   // Preprocessor determined unsat, so we can make a shortcut.
   if (d_sat_state_pp == Result::UNSAT)
   {
     for (const auto& a : _A)
     {
-      auto it = d_original_assertions_to_index.find(a);
-      assert(it != d_original_assertions_to_index.end());
-      const Node& n = d_assertions[it->second];
-      if (n.is_value() && !n.value<bool>())
+      if (a.is_value() && !a.value<bool>())
       {
         return nm.mk_value(false);
       }
