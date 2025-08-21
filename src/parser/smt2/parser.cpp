@@ -297,6 +297,9 @@ Parser::parse_command(bool parse_only)
     case Token::DEFINE_SORT: res = parse_command_define_sort(); break;
     case Token::ECHO: res = parse_command_echo(); break;
     case Token::EXIT: res = parse_command_exit(); break;
+    case Token::GET_INTERPOLANT:
+      res = parse_command_get_interpolant(parse_only);
+      break;
     case Token::GET_MODEL: res = parse_command_get_model(); break;
     case Token::GET_UNSAT_ASSUMPTIONS:
       res = parse_command_get_unsat_assumptions();
@@ -767,6 +770,53 @@ Parser::parse_command_exit()
   d_statistics.num_exit += 1;
   d_done = true;
   print_success();
+  return true;
+}
+
+bool
+Parser::parse_command_get_interpolant(bool parse_only)
+{
+  init_logic();
+  init_bitwuzla();
+
+  if (!d_options.get(bitwuzla::Option::PRODUCE_INTERPOLANTS))
+  {
+    return error("interpolant generation is not enabled");
+  }
+  if (!parse_lpar())
+  {
+    return false;
+  }
+  std::vector<bitwuzla::Term> args;
+  std::vector<std::string> repr;
+  if (!parse_term_list(args, &repr))
+  {
+    return false;
+  }
+  assert(args.size() == repr.size());
+
+  for (size_t i = 0, n = args.size(); i < n; ++i)
+  {
+    if (!args[i].sort().is_bool())
+    {
+      return error_arg("term at index " + std::to_string(i)
+                       + " is not a formula");
+    }
+  }
+  if (!parse_rpar())
+  {
+    return false;
+  }
+  if (d_result != bitwuzla::Result::UNSAT)
+  {
+    return true;
+  }
+  if (!parse_only)
+  {
+    bitwuzla::Term interpolant = d_bitwuzla->get_interpolant(args);
+    (*d_out) << interpolant << std::endl;
+    d_out->flush();
+  }
   return true;
 }
 
@@ -2928,10 +2978,10 @@ Parser::error(const std::string& error_msg,
   const Lexer::Coordinate& c = coo ? *coo : d_lexer->coo();
   d_error = d_infile_name + ":" + std::to_string(c.line) + ":"
             + std::to_string(c.col) + ": " + error_msg;
-  //#ifndef NDEBUG
-  //  std::cout << "[error] " << d_error << std::endl;
-  //  assert(false);
-  //#endif
+  // #ifndef NDEBUG
+  //   std::cout << "[error] " << d_error << std::endl;
+  //   assert(false);
+  // #endif
   return false;
 }
 

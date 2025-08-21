@@ -20,6 +20,7 @@ tests_smt2 = [
   ['check/regr_cm8.smt2'],
   ['check/regr_cm9.smt2'],
   ['check/regr_uc1.smt2'],
+  ['get-interpolant/pono1.smt2'],
   ['get-model/regr-5smod3.btor.smt2', ['--print-model']],
   ['get-model/regr-5srem3.btor.smt2'],
   ['get-model/regr-6smod3.btor.smt2'],
