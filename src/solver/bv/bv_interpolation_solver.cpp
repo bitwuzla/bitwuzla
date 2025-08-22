@@ -247,6 +247,14 @@ BvInterpolationSolver::solve()
   }
 
   // Encode
+  //
+  // We need to notify the interpolation SAT proof tracer via
+  // set_current_aig_id() which AIG id the following, currently encoded SAT
+  // clauses are associated with. This mapping is later utilized in the proof
+  // tracer to generate dynamic labeling of variables and clauses according to
+  // the partition of the set of current assertions into A and B formulas. For
+  // this, we only care about association with the top most AIG node.
+
   if (!d_assertions.empty())
   {
     util::Timer timer(d_stats.time_encode);
@@ -254,6 +262,7 @@ BvInterpolationSolver::solve()
     {
       const auto& bits = d_bitblaster->bits(assertion);
       assert(!bits.empty());
+      d_interpol_sat_solver->set_current_aig_id(bits[0].get_id());
       d_cnf_encoder->encode(bits[0], true);
     }
     d_assertions.clear();
@@ -264,6 +273,7 @@ BvInterpolationSolver::solve()
     const auto& bits = d_bitblaster->bits(assumption);
     assert(!bits.empty());
     util::Timer timer(d_stats.time_encode);
+    d_interpol_sat_solver->set_current_aig_id(bits[0].get_id());
     d_cnf_encoder->encode(bits[0], false);
     d_sat_solver->assume(bits[0].get_id());
   }
