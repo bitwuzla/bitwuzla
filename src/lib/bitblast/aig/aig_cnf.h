@@ -19,29 +19,46 @@ class SatInterface
  public:
    virtual ~SatInterface() {};
 
-  /**
-   * Add literal to current clause.
-   *
-   * @param id Id of literal to be added. 0 terminates the clause.
-   */
-  virtual void add(int64_t lit) = 0;
-  /**
-   * Add a set of literals as clause.
-   *
-   * @param literals List of literals to be added (without terminating 0).
-   */
-  virtual void add_clause(const std::initializer_list<int64_t>& literals) = 0;
+   /**
+    * Add literal to current clause.
+    *
+    * @param id Id of literal to be added. 0 terminates the clause.
+    * @param aig_id   The AIG id associated with the currently added clause.
+    *                 In the case of clauses associated with and nodes or AIGs
+    *                 encoding ITEs, this id will always be positive. In the
+    *                 case of units encoding (the leafs of AIGs representing)
+    *                 top-level assertions, the clause is associated with the
+    *                 top-most AIG representing the assertion (and thus the id
+    *                 may be negative).
+    *
+    * @note Parameter `aig_id` is not needed for standard bit-blasting, but may
+    *       be required, e.g., for clause labeling when generating interpolants
+    *       from the SAT proof.
+    */
+   virtual void add(int64_t lit, int64_t aig_id = 0) = 0;
+   /**
+    * Add a set of literals as clause.
+    *
+    * @param literals List of literals to be added (without terminating 0).
+    * @param aig_id   The AIG id associated with this clause. In the case of
+    *                 clauses associated with and nodes or AIGs encoding ITEs,
+    *                 this id will always be positive. In the case of units
+    *                 encoding (the leafs of AIGs representing) top-level
+    *                 assertions, the clause is associated with the top-most
+    *                 AIG representing the assertion (and thus the id may be
+    *                 negative).
+    *
+    * @note Parameter `aig_id` is not needed for standard bit-blasting, but may
+    *       be required, e.g., for clause labeling when generating interpolants
+    *       from the SAT proof.
+    */
+   virtual void add_clause(const std::initializer_list<int64_t>& literals,
+                           int64_t aig_id = 0) = 0;
    /**
     * Query the value of the given literal.
     * @return True if the literal evaluates to true.
     */
-  virtual bool value(int64_t lit) = 0;
-  /**
-   * Cache AIG id associated with currently added clauses.
-   * This is necessary for keeping proof tracing and interpolant generation
-   * in sync and is otherwise not used.
-   */
-  virtual void set_current_aig_id(int64_t aig_id) { (void) aig_id; }
+   virtual bool value(int64_t lit) = 0;
 };
 
 class AigCnfEncoder

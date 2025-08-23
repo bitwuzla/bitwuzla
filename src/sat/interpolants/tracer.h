@@ -47,7 +47,11 @@ class Tracer : public CaDiCaL::Tracer
    * Set the associated AIG id of the currently processed clause.
    * @param id The AIG id.
    */
-  void set_current_aig_id(int64_t id) { d_cur_aig_id = id; }
+  void set_current_aig_id(int64_t id)
+  {
+    assert(id);
+    d_cur_aig_id = id;
+  }
 
   /**
    * Get interpolant.

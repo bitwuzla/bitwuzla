@@ -48,6 +48,17 @@ CadicalTracer::add_original_clause(uint64_t id,
                                    const std::vector<int32_t>& clause,
                                    bool restore)
 {
+  if (d_logger.is_log_enabled(2))
+  {
+    std::stringstream ss;
+    ss << "original clause [" << id << "]: ";
+    for (const auto& lit : clause)
+    {
+      ss << " " << lit;
+    }
+    Log(2) << ss.str();
+  }
+
   (void) redundant;
   assert(id);
   assert(d_cur_aig_id);
@@ -72,6 +83,17 @@ CadicalTracer::add_derived_clause(uint64_t id,
                                   const std::vector<int32_t>& clause,
                                   const std::vector<uint64_t>& antecedents)
 {
+  if (d_logger.is_log_enabled(2))
+  {
+    std::stringstream ss;
+    ss << "derived clause [" << id << "]: ";
+    for (const auto& lit : clause)
+    {
+      ss << " " << lit;
+    }
+    Log(2) << ss.str();
+  }
+
   (void) id;
   (void) redundant;
   assert(!antecedents.empty());
@@ -84,6 +106,17 @@ CadicalTracer::add_assumption_clause(uint64_t id,
                                      const std::vector<int32_t>& clause,
                                      const std::vector<uint64_t>& antecedents)
 {
+  if (d_logger.is_log_enabled(2))
+  {
+    std::stringstream ss;
+    ss << "assumption clause [" << id << "]: ";
+    for (const auto& lit : clause)
+    {
+      ss << " " << lit;
+    }
+    Log(2) << ss.str();
+  }
+
   if (antecedents.size())
   {
     // We have a resolution of multiple clauses.
@@ -217,6 +250,25 @@ CadicalTracer::get_interpolant(
 {
   d_part_interpolants.clear();
   uint64_t final_clause_id = d_final_clause_ids[0];
+
+  if (d_logger.is_log_enabled(2))
+  {
+    Log(2);
+    Log(2) << "proof core:";
+    for (const auto& p : d_proof_core)
+    {
+      std::stringstream ss;
+      ss << "  " << p << ": (";
+      for (const auto& lit : d_clauses.at(p).d_clause)
+      {
+        ss << " " << lit;
+      }
+      ss << " )";
+      Log(2) << ss.str();
+    }
+    Log(2);
+  }
+
   for (uint64_t id : d_proof_core)
   {
     assert(id <= d_clauses.size());
@@ -226,7 +278,25 @@ CadicalTracer::get_interpolant(
 
     if (type == ClauseType::ORIGINAL)
     {
+      // Our clause label mapping maps AIG nodes reachable from assertions
+      // to the respective labeling (as given via the assertions). This is
+      // sensitive to Boolean negation and thus AIG node ids may be negative.
+      //
+      // However, our clause to associated AIG node mapping maps clauses
+      // associated with AND gates and AIG nodes representing ITEs to the
+      // respective, non-negated AIG node (id is always positive). Only leafs
+      // of top-level assertions are associated with (potentially negated)
+      // AIGs representing top-level assertions.
+      //
+      // Thus, if we don't find the associated node in the clause label
+      // mapping, it must be a clause associated with an AND gate or ITE node
+      // and may thus not be unit. Its labeling is independent of negation.
       auto it = clause_labels.find(clause.d_aig_id);
+      if (it == clause_labels.end())
+      {
+        assert(clause.d_clause.size() > 1);
+        it = clause_labels.find(-clause.d_aig_id);
+      }
       assert(it != clause_labels.end());
       ClauseKind kind = it->second;
       assert(d_part_interpolants.find(id) == d_part_interpolants.end());

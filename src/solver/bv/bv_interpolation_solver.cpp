@@ -44,8 +44,16 @@ class BvInterpolationSolver::InterpolationSatSolver
   {
   }
 
-  void add(int64_t lit) override
+  void add(int64_t lit, int64_t aig_id) override
   {
+    assert(aig_id);
+    // We need to notify the interpolation SAT proof tracer which AIG id the
+    // following, currently encoded SAT clauses are associated with. This
+    // mapping is later utilized to generate dynamic labeling of variables and
+    // clauses according to the partition of the set of current assertions into
+    // A and B formulas.
+    d_tracer.set_current_aig_id(aig_id);
+
     if (lit == 0)
     {
       Log(3) << "CNF encoder: add clause";
@@ -75,23 +83,19 @@ class BvInterpolationSolver::InterpolationSatSolver
     }
   }
 
-  void add_clause(const std::initializer_list<int64_t>& literals) override
+  void add_clause(const std::initializer_list<int64_t>& literals,
+                  int64_t aig_id) override
   {
     for (int64_t lit : literals)
     {
-      add(lit);
+      add(lit, aig_id);
     }
-    add(0);
+    add(0, aig_id);
   }
 
   bool value(int64_t lit) override
   {
     return d_solver.value(lit) == 1 ? true : false;
-  }
-
-  void set_current_aig_id(int64_t aig_id) override
-  {
-    d_tracer.set_current_aig_id(aig_id);
   }
 
  private:
@@ -247,13 +251,6 @@ BvInterpolationSolver::solve()
   }
 
   // Encode
-  //
-  // We need to notify the interpolation SAT proof tracer via
-  // set_current_aig_id() which AIG id the following, currently encoded SAT
-  // clauses are associated with. This mapping is later utilized in the proof
-  // tracer to generate dynamic labeling of variables and clauses according to
-  // the partition of the set of current assertions into A and B formulas. For
-  // this, we only care about association with the top most AIG node.
 
   if (!d_assertions.empty())
   {
@@ -262,7 +259,6 @@ BvInterpolationSolver::solve()
     {
       const auto& bits = d_bitblaster->bits(assertion);
       assert(!bits.empty());
-      d_interpol_sat_solver->set_current_aig_id(bits[0].get_id());
       d_cnf_encoder->encode(bits[0], true);
     }
     d_assertions.clear();
@@ -273,7 +269,6 @@ BvInterpolationSolver::solve()
     const auto& bits = d_bitblaster->bits(assumption);
     assert(!bits.empty());
     util::Timer timer(d_stats.time_encode);
-    d_interpol_sat_solver->set_current_aig_id(bits[0].get_id());
     d_cnf_encoder->encode(bits[0], false);
     d_sat_solver->assume(bits[0].get_id());
   }
@@ -369,17 +364,13 @@ BvInterpolationSolver::label_clauses(
   {
     const bitblast::AigNode& cur = visit.back();
     int64_t id                   = cur.get_id();
-
-    {
-      auto [it, inserted] = cache.insert(id);
-      if (!inserted)
-      {
-        visit.pop_back();
-        continue;
-      }
-    }
-
     visit.pop_back();
+
+    auto [it, inserted] = cache.insert(id);
+    if (!inserted)
+    {
+      continue;
+    }
 
     if (cur.is_and())
     {

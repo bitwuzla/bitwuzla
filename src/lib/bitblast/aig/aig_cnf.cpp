@@ -22,6 +22,7 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level)
 {
   if (top_level)
   {
+    // flatten, thus only add leafs of top-level AIGs
     std::unordered_set<int64_t> cache;
     std::vector<std::reference_wrapper<const AigNode>> visit{node};
     std::vector<std::reference_wrapper<const AigNode>> children;
@@ -51,7 +52,9 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level)
 
     for (const AigNode& child : children)
     {
-      d_sat_solver.add_clause({child.get_id()});
+      auto id = child.get_id();
+      // leafs of top-level AIGs are associated with the top-most AIG
+      d_sat_solver.add_clause({id}, node.get_id());
       ++d_statistics.num_clauses;
     }
   }
@@ -200,7 +203,8 @@ AigCnfEncoder::_encode(const AigNode& aig)
       set_encoded(*cur);
       if (cur->is_true() || cur->is_false())
       {
-        d_sat_solver.add_clause({std::abs(cur->get_id())});
+        auto id = std::abs(cur->get_id());
+        d_sat_solver.add_clause({id}, id);
         ++d_statistics.num_clauses;
         ++d_statistics.num_literals;
       }
@@ -242,10 +246,10 @@ AigCnfEncoder::_encode(const AigNode& aig)
           auto a = -children[1]->get_id();  // then
           auto b = -children[2]->get_id();  // else
 
-          d_sat_solver.add_clause({-x, -c, a});
-          d_sat_solver.add_clause({-x, c, b});
-          d_sat_solver.add_clause({x, -c, -a});
-          d_sat_solver.add_clause({x, c, -b});
+          d_sat_solver.add_clause({-x, -c, a}, x);
+          d_sat_solver.add_clause({-x, c, b}, x);
+          d_sat_solver.add_clause({x, -c, -a}, x);
+          d_sat_solver.add_clause({x, c, -b}, x);
           d_statistics.num_clauses += 4;
           d_statistics.num_literals += 12;
         }
@@ -259,9 +263,9 @@ AigCnfEncoder::_encode(const AigNode& aig)
           auto a = (*cur)[0].get_id();
           auto b = (*cur)[1].get_id();
 
-          d_sat_solver.add_clause({-x, a});
-          d_sat_solver.add_clause({-x, b});
-          d_sat_solver.add_clause({x, -a, -b});
+          d_sat_solver.add_clause({-x, a}, x);
+          d_sat_solver.add_clause({-x, b}, x);
+          d_sat_solver.add_clause({x, -a, -b}, x);
           d_statistics.num_clauses += 3;
           d_statistics.num_literals += 7;
         }

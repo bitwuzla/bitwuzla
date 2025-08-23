@@ -24,8 +24,9 @@ using ClauseList = std::vector<std::vector<int64_t>>;
 class DummySatSolver : public bitblast::SatInterface
 {
  public:
-  void add(int64_t lit) override
+  void add(int64_t lit, int64_t aig_id = 0) override
   {
+    (void) aig_id;
     if (std::abs(lit) > d_max_var)
     {
       d_max_var = std::abs(lit);
@@ -41,8 +42,10 @@ class DummySatSolver : public bitblast::SatInterface
       d_clause.push_back(lit);
     }
   }
-  void add_clause(const std::initializer_list<int64_t>& literals) override
+  void add_clause(const std::initializer_list<int64_t>& literals,
+                  int64_t aig_id = 0) override
   {
+    (void) aig_id;
     for (auto lit : literals)
     {
       add(lit);

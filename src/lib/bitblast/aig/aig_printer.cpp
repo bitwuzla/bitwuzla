@@ -146,8 +146,9 @@ class CnfPrinter : public bitblast::SatInterface
  public:
   CnfPrinter() = default;
 
-  void add(int64_t lit) override
+  void add(int64_t lit, int64_t aig_id = 0) override
   {
+    (void) aig_id;
     int64_t abs_lit = std::abs(lit);
     if (abs_lit > d_max_var)
     {
@@ -156,8 +157,10 @@ class CnfPrinter : public bitblast::SatInterface
     d_literals.push_back(lit);
   }
 
-  void add_clause(const std::initializer_list<int64_t>& literals) override
+  void add_clause(const std::initializer_list<int64_t>& literals,
+                  int64_t aig_id = 0) override
   {
+    (void) aig_id;
     for (const auto& lit : literals)
     {
       add(lit);
