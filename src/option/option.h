@@ -118,6 +118,7 @@ enum class SatSolver
   CRYPTOMINISAT,
   GIMSATUL,
   KISSAT,
+  AE_KISSAT,
 };
 std::ostream& operator<<(std::ostream& out, SatSolver solver);
 
