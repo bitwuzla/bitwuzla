@@ -10,6 +10,6 @@
 
 #define VERSION "@version@"
 #define COMPILER "@compiler@"
-#define ID "unknown"
-#define BUILD ""
+#define BUILD "AE_Kissat2025_MAB"
+#define ID "ae_kissat2025_mab-@version@"
 #define DIR ""
