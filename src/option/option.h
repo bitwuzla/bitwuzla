@@ -115,6 +115,7 @@ enum class SatSolver
   CADICAL,
   CRYPTOMINISAT,
   KISSAT,
+  AE_KISSAT,
 };
 
 enum class PropPathSelection
