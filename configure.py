@@ -121,6 +121,7 @@ def main():
                     help='delete build directory if it already exists')
     bool_opt(ap, 'cadical', 'CaDiCaL support', True)
     bool_opt(ap, 'kissat', 'Kissat support')
+    bool_opt(ap, 'ae_kissat', 'AE_Kissat support')
     bool_opt(ap, 'cryptominisat', 'CryptoMiniSat support')
     bool_opt(ap, 'gimsatul', 'Gimsatul support')
     bool_opt(ap,
@@ -174,6 +175,8 @@ def main():
         build_opts.append(f'-Dcadical={_bool(args.cadical)}')
     if args.kissat is not None:
         build_opts.append(f'-Dkissat={_bool(args.kissat)}')
+    if args.ae_kissat is not None:
+        build_opts.append(f'-Dae_kissat={_bool(args.ae_kissat)}')
     if args.cryptominisat is not None:
         build_opts.append(f'-Dcryptominisat={_bool(args.cryptominisat)}')
     if args.gimsatul is not None:
