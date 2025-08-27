@@ -155,10 +155,16 @@ BvSolver::value(const Node& term)
 void
 BvSolver::unsat_core(std::vector<Node>& core) const
 {
-  assert(!d_produce_interpolants);
   if (d_cur_solver == option::BvSolver::BITBLAST)
   {
-    d_bitblast_solver.unsat_core(core);
+    if (d_env.options().produce_interpolants())
+    {
+      d_interpol_solver->unsat_core(core);
+    }
+    else
+    {
+      d_bitblast_solver.unsat_core(core);
+    }
   }
   else
   {
