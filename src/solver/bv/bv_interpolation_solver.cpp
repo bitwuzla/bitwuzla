@@ -358,6 +358,8 @@ BvInterpolationSolver::label_clauses(
     for (const auto& aig : bits)
     {
       visit.push_back(aig);
+      // Enforce A/B labeling for unit clauses (top-level assertions).
+      clause_labels[aig.get_id()] = kind;
     }
   }
   do

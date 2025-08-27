@@ -24,6 +24,8 @@ tests_smt2 = [
   ['get-interpolant/pono2.smt2'],
   ['get-interpolant/pono3.smt2'],
   ['get-interpolant/red-pono2.smt2'],
+  ['get-interpolant/red-sw_sym_ex.interp.smt2'],
+  ['get-interpolant/sw_sym_ex.interp.smt2'],
   ['get-model/regr-5smod3.btor.smt2', ['--print-model']],
   ['get-model/regr-5srem3.btor.smt2'],
   ['get-model/regr-6smod3.btor.smt2'],
