@@ -173,6 +173,7 @@ CadicalTracer::delete_clause(uint64_t id,
 void
 CadicalTracer::add_assumption(int32_t lit)
 {
+  Log(2) << "assumption: " << lit;
   d_assumptions.insert(lit);
 }
 
@@ -259,11 +260,48 @@ CadicalTracer::get_interpolant(
     {
       std::stringstream ss;
       ss << "  " << p << ": (";
-      for (const auto& lit : d_clauses.at(p).d_clause)
+      for (const auto& lit : d_clauses[p].d_clause)
+      {
+        ss << " " << lit;
+      }
+      ss << " ) [";
+      for (const auto& ant : d_clauses[p].d_antecedents)
+      {
+        ss << "  " << ant;
+      }
+      ss << " ]";
+      Log(2) << ss.str();
+    }
+    Log(2);
+    Log(2) << "clause labels:";
+    for (const auto& cl : clause_labels)
+    {
+      (void) cl.first;
+      (void) cl.second;
+      std::stringstream ss;
+      Log(2) << "  " << cl.first << ": " << cl.second;
+    }
+    Log(2);
+    Log(2) << "clauses:";
+    for (size_t id = 0, size = d_clauses.size(); id < size; ++id)
+    {
+      std::stringstream ss;
+      auto& clause = d_clauses[id];
+      ss << "  " << id << ": [" << clause.d_aig_id << "]: (";
+      for (const auto& lit : clause.d_clause)
       {
         ss << " " << lit;
       }
       ss << " )";
+      if (clause_labels.find(clause.d_aig_id) != clause_labels.end())
+      {
+        ss << " [" << clause_labels.at(clause.d_aig_id) << "]";
+      }
+      else if (clause.d_clause.size() > 1
+               && clause_labels.find(-clause.d_aig_id) != clause_labels.end())
+      {
+        ss << " [" << clause_labels.at(-clause.d_aig_id) << "]";
+      }
       Log(2) << ss.str();
     }
     Log(2);
