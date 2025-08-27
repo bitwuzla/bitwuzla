@@ -255,7 +255,10 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
     check::CheckInterpolant ci(*this);
     auto res = ci.check(A, ipol);
     assert(res);
-    Warn(!res) << "interpolant check failed";
+    if (!res)
+    {
+      throw Error("interpolant check failed");
+    }
   }
 
   d_stats.max_memory = util::maximum_memory_usage();
