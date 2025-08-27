@@ -20,6 +20,7 @@ enum class VariableKind
   A,
   B,
   GLOBAL,
+  NONE,
 };
 enum class ClauseKind
 {

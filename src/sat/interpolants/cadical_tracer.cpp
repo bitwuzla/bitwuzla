@@ -36,7 +36,15 @@ VariableKind
 get_var_label(const std::unordered_map<int64_t, VariableKind>& var_labels,
               int64_t lit)
 {
-  return var_labels.at(std::abs(lit));
+  auto it = var_labels.find(std::abs(lit));
+  if (it == var_labels.end())
+  {
+    // if not labeled, it is not active, i.e., it is part of a definition
+    // that is not currently asserted/assumed
+    return VariableKind::NONE;
+  }
+  assert(it->second != VariableKind::NONE);
+  return it->second;
 }
 }  // namespace
 
@@ -335,6 +343,14 @@ CadicalTracer::get_interpolant(
         assert(clause.d_clause.size() > 1);
         it = clause_labels.find(-clause.d_aig_id);
       }
+      // If not labeled, clause is not active (i.e., currently asserted/assumed)
+      // and thus irrelevant. This can only happen in the incremental case.
+      if (it == clause_labels.end())
+      {
+        d_part_interpolants.emplace(
+            id, Interpolant({d_amgr.mk_true()}, ClauseKind::A));
+        continue;
+      }
       assert(it != clause_labels.end());
       ClauseKind kind = it->second;
       assert(d_part_interpolants.find(id) == d_part_interpolants.end());
@@ -365,9 +381,17 @@ CadicalTracer::get_interpolant(
           {
             continue;
           }
-          extend_interpolant(ipol,
-                             d_part_interpolants[antecedents[idx]],
-                             get_var_label(var_labels, lit));
+          // only consider if active (labeled)
+          auto label = get_var_label(var_labels, lit);
+          if (label != VariableKind::NONE)
+          {
+            // If NONE, then lit is not active (i.e., it is not part of a
+            // clause that is currently asserted/assumed) and thus irrelevant
+            // (the interpolant is not extended with it).
+            extend_interpolant(ipol,
+                               d_part_interpolants[antecedents[idx]],
+                               get_var_label(var_labels, lit));
+          }
         }
       }
       d_part_interpolants[id] = ipol;
