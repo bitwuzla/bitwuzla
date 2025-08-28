@@ -10,6 +10,7 @@
 
 #include "sat/interpolants/tracer_kinds.h"
 
+#include <cassert>
 #include <iostream>
 
 namespace bzla::sat::interpolants {
@@ -17,16 +18,25 @@ namespace bzla::sat::interpolants {
 std::ostream&
 operator<<(std::ostream& out, VariableKind kind)
 {
-  out << (kind == VariableKind::A ? "A"
-                                  : (kind == VariableKind::B ? "B" : "GLOBAL"));
+  switch (kind)
+  {
+    case VariableKind::A: out << "A"; break;
+    case VariableKind::B: out << "B"; break;
+    case VariableKind::GLOBAL: out << "GLOBAL"; break;
+    default: assert(kind == VariableKind::NONE); out << "NONE";
+  }
   return out;
 }
 
 std::ostream&
 operator<<(std::ostream& out, ClauseKind kind)
 {
-  out << (kind == ClauseKind::A ? "A"
-                                : (kind == ClauseKind::B ? "B" : "LEARNED"));
+  switch (kind)
+  {
+    case ClauseKind::A: out << "A"; break;
+    case ClauseKind::B: out << "B"; break;
+    default: assert(kind == ClauseKind::LEARNED); out << "LEARNED";
+  }
   return out;
 }
 
