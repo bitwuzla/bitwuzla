@@ -224,6 +224,11 @@ Result
 BvInterpolationSolver::solve()
 {
   d_sat_solver->configure_terminator(d_env.terminator());
+  if (d_reset_sat)
+  {
+    init_sat_solver();
+    d_reset_sat = false;
+  }
 
   // Bitblast and determine variable labels
   if (!d_assertions.empty())
@@ -257,7 +262,6 @@ BvInterpolationSolver::solve()
       assert(!bits.empty());
       d_cnf_encoder->encode(bits[0], true);
     }
-    d_assertions.clear();
   }
 
   for (const Node& assumption : d_assumptions)

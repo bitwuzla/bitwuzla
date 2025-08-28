@@ -1141,6 +1141,7 @@ tests_smt2 = [
   ['solver/bv/redand3twice.btor.smt2'],
   ['solver/bv/redand3twice.smt2'],
   ['solver/bv/redor3.btor.smt2'],
+  ['solver/bv/red-murxla-771693115476ea54.min.smt2'],
   ['solver/bv/regr-5smod3.btor.smt2'],
   ['solver/bv/regr-5srem3.btor.smt2'],
   ['solver/bv/regr-6smod3.btor.smt2'],

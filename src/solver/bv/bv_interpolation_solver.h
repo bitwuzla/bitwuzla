@@ -62,7 +62,7 @@ class BvInterpolationSolver : public Solver,
   void unsat_core(std::vector<Node>& core) const override;
 
   void push() override {}
-  void pop() override { init_sat_solver(); }
+  void pop() override { d_reset_sat = true; }
 
   /**
    * Get interpolant I of a formulas A and B such that
@@ -243,6 +243,8 @@ class BvInterpolationSolver : public Solver,
   std::unique_ptr<InterpolationSatSolver> d_interpol_sat_solver;
   /** Result of last solve() call. */
   Result d_last_result;
+
+  bool d_reset_sat = false;
 };
 
 }  // namespace bv
