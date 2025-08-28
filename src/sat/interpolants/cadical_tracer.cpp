@@ -313,6 +313,12 @@ CadicalTracer::get_interpolant(
       Log(2) << ss.str();
     }
     Log(2);
+    Log(2) << "variable labels:";
+    for (const auto& vl : var_labels)
+    {
+      Log(2) << vl.first << ": " << vl.second;
+    }
+    Log(2);
   }
 
   for (uint64_t id : d_proof_core)
