@@ -134,10 +134,12 @@ class Statistics
   template <typename T>
   T& new_stat(const std::string& name)
   {
-    assert(d_stats.find(name) == d_stats.end());
-    auto [it, inserted] = d_stats.emplace(name, T());
-    assert(inserted);
-    return std::get<T>(it->second);
+    // assert(d_stats.find(name) == d_stats.end());
+    // auto [it, inserted] = d_stats.emplace(name, T());
+    // assert(inserted);
+    // return std::get<T>(it->second);
+    d_stats[name] = T();
+    return std::get<T>(d_stats[name]);
   }
 
   /** Print statistics to std::cout. */

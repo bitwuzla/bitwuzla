@@ -349,14 +349,6 @@ CadicalTracer::get_interpolant(
         assert(clause.d_clause.size() > 1);
         it = clause_labels.find(-clause.d_aig_id);
       }
-      // If not labeled, clause is not active (i.e., currently asserted/assumed)
-      // and thus irrelevant. This can only happen in the incremental case.
-      if (it == clause_labels.end())
-      {
-        d_part_interpolants.emplace(
-            id, Interpolant({d_amgr.mk_true()}, ClauseKind::A));
-        continue;
-      }
       assert(it != clause_labels.end());
       ClauseKind kind = it->second;
       assert(d_part_interpolants.find(id) == d_part_interpolants.end());
@@ -387,17 +379,14 @@ CadicalTracer::get_interpolant(
           {
             continue;
           }
-          // only consider if active (labeled)
           auto label = get_var_label(var_labels, lit);
-          if (label != VariableKind::NONE)
-          {
-            // If NONE, then lit is not active (i.e., it is not part of a
-            // clause that is currently asserted/assumed) and thus irrelevant
-            // (the interpolant is not extended with it).
-            extend_interpolant(ipol,
-                               d_part_interpolants[antecedents[idx]],
-                               get_var_label(var_labels, lit));
-          }
+          assert(label != VariableKind::NONE);
+          // If NONE, then lit is not active (i.e., it is not part of a
+          // clause that is currently asserted/assumed) and thus irrelevant
+          // (the interpolant is not extended with it).
+          extend_interpolant(ipol,
+                             d_part_interpolants[antecedents[idx]],
+                             get_var_label(var_labels, lit));
         }
       }
       d_part_interpolants[id] = ipol;

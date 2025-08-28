@@ -113,6 +113,7 @@ class BvInterpolationSolver::InterpolationSatSolver
 
 BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
     : Solver(env, state),
+      backtrack::Backtrackable(state.backtrack_mgr()),
       d_stats(env.statistics(), "solver::bv::interpol::"),
       d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
@@ -120,12 +121,7 @@ BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
       d_last_result(Result::UNKNOWN)
 {
   d_bitblaster.reset(new AigBitblaster());
-  d_sat_solver.reset(new sat::Cadical());
-  d_tracer.reset(new CadicalTracer(d_env, *d_bitblaster));
-  d_interpol_sat_solver.reset(
-      new InterpolationSatSolver(env, *d_sat_solver, *d_tracer));
-  d_sat_solver->solver()->connect_proof_tracer(d_tracer.get(), true);
-  d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_interpol_sat_solver));
+  init_sat_solver();
 }
 
 BvInterpolationSolver::~BvInterpolationSolver()
@@ -331,6 +327,20 @@ BvInterpolationSolver::unsat_core(std::vector<Node>& core) const
 
 /* --- BvInterpolationSolver private ---------------------------------------- */
 
+void
+BvInterpolationSolver::init_sat_solver()
+{
+  if (d_sat_solver)
+  {
+    d_sat_solver->solver()->disconnect_proof_tracer(d_tracer.get());
+  }
+  d_tracer.reset(new CadicalTracer(d_env, *d_bitblaster));
+  d_sat_solver.reset(new sat::Cadical());
+  d_interpol_sat_solver.reset(
+      new InterpolationSatSolver(d_env, *d_sat_solver, *d_tracer));
+  d_sat_solver->solver()->connect_proof_tracer(d_tracer.get(), true);
+  d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_interpol_sat_solver));
+}
 void
 BvInterpolationSolver::update_statistics()
 {

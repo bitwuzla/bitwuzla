@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <unordered_set>
 
+#include "backtrack/backtrackable.h"
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "bitblast/aig/aig_cnf.h"
@@ -42,7 +43,9 @@ class AigBitblaster;
 class BvSolver;
 class InterpolationBitblaster;
 
-class BvInterpolationSolver : public Solver, public BvSolverInterface
+class BvInterpolationSolver : public Solver,
+                              public BvSolverInterface,
+                              public backtrack::Backtrackable
 {
  public:
   /** Sat interface used for d_cnf_encoder. */
@@ -57,6 +60,9 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   Result solve() override;
   Node value(const Node& term) override;
   void unsat_core(std::vector<Node>& core) const override;
+
+  void push() override {}
+  void pop() override { init_sat_solver(); }
 
   /**
    * Get interpolant I of a formulas A and B such that
@@ -100,6 +106,8 @@ class BvInterpolationSolver : public Solver, public BvSolverInterface
   } d_stats;
 
  private:
+  void init_sat_solver();
+
   /** Update AIG and CNF statistics. */
   void update_statistics();
 
