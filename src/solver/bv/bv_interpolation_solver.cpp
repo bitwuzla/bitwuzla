@@ -409,16 +409,6 @@ BvInterpolationSolver::label_lemma(
     const Node& node)
 {
   const auto& bits = d_bitblaster->bits(node);
-  if (d_logger.is_log_enabled(2))
-  {
-    std::stringstream ss;
-    for (const auto& aig : bits)
-    {
-      ss << " " << aig;
-    }
-    Log(2) << "label_lemma: (" << ss.str() << ")";
-  }
-
   bv::AigBitblaster::aig_node_ref_vector visit;
   std::unordered_set<int64_t> cache;
   std::vector<int64_t> aig_consts;
@@ -474,6 +464,20 @@ BvInterpolationSolver::label_lemma(
 #endif
         var_labels.emplace(var, kind);
     assert(inserted);
+  }
+
+  if (d_logger.is_log_enabled(2))
+  {
+    std::stringstream ss;
+    for (const auto& aig : bits)
+    {
+      ss << " " << aig;
+    }
+    Log(2) << "label lemma ["
+           << (kind == VariableKind::GLOBAL || kind == VariableKind::A
+                   ? ClauseKind::A
+                   : ClauseKind::B)
+           << "]: (" << ss.str() << ")";
   }
 
   label_clauses(clause_labels,

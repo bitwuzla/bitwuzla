@@ -347,6 +347,13 @@ AbstractionModule::get_original_assertion(const Node& processed_assertion)
   return it->second;
 }
 
+Node
+AbstractionModule::remove_abstractions(const Node& node) const
+{
+  std::unordered_map<Node, Node> cache;
+  return utils::substitute(d_env.nm(), node, d_abstractions_rev, cache);
+}
+
 /* --- AbstractionModule private -------------------------------------------- */
 
 bool

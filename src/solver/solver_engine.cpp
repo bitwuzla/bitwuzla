@@ -201,7 +201,7 @@ SolverEngine::interpolant(const std::vector<Node>& A,
     {
       a = d_am->process_assertion(a, false);
     }
-    return d_bv_solver.interpolant(_A, _B);
+    return d_am->remove_abstractions(d_bv_solver.interpolant(_A, _B));
   }
   return d_bv_solver.interpolant(A, B);
 }

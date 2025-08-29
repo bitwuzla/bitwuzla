@@ -47,6 +47,15 @@ class AbstractionModule
    */
   const Node& get_original_assertion(const Node& processed_assertion);
 
+  /**
+   * Process given node to substitute abstractions with corresponding original
+   * (abstracted) terms.
+   * @param node The node to process.
+   * @return The 'sanitized' node, with all abstractions substituted with the
+   *         corresponding original terms.
+   */
+  Node remove_abstractions(const Node& node) const;
+
  private:
   /** @return Whether this term should be abstracted. */
   bool abstract(const Node& node) const;
