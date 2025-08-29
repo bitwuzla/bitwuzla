@@ -17,6 +17,7 @@ bitwuzla_dep = dependency('bitwuzla')
 foreach e : examples
   exe = executable(
     e, ''.join(e, '.cpp'),
-    dependencies: [bitwuzla_dep])
-    test(e, exe, suite: 'cpp')
+    dependencies: [bitwuzla_dep],
+    implicit_include_directories: false)
+  test(e, exe, suite: 'cpp')
 endforeach
