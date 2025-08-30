@@ -515,8 +515,12 @@ CadicalTracer::get_interpolant_node(Interpolant interpolant)
     {
       if (it->second.is_null())
       {
-        it->second =
-            get_node_from_bb_cache(std::abs(cur.get_id()), rev_bb_cache);
+        if (cur.is_const())
+        {
+          it->second =
+              get_node_from_bb_cache(std::abs(cur.get_id()), rev_bb_cache);
+          assert(!it->second.is_null());
+        }
         if (it->second.is_null())
         {
           int64_t id_left  = cur[0].get_id();
@@ -550,6 +554,7 @@ CadicalTracer::get_interpolant_node(Interpolant interpolant)
     Log(2);
   }
 
+  Log(1) << "SAT interpolant: " << interpolant;
   Log(1) << "SAT interpolant size: " << interpol_size << " ands";
   d_stats.size_interpolant = interpol_size;
 

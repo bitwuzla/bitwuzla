@@ -1,0 +1,2 @@
+unsat
+(and (= a #b1) (not (and (= #b0 ((_ extract 1 1) t)) (= #b0 ((_ extract 0 0) t)))))
