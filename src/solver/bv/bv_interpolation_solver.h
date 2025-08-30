@@ -19,7 +19,6 @@
 #include "backtrack/vector.h"
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig_bitblaster.h"
-#include "rewrite/rewriter.h"
 #include "sat/interpolants/tracer_kinds.h"
 #include "solver/bv/bv_solver_interface.h"
 #include "solver/solver.h"
@@ -242,8 +241,6 @@ class BvInterpolationSolver : public Solver,
   std::unique_ptr<sat::interpolants::Tracer> d_tracer;
   /** SAT solver interface for CNF encoder, which wraps `d_sat_solver`. */
   std::unique_ptr<InterpolationSatSolver> d_interpol_sat_solver;
-  /** A rewriter configured specifically for rewriting the interpolant. */
-  Rewriter d_rewriter;
   /** Result of last solve() call. */
   Result d_last_result;
 

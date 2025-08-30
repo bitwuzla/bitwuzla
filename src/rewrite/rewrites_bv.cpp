@@ -1499,11 +1499,11 @@ RewriteRule<RewriteRuleKind::BV_EXTRACT_AND>::_apply(Rewriter& rewriter,
 
 /**
  * match:  ((_ extract u l) (ite c a b))
- *          where a or b are either a VALUE, a CONSTANT or a BV_EXTRACT
+ *          where a or b are eithe a VALUE, a CONSTANT or a BV_EXTRACT
  * result: (ite c ((_ extract u l) a) ((_ extract u l) b))
  *
  * match:  ((_ extract u l) (bvnot (ite c a b)))
- *          where a or b are either a VALUE, a CONSTANT or a BV_EXTRACT
+ *          where a or b are eithe a VALUE, a CONSTANT or a BV_EXTRACT
  * result: (bvnot (ite c ((_ extract u l) a) ((_ extract u l) b)))
  */
 template <>
