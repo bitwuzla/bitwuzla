@@ -118,6 +118,7 @@ BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
       d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
       d_lemmas(state.backtrack_mgr()),
+      d_rewriter(env, Rewriter::LEVEL_INTERPOLANTS, "interpolants"),
       d_last_result(Result::UNKNOWN)
 {
   d_bitblaster.reset(new AigBitblaster());
@@ -158,7 +159,11 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A,
   util::Timer timer(d_stats.time_interpol);
   Node res = d_env.rewriter().rewrite(
       d_tracer->get_interpolant(var_labels, clause_labels));
+  Log(2) << "interpolant (tracer): " << res;
   d_stats.size_interpolant += d_tracer->d_stats.size_interpolant;
+
+  res = d_rewriter.rewrite(res);
+  Log(2) << "interpolant (after interpolant-specific rewriting): " << res;
 
   Log(1) << "interpolant: " << res;
   if (d_logger.is_log_enabled(1))

@@ -94,13 +94,15 @@ Rewriter::Rewriter(Env& env, uint8_t level, const std::string& id)
       d_logger(env.logger()),
       d_level(level),
       d_arithmetic(level == LEVEL_ARITHMETIC),
+      d_interpolants(level == LEVEL_INTERPOLANTS),
       d_eval_cache(env.options().rewrite_level() > 0 ? d_cache
                                                      : d_eval_cache_aux),
       d_stats(env.statistics(),
               "rewriter::" + (id.empty() ? "" : "(" + id + ")::"))
 {
   static_assert(Rewriter::LEVEL_ARITHMETIC > Rewriter::LEVEL_MAX);
-  assert(d_level <= Rewriter::LEVEL_ARITHMETIC);
+  static_assert(Rewriter::LEVEL_INTERPOLANTS > Rewriter::LEVEL_MAX);
+  assert(d_level <= Rewriter::LEVEL_INTERPOLANTS);
   (void) d_env;  // only used in debug mode
 }
 
@@ -1259,6 +1261,10 @@ Rewriter::rewrite_bv_extract(const Node& node)
     BZLA_APPLY_RW_RULE(BV_EXTRACT_ADD_MUL);
   }
 
+  if (d_interpolants)
+  {
+    BZLA_APPLY_RW_RULE(INTERPOLANT_BV_EXTRACT);
+  }
 DONE:
   return res;
 }
@@ -2066,6 +2072,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     CASE(BV_EXTRACT_AND);
     CASE(BV_EXTRACT_ITE);
     CASE(BV_EXTRACT_ADD_MUL);
+    CASE(INTERPOLANT_BV_EXTRACT);
     CASE(NORM_BV_EXTRACT_ADD_MUL_REV1);
     CASE(NORM_BV_EXTRACT_ADD_MUL_REV2);
     CASE(NORM_BV_EXTRACT_ADD_MUL_REV3);

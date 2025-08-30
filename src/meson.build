@@ -231,6 +231,7 @@ sources = files([
   'rewrite/rewrites_array.cpp',
   'rewrite/rewrites_bool.cpp',
   'rewrite/rewrites_bv.cpp',
+  'rewrite/rewrites_bv_interp.cpp',
   'rewrite/rewrites_bv_norm.cpp',
   'rewrite/rewrites_core.cpp',
   'rewrite/rewrites_fp.cpp',

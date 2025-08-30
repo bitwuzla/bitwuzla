@@ -46,6 +46,12 @@ class Rewriter
    */
   inline static constexpr uint8_t LEVEL_ARITHMETIC = LEVEL_MAX + 1;
   /**
+   * The level of rewrites for interpolants. This level can not be configured
+   * from the outside and rewrites of this level are only applied specifically
+   * to sanitize interpolants.
+   */
+  inline static constexpr uint8_t LEVEL_INTERPOLANTS = LEVEL_MAX + 2;
+  /**
    * Constructor.
    * @param env   The associated environment.
    * @param level The rewriting level; level 0 disables all rewrites
@@ -283,9 +289,15 @@ class Rewriter
   /** Logger instance */
   util::Logger& d_logger;
 
-  /** True to enable rewriting, false to only enable operator elimination. */
+  /**
+   * A value > 0 to enable rewriting, 0 to only enable operator elimination.
+   */
   uint8_t d_level;
+  /** True if speculative arithmetic rewrites are enabled. */
   const bool d_arithmetic;
+  /** True if this is a rewriter for interpolants. */
+  const bool d_interpolants;
+
   /** Cache nodes rewritten during rewrite(), maps node to rewritten form. */
   std::unordered_map<Node, Node> d_cache;
   /**
@@ -479,6 +491,7 @@ enum class RewriteRuleKind
   BV_EXTRACT_AND,
   BV_EXTRACT_ITE,
   BV_EXTRACT_ADD_MUL,
+  INTERPOLANT_BV_EXTRACT,
   NORM_BV_EXTRACT_ADD_MUL_REV1,
   NORM_BV_EXTRACT_ADD_MUL_REV2,
   NORM_BV_EXTRACT_ADD_MUL_REV3,
