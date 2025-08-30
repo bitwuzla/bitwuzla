@@ -102,7 +102,7 @@ license_text += '\n\n  SymFPU\n  https://github.com/martin-cs/symfpu'
 license_text = license_text.replace('\n', '\\n').replace('"', '\\"')
 
 # Generate header
-is_git_version = run_command('git', 'rev-parse', '--is-inside-work-tree', check: false)
+is_git_version = run_command('sh', '-c', 'git', 'rev-parse', '--is-inside-work-tree', check: false)
 conf_data = configuration_data()
 conf_data.set('cc', c_compiler.get_id() + ' ' + c_compiler.version())
 conf_data.set('cxx', cpp_compiler.get_id() + ' ' + cpp_compiler.version())
