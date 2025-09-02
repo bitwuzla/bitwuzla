@@ -28,6 +28,7 @@ def check(testfile, expected, out, err, output_dir):
     if out:
         out = out.replace('\r', '')
 
+    ignore_output = False
     cmp = '{}{}'.format(out, err)
     if not expected:
         n_check_sat = 0
@@ -43,7 +44,14 @@ def check(testfile, expected, out, err, output_dir):
                     expected += "\n"
                 elif line.startswith("(check-sat"):
                     n_check_sat += 1
+                elif line.startswith('; ignore output'):
+                    ignore_output = True
         assert n_check_sat == n_status
+
+    if ignore_output:
+        cmp = '\n'.join(
+                s for s in cmp.splitlines()
+                if s in ['sat', 'unsat', 'unknown'])
 
     if expected.strip() != cmp.strip():
         print("Expected:\n{}".format(expected.encode()), file=sys.stderr)
@@ -81,7 +89,11 @@ def main():
     cmd_args.extend(bzla_args)
 
     testname, _ = os.path.splitext(bzla_args[0])
+    # Name of general expect file, will be used for all testers if expect file
+    # for unsat core tester below does not exist.
     outfilename = '{}.expect'.format(testname)
+    # Name of expect file for unsat core tester. Ignored if it does not exist.
+    outfilename_uc = '{}.uc.expect'.format(testname)
     #print(outfilename)
     #print(bzla_args)
 
@@ -99,7 +111,10 @@ def main():
         expected = 'sat'
     elif args.check_unsat:
         expected = 'unsat'
-    if os.path.exists(outfilename):
+    if '--produce-unsat-cores' in bzla_args and os.path.exists(outfilename_uc):
+        with open(outfilename_uc, 'r') as outfile:
+            expected = outfile.read()
+    elif os.path.exists(outfilename):
         with open(outfilename, 'r') as outfile:
             expected = outfile.read()
     check(bzla_args[0], expected, out, err, args.output_dir)
