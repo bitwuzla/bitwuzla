@@ -49,6 +49,7 @@ to_string(bzla::parser::smt2::Token token)
     case Token::PARLETBIND: return "<parletbind token>";
     case Token::SORTED_VAR: return "<sorted_var token>";
     case Token::SORTED_VARS: return "<sorted_vars token>";
+    case Token::BINDER_BODY: return "<binder_body token>";
 
     case Token::DECIMAL_VALUE: return "<decimal value token>";
     case Token::HEXADECIMAL_VALUE: return "<hexadecimal value token>";

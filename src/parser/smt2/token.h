@@ -55,6 +55,8 @@ enum class Token
   SORTED_VAR,
   /* (<sorted_var>+) */
   SORTED_VARS,
+  /* marker for expected body to binder, body must follow marker */
+  BINDER_BODY,
 
   /* Values --------------------------------------------------------------- */
 

@@ -44,7 +44,7 @@ Parser::reset()
   d_work_control.push_back(0);
   d_done                    = false;
   d_assertion_level         = 0;
-  d_expect_body             = false;
+  d_expect_rpar             = false;
   d_is_sorted_var           = false;
   d_is_var_binding          = false;
   d_skip_attribute_value    = false;
@@ -1258,9 +1258,14 @@ Parser::parse_term(bool look_ahead, Token la)
     {
       return false;
     }
+    if (d_expect_rpar && token != Token::RPAR)
+    {
+      return error("missing ')'");
+    }
 
     if (token == Token::RPAR)
     {
+      d_expect_rpar = false;
       if (!close_term())
       {
         return false;
@@ -1320,7 +1325,6 @@ bool
 Parser::parse_open_term(Token token)
 {
   assert(token != Token::RPAR);
-  d_expect_body = false;
 
   if (token == Token::LPAR)
   {
@@ -1893,9 +1897,9 @@ Parser::close_term()
     return error("missing identifier, invalid term", coo);
   }
 
-  if (d_expect_body)
+  if (d_work.back().d_token == Token::BINDER_BODY)
   {
-    return error("missing body to '" + std::to_string(token));
+    return error("missing body to '" + std::to_string(token) + "'");
   }
 
   bool res = false;
@@ -2077,6 +2081,11 @@ Parser::close_term()
     }
   }
 
+  if (d_work.size() > 1
+      && d_work[d_work.size() - 2].d_token == Token::BINDER_BODY)
+  {
+    d_expect_rpar = true;
+  }
   return res;
 }
 
@@ -2440,6 +2449,9 @@ Parser::close_term_let(ParsedItem& item)
                      + std::to_string(item.d_token) + "'");
   }
   set_item(item, Token::TERM, pop_term_arg());
+  assert(d_work.size() && d_work.back().d_token == Token::BINDER_BODY);
+  d_work.pop_back();
+
   size_t idx = idx_open();
   size_t n   = nargs();
   for (size_t i = 0; i < n; ++i)
@@ -2494,8 +2506,7 @@ Parser::close_term_parletbind(ParsedItem& item)
   (void) item;
   assert(d_is_var_binding);
   d_is_var_binding = false;
-  assert(!d_expect_body);
-  d_expect_body = true;
+  push_item(Token::BINDER_BODY, d_lexer->coo());
   return true;
 }
 
@@ -2539,10 +2550,9 @@ Parser::close_term_sorted_vars(ParsedItem& item)
   (void) item;
   assert(d_is_sorted_var);
   d_is_sorted_var = false;
-  assert(!d_expect_body);
-  d_expect_body = true;
   assert(peek_item_is_token(Token::SORTED_VARS, idx_open()));
   d_work.erase(d_work.begin() + idx_open());
+  push_item(Token::BINDER_BODY, d_lexer->coo());
   return true;
 }
 
@@ -3114,6 +3124,11 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
 
   for (size_t i = idx, n = idx + n_args; i < n; ++i)
   {
+    if (d_work[i].d_token == Token::BINDER_BODY)
+    {
+      assert(token == Token::EXISTS || token == Token::FORALL);
+      continue;
+    }
     if (!peek_is_term_arg(i))
     {
       return error("expected term", d_work[i].d_coo);
@@ -3451,35 +3466,41 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
 
     case Token::FORALL:
     case Token::EXISTS: {
-      for (size_t i = 0, j = idx; i < n_args; ++i, ++j)
+      for (size_t i = 0, j = idx, idx_args = 0; i < n_args; ++i, ++j)
       {
-        args[i] = peek_term_arg(j);
-        if (i < n_args - 1)
+        if (i < n_args - 2)  // n_args includes BINDER_BODY token
         {
-          if (!args[i].is_variable())
-          {
-            return error("expected variable at index " + std::to_string(i)
-                             + " as argument to '" + std::to_string(token)
-                             + "'",
-                         arg_coo(j));
-          }
-          if (args[i].sort().is_fun())
+          args[idx_args] = peek_term_arg(j);
+          assert(args[idx_args].is_variable());
+          if (args[idx_args].sort().is_fun())
           {
             return error("variable of function sort not supported", arg_coo(j));
           }
           // remove sorted variables from symbol table
-          d_table.remove(args[i].str());
+          d_table.remove(args[idx_args].str());
+          idx_args += 1;
         }
-        else
+        else if (i == n_args - 1)  // body
         {
-          if (!args[i].sort().is_bool())
+          args[idx_args] = peek_term_arg(j);
+          if (!args[idx_args].sort().is_bool())
           {
             return error("expected Boolean term as body to '"
                              + std::to_string(token) + "'",
                          arg_coo(j));
           }
+          idx_args += 1;
         }
+#ifndef NDEBUG
+        else
+        {
+          assert(d_work[j].d_token == Token::BINDER_BODY);
+        }
+#endif
       }
+      assert(args.back().is_null());
+      // previously resized to n_args, which includes BINDER_BODY
+      args.pop_back();
     }
     break;
 
@@ -3550,9 +3571,10 @@ Parser::print_work_stack()
 {
   std::cout << "work stack:" << std::endl;
   std::cout << "-----------" << std::endl;
-  for (auto& w : d_work)
+  for (size_t i = 0, size = d_work.size(); i < size; ++i)
   {
-    std::cout << "  " << w.d_token;
+    auto& w = d_work[i];
+    std::cout << "  " << i << ": " << w.d_token;
     if (std::holds_alternative<bitwuzla::Term>(w.d_item))
     {
       std::cout << ": bitwuzla::Term: " << std::get<bitwuzla::Term>(w.d_item)

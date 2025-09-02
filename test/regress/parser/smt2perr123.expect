@@ -1,1 +1,1 @@
-regress/parser/smt2perr123.smt2:1:52: missing body to 'let
+regress/parser/smt2perr123.smt2:1:52: missing body to 'let'

@@ -828,13 +828,14 @@ class Parser : public bzla::parser::Parser
    */
   uint64_t d_token_class_mask = 0;
 
-  /** True if currently open term expects a body term. */
-  bool d_expect_body    = false;
   /** True if currently open term is a sorted variable. */
   bool d_is_sorted_var  = false;
   /** True if currently open term is a variable binding. */
   bool d_is_var_binding = false;
   std::unordered_set<std::string> d_var_bindings;
+
+  /** True if next token must be RPAR. Only relevant for binders. */
+  bool d_expect_rpar = false;
 
   /**
    * True to ignore any undefined symbols when parsing unsupported attribute
