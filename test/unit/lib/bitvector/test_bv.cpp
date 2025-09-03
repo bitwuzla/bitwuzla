@@ -16,6 +16,10 @@
 #include "test_lib.h"
 #include "util/integer.h"
 
+#ifndef int128_t
+using int128_t = __int128_t;
+#endif
+
 namespace bzla::test {
 
 /* -------------------------------------------------------------------------- */
@@ -392,8 +396,12 @@ TestBitVector::_smulo(int64_t x, int64_t y, uint64_t size)
   }
   if (size < 64)
   {
-    return x * y < -std::pow(2, size - 1)
-           || x * y > static_cast<int64_t>(normalize_uint64(size - 1, ~0));
+    int128_t _x  = x;
+    int128_t _y  = y;
+    int128_t mul = _x * _y;
+    return mul < static_cast<int128_t>(-std::pow(2, size - 1))
+           || mul > static_cast<int64_t>(
+                  normalize_uint64(size - 1, ~((uint64_t) 0)));
   }
   return y != 0 && x != 0 && x * y / y != x;
 }
