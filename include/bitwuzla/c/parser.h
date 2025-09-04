@@ -110,8 +110,8 @@ BitwuzlaTerm bitwuzla_parser_parse_term(BitwuzlaParser* parser,
                                         const char** error_msg);
 /**
  * Parse sort from string.
- * @param parser     The Bitwuzla parser instance.
- * @param input The input string.
+ * @param parser The Bitwuzla parser instance.
+ * @param input  The input string.
  * @return The resulting sort.
  * @param error_msg  Output parameter for the error message in case of a
  *                   parse error, NULL if no error occurred.
@@ -124,7 +124,8 @@ BitwuzlaSort bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
  * Get the current set of (user-)declared sort symbols.
  * @note Corresponds to the sorts declared via SMT-LIB command `declare-sort`.
  *       Will always return an empty set for BTOR2 input.
- * @param size The size of the returned sort array.
+ * @param parser The Bitwuzla parser instance.
+ * @param size   The size of the returned sort array.
  * @return The declared sorts, NULL if empty.
  */
 BitwuzlaSort* bitwuzla_parser_get_declared_sorts(BitwuzlaParser* parser,
@@ -133,7 +134,8 @@ BitwuzlaSort* bitwuzla_parser_get_declared_sorts(BitwuzlaParser* parser,
  * Get the current set of (user-)declared function symbols.
  * @note Corresponds to the function symbols declared via SMT-LIB commands
  *       `declare-const` and `declare-fun`.
- * @param size The size of the returned sort array.
+ * @param parser The Bitwuzla parser instance.
+ * @param size   The size of the returned sort array.
  * @return The declared function symbols, NULL if empty.
  */
 BitwuzlaTerm* bitwuzla_parser_get_declared_funs(BitwuzlaParser* parser,
