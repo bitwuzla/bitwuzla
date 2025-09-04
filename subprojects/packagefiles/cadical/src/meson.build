@@ -108,7 +108,10 @@ if not compiler.has_function('closefrom', prefix: '#include <fcntl.h>')
   cpp_args += ['-DNCLOSEFROM']
 endif
 
-cadical_lib = library('cadical', sources: sources, cpp_args: cpp_args)
+cadical_lib = static_library('cadical',
+                      sources: sources,
+                      cpp_args: cpp_args,
+                      pic: true)
 cadical_dep = declare_dependency(
                   include_directories: include_directories('.'),
                   link_with: cadical_lib,
