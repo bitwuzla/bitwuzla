@@ -19,12 +19,12 @@ if build_static and gmp_dep.found()
                                       has_headers: ['gmp.h', 'gmpxx.h'],
                                       static: true,
                                       required: false)
-  # If we don't find the static library, build the GMP subproject as fallback.
-  if not gmp_dep.found()
-    gmp_dep = subproject('gmp-6.3.0').get_variable('gmp_dep')
-  endif
 endif
 
+# If we don't find the GMP library, build GMP subproject as static as fallback.
+if not gmp_dep.found()
+  gmp_dep = subproject('gmp-6.3.0').get_variable('gmp_dep')
+endif
 
 # Subproject dependencies
 
