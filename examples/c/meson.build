@@ -19,6 +19,7 @@ foreach e : examples
   exe = executable(
     e, ''.join(e, '.c'),
     link_args: ['-lstdc++', '-lm'],
-    dependencies: [bitwuzla_dep])
+    dependencies: [bitwuzla_dep],
+    implicit_include_directories: false)
     test(e, exe, suite: 'c')
 endforeach
