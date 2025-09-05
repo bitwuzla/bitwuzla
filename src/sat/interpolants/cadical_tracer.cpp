@@ -73,10 +73,8 @@ CadicalTracer::add_original_clause(uint64_t id,
 
   if (restore)
   {
-    assert(d_clauses.size() > id);
-    d_clauses[id].d_clause = clause;
-    d_clauses[id].d_type   = ClauseType::ORIGINAL;
-    d_clauses[id].d_aig_id = d_cur_aig_id;
+    // We must never delete original clauses as we cannot restore their AIG
+    // id. Thus, we also never restore original clauses.
     return;
   }
 
@@ -158,24 +156,14 @@ CadicalTracer::delete_clause(uint64_t id,
                              bool redundant,
                              const std::vector<int32_t>& clause)
 {
+  // We must never delete original clauses as we cannot restore their AIG
+  // id. Thus, we also never restore original clauses. We could potentially
+  // delete derived clauses, but we encountered cases where derived clauses
+  // that were (marked redundant and) deleted appeared in the proof core.
+  // Consequently, for now, we never delete clauses.
   (void) id;
   (void) redundant;
   (void) clause;
-  //   assert(id < d_clauses.size());
-  // #ifndef NDEBUG
-  //   std::unordered_set<int32_t> lits;
-  //   for (int32_t lit : d_clauses[id].first)
-  //   {
-  //     lits.insert(lit);
-  //   }
-  //   for (int32_t lit : clause)
-  //   {
-  //     assert(lits.find(lit) != lits.end());
-  //   }
-  //   assert(lits.size() == clause.size());
-  // #endif
-  //   d_clauses[id].first.clear();
-  //   d_clauses[id].second = ClauseType::NONE;
 }
 
 void
