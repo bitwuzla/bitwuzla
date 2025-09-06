@@ -226,7 +226,6 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
       _A.push_back(d_assertions[a.second]);
     }
   }
-  assert(_A.size() + _B.size() == d_original_assertions.size());
 
   // Preprocessor determined unsat, so we can make a shortcut.
   if (d_sat_state_pp == Result::UNSAT)
