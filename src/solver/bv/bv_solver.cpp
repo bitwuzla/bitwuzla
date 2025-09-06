@@ -58,14 +58,23 @@ BvSolver::BvSolver(Env& env, SolverState& state)
       d_solver_mode(env.options().bv_solver()),
       d_stats(env.statistics())
 {
-  if (d_solver_mode == option::BvSolver::PROP
-      || d_solver_mode == option::BvSolver::PREPROP)
-  {
-    d_prop_solver.reset(new BvPropSolver(env, state, d_bitblast_solver));
-  }
   if (env.options().produce_interpolants())
   {
     d_interpol_solver.reset(new BvInterpolationSolver(env, state));
+  }
+  if (d_solver_mode == option::BvSolver::PROP
+      || d_solver_mode == option::BvSolver::PREPROP)
+  {
+    if (env.options().produce_interpolants())
+    {
+      d_prop_solver.reset(
+          new BvPropSolver(env, state, d_interpol_solver->bitblaster()));
+    }
+    else
+    {
+      d_prop_solver.reset(
+          new BvPropSolver(env, state, d_bitblast_solver.bitblaster()));
+    }
   }
 }
 

@@ -13,8 +13,9 @@
 
 #include "backtrack/backtrackable.h"
 #include "ls/ls_bv.h"
-#include "solver/bv/bv_bitblast_solver.h"
+#include "solver/bv/aig_bitblaster.h"
 #include "solver/bv/bv_solver_interface.h"
+#include "solver/solver.h"
 #include "util/statistics.h"
 
 namespace bzla {
@@ -26,7 +27,7 @@ namespace bv {
 class BvPropSolver : public Solver, public BvSolverInterface
 {
  public:
-  BvPropSolver(Env& env, SolverState& state, BvBitblastSolver& bb_solver);
+  BvPropSolver(Env& env, SolverState& state, AigBitblaster& bitblaster);
   ~BvPropSolver();
 
   Result solve() override;
@@ -66,11 +67,13 @@ class BvPropSolver : public Solver, public BvSolverInterface
   void print_progress() const;
 
   /**
-   * The associated bit-blasting solver, for bit-blasting to determine
-   * constant bits information. We utilize the bit-blaster of the BB solver
-   * to avoid redundant bit-blasting work.
+   * The bit-blaster of the associated bit-blasting solver.
+   *
+   * We bit-blast to AIGs to determine constant bits information and use the
+   * bit-blaster of the associated bit-blasting solver to avoid redundant
+   * bit-blasting work.
    */
-  BvBitblastSolver& d_bb_solver;
+  AigBitblaster& d_bitblaster;
   /** The local search engine. */
   std::unique_ptr<bzla::ls::LocalSearchBV> d_ls;
   /** The backtrack manager for the local search engine. */

@@ -120,7 +120,6 @@ BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
       d_lemmas(state.backtrack_mgr()),
       d_last_result(Result::UNKNOWN)
 {
-  d_bitblaster.reset(new AigBitblaster());
   init_sat_solver();
 }
 
@@ -236,17 +235,17 @@ BvInterpolationSolver::solve()
     util::Timer timer(d_stats.time_bitblast);
     for (const Node& assertion : d_assertions)
     {
-      d_bitblaster->bitblast(assertion);
+      d_bitblaster.bitblast(assertion);
     }
   }
   if (!d_assumptions.empty())
   {
     for (const Node& assumption : d_assumptions)
     {
-      if (d_bitblaster->bits(assumption).empty())
+      if (d_bitblaster.bits(assumption).empty())
       {
         util::Timer timer(d_stats.time_bitblast);
-        d_bitblaster->bitblast(assumption);
+        d_bitblaster.bitblast(assumption);
       }
     }
   }
@@ -258,7 +257,7 @@ BvInterpolationSolver::solve()
     util::Timer timer(d_stats.time_encode);
     for (const Node& assertion : d_assertions)
     {
-      const auto& bits = d_bitblaster->bits(assertion);
+      const auto& bits = d_bitblaster.bits(assertion);
       assert(!bits.empty());
       d_cnf_encoder->encode(bits[0], true);
     }
@@ -266,7 +265,7 @@ BvInterpolationSolver::solve()
 
   for (const Node& assumption : d_assumptions)
   {
-    const auto& bits = d_bitblaster->bits(assumption);
+    const auto& bits = d_bitblaster.bits(assumption);
     assert(!bits.empty());
     util::Timer timer(d_stats.time_encode);
     d_cnf_encoder->encode(bits[0], false);
@@ -289,7 +288,7 @@ BvInterpolationSolver::value(const Node& term)
   assert(BvSolver::is_leaf(term));
   assert(term.type().is_bool() || term.type().is_bv());
 
-  const auto& bits = d_bitblaster->bits(term);
+  const auto& bits = d_bitblaster.bits(term);
   const Type& type = term.type();
   NodeManager& nm  = d_env.nm();
 
@@ -320,7 +319,7 @@ BvInterpolationSolver::unsat_core(std::vector<Node>& core) const
 
   for (const Node& assumption : d_assumptions)
   {
-    const auto& bits = d_bitblaster->bits(assumption);
+    const auto& bits = d_bitblaster.bits(assumption);
     assert(bits.size() == 1);
     if (d_sat_solver->failed(bits[0].get_id()))
     {
@@ -338,7 +337,7 @@ BvInterpolationSolver::init_sat_solver()
   {
     d_sat_solver->solver()->disconnect_proof_tracer(d_tracer.get());
   }
-  d_tracer.reset(new CadicalTracer(d_env, *d_bitblaster));
+  d_tracer.reset(new CadicalTracer(d_env, d_bitblaster));
   d_sat_solver.reset(new sat::Cadical());
   d_interpol_sat_solver.reset(
       new InterpolationSatSolver(d_env, *d_sat_solver, *d_tracer));
@@ -348,9 +347,9 @@ BvInterpolationSolver::init_sat_solver()
 void
 BvInterpolationSolver::update_statistics()
 {
-  d_stats.bb_num_aig_ands     = d_bitblaster->num_aig_ands();
-  d_stats.bb_num_aig_consts   = d_bitblaster->num_aig_consts();
-  d_stats.bb_num_aig_shared   = d_bitblaster->num_aig_shared();
+  d_stats.bb_num_aig_ands     = d_bitblaster.num_aig_ands();
+  d_stats.bb_num_aig_consts   = d_bitblaster.num_aig_consts();
+  d_stats.bb_num_aig_shared   = d_bitblaster.num_aig_shared();
   auto& cnf_stats          = d_cnf_encoder->statistics();
   d_stats.bb_num_cnf_vars     = cnf_stats.num_vars;
   d_stats.bb_num_cnf_clauses  = cnf_stats.num_clauses;
@@ -367,7 +366,7 @@ BvInterpolationSolver::label_clauses(
   std::unordered_set<int64_t> cache;
   for (const auto& node : nodes)
   {
-    const auto& bits = d_bitblaster->bits(node);
+    const auto& bits = d_bitblaster.bits(node);
     assert(!bits.empty());
     for (const auto& aig : bits)
     {
@@ -408,7 +407,7 @@ BvInterpolationSolver::label_lemma(
     std::unordered_map<int64_t, sat::interpolants::ClauseKind>& clause_labels,
     const Node& node)
 {
-  const auto& bits = d_bitblaster->bits(node);
+  const auto& bits = d_bitblaster.bits(node);
   bv::AigBitblaster::aig_node_ref_vector visit;
   std::unordered_set<int64_t> cache;
   std::vector<int64_t> aig_consts;
@@ -566,7 +565,7 @@ BvInterpolationSolver::label_consts(
         }
         if (cur.type().is_bool() || cur.type().is_bv())
         {
-          const auto& bits = d_bitblaster->bits(cur);
+          const auto& bits = d_bitblaster.bits(cur);
           if (!bits.empty())
           {
             label_var(var_labels, bits, kind);
@@ -587,7 +586,7 @@ BvInterpolationSolver::label_consts(
 #ifndef NDEBUG
         else
         {
-          assert(d_bitblaster->bits(cur).empty());
+          assert(d_bitblaster.bits(cur).empty());
         }
 #endif
       }
@@ -650,7 +649,7 @@ BvInterpolationSolver::label_leafs(
     {
       auto it = term_labels.find(cur);
       assert(it != term_labels.end());
-      const auto& bits = d_bitblaster->bits(cur);
+      const auto& bits = d_bitblaster.bits(cur);
       if (!bits.empty())
       {
         label_var(var_labels, bits, it->second);
@@ -687,7 +686,7 @@ BvInterpolationSolver::label_vars(
   std::unordered_map<int64_t, bool> cache;
   for (const auto& a : A)
   {
-    const auto& bits = d_bitblaster->bits(a);
+    const auto& bits = d_bitblaster.bits(a);
     assert(!bits.empty());
     for (const auto& aig : bits)
     {
@@ -696,7 +695,7 @@ BvInterpolationSolver::label_vars(
   }
   for (const auto& a : B)
   {
-    const auto& bits = d_bitblaster->bits(a);
+    const auto& bits = d_bitblaster.bits(a);
     assert(!bits.empty());
     for (const auto& aig : bits)
     {
@@ -745,10 +744,10 @@ BvInterpolationSolver::log_bitblaster_cache(uint64_t level) const
   if (d_logger.is_log_enabled(level))
   {
     Log(level);
-    Log(level) << "Bitblaster cache: "
-               << d_bitblaster->bitblaster_cache().size() << " entries";
+    Log(level) << "Bitblaster cache: " << d_bitblaster.bitblaster_cache().size()
+               << " entries";
     Log(level);
-    for (const auto& p : d_bitblaster->bitblaster_cache())
+    for (const auto& p : d_bitblaster.bitblaster_cache())
     {
       std::stringstream ss;
       ss << "@t" << p.first.id() << ": " << p.first << ": (";

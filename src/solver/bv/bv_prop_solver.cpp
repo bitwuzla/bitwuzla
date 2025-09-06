@@ -31,9 +31,9 @@ using namespace bzla::node;
 
 BvPropSolver::BvPropSolver(Env& env,
                            SolverState& state,
-                           BvBitblastSolver& bb_solver)
+                           AigBitblaster& bitblaster)
     : Solver(env, state),
-      d_bb_solver(bb_solver),
+      d_bitblaster(bitblaster),
       d_ls_backtrack(state.backtrack_mgr(), nullptr),
       d_stats(env.statistics(), "solver::bv::prop::")
 {
@@ -155,7 +155,7 @@ BvPropSolver::register_assertion(const Node& assertion,
 
   if (d_use_const_bits)
   {
-    d_bb_solver.bitblaster().bitblast(assertion);
+    d_bitblaster.bitblast(assertion);
   }
 
   do
@@ -246,7 +246,7 @@ BvPropSolver::mk_node(const Node& node)
   }
   else if (d_use_const_bits)
   {
-    const auto& bits = d_bb_solver.bitblaster().bits(node);
+    const auto& bits = d_bitblaster.bits(node);
     assert(bits.size() == size);
 
     for (uint64_t i = 0; i < size; ++i)

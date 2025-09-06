@@ -20,6 +20,7 @@
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig_bitblaster.h"
 #include "sat/interpolants/tracer_kinds.h"
+#include "solver/bv/aig_bitblaster.h"
 #include "solver/bv/bv_solver_interface.h"
 #include "solver/solver.h"
 #include "util/statistics.h"
@@ -60,6 +61,8 @@ class BvInterpolationSolver : public Solver,
   Result solve() override;
   Node value(const Node& term) override;
   void unsat_core(std::vector<Node>& core) const override;
+
+  AigBitblaster& bitblaster() { return d_bitblaster; }
 
   void push() override {}
   void pop() override { d_reset_sat = true; }
@@ -231,7 +234,7 @@ class BvInterpolationSolver : public Solver,
   backtrack::unordered_set<Node> d_lemmas;
 
   /** AIG bit-blaster. */
-  std::unique_ptr<AigBitblaster> d_bitblaster;
+  AigBitblaster d_bitblaster;
 
   /** CNF encoder for AIGs. */
   std::unique_ptr<bitblast::AigCnfEncoder> d_cnf_encoder;
