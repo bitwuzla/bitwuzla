@@ -133,10 +133,20 @@ BvSolver::solve()
     case option::BvSolver::PREPROP:
       d_cur_solver = option::BvSolver::PROP;
       d_sat_state  = d_prop_solver->solve();
-      if (d_sat_state == Result::UNKNOWN)
+      if (d_sat_state == Result::UNSAT
+          && d_env.options().produce_interpolants())
+      {
+        // We need the SAT proof of the bitblasting solver to produce an
+        // interpolant, solve again without prop (not expensive since prop can
+        // only determine unsat for the most trivial cases).
+        d_sat_state = d_interpol_solver->solve();
+      }
+      else if (d_sat_state == Result::UNKNOWN)
       {
         d_cur_solver = option::BvSolver::BITBLAST;
-        d_sat_state = d_bitblast_solver.solve();
+        d_sat_state  = d_env.options().produce_interpolants()
+                           ? d_interpol_solver->solve()
+                           : d_bitblast_solver.solve();
       }
       break;
   }
