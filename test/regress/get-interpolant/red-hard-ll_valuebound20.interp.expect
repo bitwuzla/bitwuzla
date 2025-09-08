@@ -1,2 +1,0 @@
-unsat
-(let ((_let0 (concat #b00 s))) (let ((_let1 (bvmul _let0 _let0))) (let ((_let2 (= s #b1))) (let ((_let3 (= s #b0))) (let ((_let4 ((_ extract 1 1) _let1))) (let ((_let5 ((_ extract 2 2) _let1))) (let ((_let6 ((_ extract 0 0) _let1))) (let ((_let7 (not (and (= #b1 _let6) _let3)))) (let ((_let8 (not (and _let2 (not (and (and (not (and _let2 (= #b0 _let6))) _let7) (and (= #b0 _let4) (= #b0 _let5)))))))) (and (and _let8 (and (and _let7 _let8) (not (and _let3 (= #b1 _let5))))) (not (and _let3 (= #b1 _let4)))))))))))))
