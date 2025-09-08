@@ -37,7 +37,6 @@ SolvingContext::SolvingContext(NodeManager& nm,
       d_logger(d_env.logger()),
       d_assertions(&d_backtrack_mgr),
       d_original_assertions(&d_backtrack_mgr),
-      d_original_assertions_to_index(&d_backtrack_mgr),
       d_have_quantifiers(&d_backtrack_mgr),
       d_preprocessor(*this),
       d_solver_engine(*this),
@@ -120,13 +119,6 @@ SolvingContext::assert_formula(const Node& formula)
       d_have_quantifiers = true;
     }
     d_original_assertions.push_back(formula);
-    if (d_env.options().produce_interpolants())
-    {
-      // Duplicate assertions are no issue for this book keeping, they
-      // map to the same node (albeit at different indices). We only need
-      // one mapping.
-      d_original_assertions_to_index.emplace(formula, d_assertions.size() - 1);
-    }
   }
 }
 
@@ -179,13 +171,6 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 
   assert(d_env.options().produce_interpolants());
   assert(d_sat_state == Result::UNSAT);
-#ifndef NDEBUG
-  for (const auto& a : A)
-  {
-    assert(d_original_assertions_to_index.find(a)
-           != d_original_assertions_to_index.end());
-  }
-#endif
   Log(1);
   Log(1) << "*** interpolant";
   Log(1);
@@ -213,17 +198,21 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 
   // Partition preprocessed assertions into A and B
   std::vector<Node> _A, _B;
-  for (const auto& a : d_original_assertions_to_index)
+  std::unordered_set<Node> orig_assertions{d_original_assertions.begin(),
+                                           d_original_assertions.end()};
+  for (size_t i = 0, size = d_assertions.size(); i < size; ++i)
   {
-    assert(a.second < d_assertions.size());
-    auto it = A.find(a.first);
+    // trace assertion back to original assertion
+    auto it = A.find(
+        d_preprocessor.original_assertion(d_assertions[i], orig_assertions));
+    // put in A or B bucket, depending on the original assertion
     if (it == A.end())
     {
-      _B.push_back(d_assertions[a.second]);
+      _B.push_back(d_assertions[i]);
     }
     else
     {
-      _A.push_back(d_assertions[a.second]);
+      _A.push_back(d_assertions[i]);
     }
   }
 

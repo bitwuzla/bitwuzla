@@ -62,6 +62,17 @@ class Preprocessor
   /** Get current map of active substitutions. */
   const std::unordered_map<Node, Node>& substitutions() const;
 
+  /**
+   * Get the assertion the given assertion originates from.
+   * @note Asserts that given node can be traced back to an original assertion.
+   * @param assertion The assertion to trace back.
+   * @param original_assertions The set of original assertions.
+   * @return The orginal assertion.
+   */
+  Node original_assertion(
+      const Node& assertion,
+      const std::unordered_set<Node>& original_assertions) const;
+
  private:
   /** Apply all preprocessing passes to assertions until fixed-point. */
   void apply(AssertionVector& assertions);

@@ -138,12 +138,6 @@ class SolvingContext
   /** Original input assertions added via assert_formula(). */
   backtrack::vector<Node> d_original_assertions;
 
-  /**
-   * Map original input assertions to index in (preprocessed) d_assertions.
-   * This is only required as book keeping for interpolant generation.
-   */
-  backtrack::unordered_map<Node, size_t> d_original_assertions_to_index;
-
   /** Do we have quantifiers in the current set of assertions? */
   backtrack::object<bool> d_have_quantifiers;
 

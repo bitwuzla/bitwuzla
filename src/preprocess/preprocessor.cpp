@@ -46,6 +46,7 @@ Preprocessor::Preprocessor(SolvingContext& context)
       d_global_backtrack_mgr(*context.backtrack_mgr()),
       d_pop_callback(context.backtrack_mgr(), &d_backtrack_mgr),
       d_assertion_tracker(d_env.options().produce_unsat_cores()
+                                  || d_env.options().produce_interpolants()
                               ? new AssertionTracker(&d_backtrack_mgr)
                               : nullptr),
       d_pass_rewrite(d_env, &d_backtrack_mgr),
@@ -204,6 +205,19 @@ Preprocessor::post_process_unsat_core(
 #endif
 
   return unsat_core;
+}
+
+Node
+Preprocessor::original_assertion(
+    const Node& assertion,
+    const std::unordered_set<Node>& original_assertions) const
+{
+  assert(d_assertion_tracker);
+  std::vector<Node> traced_back;
+  d_assertion_tracker->find_original(
+      {assertion}, original_assertions, traced_back);
+  assert(traced_back.size() == 1);
+  return traced_back[0];
 }
 
 const std::unordered_map<Node, Node>&
