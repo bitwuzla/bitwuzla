@@ -134,6 +134,11 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A,
 {
   assert(d_last_result == Result::UNSAT);
 
+  if (B.empty())
+  {
+    return d_env.nm().mk_value(false);
+  }
+
   // map SAT var to label
   std::unordered_map<int64_t, VariableKind> var_labels;
   // map SAT clause to label

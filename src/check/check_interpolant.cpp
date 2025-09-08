@@ -137,7 +137,7 @@ CheckInterpolant::check(const std::unordered_set<Node>& A,
   {
     visit.push_back(a);
   }
-  do
+  while (!visit.empty())
   {
     const Node& cur     = visit.back();
     auto [it, inserted] = cache.emplace(cur, true);
@@ -159,7 +159,7 @@ CheckInterpolant::check(const std::unordered_set<Node>& A,
       }
     }
     visit.pop_back();
-  } while (!visit.empty());
+  }
 
   cache.clear();
   visit.push_back(interpolant);

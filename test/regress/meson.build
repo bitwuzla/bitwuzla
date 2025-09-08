@@ -25,6 +25,7 @@ tests_smt2 = [
   ['get-interpolant/hard-ll_valuebound20.interp.smt2'],
   ['get-interpolant/incr-interp.smt2'],
   ['get-interpolant/loop3.interp.smt2'],
+  ['get-interpolant/murxla-22d302aad19922d4.min.smt2'],
   ['get-interpolant/picorv32_mutAY_nomem-p1.dar.smt2'],
   ['get-interpolant/pono-engine-test.interp.smt2'],
   ['get-interpolant/pono-engine-test2.interp.smt2'],
