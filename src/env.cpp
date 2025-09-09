@@ -23,6 +23,7 @@ Env::Env(NodeManager& nm,
     : d_nm(nm),
       d_options(options),
       d_rewriter(*this, options.rewrite_level()),
+      d_sat_factory(options),
       d_logger(options.log_level(),
                options.verbosity(),
                name.empty() ? "" : "(" + name + ")")
@@ -61,10 +62,16 @@ Env::nm()
   return d_nm;
 }
 
+sat::SatSolverFactory&
+Env::sat_factory()
+{
+  return d_sat_factory;
+}
+
 void
 Env::configure_terminator(Terminator* terminator)
 {
-  if (!sat::has_sat_solver_terminator_support(d_options))
+  if (!d_sat_factory.has_terminator_support())
   {
     throw Unsupported("terminator not supported in configured SAT solver");
   }

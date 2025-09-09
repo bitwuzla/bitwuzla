@@ -10,6 +10,7 @@
 
 #include "sat/sat_solver_factory.h"
 
+#include "option/option.h"
 #include "sat/cadical.h"
 #ifdef BZLA_USE_CMS
 #include "sat/cryptominisat.h"
@@ -18,43 +19,45 @@
 #include "sat/kissat.h"
 #endif
 
+#include <cassert>
+
 namespace bzla::sat {
 
 SatSolver*
-new_sat_solver(const option::Options& options)
+SatSolverFactory::new_sat_solver()
 {
-  (void) options;
 #ifdef BZLA_USE_KISSAT
-  if (options.sat_solver() == option::SatSolver::KISSAT)
+  if (d_options.sat_solver() == option::SatSolver::KISSAT)
   {
     return new Kissat();
   }
 #endif
 #ifdef BZLA_USE_CMS
-  if (options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
+  if (d_options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
   {
-    return new CryptoMiniSat(options.nthreads());
+    return new CryptoMiniSat(d_options.nthreads());
   }
 #endif
+  assert(d_options.sat_solver() == option::SatSolver::CADICAL);
   return new Cadical();
 }
 
 bool
-has_sat_solver_terminator_support(const option::Options& options)
+SatSolverFactory::has_terminator_support()
 {
-  (void) options;
 #ifdef BZLA_USE_KISSAT
-  if (options.sat_solver() == option::SatSolver::KISSAT)
+  if (d_options.sat_solver() == option::SatSolver::KISSAT)
   {
     return false;
   }
 #endif
 #ifdef BZLA_USE_CMS
-  if (options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
+  if (d_options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
   {
     return false;
   }
 #endif
+  assert(d_options.sat_solver() == option::SatSolver::CADICAL);
   return true;
 }
 

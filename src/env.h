@@ -14,6 +14,7 @@
 #include "node/node_manager.h"
 #include "option/option.h"
 #include "rewrite/rewriter.h"
+#include "sat/sat_solver_factory.h"
 #include "util/logger.h"
 #include "util/statistics.h"
 
@@ -47,6 +48,9 @@ class Env
   /** @return The associated node manager instance. */
   NodeManager& nm();
 
+  /** @return The associated SAT solver factory. */
+  sat::SatSolverFactory& sat_factory();
+
   /**
    * Configure associated termination configuration instance.
    * @note Only one terminator can be configured at a time. This will
@@ -78,6 +82,8 @@ class Env
   Rewriter d_rewriter;
   /** The associated terminator. */
   Terminator* d_terminator = nullptr;
+  /** The associated SAT solver factory. */
+  sat::SatSolverFactory d_sat_factory;
   /** The associated logger class. */
   util::Logger d_logger;
 };
