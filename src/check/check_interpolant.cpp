@@ -107,10 +107,10 @@ CheckInterpolant::check(const std::unordered_set<Node>& A,
   Log(1);
 
   // Finally, check if uninterpreted symbols occurring in I are shared, i.e.,
-  // that it contains no symbols that are local to A or C.
+  // that it contains no symbols that are local to A or B.
   Log(1) << "check: symbols in I";
   std::unordered_map<Node, VariableKind> consts;
-  node_ref_vector visit{assertions.begin(), assertions.end()};
+  node_ref_vector visit{A.begin(), A.end()};
   unordered_node_ref_map<bool> cache;
   do
   {
@@ -163,10 +163,6 @@ CheckInterpolant::check(const std::unordered_set<Node>& A,
 
   cache.clear();
   visit.push_back(interpolant);
-  for (const auto& a : B)
-  {
-    visit.push_back(a);
-  }
   do
   {
     const Node& cur     = visit.back();
