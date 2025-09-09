@@ -223,19 +223,24 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
     {
       if (a.is_value() && !a.value<bool>())
       {
-        return nm.mk_value(false);
+        ipol = nm.mk_value(false);
+        break;
       }
     }
     for (const auto& a : _B)
     {
       if (a.is_value() && !a.value<bool>())
       {
-        return nm.mk_value(true);
+        ipol = nm.mk_value(true);
+        break;
       }
     }
   }
 
-  ipol = d_solver_engine.interpolant(_A, _B);
+  if (ipol.is_null())
+  {
+    ipol = d_solver_engine.interpolant(_A, _B);
+  }
 
   if (!ipol.is_null() && options().dbg_check_interpolant())
   {
