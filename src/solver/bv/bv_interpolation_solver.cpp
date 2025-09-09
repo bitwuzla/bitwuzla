@@ -144,6 +144,9 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A,
   // map SAT clause to label
   std::unordered_map<int64_t, ClauseKind> clause_labels;
 
+  // SAT variable with id 1 represents true/false. We always label it as GLOBAL.
+  var_labels[1] = VariableKind::GLOBAL;
+
   {
     util::Timer timer(d_stats.time_label);
     label_clauses(clause_labels, A, ClauseKind::A);
@@ -399,6 +402,12 @@ BvInterpolationSolver::label_clauses(
     }
 
     clause_labels.emplace(id, kind);
+    // We always add (1 0) to the SAT solver to enforce correct true/false
+    // handling. However, this clause is not necessarily added as clause with
+    // id 1. Thus, we need to explicitly add the labeling of this clause and its
+    // negation here. Note that if the clause or its negation is a top-level
+    // unit in A or B, its labeling will be reset above when enforcing A/B
+    // labeling for units to ensure correct assignment of clauses to A/B.
     if (cur.is_true() || cur.is_false())
     {
       clause_labels.emplace(-id, kind);
