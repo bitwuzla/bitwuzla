@@ -1651,6 +1651,8 @@ Bitwuzla::get_interpolant(const std::vector<Term>& A)
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_PRODUCE_INTERPOLANTS(d_ctx->options());
   BITWUZLA_CHECK_LAST_CALL_UNSAT("get interpolant");
+  BITWUZLA_CHECK(!A.empty())
+      << "expected non-empty set of A formulas as argument to get-interpolant";
 
   std::unordered_set<bzla::Node> _A;
   if (!A.empty())
