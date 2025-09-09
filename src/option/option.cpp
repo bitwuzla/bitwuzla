@@ -811,6 +811,7 @@ Options::finalize()
   {
     // Interpolation is currently only supported with CaDiCaL.
     sat_solver.set(SatSolver::CADICAL);
+
     // Introduces fresh variables.
     pp_elim_bv_extracts.set(false);
     // Potentially eliminate shared symbols. We do not know at solving time
@@ -820,6 +821,12 @@ Options::finalize()
     // We currently cannot track where assertions added by this pp pass
     // originate from.
     pp_skeleton_preproc.set(false);
+
+    // Assertion abstraction adds back assertions as lemmas, which is generally
+    // problematic for interpolant generation (full set of symbols not in
+    // initial A/B formula set, which is required to  determine shared symbols;
+    // artificial introduction of 'mixed' lemmas).
+    abstraction_assert.set(false);
   }
   // configure default values for number of propagations and updates in case
   // of sequential portfolio bv solver configuration PREPROP
