@@ -816,6 +816,7 @@ Options::finalize()
     // we may want to reenable, which will require to map back preprocessed
     // terms to the original terms.
     preprocess.set(false);
+    pp_elim_bv_extracts.set(false);
   }
   // configure default values for number of propagations and updates in case
   // of sequential portfolio bv solver configuration PREPROP

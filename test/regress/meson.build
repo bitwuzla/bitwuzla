@@ -28,6 +28,7 @@ tests_smt2 = [
   ['get-interpolant/murxla-154bd8c09fb70637.min.smt2'],
   ['get-interpolant/murxla-20916f8962fc9c26.min.smt2'],
   ['get-interpolant/murxla-22d302aad19922d4.min.smt2'],
+  ['get-interpolant/murxla-6116f4988dde7b23.min.smt2'],
   ['get-interpolant/picorv32_mutAY_nomem-p1.dar.smt2'],
   ['get-interpolant/pono-engine-test.interp.smt2'],
   ['get-interpolant/pono-engine-test2.interp.smt2'],
