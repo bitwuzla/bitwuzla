@@ -816,7 +816,11 @@ Options::finalize()
     // we may want to reenable, which will require to map back preprocessed
     // terms to the original terms.
     preprocess.set(false);
+    // Introduces fresh variables.
     pp_elim_bv_extracts.set(false);
+    // Potentially eliminates shared symbols. We do not know at solving time
+    // which symbols are A/B-local or shared, thus we have to disable.
+    pp_variable_subst.set(false);
   }
   // configure default values for number of propagations and updates in case
   // of sequential portfolio bv solver configuration PREPROP

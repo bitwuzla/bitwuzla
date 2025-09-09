@@ -1,0 +1,8 @@
+(set-option :produce-interpolants 1)
+(set-option :rewrite-level 0)
+;(set-option :pp-variable-subst true)
+(declare-const x Bool)
+(assert (! x :named a1))
+(assert (distinct x true))
+(check-sat)
+(get-interpolant (a1))
