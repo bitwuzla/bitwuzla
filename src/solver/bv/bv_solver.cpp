@@ -86,17 +86,14 @@ BvSolver::register_assertion(const Node& assertion,
                              bool is_lemma)
 {
   ++d_stats.num_assertions;
-  if (d_solver_mode == option::BvSolver::BITBLAST
-      || d_solver_mode == option::BvSolver::PREPROP)
+  if (d_produce_interpolants)
   {
-    if (d_produce_interpolants)
-    {
-      d_interpol_solver->register_assertion(assertion, top_level, is_lemma);
-    }
-    else
-    {
-      d_bitblast_solver.register_assertion(assertion, top_level, is_lemma);
-    }
+    d_interpol_solver->register_assertion(assertion, top_level, is_lemma);
+  }
+  else if (d_solver_mode == option::BvSolver::BITBLAST
+           || d_solver_mode == option::BvSolver::PREPROP)
+  {
+    d_bitblast_solver.register_assertion(assertion, top_level, is_lemma);
   }
   if (d_solver_mode == option::BvSolver::PROP
       || d_solver_mode == option::BvSolver::PREPROP)
@@ -129,6 +126,14 @@ BvSolver::solve()
     case option::BvSolver::PROP:
       assert(d_cur_solver == option::BvSolver::PROP);
       d_sat_state = d_prop_solver->solve();
+      if (d_sat_state == Result::UNSAT
+          && d_env.options().produce_interpolants())
+      {
+        // We need the SAT proof of the bitblasting solver to produce an
+        // interpolant, solve again without prop (not expensive since prop can
+        // only determine unsat for the most trivial cases).
+        d_sat_state = d_interpol_solver->solve();
+      }
       break;
     case option::BvSolver::PREPROP:
       d_cur_solver = option::BvSolver::PROP;
