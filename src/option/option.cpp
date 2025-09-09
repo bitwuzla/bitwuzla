@@ -811,16 +811,15 @@ Options::finalize()
   {
     // Interpolation is currently only supported with CaDiCaL.
     sat_solver.set(SatSolver::CADICAL);
-    // We disable preprocessing for now to ensure that the interpolant we
-    // compute is indeed an interpolant for the original query. In the future,
-    // we may want to reenable, which will require to map back preprocessed
-    // terms to the original terms.
-    preprocess.set(false);
     // Introduces fresh variables.
     pp_elim_bv_extracts.set(false);
-    // Potentially eliminates shared symbols. We do not know at solving time
+    // Potentially eliminate shared symbols. We do not know at solving time
     // which symbols are A/B-local or shared, thus we have to disable.
+    pp_embedded_constr.set(false);
     pp_variable_subst.set(false);
+    // We currently cannot track where assertions added by this pp pass
+    // originate from.
+    pp_skeleton_preproc.set(false);
   }
   // configure default values for number of propagations and updates in case
   // of sequential portfolio bv solver configuration PREPROP
