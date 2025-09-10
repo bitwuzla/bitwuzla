@@ -1567,14 +1567,6 @@ class Bitwuzla
    *                at this point.
    */
   Bitwuzla(TermManager &tm, const Options &options = Options());
-  /**
-   * Constructor.
-   * @param options The associated options instance. Options must be configured
-   *                at this point.
-   *
-   * @note: (deprecated) Uses the global thread-local term manager.
-   */
-  Bitwuzla(const Options &options = Options());
   /** Destructor. */
   ~Bitwuzla();
 
