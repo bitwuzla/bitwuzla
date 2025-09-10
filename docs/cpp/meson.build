@@ -4,6 +4,7 @@ include_path = join_paths(meson.project_source_root(), 'include', 'bitwuzla')
 header_files = [
   join_paths(include_path, 'cpp', 'bitwuzla.h'),
   join_paths(include_path, 'cpp', 'parser.h'),
+  join_paths(include_path, 'cpp', 'terminator.h'),
   join_paths(include_path, 'enums.h'),
   join_paths(include_path, 'option.h'),
 ]
