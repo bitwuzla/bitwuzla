@@ -22,9 +22,14 @@ if not os.path.isdir(args.path):
 
 git_id = ''
 
+cmd_found = True
 cmd = ['git', '-C', args.path, 'rev-parse', '--abbrev-ref', 'HEAD']
-proc = subprocess.run(cmd, capture_output=True, check=False)
-if proc.returncode == 0 and proc.stdout:
+try:
+    proc = subprocess.run(cmd, capture_output=True, check=False)
+except FileNotFoundError:
+    cmd_found = False # git not installed
+
+if cmd_found and proc.returncode == 0 and proc.stdout:
     git_id += proc.stdout.decode().strip()
     git_id += '@'
     cmd = ['git', '-C', args.path, 'rev-parse', '--short', 'HEAD']
