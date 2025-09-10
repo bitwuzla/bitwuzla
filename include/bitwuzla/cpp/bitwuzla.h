@@ -11,6 +11,7 @@
 #ifndef BITWUZLA_API_CPP_H_INCLUDED
 #define BITWUZLA_API_CPP_H_INCLUDED
 
+#include <bitwuzla/cpp/terminator.h>
 #include <bitwuzla/enums.h>
 #include <bitwuzla/option.h>
 
@@ -34,7 +35,6 @@ class NodeManager;
 class Node;
 class Type;
 class SolvingContext;
-class Terminator;
 namespace option {
 class Options;
 }
@@ -229,7 +229,7 @@ std::ostream &operator<<(std::ostream &out, const set_letify &l);
 /* Options                                                                    */
 /* -------------------------------------------------------------------------- */
 
-// Note: enum class Option is declared in api/option.h
+// Note: enum class Option is declared in include/bitwuzla/option.h
 
 class Bitwuzla;
 class TermManager;
@@ -490,7 +490,7 @@ OptionInfo::String OptionInfo::value() const;
 /* Result                                                                     */
 /* -------------------------------------------------------------------------- */
 
-// Note: enum class Result is declared in api/enums.h
+// Note: enum class Result is declared in include/bitwuzla/enums.h
 
 /**
  * Print result to output stream.
@@ -504,7 +504,7 @@ std::ostream &operator<<(std::ostream &out, Result result);
 /* Kind                                                                       */
 /* -------------------------------------------------------------------------- */
 
-// Note: enum class Kind is declared in api/enums.h
+// Note: enum class Kind is declared in include/bitwuzla/enums.h
 
 /**
  * Print kind to output stream.
@@ -518,7 +518,7 @@ std::ostream &operator<<(std::ostream &out, Kind kind);
 /* RoundingMode                                                               */
 /* -------------------------------------------------------------------------- */
 
-// Note: enum class RoundingMode is declared in api/enums.h
+// Note: enum class RoundingMode is declared in include/bitwuzla/enums.h
 
 /**
  * Print rounding mode to output stream.
@@ -1082,21 +1082,7 @@ std::ostream &operator<<(std::ostream &out, const Sort &sort);
 /* -------------------------------------------------------------------------- */
 /* Terminator                                                                 */
 /* -------------------------------------------------------------------------- */
-
-/** The termination callback configuration. */
-class Terminator
-{
- public:
-  /** Destructor. */
-  virtual ~Terminator();
-  /**
-   * Termination function.
-   * If terminator has been connected, Bitwuzla calls this function periodically
-   * to determine if the connected instance should be terminated.
-   * @return True if the associated instance of Bitwuzla should be terminated.
-   */
-  virtual bool terminate() = 0;
-};
+// Note: class Terminator is declared in include/bitwuzla/terminator.h
 
 /* -------------------------------------------------------------------------- */
 /* Term Manager                                                               */
@@ -1771,8 +1757,6 @@ class Bitwuzla
   uint64_t d_n_sat_calls = 0;
   /** The associated terminator. */
   Terminator *d_terminator = nullptr;
-  /** The internal terminator. */
-  std::unique_ptr<bzla::Terminator> d_terminator_internal;
   /** Cache holding the current unsat core. */
   std::vector<Term> d_unsat_core;
   /** Cache the current set of assumptions. */

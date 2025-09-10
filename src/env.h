@@ -20,8 +20,6 @@
 
 namespace bzla {
 
-class Terminator;
-
 class Env
 {
  public:

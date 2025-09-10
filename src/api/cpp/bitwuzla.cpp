@@ -1394,38 +1394,6 @@ operator<<(std::ostream &out, const Sort &sort)
   return out;
 }
 
-/* Terminator public -------------------------------------------------------- */
-
-Terminator::~Terminator() {}
-
-/* Terminator internal ------------------------------------------------------ */
-
-class TerminatorInternal : public bzla::Terminator
-{
- public:
-  /**
-   * Constructor.
-   * @param terminator The associated user-facing terminator.
-   */
-  TerminatorInternal(bitwuzla::Terminator *terminator)
-      : d_terminator(terminator)
-  {
-  }
-
-  bool terminate() override
-  {
-    if (d_terminator == nullptr)
-    {
-      return false;
-    }
-    return d_terminator->terminate();
-  }
-
- private:
-  /** The associated user-facing terminator. */
-  bitwuzla::Terminator *d_terminator;
-};
-
 /* Bitwuzla public ---------------------------------------------------------- */
 
 Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
@@ -1441,19 +1409,7 @@ void
 Bitwuzla::configure_terminator(Terminator *terminator)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
-  if (terminator == nullptr)
-  {
-    if (d_terminator != nullptr)
-    {
-      assert(d_terminator_internal);
-      d_terminator_internal.reset(nullptr);
-    }
-  }
-  else
-  {
-    d_terminator_internal.reset(new TerminatorInternal(terminator));
-  }
-  d_ctx->env().configure_terminator(d_terminator_internal.get());
+  d_ctx->env().configure_terminator(terminator);
   d_terminator = terminator;
   BITWUZLA_TRY_CATCH_END;
 }

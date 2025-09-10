@@ -166,6 +166,7 @@ sources = files([
   'api/checks.cpp',
   'api/cpp/bitwuzla.cpp',
   'api/cpp/parser.cpp',
+  'api/cpp/terminator.cpp',
   'backtrack/assertion_stack.cpp',
   'backtrack/backtrackable.cpp',
   'check/check_model.cpp',
