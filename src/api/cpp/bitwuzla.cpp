@@ -1367,12 +1367,50 @@ operator<<(std::ostream &out, const Sort &sort)
   return out;
 }
 
+/* SatSolverFactoryInternal ------------------------------------------------- */
+
+class SatSolverFactoryInternal : public bzla::sat::SatSolverFactory
+{
+ public:
+  /** Constructor. */
+  SatSolverFactoryInternal(bitwuzla::SatSolverFactory &sat_factory,
+                           const bzla::option::Options &options)
+      : bzla::sat::SatSolverFactory(options), d_sat_factory(sat_factory)
+  {
+  }
+  std::unique_ptr<SatSolver> new_sat_solver() override
+  {
+    return d_sat_factory.new_sat_solver();
+  }
+  bool has_terminator_support() override
+  {
+    return d_sat_factory.has_terminator_support();
+  }
+
+ private:
+  bitwuzla::SatSolverFactory &d_sat_factory;
+};
+
 /* Bitwuzla public ---------------------------------------------------------- */
 
 Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   d_ctx.reset(new bzla::SolvingContext(*d_tm.d_nm, *options.d_options, "main"));
+  BITWUZLA_TRY_CATCH_END;
+}
+
+Bitwuzla::Bitwuzla(TermManager &tm,
+                   SatSolverFactory &sat_factory,
+                   const Options &options)
+    : d_tm(tm)
+{
+  BITWUZLA_TRY_CATCH_BEGIN;
+  d_ctx.reset(new bzla::SolvingContext(
+      *d_tm.d_nm,
+      *options.d_options,
+      new SatSolverFactoryInternal(sat_factory, *options.d_options),
+      "main"));
   BITWUZLA_TRY_CATCH_END;
 }
 

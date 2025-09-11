@@ -12,6 +12,7 @@
 #include <bitwuzla/cpp/parser.h>
 
 #include <algorithm>
+#include <cadical.hpp>
 #include <chrono>
 #include <fstream>
 #include <ostream>
@@ -4084,6 +4085,112 @@ TEST_F(TestApi, terminate_timeout_wrap)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* External SAT solver factory                                                */
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestApi, sat_factory)
+{
+  class TestCadicalTerminator : public CaDiCaL::Terminator
+  {
+   public:
+    TestCadicalTerminator(bitwuzla::Terminator* terminator)
+        : d_terminator(terminator)
+    {
+    }
+    ~TestCadicalTerminator() {}
+    bool terminate() override { return d_terminator->terminate(); }
+
+   private:
+    bitwuzla::Terminator* d_terminator = nullptr;
+  };
+
+  class TestSatSolver : public bitwuzla::SatSolver
+  {
+   public:
+    void add(int32_t lit) override { d_cadical.add(lit); }
+    void assume(int32_t lit) override { d_cadical.assume(lit); }
+
+    int32_t value(int32_t lit) override
+    {
+      int32_t val = d_cadical.val(lit);
+      if (val > 0) return 1;
+      if (val < 0) return -1;
+      return 0;
+    }
+    bool failed(int32_t lit) override { return d_cadical.failed(lit); }
+    int32_t fixed(int32_t lit) override { return d_cadical.fixed(lit); }
+
+    bitwuzla::Result solve() override
+    {
+      int32_t res = d_cadical.solve();
+      if (res == 10) return bitwuzla::Result::SAT;
+      if (res == 20) return bitwuzla::Result::UNSAT;
+      return bitwuzla::Result::UNKNOWN;
+    }
+
+    void configure_terminator(bitwuzla::Terminator* terminator) override
+    {
+      d_term.reset(new TestCadicalTerminator(terminator));
+      if (terminator)
+      {
+        d_cadical.connect_terminator(d_term.get());
+      }
+      else
+      {
+        d_cadical.disconnect_terminator();
+      }
+    }
+
+    const char* get_name() const override { return "external-cadical"; }
+    const char* get_version() const override { return d_cadical.version(); };
+
+   private:
+    CaDiCaL::Solver d_cadical;
+    std::unique_ptr<CaDiCaL::Terminator> d_term = nullptr;
+  };
+
+  class TestSatSolverFactory : public bitwuzla::SatSolverFactory
+  {
+   public:
+    TestSatSolverFactory(const bitwuzla::Options& options)
+        : bitwuzla::SatSolverFactory((options))
+    {
+    }
+    std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
+    {
+      return std::unique_ptr<bitwuzla::SatSolver>(new TestSatSolver());
+    }
+    bool has_terminator_support() override { return true; }
+
+   private:
+    std::unique_ptr<bitwuzla::SatSolver> d_cur_sat_solver;
+  };
+
+  bitwuzla::Sort bv_sort4 = d_tm.mk_bv_sort(4);
+  bitwuzla::Term x        = d_tm.mk_const(bv_sort4);
+  bitwuzla::Term s        = d_tm.mk_const(bv_sort4);
+  bitwuzla::Term t        = d_tm.mk_const(bv_sort4);
+  bitwuzla::Term b        = d_tm.mk_term(
+      bitwuzla::Kind::DISTINCT,
+      {d_tm.mk_term(bitwuzla::Kind::BV_MUL,
+                           {s, d_tm.mk_term(bitwuzla::Kind::BV_MUL, {x, t})}),
+              d_tm.mk_term(bitwuzla::Kind::BV_MUL,
+                           {d_tm.mk_term(bitwuzla::Kind::BV_MUL, {s, x}), t})});
+
+  testing::internal::CaptureStdout();
+  bitwuzla::Options opts;
+  opts.set(bitwuzla::Option::VERBOSITY, 1);
+  opts.set(bitwuzla::Option::PREPROCESS, false);
+  TestSatSolverFactory sat_factory(opts);
+  bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
+  bitwuzla.assert_formula(b);
+  ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+  ASSERT_NE(testing::internal::GetCapturedStdout().find(
+                "initialized SAT solver: external-cadical"),
+            std::string::npos);
 }
 
 /* -------------------------------------------------------------------------- */
