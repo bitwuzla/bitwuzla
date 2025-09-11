@@ -219,7 +219,9 @@ def main():
     ap.add_argument('output_file')
     args = ap.parse_args()
 
-    if not args.input_file.endswith('enums.h') and not args.input_file.endswith('option.h'):
+    if not args.input_file.endswith('enums.h') and \
+            not args.input_file.endswith('option.h') and \
+            not args.input_file.endswith('result.h'):
         raise ValueError("Expected enums.h or option.h as input file")
 
     # Extract all of our enums

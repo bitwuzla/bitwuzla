@@ -23,11 +23,19 @@ options_pxd = custom_target('options.pxd',
   command: [python, mkenums_script, option_h, '@OUTPUT@']
 )
 
+# Generate result include
+result_h = files('../../../include/bitwuzla/result.h')
+result_pxd = custom_target('result.pxd',
+  output: 'result.pxd',
+  depend_files: [mkenums_script, result_h],
+  command: [python, mkenums_script, result_h, '@OUTPUT@']
+)
+
 # Build Python module
 python_dep = python.dependency()
 bitwuzla_py_ext = python.extension_module(
   'bitwuzla',
-  ['bitwuzla.pyx', enums_pxd, options_pxd, 'terminator.cpp'],
+  ['bitwuzla.pyx', enums_pxd, options_pxd, result_pxd, 'terminator.cpp'],
   dependencies: [python_dep, bitwuzla_dep],
   # Note: include_directories not passed to cython compiler
   cython_args: ['-I', meson.current_build_dir()],

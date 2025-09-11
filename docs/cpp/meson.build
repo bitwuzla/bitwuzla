@@ -7,6 +7,7 @@ header_files = [
   join_paths(include_path, 'cpp', 'terminator.h'),
   join_paths(include_path, 'enums.h'),
   join_paths(include_path, 'option.h'),
+  join_paths(include_path, 'result.h'),
 ]
 
 conf_data.set('PROJECT_NAME', 'Bitwuzla_cpp')

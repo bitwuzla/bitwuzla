@@ -14,6 +14,7 @@
 #include <bitwuzla/cpp/terminator.h>
 #include <bitwuzla/enums.h>
 #include <bitwuzla/option.h>
+#include <bitwuzla/result.h>
 
 #include <cstdint>
 #include <functional>
@@ -498,15 +499,8 @@ OptionInfo::String OptionInfo::value() const;
 /* Result                                                                     */
 /* -------------------------------------------------------------------------- */
 
-// Note: enum class Result is declared in include/bitwuzla/enums.h
-
-/**
- * Print result to output stream.
- * @param out The output stream.
- * @param result The result.
- * @return The output stream.
- */
-std::ostream &operator<<(std::ostream &out, Result result);
+// Note: enum class Result and corresponding operator<< for Result are declared
+//       in include/bitwuzla/result.h
 
 /* -------------------------------------------------------------------------- */
 /* Kind                                                                       */
@@ -1799,12 +1793,7 @@ std::string to_string(bitwuzla::Kind kind);
  */
 std::string to_string(bitwuzla::RoundingMode rm);
 
-/**
- * Get string representation of given result.
- * @param result The result.
- * @return The string representation.
- */
-std::string to_string(bitwuzla::Result result);
+// Note: to_string(bitwuzla::Result) is declared in include/bitwuzla/result.h
 
 }  // namespace std
 

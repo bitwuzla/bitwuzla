@@ -24,6 +24,7 @@ extern "C" {
 #define BITWUZLA_API_USE_C_ENUMS
 #include <bitwuzla/enums.h>
 #include <bitwuzla/option.h>
+#include <bitwuzla/result.h>
 #undef BITWUZLA_API_USE_C_ENUMS
 
 /* -------------------------------------------------------------------------- */

@@ -27,9 +27,7 @@
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "solver/fp/symfpu_nm.h"  // Temporary for setting SymFpuNM
-#include "solver/result.h"
 #include "solving_context.h"
-#include "terminator.h"
 #include "util/printer.h"
 #include "util/util.h"
 
@@ -142,17 +140,6 @@ static const std::unordered_map<Option, bzla::option::Option>
 
 static const std::unordered_map<bzla::option::Option, Option> s_options =
     _init_reverse(s_internal_options);
-
-/** Map api result to internal result. */
-static const std::unordered_map<Result, bzla::Result> s_internal_results = {
-    {Result::SAT, bzla::Result::SAT},
-    {Result::UNSAT, bzla::Result::UNSAT},
-    {Result::UNKNOWN, bzla::Result::UNKNOWN},
-};
-
-/** Map internal result to api result. */
-static const std::unordered_map<bzla::Result, Result> s_results =
-    _init_reverse(s_internal_results);
 
 /** Map api rounding mode to internal rounding mode. */
 static const std::unordered_map<RoundingMode, bzla::RoundingMode>
@@ -303,20 +290,6 @@ git_id()
 }
 
 /* -------------------------------------------------------------------------- */
-
-std::ostream &
-operator<<(std::ostream &out, Result result)
-{
-  try
-  {
-    out << s_internal_results.at(result);
-    return out;
-  }
-  catch (...)
-  {
-    throw Exception("invalid result");
-  }
-}
 
 std::ostream &
 operator<<(std::ostream &out, Kind kind)
@@ -1590,7 +1563,7 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
       d_ctx->assert_formula(*term.d_node);
       d_assumptions.insert(term);
     }
-    d_last_check_sat = s_results.at(d_ctx->solve());
+    d_last_check_sat = d_ctx->solve();
     // Delay pop until other methods are called that change solver state. This
     // allows users to query values and unsat cores after a check-sat with
     // assumptions.
@@ -1598,7 +1571,7 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
   }
   else
   {
-    d_last_check_sat = s_results.at(d_ctx->solve());
+    d_last_check_sat = d_ctx->solve();
   }
   BITWUZLA_TRY_CATCH_END;
   return d_last_check_sat;
@@ -2673,21 +2646,6 @@ to_string(bitwuzla::Kind kind)
   catch (...)
   {
     throw bitwuzla::Exception("invalid term kind");
-  }
-}
-
-std::string
-to_string(bitwuzla::Result result)
-{
-  try
-  {
-    std::stringstream ss;
-    ss << bitwuzla::s_internal_results.at(result);
-    return ss.str();
-  }
-  catch (...)
-  {
-    throw bitwuzla::Exception("invalid result");
   }
 }
 

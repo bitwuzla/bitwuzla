@@ -22,29 +22,6 @@ namespace bitwuzla {
 #endif
 
 /* -------------------------------------------------------------------------- */
-/* Result                                                                     */
-/* -------------------------------------------------------------------------- */
-
-#ifdef BITWUZLA_API_USE_C_ENUMS
-#undef EVALUE
-#define EVALUE(name) BITWUZLA_##name
-#endif
-
-/** A satisfiability result. */
-enum ENUM(Result)
-{
-  EVALUE(SAT)     = 10,  ///< sat
-  EVALUE(UNSAT)   = 20,  ///< unsat
-  EVALUE(UNKNOWN) = 0,   ///< unknown
-};
-
-#ifdef BITWUZLA_API_USE_C_ENUMS
-#ifndef DOXYGEN_SKIP
-typedef enum ENUM(Result) ENUM(Result);
-#endif
-#endif
-
-/* -------------------------------------------------------------------------- */
 /* RoundingMode                                                               */
 /* -------------------------------------------------------------------------- */
 
@@ -1790,8 +1767,8 @@ typedef enum ENUM(Kind) ENUM(Kind);
 
 /* -------------------------------------------------------------------------- */
 
-#undef EVALUE
 #undef ENUM
+#undef EVALUE
 
 #ifndef BITWUZLA_API_USE_C_ENUMS
 }  // namespace bitwuzla
