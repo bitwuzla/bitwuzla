@@ -22,6 +22,7 @@ extern "C" {
 #include <memory>
 
 #include "sat/sat_solver.h"
+#include "solver/result.h"
 
 namespace bzla::sat {
 

@@ -26,6 +26,7 @@ import cython
 
 include "enums.pxd"
 include "options.pxd"
+include "result.pxd"
 
 # -------------------------------------------------------------------------- #
 
