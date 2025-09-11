@@ -198,21 +198,16 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 
   // Partition preprocessed assertions into A and B
   std::vector<Node> _A, _B;
-  std::unordered_set<Node> orig_assertions{d_original_assertions.begin(),
-                                           d_original_assertions.end()};
-  for (size_t i = 0, size = d_assertions.size(); i < size; ++i)
+  for (const auto& a : d_original_assertions)
   {
-    // trace assertion back to original assertion
-    auto it = A.find(
-        d_preprocessor.original_assertion(d_assertions[i], orig_assertions));
-    // put in A or B bucket, depending on the original assertion
-    if (it == A.end())
+    auto it = A.find(a);
+    if (it != A.end())
     {
-      _B.push_back(d_assertions[i]);
+      _A.push_back(d_env.rewriter().rewrite(a));
     }
     else
     {
-      _A.push_back(d_assertions[i]);
+      _B.push_back(d_env.rewriter().rewrite(a));
     }
   }
 

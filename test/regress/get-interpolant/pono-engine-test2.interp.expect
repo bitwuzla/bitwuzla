@@ -2,4 +2,4 @@ unsat
 sat
 unsat
 unsat
-(and (and (and (and (and (and (and (= #b1 ((_ extract 1 1) x@1)) (= #b0 ((_ extract 2 2) x@1))) (= #b0 ((_ extract 3 3) x@1))) (= #b0 ((_ extract 0 0) x@1))) (= #b0 ((_ extract 4 4) x@1))) (= #b0 ((_ extract 7 7) x@1))) (= #b0 ((_ extract 6 6) x@1))) (= #b0 ((_ extract 5 5) x@1)))
+(and (and (and (and (and (and (and (= #b1 ((_ extract 1 1) x@1)) (= #b0 ((_ extract 2 2) x@1))) (= #b0 ((_ extract 7 7) x@1))) (= #b0 ((_ extract 6 6) x@1))) (= #b0 ((_ extract 5 5) x@1))) (= #b0 ((_ extract 4 4) x@1))) (= #b0 ((_ extract 3 3) x@1))) (= #b0 ((_ extract 0 0) x@1)))
