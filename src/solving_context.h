@@ -29,10 +29,34 @@ class ResourceTerminator;
 class SolvingContext
 {
  public:
+  /**
+   * Constructor.
+   * @param nm        The associated node manager.
+   * @param options   The associated options.
+   * @param name      The name of this context, for logging purposes.
+   * @param subsolver True if this context is a subsolver of another context.
+   */
   SolvingContext(NodeManager& nm,
                  const option::Options& options,
                  const std::string& name = "",
                  bool subsolver          = false);
+  /**
+   * Constructor for initialization with (external) SAT solver factory.
+   * This constructor is only used when a Bitwuzla instance is to be
+   * instantiated with an external, user-provided SAT solver factory.
+   * @param nm          The associated node manager.
+   * @param options     The associated options.
+   * @param sat_factory The external SAT solver factory. Env takes ownership of
+   *                    this pointer.
+   * @param name        The name of this context, for logging purposes.
+   * @param subsolver   True if this context is a subsolver of another context.
+   */
+  SolvingContext(NodeManager& nm,
+                 const option::Options& options,
+                 sat::SatSolverFactory* sat_factory,
+                 const std::string& name = "",
+                 bool subsolver          = false);
+  /** Destructor. */
   ~SolvingContext();
 
   /** Solve the current set of assertions in the context. */

@@ -16,6 +16,7 @@
 #include "check/check_unsat_core.h"
 #include "node/node.h"
 #include "resource_terminator.h"
+#include "sat/sat_solver_factory.h"
 #include "solver/fp/symfpu_nm.h"  // Temporary for setting SymFpuNM
 #include "util/exceptions.h"
 #include "util/resources.h"
@@ -31,6 +32,24 @@ SolvingContext::SolvingContext(NodeManager& nm,
                                const std::string& name,
                                bool subsolver)
     : d_env(nm, options, name),
+      d_logger(d_env.logger()),
+      d_assertions(&d_backtrack_mgr),
+      d_original_assertions(&d_backtrack_mgr),
+      d_have_quantifiers(&d_backtrack_mgr),
+      d_preprocessor(*this),
+      d_solver_engine(*this),
+      d_subsolver(subsolver),
+      d_stats(d_env.statistics())
+{
+  d_have_quantifiers = false;
+}
+
+SolvingContext::SolvingContext(NodeManager& nm,
+                               const option::Options& options,
+                               sat::SatSolverFactory* sat_factory,
+                               const std::string& name,
+                               bool subsolver)
+    : d_env(nm, options, name, sat_factory),
       d_logger(d_env.logger()),
       d_assertions(&d_backtrack_mgr),
       d_original_assertions(&d_backtrack_mgr),
