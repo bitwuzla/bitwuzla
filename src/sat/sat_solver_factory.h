@@ -11,6 +11,8 @@
 #ifndef BZLA_SAT_SAT_SOLVER_FACTORY_H_INCLUDED
 #define BZLA_SAT_SAT_SOLVER_FACTORY_H_INCLUDED
 
+#include <memory>
+
 #include "option/option.h"
 #include "sat/sat_solver.h"
 
@@ -22,7 +24,7 @@ class SatSolverFactory
   /** Constructor. */
   SatSolverFactory(const option::Options& options) : d_options(options) {}
   /** Create new SAT solver instance. */
-  SatSolver* new_sat_solver();
+  std::unique_ptr<SatSolver> new_sat_solver();
   /** Determine if configured SAT solver has terminator support. */
   bool has_terminator_support();
 
