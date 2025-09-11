@@ -18,6 +18,8 @@
 #include <vector>
 
 #include "sat/sat_solver.h"
+#include "solver/result.h"
+#include "terminator.h"
 
 extern "C" {
 struct gimsatul;

@@ -16,13 +16,10 @@
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "preprocess/preprocessing_pass.h"
+#include "sat/sat_solver.h"
 #include "util/statistics.h"
 
 namespace bzla {
-
-namespace sat {
-class SatSolver;
-}
 
 namespace preprocess::pass {
 

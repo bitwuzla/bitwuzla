@@ -15,6 +15,7 @@
 #include "option/option.h"
 #include "rewrite/rewriter.h"
 #include "sat/sat_solver_factory.h"
+#include "terminator.h"
 #include "util/logger.h"
 #include "util/statistics.h"
 
