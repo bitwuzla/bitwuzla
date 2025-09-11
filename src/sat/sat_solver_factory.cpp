@@ -24,31 +24,33 @@
 
 #include <cassert>
 
+#include "sat/sat_solver.h"
+
 namespace bzla::sat {
 
-SatSolver*
+std::unique_ptr<SatSolver>
 SatSolverFactory::new_sat_solver()
 {
 #ifdef BZLA_USE_KISSAT
   if (d_options.sat_solver() == option::SatSolver::KISSAT)
   {
-    return new Kissat();
+    return std::unique_ptr<SatSolver>(new Kissat());
   }
 #endif
 #ifdef BZLA_USE_CMS
   if (d_options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
   {
-    return new CryptoMiniSat(d_options.nthreads());
+    return std::unique_ptr<SatSolver>(new CryptoMiniSat(d_options.nthreads()));
   }
 #endif
 #ifdef BZLA_USE_GIMSATUL
   if (d_options.sat_solver() == option::SatSolver::GIMSATUL)
   {
-    return new Gimsatul(d_options.nthreads());
+    return std::unique_ptr<SatSolver>(new Gimsatul(d_options.nthreads()));
   }
 #endif
   assert(d_options.sat_solver() == option::SatSolver::CADICAL);
-  return new Cadical();
+  return std::unique_ptr<SatSolver>(new Cadical());
 }
 
 bool
