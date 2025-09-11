@@ -24,9 +24,9 @@ class SatSolverFactory
   /** Constructor. */
   SatSolverFactory(const option::Options& options) : d_options(options) {}
   /** Create new SAT solver instance. */
-  std::unique_ptr<SatSolver> new_sat_solver();
+  virtual std::unique_ptr<SatSolver> new_sat_solver();
   /** Determine if configured SAT solver has terminator support. */
-  bool has_terminator_support();
+  virtual bool has_terminator_support();
 
  private:
   const option::Options& d_options;

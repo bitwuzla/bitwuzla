@@ -11,6 +11,7 @@
 #ifndef BITWUZLA_API_CPP_H_INCLUDED
 #define BITWUZLA_API_CPP_H_INCLUDED
 
+#include <bitwuzla/cpp/sat_solver.h>
 #include <bitwuzla/cpp/terminator.h>
 #include <bitwuzla/enums.h>
 #include <bitwuzla/option.h>
@@ -1541,6 +1542,31 @@ class TermManager
 };
 
 /* -------------------------------------------------------------------------- */
+/* External SAT Solver Factory                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The interface for an external (user-provided) SAT solver factory.
+ * @warning This interface is experimental and may change in future versions.
+ */
+class SatSolverFactory
+{
+ public:
+  /** Constructor. */
+  SatSolverFactory(const Options& options) : d_options(options) {}
+  /**
+   * Create new (external) SAT solver instance.
+   * @return The SAT solver instance.
+   */
+  virtual std::unique_ptr<SatSolver> new_sat_solver() = 0;
+  /** Determine if configured SAT solver has terminator support. */
+  virtual bool has_terminator_support() = 0;
+
+ private:
+  const Options& d_options;
+};
+
+/* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -1555,6 +1581,19 @@ class Bitwuzla
    *                at this point.
    */
   Bitwuzla(TermManager &tm, const Options &options = Options());
+  /**
+   * Constructor for configuration with external SAT solver factory.
+   * @warning This constructor is experimental and may change in future
+   * versions.
+   * @param tm          The associated term manager instance.
+   * @param options     The associated options instance. Options must be
+   *                    configured at this point.
+   * @param sat_factory The associated SAT solver factory.
+   */
+  Bitwuzla(TermManager& tm,
+           SatSolverFactory& sat_factory,
+           const Options& options = Options());
+
   /** Destructor. */
   ~Bitwuzla();
 
