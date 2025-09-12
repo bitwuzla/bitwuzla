@@ -64,7 +64,7 @@ class Preprocessor
 
   /**
    * Get the assertion the given assertion originates from.
-   * @note Asserts that given node can be traced back to an original assertion.
+   * @note Asserts that given node can be traced back to one original assertion.
    * @param assertion The assertion to trace back.
    * @param original_assertions The set of original assertions.
    * @return The orginal assertion.

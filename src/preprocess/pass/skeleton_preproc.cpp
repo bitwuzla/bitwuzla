@@ -47,6 +47,18 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
   {
     return;
   }
+  // New assertions introduced by this pass do not have a single 'parent',
+  // and thus the assertion tracker does not yet support tracking this pass.
+  // Both unsat cores and interpolants generation rely on the assertion tracker,
+  // thus we disable this pass when either is enabled.
+  // Note: If we reenable this pass for both in the future we will probably
+  //       need separate tracker instances for each (they likely will require
+  //       different tracking for this pass).
+  if (d_env.options().produce_unsat_cores()
+      || d_env.options().produce_interpolants())
+  {
+    return;
+  }
 
   if (d_done)
   {

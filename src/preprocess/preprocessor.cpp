@@ -46,6 +46,7 @@ Preprocessor::Preprocessor(SolvingContext& context)
       d_global_backtrack_mgr(*context.backtrack_mgr()),
       d_pop_callback(context.backtrack_mgr(), &d_backtrack_mgr),
       d_assertion_tracker(d_env.options().produce_unsat_cores()
+                                  || d_env.options().produce_interpolants()
                               ? new AssertionTracker(&d_backtrack_mgr)
                               : nullptr),
       d_pass_rewrite(d_env, &d_backtrack_mgr),

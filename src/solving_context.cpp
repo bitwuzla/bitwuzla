@@ -197,24 +197,39 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
   set_resource_limits();
 
   // Partition preprocessed assertions into A and B
-  std::vector<Node> _A, _B;
-  for (const auto& a : d_original_assertions)
+  std::vector<Node> ppA, ppB;
+  std::unordered_set<Node> orig_ass{d_original_assertions.begin(),
+                                    d_original_assertions.end()};
+  for (size_t i = 0, size = d_assertions.size(); i < size; ++i)
   {
-    auto it = A.find(a);
+    // trace assertion back to original assertion
+    Node orig = d_preprocessor.original_assertion(d_assertions[i], orig_ass);
+    auto it   = A.find(orig);
     if (it != A.end())
     {
-      _A.push_back(d_env.rewriter().rewrite(a));
+      ppA.push_back(d_assertions[i]);
     }
     else
     {
-      _B.push_back(d_env.rewriter().rewrite(a));
+      ppB.push_back(d_assertions[i]);
     }
   }
 
-  // Preprocessor determined unsat, so we can make a shortcut.
-  if (d_sat_state_pp == Result::UNSAT)
+  // A set empty after preprocessing
+  if (ppA.empty())
   {
-    for (const auto& a : _A)
+    ipol = nm.mk_value(true);
+  }
+  // B set empty after preprocessing
+  else if (ppB.empty())
+  {
+    ipol = nm.mk_value(false);
+  }
+
+  // Preprocessor determined unsat, so we can make a shortcut.
+  if (ipol.is_null() && d_sat_state_pp == Result::UNSAT)
+  {
+    for (const auto& a : ppA)
     {
       if (a.is_value() && !a.value<bool>())
       {
@@ -222,7 +237,7 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
         break;
       }
     }
-    for (const auto& a : _B)
+    for (const auto& a : ppB)
     {
       if (a.is_value() && !a.value<bool>())
       {
@@ -234,7 +249,7 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 
   if (ipol.is_null())
   {
-    ipol = d_solver_engine.interpolant(_A, _B);
+    ipol = d_solver_engine.interpolant(ppA, ppB);
   }
 
   if (!ipol.is_null() && options().dbg_check_interpolant())
