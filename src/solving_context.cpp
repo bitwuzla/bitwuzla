@@ -174,6 +174,7 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
   Log(1);
   Log(1) << "*** interpolant";
   Log(1);
+  Log(1) << "expected assertion partitioning:";
   if (d_logger.is_log_enabled(1))
   {
     for (size_t i = 0, ia = 0, ib = 0, n = d_original_assertions.size(); i < n;
@@ -197,6 +198,7 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
   set_resource_limits();
 
   // Partition preprocessed assertions into A and B
+  std::unordered_set<Node> B;
   std::vector<Node> ppA, ppB;
   std::unordered_set<Node> orig_ass{d_original_assertions.begin(),
                                     d_original_assertions.end()};
@@ -211,23 +213,34 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
     }
     else
     {
+      B.insert(orig);
       ppB.push_back(d_assertions[i]);
     }
   }
 
-  // A set empty after preprocessing
-  if (ppA.empty())
+  Log(1) << "actual assertion partitioning:";
+  if (d_logger.is_log_enabled(1))
   {
-    ipol = nm.mk_value(true);
-  }
-  // B set empty after preprocessing
-  else if (ppB.empty())
-  {
-    ipol = nm.mk_value(false);
+    for (const auto& a : A)
+    {
+      Log(1) << "A: " << a;
+    }
+    for (const auto& a : B)
+    {
+      Log(1) << "B: " << a;
+    }
+    for (size_t i = 0, size = ppA.size(); i < size; ++i)
+    {
+      Log(1) << "ppA[" << i << "]: " << ppA[i];
+    }
+    for (size_t i = 0, size = ppB.size(); i < size; ++i)
+    {
+      Log(1) << "ppB[" << i << "]: " << ppB[i];
+    }
   }
 
   // Preprocessor determined unsat, so we can make a shortcut.
-  if (ipol.is_null() && d_sat_state_pp == Result::UNSAT)
+  if (d_sat_state_pp == Result::UNSAT)
   {
     for (const auto& a : ppA)
     {
@@ -249,7 +262,7 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 
   if (ipol.is_null())
   {
-    ipol = d_solver_engine.interpolant(ppA, ppB);
+    ipol = d_solver_engine.interpolant(A, B, ppA, ppB);
   }
 
   if (!ipol.is_null() && options().dbg_check_interpolant())

@@ -10,6 +10,8 @@
 
 #include "solver/bv/bv_solver.h"
 
+#include <unordered_set>
+
 #include "env.h"
 #include "solver/bv/bv_bitblast_solver.h"
 
@@ -202,10 +204,13 @@ BvSolver::unsat_core(std::vector<Node>& core) const
 /* --- BvSolver private ----------------------------------------------------- */
 
 Node
-BvSolver::interpolant(const std::vector<Node>& A, const std::vector<Node>& B)
+BvSolver::interpolant(const std::unordered_set<Node>& A,
+                      const std::unordered_set<Node>& B,
+                      const std::vector<Node>& ppA,
+                      const std::vector<Node>& ppB)
 {
   assert(d_produce_interpolants);
-  return d_interpol_solver->interpolant(A, B);
+  return d_interpol_solver->interpolant(A, B, ppA, ppB);
 }
 
 BvSolver::Statistics::Statistics(util::Statistics& stats)

@@ -11,6 +11,7 @@
 #include "solver/bv/bv_interpolation_solver.h"
 
 #include <cstdint>
+#include <unordered_set>
 
 #include "env.h"
 #include "node/node.h"
@@ -129,12 +130,20 @@ BvInterpolationSolver::~BvInterpolationSolver()
 }
 
 Node
-BvInterpolationSolver::interpolant(const std::vector<Node>& A,
-                                   const std::vector<Node>& B)
+BvInterpolationSolver::interpolant(const std::unordered_set<Node>& A,
+                                   const std::unordered_set<Node>& B,
+                                   const std::vector<Node>& ppA,
+                                   const std::vector<Node>& ppB)
 {
   assert(d_last_result == Result::UNSAT);
 
-  if (B.empty())
+  // A set empty after preprocessing
+  if (ppA.empty())
+  {
+    return d_env.nm().mk_value(true);
+  }
+  // B set empty after preprocessing
+  if (ppB.empty())
   {
     return d_env.nm().mk_value(false);
   }
@@ -149,10 +158,10 @@ BvInterpolationSolver::interpolant(const std::vector<Node>& A,
 
   {
     util::Timer timer(d_stats.time_label);
-    label_clauses(clause_labels, A, ClauseKind::A);
-    label_clauses(clause_labels, B, ClauseKind::B);
+    label_clauses(clause_labels, ppA, ClauseKind::A);
+    label_clauses(clause_labels, ppB, ClauseKind::B);
 
-    label_vars(var_labels, A, B);
+    label_vars(var_labels, A, B, ppA, ppB);
 
     for (const auto& a : d_lemmas)
     {
@@ -551,7 +560,7 @@ void
 BvInterpolationSolver::label_consts(
     std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
     std::unordered_map<Node, VariableKind>& term_labels,
-    const std::vector<Node>& nodes,
+    const std::unordered_set<Node>& nodes,
     sat::interpolants::VariableKind kind)
 {
   std::unordered_map<Node, bool> cache;
@@ -677,28 +686,34 @@ BvInterpolationSolver::label_leafs(
 void
 BvInterpolationSolver::label_vars(
     std::unordered_map<int64_t, VariableKind>& var_labels,
-    const std::vector<Node>& A,
-    const std::vector<Node>& B)
+    const std::unordered_set<Node>& A,
+    const std::unordered_set<Node>& B,
+    const std::vector<Node>& ppA,
+    const std::vector<Node>& ppB)
 {
   std::unordered_map<Node, VariableKind> term_labels;
-  // First, explicitly label all consts (leafs) that occur in `node`. This is
-  // necessary as we need to step all the way down in case of abstracted
-  // terms. Else, if we only traversed through the bits of a node, we would
-  // cut off above the consts that occur in the abstracted term.
+  // First, explicitly label all consts (leafs) that occur in `node` based on
+  // their occurrence in the original assertions.
+  // This is necessary as we need to step all the way down in case of abstracted
+  // terms. Else, if we only traversed through the bits of a node, we would cut
+  // off above the consts that occur in the abstracted term.
+  // We do this with respect to the original assertions to determine their
+  // 'original' labeling (preprocessing passes may transform assertions such
+  // that the label and/or the 'shared-ness' of symbols may change).
   label_consts(var_labels, term_labels, A, VariableKind::A);
   label_consts(var_labels, term_labels, B, VariableKind::B);
 
-  // map terms that are not bit-blasted to label, this is necessary to determine
-  // the label of abstracted terms
-  label_leafs(var_labels, term_labels, A);
-  label_leafs(var_labels, term_labels, B);
+  // Map terms that are not bit-blasted to a label. This is necessary to
+  // determine the label of abstracted terms.
+  label_leafs(var_labels, term_labels, ppA);
+  label_leafs(var_labels, term_labels, ppB);
 
   // Now, label all SAT vars while traversing from the bits of all nodes. This
   // is necessary to ensure that no AIGS associated with bits of consts that are
   // not shared between A and B get pulled into the interpolant.
   bv::AigBitblaster::aig_node_ref_vector visit;
   std::unordered_map<int64_t, bool> cache;
-  for (const auto& a : A)
+  for (const auto& a : ppA)
   {
     const auto& bits = d_bitblaster.bits(a);
     assert(!bits.empty());
@@ -707,7 +722,7 @@ BvInterpolationSolver::label_vars(
       visit.push_back(aig);
     }
   }
-  for (const auto& a : B)
+  for (const auto& a : ppB)
   {
     const auto& bits = d_bitblaster.bits(a);
     assert(!bits.empty());

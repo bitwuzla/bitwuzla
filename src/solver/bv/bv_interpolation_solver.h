@@ -77,16 +77,21 @@ class BvInterpolationSolver : public Solver,
    *   - and its satisfiability must have been determined via solve() as unsat
    *     before calling this function.
    *
-   * @param A The set of formulas A, given as preprocessed assertions.
-   * @param B The set of formulas B, given as preprocessed assertions.
+   * @param A   The set of original formulas A.
+   * @param B   The set of original formulas B.
+   * @param ppA The set of formulas A, given as preprocessed assertions.
+   * @param ppB The set of formulas B, given as preprocessed assertions.
    *
-   * @note In case the abstraction module is enabled, sets A and B must
+   * @note In case the abstraction module is enabled, sets ppA and ppB must
    *       contain the abstracted version of assertions with abstracted terms.
    *       This is necessary because for labeling, the interpolation engine
    *       needs to process the assertions that have actually been processed
    *       during solving.
    */
-  Node interpolant(const std::vector<Node>& A, const std::vector<Node>& B);
+  Node interpolant(const std::unordered_set<Node>& A,
+                   const std::unordered_set<Node>& B,
+                   const std::vector<Node>& ppA,
+                   const std::vector<Node>& ppB);
 
   /** Get statistics. */
   const auto& statistics() const { return d_stats; }
@@ -136,13 +141,17 @@ class BvInterpolationSolver : public Solver,
    *
    * @param var_labels  The variable labels map to add to. Maps AIG ids to
    *                    variable labels.
-   * @param A           The set of A assertions.
-   * @param B           The set of B assertions.
+   * @param A           The set of original A assertions.
+   * @param B           The set of original B assertions.
+   * @param ppA         The set of preprocessed A assertions.
+   * @param ppB         The set of preprocessed B assertions.
    */
   void label_vars(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
-      const std::vector<Node>& A,
-      const std::vector<Node>& B);
+      const std::unordered_set<Node>& A,
+      const std::unordered_set<Node>& B,
+      const std::vector<Node>& ppA,
+      const std::vector<Node>& ppB);
 
   /**
    * Label SAT variables associated with bits of consts in given set of `nodes`
@@ -161,7 +170,7 @@ class BvInterpolationSolver : public Solver,
   void label_consts(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
       std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
-      const std::vector<Node>& nodes,
+      const std::unordered_set<Node>& nodes,
       sat::interpolants::VariableKind kind);
   /**
    * Label the bits of the bit-vector representation of BvSolver leafs (that are

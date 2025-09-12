@@ -11,6 +11,7 @@
 #include "solver/solver_engine.h"
 
 #include <iomanip>
+#include <unordered_set>
 
 #include "env.h"
 #include "node/node.h"
@@ -183,27 +184,29 @@ SolverEngine::unsat_core(std::vector<Node>& core) const
 }
 
 Node
-SolverEngine::interpolant(const std::vector<Node>& A,
-                          const std::vector<Node>& B)
+SolverEngine::interpolant(const std::unordered_set<Node>& A,
+                          const std::unordered_set<Node>& B,
+                          const std::vector<Node>& ppA,
+                          const std::vector<Node>& ppB)
 {
   if (d_am)
   {
     // The interpolation engine needs the actual set of assertions that
     // is being processed (for labeling). Thus, in case that our abstraction
-    // module is enabled, assertions in A/B with abstracted terms must be
+    // module is enabled, assertions in ppA/ppB with abstracted terms must be
     // replaced with the corresponding abstracted assertions.
-    std::vector<Node> _A(A), _B(B);
-    for (auto& a : _A)
+    std::vector<Node> _ppA(ppA), _ppB(ppB);
+    for (auto& a : _ppA)
     {
       a = d_am->process_assertion(a, false);
     }
-    for (auto& a : _B)
+    for (auto& a : _ppB)
     {
       a = d_am->process_assertion(a, false);
     }
-    return d_am->remove_abstractions(d_bv_solver.interpolant(_A, _B));
+    return d_am->remove_abstractions(d_bv_solver.interpolant(A, B, _ppA, _ppB));
   }
-  return d_bv_solver.interpolant(A, B);
+  return d_bv_solver.interpolant(A, B, ppA, ppB);
 }
 
 bool
