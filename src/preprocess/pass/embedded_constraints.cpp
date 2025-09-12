@@ -37,6 +37,11 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
   {
     return;
   }
+  // Disabled if interpolants generation is enabled.
+  if (d_env.options().produce_interpolants())
+  {
+    return;
+  }
 
   Log(1) << "Apply embedded constraints preprocessing pass";
 

@@ -567,6 +567,14 @@ void
 PassVariableSubstitution::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats_pass.time_apply);
+
+  // Requires special labeling of substituted variable bits and post-processing
+  // of interpolant, not yet supported.
+  if (d_env.options().produce_interpolants())
+  {
+    return;
+  }
+
   Log(1) << "Apply variable substitution";
 
   auto& substitution_map = d_cache.substitutions();

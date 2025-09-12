@@ -807,14 +807,6 @@ Options::finalize()
     // Interpolation is currently only supported with CaDiCaL.
     sat_solver.set(SatSolver::CADICAL);
 
-    // We disable preprocessing when producing interpolants since all passes
-    // that are potentially relevant for performance may potentially eliminate
-    // all shared symbols. We do not know at solving time which symbols are
-    // A/B-local or shared, thus we have to disable. Rewriting is enabled.
-    //
-    // Note that below we have to explicitly disallow that user-set passes
-    // are enabled even when preprocessing is disabled.
-    preprocess.set(false);
     // Introduces fresh variables
     // Assertion abstraction adds back assertions as lemmas, which is generally
     // problematic for interpolant generation (full set of symbols not in
@@ -838,13 +830,12 @@ Options::finalize()
   // Disable preprocessing passes if not explicitly enabled by user
   if (!preprocess())
   {
-    bool interpolants = produce_interpolants();
     for (Option o = Option::PREPROCESS; o != Option::PP_OPT_END; ++o)
     {
       auto d = data(o);
       // We have to explicitly disallow that user-set passes are enabled even
       // when preprocessing is disabled.
-      if (interpolants || !d->d_is_user_set)
+      if (!d->d_is_user_set)
       {
         assert(d->is_bool());
         auto opt = static_cast<OptionBool*>(d);

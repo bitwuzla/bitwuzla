@@ -40,6 +40,12 @@ PassElimExtract::apply(AssertionVector& assertions)
   {
     return;
   }
+  // Introduces fresh variables, we cannot handle this when producing
+  // interpolants at the moment.
+  if (d_env.options().produce_interpolants())
+  {
+    return;
+  }
 
   util::Timer timer(d_stats_pass.time_apply);
   d_cache.clear();
