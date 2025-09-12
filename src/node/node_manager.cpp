@@ -304,6 +304,7 @@ NodeManager::compute_type(Kind kind,
     case Kind::BV_REDOR:
     case Kind::BV_REDXOR: return d_tm.mk_bv_type(1);
 
+    case Kind::AM_ABSTRACT:
     case Kind::BV_ADD:
     case Kind::BV_AND:
     case Kind::BV_ASHR:
@@ -424,6 +425,7 @@ NodeManager::check_type(Kind kind,
       assert(false);
       break;
 
+    case Kind::AM_ABSTRACT:
     case Kind::CONSTANT:
     case Kind::CONST_ARRAY:
     case Kind::VARIABLE:

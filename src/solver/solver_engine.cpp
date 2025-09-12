@@ -354,18 +354,16 @@ SolverEngine::process_term(const Node& term)
       }
       else
       {
-        if (fun::FunSolver::is_theory_leaf(cur))
+        if (d_am != nullptr && d_am->is_abstraction(cur))
         {
-          if (d_am != nullptr && d_am->is_abstraction(cur))
-          {
-            Log(2) << "register abstraction term: " << cur;
-            d_am->register_abstraction(cur);
-          }
-          else
-          {
-            Log(2) << "register function term: " << cur;
-            d_fun_solver.register_term(cur);
-          }
+          Log(2) << "register abstraction term: " << cur;
+          d_am->register_abstraction(cur);
+          d_new_terms_registered = true;
+        }
+        else if (fun::FunSolver::is_theory_leaf(cur))
+        {
+          Log(2) << "register function term: " << cur;
+          d_fun_solver.register_term(cur);
           d_new_terms_registered = true;
         }
         else if (array::ArraySolver::is_theory_leaf(cur))
@@ -468,6 +466,7 @@ SolverEngine::_value(const Node& term)
         }
         break;
 
+        case Kind::AM_ABSTRACT:
         case Kind::APPLY:
         case Kind::SELECT:
         case Kind::FORALL:

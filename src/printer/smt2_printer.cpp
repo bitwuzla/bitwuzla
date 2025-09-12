@@ -369,6 +369,7 @@ Smt2Printer::print(std::ostream& os,
         case Kind::DISTINCT:
         case Kind::EQUAL:
         case Kind::ITE:
+        case Kind::AM_ABSTRACT:
         case Kind::BV_ADD:
         case Kind::BV_AND:
         case Kind::BV_ASHR:

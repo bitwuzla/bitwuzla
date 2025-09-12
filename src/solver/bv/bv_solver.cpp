@@ -25,6 +25,8 @@ BvSolver::is_leaf(const Node& term)
   Kind k = term.kind();
   return k == Kind::CONSTANT
          || k == Kind::VALUE
+         // Abstraction
+         || k == Kind::AM_ABSTRACT
          // Quantifiers
          || k == Kind::FORALL
          || k == Kind::EXISTS

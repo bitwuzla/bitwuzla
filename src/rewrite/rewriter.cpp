@@ -437,6 +437,9 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::EQUAL: res = rewrite_eq(n); break;
     case node::Kind::ITE: res = rewrite_ite(n); break;
 
+    // There are no rewrites for abstraction nodes.
+    case node::Kind::AM_ABSTRACT: res = n; break;
+
     case node::Kind::BV_AND: res = rewrite_bv_and(n); break;
     case node::Kind::BV_ADD: res = rewrite_bv_add(n); break;
     case node::Kind::BV_ASHR: res = rewrite_bv_ashr(n); break;

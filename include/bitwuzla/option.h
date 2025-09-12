@@ -660,24 +660,6 @@ enum ENUM(Option)
    */
   EVALUE(ABSTRACTION_BV_UREM),
   /*!
-   * **Abstraction module: Abstract equality terms.**
-   *
-   * *Values:*
-   *  - **true**: enable
-   *  - **false**: disable [**default**]
-   */
-#ifndef BITWUZLA_API_USE_C_ENUMS
-  /*! @see Option::ABSTRACTION
-   */
-#else
-  /*! @see BITWUZLA_OPT_ABSTRACTION
-   */
-#endif
-  /*!
-   * @warning This is an expert option to configure the abstraction module.
-   */
-  EVALUE(ABSTRACTION_EQUAL),
-  /*!
    * **Abstraction module: Abstract ITE terms.**
    *
    * *Values:*

@@ -50,6 +50,7 @@ AigBitblaster::bitblast(const Node& t)
                            : d_bitblaster.bv_value(cur.value<BitVector>());
           break;
 
+        case Kind::AM_ABSTRACT:
         // Boolean abstractions
         case Kind::FP_IS_INF:
         case Kind::FP_IS_NAN:

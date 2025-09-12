@@ -977,6 +977,7 @@ TEST_F(TestBvInterpolationSolver, interpol_fp2)
   Node fpabs_a   = d_nm.mk_node(Kind::FP_ABS, {a});
   Node fpposzero = d_nm.mk_value(FloatingPoint::fpzero(5, 11, false));
   Node fpnegzero = d_nm.mk_value(FloatingPoint::fpzero(5, 11, true));
+  // (not (fp.isNaN b))
   Node A0 = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NAN, {b})});
   // (not (fp.isNegative b))
   Node A1 = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NEG, {b})});

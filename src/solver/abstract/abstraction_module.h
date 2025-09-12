@@ -59,15 +59,6 @@ class AbstractionModule
  private:
   /** @return Whether this term should be abstracted. */
   bool abstract(const Node& node) const;
-
-  const Node& get_abstraction(const Node& node);
-
-  /** Add original term and its abstraction. */
-  void add_abstraction(const Node& node, const Node& abstr);
-
-  /** @return Abstraction UF for given node based on its type and kind. */
-  const Node& abstr_uf(const Node& node);
-
   /** Check assignment of abstraction and add lemma if needed. */
   void check_term_abstraction(const Node& abstr);
   /** Check assignment of ITE abstraction and lazily expand if needed. */
@@ -110,18 +101,10 @@ class AbstractionModule
   backtrack::vector<Node> d_active_abstractions;
   /** Maps abstracted terms (original) to abstractions. */
   std::unordered_map<Node, Node> d_abstractions;
-  /** Maps abstractions to abstracted terms (original). */
-  std::unordered_map<Node, Node> d_abstractions_rev;
   /** Cache for process(). */
   std::unordered_map<Node, Node> d_abstraction_cache;
   /** Assertion cache, used for tracking unsat cores. */
   std::unordered_map<Node, Node> d_abstraction_cache_assertions;
-  /** Stores abstraction UFs based on kind and type. */
-  std::unordered_map<node::Kind, std::unordered_map<Type, Node>> d_abstr_ufs;
-  /** Stores abstraction consts for assertions. */
-  std::unordered_map<Node, Node> d_abstr_consts;
-  /** Stores abstraction consts for equalities. */
-  std::unordered_map<Node, std::vector<Node>> d_abstr_equal;
   /** Stores enabled refinement lemmas based on kind. */
   std::unordered_map<node::Kind, std::vector<std::unique_ptr<AbstractionLemma>>>
       d_abstr_lemmas;

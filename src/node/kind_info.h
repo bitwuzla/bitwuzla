@@ -93,6 +93,8 @@ struct KindInfo
     return Kind::AND <= kind && kind <= Kind::XOR;
   }
 
+  static bool is_abstraction(Kind kind) { return kind == Kind::AM_ABSTRACT; }
+
   /** @return Whether given kind is a bit-vector kind. */
   static bool is_bv(Kind kind)
   {

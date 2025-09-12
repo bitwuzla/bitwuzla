@@ -55,6 +55,9 @@ constexpr KindInfo::KindInfo()
   init(Kind::OR, 2, 0, "OR", "or", KindInfo::LEFT_ASSOC, true);
   init(Kind::XOR, 2, 0, "XOR", "xor", KindInfo::LEFT_ASSOC, true);
 
+  /* Abstraction */
+  init(Kind::AM_ABSTRACT, 1, 0, "AM_ABSTRACT", "bzla.abstract");
+
   /* Bit-vectors */
   init(Kind::BV_ADD, 2, 0, "BV_ADD", "bvadd", KindInfo::LEFT_ASSOC, true);
   init(Kind::BV_AND, 2, 0, "BV_AND", "bvand", KindInfo::LEFT_ASSOC, true);

@@ -424,11 +424,6 @@ Options::Options()
                           true,
                           "term abstraction for bvurem",
                           "abstraction-bvurem"),
-      abstraction_eq(this,
-                     Option::ABSTRACTION_EQUAL,
-                     false,
-                     "term abstraction for =",
-                     "abstraction-eq"),
       abstraction_ite(this,
                       Option::ABSTRACTION_ITE,
                       false,
@@ -918,7 +913,6 @@ Options::data(Option opt)
     case Option::ABSTRACTION_BV_MUL: return &abstraction_bv_mul;
     case Option::ABSTRACTION_BV_UDIV: return &abstraction_bv_udiv;
     case Option::ABSTRACTION_BV_UREM: return &abstraction_bv_urem;
-    case Option::ABSTRACTION_EQUAL: return &abstraction_eq;
     case Option::ABSTRACTION_ITE: return &abstraction_ite;
 
     case Option::PREPROCESS: return &preprocess;
