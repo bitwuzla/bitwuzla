@@ -578,7 +578,7 @@ CadicalTracer::mk_or(bitblast::AigNode& aig0, bitblast::AigNode& aig1) const
 }
 
 AigNode
-CadicalTracer::mk_or(std::vector<AigNode> aigs) const
+CadicalTracer::mk_or(const std::vector<AigNode>& aigs) const
 {
   if (aigs.empty())
   {

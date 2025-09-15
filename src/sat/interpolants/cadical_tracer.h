@@ -163,7 +163,7 @@ class CadicalTracer : public Tracer
    * @param aigs The AIGs.
    * @return The AIG representing a logical OR over the given AIGs.
    */
-  bitblast::AigNode mk_or(std::vector<bitblast::AigNode> aigs) const;
+  bitblast::AigNode mk_or(const std::vector<bitblast::AigNode>& aigs) const;
 
   /** Added clauses, dummy at index 0 to enable access via clause id. */
   std::vector<Clause> d_clauses{Clause()};
