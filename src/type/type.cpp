@@ -12,7 +12,7 @@
 
 #include <cassert>
 
-#include "printer/printer.h"
+#include "printer/smt2_printer.h"
 #include "type/type_data.h"
 
 namespace bzla {
@@ -246,7 +246,7 @@ operator<(const Type& a, const Type& b)
 std::ostream&
 operator<<(std::ostream& out, const Type& type)
 {
-  Printer::print(out, type);
+  Smt2Printer::print(out, type);
   return out;
 }
 

@@ -8,7 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "printer/printer.h"
+#include "printer/smt2_printer.h"
 
 #include <iostream>
 #include <sstream>
@@ -22,6 +22,7 @@
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
 #include "parser/smt2/lexer.h"
+#include "printer/exception.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "util/printer.h"
@@ -33,7 +34,7 @@ using namespace node;
 /* --- Printer public ------------------------------------------------------- */
 
 void
-Printer::print(std::ostream& os, const Node& node)
+Smt2Printer::print(std::ostream& os, const Node& node)
 {
   size_t depth = os.iword(util::set_depth::s_stream_index_maximum_depth);
   bool no_lets = os.iword(util::set_letify::s_stream_index_no_letify);
@@ -51,7 +52,7 @@ Printer::print(std::ostream& os, const Node& node)
 }
 
 void
-Printer::print(std::ostream& os, const Type& type)
+Smt2Printer::print(std::ostream& os, const Type& type)
 {
   if (type.is_bool())
   {
@@ -100,8 +101,8 @@ Printer::print(std::ostream& os, const Type& type)
 }
 
 void
-Printer::print_formula(std::ostream& os,
-                       const backtrack::AssertionView& assertions)
+Smt2Printer::print_formula(std::ostream& os,
+                           const backtrack::AssertionView& assertions)
 {
   bool no_lets    = os.iword(util::set_letify::s_stream_index_no_letify);
   bool has_arrays = false, has_bv = false, has_fp = false, has_funs = false;
@@ -292,7 +293,8 @@ Printer::print_formula(std::ostream& os,
 }
 
 void
-Printer::print_formula(std::ostream& os, const std::vector<Node>& assertions)
+Smt2Printer::print_formula(std::ostream& os,
+                           const std::vector<Node>& assertions)
 {
   backtrack::AssertionStack stack;
   for (const Node& assertion : assertions)
@@ -305,12 +307,12 @@ Printer::print_formula(std::ostream& os, const std::vector<Node>& assertions)
 /* --- Printer private ------------------------------------------------------ */
 
 void
-Printer::print(std::ostream& os,
-               const Node& node,
-               node::unordered_node_ref_map<std::string>& def_map,
-               node::unordered_node_ref_map<std::string>& let_map,
-               size_t max_depth,
-               bool no_lets)
+Smt2Printer::print(std::ostream& os,
+                   const Node& node,
+                   node::unordered_node_ref_map<std::string>& def_map,
+                   node::unordered_node_ref_map<std::string>& let_map,
+                   size_t max_depth,
+                   bool no_lets)
 {
   // configure bit-vector output number format
   uint8_t bv_format = os.iword(util::set_bv_format::s_stream_index_bv_format);
@@ -374,7 +376,7 @@ Printer::print(std::ostream& os,
       {
         case Kind::CONST_ARRAY:
           os << "((as const ";
-          Printer::print(os, cur.type());
+          Smt2Printer::print(os, cur.type());
           os << ")";
           break;
 
@@ -489,7 +491,7 @@ Printer::print(std::ostream& os,
           os << "(" << symbol << " ((";
           print_symbol(os, cur[0]);
           os << " ";
-          Printer::print(os, cur[0].type());
+          Smt2Printer::print(os, cur[0].type());
           os << ")) ";
           visit.pop_back();  // Pop variable
           visit.pop_back();  // Pop body
@@ -618,7 +620,7 @@ Printer::print(std::ostream& os,
 }
 
 void
-Printer::print_symbol(std::ostream& os, const Node& node)
+Smt2Printer::print_symbol(std::ostream& os, const Node& node)
 {
   const auto symbol = node.symbol();
   if (symbol)
@@ -651,12 +653,12 @@ Printer::print_symbol(std::ostream& os, const Node& node)
 }
 
 void
-Printer::letify(std::ostream& os,
-                const Node& node,
-                node::unordered_node_ref_map<std::string>& def_map,
-                node::unordered_node_ref_map<std::string>& let_map,
-                size_t max_depth,
-                bool no_lets)
+Smt2Printer::letify(std::ostream& os,
+                    const Node& node,
+                    node::unordered_node_ref_map<std::string>& def_map,
+                    node::unordered_node_ref_map<std::string>& let_map,
+                    size_t max_depth,
+                    bool no_lets)
 {
   if (no_lets)
   {

@@ -23,7 +23,7 @@
 #include "option/option.h"
 #include "printer/btor2_printer.h"
 #include "printer/exception.h"
-#include "printer/printer.h"
+#include "printer/smt2_printer.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "solver/fp/symfpu_nm.h"  // Temporary for setting SymFpuNM
@@ -1663,7 +1663,7 @@ Bitwuzla::print_formula(std::ostream &out, const std::string &format) const
   {
     if (format == "smt2")
     {
-      bzla::Printer::print_formula(out, d_ctx->assertions());
+      bzla::Smt2Printer::print_formula(out, d_ctx->assertions());
     }
     else
     {
@@ -1689,7 +1689,7 @@ Bitwuzla::print_unsat_core(std::ostream &out, const std::string &format) const
   BITWUZLA_TRY_CATCH_BEGIN;
   if (d_last_check_sat == Result::UNSAT)
   {
-    bzla::Printer::print_formula(out, d_ctx->get_unsat_core());
+    bzla::Smt2Printer::print_formula(out, d_ctx->get_unsat_core());
   }
   BITWUZLA_TRY_CATCH_END;
 }
