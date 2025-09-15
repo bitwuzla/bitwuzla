@@ -29,6 +29,7 @@ struct Options
   uint64_t time_limit     = 0;
   std::string infile_name = "<stdin>";
   std::string language    = "smt2";
+  std::string output_lang = "smt2";
 };
 
 /**
