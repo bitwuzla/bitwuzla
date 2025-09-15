@@ -216,6 +216,7 @@ sources = files([
   'preprocess/preprocessing_pass.cpp',
   'preprocess/preprocessor.cpp',
   'printer/printer.cpp',
+  'printer/btor2_printer.cpp',
   'rewrite/evaluator.cpp',
   'rewrite/rewrite_utils.cpp',
   'rewrite/rewriter.cpp',

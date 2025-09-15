@@ -394,6 +394,16 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
     {
       opts.print = true;
     }
+    else if (check_opt_value(arg, "", "--output-lang"))
+    {
+      auto [opt, val] = parse_arg_val(argc, i, argv);
+      if (val != "smt2" && val != "btor2")
+      {
+        Error() << "invalid output language given `" << val << "`, expected "
+                << "'smt2' or 'btor2'";
+      }
+      opts.output_lang = val;
+    }
     else if (arg == "--print-unsat-core")
     {
       opts.print_unsat_core = true;

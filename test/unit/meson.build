@@ -51,6 +51,7 @@ unit_tests = [
 
   ['printer',
     [
+      'btor2_printer',
       'printer'
     ]
   ],

@@ -64,7 +64,7 @@ main(int32_t argc, char* argv[])
       {
         bitwuzla->simplify();
       }
-      bitwuzla->print_formula(std::cout, "smt2");
+      bitwuzla->print_formula(std::cout, main_options.output_lang);
     }
 
     if (main_options.print_unsat_core)

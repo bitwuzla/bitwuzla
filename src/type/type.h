@@ -162,6 +162,14 @@ bool operator==(const Type& a, const Type& b);
  */
 bool operator!=(const Type& a, const Type& b);
 
+/** Compare types by type id.
+ *
+ * @param a The first type to compare.
+ * @param b The second type to compare.
+ * @return True if the id of a is less than id of b.
+ */
+bool operator<(const Type& a, const Type& b);
+
 /** Print type to stream. */
 std::ostream& operator<<(std::ostream& out, const Type& type);
 

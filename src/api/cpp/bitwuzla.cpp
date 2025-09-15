@@ -21,6 +21,8 @@
 #include "node/node_utils.h"
 #include "node/unordered_node_ref_set.h"
 #include "option/option.h"
+#include "printer/btor2_printer.h"
+#include "printer/exception.h"
 #include "printer/printer.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
@@ -1655,10 +1657,18 @@ void
 Bitwuzla::print_formula(std::ostream &out, const std::string &format) const
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(format);
-  BITWUZLA_CHECK(format == "smt2") << "invalid format, expected 'smt2'";
+  BITWUZLA_CHECK(format == "smt2" || format == "btor2")
+      << "invalid format, expected 'smt2' or 'btor2'";
   try
   {
-    bzla::Printer::print_formula(out, d_ctx->assertions());
+    if (format == "smt2")
+    {
+      bzla::Printer::print_formula(out, d_ctx->assertions());
+    }
+    else
+    {
+      bzla::Btor2Printer::print_formula(out, d_ctx->assertions());
+    }
   }
   catch (bzla::Error &e)
   {

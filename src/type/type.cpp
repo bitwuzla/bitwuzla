@@ -237,6 +237,12 @@ operator!=(const Type& a, const Type& b)
   return a.d_data != b.d_data;
 }
 
+bool
+operator<(const Type& a, const Type& b)
+{
+  return a.id() < b.id();
+}
+
 std::ostream&
 operator<<(std::ostream& out, const Type& type)
 {
