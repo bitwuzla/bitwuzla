@@ -13,7 +13,7 @@
 #include "bv/bitvector.h"
 #include "node/kind_info.h"
 #include "node/node_manager.h"
-#include "printer/printer.h"
+#include "printer/smt2_printer.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "test/unit/test.h"
@@ -29,7 +29,7 @@ class TestPrinter : public TestCommon
   void test_unary(Kind kind, const Type& type)
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_node(kind, {d_nm.mk_const(type, "x")}));
+    Smt2Printer::print(ss, d_nm.mk_node(kind, {d_nm.mk_const(type, "x")}));
     ASSERT_EQ(ss.str(), "(" + std::string(KindInfo::smt2_name(kind)) + " x)");
   }
   void test_unary_indexed(Kind kind,
@@ -37,7 +37,8 @@ class TestPrinter : public TestCommon
                           const std::vector<uint64_t>& idxs)
   {
     std::stringstream ss, es;
-    Printer::print(ss, d_nm.mk_node(kind, {d_nm.mk_const(type, "x")}, idxs));
+    Smt2Printer::print(ss,
+                       d_nm.mk_node(kind, {d_nm.mk_const(type, "x")}, idxs));
     es << "((_ " << KindInfo::smt2_name(kind);
     for (uint64_t i : idxs) es << " " << i;
     es << ") x)";
@@ -55,7 +56,7 @@ class TestPrinter : public TestCommon
          << "x" + std::to_string(i);
     }
     es << ")";
-    Printer::print(ss, d_nm.mk_node(kind, consts));
+    Smt2Printer::print(ss, d_nm.mk_node(kind, consts));
     ASSERT_EQ(ss.str(), es.str());
   }
   void test_nary_indexed(Kind kind,
@@ -74,63 +75,64 @@ class TestPrinter : public TestCommon
          << "x" + std::to_string(i);
     }
     es << ")";
-    Printer::print(ss, d_nm.mk_node(kind, consts, idxs));
+    Smt2Printer::print(ss, d_nm.mk_node(kind, consts, idxs));
     ASSERT_EQ(ss.str(), es.str());
   }
 
   NodeManager d_nm;
-  Type d_type_bool  = d_nm.mk_bool_type();
-  Type d_type_bv    = d_nm.mk_bv_type(8);
-  Type d_type_fp    = d_nm.mk_fp_type(5, 11);
-  Type d_type_rm    = d_nm.mk_rm_type();
+  Type d_type_bool = d_nm.mk_bool_type();
+  Type d_type_bv   = d_nm.mk_bv_type(8);
+  Type d_type_fp   = d_nm.mk_fp_type(5, 11);
+  Type d_type_rm   = d_nm.mk_rm_type();
 };
 
 TEST_F(TestPrinter, print_type)
 {
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_bool_type());
+    Smt2Printer::print(ss, d_nm.mk_bool_type());
     ASSERT_EQ(ss.str(), "Bool");
   }
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_rm_type());
+    Smt2Printer::print(ss, d_nm.mk_rm_type());
     ASSERT_EQ(ss.str(), "RoundingMode");
   }
   {
     std::stringstream ss;
     Type t = d_nm.mk_uninterpreted_type();
-    Printer::print(ss, t);
+    Smt2Printer::print(ss, t);
     ASSERT_EQ(ss.str(), "@bzla.sort" + std::to_string(t.id()));
   }
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_uninterpreted_type("foo"));
+    Smt2Printer::print(ss, d_nm.mk_uninterpreted_type("foo"));
     ASSERT_EQ(ss.str(), "foo");
   }
   {
     std::stringstream ss;
-    Printer::print(ss, d_type_bv);
+    Smt2Printer::print(ss, d_type_bv);
     ASSERT_EQ(ss.str(), "(_ BitVec 8)");
   }
   {
     std::stringstream ss;
-    Printer::print(ss, d_type_fp);
+    Smt2Printer::print(ss, d_type_fp);
     ASSERT_EQ(ss.str(), "(_ FloatingPoint 5 11)");
   }
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_array_type(d_type_bv, d_type_fp));
+    Smt2Printer::print(ss, d_nm.mk_array_type(d_type_bv, d_type_fp));
     ASSERT_EQ(ss.str(), "(Array (_ BitVec 8) (_ FloatingPoint 5 11))");
   }
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_fun_type({d_type_bv, d_type_fp}));
+    Smt2Printer::print(ss, d_nm.mk_fun_type({d_type_bv, d_type_fp}));
     ASSERT_EQ(ss.str(), "(_ BitVec 8) -> (_ FloatingPoint 5 11)");
   }
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_fun_type({d_type_bool, d_type_bv, d_type_fp}));
+    Smt2Printer::print(ss,
+                       d_nm.mk_fun_type({d_type_bool, d_type_bv, d_type_fp}));
     ASSERT_EQ(ss.str(), "Bool (_ BitVec 8) -> (_ FloatingPoint 5 11)");
   }
 }
@@ -139,33 +141,33 @@ TEST_F(TestPrinter, print_value)
 {
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_value(true));
+    Smt2Printer::print(ss, d_nm.mk_value(true));
     ASSERT_EQ(ss.str(), "true");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_value(false));
+    Smt2Printer::print(ss, d_nm.mk_value(false));
     ASSERT_EQ(ss.str(), "false");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_value(BitVector::from_ui(4, 2)));
+    Smt2Printer::print(ss, d_nm.mk_value(BitVector::from_ui(4, 2)));
     ASSERT_EQ(ss.str(), "#b0010");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss,
-                   d_nm.mk_value(FloatingPoint(d_nm.mk_fp_type(3, 5),
-                                               BitVector::from_ui(8, 2))));
+    Smt2Printer::print(ss,
+                       d_nm.mk_value(FloatingPoint(d_nm.mk_fp_type(3, 5),
+                                                   BitVector::from_ui(8, 2))));
     ASSERT_EQ(ss.str(), "(fp #b0 #b000 #b0010)");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_value(RoundingMode::RNA));
+    Smt2Printer::print(ss, d_nm.mk_value(RoundingMode::RNA));
     ASSERT_EQ(ss.str(), "RNA");
   }
 }
@@ -174,20 +176,20 @@ TEST_F(TestPrinter, print_const)
 {
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_const(d_type_bool, "x"));
+    Smt2Printer::print(ss, d_nm.mk_const(d_type_bool, "x"));
     ASSERT_EQ(ss.str(), "x");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_const(d_type_bool, ""));
+    Smt2Printer::print(ss, d_nm.mk_const(d_type_bool, ""));
     ASSERT_EQ(ss.str(), "||");
   }
 
   {
     std::stringstream ss, expected;
     Node n = d_nm.mk_const(d_type_bool);
-    Printer::print(ss, n);
+    Smt2Printer::print(ss, n);
     expected << "@bzla.const_" << n.id();
     ASSERT_EQ(ss.str(), expected.str());
   }
@@ -197,20 +199,20 @@ TEST_F(TestPrinter, print_var)
 {
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_var(d_type_bool, "x"));
+    Smt2Printer::print(ss, d_nm.mk_var(d_type_bool, "x"));
     ASSERT_EQ(ss.str(), "x");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_var(d_type_bool, ""));
+    Smt2Printer::print(ss, d_nm.mk_var(d_type_bool, ""));
     ASSERT_EQ(ss.str(), "||");
   }
 
   {
     std::stringstream ss, expected;
     Node n = d_nm.mk_var(d_type_bool);
-    Printer::print(ss, n);
+    Smt2Printer::print(ss, n);
     expected << "@bzla.var_" << n.id();
     ASSERT_EQ(ss.str(), expected.str());
   }
@@ -225,56 +227,64 @@ TEST_F(TestPrinter, print_binder)
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_node(Kind::FORALL, {w, d_nm.mk_value(true)}));
+    Smt2Printer::print(ss,
+                       d_nm.mk_node(Kind::FORALL, {w, d_nm.mk_value(true)}));
     ASSERT_EQ(ss.str(), "(forall ((w Bool)) true)");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_value(true)}));
+    Smt2Printer::print(ss,
+                       d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_value(true)}));
     ASSERT_EQ(ss.str(), "(forall ((x (_ BitVec 32))) true)");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_node(Kind::FORALL, {y, d_nm.mk_value(true)}));
+    Smt2Printer::print(ss,
+                       d_nm.mk_node(Kind::FORALL, {y, d_nm.mk_value(true)}));
     ASSERT_EQ(ss.str(), "(forall ((y RoundingMode)) true)");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_node(Kind::FORALL, {z, d_nm.mk_value(true)}));
+    Smt2Printer::print(ss,
+                       d_nm.mk_node(Kind::FORALL, {z, d_nm.mk_value(true)}));
     ASSERT_EQ(ss.str(), "(forall ((z (_ FloatingPoint 8 24))) true)");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_node(Kind::EXISTS, {w, d_nm.mk_value(true)}));
+    Smt2Printer::print(ss,
+                       d_nm.mk_node(Kind::EXISTS, {w, d_nm.mk_value(true)}));
     ASSERT_EQ(ss.str(), "(exists ((w Bool)) true)");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_node(Kind::EXISTS, {x, d_nm.mk_value(true)}));
+    Smt2Printer::print(ss,
+                       d_nm.mk_node(Kind::EXISTS, {x, d_nm.mk_value(true)}));
     ASSERT_EQ(ss.str(), "(exists ((x (_ BitVec 32))) true)");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_node(Kind::EXISTS, {y, d_nm.mk_value(true)}));
+    Smt2Printer::print(ss,
+                       d_nm.mk_node(Kind::EXISTS, {y, d_nm.mk_value(true)}));
     ASSERT_EQ(ss.str(), "(exists ((y RoundingMode)) true)");
   }
 
   {
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_node(Kind::EXISTS, {z, d_nm.mk_value(true)}));
+    Smt2Printer::print(ss,
+                       d_nm.mk_node(Kind::EXISTS, {z, d_nm.mk_value(true)}));
     ASSERT_EQ(ss.str(), "(exists ((z (_ FloatingPoint 8 24))) true)");
   }
 
   {
     Node v = d_nm.mk_var(d_nm.mk_bv_type(8), "v");
     std::stringstream ss;
-    Printer::print(ss, d_nm.mk_node(Kind::LAMBDA, {v, v}));
+    Smt2Printer::print(ss, d_nm.mk_node(Kind::LAMBDA, {v, v}));
     ASSERT_EQ(ss.str(), "(lambda ((v (_ BitVec 8))) v)");
   }
 }
@@ -286,7 +296,7 @@ TEST_F(TestPrinter, print_apply)
   Node x    = d_nm.mk_const(d_nm.mk_bv_type(32), "x");
 
   std::stringstream ss;
-  Printer::print(ss, d_nm.mk_node(Kind::APPLY, {f, x}));
+  Smt2Printer::print(ss, d_nm.mk_node(Kind::APPLY, {f, x}));
   ASSERT_EQ(ss.str(), "(f x)");
 }
 
@@ -299,13 +309,13 @@ TEST_F(TestPrinter, print_let1)
 
   {
     std::stringstream ss;
-    Printer::print(ss, or_and);
+    Smt2Printer::print(ss, or_and);
     ASSERT_EQ(ss.str(), "(let ((_let0 (and x y))) (or _let0 _let0))");
   }
   {
     std::stringstream ss;
     ss << util::set_letify(false);
-    Printer::print(ss, or_and);
+    Smt2Printer::print(ss, or_and);
     ASSERT_EQ(ss.str(), "(or (and x y) (and x y))");
   }
 }
@@ -320,7 +330,7 @@ TEST_F(TestPrinter, print_let2)
 
   {
     std::stringstream ss;
-    Printer::print(ss, and_or_and);
+    Smt2Printer::print(ss, and_or_and);
     ASSERT_EQ(ss.str(),
               "(let ((_let0 (and x y))) (let ((_let1 (or _let0 _let0))) (and "
               "_let1 _let1)))");
@@ -328,7 +338,7 @@ TEST_F(TestPrinter, print_let2)
   {
     std::stringstream ss;
     ss << util::set_letify(false);
-    Printer::print(ss, and_or_and);
+    Smt2Printer::print(ss, and_or_and);
     ASSERT_EQ(ss.str(),
               "(and (or (and x y) (and x y)) (or (and x y) (and x y)))");
   }
@@ -345,14 +355,14 @@ TEST_F(TestPrinter, print_let3)
 
   {
     std::stringstream ss;
-    Printer::print(ss, or_and);
+    Smt2Printer::print(ss, or_and);
     ASSERT_EQ(ss.str(),
               "(let ((_let0 (and a b))) (or _let0 (forall ((x Bool)) _let0)))");
   }
   {
     std::stringstream ss;
     ss << util::set_letify(false);
-    Printer::print(ss, or_and);
+    Smt2Printer::print(ss, or_and);
     ASSERT_EQ(ss.str(), "(or (and a b) (forall ((x Bool)) (and a b)))");
   }
 }
@@ -365,10 +375,10 @@ TEST_F(TestPrinter, print_let4)
   Node or_and     = d_nm.mk_node(Kind::OR, {x_and_y, x_and_y});
   Node and_or_and = d_nm.mk_node(Kind::AND, {or_and, or_and});
   Node forall     = d_nm.mk_node(Kind::FORALL,
-                             {x, d_nm.mk_node(Kind::FORALL, {y, and_or_and})});
+                                 {x, d_nm.mk_node(Kind::FORALL, {y, and_or_and})});
   {
     std::stringstream ss;
-    Printer::print(ss, forall);
+    Smt2Printer::print(ss, forall);
     ASSERT_EQ(ss.str(),
               "(forall ((x Bool)) (forall ((y Bool)) (let ((_let0 (and x y))) "
               "(let ((_let1 (or _let0 _let0))) (and _let1 _let1)))))");
@@ -376,7 +386,7 @@ TEST_F(TestPrinter, print_let4)
   {
     std::stringstream ss;
     ss << util::set_letify(false);
-    Printer::print(ss, forall);
+    Smt2Printer::print(ss, forall);
     ASSERT_EQ(ss.str(),
               "(forall ((x Bool)) (forall ((y Bool)) "
               "(and (or (and x y) (and x y)) (or (and x y) (and x y)))))");
@@ -391,7 +401,7 @@ TEST_F(TestPrinter, print_nested)
   Node bvand1 =
       d_nm.mk_node(Kind::BV_AND, {d_nm.mk_value(BitVector(4, "1001")), bvand0});
   std::stringstream ss;
-  Printer::print(ss, bvand1);
+  Smt2Printer::print(ss, bvand1);
   ASSERT_EQ(ss.str(), "(bvand #b1001 (bvand #b1001 #b1110))");
 }
 
@@ -402,7 +412,7 @@ TEST_F(TestPrinter, print_const_array)
   Node value       = d_nm.mk_const(bv32, "val");
   Node const_array = d_nm.mk_const_array(d_nm.mk_array_type(fp32, bv32), value);
   std::stringstream ss;
-  Printer::print(ss, const_array);
+  Smt2Printer::print(ss, const_array);
   ASSERT_EQ(ss.str(),
             "((as const (Array (_ FloatingPoint 8 24) (_ BitVec 32))) val)");
 }

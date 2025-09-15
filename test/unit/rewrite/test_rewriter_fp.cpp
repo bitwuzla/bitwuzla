@@ -10,7 +10,7 @@
 
 #include <gtest/gtest.h>
 
-#include "printer/printer.h"
+#include "printer/smt2_printer.h"
 #include "solver/fp/symfpu_nm.h"
 #include "test/unit/rewrite/test_rewriter.h"
 

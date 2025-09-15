@@ -13,7 +13,7 @@
 #include "bv/domain/bitvector_domain.h"
 #include "node/node_manager.h"
 #include "option/option.h"
-#include "printer/printer.h"
+#include "printer/smt2_printer.h"
 #include "rng/rng.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
@@ -305,7 +305,7 @@ TestBvPropSolver::_test_prop_aux(Kind kind,
       std::cout << "d2: " << *d2 << std::endl;
     }
     std::cout << "t: " << t << std::endl;
-    Printer::print(std::cout, eq);
+    Smt2Printer::print(std::cout, eq);
     std::cout << std::endl;
   }
   assert(res == Result::SAT);

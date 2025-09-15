@@ -14,7 +14,7 @@
 
 #include "env.h"
 #include "node/node_ref_vector.h"
-#include "printer/printer.h"
+#include "printer/smt2_printer.h"
 #include "rewrite/evaluator.h"
 #include "solver/abstract/abstraction_module.h"
 #include "solving_context.h"

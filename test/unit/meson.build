@@ -51,7 +51,7 @@ unit_tests = [
 
   ['printer',
     [
-      'printer'
+      'smt2_printer'
     ]
   ],
 
