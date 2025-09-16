@@ -50,12 +50,12 @@ def _bool(val):
     return 'false'
 
 # Can be replaced with argparse.BooleanOptionalAction when Python 3.8 is EOL.
-def bool_opt(ap, name, help):
+def bool_opt(ap, name, help, dflt=None):
     dest = name.replace('-', '_')
     ap.add_argument(f'--{name}', action='store_true',
-                    help=f'enable {help}', default=None)
+                    help=f'enable {help}', default=dflt)
     ap.add_argument(f'--no-{name}', action='store_false', dest=dest,
-                    help=f'disable {help}', default=None)
+                    help=f'disable {help}', default=(not dflt))
 
 def main():
     if not os.path.exists('src/main/main.cpp'):
@@ -91,6 +91,7 @@ def main():
     bool_opt(ap, 'docs', 'documentation')
     ap.add_argument('--wipe', action='store_true',
                     help='delete build directory if it already exists')
+    bool_opt(ap, 'cadical', 'CaDiCaL support', True)
     bool_opt(ap, 'kissat', 'Kissat support')
     bool_opt(ap, 'cryptominisat', 'CryptoMiniSat support')
     bool_opt(ap,
@@ -139,6 +140,8 @@ def main():
         build_opts.append(f'-Db_sanitize={",".join(sanitize)}')
     if args.wipe and os.path.exists(args.build_dir):
         shutil.rmtree(args.build_dir)
+    if args.cadical is not None:
+        build_opts.append(f'-Dcadical={_bool(args.cadical)}')
     if args.kissat is not None:
         build_opts.append(f'-Dkissat={_bool(args.kissat)}')
     if args.cryptominisat is not None:

@@ -115,6 +115,10 @@ enum class SatSolver
   CADICAL,
   CRYPTOMINISAT,
   KISSAT,
+#if !defined(BZLA_USE_CADICAL) && !defined(BZLA_USE_CMS) \
+    && !defined(BZLA_USE_KISSAT)
+  NONE,
+#endif
 };
 
 enum class PropPathSelection
@@ -767,4 +771,7 @@ class Exception : public std::exception
 };
 }  // namespace bzla::option
 
+namespace std {
+std::string to_string(bzla::option::SatSolver sat_solver);
+}
 #endif

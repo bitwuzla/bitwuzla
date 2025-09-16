@@ -11,7 +11,9 @@
 #include "sat/sat_solver_factory.h"
 
 #include "option/option.h"
+#ifdef BZLA_USE_CADICAL
 #include "sat/cadical.h"
+#endif
 #ifdef BZLA_USE_CMS
 #include "sat/cryptominisat.h"
 #endif
@@ -40,7 +42,11 @@ SatSolverFactory::new_sat_solver()
   }
 #endif
   assert(d_options.sat_solver() == option::SatSolver::CADICAL);
+#ifdef BZLA_USE_CADICAL
   return std::unique_ptr<SatSolver>(new Cadical());
+#else
+  return nullptr;
+#endif
 }
 
 bool

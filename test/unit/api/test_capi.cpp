@@ -5611,6 +5611,7 @@ TEST_F(TestCApi, terminate)
     bitwuzla_delete(bitwuzla);
   }
   // not solved by rewriting, should be terminated in the PP when configured
+#ifdef BZLA_USE_CADICAL
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
@@ -5642,6 +5643,7 @@ TEST_F(TestCApi, terminate)
     bitwuzla_options_delete(opts);
     bitwuzla_delete(bitwuzla);
   }
+#endif
 #ifdef BZLA_USE_CMS
   // No terminator support in CryptoMiniSat, so configuring the terminator
   // will already throw even though this would terminate in the PP (as the
@@ -5682,6 +5684,7 @@ TEST_F(TestCApi, terminate)
 
 TEST_F(TestCApi, terminate_sat)
 {
+#ifdef BZLA_USE_CADICAL
   BitwuzlaSort bv_sort32 = bitwuzla_mk_bv_sort(d_tm, 32);
   BitwuzlaTerm x         = bitwuzla_mk_const(d_tm, bv_sort32, nullptr);
   BitwuzlaTerm s         = bitwuzla_mk_const(d_tm, bv_sort32, nullptr);
@@ -5727,6 +5730,7 @@ TEST_F(TestCApi, terminate_sat)
     bitwuzla_options_delete(opts);
     bitwuzla_delete(bitwuzla);
   }
+#endif
   // Note: CryptoMiniSat and Kissat do not implement terminator support
 }
 

@@ -34,7 +34,7 @@ cadical_dep = cpp_compiler.find_library('cadical',
                                         static: build_static,
                                         required: false)
 if not cadical_dep.found()
-  cadical_dep = dependency('cadical', required: true)
+  cadical_dep = dependency('cadical', required: get_option('cadical'))
 endif
 
 cms_dep = dependency('cryptominisat5',
@@ -58,6 +58,9 @@ symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 dependencies = [symfpu_dep, cadical_dep, cms_dep, kissat_dep, gmp_dep]
 
 cpp_args = []
+if cadical_dep.found()
+  cpp_args += ['-DBZLA_USE_CADICAL']
+endif
 if cms_dep.found()
   cpp_args += ['-DBZLA_USE_CMS']
 endif

@@ -842,8 +842,6 @@ tests_smt2 = [
   ['rewrite/bv/rw99.btor.smt2', ['-rwl=1']],
   #['solver/declsort0.smt2'], # TODO: disabled due to missing support in fun solver
   #['solver/declsort1.smt2'], # TODO: disabled due to missing support in fun solver
-  ['solver/abstract/bv_udiv_pow2.smt2'],
-  ['solver/abstract/bv_urem_pow2.smt2'],
   ['solver/abstract/murxla-d9523963f3a24521.min.smt2'],
   ['solver/abstract/murxla-67f411058e7b0ea7.min.smt2'],
   ['solver/abstract/murxla-a2f5f3aa83d5a854.min.smt2'],
@@ -1456,8 +1454,6 @@ tests_smt2 = [
   ['solver/process_term2.smt2'],
   ['solver/process_term3.smt2'],
   ['solver/process_term4.smt2'],
-  ['solver/time_limit_per1.smt2'],
-  ['solver/time_limit_per2.smt2'],
   ['solver/quant/issue96.smt2'],
   ['solver/quant/issue97.smt2'],
   ['solver/quant/issue185.smt2'],
@@ -1498,6 +1494,19 @@ tests_smt2 = [
   ['solver/murxla-6812513959742a22.min.smt2'],
   ['solver/murxla-61282565da842d10.min.smt2'],
 ]
+
+# Tests that set a time limit (which requires terminator support in the SAT
+# solver). Only CaDiCaL has terminator support.
+tests_smt2_time_limit = [
+  ['solver/time_limit_per1.smt2'],
+  ['solver/time_limit_per2.smt2'],
+  ['solver/abstract/bv_udiv_pow2.smt2'],
+  ['solver/abstract/bv_urem_pow2.smt2'],
+]
+
+if get_option('cadical')
+  tests_smt2 += tests_smt2_time_limit
+endif
 
 if get_option('fpexp')
   tests_smt2 += [

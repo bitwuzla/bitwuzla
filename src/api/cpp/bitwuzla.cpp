@@ -1393,12 +1393,15 @@ class SatSolverFactoryInternal : public bzla::sat::SatSolverFactory
 
 /* Bitwuzla public ---------------------------------------------------------- */
 
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_KISSAT)
 Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   d_ctx.reset(new bzla::SolvingContext(*d_tm.d_nm, *options.d_options, "main"));
   BITWUZLA_TRY_CATCH_END;
 }
+#endif
 
 Bitwuzla::Bitwuzla(TermManager &tm,
                    SatSolverFactory &sat_factory,

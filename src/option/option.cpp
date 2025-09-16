@@ -180,10 +180,24 @@ Options::Options()
                 "bv-solver"),
       sat_solver(this,
                  Option::SAT_SOLVER,
+#if defined(BZLA_USE_CADICAL)
                  SatSolver::CADICAL,
+#elif defined(BZLA_USE_CMS)
+                 SatSolver::CRYPTOMINISAT,
+#elif defined(BZLA_USE_KISSAT)
+                 SatSolver::KISSAT,
+#else
+                 SatSolver::NONE,
+#endif
                  {{SatSolver::CADICAL, "cadical"},
                   {SatSolver::CRYPTOMINISAT, "cms"},
-                  {SatSolver::KISSAT, "kissat"}},
+                  {SatSolver::KISSAT, "kissat"}
+#if !defined(BZLA_USE_CADICAL) && !defined(BZLA_USE_CMS) \
+    && !defined(BZLA_USE_KISSAT)
+                  ,
+                  {SatSolver::NONE, "none"}
+#endif
+                 },
                  "backend SAT solver",
                  "sat-solver",
                  "S"),
@@ -567,13 +581,13 @@ Options::set(Option opt, const std::string& value, bool is_user_set)
   assert(is_user_set || !data(opt)->d_is_user_set);
   if (data(opt)->is_mode())
   {
-#ifndef BZLA_USE_KISSAT
+#ifndef BZLA_USE_CADICAL
     if (opt == Option::SAT_SOLVER
-        && value == sat_solver.mode_to_string(SatSolver::KISSAT))
+        && value == sat_solver.mode_to_string(SatSolver::CADICAL))
     {
       throw Exception("invalid configuration for option --"
                       + std::string(sat_solver.lng())
-                      + ", Kissat not compiled in");
+                      + ", CaDiCaL not compiled in");
     }
 #endif
 #ifndef BZLA_USE_CMS
@@ -583,6 +597,15 @@ Options::set(Option opt, const std::string& value, bool is_user_set)
       throw Exception("invalid configuration for option --"
                       + std::string(sat_solver.lng())
                       + ", CryptoMiniSat not compiled in");
+    }
+#endif
+#ifndef BZLA_USE_KISSAT
+    if (opt == Option::SAT_SOLVER
+        && value == sat_solver.mode_to_string(SatSolver::KISSAT))
+    {
+      throw Exception("invalid configuration for option --"
+                      + std::string(sat_solver.lng())
+                      + ", Kissat not compiled in");
     }
 #endif
     reinterpret_cast<OptionMode*>(data(opt))->set_str(value, is_user_set);
@@ -813,3 +836,22 @@ Options::data(Option opt)
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla::option
+
+namespace std {
+std::string
+to_string(bzla::option::SatSolver sat_solver)
+{
+  switch (sat_solver)
+  {
+    case bzla::option::SatSolver::CADICAL: return "cadical";
+    case bzla::option::SatSolver::CRYPTOMINISAT: return "cryptominisat";
+    case bzla::option::SatSolver::KISSAT: return "kissat";
+    default:
+#if !defined(BZLA_USE_CADICAL) && !defined(BZLA_USE_CMS) \
+    && !defined(BZLA_USE_KISSAT)
+      assert(sat_solver == bzla::option::SatSolver::NONE);
+#endif
+      return "none";
+  }
+}
+}  // namespace std
