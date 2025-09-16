@@ -20,6 +20,7 @@ extern "C" {
 }
 
 #include <memory>
+#include <vector>
 
 #include "sat/sat_solver.h"
 
@@ -42,7 +43,12 @@ class Kissat : public SatSolver
   const char *get_version() const override;
 
  private:
+  void init();
+
+  bool d_init      = false;
   kissat *d_solver = nullptr;
+  std::vector<int32_t> d_literals;
+  std::vector<int32_t> d_assumptions;
 };
 
 }  // namespace bzla::sat
