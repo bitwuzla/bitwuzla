@@ -8,9 +8,13 @@ This file collects a summary of important and/or user-visible changes.
     - `bitwuzla_parser_set_termination_callback(BitwuzlaParser*, int32_t (*)(void*), void*)`
     - `bitwuzla_parser_get_termination_callback_state(BitwuzlaParser*)`
   - Python API:  `void Parser.configure_terminator(callable)`
+
 - Add support for printing BTOR2 via `--output-lang` option. Printing to BTOR2
   supports printing of QF_ABV and QF_BV formulas only.
 
+- Enable incremental support for Kissat. Note: Since Kissat does not support
+  incremental solving natively, Bitwuzla creates a fresh Kissat instance for
+  each SAT query.
 
 ## News for version 0.8.2
 
