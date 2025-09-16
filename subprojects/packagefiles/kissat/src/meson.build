@@ -85,7 +85,6 @@ sources = [
   'shrink.c',
   'smooth.c',
   'sort.c',
-  'stack.c',
   'statistics.c',
   'strengthen.c',
   'substitute.c',
