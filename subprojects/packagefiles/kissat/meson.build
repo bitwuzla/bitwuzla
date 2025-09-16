@@ -1,6 +1,6 @@
 project('kissat',
   'c',
-  version: '4.0.1',
+  version: '4.0.4',
   license: 'mit',
   default_options: [
     'c_std=c99',

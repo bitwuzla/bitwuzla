@@ -16,6 +16,8 @@ This file collects a summary of important and/or user-visible changes.
   incremental solving natively, Bitwuzla creates a fresh Kissat instance for
   each SAT query.
 
+- Bumped Kissat to version 4.0.4.
+
 ## News for version 0.8.2
 
 - Fixed issue with model values in MBQI solver (#185).
