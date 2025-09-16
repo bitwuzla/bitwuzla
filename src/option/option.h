@@ -118,6 +118,10 @@ enum class SatSolver
   CRYPTOMINISAT,
   GIMSATUL,
   KISSAT,
+#if !defined(BZLA_USE_CADICAL) && !defined(BZLA_USE_CMS) \
+    && !defined(BZLA_USE_GIMSATUL) && !defined(BZLA_USE_KISSAT)
+  NONE,
+#endif
 };
 std::ostream& operator<<(std::ostream& out, SatSolver solver);
 
@@ -781,4 +785,7 @@ class Exception : public std::exception
 };
 }  // namespace bzla::option
 
+namespace std {
+std::string to_string(bzla::option::SatSolver sat_solver);
+}
 #endif

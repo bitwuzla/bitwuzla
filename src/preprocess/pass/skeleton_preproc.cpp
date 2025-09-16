@@ -15,7 +15,9 @@
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
+#ifdef BZLA_USE_CADICAL
 #include "sat/cadical.h"
+#endif
 
 namespace bzla::preprocess::pass {
 
@@ -38,7 +40,8 @@ void
 PassSkeletonPreproc::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats_pass.time_apply);
-
+  (void) assertions;
+#ifdef BZLA_USE_CADICAL
   // Disabled if unsat cores enabled.
   if (d_env.options().produce_unsat_cores())
   {
@@ -129,6 +132,7 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
   d_done = true;
   d_sat_solver.reset(new sat::Cadical());
   d_encode_cache.clear();
+#endif
 }
 
 /* --- PassSkeletonPreproc private ------------------------------------------ */

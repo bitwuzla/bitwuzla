@@ -13,11 +13,13 @@
 #include <gmp.h>
 
 #include <algorithm>
-#include <cadical.hpp>
 #include <chrono>
 #include <fstream>
 #include <ostream>
 
+#include "sat/cadical.h"
+#include "sat/cryptominisat.h"
+#include "sat/kissat.h"
 #include "test/unit/test.h"
 
 #define ASSERT_EXCEPTION(try_block, exception_type, msg)                    \
@@ -364,8 +366,10 @@ TEST_F(TestApi, options_set)
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::BV_SOLVER), "prop");
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::BV_SOLVER), "bitblast");
+#ifdef BZLA_USE_CADICAL
     opts.set(bitwuzla::Option::SAT_SOLVER, "cadical");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
+#endif
 #ifdef BZLA_USE_KISSAT
     opts.set("sat-solver", "kissat");
     ASSERT_EQ(opts.get_mode(bitwuzla::Option::SAT_SOLVER), "kissat");
@@ -392,8 +396,10 @@ TEST_F(TestApi, option_set_args)
   options.set({"-v=4"});
   ASSERT_EQ(options.get(bitwuzla::Option::VERBOSITY), 4);
   ASSERT_THROW(options.set({"-v=100"}), bitwuzla::Exception);
+#ifdef BZLA_USE_CADICAL
   options.set({"-S=cadical"});
   ASSERT_EQ(options.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
+#endif
   ASSERT_THROW(options.set({"--no-verbosity"}), bitwuzla::Exception);
 }
 
@@ -3871,12 +3877,14 @@ TEST_F(TestApi, sat_solvers)
   smt2.close();
 
   bitwuzla::Options options;
+#ifdef BZLA_USE_CADICAL
   {
     options.set(bitwuzla::Option::SAT_SOLVER, "cadical");
     // error, produce models not enabled
     bitwuzla::parser::Parser parser(d_tm, options, "smt2", &std::cout);
     parser.parse(input);
   }
+#endif
 #ifdef BZLA_USE_CMS
   {
     options.set(bitwuzla::Option::SAT_SOLVER, "cms");
@@ -3947,6 +3955,7 @@ TEST_F(TestApi, terminate)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
   }
+#ifdef BZLA_USE_CADICAL
   {
     TestTerminator tt;
     bitwuzla::Options opts;
@@ -3986,6 +3995,7 @@ TEST_F(TestApi, terminate)
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output, "");
   }
+#endif
 #ifdef BZLA_USE_CMS
   // No terminator support in CryptoMiniSat, so configuring the terminator
   // will already throw even though this would terminate in the PP (as the
@@ -4056,6 +4066,7 @@ TEST_F(TestApi, terminate_sat)
                             {d_tm.mk_term(bitwuzla::Kind::BV_MUL, {s, x}), t})});
   // not solved by bit-blasting without preprocessing, should be terminated in
   // the SAT solver when configured
+#ifdef BZLA_USE_CADICAL
   {
     TestTerminator tt(1000);
     bitwuzla::Options opts;
@@ -4087,6 +4098,7 @@ TEST_F(TestApi, terminate_sat)
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output, unknown.str());
   }
+#endif
   // Note: CryptoMiniSat and Kissat do not implement terminator support.
   //       Throws an exception.
 #ifdef BZLA_USE_CMS
@@ -4115,6 +4127,7 @@ TEST_F(TestApi, terminate_sat)
 
 TEST_F(TestApi, terminate_timeout_wrap)
 {
+#ifdef BZLA_USE_CADICAL
   class TestTerminator : public bitwuzla::Terminator
   {
    public:
@@ -4165,6 +4178,7 @@ TEST_F(TestApi, terminate_timeout_wrap)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
+#endif
 }
 
 /* -------------------------------------------------------------------------- */
@@ -4173,81 +4187,125 @@ TEST_F(TestApi, terminate_timeout_wrap)
 
 TEST_F(TestApi, sat_factory)
 {
-  class TestCadicalTerminator : public CaDiCaL::Terminator
+  class TestCadicalTerminator : public bitwuzla::Terminator
   {
    public:
-    TestCadicalTerminator(bitwuzla::Terminator* terminator)
-        : d_terminator(terminator)
-    {
-    }
-    ~TestCadicalTerminator() {}
-    bool terminate() override { return d_terminator->terminate(); }
-
-   private:
-    bitwuzla::Terminator* d_terminator = nullptr;
+    bool terminate() override { return false; }
   };
 
   class TestSatSolver : public bitwuzla::SatSolver
   {
    public:
-    void add(int32_t lit) override { d_cadical.add(lit); }
-    void assume(int32_t lit) override { d_cadical.assume(lit); }
-
-    int32_t value(int32_t lit) override
+    TestSatSolver(SatSolver* sat_solver) : d_sat_solver(sat_solver) {}
+    void add(int32_t lit) override { d_sat_solver->add(lit); }
+    void assume(int32_t lit) override { d_sat_solver->assume(lit); }
+    int32_t value(int32_t lit) override { return d_sat_solver->value(lit); }
+    bool failed(int32_t lit) override { return d_sat_solver->failed(lit); }
+    int32_t fixed(int32_t lit) override { return d_sat_solver->fixed(lit); }
+    bitwuzla::Result solve() override { return d_sat_solver->solve(); }
+    const char* get_version() const override
     {
-      int32_t val = d_cadical.val(lit);
-      if (val > 0) return 1;
-      if (val < 0) return -1;
-      return 0;
+      return d_sat_solver->get_version();
     }
-    bool failed(int32_t lit) override { return d_cadical.failed(lit); }
-    int32_t fixed(int32_t lit) override { return d_cadical.fixed(lit); }
-
-    bitwuzla::Result solve() override
-    {
-      int32_t res = d_cadical.solve();
-      if (res == 10) return bitwuzla::Result::SAT;
-      if (res == 20) return bitwuzla::Result::UNSAT;
-      return bitwuzla::Result::UNKNOWN;
-    }
-
     void configure_terminator(bitwuzla::Terminator* terminator) override
     {
-      d_term.reset(new TestCadicalTerminator(terminator));
-      if (terminator)
-      {
-        d_cadical.connect_terminator(d_term.get());
-      }
-      else
-      {
-        d_cadical.disconnect_terminator();
-      }
+      (void) terminator;
     }
 
-    const char* get_name() const override { return "external-cadical"; }
-    const char* get_version() const override { return d_cadical.version(); };
-
    private:
-    CaDiCaL::Solver d_cadical;
-    std::unique_ptr<CaDiCaL::Terminator> d_term = nullptr;
+    std::unique_ptr<SatSolver> d_sat_solver = nullptr;
   };
 
-  class TestSatSolverFactory : public bitwuzla::SatSolverFactory
+#ifdef BZLA_USE_CADICAL
+  class TestCadical : public TestSatSolver
   {
    public:
-    TestSatSolverFactory(const bitwuzla::Options& options)
+    TestCadical(sat::Cadical* cadical) : TestSatSolver(cadical) {}
+    const char* get_name() const override { return "external-cadical"; }
+    void configure_terminator(bitwuzla::Terminator* terminator) override
+    {
+      d_sat_solver->configure_terminator(terminator);
+    }
+  };
+  class TestCadicalFactory : public bitwuzla::SatSolverFactory
+  {
+   public:
+    TestCadicalFactory(const bitwuzla::Options& options)
         : bitwuzla::SatSolverFactory((options))
     {
     }
     std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
     {
-      return std::unique_ptr<bitwuzla::SatSolver>(new TestSatSolver());
+      return std::unique_ptr<TestCadical>(new TestCadical(new sat::Cadical()));
     }
     bool has_terminator_support() override { return true; }
-
-   private:
-    std::unique_ptr<bitwuzla::SatSolver> d_cur_sat_solver;
   };
+#endif
+#ifdef BZLA_USE_CMS
+  class TestCryptoMinisat : public TestSatSolver
+  {
+   public:
+    TestCryptoMinisat(sat::CryptoMiniSat* cms) : TestSatSolver(cms) {}
+    const char* get_name() const override { return "external-cryptominisat"; }
+  };
+  class TestCryptoMinisatFactory : public bitwuzla::SatSolverFactory
+  {
+   public:
+    TestCryptoMinisatFactory(const bitwuzla::Options& options)
+        : bitwuzla::SatSolverFactory((options))
+    {
+    }
+    std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
+    {
+      return std::unique_ptr<TestCryptoMinisat>(
+          new TestCryptoMinisat(new sat::CryptoMiniSat(1)));
+    }
+    bool has_terminator_support() override { return false; }
+  };
+#endif
+#ifdef BZLA_USE_GIMSATUL
+  class TestGimsatul : public TestSatSolver
+  {
+   public:
+    TestGimsatul(sat::Gimsatul* gimsatul) : TestSatSolver(gimsatul) {}
+    const char* get_name() const override { return "external-gimsatul"; }
+  };
+  class TestGimsatul : public bitwuzla::SatSolverFactory
+  {
+   public:
+    TestGimsatul(const bitwuzla::Options& options)
+        : bitwuzla::SatSolverFactory((options))
+    {
+    }
+    std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
+    {
+      return std::unique_ptr<TestGimsatul>(
+          new TestCryptoMinisat(new sat::Gimsatul(1)));
+    }
+    bool has_terminator_support() override { return false; }
+  };
+#endif
+#ifdef BZLA_USE_KISSAT
+  class TestKissat : public TestSatSolver
+  {
+   public:
+    TestKissat(sat::Kissat* kissat) : TestSatSolver(kissat) {}
+    const char* get_name() const override { return "external-kissat"; }
+  };
+  class TestKissatFactory : public bitwuzla::SatSolverFactory
+  {
+   public:
+    TestKissatFactory(const bitwuzla::Options& options)
+        : bitwuzla::SatSolverFactory((options))
+    {
+    }
+    std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
+    {
+      return std::unique_ptr<TestKissat>(new TestKissat(new sat::Kissat()));
+    }
+    bool has_terminator_support() override { return false; }
+  };
+#endif
 
   bitwuzla::Sort bv_sort4 = d_tm.mk_bv_sort(4);
   bitwuzla::Term x        = d_tm.mk_const(bv_sort4);
@@ -4259,18 +4317,66 @@ TEST_F(TestApi, sat_factory)
                            {s, d_tm.mk_term(bitwuzla::Kind::BV_MUL, {x, t})}),
               d_tm.mk_term(bitwuzla::Kind::BV_MUL,
                            {d_tm.mk_term(bitwuzla::Kind::BV_MUL, {s, x}), t})});
-
-  testing::internal::CaptureStdout();
-  bitwuzla::Options opts;
-  opts.set(bitwuzla::Option::VERBOSITY, 1);
-  opts.set(bitwuzla::Option::PREPROCESS, false);
-  TestSatSolverFactory sat_factory(opts);
-  bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
-  bitwuzla.assert_formula(b);
-  ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
-  ASSERT_NE(testing::internal::GetCapturedStdout().find(
-                "initialized SAT solver: external-cadical"),
-            std::string::npos);
+#ifdef BZLA_USE_CADICAL
+  {
+    testing::internal::CaptureStderr();
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::VERBOSITY, 1);
+    opts.set(bitwuzla::Option::PREPROCESS, false);
+    TestCadicalFactory sat_factory(opts);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+    ASSERT_NE(testing::internal::GetCapturedStderr().find(
+                  "initialized SAT solver: external-cadical"),
+              std::string::npos);
+  }
+#endif
+#ifdef BZLA_USE_CMS
+  {
+    testing::internal::CaptureStderr();
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::VERBOSITY, 1);
+    opts.set(bitwuzla::Option::PREPROCESS, false);
+    TestCryptoMinisatFactory sat_factory(opts);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+    ASSERT_NE(testing::internal::GetCapturedStderr().find(
+                  "initialized SAT solver: external-cryptominisat"),
+              std::string::npos);
+  }
+#endif
+#ifdef BZLA_USE_GIMSATUL
+  {
+    testing::internal::CaptureStderr();
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::VERBOSITY, 1);
+    opts.set(bitwuzla::Option::PREPROCESS, false);
+    TestGimsatulFactory sat_factory(opts);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+    ASSERT_NE(testing::internal::GetCapturedStderr().find(
+                  "initialized SAT solver: external-gimsatul"),
+              std::string::npos);
+  }
+#endif
+#ifdef BZLA_USE_KISSAT
+  {
+    testing::internal::CaptureStderr();
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::VERBOSITY, 1);
+    opts.set(bitwuzla::Option::PREPROCESS, false);
+    TestKissatFactory sat_factory(opts);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+    ASSERT_NE(testing::internal::GetCapturedStderr().find(
+                  "initialized SAT solver: external-kissat"),
+              std::string::npos);
+  }
+#endif
 }
 
 /* -------------------------------------------------------------------------- */
@@ -4315,6 +4421,7 @@ TEST_F(TestApi, nthreads)
   smt2 << "(check-sat)" << std::endl;
   smt2.close();
 
+#ifdef BZLA_USE_CADICAL
   {
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::SAT_SOLVER, "cadical");
@@ -4329,6 +4436,7 @@ TEST_F(TestApi, nthreads)
     bitwuzla::parser::Parser parser(d_tm, opts, "smt2", &std::cout);
     parser.parse(input);
   }
+#endif
 #ifdef BZLA_USE_CMS
   {
     bitwuzla::Options opts;

@@ -25,15 +25,22 @@ build_static = get_option('default_library') == 'static' \
                and get_option('b_sanitize') == 'none' \
                and not enable_python
 
+is_sat_solver_configured = get_option('cadical') or \
+                           get_option('cryptominisat') or \
+                           get_option('kissat')
 # Configure testing
-if get_option('testing').auto()
-  if get_option('buildtype') == 'release'
-    enable_testing = false
-  elif get_option('buildtype') in ['debug', 'debugoptimized']
-    enable_testing = true
-  endif
+if not is_sat_solver_configured
+  enable_testing = false
 else
-  enable_testing = get_option('testing').enabled()
+  if get_option('testing').auto()
+    if get_option('buildtype') == 'release'
+      enable_testing = false
+    elif get_option('buildtype') in ['debug', 'debugoptimized']
+      enable_testing = true
+    endif
+  else
+    enable_testing = get_option('testing').enabled()
+  endif
 endif
 
 if get_option('unit_testing').auto()

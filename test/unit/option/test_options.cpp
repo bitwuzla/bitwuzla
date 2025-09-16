@@ -52,16 +52,22 @@ TEST_F(TestOptions, opt_num)
 
 TEST_F(TestOptions, opt_enum)
 {
+#ifdef BZLA_USE_CADICAL
+  d_opts.set<std::string>(Option::SAT_SOLVER, "cadical");
   ASSERT_EQ(d_opts.sat_solver(), SatSolver::CADICAL);
+  ASSERT_EQ(std::to_string(d_opts.sat_solver()), "cadical");
   ASSERT_EQ(d_opts.get<std::string>(Option::SAT_SOLVER), "cadical");
+#endif
 #ifdef BZLA_USE_CMS
   d_opts.set<std::string>(Option::SAT_SOLVER, "cms");
   ASSERT_EQ(d_opts.sat_solver(), SatSolver::CRYPTOMINISAT);
+  ASSERT_EQ(std::to_string(d_opts.sat_solver()), "cryptominisat");
   ASSERT_EQ(d_opts.get<std::string>(Option::SAT_SOLVER), "cms");
 #endif
 #ifdef BZLA_USE_KISSAT
   d_opts.set<std::string>(Option::SAT_SOLVER, "kissat");
   ASSERT_EQ(d_opts.sat_solver(), SatSolver::KISSAT);
+  ASSERT_EQ(std::to_string(d_opts.sat_solver()), "kissat");
   ASSERT_EQ(d_opts.get<std::string>(Option::SAT_SOLVER), "kissat");
 #endif
   ASSERT_DEATH_DEBUG(d_opts.get<bool>(Option::SAT_SOLVER), "is_bool");
