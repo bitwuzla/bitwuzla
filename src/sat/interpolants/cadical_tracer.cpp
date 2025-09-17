@@ -436,7 +436,6 @@ CadicalTracer::get_interpolant(
     for (int32_t lit : d_clauses[final_clause_id].d_clause)
     {
       ClauseKind kind = clause_labels.at(-lit);
-      // Interpolant ip = get_interpolant(var_labels, -lit);
       Interpolant ip = get_interpolant(var_labels, {-lit}, kind);
       assert(!ip.is_null());
       if (!interpolant.is_null())
