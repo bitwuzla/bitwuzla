@@ -76,7 +76,7 @@ SimplifyCache::add(const Node& node, const Node& subst, const Cacher cacher)
     ++d_stats.num_added;
   }
 
-  it->second.d_flags.set(cacher);
+  it->second.flags().set(cacher);
 }
 
 const Node&
@@ -136,7 +136,7 @@ SimplifyCache::cached(const Node& node, const Cacher cacher) const
   {
     return false;
   }
-  return it->second.d_flags.processed(cacher);
+  return it->second.flags().processed(cacher);
 }
 
 bool
@@ -191,11 +191,14 @@ SimplifyCache::pop()
   {
     if (it->second.level() == d_level)
     {
+#ifdef SIMPLIFY_CACHE_DEBUG
+      Node before = it->second.subst();
+#endif
       if (it->second.pop())
       {
 #ifdef SIMPLIFY_CACHE_DEBUG
         std::cout << this << " cache remove @" << d_level << ": " << it->first
-                  << std::endl;
+                  << " -> " << before << std::endl;
 #endif
         it = d_simplified.erase(it);
       }
@@ -204,7 +207,7 @@ SimplifyCache::pop()
 #ifdef SIMPLIFY_CACHE_DEBUG
         std::cout << this << " cache restore @" << d_level << ": " << it->first
                   << " -> " << it->second.subst() << " @ " << it->second.level()
-                  << std::endl;
+                  << " (before: " << before << ")" << std::endl;
 #endif
       }
       ++d_stats.num_popped;

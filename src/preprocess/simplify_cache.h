@@ -113,19 +113,19 @@ class SimplifyCache : public backtrack::Backtrackable
    public:
     CacheNode(const Node& subst, uint32_t level)
     {
-      d_substs.emplace_back(subst, level);
+      d_substs.emplace_back(subst, level, ProcessedFlags());
     }
 
     const Node& subst() const
     {
       assert(!d_substs.empty());
-      return d_substs.back().first;
+      return d_substs.back().d_subst;
     }
 
     uint32_t level() const
     {
       assert(!d_substs.empty());
-      return d_substs.back().second;
+      return d_substs.back().d_level;
     }
 
     bool pop()
@@ -137,20 +137,21 @@ class SimplifyCache : public backtrack::Backtrackable
 
     void update(const Node& subst, uint32_t lvl)
     {
+      assert(level() <= lvl);
       if (lvl == level())
       {
         update(subst);
       }
       else
       {
-        d_substs.emplace_back(subst, lvl);
+        d_substs.emplace_back(subst, lvl, d_substs.back().d_flags);
       }
     }
 
     void update(const Node& subst)
     {
       assert(!d_substs.empty());
-      d_substs.back().first = subst;
+      d_substs.back().d_subst = subst;
     }
 
     void freeze(uint32_t level)
@@ -170,11 +171,24 @@ class SimplifyCache : public backtrack::Backtrackable
       d_frozen_level = 0;
     }
 
-    ProcessedFlags d_flags;
+    ProcessedFlags& flags() { return d_substs.back().d_flags; }
+
+    const ProcessedFlags& flags() const { return d_substs.back().d_flags; }
 
    private:
+    struct State
+    {
+      State(const Node& subst, uint32_t level, const ProcessedFlags& flags)
+          : d_subst(subst), d_level(level), d_flags(flags)
+      {
+      }
+      Node d_subst;
+      uint32_t d_level;
+      ProcessedFlags d_flags;
+    };
+
     /** Substitition node and level it was substituted. */
-    std::vector<std::pair<Node, uint32_t>> d_substs;
+    std::vector<State> d_substs;
     /** Is node frozen? */
     bool d_frozen = false;
     /** Assertion stack level when node was frozen. */
