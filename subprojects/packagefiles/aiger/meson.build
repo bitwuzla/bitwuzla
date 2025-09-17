@@ -12,7 +12,7 @@ project('aiger',
   ]
 )
 
-aiger_lib = library('aiger', sources: ['aiger.c'])
+aiger_lib = static_library('aiger', sources: ['aiger.c'])
 aiger_dep = declare_dependency(
                   include_directories: include_directories('.'),
                   link_with: aiger_lib)
