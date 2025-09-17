@@ -87,22 +87,20 @@ Tracer::get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache) const
   const auto& it = cache.find(aig_id);
   if (it != cache.end())
   {
-    node       = it->second.first;
-    idx        = it->second.second;
-    bool is_bv = node.type().is_bv();
-    assert(is_bv || idx == 0);
-    if (is_bv)
-    {
-      node = utils::bv1_to_bool(
-          d_nm, d_nm.mk_node(Kind::BV_EXTRACT, {node}, {idx, idx}));
-    }
-    return node;
+    node = it->second.first;
+    idx  = it->second.second;
   }
-  const auto& nit = cache.find(-aig_id);
-  if (nit != cache.end())
+  else
   {
-    node       = utils::invert_node(d_nm, nit->second.first);
-    idx        = nit->second.second;
+    const auto& nit = cache.find(-aig_id);
+    if (nit != cache.end())
+    {
+      node = utils::invert_node(d_nm, nit->second.first);
+      idx  = nit->second.second;
+    }
+  }
+  if (!node.is_null())
+  {
     bool is_bv = node.type().is_bv();
     assert(is_bv || idx == 0);
     if (is_bv)
@@ -110,9 +108,8 @@ Tracer::get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache) const
       node = utils::bv1_to_bool(
           d_nm, d_nm.mk_node(Kind::BV_EXTRACT, {node}, {idx, idx}));
     }
-    return node;
   }
-  return Node();
+  return node;
 }
 
 }  // namespace bzla::sat::interpolants
