@@ -208,7 +208,7 @@ AbstractionModule::check()
   for (size_t i = 0; i < d_active_abstractions.size(); ++i)
   {
     // Do not use reference here, since d_active_abstractions may change when
-    // calling check_abstraction().
+    // calling check_term_abstraction().
     const Node abstr_term = d_active_abstractions[i];
     check_term_abstraction(abstr_term);
   }
@@ -352,7 +352,7 @@ AbstractionModule::remove_abstractions(const Node& node) const
     {
       if (cur.kind() == Kind::AM_ABSTRACT)
       {
-        it->second = cur[0];
+        it->second = cache.at(cur[0]);
       }
       else
       {

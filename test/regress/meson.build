@@ -30,6 +30,8 @@ tests_smt2 = [
   ['get-interpolant/incr-interp.pudlak.smt2'],
   ['get-interpolant/loop3.interp.smt2'],
   ['get-interpolant/loop3.interp.smt2', '--interpolants-algo=pudlak'],
+  ['get-interpolant/murxla-14f02a0715edabfd.min.smt2'],
+  ['get-interpolant/murxla-14f02a0715edabfd.min.smt2', '--interpolants-algo=pudlak'],
   ['get-interpolant/murxla-154bd8c09fb70637.min.smt2'],
   ['get-interpolant/murxla-154bd8c09fb70637.min.smt2', '--interpolants-algo=pudlak'],
   ['get-interpolant/murxla-20916f8962fc9c26.min.smt2'],
