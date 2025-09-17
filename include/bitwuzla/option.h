@@ -679,6 +679,24 @@ enum ENUM(Option)
   EVALUE(ABSTRACTION_ITE),
 
   /*!
+   * **Interpolant generation.**
+   *
+   * The bit-level algorithm used for interpolant generation.
+   *
+   * *Values:*
+   * \verbatim embed:rst:leading-asterisk
+   *  - **mcmillan**:
+   *    Use the *asymmetric* interpolant generation via McMillan's algorithm
+   *    :cite:`McMillan03`. [**default**]
+   *  - **pudlak**:
+   *    Use the *symmetric* interpolant generation via Pudlak's algorithm
+   *    :cite:`Pudlak97`.
+   * \endverbatim
+   *
+   * @warning This is an expert option to configure interpolant generation.
+   */
+  EVALUE(INTERPOLANTS_ALGO),
+  /*!
    * **Preprocessing.**
    *
    * When enabled, applies all enabled preprocessing passes.

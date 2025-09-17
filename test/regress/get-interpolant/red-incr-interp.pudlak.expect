@@ -1,0 +1,4 @@
+unsat
+(let ((_let0 ((_ extract 2 2) x@1))) (and (= _let0 #b0) (not (and (not (and (and (= #b1 ((_ extract 0 0) x@1)) (= #b1 ((_ extract 1 1) x@1))) (= #b1 _let0))) (= #b1 ((_ extract 3 3) x@1))))))
+unsat
+true

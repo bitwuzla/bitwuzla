@@ -134,13 +134,23 @@ class CadicalTracer : public Tracer
   Node get_interpolant_node(Interpolant interpolant);
 
   /**
-   * Extend `interpolant` with interpolant `ext` for a given variable kind.
-   * @param interpolant The interpolant to be extended.
-   * @param ext         The interpolant to extend with.
-   * @param kind        The variable kind.
+   * Extend `interpolant` with interpolant `ext` for a given literal.
+   *
+   * For two clauses c1 and c2, resolved over variable |lit| where -lit occurs
+   * in c1 and lit occurs in c2. Extend partial_interpolant(c1) (`interpolant`)
+   * with partial_interpolant(c2) (`ext`).
+   *
+   * @note The actual pivot literal `lit` as it occurs in c2 is only required
+   *       for Pudlak's algorithm. McMillan's algorithm only requires its kind.
+   *
+   * @param interpolant The partial interpolant (of c1) to be extended.
+   * @param ext         The partial interpolant (of c2) to extend with.
+   * @param lit         The pivot literal as it occurs in c2.
+   * @param kind        The variable kind of the given literal.
    */
   void extend_interpolant(Interpolant& interpolant,
                           Interpolant& ext,
+                          int32_t lit,
                           VariableKind kind);
   /**
    * Mark variable with phase of literal.
@@ -156,8 +166,8 @@ class CadicalTracer : public Tracer
    * @param aig1 The second AIG.
    * @return The AIG representing a logical OR over the given AIGs.
    */
-  bitblast::AigNode mk_or(bitblast::AigNode& aig0,
-                          bitblast::AigNode& aig1) const;
+  bitblast::AigNode mk_or(const bitblast::AigNode& aig0,
+                          const bitblast::AigNode& aig1) const;
   /**
    * Helper to create AIG or over a list of AIGs.
    * @param aigs The AIGs.
@@ -181,6 +191,7 @@ class CadicalTracer : public Tracer
   std::vector<uint64_t> d_final_clause_ids;
   std::vector<uint64_t> d_proof_core;
   CaDiCaL::ConclusionType d_conclusion;
+  option::InterpolantsAlgo d_algo;
 };
 
 std::ostream& operator<<(std::ostream& out,

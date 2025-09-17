@@ -40,6 +40,7 @@ enum class Option
   WRITE_AIGER,  // str
   WRITE_CNF,    // str
 
+  // BV: propagation-based local search engine
   PROP_NPROPS,                  // numeric
   PROP_NUPDATES,                // numeric
   PROP_PATH_SEL,                // enum
@@ -65,6 +66,9 @@ enum class Option
   ABSTRACTION_BV_UDIV,         // bool
   ABSTRACTION_BV_UREM,         // bool
   ABSTRACTION_ITE,             // bool
+
+  // Interpolant generation
+  INTERPOLANTS_ALGO,  // enum
 
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,             // bool
@@ -112,6 +116,12 @@ enum class BvSolver
   PREPROP,
 };
 std::ostream& operator<<(std::ostream& out, BvSolver solver);
+
+enum class InterpolantsAlgo
+{
+  MCMILLAN,
+  PUDLAK,
+};
 
 enum class SatSolver
 {
@@ -577,6 +587,7 @@ class Options
   OptionBool prop_opt_lt_concat_sext;
   OptionBool prop_sext;
 
+  // Abstraction module
   OptionBool abstraction;
   OptionNumeric abstraction_bv_size;
   OptionBool abstraction_eager_refine;
@@ -591,6 +602,9 @@ class Options
   OptionBool abstraction_bv_udiv;
   OptionBool abstraction_bv_urem;
   OptionBool abstraction_ite;
+
+  // Interpolants generation
+  OptionModeT<InterpolantsAlgo> interpolants_algo;
 
   // Preprocessing
   OptionBool preprocess;

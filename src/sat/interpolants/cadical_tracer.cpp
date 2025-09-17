@@ -17,6 +17,7 @@
 #include "bitblast/aig/aig_node.h"
 #include "node/node.h"
 #include "node/node_utils.h"
+#include "option/option.h"
 #include "sat/interpolants/tracer_kinds.h"
 
 using namespace bzla::bitblast;
@@ -25,7 +26,7 @@ using namespace bzla::node;
 namespace bzla::sat::interpolants {
 
 CadicalTracer::CadicalTracer(Env& env, bv::AigBitblaster& bitblaster)
-    : Tracer(env, bitblaster)
+    : Tracer(env, bitblaster), d_algo(env.options().interpolants_algo())
 {
 }
 
@@ -373,7 +374,7 @@ CadicalTracer::get_interpolant(
           // clause that is currently asserted/assumed) and thus irrelevant
           // (the interpolant is not extended with it).
           extend_interpolant(
-              ipol, d_part_interpolants[antecedents[idx]], label);
+              ipol, d_part_interpolants[antecedents[idx]], lit, label);
         }
       }
       d_part_interpolants[id] = ipol;
@@ -409,12 +410,11 @@ CadicalTracer::get_interpolant(
           continue;
         }
         ClauseKind kind = clause_labels.at(-lit);
-        // Interpolant ip = get_interpolant(var_labels, -lit);
         Interpolant ip = get_interpolant(var_labels, {-lit}, kind);
         assert(!ip.is_null());
         if (!ipol.is_null())
         {
-          extend_interpolant(ipol, ip, get_var_label(var_labels, lit));
+          extend_interpolant(ipol, ip, -lit, get_var_label(var_labels, lit));
         }
         else
         {
@@ -441,7 +441,8 @@ CadicalTracer::get_interpolant(
       assert(!ip.is_null());
       if (!interpolant.is_null())
       {
-        extend_interpolant(interpolant, ip, get_var_label(var_labels, lit));
+        extend_interpolant(
+            interpolant, ip, -lit, get_var_label(var_labels, lit));
       }
       else
       {
@@ -572,7 +573,8 @@ CadicalTracer::mark_var(std::unordered_map<int32_t, uint8_t>& marked_vars,
 }
 
 AigNode
-CadicalTracer::mk_or(bitblast::AigNode& aig0, bitblast::AigNode& aig1) const
+CadicalTracer::mk_or(const bitblast::AigNode& aig0,
+                     const bitblast::AigNode& aig1) const
 {
   return d_amgr.mk_not(d_amgr.mk_and(d_amgr.mk_not(aig0), d_amgr.mk_not(aig1)));
 }
@@ -608,14 +610,21 @@ CadicalTracer::get_interpolant(
   AigNode res = d_amgr.mk_true();
   if (kind == ClauseKind::A)
   {
-    std::vector<AigNode> lits;
-    for (int32_t lit : clause)
+    switch (d_algo)
     {
-      if (get_var_label(var_labels, lit) == VariableKind::GLOBAL)
-      {
-        lits.push_back(d_amgr.get_node(lit));
+      case option::InterpolantsAlgo::MCMILLAN: {
+        std::vector<AigNode> lits;
+        for (int32_t lit : clause)
+        {
+          if (get_var_label(var_labels, lit) == VariableKind::GLOBAL)
+          {
+            lits.push_back(d_amgr.get_node(lit));
+          }
+          res = mk_or(lits);
+        }
       }
-      res = mk_or(lits);
+      break;
+      case option::InterpolantsAlgo::PUDLAK: res = d_amgr.mk_false(); break;
     }
   }
   return {res, kind};
@@ -624,8 +633,25 @@ CadicalTracer::get_interpolant(
 void
 CadicalTracer::extend_interpolant(Interpolant& interpolant,
                                   Interpolant& ext,
+                                  int32_t lit,
                                   VariableKind kind)
 {
+  // Given two clauses c1 and c2, resolved over var = |lit| with -lit in c1 and
+  // lit in c2. We have that
+  // interpolant = partial_interpolant(c1)
+  // ext         = partial_interpolant(c2)
+  // kind        = variable_kind(var)
+  //
+  // Mc Millan:
+  // kind == A: res = partial_interpolant(c1) \/ partial_interpolant(c2)
+  // else     : res = partial_interpolant(c1) /\ partial_interpolant(c2)
+  //
+  // Pudlak:
+  // kind == A: res = partial_interpolant(c1) \/ partial_interpolant(c2)
+  // kind == B: res = partial_interpolant(c1) /\ partial_interpolant(c2)
+  // kind == G: res = (partial_interpolant(c1) \/ -lit)
+  //                   /\ (partial_interpolant(c2) \/  lit)
+
   if (interpolant.d_kind != ext.d_kind)
   {
     interpolant.d_kind = ClauseKind::LEARNED;
@@ -637,8 +663,26 @@ CadicalTracer::extend_interpolant(Interpolant& interpolant,
   }
   else
   {
-    interpolant.d_interpolant =
-        d_amgr.mk_and(interpolant.d_interpolant, ext.d_interpolant);
+    switch (d_algo)
+    {
+      case option::InterpolantsAlgo::MCMILLAN:
+        interpolant.d_interpolant =
+            d_amgr.mk_and(interpolant.d_interpolant, ext.d_interpolant);
+        break;
+      case option::InterpolantsAlgo::PUDLAK:
+        if (kind == VariableKind::B)
+        {
+          interpolant.d_interpolant =
+              d_amgr.mk_and(interpolant.d_interpolant, ext.d_interpolant);
+        }
+        else
+        {
+          assert(kind == VariableKind::GLOBAL);
+          interpolant.d_interpolant = d_amgr.mk_and(
+              mk_or(interpolant.d_interpolant, d_amgr.get_node(-lit)),
+              mk_or(ext.d_interpolant, d_amgr.get_node(lit)));
+        }
+    }
   }
 }
 

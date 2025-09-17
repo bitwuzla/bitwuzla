@@ -429,7 +429,14 @@ Options::Options()
                       false,
                       "term abstraction for ite",
                       "abstraction-ite"),
-
+      // Interpolants generation
+      interpolants_algo(this,
+                        Option::INTERPOLANTS_ALGO,
+                        InterpolantsAlgo::MCMILLAN,
+                        {{InterpolantsAlgo::MCMILLAN, "mcmillan"},
+                         {InterpolantsAlgo::PUDLAK, "pudlak"}},
+                        "algorithm for interpolant generation",
+                        "interpolants-algo"),
       // Preprocessing
       preprocess(
           this, Option::PREPROCESS, true, "enable preprocessing", "preprocess"),
@@ -905,6 +912,8 @@ Options::data(Option opt)
     case Option::ABSTRACTION_BV_UDIV: return &abstraction_bv_udiv;
     case Option::ABSTRACTION_BV_UREM: return &abstraction_bv_urem;
     case Option::ABSTRACTION_ITE: return &abstraction_ite;
+
+    case Option::INTERPOLANTS_ALGO: return &interpolants_algo;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

@@ -1,0 +1,8 @@
+sat
+unsat
+(not (and (= state15@1 #b1) (= state12@1 #b1)))
+sat
+sat
+sat
+unsat
+(let ((_let0 (= state15@1 #b1))) (and (= state14@1 #b1) (and (not (and _let0 (and (= state13@1 #b0) (and (= state11@1 #b0) (= state12@1 #b1))))) (not (and _let0 (= state11@1 #b1))))))
