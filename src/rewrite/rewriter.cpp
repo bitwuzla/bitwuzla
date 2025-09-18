@@ -66,7 +66,7 @@ Rewriter::Rewriter(Env& env,
 Node
 Rewriter::rewrite(const Node& node)
 {
-  std::vector<Node> visit{node};
+  std::vector<Node> visit{d_preproc_cache.get(node)};
   std::unordered_map<Node, Node> cache;
   do
   {

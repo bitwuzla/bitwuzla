@@ -403,6 +403,7 @@ tests_smt2 = [
   ['preprocess/murxla-60e16cc072cca364.min.smt2'],
   ['preprocess/murxla-99627c7d950e42b3.min.smt2'],
   ['preprocess/murxla-c598aa85aefc51a0.min.smt2'],
+  ['preprocess/murxla-f06b966a11046c83.min.smt2'],
   ['preprocess/normalize1.smt2'],
   ['preprocess/normalize2.smt2'],
   ['preprocess/normalize3.smt2'],

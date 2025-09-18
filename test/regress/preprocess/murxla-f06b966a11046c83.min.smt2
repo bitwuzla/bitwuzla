@@ -1,0 +1,6 @@
+(declare-const x Bool)
+(declare-const y Bool)
+(define-fun f ((z Bool)) Bool false)
+(assert (f (ite y (f x) (f y))))
+(set-info :status unsat)
+(check-sat-assuming ((ite y (f x) (f y))))
