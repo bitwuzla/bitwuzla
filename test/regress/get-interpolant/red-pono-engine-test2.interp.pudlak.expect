@@ -1,0 +1,3 @@
+sat
+unsat
+(and (= ((_ extract 1 1) y) #b0) (= ((_ extract 2 2) y) #b0))
