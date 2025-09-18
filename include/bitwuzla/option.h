@@ -697,6 +697,20 @@ enum ENUM(Option)
    */
   EVALUE(INTERPOLANTS_ALGO),
   /*!
+   * **Interpolant generation.**
+   *
+   * When enabled, the generated interpolant is lifted as much as possible
+   * to the theory level. Else, the resulting interpolant exactly corresponds
+   * to the bit-level AIG interpolant.
+   *
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
+   *
+   * @warning This is an expert option to configure interpolant generation.
+   */
+  EVALUE(INTERPOLANTS_LIFT),
+  /*!
    * **Preprocessing.**
    *
    * When enabled, applies all enabled preprocessing passes.

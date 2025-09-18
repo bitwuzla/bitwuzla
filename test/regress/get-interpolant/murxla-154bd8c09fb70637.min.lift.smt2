@@ -1,0 +1,8 @@
+(set-option :produce-interpolants 1)
+(set-option :interpolants-lift true)
+(declare-const x Bool)
+(declare-const x1 Bool)
+(assert (distinct true (or x x1 (not (= x (not x1))))))
+(assert (! x1 :named a2))
+(check-sat)
+(get-interpolant (a2))

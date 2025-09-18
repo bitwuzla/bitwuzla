@@ -24,72 +24,143 @@ tests_smt2 = [
   ['check/regr_uc1.smt2'],
   ## get-interpolant
   ['get-interpolant/a16-p018.dar.smt2'],
+  ['get-interpolant/a16-p018.dar.lift.smt2'],
   ['get-interpolant/a16-p018.dar.pudlak.smt2'],
+  #
   ['get-interpolant/bug-1.interp.smt2'],
+  ['get-interpolant/bug-1.interp.lift.smt2'],
   ['get-interpolant/bug-1.interp.pudlak.smt2'],
+  #
   ['get-interpolant/hard-ll_valuebound20.interp.smt2'],
+  ['get-interpolant/hard-ll_valuebound20.interp.lift.smt2'],
   ['get-interpolant/hard-ll_valuebound20.interp.pudlak.smt2'],
+  #
   ['get-interpolant/incr-interp.smt2'],
+  ['get-interpolant/incr-interp.lift.smt2'],
   ['get-interpolant/incr-interp.pudlak.smt2'],
+  #
   ['get-interpolant/loop3.interp.smt2'],
+  ['get-interpolant/loop3.interp.lift.smt2'],
   ['get-interpolant/loop3.interp.pudlak.smt2'],
+  #
   ['get-interpolant/murxla-14f02a0715edabfd.min.smt2'],
+  ['get-interpolant/murxla-14f02a0715edabfd.min.lift.smt2'],
   ['get-interpolant/murxla-14f02a0715edabfd.min.pudlak.smt2'],
+  #
   ['get-interpolant/murxla-154bd8c09fb70637.min.smt2'],
+  ['get-interpolant/murxla-154bd8c09fb70637.min.lift.smt2'],
   ['get-interpolant/murxla-154bd8c09fb70637.min.pudlak.smt2'],
+  #
   ['get-interpolant/murxla-20916f8962fc9c26.min.smt2'],
+  ['get-interpolant/murxla-20916f8962fc9c26.min.lift.smt2'],
   ['get-interpolant/murxla-20916f8962fc9c26.min.pudlak.smt2'],
+  #
   ['get-interpolant/murxla-22d302aad19922d4.min.smt2'],
+  ['get-interpolant/murxla-22d302aad19922d4.min.lift.smt2'],
   ['get-interpolant/murxla-22d302aad19922d4.min.pudlak.smt2'],
+  #
   ['get-interpolant/murxla-58cf094fd84cdb.min.smt2'],
+  ['get-interpolant/murxla-58cf094fd84cdb.min.lift.smt2'],
   ['get-interpolant/murxla-58cf094fd84cdb.min.pudlak.smt2'],
+  #
   ['get-interpolant/murxla-6116f4988dde7b23.min.smt2'],
+  ['get-interpolant/murxla-6116f4988dde7b23.min.lift.smt2'],
   ['get-interpolant/murxla-6116f4988dde7b23.min.pudlak.smt2'],
+  #
   ['get-interpolant/murxla-6c8ada822bcad6a4.min.smt2'],
+  ['get-interpolant/murxla-6c8ada822bcad6a4.min.lift.smt2'],
   ['get-interpolant/murxla-6c8ada822bcad6a4.min.pudlak.smt2'],
+  #
   ['get-interpolant/murxla-71bda919abd73fe9.min.smt2'],
+  ['get-interpolant/murxla-71bda919abd73fe9.min.lift.smt2'],
   ['get-interpolant/murxla-71bda919abd73fe9.min.pudlak.smt2'],
+  #
   ['get-interpolant/murxla-cdfb7bd7fd6eb9fe.min.smt2'],
+  ['get-interpolant/murxla-cdfb7bd7fd6eb9fe.min.lift.smt2'],
   ['get-interpolant/murxla-cdfb7bd7fd6eb9fe.min.pudlak.smt2'],
+  #
   ['get-interpolant/murxla-d577a08c0ddb7366.min.smt2'],
+  ['get-interpolant/murxla-d577a08c0ddb7366.min.lift.smt2'],
   ['get-interpolant/murxla-d577a08c0ddb7366.min.pudlak.smt2'],
+  #
   ['get-interpolant/picorv32_mutAY_nomem-p1.dar.smt2'],
+  ['get-interpolant/picorv32_mutAY_nomem-p1.dar.lift.smt2'],
   ['get-interpolant/picorv32_mutAY_nomem-p1.dar.pudlak.smt2'],
+  #
   ['get-interpolant/pono-engine-test.interp.smt2'],
+  ['get-interpolant/pono-engine-test.interp.lift.smt2'],
   ['get-interpolant/pono-engine-test.interp.pudlak.smt2'],
+  #
   ['get-interpolant/pono-engine-test2.interp.smt2'],
+  ['get-interpolant/pono-engine-test2.interp.lift.smt2'],
   ['get-interpolant/pono-engine-test2.interp.pudlak.smt2'],
+  #
   ['get-interpolant/pono1.smt2'],
+  ['get-interpolant/pono1.lift.smt2'],
   ['get-interpolant/pono1.pudlak.smt2'],
+  #
   ['get-interpolant/pono2.smt2'],
+  ['get-interpolant/pono2.lift.smt2'],
   ['get-interpolant/pono2.pudlak.smt2'],
+  #
   ['get-interpolant/pono3.smt2'],
+  ['get-interpolant/pono3.lift.smt2'],
   ['get-interpolant/pono3.pudlak.smt2'],
+  #
   ['get-interpolant/qspiflash_dualflexpress_divfive-p114.dar.smt2'],
+  ['get-interpolant/qspiflash_dualflexpress_divfive-p114.dar.lift.smt2'],
   ['get-interpolant/qspiflash_dualflexpress_divfive-p114.dar.pudlak.smt2'],
+  #
   ['get-interpolant/qspiflash_qflexpress_divfive-p088.dar.smt2'],
+  ['get-interpolant/qspiflash_qflexpress_divfive-p088.dar.lift.smt2'],
   ['get-interpolant/qspiflash_qflexpress_divfive-p088.dar.pudlak.smt2'],
+  #
   ['get-interpolant/red-a16-p018.dar.smt2'],
+  ['get-interpolant/red-a16-p018.dar.lift.smt2'],
   ['get-interpolant/red-a16-p018.dar.pudlak.smt2'],
+  #
   ['get-interpolant/red-hard-ll_valuebound20.interp.smt2'],
+  ['get-interpolant/red-hard-ll_valuebound20.interp.lift.smt2'],
   ['get-interpolant/red-hard-ll_valuebound20.interp.pudlak.smt2'],
+  #
   ['get-interpolant/red-incr-interp.smt2'],
+  ['get-interpolant/red-incr-interp.lift.smt2'],
   ['get-interpolant/red-incr-interp.pudlak.smt2'],
+  #
   ['get-interpolant/red-loop3.interp.smt2'],
+  ['get-interpolant/red-loop3.interp.lift.smt2'],
   ['get-interpolant/red-loop3.interp.pudlak.smt2'],
+  #
+  ['get-interpolant/red-murxla-14f02a0715edabfd.min.smt2'],
+  ['get-interpolant/red-murxla-14f02a0715edabfd.min.lift.smt2'],
+  ['get-interpolant/red-murxla-14f02a0715edabfd.min.pudlak.smt2'],
+  #
   ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.smt2'],
+  ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.lift.smt2'],
   ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.pudlak.smt2'],
+  #
   ['get-interpolant/red-picorv32_mutAY_nomem-p1.dar.smt2'],
+  ['get-interpolant/red-picorv32_mutAY_nomem-p1.dar.lift.smt2'],
   ['get-interpolant/red-picorv32_mutAY_nomem-p1.dar.pudlak.smt2'],
+  #
   ['get-interpolant/red-pono-engine-test2.interp.smt2'],
+  ['get-interpolant/red-pono-engine-test2.interp.lift.smt2'],
   ['get-interpolant/red-pono-engine-test2.interp.pudlak.smt2'],
+  #
   ['get-interpolant/red-pono2.smt2'],
+  ['get-interpolant/red-pono2.lift.smt2'],
   ['get-interpolant/red-pono2.pudlak.smt2'],
+  #
   ['get-interpolant/red-qspiflash_qflexpress_divfive-p088.dar.smt2'],
+  ['get-interpolant/red-qspiflash_qflexpress_divfive-p088.dar.lift.smt2'],
   ['get-interpolant/red-qspiflash_qflexpress_divfive-p088.dar.pudlak.smt2'],
+  #
   ['get-interpolant/red-sw_sym_ex.interp.smt2'],
+  ['get-interpolant/red-sw_sym_ex.interp.lift.smt2'],
   ['get-interpolant/red-sw_sym_ex.interp.pudlak.smt2'],
+  #
   ['get-interpolant/sw_sym_ex.interp.smt2'],
+  ['get-interpolant/sw_sym_ex.interp.lift.smt2'],
   ['get-interpolant/sw_sym_ex.interp.pudlak.smt2'],
   ## get-model
   ['get-model/regr-5smod3.btor.smt2', ['--print-model']],

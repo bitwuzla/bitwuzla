@@ -141,6 +141,9 @@ class BvInterpolationSolver : public Solver,
    *
    * @param var_labels  The variable labels map to add to. Maps AIG ids to
    *                    variable labels.
+   * @param term_labels Map from terms to variable labels. If any input of a
+   *                    term is labeled as A/B-local, the term is labeled as
+   *                    A/B-local, and GLOBAL otherwise.
    * @param A           The set of original A assertions.
    * @param B           The set of original B assertions.
    * @param ppA         The set of preprocessed A assertions.
@@ -148,6 +151,7 @@ class BvInterpolationSolver : public Solver,
    */
   void label_vars(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
+      std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
       const std::unordered_set<Node>& A,
       const std::unordered_set<Node>& B,
       const std::vector<Node>& ppA,
@@ -164,6 +168,9 @@ class BvInterpolationSolver : public Solver,
    *
    * @param var_labels  The variable labels map to add to. Maps AIG ids to
    *                    variable labels.
+   * @param term_labels Map from terms to variable labels. If any input of a
+   *                    term is labeled as A/B-local, the term is labeled as
+   *                    A/B-local, and GLOBAL otherwise.
    * @param nodes       The set of nodes.
    * @param kind        The variable kind to label with.
    */
@@ -182,10 +189,9 @@ class BvInterpolationSolver : public Solver,
    *
    * @param var_labels  The variable labels map to add to. Maps AIG ids to
    *                    variable labels.
-   * @param term_labels Intermediate (over labeling of all assertions) map from
-   *                    terms to variable labels for terms that are not
-   *                    bit-blasted. This is necessary to determine the label of
-   *                    abstracted terms.
+   * @param term_labels Map from terms to variable labels. If any input of a
+   *                    term is labeled as A/B-local, the term is labeled as
+   *                    A/B-local, and GLOBAL otherwise.
    * @param nodes       The set of nodes.
    * @param kind        The variable kind to label with.
    */
@@ -222,11 +228,15 @@ class BvInterpolationSolver : public Solver,
    *
    * @param var_labels    The variable labels map.
    * @param clause_labels The clause labels map.
+   * @param term_labels    Map from terms to variable labels. If any input of a
+   *                       term is labeled as A/B-local, the term is labeled as
+   *                       A/B-local, and GLOBAL otherwise.
    * @param node          The lemma.
    */
   void label_lemma(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
       std::unordered_map<int64_t, sat::interpolants::ClauseKind>& clause_labels,
+      std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
       const Node& node);
 
   /**

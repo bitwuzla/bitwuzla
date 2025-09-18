@@ -156,16 +156,17 @@ BvInterpolationSolver::interpolant(const std::unordered_set<Node>& A,
   // SAT variable with id 1 represents true/false. We always label it as GLOBAL.
   var_labels[1] = VariableKind::GLOBAL;
 
+  std::unordered_map<Node, VariableKind> term_labels;
   {
     util::Timer timer(d_stats.time_label);
     label_clauses(clause_labels, ppA, ClauseKind::A);
     label_clauses(clause_labels, ppB, ClauseKind::B);
 
-    label_vars(var_labels, A, B, ppA, ppB);
+    label_vars(var_labels, term_labels, A, B, ppA, ppB);
 
     for (const auto& a : d_lemmas)
     {
-      label_lemma(var_labels, clause_labels, a);
+      label_lemma(var_labels, clause_labels, term_labels, a);
     }
   }
 
@@ -173,7 +174,7 @@ BvInterpolationSolver::interpolant(const std::unordered_set<Node>& A,
 
   util::Timer timer(d_stats.time_interpol);
   Node res = d_env.rewriter().rewrite(
-      d_tracer->get_interpolant(var_labels, clause_labels));
+      d_tracer->get_interpolant(var_labels, clause_labels, term_labels));
   d_stats.size_interpolant += d_tracer->d_stats.size_interpolant;
 
   Log(1) << "interpolant: " << res;
@@ -428,8 +429,10 @@ void
 BvInterpolationSolver::label_lemma(
     std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
     std::unordered_map<int64_t, sat::interpolants::ClauseKind>& clause_labels,
+    std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
     const Node& node)
 {
+  // label SAT variables
   const auto& bits = d_bitblaster.bits(node);
   bv::AigBitblaster::aig_node_ref_vector visit;
   std::unordered_set<int64_t> cache;
@@ -487,6 +490,50 @@ BvInterpolationSolver::label_lemma(
         var_labels.emplace(var, kind);
     assert(inserted);
   }
+  // label unlabeled terms
+  std::unordered_map<Node, bool> ncache;
+  std::vector<Node> nvisit{node};
+  do
+  {
+    Node cur            = nvisit.back();
+    auto [it, inserted] = ncache.emplace(cur, true);
+    if (inserted)
+    {
+      nvisit.insert(nvisit.end(), cur.begin(), cur.end());
+      // we don't need to push word-blasted terms here as they should appear
+      // in lemmas if relevant
+      continue;
+    }
+    else if (it->second)
+    {
+      it->second          = false;
+      auto [it, inserted] = term_labels.emplace(cur, VariableKind::GLOBAL);
+      if (!inserted)
+      {
+        continue;
+      }
+      assert(!cur.is_const());
+      VariableKind k = VariableKind::GLOBAL;
+      for (const auto& c : cur)
+      {
+        auto it = term_labels.find(c);
+        assert(it != term_labels.end());
+        if (it->second != VariableKind::GLOBAL)
+        {
+          assert(k == VariableKind::GLOBAL || k == it->second);
+          k = it->second;
+#ifdef NDEBUG
+          break;
+#endif
+        }
+      }
+      if (!inserted && it->second != VariableKind::GLOBAL && it->second != k)
+      {
+        it->second = VariableKind::GLOBAL;
+      }
+    }
+    nvisit.pop_back();
+  } while (!nvisit.empty());
 
   if (d_logger.is_log_enabled(2))
   {
@@ -595,7 +642,7 @@ BvInterpolationSolver::label_consts(
           }
           // If not bit-blasted, it is not relevant for interpolant.
         }
-        else if (cur.type().is_fp())
+        else if (cur.type().is_fp() || cur.type().is_rm())
         {
           if (word_blaster.is_word_blasted(cur))
           {
@@ -686,12 +733,12 @@ BvInterpolationSolver::label_leafs(
 void
 BvInterpolationSolver::label_vars(
     std::unordered_map<int64_t, VariableKind>& var_labels,
+    std::unordered_map<Node, VariableKind>& term_labels,
     const std::unordered_set<Node>& A,
     const std::unordered_set<Node>& B,
     const std::vector<Node>& ppA,
     const std::vector<Node>& ppB)
 {
-  std::unordered_map<Node, VariableKind> term_labels;
   // First, explicitly label all consts (leafs) that occur in `node` based on
   // their occurrence in the original assertions.
   // This is necessary as we need to step all the way down in case of abstracted

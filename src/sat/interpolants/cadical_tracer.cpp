@@ -26,7 +26,8 @@ using namespace bzla::node;
 namespace bzla::sat::interpolants {
 
 CadicalTracer::CadicalTracer(Env& env, bv::AigBitblaster& bitblaster)
-    : Tracer(env, bitblaster), d_algo(env.options().interpolants_algo())
+    : Tracer(env, bitblaster, env.options().interpolants_lift()),
+      d_algo(env.options().interpolants_algo())
 {
 }
 
@@ -244,7 +245,9 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
 Node
 CadicalTracer::get_interpolant(
     const std::unordered_map<int64_t, VariableKind>& var_labels,
-    const std::unordered_map<int64_t, ClauseKind>& clause_labels)
+    const std::unordered_map<int64_t, ClauseKind>& clause_labels,
+    const std::unordered_map<Node, sat::interpolants::VariableKind>&
+        term_labels)
 {
   d_part_interpolants.clear();
   uint64_t final_clause_id = d_final_clause_ids[0];
@@ -448,17 +451,20 @@ CadicalTracer::get_interpolant(
         interpolant = ip;
       }
     }
-    return get_interpolant_node(interpolant);
+    return get_interpolant_node(interpolant, term_labels);
   }
 
   // derived empty clause
   auto it = d_part_interpolants.find(final_clause_id);
   assert(it != d_part_interpolants.end());
-  return get_interpolant_node(it->second);
+  return get_interpolant_node(it->second, term_labels);
 }
 
 Node
-CadicalTracer::get_interpolant_node(Interpolant interpolant)
+CadicalTracer::get_interpolant_node(
+    Interpolant interpolant,
+    const std::unordered_map<Node, sat::interpolants::VariableKind>&
+        term_labels)
 {
   if (interpolant.is_null())
   {
@@ -502,7 +508,7 @@ CadicalTracer::get_interpolant_node(Interpolant interpolant)
     {
       if (it->second.is_null())
       {
-        it->second = get_node_from_bb_cache(cur, rev_bb_cache);
+        it->second = get_node_from_bb_cache(cur, rev_bb_cache, term_labels);
         assert(!cur.is_const() || !it->second.is_null());
         if (it->second.is_null())
         {

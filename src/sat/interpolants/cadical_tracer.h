@@ -116,7 +116,9 @@ class CadicalTracer : public Tracer
    */
   Node get_interpolant(
       const std::unordered_map<int64_t, VariableKind>& var_labels,
-      const std::unordered_map<int64_t, ClauseKind>& clause_labels) override;
+      const std::unordered_map<int64_t, ClauseKind>& clause_labels,
+      const std::unordered_map<Node, sat::interpolants::VariableKind>&
+          term_labels) override;
 
  private:
   /**
@@ -131,7 +133,10 @@ class CadicalTracer : public Tracer
       const std::vector<int32_t>& clause,
       ClauseKind kind);
 
-  Node get_interpolant_node(Interpolant interpolant);
+  Node get_interpolant_node(
+      Interpolant interpolant,
+      const std::unordered_map<Node, sat::interpolants::VariableKind>&
+          term_labels);
 
   /**
    * Extend `interpolant` with interpolant `ext` for a given literal.
@@ -191,6 +196,8 @@ class CadicalTracer : public Tracer
   std::vector<uint64_t> d_final_clause_ids;
   std::vector<uint64_t> d_proof_core;
   CaDiCaL::ConclusionType d_conclusion;
+
+  /** The configured interpolants generation algorithm. */
   option::InterpolantsAlgo d_algo;
 };
 

@@ -437,6 +437,13 @@ Options::Options()
                          {InterpolantsAlgo::PUDLAK, "pudlak"}},
                         "algorithm for interpolant generation",
                         "interpolants-algo"),
+      interpolants_lift(this,
+                        Option::INTERPOLANTS_LIFT,
+                        false,
+                        "lift bit-level interpolant as much as possible to the "
+                        "theory level (if disabled, generate inerpolant as 1:1 "
+                        "correspondence from bit-level AIG interpolant)",
+                        "interpolants-lift"),
       // Preprocessing
       preprocess(
           this, Option::PREPROCESS, true, "enable preprocessing", "preprocess"),
@@ -914,6 +921,7 @@ Options::data(Option opt)
     case Option::ABSTRACTION_ITE: return &abstraction_ite;
 
     case Option::INTERPOLANTS_ALGO: return &interpolants_algo;
+    case Option::INTERPOLANTS_LIFT: return &interpolants_lift;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

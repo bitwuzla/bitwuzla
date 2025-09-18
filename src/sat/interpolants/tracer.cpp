@@ -80,18 +80,22 @@ Tracer::compute_rev_bb_cache() const
 }
 
 Node
-Tracer::get_node_from_bb_cache(const bitblast::AigNode& aig,
-                               RevBitblasterCache& cache) const
+Tracer::get_node_from_bb_cache(
+    const bitblast::AigNode& aig,
+    RevBitblasterCache& cache,
+    const std::unordered_map<Node, sat::interpolants::VariableKind>&
+        term_labels) const
 {
-  // We only consider AIG consts and build the interpolant as an exact
-  // correspondence of the AIG interpolant on top of the bits represented as
-  // these consts.
-  if (!aig.is_const())
+  // If we do not lift the interpolant to the theory level, we only consider AIG
+  // consts and build the interpolant as an exact correspondence of the AIG
+  // interpolant on top of the bits represented as these consts.
+  if (!d_lift && !aig.is_const())
   {
     return Node();
   }
 
   Node node;
+  VariableKind kind = VariableKind::GLOBAL;
   size_t idx     = 0;
   int64_t aig_id = std::abs(aig.get_id());
   const auto& it = cache.find(aig_id);
@@ -99,18 +103,35 @@ Tracer::get_node_from_bb_cache(const bitblast::AigNode& aig,
   {
     node = it->second.first;
     idx  = it->second.second;
+    if (!node.is_null())
+    {
+      auto tl = term_labels.find(node);
+      assert(tl != term_labels.end());
+      kind = tl->second;
+    }
   }
   else
   {
     const auto& nit = cache.find(-aig_id);
     if (nit != cache.end())
     {
-      node = utils::invert_node(d_nm, nit->second.first);
+      node = nit->second.first;
       idx  = nit->second.second;
+      if (!node.is_null())
+      {
+        auto tl = term_labels.find(node);
+        assert(tl != term_labels.end());
+        kind = tl->second;
+      }
+      node = utils::invert_node(d_nm, node);
     }
   }
   if (!node.is_null())
   {
+    if (kind != VariableKind::GLOBAL)
+    {
+      return Node();
+    }
     bool is_bv = node.type().is_bv();
     assert(is_bv || idx == 0);
     if (is_bv)

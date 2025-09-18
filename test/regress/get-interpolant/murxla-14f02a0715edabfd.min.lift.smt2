@@ -1,0 +1,10 @@
+; ignore output
+(declare-const __ (_ BitVec 1))
+(set-option :produce-interpolants 1)
+(set-option :interpolants-lift true)
+(set-option :abstraction-ite true)
+(assert (bvult (bvredand (_ bv0 127)) (bvredxor (bvsdiv ((_ sign_extend 103) (bvredand (_ bv0 127))) ((_ sign_extend 103) (bvredand (bvsmod (_ bv1 127) ((_ zero_extend 126) __))))))))
+(assert (! (bvult (_ bv0 128) ((_ sign_extend 1) (bvsdiv (_ bv0 127) ((_ zero_extend 126) __)))) :named a1))
+(set-info :status unsat)
+(check-sat)
+(get-interpolant (a1))
