@@ -131,7 +131,10 @@ Tracer::get_node_from_bb_cache(
       if (!node.is_null())
       {
         auto tl = term_labels.find(node);
-        assert(tl != term_labels.end());
+        if (tl == term_labels.end())
+        {
+          return Node();
+        }
         kind = tl->second;
       }
       node = utils::invert_node(d_nm, node);
