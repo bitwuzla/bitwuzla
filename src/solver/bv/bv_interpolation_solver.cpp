@@ -205,6 +205,22 @@ BvInterpolationSolver::interpolant(const std::unordered_set<Node>& A,
     Log(1) << "interpolant size: " << interpol_size << " ands";
   }
 
+#ifndef NDEBUG
+  {
+    node_ref_vector visit{d_assertions.begin(), d_assertions.end()};
+    visit.insert(visit.end(), d_assumptions.begin(), d_assumptions.end());
+    visit.insert(visit.end(), d_lemmas.begin(), d_lemmas.end());
+    unordered_node_ref_set cache;
+    do
+    {
+      const Node& cur = visit.back();
+      visit.pop_back();
+      cache.insert(cur);
+      assert(term_labels.find(cur) != term_labels.end());
+    } while (!visit.empty());
+  }
+#endif
+
   return res;
 }
 
@@ -702,9 +718,7 @@ BvInterpolationSolver::label_leafs(
           {
             assert(k == VariableKind::GLOBAL || k == it->second);
             k = it->second;
-#ifdef NDEBUG
             break;
-#endif
           }
         }
         auto [it, inserted] = term_labels.emplace(cur, k);

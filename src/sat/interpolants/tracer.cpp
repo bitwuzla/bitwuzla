@@ -106,7 +106,18 @@ Tracer::get_node_from_bb_cache(
     if (!node.is_null())
     {
       auto tl = term_labels.find(node);
-      assert(tl != term_labels.end());
+      // We cannot assert here that all nodes we map back are labeled since we
+      // do not backtrack the bitblaster cache. That is, it can happen that we
+      // built an AIG node that maps to a node in the cache that does not occur
+      // in the input formula (incl. the lemmas). This will only happen in rare
+      // cases, and very likely only for nodes that already correspond to the
+      // Node-level representation of the AIG node (with Boolean inputs). We
+      // thus do not introduce additional labeling of unlabeled nodes here,
+      // but use the Node-level representation of the AIG node.
+      if (tl == term_labels.end())
+      {
+        return Node();
+      }
       kind = tl->second;
     }
   }

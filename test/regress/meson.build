@@ -135,6 +135,10 @@ tests_smt2 = [
   ['get-interpolant/red-murxla-14f02a0715edabfd.min.lift.smt2'],
   ['get-interpolant/red-murxla-14f02a0715edabfd.min.pudlak.smt2'],
   #
+  ['get-interpolant/red-murxla-64e16770297cc670.min.smt2'],
+  ['get-interpolant/red-murxla-64e16770297cc670.min.lift.smt2'],
+  ['get-interpolant/red-murxla-64e16770297cc670.min.pudlak.smt2'],
+  #
   ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.smt2'],
   ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.lift.smt2'],
   ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.pudlak.smt2'],

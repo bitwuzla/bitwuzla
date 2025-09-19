@@ -1,0 +1,3 @@
+unsat
+unsat
+(let ((_let0 (not x))) (let ((_let1 (= x1 _let0))) (and _let1 (not (and _let0 (and (not x1) _let1))))))
