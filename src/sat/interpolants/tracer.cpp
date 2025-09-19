@@ -80,10 +80,20 @@ Tracer::compute_rev_bb_cache() const
 }
 
 Node
-Tracer::get_node_from_bb_cache(int64_t aig_id, RevBitblasterCache& cache) const
+Tracer::get_node_from_bb_cache(const bitblast::AigNode& aig,
+                               RevBitblasterCache& cache) const
 {
+  // We only consider AIG consts and build the interpolant as an exact
+  // correspondence of the AIG interpolant on top of the bits represented as
+  // these consts.
+  if (!aig.is_const())
+  {
+    return Node();
+  }
+
   Node node;
   size_t idx     = 0;
+  int64_t aig_id = std::abs(aig.get_id());
   const auto& it = cache.find(aig_id);
   if (it != cache.end())
   {
