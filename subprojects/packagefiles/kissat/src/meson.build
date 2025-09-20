@@ -104,7 +104,7 @@ sources = [
   'witness.c',
 ]
 
-kissat_lib = library('kissat', sources: sources)
+kissat_lib = static_library('kissat', sources: sources, pic: true)
 kissat_dep = declare_dependency(
                   include_directories: include_directories('.'),
                   link_with: kissat_lib)
