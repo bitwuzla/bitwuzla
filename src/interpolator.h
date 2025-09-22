@@ -36,6 +36,18 @@ class Interpolator
   Node get_interpolant(const std::unordered_set<Node>& A);
 
  private:
+  Node interpolant_by_substitution(const std::unordered_set<Node>& A,
+                                   const std::unordered_set<Node>& B,
+                                   const std::vector<Node>& ppA,
+                                   const std::vector<Node>& ppB);
+
+  std::unordered_set<Node> get_consts(const std::unordered_set<Node>& nodes);
+  std::unordered_set<Node> shared_consts(const std::unordered_set<Node>& A,
+                                         const std::unordered_set<Node>& B);
+  Node apply_substs(Env& env,
+                    const std::vector<Node>& assertions,
+                    const std::unordered_set<Node>& shared);
+
   /** The associated solving context. */
   SolvingContext& d_ctx;
   /** The associated environnment. */
@@ -51,6 +63,9 @@ class Interpolator
   {
     Statistics(util::Statistics& stats);
     util::TimerStatistic& time_get_interpolant;
+    uint64_t& interpolant_substA;
+    uint64_t& interpolant_substB;
+    uint64_t& interpolant_bitlevel;
   } d_stats;
 };
 

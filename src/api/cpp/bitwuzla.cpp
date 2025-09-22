@@ -115,6 +115,7 @@ static const std::unordered_map<Option, bzla::option::Option>
 
         {Option::INTERPOLANTS_ALGO, bzla::option::Option::INTERPOLANTS_ALGO},
         {Option::INTERPOLANTS_LIFT, bzla::option::Option::INTERPOLANTS_LIFT},
+        {Option::INTERPOLANTS_SUBST, bzla::option::Option::INTERPOLANTS_SUBST},
 
         {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
 

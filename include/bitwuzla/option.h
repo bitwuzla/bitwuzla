@@ -711,6 +711,21 @@ enum ENUM(Option)
    */
   EVALUE(INTERPOLANTS_LIFT),
   /*!
+   * **Interpolant generation.**
+   *
+   * When enabled, the generated interpolant is computed via substituitions.
+   * If all A-local symbols are eliminated via substitution, the resulting A
+   * is an interpolant. If all B-local symbols are eliminated via substitution,
+   * ~B is an interpolant.
+   *
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
+   *
+   * @warning This is an expert option to configure interpolant generation.
+   */
+  EVALUE(INTERPOLANTS_SUBST),
+  /*!
    * **Preprocessing.**
    *
    * When enabled, applies all enabled preprocessing passes.

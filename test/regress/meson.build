@@ -166,6 +166,11 @@ tests_smt2 = [
   ['get-interpolant/sw_sym_ex.interp.smt2'],
   ['get-interpolant/sw_sym_ex.interp.lift.smt2'],
   ['get-interpolant/sw_sym_ex.interp.pudlak.smt2'],
+
+  ['get-interpolant/eqsubst1.smt2'],
+  ['get-interpolant/eqsubst2.smt2'],
+  ['get-interpolant/eqsubst3.smt2'],
+
   ## get-model
   ['get-model/regr-5smod3.btor.smt2', ['--print-model']],
   ['get-model/regr-5srem3.btor.smt2'],

@@ -444,6 +444,11 @@ Options::Options()
                         "theory level (if disabled, generate inerpolant as 1:1 "
                         "correspondence from bit-level AIG interpolant)",
                         "interpolants-lift"),
+      interpolants_subst(this,
+                         Option::INTERPOLANTS_SUBST,
+                         false,
+                         "compute interpolant by substitution, if possible",
+                         "interpolants-subst"),
       // Preprocessing
       preprocess(
           this, Option::PREPROCESS, true, "enable preprocessing", "preprocess"),
@@ -922,6 +927,7 @@ Options::data(Option opt)
 
     case Option::INTERPOLANTS_ALGO: return &interpolants_algo;
     case Option::INTERPOLANTS_LIFT: return &interpolants_lift;
+    case Option::INTERPOLANTS_SUBST: return &interpolants_subst;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

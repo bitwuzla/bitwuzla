@@ -10,7 +10,12 @@
 
 #include "interpolator.h"
 
+#include "node/node_utils.h"
+#include "preprocess/pass/variable_substitution.h"
+
 namespace bzla {
+
+using namespace node;
 
 Interpolator::Interpolator(SolvingContext& ctx)
     : d_ctx(ctx),
@@ -117,15 +122,156 @@ Interpolator::get_interpolant(const std::unordered_set<Node>& A)
 
   if (ipol.is_null())
   {
-    ipol = d_ctx.solver_engine().interpolant(A, B, ppA, ppB);
+    if (d_env.options().interpolants_subst())
+    {
+      ipol = interpolant_by_substitution(A, B, ppA, ppB);
+    }
+
+    // Generate interpolant from bit-level proof.
+    if (ipol.is_null())
+    {
+      ipol = d_ctx.solver_engine().interpolant(A, B, ppA, ppB);
+      ++d_stats.interpolant_bitlevel;
+    }
   }
 
   return ipol;
 }
 
+Node
+Interpolator::interpolant_by_substitution(const std::unordered_set<Node>& A,
+                                          const std::unordered_set<Node>& B,
+                                          const std::vector<Node>& ppA,
+                                          const std::vector<Node>& ppB)
+{
+  std::unordered_set<Node> shared = shared_consts(A, B);
+
+  // Check if all A-local symbols were eliminated and return A as
+  // interpolant.
+  Node ipol = apply_substs(d_env, ppA, shared);
+  if (!ipol.is_null())
+  {
+    ++d_stats.interpolant_substA;
+    return d_env.rewriter().rewrite(ipol);
+  }
+
+  // Check if all B-local symbols were eliminated and return ~B as
+  // interpolant.
+  ipol = apply_substs(d_env, ppB, shared);
+  if (!ipol.is_null())
+  {
+    ++d_stats.interpolant_substB;
+    return d_env.rewriter().rewrite(d_env.nm().mk_node(Kind::NOT, {ipol}));
+  }
+
+  return Node();
+}
+
+std::unordered_set<Node>
+Interpolator::get_consts(const std::unordered_set<Node>& nodes)
+{
+  std::vector<Node> visit;
+  std::unordered_set<Node> cache, consts;
+
+  visit.insert(visit.end(), nodes.begin(), nodes.end());
+  while (!visit.empty())
+  {
+    Node cur = visit.back();
+    visit.pop_back();
+
+    if (cache.insert(cur).second)
+    {
+      if (cur.is_const())
+      {
+        consts.insert(cur);
+      }
+
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  }
+
+  return consts;
+}
+
+std::unordered_set<Node>
+Interpolator::shared_consts(const std::unordered_set<Node>& A,
+                            const std::unordered_set<Node>& B)
+{
+  std::unordered_set<Node> shared;
+
+  auto constsA = get_consts(A);
+  auto constsB = get_consts(B);
+
+  for (const auto& c : constsA)
+  {
+    if (constsB.find(c) != constsB.end())
+    {
+      shared.insert(c);
+    }
+  }
+  return shared;
+}
+
+Node
+Interpolator::apply_substs(Env& env,
+                           const std::vector<Node>& assertions,
+                           const std::unordered_set<Node>& shared)
+{
+  option::Options opts;
+  Env vs_env(env.nm(), opts);
+  backtrack::BacktrackManager mgr;
+  preprocess::pass::PassVariableSubstitution vs(vs_env, &mgr, shared);
+  backtrack::AssertionStack as;
+  for (const auto& a : assertions)
+  {
+    as.push_back(a);
+  }
+
+  if (as.size() == 0)
+  {
+    return Node();
+  }
+
+  preprocess::AssertionVector av(as.view());
+  vs.apply(av);
+
+  std::unordered_set<Node> subst;
+  for (size_t i = 0; i < av.size(); ++i)
+  {
+    subst.insert(av[i]);
+  }
+
+  bool is_itp  = true;
+  auto constsA = get_consts(subst);
+  for (const auto& c : constsA)
+  {
+    if (shared.find(c) == shared.end())
+    {
+      is_itp = false;
+      break;
+    }
+  }
+  if (is_itp)
+  {
+    std::vector<Node> nodes;
+    for (size_t i = 0; i < av.size(); ++i)
+    {
+      nodes.push_back(av[i]);
+    }
+    return utils::mk_nary(env.nm(), Kind::AND, nodes);
+  }
+  return Node();
+}
+
 Interpolator::Statistics::Statistics(util::Statistics& stats)
     : time_get_interpolant(stats.new_stat<util::TimerStatistic>(
-          "interpolator::time_get_interpolant"))
+          "interpolator::time_get_interpolant")),
+      interpolant_substA(
+          stats.new_stat<uint64_t>("interpolator::interpolant_substA")),
+      interpolant_substB(
+          stats.new_stat<uint64_t>("interpolator::interpolant_substB")),
+      interpolant_bitlevel(
+          stats.new_stat<uint64_t>("interpolator::interpolant_bitlevel"))
 {
 }
 }  // namespace bzla

@@ -26,7 +26,8 @@ class PassVariableSubstitution : public PreprocessingPass
 {
  public:
   PassVariableSubstitution(Env& env,
-                           backtrack::BacktrackManager* backtrack_mgr);
+                           backtrack::BacktrackManager* backtrack_mgr,
+                           const std::unordered_set<Node>& exclude = {});
 
   void apply(AssertionVector& assertions) override;
 
@@ -113,6 +114,9 @@ class PassVariableSubstitution : public PreprocessingPass
 
   /** Backtrackable substitution cache. */
   Cache d_cache;
+
+  /** Do not substitute these consts. */
+  std::unordered_set<Node> d_exclude_consts;
 
   struct Statistics
   {
