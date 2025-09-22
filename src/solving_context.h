@@ -109,7 +109,12 @@ class SolvingContext
   Env& env();
 
   /** @return The solver engine. */
-  const SolverEngine& solver_engine() const { return d_solver_engine; }
+  SolverEngine& solver_engine() { return d_solver_engine; }
+
+  /** @return The current sat state. */
+  Result sat_state() const { return d_sat_state; }
+  /** @return The result of the last preprocess() call. */
+  Result sat_state_pp() const { return d_sat_state_pp; }
 
  private:
   /** Helper for checking models, unsat cores and interpolants after solve. */
@@ -165,7 +170,6 @@ class SolvingContext
     util::TimerStatistic& time_ensure_model;
     util::TimerStatistic& time_check_model;
     util::TimerStatistic& time_check_unsat_core;
-    util::TimerStatistic& time_get_interpolant;
     util::TimerStatistic& time_check_interpolant;
     uint64_t& max_memory;
     util::HistogramStatistic& formula_kinds_pre;

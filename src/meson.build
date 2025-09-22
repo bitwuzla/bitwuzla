@@ -193,6 +193,7 @@ sources = files([
   'check/check_model.cpp',
   'check/check_unsat_core.cpp',
   'env.cpp',
+  'interpolator.cpp',
   'node/kind_info.cpp',
   'node/node.cpp',
   'node/node_data.cpp',

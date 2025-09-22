@@ -15,6 +15,7 @@
 #include "check/check_interpolant.h"
 #include "check/check_model.h"
 #include "check/check_unsat_core.h"
+#include "interpolator.h"
 #include "node/node.h"
 #include "resource_terminator.h"
 #include "sat/sat_solver_factory.h"
@@ -167,103 +168,14 @@ SolvingContext::get_unsat_core()
 Node
 SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 {
-  util::Timer timer(d_stats.time_get_interpolant);
-
   assert(d_env.options().produce_interpolants());
   assert(d_sat_state == Result::UNSAT);
-  Log(1);
-  Log(1) << "*** interpolant";
-  Log(1);
-  Log(1) << "expected assertion partitioning:";
-  if (d_logger.is_log_enabled(1))
-  {
-    for (size_t i = 0, ia = 0, ib = 0, n = d_original_assertions.size(); i < n;
-         ++i)
-    {
-      if (A.find(d_original_assertions[i]) != A.end())
-      {
-        Log(1) << "A[" << ia++ << "]: " << d_original_assertions[i];
-      }
-      else
-      {
-        Log(1) << "B[" << ib++ << "]: " << d_original_assertions[i];
-      }
-    }
-  }
-  Log(1);
 
-  Node ipol;
-  NodeManager& nm = d_env.nm();
-  fp::SymFpuNM snm(nm);
+  fp::SymFpuNM snm(d_env.nm());
   set_resource_limits();
 
-  // Partition preprocessed assertions into A and B
-  std::unordered_set<Node> B;
-  std::vector<Node> ppA, ppB;
-  std::unordered_set<Node> orig_ass{d_original_assertions.begin(),
-                                    d_original_assertions.end()};
-  for (size_t i = 0, size = d_assertions.size(); i < size; ++i)
-  {
-    // trace assertion back to original assertion
-    Node orig = d_preprocessor.original_assertion(d_assertions[i], orig_ass);
-    auto it   = A.find(orig);
-    if (it != A.end())
-    {
-      ppA.push_back(d_assertions[i]);
-    }
-    else
-    {
-      B.insert(orig);
-      ppB.push_back(d_assertions[i]);
-    }
-  }
-
-  Log(1) << "actual assertion partitioning:";
-  if (d_logger.is_log_enabled(1))
-  {
-    for (const auto& a : A)
-    {
-      Log(1) << "A: " << a;
-    }
-    for (const auto& a : B)
-    {
-      Log(1) << "B: " << a;
-    }
-    for (size_t i = 0, size = ppA.size(); i < size; ++i)
-    {
-      Log(1) << "ppA[" << i << "]: " << ppA[i];
-    }
-    for (size_t i = 0, size = ppB.size(); i < size; ++i)
-    {
-      Log(1) << "ppB[" << i << "]: " << ppB[i];
-    }
-  }
-
-  // Preprocessor determined unsat, so we can make a shortcut.
-  if (d_sat_state_pp == Result::UNSAT)
-  {
-    for (const auto& a : ppA)
-    {
-      if (a.is_value() && !a.value<bool>())
-      {
-        ipol = nm.mk_value(false);
-        break;
-      }
-    }
-    for (const auto& a : ppB)
-    {
-      if (a.is_value() && !a.value<bool>())
-      {
-        ipol = nm.mk_value(true);
-        break;
-      }
-    }
-  }
-
-  if (ipol.is_null())
-  {
-    ipol = d_solver_engine.interpolant(A, B, ppA, ppB);
-  }
+  Interpolator interpol(*this);
+  Node ipol = interpol.get_interpolant(A);
 
   if (!ipol.is_null() && options().dbg_check_interpolant())
   {
@@ -514,8 +426,6 @@ SolvingContext::Statistics::Statistics(util::Statistics& stats)
           "solving_context::time_check_model")),
       time_check_unsat_core(stats.new_stat<util::TimerStatistic>(
           "solving_context::time_check_unsat_core")),
-      time_get_interpolant(stats.new_stat<util::TimerStatistic>(
-          "solving_context::time_get_interpolant")),
       time_check_interpolant(stats.new_stat<util::TimerStatistic>(
           "solving_context::time_check_interpolant")),
       max_memory(stats.new_stat<uint64_t>("solving_context::max_memory")),
