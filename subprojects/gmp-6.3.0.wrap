@@ -3,7 +3,7 @@ directory = gmp-6.3.0
 
 source_url = https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
 source_filename = gmp-6.3.0.tar.xz
-source_hash = a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898
+source_hash = 199c5d172a8ebf84ec252a33b0823abf184d88bbc3a334bc575a1380a84f896e
 
 patch_directory = gmp-6.3.0
 
