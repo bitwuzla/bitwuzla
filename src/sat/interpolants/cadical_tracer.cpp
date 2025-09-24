@@ -61,12 +61,12 @@ CadicalTracer::add_original_clause(uint64_t id,
   if (d_logger.is_log_enabled(2))
   {
     std::stringstream ss;
-    ss << "original clause [" << id << "]: ";
+    ss << "original clause [" << id << "] (" << redundant << "): {";
     for (const auto& lit : clause)
     {
       ss << " " << lit;
     }
-    Log(2) << ss.str();
+    Log(2) << ss.str() << " } [restore: " << restore << "]";
   }
 
   (void) redundant;
@@ -94,12 +94,17 @@ CadicalTracer::add_derived_clause(uint64_t id,
   if (d_logger.is_log_enabled(2))
   {
     std::stringstream ss;
-    ss << "derived clause [" << id << "]: ";
+    ss << "derived clause [" << id << "] (" << redundant << "): {";
     for (const auto& lit : clause)
     {
       ss << " " << lit;
     }
-    Log(2) << ss.str();
+    ss << " } [";
+    for (const auto& id : antecedents)
+    {
+      ss << " " << id;
+    }
+    Log(2) << ss.str() << " ]";
   }
 
   (void) id;
@@ -166,6 +171,17 @@ CadicalTracer::delete_clause(uint64_t id,
   (void) id;
   (void) redundant;
   (void) clause;
+  if (d_logger.is_log_enabled(2))
+  {
+    std::stringstream ss;
+    ss << "delete clause: " << id << " (" << redundant << ") {";
+    for (int32_t l : clause)
+    {
+      ss << " " << l;
+    }
+    ss << " }";
+    Log(2) << ss.str();
+  }
 }
 
 void

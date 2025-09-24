@@ -218,7 +218,7 @@ Interpolator::apply_substs(Env& env,
                            const std::unordered_set<Node>& shared)
 {
   option::Options opts;
-  Env vs_env(env.nm(), opts);
+  Env vs_env(env.nm(), env.sat_factory(), opts);
   backtrack::BacktrackManager mgr;
   preprocess::pass::PassVariableSubstitution vs(vs_env, &mgr, shared);
   backtrack::AssertionStack as;
