@@ -75,8 +75,8 @@ CadicalTracer::add_original_clause(uint64_t id,
 
   if (restore)
   {
-    // We must never delete original clauses as we cannot restore their AIG
-    // id. Thus, we also never restore original clauses.
+    // We must never delete clauses, for different reasons. Thus we also never
+    // restore original clauses.
     return;
   }
 
@@ -163,11 +163,15 @@ CadicalTracer::delete_clause(uint64_t id,
                              bool redundant,
                              const std::vector<int32_t>& clause)
 {
-  // We must never delete original clauses as we cannot restore their AIG
-  // id. Thus, we also never restore original clauses. We could potentially
-  // delete derived clauses, but we encountered cases where derived clauses
-  // that were (marked redundant and) deleted appeared in the proof core.
-  // Consequently, for now, we never delete clauses.
+  // We must never delete clauses, for different reasons.
+  //
+  // If we delete them completely, including the aig-id, we cannot restore the
+  // AIG id. If we only delete their clause/antecedents, it will happen that
+  // clauses and antecedents in the proof core have been previously deleted
+  // (CaDiCaL deletes clauses it simplifies). This applies to any type of
+  // clause, including derived clauses.
+  //
+  // Since we never delete clauses, we also never restore original clauses.
   (void) id;
   (void) redundant;
   (void) clause;
