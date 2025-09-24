@@ -29,7 +29,8 @@ def check(testfile, expected, out, err, output_dir):
         out = out.replace('\r', '')
 
     ignore_output = False
-    cmp = '{}{}'.format(out, err)
+    cmp = out
+
     if not expected:
         n_check_sat = 0
         n_status = 0
@@ -52,6 +53,8 @@ def check(testfile, expected, out, err, output_dir):
         cmp = '\n'.join(
                 s for s in cmp.splitlines()
                 if s in ['sat', 'unsat', 'unknown'])
+
+    cmp = '{}{}'.format(cmp, err)
 
     if expected.strip() != cmp.strip():
         print("Expected:\n{}".format(expected.encode()), file=sys.stderr)
