@@ -104,7 +104,7 @@ sources = [
   'witness.c',
 ]
 
-ae_kissat2025_mab_lib = library('ae_kissat2025_mab', sources: sources)
+ae_kissat2025_mab_lib = static_library('ae_kissat2025_mab', sources: sources)
 ae_kissat2025_mab_dep = declare_dependency(
                   include_directories: include_directories('.'),
                   link_with: ae_kissat2025_mab_lib)
