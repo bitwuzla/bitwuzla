@@ -258,6 +258,8 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
     }
   }
   std::sort(d_proof_core.begin(), d_proof_core.end());
+  d_stats.size_proof      = d_clauses.size();
+  d_stats.size_proof_core = d_proof_core.size();
 }
 
 /* -------------------------------------------------------------------------- */

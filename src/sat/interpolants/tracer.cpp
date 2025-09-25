@@ -18,8 +18,10 @@ namespace bzla::sat::interpolants {
 
 Tracer::Statistics::Statistics(util::Statistics& stats,
                                const std::string& prefix)
-    : size_interpolant(
-          stats.new_stat<uint64_t>(prefix + "sat::interpolant::size"))
+    : size_interpolant(stats.new_stat<uint64_t>(prefix + "size_interpolant")),
+      size_proof(stats.new_stat<uint64_t>(prefix + "size_proof")),
+      size_proof_core(stats.new_stat<uint64_t>(prefix + "size_proof_core"))
+
 {
 }
 

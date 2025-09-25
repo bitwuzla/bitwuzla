@@ -38,7 +38,7 @@ class Tracer : public CaDiCaL::Tracer
    *                   to the bit-level AIG interpolant.
    */
   Tracer(Env& env, bv::AigBitblaster& bitblaster, bool lift)
-      : d_stats(env.statistics(), "sat::interpol::"),
+      : d_stats(env.statistics(), "sat::interpolants::tracer::"),
         d_nm(env.nm()),
         d_bitblaster(bitblaster),
         d_amgr(bitblaster.amgr()),
@@ -76,6 +76,8 @@ class Tracer : public CaDiCaL::Tracer
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
     uint64_t& size_interpolant;
+    uint64_t& size_proof;
+    uint64_t& size_proof_core;
   } d_stats;
 
  protected:
