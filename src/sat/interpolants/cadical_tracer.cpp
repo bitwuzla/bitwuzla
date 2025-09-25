@@ -371,6 +371,9 @@ CadicalTracer::get_interpolant(
     }
     else if (type == ClauseType::DERIVED)
     {
+      // CaDiCaL stores the antecedents of a derived clause in the order they
+      // were resolved/propagated. We thus have to process these antecedents
+      // in reverse order, starting from the last.
       const auto& antecedents = clause.d_antecedents;
       // Mark literals of conflicting clause
       auto& conf_clause = d_clauses[antecedents.back()].d_clause;
