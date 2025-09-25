@@ -57,18 +57,14 @@ class CadicalTracer : public Tracer
   };
   struct Interpolant
   {
-    Interpolant()
-        : d_interpolant(bitblast::AigNode()), d_kind(ClauseKind::LEARNED)
-    {
-    }
-    Interpolant(const bitblast::AigNode& interpolant, ClauseKind kind)
-        : d_interpolant(interpolant), d_kind(kind)
+    Interpolant() : d_interpolant(bitblast::AigNode()) {}
+    Interpolant(const bitblast::AigNode& interpolant)
+        : d_interpolant(interpolant)
     {
     }
     bool is_null() const { return d_interpolant.is_null(); }
     void reset() { d_interpolant = bitblast::AigNode(); }
     bitblast::AigNode d_interpolant;
-    ClauseKind d_kind = ClauseKind::LEARNED;
   };
 
   /* CaDiCaL::Tracer interface ------------------------------------------- */

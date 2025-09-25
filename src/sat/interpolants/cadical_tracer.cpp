@@ -653,7 +653,7 @@ CadicalTracer::get_interpolant(
       case option::InterpolantsAlgo::PUDLAK: res = d_amgr.mk_false(); break;
     }
   }
-  return {res, kind};
+  return res;
 }
 
 void
@@ -678,10 +678,6 @@ CadicalTracer::extend_interpolant(Interpolant& interpolant,
   // kind == G: res = (partial_interpolant(c1) \/ -lit)
   //                   /\ (partial_interpolant(c2) \/  lit)
 
-  if (interpolant.d_kind != ext.d_kind)
-  {
-    interpolant.d_kind = ClauseKind::LEARNED;
-  }
   if (kind == VariableKind::A)
   {
     interpolant.d_interpolant =
@@ -728,7 +724,7 @@ operator<<(std::ostream& out, const CadicalTracer::ClauseType& type)
 std::ostream&
 operator<<(std::ostream& out, const CadicalTracer::Interpolant& interpolant)
 {
-  out << interpolant.d_interpolant.str() << " (" << interpolant.d_kind << ")";
+  out << interpolant.d_interpolant.str();
   return out;
 }
 
