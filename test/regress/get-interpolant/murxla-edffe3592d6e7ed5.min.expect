@@ -1,0 +1,4 @@
+unsat
+(
+(not (and (= x #b1) (= #b0 (bvshl #b1 x9))))
+)

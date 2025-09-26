@@ -1,0 +1,6 @@
+unsat
+(
+x
+(= #b0 ((_ extract 1 1) a))
+false
+)

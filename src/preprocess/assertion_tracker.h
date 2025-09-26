@@ -29,8 +29,15 @@ class AssertionTracker
                      const std::unordered_set<Node>& original_assertions,
                      std::vector<Node>& res) const;
 
+  /**
+   * Trace back to final preprocessed assertions, starting from given
+   * assertion.
+   */
+  std::vector<Node> find_children(const Node& assertion) const;
+
  private:
   backtrack::unordered_map<Node, Node> d_tracked_assertions;
+  backtrack::unordered_map<Node, std::vector<Node>> d_tracked_children;
 };
 
 }  // namespace bzla::preprocess

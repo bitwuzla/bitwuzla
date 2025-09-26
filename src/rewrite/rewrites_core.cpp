@@ -1398,6 +1398,47 @@ RewriteRule<RewriteRuleKind::ITE_BOOL>::_apply(Rewriter& rewriter,
   return node;
 }
 
+namespace {
+
+Node
+_rw_ite_cond_equal(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  if (node[0].kind() == Kind::EQUAL)
+  {
+    if (node[0][idx].is_value() && node[0][idx] == node[1]
+        && rewriter.invert_node(node[0][idx]) == node[2])
+    {
+      return node[0][1 - idx];
+    }
+  }
+  return node;
+}
+
+}  // namespace
+
+/**
+ * match:  (ite (= t c) c (bvnot c))
+ * match:  (ite (= t c) c (not c))
+ * result: t
+ */
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_COND_EQUAL>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  if ((node.type().is_bv() && node.type().bv_size() == 1)
+      || node.type().is_bool())
+  {
+    Node res = _rw_ite_cond_equal(rewriter, node, 0);
+    if (res == node)
+    {
+      return _rw_ite_cond_equal(rewriter, node, 1);
+    }
+  }
+  return node;
+}
+
 /**
  * match:  (ite c (concat a b) (concat a d))
  * result: (concat a (ite c b d))

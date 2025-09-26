@@ -552,16 +552,13 @@ PassVariableSubstitution::normalize_for_substitution(const Node& assertion)
 /* --- PassVariableSubstitution public -------------------------------------- */
 
 PassVariableSubstitution::PassVariableSubstitution(
-    Env& env,
-    backtrack::BacktrackManager* backtrack_mgr,
-    const std::unordered_set<Node>& exclude)
+    Env& env, backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr, "vs", "varsubst"),
       d_substitutions(backtrack_mgr),
       d_substitution_assertions(backtrack_mgr),
       d_first_seen(backtrack_mgr),
       d_first_seen_cache(backtrack_mgr),
       d_cache(backtrack_mgr),
-      d_exclude_consts(exclude),
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
@@ -743,6 +740,12 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     Node replacement = process(assertion);
     assertions.replace(i, replacement);
   }
+}
+
+void
+PassVariableSubstitution::exclude(const std::unordered_set<Node>& exclude)
+{
+  d_exclude_consts.insert(exclude.begin(), exclude.end());
 }
 
 Node

@@ -126,6 +126,14 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_AND_CONCAT>::_apply(Rewriter& rewriter,
                                                          const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_XOR>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_XNOR>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
 /* bvashr ------------------------------------------------------------------- */
 
 template <>
@@ -383,6 +391,15 @@ Node RewriteRule<RewriteRuleKind::BV_XOR_SAME>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_XOR_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_XOR_NOT>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
+/* bvcomp ------------------------------------------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_COMP_BV1_CONST>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
 
 /* eval---------------------------------------------------------------------- */
 

@@ -208,23 +208,23 @@ enum ENUM(Option)
    */
   EVALUE(WRITE_CNF),
 
-  /* ---------------- BV: Prop Engine Options (Expert) ---------------------- */
+/* ---------------- BV: Prop Engine Options (Expert) ---------------------- */
 
-  /*!
-   * **Propagation-based local search solver engine: Constant bits.**
-   *
-   * Enable/disable constant bit propagation in the propagation-based local
-   * search engine (requires bit-blasting to AIG).
-   *
-   * \verbatim embed:rst:leading-asterisk
-   * Our procedure for augmenting propagation-based local search with constant
-   * bit information is described in :cite:`fmcad20`.
-   * \endverbatim
-   *
-   * *Values:*
-   *  - **true**: enable [**default**]
-   *  - **false**: disable
-   */
+/*!
+ * **Propagation-based local search solver engine: Constant bits.**
+ *
+ * Enable/disable constant bit propagation in the propagation-based local
+ * search engine (requires bit-blasting to AIG).
+ *
+ * \verbatim embed:rst:leading-asterisk
+ * Our procedure for augmenting propagation-based local search with constant
+ * bit information is described in :cite:`fmcad20`.
+ * \endverbatim
+ *
+ * *Values:*
+ *  - **true**: enable [**default**]
+ *  - **false**: disable
+ */
 #ifndef BITWUZLA_API_USE_C_ENUMS
   /*! @see Option::BV_SOLVER
    */
@@ -725,6 +725,44 @@ enum ENUM(Option)
    * @warning This is an expert option to configure interpolant generation.
    */
   EVALUE(INTERPOLANTS_SUBST),
+  /*!
+   * **Interpolant generation.**
+   *
+   * When enabled, the generated bit-level interpolant is simplified by applying
+   * several post-processing steps that try to recover more word-level
+   * structure.
+   *
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
+   *
+   * @warning This is an expert option to configure interpolant generation.
+   */
+  EVALUE(INTERPOLANTS_SIMP),
+  /*!
+   * **Interpolant generation.**
+   *
+   * When enabled, compute statistics about generated interpolant.
+   *
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
+   *
+   * @warning This is an expert option to configure interpolant generation.
+   */
+  EVALUE(INTERPOLANTS_STATS),
+  /*!
+   * **Interpolant generation.**
+   *
+   * When enabled, prints statistics to stdout.
+   *
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
+   *
+   * @warning This is an expert option to configure interpolant generation.
+   */
+  EVALUE(INTERPOLANTS_PRINT_STATS),
   /*!
    * **Preprocessing.**
    *

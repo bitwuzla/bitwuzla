@@ -1,0 +1,8 @@
+(declare-const __ (_ BitVec 38))
+(set-option :produce-interpolants true)
+(set-option :interpolants-simp true)
+(set-option :rewrite-level 0)
+(assert (bvsaddo (_ bv1 39) ((_ zero_extend 1) __)))
+(assert (! (= (concat (bvredor (_ bv0 21)) ((_ zero_extend 2) __)) (bvshl (concat (bvredor (_ bv0 21)) (_ bv1 40)) (concat (bvredor (_ bv0 21)) ((_ zero_extend 2) __)))) :named a1))
+(check-sat)
+(get-interpolants (a1))

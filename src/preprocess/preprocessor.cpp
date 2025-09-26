@@ -64,6 +64,12 @@ Preprocessor::Preprocessor(SolvingContext& context)
 {
 }
 
+void
+Preprocessor::exclude(const std::unordered_set<Node>& exclude)
+{
+  d_pass_variable_substitution.exclude(exclude);
+}
+
 Result
 Preprocessor::preprocess()
 {
@@ -71,7 +77,7 @@ Preprocessor::preprocess()
   ++d_num_preprocess;
 
   // Set of already preprocessed assertions is inconsistent
-  if (d_assertions.is_inconsistent())
+  if (is_inconsistent())
   {
     return Result::UNSAT;
   }
@@ -89,7 +95,7 @@ Preprocessor::preprocess()
   }
 
   // Process assertions by level
-  while (!d_assertions.empty() && !d_assertions.is_inconsistent())
+  while (!d_assertions.empty() && !is_inconsistent())
   {
     size_t level = d_assertions.level(d_assertions.begin());
 
@@ -107,7 +113,7 @@ Preprocessor::preprocess()
     // Advance assertions to next level
     d_assertions.set_index(d_assertions.begin() + assertions.size());
   }
-  assert(d_assertions.empty() || d_assertions.is_inconsistent());
+  assert(d_assertions.empty() || is_inconsistent());
 
   // Sync backtrack manager to level. This is required if there are levels
   // that do not contain any assertions.
@@ -132,6 +138,9 @@ Preprocessor::preprocess()
   d_pass_normalize.clear_cache();
   d_pass_elim_extract.clear_cache();
 
+  // Note: We use d_assertions.is_inconsistent() here since we want to return
+  // UNSAT if the assertions are inconsistent even if early termination is
+  // disabled.
   if (d_assertions.is_inconsistent())
   {
     return Result::UNSAT;
@@ -207,17 +216,11 @@ Preprocessor::post_process_unsat_core(
   return unsat_core;
 }
 
-Node
-Preprocessor::original_assertion(
-    const Node& assertion,
-    const std::unordered_set<Node>& original_assertions) const
+std::vector<Node>
+Preprocessor::preprocessed_assertions(const Node& assertion) const
 {
   assert(d_assertion_tracker);
-  std::vector<Node> traced_back;
-  d_assertion_tracker->find_original(
-      {assertion}, original_assertions, traced_back);
-  assert(traced_back.size() == 1);
-  return traced_back[0];
+  return d_assertion_tracker->find_children(assertion);
 }
 
 const std::unordered_map<Node, Node>&
@@ -227,6 +230,12 @@ Preprocessor::substitutions() const
 }
 
 /* --- Preprocessor private ------------------------------------------------- */
+
+bool
+Preprocessor::is_inconsistent() const
+{
+  return d_early_terminate && d_assertions.is_inconsistent();
+}
 
 void
 Preprocessor::apply(AssertionVector& assertions)
@@ -267,7 +276,7 @@ Preprocessor::apply(AssertionVector& assertions)
     {
       print_statistics(d_pass_rewrite, assertions);
     }
-    if (assertions.is_inconsistent())
+    if (is_inconsistent())
     {
       break;
     }
@@ -279,7 +288,7 @@ Preprocessor::apply(AssertionVector& assertions)
       {
         print_statistics(d_pass_flatten_and, assertions);
       }
-      if (assertions.is_inconsistent())
+      if (is_inconsistent())
       {
         break;
       }
@@ -295,8 +304,8 @@ Preprocessor::apply(AssertionVector& assertions)
         {
           print_statistics(d_pass_variable_substitution, assertions);
         }
-      } while (assertions.modified() && !assertions.is_inconsistent());
-      if (assertions.is_inconsistent())
+      } while (assertions.modified() && !is_inconsistent());
+      if (is_inconsistent())
       {
         break;
       }
@@ -310,7 +319,7 @@ Preprocessor::apply(AssertionVector& assertions)
       {
         print_statistics(d_pass_skeleton_preproc, assertions);
       }
-      if (assertions.is_inconsistent())
+      if (is_inconsistent())
       {
         break;
       }
@@ -323,7 +332,7 @@ Preprocessor::apply(AssertionVector& assertions)
       {
         print_statistics(d_pass_embedded_constraints, assertions);
       }
-      if (assertions.is_inconsistent())
+      if (is_inconsistent())
       {
         break;
       }
@@ -352,7 +361,7 @@ Preprocessor::apply(AssertionVector& assertions)
       {
         print_statistics(d_pass_elim_bvudiv, assertions);
       }
-      if (d_assertions.is_inconsistent())
+      if (is_inconsistent())
       {
         break;
       }
@@ -377,7 +386,7 @@ Preprocessor::apply(AssertionVector& assertions)
       {
         print_statistics(d_pass_normalize, assertions);
       }
-      if (d_assertions.is_inconsistent())
+      if (is_inconsistent())
       {
         break;
       }
@@ -390,14 +399,13 @@ Preprocessor::apply(AssertionVector& assertions)
       {
         print_statistics(d_pass_elim_extract, assertions);
       }
-      if (d_assertions.is_inconsistent())
+      if (is_inconsistent())
       {
         break;
       }
     }
 
-  } while (assertions.modified() && !assertions.is_inconsistent()
-           && !d_env.terminate());
+  } while (assertions.modified() && !is_inconsistent() && !d_env.terminate());
 
 #ifndef NDEBUG
   if (d_env.options().dbg_pp_node_thresh())
@@ -493,7 +501,7 @@ Preprocessor::print_statistics(const PreprocessingPass& pass,
   }
 
   std::string pid = pass.id();
-  if (assertions.is_inconsistent())
+  if (is_inconsistent())
   {
     pid += "*";
   }

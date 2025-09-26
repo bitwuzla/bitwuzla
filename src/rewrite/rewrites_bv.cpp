@@ -1074,6 +1074,86 @@ RewriteRule<RewriteRuleKind::BV_AND_CONCAT>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/* match:  (bvand a (bvxor a b))
+ * result: (bvand a (bvnot b))
+ *
+ * match:  (bvand (bvnot a) (bvxor a b))
+ * result: (bvand (bvnot a) b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_XOR>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  for (size_t i = 0; i < 2; ++i)
+  {
+    if (node[i].kind() == Kind::BV_XOR)
+    {
+      const Node& a    = node[1 - i];
+      const Node& _xor = node[i];
+      if (a == _xor[0])
+      {
+        return rewriter.mk_node(Kind::BV_AND,
+                                {a, rewriter.invert_node(_xor[1])});
+      }
+      else if (a == _xor[1])
+      {
+        return rewriter.mk_node(Kind::BV_AND,
+                                {a, rewriter.invert_node(_xor[0])});
+      }
+      else if (a == rewriter.invert_node(_xor[0]))
+      {
+        return rewriter.mk_node(Kind::BV_AND, {a, _xor[1]});
+      }
+      else if (a == rewriter.invert_node(_xor[1]))
+      {
+        return rewriter.mk_node(Kind::BV_AND, {a, _xor[0]});
+      }
+    }
+  }
+  return node;
+}
+
+/* match:  (bvand a (bvxnor a b))
+ * result: (bvand a b)
+ *
+ * match:  (bvand (bvnot a) (bvxnor a b))
+ * result: (bvand (bvnot a) (bvnot b))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_XNOR>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  for (size_t i = 0; i < 2; ++i)
+  {
+    if (node[i].kind() == Kind::BV_NOT && node[i][0].kind() == Kind::BV_XOR)
+    {
+      const Node& a    = node[1 - i];
+      const Node& _xor = node[i][0];
+      if (a == _xor[0])
+      {
+        return rewriter.mk_node(Kind::BV_AND, {a, _xor[1]});
+      }
+      else if (a == _xor[1])
+      {
+        return rewriter.mk_node(Kind::BV_AND, {a, _xor[0]});
+      }
+      else if (a == rewriter.invert_node(_xor[0]))
+      {
+        return rewriter.mk_node(Kind::BV_AND,
+                                {a, rewriter.invert_node(_xor[1])});
+      }
+      else if (a == rewriter.invert_node(_xor[1]))
+      {
+        return rewriter.mk_node(Kind::BV_AND,
+                                {a, rewriter.invert_node(_xor[0])});
+      }
+    }
+  }
+  return node;
+}
+
 /* bvashr ------------------------------------------------------------------- */
 
 /**
@@ -2762,6 +2842,64 @@ RewriteRule<RewriteRuleKind::BV_XOR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     res = _rw_bv_xor_special_const(rewriter, node, 1);
   }
   return res;
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_XOR_NOT>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  if (node[0].is_inverted() && !node[1].is_inverted())
+  {
+    return rewriter.mk_node(
+        Kind::BV_NOT, {rewriter.mk_node(Kind::BV_XOR, {node[0][0], node[1]})});
+  }
+  else if (!node[0].is_inverted() && node[1].is_inverted())
+  {
+    return rewriter.mk_node(
+        Kind::BV_NOT, {rewriter.mk_node(Kind::BV_XOR, {node[0], node[1][0]})});
+  }
+  else if (node[0].is_inverted() && node[1].is_inverted())
+  {
+    return rewriter.mk_node(Kind::BV_XOR, {node[0][0], node[1][0]});
+  }
+  return node;
+}
+
+/* bvcomp ------------------------------------------------------------------- */
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_COMP_BV1_CONST>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  if (node[0].type().bv_size() == 1)
+  {
+    if (node[0].is_value())
+    {
+      if (node[0].value<BitVector>().is_true())
+      {
+        return node[1];
+      }
+      else
+      {
+        return rewriter.invert_node(node[1]);
+      }
+    }
+    else if (node[1].is_value())
+    {
+      if (node[1].value<BitVector>().is_true())
+      {
+        return node[0];
+      }
+      else
+      {
+        return rewriter.invert_node(node[0]);
+      }
+    }
+  }
+
+  return node;
 }
 
 /* ----Evaluation (Constant Folding) Rules ---------------------------------- */

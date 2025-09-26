@@ -217,7 +217,7 @@ CheckInterpolant::check_inductive(const Node& I_prev,
   NodeManager& nm = d_ctx.env().nm();
   option::Options opts;
   opts.dbg_check_interpolant.set(false);
-  SolvingContext check_ctx(nm, opts, "chkinterpol");
+  SolvingContext check_ctx(nm, opts, d_ctx.env().sat_factory(), "chkinterpol");
   check_ctx.env().configure_terminator(d_ctx.env().terminator());
   for (const auto& a : A)
   {
@@ -228,17 +228,18 @@ CheckInterpolant::check_inductive(const Node& I_prev,
     size_t i = 0;
     for (const auto& a : A)
     {
-      Log(1) << "A[" << i++ << "]: " << a;
+      Log(1) << "A_i[" << i++ << "]: " << a;
     }
+    Log(1) << "I_prev: " << I_prev;
     i = 0;
   }
   Log(1) << "I: " << I;
   Log(1);
   check_ctx.assert_formula(I_prev);
   check_ctx.assert_formula(nm.mk_node(node::Kind::NOT, {I}));
-  Log(1) << "check: (and I_prev A_inc (not I))";
+  Log(1) << "check: (and I_prev A_i (not I))";
   Result res = check_ctx.solve();
-  Log(1) << "(and I_prev A_inc (not I)): " << res;
+  Log(1) << "(and I_prev A_i (not I)): " << res;
   return res == Result::UNSAT;
 }
 

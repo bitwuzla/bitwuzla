@@ -211,6 +211,10 @@ const Node&
 Rewriter::invert_node(const Node& node)
 {
   assert(node.type().is_bool() || node.type().is_bv());
+  if (node.is_inverted())
+  {
+    return node[0];
+  }
   if (node.type().is_bool())
   {
     return mk_node(node::Kind::NOT, {node});
@@ -375,6 +379,36 @@ Rewriter::is_bv_xnor(const Node& node, Node& child0, Node& child1)
     child0 = node[0][0];
     child1 = node[0][1];
     return true;
+  }
+  return false;
+}
+
+bool
+Rewriter::is_bv_xor(const Node& node, Node& child0, Node& child1)
+{
+  if (node.kind() == Kind::BV_XOR)
+  {
+    child0 = node[0];
+    child1 = node[1];
+    return true;
+  }
+
+  Node or0, or1;
+  if (node.kind() == Kind::BV_AND)
+  {
+    if ((is_bv_or(node[0], or0, or1) && node[1].is_inverted()
+         && node[1][0].kind() == Kind::BV_AND
+         && (node[1][0][0] == or0 || node[1][0][0] == or1)
+         && (node[1][0][1] == or0 || node[1][0][1] == or1))
+        || (is_bv_or(node[1], or0, or1) && node[0].is_inverted()
+            && node[0][0].kind() == Kind::BV_AND
+            && (node[0][0][0] == or0 || node[0][0][0] == or1)
+            && (node[0][0][1] == or0 || node[0][0][1] == or1)))
+    {
+      child0 = or0;
+      child1 = or1;
+      return true;
+    }
   }
   return false;
 }
@@ -1111,6 +1145,7 @@ Rewriter::rewrite_ite(const Node& node)
     BZLA_APPLY_RW_RULE(ITE_ELSE_ITE2);
     BZLA_APPLY_RW_RULE(ITE_ELSE_ITE3);
     BZLA_APPLY_RW_RULE(ITE_BOOL);
+    BZLA_APPLY_RW_RULE(ITE_COND_EQUAL);
   }
   if (d_level >= 2)
   {
@@ -1184,6 +1219,8 @@ Rewriter::rewrite_bv_and(const Node& node)
     BZLA_APPLY_RW_RULE(BV_AND_NOT_AND1);
     BZLA_APPLY_RW_RULE(BV_AND_NOT_AND2);
     BZLA_APPLY_RW_RULE(BV_AND_CONCAT);
+    BZLA_APPLY_RW_RULE(BV_AND_XOR);
+    BZLA_APPLY_RW_RULE(BV_AND_XNOR);
   }
 
 DONE:
@@ -1473,6 +1510,23 @@ Rewriter::rewrite_bv_xor(const Node& node)
     BZLA_APPLY_RW_RULE(BV_XOR_EVAL);
     BZLA_APPLY_RW_RULE(BV_XOR_SAME);
     BZLA_APPLY_RW_RULE(BV_XOR_SPECIAL_CONST);
+    BZLA_APPLY_RW_RULE(BV_XOR_NOT);
+  }
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_bv_comp(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res = node;
+
+  if (d_level >= 1)
+  {
+    BZLA_APPLY_RW_RULE(BV_COMP_EVAL);
+    BZLA_APPLY_RW_RULE(BV_COMP_BV1_CONST);
   }
 
 DONE:
@@ -1517,7 +1571,7 @@ BZLA_ELIM_KIND_IMPL(bv_usubo, BV_USUBO_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_xnor, BV_XNOR_ELIM)
 // BZLA_ELIM_KIND_IMPL(bv_xor, BV_XOR_ELIM) do not eliminate
 BZLA_ELIM_KIND_IMPL(bv_zero_extend, BV_ZERO_EXTEND_ELIM)
-BZLA_ELIM_KIND_IMPL(bv_comp, BV_COMP_ELIM)
+// BZLA_ELIM_KIND_IMPL(bv_comp, BV_COMP_ELIM)
 
 /* FP rewrites -------------------------------------------------------------- */
 
@@ -2019,6 +2073,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     CASE(ITE_ELSE_ITE2);
     CASE(ITE_ELSE_ITE3);
     CASE(ITE_BOOL);
+    CASE(ITE_COND_EQUAL);
     CASE(ITE_BV_CONCAT);
     CASE(ITE_BV_OP);
     CASE(NOT_NOT);
@@ -2056,6 +2111,8 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     CASE(BV_AND_NOT_AND1);
     CASE(BV_AND_NOT_AND2);
     CASE(BV_AND_CONCAT);
+    CASE(BV_AND_XOR);
+    CASE(BV_AND_XNOR);
     CASE(BV_ASHR_SPECIAL_CONST);
     CASE(BV_ASHR_CONST);
     CASE(BV_CONCAT_CONST);
@@ -2121,11 +2178,13 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     CASE(BV_UREM_SAME);
     CASE(BV_XOR_SAME);
     CASE(BV_XOR_SPECIAL_CONST);
+    CASE(BV_XOR_NOT);
     CASE(AND_EVAL);
     CASE(BV_ADD_EVAL);
     CASE(BV_AND_EVAL);
     CASE(BV_ASHR_EVAL);
     CASE(BV_COMP_EVAL);
+    CASE(BV_COMP_BV1_CONST);
     CASE(BV_CONCAT_EVAL);
     CASE(BV_DEC_EVAL);
     CASE(BV_EXTRACT_EVAL);

@@ -68,9 +68,12 @@ enum class Option
   ABSTRACTION_ITE,             // bool
 
   // Interpolant generation
-  INTERPOLANTS_ALGO,   // enum
-  INTERPOLANTS_LIFT,   // bool
-  INTERPOLANTS_SUBST,  // bool
+  INTERPOLANTS_ALGO,         // enum
+  INTERPOLANTS_LIFT,         // bool
+  INTERPOLANTS_SUBST,        // bool
+  INTERPOLANTS_SIMP,         // bool
+  INTERPOLANTS_STATS,        // bool
+  INTERPOLANTS_PRINT_STATS,  // bool
 
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,             // bool
@@ -609,6 +612,9 @@ class Options
   OptionModeT<InterpolantsAlgo> interpolants_algo;
   OptionBool interpolants_lift;
   OptionBool interpolants_subst;
+  OptionBool interpolants_simp;
+  OptionBool interpolants_stats;
+  OptionBool interpolants_print_stats;
 
   // Preprocessing
   OptionBool preprocess;

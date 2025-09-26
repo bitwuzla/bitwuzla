@@ -15,7 +15,7 @@ namespace bzla::preprocess {
 /* --- AssertionTracker public ---------------------------------------------- */
 
 AssertionTracker::AssertionTracker(backtrack::BacktrackManager* mgr)
-    : d_tracked_assertions(mgr)
+    : d_tracked_assertions(mgr), d_tracked_children(mgr)
 {
 }
 
@@ -25,6 +25,13 @@ AssertionTracker::track(const Node& assertion, const Node& parent)
   assert(!parent.is_null());
   // Only track first occurrence of assertion
   d_tracked_assertions.emplace(assertion, parent);
+
+  auto [it, inserted] =
+      d_tracked_children.emplace(parent, std::vector<Node>{assertion});
+  if (!inserted)
+  {
+    it->second.push_back(assertion);
+  }
 }
 
 void
@@ -59,6 +66,38 @@ AssertionTracker::find_original(
     }
   }
   assert(!res.empty());
+}
+
+std::vector<Node>
+AssertionTracker::find_children(const Node& assertion) const
+{
+  // Trace back to final preprocessed children
+  std::unordered_set<Node> cache;
+  std::vector<Node> visit{assertion};
+  std::vector<Node> children;
+  while (!visit.empty())
+  {
+    Node n = visit.back();
+    visit.pop_back();
+    if (!cache.insert(n).second)
+    {
+      continue;
+    }
+
+    // Trace parents
+    auto it = d_tracked_children.find(n);
+
+    if (it == d_tracked_children.end()
+        || (it->second.size() == 1 && it->second[0] == n))
+    {
+      children.push_back(n);
+    }
+    else
+    {
+      visit.insert(visit.end(), it->second.begin(), it->second.end());
+    }
+  }
+  return children;
 }
 
 }  // namespace bzla::preprocess

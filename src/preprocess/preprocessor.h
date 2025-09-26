@@ -45,6 +45,12 @@ class Preprocessor
  public:
   Preprocessor(SolvingContext& context);
 
+  /**
+   * Exclude variables from being substituted in the variable substitution
+   * pass.
+   */
+  void exclude(const std::unordered_set<Node>& exclude);
+
   /** Preprocess current set of assertions. */
   Result preprocess();
 
@@ -63,17 +69,23 @@ class Preprocessor
   const std::unordered_map<Node, Node>& substitutions() const;
 
   /**
-   * Get the assertion the given assertion originates from.
-   * @note Asserts that given node can be traced back to one original assertion.
+   * Get all preprocessed assertions origiting from given assertion.
+
    * @param assertion The assertion to trace back.
-   * @param original_assertions The set of original assertions.
-   * @return The orginal assertion.
+   * @return The preprocessed assertions.
    */
-  Node original_assertion(
-      const Node& assertion,
-      const std::unordered_set<Node>& original_assertions) const;
+  std::vector<Node> preprocessed_assertions(const Node& assertion) const;
+
+  /** Do not terminate early due to inconsistent assertions. */
+  void set_early_terminate(bool early_terminate)
+  {
+    d_early_terminate = early_terminate;
+  }
 
  private:
+  /** Is the current set of assertions inconsistent? */
+  bool is_inconsistent() const;
+
   /** Apply all preprocessing passes to assertions until fixed-point. */
   void apply(AssertionVector& assertions);
 
@@ -89,6 +101,8 @@ class Preprocessor
   Env& d_env;
   util::Logger& d_logger;
   uint64_t d_num_preprocess = 0;
+  /** Terminate preprocessing as soon as assertions are inconsistent. */
+  bool d_early_terminate = true;
 
   /** Current set of assertions. */
   backtrack::AssertionView& d_assertions;

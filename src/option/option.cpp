@@ -449,6 +449,21 @@ Options::Options()
                          false,
                          "compute interpolant by substitution, if possible",
                          "interpolants-subst"),
+      interpolants_simp(this,
+                        Option::INTERPOLANTS_SIMP,
+                        false,
+                        "simplify bit-level interpolant (post-processing)",
+                        "interpolants-simp"),
+      interpolants_stats(this,
+                         Option::INTERPOLANTS_STATS,
+                         false,
+                         "compute interpolant statistics",
+                         "interpolants-stats"),
+      interpolants_print_stats(this,
+                               Option::INTERPOLANTS_PRINT_STATS,
+                               false,
+                               "print interpolant statistics to stdout",
+                               "interpolants-print-stats"),
       // Preprocessing
       preprocess(
           this, Option::PREPROCESS, true, "enable preprocessing", "preprocess"),
@@ -928,6 +943,9 @@ Options::data(Option opt)
     case Option::INTERPOLANTS_ALGO: return &interpolants_algo;
     case Option::INTERPOLANTS_LIFT: return &interpolants_lift;
     case Option::INTERPOLANTS_SUBST: return &interpolants_subst;
+    case Option::INTERPOLANTS_SIMP: return &interpolants_simp;
+    case Option::INTERPOLANTS_STATS: return &interpolants_stats;
+    case Option::INTERPOLANTS_PRINT_STATS: return &interpolants_print_stats;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;

@@ -82,7 +82,8 @@ class SolverEngine
    * @param ppA The set of formulas A, given as preprocessed assertions.
    * @param ppB The set of formulas B, given as preprocessed assertions.
    */
-  Node interpolant(const std::vector<Node>& ppA, const std::vector<Node>& ppB);
+  Node interpolant(const std::unordered_set<Node>& ppA,
+                   const std::unordered_set<Node>& ppB);
 
   /**
    * Add a lemma.

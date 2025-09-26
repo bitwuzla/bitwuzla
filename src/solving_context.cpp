@@ -207,6 +207,7 @@ SolvingContext::get_interpolants(
         util::Timer timer(d_stats.time_check_interpolant_inductive);
         check::CheckInterpolant ci(*this);
         auto res = ci.check_inductive(ipols[i - 1], partitions[i], ipols[i]);
+        assert(res);
         if (!res)
         {
           throw Error("inductive interpolant check failed");

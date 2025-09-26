@@ -175,6 +175,12 @@ tests_smt2 = [
   ['get-interpolant/eqsubst2.smt2'],
   ['get-interpolant/eqsubst3.smt2'],
 
+  ['get-interpolant/seq.subst1.smt2'],
+  ['get-interpolant/murxla-3432d8487343bf0e.min.smt2'],
+  ['get-interpolant/murxla-e4a11d9f2204c5fc.min.smt2'],
+  ['get-interpolant/murxla-edffe3592d6e7ed5.min.smt2'],
+  ['get-interpolant/murxla-54fadb5bb5e62d88.min.smt2'],
+
   ## get-model
   ['get-model/regr-5smod3.btor.smt2', ['--print-model']],
   ['get-model/regr-5srem3.btor.smt2'],

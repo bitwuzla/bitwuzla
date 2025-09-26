@@ -70,7 +70,7 @@ class Rewriter
   Node eval(const Node& node);
 
   /**
-   * Create node and apply rewriting.
+   * Create node and apply rewriting to current node.
    * @param kind     The kind of the node to create.
    * @param children The children of the node to create.
    * @param indices  The indices of the node to create.
@@ -143,6 +143,8 @@ class Rewriter
    * @param child1 The (resulting) second child of the extracted bvxnor node.
    */
   bool is_bv_xnor(const Node& node, Node& child0, Node& child1);
+
+  bool is_bv_xor(const Node& node, Node& child0, Node& child1);
 
   /** Clear rewrite cache. */
   void clear_cache();
@@ -383,6 +385,7 @@ enum class RewriteRuleKind
   ITE_ELSE_ITE2,
   ITE_ELSE_ITE3,
   ITE_BOOL,
+  ITE_COND_EQUAL,
   // Level 2+
   ITE_BV_CONCAT,
   ITE_BV_OP,
@@ -452,6 +455,8 @@ enum class RewriteRuleKind
   BV_AND_NOT_AND1,
   BV_AND_NOT_AND2,
   BV_AND_CONCAT,
+  BV_AND_XOR,
+  BV_AND_XNOR,
 
   //// bvashr
   // Level 1+
@@ -562,6 +567,7 @@ enum class RewriteRuleKind
   // Level 1+
   BV_XOR_SAME,
   BV_XOR_SPECIAL_CONST,
+  BV_XOR_NOT,
 
   //// Eliminated operators
   // Level 1+
@@ -607,6 +613,7 @@ enum class RewriteRuleKind
   BV_AND_EVAL,
   BV_ASHR_EVAL,
   BV_COMP_EVAL,
+  BV_COMP_BV1_CONST,
   BV_CONCAT_EVAL,
   BV_DEC_EVAL,
   BV_EXTRACT_EVAL,

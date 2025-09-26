@@ -116,6 +116,10 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::INTERPOLANTS_ALGO, bzla::option::Option::INTERPOLANTS_ALGO},
         {Option::INTERPOLANTS_LIFT, bzla::option::Option::INTERPOLANTS_LIFT},
         {Option::INTERPOLANTS_SUBST, bzla::option::Option::INTERPOLANTS_SUBST},
+        {Option::INTERPOLANTS_SIMP, bzla::option::Option::INTERPOLANTS_SIMP},
+        {Option::INTERPOLANTS_STATS, bzla::option::Option::INTERPOLANTS_STATS},
+        {Option::INTERPOLANTS_PRINT_STATS,
+         bzla::option::Option::INTERPOLANTS_PRINT_STATS},
 
         {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
 
@@ -1678,6 +1682,14 @@ Bitwuzla::get_interpolant(const std::vector<Term>& A)
   Term res;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = d_ctx->get_interpolant(_A);
+  if (d_ctx->options().interpolants_print_stats())
+  {
+    auto stats = statistics();
+    for (auto& [name, val] : stats)
+    {
+      std::cout << name << ": " << val << std::endl;
+    }
+  }
   BITWUZLA_TRY_CATCH_END;
   return res;
 }
@@ -1720,6 +1732,14 @@ Bitwuzla::get_interpolants(const std::vector<std::vector<Term>>& A)
   std::vector<Term> res;
   BITWUZLA_TRY_CATCH_BEGIN;
   res = Term::node_vector_to_terms(d_ctx->get_interpolants(partitions));
+  if (d_ctx->options().interpolants_print_stats())
+  {
+    auto stats = statistics();
+    for (auto& [name, val] : stats)
+    {
+      std::cout << name << ": " << val << std::endl;
+    }
+  }
   BITWUZLA_TRY_CATCH_END;
   return res;
 }

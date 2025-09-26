@@ -446,7 +446,7 @@ RewriteRule<RewriteRuleKind::AND_SUBSUM2>::_apply(Rewriter& rewriter,
 
 /**
  * match:  (and (and a b) (not (and a c)))
- * result: (and((and a b) (not c))
+ * result: (and (and a b) (not c))
  */
 namespace {
 Node
