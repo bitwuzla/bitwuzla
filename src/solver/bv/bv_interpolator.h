@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_SOLVER_BV_BV_INTERPOLATION_SOLVER_H_INCLUDED
-#define BZLA_SOLVER_BV_BV_INTERPOLATION_SOLVER_H_INCLUDED
+#ifndef BZLA_SOLVER_BV_BV_INTERPOLATOR_H_INCLUDED
+#define BZLA_SOLVER_BV_BV_INTERPOLATOR_H_INCLUDED
 
 #include <cstdint>
 #include <unordered_set>
@@ -36,7 +36,7 @@ class Cadical;
 namespace interpolants {
 class Tracer;
 }
-}
+}  // namespace sat
 
 namespace bv {
 
@@ -44,16 +44,16 @@ class AigBitblaster;
 class BvSolver;
 class InterpolationBitblaster;
 
-class BvInterpolationSolver : public Solver,
-                              public BvSolverInterface,
-                              public backtrack::Backtrackable
+class BvInterpolator : public Solver,
+                       public BvSolverInterface,
+                       public backtrack::Backtrackable
 {
  public:
   /** Sat interface used for d_cnf_encoder. */
   class InterpolationSatSolver;
 
-  BvInterpolationSolver(Env& env, SolverState& state);
-  ~BvInterpolationSolver();
+  BvInterpolator(Env& env, SolverState& state);
+  ~BvInterpolator();
 
   void register_assertion(const Node& assertion,
                           bool top_level,

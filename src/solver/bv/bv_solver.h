@@ -13,7 +13,7 @@
 
 #include "option/option.h"
 #include "solver/bv/bv_bitblast_solver.h"
-#include "solver/bv/bv_interpolation_solver.h"
+#include "solver/bv/bv_interpolator.h"
 #include "solver/bv/bv_prop_solver.h"
 #include "solver/bv/bv_solver_interface.h"
 #include "solver/solver.h"
@@ -83,10 +83,7 @@ class BvSolver : public Solver, public BvSolverInterface
 
   option::BvSolver cur_solver() const { return d_cur_solver; }
 
-  BvInterpolationSolver* interpol_solver() const
-  {
-    return d_interpol_solver.get();
-  }
+  BvInterpolator* interpol_solver() const { return d_interpol_solver.get(); }
 
  private:
   /** Result of the last check() call. */
@@ -97,7 +94,7 @@ class BvSolver : public Solver, public BvSolverInterface
   /** Propagation-based local search subsolver. */
   std::unique_ptr<BvPropSolver> d_prop_solver;
   /** Interpolation subsolver. */
-  std::unique_ptr<BvInterpolationSolver> d_interpol_solver;
+  std::unique_ptr<BvInterpolator> d_interpol_solver;
 
   /**
    * The currently enabled subsolver. Used to determine which solver to ask

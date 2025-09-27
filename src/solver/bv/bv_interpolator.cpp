@@ -8,7 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "solver/bv/bv_interpolation_solver.h"
+#include "solver/bv/bv_interpolator.h"
 
 #include <cstdint>
 #include <unordered_set>
@@ -26,7 +26,6 @@
 #include "solver/bv/bv_solver.h"
 #include "solver/fp/fp_solver.h"
 #include "solver/fp/word_blaster.h"
-#include "util/printer.h"
 
 using namespace bzla::node;
 using namespace bzla::sat::interpolants;
@@ -36,8 +35,7 @@ namespace bzla::bv {
 /* --- InterpolationSatSolver ---------------------------------------------- */
 
 /** Interface for interpolating SAT solver wrapper for AIG encoder. */
-class BvInterpolationSolver::InterpolationSatSolver
-    : public bitblast::SatInterface
+class BvInterpolator::InterpolationSatSolver : public bitblast::SatInterface
 {
  public:
   InterpolationSatSolver(Env& env, sat::SatSolver& solver, Tracer& tracer)
@@ -110,12 +108,12 @@ class BvInterpolationSolver::InterpolationSatSolver
   Tracer& d_tracer;
 };
 
-/* --- BvInterpolationSolver public ---------------------------------------- */
+/* --- BvInterpolator public ---------------------------------------- */
 
-BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
+BvInterpolator::BvInterpolator(Env& env, SolverState& state)
     : Solver(env, state),
       backtrack::Backtrackable(state.backtrack_mgr()),
-      d_stats(env.statistics(), "solver::bv::interpol::"),
+      d_stats(env.statistics(), "solver::bv::interpolator::"),
       d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
       d_lemmas(state.backtrack_mgr()),
@@ -124,16 +122,16 @@ BvInterpolationSolver::BvInterpolationSolver(Env& env, SolverState& state)
   init_sat_solver();
 }
 
-BvInterpolationSolver::~BvInterpolationSolver()
+BvInterpolator::~BvInterpolator()
 {
   d_sat_solver->solver()->disconnect_proof_tracer(d_tracer.get());
 }
 
 Node
-BvInterpolationSolver::interpolant(const std::unordered_set<Node>& A,
-                                   const std::unordered_set<Node>& B,
-                                   const std::vector<Node>& ppA,
-                                   const std::vector<Node>& ppB)
+BvInterpolator::interpolant(const std::unordered_set<Node>& A,
+                            const std::unordered_set<Node>& B,
+                            const std::vector<Node>& ppA,
+                            const std::vector<Node>& ppB)
 {
   assert(d_last_result == Result::UNSAT);
 
@@ -225,9 +223,9 @@ BvInterpolationSolver::interpolant(const std::unordered_set<Node>& A,
 }
 
 void
-BvInterpolationSolver::register_assertion(const Node& assertion,
-                                          bool top_level,
-                                          bool is_lemma)
+BvInterpolator::register_assertion(const Node& assertion,
+                                   bool top_level,
+                                   bool is_lemma)
 {
   // If unsat cores are enabled, all assertions are assumptions except lemmas.
   if (d_env.options().produce_unsat_cores() && !is_lemma)
@@ -254,7 +252,7 @@ BvInterpolationSolver::register_assertion(const Node& assertion,
 }
 
 Result
-BvInterpolationSolver::solve()
+BvInterpolator::solve()
 {
   d_sat_solver->configure_terminator(d_env.terminator());
   if (d_reset_sat)
@@ -317,7 +315,7 @@ BvInterpolationSolver::solve()
 }
 
 Node
-BvInterpolationSolver::value(const Node& term)
+BvInterpolator::value(const Node& term)
 {
   assert(BvSolver::is_leaf(term));
   assert(term.type().is_bool() || term.type().is_bv());
@@ -346,7 +344,7 @@ BvInterpolationSolver::value(const Node& term)
 }
 
 void
-BvInterpolationSolver::unsat_core(std::vector<Node>& core) const
+BvInterpolator::unsat_core(std::vector<Node>& core) const
 {
   assert(d_last_result == Result::UNSAT);
   assert(d_env.options().produce_unsat_cores());
@@ -362,10 +360,10 @@ BvInterpolationSolver::unsat_core(std::vector<Node>& core) const
   }
 }
 
-/* --- BvInterpolationSolver private ---------------------------------------- */
+/* --- BvInterpolator private ---------------------------------------- */
 
 void
-BvInterpolationSolver::init_sat_solver()
+BvInterpolator::init_sat_solver()
 {
   if (d_sat_solver)
   {
@@ -379,19 +377,19 @@ BvInterpolationSolver::init_sat_solver()
   d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_interpol_sat_solver));
 }
 void
-BvInterpolationSolver::update_statistics()
+BvInterpolator::update_statistics()
 {
   d_stats.bb_num_aig_ands     = d_bitblaster.num_aig_ands();
   d_stats.bb_num_aig_consts   = d_bitblaster.num_aig_consts();
   d_stats.bb_num_aig_shared   = d_bitblaster.num_aig_shared();
-  auto& cnf_stats          = d_cnf_encoder->statistics();
+  auto& cnf_stats             = d_cnf_encoder->statistics();
   d_stats.bb_num_cnf_vars     = cnf_stats.num_vars;
   d_stats.bb_num_cnf_clauses  = cnf_stats.num_clauses;
   d_stats.bb_num_cnf_literals = cnf_stats.num_literals;
 }
 
 void
-BvInterpolationSolver::label_clauses(
+BvInterpolator::label_clauses(
     std::unordered_map<int64_t, ClauseKind>& clause_labels,
     const std::vector<Node>& nodes,
     ClauseKind kind)
@@ -442,7 +440,7 @@ BvInterpolationSolver::label_clauses(
 }
 
 void
-BvInterpolationSolver::label_lemma(
+BvInterpolator::label_lemma(
     std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
     std::unordered_map<int64_t, sat::interpolants::ClauseKind>& clause_labels,
     std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
@@ -573,7 +571,7 @@ BvInterpolationSolver::label_lemma(
 }
 
 void
-BvInterpolationSolver::label_var(
+BvInterpolator::label_var(
     std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
     const bitblast::AigBitblaster::Bits& bits,
     sat::interpolants::VariableKind kind)
@@ -620,7 +618,7 @@ BvInterpolationSolver::label_var(
 }
 
 void
-BvInterpolationSolver::label_consts(
+BvInterpolator::label_consts(
     std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
     std::unordered_map<Node, VariableKind>& term_labels,
     const std::unordered_set<Node>& nodes,
@@ -682,7 +680,7 @@ BvInterpolationSolver::label_consts(
 }
 
 void
-BvInterpolationSolver::label_leafs(
+BvInterpolator::label_leafs(
     std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
     std::unordered_map<Node, VariableKind>& term_labels,
     const std::vector<Node>& nodes)
@@ -745,7 +743,7 @@ BvInterpolationSolver::label_leafs(
 }
 
 void
-BvInterpolationSolver::label_vars(
+BvInterpolator::label_vars(
     std::unordered_map<int64_t, VariableKind>& var_labels,
     std::unordered_map<Node, VariableKind>& term_labels,
     const std::unordered_set<Node>& A,
@@ -829,7 +827,7 @@ BvInterpolationSolver::label_vars(
 }
 
 void
-BvInterpolationSolver::log_bitblaster_cache(uint64_t level) const
+BvInterpolator::log_bitblaster_cache(uint64_t level) const
 {
   if (d_logger.is_log_enabled(level))
   {
@@ -851,8 +849,8 @@ BvInterpolationSolver::log_bitblaster_cache(uint64_t level) const
   }
 }
 
-BvInterpolationSolver::Statistics::Statistics(util::Statistics& stats,
-                                              const std::string& prefix)
+BvInterpolator::Statistics::Statistics(util::Statistics& stats,
+                                       const std::string& prefix)
     : time_sat(stats.new_stat<util::TimerStatistic>(prefix + "time_sat")),
       time_interpol(
           stats.new_stat<util::TimerStatistic>(prefix + "time_interpol")),

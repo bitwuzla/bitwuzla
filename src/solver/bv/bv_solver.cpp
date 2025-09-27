@@ -64,7 +64,7 @@ BvSolver::BvSolver(Env& env, SolverState& state)
 {
   if (env.options().produce_interpolants())
   {
-    d_interpol_solver.reset(new BvInterpolationSolver(env, state));
+    d_interpol_solver.reset(new BvInterpolator(env, state));
   }
   if (d_solver_mode == option::BvSolver::PROP
       || d_solver_mode == option::BvSolver::PREPROP)
