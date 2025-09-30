@@ -111,6 +111,11 @@ class SolverEngine
   /** @return The associated floating-point solver instance. */
   const fp::FpSolver& fp_solver() const { return d_fp_solver; }
 
+  const backtrack::unordered_set<Node>& lemma_cache() const
+  {
+    return d_lemma_cache;
+  }
+
  private:
   /** Synchronize d_backtrack_mgr up to given level. */
   void sync_scope(size_t level);

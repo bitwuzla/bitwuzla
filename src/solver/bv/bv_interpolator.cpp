@@ -17,115 +17,35 @@
 #include "node/node.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
-#include "node/node_utils.h"
 #include "node/unordered_node_ref_set.h"
-#include "sat/cadical.h"
-#include "sat/interpolants/cadical_tracer.h"
+#include "sat/interpolants/tracer.h"
 #include "sat/interpolants/tracer_kinds.h"
 #include "solver/bv/aig_bitblaster.h"
+#include "solver/bv/bv_bitblast_solver.h"
 #include "solver/bv/bv_solver.h"
 #include "solver/fp/fp_solver.h"
-#include "solver/fp/word_blaster.h"
 
 using namespace bzla::node;
 using namespace bzla::sat::interpolants;
 
 namespace bzla::bv {
 
-/* --- InterpolationSatSolver ---------------------------------------------- */
-
-/** Interface for interpolating SAT solver wrapper for AIG encoder. */
-class BvInterpolator::InterpolationSatSolver : public bitblast::SatInterface
-{
- public:
-  InterpolationSatSolver(Env& env, sat::SatSolver& solver, Tracer& tracer)
-      : d_logger(env.logger()), d_solver(solver), d_tracer(tracer)
-  {
-  }
-
-  void add(int64_t lit, int64_t aig_id) override
-  {
-    assert(aig_id);
-    // We need to notify the interpolation SAT proof tracer which AIG id the
-    // following, currently encoded SAT clauses are associated with. This
-    // mapping is later utilized to generate dynamic labeling of variables and
-    // clauses according to the partition of the set of current assertions into
-    // A and B formulas.
-    d_tracer.set_current_aig_id(aig_id);
-
-    if (lit == 0)
-    {
-      Log(3) << "CNF encoder: add clause";
-      size_t size = d_clause.size();
-      if (d_logger.is_log_enabled(2))
-      {
-        std::stringstream ss;
-        ss << "  clause: ";
-        for (auto a : d_clause)
-        {
-          ss << " " << a;
-        }
-        Log(3) << ss.str();
-      }
-      for (size_t i = 0; i < size; ++i)
-      {
-        int64_t lit = d_clause[i];
-        Log(3) << "  CNF encoder: add: " << lit;
-        d_solver.add(lit);
-      }
-      d_solver.add(0);
-      d_clause.clear();
-    }
-    else
-    {
-      d_clause.push_back(lit);
-    }
-  }
-
-  void add_clause(const std::initializer_list<int64_t>& literals,
-                  int64_t aig_id) override
-  {
-    for (int64_t lit : literals)
-    {
-      add(lit, aig_id);
-    }
-    add(0, aig_id);
-  }
-
-  bool value(int64_t lit) override
-  {
-    return d_solver.value(lit) == 1 ? true : false;
-  }
-
- private:
-  /** The associated logger instance. */
-  util::Logger& d_logger;
-  /** The associated SAT solver. */
-  sat::SatSolver& d_solver;
-  /** Cache literals of current clause. */
-  std::vector<int64_t> d_clause;
-  /** The associated tracer. */
-  Tracer& d_tracer;
-};
-
 /* --- BvInterpolator public ---------------------------------------- */
 
-BvInterpolator::BvInterpolator(Env& env, SolverState& state)
-    : Solver(env, state),
-      backtrack::Backtrackable(state.backtrack_mgr()),
-      d_stats(env.statistics(), "solver::bv::interpolator::"),
-      d_assertions(state.backtrack_mgr()),
-      d_assumptions(state.backtrack_mgr()),
-      d_lemmas(state.backtrack_mgr()),
-      d_last_result(Result::UNKNOWN)
+BvInterpolator::BvInterpolator(Env& env,
+                               SolverState& state,
+                               BvBitblastSolver& bb_solver)
+    : d_stats(env.statistics(), "solver::bv::interpolator::"),
+      d_env(env),
+      d_logger(env.logger()),
+      d_lemmas(state.lemma_cache()),
+      d_bitblaster(bb_solver.bitblaster()),
+      d_tracer(bb_solver.tracer()),
+      d_word_blaster(state.fp_solver().word_blaster())
 {
-  init_sat_solver();
 }
 
-BvInterpolator::~BvInterpolator()
-{
-  d_sat_solver->solver()->disconnect_proof_tracer(d_tracer.get());
-}
+BvInterpolator::~BvInterpolator() {}
 
 Node
 BvInterpolator::interpolant(const std::unordered_set<Node>& A,
@@ -133,8 +53,6 @@ BvInterpolator::interpolant(const std::unordered_set<Node>& A,
                             const std::vector<Node>& ppA,
                             const std::vector<Node>& ppB)
 {
-  assert(d_last_result == Result::UNSAT);
-
   // A set empty after preprocessing
   if (ppA.empty())
   {
@@ -171,8 +89,9 @@ BvInterpolator::interpolant(const std::unordered_set<Node>& A,
   log_bitblaster_cache(2);
 
   util::Timer timer(d_stats.time_interpol);
-  Node res = d_env.rewriter().rewrite(
-      d_tracer->get_interpolant(var_labels, clause_labels, term_labels));
+  Node res = d_tracer->get_interpolant(var_labels, clause_labels, term_labels);
+  assert(!res.is_null());
+  res = d_env.rewriter().rewrite(res);
   d_stats.size_interpolant += d_tracer->d_stats.size_interpolant;
 
   Log(1) << "interpolant: " << res;
@@ -205,8 +124,8 @@ BvInterpolator::interpolant(const std::unordered_set<Node>& A,
 
 #ifndef NDEBUG
   {
-    node_ref_vector visit{d_assertions.begin(), d_assertions.end()};
-    visit.insert(visit.end(), d_assumptions.begin(), d_assumptions.end());
+    node_ref_vector visit{ppA.begin(), ppA.end()};
+    visit.insert(visit.end(), ppB.begin(), ppB.end());
     visit.insert(visit.end(), d_lemmas.begin(), d_lemmas.end());
     unordered_node_ref_set cache;
     do
@@ -222,171 +141,7 @@ BvInterpolator::interpolant(const std::unordered_set<Node>& A,
   return res;
 }
 
-void
-BvInterpolator::register_assertion(const Node& assertion,
-                                   bool top_level,
-                                   bool is_lemma)
-{
-  // If unsat cores are enabled, all assertions are assumptions except lemmas.
-  if (d_env.options().produce_unsat_cores() && !is_lemma)
-  {
-    top_level = false;
-  }
-
-  if (!top_level)
-  {
-    d_assumptions.push_back(assertion);
-  }
-  else
-  {
-    d_assertions.push_back(assertion);
-  }
-
-  if (is_lemma)
-  {
-    d_lemmas.insert(assertion);
-  }
-
-  // Update AIG statistics
-  update_statistics();
-}
-
-Result
-BvInterpolator::solve()
-{
-  d_sat_solver->configure_terminator(d_env.terminator());
-  if (d_reset_sat)
-  {
-    init_sat_solver();
-    d_reset_sat = false;
-  }
-
-  // Bitblast and determine variable labels
-  if (!d_assertions.empty())
-  {
-    util::Timer timer(d_stats.time_bitblast);
-    for (const Node& assertion : d_assertions)
-    {
-      d_bitblaster.bitblast(assertion);
-    }
-  }
-  if (!d_assumptions.empty())
-  {
-    for (const Node& assumption : d_assumptions)
-    {
-      if (d_bitblaster.bits(assumption).empty())
-      {
-        util::Timer timer(d_stats.time_bitblast);
-        d_bitblaster.bitblast(assumption);
-      }
-    }
-  }
-
-  // Encode
-
-  if (!d_assertions.empty())
-  {
-    util::Timer timer(d_stats.time_encode);
-    for (const Node& assertion : d_assertions)
-    {
-      const auto& bits = d_bitblaster.bits(assertion);
-      assert(!bits.empty());
-      d_cnf_encoder->encode(bits[0], true);
-    }
-  }
-
-  for (const Node& assumption : d_assumptions)
-  {
-    const auto& bits = d_bitblaster.bits(assumption);
-    assert(!bits.empty());
-    util::Timer timer(d_stats.time_encode);
-    d_cnf_encoder->encode(bits[0], false);
-    d_sat_solver->assume(bits[0].get_id());
-  }
-
-  // Update CNF statistics
-  update_statistics();
-
-  d_solver_state.print_statistics();
-  util::Timer timer(d_stats.time_sat);
-  d_last_result = d_sat_solver->solve();
-
-  return d_last_result;
-}
-
-Node
-BvInterpolator::value(const Node& term)
-{
-  assert(BvSolver::is_leaf(term));
-  assert(term.type().is_bool() || term.type().is_bv());
-
-  const auto& bits = d_bitblaster.bits(term);
-  const Type& type = term.type();
-  NodeManager& nm  = d_env.nm();
-
-  // Return default value if not bit-blasted
-  if (bits.empty())
-  {
-    return utils::mk_default_value(nm, type);
-  }
-
-  if (type.is_bool())
-  {
-    return nm.mk_value(d_cnf_encoder->value(bits[0]) == 1);
-  }
-
-  BitVector val(type.bv_size());
-  for (size_t i = 0, size = bits.size(); i < size; ++i)
-  {
-    val.set_bit(size - 1 - i, d_cnf_encoder->value(bits[i]) == 1);
-  }
-  return nm.mk_value(val);
-}
-
-void
-BvInterpolator::unsat_core(std::vector<Node>& core) const
-{
-  assert(d_last_result == Result::UNSAT);
-  assert(d_env.options().produce_unsat_cores());
-
-  for (const Node& assumption : d_assumptions)
-  {
-    const auto& bits = d_bitblaster.bits(assumption);
-    assert(bits.size() == 1);
-    if (d_sat_solver->failed(bits[0].get_id()))
-    {
-      core.push_back(assumption);
-    }
-  }
-}
-
 /* --- BvInterpolator private ---------------------------------------- */
-
-void
-BvInterpolator::init_sat_solver()
-{
-  if (d_sat_solver)
-  {
-    d_sat_solver->solver()->disconnect_proof_tracer(d_tracer.get());
-  }
-  d_tracer.reset(new CadicalTracer(d_env, d_bitblaster));
-  d_sat_solver.reset(new sat::Cadical());
-  d_interpol_sat_solver.reset(
-      new InterpolationSatSolver(d_env, *d_sat_solver, *d_tracer));
-  d_sat_solver->solver()->connect_proof_tracer(d_tracer.get(), true);
-  d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_interpol_sat_solver));
-}
-void
-BvInterpolator::update_statistics()
-{
-  d_stats.bb_num_aig_ands     = d_bitblaster.num_aig_ands();
-  d_stats.bb_num_aig_consts   = d_bitblaster.num_aig_consts();
-  d_stats.bb_num_aig_shared   = d_bitblaster.num_aig_shared();
-  auto& cnf_stats             = d_cnf_encoder->statistics();
-  d_stats.bb_num_cnf_vars     = cnf_stats.num_vars;
-  d_stats.bb_num_cnf_clauses  = cnf_stats.num_clauses;
-  d_stats.bb_num_cnf_literals = cnf_stats.num_literals;
-}
 
 void
 BvInterpolator::label_clauses(
@@ -625,7 +380,6 @@ BvInterpolator::label_consts(
     sat::interpolants::VariableKind kind)
 {
   std::unordered_map<Node, bool> cache;
-  const auto& word_blaster = d_solver_state.fp_solver().word_blaster();
   std::vector<Node> visit(nodes.begin(), nodes.end());
   do
   {
@@ -658,10 +412,10 @@ BvInterpolator::label_consts(
         }
         else if (cur.type().is_fp() || cur.type().is_rm())
         {
-          if (word_blaster.is_word_blasted(cur))
+          if (d_word_blaster.is_word_blasted(cur))
           {
             visit.pop_back();
-            visit.push_back(word_blaster.word_blasted(cur));
+            visit.push_back(d_word_blaster.word_blasted(cur));
             continue;
           }
           // If not word-blasted or bit-blasted, it is not relevant for
@@ -685,7 +439,6 @@ BvInterpolator::label_leafs(
     std::unordered_map<Node, VariableKind>& term_labels,
     const std::vector<Node>& nodes)
 {
-  const auto& word_blaster = d_solver_state.fp_solver().word_blaster();
   std::unordered_map<Node, bool> cache;
   std::vector<Node> visit(nodes.begin(), nodes.end());
   do
@@ -696,9 +449,9 @@ BvInterpolator::label_leafs(
     {
       visit.insert(visit.end(), cur.begin(), cur.end());
       if (BvSolver::is_leaf(cur) && cur.type().is_fp()
-          && word_blaster.is_word_blasted(cur))
+          && d_word_blaster.is_word_blasted(cur))
       {
-        visit.push_back(word_blaster.word_blasted(cur));
+        visit.push_back(d_word_blaster.word_blasted(cur));
       }
       continue;
     }

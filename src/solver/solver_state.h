@@ -11,6 +11,7 @@
 #ifndef BZLA_SOLVER_SOLVER_STATE_H_INCLUDED
 #define BZLA_SOLVER_SOLVER_STATE_H_INCLUDED
 
+#include "backtrack/unordered_set.h"
 #include "node/node.h"
 
 namespace bzla {
@@ -46,6 +47,9 @@ class SolverState
 
   /** @return The associated floating-point solver instance. */
   const fp::FpSolver& fp_solver() const;
+
+  /** @return The current set of lemmas. */
+  const backtrack::unordered_set<Node>& lemma_cache() const;
 
  private:
   /** Associated solver engine. */

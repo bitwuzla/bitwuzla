@@ -58,4 +58,10 @@ SolverState::fp_solver() const
   return d_solver_engine.fp_solver();
 }
 
+const backtrack::unordered_set<Node>&
+SolverState::lemma_cache() const
+{
+  return d_solver_engine.lemma_cache();
+}
+
 }  // namespace bzla

@@ -83,8 +83,6 @@ class BvSolver : public Solver, public BvSolverInterface
 
   option::BvSolver cur_solver() const { return d_cur_solver; }
 
-  BvInterpolator* interpol_solver() const { return d_interpol_solver.get(); }
-
  private:
   /** Result of the last check() call. */
   Result d_sat_state = Result::UNKNOWN;
@@ -93,16 +91,12 @@ class BvSolver : public Solver, public BvSolverInterface
   BvBitblastSolver d_bitblast_solver;
   /** Propagation-based local search subsolver. */
   std::unique_ptr<BvPropSolver> d_prop_solver;
-  /** Interpolation subsolver. */
-  std::unique_ptr<BvInterpolator> d_interpol_solver;
 
   /**
    * The currently enabled subsolver. Used to determine which solver to ask
    * for model values and unsat cores.
    */
   option::BvSolver d_cur_solver;
-  /** Cache optiont :produce-interpolants. */
-  bool d_produce_interpolants;
   /**
    * The subsolver configured via options. Used to determine to which
    * solver to send registered terms.

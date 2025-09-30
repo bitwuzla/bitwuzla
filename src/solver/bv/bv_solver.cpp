@@ -58,27 +58,14 @@ BvSolver::BvSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_bitblast_solver(env, state),
       d_cur_solver(env.options().bv_solver()),
-      d_produce_interpolants(env.options().produce_interpolants()),
       d_solver_mode(env.options().bv_solver()),
       d_stats(env.statistics())
 {
-  if (env.options().produce_interpolants())
-  {
-    d_interpol_solver.reset(new BvInterpolator(env, state));
-  }
   if (d_solver_mode == option::BvSolver::PROP
       || d_solver_mode == option::BvSolver::PREPROP)
   {
-    if (env.options().produce_interpolants())
-    {
-      d_prop_solver.reset(
-          new BvPropSolver(env, state, d_interpol_solver->bitblaster()));
-    }
-    else
-    {
-      d_prop_solver.reset(
-          new BvPropSolver(env, state, d_bitblast_solver.bitblaster()));
-    }
+    d_prop_solver.reset(
+        new BvPropSolver(env, state, d_bitblast_solver.bitblaster()));
   }
 }
 
@@ -90,12 +77,8 @@ BvSolver::register_assertion(const Node& assertion,
                              bool is_lemma)
 {
   ++d_stats.num_assertions;
-  if (d_produce_interpolants)
-  {
-    d_interpol_solver->register_assertion(assertion, top_level, is_lemma);
-  }
-  else if (d_solver_mode == option::BvSolver::BITBLAST
-           || d_solver_mode == option::BvSolver::PREPROP)
+  if (d_solver_mode == option::BvSolver::BITBLAST
+      || d_solver_mode == option::BvSolver::PREPROP)
   {
     d_bitblast_solver.register_assertion(assertion, top_level, is_lemma);
   }
@@ -122,10 +105,7 @@ BvSolver::solve()
   {
     case option::BvSolver::BITBLAST:
       assert(d_cur_solver == option::BvSolver::BITBLAST);
-      assert(!d_env.options().produce_interpolants() || d_interpol_solver);
-      d_sat_state = d_env.options().produce_interpolants()
-                        ? d_interpol_solver->solve()
-                        : d_bitblast_solver.solve();
+      d_sat_state = d_bitblast_solver.solve();
       break;
     case option::BvSolver::PROP:
       assert(d_cur_solver == option::BvSolver::PROP);
@@ -136,7 +116,7 @@ BvSolver::solve()
         // We need the SAT proof of the bitblasting solver to produce an
         // interpolant, solve again without prop (not expensive since prop can
         // only determine unsat for the most trivial cases).
-        d_sat_state = d_interpol_solver->solve();
+        d_sat_state = d_bitblast_solver.solve();
       }
       break;
     case option::BvSolver::PREPROP:
@@ -148,14 +128,12 @@ BvSolver::solve()
         // We need the SAT proof of the bitblasting solver to produce an
         // interpolant, solve again without prop (not expensive since prop can
         // only determine unsat for the most trivial cases).
-        d_sat_state = d_interpol_solver->solve();
+        d_sat_state = d_bitblast_solver.solve();
       }
       else if (d_sat_state == Result::UNKNOWN)
       {
         d_cur_solver = option::BvSolver::BITBLAST;
-        d_sat_state  = d_env.options().produce_interpolants()
-                           ? d_interpol_solver->solve()
-                           : d_bitblast_solver.solve();
+        d_sat_state  = d_bitblast_solver.solve();
       }
       break;
   }
@@ -170,10 +148,6 @@ BvSolver::value(const Node& term)
   assert(term.type().is_bool() || term.type().is_bv());
   if (d_cur_solver == option::BvSolver::BITBLAST)
   {
-    if (d_env.options().produce_interpolants())
-    {
-      return d_interpol_solver->value(term);
-    }
     return d_bitblast_solver.value(term);
   }
   assert(d_cur_solver == option::BvSolver::PROP);
@@ -185,14 +159,7 @@ BvSolver::unsat_core(std::vector<Node>& core) const
 {
   if (d_cur_solver == option::BvSolver::BITBLAST)
   {
-    if (d_env.options().produce_interpolants())
-    {
-      d_interpol_solver->unsat_core(core);
-    }
-    else
-    {
-      d_bitblast_solver.unsat_core(core);
-    }
+    d_bitblast_solver.unsat_core(core);
   }
   else
   {
@@ -209,8 +176,8 @@ BvSolver::interpolant(const std::unordered_set<Node>& A,
                       const std::vector<Node>& ppA,
                       const std::vector<Node>& ppB)
 {
-  assert(d_produce_interpolants);
-  return d_interpol_solver->interpolant(A, B, ppA, ppB);
+  assert(d_env.options().produce_interpolants());
+  return d_bitblast_solver.interpolant(A, B, ppA, ppB);
 }
 
 BvSolver::Statistics::Statistics(util::Statistics& stats)

@@ -14,6 +14,10 @@
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
+#include "option/option.h"
+#include "sat/cadical.h"
+#include "sat/interpolants/cadical_tracer.h"
+#include "sat/interpolants/tracer.h"
 #include "sat/sat_solver_factory.h"
 #include "solver/bv/bv_solver.h"
 
@@ -21,7 +25,9 @@ namespace bzla::bv {
 
 using namespace bzla::node;
 
-/** Sat solver wrapper for AIG encoder. */
+/* --- BitblastSatSolver --------------------------------------------------- */
+
+/** Sat solver wrapper for AIG encoder for bitblasting, no interpolation. */
 class BvBitblastSolver::BitblastSatSolver : public bitblast::SatInterface
 {
  public:
@@ -53,29 +59,121 @@ class BvBitblastSolver::BitblastSatSolver : public bitblast::SatInterface
   sat::SatSolver& d_solver;
 };
 
+/* --- InterpolationSatSolver ---------------------------------------------- */
+
+/** Interface for interpolating SAT solver wrapper for AIG encoder. */
+class BvBitblastSolver::InterpolationSatSolver : public bitblast::SatInterface
+{
+ public:
+  InterpolationSatSolver(Env& env,
+                         sat::SatSolver& solver,
+                         sat::interpolants::Tracer& tracer)
+      : d_logger(env.logger()), d_solver(solver), d_tracer(tracer)
+  {
+  }
+
+  void add(int64_t lit, int64_t aig_id) override
+  {
+    assert(aig_id);
+    // We need to notify the interpolation SAT proof tracer which AIG id the
+    // following, currently encoded SAT clauses are associated with. This
+    // mapping is later utilized to generate dynamic labeling of variables and
+    // clauses according to the partition of the set of current assertions into
+    // A and B formulas.
+    d_tracer.set_current_aig_id(aig_id);
+
+    if (lit == 0)
+    {
+      Log(3) << "CNF encoder: add clause";
+      size_t size = d_clause.size();
+      if (d_logger.is_log_enabled(2))
+      {
+        std::stringstream ss;
+        ss << "  clause: ";
+        for (auto a : d_clause)
+        {
+          ss << " " << a;
+        }
+        Log(3) << ss.str();
+      }
+      for (size_t i = 0; i < size; ++i)
+      {
+        int64_t lit = d_clause[i];
+        Log(3) << "  CNF encoder: add: " << lit;
+        d_solver.add(lit);
+      }
+      d_solver.add(0);
+      d_clause.clear();
+    }
+    else
+    {
+      d_clause.push_back(lit);
+    }
+  }
+
+  void add_clause(const std::initializer_list<int64_t>& literals,
+                  int64_t aig_id) override
+  {
+    for (int64_t lit : literals)
+    {
+      add(lit, aig_id);
+    }
+    add(0, aig_id);
+  }
+
+  bool value(int64_t lit) override
+  {
+    return d_solver.value(lit) == 1 ? true : false;
+  }
+
+ private:
+  /** The associated logger instance. */
+  util::Logger& d_logger;
+  /** The associated SAT solver. */
+  sat::SatSolver& d_solver;
+  /** Cache literals of current clause. */
+  std::vector<int64_t> d_clause;
+  /** The associated tracer. */
+  sat::interpolants::Tracer& d_tracer;
+};
+
 /* --- BvBitblastSolver public ---------------------------------------------- */
 
 BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
     : Solver(env, state),
+      backtrack::Backtrackable(state.backtrack_mgr()),
       d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
       d_last_result(Result::UNKNOWN),
       d_opt_print_aig(!env.options().write_aiger().empty()
                       || !env.options().write_cnf().empty()),
+      d_produce_interpolants(env.options().produce_interpolants()),
       d_stats(env.statistics(), "solver::bv::bitblast::")
 {
-  d_sat_solver = d_env.sat_factory().new_sat_solver();
-  Msg(1) << "initialized SAT solver: " << d_sat_solver->get_name();
-  d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
-  d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_bitblast_sat_solver));
+  init_sat_solver();
 }
 
-BvBitblastSolver::~BvBitblastSolver() {}
+BvBitblastSolver::~BvBitblastSolver()
+{
+  if (d_tracer)
+  {
+    static_cast<sat::Cadical*>(d_sat_solver.get())
+        ->solver()
+        ->disconnect_proof_tracer(d_tracer.get());
+    d_tracer.reset(nullptr);
+  }
+}
 
 Result
 BvBitblastSolver::solve()
 {
   d_sat_solver->configure_terminator(d_env.terminator());
+
+  if (d_reset_sat)
+  {
+    init_sat_solver();
+    d_reset_sat = false;
+  }
 
   if (!d_assertions.empty())
   {
@@ -86,7 +184,7 @@ BvBitblastSolver::solve()
       assert(!bits.empty());
       d_cnf_encoder->encode(bits[0], true);
     }
-    d_assertions.clear();
+    // d_assertions.clear();
   }
 
   for (const Node& assumption : d_assumptions)
@@ -201,7 +299,65 @@ BvBitblastSolver::unsat_core(std::vector<Node>& core) const
   }
 }
 
+void
+BvBitblastSolver::pop()
+{
+  if (d_produce_interpolants)
+  {
+    d_reset_sat = true;
+  }
+}
+
+Node
+BvBitblastSolver::interpolant(const std::unordered_set<Node>& A,
+                              const std::unordered_set<Node>& B,
+                              const std::vector<Node>& ppA,
+                              const std::vector<Node>& ppB)
+{
+#ifndef NDEBUG
+  for (const Node& assumption : d_assumptions)
+  {
+    assert(std::find(ppA.begin(), ppA.end(), assumption) != ppA.end()
+           || std::find(ppB.begin(), ppB.end(), assumption) != ppB.end());
+  }
+#endif
+  d_bv_interpolator.reset(new BvInterpolator(d_env, d_solver_state, *this));
+  return d_bv_interpolator->interpolant(A, B, ppA, ppB);
+}
+
 /* --- BvBitblastSolver private --------------------------------------------- */
+
+void
+BvBitblastSolver::init_sat_solver()
+{
+  assert(!d_produce_interpolants
+         || d_env.options().sat_solver() == option::SatSolver::CADICAL);
+
+  if (d_tracer)
+  {
+    static_cast<sat::Cadical*>(d_sat_solver.get())
+        ->solver()
+        ->disconnect_proof_tracer(d_tracer.get());
+    d_tracer.reset(nullptr);
+  }
+
+  d_sat_solver = d_env.sat_factory().new_sat_solver();
+  Msg(1) << "initialized SAT solver: " << d_sat_solver->get_name();
+
+  if (d_produce_interpolants)
+  {
+    d_tracer.reset(new sat::interpolants::CadicalTracer(d_env, d_bitblaster));
+    sat::Cadical* cadical = static_cast<sat::Cadical*>(d_sat_solver.get());
+    cadical->solver()->connect_proof_tracer(d_tracer.get(), true);
+    d_bitblast_sat_solver.reset(
+        new InterpolationSatSolver(d_env, *d_sat_solver, *d_tracer));
+  }
+  else
+  {
+    d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
+  }
+  d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_bitblast_sat_solver));
+}
 
 void
 BvBitblastSolver::update_statistics()

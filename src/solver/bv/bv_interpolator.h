@@ -14,28 +14,19 @@
 #include <cstdint>
 #include <unordered_set>
 
-#include "backtrack/backtrackable.h"
 #include "backtrack/unordered_set.h"
-#include "backtrack/vector.h"
-#include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig_bitblaster.h"
 #include "sat/interpolants/tracer_kinds.h"
 #include "solver/bv/aig_bitblaster.h"
-#include "solver/bv/bv_solver_interface.h"
+#include "solver/bv/bv_bitblast_solver.h"
+#include "solver/fp/word_blaster.h"
 #include "solver/solver.h"
 #include "util/statistics.h"
-
-namespace CaDiCraig {
-class CraigTracer;
-}
 
 namespace bzla {
 
 namespace sat {
 class Cadical;
-namespace interpolants {
-class Tracer;
-}
 }  // namespace sat
 
 namespace bv {
@@ -44,28 +35,11 @@ class AigBitblaster;
 class BvSolver;
 class InterpolationBitblaster;
 
-class BvInterpolator : public Solver,
-                       public BvSolverInterface,
-                       public backtrack::Backtrackable
+class BvInterpolator
 {
  public:
-  /** Sat interface used for d_cnf_encoder. */
-  class InterpolationSatSolver;
-
-  BvInterpolator(Env& env, SolverState& state);
+  BvInterpolator(Env& env, SolverState& state, BvBitblastSolver& bb_solver);
   ~BvInterpolator();
-
-  void register_assertion(const Node& assertion,
-                          bool top_level,
-                          bool is_lemma) override;
-  Result solve() override;
-  Node value(const Node& term) override;
-  void unsat_core(std::vector<Node>& core) const override;
-
-  AigBitblaster& bitblaster() { return d_bitblaster; }
-
-  void push() override {}
-  void pop() override { d_reset_sat = true; }
 
   /**
    * Get interpolant I of a formulas A and B such that
@@ -114,8 +88,6 @@ class BvInterpolator : public Solver,
   } d_stats;
 
  private:
-  void init_sat_solver();
-
   /** Update AIG and CNF statistics. */
   void update_statistics();
 
@@ -245,28 +217,20 @@ class BvInterpolator : public Solver,
    */
   void log_bitblaster_cache(uint64_t level) const;
 
-  /** The current set of assertions. */
-  backtrack::vector<Node> d_assertions;
-  /** The current set of assumptions. */
-  backtrack::vector<Node> d_assumptions;
+  /** The associated environment. */
+  Env& d_env;
+  /** The associated logger instance. */
+  util::Logger& d_logger;
+
   /** The current set of lemmas. */
-  backtrack::unordered_set<Node> d_lemmas;
+  const backtrack::unordered_set<Node>& d_lemmas;
 
   /** AIG bit-blaster. */
-  AigBitblaster d_bitblaster;
-
-  /** CNF encoder for AIGs. */
-  std::unique_ptr<bitblast::AigCnfEncoder> d_cnf_encoder;
-  /** SAT solver used for solving bit-blasted formula. */
-  std::unique_ptr<sat::Cadical> d_sat_solver;
-  /** Interpolation tracer. */
-  std::unique_ptr<sat::interpolants::Tracer> d_tracer;
-  /** SAT solver interface for CNF encoder, which wraps `d_sat_solver`. */
-  std::unique_ptr<InterpolationSatSolver> d_interpol_sat_solver;
-  /** Result of last solve() call. */
-  Result d_last_result;
-
-  bool d_reset_sat = false;
+  AigBitblaster& d_bitblaster;
+  /** The associated proof tracer for interpolants. */
+  sat::interpolants::Tracer* d_tracer;
+  /** The associated word_blaster. */
+  const fp::WordBlaster& d_word_blaster;
 };
 
 }  // namespace bv
