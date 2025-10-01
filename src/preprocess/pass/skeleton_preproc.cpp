@@ -12,16 +12,65 @@
 
 #include <memory>
 
+#include "bitblast/aig/aig_cnf.h"
+#include "bitblast/aig_bitblaster.h"
+#include "cadical.hpp"
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #ifdef BZLA_USE_CADICAL
 #include "sat/cadical.h"
 #endif
+#include "solver/bv/aig_bitblaster.h"
 
 namespace bzla::preprocess::pass {
 
 using namespace node;
+
+class FixedListener : public CaDiCaL::FixedAssignmentListener
+{
+ public:
+  ~FixedListener() {};
+
+  void notify_fixed_assignment(int32_t lit) override { d_fixed.push_back(lit); }
+
+  const auto& fixed() const { return d_fixed; }
+
+ private:
+  std::vector<int32_t> d_fixed;
+};
+
+class CnfSatInterface : public bitblast::SatInterface
+{
+ public:
+  CnfSatInterface(sat::Cadical& solver) : d_solver(solver) {}
+
+  void add(int64_t lit, int64_t aig_id = 0) override
+  {
+    (void) aig_id;
+    d_solver.add(lit);
+  }
+
+  void add_clause(const std::initializer_list<int64_t>& literals,
+                  int64_t aig_id = 0) override
+  {
+    for (const auto& lit : literals)
+    {
+      add(lit, aig_id);
+    }
+    add(0, aig_id);
+  }
+
+  bool value(int64_t lit) override
+  {
+    (void) lit;
+    assert(false);
+    return false;
+  }
+
+ private:
+  sat::Cadical& d_solver;
+};
 
 /* --- PassSkeletonPreproc public ------------------------------------------- */
 
@@ -35,6 +84,8 @@ PassSkeletonPreproc::PassSkeletonPreproc(
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
+
+PassSkeletonPreproc::~PassSkeletonPreproc() {}
 
 void
 PassSkeletonPreproc::apply(AssertionVector& assertions)
@@ -90,57 +141,78 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
   if (d_reset())
   {
     d_sat_solver.reset(new sat::Cadical());
+    d_fixed_listener.reset(new FixedListener());
+    d_sat_solver->solver()->connect_fixed_listener(d_fixed_listener.get());
     d_encode_cache.clear();
     d_reset = false;
     ++d_stats.num_resets;
   }
+
+  CnfSatInterface cnf_sat(*d_sat_solver);
+  bv::AigBitblaster bitblaster(true);
+  bitblast::AigCnfEncoder cnf_encoder(cnf_sat);
+  std::unordered_map<Node, bitblast::AigBitblaster::Bits> bb_cache;
 
   // Encode Boolean skeleton
   {
     util::Timer timer(d_stats.time_encode);
     for (const Node& assertion : _assertions)
     {
-      encode(assertion);
-      d_assertion_lits.insert(std::abs(lit(assertion)));
+      bitblaster.bitblast(assertion);
+      const auto& bits = bitblaster.bits(assertion);
+      cnf_encoder.encode(bits[0], true);
+      d_assertion_lits.insert(bits[0].get_id());
       d_assertions.push_back(assertion);
     }
   }
 
-  Result res;
+  d_stats.num_cnf_clauses = cnf_encoder.statistics().num_clauses;
+  d_stats.num_cnf_lits    = cnf_encoder.statistics().num_literals;
+
   {
     util::Timer timer(d_stats.time_sat);
-    res = d_sat_solver->solve();
+    d_sat_solver->solver()->simplify();
+  }
+
+  std::unordered_map<uint64_t, Node> node_map;
+  for (const auto& [n, bits] : bb_cache)
+  {
+    assert(bits.size() == 1);
+    const auto& aig = bits[0];
+    node_map.emplace(aig.get_id(), n);
   }
 
   NodeManager& nm = d_env.nm();
-  res             = d_sat_solver->solve();
-  if (res == Result::SAT)
+  Rewriter& rw    = d_env.rewriter();
+  for (const auto& lit : d_fixed_listener->fixed())
   {
-    util::Timer timer(d_stats.time_fixed);
-    for (const auto& [node, _] : d_encode_cache)
+    if (d_assertion_lits.find(lit) == d_assertion_lits.end())
     {
-      auto l = std::abs(lit(node));
-      if (d_assertion_lits.find(l) == d_assertion_lits.end())
+      bool inv = false;
+      auto it  = node_map.find(lit);
+      if (it == node_map.end())
       {
-        l        = lit(node);
-        auto val = d_sat_solver->fixed(l);
-        Node null;
-        if (val < 0)
+        it  = node_map.find(-lit);
+        inv = true;
+        if (it == node_map.end())
         {
-          ++d_stats.num_new_assertions;
-          assertions.push_back(nm.mk_node(Kind::NOT, {node}), null);
-          d_assertion_lits.insert(l);
-        }
-        else if (val > 0)
-        {
-          ++d_stats.num_new_assertions;
-          assertions.push_back(node, null);
-          d_assertion_lits.insert(l);
+          // Skip AIG internal nodes
+          ++d_stats.num_fixed_unused;
+          continue;
         }
       }
+
+      Node new_assert = rw.invert_node_if(inv, it->second);
+      if (new_assert.type().is_bv())
+      {
+        new_assert = nm.mk_node(
+            Kind::EQUAL, {new_assert, nm.mk_value(BitVector::mk_true())});
+      }
+
+      assertions.push_back(new_assert, Node());
+      ++d_stats.num_new_assertions;
     }
   }
-
   d_done = true;
   d_sat_solver.reset(new sat::Cadical());
   d_encode_cache.clear();
@@ -152,160 +224,22 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
 int64_t
 PassSkeletonPreproc::lit(const Node& term)
 {
-  assert(term.type().is_bool());
-  return (term.kind() == Kind::NOT) ? -term[0].id() : term.id();
-}
-
-void
-PassSkeletonPreproc::encode(const Node& assertion)
-{
-  if (d_encode_cache.find(assertion) != d_encode_cache.end())
-  {
-    // Already encoded
-    return;
-  }
-
-  node_ref_vector visit{assertion};
-  do
-  {
-    const Node& cur = visit.back();
-
-    if (!cur.type().is_bool())
-    {
-      visit.pop_back();
-      continue;
-    }
-
-    auto [it, inserted] = d_encode_cache.emplace(cur, false);
-    if (inserted)
-    {
-      Kind k = cur.kind();
-      if (k == Kind::NOT || k == Kind::AND || k == Kind::ITE
-          || k == Kind::EQUAL)
-      {
-        visit.insert(visit.end(), cur.begin(), cur.end());
-      }
-      continue;
-    }
-    else if (!it->second)
-    {
-      it->second = true;
-      switch (cur.kind())
-      {
-        case Kind::AND: {
-          // n <=> a /\ b
-          auto n = lit(cur);
-          auto a = lit(cur[0]);
-          auto b = lit(cur[1]);
-
-          d_sat_solver->add(-n);
-          d_sat_solver->add(a);
-          d_sat_solver->add(0);
-
-          d_sat_solver->add(-n);
-          d_sat_solver->add(b);
-          d_sat_solver->add(0);
-
-          d_sat_solver->add(n);
-          d_sat_solver->add(-a);
-          d_sat_solver->add(-b);
-          d_sat_solver->add(0);
-
-          d_stats.num_cnf_lits += 7;
-          d_stats.num_cnf_clauses += 3;
-        }
-        break;
-
-        case Kind::EQUAL:
-          if (cur[0].type().is_bool())
-          {
-            // n <=> a = b
-            auto n = lit(cur);
-            auto a = lit(cur[0]);
-            auto b = lit(cur[1]);
-
-            d_sat_solver->add(-n);
-            d_sat_solver->add(-a);
-            d_sat_solver->add(b);
-            d_sat_solver->add(0);
-
-            d_sat_solver->add(-n);
-            d_sat_solver->add(a);
-            d_sat_solver->add(-b);
-            d_sat_solver->add(0);
-
-            d_sat_solver->add(n);
-            d_sat_solver->add(a);
-            d_sat_solver->add(b);
-            d_sat_solver->add(0);
-
-            d_sat_solver->add(n);
-            d_sat_solver->add(-a);
-            d_sat_solver->add(-b);
-            d_sat_solver->add(0);
-
-            d_stats.num_cnf_lits += 12;
-            d_stats.num_cnf_clauses += 4;
-          }
-          break;
-
-        case Kind::ITE: {
-          // n <=> c ? a : b
-          auto n = lit(cur);
-          auto c = lit(cur[0]);
-          auto a = lit(cur[1]);
-          auto b = lit(cur[2]);
-
-          d_sat_solver->add(-n);
-          d_sat_solver->add(-c);
-          d_sat_solver->add(-a);
-          d_sat_solver->add(0);
-
-          d_sat_solver->add(-n);
-          d_sat_solver->add(c);
-          d_sat_solver->add(b);
-          d_sat_solver->add(0);
-
-          d_sat_solver->add(n);
-          d_sat_solver->add(-c);
-          d_sat_solver->add(-a);
-          d_sat_solver->add(0);
-
-          d_sat_solver->add(n);
-          d_sat_solver->add(c);
-          d_sat_solver->add(-b);
-          d_sat_solver->add(0);
-
-          d_stats.num_cnf_lits += 12;
-          d_stats.num_cnf_clauses += 4;
-        }
-        break;
-
-        case Kind::VALUE:
-          d_sat_solver->add(cur.value<bool>() ? lit(cur) : -lit(cur));
-          break;
-
-        default: break;
-      }
-    }
-    visit.pop_back();
-  } while (!visit.empty());
-
-  d_sat_solver->add(lit(assertion));
-  d_sat_solver->add(0);
-  d_stats.num_cnf_lits += 1;
-  d_stats.num_cnf_clauses += 1;
+  assert(term.type().is_bool()
+         || (term.type().is_bv() && term.type().bv_size() == 1));
+  return (term.kind() == Kind::NOT || term.kind() == Kind::BV_NOT)
+             ? -term[0].id()
+             : term.id();
 }
 
 PassSkeletonPreproc::Statistics::Statistics(util::Statistics& stats,
                                             const std::string& prefix)
     : time_sat(stats.new_stat<util::TimerStatistic>(prefix + "time_sat")),
-      time_fixed(stats.new_stat<util::TimerStatistic>(prefix + "time_fixed")),
       time_encode(stats.new_stat<util::TimerStatistic>(prefix + "time_encode")),
       num_new_assertions(stats.new_stat<uint64_t>(prefix + "new_assertions")),
       num_resets(stats.new_stat<uint64_t>(prefix + "resets")),
       num_cnf_lits(stats.new_stat<uint64_t>(prefix + "cnf::lits")),
-      num_cnf_clauses(stats.new_stat<uint64_t>(prefix + "cnf::clauses"))
+      num_cnf_clauses(stats.new_stat<uint64_t>(prefix + "cnf::clauses")),
+      num_fixed_unused(stats.new_stat<uint64_t>(prefix + "fixed::unused"))
 {
 }
 

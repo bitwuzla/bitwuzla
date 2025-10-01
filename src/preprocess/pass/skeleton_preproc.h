@@ -15,13 +15,21 @@
 
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
+#include "bitblast/aig/aig_cnf.h"
 #include "preprocess/preprocessing_pass.h"
 #include "sat/sat_solver.h"
+#include "solver/bv/aig_bitblaster.h"
 #include "util/statistics.h"
 
 namespace bzla {
 
+namespace sat {
+class Cadical;
+}
+
 namespace preprocess::pass {
+
+class FixedListener;
 
 /**
  * Utility class to determine whether assertions were popped.
@@ -47,14 +55,15 @@ class PassSkeletonPreproc : public PreprocessingPass
 {
  public:
   PassSkeletonPreproc(Env& env, backtrack::BacktrackManager* backtrack_mgr);
+  ~PassSkeletonPreproc();
 
   void apply(AssertionVector& assertions) override;
 
  private:
   int64_t lit(const Node& term);
-  void encode(const Node& assertion);
 
-  std::unique_ptr<sat::SatSolver> d_sat_solver;
+  std::unique_ptr<sat::Cadical> d_sat_solver;
+  std::unique_ptr<FixedListener> d_fixed_listener;
   std::unordered_map<Node, bool> d_encode_cache;
   backtrack::unordered_set<int64_t> d_assertion_lits;
   backtrack::vector<Node> d_assertions;
@@ -65,12 +74,12 @@ class PassSkeletonPreproc : public PreprocessingPass
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
     util::TimerStatistic& time_sat;
-    util::TimerStatistic& time_fixed;
     util::TimerStatistic& time_encode;
     uint64_t& num_new_assertions;
     uint64_t& num_resets;
     uint64_t& num_cnf_lits;
     uint64_t& num_cnf_clauses;
+    uint64_t& num_fixed_unused;
   } d_stats;
 };
 

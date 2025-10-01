@@ -33,6 +33,8 @@ class AigBitblaster
                          T,
                          std::hash<bitblast::AigNode>>;
 
+  AigBitblaster(bool bool_bv1_mode = false) : d_bool_bv1_mode(bool_bv1_mode) {};
+
   /** Recursively bit-blast `term`. */
   virtual void bitblast(const Node& term);
 
@@ -69,6 +71,8 @@ class AigBitblaster
   bitblast::AigBitblaster d_bitblaster;
   /** Cached to store bit-blasted terms and their encoded bits. */
   std::unordered_map<Node, bitblast::AigBitblaster::Bits> d_bitblaster_cache;
+
+  bool d_bool_bv1_mode = false;
 };
 
 }  // namespace bzla::bv

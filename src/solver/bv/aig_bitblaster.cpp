@@ -25,13 +25,37 @@ AigBitblaster::bitblast(const Node& t)
   {
     const Node& cur = visit.back();
     assert(cur.type().is_bool() || cur.type().is_bv());
+    assert(!d_bool_bv1_mode || cur.type().is_bool()
+           || cur.type().bv_size() == 1);
 
-    auto it = d_bitblaster_cache.find(cur);
-    if (it == d_bitblaster_cache.end())
+    auto [it, inserted] = d_bitblaster_cache.try_emplace(cur);
+    if (inserted)
     {
-      d_bitblaster_cache.emplace(cur, bitblast::AigBitblaster::Bits());
       if (!BvSolver::is_leaf(cur))
       {
+        if (d_bool_bv1_mode)
+        {
+          const Type& type = cur.type();
+          if (type.is_bool() || (type.is_bv() && type.bv_size() == 1))
+          {
+            bool push = true;
+            for (const auto& c : cur)
+            {
+              if (!c.type().is_bool()
+                  && !(c.type().is_bv() && c.type().bv_size() == 1))
+              {
+                push = false;
+                break;
+              }
+            }
+            if (!push)
+            {
+              assert(type.is_bool() || (type.is_bv() && type.bv_size() == 1));
+              it->second = d_bitblaster.bv_constant(1);
+              continue;
+            }
+          }
+        }
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
       continue;
@@ -40,6 +64,7 @@ AigBitblaster::bitblast(const Node& t)
     {
       const Type& type = cur.type();
       assert(type.is_bool() || type.is_bv());
+      assert(!d_bool_bv1_mode || type.is_bool() || type.bv_size() == 1);
 
       switch (cur.kind())
       {
@@ -104,6 +129,7 @@ AigBitblaster::bitblast(const Node& t)
           it->second = d_bitblaster.bv_or(bits(cur[0]), bits(cur[1]));
           break;
 
+        case Kind::XOR:
         case Kind::BV_XOR:
           it->second = d_bitblaster.bv_xor(bits(cur[0]), bits(cur[1]));
           break;
