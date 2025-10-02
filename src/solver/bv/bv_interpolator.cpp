@@ -205,60 +205,43 @@ BvInterpolator::label_lemma(
   const auto& bits = d_bitblaster.bits(node);
   bv::AigBitblaster::aig_node_ref_vector visit;
   std::unordered_set<int64_t> cache;
-  std::vector<int64_t> aig_consts;
   for (const auto& aig : bits)
   {
     visit.push_back(aig);
   }
-  VariableKind kind = VariableKind::GLOBAL;
   do
   {
     const bitblast::AigNode& cur = visit.back();
     int64_t id                   = cur.get_id();
     int64_t var                  = std::abs(id);
 
+    auto [it, inserted] = var_labels.emplace(var, VariableKind::NONE);
+    if (inserted)
     {
-      auto [it, inserted] = cache.insert(var);
-      if (!inserted)
+      if (cur.is_and())
       {
-        visit.pop_back();
-        continue;
+        visit.push_back(cur[0]);
+        visit.push_back(cur[1]);
       }
+      continue;
+    }
+    else if (it->second == VariableKind::NONE)
+    {
+      assert(cur.is_and());
+      // not labeled, label based on children
+      VariableKind k0 = var_labels.at(std::abs(cur[0].get_id()));
+      VariableKind k1 = var_labels.at(std::abs(cur[1].get_id()));
+      assert(k0 == k1 || k0 == VariableKind::GLOBAL
+             || k1 == VariableKind::GLOBAL);
+      it->second = k0 == VariableKind::GLOBAL ? k1 : k0;
     }
 
     visit.pop_back();
-
-    if (cur.is_and())
-    {
-      visit.push_back(cur[0]);
-      visit.push_back(cur[1]);
-    }
-
-    auto it = var_labels.find(var);
-    if (it == var_labels.end())
-    {
-      aig_consts.push_back(var);
-    }
-    else
-    {
-      if (it->second == VariableKind::GLOBAL)
-      {
-        continue;
-      }
-
-      assert(kind == VariableKind::GLOBAL || kind == it->second);
-      kind = it->second;
-    }
   } while (!visit.empty());
 
-  for (int64_t var : aig_consts)
-  {
-#ifndef NDEBUG
-    auto [it, inserted] =
-#endif
-        var_labels.emplace(var, kind);
-    assert(inserted);
-  }
+  // the determined kind of the lemma
+  VariableKind kind = var_labels.at(std::abs(bits[0].get_id()));
+
   // label unlabeled terms
   std::unordered_map<Node, bool> ncache;
   std::vector<Node> nvisit{node};
@@ -311,11 +294,11 @@ BvInterpolator::label_lemma(
     {
       ss << " " << aig;
     }
-    Log(2) << "label lemma ["
+    Log(2) << "label lemma: " << node << " ["
            << (kind == VariableKind::GLOBAL || kind == VariableKind::A
                    ? ClauseKind::A
                    : ClauseKind::B)
-           << "]: (" << ss.str() << ")";
+           << "]: aig: " << ss.str();
   }
 
   label_clauses(clause_labels,
