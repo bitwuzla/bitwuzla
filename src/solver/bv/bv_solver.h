@@ -103,6 +103,9 @@ class BvSolver : public Solver, public BvSolverInterface
    */
   const option::BvSolver d_solver_mode;
 
+  /** True if interpolant generation is enabled. */
+  bool d_produce_interpolants;
+
   struct Statistics
   {
     Statistics(util::Statistics& stats);

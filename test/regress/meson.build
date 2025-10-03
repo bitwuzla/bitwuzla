@@ -1278,6 +1278,7 @@ tests_smt2 = [
   ['solver/bv/preprop1.smt2'],
   ['solver/bv/prim8bugreduced.btor.smt2'],
   ['solver/bv/problem_130.smt2'],
+  ['solver/bv/prop/murxla-110deca336eefafd.min.smt2'],
   ['solver/bv/prop/prels-funs.smt2', ['--bv-solver=preprop']],
   ['solver/bv/prop/prop_essential_checks_cycle.smt2', ['--bv-solver=prop --prop-sext --prop-ineq-bounds']], # --prop-use-inv-lt-concat" # TODO option currently disabled
   ['solver/bv/prop/prop_fp.smt2', ['--bv-solver=prop']],

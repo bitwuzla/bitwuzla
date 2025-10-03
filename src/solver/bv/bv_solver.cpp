@@ -13,6 +13,7 @@
 #include <unordered_set>
 
 #include "env.h"
+#include "option/option.h"
 #include "solver/bv/bv_bitblast_solver.h"
 
 namespace bzla::bv {
@@ -59,6 +60,7 @@ BvSolver::BvSolver(Env& env, SolverState& state)
       d_bitblast_solver(env, state),
       d_cur_solver(env.options().bv_solver()),
       d_solver_mode(env.options().bv_solver()),
+      d_produce_interpolants(env.options().produce_interpolants()),
       d_stats(env.statistics())
 {
   if (d_solver_mode == option::BvSolver::PROP
@@ -78,7 +80,12 @@ BvSolver::register_assertion(const Node& assertion,
 {
   ++d_stats.num_assertions;
   if (d_solver_mode == option::BvSolver::BITBLAST
-      || d_solver_mode == option::BvSolver::PREPROP)
+      || d_solver_mode == option::BvSolver::PREPROP
+      // We have to register assertions for PROP if producing interpolants.
+      // We expect unsat in that case and if PROP is able to determine unsat
+      // we have to fall back to bit-blasting to generate the SAT proof for
+      // interpolant production.
+      || (d_solver_mode == option::BvSolver::PROP && d_produce_interpolants))
   {
     d_bitblast_solver.register_assertion(assertion, top_level, is_lemma);
   }
@@ -110,8 +117,7 @@ BvSolver::solve()
     case option::BvSolver::PROP:
       assert(d_cur_solver == option::BvSolver::PROP);
       d_sat_state = d_prop_solver->solve();
-      if (d_sat_state == Result::UNSAT
-          && d_env.options().produce_interpolants())
+      if (d_sat_state == Result::UNSAT && d_produce_interpolants)
       {
         // We need the SAT proof of the bitblasting solver to produce an
         // interpolant, solve again without prop (not expensive since prop can
@@ -122,8 +128,7 @@ BvSolver::solve()
     case option::BvSolver::PREPROP:
       d_cur_solver = option::BvSolver::PROP;
       d_sat_state  = d_prop_solver->solve();
-      if (d_sat_state == Result::UNSAT
-          && d_env.options().produce_interpolants())
+      if (d_sat_state == Result::UNSAT && d_produce_interpolants)
       {
         // We need the SAT proof of the bitblasting solver to produce an
         // interpolant, solve again without prop (not expensive since prop can
@@ -176,7 +181,7 @@ BvSolver::interpolant(const std::unordered_set<Node>& A,
                       const std::vector<Node>& ppA,
                       const std::vector<Node>& ppB)
 {
-  assert(d_env.options().produce_interpolants());
+  assert(d_produce_interpolants);
   return d_bitblast_solver.interpolant(A, B, ppA, ppB);
 }
 
