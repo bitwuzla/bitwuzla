@@ -145,6 +145,8 @@ tests_smt2 = [
   ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.lift.smt2'],
   ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.pudlak.smt2'],
   #
+  ['get-interpolant/red-murxla-b21df6c6cf3b808e.min.smt2'],
+  #
   ['get-interpolant/red-picorv32_mutAY_nomem-p1.dar.smt2'],
   ['get-interpolant/red-picorv32_mutAY_nomem-p1.dar.lift.smt2'],
   ['get-interpolant/red-picorv32_mutAY_nomem-p1.dar.pudlak.smt2'],

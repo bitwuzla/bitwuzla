@@ -613,7 +613,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       }
       auto [var, term] = find_substitution(assertion);
       // No variable substitution
-      if (var.is_null() || d_exclude_consts.find(var) != d_exclude_consts.end())
+      if (var.is_null())
       {
         continue;
       }
@@ -631,6 +631,11 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
         {
           continue;
         }
+      }
+
+      if (d_exclude_consts.find(var) != d_exclude_consts.end())
+      {
+        continue;
       }
 
       // If we already have substitutions, process the term first to ensure
