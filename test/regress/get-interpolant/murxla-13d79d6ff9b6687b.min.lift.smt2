@@ -1,7 +1,0 @@
-(declare-const x (_ BitVec 26))
-(set-option :produce-interpolants 1)
-(set-option :interpolants-lift true)
-(set-option :bv-solver "prop")
-(assert (! (bvssubo x (_ bv0 26)) :named a1))
-(check-sat)
-(get-interpolant (a1))
