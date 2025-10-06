@@ -131,15 +131,22 @@ Node
 RewriteRule<RewriteRuleKind::NORM_BV_NOT_OR_SHL>::_apply(Rewriter& rewriter,
                                                          const Node& node)
 {
-  Node or0, or1;
-  if (rewriter.is_bv_or(node, or0, or1))
+  //  Note: Do not use rewriter.is_bv_or() here as this may trigger recursive
+  //  calls.
+  if (node.is_inverted() && node[0].kind() == Kind::AND)
   {
-    if ((or0.kind() == Kind::BV_SHL && or0[1] == or1)
-        || (or1.kind() == Kind::BV_SHL && or1[1] == or0))
+    const Node& _or = node[0];
+    if ((_or[0].is_inverted() && _or[0][0].kind() == Kind::BV_SHL
+         && _or[0][0][1] == _or[1])
+        || (_or[1].is_inverted() && _or[1][0].kind() == Kind::BV_SHL
+            && _or[1][0][1] == _or[0]))
     {
-      return rewriter.mk_node(Kind::BV_ADD, {or0, or1});
+      return rewriter.mk_node(
+          Kind::BV_ADD,
+          {rewriter.invert_node(_or[0]), rewriter.invert_node(_or[1])});
     }
   }
+  assert(node[0].kind() != Kind::BV_OR);  // should be eliminated
   return node;
 }
 
