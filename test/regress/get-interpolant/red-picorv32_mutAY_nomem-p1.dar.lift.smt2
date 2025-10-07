@@ -1,6 +1,6 @@
 (declare-const x Bool)
 (set-option :produce-interpolants true)
-(set-option :interpolants-lift true)
+(set-option :interpolants-lift false)
 (declare-const s (_ BitVec 2))
 (declare-const t (_ BitVec 2))
 (declare-const a (_ BitVec 1))

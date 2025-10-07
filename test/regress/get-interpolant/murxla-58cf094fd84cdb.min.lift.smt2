@@ -1,5 +1,5 @@
-(set-option :produce-interpolants 1)
-(set-option :interpolants-lift true)
+(set-option :produce-interpolants true)
+(set-option :interpolants-lift false)
 (set-option :rewrite-level 0)
 ;(set-option :pp-variable-subst true)
 (declare-const x Bool)

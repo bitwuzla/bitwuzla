@@ -1,7 +1,7 @@
 (declare-const x (_ BitVec 3))
 (declare-const y (_ BitVec 3))
 (set-option :produce-interpolants true)
-(set-option :interpolants-lift true)
+(set-option :interpolants-lift false)
 (push 1)
 (assert (= y (ite (bvult x (_ bv1 3)) x (_ bv0 3))))
 (push 1)

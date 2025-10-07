@@ -1,6 +1,5 @@
-(set-option :global-declarations true)
-(set-option :produce-interpolants 1)
-(set-option :interpolants-lift true)
+(set-option :produce-interpolants true)
+(set-option :interpolants-lift false)
 (set-option :bv-solver "preprop")
 (declare-const _x1 (_ BitVec 96))
 (assert (! (let ((_let0 (bvsub _x1 _x1)))(bvsmulo _let0 _let0)) :named a1))

@@ -1,6 +1,6 @@
 (set-logic QF_BV)
 (set-option :produce-interpolants true)
-(set-option :interpolants-lift true)
+(set-option :interpolants-lift false)
 (declare-const cfg@1 Bool)
 (declare-const initstate@1 Bool)
 (declare-const witness@1 Bool)

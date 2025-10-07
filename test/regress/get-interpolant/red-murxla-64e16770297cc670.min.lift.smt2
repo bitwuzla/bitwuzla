@@ -1,5 +1,5 @@
-(set-option :produce-interpolants 1)
-(set-option :interpolants-lift true)
+(set-option :produce-interpolants true)
+(set-option :interpolants-lift false)
 (declare-const x Bool)
 (declare-const x1 Bool)
 (assert (xor x1 (not (ite x (distinct x1 true) false))))

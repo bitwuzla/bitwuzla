@@ -1,6 +1,6 @@
 ; ignore output
 (set-option :produce-interpolants true)
-(set-option :interpolants-lift true)
+(set-option :interpolants-lift false)
 (set-option :abstraction-bv-size 3)
 (declare-const s (_ BitVec 1))
 (declare-const t (_ BitVec 1))

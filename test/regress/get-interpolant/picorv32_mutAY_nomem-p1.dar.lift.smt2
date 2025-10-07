@@ -1,7 +1,7 @@
 ; ignore output
 (set-logic QF_BV)
 (set-option :produce-interpolants true)
-(set-option :interpolants-lift true)
+(set-option :interpolants-lift false)
 (declare-const state992@1 (_ BitVec 1))
 (declare-const state990@1 (_ BitVec 1))
 (declare-const state988@1 (_ BitVec 1))

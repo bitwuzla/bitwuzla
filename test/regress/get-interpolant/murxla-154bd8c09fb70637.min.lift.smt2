@@ -1,5 +1,5 @@
 (set-option :produce-interpolants 1)
-(set-option :interpolants-lift true)
+(set-option :interpolants-lift false)
 (declare-const x Bool)
 (declare-const x1 Bool)
 (assert (distinct true (or x x1 (not (= x (not x1))))))

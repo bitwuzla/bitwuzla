@@ -1,6 +1,6 @@
 (set-logic QF_BV)
 (set-option :produce-interpolants true)
-(set-option :interpolants-lift true)
+(set-option :interpolants-lift false)
 (declare-const x@1 (_ BitVec 8))
 (declare-const x@0 (_ BitVec 8))
 (declare-const x@2 (_ BitVec 8))

@@ -1,5 +1,5 @@
 (set-option :produce-interpolants true)
-(set-option :interpolants-lift true)
+(set-option :interpolants-lift false)
 (declare-const s (_ BitVec 1))
 (declare-const t (_ BitVec 1))
 (assert (! (= s t) :named a1))

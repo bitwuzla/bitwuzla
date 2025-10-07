@@ -1,7 +1,7 @@
 (declare-const s (_ BitVec 2))
 (declare-const st (_ BitVec 2))
 (set-option :produce-interpolants true)
-(set-option :interpolants-lift true)
+(set-option :interpolants-lift false)
 (declare-const t (_ BitVec 1))
 (declare-const a (_ BitVec 1))
 (assert (! (= (_ bv1 1) ((_ extract 1 1) st)) :named a1))

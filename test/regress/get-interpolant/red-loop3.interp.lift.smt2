@@ -1,5 +1,5 @@
 (set-option :produce-interpolants true)
-(set-option :interpolants-lift true)
+(set-option :interpolants-lift false)
 (set-option :abstraction true)
 (declare-const x61 Bool)
 (declare-const u (_ BitVec 28))

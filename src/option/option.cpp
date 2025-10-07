@@ -439,7 +439,7 @@ Options::Options()
                         "interpolants-algo"),
       interpolants_lift(this,
                         Option::INTERPOLANTS_LIFT,
-                        false,
+                        true,
                         "lift bit-level interpolant as much as possible to the "
                         "theory level (if disabled, generate inerpolant as 1:1 "
                         "correspondence from bit-level AIG interpolant)",
