@@ -415,7 +415,7 @@ BvInterpolator::label_consts(
 }
 
 void
-BvInterpolator::label_leafs(
+BvInterpolator::label_terms_and_leafs(
     std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
     std::unordered_map<Node, VariableKind>& term_labels,
     const std::vector<Node>& nodes)
@@ -499,8 +499,8 @@ BvInterpolator::label_vars(
 
   // Map terms that are not bit-blasted to a label. This is necessary to
   // determine the label of abstracted terms.
-  label_leafs(var_labels, term_labels, ppA);
-  label_leafs(var_labels, term_labels, ppB);
+  label_terms_and_leafs(var_labels, term_labels, ppA);
+  label_terms_and_leafs(var_labels, term_labels, ppB);
 
   // Now, label all SAT vars while traversing from the bits of all nodes. This
   // is necessary to ensure that no AIGS associated with bits of consts that are

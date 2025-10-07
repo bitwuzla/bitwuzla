@@ -143,10 +143,11 @@ class BvInterpolator
       const std::vector<Node>& nodes,
       sat::interpolants::VariableKind kind);
   /**
-   * Label the bits of the bit-vector representation of BvSolver leafs (that are
-   * not consts) depending on the label of their children in a given set of
-   * `nodes`. Only if all children are labeled as VariableKind::GLOBAL, a leaf
-   * is labeled as GLOBAL. Mixed labeling of children (A and B) cannot occur.
+   * Label terms based on their children in a given set of `nodes`.
+   * Additionally, label the bits of the bit-vector representation of BvSolver
+   * leafs (that are not consts) depending on their corresponding term label.
+   * Only if all children are labeled as VariableKind::GLOBAL, a leaf is
+   * labeled as GLOBAL. Mixed labeling of children (A and B) cannot occur.
    *
    * Helper for label_vars().
    *
@@ -158,7 +159,7 @@ class BvInterpolator
    * @param nodes       The set of nodes.
    * @param kind        The variable kind to label with.
    */
-  void label_leafs(
+  void label_terms_and_leafs(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
       std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
       const std::vector<Node>& nodes);
