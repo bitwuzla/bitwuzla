@@ -130,7 +130,7 @@ Interpolator::get_interpolant(const std::unordered_set<Node>& A)
     // Generate interpolant from bit-level proof.
     if (ipol.is_null())
     {
-      ipol = d_ctx.solver_engine().interpolant(A, B, ppA, ppB);
+      ipol = d_ctx.solver_engine().interpolant(ppA, ppB);
       ++d_stats.interpolant_bitlevel;
     }
   }

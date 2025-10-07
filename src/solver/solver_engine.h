@@ -79,15 +79,10 @@ class SolverEngine
    *   - and its satisfiability must have been determined via solve() as unsat
    *     before calling this function.
    *
-   * @param A   The set of original formulas A.
-   * @param B   The set of original formulas B.
    * @param ppA The set of formulas A, given as preprocessed assertions.
    * @param ppB The set of formulas B, given as preprocessed assertions.
    */
-  Node interpolant(const std::unordered_set<Node>& A,
-                   const std::unordered_set<Node>& B,
-                   const std::vector<Node>& ppA,
-                   const std::vector<Node>& ppB);
+  Node interpolant(const std::vector<Node>& ppA, const std::vector<Node>& ppB);
 
   /**
    * Add a lemma.

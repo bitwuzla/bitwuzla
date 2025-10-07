@@ -56,8 +56,6 @@ class BvSolver : public Solver, public BvSolverInterface
    *   - and its satisfiability must have been determined via solve() as unsat
    *     before calling this function.
    *
-   * @param A   The set of original formulas A.
-   * @param B   The set of original formulas B.
    * @param ppA The set of formulas A, given as preprocessed assertions.
    * @param ppB The set of formulas B, given as preprocessed assertions.
    *
@@ -67,10 +65,7 @@ class BvSolver : public Solver, public BvSolverInterface
    *       needs to process the assertions that have actually been processed
    *       during solving.
    */
-  Node interpolant(const std::unordered_set<Node>& A,
-                   const std::unordered_set<Node>& B,
-                   const std::vector<Node>& ppA,
-                   const std::vector<Node>& ppB);
+  Node interpolant(const std::vector<Node>& ppA, const std::vector<Node>& ppB);
 
   /** Get overall BV solver statistics. */
   const auto& statistics() const { return d_stats; }

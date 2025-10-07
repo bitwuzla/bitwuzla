@@ -176,13 +176,11 @@ BvSolver::unsat_core(std::vector<Node>& core) const
 /* --- BvSolver private ----------------------------------------------------- */
 
 Node
-BvSolver::interpolant(const std::unordered_set<Node>& A,
-                      const std::unordered_set<Node>& B,
-                      const std::vector<Node>& ppA,
+BvSolver::interpolant(const std::vector<Node>& ppA,
                       const std::vector<Node>& ppB)
 {
   assert(d_produce_interpolants);
-  return d_bitblast_solver.interpolant(A, B, ppA, ppB);
+  return d_bitblast_solver.interpolant(ppA, ppB);
 }
 
 BvSolver::Statistics::Statistics(util::Statistics& stats)

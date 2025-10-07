@@ -309,9 +309,7 @@ BvBitblastSolver::pop()
 }
 
 Node
-BvBitblastSolver::interpolant(const std::unordered_set<Node>& A,
-                              const std::unordered_set<Node>& B,
-                              const std::vector<Node>& ppA,
+BvBitblastSolver::interpolant(const std::vector<Node>& ppA,
                               const std::vector<Node>& ppB)
 {
 #ifndef NDEBUG
@@ -322,7 +320,7 @@ BvBitblastSolver::interpolant(const std::unordered_set<Node>& A,
   }
 #endif
   d_bv_interpolator.reset(new BvInterpolator(d_env, d_solver_state, *this));
-  return d_bv_interpolator->interpolant(A, B, ppA, ppB);
+  return d_bv_interpolator->interpolant(ppA, ppB);
 }
 
 /* --- BvBitblastSolver private --------------------------------------------- */

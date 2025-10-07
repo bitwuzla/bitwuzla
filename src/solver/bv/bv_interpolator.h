@@ -51,8 +51,6 @@ class BvInterpolator
    *   - and its satisfiability must have been determined via solve() as unsat
    *     before calling this function.
    *
-   * @param A   The set of original formulas A.
-   * @param B   The set of original formulas B.
    * @param ppA The set of formulas A, given as preprocessed assertions.
    * @param ppB The set of formulas B, given as preprocessed assertions.
    *
@@ -62,10 +60,7 @@ class BvInterpolator
    *       needs to process the assertions that have actually been processed
    *       during solving.
    */
-  Node interpolant(const std::unordered_set<Node>& A,
-                   const std::unordered_set<Node>& B,
-                   const std::vector<Node>& ppA,
-                   const std::vector<Node>& ppB);
+  Node interpolant(const std::vector<Node>& ppA, const std::vector<Node>& ppB);
 
   /** Get statistics. */
   const auto& statistics() const { return d_stats; }
@@ -116,16 +111,12 @@ class BvInterpolator
    * @param term_labels Map from terms to variable labels. If any input of a
    *                    term is labeled as A/B-local, the term is labeled as
    *                    A/B-local, and GLOBAL otherwise.
-   * @param A           The set of original A assertions.
-   * @param B           The set of original B assertions.
    * @param ppA         The set of preprocessed A assertions.
    * @param ppB         The set of preprocessed B assertions.
    */
   void label_vars(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
       std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
-      const std::unordered_set<Node>& A,
-      const std::unordered_set<Node>& B,
       const std::vector<Node>& ppA,
       const std::vector<Node>& ppB);
 
@@ -149,7 +140,7 @@ class BvInterpolator
   void label_consts(
       std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
       std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
-      const std::unordered_set<Node>& nodes,
+      const std::vector<Node>& nodes,
       sat::interpolants::VariableKind kind);
   /**
    * Label the bits of the bit-vector representation of BvSolver leafs (that are

@@ -48,9 +48,7 @@ BvInterpolator::BvInterpolator(Env& env,
 BvInterpolator::~BvInterpolator() {}
 
 Node
-BvInterpolator::interpolant(const std::unordered_set<Node>& A,
-                            const std::unordered_set<Node>& B,
-                            const std::vector<Node>& ppA,
+BvInterpolator::interpolant(const std::vector<Node>& ppA,
                             const std::vector<Node>& ppB)
 {
   // A set empty after preprocessing
@@ -78,7 +76,7 @@ BvInterpolator::interpolant(const std::unordered_set<Node>& A,
     label_clauses(clause_labels, ppA, ClauseKind::A);
     label_clauses(clause_labels, ppB, ClauseKind::B);
 
-    label_vars(var_labels, term_labels, A, B, ppA, ppB);
+    label_vars(var_labels, term_labels, ppA, ppB);
 
     for (const auto& a : d_lemmas)
     {
@@ -359,7 +357,7 @@ void
 BvInterpolator::label_consts(
     std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
     std::unordered_map<Node, VariableKind>& term_labels,
-    const std::unordered_set<Node>& nodes,
+    const std::vector<Node>& nodes,
     sat::interpolants::VariableKind kind)
 {
   std::unordered_map<Node, bool> cache;
@@ -482,8 +480,6 @@ void
 BvInterpolator::label_vars(
     std::unordered_map<int64_t, VariableKind>& var_labels,
     std::unordered_map<Node, VariableKind>& term_labels,
-    const std::unordered_set<Node>& A,
-    const std::unordered_set<Node>& B,
     const std::vector<Node>& ppA,
     const std::vector<Node>& ppB)
 {
@@ -492,11 +488,14 @@ BvInterpolator::label_vars(
   // This is necessary as we need to step all the way down in case of abstracted
   // terms. Else, if we only traversed through the bits of a node, we would cut
   // off above the consts that occur in the abstracted term.
-  // We do this with respect to the original assertions to determine their
-  // 'original' labeling (preprocessing passes may transform assertions such
-  // that the label and/or the 'shared-ness' of symbols may change).
-  label_consts(var_labels, term_labels, A, VariableKind::A);
-  label_consts(var_labels, term_labels, B, VariableKind::B);
+  // We do this with respect to the preprocessed assertions, which is safe since
+  // we only allow assertion-local simplifications in preprocessing when
+  // interpolants generation is enabled. Simplifications due to assertion-local
+  // preprocessing will not transform assertions such that the label and/or
+  // shared-ness of symbols will change across A/B (if shared-ness is simplified
+  // away, the shared symbol is not relevant for the interpolant).
+  label_consts(var_labels, term_labels, ppA, VariableKind::A);
+  label_consts(var_labels, term_labels, ppB, VariableKind::B);
 
   // Map terms that are not bit-blasted to a label. This is necessary to
   // determine the label of abstracted terms.

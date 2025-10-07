@@ -184,9 +184,7 @@ SolverEngine::unsat_core(std::vector<Node>& core) const
 }
 
 Node
-SolverEngine::interpolant(const std::unordered_set<Node>& A,
-                          const std::unordered_set<Node>& B,
-                          const std::vector<Node>& ppA,
+SolverEngine::interpolant(const std::vector<Node>& ppA,
                           const std::vector<Node>& ppB)
 {
   if (d_am)
@@ -204,9 +202,9 @@ SolverEngine::interpolant(const std::unordered_set<Node>& A,
     {
       a = d_am->process_assertion(a, false);
     }
-    return d_am->remove_abstractions(d_bv_solver.interpolant(A, B, _ppA, _ppB));
+    return d_am->remove_abstractions(d_bv_solver.interpolant(_ppA, _ppB));
   }
-  return d_bv_solver.interpolant(A, B, ppA, ppB);
+  return d_bv_solver.interpolant(ppA, ppB);
 }
 
 bool
