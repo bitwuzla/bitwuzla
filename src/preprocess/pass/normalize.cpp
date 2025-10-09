@@ -1423,14 +1423,18 @@ PassNormalize::process(const Node& node)
         Node res = utils::rebuild_node(nm, cur, children);
         Node prev_res1, prev_res2, prev_res3, prev_res4;
 
-#ifndef NDEBUG
         std::unordered_set<Node> norm_cache;
-#endif
-
         // Apply normalization until fixed point.
         while (true)
         {
-          assert(norm_cache.insert(res).second);
+#ifndef NDEBUG
+          assert(norm_cache.insert(res).second);  // Fixed point issue
+#else
+          if (!norm_cache.insert(res).second)
+          {
+            break;
+          }
+#endif
           // normalize: sum = sum
           // normalize: product = product
           if (prev_res1 != res && res.kind() == Kind::EQUAL
