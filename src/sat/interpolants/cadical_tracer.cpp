@@ -292,6 +292,16 @@ CadicalTracer::get_interpolant(
         ss << "  " << ant;
       }
       ss << " ]";
+      if (clause_labels.find(d_clauses[p].d_aig_id) != clause_labels.end())
+      {
+        ss << " [" << clause_labels.at(d_clauses[p].d_aig_id) << "]";
+      }
+      else if (d_clauses[p].d_clause.size() > 1
+               && clause_labels.find(-d_clauses[p].d_aig_id)
+                      != clause_labels.end())
+      {
+        ss << " [" << clause_labels.at(-d_clauses[p].d_aig_id) << "]";
+      }
       Log(2) << ss.str();
     }
     Log(2);
