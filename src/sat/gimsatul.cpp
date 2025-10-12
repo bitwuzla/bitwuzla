@@ -108,7 +108,7 @@ Gimsatul::solve()
   }
   d_assumptions.clear();
 
-  d_gimsatul = gimsatul_init(d_nthreads, d_max_var);
+  d_gimsatul = gimsatul_init(d_nthreads, max_var);
   gimsatul_add_clauses(
       d_gimsatul, max_var, d_literals.size(), d_literals.data(), num_clauses);
   d_literals.resize(size_before_assumptions);
