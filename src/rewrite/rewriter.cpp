@@ -1072,6 +1072,7 @@ Rewriter::rewrite_eq(const Node& node)
     BZLA_APPLY_RW_RULE(EQUAL_CONST_BV_ADD);
     BZLA_APPLY_RW_RULE(EQUAL_CONST_BV_MUL);
     BZLA_APPLY_RW_RULE(EQUAL_CONST_BV_NOT);
+    BZLA_APPLY_RW_RULE(EQUAL_BV_COMP_BV1);
   }
   if (d_level >= 2)
   {
@@ -1999,6 +2000,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     CASE(EQUAL_CONST_BV_ADD);
     CASE(EQUAL_CONST_BV_MUL);
     CASE(EQUAL_CONST_BV_NOT);
+    CASE(EQUAL_BV_COMP_BV1);
     CASE(EQUAL_BV_ADD);
     CASE(EQUAL_BV_ADD_ADD);
     CASE(EQUAL_BV_CONCAT);

@@ -853,6 +853,30 @@ RewriteRule<RewriteRuleKind::EQUAL_CONST_BV_NOT>::_apply(Rewriter& rewriter,
   return res;
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::EQUAL_BV_COMP_BV1>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  if ((node[0].is_value() && node[1].kind() == Kind::BV_COMP)
+      || (node[1].is_value() && node[0].kind() == Kind::BV_COMP))
+  {
+    size_t idx       = node[0].is_value() ? 0 : 1;
+    const Node& val  = node[idx];
+    const Node& comp = node[1 - idx];
+
+    if (val.value<BitVector>().is_true())
+    {
+      return rewriter.mk_node(Kind::EQUAL, {comp[0], comp[1]});
+    }
+    else
+    {
+      return rewriter.mk_node(Kind::DISTINCT, {comp[0], comp[1]});
+    }
+  }
+  return node;
+}
+
 /**
  * match:  (= (bvadd a b) a)
  * result: (= b (_ bv0 N))

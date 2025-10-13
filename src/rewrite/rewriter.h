@@ -361,6 +361,7 @@ enum class RewriteRuleKind
   EQUAL_CONST_BV_ADD,
   EQUAL_CONST_BV_MUL,
   EQUAL_CONST_BV_NOT,
+  EQUAL_BV_COMP_BV1,
   // Level 2+
   EQUAL_BV_ADD,
   EQUAL_BV_ADD_ADD,
