@@ -31,6 +31,10 @@ class CheckInterpolant
    */
   bool check(const std::unordered_set<Node>& A, const Node& interpolant);
 
+  bool check_inductive(const Node& I_prev,
+                       const std::unordered_set<Node>& A,
+                       const Node& I);
+
  private:
   SolvingContext& d_ctx;
   util::Logger& d_logger;

@@ -190,15 +190,27 @@ SolvingContext::get_interpolants(
     std::unordered_set<Node> A;
     for (size_t i = 0, size = ipols.size(); i < size; ++i)
     {
-      A.insert(partitions[i].begin(), partitions[i].end());
-      assert(!ipols[i].is_null());
-      util::Timer timer(d_stats.time_check_interpolant);
-      check::CheckInterpolant ci(*this);
-      auto res = ci.check(A, ipols[i]);
-      assert(res);
-      if (!res)
       {
-        throw Error("interpolant check failed");
+        A.insert(partitions[i].begin(), partitions[i].end());
+        assert(!ipols[i].is_null());
+        util::Timer timer(d_stats.time_check_interpolant);
+        check::CheckInterpolant ci(*this);
+        auto res = ci.check(A, ipols[i]);
+        assert(res);
+        if (!res)
+        {
+          throw Error("interpolant check failed");
+        }
+      }
+      if (i > 0)
+      {
+        util::Timer timer(d_stats.time_check_interpolant_inductive);
+        check::CheckInterpolant ci(*this);
+        auto res = ci.check_inductive(ipols[i - 1], partitions[i], ipols[i]);
+        if (!res)
+        {
+          throw Error("inductive interpolant check failed");
+        }
       }
     }
   }
@@ -442,6 +454,8 @@ SolvingContext::Statistics::Statistics(util::Statistics& stats)
           "solving_context::time_check_unsat_core")),
       time_check_interpolant(stats.new_stat<util::TimerStatistic>(
           "solving_context::time_check_interpolant")),
+      time_check_interpolant_inductive(stats.new_stat<util::TimerStatistic>(
+          "solving_context::time_check_interpolant_inductive")),
       max_memory(stats.new_stat<uint64_t>("solving_context::max_memory")),
       formula_kinds_pre(
           stats.new_stat<util::HistogramStatistic>("formula::pre::node")),

@@ -198,6 +198,7 @@ class SolvingContext
     util::TimerStatistic& time_check_model;
     util::TimerStatistic& time_check_unsat_core;
     util::TimerStatistic& time_check_interpolant;
+    util::TimerStatistic& time_check_interpolant_inductive;
     uint64_t& max_memory;
     util::HistogramStatistic& formula_kinds_pre;
     util::HistogramStatistic& formula_kinds_post;

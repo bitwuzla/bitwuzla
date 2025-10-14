@@ -199,4 +199,47 @@ CheckInterpolant::check(const std::unordered_set<Node>& A,
 
   return true;
 }
+
+bool
+CheckInterpolant::check_inductive(const Node& I_prev,
+                                  const std::unordered_set<Node>& A,
+                                  const Node& I)
+{
+  if (!d_ctx.options().dbg_check_interpolant())
+  {
+    return true;
+  }
+
+  Log(1);
+  Log(1) << "*** check interpolant inductive";
+  Log(1);
+
+  NodeManager& nm = d_ctx.env().nm();
+  option::Options opts;
+  opts.dbg_check_interpolant.set(false);
+  SolvingContext check_ctx(nm, opts, "chkinterpol");
+  check_ctx.env().configure_terminator(d_ctx.env().terminator());
+  for (const auto& a : A)
+  {
+    check_ctx.assert_formula(a);
+  }
+  if (d_logger.is_log_enabled(1))
+  {
+    size_t i = 0;
+    for (const auto& a : A)
+    {
+      Log(1) << "A[" << i++ << "]: " << a;
+    }
+    i = 0;
+  }
+  Log(1) << "I: " << I;
+  Log(1);
+  check_ctx.assert_formula(I_prev);
+  check_ctx.assert_formula(nm.mk_node(node::Kind::NOT, {I}));
+  Log(1) << "check: (and I_prev A_inc (not I))";
+  Result res = check_ctx.solve();
+  Log(1) << "(and I_prev A_inc (not I)): " << res;
+  return res == Result::UNSAT;
+}
+
 }  // namespace bzla::check
