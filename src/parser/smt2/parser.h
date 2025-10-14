@@ -226,6 +226,11 @@ class Parser : public bzla::parser::Parser
    */
   bool parse_command_get_interpolant(bool parse_only);
   /**
+   * Parse get-interpolants command.
+   * @return True if command was parsed without an error.
+   */
+  bool parse_command_get_interpolants(bool parse_only);
+  /**
    * Parse get-model command.
    * @return True if command was parsed without an error.
    */

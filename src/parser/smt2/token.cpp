@@ -89,6 +89,7 @@ to_string(bzla::parser::smt2::Token token)
     case Token::GET_ASSIGNMENT: return "get-assignment";
     case Token::GET_INFO: return "get-info";
     case Token::GET_INTERPOLANT: return "get-interpolant";
+    case Token::GET_INTERPOLANTS: return "get-interpolants";
     case Token::GET_OPTION: return "get-option";
     case Token::GET_MODEL: return "get-model";
     case Token::GET_PROOF: return "get-proof";

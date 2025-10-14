@@ -230,6 +230,7 @@ SymbolTable::init_commands()
   insert(Token::GET_ASSIGNMENT);
   insert(Token::GET_INFO);
   insert(Token::GET_INTERPOLANT);
+  insert(Token::GET_INTERPOLANTS);
   insert(Token::GET_MODEL);
   insert(Token::GET_OPTION);
   insert(Token::GET_PROOF);

@@ -300,6 +300,9 @@ Parser::parse_command(bool parse_only)
     case Token::GET_INTERPOLANT:
       res = parse_command_get_interpolant(parse_only);
       break;
+    case Token::GET_INTERPOLANTS:
+      res = parse_command_get_interpolants(parse_only);
+      break;
     case Token::GET_MODEL: res = parse_command_get_model(); break;
     case Token::GET_UNSAT_ASSUMPTIONS:
       res = parse_command_get_unsat_assumptions();
@@ -815,6 +818,77 @@ Parser::parse_command_get_interpolant(bool parse_only)
   {
     bitwuzla::Term interpolant = d_bitwuzla->get_interpolant(args);
     (*d_out) << interpolant << std::endl;
+    d_out->flush();
+  }
+  return true;
+}
+
+bool
+Parser::parse_command_get_interpolants(bool parse_only)
+{
+  init_logic();
+  init_bitwuzla();
+
+  if (!d_options.get(bitwuzla::Option::PRODUCE_INTERPOLANTS))
+  {
+    return error("interpolant generation is not enabled");
+  }
+
+  if (d_result != bitwuzla::Result::UNSAT)
+  {
+    return true;
+  }
+
+  std::vector<std::vector<bitwuzla::Term>> partitions;
+
+  Token la = next_token();
+  while (true)
+  {
+    std::vector<bitwuzla::Term> partition;
+
+    if (!check_token(la))
+    {
+      return false;
+    }
+    if (la != Token::LPAR)
+    {
+      return error("missing '('");
+    }
+
+    if (!parse_term_list(partition, nullptr))
+    {
+      return false;
+    }
+
+    if (partition.empty())
+    {
+      return error("empty term list");
+    }
+
+    for (size_t i = 0, n = partition.size(); i < n; ++i)
+    {
+      if (!partition[i].sort().is_bool())
+      {
+        return error_arg("term at index " + std::to_string(i)
+                         + " is not a formula");
+      }
+    }
+    partitions.emplace_back(std::move(partition));
+    la = next_token();
+    if (la == Token::RPAR)
+    {
+      break;
+    }
+  }
+
+  if (!parse_only)
+  {
+    std::vector<bitwuzla::Term> interpolants =
+        d_bitwuzla->get_interpolants(partitions);
+    for (const auto& itp : interpolants)
+    {
+      (*d_out) << itp << std::endl;
+    }
     d_out->flush();
   }
   return true;
