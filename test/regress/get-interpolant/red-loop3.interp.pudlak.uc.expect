@@ -1,0 +1,2 @@
+unsat
+(not (and (= st #b1) (= i #b0)))
