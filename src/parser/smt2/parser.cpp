@@ -885,10 +885,12 @@ Parser::parse_command_get_interpolants(bool parse_only)
   {
     std::vector<bitwuzla::Term> interpolants =
         d_bitwuzla->get_interpolants(partitions);
+    (*d_out) << "(" << std::endl;
     for (const auto& itp : interpolants)
     {
       (*d_out) << itp << std::endl;
     }
+    (*d_out) << ")" << std::endl;
     d_out->flush();
   }
   return true;
