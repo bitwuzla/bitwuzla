@@ -1682,6 +1682,48 @@ Bitwuzla::get_interpolant(const std::vector<Term>& A)
   return res;
 }
 
+std::vector<Term>
+Bitwuzla::get_interpolants(const std::vector<std::vector<Term>>& A)
+{
+  BITWUZLA_CHECK_NOT_NULL(d_ctx);
+  BITWUZLA_CHECK_OPT_PRODUCE_INTERPOLANTS(d_ctx->options());
+  BITWUZLA_CHECK_LAST_CALL_UNSAT("get interpolants");
+  BITWUZLA_CHECK(!A.empty())
+      << "expected non-empty set of partitions as argument to get-interpolants";
+
+  std::vector<std::unordered_set<bzla::Node>> partitions;
+  if (!A.empty())
+  {
+    const auto& orig_assertions = d_ctx->original_assertions();
+    std::unordered_set<bzla::Node> _orig_assertions(orig_assertions.begin(),
+                                                    orig_assertions.end());
+    for (size_t i = 0, size = A.size(); i < size; ++i)
+    {
+      const auto& part = A[i];
+      std::unordered_set<bzla::Node> _A;
+      for (size_t j = 0, size = part.size(); j < size; ++j)
+      {
+        const Term& term = A[i][j];
+        BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
+            term,
+            "assertion at position " + std::to_string(i) + " in partition "
+                + std::to_string(j));
+        BITWUZLA_CHECK(_orig_assertions.find(*term.d_node)
+                       != _orig_assertions.end())
+            << " assertion at position " << i << " in partition " << j
+            << " is not currently asserted";
+        _A.insert(*term.d_node);
+      }
+      partitions.emplace_back(std::move(_A));
+    }
+  }
+  std::vector<Term> res;
+  BITWUZLA_TRY_CATCH_BEGIN;
+  res = Term::node_vector_to_terms(d_ctx->get_interpolants(partitions));
+  BITWUZLA_TRY_CATCH_END;
+  return res;
+}
+
 void
 Bitwuzla::print_formula(std::ostream &out, const std::string &format) const
 {

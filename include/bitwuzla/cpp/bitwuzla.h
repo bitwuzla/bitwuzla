@@ -1772,6 +1772,34 @@ class Bitwuzla
    * @see `check_sat()`
    */
   Term get_interpolant(const std::vector<Term>& A);
+  /**
+   * Get an inductive sequence of interpolants <I_1, ..., I_n> given the current
+   * set of assertions F and a sequence of partitions.
+   *
+   * The sequence of partition is given as a list of set increments of asserted
+   * formulas {F_1, F_2, ..., F_n}, which expands into sets of partitions
+   * {(A_1, B_1), (A_2, B_2), ..., (A_n, B_n)} such that
+   *
+   *   A_1 = F_1
+   *   A_2 = F_1 \cup F_2
+   *   ...
+   *   A_n = F_1 \cup F_2 \cup ... \cup F_n
+   *
+   * and B_i = F \ A_i with (and A_i B_i) unsat.
+   *
+   * The resulting sequence of interpolants is inductive, i.e., it holds that
+   * (=> (and I_i F_{i+1}) I_{i+1}).
+   *
+   * Requires that the last `check_sat()` query returned `Result::UNSAT`.
+   *
+   * @note Assertions in A_i must be currently asserted formulas.
+   * @note Current SAT state must be unsat.
+   * @param partitions The set of partitions.
+   * @return The interpolation sequence.
+   *
+   * @see `check_sat()`
+   */
+  std::vector<Term> get_interpolants(const std::vector<std::vector<Term>>& A);
 
   /**
    * Print the current input formula to the given output stream.
