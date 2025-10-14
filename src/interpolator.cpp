@@ -138,6 +138,21 @@ Interpolator::get_interpolant(const std::unordered_set<Node>& A)
   return ipol;
 }
 
+std::vector<Node>
+Interpolator::get_interpolants(
+    const std::vector<std::unordered_set<Node>>& partitions)
+{
+  std::vector<Node> res;
+  std::unordered_set<Node> A;
+
+  for (const auto& p : partitions)
+  {
+    A.insert(p.begin(), p.end());
+    res.push_back(get_interpolant(A));
+  }
+  return res;
+}
+
 Node
 Interpolator::interpolant_by_substitution(const std::unordered_set<Node>& A,
                                           const std::unordered_set<Node>& B,

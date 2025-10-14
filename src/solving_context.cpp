@@ -168,6 +168,13 @@ SolvingContext::get_unsat_core()
 Node
 SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
 {
+  return get_interpolants({A})[0];
+}
+
+std::vector<Node>
+SolvingContext::get_interpolants(
+    const std::vector<std::unordered_set<Node>>& partitions)
+{
   assert(d_env.options().produce_interpolants());
   assert(d_sat_state == Result::UNSAT);
 
@@ -175,22 +182,29 @@ SolvingContext::get_interpolant(const std::unordered_set<Node>& A)
   set_resource_limits();
 
   Interpolator interpol(*this);
-  Node ipol = interpol.get_interpolant(A);
+  std::vector<Node> ipols = interpol.get_interpolants(partitions);
 
-  if (!ipol.is_null() && options().dbg_check_interpolant())
+  if (options().dbg_check_interpolant())
   {
-    util::Timer timer(d_stats.time_check_interpolant);
-    check::CheckInterpolant ci(*this);
-    auto res = ci.check(A, ipol);
-    assert(res);
-    if (!res)
+    assert(ipols.size() == partitions.size());
+    std::unordered_set<Node> A;
+    for (size_t i = 0, size = ipols.size(); i < size; ++i)
     {
-      throw Error("interpolant check failed");
+      A.insert(partitions[i].begin(), partitions[i].end());
+      assert(!ipols[i].is_null());
+      util::Timer timer(d_stats.time_check_interpolant);
+      check::CheckInterpolant ci(*this);
+      auto res = ci.check(A, ipols[i]);
+      assert(res);
+      if (!res)
+      {
+        throw Error("interpolant check failed");
+      }
     }
   }
 
   d_stats.max_memory = util::maximum_memory_usage();
-  return ipol;
+  return ipols;
 }
 
 void
