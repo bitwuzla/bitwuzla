@@ -180,6 +180,9 @@ tests_smt2 = [
   ['get-interpolant/murxla-e4a11d9f2204c5fc.min.smt2'],
   ['get-interpolant/murxla-edffe3592d6e7ed5.min.smt2'],
   ['get-interpolant/murxla-54fadb5bb5e62d88.min.smt2'],
+  ['get-interpolant/murxla-1ab3c57122752408.min.smt2'],
+  ['get-interpolant/murxla-1ab3c57122752408.min2.smt2'],
+  ['get-interpolant/murxla-556e2bd662ece5fe.smt2'],
 
   ## get-model
   ['get-model/regr-5smod3.btor.smt2', ['--print-model']],

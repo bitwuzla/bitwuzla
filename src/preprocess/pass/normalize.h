@@ -30,6 +30,8 @@ class PassNormalize : public PreprocessingPass
   void apply(AssertionVector& assertions) override;
   Node process(const Node& node) override;
 
+  void disable() { d_disabled = true; };
+
  private:
   /**
    * Compute the  number of occurrences of the leafs of a
@@ -169,6 +171,9 @@ class PassNormalize : public PreprocessingPass
    */
   std::unordered_map<Node, Node> d_cache;
 
+  // FIXME: Not required anymore once new preprocessing infrastructure is merged
+  std::unordered_map<Node, Node> d_assertion_cache;
+
   std::vector<Node> d_adder_chains;
   std::unordered_map<Node, uint64_t> d_adder_chains_length;
   std::unordered_set<Node> d_adder_chains_cache;
@@ -178,6 +183,8 @@ class PassNormalize : public PreprocessingPass
 
   /** Indicates whether we compute a bit-blasting score. */
   bool d_enable_scoring = true;
+  /** Only query caches for already processed assertions. */
+  bool d_disabled = false;
 
   struct Statistics
   {
