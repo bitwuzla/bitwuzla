@@ -28,7 +28,7 @@ AssertionStack::push_back(const Node& assertion)
   d_assertions.emplace_back(assertion, d_control.size());
   if (assertion.is_value() && !assertion.value<bool>())
   {
-    d_inconsistent.back() = true;
+    set_inconsistent(d_inconsistent.size() - 1);
   }
   return true;
 }
@@ -45,7 +45,7 @@ AssertionStack::replace(size_t index, const Node& replacement)
   }
   if (replacement.is_value() && !replacement.value<bool>())
   {
-    d_inconsistent[level] = true;
+    set_inconsistent(level);
   }
 
   d_assertions[index].first = replacement;
@@ -64,7 +64,7 @@ AssertionStack::insert_at_level(size_t level, const Node& assertion)
 
   if (assertion.is_value() && !assertion.value<bool>())
   {
-    d_inconsistent[level] = true;
+    set_inconsistent(level);
   }
 
   // Add assertion to given level and update control stack.
@@ -153,6 +153,25 @@ AssertionStack::pop()
     {
       view->set_index(size);
     }
+  }
+}
+
+/* --- AssertionStack private ----------------------------------------------- */
+
+void
+AssertionStack::set_inconsistent(size_t level)
+{
+  // If a lower assertion level is inconsistent, all levels above are too.
+  //
+  // The assertion stack uses the user-facing backtrack manager. However,
+  // the preprocessor uses its own backtrack manager and syncs scopes
+  // while preprocessing. Assertions are processed in order and can be
+  // simplified to false at any given level, not only the most recent one.
+  // Thus, we have to set the inconsistent flag for all levels that are in an
+  // inconsistent state starting from given level.
+  for (size_t i = level, size = d_inconsistent.size(); i < size; ++i)
+  {
+    d_inconsistent[i] = true;
   }
 }
 

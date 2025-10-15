@@ -186,6 +186,9 @@ class AssertionStack : public Backtrackable
   void pop() override;
 
  private:
+  /** Set inconsistent flag for all levels >= level. */
+  void set_inconsistent(size_t level);
+
   /** Assertion associated with their current scope level. */
   std::vector<std::pair<Node, size_t>> d_assertions;
   /** Flag to indicate whether assertions at given level are inconsistent. */
