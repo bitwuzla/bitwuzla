@@ -183,6 +183,7 @@ tests_smt2 = [
   ['get-interpolant/murxla-1ab3c57122752408.min.smt2'],
   ['get-interpolant/murxla-1ab3c57122752408.min2.smt2'],
   ['get-interpolant/murxla-556e2bd662ece5fe.smt2'],
+  ['get-interpolant/bug-vgasim.min.smt2'],
 
   ## get-model
   ['get-model/regr-5smod3.btor.smt2', ['--print-model']],

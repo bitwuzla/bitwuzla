@@ -87,12 +87,11 @@ AssertionTracker::find_children(const Node& assertion) const
     // Trace parents
     auto it = d_tracked_children.find(n);
 
-    if (it == d_tracked_children.end()
-        || (it->second.size() == 1 && it->second[0] == n))
-    {
-      children.push_back(n);
-    }
-    else
+    // Include all intermediate nodes, which will be filtered out at a later
+    // stage. We have to include them since at this point we don't know at which
+    // level the node is asserted.
+    children.push_back(n);
+    if (it != d_tracked_children.end())
     {
       visit.insert(visit.end(), it->second.begin(), it->second.end());
     }
