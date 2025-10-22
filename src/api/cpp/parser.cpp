@@ -21,17 +21,19 @@ namespace bitwuzla::parser {
 
 Exception::Exception(const std::string &msg) : bitwuzla::Exception(msg) {}
 
-Exception::Exception(const std::stringstream &stream)
+Exception::Exception(const std::stringstream& stream)
     : bitwuzla::Exception(stream.str())
 {
 }
 
 /* Parser public ------------------------------------------------------------ */
 
-Parser::Parser(TermManager &tm,
-               Options &options,
-               const std::string &language,
-               std::ostream *out)
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_GIMSATUL) || defined(BZLA_USE_KISSAT)
+Parser::Parser(TermManager& tm,
+               Options& options,
+               const std::string& language,
+               std::ostream* out)
 {
   BITWUZLA_CHECK(language == "smt2" || language == "btor2")
       << "invalid input language, expected 'smt2' or 'btor2'";
@@ -43,6 +45,29 @@ Parser::Parser(TermManager &tm,
   else
   {
     d_parser.reset(new bzla::parser::btor2::Parser(tm, options, out));
+  }
+  BITWUZLA_CHECK(d_parser->error_msg().empty()) << d_parser->error_msg();
+}
+#endif
+
+Parser::Parser(TermManager& tm,
+               SatSolverFactory& sat_factory,
+               Options& options,
+               const std::string& language,
+               std::ostream* out)
+{
+  BITWUZLA_CHECK(language == "smt2" || language == "btor2")
+      << "invalid input language, expected 'smt2' or 'btor2'";
+  BITWUZLA_CHECK_NOT_NULL(out);
+  if (language == "smt2")
+  {
+    d_parser.reset(
+        new bzla::parser::smt2::Parser(tm, &sat_factory, options, out));
+  }
+  else
+  {
+    d_parser.reset(
+        new bzla::parser::btor2::Parser(tm, &sat_factory, options, out));
   }
   BITWUZLA_CHECK(d_parser->error_msg().empty()) << d_parser->error_msg();
 }

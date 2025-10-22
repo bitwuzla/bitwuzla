@@ -32,6 +32,16 @@ Parser::Parser(bitwuzla::TermManager& tm,
   d_bv1_zero         = d_tm.mk_bv_zero(bv1);
 }
 
+Parser::Parser(bitwuzla::TermManager& tm,
+               bitwuzla::SatSolverFactory* sat_factory,
+               bitwuzla::Options& options,
+               std::ostream* out)
+    : bzla::parser::Parser(tm, sat_factory, options, out)
+{
+  throw bzla::Unsupported(
+      "C bindings for external SAT solver factory not supported");
+}
+
 Parser::~Parser() {}
 
 void

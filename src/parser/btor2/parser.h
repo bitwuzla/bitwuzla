@@ -22,6 +22,7 @@ class Parser : public bzla::parser::Parser
  public:
   /**
    * Constructor.
+   * @param tm       The associated term manager instance.
    * @param options  The associated Bitwuzla options. Parser creates Bitwuzla
    *                 instance from these options.
    * @param out      The output stream.
@@ -29,6 +30,20 @@ class Parser : public bzla::parser::Parser
   Parser(bitwuzla::TermManager& tm,
          bitwuzla::Options& options,
          std::ostream* out = &std::cout);
+  /**
+   * Constructor.
+   * @param tm          The associated term manager instance.
+   * @param sat_factory The external SAT solver factory. Env takes ownership of
+   *                    this pointer.
+   * @param options     The associated Bitwuzla options. Parser creates Bitwuzla
+   *                    instance from these options.
+   * @param out         The output stream.
+   */
+  Parser(bitwuzla::TermManager& tm,
+         bitwuzla::SatSolverFactory* sat_factory,
+         bitwuzla::Options& options,
+         std::ostream* out = &std::cout);
+
   /** Destructor. */
   ~Parser();
 

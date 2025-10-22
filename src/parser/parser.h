@@ -27,6 +27,7 @@ class Parser
  public:
   /**
    * Constructor.
+   * @param tm       The associated term manager instance.
    * @param options  The associated Bitwuzla options. Parser creates Bitwuzla
    *                 instance from these options.
    * @param out      The output stream.
@@ -45,6 +46,32 @@ class Parser
         d_logger(d_log_level, d_verbosity, std::cerr),
         d_out(out),
         d_diag_out(&std::cerr)
+  {
+  }
+  /**
+   * Constructor.
+   * @param tm          The associated term manager instance.
+   * @param sat_factory The external SAT solver factory. Env takes ownership of
+   *                    this pointer.
+   * @param options  The associated Bitwuzla options. Parser creates Bitwuzla
+   *                 instance from these options.
+   * @param out      The output stream.
+   * @note It is not safe to reuse a parser instance after a parse error.
+   *       Subsequent parse queries after a parse error will return with
+   *       an error.
+   */
+  Parser(bitwuzla::TermManager& tm,
+         bitwuzla::SatSolverFactory* sat_factory,
+         bitwuzla::Options& options,
+         std::ostream* out = &std::cout)
+      : d_options_orig(options),
+        d_options(options),
+        d_tm(tm),
+        d_sat_factory(sat_factory),
+        d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
+        d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
+        d_logger(d_log_level, d_verbosity, std::cerr),
+        d_out(out)
   {
   }
 
@@ -150,7 +177,18 @@ class Parser
   {
     if (!d_bitwuzla)
     {
-      d_bitwuzla.reset(new bitwuzla::Bitwuzla(d_tm, d_options));
+      if (d_sat_factory)
+      {
+        d_bitwuzla.reset(
+            new bitwuzla::Bitwuzla(d_tm, *d_sat_factory, d_options));
+      }
+      else
+      {
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_GIMSATUL) || defined(BZLA_USE_KISSAT)
+        d_bitwuzla.reset(new bitwuzla::Bitwuzla(d_tm, d_options));
+#endif
+      }
       if (d_terminator)
       {
         d_bitwuzla->configure_terminator(d_terminator);
@@ -173,6 +211,8 @@ class Parser
   bitwuzla::Options d_options;
   /** The associated term manager instance. */
   bitwuzla::TermManager& d_tm;
+  /** The associated external SAT solver factory, if any. */
+  bitwuzla::SatSolverFactory* d_sat_factory = nullptr;
   /** The Bitwuzla instance. */
   std::shared_ptr<bitwuzla::Bitwuzla> d_bitwuzla = nullptr;
   /** The Bitwuzla terminator. */

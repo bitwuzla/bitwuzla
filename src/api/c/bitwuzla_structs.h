@@ -19,6 +19,8 @@ extern "C" {
 #include <cassert>
 #include <fstream>
 
+#include "util/exceptions.h"
+
 /* -------------------------------------------------------------------------- */
 
 class CTerminator : public bitwuzla::Terminator
@@ -163,6 +165,10 @@ struct Bitwuzla
 {
   Bitwuzla(BitwuzlaTermManager *tm, const BitwuzlaOptions *options)
   {
+    (void) tm;
+    (void) options;
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_GIMSATUL) || defined(BZLA_USE_KISSAT)
     if (options)
     {
       d_bitwuzla = new bitwuzla::Bitwuzla(tm->d_tm, options->d_options);
@@ -173,6 +179,10 @@ struct Bitwuzla
     }
     d_tm                    = tm;
     d_bitwuzla_needs_delete = true;
+#else
+    throw bzla::Unsupported(
+        "C bindings for external SAT solver factory not supported");
+#endif
   }
 
   Bitwuzla(BitwuzlaTermManager *tm, bitwuzla::Bitwuzla *bitwuzla)
