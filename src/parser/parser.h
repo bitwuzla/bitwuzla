@@ -182,6 +182,10 @@ class Parser
         d_bitwuzla.reset(new bitwuzla::Bitwuzla(d_tm, d_options));
 #endif
       }
+      if (d_terminator)
+      {
+        d_bitwuzla->configure_terminator(d_terminator);
+      }
     }
   }
   /**
