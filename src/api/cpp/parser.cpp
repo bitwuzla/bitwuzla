@@ -82,6 +82,13 @@ Parser::parse(const std::string &input, bool parse_only, bool parse_file)
 }
 
 void
+Parser::configure_terminator(Terminator *terminator)
+{
+  assert(d_parser);
+  d_parser->configure_terminator(terminator);
+}
+
+void
 Parser::configure_auto_print_model(bool value)
 {
   assert(d_parser);

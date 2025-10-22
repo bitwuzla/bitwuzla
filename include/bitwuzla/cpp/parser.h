@@ -90,6 +90,15 @@ class Parser
   /** Destructor. */
   ~Parser();
   /**
+   * Connect or disconnect associated termination configuration instance.
+   * @note Only one terminator can be connected at a time. This will disconnect
+   *       a previously connected terminator before connecting a new one.
+   * @param terminator The terminator instance. Nullptr disconnects the
+   *                   currently associated terminator.
+   */
+  void configure_terminator(Terminator *terminator);
+
+  /**
    * Enable or disable the automatic printing of the model after each
    * satisfiable query.
    *
