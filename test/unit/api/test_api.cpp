@@ -3352,10 +3352,15 @@ TEST_F(TestApi, parser_smt2)
 TEST_F(TestApi, parser_smt2_string1)
 {
   std::stringstream smt2;
-  smt2 << "(set-logic QF_BV)" << std::endl;
-  smt2 << "(check-sat)" << std::endl;
-  smt2 << "(exit)" << std::endl;
+  smt2 << "(set-logic QF_BV)"
+       << "(declare-const a Bool)"
+       << "(declare-const b Bool)"
+       << "(assert (distinct a b))"
+       << "(check-sat)"
+       << "(exit)";
   bitwuzla::Options options;
+  std::stringstream sat;
+  sat << "sat" << std::endl;
   {
     bitwuzla::parser::Parser parser(d_tm, options);
     ASSERT_EXCEPTION(parser.parse(smt2.str(), true, true),
@@ -3363,16 +3368,54 @@ TEST_F(TestApi, parser_smt2_string1)
                      "failed to open");
   }
   {
+    testing::internal::CaptureStdout();
     bitwuzla::parser::Parser parser(d_tm, options);
     ASSERT_NO_THROW(parser.parse(smt2.str(), true, false));
-    ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>());
-    ASSERT_EQ(parser.get_declared_funs(), std::vector<bitwuzla::Term>());
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, "");
+    ASSERT_EQ(parser.get_declared_sorts().size(), 0);
+    ASSERT_EQ(parser.get_declared_funs().size(), 2);
   }
   {
+    testing::internal::CaptureStdout();
     bitwuzla::parser::Parser parser(d_tm, options);
-    ASSERT_NO_THROW(parser.parse("<string>", smt2, true));
-    ASSERT_EQ(parser.get_declared_sorts(), std::vector<bitwuzla::Sort>());
-    ASSERT_EQ(parser.get_declared_funs(), std::vector<bitwuzla::Term>());
+    ASSERT_NO_THROW(parser.parse(smt2.str(), false, false));
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, sat.str());
+    ASSERT_EQ(parser.get_declared_sorts().size(), 0);
+    ASSERT_EQ(parser.get_declared_funs().size(), 2);
+  }
+  {
+    testing::internal::CaptureStdout();
+    bitwuzla::parser::Parser parser(d_tm, options);
+    ASSERT_NO_THROW(parser.parse("<string>", smt2));
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, sat.str());
+    ASSERT_EQ(parser.get_declared_sorts().size(), 0);
+    ASSERT_EQ(parser.get_declared_funs().size(), 2);
+  }
+  {
+    std::stringstream smt2;
+    smt2 << "(set-logic Q_BV)"
+         << "(exit)";
+    bitwuzla::parser::Parser parser(d_tm, options);
+    ASSERT_THROW(parser.parse("<string>", smt2, true), bitwuzla::Exception);
+  }
+  {
+    std::stringstream smt2;
+    smt2 << "(set-logic QF_BV)"
+         << "(declare-const a Bol)"
+         << "(exit)";
+    bitwuzla::parser::Parser parser(d_tm, options);
+    ASSERT_THROW(parser.parse("<string>", smt2, true), bitwuzla::Exception);
+  }
+  {
+    std::stringstream smt2;
+    smt2 << "(set-logic QF_BV)"
+         << "(declare-const a (_ BitVec))"
+         << "(exit)";
+    bitwuzla::parser::Parser parser(d_tm, options);
+    ASSERT_THROW(parser.parse(smt2.str(), false, false), bitwuzla::Exception);
   }
 }
 
@@ -3926,6 +3969,25 @@ TEST_F(TestApi, terminate)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
+  {
+    // Configure terminator via parser.
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
+    opts.set(bitwuzla::Option::BV_SOLVER, "prop");
+    TestTerminator tt;
+    std::stringstream smt2;
+    smt2 << "(declare-const x (_ BitVec 4))"
+         << "(declare-const s (_ BitVec 4))"
+         << "(declare-const t (_ BitVec 4))"
+         << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
+         << "(check-sat)" << std::endl;
+    bitwuzla::parser::Parser parser(d_tm, opts);
+    parser.configure_terminator(&tt);
+    testing::internal::CaptureStdout();
+    parser.parse("<string>", smt2, false);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, "");
+  }
 #ifdef BZLA_USE_CMS
   // No terminator support in CryptoMiniSat, so configuring the terminator
   // will already throw even though this would terminate in the PP (as the
@@ -4005,6 +4067,27 @@ TEST_F(TestApi, terminate_sat)
     bitwuzla.configure_terminator(&tt);
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+  {
+    // Configure terminator via parser.
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::PREPROCESS, false);
+    TestTerminator tt(1000);
+    std::stringstream smt2;
+    smt2 << "(declare-const x (_ BitVec 32))"
+         << "(declare-const s (_ BitVec 32))"
+         << "(declare-const t (_ BitVec 32))"
+         << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
+         << "(check-sat)" << std::endl;
+    bitwuzla::parser::Parser parser(d_tm, opts);
+    parser.configure_terminator(&tt);
+    std::stringstream unknown;
+    unknown << "unknown" << std::endl;
+    testing::internal::CaptureStdout();
+    ASSERT_NO_THROW(parser.parse("<string>", smt2, false));
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, unknown.str());
   }
   // Note: CryptoMiniSat and Kissat do not implement terminator support.
   //       Throws an exception.

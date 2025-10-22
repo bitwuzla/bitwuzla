@@ -59,6 +59,42 @@ BitwuzlaParser* bitwuzla_parser_new(BitwuzlaTermManager* tm,
 void bitwuzla_parser_delete(BitwuzlaParser* parser);
 
 /**
+ * Configure a termination callback function.
+ *
+ * The `state` of the callback can be retrieved via
+ * `bitwuzla_parser_get_termination_callback_state()`.
+ *
+ * @param parser The Bitwuzla parser instance.
+ * @param fun    The callback function, returns a value != 0 if `bitwuzla`
+ *               should be terminated.
+ * @param state  The argument to the callback function.
+ *
+ * @see
+ *   * `bitwuzla_terminate`
+ *   * `bitwuzla_get_termination_callback_state`
+ */
+void bitwuzla_parser_set_termination_callback(BitwuzlaParser* parser,
+                                              int32_t (*fun)(void*),
+                                              void* state);
+
+/**
+ * Get the state of the termination callback function.
+ *
+ * The returned object representing the state of the callback corresponds to
+ * the `state` configured as argument to the callback function via
+ * `bitwuzla_set_termination_callback()`.
+ *
+ * @param parser The Bitwuzla parser instance.
+ *
+ * @return The object passed as argument `state` to the callback function.
+ *
+ * @see
+ *   * `bitwuzla_terminate`
+ *   * `bitwuzla_set_termination_callback`
+ */
+void* bitwuzla_parser_get_termination_callback_state(BitwuzlaParser* parser);
+
+/**
  * Enable or disable the automatic printing of the model after each
  * satisfiable query.
  *

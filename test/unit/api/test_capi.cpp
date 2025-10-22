@@ -5642,6 +5642,28 @@ TEST_F(TestCApi, terminate)
     bitwuzla_options_delete(opts);
     bitwuzla_delete(bitwuzla);
   }
+  {
+    // Configure terminator via parser.
+    std::stringstream smt2;
+    smt2 << "(declare-const x (_ BitVec 4))"
+         << "(declare-const s (_ BitVec 4))"
+         << "(declare-const t (_ BitVec 4))"
+         << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
+         << "(check-sat)" << std::endl;
+    BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, opts, "smt2", 2, "<stdout>");
+    bitwuzla_parser_set_termination_callback(parser, test_terminate1, nullptr);
+    const char *error_msg;
+    testing::internal::CaptureStdout();
+    bitwuzla_parser_parse(parser, smt2.str().c_str(), false, false, &error_msg);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, "");
+    bitwuzla_parser_delete(parser);
+    bitwuzla_options_delete(opts);
+  }
 #ifdef BZLA_USE_CMS
   // No terminator support in CryptoMiniSat, so configuring the terminator
   // will already throw even though this would terminate in the PP (as the
@@ -5726,6 +5748,33 @@ TEST_F(TestCApi, terminate_sat)
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
     bitwuzla_options_delete(opts);
     bitwuzla_delete(bitwuzla);
+  }
+  {
+    // Configure terminator via parser.
+    std::stringstream smt2;
+    smt2 << "(declare-const x (_ BitVec 32))"
+         << "(declare-const s (_ BitVec 32))"
+         << "(declare-const t (_ BitVec 32))"
+         << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
+         << "(check-sat)" << std::endl;
+    BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
+    bitwuzla_set_option(opts, BITWUZLA_OPT_PREPROCESS, 0);
+    BitwuzlaParser *parser =
+        bitwuzla_parser_new(d_tm, opts, "smt2", 2, "<stdout>");
+    struct terminator_state state;
+    gettimeofday(&state.start, NULL);
+    state.time_limit_ms = 1000;
+    bitwuzla_parser_set_termination_callback(parser, test_terminate2, &state);
+    std::stringstream unknown;
+    unknown << "unknown" << std::endl;
+    const char *error_msg;
+    testing::internal::CaptureStdout();
+    bitwuzla_parser_parse(parser, smt2.str().c_str(), false, false, &error_msg);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, unknown.str());
+    bitwuzla_parser_delete(parser);
+    bitwuzla_options_delete(opts);
   }
   // Note: CryptoMiniSat and Kissat do not implement terminator support
 }

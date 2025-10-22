@@ -47,6 +47,8 @@ struct BitwuzlaParser
   /** The wrapped Bitwuzla instance associated with the parser. */
   std::unique_ptr<Bitwuzla> d_bitwuzla = nullptr;
   BitwuzlaTermManager* d_tm            = nullptr;
+  /** The currently configured terminator. */
+  std::unique_ptr<CTerminator> d_terminator;
 };
 
 BitwuzlaParser*
@@ -82,6 +84,30 @@ bitwuzla_parser_configure_auto_print_model(BitwuzlaParser* parser, bool value)
   BITWUZLA_CHECK_NOT_NULL(parser);
   parser->d_parser->configure_auto_print_model(value);
   BITWUZLA_C_TRY_CATCH_END;
+}
+
+void
+bitwuzla_parser_set_termination_callback(BitwuzlaParser* parser,
+                                         int32_t (*fun)(void*),
+                                         void* state)
+{
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(parser);
+  BITWUZLA_CHECK_NOT_NULL(fun);
+  parser->d_terminator.reset(new CTerminator(fun, state));
+  parser->d_parser->configure_terminator(parser->d_terminator.get());
+  BITWUZLA_C_TRY_CATCH_END;
+}
+
+void*
+bitwuzla_parser_get_termination_callback_state(BitwuzlaParser* parser)
+{
+  void* res = nullptr;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(parser);
+  res = parser->d_terminator ? parser->d_terminator->get_state() : nullptr;
+  BITWUZLA_C_TRY_CATCH_END;
+  return res;
 }
 
 void
