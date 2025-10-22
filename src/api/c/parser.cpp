@@ -29,6 +29,9 @@ struct BitwuzlaParser
                  const char* outfile_name)
       : d_tm(tm)
   {
+    (void) tm;
+    (void) options;
+    (void) language;
     std::ofstream outfile;
     std::ostream* out = &std::cout;
     if (std::string(outfile_name) != "<stdout>")
@@ -37,8 +40,30 @@ struct BitwuzlaParser
       out = &outfile;
     }
     (*out) << bitwuzla::set_bv_format(base);
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_KISSAT)
     d_parser.reset(new bitwuzla::parser::Parser(
         tm->d_tm, options->d_options, language, out));
+#else
+    throw bzla::Unsupported(
+        "C bindings for external SAT solver factory not supported");
+#endif
+  }
+  BitwuzlaParser(BitwuzlaTermManager* tm,
+                 bitwuzla::SatSolverFactory* sat_factory,
+                 BitwuzlaOptions* options,
+                 const char* language,
+                 uint8_t base,
+                 const char* outfile_name)
+  {
+    (void) tm;
+    (void) sat_factory;
+    (void) options;
+    (void) language;
+    (void) base;
+    (void) outfile_name;
+    throw bzla::Unsupported(
+        "C bindings for external SAT solver factory not supported");
   }
   /** The associated bitwuzla instance. */
   std::unique_ptr<bitwuzla::parser::Parser> d_parser;

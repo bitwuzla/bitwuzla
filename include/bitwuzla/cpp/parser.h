@@ -50,6 +50,8 @@ class Exception : public bitwuzla::Exception
 class Parser
 {
  public:
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_KISSAT)
   /**
    * Constructor.
    * @note The parser creates and owns the associated Bitwuzla instance.
@@ -63,6 +65,25 @@ class Parser
    *       an error.
    */
   Parser(TermManager &tm,
+         Options &options,
+         const std::string &language = "smt2",
+         std::ostream *out           = &std::cout);
+#endif
+  /**
+   * Constructor.
+   * @note The parser creates and owns the associated Bitwuzla instance.
+   * @param tm The associated term manager instance.
+   * @param sat_factory The associated SAT solver factory.
+   * @param options  The configuration options for the Bitwuzla instance
+   *                 (created by the parser).
+   * @param language The format of the input.
+   * @param out      The output stream.
+   * @note It is not safe to reuse a parser instance after a parse error.
+   *       Subsequent parse queries after a parse error will return with
+   *       an error.
+   */
+  Parser(TermManager &tm,
+         SatSolverFactory &sat_factory,
          Options &options,
          const std::string &language = "smt2",
          std::ostream *out           = &std::cout);

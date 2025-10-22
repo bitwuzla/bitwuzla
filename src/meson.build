@@ -268,4 +268,6 @@ bitwuzla_dep = declare_dependency(include_directories: bitwuzla_inc,
 pkg = import('pkgconfig')
 pkg.generate(bitwuzla_lib)
 
-subdir('main')
+if is_sat_solver_configured
+  subdir('main')
+endif

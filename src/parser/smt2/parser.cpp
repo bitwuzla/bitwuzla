@@ -33,6 +33,22 @@ Parser::Parser(bitwuzla::TermManager& tm,
                        | static_cast<uint32_t>(TokenClass::RESERVED);
   d_work_control.push_back(0);
 }
+Parser::Parser(bitwuzla::TermManager& tm,
+               bitwuzla::SatSolverFactory* sat_factory,
+               bitwuzla::Options& options,
+               std::ostream* out)
+    : bzla::parser::Parser(tm, sat_factory, options, out),
+      d_decl_funs(&d_backtrack_mgr),
+      d_decl_sorts(&d_backtrack_mgr),
+      d_named_assertions(&d_backtrack_mgr)
+{
+  d_lexer.reset(new Lexer());
+  d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
+                       | static_cast<uint32_t>(TokenClass::CORE)
+                       | static_cast<uint32_t>(TokenClass::KEYWORD)
+                       | static_cast<uint32_t>(TokenClass::RESERVED);
+  d_work_control.push_back(0);
+}
 
 Parser::~Parser() { d_table.clear_pending_symbols(); }
 
