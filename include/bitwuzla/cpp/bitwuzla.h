@@ -1773,22 +1773,38 @@ class Bitwuzla
    */
   Term get_interpolant(const std::vector<Term>& A);
   /**
-   * Get an inductive sequence of interpolants <I_1, ..., I_n> given the current
-   * set of assertions F and a sequence of partitions.
+   * \verbatim embed:rst:leading-asterisk
+   * Get an inductive sequence of interpolants
+   * :math:`\langle I_1, \ldots, I_n \rangle` given the current
+   * set of assertions :math:`F` and a sequence of partitions.
    *
-   * The sequence of partition is given as a list of set increments of asserted
-   * formulas {F_1, F_2, ..., F_n}, which expands into sets of partitions
-   * {(A_1, B_1), (A_2, B_2), ..., (A_n, B_n)} such that
+   * The sequence of partitions is given as a list of set increments
+   * :math:`\{A_1, \ldots, A_n\}` of asserted formulas
+   * :math:`F = \{F_1, F_2, \ldots, F_n\}`, which expands into sets of
+   * partitions
    *
-   *   A_1 = F_1
-   *   A_2 = F_1 \cup F_2
-   *   ...
-   *   A_n = F_1 \cup F_2 \cup ... \cup F_n
+   * .. math::
    *
-   * and B_i = F \ A_i with (and A_i B_i) unsat.
+   *   \{(A_1, B_1), (A_2, B_2), \ldots, (A_n, B_n)\}
+   *
+   * such that
+   *
+   * .. math::
+   *
+   *   A_1 &= F_1 \\
+   *   A_2 &= F_1\,\cup\,F_2 \\
+   *   \ldots & \\
+   *   A_n & = F_1\,\cup\,F_2\,\cup\,\ldots\,\cup\,F_n \\
+   *
+   * and
+   *
+   * .. math::
+   *
+   *   B_i = F \setminus A_i \text{ with } A_i \wedge B_i \models \bot.
    *
    * The resulting sequence of interpolants is inductive, i.e., it holds that
-   * (=> (and I_i F_{i+1}) I_{i+1}).
+   * :math:`(I_i \wedge F_{i+1}) \rightarrow I_{i+1}`.
+   * \endverbatim
    *
    * Requires that the last `check_sat()` query returned `Result::UNSAT`.
    *
