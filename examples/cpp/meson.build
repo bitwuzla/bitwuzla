@@ -1,5 +1,6 @@
 examples = [
   'checksatassuming',
+  'interpolants',
   'option_info',
   'options',
   'parse',
