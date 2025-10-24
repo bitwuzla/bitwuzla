@@ -46,9 +46,18 @@ main()
   bitwuzla.assert_formula(a3);
   bitwuzla.assert_formula(a4);
   bitwuzla.check_sat();
+  // Query an interpolant for A /\ B with A = {a1, a2}.
   Term interpolant = bitwuzla.get_interpolant({a1, a2});
   std::cout << interpolant << std::endl;
   // (not (= x2 #b00))
+
+  // Query an interpolation sequence for a sequence of A/B-partitions
+  //     {
+  //       ({a1},        {a2, a3, a4}),
+  //       ({a1, a2},    {a3, a4}),
+  //       ({a1, a2, a3, {a4})
+  //     }
+  // given as a list {{a1}, {a2}, {a3}} of increments of A.
   std::vector<Term> interpolants =
       bitwuzla.get_interpolants({{a1}, {a2}, {a3}});
   // [0]: (= ((_ extract 3 3) (bvadd (concat #b00 x1) #b1111)) #b0)
