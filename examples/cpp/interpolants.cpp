@@ -18,6 +18,7 @@ int
 main()
 {
   TermManager tm;
+
   Sort bv2 = tm.mk_bv_sort(2);
   Sort bv4 = tm.mk_bv_sort(4);
   Term x1  = tm.mk_const(bv2, "x1");
@@ -37,19 +38,22 @@ main()
                                {tm.mk_term(Kind::BV_ZERO_EXTEND, {x2}, {2})})},
                    {1, 0})});
   Term a4 = tm.mk_term(Kind::EQUAL, {x3, tm.mk_bv_zero(bv2)});
+
   Options options;
   options.set(Option::PRODUCE_INTERPOLANTS, true);
   options.set(Option::INTERPOLANTS_SIMP, true);
+
   Bitwuzla bitwuzla(tm, options);
   bitwuzla.assert_formula(a1);
   bitwuzla.assert_formula(a2);
   bitwuzla.assert_formula(a3);
   bitwuzla.assert_formula(a4);
   bitwuzla.check_sat();
+
   // Query an interpolant for A /\ B with A = {a1, a2}.
   Term interpolant = bitwuzla.get_interpolant({a1, a2});
-  std::cout << interpolant << std::endl;
   // (not (= x2 #b00))
+  std::cout << interpolant << std::endl;
 
   // Query an interpolation sequence for a sequence of A/B-partitions
   //     {
