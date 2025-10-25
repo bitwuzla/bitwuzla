@@ -1563,11 +1563,12 @@ BitwuzlaTerm bitwuzla_get_interpolant(Bitwuzla* bitwuzla,
  *
  * The resulting sequence of interpolants is inductive, i.e., it holds that
  * :math:`(I_i \wedge F_{i+1}) \rightarrow I_{i+1}`.
- * \endverbatim
  *
  * Requires that the last `check_sat()` query returned `Result::UNSAT`.
  *
- * @note Assertions in A_i must be currently asserted formulas.
+ * .. note:: Assertions in :math:`A_i` must be currently asserted formulas.
+ * \endverbatim
+ *
  * @note Current SAT state must be unsat.
  *
  * @param Asc  The number of A increments in `As`.

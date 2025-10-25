@@ -464,3 +464,4 @@ Interpolation Example
 
 .. tabbed-examples::
    ../../examples/cpp/interpolants.cpp
+   ../../examples/c/interpolants.c

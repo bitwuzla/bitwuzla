@@ -52,6 +52,8 @@ opportunity if the callback function returns a value :code:`!= 0`.
 - :cpp:func:`bitwuzla_check_sat()`
 - :cpp:func:`bitwuzla_check_sat_assuming()`
 - :cpp:func:`bitwuzla_get_value()`
+- :cpp:func:`bitwuzla_get_interpolant()`
+- :cpp:func:`bitwuzla_get_interpolants()`
 - :cpp:func:`bitwuzla_print_formula()`
 - :cpp:func:`bitwuzla_get_statistics()`
 
