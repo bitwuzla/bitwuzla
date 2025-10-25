@@ -1810,7 +1810,7 @@ class Bitwuzla
    *
    * @note Assertions in A_i must be currently asserted formulas.
    * @note Current SAT state must be unsat.
-   * @param partitions The set of partitions.
+   * @param A The set of A increments.
    * @return The interpolation sequence.
    *
    * @see `check_sat()`

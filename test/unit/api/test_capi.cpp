@@ -2868,6 +2868,135 @@ TEST_F(TestCApi, get_rm_value)
   ASSERT_EQ("RTZ", std::string(bitwuzla_term_value_get_str_fmt(d_rm_rtz, 10)));
 }
 
+TEST_F(TestCApi, get_interpolant)
+{
+  BitwuzlaSort bv4  = bitwuzla_mk_bv_sort(d_tm, 4);
+  BitwuzlaTerm x    = bitwuzla_mk_const(d_tm, bv4, "x");
+  BitwuzlaTerm y    = bitwuzla_mk_const(d_tm, bv4, "y");
+  BitwuzlaTerm z    = bitwuzla_mk_const(d_tm, bv4, "z");
+  BitwuzlaTerm zero = bitwuzla_mk_bv_zero(d_tm, bv4);
+  BitwuzlaTerm one  = bitwuzla_mk_bv_one(d_tm, bv4);
+  // (= z (bvadd x y))
+  BitwuzlaTerm a0 =
+      bitwuzla_mk_term2(d_tm,
+                        BITWUZLA_KIND_EQUAL,
+                        z,
+                        bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_ADD, x, y));
+  // (distinct x y)
+  BitwuzlaTerm a1 = bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_DISTINCT, x, y);
+  // (and
+  //   (distinct x (_ bv0 1024))
+  //   (= (bvand x (bvsub x (_ bv1 1024))) (_ bv0 1024))))
+  BitwuzlaTerm a2 = bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_DISTINCT, x, zero);
+  BitwuzlaTerm a3 = bitwuzla_mk_term2(
+      d_tm,
+      BITWUZLA_KIND_EQUAL,
+      bitwuzla_mk_term2(d_tm,
+                        BITWUZLA_KIND_BV_AND,
+                        x,
+                        bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_SUB, x, one)),
+      zero);
+  // (and
+  //   (distinct y (_ bv0 1024))
+  //   (= (bvand y (bvsub y (_ bv1 1024))) (_ bv0 1024)))
+  BitwuzlaTerm a4 = bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_DISTINCT, y, zero);
+  BitwuzlaTerm a5 = bitwuzla_mk_term2(
+      d_tm,
+      BITWUZLA_KIND_EQUAL,
+      bitwuzla_mk_term2(d_tm,
+                        BITWUZLA_KIND_BV_AND,
+                        y,
+                        bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_SUB, y, one)),
+      zero);
+  //   (and
+  //     (distinct z (_ bv0 1024))
+  //     (= (bvand z (bvsub z (_ bv1 1024))) (_ bv0 1024)))
+  BitwuzlaTerm b0 = bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_DISTINCT, z, zero);
+  BitwuzlaTerm b1 = bitwuzla_mk_term2(
+      d_tm,
+      BITWUZLA_KIND_EQUAL,
+      bitwuzla_mk_term2(d_tm,
+                        BITWUZLA_KIND_BV_AND,
+                        z,
+                        bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_SUB, z, one)),
+      zero);
+
+  std::vector<BitwuzlaTerm> A = {a0, a1, a2, a3, a4, a5};
+  {
+    // produce-interpolants not enabled
+    BitwuzlaOptions* options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 0);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
+    for (const auto& t : A)
+    {
+      bitwuzla_assert(bitwuzla, t);
+    }
+    bitwuzla_assert(bitwuzla, b0);
+    bitwuzla_assert(bitwuzla, b1);
+    bitwuzla_check_sat(bitwuzla);
+    ASSERT_DEATH(bitwuzla_get_interpolant(bitwuzla, A.size(), A.data()),
+                 "interpolants production not enabled");
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
+  {
+    // given assertion is not currently asserted
+    BitwuzlaOptions* options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 1);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
+    for (const auto& t : A)
+    {
+      bitwuzla_assert(bitwuzla, t);
+    }
+    bitwuzla_assert(bitwuzla, b0);
+    bitwuzla_assert(bitwuzla, b1);
+    A.push_back(bitwuzla_mk_term1(d_tm, BITWUZLA_KIND_NOT, a0));
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    ASSERT_DEATH(bitwuzla_get_interpolant(bitwuzla, A.size(), A.data()),
+                 "not currently asserted");
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
+  {
+    BitwuzlaOptions* options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 1);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
+    for (const auto& t : A)
+    {
+      bitwuzla_assert(bitwuzla, t);
+    }
+    bitwuzla_assert(bitwuzla, b0);
+    bitwuzla_assert(bitwuzla, b1);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    bitwuzla_get_interpolant(bitwuzla, A.size(), A.data());
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
+  {
+    BitwuzlaOptions* options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 1);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
+    for (const auto& t : A)
+    {
+      bitwuzla_assert(bitwuzla, t);
+    }
+    bitwuzla_assert(bitwuzla, b0);
+    bitwuzla_assert(bitwuzla, b1);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    BitwuzlaTerm A0[1] = {a0};
+    BitwuzlaTerm A1[1] = {a1};
+    BitwuzlaTerm A2[1] = {a2};
+    BitwuzlaTerm A3[1] = {a3};
+    BitwuzlaTerm A4[1] = {a4};
+    BitwuzlaTerm A5[1] = {a5};
+    std::vector<BitwuzlaTerm*> As{A0, A1, A2, A3, A4, A5};
+    uint32_t Asc[6] = {1, 1, 1, 1, 1, 1};
+    size_t size;
+    bitwuzla_get_interpolants(bitwuzla, As.size(), Asc, As.data(), &size);
+    ASSERT_EQ(size, 6);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Printing                                                                   */
 /* -------------------------------------------------------------------------- */

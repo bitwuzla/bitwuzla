@@ -1808,12 +1808,12 @@ TEST_F(TestApi, get_interpolant)
                     {z, d_tm.mk_term(bitwuzla::Kind::BV_SUB, {z, one})}),
        zero});
 
+  std::vector A = {a0, a1, a2, a3, a4, a5};
   {
     // produce-interpolants not enabled
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_INTERPOLANTS, false);
     bitwuzla::Bitwuzla bitwuzla(d_tm, options);
-    std::vector A = {a0, a1, a2, a3, a4, a5};
     for (const auto& t : A)
     {
       bitwuzla.assert_formula(t);
@@ -1828,7 +1828,6 @@ TEST_F(TestApi, get_interpolant)
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_INTERPOLANTS, true);
     bitwuzla::Bitwuzla bitwuzla(d_tm, options);
-    std::vector A = {a0, a1, a2, a3, a4, a5};
     for (const auto& t : A)
     {
       bitwuzla.assert_formula(t);
@@ -1843,7 +1842,6 @@ TEST_F(TestApi, get_interpolant)
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_INTERPOLANTS, true);
     bitwuzla::Bitwuzla bitwuzla(d_tm, options);
-    std::vector A = {a0, a1, a2, a3, a4, a5};
     for (const auto& t : A)
     {
       bitwuzla.assert_formula(t);
@@ -1852,6 +1850,21 @@ TEST_F(TestApi, get_interpolant)
     bitwuzla.assert_formula(b1);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
     ASSERT_FALSE(bitwuzla.get_interpolant(A).is_null());
+  }
+  {
+    bitwuzla::Options options;
+    options.set(bitwuzla::Option::PRODUCE_INTERPOLANTS, true);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, options);
+    for (const auto& t : A)
+    {
+      bitwuzla.assert_formula(t);
+    }
+    bitwuzla.assert_formula(b0);
+    bitwuzla.assert_formula(b1);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
+    auto interpolants =
+        bitwuzla.get_interpolants({{a0}, {a1}, {a2}, {a3}, {a4}, {a5}});
+    ASSERT_EQ(interpolants.size(), 6);
   }
 }
 

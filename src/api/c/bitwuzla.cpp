@@ -629,6 +629,57 @@ bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term)
   return res;
 }
 
+BitwuzlaTerm
+bitwuzla_get_interpolant(Bitwuzla* bitwuzla, uint32_t argc, BitwuzlaTerm args[])
+{
+  BitwuzlaTerm res = nullptr;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  BITWUZLA_CHECK_NOT_NULL(args);
+  std::vector<bitwuzla::Term> A;
+  for (uint32_t i = 0; i < argc; ++i)
+  {
+    A.push_back(BitwuzlaTermManager::import_term(args[i]));
+  }
+  res = bitwuzla->d_tm->export_term(bitwuzla->d_bitwuzla->get_interpolant(A));
+  BITWUZLA_C_TRY_CATCH_END;
+  return res;
+}
+
+BitwuzlaTerm*
+bitwuzla_get_interpolants(Bitwuzla* bitwuzla,
+                          uint32_t Asc,
+                          uint32_t* Ac,
+                          BitwuzlaTerm* As[],
+                          size_t* size)
+{
+  static thread_local std::vector<BitwuzlaTerm> res;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(Ac);
+  BITWUZLA_CHECK_NOT_NULL(As);
+  std::vector<std::vector<bitwuzla::Term>> A;
+  for (uint32_t i = 0; i < Asc; ++i)
+  {
+    BITWUZLA_CHECK_NOT_NULL(As[i]);
+    A.push_back({});
+    for (uint32_t j = 0; j < Ac[i]; ++j)
+    {
+      A.back().push_back(BitwuzlaTermManager::import_term(As[i][j]));
+    }
+  }
+  BITWUZLA_CHECK_NOT_NULL(size);
+  res.clear();
+  auto interpolants = bitwuzla->d_bitwuzla->get_interpolants(A);
+  auto tm           = bitwuzla->d_tm;
+  for (auto& term : interpolants)
+  {
+    res.push_back(tm->export_term(term));
+  }
+  *size = res.size();
+  BITWUZLA_C_TRY_CATCH_END;
+  return *size > 0 ? res.data() : nullptr;
+}
+
 void
 bitwuzla_print_formula(Bitwuzla *bitwuzla,
                        const char *format,

@@ -1508,6 +1508,84 @@ BitwuzlaResult bitwuzla_check_sat_assuming(Bitwuzla *bitwuzla,
 BitwuzlaTerm bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term);
 
 /**
+ * Get a term representing the interpolant I given the current set of
+ * assertions, partitioned into partitions A and B such that `(and A B)`
+ * is unsat and `(=> A I)` and `(=> I (not B))`.
+ *
+ * Partition A is the given set of assertions, partition B consists of the
+ * remaining assertions that are not in A.
+ *
+ * Requires that the last `check_sat()` query returned `Result::UNSAT`.
+ *
+ * @note Assertions in A and B must be currently asserted formulas.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param argc     The number of A formulas in `args`.
+ * @param args     The set of formulas representing partition A. This must be
+ *                 a strict subset of the set of current assertions.
+ * @return Interpolant I such that `(=> A I)` and `(=> I (not B))`.
+ *
+ * @see `check_sat()`
+ */
+BitwuzlaTerm bitwuzla_get_interpolant(Bitwuzla* bitwuzla,
+                                      uint32_t argc,
+                                      BitwuzlaTerm args[]);
+
+/**
+ * \verbatim embed:rst:leading-asterisk
+ * Get an inductive sequence of interpolants
+ * :math:`\langle I_1, \ldots, I_n \rangle` given the current
+ * set of assertions :math:`F` and a sequence of partitions.
+ *
+ * The sequence of partitions is given as a list of set increments
+ * :math:`\{A_1, \ldots, A_n\}` of asserted formulas
+ * :math:`F = \{F_1, F_2, \ldots, F_n\}`, which expands into sets of
+ * partitions
+ *
+ * .. math::
+ *
+ *   \{(A_1, B_1), (A_2, B_2), \ldots, (A_n, B_n)\}
+ *
+ * such that
+ *
+ * .. math::
+ *
+ *   A_1 &= F_1 \\
+ *   A_2 &= F_1\,\cup\,F_2 \\
+ *   \ldots & \\
+ *   A_n & = F_1\,\cup\,F_2\,\cup\,\ldots\,\cup\,F_n \\
+ *
+ * and
+ *
+ * .. math::
+ *
+ *   B_i = F \setminus A_i \text{ with } A_i \wedge B_i \models \bot.
+ *
+ * The resulting sequence of interpolants is inductive, i.e., it holds that
+ * :math:`(I_i \wedge F_{i+1}) \rightarrow I_{i+1}`.
+ * \endverbatim
+ *
+ * Requires that the last `check_sat()` query returned `Result::UNSAT`.
+ *
+ * @note Assertions in A_i must be currently asserted formulas.
+ * @note Current SAT state must be unsat.
+ *
+ * @param Asc  The number of A increments in `As`.
+ * @param Ac   The number of formulas for each increment `A` in `As`.
+ * @param As   The set of A increments.
+ * @param size Output parameter, stores the size of the returned array.
+ *
+ * @return The interpolation sequence.
+ *
+ * @see `check_sat()`
+ */
+BitwuzlaTerm* bitwuzla_get_interpolants(Bitwuzla* bitwuzla,
+                                        uint32_t Asc,
+                                        uint32_t* Ac,
+                                        BitwuzlaTerm* As[],
+                                        size_t* size);
+
+/**
  * Print the current input formula.
  *
  * @param bitwuzla The Bitwuzla instance.
