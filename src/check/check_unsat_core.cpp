@@ -35,7 +35,20 @@ CheckUnsatCore::check()
   option::Options opts;
   opts.dbg_check_model.set(false);
   opts.dbg_check_unsat_core.set(false);
-  SolvingContext check_ctx(d_ctx.env().nm(), opts, "chkuc", true);
+  SolvingContext check_ctx =
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_KISSAT)
+      d_ctx.env().sat_factory()
+          ? SolvingContext(d_ctx.env().nm(),
+                           opts,
+                           d_ctx.env().sat_factory(),
+                           "chkuc",
+                           true)
+          : SolvingContext(d_ctx.env().nm(), opts, "chkuc", true);
+#else
+      SolvingContext(
+          d_ctx.env().nm(), opts, d_ctx.env().sat_factory(), "chkuc", true);
+#endif
   for (const Node& assertion : d_ctx.get_unsat_core())
   {
     check_ctx.assert_formula(assertion);

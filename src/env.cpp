@@ -64,10 +64,10 @@ Env::nm()
   return d_nm;
 }
 
-sat::SatSolverFactory&
+sat::SatSolverFactory*
 Env::sat_factory()
 {
-  return *d_sat_factory;
+  return d_sat_factory.get();
 }
 
 void

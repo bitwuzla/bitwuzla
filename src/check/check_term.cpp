@@ -1,3 +1,5 @@
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_KISSAT)
 #include "check/check_term.h"
 
 #include "node/node_manager.h"
@@ -23,3 +25,4 @@ check_term_equiv(NodeManager& nm, const Node& t1, const Node& t2)
 }
 
 }  // namespace bzla::check
+#endif

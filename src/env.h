@@ -55,7 +55,7 @@ class Env
   NodeManager& nm();
 
   /** @return The associated SAT solver factory. */
-  sat::SatSolverFactory& sat_factory();
+  sat::SatSolverFactory* sat_factory();
 
   /**
    * Configure associated termination configuration instance.
@@ -89,7 +89,7 @@ class Env
   /** The associated terminator. */
   Terminator* d_terminator = nullptr;
   /** The associated SAT solver factory. */
-  std::unique_ptr<sat::SatSolverFactory> d_sat_factory;
+  std::unique_ptr<sat::SatSolverFactory> d_sat_factory = nullptr;
   /** The associated logger class. */
   util::Logger d_logger;
 };
