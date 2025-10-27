@@ -142,6 +142,9 @@ endif
 if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
 endif
+if is_sat_solver_configured
+  cpp_args += ['-DBZLA_IS_SAT_SOLVER_CONFIGURED']
+endif
 if get_option('fpexp')
   cpp_args += ['-DBZLA_USE_FPEXP']
 endif

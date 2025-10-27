@@ -50,8 +50,7 @@ class Exception : public bitwuzla::Exception
 class Parser
 {
  public:
-#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
-    || defined(BZLA_USE_KISSAT)
+#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   /**
    * Constructor.
    * @note The parser creates and owns the associated Bitwuzla instance.

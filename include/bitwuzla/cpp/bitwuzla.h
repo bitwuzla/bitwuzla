@@ -1566,8 +1566,7 @@ class SatSolverFactory
 class Bitwuzla
 {
  public:
-#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
-    || defined(BZLA_USE_KISSAT)
+#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   /**
    * Constructor.
    * @param tm The associated term manager instance.

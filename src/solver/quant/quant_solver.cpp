@@ -351,8 +351,7 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
     d_mbqi_solver.reset(new SolvingContext(
         d_env.nm(), options, d_env.sat_factory(), "mbqi", true));
   }
-#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
-    || defined(BZLA_USE_KISSAT)
+#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   else
   {
     d_mbqi_solver.reset(new SolvingContext(d_env.nm(), options, "mbqi", true));

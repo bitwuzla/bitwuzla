@@ -177,8 +177,7 @@ class Parser
       }
       else
       {
-#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
-    || defined(BZLA_USE_KISSAT)
+#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
         d_bitwuzla.reset(new bitwuzla::Bitwuzla(d_tm, d_options));
 #endif
       }

@@ -1,5 +1,4 @@
-#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
-    || defined(BZLA_USE_KISSAT)
+#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
 #include "check/check_term.h"
 
 #include "node/node_manager.h"
