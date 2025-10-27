@@ -54,8 +54,7 @@ operator<<(std::ostream& out, SatSolver solver)
     case SatSolver::CRYPTOMINISAT: out << "CRYPTOMINISAT"; break;
     case SatSolver::GIMSATUL: out << ""; break;
     case SatSolver::KISSAT: out << "KISSAT"; break;
-#if !defined(BZLA_USE_CADICAL) && !defined(BZLA_USE_CMS) \
-    && !defined(BZLA_USE_GIMSATUL) && !defined(BZLA_USE_KISSAT)
+#if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
     case SatSolver::NONE: out << "NONE"; break;
 #endif
   }
@@ -253,8 +252,7 @@ Options::Options()
                   {SatSolver::CRYPTOMINISAT, "cms"},
                   {SatSolver::GIMSATUL, "gimsatul"},
                   {SatSolver::KISSAT, "kissat"}
-#if !defined(BZLA_USE_CADICAL) && !defined(BZLA_USE_CMS) \
-    && !defined(BZLA_USE_GIMSATUL) && !defined(BZLA_USE_KISSAT)
+#if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
                   ,
                   {SatSolver::NONE, "none"}
 #endif
@@ -929,8 +927,7 @@ to_string(bzla::option::SatSolver sat_solver)
     case bzla::option::SatSolver::CRYPTOMINISAT: return "cryptominisat";
     case bzla::option::SatSolver::KISSAT: return "kissat";
     default:
-#if !defined(BZLA_USE_CADICAL) && !defined(BZLA_USE_CMS) \
-    && !defined(BZLA_USE_GIMSATUL) && !defined(BZLA_USE_KISSAT)
+#if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
       assert(sat_solver == bzla::option::SatSolver::NONE);
 #endif
       return "none";

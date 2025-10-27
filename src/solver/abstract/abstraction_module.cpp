@@ -1102,8 +1102,7 @@ AbstractionModule::verify_lemmas() const
   option::Options opts;
   NodeManager& nm = d_env.nm();
   SolvingContext ctx =
-#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
-    || defined(BZLA_USE_GIMSATUL) || defined(BZLA_USE_KISSAT)
+#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
       d_env.sat_factory() ? SolvingContext(nm, opts, d_env.sat_factory())
                           : SolvingContext(nm, opts);
 #else

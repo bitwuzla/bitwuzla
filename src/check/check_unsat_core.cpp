@@ -36,8 +36,7 @@ CheckUnsatCore::check()
   opts.dbg_check_model.set(false);
   opts.dbg_check_unsat_core.set(false);
   SolvingContext check_ctx =
-#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
-    || defined(BZLA_USE_GIMSATUL) || defined(BZLA_USE_KISSAT)
+#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
       d_ctx.env().sat_factory()
           ? SolvingContext(d_ctx.env().nm(),
                            opts,

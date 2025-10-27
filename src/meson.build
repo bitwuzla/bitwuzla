@@ -65,6 +65,9 @@ endif
 if mpfr_dep.found()
   cpp_args += ['-DMPFR_USE_C99_FEATURE=1']
 endif
+if is_sat_solver_configured
+  cpp_args += ['-DBZLA_IS_SAT_SOLVER_CONFIGURED']
+endif
 
 # ---
 # Additional build definitions

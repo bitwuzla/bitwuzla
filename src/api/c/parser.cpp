@@ -40,8 +40,7 @@ struct BitwuzlaParser
       out = &d_outfile;
     }
     (*out) << bitwuzla::set_bv_format(base);
-#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
-    || defined(BZLA_USE_GIMSATUL) || defined(BZLA_USE_KISSAT)
+#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
     d_parser.reset(new bitwuzla::parser::Parser(
         tm->d_tm, options->d_options, language, out));
 #else

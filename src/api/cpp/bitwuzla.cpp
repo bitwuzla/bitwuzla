@@ -1405,8 +1405,7 @@ class SatSolverFactoryInternal : public bzla::sat::SatSolverFactory
 
 /* Bitwuzla public ---------------------------------------------------------- */
 
-#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
-    || defined(BZLA_USE_GIMSATUL) || defined(BZLA_USE_KISSAT)
+#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
 Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
 {
   BITWUZLA_TRY_CATCH_BEGIN;

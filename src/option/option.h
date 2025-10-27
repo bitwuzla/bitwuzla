@@ -118,8 +118,7 @@ enum class SatSolver
   CRYPTOMINISAT,
   GIMSATUL,
   KISSAT,
-#if !defined(BZLA_USE_CADICAL) && !defined(BZLA_USE_CMS) \
-    && !defined(BZLA_USE_GIMSATUL) && !defined(BZLA_USE_KISSAT)
+#if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   NONE,
 #endif
 };

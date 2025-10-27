@@ -27,6 +27,7 @@ build_static = get_option('default_library') == 'static' \
 
 is_sat_solver_configured = get_option('cadical') or \
                            get_option('cryptominisat') or \
+                           get_option('gimsatul') or \
                            get_option('kissat')
 # Configure testing
 if not is_sat_solver_configured
