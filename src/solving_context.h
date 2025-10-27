@@ -29,6 +29,8 @@ class ResourceTerminator;
 class SolvingContext
 {
  public:
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_GIMSATUL) || defined(BZLA_USE_KISSAT)
   /**
    * Constructor.
    * @param nm        The associated node manager.
@@ -40,6 +42,7 @@ class SolvingContext
                  const option::Options& options,
                  const std::string& name = "",
                  bool subsolver          = false);
+#endif
   /**
    * Constructor for initialization with (external) SAT solver factory.
    * This constructor is only used when a Bitwuzla instance is to be

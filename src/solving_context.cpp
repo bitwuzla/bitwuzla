@@ -27,6 +27,8 @@ using namespace node;
 
 /* --- SolvingContext public ----------------------------------------------- */
 
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_GIMSATUL) || defined(BZLA_USE_KISSAT)
 SolvingContext::SolvingContext(NodeManager& nm,
                                const option::Options& options,
                                const std::string& name,
@@ -43,6 +45,7 @@ SolvingContext::SolvingContext(NodeManager& nm,
 {
   d_have_quantifiers = false;
 }
+#endif
 
 SolvingContext::SolvingContext(NodeManager& nm,
                                const option::Options& options,

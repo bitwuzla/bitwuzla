@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS) \
+    || defined(BZLA_USE_KISSAT)
 #ifndef BZLA_CHECK_CHECK_TERM_H_INCLUDED
 
 #include "node/node.h"
@@ -18,4 +20,5 @@ bool check_term_equiv(NodeManager& nm, const Node& t1, const Node& t2);
 
 }  // namespace bzla::check
 
+#endif
 #endif
