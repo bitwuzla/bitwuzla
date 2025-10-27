@@ -8,11 +8,12 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <iostream>
+
 #include "node/node_manager.h"
+#include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
-
-#include <iostream>
 
 namespace bzla::test {
 
@@ -26,7 +27,8 @@ TEST_F(TestFunSolver, fc1)
 {
   NodeManager nm;
   option::Options options;
-  SolvingContext ctx(nm, options);
+  sat::SatSolverFactory sat_factory(options);
+  SolvingContext ctx(nm, options, sat_factory);
 
   Type bv_type = nm.mk_bv_type(16);
   Type bool_type = nm.mk_bool_type();
@@ -57,7 +59,8 @@ TEST_F(TestFunSolver, fc2)
 {
   NodeManager nm;
   option::Options options;
-  SolvingContext ctx(nm, options);
+  sat::SatSolverFactory sat_factory(options);
+  SolvingContext ctx(nm, options, sat_factory);
 
   Type bv_type = nm.mk_bv_type(16);
   Type bool_type = nm.mk_bool_type();

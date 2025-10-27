@@ -48,10 +48,11 @@ class TestRewriterBvOverflow : public TestRewriter
 
     NodeManager nm;
     option::Options options;
+    sat::SatSolverFactory sat_factory(options);
     options.rewrite_level.set(rwl);
     options.dbg_check_model.set(false);
     options.dbg_check_unsat_core.set(false);
-    SolvingContext ctx = SolvingContext(nm, options);
+    SolvingContext ctx = SolvingContext(nm, options, sat_factory);
     for (int32_t num_bits = low; num_bits <= high; num_bits++)
     {
       for (int32_t i = 0, max = std::pow(2, num_bits); i < max; ++i)
@@ -121,10 +122,11 @@ class TestRewriterBvOverflow : public TestRewriter
 
     NodeManager nm;
     option::Options options;
+    sat::SatSolverFactory sat_factory(options);
     options.rewrite_level.set(rwl);
     options.dbg_check_model.set(false);
     options.dbg_check_unsat_core.set(false);
-    SolvingContext ctx = SolvingContext(nm, options);
+    SolvingContext ctx = SolvingContext(nm, options, sat_factory);
     for (int32_t num_bits = low; num_bits <= high; num_bits++)
     {
       int32_t max = std::pow(2, num_bits - 1);

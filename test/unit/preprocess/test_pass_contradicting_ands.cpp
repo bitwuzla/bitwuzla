@@ -12,6 +12,7 @@
 
 #include "option/option.h"
 #include "preprocess/pass/contradicting_ands.h"
+#include "sat/sat_solver_factory.h"
 #include "test/unit/preprocess/test_preprocess_pass.h"
 
 namespace bzla::test {
@@ -23,10 +24,10 @@ using namespace node;
 class TestPassContradictingAnds : public TestPreprocessingPass
 {
  protected:
-  TestPassContradictingAnds()
+  TestPassContradictingAnds() : d_sat_factory(d_options)
   {
     d_options.rewrite_level.set(0);
-    d_env.reset(new Env(d_nm, d_options));
+    d_env.reset(new Env(d_nm, d_sat_factory, d_options));
     d_pass.reset(new preprocess::pass::PassContradictingAnds(*d_env, &d_bm));
   }
 
@@ -67,6 +68,7 @@ class TestPassContradictingAnds : public TestPreprocessingPass
   Node d_c_inv = d_nm.invert_node(d_c);
   Node d_zero = d_nm.mk_value(BitVector::mk_zero(8));
 
+  sat::SatSolverFactory d_sat_factory;
   std::unique_ptr<preprocess::pass::PassContradictingAnds> d_pass;
   std::unique_ptr<Env> d_env;
 };

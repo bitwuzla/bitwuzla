@@ -27,31 +27,12 @@ using namespace node;
 
 /* --- SolvingContext public ----------------------------------------------- */
 
-#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
 SolvingContext::SolvingContext(NodeManager& nm,
                                const option::Options& options,
+                               sat::SatSolverFactory& sat_factory,
                                const std::string& name,
                                bool subsolver)
-    : d_env(nm, options, name),
-      d_logger(d_env.logger()),
-      d_assertions(&d_backtrack_mgr),
-      d_original_assertions(&d_backtrack_mgr),
-      d_have_quantifiers(&d_backtrack_mgr),
-      d_preprocessor(*this),
-      d_solver_engine(*this),
-      d_subsolver(subsolver),
-      d_stats(d_env.statistics())
-{
-  d_have_quantifiers = false;
-}
-#endif
-
-SolvingContext::SolvingContext(NodeManager& nm,
-                               const option::Options& options,
-                               sat::SatSolverFactory* sat_factory,
-                               const std::string& name,
-                               bool subsolver)
-    : d_env(nm, options, name, sat_factory),
+    : d_env(nm, sat_factory, options, name),
       d_logger(d_env.logger()),
       d_assertions(&d_backtrack_mgr),
       d_original_assertions(&d_backtrack_mgr),

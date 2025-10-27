@@ -24,6 +24,7 @@
 #include "printer/btor2_printer.h"
 #include "printer/exception.h"
 #include "printer/smt2_printer.h"
+#include "sat/sat_solver_factory.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "solver/fp/symfpu_nm.h"  // Temporary for setting SymFpuNM
@@ -1409,7 +1410,9 @@ class SatSolverFactoryInternal : public bzla::sat::SatSolverFactory
 Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
-  d_ctx.reset(new bzla::SolvingContext(*d_tm.d_nm, *options.d_options, "main"));
+  d_sat_factory.reset(new bzla::sat::SatSolverFactory(*options.d_options));
+  d_ctx.reset(new bzla::SolvingContext(
+      *d_tm.d_nm, *options.d_options, *d_sat_factory, "main"));
   BITWUZLA_TRY_CATCH_END;
 }
 #endif
@@ -1420,11 +1423,10 @@ Bitwuzla::Bitwuzla(TermManager& tm,
     : d_tm(tm)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
+  d_sat_factory.reset(
+      new SatSolverFactoryInternal(sat_factory, *options.d_options));
   d_ctx.reset(new bzla::SolvingContext(
-      *d_tm.d_nm,
-      *options.d_options,
-      new SatSolverFactoryInternal(sat_factory, *options.d_options),
-      "main"));
+      *d_tm.d_nm, *options.d_options, *d_sat_factory, "main"));
   BITWUZLA_TRY_CATCH_END;
 }
 

@@ -12,6 +12,7 @@
 
 #include "backtrack/backtrackable.h"
 #include "preprocess/pass/flatten_and.h"
+#include "sat/sat_solver_factory.h"
 #include "test/unit/preprocess/test_preprocess_pass.h"
 
 namespace bzla::test {
@@ -22,9 +23,14 @@ using namespace node;
 class TestPassFlattenAnd : public TestPreprocessingPass
 {
  public:
-  TestPassFlattenAnd() : d_env(d_nm), d_pass(d_env, &d_bm){};
+  TestPassFlattenAnd()
+      : d_sat_factory(d_options),
+        d_env(d_nm, d_sat_factory),
+        d_pass(d_env, &d_bm) {};
 
  protected:
+  option::Options d_options;
+  sat::SatSolverFactory d_sat_factory;
   Env d_env;
   preprocess::pass::PassFlattenAnd d_pass;
 };

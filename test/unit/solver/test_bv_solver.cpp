@@ -19,26 +19,28 @@ using namespace node;
 class TestBvSolver : public TestCommon
 {
  protected:
+  TestBvSolver() : d_sat_factory(d_options) {}
   option::Options d_options;
+  sat::SatSolverFactory d_sat_factory;
 };
 
 TEST_F(TestBvSolver, ctor_dtor)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
 }
 
 TEST_F(TestBvSolver, solve_empty)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
   ASSERT_EQ(ctx.solve(), Result::SAT);
 }
 
 TEST_F(TestBvSolver, solve_true)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
   ctx.assert_formula(nm.mk_value(true));
   ASSERT_EQ(ctx.solve(), Result::SAT);
 }
@@ -46,7 +48,7 @@ TEST_F(TestBvSolver, solve_true)
 TEST_F(TestBvSolver, solve_false)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
   ctx.assert_formula(nm.mk_value(false));
   ASSERT_EQ(ctx.solve(), Result::UNSAT);
 }
@@ -54,7 +56,7 @@ TEST_F(TestBvSolver, solve_false)
 TEST_F(TestBvSolver, solve_eq1)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
 
   Type bv8 = nm.mk_bv_type(8);
   Node x   = nm.mk_const(bv8);
@@ -68,7 +70,7 @@ TEST_F(TestBvSolver, solve_eq1)
 TEST_F(TestBvSolver, solve_eq2)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
 
   Type bv8 = nm.mk_bv_type(8);
   Node x   = nm.mk_const(bv8);
@@ -82,7 +84,7 @@ TEST_F(TestBvSolver, solve_eq2)
 TEST_F(TestBvSolver, solve_ne)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
 
   Type bv8 = nm.mk_bv_type(2);
   Node x   = nm.mk_const(bv8);
@@ -96,7 +98,7 @@ TEST_F(TestBvSolver, solve_ne)
 TEST_F(TestBvSolver, solve_diseq)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
 
   Type bv8 = nm.mk_bv_type(8);
   Node x   = nm.mk_const(bv8);
@@ -109,7 +111,7 @@ TEST_F(TestBvSolver, solve_diseq)
 TEST_F(TestBvSolver, solve_add)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
 
   Type bv8     = nm.mk_bv_type(8);
   Node x       = nm.mk_const(bv8);
@@ -126,7 +128,7 @@ TEST_F(TestBvSolver, solve_add)
 TEST_F(TestBvSolver, solve_mul)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
 
   Type bv8     = nm.mk_bv_type(4);
   Node x       = nm.mk_const(bv8);
@@ -143,7 +145,7 @@ TEST_F(TestBvSolver, solve_mul)
 TEST_F(TestBvSolver, value1)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
 
   Type bv8 = nm.mk_bv_type(8);
   Node x   = nm.mk_const(bv8);
@@ -155,7 +157,7 @@ TEST_F(TestBvSolver, value1)
 TEST_F(TestBvSolver, value2)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
 
   Type bv8 = nm.mk_bv_type(8);
   Node x   = nm.mk_const(bv8);
@@ -175,7 +177,7 @@ TEST_F(TestBvSolver, value2)
 TEST_F(TestBvSolver, multiple_ctxs)
 {
   NodeManager nm;
-  SolvingContext ctx1 = SolvingContext(nm, d_options);
+  SolvingContext ctx1 = SolvingContext(nm, d_options, d_sat_factory);
 
   Type bv8 = nm.mk_bv_type(2);
   Node x   = nm.mk_const(bv8);
@@ -185,7 +187,7 @@ TEST_F(TestBvSolver, multiple_ctxs)
   ASSERT_EQ(ctx1.solve(), Result::SAT);
   ASSERT_NE(ctx1.get_value(x), ctx1.get_value(y));
 
-  SolvingContext ctx2 = SolvingContext(nm, d_options);
+  SolvingContext ctx2 = SolvingContext(nm, d_options, d_sat_factory);
   ctx2.assert_formula(nm.mk_node(Kind::EQUAL, {x, ctx1.get_value(x)}));
   ctx2.assert_formula(nm.mk_node(Kind::EQUAL, {y, ctx1.get_value(y)}));
   ASSERT_EQ(ctx2.solve(), Result::SAT);
@@ -196,7 +198,7 @@ TEST_F(TestBvSolver, multiple_ctxs)
 TEST_F(TestBvSolver, solve1)
 {
   NodeManager nm;
-  SolvingContext ctx = SolvingContext(nm, d_options);
+  SolvingContext ctx = SolvingContext(nm, d_options, d_sat_factory);
 
   Type bv2 = nm.mk_bv_type(2);
   Node x   = nm.mk_const(bv2);

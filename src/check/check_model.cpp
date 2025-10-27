@@ -38,15 +38,8 @@ CheckModel::check()
   option::Options opts;
   opts.dbg_check_model.set(false);
   NodeManager& nm = d_ctx.env().nm();
-  SolvingContext check_ctx =
-#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
-      d_ctx.env().sat_factory()
-          ? SolvingContext(
-                nm, opts, d_ctx.env().sat_factory(), "chkmodel", true)
-          : SolvingContext(nm, opts, "chkmodel", true);
-#else
-      SolvingContext(nm, opts, d_ctx.env().sat_factory(), "chkmodel", true);
-#endif
+  SolvingContext check_ctx(
+      nm, opts, d_ctx.env().sat_factory(), "chkmodel", true);
   for (const Node& assertion : d_ctx.original_assertions())
   {
     check_ctx.assert_formula(assertion);
