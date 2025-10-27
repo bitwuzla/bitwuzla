@@ -18,14 +18,13 @@
 namespace bzla {
 
 Env::Env(NodeManager& nm,
+         sat::SatSolverFactory& sat_factory,
          const option::Options& options,
-         const std::string& name,
-         sat::SatSolverFactory* sat_factory)
+         const std::string& name)
     : d_nm(nm),
       d_options(options),
       d_rewriter(*this, options.rewrite_level()),
-      d_sat_factory(sat_factory ? sat_factory
-                                : new sat::SatSolverFactory(options)),
+      d_sat_factory(sat_factory),
       d_logger(options.log_level(),
                options.verbosity(),
                name.empty() ? "" : "(" + name + ")")
@@ -64,16 +63,16 @@ Env::nm()
   return d_nm;
 }
 
-sat::SatSolverFactory*
+sat::SatSolverFactory&
 Env::sat_factory()
 {
-  return d_sat_factory.get();
+  return d_sat_factory;
 }
 
 void
 Env::configure_terminator(Terminator* terminator)
 {
-  if (!d_sat_factory->has_terminator_support())
+  if (!d_sat_factory.has_terminator_support())
   {
     throw Unsupported("terminator not supported in configured SAT solver");
   }

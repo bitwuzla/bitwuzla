@@ -9,6 +9,7 @@
  */
 
 #include "node/node_manager.h"
+#include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/rewrite/test_rewriter.h"
 
@@ -19,6 +20,7 @@ using namespace bzla::node;
 class TestRewriterBvRotate : public TestRewriter
 {
  protected:
+  TestRewriterBvRotate() : d_sat_factory(d_options) {}
   void test_rot(uint32_t size, uint32_t nbits, bool left)
   {
     Kind kind, kindi;
@@ -33,16 +35,18 @@ class TestRewriterBvRotate : public TestRewriter
       kindi = Kind::BV_RORI;
     }
 
-    NodeManager nm;
-    Node const0     = nm.mk_const(nm.mk_bv_type(size));
-    Node roti       = nm.mk_node(kindi, {const0}, {nbits});
-    Node rot0       = nm.mk_node(
-        kind, {const0, nm.mk_value(BitVector::from_ui(size, nbits))});
-    option::Options d_options;
-    SolvingContext ctx = SolvingContext(nm, d_options);
-    ctx.assert_formula(nm.mk_node(Kind::DISTINCT, {rot0, roti}));
+    Node const0 = d_nm.mk_const(d_nm.mk_bv_type(size));
+    Node roti   = d_nm.mk_node(kindi, {const0}, {nbits});
+    Node rot0   = d_nm.mk_node(
+        kind, {const0, d_nm.mk_value(BitVector::from_ui(size, nbits))});
+    SolvingContext ctx = SolvingContext(d_nm, d_options, d_sat_factory);
+    ctx.assert_formula(d_nm.mk_node(Kind::DISTINCT, {rot0, roti}));
     ASSERT_EQ(ctx.solve(), Result::UNSAT);
   }
+
+  NodeManager d_nm;
+  option::Options d_options;
+  sat::SatSolverFactory d_sat_factory;
 };
 
 TEST_F(TestRewriterBvRotate, rol_1_0) { test_rot(1, 0, true); }

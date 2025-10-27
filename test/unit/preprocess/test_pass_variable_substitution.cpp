@@ -13,6 +13,7 @@
 #include "option/option.h"
 #include "preprocess/pass/variable_substitution.h"
 #include "preprocess/preprocessor.h"
+#include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/preprocess/test_preprocess_pass.h"
 
@@ -25,7 +26,10 @@ using namespace node;
 class TestPassVariableSubstitution : public TestPreprocessingPass
 {
  public:
-  TestPassVariableSubstitution() : d_env(d_nm), d_pass(d_env, &d_bm)
+  TestPassVariableSubstitution()
+      : d_sat_factory(d_options),
+        d_env(d_nm, d_sat_factory),
+        d_pass(d_env, &d_bm)
   {
     d_options.rewrite_level.set(0);
     d_options.pp_embedded_constr.set(false);
@@ -35,6 +39,8 @@ class TestPassVariableSubstitution : public TestPreprocessingPass
   };
 
  protected:
+  option::Options d_options;
+  sat::SatSolverFactory d_sat_factory;
   Env d_env;
   preprocess::pass::PassVariableSubstitution d_pass;
 };
@@ -178,7 +184,7 @@ TEST_F(TestPassVariableSubstitution, cycle5)
 
 TEST_F(TestPassVariableSubstitution, inc1)
 {
-  SolvingContext ctx(d_nm, d_options);
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
   Preprocessor& pp = ctx.preprocessor();
 
   Node x  = d_nm.mk_const(d_nm.mk_bool_type(), "x");
@@ -233,7 +239,7 @@ TEST_F(TestPassVariableSubstitution, inc1)
 
 TEST_F(TestPassVariableSubstitution, inc2)
 {
-  SolvingContext ctx(d_nm, d_options);
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
   Preprocessor& pp = ctx.preprocessor();
 
   Node x       = d_nm.mk_const(d_nm.mk_bool_type(), "x");
@@ -283,7 +289,7 @@ TEST_F(TestPassVariableSubstitution, inc2)
 
 TEST_F(TestPassVariableSubstitution, inc3)
 {
-  SolvingContext ctx(d_nm, d_options);
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
   Preprocessor& pp = ctx.preprocessor();
 
   Node x       = d_nm.mk_const(d_nm.mk_bool_type(), "x");

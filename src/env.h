@@ -26,18 +26,14 @@ class Env
  public:
   /**
    * Constructor.
+   * @param sat_factory The associated SAT solver factory.
    * @param options     The associated configuration options.
    * @param name        The name of this Env, for logging purposes.
-   * @param sat_factory The associated SAT solver factory (optional).
-   *                    Env takes ownership of this pointer.
-   *                    If not nullptr, Env is initialized with an external
-   *                    (user-provided) SAT solver factory. Else, it is
-   *                    initialized with default, internal SAT solver factory.
    */
   Env(NodeManager& nm,
-      const option::Options& options     = option::Options(),
-      const std::string& name            = "",
-      sat::SatSolverFactory* sat_factory = nullptr);
+      sat::SatSolverFactory& sat_factory,
+      const option::Options& options = option::Options(),
+      const std::string& name        = "");
 
   /** @return The associated options instance. */
   const option::Options& options() const;
@@ -55,7 +51,7 @@ class Env
   NodeManager& nm();
 
   /** @return The associated SAT solver factory. */
-  sat::SatSolverFactory* sat_factory();
+  sat::SatSolverFactory& sat_factory();
 
   /**
    * Configure associated termination configuration instance.
@@ -89,7 +85,7 @@ class Env
   /** The associated terminator. */
   Terminator* d_terminator = nullptr;
   /** The associated SAT solver factory. */
-  std::unique_ptr<sat::SatSolverFactory> d_sat_factory = nullptr;
+  sat::SatSolverFactory& d_sat_factory;
   /** The associated logger class. */
   util::Logger d_logger;
 };

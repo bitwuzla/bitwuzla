@@ -12,6 +12,7 @@
 
 #include "preprocess/pass/normalize.h"
 #include "rewrite/rewriter.h"
+#include "sat/sat_solver_factory.h"
 #include "test/unit/preprocess/test_preprocess_pass.h"
 
 namespace bzla::test {
@@ -24,9 +25,9 @@ using namespace bzla::preprocess::pass;
 class TestPassNormalize : public TestPreprocessingPass
 {
  protected:
-  TestPassNormalize()
+  TestPassNormalize() : d_sat_factory(d_options)
   {
-    d_env.reset(new Env(d_nm, d_options));
+    d_env.reset(new Env(d_nm, d_sat_factory, d_options));
     d_pass.reset(new PassNormalize(*d_env, &d_bm));
   };
 
@@ -214,6 +215,8 @@ class TestPassNormalize : public TestPreprocessingPass
   Node d_true    = d_nm.mk_value(true);
 
   std::unique_ptr<preprocess::pass::PassNormalize> d_pass;
+  option::Options d_options;
+  sat::SatSolverFactory d_sat_factory;
   std::unique_ptr<Env> d_env;
 };
 

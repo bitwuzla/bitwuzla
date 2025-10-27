@@ -9,6 +9,7 @@
  */
 
 #include "node/node_manager.h"
+#include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
 
@@ -19,29 +20,29 @@ using namespace node;
 class TestIncremental : public TestCommon
 {
  protected:
+  TestIncremental() : d_sat_factory(d_options) {}
+
   void test_incremental_counter(uint64_t size, bool is_nondet)
   {
     assert(size > 0);
 
-    NodeManager nm;
-    option::Options options;
-    SolvingContext ctx = SolvingContext(nm, options);
+    SolvingContext ctx = SolvingContext(d_nm, d_options, d_sat_factory);
 
-    Node one        = nm.mk_value(BitVector::mk_true());
-    Node cur        = nm.mk_value(BitVector::mk_zero(size));
+    Node one = d_nm.mk_value(BitVector::mk_true());
+    Node cur = d_nm.mk_value(BitVector::mk_zero(size));
 
     uint32_t i = 0;
     for (;;)
     {
-      Node inc = nm.mk_node(Kind::BV_INC, {cur});
+      Node inc = d_nm.mk_node(Kind::BV_INC, {cur});
       Node next, oracle;
 
       if (is_nondet)
       {
-        Node oracle =
-            i > 0 ? nm.mk_const(nm.mk_bool_type(), "oracle" + std::to_string(i))
-                  : nm.mk_value(true);
-        next = nm.mk_node(Kind::ITE, {oracle, inc, cur});
+        Node oracle = i > 0 ? d_nm.mk_const(d_nm.mk_bool_type(),
+                                            "oracle" + std::to_string(i))
+                            : d_nm.mk_value(true);
+        next        = d_nm.mk_node(Kind::ITE, {oracle, inc, cur});
       }
       else
       {
@@ -50,14 +51,14 @@ class TestIncremental : public TestCommon
 
       cur = next;
 
-      Node nonzero = nm.mk_node(Kind::BV_REDOR, {cur});
-      Node allzero = nm.mk_node(Kind::BV_NOT, {nonzero});
+      Node nonzero = d_nm.mk_node(Kind::BV_REDOR, {cur});
+      Node allzero = d_nm.mk_node(Kind::BV_NOT, {nonzero});
 
       i += 1;
 
       // TODO refactor to use solve with assumptions when supported
       ctx.push();
-      ctx.assert_formula(nm.mk_node(Kind::EQUAL, {allzero, one}));
+      ctx.assert_formula(d_nm.mk_node(Kind::EQUAL, {allzero, one}));
       Result res = ctx.solve();
       if (res == Result::SAT)
       {
@@ -76,9 +77,7 @@ class TestIncremental : public TestCommon
   {
     assert(size > 0);
 
-    NodeManager nm;
-    option::Options options;
-    SolvingContext ctx = SolvingContext(nm, options);
+    SolvingContext ctx = SolvingContext(d_nm, d_options, d_sat_factory);
 
     Node prev;
     uint32_t i = 0;
@@ -86,12 +85,12 @@ class TestIncremental : public TestCommon
     for (;;)
     {
       i += 1;
-      Type type = nm.mk_bv_type(size);
-      Node next = nm.mk_const(type, "const" + std::to_string(i));
+      Type type = d_nm.mk_bv_type(size);
+      Node next = d_nm.mk_const(type, "const" + std::to_string(i));
 
       if (!prev.is_null())
       {
-        ctx.assert_formula(nm.mk_node(Kind::BV_ULT, {prev, next}));
+        ctx.assert_formula(d_nm.mk_node(Kind::BV_ULT, {prev, next}));
       }
       prev = next;
 
@@ -105,6 +104,9 @@ class TestIncremental : public TestCommon
     }
     ASSERT_EQ(i, (uint32_t) (1 << size) + 1);
   }
+  NodeManager d_nm;
+  option::Options d_options;
+  sat::SatSolverFactory d_sat_factory;
 };
 
 TEST_F(TestIncremental, incremental_counter1)
@@ -169,20 +171,20 @@ TEST_F(TestIncremental, lt8) { test_incremental_lt(8); }
 
 TEST_F(TestIncremental, assume_assert1)
 {
-  NodeManager nm;
   option::Options options;
   options.set<uint64_t>(option::Option::REWRITE_LEVEL, 0);
-  SolvingContext ctx = SolvingContext(nm, options);
+  sat::SatSolverFactory sat_factory(d_options);
+  SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
 
-  Type type       = nm.mk_bool_type();
-  Type atype      = nm.mk_array_type(type, type);
-  Node array      = nm.mk_const(atype, "array1");
-  Node index1     = nm.mk_const(type, "index1");
-  Node index2     = nm.mk_const(type, "index2");
-  Node read1      = nm.mk_node(Kind::SELECT, {array, index1});
-  Node read2      = nm.mk_node(Kind::SELECT, {array, index2});
-  Node eq         = nm.mk_node(Kind::EQUAL, {index1, index2});
-  Node ne         = nm.mk_node(Kind::DISTINCT, {read1, read2});
+  Type type   = d_nm.mk_bool_type();
+  Type atype  = d_nm.mk_array_type(type, type);
+  Node array  = d_nm.mk_const(atype, "array1");
+  Node index1 = d_nm.mk_const(type, "index1");
+  Node index2 = d_nm.mk_const(type, "index2");
+  Node read1  = d_nm.mk_node(Kind::SELECT, {array, index1});
+  Node read2  = d_nm.mk_node(Kind::SELECT, {array, index2});
+  Node eq     = d_nm.mk_node(Kind::EQUAL, {index1, index2});
+  Node ne     = d_nm.mk_node(Kind::DISTINCT, {read1, read2});
 
   ctx.assert_formula(ne);
   // TODO refactor to use solve with assumptions when supported
@@ -198,20 +200,20 @@ TEST_F(TestIncremental, assume_assert1)
 
 TEST_F(TestIncremental, lemmas_on_demand1)
 {
-  NodeManager nm;
   option::Options options;
   options.set<uint64_t>(option::Option::REWRITE_LEVEL, 0);
-  SolvingContext ctx = SolvingContext(nm, options);
+  sat::SatSolverFactory sat_factory(options);
+  SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
 
-  Type type       = nm.mk_bool_type();
-  Type atype      = nm.mk_array_type(type, type);
-  Node array      = nm.mk_const(atype, "array1");
-  Node index1     = nm.mk_const(type, "index1");
-  Node index2     = nm.mk_const(type, "index2");
-  Node read1      = nm.mk_node(Kind::SELECT, {array, index1});
-  Node read2      = nm.mk_node(Kind::SELECT, {array, index2});
-  Node eq         = nm.mk_node(Kind::EQUAL, {index1, index2});
-  Node ne         = nm.mk_node(Kind::DISTINCT, {read1, read2});
+  Type type   = d_nm.mk_bool_type();
+  Type atype  = d_nm.mk_array_type(type, type);
+  Node array  = d_nm.mk_const(atype, "array1");
+  Node index1 = d_nm.mk_const(type, "index1");
+  Node index2 = d_nm.mk_const(type, "index2");
+  Node read1  = d_nm.mk_node(Kind::SELECT, {array, index1});
+  Node read2  = d_nm.mk_node(Kind::SELECT, {array, index2});
+  Node eq     = d_nm.mk_node(Kind::EQUAL, {index1, index2});
+  Node ne     = d_nm.mk_node(Kind::DISTINCT, {read1, read2});
 
   ctx.assert_formula(eq);
   // TODO refactor to use solve with assumptions when supported

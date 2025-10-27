@@ -12,6 +12,7 @@
 
 #include "node/node_manager.h"
 #include "option/option.h"
+#include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
 
@@ -23,6 +24,8 @@ using namespace option;
 class TestFpSolver : public TestCommon
 {
  protected:
+  TestFpSolver() : d_sat_factory(d_options) {}
+
   void SetUp() override
   {
     TestCommon::SetUp();
@@ -39,9 +42,10 @@ class TestFpSolver : public TestCommon
 
   /** The node manager. */
   NodeManager d_nm;
-
   /** The solver options. */
   Options d_options;
+  /** The SAT solver factory. */
+  sat::SatSolverFactory d_sat_factory;
 
   Type d_fp16;
   Node d_fp_a;
@@ -56,7 +60,7 @@ class TestFpSolver : public TestCommon
 
 TEST_F(TestFpSolver, fp_abs)
 {
-  SolvingContext ctx = SolvingContext(d_nm, d_options);
+  SolvingContext ctx = SolvingContext(d_nm, d_options, d_sat_factory);
 
   ctx.assert_formula(d_nm.mk_node(
       Kind::EQUAL,
@@ -82,7 +86,7 @@ TEST_F(TestFpSolver, fp_abs)
 
 TEST_F(TestFpSolver, fp_add)
 {
-  SolvingContext ctx = SolvingContext(d_nm, d_options);
+  SolvingContext ctx = SolvingContext(d_nm, d_options, d_sat_factory);
   ctx.assert_formula(
       d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NAN, {d_fp_a})}));
   ctx.assert_formula(
@@ -110,7 +114,7 @@ TEST_F(TestFpSolver, fp_add)
 
 TEST_F(TestFpSolver, fp_fma)
 {
-  SolvingContext ctx = SolvingContext(d_nm, d_options);
+  SolvingContext ctx = SolvingContext(d_nm, d_options, d_sat_factory);
   ctx.assert_formula(
       d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::FP_IS_NAN, {d_fp_a})}));
   ctx.assert_formula(

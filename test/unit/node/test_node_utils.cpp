@@ -14,6 +14,7 @@
 #include "node/node_manager.h"
 #include "node/node_utils.h"
 #include "rewrite/rewriter.h"
+#include "sat/sat_solver_factory.h"
 
 namespace bzla::test {
 
@@ -33,9 +34,16 @@ class TestNodeUtils : public ::testing::Test
   }
 
  protected:
-  TestNodeUtils() : d_env(d_nm), d_rewriter(d_env.rewriter()) {}
+  TestNodeUtils()
+      : d_sat_factory(d_options),
+        d_env(d_nm, d_sat_factory),
+        d_rewriter(d_env.rewriter())
+  {
+  }
 
   NodeManager d_nm;
+  option::Options d_options;
+  sat::SatSolverFactory d_sat_factory;
   Env d_env;
   Rewriter& d_rewriter;
   Type d_bv4_type;

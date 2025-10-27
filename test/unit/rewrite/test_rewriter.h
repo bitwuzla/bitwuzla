@@ -14,6 +14,7 @@
 #include "node/kind_info.h"
 #include "node/node_manager.h"
 #include "rewrite/rewriter.h"
+#include "sat/sat_solver_factory.h"
 #include "solver/fp/floating_point.h"
 
 namespace bzla::test {
@@ -23,7 +24,12 @@ static const char* s_solver_binary = std::getenv("SOLVER_BINARY");
 class TestRewriter : public ::testing::Test
 {
  protected:
-  TestRewriter() : d_env(d_nm), d_rewriter(d_env.rewriter()) {}
+  TestRewriter()
+      : d_sat_factory(d_options),
+        d_env(d_nm, d_sat_factory),
+        d_rewriter(d_env.rewriter())
+  {
+  }
 
   void SetUp() override
   {
@@ -147,7 +153,7 @@ class TestRewriter : public ::testing::Test
     {
       ss << "(declare-const " << child << " " << child.type() << ")\n";
     }
-    Env env(d_nm);
+    Env env(d_nm, d_sat_factory);
     ss << "(assert (distinct " << node << " " << env.rewriter().rewrite(node)
        << "))\n";
     ASSERT_EQ(check_sat(ss), "unsat");
@@ -160,7 +166,7 @@ class TestRewriter : public ::testing::Test
     {
       GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
     }
-    Env env(d_nm);
+    Env env(d_nm, d_sat_factory);
     Rewriter& rewriter = env.rewriter();
     std::stringstream ss;
     std::vector<std::reference_wrapper<const Node>> visit{node};
@@ -200,12 +206,14 @@ class TestRewriter : public ::testing::Test
 
   void test_rewrite(const Node& node, const Node& expected)
   {
-    Env env(d_nm);
+    Env env(d_nm, d_sat_factory);
     ASSERT_EQ(expected, d_rewriter.rewrite(node));
     ASSERT_EQ(expected, env.rewriter().rewrite(node));
   }
 
   NodeManager d_nm;
+  option::Options d_options;
+  sat::SatSolverFactory d_sat_factory;
   Env d_env;
   Rewriter& d_rewriter;
 

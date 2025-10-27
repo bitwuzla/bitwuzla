@@ -4299,7 +4299,6 @@ TEST_F(TestApi, sat_factory)
               d_tm.mk_term(bitwuzla::Kind::BV_MUL,
                            {d_tm.mk_term(bitwuzla::Kind::BV_MUL, {s, x}), t})});
 #ifdef BZLA_USE_CADICAL
-  std::cout << "#### cadical" << std::endl;
   {
     testing::internal::CaptureStdout();
     bitwuzla::Options opts;
@@ -4315,7 +4314,6 @@ TEST_F(TestApi, sat_factory)
   }
 #endif
 #ifdef BZLA_USE_CMS
-  std::cout << "#### cms" << std::endl;
   {
     testing::internal::CaptureStdout();
     bitwuzla::Options opts;
@@ -4331,7 +4329,6 @@ TEST_F(TestApi, sat_factory)
   }
 #endif
 #ifdef BZLA_USE_KISSAT
-  std::cout << "#### kissat" << std::endl;
   {
     testing::internal::CaptureStdout();
     bitwuzla::Options opts;

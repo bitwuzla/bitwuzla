@@ -346,17 +346,8 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
   options.produce_models.set(true);
   options.abstraction.set(false);
   options.pp_normalize.set(false);
-  if (d_env.sat_factory() != nullptr)
-  {
-    d_mbqi_solver.reset(new SolvingContext(
-        d_env.nm(), options, d_env.sat_factory(), "mbqi", true));
-  }
-#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
-  else
-  {
-    d_mbqi_solver.reset(new SolvingContext(d_env.nm(), options, "mbqi", true));
-  }
-#endif
+  d_mbqi_solver.reset(new SolvingContext(
+      d_env.nm(), options, d_env.sat_factory(), "mbqi", true));
 
   // Assert formula
   for (const Node& c : d_consts)

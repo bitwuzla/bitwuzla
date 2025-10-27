@@ -888,7 +888,7 @@ AbstractionModule::score_lemmas(
 void
 AbstractionModule::rank_lemmas_by_circuit_size()
 {
-  Env env(d_env.nm());
+  Env env(d_env.nm(), d_env.sat_factory());
   bv::AigBitblaster bb;
   NodeManager& nm = d_env.nm();
   Type bv32       = nm.mk_bv_type(32);
@@ -1101,13 +1101,7 @@ AbstractionModule::verify_lemmas() const
 {
   option::Options opts;
   NodeManager& nm = d_env.nm();
-  SolvingContext ctx =
-#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
-      d_env.sat_factory() ? SolvingContext(nm, opts, d_env.sat_factory())
-                          : SolvingContext(nm, opts);
-#else
-      SolvingContext(nm, opts, d_env.sat_factory());
-#endif
+  SolvingContext ctx(nm, opts, d_env.sat_factory());
 
   for (uint64_t size = 4; size < 32; ++size)
   {

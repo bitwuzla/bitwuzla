@@ -40,6 +40,9 @@ class SolvingContext;
 namespace option {
 class Options;
 }
+namespace sat {
+class SatSolverFactory;
+}
 }  // namespace bzla
 
 namespace bitwuzla {
@@ -1802,6 +1805,8 @@ class Bitwuzla
   bool d_pending_pop = false;
   /** The associated term manager instance. */
   TermManager &d_tm;
+  /** The associated SAT solver factory. */
+  std::unique_ptr<bzla::sat::SatSolverFactory> d_sat_factory;
 };
 
 /* -------------------------------------------------------------------------- */

@@ -183,7 +183,6 @@ sources = files([
   'backtrack/backtrackable.cpp',
   'check/check_model.cpp',
   'check/check_unsat_core.cpp',
-  'check/check_term.cpp',
   'env.cpp',
   'node/kind_info.cpp',
   'node/node.cpp',

@@ -15,6 +15,7 @@
 #include "option/option.h"
 #include "printer/printer.h"
 #include "rng/rng.h"
+#include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
 
@@ -37,6 +38,7 @@ class TestBvPropSolver : public ::testing::Test
   static constexpr uint32_t TEST_NUPDATES = TEST_SLOW ? 200 : 100;
 #endif
 
+  TestBvPropSolver() : d_sat_factory(d_options) {}
 
   void SetUp() override
   {
@@ -145,6 +147,8 @@ class TestBvPropSolver : public ::testing::Test
   NodeManager d_nm;
   /** The configured options. */
   Options d_options;
+  /** The configured SAT solver factory. */
+  sat::SatSolverFactory d_sat_factory;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -246,7 +250,7 @@ TestBvPropSolver::_test_prop_aux(Kind kind,
   Node const1 = s1 ? fix_bits(d_nm.mk_const(type), *d1) : Node();
   Node const2 = s2 ? fix_bits(d_nm.mk_const(type), *d2) : Node();
 
-  SolvingContext ctx = SolvingContext(d_nm, d_options);
+  SolvingContext ctx = SolvingContext(d_nm, d_options, d_sat_factory);
 
   if (s2)
   {
