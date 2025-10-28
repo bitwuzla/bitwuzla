@@ -26,12 +26,18 @@ Exception::Exception(const std::stringstream &stream)
 
 /* Parser public ------------------------------------------------------------ */
 
-#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
 Parser::Parser(TermManager & tm,
                Options & options,
                const std::string &language,
                std::ostream *out)
 {
+#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
+  (void) tm;
+  (void) options;
+  (void) language;
+  (void) out;
+  throw Exception("no SAT solver configured");
+#else
   BITWUZLA_CHECK(language == "smt2" || language == "btor2")
       << "invalid input language, expected 'smt2' or 'btor2'";
   BITWUZLA_CHECK_NOT_NULL(out);
@@ -44,8 +50,8 @@ Parser::Parser(TermManager & tm,
     d_parser.reset(new bzla::parser::btor2::Parser(tm, options, out));
   }
   BITWUZLA_CHECK(d_parser->error_msg().empty()) << d_parser->error_msg();
-}
 #endif
+}
 
 Parser::Parser(TermManager &tm,
                SatSolverFactory &sat_factory,

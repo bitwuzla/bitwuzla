@@ -1394,16 +1394,20 @@ class SatSolverFactoryInternal : public bzla::sat::SatSolverFactory
 
 /* Bitwuzla public ---------------------------------------------------------- */
 
-#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
 Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
 {
+#if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
+  (void) tm;
+  (void) options;
+  throw Exception("no SAT solver configured");
+#else
   BITWUZLA_TRY_CATCH_BEGIN;
   d_sat_factory.reset(new bzla::sat::SatSolverFactory(*options.d_options));
   d_ctx.reset(new bzla::SolvingContext(
       *d_tm.d_nm, *options.d_options, *d_sat_factory, "main"));
   BITWUZLA_TRY_CATCH_END;
-}
 #endif
+}
 
 Bitwuzla::Bitwuzla(TermManager &tm,
                    SatSolverFactory &sat_factory,
