@@ -2,6 +2,13 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Add support for configuring a terminator via the parser.
+  - C++ API: `void Parser::configure_terminator(Terminator *)`
+  - C API:
+    - `bitwuzla_parser_set_termination_callback(BitwuzlaParser*, int32_t (*)(void*), void*)`
+    - `bitwuzla_parser_get_termination_callback_state(BitwuzlaParser*)`
+  - Python API:  `void Parser.configure_terminator(callable)`
+
 ## News for version 0.8.2
 
 - Fixed issue with model values in MBQI solver (#185).
