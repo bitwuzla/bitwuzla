@@ -305,6 +305,7 @@ cdef extern from "bitwuzla/cpp/parser.h" namespace "bitwuzla::parser":
                Options& options,
                const string& language,
                ostream* out) except +raise_error
+        void configure_terminator(Terminator *terminator) except +raise_error
         void configure_auto_print_model(bool value) except +raise_error
         void parse(const string& infile_name, bool parse_only, bool parse_file) except +raise_error
         Term parse_term(const string& iinput) except +raise_error

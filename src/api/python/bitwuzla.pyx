@@ -1327,7 +1327,7 @@ cdef class Bitwuzla:
                     # Terminate after self.time_limit seconds passed
                     return time.time() - self.start_time > self.time_limit
 
-             bitwuzla = Bitwuzla()
+             bitwuzla = Bitwuzla(tm, options)
              bitwuzla.configure_terminator(lambda: True)            # immediately terminate
              bitwuzla.configure_terminator(TimeLimitTerminator(1))  # terminate after 1s
              bitwuzla.configure_terminator(TimeLimitTerminator(10)) # terminate after 10s
@@ -1518,6 +1518,7 @@ cdef class Parser:
     cdef unique_ptr[bitwuzla_api.Parser] c_parser
     cdef Options options
     cdef TermManager tm
+    cdef unique_ptr[bitwuzla_api.PyTerminator] c_terminator
 
     def __init__(self,
                  tm: TermManager,
@@ -1546,6 +1547,38 @@ cdef class Parser:
                     options.c_options,
                     <const string&> str(language).encode(),
                     &bitwuzla_api.cout))
+
+    def configure_terminator(self, callback: callable):
+        """Set a termination callback.
+
+           Use this function to force Bitwuzla to prematurely terminate if
+           callback returns True. The callback object needs to be a callable,
+           i.e., it is a function or class that implements the builtin method
+           __call__().
+
+           For example: ::
+
+             import time
+             class TimeLimitTerminator:
+                def __init__(self, time_limit):
+                    self.start_time = time.time()
+                    self.time_limit = time_limit
+
+                def __call__(self):
+                    # Terminate after self.time_limit seconds passed
+                    return time.time() - self.start_time > self.time_limit
+
+             parser = Parser(tm, options)
+             parser.configure_terminator(lambda: True)            # immediately terminate
+             parser.configure_terminator(TimeLimitTerminator(1))  # terminate after 1s
+             parser.configure_terminator(TimeLimitTerminator(10)) # terminate after 10s
+
+           :param callback: A callable Python object.
+        """
+        self.c_terminator.reset(
+            new bitwuzla_api.PyTerminator(<PyObject*> callback))
+        self.c_parser.get().configure_terminator(
+            <bitwuzla_api.Terminator*> self.c_terminator.get())
 
     def configure_auto_print_model(self, value: bool):
         """Enable or disable the automatic printing of the model after each

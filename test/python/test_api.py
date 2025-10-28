@@ -2333,7 +2333,7 @@ def test_parser_btor2_print_model_sat(tm):
 # Termination function
 # ----------------------------------------------------------------------------
 
-def test_terminate(tm):
+def test_terminate(tm, capfd):
 
     class TestTerminator:
         def __call__(self):
@@ -2373,8 +2373,8 @@ def test_terminate(tm):
     bitwuzla.assert_formula(a)
     assert bitwuzla.check_sat() == Result.UNSAT
 
-    # not solved by rewriting, should be terminated in the PP when configured
     tt = TestTerminator()
+    # not solved by rewriting, should be terminated in the PP when configured
     options.set(Option.BV_SOLVER, 'bitblast')
     bitwuzla = Bitwuzla(tm, options)
     bitwuzla.assert_formula(b)
@@ -2385,13 +2385,24 @@ def test_terminate(tm):
     bitwuzla.configure_terminator(tt)
     assert bitwuzla.check_sat() == Result.UNKNOWN
 
-    tt = TestTerminator()
     options.set(Option.BV_SOLVER, 'prop')
     options.set(Option.REWRITE_LEVEL, 0)
     bitwuzla = Bitwuzla(tm, options)
     bitwuzla.configure_terminator(tt)
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNKNOWN
+
+    # configure terminator via parser
+    smt2 = '(declare-const x (_ BitVec 4))'\
+           + '(declare-const s (_ BitVec 4))'\
+           + '(declare-const t (_ BitVec 4))'\
+           + '(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))'\
+           + '(check-sat)'
+    parser = Parser(tm, options)
+    parser.configure_terminator(tt)
+    parser.parse(smt2, False, False)
+    captured = capfd.readouterr()
+    assert captured.out == ''
 
     # No terminator support in CryptoMiniSat, so configuring the terminator
     # will already throw even though this would terminate in the PP (as the
@@ -2423,7 +2434,7 @@ def test_terminate(tm):
         assert "Kissat not compiled in" in str(e) or \
                "terminator not supported in configured SAT solver" in str(e)
 
-def test_terminate_sat(tm):
+def test_terminate_sat(tm, capfd):
     class TestTerminator:
         def __init__(self, time_limit):
             self.start_time = time.time()
@@ -2444,7 +2455,7 @@ def test_terminate_sat(tm):
                 ])
     # not solved by bit-blasting without preprocessing, should be terminated in
     # the SAT solver when configured
-    tt = TestTerminator(1)
+    tt = TestTerminator(1000)
     options = Options()
     options.set(Option.BV_SOLVER, 'bitblast')
     options.set(Option.PREPROCESS, False)
@@ -2452,6 +2463,18 @@ def test_terminate_sat(tm):
     bitwuzla.configure_terminator(tt)
     bitwuzla.assert_formula(b)
     assert bitwuzla.check_sat() == Result.UNKNOWN
+    # configure terminator via parser
+    smt2 = '(declare-const x (_ BitVec 32))'\
+           + '(declare-const s (_ BitVec 32))'\
+           + '(declare-const t (_ BitVec 32))'\
+           + '(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))'\
+           + '(check-sat)'
+    tt = TestTerminator(1000)
+    parser = Parser(tm, options)
+    parser.configure_terminator(tt)
+    parser.parse(smt2, False, False)
+    captured = capfd.readouterr()
+    assert captured.out == 'unknown\n'
     # Note: CryptoMiniSat and Kissat do not implement terminator support
 
 
