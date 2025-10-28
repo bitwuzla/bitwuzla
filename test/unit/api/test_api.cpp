@@ -4230,10 +4230,7 @@ TEST_F(TestApi, sat_factory)
   class TestCadicalFactory : public bitwuzla::SatSolverFactory
   {
    public:
-    TestCadicalFactory(const bitwuzla::Options& options)
-        : bitwuzla::SatSolverFactory((options))
-    {
-    }
+    TestCadicalFactory() : bitwuzla::SatSolverFactory() {}
     std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
     {
       return std::unique_ptr<TestCadical>(new TestCadical(new sat::Cadical()));
@@ -4251,10 +4248,7 @@ TEST_F(TestApi, sat_factory)
   class TestCryptoMinisatFactory : public bitwuzla::SatSolverFactory
   {
    public:
-    TestCryptoMinisatFactory(const bitwuzla::Options& options)
-        : bitwuzla::SatSolverFactory((options))
-    {
-    }
+    TestCryptoMinisatFactory() : bitwuzla::SatSolverFactory() {}
     std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
     {
       return std::unique_ptr<TestCryptoMinisat>(
@@ -4295,10 +4289,7 @@ TEST_F(TestApi, sat_factory)
   class TestKissatFactory : public bitwuzla::SatSolverFactory
   {
    public:
-    TestKissatFactory(const bitwuzla::Options& options)
-        : bitwuzla::SatSolverFactory((options))
-    {
-    }
+    TestKissatFactory() : bitwuzla::SatSolverFactory() {}
     std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
     {
       return std::unique_ptr<TestKissat>(new TestKissat(new sat::Kissat()));
@@ -4323,7 +4314,7 @@ TEST_F(TestApi, sat_factory)
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::VERBOSITY, 1);
     opts.set(bitwuzla::Option::PREPROCESS, false);
-    TestCadicalFactory sat_factory(opts);
+    TestCadicalFactory sat_factory;
     bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
@@ -4338,7 +4329,7 @@ TEST_F(TestApi, sat_factory)
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::VERBOSITY, 1);
     opts.set(bitwuzla::Option::PREPROCESS, false);
-    TestCryptoMinisatFactory sat_factory(opts);
+    TestCryptoMinisatFactory sat_factory;
     bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
@@ -4368,7 +4359,7 @@ TEST_F(TestApi, sat_factory)
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::VERBOSITY, 1);
     opts.set(bitwuzla::Option::PREPROCESS, false);
-    TestKissatFactory sat_factory(opts);
+    TestKissatFactory sat_factory;
     bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);

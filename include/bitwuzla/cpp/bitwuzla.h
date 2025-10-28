@@ -1556,7 +1556,7 @@ class SatSolverFactory
 {
  public:
   /** Constructor. */
-  SatSolverFactory(const Options& options) : d_options(options) {}
+  SatSolverFactory() {}
   /**
    * Create new (external) SAT solver instance.
    * @return The SAT solver instance.
@@ -1564,9 +1564,6 @@ class SatSolverFactory
   virtual std::unique_ptr<SatSolver> new_sat_solver() = 0;
   /** Determine if configured SAT solver has terminator support. */
   virtual bool has_terminator_support() = 0;
-
- private:
-  const Options& d_options;
 };
 
 /* -------------------------------------------------------------------------- */
