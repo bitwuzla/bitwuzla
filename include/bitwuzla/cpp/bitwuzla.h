@@ -1574,15 +1574,13 @@ class SatSolverFactory
 class Bitwuzla
 {
  public:
-#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   /**
    * Constructor.
    * @param tm The associated term manager instance.
    * @param options The associated options instance. Options must be configured
    *                at this point.
    */
-  Bitwuzla(TermManager &tm, const Options &options = Options());
-#endif
+  Bitwuzla(TermManager& tm, const Options& options = Options());
   /**
    * Constructor for configuration with external SAT solver factory.
    * @warning This constructor is experimental and may change in future

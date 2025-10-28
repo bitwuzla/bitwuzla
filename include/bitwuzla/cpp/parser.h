@@ -50,7 +50,6 @@ class Exception : public bitwuzla::Exception
 class Parser
 {
  public:
-#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   /**
    * Constructor.
    * @note The parser creates and owns the associated Bitwuzla instance.
@@ -63,11 +62,10 @@ class Parser
    *       Subsequent parse queries after a parse error will return with
    *       an error.
    */
-  Parser(TermManager &tm,
-         Options &options,
-         const std::string &language = "smt2",
-         std::ostream *out           = &std::cout);
-#endif
+  Parser(TermManager& tm,
+         Options& options,
+         const std::string& language = "smt2",
+         std::ostream* out           = &std::cout);
   /**
    * Constructor.
    * @note The parser creates and owns the associated Bitwuzla instance.
