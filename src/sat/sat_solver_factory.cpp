@@ -34,24 +34,24 @@ std::unique_ptr<SatSolver>
 SatSolverFactory::new_sat_solver()
 {
 #ifdef BZLA_USE_KISSAT
-  if (d_options.sat_solver() == option::SatSolver::KISSAT)
+  if (d_sat_solver == option::SatSolver::KISSAT)
   {
     return std::unique_ptr<SatSolver>(new Kissat());
   }
 #endif
 #ifdef BZLA_USE_CMS
-  if (d_options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
+  if (d_sat_solver == option::SatSolver::CRYPTOMINISAT)
   {
-    return std::unique_ptr<SatSolver>(new CryptoMiniSat(d_options.nthreads()));
+    return std::unique_ptr<SatSolver>(new CryptoMiniSat(d_nthreads));
   }
 #endif
 #ifdef BZLA_USE_GIMSATUL
-  if (d_options.sat_solver() == option::SatSolver::GIMSATUL)
+  if (d_sat_solver == option::SatSolver::GIMSATUL)
   {
-    return std::unique_ptr<SatSolver>(new Gimsatul(d_options.nthreads()));
+    return std::unique_ptr<SatSolver>(new Gimsatul(d_nthreads));
   }
 #endif
-  assert(d_options.sat_solver() == option::SatSolver::CADICAL);
+  assert(d_sat_solver == option::SatSolver::CADICAL);
 #ifdef BZLA_USE_CADICAL
   return std::unique_ptr<SatSolver>(new Cadical());
 #else
@@ -63,24 +63,24 @@ bool
 SatSolverFactory::has_terminator_support()
 {
 #ifdef BZLA_USE_KISSAT
-  if (d_options.sat_solver() == option::SatSolver::KISSAT)
+  if (d_sat_solver == option::SatSolver::KISSAT)
   {
     return false;
   }
 #endif
 #ifdef BZLA_USE_CMS
-  if (d_options.sat_solver() == option::SatSolver::CRYPTOMINISAT)
+  if (d_sat_solver == option::SatSolver::CRYPTOMINISAT)
   {
     return false;
   }
 #endif
 #ifdef BZLA_USE_GIMSATUL
-  if (d_options.sat_solver() == option::SatSolver::GIMSATUL)
+  if (d_sat_solver == option::SatSolver::GIMSATUL)
   {
     return false;
   }
 #endif
-  assert(d_options.sat_solver() == option::SatSolver::CADICAL);
+  assert(d_sat_solver == option::SatSolver::CADICAL);
   return true;
 }
 
