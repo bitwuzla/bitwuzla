@@ -568,6 +568,11 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats_pass.time_apply);
 
+  // Disabled if unsat cores enabled for now.
+  if (d_env.options().produce_unsat_cores())
+  {
+    return;
+  }
   // Requires special labeling of substituted variable bits and post-processing
   // of interpolant, not yet supported.
   if (d_env.options().produce_interpolants())
