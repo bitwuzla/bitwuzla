@@ -1549,6 +1549,7 @@ class SatSolverFactory
  public:
   /** Constructor. */
   SatSolverFactory() {}
+  virtual ~SatSolverFactory() {}
   /**
    * Create new (external) SAT solver instance.
    * @return The SAT solver instance.

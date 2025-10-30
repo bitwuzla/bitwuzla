@@ -4234,6 +4234,7 @@ TEST_F(TestApi, sat_factory)
   {
    public:
     TestCadicalFactory() : bitwuzla::SatSolverFactory() {}
+    ~TestCadicalFactory() {}
     std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
     {
       return std::unique_ptr<TestCadical>(new TestCadical(new sat::Cadical()));
@@ -4252,6 +4253,7 @@ TEST_F(TestApi, sat_factory)
   {
    public:
     TestCryptoMinisatFactory() : bitwuzla::SatSolverFactory() {}
+    ~TestCryptoMinisatFactory() {}
     std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
     {
       return std::unique_ptr<TestCryptoMinisat>(
@@ -4271,6 +4273,7 @@ TEST_F(TestApi, sat_factory)
   {
    public:
     TestKissatFactory() : bitwuzla::SatSolverFactory() {}
+    ~TestKissatFactory() {}
     std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
     {
       return std::unique_ptr<TestKissat>(new TestKissat(new sat::Kissat()));
