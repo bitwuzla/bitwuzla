@@ -33,7 +33,7 @@ Parser::Parser(TermManager& tm,
                const std::string& language,
                std::ostream* out)
 {
-#if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
+#if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   (void) tm;
   (void) options;
   (void) language;

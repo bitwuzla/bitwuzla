@@ -1391,6 +1391,7 @@ class SatSolverFactoryInternal : public bzla::sat::SatSolverFactory
       : bzla::sat::SatSolverFactory(options), d_sat_factory(sat_factory)
   {
   }
+  virtual ~SatSolverFactoryInternal() {}
   std::unique_ptr<SatSolver> new_sat_solver() override
   {
     return d_sat_factory.new_sat_solver();

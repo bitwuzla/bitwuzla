@@ -22,14 +22,19 @@ class SatSolverFactory
 {
  public:
   /** Constructor. */
-  SatSolverFactory(const option::Options& options) : d_options(options) {}
+  SatSolverFactory(const option::Options& options)
+      : d_sat_solver(options.sat_solver()), d_nthreads(options.nthreads())
+  {
+  }
+  virtual ~SatSolverFactory() {}
   /** Create new SAT solver instance. */
   virtual std::unique_ptr<SatSolver> new_sat_solver();
   /** Determine if configured SAT solver has terminator support. */
   virtual bool has_terminator_support();
 
  private:
-  const option::Options& d_options;
+  option::SatSolver d_sat_solver;
+  uint64_t d_nthreads;
 };
 
 }  // namespace bzla::sat
