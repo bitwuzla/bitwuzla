@@ -314,24 +314,59 @@ QuantSolver::process(const Node& q)
 {
   util::Timer timer(d_stats.time_process);
   node::node_ref_vector visit{q};
+  std::unordered_map<Node, bool> cache;
+  std::unordered_map<Node, std::unordered_set<Node>> vars;
+
+  auto [it, inserted] = d_process_cache.insert(q);
+  if (!inserted)
+  {
+    return;
+  }
+
   do
   {
     const Node& cur = visit.back();
-    visit.pop_back();
 
-    auto [it, inserted] = d_process_cache.insert(cur);
+    auto [it, inserted] = cache.emplace(cur, false);
     if (inserted)
     {
       if (cur.kind() == Kind::CONSTANT)
       {
         d_consts.push_back(cur);
       }
-      if (cur.kind() != Kind::FORALL)
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (!it->second)
+    {
+      it->second = true;
+      if (cur.is_variable())
       {
-        d_ground_terms.push_back(cur);
-        visit.insert(visit.end(), cur.begin(), cur.end());
+        vars[cur].insert(cur);
+      }
+      else
+      {
+        auto& _vars = vars[cur];
+        for (const auto& c : cur)
+        {
+          const auto& v = vars.at(c);
+          _vars.insert(v.begin(), v.end());
+        }
+
+        if (cur.kind() == Kind::FORALL)
+        {
+          assert(_vars.find(cur[0]) != _vars.end());
+          _vars.erase(cur[0]);
+        }
+
+        if (_vars.empty())
+        {
+          d_process_cache.insert(cur);
+          d_ground_terms.push_back(cur);
+        }
       }
     }
+    visit.pop_back();
   } while (!visit.empty());
 }
 
@@ -339,6 +374,19 @@ bool
 QuantSolver::mbqi_check(const std::vector<Node>& to_check)
 {
   util::Timer timer(d_stats.time_mbqi);
+
+  // Construct ground term map
+  std::unordered_map<Node, std::vector<Node>> ground_terms;
+  for (const Node& t : d_ground_terms)
+  {
+    Node tv = d_solver_state.value(t);
+    assert(!tv.is_null());
+    ground_terms[tv].push_back(t);
+  }
+  for (auto& [v, terms] : ground_terms)
+  {
+    std::sort(terms.begin(), terms.end());
+  }
 
   // Initialize MBQI solver
   NodeManager& nm = d_env.nm();
@@ -367,7 +415,7 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
     // Counterexample
     if (res == Result::SAT)
     {
-      lemma(mbqi_lemma(q), LemmaKind::MBQI_INST);
+      lemma(mbqi_lemma(q, ground_terms), LemmaKind::MBQI_INST);
     }
     else if (res == Result::UNSAT)
     {
@@ -411,7 +459,9 @@ QuantSolver::mbqi_inst(const Node& q)
 }
 
 Node
-QuantSolver::mbqi_lemma(const Node& q)
+QuantSolver::mbqi_lemma(
+    const Node& q,
+    const std::unordered_map<Node, std::vector<Node>>& ground_terms)
 {
   assert(q.kind() == Kind::FORALL);
 
@@ -422,18 +472,7 @@ QuantSolver::mbqi_lemma(const Node& q)
     const Node& ic = inst_const(cur);
     Node value     = d_mbqi_solver->get_value(ic);
     assert(!value.is_null());
-    for (const Node& t : d_ground_terms)
-    {
-      if (t.type() == ic.type())
-      {
-        Node tv = d_solver_state.value(t);
-        if (tv == value)
-        {
-          value = t;
-          break;
-        }
-      }
-    }
+    value = symbolic_term(value, ground_terms);
     map.emplace(cur[0], value);
     assert(!ic.is_null());
     cur = cur[1];
@@ -442,6 +481,50 @@ QuantSolver::mbqi_lemma(const Node& q)
   NodeManager& nm = d_env.nm();
   Node inst       = substitute(cur, map);
   return nm.mk_node(Kind::IMPLIES, {q, inst});
+}
+
+Node
+QuantSolver::symbolic_term(
+    const Node& term,
+    const std::unordered_map<Node, std::vector<Node>>& ground_terms)
+{
+  std::vector<Node> visit{term};
+  std::unordered_map<Node, Node> cache;
+
+  NodeManager& nm = d_env.nm();
+  while (!visit.empty())
+  {
+    Node cur = visit.back();
+
+    auto [it, inserted] = cache.emplace(cur, Node());
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      if (cur.is_value())
+      {
+        auto itt = ground_terms.find(cur);
+        if (itt != ground_terms.end())
+        {
+          assert(!itt->second.empty());
+          it->second = itt->second[0];
+        }
+        else
+        {
+          it->second = cur;
+        }
+      }
+      else
+      {
+        it->second = utils::rebuild_node(nm, cur, cache);
+      }
+    }
+    visit.pop_back();
+  }
+  return cache.at(term);
 }
 
 QuantSolver::Statistics::Statistics(util::Statistics& stats,

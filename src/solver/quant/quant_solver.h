@@ -71,7 +71,12 @@ class QuantSolver : public Solver
 
   bool mbqi_check(const std::vector<Node>& to_check);
   const Node& mbqi_inst(const Node& q);
-  Node mbqi_lemma(const Node& q);
+  Node mbqi_lemma(
+      const Node& q,
+      const std::unordered_map<Node, std::vector<Node>>& ground_terms);
+  Node symbolic_term(
+      const Node& term,
+      const std::unordered_map<Node, std::vector<Node>>& ground_terms);
 
   backtrack::vector<Node> d_quantifiers;
   backtrack::vector<Node> d_assertions;
