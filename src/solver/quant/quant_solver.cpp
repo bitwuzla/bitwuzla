@@ -313,16 +313,15 @@ void
 QuantSolver::process(const Node& q)
 {
   util::Timer timer(d_stats.time_process);
-  node::node_ref_vector visit{q};
-  std::unordered_map<Node, bool> cache;
-  std::unordered_map<Node, std::unordered_set<Node>> vars;
 
-  auto [it, inserted] = d_process_cache.insert(q);
-  if (!inserted)
+  if (d_process_cache.find(q) != d_process_cache.end())
   {
     return;
   }
 
+  node::node_ref_vector visit{q};
+  std::unordered_map<Node, bool> cache;
+  std::unordered_map<Node, std::unordered_set<Node>> vars_map;
   do
   {
     const Node& cur = visit.back();
@@ -342,26 +341,25 @@ QuantSolver::process(const Node& q)
       it->second = true;
       if (cur.is_variable())
       {
-        vars[cur].insert(cur);
+        vars_map[cur].insert(cur);
       }
       else
       {
-        auto& _vars = vars[cur];
+        auto& vars = vars_map[cur];
         for (const auto& c : cur)
         {
-          const auto& v = vars.at(c);
-          _vars.insert(v.begin(), v.end());
+          const auto& v = vars_map.at(c);
+          vars.insert(v.begin(), v.end());
         }
 
         if (cur.kind() == Kind::FORALL)
         {
-          assert(_vars.find(cur[0]) != _vars.end());
-          _vars.erase(cur[0]);
+          assert(vars.find(cur[0]) != vars.end());
+          vars.erase(cur[0]);
         }
 
-        if (_vars.empty())
+        if (vars.empty() && d_process_cache.insert(cur).second)
         {
-          d_process_cache.insert(cur);
           d_ground_terms.push_back(cur);
         }
       }
@@ -374,19 +372,6 @@ bool
 QuantSolver::mbqi_check(const std::vector<Node>& to_check)
 {
   util::Timer timer(d_stats.time_mbqi);
-
-  // Construct ground term map
-  std::unordered_map<Node, std::vector<Node>> ground_terms;
-  for (const Node& t : d_ground_terms)
-  {
-    Node tv = d_solver_state.value(t);
-    assert(!tv.is_null());
-    ground_terms[tv].push_back(t);
-  }
-  for (auto& [v, terms] : ground_terms)
-  {
-    std::sort(terms.begin(), terms.end());
-  }
 
   // Initialize MBQI solver
   NodeManager& nm = d_env.nm();
@@ -403,6 +388,8 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
     d_mbqi_solver->assert_formula(nm.mk_node(Kind::EQUAL, {c, value}));
   }
 
+  std::vector<Node> ce_q;
+  std::unordered_map<Node, Node> ic_values;
   size_t num_inactive = 0;
   for (const Node& q : to_check)
   {
@@ -415,7 +402,17 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
     // Counterexample
     if (res == Result::SAT)
     {
-      lemma(mbqi_lemma(q, ground_terms), LemmaKind::MBQI_INST);
+      ce_q.push_back(q);
+      // Save model values of instantiation constants
+      Node cur = q;
+      while (cur.kind() == Kind::FORALL)
+      {
+        const Node& ic = inst_const(cur);
+        Node value     = d_mbqi_solver->get_value(ic);
+        assert(!value.is_null());
+        ic_values[ic] = value;
+        cur           = cur[1];
+      }
     }
     else if (res == Result::UNSAT)
     {
@@ -427,8 +424,59 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
   if (done)
   {
     Log(2) << "mbqi: all inactive";
+    return true;
   }
-  return done;
+
+  if (ce_q.empty())
+  {
+    return done;
+  }
+
+  // Construct ground term map
+  std::unordered_map<Node, std::vector<Node>> ground_terms;
+  for (const Node& t : d_ground_terms)
+  {
+    Node tv = d_solver_state.value(t);
+    assert(!tv.is_null());
+    ground_terms[tv].push_back(t);
+  }
+
+  // Generate new instantiations for quantified formulas for which we found a
+  // counterexample.
+  do
+  {
+    for (auto& [v, terms] : ground_terms)
+    {
+      // Sort by term counter, tie break with term id.
+      std::sort(
+          terms.begin(), terms.end(), [this](const auto& n1, const auto& n2) {
+            auto id1      = n1.id();
+            auto id2      = n2.id();
+            auto num_sel1 = d_num_selected[id1];
+            auto num_sel2 = d_num_selected[id2];
+            return num_sel1 < num_sel2 || (num_sel1 == num_sel2 && id1 < id2);
+          });
+    }
+    d_selected_terms.clear();
+    for (const auto& q : ce_q)
+    {
+      lemma(mbqi_lemma(q, ic_values, ground_terms), LemmaKind::MBQI_INST);
+    }
+
+    // If we didn't make any progress with new lemmas, increment term counters
+    // and try again.
+    if (!d_added_lemma)
+    {
+      for (const auto tid : d_selected_terms)
+      {
+        ++d_num_selected[tid];
+      }
+      ++d_stats.num_lemma_iterations;
+      Log(2) << "mbqi new lemma iteration";
+    }
+  } while (!d_added_lemma);
+
+  return false;
 }
 
 const Node&
@@ -461,6 +509,7 @@ QuantSolver::mbqi_inst(const Node& q)
 Node
 QuantSolver::mbqi_lemma(
     const Node& q,
+    const std::unordered_map<Node, Node>& model_values,
     const std::unordered_map<Node, std::vector<Node>>& ground_terms)
 {
   assert(q.kind() == Kind::FORALL);
@@ -470,9 +519,7 @@ QuantSolver::mbqi_lemma(
   while (cur.kind() == Kind::FORALL)
   {
     const Node& ic = inst_const(cur);
-    Node value     = d_mbqi_solver->get_value(ic);
-    assert(!value.is_null());
-    value = symbolic_term(value, ground_terms);
+    Node value     = symbolic_term(model_values.at(ic), ground_terms);
     map.emplace(cur[0], value);
     assert(!ic.is_null());
     cur = cur[1];
@@ -488,6 +535,11 @@ QuantSolver::symbolic_term(
     const Node& term,
     const std::unordered_map<Node, std::vector<Node>>& ground_terms)
 {
+  if (ground_terms.empty())
+  {
+    return term;
+  }
+
   std::vector<Node> visit{term};
   std::unordered_map<Node, Node> cache;
 
@@ -510,7 +562,8 @@ QuantSolver::symbolic_term(
         if (itt != ground_terms.end())
         {
           assert(!itt->second.empty());
-          it->second = itt->second[0];
+          it->second = itt->second.front();
+          d_selected_terms.push_back(it->second.id());
         }
         else
         {
@@ -531,6 +584,8 @@ QuantSolver::Statistics::Statistics(util::Statistics& stats,
                                     const std::string& prefix)
     : mbqi_checks(stats.new_stat<uint64_t>(prefix + "mbqi_checks")),
       num_lemmas(stats.new_stat<uint64_t>(prefix + "num_lemmas")),
+      num_lemma_iterations(
+          stats.new_stat<uint64_t>(prefix + "num_lemma_iterations")),
       lemmas(stats.new_stat<util::HistogramStatistic>(prefix + "lemmas")),
       time_check(stats.new_stat<util::TimerStatistic>(prefix + "time_check")),
       time_process(

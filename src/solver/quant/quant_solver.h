@@ -73,6 +73,7 @@ class QuantSolver : public Solver
   const Node& mbqi_inst(const Node& q);
   Node mbqi_lemma(
       const Node& q,
+      const std::unordered_map<Node, Node>& model_values,
       const std::unordered_map<Node, std::vector<Node>>& ground_terms);
   Node symbolic_term(
       const Node& term,
@@ -83,6 +84,8 @@ class QuantSolver : public Solver
   backtrack::unordered_set<Node> d_process_cache;
   backtrack::vector<Node> d_consts;
   backtrack::vector<Node> d_ground_terms;
+  std::unordered_map<uint64_t, uint64_t> d_num_selected;
+  std::vector<uint64_t> d_selected_terms;
 
   std::unordered_map<Node, Node> d_ce_consts;
   std::unordered_map<Node, Node> d_instantiation_consts;
@@ -102,6 +105,7 @@ class QuantSolver : public Solver
 
     uint64_t& mbqi_checks;
     uint64_t& num_lemmas;
+    uint64_t& num_lemma_iterations;
     util::HistogramStatistic& lemmas;
 
     util::TimerStatistic& time_check;
