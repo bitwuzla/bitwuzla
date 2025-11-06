@@ -102,33 +102,46 @@ license_text += '\n\n  SymFPU\n  https://github.com/martin-cs/symfpu'
 license_text = license_text.replace('\n', '\\n').replace('"', '\\"')
 
 # Generate header
-is_git_version = run_command('git', 'rev-parse', '--is-inside-work-tree', check: false)
+git_exe = find_program('git', required: false)
+if git_exe.found()
+  is_git_version = run_command(git_exe, 'rev-parse', '--is-inside-work-tree',
+                               check: false).returncode() == 0
+  git_id = '@git_id@'
+  output_h = 'config.h.in'
+else
+  is_git_version = false
+  git_id = ''
+  output_h = 'config.h'
+endif
+
 conf_data = configuration_data()
 conf_data.set('cc', c_compiler.get_id() + ' ' + c_compiler.version())
 conf_data.set('cxx', cpp_compiler.get_id() + ' ' + cpp_compiler.version())
 conf_data.set('license', license_text)
 conf_data.set('os', build_machine.system())
-conf_data.set('git_id', '@git_id@')
+conf_data.set('git_id', git_id)
 conf_data.set('version', meson.project_version())
 conf_data.set('is_debug_build', (get_option('buildtype') == 'debug').to_string())
 conf_data.set('is_dev_version', meson.project_version().endswith('-dev').to_string())
-conf_data.set('is_git_version', (is_git_version.returncode() == 0).to_string())
+conf_data.set('is_git_version', is_git_version.to_string())
 config_h = configure_file(input: 'config.h.in',
-               output: 'config.h.in',
+               output: output_h,
                configuration: conf_data)
 
 # Get git information and generate git_config.h
-python_exe = find_program('python3', 'python')
-repo = meson.project_source_root()
-get_git_id = join_paths(repo, 'src', 'get_git_id.py')
-config_input = join_paths(meson.current_build_dir(), 'config.h.in')
-git_config_h = vcs_tag(
-  command: [python_exe, get_git_id, repo],
-  input: config_input,
-  output: 'config.h',
-  replace_string: '@git_id@',
-  fallback: ''
-)
+if git_exe.found()
+  python_exe = find_program('python3', 'python')
+  repo = meson.project_source_root()
+  get_git_id = join_paths(repo, 'src', 'get_git_id.py')
+  config_input = join_paths(meson.current_build_dir(), 'config.h.in')
+  config_h = vcs_tag(
+    command: [python_exe, get_git_id, repo],
+    input: config_input,
+    output: 'config.h',
+    replace_string: '@git_id@',
+    fallback: ''
+  )
+endif
 
 # ---
 # Util library used by support and bitwuzla library
@@ -246,7 +259,7 @@ sources = files([
 bitwuzla_inc = include_directories('../include', 'lib')
 
 bitwuzla_lib = library('bitwuzla',
-                      sources + git_config_h,
+                      sources + config_h,
                       include_directories: bitwuzla_inc,
                       link_with: [util_lib, support_libs],
                       dependencies: dependencies,
