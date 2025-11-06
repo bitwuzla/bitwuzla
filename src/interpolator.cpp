@@ -16,6 +16,7 @@
 #include "node/node.h"
 #include "node/node_utils.h"
 #include "preprocess/pass/variable_substitution.h"
+#include "rewrite/rewriter.h"
 #include "sat/sat_solver_factory.h"
 #include "solver/bv/aig_bitblaster.h"
 #include "util/hash.h"
@@ -28,11 +29,28 @@ Interpolator::Interpolator(SolvingContext& ctx)
     : d_ctx(ctx),
       d_env(ctx.env()),
       d_logger(d_env.logger()),
+      d_rewriter(ctx.env(), ctx.rewriter().level()),
       d_original_assertions(ctx.original_assertions()),
       d_pp_assertions(ctx.assertions()),
       d_compute_stats(d_env.options().interpolants_stats()),
       d_stats(d_env.statistics(), "interpolator::")
 {
+}
+
+Interpolator::Rewriter::Rewriter(Env& env, uint8_t level, const std::string& id)
+    : bzla::Rewriter(env, level, id)
+{
+}
+Node
+Interpolator::Rewriter::rewrite_bv_comp(const Node& node)
+{
+  Node res = bzla::Rewriter::rewrite_bv_comp(node);
+
+  RewriteRuleKind kind;
+  BZLA_APPLY_RW_RULE(BV_COMP_EVAL);
+  BZLA_APPLY_RW_RULE(BV_COMP_BV1_CONST);
+DONE:
+  return res;
 }
 
 namespace {
@@ -613,7 +631,7 @@ Interpolator::lower_bv1(const Node& node)
 {
   util::Timer timer(d_stats.time_lower_bv1);
   NodeManager& nm = d_env.nm();
-  Rewriter& rw    = d_env.rewriter();
+  bzla::Rewriter& rw = d_env.rewriter();
   Node rw_node    = rw.rewrite(node);
 
   std::vector<Node> visit{rw_node};
@@ -718,10 +736,9 @@ Interpolator::lower_bv1(const Node& node)
 }
 
 std::vector<Node>
-Interpolator::and_distrib(const std::vector<Node>& args)
+Interpolator::and_distrib(Rewriter& rw, const std::vector<Node>& args)
 {
   NodeManager& nm = d_env.nm();
-  Rewriter& rw    = d_env.rewriter();
 
   Kind kind;
   Node _true;
@@ -804,8 +821,8 @@ Interpolator::and_distrib(const std::vector<Node>& args)
       if (terms.size() > 1)
       {
         d_stats.num_merged_and += terms.size();
-        Node m = mk_node(kind,
-                         {p, invert_node(nm, utils::mk_nary(nm, kind, terms))});
+        Node m = mk_node(
+            rw, kind, {p, invert_node(nm, utils::mk_nary(nm, kind, terms))});
         _args.push_back(rw.rewrite(invert_node(nm, m)));
         candidates[i] = _true;
         merged        = true;
@@ -856,8 +873,8 @@ Interpolator::extract_xor(const std::vector<Node>& args)
         if (a.is_inverted() != _args[pos][0][0].is_inverted()
             || a.is_inverted() != _args[pos][0][1].is_inverted())
         {
-          _args[pos] =
-              invert_node_if(nm, is_xnor, mk_node(Kind::BV_XOR, {ra, rb}));
+          _args[pos] = invert_node_if(
+              nm, is_xnor, mk_node(d_rewriter, Kind::BV_XOR, {ra, rb}));
           candidates.erase(it);
           if (is_xnor)
           {
@@ -877,10 +894,9 @@ Interpolator::extract_xor(const std::vector<Node>& args)
 }
 
 Node
-Interpolator::mk_bv_and(const std::vector<Node>& nodes)
+Interpolator::mk_bv_and(Rewriter& rw, const std::vector<Node>& nodes)
 {
   NodeManager& nm = d_env.nm();
-  Rewriter& rw    = d_env.rewriter();
 
   std::vector<Node> args;
   std::vector<Node> to_flatten;
@@ -990,8 +1006,7 @@ Node
 Interpolator::extract_gates(const Node& node)
 {
   util::Timer timer(d_stats.time_extract_gates);
-  Rewriter& rw = d_env.rewriter();
-  Node rw_node = rw.rewrite(node);
+  Node rw_node = d_rewriter.rewrite(node);
 
   d_parents = compute_parents(rw_node);
 
@@ -1001,14 +1016,14 @@ Interpolator::extract_gates(const Node& node)
   while (!visit.empty())
   {
     Node cur = visit.back();
-    assert(cur == rw.rewrite(cur));
+    assert(cur == d_rewriter.rewrite(cur));
     auto [it, inserted] = cache.try_emplace(cur);
     if (inserted)
     {
       if (cur.kind() == Kind::BV_AND && cur.type().bv_size() == 1)
       {
         auto args = share_aware_flatten_and(cur);
-        args      = and_distrib(args);
+        args      = and_distrib(d_rewriter, args);
         visit.insert(visit.end(), args.begin(), args.end());
         flattened.emplace(cur, std::move(args));
       }
@@ -1029,7 +1044,7 @@ Interpolator::extract_gates(const Node& node)
           children.push_back(cache.at(leaf));
           assert(!children.back().is_null());
         }
-        res = mk_bv_and(children);
+        res = mk_bv_and(d_rewriter, children);
       }
       else
       {
@@ -1046,15 +1061,15 @@ Interpolator::extract_gates(const Node& node)
         }
         else
         {
-          res = mk_node(cur.kind(), children, cur.indices());
-          assert(res == rw.rewrite(res));
+          res = mk_node(d_rewriter, cur.kind(), children, cur.indices());
+          assert(res == d_rewriter.rewrite(res));
           if (res.kind() == Kind::BV_AND && res.type().bv_size() == 1)
           {
-            res = mk_bv_and(flatten_and(res));
+            res = mk_bv_and(d_rewriter, flatten_and(res));
           }
         }
       }
-      assert(res == rw.rewrite(res));
+      assert(res == d_rewriter.rewrite(res));
       it->second = res;
 
       auto itp       = d_parents.find(cur);
@@ -1063,7 +1078,7 @@ Interpolator::extract_gates(const Node& node)
     visit.pop_back();
   }
 
-  return cache.at(rw_node);
+  return d_env.rewriter().rewrite(cache.at(rw_node));
 }
 
 Node
@@ -1199,13 +1214,12 @@ Interpolator::extract_cmp(const std::vector<Node>& nodes)
   }
 
   NodeManager& nm = d_env.nm();
-  Rewriter& rw    = d_env.rewriter();
 
   Node bv1 = nm.mk_value(BitVector::mk_true());
   Node bv0 = nm.mk_value(BitVector::mk_false());
   for (const auto& n : nodes)
   {
-    assert(n == rw.rewrite(n));
+    assert(n == d_rewriter.rewrite(n));
     if (n.is_inverted() && n[0].kind() == Kind::BV_XOR)
     {
       bool first = true;
@@ -1269,7 +1283,7 @@ Interpolator::extract_cmp(const std::vector<Node>& nodes)
       eqs[n[0][0]].emplace_back(n[0], bv0);
       continue;
     }
-    args.push_back(rw.rewrite(n));
+    args.push_back(d_rewriter.rewrite(n));
   }
 
   for (auto& [c, exts] : eqs)
@@ -1290,8 +1304,9 @@ Interpolator::extract_cmp(const std::vector<Node>& nodes)
           && cur_p.first.kind() == Kind::BV_EXTRACT
           && p.first.index(0) + 1 == cur_p.first.index(1))
       {
-        p.first  = mk_node(Kind::BV_CONCAT, {cur_p.first, p.first});
-        p.second = mk_node(Kind::BV_CONCAT, {cur_p.second, p.second});
+        p.first = mk_node(d_rewriter, Kind::BV_CONCAT, {cur_p.first, p.first});
+        p.second =
+            mk_node(d_rewriter, Kind::BV_CONCAT, {cur_p.second, p.second});
         ++d_stats.num_merged_eq;
         if (!merged)
         {
@@ -1301,23 +1316,22 @@ Interpolator::extract_cmp(const std::vector<Node>& nodes)
       }
       else
       {
-        args.push_back(mk_node(Kind::BV_COMP, {p.first, p.second}));
+        args.push_back(mk_node(d_rewriter, Kind::BV_COMP, {p.first, p.second}));
         p = cur_p;
       }
     }
-    args.push_back(mk_node(Kind::BV_COMP, {p.first, p.second}));
+    args.push_back(mk_node(d_rewriter, Kind::BV_COMP, {p.first, p.second}));
   }
 
   return args;
 }
 
 Node
-Interpolator::mk_and_eq(const std::vector<Node>& nodes)
+Interpolator::mk_and_eq(Rewriter& rw, const std::vector<Node>& nodes)
 {
   std::unordered_map<Node, std::vector<std::pair<Node, Node>>> eqs;
 
   NodeManager& nm = d_env.nm();
-  Rewriter& rw    = d_env.rewriter();
 
   // Merge equalities over extracts
   std::vector<Node> args;
@@ -1389,8 +1403,8 @@ Interpolator::mk_and_eq(const std::vector<Node>& nodes)
             && cur_p.first.kind() == Kind::BV_EXTRACT
             && p.first.index(0) + 1 == cur_p.first.index(1))
         {
-          p.first  = mk_node(Kind::BV_CONCAT, {cur_p.first, p.first});
-          p.second = mk_node(Kind::BV_CONCAT, {cur_p.second, p.second});
+          p.first  = mk_node(rw, Kind::BV_CONCAT, {cur_p.first, p.first});
+          p.second = mk_node(rw, Kind::BV_CONCAT, {cur_p.second, p.second});
           ++d_stats.num_merged_eq;
           if (!merged)
           {
@@ -1400,15 +1414,15 @@ Interpolator::mk_and_eq(const std::vector<Node>& nodes)
         }
         else
         {
-          args.push_back(mk_node(Kind::EQUAL, {p.first, p.second}));
+          args.push_back(mk_node(rw, Kind::EQUAL, {p.first, p.second}));
           p = cur_p;
         }
       }
-      args.push_back(mk_node(Kind::EQUAL, {p.first, p.second}));
+      args.push_back(mk_node(rw, Kind::EQUAL, {p.first, p.second}));
     }
   }
 
-  args = and_distrib(args);
+  args = and_distrib(rw, args);
 
   if (args.size() == 1)
   {
@@ -1504,11 +1518,12 @@ Interpolator::simplify(const Node& node)
 }
 
 Node
-Interpolator::mk_node(node::Kind k,
+Interpolator::mk_node(Rewriter& rw,
+                      node::Kind k,
                       const std::vector<Node>& children,
                       const std::vector<uint64_t>& indices)
 {
-  return d_env.rewriter().rewrite(d_env.nm().mk_node(k, children, indices));
+  return rw.rewrite(d_env.nm().mk_node(k, children, indices));
 }
 
 Interpolator::Statistics::Statistics(util::Statistics& stats,

@@ -18,19 +18,6 @@
 #include "node/unordered_node_ref_set.h"
 #include "util/logger.h"
 
-#define BZLA_APPLY_RW_RULE(rw_rule)                                \
-  do                                                               \
-  {                                                                \
-    std::tie(res, kind) =                                          \
-        RewriteRule<RewriteRuleKind::rw_rule>::apply(*this, node); \
-    if (res != node)                                               \
-    {                                                              \
-      d_stats.rewrites << kind;                                    \
-      ++d_stats.num_rewrites;                                      \
-      goto DONE;                                                   \
-    }                                                              \
-  } while (false);
-
 #define BZLA_ELIM_KIND_IMPL(name, rule)           \
   Node Rewriter::rewrite_##name(const Node& node) \
   {                                               \
@@ -1523,11 +1510,7 @@ Rewriter::rewrite_bv_comp(const Node& node)
   RewriteRuleKind kind;
   Node res = node;
 
-  if (d_level >= 1)
-  {
-    BZLA_APPLY_RW_RULE(BV_COMP_EVAL);
-    BZLA_APPLY_RW_RULE(BV_COMP_BV1_CONST);
-  }
+  BZLA_APPLY_RW_RULE(BV_COMP_ELIM);
 
 DONE:
   return res;

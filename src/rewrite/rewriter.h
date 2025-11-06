@@ -27,6 +27,19 @@ class Logger;
 
 class Env;
 
+#define BZLA_APPLY_RW_RULE(rw_rule)                                \
+  do                                                               \
+  {                                                                \
+    std::tie(res, kind) =                                          \
+        RewriteRule<RewriteRuleKind::rw_rule>::apply(*this, node); \
+    if (res != node)                                               \
+    {                                                              \
+      d_stats.rewrites << kind;                                    \
+      ++d_stats.num_rewrites;                                      \
+      goto DONE;                                                   \
+    }                                                              \
+  } while (false);
+
 /* -------------------------------------------------------------------------- */
 
 class Rewriter
@@ -54,6 +67,9 @@ class Rewriter
    * @param id    The identifier of this rewriter (used for stats).
    */
   Rewriter(Env& env, uint8_t level = LEVEL_MAX, const std::string& id = "");
+
+  /** @return The configured rewriting level. */
+  uint8_t level() { return d_level; }
 
   /**
    * Rewrite given node.
@@ -158,7 +174,7 @@ class Rewriter
    */
   void configure_parents_count(std::unordered_map<Node, uint64_t>* parents_map);
 
- private:
+ protected:
   /** The limit for recursive calls to _rewrite(). */
   static constexpr uint64_t RECURSION_LIMIT = 4096;
 
@@ -232,7 +248,7 @@ class Rewriter
   Node rewrite_bv_usubo(const Node& node);
   Node rewrite_bv_xnor(const Node& node);
   Node rewrite_bv_zero_extend(const Node& node);
-  Node rewrite_bv_comp(const Node& node);
+  virtual Node rewrite_bv_comp(const Node& node);
 
   /* FP ------------------------------------------ */
   Node rewrite_fp_abs(const Node& node);

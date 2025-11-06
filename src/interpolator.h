@@ -50,6 +50,12 @@ class Interpolator
       const std::vector<std::unordered_set<Node>>& partitions);
 
  private:
+  class Rewriter : public bzla::Rewriter
+  {
+   public:
+    Rewriter(Env& env, uint8_t level = LEVEL_MAX, const std::string& id = "");
+    Node rewrite_bv_comp(const Node& node) override;
+  };
   /**
    * Get interpolant I given the current set of assertions, partitioned into
    * A and B such that (and A B) is unsat and (=> A I) and (=> I (not B)).
@@ -77,28 +83,29 @@ class Interpolator
   Node apply_substs(Env& env,
                     const std::unordered_set<Node>& assertions,
                     const std::unordered_set<Node>& shared);
+  std::vector<Node> apply_substs_local(const std::vector<Node>& nodes);
 
   Node post_process_bit_level(const Node& node);
 
   std::vector<Node> flatten_and(const Node& node);
   std::vector<Node> share_aware_flatten_and(const Node& node);
-  Node lower_bv1(const Node& node);
 
-  std::vector<Node> and_distrib(const std::vector<Node>& args);
-  std::vector<Node> extract_xor(const std::vector<Node>& args);
-  std::vector<Node> extract_cmp(const std::vector<Node>& args);
-  Node mk_bv_and(const std::vector<Node>& nodes);
+  Node lower_bv1(const Node& node);
+  Node lift_bv1_bool(const Node& node);
 
   Node extract_gates(const Node& node);
-  Node lift_bv1_bool(const Node& node);
-  Node mk_and_eq(const std::vector<Node>& nodes);
-  std::vector<Node> apply_substs_local(const std::vector<Node>& nodes);
+  std::vector<Node> and_distrib(Rewriter& rw, const std::vector<Node>& args);
+  std::vector<Node> extract_xor(const std::vector<Node>& args);
+  std::vector<Node> extract_cmp(const std::vector<Node>& args);
 
-  Node simplify(const Node& node);
-
-  Node mk_node(node::Kind k,
+  Node mk_bv_and(Rewriter& rw, const std::vector<Node>& nodes);
+  Node mk_and_eq(Rewriter& rw, const std::vector<Node>& nodes);
+  Node mk_node(Rewriter& rw,
+               node::Kind k,
                const std::vector<Node>& children,
                const std::vector<uint64_t>& indices = {});
+
+  Node simplify(const Node& node);
 
   /** The associated solving context. */
   SolvingContext& d_ctx;
@@ -106,6 +113,10 @@ class Interpolator
   Env& d_env;
   /** The associated logger instance. */
   util::Logger& d_logger;
+
+  /** The interpolation-specific rewriter. */
+  Rewriter d_rewriter;
+
   /** The set of original assertions. */
   const backtrack::vector<Node>& d_original_assertions;
   /** The set of preprocessed assertions. */
