@@ -183,7 +183,8 @@ Options::Options()
                  SatSolver::CADICAL,
                  {{SatSolver::CADICAL, "cadical"},
                   {SatSolver::CRYPTOMINISAT, "cms"},
-                  {SatSolver::KISSAT, "kissat"}},
+                  {SatSolver::KISSAT, "kissat"},
+                  {SatSolver::AE_KISSAT, "ae_kissat"}},
                  "backend SAT solver",
                  "sat-solver",
                  "S"),
@@ -574,6 +575,15 @@ Options::set(Option opt, const std::string& value, bool is_user_set)
       throw Exception("invalid configuration for option --"
                       + std::string(sat_solver.lng())
                       + ", Kissat not compiled in");
+    }
+#endif
+#ifndef BZLA_USE_AE_KISSAT
+    if (opt == Option::SAT_SOLVER
+        && value == sat_solver.mode_to_string(SatSolver::AE_KISSAT))
+    {
+      throw Exception("invalid configuration for option --"
+                      + std::string(sat_solver.lng())
+                      + ", AE_Kissat not compiled in");
     }
 #endif
 #ifndef BZLA_USE_CMS
