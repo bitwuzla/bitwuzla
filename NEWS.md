@@ -23,6 +23,9 @@ This file collects a summary of important and/or user-visible changes.
 
 - Windows compilation in MSYS2 environment is now supported.
 
+- Removed unreliable GMP fallback subproject. The build system now requires
+  shared/static GMP libraries to be installed on the system.
+
 ## News for version 0.8.2
 
 - Fixed issue with model values in MBQI solver (#185).
