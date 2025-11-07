@@ -21,6 +21,8 @@ This file collects a summary of important and/or user-visible changes.
 - Add support for Gimsatul as SAT backend. Number of threads can be specified
   via `-j/--nthreads` option.
 
+- Windows compilation in MSYS2 environment is now supported.
+
 ## News for version 0.8.2
 
 - Fixed issue with model values in MBQI solver (#185).

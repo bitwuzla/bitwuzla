@@ -11,7 +11,7 @@
 #ifndef BZLA_UTIL_INTEGER_H_INCLUDED
 #define BZLA_UTIL_INTEGER_H_INCLUDED
 
-#include <gmpxx.h>
+#include <gmp.h>
 
 #include <functional>
 #include <cstdint>

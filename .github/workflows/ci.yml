@@ -40,39 +40,53 @@ jobs:
             config: debug --shared --python
             env: CC=clang CXX=clang++
 
+          - name: debug-win64
+            os: windows-latest
+            config: debug --python
+            shell: msys2 {0}
+
           - name: release-win64
-            os: ubuntu-latest
-            config: --win64
+            os: windows-latest
             package-name: Bitwuzla-Win64-x86_64
+            config: --python
+            shell: msys2 {0}
 
     name: ${{ matrix.os }}:${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell || 'bash'}}
 
     steps:
       - name: Install Packages (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev ninja-build
-          if [[ "${{matrix.name}}" == "release-win64" ]]; then
-            sudo apt-get install -y mingw-w64
-            sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
-            sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
-          fi
-          if [[ "${{matrix.name}}" == "release-aarch64" ]]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-          fi
+          sudo apt-get install -y libgmp-dev ninja-build meson cython3 python3-pytest libgtest-dev
 
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
-        run: brew install ninja
-
-      - name: Setup Python Environment
         run: |
-          python3 -m venv ~/.venv
-          source ~/.venv/bin/activate
-          python3 -m pip install meson pytest cython>=3.*
-          echo "$HOME/.venv/bin/" >> $GITHUB_PATH
+          brew install meson ninja pytest cython googletest
+          echo "/opt/homebrew/opt/cython/bin" >> $GITHUB_PATH
+
+
+      - name: Install Packages (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            git
+            mingw-w64-x86_64-ca-certificates
+            mingw-w64-x86_64-cython
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-gtest
+            mingw-w64-x86_64-meson
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-python3
+            mingw-w64-x86_64-python-pytest
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,11 +94,8 @@ jobs:
           ssh-key: ${{ secrets.BZLA_LIBS_KEY }}
           submodules: 'recursive'
 
-      - name: Wrap
-        run: meson wrap install gtest
-
       - name: Configure
-        run: ${{ matrix.env }} ./configure.py --prefix=${{ github.workspace }}/build/install ${{ matrix.config }}
+        run: ${{ matrix.env }} ./configure.py --prefix="$(pwd)/build/install" ${{ matrix.config }}
 
       - name: Build
         id: build
@@ -94,16 +105,14 @@ jobs:
         working-directory: build
 
       - name: Test
-        if: matrix.name != 'release-win64' && matrix.name != 'release-aarch64'
         run: meson test --print-errorlogs
         working-directory: build
 
       - name: Examples
-        if: matrix.name != 'release-win64' && matrix.name != 'release-aarch64'
         working-directory: examples
         run: |
-          pkgconfigdir=$(find ${{ github.workspace }}/build/install/lib -name pkgconfig)
-          pythonlibdir=$(find ${{ github.workspace }}/build/install/lib -name site-packages)
+          pkgconfigdir=$(find $(pwd)/../build/install/lib -name pkgconfig)
+          pythonlibdir=$(find $(pwd)/../build/install/lib -name site-packages)
           meson setup build --pkg-config-path=$pkgconfigdir -Dpython_path=$pythonlibdir
           cd build
           meson test -v
