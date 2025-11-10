@@ -55,6 +55,13 @@ class WordBlaster
    */
   bool is_word_blasted(const Node& node) const;
 
+  /**
+   * Word-blast given floating-point or rounding mode constant/leaf (if not
+   * word-blasted) and return constraint to ensure validity of the word-blasted
+   * representation of the constant/leaf.
+   */
+  std::pair<Node, bool> valid(const Node& node);
+
  private:
   using SymUnpackedFloat = ::symfpu::unpackedFloat<SymFpuSymTraits>;
   using UnpackedFloatMap = std::unordered_map<Node, SymUnpackedFloat>;

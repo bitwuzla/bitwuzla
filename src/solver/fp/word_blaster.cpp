@@ -154,6 +154,51 @@ WordBlaster::is_word_blasted(const Node& node) const
   return false;
 }
 
+std::pair<Node, bool>
+WordBlaster::valid(const Node& node)
+{
+  assert(node.is_const() || is_leaf(node));
+
+  Type type = node.type();
+
+  if (type.is_rm())
+  {
+    auto it = d_internal->d_rm_map.find(node);
+    if (it != d_internal->d_rm_map.end())
+    {
+      return {it->second.valid().getNode(), false};
+    }
+    SymFpuSymRM rmvar(node);
+    d_internal->d_rm_map.emplace(node, rmvar);
+    return {rmvar.valid().getNode(), true};
+  }
+  assert(type.is_fp());
+
+  auto it = d_internal->d_unpacked_float_map.find(node);
+  if (it != d_internal->d_unpacked_float_map.end())
+  {
+    return {it->second.valid(type).getNode(), false};
+  }
+  NodeManager& nm = d_env.nm();
+  Node inf =
+      nm.mk_const(nm.mk_bv_type(1), create_component_symbol(node, "inf"));
+  Node nan =
+      nm.mk_const(nm.mk_bv_type(1), create_component_symbol(node, "nan"));
+  Node sign =
+      nm.mk_const(nm.mk_bv_type(1), create_component_symbol(node, "sign"));
+  Node zero =
+      nm.mk_const(nm.mk_bv_type(1), create_component_symbol(node, "zero"));
+  Node exp = nm.mk_const(nm.mk_bv_type(SymUnpackedFloat::exponentWidth(type)),
+                         create_component_symbol(node, "exp"));
+  Node sig =
+      nm.mk_const(nm.mk_bv_type(SymUnpackedFloat::significandWidth(type)),
+                  create_component_symbol(node, "sig"));
+
+  SymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
+  d_internal->d_unpacked_float_map.emplace(node, uf);
+  return {uf.valid(type).getNode(), true};
+}
+
 /* --- WordBlaster private -------------------------------------------------- */
 
 Node
@@ -247,39 +292,17 @@ WordBlaster::_word_blast(const Node& node)
       {
         d_internal->d_rm_map.emplace(cur, SymFpuSymRM(cur));
       }
-      else if (type.is_rm() && (cur.is_const() || is_leaf(cur)))
+      else if ((type.is_rm() || type.is_fp())
+               && (cur.is_const() || is_leaf(cur)))
       {
-        SymFpuSymRM rmvar(cur);
-        d_internal->d_rm_map.emplace(cur, rmvar);
-        d_solver_state.lemma(
-            node::utils::bv1_to_bool(nm, rmvar.valid().getNode()));
+        auto [lemma, inserted] = valid(cur);
+        assert(inserted);
+        d_solver_state.lemma(node::utils::bv1_to_bool(nm, lemma));
       }
       else if (type.is_fp() && cur.is_value())
       {
         d_internal->d_unpacked_float_map.emplace(
             cur, *cur.value<FloatingPoint>().unpacked());
-      }
-      else if (type.is_fp() && (cur.is_const() || is_leaf(cur)))
-      {
-        Node inf =
-            nm.mk_const(nm.mk_bv_type(1), create_component_symbol(cur, "inf"));
-        Node nan =
-            nm.mk_const(nm.mk_bv_type(1), create_component_symbol(cur, "nan"));
-        Node sign =
-            nm.mk_const(nm.mk_bv_type(1), create_component_symbol(cur, "sign"));
-        Node zero =
-            nm.mk_const(nm.mk_bv_type(1), create_component_symbol(cur, "zero"));
-        Node exp =
-            nm.mk_const(nm.mk_bv_type(SymUnpackedFloat::exponentWidth(type)),
-                        create_component_symbol(cur, "exp"));
-        Node sig =
-            nm.mk_const(nm.mk_bv_type(SymUnpackedFloat::significandWidth(type)),
-                        create_component_symbol(cur, "sig"));
-
-        SymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
-        d_internal->d_unpacked_float_map.emplace(cur, uf);
-        d_solver_state.lemma(
-            node::utils::bv1_to_bool(nm, uf.valid(type).getNode()));
       }
       else if (kind == node::Kind::EQUAL && cur[0].type().is_fp())
       {
