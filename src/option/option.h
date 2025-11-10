@@ -102,6 +102,7 @@ enum class BvNumberFormat
   DEC,
   HEX,
 };
+std::ostream& operator<<(std::ostream& out, BvNumberFormat format);
 
 enum class BvSolver
 {
@@ -109,6 +110,7 @@ enum class BvSolver
   PROP,
   PREPROP,
 };
+std::ostream& operator<<(std::ostream& out, BvSolver solver);
 
 enum class SatSolver
 {
@@ -117,12 +119,14 @@ enum class SatSolver
   GIMSATUL,
   KISSAT,
 };
+std::ostream& operator<<(std::ostream& out, SatSolver solver);
 
 enum class PropPathSelection
 {
   ESSENTIAL,
   RANDOM,
 };
+std::ostream& operator<<(std::ostream& out, PropPathSelection sel);
 
 /* -------------------------------------------------------------------------- */
 

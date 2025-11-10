@@ -18,6 +18,58 @@
 
 namespace bzla::option {
 
+/* -------------------------------------------------------------------------- */
+
+std::ostream&
+operator<<(std::ostream& out, BvNumberFormat format)
+{
+  switch (format)
+  {
+    case BvNumberFormat::BIN: out << "BIN"; break;
+    case BvNumberFormat::DEC: out << "DEC"; break;
+    case BvNumberFormat::HEX: out << "HEX"; break;
+  }
+  return out;
+}
+
+std::ostream&
+operator<<(std::ostream& out, BvSolver solver)
+{
+  switch (solver)
+  {
+    case BvSolver::BITBLAST: out << "BITBLAST"; break;
+    case BvSolver::PROP: out << "PROP"; break;
+    case BvSolver::PREPROP: out << "PREPROP"; break;
+  }
+  return out;
+}
+
+std::ostream&
+operator<<(std::ostream& out, SatSolver solver)
+{
+  switch (solver)
+  {
+    case SatSolver::CADICAL: out << "CADICAL"; break;
+    case SatSolver::CRYPTOMINISAT: out << "CRYPTOMINISAT"; break;
+    case SatSolver::GIMSATUL: out << ""; break;
+    case SatSolver::KISSAT: out << "KISSAT"; break;
+  }
+  return out;
+}
+
+std::ostream&
+operator<<(std::ostream& out, PropPathSelection sel)
+{
+  switch (sel)
+  {
+    case PropPathSelection::ESSENTIAL: out << "ESSENTIAL"; break;
+    case PropPathSelection::RANDOM: out << "RANDOM"; break;
+  }
+  return out;
+}
+
+/* -------------------------------------------------------------------------- */
+
 Option
 operator++(Option& o)
 {
