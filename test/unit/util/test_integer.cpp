@@ -81,9 +81,9 @@ TEST_F(TestInteger, conversion)
   ASSERT_EQ(Integer(INT64_MIN).to_int64(), INT64_MIN);
   ASSERT_EQ(Integer(INT64_MAX).to_int64(), INT64_MAX);
   ASSERT_DEATH_DEBUG(Integer(UINT64_MAX).to_int64(),
-                     "value <= std::numeric_limits<int64_t>::max()");
+                     "value <= std::numeric_limits<int64_t>::max");
   ASSERT_DEATH_DEBUG(Integer("-9223372036854775809").to_int64(),
-                     "value <= .*std::numeric_limits<int64_t>::min().*");
+                     "value <= .*std::numeric_limits<int64_t>::min.*");
   ASSERT_DEATH_DEBUG(Integer("-18446744073709551616").to_int64(),
                      "64 >= mpz_sizeinbase.*");
 
