@@ -1,8 +1,8 @@
 Installation and Build Instructions
 ===================================
 
-Building Bitwuzla
------------------
+Building Bitwuzla on Linux and macOS
+------------------------------------
 
 .. code:: bash
 
@@ -80,10 +80,28 @@ Building without pip
    The Python module can be found in ``build/src/api/python/``.
 
 
-Cross Compiling for Windows
----------------------------
+Building Bitwuzla for Windows
+-----------------------------
 
-Cross compiling Bitwuzla with Mingw-w64 can be done as follows:
+Bitwulzla can be either cross-compiled via Mingw-w64 or MSYS2.
+
+* **Required Dependencies**
+
+The following `mingw` packages are required to compile Bitwuzla for Windows:
+
+  * `mingw-w64-x86_64-gcc`
+  * `mingw-w64-x86_64-gmp`
+  * `mingw-w64-x86_64-meson`
+  * `mingw-w64-x86_64-ninja`
+  * `mingw-w64-x86_64-python3`
+  * `mingw-w64-x86_64-cython` (optional for Python bindings)
+  * `mingw-w64-x86_64-gtest` (optional for debug builds)
+  * `mingw-w64-x86_64-python-pytest` (optional for debug builds)
+
+On **arm64** machines, replace `x86_64` with `aarch64` for the packages above.
+After setting up the MSYS2 environment, follow the Linux/macOS building
+instructions.
+For cross-compilation add flag `--win64` to the configure line.
 
 .. code:: bash
 
@@ -96,11 +114,6 @@ Cross compiling Bitwuzla with Mingw-w64 can be done as follows:
 
   # Build and install
   cd build && ninja
-
-
-* **Required Dependencies**
-
-  * `mingw-w64 <https://www.mingw-w64.org/>`_
 
 
 API Documentation

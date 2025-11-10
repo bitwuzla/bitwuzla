@@ -27,7 +27,8 @@ https://github.com/bitwuzla/bitwuzla
 
 ## Build and Installation Instructions
 
-Bitwuzla can be built on Linux and macOS. Windows support is planned and WIP.
+Bitwuzla can be built on Linux, macOS. For Windows, it can be built using
+MSYS2 or cross-compiled via Mingw-w64.
 
 For detailed build and installation instructions
 see [docs/install.rst](docs/install.rst).
