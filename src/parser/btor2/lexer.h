@@ -200,6 +200,10 @@ class Lexer
       d_cur_coo.col += 1;
       assert(d_cur_coo.col > 0);
     }
+    if (res == d_input->eof())
+    {
+      res = EOF;
+    }
     return res;
   }
 
