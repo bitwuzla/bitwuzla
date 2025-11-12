@@ -78,6 +78,7 @@ jobs:
           update: true
           install: >-
             git
+            zip
             mingw-w64-x86_64-ca-certificates
             mingw-w64-x86_64-cython
             mingw-w64-x86_64-gcc
