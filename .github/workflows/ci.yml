@@ -48,14 +48,13 @@ jobs:
           - name: release-win64
             os: windows-latest
             package-name: Bitwuzla-Win64-x86_64
-            config: --python
             shell: msys2 {0}
 
     name: ${{ matrix.os }}:${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        shell: ${{ matrix.shell || 'bash'}}
+        shell: ${{ matrix.shell || 'bash' }}
 
     steps:
       - name: Install Packages (Linux)
@@ -76,6 +75,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
+          path-type: inherit
           install: >-
             git
             zip
@@ -123,8 +123,6 @@ jobs:
         if: matrix.package-name && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
         uses: ./.github/actions/add-package
         with:
+          shell: ${{ matrix.shell || 'bash' }}
           build-dir: ${{ steps.build.outputs.build-dir }}
           package-name: ${{ matrix.package-name }}-static
-          # when using GITHUB_TOKEN, no further workflows are triggered
-          github-token-latest: ${{ secrets.GITHUB_TOKEN }}
-          github-token-release: ${{ secrets.GITHUB_TOKEN }}
