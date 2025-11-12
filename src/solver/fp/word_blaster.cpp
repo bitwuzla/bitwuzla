@@ -43,19 +43,6 @@ create_component_symbol(const Node& node, const std::string& s)
   return "_fp_var_" + std::to_string(node.id()) + s + "_component_";
 }
 
-/**
- * Determine if given node is a leaf node for the word blaster, i.e., a term of
- * floating-point or rounding mode type that belongs to any of the other
- * theories.
- * @param node The node to query.
- */
-bool
-is_leaf(const Node& node)
-{
-  return array::ArraySolver::is_theory_leaf(node)
-         || fun::FunSolver::is_theory_leaf(node)
-         || quant::QuantSolver::is_theory_leaf(node);
-}
 }  // namespace
 
 struct WordBlaster::Internal
@@ -70,8 +57,18 @@ struct WordBlaster::Internal
 
 /* --- WordBlaster public --------------------------------------------------- */
 
+bool
+WordBlaster::is_leaf(const Node& node)
+{
+  return array::ArraySolver::is_theory_leaf(node)
+         || fun::FunSolver::is_theory_leaf(node)
+         || quant::QuantSolver::is_theory_leaf(node);
+}
+
 WordBlaster::WordBlaster(Env& env, SolverState& state)
-    : d_env(env), d_solver_state(state)
+    : d_word_blasted_consts(state.backtrack_mgr()),
+      d_env(env),
+      d_solver_state(state)
 {
   d_internal.reset(new Internal());
 }
@@ -154,11 +151,18 @@ WordBlaster::is_word_blasted(const Node& node) const
   return false;
 }
 
+bool
+WordBlaster::is_cur_word_blasted_const(const Node& node) const
+{
+  return d_word_blasted_consts.find(node) != d_word_blasted_consts.end();
+}
+
 std::pair<Node, bool>
 WordBlaster::valid(const Node& node)
 {
   assert(node.is_const() || is_leaf(node));
 
+  NodeManager& nm = d_env.nm();
   Type type = node.type();
 
   if (type.is_rm())
@@ -166,20 +170,21 @@ WordBlaster::valid(const Node& node)
     auto it = d_internal->d_rm_map.find(node);
     if (it != d_internal->d_rm_map.end())
     {
-      return {it->second.valid().getNode(), false};
+      return {node::utils::bv1_to_bool(nm, it->second.valid().getNode()),
+              false};
     }
     SymFpuSymRM rmvar(node);
     d_internal->d_rm_map.emplace(node, rmvar);
-    return {rmvar.valid().getNode(), true};
+    return {node::utils::bv1_to_bool(nm, rmvar.valid().getNode()), true};
   }
   assert(type.is_fp());
 
   auto it = d_internal->d_unpacked_float_map.find(node);
   if (it != d_internal->d_unpacked_float_map.end())
   {
-    return {it->second.valid(type).getNode(), false};
+    return {node::utils::bv1_to_bool(nm, it->second.valid(type).getNode()),
+            false};
   }
-  NodeManager& nm = d_env.nm();
   Node inf =
       nm.mk_const(nm.mk_bv_type(1), create_component_symbol(node, "inf"));
   Node nan =
@@ -196,7 +201,7 @@ WordBlaster::valid(const Node& node)
 
   SymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
   d_internal->d_unpacked_float_map.emplace(node, uf);
-  return {uf.valid(type).getNode(), true};
+  return {node::utils::bv1_to_bool(nm, uf.valid(type).getNode()), true};
 }
 
 /* --- WordBlaster private -------------------------------------------------- */
@@ -297,7 +302,9 @@ WordBlaster::_word_blast(const Node& node)
       {
         auto [lemma, inserted] = valid(cur);
         assert(inserted);
-        d_solver_state.lemma(node::utils::bv1_to_bool(nm, lemma));
+        d_solver_state.lemma(lemma);
+        assert(d_word_blasted_consts.find(cur) == d_word_blasted_consts.end());
+        d_word_blasted_consts.insert(cur);
       }
       else if (type.is_fp() && cur.is_value())
       {

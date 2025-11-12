@@ -1445,6 +1445,7 @@ tests_smt2 = [
   ['solver/fp/fp_sort.smt2'],
   ['solver/fp/fp_to_fp.smt2'],
   ['solver/fp/fp_zero.smt2'],
+  ['solver/fp/murxla-471c1abae363d2e.min.smt2'],
   ['solver/fp/uf_fpmax.smt2'],
   ['solver/fp/uf_fpmin.smt2'],
   ['solver/fp/uf_tosbv.smt2'],

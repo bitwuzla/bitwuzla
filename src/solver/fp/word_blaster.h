@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "backtrack/unordered_set.h"
 #include "env.h"
 #include "node/node.h"
 #include "solver/fp/floating_point.h"
@@ -36,6 +37,14 @@ class SymFpuSymProp;
 class WordBlaster
 {
  public:
+  /**
+   * Determine if given node is a leaf node for the word blaster, i.e., a term
+   * of floating-point or rounding mode type that belongs to any of the other
+   * theories.
+   * @param node The node to query.
+   */
+  static bool is_leaf(const Node& node);
+
   WordBlaster(Env& env, SolverState& state);
   ~WordBlaster();
 
@@ -52,8 +61,19 @@ class WordBlaster
 
   /**
    * Determine whether word_blast() was already called on given node.
+   * @param node The node to query the status for.
+   * @return True if `node` has already been word-blasted.
    */
   bool is_word_blasted(const Node& node) const;
+
+  /**
+   * Determine whether word_blast() was called in a currently active assertion
+   * level on given RM/FP const/leaf.
+   * @param node   The const/leaf to query the status for.
+   * @return True if `node` is an RM/FP const/leaf and has been word-blasted in
+   *         any of the currently active assertion levels.
+   */
+  bool is_cur_word_blasted_const(const Node& node) const;
 
   /**
    * Word-blast given floating-point or rounding mode constant/leaf (if not
@@ -119,6 +139,12 @@ class WordBlaster
   std::unordered_map<Type, Node> d_sbv_ubv_uf_map;
 
   std::vector<Node> d_additional_assertions;
+
+  /**
+   * Cache which constants have been word-blasted in the currently active
+   * assertion levels.
+   */
+  backtrack::unordered_set<Node> d_word_blasted_consts;
 
   /** The associated environment. */
   Env& d_env;

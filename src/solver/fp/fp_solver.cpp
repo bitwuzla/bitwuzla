@@ -13,7 +13,9 @@
 #include "env.h"
 #include "node/node_kind.h"
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
 #include "node/node_utils.h"
+#include "node/unordered_node_ref_set.h"
 #include "rewrite/rewriter.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
@@ -39,7 +41,8 @@ FpSolver::FpSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_word_blaster(env, state),
       d_word_blast_queue(state.backtrack_mgr()),
-      d_word_blast_index(state.backtrack_mgr())
+      d_word_blast_index(state.backtrack_mgr()),
+      d_valid_constraints_cache(state.backtrack_mgr())
 {
 }
 
@@ -53,6 +56,62 @@ FpSolver::check()
 
   reset_cached_values();
   NodeManager& nm = d_env.nm();
+
+  // In the incremental case, it can happen that validity constraints (added as
+  // lemmas) for FP/RM consts and leafs were registered in the bit-blast solver
+  // but never bit-blasted.
+  //
+  // This only happens if a BV engine other than the bit-blast engine solves an
+  // incremental query where an RM/FP const/leaf is word-blasted for the first
+  // time, and the corresponding assertions are popped before the next query.
+  // This results in the validity lemmas for the const/leaf being registered
+  // in the bit-blast solver but never bit-blasted, since the bit-blast solver
+  // maintains registered assertions in a backtrackable queue (to be
+  // bit-blasted), and thus lemmas get popped before they are bit-blasted.
+  //
+  // Thus, we have to keep track of which RM/FP consts/leafs are currently
+  // "active", and which of them we currently have added validity constraints
+  // for. That is, we maintain a backtrackable cache to keep track of which
+  // nodes we have seen on the current assertion level, and if we encounter
+  // an RM/FP const/leaf that has been word-blasted previously but is not
+  // cached, we add the corresponding validity constraints.
+  //
+  // Note that this will not result in duplicate lemmas (on the node level) in
+  // the currently active assertion levels, but may result in bit-blasting
+  // lemmas more than once.
+  for (size_t i = d_word_blast_index.get(), size = d_word_blast_queue.size();
+       i < size;
+       ++i)
+  {
+    const Node& node = d_word_blast_queue[i];
+
+    node_ref_vector visit{node};
+    do
+    {
+      const Node& cur = visit.back();
+      visit.pop_back();
+      if (!d_valid_constraints_cache.insert(cur).second)
+      {
+        continue;
+      }
+      if (cur.is_const() || WordBlaster::is_leaf(cur))
+      {
+        // If `cur` has been word-blasted but not in any of the currently active
+        // assertion levels, we have to readd the validity lemma.
+        if (d_word_blaster.is_word_blasted(cur)
+            && !d_word_blaster.is_cur_word_blasted_const(cur))
+        {
+          d_solver_state.lemma(d_word_blaster.valid(cur).first);
+        }
+      }
+      else
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+    } while (!visit.empty());
+  }
+
+  // Word-blast nodes that have not yet been word-blasted.
   for (size_t i = d_word_blast_index.get(), size = d_word_blast_queue.size();
        i < size;
        ++i)
