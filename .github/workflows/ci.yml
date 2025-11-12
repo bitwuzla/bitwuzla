@@ -90,10 +90,7 @@ jobs:
             mingw-w64-x86_64-python-pytest
 
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.BZLA_LIBS_KEY }}
-          submodules: 'recursive'
+        uses: actions/checkout@v5
 
       - name: Configure
         run: ${{ matrix.env }} ./configure.py --prefix="$(pwd)/build/install" ${{ matrix.config }}

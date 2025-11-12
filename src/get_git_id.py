@@ -30,7 +30,7 @@ if proc.returncode == 0 and proc.stdout:
     cmd = ['git', '-C', args.path, 'rev-parse', '--short', 'HEAD']
     proc = subprocess.run(cmd, capture_output=True, check=False)
     git_id += proc.stdout.decode().strip()
-    cmd = ['git', '-C', args.path, 'diff-index', '--quiet', 'HEAD']
+    cmd = ['git', '-C', args.path, 'diff-index', '--ignore-all-space', 'HEAD']
     proc = subprocess.run(cmd, capture_output=True, check=False)
     if proc.returncode != 0:
         git_id += '-dirty'
