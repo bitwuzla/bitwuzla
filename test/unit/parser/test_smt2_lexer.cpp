@@ -21,7 +21,6 @@ using namespace bzla::parser::smt2;
 class TestSmt2Lexer : public ::testing::Test
 {
  protected:
-  inline static constexpr const char* s_out_prefix = "/tmp/bitwuzla_regress_";
   void next_token(Lexer& lexer,
                   Token expected,
                   const std::string& expected_str = "")
@@ -40,7 +39,7 @@ class TestSmt2Lexer : public ::testing::Test
 
   void open_file(const std::stringstream& input, std::ifstream& infile)
   {
-    std::string infile_name = s_out_prefix + std::string("lexer.smt2");
+    std::string infile_name = "test_lexer.smt2";
     std::ofstream ofile(infile_name);
     ofile << input.str();
     ofile.close();
