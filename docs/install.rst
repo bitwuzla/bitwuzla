@@ -28,6 +28,7 @@ Building Bitwuzla on Linux and macOS
   * `Meson >= 0.64 <https://mesonbuild.com>`_
   * `Ninja <https://ninja-build.org>`_
   * `GMP >= v6.3 (GNU Multi-Precision arithmetic library) <https://gmplib.org>`_
+  * `MPFR >= v4.2.1 (GNU Multiple Precision Floating-Point Reliable Library) <https://www.mpfr.org>`_
   * `CaDiCaL >= 1.5.0 <https://github.com/arminbiere/cadical>`_
   * `SymFPU <https://github.com/martin-cs/symfpu>`_
 
@@ -92,6 +93,7 @@ The following `mingw` packages are required to compile Bitwuzla for Windows:
   * `mingw-w64-x86_64-gcc`
   * `mingw-w64-x86_64-gmp`
   * `mingw-w64-x86_64-meson`
+  * `mingw-w64-x86_64-mpfr`
   * `mingw-w64-x86_64-ninja`
   * `mingw-w64-x86_64-python3`
   * `mingw-w64-x86_64-cython` (optional for Python bindings)

@@ -10,6 +10,10 @@ gmp_dep = dependency('gmp',
                      version: '>=6.3',
                      required: true,
                      static: build_static)
+mpfr_dep = dependency('mpfr',
+                     version: '>=4.2.1',
+                     required: true,
+                     static: build_static)
 
 # Subproject dependencies
 
@@ -42,7 +46,8 @@ gimsatul_dep = dependency('gimsatul', required: get_option('gimsatul'))
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
-dependencies = [symfpu_dep, cadical_dep, cms_dep, kissat_dep, gmp_dep, gimsatul_dep]
+dependencies = [
+  gmp_dep, mpfr_dep, symfpu_dep, cadical_dep, cms_dep, kissat_dep, gimsatul_dep]
 
 cpp_args = []
 if cms_dep.found()
@@ -82,6 +87,8 @@ library see the corresponding url.'''
 license_text += '\n\n  CaDiCaL\n  https://github.com/arminbiere/cadical'
 license_text += \
   '\n\n  GMP - GNU Multiple Precision Arithmetic Library\n  https://gmplib.org'
+license_text += \
+  '\n\n  MPFR - GNU Multiple Precision Floating-Point Realiable Library\n  https://www.mpfr.org'
 if cms_dep.found()
   license_text += '\n\n  CryptoMiniSat\n  https://github.com/msoos/cryptominisat'
 endif
