@@ -125,7 +125,7 @@ unit_tests = [
 
 gtest_dep = dependency('gtest_main', required: true)
 test_inc = [include_directories('../../src', '../..', 'lib')]
-test_deps = [gtest_dep, bitwuzla_dep, gmp_dep]
+test_deps = [gtest_dep, bitwuzla_dep, gmp_dep, mpfr_dep]
 
 # Disable wine debug output if we run the cross-compiled binary
 env = []
