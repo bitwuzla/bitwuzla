@@ -6,61 +6,62 @@
 
 namespace bzla::bitblast {
 
-AigNode::AigNode(AigNodeData* data, bool negated)
-    : d_data(data), d_negated(negated)
+AigNode::AigNode(AigNodeData* d, bool negated)
+    : d_data(reinterpret_cast<uintptr_t>(d))
 {
-  d_data->inc_refs();
+  assert(d);
+  if (negated)
+  {
+    d_data |= 1;
+  }
+  data()->inc_refs();
 }
 
 AigNode::~AigNode()
 {
   if (!is_null())
   {
-    d_data->dec_refs();
+    data()->dec_refs();
   }
 }
 
-AigNode::AigNode(const AigNode& other)
-    : d_data(other.d_data), d_negated(other.d_negated)
+AigNode::AigNode(const AigNode& other) : d_data(other.d_data)
 {
   assert(!other.is_null());
-  d_data->inc_refs();
+  data()->inc_refs();
 }
 
 AigNode&
 AigNode::operator=(const AigNode& other)
 {
-  if (d_data)
+  if (!is_null())
   {
-    d_data->dec_refs();
+    data()->dec_refs();
   }
-  d_data    = other.d_data;
-  d_negated = other.d_negated;
-  d_data->inc_refs();
+  d_data = other.d_data;
+  data()->inc_refs();
   return *this;
 }
 
 AigNode::AigNode(AigNode&& other)
 {
-  if (d_data)
+  if (!is_null())
   {
-    d_data->dec_refs();
+    data()->dec_refs();
   }
   d_data       = other.d_data;
-  d_negated    = other.d_negated;
-  other.d_data = nullptr;
+  other.d_data = 0;
 }
 
 AigNode&
 AigNode::operator=(AigNode&& other)
 {
-  if (d_data)
+  if (!is_null())
   {
-    d_data->dec_refs();
+    data()->dec_refs();
   }
   d_data       = other.d_data;
-  d_negated    = other.d_negated;
-  other.d_data = nullptr;
+  other.d_data = 0;
   return *this;
 }
 

@@ -64,7 +64,7 @@ class AigManager
 
   AigNode mk_not(const AigNode& a)
   {
-    return AigNode(a.d_data, !a.is_negated());
+    return AigNode(a.data(), !a.is_negated());
   }
 
   AigNode mk_and(const AigNode& a, const AigNode& b)

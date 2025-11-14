@@ -27,7 +27,6 @@ class AigNodeData;
 class AigNode
 {
   friend AigManager;
-  friend AigNodeData;
 
  public:
   AigNode() = default;
@@ -45,7 +44,7 @@ class AigNode
 
   bool is_const() const;
 
-  bool is_negated() const { return d_negated; }
+  bool is_negated() const { return d_data & 1; }
 
   const AigNode& operator[](int index) const;
 
@@ -53,19 +52,22 @@ class AigNode
 
   uint32_t parents() const;
 
+  bool is_null() const { return d_data == 0; }
+
  private:
   static const int64_t s_true_id = 1;
 
   // Should only be constructed via AigManager
   AigNode(AigNodeData* data, bool negated = false);
 
-  bool is_null() const { return d_data == nullptr; }
+  void reset() { d_data = 0; }
 
-  uint64_t get_refs() const;
+  AigNodeData* data() const
+  {
+    return reinterpret_cast<AigNodeData*>(d_data & ~1);
+  }
 
-  AigNodeData* d_data = nullptr;
-  // TODO: optimization hide flag in d_data pointer
-  bool d_negated = false;
+  uintptr_t d_data = 0;
 };
 
 inline bool
@@ -134,19 +136,19 @@ class AigNodeData
 inline bool
 AigNode::is_true() const
 {
-  return d_data->d_id == AigNode::s_true_id && !is_negated();
+  return data()->d_id == AigNode::s_true_id && !is_negated();
 }
 
 inline bool
 AigNode::is_false() const
 {
-  return d_data->d_id == AigNode::s_true_id && is_negated();
+  return data()->d_id == AigNode::s_true_id && is_negated();
 }
 
 inline bool
 AigNode::is_and() const
 {
-  return !d_data->d_left.is_null();
+  return !data()->d_left.is_null();
 }
 
 inline bool
@@ -161,10 +163,10 @@ AigNode::operator[](int index) const
   assert(is_and());
   if (index == 0)
   {
-    return d_data->d_left;
+    return data()->d_left;
   }
   assert(index == 1);
-  return d_data->d_right;
+  return data()->d_right;
 }
 
 inline int64_t
@@ -175,21 +177,14 @@ AigNode::get_id() const
   {
     return 0;
   }
-  return is_negated() ? -d_data->d_id : d_data->d_id;
+  return is_negated() ? -data()->d_id : data()->d_id;
 }
 
 inline uint32_t
 AigNode::parents() const
 {
   assert(!is_null());
-  return d_data->d_parents;
-}
-
-inline uint64_t
-AigNode::get_refs() const
-{
-  assert(!is_null());
-  return d_data->d_refs;
+  return data()->d_parents;
 }
 
 }  // namespace bzla::bitblast

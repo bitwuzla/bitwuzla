@@ -123,7 +123,7 @@ AigNodeUniqueTable::resize()
 // BitNodeInterface<AigNode>
 
 AigManager::AigManager()
-    : d_true(new_data(), false), d_false(d_true.d_data, true)
+    : d_true(new_data(), false), d_false(d_true.data(), true)
 {
   assert(d_true.get_id() == AigNode::s_true_id);
   assert(d_false.get_id() == -AigNode::s_true_id);
@@ -148,8 +148,8 @@ AigManager::init_id(AigNodeData* d)
   d->d_id = d_aig_id_counter++;
   if (!d->d_left.is_null())
   {
-    ++d->d_left.d_data->d_parents;
-    ++d->d_right.d_data->d_parents;
+    ++d->d_left.data()->d_parents;
+    ++d->d_right.data()->d_parents;
   }
 }
 
@@ -457,19 +457,19 @@ AigManager::garbage_collect(AigNodeData* d)
       // Erase node data from unique table before we modify children.
       d_unique_table.erase(cur);
 
-      data = cur->d_left.d_data;
+      data = cur->d_left.data();
       --data->d_refs;
       --data->d_parents;
-      cur->d_left.d_data = nullptr;
+      cur->d_left.reset();
       if (data->d_refs == 0)
       {
         visit.push_back(data);
       }
 
-      data = cur->d_right.d_data;
+      data = cur->d_right.data();
       --data->d_refs;
       --data->d_parents;
-      cur->d_right.d_data = nullptr;
+      cur->d_right.reset();
       if (data->d_refs == 0)
       {
         visit.push_back(data);
