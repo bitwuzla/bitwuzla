@@ -61,7 +61,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev ninja-build meson cython3 python3-pytest libgtest-dev
+          sudo apt-get install -y libgmp-dev libmpfr-dev ninja-build meson cython3 python3-pytest libgtest-dev
 
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
@@ -83,6 +83,7 @@ jobs:
             mingw-w64-x86_64-cython
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-mpfr
             mingw-w64-x86_64-gtest
             mingw-w64-x86_64-meson
             mingw-w64-x86_64-ninja
