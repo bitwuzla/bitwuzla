@@ -15,11 +15,39 @@ import subprocess
 import shutil
 import sys
 
+from pathlib import Path
+
 def info(msg):
     print(f'-- {msg}')
 
 def die(msg):
     sys.exit(f'** configure.py: {msg}')
+
+def patch_mpfr_pc(builddir):
+    try:
+        if not os.path.exists(builddir):
+            os.mkdir(builddir)
+        cmd = subprocess.Popen(
+                ['pkg-config', '--variable=pcfiledir', 'mpfr'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        new_lines = []
+        with open(os.path.join(Path(out.decode().strip()), 'mpfr.pc'), 'r') \
+                as infile:
+            lines = infile.readlines()
+            for line in lines:
+                if line.startswith('Libs:'):
+                    new_lines.append('Requires: gmp >= 5.0\n')
+                    line = line.replace('-lgmp', '')
+                new_lines.append(line)
+        with open(os.path.join(builddir, 'mpfr.pc'), 'w') as outfile:
+            outfile.write(''.join(new_lines))
+        if 'PKG_CONFIG_PATH' in os.environ:
+            os.environ['PKG_CONFIG_PATH'] += os.pathsep + builddir
+        else:
+            os.environ['PKG_CONFIG_PATH'] = os.pathsep + builddir
+    except FileNotFoundError:
+        pass
 
 def configure_build(builddir, opts):
     cmd = ['meson']
@@ -155,6 +183,9 @@ def main():
             build_opts.append(f'-Dfpexp=false')
     if args.aiger is not None:
         build_opts.append(f'-Daiger={_bool(args.aiger)}')
+
+    # workaround until mpfr.pc is fixed from mpfr side
+    patch_mpfr_pc(args.build_dir)
 
     configure_build(args.build_dir, build_opts)
 
