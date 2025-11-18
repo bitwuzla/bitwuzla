@@ -311,6 +311,15 @@ SymFpuBV<is_signed>::modularAdd(const SymFpuBV<is_signed> &op) const
 
 template <bool is_signed>
 SymFpuBV<is_signed>
+SymFpuBV<is_signed>::modularSubtract(const SymFpuBV<is_signed> &op) const
+{
+  assert(!d_bv.is_null());
+  assert(!op.d_bv.is_null());
+  return *this - op;
+}
+
+template <bool is_signed>
+SymFpuBV<is_signed>
 SymFpuBV<is_signed>::modularNegate() const
 {
   assert(!d_bv.is_null());
@@ -889,6 +898,13 @@ SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::modularAdd(const SymFpuSymBV<is_signed> &op) const
 {
   return *this + op;
+}
+
+template <bool is_signed>
+SymFpuSymBV<is_signed>
+SymFpuSymBV<is_signed>::modularSubtract(const SymFpuSymBV<is_signed> &op) const
+{
+  return *this - op;
 }
 
 template <bool is_signed>

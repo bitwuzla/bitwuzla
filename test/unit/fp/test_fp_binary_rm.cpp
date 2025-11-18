@@ -76,10 +76,6 @@ class TestFpBinaryRm : public TestFp
 
 TEST_F(TestFpBinaryRm, add) { TEST_BINARY_RM(add); }
 TEST_F(TestFpBinaryRm, mul) { TEST_BINARY_RM(mul); }
-#ifdef NDEBUG
-// SymFPU fails with an assertion failure (see issue #164) but agrees with
-// MPFR on all tests for release builds without assertions.
 TEST_F(TestFpBinaryRm, div) { TEST_BINARY_RM(div); }
-#endif
 
 }  // namespace bzla::test
