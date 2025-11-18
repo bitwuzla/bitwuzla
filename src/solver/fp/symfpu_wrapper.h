@@ -119,6 +119,7 @@ class SymFpuBV
   SymFpuBV<is_signed> modularIncrement() const;
   SymFpuBV<is_signed> modularDecrement() const;
   SymFpuBV<is_signed> modularAdd(const SymFpuBV<is_signed> &op) const;
+  SymFpuBV<is_signed> modularSubtract(const SymFpuBV<is_signed> &op) const;
   SymFpuBV<is_signed> modularNegate() const;
 
   /*** Comparisons ***/
@@ -309,6 +310,8 @@ class SymFpuSymBV
   SymFpuSymBV<is_signed> modularIncrement() const;
   SymFpuSymBV<is_signed> modularDecrement() const;
   SymFpuSymBV<is_signed> modularAdd(const SymFpuSymBV<is_signed> &op) const;
+  SymFpuSymBV<is_signed> modularSubtract(
+      const SymFpuSymBV<is_signed> &op) const;
   SymFpuSymBV<is_signed> modularNegate() const;
 
   /** Operators for Boolean nodes */
@@ -445,6 +448,7 @@ BZLA_FP_ITE(bzla::fp::SymFpuTraits::rm);
 BZLA_FP_ITE(bzla::fp::SymFpuTraits::prop);
 BZLA_FP_ITE(bzla::fp::SymFpuTraits::sbv);
 BZLA_FP_ITE(bzla::fp::SymFpuTraits::ubv);
+BZLA_FP_ITE(bzla::fp::SymFpuSymTraits::sbv);
 #undef BZLA_FP_ITE
 
 #define BZLA_FP_SYM_ITE(T)                                               \
