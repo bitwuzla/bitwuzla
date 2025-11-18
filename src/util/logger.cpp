@@ -16,7 +16,8 @@
 
 namespace bzla::util {
 
-Logger::Line::Line(uint64_t level, const char* prefix)
+Logger::Line::Line(uint64_t level, std::ostream& out, const char* prefix)
+    : d_out(out)
 {
   auto& os = stream();
   // Save stream flags for restoring them later.
@@ -47,14 +48,24 @@ Logger::Line::~Line()
 std::ostream&
 Logger::Line::stream()
 {
-  return std::cout;
+  return d_out;
 }
 
 Logger::Logger(uint64_t log_level,
                uint64_t verbosity,
+               std::ostream& out,
                const std::string& prefix)
-    : d_log_level(log_level), d_verbosity_level(verbosity), d_prefix(prefix)
+    : d_log_level(log_level),
+      d_verbosity_level(verbosity),
+      d_prefix(prefix),
+      d_out(&out)
 {
+}
+
+void
+Logger::set_stream(std::ostream& out)
+{
+  d_out = &out;
 }
 
 bool
@@ -72,19 +83,19 @@ Logger::is_log_enabled(uint64_t level)
 Logger::Line
 Logger::log(uint64_t level)
 {
-  return Line(level, d_prefix.empty() ? nullptr : d_prefix.c_str());
+  return Line(level, *d_out, d_prefix.empty() ? nullptr : d_prefix.c_str());
 }
 
 Logger::Line
 Logger::msg(uint64_t level)
 {
-  return Line(level, "[bzla]");
+  return Line(level, *d_out, "[bzla]");
 }
 
 Logger::Line
 Logger::warn()
 {
-  return Line(1, "[bzla] warning:");
+  return Line(1, *d_out, "[bzla] warning:");
 }
 
 void

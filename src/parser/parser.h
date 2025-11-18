@@ -42,8 +42,9 @@ class Parser
         d_tm(tm),
         d_log_level(options.get(bitwuzla::Option::LOGLEVEL)),
         d_verbosity(options.get(bitwuzla::Option::VERBOSITY)),
-        d_logger(d_log_level, d_verbosity),
-        d_out(out)
+        d_logger(d_log_level, d_verbosity, std::cerr),
+        d_out(out),
+        d_diag_out(&std::cerr)
   {
   }
 
@@ -137,6 +138,9 @@ class Parser
   /** @return The error message. */
   const std::string& error_msg() { return d_error; }
 
+  /** @return The diagnostic output channel. */
+  std::ostream& diagnostic_output_channel() { return *d_diag_out; }
+
  protected:
   /** Initialize Bitwuzla instance. */
   void init_bitwuzla()
@@ -186,6 +190,10 @@ class Parser
   std::ofstream d_outfile;
   /** The output stream, either prints to d_outfile or std::cout. */
   std::ostream* d_out;
+  /** The diagnostic output file stream if print to a file. */
+  std::ofstream d_diag_outfile;
+  /** The diagnostic output stream, prints to d_diag_outfile or std::cerr. */
+  std::ostream* d_diag_out;
 
   /** The status of the input file set via set-info. */
   bitwuzla::Result d_status = bitwuzla::Result::UNKNOWN;

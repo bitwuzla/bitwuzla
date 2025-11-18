@@ -1062,22 +1062,47 @@ Parser::parse_command_set_option()
 
   if (token == Token::REGULAR_OUTPUT_CHANNEL)
   {
-    token = next_token();
-    if (!check_token(token))
+    std::string filename;
+    if (!parse_string(filename))
     {
       return false;
     }
-    const std::string& outfile_name = d_lexer->token();
-    assert(!outfile_name.empty());
-    try
+    // Default is stdout
+    if (filename != "stdout")
     {
-      d_outfile.open(outfile_name, std::ofstream::out);
+      try
+      {
+        d_outfile.open(filename, std::ofstream::out);
+      }
+      catch (...)
+      {
+        return error("cannot create '" + filename + "'");
+      }
+      d_out = &d_outfile;
     }
-    catch (...)
+  }
+  else if (token == Token::DIAG_OUTPUT_CHANNEL)
+  {
+    std::string filename;
+    if (!parse_string(filename))
     {
-      return error("cannot create '" + outfile_name + "'");
+      return false;
     }
-    d_out = &d_outfile;
+    // Default is stderr
+    if (filename != "stderr")
+    {
+      try
+      {
+        d_diag_outfile.open(filename, std::ofstream::out);
+      }
+      catch (...)
+      {
+        return error("cannot create '" + filename + "'");
+      }
+      d_diag_out = &d_diag_outfile;
+      d_options.set_diagnostic_output_stream(*d_diag_out);
+      d_logger.set_stream(*d_diag_out);
+    }
   }
   else if (token == Token::PRINT_SUCCESS)
   {
@@ -1201,6 +1226,25 @@ Parser::parse_uint64(uint64_t& uint)
     }
   }
   return error("expected 64 bit integer");
+}
+
+bool
+Parser::parse_string(std::string& str)
+{
+  Token token = next_token();
+  if (!check_token(token))
+  {
+    return false;
+  }
+
+  const std::string& parsed_str = d_lexer->token();
+  assert(!parsed_str.empty());
+  if (parsed_str.front() == '"' && parsed_str.back() == '"')
+  {
+    str = parsed_str.substr(1, parsed_str.size() - 2);
+    return true;
+  }
+  return error("expected string");
 }
 
 bool

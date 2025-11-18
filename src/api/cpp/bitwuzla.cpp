@@ -415,6 +415,12 @@ Options::operator=(const Options &options)
   return *this;
 }
 
+void
+Options::set_diagnostic_output_stream(std::ostream& out)
+{
+  d_options->set_diagnostic_output_stream(out);
+}
+
 bool
 Options::is_valid(const std::string &name) const
 {

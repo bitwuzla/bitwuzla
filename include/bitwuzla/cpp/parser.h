@@ -160,6 +160,11 @@ class Parser
    */
   std::shared_ptr<bitwuzla::Bitwuzla> bitwuzla();
 
+  /**
+   * Get the diagnostic output stream.
+   */
+  std::ostream& diagnostic_output_channel() const;
+
  private:
   std::unique_ptr<bzla::parser::Parser> d_parser;
 };
