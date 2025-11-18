@@ -152,6 +152,17 @@ BitwuzlaOptions *bitwuzla_options_new();
 void bitwuzla_options_delete(BitwuzlaOptions *options);
 
 /**
+ * Set diagnostic output stream.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param filename The filename to redirect the diagnostic output to.
+ *                 "<stderr>" and "<stdout>" are special filenames and redirect
+ *                 to stderr and stdout respectively.
+ */
+void bitwuzla_options_set_diagnostic_output_stream(BitwuzlaOptions* options,
+                                                   const char* filename);
+
+/**
  * Determine if given string is a valid short or long option name.
  * @param options The Bitwuzla options instance.
  * @param name The name.

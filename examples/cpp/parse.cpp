@@ -24,6 +24,9 @@ main()
   // Create a Bitwuzla options instance.
   Options options;
 
+  // Default diagnostic output stream is std::cerr.
+  options.set_diagnostic_output_stream(std::cerr);
+
   // We will parse example file `smt2/quickstart.smt2`.
   // Create parser instance.
   parser::Parser parser(tm, options);

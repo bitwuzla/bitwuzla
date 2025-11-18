@@ -42,7 +42,7 @@ class Logger
      * @param level  The log level.
      * @param prefix The log prefix.
      */
-    Line(uint64_t level, const char* prefix = nullptr);
+    Line(uint64_t level, std::ostream& out, const char* prefix = nullptr);
     /**
      * Destructor.
      */
@@ -56,6 +56,8 @@ class Logger
    private:
     /** Stream flags saved on construction and restored on destruction. */
     std::ios_base::fmtflags d_flags;
+    /** Output stream. */
+    std::ostream& d_out;
   };
 
   /**
@@ -66,7 +68,14 @@ class Logger
    */
   Logger(uint64_t log_level,
          uint64_t verbosity,
+         std::ostream& out,
          const std::string& prefix = "");
+
+  /**
+   * Set output stream.
+   * @param out Output stream.
+   */
+  void set_stream(std::ostream& out);
 
   /** @return True if verbose messaging is enabled for the given level. */
   bool is_msg_enabled(uint64_t level);
@@ -107,6 +116,8 @@ class Logger
   uint64_t d_verbosity_level;
   /** The message prefix for verbose and logging messages. */
   std::string d_prefix;
+  /** Output stream for logging. */
+  std::ostream* d_out;
 };
 
 }  // namespace bzla::util

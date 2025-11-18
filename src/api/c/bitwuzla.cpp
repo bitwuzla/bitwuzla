@@ -176,6 +176,17 @@ bitwuzla_options_delete(BitwuzlaOptions *options)
   BITWUZLA_C_TRY_CATCH_END;
 }
 
+void
+bitwuzla_options_set_diagnostic_output_stream(BitwuzlaOptions* options,
+                                              const char* filename)
+{
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_NOT_NULL(filename);
+  options->set_diagnostic_output_stream(filename);
+  BITWUZLA_C_TRY_CATCH_END;
+}
+
 bool
 bitwuzla_option_is_valid(BitwuzlaOptions *options, const char *name)
 {

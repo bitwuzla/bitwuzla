@@ -2,6 +2,25 @@
 
 #include <cassert>
 
+void
+BitwuzlaOptions::set_diagnostic_output_stream(const char* output_filename)
+{
+  std::string filename = std::string(output_filename);
+  if (filename == "<stdout>")
+  {
+    d_options.set_diagnostic_output_stream(std::cout);
+  }
+  else if (filename == "<stderr>")
+  {
+    d_options.set_diagnostic_output_stream(std::cerr);
+  }
+  else
+  {
+    d_diag_output.open(output_filename, std::ofstream::out);
+    d_options.set_diagnostic_output_stream(d_diag_output);
+  }
+}
+
 const bitwuzla::Sort&
 BitwuzlaTermManager::import_sort(BitwuzlaSort sort)
 {

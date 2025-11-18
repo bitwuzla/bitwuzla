@@ -249,6 +249,14 @@ class Options
   Options(const Options &options);
   /** Copy assignment. */
   Options &operator=(const Options &options);
+
+  /**
+   * Set diagnostic output stream for logging purposes.
+   * @note Default stream is std::cerr.
+   * @param out Output stream.
+   */
+  void set_diagnostic_output_stream(std::ostream& out);
+
   /**
    * Determine if given string is a valid short or long option name.
    * @param name The name.

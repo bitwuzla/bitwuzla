@@ -57,7 +57,7 @@ class Parser
    * @param options  The configuration options for the Bitwuzla instance
    *                 (created by the parser).
    * @param language The format of the input.
-   * @param out      The output stream.
+   * @param out      The output stream (:regular-output-channel in SMT-LIB).
    * @note It is not safe to reuse a parser instance after a parse error.
    *       Subsequent parse queries after a parse error will return with
    *       an error.
@@ -159,6 +159,12 @@ class Parser
    * @return The Bitwuzla instance.
    */
   std::shared_ptr<bitwuzla::Bitwuzla> bitwuzla();
+
+  /**
+   * Get the diagnostic output stream (:diagnostic-output-channel in SMT-LIB).
+   * @return The diagnostic output stream.
+   */
+  std::ostream& diagnostic_output_stream() const;
 
  private:
   std::unique_ptr<bzla::parser::Parser> d_parser;

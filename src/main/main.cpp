@@ -74,10 +74,11 @@ main(int32_t argc, char* argv[])
 
     if (options.get(bitwuzla::Option::VERBOSITY))
     {
+      auto& os   = parser.diagnostic_output_stream();
       auto stats = bitwuzla->statistics();
       for (auto& [name, val] : stats)
       {
-        std::cout << name << ": " << val << std::endl;
+        os << name << ": " << val << std::endl;
       }
     }
   }

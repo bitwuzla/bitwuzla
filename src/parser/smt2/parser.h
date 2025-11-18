@@ -285,6 +285,13 @@ class Parser : public bzla::parser::Parser
   bool parse_uint64(uint64_t& uint);
 
   /**
+   * Parse a quoted string.
+   * @param str Stores the resulting string without quotes.
+   * @return False on error.
+   */
+  bool parse_string(std::string& str);
+
+  /**
    * Parse symbol.
    * @param error_msg  A message indicating where the symbol was expected,
    *                   e.g., "after declare-const".

@@ -523,6 +523,9 @@ class Options
   friend OptionBase;
 
  private:
+  /** Output stream for logging. */
+  std::ostream* d_diagnostic_output_stream;
+
   /** Map short and long option name to option. */
   std::unordered_map<std::string, Option> d_name2option;
 
@@ -705,6 +708,12 @@ class Options
    * configured options.
    */
   void finalize();
+
+  /** Set diagnostic output stream. */
+  void set_diagnostic_output_stream(std::ostream& out);
+
+  /** @return The diagnostic output stream. */
+  std::ostream& diagnostic_output_stream() const;
 
  private:
   /**

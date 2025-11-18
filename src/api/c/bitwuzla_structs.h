@@ -17,6 +17,7 @@ extern "C" {
 #include <bitwuzla/cpp/bitwuzla.h>
 
 #include <cassert>
+#include <fstream>
 
 /* -------------------------------------------------------------------------- */
 
@@ -54,7 +55,11 @@ struct BitwuzlaOptions
 {
   BitwuzlaOptions() : d_options(bitwuzla::Options()) {}
   BitwuzlaOptions(bitwuzla::Options &options) : d_options(options) {}
+
+  void set_diagnostic_output_stream(const char* output_filename);
+
   bitwuzla::Options d_options;
+  std::ofstream d_diag_output;
 };
 
 /** Wrapper for C++ terms. */

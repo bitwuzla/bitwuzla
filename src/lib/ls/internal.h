@@ -92,7 +92,8 @@ struct LocalSearch<VALUE>::Internal
            uint32_t log_level,
            uint32_t verbosity_level,
            const std::string& name)
-      : d_stats(stats, stats_prefix), d_logger(log_level, verbosity_level, name)
+      : d_stats(stats, stats_prefix),
+        d_logger(log_level, verbosity_level, std::cerr, name)
   {
   }
   StatisticsInternal d_stats;

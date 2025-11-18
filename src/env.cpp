@@ -25,6 +25,7 @@ Env::Env(NodeManager& nm,
       d_rewriter(*this, options.rewrite_level()),
       d_logger(options.log_level(),
                options.verbosity(),
+               options.diagnostic_output_stream(),
                name.empty() ? "" : "(" + name + ")")
 {
   d_options.finalize();

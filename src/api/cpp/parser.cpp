@@ -134,6 +134,12 @@ Parser::bitwuzla()
   return d_parser->bitwuzla();
 }
 
+std::ostream&
+Parser::diagnostic_output_stream() const
+{
+  return d_parser->diagnostic_output_channel();
+}
+
 Parser::~Parser() {}
 
 /* -------------------------------------------------------------------------- */

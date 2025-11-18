@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 
 #include "config.h"
 #include "rewrite/rewriter.h"
@@ -148,7 +149,8 @@ OptionModeT<T>::is_valid(const std::string& value) const
 /* --- Options public ------------------------------------------------------- */
 
 Options::Options()
-    : d_name2option(),
+    : d_diagnostic_output_stream(&std::cerr),
+      d_name2option(),
       // general
       log_level(this,
                 Option::LOG_LEVEL,
@@ -796,6 +798,18 @@ Options::finalize()
       }
     }
   }
+}
+
+void
+Options::set_diagnostic_output_stream(std::ostream& out)
+{
+  d_diagnostic_output_stream = &out;
+}
+
+std::ostream&
+Options::diagnostic_output_stream() const
+{
+  return *d_diagnostic_output_stream;
 }
 
 /* --- Options private ------------------------------------------------------ */

@@ -21,6 +21,9 @@ main()
   // Create a Bitwuzla options instance.
   BitwuzlaOptions* options = bitwuzla_options_new();
 
+  // Default diagnostic output stream is stderr.
+  bitwuzla_options_set_diagnostic_output_stream(options, "<stderr>");
+
   // We will parse example file `smt2/quickstart.smt2`.
   // Create parser instance.
   const char* infile_name = "../smt2/quickstart.smt2";

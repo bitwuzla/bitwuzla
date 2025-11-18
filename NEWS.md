@@ -31,6 +31,12 @@ This file collects a summary of important and/or user-visible changes.
 
 - Add support for linking against mimalloc memory allocator.
 
+- Diagnostic output is now printed to stderr by default and can be configured
+  via the options API:
+    - C++ API: `Options::set_diagnostic_output_stream(std::ostream&)`
+    - C API: `bitwuzla_options_set_diagnostic_output_stream(BitwuzlaOptions*, const char* filename)`
+    - Python API: not supported
+
 ## News for version 0.8.2
 
 - Fixed issue with model values in MBQI solver (#185).
