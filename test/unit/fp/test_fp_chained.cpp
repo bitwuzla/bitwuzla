@@ -204,22 +204,13 @@ TEST_F(TestFpChained, chained_rem)
   TEST_CHAINED_BINARY_REM(add);
   // (a * b) rem c, (a rem b) * c
   TEST_CHAINED_BINARY_REM(mul);
-#ifdef NDEBUG
-  // SymFPU may fail with an assertion failure (see issue #164) but agrees with
-  // MPFR on all tests for release builds without assertions.
   // (a / b) rem c, (a rem b) / c
   TEST_CHAINED_BINARY_REM(div);
-#endif
 }
 TEST_F(TestFpChained, chained_bin_rm)
 {
   TEST_CHAINED_BINARY_RM(add, mul);
-#ifdef NDEBUG
-  // SymFPU may fail with an assertion failure (see issue #164) but agrees with
-  // MPFR on all tests for release builds without assertions.
-  // (a / b) rem c, (a rem b) / c
   TEST_CHAINED_BINARY_RM(add, div);
-#endif
 }
 TEST_F(TestFpChained, chained_un_bin_rm)
 {
@@ -227,13 +218,8 @@ TEST_F(TestFpChained, chained_un_bin_rm)
   TEST_CHAINED_UNARY_BINARY_RM(neg, add);
   TEST_CHAINED_UNARY_BINARY_RM(abs, mul);
   TEST_CHAINED_UNARY_BINARY_RM(neg, mul);
-#ifdef NDEBUG
-  // SymFPU may fail with an assertion failure (see issue #164) but agrees with
-  // MPFR on all tests for release builds without assertions.
-  // (a / b) rem c, (a rem b) / c
   TEST_CHAINED_UNARY_BINARY_RM(abs, div);
   TEST_CHAINED_UNARY_BINARY_RM(neg, div);
-#endif
 }
 TEST_F(TestFpChained, chained_un_rm_bin_rm)
 {
@@ -241,13 +227,8 @@ TEST_F(TestFpChained, chained_un_rm_bin_rm)
   TEST_CHAINED_UNARY_RM_BINARY_RM(rti, add);
   TEST_CHAINED_UNARY_RM_BINARY_RM(sqrt, mul);
   TEST_CHAINED_UNARY_RM_BINARY_RM(rti, mul);
-#ifdef NDEBUG
-  // SymFPU may fail with an assertion failure (see issue #164) but agrees with
-  // MPFR on all tests for release builds without assertions.
-  // (a / b) rem c, (a rem b) / c
   TEST_CHAINED_UNARY_RM_BINARY_RM(sqrt, div);
   TEST_CHAINED_UNARY_RM_BINARY_RM(rti, div);
-#endif
 }
 
 }  // namespace bzla::test
