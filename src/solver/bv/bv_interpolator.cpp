@@ -24,6 +24,7 @@
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solver/bv/bv_solver.h"
 #include "solver/fp/fp_solver.h"
+#include "util/exceptions.h"
 
 using namespace bzla::node;
 using namespace bzla::sat::interpolants;
@@ -225,12 +226,20 @@ BvInterpolator::label_lemma(
     }
     else if (it->second == VariableKind::NONE)
     {
-      assert(cur.is_and());
+      if (!cur.is_and())
+      {
+        throw Unsupported(
+            "interpolation queries with lemmas that use fresh variables not "
+            "supported");
+      }
       // not labeled, label based on children
       VariableKind k0 = var_labels.at(std::abs(cur[0].get_id()));
       VariableKind k1 = var_labels.at(std::abs(cur[1].get_id()));
-      assert(k0 == k1 || k0 == VariableKind::GLOBAL
-             || k1 == VariableKind::GLOBAL);
+      if (k0 != k1 && k0 != VariableKind::GLOBAL && k1 != VariableKind::GLOBAL)
+      {
+        throw Unsupported(
+            "interpolation queries with mixed lemmas not supported");
+      }
       it->second = k0 == VariableKind::GLOBAL ? k1 : k0;
     }
 
@@ -270,7 +279,11 @@ BvInterpolator::label_lemma(
         assert(it != term_labels.end());
         if (it->second != VariableKind::GLOBAL)
         {
-          assert(k == VariableKind::GLOBAL || k == it->second);
+          if (k != VariableKind::GLOBAL && k != it->second)
+          {
+            throw Unsupported(
+                "interpolation queries with mixed lemmas not supported");
+          }
           k = it->second;
 #ifdef NDEBUG
           break;

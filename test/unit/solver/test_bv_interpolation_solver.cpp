@@ -17,6 +17,7 @@
 #include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
+#include "util/exceptions.h"
 
 namespace bzla::test {
 
@@ -45,34 +46,36 @@ class TestBvInterpolationSolver : public TestCommon
   }
 
   void test_get_interpolant(const std::unordered_set<Node>& A,
-                            const std::unordered_set<Node>& B)
+                            const std::unordered_set<Node>& B,
+                            bool assert_throw = false)
   {
-    test_get_interpolant_aux(A, B, AssumptionConfig::NONE);
+    test_get_interpolant_aux(A, B, AssumptionConfig::NONE, assert_throw);
     if (s_all_ass_configs)
     {
-      test_get_interpolant_aux(A, B, AssumptionConfig::ALL);
-      test_get_interpolant_aux(A, B, AssumptionConfig::ONLY_A);
-      test_get_interpolant_aux(A, B, AssumptionConfig::ONLY_B);
+      test_get_interpolant_aux(A, B, AssumptionConfig::ALL, assert_throw);
+      test_get_interpolant_aux(A, B, AssumptionConfig::ONLY_A, assert_throw);
+      test_get_interpolant_aux(A, B, AssumptionConfig::ONLY_B, assert_throw);
     }
   }
 
   void test_get_interpolant_aux(const std::unordered_set<Node>& A,
                                 const std::unordered_set<Node>& B,
-                                AssumptionConfig config)
+                                AssumptionConfig config,
+                                bool assert_throw = false)
   {
     // get interpolant
     test_get_interpolant_aux(
-        true, d_options.rewrite_level.dflt(), A, B, config);
+        true, d_options.rewrite_level.dflt(), A, B, config, assert_throw);
 
     if (s_all_pp_rw)
     {
       // get_interpolant when preprocessing is disabled
       test_get_interpolant_aux(
-          false, d_options.rewrite_level.dflt(), A, B, config);
+          false, d_options.rewrite_level.dflt(), A, B, config, assert_throw);
       // get_interpolant when rewriting is disabled
-      test_get_interpolant_aux(true, 0, A, B, config);
+      test_get_interpolant_aux(true, 0, A, B, config, assert_throw);
       // get_interpolant when preprocessing and rewriting is disabled
-      test_get_interpolant_aux(false, 0, A, B, config);
+      test_get_interpolant_aux(false, 0, A, B, config, assert_throw);
     }
   }
 
@@ -80,7 +83,8 @@ class TestBvInterpolationSolver : public TestCommon
                                 uint64_t rwl,
                                 const std::unordered_set<Node>& A,
                                 const std::unordered_set<Node>& B,
-                                AssumptionConfig config)
+                                AssumptionConfig config,
+                                bool assert_throw = false)
   {
     if (d_options.log_level())
     {
@@ -110,8 +114,15 @@ class TestBvInterpolationSolver : public TestCommon
     }
     // (and A B) must be unsat
     ASSERT_EQ(ctx.solve(), Result::UNSAT);
-    Node interpolant = ctx.get_interpolant(A);
-    ASSERT_FALSE(interpolant.is_null());
+    if (assert_throw)
+    {
+      ASSERT_THROW(ctx.get_interpolant(A), bzla::Unsupported);
+    }
+    else
+    {
+      Node interpolant = ctx.get_interpolant(A);
+      ASSERT_FALSE(interpolant.is_null());
+    }
   }
 
   void test_get_interpolant_inc(const std::unordered_set<Node>& A,
@@ -747,10 +758,8 @@ TEST_F(TestBvInterpolationSolver, interpol_bv_abstr3)
   test_get_interpolant({A0, A1, A2, A3}, {B});
 }
 
-#if 0
-// For now, since we now strictly follow the definition of interpolation where
-// the interpolant may only contain shared uninterpreted symbols, we don't
-// support interpolation when arrays and UF are involved.
+// We only support interpolants for non-extensional arrays and UF if we do not
+// encounter mixed lemmas.
 
 TEST_F(TestBvInterpolationSolver, interpol_array1)
 {
@@ -784,7 +793,7 @@ TEST_F(TestBvInterpolationSolver, interpol_array1)
                            });
   Node B  = d_nm.mk_node(Kind::DISTINCT, {a4, a5});
 
-  test_get_interpolant({A0, A1, A2}, {B});
+  test_get_interpolant({A0, A1, A2}, {B}, true);
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_array2)
@@ -814,7 +823,7 @@ TEST_F(TestBvInterpolationSolver, interpol_array2)
 
   Node B = d_nm.mk_node(Kind::AND, {C0, C1});
 
-  test_get_interpolant({A0, A1, A2}, {B});
+  test_get_interpolant({A0, A1, A2}, {B}, true);
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_array3)
@@ -878,7 +887,7 @@ TEST_F(TestBvInterpolationSolver, interpol_array3)
   ctx.assert_formula(A4);
   ctx.assert_formula(B);
   assert(ctx.solve() == Result::UNSAT);
-  test_get_interpolant({A0, A1, A2, A3, A4}, {B});
+  test_get_interpolant({A0, A1, A2, A3, A4}, {B}, true);
 }
 
 TEST_F(TestBvInterpolationSolver, interpol_array4a)
@@ -943,9 +952,8 @@ TEST_F(TestBvInterpolationSolver, interpol_array4b)
                          {d_nm.mk_node(Kind::SELECT, {h, b}),
                           d_nm.mk_node(Kind::SELECT, {hh, b})});
   Node B = utils::mk_nary(d_nm, Kind::AND, {B0, B1, B2});
-  test_get_interpolant({A}, {B});
+  test_get_interpolant({A}, {B}, true);
 }
-#endif
 
 TEST_F(TestBvInterpolationSolver, interpol_fp1)
 {
