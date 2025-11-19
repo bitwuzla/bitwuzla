@@ -261,6 +261,7 @@ sources = files([
   'solver/abstract/abstraction_module.cpp',
   'solver/bv/bv_bitblast_solver.cpp',
   'solver/bv/bv_interpolator.cpp',
+  'solver/bv/bv_inverter.cpp',
   'solver/bv/bv_prop_solver.cpp',
   'solver/bv/bv_solver.cpp',
   'solver/bv/aig_bitblaster.cpp',
