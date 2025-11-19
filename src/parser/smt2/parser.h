@@ -107,6 +107,9 @@ class Parser : public bzla::parser::Parser
     }
   }
 
+  /** Reset the configured logic. */
+  void reset_logic();
+
   /** Reset parser for new parse call. */
   void reset();
 

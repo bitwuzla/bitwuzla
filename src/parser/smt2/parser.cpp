@@ -37,6 +37,15 @@ Parser::Parser(bitwuzla::TermManager& tm,
 Parser::~Parser() { d_table.clear_pending_symbols(); }
 
 void
+Parser::reset_logic()
+{
+  d_logic.clear();
+  d_arrays_enabled = false;
+  d_bv_enabled     = false;
+  d_fp_enabled     = false;
+}
+
+void
 Parser::reset()
 {
   d_work.clear();
@@ -933,14 +942,13 @@ Parser::parse_command_push()
 bool
 Parser::parse_command_reset()
 {
-  init_logic();
-
   if (!parse_rpar())
   {
     return false;
   }
   d_bitwuzla.reset();
   d_table.reset();
+  reset_logic();
   d_options = d_options_orig;
   print_success();
   return true;
@@ -949,8 +957,6 @@ Parser::parse_command_reset()
 bool
 Parser::parse_command_reset_assertions()
 {
-  init_logic();
-
   if (!parse_rpar())
   {
     return false;
@@ -959,6 +965,15 @@ Parser::parse_command_reset_assertions()
   if (!d_global_decl)
   {
     d_table.reset();
+    // Repopulate symbol table based on set logic.
+    if (d_logic.empty())
+    {
+      init_logic();
+    }
+    else
+    {
+      is_supported_logic(d_logic);
+    }
   }
   print_success();
   return true;
