@@ -30,6 +30,8 @@ class BvInverter
   Node ic(Kind kind, const Node& x, const Node& s, const Node& t);
 
  private:
+  Node ic_bv_slt(const Node& x, const Node& t);
+  Node ic_bv_sgt(const Node& x, const Node& t);
   Node ic_bv_ult(const Node& x, const Node& t);
   Node ic_bv_ugt(const Node& x, const Node& t);
 
