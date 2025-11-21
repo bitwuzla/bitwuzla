@@ -1446,6 +1446,7 @@ tests_smt2 = [
   ['solver/fp/fp_sort.smt2'],
   ['solver/fp/fp_to_fp.smt2'],
   ['solver/fp/fp_zero.smt2'],
+  ['solver/fp/issue164.smt2'],
   ['solver/fp/murxla-471c1abae363d2e.min.smt2'],
   ['solver/fp/uf_fpmax.smt2'],
   ['solver/fp/uf_fpmin.smt2'],
@@ -1505,6 +1506,7 @@ if get_option('fpexp')
   tests_smt2 += [
     ['check/regr_cm3.smt2'],
     ['solver/fp/fp_regr11.smt2'],
+    ['solver/fp/issue130.smt2'],
     ['solver/quant/duplicatelemma1.smt2'],
   ]
 endif
