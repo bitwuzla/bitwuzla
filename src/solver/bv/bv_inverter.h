@@ -34,6 +34,7 @@ class BvInverter
 
  private:
   Node ic_bv_mul(Kind predicate, const std::vector<Node>& nodes, size_t idx);
+  Node ic_bv_udiv(Kind predicate, const std::vector<Node>& nodes, size_t idx);
   Node ic_bv_urem(Kind predicate, const std::vector<Node>& nodes, size_t idx);
 
   /** The associated node manager. */
