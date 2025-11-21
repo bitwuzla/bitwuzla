@@ -42,10 +42,21 @@ AigPrinter::symbol(const AigNode& n, const std::string& symbol)
 namespace {
 
 uint32_t
-to_aiger_id(int64_t id)
+aiger_id(const AigNode& node)
 {
-  assert(id <= std::numeric_limits<int32_t>::max());
-  uint32_t lit = aiger_var2lit(std::abs(id));
+  assert(node.get_id() <= std::numeric_limits<int32_t>::max());
+
+  if (node.is_true())
+  {
+    return aiger_true;
+  }
+  if (node.is_false())
+  {
+    return aiger_false;
+  }
+
+  const auto id = node.get_id();
+  uint32_t lit  = aiger_var2lit(std::abs(id));
   if (id < 0)
   {
     return aiger_not(lit);
@@ -81,7 +92,7 @@ AigPrinter::write_aiger(const std::string& filename)
     else if (!it->second)
     {
       it->second   = true;
-      auto cur_lit = to_aiger_id(id);
+      auto cur_lit = aiger_strip(aiger_id(cur));
       if (cur.is_const())
       {
         auto its = d_symbols.find(cur);
@@ -94,12 +105,15 @@ AigPrinter::write_aiger(const std::string& filename)
           aiger_add_input(aig, cur_lit, its->second.c_str());
         }
       }
+      else if (cur.is_and())
+      {
+        auto rhs0 = aiger_id(cur[0]);
+        auto rhs1 = aiger_id(cur[1]);
+        aiger_add_and(aig, cur_lit, rhs0, rhs1);
+      }
       else
       {
-        assert(cur.is_and());
-        auto rhs0 = to_aiger_id(cur[0].get_id());
-        auto rhs1 = to_aiger_id(cur[1].get_id());
-        aiger_add_and(aig, cur_lit, rhs0, rhs1);
+        assert(cur.is_true() || cur.is_false());
       }
     }
     visit.pop_back();
@@ -107,7 +121,7 @@ AigPrinter::write_aiger(const std::string& filename)
 
   for (const auto& output : d_outputs)
   {
-    aiger_add_output(aig, to_aiger_id(output.get_id()), nullptr);
+    aiger_add_output(aig, aiger_id(output), nullptr);
   }
 
   aiger_open_and_write_to_file(aig, filename.c_str());
