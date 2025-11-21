@@ -2,6 +2,9 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- MPFR >= 4.2.1 is now a required dependency. As with GMP, it is required that
+  shared/static MPFR libraries are installed on the system.
+
 - Add support for configuring a terminator via the parser.
   - C++ API: `void Parser::configure_terminator(Terminator *)`
   - C API:
