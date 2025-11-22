@@ -17,6 +17,12 @@ unit_tests = [
     ]
   ],
 
+  ['fp',
+    [
+      'floating_point',
+    ]
+  ],
+
   ['node',
     [
       'node',
@@ -76,7 +82,6 @@ unit_tests = [
       'bv_solver',
       'bv_prop_solver',
       'fp_solver',
-      'fp_floating_point',
     ]
   ],
 
