@@ -19,7 +19,14 @@ unit_tests = [
 
   ['fp',
     [
-      'floating_point',
+      'fp',
+      'fp_eq_ineq',
+      'fp_from',
+      'fp_chained',
+      'fp_unary',
+      'fp_binary',
+      'fp_binary_rm',
+      'fp_ternary',
     ]
   ],
 
