@@ -28,7 +28,16 @@ class TestBvInverter : public TestCommon
   {
   }
 
+  void test_ic(Kind predicate,
+               Kind kind,
+               uint64_t bw0,
+               uint64_t bw1,
+               uint64_t bw_t,
+               size_t idx);
+
   void test_ic(Kind predicate, Kind kind, uint64_t bw, size_t idx);
+
+  void test_ic_concat(Kind predicate, uint64_t bw0, uint64_t bw1, size_t idx);
 
   NodeManager d_nm;
   option::Options d_options;
@@ -49,12 +58,19 @@ class TestBvInverter : public TestCommon
 };
 
 void
-TestBvInverter::test_ic(Kind predicate, Kind kind, uint64_t bw, size_t idx)
+TestBvInverter::test_ic(Kind predicate,
+                        Kind kind,
+                        uint64_t bw0,
+                        uint64_t bw1,
+                        uint64_t bw_t,
+                        size_t idx)
 {
-  Type bv = d_nm.mk_bv_type(bw);
-  Node x  = d_nm.mk_var(bv, "x");
-  Node s  = d_nm.mk_const(bv, "s");
-  Node t  = d_nm.mk_const(bv, "t");
+  Type bv0 = d_nm.mk_bv_type(bw0);
+  Type bv1 = d_nm.mk_bv_type(bw1);
+  Type bv  = d_nm.mk_bv_type(bw_t);
+  Node x   = d_nm.mk_var(idx == 0 ? bv0 : bv1, "x");
+  Node s   = d_nm.mk_const(idx == 0 ? bv1 : bv0, "s");
+  Node t   = d_nm.mk_const(bv, "t");
 
   Node ic = d_inverter.ic(
       predicate, kind, {idx == 0 ? x : s, idx == 0 ? s : x, t}, idx);
@@ -83,6 +99,21 @@ TestBvInverter::test_ic(Kind predicate, Kind kind, uint64_t bw, size_t idx)
     std::cout << "vc: " << ass << std::endl;
   }
   ASSERT_EQ(res, Result::UNSAT);
+}
+
+void
+TestBvInverter::test_ic(Kind predicate, Kind kind, uint64_t bw, size_t idx)
+{
+  test_ic(predicate, kind, bw, bw, bw, idx);
+}
+
+void
+TestBvInverter::test_ic_concat(Kind predicate,
+                               uint64_t bw0,
+                               uint64_t bw1,
+                               size_t idx)
+{
+  test_ic(predicate, Kind::BV_CONCAT, bw0, bw1, bw0 + bw1, idx);
 }
 
 TEST_F(TestBvInverter, bv_and)
@@ -162,7 +193,19 @@ TEST_F(TestBvInverter, bv_urem)
   }
 }
 
-// TODO concat
+TEST_F(TestBvInverter, bv_concat)
+{
+  for (Kind predicate : d_predicates)
+  {
+    test_ic_concat(predicate, 1, 1, 0);
+    test_ic_concat(predicate, 1, 1, 1);
+    test_ic_concat(predicate, 2, 1, 0);
+    test_ic_concat(predicate, 2, 1, 1);
+    test_ic_concat(predicate, 2, 4, 0);
+    test_ic_concat(predicate, 2, 4, 1);
+  }
+}
+
 // TODO sext
 
 }  // namespace bzla::test

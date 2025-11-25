@@ -1490,12 +1490,12 @@ BvInverter::ic_bv_concat(Kind predicate,
                              d_nm.mk_node(Kind::BV_ULT, {s, t_s})});
       }
       // s :: x <_s t
-      // IC: (and (bvule s t_s) (=> (= s t_s) (distinct t_x 0_[bw(x)])))
+      // IC: (and (bvsle s t_s) (=> (= s t_s) (distinct t_x 0_[bw(x)])))
       {
         Node zero = d_nm.mk_value(BitVector::mk_zero(bw_x));
         return d_nm.mk_node(
             Kind::AND,
-            {d_nm.mk_node(Kind::BV_ULE, {s, t_s}),
+            {d_nm.mk_node(Kind::BV_SLE, {s, t_s}),
              d_nm.mk_node(Kind::IMPLIES,
                           {d_nm.mk_node(Kind::EQUAL, {s, t_s}),
                            d_nm.mk_node(Kind::DISTINCT, {t_x, zero})})});
@@ -1549,7 +1549,7 @@ BvInverter::ic_bv_concat(Kind predicate,
       }
       // s :: x >=_s t
       // IC: (bvuge s t_s)
-      return d_nm.mk_node(Kind::BV_UGE, {s, t_s});
+      return d_nm.mk_node(Kind::BV_SGE, {s, t_s});
 
     case Kind::DISTINCT:
       // x :: s != t
