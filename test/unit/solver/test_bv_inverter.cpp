@@ -39,6 +39,8 @@ class TestBvInverter : public TestCommon
 
   void test_ic_concat(Kind predicate, uint64_t bw0, uint64_t bw1, size_t idx);
 
+  void test_ic_sext(Kind predicate, uint64_t bw_x, uint64_t bw_t, size_t idx);
+
   NodeManager d_nm;
   option::Options d_options;
   sat::SatSolverFactory d_sat_factory;
@@ -115,6 +117,58 @@ TestBvInverter::test_ic_concat(Kind predicate,
 {
   test_ic(predicate, Kind::BV_CONCAT, bw0, bw1, bw0 + bw1, idx);
 }
+
+void
+TestBvInverter::test_ic_sext(Kind predicate,
+                             uint64_t bw0,
+                             uint64_t bw1,
+                             size_t idx)
+{
+  Type bv0 = d_nm.mk_bv_type(bw0);
+  Type bv1 = d_nm.mk_bv_type(bw1);
+  assert(idx == 0 || bw0 >= bw1);
+  assert(idx == 1 || bw1 >= bw0);
+  Node x     = d_nm.mk_var(idx == 0 ? bv0 : bv1, "x");
+  Node t     = d_nm.mk_const(idx == 0 ? bv1 : bv0, "t");
+  uint64_t n = t.type().bv_size() - x.type().bv_size();
+
+  Node ic = d_inverter.ic(predicate,
+                          Kind::BV_SIGN_EXTEND,
+                          {idx == 0 ? x : t, idx == 0 ? t : x},
+                          idx);
+  ASSERT_FALSE(ic.is_null());
+
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
+  Node ass = d_nm.mk_node(
+      Kind::NOT,
+      {d_nm.mk_node(
+          Kind::EQUAL,
+          {ic,
+           d_nm.mk_node(
+               Kind::EXISTS,
+               {x,
+                d_nm.mk_node(
+                    predicate,
+                    {
+                        idx == 0 ? d_nm.mk_node(Kind::BV_SIGN_EXTEND, {x}, {n})
+                                 : t,
+                        idx == 0 ? t
+                                 : d_nm.mk_node(Kind::BV_SIGN_EXTEND, {x}, {n}),
+                    })})})});
+  ctx.assert_formula(ass);
+  Result res = ctx.solve();
+  if (res != Result::UNSAT)
+  {
+    std::cout << "predicate: " << predicate << std::endl;
+    std::cout << "kind: " << Kind::BV_SIGN_EXTEND << std::endl;
+    std::cout << "idx: " << idx << std::endl;
+    std::cout << "ic: " << ic << std::endl;
+    std::cout << "vc: " << ass << std::endl;
+  }
+  ASSERT_EQ(res, Result::UNSAT);
+}
+
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestBvInverter, bv_and)
 {
@@ -206,6 +260,17 @@ TEST_F(TestBvInverter, bv_concat)
   }
 }
 
-// TODO sext
+TEST_F(TestBvInverter, bv_sext)
+{
+  for (Kind predicate : d_predicates)
+  {
+    test_ic_sext(predicate, 1, 1, 0);
+    test_ic_sext(predicate, 1, 1, 1);
+    test_ic_sext(predicate, 2, 3, 0);
+    test_ic_sext(predicate, 3, 1, 1);
+    test_ic_sext(predicate, 2, 4, 0);
+    test_ic_sext(predicate, 5, 2, 1);
+  }
+}
 
 }  // namespace bzla::test
