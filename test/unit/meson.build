@@ -92,6 +92,7 @@ unit_tests = [
       'incremental',
       'bv_solver',
       'bv_interpolation_solver',
+      'bv_inverter',
       'bv_prop_solver',
       'fp_solver',
     ]

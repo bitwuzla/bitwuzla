@@ -140,11 +140,11 @@ BvInverter::ic_bv_and(Kind predicate,
 
     case Kind::BV_SLE:
       // x & s <=_s t
-      // IC: (bvsge t (bvor s min_signed_[w]))
+      // IC: (bvuge s (bvand t min_signed_[w]))
       {
         Node mins = d_nm.mk_value(BitVector::mk_min_signed(bw));
-        return d_nm.mk_node(Kind::BV_SGE,
-                            {t, d_nm.mk_node(Kind::BV_OR, {s, mins})});
+        return d_nm.mk_node(Kind::BV_UGE,
+                            {s, d_nm.mk_node(Kind::BV_AND, {t, mins})});
       }
 
     case Kind::BV_SGT:
@@ -162,8 +162,11 @@ BvInverter::ic_bv_and(Kind predicate,
       return d_nm.mk_node(
           Kind::OR,
           {d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_AND, {s, t}), t}),
-           d_nm.mk_node(Kind::BV_AND,
-                        {d_nm.mk_node(Kind::BV_SUB, {t, s}), s})});
+           d_nm.mk_node(
+               Kind::BV_SLT,
+               {t,
+                d_nm.mk_node(Kind::BV_AND,
+                             {d_nm.mk_node(Kind::BV_SUB, {t, s}), s})})});
 
     case Kind::DISTINCT:
       // x & s != t
@@ -287,9 +290,10 @@ BvInverter::ic_bv_mul(Kind predicate,
       // IC: (= (bvand (bvor (bvneg s) s) t) t)
       return d_nm.mk_node(
           Kind::EQUAL,
-          {d_nm.mk_node(Kind::BV_AND,
-                        {d_nm.mk_node(Kind::BV_OR,
-                                      {d_nm.mk_node(Kind::BV_NEG, {s}), s})}),
+          {d_nm.mk_node(
+               Kind::BV_AND,
+               {d_nm.mk_node(Kind::BV_OR, {d_nm.mk_node(Kind::BV_NEG, {s}), s}),
+                t}),
            t});
   }
 }
@@ -352,7 +356,7 @@ BvInverter::ic_bv_udiv(Kind predicate,
     case Kind::BV_UGT: {
       // x / s >_u t
       // IC: (bvugt (bvudiv ~0_[w] s) t)
-      Node ones = d_nm.mk_value(BitVector::mk_one(bw));
+      Node ones = d_nm.mk_value(BitVector::mk_ones(bw));
       if (idx == 0)
       {
         return d_nm.mk_node(Kind::BV_UGT,
@@ -426,7 +430,7 @@ BvInverter::ic_bv_udiv(Kind predicate,
       // s / x <=_s t
       // IC: (or (bvsge t ~0_[w]) (bvsge t s))
       {
-        Node ones = d_nm.mk_value(BitVector::mk_one(bw));
+        Node ones = d_nm.mk_value(BitVector::mk_ones(bw));
         return d_nm.mk_node(Kind::OR,
                             {d_nm.mk_node(Kind::BV_SGE, {t, ones}),
                              d_nm.mk_node(Kind::BV_SGE, {t, s})});
@@ -439,7 +443,7 @@ BvInverter::ic_bv_udiv(Kind predicate,
       //       (bvsgt (bvudiv max_signed_[w] s) t))
       if (idx == 0)
       {
-        Node ones = d_nm.mk_value(BitVector::mk_one(bw));
+        Node ones = d_nm.mk_value(BitVector::mk_ones(bw));
         Node maxs = d_nm.mk_value(BitVector::mk_max_signed(bw));
         return d_nm.mk_node(
             Kind::OR,
@@ -479,7 +483,7 @@ BvInverter::ic_bv_udiv(Kind predicate,
       //       (bvsge (bvudiv max_signed_[w] s) t))
       if (idx == 0)
       {
-        Node ones = d_nm.mk_value(BitVector::mk_one(bw));
+        Node ones = d_nm.mk_value(BitVector::mk_ones(bw));
         Node maxs = d_nm.mk_value(BitVector::mk_max_signed(bw));
         return d_nm.mk_node(
             Kind::OR,
@@ -516,7 +520,7 @@ BvInverter::ic_bv_udiv(Kind predicate,
       Node zero = d_nm.mk_value(BitVector::mk_zero(bw));
       if (idx == 0)
       {
-        Node ones = d_nm.mk_value(BitVector::mk_one(bw));
+        Node ones = d_nm.mk_value(BitVector::mk_ones(bw));
         return d_nm.mk_node(Kind::OR,
                             {d_nm.mk_node(Kind::DISTINCT, {s, zero}),
                              d_nm.mk_node(Kind::DISTINCT, {t, ones})});
@@ -1010,8 +1014,16 @@ BvInverter::ic_bv_ashr(Kind predicate,
         return d_nm.mk_node(Kind::DISTINCT, {t, zero});
       }
       // s >>a x <_u t
-      // IC: true
-      return d_nm.mk_value(true);
+      // IC: (and (or (bvult s t) (bvsge s 0_[w])) (distinct t 0_[w]))
+      {
+        Node zero = d_nm.mk_value(BitVector::mk_zero(bw));
+        return d_nm.mk_node(
+            Kind::AND,
+            {d_nm.mk_node(Kind::OR,
+                          {d_nm.mk_node(Kind::BV_ULT, {s, t}),
+                           d_nm.mk_node(Kind::BV_SGE, {s, zero})}),
+             d_nm.mk_node(Kind::DISTINCT, {t, zero})});
+      }
 
     case Kind::BV_ULE:
       // x >>a s <=_u t
@@ -1049,18 +1061,10 @@ BvInverter::ic_bv_ashr(Kind predicate,
 
     case Kind::BV_UGE:
       // x >>a s >=_u t
-      // IC: (and (not (and (bvuge s t) (bvslt s 0_[w]))) (not (= t 0_[w])))
+      // IC: true
       if (idx == 0)
       {
-        Node zero = d_nm.mk_value(BitVector::mk_zero(bw));
-        return d_nm.mk_node(
-            Kind::AND,
-            {d_nm.mk_node(
-                 Kind::NOT,
-                 {d_nm.mk_node(Kind::AND,
-                               {d_nm.mk_node(Kind::BV_UGE, {s, t}),
-                                d_nm.mk_node(Kind::BV_SLT, {s, zero})})}),
-             d_nm.mk_node(Kind::DISTINCT, {t, zero})});
+        return d_nm.mk_value(true);
       }
       // s >>a x >=_u t
       // IC: (not (and (bvult s (bvnot s)) (bvult s t)))
@@ -1146,7 +1150,7 @@ BvInverter::ic_bv_ashr(Kind predicate,
           Kind::NOT,
           {d_nm.mk_node(
               Kind::AND,
-              {d_nm.mk_node(Kind::BV_ULT, {t, d_nm.mk_node(Kind::NOT, {t})}),
+              {d_nm.mk_node(Kind::BV_ULT, {t, d_nm.mk_node(Kind::BV_NOT, {t})}),
                d_nm.mk_node(Kind::BV_SLT, {s, t})})});
     }
 
