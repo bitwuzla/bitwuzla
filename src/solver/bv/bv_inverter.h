@@ -37,6 +37,7 @@ class BvInverter
   Node ic_bv_ashr(Kind predicate, const std::vector<Node>& nodes, size_t idx);
   Node ic_bv_concat(Kind predicate, const std::vector<Node>& nodes, size_t idx);
   Node ic_bv_mul(Kind predicate, const std::vector<Node>& nodes, size_t idx);
+  Node ic_bv_sext(Kind predicate, const std::vector<Node>& nodes, size_t idx);
   Node ic_bv_shl(Kind predicate, const std::vector<Node>& nodes, size_t idx);
   Node ic_bv_shr(Kind predicate, const std::vector<Node>& nodes, size_t idx);
   Node ic_bv_udiv(Kind predicate, const std::vector<Node>& nodes, size_t idx);
