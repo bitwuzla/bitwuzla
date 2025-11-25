@@ -39,6 +39,12 @@ Node mk_nary(NodeManager& nm, Kind kind, const std::vector<Node>& terms);
 Node mk_default_value(NodeManager& nm, const Type& type);
 
 /**
+ * @return Successor of given value. Returns null node if no successor exists.
+ * @param value Computes successor of this value.
+ */
+Node next_value(NodeManager& nm, const Node& value);
+
+/**
  * @return Binder node of given kind.
  * @param kind Binder kind.
  * @param terms The children of the binder node, the terms[size - 1]

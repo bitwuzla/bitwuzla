@@ -15,6 +15,8 @@
 #include "node/node_utils.h"
 #include "rewrite/rewriter.h"
 #include "sat/sat_solver_factory.h"
+#include "solver/fp/floating_point.h"
+#include "solver/fp/rounding_mode.h"
 
 namespace bzla::test {
 
@@ -165,6 +167,58 @@ TEST_F(TestNodeUtils, rebuild_indexed)
   std::vector<uint64_t> idx{2, 1};
   ASSERT_EQ(d_nm.mk_node(Kind::BV_EXTRACT, {d_c4}, extract.indices()),
             d_nm.mk_node(Kind::BV_EXTRACT, {d_c4}, idx));
+}
+
+TEST_F(TestNodeUtils, next_value)
+{
+  {
+    ASSERT_EQ(utils::next_value(d_nm, d_nm.mk_value(false)),
+              d_nm.mk_value(true));
+    ASSERT_TRUE(utils::next_value(d_nm, d_nm.mk_value(true)).is_null());
+  }
+
+  {
+    ASSERT_EQ(utils::next_value(d_nm, d_nm.mk_value(BitVector::from_ui(2, 0))),
+              d_nm.mk_value(BitVector::from_ui(2, 1)));
+    ASSERT_EQ(utils::next_value(d_nm, d_nm.mk_value(BitVector::from_ui(2, 1))),
+              d_nm.mk_value(BitVector::from_ui(2, 2)));
+    ASSERT_EQ(utils::next_value(d_nm, d_nm.mk_value(BitVector::from_ui(2, 2))),
+              d_nm.mk_value(BitVector::from_ui(2, 3)));
+    ASSERT_TRUE(utils::next_value(d_nm, d_nm.mk_value(BitVector::from_ui(2, 3)))
+                    .is_null());
+  }
+
+  {
+    ASSERT_EQ(utils::next_value(d_nm, d_nm.mk_value(RoundingMode::RNA)),
+              d_nm.mk_value(RoundingMode::RNE));
+    ASSERT_EQ(utils::next_value(d_nm, d_nm.mk_value(RoundingMode::RNE)),
+              d_nm.mk_value(RoundingMode::RTN));
+    ASSERT_EQ(utils::next_value(d_nm, d_nm.mk_value(RoundingMode::RTN)),
+              d_nm.mk_value(RoundingMode::RTP));
+    ASSERT_EQ(utils::next_value(d_nm, d_nm.mk_value(RoundingMode::RTP)),
+              d_nm.mk_value(RoundingMode::RTZ));
+    ASSERT_TRUE(
+        utils::next_value(d_nm, d_nm.mk_value(RoundingMode::RTZ)).is_null());
+  }
+
+  {
+    Type fp8     = d_nm.mk_fp_type(3, 5);
+    Node n       = d_nm.mk_value(FloatingPoint::fpzero(3, 5, false));
+    BitVector bv = BitVector::mk_zero(8);
+
+    while (!n.value<FloatingPoint>().fpisnan())
+    {
+      ASSERT_EQ(n.value<FloatingPoint>().as_bv(), bv);
+      bv.flip_bit(bv.size() - 1);
+      if (!bv.msb())
+      {
+        bv.ibvinc();
+      }
+      n = utils::next_value(d_nm, n);
+    }
+    n = utils::next_value(d_nm, n);
+    ASSERT_TRUE(n.is_null());
+  }
 }
 
 }  // namespace bzla::test

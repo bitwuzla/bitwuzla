@@ -10,6 +10,8 @@
 
 #include "node/node_utils.h"
 
+#include <sstream>
+
 #include "bv/bitvector.h"
 #include "node/kind_info.h"
 #include "node/node_manager.h"
@@ -174,6 +176,60 @@ mk_default_value(NodeManager& nm, const Type& type)
   }
   assert(type.is_rm());
   return nm.mk_value(RoundingMode::RNA);
+}
+
+Node
+next_value(NodeManager& nm, const Node& value)
+{
+  const Type& type = value.type();
+  if (type.is_bool())
+  {
+    if (value.value<bool>())
+    {
+      return Node();
+    }
+    return nm.mk_value(true);
+  }
+  else if (type.is_bv())
+  {
+    if (value.value<BitVector>().is_ones())
+    {
+      return Node();
+    }
+    return nm.mk_value(value.value<BitVector>().bvinc());
+  }
+  else if (type.is_rm())
+  {
+    const auto& rm = value.value<RoundingMode>();
+    assert(rm != RoundingMode::NUM_RM);
+    RoundingMode next = static_cast<RoundingMode>(static_cast<int32_t>(rm) + 1);
+    if (next == RoundingMode::NUM_RM)
+    {
+      return Node();
+    }
+    return nm.mk_value(next);
+  }
+  else
+  {
+    assert(type.is_fp());
+    const FloatingPoint& fp = value.value<FloatingPoint>();
+
+    if (fp.fpisnan())
+    {
+      return Node();
+    }
+
+    BitVector bv = fp.as_bv();
+    bv.flip_bit(bv.size() - 1);
+    if (!bv.msb())
+    {
+      bv.ibvinc();
+      return nm.mk_value(
+          FloatingPoint(type.fp_exp_size(), type.fp_sig_size(), bv));
+    }
+    return nm.mk_value(
+        FloatingPoint(type.fp_exp_size(), type.fp_sig_size(), bv));
+  }
 }
 
 Node
