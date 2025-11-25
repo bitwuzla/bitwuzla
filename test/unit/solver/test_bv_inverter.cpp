@@ -41,6 +41,8 @@ class TestBvInverter : public TestCommon
 
   void test_ic_sext(Kind predicate, uint64_t bw_x, uint64_t bw_t, size_t idx);
 
+  void test_ic_ineq(Kind predicate, uint64_t bw, size_t idx);
+
   NodeManager d_nm;
   option::Options d_options;
   sat::SatSolverFactory d_sat_factory;
@@ -168,6 +170,40 @@ TestBvInverter::test_ic_sext(Kind predicate,
   ASSERT_EQ(res, Result::UNSAT);
 }
 
+void
+TestBvInverter::test_ic_ineq(Kind predicate, uint64_t bw, size_t idx)
+{
+  Type bv = d_nm.mk_bv_type(bw);
+  Node x  = d_nm.mk_var(bv, "x");
+  Node t  = d_nm.mk_const(bv, "t");
+
+  Node ic = d_inverter.ic(
+      predicate, x.kind(), {idx == 0 ? x : t, idx == 0 ? t : x}, idx);
+  ASSERT_FALSE(ic.is_null());
+
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
+  Node ass = d_nm.mk_node(
+      Kind::NOT,
+      {d_nm.mk_node(
+          Kind::EQUAL,
+          {ic,
+           d_nm.mk_node(Kind::EXISTS,
+                        {
+                            x,
+                            d_nm.mk_node(predicate,
+                                         {idx == 0 ? x : t, idx == 0 ? t : x}),
+                        })})});
+  ctx.assert_formula(ass);
+  Result res = ctx.solve();
+  if (res != Result::UNSAT)
+  {
+    std::cout << "predicate: " << predicate << std::endl;
+    std::cout << "idx: " << idx << std::endl;
+    std::cout << "ic: " << ic << std::endl;
+    std::cout << "vc: " << ass << std::endl;
+  }
+  ASSERT_EQ(res, Result::UNSAT);
+}
 /* -------------------------------------------------------------------------- */
 
 TEST_F(TestBvInverter, bv_and)
@@ -270,6 +306,17 @@ TEST_F(TestBvInverter, bv_sext)
     test_ic_sext(predicate, 3, 1, 1);
     test_ic_sext(predicate, 2, 4, 0);
     test_ic_sext(predicate, 5, 2, 1);
+  }
+}
+
+TEST_F(TestBvInverter, ineq)
+{
+  for (Kind predicate : d_predicates)
+  {
+    test_ic_ineq(predicate, 1, 0);
+    test_ic_ineq(predicate, 1, 1);
+    test_ic_ineq(predicate, 4, 0);
+    test_ic_ineq(predicate, 4, 1);
   }
 }
 

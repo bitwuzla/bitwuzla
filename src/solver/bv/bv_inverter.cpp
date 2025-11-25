@@ -42,52 +42,65 @@ BvInverter::ic(Kind predicate,
     case Kind::BV_SIGN_EXTEND: return ic_bv_sext(predicate, nodes, idx);
     case Kind::BV_UREM: return ic_bv_urem(predicate, nodes, idx);
     case Kind::BV_UDIV: return ic_bv_udiv(predicate, nodes, idx);
-    default: assert(false);
-  }
-  assert(nodes.size() == 2);
-  size_t bw = nodes[idx].type().bv_size();
-  switch (predicate)
-  {
-    case Kind::BV_SLT:
-      // x <_s t
-      // IC: (distinct t min_signed_[w])
-      return d_nm.mk_node(
-          Kind::DISTINCT,
-          {nodes[1 - idx], d_nm.mk_value(BitVector::mk_min_signed(bw))});
+    default:
+      assert(nodes.size() == 2);
+      size_t bw = nodes[idx].type().bv_size();
+      switch (predicate)
+      {
+        case Kind::BV_SLT:
+        case Kind::BV_SGT:
+          if ((predicate == Kind::BV_SLT && idx == 0)
+              || (predicate == Kind::BV_SGT && idx == 1))
+          {
+            // x <_s t
+            // t >_s x
+            // IC: (distinct t min_signed_[w])
+            return d_nm.mk_node(
+                Kind::DISTINCT,
+                {nodes[1 - idx], d_nm.mk_value(BitVector::mk_min_signed(bw))});
+          }
+          // x >_s t
+          // t <_s x
+          // IC: (distinct t max_signed_[w])
+          return d_nm.mk_node(
+              Kind::DISTINCT,
+              {nodes[1 - idx], d_nm.mk_value(BitVector::mk_max_signed(bw))});
+        case Kind::BV_ULT:
+        case Kind::BV_UGT:
+          if ((predicate == Kind::BV_ULT && idx == 0)
+              || (predicate == Kind::BV_UGT && idx == 1))
+          {
+            // x <_u t
+            // t >_u x
+            // IC: (distinct t (_ bv0 w))
+            return d_nm.mk_node(
+                Kind::DISTINCT,
+                {nodes[1 - idx], d_nm.mk_value(BitVector::mk_zero(bw))});
+          }
+          // x >_u t
+          // t <_u x
+          // IC: (distinct t (bvnot (_ bv0 w)))
+          return d_nm.mk_node(
+              Kind::DISTINCT,
+              {nodes[1 - idx], d_nm.mk_value(BitVector::mk_ones(bw))});
 
-    case Kind::BV_SGT:
-      // x >_s t
-      // IC: (distinct t max_signed_[w])
-      return d_nm.mk_node(
-          Kind::DISTINCT,
-          {nodes[1 - idx], d_nm.mk_value(BitVector::mk_max_signed(bw))});
+        case Kind::BV_UGE:
+          // x >=_u t
+        case Kind::BV_ULE:
+          // x <=_u t
+        case Kind::BV_SGE:
+          // x >=_s t
+        case Kind::BV_SLE:
+          // x <=_s t
+        case Kind::DISTINCT:
+          // x != t
+        case Kind::EQUAL:
+          // x = t
+          // IC: true
+          return d_nm.mk_value(true);
 
-    case Kind::BV_ULT:
-      // x <_u t
-      // IC: (distinct t (_ bv0 w))
-      return d_nm.mk_node(
-          Kind::DISTINCT,
-          {nodes[1 - idx], d_nm.mk_value(BitVector::mk_zero(bw))});
-
-    case Kind::BV_UGT:
-      // x >_u t
-      // IC: (distinct t (bvnot (_ bv0 w)))
-      return d_nm.mk_node(
-          Kind::DISTINCT,
-          {nodes[1 - idx], d_nm.mk_value(BitVector::mk_ones(bw))});
-
-    case Kind::BV_UGE:
-      // x >=_u t
-    case Kind::BV_ULE:
-      // x <=_u t
-    case Kind::BV_SGE:
-      // x >=_s t
-    case Kind::BV_SLE:
-      // x <=_s t
-      // IC: true
-      return d_nm.mk_value(true);
-
-    default: assert(false);
+        default: assert(false);
+      }
   }
 }
 
