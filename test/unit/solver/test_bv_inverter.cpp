@@ -27,26 +27,14 @@ class TestBvInverter : public TestCommon
         d_inverter(d_env)
   {
   }
-  void SetUp() override
-  {
-    d_bv4 = d_nm.mk_bv_type(4);
-    d_x   = d_nm.mk_var(d_bv4, "x");
-    d_s   = d_nm.mk_const(d_bv4, "s");
-    d_t   = d_nm.mk_const(d_bv4, "t");
-  }
 
-  void test_ic(Kind predicate, Kind kind, size_t idx);
+  void test_ic(Kind predicate, Kind kind, uint64_t bw, size_t idx);
 
   NodeManager d_nm;
   option::Options d_options;
   sat::SatSolverFactory d_sat_factory;
   Env d_env;
   BvInverter d_inverter;
-
-  Type d_bv4;
-  Node d_x;
-  Node d_s;
-  Node d_t;
 
   std::vector<Kind> d_predicates = {Kind::BV_ULT,
                                     Kind::BV_ULE,
@@ -61,10 +49,15 @@ class TestBvInverter : public TestCommon
 };
 
 void
-TestBvInverter::test_ic(Kind predicate, Kind kind, size_t idx)
+TestBvInverter::test_ic(Kind predicate, Kind kind, uint64_t bw, size_t idx)
 {
+  Type bv = d_nm.mk_bv_type(bw);
+  Node x  = d_nm.mk_var(bv, "x");
+  Node s  = d_nm.mk_const(bv, "s");
+  Node t  = d_nm.mk_const(bv, "t");
+
   Node ic = d_inverter.ic(
-      predicate, kind, {idx == 0 ? d_x : d_s, idx == 0 ? d_s : d_x, d_t}, idx);
+      predicate, kind, {idx == 0 ? x : s, idx == 0 ? s : x, t}, idx);
   ASSERT_FALSE(ic.is_null());
 
   SolvingContext ctx(d_nm, d_options, d_sat_factory);
@@ -73,13 +66,12 @@ TestBvInverter::test_ic(Kind predicate, Kind kind, size_t idx)
       {d_nm.mk_node(
           Kind::EQUAL,
           {ic,
-           d_nm.mk_node(
-               Kind::EXISTS,
-               {d_x,
-                d_nm.mk_node(predicate,
-                             {idx == 0 ? d_nm.mk_node(kind, {d_x, d_s})
-                                       : d_nm.mk_node(kind, {d_s, d_x}),
-                              d_t})})})});
+           d_nm.mk_node(Kind::EXISTS,
+                        {x,
+                         d_nm.mk_node(predicate,
+                                      {idx == 0 ? d_nm.mk_node(kind, {x, s})
+                                                : d_nm.mk_node(kind, {s, x}),
+                                       t})})})});
   ctx.assert_formula(ass);
   Result res = ctx.solve();
   if (res != Result::UNSAT)
@@ -97,8 +89,10 @@ TEST_F(TestBvInverter, bv_and)
 {
   for (Kind predicate : d_predicates)
   {
-    test_ic(predicate, Kind::BV_AND, 0);
-    test_ic(predicate, Kind::BV_AND, 1);
+    test_ic(predicate, Kind::BV_AND, 1, 0);
+    test_ic(predicate, Kind::BV_AND, 1, 1);
+    test_ic(predicate, Kind::BV_AND, 4, 0);
+    test_ic(predicate, Kind::BV_AND, 4, 1);
   }
 }
 
@@ -106,8 +100,10 @@ TEST_F(TestBvInverter, bv_ashr)
 {
   for (Kind predicate : d_predicates)
   {
-    test_ic(predicate, Kind::BV_ASHR, 0);
-    test_ic(predicate, Kind::BV_ASHR, 1);
+    test_ic(predicate, Kind::BV_ASHR, 1, 0);
+    test_ic(predicate, Kind::BV_ASHR, 1, 1);
+    test_ic(predicate, Kind::BV_ASHR, 4, 0);
+    test_ic(predicate, Kind::BV_ASHR, 4, 1);
   }
 }
 
@@ -115,8 +111,10 @@ TEST_F(TestBvInverter, bv_mul)
 {
   for (Kind predicate : d_predicates)
   {
-    test_ic(predicate, Kind::BV_MUL, 0);
-    test_ic(predicate, Kind::BV_MUL, 1);
+    test_ic(predicate, Kind::BV_MUL, 1, 0);
+    test_ic(predicate, Kind::BV_MUL, 1, 1);
+    test_ic(predicate, Kind::BV_MUL, 4, 0);
+    test_ic(predicate, Kind::BV_MUL, 4, 1);
   }
 }
 
@@ -124,8 +122,10 @@ TEST_F(TestBvInverter, bv_shl)
 {
   for (Kind predicate : d_predicates)
   {
-    test_ic(predicate, Kind::BV_SHL, 0);
-    test_ic(predicate, Kind::BV_SHL, 1);
+    test_ic(predicate, Kind::BV_SHL, 1, 0);
+    test_ic(predicate, Kind::BV_SHL, 1, 1);
+    test_ic(predicate, Kind::BV_SHL, 4, 0);
+    test_ic(predicate, Kind::BV_SHL, 4, 1);
   }
 }
 
@@ -133,8 +133,10 @@ TEST_F(TestBvInverter, bv_shr)
 {
   for (Kind predicate : d_predicates)
   {
-    test_ic(predicate, Kind::BV_SHR, 0);
-    test_ic(predicate, Kind::BV_SHR, 1);
+    test_ic(predicate, Kind::BV_SHR, 1, 0);
+    test_ic(predicate, Kind::BV_SHR, 1, 1);
+    test_ic(predicate, Kind::BV_SHR, 4, 0);
+    test_ic(predicate, Kind::BV_SHR, 4, 1);
   }
 }
 
@@ -142,8 +144,10 @@ TEST_F(TestBvInverter, bv_udiv)
 {
   for (Kind predicate : d_predicates)
   {
-    test_ic(predicate, Kind::BV_UDIV, 0);
-    test_ic(predicate, Kind::BV_UDIV, 1);
+    test_ic(predicate, Kind::BV_UDIV, 1, 0);
+    test_ic(predicate, Kind::BV_UDIV, 1, 1);
+    test_ic(predicate, Kind::BV_UDIV, 4, 0);
+    test_ic(predicate, Kind::BV_UDIV, 4, 1);
   }
 }
 
@@ -151,8 +155,10 @@ TEST_F(TestBvInverter, bv_urem)
 {
   for (Kind predicate : d_predicates)
   {
-    test_ic(predicate, Kind::BV_UREM, 0);
-    test_ic(predicate, Kind::BV_UREM, 1);
+    test_ic(predicate, Kind::BV_UREM, 1, 0);
+    test_ic(predicate, Kind::BV_UREM, 1, 1);
+    test_ic(predicate, Kind::BV_UREM, 4, 0);
+    test_ic(predicate, Kind::BV_UREM, 4, 1);
   }
 }
 
