@@ -29,12 +29,11 @@ struct BitwuzlaParser
                  const char* outfile_name)
       : d_tm(tm)
   {
-    std::ofstream outfile;
     std::ostream* out = &std::cout;
     if (std::string(outfile_name) != "<stdout>")
     {
-      outfile.open(outfile_name, std::ofstream::out);
-      out = &outfile;
+      d_outfile.open(outfile_name, std::ofstream::out);
+      out = &d_outfile;
     }
     (*out) << bitwuzla::set_bv_format(base);
     d_parser.reset(new bitwuzla::parser::Parser(
@@ -49,6 +48,8 @@ struct BitwuzlaParser
   BitwuzlaTermManager* d_tm            = nullptr;
   /** The currently configured terminator. */
   std::unique_ptr<CTerminator> d_terminator;
+  /** Output file. */
+  std::ofstream d_outfile;
 };
 
 BitwuzlaParser*
