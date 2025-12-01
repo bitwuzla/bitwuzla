@@ -143,7 +143,7 @@ SolvingContext::get_value(const Node& term)
   catch (const ComputeValueException& e)
   {
     // This only happens if we encounter a quantifier that was not registered
-    // and therefore cannot we cannot determine its value without calling
+    // and therefore we cannot determine its value without calling
     // solve() again. We instead return the original term.
     Log(2) << "encountered unregistered term while computing value: "
            << e.node();

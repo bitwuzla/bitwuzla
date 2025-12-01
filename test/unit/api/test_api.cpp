@@ -4273,6 +4273,44 @@ TEST_F(TestApi, fpexp)
   (void) d_tm.mk_fp_sort(15, 113);
 }
 
+namespace {
+void
+dfs(bitwuzla::Bitwuzla& bitwuzla, const bitwuzla::Term& t)
+{
+  std::cout << t << " = " << std::flush << bitwuzla.get_value(t) << '\n';
+  for (auto&& child : t.children())
+  {
+    dfs(bitwuzla, child);
+  }
+}
+
+}  // namespace
+
+TEST_F(TestApi, issue197)
+{
+  std::string smt2 = "(set-info :smt-lib-version 2.6)";
+  smt2 += "(set-logic QF_BV)";
+  smt2 += "(set-info :status sat)";
+  smt2 += "(declare-fun bv1 () (_ BitVec 32))";
+  smt2 += "(declare-fun bv2 () (_ BitVec 32))";
+  smt2 += "(define-fun minus ((x (_ BitVec 32))) (_ BitVec 32) (bvneg x))";
+  smt2 += "(assert (= (minus bv1) bv2))";
+
+  bitwuzla::TermManager tm;
+  bitwuzla::Options opt;
+  opt.set(bitwuzla::Option::PRODUCE_MODELS, true);
+  bitwuzla::parser::Parser parser(tm, opt);
+  parser.parse(std::string(smt2), true, false);
+  auto bitwuzla   = parser.bitwuzla();
+  auto assertions = bitwuzla->get_assertions();
+  auto result     = bitwuzla->check_sat();
+  assert(result == bitwuzla::Result::SAT);
+  for (auto& t : assertions)
+  {
+    dfs(*bitwuzla, t);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test

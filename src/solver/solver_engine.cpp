@@ -436,6 +436,13 @@ SolverEngine::_value(const Node& term)
       {
         case Kind::VALUE: value = cur; break;
 
+        case Kind::VARIABLE: {
+          Log(3) << "variable encountered: " << cur;
+          d_value_cache.clear();
+          throw ComputeValueException(cur);
+        }
+        break;
+
         case Kind::APPLY:
         case Kind::SELECT:
         case Kind::FORALL:
