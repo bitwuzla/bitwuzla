@@ -253,6 +253,7 @@ sources = files([
   'solver/solver_engine.cpp',
   'solver/solver_state.cpp',
   'solving_context.cpp',
+  'type/card.cpp',
   'type/type.cpp',
   'type/type_data.cpp',
   'type/type_manager.cpp',
