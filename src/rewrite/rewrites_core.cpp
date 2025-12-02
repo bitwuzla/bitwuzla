@@ -21,6 +21,7 @@
 #include "rewrite/rewrite_utils.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
+#include "type/card.h"
 
 namespace bzla {
 
@@ -1100,11 +1101,7 @@ RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
   uint64_t num_children = node.num_children();
   if (num_children > 2)
   {
-    const Type& type = node[0].type();
-    if ((type.is_bv() && std::log2(num_children) > type.bv_size())
-        || (type.is_fp()
-            && std::log2(num_children)
-                   > (type.fp_exp_size() + type.fp_sig_size())))
+    if (util::Integer(num_children) > type::compute_cardinality(node[0].type()))
     {
       return rewriter.nm().mk_value(false);
     }

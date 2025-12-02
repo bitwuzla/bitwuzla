@@ -16,6 +16,7 @@
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "test_rewriter.h"
+#include "type/card.h"
 
 namespace bzla::test {
 
@@ -603,16 +604,61 @@ TEST_F(TestRewriterCore, core_equal_inv)
 TEST_F(TestRewriterCore, core_distinct_card)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::DISTINCT_CARD;
-  Type bv2_type                  = d_nm.mk_bv_type(2);
-  Node a                         = d_nm.mk_const(bv2_type);
-  Node b                         = d_nm.mk_const(bv2_type);
-  Node c                         = d_nm.mk_const(bv2_type);
-  Node d                         = d_nm.mk_const(bv2_type);
-  Node e                         = d_nm.mk_const(bv2_type);
-  // applies
-  test_rule<kind>(d_nm.mk_node(Kind::DISTINCT, {a, b, c, d, e}));
-  // does not apply
-  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::DISTINCT, {a, b, d, d}));
+
+  {
+    Type t = d_nm.mk_bool_type();
+    Node a = d_nm.mk_const(t);
+    Node b = d_nm.mk_const(t);
+    Node c = d_nm.mk_const(t);
+    // applies
+    test_rule<kind>(d_nm.mk_node(Kind::DISTINCT, {a, b, c}));
+    // does not apply
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::DISTINCT, {a, b}));
+  }
+
+  {
+    Type t = d_nm.mk_bv_type(2);
+    Node a = d_nm.mk_const(t);
+    Node b = d_nm.mk_const(t);
+    Node c = d_nm.mk_const(t);
+    Node d = d_nm.mk_const(t);
+    Node e = d_nm.mk_const(t);
+    // applies
+    test_rule<kind>(d_nm.mk_node(Kind::DISTINCT, {a, b, c, d, e}));
+    // does not apply
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::DISTINCT, {a, b, d, d}));
+  }
+
+  {
+    Type t = d_nm.mk_rm_type();
+    Node a = d_nm.mk_const(t);
+    Node b = d_nm.mk_const(t);
+    Node c = d_nm.mk_const(t);
+    Node d = d_nm.mk_const(t);
+    Node e = d_nm.mk_const(t);
+    Node f = d_nm.mk_const(t);
+    // applies
+    test_rule<kind>(d_nm.mk_node(Kind::DISTINCT, {a, b, c, d, e, f}));
+    // does not apply
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::DISTINCT, {a, b, c, d, e}));
+  }
+
+  {
+    Type t = d_nm.mk_fp_type(3, 8);
+    std::vector<Node> nodes;
+    for (util::Integer i = 0, card = type::compute_cardinality(t); i <= card;
+         ++i)
+    {
+      nodes.push_back(d_nm.mk_const(t));
+    }
+
+    // applies
+    test_rule<kind>(d_nm.mk_node(Kind::DISTINCT, nodes));
+    // does not apply
+    nodes.pop_back();
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::DISTINCT, nodes));
+  }
 }
 
 /* ite ---------------------------------------------------------------------- */

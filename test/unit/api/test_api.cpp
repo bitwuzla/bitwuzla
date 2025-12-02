@@ -2123,16 +2123,10 @@ TEST_F(TestApi, print_formula5)
   {
     std::stringstream expected_smt2;
     expected_smt2
-        << "(set-logic )" << std::endl
-        << "(declare-const _x0 Bool)" << std::endl
-        << "(define-fun @def0 () Bool (exists ((_x1 Bool)) (let ((_let0 (ite "
-           "false _x1 _x0))) (let ((_let1 (and (and (distinct _let0 _x1) "
-           "(distinct _let0 _x0)) (distinct _x1 _x0)))) (let ((_let2 (= _let1 "
-           "_x0))) (ite _let2 _let2 _let1))))))"
-        << std::endl
-        << "(assert (ite @def0 @def0 _x0))" << std::endl
-        << "(check-sat)" << std::endl
-        << "(exit)" << std::endl;
+        << "(set-logic )\n(declare-const _x0 Bool)\n(define-fun @def0 () Bool "
+           "(exists ((_x1 Bool)) (let ((_let0 (distinct (ite false _x1 _x0) "
+           "_x1 _x0))) (let ((_let1 (= _let0 _x0))) (ite _let1 _let1 "
+           "_let0)))))\n(assert (ite @def0 @def0 _x0))\n(check-sat)\n(exit)\n";
     std::stringstream ss;
     bitwuzla->print_formula(ss, "smt2");
     ASSERT_EQ(ss.str(), expected_smt2.str());
@@ -2140,18 +2134,11 @@ TEST_F(TestApi, print_formula5)
   {
     std::stringstream expected_smt2;
     expected_smt2
-        << "(set-logic )" << std::endl
-        << "(declare-const _x0 Bool)" << std::endl
-        << "(define-fun @def0 () Bool (exists ((_x1 Bool)) (ite (= (and (and "
-           "(distinct (ite false _x1 _x0) _x1) (distinct (ite false _x1 _x0) "
-           "_x0)) (distinct _x1 _x0)) _x0) (= (and (and (distinct (ite false "
-           "_x1 _x0) _x1) (distinct (ite false _x1 _x0) _x0)) (distinct _x1 "
-           "_x0)) _x0) (and (and (distinct (ite false _x1 _x0) _x1) (distinct "
-           "(ite false _x1 _x0) _x0)) (distinct _x1 _x0)))))"
-        << std::endl
-        << "(assert (ite @def0 @def0 _x0))" << std::endl
-        << "(check-sat)" << std::endl
-        << "(exit)" << std::endl;
+        << "(set-logic )\n(declare-const _x0 Bool)\n(define-fun @def0 () Bool "
+           "(exists ((_x1 Bool)) (ite (= (distinct (ite false _x1 _x0) _x1 "
+           "_x0) _x0) (= (distinct (ite false _x1 _x0) _x1 _x0) _x0) (distinct "
+           "(ite false _x1 _x0) _x1 _x0))))\n(assert (ite @def0 @def0 "
+           "_x0))\n(check-sat)\n(exit)\n";
     std::stringstream ss;
     ss << bitwuzla::set_letify(false);
     bitwuzla->print_formula(ss, "smt2");
