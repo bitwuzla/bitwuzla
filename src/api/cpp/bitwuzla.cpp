@@ -2241,6 +2241,11 @@ TermManager::mk_term(Kind kind,
         return bzla::node::utils::mk_nary(
             *d_nm, bzla::node::Kind::EQUAL, Term::term_vector_to_nodes(args));
       }
+      else if (kind == Kind::DISTINCT)
+      {
+        return d_nm->mk_node(bzla::node::Kind::DISTINCT,
+                             Term::term_vector_to_nodes(args));
+      }
       return bzla::node::utils::mk_nary(
           *d_nm, s_internal_kinds.at(kind), Term::term_vector_to_nodes(args));
     // unary
