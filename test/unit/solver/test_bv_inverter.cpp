@@ -253,6 +253,14 @@ TEST_F(TestBvInverter, and)
   test_ic_bool(Kind::DISTINCT, Kind::AND, 1);
 }
 
+TEST_F(TestBvInverter, or)
+{
+  test_ic_bool(Kind::EQUAL, Kind::OR, 0);
+  test_ic_bool(Kind::EQUAL, Kind::OR, 1);
+  test_ic_bool(Kind::DISTINCT, Kind::OR, 0);
+  test_ic_bool(Kind::DISTINCT, Kind::OR, 1);
+}
+
 TEST_F(TestBvInverter, bv_and)
 {
   for (Kind predicate : d_predicates)
@@ -261,6 +269,17 @@ TEST_F(TestBvInverter, bv_and)
     test_ic(predicate, Kind::BV_AND, 1, 1);
     test_ic(predicate, Kind::BV_AND, 4, 0);
     test_ic(predicate, Kind::BV_AND, 4, 1);
+  }
+}
+
+TEST_F(TestBvInverter, bv_or)
+{
+  for (Kind predicate : d_predicates)
+  {
+    test_ic(predicate, Kind::BV_OR, 1, 0);
+    test_ic(predicate, Kind::BV_OR, 1, 1);
+    test_ic(predicate, Kind::BV_OR, 4, 0);
+    test_ic(predicate, Kind::BV_OR, 4, 1);
   }
 }
 

@@ -34,7 +34,9 @@ BvInverter::ic(Kind predicate,
   switch (kind)
   {
     case Kind::AND: return ic_and(predicate, nodes, idx);
+    case Kind::OR: return ic_or(predicate, nodes, idx);
     case Kind::BV_AND: return ic_bv_and(predicate, nodes, idx);
+    case Kind::BV_OR: return ic_bv_or(predicate, nodes, idx);
     case Kind::BV_ASHR: return ic_bv_ashr(predicate, nodes, idx);
     case Kind::BV_CONCAT: return ic_bv_concat(predicate, nodes, idx);
     case Kind::BV_MUL: return ic_bv_mul(predicate, nodes, idx);
@@ -131,6 +133,31 @@ BvInverter::ic_and(Kind predicate, const std::vector<Node>& nodes, size_t idx)
 }
 
 Node
+BvInverter::ic_or(Kind predicate, const std::vector<Node>& nodes, size_t idx)
+{
+  assert(nodes.size() == 3);
+  const Node& s = nodes[1 - idx];
+  const Node& t = nodes.back();
+  switch (predicate)
+  {
+    case Kind::DISTINCT:
+      // x | s != t
+      // IC: (or (not s) (not t))
+      {
+        return d_nm.mk_node(
+            Kind::OR,
+            {d_nm.mk_node(Kind::NOT, {s}), d_nm.mk_node(Kind::NOT, {t})});
+      }
+
+    default:
+      assert(predicate == Kind::EQUAL);
+      // x | s = t
+      // IC: (= (or t s) t)
+      return d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::OR, {t, s}), t});
+  }
+}
+
+Node
 BvInverter::ic_bv_and(Kind predicate,
                       const std::vector<Node>& nodes,
                       size_t idx)
@@ -220,6 +247,91 @@ BvInverter::ic_bv_and(Kind predicate,
       // x & s = t
       // IC: (= (bvand t s) t)
       return d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_AND, {t, s}), t});
+  }
+}
+
+Node
+BvInverter::ic_bv_or(Kind predicate, const std::vector<Node>& nodes, size_t idx)
+{
+  assert(nodes.size() == 3);
+  const Node& s = nodes[1 - idx];
+  const Node& t = nodes.back();
+  uint64_t bw   = s.type().bv_size();
+  switch (predicate)
+  {
+    case Kind::BV_ULT:
+      // x | s <_u t
+      // IC: (bvult s t)
+      return d_nm.mk_node(Kind::BV_ULT, {s, t});
+
+    case Kind::BV_ULE:
+      // x | s <=_u t
+      // IC: (bvuge t s)
+      return d_nm.mk_node(Kind::BV_UGE, {t, s});
+
+    case Kind::BV_UGT:
+      // x | s >_u t
+      // IC: (bvult t ~0_[w])
+      {
+        Node ones = d_nm.mk_value(BitVector::mk_ones(bw));
+        return d_nm.mk_node(Kind::BV_ULT, {t, ones});
+      }
+
+    case Kind::BV_UGE:
+      // x | s >=_u t
+      // IC: true
+      return d_nm.mk_value(true);
+
+    case Kind::BV_SLT:
+      // x | s <_s t
+      // IC: (bvslt (bvor (bvnot (bvsub s t)) s) t)
+      return d_nm.mk_node(
+          Kind::BV_SLT,
+          {d_nm.mk_node(Kind::BV_OR,
+                        {d_nm.mk_node(Kind::BV_NOT,
+                                      {d_nm.mk_node(Kind::BV_SUB, {s, t})}),
+                         s}),
+           t});
+
+    case Kind::BV_SLE:
+      // x | s <=_s t
+      // IC: (bvsge t (bvor s min_signed_[w]))
+      {
+        Node mins = d_nm.mk_value(BitVector::mk_min_signed(bw));
+        return d_nm.mk_node(Kind::BV_SGE,
+                            {t, d_nm.mk_node(Kind::BV_OR, {s, mins})});
+      }
+
+    case Kind::BV_SGT:
+      // x | s >_s t
+      // IC: (bvslt t (bvor s max_sigend_[w]))
+      {
+        Node maxs = d_nm.mk_value(BitVector::mk_max_signed(bw));
+        return d_nm.mk_node(Kind::BV_SLT,
+                            {t, d_nm.mk_node(Kind::BV_OR, {s, maxs})});
+      }
+
+    case Kind::BV_SGE:
+      // x | s >=_s t
+      // IC: (bvsge s (bvand s t))
+      return d_nm.mk_node(Kind::BV_SGE,
+                          {s, d_nm.mk_node(Kind::BV_AND, {s, t})});
+
+    case Kind::DISTINCT:
+      // x | s != t
+      // IC: (or (distinct s ~0_[w]) (distinct t ~0_[w]))
+      {
+        Node ones = d_nm.mk_value(BitVector::mk_ones(bw));
+        return d_nm.mk_node(Kind::OR,
+                            {d_nm.mk_node(Kind::DISTINCT, {s, ones}),
+                             d_nm.mk_node(Kind::DISTINCT, {t, ones})});
+      }
+
+    default:
+      assert(predicate == Kind::EQUAL);
+      // x | s = t
+      // IC: (= (bvor t s) t)
+      return d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_OR, {t, s}), t});
   }
 }
 

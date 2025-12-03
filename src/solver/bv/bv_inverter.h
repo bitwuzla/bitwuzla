@@ -34,7 +34,9 @@ class BvInverter
 
  private:
   Node ic_and(Kind predicate, const std::vector<Node>& nodes, size_t idx);
+  Node ic_or(Kind predicate, const std::vector<Node>& nodes, size_t idx);
   Node ic_bv_and(Kind predicate, const std::vector<Node>& nodes, size_t idx);
+  Node ic_bv_or(Kind predicate, const std::vector<Node>& nodes, size_t idx);
   Node ic_bv_ashr(Kind predicate, const std::vector<Node>& nodes, size_t idx);
   Node ic_bv_concat(Kind predicate, const std::vector<Node>& nodes, size_t idx);
   Node ic_bv_mul(Kind predicate, const std::vector<Node>& nodes, size_t idx);
