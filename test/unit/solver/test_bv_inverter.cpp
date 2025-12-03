@@ -43,6 +43,8 @@ class TestBvInverter : public TestCommon
 
   void test_ic_ineq(Kind predicate, uint64_t bw, size_t idx);
 
+  void test_ic_bool(Kind predicate, Kind kind, size_t idx);
+
   NodeManager d_nm;
   option::Options d_options;
   sat::SatSolverFactory d_sat_factory;
@@ -204,7 +206,52 @@ TestBvInverter::test_ic_ineq(Kind predicate, uint64_t bw, size_t idx)
   }
   ASSERT_EQ(res, Result::UNSAT);
 }
+
+void
+TestBvInverter::test_ic_bool(Kind predicate, Kind kind, size_t idx)
+{
+  Node x = d_nm.mk_var(d_nm.mk_bool_type(), "x");
+  Node s = d_nm.mk_const(d_nm.mk_bool_type(), "s");
+  Node t = d_nm.mk_const(d_nm.mk_bool_type(), "t");
+
+  Node ic = d_inverter.ic(
+      predicate, kind, {idx == 0 ? x : s, idx == 0 ? s : x, t}, idx);
+  ASSERT_FALSE(ic.is_null());
+
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
+  Node ass = d_nm.mk_node(
+      Kind::NOT,
+      {d_nm.mk_node(
+          Kind::EQUAL,
+          {ic,
+           d_nm.mk_node(Kind::EXISTS,
+                        {x,
+                         d_nm.mk_node(predicate,
+                                      {idx == 0 ? d_nm.mk_node(kind, {x, s})
+                                                : d_nm.mk_node(kind, {s, x}),
+                                       t})})})});
+  ctx.assert_formula(ass);
+  Result res = ctx.solve();
+  if (res != Result::UNSAT)
+  {
+    std::cout << "predicate: " << predicate << std::endl;
+    std::cout << "kind: " << kind << std::endl;
+    std::cout << "idx: " << idx << std::endl;
+    std::cout << "ic: " << ic << std::endl;
+    std::cout << "vc: " << ass << std::endl;
+  }
+  ASSERT_EQ(res, Result::UNSAT);
+}
+
 /* -------------------------------------------------------------------------- */
+
+TEST_F(TestBvInverter, and)
+{
+  test_ic_bool(Kind::EQUAL, Kind::AND, 0);
+  test_ic_bool(Kind::EQUAL, Kind::AND, 1);
+  test_ic_bool(Kind::DISTINCT, Kind::AND, 0);
+  test_ic_bool(Kind::DISTINCT, Kind::AND, 1);
+}
 
 TEST_F(TestBvInverter, bv_and)
 {

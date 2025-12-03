@@ -33,6 +33,7 @@ BvInverter::ic(Kind predicate,
   assert(idx < 2);
   switch (kind)
   {
+    case Kind::AND: return ic_and(predicate, nodes, idx);
     case Kind::BV_AND: return ic_bv_and(predicate, nodes, idx);
     case Kind::BV_ASHR: return ic_bv_ashr(predicate, nodes, idx);
     case Kind::BV_CONCAT: return ic_bv_concat(predicate, nodes, idx);
@@ -105,6 +106,29 @@ BvInverter::ic(Kind predicate,
 }
 
 /* --- BvInverter private --------------------------------------------------- */
+
+Node
+BvInverter::ic_and(Kind predicate, const std::vector<Node>& nodes, size_t idx)
+{
+  assert(nodes.size() == 3);
+  const Node& s = nodes[1 - idx];
+  const Node& t = nodes.back();
+  switch (predicate)
+  {
+    case Kind::DISTINCT:
+      // x & s != t
+      // IC: (or s t)
+      {
+        return d_nm.mk_node(Kind::OR, {s, t});
+      }
+
+    default:
+      assert(predicate == Kind::EQUAL);
+      // x & s = t
+      // IC: (= (and t s) t)
+      return d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::AND, {t, s}), t});
+  }
+}
 
 Node
 BvInverter::ic_bv_and(Kind predicate,
