@@ -77,23 +77,19 @@ TestBvInverter::test_ic(Kind predicate,
   Node x   = d_nm.mk_var(idx == 0 ? bv0 : bv1, "x");
   Node s   = d_nm.mk_const(idx == 0 ? bv1 : bv0, "s");
   Node t   = d_nm.mk_const(bv, "t");
+  Node node =
+      idx == 0 ? d_nm.mk_node(kind, {x, s}) : d_nm.mk_node(kind, {s, x});
 
-  Node ic = d_inverter.ic(
-      predicate, kind, {idx == 0 ? x : s, idx == 0 ? s : x, t}, idx);
+  Node ic = d_inverter.ic(predicate, node, t, idx);
   ASSERT_FALSE(ic.is_null());
 
   SolvingContext ctx(d_nm, d_options, d_sat_factory);
   Node ass = d_nm.mk_node(
       Kind::NOT,
-      {d_nm.mk_node(
-          Kind::EQUAL,
-          {ic,
-           d_nm.mk_node(Kind::EXISTS,
-                        {x,
-                         d_nm.mk_node(predicate,
-                                      {idx == 0 ? d_nm.mk_node(kind, {x, s})
-                                                : d_nm.mk_node(kind, {s, x}),
-                                       t})})})});
+      {d_nm.mk_node(Kind::EQUAL,
+                    {ic,
+                     d_nm.mk_node(Kind::EXISTS,
+                                  {x, d_nm.mk_node(predicate, {node, t})})})});
   ctx.assert_formula(ass);
   Result res = ctx.solve();
   if (res != Result::UNSAT)
@@ -135,30 +131,23 @@ TestBvInverter::test_ic_sext(Kind predicate,
   Node x     = d_nm.mk_var(idx == 0 ? bv0 : bv1, "x");
   Node t     = d_nm.mk_const(idx == 0 ? bv1 : bv0, "t");
   uint64_t n = t.type().bv_size() - x.type().bv_size();
+  Node node  = d_nm.mk_node(Kind::BV_SIGN_EXTEND, {x}, {n});
 
-  Node ic = d_inverter.ic(predicate,
-                          Kind::BV_SIGN_EXTEND,
-                          {idx == 0 ? x : t, idx == 0 ? t : x},
-                          idx);
+  Node ic = d_inverter.ic(predicate, node, t, idx);
   ASSERT_FALSE(ic.is_null());
 
   SolvingContext ctx(d_nm, d_options, d_sat_factory);
   Node ass = d_nm.mk_node(
       Kind::NOT,
-      {d_nm.mk_node(
-          Kind::EQUAL,
-          {ic,
-           d_nm.mk_node(
-               Kind::EXISTS,
-               {x,
-                d_nm.mk_node(
-                    predicate,
-                    {
-                        idx == 0 ? d_nm.mk_node(Kind::BV_SIGN_EXTEND, {x}, {n})
-                                 : t,
-                        idx == 0 ? t
-                                 : d_nm.mk_node(Kind::BV_SIGN_EXTEND, {x}, {n}),
-                    })})})});
+      {d_nm.mk_node(Kind::EQUAL,
+                    {ic,
+                     d_nm.mk_node(Kind::EXISTS,
+                                  {x,
+                                   d_nm.mk_node(predicate,
+                                                {
+                                                    idx == 0 ? node : t,
+                                                    idx == 0 ? t : node,
+                                                })})})});
   ctx.assert_formula(ass);
   Result res = ctx.solve();
   if (res != Result::UNSAT)
@@ -178,23 +167,20 @@ TestBvInverter::test_ic_ineq(Kind predicate, uint64_t bw, size_t idx)
   Type bv = d_nm.mk_bv_type(bw);
   Node x  = d_nm.mk_var(bv, "x");
   Node t  = d_nm.mk_const(bv, "t");
+  Node node = d_nm.mk_node(predicate, {idx == 0 ? x : t, idx == 0 ? t : x});
 
-  Node ic = d_inverter.ic(
-      predicate, x.kind(), {idx == 0 ? x : t, idx == 0 ? t : x}, idx);
+  Node ic = d_inverter.ic(node, t, idx);
   ASSERT_FALSE(ic.is_null());
 
   SolvingContext ctx(d_nm, d_options, d_sat_factory);
-  Node ass = d_nm.mk_node(
-      Kind::NOT,
-      {d_nm.mk_node(
-          Kind::EQUAL,
-          {ic,
-           d_nm.mk_node(Kind::EXISTS,
-                        {
-                            x,
-                            d_nm.mk_node(predicate,
-                                         {idx == 0 ? x : t, idx == 0 ? t : x}),
-                        })})});
+  Node ass = d_nm.mk_node(Kind::NOT,
+                          {d_nm.mk_node(Kind::EQUAL,
+                                        {ic,
+                                         d_nm.mk_node(Kind::EXISTS,
+                                                      {
+                                                          x,
+                                                          node,
+                                                      })})});
   ctx.assert_formula(ass);
   Result res = ctx.solve();
   if (res != Result::UNSAT)
@@ -213,23 +199,19 @@ TestBvInverter::test_ic_bool(Kind predicate, Kind kind, size_t idx)
   Node x = d_nm.mk_var(d_nm.mk_bool_type(), "x");
   Node s = d_nm.mk_const(d_nm.mk_bool_type(), "s");
   Node t = d_nm.mk_const(d_nm.mk_bool_type(), "t");
+  Node node =
+      idx == 0 ? d_nm.mk_node(kind, {x, s}) : d_nm.mk_node(kind, {s, x});
 
-  Node ic = d_inverter.ic(
-      predicate, kind, {idx == 0 ? x : s, idx == 0 ? s : x, t}, idx);
+  Node ic = d_inverter.ic(predicate, node, t, idx);
   ASSERT_FALSE(ic.is_null());
 
   SolvingContext ctx(d_nm, d_options, d_sat_factory);
   Node ass = d_nm.mk_node(
       Kind::NOT,
-      {d_nm.mk_node(
-          Kind::EQUAL,
-          {ic,
-           d_nm.mk_node(Kind::EXISTS,
-                        {x,
-                         d_nm.mk_node(predicate,
-                                      {idx == 0 ? d_nm.mk_node(kind, {x, s})
-                                                : d_nm.mk_node(kind, {s, x}),
-                                       t})})})});
+      {d_nm.mk_node(Kind::EQUAL,
+                    {ic,
+                     d_nm.mk_node(Kind::EXISTS,
+                                  {x, d_nm.mk_node(predicate, {node, t})})})});
   ctx.assert_formula(ass);
   Result res = ctx.solve();
   if (res != Result::UNSAT)

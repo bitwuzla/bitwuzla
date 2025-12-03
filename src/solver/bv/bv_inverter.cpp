@@ -24,97 +24,89 @@ BvInverter::BvInverter(Env& env) : d_nm(env.nm()) {}
 BvInverter::~BvInverter() {}
 
 Node
-BvInverter::ic(Kind predicate,
-               Kind kind,
-               const std::vector<Node>& nodes,
-               size_t idx)
+BvInverter::ic(const Node& node, const Node& t, size_t idx)
 {
-  assert(nodes.size() > 1);
-  assert(idx < 2);
+  Kind kind = node.kind();
+  size_t bw = t.type().bv_size();
   switch (kind)
   {
-    case Kind::AND: return ic_and(predicate, nodes, idx);
-    case Kind::OR: return ic_or(predicate, nodes, idx);
-    case Kind::BV_AND: return ic_bv_and(predicate, nodes, idx);
-    case Kind::BV_OR: return ic_bv_or(predicate, nodes, idx);
-    case Kind::BV_ASHR: return ic_bv_ashr(predicate, nodes, idx);
-    case Kind::BV_CONCAT: return ic_bv_concat(predicate, nodes, idx);
-    case Kind::BV_MUL: return ic_bv_mul(predicate, nodes, idx);
-    case Kind::BV_SHR: return ic_bv_shr(predicate, nodes, idx);
-    case Kind::BV_SHL: return ic_bv_shl(predicate, nodes, idx);
-    case Kind::BV_SIGN_EXTEND: return ic_bv_sext(predicate, nodes, idx);
-    case Kind::BV_UREM: return ic_bv_urem(predicate, nodes, idx);
-    case Kind::BV_UDIV: return ic_bv_udiv(predicate, nodes, idx);
-    default:
-      assert(nodes.size() == 2);
-      size_t bw = nodes[idx].type().bv_size();
-      switch (predicate)
+    case Kind::BV_SLT:
+    case Kind::BV_SGT:
+      if ((kind == Kind::BV_SLT && idx == 0)
+          || (kind == Kind::BV_SGT && idx == 1))
       {
-        case Kind::BV_SLT:
-        case Kind::BV_SGT:
-          if ((predicate == Kind::BV_SLT && idx == 0)
-              || (predicate == Kind::BV_SGT && idx == 1))
-          {
-            // x <_s t
-            // t >_s x
-            // IC: (distinct t min_signed_[w])
-            return d_nm.mk_node(
-                Kind::DISTINCT,
-                {nodes[1 - idx], d_nm.mk_value(BitVector::mk_min_signed(bw))});
-          }
-          // x >_s t
-          // t <_s x
-          // IC: (distinct t max_signed_[w])
-          return d_nm.mk_node(
-              Kind::DISTINCT,
-              {nodes[1 - idx], d_nm.mk_value(BitVector::mk_max_signed(bw))});
-        case Kind::BV_ULT:
-        case Kind::BV_UGT:
-          if ((predicate == Kind::BV_ULT && idx == 0)
-              || (predicate == Kind::BV_UGT && idx == 1))
-          {
-            // x <_u t
-            // t >_u x
-            // IC: (distinct t (_ bv0 w))
-            return d_nm.mk_node(
-                Kind::DISTINCT,
-                {nodes[1 - idx], d_nm.mk_value(BitVector::mk_zero(bw))});
-          }
-          // x >_u t
-          // t <_u x
-          // IC: (distinct t (bvnot (_ bv0 w)))
-          return d_nm.mk_node(
-              Kind::DISTINCT,
-              {nodes[1 - idx], d_nm.mk_value(BitVector::mk_ones(bw))});
-
-        case Kind::BV_UGE:
-          // x >=_u t
-        case Kind::BV_ULE:
-          // x <=_u t
-        case Kind::BV_SGE:
-          // x >=_s t
-        case Kind::BV_SLE:
-          // x <=_s t
-        case Kind::DISTINCT:
-          // x != t
-        case Kind::EQUAL:
-          // x = t
-          // IC: true
-          return d_nm.mk_value(true);
-
-        default: assert(false);
+        // x <_s t
+        // t >_s x
+        // IC: (distinct t min_signed_[w])
+        return d_nm.mk_node(Kind::DISTINCT,
+                            {t, d_nm.mk_value(BitVector::mk_min_signed(bw))});
       }
+      // x >_s t
+      // t <_s x
+      // IC: (distinct t max_signed_[w])
+      return d_nm.mk_node(Kind::DISTINCT,
+                          {t, d_nm.mk_value(BitVector::mk_max_signed(bw))});
+    case Kind::BV_ULT:
+    case Kind::BV_UGT:
+      if ((kind == Kind::BV_ULT && idx == 0)
+          || (kind == Kind::BV_UGT && idx == 1))
+      {
+        // x <_u t
+        // t >_u x
+        // IC: (distinct t (_ bv0 w))
+        return d_nm.mk_node(Kind::DISTINCT,
+                            {t, d_nm.mk_value(BitVector::mk_zero(bw))});
+      }
+      // x >_u t
+      // t <_u x
+      // IC: (distinct t (bvnot (_ bv0 w)))
+      return d_nm.mk_node(Kind::DISTINCT,
+                          {t, d_nm.mk_value(BitVector::mk_ones(bw))});
+
+    default:
+      assert(kind == Kind::BV_UGE || kind == Kind::BV_ULE
+             || kind == Kind::BV_SGE || kind == Kind::BV_SLE
+             || kind == Kind::DISTINCT || kind == Kind::EQUAL);
+      // x >=_u t
+      // x <=_u t
+      // x >=_s t
+      // x <=_s t
+      // x != t
+      // x = t
+      // IC: true
+      return d_nm.mk_value(true);
+  }
+}
+
+Node
+BvInverter::ic(Kind predicate, const Node& node, const Node& t, size_t idx)
+{
+  assert(idx < 2);
+  switch (node.kind())
+  {
+    case Kind::AND: return ic_and(predicate, node, t, idx);
+    case Kind::OR: return ic_or(predicate, node, t, idx);
+    case Kind::BV_AND: return ic_bv_and(predicate, node, t, idx);
+    case Kind::BV_OR: return ic_bv_or(predicate, node, t, idx);
+    case Kind::BV_ASHR: return ic_bv_ashr(predicate, node, t, idx);
+    case Kind::BV_CONCAT: return ic_bv_concat(predicate, node, t, idx);
+    case Kind::BV_MUL: return ic_bv_mul(predicate, node, t, idx);
+    case Kind::BV_SHR: return ic_bv_shr(predicate, node, t, idx);
+    case Kind::BV_SHL: return ic_bv_shl(predicate, node, t, idx);
+    case Kind::BV_SIGN_EXTEND: return ic_bv_sext(predicate, node, t, idx);
+    case Kind::BV_UREM: return ic_bv_urem(predicate, node, t, idx);
+    default:
+      assert(node.kind() == Kind::BV_UDIV);
+      return ic_bv_udiv(predicate, node, t, idx);
   }
 }
 
 /* --- BvInverter private --------------------------------------------------- */
 
 Node
-BvInverter::ic_and(Kind predicate, const std::vector<Node>& nodes, size_t idx)
+BvInverter::ic_and(Kind predicate, const Node& node, const Node& t, size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& s = node[1 - idx];
   switch (predicate)
   {
     case Kind::DISTINCT:
@@ -133,11 +125,9 @@ BvInverter::ic_and(Kind predicate, const std::vector<Node>& nodes, size_t idx)
 }
 
 Node
-BvInverter::ic_or(Kind predicate, const std::vector<Node>& nodes, size_t idx)
+BvInverter::ic_or(Kind predicate, const Node& node, const Node& t, size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& s = node[1 - idx];
   switch (predicate)
   {
     case Kind::DISTINCT:
@@ -159,12 +149,11 @@ BvInverter::ic_or(Kind predicate, const std::vector<Node>& nodes, size_t idx)
 
 Node
 BvInverter::ic_bv_and(Kind predicate,
-                      const std::vector<Node>& nodes,
+                      const Node& node,
+                      const Node& t,
                       size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& s = node[1 - idx];
   uint64_t bw   = s.type().bv_size();
   switch (predicate)
   {
@@ -251,11 +240,12 @@ BvInverter::ic_bv_and(Kind predicate,
 }
 
 Node
-BvInverter::ic_bv_or(Kind predicate, const std::vector<Node>& nodes, size_t idx)
+BvInverter::ic_bv_or(Kind predicate,
+                     const Node& node,
+                     const Node& t,
+                     size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& s = node[1 - idx];
   uint64_t bw   = s.type().bv_size();
   switch (predicate)
   {
@@ -337,12 +327,11 @@ BvInverter::ic_bv_or(Kind predicate, const std::vector<Node>& nodes, size_t idx)
 
 Node
 BvInverter::ic_bv_mul(Kind predicate,
-                      const std::vector<Node>& nodes,
+                      const Node& node,
+                      const Node& t,
                       size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& s = node[1 - idx];
   uint64_t bw   = s.type().bv_size();
   switch (predicate)
   {
@@ -449,12 +438,11 @@ BvInverter::ic_bv_mul(Kind predicate,
 
 Node
 BvInverter::ic_bv_udiv(Kind predicate,
-                       const std::vector<Node>& nodes,
+                       const Node& node,
+                       const Node& t,
                        size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& s = node[1 - idx];
   uint64_t bw   = s.type().bv_size();
   switch (predicate)
   {
@@ -709,12 +697,11 @@ BvInverter::ic_bv_udiv(Kind predicate,
 
 Node
 BvInverter::ic_bv_urem(Kind predicate,
-                       const std::vector<Node>& nodes,
+                       const Node& node,
+                       const Node& t,
                        size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& s = node[1 - idx];
   uint64_t bw   = s.type().bv_size();
   switch (predicate)
   {
@@ -954,12 +941,11 @@ _ic_shift_for_all_i(NodeManager& nm, Kind predicate, Kind kind, Node s, Node t)
 
 Node
 BvInverter::ic_bv_shr(Kind predicate,
-                      const std::vector<Node>& nodes,
+                      const Node& node,
+                      const Node& t,
                       size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& s = node[1 - idx];
   uint64_t bw   = s.type().bv_size();
   switch (predicate)
   {
@@ -1145,12 +1131,11 @@ BvInverter::ic_bv_shr(Kind predicate,
 
 Node
 BvInverter::ic_bv_ashr(Kind predicate,
-                       const std::vector<Node>& nodes,
+                       const Node& node,
+                       const Node& t,
                        size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& s = node[1 - idx];
   uint64_t bw   = s.type().bv_size();
   switch (predicate)
   {
@@ -1368,12 +1353,11 @@ BvInverter::ic_bv_ashr(Kind predicate,
 
 Node
 BvInverter::ic_bv_shl(Kind predicate,
-                      const std::vector<Node>& nodes,
+                      const Node& node,
+                      const Node& t,
                       size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& s = node[1 - idx];
   uint64_t bw   = s.type().bv_size();
   switch (predicate)
   {
@@ -1530,13 +1514,12 @@ BvInverter::ic_bv_shl(Kind predicate,
 
 Node
 BvInverter::ic_bv_concat(Kind predicate,
-                         const std::vector<Node>& nodes,
+                         const Node& node,
+                         const Node& t,
                          size_t idx)
 {
-  assert(nodes.size() == 3);
-  const Node& x = nodes[idx];
-  const Node& s = nodes[1 - idx];
-  const Node& t = nodes.back();
+  const Node& x = node[idx];
+  const Node& s = node[1 - idx];
   uint64_t bw_x = x.type().bv_size();
   uint64_t bw_s = s.type().bv_size();
   uint64_t bw_t = t.type().bv_size();
@@ -1717,12 +1700,11 @@ BvInverter::ic_bv_concat(Kind predicate,
 
 Node
 BvInverter::ic_bv_sext(Kind predicate,
-                       const std::vector<Node>& nodes,
+                       const Node& node,
+                       const Node& t,
                        size_t idx)
 {
-  assert(nodes.size() == 2);
-  const Node& x = nodes[idx];
-  const Node& t = nodes[1 - idx];
+  const Node& x = node[0];
   uint64_t bw_t = t.type().bv_size();
   uint64_t bw_x = x.type().bv_size();
   uint64_t n    = bw_t - bw_x;

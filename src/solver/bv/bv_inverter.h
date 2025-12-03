@@ -27,24 +27,25 @@ class BvInverter
   BvInverter(Env& env);
   ~BvInverter();
 
-  Node ic(Kind predicate,
-          Kind kind,
-          const std::vector<Node>& nodes,
-          size_t idx);
+  Node ic(const Node& node, const Node& t, size_t idx);
+  Node ic(Kind predicate, const Node& node, const Node& t, size_t idx);
 
  private:
-  Node ic_and(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_or(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_bv_and(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_bv_or(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_bv_ashr(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_bv_concat(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_bv_mul(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_bv_sext(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_bv_shl(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_bv_shr(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_bv_udiv(Kind predicate, const std::vector<Node>& nodes, size_t idx);
-  Node ic_bv_urem(Kind predicate, const std::vector<Node>& nodes, size_t idx);
+  Node ic_and(Kind predicate, const Node& node, const Node& t, size_t idx);
+  Node ic_or(Kind predicate, const Node& node, const Node& t, size_t idx);
+  Node ic_bv_and(Kind predicate, const Node& node, const Node& t, size_t idx);
+  Node ic_bv_or(Kind predicate, const Node& node, const Node& t, size_t idx);
+  Node ic_bv_ashr(Kind predicate, const Node& node, const Node& t, size_t idx);
+  Node ic_bv_concat(Kind predicate,
+                    const Node& t,
+                    const Node& node,
+                    size_t idx);
+  Node ic_bv_mul(Kind predicate, const Node& node, const Node& t, size_t idx);
+  Node ic_bv_sext(Kind predicate, const Node& node, const Node& t, size_t idx);
+  Node ic_bv_shl(Kind predicate, const Node& node, const Node& t, size_t idx);
+  Node ic_bv_shr(Kind predicate, const Node& node, const Node& t, size_t idx);
+  Node ic_bv_udiv(Kind predicate, const Node& node, const Node& t, size_t idx);
+  Node ic_bv_urem(Kind predicate, const Node& node, const Node& t, size_t idx);
 
   /** The associated node manager. */
   NodeManager& d_nm;
