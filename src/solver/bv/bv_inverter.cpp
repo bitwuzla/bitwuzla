@@ -19,7 +19,7 @@ namespace bzla::bv {
 
 /* --- BvInverter public ---------------------------------------------------- */
 
-BvInverter::BvInverter(Env& env) : d_nm(env.nm()) {}
+BvInverter::BvInverter(Env& env) : d_env(env), d_nm(env.nm()) {}
 
 BvInverter::~BvInverter() {}
 
@@ -102,6 +102,146 @@ BvInverter::ic(Kind predicate, const Node& node, const Node& t, size_t idx)
 }
 
 /* --- BvInverter private --------------------------------------------------- */
+
+bool
+BvInverter::is_invertible(const Node& node) const
+{
+  Kind kind = node.kind();
+  switch (kind)
+  {
+    case Kind::AND:
+    case Kind::OR:
+    case Kind::EQUAL:
+    case Kind::DISTINCT:
+    case Kind::NOT:
+
+    case Kind::BV_ADD:
+    case Kind::BV_AND:
+    case Kind::BV_OR:
+    case Kind::BV_ASHR:
+    case Kind::BV_ULT:
+    case Kind::BV_UGT:
+    case Kind::BV_ULE:
+    case Kind::BV_UGE:
+    case Kind::BV_SLT:
+    case Kind::BV_SGT:
+    case Kind::BV_SLE:
+    case Kind::BV_SGE:
+    case Kind::BV_NOT:
+    case Kind::BV_CONCAT:
+    case Kind::BV_MUL:
+    case Kind::BV_EXTRACT:
+    case Kind::BV_UDIV:
+    case Kind::BV_UREM:
+    case Kind::BV_SHL:
+    case Kind::BV_SHR: return true;
+
+    default:
+      assert(kind != Kind::BV_COMP);
+      assert(kind != Kind::BV_DEC);
+      assert(kind != Kind::BV_INC);
+      assert(kind != Kind::BV_NAND);
+      assert(kind != Kind::BV_NEG);
+      assert(kind != Kind::BV_NEG);
+      assert(kind != Kind::BV_NEGO);
+      assert(kind != Kind::BV_NOR);
+      assert(kind != Kind::BV_REDAND);
+      assert(kind != Kind::BV_REDOR);
+      assert(kind != Kind::BV_REDXOR);
+      assert(kind != Kind::BV_REPEAT);
+      assert(kind != Kind::BV_ROL);
+      assert(kind != Kind::BV_ROLI);
+      assert(kind != Kind::BV_ROR);
+      assert(kind != Kind::BV_RORI);
+      assert(kind != Kind::BV_SADDO);
+      assert(kind != Kind::BV_SDIV);
+      assert(kind != Kind::BV_SDIVO);
+      assert(kind != Kind::BV_SIGN_EXTEND);
+      assert(kind != Kind::BV_SIGN_EXTEND);
+      assert(kind != Kind::BV_SMOD);
+      assert(kind != Kind::BV_SMULO);
+      assert(kind != Kind::BV_SREM);
+      assert(kind != Kind::BV_SSUBO);
+      assert(kind != Kind::BV_SUB);
+      assert(kind != Kind::BV_UADDO);
+      assert(kind != Kind::BV_UMULO);
+      assert(kind != Kind::BV_USUBO);
+      assert(kind != Kind::BV_XNOR);
+      assert(kind != Kind::BV_ZERO_EXTEND);
+      assert(kind != Kind::IMPLIES);
+      assert(kind != Kind::XOR);
+      return false;
+  }
+}
+
+std::unordered_map<Node, size_t>
+BvInverter::compute_path(const Node& node, const Node& x) const
+{
+  std::vector<std::pair<Node, size_t>> visit{{node, 0}};
+  std::unordered_map<Node, bool> cache;
+  do
+  {
+    auto [cur, idx]     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, true);
+
+    if (cur == x)
+    {
+      assert(inserted);
+      break;
+    }
+    if (!is_invertible(cur))
+    {
+      it->second = false;
+      visit.pop_back();
+      continue;
+    }
+    if (inserted)
+    {
+      for (size_t i = 0, n = cur.num_children(); i < n; ++i)
+      {
+        visit.push_back({cur[i], i});
+      }
+    }
+    else
+    {
+      it->second = false;
+      visit.pop_back();
+    }
+  } while (!visit.empty());
+
+  std::vector<std::pair<Node, size_t>> path;
+  for (const auto& v : visit)
+  {
+    auto it = cache.find(v.first);
+    if (it != cache.end() && it->second)
+    {
+      path.push_back(std::move(v));
+    }
+  }
+
+  std::cout << "cache: " << cache.size() << std::endl;
+  for (const auto& c : cache)
+  {
+    std::cout << c.first << " (" << c.second << ")" << std::endl;
+  }
+  std::cout << "path: " << path.size() << std::endl;
+  size_t i = 0;
+  for (const auto& p : path)
+  {
+    std::cout << "path[" << i++ << "]: " << p.first << " (" << p.second << ") ["
+              << (cache.find(p.first) == cache.end()
+                      ? "0"
+                      : (cache.find(p.first)->second ? "y" : "x"))
+              << "]" << std::endl;
+  }
+
+  std::unordered_map<Node, size_t> res;
+  for (size_t i = 1, n = path.size(); i < n; ++i)
+  {
+    res[path[i - 1].first] = path[i].second;
+  }
+  return res;
+}
 
 Node
 BvInverter::ic_and(Kind predicate, const Node& node, const Node& t, size_t idx)

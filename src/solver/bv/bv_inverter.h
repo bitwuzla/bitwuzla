@@ -31,6 +31,11 @@ class BvInverter
   Node ic(Kind predicate, const Node& node, const Node& t, size_t idx);
 
  private:
+  bool is_invertible(const Node& node) const;
+
+  std::unordered_map<Node, size_t> compute_path(const Node& node,
+                                                const Node& x) const;
+
   Node ic_and(Kind predicate, const Node& node, const Node& t, size_t idx);
   Node ic_or(Kind predicate, const Node& node, const Node& t, size_t idx);
   Node ic_bv_and(Kind predicate, const Node& node, const Node& t, size_t idx);
@@ -47,6 +52,8 @@ class BvInverter
   Node ic_bv_udiv(Kind predicate, const Node& node, const Node& t, size_t idx);
   Node ic_bv_urem(Kind predicate, const Node& node, const Node& t, size_t idx);
 
+  /** The associated environment. */
+  Env& d_env;
   /** The associated node manager. */
   NodeManager& d_nm;
 };
