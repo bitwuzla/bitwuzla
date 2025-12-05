@@ -91,7 +91,7 @@ Node rebuild_node(NodeManager& nm,
  * @param node The node process.
  * @param substitutions The substitution map to apply.
  * @param cache The substitution cache.
- * @return The node with substituions applied.
+ * @return The node with substitutions applied.
  */
 Node substitute(NodeManager& nm,
                 const Node& node,
